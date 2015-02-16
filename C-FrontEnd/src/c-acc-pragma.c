@@ -203,6 +203,7 @@ int parse_ACC_pragma()
 	CExpr *x = NULL;
 
 	if(pg_tok == '('){
+	  //<<<<<<< HEAD
 	  if((x = parse_ACC_clause_arg()) == NULL)
 	    goto syntax_err;
 	  x = ACC_PG_LIST(ACC_WAIT_ARG, x);
@@ -215,6 +216,13 @@ int parse_ACC_pragma()
 	  pg_ACC_list = exprListCons(x, pg_ACC_list);
 	}
 
+/* ======= */
+/* 	    CExpr *x; */
+/* 	    if((x = parse_ACC_clause_arg()) == NULL)  */
+/* 		goto syntax_err; */
+/* 	    pg_ACC_list = (CExpr*)allocExprOfList1(EC_UNDEF,x); */
+/* 	} else pg_ACC_list = NULL; */
+	//>>>>>>> master
 	ret= PRAGMA_EXEC;
 	goto chk_end;
     }
@@ -418,6 +426,9 @@ static CExpr* parse_ACC_clauses()
 	    goto syntax_err;
 	}
 	args = exprListAdd(args,c);
+	if(pg_tok == ','){
+	  pg_get_token();
+	}
     }
     return args;
  syntax_err:

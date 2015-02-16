@@ -94,7 +94,7 @@ public class XmcWriter
         _lastChar = c;
         _writer.print(c);
     }
-    
+   
     private void _print(int n)
     {
         _lastChar = '0';
@@ -197,7 +197,7 @@ public class XmcWriter
             _print(s);
         return this;
     }
-    
+   
     /**
      * Adds char with no LF
      *

@@ -14,9 +14,13 @@ void call_xmpf_finalize_all__(){
 
 void xmpf_init_all__()
 {
-  atexit(call_xmpf_finalize_all__);
-
   _XMP_init(0, NULL);
+
+  /* 
+     On SR16000, when calling MPI_Finalize from atexit(),
+     the atexit must be called after MPI_Init().
+   */
+  atexit(call_xmpf_finalize_all__);
   _XMP_check_reflect_type();
 
   _XMPC_running = 0;
@@ -109,7 +113,8 @@ size_t _XMP_get_datatype_size(int datatype)
   switch (datatype){
 
   case _XMP_N_TYPE_BOOL:
-    size = SIZEOF__BOOL; break;
+    size = _XMPF_running ? SIZEOF_UNSIGNED_INT : SIZEOF__BOOL;
+    break;
 
   case _XMP_N_TYPE_CHAR:
   case _XMP_N_TYPE_UNSIGNED_CHAR:

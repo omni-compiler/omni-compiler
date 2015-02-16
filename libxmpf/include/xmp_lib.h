@@ -1,12 +1,22 @@
-type xmp_desc
-  sequence
-  integer*8 :: desc
-end type xmp_desc
+!-------------------------------
+!  descriptor
+!-------------------------------
+      type xmp_desc
+         sequence
+         integer*8 :: desc
+      end type xmp_desc
 
-interface
-integer(4) function xmp_num_nodes()
-  end function xmp_num_nodes
+!-------------------------------
+!  coarray 
+!-------------------------------
+      include "xmp_lib_coarray_sync.h"
 
-integer(4) function xmp_node_num()
-  end function xmp_node_num
-end interface
+!!      integer, external :: image_index
+!!      integer, external :: lcobound, ucobound
+      integer, external :: num_images, this_image
+
+!-------------------------------
+!  array functions to support reference of coindexed-objects
+!-------------------------------
+      include "xmp_lib_coarray_get.h"
+

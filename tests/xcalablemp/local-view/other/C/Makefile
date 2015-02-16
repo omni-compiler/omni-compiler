@@ -3,9 +3,9 @@ XRUN    = mpirun
 
 .PHONY: clean all default run
 
-all: extern
+all: extern.x
 
-extern: extern_a.c extern_b.c
+extern.x: extern_a.c extern_b.c
 	$(XCC) extern_a.c extern_b.c -o extern.x
 
 run:

@@ -6,9 +6,6 @@
 /* */
 #undef ADDR_IS_64
 
-/* aix int64_t */
-#undef AIX_64BIT
-
 /* The normal alignment of `double', in bytes. */
 #undef ALIGNOF_DOUBLE
 
@@ -41,9 +38,6 @@
 
 /* quad real */
 #undef ENABLE_QREAL
-
-/* Define to 1 if your Fortran compiler doesn't accept -c and -o together. */
-#undef FC_NO_MINUS_C_MINUS_O
 
 /* not declared gettimeofday in sys/time.h */
 #undef GETTOD_NOT_DECLARED

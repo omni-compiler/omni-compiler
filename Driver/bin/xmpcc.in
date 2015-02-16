@@ -1,129 +1,198 @@
 #!/bin/bash
 
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
+### Read configration file and library ###
+OMNI_HOME=@OMNI_HOME@
+. ${OMNI_HOME}/etc/xmpcc.conf
+. ${OMNI_HOME}/libexec/omni_common_lib.sh
+. ${OMNI_HOME}/libexec/xmpcc_lib.sh
 
-stderr() {
-    echo $* 1>&2
-}
+### Directory for saving intermediate files ###
+PID=$$
+TEMP_DIR=/tmp/__omni_tmp__${PID}
+DEBUG_TEMP_DIR="__omni_tmp__"
 
-error() {
-    stderr "error: $*"
-}
+### Default options ###
+ENABLE_LINKER=true
+ONLY_PP=false
+VERBOSE=false
+ENABLE_DEBUG=false
+OUTPUT_TEMPORAL=false
+DRY_RUN=false
+STOP_PP=false
+STOP_FRONTEND=false
+STOP_TRANSLATOR=false
+STOP_BACKEND=false
+STOP_COMPILE=false
+ENABLE_OPENMP=false
+ENABLE_XACC=false
+ENABLE_SCALASCA_ALL=false
+ENABLE_SCALASCA=false
+ENABLE_TLOG_ALL=false
+ENABLE_TLOG=false
 
-BINDIR=`dirname $0`
-GPGPU_PREFIX=@GPGPU_PREFIX@
+# Additional options defined by command line (e.g. --Wl..)
+# These parameters are set in xmpcc_set_parameters().
+OUTPUT_FILE=
+PROFILE_OPT=
+OPENMP_ADD_OPT=
+PP_ADD_OPT=
+FRONTEND_ADD_OPT=
+XCODE_TRANSLATOR_ADD_OPT=
+BACKEND_ADD_OPT=
+NATIVE_ADD_OPT=
+LINKER_ADD_OPT=
 
-selective_profile=0
-all_profile=0
-doScalasca=0
-doTlog=0
-doProf=0
-export useDom=1
-args=()
-for i in "$@"; do
-    case "${i}" in
-        -profile|-allprofile|-with-scalasca|-with-tlog)
-            case "${i}" in
-		-profile)
-		    selective_profile=1;;
-		-allprofile)
-		    all_profile=1;;
-                -with-scalasca)
-                    doScalasca=1;;
-                -with-tlog)
-                    doTlog=1;;
-            esac
-            doProf=1
-            args=("${args[@]}" "--Wx${i}");;
-        -enable-threads)
-            args=("${args[@]}" "--Wx${i}" "--Wl${i}" "--Wn-D_OPENMP=200203");;
-        -enable-gpu)
-            if test @XMP_ENABLE_GPU@ -eq 1; then
-                args=("${args[@]}" "--Wx${i}" "--Wl${i}" "--Wn${i}")
-            else
-                echo "warning: -enable-gpu option is unavailable, rebuild the compiler with ./configure --enable-xmpgpu"
-            fi;;
-        -tmp)
-            args=("${args[@]}" "--Wn${i}");;
-	-use-relaxer)
-	    export useDom=0;;
-	-disable-pragma-macro)
-	    args=("${args[@]}" "--Wp-no-replace-pragma");;
-	-facc)
-	    if test @ENABLE_ACC@ -eq 1; then
-		args=("${args[@]}" "--Wf${i}" "--Wx${i}" "--Wl${i}" "--Wn-omniacc")
-	    else
-		echo "warning: -facc option is unavailable, rebuild the compiler with ./configure --enable-openacc"
-            fi;;
-        -openmp|-omp)
-            args=("${args[@]}" "-OPENMP")
-            args=("${args[@]}" "-openmp");;
-        *)
-            args=("${args[@]}" "${i}");;
-    esac
+### Set options ###
+# e.g.) xmpcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a -omp
+#
+#  c_files="a.c b.c"                  # C files
+#  archive_files="lib.a"              # Archive files
+#  obj_files="c.o"                    # Object files
+#  other_args="-I/usr/lib"            # Options for Preprocessor, Compiler, and Linker
+# 
+#  Note that "-omp" is extracted by xmpcc_set_parameters, and set "ENABLE_OPENMP".
+c_files=
+archive_files=
+obj_files=
+other_args=
+xmpcc_set_parameters ${@+"$@"}
+omni_c_check_file_exist
+
+### Create temporal directory ###
+if [ $ENABLE_DEBUG = true ]; then
+    TEMP_DIR=$DEBUG_TEMP_DIR
+    if [ -d $TEMP_DIR ]; then
+	omni_exec rm -rf $TEMP_DIR
+    fi
+fi
+
+omni_exec mkdir -p $TEMP_DIR
+[ $ENABLE_DEBUG = true ] && echo "Create ${TEMP_DIR}/"
+
+### Clean temporal directory before exit ###
+trap "rm -rf $TEMP_DIR; exit 1" 1 2 3 15
+
+### Preprocessor ###
+if [ $ONLY_PP = true -a -f "$OUTPUT_FILE" ]; then
+    omni_exec rm $OUTPUT_FILE
+fi
+
+for c_file in $c_files; do
+    FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_PP_C=${TEMP_DIR}/${FILE_NAME}_pp.c
+    FILE_PP_I=${TEMP_DIR}/${FILE_NAME}_pp.i
+
+    omni_exec $OMNI_REPLACE_PRAGMA_CMD $OMNI_REPLACE_PRAGMA_OPT $c_file -o $FILE_PP_C
+    omni_exec $OMNI_CPP_CMD $PP_ADD_OPT $OMNI_CPP_OPT $other_args $FILE_PP_C ">" $FILE_PP_I
+    # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
+
+    if [ $ONLY_PP = true ]; then
+	if [ "$OUTPUT_FILE" = "" ]; then
+	    omni_exec cat $FILE_PP_I
+	else
+	    omni_exec cat $FILE_PP_I ">>" $OUTPUT_FILE
+	fi
+    fi
+done
+[ $STOP_PP = true ] && exit 0;
+[ $ONLY_PP = true -a $ENABLE_DEBUG = true ] && exit 0;          # xmpcc -E --debug hoge.c (save $TMP_DIR)
+[ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # xmpcc -E hoge.c
+
+### Frontend ###
+[ $ENABLE_XACC = true ] && FRONTEND_ADD_OPT="-facc $FRONTEND_ADD_OPT"
+for c_file in $c_files; do
+    FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_PP_I=${TEMP_DIR}/${FILE_NAME}_pp.i
+    FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_in.xml
+
+    omni_exec $OMNI_C2X_CMD $FRONTEND_ADD_OPT $OMNI_C2X_OPT $FILE_PP_I -o $FILE_IN_X
+done
+[ $STOP_FRONTEND = true ] && exit 0;
+
+### Translator ###
+[ $ENABLE_TLOG_ALL = true ] && PROFILE_OPT="-tlog-all"
+[ $ENABLE_TLOG = true ] && PROFILE_OPT="-tlog"
+[ $ENABLE_SCALASCA_ALL = true ] && PROFILE_OPT="-scalasca-all"
+[ $ENABLE_SCALASCA = true ] && PROFILE_OPT="-scalasca"
+[ $ENABLE_XACC = true ] && XCODE_TRANSLATOR_ADD_OPT="-facc $XCODE_TRANSLATOR_ADD_OPT"
+for c_file in $c_files; do
+    FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_in.xml
+    FILE_OUT_X=${TEMP_DIR}/${FILE_NAME}_out.xml
+    FILE_C=${TEMP_DIR}/${FILE_NAME}.c
+
+    omni_exec $OMNI_CX2X_CMD $OMNI_CX2X_OPT $XCODE_TRANSLATOR_ADD_OPT $PROFILE_OPT $FILE_IN_X -o $FILE_OUT_X
+    # also create ${TEMP_DIR}/${FILE_NAME}_in.c
+    omni_exec cp ${TEMP_DIR}/${FILE_NAME}_in.c $FILE_C
+done
+[ $STOP_TRANSLATOR = true ] && exit 0;
+
+### Backend ###
+if [ $OUTPUT_TEMPORAL = true ]; then
+    for c_file in $c_files; do
+	FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+	FILE_C=${TEMP_DIR}/${FILE_NAME}.c
+    
+	omni_exec cp $FILE_C __omni_tmp__${FILE_NAME}.c
+	echo "output __omni_tmp__${FILE_NAME}.c"
+    done
+fi
+[ $STOP_BACKEND = true ] && exit 0;
+
+### Native Compiler ###
+[ $ENABLE_OPENMP = true ] && OPENMP_ADD_OPT="$OPENMP_OPT"
+for c_file in $c_files; do
+    FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_C=${TEMP_DIR}/${FILE_NAME}.c
+    FILE_O=${TEMP_DIR}/${FILE_NAME}.o
+    FILE_USER_O=`basename $c_file .c`.o
+
+    omni_exec $OMNI_MPICC_CMD $NATIVE_ADD_OPT $OMNI_MPICC_OPT $OPENMP_ADD_OPT $other_args $FILE_C -o $FILE_O
+
+    ### GPU Compiler ###
+    FILE_CU=${TEMP_DIR}/${FILE_NAME}_pp.cu
+    FILE_GPUO=${TEMP_DIR}/${FILE_NAME}.gpu.o
+    if [ $ENABLE_XACC = true ] && [ -e $FILE_CU ]; then
+	omni_exec $OMNI_GPUCC_CMD $OMNI_GPUCC_OPT $FILE_CU -o $FILE_GPUO
+	FILE_O_TMP=${TEMP_DIR}/${FILE_NAME}.cpu.o
+	omni_exec mv $FILE_O $FILE_O_TMP
+	omni_exec ld -r $FILE_O_TMP $FILE_GPUO -o $FILE_O
+	omni_exec rm $FILE_O_TMP
+    fi
+    
+    if [ $ENABLE_LINKER = false -a "$OUTPUT_FILE" != "" ]; then
+	omni_exec mv $FILE_O $OUTPUT_FILE  # only a single file is created.
+    else
+	omni_exec cp $FILE_O $FILE_USER_O
+    fi
+done
+[ $STOP_COMPILE = true ] && exit 0;
+[ $ENABLE_LINKER = false -a $ENABLE_DEBUG = true ] && exit 0;         # xmpcc -c --debug hoge.c
+[ $ENABLE_LINKER = false ] && { omni_exec rm -rf $TEMP_DIR; exit 0; } # xmpcc -c hoge.c
+
+### Linker ###
+# collect initialize modules
+for c_file in $c_files; do
+    FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
+    FILE_O=${TEMP_DIR}/${FILE_NAME}.o
+    obj_files="$obj_files $FILE_O"
 done
 
-if test ${useDom} -eq 0; then
-    args=("${args[@]}" "--Wx-use-relaxer")
+omni_exec $XMP_COLLECT_INIT $obj_files --PID ${PID}   # create /tmp/_xmpc_init_${PID}.o
+FILE_COLLECT_O=${TEMP_DIR}/__omni_collect__$PID.o
+omni_exec mv /tmp/_xmpc_init_${PID}.o $FILE_COLLECT_O
+
+# link
+[ $ENABLE_TLOG_ALL = true -o $ENABLE_TLOG = true ] && PROFILE_OPT="-ltlog_mpi"
+[ $ENABLE_XACC = true ] && LINKER_ADD_OPT="$OMNI_GPUCC_LIB $LINKER_ADD_OPT"
+
+if [ "$OUTPUT_FILE" = "" ]; then
+    omni_exec $OMNI_LINKER_CMD $FILE_COLLECT_O $obj_files $OMNI_LINKER_OPT $PROFILE_OPT $LINKER_ADD_OPT $other_args $archive_files
 else
-    args=("${args[@]}" "--Wf-fxmp")
+    omni_exec $OMNI_LINKER_CMD $FILE_COLLECT_O $obj_files $OMNI_LINKER_OPT $PROFILE_OPT $LINKER_ADD_OPT $other_args $archive_files -o $OUTPUT_FILE
 fi
 
-if test ${selective_profile} -eq 1 -a ${all_profile} -eq 1; then
-    error "Please select only one, \"-profile\" or \"-allprofile\"."
-    exit 1
-fi
+### Delete temporal directory ###
+[ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
 
-if test ${doTlog} -eq 1 -a ${doScalasca} -eq 1; then
-    error "Please select only one, \"-with-scalasca\" or \"-with-tlog\"."
-    exit 1
-fi
-
-# xmpcc -with-scalasca hoge.c -o hoge
-#  -> xmpcc -with-scalasca hoge.c -o hoge -allprofile
-if test ${doScalasca} -eq 1; then
-    if test ${all_profile} -eq 0 -a ${selective_profile} -eq 0; then
-        all_profile=1
-	args=("${args[@]}" "--Wx-allprofile")
-    fi
-fi
-
-# xmpcc -with-tlog hoge.c -o hoge
-#  -> xmpcc -with-tlog hoge.c -o hoge -allprofile
-if test ${doTlog} -eq 1; then
-    if test ${all_profile} -eq 0 -a ${selective_profile} -eq 0; then
-        all_profile=1
-	args=("${args[@]}" "--Wx-allprofile")
-    fi
-fi
-
-if test ${doProf} -eq 1; then
-    if test ${doTlog} -eq 0 -a ${doScalasca} -eq 0; then
-        doScalasca=1
-    fi
-fi
-
-if test ${doScalasca} -eq 1; then
-    if test -z "${SCALASCA_HOME}"; then
-        error "environmental variable SCALASCA_HOME not set."
-        exit 1
-    fi
-    args=("--Wn-DEPIK" "--Wn-I${SCALASCA_HOME}/include" "${args[@]}" "--Wl-prof-scalasca")
-elif test ${doTlog} -eq 1; then
-    PREFIX=@prefix@
-    TLOG_MPI_LIB=${PREFIX}/lib
-    args=("--Wn-I${TLOG_MPI_LIB}" "${args[@]}" "--Wl-prof-tlog")
-fi
-
-if test ${doProf} -eq 1 -a ${doScalasca} -eq 0; then
-    args=("${args[@]}" "--Wl-ltlog_mpi")
-fi
-
-set -- "${args[@]}"
-
-exec ${BINDIR}/omdriver --xc -Txmp "$@"
-
-exit $?
+exit 0

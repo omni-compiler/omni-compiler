@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include "mpi.h"
 #include "xmp_internal.h"
-#include "xmp_atomic.h"
+
 static size_t _xmp_heap_size, _xmp_stride_size, _xmp_coarray_shift = 0;
 static int *_xmp_gasnet_stride_queue;
 static int _xmp_gasnet_stride_wait_size = 0;
@@ -15,7 +15,7 @@ gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_SETLOCKSTATE,               _xmp_gasnet_setlockstate },
   { _XMP_GASNET_UNLOCK_REQUEST,             _xmp_gasnet_unlock_request },
   { _XMP_GASNET_LOCKHANDOFF,                _xmp_gasnet_lockhandoff },
-  { _XMP_GASNET_POST_REQUEST,               _xmp_gasnet_post_request },
+  { _XMP_GASNET_POSTREQ,                    _xmp_gasnet_postreq },
   { _XMP_GASNET_UNPACK,                     _xmp_gasnet_unpack },
   { _XMP_GASNET_UNPACK_USING_BUF,           _xmp_gasnet_unpack_using_buf },
   { _XMP_GASNET_UNPACK_REPLY,               _xmp_gasnet_unpack_reply },
@@ -33,8 +33,9 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
 
   each_addr = (char **)_XMP_alloc(sizeof(char *) * _XMP_world_size);
 
-  for(int i=0;i<_XMP_world_size;i++)
+  for(int i=0;i<_XMP_world_size;i++) {
     each_addr[i] = (char *)(_xmp_gasnet_buf[i]) + _xmp_coarray_shift;
+  }
 
   if(coarray_size % _XMP_GASNET_ALIGNMENT == 0)
     _xmp_coarray_shift += coarray_size;
@@ -52,6 +53,7 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
   }
 
   coarray->addr = each_addr;
+  coarray->real_addr = each_addr[_XMP_world_rank];
   *addr = each_addr[_XMP_world_rank];
 }
 

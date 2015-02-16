@@ -1,18 +1,11 @@
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
 TOPDIR		= ../..
 prefix		= @prefix@
-
-CFLAGS		= @BECC_OPTION@ -I. -I$(TOPDIR)/include @DEFS@ @CPPFLAGS@
-
-CC		= @BECC@
+CFLAGS		= @MPI_CFLAGS@ -I. -I$(TOPDIR)/include @DEFS@ @CPPFLAGS@
+CC		= @MPI_CC@
 AR		= @AR@ cr
 RANLIB		= @RANLIB@
 
 SRCS		= ompc_thread.c ompc_lock.c ompc_lib.c ompc_runtime.c timer.c ompf_runtime.c ompf_thread.c
-
 OMPCRTOBJ	= ompc_main.o
 OMPCRTOBJ_SRC	= ompc_main.c
 OMPFRTOBJ	= ompf_main.o
@@ -35,10 +28,10 @@ clean-local:	clean
 @INCLUDECOM@ ./target.tmpl
 
 $(OMPCRTOBJ): $(OMPCRTOBJ_SRC)
-	$(BECC) $(CFLAGS) -c $<
+	$(MPI_CC) $(MPI_CFLAGS) -c $<
 
 $(OMPFRTOBJ): $(OMPFRTOBJ_SRC)
-	$(BEFC) $(FFLAGS) -c $<
+	$(MPI_FC) $(MPI_FCFLAGS) -c $<
 
 install-exec-local:	$(doAllLib)
 	test -z "$(libdir)" || $(MKDIR_P) $(DESTDIR)$(libdir)

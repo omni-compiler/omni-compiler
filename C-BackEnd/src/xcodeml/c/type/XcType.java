@@ -560,7 +560,6 @@ public abstract class XcType extends XcObj implements Cloneable, XcGccAttributab
                         }
                     }
                 }
-
             }
             break;
 

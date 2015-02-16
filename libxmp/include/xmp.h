@@ -26,8 +26,7 @@
 typedef void *xmp_desc_t;
 
 // ----- libxmp
-//extern MPI_Comm	xmp_get_mpi_comm(void);
-extern int	xmp_get_mpi_comm(void);
+extern MPI_Comm	xmp_get_mpi_comm(void);
 extern void	xmp_init_mpi(int *argc, char ***argv);
 extern void	xmp_finalize_mpi(void);
 extern void	xmp_init(int *argc, char ***argv);
@@ -56,6 +55,7 @@ extern int      xmp_array_lshadow(xmp_desc_t d, int dim, int *lshadow);
 extern int      xmp_array_ushadow(xmp_desc_t d, int dim, int *ushadow);
 extern int      xmp_array_owner(xmp_desc_t d, int ndims, int index[], int dim);
 extern int      xmp_array_lead_dim(xmp_desc_t d, int size[]);
+extern int      xmp_array_gtol(xmp_desc_t d, int g_idx[], int lidx[]);
 extern int      xmp_align_axis(xmp_desc_t d, int dim, int *axis);
 extern int      xmp_align_offset(xmp_desc_t d, int dim, int *offset);
 extern int      xmp_align_format(xmp_desc_t d, int dim);
@@ -89,7 +89,10 @@ extern void     xmp_sync_image(int image, int* status);
 extern void     xmp_sync_images(int num, int* image_set, int* status);
 extern void     xmp_sync_images_all(int* status);
 
-extern void    *xmp_malloc(xmp_desc_t d, int size);
+extern void     xmp_sort_up(xmp_desc_t a_desc, xmp_desc_t b_desc);
+extern void     xmp_sort_down(xmp_desc_t a_desc, xmp_desc_t b_desc);
+
+extern void    *xmp_malloc(xmp_desc_t d, ...);
 extern void     xmp_free(xmp_desc_t d);
 
 extern void     xmp_exit(int status);

@@ -5,6 +5,7 @@
  *  $
  */
 package exc.object;
+import exc.block.Block;
 
 public class XobjString extends XobjConst
 {
@@ -53,6 +54,23 @@ public class XobjString extends XobjConst
     public void setName(String newValue)
     {
         value = newValue;
+    }
+
+    @Override
+    public Xobject cfold(Block block)
+    {
+      if (value == null) 
+        return this.copy();
+
+      Xobject id_list = block.getBody().getIdentList();
+      if (id_list == null)
+        return this.copy();
+
+      Ident ident = id_list.findVarIdent(value);
+      if (ident == null)
+        return this.copy();
+
+      return ident.cfold(block);
     }
 
     @Override

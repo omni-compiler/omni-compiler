@@ -1,37 +1,65 @@
-#    This file is an input file used by the GNU "autoconf" program to
-#    generate the file "configure", which is run during Omni installation
-#    to configure the system for the local environment.
-
 AC_PREREQ(2.60)
 LT_PREREQ(2.4)
 
-# --------------------------------------------------------------------
-# Let the initiation begin....
-
-AC_INIT([Omni Compiler], [0.8.0], [h-murai@riken.jp], [omni])
+AC_INIT([Omni Compiler], [0.9.1], [h-murai@riken.jp], [omni])
 
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
 
-AC_CANONICAL_BUILD
-AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 AC_CONFIG_SRCDIR([include/exc_platform.h])
 AC_CONFIG_HEADER([include/config.h Driver/atool/src/include/nata/nata_config.h])
 
-SHELL=`which bash` > /dev/null 2>&1
-if test $? -ne 0 -o -z "${SHELL}"; then
+# --------------------------------------------------------------------
+# check bash
+SHELL=`which bash` 1> /dev/null 2> /dev/null
+if test $? -ne 0; then
    AC_MSG_ERROR([To run libtool you need a bash, not /bin/sh.])
    exit 1
 fi
 export SHELL
 AC_SUBST(SHELL)
 
+# --------------------------------------------------------------------
+# check existence of commands set by user
+for cmd	in $CC $FC $MPI_CC $MPI_FC $JAVA $JAVAC $JAR
+do
+  if test "$cmd" != ""; then
+    which $cmd 2> /dev/null 1> /dev/null
+    if test $? -eq 1; then
+      echo "$cmd not found"
+      exit 1
+    fi
+  fi
+done
+
+# save environmental variables set by user
+userCFLAGS=${CFLAGS}
+userFCFLAGS=${FCFLAGS}
+
+userMPI_CPP=${MPI_CPP}
+userMPI_CPPFLAGS=${MPI_CPPFLAGS}
+userMPI_CC=${MPI_CC}
+userMPI_CFLAGS=${MPI_CFLAGS}
+userMPI_CLIBS=${MPI_CLIBS}
+
+userMPI_FPP=${MPI_FPP}
+userMPI_FPPFLAGS=${MPI_FPPFLAGS}
+userMPI_FC=${MPI_FC}
+userMPI_FCFLAGS=${MPI_FCFLAGS}
+userMPI_FCLIBS=${MPI_FCLIBS}
+
+userJAVA=${JAVA}
+userJAVAC=${JAVAC}
+userJAR=${JAR}
+
+# --------------------------------------------------------------------
+# Initialize for autoconf
 LT_INIT
+
 AC_SUBST(LIBTOOL)
 AC_SUBST(LIBTOOL_DEPS)
-
 AM_INIT_AUTOMAKE([no-define foreign])
 AM_MAINTAINER_MODE([enable])
 
@@ -45,7 +73,6 @@ AC_MSG_CHECKING(check XcodeML-Common project exists)
 if test -e "XcodeML-Common/Makefile.am"; then
     XCODEML_COMMON_DIR=XcodeML-Common
     AC_CONFIG_FILES($XCODEML_COMMON_DIR/Makefile)
-    AC_CONFIG_FILES($XCODEML_COMMON_DIR/ant.properties)
     AC_MSG_RESULT(yes)
 else
     XCODEML_COMMON_DIR=''
@@ -54,7 +81,7 @@ fi
 
 AC_SUBST(XCODEML_COMMON_DIR)
 
-#----
+# --------------------------------------------------------------------
 AC_MSG_CHECKING(check C-FrontEnd project exists)
 
 if test -e "C-FrontEnd/src/Makefile.am"; then
@@ -68,13 +95,12 @@ fi
 
 AC_SUBST(C_FRONTEND_DIR)
 
-#----
+# --------------------------------------------------------------------
 AC_MSG_CHECKING(check C-BackEnd project exists)
 
-if test -e "C-BackEnd/Makefile.am" -a -e "C-BackEnd/ant.properties.in"; then
+if test -e "C-BackEnd/Makefile.am"; then
     C_BACKEND_DIR=C-BackEnd
     AC_CONFIG_FILES($C_BACKEND_DIR/Makefile)
-    AC_CONFIG_FILES($C_BACKEND_DIR/ant.properties)
     AC_CONFIG_FILES($C_BACKEND_DIR/bin/C_Back)
     AC_MSG_RESULT(yes)
 else
@@ -84,7 +110,7 @@ fi
 
 AC_SUBST(C_BACKEND_DIR)
 
-#----
+# --------------------------------------------------------------------
 AC_MSG_CHECKING(check F-FrontEnd project exists)
 
 if test -e "F-FrontEnd/src/Makefile.am"; then
@@ -98,13 +124,12 @@ fi
 
 AC_SUBST(F_FRONTEND_DIR)
 
-#----
+# --------------------------------------------------------------------
 AC_MSG_CHECKING(check F-BackEnd project exists)
 
-if test -e "F-BackEnd/Makefile.am" -a -e "F-BackEnd/ant.properties.in"; then
+if test -e "F-BackEnd/Makefile.am"; then
     F_BACKEND_DIR=F-BackEnd
     AC_CONFIG_FILES($F_BACKEND_DIR/Makefile)
-    AC_CONFIG_FILES($F_BACKEND_DIR/ant.properties)
     AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Back)
     AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Trans)
     AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Decomp)
@@ -114,27 +139,14 @@ else
     AC_MSG_RESULT(no)
 fi
 
-if test "x${C_FRONTEND_DIR}" != "x" -a "x${C_BACKEND_DIR}" != "x"; then
-	enableC2C=yes
-else
-	enableC2C=no
-fi
-
-if test "x${F_FRONTEND_DIR}" != "x" -a "x${F_BACKEND_DIR}" != "x"; then
-	enableF2F=yes
-else
-	enableF2F=no
-fi
-
 AC_SUBST(F_BACKEND_DIR)
 
-#----
+# --------------------------------------------------------------------
 AC_MSG_CHECKING(check XcodeML-Exc-Tools project exists)
 
-if test -e "XcodeML-Exc-Tools/Makefile.am" -a -e "XcodeML-Exc-Tools/ant.properties.in"; then
+if test -e "XcodeML-Exc-Tools/Makefile.am"; then
     XCODEML_EXC_TOOLS_DIR=XcodeML-Exc-Tools
     AC_CONFIG_FILES($XCODEML_EXC_TOOLS_DIR/Makefile)
-    AC_CONFIG_FILES($XCODEML_EXC_TOOLS_DIR/ant.properties)
     AC_CONFIG_FILES($XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java)
     AC_MSG_RESULT(yes)
 else
@@ -144,62 +156,22 @@ fi
 
 AC_SUBST(XCODEML_EXC_TOOLS_DIR)
 
-#----
+# --------------------------------------------------------------------
 AC_MSG_CHECKING(check Driver project exists)
 
 if test -e "Driver/src/Makefile.am"; then
     OMDRIVER_DIR=Driver/src
     AC_CONFIG_FILES($OMDRIVER_DIR/Makefile)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/ompp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omnative)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omlinker)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/oml2x)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omx2x)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omx2l)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/ompcc.conf)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/ompf90.conf)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/xmpcc.conf)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/xmpf90.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/java.conf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.openmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.openmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.openmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.openmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.openmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omc2c)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/ompcc)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omcpp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omc2x)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omcx2x)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omx2c)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omcnative)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omclinker)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/omc.conf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omf2f)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/ompf90)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omfpp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omf2x)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omfx2x)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omx2f)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omfnative)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omflinker)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/omf.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpcc)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.xmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.xmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.xmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.xmp)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.xmp)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpf90)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.xmpf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.xmpf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.xmpf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.xmpf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.xmpf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/pp.conf.acc)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/l2x.conf.acc)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/x2x.conf.acc)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/native.conf.acc)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/linker.conf.acc)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/setup.conf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omtranslate)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/omni_collect_init)
+    AC_CONFIG_FILES($OMDRIVER_DIR/../libexec/omni_traverse)
     AC_MSG_RESULT(yes)
 else
     OMDRIVER_DIR=''
@@ -208,7 +180,8 @@ fi
 
 AC_SUBST(OMDRIVER_DIR)
 
-#----
+# --------------------------------------------------------------------
+# C
 LIBXMP_HEADER_DIR=libxmp/include
 LIBXMP_DIR=libxmp/src
 LIBXMP_THREADS_DIR=libxmp/src_threads
@@ -222,24 +195,16 @@ AC_SUBST(LIBXMP_DIR)
 AC_SUBST(LIBXMP_THREADS_DIR)
 AC_SUBST(LIBXMP_GPU_DIR)
 
-#----
+# F
 LIBXMPF_HEADER_DIR=libxmpf/include
 LIBXMPF_DIR=libxmpf/src
-#LIBXMPF_THREADS_DIR=libxmpf/src_threads
-#LIBXMPF_GPU_DIR=libxmpf/src_gpu
-
 AC_CONFIG_FILES($LIBXMPF_HEADER_DIR/Makefile)
 AC_CONFIG_FILES($LIBXMPF_DIR/Makefile)
-#AC_CONFIG_FILES($LIBXMPF_THREADS_DIR/Makefile)
-#AC_CONFIG_FILES($LIBXMPF_GPU_DIR/Makefile)
-
 AC_SUBST(LIBXMPF_HEADER_DIR)
 AC_SUBST(LIBXMPF_DIR)
-#AC_SUBST(LIBXMPF_THREADS_DIR)
-#AC_SUBST(LIBXMPF_GPU_DIR)
 
 # --------------------------------------------------------------------
-# First of all, check on what system we are running.
+# check on what system we are running.
 
 #AC_CANONICAL_SYSTEM
 AC_MSG_CHECKING(os)
@@ -376,16 +341,15 @@ OMP_LOCK_TYPE=${lock_type}
 AC_SUBST(OMP_LOCK_TYPE)
 
 case $lock_type in
-    spin*)
-	case $CPU in
-	    i386*|x86_64*|mips*|sparc*|alpha*|rs6000*)
-		true;;
-	    *)
-		echo "$ac_t""spin lock is only available on i386, x86_64, mips, alpha, sparc and rs6000 architectures." 1>&6
-		exit 1;;
-	esac;;
-    *)
-	true;;
+  spin*)
+    case $CPU in i386*|x86_64*|mips*|sparc*|alpha*|rs6000*)
+      true;;
+      *)
+      echo "$ac_t""spin lock is only available on i386, x86_64, mips, alpha, sparc and rs6000 architectures." 1>&6
+      exit 1;;
+    esac;;
+  *)
+    true;;
 esac
 
 THREAD_DEF=""
@@ -425,7 +389,7 @@ genLibTargetTmpl () {
 	`(cd ${dir};grep --regexp="^SRCS" Makefile.am | sed s/"SRCS		= "//g)` > ${tmpl}
 }
 
-#----
+# --------------------------------------------------------------------
 LIBOMPC_DIR="libompc/src"
 AC_CONFIG_FILES($LIBOMPC_DIR/Makefile)
 LIBOMPF_DIR="libompf/src"
@@ -442,7 +406,7 @@ AC_SUBST(LIBOMPF_DIR)
 AC_SUBST(LIBTLOG_DIR)
 AC_SUBST(LIBTLOG_MPI_DIR)
 
-#----
+# --------------------------------------------------------------------
 LIBACC_DIR=libacc/src
 LIBACC_HEADER_DIR=libacc/include
 AC_CONFIG_FILES($LIBACC_DIR/Makefile)
@@ -458,79 +422,76 @@ AC_SUBST(LIBXACC_DIR)
 AC_SUBST(LIBXACC_HEADER_DIR)
 
 # --------------------------------------------------------------------
-# check what CC will be used, and set compile flags
-
-isGcc=yes
-optCFlags=""
-debCFlags=""
-userBCFlags=""
-mustCFlags=""
-debCppFlags=""
-userCppFlags=""
-mustCppFlags=""
-ccCom=""
-
 AC_ARG_ENABLE(debug,
     [  --enable-debug                 enable generate executable with debug symbol (false default).],
-    [doDebug=$enableval], [doDebug=no])
+    [doDebug=yes], [doDebug=no])
 
-AC_ARG_ENABLE(xmpgpu,
-    [  --enable-xmpgpu                enable XcalableMP-GPU (false default).],
-    [doXmpGpu=$enableval], [doXmpGpu=no])
+#AC_ARG_ENABLE(xmpgpu,
+#    [  --enable-xmpgpu                enable XcalableMP-GPU (false default).],
+#    [doXmpGpu=yes], [doXmpGpu=no])
 
 AC_ARG_ENABLE(openacc,
     [  --enable-openacc               enable OpenACC (false default).],
-    [doOpenAcc=$enableval], [doOpenAcc=no])
-
-AC_ARG_WITH(cppflag,
-    [  --with-cppflag=OPT          C preprocessor options],
-    [userCppFlags="${withval}"], [userCppFlags=""])
-
-AC_ARG_WITH(backend-cflag,
-    [  --with-backend-cflag=OPT    Backend C compiler options for optimization],
-    [userBCFlags="${withval}"], [userBCFlags=""])
+    [doOpenAcc=yes], [doOpenAcc=no])
 
 AC_ARG_ENABLE(atool,
     [  --enable-atool                 enable atool (false default).],
-    [doatool=$enableval], [doatool=no])
-
-AC_ARG_ENABLE(KEK,
-    [  --enable-KEK                   enable KEK option (false default).],
-    [doKEK=$enableval], [doKEK=no])
+    [doatool=yes], [doatool=no])
 
 AC_ARG_ENABLE(xacc,
     [  --enable-xacc                  enable XcalableACC (false default).],
-    [xacc=$enableval], [xacc=no])
+    [xacc=yes], [xacc=no])
 
-AC_PROG_CC
-AC_PROG_CXX
-AC_PROG_INSTALL
+AC_ARG_ENABLE(mpi3,
+    [  --enable-mpi3                  enable MPI3 (false default).],
+    [doMPI3=yes], [doMPI3=no])
+
+## Add temporarily by mnakao
+#AC_ARG_ENABLE(FJRDMA,
+#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
+#   [enableFJRDMA=yes], [enableFJRDMA=no])
+#
+#AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
+## End Add temporarily
+
+AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
+
+AC_SUBST(FJRDMA)
 
 # --------------------------------------------------------------------
-if test "x${doDebug}" = "xyes"; then
-    debCFlags="-g"
-    optCFlags="-O0"
-    debCppFlags="-DDEBUG"
-else
-    debCFlags=""
-    optCFlags="-O2"
-    debCppFlags="-DNDEBUG"
-fi
+# check basic commands
 
-XMP_ENABLE_GPU=0
-if test "x${doXmpGpu}" = "xyes"; then
-    XMP_ENABLE_GPU=1
-fi
-AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
-AC_SUBST(XMP_ENABLE_GPU)
+AC_PROG_CPP
+AC_PROG_CC
+AC_PROG_FC
+AC_PROG_CXX
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+AC_PROG_AWK
+AC_PROG_LEX
+AC_PROG_YACC
 
+# --------------------------------------------------------------------
+# set XMP-dev
+
+#XMP_ENABLE_GPU=0
+#if test "x${doXmpGpu}" = "xyes"; then
+#    XMP_ENABLE_GPU=1
+#fi
+#AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
+#AC_SUBST(XMP_ENABLE_GPU)
+
+# --------------------------------------------------------------------
+# set OpenACC
 ENABLE_ACC=0
 if test "x${doOpenAcc}" = "xyes"; then
     ENABLE_ACC=1
 fi
 AM_CONDITIONAL(ENABLE_ACC, test "x${doOpenAcc}" = "xyes")
 AC_SUBST(ENABLE_ACC)
- 
+
+# --------------------------------------------------------------------
+# set ATOOLS
 ENABLE_ATOOL=0
 if test "x${doatool}" = "xyes"; then
    ENABLE_ATOOL=1
@@ -538,30 +499,12 @@ fi
 AM_CONDITIONAL(ENABLE_ATOOL, test "x${doatool}" = "xyes")
 AC_SUBST(ENABLE_ATOOL)
 
-#ENABLE_XACC=0
-#if test "x${xacc}" = "xyes"; then
-#   ENABLE_XACC=1
-#fi
+# --------------------------------------------------------------------
+# set XACC
 AM_CONDITIONAL(ENABLE_XACC, test "x${xacc}" = "xyes")
 AC_SUBST(ENABLE_XACC)
 
-# check gcc version
-AC_MSG_CHECKING(gcc version)
-changequote(<<, >>)
-gccVer=`${CC} --version 2>&1 | head -n1 | sed 's:[^ ]* [^ ]* ::' | sed 's: .*::'`
-changequote([, ])
-AC_MSG_RESULT($gccVer)
-
-case $gccVer in
-2*|3*|4.0*|4.1.0|4.1.1|4.1.2)
-	;;
-4*)
-    mustCFlags="-fgnu89-inline"
-	;;
-esac
-
-mustCFlags="${mustCppFlags}"
-
+# --------------------------------------------------------------------
 # Generate cpu/os specifier
 CPUDEF=-DOMNI_CPU_`echo $CPU | tr '[a-z]' '[A-Z]'`
 OSDEF=-DOMNI_OS_`echo $OS | tr '[a-z]' '[A-Z]'`
@@ -571,468 +514,699 @@ if test "$target" != "$host"; then
    TARGET_CPUDEF=-DOMNI_TARGET_CPU_`echo ${TARGET_CPU} | tr '[a-z]' '[A-Z]'`
 fi
 
-CPPFLAGS="${CPUDEF} ${OSDEF} ${debCppFlags} ${userCppFlags} ${mustCppFlags} ${TARGET_CPUDEF}"
+debCppFlags=""
+if test "x${doDebug}" = "xyes"; then
+    CFLAGS="-g -O0"
+    FCFLAGS="-g -O0"
+    debCppFlags="-DDEBUG"
+else
+    debCppFlags="-DNDEBUG"
+fi
+
+CPPFLAGS="${CPUDEF} ${OSDEF} ${debCppFlags} ${TARGET_CPUDEF}"
 AC_SUBST(CPPFLAGS)
 
-CFLAGS="${debCFlags} ${optCFlags} ${mustCFlags} ${CFLAGS}"
 CXXFLAGS=$CFLAGS
-AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 
 AH_TEMPLATE(OBJEXT, [object file extension])
 AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 
 # --------------------------------------------------------------------
-# Specify Backend Compiler and Options
-IS_CRAY="No"
-IS_AIX="No"
-AIX_OPT=""
-if test "$target" != "$host"; then
-  if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
-    BECC="mpifccpx"
-    BEFC="mpifrtpx"
-    BECC_OPTION="-Xg -noansi -Kfast"
-    BEFC_MODINC="-M"
-  elif test "$target" = "MIC-linux-gnu"; then
-    BECC="mpiicc"
-    BEFC="mpiifort"
-    BEFC_MODINC="-module"
-  elif test "$target" = "Cray-linux-gnu"; then
-    BECC="cc"
-    BEFC="ftn"
-    BECC_OPTION="-hgnu"
-    IS_CRAY="Yes"
-    BEFC_MODINC="-J"
-  elif test "$target" = "sx-nec-superux"; then
-    BECC="sxmpic++"
-    BEFC="sxmpif90"
-    BECC_OPTION=""
-    BEFC_MODINC="-to"
-  elif test "$target" = "powerpc-ibm-none"; then
-    BECC="mpixlcxx_r"
-    BEFC="mpixlf90_r"
-    BEFC_OPTION="-qextname"
-    BECC_OPTION=""
-    BEFC_MODINC="-I"
-  elif test "$target" = "powerpc64-hitachi-aix"; then
-    BECC="mpCC_r"
-    BEFC="mpxlf90_r"
-    BEFC_OPTION="-qextname -q64"
-    BECC_OPTION="-qcpluscmt -q64"
-    AIX_OPT="-maix64"
-    IS_AIX="Yes"
-    BEFC_MODINC="-I"
-  fi
-else  # if "--target" option is not used in ./configure
-  BECC="mpicc"
-  BEFC="mpif90"
-  BEFC_MODINC="-M"
-fi
+# Set compilers and their options:
+#   The following operation sets 3 kinds of compiler and their options.
+#
+# (1) Local compiler (for compiling C_Front and so on)
+#   CC, FC, CFLAGS, FCFLAGS, ...
+#
+# (2) MPI compiler (for compiling libxmp and so on)
+#  MPI_CC, MPI_FC, MPI_CFLAGS, MPI_FCFLAGS, ...
+#
+# (3) Omni compiler (for using xmpcc and xmpf90 commands)
+#  OMNI_XXX_CFLAGS, OMNI_XXX_FCFLAGS, ...
+#    "XXX" is a phase name.
+#
+# Note that:
+#  MPI_CFLAGS needs options for OpenMP and strong optimization (e.g. -O2) and C99.
+#  MPI_FCFLAGS needs an option for strong optimization (e.g. -O2).
+#
+#  Prefix "OMNI_" options should set a minimal of option as possible.
+#  OMNI_C_PP, Pre-processor command, needs an option for C99.
+#  OMNI_NTV_CFLAGS needs options for C99 support.
+#  OMNI_LNK_CFLAGS and OMNI_LNK_FCFLAGS need an option for OpenMP.
 
-# --------------------------------------------------------------------
-# specify Backend C compiler
-AC_ARG_WITH(backend-cc,
-    [  --with-backend-cc=CMD       Backend C compiler (default: mpicc)],
-    [BECC="${withval}"], [BECC="${BECC}"])
+# Memo:
+#   Name rule for --target=machine-[vendor-]operatingsystem
+#   It contains three fields: the name of the CPU family/model, the vendor, and the operating system name.
+#   But, the vendor field is mostly unused.
+#   Refer: http://wiki.osdev.org/Target_Triplet
 
-# --------------------------------------------------------------------
-# specify Backend F90 compiler
-AC_ARG_WITH(backend-fc,
-    [  --with-backend-fc=CMD       Backend F90 compiler (default: mpif90)],
-    [BEFC="${withval}"], [BEFC="${BEFC}"])
-
-# --------------------------------------------------------------------
-AC_SUBST(BECC)
-AC_SUBST(BEFC)
-
-PPCC="${BECC}"
-PPCC_OPT="-E"
-NATIVE_DOPT="-D_XCALABLEMP"
-
-if test "$target" = "powerpc-ibm-none"; then
-  PPCC="gcc"
-  PPCC_OPT="-E --std=c99"
-  NATIVE_DOPT="-WF,-D_XCALABLEMP"
-fi
-
-if test "$target" = "powerpc64-hitachi-aix"; then
-  NATIVE_DOPT="-WF,-D_XCALABLEMP"
-fi
-
-AC_SUBST(PPCC)
-AC_SUBST(PPCC_OPT)
-AC_SUBST(NATIVE_DOPT)
-
-AC_SUBST(AIX_OPT)
-if test "$IS_AIX" = "Yes"; then
-  AC_DEFINE(AIX_64BIT)
-  AH_TEMPLATE(AIX_64BIT, [aix int64_t])
-fi
-
-## Add temporarily by mnakao
-enableKRDMA=""
-AC_ARG_ENABLE(KRDMA,
-   [  --enable-KRDMA                 enable RDMA functions on the K compiter.],
-   [enableKRDMA=$enableval], [enableKRDMA=no])
-
-AM_CONDITIONAL(FJRDMA, test x${enableKRDMA} = xyes)
-AC_SUBST(FJRDMA)
-## End Add temporarily
-
-#AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
-#AC_SUBST(FJRDMA)
-
-
-AC_SUBST(BEFC_MODINC)
-
-AC_SUBST(IS_CRAY)
-AC_SUBST(IS_AIX)
-
-AM_CONDITIONAL(SR16000, test "$target" = "powerpc64-hitachi-aix") 
-AC_SUBST(SR16000)
-
-AM_CONDITIONAL(SUPERUX, test "$target" = "sx-nec-superux")
-AC_SUBST(SUPERUX)
-
-#AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
-#AC_SUBST(CRAY)
-
-# --------------------------------------------------------------------
-# Specify Options of Backend C Compiler when compiling XMP code
-IS_PGCC="No"
-AC_MSG_CHECKING([backend C compiler])
 if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
-  OMC_CONF_LX2X_OPT=""
-  OMC_CONF_NTV_OPT="-Xg -noansi"
-  OMC_CONF_LNK_OPT="-Kfast,openmp"
-  BECC_OMP_OPTION="-Kfast,openmp"
+# OpenMP
+  OPENMP_OPT="-Kopenmp"
+
+# MPI C
+  MPI_CC="mpifccpx"
+  MPI_CPP=$MPI_CC
+  MPI_CFLAGS="-Kfast,openmp -Xg -noansi"
+  MPI_CPPFLAGS="-E -Xg -noansi"
+  MPI_CLIBS=""
+
+# MPI F
+  MPI_FC="mpifrtpx"
+  MPI_FPP=$MPI_FC
+  MPI_FPPFLAGS="-E"
+  MPI_FCFLAGS="-Kfast,openmp"
+  MPI_MODINC="-M"
+  MPI_FCLIBS=""
+
+# Omni C
+  OMNI_C2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
+  OMNI_NTV_CFLAGS="-Xg -noansi"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+
+# Omni F
+  OMNI_F2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
+  OMNI_NTV_FCFLAGS="-Free"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+elif test "$target" = "MIC-linux-gnu"; then
+# OpenMP
+  OPENMP_OPT="-mp"
+
+# MPI C
+  MPI_CC="mpiicc"
+  MPI_CPP=$MPI_CC
+  MPI_CPPFLAGS="-E -std=gnu99"
+  MPI_CFLAGS="-fast $OPENMP_OPT"
+  MPI_CLIBS=""
+
+# MPI F
+  MPI_FC="mpiifort"
+  MPI_FPP=$MPI_FC
+  MPI_FPPFLAGS="-E"
+  MPI_FCFLAGS="-fast $OPENMP_OPT"
+  MPI_MODINC="-module"
+  MPI_FCLIBS=""
+
+# Omni C
+  OMNI_C2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
+  OMNI_NTV_CFLAGS="-std=gnu99"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+
+# Omni F
+  OMNI_F2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
+  OMNI_NTV_FCFLAGS=""
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
 elif test "$target" = "Cray-linux-gnu"; then
-  OMC_CONF_LX2X_OPT=""
-  OMC_CONF_NTV_OPT="-hgnu -D_XMP_CRAY"
-  OMC_CONF_LNK_OPT=""
-  BECC_OMP_OPTION=""
+# OpenMP
+  OPENMP_OPT="-h omp"
+
+# MPI C
+  MPI_CC="cc"
+  MPI_CPP=$MPI_CC
+  MPI_CPPFLAGS="-E"
+  MPI_CFLAGS="-O2 $OPENMP_OPT"
+  MPI_CLIBS=""
+
+# MPI F
+  MPI_FC="ftn"
+  MPI_FPP=$MPI_FC
+  MPI_FPPFLAGS="-E"
+  MPI_FCFLAGS="-O2 $OPENMP_OPT"
+  MPI_MODINC="-J"
+  MPI_FCLIBS=""
+
+# Omni C
+  OMNI_C2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
+  OMNI_NTV_CFLAGS="-hgnu -D_XMP_CRAY"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+
+# Omni F
+  OMNI_F2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
+  OMNI_NTV_FCFLAGS="-f free"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
 elif test "$target" = "sx-nec-superux"; then
-  OMC_CONF_LX2X_OPT=""
-  OMC_CONF_NTV_OPT="-Kgcc -w"
-  OMC_CONF_LNK_OPT="-Popenmp"
-  BECC_OMP_OPTION="-Popenmp"
-elif test "$target" = "powerpc-ibm-none"; then
-  OMC_CONF_LX2X_OPT=""
-  OMC_CONF_NTV_OPT="-q64"
-  DRIVER="/bgsys/drivers/ppcfloor"
-if test "x${doKEK}" = "xyes"; then
-  OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
-                -L/usr/local/bg/lib -lkek -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
+# OpenMP
+  OPENMP_OPT="-Popenmp"
+
+# MPI C
+  MPI_CC="sxmpic++"
+  MPI_CPP=$MPI_CC
+  MPI_CPPFLAGS="-E"
+  MPI_CFLAGS="-O2 $OPENMP_OPT"
+  MPI_CLIBS=""
+
+# MPI F
+  MPI_FC="sxmpif90"
+  MPI_FPP=$MPI_FC
+  MPI_FPPFLAGS="-E"
+  MPI_FCFLAGS="-O2 $OPENMP_OPT"
+  MPI_MODINC="-to"
+  MPI_FCLIBS=""
+
+# Omni C
+  OMNI_C2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
+  OMNI_NTV_CFLAGS="-Kgcc -w"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+
+# Omni F
+  OMNI_F2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
+  OMNI_NTV_FCFLAGS="-f4 -w"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+elif test "$target" = "powerpc-ibm-cnk"; then
+  # These options are referred to https://scwwwb.kek.jp/index.html
+
+# OpenMP
+  OPENMP_OPT="-qsmp=omp"
+
+# MPI C
+  MPI_DIR="/bgsys/drivers/V1R2M1/ppc64/comm/bin/xl/"
+  if test -d $MPI_DIR; then
+    MPI_CC="$MPI_DIR/mpixlcxx_r"
+  else
+    MPI_CC="mpixlcxx_r"
+  fi
+
+# $MPICC cannot be used for XcodeML bug. Instead of $MPICC, 
+# $CC (gcc) is used. But, this is not a good idea. Wish to fix the bug.
+#  MPI_CPP=$MPI_CC
+  MPI_CPP=$CC
+  MPI_CPPFLAGS="-E"
+  MPI_CFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH $OPENMP_OPT"
+
+  if test -f /usr/local/bg/lib/libkek.a; then
+    MPI_CLIBS="/usr/local/bg/lib/libkek.a"
+  fi
+
+  if test -f /bgsys/drivers/ppcfloor/bgpm/lib/libbgpm.a; then
+    MPI_CLIBS="$MPI_CLIBS /bgsys/drivers/ppcfloor/bgpm/lib/libbgpm.a"
+  fi
+  
+# MPI F
+  if test -d $MPI_DIR; then
+    MPI_FC="/bgsys/drivers/V1R2M1/ppc64/comm/bin/xl/mpixlf90_r"
+  else
+    MPI_FC="mpixlf90_r"
+  fi
+  MPI_FPP=$MPI_FC
+  MPI_FPPFLAGS="-E"
+  MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist -qextname $INC_PATH $OPENMP_OPT"
+  MPI_MODINC="-I"
+
+  INC_PATH="/usr/local/bg/include"
+  if test -d $INC_PATH; then
+    MPI_CFLAGS="$MPI_CFLAGS -I$INC_PATH"
+    MPI_FCFLAGS="$MPI_FCFLAGS -I$INC_PATH"
+  fi
+
+  MPI_FCLIBS=$MPI_CLIBS
+
+# Omni C
+  OMNI_C2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
+  OMNI_NTV_CFLAGS="-q64 -qipa"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT $MPI_CLIBS"
+
+# Omni F
+  OMNI_F2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
+  OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT $MPI_CLIBS"
+
+elif test "$target" = "powerpc-hitachi-aix"; then
+# OpenMP
+  OPENMP_OPT="-qsmp=omp"
+
+# MPI C
+  MPI_CC="mpCC_r"
+  MPI_CPP=$MPI_CC
+  MPI_CPPFLAGS="-E"
+  MPI_CFLAGS="-q64 -qhot -qsimd=auto -O5 $OPENMP_OPT"
+  MPI_CLIBS=""
+
+# MPI F
+  MPI_FC="mpxlf90_r"
+  MPI_FPP=$MPI_FC
+  MPI_FPPFLAGS="-E"
+  MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $OPENMP_OPT"
+  MPI_MODINC="-I"
+  MPI_FCLIBS=""
+
+# Omni C
+  OMNI_C2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
+  OMNI_NTV_CFLAGS="-q64"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+
+# Omni F
+  OMNI_F2X_FLAGS=""
+  OMNI_X2X_FLAGS=""
+  OMNI_NTV_FCFLAGS="-q64 -qextname"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
 else
-  OMC_CONF_LNK_OPT="-I/usr/local/bg/include \
-                -L/usr/local/bg/lib -L${DRIVER}/bgpm/lib/ -lbgpm -g -O3 -qhot -qsmp=omp -qsimd=auto -q64"
-fi
-  BECC_OPTION="-O5"
-  BECC_OMP_OPTION="-O5  -qhot -qsmp=omp -qsimd=auto"
-elif test "$target" = "powerpc64-hitachi-aix"; then
-  OMC_CONF_LX2X_OPT=""
-  OMC_CONF_NTV_OPT="-q64"
-  OMC_CONF_LNK_OPT="-q64 -qhot -qsmp=omp -qsimd=auto"
-  BECC_OPTION="-O5"
-  BECC_OMP_OPTION="-O5 -qhot -qsmp=omp -qsimd=auto"
-else
-  chk=`$BECC --version | head -n1`
+  INTEL_MPICC=mpiicc
+  which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
+  if test $? -eq 0; then
+    MPI_CC=${INTEL_MPICC}
+  else
+    MPI_CC="mpicc"
+  fi
+
+  chk=`${MPI_CC} --version | head -n1`
   case $chk in
   cc* | gcc* | Apple*)
-    OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-O2 -std=gnu99 -Wno-implicit -Wno-attributes"
-    OMC_CONF_LNK_OPT="-O2 -fopenmp"
-    BECC_OPTION="-O2 -std=gnu99 -Wall -Wpointer-arith"
-    BECC_OMP_OPTION="-O2 -fopenmp"
+    # OpenMP
+    OPENMP_OPT="-fopenmp"
+
+    # MPI C
+    MPI_CPP=$MPI_CC
+    MPI_CPPFLAGS="-E -std=gnu99"
+    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT"
+    MPI_CLIBS=""
+
+    # MPI F
+    MPI_FC="mpif90"
+    MPI_FPP=$MPI_FC
+    MPI_FPPFLAGS="-E"
+    MPI_FCFLAGS="-O2 $OPENMP_OPT"
+    MPI_MODINC="-J"
+    MPI_FCLIBS=""
+
+    # Omni C
+    OMNI_C2X_FLAGS=""
+    OMNI_X2X_FLAGS=""
+    OMNI_NTV_CFLAGS="-std=gnu99"
+    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+
+    # Omni F
+    OMNI_F2X_FLAGS=""
+    OMNI_X2X_FLAGS="-gnu"
+    OMNI_NTV_FCFLAGS="-ffree-form -fcray-pointer"
+    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS -fopenmp -lgomp"
     ;;
   *ICC*)
-    OMC_CONF_LX2X_OPT=""
-    OMC_CONF_NTV_OPT="-std=gnu99 -w"
-    OMC_CONF_LNK_OPT="-O2 -openmp"
-    BECC_OPTION="-O2 -std=gnu99 -Wall -Wpointer-arith"
-    BECC_OMP_OPTION="-openmp"
+    # OpenMP
+    OPENMP_OPT="-openmp"
+
+    # MPI C
+    MPI_CPP=$MPI_CC
+    ver=`$MPI_CC --version 2> /dev/null | head -n1`
+    case $ver in
+    *15*)
+      MPI_CPPFLAGS="-E -std=gnu99 -no-gcc" ;;
+    *)
+      MPI_CPPFLAGS="-E -std=gnu99" ;;
+    esac
+    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT"
+    MPI_CLIBS=""
+
+    # MPI F
+    MPI_FC="mpiifort"
+    MPI_FPP=$MPI_FC
+    MPI_FPPFLAGS="-E"
+    MPI_FCFLAGS="-O2 $OPENMP_OPT"
+    MPI_MODINC="-module"
+    MPI_FCLIBS=""
+
+    # Omni C
+    OMNI_C2X_FLAGS=""
+    OMNI_X2X_FLAGS=""
+    OMNI_NTV_CFLAGS="-std=gnu99"
+    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+
+    # Omni F
+    OMNI_F2X_FLAGS=""
+    OMNI_X2X_FLAGS="-intel"
+    OMNI_NTV_FCFLAGS=""
+    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
     ;;
   *)
-    chk2=`$BECC --version 2> /dev/null | head -n2 | tail -n1`
+    chk2=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1`
     case $chk2 in
     pgcc*)
-      OMC_CONF_LX2X_OPT=""
-      OMC_CONF_NTV_OPT="-O2 -D_XMP_PGI"
-      OMC_CONF_LNK_OPT="-O2 -mp"
-      BECC_OPTION="-O2 -c99 -Minform=warn"
-      BECC_OMP_OPTION="-O2 -mp"
-      IS_PGCC="Yes"
+      # OpenMP
+      OPENMP_OPT="-mp"
+
+      # MPI C
+      MPI_CPP=$MPI_CC
+      MPI_CPPFLAGS="-E -c99"
+      MPI_CFLAGS="-fast -c99 $OPENMP_OPT"
+      MPI_CLIBS=""
+
+      # MPI F
+      MPI_FC="mpif90"
+      MPI_FPP=$MPI_FC
+      MPI_FPPFLAGS="-E"
+      MPI_FCFLAGS="-fast $OPENMP_OPT"
+      MPI_MODINC="-module"
+      MPI_FCLIBS=""
+
+      # Omni C
+      OMNI_C2X_FLAGS="--no-builtin-va-arg"
+      OMNI_X2X_FLAGS=""
+      OMNI_NTV_CFLAGS="-D_XMP_PGI"
+      OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+
+      # Omni F
+      OMNI_F2X_FLAGS=""
+      OMNI_X2X_FLAGS=""
+      OMNI_NTV_FCFLAGS=""
+      OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+      # Special options
+      IS_PGI="Yes"
+      AC_SUBST(IS_PGI)
       ;;
     *)
-    echo "No supported C compiler was found."
-    echo "This program supports following C compilers."
-    echo " - GNU C Compiler (mpicc)"
-    echo " - Intel C Compiler (mpiicc)"
-    echo " - Fujitsu C Compiler (mpifccpx)"
-    echo " - Cray C Compiler (cc)"
-    echo " - NEC C/C++ Compiler (sxc++)"
-    echo " - IBM C Compiler (mpixlcxx_r)"
-    echo " - HITACHI C Compiler (mpCC_r)"
-    echo " - PGI C Compiler (pgcc)"
-exit 1
-    ;;
-    esac 
-    ;;
+      echo "No supported compiler was found."
+      echo "This program supports following MPI compilers."
+      echo " - GNU Compiler (mpicc/mpif90)"
+      echo " - Intel Compiler (mpiicc/mpiifort)"
+      echo " - PGI Compiler (mpicc/mpif90)"
+      echo " - Fujitsu Compiler (mpifccpx/mpifrtpx)"
+      echo " - Cray Compiler (cc/ftn)"
+      echo " - NEC Compiler (sxmpic++/sxmpif90)"
+      echo " - IBM Compiler (mpixlcxx_r/mpixlf90_r)"
+      echo " - HITACHI Compiler (mpCC_r/mpif90)"
+      exit 1 ;;
+    esac ;;
   esac
 fi
 
-BECC_OPTION="${BECC_OPTION} ${userBCFlags}"
+# --------------------------------------------------------------------
+# specify GPU C compiler
 
-AC_SUBST(OMC_CONF_LX2X_OPT)
-AC_SUBST(OMC_CONF_NTV_OPT)
-AC_SUBST(OMC_CONF_LNK_OPT)
-AC_SUBST(BECC_OMP_OPTION)
-AC_SUBST(BECC_OPTION)
-AC_SUBST(IS_PGCC)
+AC_ARG_WITH(gpucc,
+    [  --with-gpucc=CMD            GPU C compiler (default: nvcc)],
+    [GPU_CMD="${withval}"], [GPU_CMD="nvcc"])
+
+AC_SUBST(GPU_CMD)
 
 # --------------------------------------------------------------------
-# Specify Options of Backend Fortran Compiler
-if test $enableF2F = yes; then
-  AC_PROG_FC([${FC},gfortran,ifort])
-  AC_MSG_CHECKING([backend Fortran compiler])
+# specify GPU C compiler flags
 
-  if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
-    OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-Free -Kfast"
-    OMF_CONF_LNK_OPT="-Kfast,openmp"
-  elif test "$target" = "Cray-linux-gnu"; then
-    OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-f free"
-    OMF_CONF_LNK_OPT=""
-  elif test "$target" = "sx-nec-superux"; then
-    OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-f4 -w"
-    OMF_CONF_LNK_OPT="-Popenmp"
-  elif test "$target" = "powerpc-ibm-none"; then
-    OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-qextname -O5 -q64"
-    OMF_CONF_LNK_OPT="-I/usr/local/bg/include -g -O3 -qhot -qsmp=omp -qsimd=auto -q64 -qsource -qlist"
-  elif test "$target" = "powerpc64-hitachi-aix"; then
-    OMF_CONF_LX2X_OPT=""
-    OMF_CONF_NTV_OPT="-qextname -qnomixed -q64  -O5"
-    OMF_CONF_LNK_OPT="-q64  -O5 -qhot -qsmp=omp -qsimd=auto"
-  else
-    chk=`$BEFC --version 2> /dev/null | head -n1`
-    case $chk in
-    GNU*)
-      OMF_CONF_LX2X_OPT="-gnu"
-      OMF_CONF_NTV_OPT="-ffree-form"
-      OMF_CONF_LNK_OPT="-fopenmp -lgomp"
-      BEFC_MODINC="-J"  
-      ;;
-    *IFORT*)
-      OMF_CONF_LX2X_OPT="-intel"
-      OMF_CONF_NTV_OPT="-auto -fast"
-      OMF_CONF_LNK_OPT="-threads -openmp -fast"
-      BEFC_MODINC="-module"
-      ;;
-    *)
-      chk2=`$BEFC --version 2>/dev/null | head -n2 | tail -n1`
-      case $chk2 in
-      pgfortran*|pgf95*|pgf90*)
-        OMF_CONF_LX2X_OPT=""
-        OMF_CONF_NTV_OPT="-O2"
-        OMF_CONF_LNK_OPT="-O2 -mp"
-	;;
-      *)
-      echo "No supported Fortran compiler was found."
-      echo "This program supports following Fortran compilers."
-      echo " - GNU Fortran (mpif77 or mpif90)"
-      echo " - Intel Fortran (mpiifort)"
-      echo " - Fujitsu Fortran (mpifrtpx)"
-      echo " - Cray Fortran (ftn)"
-      echo " - IBM Fortran (mpixlf90_r)"
-      echo " - Hitachi Fortran (mpif90)"
-      echo " - PGI Fortran (mpif90)"
-      exit 1
-      ;;
-    esac
-      ;;
-    esac
-  fi
-  AC_SUBST(OMF_CONF_LX2X_OPT)
-  AC_SUBST(OMF_CONF_NTV_OPT)
-  AC_SUBST(OMF_CONF_LNK_OPT)
-  AC_SUBST(BEFC_OPTION)
-  AC_SUBST(BEFC_MODINC)
-  AC_PROG_FC_C_O
+AC_ARG_WITH(gpu-cflags,
+    [  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)],
+    [GPU_CFLAGS="${withval}"], [GPU_CFLAGS="-arch=sm_20 -O3"])
+
+AC_SUBST(GPU_CFLAGS)
+
+# --------------------------------------------------------------------
+# specify libgpu path
+
+AC_ARG_WITH(cuda,
+    [  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)],
+    [GPGPU_PREFIX="${withval}"], [GPGPU_PREFIX="/usr/local/cuda"])
+
+AC_SUBST(GPGPU_PREFIX)
+
+# --------------------------------------------------------------------
+# specify libxmp path
+
+AC_ARG_WITH(libxml,
+    [  --with-libxml=DIR           libxml installation path (default: /usr)],
+    [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="/usr"])
+
+if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
+   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help])
 fi
 
+AC_SUBST(LIBXML_PREFIX)
+
 # --------------------------------------------------------------------
-# Various command check
+# set TCA
 
-# check make programs
-AC_PROG_MAKE_SET
+AC_ARG_WITH(TCA,
+    [  --with-TCA=DIR              TCA installation path],
+    [TCA_PREFIX="${withval}"; use_tca=yes], [use_tca=no])
 
-# check awk
-AC_PROG_AWK
-
-# check bash
-BASH=""
-AC_PATH_PROGS(BASH, bash, ${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin)
-AC_SUBST(BASH)
-
-RANLIB=""
-AR=""
-NM=""
-
-# check ranlib & ar & nm
-if test "$target" != "$host"; then
-   case "$target" in
-	Kcomputer-linux-gnu|FX10-linux-gnu)
-#		AC_CHECK_TOOL([RANLIB], [ranlibpx], [:])
-		AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [:])
-		if test "${RANLIB}" = ":"; then
-		    AC_MSG_ERROR([ranlibpx not found]);
-		fi		    
-
-#		AC_CHECK_TOOL([AR], [arpx], [:])
-		AC_CHECK_PROG([AR], [arpx], [arpx], [:])
-		if test "${AR}" = ":"; then
-		    AC_MSG_ERROR([arpx not found]);
-		fi		    
-
-		ARFLAGS="cru"
-		AC_SUBST(ARFLAGS)
-
-#		AC_CHECK_TOOL([NM], [nmpx], [:])
-		AC_CHECK_PROG([NM], [nmpx], [nmpx], [:])
-		if test "${AR}" = ":"; then
-		    AC_MSG_ERROR([nmpx not found]);
-		fi ;;
-	sx-nec-superux)
-#		AC_CHECK_TOOL([RANLIB], [echo], [echo], [:])
-		AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
-#		if test "${RANLIB}" = ":"; then
-#		    AC_MSG_ERROR([sxranlib not found]);
-#		fi		    
-
-#		AC_CHECK_TOOL([AR], [sxar], [:])
-		AC_CHECK_PROG([AR], [sxar], [sxar], [:])
-		if test "${AR}" = ":"; then
-		    AC_MSG_ERROR([sxar not found]);
-		fi		    
-
-		ARFLAGS="cru"
-		AC_SUBST(ARFLAGS)
-
-#		AC_CHECK_TOOL([NM], [sxnm], [:])
-		AC_CHECK_PROG([NM], [sxnm], [sxnm], [:])
-		if test "${NM}" = ":"; then
-		    AC_MSG_ERROR([sxnm not found]);
-		fi ;;
-	powerpc64-hitachi-aix)
-#                AC_CHECK_TOOL([RANLIB], [echo], [:])
-                AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
-#                if test "${RANLIB}" = ":"; then
-#                    AC_MSG_ERROR([ranlib not found]);
-#                fi
-
-#                AC_CHECK_TOOL([AR], [ar], [:])
-                AC_CHECK_PROG([AR], [ar], [ar], [:])
-                if test "${AR}" = ":"; then
-                    AC_MSG_ERROR([ar not found]);
-                fi
-
-                ARFLAGS="-X32_64 cru"
-                AC_SUBST(ARFLAGS)
-
-#                AC_CHECK_TOOL([NM], [nm], [:])
-                AC_CHECK_PROG([NM], [nm], [nm], [:])
-                if test "${NM}" = ":"; then
-                    AC_MSG_ERROR([nm not found]);
-                fi ;;         
-	powerpc-ibm-none)
-#                AC_CHECK_TOOL([RANLIB], [echo], [:])
-                AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
-#                if test "${RANLIB}" = ":"; then
-#                    AC_MSG_ERROR([bgranlib not found]);
-#                fi
-
-#                AC_CHECK_TOOL([AR], [ar], [:])
-                AC_CHECK_PROG([AR], [ar], [ar], [:])
-                if test "${AR}" = ":"; then
-                    AC_MSG_ERROR([bgar not found]);
-                fi
-
-                ARFLAGS="cru"
-                AC_SUBST(ARFLAGS)
-
-#                AC_CHECK_TOOL([NM], [nm], [:])
-                AC_CHECK_PROG([NM], [nm], [nm], [:])
-                if test "${NM}" = ":"; then
-                    AC_MSG_ERROR([nm not found]);
-                fi ;;         
-	Cray-linux-gnu)
-		AC_PROG_RANLIB
-#		AC_CHECK_TOOL([AR], [ar], [:])
-		AC_CHECK_PROG([AR], [ar], [ar], [:])
-		ARFLAGS="cru"
-		AC_SUBST(ARFLAGS)
-#		AC_CHECK_TOOL([NM], [nm], [:])
-		AC_CHECK_PROG([NM], [nm], [nm], [:])
-                ;;
-	*)
-		AC_CHECK_TARGET_TOOL([RANLIB], [ranlib], [:])
-		AC_CHECK_TARGET_TOOL([AR], [ar], [:])
-		AC_CHECK_TARGET_TOOL([NM], [nm], [:]) ;;
-   esac
-else
-   AC_PROG_RANLIB
-   if test "x${isGcc}" = "xno"; then
-      case $OS in
-          solaris*|irix*)
-	  RANLIB=':';;
-      esac
+if test x$use_tca = xyes; then
+   if ! test -f $TCA_PREFIX/tca-api.h; then
+      AC_MSG_ERROR([$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>])
    fi
 
-   AC_CHECK_TOOL([AR], [ar], [:])
-   ARFLAGS="cru"
-   AC_SUBST(ARFLAGS)
-
-   AC_CHECK_TOOL([NM], [nm], [:])
-
+  MPI_CPPFLAGS="${MPI_CPPFLAGS} -I${TCA_PREFIX}"
+  MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}"
+  MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX} -ltca"
+  OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS ${MPI_CLIBS}"
 fi
 
-# check CC for libraries
-if test "$target" != "$host"; then
-   case "$target" in
-	Kcomputer-linux-gnu|FX10-linux-gnu)
-		CC_LIB="fccpx -Xg -std=gnu99"
-		AC_SUBST(CC_LIB) ;;
-        MIC-linux-gnu)
-		CC_LIB="icc -mmic"
-		AC_SUBST(CC_LIB) ;;
-	sx-nec-superux)
-		CC_LIB="sxc++ -Kgcc"
-		AC_SUBST(CC_LIB) ;;
-	powerpc64-hitachi-aix)
-		CC_LIB="lxc -qgcc_c_stdinc"
-		AC_SUBST(CC_LIB);;
-	powerpc-ibm-none)
-		CC_LIB="bglxc -qgcc_c_stdinc"
-		AC_SUBST(CC_LIB);;
-	*)
-		AC_CHECK_TARGET_TOOL([CC_LIB], [cc], [:]) ;;
-   esac
+AM_CONDITIONAL(TCA, test x${use_tca} = xyes)
+# --------------------------------------------------------------------
+# specify GASNet path
+
+AC_ARG_WITH(gasnet,
+    [  --with-gasnet=DIR           GASNet installation path],
+    [GASNET_PREFIX="${withval}"; use_gasnet=yes], [use_gasnet=no])
+
+if test x$use_gasnet = xyes; then
+  if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
+    AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet])
+  fi
+fi
+
+AM_CONDITIONAL(GASNET, test x${use_gasnet} = xyes)
+
+# --------------------------------------------------------------------
+# specify GASNet conduit
+
+AC_ARG_WITH(gasnet_conduit,
+    [  --with-gasnet-conduit=NAME  GASNet conduit],
+    [GASNET_CONDUIT="${withval}"], [GASNET_CONDUIT="${default_gasnet_conduit}"])
+
+if test x${use_gasnet} = xyes; then
+  gasnet_conduit_flag=no
+  if test "${GASNET_CONDUIT}" = ""; then
+    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
+    do
+      if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
+         GASNET_CONDUIT=${c}
+         gasnet_conduit_flag=yes
+      fi
+    done
+  else
+    gasnet_conduit_flag=yes
+  fi
+
+  if test "${gasnet_conduit_flag}" = no || ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
+    AC_MSG_ERROR([${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit])
+  else
+    # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
+    __ECHO=""
+    if test $OS = "darwin"; then
+        __ECHO="echo"
+    else
+        __ECHO="echo -e"
+    fi
+    tmp_file=_XMP_makefile.$$
+    mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
+    GASNET_CPPFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
+    GASNET_CFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
+    GASNET_LDFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
+
+    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
+    GASNET_LIBS=`make -s -f ${tmp_file} 2>/dev/null`
+    rm ${tmp_file}
+    unset __ECHO
+  fi
+
+  MPI_CPPFLAGS="${MPI_CPPFLAGS} ${GASNET_CPPFLAGS}"
+  MPI_CFLAGS="${MPI_CFLAGS} ${GASNET_CFLAGS} ${GASNET_CPPFLAGS}"
+  MPI_CLIBS="${MPI_CLIBS} ${GASNET_LDFLAGS} ${GASNET_LIBS}"
+  OMNI_LNK_CFLAGS="${OMNI_LNK_CFLAGS} ${GASNET_LIBS}"
+  OMNI_LNK_FCFLAGS="${OMNI_LNK_FCFLAGS} ${GASNET_LIBS}"
+fi
+
+AC_SUBST(GASNET_LIBS)
+
+# Set user defined value.
+if test "${userMPI_CPP}" != ""; then
+  MPI_CPP="${userMPI_CPP}"
+fi
+
+if test	"${userMPI_CC}" != ""; then
+  MPI_CC="${userMPI_CC}"
+fi
+
+if test "${userMPI_CFLAGS}" != ""; then
+  MPI_CFLAGS="${userMPI_CFLAGS}"
+fi
+
+if test "${userMPI_FC}" != ""; then
+  MPI_FC="${userMPI_FC}"
+fi
+
+if test "${userMPI_FCFLAGS}" != ""; then
+  MPI_FCFLAGS="${userMPI_FCFLAGS}"
+fi
+
+if test "${userCFLAGS}" != ""; then
+  CFLAGS="${userCFLAGS}"
+else
+  if test "$target" = "powerpc-hitachi-aix"; then
+    CFLAGS="${CFLAGS} -maix64"
+  fi
+  chk=`${CC} --version | head -n1`
+  case $chk in
+  cc* | gcc* | Apple* | *ICC*)
+    CFLAGS="${CFLAGS} -std=gnu99 -Wall -Wpointer-arith"
+    ;;
+  *)
+    chk2=`${CC} --version 2> /dev/null | head -n2 | tail -n1`
+    case $chk2 in
+    pgcc*)
+      CFLAGS="${CFLAGS} -c99"
+    ;;
+    *)
+     echo "No supported C compiler was found."
+     exit 1 ;;
+    esac ;;
+  esac
+fi
+
+# MPI3 for MPI FLAGS
+if test "x${doMPI3}" = "xyes"; then
+   MPI_CPPFLAGS="$MPI_CPPFLAGS -D_XMP_MPI3"
+   MPI_FPPFLAGS="$MPI_FPPFLAGS -D_XMP_MPI3"
+   MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
+   MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
+   OMNI_X2X_FLAGS="$OMNI_X2X_FLAGS -mpi3"
+fi
+
+if test "${userFCFLAGS}" != ""; then
+  FCFLAGS="${userFCFLAGS}"
+fi
+
+if test "${userMPI_CPPFLAGS}" != ""; then
+  MPI_CPPFLAGS="${userMPI_CPPFLAGS}"
+fi
+
+if test "${userMPI_FPP}" != ""; then
+  MPI_FPP="${userMPI_FPP}"
+fi
+
+if test "${userMPI_FPPFLAGS}" != ""; then
+  MPI_FPPFLAGS="${userMPI_FPPFLAGS}"
+fi
+
+if test "${userMPI_CLIBS}" != ""; then
+  MPI_CLIBS="${userMPI_CLIBS}"
+fi
+
+if test "${userMPI_FCLIBS}" != ""; then
+  MPI_FCLIBS="${userMPI_FCLIBS}"
+fi
+
+# OpenMP
+AC_SUBST(OPENMP_OPT)
+
+# MPI C
+AC_SUBST(MPI_CC)
+AC_SUBST(MPI_CPP)
+AC_SUBST(MPI_CPPFLAGS)
+AC_SUBST(MPI_CFLAGS)
+AC_SUBST(MPI_CLIBS)
+
+# MPI F
+AC_SUBST(MPI_FC)
+AC_SUBST(MPI_FPP)
+AC_SUBST(MPI_FPPFLAGS)
+AC_SUBST(MPI_FCFLAGS)
+AC_SUBST(MPI_MODINC)
+AC_SUBST(MPI_FCLIBS)
+
+# Omni C
+AC_SUBST(OMNI_C2X_FLAGS)
+AC_SUBST(OMNI_X2X_FLAGS)
+AC_SUBST(OMNI_NTV_CFLAGS)
+AC_SUBST(OMNI_LNK_CFLAGS)
+
+# Omni F
+OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
+AC_SUBST(OMNI_F_PP)
+AC_SUBST(OMNI_F2X_FLAGS)
+AC_SUBST(OMNI_X2X_FLAGS)
+AC_SUBST(OMNI_NTV_FCFLAGS)
+AC_SUBST(OMNI_LNK_FCFLAGS)
+
+# Other options
+chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
+AM_CONDITIONAL(IS_PGI, test "$chk" != "")
+
+AM_CONDITIONAL(IS_CRAY, test "$target" = "Cray-linux-gnu")
+AM_CONDITIONAL(IS_SUPERUX, test "$target" = "sx-nec-superux")
+
+AC_SUBST(IS_CRAY)
+AC_SUBST(IS_SUPERUX)
+
+# --------------------------------------------------------------------
+# check ranlib & ar & nm
+if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
+    AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [:])
+    AC_CHECK_PROG([AR], [arpx], [arpx], [:])
+    ARFLAGS="cru"
+    AC_CHECK_PROG([NM], [nmpx], [nmpx], [:])
+
+elif test "$target" = "sx-nec-superux"; then
+    AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
+    AC_CHECK_PROG([AR], [sxar], [sxar], [:])
+    ARFLAGS="cru"
+    AC_CHECK_PROG([NM], [sxnm], [sxnm], [:])
+
+elif test "$target" = "powerpc-hitachi-aix"; then
+    AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
+    AC_CHECK_PROG([AR], [ar], [ar], [:])
+    ARFLAGS="-X32_64 cru"
+    AC_CHECK_PROG([NM], [nm], [nm], [:])
+
+elif test "$target" = "powerpc-ibm-cnk"; then
+    AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
+    AC_CHECK_PROG([AR], [bgar], [bgar], [:])
+    ARFLAGS="cru"
+    AC_CHECK_PROG([NM], [nm], [nm], [:])
 
 else
-
-   CC_LIB=${CC}
-   AC_SUBST(CC_LIB)
-
+   AC_CHECK_TOOL([RANLIB], [ranlib], [:])
+   AC_CHECK_TOOL([AR], [ar], [:])
+   ARFLAGS="cru"
+   AC_CHECK_TOOL([NM], [nm], [:])
 fi
 
-# check zip
-ZIPCOM=""
-AC_PATH_PROG(ZIPCOM, zip, zip, ${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin)
-AC_SUBST(ZIPCOM)
+AC_SUBST(ARFLAGS)
+# Check RANLIB & AR & NM
+if test "${RANLIB}" = ":"; then
+  AC_MSG_ERROR([${RANLIB} not found]);
+fi
 
+if test "${AR}" = ":"; then
+  AC_MSG_ERROR([${AR} not found]);
+fi
+
+if test "${NM}" = ":"; then
+   AC_MSG_ERROR([${NM} not found]);
+fi
+
+# --------------------------------------------------------------------
 # check Perl versoin is 5
 PERL5=""
 AC_PATH_PROGS(PERL5, perl)
@@ -1055,140 +1229,34 @@ else
     fi
     rm -f ${pTmp}
     unset chk pTmp
-
 fi
 AC_SUBST(PERL5)
-
-# check lex and yacc
-
-AC_PROG_LEX
-#AC_CHECK_PROGS([LEX], [flex]) 
-if test $LEX = ":"; then
-exit 1
-fi
-AC_PROG_YACC
 
 # --------------------------------------------------------------------
 # check java
 
-useJava=yes
-
-JAVACOM=""
-AC_PATH_PROG(JAVACOM, java, java, ${JAVA_HOME}/bin)
-JAVA_HOME=`$JAVACOM -classpath buildutils javahome`
-java_home_base=`basename ${JAVA_HOME}`
-
-if test "${java_home_base}" = "jre"; then
-    JAVA_HOME=`dirname ${JAVA_HOME}`
+if test "$userJAVA" != ""; then
+  JAVA="$userJAVA"
+else
+  AC_PATH_PROG(JAVA, java, java)
 fi
 
-AC_SUBST(JAVA_HOME)
-
-JAVACCOM=""
-AC_PATH_PROG(JAVACCOM, javac, javac, ${JAVA_HOME}/bin:${PATH}:/usr/java/default/bin:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin)
-
-JARCOM=""
-AC_PATH_PROG(JARCOM, jar, jar, ${JAVA_HOME}/bin)
-
-AC_SUBST(JAVACOM)
-AC_SUBST(JAVACCOM)
-AC_SUBST(JARCOM)
-
-# check Java VM is IBM Java6
-
-isIBMJava6=no
-if test "x${useJava}" = "xyes"; then
-    AC_MSG_CHECKING([IBM Java6 or later])
-    jTmp=/tmp/.omniJavaChk.$$
-    ${JAVACOM} -fullversion > ${jTmp} 2>&1
-    chk=`grep 'JRE 1.6.0 IBM' ${jTmp}` || `grep 'JRE 1.7.0 IBM' ${jTmp}` || `grep 'JRE 1.8.0 IBM' ${jTmp}`
-    if test "x${chk}" = "x"; then
-        AC_MSG_RESULT([no])
-    else
-        AC_MSG_RESULT([yes])
-        isIBMJava6=yes
-    fi
-    rm -f ${jTmp}
-    unset chk jTmp
-fi
-AC_SUBST(isIBMJava6)
-
-# check Java VM version is Sun Java6
-isSunJava6=no
-if test "x${useJava}" = "xyes"; then
-    AC_MSG_CHECKING([Sun Java6 or later])
-
-    changequote(<<, >>)
-    case $target in
-      powerpc-ibm-none|powerpc64-hitachi-aix)
-        chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:openjdk[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
-      ;;
-	*)
-        chk=`${JAVACOM} -fullversion 2>&1 | sed -e 's:java[\t ]*full[\t ]*version[\t ]*::g' -e 's:\"::g'`
-	;;
-    esac 
-    changequote([, ])
-
-    if test "x${chk}" = "x"; then
-        AC_MSG_RESULT([no])
-    fi
-    case $chk in
-    1.6*|1.7*|1.8*)
-        isSunJava6=yes
-        AC_MSG_RESULT([yes]);;
-    *)
-        isSunJava6=no
-        AC_MSG_RESULT([no]);;
-    esac
-    unset chk
+if test	"$userJAVAC" != ""; then
+  JAVAC="$userJAVAC"
+else
+  AC_PATH_PROG(JAVAC, javac, javac)
 fi
 
-if test "${isSunJava6}" = "no" -a "${isIBMJava6}" = "no"; then
-    AC_MSG_ERROR([Java6 or later not found]);
+if test "$userJAR" != ""; then
+  JAR="$userJAR"
+else
+  AC_PATH_PROG(JAR, jar, jar)
 fi
 
-AC_SUBST(isSunJava6)
+AC_SUBST(JAVA)
+AC_SUBST(JAVAC)
+AC_SUBST(JAR)
 
-# check java type
-javaType=unknown
-if test "x${useJava}" = "xyes"; then
-    if test "x${isIBMJava6}" = "xyes"; then
-        javaType=ibm
-    elif test "x${isSunJava6}" = "xyes"; then
-        javaType=sun
-    fi
-fi
-AC_SUBST(javaType)
-
-# check ant
-ANTCOM=""
-AC_PATH_PROG(ANTCOM, ant, , ${PATH}:/bin:/usr/bin:/usr/local/bin:/opt/bin:/opt/local/bin)
-
-if test "$ANTCOM" = ""; then
-    AC_MSG_ERROR([requires Apache Ant])
-fi
-
-ANTCOM="JAVA_HOME=$JAVA_HOME ${ANTCOM}"
-AC_SUBST(ANTCOM)
-
-# check relaxer
-#relaxerDir=/usr/local/relaxer
-#AC_MSG_CHECKING([for relaxer])
-#AC_ARG_WITH(relaxerDir,
-#    [  --with-relaxerDir=DIR  specify where the Relaxer is installed.],
-#    [relaxerDir=$withval], [relaxerDir=/usr/local/relaxer])
-#
-#if test -e "${relaxerHome}/Relaxer.jar" ; then
-#    AC_MSG_RESULT($relaxerDir)
-#    RELAXER_DIR="${relaxerDir}"
-#else
-#    AC_MSG_RESULT(no)
-#    RELAXER_DIR=""
-#fi
-#
-#AC_SUBST(RELAXER_DIR)
-
-# set java library install dir to install target of java_DATA
 javadir='${prefix}/share/xcalablemp'
 AC_SUBST(javadir)
 
@@ -1225,17 +1293,14 @@ AC_CHECK_HEADERS([fcntl.h libintl.h malloc.h stddef.h stdint.h limits.h strings.
 # --------------------------------------------------------------------
 # Checks for library functions.
 
-if test "$target" != "$host"; then
-   case "$target" in
-        powerpc64-hitachi-aix);;
-        *)
-	AC_FUNC_MALLOC;;
-   esac
-else
-	AC_FUNC_MALLOC
+# Need this to get around rpc_malloc error in AIX
+# see https://www.mail-archive.com/gsoap@yahoogroups.com/msg00385.html
+if test "$target" = "powerpc-hitachi-aix"; then
+  export ac_cv_func_malloc_0_nonnull=yes
+  export ac_cv_func_realloc_0_nonnull=yes
 fi
 
-#AC_FUNC_MALLOC
+AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_FUNC_FORK
 AC_FUNC_STAT
@@ -1455,7 +1520,7 @@ qRealPrecBits=128
 
 AC_ARG_ENABLE(mreal,
     [  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).],
-    [doQReal=$enableval], [doQReal=no])
+    [doQReal=yes], [doQReal=no])
 
 AC_ARG_WITH(gmp-lib,
     [  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.],
@@ -1484,7 +1549,6 @@ fi
 AC_ARG_WITH(precision,
     [  --with-precision=NUM        the default precision of real*16 in bits (128).],
     [qRealPrecBits=$withval], [qRealPrecBits=128])
-
 
 # libgmp check
 omniLimbT="int"
@@ -1631,144 +1695,13 @@ AC_SUBST(omniQRealPrecInLimb)
 AC_SUBST(omniQRealFillGap)
 
 # --------------------------------------------------------------------
-# specify libxmp path
-default_libxmlDir="/usr"
-
-AC_ARG_WITH(libxml,
-    [  --with-libxml=DIR           libxml installation path (default: /usr)],
-    [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="${default_libxmlDir}"])
-
-if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help])
-fi
-
-AC_SUBST(LIBXML_PREFIX)
-
-# --------------------------------------------------------------------
-# TCA
-AC_ARG_WITH(TCA,
-    [  --with-TCA=DIR              TCA installation path],
-    [TCA_PREFIX="${withval}"])
-
-use_tca=no
-if test "${TCA_PREFIX}" != ""; then
-   use_tca=yes
-   if ! test -f $TCA_PREFIX/tca-api.h; then
-      AC_MSG_ERROR([$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>])
-   fi
-fi
-
-AM_CONDITIONAL(TCA, test x${use_tca} = xyes)
-AC_SUBST(TCA_PREFIX)
-
-# --------------------------------------------------------------------
-# specify GASNet path
-
-default_gasnetDir=""
-
-AC_ARG_WITH(gasnet,
-    [  --with-gasnet=DIR           GASNet installation path],
-    [GASNET_PREFIX="${withval}"], [GASNET_PREFIX="${default_gasnetDir}"])
-
-use_gasnet=no
-if test "${GASNET_PREFIX}" != ""; then
-  use_gasnet=yes
-  if ! test -f "${GASNET_PREFIX}/include/gasnet.h"; then
-	  AC_MSG_ERROR([${GASNET_PREFIX}/include/gasnet.h not found. Please check --with-gasnet])
-  fi
-fi
-
-AM_CONDITIONAL(GASNET, test x${use_gasnet} = xyes)
-AC_SUBST(GASNET_PREFIX)
-
-# --------------------------------------------------------------------
-# specify GASNet conduit
-
-AC_ARG_WITH(gasnet_conduit,
-    [  --with-gasnet-conduit=NAME  GASNet conduit],
-    [GASNET_CONDUIT="${withval}"], [GASNET_CONDUIT="${default_gasnet_conduit}"])
-
-if test "${use_gasnet}" = yes; then
-  gasnet_conduit_flag=no
-  if test "${GASNET_CONDUIT}" = ""; then
-    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
-    do
-      if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
-         GASNET_CONDUIT=${c}
-         gasnet_conduit_flag=yes
-      fi
-    done
-  else
-    gasnet_conduit_flag=yes
-  fi
-
-  if test "${gasnet_conduit_flag}" = no || ! test -d $GASNET_PREFIX/include/${GASNET_CONDUIT}-conduit; then
-    AC_MSG_ERROR([${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit not found. Please attach or check --with-gasnet-conduit])
-  else
-    # Create temporary Makefile to set $(GASNET_CPPFLAGS) $(GASNET_CFLAGS) $(GASNET_LDFLAGS) $(GASNET_LIBS)
-    __ECHO=""
-    if test $OS = "darwin"; then
-        __ECHO="echo"
-    else
-	__ECHO="echo -e"
-    fi
-    tmp_file=_XMP_makefile.$$
-    mak_file=${GASNET_PREFIX}/include/${GASNET_CONDUIT}-conduit/${GASNET_CONDUIT}-seq.mak
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
-    GASNET_CPPFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
-    
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
-    GASNET_CFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LDFLAGS)"  > ${tmp_file}
-    GASNET_LDFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-
-    $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_LIBS)"     > ${tmp_file}
-    GASNET_LIBS=`make -s -f ${tmp_file} 2>/dev/null`
-    rm ${tmp_file}
-    unset __ECHO
-  fi
-fi
-
-AC_SUBST(GASNET_CONDUIT)
-AC_SUBST(GASNET_CPPFLAGS)
-AC_SUBST(GASNET_CFLAGS)
-AC_SUBST(GASNET_LDFLAGS)
-AC_SUBST(GASNET_LIBS)
-
-# --------------------------------------------------------------------
-# specify GPU C compiler
-
-AC_ARG_WITH(gpucc,
-    [  --with-gpucc=CMD            GPU C compiler (default: nvcc)],
-    [GPU_CMD="${withval}"], [GPU_CMD="nvcc"])
-
-AC_SUBST(GPU_CMD)
-
-# --------------------------------------------------------------------
-# specify GPU C compiler flags
-
-AC_ARG_WITH(gpu-cflags,
-    [  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)],
-    [GPU_CFLAGS="${withval}"], [GPU_CFLAGS="-arch=sm_20 -O3"])
-
-AC_SUBST(GPU_CFLAGS)
-
-# --------------------------------------------------------------------
-# specify libgpu path
-
-AC_ARG_WITH(cuda,
-    [  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)],
-    [GPGPU_PREFIX="${withval}"], [GPGPU_PREFIX="/usr/local/cuda"])
-
-AC_SUBST(GPGPU_PREFIX)
-
-# --------------------------------------------------------------------
 # Export Omni Config Variable
 
-OMNI_HOME=${prefix}
+if test "${prefix}" = "NONE" -o "${prefix}" = ""; then
+  OMNI_HOME=/usr/local
+else
+  OMNI_HOME=${prefix}
+fi
 AC_SUBST(OMNI_HOME)
 AH_TEMPLATE(OMNI_HOME, [omni compiler install directory])
 AC_DEFINE_UNQUOTED(OMNI_HOME, "${OMNI_HOME}")
@@ -1784,32 +1717,25 @@ AC_SUBST(OM_DRIVER_CONF_DIR)
 AH_TEMPLATE(OM_DRIVER_CONF_DIR, [omni compiler driver configuration file directory])
 AC_DEFINE_UNQUOTED(OM_DRIVER_CONF_DIR, "${OM_DRIVER_CONF_DIR}")
 
-  if test "$target" = "powerpc-ibm-none"; then
-    OM_EXEC_C_PP="gcc -E"
-  else
-    OM_EXEC_C_PP="${BECC} -E"
-  fi
-
-
-#OM_EXEC_C_PP="${BECC} -E"
+OM_EXEC_C_PP="${MPI_CPP}"
 AC_SUBST(OM_EXEC_C_PP)
 
-OM_EXEC_C_COMPILER="${BECC}"
+OM_EXEC_C_COMPILER="${MPI_CC}"
 AC_SUBST(OM_EXEC_C_COMPILER)
 
-OM_EXEC_C_LINKER="${BECC}"
+OM_EXEC_C_LINKER="${MPI_CC}"
 AC_SUBST(OM_EXEC_C_LINKER)
 
 OM_EXEC_CXX_LINKER="${CXX}"
 AC_SUBST(OM_EXEC_CXX_LINKER)
 
-OM_EXEC_F_PP="${FC} -E"
+OM_EXEC_F_PP="${OMNI_F_PP}"
 AC_SUBST(OM_EXEC_F_PP)
 
-OM_EXEC_F_COMPILER="${FC}"
+OM_EXEC_F_COMPILER="${MPI_FC}"
 AC_SUBST(OM_EXEC_F_COMPILER)
 
-OM_EXEC_F_LINKER="${FC}"
+OM_EXEC_F_LINKER="${MPI_FC}"
 AC_SUBST(OM_EXEC_F_LINKER)
 
 INCLUDECOM=include
@@ -1818,9 +1744,9 @@ AC_SUBST(INCLUDECOM)
 XMPPKG_CONFFILE="./release/package_param.conf"
 
 if test -f "${XMPPKG_CONFFILE}"; then
-	. "${XMPPKG_CONFFILE}"
+  . "${XMPPKG_CONFFILE}"
 else
-	AC_MSG_WARN([a configuration file for packaging is not found.])
+  AC_MSG_WARN([a configuration file for packaging is not found.])
 fi
 
 XMPPKG_CHANGELOG_DATE=`date '+%a, %d %b %Y %H:%M:%S %z'`
@@ -1843,13 +1769,13 @@ AC_SUBST(XMPPKG_CHANGELOG_DATE)
 AM_SUBST_NOTMAKE(XMPPKG_DESCRIPTION)
 
 AC_CONFIG_FILES(
-	Makefile
-	release/debian/changelog
-	release/debian/control
-	release/debian/rules
-	release/xcalablemp.spec
-	release/make_rpm.sh
-	release/make_deb.sh
+  Makefile
+  release/debian/changelog
+  release/debian/control
+  release/debian/rules
+  release/xcalablemp.spec
+  release/make_rpm.sh
+  release/make_deb.sh
 )
 
 # --------------------------------------------------------------------
@@ -1858,9 +1784,6 @@ AC_SUBST(ATOOL_DIR)
 
 RM="rm -f"
 AC_SUBST(RM)
-
-MKDIR="mkdir -p"
-AC_SUBST(MKDIR)
 
 # headers/macros
 AC_CHECK_HEADER(sys/param.h, [AC_DEFINE([HAVE_SYS_PARAM_H], [1], [ ])])
@@ -1919,14 +1842,7 @@ omniBinDir=''
 omniLibDir=''
 omniEtcDir="${OM_DRIVER_CONF_DIR}/"
 omniIncDir=''
-AC_ARG_WITH([omni],
-	[AS_HELP_STRING([--with-omni],
-		[specify where the omni is installed (prefix default).])],
-	[tmpOmniDir=${withval}],
-	[tmpOmniDir=${prefix}])
-if test -z "${tmpOmniDir}"; then
-    tmpOmniDir=${defaultOmniDir}
-fi
+
 AC_MSG_CHECKING([the Omni is installed at "${tmpOmniDir}"])
 if test -d "${tmpOmniDir}"; then
     if test -x "${tmpOmniDir}/bin/F_Front"; then
@@ -1941,7 +1857,6 @@ if test ! -z "${omniDir}"; then
     # Don't delete the last slash.
     omniBinDir="${omniDir}"/bin/
     omniLibDir="${omniDir}"/lib/
-#    omniEtcDir="${omniDir}"/etc/
     omniIncDir="${omniDir}"/include
 fi
 
@@ -1951,76 +1866,17 @@ AC_SUBST(omniLibDir)
 AC_SUBST(omniEtcDir)
 AC_SUBST(omniIncDir)
 
-# native compiler
-tmpNativeCompiler=''
-AC_ARG_WITH([nativeCompiler],
-	[AS_HELP_STRING([--with-nativeCompiler],
-		[specify a native fortran compiler ("gfortran" default).])],
-	[tmpNativeCompiler=${withval}],
-	[tmpNativeCompiler="gfortran"])
-nativeCompiler=${tmpNativeCompiler}
-AC_SUBST(nativeCompiler)
-
-checkCpp() {
-    __ret=1
-    __tmpFileBase=/tmp/.cpptest.$$
-    __tmpFile=${__tmpFileBase}.F90
-    __data=`date | base64 2>/dev/null`
-    echo "#ifdef __XMP_CPP_CHECK__" > ${__tmpFile}
-    echo ${__data} >> ${__tmpFile}
-    echo "#endif" >> ${__tmpFile}
-    __vdata=`$* -D__XMP_CPP_CHECK__ ${__tmpFile} 2>/dev/null | grep "${__data}" 2>/dev/null`
-    rm -f ${__tmpFileBase}*
-    if test "x${__data}" = "x${__vdata}"; then
-        __ret=0
-    fi
-    unset __tmpFile __data __vdata
-    return ${__ret}
-}
-
 # cpp
-cppCmd=''
-tmpCppCmd=''
-AC_ARG_WITH([cpp],
-	[AS_HELP_STRING([--with-cpp],
-		[specify a cpp command (native compiler default).])],
-	[tmpCppCmd=${withval}],
-	[tmpCppCmd=${nativeCompiler}])
-AC_MSG_CHECKING(["${tmpCppCmd}" is a C preprosessor])
-checkCpp ${tmpCppCmd}
-if test $? -eq 0; then
-    AC_MSG_RESULT([yes, it is.])
-    cppCmd=${tmpCppCmd}
-else
-    AC_MSG_RESULT([no, it isn't.])
-    AC_MSG_CHECKING(["${nativeCompiler} -E" acts like cpp])
-    checkCpp ${nativeCompiler} -E
-    if test $? -eq 0; then
-        AC_MSG_RESULT([yes, it does.])
-        cppCmd=${nativeCompiler}
-    else
-	AC_MSG_RESULT([no, it doesn't.])
-    fi
-fi
-if test -z "${cppCmd}"; then
+cppCmd=${CPP}
+if test -z "${CPP}"; then
    AC_MSG_FAILURE([Can't find any usable C preprosessor.])
    exit 1
 fi
 AC_SUBST(cppCmd)
 
-# sysdeps.
-
-#eval `echo ${target} | awk -F- '{ printf "tagCPU=%s; tagOS=%s;\n", $1, $3 }'`
-#changequote(<<, >>)
-#CPU=`echo ${tagCPU} | tr '[A-Z]' '[a-z]'`
-#OS=`echo ${tagOS} | tr '[A-Z]' '[a-z]'` 
-#changequote([, ])
-#unset tagOS tagCPU
-
 HOSTARCH=`./buildutils/config.guess | grep -v Linking`
 CPU=`echo $HOSTARCH | awk -F- '{ print $1 }' | sed 's/\./_/g'`
 OS=`echo $HOSTARCH | awk -F- '{ print $3 }' | sed 's/\./_/g'`
-
 
 case $CPU in
     i*86)
@@ -2032,7 +1888,7 @@ OS_LDFLAGS=''
 OS_LIBS=''
 OS_CFLAGS=''
 if test -z "${MAKE}"; then
-	MAKE=make
+  MAKE=make
 fi
 
 API_FLAVOR=NATA_API_POSIX
@@ -2076,29 +1932,9 @@ case $OS in
 	API_FLAVOR=NATA_API_WIN32API;;
 esac
 
-if test "$target" != "$host"; then
-   case "$target" in
-        Kcomputer-linux-gnu|FX10-linux-gnu)
-                LDFLAGS=""
-                BLASLIB="-SSL2BLAMP"
-                AC_SUBST(BLASLIB);;
-        MIC-linux-gnu)
-                LDFLAGS="";;
-        sx-nec-superux)
-                LDFLAGS="-L/usr/lib64";;
-        powerpc64-hitachi-aix)
-                LDFLAGS="";;
-        powerpc-ibm-none)
-                LDFLAGS="";;
-        *)
-                LDFLAGS="";;
-   esac
-
-else
-
-   CC_LIB=${CC}
-   AC_SUBST(CC_LIB)
-
+if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
+  BLASLIB="-SSL2BLAMP"
+  AC_SUBST(BLASLIB)
 fi
 
 OS_CXXFLAGS=${OS_CFLAGS}
@@ -2126,15 +1962,14 @@ AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
 
-# emit.
 AC_CONFIG_FILES(
-	Driver/atool/mk/vars.mk
-	Driver/atool/Makefile
-	Driver/atool/src/lib/Makefile
-	Driver/atool/src/include/nata/Makefile
-	Driver/atool/src/include/nata/nata_platform.h
-	Driver/atool/src/cmd/Makefile
-	Driver/atool/src/cmd/paths.h
+  Driver/atool/mk/vars.mk
+  Driver/atool/Makefile
+  Driver/atool/src/lib/Makefile
+  Driver/atool/src/include/nata/Makefile
+  Driver/atool/src/include/nata/nata_platform.h
+  Driver/atool/src/cmd/Makefile
+  Driver/atool/src/cmd/paths.h
 )
 
 AC_CONFIG_COMMANDS([modify-config],
@@ -2148,23 +1983,28 @@ AC_CONFIG_COMMANDS([depend],
 	[(${BASH} ./Driver/atool/mk/initdepend && cd ./Driver/atool && ${MAKE} depend)],
 	[MAKE=${MAKE}])
 
-AC_CONFIG_COMMANDS([config-clean],
-	[rm -rf ./config.log ./config.status.* autom4te.cache])
+#AC_CONFIG_COMMANDS([config-clean],
+#	[rm -rf ./config.log ./config.status.* autom4te.cache])
 
 unset program_transform_name
 
 AC_OUTPUT
 ${MAKE} clean
 
-# ----------------------
-# Edit version file
+# --------------------------------------------------------------------
+# Set version file
 VERSIONTXT="./Driver/etc/version"
 if test -d .git; then
-  VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
-  echo -n Version:${XMPPKG_VERSION}, ${VERSION} > ${VERSIONTXT}
+  which git 1>/dev/null 2>/dev/null
+  if test $? -eq 0; then
+    VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
+    echo -n Version:${XMPPKG_VERSION}, ${VERSION} > ${VERSIONTXT}
+  else
+    echo -n "This omni compiler was compiled on no-git environment however git clone it." > ${VERSIONTXT}
+  fi
 fi
 
-# ----------------------
+# --------------------------------------------------------------------
 # Output
 
 cat << EOF
@@ -2173,17 +2013,30 @@ cat << EOF
 
   PREFIX : ${prefix}
 
-  Local Compiler:
-    C Compiler            : $CC
-    C Compiler FLAG       : "$CFLAG"
-    Fortran Compiler      : $FC
-    Fortran Compiler FLAG : "$FFLAG"
-  
-  Backend Compiler:
-    C Compiler            : $BECC
-    C Compiler FLAG       : "$BECC_OPTION"
-    Fortran Compiler      : $BEFC
-    Fortran Compiler FLAG : "$BEFC_OPTION"
+  Local Compilers:
+    C compiler (CC)                      : `which $CC`
+    C compiler flags (CFLAGS)            : $CFLAGS
+    Fortran compiler (FC)                : `which $FC`
+    Fortran compiler flags (FCFLAGS)     : $FCFLAGS
+    Java application launcher (JAVA)     : `which "$JAVA"`
+    Java compiler (JAVAC)                : `which $JAVAC`
+    Java Archive Tool (JAR)              : `which $JAR`
+
+  MPI Compilers:
+    C preprocessor flags (MPI_CPP)              : `which $MPI_CPP`
+    C preprocessor flags (MPI_CPPFLAGS)         : $MPI_CPPFLAGS
+    C compiler (MPI_CC)                         : `which $MPI_CC`
+    C compiler flags (MPI_CFLAGS)               : $MPI_CFLAGS
+    C compiler linker flags (MPI_CLIBS)         : $MPI_CLIBS
+
+    Fortran preprocessor (MPI_FPP)              : `which $MPI_FPP`
+    Fortran preprocessor flags (MPI_FPPFLAGS)   : $MPI_FPPFLAGS
+    Fortran compiler (MPI_FC)                   : `which $MPI_FC`
+    Fortran compiler flags (MPI_FCFLAGS)        : $MPI_FCFLAGS
+    Fortran compiler linker flags (MPI_FCLIBS)  : $MPI_FCLIBS
+
+  Note: If you want to change above compilers and their options,
+        please rerun ./configure MPI_CC=...
 EOF
 
 if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; then
@@ -2191,18 +2044,18 @@ if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; the
   echo "  Options:"
   echo "    GASNet                : $use_gasnet"
 
-  if test "${use_gasnet}" = yes; then
-  cat << EOF
-      Installed in        : $GASNET_PREFIX
-      Conduit             : $GASNET_CONDUIT
-
-EOF
+  if test x${use_gasnet} = xyes; then
+    echo "      Installed in        : $GASNET_PREFIX"
+    echo "      Conduit             : $GASNET_CONDUIT"
   fi
   echo "    OpenACC               : $doOpenAcc"
 fi
 
-if test "${use_tca}" = "yes"; then
+if test x${use_tca} = xyes; then
   echo "    TCA                   : yes"
 fi
-echo "=================================================="
 
+if test x${doMPI3} = xyes; then
+  echo "    MPI3                  : yes"
+fi
+echo "=================================================="

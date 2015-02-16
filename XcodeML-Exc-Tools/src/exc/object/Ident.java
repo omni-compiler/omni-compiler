@@ -5,6 +5,7 @@
  *  $
  */
 package exc.object;
+import exc.block.Block;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,19 +46,28 @@ public class Ident extends Xobject
     /** Fortran: declared module */
     private String declared_module;
     /** Codimensions for coarray (ID=284) */
-    private Xobject codimensions;
+    private Xobject codimensions;      // Codimensions might be moved into this.type like Fortran.
+                                       // See exc.object.FarrayType
   
     // constructor
-    public Ident(String name, StorageClass stg_class, Xtype type, Xobject v, VarScope scope)
+    public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
+                 VarScope scope)
     {
-        this(name, stg_class, type, v, 0, null, 0, null, null, null);
+        this(name, stg_class, type, v, 0, null, 0, null, null, null, null);
+        setScope(scope);
+    }
+    public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
+                 VarScope scope, Xobject codimensions)
+    {
+        this(name, stg_class, type, v, 0, null, 0, null, null, null, codimensions);
         setScope(scope);
     }
     
     // constructor
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
-        int optionalFlags, Xobject gccAttrs,
-        int bit_field, Xobject bit_field_expr, Xobject enum_value, Xobject fparam_value)
+                 int optionalFlags, Xobject gccAttrs,
+                 int bit_field, Xobject bit_field_expr, Xobject enum_value,
+                 Xobject fparam_value, Xobject codimensions)
     {
         super(null, type, optionalFlags);
         if(name != null)
@@ -70,12 +80,26 @@ public class Ident extends Xobject
         this.gcc_attrs = gccAttrs;
         this.enum_value = enum_value;
         this.fparam_value = fparam_value;
+        this.codimensions = codimensions;
     }
+  /************************
+    // for upper-compatibility
+    public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
+                 int optionalFlags, Xobject gccAttrs,
+                 int bit_field, Xobject bit_field_expr, Xobject enum_value,
+                 Xobject fparam_value) {
+      this(name, stg_class, type, v,
+           optionalFlags, gccAttrs,
+           bit_field, bit_field_expr, enum_value,
+           fparam_value, null);
+    }
+  ****************************/
 
     // constructor
     public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
                  boolean declared, int optionalFlags, Xobject gccAttrs,
-                 int bit_field, Xobject bit_field_expr, Xobject enum_value, Xobject fparam_value) {
+                 int bit_field, Xobject bit_field_expr, Xobject enum_value,
+                 Xobject fparam_value, Xobject codimensions) {
       super(null, type, optionalFlags);
       if(name != null) {
         this.name = name.intern();
@@ -89,12 +113,25 @@ public class Ident extends Xobject
       this.gcc_attrs = gccAttrs;
       this.enum_value = enum_value;
       this.fparam_value = fparam_value;
+      this.codimensions = codimensions;
     }
+  /***************************************:
+    // for upper-compatibility
+    public Ident(String name, StorageClass stg_class, Xtype type, Xobject v,
+                 boolean declared, int optionalFlags, Xobject gccAttrs,
+                 int bit_field, Xobject bit_field_expr, Xobject enum_value,
+                 Xobject fparam_value) {
+      this(name, stg_class, type, v,
+           declared, optionalFlags, gccAttrs,
+           bit_field, bit_field_expr, enum_value,
+           fparam_value, null);
+    }
+  **********************************/
 
     // constructor for temporary variable
     public Ident(int num, Xtype type)
     {
-        this(null, StorageClass.REG, type, null, null);
+        this(null, StorageClass.REG, type, null, null, null);
         this.num = num;
     }
     
@@ -115,6 +152,12 @@ public class Ident extends Xobject
             return "r_" + Integer.toHexString(num);
         else
             return name;
+    }
+
+    @Override
+    public int getFrank()
+    {
+        return type.getNumDimensions();
     }
 
     public void setName(String name)
@@ -152,14 +195,29 @@ public class Ident extends Xobject
         this.value = value;
     }
 
-   public Xobject getCodimensions()     // for coarray (ID=284)
+   public Xobject getCodimensions()     // for coarray C (ID=284)
     {
         return codimensions;
     }
 
-   public void setCodimensions(Xobject codimensions)     // for coarray (ID=284)
+   public void setCodimensions(Xobject codimensions)     // for coarray C (#284)
     {
         this.codimensions = codimensions;
+    }
+
+    public int getCorank()                // for coarray Fortran (#060)
+    {
+        return (Type() == null) ? 0 : Type().getCorank();
+    }
+
+    public boolean isCoarray()            // for coarray Fortran (#060)
+    {
+        return (Type() == null) ? false : Type().isCoarray();
+    }
+
+    public boolean wasCoarray()           // for coarray Fortran (#060)
+    {
+        return (Type() == null) ? false : Type().wasCoarray();
     }
 
     public boolean isDeclared()
@@ -219,9 +277,20 @@ public class Ident extends Xobject
     }
     
     @Override
+    public Xobject cfold(Block block)
+    {
+      if (fparam_value != null) {
+        Xobject that = ((XobjList)fparam_value).args.arg;
+        return that.cfold(block);
+      }
+      return this.copy();
+    }
+
+    @Override
     public Xobject copy() {
       return new Ident(name, stg_class, type, value, declared, getOptionalFlags(),
-                       gcc_attrs, bit_field, bit_field_expr, enum_value, fparam_value);
+                       gcc_attrs, bit_field, bit_field_expr, enum_value,
+                       fparam_value, codimensions);
     }
 
     @Override
@@ -337,6 +406,11 @@ public class Ident extends Xobject
     //
     public static Ident Var(String name, Xtype t, Xtype addrt, VarScope scope)
     {
+      return Var(name, t, addrt, scope, null);
+    }
+    public static Ident Var(String name, Xtype t, Xtype addrt, VarScope scope,
+                            Xobject codimensions)
+    {
         StorageClass sclass;
         Xcode addrCode;
         
@@ -350,7 +424,7 @@ public class Ident extends Xobject
         
         return new Ident(
             name, sclass, t,
-            Xcons.Symbol(addrCode, addrt, name), scope);
+            Xcons.Symbol(addrCode, addrt, name), scope, codimensions);
     }
     
     public static Ident Local(String name, Xtype t, Xtype addrt)
@@ -465,7 +539,7 @@ public class Ident extends Xobject
             addr.setIsToBeFcommon(isFcommon);
         }
         
-        Ident id = new Ident(name, sclass, t, addr, VarScope.LOCAL);
+        Ident id = new Ident(name, sclass, t, addr, VarScope.LOCAL, null);
         id.setIsToBeFcommon(isFcommon);
         
         return id;

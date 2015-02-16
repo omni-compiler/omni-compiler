@@ -56,6 +56,7 @@ public class XMPtranslate implements XobjectDefVisitor
     String name = d.getName();
 
     Xtype funcType = d.getFuncType().copy();
+    funcType.setFuncResultName(null);
     Ident funcId = Ident.FidentNotExternal("xmpf_" + name, funcType);
     funcId.setProp(XMP_GENERATED_CHILD, true);
 
@@ -78,7 +79,8 @@ public class XMPtranslate implements XobjectDefVisitor
 
     for (Xobject kk: (XobjList)decls){
       if (kk.getArg(0) == null) continue;
-      if (kk.Opcode() == Xcode.F_COMMON_DECL) continue;
+      if (kk.Opcode() == Xcode.F_COMMON_DECL ||
+	  kk.Opcode() == Xcode.F_DATA_DECL) continue;
       Ident id = d.findIdent(kk.getArg(0).getName());
       if (id != null && id.getStorageClass() == StorageClass.FPARAM){
 	childDecls.add(kk.copy());
@@ -192,8 +194,13 @@ public class XMPtranslate implements XobjectDefVisitor
 
     // System.out.println("def="+d.getDef());
     if(is_module){
-      if(!haveXMPpragma(d.getDef())) return;
       fd = XMPmoduleBlock(d);
+      if(!haveXMPpragma(d.getDef())) {
+        // for coarray #060
+        XMPtransCoarray transCoarray = new XMPtransCoarray(fd, env);
+        transCoarray.run();
+        return;
+      }
     } else if(d.isFuncDef()){ // declarations
       Xtype ft = d.getFuncType();
       if(ft != null && ft.isFprogram()) {

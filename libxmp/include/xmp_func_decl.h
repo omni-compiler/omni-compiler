@@ -7,10 +7,8 @@
 #ifndef _XMP_RUNTIME_FUNC_DECL
 #define _XMP_RUNTIME_FUNC_DECL
 
-#ifndef _XMP_CRAY
-#ifndef _XMP_PGI
+#if !defined(_XMP_CRAY)
 #include <stddef.h>
-#endif
 #endif
 
 // ----- libxml
@@ -137,8 +135,8 @@ extern void _XMP_coarray_rdma_node_set_5(const int, const int, const int, const 
 extern void _XMP_coarray_rdma_node_set_6(const int, const int, const int, const int, const int, const int);
 extern void _XMP_coarray_rdma_node_set_7(const int, const int, const int, const int, const int, const int, const int);
 
-extern void _XMP_coarray_rdma_do_f(const int*, const void*, const void*, const void*);
-extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void *);
+extern void _XMP_coarray_rdma_do_f(const int*, void*, void*, void*);
+extern void _XMP_coarray_rdma_do(const int, void*, void*, void *);
 extern void _XMP_coarray_sync_all();
 extern void _XMP_coarray_sync_memory();
 extern void xmp_sync_memory(const int* status);
@@ -265,7 +263,8 @@ extern void _XMP_exchange_shadow_NORMAL(void **lo_recv_buffer, void **hi_recv_bu
                                         void *lo_send_buffer, void *hi_send_buffer,
                                         void *array_desc, int array_index);
 extern void _XMP_reflect_shadow_FULL(void *array_addr, void *array_desc, int array_index);
-extern void _XMP_init_shadow_noalloc(void *a, int shadow_type, int lshadow, int ushadow);
+//extern void _XMP_init_shadow_noalloc(void *a, int shadow_type, int lshadow, int ushadow);
+extern void _XMP_init_shadow_noalloc(void *a, ...);
 
 // xmp_template.c
 extern void _XMP_init_template_FIXED(void **template, int dim, ...);
@@ -278,7 +277,7 @@ extern void _XMP_dist_template_BLOCK(void *template, int template_index, int nod
 extern void _XMP_dist_template_CYCLIC(void *template, int template_index, int nodes_index);
 extern void _XMP_dist_template_BLOCK_CYCLIC(void *template, int template_index, int nodes_index, unsigned long long width);
 extern void _XMP_dist_template_GBLOCK(void *template, int template_index, int nodes_index,
-				      int *mapping_array);
+				      int *mapping_array, int *temp0);
 
 extern int _XMP_exec_task_TEMPLATE_PART(void **task_desc, void *ref_template, ...);
 extern long long int _XMP_L2G_GBLOCK(int local_idx, void *template, int template_index);
@@ -302,22 +301,22 @@ extern void _XMP_post_5(const void*, const int n1, const int n2, const int n3, c
 extern void _XMP_post_6(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int t);
 extern void _XMP_post_7(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int n7, const int t);
 
-extern void _XMP_wait();
-extern void _XMP_wait_tag_1(const void*, const int n1, const int t);
-extern void _XMP_wait_tag_2(const void*, const int n1, const int n2, const int t);
-extern void _XMP_wait_tag_3(const void*, const int n1, const int n2, const int n3, const int t);
-extern void _XMP_wait_tag_4(const void*, const int n1, const int n2, const int n3, const int n4, const int t);
-extern void _XMP_wait_tag_5(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int t);
-extern void _XMP_wait_tag_6(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int t);
-extern void _XMP_wait_tag_7(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int n7, const int t);
+extern void _XMP_wait_noargs();
+extern void _XMP_wait_1(const void*, const int n1, const int t);
+extern void _XMP_wait_2(const void*, const int n1, const int n2, const int t);
+extern void _XMP_wait_3(const void*, const int n1, const int n2, const int n3, const int t);
+extern void _XMP_wait_4(const void*, const int n1, const int n2, const int n3, const int n4, const int t);
+extern void _XMP_wait_5(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int t);
+extern void _XMP_wait_6(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int t);
+extern void _XMP_wait_7(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int n7, const int t);
 
-extern void _XMP_wait_notag_1(const void*, const int n1);
-extern void _XMP_wait_notag_2(const void*, const int n1, const int n2);
-extern void _XMP_wait_notag_3(const void*, const int n1, const int n2, const int n3);
-extern void _XMP_wait_notag_4(const void*, const int n1, const int n2, const int n3, const int n4);
-extern void _XMP_wait_notag_5(const void*, const int n1, const int n2, const int n3, const int n4, const int n5);
-extern void _XMP_wait_notag_6(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6);
-extern void _XMP_wait_notag_7(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int n7);
+extern void _XMP_wait_node_1(const void*, const int n1);
+extern void _XMP_wait_node_2(const void*, const int n1, const int n2);
+extern void _XMP_wait_node_3(const void*, const int n1, const int n2, const int n3);
+extern void _XMP_wait_node_4(const void*, const int n1, const int n2, const int n3, const int n4);
+extern void _XMP_wait_node_5(const void*, const int n1, const int n2, const int n3, const int n4, const int n5);
+extern void _XMP_wait_node_6(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6);
+extern void _XMP_wait_node_7(const void*, const int n1, const int n2, const int n3, const int n4, const int n5, const int n6, const int n7);
 
 // ----- libxmp_threads
 // xmp_threads_runtime.c
@@ -345,5 +344,13 @@ extern void _XMP_gpu_unpack_shadow_NORMAL(void *desc, void *lo_buffer, void *hi_
 // xmp_intrinsic.c
 extern void xmp_transpose(void *dst_d, void *src_d, int opt);
 extern void xmp_matmul(void *x_p, void *a_p, void *b_p);
+extern void xmp_pack_mask(void *v_p, void *a_p, void *m_p);
+extern void xmp_pack_nomask(void *v_p, void *a_p);
+extern void xmp_pack(void *v_p, void *a_p, void *m_p);
+extern void xmp_unpack_mask(void *a_p, void *v_p, void *m_p);
+extern void xmp_unpack_nomask(void *a_p, void *v_p);
+extern void xmp_unpack(void *a_p, void *v_p, void *m_p);
+extern void xmp_gather(void *, void *, ...);
+extern void xmp_scatter(void *, void *, ...);
 
 #endif // _XMP_RUNTIME_FUNC_DECL

@@ -147,8 +147,10 @@ public class ACCgpuDecompileWriter extends PrintWriter {
             printDeclList(v.getArg(2), v.getArg(1));
           }
 
+          print("{");
           printBody(v.getArg(3));
           println();
+          println("}");
         } break;
       default:
         fatal("wrong operation");
@@ -453,17 +455,6 @@ public class ACCgpuDecompileWriter extends PrintWriter {
       if (prop != null) {
         println(";");
 
-        if(propAsync == null){
-          println("_ACC_GPU_M_BARRIER_KERNEL();");
-          if(ACC.debugFlag){
-            println("_ACC_GPU_CHECK_ERROR(\"" + funcName + "\");"); //for debugging
-          }
-        }else if(!propAsync.isEmpty()){
-          //_ACC_gpu_sync_kernel(id)のような関数呼び出しにする
-          print("if(");
-          print(propAsync.getArg(0));
-          println(" == ACC_ASYNC_SYNC) _ACC_gpu_wait(ACC_ASYNC_SYNC);");
-        }
         print("}");
       }
       break;
@@ -477,6 +468,17 @@ public class ACCgpuDecompileWriter extends PrintWriter {
       print("(");
       print(v.left());
       print(")--");
+      break;
+      
+    case PRE_INCR_EXPR:
+      print("++(");
+      print(v.left());
+      print(")");
+      break;
+    case PRE_DECR_EXPR:
+      print("--(");
+      print(v.left());
+      print(")");
       break;
 
     case SIZE_OF_EXPR:    /* (SIZE_OF_EXPR type-or-expr) */

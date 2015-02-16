@@ -1,26 +1,18 @@
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
-bin_SCRIPTS=bin/C_Back
-java_DATA = build/om-c-back.jar
-ANT = @ANTCOM@ -buildfile build.xml
-MKDIR_P = @MKDIR_P@
-SRC = $(wildcard src/*/*/*/*.java)
+bin_SCRIPTS = bin/C_Back
+TARGET = build/om-c-back.jar
+SRC    = $(wildcard src/xcodeml/c/*/*.java)
 
-all-local: $(java_DATA)
+all-local: $(TARGET)
 
-$(java_DATA): $(SRC)
-	$(ANT) jar
-
-jar:
-	$(ANT) jar
-
-jar-test:
-	$(ANT) jar-test
+$(TARGET): $(SRC)
+	$(JAVAC) src/xcodeml/c/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
+	mkdir -p build
+	cd src; $(JAR) cf ../$@ xcodeml/c/*/*.class
 
 clean-local:
-	$(ANT) clean
+	rm -f $(TARGET) $(CLASS)
 
-html-local:
-	$(ANT) document
+install: $(TARGET)
+	mkdir -p ${javadir}
+	$(INSTALL) $^ ${javadir}
+

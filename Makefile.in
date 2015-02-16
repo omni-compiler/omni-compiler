@@ -78,17 +78,13 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@ENABLE_XMP_GPU_TRUE@am__append_1 = @LIBXMP_GPU_DIR@
+@IS_SUPERUX_FALSE@am__append_1 = @LIBOMPC_DIR@ @LIBOMPF_DIR@
 @ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
 @ENABLE_XACC_TRUE@am__append_3 = @LIBXACC_DIR@ @LIBXACC_HEADER_DIR@
 @ENABLE_ATOOL_TRUE@am__append_4 = @ATOOL_DIR@
-@GASNET_TRUE@am__append_5 = "local-view/post-wait/C" \
-@GASNET_TRUE@	"local-view/coarray/C" "local-view/coarray/C" \
-@GASNET_TRUE@	"local-view/other/C"
-@FJRDMA_TRUE@am__append_6 = "local-view/post-wait/C" \
-@FJRDMA_TRUE@	"local-view/coarray/C" "local-view/coarray/C" \
-@FJRDMA_TRUE@	"local-view/other/C"
-@GASNET_TRUE@am__append_7 = "local-view/coarray/C/"
+@GASNET_TRUE@am__append_5 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
+@GASNET_TRUE@am__append_6 = "local-view/coarray/C/"
+@FJRDMA_TRUE@am__append_7 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
 @FJRDMA_TRUE@am__append_8 = "local-view/coarray/C/"
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
@@ -200,11 +196,11 @@ CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
 	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
-	@OMDRIVER_DIR@ @LIBOMPC_DIR@ @LIBOMPF_DIR@ @LIBTLOG_DIR@ \
-	@LIBTLOG_MPI_DIR@ @LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
-	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ \
-	@LIBXMP_GPU_DIR@ @LIBACC_DIR@ @LIBACC_HEADER_DIR@ \
-	@LIBXACC_DIR@ @LIBXACC_HEADER_DIR@ @ATOOL_DIR@ $(am__empty)
+	@OMDRIVER_DIR@ @LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
+	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ \
+	@LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ @LIBOMPC_DIR@ @LIBOMPF_DIR@ \
+	@LIBACC_DIR@ @LIBACC_HEADER_DIR@ @LIBXACC_DIR@ \
+	@LIBXACC_HEADER_DIR@ @ATOOL_DIR@ $(am__empty)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -248,10 +244,8 @@ am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
 ACLOCAL = @ACLOCAL@
-AIX_OPT = @AIX_OPT@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
-ANTCOM = @ANTCOM@
 API_FLAVOR = @API_FLAVOR@
 AR = @AR@
 ARFLAGS = @ARFLAGS@
@@ -260,17 +254,9 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BASH = @BASH@
-BECC = @BECC@
-BECC_OMP_OPTION = @BECC_OMP_OPTION@
-BECC_OPTION = @BECC_OPTION@
-BEFC = @BEFC@
-BEFC_MODINC = @BEFC_MODINC@
-BEFC_OPTION = @BEFC_OPTION@
 BLASLIB = @BLASLIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
-CC_LIB = @CC_LIB@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -303,12 +289,7 @@ FGREP = @FGREP@
 FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
-GASNET_CFLAGS = @GASNET_CFLAGS@
-GASNET_CONDUIT = @GASNET_CONDUIT@
-GASNET_CPPFLAGS = @GASNET_CPPFLAGS@
-GASNET_LDFLAGS = @GASNET_LDFLAGS@
 GASNET_LIBS = @GASNET_LIBS@
-GASNET_PREFIX = @GASNET_PREFIX@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CFLAGS = @GPU_CFLAGS@
 GPU_CMD = @GPU_CMD@
@@ -320,13 +301,12 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INT_ENUFF_FOR_VOIDP = @INT_ENUFF_FOR_VOIDP@
-IS_AIX = @IS_AIX@
 IS_CRAY = @IS_CRAY@
-IS_PGCC = @IS_PGCC@
-JARCOM = @JARCOM@
-JAVACCOM = @JAVACCOM@
-JAVACOM = @JAVACOM@
-JAVA_HOME = @JAVA_HOME@
+IS_PGI = @IS_PGI@
+IS_SUPERUX = @IS_SUPERUX@
+JAR = @JAR@
+JAVA = @JAVA@
+JAVAC = @JAVAC@
 JAVA_OPT = @JAVA_OPT@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
@@ -359,23 +339,34 @@ MAINT = @MAINT@
 MAKE = @MAKE@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
-MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
-NATIVE_DOPT = @NATIVE_DOPT@
+MPI_CC = @MPI_CC@
+MPI_CFLAGS = @MPI_CFLAGS@
+MPI_CLIBS = @MPI_CLIBS@
+MPI_CPP = @MPI_CPP@
+MPI_CPPFLAGS = @MPI_CPPFLAGS@
+MPI_FC = @MPI_FC@
+MPI_FCFLAGS = @MPI_FCFLAGS@
+MPI_FCLIBS = @MPI_FCLIBS@
+MPI_FPP = @MPI_FPP@
+MPI_FPPFLAGS = @MPI_FPPFLAGS@
+MPI_MODINC = @MPI_MODINC@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OMC_CONF_LNK_OPT = @OMC_CONF_LNK_OPT@
-OMC_CONF_LX2X_OPT = @OMC_CONF_LX2X_OPT@
-OMC_CONF_NTV_OPT = @OMC_CONF_NTV_OPT@
 OMDRIVER_DIR = @OMDRIVER_DIR@
-OMF_CONF_LNK_OPT = @OMF_CONF_LNK_OPT@
-OMF_CONF_LX2X_OPT = @OMF_CONF_LX2X_OPT@
-OMF_CONF_NTV_OPT = @OMF_CONF_NTV_OPT@
+OMNI_C2X_FLAGS = @OMNI_C2X_FLAGS@
+OMNI_F2X_FLAGS = @OMNI_F2X_FLAGS@
+OMNI_F_PP = @OMNI_F_PP@
 OMNI_HOME = @OMNI_HOME@
+OMNI_LNK_CFLAGS = @OMNI_LNK_CFLAGS@
+OMNI_LNK_FCFLAGS = @OMNI_LNK_FCFLAGS@
+OMNI_NTV_CFLAGS = @OMNI_NTV_CFLAGS@
+OMNI_NTV_FCFLAGS = @OMNI_NTV_FCFLAGS@
+OMNI_X2X_FLAGS = @OMNI_X2X_FLAGS@
 OMP_LOCK_TYPE = @OMP_LOCK_TYPE@
 OMP_THREAD_TYPE = @OMP_THREAD_TYPE@
 OM_DRIVER_CONF_DIR = @OM_DRIVER_CONF_DIR@
@@ -386,6 +377,7 @@ OM_EXEC_C_PP = @OM_EXEC_C_PP@
 OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
+OPENMP_OPT = @OPENMP_OPT@
 OS = @OS@
 OSDEF = @OSDEF@
 OS_CFLAGS = @OS_CFLAGS@
@@ -405,8 +397,6 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL5 = @PERL5@
 POW_LIB = @POW_LIB@
-PPCC = @PPCC@
-PPCC_OPT = @PPCC_OPT@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
 RM = @RM@
@@ -423,11 +413,8 @@ SIZEOF_UNSIGNED_LONG_LONG = @SIZEOF_UNSIGNED_LONG_LONG@
 SIZEOF_UNSIGNED_SHORT = @SIZEOF_UNSIGNED_SHORT@
 SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
-SR16000 = @SR16000@
 STRIP = @STRIP@
-SUPERUX = @SUPERUX@
 TARGET_ARCH = @TARGET_ARCH@
-TCA_PREFIX = @TCA_PREFIX@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
@@ -449,10 +436,8 @@ XMPPKG_SUMMARY = @XMPPKG_SUMMARY@
 XMPPKG_URL = @XMPPKG_URL@
 XMPPKG_VENDOR = @XMPPKG_VENDOR@
 XMPPKG_VERSION = @XMPPKG_VERSION@
-XMP_ENABLE_GPU = @XMP_ENABLE_GPU@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
-ZIPCOM = @ZIPCOM@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -492,9 +477,6 @@ htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
-isIBMJava6 = @isIBMJava6@
-isSunJava6 = @isSunJava6@
-javaType = @javaType@
 javadir = @javadir@
 libdir = @libdir@
 libexecdir = @libexecdir@
@@ -502,7 +484,6 @@ localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
-nativeCompiler = @nativeCompiler@
 oldincludedir = @oldincludedir@
 omniBinDir = @omniBinDir@
 omniDir = @omniDir@
@@ -530,30 +511,14 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
-@SUPERUX_FALSE@SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ \
-@SUPERUX_FALSE@	@C_BACKEND_DIR@ @F_FRONTEND_DIR@ \
-@SUPERUX_FALSE@	@F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
-@SUPERUX_FALSE@	@OMDRIVER_DIR@ @LIBOMPC_DIR@ @LIBOMPF_DIR@ \
-@SUPERUX_FALSE@	@LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
-@SUPERUX_FALSE@	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
-@SUPERUX_FALSE@	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ \
-@SUPERUX_FALSE@	@LIBXMPF_DIR@ $(am__append_1) $(am__append_2) \
-@SUPERUX_FALSE@	$(am__append_3) $(am__append_4)
-@SUPERUX_TRUE@SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ \
-@SUPERUX_TRUE@	@C_BACKEND_DIR@ @F_FRONTEND_DIR@ @F_BACKEND_DIR@ \
-@SUPERUX_TRUE@	@XCODEML_EXC_TOOLS_DIR@ @OMDRIVER_DIR@ \
-@SUPERUX_TRUE@	@LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
-@SUPERUX_TRUE@	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ \
-@SUPERUX_TRUE@	@LIBXMP_THREADS_DIR@ @LIBXMPF_HEADER_DIR@ \
-@SUPERUX_TRUE@	@LIBXMPF_DIR@ $(am__append_1) $(am__append_2) \
-@SUPERUX_TRUE@	$(am__append_3) $(am__append_4)
+SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
+	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
+	@OMDRIVER_DIR@ @LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
+	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ \
+	@LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ $(am__append_1) \
+	$(am__append_2) $(am__append_3) $(am__append_4)
 XMPPKG_TMPDIR_TOP := "/tmp/@XMPPKG_NAME@"
-XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/$(shell mktemp -u --tmpdir=/)
+XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/tmp.$$
 DEB_VER_FILE = "/etc/debian_version"
 RH_REL_FILE = "/etc/redhat-release"
 BASE_TESTDIR = "tests/xcalablemp/"
@@ -561,75 +526,35 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	"global-view/bcast/C/" "global-view/bcast/F/" \
 	"global-view/loop/C" "global-view/loop/F" \
 	"global-view/reduction/C" "global-view/reduction/F" \
-	"global-view/shadow-reflect/C/" "global-view/task/C" \
+	"global-view/shadow-reflect/C/" \
+	"global-view/shadow-reflect/F/" "global-view/task/C" \
 	"global-view/task/F" "global-view/template_fix/C/" \
 	"global-view/template_fix/F/" "global-view/gmove/C/" \
 	"global-view/gmove/F/" "global-view/inquiry/C/" \
 	"global-view/inquiry/F/" "global-view/gblock/C/" \
 	"global-view/gblock/F/" "global-view/align/C/" \
-	"global-view/align/F/" "others/F" "others/C" $(am__append_5) \
-	$(am__append_6)
+	"global-view/align/F/" "global-view/intrinsic/C/" \
+	"global-view/intrinsic/F/" "global-view/util/C/" \
+	"global-view/util/F/" "others/F" "others/C" $(am__append_5) \
+	$(am__append_7)
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
-LARGE_TESTDIRS = "others/C" $(am__append_7) $(am__append_8)
-DELETABLES = \
-	C-BackEnd/ant.properties \
-	C-BackEnd/bin/C_Back \
-	C-FrontEnd/src/c-exprcode.c \
-	C-FrontEnd/src/c-exprcode.h \
-	C-FrontEnd/src/c-parser.c \
-	C-FrontEnd/src/c-parser.h \
-	Driver/bin/omc2c \
-	Driver/bin/omc2x \
-	Driver/bin/omclinker \
-	Driver/bin/omcnative \
-	Driver/bin/omcpp \
-	Driver/bin/omcx2x \
-	Driver/bin/omf2f \
-	Driver/bin/omf2x \
-	Driver/bin/omflinker \
-	Driver/bin/omfnative \
-	Driver/bin/omfpp \
-	Driver/bin/omfx2x \
-	Driver/bin/oml2x \
-	Driver/bin/omlinker \
-	Driver/bin/omnative \
-	Driver/bin/ompcc \
+LARGE_TESTDIRS = "others/C" $(am__append_6) $(am__append_8)
+DELETABLES = Driver/bin/ompcc \
 	Driver/bin/ompf90 \
-	Driver/bin/ompp \
-	Driver/bin/omx2c \
-	Driver/bin/omx2f \
-	Driver/bin/omx2l \
-	Driver/bin/omx2x \
-	Driver/bin/xmpcc \
 	Driver/bin/xmpf90 \
-	Driver/bin/omtranslate \
-	Driver/bin/omni_collect_init \
+	Driver/bin/xmpcc \
+	Driver/etc/xmpcc.conf \
+	Driver/etc/xmpf90.conf \
+	Driver/etc/ompcc.conf \
+	Driver/etc/ompf90.conf \
 	Driver/etc/java.conf \
-	Driver/etc/l2x.conf.openmp \
-	Driver/etc/l2x.conf.xmp \
-	Driver/etc/l2x.conf.xmpf \
-	Driver/etc/l2x.conf.acc \
-	Driver/etc/linker.conf.openmp \
-	Driver/etc/linker.conf.xmp \
-	Driver/etc/linker.conf.xmpf \
-	Driver/etc/linker.conf.acc \
-	Driver/etc/native.conf.openmp \
-	Driver/etc/native.conf.xmp \
-	Driver/etc/native.conf.xmpf \
-	Driver/etc/native.conf.acc \
-	Driver/etc/omc.conf \
-	Driver/etc/omf.conf \
-	Driver/etc/pp.conf.openmp \
-	Driver/etc/pp.conf.xmp \
-	Driver/etc/pp.conf.xmpf \
-	Driver/etc/pp.conf.acc \
-	Driver/etc/x2x.conf.openmp \
-	Driver/etc/x2x.conf.xmp \
-	Driver/etc/x2x.conf.xmpf \
-	Driver/etc/x2x.conf.acc \
-	Driver/etc/setup.conf \
+	Driver/libexec/omni_traverse \
+        C-FrontEnd/src/c-exprcode.c \
+        C-FrontEnd/src/c-exprcode.h \
+        C-FrontEnd/src/c-parser.c \
+        C-FrontEnd/src/c-parser.h \
 	C-FrontEnd/src/c-token.c \
-	F-BackEnd/ant.properties \
+	C-BackEnd/bin/C_Back \
 	F-BackEnd/bin/F_Back \
 	F-BackEnd/bin/F_Trans \
 	F-BackEnd/bin/F_Decomp \
@@ -637,8 +562,6 @@ DELETABLES = \
 	F-FrontEnd/src/C-exprcode.h \
 	F-FrontEnd/src/F95-parser.c \
 	F-FrontEnd/src/F95-parser.output \
-	XcodeML-Common/ant.properties \
-	XcodeML-Exc-Tools/ant.properties \
 	XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java \
 	autom4te.cache/ \
 	libtlog/src_mpi/bin/tlogview \
@@ -1170,20 +1093,20 @@ uninstall-am:
 release-rpm:
 	if test -f $(RH_REL_FILE) ; then \
 		mkdir -p $(XMPPKG_TMPDIR_TOP); \
-		$(SHELL) release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
+		bash release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
 		rm -rf $(XMPPKG_TMPDIR_TOP); \
 	fi
 
 release-deb:
 	if test -f $(DEB_VER_FILE) ; then \
 		mkdir -p $(XMPPKG_TMPDIR); \
-		$(SHELL) release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
+		bash release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
 		rm -rf $(XMPPKG_TMPDIR_TOP); \
 	fi
 
 release: release-rpm release-deb
 
-.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests all-tests clean-all-tests run-all-tests
+.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests
 
 tests: 
 	@for subdir in $(TESTDIRS) ; do \
@@ -1218,10 +1141,6 @@ run-large-tests:
 	$(MAKE) run -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	if test $$? -ne 0; then exit 1; fi ;\
 	done
-
-all-tests: tests large-tests
-clean-all-tests: clean-tests clean-large-tests
-run-all-tests: run-tests run-large-tests
 
 clean-local:
 	rm -rf autom4te.cache

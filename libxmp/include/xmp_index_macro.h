@@ -20,8 +20,8 @@
 #define _XMP_M_LTOG_TEMPLATE_BLOCK_CYCLIC(_l, _b, _m, _P, _p) \
 ((((_l) / (_b)) * (_b) * (_P)) + ((_b) * (_p)) + ((_l) % (_b)) + (_m))
 
-#define _XMP_M_LTOG_TEMPLATE_GBLOCK(_l, _m, _p) \
-((_l) + (_m)[(_p)])
+#define _XMP_M_LTOG_TEMPLATE_GBLOCK(_l, _x)	\
+((_l) + (_x))
 
 // ------------------------------------------------------------------------------------------------------------------------------
 #define _XMP_M_CALC_INDEX_BLOCK(_i, _x) \

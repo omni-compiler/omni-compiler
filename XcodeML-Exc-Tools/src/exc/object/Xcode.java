@@ -136,7 +136,7 @@ public enum Xcode
      // L   SUBA_UPPER_BOUND           
      // L   SUBA_STEP                  
     CO_ARRAY_REF                    (  99, 'L', null, null),
-    CO_ARRAY_ASSIGN_EXPR            ( 100, 'L', null, null),
+    CO_ARRAY_ASSIGN_EXPR            ( 100, 'L', null, null),   // not used??
      // -----------------
      // Fortran: Declaration / Definition
     F_DATA_DECL                     ( 101, 'L', null, null),
@@ -265,6 +265,9 @@ public enum Xcode
     LOWER_BOUND                     ( 193, 'L', null, null),
     UPPER_BOUND                     ( 194, 'L', null, null),
     STEP                            ( 195, 'L', null, null),
+     // -----------------
+     // added for coarray
+    F_CO_SHAPE                      ( 196, 'L', null, null),         // ID=060
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),

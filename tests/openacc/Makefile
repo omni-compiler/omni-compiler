@@ -18,6 +18,7 @@ run: $(EXES)
 	$(XRUN) parallel_private.x
 	$(XRUN) parallel-loop_private.x
 	$(XRUN) parallel-loop_reduction.x
+	$(XRUN) parallel-loop_reduction_double.x
 	$(XRUN) loop_private_gang.x
 	$(XRUN) loop_private_vector.x
 	$(XRUN) parallel_if.x
@@ -58,6 +59,9 @@ run: $(EXES)
 	$(XRUN) kernel_sync.x
 	$(XRUN) enter_exit_data.x
 	$(XRUN) bug_exit_data.x
+	$(XRUN) bug_clause_comma.x
+	$(XRUN) kernels.x
+	$(XRUN) kernels-loop.x
 
 update_host_subarray_type:
 	$(XCC) -o update_host_subarray_char.x update_host_subarray.c -DCHAR

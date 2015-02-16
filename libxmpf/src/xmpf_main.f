@@ -1,9 +1,16 @@
 ! main program
+      !! src: libxmpf/src/xmpf_misc.c
+      !! incl. atexit, _XMP_init, FJMPI_Rdma_init, etc.
       call xmpf_init_all_
-      call xmpf_module_init_   ! old-fashioned
-!      call xmpf_init_coarray1
-!      call xmpf_init_coarray2
+
+      !! This subroutine is sutomatically generated.
+      !! see Driver/bin/omni_traverse.in
+      call xmpf_traverse
+
+      !! user's main program
       call xmpf_main
-!      call xmpf_finalize_coarray
+
+      !! src: libxmpf/src/xmpf_misc.c
+      !! incl. FJMPI_Rdma_finalize(), _XMP_finalize, etc.
       call xmpf_finalize_all_
       end

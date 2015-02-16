@@ -195,10 +195,8 @@ ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
-AIX_OPT = @AIX_OPT@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
-ANTCOM = @ANTCOM@
 API_FLAVOR = @API_FLAVOR@
 AR = @AR@
 ARFLAGS = @ARFLAGS@
@@ -207,17 +205,9 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BASH = @BASH@
-BECC = @BECC@
-BECC_OMP_OPTION = @BECC_OMP_OPTION@
-BECC_OPTION = @BECC_OPTION@
-BEFC = @BEFC@
-BEFC_MODINC = @BEFC_MODINC@
-BEFC_OPTION = @BEFC_OPTION@
 BLASLIB = @BLASLIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
-CC_LIB = @CC_LIB@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -250,12 +240,7 @@ FGREP = @FGREP@
 FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
-GASNET_CFLAGS = @GASNET_CFLAGS@
-GASNET_CONDUIT = @GASNET_CONDUIT@
-GASNET_CPPFLAGS = @GASNET_CPPFLAGS@
-GASNET_LDFLAGS = @GASNET_LDFLAGS@
 GASNET_LIBS = @GASNET_LIBS@
-GASNET_PREFIX = @GASNET_PREFIX@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CFLAGS = @GPU_CFLAGS@
 GPU_CMD = @GPU_CMD@
@@ -267,13 +252,12 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INT_ENUFF_FOR_VOIDP = @INT_ENUFF_FOR_VOIDP@
-IS_AIX = @IS_AIX@
 IS_CRAY = @IS_CRAY@
-IS_PGCC = @IS_PGCC@
-JARCOM = @JARCOM@
-JAVACCOM = @JAVACCOM@
-JAVACOM = @JAVACOM@
-JAVA_HOME = @JAVA_HOME@
+IS_PGI = @IS_PGI@
+IS_SUPERUX = @IS_SUPERUX@
+JAR = @JAR@
+JAVA = @JAVA@
+JAVAC = @JAVAC@
 JAVA_OPT = @JAVA_OPT@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
@@ -306,23 +290,34 @@ MAINT = @MAINT@
 MAKE = @MAKE@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
-MKDIR = @MKDIR@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
-NATIVE_DOPT = @NATIVE_DOPT@
+MPI_CC = @MPI_CC@
+MPI_CFLAGS = @MPI_CFLAGS@
+MPI_CLIBS = @MPI_CLIBS@
+MPI_CPP = @MPI_CPP@
+MPI_CPPFLAGS = @MPI_CPPFLAGS@
+MPI_FC = @MPI_FC@
+MPI_FCFLAGS = @MPI_FCFLAGS@
+MPI_FCLIBS = @MPI_FCLIBS@
+MPI_FPP = @MPI_FPP@
+MPI_FPPFLAGS = @MPI_FPPFLAGS@
+MPI_MODINC = @MPI_MODINC@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OMC_CONF_LNK_OPT = @OMC_CONF_LNK_OPT@
-OMC_CONF_LX2X_OPT = @OMC_CONF_LX2X_OPT@
-OMC_CONF_NTV_OPT = @OMC_CONF_NTV_OPT@
 OMDRIVER_DIR = @OMDRIVER_DIR@
-OMF_CONF_LNK_OPT = @OMF_CONF_LNK_OPT@
-OMF_CONF_LX2X_OPT = @OMF_CONF_LX2X_OPT@
-OMF_CONF_NTV_OPT = @OMF_CONF_NTV_OPT@
+OMNI_C2X_FLAGS = @OMNI_C2X_FLAGS@
+OMNI_F2X_FLAGS = @OMNI_F2X_FLAGS@
+OMNI_F_PP = @OMNI_F_PP@
 OMNI_HOME = @OMNI_HOME@
+OMNI_LNK_CFLAGS = @OMNI_LNK_CFLAGS@
+OMNI_LNK_FCFLAGS = @OMNI_LNK_FCFLAGS@
+OMNI_NTV_CFLAGS = @OMNI_NTV_CFLAGS@
+OMNI_NTV_FCFLAGS = @OMNI_NTV_FCFLAGS@
+OMNI_X2X_FLAGS = @OMNI_X2X_FLAGS@
 OMP_LOCK_TYPE = @OMP_LOCK_TYPE@
 OMP_THREAD_TYPE = @OMP_THREAD_TYPE@
 OM_DRIVER_CONF_DIR = @OM_DRIVER_CONF_DIR@
@@ -333,6 +328,7 @@ OM_EXEC_C_PP = @OM_EXEC_C_PP@
 OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
+OPENMP_OPT = @OPENMP_OPT@
 OS = @OS@
 OSDEF = @OSDEF@
 OS_CFLAGS = @OS_CFLAGS@
@@ -352,8 +348,6 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL5 = @PERL5@
 POW_LIB = @POW_LIB@
-PPCC = @PPCC@
-PPCC_OPT = @PPCC_OPT@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
 RM = @RM@
@@ -370,11 +364,8 @@ SIZEOF_UNSIGNED_LONG_LONG = @SIZEOF_UNSIGNED_LONG_LONG@
 SIZEOF_UNSIGNED_SHORT = @SIZEOF_UNSIGNED_SHORT@
 SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
-SR16000 = @SR16000@
 STRIP = @STRIP@
-SUPERUX = @SUPERUX@
 TARGET_ARCH = @TARGET_ARCH@
-TCA_PREFIX = @TCA_PREFIX@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
@@ -396,10 +387,8 @@ XMPPKG_SUMMARY = @XMPPKG_SUMMARY@
 XMPPKG_URL = @XMPPKG_URL@
 XMPPKG_VENDOR = @XMPPKG_VENDOR@
 XMPPKG_VERSION = @XMPPKG_VERSION@
-XMP_ENABLE_GPU = @XMP_ENABLE_GPU@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
-ZIPCOM = @ZIPCOM@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -439,9 +428,6 @@ htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
-isIBMJava6 = @isIBMJava6@
-isSunJava6 = @isSunJava6@
-javaType = @javaType@
 javadir = @javadir@
 libdir = @libdir@
 libexecdir = @libexecdir@
@@ -449,7 +435,6 @@ localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
-nativeCompiler = @nativeCompiler@
 oldincludedir = @oldincludedir@
 omniBinDir = @omniBinDir@
 omniDir = @omniDir@
@@ -477,29 +462,6 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-
-# trace color (1:mono 2:color)
-#DEBUG_FLAGS+=-DCEXPR_TRACE_COLOR=1
-#DEBUG_FLAGS+=-DCEXPR_TRACE_COLOR=2
-
-# yacc state trace
-#DEBUG_FLAGS+=-DCEXPR_DEBUG_STAT
-
-# debug symbol table
-#DEBUG_FLAGS+=-DCEXPR_DEBUG_SYMBOL
-
-# debug gcc attribute/extension counts
-#DEBUG_FLAGS+=-DCEXPR_DEBUG_GCCATTR
-
-# debug malloc/free
-#DEBUG_FLAGS+=-DCCOL_DEBUG_MEM
-#DEBUG_FLAGS+=-DCEXPR_DEBUG_MEM
-
-# debug XcodeML output
-#DEBUG_FLAGS+=-DXCODEML_DEBUG
-
-# debug memory leak
-#DEBUG_FLAGS+=-DMTRACE
 C_Front_SOURCES = \
 	c-parser.y c-lexer.l c-expr.c c-token.c c-exprcode.c \
 	c-dump.c c-comp.c c-reduce.c c-xcodeml.c c-const.c \
@@ -510,7 +472,6 @@ C_Front_SOURCES = \
 
 EXTRA_C_Front_SOURCES = c-dbgmain.c
 AM_YFLAGS = -v -d
-AM_CFLAGS = -std=c99 -Wall $(DEBUG_FLAGS) $(AIX_OPT)
 all: all-am
 
 .SUFFIXES:
@@ -858,20 +819,7 @@ c-omp-pragma.c: c-pragma.h c-omp.h
 c-xmp-pragma.c: c-pragma.h c-xmp.h
 c-acc-pragma.c: c-pragma.h c-acc.h
 c-xcodeml.c: c-expr.h
-c-const.c: c-expr.h c-const.h
-c-comp.c: c-expr.h c-comp.h
-c-option.c: c-expr.h c-option.h
-c-pragma.c: c-pragma.h c-omp.h c-xmp.h c-acc.h
-c-omp-pragma.c: c-pragma.h c-omp.h
-c-xmp-pragma.c: c-pragma.h c-xmp.h
-c-acc-pragma.c: c-pragma.h c-acc.h
-c-omp-pragma.c: c-pragma.h c-omp.h
-c-xmp-pragma.c: c-pragma.h c-xmp.h
-c-acc-pragma.c: c-pragma.h c-acc.h
-c-xcodeml.c: c-expr.h
-c-omp-xcodeml.c: c-expr.h c-omp.h
-c-xmp-xcodeml.c: c-expr.h c-xmp.h
-c-acc-xcodeml.c: c-expr.h c-acc.h
+#AM_CFLAGS=-std=c99 -Wall $(DEBUG_FLAGS)
 
 $(C_Front_SOURCES): c-exprcode.h
 
@@ -900,6 +848,8 @@ clean-local:
 html-local:
 	if test ! -e "../doc"; then mkdir ../doc; fi
 	doxygen >/dev/null
+
+.NOTPARALLEL:
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

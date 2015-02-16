@@ -425,7 +425,7 @@ static int _xmp_io_set_view_block_cyclic
 	int b[mcnt]; MPI_Aint d[mcnt]; MPI_Datatype t[mcnt];
 	int iend=bw*x_l+ib_l +1;
 	int ista=bw*x_u+ib_u;
-	int y_sta = func_m( -step, 0 );
+	//int y_sta = func_m( -step, 0 );
 	int y_end = func_m( step, (rp_lb - rp_ub) );
 #ifdef DEBUG
 	fprintf(stderr, "ista=%d  iend=%d  iend-ista=%d  (iend-ista) / (bw*b1)=%d  (iend-ista) %% (bw*b1)=%d\n",
@@ -728,8 +728,8 @@ static int _xmp_io_write_read_block_cyclic
 	int b[mcnt]; MPI_Aint d[mcnt]; MPI_Datatype t[mcnt];
 	int ista=bw*x_l+ib_l;
 	int iend=bw*x_u+ib_u +1;
-	int y_sta = func_m( step, 0 );
-	int y_end = func_m( (-step), (- rp_lb + rp_ub) );
+	//int y_sta = func_m( step, 0 );
+	//int y_end = func_m( (-step), (- rp_lb + rp_ub) );
 #ifdef DEBUG
 	fprintf(stderr, "y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */
@@ -1019,8 +1019,8 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
       }else{ /* ib_l */ /* ib_u */
 	int ista=bw*x_l+ib_l;
 	int iend=bw*x_u+ib_u +1;
-	int y_sta = func_m( step, 0 );
-	int y_end = func_m( (-step), (- rp_lb + rp_ub) );
+	//int y_sta = func_m( step, 0 );
+	//int y_end = func_m( (-step), (- rp_lb + rp_ub) );
 #ifdef DEBUG
 	fprintf(stderr, "y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */
@@ -1162,8 +1162,8 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
       }else{ /* ib_l */ /* ib_u */
 	int ista=bw*x_l+ib_l;
 	int iend=bw*x_u+ib_u -1;
-	int y_sta = func_m( -step, 0 );
-	int y_end = func_m( step, (rp_lb - rp_ub) );
+	//int y_sta = func_m( -step, 0 );
+	//int y_end = func_m( step, (rp_lb - rp_ub) );
 #ifdef DEBUG
 	fprintf(stderr, "y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */

@@ -370,7 +370,7 @@ public class XMPtranslateLocalPragma {
 
     // no arguments
     if(numOfArgs == 0){
-      pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait", null));
+      pb.replace(_globalDecl.createFuncCallBlock("_XMP_wait_noargs", null));
       return;
     }
 
@@ -393,14 +393,14 @@ public class XMPtranslateLocalPragma {
       args.add(onRef.getArg(1).getArg(i));
 
     if(numOfArgs == 1){
-      funcName = "_XMP_wait_notag_" + String.valueOf(nodeObj.getDim());
+      funcName = "_XMP_wait_node_" + String.valueOf(nodeObj.getDim());
       pb.replace(_globalDecl.createFuncCallBlock(funcName, args));
       return;
     }
     
     // node and tag
     if(numOfArgs == 2){ // node and tag
-      funcName = "_XMP_wait_tag_" + String.valueOf(nodeObj.getDim());
+      funcName = "_XMP_wait_" + String.valueOf(nodeObj.getDim());
       Xobject tag = waitDecl.getArg(1);
       args.add(tag);
       pb.replace(_globalDecl.createFuncCallBlock(funcName, args));
@@ -1487,6 +1487,21 @@ public class XMPtranslateLocalPragma {
       					    templateObj, templateIndexArg.getInt(),
       					    _globalDecl, forBlock);
     }
+
+    // rewrite loop index in initializer in loop
+    BlockList body = getLoopBody(forBlock);
+
+    for (Block b = body.getHead(); b != null; b = b.getNext()){
+      
+      if (b.getBody() == null) continue;
+      topdownXobjectIterator iter2 = new topdownXobjectIterator(b.getBody().getDecls());
+      for (iter2.init(); !iter2.end(); iter2.next()) {
+	XMPrewriteExpr.rewriteLoopIndexInLoop(iter2.getXobject(), loopIndexName,
+					      templateObj, templateIndexArg.getInt(),
+					      _globalDecl, forBlock);
+      }
+    }
+
   }
 
   private void callLoopSchedFuncNodes(XMPnodes nodesObj, XobjList nodesSubscriptList,
@@ -3116,7 +3131,10 @@ public class XMPtranslateLocalPragma {
 
       var = declIdentWithBlock(pb, "_XMP_loop_i" + Integer.toString(i), Xtype.intType);
       varList.add(var);
-      varListTemplate.set(leftAlignedArray.getAlignSubscriptIndexAt(i), var);
+
+      if (leftAlignedArray.getAlignMannerAt(i) != XMPalignedArray.NOT_ALIGNED){
+	varListTemplate.set(leftAlignedArray.getAlignSubscriptIndexAt(i), var);
+      }
 
       lb = ((XobjList)sub).getArg(0);
       if (lb == null) lb = Xcons.IntConstant(0);
@@ -3186,6 +3204,7 @@ public class XMPtranslateLocalPragma {
 	Xobject lb, st;
 
 	if (sub.Opcode() != Xcode.LIST) continue;
+	//if (array1.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED) continue;
 
 	lb = ((XobjList)sub).getArg(0);
 	if (lb == null) lb = Xcons.IntConstant(0);
@@ -3193,10 +3212,10 @@ public class XMPtranslateLocalPragma {
 	if (st == null) st = Xcons.IntConstant(1);
 
 	Xobject expr;
-	//expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
-	Ident loopVar = varListTemplate.get(array1.getAlignSubscriptIndexAt(i));
-	if (loopVar == null) XMP.fatal("array on rhs does not conform to that on lhs.");
-	expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
+	expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
+	//Ident loopVar = varListTemplate.get(array1.getAlignSubscriptIndexAt(i));
+	//if (loopVar == null) XMP.fatal("array on rhs does not conform to that on lhs.");
+	//expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
 	expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
 
 	subscripts1.setArg(i, expr);
@@ -3217,7 +3236,7 @@ public class XMPtranslateLocalPragma {
     BlockList body = Bcons.emptyBody();
     body.add(Xcons.Set(new_left, assignStmt.right()));
 
-    for (int i = 0; i < varList.size(); i++){
+    for (int i = varList.size() - 1; i >= 0; i--){
       loop = Bcons.emptyBody();
       // Xobject ub = Xcons.binaryOp(Xcode.MINUS_EXPR, ubList.get(i), lbList.get(i));
       // ub = Xcons.binaryOp(Xcode.PLUS_EXPR, ub, stList.get(i));
@@ -3236,7 +3255,9 @@ public class XMPtranslateLocalPragma {
 
     XobjList loopIterList = Xcons.List();
     for (int i = 0; i < varList.size(); i++){
-      loopIterList.add(varList.get(i).Ref());
+      if (leftAlignedArray.getAlignMannerAt(i) != XMPalignedArray.NOT_ALIGNED){
+	loopIterList.add(varList.get(i).Ref());
+      }
     }
     args.add(loopIterList);
 

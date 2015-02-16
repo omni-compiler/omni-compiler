@@ -748,6 +748,7 @@ declare_function(ID id)
 
         v = expv_sym_term(F_FUNC, NULL, ID_SYM(id));
         EXPV_TYPE(v) = ID_TYPE(id);
+	TYPE_UNSET_SAVE(ID_TYPE(id));
         ID_ADDR(id) = v;
     }
     return id;
@@ -2312,11 +2313,11 @@ calc_array_spec_size_by_spec(int lower, int upper, int step) {
         upper != 0 &&
         step != 0) {
         ret = (upper - lower + step) / step;
-        if (ret <= 0) {
-            error("invalid array-spec: %d:%d:%d.",
-                  lower, upper, step);
-            ret = -1;
-        }
+        /* if (ret <= 0) { */
+        /*     error("invalid array-spec: %d:%d:%d.", */
+        /*           lower, upper, step); */
+        /*     ret = -1; */
+        /* } */
     }
 
     return ret;
@@ -3280,14 +3281,17 @@ fix_array_dimensions(TYPE_DESC tp)
 	      if (cs != 0){
 		int s = (EXPV_INT_VALUE(upper) - EXPV_INT_VALUE(lower) + cs) / cs;
 		if (s < 0)
-		  // Fix the error message ' "??", line ??: '
-		  error_at_node(TYPE_DIM_UPPER(tp),
-				"upper bound must be larger than lower bound when step > 0 and vice versa.");
-		size = expv_int_term(INT_CONSTANT, type_INT, s);
+		  /* // Fix the error message ' "??", line ??: ' */
+		  /* error_at_node(TYPE_DIM_UPPER(tp), */
+		  /* 		"upper bound must be larger than lower bound when step > 0 and vice versa."); */
+		  size = expv_int_term(INT_CONSTANT, type_INT, 0);
+		else
+		  size = expv_int_term(INT_CONSTANT, type_INT, s);
 	      }
 	      else
 		// Fix the error message ' "??", line ??: '
-		error_at_node(TYPE_DIM_STEP(tp), "step must not be zero");
+		//error_at_node(TYPE_DIM_STEP(tp), "step must not be zero");
+		error("step must not be zero");
 	    }
 	    else
 	      size = expv_cons(DIV_EXPR, type_INT,

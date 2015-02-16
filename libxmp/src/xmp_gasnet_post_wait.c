@@ -1,115 +1,143 @@
+/**
+ * Post/wait functions using GASNet
+ *
+ * @file
+ */
 #include "xmp_internal.h"
-#include "xmp_atomic.h"
 
-typedef struct request_list{
+/* postreq = post request */
+typedef struct _XMP_postreq_info{
   int node;
   int tag;
-} request_list_t;
+} _XMP_postreq_info_t;
 
-typedef struct post_wait_obj{
-  gasnet_hsl_t    hsl;
-  int             wait_num;  /* How many requests form post node are waited */
-  request_list_t  *list;
-  int             list_size;
-} post_wait_obj_t;
+typedef struct _XMP_postreq{
+  _XMP_postreq_info_t *table;   /**< Table for post requests */
+  int                 num;      /**< How many post requests are in table */
+  int                 max_size; /**< Max size of table */
+  gasnet_hsl_t        hsl;      /**< Lock object for GASNet */
+} _XMP_postreq_t;
 
-static post_wait_obj_t pw;
+static _XMP_postreq_t _postreq;
 
+/**
+ * Initialize environment for post/wait directives
+ */
 void _xmp_gasnet_post_wait_initialize()
 {
-  gasnet_hsl_init(&pw.hsl);
-  pw.wait_num            = 0;
-  pw.list                = malloc(sizeof(request_list_t) * _XMP_POST_WAIT_QUEUESIZE);
-  pw.list_size           = _XMP_POST_WAIT_QUEUESIZE;
+  gasnet_hsl_init(&_postreq.hsl);
+  _postreq.num      = 0;
+  _postreq.max_size = _XMP_POSTREQ_INITIAL_TABLE_SIZE;
+  _postreq.table    = malloc(sizeof(_XMP_postreq_info_t) * _postreq.max_size);
 }
 
-static void _xmp_pw_push(const int node, const int tag)
+static void add_request(const int node, const int tag)
 {
-  pw.list[pw.wait_num].node = node;
-  pw.list[pw.wait_num].tag  = tag;
-  pw.wait_num++;
+  _postreq.table[_postreq.num].node = node;
+  _postreq.table[_postreq.num].tag  = tag;
+  _postreq.num++;
 }
 
-static void _xmp_gasnet_do_post(const int node, const int tag)
+static void do_post(const int node, const int tag)
 {
-  gasnet_hsl_lock(&pw.hsl);
-  if(pw.list_size == pw.wait_num){
-    request_list_t *old_list = pw.list;
-    pw.list_size += _XMP_POST_WAIT_QUEUECHUNK;
-    pw.list = malloc(sizeof(request_list_t) * pw.list_size);
-    memcpy(pw.list, old_list, sizeof(request_list_t) * pw.wait_num);
-    free(old_list);
+  gasnet_hsl_lock(&_postreq.hsl);
+  if(_postreq.num == _postreq.max_size){
+    _XMP_postreq_info_t *old_table = _postreq.table;
+    _postreq.max_size += _XMP_POSTREQ_INCREMENT_TABLE_SIZE;
+    _postreq.table = malloc(sizeof(_XMP_postreq_info_t) * _postreq.max_size);
+    memcpy(_postreq.table, old_table, sizeof(_XMP_postreq_info_t) * _postreq.num);
+    free(old_table);
   }
-  _xmp_pw_push(node, tag);
-  gasnet_hsl_unlock(&pw.hsl);
+  add_request(node, tag);
+  gasnet_hsl_unlock(&_postreq.hsl);
 }
 
-void _xmp_gasnet_post_request(gasnet_token_t token, const int node, const int tag)
+void _xmp_gasnet_postreq(gasnet_token_t token, const int node, const int tag)
 {
-  _xmp_gasnet_do_post(node, tag);
+  do_post(node, tag);
 }
 
-void _xmp_gasnet_post(const int target_node, const int tag)
+/**
+ * Post operation
+ *
+ * @param[in] node node number
+ * @param[in] tag  tag
+ */
+void _xmp_gasnet_post(const int node, const int tag)
 {
-  if(target_node == _XMP_world_rank){
-    _xmp_gasnet_do_post(_XMP_world_rank, tag);
+  if(node == _XMP_world_rank){
+    do_post(_XMP_world_rank, tag);
   } else{
-    gasnet_AMRequestShort2(target_node, _XMP_GASNET_POST_REQUEST, _XMP_world_rank, tag);
+    gasnet_AMRequestShort2(node, _XMP_GASNET_POSTREQ, _XMP_world_rank, tag);
   }
 }
 
-static void _xmp_pw_cutdown(const int index)
+static void shift_postreq(const int index)
 {
-  if(index != pw.wait_num-1){  // Not tail index
-    for(int i=index+1;i<pw.wait_num;i++){
-      pw.list[i-1] = pw.list[i];
+  if(index != _postreq.num-1){  // Not tail index
+    for(int i=index+1;i<_postreq.num;i++){
+      _postreq.table[i-1] = _postreq.table[i];
     }
   }
-  pw.wait_num--;
+  _postreq.num--;
 }
 
-static int _xmp_pw_remove_anonymous()
+static bool remove_request_noargs()
 {
-  if(pw.wait_num > 0){
-    pw.wait_num--;
+  if(_postreq.num > 0){
+    _postreq.num--;
     return _XMP_N_INT_TRUE;
   }
   return _XMP_N_INT_FALSE;
 }
 
-static int _xmp_pw_remove_notag(const int node)
+static bool remove_request_node(const int node)
 {
-  for(int i=pw.wait_num-1;i>=0;i--){
-    if(node == pw.list[i].node){
-      _xmp_pw_cutdown(i);
+  for(int i=_postreq.num-1;i>=0;i--){
+    if(node == _postreq.table[i].node){
+      shift_postreq(i);
       return _XMP_N_INT_TRUE;
     }
   }
   return _XMP_N_INT_FALSE;
 }
 
-static int _xmp_pw_remove(const int node, const int tag)
+static bool remove_request(const int node, const int tag)
 {
-  for(int i=pw.wait_num-1;i>=0;i--){
-    if(node == pw.list[i].node && tag == pw.list[i].tag){
-      _xmp_pw_cutdown(i);
+  for(int i=_postreq.num-1;i>=0;i--){
+    if(node == _postreq.table[i].node && tag == _postreq.table[i].tag){
+      shift_postreq(i);
       return _XMP_N_INT_TRUE;
     }
   }
   return _XMP_N_INT_FALSE;
 }
 
-void _xmp_gasnet_wait()
+/**
+ * Wait operation without node-ref and tag
+ */
+void _xmp_gasnet_wait_noargs()
 {
-  GASNET_BLOCKUNTIL(_xmp_pw_remove_anonymous());
+  GASNET_BLOCKUNTIL(remove_request_noargs());
 }
 
-void _xmp_gasnet_wait_tag(const int node, const int tag)
+/**
+ * Wait operation with node-ref
+ *
+ * @param[in] node node number
+ */
+void _xmp_gasnet_wait_node(const int node)
 {
-  GASNET_BLOCKUNTIL(_xmp_pw_remove(node, tag));
+  GASNET_BLOCKUNTIL(remove_request_node(node));
 }
 
-void _xmp_gasnet_wait_notag(const int node)
+/**
+ * Wait operation with node-ref and tag
+ *
+ * @param[in] node node number
+ * @param[in] tag  tag
+ */
+void _xmp_gasnet_wait(const int node, const int tag)
 {
-  GASNET_BLOCKUNTIL(_xmp_pw_remove_notag(node));
+  GASNET_BLOCKUNTIL(remove_request(node, tag));
 }
