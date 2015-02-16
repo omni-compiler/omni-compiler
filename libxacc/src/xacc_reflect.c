@@ -993,27 +993,22 @@ static void _XACC_reflect_do_inter_start_dim0(_XACC_arrays_t *arrays_desc)
 {
 #pragma omp master
   {
-    _XACC_array_t *array_desc = arrays_desc->array + arrays_desc->device_type->lb;
-    _XACC_array_info_t *ai = array_desc->info + 0;
-    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+    _XACC_array_t *array_desc_lb = arrays_desc->array + arrays_desc->device_type->lb;
+    _XACC_array_info_t *ai_lb = array_desc_lb->info + 0;
+    _XMP_reflect_sched_t *reflect_lb = ai_lb->reflect_sched;
+    _XACC_array_t *array_desc_ub = arrays_desc->array + arrays_desc->device_type->ub;
+    _XACC_array_info_t *ai_ub = array_desc_ub->info + 0;
+    _XMP_reflect_sched_t *reflect_ub = ai_ub->reflect_sched;
+
     if(useHostBuffer){
-      reflect_pack_wait(reflect);
+      reflect_pack_wait(reflect_lb);
+      reflect_pack_wait(reflect_ub);      
     }
 
-    MPI_Start(reflect->req + 0); //lo recv                                                                                                                                                        
-    MPI_Start(reflect->req + 3); //hi send                                                                                                                                                        
-  }
-#pragma omp master
-  {
-    _XACC_array_t *array_desc = arrays_desc->array + arrays_desc->device_type->ub;
-    _XACC_array_info_t *ai = array_desc->info + 0;
-    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
-    if(useHostBuffer){
-      reflect_pack_wait(reflect);
-    }
-    
-    MPI_Start(reflect->req + 1); //lo send                                                                                                                                                        
-    MPI_Start(reflect->req + 2); //hi recv                                                                                                                                                        
+    MPI_Start(reflect_lb->req + 0); //lo recv
+    MPI_Start(reflect_ub->req + 1); //lo send
+    MPI_Start(reflect_ub->req + 2); //hi recv
+    MPI_Start(reflect_lb->req + 3); //hi send
   }
   TLOG_LOG(TLOG_EVENT_1);
 }
@@ -1022,19 +1017,17 @@ static void _XACC_reflect_do_inter_wait_dim0(_XACC_arrays_t *arrays_desc)
 {
 #pragma omp master
   {
-    _XACC_array_t *array_desc = arrays_desc->array + arrays_desc->device_type->lb;
-    _XACC_array_info_t *ai = array_desc->info + 0;
-    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
-    MPI_Wait(reflect->req + 0, MPI_STATUS_IGNORE); //lo recv                                                                                                                                      
-    MPI_Wait(reflect->req + 3, MPI_STATUS_IGNORE); //hi send                                                                                                                                      
-  }
-#pragma omp master
-  {
-    _XACC_array_t *array_desc = arrays_desc->array + arrays_desc->device_type->ub;
-    _XACC_array_info_t *ai = array_desc->info + 0;
-    _XMP_reflect_sched_t *reflect = ai->reflect_sched;
-    MPI_Wait(reflect->req + 1, MPI_STATUS_IGNORE); //lo send                                                                                                                                      
-    MPI_Wait(reflect->req + 2, MPI_STATUS_IGNORE); //hi recv                                                                                                                                      
+    _XACC_array_t *array_desc_lb = arrays_desc->array + arrays_desc->device_type->lb;
+    _XACC_array_info_t *ai_lb = array_desc_lb->info + 0;
+    _XMP_reflect_sched_t *reflect_lb = ai_lb->reflect_sched;
+    _XACC_array_t *array_desc_ub = arrays_desc->array + arrays_desc->device_type->ub;
+    _XACC_array_info_t *ai_ub = array_desc_ub->info + 0;
+    _XMP_reflect_sched_t *reflect_ub = ai_ub->reflect_sched;
+
+    MPI_Wait(reflect_lb->req + 0, MPI_STATUS_IGNORE); //lo recv
+    MPI_Wait(reflect_ub->req + 1, MPI_STATUS_IGNORE); //lo send
+    MPI_Wait(reflect_ub->req + 2, MPI_STATUS_IGNORE); //hi recv
+    MPI_Wait(reflect_lb->req + 3, MPI_STATUS_IGNORE); //hi send
   }
   TLOG_LOG(TLOG_EVENT_1);
 }
