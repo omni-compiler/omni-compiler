@@ -25,3 +25,9 @@ extern void _XACC_sched_loop_layout_BLOCK(int init,
                                    int dim,
                                    int deviceNum);
 extern void _XACC_set_shadow_NORMAL(void* array_desc, int dim , int lo, int hi);
+
+extern void _XACC_set_deviceptr(void *arrays_desc, void *deviceptr, int deviceNum);
+
+// xacc_reflect.c
+extern void _XACC_reflect_init(void *arrays_desc);
+extern void _XACC_reflect_do(void *arrays_desc);

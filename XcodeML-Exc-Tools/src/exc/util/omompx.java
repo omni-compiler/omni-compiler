@@ -337,6 +337,9 @@ public class omompx
           xobjFile.addHeaderLine("# include \"xmp_tlog.h\"");
         }
       }
+      if(xcalableACC){
+	xobjFile.addHeaderLine("# include \"xacc_func_decl.h\"");
+      }
       xmpTranslator.finalize();
 
       if(xcodeWriter != null) {
