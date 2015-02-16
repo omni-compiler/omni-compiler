@@ -49,6 +49,14 @@ void xmpf_finalize_all__()
 }
 
 
+/*
+ * dummy routine
+ *  This routine will be called only if the user program does not
+ *  require to generate the initialization routines for modules.
+ */
+void xmpf_traverse_module_(void) { }
+
+
 void xmpf_debug_()
 {
   int flag = 0;
