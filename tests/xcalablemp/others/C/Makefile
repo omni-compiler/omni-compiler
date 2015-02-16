@@ -29,7 +29,7 @@ all default: $(EXES)
 .c.x:
 	$(XCC) -o $@ $<
 
-run: macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 293-hyphen.x 364.x
+run: macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 293-hyphen.x
 	$(XRUN) -n 4 ./macro_in_pragma.x
 	export XMP_NODE_SIZE0=2; \
 	export XMP_NODE_SIZE1=2; \
@@ -47,7 +47,6 @@ run: macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 2
 	XMP_NODE_SIZE0=4 $(XRUN) -n 4 ./343_dynamicnode.x
 	$(XRUN) -n 1 ./344_include.x
 	$(XRUN) -n 1 ./293-hyphen.x
-	$(XRUN) -n 1 ./364.x
 
 #-- cleaning
 clean:
