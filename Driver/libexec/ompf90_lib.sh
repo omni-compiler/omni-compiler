@@ -1,4 +1,4 @@
-function xmpf90_print_help()
+function ompf90_print_help()
 {
 cat <<EOF
 usage: $1 <OPTIONS> <INPUTFILE> ...
@@ -31,20 +31,15 @@ Process Options
   --Wn[option] : Add native compiler option.
   --Wl[option] : Add linker option.
 
-XcalableMP Options
+Omni OpenACC Options
 
-  -omp,--openmp       : enable OpenMP.
-  -xacc,--xcalableacc : enable XcalableACC.
-  --scalasca-all      : output results in scalasca format for all directives.
-  --scalasca          : output results in scalasca format for selected directives.
-  --tlog-all          : output results in tlog format for all directives.
-  --tlog              : output results in tlog format for selected directives.
+  -acc, --openacc : Enable OpenACC.
 EOF
 }
 
-function xmpf90_show_env()
+function ompf90_show_env()
 {
-    CONF_FILE=${OMNI_HOME}/etc/xmpf90.conf
+    CONF_FILE=${OMNI_HOME}/etc/ompf90.conf
     if [ -f $CONF_FILE ]; then
 	for val in `sed '/^[[:space:]]*$/d' ${CONF_FILE} | grep -v '^#' | awk -F= '{print $1}'`
 	do
@@ -57,9 +52,9 @@ function xmpf90_show_env()
     fi
 }
 
-function xmpf90_set_parameters()
+function ompf90_set_parameters()
 {
-    local tmp_args=
+    local tmp_args=""
     local OUTPUT_FLAG=
     local MODULE_FLAG=
 
@@ -67,11 +62,11 @@ function xmpf90_set_parameters()
 	case $arg in
 	    -o)
                 OUTPUT_FLAG=true;;
-	    -J)
-		MODULE_FLAG=true;;
-	    -J?*)
-		MODULE_OPT="$MODULE_OPT -M${arg#-J}"
-		other_args="$other_args $arg";;
+            -J)
+                MODULE_FLAG=true;;
+            -J?*)
+                MODULE_OPT="$MODULE_OPT -M${arg#-J}"
+                other_args="$other_args $arg";;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)
@@ -83,10 +78,10 @@ function xmpf90_set_parameters()
 		exit 0;;
             -h|--help)
 		local scriptname=`basename $0`
-		xmpf90_print_help $scriptname
+		ompf90_print_help $scriptname
 		exit 0;;
 	    --show-env)
-		xmpf90_show_env
+		ompf90_show_env
 		exit 0;;
             --tmp)
 		OUTPUT_TEMPORAL=true;;
@@ -127,29 +122,24 @@ function xmpf90_set_parameters()
             --Wl*)
 		LINKER_ADD_OPT=${arg#--Wl}
 		;;
-	    --openmp|-omp)
-		ENABLE_OPENMP=true;;
-	    --xcalableacc|-xacc)
-		ENABLE_XACC=true;;
-	    --scalasca-all)
-		ENABLE_SCALASCA_ALL=true;;
-	    --scalasca)
-		ENABLE_SCALASCA=true;;
-	    --tlog-all)
-		ENABLE_TLOG_ALL=true;;
-	    --tlog)
-		ENABLE_TLOG=true;;
+	    -acc|--openacc)
+		omni_error_exit "OpenACC for ompf90 has been not implemented yet."
+		if [ ${ENABLE_ACC} = "0" ]; then
+		    omni_error_exit "warning: $arg option is unavailable, rebuild the compiler with ./configure --enable-openacc"
+		fi
+		ENABLE_ACC=true
+		;;
             *)
-		if [ "$OUTPUT_FLAG" = true ]; then
-		    OUTPUT_FILE=$arg
-		    OUTPUT_FLAG=false
-		elif [[ "$MODULE_FLAG" = true ]]; then
-		    MODULE_OPT="$MODULE_OPT -M$arg"
-		    other_args="$other_args -J $arg"
-		    MODULE_FLAG=false
-		else
-		    tmp_args="$tmp_args $arg"
-		fi;;
+                if [ "$OUTPUT_FLAG" = true ]; then
+                    OUTPUT_FILE=$arg
+                    OUTPUT_FLAG=false
+                elif [[ "$MODULE_FLAG" = true ]]; then
+                    MODULE_OPT="$MODULE_OPT -M$arg"
+                    other_args="$other_args -J $arg"
+                    MODULE_FLAG=false
+                else
+                    tmp_args="$tmp_args $arg"
+                fi;;
 	esac
     done
 
@@ -158,18 +148,19 @@ function xmpf90_set_parameters()
     fi
 
     for arg in $tmp_args; do
-	if [[ $arg =~ \.F90$ ]] || [[ $arg =~ \.F$ ]]; then
-	    F_F90_files="$F_F90_files $arg"
-	    all_files="$all_files $arg"
-	elif [[ $arg =~ \.f90$ ]] || [[ $arg =~ \.f$ ]]; then
+        if [[ $arg =~ \.F90$ ]] || [[ $arg =~ \.F$ ]]; then
+            F_F90_files="$F_F90_files $arg"
+            all_files="$all_files $arg"
+        elif [[ $arg =~ \.f90$ ]] || [[ $arg =~ \.f$ ]]; then
             f_f90_files="$f_f90_files $arg"
-	    all_files="$all_files $arg"
-	elif [[ $arg =~ \.a$ ]]; then
-	    archive_files="$archive_files $arg"
-	elif [[ "${arg}" =~ \.o$ ]]; then
+            all_files="$all_files $arg"
+        elif [[ $arg =~ \.a$ ]]; then
+            archive_files="$archive_files $arg"
+        elif [[ "${arg}" =~ \.o$ ]]; then
             obj_files="$obj_files $arg"
-	else
+        else
             other_args="$other_args $arg"
-	fi
+        fi
     done
 }
+

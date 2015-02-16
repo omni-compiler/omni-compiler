@@ -2,7 +2,7 @@ XFC     = xmpf90 -O2
 XRUN    = mpirun
 EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x
 
-all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x 228.x 45_save.o 358_result.x
+all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x 228.x 45_save.o 358_result.x 377.x
 
 module_test0.x: module0.o main.o
 	$(XFC) -o module_test0.x module0.o main.o
@@ -66,6 +66,15 @@ refobj.x: refobj.f90
 358_result.x: 358_result.f90
 	$(XFC) -o $@ $<
 
+377.x: 377.f90
+	rm -f 377.txt; \
+	$(XFC) -c -o 377.txt 377.f90; \
+	if test -f 377.txt; then \
+	  echo "PASS"; \
+	else \
+	  exit 1; \
+	fi;
+
 run: $(EXES)
 	$(XRUN) -np 2 ./module_test.x
 	$(XRUN) -np 2 ./exit.x
@@ -81,3 +90,4 @@ run: $(EXES)
 clean:
 	rm -f $(EXES) *.o *.*mod
 	rm -rf mod
+	rm -f 377.txt

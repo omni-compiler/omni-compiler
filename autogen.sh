@@ -32,24 +32,16 @@ rm -rf Makefile config.cache config.log config.status autom4te.cache
 (cd C-FrontEnd;
     rm -rf src/Makefile)
 (cd C-BackEnd;
-    rm -rf Makefile ant.properties bin/C_Back)
+    rm -rf Makefile bin/C_Back)
 (cd F-FrontEnd;
     rm -rf src/Makefile)
 (cd F-BackEnd;
-    rm -rf Makefile ant.properties bin/F_Back)
+    rm -rf Makefile bin/F_Back)
 (cd Driver;
-    rm -rf Makefile etc/omc.conf etc/omf.conf \
-    etc/java.conf \
-    etc/*.openmp \
-    bin/*.openmp \
-    bin/oml2x bin/omx2x bin/omx2l \
-    bin/ompp bin/omnative bin/omlinker \
-    bin/omc2c bin/ompcc bin/omc2x bin/omcx2x bin/omx2c \
-    bin/omcpp bin/omcnative bin/omclinker \
-    bin/omf2f bin/ompf90 bin/omf2x bin/omfx2x bin/omx2f \
-    bin/omfpp bin/omfnative bin/omflinker \
-    bin/xmpcc bin/*.xmp etc/*.xmp \
-    bin/xmpcc-threads bin/*.xmp_threads etc/*.xmp_threads)
+    rm -rf Makefile etc/java.conf etc/ompcc.conf \
+    etc/xmpcc.conf etc/xmpf90.conf etc/ompf90.conf \
+    bin/ompcc bin/ompf90 bin/xmpcc bin/xmpf90 \
+    libexec/omni_traverse)
 
 (cd libxmp;
     rm -rf src/Makefile)
@@ -58,9 +50,9 @@ rm -rf Makefile config.cache config.log config.status autom4te.cache
 (cd libtlog;
     rm -rf src/Makefile)
 (cd XcodeML-Common;
-    rm -rf src/Makefile src/ant.properties)
+    rm -rf src/Makefile)
 (cd XcodeML-Exc-Tools;
-    rm -rf src/Makefile src/ant.properties)
+    rm -rf src/Makefile)
 (cd tests;
     rm -rf C-test/Makefile tiny/Makefile clinkpack/Makefile)
 

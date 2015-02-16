@@ -19,11 +19,20 @@ all default: $(EXES)
 364.x: 364.c
 	$(XCC) --debug $^ -o $@
 
+377.x: 377.c
+	rm -f 377.txt; \
+	$(XCC) -c -o 377.txt 377.c; \
+	if test -f 377.txt; then \
+	  echo "PASS";\
+	else \
+	  exit 1; \
+	fi;
+
 #-- default rules
 .c.x:
 	$(XCC) -o $@ $<
 
-run:macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 293-hyphen.x 364.x
+run: macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 293-hyphen.x 364.x
 	$(XRUN) -n 4 ./macro_in_pragma.x
 	export XMP_NODE_SIZE0=2; \
 	export XMP_NODE_SIZE1=2; \
@@ -47,3 +56,4 @@ run:macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 29
 clean:
 	rm -f $(EXES) $(C_OBJS)
 	rm -rf __omni_tmp__
+	rm -f 377.txt

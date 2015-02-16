@@ -1,8 +1,3 @@
-static char rcsid[] = "$Id: tlog.c,v 1.1.1.1 2005/06/20 09:56:18 msato Exp $";
-/* 
- * $Release$
- * $Copyright$
- */
 #include <stdio.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -21,7 +16,6 @@ TLOG_HANDLE tlog_handle_table[MAX_THREADS];
 static TLOG_BLOCK *free_block = NULL;
 
 static TLOG_DATA *_tlog_get_data(int id);
-static void _tlog_dump(void);
 static void _tlog_adjust_all_time();
 void _tlog_log(int tid,enum tlog_type type,int arg);
 void _tlog_file_open();
