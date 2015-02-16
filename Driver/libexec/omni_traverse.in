@@ -7,6 +7,10 @@
 MODE=1         # generate subroutines respectively for all groups
 #MODE=2          # generate one subroutine for all proceures of all groups
 
+#-- for MODE 1
+DEFAULT_F_GROUPNAMES=( xmpf_traverse_module xmpf_traverse_initcoarray )
+DEFAULT_C_GROUPNAMES=( xmpc_traverse_init xmpc_traverse_finalize )
+
 NM="@NM@"
 
 USAGE='usage: '$0' <option> ... <input_file> ...
@@ -82,8 +86,14 @@ if [ "${error}" = "yes" ]; then
 fi
 
 #--- classify the chosen names by keywords
-groupnames=()
-for name in "${procedures[@]}"; do
+if [ $MODE == 1 ]; then
+  case $LANG in
+  F) groupnames=( ${DEFAULT_F_GROUPNAMES[@]} );;
+  C) groupnames=( ${DEFAULT_C_GROUPNAMES[@]} );;
+  esac
+else
+  groupnames=()
+  for name in "${procedures[@]}"; do
     # separate procedure name "prefix_travserse_keywd_reststring"
     # into three parts, groupname, '_' and basename, where
     #  groupname is "prefix_travserse_keywd" and
@@ -96,7 +106,8 @@ for name in "${procedures[@]}"; do
         $groupname)  ;;
         *)           groupnames+=( $groupname );;
     esac
-done
+  done
+fi
 
 if [ "$VERBOSE" = "yes" ]; then
     echo ------------
