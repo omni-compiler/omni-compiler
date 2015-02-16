@@ -26,6 +26,9 @@ void xmpf_init_all__()
   _XMPC_running = 0;
   _XMPF_running = 1;
 
+  /* for Coarray environment */
+  _XMPF_coarray_init();
+
 #if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
   FJMPI_Rdma_init();
 #endif

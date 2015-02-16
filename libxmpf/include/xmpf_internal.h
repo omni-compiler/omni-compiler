@@ -296,6 +296,8 @@ extern int _XMP_boundaryByte;     // communication boundary (bytes)
 #define COARRAY_PUT_CODE  701
 
 /* xmpf_coarray.c */
+extern void _XMPF_coarray_init(void); 
+
 extern int _XMPF_coarrayMsg;          // default: debug message off
 extern void xmpf_coarray_msg_(int *sw);
 

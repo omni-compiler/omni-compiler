@@ -3,32 +3,72 @@
 static int _getNewSerno();
 static int _set_coarrayInfo(char *desc, char *orgAddr, int count, size_t element);
 
+static void _coarray_msg(int sw);
+
 
 /*****************************************\
-  internal switches
+  runtime environment
 \*****************************************/
 
 int _XMPF_coarrayMsg = 0;          // default: message off
 int _XMPF_coarrayErr = 0;          // default: aggressive error check off
 
-void xmpf_coarray_msg_(int *sw)
+void _XMPF_coarray_init(void)
 {
-  if (_XMPF_coarrayMsg && *sw == 0)
-    _XMPF_coarrayDebugPrint("xmpf_coarray_msg OFF\n");
-
-  _XMPF_coarrayMsg = *sw;
-
-  if (_XMPF_coarrayMsg) {
-    _XMPF_coarrayDebugPrint("xmpf_coarray_msg ON\n");
-#ifdef _XMP_COARRAY_FJRDMA
-    fprintf(stderr, "  _XMP_COARRAY_FJRDMA defined -- ");
-#else
-    fprintf(stderr, "  _XMP_COARRAY_FJRDMA not defined -- ");
-#endif
-    fprintf(stderr, "%d-byte boundary\n", BOUNDARY_BYTE);
+  char *env1 = getenv("XMPF_COARRAY_MSG");
+  if (env1 != NULL) {
+    _coarray_msg(atoi(env1));
   }
+
 }
 
+
+/*
+ *  user's switch written in the program
+ */
+void xmpf_coarray_msg_(int *sw)
+{
+  _coarray_msg(*sw);
+}
+
+
+void _coarray_msg(int sw)
+{
+  switch (sw) {
+  case 0:
+  default:
+    if (_XMPF_coarrayMsg)
+      _XMPF_coarrayDebugPrint("xmpf_coarray_msg OFF\n");
+    _XMPF_coarrayMsg = 0;
+    return;
+
+  case 1:
+    _XMPF_coarrayMsg = 1;
+    break;
+
+  case 2:
+    if (xmp_node_num() == 1) {
+      _XMPF_coarrayMsg = 1;
+      break;
+    } else {
+      if (_XMPF_coarrayMsg)
+        _XMPF_coarrayDebugPrint("xmpf_coarray_msg OFF\n");
+      _XMPF_coarrayMsg = 0;
+      return;
+    }
+  }
+
+  _XMPF_coarrayDebugPrint("xmpf_coarray_msg ON\n");
+  fprintf(stderr,
+          "  %d-byte boundary since _XMP_COARRAY_FJRDMA %s\n",
+          BOUNDARY_BYTE,
+#ifdef _XMP_COARRAY_FJRDMA
+          "is set."
+#else
+          "is not set."
+#endif
+          );
+}
 
 
 /*****************************************\
