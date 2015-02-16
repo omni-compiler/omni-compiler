@@ -1,3 +1,8 @@
+function omni_set_trap()
+{
+  trap "rm -rf $TEMP_DIR; exit 1" 2
+}
+
 function omni_error_exit()
 {
     echo "$0: error: $1"
@@ -18,15 +23,12 @@ function omni_print_version()
 
 function omni_exec()
 {
-    if [ $VERBOSE = true ] || [ $DRY_RUN = true ]; then
-	echo $@
+    [ $VERBOSE = true -o $DRY_RUN = true ] && echo $@
+    [ $DRY_RUN = false ] && eval $@
+    if [ $? -ne 0 ]; then
+	[ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
+	exit 1
     fi
-
-    if [ $DRY_RUN = false ]; then
-	eval $@
-    fi
-
-    [ $? -ne 0 ] && { omni_exec rm -rf $TEMP_DIR; exit 1; }
 }
 
 
@@ -35,9 +37,7 @@ function omni_f_check_file_exist()
     ([ "$all_files" = "" ] && [ "$obj_files" = "" ]) && omni_error_exit "no input files."
 
     for file in $all_files $obj_files $archive_files; do
-	if [ ! -f $file ]; then
-	        omni_error_exit "not found ${file}"
-fi
+	[ ! -f $file ] && omni_error_exit "not found ${file}"
     done
 }
 
@@ -65,9 +65,7 @@ function omni_c_check_file_exist()
     ([ "$c_files" = "" ] && [ "$obj_files" = "" ]) && omni_error_exit "no input files."
 
     for file in $c_files $obj_files; do
-        if [ ! -f $file ]; then
-            omni_error_exit "not found ${file}"
-        fi
+        [ ! -f $file ] && omni_error_exit "not found ${file}"
     done
 }
 
@@ -84,4 +82,3 @@ function omni_c_norm_file_name()
 
     echo $NORM_NAME
 }
-

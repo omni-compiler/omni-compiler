@@ -62,7 +62,7 @@ omni_exec mkdir -p $TEMP_DIR
 [ $ENABLE_DEBUG = true ] && echo "Create ${TEMP_DIR}/"
 
 ### Clean temporal directory before exit ###
-trap "rm -rf $TEMP_DIR; exit 1" 1 2 3 15
+omni_set_trap
 
 ### Preprocessor ###
 [ $ONLY_PP = true -a -f "$OUTPUT_FILE" ] && omni_exec rm $OUTPUT_FILE
