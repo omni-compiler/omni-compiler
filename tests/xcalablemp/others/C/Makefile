@@ -16,23 +16,20 @@ all default: $(EXES)
 344_include.x: ./344_include.c
 	$(XCC) -I$(MPIPATH) $^ -o $@
 
-364.x: 364.c
-	$(XCC) --debug $^ -o $@
-
 377.x: 377.c
 	rm -f 377.txt; \
-	$(XCC) -c -o 377.txt 377.c; \
-	if test -f 377.txt; then \
-	  echo "PASS";\
-	else \
-	  exit 1; \
-	fi;
+	$(XCC) -c -o 377.txt $<; \
+	[ ! -f 377.txt ] && exit 1; \
+	rm -rf __omni_tmp__; \
+	$(XCC) -c $< --debug 1> /dev/null; \
+	[ ! -d __omni_tmp__ ] && exit 1; \
+	echo "PASS"; 
 
 #-- default rules
 .c.x:
 	$(XCC) -o $@ $<
 
-run: macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 293-hyphen.x 364.x
+run: macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 293-hyphen.x
 	$(XRUN) -n 4 ./macro_in_pragma.x
 	export XMP_NODE_SIZE0=2; \
 	export XMP_NODE_SIZE1=2; \
@@ -50,7 +47,6 @@ run: macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 2
 	XMP_NODE_SIZE0=4 $(XRUN) -n 4 ./343_dynamicnode.x
 	$(XRUN) -n 1 ./344_include.x
 	$(XRUN) -n 1 ./293-hyphen.x
-	$(XRUN) -n 1 ./364.x
 
 #-- cleaning
 clean:

@@ -68,12 +68,12 @@ refobj.x: refobj.f90
 
 377.x: 377.f90
 	rm -f 377.txt; \
-	$(XFC) -c -o 377.txt 377.f90; \
-	if test -f 377.txt; then \
-	  echo "PASS"; \
-	else \
-	  exit 1; \
-	fi;
+	$(XFC) -c -o 377.txt $<; \
+	[ ! -f 377.txt ] && exit 1; \
+	rm -rf __omni_tmp__; \
+	$(XFC) -c $< --debug 1> /dev/null;\
+	[ ! -d __omni_tmp__ ] && exit 1; \
+	echo "PASS";
 
 run: $(EXES)
 	$(XRUN) -np 2 ./module_test.x
@@ -89,5 +89,5 @@ run: $(EXES)
 
 clean:
 	rm -f $(EXES) *.o *.*mod
-	rm -rf mod
+	rm -rf mod __omni_tmp__
 	rm -f 377.txt

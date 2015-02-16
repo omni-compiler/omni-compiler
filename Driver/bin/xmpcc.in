@@ -67,6 +67,7 @@ if [ $ENABLE_DEBUG = true ]; then
 fi
 
 omni_exec mkdir -p $TEMP_DIR
+[ $ENABLE_DEBUG = true ] && echo "Create ${TEMP_DIR}/"
 
 ### Clean temporal directory before exit ###
 trap "rm -rf $TEMP_DIR; exit 1" 1 2 3 15
@@ -94,7 +95,8 @@ for c_file in $c_files; do
     fi
 done
 [ $STOP_PP = true ] && exit 0;
-[ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }
+[ $ONLY_PP = true -a $ENABLE_DEBUG = true ] && exit 0;          # xmpcc -E --debug hoge.c (save $TMP_DIR)
+[ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # xmpcc -E hoge.c
 
 ### Frontend ###
 [ $ENABLE_XACC = true ] && FRONTEND_ADD_OPT="-facc $FRONTEND_ADD_OPT"
@@ -165,7 +167,8 @@ for c_file in $c_files; do
     fi
 done
 [ $STOP_COMPILE = true ] && exit 0;
-[ $ENABLE_LINKER = false ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }
+[ $ENABLE_LINKER = false -a $ENABLE_DEBUG = true ] && exit 0;         # xmpcc -c --debug hoge.c
+[ $ENABLE_LINKER = false ] && { omni_exec rm -rf $TEMP_DIR; exit 0; } # xmpcc -c hoge.c
 
 ### Linker ###
 # collect initialize modules
@@ -190,10 +193,6 @@ else
 fi
 
 ### Delete temporal directory ###
-if [ $ENABLE_DEBUG = true ]; then
-    echo "Create ${TEMP_DIR}/"
-else
-    omni_exec rm -rf $TEMP_DIR
-fi
+[ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
 
 exit 0
