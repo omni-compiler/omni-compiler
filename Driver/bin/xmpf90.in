@@ -132,6 +132,8 @@ for file in $all_files; do
 
     omni_exec $OMNI_FX2X_CMD $OMNI_FX2X_OPT $XCODE_TRANSLATOR_ADD_OPT $MODULE_OPT $PROFILE_OPT $FILE_IN_X -o $FILE_OUT_X
     # also create ${TEMP_DIR}/${FILE_NAME}_${EXT}_in.F90
+    # Note : The BlueGene/Q 's mpi compiler can compile only *.F90 in XMP process.
+    # So that remains .F90 extention after process of the native compilier.
 done
 [ $STOP_TRANSLATOR = true ] && exit 0;
 
