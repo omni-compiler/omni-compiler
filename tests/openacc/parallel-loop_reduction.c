@@ -1,3 +1,14 @@
+int g_sum;
+
+void reduce(int a[100])
+{
+  int i;
+#pragma acc parallel loop reduction(+:g_sum) present(a, g_sum)
+  for(i =0;i<100;i++){
+    g_sum += a[i];
+  }
+}
+
 int main()
 {
   int array[100];
@@ -62,5 +73,12 @@ int main()
   //vefify
   if(sum != 5000) return 6;
   
+  g_sum = 0;
+#pragma acc data copy(array,g_sum)
+  {
+    reduce(array);
+  }
+  if(g_sum != 4950) return 7;
+
   return 0;
 }

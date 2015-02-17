@@ -53,7 +53,10 @@ public class ACCtranslateData {
       Ident varId = var.getId();
       
       if(! var.allocatesDeviceMemory()){
-    	  if(var.isFirstprivate() || var.isPrivate() || var.isReduction()) continue;
+    	  if(var.isFirstprivate() || var.isPrivate()) continue;
+
+	  //FIXME
+    	  if(var.isReduction() && !var.isPresent()) continue;
     	  
     	  Ident hostDescId = dataInfo.getHostDescId(var.getName());
     	  if(hostDescId != null) continue;
