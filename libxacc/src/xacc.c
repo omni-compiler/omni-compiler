@@ -127,6 +127,57 @@ void _XACC_init_layouted_array(_XACC_arrays_t **arrays, _XMP_array_t* alignedArr
   *arrays = layoutedArray;
 }
 
+void _XACC_init_layouted_array_normal(_XACC_arrays_t **arrays, void* host_ptr, size_t element_size, int dim, unsigned long long * dim_size, _XACC_device_t* device)
+{
+  _XACC_arrays_t* layoutedArray = (_XACC_arrays_t*)_XMP_alloc(sizeof(_XACC_arrays_t));
+
+  layoutedArray->device_type = device;
+  layoutedArray->array = (_XACC_array_t*)_XMP_alloc(sizeof(_XACC_array_t) * (device->ub + 1));
+  
+  for(int dev = device->lb; dev <= device->ub; dev += device->step){
+    _XACC_array_info_t* d_array_info = (_XACC_array_info_t*)_XMP_alloc(sizeof(_XACC_array_info_t) * dim);
+    //    _XMP_array_info_t *h_array_info = (_XMP_array_info_t*)_XMP_alloc(sizeof(_XMP_array_info_t) * dim);//alignedArray->info;
+    layoutedArray->array[dev].info = d_array_info;
+    int i;
+    for(i = 0; i <dim; i++){
+      unsigned long long dim_size_i = dim_size[i];
+
+      d_array_info[i].device_layout_manner = _XMP_N_DIST_DUPLICATION;
+      d_array_info[i].par_lower = 0; //h_array_info[i].par_lower;
+      d_array_info[i].par_upper = dim_size_i; //h_array_info[i].par_upper;
+      d_array_info[i].par_stride = 1; //h_array_info[i].par_stride;
+      d_array_info[i].par_size = dim_size_i; //h_array_info[i].par_size;
+
+      d_array_info[i].alloc_size = dim_size_i; //h_array_info[i].alloc_size;
+
+      d_array_info[i].local_lower = 0; //h_array_info[i].local_lower;
+      d_array_info[i].local_upper = dim_size_i; //h_array_info[i].local_upper;
+      d_array_info[i].local_stride = 1; //h_array_info[i].local_stride;
+
+      d_array_info[i].shadow_size_lo = 0; //h_array_info[i].shadow_size_lo;
+      d_array_info[i].shadow_size_hi = 0; //h_array_info[i].shadow_size_hi;
+
+      d_array_info[i].reflect_sched = NULL;
+
+      /* fprintf(stderr,"dim=%d, host par (%d, %d, %d) local(%d, %d, %d, %d)\n", */
+      /*      i, */
+      /*      h_array_info[i].par_lower, */
+      /*      h_array_info[i].par_upper, */
+      /*      h_array_info[i].par_stride, */
+      /*      h_array_info[i].local_lower, */
+      /*      h_array_info[i].local_upper, */
+      /*      h_array_info[i].local_stride, */
+      /*      h_array_info[i].alloc_size); */
+
+    }
+  }
+  layoutedArray->dim = dim;
+  layoutedArray->hostptr = host_ptr; //alignedArray->array_addr_p;
+  layoutedArray->type_size = element_size; //alignedArray->type_size;
+  layoutedArray->xmp_array = NULL; //alignedArray;
+  *arrays = layoutedArray;
+}
+
 void _XACC_split_layouted_array_DUPLICATION(_XACC_arrays_t* array_desc, int dim){
   /* _XMP_array_info_t *h_array_info = &(array_desc->info[dim]); */
 
