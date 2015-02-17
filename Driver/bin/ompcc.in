@@ -117,11 +117,10 @@ for c_file in $c_files; do
     FILE_NAME=`omni_c_norm_file_name $c_file`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
     FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_in.xml
     FILE_OUT_X=${TEMP_DIR}/${FILE_NAME}_out.xml
-    FILE_C=${TEMP_DIR}/${FILE_NAME}.c
 
     omni_exec $OMNI_CX2X_CMD $OMNI_CX2X_OPT $XCODE_TRANSLATOR_ADD_OPT $FILE_IN_X -o $FILE_OUT_X
     # also create ${TEMP_DIR}/${FILE_NAME}_in.c
-    omni_exec cp ${TEMP_DIR}/${FILE_NAME}_in.c $FILE_C
+    omni_exec cp ${TEMP_DIR}/${FILE_NAME}_in.c FILE_C=${TEMP_DIR}/${FILE_NAME}.c
 done
 [ $STOP_TRANSLATOR = true ] && exit 0;
 

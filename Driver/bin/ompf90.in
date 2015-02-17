@@ -126,12 +126,9 @@ for file in $all_files; do
     EXT=${file##*.}
     FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.xml
     FILE_OUT_X=${TEMP_DIR}/${FILE_NAME}_${EXT}_out.xml
-    FILE_F=${TEMP_DIR}/${FILE_NAME}.${EXT}
 
     omni_exec $OMNI_FX2X_CMD $OMNI_FX2X_OPT $XCODE_TRANSLATOR_ADD_OPT $MODULE_OPT $FILE_IN_X -o $FILE_OUT_X
     # also create ${TEMP_DIR}/${FILE_NAME}_${EXT}_in.F90
-
-    mv ${TEMP_DIR}/${FILE_NAME}_${EXT}_in.F90 $FILE_F
 done
 [ $STOP_TRANSLATOR = true ] && exit 0;
 
@@ -140,9 +137,10 @@ if [ $OUTPUT_TEMPORAL = true ]; then
     for file in $all_files; do
 	FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
 	EXT=${file##*.}
-	FILE_F=${TEMP_DIR}/${FILE_NAME}.${EXT}
-	omni_exec cp $FILE_F __omni_tmp__${FILE_NAME}
-	echo "output __omni_tmp__${FILE_NAME}"
+	FILE_F90=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.F90
+
+	omni_exec cp $FILE_F90 __omni_tmp__${FILE_NAME}.${EXT}
+	echo "output __omni_tmp__${FILE_NAME}.${EXT}"
     done
 fi
 [ $STOP_BACKEND = true ] && exit 0;

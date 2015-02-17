@@ -558,6 +558,10 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-Kopenmp"
 
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
+
 # MPI C
   MPI_CC="mpifccpx"
   MPI_CPP=$MPI_CC
@@ -588,6 +592,10 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 elif test "$target" = "MIC-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-mp"
+
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
 
 # MPI C
   MPI_CC="mpiicc"
@@ -620,6 +628,10 @@ elif test "$target" = "Cray-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-h omp"
 
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
+
 # MPI C
   MPI_CC="cc"
   MPI_CPP=$MPI_CC
@@ -650,6 +662,10 @@ elif test "$target" = "Cray-linux-gnu"; then
 elif test "$target" = "sx-nec-superux"; then
 # OpenMP
   OPENMP_OPT="-Popenmp"
+
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
 
 # MPI C
   MPI_CC="sxmpic++"
@@ -684,6 +700,10 @@ elif test "$target" = "powerpc-ibm-cnk"; then
 # OpenMP
   OPENMP_OPT="-qsmp=omp"
 
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-WF,-D_XCALABLEMP"
+
 # MPI C
   MPI_DIR="/bgsys/drivers/V1R2M1/ppc64/comm/bin/xl/"
   if test -d $MPI_DIR; then
@@ -692,11 +712,17 @@ elif test "$target" = "powerpc-ibm-cnk"; then
     MPI_CC="mpixlcxx_r"
   fi
 
-# $MPICC cannot be used for XcodeML bug. Instead of $MPICC, 
-# $CC (gcc) is used. But, this is not a good idea. Wish to fix the bug.
+# $MPICC cannot be used for XcodeML bug. 
+# Instead of $MPICC, $CC (gcc) is used. 
+# But, this is not a good idea. Wish to fix the bug.
 #  MPI_CPP=$MPI_CC
   MPI_CPP=$CC
-  MPI_CPPFLAGS="-E"
+  MPI_CPPFLAGS="-E --std=c99"
+
+  if test -d "/bgsys/drivers/ppcfloor/comm/include"; then
+    MPI_CPPFLAGS="$MPI_CPPFLAGS -I/bgsys/drivers/ppcfloor/comm/include"
+  fi
+
   MPI_CFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH $OPENMP_OPT"
 
   if test -f /usr/local/bg/lib/libkek.a; then
@@ -742,6 +768,10 @@ elif test "$target" = "powerpc-hitachi-aix"; then
 # OpenMP
   OPENMP_OPT="-qsmp=omp"
 
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
+
 # MPI C
   MPI_CC="mpCC_r"
   MPI_CPP=$MPI_CC
@@ -770,6 +800,10 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
 
 else
+  # XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
+
   INTEL_MPICC=mpiicc
   which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
   if test $? -eq 0; then
@@ -783,6 +817,10 @@ else
   cc* | gcc* | Apple*)
     # OpenMP
     OPENMP_OPT="-fopenmp"
+
+    # XcalableMP
+    XMPC_DEF="-D_XCALABLEMP"
+    XMPF_DEF="-D_XCALABLEMP"
 
     # MPI C
     MPI_CPP=$MPI_CC
@@ -813,6 +851,10 @@ else
   *ICC*)
     # OpenMP
     OPENMP_OPT="-openmp"
+
+    # XcalableMP
+    XMPC_DEF="-D_XCALABLEMP"
+    XMPF_DEF="-D_XCALABLEMP"
 
     # MPI C
     MPI_CPP=$MPI_CC
@@ -852,6 +894,10 @@ else
     pgcc*)
       # OpenMP
       OPENMP_OPT="-mp"
+
+      # XcalableMP
+      XMPC_DEF="-D_XCALABLEMP"
+      XMPF_DEF="-D_XCALABLEMP"
 
       # MPI C
       MPI_CPP=$MPI_CC
@@ -1112,6 +1158,10 @@ fi
 
 # OpenMP
 AC_SUBST(OPENMP_OPT)
+
+# XcalableMP
+AC_SUBST(XMPC_DEF)
+AC_SUBST(XMPF_DEF)
 
 # MPI C
 AC_SUBST(MPI_CC)
