@@ -11,7 +11,7 @@ LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
 lib_LIBRARIES = libxacc.a
 libxacc_a_SOURCES = $(XACC_INC_DIR)/xacc_internal.h \
-	xacc.c xacc_pack.cu xacc_reflect.c
+	xacc.c xacc_pack.cu xacc_reflect.c xacc_reduce.c
 #                   xacc_device_stack.c
 #					$(XMP_INC_DIR)/xmp_internal.h
 

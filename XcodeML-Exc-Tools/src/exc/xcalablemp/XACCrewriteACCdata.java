@@ -196,7 +196,7 @@ public class XACCrewriteACCdata {
             ident = pb.findVarIdent(scalaName);
           }
           Block initDeviceArrayFuncCall = _globalDecl.createFuncCallBlock("_XACC_init_layouted_array_normal", Xcons.List(layoutedArrayDescId.getAddr(), ident.getAddr(), 
-                Xcons.SizeOf(ident.Type()), Xcons.IntConstant(1), Xcons.IntConstant(0), device.getDescId().Ref()));
+                Xcons.SizeOf(ident.Type()), Xcons.IntConstant(0), Xcons.IntConstant(0), device.getDescId().Ref()));
           add(initDeviceArrayFuncCall);
           
           layoutedArray = new XACClayoutedArray(layoutedArrayDescId, ident, layout);

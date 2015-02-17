@@ -1,3 +1,6 @@
+#define _XMP_M_REDUCE_XACC_EXEC(addr, count, datatype, op) \
+_XACC_reduce_NODES_ENTIRE(_XMP_get_execution_nodes(), addr, count, datatype, op)
+
 // xacc.c
 extern void _XACC_init_device(void* desc, acc_device_t device, int lower, int upper, int step);
 extern int _XACC_get_num_current_devices();
@@ -32,3 +35,6 @@ extern void _XACC_init_layouted_array_normal(void *arrays_desc, void* host_ptr, 
 // xacc_reflect.c
 extern void _XACC_reflect_init(void *arrays_desc);
 extern void _XACC_reflect_do(void *arrays_desc);
+
+// xacc_reduce.c
+void _XACC_reduce_NODES_ENTIRE(void *nodes, void *data_addr, int count, int datatype, int op);
