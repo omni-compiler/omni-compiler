@@ -9,7 +9,9 @@ package exc.xcalablemp;
 import exc.block.*;
 import exc.object.*;
 import exc.openmp.OMPpragma;
+
 import java.util.*;
+
 import xcodeml.util.XmOption;
 
 public class XMPtranslateLocalPragma {
@@ -1287,7 +1289,7 @@ public class XMPtranslateLocalPragma {
     while (it.hasNext()) {
       XobjList reductionRef = (XobjList)it.next();
       Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb,
-                                                                       true, schedBaseBlock, reductionInitIfBlock);
+                                                                       true, schedBaseBlock, reductionInitIfBlock, false);
       String reductionFuncType = createReductionFuncType(reductionRef, pb, false);
 
       reductionBody.add(createReductionFuncCallBlock(false, reductionFuncType + "_CLAUSE",
@@ -1654,7 +1656,7 @@ public class XMPtranslateLocalPragma {
       XMP.fatal("reduction of both host and acc is unimplemented");
     }
     Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb,
-                                                                     false, null, null);
+                                                                     false, null, null, isACC);
     String reductionFuncType = createReductionFuncType(reductionRef, pb, isACC);
 
     // create function call
@@ -1686,9 +1688,9 @@ public class XMPtranslateLocalPragma {
       for(Xobject x : reductionSpecList){
         vars.add(x.getArg(0));
       }
-      reductionFuncCallBlock =
-      Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA",
-            Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), vars)), Bcons.blockList(reductionFuncCallBlock));
+//      reductionFuncCallBlock =
+//      Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA",
+//            Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), vars)), Bcons.blockList(reductionFuncCallBlock));
     }
     pb.replace(reductionFuncCallBlock);
 
@@ -1726,19 +1728,19 @@ public class XMPtranslateLocalPragma {
       case XMPcollective.REDUCE_LXOR:
       case XMPcollective.REDUCE_MAX:
       case XMPcollective.REDUCE_MIN:
-        return isACC? new String("reduce_acc") : new String("reduce");
+        return isACC? new String("reduce_xacc") : new String("reduce");
       case XMPcollective.REDUCE_FIRSTMAX:
       case XMPcollective.REDUCE_FIRSTMIN:
       case XMPcollective.REDUCE_LASTMAX:
       case XMPcollective.REDUCE_LASTMIN:
-        return isACC? new String("reduce_acc_FLMM") : new String("reduce_FLMM");
+        return isACC? new String("reduce_xacc_FLMM") : new String("reduce_FLMM");
       default:
         throw new XMPexception("unknown reduce operation");
     }
   }
 
   private Vector<XobjList> createReductionArgsList(XobjList reductionRef, PragmaBlock pb, boolean isClause,
-                                                   CforBlock schedBaseBlock, IfBlock reductionInitIfBlock) throws XMPexception {
+                                                   CforBlock schedBaseBlock, IfBlock reductionInitIfBlock, boolean isACC) throws XMPexception {
     Vector<XobjList> returnVector = new Vector<XobjList>();
 
     XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
@@ -1763,7 +1765,18 @@ public class XMPtranslateLocalPragma {
 	  basicSpecType = (BasicType)specType;
 	  checkReductionType(specName, basicSpecType);
 	  
-	  specRef = specId.getAddr();
+	  if(! isACC){
+	    specRef = specId.getAddr();
+	  }else{
+	    String varName = specId.getName();
+	    XMPsymbolTable localSymbolTable = XMPlocalDecl.declXMPsymbolTable2(pb); 
+	    XACClayoutedArray layoutedArray = localSymbolTable.getXACCdeviceArray(varName);
+	    if(layoutedArray == null){
+	      layoutedArray = _globalDecl.getXACCdeviceArray(varName, pb);
+	    }
+	    specRef = layoutedArray.getDescId().Ref();
+	  }
+	      
 	  count = Xcons.LongLongConstant(0, 1);
 	  elmtType = XMP.createBasicTypeConstantObj(basicSpecType);
 	} break;

@@ -156,17 +156,17 @@ public class XACCtranslatePragma {
         if(pragma == ACCpragma.DATA){
           XACCrewriteACCdata rewriter = new XACCrewriteACCdata(_globalDecl, pb);
           Block replaceBlock = rewriter.makeReplaceBlock();
-          bIter.setBlock(replaceBlock);
+          if(replaceBlock != null) bIter.setBlock(replaceBlock);
           continue;
         }else if(pragma == ACCpragma.PARALLEL_LOOP){
           XACCrewriteACCparallel rewriter = new XACCrewriteACCparallel(_globalDecl, pb);
           Block replaceBlock = rewriter.makeReplaceBlock();
-          bIter.setBlock(replaceBlock);
+          if(replaceBlock != null) bIter.setBlock(replaceBlock);
           continue;
         }else if(pragma == ACCpragma.UPDATE){
           XACCrewriteACCdata rewriter = new XACCrewriteACCdata(_globalDecl, pb);
           Block replaceBlock = rewriter.makeReplaceBlock();
-          bIter.setBlock(replaceBlock);
+          if(replaceBlock != null) bIter.setBlock(replaceBlock);
           continue;
         }else if(pragma == ACCpragma.DECLARE){
           XMP.fatal("local declare is not supported yet");

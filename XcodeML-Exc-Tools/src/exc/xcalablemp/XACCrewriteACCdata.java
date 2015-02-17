@@ -179,6 +179,38 @@ public class XACCrewriteACCdata {
     XMPcoarray coarray = _globalDecl.getXMPcoarray(arrayAddr.getSym(), pb);
 
     if (alignedArray == null && coarray == null) {
+      if(device != null){
+        if(layout != null) XMP.fatal("layout cannot be specified for non-aligned array");
+        
+        XACClayoutedArray layoutedArray = null;
+        String scalaName = arrayAddr.getName();
+        layoutedArray = getXACClayoutedArray(scalaName);
+        
+        if(layoutedArray == null){
+          Ident layoutedArrayDescId = declIdent(XACC_DESC_PREFIX + scalaName, Xtype.voidPtrType);
+          /* _XACC_init_layouted_array_normal (descId, pointer, elementsize, dims, dimsize_array, device);*/
+          Ident ident = null;
+          if(isGlobal){
+            ident = _globalDecl.findVarIdent(scalaName);
+          }else{
+            ident = pb.findVarIdent(scalaName);
+          }
+          Block initDeviceArrayFuncCall = _globalDecl.createFuncCallBlock("_XACC_init_layouted_array_normal", Xcons.List(layoutedArrayDescId.getAddr(), ident.getAddr(), 
+                Xcons.SizeOf(ident.Type()), Xcons.IntConstant(1), Xcons.IntConstant(0), device.getDescId().Ref()));
+          add(initDeviceArrayFuncCall);
+          
+          layoutedArray = new XACClayoutedArray(layoutedArrayDescId, ident, layout);
+          putXACClayoutedArray(layoutedArray);
+          
+          if(clause == ACCpragma.CREATE){
+            Block setDevicePtrFuncCall = _globalDecl.createFuncCallBlock("_XACC_set_deviceptr", Xcons.List(layoutedArrayDescId.Ref(), ident.getAddr(), deviceLoop.getLoopVarId().Ref()));
+            deviceLoop.addToEnd(Bcons.PRAGMA(Xcode.ACC_PRAGMA, ACCpragma.HOST_DATA.toString(), Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), Xcons.List(arrayAddr))), Bcons.blockList(setDevicePtrFuncCall)));
+          }          
+        }
+        
+      }
+      
+      
         return arrayAddr;
     }
     else if(alignedArray != null && coarray == null){ // only alignedArray
