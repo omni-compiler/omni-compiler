@@ -984,6 +984,25 @@ if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
 fi
 
 AC_SUBST(LIBXML_PREFIX)
+# --------------------------------------------------------------------
+# set BLAS
+
+AC_ARG_WITH(blas-lib,
+    [  --with-blas-lib=DIR         BLAS Library (e.g. /foo/blas_LINUX.a)],
+    [BLAS_LIB="${withval}"; use_blas_lib=yes], [use_blas_lib=no])
+
+if test x$use_blas_lib = xyes; then
+   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS ${BLAS_LIB}"
+   OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS ${BLAS_LIB}"
+else
+  if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
+    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS -SSL2BLAMP"
+    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS -SSL2BLAMP"
+  fi
+fi
+
+AC_SUBST(BLAS_LIB)
+AM_CONDITIONAL(BLAS_LIB, test x${use_blas_lib} = xyes)
 
 # --------------------------------------------------------------------
 # set TCA
@@ -1055,7 +1074,6 @@ if test x${use_gasnet} = xyes; then
 
     $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
     GASNET_CPPFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
 
     $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
     GASNET_CFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
@@ -2080,10 +2098,10 @@ cat << EOF
 
   Note: If you want to change above compilers and their options,
         please rerun ./configure MPI_CC=...
+
 EOF
 
 if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; then
-  echo ""
   echo "  Options:"
   echo "    GASNet                : $use_gasnet"
 
@@ -2100,5 +2118,9 @@ fi
 
 if test x${doMPI3} = xyes; then
   echo "    MPI3                  : yes"
+fi
+
+if test x${use_blas_lib} = xyes; then
+  echo "    BLAS LIB              : $BLAS_LIB"
 fi
 echo "=================================================="
