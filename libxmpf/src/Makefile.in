@@ -79,7 +79,14 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@FJRDMA_TRUE@am__append_1 = -D_XMP_COARRAY_FJRDMA
+@GASNET_TRUE@am__append_1 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
+@GASNET_TRUE@                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
+
+@GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET
+@FJRDMA_TRUE@am__append_3 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
+@FJRDMA_TRUE@                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
+
+@FJRDMA_TRUE@am__append_4 = -D_XMP_COARRAY_FJRDMA
 subdir = ./libxmpf/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -131,14 +138,28 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libxmpf_a_AR = $(AR) $(ARFLAGS)
 libxmpf_a_LIBADD =
+am__libxmpf_a_SOURCES_DIST = $(XMPF_INC_DIR)/xmpf_internal.h \
+	xmpf_array.c xmpf_gcomm.c xmpf_gmove.c xmpf_index.c xmpf_lib.c \
+	xmpf_loop.c xmpf_misc.c xmpf_nodes.c xmpf_pack.c \
+	xmpf_reflect.c xmpf_sort.c xmpf_task.c xmpf_template.c \
+	xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
+	xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
+@GASNET_TRUE@am__objects_1 = xmpf_coarray.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_put.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_get.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT)
+@FJRDMA_TRUE@am__objects_2 = xmpf_coarray.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_put.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_get.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT)
 am_libxmpf_a_OBJECTS = xmpf_array.$(OBJEXT) xmpf_gcomm.$(OBJEXT) \
 	xmpf_gmove.$(OBJEXT) xmpf_index.$(OBJEXT) xmpf_lib.$(OBJEXT) \
 	xmpf_loop.$(OBJEXT) xmpf_misc.$(OBJEXT) xmpf_nodes.$(OBJEXT) \
 	xmpf_pack.$(OBJEXT) xmpf_reflect.$(OBJEXT) xmpf_sort.$(OBJEXT) \
-	xmpf_task.$(OBJEXT) xmpf_template.$(OBJEXT) \
-	xmpf_coarray.$(OBJEXT) xmpf_coarray_wrap.$(OBJEXT) \
-	xmpf_coarray_put.$(OBJEXT) xmpf_coarray_get.$(OBJEXT) \
-	xmpf_coarray_get_wrap.$(OBJEXT)
+	xmpf_task.$(OBJEXT) xmpf_template.$(OBJEXT) $(am__objects_1) \
+	$(am__objects_2)
 libxmpf_a_OBJECTS = $(am_libxmpf_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -193,7 +214,7 @@ am__v_FCLD_ = $(am__v_FCLD_@AM_DEFAULT_V@)
 am__v_FCLD_0 = @echo "  FCLD    " $@;
 am__v_FCLD_1 = 
 SOURCES = $(libxmpf_a_SOURCES)
-DIST_SOURCES = $(libxmpf_a_SOURCES)
+DIST_SOURCES = $(am__libxmpf_a_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -235,7 +256,7 @@ BLAS_LIB = @BLAS_LIB@
 CC = @MPI_CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@ \
-	$(am__append_1)
+	$(am__append_2) $(am__append_4)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPU = @CPU@
@@ -492,12 +513,11 @@ top_srcdir = @top_srcdir@
 XMP_INC_DIR = ../../libxmp/include
 XMPF_INC_DIR = ../include
 lib_LIBRARIES = libxmpf.a
-libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c xmpf_gcomm.c \
-                    xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
-                    xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
-		    xmpf_template.c xmpf_coarray.c xmpf_coarray_wrap.f90\
-                    xmpf_coarray_put.c xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
-
+libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c \
+	xmpf_gcomm.c xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c \
+	xmpf_misc.c xmpf_nodes.c xmpf_pack.c xmpf_reflect.c \
+	xmpf_sort.c xmpf_task.c xmpf_template.c $(am__append_1) \
+	$(am__append_3)
 all: all-am
 
 .SUFFIXES:
