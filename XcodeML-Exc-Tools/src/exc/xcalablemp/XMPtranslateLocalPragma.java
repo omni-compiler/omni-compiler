@@ -402,7 +402,10 @@ public class XMPtranslateLocalPragma {
     Ident funcId = _globalDecl.declExternFunc("_XMP_wait_async__");
     XobjList funcArgs = (XobjList)pb.getClauses().getArg(0);
     BlockList funcBody = Bcons.emptyBody();
-    funcBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+    for (Xobject i: funcArgs){
+      funcBody.add(Bcons.Statement(funcId.Call(Xcons.List(i))));
+    }
+
     Block funcCallBlock = Bcons.COMPOUND(funcBody);
 
     // the following code comes from translateBcast.
