@@ -21,6 +21,10 @@ if FJRDMA
     CFLAGS           += -D_XMP_COARRAY_FJRDMA -D_XMP_COARRAY
 endif
 
+if BLAS_LIB
+    CFLAGS += -D_XMP_BLAS_LIB
+endif
+
 if TCA
     libxmp_a_SOURCES += xmp_reflect_tca.c
     CFLAGS        += -D_XMP_TCA

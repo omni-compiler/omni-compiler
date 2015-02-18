@@ -3357,7 +3357,7 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
 
    /* matmul */
    /* TODO: X = A * BT -> DGEMM */
-#ifdef OMNI_TARGET_CPU_KCOMPUTER
+#if defined(OMNI_TARGET_CPU_KCOMPUTER) || defined(_XMP_BLAS_LIB)
    dim0_size = x_d->info[0].local_upper - x_d->info[0].local_lower + 1;
    dim1_size = x_d->info[1].local_upper - x_d->info[1].local_lower + 1;
    k = a_d->info[1].ser_size;
