@@ -346,7 +346,7 @@ void _XACC_calc_size(_XACC_arrays_t* array_desc){
       
       d_array_desc->alloc_size = device_acc * info->alloc_size;
       d_array_desc->alloc_offset = device_offset + device_acc * (info->local_lower - info->shadow_size_lo);
-      d_array_desc->copy_size = device_acc * (info->alloc_size - info->shadow_size_lo - info->shadow_size_hi);
+      d_array_desc->copy_size = device_acc * (info->par_upper - info->par_lower + 1); //device_acc * (info->alloc_size - info->shadow_size_lo - info->shadow_size_hi);
       d_array_desc->copy_offset = device_offset + device_acc * info->local_lower;
     }
 
