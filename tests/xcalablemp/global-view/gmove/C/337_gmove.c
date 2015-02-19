@@ -1,10 +1,12 @@
+#define NAMELEN 25
 #define NMAX 4
 #include <stdio.h>
 #include <stdlib.h>
 #include "xmp.h"
 
-extern int chk_int(int ierr);
+extern int chk_int(char name[], int ierr);
 
+char name[NAMELEN]="337";
 int n=NMAX;
 int a[n][n],b[n][n];
 #pragma xmp nodes p(2,2)
@@ -44,5 +46,5 @@ int main(){
   }
 
 #pragma xmp reduction (MAX:ierr)
-  chk_int(ierr);
+  chk_int(name, ierr);
 }
