@@ -27,7 +27,6 @@ run: $(EXES)
 	$(XRUN) -n 8 ./max2.x
 	$(XRUN) -n 8 ./min2.x
 	$(XRUN) -n 3 ./array.x
-	$(XRUN) -n 8 ./plus2_async.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

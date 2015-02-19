@@ -26,7 +26,6 @@ run: $(EXES)
 	$(XRUN) -n 8 ./bcast10.x
 	$(XRUN) -n 8 ./bcast11.x
 	$(XRUN) -n 8 ./bcast12.x
-	$(XRUN) -n 8 ./bcast_async.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

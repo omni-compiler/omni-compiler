@@ -3,9 +3,7 @@
 _Bool xmpf_test_task_on__(_XMP_object_ref_t **r_desc);
 void xmpf_end_task__(void);
 
-#define ASYNC_COMM 1
-
-#ifdef ASYNC_COMM
+#if MPI_VERSION >= 3
 extern _Bool is_async;
 extern int _async_id;
 #endif
@@ -34,7 +32,7 @@ void xmpf_wait_async__(int *async_id, _XMP_object_ref_t **on_desc)
 }
 
 
-#ifdef ASYNC_COMM
+#if MPI_VERSION >= 3
 
 void xmpf_init_async__(int *async_id){
   is_async = true;
