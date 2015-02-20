@@ -58,6 +58,7 @@ public class XMPrewriteExpr
 	      XobjList alloc = (XobjList)y.next();
 	      Xobject obj = alloc.getArg(0);
 	      while (obj.Opcode() == Xcode.MEMBER_REF) obj = obj.getArg(0).getArg(0);
+	      if (obj.Opcode() == Xcode.F_ARRAY_REF) obj = obj.getArg(0).getArg(0);
 	      Ident id = env.findVarIdent(obj.getName(), fb);
 	      if (id == null) break;
 	      XMParray array = XMParray.getArray(id);
