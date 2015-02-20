@@ -219,3 +219,6 @@ void _XMP_unpack_array_2_DOUBLE(double *dst_addr, double *buf_addr,
 
 }
 */
+
+void xmp_desc_of_(){
+}
