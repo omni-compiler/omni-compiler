@@ -39,6 +39,8 @@ public class XMParray {
 
   private int NthAssumedShape = -1;
 
+  boolean shadow_declared = false;
+
   // null constructor
   public XMParray() { }
 
@@ -456,6 +458,13 @@ public class XMParray {
       XMP.errorAt(pb,"shadow dimension size is different from array dimension");
       return;
     }
+
+    if (array.shadow_declared){
+      XMP.errorAt(pb, "variable '" + name + "' already has shadow region");
+    }
+
+    array.shadow_declared = true;
+
     for(int i = 0; i < dims.size(); i++){
       XMPdimInfo d_info = dims.elementAt(i);
       int right = 0;
