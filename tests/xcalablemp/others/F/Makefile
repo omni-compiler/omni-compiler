@@ -52,7 +52,7 @@ xmp_lib.o: xmp_lib.f90
 	$(XFC) -c xmp_lib.f90
 
 threadprivate.o: threadprivate.f90
-	$(XFC) -c -openmp threadprivate.f90
+	$(XFC) -c --openmp threadprivate.f90
 
 refobj.x: refobj.f90
 	$(XFC) -o refobj.x refobj.f90
