@@ -145,6 +145,9 @@ typedef struct _XMP_reflect_sched_type {
 
   void *lo_send_tca_buf, *lo_recv_tca_buf;
   void *hi_send_tca_buf, *hi_recv_tca_buf;
+
+  void *lo_tca_async_id;
+  void *hi_tca_async_id;
 #endif
 } _XMP_reflect_sched_t;
 
@@ -210,6 +213,7 @@ typedef struct _XMP_array_type {
   int rdma_memid;
 #endif
 #if defined(_XMP_TCA)
+  void *acc_addr;
   void* tca_handle;
   _Bool set_handle;  // If tca_handle has been set, set_handle = true
   int   dma_slot;

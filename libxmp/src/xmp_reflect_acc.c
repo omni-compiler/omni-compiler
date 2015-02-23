@@ -10,17 +10,17 @@ void _XMP_reflect_init_acc(void *acc_addr, _XMP_array_t *array_desc)
   assert(useTCAHybridFlag == 1);
 
   if (useTCAHybrid) {
-    printf("Use TCA Hybrid reflect init\n");
+    /* printf("Use TCA Hybrid reflect init\n"); */
     _XMP_create_TCA_handle(acc_addr, array_desc);
     _XMP_create_TCA_desc(array_desc);
     _XMP_reflect_init_gpu(acc_addr, array_desc);
   } else {
-    printf("Use TCA reflect init\n");
+    /* printf("Use TCA reflect init\n"); */
     _XMP_create_TCA_handle(acc_addr, array_desc);
     _XMP_create_TCA_desc(array_desc);
   }
 #else
-  printf("Use MPI reflect init\n");
+  /* printf("Use MPI reflect init\n"); */
   _XMP_reflect_init_gpu(acc_addr, array_desc);
 #endif
 }
@@ -33,21 +33,23 @@ void _XMP_reflect_do_acc(_XMP_array_t *array_desc)
   assert(useTCAHybridFlag == 1);
 
   if (useTCAHybrid) {
-    printf("Use TCA Hybrid reflect do\n");
+    /* printf("Use TCA Hybrid reflect do\n"); */
     /* _XMP_reflect_do_tca(array_desc); */
     /* _XMP_reflect_do_gpu(array_desc); */
     _XMP_reflect_start_tca(array_desc);
     _XMP_reflect_start_gpu(array_desc);
     _XMP_reflect_wait_tca(array_desc);
     _XMP_reflect_wait_gpu(array_desc);
-    MPI_Barrier(MPI_COMM_WORLD);
+    /* MPI_Barrier(MPI_COMM_WORLD); */
   } else {
-    printf("Use TCA reflect do\n");
+    /* printf("Use TCA reflect do\n"); */
     _XMP_reflect_do_tca(array_desc);
+    /* MPI_Barrier(MPI_COMM_WORLD); */
   }
 #else
-  printf("Use MPI reflect do\n");
+  /* printf("Use MPI reflect do\n"); */
   _XMP_reflect_do_gpu(array_desc);
+  /* MPI_Barrier(MPI_COMM_WORLD); */
 #endif
 }
 

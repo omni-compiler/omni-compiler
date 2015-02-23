@@ -10,6 +10,11 @@ extern "C"
   void _XMP_gpu_unpack_vector2_async(char * __restrict__ dst0, char * __restrict__ src0, int blocklength0, long stride0,
      				      char * __restrict__ dst1, char * __restrict__ src1, int blocklength1, long stride1,
 				      int count, size_t typesize, cudaStream_t st);
+  void _XMP_gpu_pack_vector_memcpy(void * dst, size_t dpich, void *src, size_t spich, size_t width, size_t height);
+  void _XMP_gpu_unpack_vector_memcpy(void * dst, size_t dpich, void *src, size_t spich, size_t width, size_t height);
+  void _XMP_gpu_pack_vector_sync(char * __restrict__ dst, char * __restrict__ src, int count, int blocklength, long stride, size_t typesize);
+  void _XMP_gpu_unpack_vector_sync(char * __restrict__ dst, char * __restrict__ src, int count, int blocklength, long stride, size_t typesize);
+  void _XMP_print_buf(void *buf, int dst_rank);
 }
 
 static const int numThreads = 128;
@@ -257,4 +262,104 @@ void _XMP_gpu_unpack_vector2_async(char * __restrict__ dst0, char * __restrict__
   memcpy2D2_async(dst0, stride0, src0, blocklength0, blocklength0,
 				  dst1, stride1, src1, blocklength1, blocklength1,
 				  count, typesize, st);
+}
+
+void _XMP_gpu_pack_vector_memcpy(void * dst, size_t dpich, void *src, size_t spich, size_t width, size_t height)
+{
+  cudaMemcpy2D(dst, dpich, src, spich, width, height, cudaMemcpyDeviceToDevice);
+}
+
+void _XMP_gpu_unpack_vector_memcpy(void * dst, size_t dpich, void *src, size_t spich, size_t width, size_t height)
+{
+  cudaMemcpy2D(dst, dpich, src, spich, width, height, cudaMemcpyDeviceToDevice);
+}
+
+void _XMP_gpu_pack_vector_sync(char * __restrict__ dst, char * __restrict__ src, int count, int blocklength, long stride, size_t typesize)
+{
+  const int numThreads = 128; //must be 2^n
+
+  int blocklength_c = blocklength / typesize;
+  int stride_c = stride / typesize;
+  int bx = 1, by;
+  int tx = 1, ty;
+  int tmp = blocklength_c;
+  if(tmp >= numThreads){
+    tx = numThreads;
+  }else{
+    while(tx < tmp){
+      tx <<= 1;
+    }
+  }
+  ty = numThreads / tx;
+  by = (count-1)/ty + 1;
+  dim3 gridSize(bx,by);
+  dim3 blockSize(tx, ty);
+
+  //printf("blocklen=%d, count=%d, grid(%d,%d), block(%d,%d)\n", blocklength_c, count, bx,by,tx,ty);
+  switch(typesize){
+  case 1:
+    _XMP_gpu_pack_vector_kernel<char><<<gridSize, blockSize>>>((char *)dst, (char *)src, count, blocklength_c, stride_c);
+    break;
+  case 2:
+    _XMP_gpu_pack_vector_kernel<short><<<gridSize, blockSize>>>((short *)dst, (short *)src, count, blocklength_c, stride_c);
+    break;
+  case 4:
+    _XMP_gpu_pack_vector_kernel<int><<<gridSize, blockSize>>>((int *)dst, (int *)src, count, blocklength_c, stride_c);
+    break;
+  case 8:
+    _XMP_gpu_pack_vector_kernel<long long><<<gridSize, blockSize>>>((long long *)dst, (long long *)src, count, blocklength_c, stride_c);
+    break;
+  default:
+    _XMP_gpu_pack_vector_kernel<char><<<gridSize, blockSize>>>(dst, src, count, blocklength, stride);
+  }
+  cudaDeviceSynchronize();
+}
+
+void _XMP_gpu_unpack_vector_sync(char * __restrict__ dst, char * __restrict__ src, int count, int blocklength, long stride, size_t typesize)
+{
+  const int numThreads = 128; //must be 2^n
+
+  int blocklength_c = blocklength / typesize;
+  int stride_c = stride / typesize;
+  int bx = 1, by;
+  int tx = 1, ty;
+  int tmp = blocklength_c;
+  if(tmp >= numThreads){
+    tx = numThreads;
+  }else{
+    while(tx < tmp){
+      tx <<= 1;
+    }
+  }
+  ty = numThreads / tx;
+  by = (count-1)/ty + 1;
+  dim3 gridSize(bx,by);
+  dim3 blockSize(tx, ty);
+
+  //printf("blocklen=%d, count=%d, grid(%d,%d), block(%d,%d)\n", blocklength_c, count, bx,by,tx,ty);
+  switch(typesize){
+  case 1:
+    _XMP_gpu_unpack_vector_kernel<char><<<gridSize, blockSize>>>((char *)dst, (char *)src, count, blocklength_c, stride_c);
+    break;
+  case 2:
+    _XMP_gpu_unpack_vector_kernel<short><<<gridSize, blockSize>>>((short *)dst, (short *)src, count, blocklength_c, stride_c);
+    break;
+  case 4:
+    _XMP_gpu_unpack_vector_kernel<int><<<gridSize, blockSize>>>((int *)dst, (int *)src, count, blocklength_c, stride_c);
+    break;
+  case 8:
+    _XMP_gpu_unpack_vector_kernel<long long><<<gridSize, blockSize>>>((long long *)dst, (long long *)src, count, blocklength_c, stride_c);
+    break;
+  default:
+    _XMP_gpu_unpack_vector_kernel<char><<<gridSize, blockSize>>>(dst, src, count, blocklength, stride);
+  }
+  cudaDeviceSynchronize();
+}
+
+void _XMP_print_buf(void *buf, int dst_rank)
+{
+  double *tmp = (double*)buf;
+  double real;
+  cudaMemcpy(&real, &tmp[1], sizeof(double), cudaMemcpyDeviceToHost);
+  printf("buf = %lf, rank = %d\n", real, dst_rank);
 }

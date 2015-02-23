@@ -45,7 +45,7 @@ static const int useSingleStreamLimit = 16 * 1024; //element
 
 //#define _TLOG
 #ifdef _TLOG
-#include "tlog.h"
+#include "tlog_mpi.h"
 #define TLOG_LOG(log) do{tlog_log((log));}while(0)
 #else
 #define TLOG_LOG(log) do{}while(0)

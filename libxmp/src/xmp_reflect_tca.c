@@ -1,9 +1,50 @@
 #include "xmp_internal.h"
 #include "tca-api.h"
+#include "include/cuda_runtime.h"
 #include <assert.h>
 #define _XMP_TCA_DMAC 0
 #define _XMP_TCA_CHAIN_FLAG (tcaDMANotify|tcaDMAContinue)
-#define _XMP_TCA_LAST_FLAG  (tcaDMANotify)
+#define _XMP_TCA_LAST_FLAG  (tcaDMANotifySelf|tcaDMANotify)
+//#define _XMP_TCA_LAST_FLAG  (tcaDMANotify)
+
+void _XMP_gpu_pack_vector_sync(char * restrict dst, char * restrict src, int count, int blocklength, long stride, size_t typesize);
+void _XMP_gpu_unpack_vector_sync(char * restrict dst, char * restrict src, int count, int blocklength, long stride, size_t typesize);
+void _XMP_gpu_pack_vector_async(char * restrict dst, char * restrict src, int count, int blocklength, long stride, size_t typesize, void* async_id);
+void _XMP_gpu_unpack_vector_async(char * restrict dst, char * restrict src, int count, int blocklength, long stride, size_t typesize, void* async_id);
+
+//#define _TLOG
+#ifdef _TLOG
+#include "tlog_mpi.h"
+#define TLOG_LOG(log) do{tlog_log((log));}while(0)
+#else
+#define TLOG_LOG(log) do{}while(0)
+#endif
+
+static void gpu_wait_async(void *async_id)
+{
+  cudaStream_t st = *((cudaStream_t*)async_id);
+  cudaStreamSynchronize(st);
+}
+
+static void gpu_pack_wait(_XMP_reflect_sched_t *reflect)
+{
+  if(reflect->hi_rank != MPI_PROC_NULL){
+    gpu_wait_async(reflect->lo_tca_async_id);
+  }
+  if(reflect->lo_rank != MPI_PROC_NULL){
+    gpu_wait_async(reflect->hi_tca_async_id);
+  }
+}
+
+static void gpu_unpack_wait(_XMP_reflect_sched_t *reflect)
+{
+  if(reflect->lo_rank != MPI_PROC_NULL){
+    gpu_wait_async(reflect->lo_tca_async_id);
+  }
+  if(reflect->hi_rank != MPI_PROC_NULL){
+    gpu_wait_async(reflect->hi_tca_async_id);
+  }
+}
 
 void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
 {
@@ -24,6 +65,7 @@ void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
   tcaHandle tmp_handle;
   TCA_SAFE_CALL(tcaCreateHandle(&tmp_handle, acc_addr, size, tcaMemoryGPU));
 
+  adesc->acc_addr = acc_addr;
   adesc->tca_handle = _XMP_alloc(sizeof(tcaHandle) * _XMP_world_size);
   MPI_Allgather(&tmp_handle, sizeof(tcaHandle), MPI_BYTE,
                 adesc->tca_handle, sizeof(tcaHandle), MPI_BYTE, MPI_COMM_WORLD);
@@ -146,6 +188,10 @@ static void _XMP_reflect_acc_sched_dim(_XMP_array_t *adesc, int dim, int is_peri
   reflect->lo_dst_offset = lo_dst_offset;
   reflect->hi_src_offset = hi_src_offset;
   reflect->hi_dst_offset = hi_dst_offset;
+  reflect->lo_tca_async_id = _XMP_alloc(sizeof(cudaStream_t));
+  cudaStreamCreate(reflect->lo_tca_async_id);
+  reflect->hi_tca_async_id = _XMP_alloc(sizeof(cudaStream_t));
+  cudaStreamCreate(reflect->hi_tca_async_id);
 }
 
 static tcaDMAFlag getFlag(int j, int num_of_tca_neighbors){
@@ -181,9 +227,9 @@ static void xmp_tcaSetDMADesc(_XMP_array_t *adesc, _XMP_reflect_sched_t *reflect
     /* 	   src_rank, dst_rank, dst_offset, src_offset, width); */
   } else if (count > 1) {
     if (num_stride == 1) {
-      TCA_SAFE_CALL(tcaSetDMADescInt_Memcpy(*dma_slot, dma_slot, &recv_h[dst_rank], 0,
-    					    &send_h[src_rank], 0, width*count,
-    					    getFlag(j, num_of_tca_neighbors), adesc->wait_slot, adesc->wait_tag));
+      TCA_SAFE_CALL(tcaSetDMADescInt_Memcpy(*dma_slot, dma_slot,  &recv_h[dst_rank], 0,
+    					    &send_h[src_rank], 0,width*count,
+					    getFlag(j, num_of_tca_neighbors), adesc->wait_slot, adesc->wait_tag));
     } else {
       TCA_SAFE_CALL(tcaSetDMADescInt_Memcpy2D(*dma_slot, dma_slot, &h[dst_rank], dst_offset, pitch,
 					      &h[src_rank], src_offset, pitch,
@@ -200,7 +246,6 @@ static void xmp_tcaSetDMADesc(_XMP_array_t *adesc, _XMP_reflect_sched_t *reflect
 void create_TCA_vector_handle(_XMP_array_t *adesc, _XMP_reflect_sched_t *reflect, int lo_rank, int hi_rank)
 {
   int count = reflect->count;
-  size_t pitch  = reflect->stride;
   size_t width  = reflect->blocklength;
   size_t vector_size = count * width;
   void *lo_send_tca_buf = NULL;
@@ -215,7 +260,7 @@ void create_TCA_vector_handle(_XMP_array_t *adesc, _XMP_reflect_sched_t *reflect
 
   if (count == 1) return;
 
-  printf("count = %d, pitch = %zd, width = %zd, vector_size = %zd\n", count, pitch, width, vector_size);
+  /* printf("count = %d, width = %zd, vector_size = %zd\n", count, width, vector_size); */
 
   TCA_SAFE_CALL(tcaMalloc((void**)&lo_send_tca_buf, vector_size, tcaMemoryGPU));
   TCA_SAFE_CALL(tcaMalloc((void**)&lo_recv_tca_buf, vector_size, tcaMemoryGPU));
@@ -339,11 +384,123 @@ void _XMP_create_TCA_desc(_XMP_array_t *adesc)
   /* MPI_Get_processor_name(processor_name,&namelen); */
 }
 
+static void _XMP_tca_pack_vector(_XMP_array_t *adesc)
+{
+  int array_dim = adesc->dim;
+  for(int i = 0; i < array_dim; i++) {
+    _XMP_array_info_t *ai = &(adesc->info[i]);
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
+      continue;
+
+    int my_rank = adesc->align_template->onto_nodes->comm_rank;
+    int lo_rank = ai->reflect_acc_sched->lo_rank;
+    int hi_rank = ai->reflect_acc_sched->hi_rank;
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
+    size_t pitch  = reflect->stride;
+    size_t width  = reflect->blocklength;
+    int count = reflect->count;
+    off_t lo_src_offset = reflect->lo_src_offset;
+    off_t hi_src_offset = reflect->hi_src_offset;
+    char *acc_addr = adesc->acc_addr;
+    char *lo_send_tca_buf = reflect->lo_send_tca_buf;
+    char *hi_send_tca_buf = reflect->hi_send_tca_buf;
+
+    if (count == 1) continue;
+
+    /* printf("lo_src_offset = %ld, hi_src_offset = %ld\n", lo_src_offset, hi_src_offset); */
+
+    if(lo_rank != -1 && _xmp_is_same_network_id(adesc, lo_rank)) {
+      _XMP_gpu_pack_vector_async(&lo_send_tca_buf[0], &acc_addr[lo_src_offset], count, width, pitch, adesc->type_size, reflect->lo_tca_async_id);
+    }
+
+    if(hi_rank != -1 && _xmp_is_same_network_id(adesc, hi_rank)) {
+      _XMP_gpu_pack_vector_async(&hi_send_tca_buf[0], &acc_addr[hi_src_offset], count, width, pitch, adesc->type_size, reflect->hi_tca_async_id);
+    }
+  TLOG_LOG(TLOG_EVENT_5);
+  }
+
+  for(int i = 0; i < array_dim; i++) {
+    _XMP_array_info_t *ai = &(adesc->info[i]);
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
+      continue;
+
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
+
+    gpu_pack_wait(reflect);
+  }
+}
+
+static void _XMP_tca_unpack_vector(_XMP_array_t *adesc)
+{
+  int array_dim = adesc->dim;
+  for(int i = 0; i < array_dim; i++) {
+    _XMP_array_info_t *ai = &(adesc->info[i]);
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
+      continue;
+
+    int lo_rank = ai->reflect_acc_sched->lo_rank;
+    int hi_rank = ai->reflect_acc_sched->hi_rank;
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
+    size_t pitch  = reflect->stride;
+    size_t width  = reflect->blocklength;
+    int count = reflect->count;
+    off_t lo_dst_offset = reflect->lo_dst_offset;
+    off_t hi_dst_offset = reflect->hi_dst_offset;
+    char *acc_addr = adesc->acc_addr;
+    char *lo_recv_tca_buf = reflect->lo_recv_tca_buf;
+    char *hi_recv_tca_buf = reflect->hi_recv_tca_buf;
+
+    if (count == 1) continue;
+
+    /* printf("lo_dst_offset = %ld, hi_dst_offset = %ld\n", lo_dst_offset, hi_dst_offset); */
+
+    if(lo_rank != -1 && _xmp_is_same_network_id(adesc, lo_rank)) {
+      _XMP_gpu_unpack_vector_async(&acc_addr[hi_dst_offset], &hi_recv_tca_buf[0], count, width, pitch, adesc->type_size, reflect->lo_tca_async_id);
+    }
+
+    if(hi_rank != -1 && _xmp_is_same_network_id(adesc, hi_rank)) {
+      _XMP_gpu_unpack_vector_async(&acc_addr[lo_dst_offset], &lo_recv_tca_buf[0], count, width, pitch, adesc->type_size, reflect->hi_tca_async_id);
+    }
+  }
+
+  for(int i = 0; i < array_dim; i++) {
+    _XMP_array_info_t *ai = &(adesc->info[i]);
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
+      continue;
+
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
+
+    gpu_unpack_wait(reflect);
+  }
+}
+
+void _XMP_reflect_do_tca(_XMP_array_t *adesc)
+{
+  TLOG_LOG(TLOG_EVENT_3_IN);
+  _XMP_tca_pack_vector(adesc);
+  TLOG_LOG(TLOG_EVENT_3_OUT);
+  TCA_SAFE_CALL(tcaStartDMADesc(_XMP_TCA_DMAC));
+  _XMP_reflect_wait_tca(adesc);
+  MPI_Barrier(MPI_COMM_WORLD);
+}
+
+void _XMP_reflect_start_tca(_XMP_array_t *adesc)
+{
+  TLOG_LOG(TLOG_EVENT_3_IN);
+  _XMP_tca_pack_vector(adesc);
+  TLOG_LOG(TLOG_EVENT_3_OUT);
+  TCA_SAFE_CALL(tcaStartDMADesc(_XMP_TCA_DMAC));
+}
+
 void _XMP_reflect_wait_tca(_XMP_array_t *adesc)
 {
   int array_dim = adesc->dim;
   tcaHandle* h = (tcaHandle*)adesc->tca_handle;
-  
+
+  int my_rank = adesc->align_template->onto_nodes->comm_rank;
+  TCA_SAFE_CALL(tcaWaitDMARecvDesc(&h[my_rank], adesc->wait_slot, adesc->wait_tag));
+
+  TLOG_LOG(TLOG_EVENT_6_IN);
   for(int i = 0; i < array_dim; i++){
     _XMP_array_info_t *ai = &(adesc->info[i]);
     if(ai->shadow_type == _XMP_N_SHADOW_NONE)
@@ -377,18 +534,12 @@ void _XMP_reflect_wait_tca(_XMP_array_t *adesc)
 	TCA_SAFE_CALL(tcaWaitDMARecvDesc(&h[hi_rank], adesc->wait_slot, adesc->wait_tag));
       }
     }
+  TLOG_LOG(TLOG_EVENT_2);
   }
-}
 
-void _XMP_reflect_do_tca(_XMP_array_t *adesc)
-{
-  TCA_SAFE_CALL(tcaStartDMADesc(_XMP_TCA_DMAC));
-  _XMP_reflect_wait_tca(adesc);
-  MPI_Barrier(MPI_COMM_WORLD);
-}
+  TLOG_LOG(TLOG_EVENT_6_OUT);
 
-void _XMP_reflect_start_tca(void)
-{
-  TCA_SAFE_CALL(tcaStartDMADesc(_XMP_TCA_DMAC));
+  TLOG_LOG(TLOG_EVENT_7_IN);
+  _XMP_tca_unpack_vector(adesc);
+  TLOG_LOG(TLOG_EVENT_7_OUT);
 }
-
