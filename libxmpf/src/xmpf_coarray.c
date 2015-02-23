@@ -24,7 +24,8 @@ void _XMPF_coarray_init(void)
 
 
 /*
- *  user's switch written in the program
+ *  hidden subroutine interface,
+ *   which can be used in the user program
  */
 void xmpf_coarray_msg_(int *sw)
 {
@@ -60,7 +61,7 @@ void _coarray_msg(int sw)
 
   _XMPF_coarrayDebugPrint("xmpf_coarray_msg ON\n");
   fprintf(stderr,
-          "  %d-byte boundary since _XMP_COARRAY_FJRDMA %s\n",
+          "  %zd-byte boundary since _XMP_COARRAY_FJRDMA %s\n",
           BOUNDARY_BYTE,
 #ifdef _XMP_COARRAY_FJRDMA
           "is set."
@@ -197,7 +198,92 @@ int this_image_(void)
 
 
 /*****************************************\
-  coarray allocation
+  memory allocation for static coarrays
+\*****************************************/
+
+static size_t staticCoarray_totalSize = 0;
+static const size_t staticCoarray_maxSize = SIZE_MAX;
+static void *staticCoarray_rootDesc;
+static void *staticCoarray_rootAddr;
+static void *staticCoarray_ptr;
+
+void xmpf_coarray_count_size_(int *count, int *element)
+{
+  size_t thisSize = (size_t)(*count) * (size_t)(*element);
+  size_t mallocSize = ROUND_UP_UNIT(thisSize);
+  size_t lastTotalSize = staticCoarray_totalSize;
+
+  if (_XMPF_coarrayMsg) {
+    _XMPF_coarrayDebugPrint("count allocation size of a static coarray: "
+                            "%zd[byte].\n", mallocSize);
+  }
+
+  staticCoarray_totalSize += mallocSize;
+
+  // error check
+  if (staticCoarray_totalSize > staticCoarray_maxSize ||
+      staticCoarray_totalSize < lastTotalSize) {
+    _XMP_fatal("Static coarrays require too much memory in total.");
+  }
+}
+
+
+void xmpf_coarray_malloc_share_(void)
+{
+  ///////////////////////
+  // TEMPORARY
+  staticCoarray_totalSize = 100000;
+  ///////////////////////
+
+  _XMP_coarray_malloc_info_1(1, staticCoarray_totalSize);
+  _XMP_coarray_malloc_image_info_1();
+  _XMP_coarray_malloc_do(&staticCoarray_rootDesc, &staticCoarray_rootAddr);
+
+  if (_XMPF_coarrayMsg) {
+    _XMPF_coarrayDebugPrint("big allocation for all static coarrays\n");
+    fprintf(stderr, "  staticCoarray_rootDesc=%p, staticCoarray_rootAddr=%p, "
+            "staticCoarray_totalSize=%zd[byte]",
+            staticCoarray_rootDesc, staticCoarray_rootAddr,
+            staticCoarray_totalSize);
+  }
+
+  staticCoarray_ptr = staticCoarray_rootAddr;
+}
+
+
+void xmpf_coarray_get_share_(int *serno, char **pointer,
+                             int *count, int *element)
+{
+  _XMPF_checkIfInTask("allocatable coarray allocation");
+
+  // error check: boundary check
+  if ((*count) != 1 && (*element) % BOUNDARY_BYTE != 0) {
+    /* restriction: the size must be a multiple of BOUNDARY_BYTE
+       unless it is a scalar.
+    */
+    _XMP_fatal("violation of static coarray allocation boundary");
+  }
+
+  // get memory
+  size_t thisSize = (size_t)(*count) * (size_t)(*element);
+  size_t mallocSize = ROUND_UP_UNIT(*thisSize);
+
+  if (_XMPF_coarrayMsg) {
+    _XMPF_coarrayDebugPrint("get memory from buffer staticCoarray_rootAddr\n");
+    fprintf(stderr, "  (*count=%d) * (*element=%d) --> (mallocSize=%zd)\n",
+            *count, *element, mallocSize);
+  }
+
+  *serno = _set_coarrayInfo(staticCoarray_RootDesc, staticCoarray_ptr,
+                            *count, *element);
+
+  *pointer = staticCoarray_ptr;
+  staticCoarray_ptr += mallocSize;
+}
+
+
+/*****************************************\
+  memory allocation for allocatable coarrays
 \*****************************************/
 
 void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
@@ -206,7 +292,7 @@ void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
   void *orgAddr;
   size_t elementRU;
 
-  _XMPF_checkIfInTask("coarray allocation");
+  _XMPF_checkIfInTask("allocatable coarray allocation");
 
   // boundary check and recovery
   if ((*element) % BOUNDARY_BYTE == 0) {
