@@ -8,6 +8,8 @@
       !! Driver/libexec/src/omni_traverse.in is the source file of 
       !! omni_traverse.
       call xmpf_traverse_module
+
+      call xmpf_coarray_malloc_share
       call xmpf_traverse_initcoarray
 
       !! user's main program

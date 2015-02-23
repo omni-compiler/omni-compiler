@@ -17,7 +17,10 @@ import java.util.*;
  */
 public class XMPcoarrayInitProcedure {
 
-  final static String MALLOC_LIB_NAME = "xmpf_coarray_malloc";
+  ///////////////////////
+  //  final static String MALLOC_LIB_NAME = "xmpf_coarray_malloc";
+  ///////////////////////
+  final static String MALLOC_LIB_NAME = "xmpf_coarray_get_share";
 
   private Boolean DEBUG = false;          // switch the value in gdb !!
 
