@@ -33,6 +33,5 @@ int main()
     if(b[i] != i*2) return 2;
   }
 
-  printf("ok\n");
   return 0;
 }
