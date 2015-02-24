@@ -218,6 +218,19 @@ void _getVectorByByte(int serno, char *src, int bytes,
 {
   char* desc = _XMPF_get_coarrayDesc(serno);
   int start = _XMPF_get_coarrayStart(serno, src);
+
+  _XMP_coarray_rdma_coarray_set_1(start, bytes, 1);    // coindexed-object
+  _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // result
+  _XMP_coarray_rdma_node_set_1(coindex);
+  _XMP_coarray_rdma_do(COARRAY_GET_CODE, desc, dst, NULL);
+}
+
+
+void _getVectorByByte_____BAK_____(int serno, char *src, int bytes,
+                      int coindex, char *dst)
+{
+  char* desc = _XMPF_get_coarrayDesc(serno);
+  int start = _XMPF_get_coarrayStart(serno, src);
   // The element that was recorded when the data was allocated is used.
   int element = _XMPF_get_coarrayElement(serno);
   int vlength = bytes / element;

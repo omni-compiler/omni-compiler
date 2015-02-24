@@ -260,6 +260,19 @@ void _putVectorByByte(int serno, char *baseAddr, int bytes,
 {
   char* desc = _XMPF_get_coarrayDesc(serno);
   int start = _XMPF_get_coarrayStart(serno, baseAddr);
+
+  _XMP_coarray_rdma_coarray_set_1(start, bytes, 1);    // LHS
+  _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // RHS
+  _XMP_coarray_rdma_node_set_1(coindex);
+  _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, src, NULL);
+}
+
+
+void _putVectorByByte____BAK____(int serno, char *baseAddr, int bytes,
+                      int coindex, char *src)
+{
+  char* desc = _XMPF_get_coarrayDesc(serno);
+  int start = _XMPF_get_coarrayStart(serno, baseAddr);
   // The element that was recorded when the data was allocated is used.
   int element = _XMPF_get_coarrayElement(serno);
   int vlength = bytes / element;

@@ -28,6 +28,10 @@ void xmpf_init_all__()
 
 #ifdef _XMP_COARRAY
   /* for Coarray environment */
+  //////////////////////
+  fprintf(stdout, "here------ before _XMPF_coarray_init\n");
+  //////////////////////
+
   _XMPF_coarray_init();
 #endif
 

@@ -20,6 +20,9 @@ void _XMPF_coarray_init(void)
     _coarray_msg(atoi(env1));
   }
 
+  //////////////////////
+  fprintf(stdout, "here------ env1=%s\n", env1);
+  //////////////////////
 }
 
 
@@ -35,6 +38,10 @@ void xmpf_coarray_msg_(int *sw)
 
 void _coarray_msg(int sw)
 {
+  //////////////////////
+  fprintf(stdout, "here------ sw=%d\n", sw);
+  //////////////////////
+
   switch (sw) {
   case 0:
   default:
@@ -204,8 +211,7 @@ int this_image_(void)
 static size_t staticCoarray_totalSize = 0;
 static const size_t staticCoarray_maxSize = SIZE_MAX;
 static void *staticCoarray_rootDesc;
-static void *staticCoarray_rootAddr;
-static void *staticCoarray_ptr;
+static char *staticCoarray_rootAddr, *staticCoarray_ptr;
 
 void xmpf_coarray_count_size_(int *count, int *element)
 {
@@ -235,7 +241,7 @@ void xmpf_coarray_malloc_share_(void)
   staticCoarray_totalSize = 100000;
   ///////////////////////
 
-  _XMP_coarray_malloc_info_1(1, staticCoarray_totalSize);
+  _XMP_coarray_malloc_info_1(staticCoarray_totalSize, 1);
   _XMP_coarray_malloc_image_info_1();
   _XMP_coarray_malloc_do(&staticCoarray_rootDesc, &staticCoarray_rootAddr);
 
@@ -266,7 +272,7 @@ void xmpf_coarray_get_share_(int *serno, char **pointer,
 
   // get memory
   size_t thisSize = (size_t)(*count) * (size_t)(*element);
-  size_t mallocSize = ROUND_UP_UNIT(*thisSize);
+  size_t mallocSize = ROUND_UP_UNIT(thisSize);
 
   if (_XMPF_coarrayMsg) {
     _XMPF_coarrayDebugPrint("get memory from buffer staticCoarray_rootAddr\n");
@@ -274,8 +280,8 @@ void xmpf_coarray_get_share_(int *serno, char **pointer,
             *count, *element, mallocSize);
   }
 
-  *serno = _set_coarrayInfo(staticCoarray_RootDesc, staticCoarray_ptr,
-                            *count, *element);
+  *serno = _set_coarrayInfo(staticCoarray_rootDesc, staticCoarray_ptr,
+                            (*count)*(*element), 1);
 
   *pointer = staticCoarray_ptr;
   staticCoarray_ptr += mallocSize;
@@ -313,12 +319,14 @@ void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
     fprintf(stderr, "  *count=%d, elementRU=%zd, *element=%d\n",
             *count, elementRU, *element);
   }
-  _XMP_coarray_malloc_info_1(*count, elementRU);
+  //_XMP_coarray_malloc_info_1(*count, elementRU);
+  _XMP_coarray_malloc_info_1((*count)*elementRU, 1);
   _XMP_coarray_malloc_image_info_1();
   _XMP_coarray_malloc_do(&desc, &orgAddr);
 
   *pointer = orgAddr;
-  *serno = _set_coarrayInfo(desc, orgAddr, *count, *element);
+  //*serno = _set_coarrayInfo(desc, orgAddr, *count, *element);
+  *serno = _set_coarrayInfo(desc, orgAddr, (*count)*(*element), 1);
 }
 
 
