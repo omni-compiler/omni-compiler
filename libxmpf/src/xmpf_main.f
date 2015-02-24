@@ -9,6 +9,7 @@
       !! omni_traverse.
       call xmpf_traverse_module
 
+      call xmpf_traverse_coarraysize
       call xmpf_coarray_malloc_share
       call xmpf_traverse_initcoarray
 

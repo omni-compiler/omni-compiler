@@ -14,7 +14,8 @@ public class XMPtransCoarray
   // constants
   final static String DESCRIPTOR_PREFIX  = "xmpf_codescr";
   final static String CRAYPOINTER_PREFIX = "xmpf_crayptr";
-  final static String INITPROC_PREFIX = "xmpf_traverse_initcoarray";
+  final static String COARRAYSIZE_PREFIX = "xmpf_traverse_coarraysize";
+  final static String COARRAYINIT_PREFIX = "xmpf_traverse_initcoarray";
 
   static ArrayList<XMPtransCoarray> ancestors
     = new ArrayList<XMPtransCoarray>();
@@ -34,7 +35,7 @@ public class XMPtransCoarray
   //private XMPinitProcedure initProcedure;
   private String initProcTextForFile;
 
-  private String newProcName;
+  private String sizeProcName, initProcName;
   private String commonName1, commonName2;
 
   //------------------------------------------------------------
@@ -47,7 +48,9 @@ public class XMPtransCoarray
     this.env = env;
     env.setCurrentDef(funcDef);      // needed if this is called before XMPrewriteExpr ???
     name = fblock.getName();
-    newProcName = genNewProcName();
+    String postfix = genNewProcPostfix();
+    sizeProcName = COARRAYSIZE_PREFIX + postfix;
+    initProcName = COARRAYINIT_PREFIX + postfix;
     commonName1 = DESCRIPTOR_PREFIX + "_" + name;
     commonName2 = CRAYPOINTER_PREFIX + "_" + name;
 
@@ -343,12 +346,10 @@ public class XMPtransCoarray
       return;
 
     // output init procedure
-    XMPcoarrayInitProcedure coarrayInit = new XMPcoarrayInitProcedure();
-    coarrayInit.genInitRoutine(coarrays, newProcName,
-                               commonName1, commonName2);
-
-    // finalize the init procedure
-    coarrayInit.finalize(env);
+    XMPcoarrayInitProcedure coarrayInit = 
+      new XMPcoarrayInitProcedure(coarrays, sizeProcName, initProcName,
+                                  commonName1, commonName2, env);
+    coarrayInit.run();
   }
 
 
@@ -380,22 +381,22 @@ public class XMPtransCoarray
   //-----------------------------------------------------
   //  parts
   //-----------------------------------------------------
-  private String genNewProcName() {
-    return genNewProcName(getHostNames());
+  private String genNewProcPostfix() {
+    return genNewProcPostfix(getHostNames());
   }
 
-  private String genNewProcName(String ... names) { // host-to-guest order
+  private String genNewProcPostfix(String ... names) { // host-to-guest order
     int n = names.length;
-    String initProcName = INITPROC_PREFIX;
+    String procPostfix = "";
     for (int i = 0; i < n; i++) {
-      initProcName += "_";
+      procPostfix += "_";
       StringTokenizer st = new StringTokenizer(names[i], "_");
       int n_underscore = st.countTokens() - 1;
       if (n_underscore > 0)   // '_' was found in names[i]
-        initProcName += String.valueOf(n_underscore);
-      initProcName += names[i];
+        procPostfix += String.valueOf(n_underscore);
+      procPostfix += names[i];
     }
-    return initProcName;
+    return procPostfix;
   }
 
   private String[] getHostNames() {

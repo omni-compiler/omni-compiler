@@ -248,10 +248,10 @@ void xmpf_coarray_count_size_(int *count, int *element)
 
 void xmpf_coarray_malloc_share_(void)
 {
-  ///////////////////////
-  // TEMPORARY
-  pool_totalSize = 100000;
-  ///////////////////////
+  if (_XMPF_coarrayMsg) {
+    _XMPF_coarrayDebugPrint("estimated pool_totalSize = %zd\n",
+                            pool_totalSize);
+  }
 
   _XMP_coarray_malloc_info_1(pool_totalSize, 1);
   _XMP_coarray_malloc_image_info_1();
@@ -288,6 +288,11 @@ void xmpf_coarray_get_share_(int *serno, char **pointer,
   // get memory
   size_t thisSize = (size_t)(*count) * (size_t)(*element);
   size_t mallocSize = ROUND_UP_UNIT(thisSize);
+
+  if (pool_ptr + mallocSize > pool_rootAddr + pool_totalSize) {
+    _XMP_fatal("lack of memory pool for static coarrays: "
+               "xmpf_coarray_get_share_() in " __FILE__);
+  }
 
   if (_XMPF_coarrayMsg) {
     _XMPF_coarrayDebugPrint("get memory in the pool\n"

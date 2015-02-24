@@ -46,9 +46,7 @@ RUN/go.sh: go.template Makefile
 ### clean
 clean:
 	rm -f *~ *.o $(OUT) *.result a.out
-	rm -f __omni_tmp__/*.F90 __omni_tmp__/*.xml
-	rm -f __omni_tmp__/*~ __omni_tmp__/*.in
-	rm -f omni_traverse*.o
+	rm -rf __omni_tmp__/
 	rm -f $(OUT:%=RUN/%)
 	rm -f *.mod *.xmod
 
