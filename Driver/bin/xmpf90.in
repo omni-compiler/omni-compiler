@@ -64,12 +64,9 @@ xmpf90_set_parameters ${@+"$@"}
 omni_f_check_file_exist
 
 ### Create temporal directory ###
-if [ $ENABLE_DEBUG = true ]; then
-    TEMP_DIR=$DEBUG_TEMP_DIR
-    if [ -d $TEMP_DIR ]; then
-	omni_exec rm -rf $TEMP_DIR
-    fi
-fi
+[ $ENABLE_DEBUG = true ] && TEMP_DIR=$DEBUG_TEMP_DIR
+# Note that,
+# If TEMP_DIR exists, the TEMP_DIR is not deleted (KAGEMAI #379)
 
 omni_exec mkdir -p $TEMP_DIR
 [ $ENABLE_DEBUG = true ] && echo "Create ${TEMP_DIR}/"
@@ -108,6 +105,7 @@ done
 
 ### Frontend ###
 [ $ENABLE_XACC = true ] && FRONTEND_ADD_OPT="-facc $FRONTEND_ADD_OPT"
+[ $ENABLE_OPENMP = true ] && FRONTEND_ADD_OPT="$FRONTEND_ADD_OPT -fopenmp"
 for file in $all_files; do
     FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
