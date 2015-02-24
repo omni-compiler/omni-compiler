@@ -7,13 +7,13 @@ import exc.object.*;
 
 
 public class ACCinfo {
-  private ACCinfo parent;
+  private final ACCinfo parent;
   private Block block; /* back link */
-  private ACCglobalDecl globalDecl;
-  ACCpragma pragma; /* directives */
+  private final ACCglobalDecl globalDecl;
+  final ACCpragma pragma; /* directives */
   private Xobject xObject;
 
-  private List<ACCvar> varList; /* variable list */
+  private final List<ACCvar> varList; /* variable list */
   
   private Xobject ifCond = null;
   
@@ -22,7 +22,7 @@ public class ACCinfo {
   
   private Xobject waitExp = null;
   
-  private Set<ACCpragma> execModels; 
+  private final Set<ACCpragma> execModels;
   private Xobject num_gangsExp = null;
   private Xobject num_workersExp = null;
   private Xobject vect_lenExp = null;
@@ -32,18 +32,12 @@ public class ACCinfo {
   private boolean isIndependent = false;
   
   //for rewrite
-  //private List<Ident> idList = null;
   private XobjList idList = null;
-  @Deprecated
-  private List<Block> beginBlockList = null;
   private Block replaceBlock = null;
-  @Deprecated
-  private List<Block> endBlockList = null;
   private Block beginBlock = null;
   private Block endBlock = null;
   private XobjList declList = null;
-  
-  
+
   ACCinfo(ACCpragma pragma, Block b, ACCglobalDecl globalDecl){
     this.pragma = pragma;
     this.block = b; 
@@ -126,7 +120,7 @@ public class ACCinfo {
       }
     }
   }
-  public Xobject getWaitExp() throws ACCexception{
+  public Xobject getWaitExp() {
     return waitExp;
   }
 
@@ -251,7 +245,7 @@ public class ACCinfo {
     return null;
   }
   
-  private ACCvar findOuterACCvar(String varName){
+  public ACCvar findOuterACCvar(String varName){
     for(ACCinfo info = parent; info != null; info = info.parent){
       ACCvar accVar = info.getACCvar(varName);
       if(accVar != null) return accVar;
@@ -260,18 +254,14 @@ public class ACCinfo {
   }
   
   /** @return true if this is always enabled */
-  public boolean isEnabled(){
-    if(ifCond == null) return true;
-    if(ifCond.isIntConstant()){
-      return ! ifCond.isZeroConstant();
-    }
-    return false;
+  public boolean isEnabled() {
+    if (ifCond == null) return true;
+    return ifCond.isIntConstant() && !ifCond.isZeroConstant();
   }
   
   /** @return true if this is always disabled */
   public boolean isDisabled(){
-    if(ifCond != null && ifCond.isZeroConstant()) return true;
-    return false;
+    return ifCond != null && ifCond.isZeroConstant();
   }
   
   /** @return true if the variable is always allocated */
@@ -414,8 +404,6 @@ public class ACCinfo {
     case PRESENT_OR_CREATE:
       if(isVarAllocated(varName)){ //not enough. 
         ACC.debug("'" + varName + "' is already allocated. '" + atr.getName() + "' is same as 'present'.");
-      }else{
-        //ACC.debug("'" + varName + "' is not allocated yet. '" + atr.getName() + "' is same as '" + atr.getName().substring("PRESENT_OR_".length()) + "'.");
       }
       break;
     case DEVICEPTR:
@@ -438,9 +426,6 @@ public class ACCinfo {
       
     case PRIVATE:
     case FIRSTPRIVATE:
-      if(varId.Type().isArray()){
-        //throw new ACCexception("'" + varName + "' is an array. Array is not allowed in " + atr.getName() + ".");
-      }break;
     case CACHE:
       break;
     default:
@@ -508,10 +493,6 @@ public class ACCinfo {
     }else{
       newACCvar.setAttribute(atr);
     }
-    //if(! subscripts.isEmpty()){
-      //newACCvar.setRange(subscripts);
-    //}
-    
   }
   
   public ACCvar getACCvar(String varName){
@@ -523,7 +504,7 @@ public class ACCinfo {
     return null;
   }
   //returns ACCvar that has same region described by subscripts
-  public ACCvar getACCvar(String varName, XobjList subscripts){
+  ACCvar getACCvar(String varName, XobjList subscripts){
     for(ACCvar accVar : varList){
       if(accVar.getName().equals(varName)){
         if(accVar.contains(subscripts))
@@ -566,14 +547,6 @@ public class ACCinfo {
   public ACCpragma getPragma(){
     return pragma;
   }
-  @Deprecated
-  public void setBeginBlockList(List<Block> beginBlockList){
-    this.beginBlockList = beginBlockList;
-  }
-  @Deprecated
-  public void setEndBlockList(List<Block> endBlockList){
-    this.endBlockList = endBlockList;
-  }
   public void setBeginBlock(Block beginBlock){
     this.beginBlock = beginBlock;
   }
@@ -582,14 +555,6 @@ public class ACCinfo {
   }
   public void setReplaceBlock(Block replaceBlock){
     this.replaceBlock = replaceBlock;
-  }
-  @Deprecated
-  public List<Block> getBeginBlockList(){
-    return beginBlockList;
-  }
-  @Deprecated
-  public List<Block> getEndBlockList(){
-    return endBlockList;
   }
   public Block getBeginBlock(){
     return beginBlock;
@@ -600,11 +565,9 @@ public class ACCinfo {
   public Block getReplaceBlock(){
     return replaceBlock;
   }
-  //public void setIdList(List<Ident> idList){
   public void setIdList(XobjList idList){
     this.idList = idList;
   }
-  //public List<Ident> getIdList(){
   public XobjList getIdList(){
     return idList;
   }
@@ -644,17 +607,6 @@ public class ACCinfo {
     return parent;
   }
   
-  /*
-  public Iterator<ACCvar> getReductionVars(){
-    List<ACCvar> reductionVars = new ArrayList<ACCvar>();
-    for(ACCvar v : varList){
-      if(v.isReduction()){
-        reductionVars.add(v);
-      }
-    }
-    return reductionVars.iterator();
-  }*/
-  
   private Ident findVarIdent(String name)
   {
       for(Block b = block; b != null; b = b.getParentBlock()){
@@ -674,15 +626,15 @@ public class ACCinfo {
   }
   
   public Iterable<ACCvar> getACCvars(ACCpragma atr){
-    Iterable <ACCvar> vars = new Iterable<ACCvar>(){
+    return new Iterable<ACCvar>(){
       public Iterator<ACCvar> iterator(){
         return new Iterator<ACCvar>(){
           private ACCvar var;
-          private Iterator<ACCvar> varIter = getVars();
+          private final Iterator<ACCvar> varIter = getVars();
           @Override
           public boolean hasNext() {
             while(varIter.hasNext()){
-              var = varIter.next(); 
+              var = varIter.next();
               if(var.isPrivate()){ //一時的に
                 return true;
               }
@@ -698,8 +650,6 @@ public class ACCinfo {
         };
       }
     };
-    
-    return vars;
   }
 
 }

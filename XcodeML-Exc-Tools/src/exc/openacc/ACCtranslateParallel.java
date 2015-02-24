@@ -61,7 +61,11 @@ public class ACCtranslateParallel {
       //if(parallelInfo.getDevicePtr(varName) != null) continue;
       if(parallelInfo.isVarReduction(varName)) continue;
       
-      if(readOnlyOuterIdSet.contains(id) && !id.Type().isArray()) continue; //firstprivateは除く
+      if(readOnlyOuterIdSet.contains(id) && !id.Type().isArray()){
+        //firstprivateは除く
+        parallelInfo.declACCvar(id.getName(), ACCpragma.FIRSTPRIVATE);
+        continue;
+      }
       //if(inductionVarIdSet.contains(id)) continue;
       
       parallelInfo.declACCvar(id.getName(), ACCpragma.PRESENT_OR_COPY);

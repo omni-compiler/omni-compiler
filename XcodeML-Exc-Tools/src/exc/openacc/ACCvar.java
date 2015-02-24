@@ -5,10 +5,10 @@ import java.util.*;
 
 
 public class ACCvar {
-  private Ident id;
-  
+  private final Ident id;
+
   private boolean isSpecifiedDataAttribute = false;
-  private EnumSet<Attribute> atrEnumSet = EnumSet.noneOf(Attribute.class);
+  private final EnumSet<Attribute> atrEnumSet = EnumSet.noneOf(Attribute.class);
   
   //for data clause
   private Ident deviceptr = null;
@@ -241,7 +241,7 @@ public class ACCvar {
         }
       }
     }
-    if(arrayType != null && isCorrectRange(arrayType, lower, length) == false){
+    if(arrayType != null && !isCorrectRange(arrayType, lower, length)){
       throw new ACCexception("array bound exceeded : " + getName());
     }
     rangeList.add(Xcons.List(lower, length));
@@ -263,14 +263,6 @@ public class ACCvar {
         if(range.Opcode() == Xcode.LIST){
           addRange(rangeList, range, null);
           type = type.getRef();
-          if(false){
-            if(type.isBasic() || type.isEnum() || type.isStruct()){
-              for(; args != null; args = args.nextArgs()){
-                range = args.getArg();
-                addRange(rangeList, range, null);
-              }
-            }
-          }
           break;
         }
         throw new ACCexception("unshaped pointer");
@@ -305,7 +297,7 @@ public class ACCvar {
     
     if(lowerInt < 0 || lengthInt < 1) return false;
     if(lowerInt + lengthInt > sizeInt) return false;
-    
+
     return true;
   }
   
@@ -350,24 +342,19 @@ public class ACCvar {
   }
   
   public Xobject getAddress() throws ACCexception{
-    Xobject addrObj = null;
     Xtype varType = id.Type();
 
     switch (varType.getKind()) {
     case Xtype.BASIC:
     case Xtype.STRUCT:
     case Xtype.UNION:
-      addrObj = id.getAddr();
-      break;
+      return id.getAddr();
     case Xtype.POINTER:
-    {
       if(isSubarray()){
-        addrObj = id.Ref();
+        return id.Ref();
       }else{
-        addrObj = id.getAddr();
+        return id.getAddr();
       }
-      break;
-    }
     case Xtype.ARRAY:
     {
       ArrayType arrayVarType = (ArrayType)varType;
@@ -375,24 +362,20 @@ public class ACCvar {
       case Xtype.BASIC:
       case Xtype.STRUCT:
       case Xtype.UNION:
-        break;
+        return id.Ref();
       default:
         throw new ACCexception("array '" + getName() + "' has a wrong data type for acc data");
       }
-
-      addrObj = id.Ref();
-      break;
     }
     default:
       throw new ACCexception("'" + getName() + "' has a wrong data type for acc data");
     }
-    return addrObj;
   }
 
-  public Xobject getSize() throws ACCexception{
+  public Xobject getSize() {
     Xobject size = Xcons.SizeOf(elementType);
     for(Xobject x : rangeList){
-      size = Xcons.binaryOp(Xcode.MUL_EXPR, size, (XobjList)x.left());
+      size = Xcons.binaryOp(Xcode.MUL_EXPR, size, x.left());
     }
     return size;
   }
@@ -434,7 +417,7 @@ public class ACCvar {
     if(x.isIntConstant()){
       return (long)x.getInt();
     }else if(x.Opcode()== Xcode.LONGLONG_CONSTANT){
-      return (long)x.getLong();
+      return x.getLong();
     }throw new ACCexception("not constant");
 
   }
@@ -458,8 +441,12 @@ public class ACCvar {
     return this.elementType;
   }
 
-  public int getDim(){
+  public int getDim() {
     return this.dim;
+  }
+
+  public boolean isArray() {
+    return this.dim > 0;
   }
 }
 

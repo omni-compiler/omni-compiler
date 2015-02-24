@@ -224,12 +224,7 @@ public class ACCgpuManager {
     return "";
   }
   
-  public void finalize(){
-    //specifyExecModel();
-    //distAxis();
-  }
-  
-  public XobjList getBlockThreadSize_old(){
+    public XobjList getBlockThreadSize_old(){
     int usedBlockDim = 3 - availableBlockDim;
     int usedThreadDim = 3 - availableThreadDim;
         
@@ -503,6 +498,21 @@ public class ACCgpuManager {
       }
     }
     return "";
+  }
+  public EnumSet<ACCpragma> getMethodType(CforBlock forBlock){
+    LoopExecInfo loopExecInfo = execMethodMap.get(forBlock);
+    ACCpragma execMethod = loopExecInfo.method;
+    if(execMethod != null){
+      switch(execMethod){
+      case _BLOCK:
+        return EnumSet.of(ACCpragma.GANG); //"block_x";
+      case _THREAD:
+        return EnumSet.of(ACCpragma.VECTOR); //"thread_x";
+      case _BLOCK_THREAD:
+        return EnumSet.of(ACCpragma.GANG, ACCpragma.VECTOR); // "block_thread_x";
+      }
+    }
+    return EnumSet.noneOf(ACCpragma.class);
   }
   public XobjList getBlockThreadSize(){
     int thread = 1;
