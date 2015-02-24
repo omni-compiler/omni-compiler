@@ -70,8 +70,9 @@ function xmpf90_set_parameters()
 	    -J)
 		MODULE_FLAG=true;;
 	    -J?*)
-		MODULE_OPT="$MODULE_OPT -M${arg#-J}"
-		other_args="$other_args $arg";;
+		MODULE_DIR="${arg#-J}"
+                MODULE_OPT="$MODULE_OPT -M${MODULE_DIR}"
+                other_args="$other_args $OMNI_MODINC ${MODULE_DIR}";;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)
@@ -144,8 +145,9 @@ function xmpf90_set_parameters()
 		    OUTPUT_FILE=$arg
 		    OUTPUT_FLAG=false
 		elif [[ "$MODULE_FLAG" = true ]]; then
-		    MODULE_OPT="$MODULE_OPT -M$arg"
-		    other_args="$other_args -J $arg"
+		    MODULE_DIR="$arg"
+		    MODULE_OPT="$MODULE_OPT -M${MODULE_DIR}"
+		    other_args="$other_args $OMNI_MODINC ${MODULE_DIR}"
 		    MODULE_FLAG=false
 		else
 		    tmp_args="$tmp_args $arg"
