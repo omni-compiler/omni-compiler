@@ -26,12 +26,8 @@ void xmpf_init_all__()
   _XMPC_running = 0;
   _XMPF_running = 1;
 
-#ifdef _XMP_COARRAY
+#if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)
   /* for Coarray environment */
-  //////////////////////
-  fprintf(stdout, "here------ before _XMPF_coarray_init\n");
-  //////////////////////
-
   _XMPF_coarray_init();
 #endif
 

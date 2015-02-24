@@ -22,6 +22,14 @@ RESULT= $(OUT:%=%.result)
 %.result: %
 	mpirun -n 3 $< 2>&1 | tee $@
 
+%.result: %.f90
+	xmpf90 $(OPT) -o $* $<
+	mpirun -n 3 $* 2>&1 | tee $@
+
+%.result: %.c
+	xmpcc $(OPT) -o $* $<
+	mpirun -n 3 $* 2>&1 | tee $@
+
 RUN/%:: %
 	cp $< $@
 
