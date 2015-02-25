@@ -16,6 +16,9 @@ all default: $(EXES)
 344_include.x: ./344_include.c
 	$(XCC) -I$(MPIPATH) $^ -o $@
 
+openmp.x: openmp.c
+	$(XCC) -omp openmp.c -o openmp.x
+
 377.x: 377.c
 	$(XCC) -c -o 377.x $<; \
 	[ ! -f 377.x ] && exit 1; \

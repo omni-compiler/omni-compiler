@@ -13,9 +13,6 @@ RESULT= $(OUT:%=%.result)
 %:  %.c
 	xmpcc $(OPT) -o $@ $<
 
-%.result: %
-	mpirun -n $(NPE) $< 2>&1 | tee $@
-
 %.result: %.f90
 	xmpf90 $(OPT) -o $* $<
 	mpirun -n 3 $* 2>&1 | tee $@
@@ -23,6 +20,9 @@ RESULT= $(OUT:%=%.result)
 %.result: %.c
 	xmpcc $(OPT) -o $* $<
 	mpirun -n 3 $* 2>&1 | tee $@
+
+%.result: %
+	mpirun -n $(NPE) $< 2>&1 | tee $@
 
 RUN/%:: %
 	cp $< $@
@@ -37,7 +37,7 @@ all:     $(OUT)
 run:	$(RESULT)
 
 ### prepare to execute on K
-submit: RUN/go.sh $(OUT:%=RUN/%)
+submit: all RUN/go.sh $(OUT:%=RUN/%)
 	cd RUN; pjsub go.sh
 
 RUN/go.sh: go.template Makefile
@@ -46,7 +46,9 @@ RUN/go.sh: go.template Makefile
 ### clean
 clean:
 	rm -f *~ *.o $(OUT) *.result a.out
-	rm -rf __omni_tmp__/
+	rm -f __omni_tmp__/*.F90 __omni_tmp__/*.xml
+	rm -f __omni_tmp__/*~ __omni_tmp__/*.in
+	rm -f omni_traverse*.o
 	rm -f $(OUT:%=RUN/%)
 	rm -f *.mod *.xmod
 

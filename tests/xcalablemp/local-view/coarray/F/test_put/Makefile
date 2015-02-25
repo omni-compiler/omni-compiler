@@ -1,4 +1,4 @@
-OPT= --debug
+#OPT= --debug
 #OPT= -g --debug --verbose
 
 OUT_OK= a1d1-3 a1d1-2 a1d1-1 a6d3 a6d4-2  a6d3-1 a6d3-2 a3d3 a2d2  a2d2-1-1 a2d2-1-5  s-2 s-1 a1d1-4 a6d4-1  a0d0-2 a0d0-3
@@ -19,9 +19,6 @@ RESULT= $(OUT:%=%.result)
 %:  %.c
 	xmpcc $(OPT) -o $@ $<
 
-%.result: %
-	mpirun -n 3 $< 2>&1 | tee $@
-
 %.result: %.f90
 	xmpf90 $(OPT) -o $* $<
 	mpirun -n 3 $* 2>&1 | tee $@
@@ -29,6 +26,9 @@ RESULT= $(OUT:%=%.result)
 %.result: %.c
 	xmpcc $(OPT) -o $* $<
 	mpirun -n 3 $* 2>&1 | tee $@
+
+%.result: %
+	mpirun -n 3 $< 2>&1 | tee $@
 
 RUN/%:: %
 	cp $< $@
@@ -43,7 +43,7 @@ all:     $(OUT)
 run:	$(RESULT)
 
 ### prepare to execute on K
-submit: RUN/go.sh $(OUT:%=RUN/%)
+submit: all RUN/go.sh $(OUT:%=RUN/%)
 	cd RUN; pjsub go.sh
 
 RUN/go.sh: go.template Makefile
@@ -52,6 +52,9 @@ RUN/go.sh: go.template Makefile
 ### clean
 clean:
 	rm -f *~ *.o $(OUT) *.result a.out
-	rm -rf __omni_tmp__/
+	rm -f __omni_tmp__/*.F90 __omni_tmp__/*.xml
+	rm -f __omni_tmp__/*~ __omni_tmp__/*.in
+	rm -f omni_traverse*.o
 	rm -f $(OUT:%=RUN/%)
 	rm -f *.mod *.xmod
+
