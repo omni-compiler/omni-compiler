@@ -6,21 +6,21 @@ go: all run
 
 all:
 	for d in $(DIRS); do \
-	  cd $$d; make all && echo PASS && echo; \
+	  (cd $$d; make all) && echo PASS; \
 	done
 
 run:
 	for d in $(DIRS); do \
-	  cd $$d; make run && echo PASS && echo; \
+	  (cd $$d; make run) && echo PASS; \
 	done
 
 submit:
 	for d in $(DIRS); do \
-	  cd $$d; make submit && echo PASS && echo; \
+	  (cd $$d; make submit) && echo PASS; \
 	done
 
 clean:
 	for d in $(DIRS); do \
-	  cd $$d; make clean && echo PASS && echo; \
+	  (cd $$d; make clean) && echo PASS; \
 	done
 

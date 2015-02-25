@@ -7,10 +7,13 @@
 #include "xmpf_internal.h"
 
 // communication schemes
-#define GETSCHEME_Normal        0
-#define GETSCHEME_RecvBuffer    1
+#define SCHEME_DirectGet       20   // RDMA expected
+#define SCHEME_BufferGet       21   // to get visible to FJ-RDMA
+#define SCHEME_ExtraDirectGet  22   // DirectGet with extra data
+#define SCHEME_ExtraBufferGet  23   // BufferGet with extra data
 
-static int _select_getscheme(char *result);
+static int _select_getscheme_scalar(int element);
+static int _select_getscheme_array(void);
 
 static void _getCoarray(int serno, char *baseAddr, int coindex, char *res,
                         int bytes, int rank, int skip[], int count[]);
@@ -38,28 +41,39 @@ extern void xmpf_coarray_get_scalar_(int *serno, char *baseAddr, int *element,
 {
   _XMPF_checkIfInTask("a scalar coindexed object");
 
-  int scheme = _select_getscheme(result);
-
-  //char *desc = _XMPF_get_coarrayDesc(*serno);
-  //int offset = _XMPF_get_coarrayOffset(*serno, baseAddr);
+  int scheme = _select_getscheme_scalar(*element);
 
   switch (scheme) {
-  case GETSCHEME_Normal:
+  case SCHEME_DirectGet:
     if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("select GETSCHEME_Normal/scalar\n"
+      _XMPF_coarrayDebugPrint("select SCHEME_DirectGet/scalar\n"
                               "  baseAddr=%p, *element=%d\n",
                               baseAddr, *element);
     }
     _getVector(*serno, baseAddr, *element, *coindex, result);
     break;
 
-  case GETSCHEME_RecvBuffer:
+  case SCHEME_BufferGet:
     {
-      size_t elementRU = ROUND_UP_BOUNDARY(*element);
-      char buf[elementRU];   // could be in RDMA area
+      char buf[*element];
 
       if (_XMPF_coarrayMsg) {
-        _XMPF_coarrayDebugPrint("select GETSCHEME_RecvBuffer/scalar\n",
+        _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/scalar\n",
+                                "  baseAddr=%p, *element=%zd, buf=%p\n",
+                                baseAddr, *element, buf);
+      }
+      _getVector(*serno, baseAddr, *element, *coindex, buf);
+      (void)memcpy(result, buf, *element);
+    }
+    break;
+
+  case SCHEME_ExtraBufferGet:
+    {
+      size_t elementRU = ROUND_UP_BOUNDARY(*element);
+      char buf[elementRU];
+
+      if (_XMPF_coarrayMsg) {
+        _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferGet/scalar\n",
                                 "  baseAddr=%p, elementRU=%zd, buf=%p\n",
                                 baseAddr, elementRU, buf);
       }
@@ -83,7 +97,7 @@ extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
   char *buf;
   int i;
 
-  int scheme = _select_getscheme(result);
+  int scheme = _select_getscheme_array();
 
   char *nextAddr;
   int skip[MAX_RANK];
@@ -104,22 +118,22 @@ extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
   }
 
   switch (scheme) {
-  case GETSCHEME_Normal:
+  case SCHEME_DirectGet:
     if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("select GETSCHEME_Normal/array\n"
+      _XMPF_coarrayDebugPrint("select SCHEME_DirectGet/array\n"
                               "  baseAddr=%p, *element=%d\n",
                               baseAddr, *element);
     }
     _getCoarray(*serno, baseAddr, *coindex, result, *element, *rank, skip, count);
     break;
 
-  case GETSCHEME_RecvBuffer:
+  case SCHEME_BufferGet:
     bufsize = *element;
     for (i = 0; i < *rank; i++) {
       bufsize *= count[i];
     }
     if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("select GETSCHEME_RecvBuffer/array\n"
+      _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/array\n"
                               "  bufsize=%zd\n", bufsize);
     }
     buf = malloc(bufsize);
@@ -133,22 +147,35 @@ extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
 }
 
 
-/* This can be further optimized.
- */
-int _select_getscheme(char *result)
+/***************************************************\
+    sub
+\***************************************************/
+
+int _select_getscheme_scalar(int element)
 {
-  int scheme;
+  if (element % BOUNDARY_BYTE > 0)
+    return SCHEME_ExtraBufferGet;
+
+  // SCHEME_ExtraDirectGet should not be used because 
+  // the extra area overwritten may be valid data.
 
 #ifdef _XMP_COARRAY_FJRDMA
-  // if the address of result may not be written in
-  scheme = GETSCHEME_RecvBuffer;
+  // The result scalar variable may be invisible to FJ-RDMA.
+  return SCHEME_BufferGet;
 #else
-  scheme = GETSCHEME_Normal;
+  return SCHEME_DirectGet;
 #endif
-
-  return scheme;
 }
 
+int _select_getscheme_array(void)
+{
+#ifdef _XMP_COARRAY_FJRDMA
+  // The result array variable may be invisible to FJ-RDMA.
+  return SCHEME_BufferGet;
+#else
+  return SCHEME_DirectGet;
+#endif
+}
 
 
 void _getCoarray(int serno, char *baseAddr, int coindex, char *result,

@@ -286,7 +286,7 @@ extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void
 
 #define ROUND_UP(n,p)         (((((size_t)(n))-1)/(p)+1)*(p))
 #define ROUND_UP_BOUNDARY(n)  ROUND_UP((n),BOUNDARY_BYTE)
-#define ROUND_UP_UNIT(n)      ROUND_UP((n),MALLOC_UNIT)
+//#define ROUND_UP_UNIT(n)      ROUND_UP((n),MALLOC_UNIT)
 
 /*-- parameters --*/
 #define DESCR_ID_MAX   250
