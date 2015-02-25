@@ -89,13 +89,6 @@ for file in $F_F90_files; do
 	fi
     fi
 done
-for file in $f_f90_files; do
-    FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
-    EXT=${file##*.}
-    FILE_PP=${TEMP_DIR}/${FILE_NAME}.${EXT}
-
-    omni_exec cp $file $FILE_PP
-done
 [ $STOP_PP = true ] && exit 0;
 [ $ONLY_PP = true -a $ENABLE_DEBUG = true ] && exit 0;          # ompf90 -E --debug hoge.c (save $TMP_DIR)
 [ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # ompf90 -E hoge.c
@@ -103,13 +96,20 @@ done
 ### Frontend ###
 [ $ENABLE_ACC = true ] && FRONTEND_ADD_OPT="$FRONTEND_ADD_OPT -facc"
 [ $ENABLE_OPENMP = true ] && FRONTEND_ADD_OPT="$FRONTEND_ADD_OPT -fopenmp"
-for file in $all_files; do
-    FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
+for file in $F_F90_files; do
+    FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.F90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
     FILE_PP=${TEMP_DIR}/${FILE_NAME}.${EXT}
     FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.xml
 
     omni_exec $OMNI_F2X_CMD $FRONTEND_ADD_OPT $OMNI_F2X_OPT $FILE_PP -o $FILE_IN_X
+done
+for file in $f_f90_files; do
+    FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
+    EXT=${file##*.}
+    FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.xml
+
+    omni_exec $OMNI_F2X_CMD $FRONTEND_ADD_OPT $OMNI_F2X_OPT $file -o $FILE_IN_X
 done
 [ $STOP_FRONTEND = true ] && exit 0;
 

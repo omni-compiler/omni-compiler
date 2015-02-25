@@ -14,7 +14,6 @@ int main()
     sum += array[i];
   }
   //verify
-  printf("%lf\n", sum);
   if(sum != 4950.0) return 1;
 
 
