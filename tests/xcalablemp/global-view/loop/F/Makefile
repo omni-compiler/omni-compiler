@@ -33,6 +33,7 @@ run: $(EXES)
 	$(XRUN) -n 16 ./reduction_plus3.x
 	$(XRUN) -n 16 ./gblock2.x
 	$(XRUN) -n 2 ./different_template.x
+	$(XRUN) -n 1 ./387_l2g.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

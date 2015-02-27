@@ -197,7 +197,7 @@ omni_exec $OMNI_TRAVERSE -o $TRAVERSE_FILE $obj_files
 [ $ENABLE_TLOG_ALL = true -o $ENABLE_TLOG = true ] && PROFILE_OPT="-ltlog_mpi"
 [ $ENABLE_XACC = true ] && LINKER_ADD_OPT="-lacc -L@GPGPU_PREFIX@/lib64 -lcudart $LINKER_ADD_OPT"
 TRAVERSE_FILE_O=${TEMP_DIR}/omni_traverse_${PID}.o
-omni_exec $OMNI_LINKER_CMD $OMNI_LINKER_OPT $LINKER_ADD_OPT -c $TRAVERSE_FILE -o $TRAVERSE_FILE_O
+omni_exec $OMNI_MPIFC_CMD -c $TRAVERSE_FILE -o $TRAVERSE_FILE_O
 obj_files="$TRAVERSE_FILE_O $obj_files"
 if [ "$OUTPUT_FILE" = "" ]; then
     omni_exec $OMNI_LINKER_CMD $obj_files $OMNI_LINKER_OPT $PROFILE_OPT $LINKER_ADD_OPT $other_args $archive_files
