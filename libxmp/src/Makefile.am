@@ -21,8 +21,8 @@ if FJRDMA
     CFLAGS           += -D_XMP_COARRAY_FJRDMA -D_XMP_COARRAY
 endif
 
-if BLAS_LIB
-    CFLAGS += -D_XMP_BLAS_LIB
+if USER_LIBBLAS
+    CFLAGS += -D_XMP_USER_LIBBLAS
 endif
 
 if TCA
