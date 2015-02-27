@@ -7,21 +7,21 @@ go: all
 
 all:
 	for d in $(DIRS); do \
-	  (cd $$d; $(MAKE) all) && echo PASS; \
+	  (cd $$d; $(MAKE) all) && echo PASS || echo "ERROR!!"; \
 	done
 
 run:
 	for d in $(DIRS); do \
-	  (cd $$d; $(MAKE) -j1 run) && echo PASS; \
+	  (cd $$d; $(MAKE) -j1 run) && echo PASS || echo "ERROR!!"; \
 	done
 
 submit:
 	for d in $(DIRS); do \
-	  (cd $$d; $(MAKE) submit) && echo PASS; \
+	  (cd $$d; $(MAKE) submit) && echo PASS || echo "ERROR!!"; \
 	done
 
 clean:
 	for d in $(DIRS); do \
-	  (cd $$d; $(MAKE) clean) && echo PASS; \
+	  (cd $$d; $(MAKE) clean) && echo PASS || echo "ERROR!!"; \
 	done
 
