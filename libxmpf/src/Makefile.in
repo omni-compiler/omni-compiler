@@ -847,7 +847,7 @@ uninstall-am: uninstall-libLIBRARIES
 	tags tags-am uninstall uninstall-am uninstall-libLIBRARIES
 
 
-xmpf_coarray_get_wrap.f90: xmpf_coarray_get_wrap.f90.sh
+xmpf_coarray_get_wrap.f90: ./xmpf_coarray_get_wrap.f90.sh
 	$< > $@
 
 install-exec-local: xmpf_main.o
