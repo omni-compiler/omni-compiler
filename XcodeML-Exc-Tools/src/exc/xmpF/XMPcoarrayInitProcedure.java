@@ -17,34 +17,46 @@ import java.util.*;
  */
 public class XMPcoarrayInitProcedure {
 
-  final static String MALLOC_LIB_NAME = "xmpf_coarray_malloc";
+  final static String SIZE_LIB_NAME = "xmpf_coarray_count_size";
+  final static String INIT_LIB_NAME = "xmpf_coarray_get_share";
 
   private Boolean DEBUG = false;          // switch the value in gdb !!
 
 
   /* for all procedures */
   private Vector<String> procTexts;
+  Vector<XMPcoarray> staticCoarrays;
+  XMPenv env;
 
   /* for each procedure */
-  private String procName;      // name of the current procedure
+  private String sizeProcName, initProcName;  // names of procedures to generate
   private String commonName1, commonName2;    // common block names
 
   /* for all variables of a procedure */
   private Vector<String> varNames1, varNames2;
-  private Vector<String> callStmts;
+  private Vector<String> callSizeStmts, callInitStmts;
 
   //------------------------------
   //  constructor/finalizer
   //------------------------------
-  public XMPcoarrayInitProcedure() {
+  public XMPcoarrayInitProcedure(Vector<XMPcoarray> staticCoarrays,
+                                 String sizeProcName, String initProcName,
+                                 String commonName1, String commonName2,
+                                 XMPenv env) {
     _init_forFile();
+
+    this.staticCoarrays = staticCoarrays;
+    this.sizeProcName = sizeProcName;
+    this.initProcName = initProcName;
+    this.commonName1 = commonName1;
+    this.commonName2 = commonName2;
+    this.env = env;
+    varNames1 = new Vector<String>();
+    varNames2 = new Vector<String>();
+    callInitStmts = new Vector<String>();
+    callSizeStmts = new Vector<String>();
   }
 
-  public void finalize(XMPenv env) {
-    //env.clearTailText();
-    for (String text: procTexts)
-      env.addTailText(text);
-  }
 
   //------------------------------
   //  for each procedure (text version)
@@ -53,61 +65,75 @@ public class XMPcoarrayInitProcedure {
   // generate initialization subroutine corresponding to 
   // the user program EX1 and coarrays V1 and V2:
   // -------------------------------------------------------
-  //     subroutine xmpf_traverse_wwww_EX1
+  //     subroutine <sizeProcName>      ! xmpf_traverse_coarraysize_EX1
+  //       call <SIZE_LIB_NAME>(200,4)
+  //       call <SIZE_LIB_NAME>(1,16)
+  //     end subroutine
+  //
+  //     subroutine <initProcName>      ! xmpf_traverse_initcoarray_EX1
   //       integer :: desc_V1
   //       integer :: desc_V2
-  //       common /xmpf_desc_EX1/desc_V1,desc_V2
-  //       common /xmpf_ptr_EX1/ptr_V1,ptr_V2
-  //       call xmp_coarray_malloc(desc_V1,ptr_V1,200,4)
-  //       call xmp_coarray_malloc(desc_V2,ptr_V2,1,16)
+  //       common /<commonName1>/desc_V1,desc_V2
+  //       common /<commonName2>/ptr_V1,ptr_V2
+  //       call <INIT_LIB_NAME>(desc_V1,ptr_V1,200,4)
+  //       call <INIT_LIB_NAME>(desc_V2,ptr_V2,1,16)
   //     end subroutine
   // -------------------------------------------------------
 
-  public void genInitRoutine(Vector<XMPcoarray> staticCoarrays,
-                             String procName, 
-                             String commonName1, String commonName2) {
-    // init for each init routine
-    openProcText(procName, commonName1, commonName2);
-
-    // malloc call stmts
+  public void run() {
     for (XMPcoarray coarray: staticCoarrays) {
       int elem = coarray.getElementLength();
       int count = coarray.getTotalArraySize();
       String descrName = coarray.getDescriptorName();
       String cptrName = coarray.getCrayPointerName();
+
       addForVarText(descrName, cptrName, count, elem);
     }
 
-    // finalize for each init routine
-    closeProcText();
+    // fill in program text
+    fillinSizeProcText();
+    fillinInitProcText();
+
+    //env.clearTailText();
+    for (String text: procTexts)
+      env.addTailText(text);
   }
 
-
-  private void openProcText(String procName,
-                            String commonName1, String commonName2) {
-    this.procName = procName;
-    this.commonName1 = commonName1;
-    this.commonName2 = commonName2;
-    varNames1 = new Vector<String>();
-    varNames2 = new Vector<String>();
-    callStmts = new Vector<String>();
-  }
 
   private void addForVarText(String varName1, String varName2, 
                              int count, int elem) {
     varNames1.add(varName1);
     varNames2.add(varName2);
-    callStmts.add(" CALL " + MALLOC_LIB_NAME + " ( " + 
-                  varName1 + " , " +varName2 + " , " +
-                  count + " , " + elem + " )");
+    callSizeStmts.add(" CALL " + SIZE_LIB_NAME + " ( " + 
+                      count + " , " + elem + " )");
+    callInitStmts.add(" CALL " + INIT_LIB_NAME + " ( " + 
+                      varName1 + " , " +varName2 + " , " +
+                      count + " , " + elem + " )");
   }
 
-  private void closeProcText() {
+
+  private void fillinSizeProcText() {
     if (varNames1.size() == 0)
       return;
 
     String text = "\n";
-    text += "SUBROUTINE " + procName + "\n";
+    text += "SUBROUTINE " + sizeProcName + "\n";
+
+    // call sizecount stmts
+    for (String stmt: callSizeStmts)
+      text += stmt +"\n";
+
+    text += "END SUBROUTINE " + sizeProcName + "\n";
+    procTexts.add(text);
+  }
+
+
+  private void fillinInitProcText() {
+    if (varNames1.size() == 0)
+      return;
+
+    String text = "\n";
+    text += "SUBROUTINE " + initProcName + "\n";
 
     // type specification stmt for varNames1
     for (String name: varNames1)
@@ -127,11 +153,11 @@ public class XMPcoarrayInitProcedure {
 
     if (DEBUG) {
       text += " WRITE(*,*) \"[XMPcoarrayInitProcedure] start SUBROUTINE " +
-        procName + "\"\n";
+        initProcName + "\"\n";
     }
 
-    // call stmts
-    for (String stmt: callStmts) {
+    // call initialization stmts
+    for (String stmt: callInitStmts) {
       if (DEBUG) {
         text += " WRITE(*,*) \" calling " + stmt + "\"\n";
       }
@@ -140,9 +166,9 @@ public class XMPcoarrayInitProcedure {
 
     if (DEBUG) {
       text += " WRITE(*,*) \"[XMPcoarrayInitProcedure] end SUBROUTINE " +
-        procName + "\"\n";
+        initProcName + "\"\n";
     }
-    text += "END SUBROUTINE " + procName + "\n";
+    text += "END SUBROUTINE " + initProcName + "\n";
     procTexts.add(text);
   }
 

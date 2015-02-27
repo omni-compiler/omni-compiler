@@ -177,7 +177,6 @@ void _XMP_wait_async__(int async_id);
 void _XMP_reflect_async__(_XMP_array_t *a_desc, int async_id);
 
 /* From xmp_coarray.c */
-extern int xmpf_get_descr_id_(char *baseAddr);
 extern void _XMP_gasnet_not_continuous_put();
 extern void _XMP_gasnet_continuous_put();
 extern void _XMP_gasnet_not_continuous_get();
@@ -273,18 +272,17 @@ extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void
 #define TRUE   1
 #define FALSE  0
 
-//////////////////////////// TEST TEST TEST
-//#define _XMP_COARRAY_FJRDMA
-//////////////////////////// TEST TEST TEST
-
 #ifdef _XMP_COARRAY_FJRDMA
-#  define BOUNDARY_BYTE 4
+#  define BOUNDARY_BYTE ((size_t)4)
 #else
-#  define BOUNDARY_BYTE 1
+#  define BOUNDARY_BYTE ((size_t)1)
 #endif
 
-#define ROUND_UP(n,p)         ((((n)-1)/(p)+1)*(p))
+#define ROUND_UP(n,p)         (((((size_t)(n))-1)/(p)+1)*(p))
 #define ROUND_UP_BOUNDARY(n)  ROUND_UP((n),BOUNDARY_BYTE)
+
+#define MALLOC_UNIT  ((size_t)4)
+#define ROUND_UP_UNIT(n)      ROUND_UP((n),MALLOC_UNIT)
 
 /*-- parameters --*/
 #define DESCR_ID_MAX   250
@@ -296,6 +294,7 @@ extern int _XMP_boundaryByte;     // communication boundary (bytes)
 #define COARRAY_PUT_CODE  701
 
 /* xmpf_coarray.c */
+extern int xmpf_get_descr_id_(char *baseAddr);
 extern void _XMPF_coarray_init(void); 
 
 extern int _XMPF_coarrayMsg;          // default: debug message off
@@ -308,11 +307,17 @@ extern int _XMPF_nowInTask(void);   // for restriction check
 extern void _XMPF_checkIfInTask(char *msgopt);   // restriction check
 extern void _XMPF_coarrayDebugPrint(char *format, ...);
 
-extern int _XMPF_get_coarrayElement(int serno);
+//extern int _XMPF_get_coarrayElement(int serno);
 extern char *_XMPF_get_coarrayDesc(int serno);
-extern int _XMPF_get_coarrayStart(int serno, char *baseAddr);
+//extern int _XMPF_get_coarrayStart(int serno, char *baseAddr);
+extern size_t _XMPF_get_coarrayOffset(int serno, char *baseAddr);
 
-extern void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element);
+extern void xmpf_coarray_count_size_(int *count, int *element);
+extern void xmpf_coarray_malloc_share_(void);
+extern void xmpf_coarray_get_share_(int *serno, char **pointer,
+                                    int *count, int *element);
+extern void xmpf_coarray_malloc_(int *serno, char **pointer,
+                                 int *count, int *element);
 
 extern void xmpf_sync_all_nostat_(void);
 extern void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen);
