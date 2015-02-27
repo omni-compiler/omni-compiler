@@ -57,8 +57,12 @@ public class XMPrewriteExpr
 	    while (y.hasNext()){
 	      XobjList alloc = (XobjList)y.next();
 	      Xobject obj = alloc.getArg(0);
-	      while (obj.Opcode() == Xcode.MEMBER_REF) obj = obj.getArg(0).getArg(0);
-	      if (obj.Opcode() == Xcode.F_ARRAY_REF) obj = obj.getArg(0).getArg(0);
+
+	      while (obj.Opcode() == Xcode.MEMBER_REF ||
+		     obj.Opcode() == Xcode.F_ARRAY_REF ||
+		     obj.Opcode() == Xcode.F_VAR_REF)
+		  obj = obj.getArg(0).getArg(0);
+
 	      Ident id = env.findVarIdent(obj.getName(), fb);
 	      if (id == null) break;
 	      XMParray array = XMParray.getArray(id);
@@ -75,7 +79,10 @@ public class XMPrewriteExpr
 	    while (y.hasNext()){
 	      XobjList dealloc = (XobjList)y.next();
 	      Xobject obj = dealloc.getArg(0);
-	      while (obj.Opcode() == Xcode.MEMBER_REF) obj = obj.getArg(0).getArg(0);
+	      while (obj.Opcode() == Xcode.MEMBER_REF ||
+		     obj.Opcode() == Xcode.F_ARRAY_REF ||
+		     obj.Opcode() == Xcode.F_VAR_REF)
+		obj = obj.getArg(0).getArg(0);
 	      Ident id = env.findVarIdent(obj.getName(), fb);
 	      if (id == null) break;
 	      XMParray array = XMParray.getArray(id);
@@ -205,15 +212,15 @@ public class XMPrewriteExpr
 	      args = args.nextArgs()){
 
 	    // check subscripts
-	    if (array.isDistributed(dim_i) &&
-		args.getArg().Opcode() == Xcode.F_ARRAY_INDEX){
-	      no_leading_scalar_in_subscripts = false;
-	    }
-	    else if (array.isDistributed(dim_i) &&
-		     args.getArg().Opcode() == Xcode.F_INDEX_RANGE &&
-		     !no_leading_scalar_in_subscripts){
-	      XMP.errorAt(block, "':' must not be lead by any int-expr in a subscript list of a global array.");
-	    }
+	    // if (array.isDistributed(dim_i) &&
+	    // 	args.getArg().Opcode() == Xcode.F_ARRAY_INDEX){
+	    //   no_leading_scalar_in_subscripts = false;
+	    // }
+	    // else if (array.isDistributed(dim_i) &&
+	    // 	     args.getArg().Opcode() == Xcode.F_INDEX_RANGE &&
+	    // 	     !no_leading_scalar_in_subscripts){
+	    //   XMP.errorAt(block, "':' must not be lead by any int-expr in a subscript list of a global array.");
+	    // }
 
 	    Xobject index_calc = 
 	      arrayIndexCalc(array,dim_i++,args.getArg(),bb,block);
@@ -592,11 +599,14 @@ public class XMPrewriteExpr
       if (!a.isDistributed(dim_i)) return i;
 
       if (is_colon(i, a, dim_i)){ // NOTE: this check is not strict.
-	if (a.hasShadow(dim_i) && dim_i != a.getDim() - 1){
-	  XMP.errorAt(block, "a subscript of the dimension having shadow must be an int-expr unless it is the last dimension.");
-	}
-	return i;
+      	// if (a.hasShadow(dim_i) && dim_i != a.getDim() - 1){
+      	//   XMP.errorAt(block, "a subscript of the dimension having shadow must be an int-expr unless it is the last dimension.");
+      	// }
+	i.setArg(0, null); i.setArg(1, null); i.setArg(2, null);
+      	return i;
       }
+
+      // what to do for other cases?
 
     default:
       XMP.errorAt(block,"bad expression in XMP array index");
@@ -653,15 +663,19 @@ public class XMPrewriteExpr
 	
       Xobject arg = arg_list.getArg(i);
 
-      if (arg.Opcode() == Xcode.VAR){ // just array name
+      if (arg.Opcode() == Xcode.VAR ||
+	  arg.Opcode() == Xcode.MEMBER_REF){ // just array name
 	  
-	Ident id = env.findVarIdent(arg.getName(), fb);
-	XMParray array = XMParray.getArray(id);
-
 	Xtype atype;
 	int arrayDim;
 	Ident sizeFunc;
 	Xobject arg0;
+	XMParray array = null;
+
+	if (arg.Opcode() != Xcode.MEMBER_REF){
+	  Ident id = env.findVarIdent(arg.getName(), fb);
+	  array = XMParray.getArray(id);
+	}
 
 	if (array != null){
 	  atype = array.getType();
@@ -701,13 +715,16 @@ public class XMPrewriteExpr
       }
       else if (arg.Opcode() == Xcode.F_ARRAY_REF){ // array section
 
-	Ident id = env.findVarIdent(arg.getArg(0).getArg(0).getName(), fb);
-	XMParray array = XMParray.getArray(id);
-
 	Xtype atype;
 	int arrayDim;
 	Ident lbFunc, ubFunc;
 	Xobject arg0;
+	XMParray array = null;
+
+	if (arg.getArg(0).getArg(0).Opcode() != Xcode.MEMBER_REF){
+	  Ident id = env.findVarIdent(arg.getArg(0).getArg(0).getName(), fb);
+	  array = XMParray.getArray(id);
+	}
 
 	if (array != null){
 	  atype = array.getType();
@@ -717,7 +734,7 @@ public class XMPrewriteExpr
 	  arg0 = array.getDescId().Ref();
 	}
 	else {
-	  atype = arg.Type();
+	  atype = arg.getArg(0).getArg(0).Type();
 	  arrayDim = atype.getNumDimensions();
 	  lbFunc = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType);
 	  ubFunc = env.declIntrinsicIdent("ubound", Xtype.FintFunctionType);
@@ -778,25 +795,21 @@ public class XMPrewriteExpr
   private boolean is_colon(Xobject i, XMParray a, int dim_i){
 
     // check lower
-    Xobject lb = a.getType().getFarraySizeExpr()[dim_i].getArg(0);
     if (i.getArg(0) != null){
-      if (i.getArg(0).Opcode() == Xcode.INT_CONSTANT &&
-	  lb.Opcode() == Xcode.INT_CONSTANT &&
-	  i.getArg(0).getInt() != lb.getInt()) return false;
+      Xobject lb = a.getType().getFarraySizeExpr()[dim_i].getArg(0);
+      if (!lb.equals(i.getArg(0))) return false;
     }
 
     // check upper
-    Xobject ub = a.getType().getFarraySizeExpr()[dim_i].getArg(1);
     if (i.getArg(1) != null){
-      if (i.getArg(1).Opcode() == Xcode.INT_CONSTANT &&
-	  ub.Opcode() == Xcode.INT_CONSTANT &&
-	  i.getArg(1).getInt() != ub.getInt()) return false;
+      Xobject ub = a.getType().getFarraySizeExpr()[dim_i].getArg(1);
+      if (!ub.equals(i.getArg(1))) return false;
     }
 
     // check stride
     if (i.getArg(2) != null){
-      if (i.getArg(2) == Xcons.IntConstant(1) &&
-	  i.getArg(2).getInt() != 1) return false;
+      if (i.getArg(2).Opcode() != Xcode.INT_CONSTANT ||
+  	  i.getArg(2).getInt() != 1) return false;
     }
 
     return true;
