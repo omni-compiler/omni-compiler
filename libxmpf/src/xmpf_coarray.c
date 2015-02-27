@@ -246,7 +246,7 @@ void xmpf_coarray_count_size_(int *count, int *element)
 }
 
 
-void xmpf_coarray_malloc_share_(void)
+void xmpf_coarray_malloc_pool_(void)
 {
   if (_XMPF_coarrayMsg) {
     _XMPF_coarrayDebugPrint("estimated pool_totalSize = %zd\n",

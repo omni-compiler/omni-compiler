@@ -16,12 +16,14 @@ if GASNET
     libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
                          xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
     CFLAGS            += -D_XMP_COARRAY_GASNET
+    FCFLAGS           += -D_XMP_COARRAY_GASNET
 endif
 
 if FJRDMA
     libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
                          xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
     CFLAGS            += -D_XMP_COARRAY_FJRDMA
+    FCFLAGS           += -D_XMP_COARRAY_FJRDMA
 endif
 
 xmpf_main.o: xmpf_main.f
