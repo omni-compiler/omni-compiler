@@ -26,7 +26,7 @@ if FJRDMA
     FCFLAGS           += -D_XMP_COARRAY_FJRDMA
 endif
 
-xmpf_coarray_get_wrap.f90: xmpf_coarray_get_wrap.f90.sh
+xmpf_coarray_get_wrap.f90: ./xmpf_coarray_get_wrap.f90.sh
 	$< > $@
 
 install-exec-local: xmpf_main.o
