@@ -83,10 +83,12 @@ target_triplet = @target@
 @GASNET_TRUE@                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
 
 @GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET
-@FJRDMA_TRUE@am__append_3 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
+@GASNET_TRUE@am__append_3 = -D_XMP_COARRAY_GASNET
+@FJRDMA_TRUE@am__append_4 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
 @FJRDMA_TRUE@                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
 
-@FJRDMA_TRUE@am__append_4 = -D_XMP_COARRAY_FJRDMA
+@FJRDMA_TRUE@am__append_5 = -D_XMP_COARRAY_FJRDMA
+@FJRDMA_TRUE@am__append_6 = -D_XMP_COARRAY_FJRDMA
 subdir = ./libxmpf/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -256,7 +258,7 @@ BLAS_LIB = @BLAS_LIB@
 CC = @MPI_CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@ \
-	$(am__append_2) $(am__append_4)
+	$(am__append_2) $(am__append_5)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPU = @CPU@
@@ -283,7 +285,7 @@ ENABLE_XACC = @ENABLE_XACC@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @MPI_FC@
-FCFLAGS = @MPI_FCFLAGS@
+FCFLAGS = @MPI_FCFLAGS@ $(am__append_3) $(am__append_6)
 FGREP = @FGREP@
 FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
@@ -517,7 +519,7 @@ libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c \
 	xmpf_gcomm.c xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c \
 	xmpf_misc.c xmpf_nodes.c xmpf_pack.c xmpf_reflect.c \
 	xmpf_sort.c xmpf_task.c xmpf_template.c $(am__append_1) \
-	$(am__append_3)
+	$(am__append_4)
 all: all-am
 
 .SUFFIXES:
