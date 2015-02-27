@@ -50,12 +50,14 @@ BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
 LARGE_TESTDIRS = "others/C"
 
 if GASNET
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if FJRDMA
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"
    LARGE_TESTDIRS += "local-view/coarray/C/"
+endif
+if MPI3
 endif
 
 .PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests
