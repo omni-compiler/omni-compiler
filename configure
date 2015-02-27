@@ -747,9 +747,8 @@ GASNET_FALSE
 GASNET_TRUE
 TCA_FALSE
 TCA_TRUE
-BLAS_LIB_FALSE
-BLAS_LIB_TRUE
-BLAS_LIB
+USER_LIBBLAS_FALSE
+USER_LIBBLAS_TRUE
 LIBXML_PREFIX
 GPGPU_PREFIX
 GPU_CFLAGS
@@ -952,7 +951,7 @@ with_gpucc
 with_gpu_cflags
 with_cuda
 with_libxml
-with_blas_lib
+with_libblas
 with_TCA
 with_gasnet
 with_gasnet_conduit
@@ -1632,7 +1631,7 @@ Optional Packages:
   --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
   --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
   --with-libxml=DIR           libxml installation path (default: /usr)
-  --with-blas-lib=DIR         BLAS Library (e.g. /foo/blas_LINUX.a)
+  --with-libblas=DIR          BLAS Library (e.g. /foo/blas_LINUX.a)
   --with-TCA=DIR              TCA installation path
   --with-gasnet=DIR           GASNet installation path
   --with-gasnet-conduit=NAME  GASNet conduit
@@ -20972,31 +20971,34 @@ fi
 # set BLAS
 
 
-# Check whether --with-blas-lib was given.
-if test "${with_blas_lib+set}" = set; then :
-  withval=$with_blas_lib; BLAS_LIB="${withval}"; use_blas_lib=yes
+# Check whether --with-libblas was given.
+if test "${with_libblas+set}" = set; then :
+  withval=$with_libblas; LIBBLAS="${withval}"; use_libblas=yes
 else
-  use_blas_lib=no
+  use_libblas=no
 fi
 
 
-if test x$use_blas_lib = xyes; then
-   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS ${BLAS_LIB}"
-   OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS ${BLAS_LIB}"
+if test x$use_libblas = xyes; then
+   if ! test -f $LIBBLAS; then
+     as_fn_error $? "$LIBBLAS not found." "$LINENO" 5
+   fi
+   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
+   OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
 else
   if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
-    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS -SSL2BLAMP"
-    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS -SSL2BLAMP"
+    LIBBLAS="-SSL2BLAMP"
+    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
+    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
   fi
 fi
 
-
- if test x${use_blas_lib} = xyes; then
-  BLAS_LIB_TRUE=
-  BLAS_LIB_FALSE='#'
+ if test x${use_libblas} = xyes; then
+  USER_LIBBLAS_TRUE=
+  USER_LIBBLAS_FALSE='#'
 else
-  BLAS_LIB_TRUE='#'
-  BLAS_LIB_FALSE=
+  USER_LIBBLAS_TRUE='#'
+  USER_LIBBLAS_FALSE=
 fi
 
 
@@ -25676,8 +25678,8 @@ if test -z "${ENABLE_XACC_TRUE}" && test -z "${ENABLE_XACC_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_XACC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${BLAS_LIB_TRUE}" && test -z "${BLAS_LIB_FALSE}"; then
-  as_fn_error $? "conditional \"BLAS_LIB\" was never defined.
+if test -z "${USER_LIBBLAS_TRUE}" && test -z "${USER_LIBBLAS_FALSE}"; then
+  as_fn_error $? "conditional \"USER_LIBBLAS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then
@@ -28561,7 +28563,7 @@ if test x${doMPI3} = xyes; then
   echo "    MPI3                  : yes"
 fi
 
-if test x${use_blas_lib} = xyes; then
-  echo "    BLAS LIB              : $BLAS_LIB"
+if test x${use_libblas} = xyes; then
+  echo "    BLAS LIB              : $LIBBLAS"
 fi
 echo "=================================================="

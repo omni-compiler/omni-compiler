@@ -987,22 +987,25 @@ AC_SUBST(LIBXML_PREFIX)
 # --------------------------------------------------------------------
 # set BLAS
 
-AC_ARG_WITH(blas-lib,
-    [  --with-blas-lib=DIR         BLAS Library (e.g. /foo/blas_LINUX.a)],
-    [BLAS_LIB="${withval}"; use_blas_lib=yes], [use_blas_lib=no])
+AC_ARG_WITH(libblas,
+    [  --with-libblas=DIR          BLAS Library (e.g. /foo/blas_LINUX.a)],
+    [LIBBLAS="${withval}"; use_libblas=yes], [use_libblas=no])
 
-if test x$use_blas_lib = xyes; then
-   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS ${BLAS_LIB}"
-   OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS ${BLAS_LIB}"
+if test x$use_libblas = xyes; then
+   if ! test -f $LIBBLAS; then
+     AC_MSG_ERROR([$LIBBLAS not found.])
+   fi
+   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
+   OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
 else
   if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
-    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS -SSL2BLAMP"
-    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS -SSL2BLAMP"
+    LIBBLAS="-SSL2BLAMP"
+    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
+    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
   fi
 fi
 
-AC_SUBST(BLAS_LIB)
-AM_CONDITIONAL(BLAS_LIB, test x${use_blas_lib} = xyes)
+AM_CONDITIONAL(USER_LIBBLAS, test x${use_libblas} = xyes)
 
 # --------------------------------------------------------------------
 # set TCA
@@ -2120,7 +2123,7 @@ if test x${doMPI3} = xyes; then
   echo "    MPI3                  : yes"
 fi
 
-if test x${use_blas_lib} = xyes; then
-  echo "    BLAS LIB              : $BLAS_LIB"
+if test x${use_libblas} = xyes; then
+  echo "    BLAS LIB              : $LIBBLAS"
 fi
 echo "=================================================="
