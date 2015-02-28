@@ -12,11 +12,18 @@ libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_main.F90 xmpf_array.c x
                     xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
 		    xmpf_template.c
 
+xmpf_main.o: xmpf_main.F90
+	$(FC) $(FCFLAGS) $< -c
+
 if GASNET
     libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
                          xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
     CFLAGS            += -D_XMP_COARRAY_GASNET
+if POWERPC
+    FCFLAGS           += -WF,-D_XMP_COARRAY_GASNET
+else
     FCFLAGS           += -D_XMP_COARRAY_GASNET
+endif
 endif
 
 if FJRDMA

@@ -755,6 +755,8 @@ LIBXML_PREFIX
 GPGPU_PREFIX
 GPU_CFLAGS
 GPU_CMD
+POWERPC_FALSE
+POWERPC_TRUE
 IS_PGI
 ENABLE_XACC
 ENABLE_XACC_FALSE
@@ -20877,6 +20879,14 @@ else
     esac ;;
   esac
 fi
+ if test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix"; then
+  POWERPC_TRUE=
+  POWERPC_FALSE='#'
+else
+  POWERPC_TRUE='#'
+  POWERPC_FALSE=
+fi
+
 
 # --------------------------------------------------------------------
 # specify GPU C compiler
@@ -25666,6 +25676,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_XACC_TRUE}" && test -z "${ENABLE_XACC_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_XACC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${POWERPC_TRUE}" && test -z "${POWERPC_FALSE}"; then
+  as_fn_error $? "conditional \"POWERPC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${USER_LIBBLAS_TRUE}" && test -z "${USER_LIBBLAS_FALSE}"; then

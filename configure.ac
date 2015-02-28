@@ -938,6 +938,7 @@ else
     esac ;;
   esac
 fi
+AM_CONDITIONAL(POWERPC, test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix")
 
 # --------------------------------------------------------------------
 # specify GPU C compiler
