@@ -467,7 +467,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 bin_SCRIPTS = ../bin/ompcc ../bin/ompf90 ../bin/xmpf90 ../bin/xmpcc
-sysconf_DATA = ../etc/java.conf ../etc/version ../etc/xmpcc.conf ../etc/xmpf90.conf \
+sysconf_DATA = ../etc/version ../etc/xmpcc.conf ../etc/xmpf90.conf \
                ../etc/ompcc.conf ../etc/ompf90.conf
 
 dist_libexec_SCRIPTS = ../libexec/omni_common_lib.sh ../libexec/xmpf90_lib.sh ../libexec/xmpcc_lib.sh \

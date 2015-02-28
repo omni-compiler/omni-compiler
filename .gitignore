@@ -10,7 +10,6 @@
 C-FrontEnd/src/c-parser.output
 C-BackEnd/Makefile
 C-BackEnd/ant.properties
-C-BackEnd/bin/C_Back
 C-BackEnd/binding/classes/
 C-BackEnd/build/
 C-BackEnd/classes/
@@ -40,7 +39,6 @@ Driver/bin/ompcc
 Driver/bin/ompf90
 Driver/bin/xmpcc
 Driver/bin/xmpf90
-Driver/etc/java.conf
 Driver/etc/ompcc.conf
 Driver/etc/ompf90.conf
 Driver/etc/xmpcc.conf
@@ -51,9 +49,6 @@ Driver/src/xmp_collect_init
 Driver/src/om_replace_pragma
 F-BackEnd/Makefile
 F-BackEnd/ant.properties
-F-BackEnd/bin/F_Back
-F-BackEnd/bin/F_Decomp
-F-BackEnd/bin/F_Trans
 F-BackEnd/binding/classes/
 F-BackEnd/build/
 F-BackEnd/classes/

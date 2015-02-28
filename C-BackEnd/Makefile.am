@@ -1,4 +1,3 @@
-bin_SCRIPTS = bin/C_Back
 TARGET = build/om-c-back.jar
 SRC    = $(wildcard src/xcodeml/c/*/*.java)
 

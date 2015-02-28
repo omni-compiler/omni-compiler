@@ -101,7 +101,6 @@ AC_MSG_CHECKING(check C-BackEnd project exists)
 if test -e "C-BackEnd/Makefile.am"; then
     C_BACKEND_DIR=C-BackEnd
     AC_CONFIG_FILES($C_BACKEND_DIR/Makefile)
-    AC_CONFIG_FILES($C_BACKEND_DIR/bin/C_Back)
     AC_MSG_RESULT(yes)
 else
     C_BACKEND_DIR=''
@@ -130,9 +129,6 @@ AC_MSG_CHECKING(check F-BackEnd project exists)
 if test -e "F-BackEnd/Makefile.am"; then
     F_BACKEND_DIR=F-BackEnd
     AC_CONFIG_FILES($F_BACKEND_DIR/Makefile)
-    AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Back)
-    AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Trans)
-    AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Decomp)
     AC_MSG_RESULT(yes)
 else
     F_BACKEND_DIR=''
@@ -166,7 +162,6 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/ompf90.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/xmpcc.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/xmpf90.conf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/java.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/ompcc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/ompf90)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpcc)
@@ -416,32 +411,24 @@ AC_SUBST(LIBACC_HEADER_DIR)
 
 # --------------------------------------------------------------------
 AC_ARG_ENABLE(debug,
-    [  --enable-debug                 enable generate executable with debug symbol (false default).],
+    [  --enable-debug                 enable generate executable with debug symbol (false default)],
     [doDebug=yes], [doDebug=no])
 
-#AC_ARG_ENABLE(xmpgpu,
-#    [  --enable-xmpgpu                enable XcalableMP-GPU (false default).],
-#    [doXmpGpu=yes], [doXmpGpu=no])
-
 AC_ARG_ENABLE(openacc,
-    [  --enable-openacc               enable OpenACC (false default).],
+    [  --enable-openacc               enable OpenACC (false default)],
     [doOpenAcc=yes], [doOpenAcc=no])
 
 AC_ARG_ENABLE(atool,
-    [  --enable-atool                 enable atool (false default).],
+    [  --enable-atool                 enable atool (false default)],
     [doatool=yes], [doatool=no])
 
 AC_ARG_ENABLE(xacc,
-    [  --enable-xacc                  enable XcalableACC (false default).],
+    [  --enable-xacc                  enable XcalableACC (false default)],
     [xacc=yes], [xacc=no])
-
-#AC_ARG_ENABLE(mpi3,
-#    [  --enable-mpi3                  enable MPI3 (false default).],
-#    [doMPI3=yes], [doMPI3=no])
 
 ## Add temporarily by mnakao
 #AC_ARG_ENABLE(FJRDMA,
-#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
+#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10],
 #   [enableFJRDMA=yes], [enableFJRDMA=no])
 #
 #AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
@@ -1603,15 +1590,15 @@ gmpDirOpt=""
 qRealPrecBits=128
 
 AC_ARG_ENABLE(mreal,
-    [  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).],
+    [  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default)],
     [doQReal=yes], [doQReal=no])
 
 AC_ARG_WITH(gmp-lib,
-    [  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.],
+    [  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support],
     [gmpLib=$withval], [true])
 
 AC_ARG_WITH(gmp-include,
-    [  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.],
+    [  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support],
     [gmpInclude=$withval], [true])
 
 if test "x${doQReal}" = "xyes"; then
@@ -1631,7 +1618,7 @@ if test "x${doQReal}" = "xyes"; then
 fi
 
 AC_ARG_WITH(precision,
-    [  --with-precision=NUM        the default precision of real*16 in bits (128).],
+    [  --with-precision=NUM        the default precision of real*16 in bits (128)],
     [qRealPrecBits=$withval], [qRealPrecBits=128])
 
 # libgmp check

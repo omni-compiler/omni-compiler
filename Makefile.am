@@ -111,17 +111,12 @@ DELETABLES = Driver/bin/ompcc \
 	Driver/etc/xmpf90.conf \
 	Driver/etc/ompcc.conf \
 	Driver/etc/ompf90.conf \
-	Driver/etc/java.conf \
 	Driver/libexec/omni_traverse \
         C-FrontEnd/src/c-exprcode.c \
         C-FrontEnd/src/c-exprcode.h \
         C-FrontEnd/src/c-parser.c \
         C-FrontEnd/src/c-parser.h \
 	C-FrontEnd/src/c-token.c \
-	C-BackEnd/bin/C_Back \
-	F-BackEnd/bin/F_Back \
-	F-BackEnd/bin/F_Trans \
-	F-BackEnd/bin/F_Decomp \
 	F-FrontEnd/src/C-exprcode.c \
 	F-FrontEnd/src/C-exprcode.h \
 	F-FrontEnd/src/F95-parser.c \
