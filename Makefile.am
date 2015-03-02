@@ -54,7 +54,7 @@ if GASNET
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if FJRDMA
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/coarray/F"
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if MPI3
