@@ -10,7 +10,7 @@
   syncall
 
   if (me==3) then
-     l2[2]=l1
+     l2[2]=l1              ! type mismatch
   endif
   syncall
 
