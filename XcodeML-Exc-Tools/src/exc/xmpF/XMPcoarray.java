@@ -166,13 +166,7 @@ public class XMPcoarray {
     return ftype.getFarraySizeExpr();
   }
 
-  public FindexRange getFindexRange() {
-    if (indexRange == null)
-      _setFindexRange();
-    return indexRange;
-  }
-
-  public void _setFindexRange() {
+  private void _setFindexRange() {
     Xobject[] shape = getShape();
     indexRange = new FindexRange(shape, fblock, env);
   }
@@ -180,6 +174,12 @@ public class XMPcoarray {
   private void _setFindexRange(Block block, XMPenv env) {
     Xobject[] sizes = getShape();
     indexRange = new FindexRange(sizes, block, env);
+  }
+
+  public FindexRange getFindexRange() {
+    if (indexRange == null)
+      _setFindexRange();
+    return indexRange;
   }
 
 
@@ -219,7 +219,7 @@ public class XMPcoarray {
 
 
   //------------------------------
-  //  inquiring interface
+  //  get/set Xtype object
   //------------------------------
   public Boolean isScalar() {
     return (ident.Type().getNumDimensions() == 0);
@@ -229,8 +229,24 @@ public class XMPcoarray {
     return ident.Type().isFallocatable();
   }
 
+  public void setAllocatable() {
+    ident.Type().setIsFallocatable(true);
+  }
+
+  public void resetAllocatable() {
+    ident.Type().setIsFallocatable(false);
+  }
+
   public Boolean isPointer() {
     return ident.Type().isFpointer();
+  }
+
+  public void setPointer() {
+    ident.Type().setIsFpointer(true);
+  }
+
+  public void resetPointer() {
+    ident.Type().setIsFpointer(false);
   }
 
   public Boolean isDummyArg() {
