@@ -17,7 +17,7 @@
 #include "xmp_constant.h"
 #include "xmp_data_struct.h"
 #include "xmp_io_sys.h"
-
+#include "xmp_internal.h"
 /* ------------------------------------------------------------------ */
 extern void _XMP_fatal(char *msg);
 
