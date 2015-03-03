@@ -234,7 +234,29 @@ public class XMPcoarray {
   }
 
   public void resetAllocatable() {
-    ident.Type().setIsFallocatable(false);
+    for (Xtype type = ident.Type(); type != null; ) {
+      type.setIsFallocatable(false);
+      if (type.copied != null)
+        type = type.copied;
+      else if (type.isBasic())
+        break;
+      else
+        type = type.getRef();
+    }
+  }
+
+  // not used now
+  public void resetAllocatableToPointer() {
+    for (Xtype type = ident.Type(); type != null; ) {
+      type.setIsFallocatable(false);
+      type.setIsFpointer(true);
+      if (type.copied != null)
+        type = type.copied;
+      else if (type.isBasic())
+        break;
+      else
+        type = type.getRef();
+    }
   }
 
   public Boolean isPointer() {
@@ -246,7 +268,15 @@ public class XMPcoarray {
   }
 
   public void resetPointer() {
-    ident.Type().setIsFpointer(false);
+    for (Xtype type = ident.Type(); type != null; ) {
+      type.setIsFpointer(false);
+      if (type.copied != null)
+        type = type.copied;
+      else if (type.isBasic())
+        break;
+      else
+        type = type.getRef();
+    }
   }
 
   public Boolean isDummyArg() {

@@ -130,8 +130,8 @@ public class XMPtransCoarray
 
     // a. declare cray-pointers and descriptors and
     //    generate common stmt inside this procedure
-    //genCommonStmt(commonName1, commonName2, staticLocalCoarrays, def);
-    genCommonStmt(commonName1, commonName2, localCoarrays, def);
+    genCommonStmt(commonName1, commonName2, staticLocalCoarrays, def);
+    //genCommonStmt(commonName1, commonName2, localCoarrays, def);
 
     // e. replace coindexed objects with function references
     replaceCoindexObjs(visibleCoarrays);
@@ -366,7 +366,8 @@ public class XMPtransCoarray
 
     for (XMPcoarray coarray: coarrays)
       if (coarray.isAllocatable())
-        XMP.error("Not supported: allocatable coarry: "+coarray.getName());
+        ;
+        //XMP.error("Not supported: allocatable coarry: "+coarray.getName());
   }
 
 
