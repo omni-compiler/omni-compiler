@@ -4595,7 +4595,7 @@ static void xmp_gather_kernel(void *x_p, void *a_p, _XMP_array_t **idx_array)
 {
    _XMP_array_t *x_d = NULL;
    _XMP_array_t *a_d = NULL;
-   int   same_nodes;
+   //int   same_nodes;
    int   duplicate;
    int   i,j;
    char  *a_all;
@@ -4635,11 +4635,11 @@ static void xmp_gather_kernel(void *x_p, void *a_p, _XMP_array_t **idx_array)
    }
 
    /* same nodes? */
-   same_nodes = 1;
-   if(_XMP_get_execution_nodes()->comm_size != x_d->align_template->onto_nodes->comm_size) same_nodes = 0;
-   if(_XMP_get_execution_nodes()->comm_size != a_d->align_template->onto_nodes->comm_size) same_nodes = 0;
+   //same_nodes = 1;
+   if(_XMP_get_execution_nodes()->comm_size != x_d->align_template->onto_nodes->comm_size);// same_nodes = 0;
+   if(_XMP_get_execution_nodes()->comm_size != a_d->align_template->onto_nodes->comm_size);// same_nodes = 0;
    for(i=0;i<a_d->dim;i++){
-      if(_XMP_get_execution_nodes()->comm_size != idx_array[i]->align_template->onto_nodes->comm_size) same_nodes = 0;
+      if(_XMP_get_execution_nodes()->comm_size != idx_array[i]->align_template->onto_nodes->comm_size);// same_nodes = 0;
    }
 
    /* duplicate? */
@@ -4761,7 +4761,7 @@ static void xmp_scatter_kernel(void *x_p, void *a_p, _XMP_array_t **idx_array)
    _XMP_array_t *a_d = NULL;
    MPI_Comm     *exec_comm;
    MPI_Datatype mpi_type;
-   int   same_nodes;
+   //int   same_nodes;
    int   duplicate;
    int   i,j;
    int   x_total_size;
@@ -4807,11 +4807,11 @@ static void xmp_scatter_kernel(void *x_p, void *a_p, _XMP_array_t **idx_array)
    }
 
    /* same nodes? */
-   same_nodes = 1;
-   if(_XMP_get_execution_nodes()->comm_size != x_d->align_template->onto_nodes->comm_size) same_nodes = 0;
-   if(_XMP_get_execution_nodes()->comm_size != a_d->align_template->onto_nodes->comm_size) same_nodes = 0;
+   //same_nodes = 1;
+   if(_XMP_get_execution_nodes()->comm_size != x_d->align_template->onto_nodes->comm_size);// same_nodes = 0;
+   if(_XMP_get_execution_nodes()->comm_size != a_d->align_template->onto_nodes->comm_size);// same_nodes = 0;
    for(i=0;i<a_d->dim;i++){
-      if(_XMP_get_execution_nodes()->comm_size != idx_array[i]->align_template->onto_nodes->comm_size) same_nodes = 0;
+      if(_XMP_get_execution_nodes()->comm_size != idx_array[i]->align_template->onto_nodes->comm_size);// same_nodes = 0;
    }
 
    /* duplicate? */
@@ -5693,10 +5693,10 @@ void xmp_pack(void *v_p, void *a_p, void *m_p)
    _XMP_array_t *v_d;
    _XMP_array_t *a_d;
    _XMP_array_t *m_d;
-   int *mp;
+   //int *mp;
    int i;
    MPI_Comm *comm;
-   int myrank,size;
+   int /*myrank,*/size;
    MPI_Request *com_req1;
    int *offset;
    int *lindx;
@@ -5780,14 +5780,14 @@ void xmp_pack(void *v_p, void *a_p, void *m_p)
       }
       return;
    }
-
+/*
    mp=NULL;
    if(m_d != NULL){
       mp=m_d->array_addr_p;
    }
-
+*/
    comm = _XMP_get_execution_nodes()->comm;
-   myrank=_XMP_get_execution_nodes()->comm_rank;
+//   myrank=_XMP_get_execution_nodes()->comm_rank;
    size  =_XMP_get_execution_nodes()->comm_size;
 
    offset = (int*)_XMP_alloc((a_d->dim)*sizeof(int));
@@ -5996,10 +5996,10 @@ void xmp_unpack(void *a_p, void *v_p, void *m_p)
    _XMP_array_t *v_d;
    _XMP_array_t *a_d;
    _XMP_array_t *m_d;
-   int *mp;
+//   int *mp;
    int i;
    MPI_Comm *comm;
-   int myrank,size;
+   int /*myrank,*/size;
    MPI_Request *com_req2;
    int *offset;
    int *lindx;
@@ -6079,14 +6079,14 @@ void xmp_unpack(void *a_p, void *v_p, void *m_p)
       }
       return;
    }
-
+/*
    mp=NULL;
    if(m_d != NULL){
       mp=m_d->array_addr_p;
-   }
+   }*/
 
    comm = _XMP_get_execution_nodes()->comm;
-   myrank=_XMP_get_execution_nodes()->comm_rank;
+   //myrank=_XMP_get_execution_nodes()->comm_rank;
    size  =_XMP_get_execution_nodes()->comm_size;
 
    offset = (int*)_XMP_alloc((a_d->dim)*sizeof(int));
