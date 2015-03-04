@@ -173,9 +173,8 @@ public class XMPtransCoarray
   //       integer :: desc_V1
   //       integer :: desc_V2
   //       pointer (ptr_V1, V1)
-  //       pointer (ptr_V2, V2)
-  //       common /xmpf_desc_EX1/desc_V1,desc_V2
-  //       common /xmpf_ptr_EX1/ptr_V1,ptr_V2
+  //       common /xmpf_desc_EX1/desc_V1
+  //       common /xmpf_ptr_EX1/ptr_V1
   //       ...
   //     end subroutine
   // --------------------------------------------

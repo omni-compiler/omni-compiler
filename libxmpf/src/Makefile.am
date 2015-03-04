@@ -1,6 +1,6 @@
 CC           = @MPI_CC@
 FC           = @MPI_FC@
-FCFLAGS      = @MPI_FCFLAGS@
+FCFLAGS      = @MPI_FCFLAGS@ @OMNI_NTV_FCFLAGS@
 XMP_INC_DIR  =../../libxmp/include
 XMPF_INC_DIR =../include
 CFLAGS       = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@
@@ -17,7 +17,8 @@ xmpf_main.o: xmpf_main.F90
 
 if GASNET
     libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
+                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
+                         xmpf_coarray_alloc_wrap.f90
     CFLAGS            += -D_XMP_COARRAY_GASNET
 if POWERPC
     FCFLAGS           += -WF,-D_XMP_COARRAY_GASNET
@@ -28,7 +29,8 @@ endif
 
 if FJRDMA
     libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
+                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
+                         xmpf_coarray_alloc_wrap.f90
     CFLAGS            += -D_XMP_COARRAY_FJRDMA
     FCFLAGS           += -D_XMP_COARRAY_FJRDMA
 endif
@@ -36,10 +38,15 @@ endif
 xmpf_coarray_get_wrap.f90: xmpf_coarray_get_wrap.f90.sh
 	. $< > $@
 
+xmpf_coarray_alloc_wrap.f90: xmpf_coarray_alloc_wrap.f90.sh
+	. $< > $@
+
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || /bin/mkdir -p $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) xmpf_main.o $(DESTDIR)$(libdir)
 
 clean-local:
-	rm -f *~ *.core core core.* xmpf_coarray_get_wrap.f90
+	rm -f *~ *.core core core.*
+	rm  xmpf_coarray_get_wrap.f90
+	rm  xmpf_coarray_alloc_wrap.f90
 
