@@ -73,6 +73,9 @@ function xmpf90_set_parameters()
 		MODULE_DIR="${arg#-J}"
                 MODULE_OPT="$MODULE_OPT -M${MODULE_DIR}"
                 other_args="$other_args $OMNI_MODINC ${MODULE_DIR}";;
+	    -I?*)
+		INCLUDE_OPT="$arg"
+		other_args="$other_args $arg";;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)

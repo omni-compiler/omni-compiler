@@ -33,6 +33,7 @@ ENABLE_TLOG=false
 # Additional options defined by command line (e.g. --Wl..)
 # These parameters are set in xmpf90_set_parameters().
 OUTPUT_FILE=
+INCLUDE_OPT=
 MODULE_OPT=
 PROFILE_OPT=
 OPENMP_ADD_OPT=
@@ -105,14 +106,14 @@ for file in $F_F90_files; do
     FILE_PP=${TEMP_DIR}/${FILE_NAME}.${EXT}
     FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.xml
 
-    omni_exec $OMNI_F2X_CMD $FRONTEND_ADD_OPT $OMNI_F2X_OPT $FILE_PP -o $FILE_IN_X
+    omni_exec $OMNI_F2X_CMD $INCLUDE_OPT $FRONTEND_ADD_OPT $OMNI_F2X_OPT $FILE_PP -o $FILE_IN_X
 done
 for file in $f_f90_files; do
     FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
     FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.xml
 
-    omni_exec $OMNI_F2X_CMD $FRONTEND_ADD_OPT $OMNI_F2X_OPT $file -o $FILE_IN_X
+    omni_exec $OMNI_F2X_CMD $INCLUDE_OPT $FRONTEND_ADD_OPT $OMNI_F2X_OPT $file -o $FILE_IN_X
 done
 [ $STOP_FRONTEND = true ] && exit 0;
 
