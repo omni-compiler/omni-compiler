@@ -584,6 +584,11 @@ public class XMPanalyzePragma
 
     analyzeReductionSpec(info, reductionSpec, pb);
     info.setOnRef(XMPobjectsRef.parseDecl(reductionOnRef,env,pb));
+
+    if (asyncOpt != null && !XmOption.isAsync()){
+      XMP.errorAt(pb, "async clause on reduction not supported by this environment");
+    }
+
     info.setAsyncId(asyncOpt);
   }
 
@@ -651,6 +656,11 @@ public class XMPanalyzePragma
     info.setBcastInfo(XMPobjectsRef.parseDecl(fromRef,env,pb),
 		      XMPobjectsRef.parseDecl(onRef,env,pb),
 		      bcast_vars);
+
+    if (asyncOpt != null && !XmOption.isAsync()){
+      XMP.errorAt(pb, "async clause on bcast not supported by this environment");
+    }
+
     info.setAsyncId(asyncOpt);
   }
 

@@ -74,6 +74,7 @@ public class omompx
       "  -fcoarry     enable coarray translation.",
       "  -fnocoarry   pass without coarray translation (default).",
       "  -fatomicio   enable transforming Fortran IO statements to atomic operations.",
+      "  -fasync      enable asynchronous communications.",
       "  -w N         set max columns to N for Fortran source.",
       "  -gnu         decompile for GNU Fortran (default).",
       "  -intel       decompile for Intel Fortran.",
@@ -114,6 +115,7 @@ public class omompx
     boolean xcalableMPthreads = false;
     boolean xcalableMPGPU = false;
     boolean xmpf = false;
+    boolean async = false;
     boolean outputXcode = false;
     boolean outputDecomp = false;
     boolean dump = false;
@@ -141,6 +143,8 @@ public class omompx
         coarray = true;
       } else if(arg.equals("-fnocoarray")) {
         coarray = false;
+      } else if(arg.equals("-fasync")) {
+        async = true;
       } else if(arg.equals("-facc")) {
         openACC = true; 
       } else if(arg.equals("-fxmp")) {
@@ -253,6 +257,7 @@ public class omompx
     XmOption.setLanguage(XmLanguage.valueOf(lang));
     XmOption.setIsOpenMP(openMP);
     XmOption.setIsCoarray(coarray);
+    XmOption.setIsAsync(async);
     XmOption.setIsXcalableMP(xcalableMP);
     XmOption.setIsXcalableMPthreads(xcalableMPthreads);
     XmOption.setIsXcalableMPGPU(xcalableMPGPU);

@@ -1676,6 +1676,11 @@ public class XMPtranslateLocalPragma {
 
     Xobject async = reductionDecl.getArg(2);
     if (async.Opcode() != Xcode.LIST){
+
+      if (!XmOption.isAsync()){
+	XMP.error(pb.getLineNo(), "async clause on redution not supported by this environment");
+      }
+
       Ident f = _globalDecl.declExternFunc("xmpc_init_async");
       pb.insert(f.Call(Xcons.List(async)));
       Ident g = _globalDecl.declExternFunc("xmpc_start_async");
@@ -2112,6 +2117,11 @@ public class XMPtranslateLocalPragma {
 
     Xobject async = bcastDecl.getArg(3);
     if (async.Opcode() != Xcode.LIST){
+
+      if (!XmOption.isAsync()){
+	XMP.error(pb.getLineNo(), "async clause on bcast not supported by this environment");
+      }
+
       Ident f = _globalDecl.declExternFunc("xmpc_init_async");
       pb.insert(f.Call(Xcons.List(async)));
       Ident g = _globalDecl.declExternFunc("xmpc_start_async");
