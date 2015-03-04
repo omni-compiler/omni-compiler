@@ -1,5 +1,5 @@
 COMPILER=$(shell xmpcc --show-env | grep OMNI_MPICC_CMD | sed 's/OMNI_MPICC_CMD=//' | sed "s/\"//g" | xargs basename)
-MPIPATH=$(shell which $(COMPILER) | sed "s/bin\/$(COMPILER)/include/g")
+MPIPATH=$(shell which $(COMPILER) | xargs dirname | awk '{print $$1"/../include"}')
 XCC     = xmpcc -O2
 XRUN    = mpirun
 C_TESTS = $(wildcard *.c)
