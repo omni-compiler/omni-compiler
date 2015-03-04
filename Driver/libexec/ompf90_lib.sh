@@ -57,6 +57,7 @@ function ompf90_set_parameters()
     local tmp_args=""
     local OUTPUT_FLAG=
     local MODULE_FLAG=
+    local INCLUDE_FLAG=
 
     for arg in "${@}"; do
 	case $arg in
@@ -68,6 +69,11 @@ function ompf90_set_parameters()
 		MODULE_DIR="${arg#-J}"
                 MODULE_OPT="$MODULE_OPT -M${MODULE_DIR}"
                 other_args="$other_args $OMNI_MODINC ${MODULE_DIR}";;
+	    -I)
+                INCLUDE_FLAG=true;;
+            -I?*)
+                INCLUDE_OPT="$arg"
+                other_args="$other_args $arg";;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)
@@ -139,6 +145,10 @@ function ompf90_set_parameters()
                     MODULE_OPT="$MODULE_OPT -M${MODULE_DIR}"
                     other_args="$other_args $OMNI_MODINC ${MODULE_DIR}"
                     MODULE_FLAG=false
+                elif [[ "$INCLUDE_FLAG" = true ]]; then
+                    other_args="$other_args -I$arg"
+                    INCLUDE_OPT="$INCLUDE_OPT -I$arg"
+                    INCLUDE_FLAG=false
                 else
                     tmp_args="$tmp_args $arg"
                 fi;;

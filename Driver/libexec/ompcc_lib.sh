@@ -6,6 +6,7 @@ usage: $1 <OPTIONS> <INPUTFILE> ...
 Compile Driver Options
 
    -o <file>         : place the output into <file>.
+   -I <dir>          : add the directory dir to the list of directories to be searched for header files.
    -c                : compile and assemble, but do not link.
    -E                : preprocess only; do not compile, assemble or link.
    -v,--verbose      : print processing status.

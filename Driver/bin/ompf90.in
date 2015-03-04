@@ -13,6 +13,7 @@ DEBUG_TEMP_DIR="__omni_tmp__"
 
 ### Default options ###
 ENABLE_LINKER=true
+ENABLE_OPENMP=false
 ONLY_PP=false
 VERBOSE=false
 ENABLE_DEBUG=false
@@ -28,6 +29,7 @@ STOP_COMPILE=false
 # These parameters are set in ompf90_set_parameters().
 OUTPUT_FILE=
 MODULE_OPT=
+INCLUDE_OPT=
 PP_ADD_OPT=
 FRONTEND_ADD_OPT=
 XCODE_TRANSLATOR_ADD_OPT=
@@ -78,7 +80,7 @@ for file in $F_F90_files; do
     EXT=${file##*.}
     FILE_PP=${TEMP_DIR}/${FILE_NAME}.${EXT}
 
-    omni_exec $OMNI_FPP_CMD $PP_ADD_OPT $OMNI_FPP_OPT $other_args $file ">" $FILE_PP
+    omni_exec $OMNI_FPP_CMD $INCLUDE_OPT $PP_ADD_OPT $OMNI_FPP_OPT $other_args $file ">" $FILE_PP
     # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
 
     if [ $ONLY_PP = true ]; then
@@ -102,14 +104,14 @@ for file in $F_F90_files; do
     FILE_PP=${TEMP_DIR}/${FILE_NAME}.${EXT}
     FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.xml
 
-    omni_exec $OMNI_F2X_CMD $FRONTEND_ADD_OPT $OMNI_F2X_OPT $FILE_PP -o $FILE_IN_X
+    omni_exec $OMNI_F2X_CMD $INCLUDE_OPT $FRONTEND_ADD_OPT $OMNI_F2X_OPT $FILE_PP -o $FILE_IN_X
 done
 for file in $f_f90_files; do
     FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
     FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.xml
 
-    omni_exec $OMNI_F2X_CMD $FRONTEND_ADD_OPT $OMNI_F2X_OPT $file -o $FILE_IN_X
+    omni_exec $OMNI_F2X_CMD $INCLUDE_OPT $FRONTEND_ADD_OPT $OMNI_F2X_OPT $file -o $FILE_IN_X
 done
 [ $STOP_FRONTEND = true ] && exit 0;
 
@@ -152,11 +154,11 @@ fi
 for file in $all_files; do
     FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
-    FILE_F=${TEMP_DIR}/${FILE_NAME}.${EXT}
     FILE_USER_O=`basename $file .${EXT}`.o
+    FILE_F90=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.F90
     FILE_O=${TEMP_DIR}/${FILE_NAME}_${EXT}.o
 
-    omni_exec $OMNI_FC_CMD $NATIVE_ADD_OPT $OMNI_FC_OPT $other_args $FILE_F -o $FILE_O
+    omni_exec $OMNI_FC_CMD $NATIVE_ADD_OPT $OMNI_FC_OPT $other_args $FILE_F90 -o $FILE_O
 
     ### GPU Compiler ###
     FILE_CU=${TEMP_DIR}/${FILE_NAME}_pp.cu
@@ -202,6 +204,6 @@ else
 fi
 
 ### Delete temporal directory ###
-if [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
+[ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
 
 exit 0

@@ -33,8 +33,8 @@ ENABLE_TLOG=false
 # Additional options defined by command line (e.g. --Wl..)
 # These parameters are set in xmpf90_set_parameters().
 OUTPUT_FILE=
-INCLUDE_OPT=
 MODULE_OPT=
+INCLUDE_OPT=
 PROFILE_OPT=
 OPENMP_ADD_OPT=
 PP_ADD_OPT=
