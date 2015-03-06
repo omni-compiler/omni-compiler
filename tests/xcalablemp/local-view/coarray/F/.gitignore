@@ -1,5 +1,1 @@
-*
-!*.f90
-!Makefile
-!.ignore
-
+*.x

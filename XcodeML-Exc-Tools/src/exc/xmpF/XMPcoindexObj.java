@@ -443,6 +443,7 @@ public class XMPcoindexObj {
     return stride;
   }
 
+
   public Xobject getSizeFromTriplet(int i) {
     Xobject subscr = subscripts.getArg(i);
     Xobject size;
@@ -450,20 +451,60 @@ public class XMPcoindexObj {
     case F_ARRAY_INDEX:         // scalar
       size = Xcons.IntConstant(1);
       break;
+
     case F_INDEX_RANGE:         // triplet
       Xobject i1 = subscr.getArg(0);  // can be null
       Xobject i2 = subscr.getArg(1);  // can be null
       Xobject i3 = subscr.getArg(2);  // can be null
       size = coarray.getSizeFromTriplet(i, i1, i2, i3);
-      if (!size.Type().isBasic() &&
-          size.Type().getBasicType() != BasicType.INT) {
-        Ident intrinsicInt =
-          getEnv().declIntrinsicIdent("int", Xtype.FintFunctionType);
-        size = intrinsicInt.Call(Xcons.List(size));
+
+      if (size != null) {            // success
+        // cast function for safe
+        if (!size.Type().isBasic() &&
+            size.Type().getBasicType() != BasicType.INT) {
+          Ident intrinInt =
+            getEnv().declIntrinsicIdent("int", Xtype.FintFunctionType);
+          size = intrinInt.Call(Xcons.List(size));
+        }
+        break;
+      }
+
+      // The following codes until the break statement are not needed
+      // if you could guarantee the value of size is always non-null
+      // even for allocatable arrays.
+
+      // for case a(:), 
+      // use a Fortran intrinsic function size.
+      if (i1 == null && i2 == null && i3 == null) {
+        Xobject arg1 = Xcons.Symbol(Xcode.VAR, name);
+        Xobject arg2 = Xcons.IntConstant(i + 1);
+        Ident intrinSize =
+          getEnv().declIntrinsicIdent("size", Xtype.FintFunctionType);
+        size = intrinSize.Call(Xcons.List(arg1, arg2));
+        break;
+      }
+
+      // for case a(i1:), a(:i2), a(::i3), a(i1::i3) and a(:i2:i3),
+      // retry coarray.getSizeFromTriplet(i, i1, i2, i3) with
+      // intrinsic functions lbound and ubound.
+      if (i1 == null) i1 = coarray.getLbound(i);
+      if (i2 == null) i2 = coarray.getUbound(i);
+      size = coarray.getSizeFromTriplet(i, i1, i2, i3);
+
+      if (size != null) {
+        // cast function for safe
+        if (!size.Type().isBasic() &&
+            size.Type().getBasicType() != BasicType.INT) {
+          Ident intrinInt =
+            getEnv().declIntrinsicIdent("int", Xtype.FintFunctionType);
+          size = intrinInt.Call(Xcons.List(size));
+        }
       }
       break;
+
     default:        // vector subscript is not supported
-      XMP.error("internal error: unexpected Xcode: "+subscr.Opcode());
+      XMP.error("internal error: maybe vector subscript. Xcode: "
+                + subscr.Opcode());
       size = null;
       break;
     }

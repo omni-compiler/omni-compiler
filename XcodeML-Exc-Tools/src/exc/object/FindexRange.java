@@ -60,6 +60,8 @@ public class FindexRange
       lbound = subscripts[i].getArg(0);
     else
       lbound = subscripts[i];
+    if (lbound == null)
+      return null;
     return lbound.cfold(block);
   }
 
@@ -69,6 +71,8 @@ public class FindexRange
       ubound = subscripts[i].getArg(1);
     else
       ubound = subscripts[i];
+    if (ubound == null)
+      return null;
     return ubound.cfold(block);
   }
 
@@ -146,8 +150,7 @@ public class FindexRange
 
   public Xobject getSizeFromLbUb(Xobject lb, Xobject ub) {
     if (ub == null)    // illegal
-      throw new UnsupportedOperationException
-        ("internal error: upper-bound is null");
+      return null;
     ub = ub.cfold(block);
 
     if (lb == null)
@@ -216,8 +219,7 @@ public class FindexRange
     }
 
     if (i2 == null)    // illegal
-      throw new UnsupportedOperationException
-        ("internal error: upper-bound absent in array specification");
+      return null;
     i2 = i2.cfold(block);
 
     if (i1 == null)

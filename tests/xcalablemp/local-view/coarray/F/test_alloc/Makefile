@@ -2,9 +2,10 @@ OPT= --debug
 #OPT= -g --debug --verbose
 
 OUT_decl= decl1 decl2
+OUT_size= sample size2 # size1-err
 
+OUT = $(OUT_decl) $(OUT_size)
 
-OUT = $(OUT_decl)
 
 SRC= $(OUT:%=%.f90)
 RESULT= $(OUT:%=%.result)
@@ -56,7 +57,7 @@ clean:
 	rm -f *~ *.o $(OUT) *.result a.out
 	rm -f __omni_tmp__/*.F90 __omni_tmp__/*.xml
 	rm -f __omni_tmp__/*~ __omni_tmp__/*.in
-	rm -f omni_traverse*.o
+	rm -f __omni_tmp__/omni_traverse_*.f90 omni_traverse*.o
 	rm -f $(OUT:%=RUN/%)
 	rm -f *.mod *.xmod
 
