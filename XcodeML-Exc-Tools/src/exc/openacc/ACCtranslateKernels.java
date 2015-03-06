@@ -27,6 +27,10 @@ public class ACCtranslateKernels {
   public void translate() throws ACCexception{
     ACC.debug("translate kernels");
     
+    if(kernelsInfo.isDisabled()){
+      return;
+    }
+    
     //divide to kernels -> list of kernel head block 
     List<List<Block>> kernelBodyList = divideBlocksBetweenKernels(pb);
     

@@ -55,7 +55,7 @@ public class ACCtranslateLocalPragma {
       translateParallel(pb);
       break;
     case KERNELS_LOOP:
-      //break;
+      translateKernels(pb); break;
     case DECLARE:
       translateDeclare(pb); break;
     case UPDATE:

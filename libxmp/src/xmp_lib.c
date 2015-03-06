@@ -9,7 +9,9 @@
 #include "xmp_internal.h"
 #include "xmp.h"
 #include <stddef.h>
-
+extern void _XMP_align_local_idx(long long int global_idx, int *local_idx,
+                                 _XMP_array_t *array, int array_axis, int *rank);
+extern void _XMP_init_shadow_dim(_XMP_array_t *array, int i, int type, int lo, int hi);
 MPI_Comm xmp_get_mpi_comm(void) {
   MPI_Comm *comm;
   comm=_XMP_get_execution_nodes()->comm;
@@ -306,7 +308,7 @@ int xmp_align_size(xmp_desc_t d, int dim){
 
 int xmp_align_replicated(xmp_desc_t d, int dim, int *replicated){
 
-  _XMP_array_t *a = (_XMP_array_t *)d;
+  //_XMP_array_t *a = (_XMP_array_t *)d;
 
   int andims, nndims, axis, counter=0; 
   xmp_desc_t dt, dn;

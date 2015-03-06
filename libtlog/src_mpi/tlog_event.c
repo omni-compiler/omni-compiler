@@ -19,7 +19,7 @@ tlog_exec_profile *tlog_read_file(char *fname,int n_node)
   tlog_exec_event *dp;
   int is_bigendian;
 
-  char t;
+  //char t;
   union {
     long i;
     char c;

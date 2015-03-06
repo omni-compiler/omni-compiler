@@ -1,32 +1,28 @@
 program test_off
 
+  character*25 tname
 !$xmp nodes p(2,2)
 
-call sub1_b_bc()
-call sub2_b_bc()
-call sub3_b_bc()
-call sub4_b_bc()
-call sub5_b_bc()
-call sub6_b_bc()
-call sub7_b_bc()
-call sub8_b_bc()
-call sub9_b_bc()
-!$xmp task on p(1,1)
-write(*,*) " "
-!$xmp end task
-call sub1_b_c()
-call sub2_b_c()
-call sub3_b_c()
-!$xmp task on p(1,1)
-write(*,*) " "
-!$xmp end task
-call sub1_b_gb()
-call sub2_b_gb()
-call sub9_b_gb()
+call sub1_b_bc(tname)
+call sub2_b_bc(tname)
+call sub3_b_bc(tname)
+call sub4_b_bc(tname)
+call sub5_b_bc(tname)
+call sub6_b_bc(tname)
+call sub7_b_bc(tname)
+call sub8_b_bc(tname)
+call sub9_b_bc(tname)
+call sub1_b_c(tname)
+call sub2_b_c(tname)
+call sub3_b_c(tname)
+call sub1_b_gb(tname)
+call sub2_b_gb(tname)
+call sub9_b_gb(tname)
 
 end program
 
-subroutine sub1_b_bc()
+subroutine sub1_b_bc(tname)
+character(*) tname
 integer i,irank
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
@@ -64,11 +60,13 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub1_b_bc"
+call chk_int(tname, ierr)
 
 end subroutine
 
-subroutine sub2_b_bc()
+subroutine sub2_b_bc(tname)
+character(*) tname
 integer i,irank
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
@@ -106,10 +104,12 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub2_b_bc"
+call chk_int(tname, ierr)
 end subroutine
 
-subroutine sub3_b_bc()
+subroutine sub3_b_bc(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 !$xmp nodes p(2,2)
@@ -146,11 +146,13 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub3_b_bc"
+call chk_int(tname, ierr)
 
 end subroutine
 
-subroutine sub4_b_bc()
+subroutine sub4_b_bc(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 !$xmp nodes p(2,2)
@@ -187,10 +189,12 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub4_b_bc"
+call chk_int(tname, ierr)
 end subroutine
 
-subroutine sub5_b_bc()
+subroutine sub5_b_bc(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 !$xmp nodes p(2,2)
@@ -227,11 +231,13 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub5_b_bc"
+call chk_int(tname, ierr)
 
 end subroutine
 
-subroutine sub6_b_bc()
+subroutine sub6_b_bc(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 !$xmp nodes p(2,2)
@@ -268,11 +274,13 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub6_b_bc"
+call chk_int(tname, ierr)
 
 end subroutine
 
-subroutine sub7_b_bc()
+subroutine sub7_b_bc(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 !$xmp nodes p(2,2)
@@ -309,11 +317,13 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub7_b_bc"
+call chk_int(tname, ierr)
 
 end subroutine
 
-subroutine sub8_b_bc()
+subroutine sub8_b_bc(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 !$xmp nodes p(2,2)
@@ -350,11 +360,13 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub8_b_bc"
+call chk_int(tname, ierr)
 
 end subroutine
 
-subroutine sub9_b_bc()
+subroutine sub9_b_bc(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 !$xmp nodes p(2,2)
@@ -391,11 +403,13 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub9_b_bc"
+call chk_int(tname, ierr)
 
 end subroutine
 
-subroutine sub1_b_c()
+subroutine sub1_b_c(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 !$xmp nodes p(2,2)
@@ -432,11 +446,13 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub1_b_c"
+call chk_int(tname, ierr)
 
 end subroutine
 
-subroutine sub2_b_c()
+subroutine sub2_b_c(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 !$xmp nodes p(2,2)
@@ -474,11 +490,13 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub2_b_c"
+call chk_int(tname, ierr)
 
 end subroutine
 
-subroutine sub3_b_c()
+subroutine sub3_b_c(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 !$xmp nodes p(2,2)
@@ -515,11 +533,13 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub3_b_c"
+call chk_int(tname, ierr)
 
 end subroutine
 
-subroutine sub1_b_gb()
+subroutine sub1_b_gb(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 integer m(2)=(/2,3/)
@@ -557,11 +577,13 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub1_b_gb"
+call chk_int(tname, ierr)
 
 end subroutine
 
-subroutine sub2_b_gb()
+subroutine sub2_b_gb(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 integer m(2)=(/2,3/)
@@ -599,11 +621,13 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub2_b_gb"
+call chk_int(tname, ierr)
 
 end subroutine
 
-subroutine sub9_b_gb()
+subroutine sub9_b_gb(tname)
+character(*) tname
 integer,parameter :: n=4
 integer a(n,n),b(n,n)
 integer m(2)=(/5,7/)
@@ -642,15 +666,7 @@ do j=1,n
 end do
 
 !$xmp reduction (max:ierr)
-call chk_int(ierr)
+tname="sub9_b_gb"
+call chk_int(tname, ierr)
 
 end subroutine
-
-!subroutine
-!
-!end subroutine
-
-!subroutine
-!
-!end subroutine
-

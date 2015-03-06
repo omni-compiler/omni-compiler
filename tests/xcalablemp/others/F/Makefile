@@ -1,8 +1,8 @@
 XFC     = xmpf90 -O2
 XRUN    = mpirun
-EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x
+EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x
 
-all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x 228.x
+all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x 228.x 45_save.o 358_result.x 377.x 261.o 162.o 383.x 392.x
 
 module_test0.x: module0.o main.o
 	$(XFC) -o module_test0.x module0.o main.o
@@ -52,13 +52,39 @@ xmp_lib.o: xmp_lib.f90
 	$(XFC) -c xmp_lib.f90
 
 threadprivate.o: threadprivate.f90
-	$(XFC) -c -openmp threadprivate.f90
+	$(XFC) -c --openmp threadprivate.f90
 
 refobj.x: refobj.f90
 	$(XFC) -o refobj.x refobj.f90
 
 228.x: 228.f
 	$(XFC) -o 228.x 228.f
+
+45_save.o: 45_save.f90
+	$(XFC) -c 45_save.f90
+
+358_result.x: 358_result.f90
+	$(XFC) -o $@ $<
+
+377.x: 377.f90
+	$(XFC) -c -o 377.x $<; \
+	[ ! -f 377.x ] && exit 1; \
+	rm -rf __omni_tmp__; \
+	$(XFC) -c $< --debug 1> /dev/null;\
+	[ ! -d __omni_tmp__ ] && exit 1; \
+        echo "PASS"
+
+261.o: 261.f90
+	$(XFC) -c $<
+
+162.o: 162.f90
+	$(XFC) -c $<
+
+383.x: 383.f90
+	$(XFC) -o $@ $<
+
+392.x: 392.f90
+	$(XFC) -I./392-include -o $@ $<
 
 run: $(EXES)
 	$(XRUN) -np 2 ./module_test.x
@@ -70,7 +96,10 @@ run: $(EXES)
 	$(XRUN) -np 8 ./dnodes.x
 	$(XRUN) -np 4 ./refobj.x
 	$(XRUN) -np 1 ./228.x
+	$(XRUN) -np 1 ./358_result.x
+	$(XRUN) -np 2 ./383.x
+	$(XRUN) -np 1 ./392.x
 
 clean:
 	rm -f $(EXES) *.o *.*mod
-	rm -rf mod
+	rm -rf mod __omni_tmp__

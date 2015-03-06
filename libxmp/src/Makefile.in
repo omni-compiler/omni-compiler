@@ -80,13 +80,14 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @GASNET_TRUE@am__append_1 = xmp_coarray_set.c xmp_coarray_do.c xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post_wait.c xmp_gasnet_post_wait.c
-@GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET
+@GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET -D_XMP_COARRAY
 @FJRDMA_TRUE@am__append_3 = xmp_coarray_set.c xmp_coarray_do.c xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c xmp_post_wait.c xmp_fjrdma_post_wait.c
-@FJRDMA_TRUE@am__append_4 = -D_XMP_COARRAY_FJRDMA
-@TCA_TRUE@am__append_5 = xmp_reflect_tca.c
-@TCA_TRUE@am__append_6 = -D_XMP_TCA
-@ENABLE_XACC_TRUE@am__append_7 = xmp_reflect_gpu.c xmp_gpu_pack.cu xmp_reduce_gpu.c
-@ENABLE_XACC_TRUE@am__append_8 = -D_XMP_XACC -I@GPGPU_PREFIX@
+@FJRDMA_TRUE@am__append_4 = -D_XMP_COARRAY_FJRDMA -D_XMP_COARRAY
+@USER_LIBBLAS_TRUE@am__append_5 = -D_XMP_USER_LIBBLAS
+@TCA_TRUE@am__append_6 = xmp_reflect_tca.c
+@TCA_TRUE@am__append_7 = -D_XMP_TCA
+@ENABLE_XACC_TRUE@am__append_8 = xmp_reflect_gpu.c xmp_gpu_pack.cu xmp_reduce_gpu.c
+@ENABLE_XACC_TRUE@am__append_9 = -D_XMP_XACC -I@GPGPU_PREFIX@
 subdir = ./libxmp/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -261,7 +262,8 @@ BLASLIB = @BLASLIB@
 CC = @MPI_CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @MPI_CFLAGS@ -I../include -I$(TLOG_INC_DIR) $(am__append_2) \
-	$(am__append_4) $(am__append_6) $(am__append_8)
+	$(am__append_4) $(am__append_5) $(am__append_7) \
+	$(am__append_9)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPU = @CPU@
@@ -290,7 +292,6 @@ F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
-FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_LIBS = @GASNET_LIBS@
@@ -355,22 +356,20 @@ MPI_FCLIBS = @MPI_FCLIBS@
 MPI_FPP = @MPI_FPP@
 MPI_FPPFLAGS = @MPI_FPPFLAGS@
 MPI_MODINC = @MPI_MODINC@
-MPI_OPENMP_FLAG = @MPI_OPENMP_FLAG@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OMDRIVER_DIR = @OMDRIVER_DIR@
+OMNI_C2X_FLAGS = @OMNI_C2X_FLAGS@
+OMNI_F2X_FLAGS = @OMNI_F2X_FLAGS@
 OMNI_F_PP = @OMNI_F_PP@
 OMNI_HOME = @OMNI_HOME@
-OMNI_L2X_CFLAGS = @OMNI_L2X_CFLAGS@
-OMNI_L2X_FCFLAGS = @OMNI_L2X_FCFLAGS@
 OMNI_LNK_CFLAGS = @OMNI_LNK_CFLAGS@
 OMNI_LNK_FCFLAGS = @OMNI_LNK_FCFLAGS@
-OMNI_LX2X_CFLAGS = @OMNI_LX2X_CFLAGS@
-OMNI_LX2X_FCFLAGS = @OMNI_LX2X_FCFLAGS@
 OMNI_NTV_CFLAGS = @OMNI_NTV_CFLAGS@
 OMNI_NTV_FCFLAGS = @OMNI_NTV_FCFLAGS@
+OMNI_X2X_FLAGS = @OMNI_X2X_FLAGS@
 OMP_LOCK_TYPE = @OMP_LOCK_TYPE@
 OMP_THREAD_TYPE = @OMP_THREAD_TYPE@
 OM_DRIVER_CONF_DIR = @OM_DRIVER_CONF_DIR@
@@ -381,6 +380,7 @@ OM_EXEC_C_PP = @OM_EXEC_C_PP@
 OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
+OPENMP_OPT = @OPENMP_OPT@
 OS = @OS@
 OSDEF = @OSDEF@
 OS_CFLAGS = @OS_CFLAGS@
@@ -425,6 +425,8 @@ TYPE_INT64 = @TYPE_INT64@
 VERSION = @VERSION@
 XCODEML_COMMON_DIR = @XCODEML_COMMON_DIR@
 XCODEML_EXC_TOOLS_DIR = @XCODEML_EXC_TOOLS_DIR@
+XMPC_DEF = @XMPC_DEF@
+XMPF_DEF = @XMPF_DEF@
 XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
 XMPPKG_GROUP = @XMPPKG_GROUP@
 XMPPKG_LICENSE = @XMPPKG_LICENSE@
@@ -524,8 +526,8 @@ libxmp_a_SOURCES = ../include/xmp_internal.h ../include/xmp_constant.h \
 	xmp_gmove.c xmp_math_function.c xmp_runtime.c \
 	xmp_tlog_runtime.c xmp_io.c xmp_reflect.c xmp_pack_vector.c \
 	xmp_reflect_acc.c xmp_reduce_acc.c xmp_intrinsic.c xmp_sort.c \
-	xmp_async.c $(am__append_1) $(am__append_3) $(am__append_5) \
-	$(am__append_7)
+	xmp_async.c $(am__append_1) $(am__append_3) $(am__append_6) \
+	$(am__append_8)
 @ENABLE_XACC_TRUE@GPUCC = @GPU_CMD@
 @ENABLE_XACC_TRUE@GPUCFLAGS = @GPU_CFLAGS@
 all: all-am

@@ -1485,6 +1485,21 @@ public class XMPtranslateLocalPragma {
       					    templateObj, templateIndexArg.getInt(),
       					    _globalDecl, forBlock);
     }
+
+    // rewrite loop index in initializer in loop
+    BlockList body = getLoopBody(forBlock);
+
+    for (Block b = body.getHead(); b != null; b = b.getNext()){
+      
+      if (b.getBody() == null) continue;
+      topdownXobjectIterator iter2 = new topdownXobjectIterator(b.getBody().getDecls());
+      for (iter2.init(); !iter2.end(); iter2.next()) {
+	XMPrewriteExpr.rewriteLoopIndexInLoop(iter2.getXobject(), loopIndexName,
+					      templateObj, templateIndexArg.getInt(),
+					      _globalDecl, forBlock);
+      }
+    }
+
   }
 
   private void callLoopSchedFuncNodes(XMPnodes nodesObj, XobjList nodesSubscriptList,

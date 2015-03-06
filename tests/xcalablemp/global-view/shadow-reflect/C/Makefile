@@ -14,8 +14,6 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: shadow_reflect.x
-
-shadow_reflect:
 	$(XRUN) -np 4 shadow_reflect.x
 
 clean:

@@ -1,0 +1,24 @@
+#!/bin/sh
+##PJM --rsc-list "rscgrp=small"
+#PJM --rsc-list "node=3"
+#PJM --rsc-list "elapse=00:02:00"
+#PJM --mpi "shape=3"
+#PJM --stg-transfiles all
+#PJM --mpi "use-rankdir"
+#PJM --stgin "rank=* ./* %r:./"
+##PJM --stgout "rank=* %r:./Fprofd_stati/* ./job%j/Fprofd_stati/"
+##PJM -s
+
+. /work/system/Env_base
+
+#OPT="-mca mpi_print_stats 1 -mca coll_tuned_use_6d_algorithm 1 -mca coll_tuned_prealloc_size 2600"
+
+echo
+echo "[test_put]"
+
+for f in @OUT@; do
+    echo $f
+    mpiexec -n 3 ./$f
+done
+
+

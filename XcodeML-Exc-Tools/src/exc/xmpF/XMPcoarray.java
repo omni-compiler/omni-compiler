@@ -105,16 +105,14 @@ public class XMPcoarray {
   }
 
 
-
-
-
   //------------------------------
   //  evaluation
   //------------------------------
   public int getElementLength() {
     Xobject elem = getElementLengthExpr(); 
     if (!elem.isIntConstant()) {
-      XMP.error("Restriction: could not evaluate the element length of: "+name);
+      XMP.error("current restriction: " +
+                "could not numerically evaluate the element length of: "+name);
       return 0;
     }
     return elem.getInt();
@@ -126,14 +124,16 @@ public class XMPcoarray {
   public Xobject getElementLengthExpr(Block block) {
     Xobject elem = ident.Type().getElementLengthExpr(block);    // see BasicType.java
     if (elem == null)
-      XMP.error("Restriction: could not get the element length of: "+name);
+      XMP.error("current restriction: " + 
+                "could not find the element length of: "+name);
     return elem;
   }
 
   public int getTotalArraySize() {
     Xobject size = getTotalArraySizeExpr();
     if (!size.isIntConstant()) {
-      XMP.error("Restriction: could not evaluate the total size of: "+name);
+      XMP.error("current restriction: " +
+                "could not numerically evaluate the total size of: "+name);
       return 0;
     }
     return size.getInt();
@@ -142,7 +142,8 @@ public class XMPcoarray {
   public Xobject getTotalArraySizeExpr() {
     Xobject size = getFindexRange().getTotalArraySizeExpr();
     if (size == null)
-      XMP.error("Restriction: could not get the size of: "+name);
+      XMP.error("current restriction: " +
+                "could not find the total size of: "+name);
     return size;
   }
 
@@ -165,13 +166,7 @@ public class XMPcoarray {
     return ftype.getFarraySizeExpr();
   }
 
-  public FindexRange getFindexRange() {
-    if (indexRange == null)
-      _setFindexRange();
-    return indexRange;
-  }
-
-  public void _setFindexRange() {
+  private void _setFindexRange() {
     Xobject[] shape = getShape();
     indexRange = new FindexRange(shape, fblock, env);
   }
@@ -179,6 +174,12 @@ public class XMPcoarray {
   private void _setFindexRange(Block block, XMPenv env) {
     Xobject[] sizes = getShape();
     indexRange = new FindexRange(sizes, block, env);
+  }
+
+  public FindexRange getFindexRange() {
+    if (indexRange == null)
+      _setFindexRange();
+    return indexRange;
   }
 
 
@@ -218,7 +219,7 @@ public class XMPcoarray {
 
 
   //------------------------------
-  //  inquiring interface
+  //  get/set Xtype object
   //------------------------------
   public Boolean isScalar() {
     return (ident.Type().getNumDimensions() == 0);
@@ -228,8 +229,54 @@ public class XMPcoarray {
     return ident.Type().isFallocatable();
   }
 
+  public void setAllocatable() {
+    ident.Type().setIsFallocatable(true);
+  }
+
+  public void resetAllocatable() {
+    for (Xtype type = ident.Type(); type != null; ) {
+      type.setIsFallocatable(false);
+      if (type.copied != null)
+        type = type.copied;
+      else if (type.isBasic())
+        break;
+      else
+        type = type.getRef();
+    }
+  }
+
+  // not used now
+  public void resetAllocatableToPointer() {
+    for (Xtype type = ident.Type(); type != null; ) {
+      type.setIsFallocatable(false);
+      type.setIsFpointer(true);
+      if (type.copied != null)
+        type = type.copied;
+      else if (type.isBasic())
+        break;
+      else
+        type = type.getRef();
+    }
+  }
+
   public Boolean isPointer() {
     return ident.Type().isFpointer();
+  }
+
+  public void setPointer() {
+    ident.Type().setIsFpointer(true);
+  }
+
+  public void resetPointer() {
+    for (Xtype type = ident.Type(); type != null; ) {
+      type.setIsFpointer(false);
+      if (type.copied != null)
+        type = type.copied;
+      else if (type.isBasic())
+        break;
+      else
+        type = type.getRef();
+    }
   }
 
   public Boolean isDummyArg() {

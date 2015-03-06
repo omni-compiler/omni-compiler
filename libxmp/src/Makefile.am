@@ -13,12 +13,16 @@ libxmp_a_SOURCES = ../include/xmp_internal.h ../include/xmp_constant.h ../includ
 
 if GASNET
     libxmp_a_SOURCES += xmp_coarray_set.c xmp_coarray_do.c xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post_wait.c xmp_gasnet_post_wait.c
-    CFLAGS           += -D_XMP_COARRAY_GASNET
+    CFLAGS           += -D_XMP_COARRAY_GASNET -D_XMP_COARRAY
 endif
 
 if FJRDMA
     libxmp_a_SOURCES += xmp_coarray_set.c xmp_coarray_do.c xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c xmp_post_wait.c xmp_fjrdma_post_wait.c
-    CFLAGS           += -D_XMP_COARRAY_FJRDMA
+    CFLAGS           += -D_XMP_COARRAY_FJRDMA -D_XMP_COARRAY
+endif
+
+if USER_LIBBLAS
+    CFLAGS += -D_XMP_USER_LIBBLAS
 endif
 
 if TCA

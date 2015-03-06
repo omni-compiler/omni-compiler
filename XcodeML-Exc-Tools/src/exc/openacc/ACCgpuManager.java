@@ -14,6 +14,9 @@ public class ACCgpuManager {
   int availableThreadDim = maxThreadDim;
   
   List<LoopExecInfo> loopExecInfos = new ArrayList<LoopExecInfo>();
+
+  private Xobject numGangs = null;
+  private Xobject vectorLength = null;
   
   ACCgpuManager(ACCinfo kernelInfo) {
     g_kernelInfo = kernelInfo;
@@ -508,6 +511,8 @@ public class ACCgpuManager {
     Xobject bsx = g_kernelInfo.getNumGangsExp();
     Xobject tsx = g_kernelInfo.getVectorLengthExp();
     
+    if(bsx == null) bsx = numGangs;
+    if(tsx == null) tsx = vectorLength;
     
     for(CforBlock key : execMethodMap.keySet()){
       LoopExecInfo loopExecInfo = execMethodMap.get(key);
@@ -584,6 +589,13 @@ public class ACCgpuManager {
    * 
    * 
    */
+  public void setNumGangs(Xobject numGangs){
+    this.numGangs = numGangs;
+  }
+  
+  public void setVectorLength(Xobject vectorLength){
+    this.vectorLength = vectorLength;
+  }
 }
 
 class LoopExecInfo{

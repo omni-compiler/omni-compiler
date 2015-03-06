@@ -84,7 +84,7 @@ public class ACCanalyzeLocalPragma {
     case PARALLEL_LOOP:
       analyzeParallelLoop(pb); break;
     case KERNELS_LOOP:
-      break;
+      analyzeKernelsLoop(pb); break;
     case DECLARE:
       analyzeDeclare(pb); break;
     case UPDATE:
@@ -372,6 +372,59 @@ public class ACCanalyzeLocalPragma {
     //specifyInductionVarAsPrivate(pb);
     //checkUnspecifiedVars(pb, accInfo);
     //specifyAttribute(pb, accInfo);
+    
+    checkLoopBody(pb);
+    checkLoop(pb, accInfo);
+    
+    if(!ACC.debugFlag){
+      checkSynchronization(pb);
+    }
+  }
+  
+  private void analyzeKernelsLoop(PragmaBlock pb) throws ACCexception{
+    XobjList clauseList = (XobjList)pb.getClauses();
+    ACCinfo accInfo = new ACCinfo(ACCpragma.KERNELS_LOOP, pb, _globalDecl);
+    ACCutil.setACCinfo(pb, accInfo);
+    
+    ACC.debug("kernels loop directive : " + clauseList);
+    
+    for(Xobject o : clauseList){
+      XobjList clause = (XobjList)o;
+      ACCpragma clauseName = ACCpragma.valueOf(clause.getArg(0));
+      Xobject clauseArgs = (clause.Nargs() > 1)? clause.getArg(1) : null;
+            
+      switch(clauseName){
+      //for kernels
+      case IF:
+        accInfo.setIfCond(clauseArgs); break;
+      case ASYNC:
+        accInfo.setAsyncExp(clauseArgs); break;
+
+      //for loop
+      case GANG:
+        accInfo.addExecModel(clauseName); //accInfo.setExecLevel(clauseName);
+        accInfo.setNumGangsExp(clauseArgs); break;
+      case WORKER:
+        accInfo.addExecModel(clauseName); //accInfo.setExecLevel(clauseName);
+        accInfo.setNumWorkersExp(clauseArgs); break;
+      case VECTOR:
+        accInfo.addExecModel(clauseName); //accInfo.setExecLevel(clauseName);
+        accInfo.setVectorLengthExp(clauseArgs); break;
+      case COLLAPSE:
+        accInfo.setCollapseNum(clauseArgs); break;
+      case SEQ:
+        accInfo.addExecModel(ACCpragma.SEQ); break;
+      case INDEPENDENT:
+        accInfo.setIndependent(); break;
+        
+      default:
+        if(clauseName.isDataClause() || clauseName.isReduction()){
+          analyzeVarList(accInfo, clauseName, (XobjList)clauseArgs);
+        }else{
+          ACC.fatal("'" + clauseName.getName() +"' clause is not allowed in 'kernels loop' directive");
+        }
+      }
+    }
     
     checkLoopBody(pb);
     checkLoop(pb, accInfo);

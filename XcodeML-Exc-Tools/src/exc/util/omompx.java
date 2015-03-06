@@ -74,7 +74,6 @@ public class omompx
       "  -fcoarry     enable coarray translation.",
       "  -fnocoarry   pass without coarray translation (default).",
       "  -fatomicio   enable transforming Fortran IO statements to atomic operations.",
-      "  -fasync      enable asynchronous communications.",
       "  -w N         set max columns to N for Fortran source.",
       "  -gnu         decompile for GNU Fortran (default).",
       "  -intel       decompile for Intel Fortran.",
@@ -143,8 +142,6 @@ public class omompx
         coarray = true;
       } else if(arg.equals("-fnocoarray")) {
         coarray = false;
-      } else if(arg.equals("-fasync")) {
-        async = true;
       } else if(arg.equals("-facc")) {
         openACC = true; 
       } else if(arg.equals("-fxmp")) {
@@ -156,6 +153,8 @@ public class omompx
         xcalableMPGPU = true;
       } else if(arg.equals("-fxmpf")) {
         xmpf = true;
+      } else if(arg.equals("-fasync")) {
+        async = true;
       } else if(arg.equals("-w")) {
         if(narg == null)
           error("needs argument after -w");
@@ -211,6 +210,8 @@ public class omompx
       } else if (arg.startsWith("-max_assumed_shape=")) {
 	  String n = arg.substring(19);
 	  exc.xmpF.XMP.MAX_ASSUMED_SHAPE = Integer.parseInt(n);
+      } else if (arg.equals("-no-ldg")){
+        exc.openacc.ACC.useReadOnlyDataCache = false;
       } else if(arg.startsWith("-")){
         error("unknown option " + arg);
       } else if(inXmlFile == null) {

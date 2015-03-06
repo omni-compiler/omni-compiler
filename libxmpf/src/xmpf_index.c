@@ -10,7 +10,8 @@ void _XMP_L2G(int local_idx, long long int *global_idx,
 
   switch(chunk->dist_manner){
   case _XMP_N_DIST_DUPLICATION:
-    *global_idx = base + local_idx ;
+    //*global_idx = base + local_idx ;
+    *global_idx = local_idx ;
     break;
   case _XMP_N_DIST_BLOCK:
     *global_idx = base + n_info->rank * chunk->par_chunk_width + local_idx;
@@ -47,7 +48,8 @@ void _XMP_G2L(long long int global_idx, int *local_idx,
 
   switch(chunk->dist_manner){
   case _XMP_N_DIST_DUPLICATION:
-    *local_idx = global_idx - base;
+    //*local_idx = global_idx - base;
+    *local_idx = global_idx;
     break;
   case _XMP_N_DIST_BLOCK:
     *local_idx = (global_idx - base) - n_info->rank * chunk->par_chunk_width;

@@ -26,6 +26,11 @@ void xmpf_init_all__()
   _XMPC_running = 0;
   _XMPF_running = 1;
 
+#if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)
+  /* for Coarray environment */
+  _XMPF_coarray_init();
+#endif
+
 #if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
   FJMPI_Rdma_init();
 #endif
@@ -44,6 +49,15 @@ void xmpf_finalize_all__()
 
   _XMP_finalize(0);
 }
+
+
+/*
+ * dummy routines
+ *  This routine will be called only if the user program does not
+ *  require to generate the initialization routines for modules.
+ */
+//void xmpf_traverse_module_(void) { }
+//void xmpf_traverse_initcoarray_(void) { }
 
 
 void xmpf_debug_()
@@ -205,3 +219,6 @@ void _XMP_unpack_array_2_DOUBLE(double *dst_addr, double *buf_addr,
 
 }
 */
+
+void xmp_desc_of_(){
+}

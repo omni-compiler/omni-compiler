@@ -17,7 +17,7 @@
 #include "xmp_constant.h"
 #include "xmp_data_struct.h"
 #include "xmp_io_sys.h"
-
+#include "xmp_internal.h"
 /* ------------------------------------------------------------------ */
 extern void _XMP_fatal(char *msg);
 
@@ -425,7 +425,7 @@ static int _xmp_io_set_view_block_cyclic
 	int b[mcnt]; MPI_Aint d[mcnt]; MPI_Datatype t[mcnt];
 	int iend=bw*x_l+ib_l +1;
 	int ista=bw*x_u+ib_u;
-	int y_sta = func_m( -step, 0 );
+	//int y_sta = func_m( -step, 0 );
 	int y_end = func_m( step, (rp_lb - rp_ub) );
 #ifdef DEBUG
 	fprintf(stderr, "ista=%d  iend=%d  iend-ista=%d  (iend-ista) / (bw*b1)=%d  (iend-ista) %% (bw*b1)=%d\n",
@@ -728,8 +728,8 @@ static int _xmp_io_write_read_block_cyclic
 	int b[mcnt]; MPI_Aint d[mcnt]; MPI_Datatype t[mcnt];
 	int ista=bw*x_l+ib_l;
 	int iend=bw*x_u+ib_u +1;
-	int y_sta = func_m( step, 0 );
-	int y_end = func_m( (-step), (- rp_lb + rp_ub) );
+	//int y_sta = func_m( step, 0 );
+	//int y_end = func_m( (-step), (- rp_lb + rp_ub) );
 #ifdef DEBUG
 	fprintf(stderr, "y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */
@@ -1019,8 +1019,8 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
       }else{ /* ib_l */ /* ib_u */
 	int ista=bw*x_l+ib_l;
 	int iend=bw*x_u+ib_u +1;
-	int y_sta = func_m( step, 0 );
-	int y_end = func_m( (-step), (- rp_lb + rp_ub) );
+	//int y_sta = func_m( step, 0 );
+	//int y_end = func_m( (-step), (- rp_lb + rp_ub) );
 #ifdef DEBUG
 	fprintf(stderr, "y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */
@@ -1162,8 +1162,8 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
       }else{ /* ib_l */ /* ib_u */
 	int ista=bw*x_l+ib_l;
 	int iend=bw*x_u+ib_u -1;
-	int y_sta = func_m( -step, 0 );
-	int y_end = func_m( step, (rp_lb - rp_ub) );
+	//int y_sta = func_m( -step, 0 );
+	//int y_end = func_m( step, (rp_lb - rp_ub) );
 #ifdef DEBUG
 	fprintf(stderr, "y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */
@@ -1900,7 +1900,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
   int *rp_ub_addr = NULL;
   int *rp_step_addr = NULL;
   int array_ndims;
-  int ierr;
+  //int ierr;
 
 #ifdef CHECK_POINT
   fprintf(stderr, "IO:START(xmp_fread_darray_unpack)\n");
@@ -1911,9 +1911,9 @@ int xmp_fread_darray_unpack(fp, apd, rp)
   if (apd == NULL){ ret = -1; goto FunctionExit; }
   if (rp == NULL){ ret = -1; goto FunctionExit; }
 
-  ierr = xmp_align_template(apd, &tempd);
+  /*ierr = */xmp_align_template(apd, &tempd);
   if (tempd == NULL){ ret = -1; goto FunctionExit; }
-  ierr = xmp_array_ndims(apd, &array_ndims);
+  /*ierr =*/ xmp_array_ndims(apd, &array_ndims);
 
   rp_dims = _xmp_range_get_dims(rp);
   rp_lb_addr = _xmp_range_get_lb_addr(rp);
@@ -2153,7 +2153,7 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   int array_ndims;
   size_t array_type_size;
   int typesize_int;
-  int ierr;
+  //int ierr;
 
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -2168,9 +2168,9 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   if (apd == NULL)         { return -1; }
   if (rp == NULL)          { return -1; }
 
-  ierr = xmp_align_template(apd, &tempd);
+  /*ierr =*/ xmp_align_template(apd, &tempd);
   if (tempd == NULL){ return -1; }
-  ierr = xmp_array_ndims(apd, &array_ndims);
+  /*ierr =*/ xmp_array_ndims(apd, &array_ndims);
   array_type_size = xmp_array_type_size(apd);
 
   rp_dims = _xmp_range_get_dims(rp);
@@ -2209,8 +2209,8 @@ fprintf(stderr, "READ(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
     int align_manner_i = xmp_align_format(apd, i+1);
     int local_lower_i = xmp_array_lcllbound(apd, i+1);
     int alloc_size_i;
-    int ierr;
-    ierr = xmp_array_lsize(apd, i+1, &alloc_size_i);
+    //int ierr;
+    /*ierr =*/ xmp_array_lsize(apd, i+1, &alloc_size_i);
 #ifdef DEBUG
 fprintf(stderr, "READ(%d/%d) (lb,ub,step)=(%d,%d,%d)\n",
        rank, nproc, RP_LB(i),  RP_UB(i), RP_STEP(i));
@@ -2402,7 +2402,7 @@ fprintf(stderr, "READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper
   if (mpiRet != MPI_SUCCESS) { return 1; }
   
   char *array_addr;
-  ierr = xmp_array_laddr(apd, &array_addr);
+  /*ierr = */xmp_array_laddr(apd, &array_addr);
 
   // read
   MPI_Type_size(dataType[0], &typesize_int);
@@ -2494,7 +2494,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
    int *rp_ub_addr = NULL;
    int *rp_step_addr = NULL;
    int array_ndims;
-   int ierr;
+   //int ierr;
 
    int myrank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -2504,10 +2504,10 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
   fprintf(stderr, "IO:START(xmp_fwrite_darray_pack): rank=%d\n", myrank);
 #endif /* CHECK_POINT */
 
-   ierr = xmp_align_template(apd, &tempd);
+   /*ierr =*/ xmp_align_template(apd, &tempd);
    if (tempd == NULL){ ret = -1; goto FunctionExit; }
    array_type_size = xmp_array_type_size(apd);
-   ierr = xmp_array_ndims(apd, &array_ndims);
+   /*ierr =*/ xmp_array_ndims(apd, &array_ndims);
 
    rp_dims = _xmp_range_get_dims(rp);
    rp_lb_addr = _xmp_range_get_lb_addr(rp);
@@ -2636,7 +2636,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 
    /* pack data */
    cp = buf;
-   ierr = xmp_array_laddr(apd, &array_addr);
+   /*ierr =*/ xmp_array_laddr(apd, &array_addr);
    for(j=0; j<buf_size; j++){
      disp = 0;
      size = 1;
@@ -2647,8 +2647,8 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
        int local_lower_i = xmp_array_lcllbound(apd, i+1);
        int ser_size_i = xmp_array_gsize(apd, i+1);
        int alloc_size_i;
-       int ierr;
-       ierr = xmp_array_lsize(apd, i+1, &alloc_size_i);
+       //int ierr;
+       /*ierr =*/ xmp_array_lsize(apd, i+1, &alloc_size_i);
        ub[i] = (j/size)%cnt[i];
        if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
 	   align_manner_i == _XMP_N_ALIGN_DUPLICATION) {
@@ -2747,7 +2747,7 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   int array_ndims;
   size_t array_type_size;
   int typesize_int;
-  int ierr;
+  //int ierr;
 
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -2762,9 +2762,9 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   if (apd == NULL)         { return -1103; }
   if (rp == NULL)          { return -1104; }
 
-  ierr = xmp_align_template(apd, &tempd);
+  /*ierr =*/ xmp_align_template(apd, &tempd);
   if (tempd == NULL){ return -1105; }
-  ierr = xmp_array_ndims(apd, &array_ndims);
+  /*ierr =*/ xmp_array_ndims(apd, &array_ndims);
   array_type_size = xmp_array_type_size(apd);
 
   rp_dims = _xmp_range_get_dims(rp);
@@ -2805,8 +2805,8 @@ fprintf(stderr, "WRITE(%d/%d) dims=%d\n",rank, nproc, RP_DIMS);
     int ser_upper_i = xmp_array_gcgubound(apd, i+1);
     int local_lower_i = xmp_array_lcllbound(apd, i+1);
     int alloc_size_i;
-    int ierr;
-    ierr = xmp_array_lsize(apd, i+1, &alloc_size_i);
+    //int ierr;
+    /*ierr =*/ xmp_array_lsize(apd, i+1, &alloc_size_i);
 /*     int local_upper_i = xmp_array_lclubound(apd, i+1); */
 /*     int shadow_size_lo_i = xmp_array_lshadow(apd, i+1); */
 /*     int shadow_size_hi_i = xmp_array_ushadow(apd, i+1); */
@@ -3009,7 +3009,7 @@ fprintf(stderr, "WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper
   if (mpiRet != MPI_SUCCESS) { return 1119; }
  
   char *array_addr;
-  ierr = xmp_array_laddr(apd, &array_addr);
+  /*ierr =*/ xmp_array_laddr(apd, &array_addr);
 
   // write
   MPI_Type_size(dataType[0], &typesize_int);
@@ -3286,7 +3286,7 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
   int *rp_step_addr = NULL;
   int array_ndims;
   size_t array_type_size;
-  int ierr;
+  //int ierr;
 
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -3302,9 +3302,9 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
   if (rp == NULL)          { return 1004; }
   if (disp  < 0)           { return 1005; }
 
-  ierr = xmp_align_template(apd, &tempd);
+  /*ierr =*/ xmp_align_template(apd, &tempd);
   if (tempd == NULL){ return 1006; }
-  ierr = xmp_array_ndims(apd, &array_ndims);
+  /*ierr =*/ xmp_array_ndims(apd, &array_ndims);
   array_type_size = xmp_array_type_size(apd);
 
   rp_dims = _xmp_range_get_dims(rp);

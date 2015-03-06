@@ -374,6 +374,9 @@ static CExpr* parse_ACC_clauses()
 	    goto syntax_err;
 	}
 	args = exprListAdd(args,c);
+	if(pg_tok == ','){
+	  pg_get_token();
+	}
     }
     return args;
  syntax_err:

@@ -24,7 +24,8 @@ void _XMP_wait_async__(int async_id)
   _XMP_async_comm_t *async;
 
   //xmp_dbg_printf("async_id = %d\n", async_id);
-  if (!(async = _XMP_get_async(async_id))) _XMP_fatal("wrong async-id");
+  //if (!(async = _XMP_get_async(async_id))) _XMP_fatal("wrong async-id");
+  if (!(async = _XMP_get_async(async_id))) return;
 
   int nreqs = async->nreqs;;
   MPI_Request *reqs = async->reqs;
@@ -52,7 +53,8 @@ int xmp_test_async_(int *async_id)
 {
   _XMP_async_comm_t *async;
 
-  if (!(async = _XMP_get_async(*async_id))) _XMP_fatal("wrong async-id");
+  //if (!(async = _XMP_get_async(*async_id))) _XMP_fatal("wrong async-id");
+  if (!(async = _XMP_get_async(*async_id))) return 1;
 
   int nreqs = async->nreqs;
   MPI_Request *reqs = async->reqs;

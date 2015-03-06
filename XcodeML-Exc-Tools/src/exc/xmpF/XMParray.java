@@ -39,6 +39,8 @@ public class XMParray {
 
   private int NthAssumedShape = -1;
 
+  boolean shadow_declared = false;
+
   // null constructor
   public XMParray() { }
 
@@ -456,6 +458,13 @@ public class XMParray {
       XMP.errorAt(pb,"shadow dimension size is different from array dimension");
       return;
     }
+
+    if (array.shadow_declared){
+      XMP.errorAt(pb, "variable '" + name + "' already has shadow region");
+    }
+
+    array.shadow_declared = true;
+
     for(int i = 0; i < dims.size(); i++){
       XMPdimInfo d_info = dims.elementAt(i);
       int right = 0;
@@ -555,9 +564,12 @@ public class XMParray {
     for(int i = 0; i < dims.size(); i++){
       XMPdimInfo info = dims.elementAt(i);
 
+      Xobject lower = info.getLower();
       Xobject upper = null;
       if (info.getUpper() == null && NthAssumedShape >= 0 && NthAssumedShape < XMP.MAX_ASSUMED_SHAPE){
 	upper = Xcons.FarrayRef(sizeArray.Ref(), Xcons.IntConstant(NthAssumedShape), Xcons.IntConstant(i));
+	upper = Xcons.binaryOp(Xcode.PLUS_EXPR, upper, lower);
+	upper = Xcons.binaryOp(Xcode.MINUS_EXPR, upper, Xcons.IntConstant(1));
       }
       else {
 	upper = info.getUpper();
@@ -565,14 +577,14 @@ public class XMParray {
 
       if(info.isAlignAny()){
 	args = Xcons.List(descId.Ref(),Xcons.IntConstant(i),
-			  info.getLower(), upper,
+			  lower, upper,
 			  Xcons.IntConstant(-1),
 			  Xcons.IntConstant(0));
       } else {
 	Xobject off = info.getAlignSubscriptOffset();
 	if(off == null) off = Xcons.IntConstant(0);
 	args = Xcons.List(descId.Ref(),Xcons.IntConstant(i),
-			  info.getLower(), upper,
+			  lower, upper,
 			  Xcons.IntConstant(info.getAlignSubscriptIndex()),
 			  off);
       }

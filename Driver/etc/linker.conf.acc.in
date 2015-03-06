@@ -1,8 +1,0 @@
-LIB_CUDA=@GPGPU_PREFIX@/lib64
-
-OM_OPTIONS="${OM_OPTIONS} -L${OMNI_HOME}/lib -L${LIB_CUDA}"
-
-LIB_ACC=acc
-LIBS="${LIBS} -l${LIB_ACC} -ltlog -lcudart"
-
-

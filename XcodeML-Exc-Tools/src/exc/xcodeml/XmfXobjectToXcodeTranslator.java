@@ -1400,6 +1400,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     if (typeName != null)
                         idSet.add("$" + typeName.getName());
                     for (Xobject a : t.getMemberList()) {
+
+			if (a.Type().equals(t)) continue;
+
                         _collectDependName(a.Type(), idSet);
                         _collectDependName(((Ident)a).getValue(), idSet);
                     }

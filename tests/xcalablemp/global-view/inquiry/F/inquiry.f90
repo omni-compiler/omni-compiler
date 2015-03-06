@@ -31,7 +31,7 @@ ierr=xmp_dist_nodes(dt1, dn1)
 irank=xmp_node_num()
 
 ierr=xmp_template_fixed(xmp_desc_of(t2),lval)
-call check(lval, 0, error)
+call check_l(lval, 0, error)
 
 !$xmp template_fix(block) t2(6)
 
@@ -78,7 +78,7 @@ if (irank==11) then
   !ierr=xmp_nodes_attr(dn1, attr)
 
   ierr=xmp_template_fixed(xmp_desc_of(t2),lval)
-  call check(lval, 1, error)
+  call check_l(lval, 1, error)
   ierr=xmp_template_ndims(dt, ival)
   call check(ival, 3, error)
   ierr=xmp_template_lbound(dt, 1, ival)
@@ -128,11 +128,11 @@ if (irank==11) then
   ierr=xmp_align_offset(xmp_desc_of(a), 3, ival)
   call check(ival, 0, error)
   ierr=xmp_align_replicated(xmp_desc_of(b), 1, lval)
-  call check(lval, 0, error)
+  call check_l(lval, 0, error)
   ierr=xmp_align_replicated(xmp_desc_of(b), 2, lval)
-  call check(lval, 1, error)
+  call check_l(lval, 1, error)
   ierr=xmp_align_replicated(xmp_desc_of(b), 3, lval)
-  call check(lval, 1, error)
+  call check_l(lval, 1, error)
   ierr=xmp_array_ndims(xmp_desc_of(a), ival)
   call check(ival, 3, error)
   ierr=xmp_array_lbound(xmp_desc_of(a), 1, ival)
@@ -165,6 +165,17 @@ if (irank==11) then
 end if
 
 end program test_inquiry
+subroutine checK_l(lresult,ians,error)
+  logical rlresult,lresult,lans
+  integer ians
+  integer error
+  lans=transfer(ians,lans)
+  rlresult = lresult
+!  print *, 'result',rlresult, 'answer' , lans
+  if(rlresult .neqv. lans) then
+     error=error+1
+  end if
+end subroutine
 
 subroutine check(iresult,ians,error)
   integer iresult,ians,error

@@ -720,15 +720,14 @@ IS_CRAY_FALSE
 IS_CRAY_TRUE
 IS_PGI_FALSE
 IS_PGI_TRUE
+OMNI_X2X_FLAGS
 OMNI_LNK_FCFLAGS
 OMNI_NTV_FCFLAGS
-OMNI_LX2X_FCFLAGS
-OMNI_L2X_FCFLAGS
+OMNI_F2X_FLAGS
 OMNI_F_PP
 OMNI_LNK_CFLAGS
 OMNI_NTV_CFLAGS
-OMNI_LX2X_CFLAGS
-OMNI_L2X_CFLAGS
+OMNI_C2X_FLAGS
 MPI_FCLIBS
 MPI_MODINC
 MPI_FCFLAGS
@@ -740,16 +739,24 @@ MPI_CFLAGS
 MPI_CPPFLAGS
 MPI_CPP
 MPI_CC
-MPI_OPENMP_FLAG
+XMPF_DEF
+XMPC_DEF
+OPENMP_OPT
+MPI3_FALSE
+MPI3_TRUE
 GASNET_LIBS
 GASNET_FALSE
 GASNET_TRUE
 TCA_FALSE
 TCA_TRUE
+USER_LIBBLAS_FALSE
+USER_LIBBLAS_TRUE
 LIBXML_PREFIX
 GPGPU_PREFIX
 GPU_CFLAGS
 GPU_CMD
+POWERPC_FALSE
+POWERPC_TRUE
 IS_PGI
 ENABLE_XACC
 ENABLE_XACC_FALSE
@@ -775,7 +782,6 @@ CXX
 ac_ct_FC
 FCFLAGS
 FC
-FJRDMA
 FJRDMA_FALSE
 FJRDMA_TRUE
 LIBACC_HEADER_DIR
@@ -943,11 +949,11 @@ enable_debug
 enable_openacc
 enable_atool
 enable_xacc
-enable_mpi3
 with_gpucc
 with_gpu_cflags
 with_cuda
 with_libxml
+with_libblas
 with_TCA
 with_gasnet
 with_gasnet_conduit
@@ -1606,12 +1612,11 @@ Optional Features:
   --disable-maintainer-mode
                           disable make rules and dependencies not useful (and
                           sometimes confusing) to the casual installer
-  --enable-debug                 enable generate executable with debug symbol (false default).
-  --enable-openacc               enable OpenACC (false default).
-  --enable-atool                 enable atool (false default).
-  --enable-xacc                  enable XcalableACC (false default).
-  --enable-mpi3                  enable MPI3 (false default).
-  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
+  --enable-debug                 enable generate executable with debug symbol (false default)
+  --enable-openacc               enable OpenACC (false default)
+  --enable-atool                 enable atool (false default)
+  --enable-xacc                  enable XcalableACC (false default)
+  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1627,12 +1632,13 @@ Optional Packages:
   --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
   --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
   --with-libxml=DIR           libxml installation path (default: /usr)
+  --with-libblas=DIR          BLAS Library (e.g. /foo/blas_LINUX.a)
   --with-TCA=DIR              TCA installation path
   --with-gasnet=DIR           GASNet installation path
   --with-gasnet-conduit=NAME  GASNet conduit
-  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.
-  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.
-  --with-precision=NUM        the default precision of real*16 in bits (128).
+  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support
+  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support
+  --with-precision=NUM        the default precision of real*16 in bits (128)
 
 Some influential environment variables:
   CC          C compiler command
@@ -12281,8 +12287,6 @@ if test -e "C-BackEnd/Makefile.am"; then
     C_BACKEND_DIR=C-BackEnd
     ac_config_files="$ac_config_files $C_BACKEND_DIR/Makefile"
 
-    ac_config_files="$ac_config_files $C_BACKEND_DIR/bin/C_Back"
-
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 else
@@ -12318,12 +12322,6 @@ $as_echo_n "checking check F-BackEnd project exists... " >&6; }
 if test -e "F-BackEnd/Makefile.am"; then
     F_BACKEND_DIR=F-BackEnd
     ac_config_files="$ac_config_files $F_BACKEND_DIR/Makefile"
-
-    ac_config_files="$ac_config_files $F_BACKEND_DIR/bin/F_Back"
-
-    ac_config_files="$ac_config_files $F_BACKEND_DIR/bin/F_Trans"
-
-    ac_config_files="$ac_config_files $F_BACKEND_DIR/bin/F_Decomp"
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -12363,97 +12361,23 @@ if test -e "Driver/src/Makefile.am"; then
     OMDRIVER_DIR=Driver/src
     ac_config_files="$ac_config_files $OMDRIVER_DIR/Makefile"
 
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/ompp"
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/ompcc.conf"
 
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omcx2x"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omclinker"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omnative"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omcnative"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omlinker"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/oml2x"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omx2x"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omx2c"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omx2l"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/omc.conf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/java.conf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/pp.conf.openmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/l2x.conf.openmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/x2x.conf.openmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/native.conf.openmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/linker.conf.openmp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omc2c"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omc2x"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omcpp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/ompcc"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpcc"
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/ompf90.conf"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/xmpcc.conf"
 
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omf2f"
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/xmpf90.conf"
+
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/ompcc"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/ompf90"
 
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omfpp"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omf2x"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omfx2x"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omx2f"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omfnative"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omflinker"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/omf.conf"
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpcc"
 
     ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpf90"
 
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/pp.conf.xmpf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/l2x.conf.xmpf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/x2x.conf.xmpf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/native.conf.xmpf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/linker.conf.xmpf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/pp.conf.acc"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/l2x.conf.acc"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/x2x.conf.acc"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/native.conf.acc"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/linker.conf.acc"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/setup.conf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omtranslate"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/omni_traverse"
+    ac_config_files="$ac_config_files $OMDRIVER_DIR/../libexec/omni_traverse"
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -12733,10 +12657,6 @@ else
 fi
 
 
-#AC_ARG_ENABLE(xmpgpu,
-#    [  --enable-xmpgpu                enable XcalableMP-GPU (false default).],
-#    [doXmpGpu=yes], [doXmpGpu=no])
-
 # Check whether --enable-openacc was given.
 if test "${enable_openacc+set}" = set; then :
   enableval=$enable_openacc; doOpenAcc=yes
@@ -12761,17 +12681,9 @@ else
 fi
 
 
-# Check whether --enable-mpi3 was given.
-if test "${enable_mpi3+set}" = set; then :
-  enableval=$enable_mpi3; doMPI3=yes
-else
-  doMPI3=no
-fi
-
-
 ## Add temporarily by mnakao
 #AC_ARG_ENABLE(FJRDMA,
-#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
+#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10],
 #   [enableFJRDMA=yes], [enableFJRDMA=no])
 #
 #AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
@@ -12784,8 +12696,6 @@ else
   FJRDMA_TRUE='#'
   FJRDMA_FALSE=
 fi
-
-
 
 
 # --------------------------------------------------------------------
@@ -20585,8 +20495,12 @@ _ACEOF
 #   Refer: http://wiki.osdev.org/Target_Triplet
 
 if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
-# MPI OpenMP
-  MPI_OPENMP_FLAG="-Kopenmp"
+# OpenMP
+  OPENMP_OPT="-Kopenmp"
+
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
 
 # MPI C
   MPI_CC="mpifccpx"
@@ -20604,115 +20518,135 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   MPI_FCLIBS=""
 
 # Omni C
-  OMNI_L2X_CFLAGS=""
-  OMNI_LX2X_CFLAGS=""
+  OMNI_C2X_FLAGS=""
   OMNI_NTV_CFLAGS="-Xg -noansi"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
-  OMNI_L2X_FCFLAGS=""
-  OMNI_LX2X_FCFLAGS=""
+  OMNI_F2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-Free"
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
 elif test "$target" = "MIC-linux-gnu"; then
-# MPI OpenMP
-  MPI_OPENMP_FLAG="-mp"
+# OpenMP
+  OPENMP_OPT="-mp"
+
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
 
 # MPI C
   MPI_CC="mpiicc"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E -std=gnu99"
-  MPI_CFLAGS="-fast $MPI_OPENMP_FLAG"
+  MPI_CFLAGS="-fast $OPENMP_OPT"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="mpiifort"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-fast $MPI_OPENMP_FLAG"
+  MPI_FCFLAGS="-fast $OPENMP_OPT"
   MPI_MODINC="-module"
   MPI_FCLIBS=""
 
 # Omni C
-  OMNI_L2X_CFLAGS=""
-  OMNI_LX2X_CFLAGS=""
+  OMNI_C2X_FLAGS=""
   OMNI_NTV_CFLAGS="-std=gnu99"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
-  OMNI_L2X_FCFLAGS=""
-  OMNI_LX2X_FCFLAGS=""
+  OMNI_F2X_FLAGS=""
   OMNI_NTV_FCFLAGS=""
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
 elif test "$target" = "Cray-linux-gnu"; then
-# MPI OpenMP
-  MPI_OPENMP_FLAG="-h omp"
+# OpenMP
+  OPENMP_OPT="-h omp"
+
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
 
 # MPI C
   MPI_CC="cc"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-O2 $MPI_OPENMP_FLAG"
+  MPI_CFLAGS="-O2 $OPENMP_OPT"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="ftn"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-O2 $MPI_OPENMP_FLAG"
+  MPI_FCFLAGS="-O2 $OPENMP_OPT"
   MPI_MODINC="-J"
   MPI_FCLIBS=""
 
 # Omni C
-  OMNI_L2X_CFLAGS=""
-  OMNI_LX2X_CFLAGS=""
+  OMNI_C2X_FLAGS=""
   OMNI_NTV_CFLAGS="-hgnu -D_XMP_CRAY"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
-  OMNI_L2X_FCFLAGS=""
-  OMNI_LX2X_FCFLAGS=""
+  OMNI_F2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-f free"
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
 elif test "$target" = "sx-nec-superux"; then
-# MPI OpenMP
-  MPI_OPENMP_FLAG="-Popenmp"
+# OpenMP
+  OPENMP_OPT="-Popenmp"
+
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
 
 # MPI C
   MPI_CC="sxmpic++"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-O2 $MPI_OPENMP_FLAG"
+  MPI_CFLAGS="-O2 $OPENMP_OPT"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="sxmpif90"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-O2 $MPI_OPENMP_FLAG"
+  MPI_FCFLAGS="-O2 $OPENMP_OPT"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
 
 # Omni C
-  OMNI_L2X_CFLAGS=""
-  OMNI_LX2X_CFLAGS=""
+  OMNI_C2X_FLAGS=""
   OMNI_NTV_CFLAGS="-Kgcc -w"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
-  OMNI_L2X_FCFLAGS=""
-  OMNI_LX2X_FCFLAGS=""
+  OMNI_F2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-f4 -w"
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
 elif test "$target" = "powerpc-ibm-cnk"; then
   # These options are referred to https://scwwwb.kek.jp/index.html
 
-# MPI OpenMP
-  MPI_OPENMP_FLAG="-qsmp=omp"
+# OpenMP
+  OPENMP_OPT="-qsmp=omp"
+
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-WF,-D_XCALABLEMP"
 
 # MPI C
   MPI_DIR="/bgsys/drivers/V1R2M1/ppc64/comm/bin/xl/"
@@ -20722,12 +20656,18 @@ elif test "$target" = "powerpc-ibm-cnk"; then
     MPI_CC="mpixlcxx_r"
   fi
 
-# $MPICC cannot be used for XcodeML bug. Instead of $MPICC,
-# $CC (gcc) is used. But, this is not a good idea. Wish to fix the bug.
+# $MPICC cannot be used for XcodeML bug.
+# Instead of $MPICC, $CC (gcc) is used.
+# But, this is not a good idea. Wish to fix the bug.
 #  MPI_CPP=$MPI_CC
   MPI_CPP=$CC
-  MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH $MPI_OPENMP_FLAG"
+  MPI_CPPFLAGS="-E --std=c99"
+
+  if test -d "/bgsys/drivers/ppcfloor/comm/include"; then
+    MPI_CPPFLAGS="$MPI_CPPFLAGS -I/bgsys/drivers/ppcfloor/comm/include"
+  fi
+
+  MPI_CFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH $OPENMP_OPT"
 
   if test -f /usr/local/bg/lib/libkek.a; then
     MPI_CLIBS="/usr/local/bg/lib/libkek.a"
@@ -20745,7 +20685,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   fi
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist -qextname $INC_PATH $MPI_OPENMP_FLAG"
+  MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist -qextname $INC_PATH $OPENMP_OPT"
   MPI_MODINC="-I"
 
   INC_PATH="/usr/local/bg/include"
@@ -20757,49 +20697,59 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   MPI_FCLIBS=$MPI_CLIBS
 
 # Omni C
-  OMNI_L2X_CFLAGS=""
-  OMNI_LX2X_CFLAGS=""
+  OMNI_C2X_FLAGS=""
   OMNI_NTV_CFLAGS="-q64 -qipa"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG $MPI_CLIBS"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT $MPI_CLIBS"
 
 # Omni F
-  OMNI_L2X_FCFLAGS=""
-  OMNI_LX2X_FCFLAGS=""
+  OMNI_F2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG $MPI_CLIBS"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT $MPI_CLIBS"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
 elif test "$target" = "powerpc-hitachi-aix"; then
-# MPI OpenMP
-  MPI_OPENMP_FLAG="-qsmp=omp"
+# OpenMP
+  OPENMP_OPT="-qsmp=omp"
+
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
 
 # MPI C
   MPI_CC="mpCC_r"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-q64 -qhot -qsimd=auto -O5 $MPI_OPENMP_FLAG"
+  MPI_CFLAGS="-q64 -qhot -qsimd=auto -O5 $OPENMP_OPT"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="mpxlf90_r"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $MPI_OPENMP_FLAG"
+  MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $OPENMP_OPT"
   MPI_MODINC="-I"
   MPI_FCLIBS=""
 
 # Omni C
-  OMNI_L2X_CFLAGS=""
-  OMNI_LX2X_CFLAGS=""
+  OMNI_C2X_FLAGS=""
   OMNI_NTV_CFLAGS="-q64"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
-  OMNI_L2X_FCFLAGS=""
-  OMNI_LX2X_FCFLAGS=""
+  OMNI_F2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qextname"
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
 else
+  # XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
+
   INTEL_MPICC=mpiicc
   which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
   if test $? -eq 0; then
@@ -20811,38 +20761,47 @@ else
   chk=`${MPI_CC} --version | head -n1`
   case $chk in
   cc* | gcc* | Apple*)
-    # MPI OpenMP
-    MPI_OPENMP_FLAG="-fopenmp"
+    # OpenMP
+    OPENMP_OPT="-fopenmp"
+
+    # XcalableMP
+    XMPC_DEF="-D_XCALABLEMP"
+    XMPF_DEF="-D_XCALABLEMP"
 
     # MPI C
     MPI_CPP=$MPI_CC
     MPI_CPPFLAGS="-E -std=gnu99"
-    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $MPI_OPENMP_FLAG"
+    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT"
     MPI_CLIBS=""
 
     # MPI F
     MPI_FC="mpif90"
     MPI_FPP=$MPI_FC
     MPI_FPPFLAGS="-E"
-    MPI_FCFLAGS="-O2 $MPI_OPENMP_FLAG"
+    MPI_FCFLAGS="-O2 $OPENMP_OPT"
     MPI_MODINC="-J"
     MPI_FCLIBS=""
 
     # Omni C
-    OMNI_L2X_CFLAGS=""
-    OMNI_LX2X_CFLAGS=""
+    OMNI_C2X_FLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
-    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
+    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
     # Omni F
-    OMNI_L2X_FCFLAGS=""
-    OMNI_LX2X_FCFLAGS="-gnu"
+    OMNI_F2X_FLAGS=""
     OMNI_NTV_FCFLAGS="-ffree-form -fcray-pointer"
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS -fopenmp -lgomp"
+
+    # Omni Common
+    OMNI_X2X_FLAGS="-gnu"
     ;;
   *ICC*)
-    # MPI OpenMP
-    MPI_OPENMP_FLAG="-openmp"
+    # OpenMP
+    OPENMP_OPT="-openmp"
+
+    # XcalableMP
+    XMPC_DEF="-D_XCALABLEMP"
+    XMPF_DEF="-D_XCALABLEMP"
 
     # MPI C
     MPI_CPP=$MPI_CC
@@ -20853,61 +20812,67 @@ else
     *)
       MPI_CPPFLAGS="-E -std=gnu99" ;;
     esac
-    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $MPI_OPENMP_FLAG"
+    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT"
     MPI_CLIBS=""
 
     # MPI F
     MPI_FC="mpiifort"
     MPI_FPP=$MPI_FC
     MPI_FPPFLAGS="-E"
-    MPI_FCFLAGS="-O2 $MPI_OPENMP_FLAG"
+    MPI_FCFLAGS="-O2 $OPENMP_OPT"
     MPI_MODINC="-module"
     MPI_FCLIBS=""
 
     # Omni C
-    OMNI_L2X_CFLAGS=""
-    OMNI_LX2X_CFLAGS=""
+    OMNI_C2X_FLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
-    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
+    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
     # Omni F
-    OMNI_L2X_FCFLAGS=""
-    OMNI_LX2X_FCFLAGS="-intel"
+    OMNI_F2X_FLAGS=""
     OMNI_NTV_FCFLAGS=""
-    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
+    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+    # Omni Common
+    OMNI_X2X_FLAGS="-intel"
     ;;
   *)
     chk2=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1`
     case $chk2 in
     pgcc*)
-      # MPI OpenMP
-      MPI_OPENMP_FLAG="-mp"
+      # OpenMP
+      OPENMP_OPT="-mp"
+
+      # XcalableMP
+      XMPC_DEF="-D_XCALABLEMP"
+      XMPF_DEF="-D_XCALABLEMP"
 
       # MPI C
       MPI_CPP=$MPI_CC
       MPI_CPPFLAGS="-E -c99"
-      MPI_CFLAGS="-fast -c99 $MPI_OPENMP_FLAG"
+      MPI_CFLAGS="-fast -c99 $OPENMP_OPT"
       MPI_CLIBS=""
 
       # MPI F
       MPI_FC="mpif90"
       MPI_FPP=$MPI_FC
       MPI_FPPFLAGS="-E"
-      MPI_FCFLAGS="-fast $MPI_OPENMP_FLAG"
+      MPI_FCFLAGS="-fast $OPENMP_OPT"
       MPI_MODINC="-module"
       MPI_FCLIBS=""
 
       # Omni C
-      OMNI_L2X_CFLAGS="--no-builtin-va-arg"
-      OMNI_LX2X_CFLAGS=""
+      OMNI_C2X_FLAGS="--no-builtin-va-arg"
       OMNI_NTV_CFLAGS="-D_XMP_PGI"
-      OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $MPI_OPENMP_FLAG"
+      OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
       # Omni F
-      OMNI_L2X_FCFLAGS=""
-      OMNI_LX2X_FCFLAGS=""
+      OMNI_F2X_FLAGS=""
       OMNI_NTV_FCFLAGS=""
-      OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $MPI_OPENMP_FLAG"
+      OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+      # Omni Common
+      OMNI_X2X_FLAGS=""
 
       # Special options
       IS_PGI="Yes"
@@ -20928,6 +20893,14 @@ else
     esac ;;
   esac
 fi
+ if test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix"; then
+  POWERPC_TRUE=
+  POWERPC_FALSE='#'
+else
+  POWERPC_TRUE='#'
+  POWERPC_FALSE=
+fi
+
 
 # --------------------------------------------------------------------
 # specify GPU C compiler
@@ -20987,6 +20960,40 @@ if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
    as_fn_error $? "parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help" "$LINENO" 5
 fi
 
+
+# --------------------------------------------------------------------
+# set BLAS
+
+
+# Check whether --with-libblas was given.
+if test "${with_libblas+set}" = set; then :
+  withval=$with_libblas; LIBBLAS="${withval}"; use_libblas=yes
+else
+  use_libblas=no
+fi
+
+
+if test x$use_libblas = xyes; then
+   if ! test -f $LIBBLAS; then
+     as_fn_error $? "$LIBBLAS not found." "$LINENO" 5
+   fi
+   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
+   OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
+else
+  if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
+    LIBBLAS="-SSL2BLAMP"
+    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
+    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
+  fi
+fi
+
+ if test x${use_libblas} = xyes; then
+  USER_LIBBLAS_TRUE=
+  USER_LIBBLAS_FALSE='#'
+else
+  USER_LIBBLAS_TRUE='#'
+  USER_LIBBLAS_FALSE=
+fi
 
 
 # --------------------------------------------------------------------
@@ -21088,7 +21095,6 @@ if test x${use_gasnet} = xyes; then
 
     $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CPPFLAGS)" > ${tmp_file}
     GASNET_CPPFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
-    GASNET_CPPFLAGS="${GASNET_CPPFLAGS} -D_XMP_COARRAY_GASNET"
 
     $__ECHO "include ${mak_file}\nall:\n\t@echo \$(GASNET_CFLAGS)"   > ${tmp_file}
     GASNET_CFLAGS=`make -s -f ${tmp_file} 2>/dev/null`
@@ -21106,6 +21112,7 @@ if test x${use_gasnet} = xyes; then
   MPI_CFLAGS="${MPI_CFLAGS} ${GASNET_CFLAGS} ${GASNET_CPPFLAGS}"
   MPI_CLIBS="${MPI_CLIBS} ${GASNET_LDFLAGS} ${GASNET_LIBS}"
   OMNI_LNK_CFLAGS="${OMNI_LNK_CFLAGS} ${GASNET_LIBS}"
+  OMNI_LNK_FCFLAGS="${OMNI_LNK_FCFLAGS} ${GASNET_LIBS}"
 fi
 
 
@@ -21155,15 +21162,34 @@ else
   esac
 fi
 
+# --------------------------------------------------------------------
 # MPI3 for MPI FLAGS
-if test "x${doMPI3}" = "xyes"; then
-   MPI_CPPFLAGS="$MPI_CPPFLAGS -D_XMP_MPI3"
-   MPI_FPPFLAGS="$MPI_FPPFLAGS -D_XMP_MPI3"
-   MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
-   MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
-   OMNI_LX2X_CFLAGS="$OMNI_LX2X_CFLAGS -mpi3"
+tmpmpi3=/tmp/tmpmpi3.$$.c
+cat <<EOF > $tmpmpi3
+#include <mpi.h>
+MPI_VERSION
+MPI_SUBVERSION
+EOF
+MPI_VERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -2 | head -1`
+MPI_SUBVERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -1`
+if test $MPI_VERSION -ge 3; then
+  OMNI_X2X_FLAGS="${OMNI_X2X_FLAGS} -fasync"
+  doMPI3=yes
+else
+  doMPI3=no
+fi
+rm -f $tmpmpi3
+ if test "x${doMPI3}" = "xyes"; then
+  MPI3_TRUE=
+  MPI3_FALSE='#'
+else
+  MPI3_TRUE='#'
+  MPI3_FALSE=
 fi
 
+
+# --------------------------------------------------------------------
+# set userflags
 if test "${userFCFLAGS}" != ""; then
   FCFLAGS="${userFCFLAGS}"
 fi
@@ -21188,7 +21214,11 @@ if test "${userMPI_FCLIBS}" != ""; then
   MPI_FCLIBS="${userMPI_FCLIBS}"
 fi
 
-# MPI OpenMP
+# OpenMP
+
+
+# XcalableMP
+
 
 
 # MPI C
@@ -21211,13 +21241,14 @@ fi
 
 
 
-
 # Omni F
 OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 
 
 
 
+
+# Omni Common
 
 
 # Other options
@@ -25388,50 +25419,9 @@ fi
 
 
 
-checkCpp() {
-    __ret=1
-    __tmpFileBase=/tmp/.cpptest.$$
-    __tmpFile=${__tmpFileBase}.F90
-    __data=`date | base64 2>/dev/null`
-    echo "#ifdef __XMP_CPP_CHECK__" > ${__tmpFile}
-    echo ${__data} >> ${__tmpFile}
-    echo "#endif" >> ${__tmpFile}
-    __vdata=`$* -D__XMP_CPP_CHECK__ ${__tmpFile} 2>/dev/null | grep "${__data}" 2>/dev/null`
-    rm -f ${__tmpFileBase}*
-    if test "x${__data}" = "x${__vdata}"; then
-        __ret=0
-    fi
-    unset __tmpFile __data __vdata
-    return ${__ret}
-}
-
 # cpp
-cppCmd=''
-tmpCppCmd=''
-tmpCppCmd=${CPP}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking \"${tmpCppCmd}\" is a C preprosessor" >&5
-$as_echo_n "checking \"${tmpCppCmd}\" is a C preprosessor... " >&6; }
-checkCpp ${tmpCppCmd}
-if test $? -eq 0; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, it is." >&5
-$as_echo "yes, it is." >&6; }
-    cppCmd=${tmpCppCmd}
-else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, it isn't." >&5
-$as_echo "no, it isn't." >&6; }
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking \"${nativeCompiler} -E\" acts like cpp" >&5
-$as_echo_n "checking \"${nativeCompiler} -E\" acts like cpp... " >&6; }
-    checkCpp ${nativeCompiler} -E
-    if test $? -eq 0; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, it does." >&5
-$as_echo "yes, it does." >&6; }
-        cppCmd=${nativeCompiler}
-    else
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no, it doesn't." >&5
-$as_echo "no, it doesn't." >&6; }
-    fi
-fi
-if test -z "${cppCmd}"; then
+cppCmd=${CPP}
+if test -z "${CPP}"; then
    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "Can't find any usable C preprosessor.
@@ -25702,12 +25692,24 @@ if test -z "${ENABLE_XACC_TRUE}" && test -z "${ENABLE_XACC_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_XACC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${POWERPC_TRUE}" && test -z "${POWERPC_FALSE}"; then
+  as_fn_error $? "conditional \"POWERPC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USER_LIBBLAS_TRUE}" && test -z "${USER_LIBBLAS_FALSE}"; then
+  as_fn_error $? "conditional \"USER_LIBBLAS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then
   as_fn_error $? "conditional \"TCA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
   as_fn_error $? "conditional \"GASNET\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPI3_TRUE}" && test -z "${MPI3_FALSE}"; then
+  as_fn_error $? "conditional \"MPI3\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${IS_PGI_TRUE}" && test -z "${IS_PGI_FALSE}"; then
@@ -26785,61 +26787,20 @@ do
     "$XCODEML_COMMON_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $XCODEML_COMMON_DIR/Makefile" ;;
     "$C_FRONTEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $C_FRONTEND_DIR/Makefile" ;;
     "$C_BACKEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $C_BACKEND_DIR/Makefile" ;;
-    "$C_BACKEND_DIR/bin/C_Back") CONFIG_FILES="$CONFIG_FILES $C_BACKEND_DIR/bin/C_Back" ;;
     "$F_FRONTEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $F_FRONTEND_DIR/Makefile" ;;
     "$F_BACKEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/Makefile" ;;
-    "$F_BACKEND_DIR/bin/F_Back") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/bin/F_Back" ;;
-    "$F_BACKEND_DIR/bin/F_Trans") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/bin/F_Trans" ;;
-    "$F_BACKEND_DIR/bin/F_Decomp") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/bin/F_Decomp" ;;
     "$XCODEML_EXC_TOOLS_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $XCODEML_EXC_TOOLS_DIR/Makefile" ;;
     "$XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java") CONFIG_FILES="$CONFIG_FILES $XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java" ;;
     "$OMDRIVER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/Makefile" ;;
-    "$OMDRIVER_DIR/../bin/ompp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompp" ;;
-    "$OMDRIVER_DIR/../bin/omcx2x") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omcx2x" ;;
-    "$OMDRIVER_DIR/../bin/omclinker") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omclinker" ;;
-    "$OMDRIVER_DIR/../bin/omnative") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omnative" ;;
-    "$OMDRIVER_DIR/../bin/omcnative") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omcnative" ;;
-    "$OMDRIVER_DIR/../bin/omlinker") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omlinker" ;;
-    "$OMDRIVER_DIR/../bin/oml2x") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/oml2x" ;;
-    "$OMDRIVER_DIR/../bin/omx2x") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omx2x" ;;
-    "$OMDRIVER_DIR/../bin/omx2c") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omx2c" ;;
-    "$OMDRIVER_DIR/../bin/omx2l") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omx2l" ;;
-    "$OMDRIVER_DIR/../etc/omc.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/omc.conf" ;;
-    "$OMDRIVER_DIR/../etc/java.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/java.conf" ;;
-    "$OMDRIVER_DIR/../etc/pp.conf.openmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/pp.conf.openmp" ;;
-    "$OMDRIVER_DIR/../etc/l2x.conf.openmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/l2x.conf.openmp" ;;
-    "$OMDRIVER_DIR/../etc/x2x.conf.openmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.openmp" ;;
-    "$OMDRIVER_DIR/../etc/native.conf.openmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.openmp" ;;
-    "$OMDRIVER_DIR/../etc/linker.conf.openmp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.openmp" ;;
-    "$OMDRIVER_DIR/../bin/omc2c") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omc2c" ;;
-    "$OMDRIVER_DIR/../bin/omc2x") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omc2x" ;;
-    "$OMDRIVER_DIR/../bin/omcpp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omcpp" ;;
-    "$OMDRIVER_DIR/../bin/ompcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompcc" ;;
-    "$OMDRIVER_DIR/../bin/xmpcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpcc" ;;
+    "$OMDRIVER_DIR/../etc/ompcc.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/ompcc.conf" ;;
+    "$OMDRIVER_DIR/../etc/ompf90.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/ompf90.conf" ;;
     "$OMDRIVER_DIR/../etc/xmpcc.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/xmpcc.conf" ;;
-    "$OMDRIVER_DIR/../bin/omf2f") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omf2f" ;;
+    "$OMDRIVER_DIR/../etc/xmpf90.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/xmpf90.conf" ;;
+    "$OMDRIVER_DIR/../bin/ompcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompcc" ;;
     "$OMDRIVER_DIR/../bin/ompf90") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompf90" ;;
-    "$OMDRIVER_DIR/../bin/omfpp") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omfpp" ;;
-    "$OMDRIVER_DIR/../bin/omf2x") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omf2x" ;;
-    "$OMDRIVER_DIR/../bin/omfx2x") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omfx2x" ;;
-    "$OMDRIVER_DIR/../bin/omx2f") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omx2f" ;;
-    "$OMDRIVER_DIR/../bin/omfnative") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omfnative" ;;
-    "$OMDRIVER_DIR/../bin/omflinker") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omflinker" ;;
-    "$OMDRIVER_DIR/../etc/omf.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/omf.conf" ;;
+    "$OMDRIVER_DIR/../bin/xmpcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpcc" ;;
     "$OMDRIVER_DIR/../bin/xmpf90") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpf90" ;;
-    "$OMDRIVER_DIR/../etc/pp.conf.xmpf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/pp.conf.xmpf" ;;
-    "$OMDRIVER_DIR/../etc/l2x.conf.xmpf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/l2x.conf.xmpf" ;;
-    "$OMDRIVER_DIR/../etc/x2x.conf.xmpf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.xmpf" ;;
-    "$OMDRIVER_DIR/../etc/native.conf.xmpf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.xmpf" ;;
-    "$OMDRIVER_DIR/../etc/linker.conf.xmpf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.xmpf" ;;
-    "$OMDRIVER_DIR/../etc/pp.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/pp.conf.acc" ;;
-    "$OMDRIVER_DIR/../etc/l2x.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/l2x.conf.acc" ;;
-    "$OMDRIVER_DIR/../etc/x2x.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/x2x.conf.acc" ;;
-    "$OMDRIVER_DIR/../etc/native.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/native.conf.acc" ;;
-    "$OMDRIVER_DIR/../etc/linker.conf.acc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/linker.conf.acc" ;;
-    "$OMDRIVER_DIR/../etc/setup.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/setup.conf" ;;
-    "$OMDRIVER_DIR/../bin/omtranslate") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omtranslate" ;;
-    "$OMDRIVER_DIR/../bin/omni_traverse") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/omni_traverse" ;;
+    "$OMDRIVER_DIR/../libexec/omni_traverse") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../libexec/omni_traverse" ;;
     "$LIBXMP_HEADER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_HEADER_DIR/Makefile" ;;
     "$LIBXMP_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_DIR/Makefile" ;;
     "$LIBXMP_THREADS_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_THREADS_DIR/Makefile" ;;
@@ -28588,19 +28549,19 @@ cat << EOF
     C compiler (MPI_CC)                         : `which $MPI_CC`
     C compiler flags (MPI_CFLAGS)               : $MPI_CFLAGS
     C compiler linker flags (MPI_CLIBS)         : $MPI_CLIBS
-
     Fortran preprocessor (MPI_FPP)              : `which $MPI_FPP`
     Fortran preprocessor flags (MPI_FPPFLAGS)   : $MPI_FPPFLAGS
     Fortran compiler (MPI_FC)                   : `which $MPI_FC`
     Fortran compiler flags (MPI_FCFLAGS)        : $MPI_FCFLAGS
     Fortran compiler linker flags (MPI_FCLIBS)  : $MPI_FCLIBS
+    Supoort MPI 3 ?                             : $doMPI3
 
   Note: If you want to change above compilers and their options,
         please rerun ./configure MPI_CC=...
+
 EOF
 
 if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; then
-  echo ""
   echo "  Options:"
   echo "    GASNet                : $use_gasnet"
 
@@ -28615,7 +28576,7 @@ if test x${use_tca} = xyes; then
   echo "    TCA                   : yes"
 fi
 
-if test x${doMPI3} = xyes; then
-  echo "    MPI3                  : yes"
+if test x${use_libblas} = xyes; then
+  echo "    BLAS LIB              : $LIBBLAS"
 fi
 echo "=================================================="

@@ -58,6 +58,7 @@ public class XMPrewriteExpr
 	      XobjList alloc = (XobjList)y.next();
 	      Xobject obj = alloc.getArg(0);
 	      while (obj.Opcode() == Xcode.MEMBER_REF) obj = obj.getArg(0).getArg(0);
+	      if (obj.Opcode() == Xcode.F_ARRAY_REF) obj = obj.getArg(0).getArg(0);
 	      Ident id = env.findVarIdent(obj.getName(), fb);
 	      if (id == null) break;
 	      XMParray array = XMParray.getArray(id);
@@ -199,8 +200,21 @@ public class XMPrewriteExpr
 	  if(array == null) break;
 
 	  int dim_i = 0;
+	  boolean no_leading_scalar_in_subscripts = true;
 	  for(XobjArgs args = x.getArg(1).getArgs(); args != null;
 	      args = args.nextArgs()){
+
+	    // check subscripts
+	    if (array.isDistributed(dim_i) &&
+		args.getArg().Opcode() == Xcode.F_ARRAY_INDEX){
+	      no_leading_scalar_in_subscripts = false;
+	    }
+	    else if (array.isDistributed(dim_i) &&
+		     args.getArg().Opcode() == Xcode.F_INDEX_RANGE &&
+		     !no_leading_scalar_in_subscripts){
+	      XMP.errorAt(block, "':' must not be lead by any int-expr in a subscript list of a global array.");
+	    }
+
 	    Xobject index_calc = 
 	      arrayIndexCalc(array,dim_i++,args.getArg(),bb,block);
 	    if(index_calc != null) args.setArg(index_calc);
@@ -576,7 +590,13 @@ public class XMPrewriteExpr
 
     case F_INDEX_RANGE:
       if (!a.isDistributed(dim_i)) return i;
-      /* what to do for array_range expression */
+
+      if (is_colon(i, a, dim_i)){ // NOTE: this check is not strict.
+	if (a.hasShadow(dim_i) && dim_i != a.getDim() - 1){
+	  XMP.errorAt(block, "a subscript of the dimension having shadow must be an int-expr unless it is the last dimension.");
+	}
+	return i;
+      }
 
     default:
       XMP.errorAt(block,"bad expression in XMP array index");
@@ -632,47 +652,118 @@ public class XMPrewriteExpr
       if (!param_list.getArg(i).Type().isFassumedShape()) continue;
 	
       Xobject arg = arg_list.getArg(i);
-      Ident id = env.findVarIdent(arg.getName(), fb);
-      XMParray array = XMParray.getArray(id);
 
-      Xtype atype;
-      int arrayDim;
-      Ident sizeFunc;
-      Xobject arg0;
+      if (arg.Opcode() == Xcode.VAR){ // just array name
+	  
+	Ident id = env.findVarIdent(arg.getName(), fb);
+	XMParray array = XMParray.getArray(id);
 
-      if (array != null){
-	atype = array.getType();
-	arrayDim = array.getDim();
-	//sizeFunc = env.declIntrinsicIdent("xmp_array_gsize", Xtype.FintFunctionType);
-	sizeFunc = env.declExternIdent("xmp_array_gsize", Xtype.FintFunctionType);
-	arg0 = array.getDescId().Ref();
-      }
-      else {
-	atype = arg.Type();
-	arrayDim = atype.getNumDimensions();
-	sizeFunc = env.declIntrinsicIdent("size", Xtype.FintFunctionType);
-	arg0 = arg;
-      }
+	Xtype atype;
+	int arrayDim;
+	Ident sizeFunc;
+	Xobject arg0;
 
-      if (atype.isFallocatable() || atype.isFassumedShape()){
-	for (int j = 0; j < arrayDim; j++){
-	  Xobject lhs = Xcons.FarrayRef(sizeArray.Ref(), Xcons.IntConstant(k), Xcons.IntConstant(j));
-	  Xobject rhs = sizeFunc.Call(Xcons.List(arg0, Xcons.IntConstant(j+1)));
-	  st.insert(Xcons.Set(lhs, rhs));
+	if (array != null){
+	  atype = array.getType();
+	  arrayDim = array.getDim();
+	  //sizeFunc = env.declIntrinsicIdent("xmp_array_gsize", Xtype.FintFunctionType);
+	  sizeFunc = env.declExternIdent("xmp_array_gsize", Xtype.FintFunctionType);
+	  arg0 = array.getDescId().Ref();
 	}
-      }
-      else {
-	Xobject declSize[] = atype.getFarraySizeExpr();
-	for (int j = 0; j < arrayDim; j++){
-	  Xobject lhs = Xcons.FarrayRef(sizeArray.Ref(), Xcons.IntConstant(k), Xcons.IntConstant(j));
-	  Xobject rhs = Xcons.binaryOp(Xcode.PLUS_EXPR,
-				       Xcons.binaryOp(Xcode.MINUS_EXPR,
-						      declSize[j].getArg(1),
-						      declSize[j].getArg(0)),
-				       Xcons.IntConstant(1));
-	  st.insert(Xcons.Set(lhs, rhs));
+	else {
+	  atype = arg.Type();
+	  arrayDim = atype.getNumDimensions();
+	  sizeFunc = env.declIntrinsicIdent("size", Xtype.FintFunctionType);
+	  arg0 = arg;
 	}
 
+	if (atype.isFallocatable() || atype.isFassumedShape()){
+	  for (int j = 0; j < arrayDim; j++){
+	    Xobject lhs = Xcons.FarrayRef(sizeArray.Ref(), Xcons.IntConstant(k), Xcons.IntConstant(j));
+	    Xobject rhs = sizeFunc.Call(Xcons.List(arg0, Xcons.IntConstant(j+1)));
+	    st.insert(Xcons.Set(lhs, rhs));
+	  }
+	}
+	else {
+	  Xobject declSize[] = atype.getFarraySizeExpr();
+	  for (int j = 0; j < arrayDim; j++){
+	    Xobject lhs = Xcons.FarrayRef(sizeArray.Ref(), Xcons.IntConstant(k), Xcons.IntConstant(j));
+	    Xobject rhs = Xcons.binaryOp(Xcode.PLUS_EXPR,
+					 Xcons.binaryOp(Xcode.MINUS_EXPR,
+							declSize[j].getArg(1),
+							declSize[j].getArg(0)),
+					 Xcons.IntConstant(1));
+	    st.insert(Xcons.Set(lhs, rhs));
+	  }
+
+	}
+
+      }
+      else if (arg.Opcode() == Xcode.F_ARRAY_REF){ // array section
+
+	Ident id = env.findVarIdent(arg.getArg(0).getArg(0).getName(), fb);
+	XMParray array = XMParray.getArray(id);
+
+	Xtype atype;
+	int arrayDim;
+	Ident lbFunc, ubFunc;
+	Xobject arg0;
+
+	if (array != null){
+	  atype = array.getType();
+	  arrayDim = array.getDim();
+	  lbFunc = env.declExternIdent("xmp_array_lbound", Xtype.FintFunctionType);
+	  ubFunc = env.declExternIdent("xmp_array_ubound", Xtype.FintFunctionType);
+	  arg0 = array.getDescId().Ref();
+	}
+	else {
+	  atype = arg.Type();
+	  arrayDim = atype.getNumDimensions();
+	  lbFunc = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType);
+	  ubFunc = env.declIntrinsicIdent("ubound", Xtype.FintFunctionType);
+	  arg0 = arg.getArg(0).getArg(0);
+	}
+
+	XobjList subList = (XobjList)arg.getArg(1);
+	for (int j = 0; j < arrayDim; j++){
+
+	  Xobject sub = subList.getArg(j);
+	  Xobject rhs = null;
+
+	  if (sub.Opcode() == Xcode.F_ARRAY_INDEX){
+	    //rhs = Xcons.IntConstant(1);
+	    continue;
+	  }
+	  else if (sub.Opcode() == Xcode.F_INDEX_RANGE){
+	    Xobject lb = sub.getArg(0);
+	    if (lb == null){
+	      lb = lbFunc.Call(Xcons.List(arg0, Xcons.IntConstant(j+1)));
+	    }
+	    Xobject ub = sub.getArg(1);
+	    if (ub == null){
+	      ub = ubFunc.Call(Xcons.List(arg0, Xcons.IntConstant(j+1)));
+	    }
+
+	    Xobject stride = sub.getArg(2);
+	    if (stride == null){
+	      rhs = Xcons.binaryOp(Xcode.PLUS_EXPR,
+				   Xcons.binaryOp(Xcode.MINUS_EXPR, ub, lb),
+				   Xcons.IntConstant(1));
+	    }
+	    else {
+	      rhs = Xcons.binaryOp(Xcode.MINUS_EXPR, ub, lb);
+	      rhs = Xcons.binaryOp(Xcode.PLUS_EXPR, rhs, stride);
+	      rhs = Xcons.binaryOp(Xcode.DIV_EXPR, rhs, stride);
+	    }
+	  }
+
+	  Xobject lhs = Xcons.FarrayRef(sizeArray.Ref(), Xcons.IntConstant(k), Xcons.IntConstant(j));
+	  st.insert(Xcons.Set(lhs, rhs));
+	}
+
+      }
+      else {
+	continue;
       }
 
       k++;
@@ -681,6 +772,34 @@ public class XMPrewriteExpr
       }
 
     }
+
+  }
+
+  private boolean is_colon(Xobject i, XMParray a, int dim_i){
+
+    // check lower
+    Xobject lb = a.getType().getFarraySizeExpr()[dim_i].getArg(0);
+    if (i.getArg(0) != null){
+      if (i.getArg(0).Opcode() == Xcode.INT_CONSTANT &&
+	  lb.Opcode() == Xcode.INT_CONSTANT &&
+	  i.getArg(0).getInt() != lb.getInt()) return false;
+    }
+
+    // check upper
+    Xobject ub = a.getType().getFarraySizeExpr()[dim_i].getArg(1);
+    if (i.getArg(1) != null){
+      if (i.getArg(1).Opcode() == Xcode.INT_CONSTANT &&
+	  ub.Opcode() == Xcode.INT_CONSTANT &&
+	  i.getArg(1).getInt() != ub.getInt()) return false;
+    }
+
+    // check stride
+    if (i.getArg(2) != null){
+      if (i.getArg(2) == Xcons.IntConstant(1) &&
+	  i.getArg(2).getInt() != 1) return false;
+    }
+
+    return true;
 
   }
 

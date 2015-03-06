@@ -81,8 +81,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = omdriver$(EXEEXT) xmp_collect_init$(EXEEXT) \
-	om_replace_pragma$(EXEEXT)
+bin_PROGRAMS = xmp_collect_init$(EXEEXT)
 subdir = ./Driver/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(dist_libexec_SCRIPTS)
@@ -103,20 +102,14 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(sysconfdir)"
 PROGRAMS = $(bin_PROGRAMS)
-om_replace_pragma_SOURCES = om_replace_pragma.c
-om_replace_pragma_OBJECTS = om_replace_pragma.$(OBJEXT)
-om_replace_pragma_LDADD = $(LDADD)
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
-am_omdriver_OBJECTS = omdriver.$(OBJEXT)
-omdriver_OBJECTS = $(am_omdriver_OBJECTS)
-omdriver_LDADD = $(LDADD)
 am_xmp_collect_init_OBJECTS =  \
 	xmp_collect_init-xmp_collect_init.$(OBJEXT)
 xmp_collect_init_OBJECTS = $(am_xmp_collect_init_OBJECTS)
 xmp_collect_init_LDADD = $(LDADD)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -178,10 +171,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = om_replace_pragma.c $(omdriver_SOURCES) \
-	$(xmp_collect_init_SOURCES)
-DIST_SOURCES = om_replace_pragma.c $(omdriver_SOURCES) \
-	$(xmp_collect_init_SOURCES)
+SOURCES = $(xmp_collect_init_SOURCES)
+DIST_SOURCES = $(xmp_collect_init_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -251,7 +242,6 @@ F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
-FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_LIBS = @GASNET_LIBS@
@@ -316,22 +306,20 @@ MPI_FCLIBS = @MPI_FCLIBS@
 MPI_FPP = @MPI_FPP@
 MPI_FPPFLAGS = @MPI_FPPFLAGS@
 MPI_MODINC = @MPI_MODINC@
-MPI_OPENMP_FLAG = @MPI_OPENMP_FLAG@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OMDRIVER_DIR = @OMDRIVER_DIR@
+OMNI_C2X_FLAGS = @OMNI_C2X_FLAGS@
+OMNI_F2X_FLAGS = @OMNI_F2X_FLAGS@
 OMNI_F_PP = @OMNI_F_PP@
 OMNI_HOME = @OMNI_HOME@
-OMNI_L2X_CFLAGS = @OMNI_L2X_CFLAGS@
-OMNI_L2X_FCFLAGS = @OMNI_L2X_FCFLAGS@
 OMNI_LNK_CFLAGS = @OMNI_LNK_CFLAGS@
 OMNI_LNK_FCFLAGS = @OMNI_LNK_FCFLAGS@
-OMNI_LX2X_CFLAGS = @OMNI_LX2X_CFLAGS@
-OMNI_LX2X_FCFLAGS = @OMNI_LX2X_FCFLAGS@
 OMNI_NTV_CFLAGS = @OMNI_NTV_CFLAGS@
 OMNI_NTV_FCFLAGS = @OMNI_NTV_FCFLAGS@
+OMNI_X2X_FLAGS = @OMNI_X2X_FLAGS@
 OMP_LOCK_TYPE = @OMP_LOCK_TYPE@
 OMP_THREAD_TYPE = @OMP_THREAD_TYPE@
 OM_DRIVER_CONF_DIR = @OM_DRIVER_CONF_DIR@
@@ -342,6 +330,7 @@ OM_EXEC_C_PP = @OM_EXEC_C_PP@
 OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
+OPENMP_OPT = @OPENMP_OPT@
 OS = @OS@
 OSDEF = @OSDEF@
 OS_CFLAGS = @OS_CFLAGS@
@@ -386,6 +375,8 @@ TYPE_INT64 = @TYPE_INT64@
 VERSION = @VERSION@
 XCODEML_COMMON_DIR = @XCODEML_COMMON_DIR@
 XCODEML_EXC_TOOLS_DIR = @XCODEML_EXC_TOOLS_DIR@
+XMPC_DEF = @XMPC_DEF@
+XMPF_DEF = @XMPF_DEF@
 XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
 XMPPKG_GROUP = @XMPPKG_GROUP@
 XMPPKG_LICENSE = @XMPPKG_LICENSE@
@@ -475,20 +466,13 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-bin_SCRIPTS = ../bin/ompp ../bin/oml2x ../bin/omx2x ../bin/omx2l ../bin/omnative ../bin/omlinker \
-	../bin/omc2c ../bin/ompcc ../bin/omf2f ../bin/ompf90 ../bin/omf2x ../bin/omfx2x \
-        ../bin/omx2f ../bin/omfpp ../bin/omfnative ../bin/omflinker ../bin/xmpf90 ../bin/xmpcc\
-	../bin/omtranslate ../bin/omcpp ../bin/omc2x ../bin/omcx2x ../bin/omx2c \
-        ../bin/omcnative ../bin/omclinker ../bin/omni_traverse
+bin_SCRIPTS = ../bin/ompcc ../bin/ompf90 ../bin/xmpf90 ../bin/xmpcc
+sysconf_DATA = ../etc/version ../etc/xmpcc.conf ../etc/xmpf90.conf \
+               ../etc/ompcc.conf ../etc/ompf90.conf
 
-sysconf_DATA = ../etc/omf.conf ../etc/omc.conf ../etc/java.conf ../etc/pp.conf.openmp ../etc/native.conf.openmp \
-        ../etc/linker.conf.openmp ../etc/l2x.conf.openmp ../etc/x2x.conf.openmp ../etc/pp.conf.xmpf \
-	../etc/native.conf.xmpf ../etc/linker.conf.xmpf ../etc/l2x.conf.xmpf ../etc/x2x.conf.xmpf \
-	../etc/pp.conf.acc ../etc/native.conf.acc ../etc/linker.conf.acc ../etc/l2x.conf.acc ../etc/x2x.conf.acc \
-	../etc/setup.conf ../etc/version ../etc/xmpcc.conf
+dist_libexec_SCRIPTS = ../libexec/omni_common_lib.sh ../libexec/xmpf90_lib.sh ../libexec/xmpcc_lib.sh \
+                       ../libexec/ompcc_lib.sh ../libexec/ompf90_lib.sh ../libexec/omni_traverse ./om_replace_pragma
 
-dist_libexec_SCRIPTS = ../libexec/driver_common.sh
-omdriver_SOURCES = omdriver.c
 xmp_collect_init_SOURCES = xmp_collect_init.c
 xmp_collect_init_CPPFLAGS = -DNM="\"$(NM)\""
 all: all-am
@@ -574,14 +558,6 @@ clean-binPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
-
-om_replace_pragma$(EXEEXT): $(om_replace_pragma_OBJECTS) $(om_replace_pragma_DEPENDENCIES) $(EXTRA_om_replace_pragma_DEPENDENCIES) 
-	@rm -f om_replace_pragma$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(om_replace_pragma_OBJECTS) $(om_replace_pragma_LDADD) $(LIBS)
-
-omdriver$(EXEEXT): $(omdriver_OBJECTS) $(omdriver_DEPENDENCIES) $(EXTRA_omdriver_DEPENDENCIES) 
-	@rm -f omdriver$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(omdriver_OBJECTS) $(omdriver_LDADD) $(LIBS)
 
 xmp_collect_init$(EXEEXT): $(xmp_collect_init_OBJECTS) $(xmp_collect_init_DEPENDENCIES) $(EXTRA_xmp_collect_init_DEPENDENCIES) 
 	@rm -f xmp_collect_init$(EXEEXT)
@@ -824,10 +800,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-clean: clean-am
-
-clean-am: clean-binPROGRAMS clean-generic clean-libtool clean-local \
-	mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
@@ -840,7 +813,7 @@ dvi-am:
 
 html: html-am
 
-html-am: html-local
+html-am:
 
 info: info-am
 
@@ -898,31 +871,28 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic clean-libtool clean-local \
-	cscopelist-am ctags ctags-am distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am html-local info info-am install install-am \
-	install-binPROGRAMS install-binSCRIPTS install-data \
-	install-data-am install-dist_libexecSCRIPTS install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip install-sysconfDATA installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-binPROGRAMS uninstall-binSCRIPTS \
+	clean-binPROGRAMS clean-generic clean-libtool cscopelist-am \
+	ctags ctags-am distclean distclean-compile distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-binPROGRAMS \
+	install-binSCRIPTS install-data install-data-am \
+	install-dist_libexecSCRIPTS install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	install-sysconfDATA installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	uninstall-dist_libexecSCRIPTS uninstall-sysconfDATA
 
 
-omdriver.c: omdriver.h
+om_replace_pragma: om_replace_pragma.c
+	$(CC) $^ -o $@
 
-clean-local:
-	rm -rf ../doc
-
-html-local:
-	if test ! -e "../doc"; then mkdir ../doc; fi
-	doxygen >/dev/null
+clean:
+	rm -f om_replace_pragma xmp_collect_init *.o
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

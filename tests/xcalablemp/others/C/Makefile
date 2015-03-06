@@ -1,5 +1,5 @@
-COMPILER=$(shell xmpcc --show-env | grep OMNI_MPICC_CMD | sed 's/OMNI_MPICC_CMD=//' | sed "s/\"//g")
-MPIPATH=$(shell which $(COMPILER) | sed "s/bin\/$(COMPILER)/include/g")
+COMPILER=$(shell xmpcc --show-env | grep OMNI_MPICC_CMD | sed 's/OMNI_MPICC_CMD=//' | sed "s/\"//g" | xargs basename)
+MPIPATH=$(shell which $(COMPILER) | xargs dirname | awk '{print $$1"/../include"}')
 XCC     = xmpcc -O2
 XRUN    = mpirun
 C_TESTS = $(wildcard *.c)
@@ -16,14 +16,22 @@ all default: $(EXES)
 344_include.x: ./344_include.c
 	$(XCC) -I$(MPIPATH) $^ -o $@
 
-364.x: 364.c
-	$(XCC) --debug $^ -o $@
+openmp.x: openmp.c
+	$(XCC) -omp openmp.c -o openmp.x
+
+377.x: 377.c
+	$(XCC) -c -o 377.x $<; \
+	[ ! -f 377.x ] && exit 1; \
+	rm -rf __omni_tmp__; \
+	$(XCC) -c $< --debug 1> /dev/null; \
+	[ ! -d __omni_tmp__ ] && exit 1; \
+	echo "PASS"; 
 
 #-- default rules
 .c.x:
 	$(XCC) -o $@ $<
 
-run:
+run: macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 293-hyphen.x
 	$(XRUN) -n 4 ./macro_in_pragma.x
 	export XMP_NODE_SIZE0=2; \
 	export XMP_NODE_SIZE1=2; \
@@ -41,9 +49,9 @@ run:
 	XMP_NODE_SIZE0=4 $(XRUN) -n 4 ./343_dynamicnode.x
 	$(XRUN) -n 1 ./344_include.x
 	$(XRUN) -n 1 ./293-hyphen.x
-	$(XRUN) -n 1 ./364.x
 
 #-- cleaning
 clean:
 	rm -f $(EXES) $(C_OBJS)
 	rm -rf __omni_tmp__
+
