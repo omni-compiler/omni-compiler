@@ -124,10 +124,8 @@ public class XMPcoindexObj {
         return expr;
     }
 
-    Ident intrinsicInt =
-      getEnv().declIntrinsicIdent("int", Xtype.FintFunctionType);
-
-    return intrinsicInt.Call(Xcons.List(expr));
+    Ident intId = declIntIntrinsicIdent("int");
+    return intId.Call(Xcons.List(expr));
   }    
 
   /* TEMPORARY VERSION
@@ -462,9 +460,8 @@ public class XMPcoindexObj {
         // cast function for safe
         if (!size.Type().isBasic() &&
             size.Type().getBasicType() != BasicType.INT) {
-          Ident intrinInt =
-            getEnv().declIntrinsicIdent("int", Xtype.FintFunctionType);
-          size = intrinInt.Call(Xcons.List(size));
+          Ident intId = declIntIntrinsicIdent("int");
+          size = intId.Call(Xcons.List(size));
         }
         break;
       }
@@ -478,9 +475,8 @@ public class XMPcoindexObj {
       if (i1 == null && i2 == null && i3 == null) {
         Xobject arg1 = Xcons.Symbol(Xcode.VAR, name);
         Xobject arg2 = Xcons.IntConstant(i + 1);
-        Ident intrinSize =
-          getEnv().declIntrinsicIdent("size", Xtype.FintFunctionType);
-        size = intrinSize.Call(Xcons.List(arg1, arg2));
+        Ident sizeId = declIntIntrinsicIdent("size");
+        size = sizeId.Call(Xcons.List(arg1, arg2));
         break;
       }
 
@@ -495,9 +491,8 @@ public class XMPcoindexObj {
         // cast function for safe
         if (!size.Type().isBasic() &&
             size.Type().getBasicType() != BasicType.INT) {
-          Ident intrinInt =
-            getEnv().declIntrinsicIdent("int", Xtype.FintFunctionType);
-          size = intrinInt.Call(Xcons.List(size));
+          Ident intId = declIntIntrinsicIdent("int");
+          size = intId.Call(Xcons.List(size));
         }
       }
       break;
@@ -538,6 +533,16 @@ public class XMPcoindexObj {
   }
   public Xobject getTotalArraySizeExpr(Block block) {
     return obj.Type().getTotalArraySizeExpr(block);
+  }
+
+
+  //------------------------------
+  //  tool
+  //------------------------------
+  private Ident declIntIntrinsicIdent(String name) { 
+    FunctionType ftype = new FunctionType(Xtype.FintType, Xtype.TQ_FINTRINSIC);
+    Ident ident = getEnv().declIntrinsicIdent(name, ftype);
+    return ident;
   }
 
 

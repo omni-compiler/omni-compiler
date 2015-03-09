@@ -199,9 +199,8 @@ public class XMPcoarray {
       // generate intrinsic function call "lbound(a,dim)"
       Xobject arg1 = Xcons.Symbol(Xcode.VAR, name);
       Xobject arg2 = Xcons.IntConstant(i + 1);
-      Ident fname =
-          getEnv().declIntrinsicIdent("lbound", Xtype.FintFunctionType);
-      lbound = fname.Call(Xcons.List(arg1, arg2));
+      Ident lboundId = declIntIntrinsicIdent("lbound");
+      lbound = lboundId.Call(Xcons.List(arg1, arg2));
     }
     return lbound;
   }
@@ -217,9 +216,8 @@ public class XMPcoarray {
       // generate intrinsic function call "ubound(a,dim)"
       Xobject arg1 = Xcons.Symbol(Xcode.VAR, name);
       Xobject arg2 = Xcons.IntConstant(i + 1);
-      Ident fname =
-          getEnv().declIntrinsicIdent("ubound", Xtype.FintFunctionType);
-      ubound = fname.Call(Xcons.List(arg1, arg2));
+      Ident uboundId = declIntIntrinsicIdent("ubound");
+      ubound = uboundId.Call(Xcons.List(arg1, arg2));
     }
     return ubound;
   }
@@ -251,6 +249,16 @@ public class XMPcoarray {
   public Xobject getSizeFromTriplet(int i, Xobject i1, Xobject i2, Xobject i3)
   {
     return getFindexRange().getSizeFromTriplet(i, i1, i2, i3);
+  }
+
+
+  //------------------------------
+  //  tool
+  //------------------------------
+  private Ident declIntIntrinsicIdent(String name) { 
+    FunctionType ftype = new FunctionType(Xtype.FintType, Xtype.TQ_FINTRINSIC);
+    Ident ident = getEnv().declIntrinsicIdent(name, ftype);
+    return ident;
   }
 
 

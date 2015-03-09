@@ -117,58 +117,61 @@ public class XMPtransCoarray
   //  TRANSLATION
   //------------------------------------------------------------
   /*
-      convert from:
-      --------------------------------------------
-        subroutine EX1
-          real :: V1(10,20)[4,*]
-          complex(8) :: V2[*]
-          integer, allocatable :: V3(:)[:,:]
-          ...
-          V1(1:3,j)[k1,k2] = (/1.0,2.0,3.0/)
-          z = V2[k]**2
-          n(1:5) = V3(2:10:2)[k1,k2]
-        end subroutine
-      --------------------------------------------
-      to:
-      --------------------------------------------
-        subroutine EX1
-          real :: V1(1:10,1:20)                                ! f
-          complex(8) :: V2                                     ! f
-          integer, pointer :: V3(:)[:,:]                       ! f,h
-          integer :: CD_V1                                     ! a
-          integer :: CD_V2                                     ! a
-          integer :: CD_V3                                     ! a
-          pointer (CP_V1, V1)                                  ! a
-          pointer (CP_V2, V2)                                  ! a
-          pointer (CP_V3, V3)                                  ! a
-          common /xmpf_CD_EX1/ CD_V1, CD_V2                    ! g
-          common /xmpf_CP_EX1/ CP_V1, CP_V2                    ! g
-          ...
-          call xmpf_coarray_put(CD_V1, V1(1,j), 4, &
-            k1+4*(k2-1), (/1.0,2.0,3.0/), ...)                 ! d
-          z = xmpf_coarray_get0d(CD_V2, V2, 16, k, 0) ** 2     ! e
-          n(1:5) = xmpf_coarray_get1d(CD_V3, V3(2), 4, &
-            k1+4*(k2-1), ...)                                  ! e
-        end subroutine
-
-        subroutine xmpf_traverse_coarraysize_ex1               ! b
-          call xmpf_coarray_count_size(200, 4)
-          call xmpf_coarray_count_size(1, 16)
-        end subroutine
-
-        subroutine xmpf_traverse_initcoarray_ex1               ! b
-          integer :: CD_V1
-          integer :: CD_V2
-          integer(8) :: CP_V1
-          integer(8) :: CP_V2
-          common /xmpf_CD_EX1/ CD_V1, CD_V2
-          common /xmpf_CP_EX1/ CP_V1, CP_V2
-          call coarray_get_share(CD_V1, CP_V1, 200, 4)
-          call coarray_get_share(CD_V2, CP_V2, 1, 16)
-        end subroutine
-      --------------------------------------------
-        CD_Vn: serial number for descriptor of Vn
-        CP_Vn: cray poiter pointing to Vn
+    convert from:
+    --------------------------------------------
+      subroutine EX1
+        real :: V1(10,20)[4,*]
+        complex(8) :: V2[*]
+        integer, allocatable :: V3(:)[:,:]
+        ...
+        V1(1:3,j)[k1,k2] = (/1.0,2.0,3.0/)
+        z = V2[k]**2
+        allocate (V3(1:10))
+        n(1:5) = V3(2:10:2)[k1,k2]
+        return
+      end subroutine
+    --------------------------------------------
+    to:
+    --------------------------------------------
+      subroutine EX1
+        real :: V1(1:10,1:20)                                ! f
+        complex(8) :: V2                                     ! f
+        integer, pointer :: V3(:)[:,:]                       ! f,h
+        integer :: CD_V1                                     ! a
+        integer :: CD_V2                                     ! a
+        integer :: CD_V3                                     ! a
+        pointer (CP_V1, V1)                                  ! a
+        pointer (CP_V2, V2)                                  ! a
+        pointer (CP_V3, V3)                                  ! a
+        common /xmpf_CD_EX1/ CD_V1, CD_V2                    ! g
+        common /xmpf_CP_EX1/ CP_V1, CP_V2                    ! g
+        ...
+        call xmpf_coarray_put(CD_V1, V1(1,j), 4, &           ! d
+          k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
+        z = xmpf_coarray_get0d(CD_V2, V2, 16, k, 0) ** 2     ! e
+        xmpf_coarray_alloc1d_i4(CD_V3, V3, 1, 10)            ! i
+        n(1:5) = xmpf_coarray_get1d(CD_V3, V3(2), 4, &       ! e
+          k1+4*(k2-1), ...)                           
+        xmpf_coarray_dealloc(CD_V3)                          ! j
+        return
+      end subroutine
+       subroutine xmpf_traverse_coarraysize_ex1              ! b
+        call xmpf_coarray_count_size(200, 4)
+        call xmpf_coarray_count_size(1, 16)
+      end subroutine
+       subroutine xmpf_traverse_initcoarray_ex1              ! b
+        integer :: CD_V1
+        integer :: CD_V2
+        integer(8) :: CP_V1
+        integer(8) :: CP_V2
+        common /xmpf_CD_EX1/ CD_V1, CD_V2
+        common /xmpf_CP_EX1/ CP_V1, CP_V2
+        call coarray_get_share(CD_V1, CP_V1, 200, 4)
+        call coarray_get_share(CD_V2, CP_V2, 1, 16)
+      end subroutine
+    --------------------------------------------
+      CD_Vn: serial number for descriptor of Vn
+      CP_Vn: cray poiter pointing to Vn
   */
 
   public void run() {
@@ -192,18 +195,14 @@ public class XMPtransCoarray
     // g. generate common stmt (static coarrays only)
     genCommonStmt(commonName1, commonName2, staticLocalCoarrays, def);
 
-    // e. replace coindexed objects with function references
-    replaceCoindexObjs(visibleCoarrays);
+    // e. convert coindexed objects to function references
+    convCoidxObjsToFuncCalls(visibleCoarrays);
 
-    // d. replace coindexed variable assignment stmts with call stmts
-    replaceCoindexVarStmts(visibleCoarrays);
+    // d. convert coindexed variable assignment stmts to call stmts
+    convCoidxStmtsToSubrCalls(visibleCoarrays);
 
     // b. generate allocation into init procedure (static coarrays only)
     genAllocOfStaticCoarrays(staticLocalCoarrays);
-
-    // c. convert allocate stmt for allocatable coarrays
-    //    (not supported yet)
-    //genAllocOfAllocCoarrays(localCoarrays);
 
     // f. remove codimensions from declarations of coarrays
     removeCodimensionsFromCoarrays(localCoarrays);
@@ -211,6 +210,13 @@ public class XMPtransCoarray
     // h. replace allocatable attributes with pointer attributes
     //    (allocatable coarrays only)
     replaceAllocatableWithPointer(allocatableLocalCoarrays);
+
+    // i. convert allocate/deallocate stmts for coarrays, and
+    //    fake intrinsic function allocated
+    convReferenceOfCoarrays(visibleCoarrays);
+
+    // j. generate automatic deallocation before return/end stmts
+    //genAutoDeallocOfCoarrays(allocatableLocalCoarrays);
   }
 
 
@@ -265,7 +271,7 @@ public class XMPtransCoarray
   //  convert statements whose LHS are coindexed variables
   //  to subroutine calls
   //-----------------------------------------------------
-  private void replaceCoindexVarStmts(Vector<XMPcoarray> coarrays) {
+  private void convCoidxStmtsToSubrCalls(Vector<XMPcoarray> coarrays) {
     BlockIterator bi = new topdownBlockIterator(fblock);
 
     for (bi.init(); !bi.end(); bi.next()) {
@@ -336,12 +342,12 @@ public class XMPtransCoarray
   //  TRANSLATION e. (GET)
   //  convert coindexed objects to function references
   //-----------------------------------------------------
-  private void replaceCoindexObjs(Vector<XMPcoarray> coarrays) {
+  private void convCoidxObjsToFuncCalls(Vector<XMPcoarray> coarrays) {
     // itaration to solve nested reference of coindexed object.
-    while (_replaceCoindexObjs1(coarrays));
+    while (_convCoidxObjsToFuncCalls1(coarrays));
   }
 
-  private Boolean _replaceCoindexObjs1(Vector<XMPcoarray> coarrays) {
+  private Boolean _convCoidxObjsToFuncCalls1(Vector<XMPcoarray> coarrays) {
     XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
 
     Boolean done = false;
@@ -376,7 +382,7 @@ public class XMPtransCoarray
    *    commGetLibName_M(...)
    */
   private Xobject coindexObjToFuncRef(Xobject funcRef,
-                                    Vector<XMPcoarray> coarrays) {
+                                      Vector<XMPcoarray> coarrays) {
     XMPcoindexObj coindexObj = new XMPcoindexObj(funcRef, coarrays);
     return coindexObj.toFuncRef();
   }
@@ -403,20 +409,121 @@ public class XMPtransCoarray
 
 
   //-----------------------------------------------------
-  //  TRANSLATION c.
-  //  convert allocate-stmt for allocatable coarrays
+  //  TRANSLATION i.
+  //  convert allocate/deallocate stmts for coarrays, and
+  //  fake intrinsic function allocated
   //-----------------------------------------------------
-  private void genAllocOfAllocCoarrays(Vector<XMPcoarray> coarrays) {
-    // do nothing if no coarrays are declared.
-    if (coarrays.isEmpty())
-      return;
+  //
+  private void convReferenceOfCoarrays(Vector<XMPcoarray> coarrays) {
 
-    for (XMPcoarray coarray: coarrays)
-      if (coarray.isAllocatable())
-        ;
-        //XMP.error("Not supported: allocatable coarry: "+coarray.getName());
+    XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
+
+    for (xi.init(); !xi.end(); xi.next()) {
+      Xobject x = xi.getXobject();
+      if (x == null)
+        continue;
+      if (x.Opcode() == null)
+        continue;
+
+      switch (x.Opcode()) {
+      case F_ALLOCATE_STATEMENT:
+        // x.getArg(0): stat= identifier 
+        //     (Reference of a variable name is only supported.)
+        // x.getArg(1): list of variables to be allocated
+        // errmsg= identifier is not supported either.
+        if (_foundCoarrayInList(x.getArg(1), coarrays))
+          conv_allocateStmt(x, coarrays);
+        break;
+
+      case F_DEALLOCATE_STATEMENT:
+        if (_foundCoarrayInList(x.getArg(1), coarrays))
+          conv_deallocateStmt(x, coarrays);
+        break;
+
+      case FUNCTION_CALL:
+        Xobject fname = x.getArg(0);
+        if (fname.getString().equalsIgnoreCase("allocated") &&
+            _isIntrinsic(fname) &&
+            _isCoarrayArg(x, coarrays)) {
+          // replace "allocated" to "associated"
+          Ident associatedId = declIntIntrinsicIdent("associated");
+          x.setArg(0, associatedId);
+        }
+        break;
+
+      default:
+        break;
+      }
+    }
   }
 
+  private Boolean _foundCoarrayInList(Xobject args, Vector<XMPcoarray> coarrays) {
+    Boolean isFound = false;
+    for (Xobject arg: (XobjList)args) {
+      String varname = arg.getArg(0).getString();
+      for (XMPcoarray coarray: coarrays) {
+        if (varname.equals(coarray.getName())) {
+          // found coarray
+          isFound = true;
+        } else if (isFound) {
+          // has found coarray and now found non-coarray 
+          XMP.error("both coarray and non-coarray cannot be in the same ALLOCATE/DEALLOCATE statement.");
+        }
+      }
+    }
+
+    return isFound;
+  }
+
+  private Boolean _isCoarrayArg(Xobject fcall, Vector<XMPcoarray> coarrays) {
+    Xobject args = fcall.getArg(1);
+    Xobject arg = args.getArg(0);
+    String name = arg.getName();
+
+    for (XMPcoarray coarray: coarrays) {
+      if (name.equals(coarray.getName()))
+        return true;
+    }
+    return false;
+  }
+
+  // assumed that name is a name of intrinsic function.
+  //
+  private Boolean _isIntrinsic(Xobject obj) {
+
+    // TEMPORARY JUDGEMENT: If name is registered as an ident, it 
+    // is not a name of intrinsic function. Else, it is regarded
+    // as a name of intrinsic function.
+    Ident id = env.findVarIdent(name, fblock);
+    if (id == null)
+      return true;          // regarded as intrinsic 
+
+    return id.Type().isFintrinsic();
+  }
+
+  private void conv_allocateStmt(Xobject x, Vector<XMPcoarray> coarrays) {
+    Vector<Xobject> callStmts = new Vector();
+
+    for (Xobject arg: (XobjList)x.getArg(1)) {
+
+      //XMPcoindexObj coidx = new XMPcoindexObj(arg, coarrays);
+
+      ////////
+      //System.out.println(" @@@ gaccha coindex object");
+      //System.out.println("     "+coidx);
+      ///////////
+      
+
+    }
+    
+  }
+
+  private void conv_deallocateStmt(Xobject x, Vector<XMPcoarray> coarrays) {
+    System.out.println(" @@@ here conv_deallocateStmt()");
+    System.out.println("   x="+x);
+
+
+  }
 
 
   //-----------------------------------------------------
@@ -501,8 +608,8 @@ public class XMPtransCoarray
     Ident id = def.findIdent("xmpf_coarray_get0d");
     if (id == null) {
       /* xmpf_lib.h seems not included. */
-      XMP.error("current restriction: \"include \'xmp_lib.h\'\" is " +
-                "necessary to use any coarray features.");
+      XMP.error("current restriction: " + 
+                "\'xmp_lib.h\' must be included to use coarray features.");
     }
   }
 
@@ -535,5 +642,14 @@ public class XMPtransCoarray
     return false;
   }
 
+
+  //------------------------------
+  //  tool
+  //------------------------------
+  private Ident declIntIntrinsicIdent(String name) { 
+    FunctionType ftype = new FunctionType(Xtype.FintType, Xtype.TQ_FINTRINSIC);
+    Ident ident = env.declIntrinsicIdent(name, ftype);
+    return ident;
+  }
 }
 
