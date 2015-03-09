@@ -741,6 +741,7 @@ MPI_CPP
 MPI_CC
 XMPF_DEF
 XMPC_DEF
+CPP_OPT
 OPENMP_OPT
 MPI3_FALSE
 MPI3_TRUE
@@ -782,6 +783,7 @@ CXX
 ac_ct_FC
 FCFLAGS
 FC
+TARGET
 FJRDMA_FALSE
 FJRDMA_TRUE
 LIBACC_HEADER_DIR
@@ -4743,7 +4745,8 @@ else
     ;;
   *)
     lt_cv_sys_max_cmd_len=`(getconf ARG_MAX) 2> /dev/null`
-    if test -n "$lt_cv_sys_max_cmd_len"; then
+    if test -n "$lt_cv_sys_max_cmd_len" && \
+	test undefined != "$lt_cv_sys_max_cmd_len"; then
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \/ 4`
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \* 3`
     else
@@ -6306,7 +6309,7 @@ ia64-*-hpux*)
   rm -rf conftest*
   ;;
 
-x86_64-*kfreebsd*-gnu|x86_64-*linux*|ppc*-*linux*|powerpc*-*linux*| \
+x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*| \
 s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
@@ -6322,9 +6325,19 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	    LD="${LD-ld} -m elf_i386_fbsd"
 	    ;;
 	  x86_64-*linux*)
-	    LD="${LD-ld} -m elf_i386"
+	    case `/usr/bin/file conftest.o` in
+	      *x86-64*)
+		LD="${LD-ld} -m elf32_x86_64"
+		;;
+	      *)
+		LD="${LD-ld} -m elf_i386"
+		;;
+	    esac
 	    ;;
-	  ppc64-*linux*|powerpc64-*linux*)
+	  powerpc64le-*)
+	    LD="${LD-ld} -m elf32lppclinux"
+	    ;;
+	  powerpc64-*)
 	    LD="${LD-ld} -m elf32ppclinux"
 	    ;;
 	  s390x-*linux*)
@@ -6343,7 +6356,10 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_x86_64"
 	    ;;
-	  ppc*-*linux*|powerpc*-*linux*)
+	  powerpcle-*)
+	    LD="${LD-ld} -m elf64lppc"
+	    ;;
+	  powerpc-*)
 	    LD="${LD-ld} -m elf64ppc"
 	    ;;
 	  s390*-*linux*|s390*-*tpf*)
@@ -12683,6 +12699,7 @@ else
   FJRDMA_FALSE=
 fi
 
+TARGET=$target
 
 # --------------------------------------------------------------------
 # check basic commands
@@ -20484,6 +20501,9 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-Kopenmp"
 
+# CPP_OPT
+  CPP_OPT="-Cpp"
+
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
   XMPF_DEF="-D_XCALABLEMP"
@@ -20519,6 +20539,9 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 elif test "$target" = "MIC-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-mp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -20556,6 +20579,9 @@ elif test "$target" = "Cray-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-h omp"
 
+# CPP_OPT
+  CPP_OPT="-cpp"
+
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
   XMPF_DEF="-D_XCALABLEMP"
@@ -20591,6 +20617,9 @@ elif test "$target" = "Cray-linux-gnu"; then
 elif test "$target" = "sx-nec-superux"; then
 # OpenMP
   OPENMP_OPT="-Popenmp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -20629,6 +20658,9 @@ elif test "$target" = "powerpc-ibm-cnk"; then
 
 # OpenMP
   OPENMP_OPT="-qsmp=omp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -20699,9 +20731,12 @@ elif test "$target" = "powerpc-hitachi-aix"; then
 # OpenMP
   OPENMP_OPT="-qsmp=omp"
 
+# CPP_OPT
+  CPP_OPT="-cpp"
+
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
-  XMPF_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-WF,-D_XCALABLEMP"
 
 # MPI C
   MPI_CC="mpCC_r"
@@ -20732,10 +20767,6 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   OMNI_X2X_FLAGS=""
 
 else
-  # XcalableMP
-  XMPC_DEF="-D_XCALABLEMP"
-  XMPF_DEF="-D_XCALABLEMP"
-
   INTEL_MPICC=mpiicc
   which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
   if test $? -eq 0; then
@@ -20749,6 +20780,9 @@ else
   cc* | gcc* | Apple*)
     # OpenMP
     OPENMP_OPT="-fopenmp"
+
+    # CPP_OPT
+    CPP_OPT="-cpp"
 
     # XcalableMP
     XMPC_DEF="-D_XCALABLEMP"
@@ -20784,6 +20818,9 @@ else
   *ICC*)
     # OpenMP
     OPENMP_OPT="-openmp"
+
+    # CPP_OPT
+    CPP_OPT="-cpp"
 
     # XcalableMP
     XMPC_DEF="-D_XCALABLEMP"
@@ -20828,6 +20865,9 @@ else
     pgcc*)
       # OpenMP
       OPENMP_OPT="-mp"
+
+      # CPP_OPT
+      CPP_OPT="-Mpreprocess"
 
       # XcalableMP
       XMPC_DEF="-D_XCALABLEMP"
@@ -21201,6 +21241,9 @@ if test "${userMPI_FCLIBS}" != ""; then
 fi
 
 # OpenMP
+
+
+# CPP_OPT
 
 
 # XcalableMP

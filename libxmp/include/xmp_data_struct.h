@@ -297,6 +297,23 @@ typedef struct _XMP_gmv_desc_type
 
 } _XMP_gmv_desc_t;
 
+//
+// for asynchronous comms.
+//
+
+typedef struct _XMP_async_comm {
+  int async_id;
+  int nreqs;
+  MPI_Request *reqs;
+  struct _XMP_async_comm *next;
+} _XMP_async_comm_t;
+
+#define _XMP_ASYNC_COMM_SIZE 511
+
+#define _XMP_MAX_ASYNC_REQS (4 * _XMP_N_MAX_DIM * 10)
+
+
+
 typedef struct _XMP_gpu_array_type {
   int gtol;
   unsigned long long acc;

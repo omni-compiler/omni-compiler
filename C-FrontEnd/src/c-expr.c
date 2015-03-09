@@ -1842,6 +1842,35 @@ allocExprOfList4(CExprCodeEnum exprCode, CExpr *expr1, CExpr *expr2,
 
 /**
  * \brief
+ * alloc CExprOfList and 5 children
+ *
+ * @param exprCode
+ *      expression code
+ * @param expr1
+ *      child node
+ * @param expr2
+ *      child node
+ * @param expr3
+ *      child node
+ * @param expr4
+ *      child node
+ * @param expr5
+ *      child node
+ * @return
+ *      allocated node
+ */
+CExprOfList*
+allocExprOfList5(CExprCodeEnum exprCode, CExpr *expr1, CExpr *expr2,
+		 CExpr *expr3, CExpr *expr4, CExpr *expr5)
+{
+  CExprOfList *expr = allocExprOfList4(exprCode, expr1, expr2, expr3, expr4);
+  exprListAdd((CExpr*)expr, expr5);
+  return expr;
+}
+
+
+/**
+ * \brief
  * free CExprOfList
  *
  * @param expr

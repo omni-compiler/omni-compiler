@@ -144,11 +144,11 @@ am__v_AR_1 =
 libxmpf_a_AR = $(AR) $(ARFLAGS)
 libxmpf_a_LIBADD =
 am__libxmpf_a_SOURCES_DIST = $(XMPF_INC_DIR)/xmpf_internal.h \
-	xmpf_main.F90 xmpf_array.c xmpf_gcomm.c xmpf_gmove.c \
-	xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c xmpf_nodes.c \
-	xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
-	xmpf_template.c xmpf_coarray.c xmpf_coarray_wrap.f90 \
-	xmpf_coarray_put.c xmpf_coarray_get.c \
+	xmpf_main.F90 xmpf_array.c xmpf_async.c xmpf_gcomm.c \
+	xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
+	xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c \
+	xmpf_task.c xmpf_template.c xmpf_coarray.c \
+	xmpf_coarray_wrap.f90 xmpf_coarray_put.c xmpf_coarray_get.c \
 	xmpf_coarray_get_wrap.f90 xmpf_coarray_alloc_wrap.f90
 @GASNET_TRUE@am__objects_1 = xmpf_coarray.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
@@ -163,9 +163,9 @@ am__libxmpf_a_SOURCES_DIST = $(XMPF_INC_DIR)/xmpf_internal.h \
 @FJRDMA_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_alloc_wrap.$(OBJEXT)
 am_libxmpf_a_OBJECTS = xmpf_main.$(OBJEXT) xmpf_array.$(OBJEXT) \
-	xmpf_gcomm.$(OBJEXT) xmpf_gmove.$(OBJEXT) xmpf_index.$(OBJEXT) \
-	xmpf_lib.$(OBJEXT) xmpf_loop.$(OBJEXT) xmpf_misc.$(OBJEXT) \
-	xmpf_nodes.$(OBJEXT) xmpf_pack.$(OBJEXT) \
+	xmpf_async.$(OBJEXT) xmpf_gcomm.$(OBJEXT) xmpf_gmove.$(OBJEXT) \
+	xmpf_index.$(OBJEXT) xmpf_lib.$(OBJEXT) xmpf_loop.$(OBJEXT) \
+	xmpf_misc.$(OBJEXT) xmpf_nodes.$(OBJEXT) xmpf_pack.$(OBJEXT) \
 	xmpf_reflect.$(OBJEXT) xmpf_sort.$(OBJEXT) xmpf_task.$(OBJEXT) \
 	xmpf_template.$(OBJEXT) $(am__objects_1) $(am__objects_2)
 libxmpf_a_OBJECTS = $(am_libxmpf_a_OBJECTS)
@@ -276,6 +276,7 @@ CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@ \
 	$(am__append_2) $(am__append_6)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CPP_OPT = @CPP_OPT@
 CPU = @CPU@
 CPUDEF = @CPUDEF@
 CXX = @CXX@
@@ -428,6 +429,7 @@ SIZEOF_UNSIGNED_SHORT = @SIZEOF_UNSIGNED_SHORT@
 SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
 STRIP = @STRIP@
+TARGET = @TARGET@
 TARGET_ARCH = @TARGET_ARCH@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
@@ -531,10 +533,10 @@ XMP_INC_DIR = ../../libxmp/include
 XMPF_INC_DIR = ../include
 lib_LIBRARIES = libxmpf.a
 libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_main.F90 \
-	xmpf_array.c xmpf_gcomm.c xmpf_gmove.c xmpf_index.c xmpf_lib.c \
-	xmpf_loop.c xmpf_misc.c xmpf_nodes.c xmpf_pack.c \
-	xmpf_reflect.c xmpf_sort.c xmpf_task.c xmpf_template.c \
-	$(am__append_1) $(am__append_5)
+	xmpf_array.c xmpf_async.c xmpf_gcomm.c xmpf_gmove.c \
+	xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c xmpf_nodes.c \
+	xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
+	xmpf_template.c $(am__append_1) $(am__append_5)
 all: all-am
 
 .SUFFIXES:

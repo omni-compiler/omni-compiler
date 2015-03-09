@@ -15,6 +15,7 @@ DEBUG_TEMP_DIR="__omni_tmp__"
 ENABLE_LINKER=true
 ENABLE_OPENMP=false
 ONLY_PP=false
+ENABLE_CPP=false
 VERBOSE=false
 ENABLE_DEBUG=false
 OUTPUT_TEMPORAL=false
@@ -24,18 +25,6 @@ STOP_FRONTEND=false
 STOP_TRANSLATOR=false
 STOP_BACKEND=false
 STOP_COMPILE=false
-
-# Additional options defined by command line (e.g. --Wl..)
-# These parameters are set in ompf90_set_parameters().
-OUTPUT_FILE=
-MODULE_OPT=
-INCLUDE_OPT=
-PP_ADD_OPT=
-FRONTEND_ADD_OPT=
-XCODE_TRANSLATOR_ADD_OPT=
-BACKEND_ADD_OPT=
-NATIVE_ADD_OPT=
-LINKER_ADD_OPT=
 
 ### Set options ###
 # e.g.) ompf90 -I/usr/lib a.f b.F c.f90 d.F90 e.o --tmp --Wlfoo lib.a
@@ -48,19 +37,32 @@ LINKER_ADD_OPT=
 #  other_args="-I/usr/lib"            # Options for Preprocessor, Compiler, and Linker
 # 
 #  Note that "-omp" is extracted by ompf90_set_parameters, and set "ENABLE_OPENMP".
-F_F90_files=
-f_f90_files=
-all_files=
-archive_files=
-obj_files=
-other_args=
+#
+# To deal with space-separator in options, the following variables are defined as an array (#278)
+output_file=()
+F_F90_files=()
+f_f90_files=()
+all_files=()
+archive_files=()
+obj_files=()
+other_args=()
+
+# Additional options defined by command line (e.g. --Wl..)
+pp_add_opt=()
+frontend_add_opt=()
+xcode_translator_add_opt=()
+native_add_opt=()
+backend_add_opt=()
+linker_add_opt=()
+module_opt=()
+include_opt=()
+
 ompf90_set_parameters ${@+"$@"}
 omni_f_check_file_exist
 
 ### Create temporal directory ###
 [ $ENABLE_DEBUG = true ] && TEMP_DIR=$DEBUG_TEMP_DIR
-# Note that,
-# If TEMP_DIR exists, the TEMP_DIR is not deleted (KAGEMAI #379)
+# Note that, if TEMP_DIR exists, the TEMP_DIR is not deleted (KAGEMAI #379)
 
 omni_exec mkdir -p $TEMP_DIR
 [ $ENABLE_DEBUG = true ] && echo "Create ${TEMP_DIR}/"
@@ -69,141 +71,151 @@ omni_exec mkdir -p $TEMP_DIR
 omni_set_trap
 
 ### Preprocessor ###
-[ $ONLY_PP = true -a -f "$OUTPUT_FILE" ] && omni_exec rm $OUTPUT_FILE
-if [ $ENABLE_ACC = true ]; then
-    OMNI_CPP_OPT="$OMNI_CPP_OPT ${OPENACC_DEF}"
-else
-    OMNI_CPP_OPT="$OMNI_CPP_OPT ${OPENMP_DEF}"
-fi
-for file in $F_F90_files; do
-    FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.F -> hoge_2f_fuga_2f_a
+[ $ONLY_PP = true -a -f "${output_file}" ] && omni_exec rm "${output_file}"
+for file in "${F_F90_files[@]}"; do
+    FILE=("${file}")
+    FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.F -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
-    FILE_PP=${TEMP_DIR}/${FILE_NAME}.${EXT}
+    FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
 
-    omni_exec $OMNI_FPP_CMD $INCLUDE_OPT $PP_ADD_OPT $OMNI_FPP_OPT $other_args $file ">" $FILE_PP
+    # When ">" or ">>" is used, please use "omni_exec_echo" and "omni_exec_run" instead of "omni_exec".
+    omni_exec_echo $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" ">" "${FILE_PP}"
+    omni_exec_run  $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" > "${FILE_PP}"
     # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
 
     if [ $ONLY_PP = true ]; then
-	if [ "$OUTPUT_FILE" = "" ]; then
-	    omni_exec cat $FILE_PP
+	if [ "${output_file}" = "" ]; then
+	    omni_exec cat "${FILE_PP}"
 	else
-	    omni_exec cat $FILE_PP ">>" $OUTPUT_FILE
+	    omni_exec_echo cat "${FILE_PP_I}" ">>" "${output_file}"
+            omni_exec_run  cat "${FILE_PP_I}" >> "${output_file}"
 	fi
     fi
 done
+
+OMNI_FPP_OPT="$OMNI_FPP_OPT $CPP_OPT"
+for file in "${f_f90_files[@]}"; do
+    FILE=("${file}")
+    FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
+    EXT=${file##*.}
+    FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
+
+    if [ $ENABLE_CPP = true ]; then
+        # When ">" or ">>" is used, please use "omni_exec_echo" and "omni_exec_run" instead of "omni_exec".
+        omni_exec_echo $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" ">" "${FILE_PP}"
+        omni_exec_run  $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" > "${FILE_PP}"
+        # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
+
+        if [ $ONLY_PP = true ]; then
+            if [ "${output_file}" = "" ]; then
+                omni_exec cat "${FILE_PP}"
+            else
+                omni_exec_echo cat "${FILE_PP_I}" ">>" "${output_file}"
+                omni_exec_run  cat "${FILE_PP_I}" >> "${output_file}"
+            fi
+        fi
+    else
+        omni_exec cp "${FILE}" "${FILE_PP}"
+    fi
+done
 [ $STOP_PP = true ] && exit 0;
-[ $ONLY_PP = true -a $ENABLE_DEBUG = true ] && exit 0;          # ompf90 -E --debug hoge.c (save $TMP_DIR)
+[ $ONLY_PP = true -a $ENABLE_DEBUG = true ] && exit 0;            # ompf90 -E --debug hoge.c (save $TMP_DIR)
 [ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # ompf90 -E hoge.c
 
 ### Frontend ###
-[ $ENABLE_ACC = true ] && FRONTEND_ADD_OPT="$FRONTEND_ADD_OPT -facc"
-[ $ENABLE_OPENMP = true ] && FRONTEND_ADD_OPT="$FRONTEND_ADD_OPT -fopenmp"
-for file in $F_F90_files; do
-    FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.F90 -> hoge_2f_fuga_2f_a
+[ $ENABLE_ACC = true ] && frontend_add_opt=("-facc" "${frontend_add_opt[@]}")
+[ $ENABLE_OPENMP = true ] && frontend_add_opt=("-fopenmp" "${frontend_add_opt[@]}")
+for file in "${all_files[@]}"; do
+    FILE=("${file}")
+    FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.F90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
-    FILE_PP=${TEMP_DIR}/${FILE_NAME}.${EXT}
-    FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.xml
+    FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
+    FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.xml
 
-    omni_exec $OMNI_F2X_CMD $INCLUDE_OPT $FRONTEND_ADD_OPT $OMNI_F2X_OPT $FILE_PP -o $FILE_IN_X
-done
-for file in $f_f90_files; do
-    FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
-    EXT=${file##*.}
-    FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.xml
-
-    omni_exec $OMNI_F2X_CMD $INCLUDE_OPT $FRONTEND_ADD_OPT $OMNI_F2X_OPT $file -o $FILE_IN_X
+    omni_exec $OMNI_F2X_CMD "${include_opt[@]}" "${module_opt[@]}" "${frontend_add_opt[@]}" $OMNI_F2X_OPT "${FILE_PP}" -o "${FILE_IN_X}"
 done
 [ $STOP_FRONTEND = true ] && exit 0;
 
 ### Translator ###
-if [ $ENABLE_ACC = true ]; then
-    XCODE_TRANSLATOR_ADD_OPT="$XCODE_TRANSLATOR_ADD_OPT -facc"
-else
-    XCODE_TRANSLATOR_ADD_OPT="$XCODE_TRANSLATOR_ADD_OPT -fopenmp"
-fi
-for file in $all_files; do
-    FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
+[ $ENABLE_ACC = true ] && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -facc"
+for file in "${all_files[@]}"; do
+    FILE=("${file}")
+    FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
-    FILE_IN_X=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.xml
-    FILE_OUT_X=${TEMP_DIR}/${FILE_NAME}_${EXT}_out.xml
+    FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.xml
+    FILE_OUT_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_out.xml
 
-    omni_exec $OMNI_FX2X_CMD $OMNI_FX2X_OPT $XCODE_TRANSLATOR_ADD_OPT $MODULE_OPT $FILE_IN_X -o $FILE_OUT_X
+    omni_exec $OMNI_FX2X_CMD $OMNI_FX2X_OPT "${xcode_translator_add_opt[@]}" "${module_opt[@]}" "${FILE_IN_X}" -o "${FILE_OUT_X}"
     # also create ${TEMP_DIR}/${FILE_NAME}_${EXT}_in.F90
 done
 [ $STOP_TRANSLATOR = true ] && exit 0;
 
 ### Backend ###
 if [ $OUTPUT_TEMPORAL = true ]; then
-    for file in $all_files; do
-	FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
+    for file in "${all_files[@]}"; do
+        FILE=("${file}")
+	FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
 	EXT=${file##*.}
-	FILE_F90=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.F90
+	FILE_F90=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.F90
 
-	omni_exec cp $FILE_F90 __omni_tmp__${FILE_NAME}.${EXT}
-	echo "output __omni_tmp__${FILE_NAME}.${EXT}"
+	omni_exec cp "${FILE_F90}" __omni_tmp__"${FILE_NAME}".${EXT}
+        echo output __omni_tmp__"${FILE_NAME}".${EXT}
     done
 fi
 [ $STOP_BACKEND = true ] && exit 0;
 
 ### Native Compiler ###
-if [ $ENABLE_ACC = true ]; then
-    OMNI_FC_OPT="$OMNI_FC_OPT ${OPENACC_DEF}"
-else
-    OMNI_FC_OPT="$OMNI_FC_OPT ${OPENMP_DEF}"
-fi
-for file in $all_files; do
-    FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
+[ $ENABLE_ACC = true ]    &&  native_add_opt=("$OPENACC_DEF" "${native_add_opt[@]}")
+[ $ENABLE_OPENMP = true ] &&  native_add_opt=("$OPENMP_DEF" "${native_add_opt[@]}")
+for file in "${all_files[@]}"; do
+    FILE=("${file}")
+    FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
-    FILE_USER_O=`basename $file .${EXT}`.o
-    FILE_F90=${TEMP_DIR}/${FILE_NAME}_${EXT}_in.F90
-    FILE_O=${TEMP_DIR}/${FILE_NAME}_${EXT}.o
+    FILE_USER_O=`basename "${FILE}" .${EXT}`.o
+    FILE_F90=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.F90
+    FILE_O=${TEMP_DIR}/"${FILE_NAME}"_${EXT}.o
 
-    omni_exec $OMNI_FC_CMD $NATIVE_ADD_OPT $OMNI_FC_OPT $other_args $FILE_F90 -o $FILE_O
+    omni_exec $OMNI_FC_CMD "${native_add_opt[@]}" $OMNI_FC_OPT "${other_args[@]}" "${FILE_F90}" -o "${FILE_O}"
 
     ### GPU Compiler ###
-    FILE_CU=${TEMP_DIR}/${FILE_NAME}_pp.cu
-    FILE_GPUO=${TEMP_DIR}/${FILE_NAME}.gpu.o
+    FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
+    FILE_GPUO=${TEMP_DIR}/"${FILE_NAME}".gpu.o
     if [ -e $FILE_CU ]; then
-        omni_exec $OMNI_GPUCC_CMD $OMNI_GPUCC_OPT $FILE_CU -o $FILE_GPUO
-        FILE_O_TMP=${TEMP_DIR}/${FILE_NAME}.cpu.o
-        omni_exec mv $FILE_O $FILE_O_TMP
-        omni_exec ld -r $FILE_O_TMP $FILE_GPUO -o $FILE_O
-        omni_exec rm $FILE_O_TMP
+	omni_exec $OMNI_GPUCC_CMD $OMNI_GPUCC_OPT "${FILE_CU}" -o "${FILE_GPUO}"
+        FILE_O_TMP=${TEMP_DIR}/"${FILE_NAME}".cpu.o
+        omni_exec mv "${FILE_O}" "${FILE_O_TMP}"
+        omni_exec ld -r "${FILE_O_TMP}" "${FILE_GPUO}" -o "${FILE_O}"
+        omni_exec rm -f "${FILE_O_TMP}"
     fi
     
-    if [ $ENABLE_LINKER = false -a "$OUTPUT_FILE" != "" ]; then
-	omni_exec mv $FILE_O $OUTPUT_FILE  # only a single file is created.
+    if [ $ENABLE_LINKER = false -a "${output_file}" != "" ]; then
+        omni_exec mv "${FILE_O}" "${output_file}"  # only a single file is created.
     else
-	omni_exec cp $FILE_O $FILE_USER_O
+        omni_exec cp "${FILE_O}" "${FILE_USER_O}"
     fi
 done
 [ $STOP_COMPILE = true ] && exit 0;
 [ $ENABLE_LINKER = false -a $ENABLE_DEBUG = true ] && exit 0;         # ompf90 -c --debug hoge.c
-[ $ENABLE_LINKER = false ] && { omni_exec rm -rf $TEMP_DIR; exit 0; } # ompf90 -c hoge.c
+[ $ENABLE_LINKER = false ] && { omni_exec rm -rf "${TEMP_DIR}"; exit 0; } # ompf90 -c hoge.c
 
 ### Linker ###
 # collect initialize modules
-for file in $all_files; do
-    FILE_NAME=`omni_f_norm_file_name $file`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
+for file in "${all_files[@]}"; do
+    FILE=("${file}")
+    FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
-    FILE_O=${TEMP_DIR}/${FILE_NAME}_${EXT}.o
-    obj_files="$obj_files $FILE_O"
+    FILE_O=${TEMP_DIR}/"${FILE_NAME}"_${EXT}.o
+    obj_files=("${obj_files[@]}" "${FILE_O}")
 done
 
 # link
-if [ $ENABLE_ACC = true ]; then
-    LINKER_ADD_OPT="$LINKER_ADD_OPT $OMNI_GPUCC_LIB"
-else
-    obj_files="$OMPF_MAIN_O $obj_files"
-fi
+[ $ENABLE_ACC = true ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_GPUCC_LIB"
+obj_files=("$OMPF_MAIN_O" "${obj_files[@]}")
+[ "${output_file}" != "" ] && other_args=("${other_args[@]}" "-o" "${output_file}")
 
-if [ "$OUTPUT_FILE" = "" ]; then
-    omni_exec $OMNI_LINKER_CMD $obj_files $OMNI_LINKER_OPT $LINKER_ADD_OPT $other_args $archive_files
-else
-    omni_exec $OMNI_LINKER_CMD $obj_files $OMNI_LINKER_OPT $LINKER_ADD_OPT $other_args $archive_files -o $OUTPUT_FILE
-fi
-
+omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" $OMNI_LINKER_OPT "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}"
+    
 ### Delete temporal directory ###
-[ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
+[ $ENABLE_DEBUG = false ] && omni_exec rm -rf "${TEMP_DIR}"
 
 exit 0
