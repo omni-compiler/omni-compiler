@@ -586,7 +586,7 @@ public class XMPanalyzePragma
     info.setOnRef(XMPobjectsRef.parseDecl(reductionOnRef,env,pb));
 
     if (asyncOpt != null && !XmOption.isAsync()){
-      XMP.errorAt(pb, "async clause on reduction not supported by this environment");
+      XMP.errorAt(pb, "MPI-3 is required to use the async clause on a reduction directive");
     }
 
     info.setAsyncId(asyncOpt);
@@ -658,7 +658,7 @@ public class XMPanalyzePragma
 		      bcast_vars);
 
     if (asyncOpt != null && !XmOption.isAsync()){
-      XMP.errorAt(pb, "async clause on bcast not supported by this environment");
+      XMP.errorAt(pb, "MPI-3 is required to use the async clause on a bcast directive");
     }
 
     info.setAsyncId(asyncOpt);

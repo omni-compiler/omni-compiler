@@ -1693,7 +1693,7 @@ public class XMPtranslateLocalPragma {
     if (async.Opcode() != Xcode.LIST){
 
       if (!XmOption.isAsync()){
-	XMP.error(pb.getLineNo(), "async clause on redution not supported by this environment");
+	XMP.error(pb.getLineNo(), "MPI-3 is required to use the async clause on a reduction directive");
       }
 
       Ident f = _globalDecl.declExternFunc("xmpc_init_async");
@@ -2134,7 +2134,7 @@ public class XMPtranslateLocalPragma {
     if (async.Opcode() != Xcode.LIST){
 
       if (!XmOption.isAsync()){
-	XMP.error(pb.getLineNo(), "async clause on bcast not supported by this environment");
+	XMP.error(pb.getLineNo(), "MPI-3 is required to use the async clause on a bcast directive");
       }
 
       Ident f = _globalDecl.declExternFunc("xmpc_init_async");
