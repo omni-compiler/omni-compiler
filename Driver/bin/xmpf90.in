@@ -224,13 +224,13 @@ omni_exec $OMNI_TRAVERSE -o $TRAVERSE_FILE "${obj_files[@]}"
 
 # link
 [ $ENABLE_TLOG_ALL = true -o $ENABLE_TLOG = true ] && OMNI_LINKER_OPT="-ltlog_mpi $OMNI_LINKER_OPT"
-[ $ENABLE_XACC = true ] && linker_add_opt=("-lacc -L@GPGPU_PREFIX@/lib64" "-lcudart" "${linker_add_opt[@]}")
+[ $ENABLE_XACC = true ] && OMNI_LINKER_OPT="-lacc -L@GPGPU_PREFIX@/lib64 -lcudart $OMNI_LINKER_OPT"
 TRAVERSE_FILE_O=${TEMP_DIR}/omni_traverse_${PID}.o
 omni_exec $OMNI_MPIFC_CMD -c $TRAVERSE_FILE -o $TRAVERSE_FILE_O
 obj_files=("$TRAVERSE_FILE_O" "${obj_files[@]}")
 [ "${output_file}" != "" ] && other_args=("${other_args[@]}" "-o" "${output_file}")
 
-omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" $OMNI_LINKER_OPT ${linker_add_opt[@]} "${other_args[@]}" "${archive_files[@]}"
+omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" $OMNI_LINKER_OPT "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}"
 
 ### Delete temporal directory ###
 [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR

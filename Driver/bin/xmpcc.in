@@ -190,7 +190,7 @@ omni_exec mv /tmp/_xmpc_init_${PID}.o $FILE_COLLECT_O
 [ $ENABLE_XACC = true ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_GPUCC_LIB"
 [ "${output_file}" != "" ] && other_args=("${other_args[@]}" "-o" "${output_file}")
 
-omni_exec $OMNI_LINKER_CMD $FILE_COLLECT_O "${obj_files[@]}" $OMNI_LINKER_OPT ${linker_add_opt[@]} "${other_args[@]}" "${archive_files[@]}"
+omni_exec $OMNI_LINKER_CMD $FILE_COLLECT_O "${obj_files[@]}" $OMNI_LINKER_OPT "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}"
 
 ### Delete temporal directory ###
 [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
