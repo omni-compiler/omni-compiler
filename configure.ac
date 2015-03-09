@@ -909,7 +909,7 @@ else
       OPENMP_OPT="-mp"
 
       # CPP_OPT
-      CPP_OPT="-cpp"
+      CPP_OPT="-Mpreprocess"
 
       # XcalableMP
       XMPC_DEF="-D_XCALABLEMP"
