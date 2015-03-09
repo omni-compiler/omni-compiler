@@ -92,14 +92,15 @@ for file in "${F_F90_files[@]}"; do
 	fi
     fi
 done
-if [ $ENABLE_CPP = true ]; then
-    OMNI_FPP_OPT="$OMNI_FPP_OPT $CPP_OPT"
-    for file in "${f_f90_files[@]}"; do
-        FILE=("${file}")
-        FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
-        EXT=${file##*.}
-        FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
 
+OMNI_FPP_OPT="$OMNI_FPP_OPT $CPP_OPT"
+for file in "${f_f90_files[@]}"; do
+    FILE=("${file}")
+    FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
+    EXT=${file##*.}
+    FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
+
+    if [ $ENABLE_CPP = true ]; then
         # When ">" or ">>" is used, please use "omni_exec_echo" and "omni_exec_run" instead of "omni_exec".
         omni_exec_echo $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" ">" "${FILE_PP}"
         omni_exec_run  $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" > "${FILE_PP}"
@@ -113,8 +114,10 @@ if [ $ENABLE_CPP = true ]; then
                 omni_exec_run  cat "${FILE_PP_I}" >> "${output_file}"
             fi
         fi
-    done
-fi
+    else
+        omni_exec cp "${FILE}" "${FILE_PP}"
+    fi
+done
 [ $STOP_PP = true ] && exit 0;
 [ $ONLY_PP = true -a $ENABLE_DEBUG = true ] && exit 0;            # ompf90 -E --debug hoge.c (save $TMP_DIR)
 [ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # ompf90 -E hoge.c
@@ -122,22 +125,14 @@ fi
 ### Frontend ###
 [ $ENABLE_ACC = true ] && frontend_add_opt=("-facc" "${frontend_add_opt[@]}")
 [ $ENABLE_OPENMP = true ] && frontend_add_opt=("-fopenmp" "${frontend_add_opt[@]}")
-for file in "${F_F90_files[@]}"; do
+for file in "${all_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.F90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
     FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
     FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.xml
 
-    omni_exec $OMNI_F2X_CMD "${include_opt[@]}" "${frontend_add_opt[@]}" $OMNI_F2X_OPT "${FILE_PP}" -o "${FILE_IN_X}"
-done
-for file in "${f_f90_files[@]}"; do
-    FILE=("${file}")
-    FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
-    EXT=${file##*.}
-    FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.xml
-
-    omni_exec $OMNI_F2X_CMD "${include_opt[@]}" "${frontend_add_opt[@]}" $OMNI_F2X_OPT "${FILE}" -o "${FILE_IN_X}"
+    omni_exec $OMNI_F2X_CMD "${include_opt[@]}" "${module_opt[@]}" "${frontend_add_opt[@]}" $OMNI_F2X_OPT "${FILE_PP}" -o "${FILE_IN_X}"
 done
 [ $STOP_FRONTEND = true ] && exit 0;
 
