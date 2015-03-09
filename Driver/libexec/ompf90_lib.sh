@@ -6,6 +6,7 @@ usage: $1 <OPTIONS> <INPUTFILE> ...
 Compile Driver Options
 
    -o <file>         : place the output into <file>.
+   -I <dir>          : add the directory dir to the list of directories to be searched for header files.
    -J <dir>          : specify where to put .mod and .xmod files for compiled modules.
    -c                : compile and assemble, but do not link.
    -E                : preprocess only; do not compile, assemble or link.
@@ -54,10 +55,10 @@ function ompf90_show_env()
 
 function ompf90_set_parameters()
 {
-    local tmp_args=""
     local OUTPUT_FLAG=
     local MODULE_FLAG=
     local INCLUDE_FLAG=
+    local module_dir=()
 
     for arg in "${@}"; do
 	case $arg in
@@ -72,8 +73,8 @@ function ompf90_set_parameters()
 	    -I)
                 INCLUDE_FLAG=true;;
             -I?*)
-                INCLUDE_OPT="$arg"
-                other_args="$other_args $arg";;
+                include_opt=("${arg}")
+                other_args=("${other_args[@]}" "${arg}");;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)
@@ -85,7 +86,7 @@ function ompf90_set_parameters()
 		exit 0;;
             -h|--help)
 		local scriptname=`basename $0`
-		ompf90_print_help $scriptname
+		ompf90_print_help "${scriptname}"
 		exit 0;;
 	    --show-env)
 		ompf90_show_env
@@ -111,24 +112,20 @@ function ompf90_set_parameters()
 	    --stop-compile)
 		STOP_COMPILE=true
 		VERBOSE=true;;
-	    --Wp*)
-		PP_ADD_OPT=${arg#--Wp}
-                ;;
+            --Wp*)
+                pp_add_opt=("${pp_add_opt[@]}" "${arg#--Wp}");;
             --Wf*)
-		FRONTEND_ADD_OPT=${arg#--Wf}
-                ;;
+                frontend_add_opt=("${frontend_add_opt[@]}" "${arg#--Wf}");;
             --Wx*)
-		XCODE_TRANSLATOR_ADD_OPT=${arg#--Wx}
-                ;;
-	    --Wn*)
-		NATIVE_ADD_OPT=${arg#--Wn}
-		;;
+                xcode_translator_add_opt=("${xcode_translator_add_opt[@]}" "${arg#--Wx}");;
+            --Wn*)
+                native_add_opt=("${native_add_opt[@]}" "${arg#--Wn}");;
             --Wb*)
-		BACKEND_ADD_OPT=${arg#--Wb}
-                ;;
+                backend_add_opt=("${backend_add_opt[@]}" "${arg#--Wb}");;
             --Wl*)
-		LINKER_ADD_OPT=${arg#--Wl}
-		;;
+                linker_add_opt=("${linker_add_opt[@]}" "${arg#--Wl}");;
+            --openmp|-omp)
+                ENABLE_OPENMP=true;;
 	    -acc|--openacc)
 		omni_error_exit "OpenACC for ompf90 has been not implemented yet."
 		if [ ${ENABLE_ACC} = "0" ]; then
@@ -138,17 +135,27 @@ function ompf90_set_parameters()
 		;;
             *)
                 if [ "$OUTPUT_FLAG" = true ]; then
-                    OUTPUT_FILE=$arg
+                    output_file=("${arg}")
                     OUTPUT_FLAG=false
                 elif [[ "$MODULE_FLAG" = true ]]; then
-                    MODULE_DIR="$arg"
-                    MODULE_OPT="$MODULE_OPT -M${MODULE_DIR}"
-                    other_args="$other_args $OMNI_MODINC ${MODULE_DIR}"
+		    module_dir=("${arg#-J}")
+                    module_opt=("-M${module_dir[0]}")
+                    other_args=("$other_args[@]" "$OMNI_MODINC" "${module_dir}")
                     MODULE_FLAG=false
                 elif [[ "$INCLUDE_FLAG" = true ]]; then
-                    other_args="$other_args -I$arg"
-                    INCLUDE_OPT="$INCLUDE_OPT -I$arg"
+		    include_opt=("${include_opt[@]}" "-I${arg}")
                     INCLUDE_FLAG=false
+                    other_args=("${other_args[@]}" "-I${arg}")
+		elif [[ $arg =~ \.f90$ ]] || [[ $arg =~ \.f$ ]]; then
+                    f_f90_files=("${f_f90_files[@]}" "${arg}")
+                    all_files=("${all_files[@]}" "${arg}");
+                elif [[ $arg =~ \.F90$ ]] || [[ $arg =~ \.F$ ]]; then
+                    F_F90_files=("${F_F90_files[@]}" "${arg}")
+                    all_files=("${all_files[@]}" "${arg}")
+                elif [[ "${arg}" =~ \.a$ ]]; then
+                    archive_files=("${archive_files[@]}" "${arg}")
+                elif [[ "${arg}" =~ \.o$ ]]; then
+                    obj_files=("${obj_files[@]}" "${arg}")
                 else
                     tmp_args="$tmp_args $arg"
                 fi;;
@@ -158,21 +165,5 @@ function ompf90_set_parameters()
     if test $OUTPUT_TEMPORAL = true -a $DRY_RUN = true; then
         omni_error_exit "cannot use both --tmp and --dry options at the same time."
     fi
-
-    for arg in $tmp_args; do
-        if [[ $arg =~ \.F90$ ]] || [[ $arg =~ \.F$ ]]; then
-            F_F90_files="$F_F90_files $arg"
-            all_files="$all_files $arg"
-        elif [[ $arg =~ \.f90$ ]] || [[ $arg =~ \.f$ ]]; then
-            f_f90_files="$f_f90_files $arg"
-            all_files="$all_files $arg"
-        elif [[ $arg =~ \.a$ ]]; then
-            archive_files="$archive_files $arg"
-        elif [[ "${arg}" =~ \.o$ ]]; then
-            obj_files="$obj_files $arg"
-        else
-            other_args="$other_args $arg"
-        fi
-    done
 }
 

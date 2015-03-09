@@ -44,23 +44,19 @@ EOF
 
 function xmpcc_show_env()
 {
-    CONF_FILE=${OMNI_HOME}/etc/xmpcc.conf
-    if [ -f $CONF_FILE ]; then
-	for val in `sed '/^[[:space:]]*$/d' ${CONF_FILE} | grep -v '^#' | awk -F= '{print $1}'`
+    CONF_FILE="${OMNI_HOME}"/etc/xmpcc.conf
+    if [ -f "${CONF_FILE}" ]; then
+	for val in `sed '/^[[:space:]]*$/d' "${CONF_FILE}" | grep -v '^#' | awk -F= '{print $1}'`
 	do
 	    echo -n ${val}=\"
             eval echo -n \"\$$val\"
 	    echo \"
 	done
-    else
-	omni_error_exit "$CONF_FILE not exist."
     fi
 }
 
 function xmpcc_set_parameters()
 {
-    local tmp_args=""
-
     for arg in "${@}"; do
 	case $arg in
 	    -o)
@@ -76,7 +72,7 @@ function xmpcc_set_parameters()
 		exit 0;;
             -h|--help)
 		local scriptname=`basename $0`
-		xmpcc_print_help $scriptname
+		xmpcc_print_help "${scriptname}"
 		exit 0;;
 	    --show-env)
 		xmpcc_show_env
@@ -103,23 +99,17 @@ function xmpcc_set_parameters()
 		STOP_COMPILE=true
 		VERBOSE=true;;
 	    --Wp*)
-		PP_ADD_OPT=${arg#--Wp}
-                ;;
+		pp_add_opt=("${pp_add_opt[@]}" "${arg#--Wp}");;
             --Wf*)
-		FRONTEND_ADD_OPT=${arg#--Wf}
-                ;;
+		frontend_add_opt=("${frontend_add_opt[@]}" "${arg#--Wf}");;
             --Wx*)
-		XCODE_TRANSLATOR_ADD_OPT=${arg#--Wx}
-                ;;
+		xcode_translator_add_opt=("${xcode_translator_add_opt[@]}" "${arg#--Wx}");;
 	    --Wn*)
-		NATIVE_ADD_OPT=${arg#--Wn}
-		;;
+		native_add_opt=("${native_add_opt[@]}" "${arg#--Wn}");;
             --Wb*)
-		BACKEND_ADD_OPT=${arg#--Wb}
-                ;;
+		backend_add_opt=("${backend_add_opt[@]}" "${arg#--Wb}");;
             --Wl*)
-		LINKER_ADD_OPT=${arg#--Wl}
-		;;
+		linker_add_opt=("${linker_add_opt[@]}" "${arg#--Wl}");;
 	    --openmp|-omp)
 		ENABLE_OPENMP=true;;
 	    --xcalableacc|-xacc)
@@ -134,10 +124,16 @@ function xmpcc_set_parameters()
 		ENABLE_TLOG=true;;
             *)
 		if [ "$OUTPUT_FLAG" = true ]; then
-		    OUTPUT_FILE=$arg
+		    output_file=("${arg}")
 		    OUTPUT_FLAG=false
+		elif [[ "${arg}" =~ \.c$ ]]; then
+                    c_files=("${c_files[@]}" "${arg}")
+                elif [[ "${arg}" =~ \.a$ ]]; then
+                    archive_files=("${archive_files[@]}" "${arg}")
+                elif [[ "${arg}" =~ \.o$ ]]; then
+                    obj_files=("${obj_files[@]}" "${arg}")
 		else
-		    tmp_args="$tmp_args $arg"
+		    other_args=("${other_args[@]}" "${arg}")
 		fi;;
 	esac
     done
@@ -145,17 +141,4 @@ function xmpcc_set_parameters()
     if test $OUTPUT_TEMPORAL = true -a $DRY_RUN = true; then
         omni_error_exit "cannot use both --tmp and --dry options at the same time."
     fi
-
-    for arg in $tmp_args; do
-	if [[ $arg =~ \.c$ ]]; then
-            c_files="$c_files $arg"
-	elif [[ $arg =~ \.a$ ]]; then
-	    archive_files="$archive_files $arg"
-	elif [[ "${arg}" =~ \.o$ ]]; then
-            obj_files="$obj_files $arg"
-	else
-            other_args="$other_args $arg"
-	fi
-    done
 }
-

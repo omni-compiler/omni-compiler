@@ -60,10 +60,10 @@ function xmpf90_show_env()
 
 function xmpf90_set_parameters()
 {
-    local tmp_args=
     local OUTPUT_FLAG=
     local MODULE_FLAG=
     local INCLUDE_FLAG=
+    local module_dir=()
 
     for arg in "${@}"; do
 	case $arg in
@@ -72,14 +72,14 @@ function xmpf90_set_parameters()
 	    -J)
 		MODULE_FLAG=true;;
 	    -J?*)
-		MODULE_DIR="${arg#-J}"
-                MODULE_OPT="$MODULE_OPT -M${MODULE_DIR}"
-                other_args="$other_args $OMNI_MODINC ${MODULE_DIR}";;
+		module_dir=("${arg#-J}")  # Only one module directory can be selected
+                module_opt=("-M${module_dir[0]}")
+                other_args=("${other_args[@]}" "$OMNI_MODINC" "${module_dir}");;
             -I)
                 INCLUDE_FLAG=true;;
 	    -I?*)
-		INCLUDE_OPT="$arg"
-		other_args="$other_args $arg";;
+		include_opt=("${arg}")
+		other_args=("${other_args[@]}" "${arg}");;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)
@@ -91,7 +91,7 @@ function xmpf90_set_parameters()
 		exit 0;;
             -h|--help)
 		local scriptname=`basename $0`
-		xmpf90_print_help $scriptname
+		xmpf90_print_help "${scriptname}"
 		exit 0;;
 	    --show-env)
 		xmpf90_show_env
@@ -117,24 +117,18 @@ function xmpf90_set_parameters()
 	    --stop-compile)
 		STOP_COMPILE=true
 		VERBOSE=true;;
-	    --Wp*)
-		PP_ADD_OPT=${arg#--Wp}
-                ;;
+            --Wp*)
+                pp_add_opt=("${pp_add_opt[@]}" "${arg#--Wp}");;
             --Wf*)
-		FRONTEND_ADD_OPT=${arg#--Wf}
-                ;;
+                frontend_add_opt=("${frontend_add_opt[@]}" "${arg#--Wf}");;
             --Wx*)
-		XCODE_TRANSLATOR_ADD_OPT=${arg#--Wx}
-                ;;
-	    --Wn*)
-		NATIVE_ADD_OPT=${arg#--Wn}
-		;;
+                xcode_translator_add_opt=("${xcode_translator_add_opt[@]}" "${arg#--Wx}");;
+            --Wn*)
+                native_add_opt=("${native_add_opt[@]}" "${arg#--Wn}");;
             --Wb*)
-		BACKEND_ADD_OPT=${arg#--Wb}
-                ;;
+                backend_add_opt=("${backend_add_opt[@]}" "${arg#--Wb}");;
             --Wl*)
-		LINKER_ADD_OPT=${arg#--Wl}
-		;;
+                linker_add_opt=("${linker_add_opt[@]}" "${arg#--Wl}");;
 	    --openmp|-omp)
 		ENABLE_OPENMP=true;;
 	    --xcalableacc|-xacc)
@@ -147,21 +141,31 @@ function xmpf90_set_parameters()
 		ENABLE_TLOG_ALL=true;;
 	    --tlog)
 		ENABLE_TLOG=true;;
-            *)
+	    *)
 		if [ "$OUTPUT_FLAG" = true ]; then
-		    OUTPUT_FILE=$arg
+		    output_file=("${arg}")
 		    OUTPUT_FLAG=false
 		elif [[ "$MODULE_FLAG" = true ]]; then
-		    MODULE_DIR="$arg"
-		    MODULE_OPT="$MODULE_OPT -M${MODULE_DIR}"
-		    other_args="$other_args $OMNI_MODINC ${MODULE_DIR}"
+		    module_dir=("${arg#-J}")
+		    module_opt=("-M${module_dir[0]}")
+		    other_args=("$other_args[@]" "$OMNI_MODINC" "${module_dir}")
 		    MODULE_FLAG=false
                 elif [[ "$INCLUDE_FLAG" = true ]]; then
-                    other_args="$other_args -I$arg"
-		    INCLUDE_OPT="$INCLUDE_OPT -I$arg"
+		    include_opt=("${include_opt[@]}" "-I${arg}")
                     INCLUDE_FLAG=false
+		    other_args=("${other_args[@]}" "-I${arg}")
+		elif [[ $arg =~ \.f90$ ]] || [[ $arg =~ \.f$ ]]; then
+		    f_f90_files=("${f_f90_files[@]}" "${arg}")
+                    all_files=("${all_files[@]}" "${arg}");
+		elif [[ $arg =~ \.F90$ ]] || [[ $arg =~ \.F$ ]]; then
+		    F_F90_files=("${F_F90_files[@]}" "${arg}")
+                    all_files=("${all_files[@]}" "${arg}")
+                elif [[ "${arg}" =~ \.a$ ]]; then
+                    archive_files=("${archive_files[@]}" "${arg}")
+                elif [[ "${arg}" =~ \.o$ ]]; then
+                    obj_files=("${obj_files[@]}" "${arg}")
 		else
-		    tmp_args="$tmp_args $arg"
+		    other_args=("${other_args[@]}" "${arg}")
 		fi;;
 	esac
     done
@@ -169,20 +173,4 @@ function xmpf90_set_parameters()
     if test $OUTPUT_TEMPORAL = true -a $DRY_RUN = true; then
         omni_error_exit "cannot use both --tmp and --dry options at the same time."
     fi
-
-    for arg in $tmp_args; do
-	if [[ $arg =~ \.F90$ ]] || [[ $arg =~ \.F$ ]]; then
-	    F_F90_files="$F_F90_files $arg"
-	    all_files="$all_files $arg"
-	elif [[ $arg =~ \.f90$ ]] || [[ $arg =~ \.f$ ]]; then
-            f_f90_files="$f_f90_files $arg"
-	    all_files="$all_files $arg"
-	elif [[ $arg =~ \.a$ ]]; then
-	    archive_files="$archive_files $arg"
-	elif [[ "${arg}" =~ \.o$ ]]; then
-            obj_files="$obj_files $arg"
-	else
-            other_args="$other_args $arg"
-	fi
-    done
 }

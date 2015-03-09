@@ -760,7 +760,7 @@ elif test "$target" = "powerpc-hitachi-aix"; then
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
-  XMPF_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-WF,-D_XCALABLEMP"
 
 # MPI C
   MPI_CC="mpCC_r"
