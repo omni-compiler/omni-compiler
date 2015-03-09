@@ -10,6 +10,7 @@ Compile Driver Options
    -J <dir>          : specify where to put .mod and .xmod files for compiled modules.
    -c                : compile and assemble, but do not link.
    -E                : preprocess only; do not compile, assemble or link.
+   -cpp              : enable preprocess.
    -v,--verbose      : print processing status.
    --version         : print version.
    -h,--help         : print usage.
@@ -84,6 +85,8 @@ function xmpf90_set_parameters()
 		ENABLE_LINKER=false;;
 	    -E)
 		ONLY_PP=true;;
+	    -cpp)
+		ENABLE_CPP=true;;
             -v|--verbose)
 		VERBOSE=true;;
 	    --version)

@@ -543,6 +543,9 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-Kopenmp"
 
+# CPP_OPT
+  CPP_OPT="-Cpp"
+
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
   XMPF_DEF="-D_XCALABLEMP"
@@ -578,6 +581,9 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 elif test "$target" = "MIC-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-mp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -615,6 +621,9 @@ elif test "$target" = "Cray-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-h omp"
 
+# CPP_OPT
+  CPP_OPT="-cpp"
+
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
   XMPF_DEF="-D_XCALABLEMP"
@@ -650,6 +659,9 @@ elif test "$target" = "Cray-linux-gnu"; then
 elif test "$target" = "sx-nec-superux"; then
 # OpenMP
   OPENMP_OPT="-Popenmp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -688,6 +700,9 @@ elif test "$target" = "powerpc-ibm-cnk"; then
 
 # OpenMP
   OPENMP_OPT="-qsmp=omp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -758,6 +773,9 @@ elif test "$target" = "powerpc-hitachi-aix"; then
 # OpenMP
   OPENMP_OPT="-qsmp=omp"
 
+# CPP_OPT
+  CPP_OPT="-cpp"
+
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
   XMPF_DEF="-WF,-D_XCALABLEMP"
@@ -791,10 +809,6 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   OMNI_X2X_FLAGS=""
 
 else
-  # XcalableMP
-  XMPC_DEF="-D_XCALABLEMP"
-  XMPF_DEF="-D_XCALABLEMP"
-
   INTEL_MPICC=mpiicc
   which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
   if test $? -eq 0; then
@@ -808,6 +822,9 @@ else
   cc* | gcc* | Apple*)
     # OpenMP
     OPENMP_OPT="-fopenmp"
+
+    # CPP_OPT
+    CPP_OPT="-cpp"
 
     # XcalableMP
     XMPC_DEF="-D_XCALABLEMP"
@@ -843,6 +860,9 @@ else
   *ICC*)
     # OpenMP
     OPENMP_OPT="-openmp"
+
+    # CPP_OPT
+    CPP_OPT="-cpp"
 
     # XcalableMP
     XMPC_DEF="-D_XCALABLEMP"
@@ -887,6 +907,9 @@ else
     pgcc*)
       # OpenMP
       OPENMP_OPT="-mp"
+
+      # CPP_OPT
+      CPP_OPT="-cpp"
 
       # XcalableMP
       XMPC_DEF="-D_XCALABLEMP"
@@ -1186,6 +1209,9 @@ fi
 
 # OpenMP
 AC_SUBST(OPENMP_OPT)
+
+# CPP_OPT
+AC_SUBST(CPP_OPT)
 
 # XcalableMP
 AC_SUBST(XMPC_DEF)

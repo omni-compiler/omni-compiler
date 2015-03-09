@@ -14,6 +14,7 @@ DEBUG_TEMP_DIR="__omni_tmp__"
 ### Default options ###
 ENABLE_LINKER=true
 ONLY_PP=false
+ENABLE_CPP=false
 VERBOSE=false
 ENABLE_DEBUG=false
 OUTPUT_TEMPORAL=false
@@ -85,7 +86,6 @@ for file in "${F_F90_files[@]}"; do
     # When ">" or ">>" is used, please use "omni_exec_echo" and "omni_exec_run" instead of "omni_exec".
     omni_exec_echo $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" ">" "${FILE_PP}"
     omni_exec_run  $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" > "${FILE_PP}"
-
     # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
 
     if [ $ONLY_PP = true ]; then
@@ -97,6 +97,29 @@ for file in "${F_F90_files[@]}"; do
 	fi
     fi
 done
+if [ $ENABLE_CPP = true ]; then
+    OMNI_FPP_OPT="$OMNI_FPP_OPT $CPP_OPT"
+    for file in "${f_f90_files[@]}"; do
+	FILE=("${file}")
+	FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
+	EXT=${file##*.}
+	FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
+
+	# When ">" or ">>" is used, please use "omni_exec_echo" and "omni_exec_run" instead of "omni_exec".
+	omni_exec_echo $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" ">" "${FILE_PP}"
+	omni_exec_run  $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" > "${FILE_PP}"
+	# AIX compiler cannot output file with ".i" suffix. So, ">" is used.
+
+	if [ $ONLY_PP = true ]; then
+            if [ "${output_file}" = "" ]; then
+		omni_exec cat "${FILE_PP}"
+            else
+		omni_exec_echo cat "${FILE_PP_I}" ">>" "${output_file}"
+		omni_exec_run  cat "${FILE_PP_I}" >> "${output_file}"
+            fi
+	fi
+    done
+fi
 [ $STOP_PP = true ] && exit 0;
 [ $ONLY_PP = true -a $ENABLE_DEBUG = true ] && exit 0;            # xmpf90 -E --debug hoge.c (save $TMP_DIR)
 [ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # xmpf90 -E hoge.c

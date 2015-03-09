@@ -276,6 +276,7 @@ CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@ \
 	$(am__append_2) $(am__append_6)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CPP_OPT = @CPP_OPT@
 CPU = @CPU@
 CPUDEF = @CPUDEF@
 CXX = @CXX@
