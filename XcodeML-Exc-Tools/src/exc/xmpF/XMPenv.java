@@ -319,6 +319,15 @@ public class XMPenv {
     return sizeArray;
   }
 
+  Ident getNullIdent(Block b){
+    Ident xmp_null = findVarIdent("XMP_NULL", b);
+    if (xmp_null == null){
+      xmp_null = declObjectId("XMP_NULL", null,
+			      Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+    }
+    return xmp_null;
+  }
+
   /*
    *  wrapper -- for collect init
    */

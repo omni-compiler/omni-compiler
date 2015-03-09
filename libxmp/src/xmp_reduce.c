@@ -11,6 +11,11 @@
 #include "mpi.h"
 #include "xmp_internal.h"
 
+#if MPI_VERSION >= 3
+extern _Bool is_async;
+extern int _async_id;
+#endif
+
 static void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
   switch (datatype) {
     case _XMP_N_TYPE_BOOL:
@@ -217,14 +222,23 @@ void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int da
   }
 
   // setup information
-  MPI_Datatype mpi_datatype;
+  MPI_Datatype mpi_datatype = MPI_INT; //dummy
   size_t datatype_size;
-  MPI_Op mpi_op;
+  MPI_Op mpi_op = MPI_SUM; // dummy
   _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
   _XMP_setup_reduce_op(&mpi_op, op);
 
   // reduce
-  MPI_Allreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
+#if MPI_VERSION >= 3
+      if (is_async){
+	_XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+	MPI_Iallreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm),
+		       &async->reqs[async->nreqs]);
+	async->nreqs++;
+      }
+      else
+#endif
+	MPI_Allreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 }
 
 // _XMP_M_REDUCE_EXEC(addr, count, datatype, op) is in xmp_comm_macro.h
@@ -342,9 +356,9 @@ void _XMPF_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
 
 void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op) {
   // setup information
-  MPI_Datatype mpi_datatype;
+  MPI_Datatype mpi_datatype = MPI_INT; // dummy
   size_t datatype_size; // not used in this function
-  MPI_Op mpi_op;
+  MPI_Op mpi_op = MPI_SUM; // dummy
   _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
   _XMP_setup_reduce_op(&mpi_op, op);
 

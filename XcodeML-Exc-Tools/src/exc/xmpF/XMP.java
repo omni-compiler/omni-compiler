@@ -94,6 +94,8 @@ public class XMP {
   public final static String set_reflect_f = "xmpf_set_reflect_";
   public final static String reflect_f = "xmpf_reflect_";
   public final static String reflect_async_f = "xmpf_reflect_async_";
+  public final static String init_async_f = "xmpf_init_async_";
+  public final static String start_async_f = "xmpf_start_async_";
   public final static String wait_async_f = "xmpf_wait_async_";
   public final static String barrier_f = "xmpf_barrier_";
   public final static String reduction_f = "xmpf_reduction_";

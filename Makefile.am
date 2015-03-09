@@ -58,6 +58,7 @@ if FJRDMA
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if MPI3
+   TESTDIRS += "global-view/async/C/" "global-view/async/F/"
 endif
 
 .PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests
