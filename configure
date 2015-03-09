@@ -783,6 +783,7 @@ CXX
 ac_ct_FC
 FCFLAGS
 FC
+TARGET
 FJRDMA_FALSE
 FJRDMA_TRUE
 LIBACC_HEADER_DIR
@@ -12684,6 +12685,7 @@ else
   FJRDMA_FALSE=
 fi
 
+TARGET=$target
 
 # --------------------------------------------------------------------
 # check basic commands

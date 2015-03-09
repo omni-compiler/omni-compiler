@@ -435,7 +435,8 @@ AC_ARG_ENABLE(xacc,
 ## End Add temporarily
 
 AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
-
+TARGET=$target
+AC_SUBST(TARGET)
 # --------------------------------------------------------------------
 # check basic commands
 

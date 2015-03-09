@@ -59,6 +59,11 @@ function xmpf90_show_env()
     fi
 }
 
+function get_target()
+{
+    xmpcc --show-env | grep TARGET | sed 's/TARGET=//' | sed "s/\"//g"
+}
+
 function xmpf90_set_parameters()
 {
     local OUTPUT_FLAG=
@@ -75,7 +80,13 @@ function xmpf90_set_parameters()
 	    -J?*)
 		module_dir=("${arg#-J}")  # Only one module directory can be selected
                 module_opt=("-M${module_dir[0]}")
-                other_args=("${other_args[@]}" "$OMNI_MODINC" "${module_dir}");;
+		target=`get_target`
+		if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
+                    other_args=("${other_args[@]}" "${OMNI_MODINC}${module_dir}")
+                else
+                    other_args=("${other_args[@]}" "${OMNI_MODINC}" "${module_dir}")
+		fi
+		;;
             -I)
                 INCLUDE_FLAG=true;;
 	    -I?*)
