@@ -38,19 +38,21 @@ int main(void)
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       sa = sa+a[i][j];
-#pragma xmp reduction (+:sa)
+#pragma xmp reduction (+:sa) async(100)
 
 #pragma xmp loop (j,i) on t2(j,i)
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       sb = sb+b[i][j];
-#pragma xmp reduction (+:sb)
+#pragma xmp reduction (+:sb) async(200)
 
 #pragma xmp loop (j,i) on t3(j,i)
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       sc = sc+c[i][j];
-#pragma xmp reduction (+:sc)
+#pragma xmp reduction (+:sc) async(300)
+
+#pragma xmp wait_async(100, 200, 300)
 
   if(sa != N*N||abs(sb-((double)N*N*0.5))>0.000001||abs(sc-((float)N*N*0.25))>0.0001)
     result = -1; // ERROR

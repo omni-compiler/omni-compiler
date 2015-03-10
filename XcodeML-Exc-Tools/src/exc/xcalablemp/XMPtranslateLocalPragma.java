@@ -401,13 +401,27 @@ public class XMPtranslateLocalPragma {
 
     Ident funcId = _globalDecl.declExternFunc("_XMP_wait_async__");
     XobjList funcArgs = (XobjList)pb.getClauses().getArg(0);
-
     BlockList funcBody = Bcons.emptyBody();
-    funcBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+    for (Xobject i: funcArgs){
+      funcBody.add(Bcons.Statement(funcId.Call(Xcons.List(i))));
+    }
 
     Block funcCallBlock = Bcons.COMPOUND(funcBody);
-    pb.replace(funcCallBlock);
 
+    // the following code comes from translateBcast.
+    XobjList onRef = (XobjList)pb.getClauses().getArg(1);
+    if (onRef != null && onRef.getArgs() != null) {
+      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
+      String execFuncSurfix = execOnRefArgs.getFirst();
+      boolean splitComm = execOnRefArgs.getSecond().booleanValue();
+      XobjList execFuncArgs = execOnRefArgs.getThird();
+      if (splitComm) {
+        BlockList waitAsyncBody = Bcons.blockList(funcCallBlock);
+	funcCallBlock = createCommTaskBlock(waitAsyncBody, execFuncSurfix, execFuncArgs);
+      }
+    }
+
+    pb.replace(funcCallBlock);
   }
 
   private void translateShadow(PragmaBlock pb) throws XMPexception {
@@ -1625,7 +1639,7 @@ public class XMPtranslateLocalPragma {
 
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
-    XobjList accOrHost = (XobjList)reductionDecl.getArg(2);
+    XobjList accOrHost = (XobjList)reductionDecl.getArg(3);
     boolean isHost = false;
     boolean isACC = false;
     for (Xobject x : accOrHost){
@@ -1663,7 +1677,7 @@ public class XMPtranslateLocalPragma {
                                                               execFuncArgs.operand(), reductionFuncArgsList);
       }
     }
-    
+
     if(isACC){
       XobjList vars = Xcons.List();
       XobjList reductionSpecList = (XobjList)reductionRef.getArg(1);
@@ -1674,10 +1688,24 @@ public class XMPtranslateLocalPragma {
       Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA",
             Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), vars)), Bcons.blockList(reductionFuncCallBlock));
     }
+
+    Xobject async = reductionDecl.getArg(2);
+    if (async.Opcode() != Xcode.LIST){
+
+      if (!XmOption.isAsync()){
+	XMP.error(pb.getLineNo(), "MPI-3 is required to use the async clause on a reduction directive");
+      }
+
+      Ident f = _globalDecl.declExternFunc("xmpc_init_async");
+      pb.insert(f.Call(Xcons.List(async)));
+      Ident g = _globalDecl.declExternFunc("xmpc_start_async");
+      pb.add(g.Call(Xcons.List(async)));;
+    }
+    
     pb.replace(reductionFuncCallBlock);
 
-    // add function calls for profiling                                                                                    
-    Xobject profileClause = reductionDecl.getArg(3);
+    // add function calls for profiling
+    Xobject profileClause = reductionDecl.getArg(4);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reduction:" + pb.getLineNo()));
@@ -2100,6 +2128,19 @@ public class XMPtranslateLocalPragma {
 	bcastFuncCallBlock = createBcastFuncCallBlock(false, execFuncSurfix,
                                             execFuncArgs.operand(), bcastArgsList, execFromRefArgs);
       }
+    }
+
+    Xobject async = bcastDecl.getArg(3);
+    if (async.Opcode() != Xcode.LIST){
+
+      if (!XmOption.isAsync()){
+	XMP.error(pb.getLineNo(), "MPI-3 is required to use the async clause on a bcast directive");
+      }
+
+      Ident f = _globalDecl.declExternFunc("xmpc_init_async");
+      pb.insert(f.Call(Xcons.List(async)));
+      Ident g = _globalDecl.declExternFunc("xmpc_start_async");
+      pb.add(g.Call(Xcons.List(async)));;
     }
 
     pb.replace(bcastFuncCallBlock);

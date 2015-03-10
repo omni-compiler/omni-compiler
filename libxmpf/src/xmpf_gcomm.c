@@ -3,6 +3,10 @@
 _Bool xmpf_test_task_on__(_XMP_object_ref_t **r_desc);
 void xmpf_end_task__(void);
 
+#if MPI_VERSION >= 3
+extern _Bool is_async;
+extern int _async_id;
+#endif
 
 //#define DBG 1
 
@@ -170,12 +174,32 @@ void _XMPF_bcast_on_nodes(void *data_addr, int count, int datatype,
 
     if (_XMP_is_entire(on_desc)){
       on = on_desc->n_desc;
-      MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm));
+
+#if MPI_VERSION >= 3
+      if (is_async){
+	_XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+	MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm),
+		   &async->reqs[async->nreqs]);
+	async->nreqs++;
+      }
+      else
+#endif
+	MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm));
     }
     else {
       if (xmpf_test_task_on__(&on_desc)){
 	on = _XMP_get_execution_nodes();
-	MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm));
+
+#if MPI_VERSION >= 3
+	if (is_async){
+	  _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+	  MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm),
+		     &async->reqs[async->nreqs]);
+	  async->nreqs++;
+	}
+	else
+#endif
+	  MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm));
 	xmpf_end_task__();
       }
     }
@@ -183,7 +207,17 @@ void _XMPF_bcast_on_nodes(void *data_addr, int count, int datatype,
   }
   else {
     on = from_desc ? from_desc->n_desc : _XMP_get_execution_nodes();
-    MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm));
+
+#if MPI_VERSION >= 3
+    if (is_async){
+      _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+      MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm),
+		 &async->reqs[async->nreqs]);
+      async->nreqs++;
+    }
+    else
+#endif
+      MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm));
   }
 
 }
@@ -303,7 +337,15 @@ void _XMPF_bcast_on_template(void *data_addr, int count, int datatype,
       }
     }
 
-    MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm));
+#if MPI_VERSION >= 3
+    if (is_async){
+      _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+      MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm), async->reqs);
+      async->nreqs = 1;
+    }
+    else
+#endif
+      MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm));
   }
   else {
     if (xmpf_test_task_on__(&on_desc)){
@@ -321,7 +363,16 @@ void _XMPF_bcast_on_template(void *data_addr, int count, int datatype,
 	}
       }
 
-      MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm));
+#if MPI_VERSION >= 3
+      if (is_async){
+	_XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+	MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm), async->reqs);
+	async->nreqs = 1;
+      }
+      else
+#endif
+	MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm));
+
       xmpf_end_task__();
     }
   }
@@ -336,7 +387,6 @@ void xmpf_bcast__(void *data_addr, int *count, int *datatype,
     _XMPF_bcast_on_template(data_addr, *count, *datatype, *from_desc, *on_desc);
   else
     _XMPF_bcast_on_nodes(data_addr, *count, *datatype, *from_desc, *on_desc);
-
 }
 
 

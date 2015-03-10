@@ -286,15 +286,18 @@ void compile_XMP_directive(expr x)
 
     case XMP_WAIT_ASYNC:
       check_INEXEC();
-      expr c0 = list0(LIST);
-      list lp;
-      FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(c)){
-        x1 = LIST_ITEM(lp);
-	x1 = compile_expression(x1);
-	c0 = list_put_last(c0, x1);
-      }
-      c = list1(LIST,c0);
-      output_statement(XMP_pragma_list(XMP_WAIT_ASYNC,c,NULL));
+      output_statement(x);
+      /* x2 = XMP_compile_ON_ref(EXPR_ARG2(c)); */
+      /* expr c0 = list0(LIST); */
+      /* list lp; */
+      /* FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(c)){ */
+      /*   x1 = LIST_ITEM(lp); */
+      /* 	x1 = compile_expression(x1); */
+      /* 	c0 = list_put_last(c0, x1); */
+      /* } */
+      /* c = list1(LIST,c0); */
+      /* //output_statement(XMP_pragma_list(XMP_WAIT_ASYNC,c,NULL)); */
+      /* output_statement(XMP_pragma_list(XMP_WAIT_ASYNC,c, x2)); */
       break;
 
     case XMP_TEMPLATE_FIX:
@@ -580,8 +583,8 @@ expv XMP_compile_subscript_list(expr l,xmp_list_context context)
 		if(EXPR_ARG1(x) == EXPR_ARG2(x) &&
 		   EXPR_ARG3(x) != NULL && EXPR_INT(EXPR_ARG3(x)) == 0){
 		    v = compile_expression(EXPR_ARG1(x));
-		    if(!IS_INT_CONST_V(v) && !IS_INT_PARAM_V(v))
-			error("subscript in nodes must be an integer constant");
+		    /* if(!IS_INT_CONST_V(v) && !IS_INT_PARAM_V(v)) */
+		    /* 	error("subscript in nodes must be an integer constant"); */
 		} else 
 		    error("bad subscript in nodes directive");
 	    }
