@@ -80,7 +80,7 @@ public class XMPglobalDecl {
     int dot = fullPath.lastIndexOf('.');
     int sep = fullPath.lastIndexOf('/');
     String fileName = fullPath.substring(sep + 1, dot); // Delete extension and dirname　( "/tmp/hoge.c -> hoge" ).
-    fileName = "xmpc_init_file_" + fileName;
+    fileName = "xmpc_traverse_init_file_" + fileName;
 
     Xtype funcType = Xtype.Function(Xtype.voidType);
     Ident funcId = _env.declExternIdent(fileName, funcType);
@@ -110,7 +110,7 @@ public class XMPglobalDecl {
     int dot = fullPath.lastIndexOf('.');
     int sep = fullPath.lastIndexOf('/');
     String fileName = fullPath.substring(sep + 1, dot);   // Delete extension and dirname　( "/tmp/hoge.c -> hoge" ).
-    fileName = "xmpc_finalize_file_" + fileName;
+    fileName = "xmpc_traverse_finalize_file_" + fileName;
 
     Ident funcId = _env.declExternIdent(fileName, funcType);
 

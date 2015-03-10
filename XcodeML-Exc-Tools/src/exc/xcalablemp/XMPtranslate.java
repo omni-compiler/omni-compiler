@@ -109,8 +109,9 @@ public class XMPtranslate implements XobjectDefVisitor {
     Xobject mainBody = fd.getDef().getFuncBody();
     XobjectFile _env = _globalDecl.getEnv();
     Ident xmpcInitAll = _env.declExternIdent("xmpc_init_all", Xtype.Function(Xtype.voidType));
-    Ident xmpcModuleInit = _env.declExternIdent("xmpc_module_init", Xtype.Function(Xtype.voidType));
+    Ident xmpcTraverseInit = _env.declExternIdent("xmpc_traverse_init", Xtype.Function(Xtype.voidType));
     Ident xmpcMain = _env.declStaticIdent("xmpc_main", Xtype.Function(mainType));
+    Ident xmpcTraverseFinalize = _env.declExternIdent("xmpc_traverse_finalize", Xtype.Function(Xtype.voidType));
     Ident xmpcFinalizeAll = _env.declExternIdent("xmpc_finalize_all", Xtype.Function(Xtype.voidType));
 
     _env.add(XobjectDef.Func(xmpcMain, mainIdList, mainDecls, mainBody));
@@ -119,15 +120,17 @@ public class XMPtranslate implements XobjectDefVisitor {
     BlockList newFuncBody = Bcons.emptyBody();
 
     newFuncBody.add(xmpcInitAll.Call(mainIdList));
-    newFuncBody.add(xmpcModuleInit.Call(null));
+    newFuncBody.add(xmpcTraverseInit.Call(null));
     if(mainType.equals(Xtype.voidType)){
       newFuncBody.add(xmpcMain.Call(mainIdList));
+      newFuncBody.add(xmpcTraverseFinalize.Call(null));
       newFuncBody.add(xmpcFinalizeAll.Call(null));
     }
     else{
       Ident r = Ident.Local("r", mainType);
       newFuncBody.addIdent(r);
       newFuncBody.add(Xcons.Set(r.Ref(), xmpcMain.Call(mainIdList)));
+      newFuncBody.add(xmpcTraverseFinalize.Call(null));
       newFuncBody.add(xmpcFinalizeAll.Call(Xcons.List(r)));
       newFuncBody.add(Xcons.List(Xcode.RETURN_STATEMENT, r.Ref()));
     }
