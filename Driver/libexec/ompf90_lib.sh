@@ -54,6 +54,11 @@ function ompf90_show_env()
     fi
 }
 
+function get_target()
+{
+    ompf90 --show-env | grep TARGET | sed 's/TARGET=//' | sed "s/\"//g"
+}
+
 function ompf90_set_parameters()
 {
     local OUTPUT_FLAG=
@@ -68,14 +73,19 @@ function ompf90_set_parameters()
             -J)
                 MODULE_FLAG=true;;
             -J?*)
-		MODULE_DIR="${arg#-J}"
-                MODULE_OPT="$MODULE_OPT -M${MODULE_DIR}"
-                other_args="$other_args $OMNI_MODINC ${MODULE_DIR}";;
+                module_dir=("${arg#-J}")  # Only one module directory can be selected
+                module_opt=("-M${module_dir[0]}")
+                target=`get_target`
+                if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
+                    other_args+=("${OMNI_MODINC}${module_dir}")
+                else
+                    other_args+=("${OMNI_MODINC}" "${module_dir}")
+                fi;;
 	    -I)
                 INCLUDE_FLAG=true;;
             -I?*)
-                include_opt=("${arg}")
-                other_args=("${other_args[@]}" "${arg}");;
+                include_opt+=("${arg}")
+                other_args+=("${arg}");;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)
@@ -116,17 +126,17 @@ function ompf90_set_parameters()
 		STOP_COMPILE=true
 		VERBOSE=true;;
             --Wp*)
-                pp_add_opt=("${pp_add_opt[@]}" "${arg#--Wp}");;
+                pp_add_opt+=("${arg#--Wp}");;
             --Wf*)
-                frontend_add_opt=("${frontend_add_opt[@]}" "${arg#--Wf}");;
+                frontend_add_opt+=("${arg#--Wf}");;
             --Wx*)
-                xcode_translator_add_opt=("${xcode_translator_add_opt[@]}" "${arg#--Wx}");;
+                xcode_translator_add_opt+=("${arg#--Wx}");;
             --Wn*)
-                native_add_opt=("${native_add_opt[@]}" "${arg#--Wn}");;
+                native_add_opt+=("${arg#--Wn}");;
             --Wb*)
-                backend_add_opt=("${backend_add_opt[@]}" "${arg#--Wb}");;
+                backend_add_opt+=("${arg#--Wb}");;
             --Wl*)
-                linker_add_opt=("${linker_add_opt[@]}" "${arg#--Wl}");;
+                linker_add_opt+=("${arg#--Wl}");;
             --openmp|-omp)
                 ENABLE_OPENMP=true;;
 	    -acc|--openacc)
@@ -143,24 +153,29 @@ function ompf90_set_parameters()
                 elif [[ "$MODULE_FLAG" = true ]]; then
 		    module_dir=("${arg#-J}")
                     module_opt=("-M${module_dir[0]}")
-                    other_args=("$other_args[@]" "$OMNI_MODINC" "${module_dir}")
                     MODULE_FLAG=false
+                    target=`get_target`
+                    if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
+			other_args+=("${OMNI_MODINC}${module_dir}")
+                    else
+			other_args+=("${OMNI_MODINC}" "${module_dir}")
+                    fi
                 elif [[ "$INCLUDE_FLAG" = true ]]; then
-		    include_opt=("${include_opt[@]}" "-I${arg}")
+		    include_opt+=("-I${arg}")
                     INCLUDE_FLAG=false
-                    other_args=("${other_args[@]}" "-I${arg}")
+                    other_args+=("-I${arg}")
 		elif [[ $arg =~ \.f90$ ]] || [[ $arg =~ \.f$ ]]; then
-                    f_f90_files=("${f_f90_files[@]}" "${arg}")
-                    all_files=("${all_files[@]}" "${arg}");
+                    f_f90_files+=("${arg}")
+                    all_files+=("${arg}");
                 elif [[ $arg =~ \.F90$ ]] || [[ $arg =~ \.F$ ]]; then
-                    F_F90_files=("${F_F90_files[@]}" "${arg}")
-                    all_files=("${all_files[@]}" "${arg}")
+                    F_F90_files+=("${arg}")
+                    all_files+=("${arg}")
                 elif [[ "${arg}" =~ \.a$ ]]; then
-                    archive_files=("${archive_files[@]}" "${arg}")
+                    archive_files+=("${arg}")
                 elif [[ "${arg}" =~ \.o$ ]]; then
-                    obj_files=("${obj_files[@]}" "${arg}")
+                    obj_files+=("${arg}")
                 else
-                    tmp_args="$tmp_args $arg"
+                    other_args+=("${arg}")
                 fi;;
 	esac
     done
@@ -169,4 +184,3 @@ function ompf90_set_parameters()
         omni_error_exit "cannot use both --tmp and --dry options at the same time."
     fi
 }
-
