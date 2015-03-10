@@ -55,11 +55,12 @@ function omni_f_check_file_exist()
 # http://d.hatena.ne.jp/eggtoothcroc/20110718/p1
 function omni_f_norm_file_name()
 {
-    local filename=`basename "$1" .f90`   # ./hoge/fuga-a.f90 -> fuga-a
+    local filename=`basename "$1" .f90`          # ./hoge/fuga-a.f90 -> fuga-a
     filename=`basename "$filename" .F90`
     filename=`basename "$filename" .f`
     filename=`basename "$filename" .F`
-    filename=`dirname "$1"`/${filename}   #  -> ./hoge/fuga-a
+    filename=`dirname "$1"`/${filename}          #  -> ./hoge/fuga-a
+    filename=`echo $filename | sed 's/^\.\///'`  #         -> hoge/fuga-a
 
     local len=${#filename}
     local NORM_NAME=""
