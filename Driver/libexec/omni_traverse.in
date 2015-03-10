@@ -155,6 +155,11 @@ fortran_output_MODE2() {
 c_output_MODE1() {
     for groupname in "${groupnames[@]}"; do
         echo "extern void ${groupname}(void);"
+        for name in "${procedures[@]}"; do
+            if [[ ${name} =~ ${groupname}_* ]]; then
+                echo "extern void ${name}(void);"
+            fi
+        done
     done
     echo
 
