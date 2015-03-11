@@ -2790,8 +2790,10 @@ next_line0:
         local_CONDCOMPL_flag = TRUE;
     }else{
         if( line_buffer[0]=='!' ){ 
-            /* now '!' on 1st place always means comment line. */
-            goto next_line;
+	  /* now '!' on 1st place always means comment line. */
+	  // skip succeeding characters
+	  while (fgetc(source_file) != '\n');
+	  goto next_line;
         }
     }
 
