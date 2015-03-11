@@ -7,13 +7,8 @@
 MODE=1         # generate subroutines respectively for all groups
 #MODE=2          # generate one subroutine for all proceures of all groups
 
-#========== not needed due to the new logic
-##-- for MODE 1
-#DEFAULT_F_GROUPNAMES=( xmpf_traverse_module xmpf_traverse_initcoarray )
-#DEFAULT_C_GROUPNAMES=( xmpc_traverse_init xmpc_traverse_finalize )
-#==========
-
 NM="@NM@"
+#NM="cat"
 
 USAGE='usage: '$0' <option> ... <input_file> ...
   <option>
@@ -39,13 +34,13 @@ while [ -n "$1" ]; do
     -o)         shift; OUTFILE="$1";;
     *.o)        INFILES+=("$1");;
     *.a)        INFILES+=("$1");;
-    *)          echo "$0: illegal filename $1" 1>&2; HELP=yes;;
+    *)          INFILES+=("$1"); echo "$0: Warning: illegal filename $1" 1>&2;;
     esac
     shift
 done
 
 if [ "$HELP" = "yes" -o "$LANG" = "" ]; then
-   echo $USAGE 1>&2
+   echo "$USAGE" 1>&2
    exit 1
 fi
 
@@ -67,27 +62,31 @@ fi
 #--------------------------------------------------------------
 
 #--- get traverse procedures
-candidates=`$NM "${INFILES[@]}" | awk 'NF >= 2 && $(NF-1) == "U" { print $NF }'`
+trav_cands=`$NM "${INFILES[@]}" | \
+    awk 'NF >= 2 && $(NF-1) ~ "^[U]$" { print $NF }'`
 traversers=()
-for name in $candidates; do
+for name in $trav_cands; do
+    name=${name#.}                # re-mangling for Hitachi SR
     case $name in
         ${PREFIX}_traverse_?*)
         case "$LANG" in 
             F) traversers+=( ${name%_} );;    # omit the last '_'
-            C) traversers+=( $name );;
+            C) traversers+=( ${name} );;
         esac;;
     esac
 done
 
 #--- get procedures to be traversed
-candidates=`$NM "${INFILES[@]}" | awk 'NF >= 2 && $(NF-1) == "T" { print $NF }'`
+proc_cands=`$NM "${INFILES[@]}" | \
+    awk 'NF >= 2 && $(NF-1) ~ "^[BbDdRrSsTt]$" { print $NF }'`
 procedures=()
-for name in $candidates; do
+for name in $proc_cands; do
+    name=${name#.}                # re-mangling for Hitachi SR
     case $name in
         ${PREFIX}_traverse_*_?* )
             case "$LANG" in
-                F) procedures+=( ${name%_} );;    # get name from "name_"
-                C) procedures+=( $name );;
+                F) procedures+=( ${name%_} );;    # omit the last '_'
+                C) procedures+=( ${name} );;
             esac;;
         ${PREFIX}_traverse_* )
             echo found unacceptable name of traverse procedure: \"${name}\"
@@ -120,11 +119,18 @@ else
 fi
 
 if [ "$VERBOSE" = "yes" ]; then
-    echo ------------
-    echo "candidates="$candidates
-    echo "procedures=${procedures[@]}"
-    echo "groupnames=${groupnames[@]}"
-    echo ------------
+    echo
+    echo "[candidate names for tarverse procedures]"
+    echo "  "$trav_cands
+    echo "[generated traverse procedures]"
+    echo "  ${traversers[@]}"
+    echo "[group names]"
+    echo "  ${groupnames[@]}"
+    echo "[candidate names for called procedures]"
+    echo "  "$proc_cands
+    echo "[procedures called in traverse procedures]"
+    echo "  ${procedures[@]}"
+    echo
 fi
 
 #--------------------------------------------------------------

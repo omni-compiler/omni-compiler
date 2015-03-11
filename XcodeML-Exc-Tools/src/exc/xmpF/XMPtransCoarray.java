@@ -215,7 +215,7 @@ public class XMPtransCoarray
 
     // i. convert allocate/deallocate stmts for coarrays, and
     //    fake intrinsic function allocated
-    convReferenceOfCoarrays(visibleCoarrays);
+    //convReferenceOfAllocCoarrays(visibleCoarrays);
 
     // j. generate automatic deallocation before return/end stmts
     //genAutoDeallocOfCoarrays(allocatableLocalCoarrays);
@@ -416,7 +416,7 @@ public class XMPtransCoarray
   //  fake intrinsic function allocated
   //-----------------------------------------------------
   //
-  private void convReferenceOfCoarrays(Vector<XMPcoarray> coarrays) {
+  private void convReferenceOfAllocCoarrays(Vector<XMPcoarray> coarrays) {
 
     XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
 
@@ -433,12 +433,12 @@ public class XMPtransCoarray
         //     (Reference of a variable name is only supported.)
         // x.getArg(1): list of variables to be allocated
         // errmsg= identifier is not supported either.
-        if (_foundCoarrayInList(x.getArg(1), coarrays))
+        if (_doesListHaveCoarray(x.getArg(1), coarrays))
           conv_allocateStmt(x, coarrays);
         break;
 
       case F_DEALLOCATE_STATEMENT:
-        if (_foundCoarrayInList(x.getArg(1), coarrays))
+        if (_doesListHaveCoarray(x.getArg(1), coarrays))
           conv_deallocateStmt(x, coarrays);
         break;
 
@@ -459,7 +459,8 @@ public class XMPtransCoarray
     }
   }
 
-  private Boolean _foundCoarrayInList(Xobject args, Vector<XMPcoarray> coarrays) {
+  private Boolean _doesListHaveCoarray(Xobject args,
+                                       Vector<XMPcoarray> coarrays) {
     Boolean isFound = false;
     for (Xobject arg: (XobjList)args) {
       String varname = arg.getArg(0).getString();

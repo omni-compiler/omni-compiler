@@ -178,7 +178,7 @@ public class XMPcoarrayInitProcedure {
       Ident sernoId =
         body.declLocalIdent(serno, Xtype.FintType, StorageClass.FCOMMON, null);
       Ident crayptrId = 
-        body.declLocalIdent(serno, Xtype.Fint8Type, StorageClass.FCOMMON, null);
+        body.declLocalIdent(crayptr, Xtype.Fint8Type, StorageClass.FCOMMON, null);
       /*------
         for 32-bit pointer envirionment
         Ident crayptrId = 

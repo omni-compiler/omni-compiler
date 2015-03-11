@@ -2,7 +2,7 @@
 #OPT= -g --debug --verbose
 
 OUT_decl= decl1 decl2
-OUT_size= sample size2 # size1-err
+OUT_size= # size2 sample #size1-err
 #OUT_allo= allo1 allo3 allo4 #allo2
 
 OUT = $(OUT_decl) $(OUT_size) $(OUT_allo)
