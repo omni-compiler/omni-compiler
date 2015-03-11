@@ -28,10 +28,6 @@ public class XMPrewriteExpr
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
 
-    // translate all about coarray #060
-    XMPtransCoarray transCoarray = new XMPtransCoarray(def, env);
-    transCoarray.run();
-
     // rewrite return statements
     BlockIterator iter5 = new topdownBlockIterator(fb);
     for (iter5.init(); !iter5.end(); iter5.next()){

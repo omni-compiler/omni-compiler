@@ -5,12 +5,12 @@
 
   me=this_image()
 
-  l1=.true.
-  l2=.false.
+  l1=.true._4
+  l2=.false._2
   syncall
 
   if (me==3) then
-     l2[2]=l1
+     l2[2]=logical(l1,2)
   endif
   syncall
 

@@ -1,11 +1,8 @@
 COMPILER=$(shell xmpcc --show-env | grep OMNI_MPICC_CMD | sed 's/OMNI_MPICC_CMD=//' | sed "s/\"//g" | xargs basename)
-MPIPATH=$(shell which $(COMPILER) | sed "s/bin\/$(COMPILER)/include/g")
+MPIPATH=$(shell which $(COMPILER) | xargs dirname | awk '{print $$1"/../include"}')
 XCC     = xmpcc -O2
 XRUN    = mpirun
-C_TESTS = $(wildcard *.c)
-C_EXES  = $(C_TESTS:.c=.x)
-C_OBJS  = $(C_TESTS:.c=.o)
-EXES    = $(C_EXES)
+EXES    = 117.x 119.x 278\ spacefile.x 293-hyphen.x 343_dynamicnode.x 344_include.x 355.x 377.x dnodes.x macro_in_pragma.x openmp.x
 
 .PHONY: clean all default run
 
@@ -13,8 +10,11 @@ all default: $(EXES)
 
 .SUFFIXES: .x .c
 
-344_include.x: ./344_include.c
+344_include.x: 344_include.c
 	$(XCC) -I$(MPIPATH) $^ -o $@
+
+278\ spacefile.x: 278\ spacefile.c
+	$(XCC) 278\ spacefile.c -DPASS='"P A S S"' -o 278\ spacefile.x
 
 openmp.x: openmp.c
 	$(XCC) -omp openmp.c -o openmp.x
@@ -49,9 +49,9 @@ run: macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 2
 	XMP_NODE_SIZE0=4 $(XRUN) -n 4 ./343_dynamicnode.x
 	$(XRUN) -n 1 ./344_include.x
 	$(XRUN) -n 1 ./293-hyphen.x
+	$(XRUN) -n 1 ./278\ spacefile.x
 
 #-- cleaning
 clean:
-	rm -f $(EXES) $(C_OBJS)
+	rm -f $(EXES) *.o
 	rm -rf __omni_tmp__
-

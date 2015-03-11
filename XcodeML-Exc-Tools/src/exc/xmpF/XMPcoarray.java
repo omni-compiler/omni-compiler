@@ -15,11 +15,13 @@ import java.util.*;
  */
 public class XMPcoarray {
 
-  // attributes
+  // original attributes
   private Ident ident;
   private String name;
   private FindexRange indexRange;
   private Xtype originalType;
+  private Boolean isAllocatableOriginally;
+  private Boolean isPointerOriginally;
 
   // corresponding cray pointer and descriptor
   private String crayPtrName = null;
@@ -45,6 +47,8 @@ public class XMPcoarray {
     fblock = funcDef.getBlock();
     name = ident.getName();
     originalType = ident.Type().copy();  // not sure how deep this copy is
+    isAllocatableOriginally = ident.Type().isFallocatable();
+    isPointerOriginally = ident.Type().isFpointer();
     if (DEBUG) System.out.println("[XMPcoarray] new coarray = "+this);
   }
 
@@ -96,16 +100,19 @@ public class XMPcoarray {
   //  self error check
   //------------------------------
   public void errorCheck() {
-    if (isPointer())
-      XMP.error("Coarray cannot be a pointer: "+name);
-    if (isDummyArg()) {
-      if (!isScalar() && !isExplicitShape())
-        XMP.error("Static coarray should be scalar or explicit shaped: "+name);
+
+    if (ident.isCoarray()) {  // if it is not converted yet
+      if (isPointer()) {
+        XMP.error("Coarray variable cannot be a pointer: " + name);
+      }
+      if (isDummyArg()) {
+        if (!isScalar() && !isExplicitShape() && !isAllocatable())
+          XMP.error("Coarray dummy argument must be explicit-shaped or allocatable: "
+                    + name);
+      }
     }
+
   }
-
-
-
 
 
   //------------------------------
@@ -169,13 +176,7 @@ public class XMPcoarray {
     return ftype.getFarraySizeExpr();
   }
 
-  public FindexRange getFindexRange() {
-    if (indexRange == null)
-      _setFindexRange();
-    return indexRange;
-  }
-
-  public void _setFindexRange() {
+  private void _setFindexRange() {
     Xobject[] shape = getShape();
     indexRange = new FindexRange(shape, fblock, env);
   }
@@ -185,15 +186,45 @@ public class XMPcoarray {
     indexRange = new FindexRange(sizes, block, env);
   }
 
+  public FindexRange getFindexRange() {
+    if (indexRange == null)
+      _setFindexRange();
+    return indexRange;
+  }
 
-  public Xobject getLbound(int i)
-  {
+
+  public Xobject getLbound(int i) {
+    Xobject lbound = getLboundOrNull(i);
+    if (lbound == null) {
+      // generate intrinsic function call "lbound(a,dim)"
+      Xobject arg1 = Xcons.Symbol(Xcode.VAR, name);
+      Xobject arg2 = Xcons.IntConstant(i + 1);
+      Ident fname =
+          getEnv().declIntrinsicIdent("lbound", Xtype.FintFunctionType);
+      lbound = fname.Call(Xcons.List(arg1, arg2));
+    }
+    return lbound;
+  }
+
+  public Xobject getLboundOrNull(int i) {
     FarrayType ftype = (FarrayType)ident.Type();
     return ftype.getLbound(i, fblock);
   }
 
-  public Xobject getUbound(int i)
-  {
+  public Xobject getUbound(int i) {
+    Xobject ubound = getUboundOrNull(i);
+    if (ubound == null) {
+      // generate intrinsic function call "ubound(a,dim)"
+      Xobject arg1 = Xcons.Symbol(Xcode.VAR, name);
+      Xobject arg2 = Xcons.IntConstant(i + 1);
+      Ident fname =
+          getEnv().declIntrinsicIdent("ubound", Xtype.FintFunctionType);
+      ubound = fname.Call(Xcons.List(arg1, arg2));
+    }
+    return ubound;
+  }
+
+  public Xobject getUboundOrNull(int i) {
     FarrayType ftype = (FarrayType)ident.Type();
     return ftype.getUbound(i, fblock);
   }
@@ -211,10 +242,12 @@ public class XMPcoarray {
     return getFindexRange().getSizeFromTriplet(i1, i2, i3);
   }
 
-  public Xobject getSizeFromTriplet(Xobject i1, Xobject i2, Xobject i3)
-  {
-    return getFindexRange().getSizeFromTriplet(i1, i2, i3);
-  }
+
+  //public Xobject getSizeFromTriplet(Xobject i1, Xobject i2, Xobject i3)
+  //{
+  //  return getFindexRange().getSizeFromTriplet(i1, i2, i3);
+  //}
+
   public Xobject getSizeFromTriplet(int i, Xobject i1, Xobject i2, Xobject i3)
   {
     return getFindexRange().getSizeFromTriplet(i, i1, i2, i3);
@@ -222,18 +255,50 @@ public class XMPcoarray {
 
 
   //------------------------------
-  //  inquiring interface
+  //  get/set Xtype object
   //------------------------------
   public Boolean isScalar() {
     return (ident.Type().getNumDimensions() == 0);
   }
 
   public Boolean isAllocatable() {
-    return ident.Type().isFallocatable();
+    return isAllocatableOriginally;
+  }
+
+  public void setAllocatable() {
+    ident.Type().setIsFallocatable(true);
+  }
+
+  public void resetAllocatable() {
+    for (Xtype type = ident.Type(); type != null; ) {
+      type.setIsFallocatable(false);
+      if (type.copied != null)
+        type = type.copied;
+      else if (type.isBasic())
+        break;
+      else
+        type = type.getRef();
+    }
   }
 
   public Boolean isPointer() {
-    return ident.Type().isFpointer();
+    return isPointerOriginally;
+  }
+
+  public void setPointer() {
+    ident.Type().setIsFpointer(true);
+  }
+
+  public void resetPointer() {
+    for (Xtype type = ident.Type(); type != null; ) {
+      type.setIsFpointer(false);
+      if (type.copied != null)
+        type = type.copied;
+      else if (type.isBasic())
+        break;
+      else
+        type = type.getRef();
+    }
   }
 
   public Boolean isDummyArg() {

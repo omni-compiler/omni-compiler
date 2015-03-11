@@ -114,6 +114,7 @@ public class omompx
     boolean xcalableMPthreads = false;
     boolean xcalableMPGPU = false;
     boolean xmpf = false;
+    boolean async = false;
     boolean outputXcode = false;
     boolean outputDecomp = false;
     boolean dump = false;
@@ -152,6 +153,8 @@ public class omompx
         xcalableMPGPU = true;
       } else if(arg.equals("-fxmpf")) {
         xmpf = true;
+      } else if(arg.equals("-fasync")) {
+        async = true;
       } else if(arg.equals("-w")) {
         if(narg == null)
           error("needs argument after -w");
@@ -255,6 +258,7 @@ public class omompx
     XmOption.setLanguage(XmLanguage.valueOf(lang));
     XmOption.setIsOpenMP(openMP);
     XmOption.setIsCoarray(coarray);
+    XmOption.setIsAsync(async);
     XmOption.setIsXcalableMP(xcalableMP);
     XmOption.setIsXcalableMPthreads(xcalableMPthreads);
     XmOption.setIsXcalableMPGPU(xcalableMPGPU);

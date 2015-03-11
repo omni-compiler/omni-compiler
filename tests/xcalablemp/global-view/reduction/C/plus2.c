@@ -38,7 +38,7 @@ int main(void)
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       sa = sa+a[i][j];
-#pragma xmp reduction (+:sa) 
+#pragma xmp reduction (+:sa)
 
 #pragma xmp loop (j,i) on t2(j,i)
   for(i=0;i<N;i++)
@@ -51,7 +51,7 @@ int main(void)
     for(j=0;j<N;j++)
       sc = sc+c[i][j];
 #pragma xmp reduction (+:sc)
-  
+
   if(sa != N*N||abs(sb-((double)N*N*0.5))>0.000001||abs(sc-((float)N*N*0.25))>0.0001)
     result = -1; // ERROR
 

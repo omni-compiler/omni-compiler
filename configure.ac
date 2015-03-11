@@ -101,7 +101,6 @@ AC_MSG_CHECKING(check C-BackEnd project exists)
 if test -e "C-BackEnd/Makefile.am"; then
     C_BACKEND_DIR=C-BackEnd
     AC_CONFIG_FILES($C_BACKEND_DIR/Makefile)
-    AC_CONFIG_FILES($C_BACKEND_DIR/bin/C_Back)
     AC_MSG_RESULT(yes)
 else
     C_BACKEND_DIR=''
@@ -130,9 +129,6 @@ AC_MSG_CHECKING(check F-BackEnd project exists)
 if test -e "F-BackEnd/Makefile.am"; then
     F_BACKEND_DIR=F-BackEnd
     AC_CONFIG_FILES($F_BACKEND_DIR/Makefile)
-    AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Back)
-    AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Trans)
-    AC_CONFIG_FILES($F_BACKEND_DIR/bin/F_Decomp)
     AC_MSG_RESULT(yes)
 else
     F_BACKEND_DIR=''
@@ -166,7 +162,6 @@ if test -e "Driver/src/Makefile.am"; then
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/ompf90.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/xmpcc.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../etc/xmpf90.conf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/java.conf)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/ompcc)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/ompf90)
     AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpcc)
@@ -416,41 +411,32 @@ AC_SUBST(LIBACC_HEADER_DIR)
 
 # --------------------------------------------------------------------
 AC_ARG_ENABLE(debug,
-    [  --enable-debug                 enable generate executable with debug symbol (false default).],
+    [  --enable-debug                 enable generate executable with debug symbol (false default)],
     [doDebug=yes], [doDebug=no])
 
-#AC_ARG_ENABLE(xmpgpu,
-#    [  --enable-xmpgpu                enable XcalableMP-GPU (false default).],
-#    [doXmpGpu=yes], [doXmpGpu=no])
-
 AC_ARG_ENABLE(openacc,
-    [  --enable-openacc               enable OpenACC (false default).],
+    [  --enable-openacc               enable OpenACC (false default)],
     [doOpenAcc=yes], [doOpenAcc=no])
 
 AC_ARG_ENABLE(atool,
-    [  --enable-atool                 enable atool (false default).],
+    [  --enable-atool                 enable atool (false default)],
     [doatool=yes], [doatool=no])
 
 AC_ARG_ENABLE(xacc,
-    [  --enable-xacc                  enable XcalableACC (false default).],
+    [  --enable-xacc                  enable XcalableACC (false default)],
     [xacc=yes], [xacc=no])
-
-AC_ARG_ENABLE(mpi3,
-    [  --enable-mpi3                  enable MPI3 (false default).],
-    [doMPI3=yes], [doMPI3=no])
 
 ## Add temporarily by mnakao
 #AC_ARG_ENABLE(FJRDMA,
-#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
+#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10],
 #   [enableFJRDMA=yes], [enableFJRDMA=no])
 #
 #AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
 ## End Add temporarily
 
 AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
-
-AC_SUBST(FJRDMA)
-
+TARGET=$target
+AC_SUBST(TARGET)
 # --------------------------------------------------------------------
 # check basic commands
 
@@ -558,6 +544,9 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-Kopenmp"
 
+# CPP_OPT
+  CPP_OPT="-Cpp"
+
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
   XMPF_DEF="-D_XCALABLEMP"
@@ -579,19 +568,23 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 
 # Omni C
   OMNI_C2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-Xg -noansi"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-Free"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
 elif test "$target" = "MIC-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-mp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -614,19 +607,23 @@ elif test "$target" = "MIC-linux-gnu"; then
 
 # Omni C
   OMNI_C2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-std=gnu99"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS=""
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
 elif test "$target" = "Cray-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-h omp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -649,19 +646,23 @@ elif test "$target" = "Cray-linux-gnu"; then
 
 # Omni C
   OMNI_C2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-hgnu -D_XMP_CRAY"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-f free"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
 elif test "$target" = "sx-nec-superux"; then
 # OpenMP
   OPENMP_OPT="-Popenmp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -684,21 +685,25 @@ elif test "$target" = "sx-nec-superux"; then
 
 # Omni C
   OMNI_C2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-Kgcc -w"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-f4 -w"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
 elif test "$target" = "powerpc-ibm-cnk"; then
   # These options are referred to https://scwwwb.kek.jp/index.html
 
 # OpenMP
   OPENMP_OPT="-qsmp=omp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -754,23 +759,27 @@ elif test "$target" = "powerpc-ibm-cnk"; then
 
 # Omni C
   OMNI_C2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-q64 -qipa"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT $MPI_CLIBS"
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT $MPI_CLIBS"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
 elif test "$target" = "powerpc-hitachi-aix"; then
 # OpenMP
   OPENMP_OPT="-qsmp=omp"
 
+# CPP_OPT
+  CPP_OPT="-cpp"
+
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
-  XMPF_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-WF,-D_XCALABLEMP"
 
 # MPI C
   MPI_CC="mpCC_r"
@@ -789,21 +798,18 @@ elif test "$target" = "powerpc-hitachi-aix"; then
 
 # Omni C
   OMNI_C2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-q64"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
 
-else
-  # XcalableMP
-  XMPC_DEF="-D_XCALABLEMP"
-  XMPF_DEF="-D_XCALABLEMP"
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
+else
   INTEL_MPICC=mpiicc
   which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
   if test $? -eq 0; then
@@ -817,6 +823,9 @@ else
   cc* | gcc* | Apple*)
     # OpenMP
     OPENMP_OPT="-fopenmp"
+
+    # CPP_OPT
+    CPP_OPT="-cpp"
 
     # XcalableMP
     XMPC_DEF="-D_XCALABLEMP"
@@ -838,19 +847,23 @@ else
 
     # Omni C
     OMNI_C2X_FLAGS=""
-    OMNI_X2X_FLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
     # Omni F
     OMNI_F2X_FLAGS=""
-    OMNI_X2X_FLAGS="-gnu"
     OMNI_NTV_FCFLAGS="-ffree-form -fcray-pointer"
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS -fopenmp -lgomp"
+
+    # Omni Common
+    OMNI_X2X_FLAGS="-gnu"
     ;;
   *ICC*)
     # OpenMP
     OPENMP_OPT="-openmp"
+
+    # CPP_OPT
+    CPP_OPT="-cpp"
 
     # XcalableMP
     XMPC_DEF="-D_XCALABLEMP"
@@ -878,15 +891,16 @@ else
 
     # Omni C
     OMNI_C2X_FLAGS=""
-    OMNI_X2X_FLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
     # Omni F
     OMNI_F2X_FLAGS=""
-    OMNI_X2X_FLAGS="-intel"
     OMNI_NTV_FCFLAGS=""
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+    # Omni Common
+    OMNI_X2X_FLAGS="-intel"
     ;;
   *)
     chk2=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1`
@@ -894,6 +908,9 @@ else
     pgcc*)
       # OpenMP
       OPENMP_OPT="-mp"
+
+      # CPP_OPT
+      CPP_OPT="-Mpreprocess"
 
       # XcalableMP
       XMPC_DEF="-D_XCALABLEMP"
@@ -915,15 +932,16 @@ else
 
       # Omni C
       OMNI_C2X_FLAGS="--no-builtin-va-arg"
-      OMNI_X2X_FLAGS=""
       OMNI_NTV_CFLAGS="-D_XMP_PGI"
       OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
       # Omni F
       OMNI_F2X_FLAGS=""
-      OMNI_X2X_FLAGS=""
       OMNI_NTV_FCFLAGS=""
       OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+      # Omni Common
+      OMNI_X2X_FLAGS=""
 
       # Special options
       IS_PGI="Yes"
@@ -944,6 +962,7 @@ else
     esac ;;
   esac
 fi
+AM_CONDITIONAL(POWERPC, test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix")
 
 # --------------------------------------------------------------------
 # specify GPU C compiler
@@ -987,22 +1006,25 @@ AC_SUBST(LIBXML_PREFIX)
 # --------------------------------------------------------------------
 # set BLAS
 
-AC_ARG_WITH(blas-lib,
-    [  --with-blas-lib=DIR         BLAS Library (e.g. /foo/blas_LINUX.a)],
-    [BLAS_LIB="${withval}"; use_blas_lib=yes], [use_blas_lib=no])
+AC_ARG_WITH(libblas,
+    [  --with-libblas=DIR          BLAS Library (e.g. /foo/blas_LINUX.a)],
+    [LIBBLAS="${withval}"; use_libblas=yes], [use_libblas=no])
 
-if test x$use_blas_lib = xyes; then
-   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS ${BLAS_LIB}"
-   OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS ${BLAS_LIB}"
+if test x$use_libblas = xyes; then
+   if ! test -f $LIBBLAS; then
+     AC_MSG_ERROR([$LIBBLAS not found.])
+   fi
+   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
+   OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
 else
   if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
-    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS -SSL2BLAMP"
-    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS -SSL2BLAMP"
+    LIBBLAS="-SSL2BLAMP"
+    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
+    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
   fi
 fi
 
-AC_SUBST(BLAS_LIB)
-AM_CONDITIONAL(BLAS_LIB, test x${use_blas_lib} = xyes)
+AM_CONDITIONAL(USER_LIBBLAS, test x${use_libblas} = xyes)
 
 # --------------------------------------------------------------------
 # set TCA
@@ -1141,15 +1163,27 @@ else
   esac
 fi
 
-# MPI3 for MPI FLAGS
-if test "x${doMPI3}" = "xyes"; then
-   MPI_CPPFLAGS="$MPI_CPPFLAGS -D_XMP_MPI3"
-   MPI_FPPFLAGS="$MPI_FPPFLAGS -D_XMP_MPI3"
-   MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
-   MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
-   OMNI_X2X_FLAGS="$OMNI_X2X_FLAGS -mpi3"
+# --------------------------------------------------------------------
+# MPI3 for MPI FLAGS 
+tmpmpi3=/tmp/tmpmpi3.$$.c
+cat <<EOF > $tmpmpi3
+#include <mpi.h>
+MPI_VERSION
+MPI_SUBVERSION
+EOF
+MPI_VERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -2 | head -1`
+MPI_SUBVERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -1`
+if test $MPI_VERSION -ge 3; then
+  OMNI_X2X_FLAGS="${OMNI_X2X_FLAGS} -fasync"
+  doMPI3=yes
+else
+  doMPI3=no
 fi
+rm -f $tmpmpi3
+AM_CONDITIONAL(MPI3, test "x${doMPI3}" = "xyes")
 
+# --------------------------------------------------------------------
+# set userflags
 if test "${userFCFLAGS}" != ""; then
   FCFLAGS="${userFCFLAGS}"
 fi
@@ -1177,6 +1211,9 @@ fi
 # OpenMP
 AC_SUBST(OPENMP_OPT)
 
+# CPP_OPT
+AC_SUBST(CPP_OPT)
+
 # XcalableMP
 AC_SUBST(XMPC_DEF)
 AC_SUBST(XMPF_DEF)
@@ -1198,7 +1235,6 @@ AC_SUBST(MPI_FCLIBS)
 
 # Omni C
 AC_SUBST(OMNI_C2X_FLAGS)
-AC_SUBST(OMNI_X2X_FLAGS)
 AC_SUBST(OMNI_NTV_CFLAGS)
 AC_SUBST(OMNI_LNK_CFLAGS)
 
@@ -1206,9 +1242,11 @@ AC_SUBST(OMNI_LNK_CFLAGS)
 OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 AC_SUBST(OMNI_F_PP)
 AC_SUBST(OMNI_F2X_FLAGS)
-AC_SUBST(OMNI_X2X_FLAGS)
 AC_SUBST(OMNI_NTV_FCFLAGS)
 AC_SUBST(OMNI_LNK_FCFLAGS)
+
+# Omni Common
+AC_SUBST(OMNI_X2X_FLAGS)
 
 # Other options
 chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
@@ -1580,15 +1618,15 @@ gmpDirOpt=""
 qRealPrecBits=128
 
 AC_ARG_ENABLE(mreal,
-    [  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).],
+    [  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default)],
     [doQReal=yes], [doQReal=no])
 
 AC_ARG_WITH(gmp-lib,
-    [  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.],
+    [  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support],
     [gmpLib=$withval], [true])
 
 AC_ARG_WITH(gmp-include,
-    [  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.],
+    [  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support],
     [gmpInclude=$withval], [true])
 
 if test "x${doQReal}" = "xyes"; then
@@ -1608,7 +1646,7 @@ if test "x${doQReal}" = "xyes"; then
 fi
 
 AC_ARG_WITH(precision,
-    [  --with-precision=NUM        the default precision of real*16 in bits (128).],
+    [  --with-precision=NUM        the default precision of real*16 in bits (128)],
     [qRealPrecBits=$withval], [qRealPrecBits=128])
 
 # libgmp check
@@ -2089,12 +2127,12 @@ cat << EOF
     C compiler (MPI_CC)                         : `which $MPI_CC`
     C compiler flags (MPI_CFLAGS)               : $MPI_CFLAGS
     C compiler linker flags (MPI_CLIBS)         : $MPI_CLIBS
-
     Fortran preprocessor (MPI_FPP)              : `which $MPI_FPP`
     Fortran preprocessor flags (MPI_FPPFLAGS)   : $MPI_FPPFLAGS
     Fortran compiler (MPI_FC)                   : `which $MPI_FC`
     Fortran compiler flags (MPI_FCFLAGS)        : $MPI_FCFLAGS
     Fortran compiler linker flags (MPI_FCLIBS)  : $MPI_FCLIBS
+    Supoort MPI 3 ?                             : $doMPI3
 
   Note: If you want to change above compilers and their options,
         please rerun ./configure MPI_CC=...
@@ -2116,11 +2154,7 @@ if test x${use_tca} = xyes; then
   echo "    TCA                   : yes"
 fi
 
-if test x${doMPI3} = xyes; then
-  echo "    MPI3                  : yes"
-fi
-
-if test x${use_blas_lib} = xyes; then
-  echo "    BLAS LIB              : $BLAS_LIB"
+if test x${use_libblas} = xyes; then
+  echo "    BLAS LIB              : $LIBBLAS"
 fi
 echo "=================================================="

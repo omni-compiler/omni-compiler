@@ -6,9 +6,11 @@ usage: $1 <OPTIONS> <INPUTFILE> ...
 Compile Driver Options
 
    -o <file>         : place the output into <file>.
+   -I <dir>          : add the directory dir to the list of directories to be searched for header files.
    -J <dir>          : specify where to put .mod and .xmod files for compiled modules.
    -c                : compile and assemble, but do not link.
    -E                : preprocess only; do not compile, assemble or link.
+   -cpp              : enable preprocess.
    -v,--verbose      : print processing status.
    --version         : print version.
    -h,--help         : print usage.
@@ -52,38 +54,62 @@ function ompf90_show_env()
     fi
 }
 
+function get_target()
+{
+    ompf90 --show-env | grep TARGET | sed 's/TARGET=//' | sed "s/\"//g"
+}
+
 function ompf90_set_parameters()
 {
-    local tmp_args=""
-    local OUTPUT_FLAG=
-    local MODULE_FLAG=
-
-    for arg in "${@}"; do
-	case $arg in
-	    -o)
-                OUTPUT_FLAG=true;;
+    while [ -n "$1" ]; do
+        case "$1" in
+            *.f90|*.f)
+                f_f90_files+=("$1"); all_files+=("$1");;
+            *.F90|*.F)
+                F_F90_files+=("$1"); all_files+=("$1");;
+            *.a)
+                archive_files+=("$1");;
+            *.o)
+                obj_files+=("$1");;
+            -o)
+                shift; output_file=("$1");;
             -J)
-                MODULE_FLAG=true;;
+		shift;
+		module_dir=("${1#-J}")
+                module_opt=("-M${module_dir[0]}")
+                target=`get_target`
+                if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
+                    other_args+=("${OMNI_MODINC}${module_dir}")
+                else
+                    other_args+=("${OMNI_MODINC}" "${module_dir}")
+                fi;;
             -J?*)
-		MODULE_DIR="${arg#-J}"
-                MODULE_OPT="$MODULE_OPT -M${MODULE_DIR}"
-                other_args="$other_args $OMNI_MODINC ${MODULE_DIR}";;
+                module_dir=("${a#-J}")
+                module_opt=("-M${module_dir[0]}")
+                target=`get_target`
+                if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
+                    other_args+=("${OMNI_MODINC}${module_dir}")
+                else
+                    other_args+=("${OMNI_MODINC}" "${module_dir}")
+                fi;;
+	    -I)
+                shift; include_opt+=("-I$1"); other_args+=("-I$1");;
+            -I?*)
+                include_opt+=("$1"); other_args+=("$1");;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)
 		ONLY_PP=true;;
+            -cpp)
+                ENABLE_CPP=true;;
             -v|--verbose)
 		VERBOSE=true;;
 	    --version)
-		omni_print_version
-		exit 0;;
+		omni_print_version; exit 0;;
             -h|--help)
-		local scriptname=`basename $0`
-		ompf90_print_help $scriptname
-		exit 0;;
+		ompf90_print_help `basename $0`; exit 0;;
 	    --show-env)
-		ompf90_show_env
-		exit 0;;
+		ompf90_show_env; exit 0;;
             --tmp)
 		OUTPUT_TEMPORAL=true;;
             --dry)
@@ -91,38 +117,29 @@ function ompf90_set_parameters()
 	    --debug)
 		ENABLE_DEBUG=true;;
             --stop-pp)
-		STOP_PP=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_PP=true;;
             --stop-frontend)
-		STOP_FRONTEND=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_FRONTEND=true;;
 	    --stop-translator)
-		STOP_TRANSLATOR=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_TRANSLATOR=true;;
 	    --stop-backend)
-		STOP_BACKEND=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_BACKEND=true;;
 	    --stop-compile)
-		STOP_COMPILE=true
-		VERBOSE=true;;
-	    --Wp*)
-		PP_ADD_OPT=${arg#--Wp}
-                ;;
+		VERBOSE=true; STOP_COMPILE=true;;
+            --Wp*)
+                pp_add_opt+=("${1#--Wp}");;
             --Wf*)
-		FRONTEND_ADD_OPT=${arg#--Wf}
-                ;;
+                frontend_add_opt+=("${1#--Wf}");;
             --Wx*)
-		XCODE_TRANSLATOR_ADD_OPT=${arg#--Wx}
-                ;;
-	    --Wn*)
-		NATIVE_ADD_OPT=${arg#--Wn}
-		;;
+                xcode_translator_add_opt+=("${1#--Wx}");;
+            --Wn*)
+                native_add_opt+=("${1#--Wn}");;
             --Wb*)
-		BACKEND_ADD_OPT=${arg#--Wb}
-                ;;
+                backend_add_opt+=("${1#--Wb}");;
             --Wl*)
-		LINKER_ADD_OPT=${arg#--Wl}
-		;;
+                linker_add_opt+=("${1#--Wl}");;
+            --openmp|-omp)
+                ENABLE_OPENMP=true;;
 	    -acc|--openacc)
 		omni_error_exit "OpenACC for ompf90 has been not implemented yet."
 		if [ ${ENABLE_ACC} = "0" ]; then
@@ -131,38 +148,12 @@ function ompf90_set_parameters()
 		ENABLE_ACC=true
 		;;
             *)
-                if [ "$OUTPUT_FLAG" = true ]; then
-                    OUTPUT_FILE=$arg
-                    OUTPUT_FLAG=false
-                elif [[ "$MODULE_FLAG" = true ]]; then
-                    MODULE_DIR="$arg"
-                    MODULE_OPT="$MODULE_OPT -M${MODULE_DIR}"
-                    other_args="$other_args $OMNI_MODINC ${MODULE_DIR}"
-                    MODULE_FLAG=false
-                else
-                    tmp_args="$tmp_args $arg"
-                fi;;
+                other_args+=("$1");;
 	esac
+	shift
     done
 
     if test $OUTPUT_TEMPORAL = true -a $DRY_RUN = true; then
         omni_error_exit "cannot use both --tmp and --dry options at the same time."
     fi
-
-    for arg in $tmp_args; do
-        if [[ $arg =~ \.F90$ ]] || [[ $arg =~ \.F$ ]]; then
-            F_F90_files="$F_F90_files $arg"
-            all_files="$all_files $arg"
-        elif [[ $arg =~ \.f90$ ]] || [[ $arg =~ \.f$ ]]; then
-            f_f90_files="$f_f90_files $arg"
-            all_files="$all_files $arg"
-        elif [[ $arg =~ \.a$ ]]; then
-            archive_files="$archive_files $arg"
-        elif [[ "${arg}" =~ \.o$ ]]; then
-            obj_files="$obj_files $arg"
-        else
-            other_args="$other_args $arg"
-        fi
-    done
 }
-

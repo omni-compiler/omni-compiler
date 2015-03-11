@@ -13,6 +13,14 @@ RESULT= $(OUT:%=%.result)
 %:  %.c
 	xmpcc $(OPT) -o $@ $<
 
+%.result: %.f90
+	xmpf90 $(OPT) -o $* $<
+	mpirun -n 3 $* 2>&1 | tee $@
+
+%.result: %.c
+	xmpcc $(OPT) -o $* $<
+	mpirun -n 3 $* 2>&1 | tee $@
+
 %.result: %
 	mpirun -n 3 $< 2>&1 | tee $@
 
@@ -29,7 +37,7 @@ all:     $(OUT)
 run:	$(RESULT)
 
 ### prepare to execute on K
-submit: RUN/go.sh $(OUT:%=RUN/%)
+submit: all RUN/go.sh $(OUT:%=RUN/%)
 	cd RUN; pjsub go.sh
 
 RUN/go.sh: go.template Makefile

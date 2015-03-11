@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include "xmp_internal.h"
+extern void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
+extern void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
 
 void _XMP_reflect_init_acc(void *acc_addr, _XMP_array_t *array_desc)
 {

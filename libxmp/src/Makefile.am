@@ -9,7 +9,7 @@ libxmp_a_SOURCES = ../include/xmp_internal.h ../include/xmp_constant.h ../includ
                    xmp_nodes.c xmp_template.c xmp_barrier.c xmp_reduce.c xmp_bcast.c \
                    xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c \
                    xmp_math_function.c xmp_runtime.c xmp_tlog_runtime.c xmp_io.c xmp_reflect.c xmp_pack_vector.c \
-		   xmp_reflect_acc.c xmp_reduce_acc.c xmp_intrinsic.c xmp_sort.c
+		   xmp_reflect_acc.c xmp_reduce_acc.c xmp_intrinsic.c xmp_sort.c xmp_async.c
 
 if GASNET
     libxmp_a_SOURCES += xmp_coarray_set.c xmp_coarray_do.c xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post_wait.c xmp_gasnet_post_wait.c
@@ -21,8 +21,8 @@ if FJRDMA
     CFLAGS           += -D_XMP_COARRAY_FJRDMA -D_XMP_COARRAY
 endif
 
-if BLAS_LIB
-    CFLAGS += -D_XMP_BLAS_LIB
+if USER_LIBBLAS
+    CFLAGS += -D_XMP_USER_LIBBLAS
 endif
 
 if TCA

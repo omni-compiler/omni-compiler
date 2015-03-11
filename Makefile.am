@@ -50,12 +50,15 @@ BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
 LARGE_TESTDIRS = "others/C"
 
 if GASNET
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if FJRDMA
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/coarray/F"
    LARGE_TESTDIRS += "local-view/coarray/C/"
+endif
+if MPI3
+   TESTDIRS += "global-view/async/C/" "global-view/async/F/"
 endif
 
 .PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests
@@ -109,17 +112,12 @@ DELETABLES = Driver/bin/ompcc \
 	Driver/etc/xmpf90.conf \
 	Driver/etc/ompcc.conf \
 	Driver/etc/ompf90.conf \
-	Driver/etc/java.conf \
 	Driver/libexec/omni_traverse \
         C-FrontEnd/src/c-exprcode.c \
         C-FrontEnd/src/c-exprcode.h \
         C-FrontEnd/src/c-parser.c \
         C-FrontEnd/src/c-parser.h \
 	C-FrontEnd/src/c-token.c \
-	C-BackEnd/bin/C_Back \
-	F-BackEnd/bin/F_Back \
-	F-BackEnd/bin/F_Trans \
-	F-BackEnd/bin/F_Decomp \
 	F-FrontEnd/src/C-exprcode.c \
 	F-FrontEnd/src/C-exprcode.h \
 	F-FrontEnd/src/F95-parser.c \

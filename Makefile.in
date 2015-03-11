@@ -81,10 +81,11 @@ target_triplet = @target@
 @IS_SUPERUX_FALSE@am__append_1 = @LIBOMPC_DIR@ @LIBOMPF_DIR@
 @ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
 @ENABLE_ATOOL_TRUE@am__append_3 = @ATOOL_DIR@
-@GASNET_TRUE@am__append_4 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"
+@GASNET_TRUE@am__append_4 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"
 @GASNET_TRUE@am__append_5 = "local-view/coarray/C/"
-@FJRDMA_TRUE@am__append_6 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
+@FJRDMA_TRUE@am__append_6 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/coarray/F"
 @FJRDMA_TRUE@am__append_7 = "local-view/coarray/C/"
+@MPI3_TRUE@am__append_8 = "global-view/async/C/" "global-view/async/F/"
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
@@ -253,12 +254,12 @@ AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BLASLIB = @BLASLIB@
-BLAS_LIB = @BLAS_LIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CPP_OPT = @CPP_OPT@
 CPU = @CPU@
 CPUDEF = @CPUDEF@
 CXX = @CXX@
@@ -285,7 +286,6 @@ F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
-FJRDMA = @FJRDMA@
 F_BACKEND_DIR = @F_BACKEND_DIR@
 F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_LIBS = @GASNET_LIBS@
@@ -411,6 +411,7 @@ SIZEOF_UNSIGNED_SHORT = @SIZEOF_UNSIGNED_SHORT@
 SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
 STRIP = @STRIP@
+TARGET = @TARGET@
 TARGET_ARCH = @TARGET_ARCH@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
@@ -535,7 +536,7 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	"global-view/align/F/" "global-view/intrinsic/C/" \
 	"global-view/intrinsic/F/" "global-view/util/C/" \
 	"global-view/util/F/" "others/F" "others/C" $(am__append_4) \
-	$(am__append_6)
+	$(am__append_6) $(am__append_8)
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
 LARGE_TESTDIRS = "others/C" $(am__append_5) $(am__append_7)
 DELETABLES = Driver/bin/ompcc \
@@ -546,17 +547,12 @@ DELETABLES = Driver/bin/ompcc \
 	Driver/etc/xmpf90.conf \
 	Driver/etc/ompcc.conf \
 	Driver/etc/ompf90.conf \
-	Driver/etc/java.conf \
 	Driver/libexec/omni_traverse \
         C-FrontEnd/src/c-exprcode.c \
         C-FrontEnd/src/c-exprcode.h \
         C-FrontEnd/src/c-parser.c \
         C-FrontEnd/src/c-parser.h \
 	C-FrontEnd/src/c-token.c \
-	C-BackEnd/bin/C_Back \
-	F-BackEnd/bin/F_Back \
-	F-BackEnd/bin/F_Trans \
-	F-BackEnd/bin/F_Decomp \
 	F-FrontEnd/src/C-exprcode.c \
 	F-FrontEnd/src/C-exprcode.h \
 	F-FrontEnd/src/F95-parser.c \

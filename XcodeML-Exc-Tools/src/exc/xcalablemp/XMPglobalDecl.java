@@ -75,22 +75,15 @@ public class XMPglobalDecl {
       _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT,
                                                  declExternFunc("_XMP_threads_init").Call(null)));
     }
+
     String fullPath = _env.getSourceFileName();
     int dot = fullPath.lastIndexOf('.');
     int sep = fullPath.lastIndexOf('/');
-    String tmpName = fullPath.substring(sep + 1, dot);   // ./fuga/hoge-a.c -> hoge-a
-    String moduleName = "";
-    for(int i=0;i<tmpName.length();i++){                 // hoge-a -> hoge_2d_a   // specific charactors are translated to hex number
-      char ch = tmpName.charAt(i);
-      if(Character.isLetterOrDigit(ch))
-        moduleName += ch;
-      else
-        moduleName += "_" + Integer.toHexString(ch) + "_";
-    }
-    moduleName = "xmpc_init_file_" + moduleName;          // xmpc_init_file_hoge_2d_a
+    String fileName = fullPath.substring(sep + 1, dot); // Delete extension and dirname　( "/tmp/hoge.c -> hoge" ).
+    fileName = "xmpc_traverse_init_file_" + fileName;
 
     Xtype funcType = Xtype.Function(Xtype.voidType);
-    Ident funcId = _env.declExternIdent(moduleName, funcType);
+    Ident funcId = _env.declExternIdent(fileName, funcType);
     
     _env.add(XobjectDef.Func(funcId, null, null, 
 			     Xcons.List(Xcode.COMPOUND_STATEMENT, (Xobject)null, null, _globalConstructorFuncBody)));
@@ -116,17 +109,10 @@ public class XMPglobalDecl {
     String fullPath = _env.getSourceFileName();
     int dot = fullPath.lastIndexOf('.');
     int sep = fullPath.lastIndexOf('/');
-    String tmpName = fullPath.substring(sep + 1, dot);   // ./fuga/hoge-a.c -> hoge-a
-    String moduleName = "";
-    for(int i=0;i<tmpName.length();i++){                 // hoge-a -> hoge_2d_a   // specific charactors are translated to hex number
-      char ch = tmpName.charAt(i);
-      if(Character.isLetterOrDigit(ch))
-        moduleName += ch;
-      else
-        moduleName += "_" + Integer.toHexString(ch) + "_";
-    }
-    moduleName = "xmpc_finalize_file_" + moduleName;     // xmpc_finalize_file_hoge_2d_a
-    Ident funcId = _env.declExternIdent(moduleName, funcType);
+    String fileName = fullPath.substring(sep + 1, dot);   // Delete extension and dirname　( "/tmp/hoge.c -> hoge" ).
+    fileName = "xmpc_traverse_finalize_file_" + fileName;
+
+    Ident funcId = _env.declExternIdent(fileName, funcType);
 
     _env.add(XobjectDef.Func(funcId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT,
                              (Xobject)null, null, _globalDestructorFuncBody)));

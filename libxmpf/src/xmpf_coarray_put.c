@@ -7,10 +7,13 @@
 #include "xmpf_internal.h"
 
 // communication schemes
-#define PUTSCHEME_Normal        0
-#define PUTSCHEME_SendBuffer    1
+#define SCHEME_DirectPut       10   // RDMA expected
+#define SCHEME_BufferPut       11   // to get visible to FJ-RDMA
+#define SCHEME_ExtraDirectPut  12   // DirectPut with extra data
+#define SCHEME_ExtraBufferPut  13   // BufferPut with extra data
 
-static int _select_putscheme(int condition);
+static int _select_putscheme_scalar(int condition, int element);
+static int _select_putscheme_array(int condition);
 
 static void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
                         int bytes, int rank, int skip[], int count[]);
@@ -19,60 +22,84 @@ static char *_putVectorIter(int serno, char *baseAddr, int bytes,
                             int coindex, char *src,
                             int loops, int skip[], int count[]);
 
+static void _putVector(int serno, char *baseAddr, int bytes,
+                       int coindex, char* src);
+#if 0
+/* disused */
 static void _putVectorByByte(int serno, char *baseAddr, int bytes,
                              int coindex, char* src);
 static void _putVectorByElement(char *desc, int start, int vlength,
                                 int coindex, char* src);
-
+#endif
 
 /***************************************************\
     entry
 \***************************************************/
-
-/*
- *  assumed that tha value of emelent is the same as the one recorded previously.
- */
 
 extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition)
 {
   _XMPF_checkIfInTask("scalar coindexed variable");
 
-  char *buf;
-  size_t elementRU;
-
-  int scheme = _select_putscheme(*condition);
-
-  char *desc = _XMPF_get_coarrayDesc(*serno);
-  int start = _XMPF_get_coarrayStart(*serno, baseAddr);
+  int scheme = _select_putscheme_scalar(*condition, *element);
 
   switch (scheme) {
-  case PUTSCHEME_Normal:
+  case SCHEME_DirectPut:
     if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("PUTSCHEME_Normal/scalar selected\n");
-      fprintf(stderr, "  element in descr=%d, *element=%d\n",
-              _XMPF_get_coarrayElement(*serno), *element);
+      _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/scalar\n"
+                              "  baseAddr=%p, *element=%d\n",
+                              baseAddr, *element);
     }
-    _putVectorByElement(desc, start, 1, *coindex, rhs);
+    _putVector(*serno, baseAddr, *element, *coindex, rhs);
     break;
     
-  case PUTSCHEME_SendBuffer:
-    elementRU = (size_t)ROUND_UP_BOUNDARY(*element);
-    buf = malloc(elementRU);
-    if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("PUTSCHEME_SendBuffer/scalar selected\n");
-      fprintf(stderr, "  element in descr=%d, *element=%d\n",
-              _XMPF_get_coarrayElement(*serno), *element);
-      fprintf(stderr, "  elementRU=%zd, buf=%p\n", elementRU, buf);
+  case SCHEME_ExtraDirectPut:
+    {
+      size_t elementRU = ROUND_UP_BOUNDARY(*element);
+
+      if (_XMPF_coarrayMsg) {
+        _XMPF_coarrayDebugPrint("select SCHEME_ExtraDirectPut/scalar\n"
+                                "  baseAddr=%p, *element=%d, elementRU=%zd\n",
+                                baseAddr, *element, elementRU);
+      }
+      _putVector(*serno, baseAddr, elementRU, *coindex, rhs);
     }
-    (void)memcpy(buf, rhs, *element);
-    _putVectorByElement(desc, start, 1, *coindex, buf);
+    break;
+
+  case SCHEME_BufferPut:
+    {
+      char buf[*element];
+
+      if (_XMPF_coarrayMsg) {
+        _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/scalar\n"
+                                "  baseAddr=%p, *element=%zd, buf=%p\n",
+                                baseAddr, *element, buf);
+      }
+      (void)memcpy(buf, rhs, *element);
+      _putVector(*serno, baseAddr, *element, *coindex, buf);
+    }
+    break;
+
+  case SCHEME_ExtraBufferPut:
+    {
+      size_t elementRU = ROUND_UP_BOUNDARY(*element);
+      char buf[elementRU];
+
+      if (_XMPF_coarrayMsg) {
+        _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferPut/scalar\n"
+                                "  baseAddr=%p, elementRU=%zd, buf=%p\n",
+                                baseAddr, elementRU, buf);
+      }
+      (void)memcpy(buf, rhs, *element);
+      _putVector(*serno, baseAddr, elementRU, *coindex, buf);
+    }
     break;
 
   default:
     _XMP_fatal("unexpected scheme number in " __FILE__);
   }
 }
+
 
 
 extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
@@ -85,12 +112,13 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
   char *buf;
   int i;
 
-  int scheme = _select_putscheme(*condition);
-
   if (*element % BOUNDARY_BYTE != 0) {
-    _XMP_fatal("violation of boundary in put communication");
+    _XMP_fatal("violation of boundary in put communication"
+               "xmpf_coarray_put_array_, " __FILE__);
     return;
   }
+
+  int scheme = _select_putscheme_array(*condition);
 
   char *nextAddr;
   int skip[MAX_RANK];
@@ -104,32 +132,26 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
     count[i] = *(va_arg(argList, int*));       // count1, count2, ...
   }
 
-  int bytes = _XMPF_get_coarrayElement(*serno);
-
   switch (scheme) {
-  case PUTSCHEME_Normal:
+  case SCHEME_DirectPut:
     if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("PUTSCHEME_Normal/array selected\n");
-      fprintf(stderr, "  element in descr=%d, *element=%d\n",
-              _XMPF_get_coarrayElement(*serno), *element);
+      _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/array\n");
     }
-    _putCoarray(*serno, baseAddr, *coindex, rhs, bytes, *rank, skip, count);
+    _putCoarray(*serno, baseAddr, *coindex, rhs, *element, *rank, skip, count);
     break;
 
-  case PUTSCHEME_SendBuffer:
+  case SCHEME_BufferPut:
     bufsize = *element;
     for (i = 0; i < *rank; i++) {
       bufsize *= count[i];
     }
     if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("PUTSCHEME_SendBuffer/array selected\n");
-      fprintf(stderr, "  element in descr=%d, *element=%d\n",
-              _XMPF_get_coarrayElement(*serno), *element);
+      _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/array\n");
       fprintf(stderr, "  *bufsize=%zd\n", bufsize);
     }
     buf = malloc(bufsize);
     (void)memcpy(buf, rhs, bufsize);
-    _putCoarray(*serno, baseAddr, *coindex, buf, bytes, *rank, skip, count);
+    _putCoarray(*serno, baseAddr, *coindex, buf, *element, *rank, skip, count);
     break;
 
   default:
@@ -165,8 +187,6 @@ extern void xmpf_coarray_put_spread_(int *serno, char *baseAddr, int *element,
     count[i] = *(va_arg(argList, int*));       // count1, count2, ...
   }
 
-  int bytes = _XMPF_get_coarrayElement(*serno);
-
   nelems = 1;
   for (i = 0; i < *rank; i++)
     nelems *= count[i];
@@ -174,21 +194,48 @@ extern void xmpf_coarray_put_spread_(int *serno, char *baseAddr, int *element,
   buf = malloc(bufsize);
   for (i = 0, p = buf; i < nelems; i++, p += *element)
     (void)memcpy(p, rhs, *element);
-  _putCoarray(*serno, baseAddr, *coindex, buf, bytes, *rank, skip, count);
+  _putCoarray(*serno, baseAddr, *coindex, buf, *element, *rank, skip, count);
 }
 
 
-int _select_putscheme(int condition)
+/***************************************************\
+    sub
+\***************************************************/
+
+/* see /XcodeML-Exc-Tools/src/exc/xmpF/XMPtransCoarray.java
+ *   condition 1: It may be necessary to use buffer copy.
+ *                The address of RHS may not be accessed by FJ-RDMA.
+ *   condition 0: Otherwise.
+ */
+
+int _select_putscheme_scalar(int condition, int element)
 {
-  int scheme;
-
 #ifdef _XMP_COARRAY_FJRDMA
-  scheme = (condition >= 1) ? PUTSCHEME_SendBuffer : PUTSCHEME_Normal;
-#else
-  scheme = (condition >= 2) ? PUTSCHEME_SendBuffer : PUTSCHEME_Normal;
+  // Temporary handling: in spite of condition, BufferPut or 
+  // ExtraBufferPut will be selected because judgement of condition
+  // seems inaccurate.
+  //  if (condition >= 1) { 
+  if (condition >= 0) {
+   if (element % BOUNDARY_BYTE == 0)
+      return SCHEME_BufferPut;
+    return SCHEME_ExtraBufferPut;
+  }
 #endif
+  
+  if (element % BOUNDARY_BYTE == 0)
+    return SCHEME_DirectPut;
+  return SCHEME_ExtraDirectPut;
+}
 
-  return scheme;
+int _select_putscheme_array(int condition)
+{
+#ifdef _XMP_COARRAY_FJRDMA
+  if (condition >= 1) {
+    return SCHEME_BufferPut;
+  }
+#endif
+  
+  return SCHEME_DirectPut;
 }
 
 
@@ -197,10 +244,9 @@ void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
     if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("**** put %d bytes fully contiguous (%s)\n",
-                              bytes, __FILE__);
+      _XMPF_coarrayDebugPrint("PUT %d bytes fully contiguous ===\n", bytes);
     }
-    _putVectorByByte(serno, baseAddr, bytes, coindex, rhs);
+    _putVector(serno, baseAddr, bytes, coindex, rhs);
     return;
   }
 
@@ -216,13 +262,13 @@ void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
   if (_XMPF_coarrayMsg) {
     char work[200];
     char* p;
-    sprintf(work, "**** put %d", bytes);
+    sprintf(work, "PUT %d", bytes);
     p = work + strlen(work);
     for (int i = 0; i < rank; i++) {
       sprintf(p, " (%d-byte stride) * %d", skip[i], count[i]);
       p += strlen(p);
     }
-    _XMPF_coarrayDebugPrint("%s bytes (%s)\n", work, __FILE__);
+    _XMPF_coarrayDebugPrint("%s bytes ===\n", work);
   }
 
   src = _putVectorIter(serno, baseAddr, bytes, coindex, src,
@@ -240,7 +286,7 @@ char *_putVectorIter(int serno, char *baseAddr, int bytes,
 
   if (loops == 1) {
     for (int i = 0; i < n; i++) {
-      _putVectorByByte(serno, dst, bytes, coindex, src);
+      _putVector(serno, dst, bytes, coindex, src);
       src += bytes;
       dst += gap;
     }
@@ -255,6 +301,21 @@ char *_putVectorIter(int serno, char *baseAddr, int bytes,
 }
 
 
+void _putVector(int serno, char *baseAddr, int bytes, int coindex, char *src)
+{
+  char* desc = _XMPF_get_coarrayDesc(serno);
+  size_t offset = _XMPF_get_coarrayOffset(serno, baseAddr);
+
+  _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // LHS
+  _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // RHS
+  _XMP_coarray_rdma_node_set_1(coindex);
+  _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, src, NULL);
+}
+
+
+#if 0
+/* disused
+ */
 void _putVectorByByte(int serno, char *baseAddr, int bytes,
                       int coindex, char *src)
 {
@@ -267,7 +328,6 @@ void _putVectorByByte(int serno, char *baseAddr, int bytes,
   _putVectorByElement(desc, start, vlength, coindex, src);
 }
 
-
 void _putVectorByElement(char *desc, int start, int vlength,
                          int coindex, char* src)
 {
@@ -277,3 +337,4 @@ void _putVectorByElement(char *desc, int start, int vlength,
   _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, src, NULL);
 }
 
+#endif

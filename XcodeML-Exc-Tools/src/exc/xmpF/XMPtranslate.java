@@ -196,7 +196,7 @@ public class XMPtranslate implements XobjectDefVisitor
     if(is_module){
       fd = XMPmoduleBlock(d);
       if(!haveXMPpragma(d.getDef())) {
-        // for coarray #060
+        // translate coarray features #060
         XMPtransCoarray transCoarray = new XMPtransCoarray(fd, env);
         transCoarray.run();
         return;
@@ -223,6 +223,11 @@ public class XMPtranslate implements XobjectDefVisitor
       copyXMParray(d);
     }
 
+    // translate coarray features #060
+    XMPtransCoarray transCoarray = new XMPtransCoarray(fd, env);
+    transCoarray.run();
+    if(XMP.hasError()) return;
+
     anaPragma.run(fd,env);
     if(XMP.hasError()) return;
 
@@ -231,7 +236,7 @@ public class XMPtranslate implements XobjectDefVisitor
 
     transPragma.run(fd,env);
     if(XMP.hasError()) return;
-        
+
     // finally, replace body
     fd.Finalize();
 

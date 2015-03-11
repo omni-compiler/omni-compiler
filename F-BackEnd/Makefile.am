@@ -1,4 +1,3 @@
-bin_SCRIPTS = bin/F_Back bin/F_Trans bin/F_Decomp
 TARGET      = build/om-f-back.jar
 SRC         = $(wildcard src/xcodeml/f/*/*.java)
 

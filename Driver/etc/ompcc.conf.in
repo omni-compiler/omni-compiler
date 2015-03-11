@@ -1,3 +1,4 @@
+TARGET="@TARGET@"
 OMNI_HOME="@OMNI_HOME@"
 OPENMP_DEF="-D_OPENMP=200203"
 OPENACC_DEF="-D_OPENACC=201111"
@@ -22,8 +23,8 @@ OMNI_JAR1="${OMNI_HOME}/share/xcalablemp/om-exc-tools.jar"
 OMNI_JAR2="${OMNI_HOME}/share/xcalablemp/om-c-back.jar"
 OMNI_JAR3="${OMNI_HOME}/share/xcalablemp/om-f-back.jar"
 OMNI_JAR4="${OMNI_HOME}/share/xcalablemp/om-common.jar"
-OMNI_CX2X_MUST_OPT="-cp ${OMNI_JAR4}:${OMNI_JAR3}:${OMNI_JAR2}:${OMNI_JAR1} exc.util.omompx -decomp -xc -gnu"
-OMNI_CX2X_OPT="@JAVA_OPT@ ${OMNI_CX2X_MUST_OPT}"
+OMNI_CX2X_MUST_OPT="-cp ${OMNI_JAR4}:${OMNI_JAR3}:${OMNI_JAR2}:${OMNI_JAR1} exc.util.omompx -decomp -xc"
+OMNI_CX2X_OPT="@JAVA_OPT@ ${OMNI_CX2X_MUST_OPT} @OMNI_X2X_FLAGS@"
 
 # Native Compile
 OMNI_CC_CMD="@MPI_CC@"
