@@ -1,7 +1,7 @@
 subroutine sub(V3)
   include "xmp_lib.h"
   integer n(10)
-  integer :: V3(:)[4,*]      !! not allowed in F2008: implicit size
+  integer :: V3(:)[:,:]      !! not allowed in F2008: implicit size
 
   !! explicit size
   n(1:5) = V3(1:5)[k1,k2]

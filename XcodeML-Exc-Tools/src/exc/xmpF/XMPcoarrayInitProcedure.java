@@ -17,8 +17,9 @@ import java.util.*;
  */
 public class XMPcoarrayInitProcedure {
 
-  final static String SIZE_LIB_NAME = "xmpf_coarray_count_size";
-  final static String INIT_LIB_NAME = "xmpf_coarray_get_share";
+  final static String COUNT_SIZE_LIB_NAME = "xmpf_coarray_count_size";
+  final static String SHARE_LIB_NAME = "xmpf_coarray_share";
+  final static String SET_COSHAPE_LIB_NAME = "xmpf_coarray_setcoshape";
 
   private Boolean DEBUG = false;          // switch the value in gdb !!
 
@@ -62,23 +63,44 @@ public class XMPcoarrayInitProcedure {
   //  for each procedure (text version)
   //------------------------------
 
-  // generate initialization subroutine corresponding to 
-  // the user program EX1 and coarrays V1 and V2:
-  // -------------------------------------------------------
-  //     subroutine <sizeProcName>      ! xmpf_traverse_coarraysize_EX1
-  //       call <SIZE_LIB_NAME>(200,4)
-  //       call <SIZE_LIB_NAME>(1,16)
-  //     end subroutine
-  //
-  //     subroutine <initProcName>      ! xmpf_traverse_initcoarray_EX1
-  //       integer :: desc_V1
-  //       integer :: desc_V2
-  //       common /<commonName1>/desc_V1,desc_V2
-  //       common /<commonName2>/ptr_V1,ptr_V2
-  //       call <INIT_LIB_NAME>(desc_V1,ptr_V1,200,4)
-  //       call <INIT_LIB_NAME>(desc_V2,ptr_V2,1,16)
-  //     end subroutine
-  // -------------------------------------------------------
+  /*
+    from a source:
+    --------------------------------------------
+      subroutine EX1
+        real :: V1(10,20)[4,*]
+        complex(8) :: V2[0:*]
+        integer, allocatable :: V3(:)[:,:]
+        ...
+        V1(1:3,j)[k1,k2] = (/1.0,2.0,3.0/)
+        z = V2[k]**2
+        allocate (V3(1:10))
+        n(1:5) = V3(2:10:2)[k1,k2]
+        return
+      end subroutine
+    --------------------------------------------
+    generate two subroutines:
+    --------------------------------------------
+      subroutine xmpf_traverse_coarraysize_ex1
+        call xmpf_coarray_count_size(200, 4)
+        call xmpf_coarray_count_size(1, 16)
+      end subroutine
+
+      subroutine xmpf_traverse_initcoarray_ex1
+        integer :: CD_V1
+        integer :: CD_V2
+        integer(8) :: CP_V1
+        integer(8) :: CP_V2
+        common /xmpf_CD_EX1/ CD_V1, CD_V2
+        common /xmpf_CP_EX1/ CP_V1, CP_V2
+        call xmpf_coarray_share(CD_V1, CP_V1, 200, 4)
+        call xmpf_coarray_set_coshape(CD_V1, 2, 1, 4, 1)
+        call xmpf_coarray_share(CD_V2, CP_V2, 1, 16)
+        call xmpf_coarray_set_coshape(CD_V2, 1, 0)
+      end subroutine
+    --------------------------------------------
+      CD_Vn: serial number for descriptor of Vn
+      CP_Vn: cray poiter pointing to Vn
+  */
 
   public void run() {
     for (XMPcoarray coarray: staticCoarrays) {
@@ -104,9 +126,9 @@ public class XMPcoarrayInitProcedure {
                              int count, int elem) {
     varNames1.add(varName1);
     varNames2.add(varName2);
-    callSizeStmts.add(" CALL " + SIZE_LIB_NAME + " ( " + 
+    callSizeStmts.add(" CALL " + COUNT_SIZE_LIB_NAME + " ( " + 
                       count + " , " + elem + " )");
-    callInitStmts.add(" CALL " + INIT_LIB_NAME + " ( " + 
+    callInitStmts.add(" CALL " + SHARE_LIB_NAME + " ( " + 
                       varName1 + " , " +varName2 + " , " +
                       count + " , " + elem + " )");
   }

@@ -19,9 +19,9 @@ public class XMPcoarray {
   private Ident ident;
   private String name;
   private FindexRange indexRange;
-  private Xtype originalType;
-  private Boolean isAllocatableOriginally;
-  private Boolean isPointerOriginally;
+  //private Xtype originalType;
+  private Boolean isAllocatable;
+  private Boolean isPointer;
 
   // corresponding cray pointer and descriptor
   private String crayPtrName = null;
@@ -37,6 +37,9 @@ public class XMPcoarray {
   // for debug
   private Boolean DEBUG = false;        // switch me on debugger
 
+  // name of library
+  final static String COARRAYIMAGE_NAME = "xmpf_coarray_image";
+
   //------------------------------
   //  CONSTRUCTOR
   //------------------------------
@@ -46,9 +49,9 @@ public class XMPcoarray {
     def = funcDef.getDef();
     fblock = funcDef.getBlock();
     name = ident.getName();
-    originalType = ident.Type().copy();  // not sure how deep this copy is
-    isAllocatableOriginally = ident.Type().isFallocatable();
-    isPointerOriginally = ident.Type().isFpointer();
+    //originalType = ident.Type().copy();
+    isAllocatable = ident.Type().isFallocatable();
+    isPointer = ident.Type().isFpointer();
     if (DEBUG) System.out.println("[XMPcoarray] new coarray = "+this);
   }
 
@@ -227,13 +230,11 @@ public class XMPcoarray {
     return ftype.getUbound(i, fblock);
   }
 
-  public Xobject getSizeFromLbUb(Xobject lb, Xobject ub)
-  {
+  public Xobject getSizeFromLbUb(Xobject lb, Xobject ub) {
     return getFindexRange().getSizeFromLbUb(lb, ub);
   }
 
-  public Xobject getSizeFromIndexRange(Xobject range)
-  {
+  public Xobject getSizeFromIndexRange(Xobject range) {
     Xobject i1 = range.getArg(0);
     Xobject i2 = range.getArg(1);
     Xobject i3 = range.getArg(2);
@@ -246,9 +247,17 @@ public class XMPcoarray {
   //  return getFindexRange().getSizeFromTriplet(i1, i2, i3);
   //}
 
-  public Xobject getSizeFromTriplet(int i, Xobject i1, Xobject i2, Xobject i3)
-  {
+  public Xobject getSizeFromTriplet(int i, Xobject i1, Xobject i2, Xobject i3) {
     return getFindexRange().getSizeFromTriplet(i, i1, i2, i3);
+  }
+
+
+  public Xobject getImageAtRuntime(Xobject cosubscripts) {
+    String fname = COARRAYIMAGE_NAME;
+    Ident fnameId = getEnv().findVarIdent(fname, null);
+    if (fnameId == null)
+      fnameId = getEnv().declExternIdent(fname, Xtype.FintFunctionType);
+    return fnameId.Call(cosubscripts);
   }
 
 
@@ -270,7 +279,7 @@ public class XMPcoarray {
   }
 
   public Boolean isAllocatable() {
-    return isAllocatableOriginally;
+    return isAllocatable;
   }
 
   public void setAllocatable() {
@@ -290,7 +299,7 @@ public class XMPcoarray {
   }
 
   public Boolean isPointer() {
-    return isPointerOriginally;
+    return isPointer;
   }
 
   public void setPointer() {
@@ -395,9 +404,9 @@ public class XMPcoarray {
     return ident.Type();
   }
 
-  public Xtype getOriginalType() {
-    return originalType;
-  }
+  //public Xtype getOriginalType() {
+  //return originalType;
+  //}
 
   public String toString() {
     return toString(ident);
@@ -414,11 +423,11 @@ public class XMPcoarray {
       + ")";
   }
 
-  public String display() {
-    return "{ident:" + toString(ident)
-      + ", originalType:" + toString(originalType)
-      + "}";
-  }
+  //public String display() {
+  //return "{ident:" + toString(ident)
+  //+ ", originalType:" + toString(originalType)
+  //+ "}";
+  //}
 
 
   //------------------------------------------------------------

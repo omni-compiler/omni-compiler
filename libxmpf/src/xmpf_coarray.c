@@ -5,6 +5,8 @@ static int _set_coarrayInfo(char *desc, char *orgAddr, size_t size);
 
 static void _coarray_msg(int sw);
 
+#define DIV_CEILING(m,n)  (((m)-1)/(n)+1)
+
 
 /*****************************************\
   runtime environment
@@ -80,6 +82,10 @@ typedef struct {
   char   *desc;
   char   *orgAddr;
   size_t  size;
+  int     corank;
+  int    *lcobound;
+  int    *ucobound;
+  int    *cosize;
 } _coarrayInfo_t;
 
 typedef struct {
@@ -117,6 +123,49 @@ int xmpf_get_descr_id_(char *baseAddr)
   _XMP_fatal("cannot access unallocated coarray");
   return -1;
 }
+
+
+/*
+ * set the current lower and upper cobounds
+ *
+ */
+void xmpf_coarray_set_coshape_(int *serno, int *corank, ...)
+{
+  int i, n, count, n_images;
+  va_list args;
+  va_start(args, corank);
+
+  _coarrayInfo_t *cp = &_coarrayInfoTab[*serno];
+  n = cp->corank = *corank;
+  cp->lcobound = (int*)malloc(sizeof(int) * n);
+  cp->ucobound = (int*)malloc(sizeof(int) * n);
+  cp->cosize = (int*)malloc(sizeof(int) * n);
+
+  for (count = 1, i = 0; i < n-1; i++) {
+    cp->lcobound[i] = *va_arg(args, int*);
+    cp->ucobound[i] = *va_arg(args, int*);
+    cp->cosize[i] = cp->ucobound[i] - cp->lcobound[i] + 1;
+    if (cp->cosize[i] <= 0)
+      _XMP_fatal("found illegal lower and upper cobounds of a coarray");
+    count *= cp->cosize[i];
+  }
+
+  n_images = num_images_();
+  cp->lcobound[n-1] = *va_arg(args, int*);
+  cp->cosize[n-1] = DIV_CEILING(n_images, count);
+  cp->ucobound[n-1] = cp->lcobound[n-1] + cp->cosize[n-1] - 1;
+
+
+  //////////////
+  for (i = 0; i < n; i++) {
+    fprintf(stdout, "  cp->lcobound[%d]  = %d\n", i, cp->lcobound[i]);
+    fprintf(stdout, "  cp->ucobound[%d]  = %d\n", i, cp->ucobound[i]);
+    fprintf(stdout, "  cp->cosize[%d]    = %d\n", i, cp->cosize[i]);
+  }
+  //////////////
+
+}
+
 
 
 //int _XMPF_get_coarrayElement(int serno)
@@ -193,29 +242,6 @@ static int _getNewSerno() {
 
 
 /*****************************************\
-  intrinsic procedures
-  through the wrappers in xmpf_coarray_wrap.f90
-\*****************************************/
-
-/*  MPI_Comm_size() of the current communicator
- */
-int num_images_(void)
-{
-  _XMPF_checkIfInTask("num_images()");
-  return xmp_num_nodes();
-}
-
-/*  (MPI_Comm_rank() + 1) in the current communicator
- */
-int this_image_(void)
-{
-  _XMPF_checkIfInTask("this_image()");
-  return xmp_node_num();
-}
-
-
-
-/*****************************************\
   memory allocation for static coarrays
 \*****************************************/
 
@@ -246,7 +272,7 @@ void xmpf_coarray_count_size_(int *count, int *element)
 }
 
 
-void xmpf_coarray_malloc_pool_(void)
+void xmpf_coarray_memorypool_(void)
 {
   if (_XMPF_coarrayMsg) {
     _XMPF_coarrayDebugPrint("estimated pool_totalSize = %zd\n",
@@ -272,8 +298,8 @@ void xmpf_coarray_malloc_pool_(void)
 }
 
 
-void xmpf_coarray_get_share_(int *serno, char **pointer,
-                             int *count, int *element)
+void xmpf_coarray_share_(int *serno, char **pointer,
+                         int *count, int *element)
 {
   _XMPF_checkIfInTask("allocatable coarray allocation");
 
@@ -291,7 +317,7 @@ void xmpf_coarray_get_share_(int *serno, char **pointer,
 
   if (pool_ptr + mallocSize > pool_rootAddr + pool_totalSize) {
     _XMP_fatal("lack of memory pool for static coarrays: "
-               "xmpf_coarray_get_share_() in " __FILE__);
+               "xmpf_coarray_share_() in " __FILE__);
   }
 
   if (_XMPF_coarrayMsg) {
@@ -349,178 +375,6 @@ void xmpf_coarray_malloc_(int *serno, char **pointer, int *count, int *element)
 }
 
 
-/*****************************************\
-  sync all
-\*****************************************/
-
-void xmpf_sync_all_nostat_(void)
-{
-  static unsigned int id = 0;
-
-  _XMPF_checkIfInTask("sync all");
-
-  id += 1;
-
-  if (_XMPF_coarrayMsg) {
-    _XMPF_coarrayDebugPrint("SYNC ALL in (id=%d)\n", id);
-  }
-
-  int status;
-  xmp_sync_all(&status);
-
-  if (_XMPF_coarrayMsg) {
-    _XMPF_coarrayDebugPrint("SYNC ALL out (id=%d)\n", id);
-  }
-}
-
-void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen)
-{
-  _XMPF_checkIfInTask("sync all");
-
-  static BOOL firstCall = TRUE;
-  if (firstCall) {
-    firstCall = FALSE;
-    fprintf(stderr, "not supported yet: "
-            "stat= specifier in SYNC ALL statement\n");
-    fprintf(stderr, "  -- ignored.\n");
-  }
-
-  int status;
-  xmp_sync_all(&status);
-}
-
-
-/*****************************************\
-  sync memory
-\*****************************************/
-
-void xmpf_sync_memory_nostat_(void)
-{
-  _XMPF_checkIfInTask("sync memory");
-
-  int status;
-  xmp_sync_memory(&status);
-}
-
-void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen)
-{
-  _XMPF_checkIfInTask("sync memory");
-
-  static BOOL firstCall = TRUE;
-  if (firstCall) {
-    firstCall = FALSE;
-    fprintf(stderr, "not supported yet: "
-            "stat= specifier in SYNC MEMORY statement\n");
-    fprintf(stderr, "  -- ignored.\n");
-  }
-
-  int status;
-  xmp_sync_memory(&status);
-}
-
-
-/*****************************************\
-  sync images
-\*****************************************/
-
-void xmpf_sync_image_nostat_(int *image)
-{
-  int status;
-  xmp_sync_image(*image, &status);
-}
-
-void xmpf_sync_image_stat_(int *image, int *stat, char *msg, int *msglen)
-{
-  static BOOL firstCall = TRUE;
-  if (firstCall) {
-    firstCall = FALSE;
-    fprintf(stderr, "not supported yet: "
-            "stat= specifier in SYNC IMAGES (<image>) statement\n");
-    fprintf(stderr, "  -- ignored.\n");
-  }
-
-  _XMPF_checkIfInTask("sync image");
-
-  int status;
-  xmp_sync_image(*image, &status);
-}
-
-
-void xmpf_sync_images_nostat_(int *images, int *size)
-{
-  int status;
-  xmp_sync_images(*size, images, &status);
-}
-
-void xmpf_sync_images_stat_(int *images, int *size, int *stat,
-                            char *msg, int *msglen)
-{
-  static BOOL firstCall = TRUE;
-  if (firstCall) {
-    firstCall = FALSE;
-    fprintf(stderr, "not supported yet: "
-            "stat= specifier in SYNC IMAGES (<images>) statement\n");
-    fprintf(stderr, "  -- ignored.\n");
-  }
-
-  _XMPF_checkIfInTask("sync image");
-
-  int status;
-  xmp_sync_images(*size, images, &status);
-}
-
-
-void xmpf_sync_allimages_nostat_(void)
-{
-  int status;
-  xmp_sync_images_all(&status);
-}
-
-void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen)
-{
-  static BOOL firstCall = TRUE;
-  if (firstCall) {
-    firstCall = FALSE;
-    fprintf(stderr, "not supported yet: "
-            "stat= specifier in SYNC IMAGES (*) statement\n");
-    fprintf(stderr, "  -- ignored.\n");
-  }
-
-  _XMPF_checkIfInTask("sync image");
-
-  int status;
-  xmp_sync_images_all(&status);
-}
-
-
-
-/*****************************************\
-  error message to reply to Fortran (temporary)
-  (not used yet)
-\*****************************************/
-
-char *_XMPF_errmsg = NULL;
-
-void xmpf_get_errmsg_(unsigned char *errmsg, int *msglen)
-{
-  int i, len;
-
-  if (_XMPF_errmsg == NULL) {
-    len = 0;
-  } else {
-    len = strlen(_XMPF_errmsg);
-    if (len > *msglen)
-      len = *msglen;
-    memcpy(errmsg, _XMPF_errmsg, len);      // '\n' is not needed
-  }
-
-  for (i = len; i < *msglen; )
-    errmsg[i++] = ' ';
-
-  return;
-}
-
-  
 /*****************************************\
   restriction checker
 \*****************************************/

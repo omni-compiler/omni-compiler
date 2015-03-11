@@ -9,7 +9,7 @@
       call xmpf_traverse_module
 #if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)
       call xmpf_traverse_coarraysize
-      call xmpf_coarray_malloc_pool
+      call xmpf_coarray_memorypool
       call xmpf_traverse_initcoarray
 #endif
 
