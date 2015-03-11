@@ -1316,9 +1316,9 @@ public class XMPtranslateLocalPragma {
       case XMPobject.TEMPLATE:
         {
           XMPtemplate onRefTemplate = (XMPtemplate)onRefObj;
-          if (!onRefTemplate.isFixed()) {
-            throw new XMPexception("template '" + onRefObjName + "' is not fixed");
-          }
+          // if (!onRefTemplate.isFixed()) {
+          //   throw new XMPexception("template '" + onRefObjName + "' is not fixed");
+          // }
 
           if (!onRefTemplate.isDistributed()) {
             throw new XMPexception("template '" + onRefObjName + "' is not distributed");
@@ -2926,9 +2926,9 @@ public class XMPtranslateLocalPragma {
           {
             XMPtemplate ontoTemplate = (XMPtemplate)onRefObject;
 
-            if (!ontoTemplate.isFixed()) {
-              throw new XMPexception("template '" + objectName + "' is not fixed");
-            }
+            // if (!ontoTemplate.isFixed()) {
+            //   throw new XMPexception("template '" + objectName + "' is not fixed");
+            // }
 
             if (!ontoTemplate.isDistributed()) {
               throw new XMPexception("template '" + objectName + "' is not distributed");
