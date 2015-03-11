@@ -121,7 +121,7 @@ public class XMPtransCoarray
     --------------------------------------------
       subroutine EX1
         real :: V1(10,20)[4,*]
-        complex(8) :: V2[*]
+        complex(8) :: V2[0:*]
         integer, allocatable :: V3(:)[:,:]
         ...
         V1(1:3,j)[k1,k2] = (/1.0,2.0,3.0/)
@@ -159,15 +159,17 @@ public class XMPtransCoarray
         call xmpf_coarray_count_size(200, 4)
         call xmpf_coarray_count_size(1, 16)
       end subroutine
-       subroutine xmpf_traverse_initcoarray_ex1              ! b
+      subroutine xmpf_traverse_initcoarray_ex1               ! b
         integer :: CD_V1
         integer :: CD_V2
         integer(8) :: CP_V1
         integer(8) :: CP_V2
         common /xmpf_CD_EX1/ CD_V1, CD_V2
         common /xmpf_CP_EX1/ CP_V1, CP_V2
-        call coarray_get_share(CD_V1, CP_V1, 200, 4)
-        call coarray_get_share(CD_V2, CP_V2, 1, 16)
+        call xmpf_coarray_share(CD_V1, CP_V1, 200, 4)
+        call xmpf_coarray_setcoshape(CD_V1, 2, 1, 4, 1)
+        call xmpf_coarray_share(CD_V2, CP_V2, 1, 16)
+        call xmpf_coarray_setcoshape(CD_V2, 1, 0)
       end subroutine
     --------------------------------------------
       CD_Vn: serial number for descriptor of Vn

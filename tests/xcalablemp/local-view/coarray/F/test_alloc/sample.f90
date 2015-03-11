@@ -3,9 +3,7 @@ subroutine EX1
   real :: V1(10,20)[4,*]
   complex(8) :: V2[*], z
   integer n(5)
-!  integer :: V3(10)[4,*]
-!  integer, allocatable :: V3(:)[:,:]
-  integer, allocatable :: V3(:)[4,*]
+  integer, allocatable :: V3(:)[:,:]
 
   V1(1:3,j)[k1,k2] = (/1.0,2.0,3.0/)
   z = V2[1]**2

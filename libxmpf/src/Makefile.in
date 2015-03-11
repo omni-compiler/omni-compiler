@@ -80,14 +80,14 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @GASNET_TRUE@am__append_1 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-@GASNET_TRUE@                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
+@GASNET_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
 @GASNET_TRUE@                         xmpf_coarray_alloc_wrap.f90
 
 @GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET
 @GASNET_TRUE@@POWERPC_TRUE@am__append_3 = -WF,-D_XMP_COARRAY_GASNET
 @GASNET_TRUE@@POWERPC_FALSE@am__append_4 = -D_XMP_COARRAY_GASNET
 @FJRDMA_TRUE@am__append_5 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-@FJRDMA_TRUE@                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
+@FJRDMA_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
 @FJRDMA_TRUE@                         xmpf_coarray_alloc_wrap.f90
 
 @FJRDMA_TRUE@am__append_6 = -D_XMP_COARRAY_FJRDMA
@@ -148,18 +148,20 @@ am__libxmpf_a_SOURCES_DIST = $(XMPF_INC_DIR)/xmpf_internal.h \
 	xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
 	xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c \
 	xmpf_task.c xmpf_template.c xmpf_coarray.c \
-	xmpf_coarray_wrap.f90 xmpf_coarray_put.c xmpf_coarray_get.c \
+	xmpf_coarray_wrap.f90 xmpf_coarray_put.c xmpf_coarray_get.c xmpf_coarray_lib.c \
 	xmpf_coarray_get_wrap.f90 xmpf_coarray_alloc_wrap.f90
 @GASNET_TRUE@am__objects_1 = xmpf_coarray.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_put.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_get.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_lib.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_alloc_wrap.$(OBJEXT)
 @FJRDMA_TRUE@am__objects_2 = xmpf_coarray.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_put.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_get.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_lib.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_alloc_wrap.$(OBJEXT)
 am_libxmpf_a_OBJECTS = xmpf_main.$(OBJEXT) xmpf_array.$(OBJEXT) \

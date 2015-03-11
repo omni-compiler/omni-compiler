@@ -5,7 +5,7 @@
     integer nerr
 
     me = this_image()
-    if (me==1) call xmpf_coarray_msg(1)
+!!    if (me==1) call xmpf_coarray_msg(1)
 
     !---------------------------- switch on message
 !!    call xmpf_coarray_msg(1)

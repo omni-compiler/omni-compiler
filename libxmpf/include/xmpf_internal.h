@@ -313,11 +313,12 @@ extern char *_XMPF_get_coarrayDesc(int serno);
 extern size_t _XMPF_get_coarrayOffset(int serno, char *baseAddr);
 
 extern void xmpf_coarray_count_size_(int *count, int *element);
-extern void xmpf_coarray_malloc_share_(void);
-extern void xmpf_coarray_get_share_(int *serno, char **pointer,
-                                    int *count, int *element);
+extern void xmpf_coarray_memorypool_(void);
+extern void xmpf_coarray_share_(int *serno, char **pointer,
+                                int *count, int *element);
 extern void xmpf_coarray_malloc_(int *serno, char **pointer,
                                  int *count, int *element);
+extern void xmpf_coarray_set_coshape_(int *serno, int *corank, ...);
 
 extern void xmpf_sync_all_nostat_(void);
 extern void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen);

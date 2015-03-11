@@ -2,7 +2,7 @@
   integer aa(10)[*]
 
   me = this_image()
-  if (me==1) call xmpf_coarray_msg(1)
+!!  if (me==1) call xmpf_coarray_msg(1)
 
 !--------------------- init
   do i=1,10

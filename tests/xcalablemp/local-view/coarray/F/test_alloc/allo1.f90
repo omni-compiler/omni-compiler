@@ -1,7 +1,7 @@
 program allo1
   include "xmp_lib.h"
-!!    real, allocatable :: a(:)[:]   #390
-  real, allocatable :: a(:)[*]
+  real, allocatable :: a(:)[:]
+!!  real, allocatable :: a(:)[*]   #390
   real, allocatable :: b(:)
 
   write(*,*) " f:",allocated(a)," f:",allocated(b)

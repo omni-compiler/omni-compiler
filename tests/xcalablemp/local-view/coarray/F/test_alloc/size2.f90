@@ -1,8 +1,7 @@
 subroutine sub(V3)
   include "xmp_lib.h"
   integer n(10)
-!  integer, allocatable :: V3(:)[:,:]      !! bug #390
-  integer, allocatable :: V3(:)[4,*]
+  integer, allocatable :: V3(:)[:,:]
 
   !! explicit size
   n(1:5) = V3(1:5)[k1,k2]
