@@ -19,7 +19,7 @@ public class XMPcoarrayInitProcedure {
 
   final static String COUNT_SIZE_LIB_NAME = "xmpf_coarray_count_size";
   final static String SHARE_LIB_NAME = "xmpf_coarray_share";
-  final static String SET_COSHAPE_LIB_NAME = "xmpf_coarray_setcoshape";
+  final static String SET_COSHAPE_LIB_NAME = "xmpf_coarray_set_coshape";
 
   private Boolean DEBUG = false;          // switch the value in gdb !!
 
@@ -103,6 +103,10 @@ public class XMPcoarrayInitProcedure {
   */
 
   public void run() {
+    run(2);
+  }
+
+  public void run(int version) {
     for (XMPcoarray coarray: staticCoarrays) {
       int elem = coarray.getElementLength();
       int count = coarray.getTotalArraySize();
@@ -112,15 +116,106 @@ public class XMPcoarrayInitProcedure {
       addForVarText(descrName, cptrName, count, elem);
     }
 
-    // fill in program text
-    fillinSizeProcText();
-    fillinInitProcText();
+    /* generate the two subroutines in the same file
+     */
+    switch(version) {
+    case 1:   // generate as Fortran program text
+      fillinSizeProcText();
+      fillinInitProcText();
 
-    //env.clearTailText();
-    for (String text: procTexts)
-      env.addTailText(text);
+      for (String text: procTexts)
+        env.addTailText(text);
+      break;
+
+    case 2:   // build and link it at the tail of XMPenv
+      buildSubroutine_coarraysize();
+      buildSubroutine_initcoarray();
+      break;
+    }
   }
 
+
+  /*
+   *  Version 2
+   */
+
+  private void buildSubroutine_coarraysize() {
+    BlockList body = Bcons.emptyBody();
+
+    for (XMPcoarray coarray: staticCoarrays) {
+      int elem = coarray.getElementLength();
+      int count = coarray.getTotalArraySize();
+
+      Xobject args = Xcons.List(Xcons.IntConstant(count),
+                                Xcons.IntConstant(elem));
+      Ident subr = env.declExternIdent(COUNT_SIZE_LIB_NAME,
+                                       Xtype.FsubroutineType);
+      body.add(subr.callSubroutine(args));
+    }
+
+    Ident procedure = env.declExternIdent(sizeProcName,
+                                          Xtype.FsubroutineType);
+    XobjectDef procDef = XobjectDef.Func(procedure, null, null,
+                                         body.toXobject());
+    env.getEnv().add(procDef);
+  }
+
+
+  private void buildSubroutine_initcoarray() {
+    BlockList body = Bcons.emptyBody();
+    Xobject decls = Xcons.List();
+
+    for (XMPcoarray coarray: staticCoarrays) {
+      int elem = coarray.getElementLength();
+      int count = coarray.getTotalArraySize();
+      String serno = coarray.getDescriptorName();
+      String crayptr = coarray.getCrayPointerName();
+
+      //varNames1.add(serno);
+      //varNames2.add(crayptr);
+
+      // build "integer, save :: serno, crayptr"
+      Ident sernoId =
+        body.declLocalIdent(serno, Xtype.FintType, StorageClass.FCOMMON, null);
+      Ident crayptrId = 
+        body.declLocalIdent(serno, Xtype.Fint8Type, StorageClass.FCOMMON, null);
+      /*------
+        for 32-bit pointer envirionment
+        Ident crayptrId = 
+        body.declLocalIdent(serno, Xtype.Fint4Type, StorageClass.FSAVE, null);
+        ------*/
+
+      // build "common /codescr_foo/ serno" and "common /crayptr_foo/ crayptr"
+      Xobject commonStmt1 = Xcons.List(Xcode.F_COMMON_DECL,
+                                       Xcons.List(Xcode.F_VAR_LIST,
+                                                  Xcons.Symbol(Xcode.IDENT, commonName1),
+                                                  Xcons.List(Xcons.FvarRef(sernoId))));
+      Xobject commonStmt2 = Xcons.List(Xcode.F_COMMON_DECL,
+                                       Xcons.List(Xcode.F_VAR_LIST,
+                                                  Xcons.Symbol(Xcode.IDENT, commonName2),
+                                                  Xcons.List(Xcons.FvarRef(crayptrId))));
+      decls.add(commonStmt1);
+      decls.add(commonStmt2);
+
+      // build "call coarray_share(serno, crayptr, count, elem)"
+      Xobject args = Xcons.List(sernoId, crayptrId,
+                                Xcons.IntConstant(count),
+                                Xcons.IntConstant(elem));
+      Ident subr = env.declExternIdent(SHARE_LIB_NAME,
+                                    Xtype.FsubroutineType);
+      body.add(subr.callSubroutine(args));
+    }
+
+    Ident procedure = env.declExternIdent(initProcName, Xtype.FsubroutineType);
+    XobjectDef procDef = XobjectDef.Func(procedure, null, decls, body.toXobject());
+    env.getEnv().add(procDef);
+  }
+
+
+
+  /*
+   *  Version 1 (incomplete handling of allocatable coarray)
+   */
 
   private void addForVarText(String varName1, String varName2, 
                              int count, int elem) {

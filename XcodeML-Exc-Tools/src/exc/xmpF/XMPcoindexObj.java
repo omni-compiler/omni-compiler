@@ -339,7 +339,7 @@ public class XMPcoindexObj {
     Xobject image = getImage();
     if (image == null &&
         (coarray.isAllocatable() || coarray.isPointer()))
-      image = coarray.getImageAtRuntime(cosubscripts);
+      image = coarray.getImageIndex(cosubscripts);
 
     Xobject actualArgs = Xcons.List(serno, baseAddr, element, image);
 

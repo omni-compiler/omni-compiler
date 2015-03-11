@@ -166,19 +166,6 @@ public class XMPcoarray {
     //Xobject size = ident.Type().getTotalArraySizeExpr(block);
     ****/
 
-  public int getRank() {
-    return ident.Type().getNumDimensions();
-  }
-
-
-  public Xobject[] getShape() {
-    if (getRank() == 0)
-      return new Xobject[0];
-
-    FarrayType ftype = (FarrayType)ident.Type();
-    return ftype.getFarraySizeExpr();
-  }
-
   private void _setFindexRange() {
     Xobject[] shape = getShape();
     indexRange = new FindexRange(shape, fblock, env);
@@ -196,8 +183,27 @@ public class XMPcoarray {
   }
 
 
+  //------------------------------
+  //  evaluation in Fortran terminology
+  //   rank, shape, size, lower/upper bound
+  //------------------------------
+
+  public int getRank() {
+    return ident.Type().getNumDimensions();
+  }
+
+
+  public Xobject[] getShape() {
+    if (getRank() == 0)
+      return new Xobject[0];
+
+    FarrayType ftype = (FarrayType)ident.Type();
+    return ftype.getFarraySizeExpr();
+  }
+
+
   public Xobject getLbound(int i) {
-    Xobject lbound = getLboundOrNull(i);
+    Xobject lbound = getLboundStatic(i);
     if (lbound == null) {
       // generate intrinsic function call "lbound(a,dim)"
       Xobject arg1 = Xcons.Symbol(Xcode.VAR, name);
@@ -208,13 +214,13 @@ public class XMPcoarray {
     return lbound;
   }
 
-  public Xobject getLboundOrNull(int i) {
+  public Xobject getLboundStatic(int i) {
     FarrayType ftype = (FarrayType)ident.Type();
     return ftype.getLbound(i, fblock);
   }
 
   public Xobject getUbound(int i) {
-    Xobject ubound = getUboundOrNull(i);
+    Xobject ubound = getUboundStatic(i);
     if (ubound == null) {
       // generate intrinsic function call "ubound(a,dim)"
       Xobject arg1 = Xcons.Symbol(Xcode.VAR, name);
@@ -225,7 +231,7 @@ public class XMPcoarray {
     return ubound;
   }
 
-  public Xobject getUboundOrNull(int i) {
+  public Xobject getUboundStatic(int i) {
     FarrayType ftype = (FarrayType)ident.Type();
     return ftype.getUbound(i, fblock);
   }
@@ -252,13 +258,15 @@ public class XMPcoarray {
   }
 
 
-  public Xobject getImageAtRuntime(Xobject cosubscripts) {
+  public Xobject getImageIndex(Xobject cosubscripts) {
     String fname = COARRAYIMAGE_NAME;
     Ident fnameId = getEnv().findVarIdent(fname, null);
     if (fnameId == null)
       fnameId = getEnv().declExternIdent(fname, Xtype.FintFunctionType);
     return fnameId.Call(cosubscripts);
   }
+
+
 
 
   //------------------------------
