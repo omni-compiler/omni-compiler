@@ -66,19 +66,30 @@ function get_target()
 
 function xmpf90_set_parameters()
 {
-    local OUTPUT_FLAG=
-    local MODULE_FLAG=
-    local INCLUDE_FLAG=
-    local module_dir=()
-
-    for arg in "${@}"; do
-	case $arg in
+    while [ -n "$1" ]; do
+        case "$1" in
+	    *.f90|*.f)
+		f_f90_files+=("$1"); all_files+=("$1");;
+	    *.F90|*.F)
+		F_F90_files+=("$1"); all_files+=("$1");;
+	    *.a)
+		archive_files+=("$1");;
+	    *.o)
+		obj_files+=("$1");;
 	    -o)
-                OUTPUT_FLAG=true;;
+                shift; output_file=("$1");;
 	    -J)
-		MODULE_FLAG=true;;
+		shift;
+		module_dir=("${1#-J}")
+		module_opt=("-M${module_dir[0]}")
+		target=`get_target`
+		if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
+                    other_args+=("${OMNI_MODINC}${module_dir}")
+                else
+                    other_args+=("${OMNI_MODINC}" "${module_dir}")
+                fi;;
 	    -J?*)
-		module_dir=("${arg#-J}")  # Only one module directory can be selected
+		module_dir=("${1#-J}")
                 module_opt=("-M${module_dir[0]}")
 		target=`get_target`
 		if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
@@ -87,10 +98,9 @@ function xmpf90_set_parameters()
                     other_args+=("${OMNI_MODINC}" "${module_dir}")
 		fi;;
             -I)
-                INCLUDE_FLAG=true;;
+		shift; include_opt+=("-I$1"); other_args+=("-I$1");;
 	    -I?*)
-		include_opt+=("${arg}")
-		other_args+=("${arg}");;
+		include_opt+=("$1"); other_args+=("$1");;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)
@@ -100,15 +110,11 @@ function xmpf90_set_parameters()
             -v|--verbose)
 		VERBOSE=true;;
 	    --version)
-		omni_print_version
-		exit 0;;
+		omni_print_version; exit 0;;
             -h|--help)
-		local scriptname=`basename $0`
-		xmpf90_print_help "${scriptname}"
-		exit 0;;
+		xmpf90_print_help `basename $0`; exit 0;;
 	    --show-env)
-		xmpf90_show_env
-		exit 0;;
+		xmpf90_show_env; exit 0;;
             --tmp)
 		OUTPUT_TEMPORAL=true;;
             --dry)
@@ -116,32 +122,27 @@ function xmpf90_set_parameters()
 	    --debug)
 		ENABLE_DEBUG=true;;
             --stop-pp)
-		STOP_PP=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_PP=true;;
             --stop-frontend)
-		STOP_FRONTEND=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_FRONTEND=true;;
 	    --stop-translator)
-		STOP_TRANSLATOR=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_TRANSLATOR=true;;
 	    --stop-backend)
-		STOP_BACKEND=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_BACKEND=true;;
 	    --stop-compile)
-		STOP_COMPILE=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_COMPILE=true;;
             --Wp*)
-                pp_add_opt+=("${arg#--Wp}");;
+                pp_add_opt+=("${1#--Wp}");;
             --Wf*)
-                frontend_add_opt+=("${arg#--Wf}");;
+                frontend_add_opt+=("${1#--Wf}");;
             --Wx*)
-                xcode_translator_add_opt+=("${arg#--Wx}");;
+                xcode_translator_add_opt+=("${1#--Wx}");;
             --Wn*)
-                native_add_opt+=("${arg#--Wn}");;
+                native_add_opt+=("${1#--Wn}");;
             --Wb*)
-                backend_add_opt+=("${arg#--Wb}");;
+                backend_add_opt+=("${1#--Wb}");;
             --Wl*)
-                linker_add_opt+=("${arg#--Wl}");;
+                linker_add_opt+=("${1#--Wl}");;
 	    --openmp|-omp)
 		ENABLE_OPENMP=true;;
 	    --xcalableacc|-xacc)
@@ -155,37 +156,9 @@ function xmpf90_set_parameters()
 	    --tlog)
 		ENABLE_TLOG=true;;
 	    *)
-		if [ "$OUTPUT_FLAG" = true ]; then
-		    output_file=("${arg}")
-		    OUTPUT_FLAG=false
-		elif [[ "$MODULE_FLAG" = true ]]; then
-		    module_dir=("${arg#-J}")
-		    module_opt=("-M${module_dir[0]}")
-		    MODULE_FLAG=false
-                    target=`get_target`
-                    if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
-			other_args+=("${OMNI_MODINC}${module_dir}")
-                    else
-			other_args+=("${OMNI_MODINC}" "${module_dir}")
-                    fi
-                elif [[ "$INCLUDE_FLAG" = true ]]; then
-		    include_opt+=("-I${arg}")
-                    INCLUDE_FLAG=false
-		    other_args+=("-I${arg}")
-		elif [[ $arg =~ \.f90$ ]] || [[ $arg =~ \.f$ ]]; then
-		    f_f90_files+=("${arg}")
-                    all_files+=("${arg}");
-		elif [[ $arg =~ \.F90$ ]] || [[ $arg =~ \.F$ ]]; then
-		    F_F90_files+=("${arg}")
-                    all_files+=("${arg}")
-                elif [[ "${arg}" =~ \.a$ ]]; then
-                    archive_files+=("${arg}")
-                elif [[ "${arg}" =~ \.o$ ]]; then
-                    obj_files+=("${arg}")
-		else
-		    other_args+=("${arg}")
-		fi;;
+		other_args+=("$1");;
 	esac
+	shift
     done
 
     if test $OUTPUT_TEMPORAL = true -a $DRY_RUN = true; then
