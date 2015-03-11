@@ -2792,7 +2792,7 @@ next_line0:
         if( line_buffer[0]=='!' ){ 
 	  /* now '!' on 1st place always means comment line. */
 	  // skip succeeding characters
-	  while (fgetc(source_file) != '\n');
+	  //while (fgetc(source_file) != '\n');
 	  goto next_line;
         }
     }
