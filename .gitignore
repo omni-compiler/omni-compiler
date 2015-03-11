@@ -33,7 +33,6 @@ Driver/atool/src/include/nata/nata_platform.h
 Driver/atool/src/include/nata/stamp-h2
 Driver/atool/src/lib/.depend
 Driver/atool/src/lib/Makefile
-Driver/bin/omni_collect_init
 Driver/libexec/omni_traverse
 Driver/bin/ompcc
 Driver/bin/ompf90
@@ -45,7 +44,6 @@ Driver/etc/xmpcc.conf
 Driver/etc/xmpf90.conf
 Driver/etc/version
 Driver/src/Makefile
-Driver/src/xmp_collect_init
 Driver/src/om_replace_pragma
 F-BackEnd/Makefile
 F-BackEnd/ant.properties

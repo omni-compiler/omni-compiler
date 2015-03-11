@@ -128,8 +128,8 @@ done
 [ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # xmpf90 -E hoge.c
 
 ### Frontend ###
-[ $ENABLE_XACC = true ] && frontend_add_opt=("-facc" "${frontend_add_opt[@]}")
-[ $ENABLE_OPENMP = true ] && frontend_add_opt=("-fopenmp" "${frontend_add_opt[@]}")
+[ $ENABLE_XACC = true ] && frontend_add_opt+=("-facc")
+[ $ENABLE_OPENMP = true ] && frontend_add_opt+=("-fopenmp")
 for file in "${all_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.F90 -> hoge_2f_fuga_2f_a
@@ -176,7 +176,7 @@ fi
 [ $STOP_BACKEND = true ] && exit 0;
 
 ### Native Compiler ###
-[ $ENABLE_OPENMP = true ] && native_add_opt=("$OPENMP_OPT" "${native_add_opt[@]}")
+[ $ENABLE_OPENMP = true ] && native_add_opt+=("$OPENMP_OPT")
 for file in "${all_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
@@ -215,10 +215,10 @@ for file in "${all_files[@]}"; do
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
     FILE_O=${TEMP_DIR}/"${FILE_NAME}"_${EXT}.o
-    obj_files=("${obj_files[@]}" "${FILE_O}")
+    obj_files+=("${FILE_O}")
 done
 
-obj_files=("$XMPF_MAIN_O" "${obj_files[@]}")
+obj_files+=("$XMPF_MAIN_O")
 TRAVERSE_FILE=${TEMP_DIR}/omni_traverse_${PID}.f90
 omni_exec $OMNI_TRAVERSE -o $TRAVERSE_FILE "${obj_files[@]}"
 
@@ -227,8 +227,8 @@ omni_exec $OMNI_TRAVERSE -o $TRAVERSE_FILE "${obj_files[@]}"
 [ $ENABLE_XACC = true ] && OMNI_LINKER_OPT="-lacc -L@GPGPU_PREFIX@/lib64 -lcudart $OMNI_LINKER_OPT"
 TRAVERSE_FILE_O=${TEMP_DIR}/omni_traverse_${PID}.o
 omni_exec $OMNI_MPIFC_CMD -c $TRAVERSE_FILE -o $TRAVERSE_FILE_O
-obj_files=("$TRAVERSE_FILE_O" "${obj_files[@]}")
-[ "${output_file}" != "" ] && other_args=("${other_args[@]}" "-o" "${output_file}")
+obj_files+=("$TRAVERSE_FILE_O")
+[ "${output_file}" != "" ] && other_args+=("-o" "${output_file}")
 
 omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" $OMNI_LINKER_OPT "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}"
 

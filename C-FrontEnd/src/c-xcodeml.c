@@ -331,10 +331,7 @@ outxChildren(FILE *fp, int indent, CExpr *expr)
     CExprIterator ite;
     EXPR_FOREACH_MULTI(ite, expr)
         if(ite.node) {
-            if(EXPR_CODE(ite.node) == EC_NULL_NODE)   // ID=284
-                outxPrint(fp, indent, "<list/>\n");
-            else
-                outxContext(fp, indent, ite.node);
+            outxContext(fp, indent, ite.node);
         }
 }
 

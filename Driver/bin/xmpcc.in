@@ -178,19 +178,19 @@ for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
     FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
     FILE_O=${TEMP_DIR}/"${FILE_NAME}".o
-    obj_files=("${obj_files[@]}" "${FILE_O}")
+    obj_files+=("${FILE_O}")
 done
-
-omni_exec $XMP_COLLECT_INIT "${obj_files[@]}" --PID ${PID}   # create /tmp/_xmpc_init_${PID}.o
-FILE_COLLECT_O=${TEMP_DIR}/__omni_collect__$PID.o
-omni_exec mv /tmp/_xmpc_init_${PID}.o $FILE_COLLECT_O
+TRAVERSE_FILE_C=${TEMP_DIR}/omni_traverse_${PID}.c
+TRAVERSE_FILE_O=${TEMP_DIR}/omni_traverse_${PID}.o
+omni_exec $OMNI_TRAVERSE -o  $TRAVERSE_FILE_C "${obj_files[@]}"
+omni_exec $OMNI_MPICC_CMD -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
 
 # link
 [ $ENABLE_TLOG_ALL = true -o $ENABLE_TLOG = true ] && OMNI_CX2X_OPT="-ltlog_mpi $OMNI_CX2X_OPT"
 [ $ENABLE_XACC = true ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_GPUCC_LIB"
-[ "${output_file}" != "" ] && other_args=("${other_args[@]}" "-o" "${output_file}")
+[ "${output_file}" != "" ] && other_args+=("-o" "${output_file}")
 
-omni_exec $OMNI_LINKER_CMD $FILE_COLLECT_O "${obj_files[@]}" $OMNI_LINKER_OPT "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}"
+omni_exec $OMNI_LINKER_CMD $TRAVERSE_FILE_O "${obj_files[@]}" $OMNI_LINKER_OPT "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}"
 
 ### Delete temporal directory ###
 [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR

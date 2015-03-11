@@ -95,17 +95,17 @@ function ompcc_set_parameters()
 		STOP_COMPILE=true
 		VERBOSE=true;;
             --Wp*)
-                pp_add_opt=("${pp_add_opt[@]}" "${arg#--Wp}");;
+                pp_add_opt+=("${arg#--Wp}");;
             --Wf*)
-                frontend_add_opt=("${frontend_add_opt[@]}" "${arg#--Wf}");;
+                frontend_add_opt+=("${arg#--Wf}");;
             --Wx*)
-                xcode_translator_add_opt=("${xcode_translator_add_opt[@]}" "${arg#--Wx}");;
+                xcode_translator_add_opt+=("${arg#--Wx}");;
             --Wn*)
-                native_add_opt=("${native_add_opt[@]}" "${arg#--Wn}");;
+                native_add_opt+=("${arg#--Wn}");;
             --Wb*)
-                backend_add_opt=("${backend_add_opt[@]}" "${arg#--Wb}");;
+                backend_add_opt+=("${arg#--Wb}");;
             --Wl*)
-                linker_add_opt=("${linker_add_opt[@]}" "${arg#--Wl}");;
+                linker_add_opt+=("${arg#--Wl}");;
 	    -acc|--openacc)
 		[ ${ENABLE_ACC} = "0" ] && omni_error_exit "warning: $arg option is unavailable, rebuild the compiler with ./configure --enable-openacc"
 		ENABLE_ACC=true;;
@@ -116,13 +116,13 @@ function ompcc_set_parameters()
                     output_file=("${arg}")
 		    OUTPUT_FLAG=false
 		elif [[ "${arg}" =~ \.c$ ]]; then
-		    c_files=("${c_files[@]}" "${arg}")
+		    c_files+=("${arg}")
 		elif [[ "${arg}" =~ \.a$ ]]; then
-		    archive_files=("${archive_files[@]}" "${arg}")
+		    archive_files+=("${arg}")
 		elif [[ "${arg}" =~ \.o$ ]]; then
-		    obj_files=("${obj_files[@]}" "${arg}")
+		    obj_files+=("${arg}")
 		else
-		    other_args=("${other_args[@]}" "${arg}")
+		    other_args+=("${arg}")
 		fi;;
 	esac
     done
@@ -131,4 +131,3 @@ function ompcc_set_parameters()
         omni_error_exit "cannot use both --tmp and --dry options at the same time."
     fi
 }
-
