@@ -1,8 +1,4 @@
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
-FC		= $(top_srcdir)/@F_FRONTEND_DIR@/F_Front
+FC		= $(top_srcdir)/F-FrontEnd/src/F_Front
 FCFLAGS		=
 
 SRCS		= omp_lib_kind.f90 omp_lib.f90

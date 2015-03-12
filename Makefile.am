@@ -1,19 +1,17 @@
-SUBDIRS=@XCODEML_COMMON_DIR@  @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
-        @F_FRONTEND_DIR@ @F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
-        @OMDRIVER_DIR@ @LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
-        @LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ \
-        @LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@
+SUBDIRS=XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src F-BackEnd \
+	XcodeML-Exc-Tools Driver/src libtlog/src_threads libtlog/src_mpi \
+        libxmp/include libxmp/src libxmp/src_threads libxmpf/include libxmpf/src
 
 if !IS_SUPERUX
-    SUBDIRS+=@LIBOMPC_DIR@ @LIBOMPF_DIR@
+    SUBDIRS+=libompc/src libompf/src
 endif
 
 if ENABLE_ACC
-    SUBDIRS+=@LIBACC_DIR@ @LIBACC_HEADER_DIR@
+    SUBDIRS+=libacc/src libacc/include
 endif
 
 if ENABLE_ATOOL
-    SUBDIRS+=@ATOOL_DIR@
+    SUBDIRS+=Driver/atool
 endif
 
 XMPPKG_NAME:="@XMPPKG_NAME@"

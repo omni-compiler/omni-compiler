@@ -1,7 +1,7 @@
 AC_PREREQ(2.60)
 LT_PREREQ(2.4)
 
-AC_INIT([Omni Compiler], [0.9.1], [h-murai@riken.jp], [omni])
+AC_INIT([Omni Compiler], [0.9.5], [h-murai@riken.jp], [omni])
 
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
@@ -67,136 +67,28 @@ TOPDIR=${ac_pwd}
 AC_SUBST(TOPDIR)
 
 # --------------------------------------------------------------------
-# check project dirs
-AC_MSG_CHECKING(check XcodeML-Common project exists)
-
-if test -e "XcodeML-Common/Makefile.am"; then
-    XCODEML_COMMON_DIR=XcodeML-Common
-    AC_CONFIG_FILES($XCODEML_COMMON_DIR/Makefile)
-    AC_MSG_RESULT(yes)
-else
-    XCODEML_COMMON_DIR=''
-    AC_MSG_RESULT(no)
-fi
-
-AC_SUBST(XCODEML_COMMON_DIR)
-
-# --------------------------------------------------------------------
-AC_MSG_CHECKING(check C-FrontEnd project exists)
-
-if test -e "C-FrontEnd/src/Makefile.am"; then
-    C_FRONTEND_DIR=C-FrontEnd/src
-    AC_CONFIG_FILES($C_FRONTEND_DIR/Makefile)
-    AC_MSG_RESULT(yes)
-else
-    C_FRONTEND_DIR=''
-    AC_MSG_RESULT(no)
-fi
-
-AC_SUBST(C_FRONTEND_DIR)
-
-# --------------------------------------------------------------------
-AC_MSG_CHECKING(check C-BackEnd project exists)
-
-if test -e "C-BackEnd/Makefile.am"; then
-    C_BACKEND_DIR=C-BackEnd
-    AC_CONFIG_FILES($C_BACKEND_DIR/Makefile)
-    AC_MSG_RESULT(yes)
-else
-    C_BACKEND_DIR=''
-    AC_MSG_RESULT(no)
-fi
-
-AC_SUBST(C_BACKEND_DIR)
-
-# --------------------------------------------------------------------
-AC_MSG_CHECKING(check F-FrontEnd project exists)
-
-if test -e "F-FrontEnd/src/Makefile.am"; then
-    F_FRONTEND_DIR=F-FrontEnd/src
-    AC_CONFIG_FILES($F_FRONTEND_DIR/Makefile)
-    AC_MSG_RESULT(yes)
-else
-    F_FRONTEND_DIR=''
-    AC_MSG_RESULT(no)
-fi
-
-AC_SUBST(F_FRONTEND_DIR)
-
-# --------------------------------------------------------------------
-AC_MSG_CHECKING(check F-BackEnd project exists)
-
-if test -e "F-BackEnd/Makefile.am"; then
-    F_BACKEND_DIR=F-BackEnd
-    AC_CONFIG_FILES($F_BACKEND_DIR/Makefile)
-    AC_MSG_RESULT(yes)
-else
-    F_BACKEND_DIR=''
-    AC_MSG_RESULT(no)
-fi
-
-AC_SUBST(F_BACKEND_DIR)
-
-# --------------------------------------------------------------------
-AC_MSG_CHECKING(check XcodeML-Exc-Tools project exists)
-
-if test -e "XcodeML-Exc-Tools/Makefile.am"; then
-    XCODEML_EXC_TOOLS_DIR=XcodeML-Exc-Tools
-    AC_CONFIG_FILES($XCODEML_EXC_TOOLS_DIR/Makefile)
-    AC_CONFIG_FILES($XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java)
-    AC_MSG_RESULT(yes)
-else
-    XCODEML_EXC_TOOLS_DIR=''
-    AC_MSG_RESULT(no)
-fi
-
-AC_SUBST(XCODEML_EXC_TOOLS_DIR)
-
-# --------------------------------------------------------------------
-AC_MSG_CHECKING(check Driver project exists)
-
-if test -e "Driver/src/Makefile.am"; then
-    OMDRIVER_DIR=Driver/src
-    AC_CONFIG_FILES($OMDRIVER_DIR/Makefile)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/ompcc.conf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/ompf90.conf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/xmpcc.conf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../etc/xmpf90.conf)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/ompcc)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/ompf90)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpcc)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../bin/xmpf90)
-    AC_CONFIG_FILES($OMDRIVER_DIR/../libexec/omni_traverse)
-    AC_MSG_RESULT(yes)
-else
-    OMDRIVER_DIR=''
-    AC_MSG_RESULT(no)
-fi
-
-AC_SUBST(OMDRIVER_DIR)
-
-# --------------------------------------------------------------------
-# C
-LIBXMP_HEADER_DIR=libxmp/include
-LIBXMP_DIR=libxmp/src
-LIBXMP_THREADS_DIR=libxmp/src_threads
-LIBXMP_GPU_DIR=libxmp/src_gpu
-AC_CONFIG_FILES($LIBXMP_HEADER_DIR/Makefile)
-AC_CONFIG_FILES($LIBXMP_DIR/Makefile)
-AC_CONFIG_FILES($LIBXMP_THREADS_DIR/Makefile)
-AC_CONFIG_FILES($LIBXMP_GPU_DIR/Makefile)
-AC_SUBST(LIBXMP_HEADER_DIR)
-AC_SUBST(LIBXMP_DIR)
-AC_SUBST(LIBXMP_THREADS_DIR)
-AC_SUBST(LIBXMP_GPU_DIR)
-
-# F
-LIBXMPF_HEADER_DIR=libxmpf/include
-LIBXMPF_DIR=libxmpf/src
-AC_CONFIG_FILES($LIBXMPF_HEADER_DIR/Makefile)
-AC_CONFIG_FILES($LIBXMPF_DIR/Makefile)
-AC_SUBST(LIBXMPF_HEADER_DIR)
-AC_SUBST(LIBXMPF_DIR)
+AC_CONFIG_FILES(XcodeML-Common/Makefile)
+AC_CONFIG_FILES(C-FrontEnd/src/Makefile)
+AC_CONFIG_FILES(C-BackEnd/Makefile)
+AC_CONFIG_FILES(F-FrontEnd/src/Makefile)
+AC_CONFIG_FILES(F-BackEnd/Makefile)
+AC_CONFIG_FILES(XcodeML-Exc-Tools/Makefile)
+AC_CONFIG_FILES(XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java)
+AC_CONFIG_FILES(Driver/src/Makefile)
+AC_CONFIG_FILES(Driver/etc/ompcc.conf)
+AC_CONFIG_FILES(Driver/etc/ompf90.conf)
+AC_CONFIG_FILES(Driver/etc/xmpcc.conf)
+AC_CONFIG_FILES(Driver/etc/xmpf90.conf)
+AC_CONFIG_FILES(Driver/bin/ompcc)
+AC_CONFIG_FILES(Driver/bin/ompf90)
+AC_CONFIG_FILES(Driver/bin/xmpcc)
+AC_CONFIG_FILES(Driver/bin/xmpf90)
+AC_CONFIG_FILES(Driver/libexec/omni_traverse)
+AC_CONFIG_FILES(libxmp/include/Makefile)
+AC_CONFIG_FILES(libxmp/src/Makefile)
+AC_CONFIG_FILES(libxmp/src_threads/Makefile)
+AC_CONFIG_FILES(libxmpf/include/Makefile)
+AC_CONFIG_FILES(libxmpf/src/Makefile)
 
 # --------------------------------------------------------------------
 # check on what system we are running.
@@ -211,47 +103,30 @@ PPTGT=""
 MM5TGT=""
 
 case $CPU in
-    i*86)
-        CPU=i386;;
-    x86_64*)
-        CPU=x86_64;;
-    alpha*)
-        CPU=alpha;;
+    i*86)    CPU=i386;;
+    x86_64*) CPU=x86_64;;
+    alpha*)  CPU=alpha;;
 esac
 
 case $OS in
-    sunos*)
-        OS=sunos;;
-    solaris*)
-        OS=solaris;;
-    freebsd*)
-        OS=freebsd;;
-    netbsd*)
-        OS=netbsd;;
-    irix*)
-        OS=irix;;
-    aix*)
-        OS=aix;;
-    darwin*)
-        OS=darwin;;
-    cygwin*)
-        OS=cygwin32;;
+    sunos*)   OS=sunos;;
+    solaris*) OS=solaris;;
+    freebsd*) OS=freebsd;;
+    netbsd*)  OS=netbsd;;
+    irix*)    OS=irix;;
+    aix*)     OS=aix;;
+    darwin*)  OS=darwin;;
+    cygwin*)  OS=cygwin32;;
 esac
 
 case $HOSTARCH in
-    i*86-pc-linux*)
-        PPTGT=linux;;
-    alpha*-unknown-linux*)
-        PPTGT=linux;;
-    i386-pc-solaris*)
-        PPTGT=sol2;;
-    sparc-sun-solaris*)
-        PPTGT=sol2;;
-    mips-sgi-irix*)
-        PPTGT=orig2k;;
+    i*86-pc-linux*)        PPTGT=linux;;
+    alpha*-unknown-linux*) PPTGT=linux;;
+    i386-pc-solaris*)      PPTGT=sol2;;
+    sparc-sun-solaris*)    PPTGT=sol2;;
+    mips-sgi-irix*)        PPTGT=orig2k;;
 esac
 
-AC_MSG_RESULT($OS $CPU)
 AC_SUBST(OS)
 AC_SUBST(CPU)
 AC_SUBST(MM5TGT)
@@ -385,29 +260,15 @@ genLibTargetTmpl () {
 }
 
 # --------------------------------------------------------------------
-LIBOMPC_DIR="libompc/src"
-AC_CONFIG_FILES($LIBOMPC_DIR/Makefile)
-LIBOMPF_DIR="libompf/src"
-AC_CONFIG_FILES($LIBOMPF_DIR/Makefile)
-LIBTLOG_DIR="libtlog/src_threads"
-AC_CONFIG_FILES($LIBTLOG_DIR/Makefile)
-LIBTLOG_MPI_DIR="libtlog/src_mpi"
-AC_CONFIG_FILES($LIBTLOG_MPI_DIR/Makefile)
-AC_CONFIG_FILES($LIBTLOG_MPI_DIR/bin/tlogview)
-genLibTargetTmpl $LIBOMPC_DIR
+AC_CONFIG_FILES(libompc/src/Makefile)
+genLibTargetTmpl libompc/src
 
-AC_SUBST(LIBOMPC_DIR)
-AC_SUBST(LIBOMPF_DIR)
-AC_SUBST(LIBTLOG_DIR)
-AC_SUBST(LIBTLOG_MPI_DIR)
-
-# --------------------------------------------------------------------
-LIBACC_DIR=libacc/src
-LIBACC_HEADER_DIR=libacc/include
-AC_CONFIG_FILES($LIBACC_DIR/Makefile)
-AC_CONFIG_FILES($LIBACC_HEADER_DIR/Makefile)
-AC_SUBST(LIBACC_DIR)
-AC_SUBST(LIBACC_HEADER_DIR)
+AC_CONFIG_FILES(libompf/src/Makefile)
+AC_CONFIG_FILES(libtlog/src_threads/Makefile)
+AC_CONFIG_FILES(libtlog/src_mpi/Makefile)
+AC_CONFIG_FILES(libtlog/src_mpi/bin/tlogview)
+AC_CONFIG_FILES(libacc/src/Makefile)
+AC_CONFIG_FILES(libacc/include/Makefile)
 
 # --------------------------------------------------------------------
 AC_ARG_ENABLE(debug,
@@ -426,14 +287,6 @@ AC_ARG_ENABLE(xacc,
     [  --enable-xacc                  enable XcalableACC (false default)],
     [xacc=yes], [xacc=no])
 
-## Add temporarily by mnakao
-#AC_ARG_ENABLE(FJRDMA,
-#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10],
-#   [enableFJRDMA=yes], [enableFJRDMA=no])
-#
-#AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
-## End Add temporarily
-
 AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
 TARGET=$target
 AC_SUBST(TARGET)
@@ -449,16 +302,6 @@ AC_PROG_MAKE_SET
 AC_PROG_AWK
 AC_PROG_LEX
 AC_PROG_YACC
-
-# --------------------------------------------------------------------
-# set XMP-dev
-
-#XMP_ENABLE_GPU=0
-#if test "x${doXmpGpu}" = "xyes"; then
-#    XMP_ENABLE_GPU=1
-#fi
-#AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
-#AC_SUBST(XMP_ENABLE_GPU)
 
 # --------------------------------------------------------------------
 # set OpenACC
@@ -579,6 +422,12 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 # Omni Common
   OMNI_X2X_FLAGS=""
 
+# ranlib & ar & nm
+  AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [:])
+  AC_CHECK_PROG([AR], [arpx], [arpx], [:])
+  ARFLAGS="cru"
+  AC_CHECK_PROG([NM], [nmpx], [nmpx], [:])
+
 elif test "$target" = "MIC-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-mp"
@@ -617,6 +466,12 @@ elif test "$target" = "MIC-linux-gnu"; then
 
 # Omni Common
   OMNI_X2X_FLAGS=""
+
+# ranlib & ar & nm
+  AC_CHECK_TOOL([RANLIB], [ranlib], [:])
+  AC_CHECK_TOOL([AR], [ar], [:])
+  ARFLAGS="cru"
+  AC_CHECK_TOOL([NM], [nm], [:])
 
 elif test "$target" = "Cray-linux-gnu"; then
 # OpenMP
@@ -657,6 +512,12 @@ elif test "$target" = "Cray-linux-gnu"; then
 # Omni Common
   OMNI_X2X_FLAGS=""
 
+# ranlib & ar & nm
+  AC_CHECK_TOOL([RANLIB], [ranlib], [:])
+  AC_CHECK_TOOL([AR], [ar], [:])
+  ARFLAGS="cru"
+  AC_CHECK_TOOL([NM], [nm], [:])
+
 elif test "$target" = "sx-nec-superux"; then
 # OpenMP
   OPENMP_OPT="-Popenmp"
@@ -695,6 +556,12 @@ elif test "$target" = "sx-nec-superux"; then
 
 # Omni Common
   OMNI_X2X_FLAGS=""
+
+# ranlib & ar & nm
+  AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
+  AC_CHECK_PROG([AR], [sxar], [sxar], [:])
+  ARFLAGS="cru"
+  AC_CHECK_PROG([NM], [sxnm], [sxnm], [:])
 
 elif test "$target" = "powerpc-ibm-cnk"; then
   # These options are referred to https://scwwwb.kek.jp/index.html
@@ -770,6 +637,12 @@ elif test "$target" = "powerpc-ibm-cnk"; then
 # Omni Common
   OMNI_X2X_FLAGS=""
 
+# ranlib & ar & nm
+  AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
+  AC_CHECK_PROG([AR], [bgar], [bgar], [:])
+  ARFLAGS="cru"
+  AC_CHECK_PROG([NM], [nm], [nm], [:])
+
 elif test "$target" = "powerpc-hitachi-aix"; then
 # OpenMP
   OPENMP_OPT="-qsmp=omp"
@@ -809,7 +682,19 @@ elif test "$target" = "powerpc-hitachi-aix"; then
 # Omni Common
   OMNI_X2X_FLAGS=""
 
+# ranlib & ar & nm
+  AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
+  AC_CHECK_PROG([AR], [ar], [ar], [:])
+  ARFLAGS="-X32_64 cru"
+  AC_CHECK_PROG([NM], [nm], [nm], [:])
+
 else
+  # ranlib & ar & nm
+  AC_CHECK_TOOL([RANLIB], [ranlib], [:])
+  AC_CHECK_TOOL([AR], [ar], [:])
+  ARFLAGS="cru"
+  AC_CHECK_TOOL([NM], [nm], [:])
+
   INTEL_MPICC=mpiicc
   which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
   if test $? -eq 0; then
@@ -963,6 +848,7 @@ else
   esac
 fi
 AM_CONDITIONAL(POWERPC, test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix")
+AC_SUBST(ARFLAGS)
 
 # --------------------------------------------------------------------
 # specify GPU C compiler
@@ -1010,17 +896,22 @@ AC_ARG_WITH(libblas,
     [  --with-libblas=DIR          BLAS Library (e.g. /foo/blas_LINUX.a)],
     [LIBBLAS="${withval}"; use_libblas=yes], [use_libblas=no])
 
+output_libblas=
 if test x$use_libblas = xyes; then
    if ! test -f $LIBBLAS; then
      AC_MSG_ERROR([$LIBBLAS not found.])
    fi
    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
+   output_libblas="yes ($LIBBLAS)"
 else
   if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
     LIBBLAS="-SSL2BLAMP"
     OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
     OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
+    output_libblas="yes ($LIBBLAS)"
+  else
+    output_libblas="no"
   fi
 fi
 
@@ -1259,53 +1150,6 @@ AC_SUBST(IS_CRAY)
 AC_SUBST(IS_SUPERUX)
 
 # --------------------------------------------------------------------
-# check ranlib & ar & nm
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
-    AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [:])
-    AC_CHECK_PROG([AR], [arpx], [arpx], [:])
-    ARFLAGS="cru"
-    AC_CHECK_PROG([NM], [nmpx], [nmpx], [:])
-
-elif test "$target" = "sx-nec-superux"; then
-    AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
-    AC_CHECK_PROG([AR], [sxar], [sxar], [:])
-    ARFLAGS="cru"
-    AC_CHECK_PROG([NM], [sxnm], [sxnm], [:])
-
-elif test "$target" = "powerpc-hitachi-aix"; then
-    AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
-    AC_CHECK_PROG([AR], [ar], [ar], [:])
-    ARFLAGS="-X32_64 cru"
-    AC_CHECK_PROG([NM], [nm], [nm], [:])
-
-elif test "$target" = "powerpc-ibm-cnk"; then
-    AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
-    AC_CHECK_PROG([AR], [bgar], [bgar], [:])
-    ARFLAGS="cru"
-    AC_CHECK_PROG([NM], [nm], [nm], [:])
-
-else
-   AC_CHECK_TOOL([RANLIB], [ranlib], [:])
-   AC_CHECK_TOOL([AR], [ar], [:])
-   ARFLAGS="cru"
-   AC_CHECK_TOOL([NM], [nm], [:])
-fi
-
-AC_SUBST(ARFLAGS)
-# Check RANLIB & AR & NM
-if test "${RANLIB}" = ":"; then
-  AC_MSG_ERROR([${RANLIB} not found]);
-fi
-
-if test "${AR}" = ":"; then
-  AC_MSG_ERROR([${AR} not found]);
-fi
-
-if test "${NM}" = ":"; then
-   AC_MSG_ERROR([${NM} not found]);
-fi
-
-# --------------------------------------------------------------------
 # check Perl versoin is 5
 PERL5=""
 AC_PATH_PROGS(PERL5, perl)
@@ -1415,10 +1259,10 @@ AC_CHECK_LIB(m, pow)
 AC_CHECK_LIB(m, sqrt)
 
 # C99 functions
-AC_CHECK_FUNC(strtoul, , AC_MSG_ERROR([strtoul not found]))
-AC_CHECK_FUNC(strtoll, , AC_MSG_ERROR([strtoll not found]))
-AC_CHECK_FUNC(strtoull, , AC_MSG_ERROR([strtoull not found]))
-AC_CHECK_FUNC(strtold, , AC_MSG_ERROR([strtold not found]))
+AC_CHECK_FUNC(strtoul,  ,AC_MSG_ERROR([strtoul not found]))
+AC_CHECK_FUNC(strtoll,  ,AC_MSG_ERROR([strtoll not found]))
+AC_CHECK_FUNC(strtoull, ,AC_MSG_ERROR([strtoull not found]))
+AC_CHECK_FUNC(strtold,  ,AC_MSG_ERROR([strtold not found]))
 
 #--------------------------------------------------------------------
 #    The code below deals with several issues related to gettimeofday:
@@ -1878,40 +1722,34 @@ AC_CONFIG_FILES(
 )
 
 # --------------------------------------------------------------------
-ATOOL_DIR=./Driver/atool
-AC_SUBST(ATOOL_DIR)
-
-RM="rm -f"
-AC_SUBST(RM)
-
 # headers/macros
-AC_CHECK_HEADER(sys/param.h, [AC_DEFINE([HAVE_SYS_PARAM_H], [1], [ ])])
-AC_CHECK_HEADER(ctype.h, [AC_DEFINE([HAVE_CTYPE_H], [1], [ ])])
-AC_CHECK_HEADER(stdio.h, [AC_DEFINE([HAVE_STDIO_H], [1], [ ])])
-AC_CHECK_HEADER(stdarg.h, [AC_DEFINE([HAVE_STDARG_H], [1], [ ])])
-AC_CHECK_HEADER(dirent.h, [AC_DEFINE([HAVE_DIRENT_H], [1], [ ])])
-AC_CHECK_HEADER(time.h, [AC_DEFINE([HAVE_TIME_H], [1], [ ])])
-AC_CHECK_HEADER(sys/termios.h, [AC_DEFINE([HAVE_SYS_TERMIOS_H], [1], [ ])])
-AC_CHECK_HEADER(signal.h, [AC_DEFINE([HAVE_SIGNAL_H], [1], [ ])])
-AC_CHECK_HEADER(netdb.h, [AC_DEFINE([HAVE_NETDB_H], [1], [ ])])
-AC_CHECK_HEADER(netinet/tcp.h, [AC_DEFINE([HAVE_NETINET_TCP_H], [1], [ ])])
-AC_CHECK_HEADER(sys/socket.h, [AC_DEFINE([HAVE_SYS_SOCKET_H], [1], [ ])])
-AC_CHECK_HEADER(arpa/inet.h, [AC_DEFINE([HAVE_ARPA_INET_H], [1], [ ])])
-AC_CHECK_HEADER(sys/ioctl.h, [AC_DEFINE([HAVE_SYS_IOCTL_H], [1], [ ])])
-AC_CHECK_HEADER(pthread.h, [AC_DEFINE([HAVE_PTHREAD_H], [1], [ ])])
-AC_CHECK_HEADER(stdbool.h, [AC_DEFINE([HAVE_STDBOOL_H], [1], [ ])])
+AC_CHECK_HEADER(sys/param.h,    [AC_DEFINE([HAVE_SYS_PARAM_H],    [1], [ ])])
+AC_CHECK_HEADER(ctype.h,        [AC_DEFINE([HAVE_CTYPE_H],        [1], [ ])])
+AC_CHECK_HEADER(stdio.h,        [AC_DEFINE([HAVE_STDIO_H],        [1], [ ])])
+AC_CHECK_HEADER(stdarg.h,       [AC_DEFINE([HAVE_STDARG_H],       [1], [ ])])
+AC_CHECK_HEADER(dirent.h,       [AC_DEFINE([HAVE_DIRENT_H],       [1], [ ])])
+AC_CHECK_HEADER(time.h,         [AC_DEFINE([HAVE_TIME_H],         [1], [ ])])
+AC_CHECK_HEADER(sys/termios.h,  [AC_DEFINE([HAVE_SYS_TERMIOS_H],  [1], [ ])])
+AC_CHECK_HEADER(signal.h,       [AC_DEFINE([HAVE_SIGNAL_H],       [1], [ ])])
+AC_CHECK_HEADER(netdb.h,        [AC_DEFINE([HAVE_NETDB_H],        [1], [ ])])
+AC_CHECK_HEADER(netinet/tcp.h,  [AC_DEFINE([HAVE_NETINET_TCP_H],  [1], [ ])])
+AC_CHECK_HEADER(sys/socket.h,   [AC_DEFINE([HAVE_SYS_SOCKET_H],   [1], [ ])])
+AC_CHECK_HEADER(arpa/inet.h,    [AC_DEFINE([HAVE_ARPA_INET_H],    [1], [ ])])
+AC_CHECK_HEADER(sys/ioctl.h,    [AC_DEFINE([HAVE_SYS_IOCTL_H],    [1], [ ])])
+AC_CHECK_HEADER(pthread.h,      [AC_DEFINE([HAVE_PTHREAD_H],      [1], [ ])])
+AC_CHECK_HEADER(stdbool.h,      [AC_DEFINE([HAVE_STDBOOL_H],      [1], [ ])])
 AC_CHECK_HEADER(sys/resource.h, [AC_DEFINE([HAVE_SYS_RESOURCE_H], [1], [ ])])
-AC_CHECK_HEADER(regex.h, [AC_DEFINE([HAVE_REGEX_H], [1], [ ])])
-AC_CHECK_FUNC(strtold, [AC_DEFINE([HAVE_STRTOLD], [1], [ ])])
+AC_CHECK_HEADER(regex.h,        [AC_DEFINE([HAVE_REGEX_H],        [1], [ ])])
+AC_CHECK_FUNC(strtold,          [AC_DEFINE([HAVE_STRTOLD],        [1], [ ])])
 
 # Assume 32 bit for cross compilation.
 AC_CHECK_SIZEOF(short int, 2)
-AC_CHECK_SIZEOF(int, 4)
-AC_CHECK_SIZEOF(long int, 4)
+AC_CHECK_SIZEOF(int,       4)
+AC_CHECK_SIZEOF(long int,  4)
 AC_CHECK_SIZEOF(long long, 8)
-AC_CHECK_SIZEOF(int64_t, 8)
-AC_CHECK_SIZEOF(size_t, 4)
-AC_CHECK_SIZEOF(void *, 4)
+AC_CHECK_SIZEOF(int64_t,   8)
+AC_CHECK_SIZEOF(size_t,    4)
+AC_CHECK_SIZEOF(void *,    4)
 
 oCPPFLAGS=${CPPFLAGS}
 oCFLAGS=${CFLAGS}
@@ -2031,11 +1869,6 @@ case $OS in
 	API_FLAVOR=NATA_API_WIN32API;;
 esac
 
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
-  BLASLIB="-SSL2BLAMP"
-  AC_SUBST(BLASLIB)
-fi
-
 OS_CXXFLAGS=${OS_CFLAGS}
 AC_SUBST(MAKE)
 AC_SUBST(OS_CPPFLAGS)
@@ -2137,24 +1970,17 @@ cat << EOF
   Note: If you want to change above compilers and their options,
         please rerun ./configure MPI_CC=...
 
+  Options:
+    BLAS Library          : $output_libblas
+    OpenACC               : $doOpenAcc
+    GASNet                : $use_gasnet
 EOF
 
-if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; then
-  echo "  Options:"
-  echo "    GASNet                : $use_gasnet"
-
-  if test x${use_gasnet} = xyes; then
-    echo "      Installed in        : $GASNET_PREFIX"
-    echo "      Conduit             : $GASNET_CONDUIT"
-  fi
-  echo "    OpenACC               : $doOpenAcc"
+if test x${use_gasnet} = xyes; then
+  echo "      Installed in        : $GASNET_PREFIX"
+  echo "      Conduit             : $GASNET_CONDUIT"
 fi
-
 if test x${use_tca} = xyes; then
   echo "    TCA                   : yes"
-fi
-
-if test x${use_libblas} = xyes; then
-  echo "    BLAS LIB              : $LIBBLAS"
 fi
 echo "=================================================="

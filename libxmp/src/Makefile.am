@@ -1,5 +1,5 @@
 CC            = @MPI_CC@
-TLOG_INC_DIR  = $(top_builddir)/@LIBTLOG_MPI_DIR@
+TLOG_INC_DIR  = $(top_builddir)/libtlog/src_mpi
 lib_LIBRARIES = libxmp.a
 CFLAGS        = @MPI_CFLAGS@ -I../include -I$(TLOG_INC_DIR)
 LDFLAGS       = @MPI_CLIBS@

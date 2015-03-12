@@ -185,7 +185,7 @@ for file in "${f_files[@]}"; do
 done
 
 # link
-[ $ENABLE_ACC = true ] && OMNI_LINKER_OPT+="$OMNI_GPUCC_LIB"
+[ $ENABLE_ACC = true ] && OMNI_LINKER_OPT="$OMNI_GPUCC_LIB $OMNI_LINKER_OPT"
 obj_files+=("$OMPF_MAIN_O")
 [ "${output_file}" != "" ] && other_args+=("-o" "${output_file}")
 

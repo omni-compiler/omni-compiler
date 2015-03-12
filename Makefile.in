@@ -78,9 +78,9 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@IS_SUPERUX_FALSE@am__append_1 = @LIBOMPC_DIR@ @LIBOMPF_DIR@
-@ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
-@ENABLE_ATOOL_TRUE@am__append_3 = @ATOOL_DIR@
+@IS_SUPERUX_FALSE@am__append_1 = libompc/src libompf/src
+@ENABLE_ACC_TRUE@am__append_2 = libacc/src libacc/include
+@ENABLE_ATOOL_TRUE@am__append_3 = Driver/atool
 @GASNET_TRUE@am__append_4 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"
 @GASNET_TRUE@am__append_5 = "local-view/coarray/C/"
 @FJRDMA_TRUE@am__append_6 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/coarray/F"
@@ -91,6 +91,17 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
 	$(top_srcdir)/include/config.h.in \
 	$(top_srcdir)/Driver/atool/src/include/nata/nata_config.h.in \
+	$(top_srcdir)/XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java.in \
+	$(top_srcdir)/Driver/etc/ompcc.conf.in \
+	$(top_srcdir)/Driver/etc/ompf90.conf.in \
+	$(top_srcdir)/Driver/etc/xmpcc.conf.in \
+	$(top_srcdir)/Driver/etc/xmpf90.conf.in \
+	$(top_srcdir)/Driver/bin/ompcc.in \
+	$(top_srcdir)/Driver/bin/ompf90.in \
+	$(top_srcdir)/Driver/bin/xmpcc.in \
+	$(top_srcdir)/Driver/bin/xmpf90.in \
+	$(top_srcdir)/Driver/libexec/omni_traverse.in \
+	$(top_srcdir)/libtlog/src_mpi/bin/tlogview.in \
 	$(top_srcdir)/release/debian/changelog.in \
 	$(top_srcdir)/release/debian/control.in \
 	$(top_srcdir)/release/debian/rules.in \
@@ -128,7 +139,13 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/config.h \
 	$(top_builddir)/Driver/atool/src/include/nata/nata_config.h
-CONFIG_CLEAN_FILES = release/debian/changelog release/debian/control \
+CONFIG_CLEAN_FILES =  \
+	XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java \
+	Driver/etc/ompcc.conf Driver/etc/ompf90.conf \
+	Driver/etc/xmpcc.conf Driver/etc/xmpf90.conf Driver/bin/ompcc \
+	Driver/bin/ompf90 Driver/bin/xmpcc Driver/bin/xmpf90 \
+	Driver/libexec/omni_traverse libtlog/src_mpi/bin/tlogview \
+	release/debian/changelog release/debian/control \
 	release/debian/rules release/xcalablemp.spec \
 	release/make_rpm.sh release/make_deb.sh \
 	Driver/atool/mk/vars.mk Driver/atool/Makefile \
@@ -194,12 +211,11 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
-DIST_SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
-	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
-	@OMDRIVER_DIR@ @LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
-	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ \
-	@LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ @LIBOMPC_DIR@ @LIBOMPF_DIR@ \
-	@LIBACC_DIR@ @LIBACC_HEADER_DIR@ @ATOOL_DIR@ $(am__empty)
+DIST_SUBDIRS = XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src \
+	F-BackEnd XcodeML-Exc-Tools Driver/src libtlog/src_threads \
+	libtlog/src_mpi libxmp/include libxmp/src libxmp/src_threads \
+	libxmpf/include libxmpf/src libompc/src libompf/src libacc/src \
+	libacc/include Driver/atool
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -248,12 +264,10 @@ AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 API_FLAVOR = @API_FLAVOR@
 AR = @AR@
 ARFLAGS = @ARFLAGS@
-ATOOL_DIR = @ATOOL_DIR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BLASLIB = @BLASLIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -267,8 +281,6 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-C_BACKEND_DIR = @C_BACKEND_DIR@
-C_FRONTEND_DIR = @C_FRONTEND_DIR@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
@@ -286,8 +298,6 @@ F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
-F_BACKEND_DIR = @F_BACKEND_DIR@
-F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_LIBS = @GASNET_LIBS@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CFLAGS = @GPU_CFLAGS@
@@ -312,23 +322,11 @@ LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
-LIBACC_DIR = @LIBACC_DIR@
-LIBACC_HEADER_DIR = @LIBACC_HEADER_DIR@
 LIBOBJS = @LIBOBJS@
-LIBOMPC_DIR = @LIBOMPC_DIR@
-LIBOMPF_DIR = @LIBOMPF_DIR@
 LIBS = @LIBS@
-LIBTLOG_DIR = @LIBTLOG_DIR@
-LIBTLOG_MPI_DIR = @LIBTLOG_MPI_DIR@
 LIBTOOL = @LIBTOOL@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 LIBXML_PREFIX = @LIBXML_PREFIX@
-LIBXMPF_DIR = @LIBXMPF_DIR@
-LIBXMPF_HEADER_DIR = @LIBXMPF_HEADER_DIR@
-LIBXMP_DIR = @LIBXMP_DIR@
-LIBXMP_GPU_DIR = @LIBXMP_GPU_DIR@
-LIBXMP_HEADER_DIR = @LIBXMP_HEADER_DIR@
-LIBXMP_THREADS_DIR = @LIBXMP_THREADS_DIR@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
@@ -354,7 +352,6 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OMDRIVER_DIR = @OMDRIVER_DIR@
 OMNI_C2X_FLAGS = @OMNI_C2X_FLAGS@
 OMNI_F2X_FLAGS = @OMNI_F2X_FLAGS@
 OMNI_F_PP = @OMNI_F_PP@
@@ -396,7 +393,6 @@ PERL5 = @PERL5@
 POW_LIB = @POW_LIB@
 PPTGT = @PPTGT@
 RANLIB = @RANLIB@
-RM = @RM@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -418,8 +414,6 @@ TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
 TYPE_INT64 = @TYPE_INT64@
 VERSION = @VERSION@
-XCODEML_COMMON_DIR = @XCODEML_COMMON_DIR@
-XCODEML_EXC_TOOLS_DIR = @XCODEML_EXC_TOOLS_DIR@
 XMPC_DEF = @XMPC_DEF@
 XMPF_DEF = @XMPF_DEF@
 XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
@@ -511,12 +505,11 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
-	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
-	@OMDRIVER_DIR@ @LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
-	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ \
-	@LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ $(am__append_1) \
-	$(am__append_2) $(am__append_3)
+SUBDIRS = XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src \
+	F-BackEnd XcodeML-Exc-Tools Driver/src libtlog/src_threads \
+	libtlog/src_mpi libxmp/include libxmp/src libxmp/src_threads \
+	libxmpf/include libxmpf/src $(am__append_1) $(am__append_2) \
+	$(am__append_3)
 XMPPKG_TMPDIR_TOP := "/tmp/@XMPPKG_NAME@"
 XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/tmp.$$
 DEB_VER_FILE = "/etc/debian_version"
@@ -631,6 +624,28 @@ Driver/atool/src/include/nata/stamp-h2: $(top_srcdir)/Driver/atool/src/include/n
 
 distclean-hdr:
 	-rm -f include/config.h include/stamp-h1 Driver/atool/src/include/nata/nata_config.h Driver/atool/src/include/nata/stamp-h2
+XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java: $(top_builddir)/config.status $(top_srcdir)/XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/etc/ompcc.conf: $(top_builddir)/config.status $(top_srcdir)/Driver/etc/ompcc.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/etc/ompf90.conf: $(top_builddir)/config.status $(top_srcdir)/Driver/etc/ompf90.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/etc/xmpcc.conf: $(top_builddir)/config.status $(top_srcdir)/Driver/etc/xmpcc.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/etc/xmpf90.conf: $(top_builddir)/config.status $(top_srcdir)/Driver/etc/xmpf90.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/bin/ompcc: $(top_builddir)/config.status $(top_srcdir)/Driver/bin/ompcc.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/bin/ompf90: $(top_builddir)/config.status $(top_srcdir)/Driver/bin/ompf90.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/bin/xmpcc: $(top_builddir)/config.status $(top_srcdir)/Driver/bin/xmpcc.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/bin/xmpf90: $(top_builddir)/config.status $(top_srcdir)/Driver/bin/xmpf90.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/libexec/omni_traverse: $(top_builddir)/config.status $(top_srcdir)/Driver/libexec/omni_traverse.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+libtlog/src_mpi/bin/tlogview: $(top_builddir)/config.status $(top_srcdir)/libtlog/src_mpi/bin/tlogview.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 release/debian/changelog: $(top_builddir)/config.status $(top_srcdir)/release/debian/changelog.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 release/debian/control: $(top_builddir)/config.status $(top_srcdir)/release/debian/control.in
