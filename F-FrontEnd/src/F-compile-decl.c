@@ -748,8 +748,8 @@ declare_function(ID id)
 
         v = expv_sym_term(F_FUNC, NULL, ID_SYM(id));
         EXPV_TYPE(v) = ID_TYPE(id);
-	TYPE_UNSET_SAVE(ID_TYPE(id));
-        ID_ADDR(id) = v;
+	if (ID_TYPE(id)) TYPE_UNSET_SAVE(ID_TYPE(id));
+	ID_ADDR(id) = v;
     }
     return id;
 }
