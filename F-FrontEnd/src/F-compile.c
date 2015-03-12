@@ -2314,6 +2314,9 @@ end_procedure()
 
     FinalizeFormat();
 
+    if (EXT_PROC_TYPE(CURRENT_EXT_ID))
+      TYPE_SET_FOR_FUNC_SELF(EXT_PROC_TYPE(CURRENT_EXT_ID));
+
     /* check undefined variable */
     FOREACH_ID(id, LOCAL_SYMBOLS) {
         if(ID_CLASS(id) == CL_UNKNOWN){
