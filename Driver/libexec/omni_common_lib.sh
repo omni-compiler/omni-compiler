@@ -44,9 +44,9 @@ function omni_exec()
 
 function omni_f_check_file_exist()
 {
-    ( [ "${all_files}" = "" ] && [ "${obj_files}" = "" ] ) && omni_error_exit "no input files."
+    ( [ "${f_files}" = "" ] && [ "${obj_files}" = "" ] ) && omni_error_exit "no input files."
 
-    for file in "${all_files[@]}" "${obj_files[@]}" "${archive_files[@]}"; do
+    for file in "${f_files[@]}" "${obj_files[@]}" "${archive_files[@]}"; do
 	[ ! -f "${file}" ] && omni_error_exit "not found ${file}"
     done
 }

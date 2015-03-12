@@ -27,22 +27,19 @@ STOP_BACKEND=false
 STOP_COMPILE=false
 
 ### Set options ###
-# e.g.) ompf90 -I/usr/lib a.f b.F c.f90 d.F90 e.o --tmp --Wlfoo lib.a
+# e.g.) ompf90 -I/usr/lib a.f b.F c.f90 d.F90 e.o --tmp --Wlfoo lib.a -o a.out
 #
-#  F_F90_files="b.F d.F90"            # fortran files needed preprocess (*.F or *.F90)
-#  f_f90_files="a.f c.f90"            # fortran files (*.f or *.f90)
-#  all_files="a.f b.F c.f90 d.F90"    # all fortran files
-#  archive_files="lib.a"              # Archive files
-#  obj_files="e.o"                    # Object files
-#  other_args="-I/usr/lib"            # Options for Preprocessor, Compiler, and Linker
+#  output_file="a.out"              # Output file
+#  f_files="a.f b.F c.f90 d.F90"    # All fortran files
+#  archive_files="lib.a"            # Archive files
+#  obj_files="e.o"                  # Object files
+#  other_args="-I/usr/lib"          # Options for Preprocessor, Compiler, and Linker
 # 
 #  Note that "-omp" is extracted by ompf90_set_parameters, and set "ENABLE_OPENMP".
 #
 # To deal with space-separator in options, the following variables are defined as an array (#278)
 output_file=()
-F_F90_files=()
-f_f90_files=()
-all_files=()
+f_files=()
 archive_files=()
 obj_files=()
 other_args=()
@@ -72,50 +69,29 @@ omni_set_trap
 
 ### Preprocessor ###
 [ $ONLY_PP = true -a -f "${output_file}" ] && omni_exec rm "${output_file}"
-for file in "${F_F90_files[@]}"; do
+[ $ENABLE_CPP = true ] && OMNI_FPP_OPT="$OMNI_FPP_OPT $CPP_OPT"
+for file in "${f_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.F -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
     FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
 
-    # When ">" or ">>" is used, please use "omni_exec_echo" and "omni_exec_run" instead of "omni_exec".
-    omni_exec_echo $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" ">" "${FILE_PP}"
-    omni_exec_run  $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" > "${FILE_PP}"
-    # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
-
-    if [ $ONLY_PP = true ]; then
-	if [ "${output_file}" = "" ]; then
-	    omni_exec cat "${FILE_PP}"
-	else
-	    omni_exec_echo cat "${FILE_PP_I}" ">>" "${output_file}"
-            omni_exec_run  cat "${FILE_PP_I}" >> "${output_file}"
-	fi
-    fi
-done
-
-OMNI_FPP_OPT="$OMNI_FPP_OPT $CPP_OPT"
-for file in "${f_f90_files[@]}"; do
-    FILE=("${file}")
-    FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
-    EXT=${file##*.}
-    FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
-
-    if [ $ENABLE_CPP = true ]; then
+    if [ $EXT = "F90" -o $EXT = "F" -o $ENABLE_CPP = true ]; then
         # When ">" or ">>" is used, please use "omni_exec_echo" and "omni_exec_run" instead of "omni_exec".
-        omni_exec_echo $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" ">" "${FILE_PP}"
-        omni_exec_run  $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" > "${FILE_PP}"
+	omni_exec_echo $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" ">" "${FILE_PP}"
+	omni_exec_run  $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" > "${FILE_PP}"
         # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
 
-        if [ $ONLY_PP = true ]; then
-            if [ "${output_file}" = "" ]; then
-                omni_exec cat "${FILE_PP}"
-            else
-                omni_exec_echo cat "${FILE_PP_I}" ">>" "${output_file}"
-                omni_exec_run  cat "${FILE_PP_I}" >> "${output_file}"
-            fi
-        fi
+	if [ $ONLY_PP = true ]; then
+	    if [ "${output_file}" = "" ]; then
+		omni_exec cat "${FILE_PP}"
+	    else
+		omni_exec_echo cat "${FILE_PP_I}" ">>" "${output_file}"
+		omni_exec_run  cat "${FILE_PP_I}" >> "${output_file}"
+	    fi
+	fi
     else
-        omni_exec cp "${FILE}" "${FILE_PP}"
+	omni_exec cp "${FILE}" "${FILE_PP}"
     fi
 done
 [ $STOP_PP = true ] && exit 0;
@@ -125,7 +101,7 @@ done
 ### Frontend ###
 [ $ENABLE_ACC = true ] && frontend_add_opt+=("-facc")
 [ $ENABLE_OPENMP = true ] && frontend_add_opt+=("-fopenmp")
-for file in "${all_files[@]}"; do
+for file in "${f_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.F90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
@@ -138,7 +114,7 @@ done
 
 ### Translator ###
 [ $ENABLE_ACC = true ] && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -facc"
-for file in "${all_files[@]}"; do
+for file in "${f_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
@@ -152,7 +128,7 @@ done
 
 ### Backend ###
 if [ $OUTPUT_TEMPORAL = true ]; then
-    for file in "${all_files[@]}"; do
+    for file in "${f_files[@]}"; do
         FILE=("${file}")
 	FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
 	EXT=${file##*.}
@@ -167,7 +143,7 @@ fi
 ### Native Compiler ###
 [ $ENABLE_ACC = true ]    &&  native_add_opt+=("$OPENACC_DEF")
 [ $ENABLE_OPENMP = true ] &&  native_add_opt+=("$OPENMP_DEF")
-for file in "${all_files[@]}"; do
+for file in "${f_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
@@ -200,7 +176,7 @@ done
 
 ### Linker ###
 # collect initialize modules
-for file in "${all_files[@]}"; do
+for file in "${f_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}

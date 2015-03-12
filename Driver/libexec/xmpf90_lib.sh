@@ -68,10 +68,8 @@ function xmpf90_set_parameters()
 {
     while [ -n "$1" ]; do
         case "$1" in
-	    *.f90|*.f)
-		f_f90_files+=("$1"); all_files+=("$1");;
-	    *.F90|*.F)
-		F_F90_files+=("$1"); all_files+=("$1");;
+	    *.f90|*.f|*.F90|*.F)
+		f_files+=("$1");;
 	    *.a)
 		archive_files+=("$1");;
 	    *.o)

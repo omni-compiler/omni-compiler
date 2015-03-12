@@ -26,12 +26,13 @@ STOP_COMPILE=false
 DISABLE_LDG=false
 
 ### Set options ###
-# e.g.) ompcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a
+# e.g.) ompcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a -o a.out
 #
-#  c_files="a.c b.c"                  # C files
-#  archive_files="lib.a"              # Archive files
-#  obj_files="c.o"                    # Object files
-#  other_args="-I/usr/lib"            # Options for Preprocessor, Compiler, and Linker
+#  output_file="a.out"              # Output file
+#  c_files="a.c b.c"                # C files
+#  archive_files="lib.a"            # Archive files
+#  obj_files="c.o"                  # Object files
+#  other_args="-I/usr/lib"          # Options for Preprocessor, Compiler, and Linker
 #
 # To deal with space-separator in options, the following variables are defined as an array (#278)
 output_file=()

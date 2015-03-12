@@ -31,12 +31,13 @@ ENABLE_TLOG_ALL=false
 ENABLE_TLOG=false
 
 ### Set options ###
-# e.g.) xmpcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a -omp
-#
-#  c_files="a.c b.c"                  # C files
-#  archive_files="lib.a"              # Archive files
-#  obj_files="c.o"                    # Object files
-#  other_args="-I/usr/lib"            # Options for Preprocessor, Compiler, and Linker
+# e.g.) xmpcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a -omp -o a.out
+#  
+#  output_file="a.out"              # Output file
+#  c_files="a.c b.c"                # C files
+#  archive_files="lib.a"            # Archive files
+#  obj_files="c.o"                  # Object files
+#  other_args="-I/usr/lib"          # Options for Preprocessor, Compiler, and Linker
 # 
 #  Note that "-omp" is extracted by xmpcc_set_parameters, and set "ENABLE_OPENMP".
 #
