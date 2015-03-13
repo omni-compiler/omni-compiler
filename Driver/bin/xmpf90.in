@@ -95,8 +95,6 @@ for file in "${f_files[@]}"; do
 		omni_exec_run  cat "${FILE_PP_I}" >> "${output_file}"
 	    fi
 	fi
-    else
-	omni_exec cp "${FILE}" "${FILE_PP}"
     fi
 done
 [ $STOP_PP = true ] && exit 0;
@@ -104,13 +102,18 @@ done
 [ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # xmpf90 -E hoge.c
 
 ### Frontend ###
-[ $ENABLE_XACC = true ] && frontend_add_opt+=("-facc")
+[ $ENABLE_XACC = true ]   && frontend_add_opt+=("-facc")
 [ $ENABLE_OPENMP = true ] && frontend_add_opt+=("-fopenmp")
 for file in "${f_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.F90 -> hoge_2f_fuga_2f_a
     EXT=${file##*.}
-    FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
+
+    if [ $EXT = "F90" -o $EXT = "F" -o $ENABLE_CPP = true ]; then
+	FILE_PP=${TEMP_DIR}/"${FILE_NAME}".${EXT}
+    else
+	FILE_PP="${FILE}"
+    fi
     FILE_IN_X=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.xml
 
     omni_exec $OMNI_F2X_CMD "${include_opt[@]}" "${module_opt[@]}" "${frontend_add_opt[@]}" $OMNI_F2X_OPT "${FILE_PP}" -o "${FILE_IN_X}"
@@ -118,11 +121,11 @@ done
 [ $STOP_FRONTEND = true ] && exit 0;
 
 ### Translator ###
-[ $ENABLE_TLOG_ALL = true ] && OMNI_FX2X_OPT="-tlog-all $OMNI_FX2X_OPT"
-[ $ENABLE_TLOG = true ] && OMNI_FX2X_OPT="-tlog $OMNI_FX2X_OPT"
+[ $ENABLE_TLOG_ALL = true ]     && OMNI_FX2X_OPT="-tlog-all $OMNI_FX2X_OPT"
+[ $ENABLE_TLOG = true ]         && OMNI_FX2X_OPT="-tlog $OMNI_FX2X_OPT"
 [ $ENABLE_SCALASCA_ALL = true ] && OMNI_FX2X_OPT="-scalasca-all $OMNI_FX2X_OPT"
-[ $ENABLE_SCALASCA = true ] && OMNI_FX2X_OPT="-scalasca $OMNI_FX2X_OPT"
-[ $ENABLE_XACC = true ] && OMNI_FX2X_OPT="-facc $OMNI_FX2X_OPT"
+[ $ENABLE_SCALASCA = true ]     && OMNI_FX2X_OPT="-scalasca $OMNI_FX2X_OPT"
+[ $ENABLE_XACC = true ]         && OMNI_FX2X_OPT="-facc $OMNI_FX2X_OPT"
 for file in "${f_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
