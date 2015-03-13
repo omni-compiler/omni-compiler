@@ -300,8 +300,19 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 AC_PROG_AWK
-AC_PROG_LEX
+
 AC_PROG_YACC
+# If yacc is not available, set YACC to 'yacc' in AC_PROG_YACC.
+if test "x$YACC" = "xyacc"; then
+   AC_MSG_ERROR([byacc is not found.])
+fi
+
+AC_PROG_LEX
+# https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.69/html_node/Particular-Programs.html
+# If lex is not available, set LEX to ':' in "AC_PROG_LEX".
+if test "x$LEX" = "x:"; then
+   AC_MSG_ERROR([flex is not found.])
+fi
 
 # --------------------------------------------------------------------
 # set OpenACC
@@ -374,7 +385,7 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 #
 #  Prefix "OMNI_" options should set a minimal of option as possible.
 #  OMNI_C_PP, Pre-processor command, needs an option for C99.
-#  OMNI_NTV_CFLAGS needs options for C99 support.
+#  OMNI_NTV_CFLAGS needs an option for C99 support.
 #  OMNI_LNK_CFLAGS and OMNI_LNK_FCFLAGS need an option for OpenMP.
 
 # Memo:
