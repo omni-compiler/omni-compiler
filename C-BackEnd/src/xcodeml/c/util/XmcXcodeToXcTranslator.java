@@ -324,6 +324,8 @@ public class XmcXcodeToXcTranslator {
             XcEnumType type = new XcEnumType(typeId);
             _setTypeAttr(type, n);
 
+            // XXX 全体的に見直す。
+
             Node symbolsNode = getElement(n, "symbols");
             if (symbolsNode != null) {
                 boolean isAllIntConstant = true;
@@ -353,8 +355,9 @@ public class XmcXcodeToXcTranslator {
 
                                 ident.setValue(new XcConstObj.IntConst(i++, XcBaseTypeEnum.INT));
                             } else {
-                              // FIXME : Because there is no idea to determine as
-                              // 'all those belonging to the expressions', this branch summarizes them as other.
+                                // FIXME 'expressions に属するものすべて' と
+                                // いう判定はできないので、その他で
+                                // まとめてある。
                                 XcLazyEvalType lazyIdent = ident;
                                 lazyIdent.setIsLazyEvalType(true);
                                 lazyIdent.setLazyBindings(new Node[] { valueChildNode });
@@ -368,11 +371,14 @@ public class XmcXcodeToXcTranslator {
                                 ident.setValue(null);
                             }
                         }
+
                         type.addEnumerator(ident);
                     }
                 }
             }
+
             _addType(tc, type, n);
+
             _addGccAttribute(type, n);
         }
     }

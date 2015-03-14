@@ -4,7 +4,7 @@ SRC    = $(wildcard src/xcodeml/c/*/*.java)
 all-local: $(TARGET)
 
 $(TARGET): $(SRC)
-	$(JAVAC) src/xcodeml/c/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
+	$(JAVAC) -encoding utf8 src/xcodeml/c/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
 	mkdir -p build
 	cd src; $(JAR) cf ../$@ xcodeml/c/*/*.class
 
