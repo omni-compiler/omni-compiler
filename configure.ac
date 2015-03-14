@@ -303,14 +303,14 @@ AC_PROG_AWK
 
 AC_PROG_YACC
 # If yacc is not available, set YACC to 'yacc' in AC_PROG_YACC.
-if test "x$YACC" = "xyacc"; then
+if test "x${YACC}" = "xyacc"; then
    AC_MSG_ERROR([byacc is not found.])
 fi
 
 AC_PROG_LEX
 # https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.69/html_node/Particular-Programs.html
 # If lex is not available, set LEX to ':' in "AC_PROG_LEX".
-if test "x$LEX" = "x:"; then
+if test "x${LEX}" = "x:"; then
    AC_MSG_ERROR([flex is not found.])
 fi
 
