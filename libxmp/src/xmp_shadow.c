@@ -378,8 +378,10 @@ void _XMP_init_shadow_noalloc(_XMP_array_t *a, ...) {
   for (int i = 0; i < dim; i++) {
     _XMP_array_info_t *ai = &(a->info[i]);
     ai->shadow_type = va_arg(args, int);
-    ai->shadow_size_lo = va_arg(args, int);
-    ai->shadow_size_hi = va_arg(args, int);
+    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+      ai->shadow_size_lo = va_arg(args, int);
+      ai->shadow_size_hi = va_arg(args, int);
+    }
   }
 
   va_end(args);

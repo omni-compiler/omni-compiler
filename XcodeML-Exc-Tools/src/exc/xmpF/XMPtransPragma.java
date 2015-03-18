@@ -435,6 +435,11 @@ public class XMPtransPragma
 
     // object size
     int op = info.getReductionOp();
+    // boolean reduce_minus = false;
+    // if (op == XMP.REDUCE_MINUS){
+    //   op = XMP.REDUCE_SUM;
+    //   reduce_minus = true;
+    // }
 
     Ident f = env.declInternIdent(XMP.reduction_f, Xtype.FsubroutineType);
     Ident f2 = env.declInternIdent(XMP.reduction_loc_f, Xtype.FsubroutineType);
@@ -472,6 +477,10 @@ public class XMPtransPragma
 	ret_body.add(f2.callSubroutine(args2));
 	j++;
       }
+
+      // if (reduce_minus){
+      // 	ret_body.add(Xcons.Set(id.Ref(), Xcons.unaryOp(Xcode.UNARY_MINUS_EXPR, id.Ref())));
+      // }
 
       ret_body.add(f.callSubroutine(args));
     }
