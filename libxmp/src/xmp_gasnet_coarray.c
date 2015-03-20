@@ -1,3 +1,7 @@
+#ifndef MPI_PORTABLE_PLATFORM_H
+#define MPI_PORTABLE_PLATFORM_H
+#endif 
+
 #include <stdarg.h>
 #include "mpi.h"
 #include "xmp_internal.h"

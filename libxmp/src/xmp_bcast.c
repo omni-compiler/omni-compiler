@@ -21,6 +21,11 @@
  *    Culture, Sports, Science and Technology, Japan.
  *  $
  */
+#ifndef MPI_PORTABLE_PLATFORM_H
+#define MPI_PORTABLE_PLATFORM_H
+#endif 
+
+
 #include <stdio.h>
 #include <stdarg.h>
 #include "mpi.h"
