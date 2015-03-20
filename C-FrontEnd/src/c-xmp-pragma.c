@@ -1377,7 +1377,7 @@ CExpr *parse_XMP_opt()
   return (CExpr *)allocExprOfNull();
 }
 
-CExpr* parse_TASKS_clause()
+CExpr *parse_TASKS_clause()
 {
     return (CExpr *)allocExprOfNull();
 }
