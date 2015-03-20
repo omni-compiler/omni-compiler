@@ -29,7 +29,7 @@ OMNI_MPIFC_OPT="@OMNI_NTV_FCFLAGS@ @XMPF_DEF@ ${OMNI_MPIFC_MUST_OPT}"
 OMNI_MODINC="@MPI_MODINC@"
 
 # Linker
-OMNI_TRAVERSE="${OMNI_HOME}/libexec/omni_traverse --F --prefix xmpf"
+OMNI_TRAVERSE="${OMNI_HOME}/libexec/omni_traverse --F --prefix @OMNI_TRAVERSE_F_PREFIX@"
 OMNI_LINKER_CMD="@MPI_FC@"
 XMPF_MAIN_O="${OMNI_HOME}/lib/xmpf_main.o"
 OMNI_LINKER_MUST_OPT="-L${OMNI_HOME}/lib -lxmpf -lxmp"

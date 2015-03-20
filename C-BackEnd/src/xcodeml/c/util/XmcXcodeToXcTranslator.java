@@ -2057,9 +2057,11 @@ public class XmcXcodeToXcTranslator {
                 enterNodes(tc, obj, asmOperandsNodes.get(0));
                 obj.setInputOperandsEnd();
             }
-            if(asmOperandsNodes.get(1) != null){
+            if(asmOperandsNodes.size() >= 2){
+              if(asmOperandsNodes.get(1) != null){
                 obj.initOutputOperands();
                 enterNodes(tc, obj, asmOperandsNodes.get(1));
+              }
             }
 
             enterNodes(tc, obj,
