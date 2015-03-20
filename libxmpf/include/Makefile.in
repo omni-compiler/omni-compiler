@@ -79,7 +79,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-subdir = libxmpf/include
+subdir = ./libxmpf/include
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(include_HEADERS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -268,8 +268,6 @@ OMNI_LNK_CFLAGS = @OMNI_LNK_CFLAGS@
 OMNI_LNK_FCFLAGS = @OMNI_LNK_FCFLAGS@
 OMNI_NTV_CFLAGS = @OMNI_NTV_CFLAGS@
 OMNI_NTV_FCFLAGS = @OMNI_NTV_FCFLAGS@
-OMNI_TRAVERSE_C_PREFIX = @OMNI_TRAVERSE_C_PREFIX@
-OMNI_TRAVERSE_F_PREFIX = @OMNI_TRAVERSE_F_PREFIX@
 OMNI_X2X_FLAGS = @OMNI_X2X_FLAGS@
 OMP_LOCK_TYPE = @OMP_LOCK_TYPE@
 OMP_THREAD_TYPE = @OMP_THREAD_TYPE@
@@ -428,9 +426,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps libxmpf/include/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./libxmpf/include/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps libxmpf/include/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./libxmpf/include/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

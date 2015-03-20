@@ -132,16 +132,6 @@ AC_SUBST(CPU)
 AC_SUBST(MM5TGT)
 AC_SUBST(PPTGT)
 
-if test "x${OS}" = "xdarwin"; then
-  OMNI_TRAVERSE_C_PREFIX="_xmpc"
-  OMNI_TRAVERSE_F_PREFIX="_xmpf"
-else
-  OMNI_TRAVERSE_C_PREFIX="xmpc"
-  OMNI_TRAVERSE_F_PREFIX="xmpf"
-fi
-AC_SUBST(OMNI_TRAVERSE_C_PREFIX)
-AC_SUBST(OMNI_TRAVERSE_F_PREFIX)
-
 # --------------------------------------------------------------------
 # OpenMP runtime checking
 

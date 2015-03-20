@@ -88,7 +88,7 @@ target_triplet = @target@
 @TCA_TRUE@am__append_7 = -D_XMP_TCA
 @ENABLE_XACC_TRUE@am__append_8 = xmp_reflect_gpu.c xmp_gpu_pack.cu xmp_reduce_gpu.c
 @ENABLE_XACC_TRUE@am__append_9 = -D_XMP_XACC -I@GPGPU_PREFIX@
-subdir = libxmp/src
+subdir = ./libxmp/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/buildutils/libtool.m4 \
@@ -351,8 +351,6 @@ OMNI_LNK_CFLAGS = @OMNI_LNK_CFLAGS@
 OMNI_LNK_FCFLAGS = @OMNI_LNK_FCFLAGS@
 OMNI_NTV_CFLAGS = @OMNI_NTV_CFLAGS@
 OMNI_NTV_FCFLAGS = @OMNI_NTV_FCFLAGS@
-OMNI_TRAVERSE_C_PREFIX = @OMNI_TRAVERSE_C_PREFIX@
-OMNI_TRAVERSE_F_PREFIX = @OMNI_TRAVERSE_F_PREFIX@
 OMNI_X2X_FLAGS = @OMNI_X2X_FLAGS@
 OMP_LOCK_TYPE = @OMP_LOCK_TYPE@
 OMP_THREAD_TYPE = @OMP_THREAD_TYPE@
@@ -525,9 +523,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps libxmp/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./libxmp/src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps libxmp/src/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./libxmp/src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
