@@ -184,6 +184,12 @@ for c_file in "${c_files[@]}"; do
     FILE_O=${TEMP_DIR}/"${FILE_NAME}".o
     obj_files+=("${FILE_O}")
 done
+if [ $ENABLE_ACC = true ]; then
+    TRAVERSE_FILE_C=${TEMP_DIR}/omni_traverse_${PID}.c
+    TRAVERSE_FILE_O=${TEMP_DIR}/omni_traverse_${PID}.o
+    omni_exec $OMNI_TRAVERSE -o  $TRAVERSE_FILE_C "${obj_files[@]}"
+    omni_exec $OMNI_CC_CMD -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
+fi
 
 # link
 if [ $ENABLE_ACC = true ]; then
@@ -193,7 +199,7 @@ else
 fi
 
 [ "${output_file}" != "" ] && other_args+=("-o" "${output_file}")
-omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" $OMNI_LINKER_OPT "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}"
+omni_exec $OMNI_LINKER_CMD ${TRAVERSE_FILE_O} "${obj_files[@]}" $OMNI_LINKER_OPT "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}"
 
 ### Delete temporal directory ###
 [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
