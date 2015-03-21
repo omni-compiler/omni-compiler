@@ -58,6 +58,7 @@ public class XMPtransCoarrayRun
     def = funcDef.getDef();
     fblock = funcDef.getBlock();
     this.env = env;
+    //// I don't know. See [Xmp-dev:5185]
     env.setCurrentDef(funcDef);      // needed if this is called before XMPrewriteExpr ???
     name = fblock.getName();
     String postfix = genNewProcPostfix();
@@ -140,7 +141,11 @@ public class XMPtransCoarrayRun
   //------------------------------------------------------------
 
   /*
-   *  PASS 1: translate all procedures excluding modules
+   *  PASS 1: for each procedure that is either 
+   *            - an external function/subroutine or
+   *            - an internal function/subroutine or
+   *            - a module function/subroutine
+   *          except module
    */
   public void run1() {
     // error check for each coarray declaration
@@ -168,15 +173,21 @@ public class XMPtransCoarrayRun
     }
 
     // convert specification and declaration part
-    Boolean isInitNeeded;
-    isInitNeeded = convDecl_procedureLocal(procLocalCoarrays);
-    isInitNeeded |= convDecl_dummyArg(dummyArgCoarrays);
-    convExec(visibleCoarrays, isInitNeeded);
+    Boolean sw1, sw2;
+    sw1 = transDeclPart_procedureLocal(procLocalCoarrays);
+    sw2 = transDeclPart_dummyArg(dummyArgCoarrays);
+    transExecPart(visibleCoarrays, (sw1||sw2));
+
+    // finalize (see XMPtranslate.java)
+    ///// I don't know why this call is needed or not needed.
+    ///// see [XMP-dev:5185] 2015.03.21
+    funcDef.Finalize();
   }
 
 
   /*
-   *  PASS 2: translate all modules
+   *  PASS 2: for each module 
+   *          excluding its module functions and subroutines
    */
   public void run2() {
     // error check for each coarray declaration
@@ -184,11 +195,16 @@ public class XMPtransCoarrayRun
       coarray.errorCheck();
 
     // convert specification and declaration part
-    convDecl_moduleLocal(localCoarrays);
+    transDeclPart_moduleLocal(localCoarrays);
+
+    // finalize (see XMPtranslate.java)
+    ///// I don't know why this call is needed or not needed.
+    ///// see [XMP-dev:5185] 2015.03.21
+    funcDef.Finalize();
   }
 
 
-  private void convExec(Vector<XMPcoarray> visibleCoarrays, Boolean isInitNeeded) {
+  private void transExecPart(Vector<XMPcoarray> visibleCoarrays, Boolean initSwitch) {
 
     // e. convert coindexed objects to function references
     convCoidxObjsToFuncCalls(visibleCoarrays);
@@ -201,15 +217,12 @@ public class XMPtransCoarrayRun
     convReferenceOfAllocCoarrays(visibleCoarrays);
 
     // i. initialization/finalization of local resources
-    if (isInitNeeded)
-      genCallOfInitAndFinalize();
+    if (initSwitch)
+      genCallOfInitAndFin();
 
     // resolve prologue/epilogue code generations
     genPrologStmts();
     genEpilogStmts();
-
-    // finalize (see XMPtranslate.java)
-    funcDef.Finalize();
   }
 
 
@@ -261,15 +274,15 @@ public class XMPtransCoarrayRun
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
   */
-  private Boolean convDecl_procedureLocal(Vector<XMPcoarray> localCoarrays) {
-    Boolean isInitNeeded = false;
+  private Boolean transDeclPart_procedureLocal(Vector<XMPcoarray> localCoarrays) {
+    Boolean initSwitch = false;
 
     // divide procedure-local coarrays into static and allocatable
     Vector<XMPcoarray> staticLocalCoarrays = new Vector<XMPcoarray>();
     Vector<XMPcoarray> allocatableLocalCoarrays = new Vector<XMPcoarray>();
     for (XMPcoarray coarray: localCoarrays) {
       if (coarray.isAllocatable()) {
-        isInitNeeded = true;
+        initSwitch = true;
         allocatableLocalCoarrays.add(coarray);
       } else {
         staticLocalCoarrays.add(coarray);
@@ -296,7 +309,7 @@ public class XMPtransCoarrayRun
     replaceAllocatableWithPointer(allocatableLocalCoarrays);
 
     // if there are any allocatale local coarrays, init/final is needed.
-    return isInitNeeded;
+    return initSwitch;
   }
 
 
@@ -342,7 +355,7 @@ public class XMPtransCoarrayRun
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
   */
-  private Boolean convDecl_dummyArg(Vector<XMPcoarray> localCoarrays) {
+  private Boolean transDeclPart_dummyArg(Vector<XMPcoarray> localCoarrays) {
     // if there are not dummy argument coarrays, return
     if (localCoarrays.isEmpty())
       return false;
@@ -402,7 +415,7 @@ public class XMPtransCoarrayRun
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
   */
-  private void convDecl_moduleLocal(Vector<XMPcoarray> localCoarrays) {
+  private void transDeclPart_moduleLocal(Vector<XMPcoarray> localCoarrays) {
 
     // select static local coarrays
     Vector<XMPcoarray> staticLocalCoarrays = new Vector<XMPcoarray>();
@@ -464,7 +477,7 @@ public class XMPtransCoarrayRun
   //  generate initialization and finalization calls
   //-----------------------------------------------------
   //
-  private void genCallOfInitAndFinalize() {
+  private void genCallOfInitAndFin() {
     // generate "call proc_init(tag)" and insert to the top
     Xobject args1 = Xcons.List(Xcons.FvarRef(resourceTagId));
     //// Rescriction of OMNI: blist.findIdent() cannot find the name defined
