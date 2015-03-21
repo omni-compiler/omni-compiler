@@ -19,9 +19,10 @@ public class XMPtransCoarrayRun
   final static String DEF_DESCPOINTER_NAME = "xmpf_coarray_descptr";
   final static String PROC_INIT_NAME = "xmpf_coarray_proc_init";
   final static String PROC_FINALIZE_NAME = "xmpf_coarray_proc_finalize";
-  final static String TAG_NAME = "xmpf_coarray_resource_tag";
+  final static String TAG_NAME = "xmpf_resource_tag";
   public final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
   final static String COARRAYALLOC_PREFIX = "xmpf_coarray_alloc";
+  final static String COARRAYDEALLOC_NAME = "xmpf_coarray_dealloc";
 
   // to handle host- and use-associations
   static ArrayList<XMPtransCoarrayRun> ancestors
@@ -230,46 +231,50 @@ public class XMPtransCoarrayRun
     example of procedure-local coarrays
     --------------------------------------------
       subroutine EX1
-        use EX2  ! including definition of a coarray
-                 !   real :: V1(10,20)[4,*]            ! static local
-        real, save :: V1(10,20)[4,*]                   ! static local
+        use EX2  !! includes "real :: V1(10,20)[4,*]"  ! module var
         complex(8), save :: V2[0:*]                    ! static local
-        integer, allocatable :: V3(:)[:,:]             ! allocatable local
+        integer, allocatable :: V3(:,:)[:,:]           ! allocatable local
         ...
         V1(1:3,j)[k1,k2] = (/1.0,2.0,3.0/)             ! put 1D
         z = V2[k]**2                                   ! get 0D
-        allocate (V3(1:10))                            ! allocate
+        allocate (V3(1:10,20)[k1:k12,0:*])             ! allocate
+        deallocate (V3)                                ! deallocate
         return                             ! auto-dealloc and free resources
       end subroutine
     --------------------------------------------
     output:
     --------------------------------------------
       subroutine EX1
-        use EX2
+        use M1
         real :: V1(1:10,1:20)                                ! f
         complex(8) :: V2                                     ! f
-        integer, POINTER :: V3(:)                            ! f,h
+        integer, POINTER :: V3(:,:)                          ! f,h
 
         integer(8) :: DP_V1, DP_V2, DP_V3                    ! a
         pointer (CP_V1, V1)                                  ! c
         pointer (CP_V2, V2)                                  ! c
-        common /xmpf_DP_EX1/ DP_V1, DP_V2                    ! g
-        common /xmpf_CP_EX1/ CP_V1, CP_V2                    ! g
+        common /xmpf_DP_M1/ DP_V1                            ! g
+        common /xmpf_DP_EX1/ DP_V2                           ! g
+        common /xmpf_CP_M1/ CP_V1                            ! g
+        common /xmpf_CP_EX1/ CP_V2                           ! g
         integer(8) :: tag                                    ! i
-        call xmpf_coarray_proc_init(tag)                     ! i
         ...
+        call xmpf_coarray_proc_init(tag)                     ! i
         call xmpf_coarray_put(DP_V1, V1(1,j), 4, &           ! d
           k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
         z = xmpf_coarray_get0d(DP_V2, V2, 16, k, 0) ** 2     ! e
-        call xmpf_coarray_alloc1d(DP_V3, V3, tag, 1, 1, 10)  ! j
+        call xmpf_coarray_alloc2d(DP_V3, V3, tag, 4,      &  ! j
+          2, 10, 20)
         call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)   ! jc
+        call xmpf_coarray_dealloc(DP_V3, tag)                ! j
         call xmpf_coarray_proc_finalize(tag)                 ! i
         return
       end subroutine
 
     !! Additionally, two subroutines xmpf_traverse_* will    ! b
-    !! be generated into the same output file to initialize
-    !! DP_Vn and CP_Vn.  See XMPcoarrayInitProcedure.
+    !! be generated into the same output file which will
+    !! initialize DP_V2 and CP_V2.
+    !! (See XMPcoarrayInitProcedure.)
     --------------------------------------------
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
@@ -316,41 +321,43 @@ public class XMPtransCoarrayRun
   /**
     example of dummy argument coarrays
     --------------------------------------------
-      subroutine EX1(V1,V2,V3)
-        real :: V1(10,20)[4,*]                    ! static dummy
-        complex(8) :: V2[0:*]                     ! static dummy
-        integer, allocatable :: V3(:)[:,:]        ! allocatable dummy
+      subroutine EX1(V2,V3)
+        complex(8) :: V2[0:*]                          ! static dummy
+        integer, allocatable :: V3(:,:)[:,:]           ! allocatable dummy
         ...
-        V1(1:3,j)[k1,k2] = (/1.0,2.0,3.0/)        ! put 1D
-        z = V2[k]**2                              ! get 0D
-        allocate (V3(1:10)[k1:k12,0:*])           ! allocate
-        return                                ! free resources
+        z = V2[k]**2                                   ! get 0D
+        allocate (V3(1:10,20)[k1:k12,0:*])             ! allocate
+        deallocate (V3)                                ! deallocate
+        return                                      ! free resources
       end subroutine
     --------------------------------------------
     output:
     --------------------------------------------
-      subroutine EX1(V1,V2,V3)
-        real :: V1(1:10,1:20)                                ! f
+      subroutine EX1(V2,V3)
         complex(8) :: V2                                     ! f
-        integer, POINTER :: V3(:)                            ! f,h
+        integer, POINTER :: V3(:,:)                          ! f,h
 
-        integer(8) :: DP_V1, DP_V2, DP_V3                    ! a
+        integer(8) :: DP_V2, DP_V3                           ! a
         integer(8) :: tag                                    ! i
         ...
         call xmpf_coarray_proc_init(tag)                     ! i
-        call xmpf_coarray_descptr(DP_V1, V1, tag)            ! k
         call xmpf_coarray_descptr(DP_V2, V2, tag)            ! k
         call xmpf_coarray_descptr(DP_V3, V3, tag)            ! k
-        call xmpf_coarray_set_coshape(DP_V1, 2, 1, 4, 1)     ! kc
         call xmpf_coarray_set_coshape(DP_V2, 1, 0)           ! kc
-        call xmpf_coarray_put(DP_V1, V1(1,j), 4, &           ! d
-          k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
+
         z = xmpf_coarray_get0d(DP_V2, V2, 16, k, 0) ** 2     ! e
-        call xmpf_coarray_alloc1d(DP_V3, V3, tag, 1, 1, 10)  ! j
+        call xmpf_coarray_alloc2d(DP_V3, V3, tag, 4, &       ! j
+          2, 10, 20)
         call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)   ! jc
+        call xmpf_coarray_dealloc(DP_V3, tag)                ! j
         call xmpf_coarray_proc_finalize(tag)                 ! i
         return
       end subroutine
+
+    !! Additionally, two subroutines xmpf_traverse_* would   ! b
+    !! be generated into the same output file which 
+    !! initialize DP_Vx and CP_Vx if there were any local 
+    !! variables Vx. (See XMPcoarrayInitProcedure.)
     --------------------------------------------
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
@@ -411,6 +418,11 @@ public class XMPtransCoarrayRun
         integer(8) :: DP_V3                                  ! a
         ...
       end subroutine
+
+    !! Additionally, two subroutines xmpf_traverse_* will    ! b
+    !! be generated into the same output file which will
+    !! initialize DP_V1, DP_V2, CP_V1 and CP_V2.
+    !! (see XMPcoarrayInitProcedure.)
     --------------------------------------------
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
@@ -715,6 +727,11 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //
   private void convReferenceOfAllocCoarrays(Vector<XMPcoarray> coarrays) {
+    convAllocateStmts(coarrays);
+    convDellocateStmts(coarrays);
+  }
+
+  private void convAllocateStmts(Vector<XMPcoarray> coarrays) {
     BasicBlockIterator bbi =
       new BasicBlockIterator(fblock);    // see XMPrewriteExpr iter3 loop
     
@@ -733,7 +750,7 @@ public class XMPtransCoarrayRun
           // xobj.getArg(1): list of variables to be allocated
           // errmsg= identifier is not supported either.
           if (_doesListHaveCoarray(xobj.getArg(1), coarrays)) {
-            ArrayList<Xobject> fstmts = conv_allocateStmt(xobj, coarrays);
+            ArrayList<Xobject> fstmts = gen_allocateStmt(xobj, coarrays);
             LineNo lineno = xobj.getLineNo();
             for (Xobject fstmt: fstmts) {
               fstmt.setLineNo(lineno);
@@ -742,11 +759,34 @@ public class XMPtransCoarrayRun
             st.remove();
           }
           break;
+        }
+      }
+    }
+  }
 
+
+  private void convDellocateStmts(Vector<XMPcoarray> coarrays) {
+    BasicBlockIterator bbi =
+      new BasicBlockIterator(fblock);    // see XMPrewriteExpr iter3 loop
+    
+    for (bbi.init(); !bbi.end(); bbi.next()) {
+      StatementIterator si = bbi.getBasicBlock().statements();
+      while (si.hasNext()){
+	Statement st = si.next();
+	Xobject xobj = st.getExpr();
+	if (xobj == null || xobj.Opcode() == null)
+          continue;
+
+	switch (xobj.Opcode()) {
         case F_DEALLOCATE_STATEMENT:
           if (_doesListHaveCoarray(xobj.getArg(1), coarrays)) {
-            ArrayList<Xobject> fstmts = conv_deallocateStmt(xobj, coarrays);
-            //// SET!!!
+            ArrayList<Xobject> fstmts = gen_deallocateStmt(xobj, coarrays);
+            LineNo lineno = xobj.getLineNo();
+            for (Xobject fstmt: fstmts) {
+              fstmt.setLineNo(lineno);
+              st.insert(fstmt);
+            }
+            st.remove();
           }
           break;
         }
@@ -777,7 +817,8 @@ public class XMPtransCoarrayRun
         allCoarray = false;
       else {
         // found both coarray and non-coarray
-        XMP.error("current restriction: both coarray and non-coarray cannot be in the same ALLOCATE/DEALLOCATE statement.");
+        XMP.error("current restriction: An ALLOCATE/DEALLOCATE statement "
+                  + "cannnot have both coarrays and noncoarrays.");
       }
     }
 
@@ -810,7 +851,9 @@ public class XMPtransCoarrayRun
     return id.Type().isFintrinsic();
   }
 
-  private ArrayList<Xobject> conv_allocateStmt(Xobject x, Vector<XMPcoarray> coarrays) {
+
+  private ArrayList<Xobject> gen_allocateStmt(Xobject x, Vector<XMPcoarray> coarrays) {
+
     ArrayList<Xobject> newStmts = new ArrayList<Xobject>();
 
     for (Xobject arg: (XobjList)x.getArg(1)) {
@@ -832,6 +875,25 @@ public class XMPtransCoarrayRun
   }
 
 
+
+  private ArrayList<Xobject> gen_deallocateStmt(Xobject x,
+                                                Vector<XMPcoarray> coarrays) {
+
+    ArrayList<Xobject> newStmts = new ArrayList<Xobject>();
+
+    for (Xobject arg: (XobjList)x.getArg(1)) {
+      Xobject varname = arg.getArg(0);
+      XMPcoarray coarray = _findCoarrayInCoarrays(varname, coarrays);
+
+      // TRANSLATION j.
+      newStmts.add(makeStmt_coarrayDealloc(coarray));
+    }
+
+    return newStmts;
+  }
+
+
+
   private Xobject makeStmt_coarrayAlloc(XMPcoarray coarray, XobjList shape) {
     int rank = coarray.getRank();
     if (rank != shape.Nargs()) {
@@ -842,6 +904,8 @@ public class XMPtransCoarrayRun
 
     Xobject args = Xcons.List(coarray.getDescPointerId(),
                               Xcons.FvarRef(coarray.getIdent()),
+                              _buildCountExpr(shape, rank),
+                              coarray.getElementLengthExpr(),
                               Xcons.FvarRef(resourceTagId),
                               Xcons.IntConstant(rank));
     for (int i = 0; i < rank; i++) {
@@ -854,6 +918,32 @@ public class XMPtransCoarrayRun
                                      BasicType.FexternalSubroutineType);
     Xobject subrCall = subr.callSubroutine(args);
     return subrCall;
+  }
+
+
+  private Xobject makeStmt_coarrayDealloc(XMPcoarray coarray) {
+    Xobject args = Xcons.List(coarray.getDescPointerId(),
+                              Xcons.FvarRef(resourceTagId));
+    Ident subr = env.declExternIdent(COARRAYDEALLOC_NAME,
+                                     BasicType.FexternalSubroutineType);
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
+
+
+  private Xobject _buildCountExpr(XobjList shape, int rank) {
+    if (rank == 0)
+      return Xcons.IntConstant(1);
+
+    Xobject countExpr = _getExtentInIndexRange(shape.getArg(0));
+    for (int i = 1; i < rank; i++) {
+      countExpr = Xcons.binaryOp(Xcode.MUL_EXPR,
+                                 countExpr,
+                                 _getExtentInIndexRange(shape.getArg(i))
+                                 ).cfold(fblock);
+    }
+
+    return countExpr;
   }
 
 
@@ -885,10 +975,19 @@ public class XMPtransCoarrayRun
 
     if (dimension == null)
       lbound = null;
-    else if (dimension.Opcode() == Xcode.F_INDEX_RANGE)
-      lbound = dimension.getArg(0);
-    else
-      lbound = null;
+    else {
+      switch (dimension.Opcode()) {
+      case F_INDEX_RANGE:
+        lbound = dimension.getArg(0);
+        break;
+      case F_ARRAY_INDEX:
+        lbound = null;
+        break;
+      default:
+        lbound = null;
+        break;
+      }
+    }
 
     if (lbound == null)
       return Xcons.IntConstant(1);
@@ -902,15 +1001,62 @@ public class XMPtransCoarrayRun
 
     if (dimension == null)
       ubound = null;
-    else if (dimension.Opcode() == Xcode.F_INDEX_RANGE)
-      ubound = dimension.getArg(1);
-    else
-      ubound = dimension;
+    else {
+      switch (dimension.Opcode()) {
+      case F_INDEX_RANGE:
+        ubound = dimension.getArg(1);
+        break;
+      case F_ARRAY_INDEX:
+        ubound = dimension.getArg(0);
+        break;
+      default:
+        ubound = dimension;
+      }
+    }
 
     if (ubound == null)
       XMP.error("illegal upper bound specified in ALLOCATE statement");
 
     return ubound.cfold(fblock);
+  }
+
+
+  private Xobject _getExtentInIndexRange(Xobject dimension) {
+    Xobject extent;
+
+    if (dimension == null)
+      extent = null;
+    else {
+      switch (dimension.Opcode()) {
+      case F_INDEX_RANGE:
+        Xobject lbound = dimension.getArg(0);
+        Xobject ubound = dimension.getArg(1);
+        if (ubound == null)                     // illegal
+          extent = null;
+        else if (lbound == null)                // lbound omitted
+          extent = ubound;
+        else {                                  // (ubound + lbound - 1)
+          Xobject tmp = Xcons.binaryOp(Xcode.MINUS_EXPR,
+                                       ubound,
+                                       lbound);
+          extent = Xcons.binaryOp(Xcode.MINUS_EXPR,
+                                  tmp,
+                                  Xcons.IntConstant(1));
+        }
+        break;
+      case F_ARRAY_INDEX:
+        extent = dimension.getArg(0);
+        break;
+      default:
+        extent = dimension;
+        break;
+      }
+    }
+
+    if (extent == null)
+      XMP.error("illegal extent of a dimension specified in ALLOCATE statement");
+
+    return extent.cfold(fblock);
   }
 
 
@@ -925,15 +1071,6 @@ public class XMPtransCoarrayRun
     return null;
   }
 
-
-
-  private ArrayList<Xobject> conv_deallocateStmt(Xobject x,
-                                                 Vector<XMPcoarray> coarrays) {
-    System.out.println(" @@@ here conv_deallocateStmt()");
-    System.out.println("   x="+x);
-
-    return null;
-  }
 
 
   //-----------------------------------------------------

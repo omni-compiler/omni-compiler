@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #-------------------------------------------------------
-#  generator of xmp_lib_coarray_get.h
-#  see also ../src/xmpf_coarray_get_wrap.{sh,f90}
+#  generator for xmp_lib_coarray_get.h
+#  see also ../src/xmpf_coarray_get_wrap.f90[.sh]
 #-------------------------------------------------------
 
 #--------------------

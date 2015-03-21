@@ -25,6 +25,9 @@
 !! reference of coindexed objects
       include "xmp_lib_coarray_get.h"
 
+!! allocate statement
+      include "xmp_lib_coarray_alloc.h"
+
 !! others
       integer, external :: xmpf_coarray_image
 !      external :: xmpf_coarray_proc_init
