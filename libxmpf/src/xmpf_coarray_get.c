@@ -15,18 +15,18 @@
 static int _select_getscheme_scalar(int element);
 static int _select_getscheme_array(void);
 
-static void _getCoarray(int serno, char *baseAddr, int coindex, char *res,
+static void _getCoarray(char *descPtr, char *baseAddr, int coindex, char *res,
                         int bytes, int rank, int skip[], int count[]);
 
-static char *_getVectorIter(int serno, char *baseAddr, int bytes,
+static char *_getVectorIter(char *descPtr, char *baseAddr, int bytes,
                             int coindex, char *dst,
                             int loops, int skip[], int count[]);
 
-static void _getVector(int serno, char *baseAddr, int bytes,
+static void _getVector(char *descPtr, char *baseAddr, int bytes,
                        int coindex, char *dst);
 #if 0
 /* disused */
-static void _getVectorByByte(int serno, char *baseAddr, int bytes,
+static void _getVectorByByte(char *descPtr, char *baseAddr, int bytes,
                              int coindex, char *dst);
 static void _getVectorByElement(char *desc, int start, int vlength,
                                 int coindex, char *dst);
@@ -36,7 +36,7 @@ static void _getVectorByElement(char *desc, int start, int vlength,
     entry
 \***************************************************/
 
-extern void xmpf_coarray_get_scalar_(int *serno, char *baseAddr, int *element,
+extern void xmpf_coarray_get_scalar_(char **descPtr, char *baseAddr, int *element,
                                      int *coindex, char *result)
 {
   _XMPF_checkIfInTask("a scalar coindexed object");
@@ -50,7 +50,7 @@ extern void xmpf_coarray_get_scalar_(int *serno, char *baseAddr, int *element,
                               "  baseAddr=%p, *element=%d\n",
                               baseAddr, *element);
     }
-    _getVector(*serno, baseAddr, *element, *coindex, result);
+    _getVector(*descPtr, baseAddr, *element, *coindex, result);
     break;
 
   case SCHEME_BufferGet:
@@ -62,7 +62,7 @@ extern void xmpf_coarray_get_scalar_(int *serno, char *baseAddr, int *element,
                                 "  baseAddr=%p, *element=%zd, buf=%p\n",
                                 baseAddr, *element, buf);
       }
-      _getVector(*serno, baseAddr, *element, *coindex, buf);
+      _getVector(*descPtr, baseAddr, *element, *coindex, buf);
       (void)memcpy(result, buf, *element);
     }
     break;
@@ -77,7 +77,7 @@ extern void xmpf_coarray_get_scalar_(int *serno, char *baseAddr, int *element,
                                 "  baseAddr=%p, elementRU=%zd, buf=%p\n",
                                 baseAddr, elementRU, buf);
       }
-      _getVector(*serno, baseAddr, elementRU, *coindex, buf);
+      _getVector(*descPtr, baseAddr, elementRU, *coindex, buf);
       (void)memcpy(result, buf, *element);
     }
     break;
@@ -88,7 +88,7 @@ extern void xmpf_coarray_get_scalar_(int *serno, char *baseAddr, int *element,
 }
 
 
-extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
+extern void xmpf_coarray_get_array_(char **descPtr, char *baseAddr, int *element,
                                     int *coindex, char *result, int *rank, ...)
 {
   _XMPF_checkIfInTask("an array coindexed object");
@@ -124,7 +124,7 @@ extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
                               "  baseAddr=%p, *element=%d\n",
                               baseAddr, *element);
     }
-    _getCoarray(*serno, baseAddr, *coindex, result, *element, *rank, skip, count);
+    _getCoarray(*descPtr, baseAddr, *coindex, result, *element, *rank, skip, count);
     break;
 
   case SCHEME_BufferGet:
@@ -137,7 +137,7 @@ extern void xmpf_coarray_get_array_(int *serno, char *baseAddr, int *element,
                               "  bufsize=%zd\n", bufsize);
     }
     buf = malloc(bufsize);
-    _getCoarray(*serno, baseAddr, *coindex, buf, *element, *rank, skip, count);
+    _getCoarray(*descPtr, baseAddr, *coindex, buf, *element, *rank, skip, count);
     (void)memcpy(result, buf, bufsize);
     break;
 
@@ -178,19 +178,19 @@ int _select_getscheme_array(void)
 }
 
 
-void _getCoarray(int serno, char *baseAddr, int coindex, char *result,
+void _getCoarray(char *descPtr, char *baseAddr, int coindex, char *result,
                  int bytes, int rank, int skip[], int count[])
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
     if (_XMPF_coarrayMsg) {
       _XMPF_coarrayDebugPrint("GET %d bytes fully contiguous ===\n", bytes);
     }
-    _getVector(serno, baseAddr, bytes, coindex, result);
+    _getVector(descPtr, baseAddr, bytes, coindex, result);
     return;
   }
 
   if (bytes == skip[0]) {  // contiguous
-    _getCoarray(serno, baseAddr, coindex, result,
+    _getCoarray(descPtr, baseAddr, coindex, result,
                 bytes * count[0], rank - 1, skip + 1, count + 1);
     return;
   }
@@ -210,12 +210,12 @@ void _getCoarray(int serno, char *baseAddr, int coindex, char *result,
     _XMPF_coarrayDebugPrint("%s bytes ===\n", work);
   }
 
-  dst = _getVectorIter(serno, baseAddr, bytes, coindex, dst,
+  dst = _getVectorIter(descPtr, baseAddr, bytes, coindex, dst,
                        rank, skip, count);
 }
 
   
-char *_getVectorIter(int serno, char *baseAddr, int bytes,
+char *_getVectorIter(char *descPtr, char *baseAddr, int bytes,
                      int coindex, char *dst,
                      int loops, int skip[], int count[])
 {
@@ -225,13 +225,13 @@ char *_getVectorIter(int serno, char *baseAddr, int bytes,
 
   if (loops == 1) {
     for (int i = 0; i < n; i++) {
-      _getVector(serno, src, bytes, coindex, dst);
+      _getVector(descPtr, src, bytes, coindex, dst);
       dst += bytes;
       src += gap;
     }
   } else {
     for (int i = 0; i < n; i++) {
-      dst = _getVectorIter(serno, baseAddr + i * gap, bytes,
+      dst = _getVectorIter(descPtr, baseAddr + i * gap, bytes,
                            coindex, dst,
                            loops - 1, skip, count);
     }
@@ -240,10 +240,10 @@ char *_getVectorIter(int serno, char *baseAddr, int bytes,
 }
 
 
-void _getVector(int serno, char *src, int bytes, int coindex, char *dst)
+void _getVector(char *descPtr, char *src, int bytes, int coindex, char *dst)
 {
-  char* desc = _XMPF_get_coarrayDesc(serno);
-  int offset = _XMPF_get_coarrayOffset(serno, src);
+  char* desc = _XMPF_get_coarrayDesc(descPtr);
+  int offset = _XMPF_get_coarrayOffset(descPtr, src);
 
   _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // coindexed-object
   _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // result
@@ -255,13 +255,13 @@ void _getVector(int serno, char *src, int bytes, int coindex, char *dst)
 #if 0
 /* disused
  */
-void _getVectorByByte(int serno, char *src, int bytes,
+void _getVectorByByte(char *descPtr, char *src, int bytes,
                       int coindex, char *dst)
 {
-  char* desc = _XMPF_get_coarrayDesc(serno);
-  int start = _XMPF_get_coarrayStart(serno, src);
+  char* desc = _XMPF_get_coarrayDesc(descPtr);
+  int start = _XMPF_get_coarrayStart(descPtr, src);
   // The element that was recorded when the data was allocated is used.
-  int element = _XMPF_get_coarrayElement(serno);
+  int element = _XMPF_get_coarrayElement(descPtr);
   int vlength = bytes / element;
 
   _getVectorByElement(desc, start, vlength, coindex, dst);

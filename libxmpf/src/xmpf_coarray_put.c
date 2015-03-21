@@ -15,18 +15,18 @@
 static int _select_putscheme_scalar(int condition, int element);
 static int _select_putscheme_array(int condition);
 
-static void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
+static void _putCoarray(char *descPtr, char *baseAddr, int coindex, char *rhs,
                         int bytes, int rank, int skip[], int count[]);
 
-static char *_putVectorIter(int serno, char *baseAddr, int bytes,
+static char *_putVectorIter(char *descPtr, char *baseAddr, int bytes,
                             int coindex, char *src,
                             int loops, int skip[], int count[]);
 
-static void _putVector(int serno, char *baseAddr, int bytes,
+static void _putVector(char *descPtr, char *baseAddr, int bytes,
                        int coindex, char* src);
 #if 0
 /* disused */
-static void _putVectorByByte(int serno, char *baseAddr, int bytes,
+static void _putVectorByByte(char *descPtr, char *baseAddr, int bytes,
                              int coindex, char* src);
 static void _putVectorByElement(char *desc, int start, int vlength,
                                 int coindex, char* src);
@@ -36,7 +36,7 @@ static void _putVectorByElement(char *desc, int start, int vlength,
     entry
 \***************************************************/
 
-extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
+extern void xmpf_coarray_put_scalar_(char **descPtr, char *baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition)
 {
   _XMPF_checkIfInTask("scalar coindexed variable");
@@ -50,7 +50,7 @@ extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
                               "  baseAddr=%p, *element=%d\n",
                               baseAddr, *element);
     }
-    _putVector(*serno, baseAddr, *element, *coindex, rhs);
+    _putVector(*descPtr, baseAddr, *element, *coindex, rhs);
     break;
     
   case SCHEME_ExtraDirectPut:
@@ -62,7 +62,7 @@ extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
                                 "  baseAddr=%p, *element=%d, elementRU=%zd\n",
                                 baseAddr, *element, elementRU);
       }
-      _putVector(*serno, baseAddr, elementRU, *coindex, rhs);
+      _putVector(*descPtr, baseAddr, elementRU, *coindex, rhs);
     }
     break;
 
@@ -76,7 +76,7 @@ extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
                                 baseAddr, *element, buf);
       }
       (void)memcpy(buf, rhs, *element);
-      _putVector(*serno, baseAddr, *element, *coindex, buf);
+      _putVector(*descPtr, baseAddr, *element, *coindex, buf);
     }
     break;
 
@@ -91,7 +91,7 @@ extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
                                 baseAddr, elementRU, buf);
       }
       (void)memcpy(buf, rhs, *element);
-      _putVector(*serno, baseAddr, elementRU, *coindex, buf);
+      _putVector(*descPtr, baseAddr, elementRU, *coindex, buf);
     }
     break;
 
@@ -102,7 +102,7 @@ extern void xmpf_coarray_put_scalar_(int *serno, char *baseAddr, int *element,
 
 
 
-extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
+extern void xmpf_coarray_put_array_(char **descPtr, char *baseAddr, int *element,
                                     int *coindex, char *rhs, int *condition,
                                     int *rank, ...)
 {
@@ -137,7 +137,7 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
     if (_XMPF_coarrayMsg) {
       _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/array\n");
     }
-    _putCoarray(*serno, baseAddr, *coindex, rhs, *element, *rank, skip, count);
+    _putCoarray(*descPtr, baseAddr, *coindex, rhs, *element, *rank, skip, count);
     break;
 
   case SCHEME_BufferPut:
@@ -151,7 +151,7 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
     }
     buf = malloc(bufsize);
     (void)memcpy(buf, rhs, bufsize);
-    _putCoarray(*serno, baseAddr, *coindex, buf, *element, *rank, skip, count);
+    _putCoarray(*descPtr, baseAddr, *coindex, buf, *element, *rank, skip, count);
     break;
 
   default:
@@ -160,7 +160,7 @@ extern void xmpf_coarray_put_array_(int *serno, char *baseAddr, int *element,
 }
 
 
-extern void xmpf_coarray_put_spread_(int *serno, char *baseAddr, int *element,
+extern void xmpf_coarray_put_spread_(char **descPtr, char *baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition,
                                      int *rank, ...)
 {
@@ -194,7 +194,7 @@ extern void xmpf_coarray_put_spread_(int *serno, char *baseAddr, int *element,
   buf = malloc(bufsize);
   for (i = 0, p = buf; i < nelems; i++, p += *element)
     (void)memcpy(p, rhs, *element);
-  _putCoarray(*serno, baseAddr, *coindex, buf, *element, *rank, skip, count);
+  _putCoarray(*descPtr, baseAddr, *coindex, buf, *element, *rank, skip, count);
 }
 
 
@@ -239,19 +239,19 @@ int _select_putscheme_array(int condition)
 }
 
 
-void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
+void _putCoarray(char *descPtr, char *baseAddr, int coindex, char *rhs,
                  int bytes, int rank, int skip[], int count[])
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
     if (_XMPF_coarrayMsg) {
       _XMPF_coarrayDebugPrint("PUT %d bytes fully contiguous ===\n", bytes);
     }
-    _putVector(serno, baseAddr, bytes, coindex, rhs);
+    _putVector(descPtr, baseAddr, bytes, coindex, rhs);
     return;
   }
 
   if (bytes == skip[0]) {  // contiguous
-    _putCoarray(serno, baseAddr, coindex, rhs,
+    _putCoarray(descPtr, baseAddr, coindex, rhs,
                 bytes * count[0], rank - 1, skip + 1, count + 1);
     return;
   }
@@ -271,12 +271,12 @@ void _putCoarray(int serno, char *baseAddr, int coindex, char *rhs,
     _XMPF_coarrayDebugPrint("%s bytes ===\n", work);
   }
 
-  src = _putVectorIter(serno, baseAddr, bytes, coindex, src,
+  src = _putVectorIter(descPtr, baseAddr, bytes, coindex, src,
                        rank, skip, count);
 }
 
   
-char *_putVectorIter(int serno, char *baseAddr, int bytes,
+char *_putVectorIter(char *descPtr, char *baseAddr, int bytes,
                      int coindex, char *src,
                      int loops, int skip[], int count[])
 {
@@ -286,13 +286,13 @@ char *_putVectorIter(int serno, char *baseAddr, int bytes,
 
   if (loops == 1) {
     for (int i = 0; i < n; i++) {
-      _putVector(serno, dst, bytes, coindex, src);
+      _putVector(descPtr, dst, bytes, coindex, src);
       src += bytes;
       dst += gap;
     }
   } else {
     for (int i = 0; i < n; i++) {
-      src = _putVectorIter(serno, baseAddr + i * gap, bytes,
+      src = _putVectorIter(descPtr, baseAddr + i * gap, bytes,
                            coindex, src,
                            loops - 1, skip, count);
     }
@@ -301,10 +301,10 @@ char *_putVectorIter(int serno, char *baseAddr, int bytes,
 }
 
 
-void _putVector(int serno, char *baseAddr, int bytes, int coindex, char *src)
+void _putVector(char *descPtr, char *baseAddr, int bytes, int coindex, char *src)
 {
-  char* desc = _XMPF_get_coarrayDesc(serno);
-  size_t offset = _XMPF_get_coarrayOffset(serno, baseAddr);
+  char* desc = _XMPF_get_coarrayDesc(descPtr);
+  size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
 
   _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // LHS
   _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // RHS
@@ -316,13 +316,13 @@ void _putVector(int serno, char *baseAddr, int bytes, int coindex, char *src)
 #if 0
 /* disused
  */
-void _putVectorByByte(int serno, char *baseAddr, int bytes,
+void _putVectorByByte(char *descPtr, char *baseAddr, int bytes,
                       int coindex, char *src)
 {
-  char* desc = _XMPF_get_coarrayDesc(serno);
-  int start = _XMPF_get_coarrayStart(serno, baseAddr);
+  char* desc = _XMPF_get_coarrayDesc(descPtr);
+  int start = _XMPF_get_coarrayStart(descPtr, baseAddr);
   // The element that was recorded when the data was allocated is used.
-  int element = _XMPF_get_coarrayElement(serno);
+  int element = _XMPF_get_coarrayElement(descPtr);
   int vlength = bytes / element;
 
   _putVectorByElement(desc, start, vlength, coindex, src);

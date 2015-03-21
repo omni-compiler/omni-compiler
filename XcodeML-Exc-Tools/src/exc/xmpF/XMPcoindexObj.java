@@ -23,7 +23,6 @@ public class XMPcoindexObj {
   Xobject obj;               // Xcode.CO_ARRAY_REF
   Xobject subscripts;
   Xobject cosubscripts;
-  Xobject image = null;
   int exprRank;                  // rank of the reference
 
   // mediator
@@ -39,8 +38,6 @@ public class XMPcoindexObj {
     //_setNameAndSubscripts(obj);
     this.obj = obj;
     this.coarray = coarray;
-    if (!coarray.isAllocatable() && !coarray.isPointer())
-      image = _getImage();
     exprRank = _getExprRank();
     if (subscripts == null && exprRank > 0)
       subscripts = _wholeArraySubscripts(exprRank);
@@ -55,8 +52,6 @@ public class XMPcoindexObj {
     //_setNameAndSubscripts(obj);
     this.obj = obj;
     coarray = _findCoarrayInCoarrays(name, coarrays);
-    if (!coarray.isAllocatable() && !coarray.isPointer())
-      image = _getImage();
     exprRank = _getExprRank();
     if (subscripts == null && exprRank > 0)
       subscripts = _wholeArraySubscripts(exprRank);
@@ -122,9 +117,10 @@ public class XMPcoindexObj {
   }
 
 
+  /****************************************
   // restriction: all values of lower-cobounds are assumed as 1.
   //
-  private Xobject _getImage() {
+  private Xobject getImageIndex() {
     Xobject cosubList = obj.getArg(1);
     Xobject[] codims = coarray.getCodimensions();
     int corank = coarray.getCorank();
@@ -157,7 +153,11 @@ public class XMPcoindexObj {
 
     return _convInt4(image);
   }
+  *********************************************/
 
+  /*
+   *  convert expr to int(expr) if expr is not surely int*4.
+   */
   private Xobject _convInt4(Xobject expr) {
     if (expr.Type().isBasic() &&
         expr.Type().getBasicType() == BasicType.INT) {
@@ -175,6 +175,7 @@ public class XMPcoindexObj {
     Ident intId = declIntIntrinsicIdent("int");
     return intId.Call(Xcons.List(expr));
   }    
+
 
   /* TEMPORARY VERSION
    *  not conversion but only error checking
@@ -279,6 +280,8 @@ public class XMPcoindexObj {
     String pattern = _selectCoarrayPutPattern(rhs);
 
     String subrName = COARRAYPUT_PREFIX + "_" + pattern;
+    //// I'm not clear why this is OK and the case xmpf_coarray_proc_init is 
+    //// not OK with the similar interface blocks.
     Ident subrIdent = getEnv().findVarIdent(subrName, null);
     if (subrIdent == null)
       subrIdent = getEnv().declExternIdent(subrName,
@@ -334,13 +337,9 @@ public class XMPcoindexObj {
     XMPcoarray coarray = getCoarray();
 
     Xobject baseAddr = getBaseAddr();
-    Xobject serno = coarray.getDescriptorIdExpr(baseAddr);
+    Xobject serno = coarray.getDescPointerIdExpr(baseAddr);
     Xobject element = coarray.getElementLengthExpr();
-    Xobject image = getImage();
-    if (image == null &&
-        (coarray.isAllocatable() || coarray.isPointer()))
-      image = coarray.getImageIndex(cosubscripts);
-
+    Xobject image = coarray.getImageIndex(baseAddr, cosubscripts);
     Xobject actualArgs = Xcons.List(serno, baseAddr, element, image);
 
     if (rhs != null)
@@ -613,10 +612,6 @@ public class XMPcoindexObj {
 
   public XMPcoarray getCoarray() {
     return coarray;
-  }
-
-  public Xobject getImage() {
-    return image;
   }
 
   public XMPenv getEnv() {

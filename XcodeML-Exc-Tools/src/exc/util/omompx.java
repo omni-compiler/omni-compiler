@@ -344,13 +344,30 @@ public class omompx
       }
     }
 
-    if(xmpf){// XcalableMP xmpF translation
-      exc.xmpF.XMPtranslate xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
-      xobjFile.iterateDef(xmp_translator);
-        
+    if(xmpf) {  // XcalableMP xmpF translation
+
+      // Coarray Fortran pass#1
+      exc.xmpF.XMPtransCoarray
+        caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1);
+      xobjFile.iterateDef(caf_translator1);
       if(exc.xmpF.XMP.hasErrors())
         System.exit(1);
-            
+      caf_translator1.finish();
+
+      // Coarray Fortran pass#2
+      exc.xmpF.XMPtransCoarray
+        caf_translator2 = new exc.xmpF.XMPtransCoarray(xobjFile, 2);
+      xobjFile.iterateDef(caf_translator2);
+      if(exc.xmpF.XMP.hasErrors())
+        System.exit(1);
+      caf_translator2.finish();
+
+      // XMP Fortran
+      exc.xmpF.XMPtranslate
+        xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
+      xobjFile.iterateDef(xmp_translator);
+      if(exc.xmpF.XMP.hasErrors())
+        System.exit(1);
       xmp_translator.finish();
 
       if(xcodeWriter != null) {

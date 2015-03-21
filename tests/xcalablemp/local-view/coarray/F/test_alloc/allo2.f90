@@ -5,7 +5,7 @@ program allo2
 
   write(*,*) "f", allocated(a)
   call allo
-  write(*,*) "t", llocated(a)
+  write(*,*) "t", allocated(a)
   write(*,*) "size(a)=10", size(a)
   call reallo
   write(*,*) "t", allocated(a)

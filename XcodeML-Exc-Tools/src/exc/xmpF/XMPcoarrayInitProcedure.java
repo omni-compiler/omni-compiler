@@ -17,11 +17,11 @@ import java.util.*;
  */
 public class XMPcoarrayInitProcedure {
 
-  final static String COUNT_SIZE_LIB_NAME = "xmpf_coarray_count_size";
-  final static String SHARE_LIB_NAME = "xmpf_coarray_share";
-  final static String SET_COSHAPE_LIB_NAME = "xmpf_coarray_set_coshape";
+  final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
+  final static String SHARE_POOL_NAME = "xmpf_coarray_share_pool";
+  //final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
 
-  private Boolean DEBUG = false;          // switch the value in gdb !!
+  private Boolean DEBUG = false;          // switch the value on gdb !!
 
 
   /* for all procedures */
@@ -64,21 +64,23 @@ public class XMPcoarrayInitProcedure {
   //------------------------------
 
   /*
-    from a source:
+    an example of source program:
     --------------------------------------------
-      subroutine EX1
-        real :: V1(10,20)[4,*]
-        complex(8) :: V2[0:*]
-        integer, allocatable :: V3(:)[:,:]
+      subroutine EX1(V4)
+        real :: V1(10,20)[4,*]                ! static local
+        complex(8) :: V2[0:*]                 ! static local
+        integer, allocatable :: V3(:)[:,:]    ! allocatable local
+        integer :: V4(:)[:,:]                 ! dummy static local
         ...
         V1(1:3,j)[k1,k2] = (/1.0,2.0,3.0/)
         z = V2[k]**2
         allocate (V3(1:10))
-        n(1:5) = V3(2:10:2)[k1,k2]
+        n(1:5) = V4(2:10:2)[k1,k2]
         return
       end subroutine
     --------------------------------------------
-    generate two subroutines:
+
+    generated two subroutines:
     --------------------------------------------
       subroutine xmpf_traverse_coarraysize_ex1
         call xmpf_coarray_count_size(200, 4)
@@ -86,34 +88,34 @@ public class XMPcoarrayInitProcedure {
       end subroutine
 
       subroutine xmpf_traverse_initcoarray_ex1
-        integer :: CD_V1
-        integer :: CD_V2
-        integer(8) :: CP_V1
-        integer(8) :: CP_V2
-        common /xmpf_CD_EX1/ CD_V1, CD_V2
+        integer(8) :: DP_V1, DP_V2
+        integer(8) :: CP_V1, CP_V2
+        common /xmpf_DP_EX1/ DP_V1, DP_V2
         common /xmpf_CP_EX1/ CP_V1, CP_V2
-        call xmpf_coarray_share(CD_V1, CP_V1, 200, 4)
-        call xmpf_coarray_set_coshape(CD_V1, 2, 1, 4, 1)
-        call xmpf_coarray_share(CD_V2, CP_V2, 1, 16)
-        call xmpf_coarray_set_coshape(CD_V2, 1, 0)
+
+        call xmpf_coarray_share_pool(DP_V1, CP_V1, 200, 4, "V1", 2)
+        call xmpf_coarray_set_coshape(DP_V1, 2, 1, 4, 1)
+        call xmpf_coarray_share_pool(DP_V2, CP_V2, 1, 16, "V2", 2)
+        call xmpf_coarray_set_coshape(DP_V2, 1, 0)
       end subroutine
     --------------------------------------------
-      CD_Vn: serial number for descriptor of Vn
-      CP_Vn: cray poiter pointing to Vn
+      DP_Vn: pointer to descriptor of each coarray Vn
+      CP_Vn: cray poiter to the coarray object Vn
+      An allocated portion may be shared with some coarrays.
   */
 
   public void run() {
-    run(2);
+    run(3);
   }
 
   public void run(int version) {
     for (XMPcoarray coarray: staticCoarrays) {
       int elem = coarray.getElementLength();
       int count = coarray.getTotalArraySize();
-      String descrName = coarray.getDescriptorName();
-      String cptrName = coarray.getCrayPointerName();
+      String descPtrName = coarray.getDescPointerName();
+      String crayPtrName = coarray.getCrayPointerName();
 
-      addForVarText(descrName, cptrName, count, elem);
+      addForVarText(descPtrName, crayPtrName, count, elem);
     }
 
     /* generate the two subroutines in the same file
@@ -131,32 +133,42 @@ public class XMPcoarrayInitProcedure {
       buildSubroutine_coarraysize();
       buildSubroutine_initcoarray();
       break;
+
+    case 3:   // similar to case 2, with changing descr-ID of serno to pointer
+      buildSubroutine_coarraysize();
+      buildSubroutine_initcoarray();
+      break;
     }
   }
 
 
   /*
-   *  Version 2
+   *  Version 2 & 3:
+   *    buildSubroutine_coarraysize
+   *    buildSubroutine_initcoarray
+   *
+   *   build subroutines as Xobject and
+   *   link them at the tail of XMPenv
    */
 
   private void buildSubroutine_coarraysize() {
     BlockList body = Bcons.emptyBody();
+    Xobject decls = Xcons.List();
 
     for (XMPcoarray coarray: staticCoarrays) {
+      // "CALL coarray_count_size(count, elem)"
       int elem = coarray.getElementLength();
       int count = coarray.getTotalArraySize();
-
       Xobject args = Xcons.List(Xcons.IntConstant(count),
                                 Xcons.IntConstant(elem));
-      Ident subr = env.declExternIdent(COUNT_SIZE_LIB_NAME,
-                                       Xtype.FsubroutineType);
+      Ident subr = body.declLocalIdent(COUNT_SIZE_NAME,
+                                       BasicType.FexternalSubroutineType);
       body.add(subr.callSubroutine(args));
     }
 
-    Ident procedure = env.declExternIdent(sizeProcName,
-                                          Xtype.FsubroutineType);
-    XobjectDef procDef = XobjectDef.Func(procedure, null, null,
-                                         body.toXobject());
+    Ident procedure = env.declExternIdent(sizeProcName, Xtype.FsubroutineType);
+    XobjectDef procDef = XobjectDef.Func(procedure, body.getIdentList(),
+                                         decls, body.toXobject());
     env.getEnv().add(procDef);
   }
 
@@ -168,46 +180,68 @@ public class XMPcoarrayInitProcedure {
     for (XMPcoarray coarray: staticCoarrays) {
       int elem = coarray.getElementLength();
       int count = coarray.getTotalArraySize();
-      String serno = coarray.getDescriptorName();
-      String crayptr = coarray.getCrayPointerName();
+      String descPtrName = coarray.getDescPointerName();
+      String crayPtrName = coarray.getCrayPointerName();
 
-      //varNames1.add(serno);
-      //varNames2.add(crayptr);
+      // for pointer to descriptor
+      Ident descPtrId =
+        body.declLocalIdent(descPtrName,
+                            Xtype.Farray(BasicType.Fint8Type),
+                            StorageClass.FLOCAL,   //or StorageClass.FCOMMON 
+                            null);
 
-      // build "integer, save :: serno, crayptr"
-      Ident sernoId =
-        body.declLocalIdent(serno, Xtype.FintType, StorageClass.FCOMMON, null);
-      Ident crayptrId = 
-        body.declLocalIdent(crayptr, Xtype.Fint8Type, StorageClass.FCOMMON, null);
-      /*------
-        for 32-bit pointer envirionment
-        Ident crayptrId = 
-        body.declLocalIdent(serno, Xtype.Fint4Type, StorageClass.FSAVE, null);
-        ------*/
+      // for the cray pointer  (cf. XMPcoarray.declareIdents() )
+      Ident crayPtrId =
+        body.declLocalIdent(crayPtrName,
+                            Xtype.Farray(BasicType.Fint8Type),
+                            StorageClass.FLOCAL,   //or StorageClass.FCOMMON 
+                            null);   //or [F] Xcons.FvarRef(dmy) [C] ident.Ref()
 
-      // build "common /codescr_foo/ serno" and "common /crayptr_foo/ crayptr"
-      Xobject commonStmt1 = Xcons.List(Xcode.F_COMMON_DECL,
-                                       Xcons.List(Xcode.F_VAR_LIST,
-                                                  Xcons.Symbol(Xcode.IDENT, commonName1),
-                                                  Xcons.List(Xcons.FvarRef(sernoId))));
-      Xobject commonStmt2 = Xcons.List(Xcode.F_COMMON_DECL,
-                                       Xcons.List(Xcode.F_VAR_LIST,
-                                                  Xcons.Symbol(Xcode.IDENT, commonName2),
-                                                  Xcons.List(Xcons.FvarRef(crayptrId))));
+      // build "common /codescr_foo/ descPtr" and "common /crayPtr_foo/ crayPtr"
+      Xobject commonStmt1 =
+        Xcons.List(Xcode.F_COMMON_DECL,
+                   Xcons.List(Xcode.F_VAR_LIST,
+                              Xcons.Symbol(Xcode.IDENT, commonName1),
+                              Xcons.List(Xcons.FvarRef(descPtrId))));
+      Xobject commonStmt2 =
+        Xcons.List(Xcode.F_COMMON_DECL,
+                   Xcons.List(Xcode.F_VAR_LIST,
+                              Xcons.Symbol(Xcode.IDENT, commonName2),
+                              Xcons.List(Xcons.FvarRef(crayPtrId))));
       decls.add(commonStmt1);
       decls.add(commonStmt2);
 
-      // build "call coarray_share(serno, crayptr, count, elem)"
-      Xobject args = Xcons.List(sernoId, crayptrId,
+      // "CALL coarray_share_pool(descPtr, crayPtr, count, elem, name, namelen)"
+      String varName = coarray.getName();
+      Xobject varNameObj = 
+        Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
+      Xobject args = Xcons.List(descPtrId,
+                                crayPtrId,
                                 Xcons.IntConstant(count),
-                                Xcons.IntConstant(elem));
-      Ident subr = env.declExternIdent(SHARE_LIB_NAME,
-                                    Xtype.FsubroutineType);
+                                Xcons.IntConstant(elem),
+                                varNameObj,
+                                Xcons.IntConstant(varName.length()));
+      Ident subr = body.declLocalIdent(SHARE_POOL_NAME,
+                                       BasicType.FexternalSubroutineType);
+      body.add(subr.callSubroutine(args));
+
+      // "CALL coarray_set_coshape(descPtr, corank, 
+      //            lb_1,ub_1, lb_2,ub_2, ..., lb_rank)
+      int corank = coarray.getCorank();
+      args = Xcons.List(descPtrId, Xcons.IntConstant(corank));
+      for (int i = 0; i < corank - 1; i++) {
+        args.add(coarray.getLcobound(i));
+        args.add(coarray.getUcobound(i));
+      }
+      args.add(coarray.getLcobound(corank - 1));
+      subr = body.declLocalIdent(XMPtransCoarrayRun.SET_COSHAPE_NAME,
+                                 BasicType.FexternalSubroutineType);
       body.add(subr.callSubroutine(args));
     }
 
     Ident procedure = env.declExternIdent(initProcName, Xtype.FsubroutineType);
-    XobjectDef procDef = XobjectDef.Func(procedure, null, decls, body.toXobject());
+    XobjectDef procDef = XobjectDef.Func(procedure, body.getIdentList(),
+                                         decls, body.toXobject());
     env.getEnv().add(procDef);
   }
 
@@ -221,9 +255,9 @@ public class XMPcoarrayInitProcedure {
                              int count, int elem) {
     varNames1.add(varName1);
     varNames2.add(varName2);
-    callSizeStmts.add(" CALL " + COUNT_SIZE_LIB_NAME + " ( " + 
+    callSizeStmts.add(" CALL " + COUNT_SIZE_NAME + " ( " + 
                       count + " , " + elem + " )");
-    callInitStmts.add(" CALL " + SHARE_LIB_NAME + " ( " + 
+    callInitStmts.add(" CALL " + SHARE_POOL_NAME + " ( " + 
                       varName1 + " , " +varName2 + " , " +
                       count + " , " + elem + " )");
   }

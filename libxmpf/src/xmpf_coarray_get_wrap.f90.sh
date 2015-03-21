@@ -18,20 +18,21 @@ print_function() {
     tk=$1
     typekind=$2
     echo "!-----------------------------------------------------------------------"
-    echo72     "      function xmpf_coarray_get${DIM}d_${tk}(serno, baseAddr, element,"
+    echo72     "      function xmpf_coarray_get${DIM}d_${tk}(descptr, baseaddr, element,"
     echo72     "     &   coindex, rank"
     for i in `seq 1 ${DIM}`; do
-        echo72 "     &   , nextAddr${i}, count${i}"
+        echo72 "     &   , nextaddr${i}, count${i}"
     done
     echo '     &   ) result(val)'
     echo "!-----------------------------------------------------------------------"
-    echo '      integer, intent(in) :: serno, element, coindex, rank'
+    echo '      integer(8), intent(in) :: descptr'
+    echo '      integer, intent(in) :: element, coindex, rank'
     for i in `seq 1 ${DIM}`; do
         echo "      integer, intent(in) :: count${i}"
     done
-    echo "      ${typekind}, intent(in) :: baseAddr"
+    echo "      ${typekind}, intent(in) :: baseaddr"
     for i in `seq 1 ${DIM}`; do
-        echo "      ${typekind}, intent(in) :: nextAddr${i}"
+        echo "      ${typekind}, intent(in) :: nextaddr${i}"
     done
     case ${DIM} in
         0)  echo "      ${typekind} :: val" ;;
@@ -46,13 +47,13 @@ print_function() {
     echo
 
     case ${DIM} in
-        0)  echo72 "      call xmpf_coarray_get_scalar(serno, baseAddr, element,"
+        0)  echo72 "      call xmpf_coarray_get_scalar(descptr, baseaddr, element,"
             echo   "     &   coindex, val)"
             ;;
-        *)  echo72 "      call xmpf_coarray_get_array(serno, baseAddr, element,"
+        *)  echo72 "      call xmpf_coarray_get_array(descptr, baseaddr, element,"
             echo72 "     &   coindex, val, rank"
             for i in `seq 1 ${DIM}`; do
-                echo72 "     &   , nextAddr${i}, count${i}"
+                echo72 "     &   , nextaddr${i}, count${i}"
             done
             echo '     &   )'
             ;;

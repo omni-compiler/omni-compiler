@@ -192,15 +192,14 @@ public class XMPtranslate implements XobjectDefVisitor
 
     XMP.resetError();
 
+    if (isGeneratedProcedure(d))
+      return;
+
     // System.out.println("def="+d.getDef());
     if(is_module){
       fd = XMPmoduleBlock(d);
-      if(!haveXMPpragma(d.getDef())) {
-        // translate coarray features #060
-        XMPtransCoarray transCoarray = new XMPtransCoarray(fd, env);
-        transCoarray.run();
+      if(!haveXMPpragma(d.getDef()))
         return;
-      }
     } else if(d.isFuncDef()){ // declarations
       Xtype ft = d.getFuncType();
       if(ft != null && ft.isFprogram()) {
@@ -222,11 +221,6 @@ public class XMPtranslate implements XobjectDefVisitor
     if (d.getNameObj().getProp(XMP_GENERATED_CHILD) != null){
       copyXMParray(d);
     }
-
-    // translate coarray features #060
-    XMPtransCoarray transCoarray = new XMPtransCoarray(fd, env);
-    transCoarray.run();
-    if(XMP.hasError()) return;
 
     anaPragma.run(fd,env);
     if(XMP.hasError()) return;
@@ -277,6 +271,14 @@ public class XMPtranslate implements XobjectDefVisitor
       if(xx != null && xx.Opcode() == Xcode.XMP_PRAGMA)
 	return true;
     }
+    return false;
+  }
+
+  private boolean isGeneratedProcedure(XobjectDef d) {
+    String name = d.getName();
+    if (name.startsWith("xmpf_traverse_"))
+      return true;
+
     return false;
   }
 }

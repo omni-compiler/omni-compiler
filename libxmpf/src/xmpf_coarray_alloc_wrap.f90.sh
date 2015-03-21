@@ -18,13 +18,14 @@ print_subr_0d() {
     tk=$1
     typekind=$2
     echo "!-----------------------------------------------------------------------"
-    echo "      subroutine xmpf_coarray_alloc0d_${tk}(serno, var, count, element)"
+    echo "      subroutine xmpf_coarray_alloc0d_${tk}(descptr, var, count, element)"
     echo "!-----------------------------------------------------------------------"
-    echo "        integer, intent(in) :: serno, count, element"
+    echo "        integer(8), intent(in) :: descptr"
+    echo "        integer, intent(in) :: count, element"
     echo "        ${typekind}, pointer, intent(out) :: var"
     echo "        ${typekind} :: obj"
     echo "        pointer (cray_ptr, obj)"
-    echo "        call xmpf_coarray_malloc(serno, cray_ptr, count, element)"
+    echo "        call xmpf_coarray_malloc(descptr, cray_ptr, count, element)"
     echo "        call pointer_assign(var, obj)"
     echo "        return"
     echo "      contains"
@@ -42,7 +43,7 @@ print_subr_nd() {
     tk=$1
     typekind=$2
     echo    "!-----------------------------------------------------------------------"
-    echo72  "      subroutine xmpf_coarray_alloc${DIM}d_${tk}(serno, var, count, element,"
+    echo72  "      subroutine xmpf_coarray_alloc${DIM}d_${tk}(descptr, var, count, element,"
 
     echo -n "     &   lb1,ub1"
     for i in `seq 2 ${DIM}`; do
@@ -51,7 +52,8 @@ print_subr_nd() {
     echo    ")"
 
     echo    "!-----------------------------------------------------------------------"
-    echo72  "        integer, intent(in) :: serno, count, element,"
+    echo    "        integer(8), intent(in) :: descptr"
+    echo72  "        integer, intent(in) :: count, element,"
     echo -n "     &    lb1,ub1"
     for i in `seq 2 ${DIM}`; do
         echo -n ",lb${i},ub${i}"
@@ -72,7 +74,7 @@ print_subr_nd() {
     echo    ")"
 
     echo    "        pointer (cray_ptr, obj)"
-    echo    "        call xmpf_coarray_malloc(serno, cray_ptr, count, element)"
+    echo    "        call xmpf_coarray_malloc(descptr, cray_ptr, count, element)"
     echo    "        call pointer_assign(var, obj)"
     echo    "        return"
     echo    "      contains"
