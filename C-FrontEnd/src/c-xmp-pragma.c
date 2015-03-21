@@ -1377,7 +1377,7 @@ CExpr *parse_XMP_opt()
   return (CExpr *)allocExprOfNull();
 }
 
-CExpr* parse_TASKS_clause()
+CExpr *parse_TASKS_clause()
 {
     return (CExpr *)allocExprOfNull();
 }
@@ -1405,11 +1405,12 @@ static CExpr* parse_REFLECT_clause()
     /* } */
 
     return XMP_LIST4(arrayNameList, widthList, async, profileClause);
-
+/*
  err:
     XMP_Error0("syntax error in the REFLECT directive");
     XMP_has_err = 1;
     return NULL;
+*/
 }
 
 

@@ -9,6 +9,7 @@
  */
 
 #include <stdint.h>
+#include <alloca.h>
 
 /* lexical analyzer, enable open mp.  */
 int OMP_flag = FALSE;

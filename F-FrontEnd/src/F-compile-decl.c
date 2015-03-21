@@ -1676,10 +1676,10 @@ TYPE_DESC
 compile_type(expr x)
 {
     expr r1, r2 = NULL;
-    int kind = 0, isKindConst = 1, charLen = 0, kindByLen = 0;
+    int kind = 0, isKindConst = 1, kindByLen = 0;
     BASIC_DATA_TYPE t;
     TYPE_DESC tp = NULL;
-    expr rkind = NULL, rcharLen = NULL;
+    expr rkind = NULL, rcharLen = NULL, charLen = 0;
     expv vkind = NULL, vkind2 = NULL, vcharLen = NULL, vcharLen1 = NULL;
     expv org_vkind = NULL;
 

@@ -67,6 +67,7 @@ trav_cands=`$NM "${INFILES[@]}" | \
 traversers=()
 for name in $trav_cands; do
     name=${name#.}                # re-mangling for Hitachi SR
+    name=${name#_}                # re-mangling for MacOS
     case $name in
         ${PREFIX}_traverse_?*)
         case "$LANG" in 
@@ -82,6 +83,7 @@ proc_cands=`$NM "${INFILES[@]}" | \
 procedures=()
 for name in $proc_cands; do
     name=${name#.}                # re-mangling for Hitachi SR
+    name=${name#_}                # re-mangling for MacOS
     case $name in
         ${PREFIX}_traverse_*_?* )
             case "$LANG" in

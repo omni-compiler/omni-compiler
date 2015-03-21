@@ -61,11 +61,11 @@ int main(){
   {
     if(error == 0){
       printf("PASS\n");
-      return 0;
     }
     else{
       printf("ERROR\n");
-      return 1;
     }
   }
+
+  return error;
 }

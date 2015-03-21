@@ -14,7 +14,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: shadow_reflect.x
-	$(XRUN) -np 4 shadow_reflect.x
+	$(XRUN) -np 4 ./shadow_reflect.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

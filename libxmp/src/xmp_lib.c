@@ -679,6 +679,7 @@ void *xmp_malloc(xmp_desc_t d, ...){
 
   int is_star[_XMP_N_MAX_DIM] = { 0 };
   unsigned long long *acc[_XMP_N_MAX_DIM] = { NULL };
+  unsigned long long dummy;
 
   va_list args;
   va_start(args, d);
@@ -689,14 +690,18 @@ void *xmp_malloc(xmp_desc_t d, ...){
 
     _XMP_array_info_t *ai = &(a->info[i]);
 
-    acc[i] = ai->acc;
-
     int tdim = ai->align_template_index;
 
+    ai->ser_upper = size - 1;
+    ai->ser_size = size;
+
     if (tdim == _XMP_N_NO_ALIGN_TEMPLATE){
+      acc[i] = &dummy;
       _XMP_align_array_NOT_ALIGNED(a, i);
     }
     else {
+
+      acc[i] = ai->acc;
 
       _XMP_template_info_t *info = &(t->info[tdim]);
       is_star[tdim] = 1;
@@ -704,9 +709,6 @@ void *xmp_malloc(xmp_desc_t d, ...){
       /* Now, normalize align_subscript and size */
       size += (ai->align_subscript - info->ser_lower);
       ai->align_subscript = info->ser_lower;
-
-      ai->ser_upper = size - 1;
-      ai->ser_size = size;
 
       switch (t->chunk[tdim].dist_manner){
       case _XMP_N_DIST_DUPLICATION:

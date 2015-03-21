@@ -3,6 +3,9 @@
  * $TSUKUBA_Copyright:
  *  $
  */
+#ifndef MPI_PORTABLE_PLATFORM_H
+#define MPI_PORTABLE_PLATFORM_H
+#endif 
 
 #ifndef _XMP_USERAPI
 #define _XMP_USERAPI

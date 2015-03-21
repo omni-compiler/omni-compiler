@@ -1304,101 +1304,103 @@ allocExprOfNumberConst(CExprCodeEnum exprCode, CBasicTypeEnum bt,
 
         errno = 0;
 
-        switch(bt) {
-        case BT_CHAR:
-        case BT_SHORT:
-        case BT_INT:
-        case BT_LONG:
-        case BT_LONGLONG: {
-                long long n = expr->e_numValue.ll = strtoll(digits, NULL, base);
-                if(errno) {
-                    overRange1 = 1;
-                    if(bt == BT_LONGLONG) {
-                        bt = BT_UNSIGNED_LONGLONG;
-                        errno = 0;
-                        n = expr->e_numValue.ull = strtoull(digits, NULL, base);
-                        overRange1 = (errno != 0);
-                    }
-                } else {
-                    switch(bt) {
-                    case BT_CHAR:
-                        if(n > UCHAR_MAX) overRange1 = 1;
-                        else if(n > SCHAR_MAX) bt = BT_UNSIGNED_CHAR;
-                        overRange1 = 1;
-                    case BT_SHORT:
-                        if(n > USHRT_MAX) overRange1 = 1;
-                        else if(n > SHRT_MAX) bt = BT_UNSIGNED_SHORT;
-                    case BT_INT:
-                        if(n > UINT_MAX) overRange1 = 1;
-                        else if(n > INT_MAX) bt = BT_UNSIGNED_INT;
-                    case BT_LONG:
-                        if(n > ULONG_MAX) overRange1 = 1;
-                        else if(n > LONG_MAX) bt = BT_UNSIGNED_LONG;
-                    default:
-                        break;
-                    }
-                }
-            }
+	if(strcmp(digits, "")){
+	  switch(bt) {
+	  case BT_CHAR:
+	  case BT_SHORT:
+	  case BT_INT:
+	  case BT_LONG:
+	  case BT_LONGLONG: {
+	    long long n = expr->e_numValue.ll = strtoll(digits, NULL, base);
+	    if(errno) {
+	      overRange1 = 1;
+	      if(bt == BT_LONGLONG) {
+		bt = BT_UNSIGNED_LONGLONG;
+		errno = 0;
+		n = expr->e_numValue.ull = strtoull(digits, NULL, base);
+		overRange1 = (errno != 0);
+	      }
+	    } else {
+	      switch(bt) {
+	      case BT_CHAR:
+		if(n > UCHAR_MAX) overRange1 = 1;
+		else if(n > SCHAR_MAX) bt = BT_UNSIGNED_CHAR;
+		overRange1 = 1;
+	      case BT_SHORT:
+		if(n > USHRT_MAX) overRange1 = 1;
+		else if(n > SHRT_MAX) bt = BT_UNSIGNED_SHORT;
+	      case BT_INT:
+		if(n > UINT_MAX) overRange1 = 1;
+		else if(n > INT_MAX) bt = BT_UNSIGNED_INT;
+	      case BT_LONG:
+		if(n > ULONG_MAX) overRange1 = 1;
+		else if(n > LONG_MAX) bt = BT_UNSIGNED_LONG;
+	      default:
+		break;
+	      }
+	    }
+	  }
             break;
-        case BT_UNSIGNED_CHAR:
-        case BT_UNSIGNED_SHORT:
-        case BT_UNSIGNED_INT:
-        case BT_UNSIGNED_LONG:
-        case BT_UNSIGNED_LONGLONG: {
-                unsigned long long n = expr->e_numValue.ull = strtoull(digits, NULL, base);
-                if(errno) {
-                    overRange1 = 1;
-                } else {
-                    switch(bt) {
-                    case BT_CHAR:
-                        overRange1 = (n > UCHAR_MAX); break;
-                    case BT_SHORT:
-                        overRange1 = (n > USHRT_MAX); break;
-                    case BT_INT:
-                        overRange1 = (n > UINT_MAX); break;
-                    case BT_LONG:
-                        overRange1 = (n > ULONG_MAX); break;
-                    default:
-                        break;
-                    }
-                }
-            }
+	  case BT_UNSIGNED_CHAR:
+	  case BT_UNSIGNED_SHORT:
+	  case BT_UNSIGNED_INT:
+	  case BT_UNSIGNED_LONG:
+	  case BT_UNSIGNED_LONGLONG: {
+	    unsigned long long n = expr->e_numValue.ull = strtoull(digits, NULL, base);
+	    if(errno) {
+	      overRange1 = 1;
+	    } else {
+	      switch(bt) {
+	      case BT_CHAR:
+		overRange1 = (n > UCHAR_MAX); break;
+	      case BT_SHORT:
+		overRange1 = (n > USHRT_MAX); break;
+	      case BT_INT:
+		overRange1 = (n > UINT_MAX); break;
+	      case BT_LONG:
+		overRange1 = (n > ULONG_MAX); break;
+	      default:
+		break;
+	      }
+	    }
+	  }
             break;
-        case BT_FLOAT:
-        case BT_FLOAT_IMAGINARY:
-          {
-            long double n = expr->e_numValue.ld = strtof(digits, NULL);
-            if(errno) {
-              overRange2 = 1;
-            }
-            else {
-              overRange2 = (n > FLT_MAX);
-            }
-          } break;
-        case BT_DOUBLE:
-        case BT_DOUBLE_IMAGINARY:
-          {
-            long double n = expr->e_numValue.ld = strtod(digits, NULL);
-            if(errno) {
-              overRange2 = 1;
-            }
-            else {
-              overRange2 = (n > DBL_MAX);
-            }
-          } break;
-        case BT_LONGDOUBLE:
-          {
-            long double n = expr->e_numValue.ld = strtold(digits, NULL);
-            if(errno) {
-              overRange2 = 1;
-            }
-            else {
-              overRange2 = (n > DBL_MAX);
-            }
-          } break;
-        default:
+	  case BT_FLOAT:
+	  case BT_FLOAT_IMAGINARY:
+	    {
+	      long double n = expr->e_numValue.ld = strtof(digits, NULL);
+	      if(errno) {
+		overRange2 = 1;
+	      }
+	      else {
+		overRange2 = (n > FLT_MAX);
+	      }
+	    } break;
+	  case BT_DOUBLE:
+	  case BT_DOUBLE_IMAGINARY:
+	    {
+	      long double n = expr->e_numValue.ld = strtod(digits, NULL);
+	      if(errno) {
+		overRange2 = 1;
+	      }
+	      else {
+		overRange2 = (n > DBL_MAX);
+	      }
+	    } break;
+	  case BT_LONGDOUBLE:
+	    {
+	      long double n = expr->e_numValue.ld = strtold(digits, NULL);
+	      if(errno) {
+		overRange2 = 1;
+	      }
+	      else {
+		overRange2 = (n > DBL_MAX);
+	      }
+	    } break;
+	  default:
             ABORT();
-        }
+	  }
+	}
     }
 
     expr->e_basicType = bt;

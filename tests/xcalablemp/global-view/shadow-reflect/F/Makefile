@@ -14,7 +14,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: full.x
-	$(XRUN) -np 2 full.x
+	$(XRUN) -np 2 ./full.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

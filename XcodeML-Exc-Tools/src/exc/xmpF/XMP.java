@@ -245,6 +245,7 @@ public class XMP {
 
     if(b == null || (l = b.getLineNo()) == null){
       error(msg);
+      return;
     }
       
     errorFlag = true;

@@ -2592,7 +2592,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
             return;
         }
 
-        if (expr_is_constant(do_incr)) {
+        if (!expr_has_param(do_incr) && expr_is_constant(do_incr)) {
             do_incr = expv_reduce_conv_const(var_tp, do_incr);
             if (EXPV_CODE(do_incr) == INT_CONSTANT) {
                 if(EXPV_INT_VALUE(do_incr) == 0)
@@ -2606,15 +2606,16 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
              * because FLOAT_CONSTANT cannot be reduced */
         }
         
-        if (expr_is_constant(do_limit)) {
+        if (!expr_has_param(do_limit) && expr_is_constant(do_limit)) {
             do_limit = expv_reduce_conv_const(var_tp, do_limit);
         }
 
-        if (expr_is_constant(do_init)) {
+        if (!expr_has_param(do_init) && expr_is_constant(do_init)) {
             do_init = expv_reduce_conv_const(var_tp, do_init);
         }
 
-        if (expr_is_constant(do_limit) && expr_is_constant(do_init)) {
+        if (!expr_has_param(do_limit) && !expr_has_param(do_init) &&
+	    expr_is_constant(do_limit) && expr_is_constant(do_init)) {
             if (incsign > 0) {              /* increment */
                 if ((IS_INT(var_tp) && 
                      EXPV_INT_VALUE(do_limit) < EXPV_INT_VALUE(do_init))) {
