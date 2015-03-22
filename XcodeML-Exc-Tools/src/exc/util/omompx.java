@@ -13,11 +13,12 @@ import java.util.List;
 import exc.object.XobjectFile;
 
 import exc.openacc.ACC;
-import exc.openacc.ACCanalyzePragma;
+//import exc.openacc.ACCanalyzePragma;
 import exc.openacc.ACCglobalDecl;
 import exc.openacc.ACCgpuDecompiler;
-import exc.openacc.ACCrewritePragma;
-import exc.openacc.ACCtranslatePragma;
+//import exc.openacc.ACCrewritePragma;
+//import exc.openacc.ACCtranslatePragma;
+import exc.openacc.*;
 
 import exc.openmp.OMP;
 import exc.openmp.OMPtranslate;
@@ -372,7 +373,30 @@ public class omompx
     }
     
     if(openACC){
+      ACC.debugFlag = true;
+      XmOption.setDebugOutput(true);
       ACCglobalDecl accGlobalDecl = new ACCglobalDecl(xobjFile);
+      AccInfoReader infoReader = new AccInfoReader(accGlobalDecl);
+      xobjFile.iterateDef(infoReader);
+      ACC.exitByError();
+      AccAnalyzer analyzer = new AccAnalyzer(accGlobalDecl);
+      xobjFile.iterateDef(analyzer);
+      ACC.exitByError();
+
+      if(true) {
+        AccTranslator translator = new AccTranslator(accGlobalDecl);
+        xobjFile.iterateDef(translator);
+        ACC.exitByError();
+        AccRewriter rewriter = new AccRewriter(accGlobalDecl);
+        xobjFile.iterateDef(rewriter);
+        ACC.exitByError();
+      }else {
+        AccInfoWriter infoWriter = new AccInfoWriter(accGlobalDecl);
+        xobjFile.iterateDef(infoWriter);
+        ACC.exitByError();
+      }
+
+      /*
       ACCanalyzePragma accAnalyzer = new ACCanalyzePragma(accGlobalDecl);
       xobjFile.iterateDef(accAnalyzer);
       accAnalyzer.finalize();
@@ -387,6 +411,7 @@ public class omompx
       xobjFile.iterateDef(accRewriter);
       accRewriter.finalize();
       ACC.exitByError();
+      */
       
       ACCgpuDecompiler gpuDecompiler = new ACCgpuDecompiler();
       gpuDecompiler.decompile(accGlobalDecl);

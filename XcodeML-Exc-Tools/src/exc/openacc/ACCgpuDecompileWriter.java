@@ -42,7 +42,7 @@ public class ACCgpuDecompileWriter extends PrintWriter {
   
   public void printFunc(XobjectDef def){
     String funcName = def.getName();
-    boolean isDeviceFunc = funcName.endsWith(ACCgpuKernel.ACC_GPU_DEVICE_FUNC_SUFFIX);
+    boolean isDeviceFunc = funcName.endsWith(AccKernel.ACC_GPU_DEVICE_FUNC_SUFFIX);
     printWithIdentList(def.getDef(), _env.getGlobalIdentList(), isDeviceFunc, (Ident)def.getNameObj());
   }
   

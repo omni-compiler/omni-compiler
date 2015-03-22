@@ -72,12 +72,12 @@ public enum ACCpragma {
   DEVICE,
   
   //internal
-  _BLOCK,
-  _BLOCK_THREAD,
-  _WARP,
-  _VECTORTHREAD,
-  _THREAD,
-  _AUTO,
+  //_BLOCK,
+  //_BLOCK_THREAD,
+  //_WARP,
+  //_VECTORTHREAD,
+  //_THREAD,
+  //_AUTO,
   ;
   
   private String name = null;
@@ -91,7 +91,7 @@ public enum ACCpragma {
     return valueOf(x.getString());
   }
   
-  public static boolean isDataClause(ACCpragma clause){
+  private static boolean isDataClause(ACCpragma clause){
     switch(clause){
     case COPY:  
     case COPYIN:  
@@ -169,5 +169,29 @@ public enum ACCpragma {
     default:
       return false;
     }
+  }
+
+  public boolean isGlobal(){
+    return this == DECLARE;
+  }
+
+  public boolean isLocal(){
+    switch(this) {
+    case PARALLEL:
+    case KERNELS:
+    case DATA:
+    case HOST_DATA:
+    case LOOP:
+    case CACHE:
+    case PARALLEL_LOOP:
+    case KERNELS_LOOP:
+    case DECLARE:
+    case UPDATE:
+    case WAIT:
+    case ENTER_DATA:
+    case EXIT_DATA:
+      return true;
+    }
+    return false;
   }
 }

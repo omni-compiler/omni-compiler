@@ -5,12 +5,13 @@ import java.util.*;
 
 
 public class ACCvar {
-  private final Ident id;
+  private final String symbol;
+  private Ident id;
 
-  private boolean isSpecifiedDataAttribute = false;
   private final EnumSet<Attribute> atrEnumSet = EnumSet.noneOf(Attribute.class);
   
   //for data clause
+  private ACCpragma dataClause = null;
   private Ident deviceptr = null;
   private Ident hostDesc = null;
   
@@ -24,6 +25,10 @@ public class ACCvar {
   //for subarray
   private XobjList rangeList = Xcons.List();
   private boolean isSubarray = false;
+  private XobjList _subscripts;
+
+  //parent
+  private ACCvar _parent;
   
   public static enum Attribute{
     isPresent,
@@ -68,13 +73,49 @@ public class ACCvar {
 //      isCache = parent.isCache;
 //      isUse_device = parent.isUse_device;
     }
+    symbol = id.getSym();
+  }
+  ACCvar(String symbol) throws ACCexception{
+    this.symbol = symbol;
+    this.id = null;
+  }
+  ACCvar(Xobject x, ACCpragma atr) throws ACCexception{
+    XobjList subscripts = null;
+    if (x.Opcode() == Xcode.LIST) {
+      Xobject var = x.getArg(0);
+      symbol = var.getName();
+      subscripts = (XobjList) x.copy();
+      subscripts.removeFirstArgs();
+    } else {
+      symbol = x.getName();
+    }
+    //this.subscripts = subscripts;
+
+    if(subscripts != null && !subscripts.isEmpty()){
+      _subscripts = subscripts;
+      //rangeList = subscripts; //makeRange(subscripts);
+      isSubarray = true;
+    }else{
+      _subscripts = null;
+      //rangeList = null;//= makeRange(id.Type());
+    }
+    dim = 0; //rangeList.Nargs();
+    setAttribute(atr);
+    id = null;
   }
   
   public void setAttribute(ACCpragma atr) throws ACCexception{
+    boolean isSpecifiedDataAttribute = false;
     if(atr.isDataClause() && isSpecifiedDataAttribute){
       ACC.fatal("ACCvar: " + id.getName() + " is already specified data attribute");
     }
-    
+
+    if(atr.isReduction()){
+      atrEnumSet.add(Attribute.isReduction);
+      reductionOp = atr;
+      return;
+    }
+
     switch(atr){
     case COPY:
       atrEnumSet.add(Attribute.create);
@@ -140,22 +181,33 @@ public class ACCvar {
       atrEnumSet.add(Attribute.isUseDevice);
       break;
     default:
-      if(atr.isReduction()){
-        atrEnumSet.add(Attribute.isReduction);
-        reductionOp = atr;
-      }else{
-        throw new ACCexception("var:"+id.getName()+", attribute:" + atr +" is not valid");
-      } 
+      throw new ACCexception("var:"+id.getName()+", attribute:" + atr +" is not valid");
     }
+    dataClause = atr;
+  }
+
+  public boolean is(ACCpragma clause){
+    return (clause == dataClause) || (clause == reductionOp);
   }
   
   public String getName(){
-    return id.getName();
+    return symbol;//id.getName();
   }
 
   @Override
   public String toString(){
-    return getName();
+    StringBuilder sb = new StringBuilder();
+    sb.append(symbol);
+    if (rangeList != null) {
+      for (Xobject subscript : rangeList) {
+        sb.append('[');
+        sb.append(subscript.getArg(0).getName());
+        sb.append(':');
+        sb.append(subscript.getArg(1).getName());
+        sb.append(']');
+      }
+    }
+    return new String(sb);
   }
   
   
@@ -200,6 +252,9 @@ public class ACCvar {
     return atrEnumSet.contains(Attribute.isUseDevice);
   }
   public Ident getDevicePtr(){
+    if(_parent != null){
+      return _parent.getDevicePtr();
+    }
     return deviceptr;
   }
   public void setDevicePtr(Ident devicePtr){
@@ -209,6 +264,9 @@ public class ACCvar {
     this.hostDesc = hostDesc;
   }
   public Ident getHostDesc(){
+    if(_parent != null){
+      return _parent.getHostDesc();
+    }
     return hostDesc;
   }
   public boolean isAllocated(){
@@ -217,6 +275,7 @@ public class ACCvar {
     //return (deviceptr != null ) || allocatesDeviceMemory;
     return (deviceptr != null ) || atrEnumSet.contains(Attribute.create);
   }
+  public ACCpragma getDataClause(){ return dataClause; }
   public ACCpragma getReductionOperator(){
     return reductionOp;
   }
@@ -446,7 +505,43 @@ public class ACCvar {
   }
 
   public boolean isArray() {
+    if(_parent != null){
+      return _parent.isArray();
+    }
     return this.dim > 0;
+  }
+
+  public String getSymbol(){
+    return symbol;
+  }
+  public Xobject toXobject(){
+    Xobject var = Xcons.Symbol(Xcode.VAR, symbol);
+    if(rangeList == null) {
+      return var;
+    }else{
+      XobjList l = Xcons.List(var);
+      l.mergeList(rangeList);
+      return l;
+    }
+  }
+  public void setIdent(Ident id) throws  ACCexception{
+    this.id = id;
+
+    //idからrangeListを作成、およびチェック?
+    if(_subscripts != null && !_subscripts.isEmpty()){
+      rangeList = makeRange(_subscripts);
+      isSubarray = true;
+    }else{
+      rangeList = makeRange(id.Type());
+    }
+    dim = rangeList.Nargs();
+  }
+  public void setParent(ACCvar var){
+    _parent = var;
+  }
+
+  ACCvar getParent(){
+    return _parent;
   }
 }
 

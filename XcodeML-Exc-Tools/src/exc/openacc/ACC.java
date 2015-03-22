@@ -28,10 +28,6 @@ public class ACC {
   public static final String FIND_DATA_FUNC_NAME = "_ACC_find_data";
 
 
-  public static Xobject createBasicTypeConstantObj(Xtype type) {
-    return Xcons.IntConstant(type.getBasicType() + 500);
-  }
-
   public static void exitByError() {
     if (errorFlag) System.exit(1);
   }

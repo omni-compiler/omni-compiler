@@ -7,13 +7,6 @@ import java.util.*;
 
 
 public class ACCutil {
-  public static ACCinfo getACCinfo(PropObject b){
-    return (ACCinfo)b.getProp(ACC.prop);
-  }
-  public static void setACCinfo(Block b, ACCinfo info){
-    b.setProp(ACC.prop, info);
-  }
-  
   public static long getArrayElmtCount(Xtype type) throws ACCexception {
     if (type.isArray()) {
       ArrayType arrayType = (ArrayType)type;
