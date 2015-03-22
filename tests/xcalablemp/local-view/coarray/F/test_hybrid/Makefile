@@ -15,14 +15,14 @@ RESULT= $(OUT:%=%.result)
 
 %.result: %.f90
 	xmpf90 $(OPT) -o $* $<
-	mpirun -n 3 $* 2>&1 | tee $@
+	mpiexec -n 3 $* 2>&1 | tee $@
 
 %.result: %.c
 	xmpcc $(OPT) -o $* $<
-	mpirun -n 3 $* 2>&1 | tee $@
+	mpiexec -n 3 $* 2>&1 | tee $@
 
 %.result: %
-	mpirun -n $(NPE) $< 2>&1 | tee $@
+	mpiexec -n $(NPE) $< 2>&1 | tee $@
 
 RUN/%:: %
 	cp $< $@
