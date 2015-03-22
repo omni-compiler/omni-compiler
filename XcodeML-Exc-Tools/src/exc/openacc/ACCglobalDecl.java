@@ -9,6 +9,10 @@ import exc.xcalablemp.XMPexception;
 import java.util.*;
 
 public class ACCglobalDecl{
+  private static final String ACC_DESTRUCTOR_FUNC_PREFIX = "acc_traverse_finalize_file_";
+  private static final String ACC_CONSTRUCTOR_FUNC_PREFIX = "acc_traverse_init_file_";
+  private static final String ACC_TRAVERSE_INIT_FUNC_NAME = "acc_traverse_init";
+  private static final String ACC_TRAVERSE_FINALIZE_FUNC_NAME = "acc_traverse_finalize";
   private XobjectFile   _env;
   private Map<String, FuncInfo> funcInfoMap;
   private XobjList _globalConstructorFuncBody;
@@ -85,30 +89,33 @@ public class ACCglobalDecl{
     
     XobjList args = Xcons.List(argc.Ref(), argv.Ref());
     
-    _globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT, declExternFunc(ACC_INIT_FUNC_NAME).Call(args)));
+    //_globalConstructorFuncBody.cons(Xcons.List(Xcode.EXPR_STATEMENT, declExternFunc(ACC_INIT_FUNC_NAME).Call(args)));
     Xtype funcType = Xtype.Function(Xtype.voidType);
 
 //    funcType.setGccAttributes(Xcons.List(Xcode.GCC_ATTRIBUTES,
 //                                         Xcons.List(Xcode.GCC_ATTRIBUTE,
 //                                                    new Ident("constructor", null, null, null, null),
 //                                                    Xcons.List())));
-    Ident funcId = _env.declStaticIdent("acc_init_all", funcType);
+    String fileName = getSourceBaseName();
+    
+    Ident funcId = _env.declExternIdent(ACC_CONSTRUCTOR_FUNC_PREFIX + fileName, funcType);
 
-    _env.add(XobjectDef.Func(funcId, params, null, Xcons.List(Xcode.COMPOUND_STATEMENT,
+    _env.add(XobjectDef.Func(funcId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT,
                                                             (Xobject)null, null, _globalConstructorFuncBody)));
   }
 
   public void setupGlobalDestructor() {
     //_globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT, declExternFunc(ACC_GPU_FINALIZE_FUNC_NAME).Call(null)));
 
-    _globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT, declExternFunc(ACC_FINALIZE_FUNC_NAME).Call(null)));
+    //_globalDestructorFuncBody.add(Xcons.List(Xcode.EXPR_STATEMENT, declExternFunc(ACC_FINALIZE_FUNC_NAME).Call(null)));
 
     Xtype funcType = Xtype.Function(Xtype.voidType);
 //    funcType.setGccAttributes(Xcons.List(Xcode.GCC_ATTRIBUTES,
 //                                         Xcons.List(Xcode.GCC_ATTRIBUTE,
 //                                                    new Ident("destructor", null, null, null, null),
 //                                                    Xcons.List())));
-    Ident funcId = _env.declStaticIdent("acc_finalize_all", funcType);
+    String fileName = getSourceBaseName();
+    Ident funcId = _env.declExternIdent(ACC_DESTRUCTOR_FUNC_PREFIX + fileName, funcType);
     _env.add(XobjectDef.Func(funcId, null, null, Xcons.List(Xcode.COMPOUND_STATEMENT,
                              (Xobject)null, null, _globalDestructorFuncBody)));
   }
@@ -215,23 +222,30 @@ public class ACCglobalDecl{
     Xobject mainBody = mainXobjDef.getFuncBody();
 
     Ident accMain = _env.declStaticIdent("acc_main", Xtype.Function(mainType));
-    Ident accInitAll = _env.findVarIdent("acc_init_all");//_env.declExternIdent("acc_init_all", Xtype.Function(Xtype.voidType));
-    Ident accFinalizeAll = _env.findVarIdent("acc_finalize_all");//_env.declExternIdent("acc_finalize_all", Xtype.Function(Xtype.voidType));
+    //Ident accInitAll = _env.findVarIdent("acc_init_all");//_env.declExternIdent("acc_init_all", Xtype.Function(Xtype.voidType));
+    //Ident accFinalizeAll = _env.findVarIdent("acc_finalize_all");//_env.declExternIdent("acc_finalize_all", Xtype.Function(Xtype.voidType));
+    Ident accInit = declExternIdent(ACC_INIT_FUNC_NAME, Xtype.Function(Xtype.voidType));
+    Ident accFinalize = declExternIdent(ACC_FINALIZE_FUNC_NAME, Xtype.Function(Xtype.voidType));
+    Ident accTraverseInit = declExternIdent(ACC_TRAVERSE_INIT_FUNC_NAME, Xtype.Function(Xtype.voidType));
+    Ident accTraverseFinalize = declExternIdent(ACC_TRAVERSE_FINALIZE_FUNC_NAME, Xtype.Function(Xtype.voidType));
 
     _env.add(XobjectDef.Func(accMain, mainIdList, mainDecls, mainBody));
 
     BlockList newMainBody = Bcons.emptyBody();
     XobjList args = ACCutil.getRefs(mainIdList);
-    newMainBody.add(accInitAll.Call(args));
+    newMainBody.add(accInit.Call(args));
+    newMainBody.add(accTraverseInit.Call());
     
     if(mainType.equals(Xtype.voidType)){
       newMainBody.add(accMain.Call(args));
-      newMainBody.add(accFinalizeAll.Call(null));
+      newMainBody.add(accTraverseFinalize.Call());
+      newMainBody.add(accFinalize.Call(null));
     }else{
       Ident r = Ident.Local("r", mainType);
       newMainBody.addIdent(r);
       newMainBody.add(Xcons.Set(r.Ref(), accMain.Call(args)));
-      newMainBody.add(accFinalizeAll.Call(null));
+      newMainBody.add(accTraverseFinalize.Call());
+      newMainBody.add(accFinalize.Call(null));
       newMainBody.add(Xcons.List(Xcode.RETURN_STATEMENT, r.Ref()));
     }
 
@@ -280,6 +294,13 @@ public class ACCglobalDecl{
     Ident newMainId = _env.declStaticIdent("main", Xtype.Function(mainType));
     _env.add(XobjectDef.Func(newMainId, args, null, newFuncBody.toXobject()));
     this.finalize();
+  }
+  
+  private String getSourceBaseName(){
+    String fullPath = _env.getSourceFileName();
+    int dot = fullPath.lastIndexOf('.');
+    int sep = fullPath.lastIndexOf('/');
+    return fullPath.substring(sep + 1, dot);   // Delete extension and dirname　( "/tmp/hoge.c -> hoge" ).
   }
 }
 
