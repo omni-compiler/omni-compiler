@@ -32,7 +32,7 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
 extern _Bool is_async;
 extern int _async_id;
 #endif
@@ -45,7 +45,7 @@ void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int 
   }
 
   // bcast
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
   if (is_async){
     _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
     MPI_Ibcast(addr, count * datatype_size, MPI_BYTE, _XMP_N_DEFAULT_ROOT_RANK,
@@ -187,7 +187,7 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
     }
   }
 
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
   if (is_async){
     _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
     MPI_Ibcast(addr, count * datatype_size, MPI_BYTE, root,

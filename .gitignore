@@ -47,6 +47,7 @@ Driver/src/Makefile
 Driver/src/om_replace_pragma
 F-BackEnd/Makefile
 F-BackEnd/ant.properties
+F-BackEnd/bin/
 F-BackEnd/binding/classes/
 F-BackEnd/build/
 F-BackEnd/classes/

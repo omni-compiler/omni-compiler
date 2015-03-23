@@ -14,7 +14,7 @@
 #include "mpi.h"
 #include "xmp_internal.h"
 
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
 extern _Bool is_async;
 extern int _async_id;
 #endif
@@ -232,7 +232,7 @@ void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int da
   _XMP_setup_reduce_op(&mpi_op, op);
 
   // reduce
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
       if (is_async){
 	_XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
 	MPI_Iallreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm),
