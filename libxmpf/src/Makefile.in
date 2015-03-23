@@ -150,13 +150,14 @@ am__libxmpf_a_SOURCES_DIST = $(XMPF_INC_DIR)/xmpf_internal.h \
 	xmpf_task.c xmpf_template.c xmpf_coarray.c \
 	xmpf_coarray_wrap.f90 xmpf_coarray_put.c xmpf_coarray_get.c \
 	xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
-	xmpf_coarray_alloc_wrap.f90
+	xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90
 @GASNET_TRUE@am__objects_1 = xmpf_coarray.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_put.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_get.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_lib.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_alloc.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_alloc_wrap.$(OBJEXT)
 @FJRDMA_TRUE@am__objects_2 = xmpf_coarray.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
@@ -164,6 +165,7 @@ am__libxmpf_a_SOURCES_DIST = $(XMPF_INC_DIR)/xmpf_internal.h \
 @FJRDMA_TRUE@	xmpf_coarray_get.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_lib.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_alloc.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_alloc_wrap.$(OBJEXT)
 am_libxmpf_a_OBJECTS = xmpf_main.$(OBJEXT) xmpf_array.$(OBJEXT) \
 	xmpf_async.$(OBJEXT) xmpf_gcomm.$(OBJEXT) xmpf_gmove.$(OBJEXT) \

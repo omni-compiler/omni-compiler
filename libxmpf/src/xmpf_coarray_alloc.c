@@ -3,7 +3,7 @@
 #define DIV_CEILING(m,n)  (((m)-1)/(n)+1)
 
 static int _set_coarrayMallocInfo(char *desc, char *orgAddr, size_t size);
-static int _getNewSerno();
+static int _getNewSerno(void);
 
 
 /*****************************************\
@@ -40,6 +40,7 @@ static int pool_serno;
  */
 typedef struct _coarrayInfo_t _coarrayInfo_t;
 struct _coarrayInfo_t {
+  _coarrayInfo_t *prev;
   _coarrayInfo_t *next;
   char   *name;          // name of the variable (for debug message)
   int     serno;         // index of table _coarrayMallocInfoTab[]
@@ -50,6 +51,7 @@ struct _coarrayInfo_t {
   int    *cosize;        // cosize[k] = max(ucobound[k]-lcobound[k]+1, 0)
 };
 
+static void _freeCoarray(_coarrayInfo_t *coarrayInfo);
 
 char *_XMPF_get_coarrayDesc(char *descPtr)
 {
@@ -64,6 +66,63 @@ size_t _XMPF_get_coarrayOffset(char *descPtr, char *baseAddr)
   int offset = ((size_t)baseAddr - (size_t)orgAddr);
   return offset;
 }
+
+
+typedef struct {
+  _coarrayInfo_t *coarrayInfoFirst;
+  _coarrayInfo_t *coarrayInfoLast;
+} _resourceInfo_t;
+
+
+static void _add_coarrayInfo(_resourceInfo_t *resourceInfo,
+                             _coarrayInfo_t *coarrayInfo)
+{
+  if (resourceInfo->coarrayInfoFirst == NULL) {
+    coarrayInfo->prev = NULL;
+    coarrayInfo->next = NULL;
+    resourceInfo->coarrayInfoFirst = coarrayInfo;
+    resourceInfo->coarrayInfoLast = coarrayInfo;
+  } else {
+    coarrayInfo->prev = resourceInfo->coarrayInfoLast;
+    coarrayInfo->next = NULL;
+    resourceInfo->coarrayInfoLast->next = coarrayInfo;
+    resourceInfo->coarrayInfoLast = coarrayInfo;
+  }
+}
+
+
+static void _remove_coarrayInfo(_resourceInfo_t *resourceInfo,
+                                _coarrayInfo_t *coarrayInfo)
+{
+  if (resourceInfo->coarrayInfoFirst == coarrayInfo) {
+    if (resourceInfo->coarrayInfoLast == coarrayInfo) {
+      resourceInfo->coarrayInfoFirst = NULL;
+      resourceInfo->coarrayInfoLast = NULL;
+    } else {
+      resourceInfo->coarrayInfoFirst = coarrayInfo->next;
+      coarrayInfo->next->prev = NULL;
+    }
+  } else {
+    if (resourceInfo->coarrayInfoLast == coarrayInfo) {
+      resourceInfo->coarrayInfoLast = coarrayInfo->prev;
+      coarrayInfo->prev->next = NULL;
+    } else {
+      coarrayInfo->prev->next = coarrayInfo->next;
+      coarrayInfo->next->prev = coarrayInfo->prev;
+    }
+  }
+
+  coarrayInfo->prev = coarrayInfo->next = NULL;
+}
+
+
+static void _del_coarrayInfo(_resourceInfo_t *resourceInfo,
+                             _coarrayInfo_t *coarrayInfo)
+{
+  _remove_coarrayInfo(resourceInfo, coarrayInfo);
+  free(coarrayInfo);
+}
+
 
 
 /*****************************************\
@@ -168,22 +227,40 @@ void xmpf_coarray_malloc_pool_(void)
 
 /***********************************************\
   allocate memory for an allocatable coarray
-    in:  count:   count of elements
-         element: element size
-    out: serno:   descriptor-ID
-         pointer: cray pointer
 \***********************************************/
 
+void xmpf_coarray_dealloc_(char **descPtr, void **tag)
+{
+  _coarrayInfo_t *cp = (_coarrayInfo_t*)(*descPtr);
+  _resourceInfo_t *resource;
+
+  _freeCoarray(cp);
+  _del_coarrayInfo(resource, cp);
+
+  if (*tag != NULL) {
+    resource = (_resourceInfo_t*)(*tag);
+    _add_coarrayInfo(resource, cp);
+  }
+}
+
+
 void xmpf_coarray_malloc_(char **descPtr, char **crayPtr,
-                          int *count, int *element)
+                          int *count, int *element, void **tag)
 {
   void *desc;
   void *orgAddr;
   size_t elementRU;
+  _resourceInfo_t *resource;
+
+  _XMPF_checkIfInTask("allocatable coarray allocation");
+
   _coarrayInfo_t *cp = 
     (_coarrayInfo_t*)malloc(sizeof(_coarrayInfo_t));
 
-  _XMPF_checkIfInTask("allocatable coarray allocation");
+  if (*tag != NULL) {
+    resource = (_resourceInfo_t*)(*tag);
+    _add_coarrayInfo(resource, cp);
+  }
 
   // boundary check and recovery
   if ((*element) % BOUNDARY_BYTE == 0) {
@@ -219,46 +296,17 @@ void xmpf_coarray_malloc_(char **descPtr, char **crayPtr,
 
 
 
-/*****************************************\
-   management of dynamic attribute:
-     procedure init/finalize
-\*****************************************/
-
-typedef struct {
-  _coarrayInfo_t *coarrayInfo;
-  _coarrayInfo_t *coarrayInfoTail;
-} _resourceInfo_t;
-  
-
-static void _add_coarrayInfo(_resourceInfo_t *resourceInfo, _coarrayInfo_t *coarrayInfo)
+void _freeCoarray(_coarrayInfo_t *coarrayInfo)
 {
-  coarrayInfo->next = NULL;
-  if (resourceInfo->coarrayInfo == NULL) {
-    resourceInfo->coarrayInfo = coarrayInfo;
-    resourceInfo->coarrayInfoTail = coarrayInfo;
-  } else {
-    resourceInfo->coarrayInfoTail->next = coarrayInfo;
-  }
+  int serno = coarrayInfo->serno;
+  char *desc = _coarrayMallocInfoTab[serno].desc;
+
+  ////////////////////////////
+  _XMPF_coarrayDebugPrint("freeCoarray() is not implemented\n");
+  //_XMP_coarray_free_do((void*)desc);
+  ////////////////////////////
+
 }
-
-
-static void _free_coarrayInfo(_coarrayInfo_t *coarrayInfo)
-{
-  // don't forget: free shape
-
-  free(coarrayInfo);
-}
-
-
-static void _finalize_coarrayInfos(_coarrayInfo_t *coarrayInfo)
-{
-  if (coarrayInfo == NULL)
-    return;
-  _finalize_coarrayInfos(coarrayInfo->next);
-
-  _free_coarrayInfo(coarrayInfo);
-}
-
 
 
 /************\
@@ -270,7 +318,8 @@ void xmpf_coarray_proc_init_(void **tag)
   _resourceInfo_t *resource;
 
   resource = (_resourceInfo_t*)malloc(sizeof(_resourceInfo_t));
-  resource->coarrayInfo = NULL;
+  resource->coarrayInfoFirst = NULL;
+  resource->coarrayInfoLast = NULL;
   _XMPF_coarrayDebugPrint("malloc and initialize resourceInfo: %p\n", resource);
   *tag = (void*)resource;
 }
@@ -278,13 +327,20 @@ void xmpf_coarray_proc_init_(void **tag)
 
 void xmpf_coarray_proc_finalize_(void **tag)
 {
+  _coarrayInfo_t *cp, *cp_next;
+
   if (*tag == NULL)
     return;
 
   _resourceInfo_t *resource = (_resourceInfo_t*)(*tag);
   _XMPF_coarrayDebugPrint("decode resourceInfo for finalize: %p\n", resource); 
-  _finalize_coarrayInfos(resource->coarrayInfo);
-
+  cp = resource->coarrayInfoFirst;
+  while (cp != NULL) {
+    cp_next = cp->next;
+    _freeCoarray(cp);
+    _del_coarrayInfo(resource, cp);
+    cp = cp_next;
+  }
   free(resource);
   *tag = NULL;
 }
@@ -423,7 +479,7 @@ int _set_coarrayMallocInfo(char *desc, char *orgAddr, size_t size)
 }
 
 
-static int _getNewSerno() {
+int _getNewSerno() {
   int i;
 
   /* try white area */
@@ -447,7 +503,7 @@ static int _getNewSerno() {
 }
 
 
-/*****************************************\
+/*****************************************      \
   intrinsic functions
 \*****************************************/
 
@@ -482,6 +538,7 @@ int xmpf_coarray_get_image_index_(char **descPtr, int *corank, ...)
   }
 
   va_end(args);
+
   return count + 1;
 }
 
