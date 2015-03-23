@@ -5,4 +5,3 @@ NPE= 2
 OUT=costmtInSpdo costmtInSpdo-2
 
 include ../Makefile.common
-

@@ -14,4 +14,3 @@ OUT_NGB   = a2d2-2NGB
 OUT=$(OUT_OK) $(OUT_NG) $(OUT_darg) $(OUT_bound) $(OUT_NGB)
 
 include ../Makefile.common
-

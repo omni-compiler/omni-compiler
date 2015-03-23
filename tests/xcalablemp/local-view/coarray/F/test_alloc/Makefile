@@ -12,3 +12,4 @@ OUT_size= size1 size1-2 #size2 #sample #size1-err
 OUT = $(OUT_decl) $(OUT_size) $(OUT_allo) $(OUT_rt)
 
 include ../Makefile.common
+

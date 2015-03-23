@@ -1,5 +1,5 @@
 XCC     = xmpcc -O2
-XRUN    = mpirun
+XRUN    = mpiexec
 TESTS = $(wildcard *.c)
 EXES  = $(TESTS:.c=.x)
 OBJS  = $(TESTS:.c=.o)
@@ -14,7 +14,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: shadow_reflect.x
-	$(XRUN) -np 4 ./shadow_reflect.x
+	$(XRUN) -n 4 ./shadow_reflect.x
 
 clean:
 	rm -f $(EXES) $(OBJS)
