@@ -86,12 +86,13 @@ target_triplet = @target@
 @GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET
 @GASNET_TRUE@@POWERPC_TRUE@am__append_3 = -WF,-D_XMP_COARRAY_GASNET
 @GASNET_TRUE@@POWERPC_FALSE@am__append_4 = -D_XMP_COARRAY_GASNET
-@FJRDMA_TRUE@am__append_5 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
+@MPI3_TRUE@am__append_5 = -D_XMP_MPI3
+@FJRDMA_TRUE@am__append_6 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
 @FJRDMA_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
 @FJRDMA_TRUE@                         xmpf_coarray_alloc_wrap.f90
 
-@FJRDMA_TRUE@am__append_6 = -D_XMP_COARRAY_FJRDMA
 @FJRDMA_TRUE@am__append_7 = -D_XMP_COARRAY_FJRDMA
+@FJRDMA_TRUE@am__append_8 = -D_XMP_COARRAY_FJRDMA
 subdir = libxmpf/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -274,7 +275,7 @@ AWK = @AWK@
 CC = @MPI_CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@ \
-	$(am__append_2) $(am__append_6)
+	$(am__append_2) $(am__append_5) $(am__append_7)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPP_OPT = @CPP_OPT@
@@ -301,7 +302,7 @@ EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @MPI_FC@
 FCFLAGS = @MPI_FCFLAGS@ @OMNI_NTV_FCFLAGS@ $(am__append_3) \
-	$(am__append_4) $(am__append_7)
+	$(am__append_4) $(am__append_8)
 FGREP = @FGREP@
 GASNET_LIBS = @GASNET_LIBS@
 GPGPU_PREFIX = @GPGPU_PREFIX@
@@ -517,7 +518,7 @@ libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_main.F90 \
 	xmpf_array.c xmpf_async.c xmpf_gcomm.c xmpf_gmove.c \
 	xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c xmpf_nodes.c \
 	xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
-	xmpf_template.c $(am__append_1) $(am__append_5)
+	xmpf_template.c $(am__append_1) $(am__append_6)
 all: all-am
 
 .SUFFIXES:

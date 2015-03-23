@@ -27,6 +27,10 @@ else
 endif
 endif
 
+if MPI3
+    CFLAGS += -D_XMP_MPI3
+endif
+
 if FJRDMA
     libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
                          xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
