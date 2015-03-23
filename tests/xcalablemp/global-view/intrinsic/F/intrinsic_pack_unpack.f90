@@ -97,10 +97,8 @@ program main
      end do
   end do
 
-  call xmp_barrier()
   !$xmp reduction(+:answer)
 
-  call xmp_barrier()
   !$xmp task on p(1,1)
   if ( answer /= 0 ) then
      write(*,*) "ERROR"
