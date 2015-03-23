@@ -21,6 +21,10 @@ if FJRDMA
     CFLAGS           += -D_XMP_COARRAY_FJRDMA -D_XMP_COARRAY
 endif
 
+if MPI3
+    CFLAGS += -D_XMP_MPI3
+endif
+
 if USER_LIBBLAS
     CFLAGS += -D_XMP_USER_LIBBLAS
 endif

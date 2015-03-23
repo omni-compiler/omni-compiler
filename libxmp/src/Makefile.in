@@ -83,11 +83,12 @@ target_triplet = @target@
 @GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET -D_XMP_COARRAY
 @FJRDMA_TRUE@am__append_3 = xmp_coarray_set.c xmp_coarray_do.c xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c xmp_post_wait.c xmp_fjrdma_post_wait.c
 @FJRDMA_TRUE@am__append_4 = -D_XMP_COARRAY_FJRDMA -D_XMP_COARRAY
-@USER_LIBBLAS_TRUE@am__append_5 = -D_XMP_USER_LIBBLAS
-@TCA_TRUE@am__append_6 = xmp_reflect_tca.c
-@TCA_TRUE@am__append_7 = -D_XMP_TCA
-@ENABLE_XACC_TRUE@am__append_8 = xmp_reflect_gpu.c xmp_gpu_pack.cu xmp_reduce_gpu.c
-@ENABLE_XACC_TRUE@am__append_9 = -D_XMP_XACC -I@GPGPU_PREFIX@
+@MPI3_TRUE@am__append_5 = -D_XMP_MPI3
+@USER_LIBBLAS_TRUE@am__append_6 = -D_XMP_USER_LIBBLAS
+@TCA_TRUE@am__append_7 = xmp_reflect_tca.c
+@TCA_TRUE@am__append_8 = -D_XMP_TCA
+@ENABLE_XACC_TRUE@am__append_9 = xmp_reflect_gpu.c xmp_gpu_pack.cu xmp_reduce_gpu.c
+@ENABLE_XACC_TRUE@am__append_10 = -D_XMP_XACC -I@GPGPU_PREFIX@
 subdir = libxmp/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -260,8 +261,8 @@ AWK = @AWK@
 CC = @MPI_CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @MPI_CFLAGS@ -I../include -I$(TLOG_INC_DIR) $(am__append_2) \
-	$(am__append_4) $(am__append_5) $(am__append_7) \
-	$(am__append_9)
+	$(am__append_4) $(am__append_5) $(am__append_6) \
+	$(am__append_8) $(am__append_10)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPP_OPT = @CPP_OPT@
@@ -506,8 +507,8 @@ libxmp_a_SOURCES = ../include/xmp_internal.h ../include/xmp_constant.h \
 	xmp_gmove.c xmp_math_function.c xmp_runtime.c \
 	xmp_tlog_runtime.c xmp_io.c xmp_reflect.c xmp_pack_vector.c \
 	xmp_reflect_acc.c xmp_reduce_acc.c xmp_intrinsic.c xmp_sort.c \
-	xmp_async.c $(am__append_1) $(am__append_3) $(am__append_6) \
-	$(am__append_8)
+	xmp_async.c $(am__append_1) $(am__append_3) $(am__append_7) \
+	$(am__append_9)
 @ENABLE_XACC_TRUE@GPUCC = @GPU_CMD@
 @ENABLE_XACC_TRUE@GPUCFLAGS = @GPU_CFLAGS@
 all: all-am
