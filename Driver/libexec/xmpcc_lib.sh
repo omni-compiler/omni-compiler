@@ -120,7 +120,7 @@ function xmpcc_set_parameters()
 	    --tlog)
 		ENABLE_TLOG=true;;
             *)
-		other_args+=("$1")
+		other_args+=("$1");;
 	esac
 	shift
     done
