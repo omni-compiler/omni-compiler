@@ -22109,7 +22109,7 @@ if test x$use_libblas = xyes; then
    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
    output_libblas="yes ($LIBBLAS)"
 else
-  if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
+  if test "$target" = "Kcomputer-linux-gnu"; then
     LIBBLAS="-SSL2BLAMP"
     OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
     OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
