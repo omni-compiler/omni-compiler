@@ -1576,7 +1576,7 @@ int m1[2]={20,3};
 int m2[2]={13,10};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,4)
-#pragma xmp nodes pb(4)=p(1:4)
+#pragma xmp nodes pb(2)=p(3:4)
 #pragma xmp nodes px(2,2,2)
 #pragma xmp template ta(0:L-1,0:M-1)
 #pragma xmp template tb(0:L-1)
@@ -1650,7 +1650,7 @@ int m2[2]={13,10};
 int m3[4]={7,9,11,18};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,4)
-#pragma xmp nodes pb(4)=p(2:5)
+#pragma xmp nodes pb(2)=p(4:5)
 #pragma xmp nodes px(4,2)
 #pragma xmp template ta(0:L-1,0:M-1)
 #pragma xmp template tb(0:L-1)
@@ -1724,7 +1724,7 @@ int m2[2]={13,10};
 int m3[4]={7,9,11,18};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,2,2)
-#pragma xmp nodes pb(4)=p(2:5)
+#pragma xmp nodes pb(2)=p(2:3)
 #pragma xmp nodes px(4,2)
 #pragma xmp template ta(0:M-1,0:L-1,100)
 #pragma xmp template tb(0:L-1)
@@ -1798,7 +1798,7 @@ int m2[2]={3,20};
 int m3[4]={7,9,11,18};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,2,2)
-#pragma xmp nodes pb(2,4)
+#pragma xmp nodes pb(4,2)
 #pragma xmp nodes px(4,2)
 #pragma xmp template ta(0:M-1,0:L-1,100)
 #pragma xmp template tb(0:N-1,0:L-1)
