@@ -45,30 +45,38 @@ print_subr_nd() {
     echo72  "      subroutine xmpf_coarray_alloc${DIM}d_${tk}(serno, var, count, element,"
 
     echo -n "     &   lb1,ub1"
-    for i in `seq 2 ${DIM}`; do
-        echo -n ",lb${i},ub${i}"
-    done
+    if [ ${DIM} -ge 2 ]; then
+	for i in `seq 2 ${DIM}`; do
+            echo -n ",lb${i},ub${i}"
+	done
+    fi
     echo    ")"
 
     echo    "!-----------------------------------------------------------------------"
     echo72  "        integer, intent(in) :: serno, count, element,"
     echo -n "     &    lb1,ub1"
-    for i in `seq 2 ${DIM}`; do
-        echo -n ",lb${i},ub${i}"
-    done
+    if [ ${DIM} -ge 2 ]; then
+	for i in `seq 2 ${DIM}`; do
+            echo -n ",lb${i},ub${i}"
+	done
+    fi
     echo    ""
 
     echo -n "        ${typekind}, pointer, intent(out) :: var(:"
-    for i in `seq 2 ${DIM}`; do
-        echo -n ",:"
-    done
+    if [ ${DIM} -ge 2 ]; then
+	for i in `seq 2 ${DIM}`; do
+            echo -n ",:"
+	done
+    fi
     echo    ")"
 
     echo72  "        ${typekind} ::"
     echo -n "     &    obj(lb1:ub1"
-    for i in `seq 2 ${DIM}`; do
-        echo -n ",lb${i}:ub${i}"
-    done
+    if [ ${DIM} -ge 2 ]; then
+	for i in `seq 2 ${DIM}`; do
+            echo -n ",lb${i}:ub${i}"
+	done
+    fi
     echo    ")"
 
     echo    "        pointer (cray_ptr, obj)"
@@ -79,15 +87,19 @@ print_subr_nd() {
     echo    "        subroutine pointer_assign(p, d)"
 
     echo -n "          ${typekind}, pointer :: p(:"
-    for i in `seq 2 ${DIM}`; do
-        echo -n ",:"
-    done
+    if [ ${DIM} -ge 2 ]; then
+	for i in `seq 2 ${DIM}`; do
+            echo -n ",:"
+	done
+    fi
     echo    ")"
 
     echo -n "          ${typekind}, target :: d(:"
-    for i in `seq 2 ${DIM}`; do
-        echo -n ",:"
-    done
+    if [ ${DIM} -ge 2 ]; then
+	for i in `seq 2 ${DIM}`; do
+            echo -n ",:"
+	done
+    fi
     echo    ")"
 
     echo    "          p => d"
