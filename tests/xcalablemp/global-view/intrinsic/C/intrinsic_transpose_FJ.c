@@ -726,7 +726,7 @@ int test_transpose_020(){
 #define N 31
 int m1[2]={1,30};
 #pragma xmp nodes p(8)
-#pragma xmp nodes pa(2,4)
+#pragma xmp nodes pa(4,2)
 #pragma xmp nodes pb(2,2,2)
 #pragma xmp template ta(0:M-1,0:N-1)
 #pragma xmp template tb(0:N-1,0:N-1,0:M-1)
@@ -767,7 +767,7 @@ int test_transpose_021(){
 #define N 31
 int m1[2]={1,30};
 #pragma xmp nodes p(8)
-#pragma xmp nodes pa(2,4)
+#pragma xmp nodes pa(4,2)
 #pragma xmp nodes pb(8)
 #pragma xmp template ta(0:M-1,0:N-1)
 #pragma xmp template tb(0:N-1)
