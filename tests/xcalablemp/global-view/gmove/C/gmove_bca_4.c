@@ -16,7 +16,7 @@ int a[n],b[n];
 #pragma xmp align a[i0] with tx(i0,*)
 #pragma xmp align b[i0] with tx(i0,*)
 
- int i0,/*i1,*/sxsierr;
+ int i0,/*i1,*/ierr;
 
 #pragma xmp loop (i0) on tx(i0,*)
   for(i0=0;i0<n;i0++){
