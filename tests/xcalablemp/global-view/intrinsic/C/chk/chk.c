@@ -33,5 +33,5 @@ int chk_int2(int ierr){
        exit(1);
     }
   }
-
+  return 0;
 }

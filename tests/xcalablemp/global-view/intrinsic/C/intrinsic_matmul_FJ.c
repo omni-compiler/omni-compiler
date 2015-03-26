@@ -68,6 +68,7 @@ int test_matmul_001(){
    }
 
    chk_int(error);
+   return 0;
 
 }
 
@@ -135,7 +136,7 @@ int test_matmul_002(){
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_003(){
@@ -201,7 +202,7 @@ int test_matmul_003(){
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_004(){
@@ -269,7 +270,7 @@ int test_matmul_004(){
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_005(){
@@ -340,7 +341,7 @@ int test_matmul_005(){
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_006(){
@@ -411,7 +412,7 @@ int test_matmul_006(){
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_007(){
@@ -483,7 +484,7 @@ int m1[2]={10,13};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_008(){
@@ -555,7 +556,7 @@ int m1[2]={10,13};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_009(){
@@ -627,7 +628,7 @@ int m1[2]={10,13};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_010(){
@@ -699,7 +700,7 @@ int m1[2]={10,13};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_011(){
@@ -771,7 +772,7 @@ int m1[2]={10,13};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_012(){
@@ -843,7 +844,7 @@ int m1[2]={30,24};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_013(){
@@ -915,7 +916,7 @@ int m1[2]={30,24};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_014(){
@@ -987,7 +988,7 @@ int m1[2]={30,24};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_015(){
@@ -1059,7 +1060,7 @@ int m1[2]={30,24};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_016(){
@@ -1131,7 +1132,7 @@ int m1[2]={30,24};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_017(){
@@ -1203,7 +1204,7 @@ int m1[2]={14,40};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_018(){
@@ -1275,7 +1276,7 @@ int m1[2]={40,14};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_019(){
@@ -1347,7 +1348,7 @@ int m1[2]={40,14};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_020(){
@@ -1419,7 +1420,7 @@ int m1[2]={40,14};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_021(){
@@ -1491,7 +1492,7 @@ int m1[2]={40,14};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_022(){
@@ -1563,7 +1564,7 @@ int m1[2]={20,3};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_023(){
@@ -1636,7 +1637,7 @@ int m2[2]={13,10};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_024(){
@@ -1710,7 +1711,7 @@ int m3[4]={7,9,11,18};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_025(){
@@ -1784,7 +1785,7 @@ int m3[4]={7,9,11,18};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_026(){
@@ -1858,7 +1859,7 @@ int m3[4]={7,9,11,18};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_027(){
@@ -1933,7 +1934,7 @@ int m4[2]={20,25};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_028(){
@@ -2008,7 +2009,7 @@ int m4[2]={20,25};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_029(){
@@ -2083,7 +2084,7 @@ int m4[2]={20,25};
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int main(int argc, char **argv){
