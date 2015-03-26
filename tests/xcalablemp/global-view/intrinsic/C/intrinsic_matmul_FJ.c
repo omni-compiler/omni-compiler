@@ -637,7 +637,7 @@ int test_matmul_010(){
 #define N 54
 #define L 23
 
-int m1[2]={10,13};
+  //int m1[2]={10,13};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,2)=p(5:8)
 #pragma xmp nodes pb(8)
@@ -709,7 +709,7 @@ int test_matmul_011(){
 #define N 54
 #define L 23
 
-int m1[2]={10,13};
+  //int m1[2]={10,13};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,4)
 #pragma xmp nodes pb(2,2,2)
@@ -997,7 +997,7 @@ int test_matmul_015(){
 #define N 54
 #define L 23
 
-int m1[2]={30,24};
+  //int m1[2]={30,24};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(8)
 #pragma xmp nodes pb(2,4)
@@ -1069,7 +1069,7 @@ int test_matmul_016(){
 #define N 54
 #define L 23
 
-int m1[2]={30,24};
+  //int m1[2]={30,24};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,2)=p(5:8)
 #pragma xmp nodes pb(2,4)
@@ -1357,7 +1357,7 @@ int test_matmul_020(){
 #define N 54
 #define L 23
 
-int m1[2]={40,14};
+  //int m1[2]={40,14};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,2,2)
 #pragma xmp nodes pb(2,2)=pa(:,1,:)
@@ -1429,7 +1429,7 @@ int test_matmul_021(){
 #define N 54
 #define L 23
 
-int m1[2]={40,14};
+  //int m1[2]={40,14};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,2,2)
 #pragma xmp nodes pb(4,2)
@@ -1943,7 +1943,7 @@ int test_matmul_028(){
 #define N 54
 #define L 23
 
-int m1[2]={25,20};
+  //int m1[2]={25,20};
 int m2[2]={20,3};
 int m3[2]={24,30};
 int m4[2]={20,25};
@@ -2018,8 +2018,8 @@ int test_matmul_029(){
 #define N 54
 #define L 23
 
-int m1[2]={25,20};
-int m2[2]={20,3};
+  //int m1[2]={25,20};
+  //int m2[2]={20,3};
 int m3[2]={24,30};
 int m4[2]={20,25};
 #pragma xmp nodes p(8)
