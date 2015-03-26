@@ -1,1 +1,0 @@
-ishihara@localhost.localdomain.75661:1427328560
