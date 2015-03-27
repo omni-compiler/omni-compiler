@@ -31,8 +31,8 @@ typedef struct _coarrayInfo_t  CoarrayInfo_t;
 /* structure for each procedure and for the entire program
  */
 struct _resourceInfo_t {
-  SegmentInfo_t *headSegment;
-  SegmentInfo_t *tailSegment;
+  SegmentInfo_t   *headSegment;
+  SegmentInfo_t   *tailSegment;
 };
 
 /* structure for each malloc/free call
@@ -42,9 +42,8 @@ struct _segmentInfo_t {
   SegmentInfo_t   *next;
   ResourceInfo_t  *parent;
   char            *orgAddr;      // local address of the allocated memory
-  char            *endAddr;      // orgAddr + (count * element) 
-  int              count;        // size of allocated data [elements]
-  size_t           element;      // size of the elmement [bytes]
+  size_t           nbytes;       // allocated size of memory [bytes]
+  char            *endAddr;      // orgAddr + nbytes
   void            *desc;         // address of the lower layer's descriptor 
   CoarrayInfo_t   *headCoarray;
   CoarrayInfo_t   *tailCoarray;
@@ -76,20 +75,19 @@ struct _coarrayInfo_t {
   char           *name;      // name of the variable (for debug message)
   char           *baseAddr;  // local address of the coarray (cray pointer)
   char           *endAddr;   // baseAddr + (count * element) 
-  int             count;     // size of the coarray [elements]
-  size_t          element;   // size of the elmement [bytes]
+  size_t          nbytes;    // size of the coarray [bytes]
   int             corank;    // number of codimensions
   int            *lcobound;  // array of lower cobounds [0..(corank-1)]
   int            *ucobound;  // array of upper cobounds [0..(corank-1)]
   int            *cosize;    // cosize[k] = max(ucobound[k]-lcobound[k]+1, 0)
 };
 
-static CoarrayInfo_t *_mallocCoarrayInfo(int count, size_t element);
+static CoarrayInfo_t *_mallocCoarrayInfo(size_t nbites);
 static void _addCoarrayInfo(SegmentInfo_t *sinfo, CoarrayInfo_t *cinfo2);
 static void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2);
 static void _freeCoarrayInfo(CoarrayInfo_t *cinfo);
 
-static CoarrayInfo_t *_getCoarray(int count, size_t element);
+static CoarrayInfo_t *_getShareForCoarray(int count, size_t element);
 
 
 /*****************************************\
@@ -133,8 +131,8 @@ SegmentInfo_t *_newSegmentInfo(void)
 
   sinfo->prev = NULL;
   sinfo->next = NULL;
-  sinfo->headCoarray = _mallocCoarrayInfo(0,0);
-  sinfo->tailCoarray = _mallocCoarrayInfo(0,0);
+  sinfo->headCoarray = _mallocCoarrayInfo(0);
+  sinfo->tailCoarray = _mallocCoarrayInfo(0);
   sinfo->headCoarray->next = sinfo->tailCoarray;
   sinfo->tailCoarray->prev = sinfo->headCoarray;
   sinfo->headCoarray->parent = sinfo;
@@ -187,13 +185,12 @@ void _freeSegmentInfo(SegmentInfo_t *sinfo)
   CoarrayInfo_t
 \*****************************************/
 
-static CoarrayInfo_t *_mallocCoarrayInfo(int count, size_t element)
+static CoarrayInfo_t *_mallocCoarrayInfo(size_t nbytes)
 {
   CoarrayInfo_t *cinfo =
     (CoarrayInfo_t*)malloc(sizeof(CoarrayInfo_t));
 
-  cinfo->count = count;
-  cinfo->element = element;
+  cinfo->nbytes = nbytes;
   cinfo->prev = NULL;
   cinfo->next = NULL;
   return cinfo;
@@ -298,8 +295,14 @@ void _freeByDescriptor(char *desc)
  */
 void xmpf_coarray_dealloc_(void **descPtr)
 {
+  // sync all (pre)
+  xmpf_sync_all_nostat_();
+
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
   _freeCoarray(cinfo);
+
+  // sync all (post)
+  xmpf_sync_all_nostat_();
 }
 
 
@@ -309,6 +312,9 @@ void xmpf_coarray_dealloc_(void **descPtr)
 void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                           int *count, int *element, void **tag)
 {
+  // sync all (pre)
+  xmpf_sync_all_nostat_();
+
   _XMPF_checkIfInTask("allocatable coarray allocation");
   ResourceInfo_t *rinfo;
 
@@ -321,12 +327,15 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
   }
 
   // make coarrayInfo and linkage
-  CoarrayInfo_t *cinfo = _mallocCoarrayInfo(*count, (size_t)(*element));
+  CoarrayInfo_t *cinfo = _mallocCoarrayInfo((*count) * (size_t)(*element));
   _addCoarrayInfo(sinfo, cinfo);
 
   // output #1, #2
   *descPtr = (void*)cinfo;
   *crayPtr = sinfo->orgAddr;
+
+  // sync all (post)
+  xmpf_sync_all_nostat_();
 }
 
 
@@ -356,13 +365,24 @@ SegmentInfo_t *_mallocSegment(int count, size_t element)
 {
   SegmentInfo_t *sinfo = _newSegmentInfo();
   size_t elementRU = _roundUpElementSize(count, element);
+  sinfo->nbytes = (size_t)count * elementRU;
+
+  if (sinfo->nbytes == 0) {
+    _XMPF_coarrayDebugPrint("MEMORY SEGMENT not allocated\n"
+                            "  requred: %zd bytes (count=%d, element=%d)\n",
+                            sinfo->nbytes, count, element);
+    return sinfo;
+  }
 
   // _XMP_coarray_malloc() and set mallocInfo
-  sinfo->count = count;
-  sinfo->element = elementRU;
-  _XMP_coarray_malloc_info_1(sinfo->count, sinfo->element);    // set shape
+  _XMP_coarray_malloc_info_1(sinfo->nbytes, 1);    // set shape
   _XMP_coarray_malloc_image_info_1();                          // set coshape
   _XMP_coarray_malloc_do(&(sinfo->desc), &(sinfo->orgAddr));   // malloc
+
+  _XMPF_coarrayDebugPrint("MEMORY SEGMENT allocated\n"
+                          "  requred: %zd bytes (count=%d, element=%d)\n"
+                          "  result : %d bytes\n",
+                          sinfo->nbytes, count, element, sinfo->nbytes);
 
   return sinfo;
 }
@@ -455,7 +475,7 @@ void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
                               char *name, int *namelen)
 {
   CoarrayInfo_t *cinfo =
-    _getCoarray(*count, (size_t)(*element));
+    _getShareForCoarray(*count, (size_t)(*element));
 
   cinfo->name = (char*)malloc(sizeof(char)*(*namelen + 1));
   strncpy(cinfo->name, name, *namelen);
@@ -465,29 +485,29 @@ void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
 }
 
 
-CoarrayInfo_t *_getCoarray(int count, size_t element)
+CoarrayInfo_t *_getShareForCoarray(int count, size_t element)
 {
   _XMPF_checkIfInTask("static coarray allocation");
 
   size_t elementRU = _roundUpElementSize(count, element);
 
   // allocate and set _coarrayInfo
-  CoarrayInfo_t *cinfo = _mallocCoarrayInfo(count, elementRU);
+  size_t thisSize = (size_t)count * elementRU;
+  CoarrayInfo_t *cinfo = _mallocCoarrayInfo(thisSize);
   _addCoarrayInfo(pool_sinfo, cinfo);
 
   // check: too large allocation
-  size_t thisSize = (size_t)count * elementRU;
-
   if (pool_currentAddr + thisSize > pool_sinfo->orgAddr + pool_totalSize) {
     _XMPF_coarrayFatal("lack of memory pool for static coarrays: "
                       "xmpf_coarray_share_pool_() in %s", __FILE__);
   }
 
-  _XMPF_coarrayDebugPrint("Coarray %s gets share of memory:\n"
-                          "  address = %p to %p\n"
-                          "  size    = %zd\n",
-                          cinfo->name, pool_currentAddr, pool_currentAddr+thisSize,
-                          thisSize);
+  _XMPF_coarrayDebugPrint("Get a share for coarray %s:\n"
+                          "  address = %p\n"
+                          "  size    = %zd\n"
+                          "  (originally, count = %d, element = %zd)\n",
+                          cinfo->name, pool_currentAddr,
+                          thisSize, count, element);
 
   cinfo->baseAddr = pool_currentAddr;
   cinfo->endAddr = pool_currentAddr += thisSize;
@@ -538,7 +558,7 @@ void xmpf_coarray_proc_finalize_(void **tag)
  *   This function is used at the entrance of a user procedure to find
  *   the descriptors of the dummy arguments.
  */
-/************************
+
 void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag)
 {
   ResourceInfo_t *rinfo = (ResourceInfo_t*)(*tag);
@@ -548,41 +568,39 @@ void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag)
   sinfo_found = NULL;
   forallSegmentInfo (sinfo, rinfo) {
     if (sinfo->orgAddr <= baseAddr && baseAddr < sinfo->endAddr) {
-      // found segment of the coarray
-      _XMPF_coarrayDebugPrint("found a segment (%p) for the coarray (%p).\n", 
+      // found the segment
+      _XMPF_coarrayDebugPrint("found the segment (addr=%p) "
+                              "including the coarray (addr=%p).\n", 
                               sinfo->orgAddr, baseAddr);
       sinfo_found = sinfo;
       break;
     }
   }
 
-  if (sinfo_found != NULL) {
-    _XMPF_coarrayFatal("INTERNAL: could not find serno for a dummy coarray, "
-                       "baseAddr=%p\n", baseAddr);
+  /******** not implemented ***********/
+  /***** RETHINK!! ****/
+  _XMPF_coarrayFatal("current restriction: coarray dummy argument it is "
+                     "not supported\n");
+
+
+  if (sinfo_found == NULL) {
+    _XMPF_coarrayDebugPrint("found the coaray (addr=%p) not allocated",
+                            baseAddr);
+
+    /******** not implemented ***********/
+    _XMPF_coarrayFatal("current restriction: un-allocated coarray dummy argument "
+                       "is not supported.\n");
+
+    /* One SecmentInfo and one CoarrayInfo should be allocated */
+    *descPtr = NULL;
+    return;
   }
-  
-  cinfo_found = NULL;
-  forallCoarrayInfo (cinfo, sinfo) {
-    if (cinfo->baseAddr <= baseAddr && baseAddr < cinfo->endAddr) {
-      // found the coarray is allocated
-      cinfo_found = cinfo;
-      break;
-    }
-  }
 
-  if (cinfo_found) {
-    _XMPF_coarrayDebugPrint("found the super-coarray (%p) of the coarray (%p).\n", 
-                            cinfo->baseAddr, baseAddr);
-      
-  CoarrayInfo_t *cp = (CoarrayInfo_t*)malloc(sizeof(CoarrayInfo_t));
-  cp->serno = serno;
-  cp->baseAddr = baseAddr;
 
-  _add_coarrayInfo(rinfo, cp);
-
-  *descPtr = (char*)cp;
+  *descPtr = NULL;
+  return;
 }
-*************************************************/
+
 
 /*
  * find descriptor-ID corresponding to baseAddr

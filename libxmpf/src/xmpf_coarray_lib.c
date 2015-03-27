@@ -29,31 +29,27 @@ void xmpf_sync_all_nostat_(void)
 {
   static unsigned int id = 0;
 
-  _XMPF_checkIfInTask("sync all");
+  _XMPF_checkIfInTask("syncall nostat");
 
   id += 1;
-
-  if (_XMPF_coarrayMsg) {
-    _XMPF_coarrayDebugPrint("SYNC ALL in (id=%d)\n", id);
-  }
 
   int status;
   xmp_sync_all(&status);
 
   if (_XMPF_coarrayMsg) {
-    _XMPF_coarrayDebugPrint("SYNC ALL out (id=%d)\n", id);
+    _XMPF_coarrayDebugPrint("SYNCALL out (id=%d)\n", id);
   }
 }
 
 void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen)
 {
-  _XMPF_checkIfInTask("sync all");
+  _XMPF_checkIfInTask("syncall with stat");
 
   static BOOL firstCall = TRUE;
   if (firstCall) {
     firstCall = FALSE;
     fprintf(stderr, "not supported yet: "
-            "stat= specifier in SYNC ALL statement\n");
+            "stat= specifier in SYNCALL statement\n");
     fprintf(stderr, "  -- ignored.\n");
   }
 
@@ -68,7 +64,7 @@ void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen)
 
 void xmpf_sync_memory_nostat_(void)
 {
-  _XMPF_checkIfInTask("sync memory");
+  _XMPF_checkIfInTask("syncmemory nostat");
 
   int status;
   xmp_sync_memory(&status);
@@ -76,7 +72,7 @@ void xmpf_sync_memory_nostat_(void)
 
 void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen)
 {
-  _XMPF_checkIfInTask("sync memory");
+  _XMPF_checkIfInTask("syncmemory with stat");
 
   static BOOL firstCall = TRUE;
   if (firstCall) {
@@ -111,7 +107,7 @@ void xmpf_sync_image_stat_(int *image, int *stat, char *msg, int *msglen)
     fprintf(stderr, "  -- ignored.\n");
   }
 
-  _XMPF_checkIfInTask("sync image");
+  _XMPF_checkIfInTask("syncimage with stat");
 
   int status;
   xmp_sync_image(*image, &status);
@@ -135,7 +131,7 @@ void xmpf_sync_images_stat_(int *images, int *size, int *stat,
     fprintf(stderr, "  -- ignored.\n");
   }
 
-  _XMPF_checkIfInTask("sync image");
+  _XMPF_checkIfInTask("syncimage with stat");
 
   int status;
   xmp_sync_images(*size, images, &status);
@@ -158,7 +154,7 @@ void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen)
     fprintf(stderr, "  -- ignored.\n");
   }
 
-  _XMPF_checkIfInTask("sync image");
+  _XMPF_checkIfInTask("syncimage with stat");
 
   int status;
   xmp_sync_images_all(&status);
