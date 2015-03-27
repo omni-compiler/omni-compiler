@@ -325,8 +325,8 @@ extern void xmpf_coarray_proc_finalize_(void **tag);
 extern void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag);
 
 
-extern char *_XMPF_get_coarrayDesc(char *descPtr);
-extern size_t _XMPF_get_coarrayOffset(char *descPtr, char *baseAddr);
+extern void *_XMPF_get_coarrayDesc(void *descPtr);
+extern size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr);
 
 extern void xmpf_coarray_count_size_(int *count, int *element);
 extern void xmpf_coarray_malloc_pool_(void);

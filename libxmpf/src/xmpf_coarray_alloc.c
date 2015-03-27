@@ -374,8 +374,8 @@ SegmentInfo_t *_mallocSegment(int count, size_t element)
   OLD VERSION
 \*****************************************/
 
-/********************************************
-static void _remove_coarrayInfo(_resourceInfo_t *resourceInfo,
+/***************************************************************
+static void _remove_coarrayInfo(ResourceInfo_t *resourceInfo,
                                 CoarrayInfo_t *coarrayInfo)
 {
   if (resourceInfo->coarrayInfoFirst == coarrayInfo) {
@@ -400,33 +400,29 @@ static void _remove_coarrayInfo(_resourceInfo_t *resourceInfo,
 }
 
 
-static void _del_coarrayInfo(_resourceInfo_t *resourceInfo,
+static void _del_coarrayInfo(ResourceInfo_t *resourceInfo,
                              CoarrayInfo_t *coarrayInfo)
 {
   _remove_coarrayInfo(resourceInfo, coarrayInfo);
   free(coarrayInfo);
 }
+*************************************************************/
 
-********************************************/
 
-/***********************************************************
-static void _freeCoarray(CoarrayInfo_t *coarrayInfo);
-
-char *_XMPF_get_coarrayDesc(char *descPtr)
+void *_XMPF_get_coarrayDesc(void *descPtr)
 {
-  CoarrayInfo_t *cp = (CoarrayInfo_t*)descPtr;
-  return SegmentInfoTab[cp->serno].desc;
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
+  return cinfo->parent->desc;
 }
 
-size_t _XMPF_get_coarrayOffset(char *descPtr, char *baseAddr)
+size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr)
 {
-  CoarrayInfo_t *cp = (CoarrayInfo_t*)descPtr;
-  char* orgAddr = SegmentInfoTab[cp->serno].orgAddr;
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
+  char* orgAddr = cinfo->parent->orgAddr;
   int offset = ((size_t)baseAddr - (size_t)orgAddr);
   return offset;
 }
 
-**********************************************************/
 
 
 /*****************************************\
