@@ -2499,13 +2499,12 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
 
   if ((gmv_desc_leftp->is_global == true) && (gmv_desc_rightp->is_global == true)){
     if ((exec_comm_size == dst_comm_size) && (exec_comm_size == src_comm_size)){
-      if ((_XMP_IS_SINGLE) ||
-          (is_same_array_shape(dst_array, src_array) &&
+        if (is_same_array_shape(dst_array, src_array) &&
            is_same_template_shape(dst_array->align_template, src_array->align_template) &&
            is_same_axis(dst_array, src_array) &&
            is_same_offset(dst_array, src_array) &&
            is_same_alignmanner(dst_array, src_array) &&
-           is_whole(gmv_desc_leftp) && is_whole(gmv_desc_rightp))) {
+           is_whole(gmv_desc_leftp) && is_whole(gmv_desc_rightp)) {
 
 
         for (int i = 0; i < dst_dim; i++) {
