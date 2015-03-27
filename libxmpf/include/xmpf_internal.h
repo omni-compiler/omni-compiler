@@ -313,16 +313,16 @@ extern void _XMPF_coarrayFatal(char *format, ...);
 
 
 /* xmpf_coarray_alloc.c */
-extern void xmpf_coarray_share_pool_(char **descPtr, char **crayPtr,
+extern void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
                                      int *count, int *element,
                                      char *name, int *namelen);
-extern void xmpf_coarray_set_coshape_(char **descPtr, int *corank, ...);
-extern int xmpf_coarray_get_image_index_(char **descPtr, int *corank, ...);
+extern void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...);
+extern int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...);
 
 //extern int xmpf_get_descr_id_(char *baseAddr);
 extern void xmpf_coarray_proc_init_(void **tag);
 extern void xmpf_coarray_proc_finalize_(void **tag);
-extern void xmpf_coarray_descptr_(char **descPtr, char *baseAddr, void **tag);
+extern void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag);
 
 
 extern char *_XMPF_get_coarrayDesc(char *descPtr);
@@ -330,9 +330,9 @@ extern size_t _XMPF_get_coarrayOffset(char *descPtr, char *baseAddr);
 
 extern void xmpf_coarray_count_size_(int *count, int *element);
 extern void xmpf_coarray_malloc_pool_(void);
-extern void xmpf_coarray_malloc_(char **descPtr, char **crayPtr,
+extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                                  int *count, int *element, void **tag);
-extern void xmpf_coarray_dealloc_(char **descPtr, void **tag);
+extern void xmpf_coarray_dealloc_(void **descPtr);
 
 /* xmpf_coarray_lib.c */
 extern int num_images_(void);
@@ -356,18 +356,18 @@ extern void xmpf_sync_allimages_nostat_(void);
 extern void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen);
 
 /* xmpf_coarray_put.c */
-extern void xmpf_coarray_put_scalar_(char **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_put_scalar_(void **descPtr, char *baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition);
-extern void xmpf_coarray_put_array_(char **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_put_array_(void **descPtr, char *baseAddr, int *element,
                                     int *coindex, char *rhs, int *condition,
                                     int *rank, ...);
-extern void xmpf_coarray_put_spread_(char **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_put_spread_(void **descPtr, char *baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition,
                                      int *rank, ...);
 
 /* xmpf_coarray_get.c */
-extern void xmpf_coarray_get_scalar_(char **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_get_scalar_(void **descPtr, char *baseAddr, int *element,
                                      int *coindex, char *result);
-extern void xmpf_coarray_get_array_(char **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_get_array_(void **descPtr, char *baseAddr, int *element,
                                     int *coindex, char *result, int *rank, ...);
 

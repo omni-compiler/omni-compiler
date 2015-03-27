@@ -15,18 +15,18 @@
 static int _select_putscheme_scalar(int condition, int element);
 static int _select_putscheme_array(int condition);
 
-static void _putCoarray(char *descPtr, char *baseAddr, int coindex, char *rhs,
+static void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
                         int bytes, int rank, int skip[], int count[]);
 
-static char *_putVectorIter(char *descPtr, char *baseAddr, int bytes,
+static char *_putVectorIter(void *descPtr, char *baseAddr, int bytes,
                             int coindex, char *src,
                             int loops, int skip[], int count[]);
 
-static void _putVector(char *descPtr, char *baseAddr, int bytes,
+static void _putVector(void *descPtr, char *baseAddr, int bytes,
                        int coindex, char* src);
 #if 0
 /* disused */
-static void _putVectorByByte(char *descPtr, char *baseAddr, int bytes,
+static void _putVectorByByte(void *descPtr, char *baseAddr, int bytes,
                              int coindex, char* src);
 static void _putVectorByElement(char *desc, int start, int vlength,
                                 int coindex, char* src);
@@ -36,7 +36,7 @@ static void _putVectorByElement(char *desc, int start, int vlength,
     entry
 \***************************************************/
 
-extern void xmpf_coarray_put_scalar_(char **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_put_scalar_(void **descPtr, char *baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition)
 {
   _XMPF_checkIfInTask("scalar coindexed variable");
@@ -102,7 +102,7 @@ extern void xmpf_coarray_put_scalar_(char **descPtr, char *baseAddr, int *elemen
 
 
 
-extern void xmpf_coarray_put_array_(char **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_put_array_(void **descPtr, char *baseAddr, int *element,
                                     int *coindex, char *rhs, int *condition,
                                     int *rank, ...)
 {
@@ -160,7 +160,7 @@ extern void xmpf_coarray_put_array_(char **descPtr, char *baseAddr, int *element
 }
 
 
-extern void xmpf_coarray_put_spread_(char **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_put_spread_(void **descPtr, char *baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition,
                                      int *rank, ...)
 {
@@ -239,7 +239,7 @@ int _select_putscheme_array(int condition)
 }
 
 
-void _putCoarray(char *descPtr, char *baseAddr, int coindex, char *rhs,
+void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
                  int bytes, int rank, int skip[], int count[])
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
@@ -276,7 +276,7 @@ void _putCoarray(char *descPtr, char *baseAddr, int coindex, char *rhs,
 }
 
   
-char *_putVectorIter(char *descPtr, char *baseAddr, int bytes,
+char *_putVectorIter(void *descPtr, char *baseAddr, int bytes,
                      int coindex, char *src,
                      int loops, int skip[], int count[])
 {
@@ -301,7 +301,7 @@ char *_putVectorIter(char *descPtr, char *baseAddr, int bytes,
 }
 
 
-void _putVector(char *descPtr, char *baseAddr, int bytes, int coindex, char *src)
+void _putVector(void *descPtr, char *baseAddr, int bytes, int coindex, char *src)
 {
   char* desc = _XMPF_get_coarrayDesc(descPtr);
   size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
@@ -316,7 +316,7 @@ void _putVector(char *descPtr, char *baseAddr, int bytes, int coindex, char *src
 #if 0
 /* disused
  */
-void _putVectorByByte(char *descPtr, char *baseAddr, int bytes,
+void _putVectorByByte(void *descPtr, char *baseAddr, int bytes,
                       int coindex, char *src)
 {
   char* desc = _XMPF_get_coarrayDesc(descPtr);

@@ -750,7 +750,10 @@ public class XMPtransCoarrayRun
           // xobj.getArg(1): list of variables to be allocated
           // errmsg= identifier is not supported either.
           if (_doesListHaveCoarray(xobj.getArg(1), coarrays)) {
-            ArrayList<Xobject> fstmts = gen_allocateStmt(xobj, coarrays);
+
+            ArrayList<Xobject> fstmts =
+              genAllocateStmt(xobj, coarrays);
+
             LineNo lineno = xobj.getLineNo();
             for (Xobject fstmt: fstmts) {
               fstmt.setLineNo(lineno);
@@ -780,7 +783,10 @@ public class XMPtransCoarrayRun
 	switch (xobj.Opcode()) {
         case F_DEALLOCATE_STATEMENT:
           if (_doesListHaveCoarray(xobj.getArg(1), coarrays)) {
-            ArrayList<Xobject> fstmts = gen_deallocateStmt(xobj, coarrays);
+
+            ArrayList<Xobject> fstmts =
+              genDeallocateStmt(xobj, coarrays);
+
             LineNo lineno = xobj.getLineNo();
             for (Xobject fstmt: fstmts) {
               fstmt.setLineNo(lineno);
@@ -852,7 +858,8 @@ public class XMPtransCoarrayRun
   }
 
 
-  private ArrayList<Xobject> gen_allocateStmt(Xobject x, Vector<XMPcoarray> coarrays) {
+  private ArrayList<Xobject> genAllocateStmt(Xobject x,
+                                             Vector<XMPcoarray> coarrays) {
 
     ArrayList<Xobject> newStmts = new ArrayList<Xobject>();
 
@@ -876,8 +883,8 @@ public class XMPtransCoarrayRun
 
 
 
-  private ArrayList<Xobject> gen_deallocateStmt(Xobject x,
-                                                Vector<XMPcoarray> coarrays) {
+  private ArrayList<Xobject> genDeallocateStmt(Xobject x,
+                                               Vector<XMPcoarray> coarrays) {
 
     ArrayList<Xobject> newStmts = new ArrayList<Xobject>();
 

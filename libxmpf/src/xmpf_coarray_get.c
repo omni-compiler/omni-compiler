@@ -15,18 +15,18 @@
 static int _select_getscheme_scalar(int element);
 static int _select_getscheme_array(void);
 
-static void _getCoarray(char *descPtr, char *baseAddr, int coindex, char *res,
+static void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *res,
                         int bytes, int rank, int skip[], int count[]);
 
-static char *_getVectorIter(char *descPtr, char *baseAddr, int bytes,
+static char *_getVectorIter(void *descPtr, char *baseAddr, int bytes,
                             int coindex, char *dst,
                             int loops, int skip[], int count[]);
 
-static void _getVector(char *descPtr, char *baseAddr, int bytes,
+static void _getVector(void *descPtr, char *baseAddr, int bytes,
                        int coindex, char *dst);
 #if 0
 /* disused */
-static void _getVectorByByte(char *descPtr, char *baseAddr, int bytes,
+static void _getVectorByByte(void *descPtr, char *baseAddr, int bytes,
                              int coindex, char *dst);
 static void _getVectorByElement(char *desc, int start, int vlength,
                                 int coindex, char *dst);
@@ -36,7 +36,7 @@ static void _getVectorByElement(char *desc, int start, int vlength,
     entry
 \***************************************************/
 
-extern void xmpf_coarray_get_scalar_(char **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_get_scalar_(void **descPtr, char *baseAddr, int *element,
                                      int *coindex, char *result)
 {
   _XMPF_checkIfInTask("a scalar coindexed object");
@@ -88,7 +88,7 @@ extern void xmpf_coarray_get_scalar_(char **descPtr, char *baseAddr, int *elemen
 }
 
 
-extern void xmpf_coarray_get_array_(char **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_get_array_(void **descPtr, char *baseAddr, int *element,
                                     int *coindex, char *result, int *rank, ...)
 {
   _XMPF_checkIfInTask("an array coindexed object");
@@ -178,7 +178,7 @@ int _select_getscheme_array(void)
 }
 
 
-void _getCoarray(char *descPtr, char *baseAddr, int coindex, char *result,
+void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *result,
                  int bytes, int rank, int skip[], int count[])
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
@@ -215,7 +215,7 @@ void _getCoarray(char *descPtr, char *baseAddr, int coindex, char *result,
 }
 
   
-char *_getVectorIter(char *descPtr, char *baseAddr, int bytes,
+char *_getVectorIter(void *descPtr, char *baseAddr, int bytes,
                      int coindex, char *dst,
                      int loops, int skip[], int count[])
 {
@@ -240,7 +240,7 @@ char *_getVectorIter(char *descPtr, char *baseAddr, int bytes,
 }
 
 
-void _getVector(char *descPtr, char *src, int bytes, int coindex, char *dst)
+void _getVector(void *descPtr, char *src, int bytes, int coindex, char *dst)
 {
   char* desc = _XMPF_get_coarrayDesc(descPtr);
   int offset = _XMPF_get_coarrayOffset(descPtr, src);
@@ -255,7 +255,7 @@ void _getVector(char *descPtr, char *src, int bytes, int coindex, char *dst)
 #if 0
 /* disused
  */
-void _getVectorByByte(char *descPtr, char *src, int bytes,
+void _getVectorByByte(void *descPtr, char *src, int bytes,
                       int coindex, char *dst)
 {
   char* desc = _XMPF_get_coarrayDesc(descPtr);
