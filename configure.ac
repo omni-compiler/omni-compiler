@@ -272,19 +272,19 @@ AC_CONFIG_FILES(libacc/include/Makefile)
 
 # --------------------------------------------------------------------
 AC_ARG_ENABLE(debug,
-    [  --enable-debug                 enable generate executable with debug symbol (false default)],
+    [  --enable-debug          enable generate executable with debug symbol (false default)],
     [doDebug=yes], [doDebug=no])
 
 AC_ARG_ENABLE(openacc,
-    [  --enable-openacc               enable OpenACC (false default)],
+    [  --enable-openacc        enable OpenACC (false default)],
     [doOpenAcc=yes], [doOpenAcc=no])
 
 AC_ARG_ENABLE(atool,
-    [  --enable-atool                 enable atool (false default)],
+    [  --enable-atool          enable atool (false default)],
     [doatool=yes], [doatool=no])
 
 AC_ARG_ENABLE(xacc,
-    [  --enable-xacc                  enable XcalableACC (false default)],
+    [  --enable-xacc           enable XcalableACC (false default)],
     [xacc=yes], [xacc=no])
 
 AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
@@ -907,26 +907,40 @@ AC_ARG_WITH(libblas,
     [  --with-libblas=DIR          BLAS Library (e.g. /foo/blas_LINUX.a)],
     [LIBBLAS="${withval}"; use_libblas=yes], [use_libblas=no])
 
+AC_ARG_ENABLE(SSL2BLAMP,
+    [  --enable-SSL2BLAMP      enable Fujitsu Math Library (true on only the K computer, false on Fx10)],
+    [use_SSL2BLAMP=yes], [use_SSL2BLAMP=no])
+
+AC_ARG_ENABLE(intelmkl,
+    [  --enable-intelmkl       enable Intel Math Kernel Library (false default)],
+    [use_intelmkl=yes], [use_intelmkl=no])
+
 output_libblas=
 if test x$use_libblas = xyes; then
    if ! test -f $LIBBLAS; then
      AC_MSG_ERROR([$LIBBLAS not found.])
    fi
-   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
-   OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
    output_libblas="yes ($LIBBLAS)"
 else
-  if test "$target" = "Kcomputer-linux-gnu"; then
+  if test "$target" = "Kcomputer-linux-gnu" -o x$use_SSL2BLAMP = "xyes"; then
+    use_libblas=yes
+    use_SSL2BLAMP=yes
     LIBBLAS="-SSL2BLAMP"
-    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
-    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
+    output_libblas="yes ($LIBBLAS)"
+  elif test x$use_intelmkl = "xyes"; then
+    use_libblas=yes
+    LIBBLAS="-mkl"
     output_libblas="yes ($LIBBLAS)"
   else
     output_libblas="no"
   fi
 fi
+OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
+OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
 
-AM_CONDITIONAL(USER_LIBBLAS, test x${use_libblas} = xyes)
+AM_CONDITIONAL(USE_LIBBLAS,   test x${use_libblas}   = xyes)
+AM_CONDITIONAL(USE_SSL2BLAMP, test x${use_SSL2BLAMP} = xyes)
+AM_CONDITIONAL(USE_INTELMKL,  test x${use_intelmkl}  = xyes)
 
 # --------------------------------------------------------------------
 # set TCA

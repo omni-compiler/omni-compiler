@@ -746,8 +746,12 @@ GASNET_FALSE
 GASNET_TRUE
 TCA_FALSE
 TCA_TRUE
-USER_LIBBLAS_FALSE
-USER_LIBBLAS_TRUE
+USE_INTELMKL_FALSE
+USE_INTELMKL_TRUE
+USE_SSL2BLAMP_FALSE
+USE_SSL2BLAMP_TRUE
+USE_LIBBLAS_FALSE
+USE_LIBBLAS_TRUE
 LIBXML_PREFIX
 GPGPU_PREFIX
 GPU_CFLAGS
@@ -934,6 +938,8 @@ with_gpu_cflags
 with_cuda
 with_libxml
 with_libblas
+enable_SSL2BLAMP
+enable_intelmkl
 with_TCA
 with_gasnet
 with_gasnet_conduit
@@ -1592,10 +1598,12 @@ Optional Features:
   --disable-maintainer-mode
                           disable make rules and dependencies not useful (and
                           sometimes confusing) to the casual installer
-  --enable-debug                 enable generate executable with debug symbol (false default)
-  --enable-openacc               enable OpenACC (false default)
-  --enable-atool                 enable atool (false default)
-  --enable-xacc                  enable XcalableACC (false default)
+  --enable-debug          enable generate executable with debug symbol (false default)
+  --enable-openacc        enable OpenACC (false default)
+  --enable-atool          enable atool (false default)
+  --enable-xacc           enable XcalableACC (false default)
+  --enable-SSL2BLAMP      enable Fujitsu Math Library (true on only the K computer, false on Fx10)
+  --enable-intelmkl       enable Intel Math Kernel Library (false default)
   --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default)
 
 Optional Packages:
@@ -22100,31 +22108,67 @@ else
 fi
 
 
+# Check whether --enable-SSL2BLAMP was given.
+if test "${enable_SSL2BLAMP+set}" = set; then :
+  enableval=$enable_SSL2BLAMP; use_SSL2BLAMP=yes
+else
+  use_SSL2BLAMP=no
+fi
+
+
+# Check whether --enable-intelmkl was given.
+if test "${enable_intelmkl+set}" = set; then :
+  enableval=$enable_intelmkl; use_intelmkl=yes
+else
+  use_intelmkl=no
+fi
+
+
 output_libblas=
 if test x$use_libblas = xyes; then
    if ! test -f $LIBBLAS; then
      as_fn_error $? "$LIBBLAS not found." "$LINENO" 5
    fi
-   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
-   OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
    output_libblas="yes ($LIBBLAS)"
 else
-  if test "$target" = "Kcomputer-linux-gnu"; then
+  if test "$target" = "Kcomputer-linux-gnu" -o x$use_SSL2BLAMP = "xyes"; then
+    use_libblas=yes
+    use_SSL2BLAMP=yes
     LIBBLAS="-SSL2BLAMP"
-    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
-    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
+    output_libblas="yes ($LIBBLAS)"
+  elif test x$use_intelmkl = "xyes"; then
+    use_libblas=yes
+    LIBBLAS="-mkl"
     output_libblas="yes ($LIBBLAS)"
   else
     output_libblas="no"
   fi
 fi
+OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
+OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
 
- if test x${use_libblas} = xyes; then
-  USER_LIBBLAS_TRUE=
-  USER_LIBBLAS_FALSE='#'
+ if test x${use_libblas}   = xyes; then
+  USE_LIBBLAS_TRUE=
+  USE_LIBBLAS_FALSE='#'
 else
-  USER_LIBBLAS_TRUE='#'
-  USER_LIBBLAS_FALSE=
+  USE_LIBBLAS_TRUE='#'
+  USE_LIBBLAS_FALSE=
+fi
+
+ if test x${use_SSL2BLAMP} = xyes; then
+  USE_SSL2BLAMP_TRUE=
+  USE_SSL2BLAMP_FALSE='#'
+else
+  USE_SSL2BLAMP_TRUE='#'
+  USE_SSL2BLAMP_FALSE=
+fi
+
+ if test x${use_intelmkl}  = xyes; then
+  USE_INTELMKL_TRUE=
+  USE_INTELMKL_FALSE='#'
+else
+  USE_INTELMKL_TRUE='#'
+  USE_INTELMKL_FALSE=
 fi
 
 
@@ -26064,8 +26108,16 @@ if test -z "${POWERPC_TRUE}" && test -z "${POWERPC_FALSE}"; then
   as_fn_error $? "conditional \"POWERPC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${USER_LIBBLAS_TRUE}" && test -z "${USER_LIBBLAS_FALSE}"; then
-  as_fn_error $? "conditional \"USER_LIBBLAS\" was never defined.
+if test -z "${USE_LIBBLAS_TRUE}" && test -z "${USE_LIBBLAS_FALSE}"; then
+  as_fn_error $? "conditional \"USE_LIBBLAS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USE_SSL2BLAMP_TRUE}" && test -z "${USE_SSL2BLAMP_FALSE}"; then
+  as_fn_error $? "conditional \"USE_SSL2BLAMP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USE_INTELMKL_TRUE}" && test -z "${USE_INTELMKL_FALSE}"; then
+  as_fn_error $? "conditional \"USE_INTELMKL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then

@@ -9,14 +9,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_XMP_USER_LIBBLAS)
+#ifdef _XMP_USE_LIBBLAS
+#ifdef _XMP_USE_SSL2BLAMP
+#include "fj_lapack.h"
+/* #include "fjcoll.h" */
+#elif _XMP_USE_INTELMKL
+#include "mkl.h"
+#else
 /* Prototype Declaration from http://azalea.s35.xrea.com/blas/blas.h */
 void dgemm_(char *transa, char *transb, int *m, int *n, int *k,
             double *alpha, double *A, int *ldA, double *B, int *ldB,
             double *beta , double *C, int *ldC);
-#elif defined(OMNI_TARGET_CPU_KCOMPUTER)
-#include "fj_lapack.h"
-/* #include "fjcoll.h" */
+#endif
 #endif
 
 /* #define DEBUG */
@@ -3367,7 +3371,7 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
 
    /* matmul */
    /* TODO: X = A * BT -> DGEMM */
-#if defined(_XMP_USER_LIBBLAS) || defined(OMNI_TARGET_CPU_KCOMPUTER)
+#ifdef _XMP_USE_LIBBLAS
    dim0_size = x_d->info[0].local_upper - x_d->info[0].local_lower + 1;
    dim1_size = x_d->info[1].local_upper - x_d->info[1].local_lower + 1;
    k = a_d->info[1].ser_size;
@@ -3390,14 +3394,16 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
          double alpha=1.0;
          double beta=0.0;
          int   ldc = x_alloc_size[0];
-#if defined(_XMP_USER_LIBBLAS)
+#ifdef _XMP_USE_SSL2BLAMP
 	 dgemm_("N", "T", &dim0_size, &dim1_size, &k, &alpha, (double*)a_recv_buf, &dim0_size,
-                (double*)b_recv_buf, &dim1_size, &beta, (double*)dst_p, &ldc);
-#elif defined(OMNI_TARGET_CPU_KCOMPUTER)
-         dgemm_("N", "T", &dim0_size, &dim1_size, &k, &alpha, (double*)a_recv_buf, &dim0_size,
-                (double*)b_recv_buf, &dim1_size, &beta, (double*)dst_p, &ldc, 1, 1);
+		(double*)b_recv_buf, &dim1_size, &beta, (double*)dst_p, &ldc, 1, 1);
+#elif _XMP_USE_INTELMKL
+	 cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,
+		     dim0_size, dim1_size, k, alpha, (double*)a_recv_buf, dim0_size, 
+		     (double*)b_recv_buf, dim1_size, beta, (double*)dst_p, ldc);
 #else
-	 XMP_fatal("Unexpected Error in xmp_intrinsic.c !!");
+         dgemm_("N", "T", &dim0_size, &dim1_size, &k, &alpha, (double*)a_recv_buf, &dim0_size,
+                (double*)b_recv_buf, &dim1_size, &beta, (double*)dst_p, &ldc);
 #endif
       }
       break;
