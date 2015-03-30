@@ -17,8 +17,8 @@ int a[n][n],b[n][n];
 
 int main(){
 
-  int i0,i1,ierr,irank;
-  irank=xmp_node_num();
+  int i0,i1,ierr;//,irank;
+  //  irank=xmp_node_num();
 
 #pragma xmp loop (i0,i1) on tx(i1,i0)
   for(i0=0;i0<n;i0++){
@@ -47,4 +47,6 @@ int main(){
 
 #pragma xmp reduction (MAX:ierr)
   chk_int(name, ierr);
+
+  return 0;
 }

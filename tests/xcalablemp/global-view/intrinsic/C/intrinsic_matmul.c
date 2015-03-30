@@ -22,7 +22,7 @@ double a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -86,7 +86,7 @@ double a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -150,7 +150,7 @@ double _Complex a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -214,7 +214,7 @@ float _Complex a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -278,7 +278,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -341,7 +341,7 @@ float a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -405,7 +405,7 @@ double a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(j,i)
 #pragma xmp align x[i][j] with tz(j,i)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(j,i)
@@ -469,7 +469,7 @@ double a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -534,7 +534,7 @@ double a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -599,7 +599,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[*][j] with tz(j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -667,7 +667,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][*] with tz(i)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -735,7 +735,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[*][j] with ty(j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -800,7 +800,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[*][j] with ty(j)
 #pragma xmp align x[*][j] with tz(j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -868,7 +868,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[*][j] with ty(j)
 #pragma xmp align x[i][*] with tz(i)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -936,7 +936,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][*] with ty(i)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -1001,7 +1001,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][*] with ty(i)
 #pragma xmp align x[*][j] with tz(j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -1069,7 +1069,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][*] with ty(i)
 #pragma xmp align x[i][*] with tz(i)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i,j) on tx(i,j)
@@ -1137,7 +1137,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
   for(i=0;i<n1;i++){
@@ -1202,7 +1202,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[*][j] with tz(j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
   for(i=0;i<n1;i++){
@@ -1270,7 +1270,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][*] with tz(i)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
   for(i=0;i<n1;i++){
@@ -1338,7 +1338,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[*][j] with ty(j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
   for(i=0;i<n1;i++){
@@ -1402,7 +1402,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[*][j] with ty(j)
 #pragma xmp align x[*][j] with tz(j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
   for(i=0;i<n1;i++){
@@ -1466,7 +1466,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[*][j] with ty(j)
 #pragma xmp align x[i][*] with tz(i)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
   for(i=0;i<n1;i++){
@@ -1531,7 +1531,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][*] with ty(i)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
   for(i=0;i<n1;i++){
@@ -1595,7 +1595,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][*] with ty(i)
 #pragma xmp align x[*][j] with tz(j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
   for(i=0;i<n1;i++){
@@ -1659,7 +1659,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][*] with ty(i)
 #pragma xmp align x[i][*] with tz(i)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
   for(i=0;i<n1;i++){
@@ -1724,7 +1724,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i) on tx(i)
@@ -1789,7 +1789,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[*][j] with tz(j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i) on tx(i)
@@ -1857,7 +1857,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][j] with ty(i,j)
 #pragma xmp align x[i][*] with tz(i)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i) on tx(i)
@@ -1925,7 +1925,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[*][j] with ty(j)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i) on tx(i)
@@ -1989,7 +1989,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[*][j] with ty(j)
 #pragma xmp align x[*][j] with tz(j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i) on tx(i)
@@ -2053,7 +2053,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[*][j] with ty(j)
 #pragma xmp align x[i][*] with tz(i)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i) on tx(i)
@@ -2118,7 +2118,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][*] with ty(i)
 #pragma xmp align x[i][j] with tz(i,j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i) on tx(i)
@@ -2182,7 +2182,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][*] with ty(i)
 #pragma xmp align x[*][j] with tz(j)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i) on tx(i)
@@ -2246,7 +2246,7 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 #pragma xmp align b[i][*] with ty(i)
 #pragma xmp align x[i][*] with tz(i)
 
-  int i,j,k,ierr;
+ int i,j,/*k,*/ierr;
   double rn1,rn2,rn3,rn4,rn5,rn6,ra,rb;
 
 #pragma xmp loop (i) on tx(i)

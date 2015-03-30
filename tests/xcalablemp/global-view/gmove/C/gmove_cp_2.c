@@ -16,7 +16,7 @@ double a[n],b[n];
 #pragma xmp align a[i] with tx(i)
 #pragma xmp align b[i] with tx(i)
 
-  int i,j,ierr;
+ int i,/*j,*/ierr;
   double err;
 
 #pragma xmp loop (i) on tx(i)
@@ -93,8 +93,8 @@ double a[n],b[n];
 #pragma xmp align a[i] with tx(i)
 #pragma xmp align b[i] with tx(i)
 
-  int i,j,ierr;
-  double err;
+ int i,/*j,*/ierr;
+ double err;
 
 #pragma xmp loop (i) on tx(i)
   for(i=0;i<n;i++){
@@ -132,7 +132,7 @@ double a[n],b[n];
 #pragma xmp align a[i] with tx(i)
 #pragma xmp align b[i] with tx(i)
 
-  int i,j,ierr;
+ int i,/*j,*/ierr;
   double err;
 
 #pragma xmp loop (i) on tx(i)
@@ -175,7 +175,7 @@ int my[4]={6,2};
 #pragma xmp align a[i] with tx(i)
 #pragma xmp align b[i] with ty(i)
 
-  int i,j,ierr;
+ int i,/*j,*/ierr;
   double err;
 
 #pragma xmp loop (i) on tx(i)
