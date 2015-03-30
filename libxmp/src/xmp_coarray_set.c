@@ -9,14 +9,19 @@
 static size_t _elmt_size;
 static int _coarray_dims, _image_dims, *_image_elmts;
 static int *_coarray_elmts, _total_coarray_elmts;
+struct _coarray_queue_t{
+  unsigned int     max_size;   /**< Max size of queue */
+  unsigned int          num;   /**< How many coarrays are in this queue */
+  _XMP_coarray_t **coarrays;   /**< pointer of coarrays */
+};
+static struct _coarray_queue_t _coarray_queue;
 
 #ifdef _XMP_COARRAY_GASNET
-// The last word must be "M"
-static void check_last_word(char *env, char *env_val)
+static void _check_last_word(char *env, char *env_val)
 {
   int len = strlen(env_val);
   char last_char = env_val[len-1];
-  if(last_char != 'M'){
+  if(last_char != 'M'){ // The last word must be "M"
     if(_XMP_world_rank == 0){
       fprintf(stderr, "[ERROR] Unexpected Charactor in %s=%s\n", env, env_val);
       fprintf(stderr, "        The last Character must be M (e.g. %s=16M)\n", env);
@@ -25,8 +30,7 @@ static void check_last_word(char *env, char *env_val)
   }
 }
 
-// Is "env_val" all number except for the last word ?
-static void check_num(char *env, char *env_val)
+static void _check_num(char *env, char *env_val)  // Is "env_val" all number except for the last word ?
 {
   int len = strlen(env_val);
 
@@ -39,27 +43,27 @@ static void check_num(char *env, char *env_val)
   }
 }
 
-static size_t get_coarray_memory_size(char *env, char *env_val){
-  check_last_word(env, env_val);
-  check_num(env, env_val);
+static size_t _get_coarray_memory_size(char *env, char *env_val){
+  _check_last_word(env, env_val);
+  _check_num(env, env_val);
   return (size_t)atoi(env_val) * 1024 * 1024;
 }
 
-static size_t check_env_size_coarray(char *env){
+static size_t _check_env_size_coarray(char *env){
   size_t size = 0;
   char *env_val;
 
   if((env_val = getenv(env)) != NULL){
-    size = get_coarray_memory_size(env, env_val);
+    size = _get_coarray_memory_size(env, env_val);
   }
   else{
     if(strcmp(env, "XMP_COARRAY_HEAP_SIZE") == 0){
       env_val = _XMP_DEFAULT_COARRAY_HEAP_SIZE;
-      size = get_coarray_memory_size(env, env_val);
+      size = _get_coarray_memory_size(env, env_val);
     }
     else if(strcmp(env, "XMP_COARRAY_STRIDE_SIZE") == 0){
       env_val = _XMP_DEFAULT_COARRAY_STRIDE_SIZE;
-      size = get_coarray_memory_size(env, env_val);
+      size = _get_coarray_memory_size(env, env_val);
     }
     else
       _XMP_fatal("Internal Error in xmp_coarray_set.c");
@@ -69,12 +73,46 @@ static size_t check_env_size_coarray(char *env){
 }
 #endif
 
+static void _build_coarray_queue()
+{
+  _coarray_queue.max_size = _XMP_COARRAY_QUEUE_INITIAL_SIZE;
+  _coarray_queue.num      = 0;
+  _coarray_queue.coarrays = malloc(sizeof(_XMP_coarray_t*) * _coarray_queue.max_size);
+}
+
+static void _rebuild_coarray_queue()
+{
+  _coarray_queue.max_size *= _XMP_COARRAY_QUEUE_INCREMENT_RAITO;
+  _XMP_coarray_t **tmp;
+  size_t next_size = _coarray_queue.max_size * sizeof(_XMP_coarray_t*);
+  if((tmp = realloc(_coarray_queue.coarrays, next_size)) == NULL)
+    _XMP_fatal("cannot allocate memory");
+  else
+    _coarray_queue.coarrays = tmp;
+}
+
+static void _push_coarray_queue(_XMP_coarray_t *c)
+{
+  if(_coarray_queue.num >= _coarray_queue.max_size)
+    _rebuild_coarray_queue();
+
+  _coarray_queue.coarrays[_coarray_queue.num++] = c;
+}
+
+static _XMP_coarray_t* _pop_coarray_queue()
+{
+  if(_coarray_queue.num == 0) return NULL;
+
+  _coarray_queue.num--;
+  return _coarray_queue.coarrays[_coarray_queue.num];
+}
+
 void _XMP_coarray_initialize(int argc, char **argv)
 {
 #ifdef _XMP_COARRAY_GASNET
   size_t _xmp_heap_size, _xmp_stride_size;
-  _xmp_heap_size   = check_env_size_coarray("XMP_COARRAY_HEAP_SIZE");
-  _xmp_stride_size = check_env_size_coarray("XMP_COARRAY_STRIDE_SIZE");
+  _xmp_heap_size   = _check_env_size_coarray("XMP_COARRAY_HEAP_SIZE");
+  _xmp_stride_size = _check_env_size_coarray("XMP_COARRAY_STRIDE_SIZE");
   _xmp_heap_size  += _xmp_stride_size;
   _XMP_gasnet_initialize(argc, argv, _xmp_heap_size, _xmp_stride_size);
 #elif _XMP_COARRAY_FJRDMA
@@ -82,6 +120,8 @@ void _XMP_coarray_initialize(int argc, char **argv)
 #else
   _XMP_fatal("Cannt use Coarray Function");
 #endif
+
+  _build_coarray_queue();
 }
 
 void _XMP_coarray_finalize(const int return_val)
@@ -320,7 +360,7 @@ void _XMP_coarray_malloc_do(void **coarray, void *addr)
   c->image_dims     = _image_dims;
   c->distance_of_coarray_elmts = distance_of_coarray_elmts;
   c->distance_of_image_elmts   = distance_of_image_elmts;
-  *coarray          = c;
+  *coarray                     = c;
 
 #ifdef _XMP_COARRAY_GASNET
   _XMP_gasnet_malloc_do(*coarray, addr, (size_t)_total_coarray_elmts*_elmt_size);
@@ -328,8 +368,9 @@ void _XMP_coarray_malloc_do(void **coarray, void *addr)
   _XMP_fjrdma_malloc_do(*coarray, addr, (size_t)_total_coarray_elmts*_elmt_size);
 #endif
   
-  free(_image_elmts);
-  // Note: Do not free() _coarray_elmts.
+  free(_image_elmts);  // Note: Do not free() _coarray_elmts.
+
+  _push_coarray_queue(c);
 }
 
 void _XMP_coarray_malloc_do_f(void **coarray, void *addr)
@@ -337,3 +378,28 @@ void _XMP_coarray_malloc_do_f(void **coarray, void *addr)
   _XMP_coarray_malloc_do(coarray, addr);
 }
 
+static void _XMP_coarray_deallocate(_XMP_coarray_t *c)
+{
+  if(c == NULL) return;
+
+  free(c->addr);
+#ifndef _XMP_COARRAY_GASNET
+  free(c->real_addr);
+#endif
+  free(c->coarray_elmts);
+  free(c->distance_of_coarray_elmts);
+  free(c->distance_of_image_elmts);
+  free(c);
+}
+
+void _XMP_coarray_lastly_deallocate()
+{
+#ifdef _XMP_COARRAY_GASNET
+  _XMP_gasnet_coarray_lastly_deallocate();
+#elif _XMP_COARRAY_FJRDMA
+  _XMP_fjrdma_coarray_lastly_deallocate();
+#endif
+
+  _XMP_coarray_t *_last_coarray_ptr = _pop_coarray_queue();
+  _XMP_coarray_deallocate(_last_coarray_ptr);
+}

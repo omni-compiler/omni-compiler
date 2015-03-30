@@ -9,8 +9,9 @@
 #include "xmp.h"
 #define MEMID_MAX 511
 #define TAG 0
-static int _memid = 2; // _memid = 0 (macro MEMID in xmp_internal.h) is used to put/get operations.
-                       // _memid = 1 (macro POST_WAID_ID in xmp_internal.h) is used to post/wait operations.
+#define FJRDMA_START_MEMID 2
+static int _memid = FJRDMA_START_MEMID; // _memid = 0 (macro MEMID in xmp_internal.h) is used to put/get operations.
+                                        // _memid = 1 (macro POST_WAID_ID in xmp_internal.h) is used to post/wait operations.
 
 void _XMP_fjrdma_initialize(int argc, char **argv)
 {
@@ -27,7 +28,7 @@ void _XMP_fjrdma_finalize()
 void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, const size_t coarray_size)
 {
   uint64_t *each_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
-  int memid = _memid++;
+  int memid = _memid;
   if(_memid == MEMID_MAX)
     _XMP_fatal("Too many coarrays. Number of coarrays is not more than 510.");
 
@@ -48,4 +49,13 @@ void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, const size_t coa
 
   coarray->real_addr = *buf;
   coarray->addr = (void *)each_addr;
+  _memid++;
+}
+
+void _XMP_fjrdma_coarray_lastly_deallocate()
+{
+  if(_memid == FJRDMA_START_MEMID) return;
+  
+  _memid--;
+  FJMPI_Rdma_dereg_mem(_memid);
 }
