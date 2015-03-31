@@ -58,6 +58,8 @@ userJAR=${JAR}
 # Initialize for autoconf
 LT_INIT
 
+RM="rm -f"
+AC_SUBST(RM)
 AC_SUBST(LIBTOOL)
 AC_SUBST(LIBTOOL_DEPS)
 AM_INIT_AUTOMAKE([no-define foreign])

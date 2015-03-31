@@ -833,6 +833,7 @@ INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
 LIBTOOL_DEPS
+RM
 CPP
 OTOOL64
 OTOOL
@@ -11471,6 +11472,8 @@ CC="$lt_save_CC"
 # Only expand once:
 
 
+
+RM="rm -f"
 
 
 
