@@ -3027,7 +3027,7 @@ static void insert_cache_comm(int key, MPI_Comm comm){
 }
 
 static MPI_Comm get_cache_comm(int key){
-  MPI_Comm newcomm;
+  MPI_Comm newcomm = NULL;
   
   for(int i=num_of_gmove_cache_comm-1;i!=-1;i--){
     if(save_key[i] == key){

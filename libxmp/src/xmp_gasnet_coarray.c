@@ -1,17 +1,10 @@
-#ifndef MPI_PORTABLE_PLATFORM_H
-#define MPI_PORTABLE_PLATFORM_H
-#endif 
-
-#include <stdarg.h>
-#include "mpi.h"
 #include "xmp_internal.h"
-
-static size_t _xmp_heap_size, _xmp_stride_size, _xmp_coarray_shift=0;
-static int *_xmp_gasnet_stride_queue;
 static int _xmp_gasnet_stride_wait_size = 0;
 static int _xmp_gasnet_stride_queue_size = _XMP_GASNET_STRIDE_INIT_SIZE;
-static char **_xmp_gasnet_buf;
 volatile static int done_get_flag;
+extern char ** _xmp_gasnet_buf;
+extern int *_xmp_gasnet_stride_queue;
+extern size_t _xmp_gasnet_coarray_shift, _xmp_gasnet_stride_size, _xmp_gasnet_heap_size;
 #define UNROLLING (4)
 struct _shift_queue_t{
   unsigned int max_size;   /**< Max size of queue */
@@ -20,24 +13,7 @@ struct _shift_queue_t{
 };
 static struct _shift_queue_t _shift_queue;
 
-gasnet_handlerentry_t htable[] = {
-  { _XMP_GASNET_LOCK_REQUEST,               _xmp_gasnet_lock_request },
-  { _XMP_GASNET_SETLOCKSTATE,               _xmp_gasnet_setlockstate },
-  { _XMP_GASNET_UNLOCK_REQUEST,             _xmp_gasnet_unlock_request },
-  { _XMP_GASNET_LOCKHANDOFF,                _xmp_gasnet_lockhandoff },
-  { _XMP_GASNET_POSTREQ,                    _xmp_gasnet_postreq },
-  { _XMP_GASNET_UNPACK,                     _xmp_gasnet_unpack },
-  { _XMP_GASNET_UNPACK_USING_BUF,           _xmp_gasnet_unpack_using_buf },
-  { _XMP_GASNET_UNPACK_REPLY,               _xmp_gasnet_unpack_reply },
-  { _XMP_GASNET_PACK,                       _xmp_gasnet_pack },
-  { _XMP_GASNET_UNPACK_GET_REPLY,           _xmp_gasnet_unpack_get_reply},
-  { _XMP_GASNET_PACK_USGIN_BUF,             _xmp_gasnet_pack_using_buf},
-  { _XMP_GASNET_UNPACK_GET_REPLY_USING_BUF, _xmp_gasnet_unpack_get_reply_using_buf},
-  { _XMP_GASNET_PACK_GET_HANDLER,           _xmp_gasnet_pack_get },
-  { _XMP_GASNET_UNPACK_GET_REPLY_NONC,      _xmp_gasnet_unpack_get_reply_nonc }
-};
-
-static void _build_shift_queue()
+void _XMP_gasnet_build_shift_queue()
 {
   _shift_queue.max_size = _XMP_GASNET_COARRAY_SHIFT_QUEUE_INITIAL_SIZE;
   _shift_queue.num      = 0;
@@ -55,7 +31,7 @@ static void _rebuild_shift_queue()
     _shift_queue.shifts = tmp;
 }
 
-static void _push_shift_queue(size_t s)
+void _XMP_push_shift_queue(size_t s)
 {
   if(_shift_queue.num >= _shift_queue.max_size)
     _rebuild_shift_queue();
@@ -71,6 +47,10 @@ static size_t _pop_shift_queue()
   return _shift_queue.shifts[_shift_queue.num];
 }
 
+void _XMP_gasnet_coarray_lastly_deallocate(){
+  _xmp_gasnet_coarray_shift -= _pop_shift_queue();
+}
+
 void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t coarray_size)
 {
   char **each_addr;  // head address of a local array on each node
@@ -79,7 +59,7 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
   each_addr = (char **)_XMP_alloc(sizeof(char *) * _XMP_world_size);
 
   for(int i=0;i<_XMP_world_size;i++) {
-    each_addr[i] = (char *)(_xmp_gasnet_buf[i]) + _xmp_coarray_shift;
+    each_addr[i] = (char *)(_xmp_gasnet_buf[i]) + _xmp_gasnet_coarray_shift;
   }
 
   if(coarray_size % _XMP_GASNET_ALIGNMENT == 0)
@@ -87,14 +67,14 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
   else{
     tmp_shift = ((coarray_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
   }
-  _xmp_coarray_shift += tmp_shift;
-  _push_shift_queue(tmp_shift);
+  _xmp_gasnet_coarray_shift += tmp_shift;
+  _XMP_push_shift_queue(tmp_shift);
 
-  if(_xmp_coarray_shift > _xmp_heap_size){
+  if(_xmp_gasnet_coarray_shift > _xmp_gasnet_heap_size){
     if(_XMP_world_rank == 0){
       fprintf(stderr, "[ERROR] Cannot allocate coarray. Heap memory size of corray is too small.\n");
       fprintf(stderr, "        Please set the environmental variable \"XMP_COARRAY_HEAP_SIZE\".\n");
-      fprintf(stderr, "        e.g.) export XMP_COARRAY_HEAP_SIZE=%zuM (or more).\n", (_xmp_coarray_shift/1024/1024)+1);
+      fprintf(stderr, "        e.g.) export XMP_COARRAY_HEAP_SIZE=%zuM (or more).\n", (_xmp_gasnet_coarray_shift/1024/1024)+1);
     }
     _XMP_fatal_nomsg();
   }
@@ -103,65 +83,6 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
   coarray->real_addr = each_addr[_XMP_world_rank];
   *addr = each_addr[_XMP_world_rank];
 }
-
-void _XMP_gasnet_coarray_lastly_deallocate()
-{
-  _xmp_coarray_shift -= _pop_shift_queue();
-}
-
-void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_heap_size, const size_t xmp_stride_size)
-{
-  if(argc != 0)
-    gasnet_init(&argc, &argv);
-  else{ 
-    // In XMP/Fortran, this function is called with "argc == 0" & "**argv == NULL".
-    // But if the second argument of gasnet_init() is NULL, gasnet_init() returns error.
-    // So dummy argument is created and used.
-    char **s;
-    s = malloc(sizeof(char *));
-    s[0] = malloc(sizeof(char));
-    gasnet_init(&argc, &s);
-  }
-
-  _XMP_world_rank = gasnet_mynode();
-  _XMP_world_size = gasnet_nodes();
-
-  if(xmp_heap_size % GASNET_PAGESIZE != 0){
-    if(xmp_heap_size <= GASNET_PAGESIZE){
-      _xmp_heap_size = GASNET_PAGESIZE;
-    }
-    else{
-      _xmp_heap_size = (xmp_heap_size/GASNET_PAGESIZE + 1) * GASNET_PAGESIZE;
-    }
-  }
-  else{
-    _xmp_heap_size = xmp_heap_size;
-  }
-
-  _xmp_stride_size = xmp_stride_size;
-
-  gasnet_attach(htable, sizeof(htable)/sizeof(gasnet_handlerentry_t), (uintptr_t)_xmp_heap_size, 0); 
-
-  _xmp_gasnet_buf = (char **)malloc(sizeof(char*) * _XMP_world_size);
-
-  gasnet_node_t i;
-  gasnet_seginfo_t *s = (gasnet_seginfo_t *)malloc(_XMP_world_size*sizeof(gasnet_seginfo_t)); 
-  gasnet_getSegmentInfo(s, _XMP_world_size);
-  for(i=0;i<_XMP_world_size;i++)
-    _xmp_gasnet_buf[i] =  (char*)s[i].addr;
-
-  _xmp_coarray_shift = xmp_stride_size;
-  _xmp_gasnet_stride_queue = malloc(sizeof(int) * _XMP_GASNET_STRIDE_INIT_SIZE);
-
-  _build_shift_queue();
-}
-
-void _XMP_gasnet_finalize(const int val)
-{
-  _XMP_gasnet_sync_all();
-  gasnet_exit(val);
-}
-
 void _XMP_gasnet_sync_memory()
 {
   for(int i=0;i<_xmp_gasnet_stride_wait_size;i++)
@@ -178,16 +99,16 @@ void _XMP_gasnet_sync_all()
   GASNET_BARRIER();
 }
 
-static void XMP_gasnet_from_c_to_c_put(const int target_image, const size_t dst_point, 
-				       const size_t src_point, const _XMP_coarray_t *dst, 
-				       const void *src, const size_t transfer_size)
+static void _gasnet_c_to_c_put(const int target_image, const size_t dst_point, 
+			       const size_t src_point, const _XMP_coarray_t *dst, 
+			       const void *src, const size_t transfer_size)
 {
   gasnet_put_nbi_bulk(target_image, dst->addr[target_image]+dst_point, ((char *)src)+src_point, 
 		      transfer_size);
 
 }
 
-static int is_all_elmt(const _XMP_array_section_t* array_info, const int dim)
+static int _is_all_elmt(const _XMP_array_section_t* array_info, const int dim)
 {
   if(array_info[dim].start == 0 && array_info[dim].length == array_info[dim].elmts){
     return _XMP_N_INT_TRUE;
@@ -213,7 +134,7 @@ static int is_all_elmt(const _XMP_array_section_t* array_info, const int dim)
 //     c[1:2][1:2][1:2][1:2] -> depth is 1.
 //     c[1:2:2][:][:][:]     -> depth is 3. 
 //     c[1:2:2][::2][:][:]   -> depth is 2.
-static int get_depth(const int dims, const _XMP_array_section_t* array_info)  // 7 >= dims >= 2
+static int _get_depth(const int dims, const _XMP_array_section_t* array_info)  // 7 >= dims >= 2
 {
   if(dims == 2){
     if(array_info[1].stride == 1)
@@ -222,7 +143,7 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info)  //
       return 0;
   }
   else if(dims == 3){
-    if(is_all_elmt(array_info, 1) && is_all_elmt(array_info, 2)){
+    if(_is_all_elmt(array_info, 1) && _is_all_elmt(array_info, 2)){
       return 2;
     }
     else if(array_info[2].stride == 1){
@@ -233,11 +154,11 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info)  //
     }
   }
   else if(dims == 4){
-    if(is_all_elmt(array_info, 1) && is_all_elmt(array_info, 2) && 
-       is_all_elmt(array_info, 3)){
+    if(_is_all_elmt(array_info, 1) && _is_all_elmt(array_info, 2) && 
+       _is_all_elmt(array_info, 3)){
       return 3;
     }
-    else if(is_all_elmt(array_info, 2) && is_all_elmt(array_info, 3)){
+    else if(_is_all_elmt(array_info, 2) && _is_all_elmt(array_info, 3)){
       return 2;
     }
     else if(array_info[3].stride == 1){
@@ -248,14 +169,14 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info)  //
     }
   }
   else if(dims == 5){
-    if(is_all_elmt(array_info, 1) && is_all_elmt(array_info, 2) &&
-       is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4)){
+    if(_is_all_elmt(array_info, 1) && _is_all_elmt(array_info, 2) &&
+       _is_all_elmt(array_info, 3) && _is_all_elmt(array_info, 4)){
       return 4;
     }
-    else if(is_all_elmt(array_info, 2) && is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4)){
+    else if(_is_all_elmt(array_info, 2) && _is_all_elmt(array_info, 3) && _is_all_elmt(array_info, 4)){
       return 3;
     }
-    else if(is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4)){
+    else if(_is_all_elmt(array_info, 3) && _is_all_elmt(array_info, 4)){
       return 2;
     }
     else if(array_info[4].stride == 1){
@@ -266,20 +187,20 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info)  //
     }
   }
   else if(dims == 6){
-    if(is_all_elmt(array_info, 1) && is_all_elmt(array_info, 2) &&
-       is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4) &&
-       is_all_elmt(array_info, 5)){
+    if(_is_all_elmt(array_info, 1) && _is_all_elmt(array_info, 2) &&
+       _is_all_elmt(array_info, 3) && _is_all_elmt(array_info, 4) &&
+       _is_all_elmt(array_info, 5)){
       return 5;
     }
-    else if(is_all_elmt(array_info, 2) && is_all_elmt(array_info, 3) && 
-	    is_all_elmt(array_info, 4) && is_all_elmt(array_info, 5)){
+    else if(_is_all_elmt(array_info, 2) && _is_all_elmt(array_info, 3) && 
+	    _is_all_elmt(array_info, 4) && _is_all_elmt(array_info, 5)){
       return 4;
     }
-    else if(is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4) &&
-	    is_all_elmt(array_info, 5)){
+    else if(_is_all_elmt(array_info, 3) && _is_all_elmt(array_info, 4) &&
+	    _is_all_elmt(array_info, 5)){
       return 3;
     }
-    else if(is_all_elmt(array_info, 4) && is_all_elmt(array_info, 5)){
+    else if(_is_all_elmt(array_info, 4) && _is_all_elmt(array_info, 5)){
       return 2;
     }
     else if(array_info[5].stride == 1){
@@ -290,25 +211,25 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info)  //
     }
   }
   else if(dims == 7){
-    if(is_all_elmt(array_info, 1) && is_all_elmt(array_info, 2) &&
-       is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4) &&
-       is_all_elmt(array_info, 5) && is_all_elmt(array_info, 6)){
+    if(_is_all_elmt(array_info, 1) && _is_all_elmt(array_info, 2) &&
+       _is_all_elmt(array_info, 3) && _is_all_elmt(array_info, 4) &&
+       _is_all_elmt(array_info, 5) && _is_all_elmt(array_info, 6)){
       return 6;
     }
-    else if(is_all_elmt(array_info, 2) && is_all_elmt(array_info, 3) &&
-            is_all_elmt(array_info, 4) && is_all_elmt(array_info, 5) &&
-	    is_all_elmt(array_info, 6)){
+    else if(_is_all_elmt(array_info, 2) && _is_all_elmt(array_info, 3) &&
+            _is_all_elmt(array_info, 4) && _is_all_elmt(array_info, 5) &&
+	    _is_all_elmt(array_info, 6)){
       return 5;
     }
-    else if(is_all_elmt(array_info, 3) && is_all_elmt(array_info, 4) &&
-            is_all_elmt(array_info, 5) && is_all_elmt(array_info, 6)){
+    else if(_is_all_elmt(array_info, 3) && _is_all_elmt(array_info, 4) &&
+            _is_all_elmt(array_info, 5) && _is_all_elmt(array_info, 6)){
       return 4;
     }
-    else if(is_all_elmt(array_info, 4) && is_all_elmt(array_info, 5) &&
-	    is_all_elmt(array_info, 6)){
+    else if(_is_all_elmt(array_info, 4) && _is_all_elmt(array_info, 5) &&
+	    _is_all_elmt(array_info, 6)){
       return 3;
     }
-    else if(is_all_elmt(array_info, 5) && is_all_elmt(array_info, 6)){
+    else if(_is_all_elmt(array_info, 5) && _is_all_elmt(array_info, 6)){
       return 2;
     }
     else if(array_info[6].stride == 1){
@@ -324,8 +245,8 @@ static int get_depth(const int dims, const _XMP_array_section_t* array_info)  //
   }
 }
 
-static void pack_for_7_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
-                                 const int continuous_dim)  // continuous_dim is from 0 to 3
+static void _pack_7_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+			      const int continuous_dim)
 {
   size_t element_size = src[6].distance;
   size_t start_offset = 0, archive_offset = 0, src_offset;
@@ -476,8 +397,8 @@ static void pack_for_7_dim_array(const _XMP_array_section_t* src, char* archive_
   }
 }
 
-static void pack_for_6_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
-                                 const int continuous_dim)  // continuous_dim is from 0 to 3
+static void _pack_6_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+			     const int continuous_dim)
 {
   size_t element_size = src[5].distance;
   size_t start_offset = 0, archive_offset = 0, src_offset;
@@ -600,8 +521,8 @@ static void pack_for_6_dim_array(const _XMP_array_section_t* src, char* archive_
   }
 }
 
-static void pack_for_5_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
-                                 const int continuous_dim)  // continuous_dim is from 0 to 3
+static void _pack_5_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+			      const int continuous_dim)
 {
   size_t element_size = src[4].distance;
   size_t start_offset = 0, archive_offset = 0, src_offset;
@@ -698,8 +619,8 @@ static void pack_for_5_dim_array(const _XMP_array_section_t* src, char* archive_
   }
 }
 
-static void pack_for_4_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
-				 const int continuous_dim)  // continuous_dim is from 0 to 3
+static void _pack_4_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+			      const int continuous_dim)
 {
   size_t element_size = src[3].distance;
   size_t start_offset = 0, archive_offset = 0, src_offset;
@@ -776,8 +697,8 @@ static void pack_for_4_dim_array(const _XMP_array_section_t* src, char* archive_
   }
 }
 
-static void pack_for_3_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
-				 const int continuous_dim)  // continuous_dim is 0 or 1 or 2
+static void _pack_3_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+			      const int continuous_dim)  // continuous_dim is 0 or 1 or 2
 {
   size_t element_size = src[2].distance;
   size_t start_offset = 0, archive_offset = 0, src_offset;
@@ -833,8 +754,8 @@ static void pack_for_3_dim_array(const _XMP_array_section_t* src, char* archive_
   }
 }
 
-static void pack_for_2_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr, 
-				 const int continuous_dim) // continuous_dim is 0 or 1
+static void _pack_2_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr, 
+			      const int continuous_dim) // continuous_dim is 0 or 1
 {
   size_t element_size = src[1].distance;
   size_t start_offset = 0;
@@ -867,7 +788,7 @@ static void pack_for_2_dim_array(const _XMP_array_section_t* src, char* archive_
   }
 }
 
-static void pack_for_1_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr)
+static void _pack_1_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr)
 {
   // for(i=0;i<src[0].length;i++){
   //   src_offset = start_offset + (stride_offset * i);
@@ -926,39 +847,39 @@ static void pack_for_1_dim_array(const _XMP_array_section_t* src, char* archive_
   }
 }
 
-static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims, 
-		     const _XMP_array_section_t* src)
+static void _pack_array(char* archive_ptr, const char* src_ptr, const int src_dims, 
+			const _XMP_array_section_t* src)
 {
   if(src_dims == 1){ 
-    pack_for_1_dim_array(src, archive_ptr, src_ptr);
+    _pack_1_dim_array(src, archive_ptr, src_ptr);
     return;
   }
 
   // How depth is memory continuity ?
-  int continuous_dim = get_depth(src_dims, src);
+  int continuous_dim = _get_depth(src_dims, src);
 
   if(src_dims == 2){
-    pack_for_2_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    _pack_2_dim_array(src, archive_ptr, src_ptr, continuous_dim);
     return;
   }
   else if(src_dims == 3){
-    pack_for_3_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    _pack_3_dim_array(src, archive_ptr, src_ptr, continuous_dim);
     return;
   }
   else if(src_dims == 4){
-    pack_for_4_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    _pack_4_dim_array(src, archive_ptr, src_ptr, continuous_dim);
     return;
   }
   else if(src_dims == 5){
-    pack_for_5_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    _pack_5_dim_array(src, archive_ptr, src_ptr, continuous_dim);
     return;
   }
   else if(src_dims == 6){
-    pack_for_6_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    _pack_6_dim_array(src, archive_ptr, src_ptr, continuous_dim);
     return;
   }
   else if(src_dims == 7){
-    pack_for_7_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    _pack_7_dim_array(src, archive_ptr, src_ptr, continuous_dim);
     return;
   }
   else{
@@ -967,13 +888,13 @@ static void XMP_pack(char* archive_ptr, const char* src_ptr, const int src_dims,
   }
 }
 
-static void XMP_gasnet_from_nonc_to_c_put(const int target_image, const size_t dst_point, const int src_dims, 
-					  const _XMP_array_section_t *src, const _XMP_coarray_t *dst, const void *src_ptr, 
-					  const size_t transfer_size)
+static void _gasnet_nonc_to_c_put(const int target_image, const size_t dst_point, const int src_dims, 
+				  const _XMP_array_section_t *src, const _XMP_coarray_t *dst, const void *src_ptr, 
+				  const size_t transfer_size)
 {
   char archive[transfer_size];
-  XMP_pack(archive, src_ptr, src_dims, src);
-  XMP_gasnet_from_c_to_c_put(target_image, dst_point, 0, dst, archive, transfer_size);
+  _pack_array(archive, src_ptr, src_dims, src);
+  _gasnet_c_to_c_put(target_image, dst_point, 0, dst, archive, transfer_size);
 }
 
 void _xmp_gasnet_unpack_reply(gasnet_token_t t, const int ith)
@@ -981,7 +902,7 @@ void _xmp_gasnet_unpack_reply(gasnet_token_t t, const int ith)
   _xmp_gasnet_stride_queue[ith] = 1;
 }
 
-static void extend_stride_queue()
+static void _extend_stride_queue()
 {
   if(_xmp_gasnet_stride_wait_size >= _xmp_gasnet_stride_queue_size){
     int old_size = _xmp_gasnet_stride_wait_size;
@@ -995,8 +916,8 @@ static void extend_stride_queue()
   }
 }
 
-static void unpack_for_7_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
-                                   char* dst_ptr, const int continuous_dim)  // continuous_dim is from 0 to 3
+static void _unpack_7_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
+				char* dst_ptr, const int continuous_dim)
 {
   size_t element_size = dst[6].distance;
   size_t start_offset = 0, src_offset = 0, dst_offset;
@@ -1147,8 +1068,8 @@ static void unpack_for_7_dim_array(const _XMP_array_section_t* dst, const char* 
   }
 }
 
-static void unpack_for_6_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
-                                   char* dst_ptr, const int continuous_dim)  // continuous_dim is from 0 to 3
+static void _unpack_6_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
+			       char* dst_ptr, const int continuous_dim)
 {
   size_t element_size = dst[5].distance;
   size_t start_offset = 0, src_offset = 0, dst_offset;
@@ -1270,8 +1191,8 @@ static void unpack_for_6_dim_array(const _XMP_array_section_t* dst, const char* 
   }
 }
 
-static void unpack_for_5_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
-                                   char* dst_ptr, const int continuous_dim)  // continuous_dim is from 0 to 3
+static void _unpack_5_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
+			       char* dst_ptr, const int continuous_dim)
 {
   size_t element_size = dst[4].distance;
   size_t start_offset = 0, src_offset = 0, dst_offset;
@@ -1367,8 +1288,8 @@ static void unpack_for_5_dim_array(const _XMP_array_section_t* dst, const char* 
   }
 }
 
-static void unpack_for_4_dim_array(const _XMP_array_section_t* dst, const char* src_ptr, 
-				   char* dst_ptr, const int continuous_dim)  // continuous_dim is from 0 to 3
+static void _unpack_4_dim_array(const _XMP_array_section_t* dst, const char* src_ptr, 
+				char* dst_ptr, const int continuous_dim)
 {
   size_t element_size = dst[3].distance;
   size_t start_offset = 0, src_offset = 0, dst_offset;
@@ -1441,8 +1362,8 @@ static void unpack_for_4_dim_array(const _XMP_array_section_t* dst, const char* 
   }
 }
 
-static void unpack_for_3_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
-				   char* dst_ptr, const int continuous_dim)  // continuous_dim is 0 or 1 or 2
+static void _unpack_3_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
+				char* dst_ptr, const int continuous_dim)
 {
   size_t element_size = dst[2].distance;
   size_t start_offset = 0, src_offset = 0, dst_offset;
@@ -1495,8 +1416,8 @@ static void unpack_for_3_dim_array(const _XMP_array_section_t* dst, const char* 
   }
 }
 
-static void unpack_for_2_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
-                                   char* dst_ptr, const int continuous_dim)
+static void _unpack_2_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
+				char* dst_ptr, const int continuous_dim)
 {
   // continuous_dim is 0 or 1
   size_t element_size = dst[1].distance;
@@ -1529,7 +1450,7 @@ static void unpack_for_2_dim_array(const _XMP_array_section_t* dst, const char* 
   }
 }
 
-static void unpack_for_1_dim_array(const _XMP_array_section_t* dst, const char* src_ptr, char* dst_ptr)
+static void _unpack_1_dim_array(const _XMP_array_section_t* dst, const char* src_ptr, char* dst_ptr)
 {
   //  for(i=0;i<dst[0].length;i++){
   //    dst_offset = start_offset + i * stride_offset;
@@ -1588,38 +1509,38 @@ static void unpack_for_1_dim_array(const _XMP_array_section_t* dst, const char* 
   }
 }
 
-static void XMP_unpack(char *dst_ptr, const int dst_dims, const char* src_ptr, 
-		       const _XMP_array_section_t* dst)
+static void _unpack_array(char *dst_ptr, const int dst_dims, const char* src_ptr, 
+			  const _XMP_array_section_t* dst)
 {
   if(dst_dims == 1){
-    unpack_for_1_dim_array(dst, src_ptr, dst_ptr);
+    _unpack_1_dim_array(dst, src_ptr, dst_ptr);
     return;
   }
 
-  int continuous_dim = get_depth(dst_dims, dst);
+  int continuous_dim = _get_depth(dst_dims, dst);
 
   if(dst_dims == 2){
-    unpack_for_2_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+    _unpack_2_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
     return;
   }
   else if(dst_dims == 3){
-    unpack_for_3_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+    _unpack_3_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
     return;
   }
   else if(dst_dims == 4){
-    unpack_for_4_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+    _unpack_4_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
     return;
   }
   else if(dst_dims == 5){
-    unpack_for_5_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+    _unpack_5_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
     return;
   }
   else if(dst_dims == 6){
-    unpack_for_6_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+    _unpack_6_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
     return;
   }
   else if(dst_dims == 7){
-    unpack_for_7_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+    _unpack_7_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
     return;
   }
   else{
@@ -1635,7 +1556,7 @@ void _xmp_gasnet_unpack_using_buf(gasnet_token_t t, const int addr_hi, const int
   _XMP_array_section_t *dst = malloc(dst_info_size);
   char* src_addr = _xmp_gasnet_buf[_XMP_world_rank];
   memcpy(dst, src_addr, dst_info_size);
-  XMP_unpack((char *)UPCRI_MAKEWORD(addr_hi,addr_lo), dst_dims, src_addr+dst_info_size, dst);
+  _unpack_array((char *)UPCRI_MAKEWORD(addr_hi,addr_lo), dst_dims, src_addr+dst_info_size, dst);
   free(dst);
   gasnet_AMReplyShort1(t, _XMP_GASNET_UNPACK_REPLY, ith);
 }
@@ -1646,12 +1567,12 @@ void _xmp_gasnet_unpack(gasnet_token_t t, const char* src_addr, const size_t nby
   size_t dst_info_size = sizeof(_XMP_array_section_t) * dst_dims;
   _XMP_array_section_t *dst = malloc(dst_info_size);
   memcpy(dst, src_addr, dst_info_size);
-  XMP_unpack((char *)UPCRI_MAKEWORD(addr_hi,addr_lo), dst_dims, src_addr+dst_info_size, dst);
+  _unpack_array((char *)UPCRI_MAKEWORD(addr_hi,addr_lo), dst_dims, src_addr+dst_info_size, dst);
   free(dst);
   gasnet_AMReplyShort1(t, _XMP_GASNET_UNPACK_REPLY, ith);
 }
 
-static void coarray_stride_size_error(size_t request_size){
+static void _stride_size_error(size_t request_size){
   if(_XMP_world_rank == 0){
     fprintf(stderr, "[ERROR] Memory size for coarray stride transfer is too small.\n");
     fprintf(stderr, "        Please set the environmental variable \"XMP_COARRAY_STRIDE_SIZE\".\n");
@@ -1660,9 +1581,9 @@ static void coarray_stride_size_error(size_t request_size){
   _XMP_fatal_nomsg();
 }
 
-static void XMP_gasnet_from_c_to_nonc_put(const int target_image, const size_t src_point, const int dst_dims, 
-					  const _XMP_array_section_t *dst_info, 
-                                          const _XMP_coarray_t *dst, const void *src, size_t transfer_size)
+static void _gasnet_c_to_nonc_put(const int target_image, const size_t src_point, const int dst_dims, 
+				  const _XMP_array_section_t *dst_info, 
+				  const _XMP_coarray_t *dst, const void *src, size_t transfer_size)
 {
   size_t dst_info_size = sizeof(_XMP_array_section_t) * dst_dims;
   transfer_size += dst_info_size;
@@ -1670,34 +1591,34 @@ static void XMP_gasnet_from_c_to_nonc_put(const int target_image, const size_t s
   memcpy(archive, dst_info, dst_info_size);
   memcpy(archive+dst_info_size, (char *)src+src_point, transfer_size - dst_info_size);
 
-  extend_stride_queue();
+  _extend_stride_queue();
   _xmp_gasnet_stride_queue[_xmp_gasnet_stride_wait_size] = 0;
   if(transfer_size < gasnet_AMMaxMedium()){
     gasnet_AMRequestMedium4(target_image, _XMP_GASNET_UNPACK, archive, (size_t)transfer_size,
 			    HIWORD(dst->addr[target_image]), LOWORD(dst->addr[target_image]), dst_dims, 
 			    _xmp_gasnet_stride_wait_size);
   }
-  else if(transfer_size < _xmp_stride_size){
+  else if(transfer_size < _xmp_gasnet_stride_size){
     gasnet_put(target_image, _xmp_gasnet_buf[target_image], archive, (size_t)transfer_size);
     gasnet_AMRequestShort4(target_image, _XMP_GASNET_UNPACK_USING_BUF, HIWORD(dst->addr[target_image]), 
 			   LOWORD(dst->addr[target_image]), dst_dims, _xmp_gasnet_stride_wait_size);
   }
   else{
-    coarray_stride_size_error(transfer_size);
+    _stride_size_error(transfer_size);
   }
   _xmp_gasnet_stride_wait_size++;
 }
 
-static void XMP_gasnet_from_nonc_to_nonc_put(const int target_image, const int dst_dims, const int src_dims,
-					     const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src,
-					     const _XMP_coarray_t *dst, const void *src_ptr, const size_t transfer_size)
+static void _gasnet_nonc_to_nonc_put(const int target_image, const int dst_dims, const int src_dims,
+				     const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src,
+				     const _XMP_coarray_t *dst, const void *src_ptr, const size_t transfer_size)
 {
   size_t dst_info_size = sizeof(_XMP_array_section_t) * dst_dims;
   size_t tsize = (size_t)transfer_size + dst_info_size;
   char archive[tsize];
   memcpy(archive, dst_info, dst_info_size);
-  XMP_pack(archive + dst_info_size, src_ptr, src_dims, src);
-  extend_stride_queue();
+  _pack_array(archive + dst_info_size, src_ptr, src_dims, src);
+  _extend_stride_queue();
   _xmp_gasnet_stride_queue[_xmp_gasnet_stride_wait_size] = 0;
 
   if(tsize < gasnet_AMMaxMedium()){
@@ -1705,13 +1626,13 @@ static void XMP_gasnet_from_nonc_to_nonc_put(const int target_image, const int d
     			    HIWORD(dst->addr[target_image]), LOWORD(dst->addr[target_image]), dst_dims,
     			    _xmp_gasnet_stride_wait_size);
   }
-  else if(tsize < _xmp_stride_size){
+  else if(tsize < _xmp_gasnet_stride_size){
     gasnet_put_bulk(target_image, _xmp_gasnet_buf[target_image], archive, tsize);
     gasnet_AMRequestShort4(target_image, _XMP_GASNET_UNPACK_USING_BUF, HIWORD(dst->addr[target_image]),
                            LOWORD(dst->addr[target_image]), dst_dims, _xmp_gasnet_stride_wait_size);
   }
   else{
-    coarray_stride_size_error(tsize);
+    _stride_size_error(tsize);
   }
 
   GASNET_BLOCKUNTIL(_xmp_gasnet_stride_queue[_xmp_gasnet_stride_wait_size] == 1);
@@ -1726,46 +1647,43 @@ void _XMP_gasnet_put(const int dst_continuous, const int src_continuous, const i
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
     size_t dst_point = get_offset(dst_info, dst_dims);
     size_t src_point = get_offset(src_info, src_dims);
-    XMP_gasnet_from_c_to_c_put(target_image, dst_point, src_point, dst, src, transfer_size);
+    _gasnet_c_to_c_put(target_image, dst_point, src_point, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
     size_t dst_point = get_offset(dst_info, dst_dims);
-    XMP_gasnet_from_nonc_to_c_put(target_image, dst_point, src_dims, src_info, dst, src, transfer_size);
+    _gasnet_nonc_to_c_put(target_image, dst_point, src_dims, src_info, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
     size_t src_point = get_offset(src_info, src_dims);
-    XMP_gasnet_from_c_to_nonc_put(target_image, src_point, dst_dims, dst_info, 
-				  dst, src, transfer_size);
+    _gasnet_c_to_nonc_put(target_image, src_point, dst_dims, dst_info, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_FALSE){
-    XMP_gasnet_from_nonc_to_nonc_put(target_image, dst_dims, src_dims, dst_info,
-    				     src_info, dst, src, transfer_size);
+    _gasnet_nonc_to_nonc_put(target_image, dst_dims, src_dims, dst_info,
+			     src_info, dst, src, transfer_size);
   }
   else{
     _XMP_fatal("Unkown shape of coarray");
   }
 }
 
-static void XMP_gasnet_from_c_to_c_get(const int target_image, const size_t dst_point, 
-				       const size_t src_point, const void *dst, 
-				       const _XMP_coarray_t *src, const size_t transfer_size)
+static void _gasnet_c_to_c_get(const int target_image, const size_t dst_point, const size_t src_point, 
+			       const void *dst, const _XMP_coarray_t *src, const size_t transfer_size)
 {
   gasnet_get_bulk(((char *)dst)+dst_point, target_image, ((char *)src->addr[target_image])+src_point,
 		  transfer_size);
 
 }
 
-static void XMP_gasnet_from_c_to_nonc_get(const int target_image, const size_t src_point, const int dst_dims, 
-					  const _XMP_array_section_t *dst_info, 
-					  const void *dst, const _XMP_coarray_t *src, const size_t transfer_size)
+static void _gasnet_c_to_nonc_get(const int target_image, const size_t src_point, const int dst_dims, const _XMP_array_section_t *dst_info, 
+				  const void *dst, const _XMP_coarray_t *src, const size_t transfer_size)
 {
-  if(transfer_size < _xmp_stride_size){
+  if(transfer_size < _xmp_gasnet_stride_size){
     char* src_addr = (char *)_xmp_gasnet_buf[_XMP_world_rank];
     gasnet_get_bulk(src_addr, target_image, ((char *)src->addr[target_image])+src_point, (size_t)transfer_size);
-    XMP_unpack(((char *)dst), dst_dims, src_addr, dst_info);
+    _unpack_array(((char *)dst), dst_dims, src_addr, dst_info);
   }
   else{
-    coarray_stride_size_error(transfer_size);
+    _stride_size_error(transfer_size);
   }
 }
 
@@ -1775,7 +1693,7 @@ void _xmp_gasnet_pack(gasnet_token_t t, const char* info, const size_t am_reques
 {
   _XMP_array_section_t *src_info = (_XMP_array_section_t *)info;
   char *archive = _xmp_gasnet_buf[_XMP_world_rank];
-  XMP_pack(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
+  _pack_array(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
   gasnet_AMReplyMedium2(t, _XMP_GASNET_UNPACK_GET_REPLY, archive, tansfer_size,
       			dst_addr_hi, dst_addr_lo);
 }
@@ -1790,7 +1708,7 @@ void _xmp_gasnet_pack_get(gasnet_token_t t, const char* info, const size_t am_re
   memcpy(src_info, info, src_size);
   char archive[tansfer_size + dst_size];
   memcpy(archive, info + src_size, dst_size);
-  XMP_pack(archive+dst_size, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
+  _pack_array(archive+dst_size, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
   free(src_info);
   gasnet_AMReplyMedium3(t, _XMP_GASNET_UNPACK_GET_REPLY_NONC, archive, tansfer_size + dst_size,
                         dst_addr_hi, dst_addr_lo, dst_dims);
@@ -1803,7 +1721,7 @@ void _xmp_gasnet_unpack_get_reply_nonc(gasnet_token_t t, char *archive, size_t t
   _XMP_array_section_t *dst_info = malloc(dst_size);
   memcpy(dst_info, archive, dst_size);
 
-  XMP_unpack((char *)UPCRI_MAKEWORD(dst_addr_hi,dst_addr_lo), dst_dims, archive+dst_size, dst_info);
+  _unpack_array((char *)UPCRI_MAKEWORD(dst_addr_hi,dst_addr_lo), dst_dims, archive+dst_size, dst_info);
   done_get_flag = _XMP_N_INT_TRUE;
 }
 
@@ -1826,12 +1744,12 @@ void _xmp_gasnet_pack_using_buf(gasnet_token_t t, const char* info, const size_t
 {
   _XMP_array_section_t *src_info = (_XMP_array_section_t *)info;
   char *archive = _xmp_gasnet_buf[_XMP_world_rank];
-  XMP_pack(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
+  _pack_array(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
   gasnet_AMReplyShort0(t, _XMP_GASNET_UNPACK_GET_REPLY_USING_BUF);
 }
 
-static void XMP_gasnet_from_nonc_to_c_get(const int target_image, const int src_dims, const _XMP_array_section_t *src_info, 
-					  const void *dst, const _XMP_coarray_t *src, const size_t transfer_size, const size_t dst_point)
+static void _gasnet_nonc_to_c_get(const int target_image, const int src_dims, const _XMP_array_section_t *src_info, 
+				  const void *dst, const _XMP_coarray_t *src, const size_t transfer_size, const size_t dst_point)
 {
   size_t am_request_size = sizeof(_XMP_array_section_t) * src_dims;
   char archive[am_request_size];  // Note: Info. of transfer_size may have better in "archive".
@@ -1845,7 +1763,7 @@ static void XMP_gasnet_from_nonc_to_c_get(const int target_image, const int src_
     			    (size_t)transfer_size, HIWORD((char *)dst+dst_point), LOWORD((char *)dst+dst_point));
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
   }
-  else if(transfer_size < _xmp_stride_size){
+  else if(transfer_size < _xmp_gasnet_stride_size){
     gasnet_AMRequestMedium4(target_image, _XMP_GASNET_PACK_USGIN_BUF, archive, am_request_size,
                             HIWORD(src->addr[target_image]), LOWORD(src->addr[target_image]), src_dims,
                             _XMP_world_rank);
@@ -1854,13 +1772,13 @@ static void XMP_gasnet_from_nonc_to_c_get(const int target_image, const int src_
     memcpy(((char *)dst)+dst_point, _xmp_gasnet_buf[_XMP_world_rank], transfer_size);
   }
   else{
-    coarray_stride_size_error(transfer_size);
+    _stride_size_error(transfer_size);
   }
 }
 
-static void XMP_gasnet_from_nonc_to_nonc_get(const int target_image, const int dst_dims, const int src_dims, 
-					     const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info, 
-					     const void *dst, const _XMP_coarray_t *src, const size_t transfer_size)
+static void _gasnet_nonc_to_nonc_get(const int target_image, const int dst_dims, const int src_dims, 
+				     const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info, 
+				     const void *dst, const _XMP_coarray_t *src, const size_t transfer_size)
 {
   done_get_flag = _XMP_N_INT_FALSE;
   //  if(transfer_size < gasnet_AMMaxMedium()){
@@ -1877,7 +1795,7 @@ static void XMP_gasnet_from_nonc_to_nonc_get(const int target_image, const int d
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
     free(archive);
   }
-  else if(transfer_size < _xmp_stride_size){
+  else if(transfer_size < _xmp_gasnet_stride_size){
     size_t am_request_size = sizeof(_XMP_array_section_t) * src_dims;
     char *archive = malloc(am_request_size);
     memcpy(archive, src_info, am_request_size);
@@ -1887,11 +1805,11 @@ static void XMP_gasnet_from_nonc_to_nonc_get(const int target_image, const int d
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
     gasnet_get_bulk(_xmp_gasnet_buf[_XMP_world_rank], target_image, _xmp_gasnet_buf[target_image], 
 		    transfer_size);
-    XMP_unpack((char *)dst, dst_dims, _xmp_gasnet_buf[_XMP_world_rank], dst_info);
+    _unpack_array((char *)dst, dst_dims, _xmp_gasnet_buf[_XMP_world_rank], dst_info);
     free(archive);
   }
   else{
-    coarray_stride_size_error(transfer_size);
+    _stride_size_error(transfer_size);
   }
 }
 
@@ -1904,23 +1822,21 @@ void _XMP_gasnet_get(const int src_continuous, const int dst_continuous, const i
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
     size_t dst_point = get_offset(dst_info, dst_dims);
     size_t src_point = get_offset(src_info, src_dims);
-    XMP_gasnet_from_c_to_c_get(target_image, dst_point, src_point, dst, src, transfer_size);
+    _gasnet_c_to_c_get(target_image, dst_point, src_point, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
     size_t dst_point = get_offset(dst_info, dst_dims);
-    XMP_gasnet_from_nonc_to_c_get(target_image, src_dims, src_info, 
-				  dst, src, transfer_size, dst_point);
+    _gasnet_nonc_to_c_get(target_image, src_dims, src_info, dst, src, transfer_size, dst_point);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
     size_t src_point = get_offset(src_info, src_dims);
-    XMP_gasnet_from_c_to_nonc_get(target_image, src_point, dst_dims, dst_info, 
-				  dst, src, transfer_size);
+    _gasnet_c_to_nonc_get(target_image, src_point, dst_dims, dst_info, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_FALSE){
-    XMP_gasnet_from_nonc_to_nonc_get(target_image, dst_dims, src_dims, dst_info, src_info, 
-    				     dst, src, transfer_size);
+    _gasnet_nonc_to_nonc_get(target_image, dst_dims, src_dims, dst_info, src_info, dst, src, transfer_size);
   }
   else{
     _XMP_fatal("Unkown shape of coarray");
   }
 }
+

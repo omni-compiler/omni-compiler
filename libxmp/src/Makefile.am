@@ -12,13 +12,15 @@ libxmp_a_SOURCES = ../include/xmp_internal.h ../include/xmp_constant.h ../includ
 		   xmp_reflect_acc.c xmp_reduce_acc.c xmp_intrinsic.c xmp_sort.c xmp_async.c
 
 if GASNET
-    libxmp_a_SOURCES += xmp_coarray_set.c xmp_coarray_do.c xmp_gasnet_coarray.c xmp_lock.c xmp_gasnet_lock.c xmp_post_wait.c xmp_gasnet_post_wait.c
-    CFLAGS           += -D_XMP_COARRAY_GASNET -D_XMP_COARRAY
+    libxmp_a_SOURCES += xmp_onesided.c xmp_gasnet_onesided.c xmp_coarray.c xmp_gasnet_coarray.c \
+			xmp_lock.c xmp_gasnet_lock.c xmp_post_wait.c xmp_gasnet_post_wait.c
+    CFLAGS           += -D_XMP_GASNET
 endif
 
 if FJRDMA
-    libxmp_a_SOURCES += xmp_coarray_set.c xmp_coarray_do.c xmp_fjrdma_coarray_set.c xmp_fjrdma_coarray_do.c xmp_post_wait.c xmp_fjrdma_post_wait.c
-    CFLAGS           += -D_XMP_COARRAY_FJRDMA -D_XMP_COARRAY
+    libxmp_a_SOURCES += xmp_onesided.c xmp_fjrdma_onesided.c xmp_coarray.c xmp_fjrdma_coarray.c xmp_post_wait.c \
+			xmp_fjrdma_post_wait.c
+    CFLAGS           += -D_XMP_FJRDMA
 endif
 
 if MPI3

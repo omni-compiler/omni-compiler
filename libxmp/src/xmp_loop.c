@@ -354,9 +354,7 @@ no_iter:
 void _XMP_sched_loop_nodes(int ser_init, int ser_cond, int ser_step,
                            int *par_init, int *par_cond, int *par_step,
                            _XMP_nodes_t *nodes, int nodes_index) {
-  if (!nodes->is_member) {
-    goto no_iter;
-  }
+  if (!nodes->is_member) goto no_iter;
 
   int reverse_iter = _XMP_N_INT_FALSE;
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)

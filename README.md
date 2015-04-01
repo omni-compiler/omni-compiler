@@ -24,20 +24,20 @@ README
     $ mpirun -np 4 test
 
 ## Environment Variables
-* XMP_COARRAY_HEAP_SIZE
+* XMP_ONESIDED_HEAP_SIZE
  **Note that on the K computer this value is not used.**
  This value specifies memory size for coarray. The default size is 16MB.
  To set this value, please execute as follows:
 
-    $ export XMP_COARRAY_HEAP_SIZE=128M
+    $ export XMP_ONESIDED_HEAP_SIZE=16M
 
-* XMP_COARRAY_STRIDE_SIZE
+* XMP_ONESIDED_STRIDE_SIZE
  **Note that on the K computer this value is not used.**
  This value specifies memory size for coarray stride operation.
  The default size is 1MB.
  To set this value, please execute as follows:
 
-    $ export XMP_COARRAY_STRIDE_SIZE=32M
+    $ export XMP_ONESIDED_STRIDE_SIZE=2M
 
 * XMP_NODE_SIZEn
  This value specifies the extent of the n'th dimension of a non-primary node

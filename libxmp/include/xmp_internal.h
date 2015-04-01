@@ -113,8 +113,10 @@ typedef struct _XMP_coarray_list_type {
 extern _XMP_coarray_list_t *_XMP_coarray_list_head;
 extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
 
-extern void _XMP_coarray_initialize(int, char **);
-extern void _XMP_coarray_finalize(const int);
+extern void _XMP_onesided_initialize(int, char **);
+extern void _XMP_onesided_finalize(const int);
+extern void _XMP_build_coarray_queue();
+extern void _XMP_push_coarray_queue(_XMP_coarray_t* c);
 extern void _XMP_coarray_lastly_deallocate();
 
 // xmp_intrinsic.c
@@ -304,9 +306,9 @@ extern void _XMP_threads_finalize(void);
 #endif
 
 // ----- for coarray & post/wait -------------------
-#if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)
-#define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "27M"
-#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "5M"
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
+#define _XMP_DEFAULT_ONESIDED_HEAP_SIZE   "27M"
+#define _XMP_DEFAULT_ONESIDED_STRIDE_SIZE "5M"
 /* Momo:
    Each process allocates 32MByte (27M+5M), and the test program uses up to 16 process
    on a single node. Therefore the node needs 512MByte (32M*16) for coarray operation. 
@@ -323,7 +325,7 @@ extern size_t get_offset(const _XMP_array_section_t *, const int);
 extern void _XMP_post_wait_initialize();
 #endif
 
-#ifdef _XMP_COARRAY_GASNET
+#ifdef _XMP_GASNET
 #include <gasnet.h>
 #define _XMP_GASNET_STRIDE_INIT_SIZE 16
 #define _XMP_GASNET_STRIDE_BLK       16
@@ -351,7 +353,7 @@ extern void _xmp_gasnet_wait(const int, const int);
 extern void _XMP_gasnet_coarray_lastly_deallocate();
 #endif
 
-#ifdef _XMP_COARRAY_FJRDMA
+#ifdef _XMP_FJRDMA
 #define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
 #define SEND_NIC FJMPI_RDMA_LOCAL_NIC0
 #define _XMP_POSTREQ_SEND_NIC FJMPI_RDMA_LOCAL_NIC2
@@ -428,7 +430,7 @@ struct _XMPTIMING
   }while (0)
 #endif
 
-#ifdef _XMP_COARRAY_GASNET
+#ifdef _XMP_GASNET
 #define _XMP_LOCK_CHUNK 8       // for lock
 
 typedef struct xmp_lock{
@@ -568,6 +570,6 @@ extern void _xmp_lock(_XMP_coarray_t*, int, int);
 extern void _xmp_unlock(_XMP_coarray_t*, int, int);
 extern void _xmp_lock_initialize(_xmp_lock_t*, int);
 
-#endif // _XMP_COARRAY_GASNET
+#endif // _XMP_GASNET
 
 #endif // _XMP_INTERNAL

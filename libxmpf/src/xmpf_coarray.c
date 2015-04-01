@@ -1,12 +1,10 @@
 #include "xmpf_internal.h"
-
+extern int num_images_(void);
 static int _getNewSerno();
 static int _set_coarrayInfo(char *desc, char *orgAddr, size_t size);
-
 static void _coarray_msg(int sw);
 
 #define DIV_CEILING(m,n)  (((m)-1)/(n)+1)
-
 
 /*****************************************\
   runtime environment
@@ -33,7 +31,6 @@ void _XMPF_coarray_init(void)
   }
 }
 
-
 /*
  *  hidden subroutine interface,
  *   which can be used in the user program
@@ -42,7 +39,6 @@ void xmpf_coarray_msg_(int *sw)
 {
   _coarray_msg(*sw);
 }
-
 
 void _coarray_msg(int sw)
 {

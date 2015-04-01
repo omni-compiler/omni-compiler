@@ -4328,13 +4328,10 @@ static void xmp_scatter_array_scatter(_XMP_array_t *array, char *x_all, char* f_
 static void xmp_scatter_array_scatter(_XMP_array_t *array, char *x_all, int*  f_all)
 #endif
 {
-   int   i;
-   int   l_offset;
-   int   g_offset;
-   int   level;
-   int   *g_par_dim_stride;
-   int   *g_ser_dim_stride;
-   FILE  *fp;
+   int   i, level;
+   int   l_offset, g_offset;
+   int   *g_par_dim_stride, *g_ser_dim_stride;
+   FILE  *fp = NULL;
    
    g_par_dim_stride = (int*)_XMP_alloc( sizeof(int)*array->dim );
    g_ser_dim_stride = (int*)_XMP_alloc( sizeof(int)*array->dim );
@@ -4501,7 +4498,7 @@ static void xmp_gather_alla2x(_XMP_array_t *x_d,
 static void xmp_gather_all_array(_XMP_array_t *array, char **all)
 {
    MPI_Comm      *exec_comm;
-   MPI_Datatype  mpi_type;
+   MPI_Datatype  mpi_type = NULL;
    int   i,j;
    int   total_size;
    int   l_offset;
@@ -4513,7 +4510,7 @@ static void xmp_gather_all_array(_XMP_array_t *array, char **all)
    char  *recv_buf;
    int   *g_par_dim_stride;
    int   *g_ser_dim_stride;
-   FILE  *fp;
+   FILE  *fp = NULL;
    
    total_size = 1; 
    for(i=0;i<array->dim;i++){
@@ -4770,8 +4767,7 @@ static void xmp_scatter_kernel(void *x_p, void *a_p, _XMP_array_t **idx_array)
    _XMP_array_t *x_d = NULL;
    _XMP_array_t *a_d = NULL;
    MPI_Comm     *exec_comm;
-   MPI_Datatype mpi_type;
-   //int   same_nodes;
+   MPI_Datatype mpi_type = NULL;
    int   duplicate;
    int   i,j;
    int   x_total_size;

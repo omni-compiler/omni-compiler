@@ -3,9 +3,8 @@
 #define MPI_PORTABLE_PLATFORM_H
 #endif 
 
-
 #include "xmp_internal.h"
-#include <gasnet_tools.h>
+#include "gasnet_tools.h"
 
 void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t* lock, int number_of_elements){
   int i;
