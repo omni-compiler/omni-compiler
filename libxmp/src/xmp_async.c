@@ -10,7 +10,7 @@ static void _XMP_wait_async_rdma(_XMP_async_comm_t *async);
 _XMP_async_comm_t *_XMP_get_async(int async_id);
 void _XMP_pop_async(int async_id);
 
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
 _Bool is_async = false;
 int _async_id;
 #endif
@@ -274,7 +274,7 @@ void _XMP_pop_async(int async_id)
 }
 
 
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
 
 void xmpc_init_async(int async_id){
   is_async = true;

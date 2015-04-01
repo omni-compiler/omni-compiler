@@ -3,7 +3,7 @@
 _Bool xmpf_test_task_on__(_XMP_object_ref_t **r_desc);
 void xmpf_end_task__(void);
 
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
 extern _Bool is_async;
 extern int _async_id;
 #endif
@@ -175,7 +175,7 @@ void _XMPF_bcast_on_nodes(void *data_addr, int count, int datatype,
     if (_XMP_is_entire(on_desc)){
       on = on_desc->n_desc;
 
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
       if (is_async){
 	_XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
 	MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm),
@@ -190,7 +190,7 @@ void _XMPF_bcast_on_nodes(void *data_addr, int count, int datatype,
       if (xmpf_test_task_on__(&on_desc)){
 	on = _XMP_get_execution_nodes();
 
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
 	if (is_async){
 	  _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
 	  MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm),
@@ -208,7 +208,7 @@ void _XMPF_bcast_on_nodes(void *data_addr, int count, int datatype,
   else {
     on = from_desc ? from_desc->n_desc : _XMP_get_execution_nodes();
 
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
     if (is_async){
       _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
       MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm),
@@ -337,7 +337,7 @@ void _XMPF_bcast_on_template(void *data_addr, int count, int datatype,
       }
     }
 
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
     if (is_async){
       _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
       MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm), async->reqs);
@@ -363,7 +363,7 @@ void _XMPF_bcast_on_template(void *data_addr, int count, int datatype,
 	}
       }
 
-#if MPI_VERSION >= 3
+#ifdef _XMP_MPI3
       if (is_async){
 	_XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
 	MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm), async->reqs);

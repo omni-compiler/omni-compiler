@@ -115,6 +115,7 @@ extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
 
 extern void _XMP_coarray_initialize(int, char **);
 extern void _XMP_coarray_finalize(const int);
+extern void _XMP_coarray_lastly_deallocate();
 
 // xmp_intrinsic.c
 extern void xmpf_transpose(void *dst_p, void *src_p, int opt);
@@ -310,8 +311,14 @@ extern void _XMP_threads_finalize(void);
    Each process allocates 32MByte (27M+5M), and the test program uses up to 16 process
    on a single node. Therefore the node needs 512MByte (32M*16) for coarray operation. 
 */
-#define _XMP_POSTREQ_INITIAL_TABLE_SIZE 32      /**< This value is trial */
-#define _XMP_POSTREQ_INCREMENT_TABLE_SIZE 512   /**< This value is trial */
+
+#define _XMP_COARRAY_QUEUE_INITIAL_SIZE 32         /**< This value is trial */
+#define _XMP_COARRAY_QUEUE_INCREMENT_RAITO (1.5)   /**< This value is trial */
+#define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INITIAL_SIZE _XMP_COARRAY_QUEUE_INITIAL_SIZE /** The same vaule may be good. */
+#define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO /** The same vaule may be good. */
+
+#define _XMP_POSTREQ_INITIAL_TABLE_SIZE 32         /**< This value is trial */
+#define _XMP_POSTREQ_INCREMENT_TABLE_SIZE 512      /**< This value is trial */
 extern size_t get_offset(const _XMP_array_section_t *, const int);
 extern void _XMP_post_wait_initialize();
 #endif
@@ -341,6 +348,7 @@ extern void _xmp_gasnet_post(const int, const int);
 extern void _xmp_gasnet_wait_noargs();
 extern void _xmp_gasnet_wait_node(const int);
 extern void _xmp_gasnet_wait(const int, const int);
+extern void _XMP_gasnet_coarray_lastly_deallocate();
 #endif
 
 #ifdef _XMP_COARRAY_FJRDMA
@@ -369,16 +377,11 @@ extern void _xmp_fjrdma_post(const int, const int);
 extern void _xmp_fjrdma_wait_noargs();
 extern void _xmp_fjrdma_wait_node(const int);
 extern void _xmp_fjrdma_wait(const int, const int);
+extern void _XMP_fjrdma_coarray_lastly_deallocate();
 #endif
 
 #ifdef _XMP_TIMING
 extern double t0, t1;
-/* extern double t_mem; */
-/* extern double t_copy; */
-/* extern double t_comm; */
-/* extern double t_sched; */
-/* extern double t_wait; */
-
 #define _XMP_TSTART(t0)  ((t0) = MPI_Wtime())
 #define _XMP_TEND(t, t0) ((t) = (t) + MPI_Wtime() - (t0))
 #define _XMP_TEND2(t, tt, t0) { double _XMP_TMP = MPI_Wtime(); \

@@ -121,11 +121,11 @@ done
 [ $STOP_FRONTEND = true ] && exit 0;
 
 ### Translator ###
-[ $ENABLE_TLOG_ALL = true ]     && OMNI_FX2X_OPT="-tlog-all $OMNI_FX2X_OPT"
-[ $ENABLE_TLOG = true ]         && OMNI_FX2X_OPT="-tlog $OMNI_FX2X_OPT"
-[ $ENABLE_SCALASCA_ALL = true ] && OMNI_FX2X_OPT="-scalasca-all $OMNI_FX2X_OPT"
-[ $ENABLE_SCALASCA = true ]     && OMNI_FX2X_OPT="-scalasca $OMNI_FX2X_OPT"
-[ $ENABLE_XACC = true ]         && OMNI_FX2X_OPT="-facc $OMNI_FX2X_OPT"
+[ $ENABLE_TLOG_ALL = true ]     && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -tlog-all"
+[ $ENABLE_TLOG = true ]         && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -tlog"
+[ $ENABLE_SCALASCA_ALL = true ] && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -scalasca-all"
+[ $ENABLE_SCALASCA = true ]     && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -scalasca"
+[ $ENABLE_XACC = true ]         && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -facc"
 for file in "${f_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
@@ -199,7 +199,7 @@ done
 
 obj_files+=("$XMPF_MAIN_O")
 TRAVERSE_FILE=${TEMP_DIR}/omni_traverse_${PID}.f90
-omni_exec $OMNI_TRAVERSE -o $TRAVERSE_FILE "${obj_files[@]}"
+omni_exec $OMNI_TRAVERSE --F --prefix xmpf -o $TRAVERSE_FILE "${obj_files[@]}"
 
 # link
 [ $ENABLE_TLOG_ALL = true -o $ENABLE_TLOG = true ] && OMNI_LINKER_OPT="-ltlog_mpi $OMNI_LINKER_OPT"

@@ -5,8 +5,8 @@ extern void xmp_transpose(void *dst_d, void *src_d, int opt);
 
 int main(){
 
-  int ret;
-  int ierr,error,i,j,k;
+  //  int ret;
+  int ierr,error,i,j/*,k*/;
   int a[4][4], b[4][4], rc[4][4];
 
 #pragma xmp nodes p(16)

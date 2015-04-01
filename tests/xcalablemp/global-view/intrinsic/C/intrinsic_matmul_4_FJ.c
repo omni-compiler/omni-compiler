@@ -67,7 +67,7 @@ int test_matmul_001(){
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_002(){
@@ -133,7 +133,7 @@ int test_matmul_002(){
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_003(){
@@ -198,7 +198,7 @@ int test_matmul_003(){
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_004(){
@@ -265,7 +265,7 @@ int test_matmul_004(){
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int test_matmul_005(){
@@ -335,7 +335,7 @@ int test_matmul_005(){
    }
 
    chk_int(error);
-
+   return 0;
 }
 
 int main(int argc, char **argv){

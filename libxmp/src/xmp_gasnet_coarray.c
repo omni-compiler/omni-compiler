@@ -6,13 +6,19 @@
 #include "mpi.h"
 #include "xmp_internal.h"
 
-static size_t _xmp_heap_size, _xmp_stride_size, _xmp_coarray_shift = 0;
+static size_t _xmp_heap_size, _xmp_stride_size, _xmp_coarray_shift=0;
 static int *_xmp_gasnet_stride_queue;
 static int _xmp_gasnet_stride_wait_size = 0;
 static int _xmp_gasnet_stride_queue_size = _XMP_GASNET_STRIDE_INIT_SIZE;
 static char **_xmp_gasnet_buf;
 volatile static int done_get_flag;
 #define UNROLLING (4)
+struct _shift_queue_t{
+  unsigned int max_size;   /**< Max size of queue */
+  unsigned int      num;   /**< How many shifts are in this queue */
+  size_t        *shifts;   /**< shifts array */
+};
+static struct _shift_queue_t _shift_queue;
 
 gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_LOCK_REQUEST,               _xmp_gasnet_lock_request },
@@ -31,9 +37,44 @@ gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_UNPACK_GET_REPLY_NONC,      _xmp_gasnet_unpack_get_reply_nonc }
 };
 
+static void _build_shift_queue()
+{
+  _shift_queue.max_size = _XMP_GASNET_COARRAY_SHIFT_QUEUE_INITIAL_SIZE;
+  _shift_queue.num      = 0;
+  _shift_queue.shifts   = malloc(sizeof(size_t*) * _shift_queue.max_size);
+}
+
+static void _rebuild_shift_queue()
+{
+  _shift_queue.max_size *= _XMP_GASNET_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO;
+  size_t *tmp;
+  size_t next_size = _shift_queue.max_size * sizeof(size_t*);
+  if((tmp = realloc(_shift_queue.shifts, next_size)) == NULL)
+    _XMP_fatal("cannot allocate memory");
+  else
+    _shift_queue.shifts = tmp;
+}
+
+static void _push_shift_queue(size_t s)
+{
+  if(_shift_queue.num >= _shift_queue.max_size)
+    _rebuild_shift_queue();
+
+  _shift_queue.shifts[_shift_queue.num++] = s;
+}
+
+static size_t _pop_shift_queue()
+{
+  if(_shift_queue.num == 0)  return 0;
+
+  _shift_queue.num--;
+  return _shift_queue.shifts[_shift_queue.num];
+}
+
 void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t coarray_size)
 {
   char **each_addr;  // head address of a local array on each node
+  size_t tmp_shift;
 
   each_addr = (char **)_XMP_alloc(sizeof(char *) * _XMP_world_size);
 
@@ -42,11 +83,13 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
   }
 
   if(coarray_size % _XMP_GASNET_ALIGNMENT == 0)
-    _xmp_coarray_shift += coarray_size;
+    tmp_shift = coarray_size;
   else{
-    _xmp_coarray_shift += ((coarray_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
+    tmp_shift = ((coarray_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
   }
-  
+  _xmp_coarray_shift += tmp_shift;
+  _push_shift_queue(tmp_shift);
+
   if(_xmp_coarray_shift > _xmp_heap_size){
     if(_XMP_world_rank == 0){
       fprintf(stderr, "[ERROR] Cannot allocate coarray. Heap memory size of corray is too small.\n");
@@ -59,6 +102,11 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
   coarray->addr = each_addr;
   coarray->real_addr = each_addr[_XMP_world_rank];
   *addr = each_addr[_XMP_world_rank];
+}
+
+void _XMP_gasnet_coarray_lastly_deallocate()
+{
+  _xmp_coarray_shift -= _pop_shift_queue();
 }
 
 void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_heap_size, const size_t xmp_stride_size)
@@ -104,6 +152,8 @@ void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_heap_size, c
 
   _xmp_coarray_shift = xmp_stride_size;
   _xmp_gasnet_stride_queue = malloc(sizeof(int) * _XMP_GASNET_STRIDE_INIT_SIZE);
+
+  _build_shift_queue();
 }
 
 void _XMP_gasnet_finalize(const int val)
@@ -1874,4 +1924,3 @@ void _XMP_gasnet_get(const int src_continuous, const int dst_continuous, const i
     _XMP_fatal("Unkown shape of coarray");
   }
 }
-
