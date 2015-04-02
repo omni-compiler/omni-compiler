@@ -9,7 +9,8 @@ $(TARGET): $(SRC)
 	cd src; $(JAR) cf ../$@ xcodeml/c/*/*.class
 
 clean-local:
-	rm -f $(TARGET) $(CLASS)
+	rm -f $(TARGET)
+	rm -f src/xcodeml/c/*/*.class
 
 install: $(TARGET)
 	mkdir -p ${javadir}

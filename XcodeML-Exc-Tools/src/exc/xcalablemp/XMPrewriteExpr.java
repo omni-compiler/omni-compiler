@@ -583,8 +583,8 @@ public class XMPrewriteExpr {
     newExpr.setIsRewrittedByXmp(true);
     iter.insertStatement(newExpr);
 
-    // Set function _XMP_coarray_rdma_node_set_X()
-    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_node_set_" + Integer.toString(imageDims));
+    // Set function _XMP_coarray_rdma_node_image_X()
+    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_image_set_" + Integer.toString(imageDims));
     funcArgs = Xcons.List();
     for(int i=0;i<imageDims;i++){
       funcArgs.add(imageList.getArg(i));

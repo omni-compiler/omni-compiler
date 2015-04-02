@@ -96,8 +96,8 @@ void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const i
   _num_of_puts++;
 
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-    uint64_t dst_point = (uint64_t)get_offset(dst_info, dst_dims);
-    uint64_t src_point = (uint64_t)get_offset(src_info, src_dims);
+    uint64_t dst_point = (uint64_t)_XMP_get_offset(dst_info, dst_dims);
+    uint64_t src_point = (uint64_t)_XMP_get_offset(src_info, src_dims);
     XMP_fjrdma_from_c_to_c_put(target_image, dst_point, src_point, dst_desc, src, src_desc, transfer_size);
   }
   else{
@@ -161,8 +161,8 @@ void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const i
   }
   
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-    uint64_t dst_point = (uint64_t)get_offset(dst_info, dst_dims);
-    uint64_t src_point = (uint64_t)get_offset(src_info, src_dims);
+    uint64_t dst_point = (uint64_t)_XMP_get_offset(dst_info, dst_dims);
+    uint64_t src_point = (uint64_t)_XMP_get_offset(src_info, src_dims);
     XMP_fjrdma_from_c_to_c_get(target_image, dst_point, src_point, dst, dst_desc, src_desc, transfer_size);
   }
   else{

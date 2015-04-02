@@ -746,12 +746,12 @@ GASNET_FALSE
 GASNET_TRUE
 TCA_FALSE
 TCA_TRUE
-USE_INTELMKL_FALSE
-USE_INTELMKL_TRUE
-USE_SSL2BLAMP_FALSE
-USE_SSL2BLAMP_TRUE
-USE_LIBBLAS_FALSE
-USE_LIBBLAS_TRUE
+INTELMKL_FALSE
+INTELMKL_TRUE
+SSL2BLAMP_FALSE
+SSL2BLAMP_TRUE
+LIBBLAS_FALSE
+LIBBLAS_TRUE
 LIBXML_PREFIX
 GPGPU_PREFIX
 GPU_CFLAGS
@@ -22151,27 +22151,27 @@ OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
 OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
 
  if test x${use_libblas}   = xyes; then
-  USE_LIBBLAS_TRUE=
-  USE_LIBBLAS_FALSE='#'
+  LIBBLAS_TRUE=
+  LIBBLAS_FALSE='#'
 else
-  USE_LIBBLAS_TRUE='#'
-  USE_LIBBLAS_FALSE=
+  LIBBLAS_TRUE='#'
+  LIBBLAS_FALSE=
 fi
 
  if test x${use_SSL2BLAMP} = xyes; then
-  USE_SSL2BLAMP_TRUE=
-  USE_SSL2BLAMP_FALSE='#'
+  SSL2BLAMP_TRUE=
+  SSL2BLAMP_FALSE='#'
 else
-  USE_SSL2BLAMP_TRUE='#'
-  USE_SSL2BLAMP_FALSE=
+  SSL2BLAMP_TRUE='#'
+  SSL2BLAMP_FALSE=
 fi
 
  if test x${use_intelmkl}  = xyes; then
-  USE_INTELMKL_TRUE=
-  USE_INTELMKL_FALSE='#'
+  INTELMKL_TRUE=
+  INTELMKL_FALSE='#'
 else
-  USE_INTELMKL_TRUE='#'
-  USE_INTELMKL_FALSE=
+  INTELMKL_TRUE='#'
+  INTELMKL_FALSE=
 fi
 
 
@@ -26111,16 +26111,16 @@ if test -z "${POWERPC_TRUE}" && test -z "${POWERPC_FALSE}"; then
   as_fn_error $? "conditional \"POWERPC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${USE_LIBBLAS_TRUE}" && test -z "${USE_LIBBLAS_FALSE}"; then
-  as_fn_error $? "conditional \"USE_LIBBLAS\" was never defined.
+if test -z "${LIBBLAS_TRUE}" && test -z "${LIBBLAS_FALSE}"; then
+  as_fn_error $? "conditional \"LIBBLAS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${USE_SSL2BLAMP_TRUE}" && test -z "${USE_SSL2BLAMP_FALSE}"; then
-  as_fn_error $? "conditional \"USE_SSL2BLAMP\" was never defined.
+if test -z "${SSL2BLAMP_TRUE}" && test -z "${SSL2BLAMP_FALSE}"; then
+  as_fn_error $? "conditional \"SSL2BLAMP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${USE_INTELMKL_TRUE}" && test -z "${USE_INTELMKL_FALSE}"; then
-  as_fn_error $? "conditional \"USE_INTELMKL\" was never defined.
+if test -z "${INTELMKL_TRUE}" && test -z "${INTELMKL_FALSE}"; then
+  as_fn_error $? "conditional \"INTELMKL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then

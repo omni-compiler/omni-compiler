@@ -116,7 +116,6 @@ extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
 extern void _XMP_onesided_initialize(int, char **);
 extern void _XMP_onesided_finalize(const int);
 extern void _XMP_build_coarray_queue();
-extern void _XMP_push_coarray_queue(_XMP_coarray_t* c);
 extern void _XMP_coarray_lastly_deallocate();
 
 // xmp_intrinsic.c
@@ -321,7 +320,7 @@ extern void _XMP_threads_finalize(void);
 
 #define _XMP_POSTREQ_INITIAL_TABLE_SIZE 32         /**< This value is trial */
 #define _XMP_POSTREQ_INCREMENT_TABLE_SIZE 512      /**< This value is trial */
-extern size_t get_offset(const _XMP_array_section_t *, const int);
+extern size_t _XMP_get_offset(const _XMP_array_section_t *, const int);
 extern void _XMP_post_wait_initialize();
 #endif
 

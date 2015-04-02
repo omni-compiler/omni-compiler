@@ -940,9 +940,9 @@ fi
 OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
 OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
 
-AM_CONDITIONAL(USE_LIBBLAS,   test x${use_libblas}   = xyes)
-AM_CONDITIONAL(USE_SSL2BLAMP, test x${use_SSL2BLAMP} = xyes)
-AM_CONDITIONAL(USE_INTELMKL,  test x${use_intelmkl}  = xyes)
+AM_CONDITIONAL(LIBBLAS,   test x${use_libblas}   = xyes)
+AM_CONDITIONAL(SSL2BLAMP, test x${use_SSL2BLAMP} = xyes)
+AM_CONDITIONAL(INTELMKL,  test x${use_intelmkl}  = xyes)
 
 # --------------------------------------------------------------------
 # set TCA

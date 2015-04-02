@@ -1645,16 +1645,16 @@ void _XMP_gasnet_put(const int dst_continuous, const int src_continuous, const i
   size_t transfer_size = dst->elmt_size*length;
 
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-    size_t dst_point = get_offset(dst_info, dst_dims);
-    size_t src_point = get_offset(src_info, src_dims);
+    size_t dst_point = _XMP_get_offset(dst_info, dst_dims);
+    size_t src_point = _XMP_get_offset(src_info, src_dims);
     _gasnet_c_to_c_put(target_image, dst_point, src_point, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
-    size_t dst_point = get_offset(dst_info, dst_dims);
+    size_t dst_point = _XMP_get_offset(dst_info, dst_dims);
     _gasnet_nonc_to_c_put(target_image, dst_point, src_dims, src_info, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
-    size_t src_point = get_offset(src_info, src_dims);
+    size_t src_point = _XMP_get_offset(src_info, src_dims);
     _gasnet_c_to_nonc_put(target_image, src_point, dst_dims, dst_info, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_FALSE){
@@ -1820,16 +1820,16 @@ void _XMP_gasnet_get(const int src_continuous, const int dst_continuous, const i
   size_t transfer_size = src->elmt_size*length;
 
   if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-    size_t dst_point = get_offset(dst_info, dst_dims);
-    size_t src_point = get_offset(src_info, src_dims);
+    size_t dst_point = _XMP_get_offset(dst_info, dst_dims);
+    size_t src_point = _XMP_get_offset(src_info, src_dims);
     _gasnet_c_to_c_get(target_image, dst_point, src_point, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
-    size_t dst_point = get_offset(dst_info, dst_dims);
+    size_t dst_point = _XMP_get_offset(dst_info, dst_dims);
     _gasnet_nonc_to_c_get(target_image, src_dims, src_info, dst, src, transfer_size, dst_point);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
-    size_t src_point = get_offset(src_info, src_dims);
+    size_t src_point = _XMP_get_offset(src_info, src_dims);
     _gasnet_c_to_nonc_get(target_image, src_point, dst_dims, dst_info, dst, src, transfer_size);
   }
   else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_FALSE){

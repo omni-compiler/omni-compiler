@@ -250,13 +250,13 @@ extern void _XMP_coarray_rdma_array_set_1(const int, const int, const int, const
 //					  const int, const int, const int, const int, const int,
 //					  const int, const int, const int, const int, const int);
 
-extern void _XMP_coarray_rdma_node_set_1(const int);
-//extern void _XMP_coarray_rdma_node_set_2(const int, const int);
-//extern void _XMP_coarray_rdma_node_set_3(const int, const int, const int);
-//extern void _XMP_coarray_rdma_node_set_4(const int, const int, const int, const int);
-//extern void _XMP_coarray_rdma_node_set_5(const int, const int, const int, const int, const int);
-//extern void _XMP_coarray_rdma_node_set_6(const int, const int, const int, const int, const int, const int);
-//extern void _XMP_coarray_rdma_node_set_7(const int, const int, const int, const int, const int, const int, const int);
+extern void _XMP_coarray_rdma_image_set_1(const int);
+//extern void _XMP_coarray_rdma_image_set_2(const int, const int);
+//extern void _XMP_coarray_rdma_image_set_3(const int, const int, const int);
+//extern void _XMP_coarray_rdma_image_set_4(const int, const int, const int, const int);
+//extern void _XMP_coarray_rdma_image_set_5(const int, const int, const int, const int, const int);
+//extern void _XMP_coarray_rdma_image_set_6(const int, const int, const int, const int, const int, const int);
+//extern void _XMP_coarray_rdma_image_set_7(const int, const int, const int, const int, const int, const int, const int);
 
 //extern void _XMP_coarray_rdma_do_f(const int*, const void*, const void*, const void*);
 extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void *);

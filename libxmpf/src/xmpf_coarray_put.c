@@ -308,7 +308,7 @@ void _putVector(int serno, char *baseAddr, int bytes, int coindex, char *src)
 
   _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // LHS
   _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // RHS
-  _XMP_coarray_rdma_node_set_1(coindex);
+  _XMP_coarray_rdma_image_set_1(coindex);
   _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, src, NULL);
 }
 
@@ -333,7 +333,7 @@ void _putVectorByElement(char *desc, int start, int vlength,
 {
   _XMP_coarray_rdma_coarray_set_1(start, vlength, 1);    // LHS
   _XMP_coarray_rdma_array_set_1(0, vlength, 1, 1, 1);    // RHS
-  _XMP_coarray_rdma_node_set_1(coindex);
+  _XMP_coarray_rdma_image_set_1(coindex);
   _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, src, NULL);
 }
 

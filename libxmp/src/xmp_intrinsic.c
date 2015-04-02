@@ -9,11 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _XMP_USE_LIBBLAS
-#ifdef _XMP_USE_SSL2BLAMP
+#ifdef _XMP_LIBBLAS
+#ifdef _XMP_SSL2BLAMP
 #include "fj_lapack.h"
 /* #include "fjcoll.h" */
-#elif _XMP_USE_INTELMKL
+#elif _XMP_INTELMKL
 #include "mkl.h"
 #else
 /* Prototype Declaration from http://azalea.s35.xrea.com/blas/blas.h */
@@ -3371,7 +3371,7 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
 
    /* matmul */
    /* TODO: X = A * BT -> DGEMM */
-#ifdef _XMP_USE_LIBBLAS
+#ifdef _XMP_LIBBLAS
    dim0_size = x_d->info[0].local_upper - x_d->info[0].local_lower + 1;
    dim1_size = x_d->info[1].local_upper - x_d->info[1].local_lower + 1;
    k = a_d->info[1].ser_size;
@@ -3394,10 +3394,10 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
          double alpha=1.0;
          double beta=0.0;
          int   ldc = x_alloc_size[0];
-#ifdef _XMP_USE_SSL2BLAMP
+#ifdef _XMP_SSL2BLAMP
 	 dgemm_("N", "T", &dim0_size, &dim1_size, &k, &alpha, (double*)a_recv_buf, &dim0_size,
 		(double*)b_recv_buf, &dim1_size, &beta, (double*)dst_p, &ldc, 1, 1);
-#elif _XMP_USE_INTELMKL
+#elif _XMP_INTELMKL
 	 cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,
 		     dim0_size, dim1_size, k, alpha, (double*)a_recv_buf, dim0_size, 
 		     (double*)b_recv_buf, dim1_size, beta, (double*)dst_p, ldc);

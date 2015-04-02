@@ -12,14 +12,14 @@ libxmp_a_SOURCES = ../include/xmp_internal.h ../include/xmp_constant.h ../includ
 		   xmp_reflect_acc.c xmp_reduce_acc.c xmp_intrinsic.c xmp_sort.c xmp_async.c
 
 if GASNET
-    libxmp_a_SOURCES += xmp_onesided.c xmp_gasnet_onesided.c xmp_coarray.c xmp_gasnet_coarray.c \
-			xmp_lock.c xmp_gasnet_lock.c xmp_post_wait.c xmp_gasnet_post_wait.c
+    libxmp_a_SOURCES += xmp_onesided.c xmp_onesided_gasnet.c xmp_coarray.c xmp_coarray_gasnet.c \
+			xmp_lock_unlock.c xmp_lock_unlock_gasnet.c xmp_post_wait.c xmp_post_wait_gasnet.c
     CFLAGS           += -D_XMP_GASNET
 endif
 
 if FJRDMA
-    libxmp_a_SOURCES += xmp_onesided.c xmp_fjrdma_onesided.c xmp_coarray.c xmp_fjrdma_coarray.c xmp_post_wait.c \
-			xmp_fjrdma_post_wait.c
+    libxmp_a_SOURCES += xmp_onesided.c xmp_onesided_fjrdma.c xmp_coarray.c xmp_coarray_fjrdma.c \
+			xmp_post_wait.c xmp_post_wait_fjrdma.c
     CFLAGS           += -D_XMP_FJRDMA
 endif
 
@@ -27,16 +27,16 @@ if MPI3
     CFLAGS += -D_XMP_MPI3
 endif
 
-if USE_LIBBLAS
-    CFLAGS += -D_XMP_USE_LIBBLAS
+if LIBBLAS
+    CFLAGS += -D_XMP_LIBBLAS
 endif
 
-if USE_SSL2BLAMP
-    CFLAGS += -D_XMP_USE_SSL2BLAMP
+if SSL2BLAMP
+    CFLAGS += -D_XMP_SSL2BLAMP
 endif
 
-if USE_INTELMKL
-    CFLAGS += -D_XMP_USE_INTELMKL
+if INTELMKL
+    CFLAGS += -D_XMP_INTELMKL
 endif
 
 if TCA
