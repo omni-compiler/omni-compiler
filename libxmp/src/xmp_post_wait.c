@@ -122,7 +122,6 @@ void _XMP_post_7(const _XMP_nodes_t *node_desc, const int num1, const int num2, 
 #endif
 }
 
-/*****************************************/
 void _XMP_wait_noargs()
 {
 #ifdef _XMP_GASNET

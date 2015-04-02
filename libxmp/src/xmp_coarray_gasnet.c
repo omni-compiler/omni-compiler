@@ -31,7 +31,7 @@ static void _rebuild_shift_queue()
     _shift_queue.shifts = tmp;
 }
 
-void _XMP_push_shift_queue(size_t s)
+static void _push_shift_queue(size_t s)
 {
   if(_shift_queue.num >= _shift_queue.max_size)
     _rebuild_shift_queue();
@@ -68,7 +68,7 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
     tmp_shift = ((coarray_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
   }
   _xmp_gasnet_coarray_shift += tmp_shift;
-  _XMP_push_shift_queue(tmp_shift);
+  _push_shift_queue(tmp_shift);
 
   if(_xmp_gasnet_coarray_shift > _xmp_gasnet_heap_size){
     if(_XMP_world_rank == 0){
@@ -83,6 +83,7 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
   coarray->real_addr = each_addr[_XMP_world_rank];
   *addr = each_addr[_XMP_world_rank];
 }
+
 void _XMP_gasnet_sync_memory()
 {
   for(int i=0;i<_xmp_gasnet_stride_wait_size;i++)
@@ -1757,7 +1758,7 @@ static void _gasnet_nonc_to_c_get(const int target_image, const int src_dims, co
 
   done_get_flag = _XMP_N_INT_FALSE;
   //  if(transfer_size < gasnet_AMMaxMedium()){
-  if(transfer_size < 0){  // mikansei
+  if(transfer_size < 0){  // fix me
     gasnet_AMRequestMedium6(target_image, _XMP_GASNET_PACK, archive, am_request_size,
 			    HIWORD(src->addr[target_image]), LOWORD(src->addr[target_image]), src_dims,
     			    (size_t)transfer_size, HIWORD((char *)dst+dst_point), LOWORD((char *)dst+dst_point));
@@ -1782,7 +1783,7 @@ static void _gasnet_nonc_to_nonc_get(const int target_image, const int dst_dims,
 {
   done_get_flag = _XMP_N_INT_FALSE;
   //  if(transfer_size < gasnet_AMMaxMedium()){
-  if(transfer_size < 0){  // mikansei
+  if(transfer_size < 0){  // fix me
     size_t am_request_src_size = sizeof(_XMP_array_section_t) * src_dims;
     size_t am_request_dst_size = sizeof(_XMP_array_section_t) * dst_dims;
     char *archive = malloc(am_request_src_size + am_request_dst_size);

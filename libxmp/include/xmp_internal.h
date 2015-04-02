@@ -318,8 +318,8 @@ extern void _XMP_threads_finalize(void);
 #define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INITIAL_SIZE _XMP_COARRAY_QUEUE_INITIAL_SIZE /** The same vaule may be good. */
 #define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO /** The same vaule may be good. */
 
-#define _XMP_POSTREQ_INITIAL_TABLE_SIZE 32         /**< This value is trial */
-#define _XMP_POSTREQ_INCREMENT_TABLE_SIZE 512      /**< This value is trial */
+#define _XMP_POSTREQ_TABLE_INITIAL_SIZE 32         /**< This value is trial */
+#define _XMP_POSTREQ_TABLE_INCREMENT_RATIO (1.5)   /**< This value is trial */
 extern size_t _XMP_get_offset(const _XMP_array_section_t *, const int);
 extern void _XMP_post_wait_initialize();
 #endif

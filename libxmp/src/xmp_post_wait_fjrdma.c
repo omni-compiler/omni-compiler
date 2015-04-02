@@ -32,7 +32,7 @@ static _XMP_postreq_t _postreq;
 void _xmp_fjrdma_post_wait_initialize()
 {
   _postreq.num      = 0;
-  _postreq.max_size = _XMP_POSTREQ_INITIAL_TABLE_SIZE;
+  _postreq.max_size = _XMP_POSTREQ_TABLE_INITIAL_SIZE;
   _postreq.table    = malloc(sizeof(_XMP_postreq_info_t) * _postreq.max_size);
   
   double *token    = _XMP_alloc(sizeof(double));
@@ -57,11 +57,13 @@ void _xmp_fjrdma_post_wait_initialize()
 static void add_postreq(const int node, const int tag)
 {
   if(_postreq.num == _postreq.max_size){  // If table is full
-    _XMP_postreq_info_t *old_table = _postreq.table;
-    _postreq.max_size += _XMP_POSTREQ_INCREMENT_TABLE_SIZE;
-    _postreq.table = malloc(sizeof(_XMP_postreq_info_t) * _postreq.max_size);
-    memcpy(_postreq.table, old_table, sizeof(_XMP_postreq_info_t) * _postreq.num);
-    free(old_table);
+    _postreq.max_size *= _XMP_POSTREQ_TABLE_INCREMENT_RATIO;
+    size_t next_size = sizeof(_XMP_postreq_info_t) * _postreq.max_size;
+    _XMP_postreq_info_t *tmp;
+    if((tmp = realloc(_postreq.table, next_size)) == NULL)
+      _XMP_fatal("cannot allocate memory");
+    else
+      _postreq.table = tmp;
   }
   
   _postreq.table[_postreq.num].node = node;
