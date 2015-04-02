@@ -77,9 +77,6 @@ static void _freeCoarrayInfo(CoarrayInfo_t *cinfo);
 
 static CoarrayInfo_t *_getShareForCoarray(int count, size_t element);
 
-static void _freeCoarray(CoarrayInfo_t *cinfo);
-static void _freeSegmentObject(MemoryChunk_t *chunk);
-static void _freeByDescriptor(char *desc);
 
 // allocation and deallocation
 static MemoryChunk_t *_mallocMemoryChunk(int count, size_t element);
@@ -103,14 +100,9 @@ static void _unlinkMemoryChunkP(MemoryChunkP_t *chunkP);
  *  A tag, cast of the address of a resource-set, is an interface to Fortran.
  */
 struct _resourceSet_t {
-  //ResourceSet_t   *prev;         // resource set allocated previously
-  //ResourceSet_t   *next;         // resource set allocated after this
   MemoryChunk_t   *headChunk;
   MemoryChunk_t   *tailChunk;
 };
-
-static ResourceSet_t *_headResourceSet = NULL;
-static ResourceSet_t *_tailResourceSet = NULL;
 
 
 /** structure for each malloc/free call
@@ -125,7 +117,6 @@ struct _memoryChunk_t {
   BOOL             isDeallocated;  // true if already encountered DEALLOCATE stmt
   char            *orgAddr;        // local address of the allocated memory
   size_t           nbytes;         // allocated size of memory [bytes]
-  char            *endAddr;        // orgAddr + nbytes
   void            *desc;           // address of the lower layer's descriptor 
   CoarrayInfo_t   *headCoarray;
   CoarrayInfo_t   *tailCoarray;
@@ -142,7 +133,6 @@ struct _coarrayInfo_t {
   MemoryChunk_t  *parent;
   char           *name;      // name of the variable (for debug message)
   char           *baseAddr;  // local address of the coarray (cray pointer)
-  char           *endAddr;   // baseAddr + (count * element) 
   size_t          nbytes;    // size of the coarray [bytes]
   int             corank;    // number of codimensions
   int            *lcobound;  // array of lower cobounds [0..(corank-1)]
@@ -229,19 +219,15 @@ MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
   size_t elementRU = _roundUpElementSize(count, element);
   chunk->nbytes = (size_t)count * elementRU;
 
-  if (chunk->nbytes == 0) {
-    _XMPF_coarrayDebugPrint("MEMORY SEGMENT not allocated\n"
-                            "  requred: %zd bytes (count=%d, element=%d)\n",
-                            chunk->nbytes, count, element);
+  if (chunk->nbytes == 0)
     return chunk;
-  }
 
   // _XMP_coarray_malloc() and set mallocInfo
   _XMP_coarray_malloc_info_1(chunk->nbytes, 1);    // set shape
   _XMP_coarray_malloc_image_info_1();                          // set coshape
   _XMP_coarray_malloc_do(&(chunk->desc), &(chunk->orgAddr));   // malloc
 
-  _XMPF_coarrayDebugPrint("MEMORY SEGMENT allocated\n"
+  _XMPF_coarrayDebugPrint("Memory Chunk allocated\n"
                           "  requred: %zd bytes (count=%d, element=%d)\n"
                           "  result : %d bytes\n",
                           chunk->nbytes, count, element, chunk->nbytes);
@@ -314,7 +300,8 @@ void _freeMemoryChunkReverseOrder(void)
 
 void xmpf_coarray_malloc_pool_(void)
 {
-  _XMPF_coarrayDebugPrint("estimated pool_totalSize = %zd\n",
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC_POOL\n"
+                          "  required pool_totalSize = %zd\n",
                           pool_totalSize);
 
   // init malloc/free history
@@ -363,11 +350,11 @@ CoarrayInfo_t *_getShareForCoarray(int count, size_t element)
 
   // check: too large allocation
   if (pool_currentAddr + thisSize > pool_chunk->orgAddr + pool_totalSize) {
-    _XMPF_coarrayFatal("lack of memory pool for static coarrays: "
+    _XMPF_coarrayFatal("insufficient memory pool for static coarrays: "
                       "xmpf_coarray_share_pool_() in %s", __FILE__);
   }
 
-  _XMPF_coarrayDebugPrint("Get a share for coarray %s:\n"
+  _XMPF_coarrayDebugPrint("Get share of coarray \'%s\' in memory pool:\n"
                           "  address = %p\n"
                           "  size    = %zd\n"
                           "  (originally, count = %d, element = %zd)\n",
@@ -375,7 +362,9 @@ CoarrayInfo_t *_getShareForCoarray(int count, size_t element)
                           thisSize, count, element);
 
   cinfo->baseAddr = pool_currentAddr;
-  cinfo->endAddr = pool_currentAddr += thisSize;
+  cinfo->nbytes = thisSize;
+
+  pool_currentAddr += thisSize;
 
   return cinfo;
 }
@@ -439,10 +428,17 @@ void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag)
   if (rset == NULL)
     rset = _newResourceSet();
 
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_DESCPTR\n");
+  _XMPF_coarrayDebugPrint("  coarray dummy argument: %p\n", baseAddr);
+
   found = FALSE;
   forallMemoryChunkP(chunkP) {
     chunk = chunkP->chunk;
-    if (chunk->orgAddr <= baseAddr && baseAddr < chunk->endAddr) {
+
+    _XMPF_coarrayDebugPrint("  comparing with a chunk: %p  +%zd\n",
+                            chunk->orgAddr, chunk->nbytes);
+
+    if (chunk->orgAddr <= baseAddr && baseAddr < chunk->orgAddr + chunk->nbytes) {
       // found the memory chunk
       found = TRUE;
       break;
@@ -450,14 +446,13 @@ void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag)
   }
 
   if (!found) {
-    _XMPF_coarrayFatal("current restriction: coarray dummy argument must be "
-                       "allocated before the procedure call.\n");
+    _XMPF_coarrayDebugPrint("did not find the memory chunk that contains the coarray:\n"
+                            "  start address of the coarray dummy arg.: %p\n", 
+                            baseAddr);
+
   }
 
-  _XMPF_coarrayDebugPrint("found the memory chunk that contains the coarray:\n"
-                          "  start address of the memory chunk      : %p\n"
-                          "  start address of the coarray dummy arg.: %p\n", 
-                          chunk->orgAddr, baseAddr);
+  _XMPF_coarrayDebugPrint("  found.\n");
 
   // generate a new descPtr for the dummy coarray
   CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk);
@@ -775,6 +770,7 @@ static CoarrayInfo_t *_newCoarrayInfo(MemoryChunk_t *parent)
   return cinfo;
 }
 
+////// NOT USED //////
 void _addCoarrayInfo(MemoryChunk_t *parent, CoarrayInfo_t *cinfo2)
 {
   CoarrayInfo_t *cinfo3 = parent->tailCoarray;
