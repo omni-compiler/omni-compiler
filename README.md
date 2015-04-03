@@ -66,6 +66,27 @@ README
  This option adds the directory "dir" to the list of directories to be searched for and put
  module information files by the compiler.
 
+# Usage of BLAS in XMP library
+ For example the function xmp_matmul(), BLAS can be used internally to improve performance.
+ To do this, "--with-libblas=" should be used in executing ./configure.
+
+* When using "--with-libblas=",
+  Indicatied BLAS is used in the XMP library, and the BLAS is added to linking phase in
+  xmpcc/xmpf90.
+
+* When not using "--with-libblas=",
+** On the K computer
+  SSL2BLAMP is used automatically. We recommend this way.
+
+** When using "--enable-SSL2BLAMP" in executing ./configure.
+  SSL2BLAMP is used in the XMP library. This option is for FX10.
+
+** When using "--enable-intelmkl" in executing ./configure.
+  Intel MKL is used in the XMP library. This option is for Intel compiler.
+
+** Other
+  Instead of BLAS, functions prepared by the XMP library is used.
+
 # Profiling Options in XMP/C
  Omni XMP compiler supports profiler interfaces of Scalasca and tlog.
  The tlog is included in this package. To use the profiler interface of Scalasca,
