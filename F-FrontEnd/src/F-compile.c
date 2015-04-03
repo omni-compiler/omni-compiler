@@ -2867,7 +2867,7 @@ import_generic_procedure(ID id) {
 
 static EXT_ID
 shallow_copy_ext_id(EXT_ID original) {
-    EXT_ID ret = NULL, ep, new_ep;
+    EXT_ID ret = NULL, ep, new_ep = NULL;
     FOREACH_EXT_ID(ep, original) {
         if (ep == original) {
             new_ep = new_external_id(EXT_SYM(ep));
@@ -2993,7 +2993,7 @@ deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp);
 static void
 deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
     ID id;
-    TYPE_DESC itp, cur, old;
+    TYPE_DESC cur, old;
     cur = tp;
     while(TYPE_REF(cur) != NULL) {
         old = TYPE_REF(cur);
@@ -3005,7 +3005,6 @@ deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
 
     if(IS_STRUCT_TYPE(cur)) {
         FOREACH_MEMBER(id, cur) {
-            itp = ID_TYPE(id);
             deep_copy_and_overwrite_for_module_id_type(&(ID_TYPE(id)));
         }
     }

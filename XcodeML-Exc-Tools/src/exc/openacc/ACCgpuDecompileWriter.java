@@ -752,7 +752,7 @@ public class ACCgpuDecompileWriter extends PrintWriter {
   private String makeDeclType(Xtype type, String name) {
     String decltype = "";
     Xtype t;
-    Stack nested_decls = new Stack();
+    Stack<Xtype> nested_decls = new Stack<Xtype>();
 
     for (t = type; t != null; t = t.getRef()) {
       if (t.getKind() == Xtype.POINTER ||

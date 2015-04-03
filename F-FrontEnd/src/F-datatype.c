@@ -241,7 +241,7 @@ shrink_type(TYPE_DESC tp)
     }
 }
 
-
+#if 0
 static uint64_t
 reduce_type_attr(TYPE_DESC tp) {
     uint64_t f = 0LL;
@@ -266,7 +266,7 @@ reduce_type_attr(TYPE_DESC tp) {
 
     return f;
 }
-
+#endif
 
 static TYPE_DESC
 simplify_type_recursively(TYPE_DESC tp, uint32_t attr, uint32_t ext) {

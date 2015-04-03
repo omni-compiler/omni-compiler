@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file F95-parser.y
  */
@@ -1898,7 +1892,7 @@ omp_schedule_attr:
 omp_default_attr:
 	  OMPKW_SHARED { $$ = OMP_LIST(OMP_DEFAULT_SHARED,NULL); }
 	| OMPKW_PRIVATE { $$ = OMP_LIST(OMP_DEFAULT_PRIVATE,NULL); }
-	| OMPKW_NONE { $$ = $$ = OMP_LIST(OMP_DEFAULT_NONE,NULL); }
+	| OMPKW_NONE { $$ = OMP_LIST(OMP_DEFAULT_NONE,NULL); }
 	;
 
 /* 

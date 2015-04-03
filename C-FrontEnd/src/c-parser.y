@@ -262,7 +262,7 @@ unary_expr:
     | unop cast_expr            %prec UNARY
             { STAT_TRACE(("{unary_expr#4}"));
                 CExprCodeEnum ec = s_CUnaryOpeEnumToExprCodeEnum[$<unop>1];
-                $$ = (ec == EC_NULL_NODE) ?  $$ = $2 :
+                $$ = (ec == EC_NULL_NODE) ?  $2 :
                     ((ec == EC_ERROR_NODE) ? exprError1($2) : exprUnary(ec, $2)); }
     /* label addr pointer.  */
     | ANDAND ident
