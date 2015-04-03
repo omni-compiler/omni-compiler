@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file c-type.c
  * implementations related to type descriptor.
@@ -353,7 +347,7 @@ freeStaticTypeDescData()
     CCOL_SL_FOREACH(site, &s_staticTypeDescs) {
         CExprOfTypeDesc *td = EXPR_T(CCOL_SL_DATA(site));
         innerFreeExprOfTypeDesc(td);
-    }
+      }
 
     CCOL_SL_CLEAR(&s_staticTypeDescs);
 
@@ -2513,7 +2507,7 @@ resolveType_subArrayRef(CExprOfBinaryNode *expr)
     CCOL_DListNode *ite1, *ite2 = CCOL_DL_HEAD(&aryRefs);
     CExprOfTypeDesc *elemTd = elemTd0;
     int i = 0;
-
+    
     CCOL_DL_FOREACH(ite1, &aryTds) {
         if(i++ >= subAryDims)
             break;

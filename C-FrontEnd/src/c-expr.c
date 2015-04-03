@@ -13,7 +13,6 @@
 #include "c-option.h"
 #include "c-pragma.h"
 
-
 CExpr                   *s_exprStart = NULL;
 CCOL_DList              s_symTabStack;
 CSymbolTable            *s_defaultSymTab;

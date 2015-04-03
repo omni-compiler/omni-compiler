@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file c-convert.c
  * implementations for conversion AST before output XcodeML.
@@ -11,7 +5,6 @@
 
 #include "c-comp.h"
 #include "c-option.h"
-
 
 //! sequence number for temporary variable
 PRIVATE_STATIC int  s_tmpVarSeq = 1;
@@ -419,6 +412,7 @@ convs_compStmt(CExpr *stmtAndDecls, CSymbolTable *symTab, int *converted)
     EXPR_C(childStmts)->e_symTab = symTab1;
 
     CCOL_SListNode *site;
+
     CCOL_SL_FOREACH(site, &decls) {
         CExprOfBinaryNode *decl = EXPR_B(CCOL_SL_DATA(site));
         moveDeclSymbolFromParent(symTab1, parentSymTab, decl);

@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 #include "c-expr.h"
 #include "c-option.h"
 #include "c-comp.h"
@@ -415,10 +409,12 @@ endCheckGccAttr(CExpr *expr)
     }
 
     CCOL_SListNode *ite1, *ite2;
-    CCOL_SL_FOREACH(ite1, &gac->gac_attrArgs) {
+    if(&gac->gac_attrArgs != NULL)
+      CCOL_SL_FOREACH(ite1, &gac->gac_attrArgs) {
         int exists = 0;
         CExpr *attr1 = (CExpr*)CCOL_SL_DATA(ite1);
-        CCOL_SL_FOREACH(ite2, &ngac.gac_attrArgs) {
+	if(&ngac.gac_attrArgs != NULL)
+	  CCOL_SL_FOREACH(ite2, &ngac.gac_attrArgs) {
             CExpr *attr2 = (CExpr*)CCOL_SL_DATA(ite2);
             if(attr1 == attr2) {
                 exists = 1;
@@ -473,7 +469,8 @@ void
 checkGccAttrOutput()
 {
     CCOL_DListNode *ite;
-
+    
+    if(&s_typeDescList != NULL)
     CCOL_DL_FOREACH(ite, &s_typeDescList) {
         CExprOfTypeDesc *td = EXPR_T(CCOL_DL_DATA(ite));
         if(td->e_isGccAttrDuplicated == 0) {

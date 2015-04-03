@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file c-xcodeml.c
  */
@@ -1278,7 +1272,7 @@ void
 setTypeIds()
 {
     CCOL_DListNode *ite;
-
+    
     CCOL_DL_FOREACH(ite, &s_typeDescList) {
         (EXPR_T(CCOL_DL_DATA(ite)))->e_isMarked = 0;
     }

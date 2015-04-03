@@ -1818,7 +1818,7 @@ checkSwitchStmt(CExpr *switchStmt)
 
                 CCOL_SListNode *site;
                 int err = 0;
-                CCOL_SL_FOREACH(site, &values) {
+   	        CCOL_SL_FOREACH(site, &values) {
                     long long *p = (long long*)CCOL_SL_DATA(site);
                     if(*p == i1) {
                         addError(cv1, CERR_114);
