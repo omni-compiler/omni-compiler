@@ -505,20 +505,16 @@ public class XMPtransCoarray
   }
 
   private void conv_allocateStmt(Xobject x, Vector<XMPcoarray> coarrays) {
-    Vector<Xobject> callStmts = new Vector();
+    Vector<Xobject> callStmts = new Vector<Xobject>();
 
     for (Xobject arg: (XobjList)x.getArg(1)) {
-
       //XMPcoindexObj coidx = new XMPcoindexObj(arg, coarrays);
 
       ////////
       //System.out.println(" @@@ gaccha coindex object");
       //System.out.println("     "+coidx);
       ///////////
-      
-
     }
-    
   }
 
   private void conv_deallocateStmt(Xobject x, Vector<XMPcoarray> coarrays) {
@@ -576,7 +572,7 @@ public class XMPtransCoarray
   }
 
   private String[] getHostNames() {
-    Vector<String> list = new Vector();
+    Vector<String> list = new Vector<String>();
     list.add(def.getName());
     XobjectDef parentDef = def.getParent();
     while (parentDef != null) {

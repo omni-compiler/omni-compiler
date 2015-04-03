@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.block;
 
 import xcodeml.util.XmLog;
@@ -14,7 +8,6 @@ import exc.object.*;
  * Object to represents a list of blocks. This is usually used for a compound
  * statement.
  */
-
 public class BlockList
 {
     Block head, tail;
@@ -244,7 +237,7 @@ public class BlockList
       idList.add(id);
 
       if (init != null) {
-        id.Declared();
+        id.setIsDeclared(true);
         XobjList declList = (XobjList)this.getDecls();
         if (declList == null) {
           declList = Xcons.List();

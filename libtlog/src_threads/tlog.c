@@ -1,14 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
-static char rcsid[] = "$Id$";
-/* 
- * $RWC_Release$
- * $RWC_Copyright$
- */
 #include <stdio.h>
 #include <sys/time.h>
 #include <sys/resource.h>

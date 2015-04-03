@@ -865,7 +865,7 @@ public class ACCgpuDecompileWriter extends PrintWriter {
         if (t.getArraySize() <= 0) {
           decltype += "[]";
         } else {
-          decltype += "[" + t.getArrayDim() + "]";
+          decltype += "[" + t.getArraySize() + "]";
         }
       } break;
     default:
@@ -1042,14 +1042,14 @@ public class ACCgpuDecompileWriter extends PrintWriter {
           } break;
         case Xtype.ENUM:
           {
-            if(type.getMoeList() == null) {
+            if(type.getMemberList() == null) {
               break;
             }
 
             printTypeName(type);
             println(" {");
 
-            for (XobjArgs a1 = type.getMoeList().getArgs(); a1 != null; a1=a1.nextArgs()) {
+            for (XobjArgs a1 = type.getMemberList().getArgs(); a1 != null; a1=a1.nextArgs()) {
               if ((id = findIdent(id_list, a1.getArg())) == null) {
                 fatal("Enum ID is not found");
               }

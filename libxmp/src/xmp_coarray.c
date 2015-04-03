@@ -854,9 +854,10 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
 #endif
 
   if(_XMP_N_COARRAY_PUT == rdma_code){
-    if(target_image == _XMP_world_rank && remote_coarray_is_continuous && local_array_is_continuous){ // Fix me:
+    if(target_image == _XMP_world_rank && remote_coarray_is_continuous && local_array_is_continuous){
       if(local_array == NULL)
-	memcpy(((_XMP_coarray_t*)remote_coarray)->real_addr, ((_XMP_coarray_t*)local_coarray)->real_addr, _transfer_coarray_elmts*((_XMP_coarray_t*)remote_coarray)->elmt_size);
+	memcpy(((_XMP_coarray_t*)remote_coarray)->real_addr, ((_XMP_coarray_t*)local_coarray)->real_addr, 
+	       _transfer_coarray_elmts*((_XMP_coarray_t*)remote_coarray)->elmt_size);
       else{
 	uint64_t dst_point = (uint64_t)_XMP_get_offset(_coarray, _coarray_dims);
 	uint64_t src_point = (uint64_t)_XMP_get_offset(_array, _array_dims);
@@ -875,9 +876,10 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
     }
   }
   else if(_XMP_N_COARRAY_GET == rdma_code){
-    if(target_image == _XMP_world_rank && remote_coarray_is_continuous && local_array_is_continuous){ // Fix me:
+    if(target_image == _XMP_world_rank && remote_coarray_is_continuous && local_array_is_continuous){
       if(local_array == NULL)
-	memcpy(((_XMP_coarray_t*)local_coarray)->real_addr, ((_XMP_coarray_t*)remote_coarray)->real_addr, _transfer_coarray_elmts*((_XMP_coarray_t*)remote_coarray)->elmt_size);
+	memcpy(((_XMP_coarray_t*)local_coarray)->real_addr, ((_XMP_coarray_t*)remote_coarray)->real_addr, 
+	       _transfer_coarray_elmts*((_XMP_coarray_t*)remote_coarray)->elmt_size);
       else{
 	uint64_t src_point = (uint64_t)_XMP_get_offset(_coarray, _coarray_dims);
         uint64_t dst_point = (uint64_t)_XMP_get_offset(_array, _array_dims);

@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 
 import exc.object.*;
@@ -748,7 +742,7 @@ public class XMPgpuDecompileWriter extends PrintWriter {
           break;
         }
 
-        if (t.getArrayDim() < 0) {
+        if (t.getArraySize() < 0) {
           decltype += "(";
           decltype += "*";
           decltype += makeDeclaratorRec(decls, name);
@@ -766,10 +760,10 @@ public class XMPgpuDecompileWriter extends PrintWriter {
           decltype += ")";
         }
 
-        if (t.getArrayDim() <= 0) {
+        if (t.getArraySize() <= 0) {
           decltype += "[]";
         } else {
-          decltype += "[" + t.getArrayDim() + "]";
+          decltype += "[" + t.getArraySize() + "]";
         }
       } break;
     default:
@@ -942,14 +936,14 @@ public class XMPgpuDecompileWriter extends PrintWriter {
           } break;
         case Xtype.ENUM:
           {
-            if(type.getMoeList() == null) {
+            if(type.getMemberList() == null) {
               break;
             }
 
             printTypeName(type);
             println(" {");
 
-            for (XobjArgs a1 = type.getMoeList().getArgs(); a1 != null; a1=a1.nextArgs()) {
+            for (XobjArgs a1 = type.getMemberList().getArgs(); a1 != null; a1=a1.nextArgs()) {
               if ((id = findIdent(id_list, a1.getArg())) == null) {
                 fatal("Enum ID is not found");
               }
