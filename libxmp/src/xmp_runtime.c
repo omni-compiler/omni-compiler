@@ -23,8 +23,9 @@ void _XMP_init(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &_XMP_world_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &_XMP_world_size);
 
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
     _XMP_onesided_initialize(argc, argv);
-
+#endif
 #ifdef _XMP_TCA
     _XMP_init_tca();
 #endif
@@ -37,7 +38,9 @@ void _XMP_init(int argc, char** argv)
 void _XMP_finalize(int return_val)
 {
   if (_XMP_runtime_working) {
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
     _XMP_onesided_finalize(return_val);
+#endif
     _XMP_finalize_world();
     _XMP_runtime_working = _XMP_N_INT_FALSE;
   }
