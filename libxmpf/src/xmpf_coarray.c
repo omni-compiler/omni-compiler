@@ -12,21 +12,23 @@ static void _coarray_msg(int sw);
 int _XMPF_coarrayMsg = 0;          // default: message off
 int _XMPF_coarrayErr = 0;          // default: aggressive error check off
 
+/*
+ * read environment variable XMPF_COARRAY_MSG
+ * usage: <v1><d><v2><d>...<vn>
+ *    <vk>  value for image index k
+ *    <d>   delimiter ',' or ' '
+ */
 void _XMPF_coarray_init(void)
 {
-  char *str;
+  char *tok, *string;
+  int i;
+  char delim[] = ", ";
 
-  if (xmp_node_num() == 1) {
-    str = getenv("XMPF_COARRAY_MSG1");
-    if (str != NULL) {
-      _coarray_msg(atoi(str));
-      return;
-    }
-  }
-
-  str = getenv("XMPF_COARRAY_MSG");
-  if (str != NULL) {
-    _coarray_msg(atoi(str));
+  string = strdup(getenv("XMPF_COARRAY_MSG"));
+  tok = strtok(string, delim);
+  for (i = 1; tok != NULL; i++, tok = strtok(NULL, delim)) {
+    if (this_image_() == i)
+      _coarray_msg(atoi(tok));
   }
 }
 
@@ -55,15 +57,16 @@ void _coarray_msg(int sw)
     break;
   }
 
-  _XMPF_coarrayDebugPrint("xmpf_coarray_msg ON\n"
-                          "  %zd-byte boundary, using %s\n",
-                          BOUNDARY_BYTE,
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MSG=%d\n"
+                          "  %zd-byte boundary\n"
+                          "  with %s\n",
+                          sw, BOUNDARY_BYTE,
 #if defined(_XMP_COARRAY_FJRDMA)
                           "FJRDMA"
 #elif defined(_XMP_COARRAY_GASNET)
                           "GASNET"
 #else
-                          "something unknown"
+                          "(something unknown)"
 #endif
                           );
 }
@@ -100,7 +103,7 @@ void _XMPF_coarrayDebugPrint(char *format, ...)
   va_list list;
   va_start(list, format);
   vsprintf(work, format, list);
-  fprintf(stderr, "CAF[%d] %s", xmp_node_num(), work);
+  fprintf(stderr, "CAF[%d] %s", this_image_(), work);
   va_end(list);
 }
 

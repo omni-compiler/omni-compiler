@@ -15,6 +15,11 @@ run:
 	  cd $$d; $(MAKE) -j1 run || { echo "ERROR!!"; exit 1; } \
 	done
 
+rerun:
+	for d in $(DIRS); do \
+	  cd $$d; $(MAKE) -j1 rerun || { echo "ERROR!!"; exit 1; } \
+	done
+
 submit:
 	for d in $(DIRS); do \
 	  cd $$d; $(MAKE) submit || { echo "ERROR!!"; exit 1; } \

@@ -8,16 +8,29 @@
  */
 int num_images_(void)
 {
-  _XMPF_checkIfInTask("num_images()");
-  return xmp_num_nodes();
+  int size;
+
+  _XMPF_checkIfInTask("NUM_IMAGES");
+
+  if (MPI_Comm_size(MPI_COMM_WORLD, &size) != 0)
+    _XMPF_coarrayFatal("internal error: NUM_IMAGES in %s", __FILE__);
+
+  return size;
 }
+
 
 /*  (MPI_Comm_rank() + 1) in the current communicator
  */
 int this_image_(void)
 {
-  _XMPF_checkIfInTask("this_image()");
-  return xmp_node_num();
+  int rank;
+
+  _XMPF_checkIfInTask("THIS_IMAGE");
+
+  if (MPI_Comm_rank(MPI_COMM_WORLD, &rank) != 0)
+    _XMPF_coarrayFatal("internal error: THIS_IMAGE in %s", __FILE__);
+
+  return rank + 1;
 }
 
 

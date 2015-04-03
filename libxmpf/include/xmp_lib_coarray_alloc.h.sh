@@ -14,7 +14,7 @@ echo72 () {
 }
 
 
-print_subr() {
+print_subr_alloc() {
     tk=$1
     typekind=$2
     echo72  "      subroutine xmpf_coarray_alloc${DIM}d_${tk}(descptr, var, count, element,"
@@ -62,6 +62,29 @@ print_subr() {
 }
 
 
+print_subr_dealloc() {
+    tk=$1
+    typekind=$2
+
+    echo    "      subroutine xmpf_coarray_dealloc${DIM}d_${tk}(descptr, var, tag)"
+    echo    "        integer(8), intent(in) :: descptr, tag"
+
+ case "${DIM}" in
+ 0) echo    "        ${typekind}, pointer, intent(out) :: var" ;;
+ 1) echo    "        ${typekind}, pointer, intent(out) :: var(:)" ;;
+ 2) echo    "        ${typekind}, pointer, intent(out) :: var(:,:)" ;;
+ 3) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:)" ;;
+ 4) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:)" ;;
+ 5) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:,:)" ;;
+ 6) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:,:,:)" ;;
+ 7) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:,:,:,:)" ;;
+ esac
+
+    echo    "      end subroutine"
+    echo
+}
+
+
 #--------------------
 #  main
 #--------------------
@@ -77,17 +100,42 @@ do
     echo "!!!  complex(kind=16) (32bytes) is not supported in XMP/F"
     echo ""
 
-    print_subr i2  "integer(2)"      
-    print_subr i4  "integer(4)"      
-    print_subr i8  "integer(8)"      
-    print_subr l2  "logical(2)"      
-    print_subr l4  "logical(4)"      
-    print_subr l8  "logical(8)"      
-    print_subr r4  "real(4)"         
-    print_subr r8  "real(8)"         
-    print_subr z8  "complex(4)"      
-    print_subr z16 "complex(8)"      
-    print_subr cn  "character(element)" 
+    print_subr_alloc i2  "integer(2)"      
+    print_subr_alloc i4  "integer(4)"      
+    print_subr_alloc i8  "integer(8)"      
+    print_subr_alloc l2  "logical(2)"      
+    print_subr_alloc l4  "logical(4)"      
+    print_subr_alloc l8  "logical(8)"      
+    print_subr_alloc r4  "real(4)"         
+    print_subr_alloc r8  "real(8)"         
+    print_subr_alloc z8  "complex(4)"      
+    print_subr_alloc z16 "complex(8)"      
+    print_subr_alloc cn  "character(element)" 
+
+    echo "      end interface"
+    echo
+done
+
+for DIM in `seq 0 7`
+do
+    echo "!-----------------------------------------------------------------------"
+    echo "      interface xmpf_coarray_dealloc${DIM}d"
+    echo "!-----------------------------------------------------------------------"
+    echo "!!!  real(kind=16) is not supported in XMP/F"
+    echo "!!!  complex(kind=16) (32bytes) is not supported in XMP/F"
+    echo ""
+
+    print_subr_dealloc i2  "integer(2)"      
+    print_subr_dealloc i4  "integer(4)"      
+    print_subr_dealloc i8  "integer(8)"      
+    print_subr_dealloc l2  "logical(2)"      
+    print_subr_dealloc l4  "logical(4)"      
+    print_subr_dealloc l8  "logical(8)"      
+    print_subr_dealloc r4  "real(4)"         
+    print_subr_dealloc r8  "real(8)"         
+    print_subr_dealloc z8  "complex(4)"      
+    print_subr_dealloc z16 "complex(8)"      
+    print_subr_dealloc cn  "character(*)" 
 
     echo "      end interface"
     echo

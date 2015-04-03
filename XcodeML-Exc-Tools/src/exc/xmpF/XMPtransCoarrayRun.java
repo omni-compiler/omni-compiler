@@ -21,8 +21,8 @@ public class XMPtransCoarrayRun
   final static String PROC_FINALIZE_NAME = "xmpf_coarray_proc_finalize";
   final static String TAG_NAME = "xmpf_resource_tag";
   public final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
-  final static String COARRAYALLOC_PREFIX = "xmpf_coarray_alloc";
-  final static String COARRAYDEALLOC_NAME = "xmpf_coarray_dealloc";
+  final static String COARRAYALLOC_PREFIX   = "xmpf_coarray_alloc";
+  final static String COARRAYDEALLOC_PREFIX = "xmpf_coarray_dealloc";
 
   // to handle host- and use-associations
   static ArrayList<XMPtransCoarrayRun> ancestors
@@ -929,9 +929,14 @@ public class XMPtransCoarrayRun
 
 
   private Xobject makeStmt_coarrayDealloc(XMPcoarray coarray) {
+    int rank = coarray.getRank();
+
     Xobject args = Xcons.List(coarray.getDescPointerId(),
+                              Xcons.FvarRef(coarray.getIdent()),
                               Xcons.FvarRef(resourceTagId));
-    Ident subr = env.declExternIdent(COARRAYDEALLOC_NAME,
+
+    String subrName = COARRAYDEALLOC_PREFIX + rank + "d";
+    Ident subr = env.declExternIdent(subrName,
                                      BasicType.FexternalSubroutineType);
     Xobject subrCall = subr.callSubroutine(args);
     return subrCall;

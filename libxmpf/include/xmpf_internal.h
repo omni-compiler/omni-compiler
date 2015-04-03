@@ -332,7 +332,7 @@ extern void xmpf_coarray_count_size_(int *count, int *element);
 extern void xmpf_coarray_malloc_pool_(void);
 extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                                  int *count, int *element, void **tag);
-extern void xmpf_coarray_dealloc_(void **descPtr);
+extern void xmpf_coarray_free_(void **descPtr, void **tag);
 
 /* xmpf_coarray_lib.c */
 extern int num_images_(void);
