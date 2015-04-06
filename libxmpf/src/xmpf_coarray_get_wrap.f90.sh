@@ -17,23 +17,31 @@ echo72 () {
 print_function() {
     tk=$1
     typekind=$2
-    echo "!-----------------------------------------------------------------------"
     echo72     "      function xmpf_coarray_get${DIM}d_${tk}(descptr, baseaddr, element,"
-    echo72     "     &   coindex, rank"
+    echo72     "     &   coindex, mold, rank"
     for i in `seq 1 ${DIM}`; do
         echo72 "     &   , nextaddr${i}, count${i}"
     done
     echo '     &   ) result(val)'
-    echo "!-----------------------------------------------------------------------"
     echo '      integer(8), intent(in) :: descptr'
     echo '      integer, intent(in) :: element, coindex, rank'
     for i in `seq 1 ${DIM}`; do
         echo "      integer, intent(in) :: count${i}"
     done
-    echo "      ${typekind}, intent(in) :: baseaddr"
+    echo '      integer(8), intent(in) :: baseaddr'
     for i in `seq 1 ${DIM}`; do
-        echo "      ${typekind}, intent(in) :: nextaddr${i}"
+        echo "      integer(8), intent(in) :: nextaddr${i}"
     done
+    case ${DIM} in
+        0)  echo "      ${typekind} :: mold" ;;
+        1)  echo "      ${typekind} :: mold(count1)" ;;
+        *)  echo72 "      ${typekind} :: mold(count1"
+            echo -n "         "
+            for i in `seq 2 ${DIM}`; do
+                echo -n ",count${i}"
+            done
+            echo ')' ;;
+    esac
     case ${DIM} in
         0)  echo "      ${typekind} :: val" ;;
         1)  echo "      ${typekind} :: val(count1)" ;;

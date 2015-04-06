@@ -36,7 +36,7 @@ static void _getVectorByElement(char *desc, int start, int vlength,
     entry
 \***************************************************/
 
-extern void xmpf_coarray_get_scalar_(void **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *result)
 {
   _XMPF_checkIfInTask("a scalar coindexed object");
@@ -47,10 +47,10 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char *baseAddr, int *elemen
   case SCHEME_DirectGet:
     if (_XMPF_coarrayMsg) {
       _XMPF_coarrayDebugPrint("select SCHEME_DirectGet/scalar\n"
-                              "  baseAddr=%p, *element=%d\n",
-                              baseAddr, *element);
+                              "  *baseAddr=%p, *element=%d\n",
+                              *baseAddr, *element);
     }
-    _getVector(*descPtr, baseAddr, *element, *coindex, result);
+    _getVector(*descPtr, *baseAddr, *element, *coindex, result);
     break;
 
   case SCHEME_BufferGet:
@@ -59,10 +59,10 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char *baseAddr, int *elemen
 
       if (_XMPF_coarrayMsg) {
         _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/scalar\n",
-                                "  baseAddr=%p, *element=%zd, buf=%p\n",
-                                baseAddr, *element, buf);
+                                "  *baseAddr=%p, *element=%zd, buf=%p\n",
+                                *baseAddr, *element, buf);
       }
-      _getVector(*descPtr, baseAddr, *element, *coindex, buf);
+      _getVector(*descPtr, *baseAddr, *element, *coindex, buf);
       (void)memcpy(result, buf, *element);
     }
     break;
@@ -74,10 +74,10 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char *baseAddr, int *elemen
 
       if (_XMPF_coarrayMsg) {
         _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferGet/scalar\n",
-                                "  baseAddr=%p, elementRU=%zd, buf=%p\n",
-                                baseAddr, elementRU, buf);
+                                "  *baseAddr=%p, elementRU=%zd, buf=%p\n",
+                                *baseAddr, elementRU, buf);
       }
-      _getVector(*descPtr, baseAddr, elementRU, *coindex, buf);
+      _getVector(*descPtr, *baseAddr, elementRU, *coindex, buf);
       (void)memcpy(result, buf, *element);
     }
     break;
@@ -88,7 +88,7 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char *baseAddr, int *elemen
 }
 
 
-extern void xmpf_coarray_get_array_(void **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char *result, int *rank, ...)
 {
   _XMPF_checkIfInTask("an array coindexed object");
@@ -99,7 +99,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char *baseAddr, int *element
 
   int scheme = _select_getscheme_array();
 
-  char *nextAddr;
+  char **nextAddr;
   int skip[MAX_RANK];
   int count[MAX_RANK];
   va_list argList;
@@ -112,8 +112,8 @@ extern void xmpf_coarray_get_array_(void **descPtr, char *baseAddr, int *element
   }
 
   for (int i = 0; i < *rank; i++) {
-    nextAddr = va_arg(argList, char*);
-    skip[i] = nextAddr - baseAddr;
+    nextAddr = (va_arg(argList, char**));
+    skip[i] = *nextAddr - *baseAddr;
     count[i] = *(va_arg(argList, int*));
   }
 
@@ -121,10 +121,10 @@ extern void xmpf_coarray_get_array_(void **descPtr, char *baseAddr, int *element
   case SCHEME_DirectGet:
     if (_XMPF_coarrayMsg) {
       _XMPF_coarrayDebugPrint("select SCHEME_DirectGet/array\n"
-                              "  baseAddr=%p, *element=%d\n",
-                              baseAddr, *element);
+                              "  *baseAddr=%p, *element=%d\n",
+                              *baseAddr, *element);
     }
-    _getCoarray(*descPtr, baseAddr, *coindex, result, *element, *rank, skip, count);
+    _getCoarray(*descPtr, *baseAddr, *coindex, result, *element, *rank, skip, count);
     break;
 
   case SCHEME_BufferGet:
@@ -137,7 +137,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char *baseAddr, int *element
                               "  bufsize=%zd\n", bufsize);
     }
     buf = malloc(bufsize);
-    _getCoarray(*descPtr, baseAddr, *coindex, buf, *element, *rank, skip, count);
+    _getCoarray(*descPtr, *baseAddr, *coindex, buf, *element, *rank, skip, count);
     (void)memcpy(result, buf, bufsize);
     break;
 

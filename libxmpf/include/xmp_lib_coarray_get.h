@@ -7,91 +7,102 @@
 !!!  complex(kind=16) (32bytes) is not supported in XMP/F
 
       function xmpf_coarray_get0d_i2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer(2), intent(in) :: baseaddr
-      integer(2) :: val
-      end function
-      function xmpf_coarray_get0d_i4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer(4), intent(in) :: baseaddr
-      integer(4) :: val
-      end function
-      function xmpf_coarray_get0d_i8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
       integer(8), intent(in) :: baseaddr
+      integer(2) :: mold
+      integer(2) :: val
+      end function
+      function xmpf_coarray_get0d_i4(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer(8), intent(in) :: baseaddr
+      integer(4) :: mold
+      integer(4) :: val
+      end function
+      function xmpf_coarray_get0d_i8(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer(8), intent(in) :: baseaddr
+      integer(8) :: mold
       integer(8) :: val
       end function
       function xmpf_coarray_get0d_l2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
-      logical(2), intent(in) :: baseaddr
+      integer(8), intent(in) :: baseaddr
+      logical(2) :: mold
       logical(2) :: val
       end function
       function xmpf_coarray_get0d_l4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
-      logical(4), intent(in) :: baseaddr
+      integer(8), intent(in) :: baseaddr
+      logical(4) :: mold
       logical(4) :: val
       end function
       function xmpf_coarray_get0d_l8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
-      logical(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: baseaddr
+      logical(8) :: mold
       logical(8) :: val
       end function
       function xmpf_coarray_get0d_r4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
-      real(4), intent(in) :: baseaddr
+      integer(8), intent(in) :: baseaddr
+      real(4) :: mold
       real(4) :: val
       end function
       function xmpf_coarray_get0d_r8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
-      real(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: baseaddr
+      real(8) :: mold
       real(8) :: val
       end function
       function xmpf_coarray_get0d_z8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
-      complex(4), intent(in) :: baseaddr
+      integer(8), intent(in) :: baseaddr
+      complex(4) :: mold
       complex(4) :: val
       end function
       function xmpf_coarray_get0d_z16(descptr, baseaddr, element,       &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
-      complex(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: baseaddr
+      complex(8) :: mold
       complex(8) :: val
       end function
       function xmpf_coarray_get0d_cn(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
-      character(element), intent(in) :: baseaddr
+      integer(8), intent(in) :: baseaddr
+      character(element) :: mold
       character(element) :: val
       end function
 
@@ -104,29 +115,7 @@
 !!!  complex(kind=16) (32bytes) is not supported in XMP/F
 
       function xmpf_coarray_get1d_i2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer(2), intent(in) :: baseaddr
-      integer(2), intent(in) :: nextaddr1
-      integer(2) :: val(count1)
-      end function
-      function xmpf_coarray_get1d_i4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer(4), intent(in) :: baseaddr
-      integer(4), intent(in) :: nextaddr1
-      integer(4) :: val(count1)
-      end function
-      function xmpf_coarray_get1d_i8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
@@ -134,94 +123,127 @@
       integer, intent(in) :: count1
       integer(8), intent(in) :: baseaddr
       integer(8), intent(in) :: nextaddr1
+      integer(2) :: mold(count1)
+      integer(2) :: val(count1)
+      end function
+      function xmpf_coarray_get1d_i4(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(4) :: mold(count1)
+      integer(4) :: val(count1)
+      end function
+      function xmpf_coarray_get1d_i8(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8) :: mold(count1)
       integer(8) :: val(count1)
       end function
       function xmpf_coarray_get1d_l2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
-      logical(2), intent(in) :: baseaddr
-      logical(2), intent(in) :: nextaddr1
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      logical(2) :: mold(count1)
       logical(2) :: val(count1)
       end function
       function xmpf_coarray_get1d_l4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
-      logical(4), intent(in) :: baseaddr
-      logical(4), intent(in) :: nextaddr1
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      logical(4) :: mold(count1)
       logical(4) :: val(count1)
       end function
       function xmpf_coarray_get1d_l8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
-      logical(8), intent(in) :: baseaddr
-      logical(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      logical(8) :: mold(count1)
       logical(8) :: val(count1)
       end function
       function xmpf_coarray_get1d_r4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
-      real(4), intent(in) :: baseaddr
-      real(4), intent(in) :: nextaddr1
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      real(4) :: mold(count1)
       real(4) :: val(count1)
       end function
       function xmpf_coarray_get1d_r8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
-      real(8), intent(in) :: baseaddr
-      real(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      real(8) :: mold(count1)
       real(8) :: val(count1)
       end function
       function xmpf_coarray_get1d_z8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
-      complex(4), intent(in) :: baseaddr
-      complex(4), intent(in) :: nextaddr1
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      complex(4) :: mold(count1)
       complex(4) :: val(count1)
       end function
       function xmpf_coarray_get1d_z16(descptr, baseaddr, element,       &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
-      complex(8), intent(in) :: baseaddr
-      complex(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      complex(8) :: mold(count1)
       complex(8) :: val(count1)
       end function
       function xmpf_coarray_get1d_cn(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   ) result(val)
       integer(8), intent(in) :: descptr
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
-      character(element), intent(in) :: baseaddr
-      character(element), intent(in) :: nextaddr1
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      character(element) :: mold(count1)
       character(element) :: val(count1)
       end function
 
@@ -234,37 +256,7 @@
 !!!  complex(kind=16) (32bytes) is not supported in XMP/F
 
       function xmpf_coarray_get2d_i2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   , nextaddr2, count2                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer, intent(in) :: count2
-      integer(2), intent(in) :: baseaddr
-      integer(2), intent(in) :: nextaddr1
-      integer(2), intent(in) :: nextaddr2
-      integer(2) :: val(count1                                          &
-         ,count2)
-      end function
-      function xmpf_coarray_get2d_i4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   , nextaddr2, count2                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer, intent(in) :: count2
-      integer(4), intent(in) :: baseaddr
-      integer(4), intent(in) :: nextaddr1
-      integer(4), intent(in) :: nextaddr2
-      integer(4) :: val(count1                                          &
-         ,count2)
-      end function
-      function xmpf_coarray_get2d_i8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   ) result(val)
@@ -275,11 +267,47 @@
       integer(8), intent(in) :: baseaddr
       integer(8), intent(in) :: nextaddr1
       integer(8), intent(in) :: nextaddr2
+      integer(2) :: mold(count1                                         &
+         ,count2)
+      integer(2) :: val(count1                                          &
+         ,count2)
+      end function
+      function xmpf_coarray_get2d_i4(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   , nextaddr2, count2                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer, intent(in) :: count2
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(4) :: mold(count1                                         &
+         ,count2)
+      integer(4) :: val(count1                                          &
+         ,count2)
+      end function
+      function xmpf_coarray_get2d_i8(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   , nextaddr2, count2                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer, intent(in) :: count2
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8) :: mold(count1                                         &
+         ,count2)
       integer(8) :: val(count1                                          &
          ,count2)
       end function
       function xmpf_coarray_get2d_l2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   ) result(val)
@@ -287,14 +315,16 @@
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
       integer, intent(in) :: count2
-      logical(2), intent(in) :: baseaddr
-      logical(2), intent(in) :: nextaddr1
-      logical(2), intent(in) :: nextaddr2
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      logical(2) :: mold(count1                                         &
+         ,count2)
       logical(2) :: val(count1                                          &
          ,count2)
       end function
       function xmpf_coarray_get2d_l4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   ) result(val)
@@ -302,14 +332,16 @@
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
       integer, intent(in) :: count2
-      logical(4), intent(in) :: baseaddr
-      logical(4), intent(in) :: nextaddr1
-      logical(4), intent(in) :: nextaddr2
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      logical(4) :: mold(count1                                         &
+         ,count2)
       logical(4) :: val(count1                                          &
          ,count2)
       end function
       function xmpf_coarray_get2d_l8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   ) result(val)
@@ -317,14 +349,16 @@
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
       integer, intent(in) :: count2
-      logical(8), intent(in) :: baseaddr
-      logical(8), intent(in) :: nextaddr1
-      logical(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      logical(8) :: mold(count1                                         &
+         ,count2)
       logical(8) :: val(count1                                          &
          ,count2)
       end function
       function xmpf_coarray_get2d_r4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   ) result(val)
@@ -332,14 +366,16 @@
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
       integer, intent(in) :: count2
-      real(4), intent(in) :: baseaddr
-      real(4), intent(in) :: nextaddr1
-      real(4), intent(in) :: nextaddr2
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      real(4) :: mold(count1                                            &
+         ,count2)
       real(4) :: val(count1                                             &
          ,count2)
       end function
       function xmpf_coarray_get2d_r8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   ) result(val)
@@ -347,14 +383,16 @@
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
       integer, intent(in) :: count2
-      real(8), intent(in) :: baseaddr
-      real(8), intent(in) :: nextaddr1
-      real(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      real(8) :: mold(count1                                            &
+         ,count2)
       real(8) :: val(count1                                             &
          ,count2)
       end function
       function xmpf_coarray_get2d_z8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   ) result(val)
@@ -362,14 +400,16 @@
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
       integer, intent(in) :: count2
-      complex(4), intent(in) :: baseaddr
-      complex(4), intent(in) :: nextaddr1
-      complex(4), intent(in) :: nextaddr2
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      complex(4) :: mold(count1                                         &
+         ,count2)
       complex(4) :: val(count1                                          &
          ,count2)
       end function
       function xmpf_coarray_get2d_z16(descptr, baseaddr, element,       &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   ) result(val)
@@ -377,14 +417,16 @@
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
       integer, intent(in) :: count2
-      complex(8), intent(in) :: baseaddr
-      complex(8), intent(in) :: nextaddr1
-      complex(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      complex(8) :: mold(count1                                         &
+         ,count2)
       complex(8) :: val(count1                                          &
          ,count2)
       end function
       function xmpf_coarray_get2d_cn(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   ) result(val)
@@ -392,9 +434,11 @@
       integer, intent(in) :: element, coindex, rank
       integer, intent(in) :: count1
       integer, intent(in) :: count2
-      character(element), intent(in) :: baseaddr
-      character(element), intent(in) :: nextaddr1
-      character(element), intent(in) :: nextaddr2
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      character(element) :: mold(count1                                 &
+         ,count2)
       character(element) :: val(count1                                  &
          ,count2)
       end function
@@ -408,43 +452,7 @@
 !!!  complex(kind=16) (32bytes) is not supported in XMP/F
 
       function xmpf_coarray_get3d_i2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   , nextaddr2, count2                                            &
-     &   , nextaddr3, count3                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer, intent(in) :: count2
-      integer, intent(in) :: count3
-      integer(2), intent(in) :: baseaddr
-      integer(2), intent(in) :: nextaddr1
-      integer(2), intent(in) :: nextaddr2
-      integer(2), intent(in) :: nextaddr3
-      integer(2) :: val(count1                                          &
-         ,count2,count3)
-      end function
-      function xmpf_coarray_get3d_i4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   , nextaddr2, count2                                            &
-     &   , nextaddr3, count3                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer, intent(in) :: count2
-      integer, intent(in) :: count3
-      integer(4), intent(in) :: baseaddr
-      integer(4), intent(in) :: nextaddr1
-      integer(4), intent(in) :: nextaddr2
-      integer(4), intent(in) :: nextaddr3
-      integer(4) :: val(count1                                          &
-         ,count2,count3)
-      end function
-      function xmpf_coarray_get3d_i8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -458,11 +466,53 @@
       integer(8), intent(in) :: nextaddr1
       integer(8), intent(in) :: nextaddr2
       integer(8), intent(in) :: nextaddr3
+      integer(2) :: mold(count1                                         &
+         ,count2,count3)
+      integer(2) :: val(count1                                          &
+         ,count2,count3)
+      end function
+      function xmpf_coarray_get3d_i4(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   , nextaddr2, count2                                            &
+     &   , nextaddr3, count3                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer, intent(in) :: count2
+      integer, intent(in) :: count3
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(4) :: mold(count1                                         &
+         ,count2,count3)
+      integer(4) :: val(count1                                          &
+         ,count2,count3)
+      end function
+      function xmpf_coarray_get3d_i8(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   , nextaddr2, count2                                            &
+     &   , nextaddr3, count3                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer, intent(in) :: count2
+      integer, intent(in) :: count3
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8) :: mold(count1                                         &
+         ,count2,count3)
       integer(8) :: val(count1                                          &
          ,count2,count3)
       end function
       function xmpf_coarray_get3d_l2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -472,15 +522,17 @@
       integer, intent(in) :: count1
       integer, intent(in) :: count2
       integer, intent(in) :: count3
-      logical(2), intent(in) :: baseaddr
-      logical(2), intent(in) :: nextaddr1
-      logical(2), intent(in) :: nextaddr2
-      logical(2), intent(in) :: nextaddr3
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      logical(2) :: mold(count1                                         &
+         ,count2,count3)
       logical(2) :: val(count1                                          &
          ,count2,count3)
       end function
       function xmpf_coarray_get3d_l4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -490,15 +542,17 @@
       integer, intent(in) :: count1
       integer, intent(in) :: count2
       integer, intent(in) :: count3
-      logical(4), intent(in) :: baseaddr
-      logical(4), intent(in) :: nextaddr1
-      logical(4), intent(in) :: nextaddr2
-      logical(4), intent(in) :: nextaddr3
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      logical(4) :: mold(count1                                         &
+         ,count2,count3)
       logical(4) :: val(count1                                          &
          ,count2,count3)
       end function
       function xmpf_coarray_get3d_l8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -508,15 +562,17 @@
       integer, intent(in) :: count1
       integer, intent(in) :: count2
       integer, intent(in) :: count3
-      logical(8), intent(in) :: baseaddr
-      logical(8), intent(in) :: nextaddr1
-      logical(8), intent(in) :: nextaddr2
-      logical(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      logical(8) :: mold(count1                                         &
+         ,count2,count3)
       logical(8) :: val(count1                                          &
          ,count2,count3)
       end function
       function xmpf_coarray_get3d_r4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -526,15 +582,17 @@
       integer, intent(in) :: count1
       integer, intent(in) :: count2
       integer, intent(in) :: count3
-      real(4), intent(in) :: baseaddr
-      real(4), intent(in) :: nextaddr1
-      real(4), intent(in) :: nextaddr2
-      real(4), intent(in) :: nextaddr3
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      real(4) :: mold(count1                                            &
+         ,count2,count3)
       real(4) :: val(count1                                             &
          ,count2,count3)
       end function
       function xmpf_coarray_get3d_r8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -544,15 +602,17 @@
       integer, intent(in) :: count1
       integer, intent(in) :: count2
       integer, intent(in) :: count3
-      real(8), intent(in) :: baseaddr
-      real(8), intent(in) :: nextaddr1
-      real(8), intent(in) :: nextaddr2
-      real(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      real(8) :: mold(count1                                            &
+         ,count2,count3)
       real(8) :: val(count1                                             &
          ,count2,count3)
       end function
       function xmpf_coarray_get3d_z8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -562,15 +622,17 @@
       integer, intent(in) :: count1
       integer, intent(in) :: count2
       integer, intent(in) :: count3
-      complex(4), intent(in) :: baseaddr
-      complex(4), intent(in) :: nextaddr1
-      complex(4), intent(in) :: nextaddr2
-      complex(4), intent(in) :: nextaddr3
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      complex(4) :: mold(count1                                         &
+         ,count2,count3)
       complex(4) :: val(count1                                          &
          ,count2,count3)
       end function
       function xmpf_coarray_get3d_z16(descptr, baseaddr, element,       &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -580,15 +642,17 @@
       integer, intent(in) :: count1
       integer, intent(in) :: count2
       integer, intent(in) :: count3
-      complex(8), intent(in) :: baseaddr
-      complex(8), intent(in) :: nextaddr1
-      complex(8), intent(in) :: nextaddr2
-      complex(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      complex(8) :: mold(count1                                         &
+         ,count2,count3)
       complex(8) :: val(count1                                          &
          ,count2,count3)
       end function
       function xmpf_coarray_get3d_cn(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -598,10 +662,12 @@
       integer, intent(in) :: count1
       integer, intent(in) :: count2
       integer, intent(in) :: count3
-      character(element), intent(in) :: baseaddr
-      character(element), intent(in) :: nextaddr1
-      character(element), intent(in) :: nextaddr2
-      character(element), intent(in) :: nextaddr3
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      character(element) :: mold(count1                                 &
+         ,count2,count3)
       character(element) :: val(count1                                  &
          ,count2,count3)
       end function
@@ -615,49 +681,7 @@
 !!!  complex(kind=16) (32bytes) is not supported in XMP/F
 
       function xmpf_coarray_get4d_i2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   , nextaddr2, count2                                            &
-     &   , nextaddr3, count3                                            &
-     &   , nextaddr4, count4                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer, intent(in) :: count2
-      integer, intent(in) :: count3
-      integer, intent(in) :: count4
-      integer(2), intent(in) :: baseaddr
-      integer(2), intent(in) :: nextaddr1
-      integer(2), intent(in) :: nextaddr2
-      integer(2), intent(in) :: nextaddr3
-      integer(2), intent(in) :: nextaddr4
-      integer(2) :: val(count1                                          &
-         ,count2,count3,count4)
-      end function
-      function xmpf_coarray_get4d_i4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   , nextaddr2, count2                                            &
-     &   , nextaddr3, count3                                            &
-     &   , nextaddr4, count4                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer, intent(in) :: count2
-      integer, intent(in) :: count3
-      integer, intent(in) :: count4
-      integer(4), intent(in) :: baseaddr
-      integer(4), intent(in) :: nextaddr1
-      integer(4), intent(in) :: nextaddr2
-      integer(4), intent(in) :: nextaddr3
-      integer(4), intent(in) :: nextaddr4
-      integer(4) :: val(count1                                          &
-         ,count2,count3,count4)
-      end function
-      function xmpf_coarray_get4d_i8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -674,11 +698,59 @@
       integer(8), intent(in) :: nextaddr2
       integer(8), intent(in) :: nextaddr3
       integer(8), intent(in) :: nextaddr4
+      integer(2) :: mold(count1                                         &
+         ,count2,count3,count4)
+      integer(2) :: val(count1                                          &
+         ,count2,count3,count4)
+      end function
+      function xmpf_coarray_get4d_i4(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   , nextaddr2, count2                                            &
+     &   , nextaddr3, count3                                            &
+     &   , nextaddr4, count4                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer, intent(in) :: count2
+      integer, intent(in) :: count3
+      integer, intent(in) :: count4
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(4) :: mold(count1                                         &
+         ,count2,count3,count4)
+      integer(4) :: val(count1                                          &
+         ,count2,count3,count4)
+      end function
+      function xmpf_coarray_get4d_i8(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   , nextaddr2, count2                                            &
+     &   , nextaddr3, count3                                            &
+     &   , nextaddr4, count4                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer, intent(in) :: count2
+      integer, intent(in) :: count3
+      integer, intent(in) :: count4
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8) :: mold(count1                                         &
+         ,count2,count3,count4)
       integer(8) :: val(count1                                          &
          ,count2,count3,count4)
       end function
       function xmpf_coarray_get4d_l2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -690,16 +762,18 @@
       integer, intent(in) :: count2
       integer, intent(in) :: count3
       integer, intent(in) :: count4
-      logical(2), intent(in) :: baseaddr
-      logical(2), intent(in) :: nextaddr1
-      logical(2), intent(in) :: nextaddr2
-      logical(2), intent(in) :: nextaddr3
-      logical(2), intent(in) :: nextaddr4
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      logical(2) :: mold(count1                                         &
+         ,count2,count3,count4)
       logical(2) :: val(count1                                          &
          ,count2,count3,count4)
       end function
       function xmpf_coarray_get4d_l4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -711,16 +785,18 @@
       integer, intent(in) :: count2
       integer, intent(in) :: count3
       integer, intent(in) :: count4
-      logical(4), intent(in) :: baseaddr
-      logical(4), intent(in) :: nextaddr1
-      logical(4), intent(in) :: nextaddr2
-      logical(4), intent(in) :: nextaddr3
-      logical(4), intent(in) :: nextaddr4
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      logical(4) :: mold(count1                                         &
+         ,count2,count3,count4)
       logical(4) :: val(count1                                          &
          ,count2,count3,count4)
       end function
       function xmpf_coarray_get4d_l8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -732,16 +808,18 @@
       integer, intent(in) :: count2
       integer, intent(in) :: count3
       integer, intent(in) :: count4
-      logical(8), intent(in) :: baseaddr
-      logical(8), intent(in) :: nextaddr1
-      logical(8), intent(in) :: nextaddr2
-      logical(8), intent(in) :: nextaddr3
-      logical(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      logical(8) :: mold(count1                                         &
+         ,count2,count3,count4)
       logical(8) :: val(count1                                          &
          ,count2,count3,count4)
       end function
       function xmpf_coarray_get4d_r4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -753,16 +831,18 @@
       integer, intent(in) :: count2
       integer, intent(in) :: count3
       integer, intent(in) :: count4
-      real(4), intent(in) :: baseaddr
-      real(4), intent(in) :: nextaddr1
-      real(4), intent(in) :: nextaddr2
-      real(4), intent(in) :: nextaddr3
-      real(4), intent(in) :: nextaddr4
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      real(4) :: mold(count1                                            &
+         ,count2,count3,count4)
       real(4) :: val(count1                                             &
          ,count2,count3,count4)
       end function
       function xmpf_coarray_get4d_r8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -774,16 +854,18 @@
       integer, intent(in) :: count2
       integer, intent(in) :: count3
       integer, intent(in) :: count4
-      real(8), intent(in) :: baseaddr
-      real(8), intent(in) :: nextaddr1
-      real(8), intent(in) :: nextaddr2
-      real(8), intent(in) :: nextaddr3
-      real(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      real(8) :: mold(count1                                            &
+         ,count2,count3,count4)
       real(8) :: val(count1                                             &
          ,count2,count3,count4)
       end function
       function xmpf_coarray_get4d_z8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -795,16 +877,18 @@
       integer, intent(in) :: count2
       integer, intent(in) :: count3
       integer, intent(in) :: count4
-      complex(4), intent(in) :: baseaddr
-      complex(4), intent(in) :: nextaddr1
-      complex(4), intent(in) :: nextaddr2
-      complex(4), intent(in) :: nextaddr3
-      complex(4), intent(in) :: nextaddr4
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      complex(4) :: mold(count1                                         &
+         ,count2,count3,count4)
       complex(4) :: val(count1                                          &
          ,count2,count3,count4)
       end function
       function xmpf_coarray_get4d_z16(descptr, baseaddr, element,       &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -816,16 +900,18 @@
       integer, intent(in) :: count2
       integer, intent(in) :: count3
       integer, intent(in) :: count4
-      complex(8), intent(in) :: baseaddr
-      complex(8), intent(in) :: nextaddr1
-      complex(8), intent(in) :: nextaddr2
-      complex(8), intent(in) :: nextaddr3
-      complex(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      complex(8) :: mold(count1                                         &
+         ,count2,count3,count4)
       complex(8) :: val(count1                                          &
          ,count2,count3,count4)
       end function
       function xmpf_coarray_get4d_cn(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -837,11 +923,13 @@
       integer, intent(in) :: count2
       integer, intent(in) :: count3
       integer, intent(in) :: count4
-      character(element), intent(in) :: baseaddr
-      character(element), intent(in) :: nextaddr1
-      character(element), intent(in) :: nextaddr2
-      character(element), intent(in) :: nextaddr3
-      character(element), intent(in) :: nextaddr4
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      character(element) :: mold(count1                                 &
+         ,count2,count3,count4)
       character(element) :: val(count1                                  &
          ,count2,count3,count4)
       end function
@@ -855,55 +943,7 @@
 !!!  complex(kind=16) (32bytes) is not supported in XMP/F
 
       function xmpf_coarray_get5d_i2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   , nextaddr2, count2                                            &
-     &   , nextaddr3, count3                                            &
-     &   , nextaddr4, count4                                            &
-     &   , nextaddr5, count5                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer, intent(in) :: count2
-      integer, intent(in) :: count3
-      integer, intent(in) :: count4
-      integer, intent(in) :: count5
-      integer(2), intent(in) :: baseaddr
-      integer(2), intent(in) :: nextaddr1
-      integer(2), intent(in) :: nextaddr2
-      integer(2), intent(in) :: nextaddr3
-      integer(2), intent(in) :: nextaddr4
-      integer(2), intent(in) :: nextaddr5
-      integer(2) :: val(count1                                          &
-         ,count2,count3,count4,count5)
-      end function
-      function xmpf_coarray_get5d_i4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   , nextaddr2, count2                                            &
-     &   , nextaddr3, count3                                            &
-     &   , nextaddr4, count4                                            &
-     &   , nextaddr5, count5                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer, intent(in) :: count2
-      integer, intent(in) :: count3
-      integer, intent(in) :: count4
-      integer, intent(in) :: count5
-      integer(4), intent(in) :: baseaddr
-      integer(4), intent(in) :: nextaddr1
-      integer(4), intent(in) :: nextaddr2
-      integer(4), intent(in) :: nextaddr3
-      integer(4), intent(in) :: nextaddr4
-      integer(4), intent(in) :: nextaddr5
-      integer(4) :: val(count1                                          &
-         ,count2,count3,count4,count5)
-      end function
-      function xmpf_coarray_get5d_i8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -923,11 +963,65 @@
       integer(8), intent(in) :: nextaddr3
       integer(8), intent(in) :: nextaddr4
       integer(8), intent(in) :: nextaddr5
+      integer(2) :: mold(count1                                         &
+         ,count2,count3,count4,count5)
+      integer(2) :: val(count1                                          &
+         ,count2,count3,count4,count5)
+      end function
+      function xmpf_coarray_get5d_i4(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   , nextaddr2, count2                                            &
+     &   , nextaddr3, count3                                            &
+     &   , nextaddr4, count4                                            &
+     &   , nextaddr5, count5                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer, intent(in) :: count2
+      integer, intent(in) :: count3
+      integer, intent(in) :: count4
+      integer, intent(in) :: count5
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(4) :: mold(count1                                         &
+         ,count2,count3,count4,count5)
+      integer(4) :: val(count1                                          &
+         ,count2,count3,count4,count5)
+      end function
+      function xmpf_coarray_get5d_i8(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   , nextaddr2, count2                                            &
+     &   , nextaddr3, count3                                            &
+     &   , nextaddr4, count4                                            &
+     &   , nextaddr5, count5                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer, intent(in) :: count2
+      integer, intent(in) :: count3
+      integer, intent(in) :: count4
+      integer, intent(in) :: count5
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8) :: mold(count1                                         &
+         ,count2,count3,count4,count5)
       integer(8) :: val(count1                                          &
          ,count2,count3,count4,count5)
       end function
       function xmpf_coarray_get5d_l2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -941,17 +1035,19 @@
       integer, intent(in) :: count3
       integer, intent(in) :: count4
       integer, intent(in) :: count5
-      logical(2), intent(in) :: baseaddr
-      logical(2), intent(in) :: nextaddr1
-      logical(2), intent(in) :: nextaddr2
-      logical(2), intent(in) :: nextaddr3
-      logical(2), intent(in) :: nextaddr4
-      logical(2), intent(in) :: nextaddr5
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      logical(2) :: mold(count1                                         &
+         ,count2,count3,count4,count5)
       logical(2) :: val(count1                                          &
          ,count2,count3,count4,count5)
       end function
       function xmpf_coarray_get5d_l4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -965,17 +1061,19 @@
       integer, intent(in) :: count3
       integer, intent(in) :: count4
       integer, intent(in) :: count5
-      logical(4), intent(in) :: baseaddr
-      logical(4), intent(in) :: nextaddr1
-      logical(4), intent(in) :: nextaddr2
-      logical(4), intent(in) :: nextaddr3
-      logical(4), intent(in) :: nextaddr4
-      logical(4), intent(in) :: nextaddr5
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      logical(4) :: mold(count1                                         &
+         ,count2,count3,count4,count5)
       logical(4) :: val(count1                                          &
          ,count2,count3,count4,count5)
       end function
       function xmpf_coarray_get5d_l8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -989,17 +1087,19 @@
       integer, intent(in) :: count3
       integer, intent(in) :: count4
       integer, intent(in) :: count5
-      logical(8), intent(in) :: baseaddr
-      logical(8), intent(in) :: nextaddr1
-      logical(8), intent(in) :: nextaddr2
-      logical(8), intent(in) :: nextaddr3
-      logical(8), intent(in) :: nextaddr4
-      logical(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      logical(8) :: mold(count1                                         &
+         ,count2,count3,count4,count5)
       logical(8) :: val(count1                                          &
          ,count2,count3,count4,count5)
       end function
       function xmpf_coarray_get5d_r4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1013,17 +1113,19 @@
       integer, intent(in) :: count3
       integer, intent(in) :: count4
       integer, intent(in) :: count5
-      real(4), intent(in) :: baseaddr
-      real(4), intent(in) :: nextaddr1
-      real(4), intent(in) :: nextaddr2
-      real(4), intent(in) :: nextaddr3
-      real(4), intent(in) :: nextaddr4
-      real(4), intent(in) :: nextaddr5
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      real(4) :: mold(count1                                            &
+         ,count2,count3,count4,count5)
       real(4) :: val(count1                                             &
          ,count2,count3,count4,count5)
       end function
       function xmpf_coarray_get5d_r8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1037,17 +1139,19 @@
       integer, intent(in) :: count3
       integer, intent(in) :: count4
       integer, intent(in) :: count5
-      real(8), intent(in) :: baseaddr
-      real(8), intent(in) :: nextaddr1
-      real(8), intent(in) :: nextaddr2
-      real(8), intent(in) :: nextaddr3
-      real(8), intent(in) :: nextaddr4
-      real(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      real(8) :: mold(count1                                            &
+         ,count2,count3,count4,count5)
       real(8) :: val(count1                                             &
          ,count2,count3,count4,count5)
       end function
       function xmpf_coarray_get5d_z8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1061,17 +1165,19 @@
       integer, intent(in) :: count3
       integer, intent(in) :: count4
       integer, intent(in) :: count5
-      complex(4), intent(in) :: baseaddr
-      complex(4), intent(in) :: nextaddr1
-      complex(4), intent(in) :: nextaddr2
-      complex(4), intent(in) :: nextaddr3
-      complex(4), intent(in) :: nextaddr4
-      complex(4), intent(in) :: nextaddr5
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      complex(4) :: mold(count1                                         &
+         ,count2,count3,count4,count5)
       complex(4) :: val(count1                                          &
          ,count2,count3,count4,count5)
       end function
       function xmpf_coarray_get5d_z16(descptr, baseaddr, element,       &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1085,17 +1191,19 @@
       integer, intent(in) :: count3
       integer, intent(in) :: count4
       integer, intent(in) :: count5
-      complex(8), intent(in) :: baseaddr
-      complex(8), intent(in) :: nextaddr1
-      complex(8), intent(in) :: nextaddr2
-      complex(8), intent(in) :: nextaddr3
-      complex(8), intent(in) :: nextaddr4
-      complex(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      complex(8) :: mold(count1                                         &
+         ,count2,count3,count4,count5)
       complex(8) :: val(count1                                          &
          ,count2,count3,count4,count5)
       end function
       function xmpf_coarray_get5d_cn(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1109,12 +1217,14 @@
       integer, intent(in) :: count3
       integer, intent(in) :: count4
       integer, intent(in) :: count5
-      character(element), intent(in) :: baseaddr
-      character(element), intent(in) :: nextaddr1
-      character(element), intent(in) :: nextaddr2
-      character(element), intent(in) :: nextaddr3
-      character(element), intent(in) :: nextaddr4
-      character(element), intent(in) :: nextaddr5
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      character(element) :: mold(count1                                 &
+         ,count2,count3,count4,count5)
       character(element) :: val(count1                                  &
          ,count2,count3,count4,count5)
       end function
@@ -1128,61 +1238,7 @@
 !!!  complex(kind=16) (32bytes) is not supported in XMP/F
 
       function xmpf_coarray_get6d_i2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   , nextaddr2, count2                                            &
-     &   , nextaddr3, count3                                            &
-     &   , nextaddr4, count4                                            &
-     &   , nextaddr5, count5                                            &
-     &   , nextaddr6, count6                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer, intent(in) :: count2
-      integer, intent(in) :: count3
-      integer, intent(in) :: count4
-      integer, intent(in) :: count5
-      integer, intent(in) :: count6
-      integer(2), intent(in) :: baseaddr
-      integer(2), intent(in) :: nextaddr1
-      integer(2), intent(in) :: nextaddr2
-      integer(2), intent(in) :: nextaddr3
-      integer(2), intent(in) :: nextaddr4
-      integer(2), intent(in) :: nextaddr5
-      integer(2), intent(in) :: nextaddr6
-      integer(2) :: val(count1                                          &
-         ,count2,count3,count4,count5,count6)
-      end function
-      function xmpf_coarray_get6d_i4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   , nextaddr2, count2                                            &
-     &   , nextaddr3, count3                                            &
-     &   , nextaddr4, count4                                            &
-     &   , nextaddr5, count5                                            &
-     &   , nextaddr6, count6                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer, intent(in) :: count2
-      integer, intent(in) :: count3
-      integer, intent(in) :: count4
-      integer, intent(in) :: count5
-      integer, intent(in) :: count6
-      integer(4), intent(in) :: baseaddr
-      integer(4), intent(in) :: nextaddr1
-      integer(4), intent(in) :: nextaddr2
-      integer(4), intent(in) :: nextaddr3
-      integer(4), intent(in) :: nextaddr4
-      integer(4), intent(in) :: nextaddr5
-      integer(4), intent(in) :: nextaddr6
-      integer(4) :: val(count1                                          &
-         ,count2,count3,count4,count5,count6)
-      end function
-      function xmpf_coarray_get6d_i8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1205,11 +1261,71 @@
       integer(8), intent(in) :: nextaddr4
       integer(8), intent(in) :: nextaddr5
       integer(8), intent(in) :: nextaddr6
+      integer(2) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6)
+      integer(2) :: val(count1                                          &
+         ,count2,count3,count4,count5,count6)
+      end function
+      function xmpf_coarray_get6d_i4(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   , nextaddr2, count2                                            &
+     &   , nextaddr3, count3                                            &
+     &   , nextaddr4, count4                                            &
+     &   , nextaddr5, count5                                            &
+     &   , nextaddr6, count6                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer, intent(in) :: count2
+      integer, intent(in) :: count3
+      integer, intent(in) :: count4
+      integer, intent(in) :: count5
+      integer, intent(in) :: count6
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      integer(4) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6)
+      integer(4) :: val(count1                                          &
+         ,count2,count3,count4,count5,count6)
+      end function
+      function xmpf_coarray_get6d_i8(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   , nextaddr2, count2                                            &
+     &   , nextaddr3, count3                                            &
+     &   , nextaddr4, count4                                            &
+     &   , nextaddr5, count5                                            &
+     &   , nextaddr6, count6                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer, intent(in) :: count2
+      integer, intent(in) :: count3
+      integer, intent(in) :: count4
+      integer, intent(in) :: count5
+      integer, intent(in) :: count6
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      integer(8) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6)
       integer(8) :: val(count1                                          &
          ,count2,count3,count4,count5,count6)
       end function
       function xmpf_coarray_get6d_l2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1225,18 +1341,20 @@
       integer, intent(in) :: count4
       integer, intent(in) :: count5
       integer, intent(in) :: count6
-      logical(2), intent(in) :: baseaddr
-      logical(2), intent(in) :: nextaddr1
-      logical(2), intent(in) :: nextaddr2
-      logical(2), intent(in) :: nextaddr3
-      logical(2), intent(in) :: nextaddr4
-      logical(2), intent(in) :: nextaddr5
-      logical(2), intent(in) :: nextaddr6
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      logical(2) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6)
       logical(2) :: val(count1                                          &
          ,count2,count3,count4,count5,count6)
       end function
       function xmpf_coarray_get6d_l4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1252,18 +1370,20 @@
       integer, intent(in) :: count4
       integer, intent(in) :: count5
       integer, intent(in) :: count6
-      logical(4), intent(in) :: baseaddr
-      logical(4), intent(in) :: nextaddr1
-      logical(4), intent(in) :: nextaddr2
-      logical(4), intent(in) :: nextaddr3
-      logical(4), intent(in) :: nextaddr4
-      logical(4), intent(in) :: nextaddr5
-      logical(4), intent(in) :: nextaddr6
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      logical(4) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6)
       logical(4) :: val(count1                                          &
          ,count2,count3,count4,count5,count6)
       end function
       function xmpf_coarray_get6d_l8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1279,18 +1399,20 @@
       integer, intent(in) :: count4
       integer, intent(in) :: count5
       integer, intent(in) :: count6
-      logical(8), intent(in) :: baseaddr
-      logical(8), intent(in) :: nextaddr1
-      logical(8), intent(in) :: nextaddr2
-      logical(8), intent(in) :: nextaddr3
-      logical(8), intent(in) :: nextaddr4
-      logical(8), intent(in) :: nextaddr5
-      logical(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      logical(8) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6)
       logical(8) :: val(count1                                          &
          ,count2,count3,count4,count5,count6)
       end function
       function xmpf_coarray_get6d_r4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1306,18 +1428,20 @@
       integer, intent(in) :: count4
       integer, intent(in) :: count5
       integer, intent(in) :: count6
-      real(4), intent(in) :: baseaddr
-      real(4), intent(in) :: nextaddr1
-      real(4), intent(in) :: nextaddr2
-      real(4), intent(in) :: nextaddr3
-      real(4), intent(in) :: nextaddr4
-      real(4), intent(in) :: nextaddr5
-      real(4), intent(in) :: nextaddr6
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      real(4) :: mold(count1                                            &
+         ,count2,count3,count4,count5,count6)
       real(4) :: val(count1                                             &
          ,count2,count3,count4,count5,count6)
       end function
       function xmpf_coarray_get6d_r8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1333,18 +1457,20 @@
       integer, intent(in) :: count4
       integer, intent(in) :: count5
       integer, intent(in) :: count6
-      real(8), intent(in) :: baseaddr
-      real(8), intent(in) :: nextaddr1
-      real(8), intent(in) :: nextaddr2
-      real(8), intent(in) :: nextaddr3
-      real(8), intent(in) :: nextaddr4
-      real(8), intent(in) :: nextaddr5
-      real(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      real(8) :: mold(count1                                            &
+         ,count2,count3,count4,count5,count6)
       real(8) :: val(count1                                             &
          ,count2,count3,count4,count5,count6)
       end function
       function xmpf_coarray_get6d_z8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1360,18 +1486,20 @@
       integer, intent(in) :: count4
       integer, intent(in) :: count5
       integer, intent(in) :: count6
-      complex(4), intent(in) :: baseaddr
-      complex(4), intent(in) :: nextaddr1
-      complex(4), intent(in) :: nextaddr2
-      complex(4), intent(in) :: nextaddr3
-      complex(4), intent(in) :: nextaddr4
-      complex(4), intent(in) :: nextaddr5
-      complex(4), intent(in) :: nextaddr6
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      complex(4) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6)
       complex(4) :: val(count1                                          &
          ,count2,count3,count4,count5,count6)
       end function
       function xmpf_coarray_get6d_z16(descptr, baseaddr, element,       &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1387,18 +1515,20 @@
       integer, intent(in) :: count4
       integer, intent(in) :: count5
       integer, intent(in) :: count6
-      complex(8), intent(in) :: baseaddr
-      complex(8), intent(in) :: nextaddr1
-      complex(8), intent(in) :: nextaddr2
-      complex(8), intent(in) :: nextaddr3
-      complex(8), intent(in) :: nextaddr4
-      complex(8), intent(in) :: nextaddr5
-      complex(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      complex(8) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6)
       complex(8) :: val(count1                                          &
          ,count2,count3,count4,count5,count6)
       end function
       function xmpf_coarray_get6d_cn(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1414,13 +1544,15 @@
       integer, intent(in) :: count4
       integer, intent(in) :: count5
       integer, intent(in) :: count6
-      character(element), intent(in) :: baseaddr
-      character(element), intent(in) :: nextaddr1
-      character(element), intent(in) :: nextaddr2
-      character(element), intent(in) :: nextaddr3
-      character(element), intent(in) :: nextaddr4
-      character(element), intent(in) :: nextaddr5
-      character(element), intent(in) :: nextaddr6
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      character(element) :: mold(count1                                 &
+         ,count2,count3,count4,count5,count6)
       character(element) :: val(count1                                  &
          ,count2,count3,count4,count5,count6)
       end function
@@ -1434,67 +1566,7 @@
 !!!  complex(kind=16) (32bytes) is not supported in XMP/F
 
       function xmpf_coarray_get7d_i2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   , nextaddr2, count2                                            &
-     &   , nextaddr3, count3                                            &
-     &   , nextaddr4, count4                                            &
-     &   , nextaddr5, count5                                            &
-     &   , nextaddr6, count6                                            &
-     &   , nextaddr7, count7                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer, intent(in) :: count2
-      integer, intent(in) :: count3
-      integer, intent(in) :: count4
-      integer, intent(in) :: count5
-      integer, intent(in) :: count6
-      integer, intent(in) :: count7
-      integer(2), intent(in) :: baseaddr
-      integer(2), intent(in) :: nextaddr1
-      integer(2), intent(in) :: nextaddr2
-      integer(2), intent(in) :: nextaddr3
-      integer(2), intent(in) :: nextaddr4
-      integer(2), intent(in) :: nextaddr5
-      integer(2), intent(in) :: nextaddr6
-      integer(2), intent(in) :: nextaddr7
-      integer(2) :: val(count1                                          &
-         ,count2,count3,count4,count5,count6,count7)
-      end function
-      function xmpf_coarray_get7d_i4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
-     &   , nextaddr1, count1                                            &
-     &   , nextaddr2, count2                                            &
-     &   , nextaddr3, count3                                            &
-     &   , nextaddr4, count4                                            &
-     &   , nextaddr5, count5                                            &
-     &   , nextaddr6, count6                                            &
-     &   , nextaddr7, count7                                            &
-     &   ) result(val)
-      integer(8), intent(in) :: descptr
-      integer, intent(in) :: element, coindex, rank
-      integer, intent(in) :: count1
-      integer, intent(in) :: count2
-      integer, intent(in) :: count3
-      integer, intent(in) :: count4
-      integer, intent(in) :: count5
-      integer, intent(in) :: count6
-      integer, intent(in) :: count7
-      integer(4), intent(in) :: baseaddr
-      integer(4), intent(in) :: nextaddr1
-      integer(4), intent(in) :: nextaddr2
-      integer(4), intent(in) :: nextaddr3
-      integer(4), intent(in) :: nextaddr4
-      integer(4), intent(in) :: nextaddr5
-      integer(4), intent(in) :: nextaddr6
-      integer(4), intent(in) :: nextaddr7
-      integer(4) :: val(count1                                          &
-         ,count2,count3,count4,count5,count6,count7)
-      end function
-      function xmpf_coarray_get7d_i8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1520,11 +1592,77 @@
       integer(8), intent(in) :: nextaddr5
       integer(8), intent(in) :: nextaddr6
       integer(8), intent(in) :: nextaddr7
+      integer(2) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6,count7)
+      integer(2) :: val(count1                                          &
+         ,count2,count3,count4,count5,count6,count7)
+      end function
+      function xmpf_coarray_get7d_i4(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   , nextaddr2, count2                                            &
+     &   , nextaddr3, count3                                            &
+     &   , nextaddr4, count4                                            &
+     &   , nextaddr5, count5                                            &
+     &   , nextaddr6, count6                                            &
+     &   , nextaddr7, count7                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer, intent(in) :: count2
+      integer, intent(in) :: count3
+      integer, intent(in) :: count4
+      integer, intent(in) :: count5
+      integer, intent(in) :: count6
+      integer, intent(in) :: count7
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: nextaddr7
+      integer(4) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6,count7)
+      integer(4) :: val(count1                                          &
+         ,count2,count3,count4,count5,count6,count7)
+      end function
+      function xmpf_coarray_get7d_i8(descptr, baseaddr, element,        &
+     &   coindex, mold, rank                                            &
+     &   , nextaddr1, count1                                            &
+     &   , nextaddr2, count2                                            &
+     &   , nextaddr3, count3                                            &
+     &   , nextaddr4, count4                                            &
+     &   , nextaddr5, count5                                            &
+     &   , nextaddr6, count6                                            &
+     &   , nextaddr7, count7                                            &
+     &   ) result(val)
+      integer(8), intent(in) :: descptr
+      integer, intent(in) :: element, coindex, rank
+      integer, intent(in) :: count1
+      integer, intent(in) :: count2
+      integer, intent(in) :: count3
+      integer, intent(in) :: count4
+      integer, intent(in) :: count5
+      integer, intent(in) :: count6
+      integer, intent(in) :: count7
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: nextaddr7
+      integer(8) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6,count7)
       integer(8) :: val(count1                                          &
          ,count2,count3,count4,count5,count6,count7)
       end function
       function xmpf_coarray_get7d_l2(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1542,19 +1680,21 @@
       integer, intent(in) :: count5
       integer, intent(in) :: count6
       integer, intent(in) :: count7
-      logical(2), intent(in) :: baseaddr
-      logical(2), intent(in) :: nextaddr1
-      logical(2), intent(in) :: nextaddr2
-      logical(2), intent(in) :: nextaddr3
-      logical(2), intent(in) :: nextaddr4
-      logical(2), intent(in) :: nextaddr5
-      logical(2), intent(in) :: nextaddr6
-      logical(2), intent(in) :: nextaddr7
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: nextaddr7
+      logical(2) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6,count7)
       logical(2) :: val(count1                                          &
          ,count2,count3,count4,count5,count6,count7)
       end function
       function xmpf_coarray_get7d_l4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1572,19 +1712,21 @@
       integer, intent(in) :: count5
       integer, intent(in) :: count6
       integer, intent(in) :: count7
-      logical(4), intent(in) :: baseaddr
-      logical(4), intent(in) :: nextaddr1
-      logical(4), intent(in) :: nextaddr2
-      logical(4), intent(in) :: nextaddr3
-      logical(4), intent(in) :: nextaddr4
-      logical(4), intent(in) :: nextaddr5
-      logical(4), intent(in) :: nextaddr6
-      logical(4), intent(in) :: nextaddr7
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: nextaddr7
+      logical(4) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6,count7)
       logical(4) :: val(count1                                          &
          ,count2,count3,count4,count5,count6,count7)
       end function
       function xmpf_coarray_get7d_l8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1602,19 +1744,21 @@
       integer, intent(in) :: count5
       integer, intent(in) :: count6
       integer, intent(in) :: count7
-      logical(8), intent(in) :: baseaddr
-      logical(8), intent(in) :: nextaddr1
-      logical(8), intent(in) :: nextaddr2
-      logical(8), intent(in) :: nextaddr3
-      logical(8), intent(in) :: nextaddr4
-      logical(8), intent(in) :: nextaddr5
-      logical(8), intent(in) :: nextaddr6
-      logical(8), intent(in) :: nextaddr7
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: nextaddr7
+      logical(8) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6,count7)
       logical(8) :: val(count1                                          &
          ,count2,count3,count4,count5,count6,count7)
       end function
       function xmpf_coarray_get7d_r4(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1632,19 +1776,21 @@
       integer, intent(in) :: count5
       integer, intent(in) :: count6
       integer, intent(in) :: count7
-      real(4), intent(in) :: baseaddr
-      real(4), intent(in) :: nextaddr1
-      real(4), intent(in) :: nextaddr2
-      real(4), intent(in) :: nextaddr3
-      real(4), intent(in) :: nextaddr4
-      real(4), intent(in) :: nextaddr5
-      real(4), intent(in) :: nextaddr6
-      real(4), intent(in) :: nextaddr7
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: nextaddr7
+      real(4) :: mold(count1                                            &
+         ,count2,count3,count4,count5,count6,count7)
       real(4) :: val(count1                                             &
          ,count2,count3,count4,count5,count6,count7)
       end function
       function xmpf_coarray_get7d_r8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1662,19 +1808,21 @@
       integer, intent(in) :: count5
       integer, intent(in) :: count6
       integer, intent(in) :: count7
-      real(8), intent(in) :: baseaddr
-      real(8), intent(in) :: nextaddr1
-      real(8), intent(in) :: nextaddr2
-      real(8), intent(in) :: nextaddr3
-      real(8), intent(in) :: nextaddr4
-      real(8), intent(in) :: nextaddr5
-      real(8), intent(in) :: nextaddr6
-      real(8), intent(in) :: nextaddr7
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: nextaddr7
+      real(8) :: mold(count1                                            &
+         ,count2,count3,count4,count5,count6,count7)
       real(8) :: val(count1                                             &
          ,count2,count3,count4,count5,count6,count7)
       end function
       function xmpf_coarray_get7d_z8(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1692,19 +1840,21 @@
       integer, intent(in) :: count5
       integer, intent(in) :: count6
       integer, intent(in) :: count7
-      complex(4), intent(in) :: baseaddr
-      complex(4), intent(in) :: nextaddr1
-      complex(4), intent(in) :: nextaddr2
-      complex(4), intent(in) :: nextaddr3
-      complex(4), intent(in) :: nextaddr4
-      complex(4), intent(in) :: nextaddr5
-      complex(4), intent(in) :: nextaddr6
-      complex(4), intent(in) :: nextaddr7
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: nextaddr7
+      complex(4) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6,count7)
       complex(4) :: val(count1                                          &
          ,count2,count3,count4,count5,count6,count7)
       end function
       function xmpf_coarray_get7d_z16(descptr, baseaddr, element,       &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1722,19 +1872,21 @@
       integer, intent(in) :: count5
       integer, intent(in) :: count6
       integer, intent(in) :: count7
-      complex(8), intent(in) :: baseaddr
-      complex(8), intent(in) :: nextaddr1
-      complex(8), intent(in) :: nextaddr2
-      complex(8), intent(in) :: nextaddr3
-      complex(8), intent(in) :: nextaddr4
-      complex(8), intent(in) :: nextaddr5
-      complex(8), intent(in) :: nextaddr6
-      complex(8), intent(in) :: nextaddr7
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: nextaddr7
+      complex(8) :: mold(count1                                         &
+         ,count2,count3,count4,count5,count6,count7)
       complex(8) :: val(count1                                          &
          ,count2,count3,count4,count5,count6,count7)
       end function
       function xmpf_coarray_get7d_cn(descptr, baseaddr, element,        &
-     &   coindex, rank                                                  &
+     &   coindex, mold, rank                                            &
      &   , nextaddr1, count1                                            &
      &   , nextaddr2, count2                                            &
      &   , nextaddr3, count3                                            &
@@ -1752,14 +1904,16 @@
       integer, intent(in) :: count5
       integer, intent(in) :: count6
       integer, intent(in) :: count7
-      character(element), intent(in) :: baseaddr
-      character(element), intent(in) :: nextaddr1
-      character(element), intent(in) :: nextaddr2
-      character(element), intent(in) :: nextaddr3
-      character(element), intent(in) :: nextaddr4
-      character(element), intent(in) :: nextaddr5
-      character(element), intent(in) :: nextaddr6
-      character(element), intent(in) :: nextaddr7
+      integer(8), intent(in) :: baseaddr
+      integer(8), intent(in) :: nextaddr1
+      integer(8), intent(in) :: nextaddr2
+      integer(8), intent(in) :: nextaddr3
+      integer(8), intent(in) :: nextaddr4
+      integer(8), intent(in) :: nextaddr5
+      integer(8), intent(in) :: nextaddr6
+      integer(8), intent(in) :: nextaddr7
+      character(element) :: mold(count1                                 &
+         ,count2,count3,count4,count5,count6,count7)
       character(element) :: val(count1                                  &
          ,count2,count3,count4,count5,count6,count7)
       end function

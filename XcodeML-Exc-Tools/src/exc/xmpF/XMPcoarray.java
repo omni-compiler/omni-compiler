@@ -16,10 +16,12 @@ import java.util.*;
 public class XMPcoarray {
 
   // name of library
-  final static String GET_IMAGE_INDEX_NAME = "xmpf_coarray_get_image_index";
   final static String XMPF_LCOBOUND = "xmpf_lcobound";
   final static String XMPF_UCOBOUND = "xmpf_ucobound";
   final static String XMPF_COSIZE = "xmpf_cosize";
+  final static String GET_IMAGE_INDEX_NAME = "xmpf_coarray_get_image_index";
+  public final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
+  public final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
 
   // original attributes
   private Ident ident;
@@ -93,6 +95,129 @@ public class XMPcoarray {
                                    StorageClass.FLOCAL,
                                    null);
   }
+
+
+
+  /*
+   *  m. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
+   *     without static coshape
+   */
+  public Xobject makeStmt_setCoshape() {
+    int corank = getCorank();
+
+    Xobject args = Xcons.List(getDescPointerId(),
+                              Xcons.IntConstant(corank));
+    for (int i = 0; i < corank - 1; i++) {
+      args.add(getLcobound(i));
+      args.add(getUcobound(i));
+    }
+    args.add(getLcobound(corank - 1));
+
+    // m.
+    Ident subr = env.declExternIdent(SET_COSHAPE_NAME,
+                                     BasicType.FexternalSubroutineType);
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
+
+
+  /*
+   *  m. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
+   *     with static coshape
+   */
+  public Xobject makeStmt_setCoshape(XobjList coshape) {
+    int corank = getCorank();
+    if (corank != coshape.Nargs()) {
+      XMP.error("number of codimensions not matched with the declaration:"
+                + corank + " and " + coshape.Nargs());
+      return null;
+    }
+
+    Xobject args = Xcons.List(getDescPointerId(),
+                              Xcons.IntConstant(corank));
+    for (int i = 0; i < corank - 1; i++) {
+      args.add(_getLboundInIndexRange(coshape.getArg(i)));
+      args.add(_getUboundInIndexRange(coshape.getArg(i)));
+    }
+    args.add(_getLboundInIndexRange(coshape.getArg(corank - 1)));
+
+    // m.
+    Ident subr = env.declExternIdent(XMPcoarray.SET_COSHAPE_NAME,
+                                     BasicType.FexternalSubroutineType);
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
+
+
+  private Xobject _getLboundInIndexRange(Xobject dimension) {
+    Xobject lbound;
+
+    if (dimension == null)
+      lbound = null;
+    else {
+      switch (dimension.Opcode()) {
+      case F_INDEX_RANGE:
+        lbound = dimension.getArg(0);
+        break;
+      case F_ARRAY_INDEX:
+        lbound = null;
+        break;
+      default:
+        lbound = null;
+        break;
+      }
+    }
+
+    if (lbound == null)
+      return Xcons.IntConstant(1);
+
+    return lbound.cfold(fblock);
+  }
+
+
+  private Xobject _getUboundInIndexRange(Xobject dimension) {
+    Xobject ubound;
+
+    if (dimension == null)
+      ubound = null;
+    else {
+      switch (dimension.Opcode()) {
+      case F_INDEX_RANGE:
+        ubound = dimension.getArg(1);
+        break;
+      case F_ARRAY_INDEX:
+        ubound = dimension.getArg(0);
+        break;
+      default:
+        ubound = dimension;
+      }
+    }
+
+    if (ubound == null)
+      XMP.error("illegal upper bound specified in ALLOCATE statement");
+
+    return ubound.cfold(fblock);
+  }
+
+
+  /*
+   *  n. "CALL set_varname(descPtr, name, namelen)"
+   */
+  public Xobject makeStmt_setVarName() {
+    String varName = getName();
+    Xobject varNameObj = 
+      Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
+    Xobject varNameLen = 
+      Xcons.IntConstant(varName.length());
+    Xobject args = Xcons.List(getDescPointerId(),
+                              varNameObj, varNameLen);
+    // n.
+    Ident subr = env.declExternIdent(SET_VARNAME_NAME,
+                                     BasicType.FexternalSubroutineType);
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
+
 
 
   /*** not used now ***/
@@ -566,9 +691,6 @@ public class XMPcoarray {
       Xobject arg = args.getArg();
       Ident id = (Ident)arg;
       if (id == ident) {
-        ///////////////////////
-        System.out.println("--- name="+name+", ");
-        ///////////////////////
         thisArgs = args;
         break;
       }

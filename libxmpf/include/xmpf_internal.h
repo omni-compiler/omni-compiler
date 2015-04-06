@@ -356,18 +356,18 @@ extern void xmpf_sync_allimages_nostat_(void);
 extern void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen);
 
 /* xmpf_coarray_put.c */
-extern void xmpf_coarray_put_scalar_(void **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition);
-extern void xmpf_coarray_put_array_(void **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char *rhs, int *condition,
                                     int *rank, ...);
-extern void xmpf_coarray_put_spread_(void **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition,
                                      int *rank, ...);
 
 /* xmpf_coarray_get.c */
-extern void xmpf_coarray_get_scalar_(void **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *result);
-extern void xmpf_coarray_get_array_(void **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char *result, int *rank, ...);
 

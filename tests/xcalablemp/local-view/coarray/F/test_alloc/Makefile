@@ -8,11 +8,11 @@ OUT_decl= decl1
 #OUT_rt  =  inquiry
 OUT_NG =  allo2NG
 
-OUT_allo= allo1 allo3 allo2 
+OUT_allo= allo1 allo3 allo4 #allo2 
 OUT_stat=#allo_stat
 
-#OUT = times $(OUT_decl) $(OUT_size) $(OUT_allo) $(OUT_rt)
-OUT=times times2
+OUT = $(OUT_decl) $(OUT_size) $(OUT_allo) $(OUT_rt)
+#OUT=times times2
 
 include ../Makefile.common
 

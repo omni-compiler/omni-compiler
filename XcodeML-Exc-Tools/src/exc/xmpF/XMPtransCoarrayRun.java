@@ -18,8 +18,6 @@ public class XMPtransCoarrayRun
   final static String TRAV_COUNTCOARRAY_PREFIX = "xmpf_traverse_countcoarray";
   final static String TRAV_INITCOARRAY_PREFIX = "xmpf_traverse_initcoarray";
   final static String GET_DESCPOINTER_NAME = "xmpf_coarray_descptr";
-  public final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
-  final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
   final static String COARRAYALLOC_PREFIX   = "xmpf_coarray_alloc";
   final static String COARRAYDEALLOC_PREFIX = "xmpf_coarray_dealloc";
   final static String PROC_INIT_NAME = "xmpf_coarray_proc_init";
@@ -50,6 +48,8 @@ public class XMPtransCoarrayRun
 
   private ArrayList<Xobject> _prologStmts = new ArrayList();
   private ArrayList<Xobject> _epilogStmts = new ArrayList();
+
+  private Boolean containsCoarray = false;
 
 
   //------------------------------------------------------------
@@ -176,10 +176,9 @@ public class XMPtransCoarrayRun
     }
 
     // convert specification and declaration part
-    Boolean sw1, sw2;
-    sw1 = transDeclPart_procedureLocal(procLocalCoarrays);
-    sw2 = transDeclPart_dummyArg(dummyArgCoarrays);
-    transExecPart(visibleCoarrays, (sw1||sw2));
+    transDeclPart_procedureLocal(procLocalCoarrays);
+    transDeclPart_dummyArg(dummyArgCoarrays);
+    transExecPart(visibleCoarrays);
 
     // finalize (see XMPtranslate.java)
     ///// I don't know why this call is needed or not needed.
@@ -204,31 +203,6 @@ public class XMPtransCoarrayRun
     ///// I don't know why this call is needed or not needed.
     ///// see [XMP-dev:5185] 2015.03.21
     funcDef.Finalize();
-  }
-
-
-  private void transExecPart(Vector<XMPcoarray> visibleCoarrays, Boolean initSwitch) {
-
-    // e. convert coindexed objects to function references
-    convCoidxObjsToFuncCalls(visibleCoarrays);
-
-    // d. convert coindexed variable assignment stmts to call stmts
-    convCoidxStmtsToSubrCalls(visibleCoarrays);
-
-    // j. convert allocate/deallocate stmts (allocatable coarrays only)
-    convAllocateStmts(visibleCoarrays);
-    convDellocateStmts(visibleCoarrays);
-
-    // l. fake intrinsic 'allocatable' (allocatable coarrays only)
-    replaceAllocatedWithAssociated(visibleCoarrays);
-
-    // i. initialization/finalization of local resources
-    if (initSwitch)
-      genCallOfInitAndFin();
-
-    // resolve prologue/epilogue code generations
-    genPrologStmts();
-    genEpilogStmts();
   }
 
 
@@ -285,19 +259,22 @@ public class XMPtransCoarrayRun
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
   */
-  private Boolean transDeclPart_procedureLocal(Vector<XMPcoarray> localCoarrays) {
-    Boolean initSwitch = false;
+  private void transDeclPart_procedureLocal(Vector<XMPcoarray> localCoarrays) {
+
+    if (localCoarrays == null)
+      // do nothing
+      return;
+
+    containsCoarray = true;
 
     // divide procedure-local coarrays into static and allocatable
     Vector<XMPcoarray> staticLocalCoarrays = new Vector<XMPcoarray>();
     Vector<XMPcoarray> allocatableLocalCoarrays = new Vector<XMPcoarray>();
     for (XMPcoarray coarray: localCoarrays) {
-      if (coarray.isAllocatable()) {
-        initSwitch = true;
+      if (coarray.isAllocatable())
         allocatableLocalCoarrays.add(coarray);
-      } else {
+      else
         staticLocalCoarrays.add(coarray);
-      }
     }
 
     // a. declare descriptor pointers
@@ -318,9 +295,6 @@ public class XMPtransCoarrayRun
     // h. replace allocatable attributes with pointer attributes
     // (allocatable coarrays only)
     replaceAllocatableWithPointer(allocatableLocalCoarrays);
-
-    // if there are any allocatale local coarrays, init/final is needed.
-    return initSwitch;
   }
 
 
@@ -370,10 +344,12 @@ public class XMPtransCoarrayRun
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
   */
-  private Boolean transDeclPart_dummyArg(Vector<XMPcoarray> localCoarrays) {
-    // if there are not dummy argument coarrays, return
+  private void transDeclPart_dummyArg(Vector<XMPcoarray> localCoarrays) {
+
     if (localCoarrays.isEmpty())
-      return false;
+      return;
+
+    containsCoarray = true;
 
     // select static local coarrays
     Vector<XMPcoarray> staticLocalCoarrays = new Vector<XMPcoarray>();
@@ -400,9 +376,6 @@ public class XMPtransCoarrayRun
     // h. replace allocatable attributes with pointer attributes
     // (allocatable coarrays only)
     replaceAllocatableWithPointer(allocatableLocalCoarrays);
-
-    // if there are any dummy argument coarrays, init/final is needed.
-    return true;
   }
 
 
@@ -437,6 +410,11 @@ public class XMPtransCoarrayRun
   */
   private void transDeclPart_moduleLocal(Vector<XMPcoarray> localCoarrays) {
 
+    if (localCoarrays.isEmpty())
+      return;
+
+    containsCoarray = true;
+
     // select static local coarrays
     Vector<XMPcoarray> staticLocalCoarrays = new Vector<XMPcoarray>();
     Vector<XMPcoarray> allocatableLocalCoarrays = new Vector<XMPcoarray>();
@@ -460,6 +438,32 @@ public class XMPtransCoarrayRun
 
     // o. remove declarations of variables (static coarrays only)
     removeDeclOfCoarrays(staticLocalCoarrays);
+  }
+
+
+
+  private void transExecPart(Vector<XMPcoarray> visibleCoarrays) {
+
+    // e. convert coindexed objects to function references
+    convCoidxObjsToFuncCalls(visibleCoarrays);
+
+    // d. convert coindexed variable assignment stmts to call stmts
+    convCoidxStmtsToSubrCalls(visibleCoarrays);
+
+    // j. convert allocate/deallocate stmts (allocatable coarrays only)
+    convAllocateStmts(visibleCoarrays);
+    convDellocateStmts(visibleCoarrays);
+
+    // l. fake intrinsic 'allocatable' (allocatable coarrays only)
+    replaceAllocatedWithAssociated(visibleCoarrays);
+
+    // i. initialization/finalization of local resources
+    if (containsCoarray)
+      genCallOfInitAndFin();
+
+    // resolve prologue/epilogue code generations
+    genPrologStmts();
+    genEpilogStmts();
   }
 
 
@@ -552,11 +556,11 @@ public class XMPtransCoarrayRun
       subrCall = subr.callSubroutine(args);
       *********************************/
       // m. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
-      makeStmt_setCoshape(coarray);
+      coarray.makeStmt_setCoshape();
       addPrologStmt(subrCall);
 
       // n. "CALL set_varname(descPtr, name, namelen)"
-      makeStmt_setVarName(coarray);
+      coarray.makeStmt_setVarName();
       addPrologStmt(subrCall);
     }
   }
@@ -614,6 +618,7 @@ public class XMPtransCoarrayRun
 
         if (_isCoindexVarStmt(assignExpr)) {
           // found -- convert the statement
+          containsCoarray = true;
           Xobject callExpr = coindexVarStmtToCallStmt(assignExpr, coarrays);
           //s.insert(callExpr);
           //s.remove();
@@ -694,6 +699,7 @@ public class XMPtransCoarrayRun
           continue;  // do nothing 
 
         // found target to convert
+        containsCoarray = true;
         Xobject funcCall = coindexObjToFuncRef(xobj, coarrays);
         xi.setXobject(funcCall);
         done = true;
@@ -761,6 +767,7 @@ public class XMPtransCoarrayRun
           // xobj.getArg(1): list of variables to be allocated
           // errmsg= identifier is not supported either.
           if (_doesListHaveCoarray(xobj.getArg(1), coarrays)) {
+            containsCoarray = true;
 
             ArrayList<Xobject> fstmts =
               genAllocateStmt(xobj, coarrays);
@@ -794,6 +801,7 @@ public class XMPtransCoarrayRun
 	switch (xobj.Opcode()) {
         case F_DEALLOCATE_STATEMENT:
           if (_doesListHaveCoarray(xobj.getArg(1), coarrays)) {
+            containsCoarray = true;
 
             ArrayList<Xobject> fstmts =
               genDeallocateStmt(xobj, coarrays);
@@ -900,9 +908,9 @@ public class XMPtransCoarrayRun
       // TRANSLATION j.
       newStmts.add(makeStmt_coarrayAlloc(coarray, shape));
       // TRANSLATION m.
-      newStmts.add(makeStmt_setCoshape(coarray, coshape));
+      newStmts.add(coarray.makeStmt_setCoshape(coshape));
       // TRANSLATION n.
-      newStmts.add(makeStmt_setVarName(coarray));
+      newStmts.add(coarray.makeStmt_setVarName());
     }
 
     return newStmts;
@@ -983,76 +991,6 @@ public class XMPtransCoarrayRun
     }
 
     return countExpr;
-  }
-
-
-  /*
-   *  m. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
-   *     with static coshape
-   */
-  private Xobject makeStmt_setCoshape(XMPcoarray coarray, XobjList coshape) {
-    int corank = coarray.getCorank();
-    if (corank != coshape.Nargs()) {
-      XMP.error("number of codimensions not matched with the declaration:"
-                + corank + " and " + coshape.Nargs());
-      return null;
-    }
-
-    Xobject args = Xcons.List(coarray.getDescPointerId(),
-                              Xcons.IntConstant(corank));
-    for (int i = 0; i < corank - 1; i++) {
-      args.add(_getLboundInIndexRange(coshape.getArg(i)));
-      args.add(_getUboundInIndexRange(coshape.getArg(i)));
-    }
-    args.add(_getLboundInIndexRange(coshape.getArg(corank - 1)));
-
-    // m.
-    Ident subr = env.declExternIdent(SET_COSHAPE_NAME,
-                                     BasicType.FexternalSubroutineType);
-    Xobject subrCall = subr.callSubroutine(args);
-    return subrCall;
-  }
-
-
-  /*
-   *  m. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
-   *     without static coshape
-   */
-  private Xobject makeStmt_setCoshape(XMPcoarray coarray) {
-    int corank = coarray.getCorank();
-
-    Xobject args = Xcons.List(coarray.getDescPointerId(),
-                              Xcons.IntConstant(corank));
-    for (int i = 0; i < corank - 1; i++) {
-      args.add(coarray.getLcobound(i));
-      args.add(coarray.getUcobound(i));
-    }
-    args.add(coarray.getLcobound(corank - 1));
-
-    // m.
-    Ident subr = env.declExternIdent(SET_COSHAPE_NAME,
-                                     BasicType.FexternalSubroutineType);
-    Xobject subrCall = subr.callSubroutine(args);
-    return subrCall;
-  }
-
-
-  /*
-   *  n. "CALL set_varname(descPtr, name, namelen)"
-   */
-  private Xobject makeStmt_setVarName(XMPcoarray coarray) {
-    String varName = coarray.getName();
-    Xobject varNameObj = 
-      Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
-    Xobject varNameLen = 
-      Xcons.IntConstant(varName.length());
-    Xobject args = Xcons.List(coarray.getDescPointerId(),
-                              varNameObj, varNameLen);
-    // n.
-    Ident subr = env.declExternIdent(SET_VARNAME_NAME,
-                                     BasicType.FexternalSubroutineType);
-    Xobject subrCall = subr.callSubroutine(args);
-    return subrCall;
   }
 
 

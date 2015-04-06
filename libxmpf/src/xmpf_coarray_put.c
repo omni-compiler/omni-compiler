@@ -36,7 +36,7 @@ static void _putVectorByElement(char *desc, int start, int vlength,
     entry
 \***************************************************/
 
-extern void xmpf_coarray_put_scalar_(void **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition)
 {
   _XMPF_checkIfInTask("scalar coindexed variable");
@@ -47,10 +47,10 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char *baseAddr, int *elemen
   case SCHEME_DirectPut:
     if (_XMPF_coarrayMsg) {
       _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/scalar\n"
-                              "  baseAddr=%p, *element=%d\n",
-                              baseAddr, *element);
+                              "  *baseAddr=%p, *element=%d\n",
+                              *baseAddr, *element);
     }
-    _putVector(*descPtr, baseAddr, *element, *coindex, rhs);
+    _putVector(*descPtr, *baseAddr, *element, *coindex, rhs);
     break;
     
   case SCHEME_ExtraDirectPut:
@@ -59,10 +59,10 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char *baseAddr, int *elemen
 
       if (_XMPF_coarrayMsg) {
         _XMPF_coarrayDebugPrint("select SCHEME_ExtraDirectPut/scalar\n"
-                                "  baseAddr=%p, *element=%d, elementRU=%zd\n",
-                                baseAddr, *element, elementRU);
+                                "  *baseAddr=%p, *element=%d, elementRU=%zd\n",
+                                *baseAddr, *element, elementRU);
       }
-      _putVector(*descPtr, baseAddr, elementRU, *coindex, rhs);
+      _putVector(*descPtr, *baseAddr, elementRU, *coindex, rhs);
     }
     break;
 
@@ -72,11 +72,11 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char *baseAddr, int *elemen
 
       if (_XMPF_coarrayMsg) {
         _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/scalar\n"
-                                "  baseAddr=%p, *element=%zd, buf=%p\n",
-                                baseAddr, *element, buf);
+                                "  *baseAddr=%p, *element=%zd, buf=%p\n",
+                                *baseAddr, *element, buf);
       }
       (void)memcpy(buf, rhs, *element);
-      _putVector(*descPtr, baseAddr, *element, *coindex, buf);
+      _putVector(*descPtr, *baseAddr, *element, *coindex, buf);
     }
     break;
 
@@ -87,11 +87,11 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char *baseAddr, int *elemen
 
       if (_XMPF_coarrayMsg) {
         _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferPut/scalar\n"
-                                "  baseAddr=%p, elementRU=%zd, buf=%p\n",
-                                baseAddr, elementRU, buf);
+                                "  *baseAddr=%p, elementRU=%zd, buf=%p\n",
+                                *baseAddr, elementRU, buf);
       }
       (void)memcpy(buf, rhs, *element);
-      _putVector(*descPtr, baseAddr, elementRU, *coindex, buf);
+      _putVector(*descPtr, *baseAddr, elementRU, *coindex, buf);
     }
     break;
 
@@ -102,7 +102,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char *baseAddr, int *elemen
 
 
 
-extern void xmpf_coarray_put_array_(void **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char *rhs, int *condition,
                                     int *rank, ...)
 {
@@ -120,15 +120,15 @@ extern void xmpf_coarray_put_array_(void **descPtr, char *baseAddr, int *element
 
   int scheme = _select_putscheme_array(*condition);
 
-  char *nextAddr;
+  char **nextAddr;
   int skip[MAX_RANK];
   int count[MAX_RANK];
   va_list argList;
   va_start(argList, rank);
 
   for (int i = 0; i < *rank; i++) {
-    nextAddr = va_arg(argList, char*);         // nextAddr1, nextAddr2, ...
-    skip[i] = nextAddr - baseAddr;
+    nextAddr = va_arg(argList, char**);         // nextAddr1, nextAddr2, ...
+    skip[i] = *nextAddr - *baseAddr;
     count[i] = *(va_arg(argList, int*));       // count1, count2, ...
   }
 
@@ -137,7 +137,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char *baseAddr, int *element
     if (_XMPF_coarrayMsg) {
       _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/array\n");
     }
-    _putCoarray(*descPtr, baseAddr, *coindex, rhs, *element, *rank, skip, count);
+    _putCoarray(*descPtr, *baseAddr, *coindex, rhs, *element, *rank, skip, count);
     break;
 
   case SCHEME_BufferPut:
@@ -151,7 +151,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char *baseAddr, int *element
     }
     buf = malloc(bufsize);
     (void)memcpy(buf, rhs, bufsize);
-    _putCoarray(*descPtr, baseAddr, *coindex, buf, *element, *rank, skip, count);
+    _putCoarray(*descPtr, *baseAddr, *coindex, buf, *element, *rank, skip, count);
     break;
 
   default:
@@ -160,7 +160,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char *baseAddr, int *element
 }
 
 
-extern void xmpf_coarray_put_spread_(void **descPtr, char *baseAddr, int *element,
+extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition,
                                      int *rank, ...)
 {
@@ -175,15 +175,15 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char *baseAddr, int *elemen
     return;
   }
 
-  char *nextAddr;
+  char **nextAddr;
   int skip[MAX_RANK];
   int count[MAX_RANK];
   va_list argList;
   va_start(argList, rank);
 
   for (int i = 0; i < *rank; i++) {
-    nextAddr = va_arg(argList, char*);         // nextAddr1, nextAddr2, ...
-    skip[i] = nextAddr - baseAddr;
+    nextAddr = va_arg(argList, char**);         // nextAddr1, nextAddr2, ...
+    skip[i] = *nextAddr - *baseAddr;
     count[i] = *(va_arg(argList, int*));       // count1, count2, ...
   }
 
@@ -194,7 +194,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char *baseAddr, int *elemen
   buf = malloc(bufsize);
   for (i = 0, p = buf; i < nelems; i++, p += *element)
     (void)memcpy(p, rhs, *element);
-  _putCoarray(*descPtr, baseAddr, *coindex, buf, *element, *rank, skip, count);
+  _putCoarray(*descPtr, *baseAddr, *coindex, buf, *element, *rank, skip, count);
 }
 
 

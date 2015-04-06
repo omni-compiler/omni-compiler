@@ -18,89 +18,81 @@ print_subr_alloc() {
     tk=$1
     typekind=$2
 
-    echo72  "      subroutine xmpf_coarray_alloc${DIM}d_${tk}(descptr, var, count, element,"
+    echo72     "      subroutine xmpf_coarray_alloc${DIM}d_${tk}(descptr, var, count,"
 
  case "${DIM}" in
- 0) echo    "     & tag, rank)" ;;
- 1) echo    "     & tag, rank, lb1, ub1)" ;;
- 2) echo    "     & tag, rank, lb1, ub1, lb2, ub2)" ;;
- 3) echo    "     & tag, rank, lb1, ub1, lb2, ub2, lb3, ub3)" ;;
- 4) echo    "     & tag, rank, lb1, ub1, lb2, ub2, lb3, ub3, lb4, ub4)" ;;
- 5) echo    "     & tag, rank, lb1, ub1, lb2, ub2, lb3, ub3, lb4, ub4, lb5, ub5)" ;;
- 6) echo72  "     & tag, rank, lb1, ub1, lb2, ub2, lb3, ub3, lb4, ub4, lb5, ub5,"
-    echo    "     & lb6, ub6)" ;;
- 7) echo72  "     & tag, rank, lb1, ub1, lb2, ub2, lb3, ub3, lb4, ub4, lb5, ub5,"
-    echo    "     & lb6, ub6, lb7, ub7)" ;;
+ 0) echo       "     &   element, tag, rank)" ;;
+ *) echo72     "     &   element, tag, rank"
+    for i in `seq 1 ${DIM}`; do
+        echo72 "     &   , lb${i}, ub${i}"
+    done
+    echo       "     &   )" ;;
  esac
-    echo    "        integer(8), intent(inout) :: descptr"
-    echo    "        integer(8), intent(in) :: tag"
+
+    echo       "        integer(8), intent(in) :: descptr"
+    echo       "        integer(8), intent(in) :: tag"
+    echo       "        integer, intent(in) :: count, element, rank"
+
  case "${DIM}" in
- 0) echo    "        integer, intent(in) :: count, element, rank" ;;
- 1) echo    "        integer, intent(in) :: count, element, rank, lb1, ub1" ;;
- 2) echo    "        integer, intent(in) :: count, element, rank, lb1, ub1, lb2, ub2" ;;
- 3) echo72  "        integer, intent(in) :: count, element, rank, lb1, ub1, lb2, ub2,"
-    echo    "     &    lb3, ub3" ;;
- 4) echo72  "        integer, intent(in) :: count, element, rank, lb1, ub1, lb2, ub2,"
-    echo    "     &    lb3, ub3, lb4, ub4" ;;
- 5) echo72  "        integer, intent(in) :: count, element, rank, lb1, ub1, lb2, ub2,"
-    echo    "     &    lb3, ub3, lb4, ub4, lb5, ub5" ;;
- 6) echo72  "        integer, intent(in) :: count, element, rank, lb1, ub1, lb2, ub2,"
-    echo    "     &    lb3, ub3, lb4, ub4, lb5, ub5, lb6, ub6" ;;
- 7) echo72  "        integer, intent(in) :: count, element, rank, lb1, ub1, lb2, ub2,"
-    echo    "     &    lb3, ub3, lb4, ub4, lb5, ub5, lb6, ub6, lb7, ub7" ;;
+ 0) ;;
+ *) for i in `seq 1 ${DIM}`; do
+        echo   "        integer, intent(in) :: lb${i}, ub${i}"
+    done ;;
  esac
+
  case "${DIM}" in
  0) echo    "        ${typekind}, pointer, intent(out) :: var" ;;
  1) echo    "        ${typekind}, pointer, intent(out) :: var(:)" ;;
- 2) echo    "        ${typekind}, pointer, intent(out) :: var(:,:)" ;;
- 3) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:)" ;;
- 4) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:)" ;;
- 5) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:,:)" ;;
- 6) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:,:,:)" ;;
- 7) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:,:,:,:)" ;;
+ *) echo -n "        ${typekind}, pointer, intent(out) :: var(:" 
+    for i in `seq 2 ${DIM}`; do
+        echo -n ",:"
+    done
+    echo    ")" ;;
  esac
-# START BODY OF PROCEDURE
+
+# START PRIVATE CONTENTS OF PROCEDURE
  case "${DIM}" in
- 0) echo    "        ${typekind} :: obj" ;;
- 1) echo    "        ${typekind} :: obj(lb1:ub1) " ;;
- 2) echo    "        ${typekind} :: obj(lb1:ub1, lb2:ub2) " ;;
- 3) echo    "        ${typekind} :: obj(lb1:ub1, lb2:ub2, lb3:ub3) " ;;
- 4) echo    "        ${typekind} :: obj(lb1:ub1, lb2:ub2, lb3:ub3, lb4:ub4) " ;;
- 5) echo72  "        ${typekind} :: obj(lb1:ub1, lb2:ub2, lb3:ub3, lb4:ub4, "
-    echo    "     &    lb5:ub5)" ;;
- 6) echo72  "        ${typekind} :: obj(lb1:ub1, lb2:ub2, lb3:ub3, lb4:ub4, "
-    echo    "     &    lb5:ub5, lb6:ub6)" ;;
- 7) echo72  "        ${typekind} :: obj(lb1:ub1, lb2:ub2, lb3:ub3, lb4:ub4, "
-    echo    "     &    lb5:ub5, lb6:ub6, lb7:ub7)" ;;
+ 0) echo       "        ${typekind} :: obj" ;;
+ 1) echo       "        ${typekind} :: obj(lb1 : ub1)" ;;
+ *) echo72     "        ${typekind} :: obj(lb1 : ub1"
+    for i in `seq 2 ${DIM}`; do
+        echo72 "     &     , lb${i} : ub${i}"
+    done
+    echo       "     &   )" ;;
  esac
+
     echo    "        pointer (crayptr, obj)"
     echo    "        call xmpf_coarray_malloc(descptr, crayptr, count, element, tag)"
     echo    "        call pointer_assign(var, obj)"
     echo    "        return"
     echo    "      contains"
     echo    "        subroutine pointer_assign(p, d)"
+
  case "${DIM}" in
- 0) echo    "          ${typekind}, pointer :: p"
-    echo    "          ${typekind}, target  :: d" ;;
- 1) echo    "          ${typekind}, pointer :: p(:)"
-    echo    "          ${typekind}, target  :: d(:)" ;;
- 2) echo    "          ${typekind}, pointer :: p(:,:)"
-    echo    "          ${typekind}, target  :: d(:,:)" ;;
- 3) echo    "          ${typekind}, pointer :: p(:,:,:)"
-    echo    "          ${typekind}, target  :: d(:,:,:)" ;;
- 4) echo    "          ${typekind}, pointer :: p(:,:,:,:)"
-    echo    "          ${typekind}, target  :: d(:,:,:,:)" ;;
- 5) echo    "          ${typekind}, pointer :: p(:,:,:,:,:)"
-    echo    "          ${typekind}, target  :: d(:,:,:,:,:)" ;;
- 6) echo    "          ${typekind}, pointer :: p(:,:,:,:,:,:)"
-    echo    "          ${typekind}, target  :: d(:,:,:,:,:,:)" ;;
- 7) echo    "          ${typekind}, pointer :: p(:,:,:,:,:,:,:)"
-    echo    "          ${typekind}, target  :: d(:,:,:,:,:,:,:)" ;;
+ 0) echo    "          ${typekind}, pointer :: p" ;;
+ 1) echo    "          ${typekind}, pointer :: p(:)" ;;
+ *) echo -n "          ${typekind}, pointer :: p(:"
+    for i in `seq 2 ${DIM}`; do
+        echo -n ",:"
+    done
+    echo    ")" ;;
  esac
+
+ case "${DIM}" in
+ 0) echo    "          ${typekind}, target  :: d" ;;
+ 1) echo    "          ${typekind}, target  :: d(:)" ;;
+ *) echo -n "          ${typekind}, target  :: d(:"
+    for i in `seq 2 ${DIM}`; do
+        echo -n ",:"
+    done
+    echo    ")" ;;
+ esac
+
     echo    "          p => d"
     echo    "          return"
     echo    "        end subroutine"
-# END BODY OF PROCEDURE
+# END PRIVATE CONTENTS OF PROCEDURE
+
     echo    "      end subroutine"
     echo
 }

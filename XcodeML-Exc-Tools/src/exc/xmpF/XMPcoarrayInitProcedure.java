@@ -225,6 +225,7 @@ public class XMPcoarrayInitProcedure {
                                        BasicType.FexternalSubroutineType);
       body.add(subr.callSubroutine(args));
 
+      /***********************************:
       // "CALL coarray_set_coshape(descPtr, corank, 
       //            lb_1,ub_1, lb_2,ub_2, ..., lb_rank)
       int corank = coarray.getCorank();
@@ -234,9 +235,14 @@ public class XMPcoarrayInitProcedure {
         args.add(coarray.getUcobound(i));
       }
       args.add(coarray.getLcobound(corank - 1));
-      subr = body.declLocalIdent(XMPtransCoarrayRun.SET_COSHAPE_NAME,
+      subr = body.declLocalIdent(XMPcoarray.SET_COSHAPE_NAME,
                                  BasicType.FexternalSubroutineType);
-      body.add(subr.callSubroutine(args));
+      ********************************/
+      Xobject setCoshape = coarray.makeStmt_setCoshape();
+      body.add(setCoshape);
+
+      Xobject setVarName = coarray.makeStmt_setVarName();
+      body.add(setVarName);
     }
 
     Ident procedure = env.declExternIdent(initProcName, Xtype.FsubroutineType);
