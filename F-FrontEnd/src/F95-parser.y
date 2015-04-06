@@ -2269,7 +2269,7 @@ xmp_clause_one:
 xmp_ON: { need_keyword = TRUE; } XMPKW_ON;
 xmp_ONTO: { need_keyword = TRUE; } XMPKW_ONTO;
 xmp_WITH: { need_keyword = TRUE; } XMPKW_WITH;
-xmp_FROM: { need_keyword = TRUE; } XMPKW_FROM;
+/*xmp_FROM: { need_keyword = TRUE; } XMPKW_FROM;*/
 xmp_ASYNC: { need_keyword = TRUE; } XMPKW_ASYNC;
 xmp_NOWAIT: { need_keyword = TRUE; } XMPKW_NOWAIT;
 /* xmp_REDUCTION: { need_keyword = TRUE; } XMPKW_REDUCTION; */
