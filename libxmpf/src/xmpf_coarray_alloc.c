@@ -75,7 +75,7 @@ static void _addCoarrayInfo(MemoryChunk_t *chunk, CoarrayInfo_t *cinfo2);
 static void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2);
 static void _freeCoarrayInfo(CoarrayInfo_t *cinfo);
 
-static CoarrayInfo_t *_getShareForCoarray(int count, size_t element);
+static CoarrayInfo_t *_getShareOfCoarray(int count, size_t element);
 
 
 // allocation and deallocation
@@ -234,7 +234,7 @@ MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
   _XMP_coarray_malloc_image_info_1();                          // set coshape
   _XMP_coarray_malloc_do(&(chunk->desc), &(chunk->orgAddr));   // malloc
 
-  _XMPF_coarrayDebugPrint("*** a memory-chunk %p allocated\n"
+  _XMPF_coarrayDebugPrint("*** MemoryChunk %p allocated\n"
                           "  requred: %zd bytes (count=%d, element=%d)\n"
                           "  result : %d bytes\n",
                           chunk, chunk->nbytes, count, element, chunk->nbytes);
@@ -263,7 +263,7 @@ void xmpf_coarray_free_(void **descPtr, void **tag)
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_FREE\n"
                           "  MemoryChunk %p\n"
                           "  in ResourceSet %p\n",
-                          rset, chunk);
+                          chunk, rset);
 
   // unlink and free CoarrayInfo keeping MemoryChunk
   _unlinkCoarrayInfo(cinfo);
@@ -311,7 +311,7 @@ void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
                               char *name, int *namelen)
 {
   CoarrayInfo_t *cinfo =
-    _getShareForCoarray(*count, (size_t)(*element));
+    _getShareOfCoarray(*count, (size_t)(*element));
 
   cinfo->name = (char*)malloc(sizeof(char)*(*namelen + 1));
   strncpy(cinfo->name, name, *namelen);
@@ -321,7 +321,7 @@ void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
 }
 
 
-CoarrayInfo_t *_getShareForCoarray(int count, size_t element)
+CoarrayInfo_t *_getShareOfCoarray(int count, size_t element)
 {
   _XMPF_checkIfInTask("static coarray allocation");
 
@@ -499,7 +499,7 @@ void _flushMallocHistory()
   MemoryChunkP_t *chunkP;
   MemoryChunk_t *chunk;
 
-  _XMPF_coarrayDebugPrint("*** looking for all memory-chunk to be free\n");
+  _XMPF_coarrayDebugPrint("*** looking for all memory-chunk to free\n");
 
   forallMemoryChunkPRev(chunkP) {
     chunk = chunkP->chunk;
@@ -507,7 +507,7 @@ void _flushMallocHistory()
       break;
 
     // found a formal-deallocated memory chunk that should be free
-    _XMPF_coarrayDebugPrint("*** freeing memory-chunk %p\n", chunk);
+    _XMPF_coarrayDebugPrint("*** freeing MemoryChunk %p\n", chunk);
 
     _unlinkMemoryChunk(chunk);     // unlink from its resource set
     _unlinkMemoryChunkP(chunkP);
@@ -539,7 +539,7 @@ void _unlinkMemoryChunkP(MemoryChunkP_t *chunkP)
      current coshapes
 \*****************************************/
 
-/*
+/* translate m.
  * set the current lower and upper cobounds
  */
 void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...)
@@ -574,6 +574,18 @@ void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...)
   va_end(args);
 }
 
+
+/* translate n.
+ * set the name of coarray object
+ */
+void xmpf_coarray_set_varname_(void **descPtr, char *name, int *namelen)
+{
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
+
+  cinfo->name = (char*)malloc(sizeof(char)*(*namelen + 1));
+  memcpy(cinfo->name, name, *namelen);
+  cinfo->name[*namelen] = '\0';
+}
 
 
 /*****************************************      \
@@ -709,7 +721,9 @@ void _freeMemoryChunk(MemoryChunk_t *chunk)
   }
   free(chunk->prev);
   free(chunk->next);
-  //freeDespptr(chunk->desc);
+
+  // free the last memory chunk object
+  _XMP_coarray_lastly_deallocate();
 }
 
 
@@ -749,7 +763,7 @@ void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2)
   cinfo2->parent = NULL;
 }
 
-static void _freeCoarrayInfo(CoarrayInfo_t *cinfo)
+void _freeCoarrayInfo(CoarrayInfo_t *cinfo)
 {
   free(cinfo->name);
   free(cinfo->lcobound);

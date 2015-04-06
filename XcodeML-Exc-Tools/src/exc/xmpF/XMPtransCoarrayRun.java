@@ -12,17 +12,18 @@ public class XMPtransCoarrayRun
   private Boolean DEBUG = false;       // change me in debugger
 
   // constants
-  final static String DESCPOINTER_PREFIX = "xmpf_descptr";
-  final static String CRAYPOINTER_PREFIX = "xmpf_crayptr";
-  final static String COARRAYSIZE_PREFIX = "xmpf_traverse_countcoarray";
-  final static String COARRAYINIT_PREFIX = "xmpf_traverse_initcoarray";
-  final static String DEF_DESCPOINTER_NAME = "xmpf_coarray_descptr";
-  final static String PROC_INIT_NAME = "xmpf_coarray_proc_init";
-  final static String PROC_FINALIZE_NAME = "xmpf_coarray_proc_finalize";
-  final static String TAG_NAME = "xmpf_resource_tag";
+  final static String VAR_DESCPOINTER_PREFIX = "xmpf_descptr";
+  final static String VAR_CRAYPOINTER_PREFIX = "xmpf_crayptr";
+  final static String VAR_TAG_NAME = "xmpf_resource_tag";
+  final static String TRAV_COUNTCOARRAY_PREFIX = "xmpf_traverse_countcoarray";
+  final static String TRAV_INITCOARRAY_PREFIX = "xmpf_traverse_initcoarray";
+  final static String GET_DESCPOINTER_NAME = "xmpf_coarray_descptr";
   public final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
+  final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
   final static String COARRAYALLOC_PREFIX   = "xmpf_coarray_alloc";
   final static String COARRAYDEALLOC_PREFIX = "xmpf_coarray_dealloc";
+  final static String PROC_INIT_NAME = "xmpf_coarray_proc_init";
+  final static String PROC_FINALIZE_NAME = "xmpf_coarray_proc_finalize";
 
   // to handle host- and use-associations
   static ArrayList<XMPtransCoarrayRun> ancestors
@@ -63,10 +64,10 @@ public class XMPtransCoarrayRun
     env.setCurrentDef(funcDef);      // needed if this is called before XMPrewriteExpr ???
     name = fblock.getName();
     String postfix = genNewProcPostfix();
-    sizeProcName = COARRAYSIZE_PREFIX + postfix;
-    initProcName = COARRAYINIT_PREFIX + postfix;
-    commonName1 = DESCPOINTER_PREFIX + "_" + name;
-    commonName2 = CRAYPOINTER_PREFIX + "_" + name;
+    sizeProcName = TRAV_COUNTCOARRAY_PREFIX + postfix;
+    initProcName = TRAV_INITCOARRAY_PREFIX + postfix;
+    commonName1 = VAR_DESCPOINTER_PREFIX + "_" + name;
+    commonName2 = VAR_CRAYPOINTER_PREFIX + "_" + name;
 
     _setCoarrays();
     _check_ifIncludeXmpLib();
@@ -77,7 +78,7 @@ public class XMPtransCoarrayRun
 
   private void _setResourceIagId() {
     BlockList blist = fblock.getBody();
-    resourceTagId = blist.declLocalIdent(TAG_NAME,
+    resourceTagId = blist.declLocalIdent(VAR_TAG_NAME,
                                  BasicType.Fint8Type,
                                  StorageClass.FLOCAL,
                                  null);
@@ -143,6 +144,7 @@ public class XMPtransCoarrayRun
 
   /*
    *  PASS 1: for each procedure that is either 
+   *            - the main program or
    *            - an external function/subroutine or
    *            - an internal function/subroutine or
    *            - a module function/subroutine
@@ -213,9 +215,12 @@ public class XMPtransCoarrayRun
     // d. convert coindexed variable assignment stmts to call stmts
     convCoidxStmtsToSubrCalls(visibleCoarrays);
 
-    // j. for allocated coarrays, convert allocate/deallocate stmts and
-    //    fake intrinsic function calls
-    convReferenceOfAllocCoarrays(visibleCoarrays);
+    // j. convert allocate/deallocate stmts (allocatable coarrays only)
+    convAllocateStmts(visibleCoarrays);
+    convDellocateStmts(visibleCoarrays);
+
+    // l. fake intrinsic 'allocatable' (allocatable coarrays only)
+    replaceAllocatedWithAssociated(visibleCoarrays);
 
     // i. initialization/finalization of local resources
     if (initSwitch)
@@ -265,7 +270,8 @@ public class XMPtransCoarrayRun
         z = xmpf_coarray_get0d(DP_V2, V2, 16, k, 0) ** 2     ! e
         call xmpf_coarray_alloc2d(DP_V3, V3, tag, 4,      &  ! j
           2, 10, 20)
-        call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)   ! jc
+        call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)   ! m
+        call xmpf_coarray_set_varname(DP_V3, "V3", 2)        ! n
         call xmpf_coarray_dealloc(DP_V3, tag)                ! j
         call xmpf_coarray_proc_finalize(tag)                 ! i
         return
@@ -309,8 +315,8 @@ public class XMPtransCoarrayRun
     // f. remove codimensions from declarations of coarrays
     removeCodimensionsFromCoarrays(localCoarrays);
 
-    // h. replace allocatable attributes with pointer attributes and
-    //    fake intrinsic 'allocatable' (allocatable coarrays only)
+    // h. replace allocatable attributes with pointer attributes
+    // (allocatable coarrays only)
     replaceAllocatableWithPointer(allocatableLocalCoarrays);
 
     // if there are any allocatale local coarrays, init/final is needed.
@@ -343,12 +349,14 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_proc_init(tag)                     ! i
         call xmpf_coarray_descptr(DP_V2, V2, tag)            ! k
         call xmpf_coarray_descptr(DP_V3, V3, tag)            ! k
-        call xmpf_coarray_set_coshape(DP_V2, 1, 0)           ! kc
+        call xmpf_coarray_set_coshape(DP_V2, 1, 0)           ! m
+        call xmpf_coarray_set_varname(DP_V2, "V2", 2)        ! n
 
         z = xmpf_coarray_get0d(DP_V2, V2, 16, k, 0) ** 2     ! e
         call xmpf_coarray_alloc2d(DP_V3, V3, tag, 4, &       ! j
           2, 10, 20)
-        call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)   ! jc
+        call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)   ! m
+        call xmpf_coarray_set_coshape(DP_V3, "V3", 2)        ! n
         call xmpf_coarray_dealloc(DP_V3, tag)                ! j
         call xmpf_coarray_proc_finalize(tag)                 ! i
         return
@@ -383,14 +391,14 @@ public class XMPtransCoarrayRun
     // a. declare descriptor pointers
     genDeclOfDescPointer(localCoarrays);
 
-    // k.& kc. generate definition of descriptor pointers (dummy coarrays only)
+    // k. m. n. generate definition of descriptor pointers (dummy coarrays only)
     genDefinitionOfDescPointer(dummyLocalCoarrays);
 
     // f. remove codimensions from declarations of coarrays
     removeCodimensionsFromCoarrays(localCoarrays);
 
-    // h. replace allocatable attributes with pointer attributes and
-    //    fake intrinsic 'allocatable' (allocatable coarrays only)
+    // h. replace allocatable attributes with pointer attributes
+    // (allocatable coarrays only)
     replaceAllocatableWithPointer(allocatableLocalCoarrays);
 
     // if there are any dummy argument coarrays, init/final is needed.
@@ -411,8 +419,8 @@ public class XMPtransCoarrayRun
     output:
     --------------------------------------------
       subroutine EX1
-       !! real :: V1(10,20)[4,*]     delete                  ! m
-       !! complex(8) :: V2[0:*]      delete                  ! m
+       !! real :: V1(10,20)[4,*]     delete                  ! o
+       !! complex(8) :: V2[0:*]      delete                  ! o
         integer, POINTER :: V3(:)                            ! f,h
 
         integer(8) :: DP_V3                                  ! a
@@ -447,10 +455,10 @@ public class XMPtransCoarrayRun
     removeCodimensionsFromCoarrays(allocatableLocalCoarrays);
 
     // h. replace allocatable attributes with pointer attributes and
-    //    fake intrinsic 'allocatable' (allocatable coarrays only)
+    // (allocatable coarrays only)
     replaceAllocatableWithPointer(allocatableLocalCoarrays);
 
-    // m. remove declarations of variables (static coarrays only)
+    // o. remove declarations of variables (static coarrays only)
     removeDeclOfCoarrays(staticLocalCoarrays);
   }
 
@@ -465,7 +473,7 @@ public class XMPtransCoarrayRun
     for (XMPcoarray coarray: coarrays) {
       // set coarray.descPtrName and 
       // generate declaration of the variable pointing the descriptor
-      coarray.genDecl_descPointer(DESCPOINTER_PREFIX);
+      coarray.genDecl_descPointer(VAR_DESCPOINTER_PREFIX);
     }
   }
 
@@ -479,7 +487,7 @@ public class XMPtransCoarrayRun
     for (XMPcoarray coarray: coarrays) {
       // set coarray.crayPtrName and
       // generate declaration of the cray pointer
-      coarray.genDecl_crayPointer(CRAYPOINTER_PREFIX);
+      coarray.genDecl_crayPointer(VAR_CRAYPOINTER_PREFIX);
     }
   }
 
@@ -509,7 +517,7 @@ public class XMPtransCoarrayRun
 
 
   //-----------------------------------------------------
-  //  TRANSLATION k. & kc.
+  //  TRANSLATION k. m. n.
   //  generate definition of descriptor pointers
   //-----------------------------------------------------
   //
@@ -518,11 +526,11 @@ public class XMPtransCoarrayRun
     Ident subr, descPtrId;
 
     for (XMPcoarray coarray: coarrays) {
-      // k.
+      // k. call "descptr(descPtr, baseAddr, tag)"
       descPtrId = coarray.getDescPointerId();
       args = Xcons.List(descPtrId, coarray.getIdent(),
                         Xcons.FvarRef(resourceTagId));
-      subr = env.declExternIdent(DEF_DESCPOINTER_NAME,
+      subr = env.declExternIdent(GET_DESCPOINTER_NAME,
                                  BasicType.FexternalSubroutineType);
       subrCall = subr.callSubroutine(args);
       addPrologStmt(subrCall);
@@ -530,7 +538,8 @@ public class XMPtransCoarrayRun
       if (coarray.isAllocatable())
         continue;
 
-      // kc.
+      /*******************  use common m. instead
+      // kc. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
       int corank = coarray.getCorank();
       args = Xcons.List(descPtrId, Xcons.IntConstant(corank));
       for (int i = 0; i < corank - 1; i++) {
@@ -541,6 +550,13 @@ public class XMPtransCoarrayRun
       subr = env.declExternIdent(SET_COSHAPE_NAME,
                                  BasicType.FexternalSubroutineType);
       subrCall = subr.callSubroutine(args);
+      *********************************/
+      // m. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
+      makeStmt_setCoshape(coarray);
+      addPrologStmt(subrCall);
+
+      // n. "CALL set_varname(descPtr, name, namelen)"
+      makeStmt_setVarName(coarray);
       addPrologStmt(subrCall);
     }
   }
@@ -722,15 +738,10 @@ public class XMPtransCoarrayRun
 
 
   //-----------------------------------------------------
-  //  TRANSLATION j. & jc.
+  //  TRANSLATION j, m, n
   //  convert allocate/deallocate stmts for allocated coarrays
   //-----------------------------------------------------
   //
-  private void convReferenceOfAllocCoarrays(Vector<XMPcoarray> coarrays) {
-    convAllocateStmts(coarrays);
-    convDellocateStmts(coarrays);
-  }
-
   private void convAllocateStmts(Vector<XMPcoarray> coarrays) {
     BasicBlockIterator bbi =
       new BasicBlockIterator(fblock);    // see XMPrewriteExpr iter3 loop
@@ -831,7 +842,7 @@ public class XMPtransCoarrayRun
     return allCoarray;
   }
 
-  private Boolean _isCoarrayArg(Xobject fcall, Vector<XMPcoarray> coarrays) {
+  private Boolean _hasCoarrayArg(Xobject fcall, Vector<XMPcoarray> coarrays) {
     Xobject args = fcall.getArg(1);
     Xobject arg = args.getArg(0);
     String name = arg.getName();
@@ -850,7 +861,9 @@ public class XMPtransCoarrayRun
     // TEMPORARY JUDGEMENT: If name is registered as an ident, it 
     // is not a name of intrinsic function. Else, it is regarded
     // as a name of intrinsic function.
-    Ident id = env.findVarIdent(name, fblock);
+    //  ... found this is not correct judgement for host association: #
+    //
+    Ident id = env.findVarIdent(obj.getName(), fblock);
     if (id == null)
       return true;          // regarded as intrinsic 
 
@@ -867,15 +880,29 @@ public class XMPtransCoarrayRun
       Xobject varname = arg.getArg(0);
       XMPcoarray coarray = _findCoarrayInCoarrays(varname, coarrays);
       XobjList shape = Xcons.List();
-      int rank = arg.getArg(1).Nargs() - 1;    //// don't know why F_Front generates such
+      XobjList coshape;
+      int rank;
+
+      // get the rank of the argument in the ALLOCATE stmt
+      int n = arg.getArg(1).Nargs();
+      if (arg.getArg(1).getArg(n - 1).Opcode() != Xcode.F_CO_SHAPE) {
+        XMP.error("lack of coshape in the ALLOCATE stetement");
+        // error recovery
+        return newStmts;
+      }
+
+      rank = n - 1;
+      coshape = (XobjList)arg.getArg(1).getArg(rank);
+
       for (int i = 0; i < rank; i++)
         shape.add(arg.getArg(1).getArg(i));
-      XobjList coshape = (XobjList)arg.getArg(1).getArg(rank);    //// weird
 
       // TRANSLATION j.
       newStmts.add(makeStmt_coarrayAlloc(coarray, shape));
-      // TRANSLATION jc.
+      // TRANSLATION m.
       newStmts.add(makeStmt_setCoshape(coarray, coshape));
+      // TRANSLATION n.
+      newStmts.add(makeStmt_setVarName(coarray));
     }
 
     return newStmts;
@@ -904,9 +931,9 @@ public class XMPtransCoarrayRun
   private Xobject makeStmt_coarrayAlloc(XMPcoarray coarray, XobjList shape) {
     int rank = coarray.getRank();
     if (rank != shape.Nargs()) {
-      XMP.error("number of dimensions not matched with the declaration: "
-                + rank + " and " + shape.Nargs());
-      return null;
+      XMP.error("Number of dimensions " + rank + 
+                " does not equal to " + shape.Nargs() +
+                ", the rank of coarray " + coarray.getName());
     }
 
     Xobject args = Xcons.List(coarray.getDescPointerId(),
@@ -959,6 +986,10 @@ public class XMPtransCoarrayRun
   }
 
 
+  /*
+   *  m. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
+   *     with static coshape
+   */
   private Xobject makeStmt_setCoshape(XMPcoarray coarray, XobjList coshape) {
     int corank = coarray.getCorank();
     if (corank != coshape.Nargs()) {
@@ -975,7 +1006,50 @@ public class XMPtransCoarrayRun
     }
     args.add(_getLboundInIndexRange(coshape.getArg(corank - 1)));
 
+    // m.
     Ident subr = env.declExternIdent(SET_COSHAPE_NAME,
+                                     BasicType.FexternalSubroutineType);
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
+
+
+  /*
+   *  m. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
+   *     without static coshape
+   */
+  private Xobject makeStmt_setCoshape(XMPcoarray coarray) {
+    int corank = coarray.getCorank();
+
+    Xobject args = Xcons.List(coarray.getDescPointerId(),
+                              Xcons.IntConstant(corank));
+    for (int i = 0; i < corank - 1; i++) {
+      args.add(coarray.getLcobound(i));
+      args.add(coarray.getUcobound(i));
+    }
+    args.add(coarray.getLcobound(corank - 1));
+
+    // m.
+    Ident subr = env.declExternIdent(SET_COSHAPE_NAME,
+                                     BasicType.FexternalSubroutineType);
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
+
+
+  /*
+   *  n. "CALL set_varname(descPtr, name, namelen)"
+   */
+  private Xobject makeStmt_setVarName(XMPcoarray coarray) {
+    String varName = coarray.getName();
+    Xobject varNameObj = 
+      Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
+    Xobject varNameLen = 
+      Xcons.IntConstant(varName.length());
+    Xobject args = Xcons.List(coarray.getDescPointerId(),
+                              varNameObj, varNameLen);
+    // n.
+    Ident subr = env.declExternIdent(SET_VARNAME_NAME,
                                      BasicType.FexternalSubroutineType);
     Xobject subrCall = subr.callSubroutine(args);
     return subrCall;
@@ -1098,17 +1172,22 @@ public class XMPtransCoarrayRun
 
   //-----------------------------------------------------
   //  TRANSLATION h.
-  //  replace allocatable attributes with pointer attributes and
-  //  fake intrinsic function 'allocated'
+  //  replace allocatable attributes with pointer attributes
   //-----------------------------------------------------
   //
   private void replaceAllocatableWithPointer(Vector<XMPcoarray> coarrays) {
-    // remove codimensions form coarray declaration
     for (XMPcoarray coarray: coarrays) {
       coarray.resetAllocatable();
       coarray.setPointer();
     }
+  }
 
+  //-----------------------------------------------------
+  //  TRANSLATION l.
+  //  fake intrinsic function 'allocated' with 'associated'
+  //-----------------------------------------------------
+  //
+  private void replaceAllocatedWithAssociated(Vector<XMPcoarray> coarrays) {
     XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
     for (xi.init(); !xi.end(); xi.next()) {
       Xobject x = xi.getXobject();
@@ -1123,9 +1202,12 @@ public class XMPtransCoarrayRun
         Xobject fname = x.getArg(0);
         if (fname.getString().equalsIgnoreCase("allocated") &&
             _isIntrinsic(fname) &&
-            _isCoarrayArg(x, coarrays)) {
-          Ident associatedId = declIntIntrinsicIdent("associated");
-          x.setArg(0, associatedId);
+            _hasCoarrayArg(x, coarrays)) {
+
+          //Ident associatedId = declIntIntrinsicIdent("associated");
+          //x.setArg(0, associatedId);
+          XobjString associated = Xcons.Symbol(Xcode.IDENT, "associated");
+          x.setArg(0, associated);
         }
         break;
       }
@@ -1134,7 +1216,7 @@ public class XMPtransCoarrayRun
 
 
   //-----------------------------------------------------
-  //  TRANSLATION m.
+  //  TRANSLATION o.
   //  remove declarations of coarray variables
   //-----------------------------------------------------
   //

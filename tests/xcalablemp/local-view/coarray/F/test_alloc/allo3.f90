@@ -38,6 +38,12 @@ program allo3
   write(*,*) "allocated(a2),allocated(c2):",allocated(a2),allocated(c2)
   write(*,*) "size(a2),size(c2):",size(a2),size(c2)
 
+  if (nerr==0) then 
+     print '("[",i0,"] OK")', me
+  else
+     print '("[",i0,"] number of NGs: ",i0)', me, nerr
+  end if
+
 
 end program allo3
 

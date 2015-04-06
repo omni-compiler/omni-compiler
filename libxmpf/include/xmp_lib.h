@@ -30,6 +30,7 @@
 
 !! others
       integer, external :: xmpf_coarray_image
+
 !      external :: xmpf_coarray_proc_init
 !      external :: xmpf_coarray_proc_finalize
 
