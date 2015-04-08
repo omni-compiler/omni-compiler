@@ -209,7 +209,7 @@ omni_exec $OMNI_MPIFC_CMD $OMNI_MPIFC_OPT -c $TRAVERSE_FILE -o $TRAVERSE_FILE_O
 obj_files+=("$TRAVERSE_FILE_O")
 [ "${output_file}" != "" ] && other_args+=("-o" "${output_file}")
 
-omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" $OMNI_LINKER_OPT "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}"
+omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" $OMNI_LINKER_OPT
 
 ### Delete temporal directory ###
 [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
