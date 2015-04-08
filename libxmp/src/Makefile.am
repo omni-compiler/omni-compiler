@@ -12,7 +12,7 @@ libxmp_a_SOURCES = ../include/xmp_internal.h ../include/xmp_constant.h ../includ
 		   xmp_reflect_acc.c xmp_reduce_acc.c xmp_intrinsic.c xmp_sort.c xmp_async.c
 
 if GASNET
-    libxmp_a_SOURCES += xmp_onesided.c xmp_onesided_gasnet.c xmp_coarray.c xmp_coarray_gasnet.c \
+    libxmp_a_SOURCES += xmp_onesided.c xmp_onesided_gasnet.c xmp_coarray.c xmp_coarray_gasnet.c xmp_coarray_gasnet_utils.c\
 			xmp_lock_unlock.c xmp_lock_unlock_gasnet.c xmp_post_wait.c xmp_post_wait_gasnet.c
     CFLAGS           += -D_XMP_GASNET
 endif
