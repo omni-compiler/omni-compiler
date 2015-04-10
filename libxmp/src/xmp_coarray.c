@@ -854,18 +854,13 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
   int remote_coarray_is_continuous = _check_continuous(_coarray, _coarray_dims);
   int local_array_is_continuous    = _check_continuous(_array, _array_dims); 
 
-#ifdef _XMP_FJRDMA
-  if(remote_coarray_is_continuous == _XMP_N_INT_FALSE || local_array_is_continuous == _XMP_N_INT_FALSE)
-    _XMP_fatal("Sorry! Not continuous array is not supported.");
-#endif
-
   if(rdma_code == _XMP_N_COARRAY_PUT){
 #ifdef _XMP_GASNET
-    _XMP_gasnet_put(remote_coarray_is_continuous, local_array_is_continuous, target_image, _coarray_dims, 
-		    _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+    _XMP_gasnet_put(remote_coarray_is_continuous, local_array_is_continuous, target_image, _coarray_dims, _array_dims, 
+		    _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_FJRDMA
-    _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_image, 
-		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts);
+    _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_image, _coarray_dims, _array_dims, 
+		    _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts, _transfer_array_elmts);
 #endif
   }
   else if(rdma_code == _XMP_N_COARRAY_GET){

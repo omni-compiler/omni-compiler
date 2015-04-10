@@ -1,4 +1,5 @@
 #include "mpi-ext.h"
+#include "xmp_internal.h"
 
 void _XMP_fjrdma_initialize(int argc, char **argv)
 {
