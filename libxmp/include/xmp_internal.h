@@ -339,7 +339,7 @@ extern void _XMP_gasnet_malloc_do(_XMP_coarray_t *, void **, const size_t);
 extern void _XMP_gasnet_initialize(int, char**, const size_t, const size_t);
 extern void _XMP_gasnet_finalize(const int);
 extern void _XMP_gasnet_put(const int, const int, const int, const int, const int, const _XMP_array_section_t*, const _XMP_array_section_t*, 
-			    const _XMP_coarray_t*, const void*, const size_t);
+			    const _XMP_coarray_t*, const void*, const size_t, const size_t);
 extern void _XMP_gasnet_get(const int, const int, const int, const int, const int, const _XMP_array_section_t*, const _XMP_array_section_t*,
                             const _XMP_coarray_t*, const void*, const size_t);
 extern void _XMP_gasnet_sync_all();
@@ -368,7 +368,7 @@ extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
 extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, const size_t);
 extern void _XMP_fjrdma_put(const int, const int, const int, const int, const int, const _XMP_array_section_t *,  
-			    const _XMP_array_section_t *, const _XMP_coarray_t *, const void *, const _XMP_coarray_t *, const int);
+			    const _XMP_array_section_t *, const _XMP_coarray_t *, const void *, const _XMP_coarray_t *, const int, const int);
 extern void _XMP_fjrdma_get(const int, const int, const int, const int, const int, const _XMP_array_section_t *, 
 			    const _XMP_array_section_t *, const _XMP_coarray_t *, const void *, const _XMP_coarray_t *, const int);
 extern void _XMP_fjrdma_shortcut_put(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, const _XMP_coarray_t *, const size_t);
@@ -456,12 +456,14 @@ extern void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t*, int);
 extern void _xmp_gasnet_do_unlock(int, xmp_gasnet_lock_t*, int*, int*);
 extern void _xmp_gasnet_do_lockhandoff(int);
 extern void _xmp_gasnet_unpack(gasnet_token_t, const char*, const size_t, 
-			       const int, const int, const int, const int);
-extern void _xmp_gasnet_unpack_using_buf(gasnet_token_t, const int, const int, const int, const int);
+			       const int, const int, const int, const int, const int);
+extern void _xmp_gasnet_unpack_using_buf(gasnet_token_t, const int, const int, const int, const int, const int);
 extern void _xmp_gasnet_unpack_reply(gasnet_token_t, const int);
 extern void _xmp_gasnet_pack(gasnet_token_t, const char*, const size_t, 
 			     const int, const int, const int, const size_t, const int, const int);
 extern void _xmp_gasnet_unpack_get_reply(gasnet_token_t, char *, size_t, const int, const int);
+extern void _XMP_pack_coarray(char*, const char*, const int, const _XMP_array_section_t*);
+extern void _XMP_unpack_coarray(char*, const int, const char*, const _XMP_array_section_t*, const int);
 
 /* Every handler function needs a uniqe number between 200-255.   
  * The Active Message library reserves ID's 1-199 for itself: client libs must

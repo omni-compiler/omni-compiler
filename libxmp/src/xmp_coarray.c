@@ -833,8 +833,14 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
 {
   if(_transfer_coarray_elmts == 0) return;
 
-  if(_transfer_coarray_elmts != _transfer_array_elmts)
-    _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;
+  if(rdma_code == _XMP_N_COARRAY_GET){
+    if(_transfer_coarray_elmts != _transfer_array_elmts)
+      _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;
+  }
+  else if(rdma_code == _XMP_N_COARRAY_PUT){
+    if(_transfer_coarray_elmts != _transfer_array_elmts && _transfer_array_elmts != 1)
+      _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;  // e.g. a[:] = b[2];
+  }
 
   int target_image = 0;
   for(int i=0;i<_image_dims;i++)
@@ -848,54 +854,23 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
   int remote_coarray_is_continuous = _check_continuous(_coarray, _coarray_dims);
   int local_array_is_continuous    = _check_continuous(_array, _array_dims); 
 
-#ifdef _XMP_FJRDMA
-  if(remote_coarray_is_continuous == _XMP_N_INT_FALSE || local_array_is_continuous == _XMP_N_INT_FALSE)
-    _XMP_fatal("Sorry! Not continuous array is not supported.");
-#endif
-
-  if(_XMP_N_COARRAY_PUT == rdma_code){
-    if(target_image == _XMP_world_rank && remote_coarray_is_continuous && local_array_is_continuous){
-      if(local_array == NULL)
-	memcpy(((_XMP_coarray_t*)remote_coarray)->real_addr, ((_XMP_coarray_t*)local_coarray)->real_addr, 
-	       _transfer_coarray_elmts*((_XMP_coarray_t*)remote_coarray)->elmt_size);
-      else{
-	uint64_t dst_point = (uint64_t)_XMP_get_offset(_coarray, _coarray_dims);
-	uint64_t src_point = (uint64_t)_XMP_get_offset(_array, _array_dims);
-	memcpy(((_XMP_coarray_t*)remote_coarray)->real_addr + dst_point, 
-	       (char *)local_array + src_point, _transfer_coarray_elmts*((_XMP_coarray_t*)remote_coarray)->elmt_size);
-      }
-    }
-    else{
+  if(rdma_code == _XMP_N_COARRAY_PUT){
 #ifdef _XMP_GASNET
-      _XMP_gasnet_put(remote_coarray_is_continuous, local_array_is_continuous, target_image,
-		      _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts);
+    _XMP_gasnet_put(remote_coarray_is_continuous, local_array_is_continuous, target_image, _coarray_dims, _array_dims, 
+		    _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_FJRDMA
-      _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_image, 
-		      _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts);
+    _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_image, _coarray_dims, _array_dims, 
+		    _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts, _transfer_array_elmts);
 #endif
-    }
   }
-  else if(_XMP_N_COARRAY_GET == rdma_code){
-    if(target_image == _XMP_world_rank && remote_coarray_is_continuous && local_array_is_continuous){
-      if(local_array == NULL)
-	memcpy(((_XMP_coarray_t*)local_coarray)->real_addr, ((_XMP_coarray_t*)remote_coarray)->real_addr, 
-	       _transfer_coarray_elmts*((_XMP_coarray_t*)remote_coarray)->elmt_size);
-      else{
-	uint64_t src_point = (uint64_t)_XMP_get_offset(_coarray, _coarray_dims);
-        uint64_t dst_point = (uint64_t)_XMP_get_offset(_array, _array_dims);
-	memcpy((char *)local_array + dst_point, 
-	       ((_XMP_coarray_t*)remote_coarray)->real_addr + src_point, _transfer_coarray_elmts*((_XMP_coarray_t*)remote_coarray)->elmt_size);
-      }
-    }
-    else{
+  else if(rdma_code == _XMP_N_COARRAY_GET){
 #ifdef _XMP_GASNET
-      _XMP_gasnet_get(remote_coarray_is_continuous, local_array_is_continuous, target_image,
-		      _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts);
+    _XMP_gasnet_get(remote_coarray_is_continuous, local_array_is_continuous, target_image,
+		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts);
 #elif _XMP_FJRDMA
-      _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_image, 
-		      _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts);
+    _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_image, 
+		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts);
 #endif
-    }
   }
   else{
     _XMP_fatal("Unexpected Operation !!");
