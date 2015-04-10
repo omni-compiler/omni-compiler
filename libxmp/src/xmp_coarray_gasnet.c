@@ -225,9 +225,9 @@ static void _gasnet_nonc_to_nonc_put(const int target_image, const int dst_dims,
   GASNET_BLOCKUNTIL(_xmp_gasnet_stride_queue[_xmp_gasnet_stride_wait_size] == 1);
 }
 
-static void _gasnet_scalar_put_bcast(const int target_image, const size_t src_point, const int dst_dims,
-				     const _XMP_array_section_t *dst_info, const _XMP_coarray_t *dst, 
-				     const void *src, const size_t elmt_size, const size_t num_elmts)
+static void _gasnet_scalar_mput(const int target_image, const size_t src_point, const int dst_dims,
+				const _XMP_array_section_t *dst_info, const _XMP_coarray_t *dst, 
+				const void *src, const size_t elmt_size, const size_t num_elmts)
 {
   size_t transfer_size = elmt_size;
   size_t dst_info_size = sizeof(_XMP_array_section_t) * dst_dims;
@@ -280,8 +280,8 @@ void _XMP_gasnet_put(const int dst_continuous, const int src_continuous, const i
   }
   else{
     size_t src_point = _XMP_get_offset(src_info, src_dims);
-    _gasnet_scalar_put_bcast(target_image, src_point, dst_dims, dst_info, dst, src, dst->elmt_size, 
-			     transfer_coarray_elmts);
+    _gasnet_scalar_mput(target_image, src_point, dst_dims, dst_info, dst, src, dst->elmt_size, 
+			transfer_coarray_elmts);
   }
 }
 

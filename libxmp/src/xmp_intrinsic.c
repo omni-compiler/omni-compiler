@@ -5747,8 +5747,8 @@ void xmp_pack(void *v_p, void *a_p, void *m_p)
    int comcount;
    int j;
 
-   xmp_pack_recv_info = (void *)xmp_pack_unpack_array_v;
-   xmp_pack_send_info = (void *)xmp_pack_unpack_array_a;
+   xmp_pack_recv_info = xmp_pack_unpack_array_v;
+   xmp_pack_send_info = xmp_pack_unpack_array_a;
 
    v_d = (_XMP_array_t*)v_p;
    a_d = (_XMP_array_t*)a_p;
@@ -6046,8 +6046,8 @@ void xmp_unpack(void *a_p, void *v_p, void *m_p)
    int comcount;
    int j;
 
-   xmp_unpack_send_info = (void *)xmp_pack_unpack_array_v;
-   xmp_unpack_recv_info = (void *)xmp_pack_unpack_array_a;
+   xmp_unpack_send_info = xmp_pack_unpack_array_v;
+   xmp_unpack_recv_info = xmp_pack_unpack_array_a;
 
    a_d = (_XMP_array_t*)a_p;
    v_d = (_XMP_array_t*)v_p;
