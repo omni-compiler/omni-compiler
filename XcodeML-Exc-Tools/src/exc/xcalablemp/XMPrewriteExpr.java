@@ -2114,4 +2114,30 @@ public class XMPrewriteExpr {
       }
       return arrayRef;
   }
+
+
+  public  void rewriteVarDecl(Xobject varDecl, boolean isLocal) {
+    assert(varDecl.Opcode() == Xcode.VAR_DECL);
+
+    String varName = varDecl.getArg(0).getName();
+    Ident varId = _globalDecl.findVarIdent(varName);
+
+    if (varId.isCoarray()) {
+      XobjList codimensions = (XobjList)varId.getCodimensions();
+
+      // normalization of codimensions:
+      //  add the last codimension '*' if it is not present
+      if (codimensions.getTail() == null ||
+          codimensions.getTail().getInt() != XMPcoarray.ASTERISK)
+        codimensions.add(Xcons.IntConstant(XMPcoarray.ASTERISK));
+
+      try {
+        XMPcoarray.translateCoarray_core(varId, varName, codimensions,
+                                         _globalDecl, isLocal);
+      } catch (XMPexception e) {
+        XMP.error(varDecl.getLineNo(), e.getMessage());
+      }
+    }
+  }
+
 }

@@ -77,6 +77,10 @@ public class XMPcoarray {
     return _descId;
   }
 
+
+  /*
+   *  for XMP/C V1.0 format
+   */
   public static void translateCoarray(XobjList coarrayDecl, XMPglobalDecl globalDecl,
                                       boolean isLocalPragma, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     String coarrayName = coarrayDecl.getArg(0).getString();
@@ -92,11 +96,21 @@ public class XMPcoarray {
       throw new XMPexception("coarray '" + coarrayName + "' is not declared");
     }
 
+    XobjList codimensions = (XobjList)coarrayDecl.getArg(1);
+    translateCoarray_core(varId, coarrayName, codimensions,
+                          globalDecl, isLocalPragma);
+  }
+
+
+  public static void translateCoarray_core(Ident varId, String name,
+                                           XobjList codimensions,
+                                           XMPglobalDecl globalDecl,
+                                           boolean isLocal) throws XMPexception {
     boolean is_output = true;
     if(varId.getStorageClass() == StorageClass.EXTERN)
       is_output = false;
 
-    int imageDim = XMPutil.countElmts((XobjList)coarrayDecl.getArg(1));
+    int imageDim = XMPutil.countElmts(codimensions);
     boolean isArray = false;
     int varDim = 0;
     Xtype elmtType = null;
@@ -121,7 +135,7 @@ public class XMPcoarray {
       elmtTypeRef = Xcons.IntConstant(XMP.NONBASIC_TYPE);
     }
 
-    XobjList coarrayDimSizeList = (XobjList)coarrayDecl.getArg(1);
+    XobjList coarrayDimSizeList = codimensions;
     int coarrayDim = coarrayDimSizeList.Nargs();
     if(coarrayDim > XMP.MAX_DIM) {
       throw new XMPexception("coarray dimension should be less than " + (XMP.MAX_DIM + 1));
@@ -165,14 +179,14 @@ public class XMPcoarray {
       funcName = funcName + Integer.toString(imageDim);
       funcArgs = Xcons.List();
       for(int i=0;i<imageDim-1;i++){
-        funcArgs.add(((XobjList)coarrayDecl.getArg(1)).getArg(i));
+        funcArgs.add(codimensions.getArg(i));
       }
       globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
     }
 
     Vector<Integer> imageVector = new Vector<Integer>(imageDim);
     for(int i=0;i<imageDim-1;i++){
-      imageVector.add(((XobjList)coarrayDecl.getArg(1)).getArg(i).getInt());
+      imageVector.add(codimensions.getArg(i).getInt());
     }
     imageVector.add(XMPcoarray.ASTERISK);
 
@@ -180,19 +194,19 @@ public class XMPcoarray {
     funcName = new String("_XMP_coarray_malloc_do");
     Ident descId, addrId;
     if(varId.getStorageClass() == StorageClass.EXTERN){
-      descId = globalDecl.declExternIdent(XMP.COARRAY_DESC_PREFIX_ + coarrayName, Xtype.voidPtrType);
-      addrId = globalDecl.declExternIdent(XMP.COARRAY_ADDR_PREFIX_ + coarrayName, new PointerType(elmtType));
+      descId = globalDecl.declExternIdent(XMP.COARRAY_DESC_PREFIX_ + name, Xtype.voidPtrType);
+      addrId = globalDecl.declExternIdent(XMP.COARRAY_ADDR_PREFIX_ + name, new PointerType(elmtType));
     }
     else if(varId.getStorageClass() == StorageClass.STATIC){
-      descId = globalDecl.declStaticIdent(XMP.COARRAY_DESC_PREFIX_ + coarrayName, Xtype.voidPtrType);
-      addrId = globalDecl.declStaticIdent(XMP.COARRAY_ADDR_PREFIX_ + coarrayName, new PointerType(elmtType));
+      descId = globalDecl.declStaticIdent(XMP.COARRAY_DESC_PREFIX_ + name, Xtype.voidPtrType);
+      addrId = globalDecl.declStaticIdent(XMP.COARRAY_ADDR_PREFIX_ + name, new PointerType(elmtType));
     }
     else if(varId.getStorageClass() == StorageClass.EXTDEF){
-      descId = globalDecl.declGlobalIdent(XMP.COARRAY_DESC_PREFIX_ + coarrayName, Xtype.voidPtrType);
-      addrId = globalDecl.declGlobalIdent(XMP.COARRAY_ADDR_PREFIX_ + coarrayName, new PointerType(elmtType));
+      descId = globalDecl.declGlobalIdent(XMP.COARRAY_DESC_PREFIX_ + name, Xtype.voidPtrType);
+      addrId = globalDecl.declGlobalIdent(XMP.COARRAY_ADDR_PREFIX_ + name, new PointerType(elmtType));
     }
     else {
-      throw new XMPexception("cannot coarray '" + coarrayName + "', wrong storage class");
+      throw new XMPexception("cannot coarray '" + name + "', wrong storage class");
     }
 
     funcArgs = Xcons.List(descId.getAddr(), addrId.getAddr());
@@ -201,7 +215,7 @@ public class XMPcoarray {
       globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
     }
     
-    XMPcoarray coarrayEntry = new XMPcoarray(coarrayName, elmtType, varDim, sizeVector, 
+    XMPcoarray coarrayEntry = new XMPcoarray(name, elmtType, varDim, sizeVector, 
                                              imageDim, imageVector, varAddr, varId, descId);
 
     globalDecl.putXMPcoarray(coarrayEntry);

@@ -510,7 +510,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
     // get enum member value
     Xobject enumValue = toXobject(getContent(getElement(n, "value")));
 
-    // get codimensions ID=284
+    // get codimensions #284
     Xobject codims = toXobject(getElement(n, "codimensions"));
 
     // get gcc attributes
@@ -546,7 +546,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
     }
 
     // create ident
-    // for coarray, set codiemnsions (ID=284)
+    // for coarray, set codiemnsions (#284)
     Ident ident = new Ident(name, sclass, type, addr,
 			    optionalFlags, gccAttrs,
 			    bitField, bitFieldExpr, enumValue, null, codims);

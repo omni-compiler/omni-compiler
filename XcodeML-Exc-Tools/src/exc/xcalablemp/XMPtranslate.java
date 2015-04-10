@@ -45,7 +45,16 @@ public class XMPtranslate implements XobjectDefVisitor {
   private void translate(XobjectDef def) {
     if (!def.isFuncDef()) {
       Xobject x = def.getDef();
-      if (x.Opcode() == Xcode.XMP_PRAGMA) _translateGlobalPragma.translate(x);
+      switch (x.Opcode()) {
+      case XMP_PRAGMA:
+        _translateGlobalPragma.translate(x);
+        break;
+
+      case VAR_DECL:
+        // for coarray declaration of XMP1.2
+        _rewriteExpr.rewriteVarDecl(x, false);   // isLocal=false
+        break;
+      }
       return;
     }
         
