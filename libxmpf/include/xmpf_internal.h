@@ -276,7 +276,7 @@ extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void
 #define TRUE   1
 #define FALSE  0
 
-#ifdef _XMP_COARRAY_FJRDMA
+#ifdef _XMP_FJRDMA
 #  define BOUNDARY_BYTE ((size_t)4)
 #else
 #  define BOUNDARY_BYTE ((size_t)1)

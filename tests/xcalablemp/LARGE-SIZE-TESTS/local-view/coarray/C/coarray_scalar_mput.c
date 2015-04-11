@@ -94,7 +94,7 @@ void test_5(int me)
   xmp_sync_all(&status);
 
   if(me == 1)
-    b[1:4:2][1][:][:][:]:[2] = tmp[0][1]; // put
+    b[1:4:2][1][:][:][:]:[2] = tmp[0][1];
   
   if(me == 2){
     for(int k=0;k<N;k++)
@@ -124,7 +124,6 @@ void check_5(int me){
 		printf("check_5 : b[%d][%d][%d][%d][%d] = %f (True value is %f) : ERROR\n",
 		       i, j, k, x, y, b[i][j][k][x][y], b_ans[i][j][k][x][y]);
 	      }
-  
   
   if(flag == TRUE && me == 2)  printf("check_2 : PASS\n");
   if(flag == FALSE) return_val = 1;

@@ -19,11 +19,11 @@ if GASNET
     libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
                          xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
                          xmpf_coarray_alloc_wrap.f90
-    CFLAGS            += -D_XMP_COARRAY_GASNET
+    CFLAGS            += -D_XMP_GASNET
 if POWERPC
-    FCFLAGS           += -WF,-D_XMP_COARRAY_GASNET
+    FCFLAGS           += -WF,-D_XMP_GASNET
 else
-    FCFLAGS           += -D_XMP_COARRAY_GASNET
+    FCFLAGS           += -D_XMP_GASNET
 endif
 endif
 
@@ -35,8 +35,8 @@ if FJRDMA
     libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
                          xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
                          xmpf_coarray_alloc_wrap.f90
-    CFLAGS            += -D_XMP_COARRAY_FJRDMA
-    FCFLAGS           += -D_XMP_COARRAY_FJRDMA
+    CFLAGS            += -D_XMP_FJRDMA
+    FCFLAGS           += -D_XMP_FJRDMA
 endif
 
 xmpf_coarray_get_wrap.f90: xmpf_coarray_get_wrap.f90.sh

@@ -58,9 +58,9 @@ void _coarray_msg(int sw)
   _XMPF_coarrayDebugPrint("xmpf_coarray_msg ON\n"
                           "  %zd-byte boundary, using %s\n",
                           BOUNDARY_BYTE,
-#if defined(_XMP_COARRAY_FJRDMA)
+#if defined(_XMP_FJRDMA)
                           "FJRDMA"
-#elif defined(_XMP_COARRAY_GASNET)
+#elif defined(_XMP_GASNET)
                           "GASNET"
 #else
                           "something unknown"

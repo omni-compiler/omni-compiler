@@ -83,7 +83,7 @@ target_triplet = @target@
 @GASNET_TRUE@			xmp_lock_unlock.c xmp_lock_unlock_gasnet.c xmp_post_wait.c xmp_post_wait_gasnet.c
 
 @GASNET_TRUE@am__append_2 = -D_XMP_GASNET
-@FJRDMA_TRUE@am__append_3 = xmp_onesided.c xmp_onesided_fjrdma.c xmp_coarray.c xmp_coarray_fjrdma.c \
+@FJRDMA_TRUE@am__append_3 = xmp_onesided.c xmp_onesided_fjrdma.c xmp_coarray.c xmp_coarray_fjrdma.c xmp_coarray_fjrdma_utils.c\
 @FJRDMA_TRUE@			xmp_post_wait.c xmp_post_wait_fjrdma.c
 
 @FJRDMA_TRUE@am__append_4 = -D_XMP_FJRDMA
@@ -159,8 +159,9 @@ am__libxmp_a_SOURCES_DIST = ../include/xmp_internal.h \
 	xmp_coarray_gasnet.c xmp_coarray_gasnet_utils.c \
 	xmp_lock_unlock.c xmp_lock_unlock_gasnet.c xmp_post_wait.c \
 	xmp_post_wait_gasnet.c xmp_onesided_fjrdma.c \
-	xmp_coarray_fjrdma.c xmp_post_wait_fjrdma.c xmp_reflect_tca.c \
-	xmp_reflect_gpu.c xmp_gpu_pack.cu xmp_reduce_gpu.c
+	xmp_coarray_fjrdma.c xmp_coarray_fjrdma_utils.c \
+	xmp_post_wait_fjrdma.c xmp_reflect_tca.c xmp_reflect_gpu.c \
+	xmp_gpu_pack.cu xmp_reduce_gpu.c
 @GASNET_TRUE@am__objects_1 = xmp_onesided.$(OBJEXT) \
 @GASNET_TRUE@	xmp_onesided_gasnet.$(OBJEXT) \
 @GASNET_TRUE@	xmp_coarray.$(OBJEXT) \
@@ -174,6 +175,7 @@ am__libxmp_a_SOURCES_DIST = ../include/xmp_internal.h \
 @FJRDMA_TRUE@	xmp_onesided_fjrdma.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_coarray.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_coarray_fjrdma.$(OBJEXT) \
+@FJRDMA_TRUE@	xmp_coarray_fjrdma_utils.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_post_wait.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_post_wait_fjrdma.$(OBJEXT)
 @TCA_TRUE@am__objects_3 = xmp_reflect_tca.$(OBJEXT)

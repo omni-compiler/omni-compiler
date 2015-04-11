@@ -159,7 +159,7 @@ int _select_getscheme_scalar(int element)
   // SCHEME_ExtraDirectGet should not be used because 
   // the extra area overwritten may be valid data.
 
-#ifdef _XMP_COARRAY_FJRDMA
+#ifdef _XMP_FJRDMA
   // The result scalar variable may be invisible to FJ-RDMA.
   return SCHEME_BufferGet;
 #else
@@ -169,7 +169,7 @@ int _select_getscheme_scalar(int element)
 
 int _select_getscheme_array(void)
 {
-#ifdef _XMP_COARRAY_FJRDMA
+#ifdef _XMP_FJRDMA
   // The result array variable may be invisible to FJ-RDMA.
   return SCHEME_BufferGet;
 #else

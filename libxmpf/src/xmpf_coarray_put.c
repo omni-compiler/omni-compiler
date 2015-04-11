@@ -210,7 +210,7 @@ extern void xmpf_coarray_put_spread_(int *serno, char *baseAddr, int *element,
 
 int _select_putscheme_scalar(int condition, int element)
 {
-#ifdef _XMP_COARRAY_FJRDMA
+#ifdef _XMP_FJRDMA
   // Temporary handling: in spite of condition, BufferPut or 
   // ExtraBufferPut will be selected because judgement of condition
   // seems inaccurate.
@@ -229,7 +229,7 @@ int _select_putscheme_scalar(int condition, int element)
 
 int _select_putscheme_array(int condition)
 {
-#ifdef _XMP_COARRAY_FJRDMA
+#ifdef _XMP_FJRDMA
   if (condition >= 1) {
     return SCHEME_BufferPut;
   }

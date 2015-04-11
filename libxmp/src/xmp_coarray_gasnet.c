@@ -72,8 +72,8 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray, void **addr, const size_t co
   if(_xmp_gasnet_coarray_shift > _xmp_gasnet_heap_size){
     if(_XMP_world_rank == 0){
       fprintf(stderr, "[ERROR] Cannot allocate coarray. Heap memory size of corray is too small.\n");
-      fprintf(stderr, "        Please set the environmental variable \"XMP_COARRAY_HEAP_SIZE\".\n");
-      fprintf(stderr, "        e.g.) export XMP_COARRAY_HEAP_SIZE=%zuM (or more).\n", (_xmp_gasnet_coarray_shift/1024/1024)+1);
+      fprintf(stderr, "        Please set the environmental variable \"XMP_ONESIDED_HEAP_SIZE\".\n");
+      fprintf(stderr, "        e.g.) export XMP_ONESIDED_HEAP_SIZE=%zuM (or more).\n", (_xmp_gasnet_coarray_shift/1024/1024)+1);
     }
     _XMP_fatal_nomsg();
   }
@@ -239,12 +239,12 @@ static void _gasnet_scalar_mput(const int target_image, const size_t src_point, 
   _extend_stride_queue();
   _xmp_gasnet_stride_queue[_xmp_gasnet_stride_wait_size] = 0;
   if(transfer_size < gasnet_AMMaxMedium()){
-    gasnet_AMRequestMedium5(target_image, _XMP_GASNET_UNPACK, archive, (size_t)transfer_size,
+    gasnet_AMRequestMedium5(target_image, _XMP_GASNET_UNPACK, archive, transfer_size,
                             HIWORD(dst->addr[target_image]), LOWORD(dst->addr[target_image]), dst_dims,
                             _xmp_gasnet_stride_wait_size, 1);
   }
   else if(transfer_size < _xmp_gasnet_stride_size){
-    gasnet_put(target_image, _xmp_gasnet_buf[target_image], archive, (size_t)transfer_size);
+    gasnet_put(target_image, _xmp_gasnet_buf[target_image], archive, transfer_size);
     gasnet_AMRequestShort5(target_image, _XMP_GASNET_UNPACK_USING_BUF, HIWORD(dst->addr[target_image]),
                            LOWORD(dst->addr[target_image]), dst_dims, _xmp_gasnet_stride_wait_size, 1);
   }

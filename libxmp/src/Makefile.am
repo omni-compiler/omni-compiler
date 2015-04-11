@@ -18,7 +18,7 @@ if GASNET
 endif
 
 if FJRDMA
-    libxmp_a_SOURCES += xmp_onesided.c xmp_onesided_fjrdma.c xmp_coarray.c xmp_coarray_fjrdma.c \
+    libxmp_a_SOURCES += xmp_onesided.c xmp_onesided_fjrdma.c xmp_coarray.c xmp_coarray_fjrdma.c xmp_coarray_fjrdma_utils.c\
 			xmp_post_wait.c xmp_post_wait_fjrdma.c
     CFLAGS           += -D_XMP_FJRDMA
 endif
