@@ -1,10 +1,11 @@
+#include <stdlib.h>
 #include "xmp_internal.h"
 
 uint64_t* _XMP_calc_raddrs_mput(const uint64_t raddr, const _XMP_array_section_t *dst_info, const int dst_dims, 
 				const size_t elmts)
 {
   uint64_t* raddrs = malloc(sizeof(uint64_t) * elmts);
-  uint64_t tmp_start_size[dst_dims], tmp_stride_offset[dst_dims], tmp_offset[dst_dims];
+  uint64_t tmp_start_offset[dst_dims], tmp_stride_offset[dst_dims], tmp_offset[dst_dims];
 
   // Temporally variables to reduce calculation for offset
   for(int i=0;i<dst_dims;i++){
