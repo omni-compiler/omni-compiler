@@ -137,9 +137,10 @@ if [ $OUTPUT_TEMPORAL = true ]; then
 	FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
 	EXT=${file##*.}
 	FILE_F90=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.F90
+	BASENAME=`basename $FILE .$EXT`
 
-	omni_exec cp "${FILE_F90}" __omni_tmp__"${FILE_NAME}".${EXT}
-        echo output __omni_tmp__"${FILE_NAME}".${EXT}
+        omni_exec cp "${FILE_F90}" __omni_tmp__"${BASENAME}".${EXT}
+        echo output __omni_tmp__"${BASENAME}".${EXT}
     done
 fi
 [ $STOP_BACKEND = true ] && exit 0;
