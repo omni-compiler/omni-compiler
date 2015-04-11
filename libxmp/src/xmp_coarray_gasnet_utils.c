@@ -2,6 +2,7 @@
 #define _XMP_UNROLLING (4)
 #define _XMP_PACK   0
 #define _XMP_UNPACK 1
+#define _XMP_MPUT 2
 
 static int _is_all_elmt(const _XMP_array_section_t* array_info, const int dim)
 {
@@ -155,9 +156,6 @@ static size_t _calc_start_offset(const _XMP_array_section_t* arrray_info, int di
 
 static void _memcpy_1dim(char *buf1, const char *buf2, const _XMP_array_section_t *array, size_t element_size, int flag)
 {
-  // flag == _XMP_PACK   : pack operation
-  // flag == _XMP_UNPACK : unpack operation
-
   size_t buf1_offset = 0, tmp;
   size_t stride_offset = array[0].stride * array[0].distance;
 
@@ -179,9 +177,6 @@ static void _memcpy_1dim(char *buf1, const char *buf2, const _XMP_array_section_
 
 static void _memcpy_2dim(char *buf1, const char *buf2, const _XMP_array_section_t *array, size_t element_size, int flag)
 {
-  // flag == _XMP_PACK   : pack operation
-  // flag == _XMP_UNPACK : unpack operation
-
   size_t buf1_offset = 0;
   size_t tmp[2], stride_offset[2];
 
@@ -208,13 +203,19 @@ static void _memcpy_2dim(char *buf1, const char *buf2, const _XMP_array_section_
       }
     }
   }
+  else if(flag == _XMP_MPUT){
+    for(int i=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<array[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        memcpy(buf1 + tmp[0] + tmp[1], buf2, element_size);
+      }
+    }
+  }
 }
 
 static void _memcpy_3dim(char *buf1, const char *buf2, const _XMP_array_section_t *array, size_t element_size, int flag)
 {
-  // flag == _XMP_PACK   : pack operation
-  // flag == _XMP_UNPACK : unpack operation
-
   size_t buf1_offset = 0;
   size_t tmp[3], stride_offset[3];
 
@@ -247,13 +248,22 @@ static void _memcpy_3dim(char *buf1, const char *buf2, const _XMP_array_section_
       }
     }
   }
+  else if(flag == _XMP_MPUT){
+    for(int i=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<array[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<array[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          memcpy(buf1 + tmp[0] + tmp[1] + tmp[2], buf2, element_size);
+        }
+      }
+    }
+  }
 }
 
 static void _memcpy_4dim(char *buf1, const char *buf2, const _XMP_array_section_t *array, size_t element_size, int flag)
 {
-  // flag == _XMP_PACK   : pack operation
-  // flag == _XMP_UNPACK : unpack operation
-
   size_t buf1_offset = 0;
   size_t tmp[4], stride_offset[4];
 
@@ -293,13 +303,26 @@ static void _memcpy_4dim(char *buf1, const char *buf2, const _XMP_array_section_
       }
     }
   }
+  else if(flag == _XMP_MPUT){
+    for(int i=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<array[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<array[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<array[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            memcpy(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3],
+                   buf2, element_size);
+          }
+        }
+      }
+    }
+  }
 }
 
 static void _memcpy_5dim(char *buf1, const char *buf2, const _XMP_array_section_t *array, size_t element_size, int flag)
 {
-  // flag == _XMP_PACK   : pack operation
-  // flag == _XMP_UNPACK : unpack operation
-
   size_t buf1_offset = 0;
   size_t tmp[5], stride_offset[5];
 
@@ -345,13 +368,29 @@ static void _memcpy_5dim(char *buf1, const char *buf2, const _XMP_array_section_
       }
     }
   }
+  else if(flag == _XMP_MPUT){
+    for(int i=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<array[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<array[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<array[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            for(int n=0;n<array[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+              memcpy(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4],
+                     buf2, element_size);
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 static void _memcpy_6dim(char *buf1, const char *buf2, const _XMP_array_section_t *array, size_t element_size, int flag)
 {
-  // flag == _XMP_PACK   : pack operation
-  // flag == _XMP_UNPACK : unpack operation
-
   size_t buf1_offset = 0;
   size_t tmp[6], stride_offset[6];
 
@@ -404,13 +443,33 @@ static void _memcpy_6dim(char *buf1, const char *buf2, const _XMP_array_section_
       }
     }
   }
+  else if(flag == _XMP_MPUT){
+    for(int i=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<array[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<array[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<array[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            for(int n=0;n<array[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+              for(int p=0;p<array[5].length;p++){
+                tmp[5] = stride_offset[5] * p;
+                memcpy(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5],
+                       buf2, element_size);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
 }
 
 static void _memcpy_7dim(char *buf1, const char *buf2, const _XMP_array_section_t *array, size_t element_size, int flag)
 {
-  // flag == _XMP_PACK   : pack operation
-  // flag == _XMP_UNPACK : unpack operation
-
   size_t buf1_offset = 0;
   size_t tmp[7], stride_offset[7];
 
@@ -462,6 +521,31 @@ static void _memcpy_7dim(char *buf1, const char *buf2, const _XMP_array_section_
 			 buf2 + buf1_offset, element_size);
                   buf1_offset += element_size;
 		}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  else if(flag == _XMP_MPUT){
+    for(int i=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(int j=0;j<array[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(int k=0;k<array[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(int m=0;m<array[3].length;m++){
+            tmp[3] = stride_offset[3] * m;
+            for(int n=0;n<array[4].length;n++){
+              tmp[4] = stride_offset[4] * n;
+	      for(int p=0;p<array[5].length;p++){
+                tmp[5] = stride_offset[5] * p;
+		for(int q=0;q<array[6].length;q++){
+                  tmp[6] = stride_offset[6] * q;
+                  memcpy(buf1 + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6],
+                         buf2, element_size);
+                }
               }
             }
           }
@@ -991,165 +1075,6 @@ static void _unpack_1_dim_array_fixed_src(const _XMP_array_section_t* dst, const
   }
 }
 
-static void _unpack_2_dim_array_fixed_src(const _XMP_array_section_t* dst, const char* src_ptr, char* dst_ptr)
-{
-  size_t tmp_start_offset[2], tmp_stride_offset[2], tmp_offset[2];
-
-  // Temporally variables to reduce calculation for offset
-  for(int i=0;i<2;i++){
-    tmp_start_offset[i]  = dst[i].start  * dst[i].distance;
-    tmp_stride_offset[i] = dst[i].stride * dst[i].distance;
-  }
-
-  for(int i=0;i<dst[0].length;i++){
-    tmp_offset[0] = tmp_start_offset[0] + i * tmp_stride_offset[0];
-    for(int j=0;j<dst[1].length;j++){
-      tmp_offset[1] = tmp_start_offset[1] + j * tmp_stride_offset[1] + tmp_offset[0];
-      memcpy(dst_ptr + tmp_offset[1], src_ptr, dst[1].distance);
-    }
-  }
-}
-
-static void _unpack_3_dim_array_fixed_src(const _XMP_array_section_t* dst, const char* src_ptr, char* dst_ptr)
-{
-  size_t tmp_start_offset[3], tmp_stride_offset[3], tmp_offset[3];
-
-  // Temporally variables to reduce calculation for offset
-  for(int i=0;i<3;i++){
-    tmp_start_offset[i]  = dst[i].start  * dst[i].distance;
-    tmp_stride_offset[i] = dst[i].stride * dst[i].distance;
-  }
-
-  for(int i=0;i<dst[0].length;i++){
-    tmp_offset[0] = tmp_start_offset[0] + i * tmp_stride_offset[0];
-    for(int j=0;j<dst[1].length;j++){
-      tmp_offset[1] = tmp_start_offset[1] + j * tmp_stride_offset[1] + tmp_offset[0];
-      for(int k=0;k<dst[2].length;k++){
-        tmp_offset[2] = tmp_start_offset[2] + k * tmp_stride_offset[2] + tmp_offset[1];
-	memcpy(dst_ptr + tmp_offset[2], src_ptr, dst[2].distance);
-      }
-    }
-  }
-}
-
-static void _unpack_4_dim_array_fixed_src(const _XMP_array_section_t* dst, const char* src_ptr, char* dst_ptr)
-{
-  size_t tmp_start_offset[4], tmp_stride_offset[4], tmp_offset[4];
-
-  // Temporally variables to reduce calculation for offset
-  for(int i=0;i<4;i++){
-    tmp_start_offset[i]  = dst[i].start  * dst[i].distance;
-    tmp_stride_offset[i] = dst[i].stride * dst[i].distance;
-  }
-
-  for(int i=0;i<dst[0].length;i++){
-    tmp_offset[0] = tmp_start_offset[0] + i * tmp_stride_offset[0];
-    for(int j=0;j<dst[1].length;j++){
-      tmp_offset[1] = tmp_start_offset[1] + j * tmp_stride_offset[1] + tmp_offset[0];
-      for(int k=0;k<dst[2].length;k++){
-        tmp_offset[2] = tmp_start_offset[2] + k * tmp_stride_offset[2] + tmp_offset[1];
-        for(int l=0;l<dst[3].length;l++){
-          tmp_offset[3] = tmp_start_offset[3] + l * tmp_stride_offset[3] + tmp_offset[2];
-	  memcpy(dst_ptr + tmp_offset[3], src_ptr, dst[3].distance);
-        }
-      }
-    }
-  }
-}
-
-static void _unpack_5_dim_array_fixed_src(const _XMP_array_section_t* dst, const char* src_ptr, char* dst_ptr)
-{
-  size_t tmp_start_offset[5], tmp_stride_offset[5], tmp_offset[5];
-
-  // Temporally variables to reduce calculation for offset
-  for(int i=0;i<5;i++){
-    tmp_start_offset[i]  = dst[i].start  * dst[i].distance;
-    tmp_stride_offset[i] = dst[i].stride * dst[i].distance;
-  }
-
-  for(int i=0;i<dst[0].length;i++){
-    tmp_offset[0] = tmp_start_offset[0] + i * tmp_stride_offset[0];
-    for(int j=0;j<dst[1].length;j++){
-      tmp_offset[1] = tmp_start_offset[1] + j * tmp_stride_offset[1] + tmp_offset[0];
-      for(int k=0;k<dst[2].length;k++){
-        tmp_offset[2] = tmp_start_offset[2] + k * tmp_stride_offset[2] + tmp_offset[1];
-        for(int l=0;l<dst[3].length;l++){
-          tmp_offset[3] = tmp_start_offset[3] + l * tmp_stride_offset[3] + tmp_offset[2];
-          for(int m=0;m<dst[4].length;m++){
-            tmp_offset[4] = tmp_start_offset[4] + m * tmp_stride_offset[4] + tmp_offset[3];
-            memcpy(dst_ptr + tmp_offset[4], src_ptr, dst[4].distance);
-          }
-        }
-      }
-    }
-  }
-}
-
-static void _unpack_6_dim_array_fixed_src(const _XMP_array_section_t* dst, const char* src_ptr, char* dst_ptr)
-{
-  size_t tmp_start_offset[6], tmp_stride_offset[6], tmp_offset[6];
-
-  // Temporally variables to reduce calculation for offset
-  for(int i=0;i<6;i++){
-    tmp_start_offset[i]  = dst[i].start  * dst[i].distance;
-    tmp_stride_offset[i] = dst[i].stride * dst[i].distance;
-  }
-
-  for(int i=0;i<dst[0].length;i++){
-    tmp_offset[0] = tmp_start_offset[0] + i * tmp_stride_offset[0];
-    for(int j=0;j<dst[1].length;j++){
-      tmp_offset[1] = tmp_start_offset[1] + j * tmp_stride_offset[1] + tmp_offset[0];
-      for(int k=0;k<dst[2].length;k++){
-        tmp_offset[2] = tmp_start_offset[2] + k * tmp_stride_offset[2] + tmp_offset[1];
-        for(int l=0;l<dst[3].length;l++){
-          tmp_offset[3] = tmp_start_offset[3] + l * tmp_stride_offset[3] + tmp_offset[2];
-          for(int m=0;m<dst[4].length;m++){
-            tmp_offset[4] = tmp_start_offset[4] + m * tmp_stride_offset[4] + tmp_offset[3];
-	    for(int n=0;n<dst[5].length;n++){
-	      tmp_offset[5] = tmp_start_offset[5] + n * tmp_stride_offset[5] + tmp_offset[4];
-	      memcpy(dst_ptr + tmp_offset[5], src_ptr, dst[5].distance);
-	    }
-          }
-        }
-      }
-    }
-  }
-}
-
-static void _unpack_7_dim_array_fixed_src(const _XMP_array_section_t* dst, const char* src_ptr, char* dst_ptr)
-{
-  size_t tmp_start_offset[7], tmp_stride_offset[7], tmp_offset[7];
-
-  // Temporally variables to reduce calculation for offset
-  for(int i=0;i<7;i++){
-    tmp_start_offset[i]  = dst[i].start  * dst[i].distance;
-    tmp_stride_offset[i] = dst[i].stride * dst[i].distance;
-  }
-
-  for(int i=0;i<dst[0].length;i++){
-    tmp_offset[0] = tmp_start_offset[0] + i * tmp_stride_offset[0];
-    for(int j=0;j<dst[1].length;j++){
-      tmp_offset[1] = tmp_start_offset[1] + j * tmp_stride_offset[1] + tmp_offset[0];
-      for(int k=0;k<dst[2].length;k++){
-        tmp_offset[2] = tmp_start_offset[2] + k * tmp_stride_offset[2] + tmp_offset[1];
-        for(int l=0;l<dst[3].length;l++){
-          tmp_offset[3] = tmp_start_offset[3] + l * tmp_stride_offset[3] + tmp_offset[2];
-          for(int m=0;m<dst[4].length;m++){
-            tmp_offset[4] = tmp_start_offset[4] + m * tmp_stride_offset[4] + tmp_offset[3];
-            for(int n=0;n<dst[5].length;n++){
-              tmp_offset[5] = tmp_start_offset[5] + n * tmp_stride_offset[5] + tmp_offset[4];
-	      for(int p=0;p<dst[6].length;p++){
-		tmp_offset[6] = tmp_start_offset[6] + p * tmp_stride_offset[6] + tmp_offset[5];
-		memcpy(dst_ptr + tmp_offset[6], src_ptr, dst[6].distance);
-	      }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
 void _XMP_unpack_coarray(char *dst_ptr, const int dst_dims, const char* src_ptr, 
 			 const _XMP_array_section_t* dst, const int flag)
 {
@@ -1192,24 +1117,25 @@ void _XMP_unpack_coarray(char *dst_ptr, const int dst_dims, const char* src_ptr,
     }
   }
   else{
+    size_t start_offset = _calc_start_offset(dst, dst_dims);
     switch (dst_dims){
     case 2:
-      _unpack_2_dim_array_fixed_src(dst, src_ptr, dst_ptr);
+      _memcpy_2dim(dst_ptr + start_offset, src_ptr, dst, dst[1].distance, _XMP_MPUT);
       break;;
     case 3:
-      _unpack_3_dim_array_fixed_src(dst, src_ptr, dst_ptr);
+      _memcpy_3dim(dst_ptr + start_offset, src_ptr, dst, dst[2].distance, _XMP_MPUT);
       break;;
     case 4:
-      _unpack_4_dim_array_fixed_src(dst, src_ptr, dst_ptr);
+      _memcpy_4dim(dst_ptr + start_offset, src_ptr, dst, dst[3].distance, _XMP_MPUT);
       break;;
     case 5:
-      _unpack_5_dim_array_fixed_src(dst, src_ptr, dst_ptr);
+      _memcpy_5dim(dst_ptr + start_offset, src_ptr, dst, dst[4].distance, _XMP_MPUT);
       break;;
     case 6:
-      _unpack_6_dim_array_fixed_src(dst, src_ptr, dst_ptr);
+      _memcpy_6dim(dst_ptr + start_offset, src_ptr, dst, dst[5].distance, _XMP_MPUT);
       break;;
     case 7:
-      _unpack_7_dim_array_fixed_src(dst, src_ptr, dst_ptr);
+      _memcpy_7dim(dst_ptr + start_offset, src_ptr, dst, dst[6].distance, _XMP_MPUT);
       break;;
     default:
       _XMP_fatal("Dimension of coarray is too big.");
