@@ -4,11 +4,10 @@
 #include <xmp.h>
 #pragma xmp nodes p(2)
 #define N 10
-long   a[N][N][N][N],          a_ans[N][N][N][N];
-float  b[N][N][N][N][N],       b_ans[N][N][N][N][N];
-double c[N][N][N][N][N][N],    c_ans[N][N][N][N][N][N];
-long   d[N][N][N][N][N][N][N], d_ans[N][N][N][N][N][N][N];
-#pragma xmp coarray a,b,c,d : [*]
+long   a[N][N][N][N]:[*],          a_ans[N][N][N][N];
+float  b[N][N][N][N][N]:[*],       b_ans[N][N][N][N][N];
+double c[N][N][N][N][N][N]:[*],    c_ans[N][N][N][N][N][N];
+long   d[N][N][N][N][N][N][N]:[*], d_ans[N][N][N][N][N][N][N];
 int status, return_val = 0;
 
 void initialize_coarrays(int me)
