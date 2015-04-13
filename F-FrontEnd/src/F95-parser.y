@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file F95-parser.y
  */
@@ -1898,7 +1892,7 @@ omp_schedule_attr:
 omp_default_attr:
 	  OMPKW_SHARED { $$ = OMP_LIST(OMP_DEFAULT_SHARED,NULL); }
 	| OMPKW_PRIVATE { $$ = OMP_LIST(OMP_DEFAULT_PRIVATE,NULL); }
-	| OMPKW_NONE { $$ = $$ = OMP_LIST(OMP_DEFAULT_NONE,NULL); }
+	| OMPKW_NONE { $$ = OMP_LIST(OMP_DEFAULT_NONE,NULL); }
 	;
 
 /* 
@@ -2275,7 +2269,7 @@ xmp_clause_one:
 xmp_ON: { need_keyword = TRUE; } XMPKW_ON;
 xmp_ONTO: { need_keyword = TRUE; } XMPKW_ONTO;
 xmp_WITH: { need_keyword = TRUE; } XMPKW_WITH;
-xmp_FROM: { need_keyword = TRUE; } XMPKW_FROM;
+/*xmp_FROM: { need_keyword = TRUE; } XMPKW_FROM;*/
 xmp_ASYNC: { need_keyword = TRUE; } XMPKW_ASYNC;
 xmp_NOWAIT: { need_keyword = TRUE; } XMPKW_NOWAIT;
 /* xmp_REDUCTION: { need_keyword = TRUE; } XMPKW_REDUCTION; */

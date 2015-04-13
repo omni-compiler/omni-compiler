@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file c-expr.c
  */
@@ -18,7 +12,6 @@
 #include "c-expr.h"
 #include "c-option.h"
 #include "c-pragma.h"
-
 
 CExpr                   *s_exprStart = NULL;
 CCOL_DList              s_symTabStack;
@@ -1187,7 +1180,7 @@ innerCopyExprCommon(CExpr *dst, CExpr *src)
     CExprCommon *cdst = EXPR_C(dst);
     CExprCommon *csrc = EXPR_C(src);
 
-    memcpy(dst, src, sizeof(dst));
+    memcpy(dst, src, sizeof(CExpr));
     EXPR_C(dst)->e_refCount = 0;
 
     EXPR_SET0(cdst->e_gccAttrPre, copyExpr(csrc->e_gccAttrPre));

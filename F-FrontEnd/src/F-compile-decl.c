@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file F-compile-decl.c
  */
@@ -572,9 +566,6 @@ declare_variable(ID id)
     if (ID_CLASS(id) == CL_MAIN) return id; /* don't care */
 
     if (ID_CLASS(id) == CL_NAMELIST) {
-#if 0
-        fatal("declare_variable: NAME_LIST, not implemented yet.");
-#endif
         return id;
     }
 
@@ -1676,10 +1667,10 @@ TYPE_DESC
 compile_type(expr x)
 {
     expr r1, r2 = NULL;
-    int kind = 0, isKindConst = 1, kindByLen = 0;
+    int kind = 0, isKindConst = 1, kindByLen = 0, charLen = 0;
     BASIC_DATA_TYPE t;
     TYPE_DESC tp = NULL;
-    expr rkind = NULL, rcharLen = NULL, charLen = 0;
+    expr rkind = NULL, rcharLen = NULL;
     expv vkind = NULL, vkind2 = NULL, vcharLen = NULL, vcharLen1 = NULL;
     expv org_vkind = NULL;
 
@@ -1734,7 +1725,6 @@ compile_type(expr x)
          */
         is_in_kind_compilation_flag_for_declare_ident = TRUE;
 	org_vkind = vkind = compile_expression(rkind);
-        //vkind = compile_expression(rkind);
         is_in_kind_compilation_flag_for_declare_ident = FALSE;
         if(vkind == NULL)
             return NULL;
@@ -1914,7 +1904,7 @@ compile_type(expr x)
 void 
 compile_IMPLICIT_decl(expr type,expr l)
 {
-    TYPE_DESC tp;
+    TYPE_DESC tp = NULL;
     ID id;
     list lp;
     expr v, ty;

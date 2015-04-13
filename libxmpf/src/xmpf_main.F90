@@ -7,9 +7,15 @@
       !! automatically made from the input program files and written
       !! in /tmp/omni_traverse_nnnn.f90 by omni_traverse script.
       call xmpf_traverse_module
+<<<<<<< HEAD
 #if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)
       call xmpf_traverse_countcoarray
       call xmpf_coarray_malloc_pool
+=======
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
+      call xmpf_traverse_coarraysize
+      call xmpf_coarray_memorypool
+>>>>>>> c99e97e9f114acd0636e561e6d26c603c2329ebb
       call xmpf_traverse_initcoarray
 #endif
 

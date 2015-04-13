@@ -1,7 +1,7 @@
 AC_PREREQ(2.60)
 LT_PREREQ(2.4)
 
-AC_INIT([Omni Compiler], [0.9.5], [h-murai@riken.jp], [omni])
+AC_INIT([Omni Compiler], [0.9.1], [h-murai@riken.jp], [omni])
 
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
@@ -940,9 +940,9 @@ fi
 OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
 OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
 
-AM_CONDITIONAL(USE_LIBBLAS,   test x${use_libblas}   = xyes)
-AM_CONDITIONAL(USE_SSL2BLAMP, test x${use_SSL2BLAMP} = xyes)
-AM_CONDITIONAL(USE_INTELMKL,  test x${use_intelmkl}  = xyes)
+AM_CONDITIONAL(LIBBLAS,   test x${use_libblas}   = xyes)
+AM_CONDITIONAL(SSL2BLAMP, test x${use_SSL2BLAMP} = xyes)
+AM_CONDITIONAL(INTELMKL,  test x${use_intelmkl}  = xyes)
 
 # --------------------------------------------------------------------
 # set TCA

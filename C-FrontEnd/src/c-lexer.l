@@ -352,7 +352,7 @@ L\"(\\.|[^\\"])*\"      { count(); yylval.expr = lexAllocStringConst(CT_WIDE);  
                         /* ------ ignoring character ------ */
 
 [ \t\v\r\n\f]  { count(); }
-\x0c           { count(); /* skip ^L */ }
+#\x0c           { count(); /* skip ^L */ }
 .              { count(); lexError(); }
 
 %%

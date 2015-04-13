@@ -3,7 +3,8 @@
 #include <string.h>
 #include "xmp_internal.h"
 #include "mpi.h"
-#ifdef _XMP_COARRAY_FJRDMA
+
+#ifdef _XMP_FJRDMA
 #include "mpi-ext.h"
 #define XMP_FJRDMA_MAX_NODES 16384
 static int compare_char(const void *x, const void *y);
@@ -22,22 +23,9 @@ void _XMP_init(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &_XMP_world_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &_XMP_world_size);
 
-#ifdef _XMP_COARRAY_FJRDMA
-    if(within_limit_of_physical_nodes()){
-      _XMP_coarray_initialize(argc, argv);
-      _XMP_post_wait_initialize();
-    }
-    //    else{
-    //      if(_XMP_world_rank == 0){
-    //	fprintf(stderr, "Coarray cannot be used in more than %d physical nodes ", XMP_FJRDMA_MAX_NODES);
-    //	fprintf(stderr, "(Now using %d physical nodes)\n", _num_of_physical_nodes);
-    //      }
-    //    }
-#elif _XMP_COARRAY_GASNET
-    _XMP_coarray_initialize(argc, argv);
-    _XMP_post_wait_initialize();
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
+    _XMP_onesided_initialize(argc, argv);
 #endif
-
 #ifdef _XMP_TCA
     _XMP_init_tca();
 #endif
@@ -50,10 +38,8 @@ void _XMP_init(int argc, char** argv)
 void _XMP_finalize(int return_val)
 {
   if (_XMP_runtime_working) {
-#ifdef _XMP_COARRAY_GASNET
-    _XMP_coarray_finalize(return_val);
-#elif _XMP_COARRAY_FJRDMA
-    _XMP_fjrdma_finalize();
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
+    _XMP_onesided_finalize(return_val);
 #endif
     _XMP_finalize_world();
     _XMP_runtime_working = _XMP_N_INT_FALSE;
@@ -75,7 +61,7 @@ void xmpc_finalize_all(int return_val)
   _XMP_finalize(return_val);
 }
 
-#ifdef _XMP_COARRAY_FJRDMA
+#ifdef _XMP_FJRDMA
 static int compare_char(const void *x, const void *y)
 {
   return strcmp((char *)x, (char *)y);

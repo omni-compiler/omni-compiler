@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
@@ -27,7 +21,8 @@
   else { \
     if (ser_step > 0) ser_cond -= ((ser_cond - ser_init) % ser_step); \
     else { \
-      reverse_iter = _XMP_N_INT_TRUE; \
+      if(reverse_iter != _XMP_N_INT_TRUE) /* This branch hides warning in _XMP_sched_loop_nodes() */	\
+        reverse_iter = _XMP_N_INT_TRUE; \
 \
       ser_step = -ser_step; \
       ser_cond++; \
@@ -354,11 +349,9 @@ no_iter:
 void _XMP_sched_loop_nodes(int ser_init, int ser_cond, int ser_step,
                            int *par_init, int *par_cond, int *par_step,
                            _XMP_nodes_t *nodes, int nodes_index) {
-  if (!nodes->is_member) {
-    goto no_iter;
-  }
+  if (!nodes->is_member) goto no_iter;
 
-  int reverse_iter = _XMP_N_INT_FALSE;
+  int reverse_iter = _XMP_N_INT_TRUE;  // reverse_iter is not used in this function
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)
 
   int rank1O = ((nodes->info[nodes_index].rank) + 1);

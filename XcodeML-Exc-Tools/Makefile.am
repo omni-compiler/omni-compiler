@@ -9,7 +9,8 @@ $(TARGET): $(SRC)
 	cd src; $(JAR) cf ../$@ ./exc/*/*.class
 
 clean-local:
-	rm -f $(TARGET) $(CLASS)
+	rm -f $(TARGET)
+	rm -f src/exc/*/*.class
 
 install: $(TARGET)
 	mkdir -p ${javadir}

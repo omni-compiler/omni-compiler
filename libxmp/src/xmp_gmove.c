@@ -1612,7 +1612,7 @@ void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_
   int dst_sub_dim=0, src_sub_dim=0;
   int *drank=NULL, *srank=NULL,*d2e=NULL, *s2e=NULL,*dst_color_ref=NULL;
 
-  size_t type_size=-1;
+  size_t type_size=0;
   MPI_Group dst_grp, src_grp, exec_grp;
 
   MPI_Comm_group(*exec_comm, &exec_grp);
@@ -2451,7 +2451,7 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
 
   void *dst_addr=NULL, *src_addr=NULL;
   int type=-1;
-  size_t type_size=-1;
+  size_t type_size=0;
   int dst_dim = gmv_desc_leftp->ndims;
   int src_dim = gmv_desc_rightp->ndims;
   int dst_num=-1, src_num=-1, dst_sub_dim=-1, src_sub_dim=-1;
@@ -3027,7 +3027,7 @@ static void insert_cache_comm(int key, MPI_Comm comm){
 }
 
 static MPI_Comm get_cache_comm(int key){
-  MPI_Comm newcomm;
+  MPI_Comm newcomm = NULL;
   
   for(int i=num_of_gmove_cache_comm-1;i!=-1;i--){
     if(save_key[i] == key){

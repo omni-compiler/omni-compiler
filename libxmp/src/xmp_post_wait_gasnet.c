@@ -27,7 +27,7 @@ void _xmp_gasnet_post_wait_initialize()
 {
   gasnet_hsl_init(&_postreq.hsl);
   _postreq.num      = 0;
-  _postreq.max_size = _XMP_POSTREQ_INITIAL_TABLE_SIZE;
+  _postreq.max_size = _XMP_POSTREQ_TABLE_INITIAL_SIZE;
   _postreq.table    = malloc(sizeof(_XMP_postreq_info_t) * _postreq.max_size);
 }
 
@@ -42,11 +42,13 @@ static void do_post(const int node, const int tag)
 {
   gasnet_hsl_lock(&_postreq.hsl);
   if(_postreq.num == _postreq.max_size){
-    _XMP_postreq_info_t *old_table = _postreq.table;
-    _postreq.max_size += _XMP_POSTREQ_INCREMENT_TABLE_SIZE;
-    _postreq.table = malloc(sizeof(_XMP_postreq_info_t) * _postreq.max_size);
-    memcpy(_postreq.table, old_table, sizeof(_XMP_postreq_info_t) * _postreq.num);
-    free(old_table);
+    _postreq.max_size *= _XMP_POSTREQ_TABLE_INCREMENT_RATIO;
+    size_t next_size = sizeof(_XMP_postreq_info_t) * _postreq.max_size;
+    _XMP_postreq_info_t *tmp;
+    if((tmp = realloc(_postreq.table, next_size)) == NULL)
+      _XMP_fatal("cannot allocate memory");
+    else
+      _postreq.table = tmp;
   }
   add_request(node, tag);
   gasnet_hsl_unlock(&_postreq.hsl);

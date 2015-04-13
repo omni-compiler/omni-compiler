@@ -1405,7 +1405,7 @@ public class ACCgpuKernel {
     gpuManager.analyze();
     
     //get outerId set
-    Set<Ident> outerIdSet = new HashSet();
+    Set<Ident> outerIdSet = new HashSet<Ident>();
     for(Block b : _kernelBlocks){
       Set<Ident> blockouterIdSet = collectOuterIdents(b); // = collectOuterIdents(b,b);
       //blockouterIdSet.removeAll(collectPrivatizedIdSet(b));

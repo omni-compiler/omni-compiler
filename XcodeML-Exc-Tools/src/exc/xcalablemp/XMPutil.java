@@ -66,7 +66,10 @@ public class XMPutil {
   }
 
   public static void putLoopIter(CforBlock b, String indVarName, XobjList loopIter) {
-    HashMap<String, XobjList> loopIterTable = (HashMap<String, XobjList>)b.getProp(LOOP_ITER);
+    //    HashMap<String, XobjList> loopIterTable = (HashMap<String, XobjList>)b.getProp(LOOP_ITER);
+    HashMap<String, XobjList> loopIterTable = new HashMap<String, XobjList>();
+    loopIterTable.put(indVarName, (XobjList)b.getProp(LOOP_ITER));
+
     if (loopIterTable == null) {
       loopIterTable = new HashMap<String, XobjList>();
       b.setProp(LOOP_ITER, (Object)loopIterTable);
@@ -76,7 +79,10 @@ public class XMPutil {
   }
 
   public static XobjList getLoopIter(CforBlock b, String indVarName) {
-    HashMap<String, XobjList> loopIterTable = (HashMap<String, XobjList>)b.getProp(LOOP_ITER);
+    //    HashMap<String, XobjList> loopIterTable = (HashMap<String, XobjList>)b.getProp(LOOP_ITER);
+    HashMap<String, XobjList> loopIterTable = new HashMap<String, XobjList>();
+    loopIterTable.put(indVarName, (XobjList)b.getProp(LOOP_ITER));
+
     if (loopIterTable == null) {
       return null;
     } else {

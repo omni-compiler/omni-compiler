@@ -113,8 +113,9 @@ typedef struct _XMP_coarray_list_type {
 extern _XMP_coarray_list_t *_XMP_coarray_list_head;
 extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
 
-extern void _XMP_coarray_initialize(int, char **);
-extern void _XMP_coarray_finalize(const int);
+extern void _XMP_onesided_initialize(int, char **);
+extern void _XMP_onesided_finalize(const int);
+extern void _XMP_build_coarray_queue();
 extern void _XMP_coarray_lastly_deallocate();
 
 // xmp_intrinsic.c
@@ -304,9 +305,9 @@ extern void _XMP_threads_finalize(void);
 #endif
 
 // ----- for coarray & post/wait -------------------
-#if defined(_XMP_COARRAY_GASNET) || defined(_XMP_COARRAY_FJRDMA)
-#define _XMP_DEFAULT_COARRAY_HEAP_SIZE   "27M"
-#define _XMP_DEFAULT_COARRAY_STRIDE_SIZE "5M"
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
+#define _XMP_DEFAULT_ONESIDED_HEAP_SIZE   "27M"
+#define _XMP_DEFAULT_ONESIDED_STRIDE_SIZE "5M"
 /* Momo:
    Each process allocates 32MByte (27M+5M), and the test program uses up to 16 process
    on a single node. Therefore the node needs 512MByte (32M*16) for coarray operation. 
@@ -317,13 +318,13 @@ extern void _XMP_threads_finalize(void);
 #define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INITIAL_SIZE _XMP_COARRAY_QUEUE_INITIAL_SIZE /** The same vaule may be good. */
 #define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO /** The same vaule may be good. */
 
-#define _XMP_POSTREQ_INITIAL_TABLE_SIZE 32         /**< This value is trial */
-#define _XMP_POSTREQ_INCREMENT_TABLE_SIZE 512      /**< This value is trial */
-extern size_t get_offset(const _XMP_array_section_t *, const int);
+#define _XMP_POSTREQ_TABLE_INITIAL_SIZE 32         /**< This value is trial */
+#define _XMP_POSTREQ_TABLE_INCREMENT_RATIO (1.5)   /**< This value is trial */
+extern size_t _XMP_get_offset(const _XMP_array_section_t *, const int);
 extern void _XMP_post_wait_initialize();
 #endif
 
-#ifdef _XMP_COARRAY_GASNET
+#ifdef _XMP_GASNET
 #include <gasnet.h>
 #define _XMP_GASNET_STRIDE_INIT_SIZE 16
 #define _XMP_GASNET_STRIDE_BLK       16
@@ -338,7 +339,7 @@ extern void _XMP_gasnet_malloc_do(_XMP_coarray_t *, void **, const size_t);
 extern void _XMP_gasnet_initialize(int, char**, const size_t, const size_t);
 extern void _XMP_gasnet_finalize(const int);
 extern void _XMP_gasnet_put(const int, const int, const int, const int, const int, const _XMP_array_section_t*, const _XMP_array_section_t*, 
-			    const _XMP_coarray_t*, const void*, const size_t);
+			    const _XMP_coarray_t*, const void*, const size_t, const size_t);
 extern void _XMP_gasnet_get(const int, const int, const int, const int, const int, const _XMP_array_section_t*, const _XMP_array_section_t*,
                             const _XMP_coarray_t*, const void*, const size_t);
 extern void _XMP_gasnet_sync_all();
@@ -351,7 +352,7 @@ extern void _xmp_gasnet_wait(const int, const int);
 extern void _XMP_gasnet_coarray_lastly_deallocate();
 #endif
 
-#ifdef _XMP_COARRAY_FJRDMA
+#ifdef _XMP_FJRDMA
 #define FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
 #define SEND_NIC FJMPI_RDMA_LOCAL_NIC0
 #define _XMP_POSTREQ_SEND_NIC FJMPI_RDMA_LOCAL_NIC2
@@ -367,7 +368,7 @@ extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
 extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, const size_t);
 extern void _XMP_fjrdma_put(const int, const int, const int, const int, const int, const _XMP_array_section_t *,  
-			    const _XMP_array_section_t *, const _XMP_coarray_t *, const void *, const _XMP_coarray_t *, const int);
+			    const _XMP_array_section_t *, const _XMP_coarray_t *, const void *, const _XMP_coarray_t *, const int, const int);
 extern void _XMP_fjrdma_get(const int, const int, const int, const int, const int, const _XMP_array_section_t *, 
 			    const _XMP_array_section_t *, const _XMP_coarray_t *, const void *, const _XMP_coarray_t *, const int);
 extern void _XMP_fjrdma_shortcut_put(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, const _XMP_coarray_t *, const size_t);
@@ -428,7 +429,7 @@ struct _XMPTIMING
   }while (0)
 #endif
 
-#ifdef _XMP_COARRAY_GASNET
+#ifdef _XMP_GASNET
 #define _XMP_LOCK_CHUNK 8       // for lock
 
 typedef struct xmp_lock{
@@ -455,12 +456,14 @@ extern void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t*, int);
 extern void _xmp_gasnet_do_unlock(int, xmp_gasnet_lock_t*, int*, int*);
 extern void _xmp_gasnet_do_lockhandoff(int);
 extern void _xmp_gasnet_unpack(gasnet_token_t, const char*, const size_t, 
-			       const int, const int, const int, const int);
-extern void _xmp_gasnet_unpack_using_buf(gasnet_token_t, const int, const int, const int, const int);
+			       const int, const int, const int, const int, const int);
+extern void _xmp_gasnet_unpack_using_buf(gasnet_token_t, const int, const int, const int, const int, const int);
 extern void _xmp_gasnet_unpack_reply(gasnet_token_t, const int);
 extern void _xmp_gasnet_pack(gasnet_token_t, const char*, const size_t, 
 			     const int, const int, const int, const size_t, const int, const int);
 extern void _xmp_gasnet_unpack_get_reply(gasnet_token_t, char *, size_t, const int, const int);
+extern void _XMP_pack_coarray(char*, const char*, const int, const _XMP_array_section_t*);
+extern void _XMP_unpack_coarray(char*, const int, const char*, const _XMP_array_section_t*, const int);
 
 /* Every handler function needs a uniqe number between 200-255.   
  * The Active Message library reserves ID's 1-199 for itself: client libs must
@@ -568,6 +571,6 @@ extern void _xmp_lock(_XMP_coarray_t*, int, int);
 extern void _xmp_unlock(_XMP_coarray_t*, int, int);
 extern void _xmp_lock_initialize(_xmp_lock_t*, int);
 
-#endif // _XMP_COARRAY_GASNET
+#endif // _XMP_GASNET
 
 #endif // _XMP_INTERNAL

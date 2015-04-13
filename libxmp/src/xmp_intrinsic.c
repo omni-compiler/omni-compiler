@@ -9,11 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _XMP_USE_LIBBLAS
-#ifdef _XMP_USE_SSL2BLAMP
+#ifdef _XMP_LIBBLAS
+#ifdef _XMP_SSL2BLAMP
 #include "fj_lapack.h"
 /* #include "fjcoll.h" */
-#elif _XMP_USE_INTELMKL
+#elif _XMP_INTELMKL
 #include "mkl.h"
 #else
 /* Prototype Declaration from http://azalea.s35.xrea.com/blas/blas.h */
@@ -3371,7 +3371,7 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
 
    /* matmul */
    /* TODO: X = A * BT -> DGEMM */
-#ifdef _XMP_USE_LIBBLAS
+#ifdef _XMP_LIBBLAS
    dim0_size = x_d->info[0].local_upper - x_d->info[0].local_lower + 1;
    dim1_size = x_d->info[1].local_upper - x_d->info[1].local_lower + 1;
    k = a_d->info[1].ser_size;
@@ -3394,10 +3394,10 @@ static void xmp_matmul_blockf(_XMP_array_t *x_d, _XMP_array_t *a_d, _XMP_array_t
          double alpha=1.0;
          double beta=0.0;
          int   ldc = x_alloc_size[0];
-#ifdef _XMP_USE_SSL2BLAMP
+#ifdef _XMP_SSL2BLAMP
 	 dgemm_("N", "T", &dim0_size, &dim1_size, &k, &alpha, (double*)a_recv_buf, &dim0_size,
 		(double*)b_recv_buf, &dim1_size, &beta, (double*)dst_p, &ldc, 1, 1);
-#elif _XMP_USE_INTELMKL
+#elif _XMP_INTELMKL
 	 cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,
 		     dim0_size, dim1_size, k, alpha, (double*)a_recv_buf, dim0_size, 
 		     (double*)b_recv_buf, dim1_size, beta, (double*)dst_p, ldc);
@@ -4328,13 +4328,10 @@ static void xmp_scatter_array_scatter(_XMP_array_t *array, char *x_all, char* f_
 static void xmp_scatter_array_scatter(_XMP_array_t *array, char *x_all, int*  f_all)
 #endif
 {
-   int   i;
-   int   l_offset;
-   int   g_offset;
-   int   level;
-   int   *g_par_dim_stride;
-   int   *g_ser_dim_stride;
-   FILE  *fp;
+   int   i, level;
+   int   l_offset, g_offset;
+   int   *g_par_dim_stride, *g_ser_dim_stride;
+   FILE  *fp = NULL;
    
    g_par_dim_stride = (int*)_XMP_alloc( sizeof(int)*array->dim );
    g_ser_dim_stride = (int*)_XMP_alloc( sizeof(int)*array->dim );
@@ -4501,7 +4498,7 @@ static void xmp_gather_alla2x(_XMP_array_t *x_d,
 static void xmp_gather_all_array(_XMP_array_t *array, char **all)
 {
    MPI_Comm      *exec_comm;
-   MPI_Datatype  mpi_type;
+   MPI_Datatype  mpi_type = NULL;
    int   i,j;
    int   total_size;
    int   l_offset;
@@ -4513,7 +4510,7 @@ static void xmp_gather_all_array(_XMP_array_t *array, char **all)
    char  *recv_buf;
    int   *g_par_dim_stride;
    int   *g_ser_dim_stride;
-   FILE  *fp;
+   FILE  *fp = NULL;
    
    total_size = 1; 
    for(i=0;i<array->dim;i++){
@@ -4770,8 +4767,7 @@ static void xmp_scatter_kernel(void *x_p, void *a_p, _XMP_array_t **idx_array)
    _XMP_array_t *x_d = NULL;
    _XMP_array_t *a_d = NULL;
    MPI_Comm     *exec_comm;
-   MPI_Datatype mpi_type;
-   //int   same_nodes;
+   MPI_Datatype mpi_type = NULL;
    int   duplicate;
    int   i,j;
    int   x_total_size;
@@ -5751,8 +5747,8 @@ void xmp_pack(void *v_p, void *a_p, void *m_p)
    int comcount;
    int j;
 
-   xmp_pack_recv_info = (void *)xmp_pack_unpack_array_v;
-   xmp_pack_send_info = (void *)xmp_pack_unpack_array_a;
+   xmp_pack_recv_info = xmp_pack_unpack_array_v;
+   xmp_pack_send_info = xmp_pack_unpack_array_a;
 
    v_d = (_XMP_array_t*)v_p;
    a_d = (_XMP_array_t*)a_p;
@@ -6050,8 +6046,8 @@ void xmp_unpack(void *a_p, void *v_p, void *m_p)
    int comcount;
    int j;
 
-   xmp_unpack_send_info = (void *)xmp_pack_unpack_array_v;
-   xmp_unpack_recv_info = (void *)xmp_pack_unpack_array_a;
+   xmp_unpack_send_info = xmp_pack_unpack_array_v;
+   xmp_unpack_recv_info = xmp_pack_unpack_array_a;
 
    a_d = (_XMP_array_t*)a_p;
    v_d = (_XMP_array_t*)v_p;

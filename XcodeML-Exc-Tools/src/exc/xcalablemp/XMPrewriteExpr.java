@@ -583,8 +583,8 @@ public class XMPrewriteExpr {
     newExpr.setIsRewrittedByXmp(true);
     iter.insertStatement(newExpr);
 
-    // Set function _XMP_coarray_rdma_node_set_X()
-    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_node_set_" + Integer.toString(imageDims));
+    // Set function _XMP_coarray_rdma_node_image_X()
+    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_image_set_" + Integer.toString(imageDims));
     funcArgs = Xcons.List();
     for(int i=0;i<imageDims;i++){
       funcArgs.add(imageList.getArg(i));
@@ -2114,4 +2114,30 @@ public class XMPrewriteExpr {
       }
       return arrayRef;
   }
+
+
+  public  void rewriteVarDecl(Xobject varDecl, boolean isLocal) {
+    assert(varDecl.Opcode() == Xcode.VAR_DECL);
+
+    String varName = varDecl.getArg(0).getName();
+    Ident varId = _globalDecl.findVarIdent(varName);
+
+    if (varId.isCoarray()) {
+      XobjList codimensions = (XobjList)varId.getCodimensions();
+
+      // normalization of codimensions:
+      //  add the last codimension '*' if it is not present
+      if (codimensions.getTail() == null ||
+          codimensions.getTail().getInt() != XMPcoarray.ASTERISK)
+        codimensions.add(Xcons.IntConstant(XMPcoarray.ASTERISK));
+
+      try {
+        XMPcoarray.translateCoarray_core(varId, varName, codimensions,
+                                         _globalDecl, isLocal);
+      } catch (XMPexception e) {
+        XMP.error(varDecl.getLineNo(), e.getMessage());
+      }
+    }
+  }
+
 }

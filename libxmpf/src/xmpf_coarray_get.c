@@ -159,7 +159,7 @@ int _select_getscheme_scalar(int element)
   // SCHEME_ExtraDirectGet should not be used because 
   // the extra area overwritten may be valid data.
 
-#ifdef _XMP_COARRAY_FJRDMA
+#ifdef _XMP_FJRDMA
   // The result scalar variable may be invisible to FJ-RDMA.
   return SCHEME_BufferGet;
 #else
@@ -169,7 +169,7 @@ int _select_getscheme_scalar(int element)
 
 int _select_getscheme_array(void)
 {
-#ifdef _XMP_COARRAY_FJRDMA
+#ifdef _XMP_FJRDMA
   // The result array variable may be invisible to FJ-RDMA.
   return SCHEME_BufferGet;
 #else
@@ -247,7 +247,7 @@ void _getVector(void *descPtr, char *src, int bytes, int coindex, char *dst)
 
   _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // coindexed-object
   _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // result
-  _XMP_coarray_rdma_node_set_1(coindex);
+  _XMP_coarray_rdma_image_set_1(coindex);
   _XMP_coarray_rdma_do(COARRAY_GET_CODE, desc, dst, NULL);
 }
 
@@ -272,7 +272,7 @@ void _getVectorByElement(char *desc, int start, int vlength,
 {
   _XMP_coarray_rdma_coarray_set_1(start, vlength, 1);    // coindexed-object
   _XMP_coarray_rdma_array_set_1(0, vlength, 1, 1, 1);    // result
-  _XMP_coarray_rdma_node_set_1(coindex);
+  _XMP_coarray_rdma_image_set_1(coindex);
   _XMP_coarray_rdma_do(COARRAY_GET_CODE, desc, dst, NULL);
 }
 

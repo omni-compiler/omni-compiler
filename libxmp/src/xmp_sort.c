@@ -638,7 +638,7 @@ static int compare_down_LONG_DOUBLE         COMPARE_DOWN(long double)
 #define PIVOT(_type) \
 (void *p, const void *a, const int an, \
           const void *b, const int bn){ \
-  _type am, bm; \
+  _type am = 0, bm = 0; \
   if (an > 0){ \
     if (an % 2 == 0) \
       am = (((_type *)a)[an / 2] + ((_type *)a)[an / 2 - 1]) / 2; \

@@ -1074,7 +1074,7 @@ public class XMPtranslateLocalPragma {
 
   private void translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
-    ArrayList iteraterList = new ArrayList();  // Not used 
+    ArrayList<String> iteraterList = new ArrayList<String>();  // Not used 
 
     // schedule loop
     scheduleLoop(pb, schedBaseBlock, schedBaseBlock, iteraterList);
@@ -1095,7 +1095,7 @@ public class XMPtranslateLocalPragma {
 
     // schedule loop
     Iterator<CforBlock> it = loopVector.iterator();
-    ArrayList iteraterList = new ArrayList();
+    ArrayList<String> iteraterList = new ArrayList<String>();
     while (it.hasNext()) {
       CforBlock forBlock = it.next();
       scheduleLoop(pb, forBlock, schedBaseBlock, iteraterList);
@@ -1299,7 +1299,7 @@ public class XMPtranslateLocalPragma {
     return reductionBody;
   }
 
-  private void scheduleLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock, ArrayList iteraterList) throws XMPexception {
+  private void scheduleLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock, ArrayList<String> iteraterList) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(schedBaseBlock);
 
@@ -1413,7 +1413,7 @@ public class XMPtranslateLocalPragma {
   }
 
   private void callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList,
-                                         CforBlock forBlock, CforBlock schedBaseBlock, ArrayList iteraterList) throws XMPexception {
+                                         CforBlock forBlock, CforBlock schedBaseBlock, ArrayList<String> iteraterList) throws XMPexception {
     Xobject loopIndex = forBlock.getInductionVar();
     String loopIndexName = loopIndex.getSym();
     iteraterList.add(loopIndexName);

@@ -210,7 +210,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
 
 int _select_putscheme_scalar(int condition, int element)
 {
-#ifdef _XMP_COARRAY_FJRDMA
+#ifdef _XMP_FJRDMA
   // Temporary handling: in spite of condition, BufferPut or 
   // ExtraBufferPut will be selected because judgement of condition
   // seems inaccurate.
@@ -229,7 +229,7 @@ int _select_putscheme_scalar(int condition, int element)
 
 int _select_putscheme_array(int condition)
 {
-#ifdef _XMP_COARRAY_FJRDMA
+#ifdef _XMP_FJRDMA
   if (condition >= 1) {
     return SCHEME_BufferPut;
   }
@@ -308,7 +308,7 @@ void _putVector(void *descPtr, char *baseAddr, int bytes, int coindex, char *src
 
   _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // LHS
   _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // RHS
-  _XMP_coarray_rdma_node_set_1(coindex);
+  _XMP_coarray_rdma_image_set_1(coindex);
   _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, src, NULL);
 }
 
@@ -333,7 +333,7 @@ void _putVectorByElement(char *desc, int start, int vlength,
 {
   _XMP_coarray_rdma_coarray_set_1(start, vlength, 1);    // LHS
   _XMP_coarray_rdma_array_set_1(0, vlength, 1, 1, 1);    // RHS
-  _XMP_coarray_rdma_node_set_1(coindex);
+  _XMP_coarray_rdma_image_set_1(coindex);
   _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, src, NULL);
 }
 

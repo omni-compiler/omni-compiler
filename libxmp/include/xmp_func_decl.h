@@ -132,13 +132,13 @@ extern void _XMP_coarray_rdma_array_set_7(const int, const int, const int, const
 					  const int, const int, const int, const int, const int,
 					  const int, const int, const int, const int, const int);
 
-extern void _XMP_coarray_rdma_node_set_1(const int);
-extern void _XMP_coarray_rdma_node_set_2(const int, const int);
-extern void _XMP_coarray_rdma_node_set_3(const int, const int, const int);
-extern void _XMP_coarray_rdma_node_set_4(const int, const int, const int, const int);
-extern void _XMP_coarray_rdma_node_set_5(const int, const int, const int, const int, const int);
-extern void _XMP_coarray_rdma_node_set_6(const int, const int, const int, const int, const int, const int);
-extern void _XMP_coarray_rdma_node_set_7(const int, const int, const int, const int, const int, const int, const int);
+extern void _XMP_coarray_rdma_image_set_1(const int);
+extern void _XMP_coarray_rdma_image_set_2(const int, const int);
+extern void _XMP_coarray_rdma_image_set_3(const int, const int, const int);
+extern void _XMP_coarray_rdma_image_set_4(const int, const int, const int, const int);
+extern void _XMP_coarray_rdma_image_set_5(const int, const int, const int, const int, const int);
+extern void _XMP_coarray_rdma_image_set_6(const int, const int, const int, const int, const int, const int);
+extern void _XMP_coarray_rdma_image_set_7(const int, const int, const int, const int, const int, const int, const int);
 
 extern void _XMP_coarray_rdma_do_f(const int*, void*, void*, void*);
 extern void _XMP_coarray_rdma_do(const int, void*, void*, void *);
@@ -151,7 +151,6 @@ extern void xmp_sync_image_f(int *image, int* status);
 extern void xmp_sync_images(int num, int* image_set, int* status);
 extern void xmp_sync_images_f(int *num, int* image_set, int* status);
 extern void xmp_sync_images_all(int* status);
-extern size_t get_offset(const void *, const int);
 extern void _XMP_coarray_shortcut_put(const int, const void*, const void*, const size_t, const size_t, const size_t);
 extern void _XMP_coarray_shortcut_put_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
 extern void _XMP_coarray_shortcut_get(const int, const void*, const void*, const size_t, const size_t, const size_t);

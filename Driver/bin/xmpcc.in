@@ -134,9 +134,10 @@ if [ $OUTPUT_TEMPORAL = true ]; then
 	C_FILE=("${c_file}")
 	FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
 	FILE_C=${TEMP_DIR}/"${FILE_NAME}".c
+	BASENAME=`basename $C_FILE`
     
-	omni_exec cp "${FILE_C}" __omni_tmp__"${FILE_NAME}".c
-	echo output __omni_tmp__"${FILE_NAME}".c
+        omni_exec cp "${FILE_C}" __omni_tmp__"${BASENAME}"
+        echo output __omni_tmp__"${BASENAME}"
     done
 fi
 [ $STOP_BACKEND = true ] && exit 0;
@@ -200,7 +201,7 @@ if [ $ENABLE_XACC = true ]; then
     OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_GPUCC_LIB"
     obj_files+=("$TRAVERSE_FILE_XACC_O")
 fi
-omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" $OMNI_LINKER_OPT "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}"
+omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" $OMNI_LINKER_OPT
 
 ### Delete temporal directory ###
 [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
