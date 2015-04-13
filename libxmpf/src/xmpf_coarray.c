@@ -1,11 +1,5 @@
 #include "xmpf_internal.h"
-<<<<<<< HEAD
 
-=======
-extern int num_images_(void);
-static int _getNewSerno();
-static int _set_coarrayInfo(char *desc, char *orgAddr, size_t size);
->>>>>>> c99e97e9f114acd0636e561e6d26c603c2329ebb
 static void _coarray_msg(int sw);
 
 #define DIV_CEILING(m,n)  (((m)-1)/(n)+1)
@@ -60,20 +54,13 @@ void _coarray_msg(int sw)
     break;
   }
 
-<<<<<<< HEAD
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_MSG=%d\n"
                           "  %zd-byte boundary\n"
                           "  with %s\n",
                           sw, BOUNDARY_BYTE,
 #if defined(_XMP_COARRAY_FJRDMA)
-=======
-  _XMPF_coarrayDebugPrint("xmpf_coarray_msg ON\n"
-                          "  %zd-byte boundary, using %s\n",
-                          BOUNDARY_BYTE,
-#if defined(_XMP_FJRDMA)
->>>>>>> c99e97e9f114acd0636e561e6d26c603c2329ebb
                           "FJRDMA"
-#elif defined(_XMP_GASNET)
+#elif defined(_XMP_COARRAY_GASNET)
                           "GASNET"
 #else
                           "(something unknown)"
