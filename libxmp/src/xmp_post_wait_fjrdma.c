@@ -40,18 +40,20 @@ void _xmp_fjrdma_post_wait_initialize()
   _remote_rdma_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
 
   // Obtain remote RDMA addresses
-  // Reduce network overload by Fujitsu (This process is temporal)
-  for(int ncount=0,i=1; i<_XMP_world_size; ncount++,i++){
-    int partner_rank = (_XMP_world_rank+i)%_XMP_world_size;
-    if(partner_rank != _XMP_world_rank)
-      while((_remote_rdma_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, _XMP_POSTREQ_ID)) == FJMPI_RDMA_ERROR);
+  MPI_Barrier(MPI_COMM_WORLD);
+  for(int ncount=0,i=1; i<_XMP_world_size+1; ncount++,i++){
+    int partner_rank = (_XMP_world_rank + _XMP_world_size - i) % _XMP_world_size;
+    if(partner_rank == _XMP_world_rank)
+      _remote_rdma_addr[partner_rank] = _local_rdma_addr;
+    else
+      _remote_rdma_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, _XMP_POSTREQ_ID);
 
-    if(ncount >= 3000){
+    if(ncount > 3000){
       MPI_Barrier(MPI_COMM_WORLD);
       ncount = 0;
     }
   }
-  // (end of temporal process)
+
 }
 
 static void add_postreq(const int node, const int tag)
