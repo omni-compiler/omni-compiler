@@ -65,12 +65,11 @@ print_subr_dealloc() {
  case "${DIM}" in
  0) echo    "        ${typekind}, pointer, intent(out) :: var" ;;
  1) echo    "        ${typekind}, pointer, intent(out) :: var(:)" ;;
- 2) echo    "        ${typekind}, pointer, intent(out) :: var(:,:)" ;;
- 3) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:)" ;;
- 4) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:)" ;;
- 5) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:,:)" ;;
- 6) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:,:,:)" ;;
- 7) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:,:,:,:)" ;;
+ *) echo    "        ${typekind}, pointer, intent(out) :: var(:"
+    for i in `seq 2 ${DIM}`; do
+        echo -n ",:"
+    done
+    echo    ")" ;;
  esac
 
     echo    "      end subroutine"

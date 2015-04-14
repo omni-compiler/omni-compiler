@@ -19,12 +19,16 @@ int _XMPF_coarrayErr = 0;          // default: aggressive error check off
  */
 void _XMPF_coarray_init(void)
 {
-  char *tok, *string;
+  char *tok, *work, *env;
   int i;
   char delim[] = ", ";
 
-  string = strdup(getenv("XMPF_COARRAY_MSG"));
-  tok = strtok(string, delim);
+  env = getenv("XMPF_COARRAY_MSG");
+  if (env == NULL) 
+    return;
+
+  work = strdup(env);
+  tok = strtok(work, delim);
   for (i = 1; tok != NULL; i++, tok = strtok(NULL, delim)) {
     if (this_image_() == i)
       _coarray_msg(atoi(tok));
