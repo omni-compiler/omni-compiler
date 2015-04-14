@@ -868,8 +868,8 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
     _XMP_gasnet_get(remote_coarray_is_continuous, local_array_is_continuous, target_image,
 		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts);
 #elif _XMP_FJRDMA
-    _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_image, 
-		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts);
+    _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_image, _coarray_dims, _array_dims, 
+		    _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts, _transfer_array_elmts);
 #endif
   }
   else{
