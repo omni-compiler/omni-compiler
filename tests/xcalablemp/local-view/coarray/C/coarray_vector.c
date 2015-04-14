@@ -3,13 +3,13 @@
 #include <stdio.h>
 #include <string.h>
 #include "xmp.h"
-int a[10], a_test[10];
-float b[3][5], b_test[3][5];
-double c[2][3][4], c_test[2][3][4];
-long d[3][4][3][2], d_test[3][4][3][2];
+int a[10]:[*], a_test[10];
+float b[3][5]:[*], b_test[3][5];
+double c[2][3][4]:[*], c_test[2][3][4];
+long d[3][4][3][2]:[*], d_test[3][4][3][2];
 int status, return_val = 0;
 #pragma xmp nodes p(2)
-#pragma xmp coarray a, b, c, d : [*]
+
 
 void initialize(int me){
   int i, j, m, n, t = (me-1) * 100;

@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include "xmp.h"
+
 #define TRUE 1
 #define FALSE 0
-#define N 20
-int a[N];
+int a[20]:[*];
 #pragma xmp nodes p(3)
-#pragma xmp coarray a:[*]
+
 
 int main()
 {
@@ -20,12 +20,15 @@ int main()
 
   xmp_sync_all(&stat);
 
-  a[0]:[me] = n[0];
-  a[1:2:3]:[me] = n[1];
-  
+  // Put
+    a[0]:[me] = n[0];
+    a[1]:[me] = n[1];
+    a[2]:[me] = n[2];
+  //    printf("%p %p\n", a, n);
+
   xmp_sync_all(&stat);
 
-  if(a[0] == me * 100 && a[1] == me * 100 && a[4] == me * 100)
+  if(a[0] == me * 100 && a[1] == me * 100 && a[2] == me * 100)
     check = TRUE;
 
 #pragma xmp barrier

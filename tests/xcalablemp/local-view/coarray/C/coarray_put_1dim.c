@@ -3,9 +3,9 @@
 #pragma xmp nodes p(*)
 #define SIZE 10
 #define DIMS 1
-int a[SIZE], b[SIZE], ret = 0;
-#pragma xmp coarray a:[*]
-#pragma xmp coarray b:[*]
+int a[SIZE]:[*], b[SIZE]:[*], ret = 0;
+
+
 
 int main(){
   int start[DIMS], len[DIMS], stride[DIMS];

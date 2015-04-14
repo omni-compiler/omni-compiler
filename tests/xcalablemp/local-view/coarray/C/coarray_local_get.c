@@ -3,9 +3,9 @@
 
 #define TRUE 1
 #define FALSE 0
-int a[20];
+int a[20]:[*];
 #pragma xmp nodes p(3)
-#pragma xmp coarray a:[*]
+
 
 int main()
 {
