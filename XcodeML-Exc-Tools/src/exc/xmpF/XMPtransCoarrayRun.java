@@ -42,7 +42,7 @@ public class XMPtransCoarrayRun
   //private XMPinitProcedure initProcedure;
   private String initProcTextForFile;
 
-  private String sizeProcName, initProcName;
+  private String traverseCountName, traverseInitName;
   private String commonName1, commonName2;
   private Ident resourceTagId;
 
@@ -55,33 +55,43 @@ public class XMPtransCoarrayRun
   //------------------------------------------------------------
   //  CONSTRUCTOR
   //------------------------------------------------------------
-  public XMPtransCoarrayRun(FuncDefBlock funcDef, XMPenv env) {
-    this.funcDef = funcDef;
-    def = funcDef.getDef();
-    fblock = funcDef.getBlock();
+  //public XMPtransCoarrayRun(FuncDefBlock funcDef, XMPenv env) {
+  public XMPtransCoarrayRun(XobjectDef def, XMPenv env, int pass) {
+    this.def = def;
     this.env = env;
-    //// I don't know. See [Xmp-dev:5185]
-    env.setCurrentDef(funcDef);      // needed if this is called before XMPrewriteExpr ???
-    name = fblock.getName();
-    String postfix = genNewProcPostfix();
-    sizeProcName = TRAV_COUNTCOARRAY_PREFIX + postfix;
-    initProcName = TRAV_INITCOARRAY_PREFIX + postfix;
+    name = def.getName();
+
+    if (pass == 1) {                // for functions and subroutines
+      funcDef = new FuncDefBlock(def);
+      //def = funcDef.getDef();
+      fblock = funcDef.getBlock();
+      //// I don't know. See [Xmp-dev:5185]
+      env.setCurrentDef(funcDef);      // needed if this is called before XMPrewriteExpr ???
+      _setResourceTagId();
+    } else {                        // for modules
+      funcDef = null;
+      fblock = null;
+    }
+
+    String postfix = _genNewProcPostfix();
+    traverseCountName = TRAV_COUNTCOARRAY_PREFIX + postfix;
+    traverseInitName = TRAV_INITCOARRAY_PREFIX + postfix;
     commonName1 = VAR_DESCPOINTER_PREFIX + "_" + name;
     commonName2 = VAR_CRAYPOINTER_PREFIX + "_" + name;
 
     _setCoarrays();
     _check_ifIncludeXmpLib();
-    _setResourceIagId();
 
     XMP.exitByError();   // exit if error has found.
   }
 
-  private void _setResourceIagId() {
+
+  private void _setResourceTagId() {
     BlockList blist = fblock.getBody();
     resourceTagId = blist.declLocalIdent(VAR_TAG_NAME,
-                                 BasicType.Fint8Type,
-                                 StorageClass.FLOCAL,
-                                 null);
+                                         BasicType.Fint8Type,
+                                         StorageClass.FLOCAL,
+                                         null);
   }
 
   private void _setCoarrays() {
@@ -180,11 +190,10 @@ public class XMPtransCoarrayRun
     transDeclPart_dummyArg(dummyArgCoarrays);
     transExecPart(visibleCoarrays);
 
-    // finalize (see XMPtranslate.java)
-    ///// I don't know why this call is needed or not needed.
-    ///// see [XMP-dev:5185] 2015.03.21
+    // finalize fblock in funcDef
     funcDef.Finalize();
   }
+
 
 
   /*
@@ -199,9 +208,7 @@ public class XMPtransCoarrayRun
     // convert specification and declaration part
     transDeclPart_moduleLocal(localCoarrays);
 
-    // finalize (see XMPtranslate.java)
-    ///// I don't know why this call is needed or not needed.
-    ///// see [XMP-dev:5185] 2015.03.21
+    // finalize fblock in funcDef
     funcDef.Finalize();
   }
 
@@ -737,7 +744,9 @@ public class XMPtransCoarrayRun
 
     // output init procedure
     XMPcoarrayInitProcedure coarrayInit = 
-      new XMPcoarrayInitProcedure(coarrays, sizeProcName, initProcName,
+      new XMPcoarrayInitProcedure(coarrays,
+                                  traverseCountName,
+                                  traverseInitName,
                                   commonName1, commonName2, env);
     coarrayInit.run();
   }
@@ -762,10 +771,9 @@ public class XMPtransCoarrayRun
 
 	switch (xobj.Opcode()) {
         case F_ALLOCATE_STATEMENT:
-          // xobj.getArg(0): stat= identifier 
-          //     (Reference of a variable name is only supported.)
+          // xobj.getArg(0): 'stat=' identifier (not supported)
           // xobj.getArg(1): list of variables to be allocated
-          // errmsg= identifier is not supported either.
+          // 'errmsg=' identifier is not supported.
           if (_doesListHaveCoarray(xobj.getArg(1), coarrays)) {
             containsCoarray = true;
 
@@ -825,20 +833,35 @@ public class XMPtransCoarrayRun
     Boolean allCoarray = true;
     Boolean allNoncoarray = true;
     for (Xobject arg: (XobjList)args) {
-      String varname = arg.getArg(0).getString();
-      Boolean found = false;
-      for (XMPcoarray coarray: coarrays) {
-        if (varname.equals(coarray.getName())) {
-          // found coarray
-          found = true;
-          break;
+      Boolean foundCoarray = false;
+      Xobject var = arg.getArg(0);
+      String varname;
+      switch (var.Opcode()) {
+      case VAR:
+        varname = arg.getArg(0).getString();
+
+        for (XMPcoarray coarray: coarrays) {
+          if (varname.equals(coarray.getName())) {
+            // found coarray
+            foundCoarray = true;
+            break;
+          }
         }
-      }
+        break;
+
+      case MEMBER_REF:        // allocation of structure component
+        /* restriction: coarray structure component is not supported
+         */
+        break;
+
+      default:
+        XMP.error("internal error: unexpected code of Xobject in ALLOCATE stmt");
+      }        
 
       // error check for each arg
-      if (found && allCoarray)
+      if (foundCoarray && allCoarray)
         allNoncoarray = false;
-      else if (!found && allNoncoarray)
+      else if (!foundCoarray && allNoncoarray)
         allCoarray = false;
       else {
         // found both coarray and non-coarray
@@ -1170,11 +1193,11 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //  parts
   //-----------------------------------------------------
-  private String genNewProcPostfix() {
-    return genNewProcPostfix(getHostNames());
+  private String _genNewProcPostfix() {
+    return _genNewProcPostfix(_getHostNames());
   }
 
-  private String genNewProcPostfix(String ... names) { // host-to-guest order
+  private String _genNewProcPostfix(String ... names) { // host-to-guest order
     int n = names.length;
     String procPostfix = "";
     for (int i = 0; i < n; i++) {
@@ -1188,7 +1211,7 @@ public class XMPtransCoarrayRun
     return procPostfix;
   }
 
-  private String[] getHostNames() {
+  private String[] _getHostNames() {
     Vector<String> list = new Vector();
     list.add(def.getName());
     XobjectDef parentDef = def.getParent();

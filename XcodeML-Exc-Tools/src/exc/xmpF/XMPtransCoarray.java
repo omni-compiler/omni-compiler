@@ -57,15 +57,20 @@ public class XMPtransCoarray implements XobjectDefVisitor
     XMPtransCoarrayRun transCoarrayRun;
 
     if (pass == 1 && !is_module) {
-      fd = new FuncDefBlock(d);
+      //fd = new FuncDefBlock(d);
       XMP.resetError();
-      transCoarrayRun = new XMPtransCoarrayRun(fd, env);
+      //transCoarrayRun = new XMPtransCoarrayRun(fd, env);
+      transCoarrayRun = new XMPtransCoarrayRun(d, env, 1);
       transCoarrayRun.run1();
+      //fd.Finalize();
     } else if (pass == 2 && is_module) {
-      fd = new FuncDefBlock(d);
+      //fd = new FuncDefBlock(d);
+      //fd = XMPmoduleBlock(d);         // referred to XMPtranslate.doDef
       XMP.resetError();
-      transCoarrayRun = new XMPtransCoarrayRun(fd, env);
-      transCoarrayRun.run2();
+      //transCoarrayRun = new XMPtransCoarrayRun(fd, env);
+      transCoarrayRun = new XMPtransCoarrayRun(d, env, 2);
+      //***transCoarrayRun.run2();
+      //fd.Finalize();
     } else {
       return;
     }
