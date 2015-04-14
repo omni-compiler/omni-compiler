@@ -162,7 +162,10 @@ void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_st
   _XMP_ASSERT(template->is_distributed); // FIXME too strict?
 
   if (!template->is_owner) {
-    goto no_iter;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+    return;
   }
 
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
@@ -179,7 +182,6 @@ void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_st
     // finalize iter
     _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
   } else {
-no_iter:
     *par_init = 0;
     *par_cond = 0;
     *par_step = 1;
@@ -193,7 +195,10 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
   _XMP_ASSERT(template->is_distributed);
 
   if (!template->is_owner) {
-    goto no_iter;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+    return;
   }
 
   _XMP_template_info_t *template_info = &(template->info[template_index]);
@@ -218,7 +223,6 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
     // finalize iter
     _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
   } else {
-no_iter:
     *par_init = 0;
     *par_cond = 0;
     *par_step = 1;
@@ -232,7 +236,10 @@ void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
   _XMP_ASSERT(template->is_distributed);
 
   if (!template->is_owner) {
-    goto no_iter;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+    return;
   }
 
   _XMP_template_info_t *template_info = &(template->info[template_index]);
@@ -257,7 +264,6 @@ void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
     // finalize iter
     _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
   } else {
-no_iter:
     *par_init = 0;
     *par_cond = 0;
     *par_step = 1;
@@ -271,7 +277,10 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
   _XMP_ASSERT(template->is_distributed);
 
   if (!template->is_owner) {
-    goto no_iter;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+    return;
   }
 
   _XMP_template_info_t *template_info = &(template->info[template_index]);
@@ -299,7 +308,6 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
     // finalize iter
     _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
   } else {
-no_iter:
     *par_init = 0;
     *par_cond = 0;
     *par_step = 1;
@@ -314,7 +322,10 @@ void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
   _XMP_ASSERT(template->is_distributed);
 
   if (!template->is_owner) {
-    goto no_iter;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+    return;
   }
 
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
@@ -338,7 +349,6 @@ void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
     // finalize iter
     _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
   } else {
-no_iter:
     *par_init = 0;
     *par_cond = 0;
     *par_step = 1;

@@ -1,8 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
 #ifndef MPI_PORTABLE_PLATFORM_H
 #define MPI_PORTABLE_PLATFORM_H
 #endif 
@@ -117,6 +112,10 @@ extern void _XMP_onesided_initialize(int, char **);
 extern void _XMP_onesided_finalize(const int);
 extern void _XMP_build_coarray_queue();
 extern void _XMP_coarray_lastly_deallocate();
+
+// xmp_coarray_utils.c
+extern void _XMP_local_put(const int, const int, const int, const int, _XMP_array_section_t *, _XMP_array_section_t *,
+			   _XMP_coarray_t *, void *, const size_t, const size_t);
 
 // xmp_intrinsic.c
 extern void xmpf_transpose(void *dst_p, void *src_p, int opt);
@@ -315,13 +314,23 @@ extern void _XMP_threads_finalize(void);
 
 #define _XMP_COARRAY_QUEUE_INITIAL_SIZE 32         /**< This value is trial */
 #define _XMP_COARRAY_QUEUE_INCREMENT_RAITO (1.5)   /**< This value is trial */
-#define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INITIAL_SIZE _XMP_COARRAY_QUEUE_INITIAL_SIZE /** The same vaule may be good. */
-#define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO /** The same vaule may be good. */
+#define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INITIAL_SIZE _XMP_COARRAY_QUEUE_INITIAL_SIZE        /** The same vaule may be good. */
+#define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO  /** The same vaule may be good. */
 
 #define _XMP_POSTREQ_TABLE_INITIAL_SIZE 32         /**< This value is trial */
 #define _XMP_POSTREQ_TABLE_INCREMENT_RATIO (1.5)   /**< This value is trial */
 extern size_t _XMP_get_offset(const _XMP_array_section_t *, const int);
 extern void _XMP_post_wait_initialize();
+#define _XMP_PACK   0
+#define _XMP_UNPACK 1
+#define _XMP_MPUT   2
+extern void _XMP_stride_memcpy_1dim(char *, const char *, const _XMP_array_section_t *, size_t, int);
+extern void _XMP_stride_memcpy_2dim(char *, const char *, const _XMP_array_section_t *, size_t, int);
+extern void _XMP_stride_memcpy_3dim(char *, const char *, const _XMP_array_section_t *, size_t, int);
+extern void _XMP_stride_memcpy_4dim(char *, const char *, const _XMP_array_section_t *, size_t, int);
+extern void _XMP_stride_memcpy_5dim(char *, const char *, const _XMP_array_section_t *, size_t, int);
+extern void _XMP_stride_memcpy_6dim(char *, const char *, const _XMP_array_section_t *, size_t, int);
+extern void _XMP_stride_memcpy_7dim(char *, const char *, const _XMP_array_section_t *, size_t, int);
 #endif
 
 #ifdef _XMP_GASNET
@@ -360,6 +369,7 @@ extern void _XMP_gasnet_coarray_lastly_deallocate();
 #define _XMP_POSTREQ_NIC_FLAG (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_REMOTE_NOTICE)
 #define _XMP_TEMP_MEMID 0
 #define _XMP_POSTREQ_ID 1
+#define FJRDMA_INTERVAL 8192
 
 #include <mpi-ext.h>
 extern void _XMP_fjrdma_initialize(int, char**);

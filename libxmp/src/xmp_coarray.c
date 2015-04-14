@@ -839,7 +839,7 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
   }
   else if(rdma_code == _XMP_N_COARRAY_PUT){
     if(_transfer_coarray_elmts != _transfer_array_elmts && _transfer_array_elmts != 1)
-      _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;  // e.g. a[:] = b[2];
+      _XMP_fatal("Coarray Error ! transfer size is wrong.\n");  // e.g. a[:]:[3] = b[2] is NG, but a[:]:[3] = b[1] is OK.
   }
 
   int target_image = 0;
@@ -855,15 +855,24 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
   int local_array_is_continuous    = _check_continuous(_array, _array_dims); 
 
   if(rdma_code == _XMP_N_COARRAY_PUT){
+    if(target_image == _XMP_world_rank){
+      _XMP_local_put(remote_coarray_is_continuous, local_array_is_continuous, _coarray_dims, _array_dims,
+		     _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+    }
+    else{
 #ifdef _XMP_GASNET
-    _XMP_gasnet_put(remote_coarray_is_continuous, local_array_is_continuous, target_image, _coarray_dims, _array_dims, 
-		    _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+      _XMP_gasnet_put(remote_coarray_is_continuous, local_array_is_continuous, target_image, _coarray_dims, _array_dims, 
+		      _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_FJRDMA
-    _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_image, _coarray_dims, _array_dims, 
-		    _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts, _transfer_array_elmts);
+      _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_image, _coarray_dims, _array_dims, 
+		      _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts, _transfer_array_elmts);
 #endif
+    }
   }
   else if(rdma_code == _XMP_N_COARRAY_GET){
+      //    if(target_image == _XMP_world_rank){
+      //      _XMP_local_get();
+      //    }
 #ifdef _XMP_GASNET
     _XMP_gasnet_get(remote_coarray_is_continuous, local_array_is_continuous, target_image,
 		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts);
