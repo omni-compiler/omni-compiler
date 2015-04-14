@@ -91,7 +91,8 @@ static void _fjrdma_continuous_put(const int target_image, const uint64_t dst_po
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
 }
 
-static void _FX10_Rdma_mput(int target_image, int FJRDMA_TAG, uint64_t *raddrs, uint64_t *laddrs, 
+#ifdef OMNI_TARGET_CPU_FX10
+static void _FX10_Rdma_mput(int target_image, uint64_t *raddrs, uint64_t *laddrs, 
 			    size_t *lengths, int stride, size_t transfer_coarray_elmts)
 {
   if(stride == 0){
@@ -103,6 +104,7 @@ static void _FX10_Rdma_mput(int target_image, int FJRDMA_TAG, uint64_t *raddrs, 
       FJMPI_Rdma_put(target_image, FJRDMA_TAG, raddrs[0]+i*stride, laddrs[0]+i*stride, lengths[0], FLAG_NIC);
   }
 }
+#endif
 
 // Number of elements of src must be 1, number of elements of dst must be more than 1.
 // e.g. a[0:100:3]:[2] = b;
@@ -131,8 +133,8 @@ static void _fjrdma_scalar_mput(const int target_image, const uint64_t dst_point
   if(transfer_coarray_elmts <= FJRDMA_MAX_MPUT){
 #ifdef OMNI_TARGET_CPU_KCOMPUTER
     FJMPI_Rdma_mput(target_image, FJRDMA_TAG, raddrs, laddrs, lengths, 0, transfer_coarray_elmts, FLAG_NIC);
-#else
-    _FX10_Rdma_mput(target_image, FJRDMA_TAG, raddrs, laddrs, lengths, 0, transfer_coarray_elmts);
+#elif OMNI_TARGET_CPU_FX10
+    _FX10_Rdma_mput(target_image, raddrs, laddrs, lengths, 0, transfer_coarray_elmts);
 #endif
     _num_of_puts++;
   }
@@ -145,8 +147,8 @@ static void _fjrdma_scalar_mput(const int target_image, const uint64_t dst_point
 #ifdef OMNI_TARGET_CPU_KCOMPUTER
       FJMPI_Rdma_mput(target_image, FJRDMA_TAG, &raddrs[i*FJRDMA_MAX_MPUT], &laddrs[i*FJRDMA_MAX_MPUT], 
 		      &lengths[i*FJRDMA_MAX_MPUT], 0, trans_elmts, FLAG_NIC);
-#else
-      _FX10_Rdma_mput(target_image, FJRDMA_TAG, &raddrs[i*FJRDMA_MAX_MPUT], &laddrs[i*FJRDMA_MAX_MPUT],
+#elif OMNI_TARGET_CPU_FX10
+      _FX10_Rdma_mput(target_image, &raddrs[i*FJRDMA_MAX_MPUT], &laddrs[i*FJRDMA_MAX_MPUT],
                       &lengths[i*FJRDMA_MAX_MPUT], 0, trans_elmts);
 #endif
 
@@ -174,7 +176,7 @@ static void _fjrdma_NON_continuous_put_1dim_same_stride(const int target_image, 
 #ifdef OMNI_TARGET_CPU_KCOMPUTER
     FJMPI_Rdma_mput(target_image, FJRDMA_TAG, &raddr, &laddr,
 		    &elmt_size, stride, transfer_coarray_elmts, FLAG_NIC);
-#else
+#elif OMNI_TARGET_CPU_FX10
     _FX10_Rdma_mput(target_image, FJRDMA_TAG, &raddr, &laddr,
                     &elmt_size, stride, transfer_coarray_elmts);
 #endif
@@ -190,7 +192,7 @@ static void _fjrdma_NON_continuous_put_1dim_same_stride(const int target_image, 
 #ifdef OMNI_TARGET_CPU_KCOMPUTER
       FJMPI_Rdma_mput(target_image, FJRDMA_TAG, &tmp_raddr, &tmp_laddr,
 		      &elmt_size, stride, trans_elmts, FLAG_NIC);
-#else
+#elif OMNI_TARGET_CPU_FX10
       _FX10_Rdma_mput(target_image, FJRDMA_TAG, &tmp_raddr, &tmp_laddr,
 		      &elmt_size, stride, trans_elmts);
 #endif

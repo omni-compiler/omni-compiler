@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <string.h>
 #include "xmp_internal.h"
 
 void _XMP_stride_memcpy_1dim(char *buf1, const char *buf2, const _XMP_array_section_t *array, size_t element_size, int flag)
