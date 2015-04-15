@@ -74,7 +74,7 @@ function ompf90_set_parameters()
             -J)
 		shift;
 		module_dir=("${1#-J}")
-                module_opt=("-M ${module_dir[0]}")
+                module_opt=("-M${module_dir[0]}")
                 target=`get_target`
                 if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
                     other_args+=("${OMNI_MODINC}${module_dir}")
@@ -83,7 +83,7 @@ function ompf90_set_parameters()
                 fi;;
             -J?*)
                 module_dir=("${1#-J}")
-                module_opt=("-M ${module_dir[0]}")
+                module_opt=("-M${module_dir[0]}")
                 target=`get_target`
                 if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
                     other_args+=("${OMNI_MODINC}${module_dir}")
@@ -95,12 +95,12 @@ function ompf90_set_parameters()
 		include_opt+=("-I$1")
 		other_args+=("-I$1")
 		module_dir=("${1#-I}")
-                trans_module_opt+=("-M ${module_dir[0]}");;
+                trans_module_opt+=("-M${module_dir[0]}");;
             -I?*)
 		include_opt+=("$1")
 		other_args+=("$1")
                 module_dir=("${1#-I}")
-                trans_module_opt+=("-M ${module_dir[0]}");;
+                trans_module_opt+=("-M${module_dir[0]}");;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)

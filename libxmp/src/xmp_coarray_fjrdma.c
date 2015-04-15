@@ -415,7 +415,6 @@ static void _fjrdma_scalar_mget(const int target_image, const uint64_t dst_point
   uint64_t raddr = (uint64_t)src_desc->addr[target_image] + src_point;
   uint64_t laddr, laddrs[dst_elmts];
   size_t elmt_size = dst_desc->elmt_size;
-  size_t lengths[dst_elmts];
 
   if(dst_desc == NULL)
     laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, (char *)dst, elmt_size*dst_elmts) + dst_point;
@@ -429,9 +428,9 @@ static void _fjrdma_scalar_mget(const int target_image, const uint64_t dst_point
   // To complete put operations before the following get operation.
   _XMP_fjrdma_sync_memory();
 
-  if(transfer_coarray_elmts <= FJRDMA_MAX_MGET){
+  if(dst <= FJRDMA_MAX_MGET){
     for(int i=0;i<dst_elmts;i++)
-      FJMPI_Rdma_get(target_image, FJRDMA_TAG, raddrs, laddrs[i], elmt_size, FLAG_NIC);
+      FJMPI_Rdma_get(target_image, FJRDMA_TAG, raddr, laddrs[i], elmt_size, FLAG_NIC);
 
     // To complete the above get operation.
     for(int i=0;i<dst_elmts;i++)
