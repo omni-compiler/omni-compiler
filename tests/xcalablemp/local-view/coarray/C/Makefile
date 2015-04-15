@@ -27,8 +27,8 @@ run:
 	$(XRUN) -n 2 ./coarray_get_2dims.x
 	$(XRUN) -n 2 ./coarray_get_3dims.x
 	$(XRUN) -n 2 ./coarray_get_4dims.x
-	$(XRUN) -n 3 ./coarray_local_put.x
-	$(XRUN) -n 3 ./coarray_local_get.x
+	$(XRUN) -n 1 ./coarray_local_put.x
+	$(XRUN) -n 1 ./coarray_local_get.x
 
 clean:
 	rm -f $(EXES) $(OBJS)
