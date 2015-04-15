@@ -777,17 +777,17 @@ void _XMP_coarray_rdma_image_set_7(const int n1, const int n2, const int n3, con
 
 // If array a is continuous, retrun _XMP_N_INT_TRUE.
 // If array a is non-continuous (e.g. stride access), return _XMP_N_INT_FALSE.
-static int _check_continuous(const _XMP_array_section_t *a, const int dims)
+static int _check_continuous(const _XMP_array_section_t *a, const int dims, const int transfer_elmts)
 {
   // Only 1 elements is transferred.
   // ex) a[2]
   // ex) b
-  if(_transfer_coarray_elmts == 1)
+  if(transfer_elmts == 1)
     return _XMP_N_INT_TRUE;
 
-  // Only the last dimension length is transferred.
+  // Only the last dimension is transferred.
   // ex) a[1][2][2:3]
-  if(_transfer_coarray_elmts == (a+dims-1)->length)
+  if(transfer_elmts == (a+dims-1)->length)
     if((a+dims-1)->stride == 1)
       return _XMP_N_INT_TRUE;
 
@@ -795,7 +795,7 @@ static int _check_continuous(const _XMP_array_section_t *a, const int dims)
   for(int i=0;i<dims;i++)
     if((a+i)->stride != 1)
       return _XMP_N_INT_FALSE;
-
+  
   // (.., i-2, i-1)-th dimension's length is "1" &&
   // i-th dimension's stride is "1" && 
   // (i+1, i+2, ..)-th dimensions are ":".
@@ -834,12 +834,12 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
   if(_transfer_coarray_elmts == 0) return;
 
   if(rdma_code == _XMP_N_COARRAY_GET){
-    if(_transfer_coarray_elmts != _transfer_array_elmts)
-      _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;
+    if(_transfer_coarray_elmts != _transfer_array_elmts && _transfer_coarray_elmts != 1)
+      _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;  // e.g. a[0:3] = b[0:2]:[3] is NG, but a[0:3] = b[0:1]:[3] is OK
   }
   else if(rdma_code == _XMP_N_COARRAY_PUT){
     if(_transfer_coarray_elmts != _transfer_array_elmts && _transfer_array_elmts != 1)
-      _XMP_fatal("Coarray Error ! transfer size is wrong.\n");  // e.g. a[:]:[3] = b[2] is NG, but a[:]:[3] = b[1] is OK.
+      _XMP_fatal("Coarray Error ! transfer size is wrong.\n");  // e.g. a[0:3]:[3] = b[0:2] is NG, but a[0:3]:[3] = b[0:1] is OK.
   }
 
   int target_image = 0;
@@ -851,8 +851,8 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
     _coarray[i].distance = ((_XMP_coarray_t*)remote_coarray)->distance_of_coarray_elmts[i];
   }
 
-  int remote_coarray_is_continuous = _check_continuous(_coarray, _coarray_dims);
-  int local_array_is_continuous    = _check_continuous(_array, _array_dims); 
+  int remote_coarray_is_continuous = _check_continuous(_coarray, _coarray_dims, _transfer_coarray_elmts);
+  int local_array_is_continuous    = _check_continuous(_array,   _array_dims,   _transfer_array_elmts); 
 
   if(rdma_code == _XMP_N_COARRAY_PUT){
     if(target_image == _XMP_world_rank){
@@ -870,16 +870,19 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
     }
   }
   else if(rdma_code == _XMP_N_COARRAY_GET){
-      //    if(target_image == _XMP_world_rank){
-      //      _XMP_local_get();
-      //    }
+    if(target_image == _XMP_world_rank){
+      _XMP_local_get(remote_coarray_is_continuous, local_array_is_continuous, _coarray_dims, _array_dims,
+                     _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+    }
+    else{
 #ifdef _XMP_GASNET
-    _XMP_gasnet_get(remote_coarray_is_continuous, local_array_is_continuous, target_image,
-		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts);
+      _XMP_gasnet_get(remote_coarray_is_continuous, local_array_is_continuous, target_image,
+		      _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts);
 #elif _XMP_FJRDMA
-    _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_image, _coarray_dims, _array_dims, 
-		    _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts, _transfer_array_elmts);
+      _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_image, _coarray_dims, _array_dims, 
+		      _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts, _transfer_array_elmts);
 #endif
+    }
   }
   else{
     _XMP_fatal("Unexpected Operation !!");

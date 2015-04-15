@@ -116,6 +116,8 @@ extern void _XMP_coarray_lastly_deallocate();
 // xmp_coarray_utils.c
 extern void _XMP_local_put(const int, const int, const int, const int, _XMP_array_section_t *, _XMP_array_section_t *,
 			   _XMP_coarray_t *, void *, const size_t, const size_t);
+extern void _XMP_local_get(const int, const int, const int, const int, _XMP_array_section_t *, _XMP_array_section_t *,
+			   _XMP_coarray_t *, void *, const size_t, const size_t);
 
 // xmp_intrinsic.c
 extern void xmpf_transpose(void *dst_p, void *src_p, int opt);
