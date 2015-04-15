@@ -1,9 +1,12 @@
 Omni Compiler Software RELEASE NOTES
 
-# ver. 0.9.1      2015/01/30
+# ver. 0.9.1      2015/04/17
 * Refactoring xmpcc command.
 * Refactoring build system (without requiring ant).
 * Support stride coarray on the K computer and FX10.
+* Support the xmp_malloc function for multidimensional global arrays.
+* Support the async clause on the bcast and the reduction directives.
+* Support the pack/unpack, gather/scatter, and sort_up/sort_down intrinsic procedures.
 * Fixed lots of bugs.
 
 # ver. 0.9.0      2014/11/14
