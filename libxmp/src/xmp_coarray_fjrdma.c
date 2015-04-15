@@ -36,7 +36,7 @@ void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray, void **buf, const size_t coa
     else
       each_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, _memid);
 
-    if(ncount > 3000){
+    if(ncount > FJRDMA_INTERVAL){
       MPI_Barrier(MPI_COMM_WORLD);
       ncount = 0;
     }
@@ -91,6 +91,21 @@ static void _fjrdma_continuous_put(const int target_image, const uint64_t dst_po
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
 }
 
+#ifdef OMNI_TARGET_CPU_FX10
+static void _FX10_Rdma_mput(int target_image, uint64_t *raddrs, uint64_t *laddrs, 
+			    size_t *lengths, int stride, size_t transfer_coarray_elmts)
+{
+  if(stride == 0){
+    for(int i=0;i<transfer_coarray_elmts;i++)
+      FJMPI_Rdma_put(target_image, FJRDMA_TAG, raddrs[i], laddrs[i], lengths[i], FLAG_NIC);
+  }
+  else{
+    for(int i=0;i<transfer_coarray_elmts;i++)
+      FJMPI_Rdma_put(target_image, FJRDMA_TAG, raddrs[0]+i*stride, laddrs[0]+i*stride, lengths[0], FLAG_NIC);
+  }
+}
+#endif
+
 // Number of elements of src must be 1, number of elements of dst must be more than 1.
 // e.g. a[0:100:3]:[2] = b;
 static void _fjrdma_scalar_mput(const int target_image, const uint64_t dst_point, const uint64_t src_point, 
@@ -116,7 +131,11 @@ static void _fjrdma_scalar_mput(const int target_image, const uint64_t dst_point
   for(int i=0;i<transfer_coarray_elmts;i++) lengths[i] = elmt_size;
 
   if(transfer_coarray_elmts <= FJRDMA_MAX_MPUT){
+#ifdef OMNI_TARGET_CPU_KCOMPUTER
     FJMPI_Rdma_mput(target_image, FJRDMA_TAG, raddrs, laddrs, lengths, 0, transfer_coarray_elmts, FLAG_NIC);
+#elif OMNI_TARGET_CPU_FX10
+    _FX10_Rdma_mput(target_image, raddrs, laddrs, lengths, 0, transfer_coarray_elmts);
+#endif
     _num_of_puts++;
   }
   else{
@@ -125,8 +144,14 @@ static void _fjrdma_scalar_mput(const int target_image, const uint64_t dst_point
 
     for(int i=0;i<times;i++){
       size_t trans_elmts = (i != times-1)? FJRDMA_MAX_MPUT : rest_elmts;
+#ifdef OMNI_TARGET_CPU_KCOMPUTER
       FJMPI_Rdma_mput(target_image, FJRDMA_TAG, &raddrs[i*FJRDMA_MAX_MPUT], &laddrs[i*FJRDMA_MAX_MPUT], 
 		      &lengths[i*FJRDMA_MAX_MPUT], 0, trans_elmts, FLAG_NIC);
+#elif OMNI_TARGET_CPU_FX10
+      _FX10_Rdma_mput(target_image, &raddrs[i*FJRDMA_MAX_MPUT], &laddrs[i*FJRDMA_MAX_MPUT],
+                      &lengths[i*FJRDMA_MAX_MPUT], 0, trans_elmts);
+#endif
+
     }
     _num_of_puts += times;
   }
@@ -148,8 +173,12 @@ static void _fjrdma_NON_continuous_put_1dim_same_stride(const int target_image, 
       In this pattern, the sixth argument of FJMPI_Rdma_mput() can NOT be 0.
   */
   if(transfer_coarray_elmts <= FJRDMA_MAX_MPUT){
+#ifdef OMNI_TARGET_CPU_KCOMPUTER
     FJMPI_Rdma_mput(target_image, FJRDMA_TAG, &raddr, &laddr,
 		    &elmt_size, stride, transfer_coarray_elmts, FLAG_NIC);
+#elif OMNI_TARGET_CPU_FX10
+    _FX10_Rdma_mput(target_image, &raddr, &laddr, &elmt_size, stride, transfer_coarray_elmts);
+#endif
     _num_of_puts++;
   }
   else{
@@ -159,8 +188,12 @@ static void _fjrdma_NON_continuous_put_1dim_same_stride(const int target_image, 
       uint64_t tmp_raddr = raddr + (i*FJRDMA_MAX_MPUT*stride);
       uint64_t tmp_laddr = laddr + (i*FJRDMA_MAX_MPUT*stride);
       size_t trans_elmts = (i != times-1)? FJRDMA_MAX_MPUT : rest_elmts;
+#ifdef OMNI_TARGET_CPU_KCOMPUTER
       FJMPI_Rdma_mput(target_image, FJRDMA_TAG, &tmp_raddr, &tmp_laddr,
 		      &elmt_size, stride, trans_elmts, FLAG_NIC);
+#elif OMNI_TARGET_CPU_FX10
+      _FX10_Rdma_mput(target_image, &tmp_raddr, &tmp_laddr, &elmt_size, stride, trans_elmts);
+#endif
     }
     _num_of_puts += times;
   }
@@ -180,7 +213,11 @@ static void _fjrdma_NON_continuous_put_general(const int target_image, uint64_t 
   for(int i=0;i<transfer_coarray_elmts;i++) lengths[i] = elmt_size;
 
   if(transfer_coarray_elmts <= FJRDMA_MAX_MPUT){
+#ifdef OMNI_TARGET_CPU_KCOMPUTER
     FJMPI_Rdma_mput(target_image, FJRDMA_TAG, raddrs, laddrs, lengths, 0, transfer_coarray_elmts, FLAG_NIC);
+#elif OMNI_TARGET_CPU_FX10
+    _FX10_Rdma_mput(target_image, raddrs, laddrs, lengths, 0, transfer_coarray_elmts);
+#endif
     _num_of_puts++;
   }
   else{
@@ -189,8 +226,13 @@ static void _fjrdma_NON_continuous_put_general(const int target_image, uint64_t 
     
     for(int i=0;i<times;i++){
       size_t trans_elmts = (i != times-1)? FJRDMA_MAX_MPUT : rest_elmts;
+#ifdef OMNI_TARGET_CPU_KCOMPUTER
       FJMPI_Rdma_mput(target_image, FJRDMA_TAG, &raddrs[i*FJRDMA_MAX_MPUT], &laddrs[i*FJRDMA_MAX_MPUT],
 		      &lengths[i*FJRDMA_MAX_MPUT], 0, trans_elmts, FLAG_NIC);
+#elif OMNI_TARGET_CPU_FX10
+      _FX10_Rdma_mput(target_image, &raddrs[i*FJRDMA_MAX_MPUT], &laddrs[i*FJRDMA_MAX_MPUT],
+                      &lengths[i*FJRDMA_MAX_MPUT], 0, trans_elmts);
+#endif
     }
     _num_of_puts += times;
   }
@@ -230,29 +272,34 @@ static void _fjrdma_NON_continuous_put(const int target_image, const uint64_t ds
 
 void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const int target_image, const int dst_dims, const int src_dims, 
 		     const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
-		     void *src, const _XMP_coarray_t *src_desc, const int transfer_coarray_elmts, const int transfer_array_elmts)
+		     void *src, const _XMP_coarray_t *src_desc, const int dst_elmts, const int src_elmts)
 {
   uint64_t dst_point = (uint64_t)_XMP_get_offset(dst_info, dst_dims);
   uint64_t src_point = (uint64_t)_XMP_get_offset(src_info, src_dims);
+  size_t transfer_size = dst_desc->elmt_size * dst_elmts;
 
-  if(transfer_coarray_elmts == transfer_array_elmts){
-    size_t transfer_size = dst_desc->elmt_size * transfer_coarray_elmts;
-    if(transfer_size > FJRDMA_MAX_SIZE){
-      fprintf(stderr, "transfer_size is too large %zu\n", transfer_size);
-      exit(1);
-    }
+  if(transfer_size > FJRDMA_MAX_SIZE){
+    fprintf(stderr, "transfer_size is too large (%zu)\n", transfer_size);
+    exit(1);
+  }
 
+  if((transfer_size&0x3) != 0){
+    fprintf(stderr, "transfer_size must be multiples of four (%zu)\n", transfer_size);
+    exit(1);
+  }
+
+  if(dst_elmts == src_elmts){
     if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
       _fjrdma_continuous_put(target_image, dst_point, src_point, dst_desc, src_desc, src, transfer_size);
     }
     else{
       _fjrdma_NON_continuous_put(target_image, dst_point, src_point, dst_info, src_info, dst_dims, src_dims, dst_desc, src_desc, 
-				 src, transfer_coarray_elmts);
+				 src, dst_elmts);
     }
   }
   else{
-    if(transfer_array_elmts == 1){
-      _fjrdma_scalar_mput(target_image, dst_point, src_point, dst_info, dst_dims, dst_desc, src_desc, src, transfer_coarray_elmts);
+    if(src_elmts == 1){
+      _fjrdma_scalar_mput(target_image, dst_point, src_point, dst_info, dst_dims, dst_desc, src_desc, src, dst_elmts);
     }
     else{
       _XMP_fatal("Number of elements is invalid");
@@ -359,30 +406,91 @@ static void _fjrdma_NON_continuous_get(const int target_image, const uint64_t ds
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
 }
 
+static void _fjrdma_scalar_mget(const int target_image, const uint64_t dst_point, const uint64_t src_point,
+				const _XMP_array_section_t *dst_info, const int dst_dims,
+				const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+				const void *dst, const size_t dst_elmts)
+/* If a local array is a coarray, dst_desc != NULL. */
+{
+  uint64_t raddr = (uint64_t)src_desc->addr[target_image] + src_point;
+  uint64_t laddr, laddrs[dst_elmts];
+  size_t elmt_size = dst_desc->elmt_size;
+
+  if(dst_desc == NULL)
+    laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, (char *)dst, elmt_size*dst_elmts) + dst_point;
+  else
+    laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_point;
+
+  // Set parameters for FJMPI_Rdma_mget
+  _XMP_set_coarray_addresses(laddr, dst_info, dst_dims, dst_elmts, laddrs);
+  for(int i=0;i<dst_elmts;i++) laddrs[i]  = laddr;
+
+  // To complete put operations before the following get operation.
+  _XMP_fjrdma_sync_memory();
+
+  if(dst <= FJRDMA_MAX_MGET){
+    for(int i=0;i<dst_elmts;i++)
+      FJMPI_Rdma_get(target_image, FJRDMA_TAG, raddr, laddrs[i], elmt_size, FLAG_NIC);
+
+    // To complete the above get operation.
+    for(int i=0;i<dst_elmts;i++)
+      while(FJMPI_Rdma_poll_cq(SEND_NIC, &_cq) != FJMPI_RDMA_NOTICE);
+  }
+  else{
+    int times      = dst_elmts / FJRDMA_MAX_MGET + 1;
+    int rest_elmts = dst_elmts - FJRDMA_MAX_MGET * (times - 1);
+
+    for(int i=0;i<times;i++){
+      size_t trans_elmts = (i != times-1)? FJRDMA_MAX_MGET : rest_elmts;
+
+      for(int j=0;j<trans_elmts;j++)
+	FJMPI_Rdma_get(target_image, FJRDMA_TAG, raddr, laddrs[j+i*FJRDMA_MAX_MGET],
+		       elmt_size, FLAG_NIC);
+
+      // To complete the above get operation.
+      for(int i=0;i<trans_elmts;i++)
+	while(FJMPI_Rdma_poll_cq(SEND_NIC, &_cq) != FJMPI_RDMA_NOTICE);
+    }
+  }
+
+  if(dst_desc == NULL)
+    FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
+}
+
 void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const int target_image, const int src_dims, const int dst_dims, 
 		     const _XMP_array_section_t *src_info, const _XMP_array_section_t *dst_info, const _XMP_coarray_t *src_desc, 
-		     void *dst, const _XMP_coarray_t *dst_desc, const int transfer_coarray_elmts, const int transfer_array_elmts)
+		     void *dst, const _XMP_coarray_t *dst_desc, const int src_elmts, const int dst_elmts)
 {
-  if(transfer_coarray_elmts == transfer_array_elmts){
-    size_t transfer_size = src_desc->elmt_size * transfer_coarray_elmts;
+  uint64_t dst_point = (uint64_t)_XMP_get_offset(dst_info, dst_dims);
+  uint64_t src_point = (uint64_t)_XMP_get_offset(src_info, src_dims);
+  size_t transfer_size = src_desc->elmt_size * src_elmts;
 
-    if(transfer_size > FJRDMA_MAX_SIZE){
-      fprintf(stderr, "transfer_size is too large %zu\n", transfer_size);
-      exit(1);
-    }
-  
-    uint64_t dst_point = (uint64_t)_XMP_get_offset(dst_info, dst_dims);
-    uint64_t src_point = (uint64_t)_XMP_get_offset(src_info, src_dims);
+  if(transfer_size > FJRDMA_MAX_SIZE){
+    fprintf(stderr, "transfer_size is too large (%zu)\n", transfer_size);
+    exit(1);
+  }
+
+  if((transfer_size&0x3) != 0){
+    fprintf(stderr, "transfer_size must be multiples of four (%zu)\n", transfer_size);
+    exit(1);
+  }
+
+  if(src_elmts == dst_elmts){
     if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
       _fjrdma_continuous_get(target_image, dst_point, src_point, dst, dst_desc, src_desc, transfer_size);
     }
     else{
       _fjrdma_NON_continuous_get(target_image, dst_point, src_point, dst_info, src_info,
-				 dst, dst_desc, src_desc, dst_dims, src_dims, transfer_coarray_elmts);
+				 dst, dst_desc, src_desc, dst_dims, src_dims, src_elmts);
     }
   }
   else{
-    _XMP_fatal("Number of elements is invalid");
+    if(src_elmts == 1){
+      _fjrdma_scalar_mget(target_image, dst_point, src_point, dst_info, dst_dims, dst_desc, src_desc, dst, dst_elmts);
+    }
+    else{
+      _XMP_fatal("Number of elements is invalid");
+    }
   }
 }
 

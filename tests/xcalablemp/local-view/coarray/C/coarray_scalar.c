@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <xmp.h>
 #pragma xmp nodes p(2)
-int a, a_test;
-long b[2], b_test[2];
-float c[2][3], c_test[2][3];
-double d[2][3][4], d_test[2][3][4];
-#pragma xmp coarray a,b,c,d : [*]
+int a:[*], a_test;
+long b[2]:[*], b_test[2];
+float c[2][3]:[*], c_test[2][3];
+double d[2][3][4]:[*], d_test[2][3][4];
+
 int status, return_val = 0;
 
 void initialize_coarrays(int me){

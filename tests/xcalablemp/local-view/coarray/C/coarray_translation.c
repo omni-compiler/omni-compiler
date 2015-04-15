@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-int a = 2, result = 0;
-#pragma xmp coarray a:[*]
+int a:[*] = 2, result = 0;
+
 
 int hoge(int a){
   return (a == -1);

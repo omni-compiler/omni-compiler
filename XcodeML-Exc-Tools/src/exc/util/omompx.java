@@ -197,7 +197,7 @@ public class omompx
       } else if (arg.equals("-tlog-all")) {
         all_profile = true;
         doTlog = true;
-      } else if (arg.startsWith("-M")) {
+      } else if (arg.startsWith("-M")) { 
           if (arg.equals("-M")) {
             if (narg == null)
               error("needs argument after -M");

@@ -96,9 +96,16 @@ function xmpf90_set_parameters()
                     other_args+=("${OMNI_MODINC}" "${module_dir}")
 		fi;;
             -I)
-		shift; include_opt+=("-I$1"); other_args+=("-I$1");;
+		shift; 
+		include_opt+=("-I$1")
+		other_args+=("-I$1")
+		module_dir=("${1#-I}")
+		trans_module_opt+=("-M${module_dir[0]}");;
 	    -I?*)
-		include_opt+=("$1"); other_args+=("$1");;
+		include_opt+=("$1")
+		other_args+=("$1")
+		module_dir=("${1#-I}")
+		trans_module_opt+=("-M${module_dir[0]}");;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)

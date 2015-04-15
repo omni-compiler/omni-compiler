@@ -162,7 +162,10 @@ void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_st
   _XMP_ASSERT(template->is_distributed); // FIXME too strict?
 
   if (!template->is_owner) {
-    goto no_iter;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+    return;
   }
 
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
@@ -179,7 +182,6 @@ void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_st
     // finalize iter
     _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
   } else {
-no_iter:
     *par_init = 0;
     *par_cond = 0;
     *par_step = 1;
@@ -193,7 +195,10 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
   _XMP_ASSERT(template->is_distributed);
 
   if (!template->is_owner) {
-    goto no_iter;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+    return;
   }
 
   _XMP_template_info_t *template_info = &(template->info[template_index]);
@@ -218,7 +223,6 @@ void _XMP_sched_loop_template_BLOCK(int ser_init, int ser_cond, int ser_step,
     // finalize iter
     _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
   } else {
-no_iter:
     *par_init = 0;
     *par_cond = 0;
     *par_step = 1;
@@ -232,7 +236,10 @@ void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
   _XMP_ASSERT(template->is_distributed);
 
   if (!template->is_owner) {
-    goto no_iter;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+    return;
   }
 
   _XMP_template_info_t *template_info = &(template->info[template_index]);
@@ -257,7 +264,6 @@ void _XMP_sched_loop_template_CYCLIC(int ser_init, int ser_cond, int ser_step,
     // finalize iter
     _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
   } else {
-no_iter:
     *par_init = 0;
     *par_cond = 0;
     *par_step = 1;
@@ -271,7 +277,10 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
   _XMP_ASSERT(template->is_distributed);
 
   if (!template->is_owner) {
-    goto no_iter;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+    return;
   }
 
   _XMP_template_info_t *template_info = &(template->info[template_index]);
@@ -299,7 +308,6 @@ void _XMP_sched_loop_template_BLOCK_CYCLIC(int ser_init, int ser_cond, int ser_s
     // finalize iter
     _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
   } else {
-no_iter:
     *par_init = 0;
     *par_cond = 0;
     *par_step = 1;
@@ -314,7 +322,10 @@ void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
   _XMP_ASSERT(template->is_distributed);
 
   if (!template->is_owner) {
-    goto no_iter;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+    return;
   }
 
   _XMP_template_chunk_t *template_chunk = &(template->chunk[template_index]);
@@ -338,7 +349,6 @@ void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
     // finalize iter
     _XMP_SM_FINALIZE_ITER(par_init, par_cond, par_step, reverse_iter);
   } else {
-no_iter:
     *par_init = 0;
     *par_cond = 0;
     *par_step = 1;
@@ -349,14 +359,22 @@ no_iter:
 void _XMP_sched_loop_nodes(int ser_init, int ser_cond, int ser_step,
                            int *par_init, int *par_cond, int *par_step,
                            _XMP_nodes_t *nodes, int nodes_index) {
-  if (!nodes->is_member) goto no_iter;
+  if (!nodes->is_member){
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+    return;
+  }
 
   int reverse_iter = _XMP_N_INT_TRUE;  // reverse_iter is not used in this function
   _XMP_SM_NORM_SCHED_PARAMS(ser_init, ser_cond, ser_step, reverse_iter)
 
   int rank1O = ((nodes->info[nodes_index].rank) + 1);
   if ((rank1O < ser_init) || (rank1O > ser_cond)) {
-    goto no_iter;
+    *par_init = 0;
+    *par_cond = 0;
+    *par_step = 1;
+    return;
   }
 
   if (((rank1O - ser_init) % ser_step) == 0) {
@@ -364,7 +382,6 @@ void _XMP_sched_loop_nodes(int ser_init, int ser_cond, int ser_step,
     *par_cond = rank1O + 1;
     *par_step = ser_step;
   } else {
-no_iter:
     *par_init = 0;
     *par_cond = 0;
     *par_step = 1;

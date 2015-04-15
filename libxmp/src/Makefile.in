@@ -79,12 +79,13 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@GASNET_TRUE@am__append_1 = xmp_onesided.c xmp_onesided_gasnet.c xmp_coarray.c xmp_coarray_gasnet.c xmp_coarray_gasnet_utils.c\
-@GASNET_TRUE@			xmp_lock_unlock.c xmp_lock_unlock_gasnet.c xmp_post_wait.c xmp_post_wait_gasnet.c
+@GASNET_TRUE@am__append_1 = xmp_onesided.c xmp_onesided_gasnet.c xmp_coarray.c xmp_coarray_utils.c xmp_coarray_local.c \
+@GASNET_TRUE@	                xmp_coarray_gasnet.c xmp_coarray_gasnet_utils.c xmp_lock_unlock.c xmp_lock_unlock_gasnet.c \
+@GASNET_TRUE@	                xmp_post_wait.c xmp_post_wait_gasnet.c
 
 @GASNET_TRUE@am__append_2 = -D_XMP_GASNET
-@FJRDMA_TRUE@am__append_3 = xmp_onesided.c xmp_onesided_fjrdma.c xmp_coarray.c xmp_coarray_fjrdma.c xmp_coarray_fjrdma_utils.c\
-@FJRDMA_TRUE@			xmp_post_wait.c xmp_post_wait_fjrdma.c
+@FJRDMA_TRUE@am__append_3 = xmp_onesided.c xmp_onesided_fjrdma.c xmp_coarray.c xmp_coarray_utils.c xmp_coarray_local.c \
+@FJRDMA_TRUE@	                xmp_coarray_fjrdma.c xmp_coarray_fjrdma_utils.c xmp_post_wait.c xmp_post_wait_fjrdma.c
 
 @FJRDMA_TRUE@am__append_4 = -D_XMP_FJRDMA
 @MPI3_TRUE@am__append_5 = -D_XMP_MPI3
@@ -156,15 +157,17 @@ am__libxmp_a_SOURCES_DIST = ../include/xmp_internal.h \
 	xmp_reflect.c xmp_pack_vector.c xmp_reflect_acc.c \
 	xmp_reduce_acc.c xmp_intrinsic.c xmp_sort.c xmp_async.c \
 	xmp_onesided.c xmp_onesided_gasnet.c xmp_coarray.c \
-	xmp_coarray_gasnet.c xmp_coarray_gasnet_utils.c \
-	xmp_lock_unlock.c xmp_lock_unlock_gasnet.c xmp_post_wait.c \
+	xmp_coarray_utils.c xmp_coarray_local.c xmp_coarray_gasnet.c \
+	xmp_coarray_gasnet_utils.c xmp_lock_unlock.c \
+	xmp_lock_unlock_gasnet.c xmp_post_wait.c \
 	xmp_post_wait_gasnet.c xmp_onesided_fjrdma.c \
 	xmp_coarray_fjrdma.c xmp_coarray_fjrdma_utils.c \
 	xmp_post_wait_fjrdma.c xmp_reflect_tca.c xmp_reflect_gpu.c \
 	xmp_gpu_pack.cu xmp_reduce_gpu.c
 @GASNET_TRUE@am__objects_1 = xmp_onesided.$(OBJEXT) \
 @GASNET_TRUE@	xmp_onesided_gasnet.$(OBJEXT) \
-@GASNET_TRUE@	xmp_coarray.$(OBJEXT) \
+@GASNET_TRUE@	xmp_coarray.$(OBJEXT) xmp_coarray_utils.$(OBJEXT) \
+@GASNET_TRUE@	xmp_coarray_local.$(OBJEXT) \
 @GASNET_TRUE@	xmp_coarray_gasnet.$(OBJEXT) \
 @GASNET_TRUE@	xmp_coarray_gasnet_utils.$(OBJEXT) \
 @GASNET_TRUE@	xmp_lock_unlock.$(OBJEXT) \
@@ -173,7 +176,8 @@ am__libxmp_a_SOURCES_DIST = ../include/xmp_internal.h \
 @GASNET_TRUE@	xmp_post_wait_gasnet.$(OBJEXT)
 @FJRDMA_TRUE@am__objects_2 = xmp_onesided.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_onesided_fjrdma.$(OBJEXT) \
-@FJRDMA_TRUE@	xmp_coarray.$(OBJEXT) \
+@FJRDMA_TRUE@	xmp_coarray.$(OBJEXT) xmp_coarray_utils.$(OBJEXT) \
+@FJRDMA_TRUE@	xmp_coarray_local.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_coarray_fjrdma.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_coarray_fjrdma_utils.$(OBJEXT) \
 @FJRDMA_TRUE@	xmp_post_wait.$(OBJEXT) \

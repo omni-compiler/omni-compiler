@@ -16,9 +16,9 @@ all default: $(EXES)
 run: 
 	$(XRUN) -n 1 ./coarray_translation.x
 	$(XRUN) -n 2 ./coarray_scalar.x
-	$(XRUN) -n 2 ./coarray_scalar_mput.x
 	$(XRUN) -n 2 ./coarray_vector.x
 	$(XRUN) -n 2 ./coarray_stride.x
+	$(XRUN) -n 2 ./coarray_scalar_mput.x
 	$(XRUN) -n 2 ./coarray_put_1dim.x
 	$(XRUN) -n 2 ./coarray_put_2dims.x
 	$(XRUN) -n 2 ./coarray_put_3dims.x
@@ -27,8 +27,8 @@ run:
 	$(XRUN) -n 2 ./coarray_get_2dims.x
 	$(XRUN) -n 2 ./coarray_get_3dims.x
 	$(XRUN) -n 2 ./coarray_get_4dims.x
-	$(XRUN) -n 3 ./coarray_local_put.x
-	$(XRUN) -n 3 ./coarray_local_get.x
+	$(XRUN) -n 1 ./coarray_local_put.x
+	$(XRUN) -n 1 ./coarray_local_get.x
 
 clean:
 	rm -f $(EXES) $(OBJS)
