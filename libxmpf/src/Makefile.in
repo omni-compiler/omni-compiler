@@ -14,6 +14,7 @@
 
 @SET_MAKE@
 
+
 VPATH = @srcdir@
 am__is_gnu_make = test -n '$(MAKEFILE_LIST)' && test -n '$(MAKELEVEL)'
 am__make_running_with_option = \
@@ -79,22 +80,25 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@GASNET_TRUE@am__append_1 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-@GASNET_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
-@GASNET_TRUE@                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90
+@GASNET_TRUE@am__append_1 = xmp_coarray_alloc.sh xmp_coarray_get.sh \
+@GASNET_TRUE@                         xmp_coarray_sync.f90 xmp_coarray.f90 \
+@GASNET_TRUE@                         xmpf_coarray.c xmpf_coarray_lib.c xmpf_coarray_alloc.c \
+@GASNET_TRUE@                         xmpf_coarray_put.c xmpf_coarray_get.c
 
-@GASNET_TRUE@am__append_2 = -D_XMP_GASNET
+@GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET
 @GASNET_TRUE@@POWERPC_TRUE@am__append_3 = -WF,-D_XMP_GASNET
 @GASNET_TRUE@@POWERPC_FALSE@am__append_4 = -D_XMP_GASNET
 @MPI3_TRUE@am__append_5 = -D_XMP_MPI3
-@FJRDMA_TRUE@am__append_6 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-@FJRDMA_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
-@FJRDMA_TRUE@                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90
+@FJRDMA_TRUE@am__append_6 = xmp_coarray_alloc.sh xmp_coarray_get.sh \
+@FJRDMA_TRUE@                         xmp_coarray_sync.f90 xmp_coarray.f90 \
+@FJRDMA_TRUE@                         xmpf_coarray.c xmpf_coarray_lib.c xmpf_coarray_alloc.c \
+@FJRDMA_TRUE@                         xmpf_coarray_put.c xmpf_coarray_get.c
 
-@FJRDMA_TRUE@am__append_7 = -D_XMP_FJRDMA
-@FJRDMA_TRUE@am__append_8 = -D_XMP_FJRDMA
+@FJRDMA_TRUE@am__append_7 = -D_XMP_COARRAY_FJRDMA
+@FJRDMA_TRUE@am__append_8 = -D_XMP_COARRAY_FJRDMA
 subdir = libxmpf/src
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
+DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
+	$(am__include_HEADERS_DIST)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/buildutils/libtool.m4 \
 	$(top_srcdir)/buildutils/ltoptions.m4 \
@@ -136,7 +140,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)"
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 LIBRARIES = $(lib_LIBRARIES)
 AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
@@ -148,26 +152,22 @@ am__libxmpf_a_SOURCES_DIST = $(XMPF_INC_DIR)/xmpf_internal.h \
 	xmpf_main.F90 xmpf_array.c xmpf_async.c xmpf_gcomm.c \
 	xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
 	xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c \
-	xmpf_task.c xmpf_template.c xmpf_coarray.c \
-	xmpf_coarray_wrap.f90 xmpf_coarray_put.c xmpf_coarray_get.c \
-	xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
-	xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90
-@GASNET_TRUE@am__objects_1 = xmpf_coarray.$(OBJEXT) \
-@GASNET_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
-@GASNET_TRUE@	xmpf_coarray_put.$(OBJEXT) \
-@GASNET_TRUE@	xmpf_coarray_get.$(OBJEXT) \
+	xmpf_task.c xmpf_template.c xmp_coarray_alloc.sh \
+	xmp_coarray_get.sh xmp_coarray_sync.f90 xmp_coarray.f90 \
+	xmpf_coarray.c xmpf_coarray_lib.c xmpf_coarray_alloc.c \
+	xmpf_coarray_put.c xmpf_coarray_get.c
+@GASNET_TRUE@am__objects_1 = xmp_coarray_sync.$(OBJEXT) \
+@GASNET_TRUE@	xmp_coarray.$(OBJEXT) xmpf_coarray.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_lib.$(OBJEXT) \
-@GASNET_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_alloc.$(OBJEXT) \
-@GASNET_TRUE@	xmpf_coarray_alloc_wrap.$(OBJEXT)
-@FJRDMA_TRUE@am__objects_2 = xmpf_coarray.$(OBJEXT) \
-@FJRDMA_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
-@FJRDMA_TRUE@	xmpf_coarray_put.$(OBJEXT) \
-@FJRDMA_TRUE@	xmpf_coarray_get.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_put.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_get.$(OBJEXT)
+@FJRDMA_TRUE@am__objects_2 = xmp_coarray_sync.$(OBJEXT) \
+@FJRDMA_TRUE@	xmp_coarray.$(OBJEXT) xmpf_coarray.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_lib.$(OBJEXT) \
-@FJRDMA_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_alloc.$(OBJEXT) \
-@FJRDMA_TRUE@	xmpf_coarray_alloc_wrap.$(OBJEXT)
+@FJRDMA_TRUE@	xmpf_coarray_put.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_get.$(OBJEXT)
 am_libxmpf_a_OBJECTS = xmpf_main.$(OBJEXT) xmpf_array.$(OBJEXT) \
 	xmpf_async.$(OBJEXT) xmpf_gcomm.$(OBJEXT) xmpf_gmove.$(OBJEXT) \
 	xmpf_index.$(OBJEXT) xmpf_lib.$(OBJEXT) xmpf_loop.$(OBJEXT) \
@@ -244,6 +244,9 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+am__include_HEADERS_DIST = xmp_coarray.mod xmp_coarray_sync.mod \
+	xmp_coarray_alloc.mod xmp_coarray_get.mod
+HEADERS = $(include_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
@@ -522,6 +525,8 @@ libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_main.F90 \
 	xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c xmpf_nodes.c \
 	xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
 	xmpf_template.c $(am__append_1) $(am__append_6)
+@FJRDMA_TRUE@include_HEADERS = xmp_coarray.mod xmp_coarray_sync.mod xmp_coarray_alloc.mod xmp_coarray_get.mod
+@GASNET_TRUE@include_HEADERS = xmp_coarray.mod xmp_coarray_sync.mod xmp_coarray_alloc.mod xmp_coarray_get.mod
 all: all-am
 
 .SUFFIXES:
@@ -631,6 +636,27 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+install-includeHEADERS: $(include_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(include_HEADERS)'; test -n "$(includedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(includedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(includedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(includedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(includedir)" || exit $$?; \
+	done
+
+uninstall-includeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(include_HEADERS)'; test -n "$(includedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(includedir)'; $(am__uninstall_files_from_dir)
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -716,9 +742,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LIBRARIES)
+all-am: Makefile $(LIBRARIES) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -773,7 +799,7 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-includeHEADERS
 
 install-dvi: install-dvi-am
 
@@ -818,7 +844,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-libLIBRARIES
+uninstall-am: uninstall-includeHEADERS uninstall-libLIBRARIES
 
 .MAKE: install-am install-strip
 
@@ -829,23 +855,27 @@ uninstall-am: uninstall-libLIBRARIES
 	html-am info info-am install install-am install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-exec-local install-html \
-	install-html-am install-info install-info-am \
-	install-libLIBRARIES install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+	install-html-am install-includeHEADERS install-info \
+	install-info-am install-libLIBRARIES install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-libLIBRARIES
+	tags tags-am uninstall uninstall-am uninstall-includeHEADERS \
+	uninstall-libLIBRARIES
 
 
-xmpf_main.o: xmpf_main.F90
-	$(FC) $(FCFLAGS) $< -c
+%.o: %.f90
+	$(FC) $(FCFLAGS) -c $< -o $@
 
-xmpf_coarray_get_wrap.f90: xmpf_coarray_get_wrap.f90.sh
-	. $< > $@
+%.o: %.F90
+	$(FC) $(FCFLAGS) -c $< -o $@
 
-xmpf_coarray_alloc_wrap.f90: xmpf_coarray_alloc_wrap.f90.sh
-	. $< > $@
+%.o: %.sh
+	. $< > $*.f90
+	$(FC) $(FCFLAGS) -c $*.f90 -o $@
+
+xmp_coarray.o: xmp_coarray_alloc.o xmp_coarray_get.o xmp_coarray_sync.o
 
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || /bin/mkdir -p $(DESTDIR)$(libdir)
@@ -853,8 +883,7 @@ install-exec-local: xmpf_main.o
 
 clean-local:
 	rm -f *~ *.core core core.*
-	rm -f xmpf_coarray_get_wrap.f90
-	rm -f xmpf_coarray_alloc_wrap.f90
+	rm -f xmp_coarray_alloc.f90 xmp_coarray_get.f90
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

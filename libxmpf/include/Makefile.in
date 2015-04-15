@@ -414,7 +414,7 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-include_HEADERS = xmp_lib.h xmp_lib_coarray_get.h xmp_lib_coarray_alloc.h xmp_lib_coarray_sync.h
+include_HEADERS = xmp_lib.h
 all: all-am
 
 .SUFFIXES:
@@ -677,12 +677,6 @@ uninstall-am: uninstall-includeHEADERS
 	ps ps-am tags tags-am uninstall uninstall-am \
 	uninstall-includeHEADERS
 
-
-xmp_lib_coarray_get.h:  xmp_lib_coarray_get.h.sh
-	. $< > $@
-
-xmp_lib_coarray_alloc.h:  xmp_lib_coarray_alloc.h.sh
-	. $< > $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
