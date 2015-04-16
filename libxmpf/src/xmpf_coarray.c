@@ -11,14 +11,23 @@ static void _coarray_msg(int sw);
 int _XMPF_coarrayMsg = 0;          // default: message off
 int _XMPF_coarrayErr = 0;          // default: aggressive error check off
 
-/*
- * read environment variable XMPF_COARRAY_MSG
- * usage: <v1><d><v2><d>...<vn>
- *    <vk>  value for image index k
- *    <d>   delimiter ',' or ' '
+/* initialization called in xmpf_main
+ *  1. set static variable _this_image and _num_nodes
+ *  2. read environment variable XMPF_COARRAY_MSG
+ *     usage: <v1><d><v2><d>...<vn>
+ *        <vk>  value for image index k
+ *        <d>   delimiter ',' or ' '
  */
 void _XMPF_coarray_init(void)
 {
+  /*
+   *  set who-am-i
+   */
+  _XMPF_set_this_image();
+
+  /*
+   * read environment variable
+   */
   char *tok, *work, *env;
   int i;
   char delim[] = ", ";
@@ -62,9 +71,9 @@ void _coarray_msg(int sw)
                           "  %zd-byte boundary\n"
                           "  with %s\n",
                           sw, BOUNDARY_BYTE,
-#if defined(_XMP_COARRAY_FJRDMA)
+#if defined(_XMP_FJRDMA)
                           "FJRDMA"
-#elif defined(_XMP_COARRAY_GASNET)
+#elif defined(_XMP_GASNET)
                           "GASNET"
 #else
                           "(something unknown)"

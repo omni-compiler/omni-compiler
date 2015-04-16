@@ -1,6 +1,26 @@
 #include "xmpf_internal.h"
 
 /*****************************************\
+  initialization
+\*****************************************/
+
+static int _this_image, _num_images;
+
+void _XMPF_set_this_image()
+{
+  int size, rank;
+
+  if (MPI_Comm_size(MPI_COMM_WORLD, &size) != 0)
+    _XMPF_coarrayFatal("INTERNAL ERROR: illegal node size of COMM_WORLD");
+  if (MPI_Comm_rank(MPI_COMM_WORLD, &rank) != 0)
+    _XMPF_coarrayFatal("INTERNAL ERROR: illegal node rank of mine");
+
+  _num_images = size;
+  _this_image = rank + 1;
+}
+
+
+/*****************************************\
   transformation functions
 \*****************************************/
 
@@ -8,14 +28,9 @@
  */
 int num_images_(void)
 {
-  int size;
-
   _XMPF_checkIfInTask("NUM_IMAGES");
 
-  if (MPI_Comm_size(MPI_COMM_WORLD, &size) != 0)
-    _XMPF_coarrayFatal("internal error: NUM_IMAGES in %s", __FILE__);
-
-  return size;
+  return _num_images;
 }
 
 
@@ -23,14 +38,9 @@ int num_images_(void)
  */
 int this_image_(void)
 {
-  int rank;
-
   _XMPF_checkIfInTask("THIS_IMAGE");
 
-  if (MPI_Comm_rank(MPI_COMM_WORLD, &rank) != 0)
-    _XMPF_coarrayFatal("internal error: THIS_IMAGE in %s", __FILE__);
-
-  return rank + 1;
+  return _this_image;
 }
 
 
@@ -202,8 +212,3 @@ void xmpf_get_errmsg_(unsigned char *errmsg, int *msglen)
 }
 
   
-
-
-
-
-

@@ -43,7 +43,7 @@ public class XMPtransCoarrayRun
   private String initProcTextForFile;
 
   private String traverseCountName, traverseInitName;
-  private String commonName1, commonName2;
+  private String descCommonName, crayCommonName;
   private Ident resourceTagId;
 
   private ArrayList<Xobject> _prologStmts = new ArrayList();
@@ -63,7 +63,6 @@ public class XMPtransCoarrayRun
 
     if (pass == 1) {                // for functions and subroutines
       funcDef = new FuncDefBlock(def);
-      //def = funcDef.getDef();
       fblock = funcDef.getBlock();
       //// I don't know. See [Xmp-dev:5185]
       env.setCurrentDef(funcDef);      // needed if this is called before XMPrewriteExpr ???
@@ -76,8 +75,8 @@ public class XMPtransCoarrayRun
     String postfix = _genNewProcPostfix();
     traverseCountName = TRAV_COUNTCOARRAY_PREFIX + postfix;
     traverseInitName = TRAV_INITCOARRAY_PREFIX + postfix;
-    commonName1 = VAR_DESCPOINTER_PREFIX + "_" + name;
-    commonName2 = VAR_CRAYPOINTER_PREFIX + "_" + name;
+    descCommonName = VAR_DESCPOINTER_PREFIX + "_" + name;
+    crayCommonName = VAR_CRAYPOINTER_PREFIX + "_" + name;
 
     _setCoarrays();
     _check_ifIncludeXmpLib();
@@ -232,33 +231,33 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       subroutine EX1
         use M1
-        real :: V1(1:10,1:20)                                ! f
-        complex(8) :: V2                                     ! f
-        integer, POINTER :: V3(:,:)                          ! f,h
+        real :: V1(1:10,1:20)                                ! f.
+        complex(8) :: V2                                     ! f.
+        integer, POINTER :: V3(:,:)                          ! f. h.
 
-        integer(8) :: DP_V1, DP_V2, DP_V3                    ! a
-        pointer (CP_V1, V1)                                  ! c
-        pointer (CP_V2, V2)                                  ! c
-        common /xmpf_DP_M1/ DP_V1                            ! g
-        common /xmpf_DP_EX1/ DP_V2                           ! g
-        common /xmpf_CP_M1/ CP_V1                            ! g
-        common /xmpf_CP_EX1/ CP_V2                           ! g
-        integer(8) :: tag                                    ! i
+        integer(8) :: DP_V1, DP_V2, DP_V3                    ! a.
+        common /xmpf_DP_M1/ DP_V1                            ! a1.
+        common /xmpf_DP_EX1/ DP_V2                           ! a1.
+        pointer (CP_V1, V1)                                  ! c.
+        pointer (CP_V2, V2)                                  ! c.
+        common /xmpf_CP_M1/ CP_V1                            ! c.
+        common /xmpf_CP_EX1/ CP_V2                           ! c.
+        integer(8) :: tag                                    ! i.
         ...
-        call xmpf_coarray_proc_init(tag)                     ! i
-        call xmpf_coarray_put(DP_V1, V1(1,j), 4, &           ! d
+        call xmpf_coarray_proc_init(tag)                     ! i.
+        call xmpf_coarray_put(DP_V1, V1(1,j), 4, &           ! d.
           k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
-        z = xmpf_coarray_get0d(DP_V2, V2, 16, k, 0) ** 2     ! e
-        call xmpf_coarray_alloc2d(DP_V3, V3, tag, 4,      &  ! j
+        z = xmpf_coarray_get0d(DP_V2, V2, 16, k, 0) ** 2     ! e.
+        call xmpf_coarray_alloc2d(DP_V3, V3, tag, 4,      &  ! j.
           2, 10, 20)
-        call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)   ! m
-        call xmpf_coarray_set_varname(DP_V3, "V3", 2)        ! n
-        call xmpf_coarray_dealloc(DP_V3, tag)                ! j
-        call xmpf_coarray_proc_finalize(tag)                 ! i
+        call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)   ! m.
+        call xmpf_coarray_set_varname(DP_V3, "V3", 2)        ! n.
+        call xmpf_coarray_dealloc(DP_V3, tag)                ! j.
+        call xmpf_coarray_proc_finalize(tag)                 ! i.
         return
       end subroutine
 
-    !! Additionally, two subroutines xmpf_traverse_* will    ! b
+    !! Additionally, two subroutines xmpf_traverse_* will    ! b.
     !! be generated into the same output file which will
     !! initialize DP_V2 and CP_V2.
     !! (See XMPcoarrayInitProcedure.)
@@ -287,11 +286,11 @@ public class XMPtransCoarrayRun
     // a. declare descriptor pointers
     genDeclOfDescPointer(localCoarrays);
 
-    // c. declare cray-pointers (static coarrays only)
-    genDeclOfCrayPointer(staticLocalCoarrays);
-
-    // g. generate common stmt (static coarrays only)
+    // a1. make common association of descriptor pointers (static coarrays only)
     genCommonStmt(staticLocalCoarrays);
+
+    // c. link cray-pointers with data object and(static coarrays only)
+    genDeclOfCrayPointer(staticLocalCoarrays);
 
     // b. generate allocation into init procedure (static coarrays only)
     genAllocOfStaticCoarrays(staticLocalCoarrays);
@@ -321,25 +320,25 @@ public class XMPtransCoarrayRun
     output:
     --------------------------------------------
       subroutine EX1(V2,V3)
-        complex(8) :: V2                                     ! f
-        integer, POINTER :: V3(:,:)                          ! f,h
+        complex(8) :: V2                                     ! f.
+        integer, POINTER :: V3(:,:)                          ! f. h.
 
-        integer(8) :: DP_V2, DP_V3                           ! a
-        integer(8) :: tag                                    ! i
+        integer(8) :: DP_V2, DP_V3                           ! a.
+        integer(8) :: tag                                    ! i.
         ...
-        call xmpf_coarray_proc_init(tag)                     ! i
-        call xmpf_coarray_descptr(DP_V2, V2, tag)            ! k
-        call xmpf_coarray_descptr(DP_V3, V3, tag)            ! k
-        call xmpf_coarray_set_coshape(DP_V2, 1, 0)           ! m
-        call xmpf_coarray_set_varname(DP_V2, "V2", 2)        ! n
+        call xmpf_coarray_proc_init(tag)                     ! i.
+        call xmpf_coarray_descptr(DP_V2, V2, tag)            ! a2.
+        call xmpf_coarray_descptr(DP_V3, V3, tag)            ! a2.
+        call xmpf_coarray_set_coshape(DP_V2, 1, 0)           ! m.
+        call xmpf_coarray_set_varname(DP_V2, "V2", 2)        ! n.
 
-        z = xmpf_coarray_get0d(DP_V2, V2, 16, k, 0) ** 2     ! e
-        call xmpf_coarray_alloc2d(DP_V3, V3, tag, 4, &       ! j
+        z = xmpf_coarray_get0d(DP_V2, V2, 16, k, 0) ** 2     ! e.
+        call xmpf_coarray_alloc2d(DP_V3, V3, tag, 4, &       ! j.
           2, 10, 20)
-        call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)   ! m
-        call xmpf_coarray_set_coshape(DP_V3, "V3", 2)        ! n
-        call xmpf_coarray_dealloc(DP_V3, tag)                ! j
-        call xmpf_coarray_proc_finalize(tag)                 ! i
+        call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)   ! m.
+        call xmpf_coarray_set_varname(DP_V3, "V3", 2)        ! n.
+        call xmpf_coarray_dealloc(DP_V3, tag)                ! j.
+        call xmpf_coarray_proc_finalize(tag)                 ! i.
         return
       end subroutine
 
@@ -374,7 +373,7 @@ public class XMPtransCoarrayRun
     // a. declare descriptor pointers
     genDeclOfDescPointer(localCoarrays);
 
-    // k. m. n. generate definition of descriptor pointers (dummy coarrays only)
+    // a2. m. n. generate definition of descriptor pointers (dummy coarrays only)
     genDefinitionOfDescPointer(dummyLocalCoarrays);
 
     // f. remove codimensions from declarations of coarrays
@@ -399,15 +398,15 @@ public class XMPtransCoarrayRun
     output:
     --------------------------------------------
       subroutine EX1
-       !! real :: V1(10,20)[4,*]     delete                  ! o
-       !! complex(8) :: V2[0:*]      delete                  ! o
-        integer, POINTER :: V3(:)                            ! f,h
+       !! real :: V1(10,20)[4,*]     delete                  ! o.
+       !! complex(8) :: V2[0:*]      delete                  ! o.
+        integer, POINTER :: V3(:)                            ! f. h.
 
-        integer(8) :: DP_V3                                  ! a
+        integer(8) :: DP_V3                                  ! a.
         ...
       end subroutine
 
-    !! Additionally, two subroutines xmpf_traverse_* will    ! b
+    !! Additionally, two subroutines xmpf_traverse_* will    ! b.
     !! be generated into the same output file which will
     !! initialize DP_V1, DP_V2, CP_V1 and CP_V2.
     !! (see XMPcoarrayInitProcedure.)
@@ -490,16 +489,58 @@ public class XMPtransCoarrayRun
 
 
   //-----------------------------------------------------
+  //  TRANSLATION a1. (static only)
+  //  generate common association of cray pointers
+  //-----------------------------------------------------
+  //
+  private void genCommonStmt(Vector<XMPcoarray> coarrays) {
+    // do nothing if no coarrays are declared.
+    if (coarrays.isEmpty())
+      return;
+
+    // descriptor pointer
+    Xobject cnameObj = Xcons.Symbol(Xcode.IDENT, descCommonName);
+    Xobject varList = Xcons.List();
+    for (XMPcoarray coarray: coarrays) {
+      Ident descPtrId = coarray.getDescPointerId();
+      varList.add(Xcons.FvarRef(descPtrId));
+    }
+
+    // declaration 
+    Xobject decls = fblock.getBody().getDecls();
+    decls.add(Xcons.List(Xcode.F_COMMON_DECL,
+                         Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList)));
+  }
+
+
+  //-----------------------------------------------------
   //  TRANSLATION c.
-  //  declare cray-pointers
+  //  link cray pointers with data objects and
+  //  generate their common association
   //-----------------------------------------------------
   //
   private void genDeclOfCrayPointer(Vector<XMPcoarray> coarrays) {
+    // do nothing if no coarrays are declared.
+    if (coarrays.isEmpty())
+      return;
+
     for (XMPcoarray coarray: coarrays) {
       // set coarray.crayPtrName and
       // generate declaration of the cray pointer
       coarray.genDecl_crayPointer(VAR_CRAYPOINTER_PREFIX);
     }
+
+    Xobject cnameObj = Xcons.Symbol(Xcode.IDENT, crayCommonName);
+    Xobject varList = Xcons.List();
+    for (XMPcoarray coarray: coarrays) {
+      Ident crayPtrId = coarray.getCrayPointerId();
+      varList.add(Xcons.FvarRef(crayPtrId));
+    }
+
+    // declaration 
+    Xobject decls = fblock.getBody().getDecls();
+    decls.add(Xcons.List(Xcode.F_COMMON_DECL,
+                         Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList)));
   }
 
 
@@ -528,7 +569,7 @@ public class XMPtransCoarrayRun
 
 
   //-----------------------------------------------------
-  //  TRANSLATION k. m. n.
+  //  TRANSLATION a2. m. n.
   //  generate definition of descriptor pointers
   //-----------------------------------------------------
   //
@@ -537,7 +578,7 @@ public class XMPtransCoarrayRun
     Ident subr, descPtrId;
 
     for (XMPcoarray coarray: coarrays) {
-      // k. call "descptr(descPtr, baseAddr, tag)"
+      // a2. call "descptr(descPtr, baseAddr, tag)"
       descPtrId = coarray.getDescPointerId();
       args = Xcons.List(descPtrId, coarray.getIdent(),
                         Xcons.FvarRef(resourceTagId));
@@ -563,46 +604,13 @@ public class XMPtransCoarrayRun
       subrCall = subr.callSubroutine(args);
       *********************************/
       // m. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
-      coarray.makeStmt_setCoshape();
+      subrCall = coarray.makeStmt_setCoshape();
       addPrologStmt(subrCall);
 
       // n. "CALL set_varname(descPtr, name, namelen)"
-      coarray.makeStmt_setVarName();
+      subrCall = coarray.makeStmt_setVarName();
       addPrologStmt(subrCall);
     }
-  }
-
-
-  //-----------------------------------------------------
-  //  TRANSLATION g.
-  //  generate common stmt in this procedure
-  //-----------------------------------------------------
-  //
-  private void genCommonStmt(Vector<XMPcoarray> coarrays) {
-    // do nothing if no coarrays are declared.
-    if (coarrays.isEmpty())
-      return;
-
-    // common block name
-    Xobject cnameObj1 = Xcons.Symbol(Xcode.IDENT, commonName1);
-    Xobject cnameObj2 = Xcons.Symbol(Xcode.IDENT, commonName2);
-
-    // list of common vars
-    Xobject varList1 = Xcons.List();
-    Xobject varList2 = Xcons.List();
-    for (XMPcoarray coarray: coarrays) {
-      Ident descPtrId = coarray.getDescPointerId();
-      Ident crayPtrId = coarray.getCrayPointerId();
-      varList1.add(Xcons.FvarRef(descPtrId));
-      varList2.add(Xcons.FvarRef(crayPtrId));
-    }
-
-    // declaration 
-    Xobject decls = fblock.getBody().getDecls();
-    decls.add(Xcons.List(Xcode.F_COMMON_DECL,
-                         Xcons.List(Xcode.F_VAR_LIST, cnameObj1, varList1)));
-    decls.add(Xcons.List(Xcode.F_COMMON_DECL,
-                         Xcons.List(Xcode.F_VAR_LIST, cnameObj2, varList2)));
   }
 
 
@@ -747,7 +755,7 @@ public class XMPtransCoarrayRun
       new XMPcoarrayInitProcedure(coarrays,
                                   traverseCountName,
                                   traverseInitName,
-                                  commonName1, commonName2, env);
+                                  descCommonName, crayCommonName, env);
     coarrayInit.run();
   }
 
@@ -1313,31 +1321,13 @@ public class XMPtransCoarrayRun
   }
 
   private void genPrologStmts() {
-    BlockList blist;
-    try {
-      blist = fblock.getBody().getHead().getBody();
-    }
-    catch(NullPointerException e) {
-      /////////////////
-      System.out.println("--- found NullPointerException in genPrologStmts");
-      /////////////////
-      return;
-    }
+    BlockList blist = fblock.getBody().getHead().getBody();
     for (int i = _prologStmts.size() - 1; i >= 0; i--)
       blist.insert(_prologStmts.get(i));
   }
 
   private void genEpilogStmts() {
-    BlockList blist;
-    try{
-      blist = fblock.getBody().getHead().getBody();
-    }
-    catch (NullPointerException e) {
-      /////////////////
-      System.out.println("--- found NullPointerException in genEpilogStmts");
-      /////////////////
-      return;
-    }
+    BlockList blist = fblock.getBody().getHead().getBody();
     for (Xobject stmt: _epilogStmts)
       blist.add(stmt);
   }

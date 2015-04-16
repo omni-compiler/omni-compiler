@@ -6,11 +6,11 @@
 
 #define DIV_CEILING(m,n)  (((m)-1)/(n)+1)
 
-#define forallMemoryChunkP(cp)  for(MemoryChunkP_t *_cp1_=((cp)=_mallocStack.head->next)->next; \
+#define forallMemoryChunkOrder(cp)  for(MemoryChunkOrder_t *_cp1_=((cp)=_mallocStack.head->next)->next; \
                                     _cp1_ != NULL;                     \
                                     (cp)=_cp1_, _cp1_=_cp1_->next)
 
-#define forallMemoryChunkPRev(cp)  for(MemoryChunkP_t *_cp1_=((cp)=_mallocStack.tail->prev)->prev; \
+#define forallMemoryChunkOrderRev(cp)  for(MemoryChunkOrder_t *_cp1_=((cp)=_mallocStack.tail->prev)->prev; \
                                        _cp1_ != NULL;                   \
                                        (cp)=_cp1_, _cp1_=_cp1_->prev)
 
@@ -53,7 +53,7 @@ typedef struct _memoryChunk_t  MemoryChunk_t;
 typedef struct _coarrayInfo_t  CoarrayInfo_t;
 
 typedef struct _memoryChunkStack_t  MemoryChunkStack_t;
-typedef struct _memoryChunkP_t      MemoryChunkP_t;
+typedef struct _memoryChunkOrder_t  MemoryChunkOrder_t;
 
 // access functions for resource set
 static ResourceSet_t *_newResourceSet(void);
@@ -61,8 +61,9 @@ static void _freeResourceSet(ResourceSet_t *rset);
 
 // access functions for memory chunk
 static MemoryChunk_t *_newMemoryChunk(void);
-static void _linkMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk2);
-static void _unlinkMemoryChunk(MemoryChunk_t *chunk2);
+static void _linkMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk);
+static void _unlinkAndFreeMemoryChunk(MemoryChunk_t *chunk);
+static void _unlinkMemoryChunk(MemoryChunk_t *chunk);
 static void _freeMemoryChunk(MemoryChunk_t *chunk);
 
 static MemoryChunk_t *pool_chunk = NULL;
@@ -86,10 +87,13 @@ static MemoryChunk_t *_mallocMemoryChunk(int count, size_t element);
 // malloc/free history
 static void _initMallocHistory(void);
 static void _addMallocHistory(MemoryChunk_t *chunk);
-static MemoryChunkP_t *_newMemoryChunkP(MemoryChunk_t *chunk);
 static void _flushMallocHistory(void);
-static void _freeMemoryChunkP(MemoryChunkP_t *chunkP);
-static void _unlinkMemoryChunkP(MemoryChunkP_t *chunkP);
+
+// historical order
+static MemoryChunkOrder_t *_newMemoryChunkOrder(MemoryChunk_t *chunk);
+static void _unlinkMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
+static void _freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
+
 
 
 /*****************************************\
@@ -114,7 +118,7 @@ struct _memoryChunk_t {
   MemoryChunk_t   *prev;
   MemoryChunk_t   *next;
   ResourceSet_t   *parent;
-  BOOL             isDeallocated;  // true if already encountered DEALLOCATE stmt
+  BOOL             isSuspended;  // true if already encountered DEALLOCATE stmt
   char            *orgAddr;        // local address of the allocated memory
   size_t           nbytes;         // allocated size of memory [bytes]
   void            *desc;           // address of the lower layer's descriptor 
@@ -145,17 +149,55 @@ struct _coarrayInfo_t {
 /** structure to manage the history of malloc
  */
 struct _memoryChunkStack_t {
-  MemoryChunkP_t  *head;
-  MemoryChunkP_t  *tail;
-};
-
-struct _memoryChunkP_t {
-  MemoryChunkP_t  *prev;
-  MemoryChunkP_t  *next;
-  MemoryChunk_t   *chunk;
+  MemoryChunkOrder_t  *head;
+  MemoryChunkOrder_t  *tail;
 };
 
 static MemoryChunkStack_t _mallocStack;
+
+struct _memoryChunkOrder_t {
+  MemoryChunkOrder_t  *prev;
+  MemoryChunkOrder_t  *next;
+  MemoryChunk_t       *chunk;
+};
+
+
+/***********************************************\
+  hidden utility functions
+\***********************************************/
+
+int xmpf_coarray_allocated_()
+{
+  MemoryChunkOrder_t *chunkp;
+  MemoryChunk_t *chunk;
+  size_t size;
+
+  size = 0;
+  forallMemoryChunkOrder(chunkp) {
+    chunk = chunkp->chunk;
+    size += chunk->nbytes;
+  }
+
+  // returns illegal value if it exceeds huge(int)
+  return size;
+}
+
+int xmpf_coarray_suspended_()
+{
+  MemoryChunkOrder_t *chunkp;
+  MemoryChunk_t *chunk;
+  size_t size;
+
+  size = 0;
+  forallMemoryChunkOrder(chunkp) {
+    chunk = chunkp->chunk;
+    if (chunk->isSuspended)
+      size += chunk->nbytes;
+  }
+
+  // returns illegal value if it exceeds huge(int)
+  return size;
+}
 
 
 /***********************************************\
@@ -261,8 +303,7 @@ void xmpf_coarray_free_(void **descPtr, void **tag)
   MemoryChunk_t *chunk = cinfo->parent;
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_FREE\n"
-                          "  MemoryChunk %p\n"
-                          "  in ResourceSet %p\n",
+                          "  MemoryChunk %p in ResourceSet %p\n",
                           chunk, rset);
 
   // unlink and free CoarrayInfo keeping MemoryChunk
@@ -270,8 +311,9 @@ void xmpf_coarray_free_(void **descPtr, void **tag)
   _freeCoarrayInfo(cinfo);
 
   if (IsEmptyMemoryChunk(chunk)) {
-    chunk->isDeallocated = TRUE;
-    // actually free objects as much as possible
+    // unlink this memory chunk and suspend it to free
+    _unlinkMemoryChunk(chunk);
+    // chance to free suspended memory chunks
     _flushMallocHistory();
   }
 }
@@ -406,7 +448,7 @@ void xmpf_coarray_proc_finalize_(void **tag)
 void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag)
 {
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
-  MemoryChunkP_t *chunkP;
+  MemoryChunkOrder_t *chunkP;
   MemoryChunk_t *chunk;
   BOOL found;
 
@@ -417,7 +459,7 @@ void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag)
   _XMPF_coarrayDebugPrint("  coarray dummy argument: %p\n", baseAddr);
 
   found = FALSE;
-  forallMemoryChunkP(chunkP) {
+  forallMemoryChunkOrder(chunkP) {
     chunk = chunkP->chunk;
 
     _XMPF_coarrayDebugPrint("  comparing with a chunk: %p  +%zd\n",
@@ -455,8 +497,8 @@ void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag)
 
 void _initMallocHistory(void)
 {
-  _mallocStack.head = _newMemoryChunkP(NULL);
-  _mallocStack.tail = _newMemoryChunkP(NULL);
+  _mallocStack.head = _newMemoryChunkOrder(NULL);
+  _mallocStack.tail = _newMemoryChunkOrder(NULL);
   _mallocStack.head->next = _mallocStack.tail;
   _mallocStack.tail->prev = _mallocStack.head;
 }
@@ -464,13 +506,13 @@ void _initMallocHistory(void)
 
 void _addMallocHistory(MemoryChunk_t *chunk)
 {
-  MemoryChunkP_t *chunkP = _newMemoryChunkP(chunk);
-  MemoryChunkP_t *tailP = _mallocStack.tail;
+  MemoryChunkOrder_t *chunkP = _newMemoryChunkOrder(chunk);
+  MemoryChunkOrder_t *tailP = _mallocStack.tail;
   if (tailP == NULL) {
     _initMallocHistory();
     tailP = _mallocStack.tail;
   }
-  MemoryChunkP_t *lastP = tailP->prev;
+  MemoryChunkOrder_t *lastP = tailP->prev;
 
   lastP->next = chunkP;
   chunkP->prev = lastP;
@@ -479,10 +521,10 @@ void _addMallocHistory(MemoryChunk_t *chunk)
 }
 
 
-MemoryChunkP_t *_newMemoryChunkP(MemoryChunk_t *chunk)
+MemoryChunkOrder_t *_newMemoryChunkOrder(MemoryChunk_t *chunk)
 {
-  MemoryChunkP_t *chunkP =
-    (MemoryChunkP_t*)malloc(sizeof(MemoryChunkP_t));
+  MemoryChunkOrder_t *chunkP =
+    (MemoryChunkOrder_t*)malloc(sizeof(MemoryChunkOrder_t));
   chunkP->prev = NULL;
   chunkP->next = NULL;
   chunkP->chunk = chunk;
@@ -496,40 +538,37 @@ MemoryChunkP_t *_newMemoryChunkP(MemoryChunk_t *chunk)
  */
 void _flushMallocHistory()
 {
-  MemoryChunkP_t *chunkP;
-  MemoryChunk_t *chunk;
+  MemoryChunkOrder_t *chunkP;
 
-  _XMPF_coarrayDebugPrint("*** looking for all memory-chunk to free\n");
+  _XMPF_coarrayDebugPrint("FLUSH suspended MemoryChunk\n");
 
-  forallMemoryChunkPRev(chunkP) {
-    chunk = chunkP->chunk;
-    if (!chunk->isDeallocated)
+  forallMemoryChunkOrderRev(chunkP) {
+    if (!chunkP->chunk->isSuspended)
       break;
 
-    // found a formal-deallocated memory chunk that should be free
-    _XMPF_coarrayDebugPrint("*** freeing MemoryChunk %p\n", chunk);
-
-    _unlinkMemoryChunk(chunk);     // unlink from its resource set
-    _unlinkMemoryChunkP(chunkP);
-    _freeMemoryChunkP(chunkP);
+    // unlink and free MemoryChunkOrder linkage
+    _unlinkMemoryChunkOrder(chunkP);
+    _freeMemoryChunkOrder(chunkP);
   }
 }
 
 
-/*  including freeing the coarray data object
- */
-void _freeMemoryChunkP(MemoryChunkP_t *chunkP)
+void _unlinkMemoryChunkOrder(MemoryChunkOrder_t *chunkP2)
 {
-  _freeMemoryChunk(chunkP->chunk);
-  free(chunkP);
+  MemoryChunkOrder_t *chunkP1 = chunkP2->prev;
+  MemoryChunkOrder_t *chunkP3 = chunkP2->next;
+
+  chunkP1->next = chunkP3;
+  chunkP3->prev = chunkP1;
+  chunkP2->next = chunkP2->prev = NULL;
 }
 
-void _unlinkMemoryChunkP(MemoryChunkP_t *chunkP)
+void _freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP)
 {
-  chunkP->prev->next = chunkP->next;
-  chunkP->next->prev = chunkP->prev;
-  chunkP->prev = NULL;
-  chunkP->next = NULL;
+  // including freeing coarray data object
+  _freeMemoryChunk(chunkP->chunk);
+
+  free(chunkP);
 }
 
 
@@ -588,7 +627,7 @@ void xmpf_coarray_set_varname_(void **descPtr, char *name, int *namelen)
 }
 
 
-/*****************************************      \
+/*****************************************\
   intrinsic functions
 \*****************************************/
 
@@ -654,11 +693,10 @@ void _freeResourceSet(ResourceSet_t *rset)
   MemoryChunk_t *chunk;
 
   forallMemoryChunk (chunk, rset) {
+    // allocated -> suspended (waiting for freeing)
     _unlinkMemoryChunk(chunk);
-    _freeMemoryChunk(chunk);
   }
 
-  //_unlinkResourceSet(rset);
   free(rset);
 }
 
@@ -680,7 +718,7 @@ MemoryChunk_t *_newMemoryChunk(void)
   chunk->tailCoarray->prev = chunk->headCoarray;
   chunk->headCoarray->parent = chunk;
   chunk->tailCoarray->parent = chunk;
-  chunk->isDeallocated = FALSE;
+  chunk->isSuspended = FALSE;
   return chunk;
 }
 
@@ -698,19 +736,24 @@ void _linkMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk2)
   chunk2->parent = chunk1->parent;
 }
 
+
 void _unlinkMemoryChunk(MemoryChunk_t *chunk2)
 {
+  chunk2->isSuspended = TRUE;
+
   MemoryChunk_t *chunk1 = chunk2->prev;
   MemoryChunk_t *chunk3 = chunk2->next;
 
   chunk1->next = chunk3;
   chunk3->prev = chunk1;
 
-  chunk2->prev = NULL;
-  chunk2->next = NULL;
-  chunk2->parent = NULL;
+  chunk2->next = chunk2->prev = chunk2->parent = NULL;
 }
 
+
+/*  current restriction of the lower-level library:
+ *   only the last allocated data can be freed.
+ */
 void _freeMemoryChunk(MemoryChunk_t *chunk)
 {
   CoarrayInfo_t *cinfo;
@@ -719,11 +762,15 @@ void _freeMemoryChunk(MemoryChunk_t *chunk)
     _unlinkCoarrayInfo(cinfo);
     _freeCoarrayInfo(cinfo);
   }
-  free(chunk->prev);
-  free(chunk->next);
+
+  // found a formal-deallocated memory chunk that should be free
+  _XMPF_coarrayDebugPrint("*** freeing suspended MemoryChunk %p, %zd bytes\n",
+                          chunk, chunk->nbytes);
 
   // free the last memory chunk object
   _XMP_coarray_lastly_deallocate();
+
+  free(chunk);
 }
 
 
@@ -769,11 +816,12 @@ void _freeCoarrayInfo(CoarrayInfo_t *cinfo)
   free(cinfo->lcobound);
   free(cinfo->ucobound);
   free(cinfo->cosize);
+  free(cinfo);
 }
 
 
 /***********************************************\
-  inquire from another file
+   inquire functions
 \***********************************************/
 
 void *_XMPF_get_coarrayDesc(void *descPtr)

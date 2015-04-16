@@ -83,7 +83,7 @@ target_triplet = @target@
 @GASNET_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
 @GASNET_TRUE@                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90
 
-@GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET
+@GASNET_TRUE@am__append_2 = -D_XMP_GASNET
 @GASNET_TRUE@@POWERPC_TRUE@am__append_3 = -WF,-D_XMP_GASNET
 @GASNET_TRUE@@POWERPC_FALSE@am__append_4 = -D_XMP_GASNET
 @MPI3_TRUE@am__append_5 = -D_XMP_MPI3
@@ -91,8 +91,8 @@ target_triplet = @target@
 @FJRDMA_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
 @FJRDMA_TRUE@                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90
 
-@FJRDMA_TRUE@am__append_7 = -D_XMP_COARRAY_FJRDMA
-@FJRDMA_TRUE@am__append_8 = -D_XMP_COARRAY_FJRDMA
+@FJRDMA_TRUE@am__append_7 = -D_XMP_FJRDMA
+@FJRDMA_TRUE@am__append_8 = -D_XMP_FJRDMA
 subdir = libxmpf/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4

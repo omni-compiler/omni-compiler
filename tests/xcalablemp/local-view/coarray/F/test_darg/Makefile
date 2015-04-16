@@ -1,5 +1,5 @@
 #OPT= --debug
-OPT= -g --debug --verbose
+#OPT= -g --debug --verbose
 NPE=3
 
 OUT_darg   = dummyarg-1 dummyarg-2

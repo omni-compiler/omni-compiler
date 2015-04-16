@@ -335,6 +335,7 @@ extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
 extern void xmpf_coarray_free_(void **descPtr, void **tag);
 
 /* xmpf_coarray_lib.c */
+extern void _XMPF_set_this_image(void);
 extern int num_images_(void);
 extern int this_image_(void);
 //extern int xmpf_num_nodes_(void);

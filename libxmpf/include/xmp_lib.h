@@ -43,3 +43,7 @@
 !         end subroutine xmpf_coarray_proc_finalize
 !      end interface
 
+!! hidden utilities
+      integer, external :: xmpf_coarray_allocated
+      integer, external :: xmpf_coarray_suspended
+

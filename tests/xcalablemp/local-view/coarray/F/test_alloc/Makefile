@@ -8,11 +8,12 @@ OUT_decl= decl1
 #OUT_rt  =  inquiry
 OUT_NG =  allo2NG
 
-OUT_allo= allo1 allo3 allo4 #allo2 
+OUT_allo= allo1 allo3 
+OUT_etc=#pipo3 allo_loop2 #allo_loop #char12  host_assoc
+
 OUT_stat=#allo_stat
 
-OUT = $(OUT_decl) $(OUT_size) $(OUT_allo) $(OUT_rt)
-#OUT=times times2
+OUT = $(OUT_etc) $(OUT_decl) $(OUT_size) $(OUT_allo) $(OUT_rt)
 
 include ../Makefile.common
 
