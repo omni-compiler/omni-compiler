@@ -65,7 +65,7 @@ print_subr_dealloc() {
  case "${DIM}" in
  0) echo    "        ${typekind}, pointer, intent(out) :: var" ;;
  1) echo    "        ${typekind}, pointer, intent(out) :: var(:)" ;;
- *) echo    "        ${typekind}, pointer, intent(out) :: var(:"
+ *) echo -n "        ${typekind}, pointer, intent(out) :: var(:"
     for i in `seq 2 ${DIM}`; do
         echo -n ",:"
     done
