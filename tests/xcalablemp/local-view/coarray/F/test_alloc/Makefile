@@ -1,4 +1,4 @@
-OPT= -g --debug 
+OPT= -g --debug
 #OPT= -g --debug --verbose
 NPE=3
 

@@ -1244,15 +1244,12 @@ public class XMPtransCoarrayRun
     }
 
     /* check a typical name defined in xmp_lib.h */
-    /***************** comment out 2015.04.15: def.findIdent might not search in used modules?
     Ident id = def.findIdent("xmpf_coarray_get0d");
-    //Ident id = def.findIdent("xmpf_sync_all_stat_wrap");
     if (id == null) {
-      // found that xmpf_lib.h is not included.
+      /* xmpf_lib.h seems not included. */
       XMP.error("current restriction: " + 
                 "\'xmp_lib.h\' must be included to use coarray features.");
     }
-    ******************/
   }
 
   private boolean _isCoarrayReferred() {

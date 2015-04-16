@@ -245,9 +245,7 @@ am__can_run_installinfo = \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 am__include_HEADERS_DIST = xmp_coarray.mod xmp_coarray_sync.mod \
-	xmp_coarray_alloc.mod xmp_coarray_get.mod xmp_coarray.xmod \
-	xmp_coarray_sync.xmod xmp_coarray_alloc.xmod \
-	xmp_coarray_get.xmod
+	xmp_coarray_alloc.mod xmp_coarray_get.mod
 HEADERS = $(include_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -527,11 +525,8 @@ libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_main.F90 \
 	xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c xmpf_nodes.c \
 	xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
 	xmpf_template.c $(am__append_1) $(am__append_6)
-MOD1 = xmp_coarray_sync.mod xmp_coarray_alloc.mod xmp_coarray_get.mod
-XMOD1 = xmp_coarray_sync.xmod xmp_coarray_alloc.xmod xmp_coarray_get.xmod
-@FJRDMA_TRUE@include_HEADERS = xmp_coarray.mod $(MOD1) xmp_coarray.xmod $(XMOD1)
-@GASNET_TRUE@include_HEADERS = xmp_coarray.mod $(MOD1) xmp_coarray.xmod $(XMOD1)
-FFRONT = ../../F-FrontEnd/src/F_Front -fxmp
+@FJRDMA_TRUE@include_HEADERS = xmp_coarray.mod xmp_coarray_sync.mod xmp_coarray_alloc.mod xmp_coarray_get.mod
+@GASNET_TRUE@include_HEADERS = xmp_coarray.mod xmp_coarray_sync.mod xmp_coarray_alloc.mod xmp_coarray_get.mod
 all: all-am
 
 .SUFFIXES:
@@ -871,29 +866,16 @@ uninstall-am: uninstall-includeHEADERS uninstall-libLIBRARIES
 
 
 %.o: %.f90
-	$(FC) $(FCFLAGS) -c $<
+	$(FC) $(FCFLAGS) -c $< -o $@
 
-%.mod: %.f90
-	$(FC) $(FCFLAGS) -c $<
+%.o: %.F90
+	$(FC) $(FCFLAGS) -c $< -o $@
 
 %.o: %.sh
 	. $< > $*.f90
-	$(FC) $(FCFLAGS) -c $*.f90
+	$(FC) $(FCFLAGS) -c $*.f90 -o $@
 
-%.mod: %.sh
-	. $< > $*.f90
-	$(FC) $(FCFLAGS) -c $*.f90
-
-%.xmod: %.f90
-	$(FFRONT) $< >/dev/null
-
-%.xmod: %.sh
-	. $< -xmp > $*4xmod.f90
-	$(FFRONT) $*4xmod.f90 >/dev/null
-
-xmp_coarray.o: $(MOD1)
-
-xmp_coarray.xmod: $(XMOD1)
+xmp_coarray.o: xmp_coarray_alloc.o xmp_coarray_get.o xmp_coarray_sync.o
 
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || /bin/mkdir -p $(DESTDIR)$(libdir)
@@ -901,9 +883,7 @@ install-exec-local: xmpf_main.o
 
 clean-local:
 	rm -f *~ *.core core core.*
-	rm -f *.mod *.xmod
 	rm -f xmp_coarray_alloc.f90 xmp_coarray_get.f90
-	rm -f xmp_coarray_alloc4xmod.f90 xmp_coarray_get4xmod.f90
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -1,5 +1,5 @@
   program decl
-    use xmp_coarray
+    include "xmp_lib.h"
     real, allocatable :: a(:)[:]
     integer, allocatable :: s[:]
     integer nerr = 0
