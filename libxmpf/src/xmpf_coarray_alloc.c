@@ -234,6 +234,9 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
   // output #1, #2
   *descPtr = (void*)cinfo;
   *crayPtr = cinfo->baseAddr;   // == chunk->orgAddr
+
+  // SYNC MEMORY
+  xmpf_sync_memory_nostat_();
 }
 
 
@@ -308,6 +311,9 @@ void xmpf_coarray_free_(void **descPtr, void **tag)
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
   MemoryChunk_t *chunk = cinfo->parent;
+
+  // SYNC MEMORY
+  xmpf_sync_memory_nostat_();
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_FREE\n"
                           "  MemoryChunk %p \"%s\", %zd bytes\n"
@@ -425,6 +431,9 @@ void xmpf_coarray_proc_finalize_(void **tag)
 {
   if (*tag == NULL)
     return;
+
+  // SYNC ALL
+  xmpf_sync_all_nostat_();
 
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
   _freeResourceSet(rset);

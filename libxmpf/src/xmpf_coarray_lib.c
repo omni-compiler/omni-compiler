@@ -58,10 +58,10 @@ void xmpf_sync_all_nostat_(void)
 
   int status;
   xmp_sync_all(&status);
+  //  if (status != 0)
+  //    _XMPF_coarrayFatal("SYNC ALL failed (xmpf_sync_all_nostat_)");
 
-  if (_XMPF_coarrayMsg) {
-    _XMPF_coarrayDebugPrint("SYNCALL out (id=%d)\n", id);
-  }
+  _XMPF_coarrayDebugPrint("SYNCALL out (id=%d)\n", id);
 }
 
 void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen)
@@ -78,6 +78,8 @@ void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen)
 
   int status;
   xmp_sync_all(&status);
+  //  if (status != 0)
+  //    _XMPF_coarrayFatal("SYNC ALL failed (xmpf_sync_all_stat_)");
 }
 
 
@@ -91,6 +93,8 @@ void xmpf_sync_memory_nostat_(void)
 
   int status;
   xmp_sync_memory(&status);
+  //  if (status != 0)
+  //    _XMPF_coarrayFatal("SYNC MEMORY failed (xmpf_sync_memory_nostat_)");
 }
 
 void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen)
@@ -107,6 +111,8 @@ void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen)
 
   int status;
   xmp_sync_memory(&status);
+  //  if (status != 0)
+  //    _XMPF_coarrayFatal("SYNC MEMORY failed (xmpf_sync_memory_stat_)");
 }
 
 
@@ -118,6 +124,8 @@ void xmpf_sync_image_nostat_(int *image)
 {
   int status;
   xmp_sync_image(*image, &status);
+  //  if (status != 0)
+  //    _XMPF_coarrayFatal("SYNC IMAGES failed (xmpf_sync_image_nostat_)");
 }
 
 void xmpf_sync_image_stat_(int *image, int *stat, char *msg, int *msglen)
@@ -134,6 +142,8 @@ void xmpf_sync_image_stat_(int *image, int *stat, char *msg, int *msglen)
 
   int status;
   xmp_sync_image(*image, &status);
+  //  if (status != 0)
+  //    _XMPF_coarrayFatal("SYNC IMAGES failed (xmpf_sync_image_stat_)");
 }
 
 
@@ -141,6 +151,8 @@ void xmpf_sync_images_nostat_(int *images, int *size)
 {
   int status;
   xmp_sync_images(*size, images, &status);
+  //  if (status != 0)
+  //    _XMPF_coarrayFatal("SYNC IMAGES failed (xmpf_sync_images_nostat_)");
 }
 
 void xmpf_sync_images_stat_(int *images, int *size, int *stat,
@@ -158,6 +170,8 @@ void xmpf_sync_images_stat_(int *images, int *size, int *stat,
 
   int status;
   xmp_sync_images(*size, images, &status);
+  //  if (status != 0)
+  //    _XMPF_coarrayFatal("SYNC IMAGES failed (xmpf_sync_images_stat_)");
 }
 
 
@@ -165,6 +179,8 @@ void xmpf_sync_allimages_nostat_(void)
 {
   int status;
   xmp_sync_images_all(&status);
+  //  if (status != 0)
+  //    _XMPF_coarrayFatal("SYNC IMAGES failed (xmpf_sync_allimages_nostat_)");
 }
 
 void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen)
@@ -181,6 +197,8 @@ void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen)
 
   int status;
   xmp_sync_images_all(&status);
+  //  if (status != 0)
+  //    _XMPF_coarrayFatal("SYNC IMAGES failed (xmpf_sync_allimages_stat_)");
 }
 
 

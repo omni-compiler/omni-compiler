@@ -72,7 +72,9 @@ public class XMPtransCoarray implements XobjectDefVisitor
       XMP.resetError();
       //transCoarrayRun = new XMPtransCoarrayRun(fd, env);
       transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2);
-      transCoarrayRun.run2();
+      //////////////////////////////////////
+      //***transCoarrayRun.run2();
+      //////////////////////////////////////////
       //fd.Finalize();
     } else {
       return;
