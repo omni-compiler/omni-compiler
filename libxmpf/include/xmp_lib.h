@@ -31,18 +31,6 @@
 !! others
       integer, external :: xmpf_coarray_image
 
-!      external :: xmpf_coarray_proc_init
-!      external :: xmpf_coarray_proc_finalize
-
-!      interface
-!         subroutine xmpf_coarray_proc_init(tag)
-!           integer(8), intent(out):: tag
-!         end subroutine xmpf_coarray_proc_init
-!         subroutine xmpf_coarray_proc_finalize(tag)
-!           integer(8), intent(in):: tag
-!         end subroutine xmpf_coarray_proc_finalize
-!      end interface
-
 !! hidden utilities
       integer, external :: xmpf_coarray_allocated_bytes
       integer, external :: xmpf_coarray_garbage_bytes

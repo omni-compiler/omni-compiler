@@ -20,8 +20,8 @@ public class XMPtransCoarrayRun
   final static String GET_DESCPOINTER_NAME = "xmpf_coarray_get_descptr";
   final static String COARRAYALLOC_PREFIX   = "xmpf_coarray_alloc";
   final static String COARRAYDEALLOC_PREFIX = "xmpf_coarray_dealloc";
-  final static String PROC_INIT_NAME = "xmpf_coarray_proc_init";
-  final static String PROC_FINALIZE_NAME = "xmpf_coarray_proc_finalize";
+  final static String COARRAY_PROLOG_NAME = "xmpf_coarray_prolog";
+  final static String COARRAY_EPILOG_NAME = "xmpf_coarray_epilog";
 
   // to handle host- and use-associations
   static ArrayList<XMPtransCoarrayRun> ancestors
@@ -123,10 +123,13 @@ public class XMPtransCoarrayRun
       }
 
       if (hostRun == null) {
-        XMP.fatal("INTERNAL: illegal top-down iterator of procedures");
+        /////////////////////////////
+        //*** XMP.fatal("INTERNAL: illegal top-down iterator of procedures");
+        /////////////////////////////
+        XMP.warning("INTERNAL: illegal top-down iterator of procedures");
+      } else {
+        visibleCoarrays.addAll(hostRun.visibleCoarrays);
       }
-
-      visibleCoarrays.addAll(hostRun.visibleCoarrays);
     }
   }
 
@@ -562,14 +565,14 @@ public class XMPtransCoarrayRun
 
     //// Rescriction of OMNI: blist.findIdent() cannot find the name defined
     //// in any interface block. Gave up using interface bloc
-    Ident fname1 = env.declExternIdent(PROC_INIT_NAME,
+    Ident fname1 = env.declExternIdent(COARRAY_PROLOG_NAME,
                                        BasicType.FexternalSubroutineType);
     Xobject call1 = fname1.callSubroutine(args1);
     insertPrologStmt(call1);
 
     // generate "call proc_finalize(tag)" and add to the tail
     Xobject args2 = Xcons.List(Xcons.FvarRef(resourceTagId));
-    Ident fname2 = env.declExternIdent(PROC_FINALIZE_NAME,
+    Ident fname2 = env.declExternIdent(COARRAY_EPILOG_NAME,
                                        BasicType.FexternalSubroutineType);
     Xobject call2 = fname2.callSubroutine(args2);
     addEpilogStmt(call2);

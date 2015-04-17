@@ -63,7 +63,7 @@ static void _freeResourceSet(ResourceSet_t *rset);
 
 // access functions for memory chunk
 static MemoryChunk_t *_newMemoryChunk(void *desc, char *orgAddr, size_t nbytes);
-static void _linkMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk);
+static void _addMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk);
 static void _unlinkMemoryChunk(MemoryChunk_t *chunk);
 static void _freeMemoryChunk(MemoryChunk_t *chunk);
 
@@ -85,7 +85,7 @@ static MemoryChunk_t *_mallocMemoryChunk(int count, size_t element);
 
 // malloc/free history
 static void _initMallocHistory(void);
-static void _addMallocHistory(MemoryChunk_t *chunk);
+static void _addMemoryChunkToMallocHistory(MemoryChunk_t *chunk);
 static void _garbageCollectMallocHistory(void);
 
 // historical order
@@ -223,7 +223,7 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
 
   if (*tag != NULL) {
     rset = (ResourceSet_t*)(*tag);
-    _linkMemoryChunk(rset, chunk);
+    _addMemoryChunk(rset, chunk);
   }
 
   // make coarrayInfo and linkage
@@ -293,7 +293,7 @@ MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
                           chunk->nbytes, count, element);
 
   // stack to mallocHistory
-  _addMallocHistory(chunk);
+  _addMemoryChunkToMallocHistory(chunk);
 
   return chunk;
 }
@@ -418,7 +418,7 @@ void xmpf_coarray_count_size_(int *count, int *element)
 }
 
 
-void xmpf_coarray_proc_init_(void **tag, char *name, int *namelen)
+void xmpf_coarray_prolog_(void **tag, char *name, int *namelen)
 {
   ResourceSet_t *resource;
 
@@ -427,7 +427,7 @@ void xmpf_coarray_proc_init_(void **tag, char *name, int *namelen)
 }
 
 
-void xmpf_coarray_proc_finalize_(void **tag)
+void xmpf_coarray_epilog_(void **tag)
 {
   if (*tag == NULL)
     return;
@@ -511,7 +511,7 @@ void _initMallocHistory(void)
 }
 
 
-void _addMallocHistory(MemoryChunk_t *chunk)
+void _addMemoryChunkToMallocHistory(MemoryChunk_t *chunk)
 {
   MemoryChunkOrder_t *chunkP2 = _newMemoryChunkOrder(chunk);
   MemoryChunkOrder_t *chunkP3 = _mallocStack.tail;
@@ -729,7 +729,7 @@ MemoryChunk_t *_newMemoryChunk(void *desc, char *orgAddr, size_t nbytes)
 }
 
 
-void _linkMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk2)
+void _addMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk2)
 {
   MemoryChunk_t *chunk3 = rset->tailChunk;
   MemoryChunk_t *chunk1 = chunk3->prev;
@@ -739,7 +739,7 @@ void _linkMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk2)
 
   chunk2->prev = chunk1;
   chunk2->next = chunk3;
-  chunk2->parent = chunk1->parent;
+  chunk2->parent = rset;
 }
 
 

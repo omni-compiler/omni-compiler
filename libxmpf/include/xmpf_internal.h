@@ -323,8 +323,8 @@ extern void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
                                      char *name, int *namelen);
 extern void xmpf_coarray_count_size_(int *count, int *element);
 
-extern void xmpf_coarray_proc_init_(void **tag, char *name, int *namelen);
-extern void xmpf_coarray_proc_finalize_(void **tag);
+extern void xmpf_coarray_prolog_(void **tag, char *name, int *namelen);
+extern void xmpf_coarray_epilog_(void **tag);
 
 extern void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag);
 extern void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...);
