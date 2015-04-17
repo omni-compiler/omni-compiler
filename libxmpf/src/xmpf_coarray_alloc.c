@@ -62,7 +62,7 @@ static void _freeResourceSet(ResourceSet_t *rset);
 // access functions for memory chunk
 static MemoryChunk_t *_newMemoryChunk(void);
 static void _linkMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk);
-static void _unlinkAndFreeMemoryChunk(MemoryChunk_t *chunk);
+//static void _unlinkAndFreeMemoryChunk(MemoryChunk_t *chunk);
 static void _unlinkMemoryChunk(MemoryChunk_t *chunk);
 static void _freeMemoryChunk(MemoryChunk_t *chunk);
 
@@ -449,7 +449,7 @@ void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag)
 {
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
   MemoryChunkOrder_t *chunkP;
-  MemoryChunk_t *chunk;
+  MemoryChunk_t *chunk = NULL;
   BOOL found;
 
   if (rset == NULL)
@@ -747,7 +747,8 @@ void _unlinkMemoryChunk(MemoryChunk_t *chunk2)
   chunk1->next = chunk3;
   chunk3->prev = chunk1;
 
-  chunk2->next = chunk2->prev = chunk2->parent = NULL;
+  chunk2->next = chunk2->prev = NULL;
+  chunk2->parent = NULL;
 }
 
 
