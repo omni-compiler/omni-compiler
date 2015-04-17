@@ -447,7 +447,7 @@ void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag)
 {
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
   MemoryChunkOrder_t *chunkP;
-  MemoryChunk_t *chunk;
+  MemoryChunk_t *chunk = NULL;
   BOOL found;
 
   if (rset == NULL)
