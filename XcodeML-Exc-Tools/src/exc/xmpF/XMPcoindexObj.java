@@ -45,7 +45,7 @@ public class XMPcoindexObj {
 
   /* construct and find the instance of XMPcoarray
    */
-  public XMPcoindexObj(Xobject obj, Vector<XMPcoarray> coarrays) {
+  public XMPcoindexObj(Xobject obj, ArrayList<XMPcoarray> coarrays) {
     name = _getName(obj);
     subscripts = _getSubscripts(obj);
     cosubscripts = _getCosubscripts(obj);
@@ -239,12 +239,15 @@ public class XMPcoindexObj {
   }
 
   private XMPcoarray _findCoarrayInCoarrays(String name,
-                                            Vector<XMPcoarray> coarrays) {
+                                            ArrayList<XMPcoarray> coarrays) {
     for (XMPcoarray coarray: coarrays) {
       if (coarray.getName() == name) {
         return coarray;
       }
     }
+
+    if (coarray == null)
+      XMP.error("INTERNAL: could not find coarray in coarrays. name=" + name);
     return null;
   }
 

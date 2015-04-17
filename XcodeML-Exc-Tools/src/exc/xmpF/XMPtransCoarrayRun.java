@@ -17,7 +17,7 @@ public class XMPtransCoarrayRun
   final static String VAR_TAG_NAME = "xmpf_resource_tag";
   final static String TRAV_COUNTCOARRAY_PREFIX = "xmpf_traverse_countcoarray";
   final static String TRAV_INITCOARRAY_PREFIX = "xmpf_traverse_initcoarray";
-  final static String GET_DESCPOINTER_NAME = "xmpf_coarray_descptr";
+  final static String GET_DESCPOINTER_NAME = "xmpf_coarray_get_descptr";
   final static String COARRAYALLOC_PREFIX   = "xmpf_coarray_alloc";
   final static String COARRAYDEALLOC_PREFIX = "xmpf_coarray_dealloc";
   final static String PROC_INIT_NAME = "xmpf_coarray_proc_init";
@@ -35,9 +35,9 @@ public class XMPtransCoarrayRun
   private XobjectDef def;
   private FunctionBlock fblock;
 
-  private Vector<XMPcoarray> localCoarrays;
-  private Vector<XMPcoarray> useAssociatedCoarrays;
-  private Vector<XMPcoarray> visibleCoarrays;
+  private ArrayList<XMPcoarray> localCoarrays;
+  private ArrayList<XMPcoarray> useAssociatedCoarrays;
+  private ArrayList<XMPcoarray> visibleCoarrays;
 
   //private XMPinitProcedure initProcedure;
   private String initProcTextForFile;
@@ -56,7 +56,8 @@ public class XMPtransCoarrayRun
   //  CONSTRUCTOR
   //------------------------------------------------------------
   //public XMPtransCoarrayRun(FuncDefBlock funcDef, XMPenv env) {
-  public XMPtransCoarrayRun(XobjectDef def, XMPenv env, int pass) {
+  public XMPtransCoarrayRun(XobjectDef def, XMPenv env,
+                            ArrayList<XMPtransCoarrayRun> pastRuns, int pass) {
     this.def = def;
     this.env = env;
     name = def.getName();
@@ -78,7 +79,7 @@ public class XMPtransCoarrayRun
     descCommonName = VAR_DESCPOINTER_PREFIX + "_" + name;
     crayCommonName = VAR_CRAYPOINTER_PREFIX + "_" + name;
 
-    _setCoarrays();
+    _setCoarrays(pastRuns);
     _check_ifIncludeXmpLib();
 
     XMP.exitByError();   // exit if error has found.
@@ -93,43 +94,46 @@ public class XMPtransCoarrayRun
                                          null);
   }
 
-  private void _setCoarrays() {
+  private void _setCoarrays(ArrayList<XMPtransCoarrayRun> pastRuns) {
     // set localCoarrays as coarrays declared in the current procedure
     // set useAssociatedCoarrays as coarrays declared in used modules
     _setLocalCoarrays();
 
-    // renew the list of the current hosts
-    // (assuming top-down analysis)
-    XobjectDef pdef = def.getParent();
-    if (pdef == null) {
-      // I have no host procedure.  I.e., I am an external procedure.
-      ancestors.clear();
-    } else {
-      for (int i = ancestors.size() - 1; i >= 0; i--) {
-        if (pdef == ancestors.get(i).def) {
-          // found the host (my parent) procedure
-          break;
-        }
-        ancestors.remove(i);
-      }
-    }
-    ancestors.add(this);
-
-    // set all coarrays declared in the current and the host procedures
-    visibleCoarrays = new Vector<XMPcoarray>();
+    /*  set visible coarrays
+     *   1. add coarrays declared in the current procedure,
+     *   2. add all use-associated coarrays, and
+     *   3. add all visible coarrays of the host-associated procedure
+     *  A name of coarray will be searched in this priority.
+     */
+    visibleCoarrays = new ArrayList<XMPcoarray>();
     visibleCoarrays.addAll(localCoarrays);
     visibleCoarrays.addAll(useAssociatedCoarrays);
-    if (ancestors.size() > 1) {
-      // host association
-      XMPtransCoarrayRun host = ancestors.get(ancestors.size() - 2);
-      visibleCoarrays.addAll(host.visibleCoarrays);
+
+    XobjectDef pdef = def.getParent();
+    if (pdef != null) {
+      // I have a host procedure.  I.e., I am an internal procedure.
+
+      XMPtransCoarrayRun hostRun = null;
+      for (XMPtransCoarrayRun run: pastRuns) {
+        if (pdef == run.def) {
+          // found the host (my parent) procedure
+          hostRun = run;
+          break;
+        }
+      }
+
+      if (hostRun == null) {
+        XMP.fatal("INTERNAL: illegal top-down iterator of procedures");
+      }
+
+      visibleCoarrays.addAll(hostRun.visibleCoarrays);
     }
   }
 
 
   private void _setLocalCoarrays() {
-    localCoarrays = new Vector<XMPcoarray>();
-    useAssociatedCoarrays = new Vector<XMPcoarray>();
+    localCoarrays = new ArrayList<XMPcoarray>();
+    useAssociatedCoarrays = new ArrayList<XMPcoarray>();
 
     Xobject idList = def.getFuncIdList();
     for (Xobject obj: (XobjList)idList) {
@@ -175,8 +179,8 @@ public class XMPtransCoarrayRun
     }
 
     // divide local coarrays into procedure-local and dummy arg
-    Vector<XMPcoarray> procLocalCoarrays = new Vector<XMPcoarray>();
-    Vector<XMPcoarray> dummyArgCoarrays = new Vector<XMPcoarray>();
+    ArrayList<XMPcoarray> procLocalCoarrays = new ArrayList<XMPcoarray>();
+    ArrayList<XMPcoarray> dummyArgCoarrays = new ArrayList<XMPcoarray>();
     for (XMPcoarray coarray: localCoarrays) {
       if (coarray.isDummyArg())
         dummyArgCoarrays.add(coarray);
@@ -265,7 +269,7 @@ public class XMPtransCoarrayRun
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
   */
-  private void transDeclPart_procedureLocal(Vector<XMPcoarray> localCoarrays) {
+  private void transDeclPart_procedureLocal(ArrayList<XMPcoarray> localCoarrays) {
 
     if (localCoarrays == null)
       // do nothing
@@ -274,8 +278,8 @@ public class XMPtransCoarrayRun
     containsCoarray = true;
 
     // divide procedure-local coarrays into static and allocatable
-    Vector<XMPcoarray> staticLocalCoarrays = new Vector<XMPcoarray>();
-    Vector<XMPcoarray> allocatableLocalCoarrays = new Vector<XMPcoarray>();
+    ArrayList<XMPcoarray> staticLocalCoarrays = new ArrayList<XMPcoarray>();
+    ArrayList<XMPcoarray> allocatableLocalCoarrays = new ArrayList<XMPcoarray>();
     for (XMPcoarray coarray: localCoarrays) {
       if (coarray.isAllocatable())
         allocatableLocalCoarrays.add(coarray);
@@ -350,7 +354,7 @@ public class XMPtransCoarrayRun
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
   */
-  private void transDeclPart_dummyArg(Vector<XMPcoarray> localCoarrays) {
+  private void transDeclPart_dummyArg(ArrayList<XMPcoarray> localCoarrays) {
 
     if (localCoarrays.isEmpty())
       return;
@@ -358,9 +362,9 @@ public class XMPtransCoarrayRun
     containsCoarray = true;
 
     // select static local coarrays
-    Vector<XMPcoarray> staticLocalCoarrays = new Vector<XMPcoarray>();
-    Vector<XMPcoarray> allocatableLocalCoarrays = new Vector<XMPcoarray>();
-    Vector<XMPcoarray> dummyLocalCoarrays = new Vector<XMPcoarray>();
+    ArrayList<XMPcoarray> staticLocalCoarrays = new ArrayList<XMPcoarray>();
+    ArrayList<XMPcoarray> allocatableLocalCoarrays = new ArrayList<XMPcoarray>();
+    ArrayList<XMPcoarray> dummyLocalCoarrays = new ArrayList<XMPcoarray>();
     for (XMPcoarray coarray: localCoarrays) {
       if (coarray.isAllocatable())
         allocatableLocalCoarrays.add(coarray);
@@ -414,7 +418,7 @@ public class XMPtransCoarrayRun
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
   */
-  private void transDeclPart_moduleLocal(Vector<XMPcoarray> localCoarrays) {
+  private void transDeclPart_moduleLocal(ArrayList<XMPcoarray> localCoarrays) {
 
     if (localCoarrays.isEmpty())
       return;
@@ -422,8 +426,8 @@ public class XMPtransCoarrayRun
     containsCoarray = true;
 
     // select static local coarrays
-    Vector<XMPcoarray> staticLocalCoarrays = new Vector<XMPcoarray>();
-    Vector<XMPcoarray> allocatableLocalCoarrays = new Vector<XMPcoarray>();
+    ArrayList<XMPcoarray> staticLocalCoarrays = new ArrayList<XMPcoarray>();
+    ArrayList<XMPcoarray> allocatableLocalCoarrays = new ArrayList<XMPcoarray>();
     for (XMPcoarray coarray: localCoarrays) {
       if (coarray.isAllocatable())
         allocatableLocalCoarrays.add(coarray);
@@ -448,7 +452,7 @@ public class XMPtransCoarrayRun
 
 
 
-  private void transExecPart(Vector<XMPcoarray> visibleCoarrays) {
+  private void transExecPart(ArrayList<XMPcoarray> visibleCoarrays) {
 
     // e. convert coindexed objects to function references
     convCoidxObjsToFuncCalls(visibleCoarrays);
@@ -479,7 +483,7 @@ public class XMPtransCoarrayRun
   //  declare variables of descriptor pointers
   //-----------------------------------------------------
   //
-  private void genDeclOfDescPointer(Vector<XMPcoarray> coarrays) {
+  private void genDeclOfDescPointer(ArrayList<XMPcoarray> coarrays) {
     for (XMPcoarray coarray: coarrays) {
       // set coarray.descPtrName and 
       // generate declaration of the variable pointing the descriptor
@@ -493,7 +497,7 @@ public class XMPtransCoarrayRun
   //  generate common association of cray pointers
   //-----------------------------------------------------
   //
-  private void genCommonStmt(Vector<XMPcoarray> coarrays) {
+  private void genCommonStmt(ArrayList<XMPcoarray> coarrays) {
     // do nothing if no coarrays are declared.
     if (coarrays.isEmpty())
       return;
@@ -519,7 +523,7 @@ public class XMPtransCoarrayRun
   //  generate their common association
   //-----------------------------------------------------
   //
-  private void genDeclOfCrayPointer(Vector<XMPcoarray> coarrays) {
+  private void genDeclOfCrayPointer(ArrayList<XMPcoarray> coarrays) {
     // do nothing if no coarrays are declared.
     if (coarrays.isEmpty())
       return;
@@ -551,7 +555,11 @@ public class XMPtransCoarrayRun
   //
   private void genCallOfInitAndFin() {
     // generate "call proc_init(tag)" and insert to the top
-    Xobject args1 = Xcons.List(Xcons.FvarRef(resourceTagId));
+    Xobject args1 = 
+      Xcons.List(Xcons.FvarRef(resourceTagId),
+                 Xcons.FcharacterConstant(Xtype.FcharacterType, name, null),
+                 Xcons.IntConstant(name.length()));
+
     //// Rescriction of OMNI: blist.findIdent() cannot find the name defined
     //// in any interface block. Gave up using interface bloc
     Ident fname1 = env.declExternIdent(PROC_INIT_NAME,
@@ -573,7 +581,7 @@ public class XMPtransCoarrayRun
   //  generate definition of descriptor pointers
   //-----------------------------------------------------
   //
-  private void genDefinitionOfDescPointer(Vector<XMPcoarray> coarrays) {
+  private void genDefinitionOfDescPointer(ArrayList<XMPcoarray> coarrays) {
     Xobject args, subrCall;
     Ident subr, descPtrId;
 
@@ -619,7 +627,7 @@ public class XMPtransCoarrayRun
   //  convert statements whose LHS are coindexed variables
   //  to subroutine calls
   //-----------------------------------------------------
-  private void convCoidxStmtsToSubrCalls(Vector<XMPcoarray> coarrays) {
+  private void convCoidxStmtsToSubrCalls(ArrayList<XMPcoarray> coarrays) {
     BlockIterator bi = new topdownBlockIterator(fblock);
 
     for (bi.init(); !bi.end(); bi.next()) {
@@ -662,7 +670,7 @@ public class XMPtransCoarrayRun
    *    call PutCommLibName(..., rhs)
    */
   private Xobject coindexVarStmtToCallStmt(Xobject assignExpr,
-                                         Vector<XMPcoarray> coarrays) {
+                                         ArrayList<XMPcoarray> coarrays) {
     Xobject lhs = assignExpr.getArg(0);
     Xobject rhs = assignExpr.getArg(1);
 
@@ -691,12 +699,12 @@ public class XMPtransCoarrayRun
   //  TRANSLATION e. (GET)
   //  convert coindexed objects to function references
   //-----------------------------------------------------
-  private void convCoidxObjsToFuncCalls(Vector<XMPcoarray> coarrays) {
+  private void convCoidxObjsToFuncCalls(ArrayList<XMPcoarray> coarrays) {
     // itaration to solve nested reference of coindexed object.
     while (_convCoidxObjsToFuncCalls1(coarrays));
   }
 
-  private Boolean _convCoidxObjsToFuncCalls1(Vector<XMPcoarray> coarrays) {
+  private Boolean _convCoidxObjsToFuncCalls1(ArrayList<XMPcoarray> coarrays) {
     XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
 
     Boolean done = false;
@@ -732,7 +740,7 @@ public class XMPtransCoarrayRun
    *    commGetLibName_M(...)
    */
   private Xobject coindexObjToFuncRef(Xobject funcRef,
-                                      Vector<XMPcoarray> coarrays) {
+                                      ArrayList<XMPcoarray> coarrays) {
     XMPcoindexObj coindexObj = new XMPcoindexObj(funcRef, coarrays);
     return coindexObj.toFuncRef();
   }
@@ -745,7 +753,7 @@ public class XMPtransCoarrayRun
   // and generate and add an initialization routine into the
   // same file (see XMPcoarrayInitProcedure)
   //
-  private void genAllocOfStaticCoarrays(Vector<XMPcoarray> coarrays) {
+  private void genAllocOfStaticCoarrays(ArrayList<XMPcoarray> coarrays) {
     // do nothing if no coarrays are declared.
     if (coarrays.isEmpty())
       return;
@@ -765,7 +773,7 @@ public class XMPtransCoarrayRun
   //  convert allocate/deallocate stmts for allocated coarrays
   //-----------------------------------------------------
   //
-  private void convAllocateStmts(Vector<XMPcoarray> coarrays) {
+  private void convAllocateStmts(ArrayList<XMPcoarray> coarrays) {
     BasicBlockIterator bbi =
       new BasicBlockIterator(fblock);    // see XMPrewriteExpr iter3 loop
     
@@ -802,7 +810,7 @@ public class XMPtransCoarrayRun
   }
 
 
-  private void convDellocateStmts(Vector<XMPcoarray> coarrays) {
+  private void convDellocateStmts(ArrayList<XMPcoarray> coarrays) {
     BasicBlockIterator bbi =
       new BasicBlockIterator(fblock);    // see XMPrewriteExpr iter3 loop
     
@@ -837,7 +845,7 @@ public class XMPtransCoarrayRun
 
 
   private Boolean _doesListHaveCoarray(Xobject args,
-                                       Vector<XMPcoarray> coarrays) {
+                                       ArrayList<XMPcoarray> coarrays) {
     Boolean allCoarray = true;
     Boolean allNoncoarray = true;
     for (Xobject arg: (XobjList)args) {
@@ -881,7 +889,7 @@ public class XMPtransCoarrayRun
     return allCoarray;
   }
 
-  private Boolean _hasCoarrayArg(Xobject fcall, Vector<XMPcoarray> coarrays) {
+  private Boolean _hasCoarrayArg(Xobject fcall, ArrayList<XMPcoarray> coarrays) {
     Xobject args = fcall.getArg(1);
     Xobject arg = args.getArg(0);
     String name = arg.getName();
@@ -911,7 +919,7 @@ public class XMPtransCoarrayRun
 
 
   private ArrayList<Xobject> genAllocateStmt(Xobject x,
-                                             Vector<XMPcoarray> coarrays) {
+                                             ArrayList<XMPcoarray> coarrays) {
 
     ArrayList<Xobject> newStmts = new ArrayList<Xobject>();
 
@@ -950,7 +958,7 @@ public class XMPtransCoarrayRun
 
 
   private ArrayList<Xobject> genDeallocateStmt(Xobject x,
-                                               Vector<XMPcoarray> coarrays) {
+                                               ArrayList<XMPcoarray> coarrays) {
 
     ArrayList<Xobject> newStmts = new ArrayList<Xobject>();
 
@@ -1116,7 +1124,7 @@ public class XMPtransCoarrayRun
 
 
   private XMPcoarray _findCoarrayInCoarrays(Xobject varname,
-                                            Vector<XMPcoarray> coarrays) {
+                                            ArrayList<XMPcoarray> coarrays) {
     String name = varname.getName();
     for (XMPcoarray coarray: coarrays) {
       if (name.equals(coarray.getName())) {
@@ -1133,7 +1141,7 @@ public class XMPtransCoarrayRun
   //  remove codimensions from declaration of coarray
   //-----------------------------------------------------
   //
-  private void removeCodimensionsFromCoarrays(Vector<XMPcoarray> coarrays) {
+  private void removeCodimensionsFromCoarrays(ArrayList<XMPcoarray> coarrays) {
     // remove codimensions form coarray declaration
     for (XMPcoarray coarray: coarrays)
       coarray.hideCodimensions();
@@ -1144,7 +1152,7 @@ public class XMPtransCoarrayRun
   //  replace allocatable attributes with pointer attributes
   //-----------------------------------------------------
   //
-  private void replaceAllocatableWithPointer(Vector<XMPcoarray> coarrays) {
+  private void replaceAllocatableWithPointer(ArrayList<XMPcoarray> coarrays) {
     for (XMPcoarray coarray: coarrays) {
       coarray.resetAllocatable();
       coarray.setPointer();
@@ -1156,7 +1164,7 @@ public class XMPtransCoarrayRun
   //  fake intrinsic function 'allocated' with 'associated'
   //-----------------------------------------------------
   //
-  private void replaceAllocatedWithAssociated(Vector<XMPcoarray> coarrays) {
+  private void replaceAllocatedWithAssociated(ArrayList<XMPcoarray> coarrays) {
     XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
     for (xi.init(); !xi.end(); xi.next()) {
       Xobject x = xi.getXobject();
@@ -1189,7 +1197,7 @@ public class XMPtransCoarrayRun
   //  remove declarations of coarray variables
   //-----------------------------------------------------
   //
-  private void removeDeclOfCoarrays(Vector<XMPcoarray> coarrays) {
+  private void removeDeclOfCoarrays(ArrayList<XMPcoarray> coarrays) {
     for (XMPcoarray coarray: coarrays) {
       coarray.unlinkIdent();
     }
@@ -1220,7 +1228,7 @@ public class XMPtransCoarrayRun
   }
 
   private String[] _getHostNames() {
-    Vector<String> list = new Vector();
+    ArrayList<String> list = new ArrayList();
     list.add(def.getName());
     XobjectDef parentDef = def.getParent();
     while (parentDef != null) {

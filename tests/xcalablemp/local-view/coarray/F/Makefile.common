@@ -9,6 +9,10 @@ RESULT= $(OUT:%=%.result)
 %:  %.c
 	xmpcc $(OPT) -o $@ $<
 
+%.result: %
+	mpirun -n $(NPE) $< 2>&1 >$@
+	cat $@
+
 %.result: %.f90
 	xmpf90 $(OPT) -o $* $<
 	mpirun -n 3 $* 2>&1 >$@
@@ -17,10 +21,6 @@ RESULT= $(OUT:%=%.result)
 %.result: %.c
 	xmpcc $(OPT) -o $* $<
 	mpirun -n 3 $* 2>&1 >$@
-	cat $@
-
-%.result: %
-	mpirun -n $(NPE) $< 2>&1 >$@
 	cat $@
 
 RUN/%:: %
@@ -46,7 +46,7 @@ RUN/go.sh: go.template Makefile
 
 ### clean
 clean:
-	rm -f *~ *.o $(OUT) $(RESULT) a.out
+	rm -f *~ *.o $(OUT) *.result a.out
 	rm -rf __omni_tmp__/
 	rm -f omni_traverse*.o
 	rm -f $(OUT:%=RUN/%)

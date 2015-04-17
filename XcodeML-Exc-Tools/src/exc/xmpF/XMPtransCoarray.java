@@ -9,6 +9,7 @@ package exc.xmpF;
 
 import exc.object.*;
 import exc.block.*;
+import java.util.*;
 
 /**
  * XcalableMP AST translator (for Coarray)
@@ -18,6 +19,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
   XMPenv env;
   private int pass;
 
+  private ArrayList<XMPtransCoarrayRun> pastRuns;
 
   //-----------------------------------------
   //  constructor
@@ -32,6 +34,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
   public XMPtransCoarray(XobjectFile env, int pass) {
     this.env = new XMPenv(env);
     this.pass = pass;
+    pastRuns = new ArrayList<XMPtransCoarrayRun>();
   }
 
   public void setPass(int pass) {
@@ -60,7 +63,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
       //fd = new FuncDefBlock(d);
       XMP.resetError();
       //transCoarrayRun = new XMPtransCoarrayRun(fd, env);
-      transCoarrayRun = new XMPtransCoarrayRun(d, env, 1);
+      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 1);
       transCoarrayRun.run1();
       //fd.Finalize();
     } else if (pass == 2 && is_module) {
@@ -68,12 +71,15 @@ public class XMPtransCoarray implements XobjectDefVisitor
       //fd = XMPmoduleBlock(d);         // referred to XMPtranslate.doDef
       XMP.resetError();
       //transCoarrayRun = new XMPtransCoarrayRun(fd, env);
-      transCoarrayRun = new XMPtransCoarrayRun(d, env, 2);
-      //***transCoarrayRun.run2();
+      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2);
+      transCoarrayRun.run2();
       //fd.Finalize();
     } else {
       return;
     }
+
+    // assuming top-down translation along host-guest association
+    pastRuns.add(transCoarrayRun);
 
     if(XMP.hasError())
       return;
