@@ -1,8 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
 #ifndef MPI_PORTABLE_PLATFORM_H
 #define MPI_PORTABLE_PLATFORM_H
 #endif 
@@ -1712,7 +1707,7 @@ long long xmp_file_sync_all(xmp_file_t *pstXmp_file)
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fread_all(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
+ssize_t xmp_fread_all(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
 {
   MPI_Status status;
   int readCount;
@@ -1767,7 +1762,7 @@ size_t xmp_fread_all(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t 
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fwrite_all(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
+ssize_t xmp_fwrite_all(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
 {
   MPI_Status status;
   int writeCount;
@@ -2084,9 +2079,9 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
-			    xmp_desc_t  apd,
-			    xmp_range_t *rp)
+ssize_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
+			     xmp_desc_t  apd,
+			     xmp_range_t *rp)
 {
   MPI_Status status;        // MPI status
   int readCount;            // read bytes
@@ -2678,9 +2673,9 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
-			     xmp_desc_t apd,
-			     xmp_range_t *rp)
+ssize_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
+			      xmp_desc_t apd,
+			      xmp_range_t *rp)
 {
   MPI_Status status;        // MPI status
   int writeCount;           // write btye
@@ -2969,16 +2964,15 @@ fprintf(stderr, "WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper
   fprintf(stderr, "fwrite_darray_all: rank=%d: typesize_int = %d\n",rank,typesize_int);
 #endif /* DEBUG */
   {
-    int ierr;
     if(typesize_int > 0){
-      if ((ierr = MPI_File_write_all(pstXmp_file->fh,
+      if ((MPI_File_write_all(pstXmp_file->fh,
 				     array_addr,
 				     1,
 				     dataType[0],
 				     &status))
 	  != MPI_SUCCESS){ return -1120; }
     }else{
-      if ((ierr = MPI_File_write_all(pstXmp_file->fh,
+      if ((MPI_File_write_all(pstXmp_file->fh,
 				     array_addr,
 				     0, /* dummy */
 				     MPI_BYTE, /* dummy */
@@ -3024,7 +3018,7 @@ fprintf(stderr, "WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fread_shared(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
+ssize_t xmp_fread_shared(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
 {
   MPI_Status status;
   int readCount;
@@ -3064,7 +3058,7 @@ size_t xmp_fread_shared(xmp_file_t *pstXmp_file, void *buffer, size_t size, size
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fwrite_shared(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
+ssize_t xmp_fwrite_shared(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
 {
   MPI_Status status;
   int writeCount;
@@ -3121,7 +3115,7 @@ size_t xmp_fwrite_shared(xmp_file_t *pstXmp_file, void *buffer, size_t size, siz
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fread(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
+ssize_t xmp_fread(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
 {
   MPI_Status status;
   int readCount;
@@ -3161,7 +3155,7 @@ size_t xmp_fread(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t coun
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fwrite(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
+ssize_t xmp_fwrite(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
 {
   MPI_Status status;
   int writeCount;
