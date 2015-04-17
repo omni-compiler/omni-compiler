@@ -14,11 +14,11 @@ if ENABLE_ATOOL
     SUBDIRS+=Driver/atool
 endif
 
-XMPPKG_NAME:="@XMPPKG_NAME@"
-XMPPKG_TMPDIR_TOP:="/tmp/@XMPPKG_NAME@"
-XMPPKG_TMPDIR:=$(XMPPKG_TMPDIR_TOP)/tmp.$$
-DEB_VER_FILE="/etc/debian_version"
-RH_REL_FILE="/etc/redhat-release"
+XMPPKG_NAME=@XMPPKG_NAME@
+XMPPKG_TMPDIR_TOP=/tmp/@XMPPKG_NAME@
+XMPPKG_TMPDIR:=$(XMPPKG_TMPDIR_TOP)/tmp
+DEB_VER_FILE=/etc/debian_version
+RH_REL_FILE=/etc/redhat-release
 
 release-rpm:
 	if test -f $(RH_REL_FILE) ; then \

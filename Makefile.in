@@ -421,7 +421,7 @@ XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
 XMPPKG_GROUP = @XMPPKG_GROUP@
 XMPPKG_LICENSE = @XMPPKG_LICENSE@
 XMPPKG_MAINTAINER = @XMPPKG_MAINTAINER@
-XMPPKG_NAME := "@XMPPKG_NAME@"
+XMPPKG_NAME = @XMPPKG_NAME@
 XMPPKG_PACKAGER = @XMPPKG_PACKAGER@
 XMPPKG_PREFIX = @XMPPKG_PREFIX@
 XMPPKG_PRIORITY = @XMPPKG_PRIORITY@
@@ -511,10 +511,10 @@ SUBDIRS = XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src \
 	libtlog/src_mpi libxmp/include libxmp/src libxmp/src_threads \
 	libxmpf/include libxmpf/src $(am__append_1) $(am__append_2) \
 	$(am__append_3)
-XMPPKG_TMPDIR_TOP := "/tmp/@XMPPKG_NAME@"
-XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/tmp.$$
-DEB_VER_FILE = "/etc/debian_version"
-RH_REL_FILE = "/etc/redhat-release"
+XMPPKG_TMPDIR_TOP = /tmp/@XMPPKG_NAME@
+XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/tmp
+DEB_VER_FILE = /etc/debian_version
+RH_REL_FILE = /etc/redhat-release
 BASE_TESTDIR = "tests/xcalablemp/"
 TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	"global-view/bcast/C/" "global-view/bcast/F/" \
@@ -580,9 +580,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

@@ -24,7 +24,7 @@ Requires:	openmpi-devel gcc-gfortran java-1.7.0-openjdk
 %setup
 
 %build
-./configure --sysconfdir=%{default_conf_prefix} --prefix=%{default_prefix} --with-backend-cc=/usr/lib64/openmpi/bin/mpicc  --with-backend-fc=/usr/lib64/openmpi/bin/mpif90
+./configure --sysconfdir=%{default_conf_prefix} --prefix=%{default_prefix} MPI_CC=/usr/lib64/openmpi/bin/mpicc MPI_FC=/usr/lib64/openmpi/bin/mpif90
 make
 
 %install
