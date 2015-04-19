@@ -38,5 +38,6 @@
     else
        print '("[",i0,"] number of NGs: ",i0)', this_image(), nerr
     end if
+    return
   end subroutine final_msg
 

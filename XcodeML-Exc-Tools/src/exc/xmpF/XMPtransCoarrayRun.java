@@ -49,6 +49,7 @@ public class XMPtransCoarrayRun
   private ArrayList<Xobject> _prologStmts = new ArrayList();
   private ArrayList<Xobject> _epilogStmts = new ArrayList();
 
+  private Boolean isModule;
   private Boolean containsCoarray = false;
 
 
@@ -59,19 +60,20 @@ public class XMPtransCoarrayRun
                             ArrayList<XMPtransCoarrayRun> pastRuns, int pass) {
     this.def = def;
     this.env = env;
+    isModule = def.isFmoduleDef();
     name = def.getName();
 
-    if (pass == 1) {                // for functions and subroutines
+    if (!isModule) {                // for functions and subroutines
       funcDef = new FuncDefBlock(def);
       fblock = funcDef.getBlock();
       env.setCurrentDef(funcDef);
     } else {                        // for modules
-      //funcDef = null;
-      funcDef = new FuncDefBlock(def);     // needed?
+      funcDef = null;
+      //funcDef = new FuncDefBlock(def);     // needed?
 
-      //fblock = null;
-      if (funcDef != null)
-        fblock = funcDef.getBlock();
+      fblock = null;
+      //if (funcDef != null)
+      //fblock = funcDef.getBlock();
 
       env.setCurrentDef(funcDef);                     //needed?
     }
@@ -83,8 +85,8 @@ public class XMPtransCoarrayRun
     crayCommonName = VAR_CRAYPOINTER_PREFIX + "_" + name;
 
     _setCoarrays(pastRuns);
-
-    _check_ifIncludeXmpLib();
+    if (pass == 1)
+      _check_ifIncludeXmpLib();
 
     XMP.exitByError();   // exit if error has found.
   }
@@ -196,6 +198,7 @@ public class XMPtransCoarrayRun
     // *** FuncDefBlock.Finalize() might be used as rare as possible
     //     to avoid bug #403
     //if (containsCoarray)
+    if (!isModule)
       funcDef.Finalize();
   }
 
@@ -212,12 +215,6 @@ public class XMPtransCoarrayRun
 
     // convert specification and declaration part
     transDeclPart_moduleLocal(localCoarrays);
-
-    // finalize fblock in funcDef
-    // *** FuncDefBlock.Finalize() might be used as rare as possible
-    //     to avoid bug #403
-    //if (containsCoarray)
-      funcDef.Finalize();
   }
 
 
@@ -1261,7 +1258,7 @@ public class XMPtransCoarrayRun
   }
 
   private boolean _isCoarrayReferred() {
-    if (localCoarrays.isEmpty())
+    if (visibleCoarrays.isEmpty())
       return false;
     return true;
   }

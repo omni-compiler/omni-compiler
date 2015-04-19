@@ -54,18 +54,19 @@ public class XMPtransCoarray implements XobjectDefVisitor
     Boolean is_module = d.isFmoduleDef();
     XMPtransCoarrayRun transCoarrayRun;
 
-    if (pass == 1 && is_module || pass == 2 && !is_module)
-      return;
-
     XMP.resetError();
-    transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, pass);
-    if (pass == 1)
-      transCoarrayRun.run1();
-    else
-      transCoarrayRun.run2();
 
-    // assuming top-down translation along host-association
-    pastRuns.add(transCoarrayRun);
+    if (pass == 1) {      // for both procedures and modules
+      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 1);
+      transCoarrayRun.run1();
+      // assuming top-down translation along host-association
+      pastRuns.add(transCoarrayRun);
+    } else if (pass == 2 && is_module) {  // for modules
+      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2);
+      transCoarrayRun.run2();
+    } else {
+      return;
+    }
 
     if(XMP.hasError())
       return;

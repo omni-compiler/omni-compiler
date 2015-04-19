@@ -175,7 +175,6 @@ subroutine checK_l(lresult,ians,error)
   if(rlresult .neqv. lans) then
      error=error+1
   end if
-  continue                                   !! to avoid bug#403
 end subroutine
 
 subroutine check(iresult,ians,error)
