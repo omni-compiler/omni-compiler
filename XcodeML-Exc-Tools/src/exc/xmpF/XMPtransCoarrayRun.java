@@ -44,7 +44,7 @@ public class XMPtransCoarrayRun
 
   private String traverseCountName, traverseInitName;
   private String descCommonName, crayCommonName;
-  private Ident resourceTagId;
+  private Ident _resourceTagId = null;
 
   private ArrayList<Xobject> _prologStmts = new ArrayList();
   private ArrayList<Xobject> _epilogStmts = new ArrayList();
@@ -55,7 +55,6 @@ public class XMPtransCoarrayRun
   //------------------------------------------------------------
   //  CONSTRUCTOR
   //------------------------------------------------------------
-  //public XMPtransCoarrayRun(FuncDefBlock funcDef, XMPenv env) {
   public XMPtransCoarrayRun(XobjectDef def, XMPenv env,
                             ArrayList<XMPtransCoarrayRun> pastRuns, int pass) {
     this.def = def;
@@ -65,12 +64,16 @@ public class XMPtransCoarrayRun
     if (pass == 1) {                // for functions and subroutines
       funcDef = new FuncDefBlock(def);
       fblock = funcDef.getBlock();
-      //// I don't know. See [Xmp-dev:5185]
-      env.setCurrentDef(funcDef);      // needed if this is called before XMPrewriteExpr ???
-      _setResourceTagId();
+      env.setCurrentDef(funcDef);
     } else {                        // for modules
-      funcDef = null;
-      fblock = null;
+      //funcDef = null;
+      funcDef = new FuncDefBlock(def);     // needed?
+
+      //fblock = null;
+      if (funcDef != null)
+        fblock = funcDef.getBlock();
+
+      env.setCurrentDef(funcDef);                     //needed?
     }
 
     String postfix = _genNewProcPostfix();
@@ -80,19 +83,12 @@ public class XMPtransCoarrayRun
     crayCommonName = VAR_CRAYPOINTER_PREFIX + "_" + name;
 
     _setCoarrays(pastRuns);
+
     _check_ifIncludeXmpLib();
 
     XMP.exitByError();   // exit if error has found.
   }
 
-
-  private void _setResourceTagId() {
-    BlockList blist = fblock.getBody();
-    resourceTagId = blist.declLocalIdent(VAR_TAG_NAME,
-                                         BasicType.Fint8Type,
-                                         StorageClass.FLOCAL,
-                                         null);
-  }
 
   private void _setCoarrays(ArrayList<XMPtransCoarrayRun> pastRuns) {
     // set localCoarrays as coarrays declared in the current procedure
@@ -197,7 +193,10 @@ public class XMPtransCoarrayRun
     transExecPart(visibleCoarrays);
 
     // finalize fblock in funcDef
-    funcDef.Finalize();
+    // *** FuncDefBlock.Finalize() might be used as rare as possible
+    //     to avoid bug #403
+    //if (containsCoarray)
+      funcDef.Finalize();
   }
 
 
@@ -215,7 +214,10 @@ public class XMPtransCoarrayRun
     transDeclPart_moduleLocal(localCoarrays);
 
     // finalize fblock in funcDef
-    funcDef.Finalize();
+    // *** FuncDefBlock.Finalize() might be used as rare as possible
+    //     to avoid bug #403
+    //if (containsCoarray)
+      funcDef.Finalize();
   }
 
 
@@ -555,7 +557,7 @@ public class XMPtransCoarrayRun
   private void genCallOfPrologAndEpilog() {
     // generate "call proc_init(tag)" and insert to the top
     Xobject args1 = 
-      Xcons.List(Xcons.FvarRef(resourceTagId),
+      Xcons.List(Xcons.FvarRef(getResourceTagId()),
                  Xcons.FcharacterConstant(Xtype.FcharacterType, name, null),
                  Xcons.IntConstant(name.length()));
 
@@ -567,7 +569,7 @@ public class XMPtransCoarrayRun
     insertPrologStmt(call1);
 
     // generate "call proc_finalize(tag)" and add to the tail
-    Xobject args2 = Xcons.List(Xcons.FvarRef(resourceTagId));
+    Xobject args2 = Xcons.List(Xcons.FvarRef(getResourceTagId()));
     Ident fname2 = env.declExternIdent(COARRAY_EPILOG_NAME,
                                        BasicType.FexternalSubroutineType);
     Xobject call2 = fname2.callSubroutine(args2);
@@ -592,7 +594,7 @@ public class XMPtransCoarrayRun
       // a2. call "descptr(descPtr, baseAddr, tag)"
       descPtrId = coarray.getDescPointerId();
       args = Xcons.List(descPtrId, coarray.getIdent(),
-                        Xcons.FvarRef(resourceTagId));
+                        Xcons.FvarRef(getResourceTagId()));
       subr = env.declExternIdent(GET_DESCPOINTER_NAME,
                                  BasicType.FexternalSubroutineType);
       subrCall = subr.callSubroutine(args);
@@ -601,19 +603,6 @@ public class XMPtransCoarrayRun
       if (coarray.isAllocatable())
         continue;
 
-      /*******************  use common m. instead
-      // kc. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
-      int corank = coarray.getCorank();
-      args = Xcons.List(descPtrId, Xcons.IntConstant(corank));
-      for (int i = 0; i < corank - 1; i++) {
-        args.add(coarray.getLcobound(i));
-        args.add(coarray.getUcobound(i));
-      }
-      args.add(coarray.getLcobound(corank - 1));
-      subr = env.declExternIdent(SET_COSHAPE_NAME,
-                                 BasicType.FexternalSubroutineType);
-      subrCall = subr.callSubroutine(args);
-      *********************************/
       // m. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
       subrCall = coarray.makeStmt_setCoshape();
       addPrologStmt(subrCall);
@@ -990,7 +979,7 @@ public class XMPtransCoarrayRun
                               Xcons.FvarRef(coarray.getIdent()),
                               _buildCountExpr(shape, rank),
                               coarray.getElementLengthExpr(),
-                              Xcons.FvarRef(resourceTagId),
+                              Xcons.FvarRef(getResourceTagId()),
                               Xcons.IntConstant(rank));
     for (int i = 0; i < rank; i++) {
       args.add(_getLboundInIndexRange(shape.getArg(i)));
@@ -1010,7 +999,7 @@ public class XMPtransCoarrayRun
 
     Xobject args = Xcons.List(coarray.getDescPointerId(),
                               Xcons.FvarRef(coarray.getIdent()),
-                              Xcons.FvarRef(resourceTagId));
+                              Xcons.FvarRef(getResourceTagId()));
 
     String subrName = COARRAYDEALLOC_PREFIX + rank + "d";
     Ident subr = env.declExternIdent(subrName,
@@ -1304,6 +1293,17 @@ public class XMPtransCoarrayRun
   //------------------------------
   //  tool
   //------------------------------
+  private Ident getResourceTagId() {
+    if (_resourceTagId == null) {
+      BlockList blist = fblock.getBody();
+      _resourceTagId = blist.declLocalIdent(VAR_TAG_NAME,
+                                            BasicType.Fint8Type,
+                                            StorageClass.FLOCAL,
+                                            null);
+    }
+    return _resourceTagId;
+  }
+
   private Ident declIntIntrinsicIdent(String name) { 
     FunctionType ftype = new FunctionType(Xtype.FintType, Xtype.TQ_FINTRINSIC);
     Ident ident = env.declIntrinsicIdent(name, ftype);

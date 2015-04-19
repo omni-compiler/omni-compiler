@@ -41,10 +41,6 @@ public class XMPtransCoarray implements XobjectDefVisitor
     this.pass = pass;
   }
 
-  //  public void init(XobjectFile env) {
-  //    this.env = new XMPenv(env);
-  //}
-    
   public void finish() {
     env.finalize();
   }
@@ -55,32 +51,20 @@ public class XMPtransCoarray implements XobjectDefVisitor
   //-----------------------------------------
 
   public void doDef(XobjectDef d) {
-    FuncDefBlock fd;
     Boolean is_module = d.isFmoduleDef();
     XMPtransCoarrayRun transCoarrayRun;
 
-    if (pass == 1 && !is_module) {
-      //fd = new FuncDefBlock(d);
-      XMP.resetError();
-      //transCoarrayRun = new XMPtransCoarrayRun(fd, env);
-      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 1);
-      transCoarrayRun.run1();
-      //fd.Finalize();
-    } else if (pass == 2 && is_module) {
-      //fd = new FuncDefBlock(d);
-      //fd = XMPmoduleBlock(d);         // referred to XMPtranslate.doDef
-      XMP.resetError();
-      //transCoarrayRun = new XMPtransCoarrayRun(fd, env);
-      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2);
-      //////////////////////////////////////
-      //***transCoarrayRun.run2();
-      //////////////////////////////////////////
-      //fd.Finalize();
-    } else {
+    if (pass == 1 && is_module || pass == 2 && !is_module)
       return;
-    }
 
-    // assuming top-down translation along host-guest association
+    XMP.resetError();
+    transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, pass);
+    if (pass == 1)
+      transCoarrayRun.run1();
+    else
+      transCoarrayRun.run2();
+
+    // assuming top-down translation along host-association
     pastRuns.add(transCoarrayRun);
 
     if(XMP.hasError())

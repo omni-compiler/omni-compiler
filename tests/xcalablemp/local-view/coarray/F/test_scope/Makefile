@@ -1,12 +1,13 @@
-OPT= -g --debug
+OPT= --debug
 #OPT= -g --debug --verbose
 NPE=3
 
-OUT_darg   = dummyarg-1 dummyarg-2
-OUT_host   = host2 host1
+OUT_darg= dummyarg-1 dummyarg-2
+OUT_host= host2 host1 
+OUT_bug403= bug1 bug1OK
+
 #host3 host2-1 ... problem in gfortran?
 
-#OUT=putget-2NGB dummyarg-1
-OUT = $(OUT_host) $(OUT_darg)
+OUT=$(OUT_bug403) $(OUT_darg) $(OUT_host)
 
 include ../Makefile.common

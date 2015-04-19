@@ -89,23 +89,6 @@ public class XMPcoindexObj {
   }
 
 
-  /************************************
-  private void _setNameAndSubscripts(Xobject obj) {
-    assert (obj.Opcode() == Xcode.CO_ARRAY_REF);
-
-    Xobject varRef = obj.getArg(0).getArg(0);
-    if (varRef.Opcode() == Xcode.F_ARRAY_REF) {        // subarray
-      name = varRef.getArg(0).getArg(0).getName();
-      subscripts = varRef.getArg(1);
-    } else if (varRef.Opcode() == Xcode.VAR) {    // scalar or whole array
-      name = varRef.getName();
-      subscripts = null;
-    } else {
-      XMP.fatal("broken Xcode to describe a coindexed object");
-    }
-  }
-  ******************************************/
-
   // make whole-array shape (:,:,...,:)
   //
   private Xobject _wholeArraySubscripts(int exprRank) {
@@ -116,44 +99,6 @@ public class XMPcoindexObj {
     return list;
   }
 
-
-  /****************************************
-  // restriction: all values of lower-cobounds are assumed as 1.
-  //
-  private Xobject getImageIndex() {
-    Xobject cosubList = obj.getArg(1);
-    Xobject[] codims = coarray.getCodimensions();
-    int corank = coarray.getCorank();
-
-    // image(1) = c[0]                                     for 1-dimensional
-    // image(d) = image(d-1) + factor(d-1) * (c[d-1]-1)  for d-dimensional
-    //   where factor(i) = cosize[0] * ... * cosize[i-1]  (i>0)
-
-    Xobject c = cosubList.getArg(0).getArg(0);         // =c[0]
-    Xobject image = c;                               // =image(1)
-    if (corank == 1)
-      return _convInt4(image);
-
-    Xobject cosize = coarray.getSizeFromIndexRange(codims[0]);   // =cosize[0]
-    Xobject factor = cosize;                               // =factor(1)
-
-    for (int i = 2; ; i++) {
-      // image(i) = image(i-1) + factor(i-1) * (c[i-1]-1)
-      c = cosubList.getArg(i-1).getArg(0);                   // =c[i-1]
-      Xobject tmp1 = Xcons.binaryOp(Xcode.MINUS_EXPR, c, Xcons.IntConstant(1));
-      Xobject tmp2 = Xcons.binaryOp(Xcode.MUL_EXPR, factor, tmp1);
-      image = Xcons.binaryOp(Xcode.PLUS_EXPR, image, tmp2);
-      if (i == corank)
-        break;
-
-      // factor(i) = factor(i-1) * cosize[i-1]
-      cosize = coarray.getSizeFromIndexRange(codims[i-1]);
-      factor = Xcons.binaryOp(Xcode.MUL_EXPR, factor, cosize);
-    }
-
-    return _convInt4(image);
-  }
-  *********************************************/
 
   /*
    *  convert expr to int(expr) if expr is not surely int*4.
