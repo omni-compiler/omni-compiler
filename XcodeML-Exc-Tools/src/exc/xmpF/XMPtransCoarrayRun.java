@@ -251,7 +251,7 @@ public class XMPtransCoarrayRun
         common /xmpf_CP_EX1/ CP_V2                           ! c.
         integer(8) :: tag                                    ! i.
         ...
-        call xmpf_coarray_proc_init(tag)                     ! i.
+        call xmpf_coarray_proc_init(tag, "EX1", 3)           ! i.
         call xmpf_coarray_put(DP_V1, V1(1,j), 4, &           ! d.
           k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
         z = xmpf_coarray_get0d(DP_V2, V2, 16, k, 0) ** 2     ! e.
@@ -274,7 +274,7 @@ public class XMPtransCoarrayRun
   */
   private void transDeclPart_procedureLocal(ArrayList<XMPcoarray> localCoarrays) {
 
-    if (localCoarrays == null)
+    if (localCoarrays.isEmpty())
       // do nothing
       return;
 
@@ -333,7 +333,7 @@ public class XMPtransCoarrayRun
         integer(8) :: DP_V2, DP_V3                           ! a.
         integer(8) :: tag                                    ! i.
         ...
-        call xmpf_coarray_proc_init(tag)                     ! i.
+        call xmpf_coarray_proc_init(tag, "EX1", 3)           ! i.
         call xmpf_coarray_descptr(DP_V2, V2, tag)            ! a2.
         call xmpf_coarray_descptr(DP_V3, V3, tag)            ! a2.
         call xmpf_coarray_set_coshape(DP_V2, 1, 0)           ! m.
@@ -472,11 +472,7 @@ public class XMPtransCoarrayRun
 
     // i. initialization/finalization of local resources
     if (containsCoarray)
-      genCallOfInitAndFin();
-
-    // resolve prologue/epilogue code generations
-    genPrologStmts();
-    genEpilogStmts();
+      genCallOfPrologAndEpilog();
   }
 
 
@@ -553,10 +549,10 @@ public class XMPtransCoarrayRun
 
   //-----------------------------------------------------
   //  TRANSLATION i.
-  //  generate initialization and finalization calls
+  //  generate procedure prolog and epilog calls
   //-----------------------------------------------------
   //
-  private void genCallOfInitAndFin() {
+  private void genCallOfPrologAndEpilog() {
     // generate "call proc_init(tag)" and insert to the top
     Xobject args1 = 
       Xcons.List(Xcons.FvarRef(resourceTagId),
@@ -576,6 +572,10 @@ public class XMPtransCoarrayRun
                                        BasicType.FexternalSubroutineType);
     Xobject call2 = fname2.callSubroutine(args2);
     addEpilogStmt(call2);
+
+    // resolve prologue/epilogue code generations
+    genPrologStmts();
+    genEpilogStmts();
   }
 
 
