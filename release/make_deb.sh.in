@@ -94,7 +94,7 @@ apt-ftparchive packages . | gzip -9c > "${XMP_SRCDIR}"/Packages.gz
 apt-ftparchive contents . | gzip -9c > "${XMP_SRCDIR}"/Contents.gz
 apt-ftparchive release  . > "${XMP_SRCDIR}"/Release
 
-echo "  $ scp ${XMPPKG_NAME}_${XMPPKG_VERSION}-${XMPPKG_RELEASE}_${CPU}.deb Packages.gz Contents.gz Release serv2.hpcs.cs.tsukuba.ac.jp:/home/www/http/omni-compiler/xcalablemp/download/[debian|ubuntu]/stable"
+echo "  $ scp ${XMPPKG_NAME}_${XMPPKG_VERSION}-${XMPPKG_RELEASE}_${CPU}.deb Packages.gz Contents.gz Release omni@omni-compiler.org:~/public_html/download/package/[debian|ubuntu]/stable/"
 
 # clean up
 rm -rf ${XMP_TMPDIR}

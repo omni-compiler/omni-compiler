@@ -12,7 +12,7 @@ function omni_error_exit()
 
 function omni_print_version()
 {
-    VERSION_FILE="${OMNI_HOME}/etc/version"
+    VERSION_FILE="${OM_DRIVER_CONF_DIR}/version"
     if [ -f $VERSION_FILE ]; then
 	cat $VERSION_FILE
 	echo ""
