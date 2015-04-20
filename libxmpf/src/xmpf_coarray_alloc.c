@@ -456,8 +456,7 @@ void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag)
 {
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
   MemoryChunkOrder_t *chunkP;
-  MemoryChunk_t *chunk = NULL;
-  BOOL found;
+  MemoryChunk_t *chunk, *myChunk;
 
   if (rset == NULL)
     rset = _newResourceSet("(pool)", strlen("(pool)"));
@@ -465,34 +464,30 @@ void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag)
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_GET_DESCPTR\n");
   _XMPF_coarrayDebugPrint("  coarray dummy argument: %p\n", baseAddr);
 
-  found = FALSE;
+  // generate a new descPtr for an allocatable dummy coarray
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(NULL, 0);
+
+  myChunk = NULL;
   forallMemoryChunkOrder(chunkP) {
     chunk = chunkP->chunk;
-
-    _XMPF_coarrayDebugPrint("  comparing with a chunk: %p  +%zd\n",
-                            chunk->orgAddr, chunk->nbytes);
-
     if (chunk->orgAddr <= baseAddr && baseAddr < chunk->orgAddr + chunk->nbytes) {
       // found the memory chunk
-      found = TRUE;
+      myChunk = chunk;
       break;
     }
   }
 
-  if (!found) {
-    _XMPF_coarrayDebugPrint("did not find the memory chunk that contains the coarray:\n"
-                            "  start address of the coarray dummy arg.: %p\n", 
-                            baseAddr);
+  if (myChunk != NULL) {
+    _XMPF_coarrayDebugPrint("*** found my chunk. baseAddr=%p, chunk->orgAddr=%p\n",
+                            baseAddr, chunk->orgAddr);
 
+    _addCoarrayInfo(myChunk, cinfo);
+
+  } else {
+    _XMPF_coarrayDebugPrint("*** no memory chunk owns me. baseAddr=%p, chunk: free\n",
+                            baseAddr);
   }
 
-  _XMPF_coarrayDebugPrint("  found.\n");
-
-  // generate a new descPtr for an allocatable dummy coarray
-  CoarrayInfo_t *cinfo = _newCoarrayInfo(NULL, 0);
-  _addCoarrayInfo(chunk, cinfo);
-  //cinfo->size = ???
-  
   // return coarrayInfo as descPtr
   *descPtr = (void*)cinfo;
 }

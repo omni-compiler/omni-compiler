@@ -34,7 +34,6 @@
     end if
 
     sync all
-    !$xmp barrier
 
     !---------------------------- check and output start
     nerr = 0

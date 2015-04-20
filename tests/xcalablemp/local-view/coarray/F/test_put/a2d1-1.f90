@@ -1,11 +1,10 @@
   program test_a2_d1
     include "xmp_coarray.h"
-    !$xmp nodes p(*)
     real a2(2,3)[*]
     integer xmp_node_num
     integer nerr
 
-    me = xmp_node_num()   ! == this_image()
+    me = this_image()
 
     a2=7.77
 
@@ -16,7 +15,6 @@
     end if
 
     sync all
-    !$xmp barrier
 
     write(*,*) "[",me,"]",a2
 

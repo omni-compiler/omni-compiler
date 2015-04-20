@@ -1,12 +1,11 @@
   program a1d1_write
     include "xmp_coarray.h"
-    !$xmp nodes p(*)
     integer*2 a(100)[*], a_org(100)
     integer xmp_node_num
     integer nerr
     character(200) wbuf1, wbuf2[*], tmp
 
-    me = xmp_node_num()   ! == this_image()
+    me = this_image()
 
     !---------------------------- switch on message
 !!    call xmpf_coarray_msg(1)
@@ -22,7 +21,6 @@
 
     !---------------------------- execution
     if (me==1) then
-!!       write(*,*) a(15:100:7)[2]
        write(wbuf1,*) a(15:100:7)[2]
     end if
     if (me==2) then

@@ -200,8 +200,29 @@ public class XMPtransCoarrayRun
     //if (containsCoarray)
     if (!isModule)
       funcDef.Finalize();
+
+    // SPECIAL HANDLING (TEMPORARY)
+    //  convert main program to soubroutine xmpf_main
+    if (_isMainProgram())
+      _convMainProgramToSubroutine("xmpf_main");
   }
 
+  private boolean _isMainProgram() {
+    Xtype ft = def.getFuncType();
+    return (ft != null && ft.isFprogram());
+  }
+
+  private void _convMainProgramToSubroutine(String newName) {
+    Xtype ft = def.getFuncType();
+    ft.setIsFprogram(false);
+    
+    String oldName = def.getName();
+    Ident nameId = env.getEnv().findVarIdent(oldName);
+    if (nameId == null)
+      XMP.fatal("INTERNAL: main program name \'" + oldName + "\' not found");
+    nameId.setName(newName);
+    def.setName(newName);
+  }
 
 
   /*
@@ -253,7 +274,7 @@ public class XMPtransCoarrayRun
         common /xmpf_CP_EX1/ CP_V2                           ! c.
         integer(8) :: tag                                    ! i.
         ...
-        call xmpf_coarray_proc_init(tag, "EX1", 3)           ! i.
+        call xmpf_coarray_prolog(tag, "EX1", 3)           ! i.
         call xmpf_coarray_put(DP_V1, V1(1,j), 4, &           ! d.
           k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
         z = xmpf_coarray_get0d(DP_V2, V2, 16, k, 0) ** 2     ! e.
@@ -262,7 +283,7 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)   ! m.
         call xmpf_coarray_set_varname(DP_V3, "V3", 2)        ! n.
         call xmpf_coarray_dealloc(DP_V3, tag)                ! j.
-        call xmpf_coarray_proc_finalize(tag)                 ! i.
+        call xmpf_coarray_epilog(tag)                 ! i.
         return
       end subroutine
 
@@ -335,7 +356,7 @@ public class XMPtransCoarrayRun
         integer(8) :: DP_V2, DP_V3                           ! a.
         integer(8) :: tag                                    ! i.
         ...
-        call xmpf_coarray_proc_init(tag, "EX1", 3)           ! i.
+        call xmpf_coarray_prolog(tag, "EX1", 3)           ! i.
         call xmpf_coarray_descptr(DP_V2, V2, tag)            ! a2.
         call xmpf_coarray_descptr(DP_V3, V3, tag)            ! a2.
         call xmpf_coarray_set_coshape(DP_V2, 1, 0)           ! m.
@@ -347,7 +368,7 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)   ! m.
         call xmpf_coarray_set_varname(DP_V3, "V3", 2)        ! n.
         call xmpf_coarray_dealloc(DP_V3, tag)                ! j.
-        call xmpf_coarray_proc_finalize(tag)                 ! i.
+        call xmpf_coarray_epilog(tag)                 ! i.
         return
       end subroutine
 
@@ -555,7 +576,7 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //
   private void genCallOfPrologAndEpilog() {
-    // generate "call proc_init(tag)" and insert to the top
+    // generate "call coarray_prolog(tag)" and insert to the top
     Xobject args1 = 
       Xcons.List(Xcons.FvarRef(getResourceTagId()),
                  Xcons.FcharacterConstant(Xtype.FcharacterType, name, null),
@@ -568,14 +589,14 @@ public class XMPtransCoarrayRun
     Xobject call1 = fname1.callSubroutine(args1);
     insertPrologStmt(call1);
 
-    // generate "call proc_finalize(tag)" and add to the tail
+    // generate "call coarray_epilog(tag)" and add to the tail
     Xobject args2 = Xcons.List(Xcons.FvarRef(getResourceTagId()));
     Ident fname2 = env.declExternIdent(COARRAY_EPILOG_NAME,
                                        BasicType.FexternalSubroutineType);
     Xobject call2 = fname2.callSubroutine(args2);
     addEpilogStmt(call2);
 
-    // resolve prologue/epilogue code generations
+    // perform prolog/epilog code generations
     genPrologStmts();
     genEpilogStmts();
   }

@@ -1,11 +1,10 @@
   program test_a1_d1
     include "xmp_coarray.h"
-    !$xmp nodes p(*)
     integer*4 a(10), b(10)[2,*]
     integer xmp_node_num
     integer nerr
 
-    me = xmp_node_num()   !! this_image()
+    me = this_image()
 
     !---------------------------- switch on message
 !!    if (me==2) call xmpf_coarray_msg(1)
@@ -25,7 +24,6 @@
     end if
 
     sync all
-    !$xmp barrier
 
     !---------------------------- check and output start
     nerr = 0

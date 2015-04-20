@@ -4,7 +4,6 @@
     integer*8 a(7,3:3)[2,*], b(10,3)
     integer nerr
 
-!!    me = xmp_node_num()   !! this_image()
     me = this_image()
 
     !---------------------------- switch on message
@@ -25,7 +24,6 @@
     end if
 
     sync all
-    !$xmp barrier
 
     !---------------------------- check and output start
     nerr = 0
