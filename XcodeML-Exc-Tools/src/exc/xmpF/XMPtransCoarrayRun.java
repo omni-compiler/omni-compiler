@@ -75,7 +75,7 @@ public class XMPtransCoarrayRun
       //if (funcDef != null)
       //fblock = funcDef.getBlock();
 
-      env.setCurrentDef(funcDef);                     //needed?
+      //env.setCurrentDef(funcDef);
     }
 
     String postfix = _genNewProcPostfix();
@@ -209,6 +209,9 @@ public class XMPtransCoarrayRun
    *          excluding its module functions and subroutines
    */
   public void run2() {
+    funcDef = null;
+    fblock = null;
+
     // error check for each coarray declaration
     for (XMPcoarray coarray: localCoarrays)
       coarray.errorCheck();

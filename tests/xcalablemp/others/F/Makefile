@@ -1,14 +1,9 @@
 XFC     = xmpf90 -O2
 XRUN    = mpiexec
-## to avoid bug#403
-##EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x
-EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x   377.x 392.x
+EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x
 
-## to avoid bug#403
-#all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
-#     228.x 45_save.o 358_result.x 377.x 261.o 162.o 383.x 384.o 392.x 393.o 278\ spacefile.x derived.o func.o
 all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
-     228.x 45_save.o 358_result.x 377.x 261.o 162.o    384.o 392.x 393.o 278\ spacefile.x derived.o func.o
+     228.x 45_save.o 358_result.x 377.x 261.o 162.o 383.x 384.o 392.x 393.o 278\ spacefile.x derived.o func.o
 
 .SUFFIXES: .x .o .f90
 

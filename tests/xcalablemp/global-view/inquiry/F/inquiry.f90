@@ -183,7 +183,6 @@ subroutine check(iresult,ians,error)
   if(iresult .ne. ians) then
     error=error+1
   end if
-  continue                                   !! to avoid bug#403
 end subroutine
 
 subroutine check_d(iresult,ians,error)
@@ -193,5 +192,4 @@ subroutine check_d(iresult,ians,error)
   if(iresult .ne. ians) then
     error=error+1
   end if
-  continue                                   !! to avoid bug#403
 end subroutine
