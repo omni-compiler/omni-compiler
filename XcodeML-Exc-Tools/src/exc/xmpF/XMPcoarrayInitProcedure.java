@@ -25,8 +25,8 @@ public class XMPcoarrayInitProcedure {
 
 
   /* for all procedures */
-  private Vector<String> procTexts;
-  Vector<XMPcoarray> staticCoarrays;
+  private ArrayList<String> procTexts;
+  ArrayList<XMPcoarray> staticCoarrays;
   XMPenv env;
 
   /* for each procedure */
@@ -34,13 +34,13 @@ public class XMPcoarrayInitProcedure {
   private String commonName1, commonName2;    // common block names
 
   /* for all variables of a procedure */
-  private Vector<String> varNames1, varNames2;
-  private Vector<String> callSizeStmts, callInitStmts;
+  private ArrayList<String> varNames1, varNames2;
+  private ArrayList<String> callSizeStmts, callInitStmts;
 
   //------------------------------
   //  constructor/finalizer
   //------------------------------
-  public XMPcoarrayInitProcedure(Vector<XMPcoarray> staticCoarrays,
+  public XMPcoarrayInitProcedure(ArrayList<XMPcoarray> staticCoarrays,
                                  String sizeProcName, String initProcName,
                                  String commonName1, String commonName2,
                                  XMPenv env) {
@@ -52,10 +52,10 @@ public class XMPcoarrayInitProcedure {
     this.commonName1 = commonName1;
     this.commonName2 = commonName2;
     this.env = env;
-    varNames1 = new Vector<String>();
-    varNames2 = new Vector<String>();
-    callInitStmts = new Vector<String>();
-    callSizeStmts = new Vector<String>();
+    varNames1 = new ArrayList<String>();
+    varNames2 = new ArrayList<String>();
+    callInitStmts = new ArrayList<String>();
+    callSizeStmts = new ArrayList<String>();
   }
 
 
@@ -225,19 +225,6 @@ public class XMPcoarrayInitProcedure {
                                        BasicType.FexternalSubroutineType);
       body.add(subr.callSubroutine(args));
 
-      /***********************************:
-      // "CALL coarray_set_coshape(descPtr, corank, 
-      //            lb_1,ub_1, lb_2,ub_2, ..., lb_rank)
-      int corank = coarray.getCorank();
-      args = Xcons.List(descPtrId, Xcons.IntConstant(corank));
-      for (int i = 0; i < corank - 1; i++) {
-        args.add(coarray.getLcobound(i));
-        args.add(coarray.getUcobound(i));
-      }
-      args.add(coarray.getLcobound(corank - 1));
-      subr = body.declLocalIdent(XMPcoarray.SET_COSHAPE_NAME,
-                                 BasicType.FexternalSubroutineType);
-      ********************************/
       Xobject setCoshape = coarray.makeStmt_setCoshape();
       body.add(setCoshape);
 
@@ -334,7 +321,7 @@ public class XMPcoarrayInitProcedure {
    * suspended
    *  This method could be better but not completed...
    */
-  public void genInitRoutine__NOT_USED__(Vector<XMPcoarray> staticCoarrays,
+  public void genInitRoutine__NOT_USED__(ArrayList<XMPcoarray> staticCoarrays,
                                          String newProcName, String commonName,
                                          FunctionBlock fblock, XMPenv env) {
     Xtype type = Xtype.FexternalSubroutineType;
@@ -366,7 +353,7 @@ public class XMPcoarrayInitProcedure {
   //  parts
   //------------------------------
   private void _init_forFile() {
-    procTexts = new Vector<String>();
+    procTexts = new ArrayList<String>();
   }
 
 

@@ -1,19 +1,10 @@
-  program times2
+  program allo_loop
     include "xmp_lib.h"
-    real, allocatable :: a(:,:)[:]
-    real, allocatable :: b(:,:)[:]
-    real, allocatable :: c(:,:)[:]
-    real, allocatable :: d(:,:)[:]
-    me = this_image()
+    real, allocatable :: abc(:,:)[:]
 
-    do i=1,10000
-
-       allocate(a(1000,569)[*],b(1000,800)[*])
-       deallocate(a)
-       allocate(c(1300,1000)[*],d(1001,1001)[*])
-       deallocate(d,b)
-       deallocate(c)
-
+    do i=1,100000
+       allocate(abc(1000,1000)[*])
+       deallocate(abc)
     end do
 
     nerr = 0
@@ -23,12 +14,11 @@
        nerr = 1
        write(*,100) this_image(), na, ng
     endif
+100 format("[",i0,"] remains allocated ",i0," and gabage ",i0," bytes")
 
     call final_msg(na)
 
-100 format("[",i0,"] remains allocated ",i0," and gabage ",i0," bytes")
-
-  end program times2
+  end program allo_loop
 
 
   subroutine final_msg(nerr)
@@ -40,4 +30,3 @@
     end if
     return
   end subroutine final_msg
-

@@ -1,4 +1,4 @@
-OPT= -g --debug
+#OPT= -g --debug
 #OPT= -g --debug --verbose
 NPE=3
 
@@ -9,7 +9,7 @@ OUT_decl= decl1
 OUT_NG =  allo2NG
 
 OUT_allo= allo1 allo3 
-OUT_etc=#pipo3 allo_loop2 #allo_loop #char12  host_assoc
+OUT_etc=allo_pipo3 allo_loop2 allo_hiloop #allo_hicall #char12  host_assoc
 
 OUT_stat=#allo_stat
 

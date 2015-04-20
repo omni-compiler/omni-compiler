@@ -59,6 +59,7 @@
        print '("[",i0,"] OK")', me
     else
        print '("[",i0,"] number of NGs: ",i0)', me, nerr
+       stop 1
     end if
     !---------------------------- check and output end
 

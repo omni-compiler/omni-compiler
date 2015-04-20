@@ -1,4 +1,4 @@
-DIRS= test_get test_put test_darg test_alloc test_fe test_cfold
+DIRS= test_get test_put test_scope test_alloc test_fe test_cfold
 #DIRS=test_hybrid
 
 .PHONY: clean all run go

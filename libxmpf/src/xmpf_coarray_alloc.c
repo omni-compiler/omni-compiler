@@ -43,6 +43,8 @@
 #define IsLastMemoryChunk(chk)   ((chk)->next->next == NULL)
 #define IsEmptyMemoryChunk(chk)  ((chk)->headCoarray->next->next == NULL)
 
+#define GetNameOfChunk(chk)  ((chk)->headCoarray->next->name)
+
 
 /*****************************************\
   typedef and static declaration
@@ -56,13 +58,12 @@ typedef struct _memoryChunkStack_t  MemoryChunkStack_t;
 typedef struct _memoryChunkOrder_t  MemoryChunkOrder_t;
 
 // access functions for resource set
-static ResourceSet_t *_newResourceSet(void);
+static ResourceSet_t *_newResourceSet(char *name, int namelen);
 static void _freeResourceSet(ResourceSet_t *rset);
 
 // access functions for memory chunk
-static MemoryChunk_t *_newMemoryChunk(void);
-static void _linkMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk);
-//static void _unlinkAndFreeMemoryChunk(MemoryChunk_t *chunk);
+static MemoryChunk_t *_newMemoryChunk(void *desc, char *orgAddr, size_t nbytes);
+static void _addMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk);
 static void _unlinkMemoryChunk(MemoryChunk_t *chunk);
 static void _freeMemoryChunk(MemoryChunk_t *chunk);
 
@@ -71,7 +72,7 @@ static size_t pool_totalSize = 0;
 static char *pool_currentAddr;
 
 // access functions for coarray info
-static CoarrayInfo_t *_newCoarrayInfo(void);
+static CoarrayInfo_t *_newCoarrayInfo(char *baseAddr, size_t nbytes);
 static void _addCoarrayInfo(MemoryChunk_t *chunk, CoarrayInfo_t *cinfo2);
 static void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2);
 static void _freeCoarrayInfo(CoarrayInfo_t *cinfo);
@@ -81,13 +82,11 @@ static CoarrayInfo_t *_getShareOfCoarray(int count, size_t element);
 
 // allocation and deallocation
 static MemoryChunk_t *_mallocMemoryChunk(int count, size_t element);
-//static void _flushResourceSetInReverseOrder(void);
-//static void _freeMemoryChunkReverseOrder(void);
 
 // malloc/free history
 static void _initMallocHistory(void);
-static void _addMallocHistory(MemoryChunk_t *chunk);
-static void _flushMallocHistory(void);
+static void _addMemoryChunkToMallocHistory(MemoryChunk_t *chunk);
+static void _garbageCollectMallocHistory(void);
 
 // historical order
 static MemoryChunkOrder_t *_newMemoryChunkOrder(MemoryChunk_t *chunk);
@@ -104,6 +103,7 @@ static void _freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
  *  A tag, cast of the address of a resource-set, is an interface to Fortran.
  */
 struct _resourceSet_t {
+  char            *name;        // procedure name (for debug message)
   MemoryChunk_t   *headChunk;
   MemoryChunk_t   *tailChunk;
 };
@@ -118,10 +118,10 @@ struct _memoryChunk_t {
   MemoryChunk_t   *prev;
   MemoryChunk_t   *next;
   ResourceSet_t   *parent;
-  BOOL             isSuspended;  // true if already encountered DEALLOCATE stmt
-  char            *orgAddr;        // local address of the allocated memory
-  size_t           nbytes;         // allocated size of memory [bytes]
-  void            *desc;           // address of the lower layer's descriptor 
+  BOOL             isGarbage;    // true if already encountered DEALLOCATE stmt
+  char            *orgAddr;      // local address of the allocated memory
+  size_t           nbytes;       // allocated size of memory [bytes]
+  void            *desc;         // address of the lower layer's descriptor 
   CoarrayInfo_t   *headCoarray;
   CoarrayInfo_t   *tailCoarray;
 };
@@ -166,7 +166,7 @@ struct _memoryChunkOrder_t {
   hidden utility functions
 \***********************************************/
 
-int xmpf_coarray_allocated_()
+int xmpf_coarray_allocated_bytes_()
 {
   MemoryChunkOrder_t *chunkp;
   MemoryChunk_t *chunk;
@@ -182,7 +182,7 @@ int xmpf_coarray_allocated_()
   return size;
 }
 
-int xmpf_coarray_suspended_()
+int xmpf_coarray_garbage_bytes_()
 {
   MemoryChunkOrder_t *chunkp;
   MemoryChunk_t *chunk;
@@ -191,7 +191,7 @@ int xmpf_coarray_suspended_()
   size = 0;
   forallMemoryChunkOrder(chunkp) {
     chunk = chunkp->chunk;
-    if (chunk->isSuspended)
+    if (chunk->isGarbage)
       size += chunk->nbytes;
   }
 
@@ -206,7 +206,7 @@ int xmpf_coarray_suspended_()
 \***********************************************/
 
 /*  1. malloc by the low-level library
- *  2. make a memoryChunk with a coarrayInfo
+ *  2. make a memoryChunk with one coarrayInfo
  */
 void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                           int *count, int *element, void **tag)
@@ -214,26 +214,29 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
   _XMPF_checkIfInTask("allocatable coarray allocation");
   ResourceSet_t *rset;
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC\n"
-                          "  *count=%d, *element=%d, *tag=%p\n",
-                          *count, *element, *tag);
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC\n");
+  //"  *count=%d, *element=%d, *tag=%p\n",
+  //*count, *element, *tag);
 
   // malloc
   MemoryChunk_t *chunk = _mallocMemoryChunk(*count, (size_t)(*element));
 
   if (*tag != NULL) {
     rset = (ResourceSet_t*)(*tag);
-    _linkMemoryChunk(rset, chunk);
+    _addMemoryChunk(rset, chunk);
   }
 
   // make coarrayInfo and linkage
-  CoarrayInfo_t *cinfo = _newCoarrayInfo();
-  cinfo->nbytes = (*count) * (size_t)(*element);
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr,
+                                         (*count) * (size_t)(*element));
   _addCoarrayInfo(chunk, cinfo);
 
   // output #1, #2
   *descPtr = (void*)cinfo;
-  *crayPtr = chunk->orgAddr;
+  *crayPtr = cinfo->baseAddr;   // == chunk->orgAddr
+
+  // SYNC MEMORY
+  xmpf_sync_memory_nostat_();
 }
 
 
@@ -262,27 +265,35 @@ size_t _roundUpElementSize(int count, size_t element)
 
 MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
 {
-  MemoryChunk_t *chunk = _newMemoryChunk();
-  size_t elementRU = _roundUpElementSize(count, element);
-  chunk->nbytes = (size_t)count * elementRU;
+  void *desc;
+  char *orgAddr;
+  size_t nbytes;
+  MemoryChunk_t *chunk;
 
-  if (chunk->nbytes == 0) {
+  size_t elementRU = _roundUpElementSize(count, element);
+  nbytes = (size_t)count * elementRU;
+
+  if (nbytes == 0) {
     _XMPF_coarrayDebugPrint("*** a memory-chunk not allocated\n");
+
+    chunk = _newMemoryChunk(NULL, NULL, 0);
     return chunk;
   }
 
   // _XMP_coarray_malloc() and set mallocInfo
-  _XMP_coarray_malloc_info_1(chunk->nbytes, 1);    // set shape
-  _XMP_coarray_malloc_image_info_1();                          // set coshape
-  _XMP_coarray_malloc_do(&(chunk->desc), &(chunk->orgAddr));   // malloc
+  _XMP_coarray_malloc_info_1(nbytes, 1);           // set shape
+  _XMP_coarray_malloc_image_info_1();              // set coshape
+  _XMP_coarray_malloc_do(&desc, &orgAddr);         // malloc
 
-  _XMPF_coarrayDebugPrint("*** MemoryChunk %p allocated\n"
-                          "  requred: %zd bytes (count=%d, element=%d)\n"
-                          "  result : %d bytes\n",
-                          chunk, chunk->nbytes, count, element, chunk->nbytes);
+  chunk = _newMemoryChunk(desc, orgAddr, nbytes);
+
+  _XMPF_coarrayDebugPrint("*** MemoryChunk %p, %zd bytes allocated\n"
+                          "  requred: %zd bytes (count=%d, element=%d)\n",
+                          chunk, chunk->nbytes,
+                          chunk->nbytes, count, element);
 
   // stack to mallocHistory
-  _addMallocHistory(chunk);
+  _addMemoryChunkToMallocHistory(chunk);
 
   return chunk;
 }
@@ -292,8 +303,7 @@ MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
   DEALLOCATE statement
   Type-1: alloc/free by the low-level library
   Type-1a: to keep the reverse order of allocation,
-           actual deallocation may be delayed.
-  RETHINK!
+     actual deallocation is delayed until garbage collection.
 \***********************************************/
 
 void xmpf_coarray_free_(void **descPtr, void **tag)
@@ -302,19 +312,24 @@ void xmpf_coarray_free_(void **descPtr, void **tag)
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
   MemoryChunk_t *chunk = cinfo->parent;
 
+  // SYNC MEMORY
+  xmpf_sync_memory_nostat_();
+
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_FREE\n"
-                          "  MemoryChunk %p in ResourceSet %p\n",
-                          chunk, rset);
+                          "  MemoryChunk %p \"%s\", %zd bytes\n"
+                          "  in ResourceSet %p \"%s\" \n",
+                          chunk, GetNameOfChunk(chunk), chunk->nbytes,
+                          rset, rset->name);
 
   // unlink and free CoarrayInfo keeping MemoryChunk
   _unlinkCoarrayInfo(cinfo);
   _freeCoarrayInfo(cinfo);
 
   if (IsEmptyMemoryChunk(chunk)) {
-    // unlink this memory chunk and suspend it to free
+    // unlink this memory chunk as a garbage
     _unlinkMemoryChunk(chunk);
-    // chance to free suspended memory chunks
-    _flushMallocHistory();
+    // now chance to cellect and free garbages
+    _garbageCollectMallocHistory();
   }
 }
 
@@ -355,8 +370,7 @@ void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
   CoarrayInfo_t *cinfo =
     _getShareOfCoarray(*count, (size_t)(*element));
 
-  cinfo->name = (char*)malloc(sizeof(char)*(*namelen + 1));
-  strncpy(cinfo->name, name, *namelen);
+  cinfo->name = strndup(name, *namelen);
 
   *descPtr = (void*)cinfo;
   *crayPtr = cinfo->baseAddr;
@@ -371,8 +385,7 @@ CoarrayInfo_t *_getShareOfCoarray(int count, size_t element)
 
   // allocate and set _coarrayInfo
   size_t thisSize = (size_t)count * elementRU;
-  CoarrayInfo_t *cinfo = _newCoarrayInfo();
-  cinfo->nbytes = thisSize;
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(pool_currentAddr, thisSize);
   _addCoarrayInfo(pool_chunk, cinfo);
 
   // check: too large allocation
@@ -388,19 +401,10 @@ CoarrayInfo_t *_getShareOfCoarray(int count, size_t element)
                           cinfo->name, pool_currentAddr,
                           thisSize, count, element);
 
-  cinfo->baseAddr = pool_currentAddr;
-  cinfo->nbytes = thisSize;
-
   pool_currentAddr += thisSize;
 
   return cinfo;
 }
-
-
-
-
-
-
 
 
 void xmpf_coarray_count_size_(int *count, int *element)
@@ -414,19 +418,22 @@ void xmpf_coarray_count_size_(int *count, int *element)
 }
 
 
-void xmpf_coarray_proc_init_(void **tag)
+void xmpf_coarray_prolog_(void **tag, char *name, int *namelen)
 {
   ResourceSet_t *resource;
 
-  resource = _newResourceSet();
+  resource = _newResourceSet(name, *namelen);
   *tag = (void*)resource;
 }
 
 
-void xmpf_coarray_proc_finalize_(void **tag)
+void xmpf_coarray_epilog_(void **tag)
 {
   if (*tag == NULL)
     return;
+
+  // SYNC ALL
+  xmpf_sync_all_nostat_();
 
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
   _freeResourceSet(rset);
@@ -439,13 +446,13 @@ void xmpf_coarray_proc_finalize_(void **tag)
    entry
 \*****************************************/
 
-/** generate and return a descriptor of a coarray dummy argument
+/** generate and return a descriptor for a coarray DUMMY ARGUMENT
  *   1. find the memory chunk that contains the coarray data object,
  *   2. generate coarrayInfo for the coarray dummy argument and link it 
  *      to the memory chunk, and
  *   3. return coarrayInfo as descPtr
  */
-void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag)
+void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag)
 {
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
   MemoryChunkOrder_t *chunkP;
@@ -453,9 +460,9 @@ void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag)
   BOOL found;
 
   if (rset == NULL)
-    rset = _newResourceSet();
+    rset = _newResourceSet("(pool)", strlen("(pool)"));
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_DESCPTR\n");
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_GET_DESCPTR\n");
   _XMPF_coarrayDebugPrint("  coarray dummy argument: %p\n", baseAddr);
 
   found = FALSE;
@@ -481,8 +488,8 @@ void xmpf_coarray_descptr_(void **descPtr, char *baseAddr, void **tag)
 
   _XMPF_coarrayDebugPrint("  found.\n");
 
-  // generate a new descPtr for the dummy coarray
-  CoarrayInfo_t *cinfo = _newCoarrayInfo();
+  // generate a new descPtr for an allocatable dummy coarray
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(NULL, 0);
   _addCoarrayInfo(chunk, cinfo);
   //cinfo->size = ???
   
@@ -504,46 +511,40 @@ void _initMallocHistory(void)
 }
 
 
-void _addMallocHistory(MemoryChunk_t *chunk)
+void _addMemoryChunkToMallocHistory(MemoryChunk_t *chunk)
 {
-  MemoryChunkOrder_t *chunkP = _newMemoryChunkOrder(chunk);
-  MemoryChunkOrder_t *tailP = _mallocStack.tail;
-  if (tailP == NULL) {
-    _initMallocHistory();
-    tailP = _mallocStack.tail;
-  }
-  MemoryChunkOrder_t *lastP = tailP->prev;
+  MemoryChunkOrder_t *chunkP2 = _newMemoryChunkOrder(chunk);
+  MemoryChunkOrder_t *chunkP3 = _mallocStack.tail;
+  MemoryChunkOrder_t *chunkP1 = chunkP3->prev;
 
-  lastP->next = chunkP;
-  chunkP->prev = lastP;
-  chunkP->next = tailP;
-  tailP->prev = chunkP;
+  chunkP1->next = chunkP2;
+  chunkP3->prev = chunkP2;
+  chunkP2->prev = chunkP1;
+  chunkP2->next = chunkP3;
 }
 
 
 MemoryChunkOrder_t *_newMemoryChunkOrder(MemoryChunk_t *chunk)
 {
   MemoryChunkOrder_t *chunkP =
-    (MemoryChunkOrder_t*)malloc(sizeof(MemoryChunkOrder_t));
-  chunkP->prev = NULL;
-  chunkP->next = NULL;
+    (MemoryChunkOrder_t*)calloc(1, sizeof(MemoryChunkOrder_t));
   chunkP->chunk = chunk;
 
   return chunkP;
 }
 
 
-/*  free deallocated coarry data objects as much as possible, keeping the
- *  reverse order of allocations.
+/*  free deallocated coarry data objects as much as possible,
+ *  keeping the reverse order of allocations.
  */
-void _flushMallocHistory()
+void _garbageCollectMallocHistory()
 {
   MemoryChunkOrder_t *chunkP;
 
-  _XMPF_coarrayDebugPrint("FLUSH suspended MemoryChunk\n");
+  _XMPF_coarrayDebugPrint("GARBAGE COLLECTION\n");
 
   forallMemoryChunkOrderRev(chunkP) {
-    if (!chunkP->chunk->isSuspended)
+    if (!chunkP->chunk->isGarbage)
       break;
 
     // unlink and free MemoryChunkOrder linkage
@@ -621,9 +622,7 @@ void xmpf_coarray_set_varname_(void **descPtr, char *name, int *namelen)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
 
-  cinfo->name = (char*)malloc(sizeof(char)*(*namelen + 1));
-  memcpy(cinfo->name, name, *namelen);
-  cinfo->name[*namelen] = '\0';
+  cinfo->name = strndup(name, *namelen);
 }
 
 
@@ -673,18 +672,18 @@ int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...)
   access functions for ResourceSet_t
 \*****************************************/
 
-ResourceSet_t *_newResourceSet(void)
+ResourceSet_t *_newResourceSet(char *name, int namelen)
 {
   ResourceSet_t *rset =
     (ResourceSet_t*)malloc(sizeof(ResourceSet_t));
 
-  rset->headChunk = _newMemoryChunk();
-  rset->tailChunk = _newMemoryChunk();
+  rset->headChunk = _newMemoryChunk(NULL, NULL, 0);
+  rset->tailChunk = _newMemoryChunk(NULL, NULL, 0);
   rset->headChunk->next = rset->tailChunk;
   rset->tailChunk->prev = rset->headChunk;
   rset->headChunk->parent = rset;
   rset->tailChunk->parent = rset;
-  //_linkResourceSet(rset);
+  rset->name = strndup(name, namelen);
   return rset;
 }
 
@@ -693,10 +692,12 @@ void _freeResourceSet(ResourceSet_t *rset)
   MemoryChunk_t *chunk;
 
   forallMemoryChunk (chunk, rset) {
-    // allocated -> suspended (waiting for freeing)
+    // unlink memory chunk as a garbage
     _unlinkMemoryChunk(chunk);
   }
 
+  // now chance of garbabe collection
+  _garbageCollectMallocHistory();
   free(rset);
 }
 
@@ -705,25 +706,30 @@ void _freeResourceSet(ResourceSet_t *rset)
   access functions for MemoryChunk_t
 \*****************************************/
 
-MemoryChunk_t *_newMemoryChunk(void)
+MemoryChunk_t *_newMemoryChunk(void *desc, char *orgAddr, size_t nbytes)
 {
   MemoryChunk_t *chunk =
     (MemoryChunk_t*)malloc(sizeof(MemoryChunk_t));
 
   chunk->prev = NULL;
   chunk->next = NULL;
-  chunk->headCoarray = _newCoarrayInfo();
-  chunk->tailCoarray = _newCoarrayInfo();
+  chunk->headCoarray = _newCoarrayInfo(NULL, 0);
+  chunk->tailCoarray = _newCoarrayInfo(NULL, 0);
   chunk->headCoarray->next = chunk->tailCoarray;
   chunk->tailCoarray->prev = chunk->headCoarray;
   chunk->headCoarray->parent = chunk;
   chunk->tailCoarray->parent = chunk;
-  chunk->isSuspended = FALSE;
+  chunk->isGarbage = FALSE;
+
+  chunk->desc = desc;
+  chunk->orgAddr = orgAddr;
+  chunk->nbytes = nbytes;
+
   return chunk;
 }
 
 
-void _linkMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk2)
+void _addMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk2)
 {
   MemoryChunk_t *chunk3 = rset->tailChunk;
   MemoryChunk_t *chunk1 = chunk3->prev;
@@ -733,13 +739,13 @@ void _linkMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk2)
 
   chunk2->prev = chunk1;
   chunk2->next = chunk3;
-  chunk2->parent = chunk1->parent;
+  chunk2->parent = rset;
 }
 
 
 void _unlinkMemoryChunk(MemoryChunk_t *chunk2)
 {
-  chunk2->isSuspended = TRUE;
+  chunk2->isGarbage = TRUE;
 
   MemoryChunk_t *chunk1 = chunk2->prev;
   MemoryChunk_t *chunk3 = chunk2->next;
@@ -765,7 +771,7 @@ void _freeMemoryChunk(MemoryChunk_t *chunk)
   }
 
   // found a formal-deallocated memory chunk that should be free
-  _XMPF_coarrayDebugPrint("*** freeing suspended MemoryChunk %p, %zd bytes\n",
+  _XMPF_coarrayDebugPrint("*** freeing a garbage MemoryChunk %p, %zd bytes\n",
                           chunk, chunk->nbytes);
 
   // free the last memory chunk object
@@ -779,10 +785,12 @@ void _freeMemoryChunk(MemoryChunk_t *chunk)
   access functions for CoarrayInfo_t
 \*****************************************/
 
-static CoarrayInfo_t *_newCoarrayInfo(void)
+static CoarrayInfo_t *_newCoarrayInfo(char *baseAddr, size_t nbytes)
 {
   CoarrayInfo_t *cinfo =
-    (CoarrayInfo_t*)malloc(sizeof(CoarrayInfo_t));
+    (CoarrayInfo_t*)calloc(1, sizeof(CoarrayInfo_t));
+  cinfo->baseAddr = baseAddr;
+  cinfo->nbytes = nbytes;
   return cinfo;
 }
 
