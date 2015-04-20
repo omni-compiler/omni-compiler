@@ -50,10 +50,13 @@ public class XMPcoarray {
   //  CONSTRUCTOR
   //------------------------------
   public XMPcoarray(Ident ident, FuncDefBlock funcDef, XMPenv env) {
+    this(ident, funcDef.getDef(), funcDef.getBlock(), env);
+  }
+  public XMPcoarray(Ident ident, XobjectDef def, FunctionBlock fblock, XMPenv env) {
     this.ident = ident;
     this.env = env;
-    def = funcDef.getDef();
-    fblock = funcDef.getBlock();
+    this.def = def;
+    this.fblock = fblock;
     name = ident.getName();
     //originalType = ident.Type().copy();
     isAllocatable = ident.Type().isFallocatable();
@@ -113,9 +116,11 @@ public class XMPcoarray {
     }
     args.add(getLcobound(corank - 1));
 
-    // m.
-    Ident subr = env.declExternIdent(SET_COSHAPE_NAME,
-                                     BasicType.FexternalSubroutineType);
+    Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
+    if (subr == null) {
+      subr = env.declExternIdent(SET_COSHAPE_NAME,
+                                 BasicType.FexternalSubroutineType);
+    }
     Xobject subrCall = subr.callSubroutine(args);
     return subrCall;
   }
@@ -141,9 +146,11 @@ public class XMPcoarray {
     }
     args.add(_getLboundInIndexRange(coshape.getArg(corank - 1)));
 
-    // m.
-    Ident subr = env.declExternIdent(XMPcoarray.SET_COSHAPE_NAME,
-                                     BasicType.FexternalSubroutineType);
+    Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
+    if (subr == null) {
+      subr = env.declExternIdent(SET_COSHAPE_NAME,
+                                 BasicType.FexternalSubroutineType);
+    }
     Xobject subrCall = subr.callSubroutine(args);
     return subrCall;
   }
@@ -211,9 +218,12 @@ public class XMPcoarray {
       Xcons.IntConstant(varName.length());
     Xobject args = Xcons.List(getDescPointerId(),
                               varNameObj, varNameLen);
-    // n.
-    Ident subr = env.declExternIdent(SET_VARNAME_NAME,
-                                     BasicType.FexternalSubroutineType);
+
+    Ident subr = env.findVarIdent(SET_VARNAME_NAME, null);
+    if (subr == null) {
+      subr = env.declExternIdent(SET_VARNAME_NAME,
+                                 BasicType.FexternalSubroutineType);
+    }
     Xobject subrCall = subr.callSubroutine(args);
     return subrCall;
   }
@@ -336,12 +346,6 @@ public class XMPcoarray {
                 "could not find the total size of: "+name);
     return size;
   }
-
-  /*********** not used 
-  public Xobject getTotalArraySizeExpr(Block block) {
-    //// wrong way because of lack of env
-    //Xobject size = ident.Type().getTotalArraySizeExpr(block);
-    ****/
 
 
   //------------------------------

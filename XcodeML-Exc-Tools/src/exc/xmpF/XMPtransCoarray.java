@@ -93,7 +93,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
       if (ident.isCoarray()) {
         // found it is a coarray
         _nCoarrays += 1;
-        errorCheck_ident(ident);
+        errorCheck_ident(ident, def);
       }
     }
   }
@@ -113,7 +113,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
       if (ident.isCoarray()) {
         // found it is a coarray
         _nCoarrays += 1;
-        errorCheck_ident(ident);
+        errorCheck_ident(ident, def);
       }
     }
     
@@ -128,7 +128,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
       switch (xobj.Opcode()) {
       case CO_ARRAY_REF:
         _nCoidxObjs += 1;
-        errorCheck_coidxObj(xobj);
+        errorCheck_coidxObj(xobj, def);
         break;
 
       case IDENT:
@@ -140,10 +140,29 @@ public class XMPtransCoarray implements XobjectDefVisitor
   }
 
 
-  private void errorCheck_ident(Ident ident) {
+  private void errorCheck_ident(Ident ident, XobjectDef def) {
+    // restriction: initialization
+
+    // non-save non-allocatable coarray in recursive procedure
+    if (_isRecursiveProcedure(def) &&
+        ident.getStorageClass() != StorageClass.FSAVE &&
+        !ident.Type().isFallocatable()) {
+      XMP.error("Coarray \'" + ident.getName() + 
+                "\' must have SAVE or ALLOCATABLE attribute in recursive procedure.");
+    }
   }
 
-  private void errorCheck_coidxObj(Xobject xobj) {
+
+  private boolean _isRecursiveProcedure(XobjectDef def) {
+    Xobject d = def.getDef();
+    if (d.Opcode() == Xcode.F_MODULE_DEFINITION)
+      return false;
+    Xobject name = d.getArgs().getArg();
+    return name.Type().isFrecursive();
+  }
+
+
+  private void errorCheck_coidxObj(Xobject xobj, XobjectDef def) {
   }
 
 

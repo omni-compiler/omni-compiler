@@ -59,8 +59,8 @@ print_subr_dealloc() {
     tk=$1
     typekind=$2
 
-    echo    "      subroutine xmpf_coarray_dealloc${DIM}d_${tk}(descptr, var, tag)"
-    echo    "        integer(8), intent(in) :: descptr, tag"
+    echo    "      subroutine xmpf_coarray_dealloc${DIM}d_${tk}(descptr, var)"
+    echo    "        integer(8), intent(in) :: descptr"
 
  case "${DIM}" in
  0) echo    "        ${typekind}, pointer, intent(out) :: var" ;;
