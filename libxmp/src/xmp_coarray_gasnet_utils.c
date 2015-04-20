@@ -677,7 +677,7 @@ void _XMP_unpack_coarray(char *dst_ptr, const int dst_dims, const char* src_ptr,
 			 const _XMP_array_section_t* dst, const int flag)
 {
   // flag == 0; src_offset is changed.
-  // flag == 1; src_offset is fixed for put_scalar_mput.
+  // flag == 1; src_offset is fixed for scalar_mput or scalar_mget.
 
   if(dst_dims == 1){
     if(flag == 0)

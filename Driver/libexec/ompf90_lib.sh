@@ -41,7 +41,7 @@ EOF
 
 function ompf90_show_env()
 {
-    CONF_FILE=${OMNI_HOME}/etc/ompf90.conf
+    CONF_FILE=${OM_DRIVER_CONF_DIR}/ompf90.conf
     if [ -f $CONF_FILE ]; then
 	for val in `sed '/^[[:space:]]*$/d' ${CONF_FILE} | grep -v '^#' | awk -F= '{print $1}'`
 	do
