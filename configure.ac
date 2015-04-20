@@ -708,14 +708,16 @@ else
   ARFLAGS="cru"
   AC_CHECK_TOOL([NM], [nm], [:])
 
-  INTEL_MPICC=mpiicc
-  which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
-  if test $? -eq 0; then
-    MPI_CC=${INTEL_MPICC}
-  elif test [ "" != "$userMPI_CC" ]; then
+  if test [ "" != "$userMPI_CC" ]; then
     MPI_CC=${userMPI_CC}
   else
-    MPI_CC=mpicc
+    INTEL_MPICC=mpiicc
+    which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
+    if test $? -eq 0; then
+      MPI_CC=${INTEL_MPICC}
+    else
+      MPI_CC=mpicc
+    fi
   fi
 
   chk=`${MPI_CC} --version | head -n1`
