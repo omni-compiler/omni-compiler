@@ -1,5 +1,5 @@
   program a1d1
-    include "xmp_lib.h"
+    include "xmp_coarray.h"
     !$xmp nodes p(*)
     integer*8 a(100)[*]
     integer b(100)

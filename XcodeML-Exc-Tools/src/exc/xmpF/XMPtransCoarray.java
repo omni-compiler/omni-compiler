@@ -20,7 +20,9 @@ public class XMPtransCoarray implements XobjectDefVisitor
   private int pass;
 
   private ArrayList<XMPtransCoarrayRun> pastRuns;
-  boolean _containsCoarray;
+  int _nCoarrays = 0;
+  int _nCoidxObjs = 0;
+  int _nCoarrayLibs = 0;
 
   //-----------------------------------------
   //  constructor
@@ -30,7 +32,6 @@ public class XMPtransCoarray implements XobjectDefVisitor
     this.env = new XMPenv(env);
     this.pass = pass;
     pastRuns = new ArrayList<XMPtransCoarrayRun>();
-    _containsCoarray = false;
   }
 
   public void finish() {
@@ -50,13 +51,10 @@ public class XMPtransCoarray implements XobjectDefVisitor
 
     switch (pass) {
     case 0:
-      boolean contains;
       if (is_module)
-        contains = errorCheck_module(d);
+        errorCheck_module(d);
       else
-        contains = errorCheck_procedure(d);
-      if (contains)
-        _containsCoarray = true;
+        errorCheck_procedure(d);
       break;
 
     case 1:               // for both procedures and modules
@@ -87,21 +85,17 @@ public class XMPtransCoarray implements XobjectDefVisitor
    *  - any coarray declarations
    * in the module.
    */
-  private boolean errorCheck_module(XobjectDef def) {
-    boolean contains = false;
-
+  private void errorCheck_module(XobjectDef def) {
     // check coarray declarations
     Xobject idList = def.getFuncIdList();
     for (Xobject obj: (XobjList)idList) {
       Ident ident = (Ident)obj;
       if (ident.isCoarray()) {
         // found it is a coarray
-        contains = true;
+        _nCoarrays += 1;
         errorCheck_ident(ident);
       }
     }
-    
-    return contains;
   }
 
   /*
@@ -111,16 +105,14 @@ public class XMPtransCoarray implements XobjectDefVisitor
    *  - any reference of coarray intrinsic procedures
    * in the procedure.
    */
-  private boolean errorCheck_procedure(XobjectDef def) {
-    boolean contains = false;
-
+  private void errorCheck_procedure(XobjectDef def) {
     // check coarray declarations
     Xobject idList = def.getFuncIdList();
     for (Xobject obj: (XobjList)idList) {
       Ident ident = (Ident)obj;
       if (ident.isCoarray()) {
         // found it is a coarray
-        contains = true;
+        _nCoarrays += 1;
         errorCheck_ident(ident);
       }
     }
@@ -135,18 +127,16 @@ public class XMPtransCoarray implements XobjectDefVisitor
 
       switch (xobj.Opcode()) {
       case CO_ARRAY_REF:
-        contains = true;
+        _nCoidxObjs += 1;
         errorCheck_coidxObj(xobj);
         break;
 
       case IDENT:
         if (isCoarrayLibraryName(xobj.getName()))
-          contains = true;
+          _nCoarrayLibs += 1;
         break;
       }
     }
-
-    return contains;
   }
 
 
@@ -167,7 +157,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
 
 
   public boolean containsCoarray() {
-    return _containsCoarray;
+    return (_nCoarrays > 0 || _nCoidxObjs > 0 || _nCoarrayLibs > 0);
   }
 }
 

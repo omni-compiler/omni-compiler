@@ -1242,7 +1242,7 @@ public class XMPtransCoarrayRun
   //------------------------------------------------------------
 
   /*
-   * Detect error if a coarray exists and xmp_lib.h is not included.
+   * Detect error if a coarray exists and xmp_coarray.h is not included.
    */
   private void _check_ifIncludeXmpLib() {
     
@@ -1251,12 +1251,12 @@ public class XMPtransCoarrayRun
       return;
     }
 
-    /* check a typical name defined in xmp_lib.h */
+    /* check a typical name defined in xmp_coarray.h */
     Ident id = def.findIdent("xmpf_coarray_get0d");
     if (id == null) {
       /* xmpf_lib.h seems not included. */
       XMP.error("current restriction: " + 
-                "\'xmp_lib.h\' must be included to use coarray features.");
+                "\'xmp_coarray.h\' must be included to use coarray features.");
     }
   }
 

@@ -1,5 +1,5 @@
   program test_s
-    include "xmp_lib.h"
+    include "xmp_coarray.h"
     real s[*]
 
   end program

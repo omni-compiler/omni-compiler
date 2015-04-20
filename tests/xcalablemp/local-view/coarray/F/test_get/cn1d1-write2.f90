@@ -1,5 +1,5 @@
   program cn1d1_write
-    include "xmp_lib.h"
+    include "xmp_coarray.h"
     !$xmp nodes p(*)
     integer*2 a(100)[*], a_org(100)
     integer xmp_node_num
