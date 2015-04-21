@@ -1,4 +1,4 @@
-module mmm
+module mmmm
 
 !$xmp nodes p(2,2)
 !$xmp template t(100,100)
@@ -98,11 +98,11 @@ contains
 
 end subroutine check
 
-end module mmm
+end module mmmm
 
 program test
 
-  use mmm
+  use mmmm
 
   interface
      subroutine sub3(x1, x2, y1, y2)
