@@ -1,5 +1,5 @@
 program allo2
-  include "xmp_lib.h"
+  include "xmp_coarray.h"
   real, allocatable :: a(:)[:] 
 
   call allo

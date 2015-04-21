@@ -1,5 +1,5 @@
   program test_barrier
-    include "xmp_lib.h"
+    include "xmp_coarray.h"
 
     real dummy(10)[*]
 

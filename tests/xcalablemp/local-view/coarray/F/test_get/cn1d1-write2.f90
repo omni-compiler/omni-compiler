@@ -1,12 +1,11 @@
   program cn1d1_write
-    include "xmp_lib.h"
-    !$xmp nodes p(*)
+    include "xmp_coarray.h"
     integer*2 a(100)[*], a_org(100)
     integer xmp_node_num
     integer nerr
     character(200) wbuf1, wbuf2[*], tmpbuf
 
-    me = xmp_node_num()   ! == this_image()
+    me = this_image()
 
     !---------------------------- switch on message
 !!    call xmpf_coarray_msg(1)

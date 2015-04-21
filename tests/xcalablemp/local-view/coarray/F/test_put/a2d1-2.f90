@@ -1,5 +1,5 @@
   program test_a2_d1
-    include "xmp_lib.h"
+    include "xmp_coarray.h"
     real a2(2,3)[*]
     integer xmp_node_num, xmp_num_nodes
     integer nerr

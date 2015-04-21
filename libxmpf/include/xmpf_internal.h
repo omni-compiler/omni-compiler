@@ -315,7 +315,7 @@ extern void _XMPF_coarrayFatal(char *format, ...);
 /* xmpf_coarray_alloc.c */
 extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                                  int *count, int *element, void **tag);
-extern void xmpf_coarray_free_(void **descPtr, void **tag);
+extern void xmpf_coarray_free_(void **descPtr);
 
 extern void xmpf_coarray_malloc_pool_(void);
 extern void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,

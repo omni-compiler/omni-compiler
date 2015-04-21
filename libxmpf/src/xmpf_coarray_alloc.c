@@ -215,8 +215,6 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
   ResourceSet_t *rset;
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC\n");
-  //"  *count=%d, *element=%d, *tag=%p\n",
-  //*count, *element, *tag);
 
   // malloc
   MemoryChunk_t *chunk = _mallocMemoryChunk(*count, (size_t)(*element));
@@ -224,6 +222,8 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
   if (*tag != NULL) {
     rset = (ResourceSet_t*)(*tag);
     _addMemoryChunk(rset, chunk);
+
+    _XMPF_coarrayDebugPrint("*** belongs to rset=%p\n", rset);
   }
 
   // make coarrayInfo and linkage
@@ -306,9 +306,8 @@ MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
      actual deallocation is delayed until garbage collection.
 \***********************************************/
 
-void xmpf_coarray_free_(void **descPtr, void **tag)
+void xmpf_coarray_free_(void **descPtr)
 {
-  ResourceSet_t *rset = (ResourceSet_t*)(*tag);
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
   MemoryChunk_t *chunk = cinfo->parent;
 
@@ -316,10 +315,8 @@ void xmpf_coarray_free_(void **descPtr, void **tag)
   xmpf_sync_memory_nostat_();
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_FREE\n"
-                          "  MemoryChunk %p \"%s\", %zd bytes\n"
-                          "  in ResourceSet %p \"%s\" \n",
-                          chunk, GetNameOfChunk(chunk), chunk->nbytes,
-                          rset, rset->name);
+                          "  MemoryChunk %p \"%s\", %zd bytes\n",
+                          chunk, GetNameOfChunk(chunk), chunk->nbytes);
 
   // unlink and free CoarrayInfo keeping MemoryChunk
   _unlinkCoarrayInfo(cinfo);
@@ -420,10 +417,11 @@ void xmpf_coarray_count_size_(int *count, int *element)
 
 void xmpf_coarray_prolog_(void **tag, char *name, int *namelen)
 {
-  ResourceSet_t *resource;
+  ResourceSet_t *rset = _newResourceSet(name, *namelen);
 
-  resource = _newResourceSet(name, *namelen);
-  *tag = (void*)resource;
+  _XMPF_coarrayDebugPrint("PROLOG CODE. rset=%p\n", rset);
+
+  *tag = (void*)rset;
 }
 
 
@@ -432,10 +430,13 @@ void xmpf_coarray_epilog_(void **tag)
   if (*tag == NULL)
     return;
 
+  ResourceSet_t *rset = (ResourceSet_t*)(*tag);
+
   // SYNC ALL
   xmpf_sync_all_nostat_();
 
-  ResourceSet_t *rset = (ResourceSet_t*)(*tag);
+  _XMPF_coarrayDebugPrint("EPILOG CODE. rset=%p\n", rset);
+
   _freeResourceSet(rset);
 
   *tag = NULL;
@@ -456,8 +457,7 @@ void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag)
 {
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
   MemoryChunkOrder_t *chunkP;
-  MemoryChunk_t *chunk = NULL;
-  BOOL found;
+  MemoryChunk_t *chunk, *myChunk;
 
   if (rset == NULL)
     rset = _newResourceSet("(pool)", strlen("(pool)"));
@@ -465,34 +465,30 @@ void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag)
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_GET_DESCPTR\n");
   _XMPF_coarrayDebugPrint("  coarray dummy argument: %p\n", baseAddr);
 
-  found = FALSE;
+  // generate a new descPtr for an allocatable dummy coarray
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(NULL, 0);
+
+  myChunk = NULL;
   forallMemoryChunkOrder(chunkP) {
     chunk = chunkP->chunk;
-
-    _XMPF_coarrayDebugPrint("  comparing with a chunk: %p  +%zd\n",
-                            chunk->orgAddr, chunk->nbytes);
-
     if (chunk->orgAddr <= baseAddr && baseAddr < chunk->orgAddr + chunk->nbytes) {
       // found the memory chunk
-      found = TRUE;
+      myChunk = chunk;
       break;
     }
   }
 
-  if (!found) {
-    _XMPF_coarrayDebugPrint("did not find the memory chunk that contains the coarray:\n"
-                            "  start address of the coarray dummy arg.: %p\n", 
-                            baseAddr);
+  if (myChunk != NULL) {
+    _XMPF_coarrayDebugPrint("*** found my chunk. baseAddr=%p, chunk->orgAddr=%p\n",
+                            baseAddr, chunk->orgAddr);
 
+    _addCoarrayInfo(myChunk, cinfo);
+
+  } else {
+    _XMPF_coarrayDebugPrint("*** no memory chunk owns me. baseAddr=%p, chunk: free\n",
+                            baseAddr);
   }
 
-  _XMPF_coarrayDebugPrint("  found.\n");
-
-  // generate a new descPtr for an allocatable dummy coarray
-  CoarrayInfo_t *cinfo = _newCoarrayInfo(NULL, 0);
-  _addCoarrayInfo(chunk, cinfo);
-  //cinfo->size = ???
-  
   // return coarrayInfo as descPtr
   *descPtr = (void*)cinfo;
 }
@@ -750,10 +746,16 @@ void _unlinkMemoryChunk(MemoryChunk_t *chunk2)
   MemoryChunk_t *chunk1 = chunk2->prev;
   MemoryChunk_t *chunk3 = chunk2->next;
 
-  chunk1->next = chunk3;
-  chunk3->prev = chunk1;
+  if (chunk1 != NULL) {
+    chunk1->next = chunk3;
+    chunk2->prev = NULL;
+  }
 
-  chunk2->next = chunk2->prev = NULL;
+  if (chunk3 != NULL) {
+    chunk3->prev = chunk1;
+    chunk2->next = NULL;
+  }
+
   chunk2->parent = NULL;
 }
 

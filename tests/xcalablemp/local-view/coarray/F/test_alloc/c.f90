@@ -1,5 +1,5 @@
   subroutine subsub
-    include "xmp_lib.h"
+    include "xmp_coarray.h"
     real, allocatable :: aaa(:)[:]
 
   contains
