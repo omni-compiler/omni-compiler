@@ -20,9 +20,6 @@
 !! allocate statement
       include "xmp_coarray_alloc.h"
 
-!! others
-      integer, external :: xmpf_coarray_image
-
 !! hidden utilities
       integer, external :: xmpf_coarray_allocated_bytes
       integer, external :: xmpf_coarray_garbage_bytes
