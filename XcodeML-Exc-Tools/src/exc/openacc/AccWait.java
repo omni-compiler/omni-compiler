@@ -5,7 +5,7 @@ import exc.block.PragmaBlock;
 import exc.object.Xcons;
 import exc.object.Xobject;
 
-public class AccWait extends AccDirective{
+class AccWait extends AccDirective{
 
   private static final String ACC_GPU_WAIT_FUNC_NAME = "_ACC_gpu_wait";
   private static final String ACC_GPU_WAIT_ALL_FUNC_NAME = "_ACC_gpu_wait_all";
@@ -16,11 +16,7 @@ public class AccWait extends AccDirective{
   }
 
   @Override
-  void analyze() throws ACCexception {
-  }
-
-  @Override
-  void translate() throws ACCexception {
+  void generate() throws ACCexception {
     Xobject waitExpr = _info.getIntExpr(ACCpragma.WAIT);
     if(waitExpr != null){ //wait(expr)
       replaceBlock = ACCutil.createFuncCallBlock(ACC_GPU_WAIT_FUNC_NAME, Xcons.List(waitExpr));
@@ -32,5 +28,10 @@ public class AccWait extends AccDirective{
   @Override
   void rewrite() throws ACCexception {
     _pb.replace(replaceBlock);
+  }
+
+  @Override
+  boolean isAcceptableClause(ACCpragma clauseKind) {
+    return clauseKind == ACCpragma.WAIT;
   }
 }

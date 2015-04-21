@@ -2,29 +2,20 @@ package exc.openacc;
 
 import exc.object.*;
 import exc.block.*;
-import xcodeml.util.XmOption;
 
 abstract class AccProcessor implements XobjectDefVisitor {
-  final protected ACCglobalDecl _globalDecl;
+  final ACCglobalDecl _globalDecl;
   final private boolean _isTopdown;
   final private boolean _isFinal;
 
-  public AccProcessor(ACCglobalDecl globalDecl, boolean isTopdown, boolean isFinal) {
-    if (!XmOption.isLanguageC()) {
-      ACC.fatal("current version only supports C language.");
-    }
-
+  AccProcessor(ACCglobalDecl globalDecl, boolean isTopdown, boolean isFinal) {
     _globalDecl = globalDecl;
     _isTopdown = isTopdown;
     _isFinal = isFinal;
   }
 
-  public AccProcessor(ACCglobalDecl globalDecl, boolean isTopdown) {
+  AccProcessor(ACCglobalDecl globalDecl, boolean isTopdown) {
     this(globalDecl, isTopdown, false);
-  }
-
-  public void finish() {
-    _globalDecl.finalize();
   }
 
   public void doDef(XobjectDef def) {

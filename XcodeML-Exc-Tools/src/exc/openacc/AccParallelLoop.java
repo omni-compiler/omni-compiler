@@ -2,7 +2,7 @@ package exc.openacc;
 
 import exc.block.PragmaBlock;
 
-public class AccParallelLoop extends AccParallel{
+class AccParallelLoop extends AccParallel{
   private final AccLoop loop;
   AccParallelLoop(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
@@ -11,11 +11,13 @@ public class AccParallelLoop extends AccParallel{
 
   @Override
   void analyze() throws ACCexception{
-    loop.analyze();
+    //loop.analyze();
+    loop.checkParallelism();
+    loop.addInductionVariableAsPrivate();
     super.analyze();
   }
 
-  public static boolean isAcceptableClause(ACCpragma clauseKind){
-    return AccParallel.isAcceptableClause(clauseKind) || AccLoop.isAcceptableClause(clauseKind);
+  boolean isAcceptableClause(ACCpragma clauseKind){
+    return super.isAcceptableClause(clauseKind) || loop.isAcceptableClause(clauseKind);
   }
 }

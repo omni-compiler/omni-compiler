@@ -4,13 +4,13 @@ import exc.object.*;
 
 import java.util.*;
 
-public class AccInformation {
-  private final ACCpragma pragma; /* directive */
+class AccInformation {
+  private final ACCpragma pragma; /* directive kind*/
   private final EnumSet<ACCpragma> boolSet = EnumSet.noneOf(ACCpragma.class);
   private final Map<ACCpragma, Xobject> exprMap = new LinkedHashMap<ACCpragma, Xobject>(); //contain order
   private final Map<ACCpragma, List<ACCvar>> varMap = new LinkedHashMap<ACCpragma, List<ACCvar>>(); //contains order
   private final Set<String> declaredSymbolSet = new HashSet<String>();
-  public static final String prop = "_ACC_information";
+  //public static final String prop = "_ACC_information";
 
   AccInformation(ACCpragma pragma, Xobject arg) throws ACCexception {
     this.pragma = pragma;
@@ -24,14 +24,8 @@ public class AccInformation {
       ACCpragma clauseKind = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArg = clause.getArgOrNull(1);
 
-      if (isAcceptableClause(pragma, clauseKind)) {
-        setClause(clauseKind, clauseArg);
-      } else {
-        throw new ACCexception(clauseKind.getName() + " clause is not allowed");
-      }
+      setClause(clauseKind, clauseArg);
     }
-
-    System.out.println(this);
   }
 
   void setBool(ACCpragma clauseKind) throws ACCexception {
@@ -55,10 +49,6 @@ public class AccInformation {
   }
 
   void setIntExpr(ACCpragma clauseKind, Xobject clauseArg) throws ACCexception {
-    //if (clauseArg != null && !clauseArg.Type().isIntegral()){
-    //  throw new ACCexception(clauseArg + " is not integer expression");
-    //}
-
     switch(clauseKind){
     case IF:
     case NUM_GANGS:
@@ -178,35 +168,6 @@ public class AccInformation {
     }
   }
 
-  private boolean isAcceptableClause(ACCpragma directive, ACCpragma clause) throws ACCexception {
-    switch (directive){
-    case PARALLEL:
-      return AccParallel.isAcceptableClause(clause);
-    case LOOP:
-      return AccLoop.isAcceptableClause(clause);
-    case DATA:
-      return AccData.isAcceptableClause(clause);
-    case DECLARE:
-      return AccDeclare.isAcceptableClause(clause);
-    case KERNELS:
-      return AccKernels.isAcceptableClause(clause);
-    case UPDATE:
-      return AccUpdate.isAcceptableClause(clause);
-    case HOST_DATA:
-      return AccHostData.isAcceptableClause(clause);
-    case PARALLEL_LOOP:
-      return AccParallelLoop.isAcceptableClause(clause);
-    case KERNELS_LOOP:
-      return AccKernelsLoop.isAcceptableClause(clause);
-    case ENTER_DATA:
-      return AccEnterData.isAcceptableClause(clause);
-    case EXIT_DATA:
-      return AccExitData.isAcceptableClause(clause);
-    default:
-      throw new ACCexception("'" + directive.getName() + "' directive is not supported yet");
-    }
-  }
-
   Xobject toXobject(){
     if(pragma == ACCpragma.CACHE){
       XobjList varList = Xcons.List();
@@ -310,54 +271,32 @@ public class AccInformation {
             boolSet.contains(clauseKind) ||
             varMap.containsKey(clauseKind);
   }
-}
 
-/*
-class Var{
-  private final String symbol;
-  private final XobjList subscripts;
-  Var(Xobject x){
-    XobjList subscripts = null;
-    if(x.Opcode() == Xcode.LIST){
-      Xobject var = x.getArg(0);
-      symbol = var.getName();
-      subscripts = (XobjList)x.copy();
-      subscripts.removeFirstArgs();
-    }else{
-      symbol = x.getName();
-    }
-    this.subscripts = subscripts;
-  }
-  Var(String symbol, XobjList subscripts){
-    this.symbol = symbol;
-    this.subscripts = subscripts;
-  }
-  public String toString(){
-    StringBuilder sb = new StringBuilder();
-    sb.append(symbol);
-    if(subscripts != null){
-      for(Xobject subscript : subscripts){
-        sb.append('[');
-        sb.append(subscript.getArg(0).getName());
-        sb.append(':');
-        sb.append(subscript.getArg(1).getName());
-        sb.append(']');
+  void validate(AccDirective directive) throws ACCexception{
+    for(ACCpragma clauseKind : boolSet){
+      if(! directive.isAcceptableClause(clauseKind)) {
+        throw new ACCexception(clauseKind.getName() + " clause is not allowed");
       }
     }
-    return new String(sb);
-  }
-  public Xobject toXobject(){
-    Xobject var = Xcons.Symbol(Xcode.VAR, symbol);
-    if(subscripts == null) {
-      return var;
-    }else{
-      XobjList l = Xcons.List(var);
-      l.mergeList(subscripts);
-      return l;
+
+    for(ACCpragma clauseKind : exprMap.keySet()){
+      if(! directive.isAcceptableClause(clauseKind)) {
+        throw new ACCexception(clauseKind.getName() + " clause is not allowed");
+      }
+      Xobject expr = exprMap.get(clauseKind);
+      if(expr != null && ! directive.isIntExpr(expr)){
+        throw new ACCexception("'" + expr + "' is not int expr");
+      }
     }
-  }
-  public String getSymbol(){
-    return symbol;
+
+    for(ACCpragma clauseKind : varMap.keySet()){
+      if(! directive.isAcceptableClause(clauseKind)) {
+        throw new ACCexception(clauseKind.getName() + " clause is not allowed");
+      }
+      for(ACCvar var : varMap.get(clauseKind)){
+        directive.setVarIdent(var);
+      }
+    }
+
   }
 }
-*/

@@ -9,7 +9,6 @@ import xcodeml.util.XmLog;
 public class ACC {
   public final static String prop = "_ACC_PROP_";
   
-  public static boolean debugFlag = true;
   private static boolean errorFlag      = false;
   
   public static boolean useReadOnlyDataCache = true;
@@ -47,15 +46,5 @@ public class ACC {
   
   public static void debug(String msg) {
     XmLog.debug("[OpenACC] " + msg);
-  }
-
-  public static Ident getMacroId(String name) {
-    return new Ident(name, StorageClass.EXTERN, Xtype.Function(Xtype.voidType),
-                     Xcons.Symbol(Xcode.FUNC_ADDR, Xtype.Pointer(Xtype.Function(Xtype.voidType)), name), VarScope.GLOBAL);
-  }
-
-  public static Ident getMacroId(String name, Xtype type) {
-    return new Ident(name, StorageClass.EXTERN, Xtype.Function(type),
-                     Xcons.Symbol(Xcode.FUNC_ADDR, Xtype.Pointer(Xtype.Function(type)), name), VarScope.GLOBAL);
   }
 }

@@ -2,16 +2,14 @@ package exc.openacc;
 
 import exc.block.*;
 
-public class AccEnterData extends AccData{
+class AccEnterData extends AccData{
 
   AccEnterData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
 
   @Override
-  void translate() throws ACCexception {
-    ACC.debug("translate enter data");
-
+  void generate() throws ACCexception {
     if(isDisabled()) return;
 
     for(ACCvar var : _info.getDeclarativeACCvarList()){
@@ -30,7 +28,7 @@ public class AccEnterData extends AccData{
     }
   }
 
-  public static boolean isAcceptableClause(ACCpragma clauseKind) {
+  boolean isAcceptableClause(ACCpragma clauseKind) {
     switch (clauseKind) {
     case IF:
     case ASYNC:

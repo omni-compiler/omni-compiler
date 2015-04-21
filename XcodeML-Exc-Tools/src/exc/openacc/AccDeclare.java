@@ -3,7 +3,7 @@ package exc.openacc;
 import exc.block.*;
 import exc.object.*;
 
-public class AccDeclare extends AccData{
+class AccDeclare extends AccData{
   AccDeclare(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
@@ -13,8 +13,6 @@ public class AccDeclare extends AccData{
 
   @Override
   void rewrite() throws ACCexception{
-    ACC.debug("rewrite global declare");
-
     BlockList initBody = Bcons.emptyBody();
     BlockList finalizeBody = Bcons.emptyBody();
 
@@ -41,7 +39,7 @@ public class AccDeclare extends AccData{
     }
   }
 
-  public static boolean isAcceptableClause(ACCpragma clauseKind) {
+  boolean isAcceptableClause(ACCpragma clauseKind) {
     switch (clauseKind){
     case IF:
     case ASYNC:

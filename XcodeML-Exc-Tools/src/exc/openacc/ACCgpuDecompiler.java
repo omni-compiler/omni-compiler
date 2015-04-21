@@ -9,7 +9,7 @@ import xcodeml.util.XmOption;
 import exc.object.*;
 
 
-public class ACCgpuDecompiler {
+class ACCgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
   private static final String GPU_SRC_EXTENSION = ".cu";
   public static final String GPU_FUNC_CONF = "OEPNACC_GPU_FUNC_CONF_PROP";

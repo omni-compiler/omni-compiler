@@ -86,10 +86,16 @@ public class ACCglobalDecl{
   public Ident declExternIdent(String name, Xtype t) {
     return _env.declExternIdent(name, t);
   }
-  public void finalize() {
+  public void finish() {
     _env.collectAllTypes();
     _env.fixupTypeRef();
   }
+
+  public void setupHeaderInclude(){
+    _env.addHeaderLine("# include \"acc.h\"");
+    _env.addHeaderLine("# include \"acc_gpu.h\"");
+  }
+
   public Ident findVarIdent(String name){
     return _env.findVarIdent(name);
   }

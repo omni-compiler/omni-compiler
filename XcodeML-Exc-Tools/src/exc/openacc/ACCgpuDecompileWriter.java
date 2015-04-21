@@ -11,7 +11,7 @@ import exc.object.*;
 import java.io.*;
 import java.util.*;
 
-public class ACCgpuDecompileWriter extends PrintWriter {
+class ACCgpuDecompileWriter extends PrintWriter {
   private XobjectFile _env = null;
 
   public ACCgpuDecompileWriter(Writer out, XobjectFile env) {
@@ -40,7 +40,7 @@ public class ACCgpuDecompileWriter extends PrintWriter {
     printWithIdentList(def.getDef(), _env.getGlobalIdentList(), false, null);
   }
   
-  public void printFunc(XobjectDef def){
+  void printFunc(XobjectDef def){
     String funcName = def.getName();
     boolean isDeviceFunc = funcName.endsWith(AccKernel.ACC_GPU_DEVICE_FUNC_SUFFIX);
     printWithIdentList(def.getDef(), _env.getGlobalIdentList(), isDeviceFunc, (Ident)def.getNameObj());

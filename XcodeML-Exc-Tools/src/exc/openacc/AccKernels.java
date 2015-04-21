@@ -4,7 +4,7 @@ import exc.block.*;
 import exc.object.*;
 import java.util.*;
 
-public class AccKernels extends AccData {
+class AccKernels extends AccData {
   private final List<Block> _kernelBlocks = new ArrayList<Block>();
   private final List<AccKernel> _accKernelList = new ArrayList<AccKernel>();
 
@@ -65,11 +65,11 @@ public class AccKernels extends AccData {
     for(Ident id : outerIdSet){
       String varName = id.getSym();
       if(_info.isDeclared(varName)) continue;
-      if(readOnlyOuterIdSet.contains(id) && !id.Type().isArray()){
-        _info.setVar(ACCpragma.FIRSTPRIVATE, Xcons.Symbol(Xcode.VAR, varName));
-      }else{
+      //if(readOnlyOuterIdSet.contains(id) && !id.Type().isArray()){
+        //_info.setVar(ACCpragma.FIRSTPRIVATE, Xcons.Symbol(Xcode.VAR, varName));
+      //}else{
         _info.setVar(ACCpragma.PRESENT_OR_COPY, Xcons.Symbol(Xcode.VAR, varName));
-      }
+      //}
     }
 
     /////////
@@ -90,15 +90,15 @@ public class AccKernels extends AccData {
   }
 
   @Override
-  void translate() throws ACCexception {
+  void generate() throws ACCexception {
     if(isDisabled()){
       return;
     }
 
 
 
-    //translate data
-    super.translate();
+    //generate data
+    super.generate();
 
     //make kernels list of block(kernel call , sync)
     for(AccKernel gpuKernel : _accKernelList){
@@ -202,7 +202,7 @@ public class AccKernels extends AccData {
     return readOnlyOuterIdSet;
   }
 
-  public static boolean isAcceptableClause(ACCpragma clauseKind) {
+  boolean isAcceptableClause(ACCpragma clauseKind) {
     switch (clauseKind){
     case IF:
     case ASYNC:

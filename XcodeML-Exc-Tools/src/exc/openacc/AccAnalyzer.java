@@ -4,7 +4,7 @@ import exc.block.PragmaBlock;
 import exc.object.PropObject;
 import exc.object.Xobject;
 
-public class AccAnalyzer extends AccProcessor {
+class AccAnalyzer extends AccProcessor {
   public AccAnalyzer(ACCglobalDecl globalDecl) {
     super(globalDecl, true);
   }

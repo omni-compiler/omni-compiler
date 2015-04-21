@@ -1,12 +1,9 @@
 package exc.openacc;
 
 import exc.block.*;
-import exc.object.Ident;
-import exc.object.Xcode;
+import exc.object.*;
 
-import java.util.List;
-
-public abstract class AccDirective {
+abstract class AccDirective {
   public static final String prop = "_ACC_DIRECTIVE";
   final AccInformation _info;
   final PragmaBlock _pb;
@@ -18,25 +15,25 @@ public abstract class AccDirective {
     _decl = decl;
     _info = info;
     _pb = pb;
+    ACC.debug(info.toString());
   }
 
-  abstract void analyze() throws ACCexception;
+  void analyze() throws ACCexception {
+    _info.validate(this);
+  }
 
-  void setVarIdents() throws ACCexception {
-    List<ACCvar> varList = _info.getACCvarList();
-    for(ACCvar var : varList){
-      String symbol = var.getSymbol();
-      Ident id = findVarIdent(symbol);
-      if(id == null){
-        throw new ACCexception("symbol '" + symbol + "' is not exist");
-      }
-      var.setIdent(id);
-      ACCvar parentVar = findParentVar(id);
-      var.setParent(parentVar);
+  void setVarIdent(ACCvar var) throws ACCexception{
+    String symbol = var.getSymbol();
+    Ident id = findVarIdent(symbol);
+    if(id == null){
+      throw new ACCexception("symbol '" + symbol + "' is not exist");
     }
+    var.setIdent(id);
+    ACCvar parentVar = findParentVar(id);
+    var.setParent(parentVar);
   }
 
-  abstract void translate() throws ACCexception;
+  abstract void generate() throws ACCexception;
   abstract void rewrite() throws ACCexception;
 
   Ident findVarIdent(String symbol){
@@ -63,8 +60,29 @@ public abstract class AccDirective {
     return _pb == null;
   }
 
-  @Deprecated
   AccInformation getInfo(){
     return _info;
+  }
+
+  abstract boolean isAcceptableClause(ACCpragma clauseKind);
+
+  boolean isIntExpr(Xobject expr) throws ACCexception{
+    if(expr == null) return false;
+
+    if(expr.Opcode() == Xcode.VAR){
+      String varName = expr.getName();
+      Ident varId = _pb.findVarIdent(varName);
+      if(varId == null){
+        throw new ACCexception("Symbol '" + varName + "' is not found");
+      }
+      if(varId.Type().isIntegral()){
+        return true;
+      }
+    }else if(expr.isIntConstant()){
+      return true;
+    }
+
+    //FIXME check complex expression
+    return true;
   }
 }

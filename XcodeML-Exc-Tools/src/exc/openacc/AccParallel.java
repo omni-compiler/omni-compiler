@@ -4,7 +4,7 @@ import exc.block.*;
 import exc.object.*;
 import java.util.*;
 
-public class AccParallel extends AccData{
+class AccParallel extends AccData{
   private Block _parallelBlock;
   private final AccKernel _accKernel;
 
@@ -56,15 +56,13 @@ public class AccParallel extends AccData{
   }
 
   @Override
-  void translate() throws ACCexception {
-    ACC.debug("translate parallel");
-
+  void generate() throws ACCexception {
     if(isDisabled()){
       return;
     }
 
-    //translate data
-    super.translate();
+    //generate data
+    super.generate();
 
     _parallelBlock = _accKernel.makeLaunchFuncCallBlock();
   }
@@ -103,7 +101,7 @@ public class AccParallel extends AccData{
     _pb.replace(Bcons.COMPOUND(resultBody));
   }
 
-  public static boolean isAcceptableClause(ACCpragma clauseKind){
+  boolean isAcceptableClause(ACCpragma clauseKind){
     switch (clauseKind) {
     case IF:
     case ASYNC:

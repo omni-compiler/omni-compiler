@@ -6,14 +6,14 @@ import exc.object.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AccUpdate extends AccData{
+class AccUpdate extends AccData{
   private final List<Block> copyBlockList = new ArrayList<Block>();
 
   AccUpdate(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
 
-  public static boolean isAcceptableClause(ACCpragma clauseKind){
+  boolean isAcceptableClause(ACCpragma clauseKind){
     switch (clauseKind){
     case IF:
     case ASYNC:
@@ -52,9 +52,7 @@ public class AccUpdate extends AccData{
   }
 
   @Override
-  void translate() throws ACCexception{
-    ACC.debug("translate update");
-
+  void generate() throws ACCexception{
     if(isDisabled()){
       return;
     }

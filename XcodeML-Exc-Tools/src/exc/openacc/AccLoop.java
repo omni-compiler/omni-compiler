@@ -4,9 +4,9 @@ import exc.block.*;
 import exc.object.*;
 import java.util.*;
 
-public class AccLoop extends AccDirective{
+class AccLoop extends AccDirective{
   //private boolean useWORKER = false;
-  private List<ACCpragma> parallelismList = Arrays.asList(ACCpragma.GANG, ACCpragma.VECTOR);
+  private final List<ACCpragma> parallelismList = Arrays.asList(ACCpragma.GANG, ACCpragma.VECTOR);
 
   AccLoop(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
@@ -17,12 +17,25 @@ public class AccLoop extends AccDirective{
     //check parallelism
     checkParallelism();
 
+    addInductionVariableAsPrivate();
+
+    super.analyze();
+  }
+
+  @Override
+  void generate() throws ACCexception {
+
+  }
+
+  @Override
+  void rewrite() throws ACCexception {
+    _pb.replace(Bcons.COMPOUND(_pb.getBody()));
+  }
+
+  void addInductionVariableAsPrivate() throws ACCexception{
     if(_info.hasClause(ACCpragma.SEQ)){
       return;
     }
-    //if(!useWORKER && _info.hasClause(ACCpragma.WORKER) && !_info.hasClause(ACCpragma.GANG) && !_info.hasClause(ACCpragma.VECTOR)){
-//      return;
-//    }
 
     //check loop body
     int collapseNum = 1;
@@ -40,21 +53,9 @@ public class AccLoop extends AccDirective{
         throw new ACCexception(symbol + " is induction variable but not private");
       }
     }
-
-    setVarIdents();
   }
 
-  @Override
-  void translate() throws ACCexception {
-
-  }
-
-  @Override
-  void rewrite() throws ACCexception {
-    _pb.replace(Bcons.COMPOUND(_pb.getBody()));
-  }
-
-  private void checkParallelism() throws ACCexception{
+  void checkParallelism() throws ACCexception{
     Set<ACCpragma> inputParallelism = getParallelismSet(_info);
 
     if(inputParallelism.contains(ACCpragma.AUTO) && inputParallelism.size() != 1 ||
@@ -215,7 +216,7 @@ public class AccLoop extends AccDirective{
     return inductionVarList;
   }
 
-  public static boolean isAcceptableClause(ACCpragma clauseKind){
+  boolean isAcceptableClause(ACCpragma clauseKind){
     switch (clauseKind) {
     case GANG:
     case WORKER:

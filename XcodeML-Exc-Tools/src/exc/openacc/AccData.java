@@ -4,14 +4,14 @@ import exc.block.*;
 import exc.object.*;
 import java.util.*;
 
-public class AccData extends AccDirective {
+class AccData extends AccDirective {
   private final static String DEVICE_PTR_PREFIX = "_ACC_DEVICE_ADDR_";
   private final static String HOST_DESC_PREFIX = "_ACC_HOST_DESC_";
-  protected final List<Block> initBlockList = new ArrayList<Block>();
-  protected final List<Block> copyinBlockList = new ArrayList<Block>();
-  protected final List<Block> copyoutBlockList = new ArrayList<Block>();
-  protected final List<Block> finalizeBlockList = new ArrayList<Block>();
-  protected final XobjList idList = Xcons.IDList();
+  final List<Block> initBlockList = new ArrayList<Block>();
+  final List<Block> copyinBlockList = new ArrayList<Block>();
+  final List<Block> copyoutBlockList = new ArrayList<Block>();
+  final List<Block> finalizeBlockList = new ArrayList<Block>();
+  final XobjList idList = Xcons.IDList();
 
   AccData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
@@ -20,7 +20,7 @@ public class AccData extends AccDirective {
     super(decl, info);
   }
 
-  public static boolean isAcceptableClause(ACCpragma clauseKind) {
+  boolean isAcceptableClause(ACCpragma clauseKind) {
     switch (clauseKind) {
     case IF:
       return true;
@@ -29,13 +29,16 @@ public class AccData extends AccDirective {
     }
   }
 
+  /*
   @Override
   void analyze() throws ACCexception {
+    super.analyze();
     //シンボルのidを調べて存在するかチェック
-    setVarIdents();
+    //setVarIdents();
 
     //TODO 親のpragmaで既に確保されているか調べる
   }
+  */
 
   boolean isDisabled(){
     Xobject ifExpr = _info.getIntExpr(ACCpragma.IF);
@@ -43,9 +46,7 @@ public class AccData extends AccDirective {
   }
 
   @Override
-  void translate() throws ACCexception {
-    ACC.debug("translate data");
-
+  void generate() throws ACCexception {
     if(isDisabled()) return;
 
     for(ACCvar var : _info.getDeclarativeACCvarList()){

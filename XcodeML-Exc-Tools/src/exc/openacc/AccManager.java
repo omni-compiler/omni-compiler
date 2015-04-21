@@ -6,7 +6,7 @@ import exc.object.*;
 import java.util.*;
 
 
-public class AccManager {
+class AccManager {
   private final AccInformation _info;
   private final PragmaBlock _pb;
   private Xobject numGangs = null;
@@ -155,7 +155,8 @@ public class AccManager {
 
     Xobject xone = Xcons.IntConstant(1);
 
-    return Xcons.List(Xcons.List(bsx, xone, xone), Xcons.List(tsx, xone, xone));
+    //return Xcons.List(Xcons.List(bsx, xone, xone), Xcons.List(tsx, xone, xone));
+    return Xcons.List(bsx, xone, tsx);
   }
 
   public void setNumGangs(Xobject numGangs){

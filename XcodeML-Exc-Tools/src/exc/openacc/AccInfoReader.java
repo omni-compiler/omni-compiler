@@ -3,7 +3,7 @@ package exc.openacc;
 import exc.block.*;
 import exc.object.*;
 
-public class AccInfoReader extends AccProcessor{
+class AccInfoReader extends AccProcessor{
   public AccInfoReader(ACCglobalDecl globalDecl) {
     super(globalDecl, true);
   }
@@ -12,14 +12,12 @@ public class AccInfoReader extends AccProcessor{
     String pragmaName = def.getArg(0).getString();
     Xobject clauseList = def.getArg(1);
     ACCpragma pragma = ACCpragma.valueOf(pragmaName);
-    ACC.debug(pragma.getName() + " directive : " + clauseList);
 
     if(! pragma.isGlobal()){
       throw new ACCexception(pragma.getName() + " is not global directive");
     }
 
     AccInformation info = new AccInformation(pragma, clauseList);
-    //def.setProp(AccInformation.prop, info);
 
     def.setProp(AccDirective.prop, new AccDeclare(_globalDecl, info));
   }
@@ -28,14 +26,12 @@ public class AccInfoReader extends AccProcessor{
     String directiveName = pb.getPragma();
     ACCpragma directive = ACCpragma.valueOf(directiveName);
     Xobject clauseList = pb.getClauses();
-    ACC.debug(directiveName + " directive : " + clauseList);
 
     if(! directive.isLocal()){
       throw new ACCexception(directiveName + " is not local directive");
     }
 
     AccInformation info = new AccInformation(directive, clauseList);
-    //pb.setProp(AccInformation.prop, info);
 
     switch (directive){
     case DATA:

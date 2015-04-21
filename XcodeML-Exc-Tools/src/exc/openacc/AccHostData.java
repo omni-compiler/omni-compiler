@@ -3,18 +3,20 @@ package exc.openacc;
 import exc.block.*;
 import exc.object.*;
 
-public class AccHostData extends AccDirective {
+class AccHostData extends AccDirective {
   AccHostData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
 
+  /*
   @Override
   void analyze() throws ACCexception {
     setVarIdents();
   }
+  */
 
   @Override
-  void translate() throws ACCexception {
+  void generate() throws ACCexception {
   }
 
   @Override
@@ -84,7 +86,7 @@ public class AccHostData extends AccDirective {
     return result;
   }
 
-  public static boolean isAcceptableClause(ACCpragma clauseKind) {
+  boolean isAcceptableClause(ACCpragma clauseKind) {
     return clauseKind == ACCpragma.USE_DEVICE;
   }
 }

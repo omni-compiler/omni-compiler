@@ -1,26 +1,61 @@
 package exc.openacc;
 
-import exc.block.PragmaBlock;
-import exc.object.PropObject;
-import exc.object.Xobject;
+import exc.object.*;
+import xcodeml.util.XmOption;
 
-public class AccTranslator extends AccProcessor{
-  public AccTranslator(ACCglobalDecl globalDecl) {
-    super(globalDecl, true);
+public class AccTranslator implements XobjectDefVisitor {
+  private final ACCglobalDecl _globalDecl;
+  private final AccInfoReader _infoReader;
+  private final AccInfoWriter _infoWriter;
+  private final AccAnalyzer _analyzer;
+  private final AccGenerator _generator;
+  private final AccRewriter _rewrite;
+  private final boolean _onlyAnalyze;
+
+  public AccTranslator(XobjectFile xobjFile, boolean onlyAnalyze){
+    if (!XmOption.isLanguageC()) {
+      ACC.fatal("current version only supports C language.");
+    }
+
+    _globalDecl = new ACCglobalDecl(xobjFile);
+    _infoReader = new AccInfoReader(_globalDecl);
+    _infoWriter = new AccInfoWriter(_globalDecl);
+    _analyzer = new AccAnalyzer(_globalDecl);
+    _generator = new AccGenerator(_globalDecl);
+    _rewrite = new AccRewriter(_globalDecl);
+    _onlyAnalyze = onlyAnalyze;
   }
 
-  void doGlobalAccPragma(Xobject def) throws ACCexception {
-    doAccPragma(def);
+  @Override
+  public void doDef(XobjectDef def) {
+    _infoReader.doDef(def);
+    ACC.exitByError();
+    _analyzer.doDef(def);
+    ACC.exitByError();
+
+    if(_onlyAnalyze) {
+      _infoWriter.doDef(def);
+      ACC.exitByError();
+      return;
+    }
+
+    _generator.doDef(def);
+    ACC.exitByError();
+    _rewrite.doDef(def);
+    ACC.exitByError();
   }
 
-  void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
-    doAccPragma(pb);
-  }
+  public void finish(){
+    if(!_onlyAnalyze) {
+      ACCgpuDecompiler gpuDecompiler = new ACCgpuDecompiler();
+      gpuDecompiler.decompile(_globalDecl);
 
-  void doAccPragma(PropObject po) throws ACCexception {
-    Object obj = po.getProp(AccDirective.prop);
-    if (obj == null) return;
-    AccDirective dire = (AccDirective) obj;
-    dire.translate();
+      _globalDecl.setupGlobalConstructor();
+      _globalDecl.setupGlobalDestructor();
+      _globalDecl.setupMain();
+      _globalDecl.setupHeaderInclude();
+    }
+
+    _globalDecl.finish();
   }
 }

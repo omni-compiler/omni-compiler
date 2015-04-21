@@ -3,13 +3,14 @@ package exc.openacc;
 import exc.block.*;
 import exc.object.*;
 
-public class AccInfoWriter extends AccProcessor {
+class AccInfoWriter extends AccProcessor {
   public AccInfoWriter(ACCglobalDecl globalDecl) {
     super(globalDecl, true, true);
   }
 
   void doGlobalAccPragma(Xobject def) throws ACCexception {
-    AccInformation info = (AccInformation) def.getProp(AccInformation.prop);
+    AccDirective directive = (AccDirective)def.getProp(AccDirective.prop);
+    AccInformation info = directive.getInfo();
     Xobject clauses = info.toXobject();
     def.setArg(1, clauses);
   }

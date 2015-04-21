@@ -4,9 +4,9 @@ import exc.block.PragmaBlock;
 import exc.object.PropObject;
 import exc.object.Xobject;
 
-class AccRewriter extends AccProcessor{
-  public AccRewriter(ACCglobalDecl globalDecl) {
-    super(globalDecl, false, true);
+class AccGenerator extends AccProcessor{
+  public AccGenerator(ACCglobalDecl globalDecl) {
+    super(globalDecl, true);
   }
 
   void doGlobalAccPragma(Xobject def) throws ACCexception {
@@ -21,6 +21,6 @@ class AccRewriter extends AccProcessor{
     Object obj = po.getProp(AccDirective.prop);
     if (obj == null) return;
     AccDirective dire = (AccDirective) obj;
-    dire.rewrite();
+    dire.generate();
   }
 }

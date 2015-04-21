@@ -75,7 +75,7 @@ public class ACCvar {
     }
     symbol = id.getSym();
   }
-  ACCvar(String symbol) throws ACCexception{
+  ACCvar(String symbol) {
     this.symbol = symbol;
     this.id = null;
   }
