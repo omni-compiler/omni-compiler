@@ -1,6 +1,6 @@
 Omni Compiler Software RELEASE NOTES
 
-# ver. 0.9.1      2015/04/17
+# ver. 0.9.1      2015/04/21
 * Refactoring xmpcc command.
 * Refactoring build system (without requiring ant).
 * Support stride coarray on the K computer and FX10.
