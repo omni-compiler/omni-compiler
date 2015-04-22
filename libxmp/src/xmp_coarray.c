@@ -856,8 +856,8 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
 
   if(rdma_code == _XMP_N_COARRAY_PUT){
     if(target_rank == _XMP_world_rank){
-      _XMP_local_put(remote_coarray_is_continuous, local_array_is_continuous, _coarray_dims, _array_dims,
-		     _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+      _XMP_local_put(remote_coarray, local_array, remote_coarray_is_continuous, local_array_is_continuous, 
+		     _coarray_dims, _array_dims, _coarray, _array, _transfer_coarray_elmts, _transfer_array_elmts);
     }
     else{
 #ifdef _XMP_GASNET
@@ -871,8 +871,8 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
   }
   else if(rdma_code == _XMP_N_COARRAY_GET){
     if(target_rank == _XMP_world_rank){
-      _XMP_local_get(remote_coarray_is_continuous, local_array_is_continuous, _coarray_dims, _array_dims,
-                     _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+      _XMP_local_get(local_array, remote_coarray, local_array_is_continuous, remote_coarray_is_continuous,
+		     _array_dims, _coarray_dims, _array, _coarray, _transfer_array_elmts, _transfer_coarray_elmts);
     }
     else{
 #ifdef _XMP_GASNET

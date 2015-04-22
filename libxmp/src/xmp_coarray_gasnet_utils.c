@@ -1,146 +1,6 @@
 #include "xmp_internal.h"
 #define _XMP_UNROLLING (4)
 
-static int _is_all_elmt(const _XMP_array_section_t* array_info, const int dim)
-{
-  if(array_info[dim].start == 0 && array_info[dim].length == array_info[dim].elmts){
-    return _XMP_N_INT_TRUE;
-  }
-  else{
-    return _XMP_N_INT_FALSE;
-  }
-}
-
-// How depth is memory continuity ?
-// when depth is 0, all dimension is not continuous.
-// ushiro no jigen kara kazoete "depth" banme made rennzokuka ?
-// eg. a[:][2:2:1]    -> depth is 1. The last diemnsion is continuous.
-//     a[:][2:2:2]    -> depth is 0.
-//     a[:][:]        -> depth is 2. But, this function is called when array is not continuous.
-//                       So depth does not become 2.
-//     b[:][:][1:2:2]   -> depth is 0.
-//     b[:][:][1]       -> depth is 1.
-//     b[:][2:2:2][1]   -> depth is 1.
-//     b[:][2:2:2][:]   -> depth is 1.
-//     b[2:2:2][:][:]   -> depth is 2.
-//     b[2:2][2:2][2:2] -> depth is 1.
-//     c[1:2][1:2][1:2][1:2] -> depth is 1.
-//     c[1:2:2][:][:][:]     -> depth is 3.
-//     c[1:2:2][::2][:][:]   -> depth is 2.
-static int _get_depth(const int dims, const _XMP_array_section_t* array_info)  // 7 >= dims >= 2
-{
-  if(dims == 2){
-    if(array_info[1].stride == 1)
-      return 1;
-    else
-      return 0;
-  }
-  
-  int all_elmt_flag[_XMP_N_MAX_DIM];
-  for(int i=1;i<dims;i++)
-    all_elmt_flag[i] = _is_all_elmt(array_info, i);
-  
-  switch (dims){
-  case 3:
-    if(all_elmt_flag[1] && all_elmt_flag[2]){
-      return 2;
-    }
-    else if(array_info[2].stride == 1){
-      return 1;
-    }
-    else{
-      return 0;
-    }
-    break;;
-    
-  case 4:
-    if(all_elmt_flag[1] && all_elmt_flag[2] && all_elmt_flag[3]){
-      return 3;
-    }
-    else if(all_elmt_flag[2] && all_elmt_flag[3]){
-      return 2;
-    }
-    else if(array_info[3].stride == 1){
-      return 1;
-    }
-    else{
-      return 0;
-    }
-    break;;
-    
-  case 5:
-    if(all_elmt_flag[1] && all_elmt_flag[2] && all_elmt_flag[3] && all_elmt_flag[4]){
-      return 4;
-    }
-    else if(all_elmt_flag[2] && all_elmt_flag[3] && all_elmt_flag[4]){
-      return 3;
-    }
-    else if(all_elmt_flag[3] && all_elmt_flag[4]){
-      return 2;
-    }
-    else if(array_info[4].stride == 1){
-      return 1;
-    }
-    else{
-      return 0;
-    }
-    break;;
-    
-  case 6:
-    if(all_elmt_flag[1] && all_elmt_flag[2] && all_elmt_flag[3] && all_elmt_flag[4] &&
-       all_elmt_flag[5]){
-      return 5;
-    }
-    else if(all_elmt_flag[2] && all_elmt_flag[3] && all_elmt_flag[4] && all_elmt_flag[5]){
-      return 4;
-    }
-    else if(all_elmt_flag[3] && all_elmt_flag[4] && all_elmt_flag[5]){
-      return 3;
-    }
-    else if(all_elmt_flag[4] && all_elmt_flag[5]){
-      return 2;
-    }
-    else if(array_info[5].stride == 1){
-      return 1;
-    }
-    else{
-      return 0;
-    }
-    break;;
-    
-  case 7:
-    if(all_elmt_flag[1] && all_elmt_flag[2] && all_elmt_flag[3] && all_elmt_flag[4] &&
-       all_elmt_flag[5] && all_elmt_flag[6]){
-      return 6;
-    }
-    else if(all_elmt_flag[2] && all_elmt_flag[3] && all_elmt_flag[4] &&
-	    all_elmt_flag[5] && all_elmt_flag[6]){
-      return 5;
-    }
-    else if(all_elmt_flag[3] && all_elmt_flag[4] && all_elmt_flag[5] && all_elmt_flag[6]){
-      return 4;
-    }
-    else if(all_elmt_flag[4] && all_elmt_flag[5] && all_elmt_flag[6]){
-      return 3;
-    }
-    else if(all_elmt_flag[5] && all_elmt_flag[6]){
-      return 2;
-    }
-    else if(array_info[6].stride == 1){
-      return 1;
-    }
-    else{
-      return 0;
-    }
-    break;;
-
-  default:
-    _XMP_fatal("Dimensions of Coarray is too big.");
-    return -1;
-    break;;
-  }
-}
-
 static size_t _calc_start_offset(const _XMP_array_section_t* arrray_info, int dim)
 {
   size_t start_offset = 0;
@@ -150,8 +10,6 @@ static size_t _calc_start_offset(const _XMP_array_section_t* arrray_info, int di
 
   return start_offset;
 }
-
-
 
 static void _pack_7_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
 			      const int continuous_dim)
@@ -379,7 +237,7 @@ void _XMP_pack_coarray(char* archive_ptr, const char* src_ptr, const int src_dim
   }
 
   // How depth is memory continuity ?
-  int continuous_dim = _get_depth(src_dims, src);
+  int continuous_dim = _XMP_get_depth(src_dims, src);
 
   switch (src_dims){
   case 2:
@@ -689,7 +547,7 @@ void _XMP_unpack_coarray(char *dst_ptr, const int dst_dims, const char* src_ptr,
   }
 
   if(flag == 0){
-    int continuous_dim = _get_depth(dst_dims, dst);
+    int continuous_dim = _XMP_get_depth(dst_dims, dst);
     switch (dst_dims){
     case 2:
       _unpack_2_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
