@@ -94,16 +94,16 @@ public class XMPcoarray {
 
     // generate declaration of descPtrId
     descPtrId = blist.declLocalIdent(descPtrName,
-                                   BasicType.Fint8Type,
-                                   StorageClass.FLOCAL,
-                                   null);
+                                     BasicType.Fint8Type,
+                                     StorageClass.FLOCAL,
+                                     null);
   }
 
 
 
   /*
    *  m. "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
-   *     without static coshape
+   *     returns null if it is not allocated
    */
   public Xobject makeStmt_setCoshape() {
     int corank = getCorank();
@@ -115,6 +115,8 @@ public class XMPcoarray {
       args.add(getUcobound(i));
     }
     args.add(getLcobound(corank - 1));
+    if (args.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (makeStmt_setCoshape())");
 
     Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
     if (subr == null) {
@@ -145,6 +147,8 @@ public class XMPcoarray {
       args.add(_getUboundInIndexRange(coshape.getArg(i)));
     }
     args.add(_getLboundInIndexRange(coshape.getArg(corank - 1)));
+    if (args.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (makeStmt_setCoshape(coshape))");
 
     Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
     if (subr == null) {
@@ -218,6 +222,8 @@ public class XMPcoarray {
       Xcons.IntConstant(varName.length());
     Xobject args = Xcons.List(getDescPointerId(),
                               varNameObj, varNameLen);
+    if (args.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (makeStmt_setVarName)");
 
     Ident subr = env.findVarIdent(SET_VARNAME_NAME, null);
     if (subr == null) {
@@ -239,6 +245,8 @@ public class XMPcoarray {
     Xobject elem = getElementLengthExpr(); 
     Xobject count = getTotalArraySizeExpr();
     Xobject args = Xcons.List(varRef, count, elem);
+    if (args.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (genMallocCallStmt)");
     Xobject stmt = Xcons.functionCall(mallocId, args);
     return stmt;
   }
@@ -510,6 +518,8 @@ public class XMPcoarray {
     for (Xobject cosubs: (XobjList)cosubscripts) {
       args.add(cosubs);
     }
+    if (args.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (getImageIndex)");
 
     return fnameId.Call(args);
   }

@@ -95,6 +95,8 @@ public class XMPcoindexObj {
     Xobject list = Xcons.List();
     for (int i = 0; i < exprRank; i++)
       list.add(Xcons.FindexRangeOfAssumedShape());
+    if (list.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (_wholeArraySubscripts)");
 
     return list;
   }
@@ -301,12 +303,8 @@ public class XMPcoindexObj {
       }
     }
 
-    // null check
-    for (Xobject arg: (XobjList)actualArgs) {
-      if (arg == null)
-        XMP.error("internal error: " + 
-                  "null augument generated in _makeActualArgs_type5()");
-    }
+    if (actualArgs.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (_makeActualArgs_type5)");
 
     return actualArgs;
   }
@@ -353,12 +351,8 @@ public class XMPcoindexObj {
       }
     }
 
-    // null check
-    for (Xobject arg: (XobjList)actualArgs) {
-      if (arg == null)
-        XMP.error("internal error: " + 
-                  "null augument generated in _makeActualArgs_type6()");
-    }
+    if (actualArgs.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (_makeActualArgs_type6)");
 
     return actualArgs;
   }

@@ -221,6 +221,9 @@ public class XMPcoarrayInitProcedure {
                                 Xcons.IntConstant(elem),
                                 varNameObj,
                                 Xcons.IntConstant(varName.length()));
+      if (args.hasNullArg())
+        XMP.fatal("INTERNAL: generated null argument (buildSubroutine_initcoarray)");
+
       Ident subr = body.declLocalIdent(SHARE_POOL_NAME,
                                        BasicType.FexternalSubroutineType);
       body.add(subr.callSubroutine(args));
