@@ -16,12 +16,14 @@ import java.util.*;
 public class XMPcoarray {
 
   // name of library
+  public final static String VAR_DESCPOINTER_PREFIX = "xmpf_descptr";
+  public final static String VAR_CRAYPOINTER_PREFIX = "xmpf_crayptr";
   final static String XMPF_LCOBOUND = "xmpf_lcobound";
   final static String XMPF_UCOBOUND = "xmpf_ucobound";
   final static String XMPF_COSIZE = "xmpf_cosize";
   final static String GET_IMAGE_INDEX_NAME = "xmpf_coarray_get_image_index";
-  public final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
-  public final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
+  final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
+  final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
 
   // original attributes
   private Ident ident;
@@ -33,10 +35,10 @@ public class XMPcoarray {
   private Boolean isPointer;
 
   // corresponding cray pointer and descriptor
-  private String crayPtrName = null;
-  private Ident crayPtrId = null;
-  private String descPtrName = null;
-  private Ident descPtrId = null;
+  private String crayPtrName;
+  private Ident crayPtrId;
+  private String descPtrName;
+  private Ident descPtrId;
 
   // context
   protected XMPenv env;
@@ -62,6 +64,8 @@ public class XMPcoarray {
     isAllocatable = ident.Type().isFallocatable();
     isPointer = ident.Type().isFpointer();
     if (DEBUG) System.out.println("[XMPcoarray] new coarray = "+this);
+    genDecl_descPointer();
+    genDecl_crayPointer();
   }
 
   //------------------------------
@@ -70,10 +74,10 @@ public class XMPcoarray {
 
   // declare cray-pointer variable correspoinding to this.
   //
-  public void genDecl_crayPointer(String crayPtrPrefix) {
+  private void genDecl_crayPointer() {
 
     BlockList blist = fblock.getBody();
-    crayPtrName = crayPtrPrefix + "_" + name;
+    crayPtrName = VAR_CRAYPOINTER_PREFIX + "_" + name;
 
     // generate declaration of crayPtrId
     Xtype crayPtrType = Xtype.Farray(BasicType.Fint8Type);
@@ -87,10 +91,10 @@ public class XMPcoarray {
 
   // declare variable of descriptor pointer corresponding to this.
   //
-  public void genDecl_descPointer(String descPtrPrefix) {
+  private void genDecl_descPointer() {
 
     BlockList blist = fblock.getBody();
-    descPtrName = descPtrPrefix + "_" + name;
+    descPtrName = VAR_DESCPOINTER_PREFIX + "_" + name;
 
     // generate declaration of descPtrId
     descPtrId = blist.declLocalIdent(descPtrName,
@@ -106,6 +110,10 @@ public class XMPcoarray {
    *     returns null if it is not allocated
    */
   public Xobject makeStmt_setCoshape() {
+    return makeStmt_setCoshape(env);
+  }
+
+  public Xobject makeStmt_setCoshape(XMPenv env) {
     int corank = getCorank();
 
     Xobject args = Xcons.List(getDescPointerId(),
@@ -116,7 +124,8 @@ public class XMPcoarray {
     }
     args.add(getLcobound(corank - 1));
     if (args.hasNullArg())
-      XMP.fatal("INTERNAL: generated null argument (makeStmt_setCoshape())");
+      XMP.fatal("generated null argument" + SET_COSHAPE_NAME +
+                "(makeStmt_setCoshape())");
 
     Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
     if (subr == null) {
@@ -148,7 +157,8 @@ public class XMPcoarray {
     }
     args.add(_getLboundInIndexRange(coshape.getArg(corank - 1)));
     if (args.hasNullArg())
-      XMP.fatal("INTERNAL: generated null argument (makeStmt_setCoshape(coshape))");
+      XMP.fatal("generated null argument " + SET_COSHAPE_NAME + 
+                "(makeStmt_setCoshape(coshape))");
 
     Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
     if (subr == null) {
@@ -215,6 +225,10 @@ public class XMPcoarray {
    *  n. "CALL set_varname(descPtr, name, namelen)"
    */
   public Xobject makeStmt_setVarName() {
+    return makeStmt_setVarName(env);
+  }
+
+  public Xobject makeStmt_setVarName(XMPenv env) {
     String varName = getName();
     Xobject varNameObj = 
       Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
@@ -223,7 +237,8 @@ public class XMPcoarray {
     Xobject args = Xcons.List(getDescPointerId(),
                               varNameObj, varNameLen);
     if (args.hasNullArg())
-      XMP.fatal("INTERNAL: generated null argument (makeStmt_setVarName)");
+      XMP.fatal("generated null argument " + SET_VARNAME_NAME +
+                "(makeStmt_setVarName)");
 
     Ident subr = env.findVarIdent(SET_VARNAME_NAME, null);
     if (subr == null) {
@@ -232,23 +247,6 @@ public class XMPcoarray {
     }
     Xobject subrCall = subr.callSubroutine(args);
     return subrCall;
-  }
-
-
-
-  /*** not used now ***/
-  public Xobject genMallocCallStmt(String mallocLibName) {
-    BlockList blist = fblock.getBody();
-    Ident mallocId = blist.declLocalIdent(mallocLibName,
-                                          BasicType.FsubroutineType);
-    Xobject varRef = Xcons.FvarRef(getCrayPointerId());
-    Xobject elem = getElementLengthExpr(); 
-    Xobject count = getTotalArraySizeExpr();
-    Xobject args = Xcons.List(varRef, count, elem);
-    if (args.hasNullArg())
-      XMP.fatal("INTERNAL: generated null argument (genMallocCallStmt)");
-    Xobject stmt = Xcons.functionCall(mallocId, args);
-    return stmt;
   }
 
 
@@ -519,7 +517,7 @@ public class XMPcoarray {
       args.add(cosubs);
     }
     if (args.hasNullArg())
-      XMP.fatal("INTERNAL: generated null argument (getImageIndex)");
+      XMP.fatal("generated null argument " + fname + "(getImageIndex)");
 
     return fnameId.Call(args);
   }
@@ -689,7 +687,7 @@ public class XMPcoarray {
 
 
   //------------------------------
-  //  low-level handling
+  //  low-level handling (NOT USED)
   //------------------------------
   public Ident unlinkIdent() {
     return unlinkIdent(def);

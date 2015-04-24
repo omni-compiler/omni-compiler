@@ -19,7 +19,6 @@ public class XMPcoarrayInitProcedure {
 
   final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
   final static String SHARE_POOL_NAME = "xmpf_coarray_share_pool";
-  //final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
 
   private Boolean DEBUG = false;          // switch the value on gdb !!
 
@@ -152,7 +151,7 @@ public class XMPcoarrayInitProcedure {
    */
 
   private void buildSubroutine_coarraysize() {
-    BlockList body = Bcons.emptyBody();
+    BlockList body = Bcons.emptyBody();         // new body of the building procedure
     Xobject decls = Xcons.List();
 
     for (XMPcoarray coarray: staticCoarrays) {
@@ -166,15 +165,17 @@ public class XMPcoarrayInitProcedure {
       body.add(subr.callSubroutine(args));
     }
 
+    // construct a new procedure
     Ident procedure = env.declExternIdent(sizeProcName, Xtype.FsubroutineType);
-    XobjectDef procDef = XobjectDef.Func(procedure, body.getIdentList(),
-                                         decls, body.toXobject());
-    env.getEnv().add(procDef);
+    XobjectDef def2 = XobjectDef.Func(procedure, body.getIdentList(),
+                                      decls, body.toXobject());
+    // link the new procedure as my sister
+    env.getEnv().add(def2);
   }
 
 
   private void buildSubroutine_initcoarray() {
-    BlockList body = Bcons.emptyBody();
+    BlockList body = Bcons.emptyBody();         // new body of the building procedure
     Xobject decls = Xcons.List();
 
     for (XMPcoarray coarray: staticCoarrays) {
@@ -227,20 +228,36 @@ public class XMPcoarrayInitProcedure {
       Ident subr = body.declLocalIdent(SHARE_POOL_NAME,
                                        BasicType.FexternalSubroutineType);
       body.add(subr.callSubroutine(args));
-
-      Xobject setCoshape = coarray.makeStmt_setCoshape();
-      body.add(setCoshape);
-
-      Xobject setVarName = coarray.makeStmt_setVarName();
-      body.add(setVarName);
     }
 
+    // construct a new procedure
     Ident procedure = env.declExternIdent(initProcName, Xtype.FsubroutineType);
-    XobjectDef procDef = XobjectDef.Func(procedure, body.getIdentList(),
-                                         decls, body.toXobject());
-    env.getEnv().add(procDef);
-  }
+    XobjectDef def2 = XobjectDef.Func(procedure, body.getIdentList(),
+                                      decls, body.toXobject());
+    // link the new procedure as my sister
+    env.getEnv().add(def2);
 
+
+    FuncDefBlock funcDef1 = env.getCurrentDef();
+
+    FuncDefBlock funcDef2 = new FuncDefBlock(def2);
+    FunctionBlock fblock2 = funcDef2.getBlock();
+    BlockList blist2 = fblock2.getBody().getHead().getBody();
+
+    env.setCurrentDef(funcDef2);
+
+    for (XMPcoarray coarray: staticCoarrays) {
+      Xobject setCoshape = coarray.makeStmt_setCoshape(env);
+      blist2.add(setCoshape);
+
+      Xobject setVarName = coarray.makeStmt_setVarName(env);
+      blist2.add(setVarName);
+    }
+
+    funcDef2.Finalize();
+
+    env.setCurrentDef(funcDef1);
+  }
 
 
   /*
