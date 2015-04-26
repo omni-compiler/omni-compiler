@@ -441,8 +441,18 @@ public class XMPtranslateLocalPragma {
 
   private void translateReflect(PragmaBlock pb) throws XMPexception {
     Block reflectFuncCallBlock = XMPshadow.translateReflect(pb, _globalDecl);
+    XobjList accOrHost = (XobjList)pb.getClauses().getArg(1);
+    boolean isACC = accOrHost.hasIdent("acc");
+    boolean isHost = accOrHost.hasIdent("host");
+    if(!isACC && !isHost){
+      isHost = true;
+    }
+    if(isACC){
+      throw new XMPexception(pb.getLineNo(), "reflect for acc is not implemented");
+    }
+    
     // add function calls for profiling            
-    Xobject profileClause = pb.getClauses().getArg(1);
+    Xobject profileClause = pb.getClauses().getArg(2);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reflect:" + pb.getLineNo()));
@@ -1640,16 +1650,12 @@ public class XMPtranslateLocalPragma {
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
     XobjList accOrHost = (XobjList)reductionDecl.getArg(3);
-    boolean isHost = false;
-    boolean isACC = false;
-    for (Xobject x : accOrHost){
-      if(x.getSym().equals("acc")) isACC = true;
-      else if(x.getSym().equals("host")) isHost = true;
-    }
+    boolean isHost = accOrHost.hasIdent("host");
+    boolean isACC = accOrHost.hasIdent("acc");
     if(!isHost && !isACC){
       isHost = true;
     }else if(isHost && isACC){
-      XMP.fatal("reduction of both host and acc is unimplemented");
+      throw new XMPexception(pb.getLineNo(), "reduction for both acc and host is unimplemented");
     }
     Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb,
                                                                      false, null, null);
@@ -2098,6 +2104,17 @@ public class XMPtranslateLocalPragma {
     XobjList bcastDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
+    // acc or host
+    XobjList accOrHost = (XobjList)bcastDecl.getArg(4);
+    boolean isACC = accOrHost.hasIdent("acc");
+    boolean isHost = accOrHost.hasIdent("host");
+    if(!isACC && !isHost){
+      isHost = true;
+    }
+    if(isACC){
+      throw new XMPexception(pb.getLineNo(), "bcast for acc is unimplemented");
+    }
+    
     // create function arguments
     XobjList varList = (XobjList)bcastDecl.getArg(0);
     Vector<XobjList> bcastArgsList = createBcastArgsList(varList, pb);
@@ -2146,7 +2163,7 @@ public class XMPtranslateLocalPragma {
     pb.replace(bcastFuncCallBlock);
 
     // add function calls for profiling                                                                                    
-    Xobject profileClause = bcastDecl.getArg(3);
+    Xobject profileClause = bcastDecl.getArg(5);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp bcast:" + pb.getLineNo()));
@@ -2407,6 +2424,17 @@ public class XMPtranslateLocalPragma {
     if(XMPcollective.GMOVE_IN == gmoveClause.getInt() || XMPcollective.GMOVE_OUT == gmoveClause.getInt())
       throw new XMPexception("gmove in/out directive is not supported yet");
 
+    // acc or host
+    XobjList accOrHost = (XobjList)gmoveDecl.getArg(1);
+    boolean isACC = accOrHost.hasIdent("acc");
+    boolean isHost = accOrHost.hasIdent("host");
+    if(!isACC && !isHost){
+      isHost = true;
+    }
+    if(isACC){
+      throw new XMPexception(pb.getLineNo(), "gmove for acc is not implemented");
+    }
+    
     // check body
     Xobject assignStmt = null;
     String checkBodyErrMsg = new String("gmove directive should be written before one assign statement");
@@ -2582,7 +2610,7 @@ public class XMPtranslateLocalPragma {
     pb.replace(gmoveBlock);
 
     // add function calls for profiling                                                                                    
-    Xobject profileClause = gmoveDecl.getArg(1);
+    Xobject profileClause = gmoveDecl.getArg(2);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp gmove:" + pb.getLineNo()));
