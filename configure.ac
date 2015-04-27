@@ -1178,9 +1178,21 @@ AC_SUBST(OMNI_LNK_FCFLAGS)
 # Omni Common
 AC_SUBST(OMNI_X2X_FLAGS)
 
-# Other options
+# check PGI compiler
 chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
 AM_CONDITIONAL(IS_PGI, test "$chk" != "")
+
+# check -lstdc++
+tmp_file_c=/tmp/_xmp.$$.c
+tmp_file_x=/tmp/_xmp.$$.x
+echo "int main(){return 0;}" > $tmp_file_c
+chk=`$MPI_CC -lstdc++ $tmp_file_c -o $tmp_file_x 2> /dev/null`
+if test $? -ne 0; then
+   rm -f $tmp_file_c $tmp_file_x
+   AC_MSG_ERROR([-lstdc++ is not found.])
+else
+   rm -f $tmp_file_c $tmp_file_x
+fi
 
 AM_CONDITIONAL(IS_CRAY, test "$target" = "Cray-linux-gnu")
 AM_CONDITIONAL(IS_SUPERUX, test "$target" = "sx-nec-superux")
