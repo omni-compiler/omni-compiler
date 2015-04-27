@@ -9,18 +9,19 @@ libxmp_a_SOURCES = ../include/xmp_internal.h ../include/xmp_constant.h ../includ
                    xmp_nodes.c xmp_template.c xmp_barrier.c xmp_reduce.c xmp_bcast.c \
                    xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c \
                    xmp_math_function.c xmp_runtime.c xmp_tlog_runtime.c xmp_io.c xmp_reflect.c xmp_pack_vector.c \
-		   xmp_reflect_acc.c xmp_reduce_acc.c xmp_intrinsic.c xmp_sort.c xmp_async.c
+		   xmp_intrinsic.c xmp_sort.c xmp_async.c
 
 if GASNET
     libxmp_a_SOURCES += xmp_onesided.c xmp_onesided_gasnet.c xmp_coarray.c xmp_coarray_utils.c xmp_coarray_local.c \
-	                xmp_coarray_gasnet.c xmp_coarray_gasnet_utils.c xmp_lock_unlock.c xmp_lock_unlock_gasnet.c \
-	                xmp_post_wait.c xmp_post_wait_gasnet.c
+			xmp_coarray_local_utils.c xmp_post_wait.c xmp_post_wait_gasnet.c \
+	                xmp_coarray_gasnet.c xmp_coarray_gasnet_utils.c xmp_lock_unlock.c xmp_lock_unlock_gasnet.c
     CFLAGS           += -D_XMP_GASNET
 endif
 
 if FJRDMA
     libxmp_a_SOURCES += xmp_onesided.c xmp_onesided_fjrdma.c xmp_coarray.c xmp_coarray_utils.c xmp_coarray_local.c \
-	                xmp_coarray_fjrdma.c xmp_coarray_fjrdma_utils.c xmp_post_wait.c xmp_post_wait_fjrdma.c
+			xmp_coarray_local_utils.c xmp_post_wait.c xmp_post_wait_fjrdma.c \
+	                xmp_coarray_fjrdma.c xmp_coarray_fjrdma_utils.c
     CFLAGS           += -D_XMP_FJRDMA
 endif
 
@@ -46,7 +47,7 @@ if TCA
 endif
 
 if ENABLE_XACC
-    libxmp_a_SOURCES += xmp_reflect_gpu.c xmp_gpu_pack.cu xmp_reduce_gpu.c
+    libxmp_a_SOURCES += xmp_reflect_acc.c xmp_reduce_acc.c xmp_bcast_acc.c xmp_reflect_gpu.c xmp_reduce_gpu.c xmp_gpu_pack.cu
     CFLAGS           += -D_XMP_XACC -I@GPGPU_PREFIX@
     GPUCC             = @GPU_CMD@
     GPUCFLAGS         = @GPU_CFLAGS@
