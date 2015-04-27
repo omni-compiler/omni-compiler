@@ -247,7 +247,7 @@ static void _fjrdma_NON_continuous_put_general(const int target, uint64_t raddr,
 #elif OMNI_TARGET_CPU_FX10
       _FX10_Rdma_mput(target, &raddrs[i*FJRDMA_MAX_MPUT], &laddrs[i*FJRDMA_MAX_MPUT],
                       &lengths[i*FJRDMA_MAX_MPUT], 0, trans_elmts);
-      _num_of_puts += transfer_elmts;
+      _num_of_puts += trans_elmts;
 #endif
     }
   }
