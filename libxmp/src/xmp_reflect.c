@@ -1358,7 +1358,7 @@ static void _XMP_reflect_dir(_XMP_array_t *adesc, int ishadow[],
   int src = my_rank;
   int dst = my_rank;
 
-  MPI_Datatype dtype;
+  MPI_Datatype send_dtype, recv_dtype;
   MPI_Request send_req, recv_req;
 
   int type_size = adesc->type_size;
@@ -1446,7 +1446,7 @@ static void _XMP_reflect_dir(_XMP_array_t *adesc, int ishadow[],
   /* } */
   /* printf(") "); */
 
-  //printf("(%d, %d, %d) ", is_periodic, at_tail, at_head);
+  /* printf("(%d, %d, %d) ", is_periodic, at_tail, at_head); */
 
   /* if (src == MPI_PROC_NULL && dst == MPI_PROC_NULL){ */
   /*   printf("[%2d]", my_rank); */
@@ -1462,38 +1462,111 @@ static void _XMP_reflect_dir(_XMP_array_t *adesc, int ishadow[],
   // setup MPI_data_type
   //
 
-  int count = 1;
-  /* int blocklength = 1; */
-  /* long long stride = 1; */
-  int blocklength = type_size;
-  long long stride = type_size;
+  /* int count = 1; */
+  /* /\* int blocklength = 1; *\/ */
+  /* /\* long long stride = 1; *\/ */
+  /* int blocklength = type_size; */
+  /* long long stride = type_size; */
+
+  /* /\* for (int i = 1; i <= target_dim; i++){ *\/ */
+  /* /\* 	count *= ainfo[i-1].alloc_size; *\/ */
+  /* /\* } *\/ */
+
+  /* for (int i = 0; i < ndims; i++){ */
+
+  /*   if (ishadow[i] == 0){ */
+  /*     count *= ainfo[i].par_size; */
+  /*   } */
+  /*   else { */
+  /*     count *= width[i]; */
+  /*   } */
+
+  /*   if (ainfo[i].shadow_size_lo != 0 || ainfo[i].shadow_size_hi != 0) break; */
+  /* } */
+
+  /* /\* for (int i = ndims - 2; i >= target_dim; i--){ *\/ */
+  /* /\* 	blocklength *= ainfo[i+1].alloc_size; *\/ */
+  /* /\* 	stride *= ainfo[i].alloc_size; *\/ */
+  /* /\* } *\/ */
+
+  /* for (int i = ndims - 1; i >= 0; i--){ */
+
+  /*   if (ishadow[i] == 0){ */
+  /*     blocklength *= ainfo[i].par_size; */
+  /*   } */
+  /*   else { */
+  /*     blocklength *= width[i]; */
+  /*   } */
+
+  /*   stride *= ainfo[i].alloc_size; */
+
+  /*   if (ainfo[i].shadow_size_lo != 0 || ainfo[i].shadow_size_hi != 0) break; */
+
+  /* } */
+
+  int sizes[_XMP_N_MAX_DIM];
+  int subsizes[_XMP_N_MAX_DIM];
+  int send_starts[_XMP_N_MAX_DIM];
+  int recv_starts[_XMP_N_MAX_DIM];
 
   for (int i = 0; i < ndims; i++){
 
-    if (ishadow[i] == 0){
-      count *= ainfo[i].par_size;
-    }
-    else {
-      count *= width[i];
-    }
-
-    if (ainfo[i].shadow_size_lo != 0 || ainfo[i].shadow_size_hi != 0) break;
-  }
-
-  for (int i = ndims - 1; i >= 0; i--){
+    sizes[i] = ainfo[i].alloc_size;
+    subsizes[i] = (ishadow[i] == 0) ? ainfo[i].par_size : width[i];
 
     if (ishadow[i] == 0){
-      blocklength *= ainfo[i].par_size;
+      // excludes shadow area
+      send_starts[i] = ainfo[i].shadow_size_lo;
+      recv_starts[i] = ainfo[i].shadow_size_lo;
+    }
+    else if (ishadow[i] > 0){
+      send_starts[i] = ainfo[i].shadow_size_lo;
+      recv_starts[i] = ainfo[i].local_upper + 1;
     }
     else {
-      blocklength *= width[i];
+      send_starts[i] = ainfo[i].local_upper - width[i] + 1;
+      recv_starts[i] = ainfo[i].shadow_size_lo - width[i];
     }
 
-    stride *= ainfo[i].alloc_size;
-
-    if (ainfo[i].shadow_size_lo != 0 || ainfo[i].shadow_size_hi != 0) break;
-
   }
+
+  MPI_Type_create_subarray(ndims, sizes, subsizes, send_starts,
+			   MPI_ORDER_C, MPI_INT, &send_dtype);
+  MPI_Type_create_subarray(ndims, sizes, subsizes, recv_starts,
+			   MPI_ORDER_C, MPI_INT, &recv_dtype);
+
+  /* if (my_rank == 0){ */
+
+  /*   printf("(%+d", ishadow[0]); */
+  /*   for (int i = 1; i < ndims; i++){ */
+  /*     printf(", %+d", ishadow[i]); */
+  /*   } */
+  /*   printf(")\n"); */
+
+  /*   printf(" sizes = (%d", sizes[0]/type_size); */
+  /*   for (int i = 1; i < ndims; i++){ */
+  /*     printf(", %d", sizes[i]/type_size); */
+  /*   } */
+  /*   printf(")\n"); */
+
+  /*   printf(" subsizes = (%d", subsizes[0]/type_size); */
+  /*   for (int i = 1; i < ndims; i++){ */
+  /*     printf(", %d", subsizes[i]/type_size); */
+  /*   } */
+  /*   printf(")\n"); */
+
+  /*   printf(" send_starts = (%d", send_starts[0]/type_size); */
+  /*   for (int i = 1; i < ndims; i++){ */
+  /*     printf(", %d", send_starts[i]/type_size); */
+  /*   } */
+  /*   printf(")\n"); */
+
+  /*   printf(" recv_starts = (%d", recv_starts[0]/type_size); */
+  /*   for (int i = 1; i < ndims; i++){ */
+  /*     printf(", %d", recv_starts[i]/type_size); */
+  /*   } */
+  /*   printf(")\n"); */
+  /* } */
 
     /* if (_XMPF_running && (!_XMPC_running)){ /\* for XMP/F *\/ */
 
@@ -1535,47 +1608,53 @@ static void _XMP_reflect_dir(_XMP_array_t *adesc, int ishadow[],
   /*   MPI_Type_free(&reflect->datatype_lo); */
   /* } */
 
-  MPI_Type_vector(count, blocklength, stride, MPI_BYTE, &dtype);
-  MPI_Type_commit(&dtype);
+  //MPI_Type_vector(count, blocklength, stride, MPI_BYTE, &dtype);
+  MPI_Type_commit(&send_dtype);
+  MPI_Type_commit(&recv_dtype);
 
   /* if (my_rank == 0){ */
-  /*   printf("count = %d, blocklength = %d, stride = %d\n", */
+  /*   printf("count = %d, blocklength = %d, stride = %d at ", */
   /* 	   count, blocklength/type_size, stride/type_size); */
+  /*   printf("(%+d", ishadow[0]); */
+  /*   for (int i = 1; i < ndims; i++){ */
+  /*     printf(", %+d", ishadow[i]); */
+  /*   } */
+  /*   printf(")\n"); */
   /* } */
 
   //
   // calculate base address
   //
 
-  int s[_XMP_N_MAX_DIM], r[_XMP_N_MAX_DIM];
+  /* int s[_XMP_N_MAX_DIM], r[_XMP_N_MAX_DIM]; */
 
-  for (int i = 0; i < ndims; i++) {
+  /* for (int i = 0; i < ndims; i++) { */
 
-    int send, recv;
+  /*   int send, recv; */
 
-    if (ishadow[i] == 0){
-      // excludes shadow area
-      send = ainfo[i].shadow_size_lo;
-      recv = ainfo[i].shadow_size_lo;
-    }
-    else if (ishadow[i] > 0){
-      send = ainfo[i].shadow_size_lo;
-      recv = ainfo[i].local_upper + 1;
-    }
-    else {
-      send = ainfo[i].local_upper - width[i] + 1;
-      recv = ainfo[i].shadow_size_lo - width[i];
-    }
+  /*   if (ishadow[i] == 0){ */
+  /*     // excludes shadow area */
+  /*     send = ainfo[i].shadow_size_lo; */
+  /*     recv = ainfo[i].shadow_size_lo; */
+  /*   } */
+  /*   else if (ishadow[i] > 0){ */
+  /*     send = ainfo[i].shadow_size_lo; */
+  /*     recv = ainfo[i].local_upper + 1; */
+  /*   } */
+  /*   else { */
+  /*     send = ainfo[i].local_upper - width[i] + 1; */
+  /*     recv = ainfo[i].shadow_size_lo - width[i]; */
+  /*   } */
 
-    int dim_acc = ainfo[i].dim_acc;
+  /*   int dim_acc = ainfo[i].dim_acc; */
 
-    send_buf = (void *)((char *)send_buf + send * dim_acc * type_size);
-    recv_buf = (void *)((char *)recv_buf + recv * dim_acc * type_size);
+  /*   send_buf = (void *)((char *)send_buf + send * dim_acc * type_size); */
+  /*   recv_buf = (void *)((char *)recv_buf + recv * dim_acc * type_size); */
 
-    s[i] = send;
-    r[i] = recv;
+  /*   s[i] = send; */
+  /*   r[i] = recv; */
 
-  }
+  /* } */
 
   /* if (my_rank == 0){ */
   /*   printf("send: (%d", s[0]); */
@@ -1587,7 +1666,14 @@ static void _XMP_reflect_dir(_XMP_array_t *adesc, int ishadow[],
   /*   for (int i = 1; i < ndims; i++){ */
   /*     printf(", %d", r[i]); */
   /*   } */
+  /*   printf(") at "); */
+
+  /*   printf("(%+d", ishadow[0]); */
+  /*   for (int i = 1; i < ndims; i++){ */
+  /*     printf(", %+d", ishadow[i]); */
+  /*   } */
   /*   printf(")\n"); */
+
   /* } */
 
   //
@@ -1596,13 +1682,16 @@ static void _XMP_reflect_dir(_XMP_array_t *adesc, int ishadow[],
 
   MPI_Request req[2];
 
-  MPI_Recv_init(recv_buf, 1, dtype, src,
+  MPI_Recv_init(recv_buf, 1, recv_dtype, src,
   		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &req[0]);
-  MPI_Send_init(send_buf, 1, dtype, dst,
+  MPI_Send_init(send_buf, 1, send_dtype, dst,
   		_XMP_N_MPI_TAG_REFLECT_LO, *comm, &req[1]);
 
   MPI_Startall(2, req);
   MPI_Waitall(2, req, MPI_STATUSES_IGNORE);
+
+  MPI_Type_free(&send_dtype);
+  MPI_Type_free(&recv_dtype);
 
 }
 
@@ -1619,6 +1708,10 @@ void _XMP_reflect_(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic){
     if (uwidth[i] > 0) ub[i] = 1;
   }
 
+  /* lb[0] = 0; ub[0] = 0; */
+  /* lb[1] = 0; ub[1] = 0; */
+  /*            ub[2] = 0; */
+
   int ishadow[_XMP_N_MAX_DIM];
 
   for (ishadow[0] = lb[0]; ishadow[0] <= ub[0]; ishadow[0]++){
@@ -1632,15 +1725,15 @@ void _XMP_reflect_(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic){
     // When ishadow > 0, upper shadow is to be updated, and vice versa.
 
     int nnzero = 0;
-    for (int i = 0; i < _XMP_N_MAX_DIM; i++){
+    for (int i = 0; i < n; i++){
       if (ishadow[i] != 0) nnzero++;
     }
     if (nnzero == 0) continue;
 
     _XMP_reflect_dir(a, ishadow, lwidth, uwidth, is_periodic);
 
-    fflush(stdout);
-    xmp_barrier();
+    /* fflush(stdout); */
+    /* xmp_barrier(); */
 
   }
   }
