@@ -9,11 +9,6 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-#ifdef _XMP_MPI3
-extern _Bool is_async;
-extern int _async_id;
-#endif
-
 static char comm_mode = -1;
 
 static void set_comm_mode()
@@ -44,7 +39,7 @@ void _XMP_bcast_acc_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, in
   if(comm_mode >= 1){
     va_list args;
     va_start(args,from_nodes);
-    _XMP_bcast_NODES_ENTIRE_NODES_va(bcast_nodes, addr, count, datatype_size, from_nodes, args);
+    _XMP_bcast_NODES_ENTIRE_NODES_V(bcast_nodes, addr, count, datatype_size, from_nodes, args);
     va_end(args);
   }else{
     _XMP_fatal("uninplemented");

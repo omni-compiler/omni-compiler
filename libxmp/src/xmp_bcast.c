@@ -102,13 +102,13 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
   va_list args;
   va_start(args, from_nodes);
 
-  _XMP_bcast_NODES_ENTIRE_NODES_va(bcast_nodes, addr, count, datatype_size, from_nodes, args);
+  _XMP_bcast_NODES_ENTIRE_NODES_V(bcast_nodes, addr, count, datatype_size, from_nodes, args);
 
   va_end(args);
 }
 
-void _XMP_bcast_NODES_ENTIRE_NODES_va(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
-				      _XMP_nodes_t *from_nodes, va_list args) {
+void _XMP_bcast_NODES_ENTIRE_NODES_V(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
+				     _XMP_nodes_t *from_nodes, va_list args) {
   _XMP_RETURN_IF_SINGLE;
 
   if (!bcast_nodes->is_member) {

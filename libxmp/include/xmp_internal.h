@@ -103,8 +103,8 @@ extern void _XMP_barrier_EXEC(void);
 extern void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size);
 extern void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
 					  _XMP_nodes_t *from_nodes, ...);
-extern void _XMP_bcast_NODES_ENTIRE_NODES_va(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
-					     _XMP_nodes_t *from_nodes, va_list args);
+extern void _XMP_bcast_NODES_ENTIRE_NODES_V(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
+					    _XMP_nodes_t *from_nodes, va_list args);
 
 // xmp_coarray.c
 typedef struct _XMP_coarray_list_type {
@@ -237,6 +237,7 @@ extern void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count,
 extern void _XMPF_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
 					   void *addr, int count, int datatype, int op,
 					   int num_locs, void **loc_vars, int *loc_types);
+extern void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op);
 
 // xmp_reflect.c
 extern void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
