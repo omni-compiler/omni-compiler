@@ -125,8 +125,8 @@ void _XMP_reduce_gpu_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count
   }
 
   // setup information
-  MPI_Datatype mpi_datatype;
-  size_t datatype_size;
+  MPI_Datatype mpi_datatype = MPI_DATATYPE_NULL;
+  size_t datatype_size = 0;
   MPI_Op mpi_op;
   _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
   _XMP_setup_reduce_op(&mpi_op, op);
@@ -150,8 +150,8 @@ void _XMP_reduce_gpu_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count
   
 void _XMP_reduce_gpu_CLAUSE(void *dev_addr, int count, int datatype, int op) {
   // setup information
-  MPI_Datatype mpi_datatype;
-  size_t datatype_size;
+  MPI_Datatype mpi_datatype = MPI_DATATYPE_NULL;
+  size_t datatype_size = 0;
   MPI_Op mpi_op;
   _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
   _XMP_setup_reduce_op(&mpi_op, op);

@@ -99,6 +99,16 @@ void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int 
 // FIXME read spec
 void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
                                    _XMP_nodes_t *from_nodes, ...) {
+  va_list args;
+  va_start(args, from_nodes);
+
+  _XMP_bcast_NODES_ENTIRE_NODES_V(bcast_nodes, addr, count, datatype_size, from_nodes, args);
+
+  va_end(args);
+}
+
+void _XMP_bcast_NODES_ENTIRE_NODES_V(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
+				     _XMP_nodes_t *from_nodes, va_list args) {
   _XMP_RETURN_IF_SINGLE;
 
   if (!bcast_nodes->is_member) {
@@ -115,8 +125,6 @@ void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int co
   int from_dim = from_nodes->dim;
   int from_lower, from_upper, from_stride;
   _XMP_nodes_inherit_info_t  *inherit_info = bcast_nodes->inherit_info;
-  va_list args;
-  va_start(args, from_nodes);
 
   if(inherit_info == NULL){
     for (int i = 0; i < from_dim; i++) {

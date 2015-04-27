@@ -53,6 +53,7 @@ public class ACCtranslateHostData {
       XobjectIterator exprIter = new bottomupXobjectIterator(expr);
       for (exprIter.init(); !exprIter.end(); exprIter.next()) {
         Xobject x = exprIter.getXobject();
+        if(x == null) continue;
         switch (x.Opcode()) {
         case VAR:
         {
