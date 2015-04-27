@@ -5,18 +5,18 @@ import exc.object.*;
 
 class AccInfoReader extends AccProcessor{
   public AccInfoReader(ACCglobalDecl globalDecl) {
-    super(globalDecl, true);
+    super(globalDecl, true, false, true);
   }
 
   void doGlobalAccPragma(Xobject def) throws ACCexception {
     String pragmaName = def.getArg(0).getString();
-    Xobject clauseList = def.getArg(1);
     ACCpragma pragma = ACCpragma.valueOf(pragmaName);
 
-    if(! pragma.isGlobal()){
+    if(! pragma.isGlobalDirective()){
       throw new ACCexception(pragma.getName() + " is not global directive");
     }
 
+    Xobject clauseList = def.getArg(1);
     AccInformation info = new AccInformation(pragma, clauseList);
 
     def.setProp(AccDirective.prop, new AccDeclare(_globalDecl, info));
@@ -25,12 +25,11 @@ class AccInfoReader extends AccProcessor{
   void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
     String directiveName = pb.getPragma();
     ACCpragma directive = ACCpragma.valueOf(directiveName);
-    Xobject clauseList = pb.getClauses();
-
-    if(! directive.isLocal()){
+    if(! directive.isLocalDirective()){
       throw new ACCexception(directiveName + " is not local directive");
     }
 
+    Xobject clauseList = pb.getClauses();
     AccInformation info = new AccInformation(directive, clauseList);
 
     switch (directive){
@@ -70,17 +69,4 @@ class AccInfoReader extends AccProcessor{
     default:
     }
   }
-
-//  private void fixXobject(Xobject x, Block b) throws ACCexception {
-//    topdownXobjectIterator xIter = new topdownXobjectIterator(x);
-//    for (xIter.init(); !xIter.end(); xIter.next()) {
-//      Xobject xobj = xIter.getXobject();
-//      if (xobj.Opcode() == Xcode.VAR) {
-//        String name = xobj.getName();
-//        Ident id = findVarIdent(b, name);
-//        if (id == null) throw new ACCexception("'" + name + "' is not exist");
-//        xIter.setXobject(id.Ref());
-//      }
-//    }
-//  }
 }

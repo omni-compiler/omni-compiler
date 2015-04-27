@@ -40,6 +40,10 @@ public class ACC {
     XmLog.warning("[OpenACC] " + msg);
   }
 
+  public static void warning(LineNo l, String msg){
+    XmLog.warning(l, "[OpenACC] " + msg);
+  }
+
   public static void fatal(String msg) {
     XmLog.fatal("[OpenACC] " + msg);
   }

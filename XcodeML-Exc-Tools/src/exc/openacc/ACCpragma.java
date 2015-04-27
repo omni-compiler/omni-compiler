@@ -72,12 +72,6 @@ public enum ACCpragma {
   DEVICE,
   
   //internal
-  //_BLOCK,
-  //_BLOCK_THREAD,
-  //_WARP,
-  //_VECTORTHREAD,
-  //_THREAD,
-  //_AUTO,
   ;
   
   private String name = null;
@@ -171,11 +165,11 @@ public enum ACCpragma {
     }
   }
 
-  public boolean isGlobal(){
+  public boolean isGlobalDirective(){
     return this == DECLARE;
   }
 
-  public boolean isLocal(){
+  public boolean isLocalDirective(){
     switch(this) {
     case PARALLEL:
     case KERNELS:

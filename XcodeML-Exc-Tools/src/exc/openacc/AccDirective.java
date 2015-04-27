@@ -85,4 +85,16 @@ abstract class AccDirective {
     //FIXME check complex expression
     return true;
   }
+//  private void fixXobject(Xobject x, Block b) throws ACCexception {
+//    topdownXobjectIterator xIter = new topdownXobjectIterator(x);
+//    for (xIter.init(); !xIter.end(); xIter.next()) {
+//      Xobject xobj = xIter.getXobject();
+//      if (xobj.Opcode() == Xcode.VAR) {
+//        String name = xobj.getName();
+//        Ident id = findVarIdent(b, name);
+//        if (id == null) throw new ACCexception("'" + name + "' is not exist");
+//        xIter.setXobject(id.Ref());
+//      }
+//    }
+//  }
 }

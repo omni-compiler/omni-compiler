@@ -6,7 +6,7 @@ import exc.object.Xobject;
 
 class AccRewriter extends AccProcessor{
   public AccRewriter(ACCglobalDecl globalDecl) {
-    super(globalDecl, false, true);
+    super(globalDecl, false, true, false);
   }
 
   void doGlobalAccPragma(Xobject def) throws ACCexception {

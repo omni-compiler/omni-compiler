@@ -7,15 +7,13 @@ abstract class AccProcessor implements XobjectDefVisitor {
   final ACCglobalDecl _globalDecl;
   final private boolean _isTopdown;
   final private boolean _isFinal;
+  final private boolean _warnUnknownPragma;
 
-  AccProcessor(ACCglobalDecl globalDecl, boolean isTopdown, boolean isFinal) {
+  AccProcessor(ACCglobalDecl globalDecl, boolean isTopdown, boolean isFinal, boolean warnUnknownPragma) {
     _globalDecl = globalDecl;
     _isTopdown = isTopdown;
     _isFinal = isFinal;
-  }
-
-  AccProcessor(ACCglobalDecl globalDecl, boolean isTopdown) {
-    this(globalDecl, isTopdown, false);
+    _warnUnknownPragma = warnUnknownPragma;
   }
 
   public void doDef(XobjectDef def) {
@@ -37,7 +35,9 @@ abstract class AccProcessor implements XobjectDefVisitor {
       }
       break;
     case PRAGMA_LINE:
-      ACC.error(x.getLineNo(), "unknown pragma : " + x);
+      if(_warnUnknownPragma) {
+        ACC.warning(x.getLineNo(), "unknown pragma : " + x);
+      }
       break;
     default:
     }
@@ -56,13 +56,20 @@ abstract class AccProcessor implements XobjectDefVisitor {
 
     for (blockIterator.init(); !blockIterator.end(); blockIterator.next()) {
       Block b = blockIterator.getBlock();
-      if (b.Opcode() == Xcode.ACC_PRAGMA) {
-        PragmaBlock pb = (PragmaBlock) b;
+      switch (b.Opcode()) {
+      case ACC_PRAGMA:
         try {
-          doLocalAccPragma(pb);
+          doLocalAccPragma((PragmaBlock) b);
         } catch (ACCexception e) {
-          ACC.error(pb.getLineNo(), e.getMessage());
+          ACC.error(b.getLineNo(), e.getMessage());
         }
+        break;
+      case PRAGMA_LINE:
+        if (_warnUnknownPragma) {
+          ACC.warning(b.getLineNo(), "unknown pragma : " + (PragmaBlock)b);
+        }
+        break;
+      default:
       }
     }
 
