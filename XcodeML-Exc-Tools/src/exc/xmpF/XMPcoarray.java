@@ -35,9 +35,9 @@ public class XMPcoarray {
   private Boolean isPointer;
 
   // corresponding cray pointer and descriptor
-  private String crayPtrName;
+  private String _crayPtrName;
   private Ident crayPtrId;
-  private String descPtrName;
+  private String _descPtrName;
   private Ident descPtrId;
 
   // context
@@ -64,8 +64,8 @@ public class XMPcoarray {
     isAllocatable = ident.Type().isFallocatable();
     isPointer = ident.Type().isFpointer();
     if (DEBUG) System.out.println("[XMPcoarray] new coarray = "+this);
-    genDecl_descPointer();
-    genDecl_crayPointer();
+    genDecl_descPointer();    // descPtrId should always be defined.
+    //genDecl_crayPointer();   // crayPtrId should be defined only for static coarray.
   }
 
   //------------------------------
@@ -74,10 +74,9 @@ public class XMPcoarray {
 
   // declare cray-pointer variable correspoinding to this.
   //
-  private void genDecl_crayPointer() {
-
+  public void genDecl_crayPointer() {
     BlockList blist = fblock.getBody();
-    crayPtrName = VAR_CRAYPOINTER_PREFIX + "_" + name;
+    String crayPtrName = getCrayPointerName();
 
     // generate declaration of crayPtrId
     Xtype crayPtrType = Xtype.Farray(BasicType.Fint8Type);
@@ -91,10 +90,9 @@ public class XMPcoarray {
 
   // declare variable of descriptor pointer corresponding to this.
   //
-  private void genDecl_descPointer() {
-
+  public void genDecl_descPointer() {
     BlockList blist = fblock.getBody();
-    descPtrName = VAR_DESCPOINTER_PREFIX + "_" + name;
+    String descPtrName = getDescPointerName();
 
     // generate declaration of descPtrId
     descPtrId = blist.declLocalIdent(descPtrName,
@@ -124,7 +122,7 @@ public class XMPcoarray {
     }
     args.add(getLcobound(corank - 1));
     if (args.hasNullArg())
-      XMP.fatal("generated null argument" + SET_COSHAPE_NAME +
+      XMP.fatal("generated null argument " + SET_COSHAPE_NAME +
                 "(makeStmt_setCoshape())");
 
     Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
@@ -615,7 +613,10 @@ public class XMPcoarray {
   }
 
   public String getCrayPointerName() {
-    return crayPtrName;
+    if (_crayPtrName == null) {
+      _crayPtrName = VAR_CRAYPOINTER_PREFIX + "_" + name;
+    }
+    return _crayPtrName;
   }
 
   public Ident getCrayPointerId() {
@@ -623,7 +624,11 @@ public class XMPcoarray {
   }
 
   public String getDescPointerName() {
-    return descPtrName;
+    if (_descPtrName == null) {
+      _descPtrName = VAR_DESCPOINTER_PREFIX + "_" + name;
+    }
+
+    return _descPtrName;
   }
 
   public Ident getDescPointerId() {

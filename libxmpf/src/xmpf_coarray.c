@@ -44,6 +44,13 @@ void _XMPF_coarray_init(void)
   }
 }
 
+
+void _XMPF_coarray_finalize(void)
+{
+  xmpf_sync_all_nostat_();
+}
+
+
 /*
  *  hidden subroutine interface,
  *   which can be used in the user program

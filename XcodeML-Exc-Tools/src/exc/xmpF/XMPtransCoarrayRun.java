@@ -20,6 +20,7 @@ public class XMPtransCoarrayRun
   final static String COARRAYDEALLOC_PREFIX = "xmpf_coarray_dealloc";
   final static String COARRAY_PROLOG_NAME = "xmpf_coarray_prolog";
   final static String COARRAY_EPILOG_NAME = "xmpf_coarray_epilog";
+  final static String SYNCALL_NAME = "xmpf_sync_all_auto";   // another entry of syncall
 
   // to handle host- and use-associations
   static ArrayList<XMPtransCoarrayRun> ancestors
@@ -47,7 +48,8 @@ public class XMPtransCoarrayRun
   private ArrayList<Xobject> _prologStmts = new ArrayList();
   private ArrayList<Xobject> _epilogStmts = new ArrayList();
 
-  private boolean bookPrologAndEpilog;
+  private Boolean _reservedAutoDealloc;
+  private Boolean _reservedAutoSyncall;   // not used. Aoto-syncalls are called in runtime.
 
 
   //------------------------------------------------------------
@@ -200,7 +202,8 @@ public class XMPtransCoarrayRun
         
 
   private void run1_procedure() {
-    bookPrologAndEpilog = false;
+    reserveAutoDealloc(false);
+    reserveAutoSyncall(false);
 
     // divide localCoarrays into four types
     ArrayList<XMPcoarray> staticLocalCoarrays = new ArrayList<XMPcoarray>();
@@ -403,8 +406,8 @@ public class XMPtransCoarrayRun
         integer(8) :: DP_V2                                  ! a.
 
         !-- initialization for procedure EX1
-        integer(8) :: tag                                    ! i.
-        call xmpf_coarray_prolog(tag, "EX1", 3)              ! i.
+      ( integer(8) :: tag                                    ! i. )
+      ( call xmpf_coarray_prolog(tag, "EX1", 3)              ! i. )
 
         !-- find DP_V2 and set the attributes
         call xmpf_coarray_get_descptr(DP_V2, V2, tag)        ! a2.
@@ -414,7 +417,7 @@ public class XMPtransCoarrayRun
         ...
 
         !-- finalization for procedure EX1
-        call xmpf_coarray_epilog(tag)                        ! i.
+      ( call xmpf_coarray_epilog(tag)                        ! i. )
         return
       end subroutine
     --------------------------------------------
@@ -449,8 +452,8 @@ public class XMPtransCoarrayRun
         integer(8) :: DP_V3                                  ! a.
 
         !-- initialization for procedure EX1
-        integer(8) :: tag                                    ! i.
-        call xmpf_coarray_prolog(tag, "EX1", 3)              ! i.
+      ( integer(8) :: tag                                    ! i. )
+      ( call xmpf_coarray_prolog(tag, "EX1", 3)              ! i. )
 
         // find DP_V3 and set attributes
         call xmpf_coarray_get_descptr(DP_V3, V3, tag)        ! a2.
@@ -459,7 +462,7 @@ public class XMPtransCoarrayRun
         ...
 
         !-- finalization for procedure EX1
-        call xmpf_coarray_epilog(tag)                        ! i.
+      ( call xmpf_coarray_epilog(tag)                        ! i. )
         return
       end subroutine
     --------------------------------------------
@@ -546,6 +549,7 @@ public class XMPtransCoarrayRun
         z = V2[k]**2                                    ! get 0D
         allocate (V3(1:10,20)[k1:k12,0:*],V4(10)[*])    ! allocate
         deallocate (V4)                                 ! deallocate
+        if (allocated(V3)) write(*,*) "yes"             ! intrinsic 'allocated'
         return                                          ! dealloc V3 automatically
       end subroutine
     --------------------------------------------
@@ -553,6 +557,7 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       subroutine EX1
         ...
+        integer(8) :: tag                                       ! i.
         call xmpf_coarray_prolog(tag, "EX1", 3)                 ! i.
         call xmpf_coarray_put(DP_V1, V1(1,j), 4, &              ! d.
           k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
@@ -561,6 +566,8 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)      ! m.
         call xmpf_coarray_set_varname(DP_V3, "V3", 2)           ! n.
         call xmpf_coarray_dealloc(DP_V3)                        ! j.
+        if (associated(V3)) write(*,*) "yes"                    ! l.
+        call xmpf_syncall()                                     ! i.
         call xmpf_coarray_epilog(tag)                           ! i.
         return
       end subroutine
@@ -588,8 +595,8 @@ public class XMPtransCoarrayRun
     // l. fake intrinsic 'allocatable' (allocatable coarrays only)
     replaceAllocatedWithAssociated(visibleCoarrays);
 
-    // i. initialization/finalization of local resources
-    if (bookPrologAndEpilog)
+    // i. initialization/finalization for auto-syncall and auto-deallocate
+    if (_reservedAutoDealloc)
       genCallOfPrologAndEpilog();
   }
 
@@ -602,9 +609,7 @@ public class XMPtransCoarrayRun
   //
   private void genDeclOfDescPointer(ArrayList<XMPcoarray> localCoarrays) {
     for (XMPcoarray coarray: localCoarrays) {
-      // set coarray.descPtrName and 
-      // generate declaration of the variable pointing the descriptor
-      coarray.getDescPointerId();
+      coarray.genDecl_descPointer();
     }
   }
 
@@ -648,9 +653,7 @@ public class XMPtransCoarrayRun
       return;
 
     for (XMPcoarray coarray: coarrays) {
-      // set coarray.crayPtrName and
-      // generate declaration of the cray pointer
-      coarray.getCrayPointerId();
+      coarray.genDecl_crayPointer();
     }
 
     Xobject cnameObj = Xcons.Symbol(Xcode.IDENT, crayCommonName);
@@ -676,14 +679,33 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //
   private void genCallOfPrologAndEpilog() {
+    genCallOfPrologAndEpilog_dealloc();
+
+    // perform prolog/epilog code generations
+    genPrologStmts();
+    genEpilogStmts();
+  }
+
+  /*  NOT USED: all calls of automatic syncalls are moved into runtime functions.
+   */
+  private void genCallOfPrologAndEpilog_syncall() {
+    // generate "call xmpf_sync_all()" and add to the tail
+    Xobject args = Xcons.List();
+    Ident fname = /*env.findVarIdent(SYNCALL_NAME, null);      // to avoid error of tool
+    if (fname == null)
+    fname = */env.declExternIdent(SYNCALL_NAME,
+                                  BasicType.FexternalSubroutineType);
+    Xobject call = fname.callSubroutine(args);
+    addEpilogStmt(call);
+  }
+
+  private void genCallOfPrologAndEpilog_dealloc() {
     // generate "call coarray_prolog(tag)" and insert to the top
     Xobject args1 = 
       Xcons.List(Xcons.FvarRef(getResourceTagId()),
                  Xcons.FcharacterConstant(Xtype.FcharacterType, name, null),
                  Xcons.IntConstant(name.length()));
 
-    //// Rescriction of OMNI: blist.findIdent() cannot find the name defined
-    //// in any interface block. Gave up using interface bloc
     Ident fname1 = env.declExternIdent(COARRAY_PROLOG_NAME,
                                        BasicType.FexternalSubroutineType);
     if (args1.hasNullArg())
@@ -696,16 +718,12 @@ public class XMPtransCoarrayRun
     Xobject args2 = Xcons.List(Xcons.FvarRef(getResourceTagId()));
     Ident fname2 = env.declExternIdent(COARRAY_EPILOG_NAME,
                                        BasicType.FexternalSubroutineType);
-    if (args1.hasNullArg())
+    if (args2.hasNullArg())
       XMP.fatal("generated null argument " + fname2 +
                 "(genCallofPrologAndEpilog args2)");
 
     Xobject call2 = fname2.callSubroutine(args2);
     addEpilogStmt(call2);
-
-    // perform prolog/epilog code generations
-    genPrologStmts();
-    genEpilogStmts();
   }
 
 
@@ -726,7 +744,7 @@ public class XMPtransCoarrayRun
       subr = env.declExternIdent(GET_DESCPOINTER_NAME,
                                  BasicType.FexternalSubroutineType);
       if (args.hasNullArg())
-        XMP.fatal("generated null argument " + subr +
+        XMP.fatal("generated null argument " + GET_DESCPOINTER_NAME +
                   "(genDefinitionOfDescPointer)");
 
       subrCall = subr.callSubroutine(args);
@@ -764,9 +782,8 @@ public class XMPtransCoarrayRun
         if (_isCoindexVarStmt(assignExpr)) {
           // found -- convert the statement
           Xobject callExpr = coindexVarStmtToCallStmt(assignExpr, coarrays);
-          //s.insert(callExpr);
-          //s.remove();
           s.setExpr(callExpr);
+          reserveAutoSyncall();
         }
       }
     }
@@ -845,6 +862,7 @@ public class XMPtransCoarrayRun
         // found target to convert
         Xobject funcCall = coindexObjToFuncRef(xobj, coarrays);
         xi.setXobject(funcCall);
+        reserveAutoSyncall();
         done = true;
       }
     }
@@ -1126,10 +1144,9 @@ public class XMPtransCoarrayRun
                 "(makeStmt_coarrayAlloc)");
 
     Ident subr = env.findVarIdent(subrName, null);
-    if (subr == null) {
+    if (subr == null)
       subr = env.declExternIdent(subrName,
                                  BasicType.FexternalSubroutineType);
-    }
     Xobject subrCall = subr.callSubroutine(args);
     return subrCall;
   }
@@ -1146,10 +1163,9 @@ public class XMPtransCoarrayRun
                 "(makeStmt_coarrayDealloc)");
 
     Ident subr = env.findVarIdent(subrName, null);
-    if (subr == null) {
+    if (subr == null)
       env.declExternIdent(subrName,
                           BasicType.FexternalSubroutineType);
-    }
     Xobject subrCall = subr.callSubroutine(args);
     return subrCall;
   }
@@ -1309,17 +1325,6 @@ public class XMPtransCoarrayRun
     BlockList blist1 = coarray1.fblock.getBody();
     BlockList blist2 = fblock.getBody();
 
-    String crayPtrName1 = coarray1.getCrayPointerName();
-    Ident crayPtrId1 = coarray1.getCrayPointerId();
-    Xtype crayPtrType1 = crayPtrId1.Type();
-
-    String descPtrName1 = coarray1.getDescPointerName();
-    Ident descPtrId1 = coarray1.getDescPointerId();
-    Xtype descPtrType1 = descPtrId1.Type();
-
-    //blist1.removeIdent(crayPtrName1);
-    //blist1.removeIdent(descPtrName1);
-    //blist1.removeIdent(name1);
     XMPcoarray coarray2 = new XMPcoarray(ident2, def, fblock, env);
 
     localCoarrays.add(coarray2);
@@ -1514,7 +1519,7 @@ public class XMPtransCoarrayRun
 
     // Prolog/Epilog cades are necessary if and only if the resource tag is
     // defined.
-    bookPrologAndEpilog = true;
+    reserveAutoDealloc();
 
     return _resourceTagId;
   }
@@ -1546,16 +1551,58 @@ public class XMPtransCoarrayRun
     _epilogStmts.add(0, stmt);
   }
 
+
   private void genPrologStmts() {
+    // for the begining of the procedure
     BlockList blist = fblock.getBody().getHead().getBody();
     for (int i = _prologStmts.size() - 1; i >= 0; i--)
       blist.insert(_prologStmts.get(i));
+
+    // restriction: for the ENTRY statement
+
   }
 
+
   private void genEpilogStmts() {
+
+    // for RETURN/STOP statement
+    BlockIterator bi = new topdownBlockIterator(fblock);
+    for (bi.init(); !bi.end(); bi.next()) {
+      Block block = bi.getBlock();
+      switch(block.Opcode()) {
+      case RETURN_STATEMENT:
+        LineNo lineno = block.getLineNo();
+        for (Xobject stmt1: _epilogStmts) {
+          Xobject stmt2 = stmt1.copy();
+          stmt2.setLineNo(lineno);
+          block.insert(stmt2);
+        }
+        break;
+
+      }
+    }
+
+    // for the end of the procedure
     BlockList blist = fblock.getBody().getHead().getBody();
     for (Xobject stmt: _epilogStmts)
       blist.add(stmt);
+  }
+
+
+  // for automatic syncall at the end of the program
+  private void reserveAutoSyncall() {
+    reserveAutoSyncall(true);
+  }
+  private void reserveAutoSyncall(Boolean sw) {
+    _reservedAutoSyncall = sw;
+  }
+
+  // for automatic deallocation at the end of the program
+  private void reserveAutoDealloc() {
+    reserveAutoDealloc(true);
+  }
+  private void reserveAutoDealloc(Boolean sw) {
+    _reservedAutoDealloc = sw;
   }
 
 }

@@ -27,7 +27,7 @@ void xmpf_init_all__()
   _XMPF_running = 1;
 
 #if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
-  /* for Coarray environment */
+  /* for Coarray Fortran environment */
   _XMPF_coarray_init();
 #endif
 
@@ -42,6 +42,11 @@ void xmpf_finalize_all__()
 {
 
   //  xmpf_dbg_printf("sched = %f, start = %f, wait = %f\n", t_sched, t_start, t_wait);
+
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
+  /* for Coarray Fortran environment */
+  _XMPF_coarray_finalize();
+#endif
 
 #if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
   FJMPI_Rdma_finalize();

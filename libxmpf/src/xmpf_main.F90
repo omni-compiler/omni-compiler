@@ -11,6 +11,7 @@
       call xmpf_traverse_countcoarray
       call xmpf_coarray_malloc_pool
       call xmpf_traverse_initcoarray
+      call xmpf_sync_all_auto
 #endif
 
       !! user's main program converted into a subroutine
