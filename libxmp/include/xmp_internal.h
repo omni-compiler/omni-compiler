@@ -99,6 +99,13 @@ _XMP_async_comm_t *_XMP_get_or_create_async(int async_id);
 extern void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes);
 extern void _XMP_barrier_EXEC(void);
 
+// xmp_bcast.c
+extern void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size);
+extern void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
+					  _XMP_nodes_t *from_nodes, ...);
+extern void _XMP_bcast_NODES_ENTIRE_NODES_va(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
+					     _XMP_nodes_t *from_nodes, va_list args);
+
 // xmp_coarray.c
 typedef struct _XMP_coarray_list_type {
   _XMP_coarray_t *coarray;

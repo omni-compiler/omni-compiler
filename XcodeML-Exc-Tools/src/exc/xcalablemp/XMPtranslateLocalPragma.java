@@ -441,7 +441,7 @@ public class XMPtranslateLocalPragma {
 
   private void translateReflect(PragmaBlock pb) throws XMPexception {
     Block reflectFuncCallBlock = XMPshadow.translateReflect(pb, _globalDecl);
-    XobjList accOrHost = (XobjList)pb.getClauses().getArg(1);
+    XobjList accOrHost = (XobjList)pb.getClauses().getArg(3);
     boolean isACC = accOrHost.hasIdent("acc");
     boolean isHost = accOrHost.hasIdent("host");
     if(!isACC && !isHost){
@@ -452,7 +452,7 @@ public class XMPtranslateLocalPragma {
     }
     
     // add function calls for profiling            
-    Xobject profileClause = pb.getClauses().getArg(2);
+    Xobject profileClause = pb.getClauses().getArg(4);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reflect:" + pb.getLineNo()));
@@ -2111,8 +2111,8 @@ public class XMPtranslateLocalPragma {
     if(!isACC && !isHost){
       isHost = true;
     }
-    if(isACC){
-      throw new XMPexception(pb.getLineNo(), "bcast for acc is unimplemented");
+    if(isACC && isHost){
+      throw new XMPexception(pb.getLineNo(), "bcast for both acc and host is unimplemented");
     }
     
     // create function arguments
@@ -2129,7 +2129,7 @@ public class XMPtranslateLocalPragma {
 
     XobjList onRef = (XobjList)bcastDecl.getArg(2);
     if (onRef == null || onRef.getArgs() == null) {
-	bcastFuncCallBlock = createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList, execFromRefArgs);
+	bcastFuncCallBlock = createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList, execFromRefArgs, isACC);
     } else {
       XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
 
@@ -2138,13 +2138,17 @@ public class XMPtranslateLocalPragma {
       XobjList execFuncArgs = execOnRefArgs.getThird();
       if (splitComm) {
         BlockList bcastBody = Bcons.blockList(createBcastFuncCallBlock(true, "EXEC",
-                                                                       null, bcastArgsList, execFromRefArgs));
+                                                                       null, bcastArgsList, execFromRefArgs, isACC));
 	bcastFuncCallBlock = createCommTaskBlock(bcastBody, execFuncSurfix, execFuncArgs);
       }
       else {
 	bcastFuncCallBlock = createBcastFuncCallBlock(false, execFuncSurfix,
-                                            execFuncArgs.operand(), bcastArgsList, execFromRefArgs);
+                                            execFuncArgs.operand(), bcastArgsList, execFromRefArgs, isACC);
       }
+    }
+    
+    if(isACC){
+      bcastFuncCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA", Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"),varList)), Bcons.blockList(bcastFuncCallBlock));
     }
 
     Xobject async = bcastDecl.getArg(3);
@@ -2230,7 +2234,7 @@ public class XMPtranslateLocalPragma {
   }
 
   private Block createBcastFuncCallBlock(boolean isMacro, String funcType, Xobject execDesc, Vector<XobjList> funcArgsList,
-                                         XMPpair<String, XobjList> execFromRefArgs) throws XMPexception {
+                                         XMPpair<String, XobjList> execFromRefArgs, boolean isACC) throws XMPexception {
     String funcSurfix = null;
     XobjList fromRef = null;
     if (execFromRefArgs == null) funcSurfix = new String(funcType + "_OMITTED");
@@ -2239,9 +2243,10 @@ public class XMPtranslateLocalPragma {
       fromRef = execFromRefArgs.getSecond();
     }
 
+    String accSuffix = isACC? "acc_" : "";
     Ident funcId = null;
-    if (isMacro) funcId = XMP.getMacroId("_XMP_M_BCAST_" + funcSurfix);
-    else         funcId = _globalDecl.declExternFunc("_XMP_bcast_" + funcSurfix);
+    if (isMacro) funcId = XMP.getMacroId("_XMP_M_BCAST_" + accSuffix.toUpperCase() + funcSurfix);
+    else         funcId = _globalDecl.declExternFunc("_XMP_bcast_" + accSuffix + funcSurfix);
 
     BlockList funcCallList = Bcons.emptyBody();
     Iterator<XobjList> it = funcArgsList.iterator();
