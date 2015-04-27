@@ -333,12 +333,12 @@ static void _gasnet_scalar_mput(const int target_rank, const int dst_dims,
   if(transfer_size < gasnet_AMMaxMedium()){
     gasnet_AMRequestMedium5(target_rank, _XMP_GASNET_UNPACK, archive, transfer_size,
                             HIWORD(dst_desc->addr[target_rank]), LOWORD(dst_desc->addr[target_rank]), 
-			    dst_dims, _xmp_gasnet_stride_wait_size, _XMP_SCALAR_COPY);
+			    dst_dims, _xmp_gasnet_stride_wait_size, _XMP_SCALAR_MCOPY);
   }
   else if(transfer_size < _xmp_gasnet_stride_size){
     gasnet_put(target_rank, _xmp_gasnet_buf[target_rank], archive, transfer_size);
     gasnet_AMRequestShort5(target_rank, _XMP_GASNET_UNPACK_USING_BUF, HIWORD(dst_desc->addr[target_rank]),
-                           LOWORD(dst_desc->addr[target_rank]), dst_dims, _xmp_gasnet_stride_wait_size, _XMP_SCALAR_COPY);
+                           LOWORD(dst_desc->addr[target_rank]), dst_dims, _xmp_gasnet_stride_wait_size, _XMP_SCALAR_MCOPY);
   }
   else{
     _stride_size_error(transfer_size);
@@ -551,7 +551,7 @@ static void _gasnet_scalar_mget(const int target_rank, const size_t src_offset, 
 {
   char* src_addr = (char *)_xmp_gasnet_buf[_XMP_world_rank];
   gasnet_get_bulk(src_addr, target_rank, ((char *)src->addr[target_rank])+src_offset, elmt_size);
-  _XMP_unpack_coarray(((char *)dst), dst_dims, src_addr, dst_info, _XMP_SCALAR_COPY);
+  _XMP_unpack_coarray(((char *)dst), dst_dims, src_addr, dst_info, _XMP_SCALAR_MCOPY);
 }
 
 /***************************************************************************************/
@@ -638,13 +638,13 @@ static void _gasnet_scalar_shortcut_mput(const int target_rank, _XMP_coarray_t *
   if(trans_size < gasnet_AMMaxMedium()){
     gasnet_AMRequestMedium5(target_rank, _XMP_GASNET_UNPACK, archive, trans_size,
                             HIWORD(dst_desc->addr[target_rank]), LOWORD(dst_desc->addr[target_rank]), 1,
-                            _xmp_gasnet_stride_wait_size, _XMP_SCALAR_COPY);
+                            _xmp_gasnet_stride_wait_size, _XMP_SCALAR_MCOPY);
   }
   else if(trans_size < _xmp_gasnet_stride_size){
     gasnet_put(target_rank, _xmp_gasnet_buf[target_rank], archive, trans_size);
     gasnet_AMRequestShort5(target_rank, _XMP_GASNET_UNPACK_USING_BUF, HIWORD(dst_desc->addr[target_rank]),
                            LOWORD(dst_desc->addr[target_rank]), 1, _xmp_gasnet_stride_wait_size,
-			   _XMP_SCALAR_COPY);
+			   _XMP_SCALAR_MCOPY);
   }
   else{
     _stride_size_error(trans_size);

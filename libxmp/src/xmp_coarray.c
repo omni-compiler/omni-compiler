@@ -1136,7 +1136,7 @@ void _XMP_coarray_shortcut_put(const int target_image, _XMP_coarray_t *dst_desc,
     _XMP_gasnet_shortcut_put(target_rank, dst_desc, src_desc->addr[_XMP_world_rank]+src_offset,
 			     dst_offset, dst_elmts, src_elmts, elmt_size);
 #elif _XMP_FJRDMA
-
+    _XMP_fjrdma_shortcut_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, src_elmts*elmt_size);
 #endif
   }
 }
@@ -1171,7 +1171,7 @@ void _XMP_coarray_shortcut_get(const int target_image, _XMP_coarray_t *dst_desc,
     _XMP_gasnet_shortcut_get(target_rank, dst_desc, src_desc->addr[target_rank]+src_offset, dst_offset,
                              dst_elmts, src_elmts, elmt_size);
 #elif _XMP_FJRDMA
-
+    _XMP_fjrdma_shortcut_get(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, elmt_size*src_elmts);
 #endif
   }
 }
