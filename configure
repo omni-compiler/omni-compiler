@@ -22438,7 +22438,7 @@ OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 # Omni Common
 
 
-# Other options
+# check PGI compiler
 chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
  if test "$chk" != ""; then
   IS_PGI_TRUE=
@@ -22448,6 +22448,18 @@ else
   IS_PGI_FALSE=
 fi
 
+
+# check -lstdc++
+tmp_file_c=/tmp/_xmp.$$.c
+tmp_file_x=/tmp/_xmp.$$.x
+echo "int main(){return 0;}" > $tmp_file_c
+chk=`$MPI_CC -lstdc++ $tmp_file_c -o $tmp_file_x 2> /dev/null`
+if test $? -ne 0; then
+   rm -f $tmp_file_c $tmp_file_x
+   as_fn_error $? "-lstdc++ is not found." "$LINENO" 5
+else
+   rm -f $tmp_file_c $tmp_file_x
+fi
 
  if test "$target" = "Cray-linux-gnu"; then
   IS_CRAY_TRUE=

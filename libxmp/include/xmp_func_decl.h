@@ -157,10 +157,10 @@ extern void xmp_sync_image_f(int *image, int* status);
 extern void xmp_sync_images(int num, int* image_set, int* status);
 extern void xmp_sync_images_f(int *num, int* image_set, int* status);
 extern void xmp_sync_images_all(int* status);
-extern void _XMP_coarray_shortcut_put(const int, const void*, const void*, const size_t, const size_t, const size_t);
-extern void _XMP_coarray_shortcut_put_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
-extern void _XMP_coarray_shortcut_get(const int, const void*, const void*, const size_t, const size_t, const size_t);
-extern void _XMP_coarray_shortcut_get_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
+extern void _XMP_coarray_shortcut_put(const int, void*, const void*, const size_t, const size_t, const size_t, const size_t);
+extern void _XMP_coarray_shortcut_put_f(const int*, void*, const void*, const size_t*, const size_t*, const size_t*, const size_t*);
+extern void _XMP_coarray_shortcut_get(const int, void*, const void*, const size_t, const size_t, const size_t, const size_t);
+extern void _XMP_coarray_shortcut_get_f(const int*, void*, const void*, const size_t*, const size_t*, const size_t*, const size_t*);
 
 // xmp_reflect_acc.c
 extern void _XMP_reflect_init_acc(void *, void *);
