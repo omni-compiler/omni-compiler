@@ -335,13 +335,13 @@ extern void _XMP_post_wait_initialize();
 #define _XMP_PACK         0
 #define _XMP_UNPACK       1
 #define _XMP_SCALAR_MCOPY 2
-extern void _XMP_stride_memcpy_1dim(char *, const char *, const _XMP_array_section_t *, const size_t, const int);
-extern void _XMP_stride_memcpy_2dim(char *, const char *, const _XMP_array_section_t *, const size_t, const int);
-extern void _XMP_stride_memcpy_3dim(char *, const char *, const _XMP_array_section_t *, const size_t, const int);
-extern void _XMP_stride_memcpy_4dim(char *, const char *, const _XMP_array_section_t *, const size_t, const int);
-extern void _XMP_stride_memcpy_5dim(char *, const char *, const _XMP_array_section_t *, const size_t, const int);
-extern void _XMP_stride_memcpy_6dim(char *, const char *, const _XMP_array_section_t *, const size_t, const int);
-extern void _XMP_stride_memcpy_7dim(char *, const char *, const _XMP_array_section_t *, const size_t, const int);
+extern void _XMP_stride_memcpy_1dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
+extern void _XMP_stride_memcpy_2dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
+extern void _XMP_stride_memcpy_3dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
+extern void _XMP_stride_memcpy_4dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
+extern void _XMP_stride_memcpy_5dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
+extern void _XMP_stride_memcpy_6dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
+extern void _XMP_stride_memcpy_7dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
 #endif
 
 #ifdef _XMP_GASNET
