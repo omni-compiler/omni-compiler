@@ -346,9 +346,9 @@ extern void _XMP_stride_memcpy_7dim(char *, const char *, const _XMP_array_secti
 
 #ifdef _XMP_GASNET
 #include <gasnet.h>
-#define _XMP_GASNET_STRIDE_INIT_SIZE 16
-#define _XMP_GASNET_STRIDE_BLK       16
-#define _XMP_GASNET_ALIGNMENT        8
+#define _XMP_GASNET_STRIDE_INIT_SIZE        32    /**< This value is trial */
+#define _XMP_GASNET_STRIDE_INCREMENT_RATIO  (1.5) /**< This value is trial */
+#define _XMP_GASNET_ALIGNMENT               8
 
 #define GASNET_BARRIER() do {  \
 	gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS); \
