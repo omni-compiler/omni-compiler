@@ -14,31 +14,31 @@ static void _pack_7dim_array(const _XMP_array_section_t* src_info, char* dst, co
   switch (dim_of_allelmts){
   case 0:
     memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
-    break;;
+    break;
   case 1:
     _XMP_stride_memcpy_1dim(dst, src, src_info, src_info[0].distance, _XMP_PACK);
-    break;;
+    break;
   case 2:
     _XMP_stride_memcpy_2dim(dst, src, src_info, src_info[1].distance, _XMP_PACK);
-    break;;
+    break;
   case 3:
     _XMP_stride_memcpy_3dim(dst, src, src_info, src_info[2].distance, _XMP_PACK);
-    break;;
+    break;
   case 4:
     _XMP_stride_memcpy_4dim(dst, src, src_info, src_info[3].distance, _XMP_PACK);
-    break;;
+    break;
   case 5:
     _XMP_stride_memcpy_5dim(dst, src, src_info, src_info[4].distance, _XMP_PACK);
-    break;;
+    break;
   case 6:
     _XMP_stride_memcpy_6dim(dst, src, src_info, src_info[5].distance, _XMP_PACK);
-    break;;
+    break;
   case 7:
     _XMP_stride_memcpy_7dim(dst, src, src_info, src_info[6].distance, _XMP_PACK);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray error");
-    break;;
+    break;
   }
 }
 
@@ -55,28 +55,28 @@ static void _pack_6dim_array(const _XMP_array_section_t* src_info, char* dst, co
   switch (dim_of_allelmts){
   case 0:
     memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
-    break;;
+    break;
   case 1:
     _XMP_stride_memcpy_1dim(dst, src, src_info, src_info[0].distance, _XMP_PACK);
-    break;;
+    break;
   case 2:
     _XMP_stride_memcpy_2dim(dst, src, src_info, src_info[1].distance, _XMP_PACK);
-    break;;
+    break;
   case 3:
     _XMP_stride_memcpy_3dim(dst, src, src_info, src_info[2].distance, _XMP_PACK);
-    break;;
+    break;
   case 4:
     _XMP_stride_memcpy_4dim(dst, src, src_info, src_info[3].distance, _XMP_PACK);
-    break;;
+    break;
   case 5:
     _XMP_stride_memcpy_5dim(dst, src, src_info, src_info[4].distance, _XMP_PACK);
-    break;;
+    break;
   case 6:
     _XMP_stride_memcpy_6dim(dst, src, src_info, src_info[5].distance, _XMP_PACK);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray error");
-    break;;
+    break;
   }
 }
 
@@ -93,25 +93,25 @@ static void _pack_5dim_array(const _XMP_array_section_t* src_info, char* dst, co
   switch (dim_of_allelmts){
   case 0:
     memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
-    break;;
+    break;
   case 1:
     _XMP_stride_memcpy_1dim(dst, src, src_info, src_info[0].distance, _XMP_PACK);
-    break;;
+    break;
   case 2:
     _XMP_stride_memcpy_2dim(dst, src, src_info, src_info[1].distance, _XMP_PACK);
-    break;;
+    break;
   case 3:
     _XMP_stride_memcpy_3dim(dst, src, src_info, src_info[2].distance, _XMP_PACK);
-    break;;
+    break;
   case 4:
     _XMP_stride_memcpy_4dim(dst, src, src_info, src_info[3].distance, _XMP_PACK);
-    break;;
+    break;
   case 5:
     _XMP_stride_memcpy_5dim(dst, src, src_info, src_info[4].distance, _XMP_PACK);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray error");
-    break;;
+    break;
   }
 }
 
@@ -128,22 +128,22 @@ static void _pack_4dim_array(const _XMP_array_section_t* src_info, char* dst, co
   switch (dim_of_allelmts){
   case 0:
     memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
-    break;;
+    break;
   case 1:
     _XMP_stride_memcpy_1dim(dst, src, src_info, src_info[0].distance, _XMP_PACK);
-    break;;
+    break;
   case 2:
     _XMP_stride_memcpy_2dim(dst, src, src_info, src_info[1].distance, _XMP_PACK);
-    break;;
+    break;
   case 3:
     _XMP_stride_memcpy_3dim(dst, src, src_info, src_info[2].distance, _XMP_PACK);
-    break;;
+    break;
   case 4:
     _XMP_stride_memcpy_4dim(dst, src, src_info, src_info[3].distance, _XMP_PACK);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray error");
-    break;;
+    break;
   }
 }
 
@@ -160,19 +160,19 @@ static void _pack_3dim_array(const _XMP_array_section_t* src_info, char* dst, co
   switch (dim_of_allelmts){
   case 0:
     memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
-    break;;
+    break;
   case 1:
     _XMP_stride_memcpy_1dim(dst, src, src_info, src_info[0].distance, _XMP_PACK);
-    break;;
+    break;
   case 2:
     _XMP_stride_memcpy_2dim(dst, src, src_info, src_info[1].distance, _XMP_PACK);
-    break;;
+    break;
   case 3:
     _XMP_stride_memcpy_3dim(dst, src, src_info, src_info[2].distance, _XMP_PACK);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray error");
-    break;;
+    break;
   }
 }
 
@@ -189,16 +189,16 @@ static void _pack_2dim_array(const _XMP_array_section_t* src_info, char* dst, co
   switch (dim_of_allelmts){
   case 0:
     memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
-    break;;
+    break;
   case 1:
     _XMP_stride_memcpy_1dim(dst, src, src_info, src_info[0].distance, _XMP_PACK);
-    break;;
+    break;
   case 2:
     _XMP_stride_memcpy_2dim(dst, src, src_info, src_info[1].distance, _XMP_PACK);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray error");
-    break;;
+    break;
   }
 }
 
@@ -287,25 +287,25 @@ void _XMP_pack_coarray(char* dst, const char* src, const int src_dims, const _XM
   switch (src_dims){
   case 2:
     _pack_2dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
-    break;;
+    break;
   case 3:
     _pack_3dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
-    break;;
+    break;
   case 4:
     _pack_4dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
-    break;;
+    break;
   case 5:
     _pack_5dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
-    break;;
+    break;
   case 6:
     _pack_6dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
-    break;;
+    break;
   case 7:
     _pack_7dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray is too big");
-    break;;
+    break;
   }
 }
 
@@ -325,28 +325,28 @@ static void _unpack_7dim_array(const _XMP_array_section_t* dst_info, const char*
     break;
   case 1:
     _XMP_stride_memcpy_1dim(dst, src, dst_info, dst_info[0].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 2:
     _XMP_stride_memcpy_2dim(dst, src, dst_info, dst_info[1].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 3:
     _XMP_stride_memcpy_3dim(dst, src, dst_info, dst_info[2].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 4:
     _XMP_stride_memcpy_4dim(dst, src, dst_info, dst_info[3].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 5:
     _XMP_stride_memcpy_5dim(dst, src, dst_info, dst_info[4].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 6:
     _XMP_stride_memcpy_6dim(dst, src, dst_info, dst_info[5].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 7:
     _XMP_stride_memcpy_7dim(dst, src, dst_info, dst_info[6].distance, _XMP_UNPACK);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray error");
-    break;;
+    break;
   }
 }
 
@@ -363,28 +363,28 @@ static void _unpack_6dim_array(const _XMP_array_section_t* dst_info, const char*
   switch (dim_of_allelmts){
   case 0:
     memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
-    break;;
+    break;
   case 1:
     _XMP_stride_memcpy_1dim(dst, src, dst_info, dst_info[0].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 2:
     _XMP_stride_memcpy_2dim(dst, src, dst_info, dst_info[1].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 3:
     _XMP_stride_memcpy_3dim(dst, src, dst_info, dst_info[2].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 4:
     _XMP_stride_memcpy_4dim(dst, src, dst_info, dst_info[3].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 5:
     _XMP_stride_memcpy_5dim(dst, src, dst_info, dst_info[4].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 6:
     _XMP_stride_memcpy_6dim(dst, src, dst_info, dst_info[5].distance, _XMP_UNPACK);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray error");
-    break;;
+    break;
   }
 }
 
@@ -401,22 +401,22 @@ static void _unpack_5dim_array(const _XMP_array_section_t* dst_info, const char*
   switch (dim_of_allelmts){
   case 0:
     memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
-    break;;
+    break;
   case 1:
     _XMP_stride_memcpy_1dim(dst, src, dst_info, dst_info[0].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 2:
     _XMP_stride_memcpy_2dim(dst, src, dst_info, dst_info[1].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 3:
     _XMP_stride_memcpy_3dim(dst, src, dst_info, dst_info[2].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 4:
     _XMP_stride_memcpy_4dim(dst, src, dst_info, dst_info[3].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 5:
     _XMP_stride_memcpy_5dim(dst, src, dst_info, dst_info[4].distance, _XMP_UNPACK);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray error");
   }
@@ -435,19 +435,19 @@ static void _unpack_4dim_array(const _XMP_array_section_t* dst_info, const char*
   switch (dim_of_allelmts){
   case 0:
     memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
-    break;;
+    break;
   case 1:
     _XMP_stride_memcpy_1dim(dst, src, dst_info, dst_info[0].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 2:
     _XMP_stride_memcpy_2dim(dst, src, dst_info, dst_info[1].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 3:
     _XMP_stride_memcpy_3dim(dst, src, dst_info, dst_info[2].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 4:
     _XMP_stride_memcpy_4dim(dst, src, dst_info, dst_info[3].distance, _XMP_UNPACK);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray error");
   }
@@ -466,16 +466,16 @@ static void _unpack_3dim_array(const _XMP_array_section_t* dst_info, const char*
   switch (dim_of_allelmts){
   case 0:
     memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
-    break;;
+    break;
   case 1:
     _XMP_stride_memcpy_1dim(dst, src, dst_info, dst_info[0].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 2:
     _XMP_stride_memcpy_2dim(dst, src, dst_info, dst_info[1].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 3:
     _XMP_stride_memcpy_3dim(dst, src, dst_info, dst_info[2].distance, _XMP_UNPACK);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray error");
   }
@@ -494,13 +494,13 @@ static void _unpack_2dim_array(const _XMP_array_section_t* dst_info, const char*
   switch (dim_of_allelmts){
   case 0:
     memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
-    break;;
+    break;
   case 1:
     _XMP_stride_memcpy_1dim(dst, src, dst_info, dst_info[0].distance, _XMP_UNPACK);
-    break;;
+    break;
   case 2:
     _XMP_stride_memcpy_2dim(dst, src, dst_info, dst_info[1].distance, _XMP_UNPACK);
-    break;;
+    break;
   default:
     _XMP_fatal("Dimension of coarray error");
   }
@@ -657,50 +657,50 @@ void _XMP_unpack_coarray(char *dst, const int dst_dims, const char* src,
     switch (dst_dims){
     case 2:
       _unpack_2dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
-      break;;
+      break;
     case 3:
       _unpack_3dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
-      break;;
+      break;
     case 4:
       _unpack_4dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
-      break;;
+      break;
     case 5:
       _unpack_5dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
-      break;;
+      break;
     case 6:
       _unpack_6dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
-      break;;
+      break;
     case 7:
       _unpack_7dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
-      break;;
+      break;
     default:
       _XMP_fatal("Dimension of coarray is too big.");
-      break;;
+      break;
     }
   }
   else if(flag == _XMP_SCALAR_MCOPY){
     switch (dst_dims){
     case 2:
       _XMP_stride_memcpy_2dim(dst + dst_offset, src, dst_info, dst_info[1].distance, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     case 3:
       _XMP_stride_memcpy_3dim(dst + dst_offset, src, dst_info, dst_info[2].distance, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     case 4:
       _XMP_stride_memcpy_4dim(dst + dst_offset, src, dst_info, dst_info[3].distance, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     case 5:
       _XMP_stride_memcpy_5dim(dst + dst_offset, src, dst_info, dst_info[4].distance, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     case 6:
       _XMP_stride_memcpy_6dim(dst + dst_offset, src, dst_info, dst_info[5].distance, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     case 7:
       _XMP_stride_memcpy_7dim(dst + dst_offset, src, dst_info, dst_info[6].distance, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     default:
       _XMP_fatal("Dimension of coarray is too big.");
-      break;;
+      break;
     }
   }
   else{

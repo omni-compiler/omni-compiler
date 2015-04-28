@@ -53,7 +53,7 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array, const in
     for(int i=0,num=0;i<array[0].length;i+=chunk_len){
       stride[num++] = stride_offset[0] * i;
     }
-    break;;
+    break;
   case 2:
     if(array[0].distance > chunk_size){ // array[0].distance > chunk_size >= array[1].distance
       chunk_len = chunk_size / array[1].distance;
@@ -71,7 +71,7 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array, const in
 	stride[num++] = stride_offset[0] * i;
       }
     }
-    break;;
+    break;
   case 3:
     if(array[1].distance > chunk_size){ // array[1].distance > chunk_size >= array[2].distance
       chunk_len = chunk_size / array[2].distance;
@@ -102,7 +102,7 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array, const in
         stride[num++] = stride_offset[0] * i;
       }
     }
-    break;;
+    break;
   case 4:
     if(array[2].distance > chunk_size){ // array[2].distance > chunk_size >= array[3].distance
       chunk_len = chunk_size / array[3].distance;
@@ -149,7 +149,7 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array, const in
         stride[num++] = stride_offset[0] * i;
       }
     }
-    break;;
+    break;
   case 5:
     if(array[3].distance > chunk_size){ // array[3].distance > chunk_size >= array[4].distance
       chunk_len = chunk_size / array[4].distance;
@@ -215,7 +215,7 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array, const in
         stride[num++] = stride_offset[0] * i;
       }
     }
-    break;;
+    break;
   case 6:
     if(array[4].distance > chunk_size){ // array[4].distance > chunk_size >= array[5].distance
       chunk_len = chunk_size / array[5].distance;
@@ -303,7 +303,7 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array, const in
         stride[num++] = stride_offset[0] * i;
       }
     }
-    break;;
+    break;
   case 7:
     if(array[5].distance > chunk_size){ // array[5].distance > chunk_size >= array[6].distance
       chunk_len = chunk_size / array[6].distance;
@@ -416,6 +416,6 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array, const in
         stride[num++] = stride_offset[0] * i;
       }
     }
-    break;;
+    break;
   }
 }

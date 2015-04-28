@@ -182,7 +182,7 @@ void _xmp_gasnet_unpack_reply(gasnet_token_t t, const int ith)
 static void _extend_stride_queue()
 {
   if(_xmp_gasnet_stride_wait_size >= _xmp_gasnet_stride_queue_size){
-    _xmp_gasnet_stride_queue_size += _XMP_GASNET_STRIDE_BLK;
+    _xmp_gasnet_stride_queue_size *= _XMP_GASNET_STRIDE_INCREMENT_RATIO;
     int *tmp;
     int next_size = _xmp_gasnet_stride_queue_size * sizeof(int);
     if((tmp = realloc(_xmp_gasnet_stride_queue, next_size)) == NULL)

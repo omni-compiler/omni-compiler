@@ -118,28 +118,28 @@ static void _local_NON_continuous_copy(char *dst, const char *src, const int dst
     switch (dst_dims){
     case 1:
       _XMP_stride_memcpy_1dim(dst, src, dst_info, elmt_size, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     case 2:
       _XMP_stride_memcpy_2dim(dst, src, dst_info, elmt_size, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     case 3:
       _XMP_stride_memcpy_3dim(dst, src, dst_info, elmt_size, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     case 4:
       _XMP_stride_memcpy_4dim(dst, src, dst_info, elmt_size, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     case 5:
       _XMP_stride_memcpy_5dim(dst, src, dst_info, elmt_size, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     case 6:
       _XMP_stride_memcpy_6dim(dst, src, dst_info, elmt_size, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     case 7:
       _XMP_stride_memcpy_7dim(dst, src, dst_info, elmt_size, _XMP_SCALAR_MCOPY);
-      break;;
+      break;
     default:
       _XMP_fatal("Coarray Error ! Dimension is too big.\n");
-      break;;
+      break;
     }
   }
   else{
