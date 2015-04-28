@@ -61,28 +61,6 @@ public class XMPtransCoarrayRun
     this.env = env;
     name = def.getName();
 
-    /***************
-    if (pass == 1) {                // for procedures and modules
-      funcDef = new FuncDefBlock(def);
-      fblock = funcDef.getBlock();
-      env.setCurrentDef(funcDef);
-    } else {                        // for modules
-      funcDef = new FuncDefBlock(def);
-      fblock = funcDef.getBlock();
-      env.setCurrentDef(funcDef);
-    **************************************************
-      funcDef = null;
-      //funcDef = new FuncDefBlock(def);     // needed?
-
-      fblock = null;
-      //if (funcDef != null)
-      //fblock = funcDef.getBlock();
-
-      //env.setCurrentDef(funcDef);
-      ************************************************
-    }
-    ****************************************/
-
     funcDef = new FuncDefBlock(def);
     fblock = funcDef.getBlock();
     env.setCurrentDef(funcDef);
@@ -188,9 +166,6 @@ public class XMPtransCoarrayRun
     for (XMPcoarray coarray: useAssociatedCoarrays) {
       if (!coarray.isAllocatable()) {  // found a use-associated static coarray 
         copyCoarrayInLocalCoarrays(coarray);
-        //Ident ident = coarray.getIdent();
-        //ident.setFdeclaredModule(null);
-        //localCoarrays.add(coarray);
       }
     }
 
@@ -685,6 +660,44 @@ public class XMPtransCoarrayRun
     genPrologStmts();
     genEpilogStmts();
   }
+
+  private void genPrologStmts() {
+    // for the begining of the procedure
+    BlockList blist = fblock.getBody().getHead().getBody();
+    for (int i = _prologStmts.size() - 1; i >= 0; i--)
+      blist.insert(_prologStmts.get(i));
+
+    // restriction: for the ENTRY statement
+  }
+
+  private void genEpilogStmts() {
+    // for RETURN statement
+    BlockIterator bi = new topdownBlockIterator(fblock);
+    for (bi.init(); !bi.end(); bi.next()) {
+      Block block = bi.getBlock();
+      switch(block.Opcode()) {
+      case RETURN_STATEMENT:
+        LineNo lineno = block.getLineNo();
+        for (Xobject stmt1: _epilogStmts) {
+          Xobject stmt2 = stmt1.copy();
+          stmt2.setLineNo(lineno);
+          block.insert(stmt2);
+        }
+        break;
+
+      }
+    }
+
+    // for the end of the procedure
+    BlockList blist = fblock.getBody().getHead().getBody();
+
+    if (blist.getTail().Opcode() == Xcode.RETURN_STATEMENT)
+      return;     // to avoid generating unreachable statements
+
+    for (Xobject stmt: _epilogStmts)
+      blist.add(stmt);
+  }
+
 
   /*  NOT USED: all calls of automatic syncalls are moved into runtime functions.
    */
@@ -1549,43 +1562,6 @@ public class XMPtransCoarrayRun
   // add at the top of _epilogStmts
   private void insertEpilogStmt(Xobject stmt) {
     _epilogStmts.add(0, stmt);
-  }
-
-
-  private void genPrologStmts() {
-    // for the begining of the procedure
-    BlockList blist = fblock.getBody().getHead().getBody();
-    for (int i = _prologStmts.size() - 1; i >= 0; i--)
-      blist.insert(_prologStmts.get(i));
-
-    // restriction: for the ENTRY statement
-
-  }
-
-
-  private void genEpilogStmts() {
-
-    // for RETURN/STOP statement
-    BlockIterator bi = new topdownBlockIterator(fblock);
-    for (bi.init(); !bi.end(); bi.next()) {
-      Block block = bi.getBlock();
-      switch(block.Opcode()) {
-      case RETURN_STATEMENT:
-        LineNo lineno = block.getLineNo();
-        for (Xobject stmt1: _epilogStmts) {
-          Xobject stmt2 = stmt1.copy();
-          stmt2.setLineNo(lineno);
-          block.insert(stmt2);
-        }
-        break;
-
-      }
-    }
-
-    // for the end of the procedure
-    BlockList blist = fblock.getBody().getHead().getBody();
-    for (Xobject stmt: _epilogStmts)
-      blist.add(stmt);
   }
 
 

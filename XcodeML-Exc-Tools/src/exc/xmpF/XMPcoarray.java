@@ -35,10 +35,10 @@ public class XMPcoarray {
   private Boolean isPointer;
 
   // corresponding cray pointer and descriptor
-  private String _crayPtrName;
-  private Ident crayPtrId;
-  private String _descPtrName;
-  private Ident descPtrId;
+  private String _crayPtrName = null;
+  private Ident crayPtrId = null;
+  private String _descPtrName = null;
+  private Ident descPtrId = null;
 
   // context
   protected XMPenv env;
@@ -91,14 +91,16 @@ public class XMPcoarray {
   // declare variable of descriptor pointer corresponding to this.
   //
   public void genDecl_descPointer() {
-    BlockList blist = fblock.getBody();
-    String descPtrName = getDescPointerName();
+    if (getDescPointerId() == null) {
+      BlockList blist = fblock.getBody();
+      String descPtrName = getDescPointerName();
 
-    // generate declaration of descPtrId
-    descPtrId = blist.declLocalIdent(descPtrName,
-                                     BasicType.Fint8Type,
-                                     StorageClass.FLOCAL,
-                                     null);
+      // generate declaration of descPtrId
+      descPtrId = blist.declLocalIdent(descPtrName,
+                                       BasicType.Fint8Type,
+                                       StorageClass.FLOCAL,
+                                       null);
+    }
   }
 
 
