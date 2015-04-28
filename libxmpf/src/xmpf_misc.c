@@ -43,11 +43,6 @@ void xmpf_finalize_all__()
 
   //  xmpf_dbg_printf("sched = %f, start = %f, wait = %f\n", t_sched, t_start, t_wait);
 
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
-  /* for Coarray Fortran environment */
-  _XMPF_coarray_finalize();
-#endif
-
 #if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
   FJMPI_Rdma_finalize();
 #endif

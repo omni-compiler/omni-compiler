@@ -30,12 +30,10 @@ program epi2
 
 contains
   subroutine allo
-    include "xmp_coarray.h"
     allocate (a(10)[*])
   end subroutine allo
 
   subroutine deallo
-    include "xmp_coarray.h"
     deallocate (a)
   end subroutine deallo
 
