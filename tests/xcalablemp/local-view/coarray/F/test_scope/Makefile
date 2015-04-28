@@ -6,12 +6,12 @@ OUT_darg= dummyarg-1 dummyarg-2
 OUT_host= host2 host1
 OUT_bug403= bug1OK #bug1
 OUT_module= mod1
-OUT_epi= autosyncall1 autosyncall2
+OUT_epi= #autosyncall1 autosyncall2
 
 #OUT_err=entry1ERR
 
 #host3 host2-1 ... problem in gfortran?
 
-OUT= $(OUT_epi) $(OUT_darg) $(OUT_host) $(OUT_module) $(OUT_bug403)
+OUT= $(OUT_host) $(OUT_module) $(OUT_bug403) $(OUT_epi) $(OUT_darg) 
 
 include ../Makefile.common
