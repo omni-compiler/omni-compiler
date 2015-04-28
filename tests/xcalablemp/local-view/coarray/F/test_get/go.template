@@ -18,7 +18,10 @@ echo "[test_get]"
 
 for f in @OUT@; do
     echo $f
-    mpiexec -n 3 ./$f
+    case $f in 
+        *NGB)  echo "...skip" ;;
+        *)     mpiexec -n 3 ./$f ;;
+    esac
 done
 
 

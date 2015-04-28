@@ -2,7 +2,7 @@
 #OPT= -g --debug --verbose
 NPE=3
 
-OUT_decl= decl1
+OUT_decl= decl3 #decl1
 #OUT_size= size1 size1-2 #size2 #sample #size1-err
 ### size2: assumed shape dummy coarray
 #OUT_rt  =  inquiry

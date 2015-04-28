@@ -34,8 +34,8 @@ submit:
 	cd test_put; $(MAKE) submit
 	cd test_scope; $(MAKE) submit
 	cd test_alloc; $(MAKE) submit
-	cd test_fe; $(MAKE) submit
-	cd test_cfold; $(MAKE) submit
+#	cd test_fe; $(MAKE) submit
+#	cd test_cfold; $(MAKE) submit
 
 clean:
 	cd test_get; $(MAKE) clean
