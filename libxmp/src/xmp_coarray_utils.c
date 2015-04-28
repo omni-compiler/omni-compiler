@@ -60,7 +60,7 @@ void _XMP_stride_memcpy_1dim(char *buf1, const char *buf2, const _XMP_array_sect
       buf1_offset += element_size;
     }
   }
-  else if(flag == _XMP_SCALAR_COPY){
+  else if(flag == _XMP_SCALAR_MCOPY){
     for(int i=0;i<array_info[0].length;i++){
       tmp = stride_offset * i;
       memcpy(buf1 + tmp, buf2, element_size);
@@ -105,7 +105,7 @@ void _XMP_stride_memcpy_2dim(char *buf1, const char *buf2, const _XMP_array_sect
       }
     }
   }
-  else if(flag == _XMP_SCALAR_COPY){
+  else if(flag == _XMP_SCALAR_MCOPY){
     for(int i=0;i<array_info[0].length;i++){
       tmp[0] = stride_offset[0] * i;
       for(int j=0;j<array_info[1].length;j++){
@@ -159,7 +159,7 @@ void _XMP_stride_memcpy_3dim(char *buf1, const char *buf2, const _XMP_array_sect
       }
     }
   }
-  else if(flag == _XMP_SCALAR_COPY){
+  else if(flag == _XMP_SCALAR_MCOPY){
     for(int i=0;i<array_info[0].length;i++){
       tmp[0] = stride_offset[0] * i;
       for(int j=0;j<array_info[1].length;j++){
@@ -223,7 +223,7 @@ void _XMP_stride_memcpy_4dim(char *buf1, const char *buf2, const _XMP_array_sect
       }
     }
   }
-  else if(flag == _XMP_SCALAR_COPY){
+  else if(flag == _XMP_SCALAR_MCOPY){
     for(int i=0;i<array_info[0].length;i++){
       tmp[0] = stride_offset[0] * i;
       for(int j=0;j<array_info[1].length;j++){
@@ -297,7 +297,7 @@ void _XMP_stride_memcpy_5dim(char *buf1, const char *buf2, const _XMP_array_sect
       }
     }
   }
-  else if(flag == _XMP_SCALAR_COPY){
+  else if(flag == _XMP_SCALAR_MCOPY){
     for(int i=0;i<array_info[0].length;i++){
       tmp[0] = stride_offset[0] * i;
       for(int j=0;j<array_info[1].length;j++){
@@ -381,7 +381,7 @@ void _XMP_stride_memcpy_6dim(char *buf1, const char *buf2, const _XMP_array_sect
       }
     }
   }
-  else if(flag == _XMP_SCALAR_COPY){
+  else if(flag == _XMP_SCALAR_MCOPY){
     for(int i=0;i<array_info[0].length;i++){
       tmp[0] = stride_offset[0] * i;
       for(int j=0;j<array_info[1].length;j++){
@@ -474,7 +474,7 @@ void _XMP_stride_memcpy_7dim(char *buf1, const char *buf2, const _XMP_array_sect
       }
     }
   }
-  else if(flag == _XMP_SCALAR_COPY){
+  else if(flag == _XMP_SCALAR_MCOPY){
     for(int i=0;i<array_info[0].length;i++){
       tmp[0] = stride_offset[0] * i;
       for(int j=0;j<array_info[1].length;j++){

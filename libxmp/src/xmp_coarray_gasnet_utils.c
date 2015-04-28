@@ -1,33 +1,33 @@
 #include "xmp_internal.h"
 #define _XMP_UNROLLING (4)
 
-static void _pack_7_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+static void _pack_7_dim_array(const _XMP_array_section_t* src_info, char* archive, const char* src,
 			      const int continuous_dim)
 {
-  size_t element_size = src[6].distance;
-  size_t start_offset = _XMP_get_offset(src, 7);
+  size_t element_size = src_info[6].distance;
+  size_t start_offset = _XMP_get_offset(src_info, 7);
 
   switch (continuous_dim){
   case 0:
-    _XMP_stride_memcpy_7dim(archive_ptr, src_ptr + start_offset, src, element_size, _XMP_PACK);
+    _XMP_stride_memcpy_7dim(archive, src + start_offset, src_info, element_size, _XMP_PACK);
     break;;
   case 1:
-    _XMP_stride_memcpy_6dim(archive_ptr, src_ptr + start_offset, src, src[6].distance * src[6].length, _XMP_PACK);
+    _XMP_stride_memcpy_6dim(archive, src + start_offset, src_info, src_info[6].distance * src_info[6].length, _XMP_PACK);
     break;;
   case 2:
-    _XMP_stride_memcpy_5dim(archive_ptr, src_ptr + start_offset, src, src[5].distance * src[5].length, _XMP_PACK);
+    _XMP_stride_memcpy_5dim(archive, src + start_offset, src_info, src_info[5].distance * src_info[5].length, _XMP_PACK);
     break;;
   case 3:
-    _XMP_stride_memcpy_4dim(archive_ptr, src_ptr + start_offset, src, src[4].distance * src[4].length, _XMP_PACK);
+    _XMP_stride_memcpy_4dim(archive, src + start_offset, src_info, src_info[4].distance * src_info[4].length, _XMP_PACK);
     break;;
   case 4:
-    _XMP_stride_memcpy_3dim(archive_ptr, src_ptr + start_offset, src, src[3].distance * src[3].length, _XMP_PACK);
+    _XMP_stride_memcpy_3dim(archive, src + start_offset, src_info, src_info[3].distance * src_info[3].length, _XMP_PACK);
     break;;
   case 5:
-    _XMP_stride_memcpy_2dim(archive_ptr, src_ptr + start_offset, src, src[2].distance * src[2].length, _XMP_PACK);
+    _XMP_stride_memcpy_2dim(archive, src + start_offset, src_info, src_info[2].distance * src_info[2].length, _XMP_PACK);
     break;;
   case 6:
-    _XMP_stride_memcpy_1dim(archive_ptr, src_ptr + start_offset, src, src[1].distance * src[1].length, _XMP_PACK);
+    _XMP_stride_memcpy_1dim(archive, src + start_offset, src_info, src_info[1].distance * src_info[1].length, _XMP_PACK);
     break;;
   default:
     _XMP_fatal("Dimension of coarray error");
@@ -35,30 +35,30 @@ static void _pack_7_dim_array(const _XMP_array_section_t* src, char* archive_ptr
   }
 }
 
-static void _pack_6_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+static void _pack_6_dim_array(const _XMP_array_section_t* src_info, char* archive, const char* src,
 			      const int continuous_dim)
 {
-  size_t element_size = src[5].distance;
-  size_t start_offset = _XMP_get_offset(src, 6);
+  size_t element_size = src_info[5].distance;
+  size_t start_offset = _XMP_get_offset(src_info, 6);
 
   switch (continuous_dim){
   case 0:
-    _XMP_stride_memcpy_6dim(archive_ptr, src_ptr + start_offset, src, element_size, _XMP_PACK);
+    _XMP_stride_memcpy_6dim(archive, src + start_offset, src_info, element_size, _XMP_PACK);
     break;;
   case 1:
-    _XMP_stride_memcpy_5dim(archive_ptr, src_ptr + start_offset, src, src[5].distance * src[5].length, _XMP_PACK);
+    _XMP_stride_memcpy_5dim(archive, src + start_offset, src_info, src_info[5].distance * src_info[5].length, _XMP_PACK);
     break;;
   case 2:
-    _XMP_stride_memcpy_4dim(archive_ptr, src_ptr + start_offset, src, src[4].distance * src[4].length, _XMP_PACK);
+    _XMP_stride_memcpy_4dim(archive, src + start_offset, src_info, src_info[4].distance * src_info[4].length, _XMP_PACK);
     break;;
   case 3:
-    _XMP_stride_memcpy_3dim(archive_ptr, src_ptr + start_offset, src, src[3].distance * src[3].length, _XMP_PACK);
+    _XMP_stride_memcpy_3dim(archive, src + start_offset, src_info, src_info[3].distance * src_info[3].length, _XMP_PACK);
     break;;
   case 4:
-    _XMP_stride_memcpy_2dim(archive_ptr, src_ptr + start_offset, src, src[2].distance * src[2].length, _XMP_PACK);
+    _XMP_stride_memcpy_2dim(archive, src + start_offset, src_info, src_info[2].distance * src_info[2].length, _XMP_PACK);
     break;;
   case 5:
-    _XMP_stride_memcpy_1dim(archive_ptr, src_ptr + start_offset, src, src[1].distance * src[1].length, _XMP_PACK);
+    _XMP_stride_memcpy_1dim(archive, src + start_offset, src_info, src_info[1].distance * src_info[1].length, _XMP_PACK);
     break;;
   default:
     _XMP_fatal("Dimension of coarray error");
@@ -66,27 +66,27 @@ static void _pack_6_dim_array(const _XMP_array_section_t* src, char* archive_ptr
   }
 }
 
-static void _pack_5_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+static void _pack_5_dim_array(const _XMP_array_section_t* src_info, char* archive, const char* src,
 			      const int continuous_dim)
 {
-  size_t element_size = src[4].distance;
-  size_t start_offset = _XMP_get_offset(src, 5);
+  size_t element_size = src_info[4].distance;
+  size_t start_offset = _XMP_get_offset(src_info, 5);
 
   switch (continuous_dim){
   case 0:
-    _XMP_stride_memcpy_5dim(archive_ptr, src_ptr + start_offset, src, element_size, _XMP_PACK);
+    _XMP_stride_memcpy_5dim(archive, src + start_offset, src_info, element_size, _XMP_PACK);
     break;;
   case 1:
-    _XMP_stride_memcpy_4dim(archive_ptr, src_ptr + start_offset, src, src[4].distance * src[4].length, _XMP_PACK);
+    _XMP_stride_memcpy_4dim(archive, src + start_offset, src_info, src_info[4].distance * src_info[4].length, _XMP_PACK);
     break;;
   case 2:
-    _XMP_stride_memcpy_3dim(archive_ptr, src_ptr + start_offset, src, src[3].distance * src[3].length, _XMP_PACK);
+    _XMP_stride_memcpy_3dim(archive, src + start_offset, src_info, src_info[3].distance * src_info[3].length, _XMP_PACK);
     break;;
   case 3:
-    _XMP_stride_memcpy_2dim(archive_ptr, src_ptr + start_offset, src, src[2].distance * src[2].length, _XMP_PACK);
+    _XMP_stride_memcpy_2dim(archive, src + start_offset, src_info, src_info[2].distance * src_info[2].length, _XMP_PACK);
     break;;
   case 4:
-    _XMP_stride_memcpy_1dim(archive_ptr, src_ptr + start_offset, src, src[1].distance * src[1].length, _XMP_PACK);
+    _XMP_stride_memcpy_1dim(archive, src + start_offset, src_info, src_info[1].distance * src_info[1].length, _XMP_PACK);
     break;;
   default:
     _XMP_fatal("Dimension of coarray error");
@@ -94,24 +94,24 @@ static void _pack_5_dim_array(const _XMP_array_section_t* src, char* archive_ptr
   }
 }
 
-static void _pack_4_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+static void _pack_4_dim_array(const _XMP_array_section_t* src_info, char* archive, const char* src,
 			      const int continuous_dim)
 {
-  size_t element_size = src[3].distance;
-  size_t start_offset = _XMP_get_offset(src, 4);
+  size_t element_size = src_info[3].distance;
+  size_t start_offset = _XMP_get_offset(src_info, 4);
 
   switch (continuous_dim){
   case 0:
-    _XMP_stride_memcpy_4dim(archive_ptr, src_ptr + start_offset, src, element_size, _XMP_PACK);
+    _XMP_stride_memcpy_4dim(archive, src + start_offset, src_info, element_size, _XMP_PACK);
     break;;
   case 1:
-    _XMP_stride_memcpy_3dim(archive_ptr, src_ptr + start_offset, src, src[3].distance * src[3].length, _XMP_PACK);
+    _XMP_stride_memcpy_3dim(archive, src + start_offset, src_info, src_info[3].distance * src_info[3].length, _XMP_PACK);
     break;;
   case 2:
-    _XMP_stride_memcpy_2dim(archive_ptr, src_ptr + start_offset, src, src[2].distance * src[2].length, _XMP_PACK);
+    _XMP_stride_memcpy_2dim(archive, src + start_offset, src_info, src_info[2].distance * src_info[2].length, _XMP_PACK);
     break;;
   case 3:
-    _XMP_stride_memcpy_1dim(archive_ptr, src_ptr + start_offset, src, src[1].distance * src[1].length, _XMP_PACK);
+    _XMP_stride_memcpy_1dim(archive, src + start_offset, src_info, src_info[1].distance * src_info[1].length, _XMP_PACK);
     break;;
   default:
     _XMP_fatal("Dimension of coarray error");
@@ -119,21 +119,21 @@ static void _pack_4_dim_array(const _XMP_array_section_t* src, char* archive_ptr
   }
 }
 
-static void _pack_3_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr,
+static void _pack_3_dim_array(const _XMP_array_section_t* src_info, char* archive, const char* src,
 			      const int continuous_dim)  // continuous_dim is 0 or 1 or 2
 {
-  size_t element_size = src[2].distance;
-  size_t start_offset = _XMP_get_offset(src, 3);
+  size_t element_size = src_info[2].distance;
+  size_t start_offset = _XMP_get_offset(src_info, 3);
 
   switch (continuous_dim){
   case 0:
-    _XMP_stride_memcpy_3dim(archive_ptr, src_ptr + start_offset, src, element_size, _XMP_PACK);
+    _XMP_stride_memcpy_3dim(archive, src + start_offset, src_info, element_size, _XMP_PACK);
     break;;
   case 1:
-    _XMP_stride_memcpy_2dim(archive_ptr, src_ptr + start_offset, src, src[2].distance * src[2].length, _XMP_PACK);
+    _XMP_stride_memcpy_2dim(archive, src + start_offset, src_info, src_info[2].distance * src_info[2].length, _XMP_PACK);
     break;;
   case 2:
-    _XMP_stride_memcpy_1dim(archive_ptr, src_ptr + start_offset, src, src[1].distance * src[1].length, _XMP_PACK);
+    _XMP_stride_memcpy_1dim(archive, src + start_offset, src_info, src_info[1].distance * src_info[1].length, _XMP_PACK);
     break;;
   default:
     _XMP_fatal("Dimension of coarray error");
@@ -141,18 +141,18 @@ static void _pack_3_dim_array(const _XMP_array_section_t* src, char* archive_ptr
   }
 }
 
-static void _pack_2_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr, 
+static void _pack_2_dim_array(const _XMP_array_section_t* src_info, char* archive, const char* src, 
 			      const int continuous_dim) // continuous_dim is 0 or 1
 {
-  size_t element_size = src[1].distance;
-  size_t start_offset = _XMP_get_offset(src, 2);
+  size_t element_size = src_info[1].distance;
+  size_t start_offset = _XMP_get_offset(src_info, 2);
 
   switch (continuous_dim){
   case 0:
-    _XMP_stride_memcpy_2dim(archive_ptr, src_ptr + start_offset, src, element_size, _XMP_PACK);
+    _XMP_stride_memcpy_2dim(archive, src + start_offset, src_info, element_size, _XMP_PACK);
     break;;
   case 1:
-    _XMP_stride_memcpy_1dim(archive_ptr, src_ptr + start_offset, src, src[1].distance * src[1].length, _XMP_PACK);
+    _XMP_stride_memcpy_1dim(archive, src + start_offset, src_info, src_info[1].distance * src_info[1].length, _XMP_PACK);
     break;;
   default:
     _XMP_fatal("Dimension of coarray error");
@@ -160,44 +160,44 @@ static void _pack_2_dim_array(const _XMP_array_section_t* src, char* archive_ptr
   }
 }
 
-static void _pack_1_dim_array(const _XMP_array_section_t* src, char* archive_ptr, const char* src_ptr)
+static void _pack_1_dim_array(const _XMP_array_section_t* src_info, char* archive, const char* src)
 {
-  // for(i=0;i<src[0].length;i++){
+  // for(i=0;i<src_info[0].length;i++){
   //   src_offset = start_offset + (stride_offset * i);
-  //   memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
+  //   memcpy(archive + archive_offset, src + src_offset, element_size);
   //   archive_offset += element_size;
   // }
-  size_t element_size = src[0].distance;
-  int repeat = src[0].length / _XMP_UNROLLING;
-  int left   = src[0].length % _XMP_UNROLLING;
-  size_t stride_offset = src[0].stride * element_size;
+  size_t element_size = src_info[0].distance;
+  int repeat = src_info[0].length / _XMP_UNROLLING;
+  int left   = src_info[0].length % _XMP_UNROLLING;
+  size_t stride_offset = src_info[0].stride * element_size;
   size_t archive_offset = 0, src_offset;
   int i = 0;
-  size_t start_offset = _XMP_get_offset(src, 1);
+  size_t start_offset = _XMP_get_offset(src_info, 1);
 
   if(repeat == 0){
     for(i=0;i<left;i++){
       src_offset = start_offset + (stride_offset * i);
       archive_offset = i * element_size;
-      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
+      memcpy(archive + archive_offset, src + src_offset, element_size);
     }
   }
   else{
     while( repeat-- > 0 ) {
       src_offset = start_offset + (stride_offset * i);
-      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
+      memcpy(archive + archive_offset, src + src_offset, element_size);
       archive_offset += element_size;
 
       src_offset += stride_offset;
-      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
+      memcpy(archive + archive_offset, src + src_offset, element_size);
       archive_offset += element_size;
 
       src_offset += stride_offset;
-      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
+      memcpy(archive + archive_offset, src + src_offset, element_size);
       archive_offset += element_size;
 
       src_offset += stride_offset;
-      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
+      memcpy(archive + archive_offset, src + src_offset, element_size);
       archive_offset += element_size;
 
       i += _XMP_UNROLLING;
@@ -206,47 +206,47 @@ static void _pack_1_dim_array(const _XMP_array_section_t* src, char* archive_ptr
     switch (left) {
     case 3 :
       src_offset = start_offset + (stride_offset * (i+2));
-      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
+      memcpy(archive + archive_offset, src + src_offset, element_size);
       archive_offset += element_size;
     case 2 :
       src_offset = start_offset + (stride_offset * (i+1));
-      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
+      memcpy(archive + archive_offset, src + src_offset, element_size);
       archive_offset += element_size;
     case 1 :
       src_offset = start_offset + (stride_offset * i);
-      memcpy(archive_ptr + archive_offset, src_ptr + src_offset, element_size);
+      memcpy(archive + archive_offset, src + src_offset, element_size);
     }
   }
 }
 
-void _XMP_pack_coarray(char* archive_ptr, const char* src_ptr, const int src_dims, const _XMP_array_section_t* src)
+void _XMP_pack_coarray(char* archive, const char* src, const int src_dims, const _XMP_array_section_t* src_info)
 {
   if(src_dims == 1){ 
-    _pack_1_dim_array(src, archive_ptr, src_ptr);
+    _pack_1_dim_array(src_info, archive, src);
     return;
   }
 
   // How depth is memory continuity ?
-  int continuous_dim = src_dims - _XMP_get_dim_of_allelmts(src_dims, src);
+  int continuous_dim = src_dims - _XMP_get_dim_of_allelmts(src_dims, src_info);
 
   switch (src_dims){
   case 2:
-    _pack_2_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    _pack_2_dim_array(src_info, archive, src, continuous_dim);
     break;;
   case 3:
-    _pack_3_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    _pack_3_dim_array(src_info, archive, src, continuous_dim);
     break;;
   case 4:
-    _pack_4_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    _pack_4_dim_array(src_info, archive, src, continuous_dim);
     break;;
   case 5:
-    _pack_5_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    _pack_5_dim_array(src_info, archive, src, continuous_dim);
     break;;
   case 6:
-    _pack_6_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    _pack_6_dim_array(src_info, archive, src, continuous_dim);
     break;;
   case 7:
-    _pack_7_dim_array(src, archive_ptr, src_ptr, continuous_dim);
+    _pack_7_dim_array(src_info, archive, src, continuous_dim);
     break;;
   default:
     _XMP_fatal("Dimension of coarray is too big");
@@ -254,33 +254,33 @@ void _XMP_pack_coarray(char* archive_ptr, const char* src_ptr, const int src_dim
   }
 }
 
-static void _unpack_7_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
-				char* dst_ptr, const int continuous_dim)
+static void _unpack_7_dim_array(const _XMP_array_section_t* dst_info, const char* src,
+				char* dst, const int continuous_dim)
 {
-  size_t element_size = dst[6].distance;
-  size_t start_offset = _XMP_get_offset(dst, 7);
+  size_t element_size = dst_info[6].distance;
+  size_t start_offset = _XMP_get_offset(dst_info, 7);
 
   switch (continuous_dim){
   case 0:
-    _XMP_stride_memcpy_7dim(dst_ptr + start_offset, src_ptr, dst, element_size, _XMP_UNPACK);
+    _XMP_stride_memcpy_7dim(dst + start_offset, src, dst_info, element_size, _XMP_UNPACK);
     break;;
   case 1:
-    _XMP_stride_memcpy_6dim(dst_ptr + start_offset, src_ptr, dst, dst[6].distance * dst[6].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_6dim(dst + start_offset, src, dst_info, dst_info[6].distance * dst_info[6].length, _XMP_UNPACK);
     break;;
   case 2:
-    _XMP_stride_memcpy_5dim(dst_ptr + start_offset, src_ptr, dst, dst[5].distance * dst[5].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_5dim(dst + start_offset, src, dst_info, dst_info[5].distance * dst_info[5].length, _XMP_UNPACK);
     break;;
   case 3:
-    _XMP_stride_memcpy_4dim(dst_ptr + start_offset, src_ptr, dst, dst[4].distance * dst[4].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_4dim(dst + start_offset, src, dst_info, dst_info[4].distance * dst_info[4].length, _XMP_UNPACK);
     break;;
   case 4:
-    _XMP_stride_memcpy_3dim(dst_ptr + start_offset, src_ptr, dst, dst[3].distance * dst[3].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_3dim(dst + start_offset, src, dst_info, dst_info[3].distance * dst_info[3].length, _XMP_UNPACK);
     break;;
   case 5:
-    _XMP_stride_memcpy_2dim(dst_ptr + start_offset, src_ptr, dst, dst[2].distance * dst[2].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_2dim(dst + start_offset, src, dst_info, dst_info[2].distance * dst_info[2].length, _XMP_UNPACK);
     break;;
   case 6:
-    _XMP_stride_memcpy_1dim(dst_ptr + start_offset, src_ptr, dst, dst[1].distance * dst[1].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_1dim(dst + start_offset, src, dst_info, dst_info[1].distance * dst_info[1].length, _XMP_UNPACK);
     break;;
   default:
     _XMP_fatal("Dimension of coarray error");
@@ -288,30 +288,30 @@ static void _unpack_7_dim_array(const _XMP_array_section_t* dst, const char* src
   }
 }
 
-static void _unpack_6_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
-				char* dst_ptr, const int continuous_dim)
+static void _unpack_6_dim_array(const _XMP_array_section_t* dst_info, const char* src,
+				char* dst, const int continuous_dim)
 {
-  size_t element_size = dst[5].distance;
-  size_t start_offset = _XMP_get_offset(dst, 6);
+  size_t element_size = dst_info[5].distance;
+  size_t start_offset = _XMP_get_offset(dst_info, 6);
 
   switch (continuous_dim){
   case 0:
-    _XMP_stride_memcpy_6dim(dst_ptr + start_offset, src_ptr, dst, element_size, _XMP_UNPACK);
+    _XMP_stride_memcpy_6dim(dst + start_offset, src, dst_info, element_size, _XMP_UNPACK);
     break;;
   case 1:
-    _XMP_stride_memcpy_5dim(dst_ptr + start_offset, src_ptr, dst, dst[5].distance * dst[5].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_5dim(dst + start_offset, src, dst_info, dst_info[5].distance * dst_info[5].length, _XMP_UNPACK);
     break;;
   case 2:
-    _XMP_stride_memcpy_4dim(dst_ptr + start_offset, src_ptr, dst, dst[4].distance * dst[4].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_4dim(dst + start_offset, src, dst_info, dst_info[4].distance * dst_info[4].length, _XMP_UNPACK);
     break;;
   case 3:
-    _XMP_stride_memcpy_3dim(dst_ptr + start_offset, src_ptr, dst, dst[3].distance * dst[3].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_3dim(dst + start_offset, src, dst_info, dst_info[3].distance * dst_info[3].length, _XMP_UNPACK);
     break;;
   case 4:
-    _XMP_stride_memcpy_2dim(dst_ptr + start_offset, src_ptr, dst, dst[2].distance * dst[2].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_2dim(dst + start_offset, src, dst_info, dst_info[2].distance * dst_info[2].length, _XMP_UNPACK);
     break;;
   case 5:
-    _XMP_stride_memcpy_1dim(dst_ptr + start_offset, src_ptr, dst, dst[1].distance * dst[1].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_1dim(dst + start_offset, src, dst_info, dst_info[1].distance * dst_info[1].length, _XMP_UNPACK);
     break;;
   default:
     _XMP_fatal("Dimension of coarray error");
@@ -319,91 +319,91 @@ static void _unpack_6_dim_array(const _XMP_array_section_t* dst, const char* src
   }
 }
 
-static void _unpack_5_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
-				char* dst_ptr, const int continuous_dim)
+static void _unpack_5_dim_array(const _XMP_array_section_t* dst_info, const char* src,
+				char* dst, const int continuous_dim)
 {
-  size_t element_size = dst[4].distance;
-  size_t start_offset = _XMP_get_offset(dst, 5);
+  size_t element_size = dst_info[4].distance;
+  size_t start_offset = _XMP_get_offset(dst_info, 5);
 
   switch (continuous_dim){
   case 0:
-    _XMP_stride_memcpy_5dim(dst_ptr + start_offset, src_ptr, dst, element_size, _XMP_UNPACK);
+    _XMP_stride_memcpy_5dim(dst + start_offset, src, dst_info, element_size, _XMP_UNPACK);
     break;;
   case 1:
-    _XMP_stride_memcpy_4dim(dst_ptr + start_offset, src_ptr, dst, dst[4].distance * dst[4].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_4dim(dst + start_offset, src, dst_info, dst_info[4].distance * dst_info[4].length, _XMP_UNPACK);
     break;;
   case 2:
-    _XMP_stride_memcpy_3dim(dst_ptr + start_offset, src_ptr, dst, dst[3].distance * dst[3].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_3dim(dst + start_offset, src, dst_info, dst_info[3].distance * dst_info[3].length, _XMP_UNPACK);
     break;;
   case 3:
-    _XMP_stride_memcpy_2dim(dst_ptr + start_offset, src_ptr, dst, dst[2].distance * dst[2].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_2dim(dst + start_offset, src, dst_info, dst_info[2].distance * dst_info[2].length, _XMP_UNPACK);
     break;;
   case 4:
-    _XMP_stride_memcpy_1dim(dst_ptr + start_offset, src_ptr, dst, dst[1].distance * dst[1].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_1dim(dst + start_offset, src, dst_info, dst_info[1].distance * dst_info[1].length, _XMP_UNPACK);
     break;;
   default:
     _XMP_fatal("Dimension of coarray error");
   }
 }
 
-static void _unpack_4_dim_array(const _XMP_array_section_t* dst, const char* src_ptr, 
-				char* dst_ptr, const int continuous_dim)
+static void _unpack_4_dim_array(const _XMP_array_section_t* dst_info, const char* src, 
+				char* dst, const int continuous_dim)
 {
-  size_t element_size = dst[3].distance;
-  size_t start_offset = _XMP_get_offset(dst, 4);
+  size_t element_size = dst_info[3].distance;
+  size_t start_offset = _XMP_get_offset(dst_info, 4);
 
   switch (continuous_dim){
   case 0:
-    _XMP_stride_memcpy_4dim(dst_ptr + start_offset, src_ptr, dst, element_size, _XMP_UNPACK);
+    _XMP_stride_memcpy_4dim(dst + start_offset, src, dst_info, element_size, _XMP_UNPACK);
     break;;
   case 1:
-    _XMP_stride_memcpy_3dim(dst_ptr + start_offset, src_ptr, dst, dst[3].distance * dst[3].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_3dim(dst + start_offset, src, dst_info, dst_info[3].distance * dst_info[3].length, _XMP_UNPACK);
     break;;
   case 2:
-    _XMP_stride_memcpy_2dim(dst_ptr + start_offset, src_ptr, dst, dst[2].distance * dst[2].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_2dim(dst + start_offset, src, dst_info, dst_info[2].distance * dst_info[2].length, _XMP_UNPACK);
     break;;
   case 3:
-    _XMP_stride_memcpy_1dim(dst_ptr + start_offset, src_ptr, dst, dst[1].distance * dst[1].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_1dim(dst + start_offset, src, dst_info, dst_info[1].distance * dst_info[1].length, _XMP_UNPACK);
     break;;
   default:
     _XMP_fatal("Dimension of coarray error");
   }
 }
 
-static void _unpack_3_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
-                                char* dst_ptr, const int continuous_dim)
+static void _unpack_3_dim_array(const _XMP_array_section_t* dst_info, const char* src,
+                                char* dst, const int continuous_dim)
 {
-  size_t element_size = dst[2].distance;
-  size_t start_offset = _XMP_get_offset(dst, 3);
+  size_t element_size = dst_info[2].distance;
+  size_t start_offset = _XMP_get_offset(dst_info, 3);
 
   switch (continuous_dim){
   case 0:
-    _XMP_stride_memcpy_3dim(dst_ptr + start_offset, src_ptr, dst, element_size, _XMP_UNPACK);
+    _XMP_stride_memcpy_3dim(dst + start_offset, src, dst_info, element_size, _XMP_UNPACK);
     break;;
   case 1:
-    _XMP_stride_memcpy_2dim(dst_ptr + start_offset, src_ptr, dst, dst[2].distance * dst[2].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_2dim(dst + start_offset, src, dst_info, dst_info[2].distance * dst_info[2].length, _XMP_UNPACK);
     break;;
   case 2:
-    _XMP_stride_memcpy_1dim(dst_ptr + start_offset, src_ptr, dst, dst[1].distance * dst[1].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_1dim(dst + start_offset, src, dst_info, dst_info[1].distance * dst_info[1].length, _XMP_UNPACK);
     break;;
   default:
     _XMP_fatal("Dimension of coarray error");
   }
 }
 
-static void _unpack_2_dim_array(const _XMP_array_section_t* dst, const char* src_ptr,
-				char* dst_ptr, const int continuous_dim)
+static void _unpack_2_dim_array(const _XMP_array_section_t* dst_info, const char* src,
+				char* dst, const int continuous_dim)
 {
   // continuous_dim is 0 or 1
-  size_t element_size = dst[1].distance;
-  size_t start_offset = _XMP_get_offset(dst, 2);
+  size_t element_size = dst_info[1].distance;
+  size_t start_offset = _XMP_get_offset(dst_info, 2);
 
   switch (continuous_dim){
   case 0:
-    _XMP_stride_memcpy_2dim(dst_ptr + start_offset, src_ptr, dst, element_size, _XMP_UNPACK);
+    _XMP_stride_memcpy_2dim(dst + start_offset, src, dst_info, element_size, _XMP_UNPACK);
     break;;
   case 1:
-    _XMP_stride_memcpy_1dim(dst_ptr + start_offset, src_ptr, dst, dst[1].distance * dst[1].length, _XMP_UNPACK);
+    _XMP_stride_memcpy_1dim(dst + start_offset, src, dst_info, dst_info[1].distance * dst_info[1].length, _XMP_UNPACK);
     break;;
   default:
     _XMP_fatal("Dimension of coarray error");
@@ -411,44 +411,44 @@ static void _unpack_2_dim_array(const _XMP_array_section_t* dst, const char* src
 }
 
 
-static void _unpack_1_dim_array(const _XMP_array_section_t* dst, const char* src_ptr, char* dst_ptr)
+static void _unpack_1_dim_array(const _XMP_array_section_t* dst_info, const char* src, char* dst)
 {
   //  for(i=0;i<dst[0].length;i++){
   //    dst_offset = start_offset + i * stride_offset;
   //    memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
   //    src_offset += element_size;
   //  }
-  size_t element_size = dst[0].distance;
-  int repeat = dst[0].length / _XMP_UNROLLING;
-  int left   = dst[0].length % _XMP_UNROLLING;
-  size_t stride_offset = dst[0].stride * element_size;
+  size_t element_size = dst_info[0].distance;
+  int repeat = dst_info[0].length / _XMP_UNROLLING;
+  int left   = dst_info[0].length % _XMP_UNROLLING;
+  size_t stride_offset = dst_info[0].stride * element_size;
   size_t dst_offset, src_offset = 0;
-  size_t start_offset = _XMP_get_offset(dst, 1);
+  size_t start_offset = _XMP_get_offset(dst_info, 1);
   int i = 0;
 
   if(repeat == 0){
     for(i=0;i<left;i++){
       dst_offset = start_offset + (i * stride_offset);
       src_offset = i * element_size;
-      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
+      memcpy(dst + dst_offset, src + src_offset, element_size);
     }
   }
   else{
     while( repeat-- > 0 ) {
       dst_offset = start_offset + (i * stride_offset);
-      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
+      memcpy(dst + dst_offset, src + src_offset, element_size);
       src_offset += element_size;
 
       dst_offset += stride_offset;
-      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
+      memcpy(dst + dst_offset, src + src_offset, element_size);
       src_offset += element_size;
 
       dst_offset += stride_offset;
-      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
+      memcpy(dst + dst_offset, src + src_offset, element_size);
       src_offset += element_size;
 
       dst_offset += stride_offset;
-      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
+      memcpy(dst + dst_offset, src + src_offset, element_size);
       src_offset += element_size;
 
       i += _XMP_UNROLLING;
@@ -457,52 +457,52 @@ static void _unpack_1_dim_array(const _XMP_array_section_t* dst, const char* src
     switch (left) {
     case 3 :
       dst_offset = start_offset + (stride_offset * (i+2));
-      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
+      memcpy(dst + dst_offset, src + src_offset, element_size);
       src_offset += element_size;
     case 2 :
       dst_offset = start_offset + (stride_offset * (i+1));
-      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
+      memcpy(dst + dst_offset, src + src_offset, element_size);
       src_offset += element_size;
     case 1:
       dst_offset = start_offset + (stride_offset * i);
-      memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
+      memcpy(dst + dst_offset, src + src_offset, element_size);
     }
   }
 }
 
-static void _unpack_1_dim_array_fixed_src(const _XMP_array_section_t* dst, const char* src_ptr, char* dst_ptr)
+static void _unpack_1_dim_array_fixed_src(const _XMP_array_section_t* dst_info, const char* src, char* dst)
 {
   //  for(i=0;i<dst[0].length;i++){
   //    dst_offset = start_offset + i * stride_offset;
   //    memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
   //  }
-  size_t element_size = dst[0].distance;
-  int repeat = dst[0].length / _XMP_UNROLLING;
-  int left   = dst[0].length % _XMP_UNROLLING;
-  size_t start_offset  = dst[0].start  * element_size;
-  size_t stride_offset = dst[0].stride * element_size;
+  size_t element_size = dst_info[0].distance;
+  int repeat = dst_info[0].length / _XMP_UNROLLING;
+  int left   = dst_info[0].length % _XMP_UNROLLING;
+  size_t start_offset  = dst_info[0].start  * element_size;
+  size_t stride_offset = dst_info[0].stride * element_size;
   size_t dst_offset;
   int i = 0;
 
   if(repeat == 0){
     for(i=0;i<left;i++){
       dst_offset = start_offset + (i * stride_offset);
-       memcpy(dst_ptr + dst_offset, src_ptr, element_size);
+      memcpy(dst + dst_offset, src, element_size);
     }
   }
   else{
     while( repeat-- > 0 ) {
       dst_offset = start_offset + (i * stride_offset);
-      memcpy(dst_ptr + dst_offset, src_ptr, element_size);
+      memcpy(dst + dst_offset, src, element_size);
  
       dst_offset += stride_offset;
-      memcpy(dst_ptr + dst_offset, src_ptr, element_size);
+      memcpy(dst + dst_offset, src, element_size);
  
       dst_offset += stride_offset;
-      memcpy(dst_ptr + dst_offset, src_ptr, element_size);
+      memcpy(dst + dst_offset, src, element_size);
  
       dst_offset += stride_offset;
-      memcpy(dst_ptr + dst_offset, src_ptr, element_size);
+      memcpy(dst + dst_offset, src, element_size);
  
       i += _XMP_UNROLLING;
     }
@@ -510,75 +510,76 @@ static void _unpack_1_dim_array_fixed_src(const _XMP_array_section_t* dst, const
     switch (left) {
     case 3 :
       dst_offset = start_offset + (stride_offset * (i+2));
-      memcpy(dst_ptr + dst_offset, src_ptr, element_size);
+      memcpy(dst + dst_offset, src, element_size);
     case 2 :
       dst_offset = start_offset + (stride_offset * (i+1));
-      memcpy(dst_ptr + dst_offset, src_ptr, element_size);
+      memcpy(dst + dst_offset, src, element_size);
     case 1:
       dst_offset = start_offset + (stride_offset * i);
-      memcpy(dst_ptr + dst_offset, src_ptr, element_size);
+      memcpy(dst + dst_offset, src, element_size);
     }
   }
 }
 
-void _XMP_unpack_coarray(char *dst_ptr, const int dst_dims, const char* src_ptr, 
-			 const _XMP_array_section_t* dst, const int flag)
+void _XMP_unpack_coarray(char *dst, const int dst_dims, const char* src, 
+			 const _XMP_array_section_t* dst_info, const int flag)
 {
   if(dst_dims == 1){
     if(flag == _XMP_UNPACK)
-      _unpack_1_dim_array(dst, src_ptr, dst_ptr);
-    else if(flag == _XMP_SCALAR_COPY)
-      _unpack_1_dim_array_fixed_src(dst, src_ptr, dst_ptr);
-    
+      _unpack_1_dim_array(dst_info, src, dst);
+    else if(flag == _XMP_SCALAR_MCOPY)
+      _unpack_1_dim_array_fixed_src(dst_info, src, dst);
+    else
+      _XMP_fatal("Unexpected error !");
     return;
   }
 
   if(flag == _XMP_UNPACK){
-    int continuous_dim = dst_dims - _XMP_get_dim_of_allelmts(dst_dims, dst);
+    int continuous_dim = dst_dims - _XMP_get_dim_of_allelmts(dst_dims, dst_info);
     switch (dst_dims){
     case 2:
-      _unpack_2_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+      _unpack_2_dim_array(dst_info, src, dst, continuous_dim);
       break;;
     case 3:
-      _unpack_3_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+      _unpack_3_dim_array(dst_info, src, dst, continuous_dim);
       break;;
     case 4:
-      _unpack_4_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+      _unpack_4_dim_array(dst_info, src, dst, continuous_dim);
       break;;
     case 5:
-      _unpack_5_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+      _unpack_5_dim_array(dst_info, src, dst, continuous_dim);
       break;;
     case 6:
-      _unpack_6_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+      _unpack_6_dim_array(dst_info, src, dst, continuous_dim);
       break;;
     case 7:
-      _unpack_7_dim_array(dst, src_ptr, dst_ptr, continuous_dim);
+      _unpack_7_dim_array(dst_info, src, dst, continuous_dim);
       break;;
     default:
       _XMP_fatal("Dimension of coarray is too big.");
       break;;
     }
   }
-  else if(flag == _XMP_SCALAR_COPY){
-    size_t start_offset = _XMP_get_offset(dst, dst_dims);
+  else if(flag == _XMP_SCALAR_MCOPY){
+    size_t start_offset = _XMP_get_offset(dst_info, dst_dims);
     switch (dst_dims){
     case 2:
-      _XMP_stride_memcpy_2dim(dst_ptr + start_offset, src_ptr, dst, dst[1].distance, _XMP_SCALAR_COPY);
+      _XMP_stride_memcpy_2dim(dst + start_offset, src, dst_info, dst_info[1].distance, _XMP_SCALAR_MCOPY);
       break;;
     case 3:
-      _XMP_stride_memcpy_3dim(dst_ptr + start_offset, src_ptr, dst, dst[2].distance, _XMP_SCALAR_COPY);
+      _XMP_stride_memcpy_3dim(dst + start_offset, src, dst_info, dst_info[2].distance, _XMP_SCALAR_MCOPY);
       break;;
     case 4:
-      _XMP_stride_memcpy_4dim(dst_ptr + start_offset, src_ptr, dst, dst[3].distance, _XMP_SCALAR_COPY);
+      _XMP_stride_memcpy_4dim(dst + start_offset, src, dst_info, dst_info[3].distance, _XMP_SCALAR_MCOPY);
       break;;
     case 5:
-      _XMP_stride_memcpy_5dim(dst_ptr + start_offset, src_ptr, dst, dst[4].distance, _XMP_SCALAR_COPY);
+      _XMP_stride_memcpy_5dim(dst + start_offset, src, dst_info, dst_info[4].distance, _XMP_SCALAR_MCOPY);
       break;;
     case 6:
-      _XMP_stride_memcpy_6dim(dst_ptr + start_offset, src_ptr, dst, dst[5].distance, _XMP_SCALAR_COPY);
+      _XMP_stride_memcpy_6dim(dst + start_offset, src, dst_info, dst_info[5].distance, _XMP_SCALAR_MCOPY);
       break;;
     case 7:
-      _XMP_stride_memcpy_7dim(dst_ptr + start_offset, src_ptr, dst, dst[6].distance, _XMP_SCALAR_COPY);
+      _XMP_stride_memcpy_7dim(dst + start_offset, src, dst_info, dst_info[6].distance, _XMP_SCALAR_MCOPY);
       break;;
     default:
       _XMP_fatal("Dimension of coarray is too big.");

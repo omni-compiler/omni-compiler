@@ -107,8 +107,8 @@ static void _FX10_Rdma_mput(int target, uint64_t *raddrs, uint64_t *laddrs,
 #endif
 
 
-static void _fjrdma_scalar_mput_do(const size_t target, const uint64_t* raddrs, const uint64_t* laddrs, 
-				   const size_t* lengths, size_t transfer_elmts, size_t elmt_size)
+static void _fjrdma_scalar_mput_do(const size_t target, uint64_t* raddrs, uint64_t* laddrs, 
+				   size_t* lengths, const size_t transfer_elmts, const size_t elmt_size)
 {
   if(transfer_elmts <= FJRDMA_MAX_MPUT){
 #ifdef OMNI_TARGET_CPU_KCOMPUTER
@@ -163,7 +163,7 @@ static void _fjrdma_scalar_mput(const int target, const uint64_t dst_point, cons
   for(int i=0;i<transfer_elmts;i++) laddrs[i] = laddr;
   for(int i=0;i<transfer_elmts;i++) lengths[i] = elmt_size;
 
-  _fjrdma_scalar_mput_do(target, raddr, laddrs, lengths, transfer_elmts, elmt_size);
+  _fjrdma_scalar_mput_do(target, raddrs, laddrs, lengths, transfer_elmts, elmt_size);
 
   if(src_desc == NULL)
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
@@ -421,7 +421,7 @@ static void _fjrdma_NON_continuous_get(const int target, const uint64_t dst_poin
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
 }
 
-static void _fjrdma_scalar_mget_do(const int target, const uint64_t raddr, const uint64_t* laddr,
+static void _fjrdma_scalar_mget_do(const int target, const uint64_t raddr, const uint64_t* laddrs,
 				   const size_t transfer_elmts, const size_t elmt_size)
 {
   // To complete put operations before the following get operation.
@@ -468,9 +468,9 @@ static void _fjrdma_scalar_mget(const int target, const uint64_t dst_point, cons
   else
     laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_point;
 
-  _XMP_set_coarray_addresses(laddr, dst_info, dst_dims, coarray_elmts, laddrs);
+  _XMP_set_coarray_addresses(laddr, dst_info, dst_dims, transfer_elmts, laddrs);
 
-  _fjrdma_scalar_mget_do(target, raddr, laddr, transfer_elmts, elmt_size);
+  _fjrdma_scalar_mget_do(target, raddr, laddrs, transfer_elmts, elmt_size);
 
   if(dst_desc == NULL)
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
@@ -505,7 +505,7 @@ void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const i
   }
   else{
     if(src_elmts == 1){
-      _fjrdma_scalar_mget(target, dst_point, src_point, dst_info, dst_dims, dst_desc, src_desc, dst, dst_elmts);
+      _fjrdma_scalar_mget(target, dst_point, src_point, dst_info, dst_dims, dst_desc, src_desc, dst, transfer_elmts);
     }
     else{
       _XMP_fatal("Number of elements is invalid");
@@ -530,32 +530,33 @@ void _XMP_fjrdma_sync_all()
 // Number of elements of src must be 1, number of elements of dst must be more than 1.
 // Both src and dst are continuous coarrays.
 // e.g. a[0:100:3]:[2] = b;
-void _XMP_fjrdma_scalar_shortcut_mput(const int target, const uint64_t raddr, uint64_t laddr,
+void _XMP_fjrdma_scalar_shortcut_mput(const int target, const uint64_t raddr, const uint64_t laddr,
 				      const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 				      const size_t transfer_elmts)
 {
   size_t elmt_size = dst_desc->elmt_size;
-  uint64_t raddrs[elmts], laddrs[elmts];
-  size_t lengths[elmts];
+  uint64_t raddrs[transfer_elmts], laddrs[transfer_elmts];
+  size_t lengths[transfer_elmts];
 
   // Set parameters for FJMPI_Rdma_mput
-  for(int i=0;i<transfer_elmts;i++) raddrs[i]  = raddr + elmt_size * i
+  for(int i=0;i<transfer_elmts;i++) raddrs[i]  = raddr + elmt_size * i;
   for(int i=0;i<transfer_elmts;i++) laddrs[i]  = laddr;
   for(int i=0;i<transfer_elmts;i++) lengths[i] = elmt_size;
 
-  _fjrdma_scalar_mput_do(target, raddr, laddrs, lengths, transfer_elmts, elmt_size);
+  _fjrdma_scalar_mput_do(target, raddrs, laddrs, lengths, transfer_elmts, elmt_size);
 }
 
-static void _XMP_fjrdma_scalar_shortcut_mget(const int target, const uint64_t dst_point, const uint64_t src_point,
-					     const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
-					     const size_t transfer_elmts)
+void _XMP_fjrdma_scalar_shortcut_mget(const int target, const uint64_t dst_point, const uint64_t src_point,
+				      const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+				      const size_t transfer_elmts)
 {
   size_t elmt_size = dst_desc->elmt_size;
   uint64_t laddrs[transfer_elmts];
   uint64_t raddr = (uint64_t)src_desc->addr[target] + src_point;
   uint64_t laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_point;
 
-  for(int i=0;i<transfer_elmts;i++) laddrs[i]  = laddr + elmt_size * i;
+  for(int i=0;i<transfer_elmts;i++) 
+    laddrs[i]  = laddr + elmt_size * i;
 
-  _fjrdma_scalar_mget_do(target, raddr, laddr, transfer_elmts, elmt_size);
+  _fjrdma_scalar_mget_do(target, raddr, laddrs, transfer_elmts, elmt_size);
 }
