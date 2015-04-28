@@ -14,7 +14,8 @@ all default: $(EXES)
 .c.x:
 	$(XCC) -o $@ $<
 
-run: 
+run:
+	$(XRUN) -n 2 coarray_scalar_mput.x
 	$(XRUN) -n 2 ./coarray_put_5dims.x
 	$(XRUN) -n 2 ./coarray_put_6dims.x
 	$(XRUN) -n 2 ./coarray_put_7dims.x

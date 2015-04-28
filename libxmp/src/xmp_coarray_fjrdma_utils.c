@@ -17,7 +17,7 @@ void _XMP_set_coarray_addresses(const uint64_t addr, const _XMP_array_section_t 
       tmp[0] = stride_offset[0] * i;
       addrs[num++] = addr + tmp[0];
     }
-    break;;
+    break;
   case 2:
     for(int i=0;i<array[0].length;i++){
       tmp[0] = stride_offset[0] * i;
@@ -26,7 +26,7 @@ void _XMP_set_coarray_addresses(const uint64_t addr, const _XMP_array_section_t 
 	addrs[num++] = addr + tmp[0] + tmp[1];
       }
     }
-    break;;
+    break;
   case 3:
     for(int i=0;i<array[0].length;i++){
       tmp[0] = stride_offset[0] * i;
@@ -38,7 +38,7 @@ void _XMP_set_coarray_addresses(const uint64_t addr, const _XMP_array_section_t 
 	}
       }
     }
-    break;;
+    break;
   case 4:
     for(int i=0;i<array[0].length;i++){
       tmp[0] = stride_offset[0] * i;
@@ -53,7 +53,7 @@ void _XMP_set_coarray_addresses(const uint64_t addr, const _XMP_array_section_t 
 	}
       }
     }
-    break;;
+    break;
   case 5:
     for(int i=0;i<array[0].length;i++){
       tmp[0] = stride_offset[0] * i;
@@ -71,7 +71,7 @@ void _XMP_set_coarray_addresses(const uint64_t addr, const _XMP_array_section_t 
         }
       }
     }
-    break;;
+    break;
   case 6:
     for(int i=0;i<array[0].length;i++){
       tmp[0] = stride_offset[0] * i;
@@ -92,7 +92,7 @@ void _XMP_set_coarray_addresses(const uint64_t addr, const _XMP_array_section_t 
         }
       }
     }
-    break;;
+    break;
   case 7:
     for(int i=0;i<array[0].length;i++){
       tmp[0] = stride_offset[0] * i;
@@ -116,7 +116,7 @@ void _XMP_set_coarray_addresses(const uint64_t addr, const _XMP_array_section_t 
         }
       }
     }
-    break;;
+    break;
   }
 }
 

@@ -10,12 +10,12 @@ struct _shift_queue_t{
   unsigned int      num;   /**< How many shifts are in this queue */
   size_t        *shifts;   /**< shifts array */
 };
-static struct _shift_queue_t _shift_queue;
+static struct _shift_queue_t _shift_queue; /** Queue which saves shift information */
 #define _XMP_STRIDE_REG  0
 #define _XMP_STRIDE_DONE 1
 
 /**
-   Create shift queue which saves shift information
+   Set initial value to the shift queue
  */
 void _XMP_gasnet_build_shift_queue()
 {
@@ -25,7 +25,7 @@ void _XMP_gasnet_build_shift_queue()
 }
 
 /**
-   Rebuild shift queue
+   Create new shift queue
  */
 static void _rebuild_shift_queue()
 {
@@ -39,7 +39,7 @@ static void _rebuild_shift_queue()
 }
 
 /**
-   Push shift information to shift queue
+   Push shift information to the shift queue
  */
 static void _push_shift_queue(size_t s)
 {
@@ -50,7 +50,7 @@ static void _push_shift_queue(size_t s)
 }
 
 /**
-   Pop shift information to shift queue
+   Pop shift information from the shift queue
  */
 static size_t _pop_shift_queue()
 {
@@ -95,7 +95,8 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size
     if(_XMP_world_rank == 0){
       fprintf(stderr, "[ERROR] Cannot allocate coarray. Heap memory size of corray is too small.\n");
       fprintf(stderr, "        Please set the environmental variable \"XMP_ONESIDED_HEAP_SIZE\".\n");
-      fprintf(stderr, "        e.g.) export XMP_ONESIDED_HEAP_SIZE=%zuM (or more).\n", (_xmp_gasnet_coarray_shift/1024/1024)+1);
+      fprintf(stderr, "        e.g.) export XMP_ONESIDED_HEAP_SIZE=%zuM (or more).\n",
+	      (_xmp_gasnet_coarray_shift/1024/1024)+1);
     }
     _XMP_fatal_nomsg();
   }
@@ -168,7 +169,7 @@ static void _gasnet_nonc_to_c_put(const int target_rank, const size_t dst_offset
 }
 
 /**
-   Registor unpack operation 
+   Registor finish of unpack operation 
 */
 void _xmp_gasnet_unpack_reply(gasnet_token_t t, const int ith)
 {
@@ -176,22 +177,24 @@ void _xmp_gasnet_unpack_reply(gasnet_token_t t, const int ith)
 }
 
 /**
-   Rebuild stride queue
+   Create new stride queue
  */
 static void _extend_stride_queue()
 {
   if(_xmp_gasnet_stride_wait_size >= _xmp_gasnet_stride_queue_size){
-    int old_size = _xmp_gasnet_stride_wait_size;
-    int new_size = old_size + _XMP_GASNET_STRIDE_BLK;
-    int *new_list = malloc(sizeof(int) * new_size);
-    int *old_list = _xmp_gasnet_stride_queue;
-    memcpy(new_list, old_list, sizeof(int) * old_size);
-    _xmp_gasnet_stride_queue = new_list;
-    _xmp_gasnet_stride_queue_size = new_size;
-    free(old_list);
+    _xmp_gasnet_stride_queue_size *= _XMP_GASNET_STRIDE_INCREMENT_RATIO;
+    int *tmp;
+    int next_size = _xmp_gasnet_stride_queue_size * sizeof(int);
+    if((tmp = realloc(_xmp_gasnet_stride_queue, next_size)) == NULL)
+      _XMP_fatal("cannot allocate memory");
+    else
+      _xmp_gasnet_stride_queue = tmp;
   }
 }
 
+/**
+   Unpack received data which is stored in buffer
+ */
 void _xmp_gasnet_unpack_using_buf(gasnet_token_t t, const int addr_hi, const int addr_lo, 
 				  const int dst_dims, const int ith, const int flag)
 {
@@ -204,6 +207,9 @@ void _xmp_gasnet_unpack_using_buf(gasnet_token_t t, const int addr_hi, const int
   gasnet_AMReplyShort1(t, _XMP_GASNET_UNPACK_REPLY, ith);
 }
 
+/**
+   Unpack received data
+ */
 void _xmp_gasnet_unpack(gasnet_token_t t, const char* src_addr, const size_t nbytes, 
 			const int addr_hi, const int addr_lo, const int dst_dims, const int ith, const int flag)
 {
