@@ -20784,8 +20784,8 @@ elif test "$target" = "Cray-linux-gnu"; then
 # MPI C
   MPI_CC="cc"
   MPI_CPP=$MPI_CC
-  MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-O2 $OPENMP_OPT"
+  MPI_CPPFLAGS="-E -D_XMP_CRAY"
+  MPI_CFLAGS="-O2 -hgnu $OPENMP_OPT"
   MPI_CLIBS=""
 
 # MPI F

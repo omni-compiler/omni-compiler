@@ -1,9 +1,9 @@
 #ifndef _ACC_GPU
 #define _ACC_GPU
 
-#ifndef _ACC_CRAY
+//#ifndef _XMP_CRAY
 #include <stddef.h>
-#endif
+//#endif
 
 #ifdef __cplusplus
 extern "C" {
