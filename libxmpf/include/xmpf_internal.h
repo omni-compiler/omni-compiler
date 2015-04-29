@@ -299,6 +299,7 @@ extern int _XMP_boundaryByte;     // communication boundary (bytes)
 
 /* xmpf_coarray.c */
 extern void _XMPF_coarray_init(void); 
+extern void _XMPF_coarray_finalize(void); 
 
 extern int _XMPF_coarrayMsg;          // default: debug message off
 extern void xmpf_coarray_msg_(int *sw);
@@ -347,6 +348,7 @@ extern int this_image_(void);
 //extern int xmpf_node_num_(void);
 
 extern void xmpf_sync_all_nostat_(void);
+extern void xmpf_sync_all_auto_(void);
 extern void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen);
 
 extern void xmpf_sync_memory_nostat_(void);

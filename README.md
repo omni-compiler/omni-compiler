@@ -1,14 +1,14 @@
 README
 
 # How to install
- Please show "INSTALL.md"
+ See "INSTALL.md"
 
 -----
 # Implementation Status
  Some features in the language specification are not supported in this release.
  (You can download the specification of XMP from "http://www.xcalablemp.org")
 
- Please show "docs/STATUS/$(version).md"
+ See "docs/STATUS/$(version).md"
 
 -----
 # How to use

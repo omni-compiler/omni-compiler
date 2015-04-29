@@ -37,9 +37,12 @@ run:	$(RESULT)
 
 rerun:  clean-result run
 
-### prepare to execute on K
-submit: all RUN/go.sh $(OUT:%=RUN/%)
+### prepare to execute on K/FX10
+submit: all RUN RUN/go.sh $(OUT:%=RUN/%)
 	cd RUN; pjsub go.sh
+
+RUN:
+	mkdir RUN
 
 RUN/go.sh: go.template Makefile
 	sed "s/@OUT@/$(OUT)/" $< >$@
@@ -51,6 +54,7 @@ clean:
 	rm -f omni_traverse*.o
 	rm -f $(OUT:%=RUN/%)
 	rm -f *.mod *.xmod
+	rm -rf RUN
 
 clean-result:
 	rm -f $(RESULT)

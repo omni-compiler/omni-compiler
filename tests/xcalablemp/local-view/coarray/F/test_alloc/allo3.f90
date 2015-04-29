@@ -1,9 +1,10 @@
 program allo3
   include "xmp_coarray.h"
   real, allocatable :: a1(:,:)[:],a2(:)[:,:]
-  real              :: b1(2,3)[*],b2(8)[4,*]
+!!  real              :: b1(2,3)[*]
+  real              :: b2(8)[4,*]
   real, allocatable :: c1(:,:),c2(:)
-  real, allocatable :: b(:)
+!!  real, allocatable :: b(:)
 
   nerr=0
 

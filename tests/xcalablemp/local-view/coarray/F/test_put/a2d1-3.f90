@@ -72,6 +72,6 @@
     end if
     !---------------------------- check and output end
 
-100 format ("a2(",i0,",",i0,")[",i0,"]=",f8.6," should be ",f8.6)
+100 format ("a2(",i0,",",i0,")[",i0,"]=",f10.6," should be ",f10.6)
 
   end program

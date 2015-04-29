@@ -6,27 +6,43 @@ DIRS= test_get test_put test_scope test_alloc test_fe test_cfold
 go: all
 
 all:
-	for d in $(DIRS); do \
-	  cd $$d; $(MAKE) all || { echo "ERROR!!"; exit 1; } \
-	done
+	cd test_get; $(MAKE) all
+	cd test_put; $(MAKE) all
+	cd test_scope; $(MAKE) all
+	cd test_alloc; $(MAKE) all
+	cd test_fe; $(MAKE) all
+	cd test_cfold; $(MAKE) all
 
 run:
-	for d in $(DIRS); do \
-	  cd $$d; $(MAKE) -j1 run || { echo "ERROR!!"; exit 1; } \
-	done
+	cd test_get; $(MAKE) -j1 run
+	cd test_put; $(MAKE) -j1 run
+	cd test_scope; $(MAKE) -j1 run
+	cd test_alloc; $(MAKE) -j1 run
+	cd test_fe; $(MAKE) -j1 run
+	cd test_cfold; $(MAKE) -j1 run
 
 rerun:
-	for d in $(DIRS); do \
-	  cd $$d; $(MAKE) -j1 rerun || { echo "ERROR!!"; exit 1; } \
-	done
+	cd test_get; $(MAKE) -j1 rerun
+	cd test_put; $(MAKE) -j1 rerun
+	cd test_scope; $(MAKE) -j1 rerun
+	cd test_alloc; $(MAKE) -j1 rerun
+	cd test_fe; $(MAKE) -j1 rerun
+	cd test_cfold; $(MAKE) -j1 rerun
 
 submit:
-	for d in $(DIRS); do \
-	  cd $$d; $(MAKE) submit || { echo "ERROR!!"; exit 1; } \
-	done
+	cd test_get; $(MAKE) submit
+	cd test_put; $(MAKE) submit
+	cd test_scope; $(MAKE) submit
+	cd test_alloc; $(MAKE) submit
+#	cd test_fe; $(MAKE) submit
+#	cd test_cfold; $(MAKE) submit
 
 clean:
-	for d in $(DIRS); do \
-	  cd $$d; $(MAKE) clean || { echo "ERROR!!"; exit 1; } \
-	done
+	cd test_get; $(MAKE) clean
+	cd test_put; $(MAKE) clean
+	cd test_scope; $(MAKE) clean
+	cd test_alloc; $(MAKE) clean
+	cd test_fe; $(MAKE) clean
+	cd test_cfold; $(MAKE) clean
+
 

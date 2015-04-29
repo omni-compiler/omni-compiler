@@ -48,20 +48,34 @@ int this_image_(void)
   sync all
 \*****************************************/
 
+static unsigned int _count_syncall = 0;
+
 void xmpf_sync_all_nostat_(void)
 {
-  static unsigned int id = 0;
-
   _XMPF_checkIfInTask("syncall nostat");
 
-  id += 1;
+  _count_syncall += 1;
 
-  int status;
+  int status = 0;
   xmp_sync_all(&status);
-  //  if (status != 0)
-  //    _XMPF_coarrayFatal("SYNC ALL failed (xmpf_sync_all_nostat_)");
 
-  _XMPF_coarrayDebugPrint("SYNCALL out (id=%d)\n", id);
+  _XMPF_coarrayDebugPrint("SYNCALL out (_count_syncall=%d, status=%d)\n",
+                          _count_syncall, status);
+}
+
+/* entry for automatic syncall at the end of procedures
+ */
+void xmpf_sync_all_auto_(void)
+{
+  _XMPF_checkIfInTask("syncall nostat");
+
+  _count_syncall += 1;
+
+  int status = 0;
+  xmp_sync_all(&status);
+
+  _XMPF_coarrayDebugPrint("SYNCALL_AUTO out (_count_syncall=%d, status=%d)\n",
+                          _count_syncall, status);
 }
 
 void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen)

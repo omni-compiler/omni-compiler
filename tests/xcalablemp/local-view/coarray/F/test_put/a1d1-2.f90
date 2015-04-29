@@ -1,7 +1,6 @@
   program test_a1_d1
     include "xmp_coarray.h"
     integer*8 a(100), b(100)[*]
-    integer xmp_node_num
     integer nerr
 
     me = this_image()
