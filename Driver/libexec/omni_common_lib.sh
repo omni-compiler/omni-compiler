@@ -31,7 +31,6 @@ function omni_exec_run()
     [ $DRY_RUN = false ] && ${@+"$@"}
 }
 
-
 function omni_exec()
 {
     [ $VERBOSE = true -o $DRY_RUN = true ] && echo ${@+"$@"}

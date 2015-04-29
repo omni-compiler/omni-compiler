@@ -1847,7 +1847,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
   xmp_desc_t tempd = NULL;
   int **bc2_result = NULL;
   size_t array_type_size;
-  int rp_dims;
+  int rp_dims = 0;
   int *rp_lb_addr = NULL;
   int *rp_ub_addr = NULL;
   int *rp_step_addr = NULL;
@@ -2436,7 +2436,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
    size_t array_type_size;
    xmp_desc_t tempd = NULL;
    int **bc2_result = NULL;
-   int rp_dims;
+   int rp_dims = 0;
    int *rp_lb_addr = NULL;
    int *rp_ub_addr = NULL;
    int *rp_step_addr = NULL;

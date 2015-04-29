@@ -752,6 +752,7 @@ SSL2BLAMP_FALSE
 SSL2BLAMP_TRUE
 LIBBLAS_FALSE
 LIBBLAS_TRUE
+LIBXML_LIB
 LIBXML_PREFIX
 GPGPU_PREFIX
 GPU_CFLAGS
@@ -760,15 +761,15 @@ ARFLAGS
 POWERPC_FALSE
 POWERPC_TRUE
 IS_PGI
-ENABLE_XACC
 ENABLE_XACC_FALSE
 ENABLE_XACC_TRUE
-ENABLE_ATOOL
+ENABLE_XACC
 ENABLE_ATOOL_FALSE
 ENABLE_ATOOL_TRUE
-ENABLE_ACC
+ENABLE_ATOOL
 ENABLE_ACC_FALSE
 ENABLE_ACC_TRUE
+ENABLE_ACC
 LEXLIB
 LEX_OUTPUT_ROOT
 LEX
@@ -12505,9 +12506,9 @@ fi
 
 # Check whether --enable-xacc was given.
 if test "${enable_xacc+set}" = set; then :
-  enableval=$enable_xacc; xacc=yes
+  enableval=$enable_xacc; doXACC=yes
 else
-  xacc=no
+  doXACC=no
 fi
 
 
@@ -20216,10 +20217,13 @@ fi
 
 # --------------------------------------------------------------------
 # set OpenACC
+# "ENABLE_ACC" defined by AC_SUBST() is used in ./Driver/libexec/ompcc_lib.sh
+# Moreover "ENABLE_ACC" defined by AM_CONDITIONAL() is used in ./Makefile.am
 ENABLE_ACC=0
 if test "x${doOpenAcc}" = "xyes"; then
     ENABLE_ACC=1
 fi
+
  if test "x${doOpenAcc}" = "xyes"; then
   ENABLE_ACC_TRUE=
   ENABLE_ACC_FALSE='#'
@@ -20229,13 +20233,13 @@ else
 fi
 
 
-
 # --------------------------------------------------------------------
 # set ATOOLS
 ENABLE_ATOOL=0
 if test "x${doatool}" = "xyes"; then
    ENABLE_ATOOL=1
 fi
+
  if test "x${doatool}" = "xyes"; then
   ENABLE_ATOOL_TRUE=
   ENABLE_ATOOL_FALSE='#'
@@ -20245,17 +20249,16 @@ else
 fi
 
 
-
 # --------------------------------------------------------------------
 # set XACC
- if test "x${xacc}" = "xyes"; then
+
+ if test "x${doXACC}" = "xyes"; then
   ENABLE_XACC_TRUE=
   ENABLE_XACC_FALSE='#'
 else
   ENABLE_XACC_TRUE='#'
   ENABLE_XACC_FALSE=
 fi
-
 
 
 # --------------------------------------------------------------------
@@ -20307,7 +20310,7 @@ _ACEOF
 #  MPI_CFLAGS needs options for OpenMP and strong optimization (e.g. -O2) and C99.
 #  MPI_FCFLAGS needs an option for strong optimization (e.g. -O2).
 #
-#  Prefix "OMNI_" options should set a minimal of option as possible.
+#  Prefix "OMNI_" options should set minimal options as possible.
 #  OMNI_C_PP, Pre-processor command, needs an option for C99.
 #  OMNI_NTV_CFLAGS needs an option for C99 support.
 #  OMNI_LNK_CFLAGS and OMNI_LNK_FCFLAGS need an option for OpenMP.
@@ -22049,6 +22052,8 @@ fi
     esac ;;
   esac
 fi
+
+# "POWERPC" flag is used in libxmpf/src/Makefile.am
  if test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix"; then
   POWERPC_TRUE=
   POWERPC_FALSE='#'
@@ -22056,6 +22061,7 @@ else
   POWERPC_TRUE='#'
   POWERPC_FALSE=
 fi
+
 
 
 
@@ -22115,6 +22121,13 @@ fi
 
 if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
    as_fn_error $? "parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help" "$LINENO" 5
+fi
+
+
+if test LIBXML_PREFIX="/usr"; then
+   LIBXML_LIB=/usr/lib64
+else
+   LIBXML_LIB=${LIBXML_PREFIX}/lib
 fi
 
 
@@ -22552,11 +22565,9 @@ fi
 done
 
 
-inDev=0
 if test "$PERL5" = ""; then
-    inDev=0
+    as_fn_error $? "perl is not found." "$LINENO" 5
 else
-    inDev=1
     isPerlVersion5=no
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking Perl version is 5" >&5
 $as_echo_n "checking Perl version is 5... " >&6; }

@@ -46,8 +46,8 @@ public class XMPtransCoarrayRun
   private String descCommonName, crayCommonName;
   private Ident _resourceTagId = null;
 
-  private ArrayList<Xobject> _prologStmts = new ArrayList();
-  private ArrayList<Xobject> _epilogStmts = new ArrayList();
+  private ArrayList<Xobject> _prologStmts = new ArrayList<Xobject>();
+  private ArrayList<Xobject> _epilogStmts = new ArrayList<Xobject>();
 
   private Boolean isModule;
   private Boolean containsCoarray = false;
@@ -1284,7 +1284,7 @@ public class XMPtransCoarrayRun
   }
 
   private String[] _getHostNames() {
-    ArrayList<String> list = new ArrayList();
+    ArrayList<String> list = new ArrayList<String>();
     list.add(def.getName());
     XobjectDef parentDef = def.getParent();
     while (parentDef != null) {

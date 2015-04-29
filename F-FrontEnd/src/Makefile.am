@@ -18,7 +18,7 @@ AM_YFLAGS=-v
 
 AM_CFLAGS=-DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML_PREFIX)/include/libxml2 
 
-F_Front_LDADD=-L$(LIBXML_PREFIX)/lib -lxml2 -lm
+F_Front_LDADD=-L$(LIBXML_LIB) -lxml2 -lm
 
 C-exprcode.h: C-exprcode.def C-exprcode.h.awk
 	$(AWK) -f C-exprcode.h.awk < C-exprcode.def > C-exprcode.h

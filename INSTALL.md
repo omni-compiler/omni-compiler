@@ -10,12 +10,12 @@
 ## On Debian GNU/Linux and Ubuntu
  The following packages may be needed to be installed previously:
 
- * flex gcc gfortran g++ openjdk-7-jdk libopenmpi-dev openmpi-bin libxml2-dev byacc make
+ * flex gcc gfortran g++ openjdk-7-jdk libopenmpi-dev openmpi-bin libxml2-dev byacc make perl
 
 ## On Red Hat and CentOS
  The following packages may be needed to be installed previously:
 
- * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel openmpi-devel libxml2-devel byacc make
+ * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel openmpi-devel libxml2-devel byacc make perl
 
 ## For local-view operations (coarray, post/wait, lock/unlock)
  * On the K computer or FX10, the Omni compiler automatically uses Fujitsu RDMA.

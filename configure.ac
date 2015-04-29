@@ -1,5 +1,5 @@
-AC_PREREQ(2.60)
-LT_PREREQ(2.4)
+#AC_PREREQ(2.60)
+#LT_PREREQ(2.4)
 
 AC_INIT([Omni Compiler], [0.9.1], [h-murai@riken.jp], [omni])
 
@@ -287,7 +287,7 @@ AC_ARG_ENABLE(atool,
 
 AC_ARG_ENABLE(xacc,
     [  --enable-xacc           enable XcalableACC (false default)],
-    [xacc=yes], [xacc=no])
+    [doXACC=yes], [doXACC=no])
 
 AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
 TARGET=$target
@@ -318,12 +318,14 @@ fi
 
 # --------------------------------------------------------------------
 # set OpenACC
+# "ENABLE_ACC" defined by AC_SUBST() is used in ./Driver/libexec/ompcc_lib.sh
+# Moreover "ENABLE_ACC" defined by AM_CONDITIONAL() is used in ./Makefile.am
 ENABLE_ACC=0
 if test "x${doOpenAcc}" = "xyes"; then
     ENABLE_ACC=1
 fi
-AM_CONDITIONAL(ENABLE_ACC, test "x${doOpenAcc}" = "xyes")
 AC_SUBST(ENABLE_ACC)
+AM_CONDITIONAL(ENABLE_ACC, test "x${doOpenAcc}" = "xyes")
 
 # --------------------------------------------------------------------
 # set ATOOLS
@@ -331,13 +333,13 @@ ENABLE_ATOOL=0
 if test "x${doatool}" = "xyes"; then
    ENABLE_ATOOL=1
 fi
-AM_CONDITIONAL(ENABLE_ATOOL, test "x${doatool}" = "xyes")
 AC_SUBST(ENABLE_ATOOL)
+AM_CONDITIONAL(ENABLE_ATOOL, test "x${doatool}" = "xyes")
 
 # --------------------------------------------------------------------
 # set XACC
-AM_CONDITIONAL(ENABLE_XACC, test "x${xacc}" = "xyes")
 AC_SUBST(ENABLE_XACC)
+AM_CONDITIONAL(ENABLE_XACC, test "x${doXACC}" = "xyes")
 
 # --------------------------------------------------------------------
 # Generate cpu/os specifier
@@ -385,7 +387,7 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 #  MPI_CFLAGS needs options for OpenMP and strong optimization (e.g. -O2) and C99.
 #  MPI_FCFLAGS needs an option for strong optimization (e.g. -O2).
 #
-#  Prefix "OMNI_" options should set a minimal of option as possible.
+#  Prefix "OMNI_" options should set minimal options as possible.
 #  OMNI_C_PP, Pre-processor command, needs an option for C99.
 #  OMNI_NTV_CFLAGS needs an option for C99 support.
 #  OMNI_LNK_CFLAGS and OMNI_LNK_FCFLAGS need an option for OpenMP.
@@ -864,7 +866,10 @@ else
     esac ;;
   esac
 fi
+
+# "POWERPC" flag is used in libxmpf/src/Makefile.am
 AM_CONDITIONAL(POWERPC, test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix")
+
 AC_SUBST(ARFLAGS)
 
 # --------------------------------------------------------------------
@@ -906,6 +911,13 @@ if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
 fi
 
 AC_SUBST(LIBXML_PREFIX)
+if test LIBXML_PREFIX="/usr"; then
+   LIBXML_LIB=/usr/lib64
+else
+   LIBXML_LIB=${LIBXML_PREFIX}/lib
+fi
+AC_SUBST(LIBXML_LIB)
+
 # --------------------------------------------------------------------
 # set BLAS
 
@@ -1205,11 +1217,9 @@ AC_SUBST(IS_SUPERUX)
 PERL5=""
 AC_PATH_PROGS(PERL5, perl)
 
-inDev=0
 if test "$PERL5" = ""; then
-    inDev=0
+    AC_MSG_ERROR([perl is not found.])
 else
-    inDev=1
     isPerlVersion5=no
     AC_MSG_CHECKING(Perl version is 5)
     pTmp=/tmp/.btoolPerlChk.$$
