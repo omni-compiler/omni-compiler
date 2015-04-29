@@ -35,9 +35,9 @@ class AccParallel extends AccData{
       if(_info.isDeclared(varName)) continue; //if declared in same directive
 
       if (readOnlyOuterIdSet.contains(id) && !id.Type().isArray()) {
-        _info.setVar(ACCpragma.FIRSTPRIVATE, Xcons.Symbol(Xcode.VAR, varName));
+        _info.addVar(ACCpragma.FIRSTPRIVATE, Xcons.Symbol(Xcode.VAR, varName));
       }else {
-        _info.setVar(ACCpragma.PRESENT_OR_COPY, Xcons.Symbol(Xcode.VAR, varName));
+        _info.addVar(ACCpragma.PRESENT_OR_COPY, Xcons.Symbol(Xcode.VAR, varName));
       }
     }
 

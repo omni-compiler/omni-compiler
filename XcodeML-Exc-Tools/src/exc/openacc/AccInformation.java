@@ -5,17 +5,161 @@ import exc.object.*;
 import java.util.*;
 
 class AccInformation {
-  private final ACCpragma pragma; /* directive kind*/
-  private final EnumSet<ACCpragma> boolSet = EnumSet.noneOf(ACCpragma.class);
-  private final Map<ACCpragma, Xobject> exprMap = new LinkedHashMap<ACCpragma, Xobject>(); //contain order
-  private final Map<ACCpragma, List<ACCvar>> varMap = new LinkedHashMap<ACCpragma, List<ACCvar>>(); //contains order
-  private final Set<String> declaredSymbolSet = new HashSet<String>();
-  //public static final String prop = "_ACC_information";
+  private final ACCpragma _pragma; /* directive kind*/
+  private final List<Clause> _clauseList = new ArrayList<Clause>();
+
+  //for redundant check
+  private final Set<String> _declaredSymbolSet = new HashSet<String>();
+  private final Set<ACCpragma> _singleClauseSet = new HashSet<ACCpragma>();
+
+  class Clause {
+    final ACCpragma _clauseKind;
+
+    Clause(ACCpragma clauseKind) throws ACCexception{
+      _clauseKind = clauseKind;
+      if(isSingle()){
+        if(_singleClauseSet.contains(clauseKind)){
+          throw new ACCexception("'" + clauseKind.getName() + "' is already specified");
+        }
+        _singleClauseSet.add(clauseKind);
+      }
+    }
+    @Override
+    public String toString(){
+      return " " + _clauseKind.getName();
+    }
+    Xobject toXobject(){
+      return Xcons.List(Xcons.String(_clauseKind.toString()));
+    }
+    List<ACCvar> getVarList(){
+      return null;
+    }
+    ACCvar findVar(String s){
+      return null;
+    }
+    void validate(AccDirective directive) throws ACCexception {
+      if (!directive.isAcceptableClause(_clauseKind)) {
+        throw new ACCexception(_clauseKind.getName() + " clause is not allowed");
+      }
+    }
+    Xobject getIntExpr(){
+      return null;
+    }
+    boolean isSingle(){
+      return true;
+    }
+  }
+
+  class IntExprClause extends Clause {
+    private final Xobject arg;
+    IntExprClause(ACCpragma clauseKind, Xobject arg) throws ACCexception{
+      super(clauseKind);
+      if(arg == null) throw new ACCexception("null expr");
+      this.arg = arg;
+    }
+    @Override
+    public String toString(){
+      return super.toString() + '(' + arg + ')';
+    }
+    @Override
+    Xobject toXobject(){
+      Xobject clauseXobj = super.toXobject();
+      clauseXobj.add(arg);
+      return clauseXobj;
+    }
+    void validate(AccDirective directive) throws ACCexception {
+      super.validate(directive);
+      if(! directive.isIntExpr(arg)){
+        throw new ACCexception("'" + arg + "' is not int expr");
+      }
+    }
+    @Override
+    Xobject getIntExpr(){
+      return arg;
+    }
+  }
+
+  class VarListClause extends Clause{
+    final List<ACCvar> varList = new ArrayList<ACCvar>();
+
+    VarListClause(ACCpragma clauseKind, XobjList args) throws ACCexception{
+      super(clauseKind);
+
+      if(args == null) return;
+      for(Xobject x : args){
+        addVar(x);
+      }
+    }
+    VarListClause(ACCpragma clauseKind) throws ACCexception{
+      this(clauseKind, null);
+    }
+    void addVar(Xobject arg) throws ACCexception{
+      ACCvar var = new ACCvar(arg, _clauseKind);
+      if (_clauseKind.isDeclarativeClause()) {
+        checkDuplication(var);
+      }
+      varList.add(var);
+    }
+    @Override
+    ACCvar findVar(String symbol) {
+      for (ACCvar var : varList) {
+        if (var.getSymbol().equals(symbol)) {
+          return var;
+        }
+      }
+      return null;
+    }
+    @Override
+    public String toString(){
+      StringBuilder sb = new StringBuilder();
+      sb.append(super.toString());
+      sb.append('(');
+      if(varList.size() > 0) {
+        sb.append(varList.get(0));
+        for (int i = 1; i < varList.size(); i++) {
+          sb.append(',');
+          sb.append(varList.get(i));
+        }
+      }
+      sb.append(')');
+      return new String(sb);
+    }
+
+    @Override
+    Xobject toXobject(){
+      XobjList varXobjList = Xcons.List();
+      for(ACCvar var : varList){
+        varXobjList.add(var.toXobject());
+      }
+      Xobject clauseXobj = super.toXobject();
+      clauseXobj.add(varXobjList);
+      return  clauseXobj;
+    }
+    @Override
+    List<ACCvar> getVarList(){
+      return varList;
+    }
+    @Override
+    void validate(AccDirective directive) throws ACCexception{
+      super.validate(directive);
+      for(ACCvar var : varList){
+        directive.setVarIdent(var);
+      }
+    }
+    @Override
+    boolean isSingle(){
+      return false;
+    }
+  }
+
+  private void addClause(Clause clause){
+    _clauseList.add(clause);
+  }
 
   AccInformation(ACCpragma pragma, Xobject arg) throws ACCexception {
-    this.pragma = pragma;
+    _pragma = pragma;
     if(pragma == ACCpragma.WAIT || pragma == ACCpragma.CACHE){
-      setClause(pragma, arg);
+      addClause(makeClause(pragma, arg));
       return;
     }
 
@@ -24,279 +168,170 @@ class AccInformation {
       ACCpragma clauseKind = ACCpragma.valueOf(clause.getArg(0));
       Xobject clauseArg = clause.getArgOrNull(1);
 
-      setClause(clauseKind, clauseArg);
+      addClause(makeClause(clauseKind, clauseArg));
     }
   }
 
-  void setBool(ACCpragma clauseKind) throws ACCexception {
-    if(boolSet.contains(clauseKind)){
-      throw new ACCexception(clauseKind.getName() + " clause is already specified");
-    }
-    switch (clauseKind){
-    case ASYNC:
-    case GANG:
-    case WORKER:
-    case VECTOR:
-      setIntExpr(clauseKind, null);
-      break;
+  Clause makeClause(ACCpragma clauseKind, Xobject arg) throws ACCexception{
+    switch (clauseKind) {
     case INDEPENDENT:
     case SEQ:
-      boolSet.add(clauseKind);
-      break;
-    default:
-      throw new ACCexception(clauseKind.getName() + " is not allowed");
-    }
-  }
-
-  void setIntExpr(ACCpragma clauseKind, Xobject clauseArg) throws ACCexception {
-    switch(clauseKind){
+      return new Clause(clauseKind);
     case IF:
     case NUM_GANGS:
-    case GANG:
     case NUM_WORKERS:
-    case WORKER:
     case VECT_LEN:
-    case VECTOR:
     case COLLAPSE:
-    case WAIT:  //it will be int expr list
+      return new IntExprClause(clauseKind, arg);
+    case GANG:
+    case WORKER:
+    case VECTOR:
+    case WAIT: //it will be int expr list
     case ASYNC: //it will be int expr list
-      if(exprMap.containsKey(clauseKind)){
-        throw new ACCexception(clauseKind.getName() + " clause is already specified");
+      if(arg == null){
+        return new Clause(clauseKind);
+      }else {
+        return new IntExprClause(clauseKind, arg);
       }
-      exprMap.put(clauseKind, clauseArg);
-      break;
     default:
-      throw new ACCexception(clauseKind.getName() + " is not allowed");
-    }
-  }
-
-  void setVarList(ACCpragma clauseKind, Xobject clauseArg) throws ACCexception {
-    if(clauseArg == null) return;
-    for(Xobject x : (XobjList)clauseArg){
-      setVar(clauseKind, x);
+      return new VarListClause(clauseKind, (XobjList)arg);
     }
   }
 
   void checkDuplication(ACCvar var) throws ACCexception {
     String symbol = var.getSymbol();
-    if(declaredSymbolSet.contains(symbol)){
+    if(_declaredSymbolSet.contains(symbol)){
       throw new ACCexception("symbol '" + symbol + "' is already specified");
     }
-    declaredSymbolSet.add(symbol);
+    _declaredSymbolSet.add(symbol);
   }
 
-  void setVar(ACCpragma clauseKind, Xobject arg) throws ACCexception {
-    ACCvar var = new ACCvar(arg, clauseKind);
-    if(isDeclarativeClause(clauseKind)){
-      checkDuplication(var);
+  void addVar(ACCpragma clauseKind, Xobject varXobj) throws ACCexception {
+    VarListClause clause = null;
+    if(clauseKind != ACCpragma.HOST && clauseKind != ACCpragma.DEVICE){
+      clause = (VarListClause)findClause(clauseKind);
     }
+    if(clause == null){
+      clause = new VarListClause(clauseKind);
+      addClause(clause);
+    }
+    clause.addVar(varXobj);
+  }
 
-    List<ACCvar> list;
-    if(varMap.containsKey(clauseKind)){
-      list = varMap.get(clauseKind);
-    }else {
-      list = new ArrayList<ACCvar>();
-      varMap.put(clauseKind, list);
-    }
-    list.add(var);
+  void addClause(ACCpragma clauseKind) throws ACCexception{
+    addClause(makeClause(clauseKind, null));
   }
 
   @Override
   public String toString(){
     StringBuilder sb = new StringBuilder();
-    sb.append("#pragma acc");
+    sb.append("#_pragma acc");
 
-    if(pragma != ACCpragma.CACHE && pragma != ACCpragma.WAIT) {
+    if(_pragma != ACCpragma.CACHE && _pragma != ACCpragma.WAIT) {
       sb.append(' ');
-      sb.append(pragma.getName());
+      sb.append(_pragma.getName());
     }
 
-    for(ACCpragma clauseKind : boolSet){
-      sb.append(' ');
-      sb.append(clauseKind.getName());
-    }
-
-    for(ACCpragma clauseKind : exprMap.keySet()){
-      sb.append(' ');
-      sb.append(clauseKind.getName());
-      Xobject expr = exprMap.get(clauseKind);
-      if(expr == null) continue;
-      sb.append('(');
-      sb.append(expr);
-      sb.append(')');
-    }
-
-    for(ACCpragma clause : varMap.keySet()){
-      List<ACCvar> list = varMap.get(clause);
-      sb.append(' ');
-      sb.append(clause.getName());
-      sb.append("(");
-      sb.append(list.get(0));
-      for(int i = 1; i < list.size(); i++){
-        sb.append(',');
-        sb.append(list.get(i));
-      }
-      sb.append(')');
+    for(Clause c : _clauseList) {
+      sb.append(c);
     }
 
     return new String(sb);
   }
 
-  private void setClause(ACCpragma kind, Xobject arg) throws ACCexception {
-    switch (kind) {
-    case INDEPENDENT:
-    case SEQ:
-      if (arg != null) {
-        throw new ACCexception("unnessesary arg");
+  List<Clause> findAllClauses(ACCpragma clauseKind){
+    List<Clause> clauses = new ArrayList<Clause>();
+    for(Clause c : _clauseList){
+      if(c._clauseKind == clauseKind){
+        clauses.add(c);
       }
-      setBool(kind);
-      break;
-    case IF:
-    case NUM_GANGS:
-    case GANG:
-    case NUM_WORKERS:
-    case WORKER:
-    case VECT_LEN:
-    case VECTOR:
-    case COLLAPSE:
-    case WAIT:
-    case ASYNC:
-      setIntExpr(kind, arg);
-      break;
-    default:
-      setVarList(kind, arg);
     }
-  }
-
-  Xobject toXobject(){
-    if(pragma == ACCpragma.CACHE){
-      XobjList varList = Xcons.List();
-      for(ACCvar var : varMap.get(pragma)){
-        varList.add(var.toXobject());
-      }
-      return varList;
-    }else if(pragma == ACCpragma.WAIT){
-      return exprMap.get(pragma);
-    }
-
-    XobjList clauses = Xcons.List();
-
-    for(ACCpragma clauseKind : boolSet){
-      clauses.add(Xcons.List(Xcons.String(clauseKind.toString())));
-    }
-
-    for(ACCpragma clauseKind : exprMap.keySet()){
-      Xobject expr = exprMap.get(clauseKind);
-      clauses.add(Xcons.List(Xcons.String(clauseKind.toString()), expr));
-    }
-
-    for(ACCpragma clauseKind : varMap.keySet()){
-      XobjList varList = Xcons.List();
-      for(ACCvar var : varMap.get(clauseKind)){
-        varList.add(var.toXobject());
-      }
-      clauses.add(Xcons.List(Xcons.String(clauseKind.toString()), varList));
-    }
-
     return clauses;
   }
 
-  private boolean isDeclarativeClause(ACCpragma clauseKind){
-    switch (clauseKind){
-    case PRIVATE:
-    case FIRSTPRIVATE:
-    case DEVICE_RESIDENT:
-    case USE_DEVICE:
-    case CACHE:
-      return true;
-    default:
-      return clauseKind.isDataClause();
+  Clause findClause(ACCpragma clauseKind){
+    List<Clause> clauses = findAllClauses(clauseKind);
+    return clauses.isEmpty() ? null : clauses.get(0);
+  }
+
+  Xobject toXobject(){
+    if(_pragma == ACCpragma.CACHE || _pragma == ACCpragma.WAIT){
+      Clause c = findClause(_pragma);
+      return c.toXobject();
     }
+
+    XobjList xobjList = Xcons.List();
+    for(Clause c : _clauseList){
+      xobjList.add(c.toXobject());
+    }
+    return xobjList;
   }
 
   boolean isDeclared(String symbol){
-    return declaredSymbolSet.contains(symbol);
+    return _declaredSymbolSet.contains(symbol);
   }
 
   List<ACCvar> getACCvarList(){
     List<ACCvar> list = new ArrayList<ACCvar>();
-    for(ACCpragma clauseKind : varMap.keySet()){
-      list.addAll(varMap.get(clauseKind));
+    for(Clause c : _clauseList){
+      List<ACCvar> varList = c.getVarList();
+      if(varList == null) continue;
+      list.addAll(varList);
     }
     return list;
   }
   List<ACCvar> getDeclarativeACCvarList(){
     List<ACCvar> list = new ArrayList<ACCvar>();
-    for(ACCpragma clauseKind : varMap.keySet()){
-      if(! isDeclarativeClause(clauseKind)) continue;
-      list.addAll(varMap.get(clauseKind));
+    for(Clause c : _clauseList){
+      if(c._clauseKind.isDeclarativeClause()) {
+        list.addAll(c.getVarList());
+      }
     }
     return list;
   }
-  public Xobject getIntExpr(ACCpragma clauseKind){
-    return exprMap.get(clauseKind);
-  }
-  ACCvar findACCvar(String symbol){
-    for(ACCpragma clauseKind : varMap.keySet()){
-      ACCvar var = findACCvar(clauseKind, symbol);
-      if(var != null) return var;
+  Xobject getIntExpr(ACCpragma clauseKind){
+    Clause clause = findClause(clauseKind);
+    if(clause == null) {
+      return null;
     }
-    return null;
+    return clause.getIntExpr();
   }
-  ACCvar findACCvar(ACCpragma clauseKind, String symbol){
-    List<ACCvar> list = varMap.get(clauseKind);
-    if(list == null ) return null;
 
-    for(ACCvar var : list){
-      if(var.getSymbol().equals(symbol)){
+  ACCvar findACCvar(List<Clause> clauseList, String symbol){
+    for(Clause clause : clauseList){
+      ACCvar var = clause.findVar(symbol);
+      if(var != null){
         return var;
       }
     }
     return null;
   }
+  ACCvar findACCvar(String symbol){
+    return findACCvar(_clauseList, symbol);
+  }
+  ACCvar findACCvar(ACCpragma clauseKind, String symbol){
+    return findACCvar(findAllClauses(clauseKind), symbol);
+  }
   ACCvar findReductionACCvar(String symbol){
-    for(ACCpragma clauseKind : varMap.keySet()){
-      if(! clauseKind.isReduction()) continue;
-      ACCvar var = findACCvar(clauseKind, symbol);
-      if(var != null) return var;
+    List<Clause> reductionClauses = new ArrayList<Clause>();
+    for(Clause clause : _clauseList){
+      if(clause._clauseKind.isReduction()){
+        reductionClauses.add(clause);
+      }
     }
-    return null;
+    return findACCvar(reductionClauses, symbol);
   }
 
-  public ACCpragma getPragma(){
-    return pragma;
+  ACCpragma getPragma(){
+    return _pragma;
   }
   boolean hasClause(ACCpragma clauseKind){
-    return exprMap.containsKey(clauseKind) ||
-            boolSet.contains(clauseKind) ||
-            varMap.containsKey(clauseKind);
+    return ! findAllClauses(clauseKind).isEmpty();
   }
 
   void validate(AccDirective directive) throws ACCexception{
-    for(ACCpragma clauseKind : boolSet){
-      if(! directive.isAcceptableClause(clauseKind)) {
-        throw new ACCexception(clauseKind.getName() + " clause is not allowed");
-      }
+    for(Clause clause : _clauseList){
+      clause.validate(directive);
     }
-
-    for(ACCpragma clauseKind : exprMap.keySet()){
-      if(! directive.isAcceptableClause(clauseKind)) {
-        throw new ACCexception(clauseKind.getName() + " clause is not allowed");
-      }
-      Xobject expr = exprMap.get(clauseKind);
-      if(expr != null && ! directive.isIntExpr(expr)){
-        throw new ACCexception("'" + expr + "' is not int expr");
-      }
-    }
-
-    for(ACCpragma clauseKind : varMap.keySet()){
-      if(! directive.isAcceptableClause(clauseKind)) {
-        throw new ACCexception(clauseKind.getName() + " clause is not allowed");
-      }
-      for(ACCvar var : varMap.get(clauseKind)){
-        directive.setVarIdent(var);
-      }
-    }
-
   }
 }

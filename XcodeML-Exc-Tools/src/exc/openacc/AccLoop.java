@@ -48,7 +48,7 @@ class AccLoop extends AccDirective{
       String symbol = inductionVar.getSym();
       ACCvar var = _info.findACCvar(symbol);
       if(var == null){
-        _info.setVar(ACCpragma.PRIVATE, Xcons.Symbol(Xcode.VAR, symbol));
+        _info.addVar(ACCpragma.PRIVATE, Xcons.Symbol(Xcode.VAR, symbol));
       }else if(! var.isPrivate()){
         throw new ACCexception(symbol + " is induction variable but not private");
       }
@@ -90,7 +90,7 @@ class AccLoop extends AccDirective{
 
     for(ACCpragma p : outputParallelism){
       if(! _info.hasClause(p)) {
-        _info.setBool(p);
+        _info.addClause(p);
       }
     }
   }

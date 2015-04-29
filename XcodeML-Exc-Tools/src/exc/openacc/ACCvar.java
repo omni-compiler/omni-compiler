@@ -104,7 +104,7 @@ public class ACCvar {
     id = null;
   }
   
-  public void setAttribute(ACCpragma atr) throws ACCexception{
+  void setAttribute(ACCpragma atr) throws ACCexception{
     boolean isSpecifiedDataAttribute = false;
     if(atr.isDataClause() && isSpecifiedDataAttribute){
       ACC.fatal("ACCvar: " + id.getName() + " is already specified data attribute");

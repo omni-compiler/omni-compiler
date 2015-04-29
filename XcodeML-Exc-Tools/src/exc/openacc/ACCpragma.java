@@ -188,4 +188,17 @@ public enum ACCpragma {
     }
     return false;
   }
+
+  public boolean isDeclarativeClause(){
+    switch (this){
+    case PRIVATE:
+    case FIRSTPRIVATE:
+    case DEVICE_RESIDENT:
+    case USE_DEVICE:
+    case CACHE:
+      return true;
+    default:
+      return this.isDataClause();
+    }
+  }
 }

@@ -4,7 +4,7 @@ import exc.block.Bcons;
 import exc.block.BlockList;
 import exc.object.*;
 
-public class ACCglobalDecl{
+class ACCglobalDecl{
   private final XobjectFile   _env;
   private final XobjList _globalConstructorFuncBody;
   private final XobjList _globalDestructorFuncBody;

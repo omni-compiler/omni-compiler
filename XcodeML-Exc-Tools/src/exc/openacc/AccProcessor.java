@@ -66,7 +66,7 @@ abstract class AccProcessor implements XobjectDefVisitor {
         break;
       case PRAGMA_LINE:
         if (_warnUnknownPragma) {
-          ACC.warning(b.getLineNo(), "unknown pragma : " + (PragmaBlock)b);
+          ACC.warning(b.getLineNo(), "unknown pragma : " + b);
         }
         break;
       default:
