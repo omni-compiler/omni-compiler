@@ -2,15 +2,15 @@ SUBDIRS=XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src F-BackEnd \
 	XcodeML-Exc-Tools Driver/src libtlog/src_threads libtlog/src_mpi \
         libxmp/include libxmp/src libxmp/src_threads libxmpf/include libxmpf/src
 
-if !IS_SUPERUX
+if !SUPERUX
     SUBDIRS+=libompc/src libompf/src
 endif
 
-if ENABLE_ACC
+if ACC
     SUBDIRS+=libacc/src libacc/include
 endif
 
-if ENABLE_ATOOL
+if ATOOL
     SUBDIRS+=Driver/atool
 endif
 

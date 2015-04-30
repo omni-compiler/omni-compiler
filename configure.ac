@@ -292,24 +292,44 @@ AC_ARG_ENABLE(xacc,
 AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
 TARGET=$target
 AC_SUBST(TARGET)
+
 # --------------------------------------------------------------------
 # check basic commands
-
 AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_FC
 AC_PROG_CXX
 AC_PROG_INSTALL
-AC_PROG_MAKE_SET
+#AC_PROG_MAKE_SET
 AC_PROG_AWK
-
 AC_PROG_YACC
+AC_PROG_LEX
+
+if test "${CPP}" = ""; then
+   AC_MSG_ERROR([CPP is not found.])
+fi
+   
+if test "${CC}" = ""; then
+   AC_MSG_ERROR([CC is not found.])
+fi
+
+if test "${FC}" = ""; then
+   AC_MSG_ERROR([FC is not found.])
+fi
+
+if test "${INSTALL}" = ""; then
+   AC_MSG_ERROR([INSTALL is not found.])
+fi
+
+if test "${AWK}" = ""; then
+  AC_MSG_ERROR([AWK is not found.])
+fi
+    
 # If yacc is not available, set YACC to 'yacc' in AC_PROG_YACC.
 if test "x${YACC}" = "xyacc"; then
    AC_MSG_ERROR([byacc is not found.])
 fi
 
-AC_PROG_LEX
 # https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.69/html_node/Particular-Programs.html
 # If lex is not available, set LEX to ':' in "AC_PROG_LEX".
 if test "x${LEX}" = "x:"; then
@@ -325,7 +345,7 @@ if test "x${doOpenAcc}" = "xyes"; then
     ENABLE_ACC=1
 fi
 AC_SUBST(ENABLE_ACC)
-AM_CONDITIONAL(ENABLE_ACC, test "x${doOpenAcc}" = "xyes")
+AM_CONDITIONAL(ACC, test "x${doOpenAcc}" = "xyes")
 
 # --------------------------------------------------------------------
 # set ATOOLS
@@ -334,12 +354,11 @@ if test "x${doatool}" = "xyes"; then
    ENABLE_ATOOL=1
 fi
 AC_SUBST(ENABLE_ATOOL)
-AM_CONDITIONAL(ENABLE_ATOOL, test "x${doatool}" = "xyes")
+AM_CONDITIONAL(ATOOL, test "x${doatool}" = "xyes")
 
 # --------------------------------------------------------------------
 # set XACC
-AC_SUBST(ENABLE_XACC)
-AM_CONDITIONAL(ENABLE_XACC, test "x${doXACC}" = "xyes")
+AM_CONDITIONAL(XACC, test "x${doXACC}" = "xyes")
 
 # --------------------------------------------------------------------
 # Generate cpu/os specifier
@@ -376,7 +395,7 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 # (1) Local compiler (for compiling C_Front and so on)
 #   CC, FC, CFLAGS, FCFLAGS, ...
 #
-# (2) MPI compiler (for compiling libxmp and so on)
+# (2) MPI compiler (for compiling libxmp and so on) to cross compile
 #  MPI_CC, MPI_FC, MPI_CFLAGS, MPI_FCFLAGS, ...
 #
 # (3) Omni compiler (for using xmpcc and xmpf90 commands)
@@ -548,14 +567,14 @@ elif test "$target" = "sx-nec-superux"; then
   MPI_CC="sxmpic++"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-O2 $OPENMP_OPT"
+  MPI_CFLAGS="-Chopt $OPENMP_OPT"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="sxmpif90"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-O2 $OPENMP_OPT"
+  MPI_FCFLAGS="-Chopt $OPENMP_OPT"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
 
@@ -848,8 +867,8 @@ else
       OMNI_X2X_FLAGS=""
 
       # Special options
-      IS_PGI="Yes"
-      AC_SUBST(IS_PGI)
+#      IS_PGI="Yes"
+#      AC_SUBST(IS_PGI)
       ;;
     *)
       echo "No supported compiler was found."
@@ -1191,8 +1210,8 @@ AC_SUBST(OMNI_LNK_FCFLAGS)
 AC_SUBST(OMNI_X2X_FLAGS)
 
 # check PGI compiler
-chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
-AM_CONDITIONAL(IS_PGI, test "$chk" != "")
+#chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
+#AM_CONDITIONAL(IS_PGI, test "$chk" != "")
 
 # check -lstdc++
 tmp_file_c=/tmp/_xmp.$$.c
@@ -1206,11 +1225,11 @@ else
    rm -f $tmp_file_c $tmp_file_x
 fi
 
-AM_CONDITIONAL(IS_CRAY, test "$target" = "Cray-linux-gnu")
-AM_CONDITIONAL(IS_SUPERUX, test "$target" = "sx-nec-superux")
+#AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
+AM_CONDITIONAL(SUPERUX, test "$target" = "sx-nec-superux")
 
-AC_SUBST(IS_CRAY)
-AC_SUBST(IS_SUPERUX)
+#AC_SUBST(CRAY)
+AC_SUBST(SUPERUX)
 
 # --------------------------------------------------------------------
 # check Perl versoin is 5
@@ -1238,23 +1257,37 @@ AC_SUBST(PERL5)
 
 # --------------------------------------------------------------------
 # check java
-
 if test "$userJAVA" != ""; then
   JAVA="$userJAVA"
 else
-  AC_PATH_PROG(JAVA, java, java)
+  JAVA=java
 fi
 
 if test	"$userJAVAC" != ""; then
   JAVAC="$userJAVAC"
 else
-  AC_PATH_PROG(JAVAC, javac, javac)
+  JAVAC=javac
 fi
 
 if test "$userJAR" != ""; then
   JAR="$userJAR"
 else
-  AC_PATH_PROG(JAR, jar, jar)
+  JAR=jar
+fi
+
+which ${JAVA} 1>/dev/null 2>/dev/null
+if test $? -ne 0; then
+   AC_MSG_ERROR([JAVA is not found.])
+fi
+
+which ${JAVAC} 1>/dev/null 2>/dev/null
+if test $? -ne 0; then
+   AC_MSG_ERROR([JAVAC is not found.])
+fi
+
+which ${JAR} 1>/dev/null 2>/dev/null
+if test $? -ne 0; then
+   AC_MSG_ERROR([JAR is not found.])
 fi
 
 AC_SUBST(JAVA)
