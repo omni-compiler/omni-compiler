@@ -342,6 +342,7 @@ extern void _XMP_stride_memcpy_4dim(char *, const char *, const _XMP_array_secti
 extern void _XMP_stride_memcpy_5dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
 extern void _XMP_stride_memcpy_6dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
 extern void _XMP_stride_memcpy_7dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
+extern void _XMP_local_continuous_copy(char *, const void *, const size_t, const size_t, const size_t);
 #endif
 
 #ifdef _XMP_GASNET

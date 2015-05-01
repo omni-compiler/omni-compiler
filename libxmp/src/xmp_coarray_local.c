@@ -2,43 +2,19 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-/***********************************************************************************/
-/* DESCRIPTION : Execute copy operation in only local node for continuous array    */
-/* ARGUMENT    : [OUT] *dst     : Pointer of destination array                     */
-/*               [IN] *src      : Pointer of source array                          */
-/*               [IN] dst_elmts : Number of elements of destination array          */
-/*               [IN] src_elmts : Number of elements of source array               */
-/*               [IN] elmt_size : Element size                                     */
-/* NOTE       : This function is called by both put and get functions              */
-/***********************************************************************************/
-static void _local_continuous_copy(char *dst, const void *src, const size_t dst_elmts, 
-				   const size_t src_elmts,  const size_t elmt_size)
-{
-  if(dst_elmts == src_elmts){ /* a[0:100]:[1] = b[1:100]; or a[0:100] = b[1:100]:[1];*/
-    memcpy(dst, src, dst_elmts * elmt_size);
-  }
-  else if(src_elmts == 1){    /* a[0:100]:[1] = b[1]; or a[0:100] = b[1]:[1]; */
-    for(int i=0;i<dst_elmts;i++)
-      memcpy(dst+elmt_size*i, src, elmt_size);
-  }
-  else{
-    _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
-  }
-}
-
-/*************************************************************************/
-/* DESCRIPTION : Check shape of two arrays                               */
-/* ARGUMENT    : [IN] array1_dims : Number of dimensions of array 1      */
-/*               [IN] array2_dims : Number of dimensions of array 2      */
-/*               [IN] array1  : Array1 information                       */
-/*               [IN] array2  : Array2 information                       */
-/* RETRUN     : If the shape of two arrays is the same, return TRUE      */
-/* EXAMPLE    : int a[100]:[*], b[100]:[*];                              */
-/*              a[0:10:2], b[0:10:2] -> TRUE                             */
-/*              a[0:10:2], b[1:10:2] -> FALSE                            */
-/*              a[0:10:2], b[0:11:2] -> FALSE                            */
-/*              a[0:10:2], b[0:10:3] -> FALSE                            */
-/*************************************************************************/
+/********************************************************************/
+/* DESCRIPTION : Check shape of two arrays                          */
+/* ARGUMENT    : [IN] array1_dims : Number of dimensions of array 1 */
+/*               [IN] array2_dims : Number of dimensions of array 2 */
+/*               [IN] *array1     : Information of array1           */
+/*               [IN] *array2     : Information of array2           */
+/* RETRUN     : If the shape of two arrays is the same, return TRUE */
+/* EXAMPLE    : int a[100]:[*], b[100]:[*];                         */
+/*              a[0:10:2], b[0:10:2] -> TRUE                        */
+/*              a[0:10:2], b[1:10:2] -> FALSE                       */
+/*              a[0:10:2], b[0:11:2] -> FALSE                       */
+/*              a[0:10:2], b[0:10:3] -> FALSE                       */
+/********************************************************************/
 static int is_the_same_shape(const int array1_dims, const int array2_dims, 
 			     const _XMP_array_section_t *array1, const _XMP_array_section_t *array2)
 {
@@ -53,18 +29,18 @@ static int is_the_same_shape(const int array1_dims, const int array2_dims,
   return _XMP_N_INT_TRUE;
 }
 
-/************************************************************************************/
-/* DESCRIPTION : Calculate maximum chunk for copy                                   */
-/* ARGUMENT    : [IN] dst_dims  : Number of dimensions of destination array         */
-/*               [IN] src_dims  : Number of dimensions of source array              */
-/*               [IN] *dst_info : Array information of destination array            */
-/*               [IN] *src_info : Array information of source array                 */
-/* RETURN     : Maximum chunk for copy                                              */
-/* NOTE       : This function is used to reduce callings of memcpy()                */
-/* EXAMPLE    : int a[10]:[*], b[10]:[*], c[5][2];                                  */
-/*              a[0:10:2]:[1] = b[0:10:2] -> 4                                      */
-/*              c[1:2][:]:[*] = b[0:4]    -> 16                                     */
-/************************************************************************************/
+/****************************************************************************/
+/* DESCRIPTION : Calculate maximum chunk for copy                           */
+/* ARGUMENT    : [IN] dst_dims  : Number of dimensions of destination array */
+/*               [IN] src_dims  : Number of dimensions of source array      */
+/*               [IN] *dst_info : Information of destination array          */
+/*               [IN] *src_info : Information of source array               */
+/* RETURN     : Maximum chunk for copy                                      */
+/* NOTE       : This function is used to reduce callings of memcpy()        */
+/* EXAMPLE    : int a[10]:[*], b[10]:[*], c[5][2];                          */
+/*              a[0:10:2]:[1] = b[0:10:2] -> 4                              */
+/*              c[1:2][:]:[*] = b[0:4]    -> 16                             */
+/****************************************************************************/
 static unsigned int _calc_copy_chunk(const int dst_dims, const int src_dims,
 				     const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info)
 {
@@ -82,8 +58,8 @@ static unsigned int _calc_copy_chunk(const int dst_dims, const int src_dims,
 /*               [IN] *src      : Pointer of source array                           */
 /*               [IN] dst_dims  : Number of dimensions of destination array         */
 /*               [IN] src_dims  : Number of dimensions of source array              */
-/*               [IN] *dst_info : Array information of destination array            */
-/*               [IN] *src_info : Array information of source array                 */
+/*               [IN] *dst_info : Information of destination array                  */
+/*               [IN] *src_info : Information of source array                       */
 /*               [IN] dst_elmts : Number of elements of destination array           */
 /*               [IN] src_elmts : Number of elements of source array                */
 /*               [IN] elmt_size : Element size                                      */
@@ -114,7 +90,7 @@ static void _local_NON_continuous_copy(char *dst, const char *src, const int dst
     for(int i=0;i<copy_elmts;i++)
       memcpy(dst+dst_stride[i], src+src_stride[i], copy_chunk);
   }
-  else if(src_elmts == 1){     /* a[0:100:2]:[1] = b[2]; or a[0:100:2] = b[2]:[1];*/
+  else if(src_elmts == 1){     /* a[0:100:2]:[1] = b[2]; or a[0:100:2] = b[2]:[1]; */
     switch (dst_dims){
     case 1:
       _XMP_stride_memcpy_1dim(dst, src, dst_info, elmt_size, _XMP_SCALAR_MCOPY);
@@ -174,8 +150,8 @@ void _XMP_local_put(_XMP_coarray_t *dst_desc, const void *src, const int dst_con
   size_t elmt_size  = dst_desc->elmt_size;
 
   if(dst_continuous && src_continuous)
-    _local_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src+src_offset,
-			   dst_elmts, src_elmts, elmt_size);
+    _XMP_local_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src+src_offset,
+			       dst_elmts, src_elmts, elmt_size);
   else
     _local_NON_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src+src_offset,
 			       dst_dims, src_dims, dst_info, src_info, dst_elmts, src_elmts, elmt_size);
@@ -208,8 +184,8 @@ void _XMP_local_get(void *dst, const _XMP_coarray_t *src_desc, const int dst_con
   size_t elmt_size  = src_desc->elmt_size;
 
   if(dst_continuous && src_continuous)
-    _local_continuous_copy((char *)dst+dst_offset, (char *)src_desc->real_addr+src_offset, 
-			   dst_elmts, src_elmts, elmt_size);
+    _XMP_local_continuous_copy((char *)dst+dst_offset, (char *)src_desc->real_addr+src_offset, 
+			       dst_elmts, src_elmts, elmt_size);
   else
     _local_NON_continuous_copy((char *)dst+dst_offset, (char *)src_desc->real_addr+src_offset,
 			       dst_dims, src_dims, dst_info, src_info, dst_elmts, src_elmts, elmt_size);

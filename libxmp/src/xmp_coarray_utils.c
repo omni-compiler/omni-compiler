@@ -1,13 +1,37 @@
 #include <string.h>
 #include "xmp_internal.h"
 
+/********************************************************************************/
+/* DESCRIPTION : Execute copy operation in only local node for continuous array */
+/* ARGUMENT    : [OUT] *dst     : Pointer of destination array                  */
+/*               [IN] *src      : Pointer of source array                       */
+/*               [IN] dst_elmts : Number of elements of destination array       */
+/*               [IN] src_elmts : Number of elements of source array            */
+/*               [IN] elmt_size : Element size                                  */
+/* NOTE       : This function is called by both put and get functions           */
+/********************************************************************************/
+void _XMP_local_continuous_copy(char *dst, const void *src, const size_t dst_elmts,
+				const size_t src_elmts, const size_t elmt_size)
+{
+  if(dst_elmts == src_elmts){ /* a[0:100]:[1] = b[1:100]; or a[0:100] = b[1:100]:[1];*/
+    memcpy(dst, src, dst_elmts * elmt_size);
+  }
+  else if(src_elmts == 1){    /* a[0:100]:[1] = b[1]; or a[0:100] = b[1]:[1]; */
+    for(int i=0;i<dst_elmts;i++)
+      memcpy(dst+elmt_size*i, src, elmt_size);
+  }
+  else{
+    _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
+  }
+}
+
 /******************************************************************/
 /* DESCRIPTION : Search maximum dimension which has all elements  */
 /* ARGUMENT    : [IN] dims       : Number of dimensions of array  */
 /*             : [IN] *array_info : Information of array          */
 /* RETURN      : Maximum dimension                                */
 /* EXAMPLE     : int a[10], b[10][20], c[10][20][30];             */
-/*               a[:], a[0:10]        -> 0                        */
+/*               a[:]                 -> 0                        */
 /*               a[0], a[1:9], a[::2] -> 1                        */
 /*               b[:][:]              -> 0                        */
 /*               b[1][:], b[2:2:2][:] -> 1                        */

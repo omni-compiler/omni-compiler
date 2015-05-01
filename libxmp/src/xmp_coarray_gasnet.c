@@ -67,12 +67,12 @@ void _XMP_gasnet_coarray_lastly_deallocate(){
   _xmp_gasnet_coarray_shift -= _pop_shift_queue();
 }
 
-/*****************************************************************/
-/* DESCRIPTION : Execute malloc operation for coarray            */
-/* ARGUMENT    : [OUT] *coarray_desc : Descriptor of new coarray */
-/*               [OUT] *addr         : Pointer of new coarray    */
-/*               [IN] coarray_size   : Coarray size              */
-/*****************************************************************/
+/**********************************************************************/
+/* DESCRIPTION : Execute malloc operation for coarray                 */
+/* ARGUMENT    : [OUT] *coarray_desc : Descriptor of new coarray      */
+/*               [OUT] **addr        : Double pointer of new coarray  */
+/*               [IN] coarray_size   : Coarray size                   */
+/**********************************************************************/
 void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
 {
   char **each_addr;  // head address of a local array on each node
@@ -152,8 +152,8 @@ static void _gasnet_c_to_c_put(const int target_rank, const size_t dst_offset,
 /* ARGUMENT    : [IN] target_rank   : Target rank                                        */
 /*               [IN] dst_offset    : Offset size of destination array                   */
 /*               [IN] src_dims      : Number of dimensions of source array               */
-/*               [IN] src_info      : Information of source array                        */
-/*               [IN] dst_desc      : Descriptor of destination coarray                  */
+/*               [IN] *src_info     : Information of source array                        */
+/*               [IN] *dst_desc     : Descriptor of destination coarray                  */
 /*               [IN] *src          : Pointer of source array                            */
 /*               [IN] transfer_size : Transfer size                                      */
 /* EXAMPLE    :                                                                          */
@@ -169,7 +169,7 @@ static void _gasnet_nonc_to_c_put(const int target_rank, const size_t dst_offset
 }
 
 /**
-   Registor finish of unpack operation 
+   Registor finish information of unpack operation 
 */
 void _xmp_gasnet_unpack_reply(gasnet_token_t t, const int ith)
 {
@@ -221,6 +221,9 @@ void _xmp_gasnet_unpack(gasnet_token_t t, const char* src_addr, const size_t nby
   gasnet_AMReplyShort1(t, _XMP_GASNET_UNPACK_REPLY, ith);
 }
 
+/**
+   Output error message
+ */
 static void _stride_size_error(size_t request_size){
   if(_XMP_world_rank == 0){
     fprintf(stderr, "[ERROR] Memory size for coarray stride transfer is too small.\n");
@@ -235,8 +238,8 @@ static void _stride_size_error(size_t request_size){
 /* ARGUMENT    : [IN] target_rank   : Target rank                                        */
 /*               [IN] src_offset    : Offset size of source array                        */
 /*               [IN] dst_dims      : Number of dimensions of destination array          */
-/*               [IN] dst_info      : Information of destination array                   */
-/*               [IN] dst_desc      : Descriptor of destination coarray                  */
+/*               [IN] *dst_info     : Information of destination array                   */
+/*               [IN] *dst_desc     : Descriptor of destination coarray                  */
 /*               [IN] *src          : Pointer of source array                            */
 /*               [IN] transfer_size : Transfer size                                      */
 /* EXAMPLE    :                                                                          */
@@ -275,8 +278,8 @@ static void _gasnet_c_to_nonc_put(const int target_rank, const size_t src_offset
 /* ARGUMENT    : [IN] target_rank   : Target rank                                            */
 /*               [IN] dst_dims      : Number of dimensions of destination array              */
 /*               [IN] src_dims      : Number of dimensions of source array                   */
-/*               [IN] dst_info      : Information of destination array                       */
-/*               [IN] src_info      : Information of source array                            */
+/*               [IN] *dst_info     : Information of destination array                       */
+/*               [IN] *src_info     : Information of source array                            */
 /*               [OUT] *dst_desc    : Descriptor of destination coarray                      */
 /*               [IN] *src          : Pointer of source array                                */
 /*               [IN] transfer_size : Transfer size                                          */
@@ -316,7 +319,7 @@ static void _gasnet_nonc_to_nonc_put(const int target_rank, const int dst_dims, 
 /* DESCRIPTION : Execute multiple put operation for scalar                    */
 /* ARGUMENT    : [IN] target_rank : Target rank                               */
 /*               [IN] dst_dims    : Number of dimensions of destination array */
-/*               [IN] dst_info    : Information of destination array          */
+/*               [IN] *dst_info   : Information of destination array          */
 /*               [OUT] *dst_desc  : Descriptor of destination coarray         */
 /*               [IN] *src        : Pointer of source coarray                 */
 /*               [IN] elmt_size   : Element size                              */
@@ -359,8 +362,8 @@ static void _gasnet_scalar_mput(const int target_rank, const int dst_dims,
 /*               [IN] target_rank    : Target rank                                     */
 /*               [IN] dst_dims       : Number of dimensions of destination array       */
 /*               [IN] src_dims       : Number of dimensions of source array            */
-/*               [IN] dst_info       : Information of destination array                */ 
-/*               [IN] src_info       : Information of source array                     */
+/*               [IN] *dst_info      : Information of destination array                */ 
+/*               [IN] *src_info      : Information of source array                     */
 /*               [OUT] *dst_desc     : Descriptor of destination coarray               */
 /*               [IN] *src           : Pointer of source array                         */
 /*               [IN] dst_elmts      : Number of elements of destination array         */
@@ -404,20 +407,44 @@ void _XMP_gasnet_put(const int dst_continuous, const int src_continuous, const i
   }
 }
 
+/*************************************************************************************/
+/* DESCRIPTION : Execute get operation (from continuous region to continuous region) */
+/* ARGUMENT    : [IN] target_rank   : Target rank                                    */
+/*               [IN] dst_offset    : Offset size of destination array               */
+/*               [IN] src_offset    : Offset size of source array                    */
+/*               [IN] *src_desc     : Descriptor of source coarray                   */
+/*               [OUT] *dst         : Pointer of destination array                   */
+/*               [IN] transfer_size : Transfer size                                  */
+/* EXAMPLE    :                                                                      */
+/*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src                        */
+/*************************************************************************************/
 static void _gasnet_c_to_c_get(const int target_rank, const size_t dst_offset, const size_t src_offset, 
-			       const void *dst, const _XMP_coarray_t *src, const size_t transfer_size)
+			       const void *dst, const _XMP_coarray_t *src_desc, const size_t transfer_size)
 {
-  gasnet_get_bulk(((char *)dst)+dst_offset, target_rank, ((char *)src->addr[target_rank])+src_offset,
+  gasnet_get_bulk(((char *)dst)+dst_offset, target_rank, ((char *)src_desc->addr[target_rank])+src_offset,
 		  transfer_size);
 
 }
 
-static void _gasnet_c_to_nonc_get(const int target_rank, const size_t src_offset, const int dst_dims, const _XMP_array_section_t *dst_info, 
-				  const void *dst, const _XMP_coarray_t *src, const size_t transfer_size)
+/*****************************************************************************************/
+/* DESCRIPTION : Execute get operation (from NON-continuous region to continuous region) */
+/* ARGUMENT    : [IN] target_rank   : Target rank                                        */
+/*               [IN] src_offset    : Offset size of source array                        */
+/*               [IN] dst_dims      : Number of dimensions of destination array          */
+/*               [IN] *dst_info     : Information of destination array                   */
+/*               [IN] *dst          : Pointer of destination array                       */
+/*               [IN] *src_desc     : Descriptor of source coarray                       */
+/*               [IN] transfer_size : Transfer size                                      */
+/* EXAMPLE    :                                                                          */
+/*     a[0:100] = b[0:100:2]:[1]; // a[] is a dst, b[] is a src                          */
+/*****************************************************************************************/
+static void _gasnet_c_to_nonc_get(const int target_rank, const size_t src_offset, const int dst_dims,
+				  const _XMP_array_section_t *dst_info, const void *dst,
+				  const _XMP_coarray_t *src_desc, const size_t transfer_size)
 {
   if(transfer_size < _xmp_gasnet_stride_size){
     char* src_addr = (char *)_xmp_gasnet_buf[_XMP_world_rank];
-    gasnet_get_bulk(src_addr, target_rank, ((char *)src->addr[target_rank])+src_offset, (size_t)transfer_size);
+    gasnet_get_bulk(src_addr, target_rank, ((char *)src_desc->addr[target_rank])+src_offset, (size_t)transfer_size);
     _XMP_unpack_coarray(((char *)dst), dst_dims, src_addr, dst_info, _XMP_UNPACK);
   }
   else{
@@ -425,35 +452,76 @@ static void _gasnet_c_to_nonc_get(const int target_rank, const size_t src_offset
   }
 }
 
-void _xmp_gasnet_pack(gasnet_token_t t, const char* info, const size_t am_request_size, 
+/*****************************************************************************/
+/* DESCRIPTION : Execute pack operation                                      */
+/* ARGUMENT    : [IN] t               : Token for Active Messages            */
+/*               [IN] *array_info     : Information of array                 */
+/*               [IN] am_request_size : Request size for Active Messages     */
+/*               [IN] src_addr_hi     : Address of source (High 32 bits)     */
+/*               [IN] src_addr_lo     : Address of source (Low  32 bits)     */
+/*               [IN] src_dims        : Number of dimensions of source array */
+/*               [IN] transfer_size   : Transfer size                        */
+/*               [IN] dst_addr_hi     : Address of source (High 32 bits)     */
+/*               [IN] dst_addr_lo     : Address of source (Low  32 bits)     */
+/* Note       : This function is called by Active Messages, and defined in   */
+/*              table of xmp_onesided_gasnet.c                               */
+/*****************************************************************************/
+void _xmp_gasnet_pack(gasnet_token_t t, const char* array_info, const size_t am_request_size, 
 		      const int src_addr_hi, const int src_addr_lo, const int src_dims, 
 		      const size_t tansfer_size, const int dst_addr_hi, const int dst_addr_lo)
 {
-  _XMP_array_section_t *src_info = (_XMP_array_section_t *)info;
+  _XMP_array_section_t *src_info = (_XMP_array_section_t *)array_info;
   char *archive = _xmp_gasnet_buf[_XMP_world_rank];
   _XMP_pack_coarray(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
   gasnet_AMReplyMedium2(t, _XMP_GASNET_UNPACK_GET_REPLY, archive, tansfer_size,
       			dst_addr_hi, dst_addr_lo);
 }
 
-void _xmp_gasnet_pack_get(gasnet_token_t t, const char* info, const size_t am_request_size,
+/**********************************************************************************/
+/* DESCRIPTION : Execute pack and get operations                                  */
+/* ARGUMENT    : [IN] t               : Token for Active Messages                 */
+/*               [IN] *array_info     : Information of array                      */
+/*               [IN] am_request_size : Request size for Active Messages          */
+/*               [IN] src_addr_hi     : Address of source (High 32 bits)          */
+/*               [IN] src_addr_lo     : Address of source (Low  32 bits)          */
+/*               [IN] src_dims        : Number of dimensions of source array      */
+/*               [IN] dst_dims        : Number of dimensions of destination array */
+/*               [IN] transfer_size   : Transfer size                             */
+/*               [IN] dst_addr_hi     : Address of source (High 32 bits)          */
+/*               [IN] dst_addr_lo     : Address of source (Low  32 bits)          */
+/* Note       : This function is called by Active Messages, and defined in        */
+/*              table of xmp_onesided_gasnet.c                                    */
+/**********************************************************************************/
+void _xmp_gasnet_pack_get(gasnet_token_t t, const char* array_info, const size_t am_request_size,
 			  const int src_addr_hi, const int src_addr_lo, const int src_dims, const int dst_dims,
 			  const size_t tansfer_size, const int dst_addr_hi, const int dst_addr_lo)
 {
   size_t src_size = sizeof(_XMP_array_section_t) * src_dims;
   size_t dst_size = sizeof(_XMP_array_section_t) * dst_dims;
   _XMP_array_section_t *src_info = malloc(src_size);
-  memcpy(src_info, info, src_size);
+  memcpy(src_info, array_info, src_size);
   char archive[tansfer_size + dst_size];
-  memcpy(archive, info + src_size, dst_size);
+  memcpy(archive, array_info + src_size, dst_size);
   _XMP_pack_coarray(archive+dst_size, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
   free(src_info);
   gasnet_AMReplyMedium3(t, _XMP_GASNET_UNPACK_GET_REPLY_NONC, archive, tansfer_size + dst_size,
                         dst_addr_hi, dst_addr_lo, dst_dims);
 }
 
+/********************************************************************************/
+/* DESCRIPTION : Execute unpack operations for Non-continuous GET               */
+/* ARGUMENT    : [IN] t             : Token for Active Messages                 */
+/*               [IN] *archives     : Recieved message                          */
+/*               [IN] transfer_size : Transfer size                             */
+/*               [IN] dst_addr_hi   : Address of source (High 32 bits)          */
+/*               [IN] dst_addr_lo   : Address of source (Low  32 bits)          */
+/*               [IN] dst_dims      : Number of dimensions of destination array */
+/* Note       : This function is called by Active Messages, and defined in      */
+/*              table of xmp_onesided_gasnet.c                                  */
+/********************************************************************************/
 void _xmp_gasnet_unpack_get_reply_nonc(gasnet_token_t t, char *archive, size_t transfer_size,
-				       const int dst_addr_hi, const int dst_addr_lo, const int dst_dims)
+				       const int dst_addr_hi, const int dst_addr_lo,
+				       const int dst_dims)
 {
   size_t dst_size = sizeof(_XMP_array_section_t) * dst_dims;
   _XMP_array_section_t *dst_info = malloc(dst_size);
@@ -464,6 +532,16 @@ void _xmp_gasnet_unpack_get_reply_nonc(gasnet_token_t t, char *archive, size_t t
 }
 
 
+/********************************************************************************/
+/* DESCRIPTION : Execute unpack operations                                      */
+/* ARGUMENT    : [IN] t             : Token for Active Messages                 */
+/*               [IN] *archives     : Recieved message                          */
+/*               [IN] transfer_size : Transfer size                             */
+/*               [IN] dst_addr_hi   : Address of source (High 32 bits)          */
+/*               [IN] dst_addr_lo   : Address of source (Low  32 bits)          */
+/* Note       : This function is called by Active Messages, and defined in      */
+/*              table of xmp_onesided_gasnet.c                                  */
+/********************************************************************************/
 void _xmp_gasnet_unpack_get_reply(gasnet_token_t t, char *archive, size_t transfer_size, 
 				  const int dst_addr_hi, const int dst_addr_lo)
 {
@@ -471,24 +549,50 @@ void _xmp_gasnet_unpack_get_reply(gasnet_token_t t, char *archive, size_t transf
   done_get_flag = _XMP_N_INT_TRUE;
 }
 
+/**
+   Set done flag for get operation
+ */
 void _xmp_gasnet_unpack_get_reply_using_buf(gasnet_token_t t)
 {
   done_get_flag = _XMP_N_INT_TRUE;
 }
 
-void _xmp_gasnet_pack_using_buf(gasnet_token_t t, const char* info, const size_t am_request_size,
+/**********************************************************************************/
+/* DESCRIPTION : Execute pack operations which uses buffer                        */
+/* ARGUMENT    : [IN] t               : Token for Active Messages                 */
+/*               [IN] *array_info     : Information of array                      */
+/*               [IN] am_request_size : Request size for Active Messages          */
+/*               [IN] src_addr_hi     : Address of source (High 32 bits)          */
+/*               [IN] src_addr_lo     : Address of source (Low  32 bits)          */
+/*               [IN] target_rank     : Target rank                               */
+/* Note       : This function is called by Active Messages, and defined in        */
+/*              table of xmp_onesided_gasnet.c                                    */
+/**********************************************************************************/
+void _xmp_gasnet_pack_using_buf(gasnet_token_t t, const char* array_info, const size_t am_request_size,
 				const int src_addr_hi, const int src_addr_lo, const int src_dims,
 				const int target_rank)
 {
-  _XMP_array_section_t *src_info = (_XMP_array_section_t *)info;
+  _XMP_array_section_t *src_info = (_XMP_array_section_t *)array_info;
   char *archive = _xmp_gasnet_buf[_XMP_world_rank];
   _XMP_pack_coarray(archive, (char *)UPCRI_MAKEWORD(src_addr_hi,src_addr_lo), src_dims, src_info);
   gasnet_AMReplyShort0(t, _XMP_GASNET_UNPACK_GET_REPLY_USING_BUF);
 }
 
+/*****************************************************************************************/
+/* DESCRIPTION : Execute get operation (from NON-continuous region to continuous region) */
+/* ARGUMENT    : [IN] target_rank   : Target rank                                        */
+/*               [IN] dst_offset    : Offset size of destination array                   */
+/*               [IN] src_dims      : Number of dimensions of source array               */
+/*               [IN] *src_info     : Information of source array                        */
+/*               [IN] *dst          : Pointer of destination coarray                     */
+/*               [IN] *src_desc     : Descriptor of source array                         */
+/*               [IN] transfer_size : Transfer size                                      */
+/* EXAMPLE    :                                                                          */
+/*     a[0:100] = b[0:100:2]:[1]; // a[] is a dst, b[] is a src                          */
+/*****************************************************************************************/
 static void _gasnet_nonc_to_c_get(const int target_rank, const size_t dst_offset, const int src_dims, 
 				  const _XMP_array_section_t *src_info, 
-				  const void *dst, const _XMP_coarray_t *src, const size_t transfer_size)
+				  const void *dst, const _XMP_coarray_t *src_desc, const size_t transfer_size)
 {
   size_t am_request_size = sizeof(_XMP_array_section_t) * src_dims;
   char archive[am_request_size];  // Note: Info. of transfer_size may have better in "archive".
@@ -498,13 +602,13 @@ static void _gasnet_nonc_to_c_get(const int target_rank, const size_t dst_offset
   //  if(transfer_size < gasnet_AMMaxMedium()){
   if(transfer_size < 0){  // fix me
     gasnet_AMRequestMedium6(target_rank, _XMP_GASNET_PACK, archive, am_request_size,
-			    HIWORD(src->addr[target_rank]), LOWORD(src->addr[target_rank]), src_dims,
+			    HIWORD(src_desc->addr[target_rank]), LOWORD(src_desc->addr[target_rank]), src_dims,
     			    (size_t)transfer_size, HIWORD((char *)dst+dst_offset), LOWORD((char *)dst+dst_offset));
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
   }
   else if(transfer_size < _xmp_gasnet_stride_size){
     gasnet_AMRequestMedium4(target_rank, _XMP_GASNET_PACK_USGIN_BUF, archive, am_request_size,
-                            HIWORD(src->addr[target_rank]), LOWORD(src->addr[target_rank]), src_dims,
+                            HIWORD(src_desc->addr[target_rank]), LOWORD(src_desc->addr[target_rank]), src_dims,
                             _XMP_world_rank);
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
     gasnet_get_bulk(_xmp_gasnet_buf[_XMP_world_rank], target_rank, _xmp_gasnet_buf[target_rank], transfer_size);
@@ -515,9 +619,22 @@ static void _gasnet_nonc_to_c_get(const int target_rank, const size_t dst_offset
   }
 }
 
+/*********************************************************************************************/
+/* DESCRIPTION : Execute get operation (from NON-continuous region to NON-continuous region) */
+/* ARGUMENT    : [IN] target_rank   : Target rank                                            */
+/*               [IN] dst_dims      : Number of dimensions of destination array              */
+/*               [IN] src_dims      : Number of dimensions of source array                   */
+/*               [IN] *dst_info     : Information of destination array                       */
+/*               [IN] *src_info     : Information of source array                            */
+/*               [IN] *dst          : Pointer of destination coarray                         */
+/*               [IN] *src_desc     : Descriptor of source array                             */
+/*               [IN] transfer_size : Transfer size                                          */
+/* EXAMPLE    :                                                                              */
+/*     a[0:100:2] = b[0:100:2]:[1]; // a[] is a dst, b[] is a src                            */
+/*********************************************************************************************/
 static void _gasnet_nonc_to_nonc_get(const int target_rank, const int dst_dims, const int src_dims, 
 				     const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info, 
-				     const void *dst, const _XMP_coarray_t *src, const size_t transfer_size)
+				     const void *dst, const _XMP_coarray_t *src_desc, const size_t transfer_size)
 {
   done_get_flag = _XMP_N_INT_FALSE;
   //  if(transfer_size < gasnet_AMMaxMedium()){
@@ -529,7 +646,7 @@ static void _gasnet_nonc_to_nonc_get(const int target_rank, const int dst_dims, 
     memcpy(archive + am_request_src_size, dst_info, am_request_dst_size);
     gasnet_AMRequestMedium7(target_rank, _XMP_GASNET_PACK_GET_HANDLER, archive, 
 			    am_request_src_size+am_request_dst_size,
-                            HIWORD(src->addr[target_rank]), LOWORD(src->addr[target_rank]), src_dims, dst_dims,
+                            HIWORD(src_desc->addr[target_rank]), LOWORD(src_desc->addr[target_rank]), src_dims, dst_dims,
                             (size_t)transfer_size, HIWORD((char *)dst), LOWORD((char *)dst));
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
     free(archive);
@@ -539,7 +656,7 @@ static void _gasnet_nonc_to_nonc_get(const int target_rank, const int dst_dims, 
     char *archive = malloc(am_request_size);
     memcpy(archive, src_info, am_request_size);
     gasnet_AMRequestMedium4(target_rank, _XMP_GASNET_PACK_USGIN_BUF, archive, am_request_size,
-                            HIWORD(src->addr[target_rank]), LOWORD(src->addr[target_rank]), src_dims,
+                            HIWORD(src_desc->addr[target_rank]), LOWORD(src_desc->addr[target_rank]), src_dims,
                             _XMP_world_rank);
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
     gasnet_get_bulk(_xmp_gasnet_buf[_XMP_world_rank], target_rank, _xmp_gasnet_buf[target_rank], 
@@ -552,11 +669,24 @@ static void _gasnet_nonc_to_nonc_get(const int target_rank, const int dst_dims, 
   }
 }
 
-static void _gasnet_scalar_mget(const int target_rank, const size_t src_offset, const int dst_dims, const _XMP_array_section_t *dst_info,
-				const void *dst, const _XMP_coarray_t *src, const size_t elmt_size)
+/******************************************************************************/
+/* DESCRIPTION : Execute multiple put operation for scalar                    */
+/* ARGUMENT    : [IN] target_rank : Target rank                               */
+/*               [IN] src_offset  : Offset size of source array               */
+/*               [IN] dst_dims    : Number of dimensions of destination array */
+/*               [IN] *dst_info   : Information of destination array          */
+/*               [IN] *dst        : Pointer of destination array              */
+/*               [IN] *src_desc   : Descriptor of source coarray              */
+/*               [IN] elmt_size   : Element size                              */
+/* EXAMPLE    :                                                               */
+/*     a[0:100] = b[0]:[1]; // a[] is a dst, b[] is a src                     */
+/******************************************************************************/
+static void _gasnet_scalar_mget(const int target_rank, const size_t src_offset, const int dst_dims,
+				const _XMP_array_section_t *dst_info, const void *dst,
+				const _XMP_coarray_t *src_desc, const size_t elmt_size)
 {
   char* src_addr = (char *)_xmp_gasnet_buf[_XMP_world_rank];
-  gasnet_get_bulk(src_addr, target_rank, ((char *)src->addr[target_rank])+src_offset, elmt_size);
+  gasnet_get_bulk(src_addr, target_rank, ((char *)src_desc->addr[target_rank])+src_offset, elmt_size);
   _XMP_unpack_coarray(((char *)dst), dst_dims, src_addr, dst_info, _XMP_SCALAR_MCOPY);
 }
 
@@ -567,8 +697,8 @@ static void _gasnet_scalar_mget(const int target_rank, const size_t src_offset, 
 /*               [IN] target_rank    : Target rank                                     */
 /*               [IN] src_dims       : Number of dimensions of source array            */
 /*               [IN] dst_dims       : Number of dimensions of destination array       */
-/*               [IN] src_info       : Information of source array                     */
-/*               [IN] dst_info       : Information of destination array                */
+/*               [IN] *src_info      : Information of source array                     */
+/*               [IN] *dst_info      : Information of destination array                */
 /*               [OUT] *src_desc     : Descriptor of source coarray                    */
 /*               [IN] *dst           : Pointer of destination array                    */
 /*               [IN] src_elmts      : Number of elements of source array              */

@@ -209,8 +209,14 @@ static void _pack_2dim_array(const _XMP_array_section_t* src_info, char* dst, co
 /*               [IN] *src            : Pointer of source array          */
 /*               [IN] dim_of_allelmts : Dimension which has all elements */
 /*************************************************************************/
-static void _pack_1dim_array(const _XMP_array_section_t* src_info, char* dst, const char* src)
+static void _pack_1dim_array(const _XMP_array_section_t* src_info, char* dst, const char* src,
+			     const int dim_of_allelmts)
 {
+  if(dim_of_allelmts == 0){
+    memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
+    return;
+  }
+  
   // for(i=0;i<src_info[0].length;i++){
   //   src_offset = stride_offset * i;
   //   memcpy(dst + archive_offset, src + src_offset, element_size);
@@ -276,15 +282,13 @@ static void _pack_1dim_array(const _XMP_array_section_t* src_info, char* dst, co
 /***********************************************************************/
 void _XMP_pack_coarray(char* dst, const char* src, const int src_dims, const _XMP_array_section_t* src_info)
 {
-  size_t src_offset = _XMP_get_offset(src_info, src_dims);
-  
-  if(src_dims == 1){ 
-    _pack_1dim_array(src_info, dst, src + src_offset);
-    return;
-  }
-
+  size_t src_offset   = _XMP_get_offset(src_info, src_dims);
   int dim_of_allelmts = _XMP_get_dim_of_allelmts(src_dims, src_info);
+  
   switch (src_dims){
+  case 1:
+    _pack_1dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
+    break;
   case 2:
     _pack_2dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
     break;
@@ -513,8 +517,14 @@ static void _unpack_2dim_array(const _XMP_array_section_t* dst_info, const char*
 /*               [OUT] *dst           : Pointer of destination array     */
 /*               [IN] dim_of_allelmts : Dimension which has all elements */
 /*************************************************************************/
-static void _unpack_1dim_array(const _XMP_array_section_t* dst_info, const char* src, char* dst)
+static void _unpack_1dim_array(const _XMP_array_section_t* dst_info, const char* src, char* dst,
+			       const int dim_of_allelmts)
 {
+  if(dim_of_allelmts == 0){
+    memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
+    return;
+  }
+  
   //  for(i=0;i<dst[0].length;i++){
   //    dst_offset = i * stride_offset;
   //    memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
@@ -641,20 +651,12 @@ void _XMP_unpack_coarray(char *dst, const int dst_dims, const char* src,
 			 const _XMP_array_section_t* dst_info, const int flag)
 {
   size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
-  
-  if(dst_dims == 1){
-    if(flag == _XMP_UNPACK)
-      _unpack_1dim_array(dst_info, src, dst + dst_offset);
-    else if(flag == _XMP_SCALAR_MCOPY)
-      _unpack_1dim_array_fixed_src(dst_info, src, dst + dst_offset);
-    else
-      _XMP_fatal("Unexpected error !");
-    return;
-  }
-
   if(flag == _XMP_UNPACK){
     int dim_of_allelmts = _XMP_get_dim_of_allelmts(dst_dims, dst_info);
     switch (dst_dims){
+    case 1:
+      _unpack_1dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
+      break;
     case 2:
       _unpack_2dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
       break;
@@ -680,6 +682,10 @@ void _XMP_unpack_coarray(char *dst, const int dst_dims, const char* src,
   }
   else if(flag == _XMP_SCALAR_MCOPY){
     switch (dst_dims){
+    case 1:
+      _unpack_1dim_array_fixed_src(dst_info, src, dst + dst_offset);
+      // Perhaps _unpack_1dim_array_fixed_src() is faster than _XMP_stride_memcpy_1dim()
+      break;
     case 2:
       _XMP_stride_memcpy_2dim(dst + dst_offset, src, dst_info, dst_info[1].distance, _XMP_SCALAR_MCOPY);
       break;
