@@ -101,7 +101,9 @@ public class XMP {
   public final static String reduction_f = "xmpf_reduction_";
   public final static String reduction_loc_f = "xmpf_reduction_loc_";
   public final static String bcast_f = "xmpf_bcast_";
-  public final static String test_task_on_f = "xmpf_test_task_on_";
+
+  public final static String create_task_nodes_f = "xmpf_create_task_nodes_";
+  public final static String test_task_on_f = "xmpf_test_task_on_nodes_";
   public final static String end_task_f = "xmpf_end_task_";
 
   public final static String gmove_g_alloc_f = "xmpf_gmv_g_alloc_";

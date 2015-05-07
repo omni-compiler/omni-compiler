@@ -1838,7 +1838,7 @@ outx_IDENT(FILE *fp, int indent, CExprOfSymbol *sym)
         switch(td->e_tdKind) {
         case TD_ARRAY:
 	  //            tag = (isAddr ? "arrayAddr" : "arrayRef"); break;
-            tag = "arrayAddr"; break;
+	  tag = "arrayAddr"; break;
         case TD_COARRAY:
             tag = "name"; scope = NULL; break;
         default:
