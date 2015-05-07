@@ -1039,7 +1039,7 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
 		      _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_FJRDMA
       _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
-		      _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts, _transfer_array_elmts);
+		      _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #endif
     }
   }
@@ -1054,7 +1054,7 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
 		      _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_FJRDMA
       _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
-		      _coarray, _array, remote_coarray, local_array, local_coarray, _transfer_coarray_elmts, _transfer_array_elmts);
+		      _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #endif
     }
   }
@@ -1163,20 +1163,6 @@ void xmp_sync_images_all(int* status)
   _XMP_fatal("Not implement xmp_sync_images_all()");
 }
 
-/*********************************************************/
-/* DESCRIPTION : Caclulate offset                        */
-/* ARGUMENT    : [IN] *array_info : Information of array */
-/*               [IN] dims       : Element size          */
-/*********************************************************/
-size_t _XMP_get_offset(const _XMP_array_section_t *array_info, const int dims)
-{
-  size_t offset = 0;
-  for(int i=0;i<dims;i++)
-    offset += array_info[i].start * array_info[i].distance;
-
-  return offset;
-}
-
 /************************************************************************/
 /* DESCRIPTION : Execute put operation without preprocessing            */
 /* ARGUMENT    : [IN] target_image : Target image                       */
@@ -1206,7 +1192,8 @@ void _XMP_coarray_shortcut_put(const int target_image, _XMP_coarray_t *dst_desc,
     _XMP_gasnet_shortcut_put(target_rank, dst_desc, src_desc->addr[_XMP_world_rank]+src_offset,
 			     dst_offset, dst_elmts, src_elmts, elmt_size);
 #elif _XMP_FJRDMA
-    _XMP_fjrdma_shortcut_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, src_elmts*elmt_size);
+    _XMP_fjrdma_shortcut_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, 
+			     dst_elmts, src_elmts, elmt_size);
 #endif
   }
 }
@@ -1240,7 +1227,8 @@ void _XMP_coarray_shortcut_get(const int target_image, _XMP_coarray_t *dst_desc,
     _XMP_gasnet_shortcut_get(target_rank, dst_desc, src_desc->addr[target_rank]+src_offset, dst_offset,
                              dst_elmts, src_elmts, elmt_size);
 #elif _XMP_FJRDMA
-    _XMP_fjrdma_shortcut_get(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, elmt_size*src_elmts);
+    _XMP_fjrdma_shortcut_get(target_rank, dst_desc, src_desc, (uint64_t)dst_offset, (uint64_t)src_offset, 
+			     dst_elmts, src_elmts, elmt_size);
 #endif
   }
 }

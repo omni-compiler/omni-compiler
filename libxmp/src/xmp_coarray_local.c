@@ -15,8 +15,8 @@
 /*              a[0:10:2], b[0:11:2] -> FALSE                       */
 /*              a[0:10:2], b[0:10:3] -> FALSE                       */
 /********************************************************************/
-static int is_the_same_shape(const int array1_dims, const int array2_dims, 
-			     const _XMP_array_section_t *array1, const _XMP_array_section_t *array2)
+static int _is_the_same_shape(const int array1_dims, const int array2_dims, 
+			      const _XMP_array_section_t *array1, const _XMP_array_section_t *array2)
 {
   if(array1_dims != array2_dims)
     return _XMP_N_INT_FALSE;
@@ -27,29 +27,6 @@ static int is_the_same_shape(const int array1_dims, const int array2_dims,
       return _XMP_N_INT_FALSE;
 
   return _XMP_N_INT_TRUE;
-}
-
-/****************************************************************************/
-/* DESCRIPTION : Calculate maximum chunk for copy                           */
-/* ARGUMENT    : [IN] dst_dims  : Number of dimensions of destination array */
-/*               [IN] src_dims  : Number of dimensions of source array      */
-/*               [IN] *dst_info : Information of destination array          */
-/*               [IN] *src_info : Information of source array               */
-/* RETURN     : Maximum chunk for copy                                      */
-/* NOTE       : This function is used to reduce callings of memcpy()        */
-/* EXAMPLE    : int a[10]:[*], b[10]:[*], c[5][2];                          */
-/*              a[0:10:2]:[1] = b[0:10:2] -> 4                              */
-/*              c[1:2][:]:[*] = b[0:4]    -> 16                             */
-/****************************************************************************/
-static unsigned int _calc_copy_chunk(const int dst_dims, const int src_dims,
-				     const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info)
-{
-  unsigned int dst_copy_chunk_dim = _XMP_get_dim_of_allelmts(dst_dims, dst_info);
-  unsigned int src_copy_chunk_dim = _XMP_get_dim_of_allelmts(src_dims, src_info);
-  unsigned int dst_copy_chunk     = _XMP_calc_copy_chunk(dst_copy_chunk_dim, dst_info);
-  unsigned int src_copy_chunk     = _XMP_calc_copy_chunk(src_copy_chunk_dim, src_info);
-  
-  return _XMP_M_MIN(dst_copy_chunk, src_copy_chunk);
 }
 
 /************************************************************************************/
@@ -73,14 +50,14 @@ static void _local_NON_continuous_copy(char *dst, const char *src, const int dst
 				       const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){
-    unsigned int copy_chunk = _calc_copy_chunk(dst_dims, src_dims, dst_info, src_info);
-    unsigned int copy_elmts = dst_elmts/(copy_chunk/elmt_size);
+    size_t copy_chunk = _XMP_calc_max_copy_chunk(dst_dims, src_dims, dst_info, src_info);
+    size_t copy_elmts = dst_elmts/(copy_chunk/elmt_size);
     size_t dst_stride[copy_elmts], src_stride[copy_elmts];
 
     // Set stride
     _XMP_set_stride(dst_stride, dst_info, dst_dims, copy_chunk, copy_elmts);
-    // The is_the_same_shape() is used to reduce cost of the second _XMP_set_stride()
-    if(is_the_same_shape(dst_dims, src_dims, dst_info, src_info))
+    // The _is_the_same_shape() is used to reduce cost of the second _XMP_set_stride()
+    if(_is_the_same_shape(dst_dims, src_dims, dst_info, src_info))
       for(int i=0;i<copy_elmts;i++)
 	src_stride[i] = dst_stride[i];
     else

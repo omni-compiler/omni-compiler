@@ -1,5 +1,43 @@
 #include <string.h>
 #include "xmp_internal.h"
+#include "xmp_math_function.h"
+
+/*********************************************************/
+/* DESCRIPTION : Caclulate offset                        */
+/* ARGUMENT    : [IN] *array_info : Information of array */
+/*               [IN] dims       : Element size          */
+/*********************************************************/
+size_t _XMP_get_offset(const _XMP_array_section_t *array_info, const int dims)
+{
+  size_t offset = 0;
+  for(int i=0;i<dims;i++)
+    offset += array_info[i].start * array_info[i].distance;
+
+  return offset;
+}
+
+/****************************************************************************/
+/* DESCRIPTION : Calculate maximum chunk for copy                           */
+/* ARGUMENT    : [IN] dst_dims  : Number of dimensions of destination array */
+/*               [IN] src_dims  : Number of dimensions of source array      */
+/*               [IN] *dst_info : Information of destination array          */
+/*               [IN] *src_info : Information of source array               */
+/* RETURN     : Maximum chunk for copy                                      */
+/* NOTE       : This function is used to reduce callings of memcpy()        */
+/* EXAMPLE    : int a[10]:[*], b[10]:[*], c[5][2];                          */
+/*              a[0:10:2]:[1] = b[0:10:2] -> 4                              */
+/*              c[1:2][:]:[*] = b[0:4]    -> 16                             */
+/****************************************************************************/
+size_t _XMP_calc_max_copy_chunk(const int dst_dims, const int src_dims,
+				const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info)
+{
+  unsigned int dst_copy_chunk_dim = _XMP_get_dim_of_allelmts(dst_dims, dst_info);
+  unsigned int src_copy_chunk_dim = _XMP_get_dim_of_allelmts(src_dims, src_info);
+  unsigned int dst_copy_chunk     = _XMP_calc_copy_chunk(dst_copy_chunk_dim, dst_info);
+  unsigned int src_copy_chunk     = _XMP_calc_copy_chunk(src_copy_chunk_dim, src_info);
+
+  return _XMP_M_MIN(dst_copy_chunk, src_copy_chunk);
+}
 
 /********************************************************************************/
 /* DESCRIPTION : Execute copy operation in only local node for continuous array */
@@ -31,15 +69,15 @@ void _XMP_local_continuous_copy(char *dst, const void *src, const size_t dst_elm
 /*             : [IN] *array_info : Information of array          */
 /* RETURN      : Maximum dimension                                */
 /* EXAMPLE     : int a[10], b[10][20], c[10][20][30];             */
-/*               a[:]                 -> 0                        */
-/*               a[0], a[1:9], a[::2] -> 1                        */
-/*               b[:][:]              -> 0                        */
-/*               b[1][:], b[2:2:2][:] -> 1                        */
-/*               b[:][2:2], b[1][1]   -> 2                        */
+/*               a[:]                  -> 0                       */
+/*               a[0], a[1:9], a[:3:2] -> 1                       */
+/*               b[:][:]               -> 0                       */
+/*               b[1][:], b[2:2:2][:]  -> 1                       */
+/*               b[:][2:2], b[1][1]    -> 2                       */
 /*               c[:][:][:]                 -> 0                  */
 /*               c[2][:][:], c[2:2:2][:][:] -> 1                  */
 /*               c[2][2:2][:]               -> 2                  */
-/*               c[:][:][::2]               -> 3                  */
+/*               c[:][:][:3:2]              -> 3                  */
 /******************************************************************/
 unsigned int _XMP_get_dim_of_allelmts(const int dims,
 				      const _XMP_array_section_t* array_info)
@@ -168,6 +206,7 @@ void _XMP_stride_memcpy_2dim(char *buf1, const char *buf2, const _XMP_array_sect
       for(int j=0;j<array_info[1].length;j++){
         tmp[1] = stride_offset[1] * j;
         memcpy(buf1 + tmp[0] + tmp[1], buf2, element_size);
+	//	printf("%d %d\n", tmp[0] + tmp[1], element_size);
       }
     }
     break;
