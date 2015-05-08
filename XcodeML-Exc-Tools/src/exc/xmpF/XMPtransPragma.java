@@ -309,6 +309,9 @@ public class XMPtransPragma
       ret_body.add(translateReduction(pb,info));
     }
 
+    Ident f = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+    ret_body.add(f.callSubroutine(Xcons.List(on_ref.getDescId())));
+
     return Bcons.COMPOUND(ret_body);
   }
 
@@ -636,9 +639,14 @@ public class XMPtransPragma
     f = env.declInternIdent(XMP.create_task_nodes_f, Xtype.FsubroutineType);
     bb.add(f.callSubroutine(Xcons.List(taskNodesDescId, on_ref.getDescId().Ref())));
 
+    Ident g1 = env.declInternIdent(XMP.nodes_dealloc_f, Xtype.FsubroutineType);
+    Ident g2 = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+
     if (tasksFlag){
       //parentBlock.insert(on_ref.buildConstructor(env));
       parentBlock.insert(b);
+      parentBlock.add(g1.callSubroutine(Xcons.List(taskNodesDescId)));
+      parentBlock.add(g2.callSubroutine(Xcons.List(on_ref.getDescId())));
     }
     else {
       //ret_body.add(on_ref.buildConstructor(env));
@@ -653,6 +661,11 @@ public class XMPtransPragma
       
     f = env.declInternIdent(XMP.end_task_f,Xtype.FsubroutineType);
     pb.getBody().add(f.Call(Xcons.List()));
+
+    if (!tasksFlag){
+      ret_body.add(g1.callSubroutine(Xcons.List(taskNodesDescId)));
+      ret_body.add(g2.callSubroutine(Xcons.List(on_ref.getDescId())));
+    }
 
     return Bcons.COMPOUND(ret_body);
   }

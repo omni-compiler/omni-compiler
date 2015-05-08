@@ -82,6 +82,7 @@ public class XMP {
 
   public final static String ref_templ_alloc_f = "xmpf_ref_templ_alloc_";
   public final static String ref_nodes_alloc_f = "xmpf_ref_nodes_alloc_";
+  public final static String ref_dealloc_f = "xmpf_ref_dealloc_";
   public final static String ref_set_loop_info_f = "xmpf_ref_set_loop_info_";
   public final static String ref_set_dim_info_f = "xmpf_ref_set_dim_info_";
   public final static String ref_init_f = "xmpf_ref_init_";
