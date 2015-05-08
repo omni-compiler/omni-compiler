@@ -357,11 +357,11 @@ static void _fjrdma_NON_continuous_the_same_stride_mput(const int target_rank, u
   size_t copy_chunk     = (size_t)_XMP_calc_copy_chunk(copy_chunk_dim, array_info);
   size_t copy_elmts     = transfer_elmts/(copy_chunk/elmt_size);
   size_t stride         = _XMP_calc_stride(array_info, array_dims, copy_chunk);
-  
+
   if(copy_elmts <= _FJRDMA_MAX_MPUT){
 #ifdef OMNI_TARGET_CPU_KCOMPUTER
     FJMPI_Rdma_mput(target_rank, _FJRDMA_TAG, &raddr, &laddr,
-		    &copy_chunk, stride, copy_elmts, _XMP_FLAG_NIC);
+    		    &copy_chunk, stride, copy_elmts, _XMP_FLAG_NIC);
     _num_of_puts++;
 #elif OMNI_TARGET_CPU_FX10
     _FX10_Rdma_mput(target_rank, &raddr, &laddr, &copy_chunk, stride, copy_elmts);
@@ -455,7 +455,7 @@ static void _fjrdma_NON_continuous_put(const int target_rank, const uint64_t dst
 
   if(_is_the_same_constant_stride(dst_info, src_info, dst_dims, src_dims)){
     _fjrdma_NON_continuous_the_same_stride_mput(target_rank, raddr, laddr, transfer_elmts,
-						dst_info, dst_dims, elmt_size);
+    						dst_info, dst_dims, elmt_size);
   }
   else{
     _fjrdma_NON_continuous_general_mput(target_rank, raddr, laddr, transfer_elmts, 
@@ -497,7 +497,7 @@ void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const i
     }
     else{
       _fjrdma_NON_continuous_put(target_rank, dst_offset, src_offset, dst_info, src_info, dst_dims, src_dims, 
-				 dst_desc, src_desc, src, dst_elmts);
+      				 dst_desc, src_desc, src, dst_elmts);
     }
   }
   else{

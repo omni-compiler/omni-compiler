@@ -5,8 +5,6 @@
 #define DIMS 2
 int a[SIZE][SIZE]:[*], b[SIZE][SIZE]:[*], ret = 0;
 
-
-
 int main(){
   int start[DIMS], len[DIMS], stride[DIMS];
   int status;

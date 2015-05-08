@@ -173,11 +173,11 @@ int main(){
   communicate_1(me);
   check_1(me);
 
-  communicate_2(me);
-  check_2(me);
+    communicate_2(me);
+    check_2(me);
   
-  communicate_3(me);
-  check_3(me);
+    communicate_3(me);
+    check_3(me);
 
 #pragma xmp barrier
 #pragma xmp reduction(MAX:return_val)  

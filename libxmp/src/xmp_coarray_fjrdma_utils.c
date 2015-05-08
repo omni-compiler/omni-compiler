@@ -234,7 +234,7 @@ void _XMP_set_coarray_addresses_with_chunk(uint64_t* addrs, const uint64_t base_
         }
       }
     }
-    if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+    else if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
       chunk_len = chunk_size / array_info[3].distance;
       for(int i=0,num=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
@@ -347,7 +347,7 @@ void _XMP_set_coarray_addresses_with_chunk(uint64_t* addrs, const uint64_t base_
         }
       }
     }
-    if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+    else if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
       chunk_len = chunk_size / array_info[3].distance;
       for(int i=0,num=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
@@ -363,7 +363,7 @@ void _XMP_set_coarray_addresses_with_chunk(uint64_t* addrs, const uint64_t base_
         }
       }
     }
-    if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+    else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
       chunk_len = chunk_size / array_info[2].distance;
       for(int i=0,num=0;i<array_info[0].length;i++){
 	tmp[0] = stride_offset[0] * i;
@@ -736,7 +736,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
     chunk_len = chunk_size / array_info[0].distance;
     for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
       stride[num++] = stride_offset[0] * chunk_len * i;
-      if(num == 2) break;
+      if(num == 2) goto end;
     }
   case 2:
     if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
@@ -746,7 +746,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
         for(int j=0;j<array_info[1].length;j+=chunk_len){
           tmp[1] = stride_offset[1] * j;
           stride[num++] = tmp[0] + tmp[1];
-          if(num == 2) break;
+          if(num == 2) goto end;
         }
       }
     }
@@ -754,7 +754,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
       chunk_len = chunk_size / array_info[0].distance;
       for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
         stride[num++] = stride_offset[0] * i;
-        if(num == 2) break;
+        if(num == 2) goto end;
       }
     }
   case 3:
@@ -767,7 +767,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	 for(int k=0;k<array_info[2].length;k+=chunk_len){
 	   tmp[2] = stride_offset[2] * k;
 	   stride[num++] = tmp[0] + tmp[1] + tmp[2];
-	   if(num == 2) break;
+	   if(num == 2) goto end;
 	 }
        }
      }
@@ -779,7 +779,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
        for(int j=0;j<array_info[1].length;j+=chunk_len){
 	 tmp[1] = stride_offset[1] * j;
 	 stride[num++] = tmp[0] + tmp[1];
-	 if(num == 2) break;
+	 if(num == 2) goto end;
        }
      }
    }
@@ -787,7 +787,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
      chunk_len = chunk_size / array_info[0].distance;
      for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
        stride[num++] = stride_offset[0] * i;
-       if(num == 2) break;
+       if(num == 2) goto end;
      }
    }
    break;
@@ -803,7 +803,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	   for(int l=0;l<array_info[3].length;l+=chunk_len){
 	     tmp[3] = stride_offset[3] * l;
 	     stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
-	     if(num == 2) break;
+	     if(num == 2) goto end;
 	   }
 	 }
        }
@@ -818,7 +818,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	 for(int k=0;k<array_info[2].length;k+=chunk_len){
 	   tmp[2] = stride_offset[2] * k;
 	   stride[num++] = tmp[0] + tmp[1] + tmp[2];
-	   if(num == 2) break;
+	   if(num == 2) goto end;
 	 }
        }
      }
@@ -830,7 +830,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
        for(int j=0;j<array_info[1].length;j+=chunk_len){
 	 tmp[1] = stride_offset[1] * j;
 	 stride[num++] = tmp[0] + tmp[1];
-	 if(num == 2) break;
+	 if(num == 2) goto end;
        }
      }
    }
@@ -838,7 +838,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
      chunk_len = chunk_size / array_info[0].distance;
      for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
        stride[num++] = stride_offset[0] * i;
-       if(num == 2) break;
+       if(num == 2) goto end;
      }
    }
    break;
@@ -856,7 +856,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	     for(int m=0;m<array_info[4].length;m+=chunk_len){
 	       tmp[4] = stride_offset[4] * m;
 	       stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
-	       if(num == 2) break;
+	       if(num == 2) goto end;
 	     }
 	   }
 	 }
@@ -874,7 +874,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	   for(int l=0;l<array_info[3].length;l+=chunk_len){
 	     tmp[3] = stride_offset[3] * l;
 	     stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
-	     if(num == 2) break;
+	     if(num == 2) goto end;
 	   }
 	 }
        }
@@ -889,7 +889,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	 for(int k=0;k<array_info[2].length;k+=chunk_len){
 	   tmp[2] = stride_offset[2] * k;
 	   stride[num++] = tmp[0] + tmp[1] + tmp[2];
-	   if(num == 2) break;
+	   if(num == 2) goto end;
 	 }
        }
      }
@@ -901,7 +901,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
        for(int j=0;j<array_info[1].length;j+=chunk_len){
 	 tmp[1] = stride_offset[1] * j;
 	 stride[num++] = tmp[0] + tmp[1];
-	 if(num == 2) break;
+	 if(num == 2) goto end;
        }
      }
    }
@@ -909,7 +909,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
      chunk_len = chunk_size / array_info[0].distance;
      for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
        stride[num++] = stride_offset[0] * i;
-       if(num == 2) break;
+       if(num == 2) goto end;
      }
    }
    break;
@@ -929,7 +929,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	       for(int n=0;n<array_info[5].length;n+=chunk_len){
 		 tmp[5] = stride_offset[5] * n;
 		 stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5];
-		 if(num == 2) break;
+		 if(num == 2) goto end;
 	       }
 	     }
 	   }
@@ -950,7 +950,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	     for(int m=0;m<array_info[4].length;m+=chunk_len){
 	       tmp[4] = stride_offset[4] * m;
 	       stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
-               if(num == 2) break;
+               if(num == 2) goto end;
 	     }
 	   }
 	 }
@@ -968,7 +968,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	   for(int l=0;l<array_info[3].length;l+=chunk_len){
 	     tmp[3] = stride_offset[3] * l;
 	     stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
-	     if(num == 2) break;
+	     if(num == 2) goto end;
 	   }
 	 }
        }
@@ -983,7 +983,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	 for(int k=0;k<array_info[2].length;k+=chunk_len){
 	   tmp[2] = stride_offset[2] * k;
 	   stride[num++] = tmp[0] + tmp[1] + tmp[2];
-	   if(num == 2) break;
+	   if(num == 2) goto end;
 	 }
        }
      }
@@ -995,7 +995,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
        for(int j=0;j<array_info[1].length;j+=chunk_len){
 	 tmp[1] = stride_offset[1] * j;
 	 stride[num++] = tmp[0] + tmp[1];
-	 if(num == 2) break;
+	 if(num == 2) goto end;
        }
      }
    }
@@ -1003,7 +1003,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
      chunk_len = chunk_size / array_info[0].distance;
      for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
        stride[num++] = stride_offset[0] * i;
-       if(num == 2) break;
+       if(num == 2) goto end;
      }
    }
    break;
@@ -1024,8 +1024,8 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 		 tmp[5] = stride_offset[5] * n;
 		 for(int p=0;p<array_info[6].length;p+=chunk_len){
 		   tmp[6] = stride_offset[6] * p;
-		   stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] * tmp[6];
-		   if(num == 2) break;
+		   stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6];
+		   if(num == 2) goto end;
 		 }
 	       }
 	     }
@@ -1049,7 +1049,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	       for(int n=0;n<array_info[5].length;n+=chunk_len){
 		 tmp[5] = stride_offset[5] * n;
 		 stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5];
-		 if(num == 2) break;
+		 if(num == 2) goto end;
 	       }
 	     }
 	   }
@@ -1070,7 +1070,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	     for(int m=0;m<array_info[4].length;m+=chunk_len){
 	       tmp[4] = stride_offset[4] * m;
 	       stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
-               if(num == 2) break;
+               if(num == 2) goto end;
 	     }
 	   }
 	 }
@@ -1088,14 +1088,14 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	   for(int l=0;l<array_info[3].length;l+=chunk_len){
 	     tmp[3] = stride_offset[3] * l;
 	     stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
-	     if(num == 2) break;
+	     if(num == 2) goto end;
 	   }
 	 }
        }
      }
    }
    else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
-     chunk_len = chunk_size / array_info[1].distance;
+     chunk_len = chunk_size / array_info[2].distance;
      for(int i=0,num=0;i<array_info[0].length;i++){
        tmp[0] = stride_offset[0] * i;
        for(int j=0;j<array_info[1].length;j++){
@@ -1103,7 +1103,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
 	 for(int k=0;k<array_info[2].length;k+=chunk_len){
 	   tmp[2] = stride_offset[2] * k;
 	   stride[num++] = tmp[0] + tmp[1] + tmp[2];
-	   if(num == 2) break;
+	   if(num == 2) goto end;
 	 }
        }
      }
@@ -1115,7 +1115,7 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
        for(int j=0;j<array_info[1].length;j+=chunk_len){
 	 tmp[1] = stride_offset[1] * j;
 	 stride[num++] = tmp[0] + tmp[1];
-	 if(num == 2) break;
+	 if(num == 2) goto end;
        }
      }
    }
@@ -1123,11 +1123,12 @@ size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
      chunk_len = chunk_size / array_info[0].distance;
      for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
        stride[num++] = stride_offset[0] * i;
-       if(num == 2) break;
+       if(num == 2) goto end;
      }
    }
    break;
   }
 
+ end:
   return stride[1] - stride[0];
 }
