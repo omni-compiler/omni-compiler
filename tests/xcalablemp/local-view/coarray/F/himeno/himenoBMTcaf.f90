@@ -113,7 +113,7 @@ contains
   end subroutine caf_alloc
 end module caf_buffer
 
-program HimenoBMTxp_f90_MPI
+program HimenoBMTxp_f90_CAF
 !
   use others
   use comm
@@ -217,10 +217,10 @@ program HimenoBMTxp_f90_MPI
      score=xmflops2/82.84
      print *,' Score based on Pentium III 600MHz :',score
   end if
-  call mpi_finalize(ierr)
+!!  call mpi_finalize(ierr)
 !
   stop
-end program HimenoBMTxp_f90_MPI
+end program HimenoBMTxp_f90_CAF
 !
 !
 subroutine readparam
@@ -459,6 +459,8 @@ subroutine initcomm
 !
   use comm
   use others
+  use mexyz
+  use caf_buffer
 !
   implicit none
 !
@@ -467,7 +469,7 @@ subroutine initcomm
   integer :: ierr,icomm,idm(3)
   logical :: ipd(3),ir
 !
-  call mpi_init(ierr)
+!!  call mpi_init(ierr)
   call mpi_comm_size(mpi_comm_world,npe,ierr)
   call mpi_comm_rank(mpi_comm_world,id,ierr)
 !
@@ -481,7 +483,7 @@ subroutine initcomm
         print *,'Invalid number of PE'
         print *,'Please check partitioning pattern or number of PE'
      end if
-     call mpi_finalize(ierr)
+!!     call mpi_finalize(ierr)
      stop
   end if
 !

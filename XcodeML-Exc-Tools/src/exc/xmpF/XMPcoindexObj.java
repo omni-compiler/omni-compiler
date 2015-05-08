@@ -32,26 +32,22 @@ public class XMPcoindexObj {
   //  CONSTRUCTOR
   //------------------------------
   public XMPcoindexObj(Xobject obj, XMPcoarray coarray) {
-    name = _getName(obj);
-    subscripts = _getSubscripts(obj);
-    cosubscripts = _getCosubscripts(obj);
-    //_setNameAndSubscripts(obj);
     this.obj = obj;
+    name = _getName(obj);
     this.coarray = coarray;
-    exprRank = _getExprRank();
-    if (subscripts == null && exprRank > 0)
-      subscripts = _wholeArraySubscripts(exprRank);
+    _initOthers();
   }
 
-  /* construct and find the instance of XMPcoarray
-   */
   public XMPcoindexObj(Xobject obj, ArrayList<XMPcoarray> coarrays) {
+    this.obj = obj;
     name = _getName(obj);
+    coarray = _findCoarrayInCoarrays(name, coarrays);
+    _initOthers();
+  }
+
+  private void _initOthers() {
     subscripts = _getSubscripts(obj);
     cosubscripts = _getCosubscripts(obj);
-    //_setNameAndSubscripts(obj);
-    this.obj = obj;
-    coarray = _findCoarrayInCoarrays(name, coarrays);
     exprRank = _getExprRank();
     if (subscripts == null && exprRank > 0)
       subscripts = _wholeArraySubscripts(exprRank);
@@ -68,7 +64,6 @@ public class XMPcoindexObj {
       XMP.fatal("broken Xcode to describe a coindexed object");
     return name;
   }
-
 
   private Xobject _getSubscripts(Xobject obj) {
     Xobject varRef = obj.getArg(0).getArg(0);
@@ -370,10 +365,10 @@ public class XMPcoindexObj {
       baseTypeCode = xtype.getBasicType();
       break;
     case Xtype.STRUCT:
-      XMP.error("internal error: STRUCT unsupported in _getTypeSuffix()");
+      XMP.fatal("internal error: STRUCT unsupported in _getTypeSuffix()");
       break;
     default:
-      XMP.error("internal error: unexpected kind in _getTypeSuffix(): xtype.getKind()");
+      XMP.fatal("internal error: unexpected kind in _getTypeSuffix(): xtype.getKind()");
       break;
     }
 
@@ -451,7 +446,7 @@ public class XMPcoindexObj {
         start = coarray.getLbound(i);
       break;
     default:        // vector subscript is not supported
-      XMP.error("internal error: unexpected Xcode: "+subscr.Opcode());
+      XMP.fatal("internal error: unexpected Xcode: "+subscr.Opcode());
       start = null;
       break;
     }
@@ -472,7 +467,7 @@ public class XMPcoindexObj {
         end = coarray.getUbound(i);
       break;
     default:        // vector subscript is not supported
-      XMP.error("internal error: unexpected Xcode: "+subscr.Opcode());
+      XMP.fatal("internal error: unexpected Xcode: "+subscr.Opcode());
       end = null;
       break;
     }
@@ -492,7 +487,7 @@ public class XMPcoindexObj {
         stride = Xcons.IntConstant(1);
       break;
     default:        // vector subscript is not supported
-      XMP.error("internal error: unexpected Xcode: "+subscr.Opcode());
+      XMP.fatal("internal error: unexpected Xcode: "+subscr.Opcode());
       stride = null;
       break;
     }
@@ -556,7 +551,7 @@ public class XMPcoindexObj {
       break;
 
     default:        // vector subscript is not supported
-      XMP.error("internal error: maybe vector subscript. Xcode: "
+      XMP.fatal("internal error: maybe vector subscript. Xcode: "
                 + subscr.Opcode());
       size = null;
       break;
