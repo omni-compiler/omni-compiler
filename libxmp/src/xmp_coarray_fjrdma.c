@@ -10,6 +10,7 @@
 #define _FJRDMA_MAX_MEMID 511
 #define _FJRDMA_MAX_MPUT 1993
 #define _FJRDMA_MAX_MGET  100 /** This value is a trial */
+#define _XMP_MAX_MPUTS     60 /** This value is a trial */
 #define _FJRDMA_TAG 0
 #define _FJRDMA_START_MEMID 2
 static int _num_of_puts = 0;
@@ -59,6 +60,12 @@ static void _FX10_Rdma_mput(const int target_rank, const uint64_t *raddrs, const
 }
 #endif
 
+static void _release_MRQ()
+{
+  if(_num_of_puts > _XMP_MAX_MPUTS)
+    _XMP_fjrdma_sync_memory();
+}
+
 /************************************************************************/
 /* DESCRIPTION : Execute scalar multiple put operation                  */
 /* ARGUMENT    : [IN] target_rank    : Target rank                      */
@@ -90,13 +97,14 @@ static void _fjrdma_scalar_mput_do(const size_t target_rank, uint64_t* raddrs, u
       size_t tmp_elmts = (i != times-1)? _FJRDMA_MAX_MPUT : rest_elmts;
 #ifdef OMNI_TARGET_CPU_KCOMPUTER
       FJMPI_Rdma_mput(target_rank, _FJRDMA_TAG, &raddrs[i*_FJRDMA_MAX_MPUT], &laddrs[i*_FJRDMA_MAX_MPUT],
-                      &lengths[i*_FJRDMA_MAX_MPUT], 0, tmp_elmts, _XMP_FLAG_NIC);
+		      &lengths[i*_FJRDMA_MAX_MPUT], 0, tmp_elmts, _XMP_FLAG_NIC);
       _num_of_puts++;
 #elif OMNI_TARGET_CPU_FX10
       _FX10_Rdma_mput(target_rank, &raddrs[i*_FJRDMA_MAX_MPUT], &laddrs[i*_FJRDMA_MAX_MPUT],
                       &lengths[i*_FJRDMA_MAX_MPUT], 0, tmp_elmts);
       _num_of_puts += tmp_elmts;
 #endif
+      _release_MRQ();
     }
   }
 }
@@ -277,66 +285,6 @@ static size_t _get_array_size(const _XMP_array_section_t *array_info, const int 
   return array_info[0].distance * array_info[0].elmts;
 }
 
-/**********************************************************************************/
-/* DESCRIPTION : Check shape of two arrays, the same is except for start          */
-/* ARGUMENT    : [IN] *array1_info : Information of array1                        */
-/*               [IN] *array2_info : Information of array2                        */
-/*               [IN] array1_dims  : Number of dimensions of array1               */
-/*               [IN] array2_dims  : Number of dimensions of array2               */
-/* RETURN:     : If two arrays have the same stride except for start, return TRUE */
-/**********************************************************************************/
-static int _is_the_same_shape_except_for_start(const _XMP_array_section_t *array1_info,
-					       const _XMP_array_section_t *array2_info,
-					       const int array1_dims, const int array2_dims)
-{
-  if(array1_dims != array2_dims) return _XMP_N_INT_FALSE;
-
-  for(int i=0;i<array1_dims;i++)
-    if(array1_info[i].length != array2_info[i].length || 
-       array1_info[i].elmts  != array2_info[i].elmts ||
-       array1_info[i].stride != array2_info[i].stride)
-      return _XMP_N_INT_FALSE;
-
-  return _XMP_N_INT_TRUE;
-}
-
-/********************************************************************/
-/* DESCRIPTION : Check two arrays have the same stride              */
-/* ARGUMENT    : [IN] *array1_info : Information of array1          */
-/*               [IN] *array2_info : Information of array2          */
-/*               [IN] array1_dims  : Number of dimensions of array1 */
-/*               [IN] array2_dims  : Number of dimensions of array2 */
-/* RETURN:     : If two arrays have the same stride, return TRUE    */
-/********************************************************************/
-static int _is_the_same_constant_stride(const _XMP_array_section_t *array1_info, 
-					const _XMP_array_section_t *array2_info,
-					const int array1_dims, const int array2_dims)
-{
-  if(! _is_the_same_shape_except_for_start(array1_info, array2_info,
-					   array1_dims, array2_dims))
-    return _XMP_N_INT_FALSE;
-
-  switch (array1_dims){
-  case 1:
-    return _XMP_is_constant_stride_1dim();
-  case 2:
-    return _XMP_is_constant_stride_2dim(array1_info, array1_dims);
-  case 3:
-    return _XMP_is_constant_stride_3dim(array1_info, array1_dims);
-  case 4:
-    return _XMP_is_constant_stride_4dim(array1_info, array1_dims);
-  case 5:
-    return _XMP_is_constant_stride_5dim(array1_info, array1_dims);
-  case 6:
-    return _XMP_is_constant_stride_6dim(array1_info, array1_dims);
-  case 7:
-    return _XMP_is_constant_stride_7dim(array1_info, array1_dims);
-  default:
-    _XMP_fatal("Coarray Error ! Dimension is too big.\n");
-    return _XMP_N_INT_FALSE; // dummy
-  }
-}
-
 /*********************************************************************/
 /* DESCRIPTION : Execute multiple put operation with the same stride */
 /* ARGUMENT    : [IN] target_rank : Target rank                      */
@@ -385,6 +333,7 @@ static void _fjrdma_NON_continuous_the_same_stride_mput(const int target_rank, u
       _FX10_Rdma_mput(target_rank, &tmp_raddr, &tmp_laddr, &copy_chunk, stride, tmp_elmts);
       _num_of_puts += tmp_elmts;
 #endif
+      _release_MRQ();
     }
   }
 }
@@ -453,13 +402,13 @@ static void _fjrdma_NON_continuous_put(const int target_rank, const uint64_t dst
     laddr = (uint64_t)src_desc->addr[_XMP_world_rank] + src_offset;
   }
 
-  if(_is_the_same_constant_stride(dst_info, src_info, dst_dims, src_dims)){
+  if(_XMP_is_the_same_constant_stride(dst_info, src_info, dst_dims, src_dims)){
     _fjrdma_NON_continuous_the_same_stride_mput(target_rank, raddr, laddr, transfer_elmts,
-    						dst_info, dst_dims, elmt_size);
+      						dst_info, dst_dims, elmt_size);
   }
   else{
     _fjrdma_NON_continuous_general_mput(target_rank, raddr, laddr, transfer_elmts, 
-					dst_info, src_info, dst_dims, src_dims, elmt_size);
+    					dst_info, src_info, dst_dims, src_dims, elmt_size);
   }
 
   if(src_desc == NULL)
