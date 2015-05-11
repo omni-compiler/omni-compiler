@@ -305,6 +305,9 @@ public class XMPtransPragma
 
     ret_body.add(pb.getBody().getHead()); // loop
 
+    Ident f = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+    ret_body.add(f.callSubroutine(Xcons.List(on_ref.getDescId())));
+
     if(info.getReductionOp() != XMP.REDUCE_NONE){
       ret_body.add(translateReduction(pb,info));
     }
@@ -394,6 +397,11 @@ public class XMPtransPragma
     Ident f = env.declInternIdent(XMP.barrier_f,
 				  Xtype.FsubroutineType);
     ret_body.add(f.callSubroutine(Xcons.List(on_ref_arg)));
+
+    if (on_ref != null){
+      Ident g = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(Xcons.List(on_ref.getDescId())));
+    }
 
     return Bcons.COMPOUND(ret_body);
   }
@@ -489,6 +497,11 @@ public class XMPtransPragma
       Xobject arg = Xcons.List(info.getAsyncId());
       Ident g = env.declInternIdent(XMP.start_async_f, Xtype.FsubroutineType);
       ret_body.add(g.callSubroutine(arg));
+    }
+
+    if (on_ref != null){
+      Ident g = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(Xcons.List(on_ref.getDescId())));
     }
 
     return Bcons.COMPOUND(ret_body);
@@ -587,6 +600,16 @@ public class XMPtransPragma
       ret_body.add(g.callSubroutine(arg));
     }
 
+    if (on_ref != null){
+      Ident g = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(Xcons.List(on_ref.getDescId())));
+    }
+
+    if (from_ref != null){
+      Ident g = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(Xcons.List(from_ref.getDescId())));
+    }
+
     return Bcons.COMPOUND(ret_body);
   }
 
@@ -620,21 +643,57 @@ public class XMPtransPragma
     // when '*' = the executing node set is specified
     if (on_ref == null) return Bcons.COMPOUND(pb.getBody());
 
-    ret_body.add(on_ref.buildConstructor(env));
-    Ident f = env.declInternIdent(XMP.test_task_on_f,
-				  Xtype.FlogicalFunctionType);
-    Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
+    Block parentBlock = pb.getParentBlock();
+    boolean tasksFlag = false;
+    if (parentBlock != null && parentBlock instanceof PragmaBlock){
+      XMPinfo parentInfo = (XMPinfo)parentBlock.getProp(XMP.prop);
+      if (parentInfo != null && parentInfo.pragma == XMPpragma.TASKS) tasksFlag = true;
+    }
+
+    Block b = on_ref.buildConstructor(env);
+    BasicBlock bb = b.getBasicBlock();
+
+    Ident taskNodesDescId = env.declObjectId(XMP.genSym("XMP_TASK_NODES"), pb);
+
+    Ident f;
+    f = env.declInternIdent(XMP.create_task_nodes_f, Xtype.FsubroutineType);
+    bb.add(f.callSubroutine(Xcons.List(taskNodesDescId, on_ref.getDescId().Ref())));
+
+    Ident g1 = env.declInternIdent(XMP.nodes_dealloc_f, Xtype.FsubroutineType);
+    Ident g2 = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+
+    if (tasksFlag){
+      //parentBlock.insert(on_ref.buildConstructor(env));
+      parentBlock.insert(b);
+      parentBlock.add(g1.callSubroutine(Xcons.List(taskNodesDescId)));
+      parentBlock.add(g2.callSubroutine(Xcons.List(on_ref.getDescId())));
+    }
+    else {
+      //ret_body.add(on_ref.buildConstructor(env));
+      ret_body.add(b);
+    }
+
+    f = env.declInternIdent(XMP.test_task_on_f,
+			    Xtype.FlogicalFunctionType);
+    //Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
+    Xobject cond = f.Call(Xcons.List(taskNodesDescId.Ref()));
     ret_body.add(Bcons.IF(cond,Bcons.COMPOUND(pb.getBody()),null));
       
     f = env.declInternIdent(XMP.end_task_f,Xtype.FsubroutineType);
     pb.getBody().add(f.Call(Xcons.List()));
 
+    if (!tasksFlag){
+      ret_body.add(g1.callSubroutine(Xcons.List(taskNodesDescId)));
+      ret_body.add(g2.callSubroutine(Xcons.List(on_ref.getDescId())));
+    }
+
     return Bcons.COMPOUND(ret_body);
   }
 
   private Block translateTasks(PragmaBlock pb, XMPinfo i) {
-    XMP.fatal("translateTasks");
-    return null;
+    //XMP.fatal("translateTasks");
+    //return null;
+    return Bcons.COMPOUND(pb.getBody());
   }
 
   /* gmove sequence:

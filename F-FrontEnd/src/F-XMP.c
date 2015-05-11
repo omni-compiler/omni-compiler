@@ -211,7 +211,8 @@ void compile_XMP_directive(expr x)
       check_INEXEC();
       /* check arg: no arg */
       push_ctl(CTL_XMP);
-      CTL_XMP_ARG(ctl_top) = x;
+      //CTL_XMP_ARG(ctl_top) = x;
+      CTL_XMP_ARG(ctl_top) = XMP_pragma_list(XMP_TASKS, EMPTY_LIST, NULL);
       EXPR_LINE(CTL_XMP_ARG(ctl_top)) = current_line;
       break;
 
@@ -221,7 +222,7 @@ void compile_XMP_directive(expr x)
 	 CTL_XMP_ARG_DIR(ctl_top) == XMP_TASKS){
 	CURRENT_STATEMENTS = XMP_check_TASK(CURRENT_STATEMENTS);
 	CTL_BLOCK(ctl_top) = 
-	  XMP_pragma_list(XMP_TASK,CTL_XMP_ARG_CLAUSE(ctl_top),
+	  XMP_pragma_list(XMP_TASKS, CTL_XMP_ARG_CLAUSE(ctl_top),
 			  CURRENT_STATEMENTS);
 	EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_XMP_ARG(ctl_top));
 	pop_ctl();
@@ -531,35 +532,63 @@ close_XMP_IO_closure(int st_no, expr x) {
     return ret;
 }
 
+
 expv XMP_check_TASK(expr x)
 {
-    expr xx;
-    expv task_list,current_task;
-    list lp;
+  expr xx;
+  expv task_list,current_task;
+  list lp;
     
-    if(x == NULL) return NULL;
-    if(EXPR_CODE(x) != LIST) fatal("XMP_check_SECION: not LIST");
+  if (x == NULL) return NULL;
+  if (EXPR_CODE(x) != LIST) fatal("XMP_check_TASK: not LIST");
 
-    task_list = EMPTY_LIST;
-    current_task = NULL;
-    FOR_ITEMS_IN_LIST(lp,x){
-	xx = LIST_ITEM(lp);
-	if(EXPR_CODE(xx) == XMP_PRAGMA &&
-	   EXPR_INT(EXPR_ARG1(xx)) == XMP_TASK){
-	    if(current_task != NULL)
-		task_list = list_put_last(task_list,current_task);
-	    current_task = EMPTY_LIST;
-	    continue;
-	}
-	if(current_task == NULL){
-	    error_at_node(xx,"statement is not in any TASK");
-	    return NULL;
-	}
-	current_task = list_put_last(current_task,xx);
+  task_list = EMPTY_LIST;
+
+  FOR_ITEMS_IN_LIST(lp,x){
+    xx = LIST_ITEM(lp);
+    if (EXPR_CODE(xx) == XMP_PRAGMA &&
+	EXPR_INT(EXPR_ARG1(xx)) == XMP_TASK){
+      task_list = list_put_last(task_list, xx);
     }
-    task_list = list_put_last(task_list,current_task);
-    return task_list;
+    else {
+      error_at_node(xx,"statement is not in any TASK");
+      return NULL;
+    }
+  }
+
+  return task_list;
 }
+
+
+/* expv XMP_check_TASK(expr x) */
+/* { */
+/*     expr xx; */
+/*     expv task_list,current_task; */
+/*     list lp; */
+    
+/*     if(x == NULL) return NULL; */
+/*     if(EXPR_CODE(x) != LIST) fatal("XMP_check_TASK: not LIST"); */
+
+/*     task_list = EMPTY_LIST; */
+/*     current_task = NULL; */
+/*     FOR_ITEMS_IN_LIST(lp,x){ */
+/* 	xx = LIST_ITEM(lp); */
+/* 	if(EXPR_CODE(xx) == XMP_PRAGMA && */
+/* 	   EXPR_INT(EXPR_ARG1(xx)) == XMP_TASK){ */
+/* 	    if(current_task != NULL) */
+/* 		task_list = list_put_last(task_list,current_task); */
+/* 	    current_task = EMPTY_LIST; */
+/* 	    continue; */
+/* 	} */
+/* 	if(current_task == NULL){ */
+/* 	    error_at_node(xx,"statement is not in any TASK"); */
+/* 	    return NULL; */
+/* 	} */
+/* 	current_task = list_put_last(current_task,xx); */
+/*     } */
+/*     task_list = list_put_last(task_list,current_task); */
+/*     return task_list; */
+/* } */
 
 
 expv XMP_compile_subscript_list(expr l,xmp_list_context context)

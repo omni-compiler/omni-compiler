@@ -20,14 +20,18 @@ public class XMPtranslateLocalPragma {
   private boolean		doTlog = false;
   private XobjectDef		currentDef;
 
+  private XMPgenSym             tmpSym;
+
   public XMPtranslateLocalPragma(XMPglobalDecl globalDecl) {
     _globalDecl = globalDecl;
+    tmpSym = new XMPgenSym();
   }
 
   public void translate(FuncDefBlock def) {
     FunctionBlock fb = def.getBlock();
     currentDef = def.getDef();
 
+    // first, skip tasks
     BlockIterator i = new topdownBlockIterator(fb);
     for (i.init(); !i.end(); i.next()) {
       Block b = i.getBlock();
@@ -39,6 +43,17 @@ public class XMPtranslateLocalPragma {
         } catch (XMPexception e) {
           XMP.error(pb.getLineNo(), e.getMessage());
         }
+      }
+    }
+
+    // next, remove tasks
+    for (i.init(); !i.end(); i.next()){
+      Block b = i.getBlock();
+      if (b.Opcode() == Xcode.XMP_PRAGMA){
+	String pragmaName = ((PragmaBlock)b).getPragma();
+	if (XMPpragma.valueOf(pragmaName) == XMPpragma.TASKS){
+	  b.replace(Bcons.COMPOUND(b.getBody()));
+	}
       }
     }
 
@@ -563,10 +578,21 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateTask(PragmaBlock pb) throws XMPexception {
+
     // start translation
     XobjList taskDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     BlockList taskBody = pb.getBody();
+
+    // check if enclosed by TASKS
+    Block parentBlock = pb.getParentBlock();
+    boolean tasksFlag = false;
+    if (parentBlock != null && parentBlock.Opcode() == Xcode.XMP_PRAGMA){
+      String pragmaName = ((PragmaBlock)parentBlock).getPragma();
+      if (XMPpragma.valueOf(pragmaName) == XMPpragma.TASKS){
+	tasksFlag = true;
+      }
+    }
 
     // create function arguments
     XobjList onRef = (XobjList)taskDecl.getArg(0);
@@ -581,12 +607,36 @@ public class XMPtranslateLocalPragma {
 
     // create function call
     BlockList taskFuncCallBlockList = Bcons.emptyBody();
-    Ident taskDescId = taskFuncCallBlockList.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.AUTO,
-                                                            Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+
+    Ident taskDescId;
+    if (tasksFlag == true){
+      taskDescId = parentBlock.getBody().declLocalIdent(tmpSym.getStr("_XMP_TASK_desc"),
+					       Xtype.voidPtrType, StorageClass.AUTO,
+					       Xcons.Cast(Xtype.voidPtrType,
+							  Xcons.IntConstant(0)));
+    }
+    else {
+      taskDescId = taskFuncCallBlockList.declLocalIdent(tmpSym.getStr("_XMP_TASK_desc"),
+					       Xtype.voidPtrType, StorageClass.AUTO,
+					       Xcons.Cast(Xtype.voidPtrType,
+							  Xcons.IntConstant(0)));
+    }
 
     execFuncArgs.cons(taskDescId.getAddr());
     Ident execFuncId = execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
-    Block taskFuncCallBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), taskBody, null);
+
+    Block taskFuncCallBlock;
+    if (tasksFlag == true){
+      Ident flag = parentBlock.getBody().declLocalIdent(tmpSym.getStr("_XMP_is_member"),
+							Xtype.intType);
+      parentBlock.getBody().insert(Xcons.Set(flag.Ref(), execFuncId.Call(execFuncArgs)));
+      taskFuncCallBlock = Bcons.IF(BasicBlock.Cond(flag.Ref()), taskBody, null);
+    }
+    else {
+      taskFuncCallBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)),
+				   taskBody, null);
+    }
+
     taskFuncCallBlockList.add(taskFuncCallBlock);
     pb.replace(Bcons.COMPOUND(taskFuncCallBlockList));
 
@@ -612,7 +662,7 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateTasks(PragmaBlock pb) {
-    System.out.println("TASKS:" + pb.toXobject().toString());
+    // do nothing here
   }
 
   private void translateLoop(PragmaBlock pb) throws XMPexception {

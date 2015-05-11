@@ -2473,7 +2473,7 @@ outx_XMP_pragma(int l, expv v)
     const int l1 = l + 1;
     outx_tagOfStatement(l, v);
     outx_XMP_dir_string(l1,EXPR_ARG1(v));
-    outx_XMP_dir_clause_list(l1,EXPR_ARG2(v));
+    if (EXPR_ARG2(v)) outx_XMP_dir_clause_list(l1,EXPR_ARG2(v));
 
     /* output body */
     if(EXPR_HAS_ARG3(v))
