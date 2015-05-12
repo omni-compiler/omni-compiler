@@ -72,6 +72,30 @@ static void _release_MRQ()
     _XMP_fjrdma_sync_memory();
 }
 
+/*********************************************************************************/
+/* DESCRIPTION : Wrapper function for multiple put operations                    */
+/* ARGUMENT    : [IN] target_rank    : Target rank                               */
+/*               [IN] *raddrs        : Remote addresses                          */
+/*               [IN] *laddrs        : Local addresses                           */
+/*               [IN] *lengths       : Lengths                                   */
+/*               [IN] stride         : Stride. If stride is 0, the first raadrs, */
+/*                                     laddrs, and lengths is used               */
+/*               [IN] transfer_elmts : Number of transfer elements               */
+/*********************************************************************************/
+static void _RDMA_mput(const size_t target_rank, uint64_t* raddrs, uint64_t* laddrs,
+		       size_t* lengths, const int stride, const size_t transfer_elmts)
+{
+#ifdef OMNI_TARGET_CPU_KCOMPUTER
+  FJMPI_Rdma_mput(target_rank, _XMP_FJRDMA_TAG, raddrs, laddrs, lengths, stride, transfer_elmts, _XMP_FLAG_NIC);
+  _num_of_puts++;
+#elif OMNI_TARGET_CPU_FX10
+  _FX10_Rdma_mput(target_rank, raddrs, laddrs, lengths, stride, transfer_elmts);
+  _num_of_puts += transfer_elmts;
+#endif
+
+  _release_MRQ();
+}
+
 /************************************************************************/
 /* DESCRIPTION : Execute scalar multiple put operation                  */
 /* ARGUMENT    : [IN] target_rank    : Target rank                      */
@@ -87,30 +111,15 @@ static void _fjrdma_scalar_mput_do(const size_t target_rank, uint64_t* raddrs, u
                                    size_t* lengths, const size_t transfer_elmts, const size_t elmt_size)
 {
   if(transfer_elmts <= _XMP_FJRDMA_MAX_MPUT){
-#ifdef OMNI_TARGET_CPU_KCOMPUTER
-    FJMPI_Rdma_mput(target_rank, _XMP_FJRDMA_TAG, raddrs, laddrs, lengths, 0, transfer_elmts, _XMP_FLAG_NIC);
-    _num_of_puts++;
-#elif OMNI_TARGET_CPU_FX10
-    _FX10_Rdma_mput(target_rank, raddrs, laddrs, lengths, 0, transfer_elmts);
-    _num_of_puts += transfer_elmts;
-#endif
+    _RDMA_mput(target_rank, raddrs, laddrs, lengths, 0, transfer_elmts);
   }
   else{
     int times      = transfer_elmts / _XMP_FJRDMA_MAX_MPUT + 1;
     int rest_elmts = transfer_elmts - _XMP_FJRDMA_MAX_MPUT * (times - 1);
-
     for(int i=0;i<times;i++){
       size_t tmp_elmts = (i != times-1)? _XMP_FJRDMA_MAX_MPUT : rest_elmts;
-#ifdef OMNI_TARGET_CPU_KCOMPUTER
-      FJMPI_Rdma_mput(target_rank, _XMP_FJRDMA_TAG, &raddrs[i*_XMP_FJRDMA_MAX_MPUT], &laddrs[i*_XMP_FJRDMA_MAX_MPUT],
-		      &lengths[i*_XMP_FJRDMA_MAX_MPUT], 0, tmp_elmts, _XMP_FLAG_NIC);
-      _num_of_puts++;
-#elif OMNI_TARGET_CPU_FX10
-      _FX10_Rdma_mput(target_rank, &raddrs[i*_XMP_FJRDMA_MAX_MPUT], &laddrs[i*_XMP_FJRDMA_MAX_MPUT],
-                      &lengths[i*_XMP_FJRDMA_MAX_MPUT], 0, tmp_elmts);
-      _num_of_puts += tmp_elmts;
-#endif
-      _release_MRQ();
+      _RDMA_mput(target_rank, &raddrs[i*_XMP_FJRDMA_MAX_MPUT], &laddrs[i*_XMP_FJRDMA_MAX_MPUT],
+		 &lengths[i*_XMP_FJRDMA_MAX_MPUT], 0, tmp_elmts);
     }
   }
 }
@@ -179,8 +188,6 @@ void _XMP_fjrdma_shortcut_put(const int target_rank, const uint64_t dst_offset, 
 			      const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
 			      const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
-  _release_MRQ();
-
   size_t transfer_size = dst_elmts * elmt_size;
   _check_transfer_size(transfer_size);
 
@@ -203,6 +210,8 @@ void _XMP_fjrdma_shortcut_put(const int target_rank, const uint64_t dst_offset, 
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
+
+  _release_MRQ();
 }
 
 /*************************************************************************/
@@ -315,14 +324,7 @@ static void _fjrdma_NON_continuous_the_same_stride_mput(const int target_rank, u
   size_t stride         = _XMP_calc_stride(array_info, array_dims, copy_chunk);
 
   if(copy_elmts <= _XMP_FJRDMA_MAX_MPUT){
-#ifdef OMNI_TARGET_CPU_KCOMPUTER
-    FJMPI_Rdma_mput(target_rank, _XMP_FJRDMA_TAG, &raddr, &laddr,
-    		    &copy_chunk, stride, copy_elmts, _XMP_FLAG_NIC);
-    _num_of_puts++;
-#elif OMNI_TARGET_CPU_FX10
-    _FX10_Rdma_mput(target_rank, &raddr, &laddr, &copy_chunk, stride, copy_elmts);
-    _num_of_puts += copy_elmts;
-#endif
+    _RDMA_mput(target_rank, &raddr, &laddr, &copy_chunk, stride, copy_elmts);
   }
   else{
     int times      = copy_elmts / _XMP_FJRDMA_MAX_MPUT + 1;
@@ -333,15 +335,7 @@ static void _fjrdma_NON_continuous_the_same_stride_mput(const int target_rank, u
       uint64_t tmp_raddr = raddr + (i*_XMP_FJRDMA_MAX_MPUT*stride);
       uint64_t tmp_laddr = laddr + (i*_XMP_FJRDMA_MAX_MPUT*stride);
       tmp_elmts = (i != times-1)? _XMP_FJRDMA_MAX_MPUT : rest_elmts;
-#ifdef OMNI_TARGET_CPU_KCOMPUTER
-      FJMPI_Rdma_mput(target_rank, _XMP_FJRDMA_TAG, &tmp_raddr, &tmp_laddr,
-		      &copy_chunk, stride, tmp_elmts, _XMP_FLAG_NIC);
-      _num_of_puts++;
-#elif OMNI_TARGET_CPU_FX10
-      _FX10_Rdma_mput(target_rank, &tmp_raddr, &tmp_laddr, &copy_chunk, stride, tmp_elmts);
-      _num_of_puts += tmp_elmts;
-#endif
-      _release_MRQ();
+      _RDMA_mput(target_rank, &tmp_raddr, &tmp_laddr, &copy_chunk, stride, tmp_elmts);
     }
   }
 }
@@ -443,8 +437,6 @@ void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const i
 		     const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
 		     const _XMP_coarray_t *src_desc, void *src, const int dst_elmts, const int src_elmts)
 {
-  _release_MRQ();
-
   uint64_t dst_offset = (uint64_t)_XMP_get_offset(dst_info, dst_dims);
   uint64_t src_offset = (uint64_t)_XMP_get_offset(src_info, src_dims);
   size_t transfer_size = dst_desc->elmt_size * dst_elmts;
@@ -468,6 +460,7 @@ void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const i
       _XMP_fatal("Number of elements is invalid");
     }
   }
+  _release_MRQ();
 }
 
 /************************************************************************/
@@ -489,8 +482,6 @@ void _XMP_fjrdma_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_d
 			      const uint64_t dst_offset, const uint64_t src_offset,
 			      const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
-  _release_MRQ();
-
   size_t transfer_size = dst_elmts * elmt_size;
   _check_transfer_size(transfer_size);
 
@@ -519,6 +510,7 @@ void _XMP_fjrdma_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_d
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
+  _release_MRQ();
 }
 
 /************************************************************************/
@@ -723,8 +715,6 @@ void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const i
 		     const _XMP_coarray_t *src_desc, const _XMP_coarray_t *dst_desc, void *dst,
 		     const int src_elmts, const int dst_elmts)
 {
-  _release_MRQ();
-
   uint64_t dst_offset = (uint64_t)_XMP_get_offset(dst_info, dst_dims);
   uint64_t src_offset = (uint64_t)_XMP_get_offset(src_info, src_dims);
   size_t transfer_size = src_desc->elmt_size * src_elmts;
@@ -748,6 +738,7 @@ void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const i
       _XMP_fatal("Number of elements is invalid");
     }
   }
+  _release_MRQ();
 }
 
 /**
