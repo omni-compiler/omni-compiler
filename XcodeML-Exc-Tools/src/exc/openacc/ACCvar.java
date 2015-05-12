@@ -50,11 +50,13 @@ public class ACCvar {
   ACCvar(Ident id, XobjList subscripts, ACCpragma atr, ACCvar parent) throws ACCexception{
     this.id = id;
     
-    if(subscripts != null && !subscripts.isEmpty()){
-      rangeList = makeRange(subscripts);
-      isSubarray = true;
-    }else{
-      rangeList = makeRange(id.Type());
+    if(atr != ACCpragma.USE_DEVICE){
+      if(subscripts != null && !subscripts.isEmpty()){
+        rangeList = makeRange(subscripts);
+        isSubarray = true;
+      }else{
+        rangeList = makeRange(id.Type());
+      }
     }
     
     dim = rangeList.Nargs();

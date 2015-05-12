@@ -56,19 +56,29 @@ public class FindexRange
    */
   public Xobject getLbound(int i) {
     Xobject lbound;
+    if (subscripts.length <= i || subscripts[i] == null)
+      return Xcons.IntConstant(1);
     if (subscripts[i].code == Xcode.F_INDEX_RANGE)
       lbound = subscripts[i].getArg(0);
     else
-      lbound = subscripts[i];
+      return Xcons.IntConstant(1);
+
+    if (lbound == null)
+      return Xcons.IntConstant(1);
     return lbound.cfold(block);
   }
 
   public Xobject getUbound(int i) {
     Xobject ubound;
+    if (subscripts.length <= i || subscripts[i] == null)
+      return null;
     if (subscripts[i].code == Xcode.F_INDEX_RANGE)
       ubound = subscripts[i].getArg(1);
     else
       ubound = subscripts[i];
+
+    if (ubound == null)
+      return null;
     return ubound.cfold(block);
   }
 
@@ -146,8 +156,7 @@ public class FindexRange
 
   public Xobject getSizeFromLbUb(Xobject lb, Xobject ub) {
     if (ub == null)    // illegal
-      throw new UnsupportedOperationException
-        ("internal error: upper-bound is null");
+      return null;
     ub = ub.cfold(block);
 
     if (lb == null)
@@ -216,8 +225,7 @@ public class FindexRange
     }
 
     if (i2 == null)    // illegal
-      throw new UnsupportedOperationException
-        ("internal error: upper-bound absent in array specification");
+      return null;
     i2 = i2.cfold(block);
 
     if (i1 == null)

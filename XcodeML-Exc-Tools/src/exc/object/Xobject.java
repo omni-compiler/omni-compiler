@@ -878,4 +878,11 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
     {
 	return (this instanceof XobjList && ((XobjList)this).Nargs() == 0);
     }
+
+    public boolean hasNullArg()
+    {
+      if (this instanceof XobjList)
+        return ((XobjList)this).hasNullArg();
+      return false;
+    }
 }

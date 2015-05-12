@@ -1,16 +1,16 @@
-bin_SCRIPTS = bin/F_Back bin/F_Trans bin/F_Decomp
 TARGET      = build/om-f-back.jar
 SRC         = $(wildcard src/xcodeml/f/*/*.java)
 
 all-local: $(TARGET)
 
 $(TARGET): $(SRC)
-	$(JAVAC) src/xcodeml/f/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
+	$(JAVAC) -encoding utf8 src/xcodeml/f/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
 	mkdir -p build
 	cd src; $(JAR) cf ../$@ xcodeml/f/*/*.class
 
 clean-local:
-	rm -f $(TARGET) $(CLASS)
+	rm -f $(TARGET)
+	rm -f src/xcodeml/f/*/*.class
 
 install: $(TARGET)
 	mkdir -p ${javadir}

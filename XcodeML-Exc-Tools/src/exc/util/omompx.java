@@ -105,6 +105,7 @@ public class omompx
     boolean xcalableMPthreads = false;
     boolean xcalableMPGPU = false;
     boolean xmpf = false;
+    boolean async = false;
     boolean outputXcode = false;
     boolean outputDecomp = false;
     boolean dump = false;
@@ -143,6 +144,8 @@ public class omompx
         xcalableMPGPU = true;
       } else if(arg.equals("-fxmpf")) {
         xmpf = true;
+      } else if(arg.equals("-fasync")) {
+        async = true;
       } else if(arg.equals("-w")) {
         if(narg == null)
           error("needs argument after -w");
@@ -185,7 +188,7 @@ public class omompx
       } else if (arg.equals("-tlog-all")) {
         all_profile = true;
         doTlog = true;
-      } else if (arg.startsWith("-M")) {
+      } else if (arg.startsWith("-M")) { 
           if (arg.equals("-M")) {
             if (narg == null)
               error("needs argument after -M");
@@ -246,6 +249,7 @@ public class omompx
     XmOption.setLanguage(XmLanguage.valueOf(lang));
     XmOption.setIsOpenMP(openMP);
     XmOption.setIsCoarray(coarray);
+    XmOption.setIsAsync(async);
     XmOption.setIsXcalableMP(xcalableMP);
     XmOption.setIsXcalableMPthreads(xcalableMPthreads);
     XmOption.setIsXcalableMPGPU(xcalableMPGPU);
@@ -331,14 +335,45 @@ public class omompx
       }
     }
 
-    if(xmpf){// XcalableMP xmpF translation
-      exc.xmpF.XMPtranslate xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
-      xobjFile.iterateDef(xmp_translator);
-        
+    if(xmpf) {  // XcalableMP xmpF translation
+
+      // Error check and light analysis
+      exc.xmpF.XMPtransCoarray
+        caf_translator0 = new exc.xmpF.XMPtransCoarray(xobjFile, 0);
+      xobjFile.iterateDef(caf_translator0);
       if(exc.xmpF.XMP.hasErrors())
         System.exit(1);
-            
-      xmp_translator.finish();
+
+      if (caf_translator0.containsCoarray()) {
+
+        //XMP.warning("translating coarray features");
+
+        // Coarray Fortran pass#1
+        exc.xmpF.XMPtransCoarray
+          caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1);
+        xobjFile.iterateDef(caf_translator1);
+        if(exc.xmpF.XMP.hasErrors())
+          System.exit(1);
+        caf_translator1.finish();
+
+        // Coarray Fortran pass#2
+        exc.xmpF.XMPtransCoarray
+          caf_translator2 = new exc.xmpF.XMPtransCoarray(xobjFile, 2);
+        xobjFile.iterateDef(caf_translator2);
+        if(exc.xmpF.XMP.hasErrors())
+          System.exit(1);
+        caf_translator2.finish();
+
+      } else {    // without coarray features
+
+        // XMP Fortran
+        exc.xmpF.XMPtranslate
+          xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
+        xobjFile.iterateDef(xmp_translator);
+        if(exc.xmpF.XMP.hasErrors())
+          System.exit(1);
+        xmp_translator.finish();
+      }
 
       if(xcodeWriter != null) {
         xobjFile.Output(xcodeWriter);

@@ -117,10 +117,10 @@ ompc_static_csched_tid(struct ompc_thread *tp,
     s = *step;
 
     /* how many iteration */
-    if(s > 0) n = (*up + ubofs - *lb + s - 1) / s;
-    else n = (*up + ubofs - *lb + s + 1) / s;
+    if(s > 0) n = ((char *)*up + ubofs - (char *)*lb + s - 1) / s;
+    else n = ((char *)*up + ubofs - (char *)*lb + s + 1) / s;
 
-    *lb += id * s;   /* adjust low bound */
+    *lb = (char *)*lb + id * s;   /* adjust low bound */
     *step = s * n_thd;
     if(n > 0 && ((n - 1) % n_thd) == id) tp->is_last = 1;
 }
@@ -164,27 +164,27 @@ ompc_static_bsched_tid(struct ompc_thread *tp,
     tp->is_last = 0;
 
     if(s > 0){
-        ee = e = *up + ubofs;
-        blk_s = (e - b + n_thd - 1) / n_thd;
+        ee = e = (char *)*up + ubofs;
+        blk_s = ((char *)e - (char *)b + n_thd - 1) / n_thd;
         blk_s = ((blk_s + s - 1) / s) * s;
-        b += blk_s * id;
-        e = b + blk_s;
+        b = (char *)b + blk_s * id;
+        e = (char *)b + blk_s;
         if((intptr_t)e >= (intptr_t)ee){
             e = ee;
             if(ee > b) tp->is_last = 1;
         }
-        *up = e - ubofs;
+        *up = (char *)e - ubofs;
     } else if(s < 0){
-        ee = e = *up - ubofs;
-        blk_s = (e - b - n_thd + 1) / n_thd;
+        ee = e = (char *)*up - ubofs;
+        blk_s = ((char *)e - (char *)b - n_thd + 1) / n_thd;
         blk_s = ((blk_s + s + 1) / s) * s;
-        b += blk_s * id;
-        e = b + blk_s;
+        b = (char *)b + blk_s * id;
+        e = (char *)b + blk_s;
         if((intptr_t)e <= (intptr_t)ee){
             e = ee;
             if((intptr_t)ee < (intptr_t)b) tp->is_last = 1;
         }
-        *up = e + ubofs;
+        *up = (char *)e + ubofs;
     } else return;
 
     *lb = b;
@@ -220,7 +220,7 @@ ompc_static_sched_init_tid(struct ompc_thread *tp,
 
     if ((nthds = ompc_get_num_threads (tp)) == 1) { /* not in parallel */
         tp->loop_sched_index = lb;
-        tp->loop_end = up + ubofs;
+        tp->loop_end = (char *)up + ubofs;
         return;        
     }
 
@@ -234,10 +234,10 @@ ompc_static_sched_init_tid(struct ompc_thread *tp,
     }
 
     chunk_size *= step;
-    tp->loop_sched_index = lb + chunk_size * tp->num;
+    tp->loop_sched_index = (char *)lb + chunk_size * tp->num;
     tp->loop_chunk_size = chunk_size;
     tp->loop_stride = chunk_size * nthds;
-    tp->loop_end = up + ubofs;
+    tp->loop_end = (char *)up + ubofs;
     tp->is_last = 0;
 }
 
@@ -268,7 +268,7 @@ ompc_static_sched_next_tid(struct ompc_thread *tp,
         e = tp->loop_end;
         if(b == e) return FALSE;
         *lb = b;
-        *up = e - ubofs;
+        *up = (char *)e - ubofs;
         tp->loop_sched_index = e;
         return TRUE;
     }
@@ -277,8 +277,8 @@ ompc_static_sched_next_tid(struct ompc_thread *tp,
     if(ompc_log_flag) tlog_loop_next_EVENT(tp->num);
 #endif
 
-    tp->loop_sched_index += tp->loop_stride;
-    e = b + tp->loop_chunk_size;
+    tp->loop_sched_index = (char*)tp->loop_sched_index + tp->loop_stride;
+    e = (char *)b + tp->loop_chunk_size;
 
     if(tp->loop_chunk_size > 0){
         if(b >= tp->loop_end) return FALSE; 
@@ -295,7 +295,7 @@ ompc_static_sched_next_tid(struct ompc_thread *tp,
     }
 
     *lb = b;
-    *up = e - ubofs;
+    *up = (char *)e - ubofs;
     return TRUE;
 }
 
@@ -329,7 +329,7 @@ ompc_dynamic_sched_init_tid(struct ompc_thread *tp,
 
     if (ompc_get_num_threads (tp) == 1) { /* not in parallel */
         tp->loop_sched_index = lb;
-        tp->loop_end = up + ubofs;
+        tp->loop_end = (char *)up + ubofs;
         return;        /* stride is not used */
     }
 #ifdef USE_LOG
@@ -340,7 +340,7 @@ ompc_dynamic_sched_init_tid(struct ompc_thread *tp,
         ompc_fatal("ompc_dynamic_sched_init");
     }
     tp->loop_chunk_size = chunk_size*step;
-    tp->loop_end = up + ubofs;
+    tp->loop_end = (char *)up + ubofs;
     tp->loop_sched_index = lb;
     tp->is_last = 0;
 
@@ -384,7 +384,7 @@ ompc_dynamic_sched_next_tid(struct ompc_thread *tp,
         e = tp->loop_end;
         if(b == e) return FALSE;
         *lb = b;
-        *up = e - ubofs;
+        *up = (char *)e - ubofs;
         tp->loop_sched_index = e;
         return TRUE;
     } 
@@ -398,16 +398,16 @@ ompc_dynamic_sched_next_tid(struct ompc_thread *tp,
     OMPC_THREAD_LOCK();
     b = tpp->dynamic_index;
     if(guided){
-        l = (tp->loop_end - b)/tpp->num_thds;
+      l = ((char *)tp->loop_end - (char *)b)/tpp->num_thds;
         l = ((l + c) / c) * c;
         if(c > 0){
             if(c > l) l = c;
         } else {
             if(c < l) l = c;
         }
-        e = b + l;
+        e = (char *)b + l;
     } else {
-        e = b + c;
+      e = (char *)b + c;
     }
     tpp->dynamic_index = e;
     OMPC_THREAD_UNLOCK();
@@ -450,7 +450,7 @@ ompc_dynamic_sched_next_tid(struct ompc_thread *tp,
         }
     }
     *lb = b;
-    *up = e - ubofs;
+    *up = (char *)e - ubofs;
     return TRUE;
 }
 
@@ -550,8 +550,8 @@ _ompc_runtime_sched_init(indvar_t lb, indvar_t up, int ubofs, int step)
     default:
         n_thd = ompc_get_num_threads (tp);
         if(chunk_size <= 0){
-            chunk_size = (up + ubofs- lb) / (step * n_thd)
-                + (((up + ubofs - lb) % (step * n_thd)) ? 1 : 0);
+	  chunk_size = ((char *)up + ubofs- (char *)lb) / (step * n_thd)
+	    + ((((char *)up + ubofs - (char *)lb) % (step * n_thd)) ? 1 : 0);
             if(chunk_size <= 0) chunk_size = 1;
         }
         ompc_static_sched_init_tid(tp, lb, up, ubofs, step, chunk_size);
@@ -656,7 +656,7 @@ ompc_ordered_end()
       return;
     }
     tpp = tp->parent;
-    tpp->ordered_id += tpp->ordered_step;
+    tpp->ordered_id = (char*)tpp->ordered_id + tpp->ordered_step;
     MBAR();
 }
 

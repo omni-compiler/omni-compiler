@@ -45,7 +45,7 @@ public class Ident extends Xobject
     private Xobject fparam_value;
     /** Fortran: declared module */
     private String declared_module;
-    /** Codimensions for coarray (ID=284) */
+    /** Codimensions for coarray (#284) */
     private Xobject codimensions;      // Codimensions might be moved into this.type like Fortran.
                                        // See exc.object.FarrayType
   
@@ -195,7 +195,7 @@ public class Ident extends Xobject
         this.value = value;
     }
 
-   public Xobject getCodimensions()     // for coarray C (ID=284)
+   public Xobject getCodimensions()     // for coarray C (#284)
     {
         return codimensions;
     }
@@ -205,14 +205,18 @@ public class Ident extends Xobject
         this.codimensions = codimensions;
     }
 
-    public int getCorank()                // for coarray Fortran (#060)
+    public int getCorank()
     {
+      if (codimensions != null) {                // for coarray C temporarily (#284)
+        return codimensions.Nargs() + 1;
+      } else {                                   // for coarray Fortran (#060)
         return (Type() == null) ? 0 : Type().getCorank();
+      }
     }
 
-    public boolean isCoarray()            // for coarray Fortran (#060)
+    public boolean isCoarray()          // commonly for C (#284) and Fortran (#060)
     {
-        return (Type() == null) ? false : Type().isCoarray();
+        return (getCorank() > 0);
     }
 
     public boolean wasCoarray()           // for coarray Fortran (#060)

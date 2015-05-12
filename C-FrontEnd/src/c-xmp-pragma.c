@@ -65,6 +65,7 @@ static CExpr* parse_POST_clause();
 static CExpr* parse_WAIT_clause();
 //static CExpr* parse_LOCAL_ALIAS_clause();
 static CExpr* parse_WIDTH_list();
+static CExpr* parse_ASYNC_clause();
 static CExpr* parse_WAIT_ASYNC_clause();
 static CExpr* parse_TEMPLATE_FIX_clause();
 
@@ -80,6 +81,7 @@ static CExpr* parse_ON_ref();
 static CExpr* parse_XMP_dist_fmt_list();
 static CExpr* parse_Reduction_opt();
 static CExpr* parse_XMP_opt();
+static CExpr* parse_ACC_or_HOST_clause();
 
 static CExpr* _xmp_pg_list(int omp_code,CExpr* args);
 
@@ -88,6 +90,8 @@ static CExpr* _xmp_pg_list(int omp_code,CExpr* args);
 #define XMP_LIST2(arg1,arg2) (CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2)
 #define XMP_LIST3(arg1,arg2,arg3) (CExpr*)allocExprOfList3(EC_UNDEF,arg1,arg2,arg3)
 #define XMP_LIST4(arg1,arg2,arg3,arg4) (CExpr*)allocExprOfList4(EC_UNDEF,arg1,arg2,arg3,arg4)
+#define XMP_LIST5(arg1,arg2,arg3,arg4,arg5) (CExpr*)allocExprOfList5(EC_UNDEF,arg1,arg2,arg3,arg4,arg5)
+#define XMP_LIST6(arg1,arg2,arg3,arg4,arg5,arg6) (CExpr*)allocExprOfList6(EC_UNDEF,arg1,arg2,arg3,arg4,arg5,arg6)
 
 #define XMP_Error0(msg) addError(NULL,msg)
 #define XMP_error1(msg,arg1) addError(NULL,msg,arg1)
@@ -1375,25 +1379,29 @@ CExpr *parse_XMP_opt()
   return (CExpr *)allocExprOfNull();
 }
 
-CExpr* parse_TASKS_clause()
+CExpr *parse_TASKS_clause()
 {
-    return (CExpr *)allocExprOfNull();
+  //return (CExpr *)allocExprOfNull();
+  return NULL;
 }
 
 static CExpr* parse_REFLECT_clause()
 {
     CExpr *arrayNameList = parse_name_list();
     CExpr *widthList = parse_WIDTH_list();
-    CExpr *async = (CExpr *)allocExprOfNull();
+    CExpr *async = parse_ASYNC_clause();
+    /* CExpr *async = (CExpr *)allocExprOfNull(); */
 
-    if (PG_IS_IDENT("async")){
-      pg_get_token();
-      if (pg_tok != '(') goto err;
-      pg_get_token();
-      async = pg_parse_expr();
-      if (pg_tok != ')') goto err;
-      pg_get_token();
-    }
+    /* if (PG_IS_IDENT("async")){ */
+    /*   pg_get_token(); */
+    /*   if (pg_tok != '(') goto err; */
+    /*   pg_get_token(); */
+    /*   async = pg_parse_expr(); */
+    /*   if (pg_tok != ')') goto err; */
+    /*   pg_get_token(); */
+    /* } */
+
+    CExpr *acc_or_host = parse_ACC_or_HOST_clause();
 
     CExpr *profileClause = (CExpr *)allocExprOfNull();
     /* if (pg_is_ident("profile")) { */
@@ -1401,12 +1409,13 @@ static CExpr* parse_REFLECT_clause()
     /*     pg_get_token(); */
     /* } */
 
-    return XMP_LIST4(arrayNameList, widthList, async, profileClause);
-
+    return XMP_LIST5(arrayNameList, widthList, async, acc_or_host, profileClause);
+/*
  err:
     XMP_Error0("syntax error in the REFLECT directive");
     XMP_has_err = 1;
     return NULL;
+*/
 }
 
 
@@ -1414,6 +1423,7 @@ static CExpr* parse_REDUCTION_clause()
 {
     CExpr* reductionRef = parse_Reduction_ref();
     CExpr* onRef = (CExpr *)allocExprOfNull();
+    CExpr* async;
     CExpr* acc_or_host = (CExpr *)allocExprOfNull();
 
     if (PG_IS_IDENT("on")) {
@@ -1421,14 +1431,9 @@ static CExpr* parse_REDUCTION_clause()
       onRef = parse_task_ON_ref();
     }
 
-    if(PG_IS_IDENT("acc") || PG_IS_IDENT("host")){
-      acc_or_host = XMP_LIST1(pg_tok_val);
-      pg_get_token();
-      if(PG_IS_IDENT("acc") || PG_IS_IDENT("host")){
-	acc_or_host = exprListAdd(acc_or_host, pg_tok_val);
-	pg_get_token();
-      }
-    }
+    async = parse_ASYNC_clause();
+
+    acc_or_host = parse_ACC_or_HOST_clause();
 
     CExpr* profileClause = (CExpr *)allocExprOfNull();
     /* if (pg_is_ident("profile")) { */
@@ -1436,7 +1441,7 @@ static CExpr* parse_REDUCTION_clause()
     /* 	    pg_get_token(); */
     /* 	} */
 
-    return XMP_LIST4(reductionRef, onRef, acc_or_host, profileClause);
+    return XMP_LIST5(reductionRef, onRef, async, acc_or_host, profileClause);
 }
 
 static CExpr* parse_BARRIER_clause()
@@ -1476,13 +1481,17 @@ static CExpr* parse_BCAST_clause()
     }
     else onRef = (CExpr *)allocExprOfNull();;
 
+    CExpr* async = parse_ASYNC_clause();
+
+    CExpr* acc_or_host = parse_ACC_or_HOST_clause();
+
     CExpr* profileClause = (CExpr *)allocExprOfNull();;
     /* if (PG_IS_IDENT("profile")) { */
     /*     profileClause = Xcons.StringConstant("profile"); */
     /*     pg_get_token(); */
     /* } */
 
-    return XMP_LIST4(varList, fromRef, onRef, profileClause);
+    return XMP_LIST6(varList, fromRef, onRef, async, acc_or_host, profileClause);
 }
 
 static CExpr* parse_GMOVE_clause()
@@ -1498,13 +1507,15 @@ static CExpr* parse_GMOVE_clause()
     }
     else gmoveClause = (CExpr*)allocExprOfNumberConst2(XMP_GMOVE_NORMAL, BT_INT);
 
+    CExpr* acc_or_host = parse_ACC_or_HOST_clause();
+
     CExpr* profileClause = (CExpr *)allocExprOfNull();
     /* if (PG_IS_IDENT("profile")) { */
     /*   profileClause = Xcons.StringConstant("profile"); */
     /*   pg_get_token(); */
     /* } */
 
-    return XMP_LIST2(gmoveClause, profileClause);
+    return XMP_LIST3(gmoveClause, acc_or_host, profileClause);
 }
 
 static CExpr* parse_COARRAY_clause()
@@ -1760,10 +1771,37 @@ static CExpr* parse_WIDTH_list()
 }
 
 
+static CExpr* parse_ASYNC_clause()
+{
+  CExpr *async = (CExpr *)allocExprOfNull();
+
+  if (PG_IS_IDENT("async")){
+    pg_get_token();
+    if (pg_tok != '(') goto err;
+    pg_get_token();
+    async = pg_parse_expr();
+    if (pg_tok != ')') goto err;
+    pg_get_token();
+  }
+
+  return async;
+
+ err:
+    XMP_Error0("syntax error in the REFLECT directive");
+    XMP_has_err = 1;
+    return NULL;
+
+}
+
 static CExpr* parse_WAIT_ASYNC_clause()
 {
     CExpr *asyncIdList = parse_expr_list();
-    return XMP_LIST1(asyncIdList);
+    CExpr* onRef = NULL;
+    if (PG_IS_IDENT("on")){
+      pg_get_token();
+      onRef = parse_task_ON_ref();
+    }
+    return XMP_LIST2(asyncIdList, onRef);
 }
 
 
@@ -1851,3 +1889,18 @@ static CExpr* parse_REFLECT_DO_clause()
 
   return XMP_LIST3(arrayNameList, acc_or_host1, acc_or_host2);
 }
+
+ static CExpr* parse_ACC_or_HOST_clause()
+ {
+   CExpr* acc_or_host = EMPTY_LIST;
+
+   if(PG_IS_IDENT("acc") || PG_IS_IDENT("host")){
+     acc_or_host = exprListAdd(acc_or_host, pg_tok_val);
+     pg_get_token();
+   }
+   if(PG_IS_IDENT("acc") || PG_IS_IDENT("host")){
+     acc_or_host = exprListAdd(acc_or_host, pg_tok_val);
+     pg_get_token();
+   }
+   return acc_or_host;
+ }

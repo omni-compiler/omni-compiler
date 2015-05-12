@@ -3,7 +3,7 @@
     return 
   end function pepe
 
-  include "xmp_lib.h"
+  include "xmp_coarray.h"
   integer aa(10)[*]
   integer pepe
 

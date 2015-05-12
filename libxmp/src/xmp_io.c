@@ -1,8 +1,6 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
+#ifndef MPI_PORTABLE_PLATFORM_H
+#define MPI_PORTABLE_PLATFORM_H
+#endif 
 
 #include <stdio.h>
 #include <string.h>
@@ -17,7 +15,7 @@
 #include "xmp_constant.h"
 #include "xmp_data_struct.h"
 #include "xmp_io_sys.h"
-
+#include "xmp_internal.h"
 /* ------------------------------------------------------------------ */
 extern void _XMP_fatal(char *msg);
 
@@ -119,14 +117,13 @@ static int _xmp_io_set_view_block_cyclic
       int a = cycle, b = step;
       int ib;
       int z_l = MAX(par_upper,rp_ub) + 1; int ib_l = bw; int x_l = 0; /* dummy */ int y_l = 0; /* dummy */
-//      int z_u = MIN(par_lower,rp_lb) - 1; int ib_u = -1; int x_u = 0; /* dummy */ int y_u = 0; /* dummy */
       int z_u = MIN(par_lower,rp_lb) - 1; int ib_u = -1; int x_u = 0; /* dummy */
       int a1, b1;
       for (ib=0; ib<bw; ib++){
 	int k = rp_lb - par_lower - ib;
-	int d, x0, y0;
+	int d, x0;
 	{
-	  int x, y, z, w, w1; int q, r, tmp; int bb = -b;
+	  int x, y, z, w; int q, r, tmp; int bb = -b;
 	  if(a == 0 || bb == 0){ return 1; }
 	  x = a; y = bb;
 	  if(x < 0) x = -x;
@@ -145,23 +142,19 @@ static int _xmp_io_set_view_block_cyclic
 	  }
 	  w = w - (w/bb)*bb;
 	  if (w < 0) w = w + bb;
-	  w1 = (y - w * a) / bb;
-	  d = y; x0 = w; y0 = w1;
+	  d = y; x0 = w; 
 	}
 	a1 = a / d;  b1 = b / d; int k1 = k / d;
 	if (k % d != 0){ continue; }
 
 	int m_l_ib = func_m( (a*b1), (a*k1*x0+par_lower+ib-lb_tmp) );
 	int x_l_ib = b1*m_l_ib + k1*x0;
-	int y_l_ib = a1*m_l_ib + k1*y0;
 	int z_l_ib = a * x_l_ib + par_lower + ib;
-	if (z_l_ib < z_l){ z_l=z_l_ib; ib_l=ib; x_l=x_l_ib; y_l=y_l_ib; }
+	if (z_l_ib < z_l){ z_l=z_l_ib; ib_l=ib; x_l=x_l_ib; }
 
 	int m_u_ib = func_m( (- a*b1), (- a*k1*x0 - par_lower - ib + ub_tmp) );
 	int x_u_ib = b1*m_u_ib + k1*x0;
-//	int y_u_ib = a1*m_u_ib + k1*y0;
 	int z_u_ib = a*x_u_ib + par_lower + ib;
-//	if (z_u_ib > z_u){ z_u=z_u_ib; ib_u=ib; x_u=x_u_ib; y_u=y_u_ib; }
 	if (z_u_ib > z_u){ z_u=z_u_ib; ib_u=ib; x_u=x_u_ib; }
       } /* ib */
 
@@ -366,14 +359,14 @@ static int _xmp_io_set_view_block_cyclic
       int ub_tmp = MAX( par_lower, rp_ub );
       int a = cycle, b = step;
       int ib;
-      int z_l = MIN(par_lower, rp_ub)-1; int ib_l = -1; int x_l = 0; /* dummy */ int y_l = 0; /* dummy */
-      int z_u = MAX(par_upper, rp_lb)+1; int ib_u = bw; int x_u = 0; /* dummy */ int y_u = 0; /* dummy */
+      int z_l = MIN(par_lower, rp_ub)-1; int ib_l = -1; int x_l = 0; /* dummy */
+      int z_u = MAX(par_upper, rp_lb)+1; int ib_u = bw; int x_u = 0; /* dummy */ 
       int a1, b1;
       for (ib=0; ib<bw; ib++){
 	int k = rp_lb - par_lower - ib;
-	int d, x0, y0;
+	int d, x0;
 	{
-	  int x, y, z, w, w1; int q, r, tmp; int bb = -b;
+	  int x, y, z, w; int q, r, tmp; int bb = -b;
 	  if(a == 0 || bb == 0){ return 1; }
 	  x = a; y = bb;
 	  if(x < 0) x = -x;
@@ -392,23 +385,20 @@ static int _xmp_io_set_view_block_cyclic
 	  }
 	  w = w - (w/bb)*bb;
 	  if (w < 0) w = w + bb;
-	  w1 = (y - w * a) / bb;
-	  d = y; x0 = w; y0 = w1;
+	  d = y; x0 = w; 
 	}
 	a1 = a / d;  b1 = b / d; int k1 = k / d;
 	if (k % d != 0){ continue; }
 
 	int m_l_ib = func_m( (-a*b1), (- a*k1*x0 - par_lower - ib + lb_tmp) );
 	int x_l_ib = b1*m_l_ib + k1*x0;
-	int y_l_ib = a1*m_l_ib + k1*y0;
 	int z_l_ib = a * x_l_ib + par_lower + ib;
-	if (z_l_ib > z_l){ z_l=z_l_ib; ib_l=ib; x_l=x_l_ib; y_l=y_l_ib; }
+	if (z_l_ib > z_l){ z_l=z_l_ib; ib_l=ib; x_l=x_l_ib; }
 
 	int m_u_ib = func_m( (a*b1), (a*k1 * x0 + par_lower + ib - ub_tmp) );
 	int x_u_ib = b1*m_u_ib + k1*x0;
-	int y_u_ib = a1*m_u_ib + k1*y0;
 	int z_u_ib = a * x_u_ib + par_lower + ib;
-	if (z_u_ib < z_u){ z_u=z_u_ib; ib_u=ib; x_u=x_u_ib; y_u=y_u_ib; }
+	if (z_u_ib < z_u){ z_u=z_u_ib; ib_u=ib; x_u=x_u_ib;}
       } /* ib */
 
       if (ib_l == -1 || ib_u == bw){ /* set is empty */
@@ -657,17 +647,13 @@ static int _xmp_io_write_read_block_cyclic
       int ub_tmp = MIN(par_upper, rp_ub);
       int a = cycle, b = step;
       int ib;
-//      int z_l = MAX(par_upper,rp_ub) + 1; int ib_l = bw; int x_l = 0; /* dummy */ int y_l = 0; /* dummy */
-//      int z_u = MIN(par_lower,rp_lb) - 1; int ib_u = -1; int x_u = 0; /* dummy */ int y_u = 0; /* dummy */
       int z_l = MAX(par_upper,rp_ub) + 1; int ib_l = bw; int x_l = 0; /* dummy */
       int z_u = MIN(par_lower,rp_lb) - 1; int ib_u = -1; int x_u = 0; /* dummy */
       int a1, b1;
       for (ib=0; ib<bw; ib++){
 	int k = rp_lb - par_lower - ib;
-//	int d, x0, y0;
 	int d, x0;
 	{
-//	  int x, y, z, w, w1; int q, r, tmp; int bb = -b;
 	  int x, y, z, w; int q, r, tmp; int bb = -b;
 	  if(a == 0 || bb == 0){ return 1; }
 	  x = a; y = bb;
@@ -687,8 +673,6 @@ static int _xmp_io_write_read_block_cyclic
 	  }
 	  w = w - (w/bb)*bb;
 	  if (w < 0) w = w + bb;
-//	  w1 = (y - w * a) / bb;
-//	  d = y; x0 = w; y0 = w1;
 	  d = y; x0 = w;
 	}
 	a1 = a / d;  b1 = b / d; int k1 = k / d;
@@ -696,16 +680,12 @@ static int _xmp_io_write_read_block_cyclic
 
 	int m_l_ib = func_m( (a*b1), (a*k1*x0+par_lower+ib-lb_tmp) );
 	int x_l_ib = b1*m_l_ib + k1*x0;
-//	int y_l_ib = a1*m_l_ib + k1*y0;
 	int z_l_ib = a * x_l_ib + par_lower + ib;
-//	if (z_l_ib < z_l){ z_l=z_l_ib; ib_l=ib; x_l=x_l_ib; y_l=y_l_ib; }
 	if (z_l_ib < z_l){ z_l=z_l_ib; ib_l=ib; x_l=x_l_ib; }
 
 	int m_u_ib = func_m( (- a*b1), (- a*k1*x0 - par_lower - ib + ub_tmp) );
 	int x_u_ib = b1*m_u_ib + k1*x0;
-//	int y_u_ib = a1*m_u_ib + k1*y0;
 	int z_u_ib = a*x_u_ib + par_lower + ib;
-//	if (z_u_ib > z_u){ z_u=z_u_ib; ib_u=ib; x_u=x_u_ib; y_u=y_u_ib; }
 	if (z_u_ib > z_u){ z_u=z_u_ib; ib_u=ib; x_u=x_u_ib; }
       } /* ib */
 #ifdef DEBUG
@@ -959,18 +939,13 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
       int ub_tmp = MIN(par_upper, rp_ub);
       int a = cycle, b = step;
       int ib;
-//      int z_l = MAX(par_upper,rp_ub) + 1; int ib_l = bw; int x_l = 0; /* dummy */ int y_l = 0; /* dummy */
-//      int z_u = MIN(par_lower,rp_lb) - 1; int ib_u = -1; int x_u = 0; /* dummy */ int y_u = 0; /* dummy */
       int z_l = MAX(par_upper,rp_ub) + 1; int ib_l = bw; int x_l = 0; /* dummy */
       int z_u = MIN(par_lower,rp_lb) - 1; int ib_u = -1; int x_u = 0; /* dummy */
-//      int a1, b1;
       int b1;
       for (ib=0; ib<bw; ib++){
 	int k = rp_lb - par_lower - ib;
-//	int d, x0, y0;
 	int d, x0;
 	{
-//	  int x, y, z, w, w1; int q, r, tmp; int bb = -b;
 	  int x, y, z, w; int q, r, tmp; int bb = -b;
 	  if(a == 0 || bb == 0){ return 1; }
 	  x = a; y = bb;
@@ -990,26 +965,19 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 	  }
 	  w = w - (w/bb)*bb;
 	  if (w < 0) w = w + bb;
-//	  w1 = (y - w * a) / bb;
-//	  d = y; x0 = w; y0 = w1;
 	  d = y; x0 = w;
 	}
-//	a1 = a / d;  b1 = b / d; int k1 = k / d;
 	b1 = b / d; int k1 = k / d;
 	if (k % d != 0){ continue; }
 
 	int m_l_ib = func_m( (a*b1), (a*k1*x0+par_lower+ib-lb_tmp) );
 	int x_l_ib = b1*m_l_ib + k1*x0;
-//	int y_l_ib = a1*m_l_ib + k1*y0;
 	int z_l_ib = a * x_l_ib + par_lower + ib;
-//	if (z_l_ib < z_l){ z_l=z_l_ib; ib_l=ib; x_l=x_l_ib; y_l=y_l_ib; }
 	if (z_l_ib < z_l){ z_l=z_l_ib; ib_l=ib; x_l=x_l_ib; }
 
 	int m_u_ib = func_m( (- a*b1), (- a*k1*x0 - par_lower - ib + ub_tmp) );
 	int x_u_ib = b1*m_u_ib + k1*x0;
-//	int y_u_ib = a1*m_u_ib + k1*y0;
 	int z_u_ib = a*x_u_ib + par_lower + ib;
-//	if (z_u_ib > z_u){ z_u=z_u_ib; ib_u=ib; x_u=x_u_ib; y_u=y_u_ib; }
 	if (z_u_ib > z_u){ z_u=z_u_ib; ib_u=ib; x_u=x_u_ib; }
       } /* ib */
 
@@ -1019,8 +987,6 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
       }else{ /* ib_l */ /* ib_u */
 	int ista=bw*x_l+ib_l;
 	int iend=bw*x_u+ib_u +1;
-	//int y_sta = func_m( step, 0 );
-	//int y_end = func_m( (-step), (- rp_lb + rp_ub) );
 #ifdef DEBUG
 	fprintf(stderr, "y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */
@@ -1101,18 +1067,13 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
       int ub_tmp = MAX( par_lower, rp_ub );
       int a = cycle, b = step;
       int ib;
-//      int z_l = MIN(par_lower, rp_ub)-1; int ib_l = -1; int x_l = 0; /* dummy */ int y_l = 0; /* dummy */
-//      int z_u = MAX(par_upper, rp_lb)+1; int ib_u = bw; int x_u = 0; /* dummy */ int y_u = 0; /* dummy */
       int z_l = MIN(par_lower, rp_ub)-1; int ib_l = -1; int x_l = 0; /* dummy */
       int z_u = MAX(par_upper, rp_lb)+1; int ib_u = bw; int x_u = 0; /* dummy */
-//      int a1, b1;
       int b1;
       for (ib=0; ib<bw; ib++){
 	int k = rp_lb - par_lower - ib;
-//	int d, x0, y0;
 	int d, x0;
 	{
-//	  int x, y, z, w, w1; int q, r, tmp; int bb = -b;
 	  int x, y, z, w; int q, r, tmp; int bb = -b;
 	  if(a == 0 || bb == 0){ return 1; }
 	  x = a; y = bb;
@@ -1132,26 +1093,19 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
 	  }
 	  w = w - (w/bb)*bb;
 	  if (w < 0) w = w + bb;
-//	  w1 = (y - w * a) / bb;
-//	  d = y; x0 = w; y0 = w1;
 	  d = y; x0 = w;
 	}
-//	a1 = a / d;  b1 = b / d; int k1 = k / d;
 	b1 = b / d; int k1 = k / d;
 	if (k % d != 0){ continue; }
 
 	int m_l_ib = func_m( (-a*b1), (- a*k1*x0 - par_lower - ib + lb_tmp) );
 	int x_l_ib = b1*m_l_ib + k1*x0;
-//	int y_l_ib = a1*m_l_ib + k1*y0;
 	int z_l_ib = a * x_l_ib + par_lower + ib;
-//	if (z_l_ib > z_l){ z_l=z_l_ib; ib_l=ib; x_l=x_l_ib; y_l=y_l_ib; }
 	if (z_l_ib > z_l){ z_l=z_l_ib; ib_l=ib; x_l=x_l_ib; }
 
 	int m_u_ib = func_m( (a*b1), (a*k1 * x0 + par_lower + ib - ub_tmp) );
 	int x_u_ib = b1*m_u_ib + k1*x0;
-//	int y_u_ib = a1*m_u_ib + k1*y0;
 	int z_u_ib = a * x_u_ib + par_lower + ib;
-//	if (z_u_ib < z_u){ z_u=z_u_ib; ib_u=ib; x_u=x_u_ib; y_u=y_u_ib; }
 	if (z_u_ib < z_u){ z_u=z_u_ib; ib_u=ib; x_u=x_u_ib; }
       } /* ib */
 
@@ -1162,8 +1116,6 @@ static int _xmp_io_pack_unpack_block_cyclic_aux1
       }else{ /* ib_l */ /* ib_u */
 	int ista=bw*x_l+ib_l;
 	int iend=bw*x_u+ib_u -1;
-	//int y_sta = func_m( -step, 0 );
-	//int y_end = func_m( step, (rp_lb - rp_ub) );
 #ifdef DEBUG
 	fprintf(stderr, "y_sta=%d  y_end=%d\n", y_sta, y_end);
 #endif /* DEBUG */
@@ -1755,7 +1707,7 @@ long long xmp_file_sync_all(xmp_file_t *pstXmp_file)
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fread_all(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
+ssize_t xmp_fread_all(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
 {
   MPI_Status status;
   int readCount;
@@ -1810,7 +1762,7 @@ size_t xmp_fread_all(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t 
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fwrite_all(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
+ssize_t xmp_fwrite_all(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
 {
   MPI_Status status;
   int writeCount;
@@ -1879,7 +1831,7 @@ int xmp_fread_darray_unpack(fp, apd, rp)
      xmp_range_t *rp;
 {
   MPI_Status    status;
-  char         *array_addr;
+  char         *array_addr=NULL;
   char         *buf=NULL;
   char         *cp;
   int          *lb=NULL;
@@ -1895,12 +1847,12 @@ int xmp_fread_darray_unpack(fp, apd, rp)
   xmp_desc_t tempd = NULL;
   int **bc2_result = NULL;
   size_t array_type_size;
-  int rp_dims;
+  int rp_dims = 0;
   int *rp_lb_addr = NULL;
   int *rp_ub_addr = NULL;
   int *rp_step_addr = NULL;
   int array_ndims;
-  int ierr;
+  //int ierr;
 
 #ifdef CHECK_POINT
   fprintf(stderr, "IO:START(xmp_fread_darray_unpack)\n");
@@ -1911,9 +1863,9 @@ int xmp_fread_darray_unpack(fp, apd, rp)
   if (apd == NULL){ ret = -1; goto FunctionExit; }
   if (rp == NULL){ ret = -1; goto FunctionExit; }
 
-  ierr = xmp_align_template(apd, &tempd);
+  /*ierr = */xmp_align_template(apd, &tempd);
   if (tempd == NULL){ ret = -1; goto FunctionExit; }
-  ierr = xmp_array_ndims(apd, &array_ndims);
+  /*ierr =*/ xmp_array_ndims(apd, &array_ndims);
 
   rp_dims = _xmp_range_get_dims(rp);
   rp_lb_addr = _xmp_range_get_lb_addr(rp);
@@ -2060,7 +2012,6 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 
    /* unpack data */
    cp = buf;
-//   int ierr0 = xmp_array_laddr(apd, &array_addr);
    for(j=0; j<buf_size; j++){
      disp = 0;
      size = 1;
@@ -2070,8 +2021,6 @@ int xmp_fread_darray_unpack(fp, apd, rp)
        int align_manner_i = xmp_align_format(apd, i+1);
        int ser_size_i = xmp_array_gsize(apd, i+1);
        int local_lower_i = xmp_array_lcllbound(apd, i+1);
-       int alloc_size_i;
-//       int ierr = xmp_array_lsize(apd, i+1, &alloc_size_i);
        ub[i] = (j/size)%cnt[i];
        if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
 	   align_manner_i == _XMP_N_ALIGN_DUPLICATION) {
@@ -2080,16 +2029,14 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 
        } else if(align_manner_i == _XMP_N_ALIGN_BLOCK){
 	 disp += (lb[i] + ub[i]*step[i] + local_lower_i - par_lower_i)*array_size;
-	 array_size *= alloc_size_i;
 
        } else if(align_manner_i == _XMP_N_ALIGN_CYCLIC ||
 		 align_manner_i == _XMP_N_ALIGN_BLOCK_CYCLIC){
 	 int local_index;
-	 int ierr = _xmp_io_pack_unpack_block_cyclic_aux2(ub[i] /* in */, bc2_result[i] /* in */,
-				       &local_index /* out */);
+	 int ierr = _xmp_io_pack_unpack_block_cyclic_aux2(ub[i], bc2_result[i],
+				       &local_index);
 	 if (ierr != MPI_SUCCESS){ ret = -1; goto FunctionExit; }
 	 disp += (local_index + local_lower_i) * array_size;
-	 array_size *= alloc_size_i;
        } /* align_manner_i */
        size *= cnt[i];
      } /* i */
@@ -2132,9 +2079,9 @@ int xmp_fread_darray_unpack(fp, apd, rp)
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
-			    xmp_desc_t  apd,
-			    xmp_range_t *rp)
+ssize_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
+			     xmp_desc_t  apd,
+			     xmp_range_t *rp)
 {
   MPI_Status status;        // MPI status
   int readCount;            // read bytes
@@ -2153,7 +2100,7 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   int array_ndims;
   size_t array_type_size;
   int typesize_int;
-  int ierr;
+  //int ierr;
 
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -2168,9 +2115,9 @@ size_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   if (apd == NULL)         { return -1; }
   if (rp == NULL)          { return -1; }
 
-  ierr = xmp_align_template(apd, &tempd);
+  /*ierr =*/ xmp_align_template(apd, &tempd);
   if (tempd == NULL){ return -1; }
-  ierr = xmp_array_ndims(apd, &array_ndims);
+  /*ierr =*/ xmp_array_ndims(apd, &array_ndims);
   array_type_size = xmp_array_type_size(apd);
 
   rp_dims = _xmp_range_get_dims(rp);
@@ -2209,8 +2156,8 @@ fprintf(stderr, "READ(%d/%d) dims=%d\n", rank, nproc, RP_DIMS);
     int align_manner_i = xmp_align_format(apd, i+1);
     int local_lower_i = xmp_array_lcllbound(apd, i+1);
     int alloc_size_i;
-    int ierr;
-    ierr = xmp_array_lsize(apd, i+1, &alloc_size_i);
+
+    /*ierr =*/ xmp_array_lsize(apd, i+1, &alloc_size_i);
 #ifdef DEBUG
 fprintf(stderr, "READ(%d/%d) (lb,ub,step)=(%d,%d,%d)\n",
        rank, nproc, RP_LB(i),  RP_UB(i), RP_STEP(i));
@@ -2402,7 +2349,7 @@ fprintf(stderr, "READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper
   if (mpiRet != MPI_SUCCESS) { return 1; }
   
   char *array_addr;
-  ierr = xmp_array_laddr(apd, &array_addr);
+  xmp_array_laddr(apd, (void **)&array_addr);
 
   // read
   MPI_Type_size(dataType[0], &typesize_int);
@@ -2489,12 +2436,12 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
    size_t array_type_size;
    xmp_desc_t tempd = NULL;
    int **bc2_result = NULL;
-   int rp_dims;
+   int rp_dims = 0;
    int *rp_lb_addr = NULL;
    int *rp_ub_addr = NULL;
    int *rp_step_addr = NULL;
    int array_ndims;
-   int ierr;
+   //int ierr;
 
    int myrank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -2504,10 +2451,10 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
   fprintf(stderr, "IO:START(xmp_fwrite_darray_pack): rank=%d\n", myrank);
 #endif /* CHECK_POINT */
 
-   ierr = xmp_align_template(apd, &tempd);
+   /*ierr =*/ xmp_align_template(apd, &tempd);
    if (tempd == NULL){ ret = -1; goto FunctionExit; }
    array_type_size = xmp_array_type_size(apd);
-   ierr = xmp_array_ndims(apd, &array_ndims);
+   /*ierr =*/ xmp_array_ndims(apd, &array_ndims);
 
    rp_dims = _xmp_range_get_dims(rp);
    rp_lb_addr = _xmp_range_get_lb_addr(rp);
@@ -2636,7 +2583,7 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 
    /* pack data */
    cp = buf;
-   ierr = xmp_array_laddr(apd, &array_addr);
+   xmp_array_laddr(apd, (void **)&array_addr);
    for(j=0; j<buf_size; j++){
      disp = 0;
      size = 1;
@@ -2647,8 +2594,8 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
        int local_lower_i = xmp_array_lcllbound(apd, i+1);
        int ser_size_i = xmp_array_gsize(apd, i+1);
        int alloc_size_i;
-       int ierr;
-       ierr = xmp_array_lsize(apd, i+1, &alloc_size_i);
+       //int ierr;
+       /*ierr =*/ xmp_array_lsize(apd, i+1, &alloc_size_i);
        ub[i] = (j/size)%cnt[i];
        if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
 	   align_manner_i == _XMP_N_ALIGN_DUPLICATION) {
@@ -2726,9 +2673,9 @@ int xmp_fwrite_darray_pack(fp, apd, rp)
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
-			     xmp_desc_t apd,
-			     xmp_range_t *rp)
+ssize_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
+			      xmp_desc_t apd,
+			      xmp_range_t *rp)
 {
   MPI_Status status;        // MPI status
   int writeCount;           // write btye
@@ -2747,7 +2694,7 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   int array_ndims;
   size_t array_type_size;
   int typesize_int;
-  int ierr;
+  //int ierr;
 
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -2762,9 +2709,9 @@ size_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   if (apd == NULL)         { return -1103; }
   if (rp == NULL)          { return -1104; }
 
-  ierr = xmp_align_template(apd, &tempd);
+  /*ierr =*/ xmp_align_template(apd, &tempd);
   if (tempd == NULL){ return -1105; }
-  ierr = xmp_array_ndims(apd, &array_ndims);
+  /*ierr =*/ xmp_array_ndims(apd, &array_ndims);
   array_type_size = xmp_array_type_size(apd);
 
   rp_dims = _xmp_range_get_dims(rp);
@@ -2805,8 +2752,8 @@ fprintf(stderr, "WRITE(%d/%d) dims=%d\n",rank, nproc, RP_DIMS);
     int ser_upper_i = xmp_array_gcgubound(apd, i+1);
     int local_lower_i = xmp_array_lcllbound(apd, i+1);
     int alloc_size_i;
-    int ierr;
-    ierr = xmp_array_lsize(apd, i+1, &alloc_size_i);
+    //int ierr;
+    /*ierr =*/ xmp_array_lsize(apd, i+1, &alloc_size_i);
 /*     int local_upper_i = xmp_array_lclubound(apd, i+1); */
 /*     int shadow_size_lo_i = xmp_array_lshadow(apd, i+1); */
 /*     int shadow_size_hi_i = xmp_array_ushadow(apd, i+1); */
@@ -3009,7 +2956,7 @@ fprintf(stderr, "WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper
   if (mpiRet != MPI_SUCCESS) { return 1119; }
  
   char *array_addr;
-  ierr = xmp_array_laddr(apd, &array_addr);
+  xmp_array_laddr(apd, (void **)&array_addr);
 
   // write
   MPI_Type_size(dataType[0], &typesize_int);
@@ -3017,16 +2964,15 @@ fprintf(stderr, "WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper
   fprintf(stderr, "fwrite_darray_all: rank=%d: typesize_int = %d\n",rank,typesize_int);
 #endif /* DEBUG */
   {
-    int ierr;
     if(typesize_int > 0){
-      if ((ierr = MPI_File_write_all(pstXmp_file->fh,
+      if ((MPI_File_write_all(pstXmp_file->fh,
 				     array_addr,
 				     1,
 				     dataType[0],
 				     &status))
 	  != MPI_SUCCESS){ return -1120; }
     }else{
-      if ((ierr = MPI_File_write_all(pstXmp_file->fh,
+      if ((MPI_File_write_all(pstXmp_file->fh,
 				     array_addr,
 				     0, /* dummy */
 				     MPI_BYTE, /* dummy */
@@ -3072,7 +3018,7 @@ fprintf(stderr, "WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fread_shared(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
+ssize_t xmp_fread_shared(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
 {
   MPI_Status status;
   int readCount;
@@ -3112,7 +3058,7 @@ size_t xmp_fread_shared(xmp_file_t *pstXmp_file, void *buffer, size_t size, size
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fwrite_shared(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
+ssize_t xmp_fwrite_shared(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
 {
   MPI_Status status;
   int writeCount;
@@ -3169,7 +3115,7 @@ size_t xmp_fwrite_shared(xmp_file_t *pstXmp_file, void *buffer, size_t size, siz
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fread(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
+ssize_t xmp_fread(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
 {
   MPI_Status status;
   int readCount;
@@ -3209,7 +3155,7 @@ size_t xmp_fread(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t coun
 /*                  returned.                                                */
 /*                                                                           */
 /*****************************************************************************/
-size_t xmp_fwrite(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
+ssize_t xmp_fwrite(xmp_file_t *pstXmp_file, void *buffer, size_t size, size_t count)
 {
   MPI_Status status;
   int writeCount;
@@ -3286,7 +3232,7 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
   int *rp_step_addr = NULL;
   int array_ndims;
   size_t array_type_size;
-  int ierr;
+  //int ierr;
 
   int rank, nproc;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -3302,9 +3248,9 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
   if (rp == NULL)          { return 1004; }
   if (disp  < 0)           { return 1005; }
 
-  ierr = xmp_align_template(apd, &tempd);
+  /*ierr =*/ xmp_align_template(apd, &tempd);
   if (tempd == NULL){ return 1006; }
-  ierr = xmp_array_ndims(apd, &array_ndims);
+  /*ierr =*/ xmp_array_ndims(apd, &array_ndims);
   array_type_size = xmp_array_type_size(apd);
 
   rp_dims = _xmp_range_get_dims(rp);

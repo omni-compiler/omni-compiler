@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file c-xcodeml.c
  */
@@ -331,10 +325,7 @@ outxChildren(FILE *fp, int indent, CExpr *expr)
     CExprIterator ite;
     EXPR_FOREACH_MULTI(ite, expr)
         if(ite.node) {
-            if(EXPR_CODE(ite.node) == EC_NULL_NODE)   // ID=284
-                outxPrint(fp, indent, "<list/>\n");
-            else
-                outxContext(fp, indent, ite.node);
+            outxContext(fp, indent, ite.node);
         }
 }
 
@@ -1281,7 +1272,7 @@ void
 setTypeIds()
 {
     CCOL_DListNode *ite;
-
+    
     CCOL_DL_FOREACH(ite, &s_typeDescList) {
         (EXPR_T(CCOL_DL_DATA(ite)))->e_isMarked = 0;
     }
@@ -1847,7 +1838,8 @@ outx_IDENT(FILE *fp, int indent, CExprOfSymbol *sym)
         switch(td->e_tdKind) {
         case TD_ARRAY:
 	  //            tag = (isAddr ? "arrayAddr" : "arrayRef"); break;
-            tag = "arrayAddr"; break;
+	  //tag = "arrayAddr"; break;
+	  tag = (sym->e_symType == ST_PARAM && isAddr) ? "varAddr" : "arrayAddr"; break;
         case TD_COARRAY:
             tag = "name"; scope = NULL; break;
         default:

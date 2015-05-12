@@ -23,6 +23,7 @@ public class XmOption
     private static boolean _xcalableMP = false;
     private static boolean _xcalableMPthreads = false;
     private static boolean _xcalableMPGPU = false;
+    private static boolean _xcalableMPasync = false;
 
     private static boolean _tlog = false;
 
@@ -118,6 +119,22 @@ public class XmOption
     public static boolean isXcalableMPGPU()
     {
         return _xcalableMPGPU;
+    }
+
+    /**
+     * Sets whether the compiler supports asynchronous communications or not.
+     */
+    public static void setIsAsync(boolean enable)
+    {
+        _xcalableMPasync = enable;
+    }
+
+    /**
+     * Checks if the compiler supports asynchronous communications.
+     */
+    public static boolean isAsync()
+    {
+        return _xcalableMPasync;
     }
 
     /**

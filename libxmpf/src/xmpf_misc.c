@@ -26,8 +26,8 @@ void xmpf_init_all__()
   _XMPC_running = 0;
   _XMPF_running = 1;
 
-#ifdef _XMP_COARRAY
-  /* for Coarray environment */
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
+  /* for Coarray Fortran environment */
   _XMPF_coarray_init();
 #endif
 

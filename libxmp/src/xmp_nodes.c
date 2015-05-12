@@ -3,6 +3,9 @@
  * $TSUKUBA_Copyright:
  *  $
  */
+#ifndef MPI_PORTABLE_PLATFORM_H
+#define MPI_PORTABLE_PLATFORM_H
+#endif 
 
 #include <stdarg.h>
 #include "mpi.h"
@@ -953,7 +956,7 @@ int _XMP_calc_linear_rank_on_target_nodes(_XMP_nodes_t *n, int *rank_array,
 }
 
 _XMP_nodes_ref_t *_XMP_init_nodes_ref(_XMP_nodes_t *n, int *rank_array) {
-  _XMP_nodes_ref_t *nodes_ref = _XMP_alloc(sizeof(sizeof(int)));
+  _XMP_nodes_ref_t *nodes_ref = _XMP_alloc(sizeof(_XMP_nodes_ref_t));
   int dim = n->dim;
   int *new_rank_array = _XMP_alloc(sizeof(int) * dim);
 

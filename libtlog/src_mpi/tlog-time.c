@@ -1,8 +1,3 @@
-static char rcsid[] = "$Id: tlog-time.c,v 1.1.1.1 2005/06/20 09:56:18 msato Exp $";
-/* 
- * $Release$
- * $Copyright$
- */
 /*
  *  TIMER routine
  *

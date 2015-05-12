@@ -270,6 +270,10 @@ public class XMParray {
     switch(sclass){
     case FPARAM: {
 
+      if (type.isFallocatable()){
+	XMP.errorAt(pb, "allocatable dummy arrays cannot be distributed.");
+      }
+
       Xtype ftype = env.getCurrentDef().getDef().getNameObj().Type();
 
       if (ftype.isFunction() && !ftype.isFsubroutine() && type.isFassumedShape()){

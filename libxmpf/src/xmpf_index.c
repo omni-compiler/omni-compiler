@@ -10,7 +10,8 @@ void _XMP_L2G(int local_idx, long long int *global_idx,
 
   switch(chunk->dist_manner){
   case _XMP_N_DIST_DUPLICATION:
-    *global_idx = base + local_idx ;
+    //*global_idx = base + local_idx ;
+    *global_idx = local_idx ;
     break;
   case _XMP_N_DIST_BLOCK:
     *global_idx = base + n_info->rank * chunk->par_chunk_width + local_idx;
@@ -47,7 +48,8 @@ void _XMP_G2L(long long int global_idx, int *local_idx,
 
   switch(chunk->dist_manner){
   case _XMP_N_DIST_DUPLICATION:
-    *local_idx = global_idx - base;
+    //*local_idx = global_idx - base;
+    *local_idx = global_idx;
     break;
   case _XMP_N_DIST_BLOCK:
     *local_idx = (global_idx - base) - n_info->rank * chunk->par_chunk_width;
@@ -74,7 +76,7 @@ void _XMP_G2L(long long int global_idx, int *local_idx,
 int xmpf_local_idx__(_XMP_array_t **a_desc, int *i_dim, int *global_idx)
 {
     _XMP_array_t *a = *a_desc;
-    int l_idx, l_base;
+    int l_idx = 0, l_base = 0;
     _XMP_array_info_t *ai = &a->info[*i_dim];
     long long off = ai->align_subscript;
     int tdim = ai->align_template_index;
@@ -87,41 +89,16 @@ int xmpf_local_idx__(_XMP_array_t **a_desc, int *i_dim, int *global_idx)
     return l_idx;
 }
 
-
-/* int xmpf_global_idx__(_XMP_array_t **a_desc, int *i_dim, int *local_idx) */
-/* { */
-/*     _XMP_array_t *a = *a_desc; */
-/*     long long g_idx; */
-
-/*     _XMP_array_info_t ai = &a->info[*i_dim]; */
-/*     int off = ai->align_subscript; */
-/*     int tdim = ai->align_template_index; */
-
-/*     int ret; */
-
-/*     _XMP_L2G(*local_idx, &g_idx, a->align_template, tdim); */
-
-/*     ret = g_idx - off; */
-
-/*     return ret; */
-/* } */
-
-
 /* calc global index by local index */
 void xmpf_l2g__(int *global_idx, int *local_idx,
 	        int *rdim, _XMP_object_ref_t **r_desc)
 {
-  long long int g_idx;
+  long long int g_idx = 0;
   _XMP_object_ref_t *rp = *r_desc;
-
-/*   int off = rp->offset[*rdim]; */
-/*   int tdim = rp->index[*rdim]; */
   int off = rp->REF_OFFSET[*rdim];
   int tdim = rp->REF_INDEX[*rdim];
 
   _XMP_L2G(*local_idx, &g_idx, rp->t_desc, tdim);
 
   *global_idx = g_idx - off;  // must be long long
-
-  //xmpf_dbg_printf("L2G(%d->%d)\n",*local_idx,*global_idx);
 }

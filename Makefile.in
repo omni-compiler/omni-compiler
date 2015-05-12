@@ -78,18 +78,30 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@IS_SUPERUX_FALSE@am__append_1 = @LIBOMPC_DIR@ @LIBOMPF_DIR@
-@ENABLE_ACC_TRUE@am__append_2 = @LIBACC_DIR@ @LIBACC_HEADER_DIR@
-@ENABLE_ATOOL_TRUE@am__append_3 = @ATOOL_DIR@
-@GASNET_TRUE@am__append_4 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"
+@SUPERUX_FALSE@am__append_1 = libompc/src libompf/src
+@ACC_TRUE@am__append_2 = libacc/src libacc/include
+@ATOOL_TRUE@am__append_3 = Driver/atool
+@GASNET_TRUE@am__append_4 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"
 @GASNET_TRUE@am__append_5 = "local-view/coarray/C/"
-@FJRDMA_TRUE@am__append_6 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/coarray/C" "local-view/other/C"
+@FJRDMA_TRUE@am__append_6 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/coarray/F"
 @FJRDMA_TRUE@am__append_7 = "local-view/coarray/C/"
+@MPI3_TRUE@am__append_8 = "global-view/async/C/" "global-view/async/F/"
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
 	$(top_srcdir)/include/config.h.in \
 	$(top_srcdir)/Driver/atool/src/include/nata/nata_config.h.in \
+	$(top_srcdir)/XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java.in \
+	$(top_srcdir)/Driver/etc/ompcc.conf.in \
+	$(top_srcdir)/Driver/etc/ompf90.conf.in \
+	$(top_srcdir)/Driver/etc/xmpcc.conf.in \
+	$(top_srcdir)/Driver/etc/xmpf90.conf.in \
+	$(top_srcdir)/Driver/bin/ompcc.in \
+	$(top_srcdir)/Driver/bin/ompf90.in \
+	$(top_srcdir)/Driver/bin/xmpcc.in \
+	$(top_srcdir)/Driver/bin/xmpf90.in \
+	$(top_srcdir)/Driver/libexec/omni_traverse.in \
+	$(top_srcdir)/libtlog/src_mpi/bin/tlogview.in \
 	$(top_srcdir)/release/debian/changelog.in \
 	$(top_srcdir)/release/debian/control.in \
 	$(top_srcdir)/release/debian/rules.in \
@@ -127,7 +139,13 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/config.h \
 	$(top_builddir)/Driver/atool/src/include/nata/nata_config.h
-CONFIG_CLEAN_FILES = release/debian/changelog release/debian/control \
+CONFIG_CLEAN_FILES =  \
+	XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java \
+	Driver/etc/ompcc.conf Driver/etc/ompf90.conf \
+	Driver/etc/xmpcc.conf Driver/etc/xmpf90.conf Driver/bin/ompcc \
+	Driver/bin/ompf90 Driver/bin/xmpcc Driver/bin/xmpf90 \
+	Driver/libexec/omni_traverse libtlog/src_mpi/bin/tlogview \
+	release/debian/changelog release/debian/control \
 	release/debian/rules release/xcalablemp.spec \
 	release/make_rpm.sh release/make_deb.sh \
 	Driver/atool/mk/vars.mk Driver/atool/Makefile \
@@ -193,12 +211,11 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
-DIST_SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
-	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
-	@OMDRIVER_DIR@ @LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
-	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ \
-	@LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ @LIBOMPC_DIR@ @LIBOMPF_DIR@ \
-	@LIBACC_DIR@ @LIBACC_HEADER_DIR@ @ATOOL_DIR@ $(am__empty)
+DIST_SUBDIRS = XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src \
+	F-BackEnd XcodeML-Exc-Tools Driver/src libtlog/src_threads \
+	libtlog/src_mpi libxmp/include libxmp/src libxmp/src_threads \
+	libxmpf/include libxmpf/src libompc/src libompf/src libacc/src \
+	libacc/include Driver/atool
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -247,18 +264,16 @@ AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 API_FLAVOR = @API_FLAVOR@
 AR = @AR@
 ARFLAGS = @ARFLAGS@
-ATOOL_DIR = @ATOOL_DIR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BLASLIB = @BLASLIB@
-BLAS_LIB = @BLAS_LIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CPP_OPT = @CPP_OPT@
 CPU = @CPU@
 CPUDEF = @CPUDEF@
 CXX = @CXX@
@@ -266,8 +281,6 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-C_BACKEND_DIR = @C_BACKEND_DIR@
-C_FRONTEND_DIR = @C_FRONTEND_DIR@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
@@ -279,15 +292,11 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 ENABLE_ACC = @ENABLE_ACC@
 ENABLE_ATOOL = @ENABLE_ATOOL@
-ENABLE_XACC = @ENABLE_XACC@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
-FJRDMA = @FJRDMA@
-F_BACKEND_DIR = @F_BACKEND_DIR@
-F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_LIBS = @GASNET_LIBS@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CFLAGS = @GPU_CFLAGS@
@@ -300,9 +309,6 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INT_ENUFF_FOR_VOIDP = @INT_ENUFF_FOR_VOIDP@
-IS_CRAY = @IS_CRAY@
-IS_PGI = @IS_PGI@
-IS_SUPERUX = @IS_SUPERUX@
 JAR = @JAR@
 JAVA = @JAVA@
 JAVAC = @JAVAC@
@@ -312,23 +318,12 @@ LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
-LIBACC_DIR = @LIBACC_DIR@
-LIBACC_HEADER_DIR = @LIBACC_HEADER_DIR@
 LIBOBJS = @LIBOBJS@
-LIBOMPC_DIR = @LIBOMPC_DIR@
-LIBOMPF_DIR = @LIBOMPF_DIR@
 LIBS = @LIBS@
-LIBTLOG_DIR = @LIBTLOG_DIR@
-LIBTLOG_MPI_DIR = @LIBTLOG_MPI_DIR@
 LIBTOOL = @LIBTOOL@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
+LIBXML_LIB = @LIBXML_LIB@
 LIBXML_PREFIX = @LIBXML_PREFIX@
-LIBXMPF_DIR = @LIBXMPF_DIR@
-LIBXMPF_HEADER_DIR = @LIBXMPF_HEADER_DIR@
-LIBXMP_DIR = @LIBXMP_DIR@
-LIBXMP_GPU_DIR = @LIBXMP_GPU_DIR@
-LIBXMP_HEADER_DIR = @LIBXMP_HEADER_DIR@
-LIBXMP_THREADS_DIR = @LIBXMP_THREADS_DIR@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
@@ -354,7 +349,6 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OMDRIVER_DIR = @OMDRIVER_DIR@
 OMNI_C2X_FLAGS = @OMNI_C2X_FLAGS@
 OMNI_F2X_FLAGS = @OMNI_F2X_FLAGS@
 OMNI_F_PP = @OMNI_F_PP@
@@ -411,21 +405,21 @@ SIZEOF_UNSIGNED_SHORT = @SIZEOF_UNSIGNED_SHORT@
 SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
 STRIP = @STRIP@
+SUPERUX = @SUPERUX@
+TARGET = @TARGET@
 TARGET_ARCH = @TARGET_ARCH@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
 TYPE_INT64 = @TYPE_INT64@
 VERSION = @VERSION@
-XCODEML_COMMON_DIR = @XCODEML_COMMON_DIR@
-XCODEML_EXC_TOOLS_DIR = @XCODEML_EXC_TOOLS_DIR@
 XMPC_DEF = @XMPC_DEF@
 XMPF_DEF = @XMPF_DEF@
 XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
 XMPPKG_GROUP = @XMPPKG_GROUP@
 XMPPKG_LICENSE = @XMPPKG_LICENSE@
 XMPPKG_MAINTAINER = @XMPPKG_MAINTAINER@
-XMPPKG_NAME := "@XMPPKG_NAME@"
+XMPPKG_NAME = @XMPPKG_NAME@
 XMPPKG_PACKAGER = @XMPPKG_PACKAGER@
 XMPPKG_PREFIX = @XMPPKG_PREFIX@
 XMPPKG_PRIORITY = @XMPPKG_PRIORITY@
@@ -510,16 +504,15 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = @XCODEML_COMMON_DIR@ @C_FRONTEND_DIR@ @C_BACKEND_DIR@ \
-	@F_FRONTEND_DIR@ @F_BACKEND_DIR@ @XCODEML_EXC_TOOLS_DIR@ \
-	@OMDRIVER_DIR@ @LIBTLOG_DIR@ @LIBTLOG_MPI_DIR@ \
-	@LIBXMP_HEADER_DIR@ @LIBXMP_DIR@ @LIBXMP_THREADS_DIR@ \
-	@LIBXMPF_HEADER_DIR@ @LIBXMPF_DIR@ $(am__append_1) \
-	$(am__append_2) $(am__append_3)
-XMPPKG_TMPDIR_TOP := "/tmp/@XMPPKG_NAME@"
-XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/tmp.$$
-DEB_VER_FILE = "/etc/debian_version"
-RH_REL_FILE = "/etc/redhat-release"
+SUBDIRS = XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src \
+	F-BackEnd XcodeML-Exc-Tools Driver/src libtlog/src_threads \
+	libtlog/src_mpi libxmp/include libxmp/src libxmp/src_threads \
+	libxmpf/include libxmpf/src $(am__append_1) $(am__append_2) \
+	$(am__append_3)
+XMPPKG_TMPDIR_TOP = /tmp/@XMPPKG_NAME@
+XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/tmp
+DEB_VER_FILE = /etc/debian_version
+RH_REL_FILE = /etc/redhat-release
 BASE_TESTDIR = "tests/xcalablemp/"
 TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	"global-view/bcast/C/" "global-view/bcast/F/" \
@@ -535,7 +528,7 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	"global-view/align/F/" "global-view/intrinsic/C/" \
 	"global-view/intrinsic/F/" "global-view/util/C/" \
 	"global-view/util/F/" "others/F" "others/C" $(am__append_4) \
-	$(am__append_6)
+	$(am__append_6) $(am__append_8)
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
 LARGE_TESTDIRS = "others/C" $(am__append_5) $(am__append_7)
 DELETABLES = Driver/bin/ompcc \
@@ -546,17 +539,12 @@ DELETABLES = Driver/bin/ompcc \
 	Driver/etc/xmpf90.conf \
 	Driver/etc/ompcc.conf \
 	Driver/etc/ompf90.conf \
-	Driver/etc/java.conf \
 	Driver/libexec/omni_traverse \
         C-FrontEnd/src/c-exprcode.c \
         C-FrontEnd/src/c-exprcode.h \
         C-FrontEnd/src/c-parser.c \
         C-FrontEnd/src/c-parser.h \
 	C-FrontEnd/src/c-token.c \
-	C-BackEnd/bin/C_Back \
-	F-BackEnd/bin/F_Back \
-	F-BackEnd/bin/F_Trans \
-	F-BackEnd/bin/F_Decomp \
 	F-FrontEnd/src/C-exprcode.c \
 	F-FrontEnd/src/C-exprcode.h \
 	F-FrontEnd/src/F95-parser.c \
@@ -635,6 +623,28 @@ Driver/atool/src/include/nata/stamp-h2: $(top_srcdir)/Driver/atool/src/include/n
 
 distclean-hdr:
 	-rm -f include/config.h include/stamp-h1 Driver/atool/src/include/nata/nata_config.h Driver/atool/src/include/nata/stamp-h2
+XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java: $(top_builddir)/config.status $(top_srcdir)/XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/etc/ompcc.conf: $(top_builddir)/config.status $(top_srcdir)/Driver/etc/ompcc.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/etc/ompf90.conf: $(top_builddir)/config.status $(top_srcdir)/Driver/etc/ompf90.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/etc/xmpcc.conf: $(top_builddir)/config.status $(top_srcdir)/Driver/etc/xmpcc.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/etc/xmpf90.conf: $(top_builddir)/config.status $(top_srcdir)/Driver/etc/xmpf90.conf.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/bin/ompcc: $(top_builddir)/config.status $(top_srcdir)/Driver/bin/ompcc.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/bin/ompf90: $(top_builddir)/config.status $(top_srcdir)/Driver/bin/ompf90.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/bin/xmpcc: $(top_builddir)/config.status $(top_srcdir)/Driver/bin/xmpcc.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/bin/xmpf90: $(top_builddir)/config.status $(top_srcdir)/Driver/bin/xmpf90.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+Driver/libexec/omni_traverse: $(top_builddir)/config.status $(top_srcdir)/Driver/libexec/omni_traverse.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+libtlog/src_mpi/bin/tlogview: $(top_builddir)/config.status $(top_srcdir)/libtlog/src_mpi/bin/tlogview.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 release/debian/changelog: $(top_builddir)/config.status $(top_srcdir)/release/debian/changelog.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 release/debian/control: $(top_builddir)/config.status $(top_srcdir)/release/debian/control.in

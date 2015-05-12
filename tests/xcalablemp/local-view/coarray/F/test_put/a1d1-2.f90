@@ -1,11 +1,9 @@
   program test_a1_d1
-    include "xmp_lib.h"
-    !$xmp nodes p(*)
+    include "xmp_coarray.h"
     integer*8 a(100), b(100)[*]
-    integer xmp_node_num
     integer nerr
 
-    me = xmp_node_num()   ! == this_image()
+    me = this_image()
 
     !---------------------------- switch on message
 !!    call xmpf_coarray_msg(1)

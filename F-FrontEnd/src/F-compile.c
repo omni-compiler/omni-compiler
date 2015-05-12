@@ -2314,6 +2314,9 @@ end_procedure()
 
     FinalizeFormat();
 
+    if (EXT_PROC_TYPE(CURRENT_EXT_ID))
+      TYPE_SET_FOR_FUNC_SELF(EXT_PROC_TYPE(CURRENT_EXT_ID));
+
     /* check undefined variable */
     FOREACH_ID(id, LOCAL_SYMBOLS) {
         if(ID_CLASS(id) == CL_UNKNOWN){
@@ -2589,7 +2592,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
             return;
         }
 
-        if (expr_is_constant(do_incr)) {
+        if (!expr_has_param(do_incr) && expr_is_constant(do_incr)) {
             do_incr = expv_reduce_conv_const(var_tp, do_incr);
             if (EXPV_CODE(do_incr) == INT_CONSTANT) {
                 if(EXPV_INT_VALUE(do_incr) == 0)
@@ -2603,15 +2606,16 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
              * because FLOAT_CONSTANT cannot be reduced */
         }
         
-        if (expr_is_constant(do_limit)) {
+        if (!expr_has_param(do_limit) && expr_is_constant(do_limit)) {
             do_limit = expv_reduce_conv_const(var_tp, do_limit);
         }
 
-        if (expr_is_constant(do_init)) {
+        if (!expr_has_param(do_init) && expr_is_constant(do_init)) {
             do_init = expv_reduce_conv_const(var_tp, do_init);
         }
 
-        if (expr_is_constant(do_limit) && expr_is_constant(do_init)) {
+        if (!expr_has_param(do_limit) && !expr_has_param(do_init) &&
+	    expr_is_constant(do_limit) && expr_is_constant(do_init)) {
             if (incsign > 0) {              /* increment */
                 if ((IS_INT(var_tp) && 
                      EXPV_INT_VALUE(do_limit) < EXPV_INT_VALUE(do_init))) {
@@ -2863,7 +2867,7 @@ import_generic_procedure(ID id) {
 
 static EXT_ID
 shallow_copy_ext_id(EXT_ID original) {
-    EXT_ID ret = NULL, ep, new_ep;
+    EXT_ID ret = NULL, ep, new_ep = NULL;
     FOREACH_EXT_ID(ep, original) {
         if (ep == original) {
             new_ep = new_external_id(EXT_SYM(ep));
@@ -2989,7 +2993,7 @@ deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp);
 static void
 deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
     ID id;
-    TYPE_DESC itp, cur, old;
+    TYPE_DESC cur, old;
     cur = tp;
     while(TYPE_REF(cur) != NULL) {
         old = TYPE_REF(cur);
@@ -3001,7 +3005,6 @@ deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
 
     if(IS_STRUCT_TYPE(cur)) {
         FOREACH_MEMBER(id, cur) {
-            itp = ID_TYPE(id);
             deep_copy_and_overwrite_for_module_id_type(&(ID_TYPE(id)));
         }
     }

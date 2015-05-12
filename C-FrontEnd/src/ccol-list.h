@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file ccol-list.h
  */
@@ -66,7 +60,7 @@ extern void             ccol_SListClear(CCOL_SList *l);
 #define CCOL_SL_SIZE(l)                 ((l)->sl_size)
 
 #define CCOL_SL_FOREACH(ite, l) \
-    if((l) != (void*)0 && (l)->sl_head != (void*)0)\
+    if((l)->sl_head != (void*)0)\
         for(ite = (l)->sl_head; ite != (void*)0; ite = CCOL_SL_NEXT(ite))
 
 #define CCOL_SL_FOREACH_SAFE(ite, iten, head) \
@@ -141,30 +135,24 @@ extern void             ccol_DListClear(CCOL_DList *l);
 #define CCOL_DL_CLEAR(l)                ccol_DListClear(l)
 
 #define CCOL_DL_FOREACH(ite, l) \
-    if((l) != (void*)0)\
-        for(ite = CCOL_DL_HEAD(l); ite != (void*)0; ite = CCOL_DL_NEXT(ite))
+  for(ite = CCOL_DL_HEAD(l); ite != (void*)0; ite = CCOL_DL_NEXT(ite))
 
 #define CCOL_DL_FOREACH_SAFE(ite, iten, l) \
-    if((l) != (void*)0)\
-        for(ite = CCOL_DL_HEAD(l), iten = CCOL_DL_NEXT(ite); ite != (void*)0;\
-            ite = iten, iten = CCOL_DL_NEXT(ite))
+  for(ite = CCOL_DL_HEAD(l), iten = CCOL_DL_NEXT(ite); ite != (void*)0;	\
+      ite = iten, iten = CCOL_DL_NEXT(ite))
 
 #define CCOL_DL_FOREACH_FROM(ite, l) \
-    if((l) != (void*)0)\
-        for(; ite != (void*)0; ite = CCOL_DL_NEXT(ite))
+  for(; ite != (void*)0; ite = CCOL_DL_NEXT(ite))
 
 #define CCOL_DL_FOREACH_REVERSE(ite, l) \
-    if((l) != (void*)0)\
-        for(ite = CCOL_DL_TAIL(l); ite != (void*)0; ite = CCOL_DL_PREV(ite))
+  for(ite = CCOL_DL_TAIL(l); ite != (void*)0; ite = CCOL_DL_PREV(ite))
 
 #define CCOL_DL_FOREACH_REVERSE_SAFE(ite, iten, l) \
-    if((l) != (void*)0)\
-        for(ite = CCOL_DL_TAIL(l), iten = CCOL_DL_PREV(ite); ite != (void*)0;\
-            ite = iten, iten = CCOL_DL_PREV(ite))
+  for(ite = CCOL_DL_TAIL(l), iten = CCOL_DL_PREV(ite); ite != (void*)0;	\
+      ite = iten, iten = CCOL_DL_PREV(ite))
 
 #define CCOL_DL_FOREACH_REVERSE_FROM(ite, l) \
-    if((l) != (void*)0)\
-        for(; ite != (void*)0; ite = CCOL_DL_PREV(ite))
+  for(; ite != (void*)0; ite = CCOL_DL_PREV(ite))
 
 #endif /* _CCOL_LIST_H_ */
 

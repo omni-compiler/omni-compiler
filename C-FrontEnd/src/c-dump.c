@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file c-dump.c
  */
@@ -550,7 +544,6 @@ dumpSymbolTable(FILE *fp)
     int i = CCOL_DL_SIZE(&s_symTabStack);
 
     CCOL_DL_FOREACH(n, &s_symTabStack) {
-
         CSymbolTable *symTab = (CSymbolTable*)CCOL_DL_DATA(n);
         fprintf(fp, "level:%d ------\n", i--);
         dumpSymbolTableGroup("ident", fp, &symTab->stb_identGroup);

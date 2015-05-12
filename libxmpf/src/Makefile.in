@@ -80,14 +80,20 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @GASNET_TRUE@am__append_1 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-@GASNET_TRUE@                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
+@GASNET_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
+@GASNET_TRUE@                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90
 
-@GASNET_TRUE@am__append_2 = -D_XMP_COARRAY_GASNET
-@FJRDMA_TRUE@am__append_3 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-@FJRDMA_TRUE@                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
+@GASNET_TRUE@am__append_2 = -D_XMP_GASNET
+@GASNET_TRUE@@POWERPC_TRUE@am__append_3 = -WF,-D_XMP_GASNET
+@GASNET_TRUE@@POWERPC_FALSE@am__append_4 = -D_XMP_GASNET
+@MPI3_TRUE@am__append_5 = -D_XMP_MPI3
+@FJRDMA_TRUE@am__append_6 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
+@FJRDMA_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
+@FJRDMA_TRUE@                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90
 
-@FJRDMA_TRUE@am__append_4 = -D_XMP_COARRAY_FJRDMA
-subdir = ./libxmpf/src
+@FJRDMA_TRUE@am__append_7 = -D_XMP_FJRDMA
+@FJRDMA_TRUE@am__append_8 = -D_XMP_FJRDMA
+subdir = libxmpf/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/buildutils/libtool.m4 \
@@ -139,27 +145,35 @@ am__v_AR_1 =
 libxmpf_a_AR = $(AR) $(ARFLAGS)
 libxmpf_a_LIBADD =
 am__libxmpf_a_SOURCES_DIST = $(XMPF_INC_DIR)/xmpf_internal.h \
-	xmpf_array.c xmpf_gcomm.c xmpf_gmove.c xmpf_index.c xmpf_lib.c \
-	xmpf_loop.c xmpf_misc.c xmpf_nodes.c xmpf_pack.c \
-	xmpf_reflect.c xmpf_sort.c xmpf_task.c xmpf_template.c \
-	xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-	xmpf_coarray_get.c xmpf_coarray_get_wrap.f90
+	xmpf_main.F90 xmpf_array.c xmpf_async.c xmpf_gcomm.c \
+	xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
+	xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c \
+	xmpf_task.c xmpf_template.c xmpf_coarray.c \
+	xmpf_coarray_wrap.f90 xmpf_coarray_put.c xmpf_coarray_get.c \
+	xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
+	xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90
 @GASNET_TRUE@am__objects_1 = xmpf_coarray.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_put.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_get.$(OBJEXT) \
-@GASNET_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT)
+@GASNET_TRUE@	xmpf_coarray_lib.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_alloc.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_alloc_wrap.$(OBJEXT)
 @FJRDMA_TRUE@am__objects_2 = xmpf_coarray.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_put.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_get.$(OBJEXT) \
-@FJRDMA_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT)
-am_libxmpf_a_OBJECTS = xmpf_array.$(OBJEXT) xmpf_gcomm.$(OBJEXT) \
-	xmpf_gmove.$(OBJEXT) xmpf_index.$(OBJEXT) xmpf_lib.$(OBJEXT) \
-	xmpf_loop.$(OBJEXT) xmpf_misc.$(OBJEXT) xmpf_nodes.$(OBJEXT) \
-	xmpf_pack.$(OBJEXT) xmpf_reflect.$(OBJEXT) xmpf_sort.$(OBJEXT) \
-	xmpf_task.$(OBJEXT) xmpf_template.$(OBJEXT) $(am__objects_1) \
-	$(am__objects_2)
+@FJRDMA_TRUE@	xmpf_coarray_lib.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_alloc.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_alloc_wrap.$(OBJEXT)
+am_libxmpf_a_OBJECTS = xmpf_main.$(OBJEXT) xmpf_array.$(OBJEXT) \
+	xmpf_async.$(OBJEXT) xmpf_gcomm.$(OBJEXT) xmpf_gmove.$(OBJEXT) \
+	xmpf_index.$(OBJEXT) xmpf_lib.$(OBJEXT) xmpf_loop.$(OBJEXT) \
+	xmpf_misc.$(OBJEXT) xmpf_nodes.$(OBJEXT) xmpf_pack.$(OBJEXT) \
+	xmpf_reflect.$(OBJEXT) xmpf_sort.$(OBJEXT) xmpf_task.$(OBJEXT) \
+	xmpf_template.$(OBJEXT) $(am__objects_1) $(am__objects_2)
 libxmpf_a_OBJECTS = $(am_libxmpf_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -176,12 +190,30 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include -I$(top_builddir)/Driver/atool/src/include/nata
 depcomp =
 am__depfiles_maybe =
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+PPFCCOMPILE = $(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_FCFLAGS) $(FCFLAGS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+LTPPFCCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(FC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_FCFLAGS) $(FCFLAGS)
+AM_V_PPFC = $(am__v_PPFC_@AM_V@)
+am__v_PPFC_ = $(am__v_PPFC_@AM_DEFAULT_V@)
+am__v_PPFC_0 = @echo "  PPFC    " $@;
+am__v_PPFC_1 = 
+FCLD = $(FC)
+FCLINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_FCLD = $(am__v_FCLD_@AM_V@)
+am__v_FCLD_ = $(am__v_FCLD_@AM_DEFAULT_V@)
+am__v_FCLD_0 = @echo "  FCLD    " $@;
+am__v_FCLD_1 = 
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
 	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
@@ -205,14 +237,6 @@ AM_V_FC = $(am__v_FC_@AM_V@)
 am__v_FC_ = $(am__v_FC_@AM_DEFAULT_V@)
 am__v_FC_0 = @echo "  FC      " $@;
 am__v_FC_1 = 
-FCLD = $(FC)
-FCLINK = $(LIBTOOL) $(AM_V_lt) --tag=FC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) \
-	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-AM_V_FCLD = $(am__v_FCLD_@AM_V@)
-am__v_FCLD_ = $(am__v_FCLD_@AM_DEFAULT_V@)
-am__v_FCLD_0 = @echo "  FCLD    " $@;
-am__v_FCLD_1 = 
 SOURCES = $(libxmpf_a_SOURCES)
 DIST_SOURCES = $(am__libxmpf_a_SOURCES_DIST)
 am__can_run_installinfo = \
@@ -246,19 +270,17 @@ AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 API_FLAVOR = @API_FLAVOR@
 AR = @AR@
 ARFLAGS = @ARFLAGS@
-ATOOL_DIR = @ATOOL_DIR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BLASLIB = @BLASLIB@
-BLAS_LIB = @BLAS_LIB@
 CC = @MPI_CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@ \
-	$(am__append_2) $(am__append_4)
+	$(am__append_2) $(am__append_5) $(am__append_7)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CPP_OPT = @CPP_OPT@
 CPU = @CPU@
 CPUDEF = @CPUDEF@
 CXX = @CXX@
@@ -266,8 +288,6 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-C_BACKEND_DIR = @C_BACKEND_DIR@
-C_FRONTEND_DIR = @C_FRONTEND_DIR@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
@@ -279,15 +299,12 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 ENABLE_ACC = @ENABLE_ACC@
 ENABLE_ATOOL = @ENABLE_ATOOL@
-ENABLE_XACC = @ENABLE_XACC@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @MPI_FC@
-FCFLAGS = @MPI_FCFLAGS@
+FCFLAGS = @MPI_FCFLAGS@ @OMNI_NTV_FCFLAGS@ $(am__append_3) \
+	$(am__append_4) $(am__append_8)
 FGREP = @FGREP@
-FJRDMA = @FJRDMA@
-F_BACKEND_DIR = @F_BACKEND_DIR@
-F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_LIBS = @GASNET_LIBS@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CFLAGS = @GPU_CFLAGS@
@@ -300,9 +317,6 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INT_ENUFF_FOR_VOIDP = @INT_ENUFF_FOR_VOIDP@
-IS_CRAY = @IS_CRAY@
-IS_PGI = @IS_PGI@
-IS_SUPERUX = @IS_SUPERUX@
 JAR = @JAR@
 JAVA = @JAVA@
 JAVAC = @JAVAC@
@@ -312,23 +326,12 @@ LDFLAGS = @MPI_CLIBS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
-LIBACC_DIR = @LIBACC_DIR@
-LIBACC_HEADER_DIR = @LIBACC_HEADER_DIR@
 LIBOBJS = @LIBOBJS@
-LIBOMPC_DIR = @LIBOMPC_DIR@
-LIBOMPF_DIR = @LIBOMPF_DIR@
 LIBS = @LIBS@
-LIBTLOG_DIR = @LIBTLOG_DIR@
-LIBTLOG_MPI_DIR = @LIBTLOG_MPI_DIR@
 LIBTOOL = @LIBTOOL@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
+LIBXML_LIB = @LIBXML_LIB@
 LIBXML_PREFIX = @LIBXML_PREFIX@
-LIBXMPF_DIR = @LIBXMPF_DIR@
-LIBXMPF_HEADER_DIR = @LIBXMPF_HEADER_DIR@
-LIBXMP_DIR = @LIBXMP_DIR@
-LIBXMP_GPU_DIR = @LIBXMP_GPU_DIR@
-LIBXMP_HEADER_DIR = @LIBXMP_HEADER_DIR@
-LIBXMP_THREADS_DIR = @LIBXMP_THREADS_DIR@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
@@ -354,7 +357,6 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OMDRIVER_DIR = @OMDRIVER_DIR@
 OMNI_C2X_FLAGS = @OMNI_C2X_FLAGS@
 OMNI_F2X_FLAGS = @OMNI_F2X_FLAGS@
 OMNI_F_PP = @OMNI_F_PP@
@@ -411,14 +413,14 @@ SIZEOF_UNSIGNED_SHORT = @SIZEOF_UNSIGNED_SHORT@
 SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
 STRIP = @STRIP@
+SUPERUX = @SUPERUX@
+TARGET = @TARGET@
 TARGET_ARCH = @TARGET_ARCH@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
 TYPE_INT64 = @TYPE_INT64@
 VERSION = @VERSION@
-XCODEML_COMMON_DIR = @XCODEML_COMMON_DIR@
-XCODEML_EXC_TOOLS_DIR = @XCODEML_EXC_TOOLS_DIR@
 XMPC_DEF = @XMPC_DEF@
 XMPF_DEF = @XMPF_DEF@
 XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
@@ -513,15 +515,15 @@ top_srcdir = @top_srcdir@
 XMP_INC_DIR = ../../libxmp/include
 XMPF_INC_DIR = ../include
 lib_LIBRARIES = libxmpf.a
-libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_array.c \
-	xmpf_gcomm.c xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c \
-	xmpf_misc.c xmpf_nodes.c xmpf_pack.c xmpf_reflect.c \
-	xmpf_sort.c xmpf_task.c xmpf_template.c $(am__append_1) \
-	$(am__append_3)
+libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_main.F90 \
+	xmpf_array.c xmpf_async.c xmpf_gcomm.c xmpf_gmove.c \
+	xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c xmpf_nodes.c \
+	xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
+	xmpf_template.c $(am__append_1) $(am__append_6)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .f90 .lo .o .obj
+.SUFFIXES: .F90 .c .f90 .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -531,9 +533,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./libxmpf/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps libxmpf/src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps ./libxmpf/src/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps libxmpf/src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -594,6 +596,15 @@ mostlyclean-compile:
 
 distclean-compile:
 	-rm -f *.tab.c
+
+.F90.o:
+	$(AM_V_PPFC)$(PPFCCOMPILE) -c -o $@ $<
+
+.F90.obj:
+	$(AM_V_PPFC)$(PPFCCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.F90.lo:
+	$(AM_V_PPFC)$(LTPPFCCOMPILE) -c -o $@ $<
 
 .c.o:
 	$(AM_V_CC)$(COMPILE) -c -o $@ $<
@@ -825,17 +836,14 @@ uninstall-am: uninstall-libLIBRARIES
 	tags tags-am uninstall uninstall-am uninstall-libLIBRARIES
 
 
-xmpf_main.o: xmpf_main.f
-	$(FC) $(FCFLAGS) -c xmpf_main.f
+xmpf_main.o: xmpf_main.F90
+	$(FC) $(FCFLAGS) $< -c
 
 xmpf_coarray_get_wrap.f90: xmpf_coarray_get_wrap.f90.sh
-	./xmpf_coarray_get_wrap.f90.sh > xmpf_coarray_get_wrap.f90
+	. $< > $@
 
-xmpf_coarray_get_wrap.o: xmpf_coarray_get_wrap.f90
-	$(FC) $(FCFLAGS) -c xmpf_coarray_get_wrap.f90
-
-xmpf_coarray_wrap.o: xmpf_coarray_wrap.f90
-	$(FC) $(FCFLAGS) -c xmpf_coarray_wrap.f90
+xmpf_coarray_alloc_wrap.f90: xmpf_coarray_alloc_wrap.f90.sh
+	. $< > $@
 
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || /bin/mkdir -p $(DESTDIR)$(libdir)
@@ -843,6 +851,8 @@ install-exec-local: xmpf_main.o
 
 clean-local:
 	rm -f *~ *.core core core.*
+	rm -f xmpf_coarray_get_wrap.f90
+	rm -f xmpf_coarray_alloc_wrap.f90
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -1,8 +1,15 @@
 #include "xmpf_internal.h"
 
-_Bool xmpf_test_task_on__(_XMP_object_ref_t **r_desc);
+//_Bool xmpf_test_task_on__(_XMP_object_ref_t **r_desc);
+void xmpf_create_task_nodes__(_XMP_nodes_t **n, _XMP_object_ref_t **r_desc);
+_Bool xmpf_test_task_on_nodes__(_XMP_nodes_t **n);
 void xmpf_end_task__(void);
+void xmpf_nodes_dealloc__(_XMP_nodes_t **n_desc);
 
+#ifdef _XMP_MPI3
+extern _Bool is_async;
+extern int _async_id;
+#endif
 
 //#define DBG 1
 
@@ -42,13 +49,24 @@ void xmpf_reduction__(void *data_addr, int *count, int *datatype, int *op,
       }
     }
     else {
-      if (xmpf_test_task_on__(r_desc)){
-	nodes = _XMP_get_execution_nodes();
-	if (*num_locs == 0) _XMP_reduce_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op);
-	else _XMPF_reduce_FLMM_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op, *num_locs,
-					    xmpf_reduction_loc_vars, xmpf_reduction_loc_types);
-	xmpf_end_task__();
+      /* if (xmpf_test_task_on__(r_desc)){ */
+      /* 	nodes = _XMP_get_execution_nodes(); */
+      /* 	if (*num_locs == 0) _XMP_reduce_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op); */
+      /* 	else _XMPF_reduce_FLMM_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op, *num_locs, */
+      /* 					    xmpf_reduction_loc_vars, xmpf_reduction_loc_types); */
+      /* 	xmpf_end_task__(); */
+      /* } */
+      _XMP_nodes_t *n;
+      xmpf_create_task_nodes__(&n, r_desc);
+      if (xmpf_test_task_on_nodes__(&n)){
+      	nodes = _XMP_get_execution_nodes();
+      	if (*num_locs == 0) _XMP_reduce_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op);
+      	else _XMPF_reduce_FLMM_NODES_ENTIRE(nodes, data_addr, *count, *datatype, *op, *num_locs,
+      					    xmpf_reduction_loc_vars, xmpf_reduction_loc_types);
+      	xmpf_end_task__();
       }
+      xmpf_nodes_dealloc__(&n);
+
     }
 
   }
@@ -170,20 +188,69 @@ void _XMPF_bcast_on_nodes(void *data_addr, int count, int datatype,
 
     if (_XMP_is_entire(on_desc)){
       on = on_desc->n_desc;
-      MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm));
+
+#ifdef _XMP_MPI3
+      if (is_async){
+	_XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+	MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm),
+		   &async->reqs[async->nreqs]);
+	async->nreqs++;
+      }
+      else
+#endif
+	MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm));
     }
     else {
-      if (xmpf_test_task_on__(&on_desc)){
+/*       if (xmpf_test_task_on__(&on_desc)){ */
+/* 	on = _XMP_get_execution_nodes(); */
+
+/* #ifdef _XMP_MPI3 */
+/* 	if (is_async){ */
+/* 	  _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id); */
+/* 	  MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm), */
+/* 		     &async->reqs[async->nreqs]); */
+/* 	  async->nreqs++; */
+/* 	} */
+/* 	else */
+/* #endif */
+/* 	  MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm)); */
+/* 	xmpf_end_task__(); */
+/*       } */
+      _XMP_nodes_t *n;
+      xmpf_create_task_nodes__(&n, &on_desc);
+      if (xmpf_test_task_on_nodes__(&n)){
 	on = _XMP_get_execution_nodes();
-	MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm));
-	xmpf_end_task__();
+
+#ifdef _XMP_MPI3
+	if (is_async){
+	  _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+	  MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm),
+		     &async->reqs[async->nreqs]);
+	  async->nreqs++;
+	}
+	else
+#endif
+	  MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm));
+      	xmpf_end_task__();
       }
+      xmpf_nodes_dealloc__(&n);
+
     }
 
   }
   else {
     on = from_desc ? from_desc->n_desc : _XMP_get_execution_nodes();
-    MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm));
+
+#ifdef _XMP_MPI3
+    if (is_async){
+      _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+      MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm),
+		 &async->reqs[async->nreqs]);
+      async->nreqs++;
+    }
+    else
+#endif
+      MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on->comm));
   }
 
 }
@@ -303,27 +370,75 @@ void _XMPF_bcast_on_template(void *data_addr, int count, int datatype,
       }
     }
 
-    MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm));
+#ifdef _XMP_MPI3
+    if (is_async){
+      _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+      MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm), async->reqs);
+      async->nreqs = 1;
+    }
+    else
+#endif
+      MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm));
   }
   else {
-    if (xmpf_test_task_on__(&on_desc)){
-      on_nodes = _XMP_get_execution_nodes();
+/*     if (xmpf_test_task_on__(&on_desc)){ */
+/*       on_nodes = _XMP_get_execution_nodes(); */
       
-      if (from_desc){
-	int acc_nodes_size = 1;
-	for (int i = 0; i < on_nodes->inherit_nodes->dim; i++){
-	  if (on_nodes->inherit_info[i].shrink) continue;
-	  int inherit_lb = on_nodes->inherit_info[i].lower;
-	  int inherit_ub = on_nodes->inherit_info[i].upper;
-	  int inherit_st = on_nodes->inherit_info[i].stride;
-	  root += (acc_nodes_size * ((from_idx_in_nodes[i] - inherit_lb) / inherit_st));
-	  acc_nodes_size *= _XMP_M_COUNT_TRIPLETi(inherit_lb, inherit_ub, inherit_st);
-	}
-      }
+/*       if (from_desc){ */
+/* 	int acc_nodes_size = 1; */
+/* 	for (int i = 0; i < on_nodes->inherit_nodes->dim; i++){ */
+/* 	  if (on_nodes->inherit_info[i].shrink) continue; */
+/* 	  int inherit_lb = on_nodes->inherit_info[i].lower; */
+/* 	  int inherit_ub = on_nodes->inherit_info[i].upper; */
+/* 	  int inherit_st = on_nodes->inherit_info[i].stride; */
+/* 	  root += (acc_nodes_size * ((from_idx_in_nodes[i] - inherit_lb) / inherit_st)); */
+/* 	  acc_nodes_size *= _XMP_M_COUNT_TRIPLETi(inherit_lb, inherit_ub, inherit_st); */
+/* 	} */
+/*       } */
 
-      MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm));
-      xmpf_end_task__();
-    }
+/* #ifdef _XMP_MPI3 */
+/*       if (is_async){ */
+/* 	_XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id); */
+/* 	MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm), async->reqs); */
+/* 	async->nreqs = 1; */
+/*       } */
+/*       else */
+/* #endif */
+/* 	MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm)); */
+
+/*       xmpf_end_task__(); */
+/*     } */
+      _XMP_nodes_t *n;
+      xmpf_create_task_nodes__(&n, &on_desc);
+      if (xmpf_test_task_on_nodes__(&n)){
+	on_nodes = _XMP_get_execution_nodes();
+      
+	if (from_desc){
+	  int acc_nodes_size = 1;
+	  for (int i = 0; i < on_nodes->inherit_nodes->dim; i++){
+	    if (on_nodes->inherit_info[i].shrink) continue;
+	    int inherit_lb = on_nodes->inherit_info[i].lower;
+	    int inherit_ub = on_nodes->inherit_info[i].upper;
+	    int inherit_st = on_nodes->inherit_info[i].stride;
+	    root += (acc_nodes_size * ((from_idx_in_nodes[i] - inherit_lb) / inherit_st));
+	    acc_nodes_size *= _XMP_M_COUNT_TRIPLETi(inherit_lb, inherit_ub, inherit_st);
+	  }
+	}
+
+#ifdef _XMP_MPI3
+	if (is_async){
+	  _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+	  MPI_Ibcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm), async->reqs);
+	  async->nreqs = 1;
+	}
+	else
+#endif
+	  MPI_Bcast(data_addr, count*size, MPI_BYTE, root, *((MPI_Comm *)on_nodes->comm));
+
+	xmpf_end_task__();
+      }
+      xmpf_nodes_dealloc__(&n);
+
   }
 
 }
@@ -336,7 +451,6 @@ void xmpf_bcast__(void *data_addr, int *count, int *datatype,
     _XMPF_bcast_on_template(data_addr, *count, *datatype, *from_desc, *on_desc);
   else
     _XMPF_bcast_on_nodes(data_addr, *count, *datatype, *from_desc, *on_desc);
-
 }
 
 
@@ -356,10 +470,17 @@ void xmpf_barrier__(_XMP_object_ref_t **desc)
       }
     }
     else {
-      if (xmpf_test_task_on__(desc)){
-	_XMP_barrier_EXEC();
-	xmpf_end_task__();
+      /* if (xmpf_test_task_on__(desc)){ */
+      /* 	_XMP_barrier_EXEC(); */
+      /* 	xmpf_end_task__(); */
+      /* } */
+      _XMP_nodes_t *n;
+      xmpf_create_task_nodes__(&n, desc);
+      if (xmpf_test_task_on_nodes__(&n)){
+      	_XMP_barrier_EXEC();
+      	xmpf_end_task__();
       }
+      xmpf_nodes_dealloc__(&n);
     }
 
   }

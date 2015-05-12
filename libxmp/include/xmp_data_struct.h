@@ -238,6 +238,7 @@ typedef struct _XMP_task_desc_type {
   int ref_stride[_XMP_N_MAX_DIM];
 } _XMP_task_desc_t;
 
+// Note: When member is changed, _XMP_coarray_deallocate() may be changed.
 typedef struct xmp_coarray{
   char **addr;      // Pointer to each node.
                     // e.g.) xmp_coarray.addr[2] is a pointer of an object on node 2.
@@ -296,6 +297,23 @@ typedef struct _XMP_gmv_desc_type
   int *st;
 
 } _XMP_gmv_desc_t;
+
+//
+// for asynchronous comms.
+//
+
+typedef struct _XMP_async_comm {
+  int async_id;
+  int nreqs;
+  MPI_Request *reqs;
+  struct _XMP_async_comm *next;
+} _XMP_async_comm_t;
+
+#define _XMP_ASYNC_COMM_SIZE 511
+
+#define _XMP_MAX_ASYNC_REQS (4 * _XMP_N_MAX_DIM * 10)
+
+
 
 typedef struct _XMP_gpu_array_type {
   int gtol;

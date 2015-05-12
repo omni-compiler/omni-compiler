@@ -6,6 +6,7 @@ usage: $1 <OPTIONS> <INPUTFILE> ...
 Compile Driver Options
 
    -o <file>         : place the output into <file>.
+   -I <dir>          : add the directory dir to the list of directories to be searched for header files.
    -c                : compile and assemble, but do not link.
    -E                : preprocess only; do not compile, assemble or link.
    -v,--verbose      : print processing status.
@@ -43,27 +44,29 @@ EOF
 
 function xmpcc_show_env()
 {
-    CONF_FILE=${OMNI_HOME}/etc/xmpcc.conf
-    if [ -f $CONF_FILE ]; then
-	for val in `sed '/^[[:space:]]*$/d' ${CONF_FILE} | grep -v '^#' | awk -F= '{print $1}'`
+    CONF_FILE=${OM_DRIVER_CONF_DIR}/xmpcc.conf
+    if [ -f "${CONF_FILE}" ]; then
+	for val in `sed '/^[[:space:]]*$/d' "${CONF_FILE}" | grep -v '^#' | awk -F= '{print $1}'`
 	do
 	    echo -n ${val}=\"
             eval echo -n \"\$$val\"
 	    echo \"
 	done
-    else
-	omni_error_exit "$CONF_FILE not exist."
     fi
 }
 
 function xmpcc_set_parameters()
 {
-    local tmp_args=""
-
-    for arg in "${@}"; do
-	case $arg in
+    while [ -n "$1" ]; do
+	case "$1" in
+	    *.c)
+		c_files+=("$1");;
+	    *.a)
+		archive_files+=("$1");;
+	    *.o)
+		obj_files+=("$1");;
 	    -o)
-                OUTPUT_FLAG=true;;
+		shift; output_file=("$1");;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)
@@ -71,15 +74,11 @@ function xmpcc_set_parameters()
             -v|--verbose)
 		VERBOSE=true;;
 	    --version)
-		omni_print_version
-		exit 0;;
+		omni_print_version; exit 0;;
             -h|--help)
-		local scriptname=`basename $0`
-		xmpcc_print_help $scriptname
-		exit 0;;
+		xmpcc_print_help `basename $0`; exit 0;;
 	    --show-env)
-		xmpcc_show_env
-		exit 0;;
+		xmpcc_show_env; exit 0;;
             --tmp)
 		OUTPUT_TEMPORAL=true;;
             --dry)
@@ -87,38 +86,27 @@ function xmpcc_set_parameters()
 	    --debug)
 		ENABLE_DEBUG=true;;
             --stop-pp)
-		STOP_PP=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_PP=true;;
             --stop-frontend)
-		STOP_FRONTEND=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_FRONTEND=true;;
 	    --stop-translator)
-		STOP_TRANSLATOR=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_TRANSLATOR=true;;
 	    --stop-backend)
-		STOP_BACKEND=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_BACKEND=true;;
 	    --stop-compile)
-		STOP_COMPILE=true
-		VERBOSE=true;;
+		VERBOSE=true; STOP_COMPILE=true;;
 	    --Wp*)
-		PP_ADD_OPT=${arg#--Wp}
-                ;;
+		pp_add_opt+=("${1#--Wp}");;
             --Wf*)
-		FRONTEND_ADD_OPT=${arg#--Wf}
-                ;;
+		frontend_add_opt+=("${1#--Wf}");;
             --Wx*)
-		XCODE_TRANSLATOR_ADD_OPT=${arg#--Wx}
-                ;;
+		xcode_translator_add_opt+=("${1#--Wx}");;
 	    --Wn*)
-		NATIVE_ADD_OPT=${arg#--Wn}
-		;;
+		native_add_opt+=("${1#--Wn}");;
             --Wb*)
-		BACKEND_ADD_OPT=${arg#--Wb}
-                ;;
+		backend_add_opt+=("${1#--Wb}");;
             --Wl*)
-		LINKER_ADD_OPT=${arg#--Wl}
-		;;
+		linker_add_opt+=("${1#--Wl}");;
 	    --openmp|-omp)
 		ENABLE_OPENMP=true;;
 	    --xcalableacc|-xacc)
@@ -132,29 +120,12 @@ function xmpcc_set_parameters()
 	    --tlog)
 		ENABLE_TLOG=true;;
             *)
-		if [ "$OUTPUT_FLAG" = true ]; then
-		    OUTPUT_FILE=$arg
-		    OUTPUT_FLAG=false
-		else
-		    tmp_args="$tmp_args $arg"
-		fi;;
+		other_args+=("$1");;
 	esac
+	shift
     done
 
     if test $OUTPUT_TEMPORAL = true -a $DRY_RUN = true; then
         omni_error_exit "cannot use both --tmp and --dry options at the same time."
     fi
-
-    for arg in $tmp_args; do
-	if [[ $arg =~ \.c$ ]]; then
-            c_files="$c_files $arg"
-	elif [[ $arg =~ \.a$ ]]; then
-	    archive_files="$archive_files $arg"
-	elif [[ "${arg}" =~ \.o$ ]]; then
-            obj_files="$obj_files $arg"
-	else
-            other_args="$other_args $arg"
-	fi
-    done
 }
-

@@ -25,6 +25,11 @@ run: $(EXES)
 	$(XRUN) -n 4 ./intrinsic_matmul_4_FJ.x
 	$(XRUN) -n 8 ./intrinsic_matmul_FJ.x
 	$(XRUN) -n 8 ./intrinsic_sort.x
+	$(XRUN) -n 4 ./intrinsic_scatter.x
+	$(XRUN) -n 4 ./intrinsic_scatter2x2.x
+	$(XRUN) -n 4 ./intrinsic_gather.x
+	$(XRUN) -n 4 ./intrinsic_gather2x2.x
+	$(XRUN) -n 4 ./intrinsic_pack_unpack.x
 
 clean:
 	rm -f $(EXES) $(OBJS) chk.o

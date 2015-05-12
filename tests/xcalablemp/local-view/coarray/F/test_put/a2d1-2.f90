@@ -1,13 +1,12 @@
   program test_a2_d1
-    include "xmp_lib.h"
+    include "xmp_coarray.h"
     real a2(2,3)[*]
-    integer xmp_node_num, xmp_num_nodes
     integer nerr
 
     !---------------------------- check and preparation
-    me = xmp_node_num()   ! == this_image()
+    me = this_image()
 
-    if (xmp_num_nodes() < 3) then
+    if (num_images() < 3) then
        print '("[",i0,"] stop: at least 3 images are needed")', me
        stop
     end if
@@ -70,6 +69,6 @@
     end if
     !---------------------------- check and output end
 
-100 format ("a2(",i0,",",i0,")[",i0,"]=",f8.6," should be ",f8.6)
+100 format ("a2(",i0,",",i0,")[",i0,"]=",f10.6," should be ",f10.6)
 
   end program

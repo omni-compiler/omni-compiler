@@ -1,10 +1,10 @@
   program putgettest
-    include "xmp_lib.h"
+    include "xmp_coarray.h"
     integer*2 a2d2(10,8)[*]
     integer xmp_node_num
     integer nerr
 
-    me = xmp_node_num()   ! == this_image()
+    me = this_image()
 
     !---------------------------- switch on message
 !!    call xmpf_coarray_msg(1)
@@ -57,6 +57,7 @@
        print '("[",i0,"] OK")', me
     else
        print '("[",i0,"] number of NGs: ",i0)', me, nerr
+       stop 1
     end if
     !---------------------------- check and output end
 

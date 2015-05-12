@@ -163,6 +163,7 @@ void
 print_IDs(ip,fp,rec)
     ID ip;
     FILE *fp;
+    int rec;
 {
     fprintf(fp, "# ID dump by %s\n", __func__);
     for( ; ip != NULL; ip = ID_NEXT(ip)) print_ID(ip,fp,rec);

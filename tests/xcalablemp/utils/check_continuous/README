@@ -1,0 +1,10 @@
+/**
+ Author:  Masahiro Nakao
+ Purpose: Check _check_continuous() in xmp_coarray.c.
+ Note   : The execution times are very long in over 5 dimensions.
+          So, I created until 4 dimensions.
+*/
+
+Usage:
+	$  make check
+

@@ -78,7 +78,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-subdir = ./XcodeML-Common
+subdir = XcodeML-Common
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/buildutils/libtool.m4 \
@@ -123,18 +123,16 @@ AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 API_FLAVOR = @API_FLAVOR@
 AR = @AR@
 ARFLAGS = @ARFLAGS@
-ATOOL_DIR = @ATOOL_DIR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BLASLIB = @BLASLIB@
-BLAS_LIB = @BLAS_LIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CPP_OPT = @CPP_OPT@
 CPU = @CPU@
 CPUDEF = @CPUDEF@
 CXX = @CXX@
@@ -142,8 +140,6 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-C_BACKEND_DIR = @C_BACKEND_DIR@
-C_FRONTEND_DIR = @C_FRONTEND_DIR@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
@@ -155,15 +151,11 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 ENABLE_ACC = @ENABLE_ACC@
 ENABLE_ATOOL = @ENABLE_ATOOL@
-ENABLE_XACC = @ENABLE_XACC@
 EXEEXT = @EXEEXT@
 F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
-FJRDMA = @FJRDMA@
-F_BACKEND_DIR = @F_BACKEND_DIR@
-F_FRONTEND_DIR = @F_FRONTEND_DIR@
 GASNET_LIBS = @GASNET_LIBS@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CFLAGS = @GPU_CFLAGS@
@@ -176,9 +168,6 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 INT_ENUFF_FOR_VOIDP = @INT_ENUFF_FOR_VOIDP@
-IS_CRAY = @IS_CRAY@
-IS_PGI = @IS_PGI@
-IS_SUPERUX = @IS_SUPERUX@
 JAR = @JAR@
 JAVA = @JAVA@
 JAVAC = @JAVAC@
@@ -188,23 +177,12 @@ LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
-LIBACC_DIR = @LIBACC_DIR@
-LIBACC_HEADER_DIR = @LIBACC_HEADER_DIR@
 LIBOBJS = @LIBOBJS@
-LIBOMPC_DIR = @LIBOMPC_DIR@
-LIBOMPF_DIR = @LIBOMPF_DIR@
 LIBS = @LIBS@
-LIBTLOG_DIR = @LIBTLOG_DIR@
-LIBTLOG_MPI_DIR = @LIBTLOG_MPI_DIR@
 LIBTOOL = @LIBTOOL@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
+LIBXML_LIB = @LIBXML_LIB@
 LIBXML_PREFIX = @LIBXML_PREFIX@
-LIBXMPF_DIR = @LIBXMPF_DIR@
-LIBXMPF_HEADER_DIR = @LIBXMPF_HEADER_DIR@
-LIBXMP_DIR = @LIBXMP_DIR@
-LIBXMP_GPU_DIR = @LIBXMP_GPU_DIR@
-LIBXMP_HEADER_DIR = @LIBXMP_HEADER_DIR@
-LIBXMP_THREADS_DIR = @LIBXMP_THREADS_DIR@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
@@ -230,7 +208,6 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OMDRIVER_DIR = @OMDRIVER_DIR@
 OMNI_C2X_FLAGS = @OMNI_C2X_FLAGS@
 OMNI_F2X_FLAGS = @OMNI_F2X_FLAGS@
 OMNI_F_PP = @OMNI_F_PP@
@@ -287,14 +264,14 @@ SIZEOF_UNSIGNED_SHORT = @SIZEOF_UNSIGNED_SHORT@
 SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
 STRIP = @STRIP@
+SUPERUX = @SUPERUX@
+TARGET = build/om-common.jar
 TARGET_ARCH = @TARGET_ARCH@
 TOPDIR = @TOPDIR@
 TYPE_INT16 = @TYPE_INT16@
 TYPE_INT32 = @TYPE_INT32@
 TYPE_INT64 = @TYPE_INT64@
 VERSION = @VERSION@
-XCODEML_COMMON_DIR = @XCODEML_COMMON_DIR@
-XCODEML_EXC_TOOLS_DIR = @XCODEML_EXC_TOOLS_DIR@
 XMPC_DEF = @XMPC_DEF@
 XMPF_DEF = @XMPF_DEF@
 XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
@@ -386,7 +363,6 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-TARGET = build/om-common.jar
 SRC = $(wildcard src/xcodeml/*.java src/xcodeml/*/*.java)
 all: all-am
 
@@ -400,9 +376,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./XcodeML-Common/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps XcodeML-Common/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps ./XcodeML-Common/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps XcodeML-Common/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -582,12 +558,14 @@ uninstall-am:
 all-local: $(TARGET)
 
 $(TARGET): $(SRC)
-	$(JAVAC) src/xcodeml/*.java src/xcodeml/*/*.java -classpath ./src -Xlint:deprecation
+	$(JAVAC) -encoding utf8 src/xcodeml/*.java src/xcodeml/*/*.java -classpath ./src -Xlint:deprecation
 	mkdir -p build
 	cd src;	$(JAR) cf ../$@ ./xcodeml/*.class ./xcodeml/*/*.class
 
 clean-local:
-	rm -f $(TARGET) $(CLASS)
+	rm -f $(TARGET)
+	rm -f src/xcodeml/*.class
+	rm -f src/xcodeml/*/*.class
 
 install: $(TARGET)
 	mkdir -p ${javadir}

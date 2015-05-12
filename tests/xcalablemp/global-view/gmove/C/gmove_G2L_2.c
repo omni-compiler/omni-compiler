@@ -16,7 +16,7 @@ double a[n];
 #pragma xmp distribute tx(cyclic(2)) onto p
 #pragma xmp align a[i] with tx(i)
 
-  int i,j,ierr;
+ int i,/*j,*/ierr;
   double b[N],err;
 
 #pragma xmp loop (i) on tx(i)

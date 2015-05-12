@@ -798,7 +798,7 @@ public class XMPalignedArray {
 
     // assumed that dynamic arrays are one-dimentional.
     alignFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
-				 alignedArray.getAccIdAt(0).getAddr()));
+				 alignedArray.getAccIdAt(alignSourceIndex).getAddr()));
 
     if (isLocalPragma) {
       XMPlocalDecl.addConstructorCall2("_XMP_align_array_noalloc", alignFuncArgs, globalDecl, parentBlock);

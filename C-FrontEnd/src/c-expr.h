@@ -1147,6 +1147,10 @@ extern CExprOfList*           allocExprOfList3(CExprCodeEnum exprCode,
                                     CExpr *e1, CExpr *e2, CExpr *e3);
 extern CExprOfList*           allocExprOfList4(CExprCodeEnum exprCode,
                                     CExpr *e1, CExpr *e2, CExpr *e3, CExpr *e4);
+extern CExprOfList*           allocExprOfList5(CExprCodeEnum exprCode,
+					       CExpr *e1, CExpr *e2, CExpr *e3, CExpr *e4, CExpr *e5);
+extern CExprOfList*           allocExprOfList6(CExprCodeEnum exprCode,
+					       CExpr *e1, CExpr *e2, CExpr *e3, CExpr *e4, CExpr *e5, CExpr *e6);
 extern CExprOfNumberConst*    allocExprOfNumberConst(CExprCodeEnum exprCode,
                                     CBasicTypeEnum btype, CCardinalEnum c, char *orgToken);
 extern CExprOfNumberConst*    allocExprOfNumberConst1(CNumValueWithType *nvt);

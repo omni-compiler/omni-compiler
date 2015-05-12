@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 import exc.block.*;
 import exc.object.*;
@@ -45,7 +39,16 @@ public class XMPtranslate implements XobjectDefVisitor {
   private void translate(XobjectDef def) {
     if (!def.isFuncDef()) {
       Xobject x = def.getDef();
-      if (x.Opcode() == Xcode.XMP_PRAGMA) _translateGlobalPragma.translate(x);
+      switch (x.Opcode()) {
+      case XMP_PRAGMA:
+        _translateGlobalPragma.translate(x);
+        break;
+
+      case VAR_DECL:
+        // for coarray declaration of XMP1.2
+        _rewriteExpr.rewriteVarDecl(x, false);   // isLocal=false
+        break;
+      }
       return;
     }
         
@@ -71,7 +74,6 @@ public class XMPtranslate implements XobjectDefVisitor {
 	XMP.error(b.getLineNo(), e.getMessage());
       }
     }
-
   }
 
   private void first_arg_check(Xobject arg) throws XMPexception{
@@ -100,7 +102,7 @@ public class XMPtranslate implements XobjectDefVisitor {
     }
   }
   
-  // Create a new function xpmc_main() and copy main() to the new function
+  // Create a new function xmpc_main() and copy main() to the new function
   private void create_new_main(FuncDefBlock fd) throws XMPexception {
     Ident mainId = _globalDecl.findVarIdent("main");
     Xtype mainType = ((FunctionType)mainId.Type()).getBaseRefType();
@@ -109,8 +111,9 @@ public class XMPtranslate implements XobjectDefVisitor {
     Xobject mainBody = fd.getDef().getFuncBody();
     XobjectFile _env = _globalDecl.getEnv();
     Ident xmpcInitAll = _env.declExternIdent("xmpc_init_all", Xtype.Function(Xtype.voidType));
-    Ident xmpcModuleInit = _env.declExternIdent("xmpc_module_init", Xtype.Function(Xtype.voidType));
+    Ident xmpcTraverseInit = _env.declExternIdent("xmpc_traverse_init", Xtype.Function(Xtype.voidType));
     Ident xmpcMain = _env.declStaticIdent("xmpc_main", Xtype.Function(mainType));
+    Ident xmpcTraverseFinalize = _env.declExternIdent("xmpc_traverse_finalize", Xtype.Function(Xtype.voidType));
     Ident xmpcFinalizeAll = _env.declExternIdent("xmpc_finalize_all", Xtype.Function(Xtype.voidType));
 
     _env.add(XobjectDef.Func(xmpcMain, mainIdList, mainDecls, mainBody));
@@ -119,15 +122,17 @@ public class XMPtranslate implements XobjectDefVisitor {
     BlockList newFuncBody = Bcons.emptyBody();
 
     newFuncBody.add(xmpcInitAll.Call(mainIdList));
-    newFuncBody.add(xmpcModuleInit.Call(null));
+    newFuncBody.add(xmpcTraverseInit.Call(null));
     if(mainType.equals(Xtype.voidType)){
       newFuncBody.add(xmpcMain.Call(mainIdList));
+      newFuncBody.add(xmpcTraverseFinalize.Call(null));
       newFuncBody.add(xmpcFinalizeAll.Call(null));
     }
     else{
       Ident r = Ident.Local("r", mainType);
       newFuncBody.addIdent(r);
       newFuncBody.add(Xcons.Set(r.Ref(), xmpcMain.Call(mainIdList)));
+      newFuncBody.add(xmpcTraverseFinalize.Call(null));
       newFuncBody.add(xmpcFinalizeAll.Call(Xcons.List(r)));
       newFuncBody.add(Xcons.List(Xcode.RETURN_STATEMENT, r.Ref()));
     }
@@ -166,24 +171,6 @@ public class XMPtranslate implements XobjectDefVisitor {
 
     first_arg_check(first_arg);
     second_arg_check(second_arg);
-
-    // Insert _XMP_constructor() into main().
-    //    BlockList mainBody = fd.getBlock().getBody().getHead().getBody();
-    //    Ident constructorId = _globalDecl.declExternFunc("_XMP_constructor");
-    //    mainBody.insert(constructorId.Call((XobjList)args));
-
-    // Insert _XMP_destructor() into previous point of return statement.
-    //    Ident destructorId = _globalDecl.declExternFunc("_XMP_destructor");
-    //    BlockIterator i = new topdownBlockIterator(mainBody);
-    //    for(i.init(); !i.end(); i.next()){
-    //      Block b = i.getBlock();
-    //      if(b.Opcode() == Xcode.RETURN_STATEMENT){
-    //	b.insert(destructorId.Call((XobjList)null));
-    //      }
-    //    }
-
-    // Insert _XMP_destructor() into end of main().
-    //    mainBody.add(destructorId.Call((XobjList)null));  
   }
   
   public void set_all_profile(){
@@ -204,8 +191,8 @@ public class XMPtranslate implements XobjectDefVisitor {
       _translateLocalPragma.setTlogEnabled(v);
   }
 
-  private void fixSubArrayRef(FuncDefBlock def){
-
+  private void fixSubArrayRef(FuncDefBlock def)
+  {
     FunctionBlock fb = def.getBlock();
     if (fb == null) return;
 
@@ -215,60 +202,54 @@ public class XMPtranslate implements XobjectDefVisitor {
 
       XobjectIterator iter2 = new bottomupXobjectIterator(block.toXobject());
       for (iter2.init(); !iter2.end(); iter2.next()){
-
 	Xobject x = iter2.getXobject();
 	if (x != null && x.Opcode() == Xcode.SUB_ARRAY_REF){
-
 	  String arrayName = x.getArg(0).getSym();
-
 	  Ident arrayId = null;
+
 	  if (block.getBody() != null) arrayId = block.getBody().findLocalIdent(arrayName);
 	  if (arrayId == null) arrayId = block.findVarIdent(arrayName);
 	  if (arrayId == null) arrayId = _globalDecl.findVarIdent(arrayName);
 	  if (arrayId == null) continue;
 
 	  Xtype arrayType = arrayId.Type();
-
 	  int n = arrayType.getNumDimensions();
-
 	  XobjList subscripts = (XobjList)x.getArg(1);
 
 	  for (int i = 0; i < n; i++, arrayType = arrayType.getRef()){
-
-	    long dimSize = arrayType.getArraySize();
-	    Xobject sizeExpr;
-	    if (dimSize == 0 || arrayType.getKind() == Xtype.POINTER){
-	      continue;
-	    }
-	    else if (dimSize == -1){
-	      sizeExpr = arrayType.getArraySizeExpr();
-	    }
-	    else {
-	      sizeExpr = Xcons.IntConstant((int)dimSize);
-	    }
-
-	    Xobject sub = subscripts.getArg(i);
-
-	    Xobject lb, len, st;
-
-	    if (sub.Opcode() != Xcode.LIST) continue;
-
-	    lb = ((XobjList)sub).getArg(0);
-	    if (lb == null) lb = Xcons.IntConstant(0);
-	    len = ((XobjList)sub).getArg(1);
-	    //if (len == null) len = Xcons.binaryOp(Xcode.MINUS_EXPR, sizeExpr, lb);
-	    if (len == null) len = sizeExpr;
-	    st = ((XobjList)sub).getArg(2);
-	    if (st == null) st = Xcons.IntConstant(1);
-
-	    subscripts.setArg(i, Xcons.List(lb, len, st));
-	  }
-
+            if(subscripts.Nargs() == i){
+              XMP.fatal(block.getLineNo(), "Invalid access of coarray");
+            }
+            else{
+              long dimSize = arrayType.getArraySize();
+              Xobject sizeExpr;
+              if (dimSize == 0 || arrayType.getKind() == Xtype.POINTER){
+                continue;
+              }
+              else if (dimSize == -1){
+                sizeExpr = arrayType.getArraySizeExpr();
+              }
+              else {
+                sizeExpr = Xcons.IntConstant((int)dimSize);
+              }
+              
+              Xobject sub = subscripts.getArg(i);
+              Xobject lb, len, st;
+              
+              if (sub.Opcode() != Xcode.LIST) continue;
+              
+              lb = ((XobjList)sub).getArg(0);
+              if (lb == null) lb = Xcons.IntConstant(0);
+              len = ((XobjList)sub).getArg(1);
+              if (len == null) len = sizeExpr;
+              st = ((XobjList)sub).getArg(2);
+              if (st == null) st = Xcons.IntConstant(1);
+              
+              subscripts.setArg(i, Xcons.List(lb, len, st));
+            }
+          }
 	}
-
       }
-
     }
-
   }
 }

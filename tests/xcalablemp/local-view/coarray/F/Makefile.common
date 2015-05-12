@@ -1,0 +1,61 @@
+# This file is included from */Makefile files.
+
+SRC= $(OUT:%=%.f90)
+RESULT= $(OUT:%=%.result)
+
+%:  %.f90
+	xmpf90 $(OPT) -o $@ $<
+
+%:  %.c
+	xmpcc $(OPT) -o $@ $<
+
+%.result: %
+	mpirun -n $(NPE) $< 2>&1 >$@
+	cat $@
+
+%.result: %.f90
+	xmpf90 $(OPT) -o $* $<
+	mpirun -n 3 $* 2>&1 >$@
+	cat $@
+
+%.result: %.c
+	xmpcc $(OPT) -o $* $<
+	mpirun -n 3 $* 2>&1 >$@
+	cat $@
+
+RUN/%:: %
+	cp $< $@
+
+RUN/%:: 
+	touch $@
+
+### compile test programs
+all:     $(OUT)
+
+### execute on local environment
+run:	$(RESULT)
+
+rerun:  clean-result run
+
+### prepare to execute on K/FX10
+submit: all RUN RUN/go.sh $(OUT:%=RUN/%)
+	cd RUN; pjsub go.sh
+
+RUN:
+	mkdir RUN
+
+RUN/go.sh: go.template Makefile
+	sed "s/@OUT@/$(OUT)/" $< >$@
+
+### clean
+clean:
+	rm -f *~ *.o $(OUT) *.result a.out
+	rm -rf __omni_tmp__/
+	rm -f omni_traverse*.o
+	rm -f $(OUT:%=RUN/%)
+	rm -f *.mod *.xmod
+	rm -rf RUN
+
+clean-result:
+	rm -f $(RESULT)
+

@@ -602,7 +602,7 @@ int test_transpose_017(){
 
 #define M 23
 #define N 31
-int m1[2]={11,20};
+  //int m1[2]={11,20};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(4)=p(3:6)
 #pragma xmp nodes pb(2,2,2)
@@ -642,7 +642,7 @@ int test_transpose_018(){
 
 #define M 23
 #define N 31
-int m1[2]={11,20};
+  //int m1[2]={11,20};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,4)
 #pragma xmp nodes pb(2,2,2)
@@ -683,7 +683,7 @@ int test_transpose_019(){
 
 #define M 23
 #define N 31
-int m1[2]={11,20};
+  //int m1[2]={11,20};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,4)
 #pragma xmp nodes pb(2,2,2)
@@ -726,7 +726,7 @@ int test_transpose_020(){
 #define N 31
 int m1[2]={1,30};
 #pragma xmp nodes p(8)
-#pragma xmp nodes pa(2,4)
+#pragma xmp nodes pa(4,2)
 #pragma xmp nodes pb(2,2,2)
 #pragma xmp template ta(0:M-1,0:N-1)
 #pragma xmp template tb(0:N-1,0:N-1,0:M-1)
@@ -767,7 +767,7 @@ int test_transpose_021(){
 #define N 31
 int m1[2]={1,30};
 #pragma xmp nodes p(8)
-#pragma xmp nodes pa(2,4)
+#pragma xmp nodes pa(4,2)
 #pragma xmp nodes pb(8)
 #pragma xmp template ta(0:M-1,0:N-1)
 #pragma xmp template tb(0:N-1)
@@ -806,7 +806,7 @@ int test_transpose_022(){
 
 #define M 23
 #define N 31
-int m1[2]={1,30};
+  //int m1[2]={1,30};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,4)
 #pragma xmp nodes pb(8)
@@ -847,7 +847,7 @@ int test_transpose_023(){
 
 #define M 23
 #define N 31
-int m1[2]={1,30};
+  //int m1[2]={1,30};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,4)
 #pragma xmp nodes pb(2,2,2)
@@ -888,7 +888,7 @@ int test_transpose_024(){
 
 #define M 23
 #define N 31
-int m1[2]={1,30};
+  //int m1[2]={1,30};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,4)
 #pragma xmp nodes pb(2,2,2)
@@ -1011,7 +1011,7 @@ int test_transpose_027(){
 
 #define M 23
 #define N 31
-int m1[2]={11,20};
+  //int m1[2]={11,20};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(4)=p(2:5)
 #pragma xmp nodes pb(2,2,2)
@@ -1052,7 +1052,7 @@ int test_transpose_028(){
 
 #define M 23
 #define N 31
-int m1[2]={11,20};
+  //int m1[2]={11,20};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(4,2)
 #pragma xmp nodes pb(2,2,2)
@@ -1093,7 +1093,7 @@ int test_transpose_029(){
 
 #define M 23
 #define N 31
-int m1[2]={11,20};
+  //int m1[2]={11,20};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(4,2)
 #pragma xmp nodes pb(2,2,2)

@@ -2057,9 +2057,11 @@ public class XmcXcodeToXcTranslator {
                 enterNodes(tc, obj, asmOperandsNodes.get(0));
                 obj.setInputOperandsEnd();
             }
-            if(asmOperandsNodes.get(1) != null){
+            if(asmOperandsNodes.size() >= 2){
+              if(asmOperandsNodes.get(1) != null){
                 obj.initOutputOperands();
                 enterNodes(tc, obj, asmOperandsNodes.get(1));
+              }
             }
 
             enterNodes(tc, obj,
@@ -2624,7 +2626,8 @@ public class XmcXcodeToXcTranslator {
             ident = tc.identTableStack.getIdent(XcSymbolKindEnum.FUNC, name);
 
             if (ident == null) {
-                if (name.startsWith("_XMP_")) return new XcIdent(name);
+                if (name.startsWith("_XMP_") ||name.startsWith("xmp_") ||
+		    name.startsWith("xmpc_")) return new XcIdent(name);
                 if (name.startsWith("_ACC_")) return new XcIdent(name);
 
                 throw new XmTranslationException(stringContentNode, "variable or function '" + name

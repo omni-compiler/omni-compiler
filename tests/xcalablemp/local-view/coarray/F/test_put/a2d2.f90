@@ -1,5 +1,5 @@
   program test_a2_d2
-    include "xmp_lib.h"
+    include "xmp_coarray.h"
     integer a2d2(10,8)[*]
     integer xmp_node_num
     integer nerr
@@ -59,6 +59,7 @@
        print '("[",i0,"] OK")', me
     else
        print '("[",i0,"] number of NGs: ",i0)', me, nerr
+       stop 1
     end if
     !---------------------------- check and output end
 

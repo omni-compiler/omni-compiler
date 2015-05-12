@@ -1,3 +1,3 @@
-  include "xmp_lib.h"
+  include "xmp_coarray.h"
   call xmpf_sync_all()
   end

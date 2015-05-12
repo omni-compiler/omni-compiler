@@ -305,6 +305,9 @@ public class XMPtransPragma
 
     ret_body.add(pb.getBody().getHead()); // loop
 
+    Ident f = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+    ret_body.add(f.callSubroutine(Xcons.List(on_ref.getDescId())));
+
     if(info.getReductionOp() != XMP.REDUCE_NONE){
       ret_body.add(translateReduction(pb,info));
     }
@@ -395,6 +398,11 @@ public class XMPtransPragma
 				  Xtype.FsubroutineType);
     ret_body.add(f.callSubroutine(Xcons.List(on_ref_arg)));
 
+    if (on_ref != null){
+      Ident g = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(Xcons.List(on_ref.getDescId())));
+    }
+
     return Bcons.COMPOUND(ret_body);
   }
 
@@ -414,6 +422,12 @@ public class XMPtransPragma
 				    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
     }
 
+    if (info.getAsyncId() != null){
+      Xobject arg = Xcons.List(info.getAsyncId());
+      Ident g = env.declInternIdent(XMP.init_async_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(arg));
+    }
+
     if (on_ref != null){
       if (info.pragma != XMPpragma.LOOP){
 	ret_body.add(on_ref.buildConstructor(env));
@@ -429,8 +443,13 @@ public class XMPtransPragma
 
     // object size
     int op = info.getReductionOp();
-    Ident f = env.declInternIdent(XMP.reduction_f,
-				  Xtype.FsubroutineType);
+    // boolean reduce_minus = false;
+    // if (op == XMP.REDUCE_MINUS){
+    //   op = XMP.REDUCE_SUM;
+    //   reduce_minus = true;
+    // }
+
+    Ident f = env.declInternIdent(XMP.reduction_f, Xtype.FsubroutineType);
     Ident f2 = env.declInternIdent(XMP.reduction_loc_f, Xtype.FsubroutineType);
 
     //for(Ident id: info.getReductionVars()){
@@ -466,9 +485,25 @@ public class XMPtransPragma
 	ret_body.add(f2.callSubroutine(args2));
 	j++;
       }
-	  
+
+      // if (reduce_minus){
+      // 	ret_body.add(Xcons.Set(id.Ref(), Xcons.unaryOp(Xcode.UNARY_MINUS_EXPR, id.Ref())));
+      // }
+
       ret_body.add(f.callSubroutine(args));
     }
+
+    if (info.getAsyncId() != null){
+      Xobject arg = Xcons.List(info.getAsyncId());
+      Ident g = env.declInternIdent(XMP.start_async_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(arg));
+    }
+
+    if (on_ref != null){
+      Ident g = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(Xcons.List(on_ref.getDescId())));
+    }
+
     return Bcons.COMPOUND(ret_body);
   }
 
@@ -483,6 +518,12 @@ public class XMPtransPragma
     if (xmp_null == null){
 	xmp_null = env.declObjectId("XMP_NULL", null,
 				    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
+    }
+
+    if (info.getAsyncId() != null){
+      Xobject arg = Xcons.List(info.getAsyncId());
+      Ident g = env.declInternIdent(XMP.init_async_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(arg));
     }
 
     XMPobjectsRef from_ref = info.getBcastFrom();
@@ -501,8 +542,8 @@ public class XMPtransPragma
     }
     else on_ref_arg = xmp_null;
 
-    Ident f = env.declInternIdent(XMP.bcast_f,
-				  Xtype.FsubroutineType);
+    Ident f = env.declInternIdent(XMP.bcast_f, Xtype.FsubroutineType);
+
     for(Ident id: info.getInfoVarIdents()){
       Xtype type = id.Type();
       Xobject size_expr = Xcons.IntConstant(1);
@@ -543,28 +584,56 @@ public class XMPtransPragma
       if(!type.isBasic()){
 	XMP.fatal("bcast for non-basic type ="+type);
       }
-      Xobject args = Xcons.List(id.Ref(),size_expr,
+
+      Xobject args = Xcons.List(id.Ref(), size_expr,
 				XMP.typeIntConstant(type),
 				from_ref_arg,
 				on_ref_arg);
+
       ret_body.add(f.callSubroutine(args));
+
     }
+
+    if (info.getAsyncId() != null){
+      Xobject arg = Xcons.List(info.getAsyncId());
+      Ident g = env.declInternIdent(XMP.start_async_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(arg));
+    }
+
+    if (on_ref != null){
+      Ident g = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(Xcons.List(on_ref.getDescId())));
+    }
+
+    if (from_ref != null){
+      Ident g = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+      ret_body.add(g.callSubroutine(Xcons.List(from_ref.getDescId())));
+    }
+
     return Bcons.COMPOUND(ret_body);
   }
 
   private Block translateWaitAsync(PragmaBlock pb, XMPinfo info){
-    Block b = Bcons.emptyBlock();
-    BasicBlock bb = b.getBasicBlock();
+    //Block b = Bcons.emptyBlock();
+    //BasicBlock bb = b.getBasicBlock();
+
+    BlockList ret_body = Bcons.emptyBody();
+
+    XMPobjectsRef on_ref = info.getOnRef();
+    Xobject on_ref_arg;
+    if (on_ref != null){
+      ret_body.add(on_ref.buildConstructor(env));
+      on_ref_arg = on_ref.getDescId().Ref();
+    }
+    else on_ref_arg = env.getNullIdent(pb).Ref();
 
     Ident f = env.declInternIdent(XMP.wait_async_f, Xtype.FsubroutineType);
 
     for (Xobject i: info.waitAsyncIds){
-	bb.add(f.callSubroutine(Xcons.List(i)));
+      ret_body.add(f.callSubroutine(Xcons.List(i, on_ref_arg)));
     }
 
-    //    bb.add(f.callSubroutine(Xcons.List(info.async_id)));
-
-    return b;
+    return Bcons.COMPOUND(ret_body);
   }
 
   private Block translateTask(PragmaBlock pb, XMPinfo info){
@@ -574,21 +643,57 @@ public class XMPtransPragma
     // when '*' = the executing node set is specified
     if (on_ref == null) return Bcons.COMPOUND(pb.getBody());
 
-    ret_body.add(on_ref.buildConstructor(env));
-    Ident f = env.declInternIdent(XMP.test_task_on_f,
-				  Xtype.FlogicalFunctionType);
-    Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
+    Block parentBlock = pb.getParentBlock();
+    boolean tasksFlag = false;
+    if (parentBlock != null && parentBlock instanceof PragmaBlock){
+      XMPinfo parentInfo = (XMPinfo)parentBlock.getProp(XMP.prop);
+      if (parentInfo != null && parentInfo.pragma == XMPpragma.TASKS) tasksFlag = true;
+    }
+
+    Block b = on_ref.buildConstructor(env);
+    BasicBlock bb = b.getBasicBlock();
+
+    Ident taskNodesDescId = env.declObjectId(XMP.genSym("XMP_TASK_NODES"), pb);
+
+    Ident f;
+    f = env.declInternIdent(XMP.create_task_nodes_f, Xtype.FsubroutineType);
+    bb.add(f.callSubroutine(Xcons.List(taskNodesDescId, on_ref.getDescId().Ref())));
+
+    Ident g1 = env.declInternIdent(XMP.nodes_dealloc_f, Xtype.FsubroutineType);
+    Ident g2 = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+
+    if (tasksFlag){
+      //parentBlock.insert(on_ref.buildConstructor(env));
+      parentBlock.insert(b);
+      parentBlock.add(g1.callSubroutine(Xcons.List(taskNodesDescId)));
+      parentBlock.add(g2.callSubroutine(Xcons.List(on_ref.getDescId())));
+    }
+    else {
+      //ret_body.add(on_ref.buildConstructor(env));
+      ret_body.add(b);
+    }
+
+    f = env.declInternIdent(XMP.test_task_on_f,
+			    Xtype.FlogicalFunctionType);
+    //Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
+    Xobject cond = f.Call(Xcons.List(taskNodesDescId.Ref()));
     ret_body.add(Bcons.IF(cond,Bcons.COMPOUND(pb.getBody()),null));
       
     f = env.declInternIdent(XMP.end_task_f,Xtype.FsubroutineType);
     pb.getBody().add(f.Call(Xcons.List()));
 
+    if (!tasksFlag){
+      ret_body.add(g1.callSubroutine(Xcons.List(taskNodesDescId)));
+      ret_body.add(g2.callSubroutine(Xcons.List(on_ref.getDescId())));
+    }
+
     return Bcons.COMPOUND(ret_body);
   }
 
   private Block translateTasks(PragmaBlock pb, XMPinfo i) {
-    XMP.fatal("translateTasks");
-    return null;
+    //XMP.fatal("translateTasks");
+    //return null;
+    return Bcons.COMPOUND(pb.getBody());
   }
 
   /* gmove sequence:

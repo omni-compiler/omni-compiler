@@ -185,7 +185,8 @@ public class XMPanalyzePragma
       break;
 
     case TASKS:
-      { analyzeTasks(pb);			break; }
+      analyzeTasks(pb.getClauses(), pb.getBody(), info, pb);
+      break;
 
     case GMOVE:
       analyzeGmove(pb.getClauses(),pb.getBody(), info, pb);
@@ -575,15 +576,21 @@ public class XMPanalyzePragma
 			XMPinfo info, PragmaBlock pb){
     Xobject reductionSpec = reductionDecl.getArg(0);
     Xobject reductionOnRef = reductionDecl.getArg(1);
-    Xobject reductionOpt = reductionDecl.getArg(2);
+    Xobject asyncOpt = reductionDecl.getArg(2);
 
-    if(reductionOpt != null){
-      XMP.fatal("redution opt is not supported yet, sorry!");
-      return;
-    }
+    // if(reductionOpt != null){
+    //   XMP.fatal("redution opt is not supported yet, sorry!");
+    //   return;
+    // }
 
     analyzeReductionSpec(info, reductionSpec, pb);
     info.setOnRef(XMPobjectsRef.parseDecl(reductionOnRef,env,pb));
+
+    if (asyncOpt != null && !XmOption.isAsync()){
+      XMP.errorAt(pb, "MPI-3 is required to use the async clause on a reduction directive");
+    }
+
+    info.setAsyncId(asyncOpt);
   }
 
   private void analyzeReductionSpec(XMPinfo info, Xobject reductionSpec,
@@ -628,12 +635,12 @@ public class XMPanalyzePragma
     XobjList bcastNameList = (XobjList) bcastDecl.getArg(0);
     Xobject fromRef = bcastDecl.getArg(1);
     Xobject onRef = bcastDecl.getArg(2);
-    Xobject bcastOpt = bcastDecl.getArg(3);
+    Xobject asyncOpt = bcastDecl.getArg(3);
 
-    if(bcastOpt != null){
-      XMP.fatal("bcast opt is not supported yet, sorry!");
-      return;
-    }
+    // if(bcastOpt != null){
+    //   XMP.fatal("bcast opt is not supported yet, sorry!");
+    //   return;
+    // }
 
     Vector<Ident> bcast_vars = new Vector<Ident>();
     for(Xobject v: bcastNameList){
@@ -650,18 +657,27 @@ public class XMPanalyzePragma
     info.setBcastInfo(XMPobjectsRef.parseDecl(fromRef,env,pb),
 		      XMPobjectsRef.parseDecl(onRef,env,pb),
 		      bcast_vars);
+
+    if (asyncOpt != null && !XmOption.isAsync()){
+      XMP.errorAt(pb, "MPI-3 is required to use the async clause on a bcast directive");
+    }
+
+    info.setAsyncId(asyncOpt);
   }
 
   private void analyzeWaitAsync(Xobject waitAsyncDecl, 
 				XMPinfo info, PragmaBlock pb){
+
     XobjList asyncIdList = (XobjList) waitAsyncDecl.getArg(0);
     Vector<Xobject> asyncIds = new Vector<Xobject>();
     for (Xobject x: asyncIdList){
 	asyncIds.add(x);
     }
     info.setWaitAsyncIds(asyncIds);
-    //    Xobject async_id = waitAsyncDecl.getArg(0);
-    //    info.setAsyncId(async_id);
+
+    Xobject onRef = waitAsyncDecl.getArg(1);
+    info.setOnRef(XMPobjectsRef.parseDecl(onRef, env, pb));
+
   }
 
   void analyzeTask(Xobject taskDecl, BlockList taskBody,
@@ -676,9 +692,14 @@ public class XMPanalyzePragma
     info.setOnRef(XMPobjectsRef.parseDecl(onRef,env,pb));
   }
 
-  private void analyzeTasks(PragmaBlock pb) {
-    XMP.fatal("analyzeTasks");
+  private void analyzeTasks(Xobject tasksDecl, BlockList taskList,
+			    XMPinfo info, PragmaBlock pb){
+    //XMP.fatal("analyzeTasks");
   }
+
+  // private void analyzeTasks(PragmaBlock pb) {
+  //   XMP.fatal("analyzeTasks");
+  // }
 
   private void analyzeGmove(Xobject gmoveDecl, BlockList body, 
 			    XMPinfo info, PragmaBlock pb) {

@@ -646,15 +646,12 @@ OS_CXXFLAGS
 OS_CFLAGS
 OS_CPPFLAGS
 MAKE
-BLASLIB
 cppCmd
 omniIncDir
 omniEtcDir
 omniLibDir
 omniBinDir
 omniDir
-RM
-ATOOL_DIR
 XMPPKG_CHANGELOG_DATE
 XMPPKG_PRIORITY
 XMPPKG_SECTION
@@ -711,22 +708,16 @@ JAR
 JAVAC
 JAVA
 PERL5
-ARFLAGS
-IS_SUPERUX
-IS_CRAY
-IS_SUPERUX_FALSE
-IS_SUPERUX_TRUE
-IS_CRAY_FALSE
-IS_CRAY_TRUE
-IS_PGI_FALSE
-IS_PGI_TRUE
+SUPERUX
+SUPERUX_FALSE
+SUPERUX_TRUE
+OMNI_X2X_FLAGS
 OMNI_LNK_FCFLAGS
 OMNI_NTV_FCFLAGS
 OMNI_F2X_FLAGS
 OMNI_F_PP
 OMNI_LNK_CFLAGS
 OMNI_NTV_CFLAGS
-OMNI_X2X_FLAGS
 OMNI_C2X_FLAGS
 MPI_FCLIBS
 MPI_MODINC
@@ -741,34 +732,42 @@ MPI_CPP
 MPI_CC
 XMPF_DEF
 XMPC_DEF
+CPP_OPT
 OPENMP_OPT
+MPI3_FALSE
+MPI3_TRUE
 GASNET_LIBS
 GASNET_FALSE
 GASNET_TRUE
 TCA_FALSE
 TCA_TRUE
-BLAS_LIB_FALSE
-BLAS_LIB_TRUE
-BLAS_LIB
+INTELMKL_FALSE
+INTELMKL_TRUE
+SSL2BLAMP_FALSE
+SSL2BLAMP_TRUE
+LIBBLAS_FALSE
+LIBBLAS_TRUE
+LIBXML_LIB
 LIBXML_PREFIX
 GPGPU_PREFIX
 GPU_CFLAGS
 GPU_CMD
-IS_PGI
-ENABLE_XACC
-ENABLE_XACC_FALSE
-ENABLE_XACC_TRUE
+ARFLAGS
+POWERPC_FALSE
+POWERPC_TRUE
+XACC_FALSE
+XACC_TRUE
+ATOOL_FALSE
+ATOOL_TRUE
 ENABLE_ATOOL
-ENABLE_ATOOL_FALSE
-ENABLE_ATOOL_TRUE
+ACC_FALSE
+ACC_TRUE
 ENABLE_ACC
-ENABLE_ACC_FALSE
-ENABLE_ACC_TRUE
-YFLAGS
-YACC
 LEXLIB
 LEX_OUTPUT_ROOT
 LEX
+YFLAGS
+YACC
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
 CXXDEPMODE
@@ -779,34 +778,15 @@ CXX
 ac_ct_FC
 FCFLAGS
 FC
-FJRDMA
+TARGET
 FJRDMA_FALSE
 FJRDMA_TRUE
-LIBACC_HEADER_DIR
-LIBACC_DIR
-LIBTLOG_MPI_DIR
-LIBTLOG_DIR
-LIBOMPF_DIR
-LIBOMPC_DIR
 OMP_LOCK_TYPE
 OMP_THREAD_TYPE
 PPTGT
 MM5TGT
 CPU
 OS
-LIBXMPF_DIR
-LIBXMPF_HEADER_DIR
-LIBXMP_GPU_DIR
-LIBXMP_THREADS_DIR
-LIBXMP_DIR
-LIBXMP_HEADER_DIR
-OMDRIVER_DIR
-XCODEML_EXC_TOOLS_DIR
-F_BACKEND_DIR
-F_FRONTEND_DIR
-C_BACKEND_DIR
-C_FRONTEND_DIR
-XCODEML_COMMON_DIR
 TOPDIR
 MAINT
 MAINTAINER_MODE_FALSE
@@ -847,6 +827,7 @@ INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
 LIBTOOL_DEPS
+RM
 CPP
 OTOOL64
 OTOOL
@@ -947,12 +928,13 @@ enable_debug
 enable_openacc
 enable_atool
 enable_xacc
-enable_mpi3
 with_gpucc
 with_gpu_cflags
 with_cuda
 with_libxml
-with_blas_lib
+with_libblas
+enable_SSL2BLAMP
+enable_intelmkl
 with_TCA
 with_gasnet
 with_gasnet_conduit
@@ -1611,12 +1593,13 @@ Optional Features:
   --disable-maintainer-mode
                           disable make rules and dependencies not useful (and
                           sometimes confusing) to the casual installer
-  --enable-debug                 enable generate executable with debug symbol (false default).
-  --enable-openacc               enable OpenACC (false default).
-  --enable-atool                 enable atool (false default).
-  --enable-xacc                  enable XcalableACC (false default).
-  --enable-mpi3                  enable MPI3 (false default).
-  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default).
+  --enable-debug          enable generate executable with debug symbol (false default)
+  --enable-openacc        enable OpenACC (false default)
+  --enable-atool          enable atool (false default)
+  --enable-xacc           enable XcalableACC (false default)
+  --enable-SSL2BLAMP      enable Fujitsu Math Library (true on only the K computer, false on Fx10)
+  --enable-intelmkl       enable Intel Math Kernel Library (false default)
+  --enable-mreal                 enable multiple precision real (and real*16) support of Fortran 77 (false default)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1632,13 +1615,13 @@ Optional Packages:
   --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
   --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
   --with-libxml=DIR           libxml installation path (default: /usr)
-  --with-blas-lib=DIR         BLAS Library (e.g. /foo/blas_LINUX.a)
+  --with-libblas=DIR          BLAS Library (e.g. /foo/blas_LINUX.a)
   --with-TCA=DIR              TCA installation path
   --with-gasnet=DIR           GASNet installation path
   --with-gasnet-conduit=NAME  GASNet conduit
-  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support.
-  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support.
-  --with-precision=NUM        the default precision of real*16 in bits (128).
+  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support
+  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support
+  --with-precision=NUM        the default precision of real*16 in bits (128)
 
 Some influential environment variables:
   CC          C compiler command
@@ -4743,7 +4726,8 @@ else
     ;;
   *)
     lt_cv_sys_max_cmd_len=`(getconf ARG_MAX) 2> /dev/null`
-    if test -n "$lt_cv_sys_max_cmd_len"; then
+    if test -n "$lt_cv_sys_max_cmd_len" && \
+	test undefined != "$lt_cv_sys_max_cmd_len"; then
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \/ 4`
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \* 3`
     else
@@ -6306,7 +6290,7 @@ ia64-*-hpux*)
   rm -rf conftest*
   ;;
 
-x86_64-*kfreebsd*-gnu|x86_64-*linux*|ppc*-*linux*|powerpc*-*linux*| \
+x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*| \
 s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
@@ -6322,9 +6306,19 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	    LD="${LD-ld} -m elf_i386_fbsd"
 	    ;;
 	  x86_64-*linux*)
-	    LD="${LD-ld} -m elf_i386"
+	    case `/usr/bin/file conftest.o` in
+	      *x86-64*)
+		LD="${LD-ld} -m elf32_x86_64"
+		;;
+	      *)
+		LD="${LD-ld} -m elf_i386"
+		;;
+	    esac
 	    ;;
-	  ppc64-*linux*|powerpc64-*linux*)
+	  powerpc64le-*)
+	    LD="${LD-ld} -m elf32lppclinux"
+	    ;;
+	  powerpc64-*)
 	    LD="${LD-ld} -m elf32ppclinux"
 	    ;;
 	  s390x-*linux*)
@@ -6343,7 +6337,10 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_x86_64"
 	    ;;
-	  ppc*-*linux*|powerpc*-*linux*)
+	  powerpcle-*)
+	    LD="${LD-ld} -m elf64lppc"
+	    ;;
+	  powerpc-*)
 	    LD="${LD-ld} -m elf64ppc"
 	    ;;
 	  s390*-*linux*|s390*-*tpf*)
@@ -11484,6 +11481,8 @@ CC="$lt_save_CC"
 
 
 
+RM="rm -f"
+
 
 
 am__api_version='1.14'
@@ -12229,189 +12228,49 @@ TOPDIR=${ac_pwd}
 
 
 # --------------------------------------------------------------------
-# check project dirs
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking check XcodeML-Common project exists" >&5
-$as_echo_n "checking check XcodeML-Common project exists... " >&6; }
+ac_config_files="$ac_config_files XcodeML-Common/Makefile"
 
-if test -e "XcodeML-Common/Makefile.am"; then
-    XCODEML_COMMON_DIR=XcodeML-Common
-    ac_config_files="$ac_config_files $XCODEML_COMMON_DIR/Makefile"
+ac_config_files="$ac_config_files C-FrontEnd/src/Makefile"
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-    XCODEML_COMMON_DIR=''
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
+ac_config_files="$ac_config_files C-BackEnd/Makefile"
 
+ac_config_files="$ac_config_files F-FrontEnd/src/Makefile"
 
+ac_config_files="$ac_config_files F-BackEnd/Makefile"
 
-# --------------------------------------------------------------------
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking check C-FrontEnd project exists" >&5
-$as_echo_n "checking check C-FrontEnd project exists... " >&6; }
+ac_config_files="$ac_config_files XcodeML-Exc-Tools/Makefile"
 
-if test -e "C-FrontEnd/src/Makefile.am"; then
-    C_FRONTEND_DIR=C-FrontEnd/src
-    ac_config_files="$ac_config_files $C_FRONTEND_DIR/Makefile"
+ac_config_files="$ac_config_files XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java"
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-    C_FRONTEND_DIR=''
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
+ac_config_files="$ac_config_files Driver/src/Makefile"
 
+ac_config_files="$ac_config_files Driver/etc/ompcc.conf"
 
+ac_config_files="$ac_config_files Driver/etc/ompf90.conf"
 
-# --------------------------------------------------------------------
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking check C-BackEnd project exists" >&5
-$as_echo_n "checking check C-BackEnd project exists... " >&6; }
+ac_config_files="$ac_config_files Driver/etc/xmpcc.conf"
 
-if test -e "C-BackEnd/Makefile.am"; then
-    C_BACKEND_DIR=C-BackEnd
-    ac_config_files="$ac_config_files $C_BACKEND_DIR/Makefile"
+ac_config_files="$ac_config_files Driver/etc/xmpf90.conf"
 
-    ac_config_files="$ac_config_files $C_BACKEND_DIR/bin/C_Back"
+ac_config_files="$ac_config_files Driver/bin/ompcc"
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-    C_BACKEND_DIR=''
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
+ac_config_files="$ac_config_files Driver/bin/ompf90"
 
+ac_config_files="$ac_config_files Driver/bin/xmpcc"
 
+ac_config_files="$ac_config_files Driver/bin/xmpf90"
 
-# --------------------------------------------------------------------
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking check F-FrontEnd project exists" >&5
-$as_echo_n "checking check F-FrontEnd project exists... " >&6; }
+ac_config_files="$ac_config_files Driver/libexec/omni_traverse"
 
-if test -e "F-FrontEnd/src/Makefile.am"; then
-    F_FRONTEND_DIR=F-FrontEnd/src
-    ac_config_files="$ac_config_files $F_FRONTEND_DIR/Makefile"
+ac_config_files="$ac_config_files libxmp/include/Makefile"
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-    F_FRONTEND_DIR=''
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
+ac_config_files="$ac_config_files libxmp/src/Makefile"
 
+ac_config_files="$ac_config_files libxmp/src_threads/Makefile"
 
+ac_config_files="$ac_config_files libxmpf/include/Makefile"
 
-# --------------------------------------------------------------------
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking check F-BackEnd project exists" >&5
-$as_echo_n "checking check F-BackEnd project exists... " >&6; }
-
-if test -e "F-BackEnd/Makefile.am"; then
-    F_BACKEND_DIR=F-BackEnd
-    ac_config_files="$ac_config_files $F_BACKEND_DIR/Makefile"
-
-    ac_config_files="$ac_config_files $F_BACKEND_DIR/bin/F_Back"
-
-    ac_config_files="$ac_config_files $F_BACKEND_DIR/bin/F_Trans"
-
-    ac_config_files="$ac_config_files $F_BACKEND_DIR/bin/F_Decomp"
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-    F_BACKEND_DIR=''
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-# --------------------------------------------------------------------
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking check XcodeML-Exc-Tools project exists" >&5
-$as_echo_n "checking check XcodeML-Exc-Tools project exists... " >&6; }
-
-if test -e "XcodeML-Exc-Tools/Makefile.am"; then
-    XCODEML_EXC_TOOLS_DIR=XcodeML-Exc-Tools
-    ac_config_files="$ac_config_files $XCODEML_EXC_TOOLS_DIR/Makefile"
-
-    ac_config_files="$ac_config_files $XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java"
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-    XCODEML_EXC_TOOLS_DIR=''
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-# --------------------------------------------------------------------
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking check Driver project exists" >&5
-$as_echo_n "checking check Driver project exists... " >&6; }
-
-if test -e "Driver/src/Makefile.am"; then
-    OMDRIVER_DIR=Driver/src
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/Makefile"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/ompcc.conf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/ompf90.conf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/xmpcc.conf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/xmpf90.conf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../etc/java.conf"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/ompcc"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/ompf90"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpcc"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../bin/xmpf90"
-
-    ac_config_files="$ac_config_files $OMDRIVER_DIR/../libexec/omni_traverse"
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-    OMDRIVER_DIR=''
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-# --------------------------------------------------------------------
-# C
-LIBXMP_HEADER_DIR=libxmp/include
-LIBXMP_DIR=libxmp/src
-LIBXMP_THREADS_DIR=libxmp/src_threads
-LIBXMP_GPU_DIR=libxmp/src_gpu
-ac_config_files="$ac_config_files $LIBXMP_HEADER_DIR/Makefile"
-
-ac_config_files="$ac_config_files $LIBXMP_DIR/Makefile"
-
-ac_config_files="$ac_config_files $LIBXMP_THREADS_DIR/Makefile"
-
-ac_config_files="$ac_config_files $LIBXMP_GPU_DIR/Makefile"
-
-
-
-
-
-
-# F
-LIBXMPF_HEADER_DIR=libxmpf/include
-LIBXMPF_DIR=libxmpf/src
-ac_config_files="$ac_config_files $LIBXMPF_HEADER_DIR/Makefile"
-
-ac_config_files="$ac_config_files $LIBXMPF_DIR/Makefile"
-
-
+ac_config_files="$ac_config_files libxmpf/src/Makefile"
 
 
 # --------------------------------------------------------------------
@@ -12428,48 +12287,30 @@ PPTGT=""
 MM5TGT=""
 
 case $CPU in
-    i*86)
-        CPU=i386;;
-    x86_64*)
-        CPU=x86_64;;
-    alpha*)
-        CPU=alpha;;
+    i*86)    CPU=i386;;
+    x86_64*) CPU=x86_64;;
+    alpha*)  CPU=alpha;;
 esac
 
 case $OS in
-    sunos*)
-        OS=sunos;;
-    solaris*)
-        OS=solaris;;
-    freebsd*)
-        OS=freebsd;;
-    netbsd*)
-        OS=netbsd;;
-    irix*)
-        OS=irix;;
-    aix*)
-        OS=aix;;
-    darwin*)
-        OS=darwin;;
-    cygwin*)
-        OS=cygwin32;;
+    sunos*)   OS=sunos;;
+    solaris*) OS=solaris;;
+    freebsd*) OS=freebsd;;
+    netbsd*)  OS=netbsd;;
+    irix*)    OS=irix;;
+    aix*)     OS=aix;;
+    darwin*)  OS=darwin;;
+    cygwin*)  OS=cygwin32;;
 esac
 
 case $HOSTARCH in
-    i*86-pc-linux*)
-        PPTGT=linux;;
-    alpha*-unknown-linux*)
-        PPTGT=linux;;
-    i386-pc-solaris*)
-        PPTGT=sol2;;
-    sparc-sun-solaris*)
-        PPTGT=sol2;;
-    mips-sgi-irix*)
-        PPTGT=orig2k;;
+    i*86-pc-linux*)        PPTGT=linux;;
+    alpha*-unknown-linux*) PPTGT=linux;;
+    i386-pc-solaris*)      PPTGT=sol2;;
+    sparc-sun-solaris*)    PPTGT=sol2;;
+    mips-sgi-irix*)        PPTGT=orig2k;;
 esac
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $OS $CPU" >&5
-$as_echo "$OS $CPU" >&6; }
 
 
 
@@ -12613,35 +12454,21 @@ genLibTargetTmpl () {
 }
 
 # --------------------------------------------------------------------
-LIBOMPC_DIR="libompc/src"
-ac_config_files="$ac_config_files $LIBOMPC_DIR/Makefile"
+ac_config_files="$ac_config_files libompc/src/Makefile"
 
-LIBOMPF_DIR="libompf/src"
-ac_config_files="$ac_config_files $LIBOMPF_DIR/Makefile"
+genLibTargetTmpl libompc/src
 
-LIBTLOG_DIR="libtlog/src_threads"
-ac_config_files="$ac_config_files $LIBTLOG_DIR/Makefile"
+ac_config_files="$ac_config_files libompf/src/Makefile"
 
-LIBTLOG_MPI_DIR="libtlog/src_mpi"
-ac_config_files="$ac_config_files $LIBTLOG_MPI_DIR/Makefile"
+ac_config_files="$ac_config_files libtlog/src_threads/Makefile"
 
-ac_config_files="$ac_config_files $LIBTLOG_MPI_DIR/bin/tlogview"
+ac_config_files="$ac_config_files libtlog/src_mpi/Makefile"
 
-genLibTargetTmpl $LIBOMPC_DIR
+ac_config_files="$ac_config_files libtlog/src_mpi/bin/tlogview"
 
+ac_config_files="$ac_config_files libacc/src/Makefile"
 
-
-
-
-
-# --------------------------------------------------------------------
-LIBACC_DIR=libacc/src
-LIBACC_HEADER_DIR=libacc/include
-ac_config_files="$ac_config_files $LIBACC_DIR/Makefile"
-
-ac_config_files="$ac_config_files $LIBACC_HEADER_DIR/Makefile"
-
-
+ac_config_files="$ac_config_files libacc/include/Makefile"
 
 
 # --------------------------------------------------------------------
@@ -12652,10 +12479,6 @@ else
   doDebug=no
 fi
 
-
-#AC_ARG_ENABLE(xmpgpu,
-#    [  --enable-xmpgpu                enable XcalableMP-GPU (false default).],
-#    [doXmpGpu=yes], [doXmpGpu=no])
 
 # Check whether --enable-openacc was given.
 if test "${enable_openacc+set}" = set; then :
@@ -12675,27 +12498,11 @@ fi
 
 # Check whether --enable-xacc was given.
 if test "${enable_xacc+set}" = set; then :
-  enableval=$enable_xacc; xacc=yes
+  enableval=$enable_xacc; doXACC=yes
 else
-  xacc=no
+  doXACC=no
 fi
 
-
-# Check whether --enable-mpi3 was given.
-if test "${enable_mpi3+set}" = set; then :
-  enableval=$enable_mpi3; doMPI3=yes
-else
-  doMPI3=no
-fi
-
-
-## Add temporarily by mnakao
-#AC_ARG_ENABLE(FJRDMA,
-#   [  --enable-FJRDMA                enable RDMA functions on the K compiter or FX10.],
-#   [enableFJRDMA=yes], [enableFJRDMA=no])
-#
-#AM_CONDITIONAL(FJRDMA, test x${enableFJRDMA} = xyes)
-## End Add temporarily
 
  if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   FJRDMA_TRUE=
@@ -12705,12 +12512,11 @@ else
   FJRDMA_FALSE=
 fi
 
-
+TARGET=$target
 
 
 # --------------------------------------------------------------------
 # check basic commands
-
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -20114,37 +19920,7 @@ fi
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${MAKE-make} sets \$(MAKE)" >&5
-$as_echo_n "checking whether ${MAKE-make} sets \$(MAKE)... " >&6; }
-set x ${MAKE-make}
-ac_make=`$as_echo "$2" | sed 's/+/p/g; s/[^a-zA-Z0-9_]/_/g'`
-if eval \${ac_cv_prog_make_${ac_make}_set+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat >conftest.make <<\_ACEOF
-SHELL = /bin/sh
-all:
-	@echo '@@@%%%=$(MAKE)=@@@%%%'
-_ACEOF
-# GNU make sometimes prints "make[1]: Entering ...", which would confuse us.
-case `${MAKE-make} -f conftest.make 2>/dev/null` in
-  *@@@%%%=?*=@@@%%%*)
-    eval ac_cv_prog_make_${ac_make}_set=yes;;
-  *)
-    eval ac_cv_prog_make_${ac_make}_set=no;;
-esac
-rm -f conftest.make
-fi
-if eval test \$ac_cv_prog_make_${ac_make}_set = yes; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-  SET_MAKE=
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-  SET_MAKE="MAKE=${MAKE-make}"
-fi
-
+#AC_PROG_MAKE_SET
 for ac_prog in gawk mawk nawk awk
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -20186,6 +19962,49 @@ fi
 
   test -n "$AWK" && break
 done
+
+for ac_prog in 'bison -y' byacc
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_YACC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$YACC"; then
+  ac_cv_prog_YACC="$YACC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_YACC="$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+YACC=$ac_cv_prog_YACC
+if test -n "$YACC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $YACC" >&5
+$as_echo "$YACC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$YACC" && break
+done
+test -n "$YACC" || YACC="yacc"
 
 for ac_prog in flex lex
 do
@@ -20346,74 +20165,54 @@ fi
 rm -f conftest.l $LEX_OUTPUT_ROOT.c
 
 fi
-for ac_prog in 'bison -y' byacc
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_YACC+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$YACC"; then
-  ac_cv_prog_YACC="$YACC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_YACC="$ac_prog"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
 
-fi
-fi
-YACC=$ac_cv_prog_YACC
-if test -n "$YACC"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $YACC" >&5
-$as_echo "$YACC" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+if test "${CPP}" = ""; then
+   as_fn_error $? "CPP is not found." "$LINENO" 5
 fi
 
+if test "${CC}" = ""; then
+   as_fn_error $? "CC is not found." "$LINENO" 5
+fi
 
-  test -n "$YACC" && break
-done
-test -n "$YACC" || YACC="yacc"
+if test "${FC}" = ""; then
+   as_fn_error $? "FC is not found." "$LINENO" 5
+fi
 
+if test "${INSTALL}" = ""; then
+   as_fn_error $? "INSTALL is not found." "$LINENO" 5
+fi
 
-# --------------------------------------------------------------------
-# set XMP-dev
+if test "${AWK}" = ""; then
+  as_fn_error $? "AWK is not found." "$LINENO" 5
+fi
 
-#XMP_ENABLE_GPU=0
-#if test "x${doXmpGpu}" = "xyes"; then
-#    XMP_ENABLE_GPU=1
-#fi
-#AM_CONDITIONAL(ENABLE_XMP_GPU, test "x${doXmpGpu}" = "xyes")
-#AC_SUBST(XMP_ENABLE_GPU)
+# If yacc is not available, set YACC to 'yacc' in AC_PROG_YACC.
+if test "x${YACC}" = "xyacc"; then
+   as_fn_error $? "byacc is not found." "$LINENO" 5
+fi
+
+# https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.69/html_node/Particular-Programs.html
+# If lex is not available, set LEX to ':' in "AC_PROG_LEX".
+if test "x${LEX}" = "x:"; then
+   as_fn_error $? "flex is not found." "$LINENO" 5
+fi
 
 # --------------------------------------------------------------------
 # set OpenACC
+# "ENABLE_ACC" defined by AC_SUBST() is used in ./Driver/libexec/ompcc_lib.sh
+# Moreover "ENABLE_ACC" defined by AM_CONDITIONAL() is used in ./Makefile.am
 ENABLE_ACC=0
 if test "x${doOpenAcc}" = "xyes"; then
     ENABLE_ACC=1
 fi
- if test "x${doOpenAcc}" = "xyes"; then
-  ENABLE_ACC_TRUE=
-  ENABLE_ACC_FALSE='#'
-else
-  ENABLE_ACC_TRUE='#'
-  ENABLE_ACC_FALSE=
-fi
 
+ if test "x${doOpenAcc}" = "xyes"; then
+  ACC_TRUE=
+  ACC_FALSE='#'
+else
+  ACC_TRUE='#'
+  ACC_FALSE=
+fi
 
 
 # --------------------------------------------------------------------
@@ -20422,26 +20221,25 @@ ENABLE_ATOOL=0
 if test "x${doatool}" = "xyes"; then
    ENABLE_ATOOL=1
 fi
- if test "x${doatool}" = "xyes"; then
-  ENABLE_ATOOL_TRUE=
-  ENABLE_ATOOL_FALSE='#'
-else
-  ENABLE_ATOOL_TRUE='#'
-  ENABLE_ATOOL_FALSE=
-fi
 
+ if test "x${doatool}" = "xyes"; then
+  ATOOL_TRUE=
+  ATOOL_FALSE='#'
+else
+  ATOOL_TRUE='#'
+  ATOOL_FALSE=
+fi
 
 
 # --------------------------------------------------------------------
 # set XACC
- if test "x${xacc}" = "xyes"; then
-  ENABLE_XACC_TRUE=
-  ENABLE_XACC_FALSE='#'
+ if test "x${doXACC}" = "xyes"; then
+  XACC_TRUE=
+  XACC_FALSE='#'
 else
-  ENABLE_XACC_TRUE='#'
-  ENABLE_XACC_FALSE=
+  XACC_TRUE='#'
+  XACC_FALSE=
 fi
-
 
 
 # --------------------------------------------------------------------
@@ -20482,7 +20280,7 @@ _ACEOF
 # (1) Local compiler (for compiling C_Front and so on)
 #   CC, FC, CFLAGS, FCFLAGS, ...
 #
-# (2) MPI compiler (for compiling libxmp and so on)
+# (2) MPI compiler (for compiling libxmp and so on) to cross compile
 #  MPI_CC, MPI_FC, MPI_CFLAGS, MPI_FCFLAGS, ...
 #
 # (3) Omni compiler (for using xmpcc and xmpf90 commands)
@@ -20493,9 +20291,9 @@ _ACEOF
 #  MPI_CFLAGS needs options for OpenMP and strong optimization (e.g. -O2) and C99.
 #  MPI_FCFLAGS needs an option for strong optimization (e.g. -O2).
 #
-#  Prefix "OMNI_" options should set a minimal of option as possible.
+#  Prefix "OMNI_" options should set minimal options as possible.
 #  OMNI_C_PP, Pre-processor command, needs an option for C99.
-#  OMNI_NTV_CFLAGS needs options for C99 support.
+#  OMNI_NTV_CFLAGS needs an option for C99 support.
 #  OMNI_LNK_CFLAGS and OMNI_LNK_FCFLAGS need an option for OpenMP.
 
 # Memo:
@@ -20507,6 +20305,9 @@ _ACEOF
 if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-Kopenmp"
+
+# CPP_OPT
+  CPP_OPT="-Cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -20529,19 +20330,140 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 
 # Omni C
   OMNI_C2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-Xg -noansi"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-Free"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
+
+# ranlib & ar & nm
+  # Extract the first word of "ranlibpx", so it can be a program name with args.
+set dummy ranlibpx; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_RANLIB+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$RANLIB"; then
+  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_RANLIB="ranlibpx"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
+fi
+fi
+RANLIB=$ac_cv_prog_RANLIB
+if test -n "$RANLIB"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
+$as_echo "$RANLIB" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  # Extract the first word of "arpx", so it can be a program name with args.
+set dummy arpx; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="arpx"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
+$as_echo "$AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  ARFLAGS="cru"
+  # Extract the first word of "nmpx", so it can be a program name with args.
+set dummy nmpx; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_NM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$NM"; then
+  ac_cv_prog_NM="$NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_NM="nmpx"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
+fi
+fi
+NM=$ac_cv_prog_NM
+if test -n "$NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
+$as_echo "$NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
 
 elif test "$target" = "MIC-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-mp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -20564,19 +20486,302 @@ elif test "$target" = "MIC-linux-gnu"; then
 
 # Omni C
   OMNI_C2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-std=gnu99"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS=""
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
+
+# ranlib & ar & nm
+  if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ranlib; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_RANLIB+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$RANLIB"; then
+  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_RANLIB="${ac_tool_prefix}ranlib"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+RANLIB=$ac_cv_prog_RANLIB
+if test -n "$RANLIB"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
+$as_echo "$RANLIB" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_RANLIB"; then
+  ac_ct_RANLIB=$RANLIB
+  # Extract the first word of "ranlib", so it can be a program name with args.
+set dummy ranlib; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_RANLIB+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_RANLIB"; then
+  ac_cv_prog_ac_ct_RANLIB="$ac_ct_RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_RANLIB="ranlib"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_RANLIB=$ac_cv_prog_ac_ct_RANLIB
+if test -n "$ac_ct_RANLIB"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_RANLIB" >&5
+$as_echo "$ac_ct_RANLIB" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_RANLIB" = x; then
+    RANLIB=":"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    RANLIB=$ac_ct_RANLIB
+  fi
+else
+  RANLIB="$ac_cv_prog_RANLIB"
+fi
+
+  if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="${ac_tool_prefix}ar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
+$as_echo "$AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_AR"; then
+  ac_ct_AR=$AR
+  # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_AR"; then
+  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_AR="ar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_AR=$ac_cv_prog_ac_ct_AR
+if test -n "$ac_ct_AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
+$as_echo "$ac_ct_AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_AR" = x; then
+    AR=":"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    AR=$ac_ct_AR
+  fi
+else
+  AR="$ac_cv_prog_AR"
+fi
+
+  ARFLAGS="cru"
+  if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}nm", so it can be a program name with args.
+set dummy ${ac_tool_prefix}nm; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_NM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$NM"; then
+  ac_cv_prog_NM="$NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_NM="${ac_tool_prefix}nm"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+NM=$ac_cv_prog_NM
+if test -n "$NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
+$as_echo "$NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_NM"; then
+  ac_ct_NM=$NM
+  # Extract the first word of "nm", so it can be a program name with args.
+set dummy nm; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_NM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_NM"; then
+  ac_cv_prog_ac_ct_NM="$ac_ct_NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_NM="nm"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_NM=$ac_cv_prog_ac_ct_NM
+if test -n "$ac_ct_NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NM" >&5
+$as_echo "$ac_ct_NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_NM" = x; then
+    NM=":"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    NM=$ac_ct_NM
+  fi
+else
+  NM="$ac_cv_prog_NM"
+fi
+
 
 elif test "$target" = "Cray-linux-gnu"; then
 # OpenMP
   OPENMP_OPT="-h omp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -20585,8 +20790,8 @@ elif test "$target" = "Cray-linux-gnu"; then
 # MPI C
   MPI_CC="cc"
   MPI_CPP=$MPI_CC
-  MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-O2 $OPENMP_OPT"
+  MPI_CPPFLAGS="-E -D_XMP_CRAY"
+  MPI_CFLAGS="-O2 -hgnu $OPENMP_OPT"
   MPI_CLIBS=""
 
 # MPI F
@@ -20599,19 +20804,302 @@ elif test "$target" = "Cray-linux-gnu"; then
 
 # Omni C
   OMNI_C2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-hgnu -D_XMP_CRAY"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-f free"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
+
+# ranlib & ar & nm
+  if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ranlib; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_RANLIB+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$RANLIB"; then
+  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_RANLIB="${ac_tool_prefix}ranlib"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+RANLIB=$ac_cv_prog_RANLIB
+if test -n "$RANLIB"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
+$as_echo "$RANLIB" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_RANLIB"; then
+  ac_ct_RANLIB=$RANLIB
+  # Extract the first word of "ranlib", so it can be a program name with args.
+set dummy ranlib; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_RANLIB+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_RANLIB"; then
+  ac_cv_prog_ac_ct_RANLIB="$ac_ct_RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_RANLIB="ranlib"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_RANLIB=$ac_cv_prog_ac_ct_RANLIB
+if test -n "$ac_ct_RANLIB"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_RANLIB" >&5
+$as_echo "$ac_ct_RANLIB" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_RANLIB" = x; then
+    RANLIB=":"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    RANLIB=$ac_ct_RANLIB
+  fi
+else
+  RANLIB="$ac_cv_prog_RANLIB"
+fi
+
+  if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="${ac_tool_prefix}ar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
+$as_echo "$AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_AR"; then
+  ac_ct_AR=$AR
+  # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_AR"; then
+  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_AR="ar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_AR=$ac_cv_prog_ac_ct_AR
+if test -n "$ac_ct_AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
+$as_echo "$ac_ct_AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_AR" = x; then
+    AR=":"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    AR=$ac_ct_AR
+  fi
+else
+  AR="$ac_cv_prog_AR"
+fi
+
+  ARFLAGS="cru"
+  if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}nm", so it can be a program name with args.
+set dummy ${ac_tool_prefix}nm; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_NM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$NM"; then
+  ac_cv_prog_NM="$NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_NM="${ac_tool_prefix}nm"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+NM=$ac_cv_prog_NM
+if test -n "$NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
+$as_echo "$NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_NM"; then
+  ac_ct_NM=$NM
+  # Extract the first word of "nm", so it can be a program name with args.
+set dummy nm; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_NM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_NM"; then
+  ac_cv_prog_ac_ct_NM="$ac_ct_NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_NM="nm"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_NM=$ac_cv_prog_ac_ct_NM
+if test -n "$ac_ct_NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NM" >&5
+$as_echo "$ac_ct_NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_NM" = x; then
+    NM=":"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    NM=$ac_ct_NM
+  fi
+else
+  NM="$ac_cv_prog_NM"
+fi
+
 
 elif test "$target" = "sx-nec-superux"; then
 # OpenMP
   OPENMP_OPT="-Popenmp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -20621,34 +21109,155 @@ elif test "$target" = "sx-nec-superux"; then
   MPI_CC="sxmpic++"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-O2 $OPENMP_OPT"
+  MPI_CFLAGS="-Chopt $OPENMP_OPT"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="sxmpif90"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-O2 $OPENMP_OPT"
+  MPI_FCFLAGS="-Chopt $OPENMP_OPT"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
 
 # Omni C
   OMNI_C2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-Kgcc -w"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-f4 -w"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
+
+# ranlib & ar & nm
+  # Extract the first word of "echo", so it can be a program name with args.
+set dummy echo; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_RANLIB+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$RANLIB"; then
+  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_RANLIB="echo"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
+fi
+fi
+RANLIB=$ac_cv_prog_RANLIB
+if test -n "$RANLIB"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
+$as_echo "$RANLIB" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  # Extract the first word of "sxar", so it can be a program name with args.
+set dummy sxar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="sxar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
+$as_echo "$AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  ARFLAGS="cru"
+  # Extract the first word of "sxnm", so it can be a program name with args.
+set dummy sxnm; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_NM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$NM"; then
+  ac_cv_prog_NM="$NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_NM="sxnm"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
+fi
+fi
+NM=$ac_cv_prog_NM
+if test -n "$NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
+$as_echo "$NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
 
 elif test "$target" = "powerpc-ibm-cnk"; then
   # These options are referred to https://scwwwb.kek.jp/index.html
 
 # OpenMP
   OPENMP_OPT="-qsmp=omp"
+
+# CPP_OPT
+  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -20704,23 +21313,144 @@ elif test "$target" = "powerpc-ibm-cnk"; then
 
 # Omni C
   OMNI_C2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-q64 -qipa"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT $MPI_CLIBS"
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT $MPI_CLIBS"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
+
+# ranlib & ar & nm
+  # Extract the first word of "echo", so it can be a program name with args.
+set dummy echo; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_RANLIB+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$RANLIB"; then
+  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_RANLIB="echo"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
+fi
+fi
+RANLIB=$ac_cv_prog_RANLIB
+if test -n "$RANLIB"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
+$as_echo "$RANLIB" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  # Extract the first word of "bgar", so it can be a program name with args.
+set dummy bgar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="bgar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
+$as_echo "$AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  ARFLAGS="cru"
+  # Extract the first word of "nm", so it can be a program name with args.
+set dummy nm; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_NM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$NM"; then
+  ac_cv_prog_NM="$NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_NM="nm"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
+fi
+fi
+NM=$ac_cv_prog_NM
+if test -n "$NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
+$as_echo "$NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
 
 elif test "$target" = "powerpc-hitachi-aix"; then
 # OpenMP
   OPENMP_OPT="-qsmp=omp"
 
+# CPP_OPT
+  CPP_OPT="-cpp"
+
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
-  XMPF_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-WF,-D_XCALABLEMP"
 
 # MPI C
   MPI_CC="mpCC_r"
@@ -20739,27 +21469,424 @@ elif test "$target" = "powerpc-hitachi-aix"; then
 
 # Omni C
   OMNI_C2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_CFLAGS="-q64"
   OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_X2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qextname"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
 
-else
-  # XcalableMP
-  XMPC_DEF="-D_XCALABLEMP"
-  XMPF_DEF="-D_XCALABLEMP"
+# Omni Common
+  OMNI_X2X_FLAGS=""
 
-  INTEL_MPICC=mpiicc
-  which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
-  if test $? -eq 0; then
-    MPI_CC=${INTEL_MPICC}
+# ranlib & ar & nm
+  # Extract the first word of "echo", so it can be a program name with args.
+set dummy echo; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_RANLIB+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$RANLIB"; then
+  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_RANLIB="echo"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
+fi
+fi
+RANLIB=$ac_cv_prog_RANLIB
+if test -n "$RANLIB"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
+$as_echo "$RANLIB" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="ar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
+$as_echo "$AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  ARFLAGS="-X32_64 cru"
+  # Extract the first word of "nm", so it can be a program name with args.
+set dummy nm; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_NM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$NM"; then
+  ac_cv_prog_NM="$NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_NM="nm"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
+fi
+fi
+NM=$ac_cv_prog_NM
+if test -n "$NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
+$as_echo "$NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+else
+  # ranlib & ar & nm
+  if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ranlib; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_RANLIB+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$RANLIB"; then
+  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_RANLIB="${ac_tool_prefix}ranlib"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+RANLIB=$ac_cv_prog_RANLIB
+if test -n "$RANLIB"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
+$as_echo "$RANLIB" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_RANLIB"; then
+  ac_ct_RANLIB=$RANLIB
+  # Extract the first word of "ranlib", so it can be a program name with args.
+set dummy ranlib; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_RANLIB+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_RANLIB"; then
+  ac_cv_prog_ac_ct_RANLIB="$ac_ct_RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_RANLIB="ranlib"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_RANLIB=$ac_cv_prog_ac_ct_RANLIB
+if test -n "$ac_ct_RANLIB"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_RANLIB" >&5
+$as_echo "$ac_ct_RANLIB" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_RANLIB" = x; then
+    RANLIB=":"
   else
-    MPI_CC="mpicc"
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    RANLIB=$ac_ct_RANLIB
+  fi
+else
+  RANLIB="$ac_cv_prog_RANLIB"
+fi
+
+  if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="${ac_tool_prefix}ar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
+$as_echo "$AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_AR"; then
+  ac_ct_AR=$AR
+  # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_AR"; then
+  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_AR="ar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_AR=$ac_cv_prog_ac_ct_AR
+if test -n "$ac_ct_AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
+$as_echo "$ac_ct_AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_AR" = x; then
+    AR=":"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    AR=$ac_ct_AR
+  fi
+else
+  AR="$ac_cv_prog_AR"
+fi
+
+  ARFLAGS="cru"
+  if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}nm", so it can be a program name with args.
+set dummy ${ac_tool_prefix}nm; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_NM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$NM"; then
+  ac_cv_prog_NM="$NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_NM="${ac_tool_prefix}nm"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+NM=$ac_cv_prog_NM
+if test -n "$NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
+$as_echo "$NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_NM"; then
+  ac_ct_NM=$NM
+  # Extract the first word of "nm", so it can be a program name with args.
+set dummy nm; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_ac_ct_NM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_NM"; then
+  ac_cv_prog_ac_ct_NM="$ac_ct_NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_NM="nm"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_NM=$ac_cv_prog_ac_ct_NM
+if test -n "$ac_ct_NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NM" >&5
+$as_echo "$ac_ct_NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_NM" = x; then
+    NM=":"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    NM=$ac_ct_NM
+  fi
+else
+  NM="$ac_cv_prog_NM"
+fi
+
+
+  if test  "" != "$userMPI_CC" ; then
+    MPI_CC=${userMPI_CC}
+  else
+    INTEL_MPICC=mpiicc
+    which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
+    if test $? -eq 0; then
+      MPI_CC=${INTEL_MPICC}
+    else
+      MPI_CC=mpicc
+    fi
   fi
 
   chk=`${MPI_CC} --version | head -n1`
@@ -20767,6 +21894,9 @@ else
   cc* | gcc* | Apple*)
     # OpenMP
     OPENMP_OPT="-fopenmp"
+
+    # CPP_OPT
+    CPP_OPT="-cpp"
 
     # XcalableMP
     XMPC_DEF="-D_XCALABLEMP"
@@ -20788,19 +21918,23 @@ else
 
     # Omni C
     OMNI_C2X_FLAGS=""
-    OMNI_X2X_FLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
     # Omni F
     OMNI_F2X_FLAGS=""
-    OMNI_X2X_FLAGS="-gnu"
     OMNI_NTV_FCFLAGS="-ffree-form -fcray-pointer"
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS -fopenmp -lgomp"
+
+    # Omni Common
+    OMNI_X2X_FLAGS="-gnu"
     ;;
   *ICC*)
     # OpenMP
     OPENMP_OPT="-openmp"
+
+    # CPP_OPT
+    CPP_OPT="-cpp"
 
     # XcalableMP
     XMPC_DEF="-D_XCALABLEMP"
@@ -20828,15 +21962,16 @@ else
 
     # Omni C
     OMNI_C2X_FLAGS=""
-    OMNI_X2X_FLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
     # Omni F
     OMNI_F2X_FLAGS=""
-    OMNI_X2X_FLAGS="-intel"
     OMNI_NTV_FCFLAGS=""
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+
+    # Omni Common
+    OMNI_X2X_FLAGS="-intel"
     ;;
   *)
     chk2=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1`
@@ -20844,6 +21979,9 @@ else
     pgcc*)
       # OpenMP
       OPENMP_OPT="-mp"
+
+      # CPP_OPT
+      CPP_OPT="-Mpreprocess"
 
       # XcalableMP
       XMPC_DEF="-D_XCALABLEMP"
@@ -20865,19 +22003,20 @@ else
 
       # Omni C
       OMNI_C2X_FLAGS="--no-builtin-va-arg"
-      OMNI_X2X_FLAGS=""
       OMNI_NTV_CFLAGS="-D_XMP_PGI"
       OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
       # Omni F
       OMNI_F2X_FLAGS=""
-      OMNI_X2X_FLAGS=""
       OMNI_NTV_FCFLAGS=""
       OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
 
-      # Special options
-      IS_PGI="Yes"
+      # Omni Common
+      OMNI_X2X_FLAGS=""
 
+      # Special options
+#      IS_PGI="Yes"
+#      AC_SUBST(IS_PGI)
       ;;
     *)
       echo "No supported compiler was found."
@@ -20894,6 +22033,18 @@ else
     esac ;;
   esac
 fi
+
+# "POWERPC" flag is used in libxmpf/src/Makefile.am
+ if test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix"; then
+  POWERPC_TRUE=
+  POWERPC_FALSE='#'
+else
+  POWERPC_TRUE='#'
+  POWERPC_FALSE=
+fi
+
+
+
 
 # --------------------------------------------------------------------
 # specify GPU C compiler
@@ -20954,35 +22105,86 @@ if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
 fi
 
 
+if test LIBXML_PREFIX="/usr"; then
+   LIBXML_LIB=/usr/lib64
+else
+   LIBXML_LIB=${LIBXML_PREFIX}/lib
+fi
+
+
 # --------------------------------------------------------------------
 # set BLAS
 
 
-# Check whether --with-blas-lib was given.
-if test "${with_blas_lib+set}" = set; then :
-  withval=$with_blas_lib; BLAS_LIB="${withval}"; use_blas_lib=yes
+# Check whether --with-libblas was given.
+if test "${with_libblas+set}" = set; then :
+  withval=$with_libblas; LIBBLAS="${withval}"; use_libblas=yes
 else
-  use_blas_lib=no
+  use_libblas=no
 fi
 
 
-if test x$use_blas_lib = xyes; then
-   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS ${BLAS_LIB}"
-   OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS ${BLAS_LIB}"
+# Check whether --enable-SSL2BLAMP was given.
+if test "${enable_SSL2BLAMP+set}" = set; then :
+  enableval=$enable_SSL2BLAMP; use_SSL2BLAMP=yes
 else
-  if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
-    OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS -SSL2BLAMP"
-    OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS -SSL2BLAMP"
+  use_SSL2BLAMP=no
+fi
+
+
+# Check whether --enable-intelmkl was given.
+if test "${enable_intelmkl+set}" = set; then :
+  enableval=$enable_intelmkl; use_intelmkl=yes
+else
+  use_intelmkl=no
+fi
+
+
+output_libblas=
+if test x$use_libblas = xyes; then
+   if ! test -f $LIBBLAS; then
+     as_fn_error $? "$LIBBLAS not found." "$LINENO" 5
+   fi
+   output_libblas="yes ($LIBBLAS)"
+else
+  if test "$target" = "Kcomputer-linux-gnu" -o x$use_SSL2BLAMP = "xyes"; then
+    use_libblas=yes
+    use_SSL2BLAMP=yes
+    LIBBLAS="-SSL2BLAMP"
+    output_libblas="yes ($LIBBLAS)"
+  elif test x$use_intelmkl = "xyes"; then
+    use_libblas=yes
+    LIBBLAS="-mkl"
+    output_libblas="yes ($LIBBLAS)"
+  else
+    output_libblas="no"
   fi
 fi
+OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS $LIBBLAS"
+OMNI_LNK_FCFLAGS="$OMNI_LNK_FCFLAGS $LIBBLAS"
 
-
- if test x${use_blas_lib} = xyes; then
-  BLAS_LIB_TRUE=
-  BLAS_LIB_FALSE='#'
+ if test x${use_libblas}   = xyes; then
+  LIBBLAS_TRUE=
+  LIBBLAS_FALSE='#'
 else
-  BLAS_LIB_TRUE='#'
-  BLAS_LIB_FALSE=
+  LIBBLAS_TRUE='#'
+  LIBBLAS_FALSE=
+fi
+
+ if test x${use_SSL2BLAMP} = xyes; then
+  SSL2BLAMP_TRUE=
+  SSL2BLAMP_FALSE='#'
+else
+  SSL2BLAMP_TRUE='#'
+  SSL2BLAMP_FALSE=
+fi
+
+ if test x${use_intelmkl}  = xyes; then
+  INTELMKL_TRUE=
+  INTELMKL_FALSE='#'
+else
+  INTELMKL_TRUE='#'
+  INTELMKL_FALSE=
 fi
 
 
@@ -21152,15 +22354,42 @@ else
   esac
 fi
 
+# --------------------------------------------------------------------
 # MPI3 for MPI FLAGS
-if test "x${doMPI3}" = "xyes"; then
-   MPI_CPPFLAGS="$MPI_CPPFLAGS -D_XMP_MPI3"
-   MPI_FPPFLAGS="$MPI_FPPFLAGS -D_XMP_MPI3"
-   MPI_CFLAGS="$MPI_CFLAGS -D_XMP_MPI3"
-   MPI_FCFLAGS="$MPI_FCFLAGS -D_XMP_MPI3"
-   OMNI_X2X_FLAGS="$OMNI_X2X_FLAGS -mpi3"
+if test "x${target}" = "xKcomputer-linux-gnu"; then
+  doMPI3=yes
+else
+  tmpmpi3=/tmp/tmpmpi3.$$.c
+  cat <<EOF > $tmpmpi3
+#include <mpi.h>
+MPI_VERSION
+MPI_SUBVERSION
+EOF
+  MPI_VERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -2 | head -1`
+  MPI_SUBVERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -1`
+  if test $MPI_VERSION -ge 3; then
+    doMPI3=yes
+  else
+    doMPI3=no
+  fi
+  rm -f $tmpmpi3
 fi
 
+if test "x${doMPI3}" = "xyes"; then
+  OMNI_X2X_FLAGS="${OMNI_X2X_FLAGS} -fasync"
+fi
+
+ if test "x${doMPI3}" = "xyes" -o "x${target}" = "xKcomputer-linux-gnu"; then
+  MPI3_TRUE=
+  MPI3_FALSE='#'
+else
+  MPI3_TRUE='#'
+  MPI3_FALSE=
+fi
+
+
+# --------------------------------------------------------------------
+# set userflags
 if test "${userFCFLAGS}" != ""; then
   FCFLAGS="${userFCFLAGS}"
 fi
@@ -21188,6 +22417,9 @@ fi
 # OpenMP
 
 
+# CPP_OPT
+
+
 # XcalableMP
 
 
@@ -21212,7 +22444,6 @@ fi
 
 
 
-
 # Omni F
 OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 
@@ -21220,801 +22451,37 @@ OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 
 
 
+# Omni Common
 
-# Other options
-chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
- if test "$chk" != ""; then
-  IS_PGI_TRUE=
-  IS_PGI_FALSE='#'
+
+# check PGI compiler
+#chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
+#AM_CONDITIONAL(IS_PGI, test "$chk" != "")
+
+# check -lstdc++
+tmp_file_c=/tmp/_xmp.$$.c
+tmp_file_x=/tmp/_xmp.$$.x
+echo "int main(){return 0;}" > $tmp_file_c
+chk=`$MPI_CC -lstdc++ $tmp_file_c -o $tmp_file_x 2> /dev/null`
+if test $? -ne 0; then
+   rm -f $tmp_file_c $tmp_file_x
+   as_fn_error $? "-lstdc++ is not found." "$LINENO" 5
 else
-  IS_PGI_TRUE='#'
-  IS_PGI_FALSE=
+   rm -f $tmp_file_c $tmp_file_x
 fi
 
-
- if test "$target" = "Cray-linux-gnu"; then
-  IS_CRAY_TRUE=
-  IS_CRAY_FALSE='#'
-else
-  IS_CRAY_TRUE='#'
-  IS_CRAY_FALSE=
-fi
-
+#AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
  if test "$target" = "sx-nec-superux"; then
-  IS_SUPERUX_TRUE=
-  IS_SUPERUX_FALSE='#'
+  SUPERUX_TRUE=
+  SUPERUX_FALSE='#'
 else
-  IS_SUPERUX_TRUE='#'
-  IS_SUPERUX_FALSE=
+  SUPERUX_TRUE='#'
+  SUPERUX_FALSE=
 fi
 
 
+#AC_SUBST(CRAY)
 
-
-
-# --------------------------------------------------------------------
-# check ranlib & ar & nm
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
-    # Extract the first word of "ranlibpx", so it can be a program name with args.
-set dummy ranlibpx; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_RANLIB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$RANLIB"; then
-  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RANLIB="ranlibpx"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
-fi
-fi
-RANLIB=$ac_cv_prog_RANLIB
-if test -n "$RANLIB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
-$as_echo "$RANLIB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-    # Extract the first word of "arpx", so it can be a program name with args.
-set dummy arpx; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_AR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$AR"; then
-  ac_cv_prog_AR="$AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_AR="arpx"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
-fi
-fi
-AR=$ac_cv_prog_AR
-if test -n "$AR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
-$as_echo "$AR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-    ARFLAGS="cru"
-    # Extract the first word of "nmpx", so it can be a program name with args.
-set dummy nmpx; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_NM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$NM"; then
-  ac_cv_prog_NM="$NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_NM="nmpx"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
-fi
-fi
-NM=$ac_cv_prog_NM
-if test -n "$NM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
-$as_echo "$NM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-elif test "$target" = "sx-nec-superux"; then
-    # Extract the first word of "echo", so it can be a program name with args.
-set dummy echo; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_RANLIB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$RANLIB"; then
-  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RANLIB="echo"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
-fi
-fi
-RANLIB=$ac_cv_prog_RANLIB
-if test -n "$RANLIB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
-$as_echo "$RANLIB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-    # Extract the first word of "sxar", so it can be a program name with args.
-set dummy sxar; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_AR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$AR"; then
-  ac_cv_prog_AR="$AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_AR="sxar"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
-fi
-fi
-AR=$ac_cv_prog_AR
-if test -n "$AR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
-$as_echo "$AR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-    ARFLAGS="cru"
-    # Extract the first word of "sxnm", so it can be a program name with args.
-set dummy sxnm; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_NM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$NM"; then
-  ac_cv_prog_NM="$NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_NM="sxnm"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
-fi
-fi
-NM=$ac_cv_prog_NM
-if test -n "$NM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
-$as_echo "$NM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-elif test "$target" = "powerpc-hitachi-aix"; then
-    # Extract the first word of "echo", so it can be a program name with args.
-set dummy echo; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_RANLIB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$RANLIB"; then
-  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RANLIB="echo"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
-fi
-fi
-RANLIB=$ac_cv_prog_RANLIB
-if test -n "$RANLIB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
-$as_echo "$RANLIB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-    # Extract the first word of "ar", so it can be a program name with args.
-set dummy ar; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_AR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$AR"; then
-  ac_cv_prog_AR="$AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_AR="ar"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
-fi
-fi
-AR=$ac_cv_prog_AR
-if test -n "$AR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
-$as_echo "$AR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-    ARFLAGS="-X32_64 cru"
-    # Extract the first word of "nm", so it can be a program name with args.
-set dummy nm; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_NM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$NM"; then
-  ac_cv_prog_NM="$NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_NM="nm"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
-fi
-fi
-NM=$ac_cv_prog_NM
-if test -n "$NM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
-$as_echo "$NM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-elif test "$target" = "powerpc-ibm-cnk"; then
-    # Extract the first word of "echo", so it can be a program name with args.
-set dummy echo; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_RANLIB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$RANLIB"; then
-  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RANLIB="echo"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB=":"
-fi
-fi
-RANLIB=$ac_cv_prog_RANLIB
-if test -n "$RANLIB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
-$as_echo "$RANLIB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-    # Extract the first word of "bgar", so it can be a program name with args.
-set dummy bgar; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_AR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$AR"; then
-  ac_cv_prog_AR="$AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_AR="bgar"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR=":"
-fi
-fi
-AR=$ac_cv_prog_AR
-if test -n "$AR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
-$as_echo "$AR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-    ARFLAGS="cru"
-    # Extract the first word of "nm", so it can be a program name with args.
-set dummy nm; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_NM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$NM"; then
-  ac_cv_prog_NM="$NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_NM="nm"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM=":"
-fi
-fi
-NM=$ac_cv_prog_NM
-if test -n "$NM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
-$as_echo "$NM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-else
-   if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
-set dummy ${ac_tool_prefix}ranlib; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_RANLIB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$RANLIB"; then
-  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RANLIB="${ac_tool_prefix}ranlib"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-RANLIB=$ac_cv_prog_RANLIB
-if test -n "$RANLIB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
-$as_echo "$RANLIB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-fi
-if test -z "$ac_cv_prog_RANLIB"; then
-  ac_ct_RANLIB=$RANLIB
-  # Extract the first word of "ranlib", so it can be a program name with args.
-set dummy ranlib; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_RANLIB+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_RANLIB"; then
-  ac_cv_prog_ac_ct_RANLIB="$ac_ct_RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_RANLIB="ranlib"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_RANLIB=$ac_cv_prog_ac_ct_RANLIB
-if test -n "$ac_ct_RANLIB"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_RANLIB" >&5
-$as_echo "$ac_ct_RANLIB" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_RANLIB" = x; then
-    RANLIB=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    RANLIB=$ac_ct_RANLIB
-  fi
-else
-  RANLIB="$ac_cv_prog_RANLIB"
-fi
-
-   if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
-set dummy ${ac_tool_prefix}ar; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_AR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$AR"; then
-  ac_cv_prog_AR="$AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_AR="${ac_tool_prefix}ar"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-AR=$ac_cv_prog_AR
-if test -n "$AR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
-$as_echo "$AR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-fi
-if test -z "$ac_cv_prog_AR"; then
-  ac_ct_AR=$AR
-  # Extract the first word of "ar", so it can be a program name with args.
-set dummy ar; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_AR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_AR"; then
-  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_AR="ar"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_AR=$ac_cv_prog_ac_ct_AR
-if test -n "$ac_ct_AR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_AR" >&5
-$as_echo "$ac_ct_AR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_AR" = x; then
-    AR=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    AR=$ac_ct_AR
-  fi
-else
-  AR="$ac_cv_prog_AR"
-fi
-
-   ARFLAGS="cru"
-   if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}nm", so it can be a program name with args.
-set dummy ${ac_tool_prefix}nm; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_NM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$NM"; then
-  ac_cv_prog_NM="$NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_NM="${ac_tool_prefix}nm"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-NM=$ac_cv_prog_NM
-if test -n "$NM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
-$as_echo "$NM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-fi
-if test -z "$ac_cv_prog_NM"; then
-  ac_ct_NM=$NM
-  # Extract the first word of "nm", so it can be a program name with args.
-set dummy nm; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_NM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_NM"; then
-  ac_cv_prog_ac_ct_NM="$ac_ct_NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_NM="nm"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_NM=$ac_cv_prog_ac_ct_NM
-if test -n "$ac_ct_NM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NM" >&5
-$as_echo "$ac_ct_NM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_ct_NM" = x; then
-    NM=":"
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    NM=$ac_ct_NM
-  fi
-else
-  NM="$ac_cv_prog_NM"
-fi
-
-fi
-
-
-# Check RANLIB & AR & NM
-if test "${RANLIB}" = ":"; then
-  as_fn_error $? "${RANLIB} not found" "$LINENO" 5;
-fi
-
-if test "${AR}" = ":"; then
-  as_fn_error $? "${AR} not found" "$LINENO" 5;
-fi
-
-if test "${NM}" = ":"; then
-   as_fn_error $? "${NM} not found" "$LINENO" 5;
-fi
 
 # --------------------------------------------------------------------
 # check Perl versoin is 5
@@ -22065,11 +22532,9 @@ fi
 done
 
 
-inDev=0
 if test "$PERL5" = ""; then
-    inDev=0
+    as_fn_error $? "perl is not found." "$LINENO" 5
 else
-    inDev=1
     isPerlVersion5=no
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking Perl version is 5" >&5
 $as_echo_n "checking Perl version is 5... " >&6; }
@@ -22091,143 +22556,37 @@ fi
 
 # --------------------------------------------------------------------
 # check java
-
 if test "$userJAVA" != ""; then
   JAVA="$userJAVA"
 else
-  # Extract the first word of "java", so it can be a program name with args.
-set dummy java; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_JAVA+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $JAVA in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_JAVA="$JAVA" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_JAVA="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_JAVA" && ac_cv_path_JAVA="java"
-  ;;
-esac
-fi
-JAVA=$ac_cv_path_JAVA
-if test -n "$JAVA"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JAVA" >&5
-$as_echo "$JAVA" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
+  JAVA=java
 fi
 
 if test	"$userJAVAC" != ""; then
   JAVAC="$userJAVAC"
 else
-  # Extract the first word of "javac", so it can be a program name with args.
-set dummy javac; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_JAVAC+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $JAVAC in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_JAVAC="$JAVAC" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_JAVAC="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_JAVAC" && ac_cv_path_JAVAC="javac"
-  ;;
-esac
-fi
-JAVAC=$ac_cv_path_JAVAC
-if test -n "$JAVAC"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JAVAC" >&5
-$as_echo "$JAVAC" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
+  JAVAC=javac
 fi
 
 if test "$userJAR" != ""; then
   JAR="$userJAR"
 else
-  # Extract the first word of "jar", so it can be a program name with args.
-set dummy jar; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_JAR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $JAR in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_JAR="$JAR" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_JAR="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_JAR" && ac_cv_path_JAR="jar"
-  ;;
-esac
-fi
-JAR=$ac_cv_path_JAR
-if test -n "$JAR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JAR" >&5
-$as_echo "$JAR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+  JAR=jar
 fi
 
+which ${JAVA} 1>/dev/null 2>/dev/null
+if test $? -ne 0; then
+   as_fn_error $? "JAVA is not found." "$LINENO" 5
+fi
 
+which ${JAVAC} 1>/dev/null 2>/dev/null
+if test $? -ne 0; then
+   as_fn_error $? "JAVAC is not found." "$LINENO" 5
+fi
+
+which ${JAR} 1>/dev/null 2>/dev/null
+if test $? -ne 0; then
+   as_fn_error $? "JAR is not found." "$LINENO" 5
 fi
 
 
@@ -24928,12 +25287,6 @@ ac_config_files="$ac_config_files Makefile release/debian/changelog release/debi
 
 
 # --------------------------------------------------------------------
-ATOOL_DIR=./Driver/atool
-
-
-RM="rm -f"
-
-
 # headers/macros
 ac_fn_c_check_header_mongrel "$LINENO" "sys/param.h" "ac_cv_header_sys_param_h" "$ac_includes_default"
 if test "x$ac_cv_header_sys_param_h" = xyes; then :
@@ -25458,11 +25811,6 @@ case $OS in
 	API_FLAVOR=NATA_API_WIN32API;;
 esac
 
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
-  BLASLIB="-SSL2BLAMP"
-
-fi
-
 OS_CXXFLAGS=${OS_CFLAGS}
 
 
@@ -25650,20 +25998,32 @@ if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCXX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_ACC_TRUE}" && test -z "${ENABLE_ACC_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_ACC\" was never defined.
+if test -z "${ACC_TRUE}" && test -z "${ACC_FALSE}"; then
+  as_fn_error $? "conditional \"ACC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_ATOOL_TRUE}" && test -z "${ENABLE_ATOOL_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_ATOOL\" was never defined.
+if test -z "${ATOOL_TRUE}" && test -z "${ATOOL_FALSE}"; then
+  as_fn_error $? "conditional \"ATOOL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_XACC_TRUE}" && test -z "${ENABLE_XACC_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_XACC\" was never defined.
+if test -z "${XACC_TRUE}" && test -z "${XACC_FALSE}"; then
+  as_fn_error $? "conditional \"XACC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${BLAS_LIB_TRUE}" && test -z "${BLAS_LIB_FALSE}"; then
-  as_fn_error $? "conditional \"BLAS_LIB\" was never defined.
+if test -z "${POWERPC_TRUE}" && test -z "${POWERPC_FALSE}"; then
+  as_fn_error $? "conditional \"POWERPC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${LIBBLAS_TRUE}" && test -z "${LIBBLAS_FALSE}"; then
+  as_fn_error $? "conditional \"LIBBLAS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${SSL2BLAMP_TRUE}" && test -z "${SSL2BLAMP_FALSE}"; then
+  as_fn_error $? "conditional \"SSL2BLAMP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${INTELMKL_TRUE}" && test -z "${INTELMKL_FALSE}"; then
+  as_fn_error $? "conditional \"INTELMKL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${TCA_TRUE}" && test -z "${TCA_FALSE}"; then
@@ -25674,16 +26034,12 @@ if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
   as_fn_error $? "conditional \"GASNET\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${IS_PGI_TRUE}" && test -z "${IS_PGI_FALSE}"; then
-  as_fn_error $? "conditional \"IS_PGI\" was never defined.
+if test -z "${MPI3_TRUE}" && test -z "${MPI3_FALSE}"; then
+  as_fn_error $? "conditional \"MPI3\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${IS_CRAY_TRUE}" && test -z "${IS_CRAY_FALSE}"; then
-  as_fn_error $? "conditional \"IS_CRAY\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${IS_SUPERUX_TRUE}" && test -z "${IS_SUPERUX_FALSE}"; then
-  as_fn_error $? "conditional \"IS_SUPERUX\" was never defined.
+if test -z "${SUPERUX_TRUE}" && test -z "${SUPERUX_FALSE}"; then
+  as_fn_error $? "conditional \"SUPERUX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
@@ -26746,41 +27102,35 @@ do
     "Driver/atool/src/include/nata/nata_config.h") CONFIG_HEADERS="$CONFIG_HEADERS Driver/atool/src/include/nata/nata_config.h" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
-    "$XCODEML_COMMON_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $XCODEML_COMMON_DIR/Makefile" ;;
-    "$C_FRONTEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $C_FRONTEND_DIR/Makefile" ;;
-    "$C_BACKEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $C_BACKEND_DIR/Makefile" ;;
-    "$C_BACKEND_DIR/bin/C_Back") CONFIG_FILES="$CONFIG_FILES $C_BACKEND_DIR/bin/C_Back" ;;
-    "$F_FRONTEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $F_FRONTEND_DIR/Makefile" ;;
-    "$F_BACKEND_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/Makefile" ;;
-    "$F_BACKEND_DIR/bin/F_Back") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/bin/F_Back" ;;
-    "$F_BACKEND_DIR/bin/F_Trans") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/bin/F_Trans" ;;
-    "$F_BACKEND_DIR/bin/F_Decomp") CONFIG_FILES="$CONFIG_FILES $F_BACKEND_DIR/bin/F_Decomp" ;;
-    "$XCODEML_EXC_TOOLS_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $XCODEML_EXC_TOOLS_DIR/Makefile" ;;
-    "$XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java") CONFIG_FILES="$CONFIG_FILES $XCODEML_EXC_TOOLS_DIR/src/exc/util/MachineDepConst.java" ;;
-    "$OMDRIVER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/Makefile" ;;
-    "$OMDRIVER_DIR/../etc/ompcc.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/ompcc.conf" ;;
-    "$OMDRIVER_DIR/../etc/ompf90.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/ompf90.conf" ;;
-    "$OMDRIVER_DIR/../etc/xmpcc.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/xmpcc.conf" ;;
-    "$OMDRIVER_DIR/../etc/xmpf90.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/xmpf90.conf" ;;
-    "$OMDRIVER_DIR/../etc/java.conf") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../etc/java.conf" ;;
-    "$OMDRIVER_DIR/../bin/ompcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompcc" ;;
-    "$OMDRIVER_DIR/../bin/ompf90") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/ompf90" ;;
-    "$OMDRIVER_DIR/../bin/xmpcc") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpcc" ;;
-    "$OMDRIVER_DIR/../bin/xmpf90") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../bin/xmpf90" ;;
-    "$OMDRIVER_DIR/../libexec/omni_traverse") CONFIG_FILES="$CONFIG_FILES $OMDRIVER_DIR/../libexec/omni_traverse" ;;
-    "$LIBXMP_HEADER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_HEADER_DIR/Makefile" ;;
-    "$LIBXMP_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_DIR/Makefile" ;;
-    "$LIBXMP_THREADS_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_THREADS_DIR/Makefile" ;;
-    "$LIBXMP_GPU_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMP_GPU_DIR/Makefile" ;;
-    "$LIBXMPF_HEADER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMPF_HEADER_DIR/Makefile" ;;
-    "$LIBXMPF_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBXMPF_DIR/Makefile" ;;
-    "$LIBOMPC_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBOMPC_DIR/Makefile" ;;
-    "$LIBOMPF_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBOMPF_DIR/Makefile" ;;
-    "$LIBTLOG_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBTLOG_DIR/Makefile" ;;
-    "$LIBTLOG_MPI_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBTLOG_MPI_DIR/Makefile" ;;
-    "$LIBTLOG_MPI_DIR/bin/tlogview") CONFIG_FILES="$CONFIG_FILES $LIBTLOG_MPI_DIR/bin/tlogview" ;;
-    "$LIBACC_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBACC_DIR/Makefile" ;;
-    "$LIBACC_HEADER_DIR/Makefile") CONFIG_FILES="$CONFIG_FILES $LIBACC_HEADER_DIR/Makefile" ;;
+    "XcodeML-Common/Makefile") CONFIG_FILES="$CONFIG_FILES XcodeML-Common/Makefile" ;;
+    "C-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES C-FrontEnd/src/Makefile" ;;
+    "C-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES C-BackEnd/Makefile" ;;
+    "F-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/Makefile" ;;
+    "F-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES F-BackEnd/Makefile" ;;
+    "XcodeML-Exc-Tools/Makefile") CONFIG_FILES="$CONFIG_FILES XcodeML-Exc-Tools/Makefile" ;;
+    "XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java") CONFIG_FILES="$CONFIG_FILES XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java" ;;
+    "Driver/src/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/src/Makefile" ;;
+    "Driver/etc/ompcc.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/ompcc.conf" ;;
+    "Driver/etc/ompf90.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/ompf90.conf" ;;
+    "Driver/etc/xmpcc.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/xmpcc.conf" ;;
+    "Driver/etc/xmpf90.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/xmpf90.conf" ;;
+    "Driver/bin/ompcc") CONFIG_FILES="$CONFIG_FILES Driver/bin/ompcc" ;;
+    "Driver/bin/ompf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/ompf90" ;;
+    "Driver/bin/xmpcc") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpcc" ;;
+    "Driver/bin/xmpf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpf90" ;;
+    "Driver/libexec/omni_traverse") CONFIG_FILES="$CONFIG_FILES Driver/libexec/omni_traverse" ;;
+    "libxmp/include/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/include/Makefile" ;;
+    "libxmp/src/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src/Makefile" ;;
+    "libxmp/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src_threads/Makefile" ;;
+    "libxmpf/include/Makefile") CONFIG_FILES="$CONFIG_FILES libxmpf/include/Makefile" ;;
+    "libxmpf/src/Makefile") CONFIG_FILES="$CONFIG_FILES libxmpf/src/Makefile" ;;
+    "libompc/src/Makefile") CONFIG_FILES="$CONFIG_FILES libompc/src/Makefile" ;;
+    "libompf/src/Makefile") CONFIG_FILES="$CONFIG_FILES libompf/src/Makefile" ;;
+    "libtlog/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libtlog/src_threads/Makefile" ;;
+    "libtlog/src_mpi/Makefile") CONFIG_FILES="$CONFIG_FILES libtlog/src_mpi/Makefile" ;;
+    "libtlog/src_mpi/bin/tlogview") CONFIG_FILES="$CONFIG_FILES libtlog/src_mpi/bin/tlogview" ;;
+    "libacc/src/Makefile") CONFIG_FILES="$CONFIG_FILES libacc/src/Makefile" ;;
+    "libacc/include/Makefile") CONFIG_FILES="$CONFIG_FILES libacc/include/Makefile" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "release/debian/changelog") CONFIG_FILES="$CONFIG_FILES release/debian/changelog" ;;
     "release/debian/control") CONFIG_FILES="$CONFIG_FILES release/debian/control" ;;
@@ -28516,38 +28866,27 @@ cat << EOF
     C compiler (MPI_CC)                         : `which $MPI_CC`
     C compiler flags (MPI_CFLAGS)               : $MPI_CFLAGS
     C compiler linker flags (MPI_CLIBS)         : $MPI_CLIBS
-
     Fortran preprocessor (MPI_FPP)              : `which $MPI_FPP`
     Fortran preprocessor flags (MPI_FPPFLAGS)   : $MPI_FPPFLAGS
     Fortran compiler (MPI_FC)                   : `which $MPI_FC`
     Fortran compiler flags (MPI_FCFLAGS)        : $MPI_FCFLAGS
     Fortran compiler linker flags (MPI_FCLIBS)  : $MPI_FCLIBS
+    Supoort MPI 3 ?                             : $doMPI3
 
   Note: If you want to change above compilers and their options,
         please rerun ./configure MPI_CC=...
 
+  Options:
+    BLAS Library          : $output_libblas
+    OpenACC               : $doOpenAcc
+    GASNet                : $use_gasnet
 EOF
 
-if test "$target" != "Kcomputer-linux-gnu" -a "$target" != "FX10-linux-gnu"; then
-  echo "  Options:"
-  echo "    GASNet                : $use_gasnet"
-
-  if test x${use_gasnet} = xyes; then
-    echo "      Installed in        : $GASNET_PREFIX"
-    echo "      Conduit             : $GASNET_CONDUIT"
-  fi
-  echo "    OpenACC               : $doOpenAcc"
+if test x${use_gasnet} = xyes; then
+  echo "      Installed in        : $GASNET_PREFIX"
+  echo "      Conduit             : $GASNET_CONDUIT"
 fi
-
 if test x${use_tca} = xyes; then
   echo "    TCA                   : yes"
-fi
-
-if test x${doMPI3} = xyes; then
-  echo "    MPI3                  : yes"
-fi
-
-if test x${use_blas_lib} = xyes; then
-  echo "    BLAS LIB              : $BLAS_LIB"
 fi
 echo "=================================================="

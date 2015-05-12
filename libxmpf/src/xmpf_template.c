@@ -264,6 +264,18 @@ void xmpf_ref_init__(_XMP_object_ref_t **r_desc)
   }
 }
 
+
+void xmpf_ref_dealloc__(_XMP_object_ref_t **r_desc)
+{
+  _XMP_object_ref_t *rp = *r_desc;
+  free(rp->REF_OFFSET);
+  free(rp->REF_INDEX);
+  free(rp->REF_STRIDE);
+  free(rp->subscript_type);
+  free(rp);
+}
+
+
 _Bool _XMP_is_entire(_XMP_object_ref_t *rp)
 {
   if (rp->ref_kind == XMP_OBJ_REF_NODES){

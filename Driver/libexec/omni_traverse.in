@@ -7,11 +7,8 @@
 MODE=1         # generate subroutines respectively for all groups
 #MODE=2          # generate one subroutine for all proceures of all groups
 
-#-- for MODE 1
-DEFAULT_F_GROUPNAMES=( xmpf_traverse_module xmpf_traverse_initcoarray )
-DEFAULT_C_GROUPNAMES=( xmpc_traverse_init xmpc_traverse_finalize )
-
 NM="@NM@"
+#NM="cat"
 
 USAGE='usage: '$0' <option> ... <input_file> ...
   <option>
@@ -37,13 +34,13 @@ while [ -n "$1" ]; do
     -o)         shift; OUTFILE="$1";;
     *.o)        INFILES+=("$1");;
     *.a)        INFILES+=("$1");;
-    *)          echo "$0: illegal filename $1" 1>&2; HELP=yes;;
+    *)          INFILES+=("$1"); echo "$0: Warning: illegal filename $1" 1>&2;;
     esac
     shift
 done
 
 if [ "$HELP" = "yes" -o "$LANG" = "" ]; then
-   echo $USAGE 1>&2
+   echo "$USAGE" 1>&2
    exit 1
 fi
 
@@ -64,17 +61,34 @@ fi
 # find names ${PREFIX}_traverse_* 
 #--------------------------------------------------------------
 
-#--- get candidates
-candidates=`$NM "${INFILES[@]}" | awk 'NF >= 2 && $(NF-1) == "T" { print $NF }'`
+#--- get traverse procedures
+trav_cands=`$NM "${INFILES[@]}" | \
+    awk 'NF >= 2 && $(NF-1) ~ "^[U]$" { print $NF }'`
+traversers=()
+for name in $trav_cands; do
+    name=${name#.}                # re-mangling for Hitachi SR
+    name=${name#_}                # re-mangling for MacOS
+    case $name in
+        ${PREFIX}_traverse_?*)
+        case "$LANG" in 
+            F) traversers+=( ${name%_} );;    # omit the last '_'
+            C) traversers+=( ${name} );;
+        esac;;
+    esac
+done
 
-#--- choose candidates "${PREFIX}_traverse_*_?*" and rename them if needed
+#--- get procedures to be traversed
+proc_cands=`$NM "${INFILES[@]}" | \
+    awk 'NF >= 2 && $(NF-1) ~ "^[BbDdRrSsTt]$" { print $NF }'`
 procedures=()
-for name in $candidates; do
+for name in $proc_cands; do
+    name=${name#.}                # re-mangling for Hitachi SR
+    name=${name#_}                # re-mangling for MacOS
     case $name in
         ${PREFIX}_traverse_*_?* )
             case "$LANG" in
-                F) procedures+=( ${name%_} );;    # get name from "name_"
-                C) procedures+=( $name );;
+                F) procedures+=( ${name%_} );;    # omit the last '_'
+                C) procedures+=( ${name} );;
             esac;;
         ${PREFIX}_traverse_* )
             echo found unacceptable name of traverse procedure: \"${name}\"
@@ -87,10 +101,7 @@ fi
 
 #--- classify the chosen names by keywords
 if [ $MODE == 1 ]; then
-  case $LANG in
-  F) groupnames=( ${DEFAULT_F_GROUPNAMES[@]} );;
-  C) groupnames=( ${DEFAULT_C_GROUPNAMES[@]} );;
-  esac
+    groupnames=( ${traversers[@]} )
 else
   groupnames=()
   for name in "${procedures[@]}"; do
@@ -110,11 +121,18 @@ else
 fi
 
 if [ "$VERBOSE" = "yes" ]; then
-    echo ------------
-    echo "candidates="$candidates
-    echo "procedures=${procedures[@]}"
-    echo "groupnames=${groupnames[@]}"
-    echo ------------
+    echo
+    echo "[candidate names for tarverse procedures]"
+    echo "  "$trav_cands
+    echo "[generated traverse procedures]"
+    echo "  ${traversers[@]}"
+    echo "[group names]"
+    echo "  ${groupnames[@]}"
+    echo "[candidate names for called procedures]"
+    echo "  "$proc_cands
+    echo "[procedures called in traverse procedures]"
+    echo "  ${procedures[@]}"
+    echo
 fi
 
 #--------------------------------------------------------------
@@ -145,6 +163,11 @@ fortran_output_MODE2() {
 c_output_MODE1() {
     for groupname in "${groupnames[@]}"; do
         echo "extern void ${groupname}(void);"
+        for name in "${procedures[@]}"; do
+            if [[ ${name} =~ ${groupname}_* ]]; then
+                echo "extern void ${name}(void);"
+            fi
+        done
     done
     echo
 
@@ -200,5 +223,3 @@ else
 fi
 
 exit 0
-
-
