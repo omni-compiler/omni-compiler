@@ -248,7 +248,11 @@ public class ACCvar {
   
   
   public Ident getId(){
-    return id;
+    if(_parent != null){
+      return _parent.getId();
+    }else{
+      return id;
+    }
   }
   public boolean isUse_device(){
     return atrEnumSet.contains(Attribute.isUseDevice);
@@ -538,8 +542,17 @@ public class ACCvar {
     }
     dim = rangeList.Nargs();
   }
-  public void setParent(ACCvar var){
+  public void setParent(ACCvar var) throws ACCexception{
     _parent = var;
+    this.id = var.getId();
+
+    if(_subscripts != null && !_subscripts.isEmpty()){
+      rangeList = makeRange(_subscripts);
+      isSubarray = true;
+    }else{
+      rangeList = _parent.rangeList;
+    }
+    dim = rangeList.Nargs();
   }
 
   ACCvar getParent(){

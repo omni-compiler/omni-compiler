@@ -28,9 +28,13 @@ abstract class AccDirective {
     if(id == null){
       throw new ACCexception("symbol '" + symbol + "' is not exist");
     }
-    var.setIdent(id);
+    //var.setIdent(id);
     ACCvar parentVar = findParentVar(id);
-    var.setParent(parentVar);
+    if(parentVar != null){
+      var.setParent(parentVar);
+    }else{
+      var.setIdent(id);
+    }
   }
 
   abstract void generate() throws ACCexception;
