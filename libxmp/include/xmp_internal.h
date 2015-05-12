@@ -416,13 +416,8 @@ extern void _XMP_fjrdma_scalar_shortcut_mput(const int, const uint64_t, const ui
 extern void _XMP_set_coarray_addresses(const uint64_t, const _XMP_array_section_t*, const int, const size_t, uint64_t*);
 extern void _XMP_set_coarray_addresses_with_chunk(uint64_t*, const uint64_t, const _XMP_array_section_t*,
 						  const int, const size_t, const size_t);
-extern int _XMP_is_constant_stride_1dim();
-extern int _XMP_is_constant_stride_2dim(const _XMP_array_section_t *, const int);
-extern int _XMP_is_constant_stride_3dim(const _XMP_array_section_t *, const int);
-extern int _XMP_is_constant_stride_4dim(const _XMP_array_section_t *, const int);
-extern int _XMP_is_constant_stride_5dim(const _XMP_array_section_t *, const int);
-extern int _XMP_is_constant_stride_6dim(const _XMP_array_section_t *, const int);
-extern int _XMP_is_constant_stride_7dim(const _XMP_array_section_t *, const int);
+extern int _XMP_is_the_same_constant_stride(const _XMP_array_section_t *, const _XMP_array_section_t *, 
+					    const int, const int);
 extern size_t _XMP_calc_stride(const _XMP_array_section_t *, const int, const size_t);
 #endif
 

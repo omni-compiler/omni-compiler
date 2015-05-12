@@ -518,7 +518,7 @@ void _XMP_set_coarray_addresses(const uint64_t addr, const _XMP_array_section_t 
 /* DESCRIPTION : Check the dimension of an array has all element ?         */
 /* ARGUMENT    : [IN] *array_info : Information of array                   */
 /*               [IN] dim         : Dimension                              */
-/* RETURN:     : If the dimension of an array has all element, return TRUE */
+/* RETURN      : If the dimension of an array has all element, return TRUE */
 /***************************************************************************/
 static int _is_all_element(const _XMP_array_section_t *array_info, int dim){
   if(array_info[dim].elmts == array_info[dim].length)
@@ -527,10 +527,26 @@ static int _is_all_element(const _XMP_array_section_t *array_info, int dim){
     return _XMP_N_INT_FALSE;
 }
 
+
+/**************************************************************************************/
+/* DESCRIPTION : Check round of array[dim]                                            */
+/* ARGUMENT    : [IN] *array      : Information of array                              */
+/*               [IN] dim         : Dimension                                         */
+/* RETURN      : If a round of array[dim], return TRUE                                */
+/* NOTE        : The following 3 lines are equal to this function                     */
+/*    int last_elmt = array[dim].start + (array[dim].length - 1) * array[dim].stride; */
+/*    int next_elmt = last_elmt + array[dim].stride - array[dim].elmts;               */
+/*    return next_elmt == array[dim].start;                                           */
+/**************************************************************************************/
+static int _check_round(const _XMP_array_section_t *array, const int dim)
+{
+  return array[dim].length * array[dim].stride - array[dim].elmts == 0;
+}
+
 /**
    If 1dim array has a constant stride, return TRUE (Always TRUE)
 */
-int _XMP_is_constant_stride_1dim()
+static int _is_constant_stride_1dim()
 {
   return _XMP_N_INT_TRUE;
 }
@@ -538,17 +554,15 @@ int _XMP_is_constant_stride_1dim()
 /********************************************************************/
 /* DESCRIPTION : Is 2dim array has a constant stride ?              */
 /* ARGUMENT    : [IN] *array_info : Information of array            */
-/*               [IN] array_dims  : Number of dimensions of array   */
 /* RETURN:     : If 2dim array has a constant stride, return TRUE   */
 /********************************************************************/
-int _XMP_is_constant_stride_2dim(const _XMP_array_section_t *array_info,
-				 const int array_dims)
+static int _is_constant_stride_2dim(const _XMP_array_section_t *array_info)
 {
-  if(array_info[array_dims-1].stride == 1){
+  if(array_info[0].stride == 1 && _check_round(array_info, 1)){
     return _XMP_N_INT_TRUE;
   }
-  else if(array_info[array_dims-2].length == 1){
-    return _XMP_is_constant_stride_1dim();
+  else if(array_info[1].stride == 1){
+    return _XMP_N_INT_TRUE;
   }
 
   return _XMP_N_INT_FALSE;
@@ -557,20 +571,20 @@ int _XMP_is_constant_stride_2dim(const _XMP_array_section_t *array_info,
 /********************************************************************/
 /* DESCRIPTION : Is 3dim array has a constant stride ?              */
 /* ARGUMENT    : [IN] *array_info : Information of array            */
-/*               [IN] array_dims  : Number of dimensions of array   */
 /* RETURN:     : If 3dim array has a constant stride, return TRUE   */
 /********************************************************************/
-int _XMP_is_constant_stride_3dim(const _XMP_array_section_t *array_info,
-				 const int array_dims)
+static int _is_constant_stride_3dim(const _XMP_array_section_t *array_info)
 {
-  if(array_info[array_dims-2].stride == 1 && _is_all_element(array_info, array_dims-1)){
+  if(array_info[1].stride == 1 && _is_all_element(array_info, 2)){
     return _XMP_N_INT_TRUE;
   }
-  else if(array_info[array_dims-3].length == 1 && array_info[array_dims-2].length == 1){
-    return _XMP_is_constant_stride_1dim();
-  }
-  else if(array_info[array_dims-3].length == 1){
-    return _XMP_is_constant_stride_2dim(array_info, array_dims);
+  else if(array_info[0].stride == 1){
+    if(_check_round(array_info, 1) && array_info[2].stride == 1){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _check_round(array_info, 2)){
+      return _XMP_N_INT_TRUE;
+    }
   }
 
   return _XMP_N_INT_FALSE;
@@ -579,25 +593,27 @@ int _XMP_is_constant_stride_3dim(const _XMP_array_section_t *array_info,
 /********************************************************************/
 /* DESCRIPTION : Is 4dim array has a constant stride ?              */
 /* ARGUMENT    : [IN] *array_info : Information of array            */
-/*               [IN] array_dims  : Number of dimensions of array   */
 /* RETURN:     : If 4dim array has a constant stride, return TRUE   */
 /********************************************************************/
-int _XMP_is_constant_stride_4dim(const _XMP_array_section_t *array_info,
-				 const int array_dims)
+static int _is_constant_stride_4dim(const _XMP_array_section_t *array_info)
 {
-  if(array_info[array_dims-3].stride == 1 && _is_all_element(array_info, array_dims-2) &&
-     _is_all_element(array_info, array_dims-1)){
+  if(array_info[1].stride == 1 && _is_all_element(array_info, 2) &&
+     _is_all_element(array_info, 3)){
     return _XMP_N_INT_TRUE;
   }
-  else if(array_info[array_dims-4].length == 1 && array_info[array_dims-3].length == 1 &&
-          array_info[array_dims-2].length == 1){
-    return _XMP_is_constant_stride_1dim();
-  }
-  else if(array_info[array_dims-4].length == 1 && array_info[array_dims-3].length == 1){
-    return _XMP_is_constant_stride_2dim(array_info, array_dims);
-  }
-  else if(array_info[array_dims-4].length == 1){
-    return _XMP_is_constant_stride_3dim(array_info, array_dims);
+  else if(array_info[0].stride == 1){
+    if(_check_round(array_info, 1) && array_info[2].stride == 1 &&
+       _is_all_element(array_info, 3)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _check_round(array_info, 2) &&
+            array_info[3].stride == 1){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _check_round(array_info, 3)){
+      return _XMP_N_INT_TRUE;
+    }
   }
 
   return _XMP_N_INT_FALSE;
@@ -606,29 +622,31 @@ int _XMP_is_constant_stride_4dim(const _XMP_array_section_t *array_info,
 /********************************************************************/
 /* DESCRIPTION : Is 5dim array has a constant stride ?              */
 /* ARGUMENT    : [IN] *array_info : Information of array            */
-/*               [IN] array_dims  : Number of dimensions of array   */
 /* RETURN:     : If 5dim array has a constant stride, return TRUE   */
 /********************************************************************/
-int _XMP_is_constant_stride_5dim(const _XMP_array_section_t *array_info,
-				 const int array_dims)
+static int _is_constant_stride_5dim(const _XMP_array_section_t *array_info)
 {
-  if(array_info[array_dims-4].stride == 1 && _is_all_element(array_info, array_dims-3) &&
-     _is_all_element(array_info, array_dims-2) && _is_all_element(array_info, array_dims-1)){
+  if(array_info[1].stride == 1 && _is_all_element(array_info, 2) &&
+     _is_all_element(array_info, 3) && _is_all_element(array_info, 4)){
     return _XMP_N_INT_TRUE;
   }
-  else if(array_info[array_dims-5].length == 1 && array_info[array_dims-4].length == 1 &&
-          array_info[array_dims-3].length == 1 && array_info[array_dims-2].length == 1){
-    return _XMP_is_constant_stride_1dim();
-  }
-  else if(array_info[array_dims-5].length == 1 && array_info[array_dims-4].length == 1 &&
-          array_info[array_dims-3].length == 1){
-    return _XMP_is_constant_stride_2dim(array_info, array_dims);
-  }
-  else if(array_info[array_dims-5].length == 1 && array_info[array_dims-4].length == 1){
-    return _XMP_is_constant_stride_3dim(array_info, array_dims);
-  }
-  else if(array_info[array_dims-5].length == 1){
-    return _XMP_is_constant_stride_4dim(array_info, array_dims);
+  else if(array_info[0].stride == 1){
+    if(_check_round(array_info, 1) && array_info[2].stride == 1 &&
+       _is_all_element(array_info, 3) && _is_all_element(array_info, 4)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _check_round(array_info, 2) &&
+            array_info[3].stride == 1 && _is_all_element(array_info, 4)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _check_round(array_info, 3) && array_info[4].stride == 1){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _is_all_element(array_info, 3) && _check_round(array_info, 4)){
+      return _XMP_N_INT_TRUE;
+    }
   }
 
   return _XMP_N_INT_FALSE;
@@ -637,35 +655,41 @@ int _XMP_is_constant_stride_5dim(const _XMP_array_section_t *array_info,
 /********************************************************************/
 /* DESCRIPTION : Is 6dim array has a constant stride ?              */
 /* ARGUMENT    : [IN] *array_info : Information of array            */
-/*               [IN] array_dims  : Number of dimensions of array   */
 /* RETURN:     : If 6dim array has a constant stride, return TRUE   */
 /********************************************************************/
-int _XMP_is_constant_stride_6dim(const _XMP_array_section_t *array_info,
-				 const int array_dims)
+static int _is_constant_stride_6dim(const _XMP_array_section_t *array_info)
 {
-  if(array_info[array_dims-5].stride == 1 && _is_all_element(array_info, array_dims-4) &&
-     _is_all_element(array_info, array_dims-3) && _is_all_element(array_info, array_dims-2) &&
-     _is_all_element(array_info, array_dims-1)){
+  if(array_info[1].stride == 1 && _is_all_element(array_info, 2) &&
+     _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+     _is_all_element(array_info, 5)){
     return _XMP_N_INT_TRUE;
   }
-  else if(array_info[array_dims-6].length == 1 && array_info[array_dims-5].length == 1 &&
-          array_info[array_dims-4].length == 1 && array_info[array_dims-3].length == 1 &&
-          array_info[array_dims-2].length == 1){
-    return _XMP_is_constant_stride_1dim();
-  }
-  else if(array_info[array_dims-6].length == 1 && array_info[array_dims-5].length == 1 &&
-          array_info[array_dims-4].length == 1 && array_info[array_dims-3].length == 1){
-    return _XMP_is_constant_stride_2dim(array_info, array_dims);
-  }
-  else if(array_info[array_dims-6].length == 1 && array_info[array_dims-5].length == 1 &&
-          array_info[array_dims-4].length == 1){
-    return _XMP_is_constant_stride_3dim(array_info, array_dims);
-  }
-  else if(array_info[array_dims-6].length == 1 && array_info[array_dims-5].length == 1){
-    return _XMP_is_constant_stride_4dim(array_info, array_dims);
-  }
-  else if(array_info[array_dims-6].length == 1){
-    return _XMP_is_constant_stride_5dim(array_info, array_dims);
+  else if(array_info[0].stride == 1){
+    if(_check_round(array_info, 1) && array_info[2].stride == 1 &&
+       _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+       _is_all_element(array_info, 5)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _check_round(array_info, 2) &&
+            array_info[3].stride == 1 && _is_all_element(array_info, 4) &&
+            _is_all_element(array_info, 5)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _check_round(array_info, 3) && array_info[4].stride == 1 &&
+            _is_all_element(array_info, 5)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _is_all_element(array_info, 3) && _check_round(array_info, 4) &&
+            array_info[5].stride == 1){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+            _check_round(array_info, 5)){
+      return _XMP_N_INT_TRUE;
+    }
   }
 
   return _XMP_N_INT_FALSE;
@@ -674,43 +698,113 @@ int _XMP_is_constant_stride_6dim(const _XMP_array_section_t *array_info,
 /********************************************************************/
 /* DESCRIPTION : Is 7dim array has a constant stride ?              */
 /* ARGUMENT    : [IN] *array_info : Information of array            */
-/*               [IN] array_dims  : Number of dimensions of array   */
 /* RETURN:     : If 7dim array has a constant stride, return TRUE   */
 /********************************************************************/
-int _XMP_is_constant_stride_7dim(const _XMP_array_section_t *array_info,
-				 const int array_dims)
+static int _is_constant_stride_7dim(const _XMP_array_section_t *array_info)
 {
-  if(array_info[array_dims-6].stride == 1 && _is_all_element(array_info, array_dims-5) &&
-     _is_all_element(array_info, array_dims-4) && _is_all_element(array_info, array_dims-3) &&
-     _is_all_element(array_info, array_dims-2) && _is_all_element(array_info, array_dims-1)){
+  if(array_info[1].stride == 1 && _is_all_element(array_info, 2) &&
+     _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+     _is_all_element(array_info, 5) && _is_all_element(array_info, 6)){
     return _XMP_N_INT_TRUE;
   }
-  else if(array_info[array_dims-7].length == 1 && array_info[array_dims-6].length == 1 &&
-          array_info[array_dims-5].length == 1 && array_info[array_dims-4].length == 1 &&
-          array_info[array_dims-3].length == 1 && array_info[array_dims-2].length == 1){
-    return _XMP_is_constant_stride_1dim();
-  }
-  else if(array_info[array_dims-7].length == 1 && array_info[array_dims-6].length == 1 &&
-          array_info[array_dims-5].length == 1 && array_info[array_dims-4].length == 1 &&
-          array_info[array_dims-3].length == 1){
-    return _XMP_is_constant_stride_2dim(array_info, array_dims);
-  }
-  else if(array_info[array_dims-7].length == 1 && array_info[array_dims-6].length == 1 &&
-          array_info[array_dims-5].length == 1 && array_info[array_dims-4].length == 1){
-    return _XMP_is_constant_stride_3dim(array_info, array_dims);
-  }
-  else if(array_info[array_dims-7].length == 1 && array_info[array_dims-6].length == 1 &&
-          array_info[array_dims-5].length == 1){
-    return _XMP_is_constant_stride_4dim(array_info, array_dims);
-  }
-  else if(array_info[array_dims-7].length == 1 && array_info[array_dims-6].length == 1){
-    return _XMP_is_constant_stride_5dim(array_info, array_dims);
-  }
-  else if(array_info[array_dims-7].length == 1){
-    return _XMP_is_constant_stride_6dim(array_info, array_dims);
+  else if(array_info[0].stride == 1){
+    if(_check_round(array_info, 1) && array_info[2].stride == 1 &&
+       _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+       _is_all_element(array_info, 5) && _is_all_element(array_info, 6)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _check_round(array_info, 2) &&
+            array_info[3].stride == 1 && _is_all_element(array_info, 4) &&
+            _is_all_element(array_info, 5) && _is_all_element(array_info, 6)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _check_round(array_info, 3) && array_info[4].stride == 1 &&
+            _is_all_element(array_info, 5) && _is_all_element(array_info, 6)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _is_all_element(array_info, 3) && _check_round(array_info, 4) &&
+            array_info[5].stride == 1 && _is_all_element(array_info, 6)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+            _check_round(array_info, 5) && array_info[6].stride == 1){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+            _is_all_element(array_info, 5) && _check_round(array_info, 6)){
+      return _XMP_N_INT_TRUE;
+    }
   }
 
   return _XMP_N_INT_FALSE;
+}
+
+/**********************************************************************************/
+/* DESCRIPTION : Check shape of two arrays, the same is except for start          */
+/* ARGUMENT    : [IN] *array1_info : Information of array1                        */
+/*               [IN] *array2_info : Information of array2                        */
+/*               [IN] array1_dims  : Number of dimensions of array1               */
+/*               [IN] array2_dims  : Number of dimensions of array2               */
+/* RETURN:     : If two arrays have the same stride except for start, return TRUE */
+/**********************************************************************************/
+static int _is_the_same_shape_except_for_start(const _XMP_array_section_t *array1_info,
+                                               const _XMP_array_section_t *array2_info,
+                                               const int array1_dims, const int array2_dims)
+{
+  if(array1_dims != array2_dims) return _XMP_N_INT_FALSE;
+
+  for(int i=0;i<array1_dims;i++)
+    if(array1_info[i].length != array2_info[i].length ||
+       array1_info[i].elmts  != array2_info[i].elmts ||
+       array1_info[i].stride != array2_info[i].stride)
+      return _XMP_N_INT_FALSE;
+
+  return _XMP_N_INT_TRUE;
+}
+
+/********************************************************************/
+/* DESCRIPTION : Check two arrays have the same stride              */
+/* ARGUMENT    : [IN] *array1_info : Information of array1          */
+/*               [IN] *array2_info : Information of array2          */
+/*               [IN] array1_dims  : Number of dimensions of array1 */
+/*               [IN] array2_dims  : Number of dimensions of array2 */
+/* RETURN:     : If two arrays have the same stride, return TRUE    */
+/* NOTE        : This function does not support the following very  */
+/*               rare case.                                         */
+/*               int a[10][10]; -> a[0:2][0:5:2];                   */
+/*               An array has continuity jumped over the dimension  */
+/********************************************************************/
+int _XMP_is_the_same_constant_stride(const _XMP_array_section_t *array1_info,
+				     const _XMP_array_section_t *array2_info,
+				     const int array1_dims, const int array2_dims)
+{
+  if(! _is_the_same_shape_except_for_start(array1_info, array2_info,
+                                           array1_dims, array2_dims))
+    return _XMP_N_INT_FALSE;
+
+  switch (array1_dims){
+  case 1:
+    return _is_constant_stride_1dim();
+  case 2:
+    return _is_constant_stride_2dim(array1_info);
+  case 3:
+    return _is_constant_stride_3dim(array1_info);
+  case 4:
+    return _is_constant_stride_4dim(array1_info);
+  case 5:
+    return _is_constant_stride_5dim(array1_info);
+  case 6:
+    return _is_constant_stride_6dim(array1_info);
+  case 7:
+    return _is_constant_stride_7dim(array1_info);
+  default:
+    _XMP_fatal("Coarray Error ! Dimension is too big.\n");
+    return _XMP_N_INT_FALSE; // dummy
+  }
 }
 
 /***************************************************************/
