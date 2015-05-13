@@ -7,7 +7,6 @@
 long   a[N][N][N][N]:[*],          a_ans[N][N][N][N];
 float  b[N][N][N][N][N]:[*],       b_ans[N][N][N][N][N];
 double c[N][N][N][N][N][N]:[*],    c_ans[N][N][N][N][N][N];
-long   d[N][N][N][N][N][N][N]:[*], d_ans[N][N][N][N][N][N][N];
 int status, return_val = 0;
 
 void initialize_coarrays(int me)
@@ -16,14 +15,14 @@ void initialize_coarrays(int me)
     for(int j=0;j<N;j++)
       for(int k=0;k<N;k++)
         for(int x=0;x<N;x++)
-	  a[i][j][k][x] = a_ans[i][j][k][x] = 0;
-
+	  a[i][j][k][x] = a_ans[i][j][k][x] = 1;
+  
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++)
       for(int k=0;k<N;k++)
 	for(int x=0;x<N;x++)
 	  for(int y=0;y<N;y++)
-	    b[i][j][k][x][y] = b_ans[i][j][k][x][y] = 0;
+	    b[i][j][k][x][y] = b_ans[i][j][k][x][y] = 2;
 
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++)
@@ -31,17 +30,7 @@ void initialize_coarrays(int me)
 	for(int x=0;x<N;x++)
 	  for(int y=0;y<N;y++)
 	    for(int z=0;z<N;z++)
-	      c[i][j][k][x][y][z] = c_ans[i][j][k][x][y][z] = 0;
-
-  for(int i=0;i<N;i++)
-    for(int j=0;j<N;j++)
-      for(int k=0;k<N;k++)
-        for(int x=0;x<N;x++)
-          for(int y=0;y<N;y++)
-            for(int z=0;z<N;z++)
-	      for(int m=0;m<N;m++)
-		d[i][j][k][x][y][z][m] = d_ans[i][j][k][x][y][z][m] = 0;
-
+	    c[i][j][k][x][y][z] = c_ans[i][j][k][x][y][z] = 3;
 }
 
 void test_4(int me)
@@ -51,6 +40,7 @@ void test_4(int me)
   if(me == 2){
     long tmp = 99;
     a[1][1:5][:][2]:[1] = tmp;   // put
+    xmp_sync_memory(&status);
   }
 
   if(me == 1){
@@ -73,7 +63,7 @@ void check_4(int me)
 	  for(int x=0;x<N;x++){
 	    if(a[i][j][k][x] != a_ans[i][j][k][x]){
 	      flag = FALSE;
-	      printf("[%d] a[%d][%d][%d][%d] check_4 : fall %ld (True value is %ld)\n",
+	      printf("[%d] a[%d][%d][%d][%d] check_4 : fail %ld (True value is %ld)\n",
 		     me, i, j, k, x, a[i][j][k][x], a_ans[i][j][k][x]);
 	    }
 	  }
@@ -136,6 +126,7 @@ void test_6(int me)
     double tmp = 3.14;
     c[0][1][2][0][1][2] = tmp;
     c[1][2:3:3][3][2][2][2]:[1] = c[0][1][2][0][1][2];
+    xmp_sync_memory(&status);
     c[0][1][2][0][1][2] = 0.0;
   }
 

@@ -452,7 +452,7 @@ void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const i
     }
   }
   else{
-    if(src_elmts == 1){ 
+    if(src_elmts == 1){
       _fjrdma_scalar_mput(target_rank, dst_offset, src_offset, dst_info, dst_dims, dst_desc, src_desc, 
 			  src, dst_elmts);
     }
@@ -746,8 +746,9 @@ void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const i
  */
 void _XMP_fjrdma_sync_memory()
 {
-  for(;_num_of_puts!=0;_num_of_puts--)
-    while(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) == FJMPI_RDMA_NOTICE);
+  while(_num_of_puts != 0)
+    if(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) == FJMPI_RDMA_NOTICE)
+      _num_of_puts--;
 }
 
 /**
