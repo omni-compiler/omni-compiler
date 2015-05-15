@@ -279,7 +279,9 @@ void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
 /*       *off = ai->par_lower - tchunk->par_lower - ai->shadow_size_lo; */
     }
     else {
-      *size = ai->ser_upper - ai->ser_lower + 1;
+      //*size = ai->ser_upper - ai->ser_lower + 1;
+      *size = ai->ser_upper; // in this case, the lower bound is not zero.
+      //xmpf_dbg_printf("size = %d\n", *size);
       *off = ai->ser_lower; // dummy
       if (blk_off) *blk_off = ai->ser_lower; // dummy
     }
@@ -290,7 +292,6 @@ void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
     if (blk_off) *blk_off = 0;
   }    
 
-  //xmpf_dbg_printf("array_get_size = (%d:%d)\n", *lb, *ub);
 }
 
 #if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)

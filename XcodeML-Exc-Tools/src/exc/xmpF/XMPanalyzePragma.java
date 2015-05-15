@@ -185,7 +185,8 @@ public class XMPanalyzePragma
       break;
 
     case TASKS:
-      { analyzeTasks(pb);			break; }
+      analyzeTasks(pb.getClauses(), pb.getBody(), info, pb);
+      break;
 
     case GMOVE:
       analyzeGmove(pb.getClauses(),pb.getBody(), info, pb);
@@ -691,9 +692,14 @@ public class XMPanalyzePragma
     info.setOnRef(XMPobjectsRef.parseDecl(onRef,env,pb));
   }
 
-  private void analyzeTasks(PragmaBlock pb) {
-    XMP.fatal("analyzeTasks");
+  private void analyzeTasks(Xobject tasksDecl, BlockList taskList,
+			    XMPinfo info, PragmaBlock pb){
+    //XMP.fatal("analyzeTasks");
   }
+
+  // private void analyzeTasks(PragmaBlock pb) {
+  //   XMP.fatal("analyzeTasks");
+  // }
 
   private void analyzeGmove(Xobject gmoveDecl, BlockList body, 
 			    XMPinfo info, PragmaBlock pb) {

@@ -449,6 +449,7 @@ public class Bcons
 	      return Statement(v.getArg(0));
 
         case PRAGMA_LINE:
+          return PRAGMA(Xcode.PRAGMA_LINE, v.getArg(0).getString(), null, null);
         case TEXT:
             return new SimpleBlock(statement_list_code(), BasicBlock.Statement(v));
             

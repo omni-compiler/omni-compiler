@@ -1381,7 +1381,8 @@ CExpr *parse_XMP_opt()
 
 CExpr *parse_TASKS_clause()
 {
-    return (CExpr *)allocExprOfNull();
+  //return (CExpr *)allocExprOfNull();
+  return NULL;
 }
 
 static CExpr* parse_REFLECT_clause()

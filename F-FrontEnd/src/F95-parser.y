@@ -1917,9 +1917,9 @@ xmp_directive:
 	    { $$ = $2; }
 	  | XMPKW_TASKS
 	    { $$ = XMP_LIST(XMP_TASKS,NULL); }
-	  | XMPKW_TASKS xmp_NOWAIT
-	    { $$ = XMP_LIST(XMP_TASKS,
-	                    GEN_NODE(INT_CONSTANT, XMP_OPT_NOWAIT)); }
+	  /* | XMPKW_TASKS xmp_NOWAIT */
+	  /*   { $$ = XMP_LIST(XMP_TASKS, */
+	  /*                   GEN_NODE(INT_CONSTANT, XMP_OPT_NOWAIT)); } */
 	  | XMPKW_LOOP { need_keyword = TRUE; } xmp_loop_clause
 	    { $$ = XMP_LIST(XMP_LOOP,$3); }
 	  | XMPKW_REFLECT xmp_reflect_clause

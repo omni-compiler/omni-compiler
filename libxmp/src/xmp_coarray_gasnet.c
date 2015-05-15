@@ -749,6 +749,7 @@ void _XMP_gasnet_get(const int src_continuous, const int dst_continuous, const i
 /*               [IN] dst_elmts   : Number of elements of destination */
 /*               [IN] elmt_size   : Element size                      */
 /* NOTE       : Both dst and src are continuous coarrays              */
+/*              target_rank != __XMP_world_rank.                      */
 /* EXAMPLE    :                                                       */
 /*     a[0:100]:[1] = b[0]; // a[] is a dst, b[] is a src             */
 /**********************************************************************/
@@ -798,6 +799,7 @@ static void _gasnet_scalar_shortcut_mput(const int target_rank, _XMP_coarray_t *
 /*               [IN] src_elmts   : Number of elements of source array      */
 /*               [IN] elmt_size   : Element size                            */
 /* NOTE       : Both dst and src are continuous coarrays                    */
+/*              target_rank != __XMP_world_rank.                            */
 /* EXAMPLE    :                                                             */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src               */
 /****************************************************************************/
@@ -825,6 +827,7 @@ void _XMP_gasnet_shortcut_put(const int target_rank, _XMP_coarray_t *dst_desc, v
 /*               [IN] dst_elmts   : Number of elements of destination array */
 /*               [IN] elmt_size   : Element size                            */
 /* NOTE       : Both dst and src are continuous coarrays                    */
+/*              target_rank != __XMP_world_rank.                            */
 /* EXAMPLE    :                                                             */
 /*     a[0:100] = b[0]:[1]; // a[] is a dst, b[] is a src                   */
 /****************************************************************************/
@@ -848,6 +851,7 @@ static void _gasnet_scalar_shortcut_mget(const int target_rank, _XMP_coarray_t *
 /*               [IN] src_elmts   : Number of elements of source array      */
 /*               [IN] elmt_size   : Element size                            */
 /* NOTE       : Both dst and src are continuous coarrays                    */
+/*              target_rank != __XMP_world_rank.                            */
 /* EXAMPLE    :                                                             */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src               */
 /****************************************************************************/
