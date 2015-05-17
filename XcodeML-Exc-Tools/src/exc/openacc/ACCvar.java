@@ -367,7 +367,7 @@ public class ACCvar {
     return true;
   }
   
-  private XobjList makeRange(Xtype type){
+  private XobjList makeRange(Xtype type) throws ACCexception{
     XobjList rangeList = Xcons.List();
     
     while(true){
@@ -375,7 +375,11 @@ public class ACCvar {
       case Xtype.ARRAY:
       {
         ArrayType arrayType = (ArrayType)type;
-        rangeList.add(Xcons.List(Xcons.IntConstant(0), getArraySize(arrayType)));
+        Xobject arraySize = getArraySize(arrayType);
+        if(arraySize == null){
+          throw new ACCexception("array size of '" + getName() + "' is unknown");
+        }
+        rangeList.add(Xcons.List(Xcons.IntConstant(0), arraySize));
         type = arrayType.getRef();
       } break;
       case Xtype.BASIC:
