@@ -345,6 +345,7 @@ public class ACCvar {
   
   private boolean isCorrectRange(ArrayType arrayType, Xobject lower, Xobject length){
     Xobject size = getArraySize(arrayType);
+    if(size == null) return true;
     size = ACCutil.foldIntConstant_mod(size);
     if(! size.isIntConstant()) return true;
     int sizeInt = size.getInt();
