@@ -420,11 +420,11 @@ public class ACCvar {
     case Xtype.UNION:
       return id.getAddr();
     case Xtype.POINTER:
-      if(isSubarray()){
+      //if(isSubarray()){
         return id.Ref();
-      }else{
-        return id.getAddr();
-      }
+      //}else{
+      //  return id.getAddr();
+      //}
     case Xtype.ARRAY:
     {
       ArrayType arrayVarType = (ArrayType)varType;
