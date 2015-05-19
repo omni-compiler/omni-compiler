@@ -69,54 +69,35 @@ module comm
   integer,parameter :: ndims=3
   integer :: ndx,ndy,ndz
   integer :: iop(3)
-  integer :: npx(2),npy(2),npz(2)
   integer :: npe,id
-  integer :: ijvec,jkvec,ikvec
-  integer :: mpi_comm_cart
 end module comm
 
-module mexyz
-  integer :: mex, mey, mez
-contains
-  subroutine getme(ndx, ndy, ndz)
-    implicit none
-    include 'xmp_coarray.h'
-    integer, intent(in) :: ndx, ndy, ndz
-    integer me1, tmp, mez1, mey1, mex1
-    me1 = this_image() - 1
-    mez1 = me1/(ndx*ndy)
-    tmp = me1 - mez1*ndx*ndy
-    mey1 = tmp/ndx
-    mex1 = tmp - mey1*ndx
-    mex = mex1 + 1
-    mey = mey1 + 1
-    mez = mez1 + 1
-  end subroutine getme
-end module mexyz
-
-module caf_buffer
+module buffer
   implicit none
   include 'xmp_coarray.h'
   real, allocatable, dimension(:,:), codimension[:,:,:] :: &
        buf1l, buf1u,  buf2l, buf2u,  buf3l, buf3u
 
 contains
-  subroutine caf_alloc(imax, jmax, kmax, ndx, ndy, ndz)
-    integer imax, jmax, kmax, ndx, ndy, ndz
+  subroutine buf_alloc
+    use others
+    use comm
+    implicit none
 
-    allocate(buf1l(jmax, kmax)[ndx,ndy,*])
-    allocate(buf1u(jmax, kmax)[ndx,ndy,*])
-    allocate(buf2l(imax, kmax)[ndx,ndy,*])
-    allocate(buf2u(imax, kmax)[ndx,ndy,*])
-    allocate(buf3l(imax, jmax)[ndx,ndy,*])
-    allocate(buf3u(imax, jmax)[ndx,ndy,*])
-  end subroutine caf_alloc
-end module caf_buffer
+    allocate(buf1l(mjmax, mkmax)[ndx,ndy,*])
+    allocate(buf1u(mjmax, mkmax)[ndx,ndy,*])
+    allocate(buf2l(mimax, mkmax)[ndx,ndy,*])
+    allocate(buf2u(mimax, mkmax)[ndx,ndy,*])
+    allocate(buf3l(mimax, mjmax)[ndx,ndy,*])
+    allocate(buf3u(mimax, mjmax)[ndx,ndy,*])
+  end subroutine buf_alloc
+end module buffer
 
 program HimenoBMTxp_f90_CAF
 !
   use others
   use comm
+  use buffer
 !
   implicit none
 !
@@ -140,6 +121,7 @@ program HimenoBMTxp_f90_CAF
   call initmax(mx,my,mz,it)
 !
   call initmem
+  call buf_alloc
 !
 !! Initializing matrixes
   call initmt(mz,it)
@@ -164,7 +146,7 @@ program HimenoBMTxp_f90_CAF
 !
   gosa= 0.0
   cpu= 0.0
-  call mpi_barrier(mpi_comm_world,ierr)
+  sync all
   cpu0= mpi_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
@@ -183,7 +165,10 @@ program HimenoBMTxp_f90_CAF
   if(id == 0) then
      print *,'  MFLOPS:',xmflops2,'  time(s):',cpu,gosa
   end if
-  nn= int(ttarget/(cpu/3.0))
+!!!!!!!!!!!!!!!!!!!
+!!  nn= int(ttarget/(cpu/3.0))
+!!!!!!!!!!!!!!!!!!!!!
+  nn = 10
 !
 ! end the test loop
   if(id == 0) then
@@ -195,7 +180,7 @@ program HimenoBMTxp_f90_CAF
 !
   gosa= 0.0
   cpu= 0.0
-  call mpi_barrier(mpi_comm_world,ierr)
+  sync all
   cpu0= mpi_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
@@ -217,7 +202,6 @@ program HimenoBMTxp_f90_CAF
      score=xmflops2/82.84
      print *,' Score based on Pentium III 600MHz :',score
   end if
-!!  call mpi_finalize(ierr)
 !
   stop
 end program HimenoBMTxp_f90_CAF
@@ -230,9 +214,11 @@ subroutine readparam
   implicit none
 !
   include 'mpif.h'
+  include 'xmp_coarray.h'
 !
-  integer :: itmp(3),ierr
-  character(10) :: size
+  integer :: itmp(3)[*],ierr, i
+!!!  character(10) :: size[*]     !! bug #354
+  character(10) :: size(1)[*]
 !
   if(id == 0) then
      print *,'For example:'
@@ -256,18 +242,12 @@ subroutine readparam
      print *
   end if
 !
-  call mpi_bcast(itmp, &
-                 3, &
-                 mpi_integer, &
-                 0, &
-                 mpi_comm_world, &
-                 ierr)
-  call mpi_bcast(size, &
-                 10, &
-                 mpi_character, &
-                 0, &
-                 mpi_comm_world, &
-                 ierr)
+  sync all
+  if (id /= 0) then
+     itmp = itmp[1]
+     size = size[1]
+  end if
+  sync all
 !
   ndx= itmp(1)
   ndy= itmp(2)
@@ -288,6 +268,12 @@ subroutine grid_set(size)
   character(10),intent(in) :: size
 !
   select case(size)
+!!!!!!!!!!!!!!11
+  case("t")
+     mx0=9
+     my0=5
+     mz0=5
+!!!!!!!!!!!!!!!!!
   case("xs")
      mx0=65
      my0=33
@@ -459,23 +445,28 @@ subroutine initcomm
 !
   use comm
   use others
-  use mexyz
-  use caf_buffer
 !
   implicit none
 !
   include 'mpif.h'
+  include 'xmp_coarray.h'
 !
-  integer :: ierr,icomm,idm(3)
-  logical :: ipd(3),ir
+  integer me1, tmp, mez1, mey1, mex1
 !
-!!  call mpi_init(ierr)
-  call mpi_comm_size(mpi_comm_world,npe,ierr)
-  call mpi_comm_rank(mpi_comm_world,id,ierr)
+  npe = num_images()
+  id = this_image() - 1
 !
   call readparam
-  call getme(ndx, ndy, ndz)
-  call caf_alloc(imax, jmax, kmax, ndx, ndy, ndz)
+
+!!!!! TEMPORARY until support this_image(coarray [,dim])
+  me1 = this_image() - 1
+  mez1 = me1/(ndx*ndy)
+  tmp = me1 - mez1*ndx*ndy
+  mey1 = tmp/ndx
+  mex1 = tmp - mey1*ndx
+  iop(1) = mex1
+  iop(2) = mey1
+  iop(3) = mez1
 !
 !
   if(ndx*ndy*ndz /= npe) then
@@ -483,60 +474,7 @@ subroutine initcomm
         print *,'Invalid number of PE'
         print *,'Please check partitioning pattern or number of PE'
      end if
-!!     call mpi_finalize(ierr)
      stop
-  end if
-!
-  icomm= mpi_comm_world
-!
-  idm(1)= ndx
-  idm(2)= ndy
-  idm(3)= ndz
-!
-  ipd(1)= .false.
-  ipd(2)= .false.
-  ipd(3)= .false.
-  ir= .false.
-!
-  call mpi_cart_create(icomm, &
-                       ndims, &
-                       idm, &
-                       ipd, &
-                       ir, &
-                       mpi_comm_cart, &
-                       ierr)
-  call mpi_cart_get(mpi_comm_cart, &
-                    ndims, &
-                    idm, &
-                    ipd, &
-                    iop, &
-                    ierr)
-!
-  if(ndz > 1) then
-     call mpi_cart_shift(mpi_comm_cart, &
-                         2, &
-                         1, &
-                         npz(1), &
-                         npz(2), &
-                         ierr)
-  end if
-!
-  if(ndy > 1) then
-     call mpi_cart_shift(mpi_comm_cart, &
-                         1, &
-                         1, &
-                         npy(1), &
-                         npy(2), &
-                         ierr)
-  end if
-!
-  if(ndx > 1) then
-     call mpi_cart_shift(mpi_comm_cart, &
-                         0, &
-                         1, &
-                         npx(1), &
-                         npx(2), &
-                         ierr)
   end if
 !
   return
@@ -563,15 +501,15 @@ subroutine initmax(mx,my,mz,ks)
   mx1(0)= 0
   do  i=1,ndx
      if(i <= mod(mx,ndx)) then
-        mx1(i)= mx1(i-1) + itmp + 1
+        mx1(i)= mx1(i-1) + itmp + 1    !! get my global lbound
      else
-        mx1(i)= mx1(i-1) + itmp
+        mx1(i)= mx1(i-1) + itmp        !! get my global lbound
      end if
   end do
   do i=0,ndx-1
-     mx2(i)= mx1(i+1) - mx1(i)
-     if(i /= 0)     mx2(i)= mx2(i) + 1
-     if(i /= ndx-1) mx2(i)= mx2(i) + 1
+     mx2(i)= mx1(i+1) - mx1(i)             !! get my width
+     if(i /= 0)     mx2(i)= mx2(i) + 1     !! add left shadow
+     if(i /= ndx-1) mx2(i)= mx2(i) + 1     !! add right shadow
   end do
 !
   itmp= my/ndy
@@ -608,9 +546,25 @@ subroutine initmax(mx,my,mz,ks)
   jmax= my2(iop(2))
   kmax= mz2(iop(3))
 !
-  mimax= imax + 1
-  mjmax= jmax + 1
-  mkmax= kmax + 1
+!!!!! debug point #1
+!!  mimax= imax + 1
+!!  mjmax= jmax + 1
+!!  mkmax= kmax + 1
+!!!! try #1
+!!  call mpi_allreduce(imax + 1, mimax, 1, mpi_integer, &
+!!                     mpi_max, mpi_comm_world, ierr)
+!!  call mpi_allreduce(jmax + 1, mjmax, 1, mpi_integer, &
+!!                     mpi_max, mpi_comm_world, ierr)
+!!  call mpi_allreduce(kmax + 1, mkmax, 1, mpi_integer, &
+!!                     mpi_max, mpi_comm_world, ierr)
+!!!! try #2
+  call mpi_allreduce(imax, mimax, 1, mpi_integer, &
+                     mpi_max, mpi_comm_world, ierr)
+  call mpi_allreduce(jmax, mjmax, 1, mpi_integer, &
+                     mpi_max, mpi_comm_world, ierr)
+  call mpi_allreduce(kmax, mkmax, 1, mpi_integer, &
+                     mpi_max, mpi_comm_world, ierr)
+       
 !
   if(iop(3) == 0) then
      ks= mz1(iop(3))
@@ -618,118 +572,86 @@ subroutine initmax(mx,my,mz,ks)
      ks= mz1(iop(3)) - 1
   end if
 !
-!!  j-k vector
-  if(ndx > 1) then
-     call mpi_type_vector(jmax*kmax, &
-                          1, &
-                          mimax, &
-                          mpi_real4, &
-                          jkvec, &
-                          ierr)
-     call mpi_type_commit(jkvec, &
-                          ierr)
-  end if
-!
-!!  i-k vector
-  if(ndy > 1) then
-     call mpi_type_vector(kmax, &
-                          imax, &
-                          mimax*mjmax, &
-                          mpi_real4, &
-                          ikvec, &
-                          ierr)
-     call mpi_type_commit(ikvec, &
-                          ierr)
-  end if
-!
-!!  i-j vector
-  if(ndz > 1) then
-     call mpi_type_vector(jmax, &
-                          imax, &
-                          mimax, &
-                          mpi_real4, &
-                          ijvec, &
-                          ierr)
-     call mpi_type_commit(ijvec, &
-                          ierr)
-  end if
-!
   return
 end subroutine initmax
 !
 !
 !
-subroutine sendp(ndx,ndy,ndz)
+subroutine sendp()
 !
   use pres
   use others
-  use mexyz
-  use caf_buffer
+  use comm
+  use buffer
   implicit none
+  integer mex, mey, mez
 !  include 'xmp_coarray.h'
-!
-  integer,intent(in) :: ndx,ndy,ndz
-!
 
-  sync all
-
-  !*** put z-axis
-  if (mez>1) then
-     buf3u[mex,mey,mez-1] = p(1:imax,1:jmax,2     )
-  end if
-  if (mez<ndz) then
-     buf3l[mex,mey,mez+1] = p(1:imax,1:jmax,kmax-1)
-  endif
-
-  sync all
-
-  !*** unpack z-axis
-  if (mez<ndz) then
-     p(1:imax,1:jmax,kmax) = buf3u
-  end if
-  if (mez>1) then
-     p(1:imax,1:jmax,1   ) = buf3l
-  endif
-
-  sync all
-
-  !*** put y-axis
-  if (mey>1) then
-     buf2u[mex,mey-1,mez] = p(1:imax,2     ,1:kmax)
-  end if
-  if (mey<ndy) then
-     buf2l[mex,mey+1,mez] = p(1:imax,jmax-1,1:kmax)
-  endif
-
-  sync all
-
-  !*** unpack y-axis
-  if (mey<ndy) then
-     p(1:imax,jmax,1:kmax) = buf2u
-  end if
-  if (mey>1) then
-     p(1:imax,1   ,1:kmax) = buf2l
-  endif
+  mex = iop(1) + 1
+  mey = iop(2) + 1
+  mez = iop(3) + 1
 
   sync all
 
   !*** put x-axis
   if (mex>1) then
-     buf1u[mex-1,mey,mez] = p(2     ,1:jmax,1:kmax)
+     buf1u(:,:)[mex-1,mey,mez] = p(2     ,:,:)
   end if
   if (mex<ndx) then
-     buf1l[mex+1,mey,mez] = p(imax-1,1:jmax,1:kmax)
+     buf1l(:,:)[mex+1,mey,mez] = p(imax-1,:,:)
   endif
 
   sync all
 
   !*** unpack x-axis
   if (mex<ndx) then
-     p(imax,1:jmax,1:kmax) = buf1u
+     p(imax,:,:) = buf1u(:,:)
   end if
   if (mex>1) then
-     p(1   ,1:jmax,1:kmax) = buf1l
+     p(1   ,:,:) = buf1l(:,:)
   endif
+
+  sync all
+
+  !*** put y-axis
+  if (mey>1) then
+     buf2u(:,:)[mex,mey-1,mez] = p(:,2     ,:)
+  end if
+  if (mey<ndy) then
+     buf2l(:,:)[mex,mey+1,mez] = p(:,jmax-1,:)
+  endif
+
+  sync all
+
+  !*** unpack y-axis
+  if (mey<ndy) then
+     p(:,jmax,:) = buf2u(:,:)
+  end if
+  if (mey>1) then
+     p(:,1   ,:) = buf2l(:,:)
+  endif
+
+  sync all
+
+  !*** put z-axis
+  if (mez>1) then
+     buf3u(:,:)[mex,mey,mez-1] = p(:,:,2     )
+  end if
+  if (mez<ndz) then
+     buf3l(:,:)[mex,mey,mez+1] = p(:,:,kmax-1)
+  endif
+
+  sync all
+
+  !*** unpack z-axis
+  if (mez<ndz) then
+     p(:,:,kmax) = buf3u(:,:)
+  end if
+  if (mez>1) then
+     p(:,:,1   ) = buf3l(:,:)
+  endif
+
+  sync all
 
   return
 end subroutine sendp

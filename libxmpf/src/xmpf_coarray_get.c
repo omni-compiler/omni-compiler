@@ -184,6 +184,7 @@ void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *result,
   if (rank == 0) {  // fully contiguous after perfect collapsing
     if (_XMPF_coarrayMsg) {
       _XMPF_coarrayDebugPrint("GET %d bytes fully contiguous ===\n", bytes);
+      fprintf(stderr, "  coindex %d gets from %d\n", XMPF_this_image, coindex);
     }
     _getVector(descPtr, baseAddr, bytes, coindex, result);
     return;

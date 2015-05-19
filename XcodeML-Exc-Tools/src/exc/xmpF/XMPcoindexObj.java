@@ -189,7 +189,7 @@ public class XMPcoindexObj {
     }
 
     if (coarray == null)
-      XMP.error("INTERNAL: could not find coarray in coarrays. name=" + name);
+      XMP.fatal("INTERNAL: could not find coarray in coarrays. name=" + name);
     return null;
   }
 
