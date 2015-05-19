@@ -145,10 +145,7 @@ program HimenoBMTxp_f90_MPI
   if(id == 0) then
      print *,'  MFLOPS:',xmflops2,'  time(s):',cpu,gosa
   end if
-!!!!!!!!!!!!!!!!!!!
-!!  nn= int(ttarget/(cpu/3.0))
-!!!!!!!!!!!!!!!!!!!!!
-  nn = 10
+  nn= int(ttarget/(cpu/3.0))
 !
 ! end the test loop
   if(id == 0) then
@@ -253,12 +250,6 @@ subroutine grid_set(size)
   character(10),intent(in) :: size
 !
   select case(size)
-!!!!!!!!!!!!!!11
-  case("t")
-     mx0=9
-     my0=5
-     mz0=5
-!!!!!!!!!!!!!!!!!
   case("xs")
      mx0=65
      my0=33

@@ -138,7 +138,7 @@ program HimenoBMTxp_f90_CAF
 !
 !! Start measuring
 !
-  nn=3
+  nn=1!!!!!!!!!!!!!!!!!!!3
   if(id == 0) then
      print *,' Start rehearsal measurement process.'
      print *,' Measure the performance in 3 times.'
@@ -168,7 +168,7 @@ program HimenoBMTxp_f90_CAF
 !!!!!!!!!!!!!!!!!!!
 !!  nn= int(ttarget/(cpu/3.0))
 !!!!!!!!!!!!!!!!!!!!!
-  nn = 10
+  nn = 0
 !
 ! end the test loop
   if(id == 0) then
@@ -584,74 +584,118 @@ subroutine sendp()
   use comm
   use buffer
   implicit none
-  integer mex, mey, mez
+  integer mx, my, mz
 !  include 'xmp_coarray.h'
 
-  mex = iop(1) + 1
-  mey = iop(2) + 1
-  mez = iop(3) + 1
+  mx = iop(1) + 1
+  my = iop(2) + 1
+  mz = iop(3) + 1
 
   sync all
-
-  !*** put x-axis
-  if (mex>1) then
-     buf1u(:,:)[mex-1,mey,mez] = p(2     ,:,:)
-  end if
-  if (mex<ndx) then
-     buf1l(:,:)[mex+1,mey,mez] = p(imax-1,:,:)
+!!!!!!!!!!!!!!
+  if (iop(1)==0.and.iop(2)==0.and.iop(3)==0) then
+     write(*,*) "(0,0,0) before"
+     write(*,*) p(1:imax,1:jmax,1:kmax)
   endif
-
   sync all
-
-  !*** unpack x-axis
-  if (mex<ndx) then
-     p(imax,:,:) = buf1u(:,:)
-  end if
-  if (mex>1) then
-     p(1   ,:,:) = buf1l(:,:)
+  if (iop(1)==1.and.iop(2)==0.and.iop(3)==0) then
+     write(*,*) "(1,0,0) before"
+     write(*,*) p(1:imax,1:jmax,1:kmax)
   endif
-
-  sync all
-
-  !*** put y-axis
-  if (mey>1) then
-     buf2u(:,:)[mex,mey-1,mez] = p(:,2     ,:)
-  end if
-  if (mey<ndy) then
-     buf2l(:,:)[mex,mey+1,mez] = p(:,jmax-1,:)
-  endif
-
-  sync all
-
-  !*** unpack y-axis
-  if (mey<ndy) then
-     p(:,jmax,:) = buf2u(:,:)
-  end if
-  if (mey>1) then
-     p(:,1   ,:) = buf2l(:,:)
-  endif
-
-  sync all
+!!!!!!!!!!!!!!
 
   !*** put z-axis
-  if (mez>1) then
-     buf3u(:,:)[mex,mey,mez-1] = p(:,:,2     )
+  if (mz>1) then
+     buf3u(2:imax-1,2:jmax-1)[mx,my,mz-1] = p(2:imax-1,2:jmax-1,2     )
   end if
-  if (mez<ndz) then
-     buf3l(:,:)[mex,mey,mez+1] = p(:,:,kmax-1)
+  if (mz<ndz) then
+     buf3l(2:imax-1,2:jmax-1)[mx,my,mz+1] = p(2:imax-1,2:jmax-1,kmax-1)
   endif
 
   sync all
 
   !*** unpack z-axis
-  if (mez<ndz) then
-     p(:,:,kmax) = buf3u(:,:)
+  if (mz<ndz) then
+     p(2:imax-1,2:jmax-1,kmax) = buf3u(2:imax-1,2:jmax-1)
   end if
-  if (mez>1) then
-     p(:,:,1   ) = buf3l(:,:)
+  if (mz>1) then
+     p(2:imax-1,2:jmax-1,1   ) = buf3l(2:imax-1,2:jmax-1)
   endif
 
   sync all
+!!!!!!!!!!!!!!
+  if (iop(1)==0.and.iop(2)==0.and.iop(3)==0) then
+     write(*,*) "(0,0,0) after z"
+     write(*,*) p(1:imax,1:jmax,1:kmax)
+  endif
+  sync all
+  if (iop(1)==1.and.iop(2)==0.and.iop(3)==0) then
+     write(*,*) "(1,0,0) after z"
+     write(*,*) p(1:imax,1:jmax,1:kmax)
+  endif
+!!!!!!!!!!!!!!
+
+  !*** put y-axis
+  if (my>1) then
+     buf2u(2:imax-1,1:kmax)[mx,my-1,mz] = p(2:imax-1,2     ,1:kmax)
+  end if
+  if (my<ndy) then
+     buf2l(2:imax-1,1:kmax)[mx,my+1,mz] = p(2:imax-1,jmax-1,1:kmax)
+  endif
+
+  sync all
+
+  !*** unpack y-axis
+  if (my<ndy) then
+     p(2:imax-1,jmax,1:kmax) = buf2u(2:imax-1,1:kmax)
+  end if
+  if (my>1) then
+     p(2:imax-1,1   ,1:kmax) = buf2l(2:imax-1,1:kmax)
+  endif
+
+  sync all
+!!!!!!!!!!!!!!
+  if (iop(1)==0.and.iop(2)==0.and.iop(3)==0) then
+     write(*,*) "(0,0,0) after y"
+     write(*,*) p(1:imax,1:jmax,1:kmax)
+  endif
+  sync all
+  if (iop(1)==1.and.iop(2)==0.and.iop(3)==0) then
+     write(*,*) "(1,0,0) after y"
+     write(*,*) p(1:imax,1:jmax,1:kmax)
+  endif
+!!!!!!!!!!!!!!
+
+  !*** put x-axis
+  if (mx>1) then
+     buf1u(1:jmax,1:kmax)[mx-1,my,mz] = p(2     ,1:jmax,1:kmax)
+  end if
+  if (mx<ndx) then
+     buf1l(1:jmax,1:kmax)[mx+1,my,mz] = p(imax-1,1:jmax,1:kmax)
+  endif
+
+  sync all
+
+  !*** unpack x-axis
+  if (mx<ndx) then
+     p(imax,1:jmax,1:kmax) = buf1u(1:jmax,1:kmax)
+  end if
+  if (mx>1) then
+     p(1   ,1:jmax,1:kmax) = buf1l(1:jmax,1:kmax)
+  endif
+
+  sync all
+!!!!!!!!!!!!!!
+  if (iop(1)==0.and.iop(2)==0.and.iop(3)==0) then
+     write(*,*) "(0,0,0) after x"
+     write(*,*) p(1:imax,1:jmax,1:kmax)
+  endif
+  sync all
+  if (iop(1)==1.and.iop(2)==0.and.iop(3)==0) then
+     write(*,*) "(1,0,0) after x"
+     write(*,*) p(1:imax,1:jmax,1:kmax)
+  endif
+!!!!!!!!!!!!!!
 
   return
 end subroutine sendp
