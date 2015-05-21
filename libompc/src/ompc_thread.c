@@ -74,7 +74,7 @@ static void *ompc_slave_proc(void *);
 #endif /* USE_SPROC && OMNI_OS_IRIX */
 #ifdef USE_ARGOBOTS
 static void ompc_xstream_setup();
-static void ompc_thread_wrapper_func();
+static void ompc_thread_wrapper_func(void *args);
 #endif /* USE_ARGOBOTS */
 static struct ompc_proc *ompc_new_proc(void);
 static struct ompc_proc *ompc_current_proc(void);
@@ -660,7 +660,7 @@ static void ompc_xstream_setup()
     ompc_new_proc();
 }
 
-static void ompc_thread_wrapper_func()
+static void ompc_thread_wrapper_func(void *args)
 {
     struct ompc_proc *cproc = ompc_current_proc();
     struct ompc_thread *tp = cproc->thr->parent;
@@ -686,7 +686,7 @@ static void ompc_thread_wrapper_func()
 # endif /* USE_LOG */
 
     /* on return, clean up */
-    me = cproc->thr;
+    struct ompc_thread *me = cproc->thr;
     cproc->thr = NULL;
     ompc_free_thread(cproc,me);    /* free thread & put me to freelist */
     ompc_free_proc(cproc);
