@@ -285,6 +285,7 @@
 %token XMPKW_ASYNC
 %token XMPKW_NOWAIT
 %token XMPKW_MASTER /* not used */
+%token XMPKW_NOCOMM
 
 %token XMPKW_IN
 %token XMPKW_OUT
@@ -299,7 +300,7 @@
 %type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_template_fix_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause xmp_wait_async_clause xmp_end_clause
 
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_width_opt xmp_width_opt1 xmp_async_opt xmp_async_opt1 xmp_width_list xmp_width
-%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width
+%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width
 
 %type <code> xmp_reduction_op
 
@@ -2006,8 +2007,8 @@ xmp_template_fix_clause:
 	    /* { $$ = list3(LIST,$2,$4,$6); } */
 
 xmp_task_clause:
-	    xmp_ON xmp_obj_ref xmp_clause_opt
-	    { $$ = list2(LIST,$2,$3); }
+	    xmp_ON xmp_obj_ref KW xmp_nocomm_opt xmp_clause_opt
+	    { $$ = list3(LIST,$2,$4,$5); }
           ;
 
 xmp_loop_clause:
@@ -2248,6 +2249,11 @@ xmp_async_opt:
         | xmp_ASYNC '(' expr ')'
         { $$ = $3; }
 	;
+
+xmp_nocomm_opt:
+	  /* NULL */ { $$ = GEN_NODE(INT_CONSTANT, 0); }
+	 | XMPKW_NOCOMM { $$ = GEN_NODE(INT_CONSTANT, 1); }
+	 ;
 
 xmp_clause_opt:
 	   /* NULL */{ $$ = NULL; }

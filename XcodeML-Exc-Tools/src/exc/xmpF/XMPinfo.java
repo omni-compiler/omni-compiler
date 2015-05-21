@@ -50,6 +50,9 @@ public class XMPinfo
   XobjList sizeList;
   XobjList distList;
 
+  // for task
+  boolean nocomm_flag;
+
   public XMPinfo(XMPpragma pragma, XMPinfo parent, Block b, XMPenv env) {
     this.pragma = pragma;
     this.parent = parent;
@@ -151,4 +154,9 @@ public class XMPinfo
   public XobjList getSizeList() { return sizeList; }
   public XobjList getDistList() { return distList; }
 
+  public void setNocomm(Xobject nocomm){
+    nocomm_flag = (nocomm.getInt() == 1);
+  }
+
+  public boolean isNocomm() { return nocomm_flag; }
 }
