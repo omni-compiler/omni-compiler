@@ -575,7 +575,7 @@ ompc_free_thread(struct ompc_proc *proc,struct ompc_thread *p)
     proc->free_thr = p;
 }
 
-
+#ifndef USE_ARGOBOTS
 #if defined(USE_SPROC) && defined(OMNI_OS_IRIX)
 static void *ompc_slave_proc(void *arg, size_t stackSize)
 #else
@@ -652,6 +652,7 @@ static void *ompc_slave_proc(void *arg)
 #endif
     return NULL;
 }
+#endif /* !USE_ARGOBOTS */
 
 #ifdef USE_ARGOBOTS
 static void ompc_xstream_setup()
