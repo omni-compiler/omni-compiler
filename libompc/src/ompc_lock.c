@@ -39,7 +39,7 @@ int ompc_test_lock(volatile ompc_lock_t *lp)
 
 # endif /* USE_SOL_THREAD */
 
-# ifdef USE_PTHREAD
+# if 0 /* USE_PTHREAD */
 void ompc_init_lock(ompc_lock_t *lp)
 {
     pthread_mutex_init((pthread_mutex_t *)lp, NULL);

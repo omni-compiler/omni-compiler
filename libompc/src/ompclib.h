@@ -26,7 +26,7 @@
 #define USE_PTHREAD_BARRIER
 #endif
 
-#ifdef USE_PTHREAD      /* pthread: set gcc include path to 2.6(pdph3) */
+#if 0 /* USE_PTHREAD */      /* pthread: set gcc include path to 2.6(pdph3) */
 # include <pthread.h>
 # ifndef OMNI_OS_CYGWIN32
 #  include <sched.h>
@@ -106,7 +106,7 @@ typedef pid_t ompc_proc_t;
 #ifdef USE_SPIN_LOCK
 typedef int ompc_lock_t;
 #else
-# ifdef USE_PTHREAD
+# if 0 /* USE_PTHREAD */
 typedef pthread_mutex_t ompc_lock_t;
 # endif
 # ifdef USE_ARGOBOTS

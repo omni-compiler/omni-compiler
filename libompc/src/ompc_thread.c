@@ -36,7 +36,7 @@ int ompc_bind_procs = FALSE;   /* default */
 /* system lock variables */
 ompc_lock_t ompc_proc_lock_obj, ompc_thread_lock_obj;
 
-#ifdef USE_PTHREAD
+#if 0 /* USE_PTHREAD */
 # ifndef SIMPLE_SPIN
 pthread_mutex_t ompc_proc_mutex;
 pthread_cond_t ompc_proc_cond;
@@ -137,7 +137,7 @@ ompc_init(int argc,char *argv[])
     size_t thdStackSize;
 #endif /* OMNI_OS_IRIX && USE_SPROC */
 
-#ifdef USE_PTHREAD
+#if 0 /* USE_PTHREAD */
     static pthread_t thds[MAX_PROC];
     static pthread_attr_t attr;
 
@@ -268,13 +268,13 @@ ompc_init(int argc,char *argv[])
      */
     ompc_max_threads = ompc_num_threads;
 
-#ifdef USE_PTHREAD
+#if 0 /* USE_PTHREAD */
 #if _POSIX_BARRIERS > 0
     pthread_barrier_init(&ompc_thd_bar, 0, ompc_num_threads);
 #endif
 #endif
 
-#if (defined(OMNI_OS_IRIX) || defined(OMNI_OS_DARWIN)) && defined(USE_PTHREAD)
+#if 0 /* (defined(OMNI_OS_IRIX) || defined(OMNI_OS_DARWIN)) && defined(USE_PTHREAD) */
     pthread_setconcurrency(ompc_max_threads);
 #endif /* OMNI_OS_IRIX && USE_PTHREAD */
 
@@ -301,7 +301,7 @@ ompc_init(int argc,char *argv[])
             printf("Stack size is not change, because it is less than the default(=1MB).\n");
         }
     }
-#ifdef USE_PTHREAD
+#if 0 /* USE_PTHREAD */
     pthread_attr_setstacksize(&attr, maxstack);
 #endif /* USE_PTHREAD */
 
@@ -342,7 +342,7 @@ ompc_init(int argc,char *argv[])
 #ifdef USE_SOL_THREAD
         r = thr_create(NULL, maxstack, ompc_slave_proc, (void *)t,
                        THR_BOUND, NULL);
-#elif defined(USE_PTHREAD)
+#elif 0 /* defined(USE_PTHREAD) */
         r = pthread_create(&thds[t],
                            &attr, (cfunc)ompc_slave_proc, (void *)((_omAddrInt_t)t));
 #elif defined(USE_ARGOBOTS)
@@ -683,7 +683,7 @@ static void ompc_thread_wrapper_func()
 # ifdef USE_LOG
     if(ompc_log_flag) tlog_parallel_OUT(i);
 # endif /* USE_LOG */
-    
+
     /* on return, clean up */
     me = cproc->thr;
     cproc->thr = NULL;
@@ -766,7 +766,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         MBAR();
     }
 
-#if defined(USE_PTHREAD) && !defined(SIMPLE_SPIN)
+#if 0 /* defined(USE_PTHREAD) && !defined(SIMPLE_SPIN) */
     if ( n_thds > 1 ){
         pthread_mutex_lock(&ompc_proc_mutex);
         pthread_cond_broadcast(&ompc_proc_cond);
