@@ -944,6 +944,9 @@ void
 ompc_terminate (int exitcode)
 {
 #ifdef USE_ARGOBOTS
+    for (int i = 0; i < ompc_proc_counter; i++) {
+        ABT_xstream_free((ABT_xstream *)&(ompc_procs[i].pid));
+    }
     ABT_finalize();
 #endif /* USE_ARGOBOTS */
 
