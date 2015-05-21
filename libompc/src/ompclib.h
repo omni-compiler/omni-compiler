@@ -57,6 +57,14 @@ typedef pthread_t ompc_proc_t;
 # define _OMPC_PROC_SELF                pthread_self()
 #endif /* USE_PTHREAD */
 
+#ifdef USE_ARGOBOTS
+# include <abt.h>
+typedef ABT_xstream ompc_proc_t;
+# define _YIELD_ME_ ABT_thread_yield()
+# define OMPC_WAIT(cond) while (cond) { _YIELD_ME_; }
+# define _OMPC_PROC_SELF ompc_xstream_self()
+#endif /* USE_ARGOBOTS */
+
 #ifdef USE_SOL_THREAD   /* solaris thread */
 #ifndef _REENTRANT
 #define _REENTRANT
@@ -101,6 +109,9 @@ typedef int ompc_lock_t;
 # ifdef USE_PTHREAD
 typedef pthread_mutex_t ompc_lock_t;
 # endif
+# ifdef USE_ARGOBOTS
+typedef ABT_mutex ompc_lock_t;
+# endif /* USE_ARGOBOTS */
 # ifdef USE_SOL_THREAD
 typedef mutex_t ompc_lock_t;
 # endif
@@ -225,6 +236,10 @@ void ompc_enter_critical (ompc_lock_t **);
 void ompc_exit_critical (ompc_lock_t **);
 
 void ompc_set_runtime_schedule(char *s);
+
+#ifdef USE_ARGOBOTS
+ompc_proc_t ompc_xstream_self();
+#endif /* USE_ARGOBOTS */
 
 #ifndef OMNI_CPU_ALPHA
 #ifndef __GNUC__

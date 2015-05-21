@@ -48,6 +48,13 @@ pthread_barrier_t ompc_thd_bar;
 # endif /* !SIMPLE_SPIN */
 #endif /* USE_PTHREAD */
 
+#ifdef USE_ARGOBOTS
+ABT_mutex ompc_proc_mutex;
+ABT_cond ompc_proc_cond;
+ABT_cond ompc_mainwait_cond;
+ABT_mutex ompc_mainwait_mutex;
+#endif /* USE_ARGOBOTS */
+
 #if defined(USE_SPROC) && defined(OMNI_OS_IRIX)
 ompc_proc_t ompc_sproc_pid[MAX_PROC];
 #endif /* USE_SPROC && OMNI_OS_IRIX */
@@ -65,6 +72,10 @@ static void *ompc_slave_proc(void *, size_t);
 #else
 static void *ompc_slave_proc(void *);
 #endif /* USE_SPROC && OMNI_OS_IRIX */
+#ifdef USE_ARGOBOTS
+static void ompc_xstream_setup();
+static void ompc_thread_wrapper_func();
+#endif /* USE_ARGOBOTS */
 static struct ompc_proc *ompc_new_proc(void);
 static struct ompc_proc *ompc_current_proc(void);
 static struct ompc_proc *ompc_get_proc(int hint);
@@ -146,6 +157,15 @@ ompc_init(int argc,char *argv[])
     pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
 # endif
 #endif /* USE_PTHREAD */
+
+#ifdef USE_ARGOBOTS
+    static ABT_xstream xstreams[MAX_PROC];
+    ABT_init(argc, argv);
+    ABT_mutex_create(&ompc_proc_mutex);
+    ABT_cond_create(&ompc_proc_cond);
+    ABT_mutex_create(&ompc_mainwait_mutex);
+    ABT_cond_create(&ompc_mainwait_cond);
+#endif /* USE_ARGOBOTS */
 
 #ifdef OMNI_OS_SOLARIS
     lnp = sysconf(_SC_NPROCESSORS_ONLN);
@@ -325,6 +345,10 @@ ompc_init(int argc,char *argv[])
 #elif defined(USE_PTHREAD)
         r = pthread_create(&thds[t],
                            &attr, (cfunc)ompc_slave_proc, (void *)((_omAddrInt_t)t));
+#elif defined(USE_ARGOBOTS)
+        r = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[t]);
+        ABT_thread_create_on_xstream(xstreams[t], ompc_xstream_setup, NULL, ABT_THREAD_ATTR_NULL, NULL);
+
 #elif defined(USE_SPROC) && defined(OMNI_OS_IRIX)
         if (getpid() == (pid_t)ompc_sproc_pid[0]) {
             ompc_sproc_pid[t] = (ompc_proc_t)sprocsp((cfunc)ompc_slave_proc,
@@ -629,6 +653,46 @@ static void *ompc_slave_proc(void *arg)
     return NULL;
 }
 
+#ifdef USE_ARGOBOTS
+static void ompc_xstream_setup()
+{
+    ompc_new_proc();
+}
+
+static void ompc_thread_wrapper_func()
+{
+    struct ompc_proc *cproc = ompc_current_proc();
+    struct ompc_thread *tp = cproc->thr->parent;
+    int i = cproc->thr->num;
+
+# ifdef USE_LOG
+    if(ompc_log_flag) tlog_parallel_IN(i);
+# endif /* USE_LOG */
+
+    if ( tp->nargs < 0) {
+        /* call C function */
+        if ( tp->args != NULL )
+            (*tp->func)(tp->args, cproc->thr);
+        else
+            (*tp->func)(cproc->thr);
+    } else {
+        /* call Fortran function */
+        ompc_call_fsub(tp);
+    }
+
+# ifdef USE_LOG
+    if(ompc_log_flag) tlog_parallel_OUT(i);
+# endif /* USE_LOG */
+    
+    /* on return, clean up */
+    me = cproc->thr;
+    cproc->thr = NULL;
+    ompc_free_thread(cproc,me);    /* free thread & put me to freelist */
+    ompc_free_proc(cproc);
+    ompc_thread_barrier2(i,tp);
+}
+#endif /* USE_ARGOBOTS */
+
 /* called from compiled code. */
 void
 ompc_do_parallel_main (int nargs, int cond, int nthds,
@@ -693,6 +757,12 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         tp->num = i;                        /* set thread_num */
         tp->in_parallel = in_parallel;
         p->thr = tp;                        /* start it ! */
+
+#ifdef USE_ARGOBOTS
+        ABT_thread_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
+            NULL, ABT_THREAD_ATTR_NULL, NULL);
+#endif /* USE_ARGOBOTS */
+
         MBAR();
     }
 
@@ -703,6 +773,14 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         pthread_mutex_unlock(&ompc_proc_mutex);
     }
 #endif /* USE_PTHREAD && !SIMPLE_SPIN */
+
+#ifdef USE_ARGOBOTS
+    if (n_thds > 1) {
+        ABT_mutex_lock(ompc_proc_mutex);
+        ABT_cond_broadcast(ompc_proc_cond);
+        ABT_mutex_unlock(ompc_proc_mutex);
+    }
+#endif /* USE_ARGOBOTS */
 
     /* allocate master in this team */
     tp = ompc_alloc_thread(cproc);
@@ -864,6 +942,10 @@ ompc_current_thread_barrier()
 void
 ompc_terminate (int exitcode)
 {
+#ifdef USE_ARGOBOTS
+    ABT_finalize();
+#endif /* USE_ARGOBOTS */
+
     exit (exitcode);
 }
 
@@ -907,3 +989,12 @@ ompc_get_max_threads()
     return ompc_max_threads;
 }
 
+#ifdef USE_ARGOBOTS
+ompc_proc_t
+ompc_xstream_self()
+{
+    ABT_xstream xstream;
+    ABT_xstream_self(&xstream);
+    return xstream;
+}
+#endif /* USE_ARGOBOTS */

@@ -67,6 +67,33 @@ int ompc_test_lock(volatile ompc_lock_t *lp)
 
 # endif /* USE_PTHREAD */
 
+# ifdef USE_ARGOBOTS
+void ompc_init_lock(ompc_lock_t *lp)
+{
+    ABT_mutex_create((ABT_mutex *)lp);
+}
+
+void ompc_lock(volatile ompc_lock_t *lp)
+{
+    ABT_mutex_lock(*(ABT_mutex *)lp);
+}
+
+void ompc_unlock(volatile ompc_lock_t *lp)
+{
+    ABT_mutex_unlock(*(ABT_mutex *)lp);
+}
+
+void ompc_destroy_lock(volatile ompc_lock_t *lp)
+{
+    ABT_mutex_free((ABT_mutex *)lp);
+}
+
+int ompc_test_lock(volatile ompc_lock_t *lp)
+{
+    return ABT_mutex_trylock(*(ABT_mutex *)lp) == ABT_SUCCESS;
+}
+# endif /* USE_ARGOBOTS */
+
 #else /* !USE_SPIN_LOCK */
 
 void ompc_init_lock(ompc_lock_t *lp)
