@@ -113,8 +113,8 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
   int i;
 
   if (*element % BOUNDARY_BYTE != 0) {
-    _XMP_fatal("violation of boundary in put communication"
-               "xmpf_coarray_put_array_, " __FILE__);
+    _XMP_fatal("violation of boundary writing to a coindexed variable\n"
+               "  xmpf_coarray_put_array_, " __FILE__);
     return;
   }
 
@@ -171,7 +171,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
   int i, nelems;
 
   if (*element % BOUNDARY_BYTE != 0) {
-    _XMP_fatal("violation of boundary in spread-put communication");
+    _XMP_fatal("violation of boundary writing a scalar to a coindexed variable");
     return;
   }
 

@@ -106,8 +106,8 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
   va_start(argList, rank);
 
   if (*element % BOUNDARY_BYTE != 0) {
-    _XMP_fatal("violation of boundary in get communication"
-               "xmpf_coarray_get_array_, " __FILE__);
+    _XMP_fatal("violation of boundary in reference of a coindexed object\n"
+               "  xmpf_coarray_get_array_, " __FILE__);
     return;
   }
 

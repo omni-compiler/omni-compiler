@@ -2,7 +2,7 @@ MPILIB=/opt/mpich/include
 #MPILIB=/opt/FJSVtclang/GM-1.2.0-17/include/mpi/fujitsu/
 
 #XMP=xmpf90 --debug -I$(MPILIB) -g
-XMP=xmpf90 -I$(MPILIB)
+XMP=xmpf90 -I$(MPILIB) --debug
 
 MPI=mpif90
 #MPI=mpifrtpx

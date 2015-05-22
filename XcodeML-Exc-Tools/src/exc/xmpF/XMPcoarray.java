@@ -380,13 +380,19 @@ public class XMPcoarray {
 
 
   public Xobject getLboundStatic(int i) {
-    FarrayType ftype = (FarrayType)ident.Type();
-    return ftype.getLbound(i, fblock);
+    if (isExplicitShape()) {
+      FarrayType ftype = (FarrayType)ident.Type();
+      return ftype.getLbound(i, fblock);
+    }
+    return null;
   }
 
   public Xobject getUboundStatic(int i) {
-    FarrayType ftype = (FarrayType)ident.Type();
-    return ftype.getUbound(i, fblock);
+    if (isExplicitShape()) {
+      FarrayType ftype = (FarrayType)ident.Type();
+      return ftype.getUbound(i, fblock);
+    }
+    return null;
   }
 
   public Xobject getLbound(int i) {

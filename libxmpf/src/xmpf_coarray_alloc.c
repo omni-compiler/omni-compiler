@@ -1,3 +1,4 @@
+#include <string.h>
 #include "xmpf_internal.h"
 
 #define BOOL   int

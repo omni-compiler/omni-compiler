@@ -133,7 +133,7 @@ program HimenoBMTxp_f90_CAF
      print *,' mimax=',mimax,' mjmax=',mjmax,' mkmax=',mkmax
      print *,' imax=',imax,' jmax=',jmax,' kmax=',kmax
      print *,' I-decomp= ',ndx,' J-decomp= ',ndy,' K-decomp= ',ndz
-     print *
+     print *,''                                ! modified for #407
   end if
 !
 !! Start measuring
@@ -213,9 +213,9 @@ subroutine readparam
   include 'mpif.h'
   include 'xmp_coarray.h'
 !
-  integer :: itmp(3)[*],ierr, i
+  integer :: itmp(3)[*]
 !!!  character(10) :: size[*]     !! to avoid bug #354
-  character(10) :: size(1)[*]
+  character(12) :: size(1)[*]
 !
   if(id == 0) then
      print *,'For example:'
@@ -227,7 +227,7 @@ subroutine readparam
      print *,'           XL  (1024x512x512)'
      print *,' Grid-size = '
      read(*,*) size
-     print *
+     print *,''                                ! modified for #407
      print *,'For example: '
      print *,'DDM pattern= '
      print *,'     1 1 2'
@@ -236,7 +236,7 @@ subroutine readparam
      print *,'     k-direction partitioning : 2'
      print *,' DDM pattern = '
      read(*,*) itmp(1),itmp(2),itmp(3)
-     print *
+     print *,''                                ! modified for #407
   end if
 !
   sync all
@@ -415,7 +415,7 @@ subroutine jacobi(nn,gosa)
      p(2:imax-1,2:jmax-1,2:kmax-1)= &
           wrk2(2:imax-1,2:jmax-1,2:kmax-1)
 !
-     call sendp(ndx,ndy,ndz)
+     call sendp()
 !
      call mpi_allreduce(wgosa, &
                         gosa, &
