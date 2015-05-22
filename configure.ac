@@ -57,11 +57,14 @@ userJAR=${JAR}
 # --------------------------------------------------------------------
 # Initialize for autoconf
 LT_INIT
+if test -z ${LIBTOOL}; then
+   AC_MSG_ERROR([Please install newer autoconf.])
+fi
+#AC_SUBST(LIBTOOL)
+#AC_SUBST(LIBTOOL_DEPS)
 
 RM="rm -f"
 AC_SUBST(RM)
-AC_SUBST(LIBTOOL)
-AC_SUBST(LIBTOOL_DEPS)
 AM_INIT_AUTOMAKE([no-define foreign])
 AM_MAINTAINER_MODE([enable])
 

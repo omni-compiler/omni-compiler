@@ -826,7 +826,6 @@ am__isrc
 INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
-LIBTOOL_DEPS
 RM
 CPP
 OTOOL64
@@ -11480,10 +11479,13 @@ CC="$lt_save_CC"
 # Only expand once:
 
 
+if test -z ${LIBTOOL}; then
+   as_fn_error $? "Please install newer autoconf." "$LINENO" 5
+fi
+#AC_SUBST(LIBTOOL)
+#AC_SUBST(LIBTOOL_DEPS)
 
 RM="rm -f"
-
-
 
 am__api_version='1.14'
 
