@@ -832,8 +832,8 @@ public class XMPtransCoarrayRun
   }
 
   /*
-   * condition 1: It may be necessary to use buffer copy.
-   *              The address of RHS may not be accessed by FJ-RDMA.
+   * condition 1: It may be necessary to use buffer copy on some platform.
+   *              (The address may not be accessed directly by FJ-RDMA.)
    * condition 0: Otherwise.
    */
   private int _getConditionOfCoarrayPut(Xobject rhs) {
