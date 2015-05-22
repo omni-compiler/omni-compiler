@@ -1,11 +1,10 @@
-MPILIB=/opt/mpich/include
-#MPILIB=/opt/FJSVtclang/GM-1.2.0-17/include/mpi/fujitsu/
-
-#XMP=xmpf90 --debug -I$(MPILIB) -g
-XMP=xmpf90 -I$(MPILIB) --debug
-
 MPI=mpif90
 #MPI=mpifrtpx
+
+MPILIB=$(dirname $(dirname $(which mpif90)))/include
+
+#XMP=xmpf90 --debug -I$(MPILIB) -g
+XMP=xmpf90 -I$(MPILIB)
 
 OBJ=mpi caf-wide caf-narrow caf-fit
 

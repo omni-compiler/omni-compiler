@@ -147,7 +147,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
     }
     if (_XMPF_coarrayMsg) {
       _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/array\n");
-      fprintf(stderr, "  *bufsize=%zd\n", bufsize);
+      fprintf(stderr, "  bufsize=%zd\n", bufsize);
     }
     buf = malloc(bufsize);
     (void)memcpy(buf, rhs, bufsize);
@@ -307,10 +307,15 @@ void _putVector(void *descPtr, char *baseAddr, int bytes, int coindex, char *src
   char* desc = _XMPF_get_coarrayDesc(descPtr);
   size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
 
+  _XMPF_coarrayDebugPrint("*** _putVector offset=%zd, src=%p, bytes=%d\n",
+                          offset, src, bytes);
+
   _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // LHS
   _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // RHS
   _XMP_coarray_rdma_image_set_1(coindex);
   _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, src, NULL);
+
+  _XMPF_coarrayDebugPrint("*** _putVector done\n");
 }
 
 

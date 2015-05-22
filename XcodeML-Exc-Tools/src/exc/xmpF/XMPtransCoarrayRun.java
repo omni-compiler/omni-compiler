@@ -832,7 +832,7 @@ public class XMPtransCoarrayRun
   }
 
   /*
-   * condition 1: It may be necessary to use buffer copy on some platform.
+   * condition 1: Buffered copy is necessary on some platform.
    *              (The address may not be accessed directly by FJ-RDMA.)
    * condition 0: Otherwise.
    */
