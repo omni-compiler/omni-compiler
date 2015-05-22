@@ -2,10 +2,10 @@
 #OPT= -g --debug --verbose
 NPE=3
 
-OUT_darg= dummyarg-1 dummyarg-2
-OUT_host= host2 host1
-OUT_bug403= bug1OK #bug1
-OUT_module= mod1 modalloc
+OUT_darg= dummyarg-1.x dummyarg-2.x
+OUT_host= host2.x host1.x
+OUT_bug403= bug1OK.x #bug1
+OUT_module= mod1.x modalloc.x
 OUT_epi= #autosyncall1 autosyncall2
 
 #OUT_err=entry1ERR
