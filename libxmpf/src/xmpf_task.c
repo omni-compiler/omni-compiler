@@ -132,9 +132,8 @@ _Bool xmpf_test_task_nocomm__(_XMP_object_ref_t **r_desc){
 	return false;
 
       case _XMP_N_DIST_BLOCK_CYCLIC:
-	//printf("%d %d %d %d %d %d\n", lb, ub, st, plb, pub, pst);
 	for (int i = 0; i < chunk->par_width; i++){
-	  if (union_triplet(lb, ub, st, plb+i, pub, pst)) goto next;
+	  if (union_triplet(lb, ub, st, plb+i, pub+i, pst)) goto next;
 	}
 	return false;
       next:

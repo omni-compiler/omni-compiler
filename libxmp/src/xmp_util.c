@@ -78,7 +78,7 @@ _Bool union_triplet(int lb0, int ub0, int st0, int lb1, int ub1, int st1){
     ub2 = ub0;
   }
 
-  for (int i = lb2; i < ub2; i += st2){
+  for (int i = lb2; i <= ub2; i += st2){
     if ((i - lb3) % st3 == 0) return true;
   }
 
