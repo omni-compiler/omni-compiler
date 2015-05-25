@@ -50,3 +50,38 @@ void _XMP_fatal_nomsg(){
 void _XMP_unexpected_error(void) {
   _XMP_fatal("unexpected error in runtime");
 }
+
+_Bool union_triplet(int lb0, int ub0, int st0, int lb1, int ub1, int st1){
+
+  if (ub0 < lb0 || ub1 < lb0) return false;
+
+  int lb2, ub2, st2;
+  int lb3,      st3;
+
+  if (lb0 > lb1){
+    lb2 = lb0;
+    lb3 = lb1;
+    st2 = st0;
+    st3 = st1;
+  }
+  else {
+    lb2 = lb1;
+    lb3 = lb0;
+    st2 = st1;
+    st3 = st0;
+  }
+
+  if (ub0 > ub1){
+    ub2 = ub1;
+  }
+  else {
+    ub2 = ub0;
+  }
+
+  for (int i = lb2; i < ub2; i += st2){
+    if ((i - lb3) % st3 == 0) return true;
+  }
+
+  return false;
+
+}
