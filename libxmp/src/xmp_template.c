@@ -575,6 +575,71 @@ int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, _XMP_template_t *
   }
 }
 
+_Bool union_triplet(int lb0, int ub0, int st0, int lb1, int ub1, int st1);
+
+int _XMP_exec_task_TEMPLATE_PART_nocomm(_XMP_template_t *ref_template, ...) {
+
+  if (!ref_template->is_owner) return _XMP_N_INT_FALSE;
+
+  int ref_dim = ref_template->dim;
+
+  int shrink[ref_dim];
+  long long lower[ref_dim], upper[ref_dim], stride[ref_dim];
+
+  va_list args;
+  va_start(args, ref_template);
+
+  for (int i = 0; i < ref_dim; i++) {
+    shrink[i] = va_arg(args, int);
+    if (!shrink[i]) {
+      lower[i] = va_arg(args, long long);
+      upper[i] = va_arg(args, long long);
+      stride[i] = va_arg(args, long long);
+    }
+  }
+
+  va_end(args);
+
+  for (int i = 0; i < ref_dim; i++){
+
+    if (shrink[i]) continue;
+
+    _XMP_template_chunk_t *chunk = &ref_template->chunk[i];
+    long long plb = chunk->par_lower;
+    long long pub = chunk->par_upper;
+    int pst = chunk->par_stride;
+
+    switch (chunk->dist_manner){
+
+    case _XMP_N_DIST_DUPLICATION:
+      break;
+
+    case _XMP_N_DIST_BLOCK:
+    case _XMP_N_DIST_GBLOCK:
+      if (pub < lower[i] || upper[i] < plb) return _XMP_N_INT_FALSE;
+      break;
+
+    case _XMP_N_DIST_CYCLIC:
+      if (union_triplet(lower[i], upper[i], stride[i], plb, pub, pst)) break;
+      return _XMP_N_INT_FALSE;
+
+    case _XMP_N_DIST_BLOCK_CYCLIC:
+      for (int i = 0; i < chunk->par_width; i++){
+	if (union_triplet(lower[i], upper[i], stride[i], plb+i, pub, pst)) goto next;
+      }
+      return _XMP_N_INT_FALSE;
+    next:
+      break;
+    default:
+      _XMP_fatal("_XMP_exec_task_TEMPLATE_PART_nocomm: unknown dist_manner");
+    }
+
+  }
+
+  return _XMP_N_INT_TRUE;
+
+}
+
 // 0-origin
 int _XMP_calc_template_owner_SCALAR(_XMP_template_t *template, int dim_index, long long ref_index) {
   _XMP_ASSERT(template->is_fixed);

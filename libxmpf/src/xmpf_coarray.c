@@ -39,7 +39,7 @@ void _XMPF_coarray_init(void)
   work = strdup(env);
   tok = strtok(work, delim);
   for (i = 1; tok != NULL; i++, tok = strtok(NULL, delim)) {
-    if (this_image_() == i)
+    if (XMPF_this_image == i)
       _coarray_msg(atoi(tok));
   }
 }
@@ -122,7 +122,7 @@ void _XMPF_coarrayDebugPrint(char *format, ...)
   va_list list;
   va_start(list, format);
   vsprintf(work, format, list);
-  fprintf(stderr, "CAF[%d] %s", this_image_(), work);
+  fprintf(stderr, "CAF[%d] %s", XMPF_this_image, work);
   va_end(list);
 }
 

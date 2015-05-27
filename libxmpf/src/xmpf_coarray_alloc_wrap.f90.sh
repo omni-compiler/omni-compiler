@@ -78,12 +78,13 @@ print_subr_alloc() {
     echo    ")" ;;
  esac
 
+    echo72  "          ${typekind}, target  ::"
  case "${DIM}" in
- 0) echo    "          ${typekind}, target  :: d" ;;
- 1) echo    "          ${typekind}, target  :: d(:)" ;;
- *) echo -n "          ${typekind}, target  :: d(:"
+ 0) echo    "            d" ;;
+ 1) echo    "            d(lb1:)" ;;
+ *) echo -n "            d(lb1:"
     for i in `seq 2 ${DIM}`; do
-        echo -n ",:"
+        echo -n ",lb${i}:"
     done
     echo    ")" ;;
  esac

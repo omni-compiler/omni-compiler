@@ -479,9 +479,16 @@ CExpr* parse_TASK_clause() {
 	
     //onRef = parse_ON_ref();
     onRef = parse_task_ON_ref();
-    opt = parse_XMP_opt();
+
+    int nocomm_flag = 0;
+    if (PG_IS_IDENT("nocomm")){
+      pg_get_token();
+      nocomm_flag = 1;
+    }
     
-    return XMP_LIST2(onRef,opt);
+    opt = parse_XMP_opt();
+
+    return XMP_LIST3(onRef, (CExpr*)allocExprOfNumberConst2(nocomm_flag, BT_INT), opt);
 
   err:
     XMP_has_err = 1;

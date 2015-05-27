@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 #ifndef _EXC_PLATFORM_H
 #define _EXC_PLATFORM_H
 
@@ -96,7 +90,7 @@ extern int      gettimeofday _ANSI_ARGS_((struct timeval *tp, struct timezone *t
 #   include <stdarg.h>
 #   define EXC_VARARGS(type, name) (type name, ...)
 #   define EXC_VARARGS_DEF(type, name) (type name, ...)
-#   define EXC_VARARGS_START(type, name, list) (va_start(list, name), name)
+#   define EXC_VARARGS_START(type, name, list) (va_start(list, name))
 #else
 #   include <varargs.h>
 #   ifdef __cplusplus

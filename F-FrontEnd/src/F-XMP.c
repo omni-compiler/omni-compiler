@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni XcalableMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 #include "F-front.h"
 
 expv XMP_check_TASK(expr x);
@@ -536,7 +530,7 @@ close_XMP_IO_closure(int st_no, expr x) {
 expv XMP_check_TASK(expr x)
 {
   expr xx;
-  expv task_list,current_task;
+  expv task_list;
   list lp;
     
   if (x == NULL) return NULL;

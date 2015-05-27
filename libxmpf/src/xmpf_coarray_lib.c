@@ -4,7 +4,7 @@
   initialization
 \*****************************************/
 
-static int _this_image, _num_images;
+int XMPF_this_image, XMPF_num_images;
 
 void _XMPF_set_this_image()
 {
@@ -15,8 +15,8 @@ void _XMPF_set_this_image()
   if (MPI_Comm_rank(MPI_COMM_WORLD, &rank) != 0)
     _XMPF_coarrayFatal("INTERNAL ERROR: illegal node rank of mine");
 
-  _num_images = size;
-  _this_image = rank + 1;
+  XMPF_num_images = size;
+  XMPF_this_image = rank + 1;
 }
 
 
@@ -30,7 +30,7 @@ int num_images_(void)
 {
   _XMPF_checkIfInTask("NUM_IMAGES");
 
-  return _num_images;
+  return XMPF_num_images;
 }
 
 
@@ -40,7 +40,7 @@ int this_image_(void)
 {
   _XMPF_checkIfInTask("THIS_IMAGE");
 
-  return _this_image;
+  return XMPF_this_image;
 }
 
 

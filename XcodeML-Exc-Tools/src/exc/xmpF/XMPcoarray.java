@@ -64,8 +64,6 @@ public class XMPcoarray {
     isAllocatable = ident.Type().isFallocatable();
     isPointer = ident.Type().isFpointer();
     if (DEBUG) System.out.println("[XMPcoarray] new coarray = "+this);
-    genDecl_descPointer();    // descPtrId should always be defined.
-    //genDecl_crayPointer();   // crayPtrId should be defined only for static coarray.
   }
 
   //------------------------------
@@ -91,16 +89,25 @@ public class XMPcoarray {
   // declare variable of descriptor pointer corresponding to this.
   //
   public void genDecl_descPointer() {
-    if (getDescPointerId() == null) {
-      BlockList blist = fblock.getBody();
-      String descPtrName = getDescPointerName();
-
-      // generate declaration of descPtrId
-      descPtrId = blist.declLocalIdent(descPtrName,
-                                       BasicType.Fint8Type,
-                                       StorageClass.FLOCAL,
-                                       null);
+    if(descPtrId != null) {
+      return;
     }
+
+    //    if (isUseAssociated()) {
+    //      return;
+    //    }
+
+
+    String descPtrName = getDescPointerName();
+    BlockList blist = fblock.getBody();
+    
+    // generate declaration of descPtrId
+    //    descPtrId = blist.declLocalIdent(descPtrName,
+    //                                     BasicType.Fint8Type,
+    //                                     StorageClass.FLOCAL,
+    //                                     null);
+    descPtrId = env.declInternIdent(descPtrName,
+                                    BasicType.Fint8Type);
   }
 
 
@@ -144,7 +151,7 @@ public class XMPcoarray {
   public Xobject makeStmt_setCoshape(XobjList coshape) {
     int corank = getCorank();
     if (corank != coshape.Nargs()) {
-      XMP.error("number of codimensions not matched with the declaration:"
+      XMP.fatal("number of codimensions not matched with the declaration:"
                 + corank + " and " + coshape.Nargs());
       return null;
     }
@@ -215,7 +222,7 @@ public class XMPcoarray {
     }
 
     if (ubound == null)
-      XMP.error("illegal upper bound specified in ALLOCATE statement");
+      XMP.fatal("illegal upper bound specified in ALLOCATE statement");
 
     return ubound.cfold(fblock);
   }
@@ -373,13 +380,19 @@ public class XMPcoarray {
 
 
   public Xobject getLboundStatic(int i) {
-    FarrayType ftype = (FarrayType)ident.Type();
-    return ftype.getLbound(i, fblock);
+    if (isExplicitShape()) {
+      FarrayType ftype = (FarrayType)ident.Type();
+      return ftype.getLbound(i, fblock);
+    }
+    return null;
   }
 
   public Xobject getUboundStatic(int i) {
-    FarrayType ftype = (FarrayType)ident.Type();
-    return ftype.getUbound(i, fblock);
+    if (isExplicitShape()) {
+      FarrayType ftype = (FarrayType)ident.Type();
+      return ftype.getUbound(i, fblock);
+    }
+    return null;
   }
 
   public Xobject getLbound(int i) {
@@ -634,9 +647,14 @@ public class XMPcoarray {
   }
 
   public Ident getDescPointerId() {
+    if (descPtrId == null)
+      XMP.warning("INTERNAL: illeagal null descPtrId");
+
     return descPtrId;
   }
 
+  /*************** should be deleted .....
+  ***************************/
   public Xobject getDescPointerIdExpr(Xobject baseAddr) {
     if (descPtrId != null)
       return descPtrId;
@@ -819,7 +837,7 @@ public class XMPcoarray {
       break;
 
     default:
-      XMP.error("found unsupported type of coarray");
+      XMP.fatal("found unsupported type of coarray");
       break;
     }
 

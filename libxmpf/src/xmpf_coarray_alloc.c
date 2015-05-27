@@ -1,3 +1,4 @@
+#include <string.h>
 #include "xmpf_internal.h"
 
 #define BOOL   int
@@ -274,7 +275,7 @@ MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
   nbytes = (size_t)count * elementRU;
 
   if (nbytes == 0) {
-    _XMPF_coarrayDebugPrint("*** a memory-chunk not allocated\n");
+    _XMPF_coarrayDebugPrint("*** no memory-chunk allocated\n");
 
     chunk = _newMemoryChunk(NULL, NULL, 0);
     return chunk;

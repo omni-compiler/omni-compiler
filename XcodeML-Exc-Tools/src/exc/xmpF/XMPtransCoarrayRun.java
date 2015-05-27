@@ -34,9 +34,20 @@ public class XMPtransCoarrayRun
   private XobjectDef def;
   private FunctionBlock fblock;
 
-  private ArrayList<XMPcoarray> localCoarrays;
   private ArrayList<XMPcoarray> useAssociatedCoarrays;
-  private ArrayList<XMPcoarray> visibleCoarrays;
+  private ArrayList<XMPcoarray> localCoarrays;
+
+  // localCoarrays is divided into the following four
+  private ArrayList<XMPcoarray> staticLocalCoarrays;
+  private ArrayList<XMPcoarray> allocatableLocalCoarrays;
+  private ArrayList<XMPcoarray> staticDummyCoarrays;
+  private ArrayList<XMPcoarray> allocatableDummyCoarrays;
+
+  // localCoarrays + useAssociatedCoarrays + the parent's visibleCoarrays
+  private ArrayList<XMPcoarray> visibleCoarrays;    // available after run1()
+
+  // to find the parent object of XMPtransCoarrayRun
+  private ArrayList<XMPtransCoarrayRun> pastRuns;
 
   //private XMPinitProcedure initProcedure;
   private String initProcTextForFile;
@@ -59,6 +70,7 @@ public class XMPtransCoarrayRun
                             ArrayList<XMPtransCoarrayRun> pastRuns, int pass) {
     this.def = def;
     this.env = env;
+    this.pastRuns = pastRuns;
     name = def.getName();
 
     funcDef = new FuncDefBlock(def);
@@ -71,7 +83,8 @@ public class XMPtransCoarrayRun
     descCommonName = XMPcoarray.VAR_DESCPOINTER_PREFIX + "_" + name;
     crayCommonName = XMPcoarray.VAR_CRAYPOINTER_PREFIX + "_" + name;
 
-    _setCoarrays(pastRuns);
+    _setLocalCoarrays();
+    /* visibleCoarrays will be set after run1 */
 
     if (pass == 1) {
       _check_ifIncludeXmpLib();
@@ -81,11 +94,6 @@ public class XMPtransCoarrayRun
   }
 
 
-
-  private void _setCoarrays(ArrayList<XMPtransCoarrayRun> pastRuns) {
-    _setLocalCoarrays();
-    _setVisibleCoarrays(pastRuns);
-  }
 
   /*  set coarrays declared in the current procedure as localCoarrays
    */
@@ -103,6 +111,34 @@ public class XMPtransCoarrayRun
           useAssociatedCoarrays.add(coarray);
         else
           localCoarrays.add(coarray);
+      }
+    }
+
+    // resolve use-associated coarrays
+    // - merge static coarrays into localCoarrays
+    // - merge also use-associated coarrays into localCoarrays,
+    //   though they and their descPtrId will be eliminated after.
+    for (XMPcoarray coarray: useAssociatedCoarrays) {
+      //      if (coarray.isExplicitShape())   // found it
+        copyCoarrayInLocalCoarrays(coarray);
+    }
+
+    // divide localCoarrays into four types
+    staticLocalCoarrays = new ArrayList<XMPcoarray>();
+    allocatableLocalCoarrays = new ArrayList<XMPcoarray>();
+    staticDummyCoarrays = new ArrayList<XMPcoarray>();
+    allocatableDummyCoarrays = new ArrayList<XMPcoarray>();
+    for (XMPcoarray coarray: localCoarrays) {
+      if (coarray.isDummyArg()) {
+        if (coarray.isAllocatable())
+          allocatableDummyCoarrays.add(coarray);
+        else
+          staticDummyCoarrays.add(coarray);
+      } else {
+        if (coarray.isExplicitShape())
+          staticLocalCoarrays.add(coarray);
+        else
+          allocatableLocalCoarrays.add(coarray);
       }
     }
   }
@@ -161,14 +197,6 @@ public class XMPtransCoarrayRun
     for (XMPcoarray coarray: localCoarrays)
       coarray.errorCheck();
 
-    // resolve use association
-    // - merge non-allocatable use-ssociated coarrays in localCoarrays
-    for (XMPcoarray coarray: useAssociatedCoarrays) {
-      if (!coarray.isAllocatable()) {  // found a use-associated static coarray 
-        copyCoarrayInLocalCoarrays(coarray);
-      }
-    }
-
     if (_isModule())
       run1_module();
     else
@@ -180,39 +208,21 @@ public class XMPtransCoarrayRun
     reserveAutoDealloc(false);
     reserveAutoSyncall(false);
 
-    // divide localCoarrays into four types
-    ArrayList<XMPcoarray> staticLocalCoarrays = new ArrayList<XMPcoarray>();
-    ArrayList<XMPcoarray> allocatableLocalCoarrays = new ArrayList<XMPcoarray>();
-    ArrayList<XMPcoarray> staticDummyCoarrays = new ArrayList<XMPcoarray>();
-    ArrayList<XMPcoarray> allocatableDummyCoarrays = new ArrayList<XMPcoarray>();
-    for (XMPcoarray coarray: localCoarrays) {
-      if (coarray.isDummyArg()) {
-        if (coarray.isAllocatable())
-          allocatableDummyCoarrays.add(coarray);
-        else
-          staticDummyCoarrays.add(coarray);
-      } else {
-        if (coarray.isAllocatable())
-          allocatableLocalCoarrays.add(coarray);
-        else
-          staticLocalCoarrays.add(coarray);
-      }
-    }
-
     // convert specification and declaration part
-    transDeclPart_staticLocal(staticLocalCoarrays);
-    transDeclPart_allocatableLocal(allocatableLocalCoarrays);
-    transDeclPart_staticDummy(staticDummyCoarrays);
-    transDeclPart_allocatableDummy(allocatableDummyCoarrays);
+    transDeclPart_staticLocal();
+    transDeclPart_allocatableLocal();
+    transDeclPart_staticDummy();
+    transDeclPart_allocatableDummy();
+
+    // To avoid trouble of the shallow/deep copies, visibleCoarrays
+    // should be made after execution of transDeclPart_*.
+    _setVisibleCoarrays(pastRuns);
 
     if (!_isModule()) {
-      transExecPart(visibleCoarrays);
-
-      // finalize fblock in funcDef
-      funcDef.Finalize();
+      transExecPart_visibleCoarrays();
     }
 
-    // SPECIAL HANDLING (TEMPORARY)
+    // SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
     //  convert main program to soubroutine xmpf_main
     if (_isMainProgram())
       _convMainProgramToSubroutine("xmpf_main");
@@ -237,15 +247,19 @@ public class XMPtransCoarrayRun
     ArrayList<XMPcoarray> staticLocalCoarrays = new ArrayList<XMPcoarray>();
     ArrayList<XMPcoarray> allocatableLocalCoarrays = new ArrayList<XMPcoarray>();
     for (XMPcoarray coarray: localCoarrays) {
-      if (coarray.isAllocatable())
-        allocatableLocalCoarrays.add(coarray);
-      else
+      if (coarray.isExplicitShape())
         staticLocalCoarrays.add(coarray);
+      else
+        allocatableLocalCoarrays.add(coarray);
     }
 
     // convert specification and declaration part
-    ///transDeclPart_module(staticLocalCoarrays);
-    transDeclPart_allocatableLocal(allocatableLocalCoarrays);
+    transModule_staticLocal1();
+    transModule_allocatableLocal();
+
+    // To avoid trouble of the shallow/deep copies, visibleCoarrays
+    // should be made after execution of transDeclPart_*.
+    _setVisibleCoarrays(pastRuns);
 
     // funcDef.Finalize() is not needed.
   }
@@ -256,21 +270,11 @@ public class XMPtransCoarrayRun
    *          excluding its module functions and subroutines
    */
   public void run2() {
-    // divide localCoarrays into four types
-    ArrayList<XMPcoarray> staticLocalCoarrays = new ArrayList<XMPcoarray>();
-    ArrayList<XMPcoarray> allocatableLocalCoarrays = new ArrayList<XMPcoarray>();
-    for (XMPcoarray coarray: localCoarrays) {
-      if (coarray.isAllocatable())
-        allocatableLocalCoarrays.add(coarray);
-      else
-        staticLocalCoarrays.add(coarray);
+
+    if (_isModule()) {
+      // convert specification and declaration part
+      transModule_staticLocal2();
     }
-
-    // convert specification and declaration part
-    transDeclPart_module(staticLocalCoarrays);
-    ///transDeclPart_allocatableLocal(allocatableLocalCoarrays);
-
-    // funcDef.Finalize() is not needed.
   }
 
 
@@ -298,7 +302,7 @@ public class XMPtransCoarrayRun
         common /xmpf_CP_M1/ CP_V1                                    ! c.
         pointer (CP_V1, V1)                                          ! c.
 
-        !-- for procedure-local static coarray V1
+        !-- for local static coarray V2
         integer(8) :: DP_V2                                          ! a.
         common /xmpf_DP_EX1/ DP_V2                                   ! a1.
         common /xmpf_CP_EX1/ CP_V2                                   ! c.
@@ -315,27 +319,27 @@ public class XMPtransCoarrayRun
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
   */
-  private void transDeclPart_staticLocal(ArrayList<XMPcoarray> coarrays) {
+  private void transDeclPart_staticLocal() {
 
     // a. declare descriptor pointers
-    genDeclOfDescPointer(coarrays);
+    genDeclOfDescPointer(staticLocalCoarrays);
 
-    // a1. make common association of descriptor pointers (static coarrays only)
-    genCommonStmt(coarrays);
+    // a1. make common association of descriptor pointers
+    genCommonStmt(staticLocalCoarrays);
 
-    // c. link cray-pointers with data object (static coarrays only)
-    genDeclOfCrayPointer(coarrays);
+    // c. link cray-pointers with data object
+    genDeclOfCrayPointer(staticLocalCoarrays);
 
-    // b. generate allocation into init procedure (static coarrays only)
-    genAllocOfStaticCoarrays(coarrays);
+    // b. generate allocation into init procedure
+    genAllocOfStaticCoarrays(staticLocalCoarrays);
 
     // f. remove codimensions from declarations of coarrays
-    removeCodimensions(coarrays);
+    removeCodimensions(staticLocalCoarrays);
   }
 
 
   /**
-    Handling procedure-local allocatable coarrays in a procedure/module
+    Handling local allocatable coarrays in a procedure/module
     --------------------------------------------
       subroutine EX1  or  module EX1
         integer, allocatable :: V3(:,:)[:,:]            ! allocatable local
@@ -352,21 +356,25 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       DP_Vn: pointer to descriptor of each coarray Vn
   */
-  private void transDeclPart_allocatableLocal(ArrayList<XMPcoarray> coarrays) {
+  private void transDeclPart_allocatableLocal() {
 
     // a. declare descriptor pointers
-    genDeclOfDescPointer(coarrays);
+    genDeclOfDescPointer(allocatableLocalCoarrays);
 
     // f. remove codimensions from declarations of coarrays
-    removeCodimensions(coarrays);
+    removeCodimensions(allocatableLocalCoarrays);
 
     // h. replace allocatable attributes with pointer attributes
-    replaceAllocatableWithPointer(coarrays);
+    replaceAllocatableWithPointer(allocatableLocalCoarrays);
+  }
+
+  private void transModule_allocatableLocal() {
+    transDeclPart_allocatableLocal();
   }
 
 
   /**
-    Handling non-allocatable dummy-argument coarrays in a procecure
+    Handling non-allocatable dummy coarrays in a procecure
     --------------------------------------------
       subroutine EX1(V2)
         complex(8) :: V2[0:*]                          ! static dummy
@@ -398,26 +406,25 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       DP_Vn: pointer to descriptor of each coarray Vn
   */
-  private void transDeclPart_staticDummy(ArrayList<XMPcoarray> coarrays) {
+  private void transDeclPart_staticDummy() {
 
     // a. declare descriptor pointers
-    genDeclOfDescPointer(coarrays);
+    genDeclOfDescPointer(staticDummyCoarrays);
 
     // a2. m. n. generate definition of descriptor pointers (dummy coarrays only)
-    genDefinitionOfDescPointer(coarrays);
+    genDefinitionOfDescPointer(staticDummyCoarrays);
 
     // f. remove codimensions from declarations of coarrays
-    removeCodimensions(coarrays);
+    removeCodimensions(staticDummyCoarrays);
   }
 
 
   /**
-    Handling allocatable dummy-argument coarrays in a procecure
+    Handling allocatable dummy coarrays in a procecure
     --------------------------------------------
       subroutine EX1(V3)
         integer, allocatable :: V3(:,:)[:,:]           ! allocatable dummy
         ...
-        return
       end subroutine
     --------------------------------------------
     output:
@@ -426,57 +433,36 @@ public class XMPtransCoarrayRun
         integer, pointer :: V3(:,:)                          ! f. h.
         integer(8) :: DP_V3                                  ! a.
 
-        !-- initialization for procedure EX1
-      ( integer(8) :: tag                                    ! i. )
-      ( call xmpf_coarray_prolog(tag, "EX1", 3)              ! i. )
-
         // find DP_V3 and set attributes
         call xmpf_coarray_get_descptr(DP_V3, V3, tag)        ! a2.
         call xmpf_coarray_set_varname(DP_V3, "V3", 2)        ! n.
 
         ...
-
-        !-- finalization for procedure EX1
-      ( call xmpf_coarray_epilog(tag)                        ! i. )
-        return
       end subroutine
     --------------------------------------------
       DP_Vn: pointer to descriptor of each coarray Vn
   */
-  private void transDeclPart_allocatableDummy(ArrayList<XMPcoarray> coarrays) {
+  private void transDeclPart_allocatableDummy() {
 
-    if (localCoarrays.isEmpty())
+    if (allocatableDummyCoarrays.isEmpty())
       return;
 
-    // select static local coarrays
-    ArrayList<XMPcoarray> staticLocalCoarrays = new ArrayList<XMPcoarray>();
-    ArrayList<XMPcoarray> allocatableLocalCoarrays = new ArrayList<XMPcoarray>();
-    ArrayList<XMPcoarray> dummyLocalCoarrays = new ArrayList<XMPcoarray>();
-    for (XMPcoarray coarray: localCoarrays) {
-      if (coarray.isAllocatable())
-        allocatableLocalCoarrays.add(coarray);
-      if (coarray.isDummyArg())
-        dummyLocalCoarrays.add(coarray);
-      if (!coarray.isAllocatable() && !coarray.isDummyArg())
-        staticLocalCoarrays.add(coarray);
-    }
-
     // a. declare descriptor pointers
-    genDeclOfDescPointer(coarrays);
+    genDeclOfDescPointer(allocatableDummyCoarrays);
 
     // a2. m. n. generate definition of descriptor pointers (dummy coarrays only)
-    genDefinitionOfDescPointer(coarrays);
+    genDefinitionOfDescPointer(allocatableDummyCoarrays);
 
     // f. remove codimensions from declarations of coarrays
-    removeCodimensions(coarrays);
+    removeCodimensions(allocatableDummyCoarrays);
 
     // h. replace allocatable attributes with pointer attributes
-    replaceAllocatableWithPointer(coarrays);
+    replaceAllocatableWithPointer(allocatableDummyCoarrays);
   }
 
 
   /**
-    Handling coarrays in a module
+    Handling static coarrays in a module
     --------------------------------------------
       module EX1
         use M1   !! contains "real :: V1(10,20)[4,*]"  ! use-associated static
@@ -488,7 +474,8 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       module EX1
         use M1
-        !***DELETE*** "complex(8), save :: V2"                       ! o.
+        !<DELETE>                complex(8), save :: V2[0:*]         ! o.
+        !<GENERATE then DELETE>  integer(8) :: DP_V2                 ! a. o.
         ...
       end module
 
@@ -501,13 +488,17 @@ public class XMPtransCoarrayRun
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
   */
-  private void transDeclPart_module(ArrayList<XMPcoarray> coarrays) {
+  private void transModule_staticLocal1() {
+    // a. declare descriptor pointers
+    genDeclOfDescPointer(staticLocalCoarrays);
 
     // b. generate allocation into init procedure (static coarrays only)
-    genAllocOfStaticCoarrays(coarrays);
+    genAllocOfStaticCoarrays(staticLocalCoarrays);
+  }
 
+  private void transModule_staticLocal2() {
     // o. remove declarations of variables
-    removeDeclOfCoarrays(coarrays);
+    removeDeclOfCoarrays(staticLocalCoarrays);
   }
 
 
@@ -555,7 +546,7 @@ public class XMPtransCoarrayRun
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
   */
-  private void transExecPart(ArrayList<XMPcoarray> visibleCoarrays) {
+  private void transExecPart_visibleCoarrays() {
 
     // e. convert coindexed objects to function references
     convCoidxObjsToFuncCalls(visibleCoarrays);
@@ -573,6 +564,15 @@ public class XMPtransCoarrayRun
     // i. initialization/finalization for auto-syncall and auto-deallocate
     if (_reservedAutoDealloc)
       genCallOfPrologAndEpilog();
+
+    // o. remove declarations for use-associated allocatable coarrays
+    for (XMPcoarray coarray: useAssociatedCoarrays) {
+      if (!coarray.isExplicitShape()) 
+        removeDeclOfCoarray(coarray);
+    }
+
+    // finalize fblock in funcDef
+    funcDef.Finalize();
   }
 
 
@@ -832,8 +832,8 @@ public class XMPtransCoarrayRun
   }
 
   /*
-   * condition 1: It may be necessary to use buffer copy.
-   *              The address of RHS may not be accessed by FJ-RDMA.
+   * condition 1: Buffered copy is necessary on some platform.
+   *              (The address may not be accessed directly by FJ-RDMA.)
    * condition 0: Otherwise.
    */
   private int _getConditionOfCoarrayPut(Xobject rhs) {
@@ -1018,7 +1018,7 @@ public class XMPtransCoarrayRun
         break;
 
       default:
-        XMP.error("internal error: unexpected code of Xobject in ALLOCATE stmt");
+        XMP.fatal("internal error: unexpected code of Xobject in ALLOCATE stmt");
       }        
 
       // error check for each arg
@@ -1125,7 +1125,7 @@ public class XMPtransCoarrayRun
   private Xobject makeStmt_coarrayAlloc(XMPcoarray coarray, XobjList shape) {
     int rank = coarray.getRank();
     if (rank != shape.Nargs()) {
-      XMP.error("Number of dimensions " + rank + 
+      XMP.fatal("Number of dimensions " + rank + 
                 " does not equal to " + shape.Nargs() +
                 ", the rank of coarray " + coarray.getName());
     }
@@ -1245,7 +1245,7 @@ public class XMPtransCoarrayRun
     }
 
     if (ubound == null)
-      XMP.error("illegal upper bound specified in ALLOCATE statement");
+      XMP.fatal("illegal upper bound specified in ALLOCATE statement");
 
     return ubound.cfold(fblock);
   }
@@ -1284,7 +1284,7 @@ public class XMPtransCoarrayRun
     }
 
     if (extent == null)
-      XMP.error("illegal extent of a dimension specified in ALLOCATE statement");
+      XMP.fatal("illegal extent of a dimension specified in ALLOCATE statement");
 
     return extent.cfold(fblock);
   }
@@ -1317,17 +1317,6 @@ public class XMPtransCoarrayRun
   /*
    *  useful to move host- and use-associcated coarrays into the list of local coarrays.
    */
-  // NOT USED
-  private void copyCoarraysInLocalCoarrays(ArrayList<XMPcoarray> coarrays) {
-    for (XMPcoarray coarray1: coarrays) {
-      if (coarray1.isAllocatable())
-        continue;
-
-      copyCoarrayInLocalCoarrays(coarray1);
-    }
-  }
-
-
   private void copyCoarrayInLocalCoarrays(XMPcoarray coarray1) {
     Xtype type1 = coarray1.getIdent().Type().copy();
     String name1 = coarray1.getName();
@@ -1396,21 +1385,15 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //
   private void removeDeclOfCoarrays(ArrayList<XMPcoarray> coarrays) {
-    for (XMPcoarray coarray: coarrays) {
-      //coarray.unlinkIdent();
-
-      env.removeIdent(coarray.getCrayPointerName(), null);
-      env.removeIdent(coarray.getDescPointerName(), null);
-      env.removeIdent(coarray.getName(), null);
-
-      //*** BlockList.removeIdent seems not stable
-      //BlockList blist = coarray.fblock.getBody();
-      //blist.removeIdent(coarray.getCrayPointerName());
-      //blist.removeIdent(coarray.getDescPointerName());
-      //blist.removeIdent(coarray.getName());
-    }
+    for (XMPcoarray coarray: coarrays)
+      removeDeclOfCoarray(coarray);
   }
 
+  private void removeDeclOfCoarray(XMPcoarray coarray) {
+    env.removeIdent(coarray.getCrayPointerName(), null);
+    env.removeIdent(coarray.getDescPointerName(), null);
+    env.removeIdent(coarray.getName(), null);
+  }
 
 
 
@@ -1477,7 +1460,7 @@ public class XMPtransCoarrayRun
   }
 
   private boolean _isCoarrayReferred() {
-    if (visibleCoarrays.isEmpty())
+    if (localCoarrays.isEmpty())
       return false;
     return true;
   }

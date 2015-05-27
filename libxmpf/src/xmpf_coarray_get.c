@@ -106,8 +106,8 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
   va_start(argList, rank);
 
   if (*element % BOUNDARY_BYTE != 0) {
-    _XMP_fatal("violation of boundary in get communication"
-               "xmpf_coarray_get_array_, " __FILE__);
+    _XMP_fatal("violation of boundary in reference of a coindexed object\n"
+               "  xmpf_coarray_get_array_, " __FILE__);
     return;
   }
 
@@ -184,6 +184,7 @@ void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *result,
   if (rank == 0) {  // fully contiguous after perfect collapsing
     if (_XMPF_coarrayMsg) {
       _XMPF_coarrayDebugPrint("GET %d bytes fully contiguous ===\n", bytes);
+      fprintf(stderr, "  coindex %d gets from %d\n", XMPF_this_image, coindex);
     }
     _getVector(descPtr, baseAddr, bytes, coindex, result);
     return;
@@ -243,12 +244,17 @@ char *_getVectorIter(void *descPtr, char *baseAddr, int bytes,
 void _getVector(void *descPtr, char *src, int bytes, int coindex, char *dst)
 {
   char* desc = _XMPF_get_coarrayDesc(descPtr);
-  int offset = _XMPF_get_coarrayOffset(descPtr, src);
+  size_t offset = _XMPF_get_coarrayOffset(descPtr, src);
+
+  _XMPF_coarrayDebugPrint("*** _getVector offset=%zd, dst=%p, bytes=%d\n",
+                          offset, dst, bytes);
 
   _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // coindexed-object
   _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // result
   _XMP_coarray_rdma_image_set_1(coindex);
   _XMP_coarray_rdma_do(COARRAY_GET_CODE, desc, dst, NULL);
+
+  _XMPF_coarrayDebugPrint("*** _getVector done\n");
 }
 
 

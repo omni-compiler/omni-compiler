@@ -222,9 +222,11 @@ extern void _XMP_init_nodes_DYNAMIC_NODES_NUMBER(void **nodes, int dim,
 extern void _XMP_init_nodes_STATIC_NODES_NAMED(void **nodes, int dim, void *ref_nodes, ...);
 extern void _XMP_init_nodes_DYNAMIC_NODES_NAMED(void **nodes, int dim, void *ref_nodes, ...);
 extern void _XMP_finalize_nodes(void *nodes);
-extern int _XMP_exec_task_GLOBAL_PART(void **task_desc, int ref_lower, int ref_upper, int ref_stride);
+//extern int _XMP_exec_task_GLOBAL_PART(void **task_desc, int ref_lower, int ref_upper, int ref_stride);
 extern int _XMP_exec_task_NODES_ENTIRE(void **task_desc, void *ref_nodes);
+extern int _XMP_exec_task_NODES_ENTIRE_nocomm(void **task_desc, void *ref_nodes);
 extern int _XMP_exec_task_NODES_PART(void **task_desc, void *ref_nodes, ...);
+extern int _XMP_exec_task_NODES_PART_nocomm(void **task_desc, void *ref_nodes, ...);
 extern void _XMP_exec_task_NODES_FINALIZE(void *task_desc);
 
 // xmp_nodes_stack.c
@@ -290,6 +292,7 @@ extern void _XMP_dist_template_GBLOCK(void *template, int template_index, int no
 				      int *mapping_array, int *temp0);
 
 extern int _XMP_exec_task_TEMPLATE_PART(void **task_desc, void *ref_template, ...);
+extern int _XMP_exec_task_TEMPLATE_PART_nocomm(void **task_desc, void *ref_template, ...);
 extern long long int _XMP_L2G_GBLOCK(int local_idx, void *template, int template_index);
 
 // xmp_util.c

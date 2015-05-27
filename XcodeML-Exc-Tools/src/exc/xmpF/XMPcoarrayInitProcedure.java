@@ -59,27 +59,23 @@ public class XMPcoarrayInitProcedure {
 
 
   //------------------------------
-  //  for each procedure (text version)
+  //  for each procedure
   //------------------------------
 
-  /*
+  /**
     an example of source program:
     --------------------------------------------
-      subroutine EX1(V4)
-        real :: V1(10,20)[4,*]                ! static local
-        complex(8) :: V2[0:*]                 ! static local
-        integer, allocatable :: V3(:)[:,:]    ! allocatable local
-        integer :: V4(:)[:,:]                 ! dummy static local
+      subroutine EX1(V4)  or  module EX1
+        use M1   !! contains "real :: V1(10,20)[4,*]"  ! use-associated static coarray
+        complex(8), save :: V2[0:*]                    ! local static coarray
+        !! other coarrays, i.e., allocatable coarrays and dummy coarrays are handled by
+        !! transDeclPart_allocatableLocal, transDeclPart_staticDummy, and
+        !! transDeclPart_allocatableDummy in XMPtransCoarrayRun.java.
         ...
-        V1(1:3,j)[k1,k2] = (/1.0,2.0,3.0/)
-        z = V2[k]**2
-        allocate (V3(1:10))
-        n(1:5) = V4(2:10:2)[k1,k2]
-        return
-      end subroutine
+      end subroutine  or  end module
     --------------------------------------------
 
-    generated two subroutines:
+    converted program and generated subroutines:
     --------------------------------------------
       subroutine xmpf_traverse_coarraysize_ex1
         call xmpf_coarray_count_size(200, 4)
