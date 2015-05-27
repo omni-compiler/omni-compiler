@@ -3907,6 +3907,8 @@ struct keyword_token XMP_keywords[ ] =
     {"nowait",	XMPKW_NOWAIT },
     {"async",	XMPKW_ASYNC },
 
+    {"nocomm",  XMPKW_NOCOMM },
+
     {"master",	XMPKW_MASTER },
     {"critical",XMPKW_CRITICAL },
     {"wait",	XMPKW_WAIT },

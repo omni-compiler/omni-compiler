@@ -683,13 +683,15 @@ public class XMPanalyzePragma
   void analyzeTask(Xobject taskDecl, BlockList taskBody,
 		   XMPinfo info, PragmaBlock pb) {
     Xobject onRef = taskDecl.getArg(0);
-    Xobject taskOpt = taskDecl.getArg(1);
+    Xobject nocomm = taskDecl.getArg(1);
+    // Xobject taskOpt = taskDecl.getArg(1);
     
-    if(taskOpt != null){
-      XMP.fatal("task opt is not supported yet, sorry!");
-      return;
-    }
+    // if(taskOpt != null){
+    //   XMP.fatal("task opt is not supported yet, sorry!");
+    //   return;
+    // }
     info.setOnRef(XMPobjectsRef.parseDecl(onRef,env,pb));
+    info.setNocomm(nocomm);
   }
 
   private void analyzeTasks(Xobject tasksDecl, BlockList taskList,

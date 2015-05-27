@@ -825,6 +825,10 @@ int _XMP_exec_task_NODES_ENTIRE(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_
   }
 }
 
+int _XMP_exec_task_NODES_ENTIRE_nocomm(_XMP_nodes_t *ref_nodes){
+  return ref_nodes->is_member;
+}
+
 void _XMP_exec_task_NODES_FINALIZE(_XMP_task_desc_t *task_desc){
   if(task_desc == NULL) return;
   _XMP_finalize_comm(task_desc->nodes->comm);
@@ -888,6 +892,41 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_no
   } else {
     return _XMP_N_INT_FALSE;
   }
+}
+
+int _XMP_exec_task_NODES_PART_nocomm(_XMP_nodes_t *ref_nodes, ...){
+
+  if (!ref_nodes->is_member) return _XMP_N_INT_FALSE;
+
+  int ref_dim = ref_nodes->dim;
+  int shrink[ref_dim], ref_lower[ref_dim], ref_upper[ref_dim], ref_stride[ref_dim];
+
+  va_list args;
+  va_start(args, ref_nodes);
+
+  for (int i = 0; i < ref_dim; i++) {
+    shrink[i] = va_arg(args, int);
+    if (!shrink[i]) {
+      ref_lower[i] = va_arg(args, int);
+      ref_upper[i] = va_arg(args, int);
+      ref_stride[i] = va_arg(args, int);
+    }
+  }
+
+  va_end(args);
+
+  for (int i = 0; i < ref_dim; i++) {
+
+    if (shrink[i]) continue;
+
+    int me = ref_nodes->info[i].rank + 1;
+
+    if (me < ref_lower[i] || ref_upper[i] < me) return _XMP_N_INT_FALSE;
+    if ((me - ref_lower[i]) % ref_stride[i] != 0) return _XMP_N_INT_FALSE;
+  }
+
+  return _XMP_N_INT_TRUE;
+
 }
 
 // FIXME do not use this function
