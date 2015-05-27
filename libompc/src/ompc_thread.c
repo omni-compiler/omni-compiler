@@ -847,6 +847,39 @@ ompc_thread_barrier(int id, struct ompc_thread *tpp)
 
 #ifdef USE_PTHREAD_BARRIER
     pthread_barrier_wait(&ompc_thd_bar);
+#elif defined(USE_ARGOBOTS)
+    sen0 = ~tpp->barrier_sense;
+    n = tpp->num_thds;
+
+    if (id == 0) {
+        for (int i = 1; i < n; i++) {
+            if ((volatile int)tpp->barrier_flags[i]._v != sen0) {
+                ABT_mutex_lock(ompc_mainwait_mutex);
+                while ((volatile int)tpp->barrier_flags[i]._v != sen0) {
+                    ABT_cond_wait(ompc_mainwait_cond, ompc_mainwait_mutex);
+                }
+                ABT_mutex_unlock(ompc_mainwait_mutex);
+            }
+        }
+
+        ABT_mutex_lock(ompc_proc_mutex);
+        tpp->barrier_sense = sen0;
+        ABT_cond_broadcast(ompc_proc_cond);
+        ABT_mutex_unlock(ompc_proc_mutex);
+    } else {
+        ABT_mutex_lock(ompc_mainwait_mutex);
+        tpp->barrier_flags[id]._v = sen0;
+        ABT_cond_signal(ompc_mainwait_cond);
+        ABT_mutex_unlock(ompc_mainwait_mutex);
+
+        if ((volatile int)tpp->barrier_sense != sen0) {
+            ABT_mutex_lock(ompc_proc_mutex);
+            while ((volatile int)tpp->barrier_sense != sen0) {
+                ABT_cond_wait(ompc_proc_cond, ompc_proc_mutex);
+            }
+            ABT_mutex_unlock(ompc_proc_mutex);
+        }
+    }
 #else
     sen0 = tpp->barrier_sense ^ 1;
     n = tpp->num_thds;
@@ -900,6 +933,25 @@ ompc_thread_barrier2(int id, struct ompc_thread *tpp)
         tpp->barrier_flags[id]._v = sen0;
         pthread_cond_signal(&ompc_mainwait_cond);
         //pthread_mutex_unlock(&ompc_mainwait_mutex);
+    }
+#elif defined(USE_ARGOBOTS)
+    if (id == 0) {
+        for (int i = 1; i < n; i++) {
+            if ((volatile int)tpp->barrier_flags[i]._v != sen0) {
+                ABT_mutex_lock(ompc_mainwait_mutex);
+                while ((volatile int)tpp->barrier_flags[i]._v != sen0) {
+                    ABT_cond_wait(ompc_mainwait_cond, ompc_mainwait_mutex);
+                }
+                ABT_mutex_unlock(ompc_mainwait_mutex);
+            }
+        }
+        tpp->barrier_sense = sen0;
+        MBAR();
+    } else {
+        ABT_mutex_lock(ompc_mainwait_mutex);
+        tpp->barrier_flags[id]._v = sen0;
+        ABT_cond_signal(ompc_mainwait_cond);
+        ABT_mutex_unlock(ompc_mainwait_mutex);
     }
 #else
     if (id == 0) {
