@@ -657,6 +657,12 @@ static void *ompc_slave_proc(void *arg)
 #ifdef USE_ARGOBOTS
 static void ompc_xstream_setup()
 {
+#ifdef USE_LOG
+    if(ompc_log_flag) {
+      tlog_slave_init ();
+    }
+#endif /* USE_LOG */
+
     ompc_new_proc();
 }
 
