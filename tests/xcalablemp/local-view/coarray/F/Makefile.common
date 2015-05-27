@@ -1,13 +1,11 @@
 # This file is included from */Makefile files.
 
 SRC= $(OUT:%=%.f90)
-RESULT= $(OUT:%=%.result)
+RESULT=$(SRC:.f90=.result)
+.SUFFIXES: .x .f90
 
-%:  %.f90
+.f90.x:
 	xmpf90 $(OPT) -o $@ $<
-
-%:  %.c
-	xmpcc $(OPT) -o $@ $<
 
 %.result: %
 	mpirun -n $(NPE) $< 2>&1 >$@
@@ -15,11 +13,6 @@ RESULT= $(OUT:%=%.result)
 
 %.result: %.f90
 	xmpf90 $(OPT) -o $* $<
-	mpirun -n 3 $* 2>&1 >$@
-	cat $@
-
-%.result: %.c
-	xmpcc $(OPT) -o $* $<
 	mpirun -n 3 $* 2>&1 >$@
 	cat $@
 

@@ -341,6 +341,7 @@ extern size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr);
 
 
 /* xmpf_coarray_lib.c */
+extern int XMPF_this_image, XMPF_num_images;
 extern void _XMPF_set_this_image(void);
 extern int num_images_(void);
 extern int this_image_(void);

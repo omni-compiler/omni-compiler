@@ -2,15 +2,15 @@
 #OPT= -g --debug --verbose
 NPE=3
 
-OUT_decl= decl3 #decl1
+OUT_decl= decl3.x #decl1
 #OUT_size= size1 size1-2 #size2 #sample #size1-err
 ### size2: assumed shape dummy coarray
 #OUT_rt  =  inquiry
-OUT_NG =  allo2NG
+OUT_NG =  allo2NG.x
 
-OUT_allo= allo1 allo3 
-OUT_epi= allodeallo #epi2 #epi1
-OUT_etc=allo_pipo3 allo_loop2 allo_hiloop #allo_hicall #char12  host_assoc
+OUT_allo= allo1.x allo3.x
+OUT_epi= allodeallo.x #epi2 #epi1
+OUT_etc=allo_pipo3.x allo_loop2.x allo_hiloop.x #allo_hicall #char12  host_assoc
 
 #OUT_err= init1ERR recursiveERR
 

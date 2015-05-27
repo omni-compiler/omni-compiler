@@ -656,8 +656,10 @@ public class XMPtransPragma
     Ident taskNodesDescId = env.declObjectId(XMP.genSym("XMP_TASK_NODES"), pb);
 
     Ident f;
-    f = env.declInternIdent(XMP.create_task_nodes_f, Xtype.FsubroutineType);
-    bb.add(f.callSubroutine(Xcons.List(taskNodesDescId, on_ref.getDescId().Ref())));
+    if (!info.isNocomm()){
+      f = env.declInternIdent(XMP.create_task_nodes_f, Xtype.FsubroutineType);
+      bb.add(f.callSubroutine(Xcons.List(taskNodesDescId, on_ref.getDescId().Ref())));
+    }
 
     Ident g1 = env.declInternIdent(XMP.nodes_dealloc_f, Xtype.FsubroutineType);
     Ident g2 = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
@@ -673,17 +675,27 @@ public class XMPtransPragma
       ret_body.add(b);
     }
 
-    f = env.declInternIdent(XMP.test_task_on_f,
-			    Xtype.FlogicalFunctionType);
-    //Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
-    Xobject cond = f.Call(Xcons.List(taskNodesDescId.Ref()));
+    Xobject cond = null;
+    if (!info.isNocomm()){
+      f = env.declInternIdent(XMP.test_task_on_f,
+			      Xtype.FlogicalFunctionType);
+      //Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
+      cond = f.Call(Xcons.List(taskNodesDescId.Ref()));
+    }
+    else {
+      f = env.declInternIdent(XMP.test_task_nocomm_f, Xtype.FlogicalFunctionType);
+      cond = f.Call(Xcons.List(on_ref.getDescId()));
+    }
+
     ret_body.add(Bcons.IF(cond,Bcons.COMPOUND(pb.getBody()),null));
       
-    f = env.declInternIdent(XMP.end_task_f,Xtype.FsubroutineType);
-    pb.getBody().add(f.Call(Xcons.List()));
+    if (!info.isNocomm()){
+      f = env.declInternIdent(XMP.end_task_f,Xtype.FsubroutineType);
+      pb.getBody().add(f.Call(Xcons.List()));
+    }
 
     if (!tasksFlag){
-      ret_body.add(g1.callSubroutine(Xcons.List(taskNodesDescId)));
+      if (!info.isNocomm()) ret_body.add(g1.callSubroutine(Xcons.List(taskNodesDescId)));
       ret_body.add(g2.callSubroutine(Xcons.List(on_ref.getDescId())));
     }
 

@@ -345,6 +345,7 @@ public class ACCvar {
   
   private boolean isCorrectRange(ArrayType arrayType, Xobject lower, Xobject length){
     Xobject size = getArraySize(arrayType);
+    if(size == null) return true;
     size = ACCutil.foldIntConstant_mod(size);
     if(! size.isIntConstant()) return true;
     int sizeInt = size.getInt();
@@ -366,7 +367,7 @@ public class ACCvar {
     return true;
   }
   
-  private XobjList makeRange(Xtype type){
+  private XobjList makeRange(Xtype type) throws ACCexception{
     XobjList rangeList = Xcons.List();
     
     while(true){
@@ -374,7 +375,11 @@ public class ACCvar {
       case Xtype.ARRAY:
       {
         ArrayType arrayType = (ArrayType)type;
-        rangeList.add(Xcons.List(Xcons.IntConstant(0), getArraySize(arrayType)));
+        Xobject arraySize = getArraySize(arrayType);
+        if(arraySize == null){
+          throw new ACCexception("array size of '" + getName() + "' is unknown");
+        }
+        rangeList.add(Xcons.List(Xcons.IntConstant(0), arraySize));
         type = arrayType.getRef();
       } break;
       case Xtype.BASIC:
@@ -415,11 +420,11 @@ public class ACCvar {
     case Xtype.UNION:
       return id.getAddr();
     case Xtype.POINTER:
-      if(isSubarray()){
+      //if(isSubarray()){
         return id.Ref();
-      }else{
-        return id.getAddr();
-      }
+      //}else{
+      //  return id.getAddr();
+      //}
     case Xtype.ARRAY:
     {
       ArrayType arrayVarType = (ArrayType)varType;
