@@ -133,40 +133,72 @@ public class XMPnodes extends XMPobject {
    *    _xmpf_nodes_init_NODES__(n_1,nodes_ref)
    */
   public void buildConstructor(BlockList body, XMPenv env){
+
+    BlockList b;
+    if (_is_saveDesc && !env.currentDefIsModule()){
+      b = Bcons.emptyBody();
+    }
+    else {
+      b = body;
+    }
+
+    Ident flagVar = null;
+    if (_is_saveDesc && !env.currentDefIsModule()){
+
+      Xtype save_desc = _descId.Type().copy();
+      save_desc.setIsFsave(true);
+      _descId.setType(save_desc);
+
+      Xtype save_logical = Xtype.FlogicalType.copy();
+      save_logical.setIsFsave(true);
+      BlockList bl = env.getCurrentDef().getBlock().getBody();
+      flagVar = bl.declLocalIdent(XMP.SAVE_DESC_PREFIX_ + _name, save_logical,
+      				    StorageClass.FSAVE,
+      				    Xcons.List(Xcode.F_VALUE, Xcons.FlogicalConstant(false)));
+    }
+
     Ident f = env.declInternIdent(XMP.nodes_alloc_f,Xtype.FsubroutineType);
     Xobject args = Xcons.List(_descId.Ref(),Xcons.IntConstant(_dim));
-    body.add(f.callSubroutine(args));
+    b.add(f.callSubroutine(args));
 
     f = env.declInternIdent(XMP.nodes_dim_size_f,Xtype.FsubroutineType);
     for(int i = 0; i < _dim; i++){
       Xobject size = _sizeVector.elementAt(i).getSize();
       if(size == null) size = Xcons.IntConstant(-1);
       args = Xcons.List(_descId.Ref(),Xcons.IntConstant(i), size);
-      body.add(f.callSubroutine(args));
+      b.add(f.callSubroutine(args));
     }
 
     switch(inheritType){
     case INHERIT_GLOBAL:
       f = env.declInternIdent(XMP.nodes_init_GLOBAL_f,Xtype.FsubroutineType);
-      body.add(f.callSubroutine(Xcons.List(_descId.Ref())));
+      b.add(f.callSubroutine(Xcons.List(_descId.Ref())));
       break;
     case INHERIT_EXEC:
       f = env.declInternIdent(XMP.nodes_init_EXEC_f,Xtype.FsubroutineType);
-      body.add(f.callSubroutine(Xcons.List(_descId.Ref())));
+      b.add(f.callSubroutine(Xcons.List(_descId.Ref())));
       break;
     case INHERIT_NODES:
-      body.add(nodesRef.buildConstructor(env));
+      b.add(nodesRef.buildConstructor(env));
       f = env.declInternIdent(XMP.nodes_init_NODES_f, Xtype.FsubroutineType);
-      body.add(f.callSubroutine(Xcons.List(_descId.Ref(), nodesRef.getDescId().Ref())));
+      b.add(f.callSubroutine(Xcons.List(_descId.Ref(), nodesRef.getDescId().Ref())));
       break;
     default:
       XMP.fatal("bulidConstrutor: unknown inheritType="+inheritType);
     }
+
+    if (_is_saveDesc && !env.currentDefIsModule()){
+      b.add(Xcons.Set(flagVar.Ref(), Xcons.FlogicalConstant(true)));
+      body.add(Bcons.IF(BasicBlock.Cond(Xcons.unaryOp(Xcode.LOG_NOT_EXPR, flagVar.Ref())), b, null));
+    }
+
   }
 
   public void buildDestructor(BlockList body, XMPenv env){
-    Ident f = env.declInternIdent(XMP.nodes_dealloc_f,Xtype.FsubroutineType);
-    Xobject args = Xcons.List(_descId.Ref());
-    body.add(f.callSubroutine(args));
+    if (!_is_saveDesc){
+      Ident f = env.declInternIdent(XMP.nodes_dealloc_f,Xtype.FsubroutineType);
+      Xobject args = Xcons.List(_descId.Ref());
+      body.add(f.callSubroutine(args));
+    }
   }
 }

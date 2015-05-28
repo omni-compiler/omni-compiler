@@ -274,10 +274,34 @@ package exc.xmpF;
     *  !  xmpf_template_init__(t_desc,n_desc)
     */
    public void buildConstructor(BlockList body, XMPenv env){
+
+     BlockList b;
+     if (_is_saveDesc && !env.currentDefIsModule()){
+       b = Bcons.emptyBody();
+     }
+     else {
+       b = body;
+     }
+
+     Ident flagVar = null;
+     if (_is_saveDesc && !env.currentDefIsModule()){
+
+       Xtype save_desc = _descId.Type().copy();
+       save_desc.setIsFsave(true);
+       _descId.setType(save_desc);
+
+       Xtype save_logical = Xtype.FlogicalType.copy();
+       save_logical.setIsFsave(true);
+       BlockList bl = env.getCurrentDef().getBlock().getBody();
+       flagVar = bl.declLocalIdent(XMP.SAVE_DESC_PREFIX_ + _name, save_logical,
+				   StorageClass.FSAVE,
+				   Xcons.List(Xcode.F_VALUE, Xcons.FlogicalConstant(false)));
+     }
+
      Ident f = env.declInternIdent(XMP.template_alloc_f,Xtype.FsubroutineType);
      Xobject flag = isFixed ? Xcons.IntConstant(1) : Xcons.IntConstant(0);
      Xobject args = Xcons.List(_descId.Ref(), Xcons.IntConstant(_dim), flag);
-     body.add(f.callSubroutine(args));
+     b.add(f.callSubroutine(args));
 
      if (!isFixed) return;
      
@@ -292,19 +316,27 @@ package exc.xmpF;
 			 info.getLower(),info.getUpper(),
 			 Xcons.IntConstant(info.getDistManner()),
 			 dist_arg);
-       body.add(f.callSubroutine(args));
+       b.add(f.callSubroutine(args));
      }
 
      /* init */
      f = env.declInternIdent(XMP.template_init_f,Xtype.FsubroutineType);
-     body.add(f.callSubroutine(Xcons.List(_descId.Ref(),
+     b.add(f.callSubroutine(Xcons.List(_descId.Ref(),
 					ontoNodes.getDescId().Ref())));
+
+    if (_is_saveDesc && !env.currentDefIsModule()){
+      b.add(Xcons.Set(flagVar.Ref(), Xcons.FlogicalConstant(true)));
+      body.add(Bcons.IF(BasicBlock.Cond(Xcons.unaryOp(Xcode.LOG_NOT_EXPR, flagVar.Ref())), b, null));
+    }
+
    }
 
    public void buildDestructor(BlockList body, XMPenv env){
-     Ident f = env.declInternIdent(XMP.template_dealloc_f,Xtype.
-				   FsubroutineType);
-     Xobject args = Xcons.List(_descId.Ref());
-     body.add(f.callSubroutine(args));
+     if (!_is_saveDesc){
+       Ident f = env.declInternIdent(XMP.template_dealloc_f,Xtype.
+				     FsubroutineType);
+       Xobject args = Xcons.List(_descId.Ref());
+       body.add(f.callSubroutine(args));
+     }
    }
 }
