@@ -10,6 +10,7 @@
 #SBATCH -t 00:20:00
 
 cd @DIRNAME@
+export PATH=@XMP_PATH@/bin:$PATH
 
 make -j2
 make run
