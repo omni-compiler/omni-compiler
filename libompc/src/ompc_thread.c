@@ -36,28 +36,10 @@ int ompc_bind_procs = FALSE;   /* default */
 /* system lock variables */
 ompc_lock_t ompc_proc_lock_obj, ompc_thread_lock_obj;
 
-#if 0 /* USE_PTHREAD */
-# ifndef SIMPLE_SPIN
-pthread_mutex_t ompc_proc_mutex;
-pthread_cond_t ompc_proc_cond;
-pthread_cond_t ompc_mainwait_cond;
-pthread_mutex_t ompc_mainwait_mutex;
-#if _POSIX_BARRIERS > 0
-pthread_barrier_t ompc_thd_bar;
-#endif
-# endif /* !SIMPLE_SPIN */
-#endif /* USE_PTHREAD */
-
-#ifdef USE_ARGOBOTS
 ABT_mutex ompc_proc_mutex;
 ABT_cond ompc_proc_cond;
 ABT_cond ompc_mainwait_cond;
 ABT_mutex ompc_mainwait_mutex;
-#endif /* USE_ARGOBOTS */
-
-#if defined(USE_SPROC) && defined(OMNI_OS_IRIX)
-ompc_proc_t ompc_sproc_pid[MAX_PROC];
-#endif /* USE_SPROC && OMNI_OS_IRIX */
 
 /* hash table */
 struct ompc_proc *ompc_proc_htable[PROC_HASH_SIZE];
@@ -67,15 +49,9 @@ struct ompc_proc *ompc_procs;
 static ompc_proc_t ompc_master_proc_id;
 
 /* prototype */
-#if defined(USE_SPROC) && defined(OMNI_OS_IRIX)
-static void *ompc_slave_proc(void *, size_t);
-#else
 static void *ompc_slave_proc(void *);
-#endif /* USE_SPROC && OMNI_OS_IRIX */
-#ifdef USE_ARGOBOTS
 static void ompc_xstream_setup();
 static void ompc_thread_wrapper_func(void *args);
-#endif /* USE_ARGOBOTS */
 static struct ompc_proc *ompc_new_proc(void);
 static struct ompc_proc *ompc_current_proc(void);
 static struct ompc_proc *ompc_get_proc(int hint);
@@ -86,31 +62,6 @@ static void ompc_free_thread(struct ompc_proc *proc, struct ompc_thread *p);
 static void ompc_thread_barrier2(int id, struct ompc_thread *tpp);
 
 extern void ompc_call_fsub(struct ompc_thread *tp);
-
-#if defined(USE_SPROC) && defined(OMNI_OS_IRIX)
-/* SGI sproc() special care */
-static size_t getProcessStackSize(void);
-
-size_t
-getProcessStackSize()
-{
-    struct rlimit limit;
-    size_t size;
-    if (getrlimit(RLIMIT_STACK, &limit) < 0) {
-        perror("getrlimit");
-        fprintf(stderr, "can't get stack limit max.\n");
-        exit(1);
-    }
-    /*
-     * FIXME:
-     * Factor 1/2 is not the best value.
-     * Are there any good way to compute stack size of each shared
-     * process?
-     */
-    size = limit.rlim_max / 2;
-    return size;
-}
-#endif /* USE_SPROC && OMNI_OS_IRIX */
 
 /* 
  * initialize library
@@ -133,45 +84,14 @@ ompc_init(int argc,char *argv[])
     struct ompc_thread *tp;
     struct ompc_proc *cproc;
     size_t maxstack = 0;
-#if defined(OMNI_OS_IRIX) && defined(USE_SPROC)
-    size_t thdStackSize;
-#endif /* OMNI_OS_IRIX && USE_SPROC */
 
-#if 0 /* USE_PTHREAD */
-    static pthread_t thds[MAX_PROC];
-    static pthread_attr_t attr;
-
-    pthread_attr_init(&attr);
-
-# ifndef SIMPLE_SPIN
-    pthread_mutex_init(&ompc_proc_mutex,NULL);
-    pthread_cond_init(&ompc_proc_cond,NULL);
-    pthread_mutex_init(&ompc_mainwait_mutex,NULL);
-    pthread_cond_init(&ompc_mainwait_cond,NULL);
-# endif /* SIMPLE_SPIN */
-
-# if !defined(OMNI_OS_FREEBSD) && !defined(OMNI_OS_IRIX) && !defined(OMNI_OS_CYGWIN32)
-    pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
-# endif /* !OMNI_OS_FREEBSD ... */
-# if 0
-    pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
-# endif
-#endif /* USE_PTHREAD */
-
-#ifdef USE_ARGOBOTS
     static ABT_xstream xstreams[MAX_PROC];
     ABT_init(argc, argv);
     ABT_mutex_create(&ompc_proc_mutex);
     ABT_cond_create(&ompc_proc_cond);
     ABT_mutex_create(&ompc_mainwait_mutex);
     ABT_cond_create(&ompc_mainwait_cond);
-#endif /* USE_ARGOBOTS */
 
-#ifdef OMNI_OS_SOLARIS
-    lnp = sysconf(_SC_NPROCESSORS_ONLN);
-#elif defined(OMNI_OS_IRIX)
-    lnp = sysconf(_SC_NPROC_ONLN);
-#elif defined(OMNI_OS_LINUX)
     {
       char buff[BUFSIZ];
       FILE *fp;
@@ -195,18 +115,11 @@ ompc_init(int argc,char *argv[])
         lnp = (npes == 0)? 1: npes;
       }
     }
-#else
-    lnp = ompc_n_proc;
-#endif /* OMNI_OS_SOLARIS */
 
     if (ompc_n_proc != lnp)
         ompc_n_proc = lnp;
     
-#if defined(USE_SPROC) && defined(OMNI_OS_IRIX)
-    __ateachexit(ompc_finalize);
-#else    
     atexit(ompc_finalize);
-#endif /* USE_SPROC && OMNI_OS_IRIX */
 
     cp = getenv("OMPC_DEBUG");
     if(cp != NULL){
@@ -268,16 +181,6 @@ ompc_init(int argc,char *argv[])
      */
     ompc_max_threads = ompc_num_threads;
 
-#if 0 /* USE_PTHREAD */
-#if _POSIX_BARRIERS > 0
-    pthread_barrier_init(&ompc_thd_bar, 0, ompc_num_threads);
-#endif
-#endif
-
-#if 0 /* (defined(OMNI_OS_IRIX) || defined(OMNI_OS_DARWIN)) && defined(USE_PTHREAD) */
-    pthread_setconcurrency(ompc_max_threads);
-#endif /* OMNI_OS_IRIX && USE_PTHREAD */
-
     cp = getenv("OMPC_STACK_SIZE");   /* stack size of threads */
     if ( cp != NULL ){
         char lstr[64];
@@ -301,9 +204,6 @@ ompc_init(int argc,char *argv[])
             printf("Stack size is not change, because it is less than the default(=1MB).\n");
         }
     }
-#if 0 /* USE_PTHREAD */
-    pthread_attr_setstacksize(&attr, maxstack);
-#endif /* USE_PTHREAD */
 
     ompc_task_end = 0;
 
@@ -330,41 +230,11 @@ ompc_init(int argc,char *argv[])
     if(ompc_debug_flag)
         fprintf(stderr, "Creating %d slave thread ...\n", ompc_max_threads-1);
 
-#if defined(USE_SPROC) && defined(OMNI_OS_IRIX)
-    (void)usconfig(CONF_INITUSERS, (unsigned int)ompc_max_threads);
-    ompc_sproc_pid[0] = getpid();
-    thdStackSize = getProcessStackSize();
-#endif /* USE_SPROC && OMNI_OS_IRIX */
-
     for( t = 1; t < ompc_max_threads; t++ ){
         if(ompc_debug_flag) fprintf(stderr, "Creating slave %d  ...\n", t);
 
-#ifdef USE_SOL_THREAD
-        r = thr_create(NULL, maxstack, ompc_slave_proc, (void *)t,
-                       THR_BOUND, NULL);
-#elif 0 /* defined(USE_PTHREAD) */
-        r = pthread_create(&thds[t],
-                           &attr, (cfunc)ompc_slave_proc, (void *)((_omAddrInt_t)t));
-#elif defined(USE_ARGOBOTS)
         r = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[t]);
         ABT_thread_create_on_xstream(xstreams[t], ompc_xstream_setup, NULL, ABT_THREAD_ATTR_NULL, NULL);
-
-#elif defined(USE_SPROC) && defined(OMNI_OS_IRIX)
-        if (getpid() == (pid_t)ompc_sproc_pid[0]) {
-            ompc_sproc_pid[t] = (ompc_proc_t)sprocsp((cfunc)ompc_slave_proc,
-                                                       PR_SALL,
-                                                       (void *)NULL,
-                                                       (caddr_t)NULL,
-                                                       thdStackSize);
-            if (ompc_sproc_pid[t] > 0) {
-                r = 0;
-            } else {
-                r = -1;
-            }
-        }
-#else
-        ompc_fatal("no thread library!!");
-#endif /* USE_SOL_THREAD */
 
         if ( r ){
             extern int errno;
@@ -391,16 +261,6 @@ ompc_init(int argc,char *argv[])
 void
 ompc_finalize()
 {
-#if defined(USE_SPROC) && defined(OMNI_OS_IRIX)
-    if(ompc_sproc_pid[0] == getpid()){
-        int t;
-        for( t = 1; t < ompc_max_threads; t++ )
-            kill(ompc_sproc_pid[t], SIGTERM);
-    
-        for( t = 1; t < ompc_max_threads; t++ )
-            wait(NULL);
-    }
-#endif /* USE_SPROC && OMNI_OS_IRIX */
 #ifdef USE_LOG
     if(ompc_log_flag){
         tlog_finalize();
@@ -414,27 +274,6 @@ ompc_fatal(char * msg)
     fprintf(stderr, "OMPC FATAL: %s\n", msg);
     exit(1);
 }
-
-#ifdef USE_SOL_THREAD
-/* find on-line processor id */
-# define P_MAX 256
-static int cpu_id = -1;
-int
-getpeid()
-{
-    int  i, err;
-    processor_info_t  pt;
-
-    for( i = cpu_id+1 ; i < P_MAX ; i++ ){
-        err = processor_info((processorid_t)i, &pt);
-        if ( err < 0 )
-            continue;
-        cpu_id = i;
-        return cpu_id;
-    }
-    exit(1);/*return -1;*/
-}
-#endif /* USE_SOL_THREAD */
 
 int
 ompc_is_master_proc()
@@ -460,21 +299,6 @@ ompc_new_proc()
     p->link = *pp;
     *pp = p;
 
-#ifdef USE_SOL_THREAD
-    /* if ompc_max_threads is less than the number of processor, bind it. */
-    if(ompc_bind_procs && (ompc_max_threads <= ompc_n_proc)){
-        int  peid, err;
-        peid = getpeid();
-        if(ompc_debug_flag) 
-            fprintf(stderr, "thread #[%d] is bind to pe[%d]\n",
-                   ompc_proc_counter-1, peid);
-        err = processor_bind(P_LWPID, P_MYID, peid, NULL);
-        if ( err < 0 ){
-            perror("processor_bind");
-            exit(1);
-        }
-    }
-#endif /* USE_SOL_THREAD */
     OMPC_PROC_UNLOCK();
     return p;
 }
@@ -487,9 +311,7 @@ ompc_current_thread()
     struct ompc_thread *tp;
 
     id = _OMPC_PROC_SELF;
-#if 0
-    fprintf(stderr, "current thread: %d, idx %lud\n", (int)id, PROC_HASH_IDX(id));
-#endif
+
     for( p = ompc_proc_htable[PROC_HASH_IDX(id)]; p != NULL; p = p->link ){
         if(p->pid == id){
             if((tp = p->thr) == NULL)
@@ -575,86 +397,6 @@ ompc_free_thread(struct ompc_proc *proc,struct ompc_thread *p)
     proc->free_thr = p;
 }
 
-#ifndef USE_ARGOBOTS
-#if defined(USE_SPROC) && defined(OMNI_OS_IRIX)
-static void *ompc_slave_proc(void *arg, size_t stackSize)
-#else
-static void *ompc_slave_proc(void *arg)
-#endif /* USE_SPROC && OMNI_OS_IRIX */
-{
-    struct ompc_proc *cproc;    /* current process */
-    struct ompc_thread *tp;
-    struct ompc_thread *me;
-    int i;
-
-#ifdef USE_LOG
-    if(ompc_log_flag) {
-      tlog_slave_init ();
-    }
-#endif /* USE_LOG */
-
-    cproc = ompc_new_proc();
-
-    for(;;) {
-
-#if defined(USE_PTHREAD) && !defined(SIMPLE_SPIN)
-        if ((struct ompc_proc * volatile)cproc->thr == NULL){
-            volatile int c;
-            for( c = 0 ; (struct ompc_proc * volatile)cproc->thr == NULL ; c++ ){
-                if ( c > MAX_COUNT ){
-                    pthread_mutex_lock(&ompc_proc_mutex);
-                    while((struct ompc_proc * volatile)cproc->thr == NULL){
-                        pthread_cond_wait(&ompc_proc_cond,&ompc_proc_mutex);
-                    }
-                    pthread_mutex_unlock(&ompc_proc_mutex);
-                    c = 0;
-                }
-            }
-        }
-#else /* if defined(USE_SOL_THREAD) || defined(USE_SPROC) || defined(SIMPLE_SPIN) */
-        /* wait for starting job */
-        OMPC_WAIT((struct ompc_proc * volatile)cproc->thr == NULL);
-#endif /* USE_PTHREAD && !SIMPLE_SPIN */
-
-        if ( ompc_task_end > 0 ){      /* terminate */
-            break;
-        }
-        tp = cproc->thr->parent;
-
-        i = cproc->thr->num;
-#ifdef USE_LOG
-        if(ompc_log_flag) tlog_parallel_IN(i);
-#endif /* USE_LOG */
-        if ( tp->nargs < 0) {
-            /* call C function */
-            if ( tp->args != NULL )
-                (*tp->func)(tp->args, cproc->thr);
-            else
-                (*tp->func)(cproc->thr);
-        } else {
-            /* call Fortran function */
-            ompc_call_fsub(tp);
-        }
-
-#ifdef USE_LOG
-        if(ompc_log_flag) tlog_parallel_OUT(i);
-#endif /* USE_LOG */
-        /* on return, clean up */
-        me = cproc->thr;
-        cproc->thr = NULL;
-        ompc_free_thread(cproc,me);    /* free thread & put me to freelist */
-        ompc_free_proc(cproc);
-        ompc_thread_barrier2(i,tp);
-    }
-
-#if 0
-    fprintf(stderr, "Exit slave[%d]\n", _OMPC_PROC_SELF);
-#endif
-    return NULL;
-}
-#endif /* !USE_ARGOBOTS */
-
-#ifdef USE_ARGOBOTS
 static void ompc_xstream_setup()
 {
 #ifdef USE_LOG
@@ -698,7 +440,6 @@ static void ompc_thread_wrapper_func(void *args)
     ompc_free_proc(cproc);
     ompc_thread_barrier2(i,tp);
 }
-#endif /* USE_ARGOBOTS */
 
 /* called from compiled code. */
 void
@@ -711,9 +452,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 
     cproc = ompc_current_proc();
     cthd  = cproc->thr;
-#if 0
-    fprintf(stderr, "  parallel proc[%d] omp num[%d].\n", cproc->pid, ompc_num_threads);
-#endif
 
     if (cond == 0) { /* serialized by parallel if(false) */
         max_thds = 1;
@@ -729,9 +467,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     proclist = NULL;
     for( n_thds = 1; n_thds < max_thds; n_thds ++ ){
         if ((p = ompc_get_proc(n_thds)) == NULL){
-#if 0
-          fprintf(stderr, "   -cannot find thread %d\n", n_thds);
-#endif
           break;
         }
         p->next = proclist;
@@ -743,9 +478,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     cthd->nargs = nargs;
     cthd->args = args;
     cthd->func = f;
-#if 0
-    fprintf(stderr, "  thread team total[%d] from[%d]\n", cthd->num_thds, ompc_num_threads);
-#endif
 
     /* initialize barrier structure */
     cthd->out_count = 0;
@@ -765,29 +497,17 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         tp->in_parallel = in_parallel;
         p->thr = tp;                        /* start it ! */
 
-#ifdef USE_ARGOBOTS
         ABT_thread_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
             NULL, ABT_THREAD_ATTR_NULL, NULL);
-#endif /* USE_ARGOBOTS */
 
         MBAR();
     }
 
-#if 0 /* defined(USE_PTHREAD) && !defined(SIMPLE_SPIN) */
-    if ( n_thds > 1 ){
-        pthread_mutex_lock(&ompc_proc_mutex);
-        pthread_cond_broadcast(&ompc_proc_cond);
-        pthread_mutex_unlock(&ompc_proc_mutex);
-    }
-#endif /* USE_PTHREAD && !SIMPLE_SPIN */
-
-#ifdef USE_ARGOBOTS
     if (n_thds > 1) {
         ABT_mutex_lock(ompc_proc_mutex);
         ABT_cond_broadcast(ompc_proc_cond);
         ABT_mutex_unlock(ompc_proc_mutex);
     }
-#endif /* USE_ARGOBOTS */
 
     /* allocate master in this team */
     tp = ompc_alloc_thread(cproc);
@@ -842,18 +562,14 @@ ompc_do_parallel_if (int cond, cfunc f, void *args)
 void
 ompc_thread_barrier(int id, struct ompc_thread *tpp)
 {
-#ifndef USE_PTHREAD_BARRIER
     int sen0,n;
-#endif // USE_PTHREAD_BARRIER
 
     if(tpp == NULL) return; /* not in parallel */
 #ifdef USE_LOG
     if(ompc_log_flag) tlog_barrier_IN(id);
 #endif // USE_LOG
 
-#ifdef USE_PTHREAD_BARRIER
-    pthread_barrier_wait(&ompc_thd_bar);
-#elif defined(USE_ARGOBOTS)
+#if 1  // USE_ARGOBOTS
     sen0 = ~tpp->barrier_sense;
     n = tpp->num_thds;
 
@@ -900,7 +616,7 @@ ompc_thread_barrier(int id, struct ompc_thread *tpp)
         MBAR();
         OMPC_WAIT ((volatile int)tpp->barrier_sense != sen0);
     }
-#endif // USE_PTHREAD_BARRIER
+#endif  // USE_ARGOBOTS
 
 #ifdef USE_LOG
     if(ompc_log_flag) tlog_barrier_OUT(id);
@@ -919,28 +635,8 @@ ompc_thread_barrier2(int id, struct ompc_thread *tpp)
 #endif // USE_LOG
     sen0 = tpp->barrier_sense ^ 1;
     n = tpp->num_thds;
-#ifdef USE_PTHREAD_BARRIER
-    if (id == 0) {
-        int j;
-        const struct timespec t = { 0, 10 };
-        for ( j = 1 ; j < n ; j++ ) {
-            if ((volatile int)tpp->barrier_flags[j]._v != sen0) {
-                pthread_mutex_lock(&ompc_mainwait_mutex);
-                while((volatile int)tpp->barrier_flags[j]._v != sen0) {
-                    pthread_cond_timedwait(&ompc_mainwait_cond, &ompc_mainwait_mutex, &t);
-                }
-                pthread_mutex_unlock(&ompc_mainwait_mutex);
-            }
-        }
-        tpp->barrier_sense = sen0;
-        MBAR();
-    } else {
-        //pthread_mutex_lock(&ompc_mainwait_mutex);
-        tpp->barrier_flags[id]._v = sen0;
-        pthread_cond_signal(&ompc_mainwait_cond);
-        //pthread_mutex_unlock(&ompc_mainwait_mutex);
-    }
-#elif defined(USE_ARGOBOTS)
+
+#if 1  // USE_ARGOBOTS
     if (id == 0) {
         for (int i = 1; i < n; i++) {
             if ((volatile int)tpp->barrier_flags[i]._v != sen0) {
@@ -970,7 +666,7 @@ ompc_thread_barrier2(int id, struct ompc_thread *tpp)
     } else {
         tpp->barrier_flags[id]._v = sen0;
     }
-#endif // USE_PTHREAD_BARRIER
+#endif  // USE_ARGOBOTS
 
 #ifdef USE_LOG
     if(ompc_log_flag) tlog_barrier_OUT(id);
@@ -1001,12 +697,10 @@ ompc_current_thread_barrier()
 void
 ompc_terminate (int exitcode)
 {
-#ifdef USE_ARGOBOTS
     for (int i = 1; i < ompc_proc_counter; i++) {
         ABT_xstream_free((ABT_xstream *)&(ompc_procs[i].pid));
     }
     ABT_finalize();
-#endif /* USE_ARGOBOTS */
 
     exit (exitcode);
 }
@@ -1051,7 +745,6 @@ ompc_get_max_threads()
     return ompc_max_threads;
 }
 
-#ifdef USE_ARGOBOTS
 ompc_proc_t
 ompc_xstream_self()
 {
@@ -1059,4 +752,3 @@ ompc_xstream_self()
     ABT_xstream_self(&xstream);
     return xstream;
 }
-#endif /* USE_ARGOBOTS */

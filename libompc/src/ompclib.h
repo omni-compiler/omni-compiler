@@ -18,104 +18,13 @@
 #include "exc_platform.h"
 #include "ompc_reduction.h"
 
-#ifdef OMNI_OS_CYGWIN32
-# define SIMPLE_SPIN
-#endif /* OMNI_OS_CYGWIN32 */
-
-#if 0
-#define USE_PTHREAD_BARRIER
-#endif
-
-#if 0 /* USE_PTHREAD */      /* pthread: set gcc include path to 2.6(pdph3) */
-# include <pthread.h>
-# ifndef OMNI_OS_CYGWIN32
-#  include <sched.h>
-# endif /* !OMNI_OS_CYGWIN32 */
-typedef pthread_t ompc_proc_t;
-# if 0
-#  define OMPC_WAIT(cond)      while(cond) sched_yield()
-# else
-#  define MAX_COUNT 10000
-#  ifdef SIMPLE_SPIN
-#   define _YIELD_ME_ sleep(0)
-#  else
-#   define _YIELD_ME_ sched_yield()
-#  endif /* SIMPLE_SPIN */
-#  define OMPC_WAIT(cond) \
-        { \
-          if (cond) { \
-            volatile int c = 0; \
-            while (cond) { \
-              if (c++ > MAX_COUNT) { \
-                _YIELD_ME_; \
-                c = 0; \
-              } \
-            } \
-          } \
-        }
-# endif /* 0 */
-# define _OMPC_PROC_SELF                pthread_self()
-#endif /* USE_PTHREAD */
-
-#ifdef USE_ARGOBOTS
-# include <abt.h>
+#include <abt.h>
 typedef ABT_xstream ompc_proc_t;
-# define _YIELD_ME_ ABT_thread_yield()
-# define OMPC_WAIT(cond) while (cond) { _YIELD_ME_; }
-# define _OMPC_PROC_SELF ompc_xstream_self()
-#endif /* USE_ARGOBOTS */
+#define _YIELD_ME_ ABT_thread_yield()
+#define OMPC_WAIT(cond) while (cond) { _YIELD_ME_; }
+#define _OMPC_PROC_SELF ompc_xstream_self()
 
-#ifdef USE_SOL_THREAD   /* solaris thread */
-#ifndef _REENTRANT
-#define _REENTRANT
-#endif /* !_REENTRANT */
-#include <sys/types.h>
-#include <thread.h>
-#include <synch.h>
-#include <sys/processor.h>
-#include <sys/procset.h>
-typedef thread_t ompc_proc_t;
-#ifdef not
-#define OMPC_WAIT(cond)        while(cond) thr_yield()
-#else
-#define MAX_COUNT 10000
-#define OMPC_WAIT(cond)\
-{if(cond){ volatile int c = 0; while(cond){ if(c++>MAX_COUNT){ thr_yield(); c = 0; }}}}
-#endif
-#define _OMPC_PROC_SELF         thr_self()
-#endif
-
-#if defined(USE_SPROC) && defined(OMNI_OS_IRIX)
-#ifndef NO_RESOURCE_H
-#include <sys/resource.h>
-#endif /* !NO_RESOURCE_H */
-#include <sys/prctl.h>
-#include <signal.h>
-#include <ulocks.h>
-typedef pid_t ompc_proc_t;
-#ifdef not
-#define OMPC_WAIT(cond)        while(cond) sched_yield()
-#else
-#define MAX_COUNT 10000
-#define OMPC_WAIT(cond)\
-{if(cond){ volatile int c = 0; while(cond){ if(c++>MAX_COUNT){ sched_yield(); c = 0; }}}}
-#endif
-#define _OMPC_PROC_SELF         getpid()
-#endif /* USE_SPROC && OMNI_OS_IRIX */
-
-#ifdef USE_SPIN_LOCK
-typedef int ompc_lock_t;
-#else
-# if 0 /* USE_PTHREAD */
-typedef pthread_mutex_t ompc_lock_t;
-# endif
-# ifdef USE_ARGOBOTS
 typedef ABT_mutex ompc_lock_t;
-# endif /* USE_ARGOBOTS */
-# ifdef USE_SOL_THREAD
-typedef mutex_t ompc_lock_t;
-# endif
-#endif
 
 typedef void* indvar_t;
 
@@ -128,19 +37,9 @@ typedef struct {
 #define N_PROC_DEFAULT  4        /* default */
 #define MAX_PROC        256
 
-#if defined(OMNI_CPU_MIPS)
-#   define CACHE_LINE_SIZE 128
-#elif defined(OMNI_CPU_X86_64)
-#   define CACHE_LINE_SIZE 64
-#else
-#   define CACHE_LINE_SIZE 32
-#endif /* OMNI_CPU_MIPS */
+#define CACHE_LINE_SIZE 64  // x86-64
 
-#ifdef USE_SPROC
-typedef void (*cfunc)();
-#else
 typedef void* (*cfunc)();
-#endif
 
 extern volatile int ompc_nested;       /* nested enable/disable */
 extern volatile int ompc_dynamic;      /* dynamic enable/disable */
@@ -237,35 +136,10 @@ void ompc_exit_critical (ompc_lock_t **);
 
 void ompc_set_runtime_schedule(char *s);
 
-#ifdef USE_ARGOBOTS
 ompc_proc_t ompc_xstream_self();
-#endif /* USE_ARGOBOTS */
-
-#ifndef OMNI_CPU_ALPHA
-#ifndef __GNUC__
-#ifndef __PGI
-# define asm(X) __asm(X)
-#endif /* __PGI */
-#else /* __GNUC__ */
-# define asm(X) __asm volatile (X)
-#endif /* __GNUC__ */
-#endif
-
 
 /* GNUC and Intel Fortran supports __sync_synchronize */
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#   define MBAR() __sync_synchronize()
-#elif defined(OMNI_CPU_I386)
-#   define MBAR() { /* asm("cpuid"); */ }
-#elif defined(OMNI_CPU_SPARC)
-#   define MBAR() asm("stbar")
-#elif defined(OMNI_CPU_ALPHA)
-extern void     __alpha_mbar _ANSI_ARGS_((void));
-#   define MBAR() __alpha_mbar()
-#else
-#   define MBAR()
-#endif /* __GNUC__ || __INTEL_COMPILER */
-
+#define MBAR() __sync_synchronize()
 
 extern int ompc_debug_flag;
 extern volatile int ompc_num_threads;
@@ -300,5 +174,3 @@ extern ompc_lock_t ompc_proc_lock_obj, ompc_thread_lock_obj;
 #define OMPC_PROC_UNLOCK()      ompc_unlock(&ompc_proc_lock_obj)
 
 #endif /* _OMPC_THREAD_H */
-
-

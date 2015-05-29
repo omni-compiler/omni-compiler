@@ -34,9 +34,6 @@ int omp_get_num_threads()
 
 void omp_set_num_threads(int num)
 {
-#ifdef USE_PTHREAD_BARRIER
-    extern pthread_barrier_t ompc_thd_bar;
-#endif
     struct ompc_thread *tp;
 
     if(num <= 0){
@@ -53,9 +50,6 @@ void omp_set_num_threads(int num)
     /* printf(" -set a number of parallelism [%d]\n", num); */
     OMPC_PROC_LOCK();
     ompc_num_threads = num;
-#ifdef USE_PTHREAD_BARRIER
-    pthread_barrier_init(&ompc_thd_bar, 0, ompc_num_threads);
-#endif
     OMPC_PROC_UNLOCK();
 }
 
