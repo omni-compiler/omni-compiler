@@ -3,8 +3,9 @@
 ## Set Arguments
 OUTPUT_DIR=$1
 JOB_NUM=$2
-BASE_TESTDIR=$3
-shift; shift; shift
+ELAPSE_TIME_SEC=$3
+BASE_TESTDIR=$4
+shift; shift; shift; shift
 TESTDIRS=$@
 CURRENT_DIR=`pwd`
 
@@ -93,6 +94,9 @@ function drawChart() \n
 </script>\n
 \n
 <div id="timeline" style="width: 1500px; height: 250px;"></div>
+<p>
+Elapse time is $ELAPSE_TIME_SEC sec.
+</p>
 EOF`
 
 echo -e ${OUTPUT} > ${OUTPUT_FILE}
