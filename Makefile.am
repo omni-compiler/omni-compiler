@@ -104,6 +104,9 @@ slurm:
 slurm-check:
 	@bash ./tests/xcalablemp/scripts/check_error_code.sh $(BASE_TESTDIR) $(TESTDIRS)
 
+slurm-timeline:
+	@bash ./tests/xcalablemp/scripts/create_timeline.sh /home/mnakao/public_html/timeline $(JOB_NUM) $(ELAPSE_TIME_SEC) $(BASE_TESTDIR) $(TESTDIRS)
+
 clean-local:
 	rm -rf autom4te.cache
 	find . -type f \( \

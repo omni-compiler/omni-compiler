@@ -1,6 +1,10 @@
 #!/bin/sh
 
 XMP_PATH=$1
+if test -f $XMP_PATH; then
+    echo "make XMP_PATH=[install path]"
+    exit 1
+fi
 SORTED_LIST=$2
 BASE_TESTDIR=$3
 
