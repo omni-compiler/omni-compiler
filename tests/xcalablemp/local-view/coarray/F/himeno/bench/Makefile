@@ -9,7 +9,7 @@ CAF=xmpf90 --debug -I$(MPILIB) -g
 # XMP/Fujitsu/RDMA
 #-----------------
 #MPI=mpifrtpx
-#MPILIB=$$(dirname $$(dirname $$(which mpifrtpx)))/include
+#MPILIB=/opt/FJSVtclang/GM-1.2.0-17/include/mpi/fujitsu/
 #CAF=xmpf90 -I"$(MPILIB)"
 
 #-----------------
