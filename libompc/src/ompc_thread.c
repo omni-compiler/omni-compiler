@@ -54,7 +54,7 @@ static void ompc_xstream_setup();
 static void ompc_thread_wrapper_func(void *args);
 static struct ompc_proc *ompc_new_proc(void);
 static struct ompc_proc *ompc_current_proc(void);
-static struct ompc_proc *ompc_get_proc(int hint);
+static struct ompc_proc *ompc_get_proc();
 static void ompc_free_proc(struct ompc_proc *p);
 static struct ompc_thread *ompc_alloc_thread(struct ompc_proc *proc);
 static void ompc_free_thread(struct ompc_proc *proc, struct ompc_thread *p);
@@ -341,26 +341,18 @@ ompc_current_proc()
 
 /* get thread from free list */
 static struct ompc_proc *
-ompc_get_proc(int hint)
+ompc_get_proc()
 {
     struct ompc_proc *p;
     int i;
     static int last_used = 0;
 
     OMPC_PROC_LOCK();
-    p = &ompc_procs[hint];
-    if(!p->is_used)
-        p->is_used = TRUE;
-    else {
-        for(i = 0; i < ompc_max_threads; i++){
-            if(++last_used >= ompc_max_threads) last_used = 0;
-            p = &ompc_procs[last_used];
-            if(!p->is_used) break;
-        }
-        if(p->is_used) p = NULL;
-        else p->is_used = TRUE;
-    }
+    if(++last_used >= ompc_max_threads) last_used = 0;
+    p = &ompc_procs[last_used];
+    p->is_used = TRUE;
     OMPC_PROC_UNLOCK();
+    __sync_fetch_and_add(&p->thread_count, 1);
 
     return p;
 }
@@ -371,6 +363,7 @@ ompc_free_proc(struct ompc_proc *p)
     OMPC_PROC_LOCK();
     p->is_used = FALSE;
     OMPC_PROC_UNLOCK();
+    __sync_fetch_and_sub(&p->thread_count, 1);
 }
 
 /* allocate/get thread entry */
@@ -456,9 +449,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     if (cond == 0) { /* serialized by parallel if(false) */
         max_thds = 1;
         in_parallel = cthd->in_parallel;
-    } else if ((cthd->parent != NULL) && ompc_nested == 0) { /* serialize nested parallel region */
-        max_thds = 1;
-        in_parallel = 1;
     } else {
         max_thds = (nthds < ompc_num_threads) ? (nthds) : (ompc_num_threads);
         in_parallel = 1;
@@ -466,7 +456,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 
     proclist = NULL;
     for( n_thds = 1; n_thds < max_thds; n_thds ++ ){
-        if ((p = ompc_get_proc(n_thds)) == NULL){
+        if ((p = ompc_get_proc()) == NULL){
           break;
         }
         p->next = proclist;
@@ -546,13 +536,13 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 void
 ompc_do_parallel(cfunc f, void *args)
 {
-    ompc_do_parallel_main (-1, 1, ompc_num_threads, f, args);
+    ompc_do_parallel_main (-1, 1, 10, f, args);
 }
 
 void
 ompc_do_parallel_if (int cond, cfunc f, void *args)
 {
-    ompc_do_parallel_main (-1, cond, ompc_num_threads, f, args);
+    ompc_do_parallel_main (-1, cond, 10, f, args);
 }
 
 

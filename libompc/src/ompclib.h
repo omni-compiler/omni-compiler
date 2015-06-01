@@ -55,6 +55,7 @@ struct ompc_proc {
     struct ompc_thread *thr;    /* thr != NULL, running */
     struct ompc_thread *free_thr;
     int is_used;                /* allocated or not */
+    int thread_count;
 };
 
 struct ompc_thread {
