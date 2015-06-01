@@ -15,6 +15,7 @@ STATIC_COLORS=('red' 'darkred' 'mistyrose' 'steelblue' 'lightsteelblue' 'darkblu
 NUM_OF_STATIC_COLORS=${#STATIC_COLORS[*]}
 TIME_LINE_DATA=""
 NUM_OF_DIRS=0
+TIMELINE_WIDTH=1500
 
 ## Set Data of master
 for dat in autogen.dat configure.dat make.dat; do
@@ -33,11 +34,13 @@ for dat in autogen.dat configure.dat make.dat; do
 done
 
 ## Set Data of slave
+NODE_NAME_LIST=""
 for subdir in ${TESTDIRS}; do
     FILE=${BASE_TESTDIR}/$subdir/${TIMELINE_FILE}
     if [ -f ${FILE} ]; then
 	JOB_NAME=`head -1 ${FILE}`
 	NODE_NAME=`head -2 ${FILE} | tail -1`
+	NODE_NAME_LIST+="$NODE_NAME\n"
 	START_TIME=`head -3 ${FILE} | tail -1`
 	END_TIME=`tail -1 ${FILE}`
 	TIME_LINE_DATA+="['"${NODE_NAME}"',\t"
@@ -48,6 +51,15 @@ for subdir in ${TESTDIRS}; do
     fi
 done
 TIME_LINE_DATA=`echo -e $TIME_LINE_DATA | sort -n`
+
+## Calculate height of timeline graph
+# Note that NODE_NAME_LIST has "\n" in the last line
+# So that when number of Slaves is 4, the value of NODE_NAME_LIST is 5.
+# Additiolal 1 is regard as Master.
+# The height is "50px * (num of slaves + master) + 20."
+NUM_OF_NODES=`echo -e $NODE_NAME_LIST | sort | uniq | wc -l`
+TIMELINE_HEIGHT=`expr 50 \* $NUM_OF_NODES`
+TIMELINE_HEIGHT=`expr 20 + $TIMELINE_HEIGHT`
 
 ## Create Directory
 mkdir -p $OUTPUT_DIR
@@ -93,7 +105,7 @@ function drawChart() \n
   }\n
 </script>\n
 \n
-<div id="timeline" style="width: 1500px; height: 250px;"></div>
+<div id="timeline" style="width: ${TIMELINE_WIDTH}px; height: ${TIMELINE_HEIGHT}px;"></div>
 <p>
 Elapse time is $ELAPSE_TIME_SEC sec.
 </p>

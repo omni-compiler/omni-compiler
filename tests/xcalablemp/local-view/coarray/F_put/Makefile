@@ -12,4 +12,4 @@ OUT_NGB   = a2d2-2NGB.x
 #OUT=$(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_type) $(OUT_NGB)
 OUT=$(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_NGB)
 
-include ../Makefile.common
+include ../F/Makefile.common
