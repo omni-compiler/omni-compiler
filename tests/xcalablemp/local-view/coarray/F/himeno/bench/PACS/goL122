@@ -1,0 +1,35 @@
+#PBS -S /bin/bash
+#PBS -A XMPTCA
+#PBS -q tcaq 
+
+#PBS -l select=4:mpiprocs=4:ompthreads=5
+#PBS -l walltime=00:06:00
+
+. /opt/Modules/default/init/bash
+#module purge
+#export MODULEPATH=/work/TCAPROF/hanawa/Modules:$MODULEPATH
+module load intel/15.0.2 intelmpi/5.0.0
+
+cd $PBS_O_WORKDIR
+
+#EXE="mpi.x caf-wide.x caf-narrow.x caf-fit.x mpi.x"
+EXE="mpi.x caf-wide.x caf-narrow.x"
+
+MODEL=L
+SHAPE=122
+SHAPES="1 2 2"
+NODES=4
+
+INFILE=./stdin${MODEL}${SHAPE}
+
+echo "${MODEL}" > ${INFILE}
+echo "${SHAPES}" >> ${INFILE}
+
+for f in ${EXE}; do
+    echo
+    echo "****************************************************"
+    echo "himenoBMT $f ${MODEL} ${SHAPE} (${MODEL}-model/${NODES} nodes)"
+    echo "****************************************************"
+    mpirun -np ${NODES} -s all ../$f < ${INFILE}
+done
+
