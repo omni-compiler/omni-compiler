@@ -8,4 +8,4 @@ OUT_param= param3.x #param1
 
 OUT=$(OUT_intrin) $(OUT_param) 
 
-include ../Makefile.common
+include ../F/Makefile.common

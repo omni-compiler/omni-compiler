@@ -1,31 +1,61 @@
-MPI=mpif90
+#-----------------
+# COLA
+# XMP/gfortran/GASNet
+#-----------------
+#MPI=mpif90
+#MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include
+#CAF=xmpf90 --debug -I$(MPILIB) -g
+
+#-----------------
+# K
+# XMP/Fujitsu/RDMA
+#-----------------
 #MPI=mpifrtpx
+#MPILIB=$$(dirname $$(dirname $$(which mpifrtpx)))/include
+#CAF=xmpf90 -I"$(MPILIB)"
 
-MPILIB=$(dirname $(dirname $(which mpif90)))/include
+#-----------------
+# PACS
+# XMP/intel/GASNet
+#-----------------
+MPI=mpif90   # same as mpiifort
+MPILIB=$$(dirname $$(dirname $$(which ${MPI})))/include64
+CAF=xmpf90 --debug -I$(MPILIB)
 
-#XMP=xmpf90 --debug -I$(MPILIB) -g
-XMP=xmpf90 -I$(MPILIB)
+#-----------------
+# PACS
+# UHCAF/Intel/GASNet
+#-----------------
+#MPI=mpif90
+#MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include64
+#MPILIB=/opt/MPI/IntelMPI/impi/4.1.1.036/include64
+#CAF=uhcaf --mpi -I$(MPILIB)
 
-OBJ=mpi caf-wide caf-narrow caf-fit
+#-----------------
+# PACS
+# UHCAF/GNU/mvapich2-GDR
+#-----------------
+#MPI=mpif90
+#MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include64
+#MPILIB=/opt/MPI/MVAPICH2-GDR/2.0/GNU/CUDA/6.5/include64
+#CAF=uhcaf --mpi -I$(MPILIB)
 
-all: $(OBJ)
+
+
+EXE=mpi.x caf-wide.x caf-narrow.x caf-fit.x
+
+all: $(EXE)
 
 ### ex.
 ### $ (echo m; echo 1 2 2) | mpirun -n 4 mpi > mpi122m.result
 ### $ (echo m; echo 1 2 2) | mpirun -n 4 caf-wide > caf-wide122m.result
 
-caf-wide: himenoBMTcaf-wide.f90
-	$(XMP) $< -o $@
+caf-%.x: himenoBMTcaf-%.f90
+	$(CAF) $< -o $@
 
-caf-narrow: himenoBMTcaf-narrow.f90
-	$(XMP) $< -o $@
-
-caf-fit: himenoBMTcaf-fit.f90
-	$(XMP) $< -o $@
-
-mpi: himenoBMTxpr.f90
+mpi.x: himenoBMTxpr.f90
 	$(MPI) $< -o $@
 
 clean:
-	rm -f $(OBJ)
+	rm -f $(EXE)
 	rm -rf a.out *.mod *.xmod *.o *~ __omni_tmp__

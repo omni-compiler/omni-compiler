@@ -14,4 +14,4 @@ OUT_epi= #autosyncall1 autosyncall2
 
 OUT= $(OUT_host) $(OUT_module) $(OUT_bug403) $(OUT_epi) $(OUT_darg) 
 
-include ../Makefile.common
+include ../F/Makefile.common
