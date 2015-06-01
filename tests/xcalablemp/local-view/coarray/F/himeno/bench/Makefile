@@ -26,6 +26,7 @@ CAF=xmpf90 --debug -I$(MPILIB) -g
 #MPI=mpif90
 #MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include64
 #MPILIB=/opt/MPI/MVAPICH2-GDR/2.0/GNU/CUDA/6.5/include64
+#MPILIB=/opt/MPI/IntelMPI/impi/4.1.1.036/include64
 #CAF=uhcaf --mpi -I$(MPILIB)
 
 
