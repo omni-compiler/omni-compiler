@@ -33,6 +33,8 @@ volatile int ompc_num_threads; /* number of team member? */
 int ompc_n_proc = N_PROC_DEFAULT;      /* number of PE */
 int ompc_bind_procs = FALSE;   /* default */
 
+static int ompc_num_fork = 10;
+
 /* system lock variables */
 ompc_lock_t ompc_proc_lock_obj, ompc_thread_lock_obj;
 
@@ -203,6 +205,15 @@ ompc_init(int argc,char *argv[])
             maxstack = 0;       /* default */
             printf("Stack size is not change, because it is less than the default(=1MB).\n");
         }
+    }
+
+    cp = getenv("OMPC_NUM_FORK");
+    if (cp != NULL) {
+        sscanf(cp, "%d", &val);
+        if (val <= 0) {
+            ompc_fatal("OMPC_NUM_FORK must be > 0");
+        }
+        ompc_num_fork = val;
     }
 
     ompc_task_end = 0;
@@ -536,13 +547,13 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 void
 ompc_do_parallel(cfunc f, void *args)
 {
-    ompc_do_parallel_main (-1, 1, 10, f, args);
+    ompc_do_parallel_main (-1, 1, ompc_num_fork, f, args);
 }
 
 void
 ompc_do_parallel_if (int cond, cfunc f, void *args)
 {
-    ompc_do_parallel_main (-1, cond, 10, f, args);
+    ompc_do_parallel_main (-1, cond, ompc_num_fork, f, args);
 }
 
 
