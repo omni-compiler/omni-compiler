@@ -1271,11 +1271,11 @@ public class XMPtransCoarrayRun
           extent = null;
         else if (lbound == null)                // lbound omitted
           extent = ubound;
-        else {                                  // (ubound + lbound - 1)
+        else {                                  // (ubound - lbound + 1)
           Xobject tmp = Xcons.binaryOp(Xcode.MINUS_EXPR,
                                        ubound,
                                        lbound);
-          extent = Xcons.binaryOp(Xcode.MINUS_EXPR,
+          extent = Xcons.binaryOp(Xcode.PLUS_EXPR,
                                   tmp,
                                   Xcons.IntConstant(1));
         }
