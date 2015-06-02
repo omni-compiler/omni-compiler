@@ -832,18 +832,24 @@ public class XMPtransCoarrayRun
   }
 
   /*
-   * condition 1: Buffered copy is necessary on some platform.
-   *              (The address may not be accessed directly by FJ-RDMA.)
+   * condition 1: Expression rts may be addressed in read-only region or
+   *    in temporary area allocated by the compiler. 
+   *    (In such cases, Fujitsu-RDMA cannot work without buffer.)
    * condition 0: Otherwise.
    */
   private int _getConditionOfCoarrayPut(Xobject rhs) {
-    if (rhs.isConstant())
-      return 1;
+    switch (rhs.Opcode()) {
+    case F_VAR_REF:
+      return 0;
 
-    if (rhs.Opcode() == Xcode.F_ARRAY_CONSTRUCTOR)
-      return 1;
+    case F_ARRAY_REF:
+      return 1;          // can be 0 if the rank is 0.
 
-    return 0;
+    default:
+      break;
+    }
+
+    return 1;        // for safe
   }
 
   //-----------------------------------------------------

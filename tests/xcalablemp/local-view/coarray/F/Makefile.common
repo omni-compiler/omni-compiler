@@ -1,6 +1,6 @@
 # This file is included from */Makefile files.
 
-SRC= $(OUT:%=%.f90)
+SRC= $(OUT:%.x=%.f90)
 RESULT=$(SRC:.f90=.result)
 .SUFFIXES: .x .f90
 
