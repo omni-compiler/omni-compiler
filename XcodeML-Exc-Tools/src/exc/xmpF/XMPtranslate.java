@@ -100,6 +100,7 @@ public class XMPtranslate implements XobjectDefVisitor
 	  String pragma = xx.getArg(0).getString();
 	  if (pragma.equals("NODES") || pragma.equals("TEMPLATE") || pragma.equals("DISTRIBUTE") ||
 	      pragma.equals("ALIGN") || pragma.equals("SHADOW") || pragma.equals("LOCAL_ALIAS") ||
+	      pragma.equals("SAVE_DESC") ||
 	      pragma.equals("COARRAY") || pragma.equals("THREADPRIVATE")){
 	    Block pb = Bcons.PRAGMA(xx.Opcode(), xx.getArg(0).getString(), xx.getArg(1), null);
 	    newFuncBody.add(pb);

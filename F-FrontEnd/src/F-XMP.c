@@ -179,6 +179,11 @@ void compile_XMP_directive(expr x)
       output_statement(XMP_pragma_list(XMP_LOCAL_ALIAS,c,NULL));
       break;
 
+    case XMP_SAVE_DESC:
+      check_INDCL();
+      output_statement(XMP_pragma_list(XMP_SAVE_DESC,c,NULL));
+      break;
+
     case XMP_TASK:
       check_INEXEC();
       /* check arg: node_ref opt */

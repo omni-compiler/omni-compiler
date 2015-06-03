@@ -140,8 +140,13 @@ public class XMPshadow {
 
     if (isLocalPragma) {
       //XMPlocalDecl.addConstructorCall("_XMP_init_shadow", shadowFuncArgs, globalDecl, pb);
-      XMPlocalDecl.addConstructorCall2(fname, shadowFuncArgs, globalDecl, parentBlock);
-      
+      if (alignedArray.isStaticDesc()){
+	XMPlocalDecl.addConstructorCall2_staticDesc(fname, shadowFuncArgs, globalDecl, parentBlock,
+						    alignedArray.getFlagId(), false);
+      }
+      else {
+	XMPlocalDecl.addConstructorCall2(fname, shadowFuncArgs, globalDecl, parentBlock);
+      }      
     }
     else {
       globalDecl.addGlobalInitFuncCall(fname, shadowFuncArgs);

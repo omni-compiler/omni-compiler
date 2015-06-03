@@ -3893,6 +3893,7 @@ struct keyword_token XMP_keywords[ ] =
     {"wait_async",	XMPKW_WAIT_ASYNC },
     {"array",	XMPKW_ARRAY },
     {"coarray",	XMPKW_COARRAY },
+    {"save_desc", XMPKW_SAVE_DESC },
 
     {"in",	XMPKW_IN },
     {"out",	XMPKW_OUT },
