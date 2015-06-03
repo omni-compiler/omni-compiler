@@ -38,6 +38,7 @@ typedef enum _xmp_list_context {
 expv XMP_compile_subscript_list(expr list,xmp_list_context context);
 expv XMP_compile_ON_ref(expr x);
 expv XMP_compile_clause_opt(expr x);
+expv XMP_compile_list(expr l);
 
 int XMP_reduction_op(expr v)
 {
@@ -269,30 +270,34 @@ void compile_XMP_directive(expr x)
       output_statement(x);
       break;
 
-    case XMP_REDUCTION:
+    case XMP_REDUCTION: {
       check_INEXEC();
-      output_statement(x);
+      expr o = EXPR_ARG1(EXPR_ARG1(c)); // operator
+      expr l = EXPR_ARG2(EXPR_ARG1(c)); // variable/loc, .../, ...
+      x1 = list2(LIST, o, l); // (operator variables...)
+      x2 = XMP_compile_ON_ref(EXPR_ARG2(c)); // on
+      x3 = compile_expression(EXPR_ARG3(c)); // async
+      c = list3(LIST, x1, x2, x3);
+      output_statement(XMP_pragma_list(XMP_REDUCTION, c, NULL));
       break;
+    }
 
     case XMP_BCAST:
       check_INEXEC();
-      output_statement(x);
+      x1 = XMP_compile_list(EXPR_ARG1(c)); // variables
+      x2 = XMP_compile_ON_ref(EXPR_ARG2(c)); // on
+      x3 = XMP_compile_ON_ref(EXPR_ARG3(c)); // from
+      x4 = compile_expression(EXPR_ARG4(c)); // async
+      c = list4(LIST, x1, x2, x3, x4);
+      output_statement(XMP_pragma_list(XMP_BCAST, c, NULL));
       break;
 
     case XMP_WAIT_ASYNC:
       check_INEXEC();
-      output_statement(x);
-      /* x2 = XMP_compile_ON_ref(EXPR_ARG2(c)); */
-      /* expr c0 = list0(LIST); */
-      /* list lp; */
-      /* FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(c)){ */
-      /*   x1 = LIST_ITEM(lp); */
-      /* 	x1 = compile_expression(x1); */
-      /* 	c0 = list_put_last(c0, x1); */
-      /* } */
-      /* c = list1(LIST,c0); */
-      /* //output_statement(XMP_pragma_list(XMP_WAIT_ASYNC,c,NULL)); */
-      /* output_statement(XMP_pragma_list(XMP_WAIT_ASYNC,c, x2)); */
+      x1 = XMP_compile_list(EXPR_ARG1(c)); // tags
+      x2 = XMP_compile_ON_ref(EXPR_ARG2(c)); // on
+      c = list2(LIST, x1, x2);
+      output_statement(XMP_pragma_list(XMP_WAIT_ASYNC,c,NULL));
       break;
 
     case XMP_TEMPLATE_FIX:
@@ -856,3 +861,19 @@ expv XMP_compile_clause_opt(expr x)
     return x; /* nothing at this moment */
 }
 
+expv XMP_compile_list(expr l)
+{
+  expr x, v;
+  list lp;
+
+  expv ret_list = EMPTY_LIST;
+
+  FOR_ITEMS_IN_LIST(lp, l){
+    x = LIST_ITEM(lp);
+    v = compile_expression(x);
+    ret_list = list_put_last(ret_list, v);
+  }
+
+  return ret_list;
+
+}
