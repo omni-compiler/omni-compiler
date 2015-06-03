@@ -553,6 +553,9 @@ public class XMParray {
 
   public void buildConstructor(BlockList body, XMPenv env){
 
+    if (is_saveDesc && type.isFallocatable())
+      XMP.fatal("an allocatable array cannot have the save_desc attribute.");
+
     BlockList b;
     if (is_saveDesc && !env.currentDefIsModule()){
       b = Bcons.emptyBody();

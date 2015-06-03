@@ -275,6 +275,9 @@ package exc.xmpF;
     */
    public void buildConstructor(BlockList body, XMPenv env){
 
+     if (_is_saveDesc && !isFixed)
+       XMP.fatal("non-fixed template cannot have the save_desc attribute.");
+
      BlockList b;
      if (_is_saveDesc && !env.currentDefIsModule()){
        b = Bcons.emptyBody();

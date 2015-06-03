@@ -358,6 +358,7 @@ public class XMPalignedArray {
 
     Boolean isParameter = isLocalPragma;
     Boolean isPointer = false;
+    boolean isStaticDesc = false;
 
     if (isLocalPragma) {
       arrayId = XMPlocalDecl.findLocalIdent(pb, arrayName);
@@ -371,6 +372,8 @@ public class XMPalignedArray {
       else {
 	localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(parentBlock);
       }
+      //isStaticDesc = localXMPsymbolTable.isStaticDesc(arrayName);
+      isStaticDesc = XMPlocalDecl.declXMPsymbolTable2(parentBlock).isStaticDesc(arrayName);
     }
     else {
       arrayId = globalDecl.findVarIdent(arrayName);
@@ -379,8 +382,6 @@ public class XMPalignedArray {
     if (arrayId == null) {
       throw new XMPexception("array '" + arrayName + "' is not declared");
     }
-
-    boolean isStaticDesc = localXMPsymbolTable.isStaticDesc(arrayName);
 
     // get array information
     XMPalignedArray alignedArray = null;
@@ -515,6 +516,8 @@ public class XMPalignedArray {
     }
     if (isParameter) alignedArray.setIsParameter();
     if (isPointer) alignedArray.setIsPointer();
+    if (isStaticDesc && isPointer)
+      throw new XMPexception("a pointer cannot have the static_desc attribute.");
 
     if (isLocalPragma) {
 
@@ -854,6 +857,7 @@ public class XMPalignedArray {
     if (isLocalPragma) {
       gtolTemp0Id = XMPlocalDecl.addObjectId2(XMP.GTOL_PREFIX_ + "temp0_" + alignedArray.getName() + "_" + alignSourceIndex,
 					      Xtype.intType, parentBlock);
+      if (alignedArray.isStaticDesc()) gtolTemp0Id.setStorageClass(StorageClass.STATIC);
     }
     else {
       gtolTemp0Id = globalDecl.declStaticIdent(XMP.GTOL_PREFIX_ + "temp0_" + alignedArray.getName() + "_" + alignSourceIndex,
