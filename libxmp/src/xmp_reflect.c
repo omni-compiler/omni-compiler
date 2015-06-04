@@ -1744,3 +1744,96 @@ void _XMP_reflect_(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic){
   }
 
 }
+
+
+// for test
+
+static void _XMP_reflect0_(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic)
+{
+
+  for (int i = 0; i < a->dim; i++){
+
+    _XMP_array_info_t *ai = &(a->info[i]);
+
+    if (ai->shadow_type == _XMP_N_SHADOW_NONE){
+      continue;
+    }
+    else if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+
+      _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+
+      if (lwidth[i] || uwidth[i]){
+
+	_XMP_ASSERT(reflect);
+
+	if (reflect->is_periodic == -1 /* not set yet */ ||
+	    lwidth[i] != reflect->lo_width ||
+	    uwidth[i] != reflect->hi_width ||
+	    is_periodic[i] != reflect->is_periodic){
+
+	  reflect->lo_width = lwidth[i];
+	  reflect->hi_width = uwidth[i];
+	  reflect->is_periodic = is_periodic[i];
+
+	  if (_xmp_reflect_pack_flag){
+	    _XMP_reflect_pcopy_sched_dim(a, i, lwidth[i], uwidth[i], is_periodic[i]);
+	  }
+	  else {
+	    _XMP_reflect_normal_sched_dim(a, i, lwidth[i], uwidth[i], is_periodic[i]);
+	  }
+
+	}
+
+	// pack
+	if (_xmp_reflect_pack_flag && i != 0){
+
+	  // for lower reflect
+	  if (lwidth[i]){
+	    _XMP_pack_vector((char *)reflect->lo_send_buf,
+			     (char *)reflect->lo_send_array,
+			     reflect->count, lwidth[i] * reflect->blocklength,
+			     reflect->stride);
+	  }
+
+	  // for upper reflect
+	  if (uwidth[i]){
+	    _XMP_pack_vector((char *)reflect->hi_send_buf,
+			     (char *)reflect->hi_send_array,
+			     reflect->count, uwidth[i] * reflect->blocklength,
+			     reflect->stride);
+	  }
+	      
+	}
+
+	MPI_Startall(4, reflect->req);
+	MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
+
+	// unpack
+	if (_xmp_reflect_pack_flag && i != 0){
+
+	  // for lower reflect
+	  if (lwidth[i]){
+	    _XMP_unpack_vector((char *)reflect->lo_recv_array,
+			       (char *)reflect->lo_recv_buf,
+			       reflect->count, lwidth[i] * reflect->blocklength,
+			       reflect->stride);
+	  }
+
+	  // for upper reflect
+	  if (uwidth[i]){
+	    _XMP_unpack_vector((char *)reflect->hi_recv_array,
+			       (char *)reflect->hi_recv_buf,
+			       reflect->count, uwidth[i] * reflect->blocklength,
+			       reflect->stride);
+	  }
+
+	}
+
+      }
+
+    }
+    
+  }
+
+
+}
