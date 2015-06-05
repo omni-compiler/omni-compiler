@@ -53,7 +53,7 @@ static ompc_proc_t ompc_master_proc_id;
 /* prototype */
 static void *ompc_slave_proc(void *);
 static void ompc_xstream_setup();
-static void ompc_thread_wrapper_func(void *args);
+static void ompc_thread_wrapper_func(void *arg);
 static struct ompc_proc *ompc_new_proc(void);
 static struct ompc_proc *ompc_current_proc(void);
 static struct ompc_proc *ompc_get_proc();
@@ -412,7 +412,7 @@ static void ompc_xstream_setup()
     ompc_new_proc();
 }
 
-static void ompc_thread_wrapper_func(void *args)
+static void ompc_thread_wrapper_func(void *arg)
 {
     struct ompc_proc *cproc = ompc_current_proc();
     struct ompc_thread *tp = cproc->thr->parent;
