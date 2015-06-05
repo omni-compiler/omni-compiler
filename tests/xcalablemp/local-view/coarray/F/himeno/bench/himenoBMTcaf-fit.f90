@@ -70,34 +70,15 @@ module comm
   integer :: ndx,ndy,ndz
   integer :: iop(3)
   integer :: npe,id
-end module comm
-!
-module buffer
-  implicit none
   include 'xmp_coarray.h'
   real, allocatable, dimension(:,:), codimension[:,:,:] :: &
        buf1l, buf1u,  buf2l, buf2u,  buf3l, buf3u
-
-contains
-  subroutine buf_alloc
-    use others
-    use comm
-    implicit none
-
-    allocate(buf1l(mjmax, mkmax)[ndx,ndy,*])
-    allocate(buf1u(mjmax, mkmax)[ndx,ndy,*])
-    allocate(buf2l(2:mimax-1, mkmax)[ndx,ndy,*])
-    allocate(buf2u(2:mimax-1, mkmax)[ndx,ndy,*])
-    allocate(buf3l(2:mimax-1, 2:mjmax-1)[ndx,ndy,*])
-    allocate(buf3u(2:mimax-1, 2:mjmax-1)[ndx,ndy,*])
-  end subroutine buf_alloc
-end module buffer
+end module comm
 
 program HimenoBMTxp_f90_CAF
 !
   use others
   use comm
-  use buffer
 !
   implicit none
 !
@@ -121,7 +102,15 @@ program HimenoBMTxp_f90_CAF
   call initmax(mx,my,mz,it)
 !
   call initmem
-  call buf_alloc
+!
+  allocate(buf1l(mjmax, mkmax)[ndx,ndy,*])
+  allocate(buf1u(mjmax, mkmax)[ndx,ndy,*])
+  allocate(buf2l(2:mimax-1, mkmax)[ndx,ndy,*])
+  allocate(buf2u(2:mimax-1, mkmax)[ndx,ndy,*])
+  allocate(buf3l(2:mimax-1, 2:mjmax-1)[ndx,ndy,*])
+  allocate(buf3u(2:mimax-1, 2:mjmax-1)[ndx,ndy,*])
+
+  iop = this_image(buf1l) - 1
 !
 !! Initializing matrixes
   call initmt(mz,it)
@@ -211,7 +200,6 @@ subroutine readparam
   implicit none
 !
   include 'mpif.h'
-  include 'xmp_coarray.h'
 !
   integer :: itmp(3)[*]
 !!!  character(10) :: size[*]     !! to avoid bug #354
@@ -440,24 +428,11 @@ subroutine initcomm
   implicit none
 !
   include 'mpif.h'
-  include 'xmp_coarray.h'
-!
-  integer me1, tmp, mez1, mey1, mex1
 !
   npe = num_images()
   id = this_image() - 1
 !
   call readparam
-
-!!!!! TEMPORARY until support this_image(coarray [,dim])
-  me1 = this_image() - 1
-  mez1 = me1/(ndx*ndy)
-  tmp = me1 - mez1*ndx*ndy
-  mey1 = tmp/ndx
-  mex1 = tmp - mey1*ndx
-  iop(1) = mex1
-  iop(2) = mey1
-  iop(3) = mez1
 !
 !
   if(ndx*ndy*ndz /= npe) then
@@ -561,10 +536,8 @@ subroutine sendp()
   use pres
   use others
   use comm
-  use buffer
   implicit none
   integer mex, mey, mez
-!  include 'xmp_coarray.h'
 
   mex = iop(1) + 1
   mey = iop(2) + 1

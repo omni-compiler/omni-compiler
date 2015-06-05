@@ -10,7 +10,7 @@ CAF=xmpf90 --debug -I$(MPILIB) -g
 #-----------------
 #MPI=mpifrtpx
 #MPILIB=/opt/FJSVtclang/GM-1.2.0-17/include/mpi/fujitsu/
-#CAF=xmpf90 -I"$(MPILIB)"
+#CAF=xmpf90 -I"$(MPILIB)" --debug
 
 #-----------------
 # UHCAF/Intel/GASNet

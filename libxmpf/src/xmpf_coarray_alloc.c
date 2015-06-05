@@ -833,7 +833,48 @@ void _freeCoarrayInfo(CoarrayInfo_t *cinfo)
 
 
 /***********************************************\
-   inquire functions
+   inquire function this_image(coarray)
+   inquire function this_image(coarray, dim)
+\***********************************************/
+
+int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim)
+{
+  int size, index, magic;
+  int k = *dim - 1;
+
+  if (k < 0 || *corank <= k)
+    _XMP_fatal("Value of 'dim' out of range");
+
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
+
+  magic = XMPF_this_image - 1;
+  for (int i = 0; i < k; i++) {
+    size = cinfo->cosize[i];
+    magic /= size;
+  }
+  size = cinfo->cosize[k];
+  index = magic % size;
+  return index + cinfo->lcobound[k];
+}
+
+void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[])
+{
+  int size, index, magic;
+
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
+
+  magic = XMPF_this_image - 1;
+  for (int i = 0; i < *corank; i++) {
+    size = cinfo->cosize[i];
+    index = magic % size;
+    image[i] = index + cinfo->lcobound[i];
+    magic /= size;
+  }
+}
+
+
+/***********************************************\
+   inquire functions (internal)
 \***********************************************/
 
 void *_XMPF_get_coarrayDesc(void *descPtr)
