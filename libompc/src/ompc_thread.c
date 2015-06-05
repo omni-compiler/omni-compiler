@@ -17,6 +17,10 @@
 #define PROC_HASH_MASK (PROC_HASH_SIZE-1)
 #define PROC_HASH_IDX(ID) ((unsigned long int)((unsigned long int)(ID) & (PROC_HASH_MASK)))
 
+#define THREAD_HASH_SIZE 0x10000L
+#define THREAD_HASH_MASK (THREAD_HASH_SIZE - 1)
+#define THREAD_HASH_IDX(ID) ((unsigned long int)(((unsigned long int)(ID) >> 2) & (THREAD_HASH_MASK)))
+
 #define DEF_STACK_SIZE  1*1024*1024     /* default stack size */
 
 int ompc_debug_flag = 0;       /* debug output control */
@@ -47,6 +51,8 @@ ABT_mutex ompc_mainwait_mutex;
 struct ompc_proc *ompc_proc_htable[PROC_HASH_SIZE];
 /* proc table */
 struct ompc_proc *ompc_procs;
+/* thread hash table */
+struct ompc_thread *ompc_thread_htable[THREAD_HASH_SIZE];
 
 static ompc_proc_t ompc_master_proc_id;
 
@@ -54,6 +60,8 @@ static ompc_proc_t ompc_master_proc_id;
 static void *ompc_slave_proc(void *);
 static void ompc_xstream_setup();
 static void ompc_thread_wrapper_func(void *arg);
+static ompc_thread_t ompc_thread_self();
+static void ompc_add_thread_to_htable(struct ompc_thread *tp);
 static struct ompc_proc *ompc_new_proc(void);
 static struct ompc_proc *ompc_current_proc(void);
 static struct ompc_proc *ompc_get_proc();
@@ -220,6 +228,7 @@ ompc_init(int argc,char *argv[])
 
     /* hash table initialize */
     bzero(ompc_proc_htable, sizeof(ompc_proc_htable));
+    bzero(ompc_thread_htable, sizeof(ompc_thread_htable));
 
     /* allocate proc structure */
     ompc_procs =
@@ -262,7 +271,8 @@ ompc_init(int argc,char *argv[])
     tp->num             = 0;    /* team master */
     tp->in_parallel     = 0;
     tp->parent          = NULL;
-    cproc->thr          = tp;
+    tp->tid = ompc_thread_self();
+    ompc_add_thread_to_htable(tp);
 
     if(ompc_debug_flag) fprintf(stderr, "init end(Master)\n");
 }
@@ -304,7 +314,6 @@ ompc_new_proc()
     ompc_proc_counter++;
 
     p->pid = id;
-    p->thr = NULL;
     /* add this proc table to hash */
     pp = &ompc_proc_htable[PROC_HASH_IDX(id)];
     p->link = *pp;
@@ -317,21 +326,16 @@ ompc_new_proc()
 /*static*/ struct ompc_thread *
 ompc_current_thread()
 {
-    ompc_proc_t id;
-    struct ompc_proc *p;
-    struct ompc_thread *tp;
+    ompc_thread_t tid = ompc_thread_self();
+    struct ompc_thread *tp = ompc_thread_htable[THREAD_HASH_IDX(tid)];
 
-    id = _OMPC_PROC_SELF;
-
-    for( p = ompc_proc_htable[PROC_HASH_IDX(id)]; p != NULL; p = p->link ){
-        if(p->pid == id){
-            if((tp = p->thr) == NULL)
-                ompc_fatal("unkonwn thread is running");
-            return tp;
+    for (; tp->tid != tid; tp = tp->link) {
+        if (tp == NULL) {
+            ompc_fatal("ompc_current_thread: thread not found");
         }
     }
-    ompc_fatal("unknown proc is running");
-    return NULL;
+
+    return tp;
 }
 
 static struct ompc_proc *
@@ -391,8 +395,35 @@ ompc_alloc_thread(struct ompc_proc *proc)
 }
 
 static void
+ompc_add_thread_to_htable(struct ompc_thread *tp)
+{
+    unsigned long int hidx = THREAD_HASH_IDX(tp->tid);
+    OMPC_PROC_LOCK();
+    tp->link = ompc_thread_htable[hidx];
+    ompc_thread_htable[hidx] = tp;
+    OMPC_PROC_UNLOCK();
+}
+
+static void
 ompc_free_thread(struct ompc_proc *proc,struct ompc_thread *p)
 {
+    unsigned long int hidx = THREAD_HASH_IDX(p->tid);
+    OMPC_PROC_LOCK();
+    struct ompc_thread *tp = ompc_thread_htable[hidx];
+    if (tp == NULL) {
+        ompc_fatal("ompc_free_thread: thread not found");
+    } else if (tp == p) {
+        ompc_thread_htable[hidx] = tp->link;
+    } else {
+        for (; tp->link != p; tp = tp->link) {
+            if (tp->link == NULL) {
+                ompc_fatal("ompc_free_thread: thread not found");
+            }
+        }
+        tp->link = tp->link->link;
+    }
+    OMPC_PROC_UNLOCK();
+
     p->freelist = proc->free_thr;
     proc->free_thr = p;
 }
@@ -411,8 +442,17 @@ static void ompc_xstream_setup()
 static void ompc_thread_wrapper_func(void *arg)
 {
     struct ompc_proc *cproc = ompc_current_proc();
-    struct ompc_thread *tp = cproc->thr->parent;
-    int i = cproc->thr->num;
+    struct ompc_thread *cthd = (struct ompc_thread *)arg;
+    struct ompc_thread *tp = cthd->parent;
+    int i = cthd->num;
+
+    if (!tp->run_children) {
+        ABT_mutex_lock(tp->mutex);
+        while (!tp->run_children) {
+            ABT_cond_wait(tp->cond, tp->mutex);
+        }
+        ABT_mutex_unlock(tp->mutex);
+    }
 
 # ifdef USE_LOG
     if(ompc_log_flag) tlog_parallel_IN(i);
@@ -421,9 +461,9 @@ static void ompc_thread_wrapper_func(void *arg)
     if ( tp->nargs < 0) {
         /* call C function */
         if ( tp->args != NULL )
-            (*tp->func)(tp->args, cproc->thr);
+            (*tp->func)(tp->args, cthd);
         else
-            (*tp->func)(cproc->thr);
+            (*tp->func)(cthd);
     } else {
         /* call Fortran function */
         ompc_call_fsub(tp);
@@ -434,11 +474,8 @@ static void ompc_thread_wrapper_func(void *arg)
 # endif /* USE_LOG */
 
     /* on return, clean up */
-    struct ompc_thread *me = cproc->thr;
-    cproc->thr = NULL;
-    ompc_free_thread(cproc,me);    /* free thread & put me to freelist */
+    ompc_free_thread(cproc, cthd);    /* free thread & put me to freelist */
     ompc_free_proc(cproc);
-    ompc_thread_barrier2(i,tp);
 }
 
 /* called from compiled code. */
@@ -451,7 +488,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     int i, n_thds, max_thds, in_parallel;
 
     cproc = ompc_current_proc();
-    cthd  = cproc->thr;
+    cthd  = ompc_current_thread();
 
     if (cond == 0) { /* serialized by parallel if(false) */
         max_thds = 1;
@@ -470,11 +507,19 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         proclist = p;
     }
 
+    cproc->next = proclist;
+    proclist = cproc;
+
     /* initialize parent thread */
     cthd->num_thds = n_thds;
     cthd->nargs = nargs;
     cthd->args = args;
     cthd->func = f;
+
+    /* initialize flag, mutex, and cond */
+    cthd->run_children = 0;
+    ABT_mutex_create(&cthd->mutex);
+    ABT_cond_create(&cthd->cond);
 
     /* initialize barrier structure */
     cthd->out_count = 0;
@@ -484,59 +529,42 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         cthd->in_flags[i]._v = 0;
     }
 
+    ompc_thread_t *children = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * n_thds);
+
     /* assign thread to proc */
-    for( i = 1; i < n_thds; i++ ){
+    for( i = 0; i < n_thds; i++ ){
         p = proclist;
         proclist = proclist->next;
         tp = ompc_alloc_thread(p);
         tp->parent = cthd;
         tp->num = i;                        /* set thread_num */
         tp->in_parallel = in_parallel;
-        p->thr = tp;                        /* start it ! */
+
+        if (i == 0) {
+            tp->nargs = nargs;
+            tp->args = args;
+        }
 
         ABT_thread_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
-            NULL, ABT_THREAD_ATTR_NULL, NULL);
-
-        MBAR();
+            (void *)tp, ABT_THREAD_ATTR_NULL, (ABT_thread *)(&tp->tid));
+        children[i] = tp->tid;
+        ompc_add_thread_to_htable(tp);
     }
 
-    if (n_thds > 1) {
-        ABT_mutex_lock(ompc_proc_mutex);
-        ABT_cond_broadcast(ompc_proc_cond);
-        ABT_mutex_unlock(ompc_proc_mutex);
+    ABT_mutex_lock(cthd->mutex);
+    cthd->run_children = 1;
+    ABT_cond_broadcast(cthd->cond);
+    ABT_mutex_unlock(cthd->mutex);
+    ABT_thread_yield_to(children[0]);
+
+    for (i = 0; i < n_thds; i++) {
+        ABT_thread_join(children[i]);
+        ABT_thread_free(&children[i]);
     }
 
-    /* allocate master in this team */
-    tp = ompc_alloc_thread(cproc);
-    tp->parent = cthd;
-    tp->num = 0;  /* this is master */
-    tp->in_parallel = in_parallel;
-    tp->nargs = nargs;
-    tp->args = args;
-    cproc->thr = tp;
-
-#ifdef USE_LOG
-    if(ompc_log_flag) tlog_parallel_IN(0);
-#endif /* USE_LOG */
-    /* execute on master */
-    if ( nargs < 0) {
-        /* call C function */
-        if ( args == NULL )
-            (*f)(tp);
-        else
-            (*f)(args, tp);
-    } else {
-        /* call Fortran function */
-        ompc_call_fsub(cthd);
-    }
-#ifdef USE_LOG
-    if(ompc_log_flag) tlog_parallel_OUT(0);
-#endif /* USE_LOG */
-
-    /* clean up this thread */
-    ompc_free_thread(cproc,tp);
-    ompc_thread_barrier2(0, cthd);
-    cproc->thr = cthd;
+    ABT_cond_free(&cthd->cond);
+    ABT_mutex_free(&cthd->mutex);
+    free(children);
 }
 
 
@@ -748,4 +776,12 @@ ompc_xstream_self()
     ABT_xstream xstream;
     ABT_xstream_self(&xstream);
     return xstream;
+}
+
+static ompc_thread_t
+ompc_thread_self()
+{
+    ABT_thread thread;
+    ABT_thread_self(&thread);
+    return thread;
 }

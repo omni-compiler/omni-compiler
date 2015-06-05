@@ -20,6 +20,7 @@
 
 #include <abt.h>
 typedef ABT_xstream ompc_proc_t;
+typedef ABT_thread ompc_thread_t;
 #define _YIELD_ME_ ABT_thread_yield()
 #define OMPC_WAIT(cond) while (cond) { _YIELD_ME_; }
 #define _OMPC_PROC_SELF ompc_xstream_self()
@@ -52,14 +53,15 @@ struct ompc_proc {
     unsigned int pe;
     struct ompc_proc *link;     /* hash link */
     struct ompc_proc *next;     /* link */
-    struct ompc_thread *thr;    /* thr != NULL, running */
     struct ompc_thread *free_thr;
     int thread_count;
 };
 
 struct ompc_thread {
+    ompc_thread_t tid;                  /* ULT id given by ABT_thread_self() */
     struct ompc_thread *parent;         /*  */
     struct ompc_thread *freelist;       /* freelist next */
+    struct ompc_thread *link;           /* hash link */
     int num;            /* the thread number of this thread in team */
     int num_thds;       /* current running thread, refenced by children */
     int in_parallel;    /* current thread executes the region in parellel */
@@ -84,6 +86,11 @@ struct ompc_thread {
 
     /* for 'lastprivate' */
     int is_last;
+
+    /* for sync between parent and children */
+    int run_children;
+    ABT_mutex mutex;
+    ABT_cond cond;
 
     /* sync for shared data, used for 'single' directive */
     /* shared by children */
