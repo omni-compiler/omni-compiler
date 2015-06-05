@@ -156,6 +156,7 @@ public class XMPtransPragma
     case SHADOW:
     case LOCAL_ALIAS:
     case COARRAY:
+    case SAVE_DESC:
       /* declaration directives, do nothing */
       return Bcons.emptyBlock();
 

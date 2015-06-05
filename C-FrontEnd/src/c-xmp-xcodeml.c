@@ -111,6 +111,7 @@ char *xmpDirectiveName(int c)
   case XMP_DISTRIBUTE:   return "DISTRIBUTE";
   case XMP_ALIGN:        return "ALIGN";
   case XMP_SHADOW:       return "SHADOW";
+  case XMP_STATIC_DESC:  return "STATIC_DESC";
   case XMP_TASK:         return "TASK";
   case XMP_TASKS:        return "TASKS";
   case XMP_LOOP:         return "LOOP";
