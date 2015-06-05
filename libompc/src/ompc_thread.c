@@ -555,7 +555,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     cthd->run_children = 1;
     ABT_cond_broadcast(cthd->cond);
     ABT_mutex_unlock(cthd->mutex);
-    ABT_thread_yield_to(children[0]);
 
     for (i = 0; i < n_thds; i++) {
         ABT_thread_join(children[i]);
