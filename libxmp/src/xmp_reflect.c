@@ -1457,15 +1457,12 @@ static void _XMP_reflect_dir(_XMP_array_t *adesc, int ishadow[],
 
   //MPI_Request req[2];
 
-  MPI_Request *send_req = req;
-  MPI_Request *recv_req = req + 1;
-
   MPI_Recv_init(recv_buf, 1, *recv_dtype, src,
-  		_XMP_N_MPI_TAG_REFLECT_LO, *comm, send_req);
+  		_XMP_N_MPI_TAG_REFLECT_LO, *comm, req);
   MPI_Send_init(send_buf, 1, *send_dtype, dst,
-  		_XMP_N_MPI_TAG_REFLECT_LO, *comm, recv_req);
+  		_XMP_N_MPI_TAG_REFLECT_LO, *comm, req + 1);
 
-  /* MPI_Startall(2, req); */
+  MPI_Startall(2, req);
   /* MPI_Waitall(2, req, MPI_STATUSES_IGNORE); */
 
   /* MPI_Type_free(&send_dtype); */
@@ -1480,13 +1477,25 @@ void _XMP_reflect_(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic){
 
   int n = a->dim;
 
-  int ncomms = 0;
+  static int ncomms = 0;
   int max_ncomms = pow(3, n) - 1;
-  MPI_Datatype dtype[max_ncomms * 2];
-  MPI_Request req[max_ncomms * 2];
+  //MPI_Datatype dtype[max_ncomms * 2];
+  //MPI_Request req[max_ncomms * 2];
+
+  static MPI_Datatype *dtype;
+  static MPI_Request *req;
 
   int lb[_XMP_N_MAX_DIM] = { 0 };
   int ub[_XMP_N_MAX_DIM] = { 0 };
+
+  if (ncomms != 0){
+    MPI_Startall(ncomms, req);
+    MPI_Waitall(ncomms, req, MPI_STATUSES_IGNORE);
+    return;
+  }
+
+  dtype = (MPI_Datatype *)malloc(sizeof(MPI_Datatype) * max_ncomms * 2);
+  req = (MPI_Request *)malloc(sizeof(MPI_Request) * max_ncomms * 2);
 
   for (int i = 0; i < n; i++){
     if (lwidth[i] > 0) lb[i] = -1;
@@ -1517,12 +1526,12 @@ void _XMP_reflect_(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic){
 
   }}}}}}}
 
-  MPI_Startall(ncomms, req);
+  //MPI_Startall(ncomms, req);
   MPI_Waitall(ncomms, req, MPI_STATUSES_IGNORE);
 
-  for (int i = 0; i < ncomms; i++){
-    MPI_Type_free(&dtype[i]);
-  }
+  /* for (int i = 0; i < ncomms; i++){ */
+  /*   MPI_Type_free(&dtype[i]); */
+  /* } */
 
 }
 
