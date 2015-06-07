@@ -52,7 +52,6 @@ struct ompc_proc {
     ompc_proc_t pid;           /* thread id give by [p]thread_self() */
     unsigned int pe;
     struct ompc_proc *link;     /* hash link */
-    struct ompc_proc *next;     /* link */
     struct ompc_thread *free_thr;
     int thread_count;
 };

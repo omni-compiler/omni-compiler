@@ -478,7 +478,7 @@ void
 ompc_do_parallel_main (int nargs, int cond, int nthds,
     cfunc f, void *args)
 {
-    struct ompc_proc *cproc, *proclist, *p;
+    struct ompc_proc *cproc, *p;
     struct ompc_thread *cthd, *tp;
     int i, n_thds, max_thds, in_parallel;
 
@@ -492,18 +492,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         max_thds = (nthds < ompc_num_threads) ? (nthds) : (ompc_num_threads);
         in_parallel = 1;
     }
-
-    proclist = NULL;
-    for( n_thds = 1; n_thds < max_thds; n_thds ++ ){
-        if ((p = ompc_get_proc()) == NULL){
-          break;
-        }
-        p->next = proclist;
-        proclist = p;
-    }
-
-    cproc->next = proclist;
-    proclist = cproc;
 
     /* initialize parent thread */
     cthd->num_thds = n_thds;
@@ -530,8 +518,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 
     /* assign thread to proc */
     for( i = 0; i < n_thds; i++ ){
-        p = proclist;
-        proclist = proclist->next;
+        p = i == 0 ? cproc : ompc_get_proc();
         tp = ompc_alloc_thread(p);
         tp->parent = cthd;
         tp->num = i;                        /* set thread_num */
