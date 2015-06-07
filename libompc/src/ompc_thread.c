@@ -322,14 +322,14 @@ ompc_new_proc()
 ompc_current_thread()
 {
     ompc_thread_t tid = ompc_thread_self();
+    ABT_mutex_lock(thread_htable_lock);
     struct ompc_thread *tp = ompc_thread_htable[THREAD_HASH_IDX(tid)];
-
     for (; tp->tid != tid; tp = tp->link) {
         if (tp == NULL) {
             ompc_fatal("ompc_current_thread: thread not found");
         }
     }
-
+    ABT_mutex_unlock(thread_htable_lock);
     return tp;
 }
 
