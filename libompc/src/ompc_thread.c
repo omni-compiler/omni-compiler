@@ -480,16 +480,16 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 {
     struct ompc_proc *cproc, *p;
     struct ompc_thread *cthd, *tp;
-    int i, n_thds, max_thds, in_parallel;
+    int i, n_thds, in_parallel;
 
     cproc = ompc_current_proc();
     cthd  = ompc_current_thread();
 
     if (cond == 0) { /* serialized by parallel if(false) */
-        max_thds = 1;
+        n_thds = 1;
         in_parallel = cthd->in_parallel;
     } else {
-        max_thds = (nthds < ompc_num_threads) ? (nthds) : (ompc_num_threads);
+        n_thds = (nthds < ompc_num_threads) ? (nthds) : (ompc_num_threads);
         in_parallel = 1;
     }
 
