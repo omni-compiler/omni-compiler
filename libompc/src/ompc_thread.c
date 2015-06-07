@@ -45,11 +45,6 @@ ompc_lock_t ompc_proc_lock_obj, ompc_thread_lock_obj;
 // lock for thread hash table
 static ABT_mutex thread_htable_lock;
 
-ABT_mutex ompc_proc_mutex;
-ABT_cond ompc_proc_cond;
-ABT_cond ompc_mainwait_cond;
-ABT_mutex ompc_mainwait_mutex;
-
 /* hash table */
 struct ompc_proc *ompc_proc_htable[PROC_HASH_SIZE];
 /* proc table */
@@ -100,10 +95,6 @@ ompc_init(int argc,char *argv[])
 
     static ABT_xstream xstreams[MAX_PROC];
     ABT_init(argc, argv);
-    ABT_mutex_create(&ompc_proc_mutex);
-    ABT_cond_create(&ompc_proc_cond);
-    ABT_mutex_create(&ompc_mainwait_mutex);
-    ABT_cond_create(&ompc_mainwait_cond);
 
     {
       char buff[BUFSIZ];
@@ -451,11 +442,11 @@ static void ompc_thread_wrapper_func(void *arg)
     int i = cthd->num;
 
     if (!tp->run_children) {
-        ABT_mutex_lock(tp->mutex);
+        ABT_mutex_lock(tp->broadcast_mutex);
         while (!tp->run_children) {
-            ABT_cond_wait(tp->cond, tp->mutex);
+            ABT_cond_wait(tp->broadcast_cond, tp->broadcast_mutex);
         }
-        ABT_mutex_unlock(tp->mutex);
+        ABT_mutex_unlock(tp->broadcast_mutex);
     }
 
 # ifdef USE_LOG
@@ -522,8 +513,10 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 
     /* initialize flag, mutex, and cond */
     cthd->run_children = 0;
-    ABT_mutex_create(&cthd->mutex);
-    ABT_cond_create(&cthd->cond);
+    ABT_mutex_create(&cthd->broadcast_mutex);
+    ABT_mutex_create(&cthd->reduction_mutex);
+    ABT_cond_create(&cthd->broadcast_cond);
+    ABT_cond_create(&cthd->reduction_cond);
 
     /* initialize barrier structure */
     cthd->out_count = 0;
@@ -555,18 +548,20 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         ompc_add_thread_to_htable(tp);
     }
 
-    ABT_mutex_lock(cthd->mutex);
+    ABT_mutex_lock(cthd->broadcast_mutex);
     cthd->run_children = 1;
-    ABT_cond_broadcast(cthd->cond);
-    ABT_mutex_unlock(cthd->mutex);
+    ABT_cond_broadcast(cthd->broadcast_cond);
+    ABT_mutex_unlock(cthd->broadcast_mutex);
 
     for (i = 0; i < n_thds; i++) {
         ABT_thread_join(children[i]);
         ABT_thread_free(&children[i]);
     }
 
-    ABT_cond_free(&cthd->cond);
-    ABT_mutex_free(&cthd->mutex);
+    ABT_cond_free(&cthd->broadcast_cond);
+    ABT_cond_free(&cthd->reduction_cond);
+    ABT_mutex_free(&cthd->broadcast_mutex);
+    ABT_mutex_free(&cthd->reduction_mutex);
     free(children);
 }
 
@@ -604,30 +599,30 @@ ompc_thread_barrier(int id, struct ompc_thread *tpp)
     if (id == 0) {
         for (int i = 1; i < n; i++) {
             if ((volatile int)tpp->barrier_flags[i]._v != sen0) {
-                ABT_mutex_lock(ompc_mainwait_mutex);
+                ABT_mutex_lock(tpp->reduction_mutex);
                 while ((volatile int)tpp->barrier_flags[i]._v != sen0) {
-                    ABT_cond_wait(ompc_mainwait_cond, ompc_mainwait_mutex);
+                    ABT_cond_wait(tpp->reduction_cond, tpp->reduction_mutex);
                 }
-                ABT_mutex_unlock(ompc_mainwait_mutex);
+                ABT_mutex_unlock(tpp->reduction_mutex);
             }
         }
 
-        ABT_mutex_lock(ompc_proc_mutex);
+        ABT_mutex_lock(tpp->broadcast_mutex);
         tpp->barrier_sense = sen0;
-        ABT_cond_broadcast(ompc_proc_cond);
-        ABT_mutex_unlock(ompc_proc_mutex);
+        ABT_cond_broadcast(tpp->broadcast_cond);
+        ABT_mutex_unlock(tpp->broadcast_mutex);
     } else {
-        ABT_mutex_lock(ompc_mainwait_mutex);
+        ABT_mutex_lock(tpp->reduction_mutex);
         tpp->barrier_flags[id]._v = sen0;
-        ABT_cond_signal(ompc_mainwait_cond);
-        ABT_mutex_unlock(ompc_mainwait_mutex);
+        ABT_cond_signal(tpp->reduction_cond);
+        ABT_mutex_unlock(tpp->reduction_mutex);
 
         if ((volatile int)tpp->barrier_sense != sen0) {
-            ABT_mutex_lock(ompc_proc_mutex);
+            ABT_mutex_lock(tpp->broadcast_mutex);
             while ((volatile int)tpp->barrier_sense != sen0) {
-                ABT_cond_wait(ompc_proc_cond, ompc_proc_mutex);
+                ABT_cond_wait(tpp->broadcast_cond, tpp->broadcast_mutex);
             }
-            ABT_mutex_unlock(ompc_proc_mutex);
+            ABT_mutex_unlock(tpp->broadcast_mutex);
         }
     }
 #else
@@ -668,20 +663,20 @@ ompc_thread_barrier2(int id, struct ompc_thread *tpp)
     if (id == 0) {
         for (int i = 1; i < n; i++) {
             if ((volatile int)tpp->barrier_flags[i]._v != sen0) {
-                ABT_mutex_lock(ompc_mainwait_mutex);
+                ABT_mutex_lock(tpp->reduction_mutex);
                 while ((volatile int)tpp->barrier_flags[i]._v != sen0) {
-                    ABT_cond_wait(ompc_mainwait_cond, ompc_mainwait_mutex);
+                    ABT_cond_wait(tpp->reduction_cond, tpp->reduction_mutex);
                 }
-                ABT_mutex_unlock(ompc_mainwait_mutex);
+                ABT_mutex_unlock(tpp->reduction_mutex);
             }
         }
         tpp->barrier_sense = sen0;
         MBAR();
     } else {
-        ABT_mutex_lock(ompc_mainwait_mutex);
+        ABT_mutex_lock(tpp->reduction_mutex);
         tpp->barrier_flags[id]._v = sen0;
-        ABT_cond_signal(ompc_mainwait_cond);
-        ABT_mutex_unlock(ompc_mainwait_mutex);
+        ABT_cond_signal(tpp->reduction_cond);
+        ABT_mutex_unlock(tpp->reduction_mutex);
     }
 #else
     if (id == 0) {

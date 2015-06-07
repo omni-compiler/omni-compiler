@@ -89,8 +89,10 @@ struct ompc_thread {
 
     /* for sync between parent and children */
     int run_children;
-    ABT_mutex mutex;
-    ABT_cond cond;
+    ABT_mutex broadcast_mutex;
+    ABT_mutex reduction_mutex;
+    ABT_cond  broadcast_cond;
+    ABT_cond  reduction_cond;
 
     /* sync for shared data, used for 'single' directive */
     /* shared by children */
