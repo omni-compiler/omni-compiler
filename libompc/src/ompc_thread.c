@@ -390,6 +390,9 @@ ompc_alloc_thread(struct ompc_proc *proc)
             ompc_fatal("ompc_alloc_thread: malloc failed");
     }
 
+    p->freelist = NULL;
+    p->link = NULL;
+    
     return p;
 }
 
