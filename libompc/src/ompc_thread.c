@@ -21,6 +21,10 @@
 #define THREAD_HASH_MASK (THREAD_HASH_SIZE - 1)
 #define THREAD_HASH_IDX(ID) ((unsigned long int)(((unsigned long int)(ID) >> 4) & (THREAD_HASH_MASK)))
 
+#define THREAD_HTABLE_MUTEX_BITWIDTH 6
+#define THREAD_HTABLE_NUM_MUTEX (THREAD_HASH_SIZE >> THREAD_HTABLE_MUTEX_BITWIDTH)
+#define THREAD_HTABLE_MUTEX_IDX(HIDX) (HIDX >> THREAD_HTABLE_MUTEX_BITWIDTH)
+
 #define DEF_STACK_SIZE  1*1024*1024     /* default stack size */
 
 int ompc_debug_flag = 0;       /* debug output control */
@@ -42,8 +46,8 @@ static int ompc_num_fork = 10;
 /* system lock variables */
 ompc_lock_t ompc_proc_lock_obj, ompc_thread_lock_obj;
 
-// lock for thread hash table
-static ABT_mutex thread_htable_lock;
+// mutexes for thread hash table
+static ABT_mutex thread_htable_mutexes[THREAD_HTABLE_NUM_MUTEX];
 
 /* hash table */
 struct ompc_proc *ompc_proc_htable[PROC_HASH_SIZE];
@@ -233,7 +237,9 @@ ompc_init(int argc,char *argv[])
     /* init system lock */
     ompc_init_lock(&ompc_proc_lock_obj);
     ompc_init_lock(&ompc_thread_lock_obj);
-    ABT_mutex_create(&thread_htable_lock);
+    for (int i = 0; i < THREAD_HTABLE_NUM_MUTEX; i++) {
+        ABT_mutex_create(&thread_htable_mutexes[i]);
+    }
     ompc_critical_init ();     /* initialize critical lock */
     ompc_atomic_init_lock ();  /* initialize atomic lock */
 
@@ -324,8 +330,11 @@ ompc_new_proc()
 ompc_current_thread()
 {
     ompc_thread_t tid = ompc_thread_self();
-    ABT_mutex_lock(thread_htable_lock);
-    struct ompc_thread *tp = ompc_thread_htable[THREAD_HASH_IDX(tid)];
+    unsigned long int hidx = THREAD_HASH_IDX(tid);
+    ABT_mutex mutex = thread_htable_mutexes[THREAD_HTABLE_MUTEX_IDX(hidx)];
+
+    ABT_mutex_lock(mutex);
+    struct ompc_thread *tp = ompc_thread_htable[hidx];
     while (1) {
         if (tp == NULL) {
             ompc_fatal("ompc_current_thread: thread not found");
@@ -335,7 +344,7 @@ ompc_current_thread()
         }
         tp = tp->link;
     }
-    ABT_mutex_unlock(thread_htable_lock);
+    ABT_mutex_unlock(mutex);
     return tp;
 }
 
@@ -405,17 +414,21 @@ static void
 ompc_add_thread_to_htable(struct ompc_thread *tp)
 {
     unsigned long int hidx = THREAD_HASH_IDX(tp->tid);
-    ABT_mutex_lock(thread_htable_lock);
+    ABT_mutex mutex = thread_htable_mutexes[THREAD_HTABLE_MUTEX_IDX(hidx)];
+
+    ABT_mutex_lock(mutex);
     tp->link = ompc_thread_htable[hidx];
     ompc_thread_htable[hidx] = tp;
-    ABT_mutex_unlock(thread_htable_lock);
+    ABT_mutex_unlock(mutex);
 }
 
 static void
 ompc_free_thread(struct ompc_proc *proc,struct ompc_thread *p)
 {
     unsigned long int hidx = THREAD_HASH_IDX(p->tid);
-    ABT_mutex_lock(thread_htable_lock);
+    ABT_mutex mutex = thread_htable_mutexes[THREAD_HTABLE_MUTEX_IDX(hidx)];
+
+    ABT_mutex_lock(mutex);
     struct ompc_thread *tp = ompc_thread_htable[hidx];
     if (tp == NULL) {
         ompc_fatal("ompc_free_thread: thread not found");
@@ -429,7 +442,7 @@ ompc_free_thread(struct ompc_proc *proc,struct ompc_thread *p)
         }
         tp->link = tp->link->link;
     }
-    ABT_mutex_unlock(thread_htable_lock);
+    ABT_mutex_unlock(mutex);
 
     ABT_mutex_lock(proc->free_thr_mutex);
     p->freelist = proc->free_thr;
@@ -726,7 +739,9 @@ ompc_terminate (int exitcode)
         ABT_mutex_free(&ompc_procs[i].free_thr_mutex);
     }
 
-    ABT_mutex_free(&thread_htable_lock);
+    for (int i = 0; i < THREAD_HTABLE_NUM_MUTEX; i++) {
+        ABT_mutex_free(&thread_htable_mutexes[i]);
+    }
 
     ABT_finalize();
 
