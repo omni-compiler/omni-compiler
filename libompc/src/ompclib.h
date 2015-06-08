@@ -53,6 +53,7 @@ struct ompc_proc {
     unsigned int pe;
     struct ompc_proc *link;     /* hash link */
     struct ompc_thread *free_thr;
+    ABT_mutex free_thr_mutex;
     int thread_count;
 };
 

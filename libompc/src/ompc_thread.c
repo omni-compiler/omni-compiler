@@ -313,8 +313,10 @@ ompc_new_proc()
     pp = &ompc_proc_htable[PROC_HASH_IDX(id)];
     p->link = *pp;
     *pp = p;
-
     OMPC_PROC_UNLOCK();
+
+    ABT_mutex_create(&p->free_thr_mutex);
+
     return p;
 }
 
@@ -382,9 +384,12 @@ ompc_alloc_thread(struct ompc_proc *proc)
 {
     struct ompc_thread *p;
 
-    if ((p = proc->free_thr) != NULL)
+    ABT_mutex_lock(proc->free_thr_mutex);
+    if ((p = proc->free_thr) != NULL) {
         proc->free_thr = p->freelist;
-    else {
+        ABT_mutex_unlock(proc->free_thr_mutex);
+    } else {
+        ABT_mutex_unlock(proc->free_thr_mutex);
         p = (struct ompc_thread *)malloc(sizeof(struct ompc_thread));
         if (p == NULL)
             ompc_fatal("ompc_alloc_thread: malloc failed");
@@ -426,8 +431,10 @@ ompc_free_thread(struct ompc_proc *proc,struct ompc_thread *p)
     }
     ABT_mutex_unlock(thread_htable_lock);
 
+    ABT_mutex_lock(proc->free_thr_mutex);
     p->freelist = proc->free_thr;
     proc->free_thr = p;
+    ABT_mutex_unlock(proc->free_thr_mutex);
 }
 
 static void ompc_xstream_setup()
@@ -716,6 +723,7 @@ ompc_terminate (int exitcode)
 {
     for (int i = 1; i < ompc_proc_counter; i++) {
         ABT_xstream_free((ABT_xstream *)&(ompc_procs[i].pid));
+        ABT_mutex_free(&ompc_procs[i].free_thr_mutex);
     }
 
     ABT_mutex_free(&thread_htable_lock);
