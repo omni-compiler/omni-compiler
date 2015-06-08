@@ -52,6 +52,7 @@ static _XACC_gmv_comm_t* find_gmv_comm(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv
 static void exec_gmv_comm(_XACC_gmv_comm_t * comm);
 static _XMP_gmv_desc_t* alloc_gmv_desc(_XMP_gmv_desc_t *desc);
 static void cache_comm(_XACC_gmv_comm_t *comm);
+static void set_sendrecv_comm(_XACC_sendrecv_comm_t *sendrecv_comm, void *buf, int count, MPI_Datatype datatype, int rank, MPI_Comm comm);
 
 //decl
 static void array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
@@ -637,6 +638,18 @@ static void sendrecv_ARRAY(int type, int type_size, /*MPI_Datatype *mpi_datatype
     _XMP_fatal("bad assign statement for gmove");
   }
 
+  int even_send_flag = 0;
+  int even_send_region_local_nums = -1;
+  int even_send_region_local_idx = -1;
+  if(src_dim == 1 && dst_array_nodes->comm_size % src_array_nodes->comm_size == 0){
+    int src_size0 = src_upper[0] - src_lower[0] + 1;
+    int even_send_region_idx = src_lower[0] / src_size0;
+    even_send_region_local_nums = src_array->info->par_size / src_size0;
+    even_send_region_local_idx = even_send_region_idx % even_send_region_local_nums;
+    even_send_flag =1;
+    //printf("p(%d) region_idx = %d, num_local_regions=%d, num_local_regions = %d, localidx = %d\n", exec_rank,even_send_region_idx, even_send_region_size, even_send_region_local_nums, even_send_region_local_idx);
+  }
+
   // recv phase
   void *recv_buffer = NULL;
   void *recv_alloc = NULL;
@@ -648,11 +661,17 @@ static void sendrecv_ARRAY(int type, int type_size, /*MPI_Datatype *mpi_datatype
       wait_recv = _XMP_N_INT_TRUE;
 
       int src_rank;
+      if(even_send_flag){
+	int src_i = even_send_region_local_idx + even_send_region_local_nums * i;
+	src_rank = src_ranks[src_i];
+	//	printf("p(%d): src_rank[%d]=%d\n", exec_rank, src_i, src_rank);
+      }else{
       if ((dst_shrink_nodes_size == src_shrink_nodes_size) ||
           (dst_shrink_nodes_size <  src_shrink_nodes_size)) {
         src_rank = src_ranks[i];
       } else {
         src_rank = src_ranks[i % src_shrink_nodes_size];
+      }
       }
 
       for (int i = 0; i < dst_dim; i++) {
@@ -669,11 +688,8 @@ static void sendrecv_ARRAY(int type, int type_size, /*MPI_Datatype *mpi_datatype
       //      fprintf(stderr, "DEBUG: Proc(%d), Irecv(src=%d, total_elmnt=%llu)\n", exec_rank, src_rank, total_elmts);
       //save comm start
       if(g_current_comm.num_recvs < _XACC_MAX_NUM_SENDRECVS){
-	g_current_comm.recvs[g_current_comm.num_recvs].buf = recv_buffer;
-	g_current_comm.recvs[g_current_comm.num_recvs].count = total_elmts * type_size;
-	g_current_comm.recvs[g_current_comm.num_recvs].datatype = MPI_BYTE;
-	g_current_comm.recvs[g_current_comm.num_recvs].rank = src_rank;
-	g_current_comm.recvs[g_current_comm.num_recvs].comm = *exec_comm;
+	set_sendrecv_comm(&(g_current_comm.recvs[g_current_comm.num_recvs]),
+			  recv_buffer, total_elmts * type_size, MPI_BYTE, src_rank, *exec_comm);
       }
       g_current_comm.num_recvs++;
       //save comm end
@@ -698,20 +714,32 @@ static void sendrecv_ARRAY(int type, int type_size, /*MPI_Datatype *mpi_datatype
       }
       if ((dst_shrink_nodes_size == src_shrink_nodes_size) ||
           (dst_shrink_nodes_size <  src_shrink_nodes_size)) {
+	if(even_send_flag){
+	  int dst_i = i / even_send_region_local_nums;
+	  if(i % even_send_region_local_nums == even_send_region_local_idx && dst_i < dst_shrink_nodes_size){
+	    //	  fprintf(stderr, "DEBUG: Proc(%d), Send(dst=%d, total_elmnt=%llu)\n", exec_rank, dst_ranks[dst_i], total_elmts);
+	  MPI_Send(send_buffer, total_elmts * type_size, MPI_BYTE, dst_ranks[dst_i], _XMP_N_MPI_TAG_GMOVE, *exec_comm);	  
+	  //save comm start
+	  if(g_current_comm.num_sends < _XACC_MAX_NUM_SENDRECVS){
+	    set_sendrecv_comm(&(g_current_comm.sends[g_current_comm.num_sends]),
+			      send_buffer, total_elmts * type_size, MPI_BYTE, dst_ranks[dst_i], *exec_comm);
+	  }
+	  g_current_comm.num_sends++;
+	  //save comm end
+	  }
+	}else{
         if (i < dst_shrink_nodes_size) {
           MPI_Send(send_buffer, total_elmts * type_size, MPI_BYTE, dst_ranks[i], _XMP_N_MPI_TAG_GMOVE, *exec_comm);
 	  //	  fprintf(stderr, "DEBUG: Proc(%d), Send(dst=%d, total_elmnt=%llu)\n", exec_rank, dst_ranks[i], total_elmts);
 	  //save comm start
 	  if(g_current_comm.num_sends < _XACC_MAX_NUM_SENDRECVS){
-	    g_current_comm.sends[g_current_comm.num_sends].buf = send_buffer;
-	    g_current_comm.sends[g_current_comm.num_sends].count = total_elmts * type_size;
-	    g_current_comm.sends[g_current_comm.num_sends].datatype = MPI_BYTE;
-	    g_current_comm.sends[g_current_comm.num_sends].rank = dst_ranks[i];
-	    g_current_comm.sends[g_current_comm.num_sends].comm = *exec_comm;
+	    set_sendrecv_comm(&(g_current_comm.sends[g_current_comm.num_sends]),
+			      send_buffer, total_elmts * type_size, MPI_BYTE, dst_ranks[i], *exec_comm);
 	  }
 	  g_current_comm.num_sends++;
 	  //save comm end
         }
+	}
       } else {
         int request_size = _XMP_M_COUNT_TRIPLETi(i, dst_shrink_nodes_size - 1, src_shrink_nodes_size);
         MPI_Request *requests = _XMP_alloc(sizeof(MPI_Request) * request_size);
@@ -886,4 +914,13 @@ static void exec_gmv_comm(_XACC_gmv_comm_t * comm)
     MPI_Send(comm->sends[i].buf, comm->sends[i].count, comm->sends[i].datatype, comm->sends[i].rank, _XMP_N_MPI_TAG_GMOVE, comm->sends[i].comm);
   }
   MPI_Waitall(comm->num_recvs, req, MPI_STATUSES_IGNORE);
+}
+
+static void set_sendrecv_comm(_XACC_sendrecv_comm_t *sendrecv_comm, void *buf, int count, MPI_Datatype datatype, int rank, MPI_Comm comm)
+{
+  sendrecv_comm->buf = buf;
+  sendrecv_comm->count = count;
+  sendrecv_comm->datatype = datatype;
+  sendrecv_comm->rank = rank;
+  sendrecv_comm->comm = comm;
 }
