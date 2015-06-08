@@ -19,7 +19,7 @@ ARCHIVE=archive.tar.bz2
 REMOTE_HOST=${USER}@omni-compiler.org
 XMP_PATH=${REMOTE_TMP_DIR}/work
 GASNET_PATH=/opt/GASNet-1.24.2
-JOBS=${LOCAL_TMP_DIR}/jobs
+#JOBS=${LOCAL_TMP_DIR}/jobs
 
 ## Clean Temporal files and dirs
 clean_files(){
@@ -27,9 +27,10 @@ clean_files(){
     rm -rf ${LOCAL_TMP_DIR}
     ssh ${REMOTE_HOST} "rm -rf ${REMOTE_TMP_DIR}"
     echo "done"
+    exit 0
 }
 
-trap "clean_files" 0 1 2 3 15
+trap "clean_files" 1 2 3 15
 
 omni_exec(){
     ${@+"$@"}
@@ -82,21 +83,28 @@ echo "Run tests ..."
 RUN_TESTS_CMD="cd ${REMOTE_TMP_DIR}/${OMNI}; \
                make slurm XMP_PATH=${XMP_PATH}"
 cd ${LOCAL_TMP_DIR}
-omni_exec ssh ${REMOTE_HOST} ${RUN_TESTS_CMD} | tee ${JOBS}
+omni_exec ssh ${REMOTE_HOST} ${RUN_TESTS_CMD}
 
-cancel_jobs(){
-    for id in $(awk '{print $4}' ${JOBS}); do
-	JOB_CANCEL_CMD="scancel $id"
-	ssh -n ${REMOTE_HOST} ${JOB_CANCEL_CMD}
-	echo ${JOB_CANCEL_CMD}
-    done
-}
-
-trap "cancel_jobs" 1 2 3 15
+# Note : The cancel_jobs() often leaves jobs.
+#        When REMOTE_TMP_DIR is removed, the jobs are also removed.
+#
+#omni_exec ssh ${REMOTE_HOST} ${RUN_TESTS_CMD} | tee ${JOBS}
+#
+#cancel_jobs(){
+#    for id in $(awk '{print $4}' ${JOBS}); do
+#	JOB_CANCEL_CMD="scancel $id"
+#	ssh -n ${REMOTE_HOST} ${JOB_CANCEL_CMD}
+#	echo ${JOB_CANCEL_CMD}
+#    done
+#    clean_files
+#}
+#
+# trap "cancel_jobs" 1 2 3 15
 
 CHECK_TESTS_CMD="cd ${REMOTE_TMP_DIR}/${OMNI};\
                  make slurm-check"
 omni_exec ssh ${REMOTE_HOST} ${CHECK_TESTS_CMD}
 echo "done"
 
+clean_files
 exit 0
