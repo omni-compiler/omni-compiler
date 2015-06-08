@@ -18,5 +18,5 @@ OUT_stat=#allo_stat
 
 OUT = $(OUT_epi) $(OUT_etc) $(OUT_decl) $(OUT_size) $(OUT_allo) $(OUT_rt)
 
-include ..F/Makefile.common
+include ../F/Makefile.common
 

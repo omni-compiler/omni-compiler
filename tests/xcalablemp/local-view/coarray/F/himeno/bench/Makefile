@@ -1,29 +1,18 @@
 #-----------------
-# COLA
 # XMP/gfortran/GASNet
 #-----------------
-#MPI=mpif90
-#MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include
-#CAF=xmpf90 --debug -I$(MPILIB) -g
+MPI=mpif90
+MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include
+CAF=xmpf90 --debug -I$(MPILIB) -g
 
 #-----------------
-# K
 # XMP/Fujitsu/RDMA
 #-----------------
 #MPI=mpifrtpx
-#MPILIB=$$(dirname $$(dirname $$(which mpifrtpx)))/include
-#CAF=xmpf90 -I"$(MPILIB)"
+#MPILIB=/opt/FJSVtclang/GM-1.2.0-17/include/mpi/fujitsu/
+#CAF=xmpf90 -I"$(MPILIB)" --debug
 
 #-----------------
-# PACS
-# XMP/intel/GASNet
-#-----------------
-MPI=mpif90   # same as mpiifort
-MPILIB=$$(dirname $$(dirname $$(which ${MPI})))/include64
-CAF=xmpf90 --debug -I$(MPILIB)
-
-#-----------------
-# PACS
 # UHCAF/Intel/GASNet
 #-----------------
 #MPI=mpif90
@@ -32,12 +21,12 @@ CAF=xmpf90 --debug -I$(MPILIB)
 #CAF=uhcaf --mpi -I$(MPILIB)
 
 #-----------------
-# PACS
 # UHCAF/GNU/mvapich2-GDR
 #-----------------
 #MPI=mpif90
 #MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include64
 #MPILIB=/opt/MPI/MVAPICH2-GDR/2.0/GNU/CUDA/6.5/include64
+#MPILIB=/opt/MPI/IntelMPI/impi/4.1.1.036/include64
 #CAF=uhcaf --mpi -I$(MPILIB)
 
 

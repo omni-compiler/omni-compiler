@@ -312,6 +312,8 @@ extern void _XMPF_checkIfInTask(char *msgopt);   // restriction check
 extern void _XMPF_coarrayDebugPrint(char *format, ...);
 extern void _XMPF_coarrayFatal(char *format, ...);
 
+extern void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[]);
+extern int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim);
 
 /* xmpf_coarray_alloc.c */
 extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,

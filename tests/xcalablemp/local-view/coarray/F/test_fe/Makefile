@@ -1,8 +1,7 @@
 #OPT=--debug
-NPE=3
+NPE=11
 
-#OUT=call_sync_all sync_all syncall lextest goto 
-OUT=call_sync_all.x sync_all.x syncall.x goto.x
+OUT=call_sync_all.x sync_all.x syncall.x goto.x thisimage.x
 
 include ../Makefile.common
 

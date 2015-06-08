@@ -4,13 +4,13 @@ DIRS_SUBMIT=../F_get ../F_put ../F_alloc ../F_scope
 .PHONY: clean all run allall runall rerun submit cleanall
 
 all:
-	cd test_fe; $(MAKE) all
+	$(MAKE) -C ./test_fe all
 
 run:
-	cd test_fe; $(MAKE) -j1 run
+	$(MAKE) -C ./test_fe -j1 run
 
 clean:
-	cd test_fe; $(MAKE) clean
+	$(MAKE) -C ./test_fe clean
 
 
 

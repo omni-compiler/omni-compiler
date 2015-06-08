@@ -41,6 +41,8 @@ public class XMParray {
 
   boolean shadow_declared = false;
 
+  boolean is_saveDesc = false;
+
   // null constructor
   public XMParray() { }
 
@@ -176,6 +178,12 @@ public class XMParray {
 
   public void setLinearized(boolean flag){
     is_linearized = flag;
+  }
+
+  public boolean isSaveDesc() { return is_saveDesc; }
+
+  public void setSaveDesc(boolean flag){
+    is_saveDesc = flag;
   }
 
   public boolean isLinearized() { return is_linearized; }
@@ -544,6 +552,49 @@ public class XMParray {
    */
 
   public void buildConstructor(BlockList body, XMPenv env){
+
+    if (is_saveDesc && type.isFallocatable())
+      XMP.fatal("an allocatable array cannot have the save_desc attribute.");
+
+    BlockList b;
+    if (is_saveDesc && !env.currentDefIsModule()){
+      b = Bcons.emptyBody();
+    }
+    else {
+      b = body;
+    }
+
+    Ident flagVar = null;
+    if (is_saveDesc && !env.currentDefIsModule()){
+
+      Xtype save_desc = descId.Type().copy();
+      save_desc.setIsFsave(true);
+      descId.setType(save_desc);
+
+      for (int i = 0; i < dims.size(); i++){
+	XMPdimInfo info = dims.elementAt(i);
+
+	Xtype t0 = info.getArraySizeVar().Type().copy();
+	t0.setIsFsave(true);
+	info.getArraySizeVar().setType(t0);
+
+	Xtype t1 = info.getArrayOffsetVar().Type().copy();
+	t1.setIsFsave(true);
+	info.getArrayOffsetVar().setType(t1);
+
+	Xtype t2 = info.getArrayBlkOffsetVar().Type().copy();
+	t2.setIsFsave(true);
+	info.getArrayBlkOffsetVar().setType(t2);
+      }
+
+      Xtype save_logical = Xtype.FlogicalType.copy();
+      save_logical.setIsFsave(true);
+      BlockList bl = env.getCurrentDef().getBlock().getBody();
+      flagVar = bl.declLocalIdent(XMP.SAVE_DESC_PREFIX_ + name, save_logical,
+      				    StorageClass.FSAVE,
+      				    Xcons.List(Xcode.F_VALUE, Xcons.FlogicalConstant(false)));
+    }
+
     Ident f;
     Xobject args;
     
@@ -551,17 +602,17 @@ public class XMParray {
     args = Xcons.List(descId.Ref(),Xcons.IntConstant(dims.size()),
 		      XMP.typeIntConstant(elementType),
 		      template.getDescId().Ref());
-    body.add(f.callSubroutine(args));
+    b.add(f.callSubroutine(args));
 
     f = env.declInternIdent(XMP.init_allocated_f, Xtype.FsubroutineType);
     args = Xcons.List(descId.Ref());
-    body.add(f.callSubroutine(args));
+    b.add(f.callSubroutine(args));
 
     if (type.isFallocatable()) return;
 
     Ident sizeArray = null;
     if (type.isFassumedShape()){
-      sizeArray = env.declOrGetSizeArray(body.getHead());
+      sizeArray = env.declOrGetSizeArray(b.getHead());
     }
 
     f = env.declInternIdent(XMP.array_align_info_f,Xtype.FsubroutineType);
@@ -592,7 +643,7 @@ public class XMParray {
 			  Xcons.IntConstant(info.getAlignSubscriptIndex()),
 			  off);
       }
-      body.add(f.callSubroutine(args));
+      b.add(f.callSubroutine(args));
     }
 
     if(hasShadow()){
@@ -606,13 +657,13 @@ public class XMParray {
 			    Xcons.IntConstant(i),
 			    Xcons.IntConstant(left),
 			    Xcons.IntConstant(right));
-	  body.add(f.callSubroutine(args));
+	  b.add(f.callSubroutine(args));
 	}
       }
     }
 
     f = env.declInternIdent(XMP.array_init_f,Xtype.FsubroutineType);
-    body.add(f.callSubroutine(Xcons.List(descId.Ref())));
+    b.add(f.callSubroutine(Xcons.List(descId.Ref())));
 
     Xobject allocate_statement = null;
     if(isLinearized()){
@@ -622,11 +673,11 @@ public class XMParray {
 	XMPdimInfo info = dims.elementAt(i);
 	f = env.declInternIdent(XMP.array_get_local_size_f,
 			      Xtype.FsubroutineType);
-	body.add(f.callSubroutine(Xcons.List(descId.Ref(),
-					     Xcons.IntConstant(i),
-					     info.getArraySizeVar().Ref(),
-					     info.getArrayOffsetVar().Ref(),
-					     info.getArrayBlkOffsetVar().Ref())));
+	b.add(f.callSubroutine(Xcons.List(descId.Ref(),
+					  Xcons.IntConstant(i),
+					  info.getArraySizeVar().Ref(),
+					  info.getArrayOffsetVar().Ref(),
+					  info.getArrayBlkOffsetVar().Ref())));
 	if(alloc_size == null)
 	  alloc_size = info.getArraySizeVar().Ref();
 	else
@@ -646,11 +697,11 @@ public class XMParray {
 	XMPdimInfo info = dims.elementAt(i);
 	f = env.declInternIdent(XMP.array_get_local_size_f,
 			      Xtype.FsubroutineType);
-	body.add(f.callSubroutine(Xcons.List(descId.Ref(),
-					     Xcons.IntConstant(i),
-					     info.getArraySizeVar().Ref(),
-					     info.getArrayOffsetVar().Ref(),
-					     info.getArrayBlkOffsetVar().Ref())));
+	b.add(f.callSubroutine(Xcons.List(descId.Ref(),
+					  Xcons.IntConstant(i),
+					  info.getArraySizeVar().Ref(),
+					  info.getArrayOffsetVar().Ref(),
+					  info.getArrayBlkOffsetVar().Ref())));
 	if (isDistributed(i)){
 	    // distributed
 	    Xobject size_1 = Xcons.binaryOp(Xcode.MINUS_EXPR,
@@ -668,7 +719,12 @@ public class XMParray {
       // allocatable
       allocate_statement = Xcons.FallocateByList(localId.Ref(),alloc_args);
     }
-      
+
+    if (is_saveDesc && !env.currentDefIsModule()){
+      b.add(Xcons.Set(flagVar.Ref(), Xcons.FlogicalConstant(true)));
+      body.add(Bcons.IF(BasicBlock.Cond(Xcons.unaryOp(Xcode.LOG_NOT_EXPR, flagVar.Ref())), b, null));
+    }
+
     switch(sclass){
     case FLOCAL:
       body.add(allocate_statement);
@@ -685,6 +741,7 @@ public class XMParray {
     // set
     f = env.declInternIdent(XMP.array_set_local_array_f,Xtype.FsubroutineType);
     body.add(f.callSubroutine(Xcons.List(descId.Ref(),localId.Ref())));
+
   }
 
   /*
@@ -839,12 +896,14 @@ public class XMParray {
   }
 
   public void buildDestructor(BlockList body, XMPenv env){
-    Ident f;
-    Xobject args;
+    if (!is_saveDesc){
+      Ident f;
+      Xobject args;
     
-    f = env.declInternIdent(XMP.array_dealloc_f,Xtype.FsubroutineType);
-    args = Xcons.List(descId.Ref());
-    body.add(f.callSubroutine(args));
+      f = env.declInternIdent(XMP.array_dealloc_f,Xtype.FsubroutineType);
+      args = Xcons.List(descId.Ref());
+      body.add(f.callSubroutine(args));
+    }
   }
 
   public Xobject convertOffset(int dim_i){
