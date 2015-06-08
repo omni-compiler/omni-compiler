@@ -277,6 +277,29 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
         return a.getArg();
     }
 
+    /** Get the argument that has the keyword or the i-th argument.
+        Null if it is not found or illegal.
+     */
+    public Xobject getArgWithKeyword(String keyword, int i)
+    {
+        // select by keyword
+        for (XobjArgs a = args; a != null; a = a.nextArgs()) {
+          Xobject arg = a.getArg();
+          if (arg.Opcode() == Xcode.F_NAMED_VALUE) {
+            if (keyword.equalsIgnoreCase(arg.getArg(0).getName()))
+              return arg.getArg(1);
+          }
+        }
+
+        // select by position i
+        Xobject arg = getArgOrNull(i);
+        if (arg != null && arg.Opcode() == Xcode.F_NAMED_VALUE) {
+          // found another keyword at position i
+          return null;
+        }
+        return arg;
+    }
+
     /** Sets the i-th argument */
     @Override
     public void setArg(int i, Xobject x)

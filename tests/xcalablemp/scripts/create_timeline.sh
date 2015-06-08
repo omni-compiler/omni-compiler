@@ -3,7 +3,7 @@
 ## Set Arguments
 OUTPUT_DIR=$1
 JOB_NUM=$2
-ELAPSE_TIME_SEC=$3
+ELAPSED_TIME_SEC=$3
 BASE_TESTDIR=$4
 shift; shift; shift; shift
 TESTDIRS=$@
@@ -107,7 +107,7 @@ function drawChart() \n
 \n
 <div id="timeline" style="width: ${TIMELINE_WIDTH}px; height: ${TIMELINE_HEIGHT}px;"></div>
 <p>
-Elapse time is $ELAPSE_TIME_SEC sec.
+Elapse time is $ELAPSED_TIME_SEC sec.
 </p>
 EOF`
 

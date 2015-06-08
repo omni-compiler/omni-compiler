@@ -152,6 +152,33 @@ public class XMPanalyzePragma
       analyzeLocalAlias(pb.getClauses(), env, pb);
       break;
 
+    case SAVE_DESC:
+      {
+	XobjList xmpObjList = (XobjList)pb.getClauses();
+
+	for (Xobject xx: xmpObjList){
+	  String objName = xx.getString();
+	  XMPobject xmpObject = env.findXMPobject(objName, pb);
+	  if (xmpObject != null){
+	    xmpObject.setSaveDesc(true);
+	    continue;
+	  }
+	  Ident id = env.findVarIdent(objName, pb);
+	  if (id != null){
+	    XMParray array =  XMParray.getArray(id);
+	    if (array != null){
+	      array.setSaveDesc(true);
+	    }
+	    else {
+	      XMP.errorAt(pb, "object '" + objName + "' is not an aligned array");
+	    }
+	    continue;
+	  }
+	  XMP.errorAt(pb, "object '" + objName + "' is not declared");
+ 	}
+      }
+      break;
+
     case TEMPLATE_FIX:
       analyzeTemplateFix(pb.getClauses(), info, pb);
       break;
@@ -279,8 +306,6 @@ public class XMPanalyzePragma
     newLocalId.setValue(Xcons.Symbol(Xcode.VAR, localType, lName));
 
     gObject.setLocalId(newLocalId);
-
-    
 
   }
 

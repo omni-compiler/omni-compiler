@@ -301,6 +301,28 @@ public class XMPlocalDecl {
     bodyList.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(funcArgs)));
   }
 
+  public static void addConstructorCall2_staticDesc(String funcName, Xobject funcArgs, XMPglobalDecl globalDecl, Block block,
+						    Ident flagVar, boolean setFlag){
+    XobjList bodyList = (XobjList)block.getProp(CONSTRUCTOR);
+    if (bodyList == null){
+      bodyList = Xcons.List(Xcode.LIST);
+      block.setProp(CONSTRUCTOR, (Object)bodyList);
+    }
+
+    Ident funcId = globalDecl.declExternFunc(funcName);
+    //bodyList.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(funcArgs)));
+
+    XobjList ifBody = Xcons.List();
+    ifBody.add(Xcons.List(Xcode.EXPR_STATEMENT, funcId.Call(funcArgs)));
+    if (setFlag) ifBody.add(Xcons.List(Xcode.EXPR_STATEMENT, Xcons.Set(flagVar.Ref(), Xcons.IntConstant(1))));
+    Xobject body = Xcons.List(Xcode.IF_STATEMENT,
+			      Xcons.unaryOp(Xcode.LOG_NOT_EXPR, flagVar.Ref()),
+			      ifBody,
+			      null);
+    bodyList.add(body);
+
+  }
+
   public static void addAllocCall2(String funcName, Xobject funcArgs, XMPglobalDecl globalDecl, Block block) {
     XobjList bodyList = (XobjList)block.getProp(ALLOC);
     if (bodyList == null){

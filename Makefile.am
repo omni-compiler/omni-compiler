@@ -107,6 +107,9 @@ slurm-check:
 slurm-timeline:
 	@bash ./tests/xcalablemp/scripts/create_timeline.sh /home/mnakao/public_html/timeline $(JOB_NUM) $(ELAPSE_TIME_SEC) $(BASE_TESTDIR) $(TESTDIRS)
 
+remote-tests:
+	@bash ./tests/xcalablemp/scripts/remote-tests.sh $(USER)
+
 clean-local:
 	rm -rf autom4te.cache
 	find . -type f \( \

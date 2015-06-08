@@ -13,10 +13,13 @@ public class XMPsymbolTable {
   private HashMap<String, XMPalignedArray> _XMPalignedArrayTable;
   private HashMap<String, XMPcoarray> _XMPcoarrayTable;
 
+  private HashMap<String, Integer> _XMPstaticDescTable;
+
   public XMPsymbolTable() {
     _XMPobjectTable = new HashMap<String, XMPobject>();
     _XMPalignedArrayTable = new HashMap<String, XMPalignedArray>();
     _XMPcoarrayTable = new HashMap<String, XMPcoarray>();
+    _XMPstaticDescTable = new HashMap<String, Integer>();
   }
 
   public void putXMPobject(XMPobject o) {
@@ -58,4 +61,13 @@ public class XMPsymbolTable {
   public XMPcoarray getXMPcoarray(String name) {
     return _XMPcoarrayTable.get(name);
   }
+
+  public void putStaticDesc(String name){
+    _XMPstaticDescTable.put(name, 0);
+  }
+
+  public boolean isStaticDesc(String name){
+    return _XMPstaticDescTable.containsKey(name);
+  }
+
 }
