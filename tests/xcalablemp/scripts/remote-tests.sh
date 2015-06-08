@@ -6,6 +6,7 @@ if test -z $1; then
     exit 1
 else
     USER=$1
+    echo "User name is ${USER}"
 fi
 
 ## Set static arguments
@@ -28,18 +29,14 @@ clean_files(){
     echo "done"
 }
 
-cancel_jobs(){
-    GET_LAST_JOBS_CMD="squeue -o %A | grep \"^[0-9]\""
-    ssh ${REMOTE_HOST} ${GET_LAST_JOBS_CMD} > ${JOBS}
-    for id in $(cat ${JOBS}); do
-	JOB_CANCEL_CMD="scancel $id"
-	ssh -n ${REMOTE_HOST} ${JOB_CANCEL_CMD}
-	echo ${JOB_CANCEL_CMD}
-    done
-}
+trap "clean_files" 0 1 2 3 15
 
-trap "clean_files" 0
-trap "cancel_jobs" 1 2 3 15
+omni_exec(){
+    ${@+"$@"}
+    if test $? -ne 0; then
+	exit 1
+    fi
+}
 
 ## Create archive of the current omni-compiler
 echo -n "Compress ... "
@@ -48,7 +45,8 @@ if test -d ${LOCAL_TMP_DIR}; then
     exit 1
 else
     mkdir -p ${LOCAL_TMP_DIR}
-    cd ..; tar cfj ${LOCAL_TMP_DIR}/${ARCHIVE} ${OMNI}
+    cd ..
+    omni_exec tar cfj ${LOCAL_TMP_DIR}/${ARCHIVE} ${OMNI}
 fi
 echo "done"
 
@@ -59,20 +57,14 @@ MKDIR_CMD="if test -d ${REMOTE_TMP_DIR}; then; \
            else\
              mkdir -p ${REMOTE_TMP_DIR}; \
            fi"
-ssh ${REMOTE_HOST} ${MKDIR_CMD}
-if test $? -ne 0; then
-    exit 1
-fi
-scp ${LOCAL_TMP_DIR}/${ARCHIVE} ${REMOTE_HOST}:${REMOTE_TMP_DIR}
+omni_exec ssh ${REMOTE_HOST} ${MKDIR_CMD}
+omni_exec scp ${LOCAL_TMP_DIR}/${ARCHIVE} ${REMOTE_HOST}:${REMOTE_TMP_DIR}
 echo "done"
 
 ## Expand the current omni-compiler
 echo -n "Expand archive ..."
 EXPAND_CMD="tar xfj ${REMOTE_TMP_DIR}/${ARCHIVE} -C ${REMOTE_TMP_DIR}"
-ssh ${REMOTE_HOST} ${EXPAND_CMD}
-if test $? -ne 0; then
-    exit 1
-fi
+omni_exec ssh ${REMOTE_HOST} ${EXPAND_CMD}
 echo "done"
 
 ## Compile the current omni-compiler
@@ -82,21 +74,29 @@ COMPILE_CMD="mkdir ${XMP_PATH}; \
              sh autogen.sh; \
              ./configure --prefix=${XMP_PATH} --with-gasnet=${GASNET_PATH}; \
              make -j2; make install"
-ssh ${REMOTE_HOST} ${COMPILE_CMD}
-if test $? -ne 0; then
-    exit 1
-fi
+omni_exec ssh ${REMOTE_HOST} ${COMPILE_CMD}
 echo "done"
 
 ## Run tests
 echo "Run tests ..."
 RUN_TESTS_CMD="cd ${REMOTE_TMP_DIR}/${OMNI}; \
-               make slurm XMP_PATH=${XMP_PATH}; \
-               make slurm-check"
-ssh ${REMOTE_HOST} ${RUN_TESTS_CMD}
-if test $? -ne 0; then
-    exit 1
-fi
+               make slurm XMP_PATH=${XMP_PATH}"
+cd ${LOCAL_TMP_DIR}
+omni_exec ssh ${REMOTE_HOST} ${RUN_TESTS_CMD} | tee ${JOBS}
+
+cancel_jobs(){
+    for id in $(awk '{print $4}' ${JOBS}); do
+	JOB_CANCEL_CMD="scancel $id"
+	ssh -n ${REMOTE_HOST} ${JOB_CANCEL_CMD}
+	echo ${JOB_CANCEL_CMD}
+    done
+}
+
+trap "cancel_jobs" 1 2 3 15
+
+CHECK_TESTS_CMD="cd ${REMOTE_TMP_DIR}/${OMNI};\
+                 make slurm-check"
+omni_exec ssh ${REMOTE_HOST} ${CHECK_TESTS_CMD}
 echo "done"
 
 exit 0
