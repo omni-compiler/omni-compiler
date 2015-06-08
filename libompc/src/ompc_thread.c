@@ -19,7 +19,7 @@
 
 #define THREAD_HASH_SIZE 0x10000L
 #define THREAD_HASH_MASK (THREAD_HASH_SIZE - 1)
-#define THREAD_HASH_IDX(ID) ((unsigned long int)(((unsigned long int)(ID) >> 2) & (THREAD_HASH_MASK)))
+#define THREAD_HASH_IDX(ID) ((unsigned long int)(((unsigned long int)(ID) >> 4) & (THREAD_HASH_MASK)))
 
 #define DEF_STACK_SIZE  1*1024*1024     /* default stack size */
 
