@@ -20,4 +20,4 @@ OUT_bound  = cn1-2okB.x l0-1okB.x
 #OUT=nest nest-2
 OUT = $(OUT_basic) $(OUT_io) $(OUT_arg) $(OUT_nest) $(OUT_lib) $(OUT_mod) $(OUT_entire) $(OUT_bound)
 
-include ../Makefile.common
+include ../F/Makefile.common

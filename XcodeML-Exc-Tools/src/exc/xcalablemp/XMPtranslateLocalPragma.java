@@ -31,8 +31,20 @@ public class XMPtranslateLocalPragma {
     FunctionBlock fb = def.getBlock();
     currentDef = def.getDef();
 
-    // first, skip tasks
+    // first, check static_desc
     BlockIterator i = new topdownBlockIterator(fb);
+    for (i.init(); !i.end(); i.next()){
+      Block b = i.getBlock();
+      if (b.Opcode() == Xcode.XMP_PRAGMA){
+	String pragmaName = ((PragmaBlock)b).getPragma();
+	if (XMPpragma.valueOf(pragmaName) == XMPpragma.STATIC_DESC){
+	  analyzeStaticDesc((PragmaBlock)b);
+	  b.remove();
+	}
+      }
+    }
+
+    // first, skip tasks
     for (i.init(); !i.end(); i.next()) {
       Block b = i.getBlock();
       if (b.Opcode() ==  Xcode.XMP_PRAGMA) {
@@ -74,6 +86,8 @@ public class XMPtranslateLocalPragma {
         { translateAlign(pb);			break; }
       case SHADOW:
         { translateShadow(pb);			break; }
+      case STATIC_DESC:
+	{ /* do nothing */                      break; }
       case TASK:
         { translateTask(pb);			break; }
       case TASKS:
@@ -3472,6 +3486,20 @@ public class XMPtranslateLocalPragma {
     args.add(null); // multicore clause ?
 
     return Bcons.PRAGMA(Xcode.XMP_PRAGMA, "LOOP", args, loop);
+  }
+
+
+  private void analyzeStaticDesc(PragmaBlock pb){
+
+    Block parentBlock = pb.getParentBlock();
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(parentBlock);
+
+    XobjList xmpObjList = (XobjList)pb.getClauses().getArg(0);
+    for (Xobject xx: xmpObjList){
+      String objName = xx.getString();
+      localXMPsymbolTable.putStaticDesc(objName);
+    }
+
   }
 
 

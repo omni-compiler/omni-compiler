@@ -61,6 +61,10 @@ public class XMPnodes extends XMPobject {
       globalDecl.checkObjectNameCollision(nodesName);
     }
 
+    // check static_desc
+    boolean is_static_desc = false;
+    if (isLocalPragma) is_static_desc = localXMPsymbolTable.isStaticDesc(nodesName);
+
     // declare nodes desciptor
     Ident nodesDescId = null;
     if (isLocalPragma) {
@@ -69,6 +73,8 @@ public class XMPnodes extends XMPobject {
     } else {
       nodesDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + nodesName, Xtype.voidPtrType);
     }
+
+    if (is_static_desc) nodesDescId.setStorageClass(StorageClass.STATIC);
 
     // declare nodes object
     int nodesDim = 0;
@@ -139,8 +145,21 @@ public class XMPnodes extends XMPobject {
     if (isLocalPragma) {
       //XMPlocalDecl.addConstructorCall(initFuncName, nodesArgs, globalDecl, pb);
       //XMPlocalDecl.insertDestructorCall("_XMP_finalize_nodes", Xcons.List(nodesDescId.Ref()), globalDecl, pb);
-      XMPlocalDecl.addConstructorCall2(initFuncName, nodesArgs, globalDecl, parentBlock);
-      XMPlocalDecl.insertDestructorCall2("_XMP_finalize_nodes", Xcons.List(nodesDescId.Ref()), globalDecl, parentBlock);
+
+      if (is_static_desc){
+	//Ident flagId = XMPlocalDecl.addObjectId2(XMP.STATIC_DESC_PREFIX_ + nodesName, Xtype.intType, parentBlock,
+	//					 Xcons.IntConstant(0));
+	//flagId.setStorageClass(StorageClass.STATIC);
+	Ident flagId = parentBlock.getBody().declLocalIdent(XMP.STATIC_DESC_PREFIX_ + nodesName, Xtype.intType,
+							    StorageClass.STATIC, Xcons.IntConstant(0));
+	XMPlocalDecl.addConstructorCall2_staticDesc(initFuncName, nodesArgs, globalDecl, parentBlock, flagId, true);
+      }
+      else {
+	XMPlocalDecl.addConstructorCall2(initFuncName, nodesArgs, globalDecl, parentBlock);
+      }
+
+      if (!is_static_desc)
+	XMPlocalDecl.insertDestructorCall2("_XMP_finalize_nodes", Xcons.List(nodesDescId.Ref()), globalDecl, parentBlock);
     }
     else {
       globalDecl.addGlobalInitFuncCall(initFuncName, nodesArgs);

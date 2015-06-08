@@ -1,4 +1,17 @@
 !-----------------------------------------------------------------------
+!   this_image(coarray)
+!-----------------------------------------------------------------------
+      function xmpf_this_image_coarray_wrap(descptr, corank) result(image)
+        integer(8), intent(in) :: descptr
+        integer, intent(in) :: corank
+        integer image(corank)           !! allocate here in Fortran
+
+        call xmpf_this_image_coarray(descptr, corank, image)
+        return
+      end function xmpf_this_image_coarray_wrap
+
+
+!-----------------------------------------------------------------------
 !   sync all
 !-----------------------------------------------------------------------
       subroutine xmpf_sync_all_stat_wrap(stat, errmsg)

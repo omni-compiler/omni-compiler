@@ -47,6 +47,7 @@ static CExpr* parse_TEMPLATE_clause();
 static CExpr* parse_DISTRIBUTE_clause();
 static CExpr* parse_ALIGN_clause();
 static CExpr* parse_SHADOW_clause();
+static CExpr* parse_STATIC_DESC_clause();
 static CExpr* parse_TASK_clause();
 static CExpr* parse_TASKS_clause();
 static CExpr* parse_LOOP_clause();
@@ -162,6 +163,11 @@ int parse_XMP_pragma()
         pg_XMP_pragma = XMP_SHADOW;
         pg_get_token();
         pg_XMP_list = parse_SHADOW_clause();
+    }
+    else if (PG_IS_IDENT("static_desc")) {
+        pg_XMP_pragma = XMP_STATIC_DESC;
+        pg_get_token();
+        pg_XMP_list = parse_STATIC_DESC_clause();
     }
     else if (PG_IS_IDENT("task")) {
         pg_XMP_pragma = XMP_TASK;
@@ -464,6 +470,26 @@ CExpr* parse_SHADOW_clause() {
   err:
     XMP_has_err = 1;
     return NULL;
+}
+
+CExpr* parse_STATIC_DESC_clause() {
+    CExpr* objectNameList = NULL;
+
+    // parse <array-name>
+    if (pg_tok == PG_IDENT) {
+	objectNameList = XMP_LIST1(pg_tok_val);
+	pg_get_token();
+    } 
+
+    if (objectNameList == NULL) 
+	objectNameList = parse_COL2_name_list();
+
+    if (objectNameList != NULL)
+      return XMP_LIST1(objectNameList);
+    else {
+      XMP_has_err = 1;
+      return NULL;
+    }
 }
 
 CExpr* parse_TASK_clause() {

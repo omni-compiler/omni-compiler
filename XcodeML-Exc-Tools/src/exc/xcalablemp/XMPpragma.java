@@ -18,6 +18,7 @@ public enum XMPpragma {
   DISTRIBUTE,
   ALIGN,
   SHADOW,
+  STATIC_DESC,
   TASK,
   TASKS,
   LOOP,

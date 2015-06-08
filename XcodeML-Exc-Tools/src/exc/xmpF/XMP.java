@@ -52,6 +52,7 @@ public class XMP {
 
   public final static String PREFIX_			= "XMP__";
   public final static String DESC_PREFIX_		= "XMP_DESC_";
+  public final static String SAVE_DESC_PREFIX_		= "XMP_SAVE_";    
 
   public final static String ASTERISK			= "* @{ASTERISK}@";
   public final static String COLON			= ": @{COLON}@";
