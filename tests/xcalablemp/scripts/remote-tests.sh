@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ## Check arguments
 if test -z $1; then
@@ -53,7 +53,7 @@ echo "done"
 
 ## Transfer the current omni-compiler
 echo -n "Transfer archive ... "
-MKDIR_CMD="if test -d ${REMOTE_TMP_DIR}; then; \
+MKDIR_CMD="if test -d ${REMOTE_TMP_DIR}; then \
              echo \"Error ${REMOTE_HOST}:${REMOTE_TMP_DIR} exist\"; exit 1;\
            else\
              mkdir -p ${REMOTE_TMP_DIR}; \
