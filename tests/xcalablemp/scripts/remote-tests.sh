@@ -25,7 +25,9 @@ GASNET_PATH=/opt/GASNet-1.24.2
 clean_files(){
     echo -n "Clean temporal files... "
     rm -rf ${LOCAL_TMP_DIR}
-    ssh ${REMOTE_HOST} "rm -rf ${REMOTE_TMP_DIR}"
+    ## Only once "rm -rf", rarely all files are not deleted, because slurm output files are created.
+    ## So "rm -rf" are executed twice.
+    ssh ${REMOTE_HOST} "rm -rf ${REMOTE_TMP_DIR} 2> /dev/null; rm -rf ${REMOTE_TMP_DIR}"
     echo "done"
     exit 0
 }
