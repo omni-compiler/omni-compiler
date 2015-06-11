@@ -53,6 +53,7 @@ static ABT_mutex thread_htable_mutexes[THREAD_HTABLE_NUM_MUTEX];
 struct ompc_proc *ompc_proc_htable[PROC_HASH_SIZE];
 /* proc table */
 struct ompc_proc *ompc_procs;
+static int proc_last_used = 0;
 /* thread hash table */
 struct ompc_thread *ompc_thread_htable[THREAD_HASH_SIZE];
 
@@ -370,11 +371,10 @@ ompc_get_proc()
 {
     struct ompc_proc *p;
     int i;
-    static int last_used = 0;
 
     OMPC_PROC_LOCK();
-    if(++last_used >= ompc_max_threads) last_used = 0;
-    p = &ompc_procs[last_used];
+    if(++proc_last_used >= ompc_max_threads) proc_last_used = 0;
+    p = &ompc_procs[proc_last_used];
     OMPC_PROC_UNLOCK();
     __sync_fetch_and_add(&p->thread_count, 1);
 
@@ -577,6 +577,10 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     ABT_mutex_free(&cthd->broadcast_mutex);
     ABT_mutex_free(&cthd->reduction_mutex);
     free(children);
+
+    if (cthd->parent == NULL) {
+        proc_last_used = 0;
+    }
 }
 
 
