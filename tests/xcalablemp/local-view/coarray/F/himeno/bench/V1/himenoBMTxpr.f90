@@ -69,18 +69,20 @@ module comm
   integer,parameter :: ndims=3
   integer :: ndx,ndy,ndz
   integer :: iop(3)
+  integer :: npx(2),npy(2),npz(2)
   integer :: npe,id
-  include 'xmp_coarray.h'
-  real, allocatable, dimension(:,:), codimension[:,:,:] :: &
-       buf1l, buf1u,  buf2l, buf2u,  buf3l, buf3u
+  integer :: ijvec,jkvec,ikvec
+  integer :: mpi_comm_cart
 end module comm
-
-program HimenoBMTxp_f90_CAF
+!
+program HimenoBMTxp_f90_MPI
 !
   use others
   use comm
 !
   implicit none
+!
+  include 'mpif.h'
 !
 !     ttarget specifys the measuring period in sec
   integer :: mx,my,mz
@@ -101,13 +103,6 @@ program HimenoBMTxp_f90_CAF
 !
   call initmem
 !
-  allocate(buf1l(mjmax, mkmax)[ndx,ndy,*])
-  allocate(buf1u(mjmax, mkmax)[ndx,ndy,*])
-  allocate(buf2l(mimax, mkmax)[ndx,ndy,*])
-  allocate(buf2u(mimax, mkmax)[ndx,ndy,*])
-  allocate(buf3l(mimax, mjmax)[ndx,ndy,*])
-  allocate(buf3u(mimax, mjmax)[ndx,ndy,*])
-!
 !! Initializing matrixes
   call initmt(mz,it)
 !
@@ -118,7 +113,7 @@ program HimenoBMTxp_f90_CAF
      print *,' mimax=',mimax,' mjmax=',mjmax,' mkmax=',mkmax
      print *,' imax=',imax,' jmax=',jmax,' kmax=',kmax
      print *,' I-decomp= ',ndx,' J-decomp= ',ndy,' K-decomp= ',ndz
-     print *,''                                ! modified for #407
+     print *
   end if
 !
 !! Start measuring
@@ -131,13 +126,19 @@ program HimenoBMTxp_f90_CAF
 !
   gosa= 0.0
   cpu= 0.0
-  sync all
-  cpu0= xmp_wtime()
+  call mpi_barrier(mpi_comm_world,ierr)
+  cpu0= mpi_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= xmp_wtime() - cpu0
+  cpu1= mpi_wtime() - cpu0
 !
-  call co_max(cpu1, cpu)
+  call mpi_allreduce(cpu1, &
+                     cpu, &
+                     1, &
+                     mpi_real8, &
+                     mpi_max, &
+                     mpi_comm_world, &
+                     ierr)
 !
   flop=real(mx-2)*real(my-2)*real(mz-2)*34.0
   if(cpu /= 0.0) xmflops2=flop/cpu*1.0d-6*real(nn)
@@ -156,13 +157,19 @@ program HimenoBMTxp_f90_CAF
 !
   gosa= 0.0
   cpu= 0.0
-  sync all
-  cpu0= xmp_wtime()
+  call mpi_barrier(mpi_comm_world,ierr)
+  cpu0= mpi_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= xmp_wtime() - cpu0
+  cpu1= mpi_wtime() - cpu0
 !
-  call co_max(cpu1, cpu)
+  call mpi_allreduce(cpu1, &
+                     cpu, &
+                     1, &
+                     mpi_real8, &
+                     mpi_max, &
+                     mpi_comm_world, &
+                     ierr)
 !
   if(id == 0) then
      if(cpu /= 0.0)  xmflops2=flop*1.0d-6/cpu*real(nn)
@@ -172,9 +179,10 @@ program HimenoBMTxp_f90_CAF
      score=xmflops2/82.84
      print *,' Score based on Pentium III 600MHz :',score
   end if
+  call mpi_finalize(ierr)
 !
   stop
-end program HimenoBMTxp_f90_CAF
+end program HimenoBMTxp_f90_MPI
 !
 !
 subroutine readparam
@@ -183,9 +191,10 @@ subroutine readparam
 !
   implicit none
 !
-  integer :: itmp(3)[*]
-!!!  character(10) :: size[*]     !! to avoid bug #354
-  character(12) :: size(1)[*]
+  include 'mpif.h'
+!
+  integer :: itmp(3),ierr
+  character(10) :: size
 !
   if(id == 0) then
      print *,'For example:'
@@ -197,7 +206,7 @@ subroutine readparam
      print *,'           XL  (1024x512x512)'
      print *,' Grid-size = '
      read(*,*) size
-     print *,''                                ! modified for #407
+     print *
      print *,'For example: '
      print *,'DDM pattern= '
      print *,'     1 1 2'
@@ -206,15 +215,21 @@ subroutine readparam
      print *,'     k-direction partitioning : 2'
      print *,' DDM pattern = '
      read(*,*) itmp(1),itmp(2),itmp(3)
-     print *,''                                ! modified for #407
+     print *
   end if
 !
-  sync all
-  if (id /= 0) then
-     itmp = itmp[1]
-     size = size[1]
-  end if
-  sync all
+  call mpi_bcast(itmp, &
+                 3, &
+                 mpi_integer, &
+                 0, &
+                 mpi_comm_world, &
+                 ierr)
+  call mpi_bcast(size, &
+                 10, &
+                 mpi_character, &
+                 0, &
+                 mpi_comm_world, &
+                 ierr)
 !
   ndx= itmp(1)
   ndy= itmp(2)
@@ -350,6 +365,8 @@ subroutine jacobi(nn,gosa)
 !
   implicit none
 !
+  include 'mpif.h'
+!
   integer,intent(in) :: nn
   real(4),intent(inout) :: gosa
   integer :: i,j,k,loop,ierr
@@ -383,9 +400,15 @@ subroutine jacobi(nn,gosa)
      p(2:imax-1,2:jmax-1,2:kmax-1)= &
           wrk2(2:imax-1,2:jmax-1,2:kmax-1)
 !
-     call sendp()
+     call sendp(ndx,ndy,ndz)
 !
-     call co_sum(wgosa, gosa)
+     call mpi_allreduce(wgosa, &
+                        gosa, &
+                        1, &
+                        mpi_real4, &
+                        mpi_sum, &
+                        mpi_comm_world, &
+                        ierr)
 !
   enddo
 !! End of iteration
@@ -397,26 +420,79 @@ end subroutine jacobi
 subroutine initcomm
 !
   use comm
-  use others
 !
   implicit none
 !
-  integer,allocatable:: dummy(:)[:,:,:]
+  include 'mpif.h'
 !
-  npe = num_images()
-  id = this_image() - 1
+  integer :: ierr,icomm,idm(3)
+  logical :: ipd(3),ir
+!
+  call mpi_init(ierr)
+  call mpi_comm_size(mpi_comm_world,npe,ierr)
+  call mpi_comm_rank(mpi_comm_world,id,ierr)
 !
   call readparam
-!
-  allocate(dummy(0)[ndx,ndy,*])
-  iop = this_image(dummy) - 1
 !
   if(ndx*ndy*ndz /= npe) then
      if(id == 0) then
         print *,'Invalid number of PE'
         print *,'Please check partitioning pattern or number of PE'
      end if
+     call mpi_finalize(ierr)
      stop
+  end if
+!
+  icomm= mpi_comm_world
+!
+  idm(1)= ndx
+  idm(2)= ndy
+  idm(3)= ndz
+!
+  ipd(1)= .false.
+  ipd(2)= .false.
+  ipd(3)= .false.
+  ir= .false.
+!
+  call mpi_cart_create(icomm, &
+                       ndims, &
+                       idm, &
+                       ipd, &
+                       ir, &
+                       mpi_comm_cart, &
+                       ierr)
+  call mpi_cart_get(mpi_comm_cart, &
+                    ndims, &
+                    idm, &
+                    ipd, &
+                    iop, &
+                    ierr)
+!
+  if(ndz > 1) then
+     call mpi_cart_shift(mpi_comm_cart, &
+                         2, &
+                         1, &
+                         npz(1), &
+                         npz(2), &
+                         ierr)
+  end if
+!
+  if(ndy > 1) then
+     call mpi_cart_shift(mpi_comm_cart, &
+                         1, &
+                         1, &
+                         npy(1), &
+                         npy(2), &
+                         ierr)
+  end if
+!
+  if(ndx > 1) then
+     call mpi_cart_shift(mpi_comm_cart, &
+                         0, &
+                         1, &
+                         npx(1), &
+                         npx(2), &
+                         ierr)
   end if
 !
   return
@@ -430,6 +506,8 @@ subroutine initmax(mx,my,mz,ks)
 !
   implicit none
 !
+  include 'mpif.h'
+!
   integer,intent(in) :: mx,my,mz
   integer,intent(out) :: ks
   integer :: i,itmp,ierr
@@ -441,15 +519,15 @@ subroutine initmax(mx,my,mz,ks)
   mx1(0)= 0
   do  i=1,ndx
      if(i <= mod(mx,ndx)) then
-        mx1(i)= mx1(i-1) + itmp + 1    !! get my global lbound
+        mx1(i)= mx1(i-1) + itmp + 1
      else
-        mx1(i)= mx1(i-1) + itmp        !! get my global lbound
+        mx1(i)= mx1(i-1) + itmp
      end if
   end do
   do i=0,ndx-1
-     mx2(i)= mx1(i+1) - mx1(i)             !! get my width
-     if(i /= 0)     mx2(i)= mx2(i) + 1     !! add lower shadow
-     if(i /= ndx-1) mx2(i)= mx2(i) + 1     !! add upper shadow
+     mx2(i)= mx1(i+1) - mx1(i)
+     if(i /= 0)     mx2(i)= mx2(i) + 1
+     if(i /= ndx-1) mx2(i)= mx2(i) + 1
   end do
 !
   itmp= my/ndy
@@ -482,13 +560,13 @@ subroutine initmax(mx,my,mz,ks)
      if(i /= ndz-1)  mz2(i)= mz2(i) + 1
   end do
 !
-  mimax=maxval(mx2(0:ndx-1))
-  mjmax=maxval(my2(0:ndy-1))
-  mkmax=maxval(mz2(0:ndz-1))
-!
   imax= mx2(iop(1))
   jmax= my2(iop(2))
   kmax= mz2(iop(3))
+!
+  mimax= imax + 1
+  mjmax= jmax + 1
+  mkmax= kmax + 1
 !
   if(iop(3) == 0) then
      ks= mz1(iop(3))
@@ -496,84 +574,241 @@ subroutine initmax(mx,my,mz,ks)
      ks= mz1(iop(3)) - 1
   end if
 !
+!!  j-k vector
+  if(ndx > 1) then
+     call mpi_type_vector(jmax*kmax, &
+                          1, &
+                          mimax, &
+                          mpi_real4, &
+                          jkvec, &
+                          ierr)
+     call mpi_type_commit(jkvec, &
+                          ierr)
+  end if
+!
+!!  i-k vector
+  if(ndy > 1) then
+     call mpi_type_vector(kmax, &
+                          imax, &
+                          mimax*mjmax, &
+                          mpi_real4, &
+                          ikvec, &
+                          ierr)
+     call mpi_type_commit(ikvec, &
+                          ierr)
+  end if
+!
+!!  i-j vector
+  if(ndz > 1) then
+     call mpi_type_vector(jmax, &
+                          imax, &
+                          mimax, &
+                          mpi_real4, &
+                          ijvec, &
+                          ierr)
+     call mpi_type_commit(ijvec, &
+                          ierr)
+  end if
+!
   return
 end subroutine initmax
 !
 !
 !
-subroutine sendp()
+subroutine sendp(ndx,ndy,ndz)
+!
+  implicit none
+!
+  integer,intent(in) :: ndx,ndy,ndz
+!
+  if(ndz > 1) then
+     call sendp3()
+  end if
+!
+  if(ndy > 1) then
+     call sendp2()
+  end if
+!
+  if(ndx > 1) then
+     call sendp1()
+  end if
+!
+  return
+end subroutine sendp
+!
+!
+!
+subroutine sendp3()
 !
   use pres
   use others
   use comm
+!
   implicit none
-  integer mex, mey, mez
-
-  mex = iop(1) + 1
-  mey = iop(2) + 1
-  mez = iop(3) + 1
-
-  sync all
-
-  !*** put z-axis
-  if (mez>1) then
-     buf3u(2:imax-1,2:jmax-1)[mex,mey,mez-1] = p(2:imax-1,2:jmax-1,2     )
-  end if
-  if (mez<ndz) then
-     buf3l(2:imax-1,2:jmax-1)[mex,mey,mez+1] = p(2:imax-1,2:jmax-1,kmax-1)
-  endif
-
-  sync all
-
-  !*** unpack z-axis
-  if (mez<ndz) then
-     p(2:imax-1,2:jmax-1,kmax) = buf3u(2:imax-1,2:jmax-1)
-  end if
-  if (mez>1) then
-     p(2:imax-1,2:jmax-1,1   ) = buf3l(2:imax-1,2:jmax-1)
-  endif
-
-  sync all
-
-  !*** put y-axis
-  if (mey>1) then
-     buf2u(2:imax-1,1:kmax)[mex,mey-1,mez] = p(2:imax-1,2     ,1:kmax)
-  end if
-  if (mey<ndy) then
-     buf2l(2:imax-1,1:kmax)[mex,mey+1,mez] = p(2:imax-1,jmax-1,1:kmax)
-  endif
-
-  sync all
-
-  !*** unpack y-axis
-  if (mey<ndy) then
-     p(2:imax-1,jmax,1:kmax) = buf2u(2:imax-1,1:kmax)
-  end if
-  if (mey>1) then
-     p(2:imax-1,1   ,1:kmax) = buf2l(2:imax-1,1:kmax)
-  endif
-
-  sync all
-
-  !*** put x-axis
-  if (mex>1) then
-     buf1u(1:jmax,1:kmax)[mex-1,mey,mez] = p(2     ,1:jmax,1:kmax)
-  end if
-  if (mex<ndx) then
-     buf1l(1:jmax,1:kmax)[mex+1,mey,mez] = p(imax-1,1:jmax,1:kmax)
-  endif
-
-  sync all
-
-  !*** unpack x-axis
-  if (mex<ndx) then
-     p(imax,1:jmax,1:kmax) = buf1u(1:jmax,1:kmax)
-  end if
-  if (mex>1) then
-     p(1   ,1:jmax,1:kmax) = buf1l(1:jmax,1:kmax)
-  endif
-
-  sync all
-
+!
+  include 'mpif.h'
+!
+  integer :: ist(mpi_status_size,0:3),ireq(0:3)=(/-1,-1,-1,-1/)
+  integer :: ierr
+!
+  call mpi_irecv(p(1,1,kmax), &
+                 1, &
+                 ijvec, &
+                 npz(2), &
+                 1, &
+                 mpi_comm_cart, &
+                 ireq(3), &
+                 ierr)
+!
+  call mpi_irecv(p(1,1,1), &
+                 1, &
+                 ijvec, &
+                 npz(1), &
+                 2, &
+                 mpi_comm_cart, &
+                 ireq(2), &
+                 ierr)
+!
+  call mpi_isend(p(1,1,2), &
+                 1, &
+                 ijvec, &
+                 npz(1), &
+                 1, &
+                 mpi_comm_cart, &
+                 ireq(0), &
+                 ierr)
+!
+  call mpi_isend(p(1,1,kmax-1), &
+                 1, &
+                 ijvec, &
+                 npz(2), &
+                 2, &
+                 mpi_comm_cart, &
+                 ireq(1), &
+                 ierr)
+!
+  call mpi_waitall(4, &
+                   ireq, &
+                   ist, &
+                   ierr)
+!
   return
-end subroutine sendp
+end subroutine sendp3
+!
+!
+!
+subroutine sendp2()
+!
+  use pres
+  use others
+  use comm
+!
+  implicit none
+!
+  include 'mpif.h'
+!
+  integer :: ist(mpi_status_size,0:3),ireq(0:3)=(/-1,-1,-1,-1/)
+  integer :: ierr
+!
+  call mpi_irecv(p(1,1,1), &
+                 1, &
+                 ikvec, &
+                 npy(1), &
+                 2, &
+                 mpi_comm_cart, &
+                 ireq(3), &
+                 ierr)
+!
+  call mpi_irecv(p(1,jmax,1), &
+                 1, &
+                 ikvec, &
+                 npy(2), &
+                 1, &
+                 mpi_comm_cart, &
+                 ireq(2), &
+                 ierr)
+!
+  call mpi_isend(p(1,2,1), &
+                 1, &
+                 ikvec, &
+                 npy(1), &
+                 1, &
+                 mpi_comm_cart, &
+                 ireq(0), &
+                 ierr)
+!
+  call mpi_isend(p(1,jmax-1,1), &
+                 1, &
+                 ikvec, &
+                 npy(2), &
+                 2, &
+                 mpi_comm_cart, &
+                 ireq(1), &
+                 ierr)
+!
+  call mpi_waitall(4, &
+                   ireq, &
+                   ist, &
+                   ierr)
+!
+  return
+end subroutine sendp2
+!
+!
+!
+subroutine sendp1()
+!
+  use pres
+  use others
+  use comm
+!
+  implicit none
+!
+  include 'mpif.h'
+!
+  integer :: ist(mpi_status_size,0:3),ireq(0:3)=(/-1,-1,-1,-1/)
+  integer :: ierr
+!
+  call mpi_irecv(p(1,1,1), &
+                 1, &
+                 jkvec, &
+                 npx(1), &
+                 2, &
+                 mpi_comm_cart, &
+                 ireq(3), &
+                 ierr)
+!
+  call mpi_irecv(p(imax,1,1), &
+                 1, &
+                 jkvec, &
+                 npx(2), &
+                 1, &
+                 mpi_comm_cart, &
+                 ireq(2), &
+                 ierr)
+!
+  call mpi_isend(p(2,1,1), &
+                 1, &
+                 jkvec, &
+                 npx(1), &
+                 1, &
+                 mpi_comm_cart, &
+                 ireq(0), &
+                 ierr)
+!
+  call mpi_isend(p(imax-1,1,1), &
+                 1, &
+                 jkvec, &
+                 npx(2), &
+                 2, &
+                 mpi_comm_cart, &
+                 ireq(1), &
+                 ierr)
+!
+  call mpi_waitall(4, &
+                   ireq, &
+                   ist, &
+                   ierr)
+!
+  return
+end subroutine sendp1

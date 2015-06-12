@@ -82,6 +82,8 @@ program HimenoBMTxp_f90_CAF
 !
   implicit none
 !
+  include 'mpif.h'
+!
 !     ttarget specifys the measuring period in sec
   integer :: mx,my,mz
   integer :: nn,it,ierr
@@ -132,12 +134,18 @@ program HimenoBMTxp_f90_CAF
   gosa= 0.0
   cpu= 0.0
   sync all
-  cpu0= xmp_wtime()
+  cpu0= mpi_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= xmp_wtime() - cpu0
+  cpu1= mpi_wtime() - cpu0
 !
-  call co_max(cpu1, cpu)
+  call mpi_allreduce(cpu1, &
+                     cpu, &
+                     1, &
+                     mpi_real8, &
+                     mpi_max, &
+                     mpi_comm_world, &
+                     ierr)
 !
   flop=real(mx-2)*real(my-2)*real(mz-2)*34.0
   if(cpu /= 0.0) xmflops2=flop/cpu*1.0d-6*real(nn)
@@ -157,12 +165,18 @@ program HimenoBMTxp_f90_CAF
   gosa= 0.0
   cpu= 0.0
   sync all
-  cpu0= xmp_wtime()
+  cpu0= mpi_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= xmp_wtime() - cpu0
+  cpu1= mpi_wtime() - cpu0
 !
-  call co_max(cpu1, cpu)
+  call mpi_allreduce(cpu1, &
+                     cpu, &
+                     1, &
+                     mpi_real8, &
+                     mpi_max, &
+                     mpi_comm_world, &
+                     ierr)
 !
   if(id == 0) then
      if(cpu /= 0.0)  xmflops2=flop*1.0d-6/cpu*real(nn)
@@ -182,6 +196,8 @@ subroutine readparam
   use comm
 !
   implicit none
+!
+  include 'mpif.h'
 !
   integer :: itmp(3)[*]
 !!!  character(10) :: size[*]     !! to avoid bug #354
@@ -350,6 +366,8 @@ subroutine jacobi(nn,gosa)
 !
   implicit none
 !
+  include 'mpif.h'
+!
   integer,intent(in) :: nn
   real(4),intent(inout) :: gosa
   integer :: i,j,k,loop,ierr
@@ -385,7 +403,13 @@ subroutine jacobi(nn,gosa)
 !
      call sendp()
 !
-     call co_sum(wgosa, gosa)
+     call mpi_allreduce(wgosa, &
+                        gosa, &
+                        1, &
+                        mpi_real4, &
+                        mpi_sum, &
+                        mpi_comm_world, &
+                        ierr)
 !
   enddo
 !! End of iteration
@@ -400,6 +424,8 @@ subroutine initcomm
   use others
 !
   implicit none
+!
+  include 'mpif.h'
 !
   integer,allocatable:: dummy(:)[:,:,:]
 !
@@ -429,6 +455,8 @@ subroutine initmax(mx,my,mz,ks)
   use comm
 !
   implicit none
+!
+  include 'mpif.h'
 !
   integer,intent(in) :: mx,my,mz
   integer,intent(out) :: ks

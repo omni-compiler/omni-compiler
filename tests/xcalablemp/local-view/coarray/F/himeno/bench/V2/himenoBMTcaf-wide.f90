@@ -82,6 +82,8 @@ program HimenoBMTxp_f90_CAF
 !
   implicit none
 !
+  include 'mpif.h'
+!
 !     ttarget specifys the measuring period in sec
   integer :: mx,my,mz
   integer :: nn,it,ierr
@@ -132,12 +134,18 @@ program HimenoBMTxp_f90_CAF
   gosa= 0.0
   cpu= 0.0
   sync all
-  cpu0= xmp_wtime()
+  cpu0= mpi_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= xmp_wtime() - cpu0
+  cpu1= mpi_wtime() - cpu0
 !
-  call co_max(cpu1, cpu)
+  call mpi_allreduce(cpu1, &
+                     cpu, &
+                     1, &
+                     mpi_real8, &
+                     mpi_max, &
+                     mpi_comm_world, &
+                     ierr)
 !
   flop=real(mx-2)*real(my-2)*real(mz-2)*34.0
   if(cpu /= 0.0) xmflops2=flop/cpu*1.0d-6*real(nn)
@@ -157,12 +165,18 @@ program HimenoBMTxp_f90_CAF
   gosa= 0.0
   cpu= 0.0
   sync all
-  cpu0= xmp_wtime()
+  cpu0= mpi_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= xmp_wtime() - cpu0
+  cpu1= mpi_wtime() - cpu0
 !
-  call co_max(cpu1, cpu)
+  call mpi_allreduce(cpu1, &
+                     cpu, &
+                     1, &
+                     mpi_real8, &
+                     mpi_max, &
+                     mpi_comm_world, &
+                     ierr)
 !
   if(id == 0) then
      if(cpu /= 0.0)  xmflops2=flop*1.0d-6/cpu*real(nn)
@@ -182,6 +196,8 @@ subroutine readparam
   use comm
 !
   implicit none
+!
+  include 'mpif.h'
 !
   integer :: itmp(3)[*]
 !!!  character(10) :: size[*]     !! to avoid bug #354
@@ -350,6 +366,8 @@ subroutine jacobi(nn,gosa)
 !
   implicit none
 !
+  include 'mpif.h'
+!
   integer,intent(in) :: nn
   real(4),intent(inout) :: gosa
   integer :: i,j,k,loop,ierr
@@ -385,7 +403,13 @@ subroutine jacobi(nn,gosa)
 !
      call sendp()
 !
-     call co_sum(wgosa, gosa)
+     call mpi_allreduce(wgosa, &
+                        gosa, &
+                        1, &
+                        mpi_real4, &
+                        mpi_sum, &
+                        mpi_comm_world, &
+                        ierr)
 !
   enddo
 !! End of iteration
@@ -400,6 +424,8 @@ subroutine initcomm
   use others
 !
   implicit none
+!
+  include 'mpif.h'
 !
   integer,allocatable:: dummy(:)[:,:,:]
 !
@@ -429,6 +455,8 @@ subroutine initmax(mx,my,mz,ks)
   use comm
 !
   implicit none
+!
+  include 'mpif.h'
 !
   integer,intent(in) :: mx,my,mz
   integer,intent(out) :: ks
@@ -517,60 +545,60 @@ subroutine sendp()
 
   !*** put z-axis
   if (mez>1) then
-     buf3u(2:imax-1,2:jmax-1)[mex,mey,mez-1] = p(2:imax-1,2:jmax-1,2     )
+     buf3u(:,:)[mex,mey,mez-1] = p(:,:,2     )
   end if
   if (mez<ndz) then
-     buf3l(2:imax-1,2:jmax-1)[mex,mey,mez+1] = p(2:imax-1,2:jmax-1,kmax-1)
+     buf3l(:,:)[mex,mey,mez+1] = p(:,:,kmax-1)
   endif
 
   sync all
 
   !*** unpack z-axis
   if (mez<ndz) then
-     p(2:imax-1,2:jmax-1,kmax) = buf3u(2:imax-1,2:jmax-1)
+     p(:,:,kmax) = buf3u(:,:)
   end if
   if (mez>1) then
-     p(2:imax-1,2:jmax-1,1   ) = buf3l(2:imax-1,2:jmax-1)
+     p(:,:,1   ) = buf3l(:,:)
   endif
 
   sync all
 
   !*** put y-axis
   if (mey>1) then
-     buf2u(2:imax-1,1:kmax)[mex,mey-1,mez] = p(2:imax-1,2     ,1:kmax)
+     buf2u(:,:)[mex,mey-1,mez] = p(:,2     ,:)
   end if
   if (mey<ndy) then
-     buf2l(2:imax-1,1:kmax)[mex,mey+1,mez] = p(2:imax-1,jmax-1,1:kmax)
+     buf2l(:,:)[mex,mey+1,mez] = p(:,jmax-1,:)
   endif
 
   sync all
 
   !*** unpack y-axis
   if (mey<ndy) then
-     p(2:imax-1,jmax,1:kmax) = buf2u(2:imax-1,1:kmax)
+     p(:,jmax,:) = buf2u(:,:)
   end if
   if (mey>1) then
-     p(2:imax-1,1   ,1:kmax) = buf2l(2:imax-1,1:kmax)
+     p(:,1   ,:) = buf2l(:,:)
   endif
 
   sync all
 
   !*** put x-axis
   if (mex>1) then
-     buf1u(1:jmax,1:kmax)[mex-1,mey,mez] = p(2     ,1:jmax,1:kmax)
+     buf1u(:,:)[mex-1,mey,mez] = p(2     ,:,:)
   end if
   if (mex<ndx) then
-     buf1l(1:jmax,1:kmax)[mex+1,mey,mez] = p(imax-1,1:jmax,1:kmax)
+     buf1l(:,:)[mex+1,mey,mez] = p(imax-1,:,:)
   endif
 
   sync all
 
   !*** unpack x-axis
   if (mex<ndx) then
-     p(imax,1:jmax,1:kmax) = buf1u(1:jmax,1:kmax)
+     p(imax,:,:) = buf1u(:,:)
   end if
   if (mex>1) then
-     p(1   ,1:jmax,1:kmax) = buf1l(1:jmax,1:kmax)
+     p(1   ,:,:) = buf1l(:,:)
   endif
 
   sync all

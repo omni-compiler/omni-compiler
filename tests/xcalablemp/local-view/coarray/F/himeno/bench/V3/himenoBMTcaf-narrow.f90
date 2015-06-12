@@ -1,3 +1,41 @@
+!*********************************************************************
+!
+! This benchmark test program is measuring a cpu performance
+! of floating point operation by a Poisson equation solver.
+!!
+! If you have any question, please ask me via email.
+! written by Ryutaro HIMENO, November 26, 2001.
+! Version 3.0
+! ----------------------------------------------
+! Ryutaro Himeno, Dr. of Eng.
+! Head of Computer Information Division,
+! RIKEN (The Institute of Pysical and Chemical Research)
+! Email : himeno@postman.riken.go.jp
+! -----------------------------------------------------------
+! You can adjust the size of this benchmark code to fit your target
+! computer. In that case, please chose following sets of
+! (mimax,mjmax,mkmax):
+! small : 65,33,33
+! small : 129,65,65
+! midium: 257,129,129
+! large : 513,257,257
+! ext.large: 1025,513,513
+! This program is to measure a computer performance in MFLOPS
+! by using a kernel which appears in a linear solver of pressure
+! Poisson eq. which appears in an incompressible Navier-Stokes solver.
+! A point-Jacobi method is employed in this solver as this method can 
+! be easyly vectrized and be parallelized.
+! ------------------
+! Finite-difference method, curvilinear coodinate system
+! Vectorizable and parallelizable on each grid point
+! No. of grid points : imax x jmax x kmax including boundaries
+! ------------------
+! A,B,C:coefficient matrix, wrk1: source term of Poisson equation
+! wrk2 : working area, OMEGA : relaxation parameter
+! BND:control variable for boundaries and objects ( = 0 or 1)
+! P: pressure
+! -------------------
+!
 module pres
   implicit none
   real(4),dimension(:,:,:),allocatable :: p
@@ -44,8 +82,6 @@ program HimenoBMTxp_f90_CAF
 !
   implicit none
 !
-  include 'mpif.h'
-!
 !     ttarget specifys the measuring period in sec
   integer :: mx,my,mz
   integer :: nn,it,ierr
@@ -71,28 +107,37 @@ program HimenoBMTxp_f90_CAF
   allocate(buf2u(mimax, mkmax)[ndx,ndy,*])
   allocate(buf3l(mimax, mjmax)[ndx,ndy,*])
   allocate(buf3u(mimax, mjmax)[ndx,ndy,*])
-
-  iop = this_image(buf1l) - 1
 !
 !! Initializing matrixes
   call initmt(mz,it)
 !
-  nn=1
+  if(id == 0) then
+     print *,'Sequential version array size'
+     print *,' mimax=',mx0,' mjmax=',my0,' mkmax=',mz0
+     print *,'Parallel version  array size'
+     print *,' mimax=',mimax,' mjmax=',mjmax,' mkmax=',mkmax
+     print *,' imax=',imax,' jmax=',jmax,' kmax=',kmax
+     print *,' I-decomp= ',ndx,' J-decomp= ',ndy,' K-decomp= ',ndz
+     print *,''                                ! modified for #407
+  end if
+!
+!! Start measuring
+!
+  nn=3
+  if(id == 0) then
+     print *,' Start rehearsal measurement process.'
+     print *,' Measure the performance in 3 times.'
+  end if
 !
   gosa= 0.0
   cpu= 0.0
   sync all
+  cpu0= xmp_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= mpi_wtime() - cpu0
+  cpu1= xmp_wtime() - cpu0
 !
-  call mpi_allreduce(cpu1, &
-                     cpu, &
-                     1, &
-                     mpi_real8, &
-                     mpi_max, &
-                     mpi_comm_world, &
-                     ierr)
+  call co_max(cpu1, cpu)
 !
   flop=real(mx-2)*real(my-2)*real(mz-2)*34.0
   if(cpu /= 0.0) xmflops2=flop/cpu*1.0d-6*real(nn)
@@ -100,6 +145,33 @@ program HimenoBMTxp_f90_CAF
      print *,'  MFLOPS:',xmflops2,'  time(s):',cpu,gosa
   end if
   nn= int(ttarget/(cpu/3.0))
+!
+! end the test loop
+  if(id == 0) then
+     print *,'Now, start the actual measurement process.'
+     print *,'The loop will be excuted in',nn,' times.'
+     print *,'This will take about one minute.'
+     print *,'Wait for a while.'
+  end if
+!
+  gosa= 0.0
+  cpu= 0.0
+  sync all
+  cpu0= xmp_wtime()
+!! Jacobi iteration
+  call jacobi(nn,gosa)
+  cpu1= xmp_wtime() - cpu0
+!
+  call co_max(cpu1, cpu)
+!
+  if(id == 0) then
+     if(cpu /= 0.0)  xmflops2=flop*1.0d-6/cpu*real(nn)
+     print *,' Loop executed for ',nn,' times'
+     print *,' Gosa :',gosa
+     print *,' MFLOPS:',xmflops2, '  time(s):',cpu
+     score=xmflops2/82.84
+     print *,' Score based on Pentium III 600MHz :',score
+  end if
 !
   stop
 end program HimenoBMTxp_f90_CAF
@@ -111,11 +183,31 @@ subroutine readparam
 !
   implicit none
 !
-  include 'mpif.h'
-!
   integer :: itmp(3)[*]
 !!!  character(10) :: size[*]     !! to avoid bug #354
   character(12) :: size(1)[*]
+!
+  if(id == 0) then
+     print *,'For example:'
+     print *,'Grid-size= '
+     print *,'           XS  (64x32x32)'
+     print *,'           S   (128x64x64)'
+     print *,'           M   (256x128x128)'
+     print *,'           L   (512x256x256)'
+     print *,'           XL  (1024x512x512)'
+     print *,' Grid-size = '
+     read(*,*) size
+     print *,''                                ! modified for #407
+     print *,'For example: '
+     print *,'DDM pattern= '
+     print *,'     1 1 2'
+     print *,'     i-direction partitioning : 1'
+     print *,'     j-direction partitioning : 1'
+     print *,'     k-direction partitioning : 2'
+     print *,' DDM pattern = '
+     read(*,*) itmp(1),itmp(2),itmp(3)
+     print *,''                                ! modified for #407
+  end if
 !
   sync all
   if (id /= 0) then
@@ -142,9 +234,51 @@ subroutine grid_set(size)
 !
   character(10),intent(in) :: size
 !
+  select case(size)
+  case("xs")
+     mx0=65
+     my0=33
+     mz0=33
+  case("XS")
+     mx0=65
+     my0=33
+     mz0=33
+  case("s")
+     mx0=129
+     my0=65
+     mz0=65
+  case("S")
+     mx0=129
+     my0=65
+     mz0=65
+  case("m")
      mx0=257
      my0=129
      mz0=129
+  case("M")
+     mx0=257
+     my0=129
+     mz0=129
+  case("l")
+     mx0=513
+     my0=257
+     mz0=257
+  case("L")
+     mx0=513
+     my0=257
+     mz0=257
+  case("xl")
+     mx0=1025
+     my0=513
+     mz0=513
+  case("XL")
+     mx0=1025
+     my0=513
+     mz0=513
+  case default
+     print *,'Invalid input character !!'
+     stop
+  end select
 !
   return
 end subroutine grid_set
@@ -216,8 +350,6 @@ subroutine jacobi(nn,gosa)
 !
   implicit none
 !
-  include 'mpif.h'
-!
   integer,intent(in) :: nn
   real(4),intent(inout) :: gosa
   integer :: i,j,k,loop,ierr
@@ -253,13 +385,7 @@ subroutine jacobi(nn,gosa)
 !
      call sendp()
 !
-     call mpi_allreduce(wgosa, &
-                        gosa, &
-                        1, &
-                        mpi_real4, &
-                        mpi_sum, &
-                        mpi_comm_world, &
-                        ierr)
+     call co_sum(wgosa, gosa)
 !
   enddo
 !! End of iteration
@@ -275,13 +401,15 @@ subroutine initcomm
 !
   implicit none
 !
-  include 'mpif.h'
+  integer,allocatable:: dummy(:)[:,:,:]
 !
   npe = num_images()
   id = this_image() - 1
 !
   call readparam
 !
+  allocate(dummy(0)[ndx,ndy,*])
+  iop = this_image(dummy) - 1
 !
   if(ndx*ndy*ndz /= npe) then
      if(id == 0) then
@@ -301,8 +429,6 @@ subroutine initmax(mx,my,mz,ks)
   use comm
 !
   implicit none
-!
-  include 'mpif.h'
 !
   integer,intent(in) :: mx,my,mz
   integer,intent(out) :: ks
@@ -356,17 +482,13 @@ subroutine initmax(mx,my,mz,ks)
      if(i /= ndz-1)  mz2(i)= mz2(i) + 1
   end do
 !
+  mimax=maxval(mx2(0:ndx-1))
+  mjmax=maxval(my2(0:ndy-1))
+  mkmax=maxval(mz2(0:ndz-1))
+!
   imax= mx2(iop(1))
   jmax= my2(iop(2))
   kmax= mz2(iop(3))
-!
-!!!!! debug point #1
-  call mpi_allreduce(imax, mimax, 1, mpi_integer, &
-                     mpi_max, mpi_comm_world, ierr)
-  call mpi_allreduce(jmax, mjmax, 1, mpi_integer, &
-                     mpi_max, mpi_comm_world, ierr)
-  call mpi_allreduce(kmax, mkmax, 1, mpi_integer, &
-                     mpi_max, mpi_comm_world, ierr)
 !
   if(iop(3) == 0) then
      ks= mz1(iop(3))
@@ -395,60 +517,60 @@ subroutine sendp()
 
   !*** put z-axis
   if (mez>1) then
-     buf3u(:,:)[mex,mey,mez-1] = p(:,:,2     )
+     buf3u(2:imax-1,2:jmax-1)[mex,mey,mez-1] = p(2:imax-1,2:jmax-1,2     )
   end if
   if (mez<ndz) then
-     buf3l(:,:)[mex,mey,mez+1] = p(:,:,kmax-1)
+     buf3l(2:imax-1,2:jmax-1)[mex,mey,mez+1] = p(2:imax-1,2:jmax-1,kmax-1)
   endif
 
   sync all
 
   !*** unpack z-axis
   if (mez<ndz) then
-     p(:,:,kmax) = buf3u(:,:)
+     p(2:imax-1,2:jmax-1,kmax) = buf3u(2:imax-1,2:jmax-1)
   end if
   if (mez>1) then
-     p(:,:,1   ) = buf3l(:,:)
+     p(2:imax-1,2:jmax-1,1   ) = buf3l(2:imax-1,2:jmax-1)
   endif
 
   sync all
 
   !*** put y-axis
   if (mey>1) then
-     buf2u(:,:)[mex,mey-1,mez] = p(:,2     ,:)
+     buf2u(2:imax-1,1:kmax)[mex,mey-1,mez] = p(2:imax-1,2     ,1:kmax)
   end if
   if (mey<ndy) then
-     buf2l(:,:)[mex,mey+1,mez] = p(:,jmax-1,:)
+     buf2l(2:imax-1,1:kmax)[mex,mey+1,mez] = p(2:imax-1,jmax-1,1:kmax)
   endif
 
   sync all
 
   !*** unpack y-axis
   if (mey<ndy) then
-     p(:,jmax,:) = buf2u(:,:)
+     p(2:imax-1,jmax,1:kmax) = buf2u(2:imax-1,1:kmax)
   end if
   if (mey>1) then
-     p(:,1   ,:) = buf2l(:,:)
+     p(2:imax-1,1   ,1:kmax) = buf2l(2:imax-1,1:kmax)
   endif
 
   sync all
 
   !*** put x-axis
   if (mex>1) then
-     buf1u(:,:)[mex-1,mey,mez] = p(2     ,:,:)
+     buf1u(1:jmax,1:kmax)[mex-1,mey,mez] = p(2     ,1:jmax,1:kmax)
   end if
   if (mex<ndx) then
-     buf1l(:,:)[mex+1,mey,mez] = p(imax-1,:,:)
+     buf1l(1:jmax,1:kmax)[mex+1,mey,mez] = p(imax-1,1:jmax,1:kmax)
   endif
 
   sync all
 
   !*** unpack x-axis
   if (mex<ndx) then
-     p(imax,:,:) = buf1u(:,:)
+     p(imax,1:jmax,1:kmax) = buf1u(1:jmax,1:kmax)
   end if
   if (mex>1) then
-     p(1   ,:,:) = buf1l(:,:)
+     p(1   ,1:jmax,1:kmax) = buf1l(1:jmax,1:kmax)
   endif
 
   sync all
