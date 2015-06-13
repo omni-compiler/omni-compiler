@@ -17,6 +17,7 @@ public enum ACCpragma {
   DECLARE,
   UPDATE,
   WAIT,
+  ATOMIC,
 
   
   //general
@@ -70,7 +71,13 @@ public enum ACCpragma {
   //update clause
   HOST,
   DEVICE,
-  
+
+  //atomic clause
+  READ,
+  WRITE,
+  CAPTURE,
+  //UPDATE,
+
   //internal
   ;
   
@@ -184,6 +191,7 @@ public enum ACCpragma {
     case WAIT:
     case ENTER_DATA:
     case EXIT_DATA:
+    case ATOMIC:
       return true;
     }
     return false;

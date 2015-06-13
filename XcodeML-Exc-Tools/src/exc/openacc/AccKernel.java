@@ -347,8 +347,21 @@ public class AccKernel {
     case FOR_STATEMENT:
       return makeCoreBlockForStatement((CforBlock) b, deviceKernelBuildInfo);
     case COMPOUND_STATEMENT:
-    case ACC_PRAGMA:
-      return makeCoreBlock(b.getBody(), deviceKernelBuildInfo);
+    case ACC_PRAGMA: {
+      PragmaBlock pb = (PragmaBlock)b;
+      ACCpragma pragma = ACCpragma.valueOf(pb.getPragma());
+      if(pragma == ACCpragma.ATOMIC) {
+        AccAtomic atomicDirective = (AccAtomic)b.getProp(AccDirective.prop);
+        try {
+          return atomicDirective.makeAtomicBlock();
+        } catch (ACCexception exception) {
+          exception.printStackTrace();
+          ACC.fatal("failed at atomic");
+        }
+      }else {
+        return makeCoreBlock(b.getBody(), deviceKernelBuildInfo);
+      }
+    }
     case IF_STATEMENT: {
       if (!outerParallelisms.contains(ACCpragma.VECTOR)) {
         BlockList resultBody = Bcons.emptyBody();

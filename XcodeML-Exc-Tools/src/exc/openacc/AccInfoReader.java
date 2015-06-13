@@ -66,6 +66,9 @@ class AccInfoReader extends AccProcessor{
     case EXIT_DATA:
       pb.setProp(AccDirective.prop, new AccExitData(_globalDecl, info, pb));
       break;
+    case ATOMIC:
+      pb.setProp(AccDirective.prop, new AccAtomic(_globalDecl, info, pb));
+      break;
     default:
     }
   }
