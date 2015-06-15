@@ -7,7 +7,7 @@
 ##------------------------------------- to here
 #PJM --stg-transfiles all
 #PJM --mpi "use-rankdir"
-#PJM --stgin "rank=* ../*.x ./stdin* %r:./"
+#PJM --stgin "rank=* ../*.x ./STDIN/* %r:./"
 ##PJM --stgout "rank=* %r:./Fprofd_stati/* ./job%j/Fprofd_stati/"
 #PJM -s
 
