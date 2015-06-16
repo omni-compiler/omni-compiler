@@ -347,6 +347,7 @@ public class AccKernel {
     case FOR_STATEMENT:
       return makeCoreBlockForStatement((CforBlock) b, deviceKernelBuildInfo);
     case COMPOUND_STATEMENT:
+      return makeCoreBlock(b.getBody(), deviceKernelBuildInfo);
     case ACC_PRAGMA: {
       PragmaBlock pb = (PragmaBlock)b;
       ACCpragma pragma = ACCpragma.valueOf(pb.getPragma());

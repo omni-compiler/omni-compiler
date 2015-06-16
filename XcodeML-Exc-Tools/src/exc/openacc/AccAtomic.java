@@ -2,12 +2,14 @@ package exc.openacc;
 
 import exc.block.*;
 import exc.object.*;
+import exc.util.MachineDep;
+import exc.util.MachineDepConst;
 
 import java.util.*;
 
 
 class AccAtomic extends AccDirective {
-  Xtype _type;
+  private Xtype _type;
   private Xcode _operator;
   private Xobject _operand;
   private Xobject _val;
@@ -129,6 +131,9 @@ class AccAtomic extends AccDirective {
         _operand = lhs;
         _val = rhsLeftOp;
         _operator = rhs.Opcode();
+        if(_operator == Xcode.MINUS_EXPR || _operator == Xcode.DIV_EXPR){
+          throw new ACCexception("'x = expr {-,/} x' is not supported yet");
+        }
       } else {
         throw new ACCexception("not vaild");
       }
@@ -169,15 +174,24 @@ class AccAtomic extends AccDirective {
     if (!addr.Type().isPointer()) {
       throw new ACCexception("not addr");
     }
-
+    Xtype castType = null;
     switch (op) {
+    case POST_INCR_EXPR:   // x++
+    case PRE_INCR_EXPR:    // ++x
+      val = Xcons.IntConstant(1);
     case ASG_PLUS_EXPR:    // +=
     case PLUS_EXPR:        // +
       funcKind = "Add";
+      castType = getCudaAtomicAddCastType();
       break;
+    case POST_DECR_EXPR:   // x--
+    case PRE_DECR_EXPR:    // --x
+      val = Xcons.IntConstant(1);
     case ASG_MINUS_EXPR:   // -=
     case MINUS_EXPR:       // -
-      funcKind = "Sub";
+      funcKind = "Add";
+      castType = getCudaAtomicAddCastType();
+      val = Xcons.unaryOp(Xcode.UNARY_MINUS_EXPR, val);
       break;
     case ASG_BIT_AND_EXPR: // &=
     case BIT_AND_EXPR:     // &
@@ -190,16 +204,6 @@ class AccAtomic extends AccDirective {
     case ASG_BIT_OR_EXPR:  // |=
     case BIT_OR_EXPR:      // |
       funcKind = "Or";
-      break;
-    case POST_INCR_EXPR:   // x++
-    case PRE_INCR_EXPR:    // ++x
-      funcKind = "Add";
-      val = Xcons.IntConstant(1);
-      break;
-    case POST_DECR_EXPR:   // x--
-    case PRE_DECR_EXPR:    // --x
-      funcKind = "Sub";
-      val = Xcons.IntConstant(1);
       break;
     case ASG_MUL_EXPR:     // *=
     case MUL_EXPR:         // *
@@ -214,11 +218,32 @@ class AccAtomic extends AccDirective {
       throw new ACCexception("unsupported operator");
     }
 
-    Ident funcId = _decl.declExternIdent("atomic" + funcKind, Xtype.Function(_type)); //not voidtype
+    if(castType != null){
+      addr = Xcons.Cast(Xtype.Pointer(castType), addr);
+      val = Xcons.Cast(castType, val);
+    }else{
+      addr = Xcons.Cast(Xtype.Pointer(_type), addr);
+      val = Xcons.Cast(_type, val);
+    }
+    
+    Ident funcId = ACCutil.getMacroFuncId("atomic" + funcKind, castType);
     XobjList args = Xcons.List(addr);
     if (val != null) {
       args.add(val);
     }
     return funcId.Call(args);
+  }
+
+  private Xtype getCudaAtomicAddCastType() {
+    if(_type.equals(Xtype.longType) || _type.equals(Xtype.unsignedlongType)){
+      if(MachineDepConst.SIZEOF_UNSIGNED_INT == MachineDepConst.SIZEOF_UNSIGNED_LONG){
+        return (Xtype.unsignedType);
+      }else{
+        return (Xtype.unsignedlonglongType);
+      }
+    }else if(_type.equals(Xtype.longlongType)){
+      return (Xtype.unsignedlonglongType);
+    }
+    return null;
   }
 }
