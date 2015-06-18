@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ## Check arguments
 if test -z $1; then
@@ -25,7 +25,9 @@ GASNET_PATH=/opt/GASNet-1.24.2
 clean_files(){
     echo -n "Clean temporal files... "
     rm -rf ${LOCAL_TMP_DIR}
-    ssh ${REMOTE_HOST} "rm -rf ${REMOTE_TMP_DIR}"
+    ## Only once "rm -rf", rarely all files are not deleted, because slurm output files are created.
+    ## So "rm -rf" are executed twice.
+    ssh ${REMOTE_HOST} "rm -rf ${REMOTE_TMP_DIR} 2> /dev/null; rm -rf ${REMOTE_TMP_DIR}"
     echo "done"
     exit 0
 }
@@ -53,7 +55,7 @@ echo "done"
 
 ## Transfer the current omni-compiler
 echo -n "Transfer archive ... "
-MKDIR_CMD="if test -d ${REMOTE_TMP_DIR}; then; \
+MKDIR_CMD="if test -d ${REMOTE_TMP_DIR}; then \
              echo \"Error ${REMOTE_HOST}:${REMOTE_TMP_DIR} exist\"; exit 1;\
            else\
              mkdir -p ${REMOTE_TMP_DIR}; \

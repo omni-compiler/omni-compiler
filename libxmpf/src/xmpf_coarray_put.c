@@ -214,8 +214,10 @@ int _select_putscheme_scalar(int condition, int element)
   // Temporary handling: in spite of condition, BufferPut or 
   // ExtraBufferPut will be selected because judgement of condition
   // seems inaccurate.
-  //  if (condition >= 1) { 
-  if (condition >= 0) {
+  //  if (condition >= 0) { 
+  //
+  // 2015.06.15 change back to conditional decision
+  if (condition >= 1) {
    if (element % BOUNDARY_BYTE == 0)
       return SCHEME_BufferPut;
     return SCHEME_ExtraBufferPut;

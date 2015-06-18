@@ -1,0 +1,469 @@
+Env_base: K-1.2.0-17-2
+
+****************************************************
+himenoBMT mpi.x M 222 (M-model/8-nodes)
+****************************************************
+ For example:
+ Grid-size= 
+            XS  (64x32x32)
+            S   (128x64x64)
+            M   (256x128x128)
+            L   (512x256x256)
+            XL  (1024x512x512)
+  Grid-size = 
+ 
+ For example: 
+ DDM pattern= 
+      1 1 2
+      i-direction partitioning : 1
+      j-direction partitioning : 1
+      k-direction partitioning : 2
+  DDM pattern = 
+ 
+ Sequential version array size
+  mimax= 257  mjmax= 129  mkmax= 129
+ Parallel version  array size
+  mimax= 130  mjmax= 66  mkmax= 66
+  imax= 129  jmax= 65  kmax= 65
+  I-decomp=  2  J-decomp=  2  K-decomp=  2
+ 
+  Start rehearsal measurement process.
+  Measure the performance in 3 times.
+   MFLOPS: 14414.69333068649   time(s): 2.853445429354906E-02 1.68943661E-03
+ Now, start the actual measurement process.
+ The loop will be excuted in 6308  times.
+ This will take about one minute.
+ Wait for a while.
+  Loop executed for  6308  times
+  Gosa : 9.38686644E-05
+  MFLOPS: 16114.83328597870   time(s): 53.66851661074907
+  Score based on Pentium III 600MHz : 194.529617
+
+****************************************************
+himenoBMT caf-wide.x M 222 (M-model/8-nodes)
+****************************************************
+ For example:
+ Grid-size= 
+            XS  (64x32x32)
+            S   (128x64x64)
+            M   (256x128x128)
+            L   (512x256x256)
+            XL  (1024x512x512)
+  Grid-size = 
+ 
+ For example: 
+ DDM pattern= 
+      1 1 2
+      i-direction partitioning : 1
+      j-direction partitioning : 1
+      k-direction partitioning : 2
+  DDM pattern = 
+ 
+ Sequential version array size
+  mimax= 257  mjmax= 129  mkmax= 129
+ Parallel version  array size
+  mimax= 129  mjmax= 65  mkmax= 65
+  imax= 129  jmax= 65  kmax= 65
+  I-decomp=  2  J-decomp=  2  K-decomp=  2
+ 
+  Start rehearsal measurement process.
+  Measure the performance in 3 times.
+   MFLOPS: 18070.55745087746   time(s): 2.276163361966610E-02 1.68943661E-03
+ Now, start the actual measurement process.
+ The loop will be excuted in 7908  times.
+ This will take about one minute.
+ Wait for a while.
+  Loop executed for  7908  times
+  Gosa : 5.18912821E-05
+  MFLOPS: 18313.25782275487   time(s): 59.20450779329985
+  Score based on Pentium III 600MHz : 221.067825
+
+****************************************************
+himenoBMT caf-narrow.x M 222 (M-model/8-nodes)
+****************************************************
+ For example:
+ Grid-size= 
+            XS  (64x32x32)
+            S   (128x64x64)
+            M   (256x128x128)
+            L   (512x256x256)
+            XL  (1024x512x512)
+  Grid-size = 
+ 
+ For example: 
+ DDM pattern= 
+      1 1 2
+      i-direction partitioning : 1
+      j-direction partitioning : 1
+      k-direction partitioning : 2
+  DDM pattern = 
+ 
+ Sequential version array size
+  mimax= 257  mjmax= 129  mkmax= 129
+ Parallel version  array size
+  mimax= 129  mjmax= 65  mkmax= 65
+  imax= 129  jmax= 65  kmax= 65
+  I-decomp=  2  J-decomp=  2  K-decomp=  2
+ 
+  Start rehearsal measurement process.
+  Measure the performance in 3 times.
+   MFLOPS: 17154.61493329027   time(s): 2.397695370018482E-02 1.68943661E-03
+ Now, start the actual measurement process.
+ The loop will be excuted in 7507  times.
+ This will take about one minute.
+ Wait for a while.
+  Loop executed for  7507  times
+  Gosa : 6.01824795E-05
+  MFLOPS: 16614.37749867138   time(s): 61.94925184734166
+  Score based on Pentium III 600MHz : 200.559860
+
+****************************************************
+himenoBMT caf-fit.x M 222 (M-model/8-nodes)
+****************************************************
+ For example:
+ Grid-size= 
+            XS  (64x32x32)
+            S   (128x64x64)
+            M   (256x128x128)
+            L   (512x256x256)
+            XL  (1024x512x512)
+  Grid-size = 
+ 
+ For example: 
+ DDM pattern= 
+      1 1 2
+      i-direction partitioning : 1
+      j-direction partitioning : 1
+      k-direction partitioning : 2
+  DDM pattern = 
+ 
+ Sequential version array size
+  mimax= 257  mjmax= 129  mkmax= 129
+ Parallel version  array size
+  mimax= 129  mjmax= 65  mkmax= 65
+  imax= 129  jmax= 65  kmax= 65
+  I-decomp=  2  J-decomp=  2  K-decomp=  2
+ 
+  Start rehearsal measurement process.
+  Measure the performance in 3 times.
+   MFLOPS: 18122.01140611222   time(s): 2.269700635224581E-02 1.68943661E-03
+ Now, start the actual measurement process.
+ The loop will be excuted in 7930  times.
+ This will take about one minute.
+ Wait for a while.
+  Loop executed for  7930  times
+  Gosa : 5.14702333E-05
+  MFLOPS: 18233.39341207453   time(s): 59.62925846595317
+  Score based on Pentium III 600MHz : 220.103745
+
+****************************************************
+himenoBMT mpi.x L 222 (L-model/8-nodes)
+****************************************************
+ For example:
+ Grid-size= 
+            XS  (64x32x32)
+            S   (128x64x64)
+            M   (256x128x128)
+            L   (512x256x256)
+            XL  (1024x512x512)
+  Grid-size = 
+ 
+ For example: 
+ DDM pattern= 
+      1 1 2
+      i-direction partitioning : 1
+      j-direction partitioning : 1
+      k-direction partitioning : 2
+  DDM pattern = 
+ 
+ Sequential version array size
+  mimax= 513  mjmax= 257  mkmax= 257
+ Parallel version  array size
+  mimax= 258  mjmax= 130  mkmax= 130
+  imax= 257  jmax= 129  kmax= 129
+  I-decomp=  2  J-decomp=  2  K-decomp=  2
+ 
+  Start rehearsal measurement process.
+  Measure the performance in 3 times.
+   MFLOPS: 15091.11823347718   time(s): 0.2223905688151717 8.84370296E-04
+ Now, start the actual measurement process.
+ The loop will be excuted in 809  times.
+ This will take about one minute.
+ Wait for a while.
+  Loop executed for  809  times
+  Gosa : 6.15236931E-04
+  MFLOPS: 15286.86287926366   time(s): 59.20340484846383
+  Score based on Pentium III 600MHz : 184.534805
+
+****************************************************
+himenoBMT caf-wide.x L 222 (L-model/8-nodes)
+****************************************************
+ For example:
+ Grid-size= 
+            XS  (64x32x32)
+            S   (128x64x64)
+            M   (256x128x128)
+            L   (512x256x256)
+            XL  (1024x512x512)
+  Grid-size = 
+ 
+ For example: 
+ DDM pattern= 
+      1 1 2
+      i-direction partitioning : 1
+      j-direction partitioning : 1
+      k-direction partitioning : 2
+  DDM pattern = 
+ 
+ Sequential version array size
+  mimax= 513  mjmax= 257  mkmax= 257
+ Parallel version  array size
+  mimax= 257  mjmax= 129  mkmax= 129
+  imax= 257  jmax= 129  kmax= 129
+  I-decomp=  2  J-decomp=  2  K-decomp=  2
+ 
+  Start rehearsal measurement process.
+  Measure the performance in 3 times.
+   MFLOPS: 18563.90956418641   time(s): 0.1807874767109752 8.84370296E-04
+ Now, start the actual measurement process.
+ The loop will be excuted in 995  times.
+ This will take about one minute.
+ Wait for a while.
+  Loop executed for  995  times
+  Gosa : 5.90147742E-04
+  MFLOPS: 18811.77261593209   time(s): 59.17113402578980
+  Score based on Pentium III 600MHz : 227.085632
+
+****************************************************
+himenoBMT caf-narrow.x L 222 (L-model/8-nodes)
+****************************************************
+ For example:
+ Grid-size= 
+            XS  (64x32x32)
+            S   (128x64x64)
+            M   (256x128x128)
+            L   (512x256x256)
+            XL  (1024x512x512)
+  Grid-size = 
+ 
+ For example: 
+ DDM pattern= 
+      1 1 2
+      i-direction partitioning : 1
+      j-direction partitioning : 1
+      k-direction partitioning : 2
+  DDM pattern = 
+ 
+ Sequential version array size
+  mimax= 513  mjmax= 257  mkmax= 257
+ Parallel version  array size
+  mimax= 257  mjmax= 129  mkmax= 129
+  imax= 257  jmax= 129  kmax= 129
+  I-decomp=  2  J-decomp=  2  K-decomp=  2
+ 
+  Start rehearsal measurement process.
+  Measure the performance in 3 times.
+   MFLOPS: 18327.85068870517   time(s): 0.1831159815192223 8.84370296E-04
+ Now, start the actual measurement process.
+ The loop will be excuted in 982  times.
+ This will take about one minute.
+ Wait for a while.
+  Loop executed for  982  times
+  Gosa : 5.91784716E-04
+  MFLOPS: 18328.99850200347   time(s): 59.93621100857854
+  Score based on Pentium III 600MHz : 221.257843
+
+****************************************************
+himenoBMT caf-fit.x L 222 (L-model/8-nodes)
+****************************************************
+ For example:
+ Grid-size= 
+            XS  (64x32x32)
+            S   (128x64x64)
+            M   (256x128x128)
+            L   (512x256x256)
+            XL  (1024x512x512)
+  Grid-size = 
+ 
+ For example: 
+ DDM pattern= 
+      1 1 2
+      i-direction partitioning : 1
+      j-direction partitioning : 1
+      k-direction partitioning : 2
+  DDM pattern = 
+ 
+ Sequential version array size
+  mimax= 513  mjmax= 257  mkmax= 257
+ Parallel version  array size
+  mimax= 257  mjmax= 129  mkmax= 129
+  imax= 257  jmax= 129  kmax= 129
+  I-decomp=  2  J-decomp=  2  K-decomp=  2
+ 
+  Start rehearsal measurement process.
+  Measure the performance in 3 times.
+   MFLOPS: 18572.28004611331   time(s): 0.1807059962302446 8.84370296E-04
+ Now, start the actual measurement process.
+ The loop will be excuted in 996  times.
+ This will take about one minute.
+ Wait for a while.
+  Loop executed for  996  times
+  Gosa : 5.89976378E-04
+  MFLOPS: 18677.13808827746   time(s): 59.65756749827415
+  Score based on Pentium III 600MHz : 225.460388
+
+****************************************************
+himenoBMT mpi.x XL 222 (XL-model/8-nodes)
+****************************************************
+ For example:
+ Grid-size= 
+            XS  (64x32x32)
+            S   (128x64x64)
+            M   (256x128x128)
+            L   (512x256x256)
+            XL  (1024x512x512)
+  Grid-size = 
+ 
+ For example: 
+ DDM pattern= 
+      1 1 2
+      i-direction partitioning : 1
+      j-direction partitioning : 1
+      k-direction partitioning : 2
+  DDM pattern = 
+ 
+ Sequential version array size
+  mimax= 1025  mjmax= 513  mkmax= 513
+ Parallel version  array size
+  mimax= 514  mjmax= 258  mkmax= 258
+  imax= 513  jmax= 257  kmax= 257
+  I-decomp=  2  J-decomp=  2  K-decomp=  2
+ 
+  Start rehearsal measurement process.
+  Measure the performance in 3 times.
+   MFLOPS: 2685.066102934959   time(s): 10.09802521672100 2.75879313E-04
+ Now, start the actual measurement process.
+ The loop will be excuted in 17  times.
+ This will take about one minute.
+ Wait for a while.
+  Loop executed for  17  times
+  Gosa : 2.60865054E-04
+  MFLOPS: 2685.882875159495   time(s): 57.20474174246192
+  Score based on Pentium III 600MHz : 32.4225388
+
+****************************************************
+himenoBMT caf-wide.x XL 222 (XL-model/8-nodes)
+****************************************************
+ For example:
+ Grid-size= 
+            XS  (64x32x32)
+            S   (128x64x64)
+            M   (256x128x128)
+            L   (512x256x256)
+            XL  (1024x512x512)
+  Grid-size = 
+ 
+ For example: 
+ DDM pattern= 
+      1 1 2
+      i-direction partitioning : 1
+      j-direction partitioning : 1
+      k-direction partitioning : 2
+  DDM pattern = 
+ 
+ Sequential version array size
+  mimax= 1025  mjmax= 513  mkmax= 513
+ Parallel version  array size
+  mimax= 513  mjmax= 257  mkmax= 257
+  imax= 513  jmax= 257  kmax= 257
+  I-decomp=  2  J-decomp=  2  K-decomp=  2
+ 
+  Start rehearsal measurement process.
+  Measure the performance in 3 times.
+   MFLOPS: 6400.417696390335   time(s): 4.236264959909022 2.75879313E-04
+ Now, start the actual measurement process.
+ The loop will be excuted in 42  times.
+ This will take about one minute.
+ Wait for a while.
+  Loop executed for  42  times
+  Gosa : 2.57333391E-04
+  MFLOPS: 6400.396092836578   time(s): 59.30790962278843
+  Score based on Pentium III 600MHz : 77.2621460
+
+****************************************************
+himenoBMT caf-narrow.x XL 222 (XL-model/8-nodes)
+****************************************************
+ For example:
+ Grid-size= 
+            XS  (64x32x32)
+            S   (128x64x64)
+            M   (256x128x128)
+            L   (512x256x256)
+            XL  (1024x512x512)
+  Grid-size = 
+ 
+ For example: 
+ DDM pattern= 
+      1 1 2
+      i-direction partitioning : 1
+      j-direction partitioning : 1
+      k-direction partitioning : 2
+  DDM pattern = 
+ 
+ Sequential version array size
+  mimax= 1025  mjmax= 513  mkmax= 513
+ Parallel version  array size
+  mimax= 513  mjmax= 257  mkmax= 257
+  imax= 513  jmax= 257  kmax= 257
+  I-decomp=  2  J-decomp=  2  K-decomp=  2
+ 
+  Start rehearsal measurement process.
+  Measure the performance in 3 times.
+   MFLOPS: 6391.824399232342   time(s): 4.241960279643536 2.75879313E-04
+ Now, start the actual measurement process.
+ The loop will be excuted in 42  times.
+ This will take about one minute.
+ Wait for a while.
+  Loop executed for  42  times
+  Gosa : 2.57333391E-04
+  MFLOPS: 6390.922157739763   time(s): 59.39582796581089
+  Score based on Pentium III 600MHz : 77.1477814
+
+****************************************************
+himenoBMT caf-fit.x XL 222 (XL-model/8-nodes)
+****************************************************
+ For example:
+ Grid-size= 
+            XS  (64x32x32)
+            S   (128x64x64)
+            M   (256x128x128)
+            L   (512x256x256)
+            XL  (1024x512x512)
+  Grid-size = 
+ 
+ For example: 
+ DDM pattern= 
+      1 1 2
+      i-direction partitioning : 1
+      j-direction partitioning : 1
+      k-direction partitioning : 2
+  DDM pattern = 
+ 
+ Sequential version array size
+  mimax= 1025  mjmax= 513  mkmax= 513
+ Parallel version  array size
+  mimax= 513  mjmax= 257  mkmax= 257
+  imax= 513  jmax= 257  kmax= 257
+  I-decomp=  2  J-decomp=  2  K-decomp=  2
+ 
+  Start rehearsal measurement process.
+  Measure the performance in 3 times.
+   MFLOPS: 6388.459200064737   time(s): 4.244194784201682 2.75879313E-04
+ Now, start the actual measurement process.
+ The loop will be excuted in 42  times.
+ This will take about one minute.
+ Wait for a while.
+  Loop executed for  42  times
+  Gosa : 2.57333391E-04
+  MFLOPS: 6388.397934184071   time(s): 59.41929681506008
+  Score based on Pentium III 600MHz : 77.1173096

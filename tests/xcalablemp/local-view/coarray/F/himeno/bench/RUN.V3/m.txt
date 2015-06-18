@@ -1,0 +1,47 @@
+klogin4$ make clean
+rm -f mpi.x caf-wide.x caf-narrow.x caf-fit.x
+rm -rf a.out *.mod *.xmod *.o *~ __omni_tmp__
+klogin4$ make
+mpifrtpx himenoBMTxpr.f90 -o mpi.x
+Fortran diagnostic messages: program name(initmt)
+  jwd2006i-i  "himenoBMTxpr.f90", line 314: 'j' is declared but never referenced.
+  jwd2006i-i  "himenoBMTxpr.f90", line 314: 'i' is declared but never referenced.
+xmpf90 himenoBMTcaf-wide.f90 -o caf-wide.x
+Picked up _JAVA_OPTIONS: -Xmx200m
+Fortran diagnostic messages: program name(xmpf_main)
+  jwd2006i-i  "himenoBMTcaf-wide.f90", line 87: 'ierr' is declared but never referenced.
+  jwd1309i-i  "himenoBMTcaf-wide.f90", line 177: Statement unreachable.
+Fortran diagnostic messages: program name(initmax)
+  jwd2006i-i  "himenoBMTcaf-wide.f90", line 435: 'ierr' is declared but never referenced.
+Fortran diagnostic messages: program name(initmt)
+  jwd2006i-i  "himenoBMTcaf-wide.f90", line 299: 'i' is declared but never referenced.
+  jwd2006i-i  "himenoBMTcaf-wide.f90", line 299: 'j' is declared but never referenced.
+Fortran diagnostic messages: program name(jacobi)
+  jwd2006i-i  "himenoBMTcaf-wide.f90", line 355: 'ierr' is declared but never referenced.
+xmpf90 himenoBMTcaf-narrow.f90 -o caf-narrow.x
+Picked up _JAVA_OPTIONS: -Xmx200m
+Fortran diagnostic messages: program name(xmpf_main)
+  jwd2006i-i  "himenoBMTcaf-narrow.f90", line 87: 'ierr' is declared but never referenced.
+  jwd1309i-i  "himenoBMTcaf-narrow.f90", line 177: Statement unreachable.
+Fortran diagnostic messages: program name(initmax)
+  jwd2006i-i  "himenoBMTcaf-narrow.f90", line 435: 'ierr' is declared but never referenced.
+Fortran diagnostic messages: program name(initmt)
+  jwd2006i-i  "himenoBMTcaf-narrow.f90", line 299: 'i' is declared but never referenced.
+  jwd2006i-i  "himenoBMTcaf-narrow.f90", line 299: 'j' is declared but never referenced.
+Fortran diagnostic messages: program name(jacobi)
+  jwd2006i-i  "himenoBMTcaf-narrow.f90", line 355: 'ierr' is declared but never referenced.
+xmpf90 himenoBMTcaf-fit.f90 -o caf-fit.x
+Picked up _JAVA_OPTIONS: -Xmx200m
+Fortran diagnostic messages: program name(xmpf_main)
+  jwd2006i-i  "himenoBMTcaf-fit.f90", line 87: 'ierr' is declared but never referenced.
+  jwd1309i-i  "himenoBMTcaf-fit.f90", line 177: Statement unreachable.
+Fortran diagnostic messages: program name(initmax)
+  jwd2006i-i  "himenoBMTcaf-fit.f90", line 435: 'ierr' is declared but never referenced.
+Fortran diagnostic messages: program name(initmt)
+  jwd2006i-i  "himenoBMTcaf-fit.f90", line 299: 'i' is declared but never referenced.
+  jwd2006i-i  "himenoBMTcaf-fit.f90", line 299: 'j' is declared but never referenced.
+Fortran diagnostic messages: program name(jacobi)
+  jwd2006i-i  "himenoBMTcaf-fit.f90", line 355: 'ierr' is declared but never referenced.
+klogin4$ pwd
+/home/ra000002/a03177/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench
+klogin4$ 

@@ -33,6 +33,8 @@ public class XMPcoarray {
   //private Xtype originalType;
   private Boolean isAllocatable;
   private Boolean isPointer;
+  private Boolean _isUseAssociated;
+  private Boolean _wasMovedFromModule = false;
 
   // corresponding cray pointer and descriptor
   private String _crayPtrName = null;
@@ -63,6 +65,7 @@ public class XMPcoarray {
     //originalType = ident.Type().copy();
     isAllocatable = ident.Type().isFallocatable();
     isPointer = ident.Type().isFpointer();
+    _isUseAssociated = (ident.getFdeclaredModule() != null);
     if (DEBUG) System.out.println("[XMPcoarray] new coarray = "+this);
   }
 
@@ -614,7 +617,7 @@ public class XMPcoarray {
   }
 
   public Boolean isUseAssociated() {
-    return ident.getFdeclaredModule() != null;
+    return _isUseAssociated;
   }
 
 
@@ -689,6 +692,15 @@ public class XMPcoarray {
   public Xtype getType() {
     return ident.Type();
   }
+
+  public void setWasMovedFromModule(Boolean bool) {
+    _wasMovedFromModule = bool;
+  }
+
+  public Boolean wasMovedFromModule() {
+    return _wasMovedFromModule;
+  }
+
 
   //public Xtype getOriginalType() {
   //return originalType;

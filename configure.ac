@@ -57,7 +57,7 @@ userJAR=${JAR}
 # --------------------------------------------------------------------
 # Initialize for autoconf
 LT_INIT
-if test -z ${LIBTOOL}; then
+if test -z "$LIBTOOL"; then
    AC_MSG_ERROR([Please install newer automake/autoconf/libtool. We recommend automake-1.14/autoconf-2.69/libtool-2.4.2.])
 fi
 #AC_SUBST(LIBTOOL)
