@@ -10,7 +10,7 @@ OMNI_FPP_OPT="@MPI_FPPFLAGS@ @XMPF_DEF@ ${OMNI_FPP_MUST_OPT}"
 
 # FrontEnd
 OMNI_F2X_CMD="${OMNI_HOME}/bin/F_Front"
-OMNI_F2X_MUST_OPT="-fxmp -I${OMNI_HOME}/include -M${OMNI_HOME}/include"
+OMNI_F2X_MUST_OPT="-fxmp -I${OMNI_HOME}/include -M."
 OMNI_F2X_OPT="${OMNI_F2X_MUST_OPT} @OMNI_F2X_FLAGS@"
 
 # Translator

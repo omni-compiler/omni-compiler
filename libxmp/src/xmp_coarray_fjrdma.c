@@ -104,8 +104,6 @@ static void _RDMA_mput(const size_t target_rank, uint64_t* raddrs, uint64_t* lad
 /*               [IN] *lengths       : Lengths                          */
 /*               [IN] transfer_elmts : Number of transfer elements      */
 /*               [IN] elmt_size      : Element size                     */
-/* EXAMPLE    :                                                         */
-/*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
 static void _fjrdma_scalar_mput_do(const size_t target_rank, uint64_t* raddrs, uint64_t* laddrs,
                                    size_t* lengths, const size_t transfer_elmts, const size_t elmt_size)
