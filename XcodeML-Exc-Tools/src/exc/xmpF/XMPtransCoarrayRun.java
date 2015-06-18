@@ -121,7 +121,8 @@ public class XMPtransCoarrayRun
     //   though they and their descPtrId will be eliminated after.
     for (XMPcoarray coarray: useAssociatedCoarrays) {
       //      if (coarray.isExplicitShape())   // found it
-        copyCoarrayInLocalCoarrays(coarray);
+      XMPcoarray coarray2 = copyCoarrayInLocalCoarrays(coarray);
+      coarray2.setWasMovedFromModule(true);
     }
 
     // divide localCoarrays into four types
@@ -1156,11 +1157,20 @@ public class XMPtransCoarrayRun
     }
 
     Xobject tag;
-    if (coarray.def == def)
-      tag = Xcons.FvarRef(getResourceTagId());
-    else
-      // the coarray is defined in different procedure
+    if (coarray.wasMovedFromModule() || coarray.def != def) {
+      // coarray is originally defined in a use-associated module or
+      // in a different procedure
+      // ... do not deallocate automatically at the exit of the procedure
       tag = Xcons.IntConstant(0, Xtype.Fint8Type, "8");
+      //////////////////////
+      System.out.println("gaccha, "+coarray);
+      //////////////////////
+    } else {
+      tag = Xcons.FvarRef(getResourceTagId());
+      //////////////////////
+      System.out.println("no gaccha, "+coarray);
+      //////////////////////
+    }
 
     Xobject descId = coarray.getDescPointerId();
     if (descId == null)
@@ -1329,7 +1339,7 @@ public class XMPtransCoarrayRun
   /*
    *  useful to move host- and use-associcated coarrays into the list of local coarrays.
    */
-  private void copyCoarrayInLocalCoarrays(XMPcoarray coarray1) {
+  private XMPcoarray copyCoarrayInLocalCoarrays(XMPcoarray coarray1) {
     Xtype type1 = coarray1.getIdent().Type().copy();
     String name1 = coarray1.getName();
     env.removeIdent(name1, null);
@@ -1342,6 +1352,7 @@ public class XMPtransCoarrayRun
     XMPcoarray coarray2 = new XMPcoarray(ident2, def, fblock, env);
 
     localCoarrays.add(coarray2);
+    return coarray2;
   }
 
 
@@ -1580,7 +1591,7 @@ public class XMPtransCoarrayRun
                                             null);
     }
 
-    // Prolog/Epilog cades are necessary if and only if the resource tag is
+    // Prolog/Epilog codes are necessary if and only if the resource tag is
     // defined.
     reserveAutoDealloc();
 
