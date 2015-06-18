@@ -33,7 +33,7 @@ CAF=xmpf90 --debug -g
 
 
 
-EXE=mpi.x caf-wide.x caf-narrow.x caf-fit.x
+EXE=mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x
 
 all: $(EXE)
 
@@ -48,6 +48,9 @@ caf-%.x: himenoBMTcaf-%.f90
 	$(CAF) $< -o $@
 
 mpi.x: himenoBMTxpr.f90
+	$(MPI) $< -o $@
+
+mpi-nocom.x: himenoBMTxpr-nocom.f90
 	$(MPI) $< -o $@
 
 clean:

@@ -12,6 +12,11 @@ subroutine co_%op%_%t%%k%(source, result)
 
   call mpi_allreduce(source, result, 1, %mpitype%, &
        mpi_%op%, mpi_comm_world, ierr)
+#ifdef _XMP_GASNET
+  if (ierr == 0) then
+     call mpi_barrier(mpi_comm_world, ierr)
+  end if
+#endif
   if (ierr /= 0) then
      call xmpf_coarray_fatal("CO_%OP% failed at mpi_allreduce")
   end if

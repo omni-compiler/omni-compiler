@@ -84,7 +84,7 @@ program HimenoBMTxp_f90_CAF
 !
 !     ttarget specifys the measuring period in sec
   integer :: mx,my,mz
-  integer :: nn,it,ierr
+  integer :: nn,it
   real(4) :: gosa,score
   real(4),parameter :: ttarget=60.0
   real(8) :: cpu,cpu0,cpu1,xmflops2,flop
@@ -352,7 +352,7 @@ subroutine jacobi(nn,gosa)
 !
   integer,intent(in) :: nn
   real(4),intent(inout) :: gosa
-  integer :: i,j,k,loop,ierr
+  integer :: i,j,k,loop
   real(4) :: s0,ss,wgosa
 !  
   do loop=1,nn
@@ -432,7 +432,7 @@ subroutine initmax(mx,my,mz,ks)
 !
   integer,intent(in) :: mx,my,mz
   integer,intent(out) :: ks
-  integer :: i,itmp,ierr
+  integer :: i,itmp
   integer :: mx1(0:ndx),my1(0:ndy),mz1(0:ndz)
   integer :: mx2(0:ndx),my2(0:ndy),mz2(0:ndz)
 !
@@ -512,8 +512,6 @@ subroutine sendp()
   mex = iop(1) + 1
   mey = iop(2) + 1
   mez = iop(3) + 1
-
-  sync all
 
   !*** put z-axis
   if (mez>1) then
