@@ -82,11 +82,9 @@ program HimenoBMTxp_f90_CAF
 !
   implicit none
 !
-  include 'mpif.h'
-!
 !     ttarget specifys the measuring period in sec
   integer :: mx,my,mz
-  integer :: nn,it,ierr
+  integer :: nn,it
   real(4) :: gosa,score
   real(4),parameter :: ttarget=60.0
   real(8) :: cpu,cpu0,cpu1,xmflops2,flop
@@ -109,8 +107,6 @@ program HimenoBMTxp_f90_CAF
   allocate(buf2u(mimax, mkmax)[ndx,ndy,*])
   allocate(buf3l(mimax, mjmax)[ndx,ndy,*])
   allocate(buf3u(mimax, mjmax)[ndx,ndy,*])
-
-  iop = this_image(buf1l) - 1
 !
 !! Initializing matrixes
   call initmt(mz,it)
@@ -136,18 +132,12 @@ program HimenoBMTxp_f90_CAF
   gosa= 0.0
   cpu= 0.0
   sync all
-  cpu0= mpi_wtime()
+  cpu0= xmp_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= mpi_wtime() - cpu0
+  cpu1= xmp_wtime() - cpu0
 !
-  call mpi_allreduce(cpu1, &
-                     cpu, &
-                     1, &
-                     mpi_real8, &
-                     mpi_max, &
-                     mpi_comm_world, &
-                     ierr)
+  call co_max(cpu1, cpu)
 !
   flop=real(mx-2)*real(my-2)*real(mz-2)*34.0
   if(cpu /= 0.0) xmflops2=flop/cpu*1.0d-6*real(nn)
@@ -167,18 +157,12 @@ program HimenoBMTxp_f90_CAF
   gosa= 0.0
   cpu= 0.0
   sync all
-  cpu0= mpi_wtime()
+  cpu0= xmp_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= mpi_wtime() - cpu0
+  cpu1= xmp_wtime() - cpu0
 !
-  call mpi_allreduce(cpu1, &
-                     cpu, &
-                     1, &
-                     mpi_real8, &
-                     mpi_max, &
-                     mpi_comm_world, &
-                     ierr)
+  call co_max(cpu1, cpu)
 !
   if(id == 0) then
      if(cpu /= 0.0)  xmflops2=flop*1.0d-6/cpu*real(nn)
@@ -198,8 +182,6 @@ subroutine readparam
   use comm
 !
   implicit none
-!
-  include 'mpif.h'
 !
   integer :: itmp(3)[*]
 !!!  character(10) :: size[*]     !! to avoid bug #354
@@ -368,11 +350,9 @@ subroutine jacobi(nn,gosa)
 !
   implicit none
 !
-  include 'mpif.h'
-!
   integer,intent(in) :: nn
   real(4),intent(inout) :: gosa
-  integer :: i,j,k,loop,ierr
+  integer :: i,j,k,loop
   real(4) :: s0,ss,wgosa
 !  
   do loop=1,nn
@@ -405,13 +385,7 @@ subroutine jacobi(nn,gosa)
 !
      call sendp()
 !
-     call mpi_allreduce(wgosa, &
-                        gosa, &
-                        1, &
-                        mpi_real4, &
-                        mpi_sum, &
-                        mpi_comm_world, &
-                        ierr)
+     call co_sum(wgosa, gosa)
 !
   enddo
 !! End of iteration
@@ -427,13 +401,15 @@ subroutine initcomm
 !
   implicit none
 !
-  include 'mpif.h'
+  integer,allocatable:: dummy(:)[:,:,:]
 !
   npe = num_images()
   id = this_image() - 1
 !
   call readparam
 !
+  allocate(dummy(0)[ndx,ndy,*])
+  iop = this_image(dummy) - 1
 !
   if(ndx*ndy*ndz /= npe) then
      if(id == 0) then
@@ -454,11 +430,9 @@ subroutine initmax(mx,my,mz,ks)
 !
   implicit none
 !
-  include 'mpif.h'
-!
   integer,intent(in) :: mx,my,mz
   integer,intent(out) :: ks
-  integer :: i,itmp,ierr
+  integer :: i,itmp
   integer :: mx1(0:ndx),my1(0:ndy),mz1(0:ndz)
   integer :: mx2(0:ndx),my2(0:ndy),mz2(0:ndz)
 !
@@ -508,17 +482,13 @@ subroutine initmax(mx,my,mz,ks)
      if(i /= ndz-1)  mz2(i)= mz2(i) + 1
   end do
 !
+  mimax=maxval(mx2(0:ndx-1))
+  mjmax=maxval(my2(0:ndy-1))
+  mkmax=maxval(mz2(0:ndz-1))
+!
   imax= mx2(iop(1))
   jmax= my2(iop(2))
   kmax= mz2(iop(3))
-!
-!!!!! debug point #1
-  call mpi_allreduce(imax, mimax, 1, mpi_integer, &
-                     mpi_max, mpi_comm_world, ierr)
-  call mpi_allreduce(jmax, mjmax, 1, mpi_integer, &
-                     mpi_max, mpi_comm_world, ierr)
-  call mpi_allreduce(kmax, mkmax, 1, mpi_integer, &
-                     mpi_max, mpi_comm_world, ierr)
 !
   if(iop(3) == 0) then
      ks= mz1(iop(3))
@@ -542,8 +512,6 @@ subroutine sendp()
   mex = iop(1) + 1
   mey = iop(2) + 1
   mez = iop(3) + 1
-
-  sync all
 
   !*** put z-axis
   if (mez>1) then

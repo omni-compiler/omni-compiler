@@ -108,7 +108,7 @@ int _XMPF_nowInTask()
 void _XMPF_checkIfInTask(char *msgopt)
 {
   if (_XMPF_nowInTask())
-    _XMPF_coarrayFatal("current rextriction: cannot use %s in any task construct",
+    _XMPF_coarrayFatal("current restriction: cannot use %s in any task construct",
                        msgopt);
 }
 
@@ -124,6 +124,11 @@ void _XMPF_coarrayDebugPrint(char *format, ...)
   vsprintf(work, format, list);
   fprintf(stderr, "CAF[%d] %s", XMPF_this_image, work);
   va_end(list);
+}
+
+void xmpf_coarray_fatal_(char *msg, int *msglen)
+{
+  _XMPF_coarrayFatal("%*s", *msglen, msg);
 }
 
 void _XMPF_coarrayFatal(char *format, ...)

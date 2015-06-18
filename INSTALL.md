@@ -87,3 +87,5 @@
  issuing autogen.sh on the top directory would be a solution.
  And if the build still failed even after issuing the autogen.sh,
  you should update your autotools (autoconf/automake/libtools) to the latest ones.
+ We have tested autoconf-2.69, automake-1.14 and libtool-2.4.6.
+ 

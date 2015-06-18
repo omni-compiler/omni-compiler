@@ -2,15 +2,17 @@
 # XMP/gfortran/GASNet
 #-----------------
 MPI=mpif90
-MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include
-CAF=xmpf90 --debug -I$(MPILIB) -g
+CAF=xmpf90 --debug -g
+#MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include
+#CAF=xmpf90 --debug -I$(MPILIB) -g
 
 #-----------------
 # XMP/Fujitsu/RDMA
 #-----------------
 #MPI=mpifrtpx
-#MPILIB=/opt/FJSVtclang/GM-1.2.0-17/include/mpi/fujitsu/
-#CAF=xmpf90 -I"$(MPILIB)" --debug
+#CAF=xmpf90
+##MPILIB=/opt/FJSVtclang/GM-1.2.0-17/include/mpi/fujitsu/
+##CAF=xmpf90 -I"$(MPILIB)" --debug
 
 #-----------------
 # UHCAF/Intel/GASNet
@@ -31,18 +33,24 @@ CAF=xmpf90 --debug -I$(MPILIB) -g
 
 
 
-EXE=mpi.x caf-wide.x caf-narrow.x caf-fit.x
+EXE=mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x
 
 all: $(EXE)
 
 ### ex.
-### $ (echo m; echo 1 2 2) | mpirun -n 4 mpi > mpi122m.result
-### $ (echo m; echo 1 2 2) | mpirun -n 4 caf-wide > caf-wide122m.result
+### $ (echo m; echo 1 2 2) | mpirun -n 4 mpi.x > mpi122m.result
+### $ (echo m; echo 1 2 2) | mpirun -n 4 caf-wide.x > caf-wide122m.result
+
+%.x: %.f90
+	$(CAF) $< -o $@
 
 caf-%.x: himenoBMTcaf-%.f90
 	$(CAF) $< -o $@
 
 mpi.x: himenoBMTxpr.f90
+	$(MPI) $< -o $@
+
+mpi-nocom.x: himenoBMTxpr-nocom.f90
 	$(MPI) $< -o $@
 
 clean:
