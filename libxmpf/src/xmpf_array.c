@@ -4,6 +4,7 @@
  * array APIs
  */
 
+void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype);
 
 void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
 			_XMP_template_t **t_desc)
@@ -17,7 +18,12 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
   a->dim = *n_dim;
   a->type = *type;
   a->type_size = _XMP_get_datatype_size(a->type);
+  size_t dummy;
+  _XMP_setup_reduce_type(&a->mpi_type, &dummy, *type);
+  a->order = MPI_ORDER_FORTRAN;
   a->total_elmts = 0;
+
+  a->async_reflect = NULL;
 
   a->align_comm = NULL;
   a->align_comm_size = 1;
