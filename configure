@@ -708,14 +708,9 @@ JAR
 JAVAC
 JAVA
 PERL5
-IS_SUPERUX
-IS_CRAY
-IS_SUPERUX_FALSE
-IS_SUPERUX_TRUE
-IS_CRAY_FALSE
-IS_CRAY_TRUE
-IS_PGI_FALSE
-IS_PGI_TRUE
+SUPERUX
+SUPERUX_FALSE
+SUPERUX_TRUE
 OMNI_X2X_FLAGS
 OMNI_LNK_FCFLAGS
 OMNI_NTV_FCFLAGS
@@ -752,6 +747,7 @@ SSL2BLAMP_FALSE
 SSL2BLAMP_TRUE
 LIBBLAS_FALSE
 LIBBLAS_TRUE
+LIBXML_LIB
 LIBXML_PREFIX
 GPGPU_PREFIX
 GPU_CFLAGS
@@ -759,16 +755,14 @@ GPU_CMD
 ARFLAGS
 POWERPC_FALSE
 POWERPC_TRUE
-IS_PGI
-ENABLE_XACC
-ENABLE_XACC_FALSE
-ENABLE_XACC_TRUE
+XACC_FALSE
+XACC_TRUE
+ATOOL_FALSE
+ATOOL_TRUE
 ENABLE_ATOOL
-ENABLE_ATOOL_FALSE
-ENABLE_ATOOL_TRUE
+ACC_FALSE
+ACC_TRUE
 ENABLE_ACC
-ENABLE_ACC_FALSE
-ENABLE_ACC_TRUE
 LEXLIB
 LEX_OUTPUT_ROOT
 LEX
@@ -832,7 +826,6 @@ am__isrc
 INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
-LIBTOOL_DEPS
 RM
 CPP
 OTOOL64
@@ -3161,8 +3154,8 @@ esac
 
 
 
-# expand $ac_aux_dir to an absolute path
-am_aux_dir=`cd $ac_aux_dir && pwd`
+# Expand $ac_aux_dir to an absolute path.
+am_aux_dir=`cd "$ac_aux_dir" && pwd`
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -4732,7 +4725,8 @@ else
     ;;
   *)
     lt_cv_sys_max_cmd_len=`(getconf ARG_MAX) 2> /dev/null`
-    if test -n "$lt_cv_sys_max_cmd_len"; then
+    if test -n "$lt_cv_sys_max_cmd_len" && \
+	test undefined != "$lt_cv_sys_max_cmd_len"; then
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \/ 4`
       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \* 3`
     else
@@ -6295,7 +6289,7 @@ ia64-*-hpux*)
   rm -rf conftest*
   ;;
 
-x86_64-*kfreebsd*-gnu|x86_64-*linux*|ppc*-*linux*|powerpc*-*linux*| \
+x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*| \
 s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
@@ -6311,9 +6305,19 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	    LD="${LD-ld} -m elf_i386_fbsd"
 	    ;;
 	  x86_64-*linux*)
-	    LD="${LD-ld} -m elf_i386"
+	    case `/usr/bin/file conftest.o` in
+	      *x86-64*)
+		LD="${LD-ld} -m elf32_x86_64"
+		;;
+	      *)
+		LD="${LD-ld} -m elf_i386"
+		;;
+	    esac
 	    ;;
-	  ppc64-*linux*|powerpc64-*linux*)
+	  powerpc64le-*)
+	    LD="${LD-ld} -m elf32lppclinux"
+	    ;;
+	  powerpc64-*)
 	    LD="${LD-ld} -m elf32ppclinux"
 	    ;;
 	  s390x-*linux*)
@@ -6332,7 +6336,10 @@ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
 	  x86_64-*linux*)
 	    LD="${LD-ld} -m elf_x86_64"
 	    ;;
-	  ppc*-*linux*|powerpc*-*linux*)
+	  powerpcle-*)
+	    LD="${LD-ld} -m elf64lppc"
+	    ;;
+	  powerpc-*)
 	    LD="${LD-ld} -m elf64ppc"
 	    ;;
 	  s390*-*linux*|s390*-*tpf*)
@@ -11472,10 +11479,13 @@ CC="$lt_save_CC"
 # Only expand once:
 
 
+if test -z "$LIBTOOL"; then
+   as_fn_error $? "Please install newer automake/autoconf/libtool. We recommend automake-1.14/autoconf-2.69/libtool-2.4.2." "$LINENO" 5
+fi
+#AC_SUBST(LIBTOOL)
+#AC_SUBST(LIBTOOL_DEPS)
 
 RM="rm -f"
-
-
 
 am__api_version='1.14'
 
@@ -12193,6 +12203,7 @@ END
   fi
 fi
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
 $as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
     # Check whether --enable-maintainer-mode was given.
@@ -12490,9 +12501,9 @@ fi
 
 # Check whether --enable-xacc was given.
 if test "${enable_xacc+set}" = set; then :
-  enableval=$enable_xacc; xacc=yes
+  enableval=$enable_xacc; doXACC=yes
 else
-  xacc=no
+  doXACC=no
 fi
 
 
@@ -12506,9 +12517,9 @@ fi
 
 TARGET=$target
 
+
 # --------------------------------------------------------------------
 # check basic commands
-
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -19912,37 +19923,7 @@ fi
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${MAKE-make} sets \$(MAKE)" >&5
-$as_echo_n "checking whether ${MAKE-make} sets \$(MAKE)... " >&6; }
-set x ${MAKE-make}
-ac_make=`$as_echo "$2" | sed 's/+/p/g; s/[^a-zA-Z0-9_]/_/g'`
-if eval \${ac_cv_prog_make_${ac_make}_set+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat >conftest.make <<\_ACEOF
-SHELL = /bin/sh
-all:
-	@echo '@@@%%%=$(MAKE)=@@@%%%'
-_ACEOF
-# GNU make sometimes prints "make[1]: Entering ...", which would confuse us.
-case `${MAKE-make} -f conftest.make 2>/dev/null` in
-  *@@@%%%=?*=@@@%%%*)
-    eval ac_cv_prog_make_${ac_make}_set=yes;;
-  *)
-    eval ac_cv_prog_make_${ac_make}_set=no;;
-esac
-rm -f conftest.make
-fi
-if eval test \$ac_cv_prog_make_${ac_make}_set = yes; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-  SET_MAKE=
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-  SET_MAKE="MAKE=${MAKE-make}"
-fi
-
+#AC_PROG_MAKE_SET
 for ac_prog in gawk mawk nawk awk
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -19984,7 +19965,6 @@ fi
 
   test -n "$AWK" && break
 done
-
 
 for ac_prog in 'bison -y' byacc
 do
@@ -20028,11 +20008,6 @@ fi
   test -n "$YACC" && break
 done
 test -n "$YACC" || YACC="yacc"
-
-# If yacc is not available, set YACC to 'yacc' in AC_PROG_YACC.
-if test "x${YACC}" = "xyacc"; then
-   as_fn_error $? "byacc is not found." "$LINENO" 5
-fi
 
 for ac_prog in flex lex
 do
@@ -20193,6 +20168,32 @@ fi
 rm -f conftest.l $LEX_OUTPUT_ROOT.c
 
 fi
+
+if test "${CPP}" = ""; then
+   as_fn_error $? "CPP is not found." "$LINENO" 5
+fi
+
+if test "${CC}" = ""; then
+   as_fn_error $? "CC is not found." "$LINENO" 5
+fi
+
+if test "${FC}" = ""; then
+   as_fn_error $? "FC is not found." "$LINENO" 5
+fi
+
+if test "${INSTALL}" = ""; then
+   as_fn_error $? "INSTALL is not found." "$LINENO" 5
+fi
+
+if test "${AWK}" = ""; then
+  as_fn_error $? "AWK is not found." "$LINENO" 5
+fi
+
+# If yacc is not available, set YACC to 'yacc' in AC_PROG_YACC.
+if test "x${YACC}" = "xyacc"; then
+   as_fn_error $? "byacc is not found." "$LINENO" 5
+fi
+
 # https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.69/html_node/Particular-Programs.html
 # If lex is not available, set LEX to ':' in "AC_PROG_LEX".
 if test "x${LEX}" = "x:"; then
@@ -20201,18 +20202,20 @@ fi
 
 # --------------------------------------------------------------------
 # set OpenACC
+# "ENABLE_ACC" defined by AC_SUBST() is used in ./Driver/libexec/ompcc_lib.sh
+# Moreover "ENABLE_ACC" defined by AM_CONDITIONAL() is used in ./Makefile.am
 ENABLE_ACC=0
 if test "x${doOpenAcc}" = "xyes"; then
     ENABLE_ACC=1
 fi
- if test "x${doOpenAcc}" = "xyes"; then
-  ENABLE_ACC_TRUE=
-  ENABLE_ACC_FALSE='#'
-else
-  ENABLE_ACC_TRUE='#'
-  ENABLE_ACC_FALSE=
-fi
 
+ if test "x${doOpenAcc}" = "xyes"; then
+  ACC_TRUE=
+  ACC_FALSE='#'
+else
+  ACC_TRUE='#'
+  ACC_FALSE=
+fi
 
 
 # --------------------------------------------------------------------
@@ -20221,26 +20224,25 @@ ENABLE_ATOOL=0
 if test "x${doatool}" = "xyes"; then
    ENABLE_ATOOL=1
 fi
- if test "x${doatool}" = "xyes"; then
-  ENABLE_ATOOL_TRUE=
-  ENABLE_ATOOL_FALSE='#'
-else
-  ENABLE_ATOOL_TRUE='#'
-  ENABLE_ATOOL_FALSE=
-fi
 
+ if test "x${doatool}" = "xyes"; then
+  ATOOL_TRUE=
+  ATOOL_FALSE='#'
+else
+  ATOOL_TRUE='#'
+  ATOOL_FALSE=
+fi
 
 
 # --------------------------------------------------------------------
 # set XACC
- if test "x${xacc}" = "xyes"; then
-  ENABLE_XACC_TRUE=
-  ENABLE_XACC_FALSE='#'
+ if test "x${doXACC}" = "xyes"; then
+  XACC_TRUE=
+  XACC_FALSE='#'
 else
-  ENABLE_XACC_TRUE='#'
-  ENABLE_XACC_FALSE=
+  XACC_TRUE='#'
+  XACC_FALSE=
 fi
-
 
 
 # --------------------------------------------------------------------
@@ -20281,7 +20283,7 @@ _ACEOF
 # (1) Local compiler (for compiling C_Front and so on)
 #   CC, FC, CFLAGS, FCFLAGS, ...
 #
-# (2) MPI compiler (for compiling libxmp and so on)
+# (2) MPI compiler (for compiling libxmp and so on) to cross compile
 #  MPI_CC, MPI_FC, MPI_CFLAGS, MPI_FCFLAGS, ...
 #
 # (3) Omni compiler (for using xmpcc and xmpf90 commands)
@@ -20292,7 +20294,7 @@ _ACEOF
 #  MPI_CFLAGS needs options for OpenMP and strong optimization (e.g. -O2) and C99.
 #  MPI_FCFLAGS needs an option for strong optimization (e.g. -O2).
 #
-#  Prefix "OMNI_" options should set a minimal of option as possible.
+#  Prefix "OMNI_" options should set minimal options as possible.
 #  OMNI_C_PP, Pre-processor command, needs an option for C99.
 #  OMNI_NTV_CFLAGS needs an option for C99 support.
 #  OMNI_LNK_CFLAGS and OMNI_LNK_FCFLAGS need an option for OpenMP.
@@ -20791,8 +20793,8 @@ elif test "$target" = "Cray-linux-gnu"; then
 # MPI C
   MPI_CC="cc"
   MPI_CPP=$MPI_CC
-  MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-O2 $OPENMP_OPT"
+  MPI_CPPFLAGS="-E -D_XMP_CRAY"
+  MPI_CFLAGS="-O2 -hgnu $OPENMP_OPT"
   MPI_CLIBS=""
 
 # MPI F
@@ -21110,14 +21112,14 @@ elif test "$target" = "sx-nec-superux"; then
   MPI_CC="sxmpic++"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-O2 $OPENMP_OPT"
+  MPI_CFLAGS="-Chopt $OPENMP_OPT"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="sxmpif90"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-O2 $OPENMP_OPT"
+  MPI_FCFLAGS="-Chopt $OPENMP_OPT"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
 
@@ -21878,12 +21880,16 @@ else
 fi
 
 
-  INTEL_MPICC=mpiicc
-  which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
-  if test $? -eq 0; then
-    MPI_CC=${INTEL_MPICC}
+  if test  "" != "$userMPI_CC" ; then
+    MPI_CC=${userMPI_CC}
   else
-    MPI_CC="mpicc"
+    INTEL_MPICC=mpiicc
+    which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
+    if test $? -eq 0; then
+      MPI_CC=${INTEL_MPICC}
+    else
+      MPI_CC=mpicc
+    fi
   fi
 
   chk=`${MPI_CC} --version | head -n1`
@@ -22012,8 +22018,8 @@ fi
       OMNI_X2X_FLAGS=""
 
       # Special options
-      IS_PGI="Yes"
-
+#      IS_PGI="Yes"
+#      AC_SUBST(IS_PGI)
       ;;
     *)
       echo "No supported compiler was found."
@@ -22030,6 +22036,8 @@ fi
     esac ;;
   esac
 fi
+
+# "POWERPC" flag is used in libxmpf/src/Makefile.am
  if test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix"; then
   POWERPC_TRUE=
   POWERPC_FALSE='#'
@@ -22037,6 +22045,7 @@ else
   POWERPC_TRUE='#'
   POWERPC_FALSE=
 fi
+
 
 
 
@@ -22096,6 +22105,13 @@ fi
 
 if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
    as_fn_error $? "parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help" "$LINENO" 5
+fi
+
+
+if test LIBXML_PREFIX="/usr"; then
+   LIBXML_LIB=/usr/lib64
+else
+   LIBXML_LIB=${LIBXML_PREFIX}/lib
 fi
 
 
@@ -22441,35 +22457,33 @@ OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 # Omni Common
 
 
-# Other options
-chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
- if test "$chk" != ""; then
-  IS_PGI_TRUE=
-  IS_PGI_FALSE='#'
+# check PGI compiler
+#chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
+#AM_CONDITIONAL(IS_PGI, test "$chk" != "")
+
+# check -lstdc++
+tmp_file_c=/tmp/_xmp.$$.c
+tmp_file_x=/tmp/_xmp.$$.x
+echo "int main(){return 0;}" > $tmp_file_c
+chk=`$MPI_CC -lstdc++ $tmp_file_c -o $tmp_file_x 2> /dev/null`
+if test $? -ne 0; then
+   rm -f $tmp_file_c $tmp_file_x
+   as_fn_error $? "-lstdc++ is not found." "$LINENO" 5
 else
-  IS_PGI_TRUE='#'
-  IS_PGI_FALSE=
+   rm -f $tmp_file_c $tmp_file_x
 fi
 
-
- if test "$target" = "Cray-linux-gnu"; then
-  IS_CRAY_TRUE=
-  IS_CRAY_FALSE='#'
-else
-  IS_CRAY_TRUE='#'
-  IS_CRAY_FALSE=
-fi
-
+#AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
  if test "$target" = "sx-nec-superux"; then
-  IS_SUPERUX_TRUE=
-  IS_SUPERUX_FALSE='#'
+  SUPERUX_TRUE=
+  SUPERUX_FALSE='#'
 else
-  IS_SUPERUX_TRUE='#'
-  IS_SUPERUX_FALSE=
+  SUPERUX_TRUE='#'
+  SUPERUX_FALSE=
 fi
 
 
-
+#AC_SUBST(CRAY)
 
 
 # --------------------------------------------------------------------
@@ -22521,11 +22535,9 @@ fi
 done
 
 
-inDev=0
 if test "$PERL5" = ""; then
-    inDev=0
+    as_fn_error $? "perl is not found." "$LINENO" 5
 else
-    inDev=1
     isPerlVersion5=no
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking Perl version is 5" >&5
 $as_echo_n "checking Perl version is 5... " >&6; }
@@ -22547,143 +22559,37 @@ fi
 
 # --------------------------------------------------------------------
 # check java
-
 if test "$userJAVA" != ""; then
   JAVA="$userJAVA"
 else
-  # Extract the first word of "java", so it can be a program name with args.
-set dummy java; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_JAVA+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $JAVA in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_JAVA="$JAVA" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_JAVA="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_JAVA" && ac_cv_path_JAVA="java"
-  ;;
-esac
-fi
-JAVA=$ac_cv_path_JAVA
-if test -n "$JAVA"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JAVA" >&5
-$as_echo "$JAVA" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
+  JAVA=java
 fi
 
 if test	"$userJAVAC" != ""; then
   JAVAC="$userJAVAC"
 else
-  # Extract the first word of "javac", so it can be a program name with args.
-set dummy javac; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_JAVAC+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $JAVAC in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_JAVAC="$JAVAC" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_JAVAC="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_JAVAC" && ac_cv_path_JAVAC="javac"
-  ;;
-esac
-fi
-JAVAC=$ac_cv_path_JAVAC
-if test -n "$JAVAC"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JAVAC" >&5
-$as_echo "$JAVAC" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
+  JAVAC=javac
 fi
 
 if test "$userJAR" != ""; then
   JAR="$userJAR"
 else
-  # Extract the first word of "jar", so it can be a program name with args.
-set dummy jar; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_JAR+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $JAR in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_JAR="$JAR" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_JAR="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_JAR" && ac_cv_path_JAR="jar"
-  ;;
-esac
-fi
-JAR=$ac_cv_path_JAR
-if test -n "$JAR"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JAR" >&5
-$as_echo "$JAR" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+  JAR=jar
 fi
 
+which ${JAVA} 1>/dev/null 2>/dev/null
+if test $? -ne 0; then
+   as_fn_error $? "JAVA is not found." "$LINENO" 5
+fi
 
+which ${JAVAC} 1>/dev/null 2>/dev/null
+if test $? -ne 0; then
+   as_fn_error $? "JAVAC is not found." "$LINENO" 5
+fi
+
+which ${JAR} 1>/dev/null 2>/dev/null
+if test $? -ne 0; then
+   as_fn_error $? "JAR is not found." "$LINENO" 5
 fi
 
 
@@ -26095,16 +26001,16 @@ if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCXX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_ACC_TRUE}" && test -z "${ENABLE_ACC_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_ACC\" was never defined.
+if test -z "${ACC_TRUE}" && test -z "${ACC_FALSE}"; then
+  as_fn_error $? "conditional \"ACC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_ATOOL_TRUE}" && test -z "${ENABLE_ATOOL_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_ATOOL\" was never defined.
+if test -z "${ATOOL_TRUE}" && test -z "${ATOOL_FALSE}"; then
+  as_fn_error $? "conditional \"ATOOL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${ENABLE_XACC_TRUE}" && test -z "${ENABLE_XACC_FALSE}"; then
-  as_fn_error $? "conditional \"ENABLE_XACC\" was never defined.
+if test -z "${XACC_TRUE}" && test -z "${XACC_FALSE}"; then
+  as_fn_error $? "conditional \"XACC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${POWERPC_TRUE}" && test -z "${POWERPC_FALSE}"; then
@@ -26135,16 +26041,8 @@ if test -z "${MPI3_TRUE}" && test -z "${MPI3_FALSE}"; then
   as_fn_error $? "conditional \"MPI3\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${IS_PGI_TRUE}" && test -z "${IS_PGI_FALSE}"; then
-  as_fn_error $? "conditional \"IS_PGI\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${IS_CRAY_TRUE}" && test -z "${IS_CRAY_FALSE}"; then
-  as_fn_error $? "conditional \"IS_CRAY\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${IS_SUPERUX_TRUE}" && test -z "${IS_SUPERUX_FALSE}"; then
-  as_fn_error $? "conditional \"IS_SUPERUX\" was never defined.
+if test -z "${SUPERUX_TRUE}" && test -z "${SUPERUX_FALSE}"; then
+  as_fn_error $? "conditional \"SUPERUX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

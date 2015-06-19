@@ -7,18 +7,10 @@
 package exc.util;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 import exc.object.XobjectFile;
 
-import exc.openacc.ACC;
-import exc.openacc.ACCanalyzePragma;
-import exc.openacc.ACCglobalDecl;
-import exc.openacc.ACCgpuDecompiler;
-import exc.openacc.ACCrewritePragma;
-import exc.openacc.ACCtranslatePragma;
-
+import exc.openacc.AccTranslator;
 import exc.openmp.OMP;
 import exc.openmp.OMPtranslate;
 
@@ -32,7 +24,6 @@ import exc.xcodeml.XcodeMLtools_F;
 import exc.xcodeml.XcodeMLtools_Fmod;
 import exc.xcodeml.XcodeMLtools_C;
 import xcodeml.XmLanguage;
-import xcodeml.XmObj;
 import xcodeml.binding.XmXcodeProgram;
 import xcodeml.util.*;
 
@@ -344,14 +335,45 @@ public class omompx
       }
     }
 
-    if(xmpf){// XcalableMP xmpF translation
-      exc.xmpF.XMPtranslate xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
-      xobjFile.iterateDef(xmp_translator);
-        
+    if(xmpf) {  // XcalableMP xmpF translation
+
+      // Error check and light analysis
+      exc.xmpF.XMPtransCoarray
+        caf_translator0 = new exc.xmpF.XMPtransCoarray(xobjFile, 0);
+      xobjFile.iterateDef(caf_translator0);
       if(exc.xmpF.XMP.hasErrors())
         System.exit(1);
-            
-      xmp_translator.finish();
+
+      if (caf_translator0.containsCoarray()) {
+
+        //XMP.warning("translating coarray features");
+
+        // Coarray Fortran pass#1
+        exc.xmpF.XMPtransCoarray
+          caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1);
+        xobjFile.iterateDef(caf_translator1);
+        if(exc.xmpF.XMP.hasErrors())
+          System.exit(1);
+        caf_translator1.finish();
+
+        // Coarray Fortran pass#2
+        exc.xmpF.XMPtransCoarray
+          caf_translator2 = new exc.xmpF.XMPtransCoarray(xobjFile, 2);
+        xobjFile.iterateDef(caf_translator2);
+        if(exc.xmpF.XMP.hasErrors())
+          System.exit(1);
+        caf_translator2.finish();
+
+      } else {    // without coarray features
+
+        // XMP Fortran
+        exc.xmpF.XMPtranslate
+          xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
+        xobjFile.iterateDef(xmp_translator);
+        if(exc.xmpF.XMP.hasErrors())
+          System.exit(1);
+        xmp_translator.finish();
+      }
 
       if(xcodeWriter != null) {
         xobjFile.Output(xcodeWriter);
@@ -376,33 +398,11 @@ public class omompx
     }
     
     if(openACC){
-      ACCglobalDecl accGlobalDecl = new ACCglobalDecl(xobjFile);
-      ACCanalyzePragma accAnalyzer = new ACCanalyzePragma(accGlobalDecl);
-      xobjFile.iterateDef(accAnalyzer);
-      accAnalyzer.finalize();
-      ACC.exitByError();
-      
-      ACCtranslatePragma accTranslator = new ACCtranslatePragma(accGlobalDecl);
+      //XmOption.setDebugOutput(true);
+      AccTranslator accTranslator = new AccTranslator(xobjFile, false);
       xobjFile.iterateDef(accTranslator);
-      accTranslator.finalize();
-      ACC.exitByError();
-      
-      ACCrewritePragma accRewriter = new ACCrewritePragma(accGlobalDecl);
-      xobjFile.iterateDef(accRewriter);
-      accRewriter.finalize();
-      ACC.exitByError();
-      
-      ACCgpuDecompiler gpuDecompiler = new ACCgpuDecompiler();
-      gpuDecompiler.decompile(accGlobalDecl);
 
-      accGlobalDecl.setupGlobalConstructor();
-      accGlobalDecl.setupGlobalDestructor();
-      accGlobalDecl.setupMain();
-      ACC.exitByError();
-      
-      xobjFile.addHeaderLine("# include \"acc.h\"");
-      xobjFile.addHeaderLine("# include \"acc_gpu.h\"");
-      accGlobalDecl.finalize();
+      accTranslator.finish();
       
       if(xcodeWriter != null) {
         xobjFile.Output(xcodeWriter);

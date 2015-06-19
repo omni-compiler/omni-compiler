@@ -1,8 +1,7 @@
 #!/bin/bash
 
 #-------------------------------------------------------
-#  generator of xmp_coarray_alloc_wrap.f90
-#  see also ../include/xmp_lib_coarray_alloc.h
+#  generator for xmp_coarray_alloc_wrap.f90
 #-------------------------------------------------------
 
 #--------------------
@@ -14,129 +13,155 @@ echo72 () {
     echo "$str"
 }
 
-print_subr_0d() {
+
+print_subr_alloc() {
     tk=$1
     typekind=$2
-    echo "!-----------------------------------------------------------------------"
-    echo "      subroutine xmpf_coarray_alloc0d_${tk}(serno, var, count, element)"
-    echo "!-----------------------------------------------------------------------"
-    echo "        integer, intent(in) :: serno, count, element"
-    echo "        ${typekind}, pointer, intent(out) :: var"
-    echo "        ${typekind} :: obj"
-    echo "        pointer (cray_ptr, obj)"
-    echo "        call xmpf_coarray_malloc(serno, cray_ptr, count, element)"
-    echo "        call pointer_assign(var, obj)"
-    echo "        return"
-    echo "      contains"
-    echo "        subroutine pointer_assign(p, d)"
-    echo "          ${typekind}, pointer :: p"
-    echo "          ${typekind}, target :: d"
-    echo "          p => d"
-    echo "          return"
-    echo "        end subroutine"
-    echo "      end subroutine"
-    echo
-}
 
-print_subr_nd() {
-    tk=$1
-    typekind=$2
-    echo    "!-----------------------------------------------------------------------"
-    echo72  "      subroutine xmpf_coarray_alloc${DIM}d_${tk}(serno, var, count, element,"
+    echo72     "      subroutine xmpf_coarray_alloc${DIM}d_${tk}(descptr, var, count,"
 
-    echo -n "     &   lb1,ub1"
-    if [ ${DIM} -ge 2 ]; then
-	for i in `seq 2 ${DIM}`; do
-            echo -n ",lb${i},ub${i}"
-	done
-    fi
-    echo    ")"
+ case "${DIM}" in
+ 0) echo       "     &   element, tag, rank)" ;;
+ *) echo72     "     &   element, tag, rank"
+    for i in `seq 1 ${DIM}`; do
+        echo72 "     &   , lb${i}, ub${i}"
+    done
+    echo       "     &   )" ;;
+ esac
 
-    echo    "!-----------------------------------------------------------------------"
-    echo72  "        integer, intent(in) :: serno, count, element,"
-    echo -n "     &    lb1,ub1"
-    if [ ${DIM} -ge 2 ]; then
-	for i in `seq 2 ${DIM}`; do
-            echo -n ",lb${i},ub${i}"
-	done
-    fi
-    echo    ""
+    echo       "        integer(8), intent(in) :: descptr"
+    echo       "        integer(8), intent(in) :: tag"
+    echo       "        integer, intent(in) :: count, element, rank"
 
-    echo -n "        ${typekind}, pointer, intent(out) :: var(:"
-    if [ ${DIM} -ge 2 ]; then
-	for i in `seq 2 ${DIM}`; do
-            echo -n ",:"
-	done
-    fi
-    echo    ")"
+ case "${DIM}" in
+ 0) ;;
+ *) for i in `seq 1 ${DIM}`; do
+        echo   "        integer, intent(in) :: lb${i}, ub${i}"
+    done ;;
+ esac
 
-    echo72  "        ${typekind} ::"
-    echo -n "     &    obj(lb1:ub1"
-    if [ ${DIM} -ge 2 ]; then
-	for i in `seq 2 ${DIM}`; do
-            echo -n ",lb${i}:ub${i}"
-	done
-    fi
-    echo    ")"
+ case "${DIM}" in
+ 0) echo    "        ${typekind}, pointer, intent(out) :: var" ;;
+ 1) echo    "        ${typekind}, pointer, intent(out) :: var(:)" ;;
+ *) echo -n "        ${typekind}, pointer, intent(out) :: var(:" 
+    for i in `seq 2 ${DIM}`; do
+        echo -n ",:"
+    done
+    echo    ")" ;;
+ esac
 
-    echo    "        pointer (cray_ptr, obj)"
-    echo    "        call xmpf_coarray_malloc(serno, cray_ptr, count, element)"
+# START PRIVATE CONTENTS OF PROCEDURE
+ case "${DIM}" in
+ 0) echo       "        ${typekind} :: obj" ;;
+ 1) echo       "        ${typekind} :: obj(lb1 : ub1)" ;;
+ *) echo72     "        ${typekind} :: obj(lb1 : ub1"
+    for i in `seq 2 ${DIM}`; do
+        echo72 "     &     , lb${i} : ub${i}"
+    done
+    echo       "     &   )" ;;
+ esac
+
+    echo    "        pointer (crayptr, obj)"
+    echo    "        call xmpf_coarray_malloc(descptr, crayptr, count, element, tag)"
     echo    "        call pointer_assign(var, obj)"
     echo    "        return"
     echo    "      contains"
     echo    "        subroutine pointer_assign(p, d)"
 
-    echo -n "          ${typekind}, pointer :: p(:"
-    if [ ${DIM} -ge 2 ]; then
-	for i in `seq 2 ${DIM}`; do
-            echo -n ",:"
-	done
-    fi
-    echo    ")"
+ case "${DIM}" in
+ 0) echo    "          ${typekind}, pointer :: p" ;;
+ 1) echo    "          ${typekind}, pointer :: p(:)" ;;
+ *) echo -n "          ${typekind}, pointer :: p(:"
+    for i in `seq 2 ${DIM}`; do
+        echo -n ",:"
+    done
+    echo    ")" ;;
+ esac
 
-    echo -n "          ${typekind}, target :: d(:"
-    if [ ${DIM} -ge 2 ]; then
-	for i in `seq 2 ${DIM}`; do
-            echo -n ",:"
-	done
-    fi
-    echo    ")"
+    echo72  "          ${typekind}, target  ::"
+ case "${DIM}" in
+ 0) echo    "            d" ;;
+ 1) echo    "            d(lb1:)" ;;
+ *) echo -n "            d(lb1:"
+    for i in `seq 2 ${DIM}`; do
+        echo -n ",lb${i}:"
+    done
+    echo    ")" ;;
+ esac
 
     echo    "          p => d"
     echo    "          return"
     echo    "        end subroutine"
+# END PRIVATE CONTENTS OF PROCEDURE
+
     echo    "      end subroutine"
     echo
 }
 
 
-print_subr() {
-    case "${DIM}" in
-        0) print_subr_0d $1 $2 ;;
-        *) print_subr_nd $1 $2 ;;
-    esac
+print_subr_dealloc() {
+    tk=$1
+    typekind=$2
+
+    echo    "      subroutine xmpf_coarray_dealloc${DIM}d_${tk}(descptr, var)"
+    echo    "        integer(8), intent(in) :: descptr"
+
+ case "${DIM}" in
+ 0) echo    "        ${typekind}, pointer, intent(out) :: var" ;;
+ 1) echo    "        ${typekind}, pointer, intent(out) :: var(:)" ;;
+ 2) echo    "        ${typekind}, pointer, intent(out) :: var(:,:)" ;;
+ 3) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:)" ;;
+ 4) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:)" ;;
+ 5) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:,:)" ;;
+ 6) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:,:,:)" ;;
+ 7) echo    "        ${typekind}, pointer, intent(out) :: var(:,:,:,:,:,:,:)" ;;
+ esac
+
+# START BODY OF PROCEDURE
+    echo    "        nullify(var)"
+    echo    "        call xmpf_coarray_free(descptr)"
+    echo    "        return"
+# END BODY OF PROCEDURE
+
+    echo    "      end subroutine"
+    echo
 }
 
 
 #--------------------
 #  main
 #--------------------
-echo "!! This file is automatically generated by xmpf_coarray_alloc_wrap.f90.sh"
+echo "!! This file is automatically generated by xmp_coarray_alloc_wrap.f90.sh"
 echo
 
 for DIM in `seq 0 7`
 do
-    print_subr i2  "integer(2)"      
-    print_subr i4  "integer(4)"      
-    print_subr i8  "integer(8)"      
-    print_subr l2  "logical(2)"      
-    print_subr l4  "logical(4)"      
-    print_subr l8  "logical(8)"      
-    print_subr r4  "real(4)"         
-    print_subr r8  "real(8)"         
-    print_subr z8  "complex(4)"      
-    print_subr z16 "complex(8)"      
-    print_subr cn  "character(element)" 
+    print_subr_alloc i2  "integer(2)"      
+    print_subr_alloc i4  "integer(4)"      
+    print_subr_alloc i8  "integer(8)"      
+    print_subr_alloc l2  "logical(2)"      
+    print_subr_alloc l4  "logical(4)"      
+    print_subr_alloc l8  "logical(8)"      
+    print_subr_alloc r4  "real(4)"         
+    print_subr_alloc r8  "real(8)"         
+    print_subr_alloc z8  "complex(4)"      
+    print_subr_alloc z16 "complex(8)"      
+    print_subr_alloc cn  "character(element)" 
+done
+
+for DIM in `seq 0 7`
+do
+    print_subr_dealloc i2  "integer(2)"      
+    print_subr_dealloc i4  "integer(4)"      
+    print_subr_dealloc i8  "integer(8)"      
+    print_subr_dealloc l2  "logical(2)"      
+    print_subr_dealloc l4  "logical(4)"      
+    print_subr_dealloc l8  "logical(8)"      
+    print_subr_dealloc r4  "real(4)"         
+    print_subr_dealloc r8  "real(8)"         
+    print_subr_dealloc z8  "complex(4)"      
+    print_subr_dealloc z16 "complex(8)"      
+    print_subr_dealloc cn  "character(*)" 
 done
 
 exit

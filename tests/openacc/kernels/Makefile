@@ -23,7 +23,7 @@ EXES = $(C_TESTS:.c=.$(SUF))
 
 all: $(EXES)
 run: $(EXES)
-	@for exe in $(EXES); do $(XRUN) $$exe; done
+	@for exe in $(EXES); do $(XRUN) ./$$exe; done
 clean:
 	rm -f *.$(SUF) *.o
 

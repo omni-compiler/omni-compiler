@@ -19,6 +19,7 @@ run:
 	$(XRUN) -n 2 ./coarray_vector.x
 	$(XRUN) -n 2 ./coarray_stride.x
 	$(XRUN) -n 2 ./coarray_scalar_mput.x
+	$(XRUN) -n 2 ./coarray_scalar_mget.x
 	$(XRUN) -n 2 ./coarray_put_1dim.x
 	$(XRUN) -n 2 ./coarray_put_2dims.x
 	$(XRUN) -n 2 ./coarray_put_3dims.x

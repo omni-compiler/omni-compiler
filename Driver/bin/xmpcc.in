@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ### Read configration file and library ###
-OMNI_HOME=@OMNI_HOME@
-. ${OMNI_HOME}/etc/xmpcc.conf
+OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
+. ${OM_DRIVER_CONF_DIR}/xmpcc.conf
 . ${OMNI_HOME}/libexec/omni_common_lib.sh
 . ${OMNI_HOME}/libexec/xmpcc_lib.sh
 
@@ -39,7 +39,7 @@ ENABLE_TLOG=false
 #  obj_files="c.o"                  # Object files
 #  other_args="-I/usr/lib"          # Options for Preprocessor, Compiler, and Linker
 # 
-#  Note that "-omp" is extracted by xmpcc_set_parameters, and set "ENABLE_OPENMP".
+#  Note that "-omp" is extracted by xmpcc_set_parameters(), and set "ENABLE_OPENMP".
 #
 # To deal with space-separator in options, the following variables are defined as an array (#278)
 output_file=()
@@ -95,7 +95,7 @@ for c_file in "${c_files[@]}"; do
     fi
 done
 [ $STOP_PP = true ] && exit 0;
-[ $ONLY_PP = true -a $ENABLE_DEBUG = true ] && exit 0;            # xmpcc -E --debug hoge.c (save $TMP_DIR)
+[ $ONLY_PP = true -a $ENABLE_DEBUG = true ] && exit 0;          # xmpcc -E --debug hoge.c (save $TEMP_DIR)
 [ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # xmpcc -E hoge.c
 
 ### Frontend ###

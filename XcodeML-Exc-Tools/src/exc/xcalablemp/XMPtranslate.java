@@ -74,7 +74,6 @@ public class XMPtranslate implements XobjectDefVisitor {
 	XMP.error(b.getLineNo(), e.getMessage());
       }
     }
-
   }
 
   private void first_arg_check(Xobject arg) throws XMPexception{
@@ -103,7 +102,7 @@ public class XMPtranslate implements XobjectDefVisitor {
     }
   }
   
-  // Create a new function xpmc_main() and copy main() to the new function
+  // Create a new function xmpc_main() and copy main() to the new function
   private void create_new_main(FuncDefBlock fd) throws XMPexception {
     Ident mainId = _globalDecl.findVarIdent("main");
     Xtype mainType = ((FunctionType)mainId.Type()).getBaseRefType();
@@ -172,24 +171,6 @@ public class XMPtranslate implements XobjectDefVisitor {
 
     first_arg_check(first_arg);
     second_arg_check(second_arg);
-
-    // Insert _XMP_constructor() into main().
-    //    BlockList mainBody = fd.getBlock().getBody().getHead().getBody();
-    //    Ident constructorId = _globalDecl.declExternFunc("_XMP_constructor");
-    //    mainBody.insert(constructorId.Call((XobjList)args));
-
-    // Insert _XMP_destructor() into previous point of return statement.
-    //    Ident destructorId = _globalDecl.declExternFunc("_XMP_destructor");
-    //    BlockIterator i = new topdownBlockIterator(mainBody);
-    //    for(i.init(); !i.end(); i.next()){
-    //      Block b = i.getBlock();
-    //      if(b.Opcode() == Xcode.RETURN_STATEMENT){
-    //	b.insert(destructorId.Call((XobjList)null));
-    //      }
-    //    }
-
-    // Insert _XMP_destructor() into end of main().
-    //    mainBody.add(destructorId.Call((XobjList)null));  
   }
   
   public void set_all_profile(){

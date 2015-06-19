@@ -73,23 +73,6 @@ public class XMPsymbolTable {
     return arrays;
   }
 
-  /*
-   * coarray
-   */
-  /************************************************************
-  public void putXMPcoarray(XMPcoarray coarray) {
-    coarrayTable.put(coarray.getName(), coarray);
-    coarrays.add(coarray);
-  }
-
-  public XMPcoarray getXMPcoarray(String name) {
-    return coarrayTable.get(name);
-  }
-
-  public Vector<XMPcoarray> getXMPcoarrys(){
-    return coarrays;
-  }
-  **************************************************************/
 
   // for debug
   public void dump(String msg){

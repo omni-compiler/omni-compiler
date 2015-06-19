@@ -17,6 +17,7 @@ public enum ACCpragma {
   DECLARE,
   UPDATE,
   WAIT,
+  ATOMIC,
 
   
   //general
@@ -70,14 +71,14 @@ public enum ACCpragma {
   //update clause
   HOST,
   DEVICE,
-  
+
+  //atomic clause
+  READ,
+  WRITE,
+  CAPTURE,
+  //UPDATE,
+
   //internal
-  _BLOCK,
-  _BLOCK_THREAD,
-  _WARP,
-  _VECTORTHREAD,
-  _THREAD,
-  _AUTO,
   ;
   
   private String name = null;
@@ -91,7 +92,7 @@ public enum ACCpragma {
     return valueOf(x.getString());
   }
   
-  public static boolean isDataClause(ACCpragma clause){
+  private static boolean isDataClause(ACCpragma clause){
     switch(clause){
     case COPY:  
     case COPYIN:  
@@ -168,6 +169,44 @@ public enum ACCpragma {
       return true;
     default:
       return false;
+    }
+  }
+
+  public boolean isGlobalDirective(){
+    return this == DECLARE;
+  }
+
+  public boolean isLocalDirective(){
+    switch(this) {
+    case PARALLEL:
+    case KERNELS:
+    case DATA:
+    case HOST_DATA:
+    case LOOP:
+    case CACHE:
+    case PARALLEL_LOOP:
+    case KERNELS_LOOP:
+    case DECLARE:
+    case UPDATE:
+    case WAIT:
+    case ENTER_DATA:
+    case EXIT_DATA:
+    case ATOMIC:
+      return true;
+    }
+    return false;
+  }
+
+  public boolean isDeclarativeClause(){
+    switch (this){
+    case PRIVATE:
+    case FIRSTPRIVATE:
+    case DEVICE_RESIDENT:
+    case USE_DEVICE:
+    case CACHE:
+      return true;
+    default:
+      return this.isDataClause();
     }
   }
 }

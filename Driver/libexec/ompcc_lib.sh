@@ -40,7 +40,7 @@ EOF
 
 function ompcc_show_env()
 {
-    CONF_FILE="${OMNI_HOME}"/etc/ompcc.conf
+    CONF_FILE=${OM_DRIVER_CONF_DIR}/ompcc.conf
     if [ -f "${CONF_FILE}" ]; then
 	for val in `sed '/^[[:space:]]*$/d' "${CONF_FILE}" | grep -v '^#' | awk -F= '{print $1}'`
 	do

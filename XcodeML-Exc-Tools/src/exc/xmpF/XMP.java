@@ -52,6 +52,7 @@ public class XMP {
 
   public final static String PREFIX_			= "XMP__";
   public final static String DESC_PREFIX_		= "XMP_DESC_";
+  public final static String SAVE_DESC_PREFIX_		= "XMP_SAVE_";    
 
   public final static String ASTERISK			= "* @{ASTERISK}@";
   public final static String COLON			= ": @{COLON}@";
@@ -82,6 +83,7 @@ public class XMP {
 
   public final static String ref_templ_alloc_f = "xmpf_ref_templ_alloc_";
   public final static String ref_nodes_alloc_f = "xmpf_ref_nodes_alloc_";
+  public final static String ref_dealloc_f = "xmpf_ref_dealloc_";
   public final static String ref_set_loop_info_f = "xmpf_ref_set_loop_info_";
   public final static String ref_set_dim_info_f = "xmpf_ref_set_dim_info_";
   public final static String ref_init_f = "xmpf_ref_init_";
@@ -101,8 +103,11 @@ public class XMP {
   public final static String reduction_f = "xmpf_reduction_";
   public final static String reduction_loc_f = "xmpf_reduction_loc_";
   public final static String bcast_f = "xmpf_bcast_";
-  public final static String test_task_on_f = "xmpf_test_task_on_";
+
+  public final static String create_task_nodes_f = "xmpf_create_task_nodes_";
+  public final static String test_task_on_f = "xmpf_test_task_on_nodes_";
   public final static String end_task_f = "xmpf_end_task_";
+  public final static String test_task_nocomm_f = "xmpf_test_task_nocomm_";
 
   public final static String gmove_g_alloc_f = "xmpf_gmv_g_alloc_";
   public final static String gmove_l_alloc_f = "xmpf_gmv_l_alloc_";

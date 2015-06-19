@@ -1,0 +1,2 @@
+  real a[*]
+  end

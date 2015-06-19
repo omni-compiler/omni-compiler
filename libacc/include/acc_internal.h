@@ -11,6 +11,7 @@
 #define ACC_ASYNC_NOVAL (-2)
 
 //device type
+#ifndef OMNI_TARGET_CPU_CRAY
 typedef enum acc_device_t{
   acc_device_none,
   acc_device_default,
@@ -18,7 +19,14 @@ typedef enum acc_device_t{
   acc_device_not_host,
   acc_device_nvidia,
 }acc_device_t;
-
+#else
+typedef long acc_device_t;
+#define acc_device_none 0
+#define acc_device_default 1
+#define acc_device_host -1
+#define acc_device_not_host -2
+#define acc_device_nvidia 2
+#endif
 
 #ifdef __cplusplus
 extern "C" {

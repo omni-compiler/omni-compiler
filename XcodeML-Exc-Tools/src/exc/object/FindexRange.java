@@ -56,21 +56,27 @@ public class FindexRange
    */
   public Xobject getLbound(int i) {
     Xobject lbound;
+    if (subscripts.length <= i || subscripts[i] == null)
+      return Xcons.IntConstant(1);
     if (subscripts[i].code == Xcode.F_INDEX_RANGE)
       lbound = subscripts[i].getArg(0);
     else
-      lbound = subscripts[i];
+      return Xcons.IntConstant(1);
+
     if (lbound == null)
-      return null;
+      return Xcons.IntConstant(1);
     return lbound.cfold(block);
   }
 
   public Xobject getUbound(int i) {
     Xobject ubound;
+    if (subscripts.length <= i || subscripts[i] == null)
+      return null;
     if (subscripts[i].code == Xcode.F_INDEX_RANGE)
       ubound = subscripts[i].getArg(1);
     else
       ubound = subscripts[i];
+
     if (ubound == null)
       return null;
     return ubound.cfold(block);

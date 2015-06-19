@@ -1,10 +1,5 @@
 #!/bin/sh
 
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
-
 echo aclocal
 aclocal --force || exit 1
 echo libtoolize

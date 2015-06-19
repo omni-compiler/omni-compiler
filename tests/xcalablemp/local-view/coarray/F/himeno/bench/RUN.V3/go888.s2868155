@@ -1,0 +1,5 @@
+<Staging Information>
+[WARN] stgin "rank=* ../*.x ./stdin* %r:./" : /volume41/data/ra000002/a03117/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench/RUN/stdin* /work/go888.2868155/0/ : No such file or directory (code=2:S-E:I:--)
+
+<Error Information>
+[WARN] stgin "rank=* ../*.x ./stdin* %r:./" : /volume41/data/ra000002/a03117/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench/RUN/stdin* /work/go888.2868155/0/ : No such file or directory (code=2:S-E:I:--)

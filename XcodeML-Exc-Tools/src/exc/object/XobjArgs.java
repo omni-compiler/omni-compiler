@@ -47,6 +47,15 @@ public class XobjArgs
         return new XobjArgs(x, a);
     }
     
+    public boolean hasNullArg()
+    {
+        if (arg == null)
+            return true;
+        if (next == null)
+            return false;
+        return next.hasNullArg();
+    }
+
     public XobjArgs cfold(Block block)
     {
         Xobject arg2 = (arg == null) ? null : arg.cfold(block);

@@ -74,7 +74,7 @@ mkdir -p ${XMP_SRCDIR}/rpm_release
 mv ${XMP_SRCDIR}/${XMPPKG_NAME}-${XMPPKG_VERSION}-${XMPPKG_RELEASE}.${CPU}.rpm ${XMP_SRCDIR}/rpm_release/
 rpm --addsign ${XMP_SRCDIR}/rpm_release/${XMPPKG_NAME}-${XMPPKG_VERSION}-${XMPPKG_RELEASE}.${CPU}.rpm
 createrepo ${XMP_SRCDIR}/rpm_release/
-echo "  $ scp -r rpm_release/* serv2.hpcs.cs.tsukuba.ac.jp:/home/www/http/omni-compiler/xcalablemp/download/centos/stable/"
+echo "  $ scp -r rpm_release/* omni@omni-compiler.org:~/public_html/download/package/centos/stable/"
 
 # clean up
 rm -rf ${XMP_RPM_BUILD_DIR}

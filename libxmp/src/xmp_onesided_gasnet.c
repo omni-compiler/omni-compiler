@@ -21,6 +21,9 @@ gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_UNPACK_GET_REPLY_NONC,      _xmp_gasnet_unpack_get_reply_nonc }
 };
 
+/**
+   Initialize GASNet job
+*/
 void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_gasnet_heap_size, 
 			    const size_t xmp_gasnet_stride_size)
 {
@@ -69,6 +72,9 @@ void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_gasnet_heap_
   _XMP_gasnet_build_shift_queue();
 }
 
+/**
+   Finalize GASNet job
+*/
 void _XMP_gasnet_finalize(const int val)
 {
   _XMP_gasnet_sync_all();

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ### Read configration file and library ###
-OMNI_HOME=@OMNI_HOME@
-. ${OMNI_HOME}/etc/xmpf90.conf
+OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
+. ${OM_DRIVER_CONF_DIR}/xmpf90.conf
 . ${OMNI_HOME}/libexec/omni_common_lib.sh
 . ${OMNI_HOME}/libexec/xmpf90_lib.sh
 

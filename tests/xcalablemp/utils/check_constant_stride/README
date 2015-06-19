@@ -1,0 +1,8 @@
+/**
+ Author:  Masahiro Nakao
+ Purpose: Check _is_the_same_constant_stride in xmp_coarray_fjrdma.c.
+*/
+
+Usage:
+	$  make check
+

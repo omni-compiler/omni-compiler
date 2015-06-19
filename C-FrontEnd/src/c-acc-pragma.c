@@ -229,6 +229,13 @@ int parse_ACC_pragma()
 	    }
 	}
     }
+    
+    if(PG_IS_IDENT("atomic")){
+      pg_ACC_pragma = ACC_ATOMIC;
+      pg_get_token();
+      if((pg_ACC_list = parse_ACC_clauses()) == NULL) goto syntax_err;
+      goto chk_end;
+    }
 
     addError(NULL,"ACC: unknown ACC directive, '%s'",pg_tok_buf);
   syntax_err:
@@ -369,6 +376,18 @@ static CExpr* parse_ACC_clauses()
 	} else if(PG_IS_IDENT("independent")){
 	    pg_get_token();
 	    c = ACC_PG_LIST(ACC_INDEPENDENT,NULL);
+	} else if(PG_IS_IDENT("read")){
+	    pg_get_token();
+	    c = ACC_PG_LIST(ACC_READ,NULL);
+	} else if(PG_IS_IDENT("write")){
+	    pg_get_token();
+	    c = ACC_PG_LIST(ACC_WRITE,NULL);
+	} else if(PG_IS_IDENT("update")){
+	    pg_get_token();
+	    c = ACC_PG_LIST(ACC_UPDATE_CLAUSE,NULL);
+	} else if(PG_IS_IDENT("capture")){
+	    pg_get_token();
+	    c = ACC_PG_LIST(ACC_CAPTURE,NULL);
 	} else {
 	  addError(NULL,"unknown ACC directive clause '%s'",pg_tok_buf);
 	    goto syntax_err;

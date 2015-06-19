@@ -23,7 +23,6 @@ public class XMPcoindexObj {
   Xobject obj;               // Xcode.CO_ARRAY_REF
   Xobject subscripts;
   Xobject cosubscripts;
-  Xobject image = null;
   int exprRank;                  // rank of the reference
 
   // mediator
@@ -33,30 +32,22 @@ public class XMPcoindexObj {
   //  CONSTRUCTOR
   //------------------------------
   public XMPcoindexObj(Xobject obj, XMPcoarray coarray) {
-    name = _getName(obj);
-    subscripts = _getSubscripts(obj);
-    cosubscripts = _getCosubscripts(obj);
-    //_setNameAndSubscripts(obj);
     this.obj = obj;
+    name = _getName(obj);
     this.coarray = coarray;
-    if (!coarray.isAllocatable() && !coarray.isPointer())
-      image = _getImage();
-    exprRank = _getExprRank();
-    if (subscripts == null && exprRank > 0)
-      subscripts = _wholeArraySubscripts(exprRank);
+    _initOthers();
   }
 
-  /* construct and find the instance of XMPcoarray
-   */
-  public XMPcoindexObj(Xobject obj, Vector<XMPcoarray> coarrays) {
+  public XMPcoindexObj(Xobject obj, ArrayList<XMPcoarray> coarrays) {
+    this.obj = obj;
     name = _getName(obj);
+    coarray = _findCoarrayInCoarrays(name, coarrays);
+    _initOthers();
+  }
+
+  private void _initOthers() {
     subscripts = _getSubscripts(obj);
     cosubscripts = _getCosubscripts(obj);
-    //_setNameAndSubscripts(obj);
-    this.obj = obj;
-    coarray = _findCoarrayInCoarrays(name, coarrays);
-    if (!coarray.isAllocatable() && !coarray.isPointer())
-      image = _getImage();
     exprRank = _getExprRank();
     if (subscripts == null && exprRank > 0)
       subscripts = _wholeArraySubscripts(exprRank);
@@ -73,7 +64,6 @@ public class XMPcoindexObj {
       XMP.fatal("broken Xcode to describe a coindexed object");
     return name;
   }
-
 
   private Xobject _getSubscripts(Xobject obj) {
     Xobject varRef = obj.getArg(0).getArg(0);
@@ -94,70 +84,22 @@ public class XMPcoindexObj {
   }
 
 
-  /************************************
-  private void _setNameAndSubscripts(Xobject obj) {
-    assert (obj.Opcode() == Xcode.CO_ARRAY_REF);
-
-    Xobject varRef = obj.getArg(0).getArg(0);
-    if (varRef.Opcode() == Xcode.F_ARRAY_REF) {        // subarray
-      name = varRef.getArg(0).getArg(0).getName();
-      subscripts = varRef.getArg(1);
-    } else if (varRef.Opcode() == Xcode.VAR) {    // scalar or whole array
-      name = varRef.getName();
-      subscripts = null;
-    } else {
-      XMP.fatal("broken Xcode to describe a coindexed object");
-    }
-  }
-  ******************************************/
-
   // make whole-array shape (:,:,...,:)
   //
   private Xobject _wholeArraySubscripts(int exprRank) {
     Xobject list = Xcons.List();
     for (int i = 0; i < exprRank; i++)
       list.add(Xcons.FindexRangeOfAssumedShape());
+    if (list.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (_wholeArraySubscripts)");
 
     return list;
   }
 
 
-  // restriction: all values of lower-cobounds are assumed as 1.
-  //
-  private Xobject _getImage() {
-    Xobject cosubList = obj.getArg(1);
-    Xobject[] codims = coarray.getCodimensions();
-    int corank = coarray.getCorank();
-
-    // image(1) = c[0]                                     for 1-dimensional
-    // image(d) = image(d-1) + factor(d-1) * (c[d-1]-1)  for d-dimensional
-    //   where factor(i) = cosize[0] * ... * cosize[i-1]  (i>0)
-
-    Xobject c = cosubList.getArg(0).getArg(0);         // =c[0]
-    Xobject image = c;                               // =image(1)
-    if (corank == 1)
-      return _convInt4(image);
-
-    Xobject cosize = coarray.getSizeFromIndexRange(codims[0]);   // =cosize[0]
-    Xobject factor = cosize;                               // =factor(1)
-
-    for (int i = 2; ; i++) {
-      // image(i) = image(i-1) + factor(i-1) * (c[i-1]-1)
-      c = cosubList.getArg(i-1).getArg(0);                   // =c[i-1]
-      Xobject tmp1 = Xcons.binaryOp(Xcode.MINUS_EXPR, c, Xcons.IntConstant(1));
-      Xobject tmp2 = Xcons.binaryOp(Xcode.MUL_EXPR, factor, tmp1);
-      image = Xcons.binaryOp(Xcode.PLUS_EXPR, image, tmp2);
-      if (i == corank)
-        break;
-
-      // factor(i) = factor(i-1) * cosize[i-1]
-      cosize = coarray.getSizeFromIndexRange(codims[i-1]);
-      factor = Xcons.binaryOp(Xcode.MUL_EXPR, factor, cosize);
-    }
-
-    return _convInt4(image);
-  }
-
+  /*
+   *  convert expr to int(expr) if expr is not surely int*4.
+   */
   private Xobject _convInt4(Xobject expr) {
     if (expr.Type().isBasic() &&
         expr.Type().getBasicType() == BasicType.INT) {
@@ -175,6 +117,7 @@ public class XMPcoindexObj {
     Ident intId = declIntIntrinsicIdent("int");
     return intId.Call(Xcons.List(expr));
   }    
+
 
   /* TEMPORARY VERSION
    *  not conversion but only error checking
@@ -238,12 +181,15 @@ public class XMPcoindexObj {
   }
 
   private XMPcoarray _findCoarrayInCoarrays(String name,
-                                            Vector<XMPcoarray> coarrays) {
+                                            ArrayList<XMPcoarray> coarrays) {
     for (XMPcoarray coarray: coarrays) {
       if (coarray.getName() == name) {
         return coarray;
       }
     }
+
+    if (coarray == null)
+      XMP.fatal("INTERNAL: could not find coarray in coarrays. name=" + name);
     return null;
   }
 
@@ -252,8 +198,9 @@ public class XMPcoindexObj {
   //  run
   //------------------------------
   public Xobject toFuncRef() {
-    // type-5 used
-    Xobject actualArgs = _makeActualArgs_type5();
+    // type-6 used
+    Xobject mold = getObj().getArg(0).getArg(0);   // object w/o coindex
+    Xobject actualArgs = _makeActualArgs_type6(mold);
 
     Xtype xtype = getType().copy();
     xtype.removeCodimensions();
@@ -272,13 +219,17 @@ public class XMPcoindexObj {
   }
 
   public Xobject toCallStmt(Xobject rhs, Xobject condition) {
-    // type-5 used
-    Xobject actualArgs = _makeActualArgs_type5(rhs, condition);
+    // type-6 used
+    Xobject actualArgs =
+      _makeActualArgs_type6(_convRhsType(rhs),
+                            condition);
 
     // "scalar" or "array" or "spread" will be selected.
     String pattern = _selectCoarrayPutPattern(rhs);
 
     String subrName = COARRAYPUT_PREFIX + "_" + pattern;
+    //// I'm not clear why this is OK and the case xmpf_coarray_proc_init is 
+    //// not OK with the similar interface blocks.
     Ident subrIdent = getEnv().findVarIdent(subrName, null);
     if (subrIdent == null)
       subrIdent = getEnv().declExternIdent(subrName,
@@ -308,18 +259,11 @@ public class XMPcoindexObj {
   }
 
 
-  /* generate actual arguments Type-4 and Type-5
+  /* generate actual arguments
    * cf. libxmpf/src/xmpf_coarray_put.c
    *
-   * Type-4: (not used now)
-   *       (int serno, void* baseAddr, int image,
-   *        [void* rhs,] int exprRank,
-   *        void* nextAddr1, int count1,
-   *        ...
-   *        void* nextAddrN, int countN )
-   *
    * Type-5:
-   *       (int serno, void* baseAddr, int element, int image,
+   *       (void *descptr, void* baseAddr, int element, int image,
    *        [void* rhs, int scheme,] int exprRank,
    *        void* nextAddr1, int count1,
    *        ...
@@ -334,14 +278,10 @@ public class XMPcoindexObj {
     XMPcoarray coarray = getCoarray();
 
     Xobject baseAddr = getBaseAddr();
-    Xobject serno = coarray.getDescriptorIdExpr(baseAddr);
+    Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
     Xobject element = coarray.getElementLengthExpr();
-    Xobject image = getImage();
-    if (image == null &&
-        (coarray.isAllocatable() || coarray.isPointer()))
-      image = coarray.getImageIndex(cosubscripts);
-
-    Xobject actualArgs = Xcons.List(serno, baseAddr, element, image);
+    Xobject image = coarray.getImageIndex(baseAddr, cosubscripts);
+    Xobject actualArgs = Xcons.List(descPtr, baseAddr, element, image);
 
     if (rhs != null)
       actualArgs.add(_convRhsType(rhs));
@@ -358,12 +298,56 @@ public class XMPcoindexObj {
       }
     }
 
-    // null check
-    for (Xobject arg: (XobjList)actualArgs) {
-      if (arg == null)
-        XMP.error("internal error: " + 
-                  "null augument generated in _makeActualArgs_type5()");
+    if (actualArgs.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (_makeActualArgs_type5)");
+
+    return actualArgs;
+  }
+
+
+  /* generate actual arguments
+   * cf. libxmpf/src/xmpf_coarray_put.c
+   *
+   * Type-6:
+   *       (void *descPtr, void* baseAddr, int element, int image,
+   *        [void* rhs, int scheme,] int exprRank,
+   *        void* nextAddr1, int count1,
+   *        ...
+   *        void* nextAddrN, int countN )
+   *   where N is rank of the reference (0<=N<=15 in Fortran 2008).
+   */
+  private Xobject _makeActualArgs_type6(Xobject addArg1) {
+    return _makeActualArgs_type6(addArg1, null);
+  }
+
+  private Xobject _makeActualArgs_type6(Xobject addArg1, Xobject addArg2) {
+    XMPcoarray coarray = getCoarray();
+
+    Xobject baseAddr = getBaseAddr();
+    Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
+    Xobject locBaseAddr = getBaseAddr_type6();
+    Xobject element = coarray.getElementLengthExpr();
+    Xobject image = coarray.getImageIndex(baseAddr, cosubscripts);
+    Xobject actualArgs =
+      Xcons.List(descPtr, locBaseAddr, element, image);
+
+    if (addArg1 != null)
+      actualArgs.add(addArg1);
+    if (addArg2 != null)
+      actualArgs.add(addArg2);
+
+    actualArgs.add(Xcons.IntConstant(exprRank));
+
+    int hostRank = coarray.getRank();
+    for (int i = 0; i < hostRank; i++) {
+      if (isTripletIndex(i)) {
+        actualArgs.add(getNeighboringAddr_type6(i));
+        actualArgs.add(getSizeFromTriplet(i));
+      }
     }
+
+    if (actualArgs.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (_makeActualArgs_type6)");
 
     return actualArgs;
   }
@@ -381,10 +365,10 @@ public class XMPcoindexObj {
       baseTypeCode = xtype.getBasicType();
       break;
     case Xtype.STRUCT:
-      XMP.error("internal error: STRUCT unsupported in _getTypeSuffix()");
+      XMP.fatal("internal error: STRUCT unsupported in _getTypeSuffix()");
       break;
     default:
-      XMP.error("internal error: unexpected kind in _getTypeSuffix(): xtype.getKind()");
+      XMP.fatal("internal error: unexpected kind in _getTypeSuffix(): xtype.getKind()");
       break;
     }
 
@@ -409,6 +393,10 @@ public class XMPcoindexObj {
     return getNeighboringAddr(-1);
   }
 
+  public Xobject getBaseAddr_type6() {
+    return getNeighboringAddr_type6(-1);
+  }
+
   /* get address of
       a(i[0], ..., i[hostRank-1])  for rank=-1
       a(i[0], ..., i[rank]+stride[axis], ..., i[hostRank-1]) for rank>=0
@@ -417,7 +405,7 @@ public class XMPcoindexObj {
     int hostRank = coarray.getRank();
 
     if (hostRank == 0) {
-      // host variable is scalar
+      // if host variable is a scalar
       return Xcons.FvarRef(coarray.getIdent());
     }
 
@@ -437,6 +425,13 @@ public class XMPcoindexObj {
     return arrElemRef;
   }
 
+  public Xobject getNeighboringAddr_type6(int axis) {
+    Xobject arrElem = getNeighboringAddr(axis);
+
+    Ident locId = declInt8IntrinsicIdent("loc");
+    return locId.Call(Xcons.List(arrElem));
+  }
+
 
   public Xobject getStart(int i) {
     Xobject subscr = subscripts.getArg(i);
@@ -451,7 +446,7 @@ public class XMPcoindexObj {
         start = coarray.getLbound(i);
       break;
     default:        // vector subscript is not supported
-      XMP.error("internal error: unexpected Xcode: "+subscr.Opcode());
+      XMP.fatal("internal error: unexpected Xcode: "+subscr.Opcode());
       start = null;
       break;
     }
@@ -472,7 +467,7 @@ public class XMPcoindexObj {
         end = coarray.getUbound(i);
       break;
     default:        // vector subscript is not supported
-      XMP.error("internal error: unexpected Xcode: "+subscr.Opcode());
+      XMP.fatal("internal error: unexpected Xcode: "+subscr.Opcode());
       end = null;
       break;
     }
@@ -492,7 +487,7 @@ public class XMPcoindexObj {
         stride = Xcons.IntConstant(1);
       break;
     default:        // vector subscript is not supported
-      XMP.error("internal error: unexpected Xcode: "+subscr.Opcode());
+      XMP.fatal("internal error: unexpected Xcode: "+subscr.Opcode());
       stride = null;
       break;
     }
@@ -556,7 +551,7 @@ public class XMPcoindexObj {
       break;
 
     default:        // vector subscript is not supported
-      XMP.error("internal error: maybe vector subscript. Xcode: "
+      XMP.fatal("internal error: maybe vector subscript. Xcode: "
                 + subscr.Opcode());
       size = null;
       break;
@@ -603,6 +598,12 @@ public class XMPcoindexObj {
     return ident;
   }
 
+  private Ident declInt8IntrinsicIdent(String name) { 
+    FunctionType ftype = new FunctionType(Xtype.Fint8Type, Xtype.TQ_FINTRINSIC);
+    Ident ident = getEnv().declIntrinsicIdent(name, ftype);
+    return ident;
+  }
+
 
   //------------------------------
   //  inquire
@@ -613,10 +614,6 @@ public class XMPcoindexObj {
 
   public XMPcoarray getCoarray() {
     return coarray;
-  }
-
-  public Xobject getImage() {
-    return image;
   }
 
   public XMPenv getEnv() {

@@ -273,6 +273,7 @@
 %token XMPKW_CRITICAL
 %token XMPKW_ARRAY
 %token XMPKW_LOCAL_ALIAS
+%token XMPKW_SAVE_DESC
 
 %token XMPKW_ON
 %token XMPKW_ONTO
@@ -285,6 +286,7 @@
 %token XMPKW_ASYNC
 %token XMPKW_NOWAIT
 %token XMPKW_MASTER /* not used */
+%token XMPKW_NOCOMM
 
 %token XMPKW_IN
 %token XMPKW_OUT
@@ -296,10 +298,10 @@
 %token XMPKW_ATOMIC
 %token XMPKW_DIRECT
 
-%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_template_fix_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause xmp_wait_async_clause xmp_end_clause
+%type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_template_fix_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause xmp_save_desc_clause xmp_wait_async_clause xmp_end_clause
 
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_width_opt xmp_width_opt1 xmp_async_opt xmp_async_opt1 xmp_width_list xmp_width
-%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width
+%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width
 
 %type <code> xmp_reduction_op
 
@@ -1917,9 +1919,9 @@ xmp_directive:
 	    { $$ = $2; }
 	  | XMPKW_TASKS
 	    { $$ = XMP_LIST(XMP_TASKS,NULL); }
-	  | XMPKW_TASKS xmp_NOWAIT
-	    { $$ = XMP_LIST(XMP_TASKS,
-	                    GEN_NODE(INT_CONSTANT, XMP_OPT_NOWAIT)); }
+	  /* | XMPKW_TASKS xmp_NOWAIT */
+	  /*   { $$ = XMP_LIST(XMP_TASKS, */
+	  /*                   GEN_NODE(INT_CONSTANT, XMP_OPT_NOWAIT)); } */
 	  | XMPKW_LOOP { need_keyword = TRUE; } xmp_loop_clause
 	    { $$ = XMP_LIST(XMP_LOOP,$3); }
 	  | XMPKW_REFLECT xmp_reflect_clause
@@ -1936,6 +1938,9 @@ xmp_directive:
 	    { $$ = XMP_LIST(XMP_ARRAY,$2); }
           | XMPKW_LOCAL_ALIAS IDENTIFIER REF_OP IDENTIFIER
 	    { $$ = XMP_LIST(XMP_LOCAL_ALIAS, list2(LIST,$2,$4)); }
+
+          | XMPKW_SAVE_DESC xmp_save_desc_clause
+	    { $$ = XMP_LIST(XMP_SAVE_DESC, $2); }
 
           | XMPKW_WAIT_ASYNC xmp_wait_async_clause
             { $$ = XMP_LIST(XMP_WAIT_ASYNC, $2); }
@@ -2006,8 +2011,8 @@ xmp_template_fix_clause:
 	    /* { $$ = list3(LIST,$2,$4,$6); } */
 
 xmp_task_clause:
-	    xmp_ON xmp_obj_ref xmp_clause_opt
-	    { $$ = list2(LIST,$2,$3); }
+	    xmp_ON xmp_obj_ref KW xmp_nocomm_opt xmp_clause_opt
+	    { $$ = list3(LIST,$2,$4,$5); }
           ;
 
 xmp_loop_clause:
@@ -2085,6 +2090,13 @@ xmp_array_clause:
 	     xmp_ON xmp_obj_ref xmp_clause_opt
                 { $$ = list2(LIST,$2,$3); }
 	     ;
+
+xmp_save_desc_clause:
+	    IDENTIFIER
+	    { $$ = list1(LIST,$1); }
+	  | COL2 xmp_name_list
+            { $$ = $2; }
+          ;
 
 xmp_wait_async_clause:
 	     '(' xmp_expr_list ')' KW XMPKW_ON xmp_obj_ref xmp_clause_opt
@@ -2248,6 +2260,11 @@ xmp_async_opt:
         | xmp_ASYNC '(' expr ')'
         { $$ = $3; }
 	;
+
+xmp_nocomm_opt:
+	  /* NULL */ { $$ = GEN_NODE(INT_CONSTANT, 0); }
+	 | XMPKW_NOCOMM { $$ = GEN_NODE(INT_CONSTANT, 1); }
+	 ;
 
 xmp_clause_opt:
 	   /* NULL */{ $$ = NULL; }

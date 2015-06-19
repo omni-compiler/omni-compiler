@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 #ifndef _XMP_IO_SYS
 #define _XMP_IO_SYS
 
@@ -37,21 +31,21 @@ extern int        xmp_fseek_shared_all(xmp_file_t*, long long, int);
 extern long long  xmp_ftell(xmp_file_t*);
 extern long long  xmp_ftell_shared(xmp_file_t*);
 extern long long  xmp_file_sync_all(xmp_file_t*);
-extern size_t     xmp_fread_all(xmp_file_t*, void*, size_t, size_t);
+extern ssize_t    xmp_fread_all(xmp_file_t*, void*, size_t, size_t);
 
 #ifdef ORIGINAL
-extern size_t     xmp_fread_darray_all(xmp_file_t*, xmp_array_t, xmp_range_t*);
-extern size_t     xmp_fwrite_darray_all(xmp_file_t*, xmp_array_t, xmp_range_t*);
+extern ssize_t    xmp_fread_darray_all(xmp_file_t*, xmp_array_t, xmp_range_t*);
+extern ssize_t    xmp_fwrite_darray_all(xmp_file_t*, xmp_array_t, xmp_range_t*);
 #else /* RIST */
-extern size_t     xmp_fread_darray_all(xmp_file_t*, xmp_desc_t, xmp_range_t*);
-extern size_t     xmp_fwrite_darray_all(xmp_file_t*, xmp_desc_t, xmp_range_t*);
+extern ssize_t    xmp_fread_darray_all(xmp_file_t*, xmp_desc_t, xmp_range_t*);
+extern ssize_t    xmp_fwrite_darray_all(xmp_file_t*, xmp_desc_t, xmp_range_t*);
 #endif
 
-extern size_t     xmp_fwrite_all(xmp_file_t*, void*, size_t, size_t);
-extern size_t     xmp_fread_shared(xmp_file_t*, void*, size_t, size_t);
-extern size_t     xmp_fwrite_shared(xmp_file_t*, void*, size_t, size_t);
-extern size_t     xmp_fread(xmp_file_t*, void*, size_t, size_t);
-extern size_t     xmp_fwrite(xmp_file_t*, void*, size_t, size_t);
+extern ssize_t    xmp_fwrite_all(xmp_file_t*, void*, size_t, size_t);
+extern ssize_t    xmp_fread_shared(xmp_file_t*, void*, size_t, size_t);
+extern ssize_t    xmp_fwrite_shared(xmp_file_t*, void*, size_t, size_t);
+extern ssize_t    xmp_fread(xmp_file_t*, void*, size_t, size_t);
+extern ssize_t    xmp_fwrite(xmp_file_t*, void*, size_t, size_t);
 
 #ifdef ORIGINAL
 extern int        xmp_file_set_view_all(xmp_file_t*, long long, xmp_array_t, xmp_range_t*);

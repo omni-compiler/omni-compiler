@@ -15,6 +15,8 @@ all default: $(EXES)
 
 run: $(EXES)
 	$(XRUN) -n 4 ./barrier.x
+	$(XRUN) -n 8 ./tasks.x
+	$(XRUN) -n 16 ./nocomm.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

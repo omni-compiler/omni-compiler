@@ -152,6 +152,33 @@ public class XMPanalyzePragma
       analyzeLocalAlias(pb.getClauses(), env, pb);
       break;
 
+    case SAVE_DESC:
+      {
+	XobjList xmpObjList = (XobjList)pb.getClauses();
+
+	for (Xobject xx: xmpObjList){
+	  String objName = xx.getString();
+	  XMPobject xmpObject = env.findXMPobject(objName, pb);
+	  if (xmpObject != null){
+	    xmpObject.setSaveDesc(true);
+	    continue;
+	  }
+	  Ident id = env.findVarIdent(objName, pb);
+	  if (id != null){
+	    XMParray array =  XMParray.getArray(id);
+	    if (array != null){
+	      array.setSaveDesc(true);
+	    }
+	    else {
+	      XMP.errorAt(pb, "object '" + objName + "' is not an aligned array");
+	    }
+	    continue;
+	  }
+	  XMP.errorAt(pb, "object '" + objName + "' is not declared");
+ 	}
+      }
+      break;
+
     case TEMPLATE_FIX:
       analyzeTemplateFix(pb.getClauses(), info, pb);
       break;
@@ -185,7 +212,8 @@ public class XMPanalyzePragma
       break;
 
     case TASKS:
-      { analyzeTasks(pb);			break; }
+      analyzeTasks(pb.getClauses(), pb.getBody(), info, pb);
+      break;
 
     case GMOVE:
       analyzeGmove(pb.getClauses(),pb.getBody(), info, pb);
@@ -278,8 +306,6 @@ public class XMPanalyzePragma
     newLocalId.setValue(Xcons.Symbol(Xcode.VAR, localType, lName));
 
     gObject.setLocalId(newLocalId);
-
-    
 
   }
 
@@ -682,18 +708,25 @@ public class XMPanalyzePragma
   void analyzeTask(Xobject taskDecl, BlockList taskBody,
 		   XMPinfo info, PragmaBlock pb) {
     Xobject onRef = taskDecl.getArg(0);
-    Xobject taskOpt = taskDecl.getArg(1);
+    Xobject nocomm = taskDecl.getArg(1);
+    // Xobject taskOpt = taskDecl.getArg(1);
     
-    if(taskOpt != null){
-      XMP.fatal("task opt is not supported yet, sorry!");
-      return;
-    }
+    // if(taskOpt != null){
+    //   XMP.fatal("task opt is not supported yet, sorry!");
+    //   return;
+    // }
     info.setOnRef(XMPobjectsRef.parseDecl(onRef,env,pb));
+    info.setNocomm(nocomm);
   }
 
-  private void analyzeTasks(PragmaBlock pb) {
-    XMP.fatal("analyzeTasks");
+  private void analyzeTasks(Xobject tasksDecl, BlockList taskList,
+			    XMPinfo info, PragmaBlock pb){
+    //XMP.fatal("analyzeTasks");
   }
+
+  // private void analyzeTasks(PragmaBlock pb) {
+  //   XMP.fatal("analyzeTasks");
+  // }
 
   private void analyzeGmove(Xobject gmoveDecl, BlockList body, 
 			    XMPinfo info, PragmaBlock pb) {

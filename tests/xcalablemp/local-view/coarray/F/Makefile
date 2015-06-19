@@ -1,27 +1,41 @@
-DIRS= test_get test_put test_fe test_cfold test_alloc
-#DIRS=test_hybrid test_dim
+DIRS=./test_fe ../F_get ../F_put ../F_alloc ../F_scope ../F_cfold
+DIRS_SUBMIT=../F_get ../F_put ../F_alloc ../F_scope
 
-.PHONY: clean all run go
-
-go: all
+.PHONY: clean all run allall runall rerun submit cleanall
 
 all:
-	for d in $(DIRS); do \
-	  cd $$d; $(MAKE) all || { echo "ERROR!!"; exit 1; } \
-	done
+	$(MAKE) -C ./test_fe all
 
 run:
+	$(MAKE) -C ./test_fe -j1 run
+
+clean:
+	$(MAKE) -C ./test_fe clean
+
+
+
+allall:
 	for d in $(DIRS); do \
-	  cd $$d; $(MAKE) -j1 run || { echo "ERROR!!"; exit 1; } \
+	  $(MAKE) -C $$d all; \
+	done
+
+runall:
+	for d in $(DIRS); do \
+	  $(MAKE) -C $$d -j1 run; \
+	done
+
+rerun:
+	for d in $(DIRS); do \
+	  $(MAKE) -C $$d -j1 rerun; \
 	done
 
 submit:
-	for d in $(DIRS); do \
-	  cd $$d; $(MAKE) submit || { echo "ERROR!!"; exit 1; } \
+	for d in $(DIRS_SUBMIT); do \
+	  $(MAKE) -C $$d submit; \
 	done
 
-clean:
+cleanall:
 	for d in $(DIRS); do \
-	  cd $$d; $(MAKE) clean || { echo "ERROR!!"; exit 1; } \
+	  $(MAKE) -C $$d clean; \
 	done
 

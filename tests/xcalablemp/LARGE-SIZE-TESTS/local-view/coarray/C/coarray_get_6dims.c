@@ -3,7 +3,7 @@
 #include <xmp.h>
 #pragma xmp nodes p2(*)
 #define SIZE 4
-#define DIMS 5
+#define DIMS 6
 int a[SIZE][SIZE][SIZE][SIZE][SIZE][SIZE]:[*], b[SIZE][SIZE][SIZE][SIZE][SIZE][SIZE]:[*];
 int start[DIMS], len[DIMS], stride[DIMS];
 int status, ret = 0;

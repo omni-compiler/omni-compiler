@@ -1,8 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
 #ifndef MPI_PORTABLE_PLATFORM_H
 #define MPI_PORTABLE_PLATFORM_H
 #endif 
@@ -866,9 +861,9 @@ void _XMP_gmove_calc_unit_size(_XMP_array_t *dst_array, _XMP_array_t *src_array,
   if ((_XMPF_running == 1) && (_XMPC_running == 0)){
     for(int i=0; i<dst_dim; i++){
       if(i==dst_block_dim){
-        dst_chunk_size[i]=dst_array->info[i].par_size;
+        dst_chunk_size[dst_block_dim]=dst_array->info[dst_block_dim].par_size;
       }else if(i==src_block_dim){
-        dst_chunk_size[i]=src_array->info[i].par_size;
+        dst_chunk_size[src_block_dim]=src_array->info[src_block_dim].par_size;
       }else{
         dst_chunk_size[i]=dst_array->info[i].ser_size;
       }

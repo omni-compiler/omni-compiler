@@ -1,14 +1,14 @@
 README
 
 # How to install
- Please show "INSTALL.md"
+ See "INSTALL.md"
 
 -----
 # Implementation Status
  Some features in the language specification are not supported in this release.
- (You can download the specification of XMP from "http://www.xcalablemp.org.")
+ (You can download the specification of XMP from "http://www.xcalablemp.org")
 
- Please show "docs/STATUS/$(version).md"
+ See "docs/STATUS/$(version).md"
 
 -----
 # How to use
@@ -29,7 +29,7 @@ README
  This value specifies memory size for coarray. The default size is 16MB.
  To set this value, please execute as follows:
 
-    $ export XMP_ONESIDED_HEAP_SIZE=16M
+    $ export XMP_ONESIDED_HEAP_SIZE=32M
 
 * XMP_ONESIDED_STRIDE_SIZE
  **Note that on the K computer this value is not used.**
@@ -66,6 +66,7 @@ README
  This option adds the directory "dir" to the list of directories to be searched for and put
  module information files by the compiler.
 
+-----
 # Usage of BLAS in XMP library
  For example the function xmp_matmul(), BLAS can be used internally to improve performance.
  To do this, "--with-libblas=" should be used in executing ./configure.
@@ -87,6 +88,7 @@ README
 ** Other
   Instead of BLAS, functions prepared by the XMP library is used.
 
+-----
 # Profiling Options in XMP/C
  Omni XMP compiler supports profiler interfaces of Scalasca and tlog.
  The tlog is included in this package. To use the profiler interface of Scalasca,

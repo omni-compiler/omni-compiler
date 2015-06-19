@@ -20,15 +20,31 @@ public class XMPtranslateLocalPragma {
   private boolean		doTlog = false;
   private XobjectDef		currentDef;
 
+  private XMPgenSym             tmpSym;
+
   public XMPtranslateLocalPragma(XMPglobalDecl globalDecl) {
     _globalDecl = globalDecl;
+    tmpSym = new XMPgenSym();
   }
 
   public void translate(FuncDefBlock def) {
     FunctionBlock fb = def.getBlock();
     currentDef = def.getDef();
 
+    // first, check static_desc
     BlockIterator i = new topdownBlockIterator(fb);
+    for (i.init(); !i.end(); i.next()){
+      Block b = i.getBlock();
+      if (b.Opcode() == Xcode.XMP_PRAGMA){
+	String pragmaName = ((PragmaBlock)b).getPragma();
+	if (XMPpragma.valueOf(pragmaName) == XMPpragma.STATIC_DESC){
+	  analyzeStaticDesc((PragmaBlock)b);
+	  b.remove();
+	}
+      }
+    }
+
+    // first, skip tasks
     for (i.init(); !i.end(); i.next()) {
       Block b = i.getBlock();
       if (b.Opcode() ==  Xcode.XMP_PRAGMA) {
@@ -39,6 +55,17 @@ public class XMPtranslateLocalPragma {
         } catch (XMPexception e) {
           XMP.error(pb.getLineNo(), e.getMessage());
         }
+      }
+    }
+
+    // next, remove tasks
+    for (i.init(); !i.end(); i.next()){
+      Block b = i.getBlock();
+      if (b.Opcode() == Xcode.XMP_PRAGMA){
+	String pragmaName = ((PragmaBlock)b).getPragma();
+	if (XMPpragma.valueOf(pragmaName) == XMPpragma.TASKS){
+	  b.replace(Bcons.COMPOUND(b.getBody()));
+	}
       }
     }
 
@@ -59,6 +86,8 @@ public class XMPtranslateLocalPragma {
         { translateAlign(pb);			break; }
       case SHADOW:
         { translateShadow(pb);			break; }
+      case STATIC_DESC:
+	{ /* do nothing */                      break; }
       case TASK:
         { translateTask(pb);			break; }
       case TASKS:
@@ -441,8 +470,18 @@ public class XMPtranslateLocalPragma {
 
   private void translateReflect(PragmaBlock pb) throws XMPexception {
     Block reflectFuncCallBlock = XMPshadow.translateReflect(pb, _globalDecl);
+    XobjList accOrHost = (XobjList)pb.getClauses().getArg(3);
+    boolean isACC = accOrHost.hasIdent("acc");
+    boolean isHost = accOrHost.hasIdent("host");
+    if(!isACC && !isHost){
+      isHost = true;
+    }
+    if(isACC){
+      throw new XMPexception(pb.getLineNo(), "reflect for acc is not implemented");
+    }
+    
     // add function calls for profiling            
-    Xobject profileClause = pb.getClauses().getArg(1);
+    Xobject profileClause = pb.getClauses().getArg(4);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reflect:" + pb.getLineNo()));
@@ -553,38 +592,85 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateTask(PragmaBlock pb) throws XMPexception {
+
     // start translation
     XobjList taskDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     BlockList taskBody = pb.getBody();
 
+    // check if enclosed by TASKS
+    Block parentBlock = pb.getParentBlock();
+    boolean tasksFlag = false;
+    if (parentBlock != null && parentBlock.Opcode() == Xcode.XMP_PRAGMA){
+      String pragmaName = ((PragmaBlock)parentBlock).getPragma();
+      if (XMPpragma.valueOf(pragmaName) == XMPpragma.TASKS){
+	tasksFlag = true;
+      }
+    }
+
+    boolean nocomm_flag = (((XobjInt)taskDecl.getArg(1)).getInt() == 1);
+
     // create function arguments
     XobjList onRef = (XobjList)taskDecl.getArg(0);
     XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
-    String execFuncSurfix = execOnRefArgs.getFirst();
+    String execFuncSuffix = execOnRefArgs.getFirst();
+    if (nocomm_flag) execFuncSuffix = execFuncSuffix + "_nocomm";
     XobjList execFuncArgs = execOnRefArgs.getThird();
     XMPobject onRefObject = execOnRefArgs.getForth();
 
     // setup task finalizer
-    Ident finFuncId = _globalDecl.declExternFunc("_XMP_pop_nodes");
-    setupFinalizer(taskBody, finFuncId, null);
+    if (!nocomm_flag){
+      Ident finFuncId = _globalDecl.declExternFunc("_XMP_pop_nodes");
+      setupFinalizer(taskBody, finFuncId, null);
+    }
 
     // create function call
     BlockList taskFuncCallBlockList = Bcons.emptyBody();
-    Ident taskDescId = taskFuncCallBlockList.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.AUTO,
-                                                            Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
 
-    execFuncArgs.cons(taskDescId.getAddr());
-    Ident execFuncId = execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
-    Block taskFuncCallBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), taskBody, null);
+    Ident taskDescId = null;
+    if (!nocomm_flag){
+
+      if (tasksFlag == true){
+	taskDescId = parentBlock.getBody().declLocalIdent(tmpSym.getStr("_XMP_TASK_desc"),
+							  Xtype.voidPtrType, StorageClass.AUTO,
+							  Xcons.Cast(Xtype.voidPtrType,
+								     Xcons.IntConstant(0)));
+      }
+      else {
+	taskDescId = taskFuncCallBlockList.declLocalIdent(tmpSym.getStr("_XMP_TASK_desc"),
+							  Xtype.voidPtrType, StorageClass.AUTO,
+							  Xcons.Cast(Xtype.voidPtrType,
+								     Xcons.IntConstant(0)));
+      }
+
+      execFuncArgs.cons(taskDescId.getAddr());
+
+    }
+
+    Ident execFuncId = execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSuffix, Xtype.intType);
+
+    Block taskFuncCallBlock;
+    if (tasksFlag == true){
+      Ident flag = parentBlock.getBody().declLocalIdent(tmpSym.getStr("_XMP_is_member"),
+							Xtype.intType);
+      parentBlock.getBody().insert(Xcons.Set(flag.Ref(), execFuncId.Call(execFuncArgs)));
+      taskFuncCallBlock = Bcons.IF(BasicBlock.Cond(flag.Ref()), taskBody, null);
+    }
+    else {
+      taskFuncCallBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)),
+				   taskBody, null);
+    }
+
     taskFuncCallBlockList.add(taskFuncCallBlock);
     pb.replace(Bcons.COMPOUND(taskFuncCallBlockList));
 
-    XobjList arg = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
-    taskBody.add(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
+    if (!nocomm_flag){
+      XobjList arg = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
+      taskBody.add(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
+    }
 
     // add function calls for profiling                                                              
-    Xobject profileClause = taskDecl.getArg(1);
+    Xobject profileClause = taskDecl.getArg(2);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp task:" + pb.getLineNo()));
@@ -602,7 +688,7 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateTasks(PragmaBlock pb) {
-    System.out.println("TASKS:" + pb.toXobject().toString());
+    // do nothing here
   }
 
   private void translateLoop(PragmaBlock pb) throws XMPexception {
@@ -1032,13 +1118,13 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
     }
 
-    String initFuncSurfix = null;
+    String initFuncSuffix = null;
     switch (onRefObj.getKind()) {
       case XMPobject.TEMPLATE:
-        initFuncSurfix = "TEMPLATE";
+        initFuncSuffix = "TEMPLATE";
         break;
       case XMPobject.NODES:
-        initFuncSurfix = "NODES";
+        initFuncSuffix = "NODES";
         break;
       default:
         throw new XMPexception("unknown object type");
@@ -1064,7 +1150,7 @@ public class XMPtranslateLocalPragma {
       setupFinalizer(reductionBody, finFuncId, null);
 
       // create function call
-      Ident initFuncId = _globalDecl.declExternFunc("_XMP_init_reduce_comm_" + initFuncSurfix, Xtype.intType);
+      Ident initFuncId = _globalDecl.declExternFunc("_XMP_init_reduce_comm_" + initFuncSuffix, Xtype.intType);
 
       return Bcons.IF(BasicBlock.Cond(initFuncId.Call(initFuncArgs)), reductionBody, null);
     } else {
@@ -1569,7 +1655,7 @@ public class XMPtranslateLocalPragma {
     return bl.declLocalIdent(identName, type);
   }
 
-  private Block createCommTaskBlock(BlockList body, String execFuncSurfix, XobjList execFuncArgs) throws XMPexception {
+  private Block createCommTaskBlock(BlockList body, String execFuncSuffix, XobjList execFuncArgs) throws XMPexception {
     // setup barrier finalizer
     setupFinalizer(body, _globalDecl.declExternFunc("_XMP_pop_nodes"), null);
 
@@ -1578,7 +1664,7 @@ public class XMPtranslateLocalPragma {
     Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.AUTO,
                                                Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
     execFuncArgs.cons(taskDescId.getAddr());
-    Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSurfix, Xtype.intType);
+    Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSuffix, Xtype.intType);
     Block execBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), body, null);
     taskBody.add(execBlock);
 
@@ -1598,14 +1684,14 @@ public class XMPtranslateLocalPragma {
     } else {
       //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
       XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
-      String execFuncSurfix = execOnRefArgs.getFirst();
+      String execFuncSuffix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
       if (splitComm) {
         BlockList barrierBody = Bcons.blockList(_globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null));
-	barrierFuncCallBlock = createCommTaskBlock(barrierBody, execFuncSurfix, execFuncArgs);
+	barrierFuncCallBlock = createCommTaskBlock(barrierBody, execFuncSuffix, execFuncArgs);
       } else {
-	barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_" + execFuncSurfix, execFuncArgs);
+	barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_" + execFuncSuffix, execFuncArgs);
       }
     }
 
@@ -1640,16 +1726,12 @@ public class XMPtranslateLocalPragma {
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
     XobjList accOrHost = (XobjList)reductionDecl.getArg(3);
-    boolean isHost = false;
-    boolean isACC = false;
-    for (Xobject x : accOrHost){
-      if(x.getSym().equals("acc")) isACC = true;
-      else if(x.getSym().equals("host")) isHost = true;
-    }
+    boolean isHost = accOrHost.hasIdent("host");
+    boolean isACC = accOrHost.hasIdent("acc");
     if(!isHost && !isACC){
       isHost = true;
     }else if(isHost && isACC){
-      XMP.fatal("reduction of both host and acc is unimplemented");
+      throw new XMPexception(pb.getLineNo(), "reduction for both acc and host is unimplemented");
     }
     Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb,
                                                                      false, null, null);
@@ -1664,16 +1746,16 @@ public class XMPtranslateLocalPragma {
     else {
       //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
       XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
-      String execFuncSurfix = execOnRefArgs.getFirst();
+      String execFuncSuffix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
       if (splitComm) {
         BlockList reductionBody = Bcons.blockList(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC",
                                                                                null, reductionFuncArgsList));
-	reductionFuncCallBlock = createCommTaskBlock(reductionBody, execFuncSurfix, execFuncArgs);
+	reductionFuncCallBlock = createCommTaskBlock(reductionBody, execFuncSuffix, execFuncArgs);
       }
       else {
-        reductionFuncCallBlock = createReductionFuncCallBlock(false, reductionFuncType + "_" + execFuncSurfix,
+        reductionFuncCallBlock = createReductionFuncCallBlock(false, reductionFuncType + "_" + execFuncSuffix,
                                                               execFuncArgs.operand(), reductionFuncArgsList);
       }
     }
@@ -2098,6 +2180,17 @@ public class XMPtranslateLocalPragma {
     XobjList bcastDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
+    // acc or host
+    XobjList accOrHost = (XobjList)bcastDecl.getArg(4);
+    boolean isACC = accOrHost.hasIdent("acc");
+    boolean isHost = accOrHost.hasIdent("host");
+    if(!isACC && !isHost){
+      isHost = true;
+    }
+    if(isACC && isHost){
+      throw new XMPexception(pb.getLineNo(), "bcast for both acc and host is unimplemented");
+    }
+    
     // create function arguments
     XobjList varList = (XobjList)bcastDecl.getArg(0);
     Vector<XobjList> bcastArgsList = createBcastArgsList(varList, pb);
@@ -2112,22 +2205,26 @@ public class XMPtranslateLocalPragma {
 
     XobjList onRef = (XobjList)bcastDecl.getArg(2);
     if (onRef == null || onRef.getArgs() == null) {
-	bcastFuncCallBlock = createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList, execFromRefArgs);
+	bcastFuncCallBlock = createBcastFuncCallBlock(true, "EXEC", null, bcastArgsList, execFromRefArgs, isACC);
     } else {
       XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
 
-      String execFuncSurfix = execOnRefArgs.getFirst();
+      String execFuncSuffix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
       if (splitComm) {
         BlockList bcastBody = Bcons.blockList(createBcastFuncCallBlock(true, "EXEC",
-                                                                       null, bcastArgsList, execFromRefArgs));
-	bcastFuncCallBlock = createCommTaskBlock(bcastBody, execFuncSurfix, execFuncArgs);
+                                                                       null, bcastArgsList, execFromRefArgs, isACC));
+	bcastFuncCallBlock = createCommTaskBlock(bcastBody, execFuncSuffix, execFuncArgs);
       }
       else {
-	bcastFuncCallBlock = createBcastFuncCallBlock(false, execFuncSurfix,
-                                            execFuncArgs.operand(), bcastArgsList, execFromRefArgs);
+	bcastFuncCallBlock = createBcastFuncCallBlock(false, execFuncSuffix,
+                                            execFuncArgs.operand(), bcastArgsList, execFromRefArgs, isACC);
       }
+    }
+    
+    if(isACC){
+      bcastFuncCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA", Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"),varList)), Bcons.blockList(bcastFuncCallBlock));
     }
 
     Xobject async = bcastDecl.getArg(3);
@@ -2146,7 +2243,7 @@ public class XMPtranslateLocalPragma {
     pb.replace(bcastFuncCallBlock);
 
     // add function calls for profiling                                                                                    
-    Xobject profileClause = bcastDecl.getArg(3);
+    Xobject profileClause = bcastDecl.getArg(5);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp bcast:" + pb.getLineNo()));
@@ -2213,18 +2310,19 @@ public class XMPtranslateLocalPragma {
   }
 
   private Block createBcastFuncCallBlock(boolean isMacro, String funcType, Xobject execDesc, Vector<XobjList> funcArgsList,
-                                         XMPpair<String, XobjList> execFromRefArgs) throws XMPexception {
-    String funcSurfix = null;
+                                         XMPpair<String, XobjList> execFromRefArgs, boolean isACC) throws XMPexception {
+    String funcSuffix = null;
     XobjList fromRef = null;
-    if (execFromRefArgs == null) funcSurfix = new String(funcType + "_OMITTED");
+    if (execFromRefArgs == null) funcSuffix = new String(funcType + "_OMITTED");
     else {
-      funcSurfix = new String(funcType + "_" + execFromRefArgs.getFirst());
+      funcSuffix = new String(funcType + "_" + execFromRefArgs.getFirst());
       fromRef = execFromRefArgs.getSecond();
     }
 
+    String accSuffix = isACC? "acc_" : "";
     Ident funcId = null;
-    if (isMacro) funcId = XMP.getMacroId("_XMP_M_BCAST_" + funcSurfix);
-    else         funcId = _globalDecl.declExternFunc("_XMP_bcast_" + funcSurfix);
+    if (isMacro) funcId = XMP.getMacroId("_XMP_M_BCAST_" + accSuffix.toUpperCase() + funcSuffix);
+    else         funcId = _globalDecl.declExternFunc("_XMP_bcast_" + accSuffix + funcSuffix);
 
     BlockList funcCallList = Bcons.emptyBody();
     Iterator<XobjList> it = funcArgsList.iterator();
@@ -2407,6 +2505,17 @@ public class XMPtranslateLocalPragma {
     if(XMPcollective.GMOVE_IN == gmoveClause.getInt() || XMPcollective.GMOVE_OUT == gmoveClause.getInt())
       throw new XMPexception("gmove in/out directive is not supported yet");
 
+    // acc or host
+    XobjList accOrHost = (XobjList)gmoveDecl.getArg(1);
+    boolean isACC = accOrHost.hasIdent("acc");
+    boolean isHost = accOrHost.hasIdent("host");
+    if(!isACC && !isHost){
+      isHost = true;
+    }
+    if(isACC){
+      throw new XMPexception(pb.getLineNo(), "gmove for acc is not implemented");
+    }
+    
     // check body
     Xobject assignStmt = null;
     String checkBodyErrMsg = new String("gmove directive should be written before one assign statement");
@@ -2582,7 +2691,7 @@ public class XMPtranslateLocalPragma {
     pb.replace(gmoveBlock);
 
     // add function calls for profiling                                                                                    
-    Xobject profileClause = gmoveDecl.getArg(1);
+    Xobject profileClause = gmoveDecl.getArg(2);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp gmove:" + pb.getLineNo()));
@@ -2736,18 +2845,18 @@ public class XMPtranslateLocalPragma {
   //       tempArgs.add(globalRef.getArg(2));
   //     }
 
-  //     String execFuncSurfix = null;
+  //     String execFuncSuffix = null;
   //     XobjList execFuncArgs = null;
   //     if (splitComm) {
-  //       execFuncSurfix = "GLOBAL_PART";
+  //       execFuncSuffix = "GLOBAL_PART";
   //       execFuncArgs = tempArgs;
   //     }
   //     else {
-  //       execFuncSurfix = "NODES_ENTIRE";
+  //       execFuncSuffix = "NODES_ENTIRE";
   //       execFuncArgs = Xcons.List(_globalDecl.getWorldDescId().Ref());
   //     }
 
-  //     return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSurfix, new Boolean(splitComm), execFuncArgs, null);
+  //     return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, new Boolean(splitComm), execFuncArgs, null);
   //   }
   //   else {
   //     // execute on <object-ref>
@@ -2839,23 +2948,23 @@ public class XMPtranslateLocalPragma {
   //         throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
 
   //       if (splitComm) {
-  //         String execFuncSurfix = null;
+  //         String execFuncSuffix = null;
   //         XobjList execFuncArgs = null;
   //         execFuncArgs = tempArgs;
   //         switch (onRefObject.getKind()) {
   //           case XMPobject.NODES:
-  //             execFuncSurfix = "NODES_PART";
+  //             execFuncSuffix = "NODES_PART";
   //             execFuncArgs.cons(ontoNodesRef);
   //             break;
   //           case XMPobject.TEMPLATE:
-  //             execFuncSurfix = "TEMPLATE_PART";
+  //             execFuncSuffix = "TEMPLATE_PART";
   //             execFuncArgs.cons(((XMPtemplate)onRefObject).getDescId().Ref());
   //             break;
   //           default:
   //             throw new XMPexception("unknown object type");
   //         }
 
-  //         return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSurfix, new Boolean(splitComm), execFuncArgs, onRefObject);
+  //         return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, new Boolean(splitComm), execFuncArgs, onRefObject);
   //       }
   //       else
   //         return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"),
@@ -2892,18 +3001,18 @@ public class XMPtranslateLocalPragma {
         tempArgs.add(globalRef.getArg(2));
       }
 
-      String execFuncSurfix = null;
+      String execFuncSuffix = null;
       XobjList execFuncArgs = null;
       if (splitComm) {
-        execFuncSurfix = "GLOBAL_PART";
+        execFuncSuffix = "GLOBAL_PART";
         execFuncArgs = tempArgs;
       }
       else {
-        execFuncSurfix = "NODES_ENTIRE";
+        execFuncSuffix = "NODES_ENTIRE";
         execFuncArgs = Xcons.List(_globalDecl.getWorldDescId().Ref());
       }
 
-      return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSurfix, new Boolean(splitComm), execFuncArgs, null);
+      return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, new Boolean(splitComm), execFuncArgs, null);
     }
     else {
       // execute on <object-ref>
@@ -2997,23 +3106,23 @@ public class XMPtranslateLocalPragma {
           throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
 
         if (splitComm) {
-          String execFuncSurfix = null;
+          String execFuncSuffix = null;
           XobjList execFuncArgs = null;
           execFuncArgs = tempArgs;
           switch (onRefObject.getKind()) {
             case XMPobject.NODES:
-              execFuncSurfix = "NODES_PART";
+              execFuncSuffix = "NODES_PART";
               execFuncArgs.cons(ontoNodesRef);
               break;
             case XMPobject.TEMPLATE:
-              execFuncSurfix = "TEMPLATE_PART";
+              execFuncSuffix = "TEMPLATE_PART";
               execFuncArgs.cons(((XMPtemplate)onRefObject).getDescId().Ref());
               break;
             default:
               throw new XMPexception("unknown object type");
           }
 
-          return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSurfix, new Boolean(splitComm), execFuncArgs, onRefObject);
+          return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, new Boolean(splitComm), execFuncArgs, onRefObject);
         }
         else
           return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"),
@@ -3377,6 +3486,20 @@ public class XMPtranslateLocalPragma {
     args.add(null); // multicore clause ?
 
     return Bcons.PRAGMA(Xcode.XMP_PRAGMA, "LOOP", args, loop);
+  }
+
+
+  private void analyzeStaticDesc(PragmaBlock pb){
+
+    Block parentBlock = pb.getParentBlock();
+    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable2(parentBlock);
+
+    XobjList xmpObjList = (XobjList)pb.getClauses().getArg(0);
+    for (Xobject xx: xmpObjList){
+      String objName = xx.getString();
+      localXMPsymbolTable.putStaticDesc(objName);
+    }
+
   }
 
 

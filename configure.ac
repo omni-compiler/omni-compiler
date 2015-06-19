@@ -1,5 +1,5 @@
-AC_PREREQ(2.60)
-LT_PREREQ(2.4)
+#AC_PREREQ(2.60)
+#LT_PREREQ(2.4)
 
 AC_INIT([Omni Compiler], [0.9.1], [h-murai@riken.jp], [omni])
 
@@ -57,11 +57,14 @@ userJAR=${JAR}
 # --------------------------------------------------------------------
 # Initialize for autoconf
 LT_INIT
+if test -z "$LIBTOOL"; then
+   AC_MSG_ERROR([Please install newer automake/autoconf/libtool. We recommend automake-1.14/autoconf-2.69/libtool-2.4.2.])
+fi
+#AC_SUBST(LIBTOOL)
+#AC_SUBST(LIBTOOL_DEPS)
 
 RM="rm -f"
 AC_SUBST(RM)
-AC_SUBST(LIBTOOL)
-AC_SUBST(LIBTOOL_DEPS)
 AM_INIT_AUTOMAKE([no-define foreign])
 AM_MAINTAINER_MODE([enable])
 
@@ -287,29 +290,49 @@ AC_ARG_ENABLE(atool,
 
 AC_ARG_ENABLE(xacc,
     [  --enable-xacc           enable XcalableACC (false default)],
-    [xacc=yes], [xacc=no])
+    [doXACC=yes], [doXACC=no])
 
 AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
 TARGET=$target
 AC_SUBST(TARGET)
+
 # --------------------------------------------------------------------
 # check basic commands
-
 AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_FC
 AC_PROG_CXX
 AC_PROG_INSTALL
-AC_PROG_MAKE_SET
+#AC_PROG_MAKE_SET
 AC_PROG_AWK
-
 AC_PROG_YACC
+AC_PROG_LEX
+
+if test "${CPP}" = ""; then
+   AC_MSG_ERROR([CPP is not found.])
+fi
+   
+if test "${CC}" = ""; then
+   AC_MSG_ERROR([CC is not found.])
+fi
+
+if test "${FC}" = ""; then
+   AC_MSG_ERROR([FC is not found.])
+fi
+
+if test "${INSTALL}" = ""; then
+   AC_MSG_ERROR([INSTALL is not found.])
+fi
+
+if test "${AWK}" = ""; then
+  AC_MSG_ERROR([AWK is not found.])
+fi
+    
 # If yacc is not available, set YACC to 'yacc' in AC_PROG_YACC.
 if test "x${YACC}" = "xyacc"; then
    AC_MSG_ERROR([byacc is not found.])
 fi
 
-AC_PROG_LEX
 # https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.69/html_node/Particular-Programs.html
 # If lex is not available, set LEX to ':' in "AC_PROG_LEX".
 if test "x${LEX}" = "x:"; then
@@ -318,12 +341,14 @@ fi
 
 # --------------------------------------------------------------------
 # set OpenACC
+# "ENABLE_ACC" defined by AC_SUBST() is used in ./Driver/libexec/ompcc_lib.sh
+# Moreover "ENABLE_ACC" defined by AM_CONDITIONAL() is used in ./Makefile.am
 ENABLE_ACC=0
 if test "x${doOpenAcc}" = "xyes"; then
     ENABLE_ACC=1
 fi
-AM_CONDITIONAL(ENABLE_ACC, test "x${doOpenAcc}" = "xyes")
 AC_SUBST(ENABLE_ACC)
+AM_CONDITIONAL(ACC, test "x${doOpenAcc}" = "xyes")
 
 # --------------------------------------------------------------------
 # set ATOOLS
@@ -331,13 +356,12 @@ ENABLE_ATOOL=0
 if test "x${doatool}" = "xyes"; then
    ENABLE_ATOOL=1
 fi
-AM_CONDITIONAL(ENABLE_ATOOL, test "x${doatool}" = "xyes")
 AC_SUBST(ENABLE_ATOOL)
+AM_CONDITIONAL(ATOOL, test "x${doatool}" = "xyes")
 
 # --------------------------------------------------------------------
 # set XACC
-AM_CONDITIONAL(ENABLE_XACC, test "x${xacc}" = "xyes")
-AC_SUBST(ENABLE_XACC)
+AM_CONDITIONAL(XACC, test "x${doXACC}" = "xyes")
 
 # --------------------------------------------------------------------
 # Generate cpu/os specifier
@@ -374,7 +398,7 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 # (1) Local compiler (for compiling C_Front and so on)
 #   CC, FC, CFLAGS, FCFLAGS, ...
 #
-# (2) MPI compiler (for compiling libxmp and so on)
+# (2) MPI compiler (for compiling libxmp and so on) to cross compile
 #  MPI_CC, MPI_FC, MPI_CFLAGS, MPI_FCFLAGS, ...
 #
 # (3) Omni compiler (for using xmpcc and xmpf90 commands)
@@ -385,7 +409,7 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 #  MPI_CFLAGS needs options for OpenMP and strong optimization (e.g. -O2) and C99.
 #  MPI_FCFLAGS needs an option for strong optimization (e.g. -O2).
 #
-#  Prefix "OMNI_" options should set a minimal of option as possible.
+#  Prefix "OMNI_" options should set minimal options as possible.
 #  OMNI_C_PP, Pre-processor command, needs an option for C99.
 #  OMNI_NTV_CFLAGS needs an option for C99 support.
 #  OMNI_LNK_CFLAGS and OMNI_LNK_FCFLAGS need an option for OpenMP.
@@ -500,8 +524,8 @@ elif test "$target" = "Cray-linux-gnu"; then
 # MPI C
   MPI_CC="cc"
   MPI_CPP=$MPI_CC
-  MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-O2 $OPENMP_OPT"
+  MPI_CPPFLAGS="-E -D_XMP_CRAY"
+  MPI_CFLAGS="-O2 -hgnu $OPENMP_OPT"
   MPI_CLIBS=""
 
 # MPI F
@@ -546,14 +570,14 @@ elif test "$target" = "sx-nec-superux"; then
   MPI_CC="sxmpic++"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-O2 $OPENMP_OPT"
+  MPI_CFLAGS="-Chopt $OPENMP_OPT"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="sxmpif90"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-O2 $OPENMP_OPT"
+  MPI_FCFLAGS="-Chopt $OPENMP_OPT"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
 
@@ -708,12 +732,16 @@ else
   ARFLAGS="cru"
   AC_CHECK_TOOL([NM], [nm], [:])
 
-  INTEL_MPICC=mpiicc
-  which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
-  if test $? -eq 0; then
-    MPI_CC=${INTEL_MPICC}
+  if test [ "" != "$userMPI_CC" ]; then
+    MPI_CC=${userMPI_CC}
   else
-    MPI_CC="mpicc"
+    INTEL_MPICC=mpiicc
+    which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
+    if test $? -eq 0; then
+      MPI_CC=${INTEL_MPICC}
+    else
+      MPI_CC=mpicc
+    fi
   fi
 
   chk=`${MPI_CC} --version | head -n1`
@@ -842,8 +870,8 @@ else
       OMNI_X2X_FLAGS=""
 
       # Special options
-      IS_PGI="Yes"
-      AC_SUBST(IS_PGI)
+#      IS_PGI="Yes"
+#      AC_SUBST(IS_PGI)
       ;;
     *)
       echo "No supported compiler was found."
@@ -860,7 +888,10 @@ else
     esac ;;
   esac
 fi
+
+# "POWERPC" flag is used in libxmpf/src/Makefile.am
 AM_CONDITIONAL(POWERPC, test "$target" = "powerpc-ibm-cnk" -o "$target" = "powerpc-hitachi-aix")
+
 AC_SUBST(ARFLAGS)
 
 # --------------------------------------------------------------------
@@ -902,6 +933,13 @@ if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
 fi
 
 AC_SUBST(LIBXML_PREFIX)
+if test LIBXML_PREFIX="/usr"; then
+   LIBXML_LIB=/usr/lib64
+else
+   LIBXML_LIB=${LIBXML_PREFIX}/lib
+fi
+AC_SUBST(LIBXML_LIB)
+
 # --------------------------------------------------------------------
 # set BLAS
 
@@ -1174,26 +1212,36 @@ AC_SUBST(OMNI_LNK_FCFLAGS)
 # Omni Common
 AC_SUBST(OMNI_X2X_FLAGS)
 
-# Other options
-chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
-AM_CONDITIONAL(IS_PGI, test "$chk" != "")
+# check PGI compiler
+#chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
+#AM_CONDITIONAL(IS_PGI, test "$chk" != "")
 
-AM_CONDITIONAL(IS_CRAY, test "$target" = "Cray-linux-gnu")
-AM_CONDITIONAL(IS_SUPERUX, test "$target" = "sx-nec-superux")
+# check -lstdc++
+tmp_file_c=/tmp/_xmp.$$.c
+tmp_file_x=/tmp/_xmp.$$.x
+echo "int main(){return 0;}" > $tmp_file_c
+chk=`$MPI_CC -lstdc++ $tmp_file_c -o $tmp_file_x 2> /dev/null`
+if test $? -ne 0; then
+   rm -f $tmp_file_c $tmp_file_x
+   AC_MSG_ERROR([-lstdc++ is not found.])
+else
+   rm -f $tmp_file_c $tmp_file_x
+fi
 
-AC_SUBST(IS_CRAY)
-AC_SUBST(IS_SUPERUX)
+#AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
+AM_CONDITIONAL(SUPERUX, test "$target" = "sx-nec-superux")
+
+#AC_SUBST(CRAY)
+AC_SUBST(SUPERUX)
 
 # --------------------------------------------------------------------
 # check Perl versoin is 5
 PERL5=""
 AC_PATH_PROGS(PERL5, perl)
 
-inDev=0
 if test "$PERL5" = ""; then
-    inDev=0
+    AC_MSG_ERROR([perl is not found.])
 else
-    inDev=1
     isPerlVersion5=no
     AC_MSG_CHECKING(Perl version is 5)
     pTmp=/tmp/.btoolPerlChk.$$
@@ -1212,23 +1260,37 @@ AC_SUBST(PERL5)
 
 # --------------------------------------------------------------------
 # check java
-
 if test "$userJAVA" != ""; then
   JAVA="$userJAVA"
 else
-  AC_PATH_PROG(JAVA, java, java)
+  JAVA=java
 fi
 
 if test	"$userJAVAC" != ""; then
   JAVAC="$userJAVAC"
 else
-  AC_PATH_PROG(JAVAC, javac, javac)
+  JAVAC=javac
 fi
 
 if test "$userJAR" != ""; then
   JAR="$userJAR"
 else
-  AC_PATH_PROG(JAR, jar, jar)
+  JAR=jar
+fi
+
+which ${JAVA} 1>/dev/null 2>/dev/null
+if test $? -ne 0; then
+   AC_MSG_ERROR([JAVA is not found.])
+fi
+
+which ${JAVAC} 1>/dev/null 2>/dev/null
+if test $? -ne 0; then
+   AC_MSG_ERROR([JAVAC is not found.])
+fi
+
+which ${JAR} 1>/dev/null 2>/dev/null
+if test $? -ne 0; then
+   AC_MSG_ERROR([JAR is not found.])
 fi
 
 AC_SUBST(JAVA)

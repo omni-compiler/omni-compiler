@@ -1,9 +1,9 @@
 XFC     = xmpf90 -O2
 XRUN    = mpiexec
-EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x
+EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x 412.x
 
 all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
-     228.x 45_save.o 358_result.x 377.x 261.o 162.o 383.x 384.o 392.x 393.o 278\ spacefile.x derived.o func.o
+     228.x 45_save.o 358_result.x 377.x 261.o 162.o 383.x 384.o 392.x 393.o 278\ spacefile.x derived.o func.o save_desc.x
 
 .SUFFIXES: .x .o .f90
 
@@ -99,6 +99,10 @@ refobj.x: refobj.f90
 392.x: 392.f90
 	$(XFC) -I./392-include -o $@ $<
 
+412.x: 412.f90
+	$(XFC) -c $< ;\
+	if [ ! -f m412.xmod ]; then exit 1; fi
+
 run:
 	$(XRUN) -np 2 ./module_test.x
 	$(XRUN) -np 2 ./exit.x
@@ -113,6 +117,7 @@ run:
 	$(XRUN) -np 2 ./383.x
 	$(XRUN) -np 1 ./392.x
 	$(XRUN) -np 1 ./278\ spacefile.x
+	$(XRUN) -np 4 ./save_desc.x
 
 clean:
 	rm -f *.x *.o *.*mod *.s

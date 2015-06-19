@@ -21,6 +21,8 @@ public class XMPobject {
   int			_dim;
   Ident			_descId;
 
+  boolean               _is_saveDesc;
+
   public XMPobject(int kind){
     _kind = kind;
   }
@@ -46,6 +48,12 @@ public class XMPobject {
 
   public Ident getDescId() {
     return _descId;
+  }
+
+  public boolean isSaveDesc() { return _is_saveDesc; }
+
+  public void setSaveDesc(boolean flag){
+    _is_saveDesc = flag;
   }
 
   public void buildConstructor(BlockList body, XMPenv def){
