@@ -84,7 +84,8 @@ enum OMP_pragma_clause {
     OMP_DIR_ORDERED=20,
     OMP_DIR_IF=21,
     OMP_DIR_NOWAIT=22,
-    OMP_DIR_SCHEDULE=23
+    OMP_DIR_SCHEDULE=23,
+    OMP_DIR_NUM_THREADS=24
 };
 
 #define IS_OMP_DATA_CLAUSE(c) \

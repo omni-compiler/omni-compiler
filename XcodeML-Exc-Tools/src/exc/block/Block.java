@@ -338,7 +338,11 @@ public class Block extends PropObject implements IVarContainer
         }
         return null; // not found
     }
-
+    @Override
+    public Ident findCommonIdent(String name)
+    {
+	return null;
+    }
     public Boolean removeVarIdent(String name){
 
       BlockList b_list;

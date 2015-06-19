@@ -222,6 +222,7 @@
 %token OMPKW_FIRSTPRIVATE
 %token OMPKW_REDUCTION
 %token OMPKW_IF
+%token OMPKW_NUM_THREADS
 %token OMPKW_COPYIN
 %token OMPKW_DO
 %token OMPKW_LASTPRIVATE
@@ -1838,6 +1839,8 @@ omp_clause:
 	  { $$ = $4; }
 	| OMPKW_ORDERED
 	  { $$ = OMP_LIST(OMP_DIR_ORDERED,NULL); }
+        | OMPKW_NUM_THREADS '(' expr ')'
+	{ $$ = OMP_LIST(OMP_DIR_NUM_THREADS,$3); } 
 	;
 
 omp_reduction_op:

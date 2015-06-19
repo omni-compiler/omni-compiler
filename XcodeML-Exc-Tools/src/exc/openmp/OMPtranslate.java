@@ -6,8 +6,11 @@
  */
 package exc.openmp;
 
+import java.util.List;
+
 import xcodeml.util.XmOption;
 import exc.object.*;
+import exc.xcodeml.XcodeMLtools;
 import exc.block.*;
 
 /**
@@ -94,6 +97,11 @@ public class OMPtranslate implements XobjectDefVisitor
         }
         
         FuncDefBlock fd = new FuncDefBlock(d);
+
+	List list = anaDecl.getCommonName();
+        for(int i=0;i<list.size();i++)
+              fd.searchCommonMember(list.get(i).toString(),anaDecl,d);
+
         if(XmOption.isLanguageC())
             fd.removeDeclInit();
 

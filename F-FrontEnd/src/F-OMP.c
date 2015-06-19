@@ -512,6 +512,15 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 					list2(LIST,EXPR_ARG1(c),v));
 	    break;
 
+	case OMP_DIR_NUM_THREADS:
+            if(!is_parallel){
+                error_at_node(x,"'num_threads' clause must be in PARALLEL");
+                break;
+            }
+            v = compile_expression(EXPR_ARG2(c));
+	    pclause = list_put_last(pclause,
+					list2(LIST,EXPR_ARG1(c),v));
+            break;
 	case OMP_DATA_PRIVATE:
 	case OMP_DATA_FIRSTPRIVATE:
 	    /* all pragma can have these */
@@ -521,6 +530,7 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 	    else     
 	      dclause = list_put_last(dclause,c);
 	    break;
+
 
 	case OMP_DATA_LASTPRIVATE:
 	    compile_OMP_name_list(EXPR_ARG2(c));

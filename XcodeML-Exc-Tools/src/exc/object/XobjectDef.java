@@ -276,7 +276,12 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
   {
     return findIdent(name, IXobject.FINDKIND_VAR);
   }
-    
+
+    public Ident findCommonIdent(String name)
+    {
+	return findIdent(name, IXobject.FINDKIND_COMMON);
+    }   
+ 
   private Ident declFident(String name, Xtype t, boolean isFcommon)
   {
     if(def.Opcode() != Xcode.FUNCTION_DEFINITION) {

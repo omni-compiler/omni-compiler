@@ -8,6 +8,15 @@
 
 package exc.xcodeml;
 
+
+import static xcodeml.util.XmDomUtil.collectChildNodes;
+import static xcodeml.util.XmDomUtil.collectElementsExclude;
+import static xcodeml.util.XmDomUtil.getAttr;
+import static xcodeml.util.XmDomUtil.getAttrBool;
+import static xcodeml.util.XmDomUtil.getContent;
+import static xcodeml.util.XmDomUtil.getContentText;
+import static xcodeml.util.XmDomUtil.getElement;
+
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;

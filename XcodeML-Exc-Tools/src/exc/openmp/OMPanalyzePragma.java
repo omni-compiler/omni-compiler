@@ -11,6 +11,7 @@ import java.util.List;
 
 import xcodeml.util.XmOption;
 import exc.object.*;
+import exc.xcodeml.XcodeMLtools;
 import exc.block.*;
 
 /**

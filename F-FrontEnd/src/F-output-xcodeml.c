@@ -2403,6 +2403,64 @@ outx_OMP_dir_string(int l,expv v)
   outx_printi(l, "<string>%s</string>\n", s);
 }
 
+static void outx_OMP_DATA_DEFAULT_kind(int l,char *s ,expv v)
+{
+    outx_printi(l+2, "<string>%s</string>\n", s);
+    //printf("EXPV_INT_VALUE(%d)\n",EXPV_INT_VALUE(v));
+    //    outx_printi(l+3,"<list>\n");
+
+    switch(EXPV_INT_VALUE(v))
+       {
+       case OMP_DEFAULT_NONE:
+       outx_printi(l+4,"<string>DEFAULT_NONE</string>\n");
+       break;
+       case OMP_DEFAULT_SHARED:
+       outx_printi(l+4,"<string>DEFAULT_SHARED</string>\n");
+       break;
+       case OMP_DEFAULT_PRIVATE:
+       outx_printi(l+4,"<string>DEFAULT_PRIVATE</string>\n");
+       break;
+       }//outx_expv_withListTag(l+2, EXPR_ARG2(vv));
+//    outx_printi(l+3,"</list>\n");
+    outx_printi(l+1,"</list>\n");
+
+}
+
+static void outx_OMP_sched_kind(int l,char *s,expv v)
+{
+  outx_printi(l+2, "<string>%s</string>\n", s);
+  //printf("EXPV_INT_VALUE(%d)\n",EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v))));
+  outx_printi(l+3,"<list>\n");                                                                                                                                                                                 
+
+  switch(EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v))))
+    {
+    case OMP_SCHED_NONE:
+      outx_printi(l+4,"<string>SCHED_NONE</string>\n");
+      break;
+    case OMP_SCHED_STATIC:
+      outx_printi(l+4,"<string>SCHED_STATIC</string>\n");
+      break;
+     case  OMP_SCHED_DYNAMIC:
+       outx_printi(l+4,"<string>SCHED_DYNAMIC</string>\n");
+       break;
+    case  OMP_SCHED_GUIDED:
+       outx_printi(l+4,"<string>SCHED_GUIDED</string>\n");
+       break;
+     case  OMP_SCHED_RUNTIME:
+       outx_printi(l+4,"<string>SCHED_RUNTIME</string>\n");
+       break;
+     case  OMP_SCHED_AFFINITY:
+       outx_printi(l+4,"<string>SCHED_AFFINITY</string>\n");
+       break;
+    default:
+      fatal("OMP Sched error");
+    }
+  outx_expv(l+4,EXPR_ARG1(v));
+    outx_printi(l+3,"</list>\n");                                                                                                                                                                                
+  outx_printi(l+1,"</list>\n");
+}
+
+
 static void
 outx_OMP_dir_clause_list(int l,expv v)
 {
@@ -2427,7 +2485,7 @@ outx_OMP_dir_clause_list(int l,expv v)
     if(EXPV_CODE(dir) != INT_CONSTANT) 
       fatal("outx_OMP_dir_clause_list: clause not INT_CONSTANT");
     switch(EXPV_INT_VALUE(dir)){
-    case OMP_DATA_DEFAULT: s = "DATA_DEFAULT"; break;
+    case OMP_DATA_DEFAULT: s = "DATA_DEFAULT"; outx_OMP_DATA_DEFAULT_kind(l,s,EXPR_ARG2(vv)); continue;
     case OMP_DATA_PRIVATE: s = "DATA_PRIVATE"; break;
     case OMP_DATA_SHARED: s = "DATA_SHARED"; break;
     case OMP_DATA_FIRSTPRIVATE: s = "DATA_FIRSTPRIVATE"; break;
@@ -2448,8 +2506,9 @@ outx_OMP_dir_clause_list(int l,expv v)
     case OMP_DATA_COPYPRIVATE: s = "DATA_COPYPRIVATE"; break;
     case OMP_DIR_ORDERED: s = "DIR_ORDERED"; break;
     case OMP_DIR_IF: s = "DIR_IF"; break;
+    case OMP_DIR_NUM_THREADS: s = "DIR_NUM_THREADS"; break;
     case OMP_DIR_NOWAIT: s = "DIR_NOWAIT"; break;
-    case OMP_DIR_SCHEDULE: s = "DIR_SCHEDULE"; break;
+    case OMP_DIR_SCHEDULE: s = "DIR_SCHEDULE";  outx_OMP_sched_kind(l,s,vv);continue;
     default:
       fatal("out_OMP_dir_clause: unknown value=%d\n",EXPV_INT_VALUE(v));
     }
