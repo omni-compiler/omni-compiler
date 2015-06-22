@@ -38,7 +38,10 @@
 !
 module pres
   implicit none
+  include 'xmp_coarray.h'
   real(4),dimension(:,:,:),allocatable :: p
+  real(4), allocatable, dimension(:,:), codimension[:,:,:] :: &
+       buf1l, buf1u,  buf2l, buf2u,  buf3l, buf3u
 end module pres
 !
 module mtrx
@@ -70,13 +73,11 @@ module comm
   integer :: ndx,ndy,ndz
   integer :: iop(3)
   integer :: npe,id
-  include 'xmp_coarray.h'
-  real, allocatable, dimension(:,:), codimension[:,:,:] :: &
-       buf1l, buf1u,  buf2l, buf2u,  buf3l, buf3u
 end module comm
 
 program HimenoBMTxp_f90_CAF
 !
+  use pres
   use others
   use comm
 !
@@ -179,6 +180,7 @@ end program HimenoBMTxp_f90_CAF
 !
 subroutine readparam
 !
+  use pres
   use comm
 !
   implicit none
@@ -383,7 +385,7 @@ subroutine jacobi(nn,gosa)
      p(2:imax-1,2:jmax-1,2:kmax-1)= &
           wrk2(2:imax-1,2:jmax-1,2:kmax-1)
 !
-!@!     call sendp()
+     call sendp()
 !
      call co_sum(wgosa, gosa)
 !
@@ -396,6 +398,7 @@ end subroutine jacobi
 !
 subroutine initcomm
 !
+  use pres
   use comm
   use others
 !
@@ -502,78 +505,5 @@ end subroutine initmax
 !
 !
 subroutine sendp()
-!
-  use pres
-  use others
-  use comm
-  implicit none
-  integer mex, mey, mez
-
-  mex = iop(1) + 1
-  mey = iop(2) + 1
-  mez = iop(3) + 1
-
-  sync all
-
-  !*** put z-axis
-  if (mez>1) then
-     buf3u(:,:)[mex,mey,mez-1] = p(:,:,2     )
-  end if
-  if (mez<ndz) then
-     buf3l(:,:)[mex,mey,mez+1] = p(:,:,kmax-1)
-  endif
-
-  sync all
-
-  !*** unpack z-axis
-  if (mez<ndz) then
-     p(:,:,kmax) = buf3u(:,:)
-  end if
-  if (mez>1) then
-     p(:,:,1   ) = buf3l(:,:)
-  endif
-
-  sync all
-
-  !*** put y-axis
-  if (mey>1) then
-     buf2u(:,:)[mex,mey-1,mez] = p(:,2     ,:)
-  end if
-  if (mey<ndy) then
-     buf2l(:,:)[mex,mey+1,mez] = p(:,jmax-1,:)
-  endif
-
-  sync all
-
-  !*** unpack y-axis
-  if (mey<ndy) then
-     p(:,jmax,:) = buf2u(:,:)
-  end if
-  if (mey>1) then
-     p(:,1   ,:) = buf2l(:,:)
-  endif
-
-  sync all
-
-  !*** put x-axis
-  if (mex>1) then
-     buf1u(:,:)[mex-1,mey,mez] = p(2     ,:,:)
-  end if
-  if (mex<ndx) then
-     buf1l(:,:)[mex+1,mey,mez] = p(imax-1,:,:)
-  endif
-
-  sync all
-
-  !*** unpack x-axis
-  if (mex<ndx) then
-     p(imax,:,:) = buf1u(:,:)
-  end if
-  if (mex>1) then
-     p(1   ,:,:) = buf1l(:,:)
-  endif
-
-  sync all
-
   return
 end subroutine sendp

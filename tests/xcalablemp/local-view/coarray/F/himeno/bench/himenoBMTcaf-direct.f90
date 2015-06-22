@@ -523,17 +523,17 @@ subroutine sendp()
      p(:,:,kmax1)[mex,mey,mez-1] = p(:,:,2     )
   end if
   if (mez<ndz) then
-!!!     p(:,:,1    )[mex,mey,mez+1] = p(:,:,kmax-1)
+     p(:,:,1    )[mex,mey,mez+1] = p(:,:,kmax-1)
   endif
 
   sync all
 
   !*** put y-axis
   if (mey>1) then
-!!!     p(:,jmax1,:)[mex,mey-1,mez] = p(:,2     ,:)
+     p(:,jmax1,:)[mex,mey-1,mez] = p(:,2     ,:)
   end if
   if (mey<ndy) then
-!!!     p(:,1    ,:)[mex,mey+1,mez] = p(:,jmax-1,:)
+     p(:,1    ,:)[mex,mey+1,mez] = p(:,jmax-1,:)
   endif
 
   sync all

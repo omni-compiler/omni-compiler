@@ -38,7 +38,10 @@
 !
 module pres
   implicit none
+  include 'xmp_coarray.h'
   real(4),dimension(:,:,:),allocatable :: p
+  real(4), allocatable, dimension(:,:), codimension[:,:,:] :: &
+       buf1l, buf1u,  buf2l, buf2u,  buf3l, buf3u
 end module pres
 !
 module mtrx
@@ -70,13 +73,11 @@ module comm
   integer :: ndx,ndy,ndz
   integer :: iop(3)
   integer :: npe,id
-  include 'xmp_coarray.h'
-  real, allocatable, dimension(:,:), codimension[:,:,:] :: &
-       buf1l, buf1u,  buf2l, buf2u,  buf3l, buf3u
 end module comm
 
 program HimenoBMTxp_f90_CAF
 !
+  use pres
   use others
   use comm
 !
@@ -179,6 +180,7 @@ end program HimenoBMTxp_f90_CAF
 !
 subroutine readparam
 !
+  use pres
   use comm
 !
   implicit none
@@ -396,6 +398,7 @@ end subroutine jacobi
 !
 subroutine initcomm
 !
+  use pres
   use comm
   use others
 !
