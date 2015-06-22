@@ -19,7 +19,7 @@ if GASNET
     libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
                          xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
                          xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
-                         xmpf_coarray_reduction.f90
+                         xmpf_coarray_reduction.F90
     CFLAGS            += -D_XMP_GASNET
 if POWERPC
     FCFLAGS           += -WF,-D_XMP_GASNET
@@ -36,12 +36,15 @@ if FJRDMA
     libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
                          xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
                          xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
-                         xmpf_coarray_reduction.f90
+                         xmpf_coarray_reduction.F90
     CFLAGS            += -D_XMP_FJRDMA
     FCFLAGS           += -D_XMP_FJRDMA
 endif
 
 %.f90: %.f90.sh
+	. $< > $@
+
+%.F90: %.F90.sh
 	. $< > $@
 
 install-exec-local: xmpf_main.o
@@ -52,4 +55,4 @@ clean-local:
 	rm -f *~ *.core core core.*
 	rm -f xmpf_coarray_get_wrap.f90
 	rm -f xmpf_coarray_alloc_wrap.f90
-
+	rm -f xmpf_coarray_reduction.F90
