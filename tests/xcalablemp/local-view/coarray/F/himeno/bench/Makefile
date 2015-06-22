@@ -2,7 +2,7 @@
 # XMP/gfortran/GASNet
 #-----------------
 MPI=mpif90
-CAF=xmpf90 --debug -g
+CAF=xmpf90 --verbose -Wf-O3
 #MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include
 #CAF=xmpf90 --debug -I$(MPILIB) -g
 
@@ -10,7 +10,7 @@ CAF=xmpf90 --debug -g
 # XMP/Fujitsu/RDMA
 #-----------------
 #MPI=mpifrtpx
-#CAF=xmpf90
+#CAF=xmpf90 -Wf-Kparallel
 ##MPILIB=/opt/FJSVtclang/GM-1.2.0-17/include/mpi/fujitsu/
 ##CAF=xmpf90 -I"$(MPILIB)" --debug
 

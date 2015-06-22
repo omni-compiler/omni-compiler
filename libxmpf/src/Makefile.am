@@ -55,4 +55,5 @@ clean-local:
 	rm -f *~ *.core core core.*
 	rm -f xmpf_coarray_get_wrap.f90
 	rm -f xmpf_coarray_alloc_wrap.f90
+	rm -f xmpf_coarray_reduction.f90
 	rm -f xmpf_coarray_reduction.F90

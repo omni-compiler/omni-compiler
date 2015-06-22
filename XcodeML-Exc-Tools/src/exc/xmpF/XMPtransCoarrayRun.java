@@ -1162,14 +1162,8 @@ public class XMPtransCoarrayRun
       // in a different procedure
       // ... do not deallocate automatically at the exit of the procedure
       tag = Xcons.IntConstant(0, Xtype.Fint8Type, "8");
-      //////////////////////
-      System.out.println("gaccha, "+coarray);
-      //////////////////////
     } else {
       tag = Xcons.FvarRef(getResourceTagId());
-      //////////////////////
-      System.out.println("no gaccha, "+coarray);
-      //////////////////////
     }
 
     Xobject descId = coarray.getDescPointerId();
