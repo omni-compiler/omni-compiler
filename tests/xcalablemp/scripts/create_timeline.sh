@@ -57,10 +57,10 @@ TIME_LINE_DATA=`echo -e $TIME_LINE_DATA | sort -n`
 # Note that NODE_NAME_LIST has "\n" in the last line
 # So that when number of Slaves is 4, the value of NODE_NAME_LIST is 5.
 # Additiolal 1 is regard as Master.
-# The height is "50px * (num of slaves + master) + 20."
+# The height is "45px * (num of slaves + master) + 30."
 NUM_OF_NODES=`echo -e $NODE_NAME_LIST | sort | uniq | wc -l`
 TIMELINE_HEIGHT=`expr 45 \* $NUM_OF_NODES`
-TIMELINE_HEIGHT=`expr 20 + $TIMELINE_HEIGHT`
+TIMELINE_HEIGHT=`expr 30 + $TIMELINE_HEIGHT`
 
 ## Create Directory
 mkdir -p $OUTPUT_DIR
