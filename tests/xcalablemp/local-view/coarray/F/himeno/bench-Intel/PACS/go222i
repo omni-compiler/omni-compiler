@@ -6,8 +6,9 @@
 #PBS -l walltime=00:40:00
 
 . /opt/Modules/default/init/bash
-#module load intel/15.0.2 intelmpi/5.0.0
-module load gnu/4.4.7 mvapich2/1.8.1_gnu_cuda-6.0.37 cuda/6.0.37
+module purge
+module load intel/15.0.2 intelmpi/5.0.0
+#module load gnu/4.4.7 mvapich2/1.8.1_gnu_cuda-6.0.37 cuda/6.0.37
 
 cd $PBS_O_WORKDIR
 
@@ -35,10 +36,10 @@ for f in ${EXE}; do
     echo "himenoBMT $f $m ${SHAPE} ($m-model/${NODES} nodes)"
     echo "****************************************************"
     ### for IntelMPI
-    #mpirun -np ${NODES} -s all ../$f < ${INFILE}
+    mpirun -np ${NODES} -s all ../$f < ${INFILE}
     ### for MVAPICH
     #@#mpirun_rsh -np ${NODES} --hostfile $PBS_NODEFILE ../$f < ${INFILE}      
-    $HOME/local/GASNet-1.24.2-Jun9/bin/gasnetrun_ibv -n ${NODES} -spawner=mpi ../$f < ${INFILE}
+    #$HOME/local/GASNet-1.24.2-Jun9/bin/gasnetrun_ibv -n ${NODES} -spawner=mpi ../$f < ${INFILE}
 done
 
 done
