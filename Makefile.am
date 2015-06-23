@@ -96,16 +96,14 @@ run-large-tests:
 	done
 
 slurm:
-	@SORTED_LIST=/tmp/xmp_sorted.$$RANDOM; \
-	bash ./tests/xcalablemp/scripts/create_sorted_list.sh $(BASE_TESTDIR) $(TESTDIRS) > $$SORTED_LIST; \
-	bash ./tests/xcalablemp/scripts/make_slurm.sh $(XMP_PATH) $$SORTED_LIST $(BASE_TESTDIR); \
-	rm -f $$SORTED_LIST
+	bash ./tests/xcalablemp/scripts/create_sorted_list.sh $(BASE_TESTDIR) $(TESTDIRS) > $(SORTED_LIST); \
+	bash ./tests/xcalablemp/scripts/make_slurm.sh $(XMP_PATH) $(SORTED_LIST) $(BASE_TESTDIR)
 
 slurm-check:
 	@bash ./tests/xcalablemp/scripts/check_error_code.sh $(BASE_TESTDIR) $(TESTDIRS)
 
 slurm-timeline:
-	@bash ./tests/xcalablemp/scripts/create_timeline.sh /home/mnakao/public_html/timeline $(JOB_NUM) $(ELAPSE_TIME_SEC) $(BASE_TESTDIR) $(TESTDIRS)
+	@bash ./tests/xcalablemp/scripts/create_timeline.sh /home/mnakao/public_html/timeline $(JOB_NUM) $(ELAPSE_TIME_SEC) $(BASE_TESTDIR) $(SORTED_LIST) $(TESTDIRS)
 
 remote-tests:
 	@bash ./tests/xcalablemp/scripts/remote-tests.sh $(USER)

@@ -21,6 +21,7 @@ while : ; do
     for subdir in ${TESTDIRS}; do
 	EFILE=${BASE_TESTDIR}/${subdir}/slurm_error_code
 	if test -e ${EFILE}; then
+	    sync
 	    ERR_CODE=`cat $EFILE`
 	    if test ${ERR_CODE} -ne 0; then
 		cat ${BASE_TESTDIR}/${subdir}/log
