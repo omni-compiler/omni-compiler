@@ -10,7 +10,7 @@
 #ifndef _OMPC_THREAD_H
 #define _OMPC_THREAD_H
 
-#define USE_LOG 1
+//#define USE_LOG 1
 
 #define TRUE 1
 #define FALSE 0
