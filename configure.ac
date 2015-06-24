@@ -68,6 +68,9 @@ AC_SUBST(RM)
 AM_INIT_AUTOMAKE([no-define foreign])
 AM_MAINTAINER_MODE([enable])
 
+MKDIR_P="install -m 755 -d"
+AC_SUBST(MKDIR_P)
+
 TOPDIR=${ac_pwd}
 AC_SUBST(TOPDIR)
 

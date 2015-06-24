@@ -48,7 +48,7 @@ endif
 	. $< > $@
 
 install-exec-local: xmpf_main.o
-	test -z $(DESTDIR)$(libdir) || /bin/mkdir -p $(DESTDIR)$(libdir)
+	test -z $(DESTDIR)$(libdir) || $(MKDIR_P) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) xmpf_main.o $(DESTDIR)$(libdir)
 
 clean-local:

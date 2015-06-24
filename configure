@@ -12227,6 +12227,9 @@ fi
 
 
 
+MKDIR_P="install -m 755 -d"
+
+
 TOPDIR=${ac_pwd}
 
 

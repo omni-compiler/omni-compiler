@@ -22,14 +22,14 @@ RH_REL_FILE=/etc/redhat-release
 
 release-rpm:
 	if test -f $(RH_REL_FILE) ; then \
-	  mkdir -p $(XMPPKG_TMPDIR_TOP); \
+	  $(MKDIR_P) $(XMPPKG_TMPDIR_TOP); \
 	  bash release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
 	  rm -rf $(XMPPKG_TMPDIR_TOP); \
 	fi
 
 release-deb:
 	if test -f $(DEB_VER_FILE) ; then \
-	  mkdir -p $(XMPPKG_TMPDIR); \
+	  $(MKDIR_P) $(XMPPKG_TMPDIR); \
 	  bash release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
 	  rm -rf $(XMPPKG_TMPDIR_TOP); \
 	fi
