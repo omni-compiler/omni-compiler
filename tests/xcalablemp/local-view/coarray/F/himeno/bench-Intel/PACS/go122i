@@ -2,12 +2,13 @@
 #PBS -A XMPTCA
 #PBS -q tcaq 
 
-#PBS -l select=8:mpiprocs=1
+#PBS -l select=4:mpiprocs=1
 #PBS -l walltime=00:40:00
 
 . /opt/Modules/default/init/bash
-#module load intel/15.0.2 intelmpi/5.0.0
-module load gnu/4.4.7 mvapich2/1.8.1_gnu_cuda-6.0.37 cuda/6.0.37
+module purge
+module load intel/15.0.2 intelmpi/5.0.0
+#module load gnu/4.4.7 mvapich2/1.8.1_gnu_cuda-6.0.37 cuda/6.0.37
 
 cd $PBS_O_WORKDIR
 
@@ -20,9 +21,9 @@ echo -------------------
 EXE="mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x"
 
 MODEL="M L XL"
-SHAPE=222
-SHAPES="2 2 2"
-NODES=8
+SHAPE=122
+SHAPES="1 2 2"
+NODES=4
 
 for m in ${MODEL}; do
 INFILE=./stdin.${m}${SHAPE}
@@ -35,10 +36,11 @@ for f in ${EXE}; do
     echo "himenoBMT $f $m ${SHAPE} ($m-model/${NODES} nodes)"
     echo "****************************************************"
     ### for IntelMPI
-    #mpirun -np ${NODES} -s all ../$f < ${INFILE}
+    mpirun -np ${NODES} -s all ../$f < ${INFILE}
     ### for MVAPICH
     #@#mpirun_rsh -np ${NODES} --hostfile $PBS_NODEFILE ../$f < ${INFILE}      
-    $HOME/local/GASNet-1.24.2-Jun9/bin/gasnetrun_ibv -n ${NODES} -spawner=mpi ../$f < ${INFILE}
+    #$HOME/local/GASNet-1.24.2-Jun9/bin/gasnetrun_ibv -n ${NODES} -spawner=mpi ../$f < ${INFILE}
 done
 
 done
+

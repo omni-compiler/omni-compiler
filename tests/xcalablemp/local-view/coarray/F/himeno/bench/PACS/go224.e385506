@@ -1,0 +1,20 @@
+gasnetrun: unable to locate a GASNet program in '/work/XMPTCA/hideto/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench/PACS/../mpi.x'
+gasnetrun: unable to locate a GASNet program in '/work/XMPTCA/hideto/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench/PACS/../mpi-nocom.x'
+gasnetrun: unable to locate a GASNet program in '/work/XMPTCA/hideto/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench/PACS/../mpi.x'
+=>> PBS: job killed: walltime 2429 exceeded limit 2400
+*** Caught a signal: SIGTERM(15) on node 0/16
+*** Caught a signal: SIGTERM(15) on node 1/16
+*** Caught a signal: SIGTERM(15) on node 3/16
+*** Caught a signal: SIGTERM(15) on node 4/16
+*** Caught a signal: SIGTERM(15) on node 7/16
+*** Caught a signal: SIGTERM(15) on node 8/16
+*** Caught a signal: SIGTERM(15) on node 9/16
+*** Caught a signal: SIGTERM(15) on node 2/16
+*** Caught a signal: SIGTERM(15) on node 5/16
+*** Caught a signal: SIGTERM(15) on node 6/16
+*** Caught a signal: SIGTERM(15) on node 11/16
+*** Caught a signal: SIGTERM(15) on node 10/16
+*** Caught a signal: SIGTERM(15) on node 13/16
+*** Caught a signal: SIGTERM(15) on node 12/16
+*** Caught a signal: SIGTERM(15) on node 14/16
+*** Caught a signal: SIGTERM(15) on node 15/16
