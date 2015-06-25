@@ -19,7 +19,7 @@ extern _Bool is_async;
 extern int _async_id;
 #endif
 
-static void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
+void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
   switch (datatype) {
     case _XMP_N_TYPE_BOOL:
       //{ *mpi_datatype = MPI_C_BOOL;			*datatype_size = sizeof(_Bool); 			break; }

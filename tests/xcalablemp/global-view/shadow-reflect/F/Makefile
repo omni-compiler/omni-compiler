@@ -15,6 +15,7 @@ all default: $(EXES)
 
 run: full.x
 	$(XRUN) -n 2 ./full.x
+	$(XRUN) -n 8 ./ordinal_reflect.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

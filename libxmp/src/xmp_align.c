@@ -29,6 +29,8 @@ void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index) {
   array->info[array_index].dim_elmts = dim_elmts;
 }
 
+void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype);
+
 void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int dim,
                           int type, size_t type_size, ...) {
   _XMP_array_t *a = _XMP_alloc(sizeof(_XMP_array_t) + sizeof(_XMP_array_info_t) * (dim - 1));
@@ -38,9 +40,14 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   a->dim = dim;
   a->type = type;
   a->type_size = type_size;
+  size_t dummy;
+  _XMP_setup_reduce_type(&a->mpi_type, &dummy, type);
+  a->order = MPI_ORDER_C;
   a->array_addr_p = NULL;
 
   a->total_elmts = 0;
+
+  a->async_reflect = NULL;
 
   a->align_comm = NULL;
   a->align_comm_size = 1;
@@ -120,6 +127,19 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
       _XMP_free(reflect_sched);
     }
 
+  }
+
+  _XMP_async_reflect_t *async_reflect = array->async_reflect;
+  if (async_reflect){
+    for (int i = 0; i < async_reflect->nreqs; i++){
+      if (async_reflect->datatype[i] != MPI_DATATYPE_NULL)
+	MPI_Type_free(&async_reflect->datatype[i]);
+      if (async_reflect->reqs[i] != MPI_REQUEST_NULL)
+	MPI_Request_free(&async_reflect->reqs[i]);
+    }
+    _XMP_free(async_reflect->datatype);
+    _XMP_free(async_reflect->reqs);
+    _XMP_free(async_reflect);
   }
 
 /*   for (int i = 0; i < array->num_reqs; i++){ */
