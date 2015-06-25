@@ -1,11 +1,13 @@
 #include "xmp_internal.h"
 #include <string.h>
 
+
 #if !defined(OMNI_TARGET_CPU_KCOMPUTER) || !defined(K_RDMA_REFLECT)
 static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
 					   int lwidth, int uwidth, int is_periodic);
 static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 					 int lwidth, int uwidth, int is_periodic);
+static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
 /* static void _XMP_reflect_start(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic, */
 /* 				int dummy); */
 static void _XMP_reflect_async_cardinal(_XMP_array_t *a, int async_id);
@@ -13,15 +15,15 @@ static void _XMP_reflect_async_ordinal(_XMP_array_t *a, int async_id);
 static void _XMP_reflect_sched_dir(_XMP_array_t *adesc, int ishadow[],
 				   int lwidth[], int uwidth[], int is_periodic_dim[]);
 #else
-static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
-				int *is_periodic, int is_async);
+/* static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth, */
+/* 				int *is_periodic, int is_async); */
 static void _XMP_reflect_rdma_sched_dim(_XMP_array_t *adesc, int target_dim,
 					int lwidth, int uwidth, int is_periodic);
 static void _XMP_reflect_start(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic,
 				 int tag);
+static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
 #endif
 
-static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
 
 //int _XMP_get_owner_pos_BLOCK(_XMP_array_t *a, int dim, int index);
 int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);
@@ -76,24 +78,6 @@ void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 
 //double t0, t_sched = 0, t_start = 0, t_wait = 0;
 
-/* void xmp_reflect_1dim(is_async, is_ordinal){ */
-/*   ... */
-/*   MPI_Startall(2, reqs); */
-/*   if (!is_async || !is_ordinal) MPI_Waitall(); */
-
-/* } */
-
-/* void xmp_reflect_async(){ */
-
-/*   if (1dim){ */
-/*     xmp_reflect_1dim();  // (3) */
-/*   } */
-/*   else { */
-/*     xmp_reflect_async(); // (1) */
-/*   } */
-
-/* } */
-
 /* void _XMP_reflect__(_XMP_array_t *a) */
 /* { */
 
@@ -133,6 +117,12 @@ void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 
 /* } */
 
+
+#if !defined(OMNI_TARGET_CPU_KCOMPUTER) || !defined(K_RDMA_REFLECT)
+
+//
+// Reflect without RDMA
+//
 
 void _XMP_reflect__(_XMP_array_t *a)
 {
@@ -179,16 +169,12 @@ void _XMP_reflect__(_XMP_array_t *a)
 	  reflect->hi_width = _xmp_uwidth[i];
 	  reflect->is_periodic = _xmp_is_periodic[i];
 
-#if !defined(OMNI_TARGET_CPU_KCOMPUTER) || !defined(K_RDMA_REFLECT)
 	  if (_xmp_reflect_pack_flag){
 	    _XMP_reflect_pcopy_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i]);
 	  }
 	  else {
 	    _XMP_reflect_normal_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i]);
 	  }
-#else
-	  _XMP_reflect_rdma_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i]);
-#endif
 
 	}
 
@@ -237,12 +223,6 @@ void _XMP_reflect__(_XMP_array_t *a)
 
 }
 
-
-#if !defined(OMNI_TARGET_CPU_KCOMPUTER) || !defined(K_RDMA_REFLECT)
-
-//
-// Reflect without RDMA
-//
 
 static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
 					  int lwidth, int uwidth, int is_periodic){
@@ -512,10 +492,6 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   void *lo_send_array = NULL, *lo_recv_array = NULL;
   void *hi_send_array = NULL, *hi_recv_array = NULL;
 
-/*   void *lo_send_buf = array_addr; */
-/*   void *lo_recv_buf = array_addr; */
-/*   void *hi_send_buf = array_addr; */
-/*   void *hi_recv_buf = array_addr; */
   void *lo_send_buf = NULL;
   void *lo_recv_buf = NULL;
   void *hi_send_buf = NULL;
@@ -1239,6 +1215,79 @@ static void _XMP_reflect_sched_dir(_XMP_array_t *adesc, int ishadow[],
 // Reflect with RDMA
 //
 
+void _XMP_reflect__(_XMP_array_t *a)
+{
+
+  int is_ordinal = 1;
+
+  _XMP_RETURN_IF_SINGLE;
+  if (!a->is_allocated){
+    _xmpf_set_reflect_flag = 0;
+    return;
+  }
+
+  if (!_xmpf_set_reflect_flag){
+    for (int i = 0; i < a->dim; i++){
+      _XMP_array_info_t *ai = &(a->info[i]);
+      _xmp_lwidth[i] = ai->shadow_size_lo;
+      _xmp_uwidth[i] = ai->shadow_size_hi;
+      _xmp_is_periodic[i] = 0;
+    }
+  }
+
+  _XMP_TSTART(t0);
+  for (int i = 0; i < a->dim; i++){
+
+    _XMP_array_info_t *ai = &(a->info[i]);
+
+    if (ai->shadow_type == _XMP_N_SHADOW_NONE){
+      continue;
+    }
+    else if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+
+      _XMP_reflect_sched_t *reflect = ai->reflect_sched;
+
+      if (_xmp_lwidth[i] || _xmp_uwidth[i]){
+
+	_XMP_ASSERT(reflect);
+
+	if (reflect->is_periodic == -1 /* not set yet */ ||
+	    _xmp_lwidth[i] != reflect->lo_width ||
+	    _xmp_uwidth[i] != reflect->hi_width ||
+	    _xmp_is_periodic[i] != reflect->is_periodic){
+
+	  reflect->lo_width = _xmp_lwidth[i];
+	  reflect->hi_width = _xmp_uwidth[i];
+	  reflect->is_periodic = _xmp_is_periodic[i];
+
+	  _XMP_reflect_rdma_sched_dim(a, i, _xmp_lwidth[i], _xmp_uwidth[i], _xmp_is_periodic[i]);
+
+	}
+
+      }
+
+    }
+    else { /* _XMP_N_SHADOW_FULL */
+      ;
+    }
+    
+  }
+  _XMP_TEND(xmptiming_.t_sched, t0);
+
+  _XMP_reflect_start(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, 0);
+
+  _XMP_reflect_wait(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic);
+
+  _xmpf_set_reflect_flag = 0;
+  for (int i = 0; i < a->dim; i++){
+    _xmp_lwidth[i] = 0;
+    _xmp_uwidth[i] = 0;
+    _xmp_is_periodic[i] = 0;
+  }
+
+}
+
+
 static void _XMP_reflect_rdma_sched_dim(_XMP_array_t *adesc, int target_dim,
 					int lwidth, int uwidth, int is_periodic){
 
@@ -1416,88 +1465,6 @@ static void _XMP_reflect_rdma_sched_dim(_XMP_array_t *adesc, int target_dim,
   reflect->hi_rank = hi_rank;
 
 }
-
-
-/* static void _XMP_reflect_sync(_XMP_array_t **a_desc, int *lwidth, int *uwidth, int *is_periodic, */
-/* 			       int tag) */
-/* { */
-/*   _XMP_array_t *a = *a_desc; */
-
-/*   xmpf_dbg_printf("_XMP_reflect_sync starts\n"); */
-
-/*   int nrdmas0 = 0, nrdmas1 = 0, nrdmas2 = 0, nrdmas3 = 0; */
-
-/*   for (int i = 0; i < a->dim; i++){ */
-
-/*     _XMP_reflect_sched_t *reflect = a->info[i].reflect_sched; */
-
-/*     // for lower reflect */
-
-/*     if (lwidth[i] && reflect->hi_rank != -1){ */
-
-/*       int hi_rank = reflect->hi_rank; */
-
-/*       uint64_t lo_recv_array = (uint64_t)reflect->lo_recv_array; */
-/*       uint64_t lo_send_array = (uint64_t)reflect->lo_send_array; */
-
-/*       FJMPI_Rdma_put(hi_rank, tag, */
-/* 		     lo_recv_array, lo_send_array, */
-/* 		     0, */
-/* 		     FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC2 | FJMPI_RDMA_REMOTE_NOTICE); */
-
-/*       nrdmas0++; */
-/*     } */
-
-/*     if (lwidth[i] && reflect->lo_rank != -1) nrdmas2++; */
-
-/*     // for upper reflect */
-
-/*     if (uwidth[i] && reflect->lo_rank != -1){ */
-
-/*       int lo_rank = reflect->lo_rank; */
-
-/*       uint64_t hi_recv_array = (uint64_t)reflect->hi_recv_array; */
-/*       uint64_t hi_send_array = (uint64_t)reflect->hi_send_array; */
-
-/*       FJMPI_Rdma_put(lo_rank, tag, */
-/* 		     hi_recv_array, hi_send_array, */
-/* 		     0, */
-/* 		     FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_REMOTE_NOTICE); */
-
-/*       nrdmas1++; */
-/*     } */
-
-/*     if (uwidth[i] && reflect->hi_rank != -1) nrdmas3++; */
-
-/*   } */
-
-/*   // flush send completion */
-/*   while (nrdmas0 || nrdmas1){ */
-/*     xmpf_dbg_printf("nrdmas0 = %d, nrdmas1 = %d, nrdmas2 = %d, nrdmas3 = %d\n", */
-/* 		    nrdmas0, nrdmas1, nrdmas2, nrdmas3); */
-/*     while (FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC0, NULL) == FJMPI_RDMA_NOTICE){ */
-/*       nrdmas0--; */
-/*     } */
-/*     while (FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC1, NULL) == FJMPI_RDMA_NOTICE){ */
-/*       nrdmas1--; */
-/*     } */
-/*   } */
-
-/*   // check receive completion */
-/*   while (nrdmas2 || nrdmas3){ */
-/*     xmpf_dbg_printf("nrdmas0 = %d, nrdmas1 = %d, nrdmas2 = %d, nrdmas3 = %d\n", */
-/* 		    nrdmas0, nrdmas1, nrdmas2, nrdmas3); */
-/*     while (FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC2, NULL) == FJMPI_RDMA_HALFWAY_NOTICE){ */
-/*       nrdmas2--; */
-/*     } */
-/*     while (FJMPI_Rdma_poll_cq(FJMPI_RDMA_NIC3, NULL) == FJMPI_RDMA_HALFWAY_NOTICE){ */
-/*       nrdmas3--; */
-/*     } */
-/*   } */
-
-/*   xmpf_dbg_printf("_XMP_reflect_sync ends\n"); */
-
-/* } */
 
 
 static void _XMP_reflect_start(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic,
