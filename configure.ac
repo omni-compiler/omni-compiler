@@ -425,7 +425,8 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 
 if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 # OpenMP
-  OPENMP_OPT="-Kopenmp"
+  OPENMP_OPT_C="-Kopenmp"
+  OPENMP_OPT_F=$OPENMP_OPT_C
 
 # CPP_OPT
   CPP_OPT="-Cpp"
@@ -452,12 +453,12 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 # Omni C
   OMNI_C2X_FLAGS=""
   OMNI_NTV_CFLAGS="-Xg -noansi"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
 
 # Omni F
   OMNI_F2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-Free"
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
   OMNI_X2X_FLAGS=""
@@ -470,7 +471,8 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
 
 elif test "$target" = "MIC-linux-gnu"; then
 # OpenMP
-  OPENMP_OPT="-mp"
+  OPENMP_OPT_C="-mp"
+  OPENMP_OPT_F=$OPENMP_OPT_C
 
 # CPP_OPT
   CPP_OPT="-cpp"
@@ -483,26 +485,26 @@ elif test "$target" = "MIC-linux-gnu"; then
   MPI_CC="mpiicc"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E -std=gnu99"
-  MPI_CFLAGS="-fast $OPENMP_OPT"
+  MPI_CFLAGS="-fast $OPENMP_OPT_C"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="mpiifort"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-fast $OPENMP_OPT"
+  MPI_FCFLAGS="-fast $OPENMP_OPT_F"
   MPI_MODINC="-module"
   MPI_FCLIBS=""
 
 # Omni C
   OMNI_C2X_FLAGS=""
   OMNI_NTV_CFLAGS="-std=gnu99"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
 
 # Omni F
   OMNI_F2X_FLAGS=""
   OMNI_NTV_FCFLAGS=""
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
   OMNI_X2X_FLAGS=""
@@ -515,7 +517,8 @@ elif test "$target" = "MIC-linux-gnu"; then
 
 elif test "$target" = "Cray-linux-gnu"; then
 # OpenMP
-  OPENMP_OPT="-h omp"
+  OPENMP_OPT_C="-h omp"
+  OPENMP_OPT_F=$OPENMP_OPT_C
 
 # CPP_OPT
   CPP_OPT="-cpp"
@@ -528,26 +531,26 @@ elif test "$target" = "Cray-linux-gnu"; then
   MPI_CC="cc"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E -D_XMP_CRAY"
-  MPI_CFLAGS="-O2 -hgnu $OPENMP_OPT"
+  MPI_CFLAGS="-O2 -hgnu $OPENMP_OPT_C"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="ftn"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-O2 $OPENMP_OPT"
+  MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
   MPI_MODINC="-J"
   MPI_FCLIBS=""
 
 # Omni C
   OMNI_C2X_FLAGS=""
   OMNI_NTV_CFLAGS="-hgnu -D_XMP_CRAY"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
 
 # Omni F
   OMNI_F2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-f free"
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
   OMNI_X2X_FLAGS=""
@@ -560,7 +563,8 @@ elif test "$target" = "Cray-linux-gnu"; then
 
 elif test "$target" = "sx-nec-superux"; then
 # OpenMP
-  OPENMP_OPT="-Popenmp"
+  OPENMP_OPT_C="-Popenmp"
+  OPENMP_OPT_F=$OPENMP_OPT_C
 
 # CPP_OPT
   CPP_OPT="-cpp"
@@ -573,26 +577,26 @@ elif test "$target" = "sx-nec-superux"; then
   MPI_CC="sxmpic++"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-Chopt $OPENMP_OPT"
+  MPI_CFLAGS="-Chopt $OPENMP_OPT_C"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="sxmpif90"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-Chopt $OPENMP_OPT"
+  MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
 
 # Omni C
   OMNI_C2X_FLAGS=""
   OMNI_NTV_CFLAGS="-Kgcc -w"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
 
 # Omni F
   OMNI_F2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-f4 -w"
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
   OMNI_X2X_FLAGS=""
@@ -607,7 +611,8 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   # These options are referred to https://scwwwb.kek.jp/index.html
 
 # OpenMP
-  OPENMP_OPT="-qsmp=omp"
+  OPENMP_OPT_C="-qsmp=omp"
+  OPENMP_OPT_F=$OPENMP_OPT_C
 
 # CPP_OPT
   CPP_OPT="-cpp"
@@ -635,7 +640,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
     MPI_CPPFLAGS="$MPI_CPPFLAGS -I/bgsys/drivers/ppcfloor/comm/include"
   fi
 
-  MPI_CFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH $OPENMP_OPT"
+  MPI_CFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH $OPENMP_OPT_C"
 
   if test -f /usr/local/bg/lib/libkek.a; then
     MPI_CLIBS="/usr/local/bg/lib/libkek.a"
@@ -653,7 +658,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   fi
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist -qextname $INC_PATH $OPENMP_OPT"
+  MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist -qextname $INC_PATH $OPENMP_OPT_F"
   MPI_MODINC="-I"
 
   INC_PATH="/usr/local/bg/include"
@@ -667,12 +672,12 @@ elif test "$target" = "powerpc-ibm-cnk"; then
 # Omni C
   OMNI_C2X_FLAGS=""
   OMNI_NTV_CFLAGS="-q64 -qipa"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT $MPI_CLIBS"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C $MPI_CLIBS"
 
 # Omni F
   OMNI_F2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qipa -qextname"
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT $MPI_CLIBS"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F $MPI_CLIBS"
 
 # Omni Common
   OMNI_X2X_FLAGS=""
@@ -685,7 +690,8 @@ elif test "$target" = "powerpc-ibm-cnk"; then
 
 elif test "$target" = "powerpc-hitachi-aix"; then
 # OpenMP
-  OPENMP_OPT="-qsmp=omp"
+  OPENMP_OPT_C="-qsmp=omp"
+  OPENMP_OPT_F=$OPENMP_OPT_C
 
 # CPP_OPT
   CPP_OPT="-cpp"
@@ -698,26 +704,26 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   MPI_CC="mpCC_r"
   MPI_CPP=$MPI_CC
   MPI_CPPFLAGS="-E"
-  MPI_CFLAGS="-q64 -qhot -qsimd=auto -O5 $OPENMP_OPT"
+  MPI_CFLAGS="-q64 -qhot -qsimd=auto -O5 $OPENMP_OPT_C"
   MPI_CLIBS=""
 
 # MPI F
   MPI_FC="mpxlf90_r"
   MPI_FPP=$MPI_FC
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $OPENMP_OPT"
+  MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $OPENMP_OPT_F"
   MPI_MODINC="-I"
   MPI_FCLIBS=""
 
 # Omni C
   OMNI_C2X_FLAGS=""
   OMNI_NTV_CFLAGS="-q64"
-  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
 
 # Omni F
   OMNI_F2X_FLAGS=""
   OMNI_NTV_FCFLAGS="-q64 -qextname"
-  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
   OMNI_X2X_FLAGS=""
@@ -735,7 +741,8 @@ else
   ARFLAGS="cru"
   AC_CHECK_TOOL([NM], [nm], [:])
 
-  if test [ "" != "$userMPI_CC" ]; then
+  # C
+  if test "" != "$userMPI_CC"; then
     MPI_CC=${userMPI_CC}
   else
     INTEL_MPICC=mpiicc
@@ -747,56 +754,15 @@ else
     fi
   fi
 
-  chk=`${MPI_CC} --version | head -n1`
-  case $chk in
-  cc* | gcc* | Apple*)
+  if test mpiicc == $MPI_CC; then  # Intel Compiler
     # OpenMP
-    OPENMP_OPT="-fopenmp"
+    OPENMP_OPT_C="-openmp"
 
     # CPP_OPT
     CPP_OPT="-cpp"
 
     # XcalableMP
     XMPC_DEF="-D_XCALABLEMP"
-    XMPF_DEF="-D_XCALABLEMP"
-
-    # MPI C
-    MPI_CPP=$MPI_CC
-    MPI_CPPFLAGS="-E -std=gnu99"
-    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT"
-    MPI_CLIBS=""
-
-    # MPI F
-    MPI_FC="mpif90"
-    MPI_FPP=$MPI_FC
-    MPI_FPPFLAGS="-E"
-    MPI_FCFLAGS="-O2 $OPENMP_OPT"
-    MPI_MODINC="-J"
-    MPI_FCLIBS=""
-
-    # Omni C
-    OMNI_C2X_FLAGS=""
-    OMNI_NTV_CFLAGS="-std=gnu99 -lm"
-    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
-
-    # Omni F
-    OMNI_F2X_FLAGS=""
-    OMNI_NTV_FCFLAGS="-ffree-form -fcray-pointer"
-    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS -fopenmp -lgomp"
-
-    # Omni Common
-    OMNI_X2X_FLAGS="-gnu"
-    ;;
-  *ICC*)
-    # OpenMP
-    OPENMP_OPT="-openmp"
-
-    # CPP_OPT
-    CPP_OPT="-cpp"
-
-    # XcalableMP
-    XMPC_DEF="-D_XCALABLEMP"
-    XMPF_DEF="-D_XCALABLEMP"
 
     # MPI C
     MPI_CPP=$MPI_CC
@@ -807,89 +773,190 @@ else
     *)
       MPI_CPPFLAGS="-E -std=gnu99" ;;
     esac
-    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT"
+    
+    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT_C"
     MPI_CLIBS=""
-
-    # MPI F
-    MPI_FC="mpiifort"
-    MPI_FPP=$MPI_FC
-    MPI_FPPFLAGS="-E"
-    MPI_FCFLAGS="-O2 $OPENMP_OPT"
-    MPI_MODINC="-module"
-    MPI_FCLIBS=""
 
     # Omni C
     OMNI_C2X_FLAGS=""
     OMNI_NTV_CFLAGS="-std=gnu99"
-    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
+    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
+
+    # Omni Common
+    OMNI_X2X_FLAGS="-intel"
+  else # GNU or PGI
+    chk=`${MPI_CC} --version | head -n1`
+    case $chk in
+    cc* | gcc* | Apple*)
+      # OpenMP
+      OPENMP_OPT_C="-fopenmp"
+
+      # CPP_OPT
+      CPP_OPT="-cpp"
+
+      # XcalableMP
+      XMPC_DEF="-D_XCALABLEMP"
+
+      # MPI C
+      MPI_CPP=$MPI_CC
+      MPI_CPPFLAGS="-E -std=gnu99"
+      MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT_C"
+      MPI_CLIBS=""
+
+      # Omni C
+      OMNI_C2X_FLAGS=""
+      OMNI_NTV_CFLAGS="-std=gnu99 -lm"
+      OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
+
+      # Omni Common
+      OMNI_X2X_FLAGS="-gnu"
+      ;;
+    *)
+      chk2=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1`
+      case $chk2 in
+      pgcc*)
+        # OpenMP
+        OPENMP_OPT_C="-mp"
+
+        # CPP_OPT
+        CPP_OPT="-Mpreprocess"
+
+        # XcalableMP
+        XMPC_DEF="-D_XCALABLEMP"
+
+        # MPI C
+        MPI_CPP=$MPI_CC
+        MPI_CPPFLAGS="-E -c99"
+        MPI_CFLAGS="-fast -c99 $OPENMP_OPT_C"
+        MPI_CLIBS=""
+
+        # Omni C
+        OMNI_C2X_FLAGS="--no-builtin-va-arg"
+        OMNI_NTV_CFLAGS="-D_XMP_PGI"
+        OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
+
+        # Omni Common
+        OMNI_X2X_FLAGS=""
+
+      # Special options
+#      IS_PGI="Yes"
+#      AC_SUBST(IS_PGI)
+        ;;
+      *)
+        echo "No supported C compiler was found."
+        echo "This program supports following MPI compilers."
+        echo " - GNU Compiler (mpicc)"
+        echo " - Intel Compiler (mpiicc)"
+        echo " - PGI Compiler (mpicc)"
+        echo " - Fujitsu Compiler (mpifccpx)"
+        echo " - Cray Compiler (cc)"
+        echo " - NEC Compiler (sxmpic++)"
+        echo " - IBM Compiler (mpixlcxx_r)"
+        echo " - HITACHI Compiler (mpCC_r)"
+        exit 1 ;;
+      esac ;;
+    esac
+  fi
+
+  # Fortran
+  if test "" != "$userMPI_FC"; then
+    MPI_FC=${userMPI_FC}
+  else
+    INTEL_MPIFC=mpiifort
+    which ${INTEL_MPIFC} 1>/dev/null 2>/dev/null
+    if test $? -eq 0; then
+      MPI_FC=${INTEL_MPIFC}
+    else
+      MPI_FC=mpif90
+    fi
+  fi
+
+  if test mpiifort = $MPI_FC; then # Intel Compiler
+    # OpenMP
+    OPENMP_OPT_F="-openmp"
+
+    # XcalableMP
+    XMPF_DEF="-D_XCALABLEMP"
+
+    # MPI F
+    MPI_FPP=$MPI_FC
+    MPI_FPPFLAGS="-E"
+    MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
+    MPI_MODINC="-module"
+    MPI_FCLIBS=""
 
     # Omni F
     OMNI_F2X_FLAGS=""
     OMNI_NTV_FCFLAGS=""
-    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
+    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
-    # Omni Common
-    OMNI_X2X_FLAGS="-intel"
-    ;;
-  *)
-    chk2=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1`
-    case $chk2 in
-    pgcc*)
-      # OpenMP
-      OPENMP_OPT="-mp"
-
-      # CPP_OPT
-      CPP_OPT="-Mpreprocess"
-
+  else # GNU or PGI
+    chk=`${MPI_FC} --version | head -n1`
+    case $chk in
+    "GNU Fortran"*)
+      # OPENMP
+      OPENMP_OPT_F="-fopenmp"
+      
       # XcalableMP
-      XMPC_DEF="-D_XCALABLEMP"
       XMPF_DEF="-D_XCALABLEMP"
-
-      # MPI C
-      MPI_CPP=$MPI_CC
-      MPI_CPPFLAGS="-E -c99"
-      MPI_CFLAGS="-fast -c99 $OPENMP_OPT"
-      MPI_CLIBS=""
 
       # MPI F
       MPI_FC="mpif90"
       MPI_FPP=$MPI_FC
       MPI_FPPFLAGS="-E"
-      MPI_FCFLAGS="-fast $OPENMP_OPT"
-      MPI_MODINC="-module"
+      MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
+      MPI_MODINC="-J"
       MPI_FCLIBS=""
-
-      # Omni C
-      OMNI_C2X_FLAGS="--no-builtin-va-arg"
-      OMNI_NTV_CFLAGS="-D_XMP_PGI"
-      OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
       # Omni F
       OMNI_F2X_FLAGS=""
-      OMNI_NTV_FCFLAGS=""
-      OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT"
-
-      # Omni Common
-      OMNI_X2X_FLAGS=""
-
-      # Special options
-#      IS_PGI="Yes"
-#      AC_SUBST(IS_PGI)
+      OMNI_NTV_FCFLAGS="-ffree-form -fcray-pointer"
+      OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F -lgomp"
       ;;
     *)
-      echo "No supported compiler was found."
-      echo "This program supports following MPI compilers."
-      echo " - GNU Compiler (mpicc/mpif90)"
-      echo " - Intel Compiler (mpiicc/mpiifort)"
-      echo " - PGI Compiler (mpicc/mpif90)"
-      echo " - Fujitsu Compiler (mpifccpx/mpifrtpx)"
-      echo " - Cray Compiler (cc/ftn)"
-      echo " - NEC Compiler (sxmpic++/sxmpif90)"
-      echo " - IBM Compiler (mpixlcxx_r/mpixlf90_r)"
-      echo " - HITACHI Compiler (mpCC_r/mpif90)"
-      exit 1 ;;
-    esac ;;
-  esac
+      chk2=`$MPI_FC --version 2> /dev/null | head -n2 | tail -n1`
+      case $chk2 in
+      pgfortran*)
+        # OpenMP
+        OPENMP_OPT_F="-mp"
+
+        # CPP_OPT
+        CPP_OPT="-Mpreprocess"
+
+        # XcalableMP
+        XMPF_DEF="-D_XCALABLEMP"
+
+        # MPI F
+        MPI_FC="mpif90"
+        MPI_FPP=$MPI_FC
+        MPI_FPPFLAGS="-E"
+        MPI_FCFLAGS="-fast $OPENMP_OPT_F"
+        MPI_MODINC="-module"
+        MPI_FCLIBS=""
+
+        # Omni F
+        OMNI_F2X_FLAGS=""
+        OMNI_NTV_FCFLAGS=""
+        OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
+
+        # Omni Common
+        OMNI_X2X_FLAGS=""
+        ;;
+      *)
+        echo "No supported compiler was found."
+        echo "This program supports following MPI Fortran compilers."
+        echo " - GNU Compiler (mpif90)"
+        echo " - Intel Compiler (mpiifort)"
+        echo " - PGI Compiler (mpif90)"
+        echo " - Fujitsu Compiler (mpifrtpx)"
+        echo " - Cray Compiler (ftn)"
+        echo " - NEC Compiler (sxmpif90)"
+        echo " - IBM Compiler (mpixlf90_r)"
+        echo " - HITACHI Compiler (mpif90)"
+        exit 1 ;;
+      esac ;;
+    esac
+  fi
 fi
 
 # "POWERPC" flag is used in libxmpf/src/Makefile.am
@@ -1176,7 +1243,8 @@ if test "${userMPI_FCLIBS}" != ""; then
 fi
 
 # OpenMP
-AC_SUBST(OPENMP_OPT)
+AC_SUBST(OPENMP_OPT_C)
+AC_SUBST(OPENMP_OPT_F)
 
 # CPP_OPT
 AC_SUBST(CPP_OPT)
