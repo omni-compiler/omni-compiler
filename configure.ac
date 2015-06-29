@@ -776,7 +776,7 @@ else
 
     # Omni C
     OMNI_C2X_FLAGS=""
-    OMNI_NTV_CFLAGS="-std=gnu99"
+    OMNI_NTV_CFLAGS="-std=gnu99 -lm"
     OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT"
 
     # Omni F
