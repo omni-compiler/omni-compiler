@@ -16,26 +16,24 @@ echo "Waiting to finish jobs ..."
 while : ; do
     sleep ${INTERVAL}
     ELAPSED_TIME=`expr ${ELAPSED_TIME} + ${INTERVAL}`
-    ALL_EXIST=true
     DONE_JOBS=0
     for subdir in ${TESTDIRS}; do
-	EFILE=${BASE_TESTDIR}/${subdir}/slurm_error_code
-	if test -e ${EFILE}; then
+	RET_FILE=${BASE_TESTDIR}/${subdir}/slurm_ret_code
+	if test -e ${RET_FILE}; then
 	    sync
-	    ERR_CODE=`cat $EFILE`
-	    if test ${ERR_CODE} -ne 0; then
+	    RET_VAL=`cat $RET_FILE`
+	    if test ${RET_VAL} -ne 0; then
 		cat ${BASE_TESTDIR}/${subdir}/log
 		cat ${BASE_TESTDIR}/${subdir}/err
-		exit $ERR_CODE
+		exit $RET_VAL
 	    fi
 	    DONE_JOBS=`expr $DONE_JOBS + 1`
-	else
-	    ALL_EXIST=false
 	fi
     done
     echo "Elapse time is ${ELAPSED_TIME} sec. (${DONE_JOBS}/${ALL_JOBS})"
     
-    if ${ALL_EXIST}; then
+    if ${DONE_JOBS} -eq ${ALL_JOBS}; then
 	break
     fi
 done
+
