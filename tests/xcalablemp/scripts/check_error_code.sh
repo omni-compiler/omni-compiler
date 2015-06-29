@@ -32,7 +32,7 @@ while : ; do
     done
     echo "Elapse time is ${ELAPSED_TIME} sec. (${DONE_JOBS}/${ALL_JOBS})"
     
-    if ${DONE_JOBS} -eq ${ALL_JOBS}; then
+    if test ${DONE_JOBS} -eq ${ALL_JOBS}; then
 	break
     fi
 done
