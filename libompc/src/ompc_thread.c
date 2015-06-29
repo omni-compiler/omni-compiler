@@ -554,13 +554,8 @@ ompc_thread_barrier(int id, struct ompc_thread *tpp)
 
     if (id == 0) {
         for (int i = 1; i < n; i++) {
-            if ((volatile int)tpp->barrier_flags[i]._v != sen0) {
-                ABT_mutex_lock(tpp->reduction_mutex);
-                while ((volatile int)tpp->barrier_flags[i]._v != sen0) {
-                    ABT_cond_wait(tpp->reduction_cond, tpp->reduction_mutex);
-                }
-                ABT_mutex_unlock(tpp->reduction_mutex);
-            }
+            OMPC_WAIT_UNTIL((volatile int)tpp->barrier_flags[i]._v == sen0,
+                tpp->reduction_cond, tpp->reduction_mutex);
         }
 
         ABT_mutex_lock(tpp->broadcast_mutex);
@@ -573,13 +568,8 @@ ompc_thread_barrier(int id, struct ompc_thread *tpp)
         ABT_cond_signal(tpp->reduction_cond);
         ABT_mutex_unlock(tpp->reduction_mutex);
 
-        if ((volatile int)tpp->barrier_sense != sen0) {
-            ABT_mutex_lock(tpp->broadcast_mutex);
-            while ((volatile int)tpp->barrier_sense != sen0) {
-                ABT_cond_wait(tpp->broadcast_cond, tpp->broadcast_mutex);
-            }
-            ABT_mutex_unlock(tpp->broadcast_mutex);
-        }
+        OMPC_WAIT_UNTIL((volatile int)tpp->barrier_sense == sen0,
+            tpp->broadcast_cond, tpp->broadcast_mutex);
     }
 #else
     sen0 = tpp->barrier_sense ^ 1;
@@ -618,13 +608,8 @@ ompc_thread_barrier2(int id, struct ompc_thread *tpp)
 #if 1  // USE_ARGOBOTS
     if (id == 0) {
         for (int i = 1; i < n; i++) {
-            if ((volatile int)tpp->barrier_flags[i]._v != sen0) {
-                ABT_mutex_lock(tpp->reduction_mutex);
-                while ((volatile int)tpp->barrier_flags[i]._v != sen0) {
-                    ABT_cond_wait(tpp->reduction_cond, tpp->reduction_mutex);
-                }
-                ABT_mutex_unlock(tpp->reduction_mutex);
-            }
+            OMPC_WAIT_UNTIL((volatile int)tpp->barrier_flags[i]._v == sen0,
+                tpp->reduction_cond, tpp->reduction_mutex);
         }
         tpp->barrier_sense = sen0;
         MBAR();

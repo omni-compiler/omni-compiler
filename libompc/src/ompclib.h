@@ -23,6 +23,20 @@ typedef ABT_xstream ompc_proc_t;
 typedef ABT_thread ompc_thread_t;
 #define _YIELD_ME_ ABT_thread_yield()
 #define OMPC_WAIT(cond) while (cond) { _YIELD_ME_; }
+#define MAX_SPIN_COUNT 200000
+#define OMPC_WAIT_UNTIL(condexpr, condvar, mutex) \
+    for (int c = 0; c <= MAX_SPIN_COUNT; c++) { \
+        if (condexpr) { \
+            break; \
+        } \
+        if (c == MAX_SPIN_COUNT) { \
+            ABT_mutex_lock(mutex); \
+            while (!(condexpr)) { \
+                ABT_cond_wait(condvar, mutex); \
+            } \
+            ABT_mutex_unlock(mutex); \
+        } \
+    }
 #define _OMPC_PROC_SELF ompc_xstream_self()
 
 typedef ABT_mutex ompc_lock_t;
