@@ -21903,7 +21903,33 @@ fi
     fi
   fi
 
-  if test mpiicc == $MPI_CC; then  # Intel Compiler
+  chk=`${MPI_CC} --version | head -n1`
+  case $chk in
+  cc* | gcc* | Apple*)
+    # OpenMP
+    OPENMP_OPT_C="-fopenmp"
+
+    # CPP_OPT
+    CPP_OPT="-cpp"
+
+    # XcalableMP
+    XMPC_DEF="-D_XCALABLEMP"
+
+    # MPI C
+    MPI_CPP=$MPI_CC
+    MPI_CPPFLAGS="-E -std=gnu99"
+    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT_C"
+    MPI_CLIBS=""
+
+    # Omni C
+    OMNI_C2X_FLAGS=""
+    OMNI_NTV_CFLAGS="-std=gnu99 -lm"
+    OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
+
+    # Omni Common
+    OMNI_X2X_FLAGS="-gnu"
+    ;;
+  *ICC*)
     # OpenMP
     OPENMP_OPT_C="-openmp"
 
@@ -21918,11 +21944,10 @@ fi
     ver=`$MPI_CC --version 2> /dev/null | head -n1`
     case $ver in
     *15*)
-      MPI_CPPFLAGS="-E -std=gnu99 -no-gcc" ;;
+       MPI_CPPFLAGS="-E -std=gnu99 -no-gcc" ;;
     *)
-      MPI_CPPFLAGS="-E -std=gnu99" ;;
+       MPI_CPPFLAGS="-E -std=gnu99" ;;
     esac
-
     MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT_C"
     MPI_CLIBS=""
 
@@ -21933,79 +21958,52 @@ fi
 
     # Omni Common
     OMNI_X2X_FLAGS="-intel"
-  else # GNU or PGI
-    chk=`${MPI_CC} --version | head -n1`
-    case $chk in
-    cc* | gcc* | Apple*)
+    ;;
+  *)
+    chk2=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1`
+    case $chk2 in
+    pgcc*)
       # OpenMP
-      OPENMP_OPT_C="-fopenmp"
+      OPENMP_OPT_C="-mp"
 
       # CPP_OPT
-      CPP_OPT="-cpp"
+      CPP_OPT="-Mpreprocess"
 
       # XcalableMP
       XMPC_DEF="-D_XCALABLEMP"
 
       # MPI C
       MPI_CPP=$MPI_CC
-      MPI_CPPFLAGS="-E -std=gnu99"
-      MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT_C"
+      MPI_CPPFLAGS="-E -c99"
+      MPI_CFLAGS="-fast -c99 $OPENMP_OPT_C"
       MPI_CLIBS=""
 
       # Omni C
-      OMNI_C2X_FLAGS=""
-      OMNI_NTV_CFLAGS="-std=gnu99 -lm"
+      OMNI_C2X_FLAGS="--no-builtin-va-arg"
+      OMNI_NTV_CFLAGS="-D_XMP_PGI"
       OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
 
       # Omni Common
-      OMNI_X2X_FLAGS="-gnu"
-      ;;
-    *)
-      chk2=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1`
-      case $chk2 in
-      pgcc*)
-        # OpenMP
-        OPENMP_OPT_C="-mp"
-
-        # CPP_OPT
-        CPP_OPT="-Mpreprocess"
-
-        # XcalableMP
-        XMPC_DEF="-D_XCALABLEMP"
-
-        # MPI C
-        MPI_CPP=$MPI_CC
-        MPI_CPPFLAGS="-E -c99"
-        MPI_CFLAGS="-fast -c99 $OPENMP_OPT_C"
-        MPI_CLIBS=""
-
-        # Omni C
-        OMNI_C2X_FLAGS="--no-builtin-va-arg"
-        OMNI_NTV_CFLAGS="-D_XMP_PGI"
-        OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
-
-        # Omni Common
-        OMNI_X2X_FLAGS=""
+      OMNI_X2X_FLAGS=""
 
       # Special options
-#      IS_PGI="Yes"
-#      AC_SUBST(IS_PGI)
-        ;;
-      *)
-        echo "No supported C compiler was found."
-        echo "This program supports following MPI compilers."
-        echo " - GNU Compiler (mpicc)"
-        echo " - Intel Compiler (mpiicc)"
-        echo " - PGI Compiler (mpicc)"
-        echo " - Fujitsu Compiler (mpifccpx)"
-        echo " - Cray Compiler (cc)"
-        echo " - NEC Compiler (sxmpic++)"
-        echo " - IBM Compiler (mpixlcxx_r)"
-        echo " - HITACHI Compiler (mpCC_r)"
-        exit 1 ;;
-      esac ;;
-    esac
-  fi
+#     IS_PGI="Yes"
+#     AC_SUBST(IS_PGI)
+      ;;
+    *)
+      echo "No supported C compiler was found."
+      echo "This program supports following MPI compilers."
+      echo " - GNU Compiler (mpicc)"
+      echo " - Intel Compiler (mpiicc)"
+      echo " - PGI Compiler (mpicc)"
+      echo " - Fujitsu Compiler (mpifccpx)"
+      echo " - Cray Compiler (cc)"
+      echo " - NEC Compiler (sxmpic++)"
+      echo " - IBM Compiler (mpixlcxx_r)"
+      echo " - HITACHI Compiler (mpCC_r)"
+      exit 1 ;;
+    esac ;;
+  esac
 
   # Fortran
   if test "" != "$userMPI_FC"; then
@@ -22020,7 +22018,29 @@ fi
     fi
   fi
 
-  if test mpiifort = $MPI_FC; then # Intel Compiler
+  chk=`${MPI_FC} --version | head -n1`
+  case $chk in
+  "GNU Fortran"*)
+    # OPENMP
+    OPENMP_OPT_F="-fopenmp"
+
+    # XcalableMP
+    XMPF_DEF="-D_XCALABLEMP"
+
+    # MPI F
+    MPI_FC="mpif90"
+    MPI_FPP=$MPI_FC
+    MPI_FPPFLAGS="-E"
+    MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
+    MPI_MODINC="-J"
+    MPI_FCLIBS=""
+
+    # Omni F
+    OMNI_F2X_FLAGS=""
+    OMNI_NTV_FCFLAGS="-ffree-form -fcray-pointer"
+    OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F -lgomp"
+    ;;
+  *IFORT*)
     # OpenMP
     OPENMP_OPT_F="-openmp"
 
@@ -22038,13 +22058,16 @@ fi
     OMNI_F2X_FLAGS=""
     OMNI_NTV_FCFLAGS=""
     OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
+    ;;
+  *)
+    chk2=`$MPI_FC --version 2> /dev/null | head -n2 | tail -n1`
+    case $chk2 in
+    pgfortran*)
+      # OpenMP
+      OPENMP_OPT_F="-mp"
 
-  else # GNU or PGI
-    chk=`${MPI_FC} --version | head -n1`
-    case $chk in
-    "GNU Fortran"*)
-      # OPENMP
-      OPENMP_OPT_F="-fopenmp"
+      # CPP_OPT
+      CPP_OPT="-Mpreprocess"
 
       # XcalableMP
       XMPF_DEF="-D_XCALABLEMP"
@@ -22053,59 +22076,32 @@ fi
       MPI_FC="mpif90"
       MPI_FPP=$MPI_FC
       MPI_FPPFLAGS="-E"
-      MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
-      MPI_MODINC="-J"
+      MPI_FCFLAGS="-fast $OPENMP_OPT_F"
+      MPI_MODINC="-module"
       MPI_FCLIBS=""
 
       # Omni F
       OMNI_F2X_FLAGS=""
-      OMNI_NTV_FCFLAGS="-ffree-form -fcray-pointer"
-      OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F -lgomp"
+      OMNI_NTV_FCFLAGS=""
+      OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
+
+      # Omni Common
+      OMNI_X2X_FLAGS=""
       ;;
     *)
-      chk2=`$MPI_FC --version 2> /dev/null | head -n2 | tail -n1`
-      case $chk2 in
-      pgfortran*)
-        # OpenMP
-        OPENMP_OPT_F="-mp"
-
-        # CPP_OPT
-        CPP_OPT="-Mpreprocess"
-
-        # XcalableMP
-        XMPF_DEF="-D_XCALABLEMP"
-
-        # MPI F
-        MPI_FC="mpif90"
-        MPI_FPP=$MPI_FC
-        MPI_FPPFLAGS="-E"
-        MPI_FCFLAGS="-fast $OPENMP_OPT_F"
-        MPI_MODINC="-module"
-        MPI_FCLIBS=""
-
-        # Omni F
-        OMNI_F2X_FLAGS=""
-        OMNI_NTV_FCFLAGS=""
-        OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
-
-        # Omni Common
-        OMNI_X2X_FLAGS=""
-        ;;
-      *)
-        echo "No supported compiler was found."
-        echo "This program supports following MPI Fortran compilers."
-        echo " - GNU Compiler (mpif90)"
-        echo " - Intel Compiler (mpiifort)"
-        echo " - PGI Compiler (mpif90)"
-        echo " - Fujitsu Compiler (mpifrtpx)"
-        echo " - Cray Compiler (ftn)"
-        echo " - NEC Compiler (sxmpif90)"
-        echo " - IBM Compiler (mpixlf90_r)"
-        echo " - HITACHI Compiler (mpif90)"
-        exit 1 ;;
-      esac ;;
-    esac
-  fi
+      echo "No supported compiler was found."
+      echo "This program supports following MPI Fortran compilers."
+      echo " - GNU Compiler (mpif90)"
+      echo " - Intel Compiler (mpiifort)"
+      echo " - PGI Compiler (mpif90)"
+      echo " - Fujitsu Compiler (mpifrtpx)"
+      echo " - Cray Compiler (ftn)"
+      echo " - NEC Compiler (sxmpif90)"
+      echo " - IBM Compiler (mpixlf90_r)"
+      echo " - HITACHI Compiler (mpif90)"
+      exit 1 ;;
+    esac ;;
+  esac
 fi
 
 # "POWERPC" flag is used in libxmpf/src/Makefile.am
