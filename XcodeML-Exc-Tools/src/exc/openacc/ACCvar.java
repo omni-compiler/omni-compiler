@@ -508,6 +508,9 @@ public class ACCvar {
   }
   
   public Xtype getElementType(){
+    if(_parent != null){
+      return _parent.getElementType();
+    }
     return this.elementType;
   }
 
