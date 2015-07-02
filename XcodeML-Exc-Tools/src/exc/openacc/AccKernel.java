@@ -1055,25 +1055,63 @@ public class AccKernel {
     return null;
   }
 
+  private boolean hasBody(Block b){
+    switch(b.Opcode()){
+      case DO_STATEMENT:
+      case SWITCH_STATEMENT:
+      case WHILE_STATEMENT:
+      case FOR_STATEMENT:
+      case COMPOUND_STATEMENT:
+        return true;
+      default:
+        return false;
+    }
+  }
 
   private void replaceVar(Block b, Ident fromId, Ident toId) {
     BasicBlockExprIterator iter = new BasicBlockExprIterator(b);
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject expr = iter.getExpr();
-      topdownXobjectIterator exprIter = new topdownXobjectIterator(expr);
-      for (exprIter.init(); !exprIter.end(); exprIter.next()) {
-        Xobject x = exprIter.getXobject();
-        if (x.Opcode() == Xcode.VAR) {
-          String varName = x.getName();
-          if (fromId.getName().equals(varName)) {
-            Ident id = findInnerBlockIdent(b, iter.getBasicBlock().getParent().getParent(), varName);
-            if (id == null) {
-              exprIter.setXobject(toId.Ref());
-            }
-          }
-        }
+      Block parentBlock = iter.getBasicBlock().getParent();
+      replaceVar(b, fromId, toId, expr, parentBlock);
+    }
+
+    BlockIterator bIter = new topdownBlockIterator(b);
+    for (bIter.init(); !bIter.end(); bIter.next()) {
+      Block block = bIter.getBlock();
+      if(hasBody(block)) {
+        Xobject decls = block.getBody().getDecls();
+        replaceVarInDecls(b, fromId, toId, block, (XobjList) decls);
+      }else if(block.Opcode() == Xcode.IF_STATEMENT){
+        replaceVarInDecls(b, fromId, toId, block, (XobjList) block.getThenBody().getDecls());
+        replaceVarInDecls(b, fromId, toId, block, (XobjList) block.getElseBody().getDecls());
       }
     }
+  }
+
+  private void replaceVarInDecls(Block b, Ident fromId, Ident toId, Block block, XobjList decls) {
+    if(decls == null) return;
+    for(Xobject decl : decls){
+      Xobject declRight = decl.right();
+      decl.setRight(replaceVar(b, fromId, toId, declRight, block));
+    }
+  }
+
+  private Xobject replaceVar(Block b, Ident fromId, Ident toId, Xobject expr, Block parentBlock) {
+    topdownXobjectIterator exprIter = new topdownXobjectIterator(expr);
+    for (exprIter.init(); !exprIter.end(); exprIter.next()) {
+      Xobject x = exprIter.getXobject();
+      if (x.Opcode() != Xcode.VAR) continue;
+      String varName = x.getName();
+      if (! fromId.getName().equals(varName)) continue;
+      Ident id = findInnerBlockIdent(b, parentBlock. getParent(), varName);
+      if (id != null) continue;
+
+      Xobject replaceXobject = toId.Ref();
+      if(expr == x) return replaceXobject;
+      exprIter.setXobject(replaceXobject);
+    }
+    return expr;
   }
 
   public void setReadOnlyOuterIdSet(Set<Ident> readOnlyOuterIdSet) {
@@ -1102,19 +1140,30 @@ public class AccKernel {
       return outerIdSet;
     }
 
+
+
     private void collectlVarIdentsInDecl(Block topBlock, Set<Ident> outerIdSet) {
       BlockIterator bIter = new topdownBlockIterator(topBlock);
       for (bIter.init(); !bIter.end(); bIter.next()) {
         Block b = bIter.getBlock();
-        if (b.Opcode() != Xcode.COMPOUND_STATEMENT) continue;
-        Xobject decls = b.getBody().getDecls();
-        if (decls == null) continue;
-        Set<String> varNameSet = collectVarNames(decls);
-        for (String name : varNameSet) {
-          Ident id = find(topBlock, b, name);
-          if (id == null) continue;
-          outerIdSet.add(id);
+
+        if(hasBody(b)){
+          Xobject decls = b.getBody().getDecls();
+          collectVarIdentsInDecls(topBlock, outerIdSet, b, decls);
+        }else if(b.Opcode() == Xcode.IF_STATEMENT){
+          collectVarIdentsInDecls(topBlock, outerIdSet, b, b.getThenBody().getDecls());
+          collectVarIdentsInDecls(topBlock, outerIdSet, b, b.getElseBody().getDecls());
         }
+      }
+    }
+
+    private void collectVarIdentsInDecls(Block topBlock, Set<Ident> outerIdSet, Block b, Xobject decls) {
+      if (decls == null) return;
+      Set<String> varNameSet = collectVarNames(decls);
+      for (String name : varNameSet) {
+        Ident id = find(topBlock, b, name);
+        if (id == null) continue;
+        outerIdSet.add(id);
       }
     }
 
@@ -1190,17 +1239,25 @@ public class AccKernel {
       BlockIterator bIter = new topdownBlockIterator(kernelBlock);
       for (bIter.init(); !bIter.end(); bIter.next()) {
         Block b = bIter.getBlock();
-        if (b.Opcode() != Xcode.COMPOUND_STATEMENT) continue;
-        Xobject decls = b.getBody().getDecls();
-        if (decls == null) continue;
-        Set<Ident> assignedIdsInDecl = collect(decls, b);
-        assignedIds.addAll(assignedIdsInDecl);
+
+        if(hasBody(b)){
+          Xobject decls = b.getBody().getDecls();
+          Set<Ident> assignedIdsInDecl = collect(decls, b);
+          assignedIds.addAll(assignedIdsInDecl);
+        }else if(b.Opcode() == Xcode.IF_STATEMENT){
+          Xobject thenBodyDecls = b.getThenBody().getDecls();
+          Xobject elseBodyDecls = b.getElseBody().getDecls();
+          assignedIds.addAll(collect(thenBodyDecls, b));
+          assignedIds.addAll(collect(elseBodyDecls, b));
+        }
       }
       return assignedIds;
     }
 
     private Set<Ident> collect(Xobject expr, Block b) {
       Set<Ident> assignedIds = new LinkedHashSet<Ident>();
+      if(expr == null) return assignedIds;
+
       XobjectIterator xobjIter = new topdownXobjectIterator(expr);
       for (xobjIter.init(); !xobjIter.end(); xobjIter.next()) {
         Xobject x = xobjIter.getXobject();
