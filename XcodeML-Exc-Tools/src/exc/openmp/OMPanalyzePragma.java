@@ -156,7 +156,8 @@ public class OMPanalyzePragma
                 }
             }
             break;
-
+	case TASK:
+	    break;
         case SINGLE: /* single <clause list> */
             for(XobjArgs a = pb.getClauses().getArgs(); a != null; a = a.nextArgs()) {
                 t = a.getArg();

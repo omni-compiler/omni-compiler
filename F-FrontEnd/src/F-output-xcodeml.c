@@ -2397,6 +2397,7 @@ outx_OMP_dir_string(int l,expv v)
   case OMP_FLUSH: s = "FLUSH"; break;
   case OMP_ORDERED: s = "ORDERED"; break;
   case OMP_THREADPRIVATE: s = "THREADPRIVATE"; break;
+  case OMP_TASK: s = "TASK";break;
   default:
     fatal("out_OMP_dir_string: unknown value=%d\n",EXPV_INT_VALUE(v));
   }
@@ -2509,6 +2510,12 @@ outx_OMP_dir_clause_list(int l,expv v)
     case OMP_DIR_NUM_THREADS: s = "DIR_NUM_THREADS"; break;
     case OMP_DIR_NOWAIT: s = "DIR_NOWAIT"; break;
     case OMP_DIR_SCHEDULE: s = "DIR_SCHEDULE";  outx_OMP_sched_kind(l,s,vv);continue;
+    case OMP_DATA_DEPEND_IN: s = "DEPEND_IN";break;
+    case OMP_DATA_DEPEND_OUT: s = "DEPEND_OUT";break;
+    case OMP_DATA_DEPEND_INOUT: s = "DEPEND_INOUT";break;
+    case OMP_DIR_UNTIED: s = "UNTIED";break;
+    case OMP_DIR_MERGEABLE: s = "MERGEABLE";break;
+    case OMP_DIR_FINAL: s = "FINAL";break;
     default:
       fatal("out_OMP_dir_clause: unknown value=%d\n",EXPV_INT_VALUE(v));
     }

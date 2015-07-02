@@ -3746,6 +3746,7 @@ struct keyword_token OMP_keywords[ ] =
 {
     {"parallel",	OMPKW_PARALLEL },
     {"end",		OMPKW_END },
+    {"task",            OMPKW_TASK},
     {"private",		OMPKW_PRIVATE },
     {"shared",		OMPKW_SHARED },
     {"default",		OMPKW_DEFAULT },
@@ -3753,6 +3754,13 @@ struct keyword_token OMP_keywords[ ] =
     {"firstprivate",	OMPKW_FIRSTPRIVATE },
     {"reduction",	OMPKW_REDUCTION },
     {"if",	        OMPKW_IF },
+    {"final",           OMPKW_FINAL },
+    {"untied",          OMPKW_UNTIED },
+    {"mergeable",       OMPKW_MERGEABLE },
+    {"depend",		OMPKW_DEPEND },
+    {"in",		OMPKW_DEPEND_IN },
+    {"out",		OMPKW_DEPEND_OUT },
+    {"inout",		OMPKW_DEPEND_INOUT },
     {"num_threads",     OMPKW_NUM_THREADS },
     {"copyin",		OMPKW_COPYIN },
     {"do",		OMPKW_DO },
@@ -3772,9 +3780,9 @@ struct keyword_token OMP_keywords[ ] =
     {"barrier",		OMPKW_BARRIER},
     {"atomic",		OMPKW_ATOMIC},
     {"flush",		OMPKW_FLUSH },
-    {"threadprivate",	OMPKW_THREADPRIVATE},
-    {"workshare",	OMPKW_WORKSHARE},
-    {"copyprivate",     OMPKW_COPYPRIVATE},
+    {"threadprivate",	OMPKW_THREADPRIVATE },
+    {"workshare",	OMPKW_WORKSHARE },
+    {"copyprivate",     OMPKW_COPYPRIVATE },
 
     { 0, 0 }
 };

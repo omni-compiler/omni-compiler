@@ -774,6 +774,7 @@ extern expr     create_implicit_decl_expv(TYPE_DESC tp, char * first, char * sec
 
 extern void compile_OMP_directive(expr v);
 int OMP_reduction_op(expr v);
+int OMP_depend_op(expr v);
 
 extern void compile_XMP_directive(expr v);
 int XMP_reduction_op(expr v);
