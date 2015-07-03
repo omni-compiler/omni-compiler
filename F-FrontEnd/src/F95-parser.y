@@ -228,9 +228,15 @@
 %token OMPKW_DEPEND_IN
 %token OMPKW_DEPEND_OUT
 %token OMPKW_DEPEND_INOUT
+%token OMPKW_SAFELEN
+%token OMPKW_SIMDLEN
+%token OMPKW_LINEAR
+%token OMPKW_ALIGNED
 %token OMPKW_NUM_THREADS
 %token OMPKW_COPYIN
 %token OMPKW_DO
+%token OMPKW_SIMD
+%token OMPKW_DECLARE
 %token OMPKW_LASTPRIVATE
 %token OMPKW_SCHEDULE
 %token OMPKW_STATIC
@@ -1733,6 +1739,22 @@ omp_directive:
 	  { $$ = OMP_LIST(OMP_F_PARALLEL_DO,$3); }
 	| OMPKW_END OMPKW_PARALLEL OMPKW_DO omp_nowait_option
 	  { $$ = OMP_LIST(OMP_F_END_PARALLEL_DO,$4); }
+        | OMPKW_SIMD omp_clause_option
+	{ $$ = OMP_LIST(OMP_F_SIMD,$2); }
+        | OMPKW_END OMPKW_SIMD
+	{ $$ = OMP_LIST(OMP_F_END_SIMD,NULL); }
+        | OMPKW_DO OMPKW_SIMD omp_clause_option
+	{ $$ = OMP_LIST(OMP_F_DO_SIMD,$3); }
+        | OMPKW_END OMPKW_DO OMPKW_SIMD omp_nowait_option
+	{ $$ = OMP_LIST(OMP_F_END_DO_SIMD,$4); }
+        | OMPKW_DECLARE OMPKW_SIMD omp_clause_option
+	{ $$ = OMP_LIST(OMP_F_DECLARE_SIMD,$3); }
+        | OMPKW_END OMPKW_DECLARE OMPKW_SIMD 
+	{ $$ = OMP_LIST(OMP_F_END_DECLARE_SIMD,NULL); }
+        | OMPKW_PARALLEL OMPKW_DO OMPKW_SIMD omp_clause_option
+	{ $$ = OMP_LIST(OMP_F_PARALLEL_DO_SIMD,$4); }	
+        | OMPKW_END OMPKW_PARALLEL OMPKW_DO OMPKW_SIMD
+	{ $$ = OMP_LIST(OMP_F_END_PARALLEL_DO_SIMD,NULL); }	
 	| OMPKW_SECTIONS omp_clause_option
 	  { $$ = OMP_LIST(OMP_F_SECTIONS,$2); }
 	| OMPKW_END OMPKW_SECTIONS omp_nowait_option

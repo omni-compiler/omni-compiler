@@ -432,6 +432,7 @@ void compile_OMP_directive(expr x)
     case OMP_F_ATOMIC:
 	OMP_st_required = OMP_ST_ATOMIC;
 	break;
+
     case OMP_F_TASK:
       push_ctl(CTL_OMP);
       compile_OMP_pragma_clause(EXPR_ARG2(x),OMP_TASK,TRUE,
@@ -449,7 +450,97 @@ void compile_OMP_directive(expr x)
         pop_ctl();
       } else  error("OpenMP TASK block is not closed");
       return;
-      
+
+    case OMP_F_SIMD:
+      push_ctl(CTL_OMP);
+      compile_OMP_pragma_clause(EXPR_ARG2(x),OMP_SIMD,TRUE,
+				&pclause,&dclause);
+      CTL_OMP_ARG(ctl_top) = list3(LIST,dir,pclause,dclause);
+      EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+      return;
+
+    case OMP_F_END_SIMD:
+      if(CTL_TYPE(ctl_top) == CTL_OMP &&
+         CTL_OMP_ARG_DIR(ctl_top) == OMP_F_SIMD){
+        CTL_BLOCK(ctl_top) =
+          OMP_pragma_list(OMP_SIMD,CTL_OMP_ARG_DCLAUSE(ctl_top),
+                          CURRENT_STATEMENTS);
+        EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
+        pop_ctl();
+      } else  error("OpenMP SIMD block is not closed");
+      return;
+    
+    case OMP_F_DO_SIMD:
+      push_ctl(CTL_OMP);
+      compile_OMP_pragma_clause(EXPR_ARG2(x),OMP_SIMD,TRUE,
+				&pclause,&dclause);
+      CTL_OMP_ARG(ctl_top) = list3(LIST,dir,pclause,dclause);
+      EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+      return;
+    case OMP_F_END_DO_SIMD:
+      if(CTL_TYPE(ctl_top) == CTL_OMP &&
+         CTL_OMP_ARG_DIR(ctl_top) == OMP_F_DO_SIMD){
+	CTL_BLOCK(ctl_top) =
+	  OMP_pragma_list(OMP_FOR,CTL_OMP_ARG_DCLAUSE(ctl_top),
+			  OMP_pragma_list(OMP_SIMD,
+					  CTL_OMP_ARG_DCLAUSE(ctl_top),
+					  CURRENT_STATEMENTS));
+	/*        CTL_BLOCK(ctl_top) =
+          OMP_pragma_list(OMP_DO_SIMD,CTL_OMP_ARG_DCLAUSE(ctl_top),
+	  CURRENT_STATEMENTS);*/
+        EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
+        pop_ctl();
+      } else  error("OpenMP DO SIMD block is not closed");
+      return;
+
+    case OMP_F_DECLARE_SIMD:
+      push_ctl(CTL_OMP);
+      compile_OMP_pragma_clause(EXPR_ARG2(x),OMP_SIMD,TRUE,
+				&pclause,&dclause);
+      CTL_OMP_ARG(ctl_top) = list3(LIST,dir,pclause,dclause);
+      EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+      return;
+    case OMP_F_END_DECLARE_SIMD:
+      if(CTL_TYPE(ctl_top) == CTL_OMP &&
+         CTL_OMP_ARG_DIR(ctl_top) == OMP_F_DECLARE_SIMD){
+        CTL_BLOCK(ctl_top) =
+          OMP_pragma_list(OMP_DECLARE,CTL_OMP_ARG_DCLAUSE(ctl_top),
+                          OMP_pragma_list(OMP_SIMD,
+                                          CTL_OMP_ARG_DCLAUSE(ctl_top),
+                                          CURRENT_STATEMENTS));
+	/*          OMP_pragma_list(OMP_DECLARE_SIMD,CTL_OMP_ARG_DCLAUSE(ctl_top),
+		    CURRENT_STATEMENTS);*/
+        EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
+        pop_ctl();
+      } else  error("OpenMP DECLARE SIMD block is not closed");
+      return;
+
+    case OMP_F_PARALLEL_DO_SIMD:
+      push_ctl(CTL_OMP);
+      compile_OMP_pragma_clause(EXPR_ARG2(x),OMP_SIMD,TRUE,
+				&pclause,&dclause);
+      CTL_OMP_ARG(ctl_top) = list3(LIST,dir,pclause,dclause);
+      EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+      return;
+
+    case OMP_F_END_PARALLEL_DO_SIMD:
+      if(CTL_TYPE(ctl_top) == CTL_OMP &&
+         CTL_OMP_ARG_DIR(ctl_top) == OMP_F_PARALLEL_DO_SIMD){
+        CTL_BLOCK(ctl_top) =
+          OMP_pragma_list(OMP_PARALLEL,CTL_OMP_ARG_DCLAUSE(ctl_top),
+                          OMP_pragma_list(OMP_FOR,
+                                          CTL_OMP_ARG_DCLAUSE(ctl_top),
+					  OMP_pragma_list(OMP_SIMD,
+							  CTL_OMP_ARG_DCLAUSE(ctl_top),
+							  CURRENT_STATEMENTS)));
+	/*
+          OMP_pragma_list(OMP_PARALLEL_DO_SIMD,CTL_OMP_ARG_PCLAUSE(ctl_top),
+	  CURRENT_STATEMENTS);*/
+        EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
+        pop_ctl();
+      } else  error("OpenMP PARALLEL DO SIMD block is not closed");
+      return;
+
     default:
 	fatal("unknown OMP pragma");
     }

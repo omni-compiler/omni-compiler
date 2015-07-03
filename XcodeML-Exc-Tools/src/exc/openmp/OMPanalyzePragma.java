@@ -65,7 +65,7 @@ public class OMPanalyzePragma
         OMPpragma p = info.pragma;
         OMPpragma c;
         Xobject t;
-        Block b;
+       Block b;
         List<XobjList> idLists;
         topdownBlockIterator bitr;
 
@@ -118,10 +118,12 @@ public class OMPanalyzePragma
                         return;
                     }
                 } else {
+                    if(pb.getBody().getHead().Opcode() == Xcode.OMP_PRAGMA)
+			break;
                     if(pb.getBody().getHead().Opcode() != Xcode.F_DO_STATEMENT) {
                         OMP.error(pb.getLineNo(), "DO loop must follows DO directive");
                         return;
-                    }
+		    }
                 }
                 ForBlock for_block = (ForBlock)pb.getBody().getHead();
                 for_block.Canonicalize();
@@ -157,6 +159,8 @@ public class OMPanalyzePragma
             }
             break;
 	case TASK:
+        case SIMD:
+        case DECLARE:
 	    break;
         case SINGLE: /* single <clause list> */
             for(XobjArgs a = pb.getClauses().getArgs(); a != null; a = a.nextArgs()) {

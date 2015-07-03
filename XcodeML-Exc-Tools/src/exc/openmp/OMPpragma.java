@@ -22,7 +22,9 @@ public enum OMPpragma
      */
     PARALLEL,           /* parallel <clause_list> */
     FOR,                /* (for|do) <clause_list> */
-    TASK,               /* task <clause_list> */
+    TASK,               /* task <clause list>*/
+    SIMD,               /* simd <clause list>*/
+    DECLARE,            /* declare <clause_list> */
     SECTIONS,           /* sections <clause_list> */
     SECTION,            /* section */
     SINGLE,             /* single <clause list> */

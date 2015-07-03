@@ -331,6 +331,8 @@ public class OMPtransPragma
             return transParallelRegion(pb, i);
 
         case FOR: /* for <clause_list> */
+	    if(pb.getBody().getHead().Opcode() == Xcode.OMP_PRAGMA)
+		return null;
             return transFor(pb, i);
 
         case SECTIONS: /* sections <clause_list> */
@@ -353,7 +355,7 @@ public class OMPtransPragma
 
         case ORDERED:
             return transOrdered(pb, i);
-
+	
         default:
             // OMP.fatal("unknown pragma");
             // ignore it
@@ -1245,7 +1247,12 @@ public class OMPtransPragma
         body.add(OMPfuncIdent(orderedEndFunc).Call(null));
         return Bcons.COMPOUND(body);
     }
-    
+    public Block transSimd(PragmaBlock b, OMPinfo i)
+    {
+        BlockList body = b.getBody();
+        return Bcons.COMPOUND(body);
+    }
+
     private Xobject getFallocateLocalArray(Xobject varAry, Xobject varShare, Xtype t, Xobject lastDimSize)
     {
         Xobject[] indices = new Xobject[t.getNumDimensions() + 1];

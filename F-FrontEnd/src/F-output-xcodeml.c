@@ -2398,6 +2398,8 @@ outx_OMP_dir_string(int l,expv v)
   case OMP_ORDERED: s = "ORDERED"; break;
   case OMP_THREADPRIVATE: s = "THREADPRIVATE"; break;
   case OMP_TASK: s = "TASK";break;
+  case OMP_SIMD: s = "SIMD";break;
+  case OMP_DECLARE: s = "DECLARE";break;
   default:
     fatal("out_OMP_dir_string: unknown value=%d\n",EXPV_INT_VALUE(v));
   }
