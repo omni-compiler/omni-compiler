@@ -21,6 +21,6 @@ install-exec-local:	$(lib_LIBRARIES)
 	$(INSTALL_DATA) $(lib_LIBRARIES) $(DESTDIR)$(libdir)
 
 html-local:
-	if test ! -e "../doc"; then mkdir ../doc; fi
+	if test ! -e "../doc"; then $(MKDIR_P) ../doc; fi
 	doxygen >/dev/null
 

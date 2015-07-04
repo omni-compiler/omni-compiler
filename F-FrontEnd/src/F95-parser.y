@@ -1,9 +1,7 @@
 /**
  * \file F95-parser.y
  */
-
 /* F95 parser */
-
 %token EOS              /* end of statement */
 %token CONSTANT         /* any constant */
 %token IDENTIFIER       /* name */
@@ -214,6 +212,7 @@
 /* OpenMP directives */
 %token OMPKW_LINE
 %token OMPKW_PARALLEL
+%token OMPKW_TASK
 %token OMPKW_END
 %token OMPKW_PRIVATE
 %token OMPKW_SHARED
@@ -222,8 +221,22 @@
 %token OMPKW_FIRSTPRIVATE
 %token OMPKW_REDUCTION
 %token OMPKW_IF
+%token OMPKW_FINAL
+%token OMPKW_UNTIED
+%token OMPKW_MERGEABLE
+%token OMPKW_DEPEND
+%token OMPKW_DEPEND_IN
+%token OMPKW_DEPEND_OUT
+%token OMPKW_DEPEND_INOUT
+%token OMPKW_SAFELEN
+%token OMPKW_SIMDLEN
+%token OMPKW_LINEAR
+%token OMPKW_ALIGNED
+%token OMPKW_NUM_THREADS
 %token OMPKW_COPYIN
 %token OMPKW_DO
+%token OMPKW_SIMD
+%token OMPKW_DECLARE
 %token OMPKW_LASTPRIVATE
 %token OMPKW_SCHEDULE
 %token OMPKW_STATIC
@@ -246,7 +259,7 @@
 %token OMPKW_COPYPRIVATE
 
 %type <val> omp_directive omp_nowait_option omp_end_clause_option omp_end_clause_list omp_end_clause omp_clause_option omp_clause_list omp_clause omp_list /*omp_common_list*/ omp_default_attr omp_copyin_list omp_schedule_arg
-%type <code> omp_schedule_attr omp_reduction_op
+%type <code> omp_schedule_attr omp_reduction_op omp_depend_op
 
 /* XcalableMP directive */
 %token XMPKW_LINE
@@ -1726,6 +1739,22 @@ omp_directive:
 	  { $$ = OMP_LIST(OMP_F_PARALLEL_DO,$3); }
 	| OMPKW_END OMPKW_PARALLEL OMPKW_DO omp_nowait_option
 	  { $$ = OMP_LIST(OMP_F_END_PARALLEL_DO,$4); }
+        | OMPKW_SIMD omp_clause_option
+	{ $$ = OMP_LIST(OMP_F_SIMD,$2); }
+        | OMPKW_END OMPKW_SIMD
+	{ $$ = OMP_LIST(OMP_F_END_SIMD,NULL); }
+        | OMPKW_DO OMPKW_SIMD omp_clause_option
+	{ $$ = OMP_LIST(OMP_F_DO_SIMD,$3); }
+        | OMPKW_END OMPKW_DO OMPKW_SIMD omp_nowait_option
+	{ $$ = OMP_LIST(OMP_F_END_DO_SIMD,$4); }
+        | OMPKW_DECLARE OMPKW_SIMD omp_clause_option
+	{ $$ = OMP_LIST(OMP_F_DECLARE_SIMD,$3); }
+        | OMPKW_END OMPKW_DECLARE OMPKW_SIMD 
+	{ $$ = OMP_LIST(OMP_F_END_DECLARE_SIMD,NULL); }
+        | OMPKW_PARALLEL OMPKW_DO OMPKW_SIMD omp_clause_option
+	{ $$ = OMP_LIST(OMP_F_PARALLEL_DO_SIMD,$4); }	
+        | OMPKW_END OMPKW_PARALLEL OMPKW_DO OMPKW_SIMD
+	{ $$ = OMP_LIST(OMP_F_END_PARALLEL_DO_SIMD,NULL); }	
 	| OMPKW_SECTIONS omp_clause_option
 	  { $$ = OMP_LIST(OMP_F_SECTIONS,$2); }
 	| OMPKW_END OMPKW_SECTIONS omp_nowait_option
@@ -1752,6 +1781,10 @@ omp_directive:
 	  { $$ = OMP_LIST(OMP_F_CRITICAL,list1(LIST,$3)); }
 	| OMPKW_END OMPKW_CRITICAL '(' IDENTIFIER ')'
 	  { $$ = OMP_LIST(OMP_F_END_CRITICAL,list1(LIST,$4)); }
+	| OMPKW_TASK omp_clause_option
+	  { $$ = OMP_LIST(OMP_F_TASK,$2); }
+	| OMPKW_END OMPKW_TASK
+	  { $$ = OMP_LIST(OMP_F_END_TASK,NULL); }
 	| OMPKW_BARRIER
 	  { $$ = OMP_LIST(OMP_F_BARRIER,NULL); }
 	| OMPKW_ATOMIC
@@ -1838,6 +1871,23 @@ omp_clause:
 	  { $$ = $4; }
 	| OMPKW_ORDERED
 	  { $$ = OMP_LIST(OMP_DIR_ORDERED,NULL); }
+        | OMPKW_NUM_THREADS '(' expr ')'
+	{ $$ = OMP_LIST(OMP_DIR_NUM_THREADS,$3); } 
+	| OMPKW_DEPEND '(' omp_depend_op ':' omp_list ')'
+	{ $$ = OMP_LIST($3,$5); }
+        | OMPKW_FINAL '(' expr ')'
+	{ $$ = OMP_LIST(OMP_DIR_FINAL,$3); }
+        | OMPKW_UNTIED
+	{ $$ = OMP_LIST(OMP_DIR_UNTIED,NULL); }
+        | OMPKW_MERGEABLE
+	{ $$ = OMP_LIST(OMP_DIR_MERGEABLE,NULL); }
+	;
+
+omp_depend_op:
+	 OMPKW_DEPEND_IN { $$ = (int) OMP_DATA_DEPEND_IN; }
+	| OMPKW_DEPEND_OUT { $$ = (int) OMP_DATA_DEPEND_OUT; }
+	| OMPKW_DEPEND_INOUT { $$ = (int) OMP_DATA_DEPEND_INOUT; }
+	| IDENTIFIER { $$ = OMP_depend_op($1); }
 	;
 
 omp_reduction_op:

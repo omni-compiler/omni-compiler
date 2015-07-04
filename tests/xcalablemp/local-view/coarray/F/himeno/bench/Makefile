@@ -2,7 +2,7 @@
 # XMP/gfortran/GASNet
 #-----------------
 MPI=mpif90
-CAF=xmpf90 --debug -g
+CAF=xmpf90 --debug
 #MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include
 #CAF=xmpf90 --debug -I$(MPILIB) -g
 
@@ -52,6 +52,13 @@ mpi.x: himenoBMTxpr.f90
 
 mpi-nocom.x: himenoBMTxpr-nocom.f90
 	$(MPI) $< -o $@
+
+run:	$(EXE:%.x=%.result)
+
+%.result: %.x
+	echo m >stdin.m122
+	echo "1 2 2" >>stdin.m122
+	mpirun -n 4 $< <stdin.m122
 
 clean:
 	rm -f $(EXE)

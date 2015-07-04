@@ -22,6 +22,9 @@ public enum OMPpragma
      */
     PARALLEL,           /* parallel <clause_list> */
     FOR,                /* (for|do) <clause_list> */
+    TASK,               /* task <clause list>*/
+    SIMD,               /* simd <clause list>*/
+    DECLARE,            /* declare <clause_list> */
     SECTIONS,           /* sections <clause_list> */
     SECTION,            /* section */
     SINGLE,             /* single <clause list> */
@@ -67,6 +70,13 @@ public enum OMPpragma
     DATA_REDUCTION_IAND(13),    // Fortran
     DATA_REDUCTION_IOR(14),     // Fortran
     DATA_REDUCTION_IEOR(15),    // Fortran
+
+    DATA_DEPEND_IN,
+    DATA_DEPEND_OUT,
+    DATA_DEPEND_INOUT,
+
+    DATA_UNTIED,
+    DATA_MERGEABLE,
 
     DIR_ORDERED,
     DIR_IF,

@@ -5,7 +5,8 @@ OUTPUT_DIR=$1
 JOB_NUM=$2
 ELAPSED_TIME_SEC=$3
 BASE_TESTDIR=$4
-shift; shift; shift; shift
+SORTED_LIST=$5
+shift; shift; shift; shift; shift
 TESTDIRS=$@
 CURRENT_DIR=`pwd`
 
@@ -56,10 +57,10 @@ TIME_LINE_DATA=`echo -e $TIME_LINE_DATA | sort -n`
 # Note that NODE_NAME_LIST has "\n" in the last line
 # So that when number of Slaves is 4, the value of NODE_NAME_LIST is 5.
 # Additiolal 1 is regard as Master.
-# The height is "50px * (num of slaves + master) + 20."
+# The height is "45px * (num of slaves + master) + 30."
 NUM_OF_NODES=`echo -e $NODE_NAME_LIST | sort | uniq | wc -l`
-TIMELINE_HEIGHT=`expr 50 \* $NUM_OF_NODES`
-TIMELINE_HEIGHT=`expr 20 + $TIMELINE_HEIGHT`
+TIMELINE_HEIGHT=`expr 45 \* $NUM_OF_NODES`
+TIMELINE_HEIGHT=`expr 30 + $TIMELINE_HEIGHT`
 
 ## Create Directory
 mkdir -p $OUTPUT_DIR
@@ -74,8 +75,30 @@ for subdir in `seq 1 $NUM_OF_DIRS`; do
     NUM=`expr $NUM + 1`
 done
 
+## Set Sorted list
+MAXLINE=`wc -l ${SORTED_LIST} | awk '{print $1}'`
+CONTENTS=""
+
+for line in $(seq 1 $MAXLINE); do
+    priority=`head -n $line ${SORTED_LIST} | tail -1 | awk '{print $1}'`
+    dirname=`head -n $line ${SORTED_LIST} | tail -1 | awk '{print $2}'`
+    CONTENTS="${CONTENTS}  <tr><td align=\"right\">${priority}</td><td>${dirname}</td></tr>\n"
+done
+
+SORTED_LIST_HTML=`cat <<EOF
+<table class="sample">\n
+  <tr><th align="right">Num of files (Priority)</th><th>Directory Name</th></tr>\n
+   ${CONTENTS}
+</table>\n
+EOF`
+
 ## OUTPUT
 OUTPUT=`cat <<EOF
+<html>\n
+<head>\n
+<link rel="stylesheet" type="text/css" href="style.css"\n
+</head>\n
+<body>\n
 <script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization', \n
                                     'version':'1','packages':['timeline']}]}"></script> \n
 <script type="text/javascript"> \n
@@ -105,10 +128,15 @@ function drawChart() \n
   }\n
 </script>\n
 \n
-<div id="timeline" style="width: ${TIMELINE_WIDTH}px; height: ${TIMELINE_HEIGHT}px;"></div>
-<p>
-Elapse time is $ELAPSED_TIME_SEC sec.
-</p>
+<div id="timeline" style="width: ${TIMELINE_WIDTH}px; height: ${TIMELINE_HEIGHT}px;"></div>\n
+<p>\n
+Elapse time is $ELAPSED_TIME_SEC sec.\n
+</p>\n
+<p>\n
+${SORTED_LIST_HTML}
+</p>\n
+</body>\n
+</html>\n
 EOF`
 
 echo -e ${OUTPUT} > ${OUTPUT_FILE}

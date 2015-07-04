@@ -82,8 +82,9 @@ echo "done"
 
 ## Run tests
 echo "Run tests ..."
+SORTED_LIST=/tmp/xmp_sorted.$$
 RUN_TESTS_CMD="cd ${REMOTE_TMP_DIR}/${OMNI}; \
-               make slurm XMP_PATH=${XMP_PATH}"
+               make slurm XMP_PATH=${XMP_PATH} SORTED_LIST=${SORTED_LIST}"
 cd ${LOCAL_TMP_DIR}
 omni_exec ssh ${REMOTE_HOST} ${RUN_TESTS_CMD}
 
@@ -104,7 +105,8 @@ omni_exec ssh ${REMOTE_HOST} ${RUN_TESTS_CMD}
 # trap "cancel_jobs" 1 2 3 15
 
 CHECK_TESTS_CMD="cd ${REMOTE_TMP_DIR}/${OMNI};\
-                 make slurm-check"
+                 make slurm-check;\
+                 rm -f $SORTED_LIST"
 omni_exec ssh ${REMOTE_HOST} ${CHECK_TESTS_CMD}
 echo "done"
 

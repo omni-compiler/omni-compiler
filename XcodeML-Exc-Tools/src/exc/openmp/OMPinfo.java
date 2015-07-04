@@ -7,6 +7,7 @@
 package exc.openmp;
 
 import exc.object.*;
+import exc.xcodeml.XcodeMLtools;
 import exc.block.*;
 
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ public class OMPinfo
     private List<OMPvar> varlist; /* variable list */
     private XobjList id_list;
     private List<OMPvar> thdprv_varlist; /* threadprivate variable list */
-
+    private XcodeMLtools tools;
     // for OMPpragma.FLUSH
     List<Xobject> flush_vars;
 
@@ -265,7 +266,7 @@ public class OMPinfo
                 return null;
             }
         }
-
+	if(id.getStorageClass()!=null)
         if(env.isThreadPrivate(id)) {
             if(atr != OMPpragma.DATA_COPYIN) {
                 OMP.error(block.getLineNo(), "variable '" + name + "' is threadprivate");
@@ -327,6 +328,9 @@ public class OMPinfo
                 t.setIsConst(false);
             } else {
                 t.unsetIsFsave();
+                t.setIsFintentIN(false);
+                t.setIsFintentOUT(false);
+                t.setIsFintentINOUT(false);
                 if(v.is_reduction ||
                     (v.is_shared && !v.is_first_private && !v.is_last_private && !v.is_private)) {
                     t.unsetIsFtarget();
@@ -475,7 +479,8 @@ public class OMPinfo
                     t = torg;
                 } else {
                     t = torg.copy();
-                    t.setIsFtarget(true);
+//                    t.setIsFtarget(true);
+                    t.unsetIsFtarget();
                     t.setIsFparameter(false);
                     t.unsetIsFsave();
                     if(t.isFarray()) {

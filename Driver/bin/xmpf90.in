@@ -157,7 +157,7 @@ fi
 [ $STOP_BACKEND = true ] && exit 0;
 
 ### Native Compiler ###
-[ $ENABLE_OPENMP = true ] && native_add_opt+=("$OPENMP_OPT")
+[ $ENABLE_OPENMP = true ] && native_add_opt+=("$OPENMP_OPT_F")
 for file in "${f_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a

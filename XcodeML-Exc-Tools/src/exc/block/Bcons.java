@@ -131,7 +131,7 @@ public class Bcons
     public static Block FOR(Xobject init, Xobject cond, Xobject iter, Block body, String construct_name)
     {
         return new CforBlock(BasicBlock.Statement(init), BasicBlock.Cond(cond),
-            BasicBlock.Statement(iter), new BlockList(body), construct_name);
+			     BasicBlock.Statement(iter), new BlockList(body), construct_name);
     }
     
     /** create 'for' statement block */
@@ -142,12 +142,12 @@ public class Bcons
 
     /** create 'for' statement block */
     public static Block FORall(Xobject ind_var, Xobject lb, Xobject ub, Xobject step,
-        Xcode checkOp, BlockList body)
+			       Xcode checkOp, BlockList body)
     {
         return Bcons.FOR(Xcons.Set(ind_var, lb),
-            Xcons.binaryOp(checkOp, ind_var, ub),
-            Xcons.asgOp(Xcode.ASG_PLUS_EXPR, ind_var, step),
-            Bcons.COMPOUND(body));
+			 Xcons.binaryOp(checkOp, ind_var, ub),
+			 Xcons.asgOp(Xcode.ASG_PLUS_EXPR, ind_var, step),
+			 Bcons.COMPOUND(body));
     }
     
     /** create Fortran 'do' statement block */
@@ -162,16 +162,28 @@ public class Bcons
         return new CondBlock(code, cond, body, constructName);
     }
 
-    /** create 'while' statement block */
+    /** create 'do while' statement block */
     public static Block WHILE(BasicBlock cond, BlockList body)
     {
         return WHILE(Xcode.WHILE_STATEMENT, cond, body, null);
     }
 
-    /** create 'while' statement block */
+    /** create 'do while' statement block */
     public static Block WHILE(Xobject cond, Block body)
     {
         return WHILE(BasicBlock.Cond(cond), new BlockList(body));
+    }
+     
+    /** create 'while' statement block */
+    public static Block DO_WHILE(BasicBlock cond, BlockList body)
+    {
+	return WHILE(Xcode.F_DO_WHILE_STATEMENT, cond, body, null);
+    }
+
+    /** create 'while' statement block */
+    public static Block DO_WHILE(Xobject cond, Block body)
+    {
+	return DO_WHILE(BasicBlock.Cond(cond), new BlockList(body));
     }
 
     /** create C 'do' statement block */
@@ -210,7 +222,7 @@ public class Bcons
         if(cond.Opcode() != Xcode.F_VALUE)
             cond = Xcons.List(Xcode.F_VALUE, cond);
         return new CondBlock(Xcode.F_SELECT_CASE_STATEMENT,
-            BasicBlock.Cond(cond), body, construct_name);
+			     BasicBlock.Cond(cond), body, construct_name);
     }
 
     /** create 'break' statement block */
@@ -291,10 +303,10 @@ public class Bcons
     /** create FuctionBlock for XobjectDef */
     public static FunctionBlock buildFunctionBlock(XobjectDef d)
     {
-      return new FunctionBlock(d.getDef().Opcode(),d.getNameObj(),
-			       d.getFuncIdList(), d.getFuncDecls(),
-			       buildBlock(d.getFuncBody()), 
-			       d.getFuncGccAttributes(), d.getParentEnv());
+	return new FunctionBlock(d.getDef().Opcode(),d.getNameObj(),
+				 d.getFuncIdList(), d.getFuncDecls(),
+				 buildBlock(d.getFuncBody()), 
+				 d.getFuncGccAttributes(), d.getParentEnv());
     }
 
     /** create block list for Xobject */
@@ -348,9 +360,9 @@ public class Bcons
             //Statement s = new Statement(v.getArg(0));
 	    Statement s = null;
 	    if (v.getArg(0).Opcode() == Xcode.FUNCTION_CALL)
-	      s = new Statement(v);
+		s = new Statement(v);
 	    else
-	      s = new Statement(v.getArg(0));
+		s = new Statement(v.getArg(0));
             s.setLineNo(v.getLineNo());
             b.getBasicBlock().add(s);
             break;
@@ -365,9 +377,9 @@ public class Bcons
     /** create block for Xobject */
     public static Block buildBlock(Xobject v)
     {
-      if(v == null) return null;
+	if(v == null) return null;
 
-      Xcode code = v.Opcode();
+	Xcode code = v.Opcode();
         switch(code) {
         default:
             if(code.isFstatement()) {
@@ -392,23 +404,23 @@ public class Bcons
             
         case OMP_PRAGMA:
             return PRAGMA(Xcode.OMP_PRAGMA, v.getArg(0).getString(), v.getArgOrNull(1),
-                buildList(v.getArgOrNull(2)));
+			  buildList(v.getArgOrNull(2)));
 
         case XMP_PRAGMA:
             return PRAGMA(Xcode.XMP_PRAGMA, v.getArg(0).getString(), v.getArg(1),
-                buildList(v.getArgOrNull(2)));
+			  buildList(v.getArgOrNull(2)));
 
         case ACC_PRAGMA:
-        	return PRAGMA(Xcode.ACC_PRAGMA, v.getArg(0).getString(), v.getArgOrNull(1),
-                buildList(v.getArgOrNull(2)));
+	    return PRAGMA(Xcode.ACC_PRAGMA, v.getArg(0).getString(), v.getArgOrNull(1),
+			  buildList(v.getArgOrNull(2)));
 
         case IF_STATEMENT: /* (IF_STATMENT cond then-part else-part) */
             return IF(BasicBlock.Cond(v.getArg(0)), buildList(v.getArg(1)),
-                buildList(v.getArg(2)));
+		      buildList(v.getArg(2)));
             
         case FOR_STATEMENT: /* (FOR init cond iter body) */
             return FOR(BasicBlock.Statement(v.getArg(0)), BasicBlock.Cond(v.getArg(1)),
-                BasicBlock.Statement(v.getArg(2)), buildList(v.getArg(3)));
+		       BasicBlock.Statement(v.getArg(2)), buildList(v.getArg(3)));
 
         case WHILE_STATEMENT: /* (WHILE_STATEMENT cond body) */
             return WHILE(BasicBlock.Cond(v.getArg(0)), buildList(v.getArg(1)));
@@ -444,29 +456,29 @@ public class Bcons
             /* signle statement Basic Block */
             //return Statement(v.getArg(0));
 	    if (v.getArg(0).Opcode() == Xcode.FUNCTION_CALL)
-	      return Statement(v);
+		return Statement(v);
 	    else
-	      return Statement(v.getArg(0));
+		return Statement(v.getArg(0));
 
         case PRAGMA_LINE:
-          return PRAGMA(Xcode.PRAGMA_LINE, v.getArg(0).getString(), null, null);
+	    return PRAGMA(Xcode.PRAGMA_LINE, v.getArg(0).getString(), null, null);
         case TEXT:
             return new SimpleBlock(statement_list_code(), BasicBlock.Statement(v));
             
         case F_IF_STATEMENT: /* (F_IF_STATMENT construct_name cond then-part else-part) */
             return IF(code, BasicBlock.Cond(v.getArg(1)),
-                buildList(v.getArg(2)), buildList(v.getArg(3)), getArg0Name(v));
+		      buildList(v.getArg(2)), buildList(v.getArg(3)), getArg0Name(v));
             
         case F_WHERE_STATEMENT: /* (F_WHERE_STATMENT () cond then-part else-part) */
             return Fwhere(BasicBlock.Cond(v.getArg(1)),
-                buildList(v.getArg(2)), buildList(v.getArg(3)));
+			  buildList(v.getArg(2)), buildList(v.getArg(3)));
             
         case F_DO_STATEMENT: /* (F_DO_STATEMENT construct_name var index_range body) */
             return Fdo(v.getArg(1), v.getArg(2), buildList(v.getArg(3)), getArg0Name(v));
             
         case F_DO_WHILE_STATEMENT: /* (F_DO_WHILE_STATEMENT construct_name cond */
             return WHILE(code, BasicBlock.Cond(v.getArg(1)),
-                buildList(v.getArg(2)), getArg0Name(v));
+			 buildList(v.getArg(2)), getArg0Name(v));
             
         case F_SELECT_CASE_STATEMENT: /* (F_SELECT_CASE_STATEMENT construct_name case_value body ) */
             return FselectCase(v.getArg(1), buildList(v.getArg(2)), getArg0Name(v));

@@ -151,15 +151,21 @@ size_t _XMP_get_datatype_size(int datatype)
     size = SIZEOF_UNSIGNED_LONG_LONG; break;
 
   case _XMP_N_TYPE_FLOAT:
+#ifdef __STD_IEC_559_COMPLEX__
   case _XMP_N_TYPE_FLOAT_IMAGINARY:
+#endif
     size = SIZEOF_FLOAT; break;
 
   case _XMP_N_TYPE_DOUBLE:
+#ifdef __STD_IEC_559_COMPLEX__
   case _XMP_N_TYPE_DOUBLE_IMAGINARY:
+#endif
     size = SIZEOF_DOUBLE; break;
 
   case _XMP_N_TYPE_LONG_DOUBLE:
+#ifdef __STD_IEC_559_COMPLEX__
   case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+#endif
     size = SIZEOF_LONG_DOUBLE; break;
 
   case _XMP_N_TYPE_FLOAT_COMPLEX:

@@ -9,7 +9,7 @@ package exc.openmp;
 import java.io.*;
 
 import xcodeml.util.XmOption;
-
+import exc.xcodeml.XcodeMLtools;
 import exc.object.*;
 import exc.block.*;
 

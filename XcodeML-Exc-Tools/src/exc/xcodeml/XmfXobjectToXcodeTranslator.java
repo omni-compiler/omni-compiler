@@ -66,7 +66,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             return null;
         }
 
-	// System.out.println("trans="+xobj);
+	//System.out.println("trans="+xobj);
 
         Element e = null;
 
