@@ -37,6 +37,7 @@ public class OMPinfo
     Xobject sched_chunk;
     boolean ordered;
 
+    boolean simd;
     // for parallel region, OMPpragma.PARALLEL
     OMPpragma data_default = OMPpragma._DEFAULT_NOT_SET;
     Xobject num_threads;
