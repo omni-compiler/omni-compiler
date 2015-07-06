@@ -567,8 +567,8 @@ clean-local:
 	rm -f src/xcodeml/f/*/*.class
 
 install: $(TARGET)
-	$(MKDIR_P) ${javadir}
-	$(INSTALL) $^ ${javadir}
+	$(MKDIR_P) $(DESTDIR)${javadir}
+	$(INSTALL) $^ $(DESTDIR)${javadir}
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

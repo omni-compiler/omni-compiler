@@ -16,7 +16,6 @@ AC_CONFIG_HEADER([include/config.h Driver/atool/src/include/nata/nata_config.h])
 SHELL=`which bash` 1> /dev/null 2> /dev/null
 if test $? -ne 0; then
    AC_MSG_ERROR([To run libtool you need a bash, not /bin/sh.])
-   exit 1
 fi
 export SHELL
 AC_SUBST(SHELL)
@@ -28,8 +27,7 @@ do
   if test "$cmd" != ""; then
     which $cmd 2> /dev/null 1> /dev/null
     if test $? -eq 1; then
-      echo "$cmd not found"
-      exit 1
+      AC_MSG_ERROR([$cmd not found])
     fi
   fi
 done
@@ -223,8 +221,7 @@ case $lock_type in
     case $CPU in i386*|x86_64*|mips*|sparc*|alpha*|rs6000*)
       true;;
       *)
-      echo "$ac_t""spin lock is only available on i386, x86_64, mips, alpha, sparc and rs6000 architectures." 1>&6
-      exit 1;;
+      AC_MSG_ERROR(["$ac_t""spin lock is only available on i386, x86_64, mips, alpha, sparc and rs6000 architectures.]);;
     esac;;
   *)
     true;;
@@ -1179,8 +1176,7 @@ else
       CFLAGS="${CFLAGS} -c99"
     ;;
     *)
-     echo "No supported C compiler was found."
-     exit 1 ;;
+    AC_MSG_ERROR([No supported C compiler was found.]);;
     esac ;;
   esac
 fi
@@ -1496,8 +1492,7 @@ rm -rf ./szchk ./szchk.*
 AC_MSG_RESULT([Creating size check program])
 ${CC} ${CPPFLAGS} ${CFLAGS} ${hasLLFlags} ./buildutils/szchk.c -o ./szchk
 if test ! -x ./szchk; then
-    AC_MSG_RESULT([can't create size check program. exit.])
-    exit 1
+    AC_MSG_ERROR([can't create size check program.])
 fi
 
 F2C_INT64_FLAGS=""
@@ -1555,12 +1550,10 @@ voidPint="unknown"
 if test -x ./chkvoidp; then
     voidPint=`./chkvoidp`
 else
-    AC_MSG_RESULT([can't create check program. exit.])
-    exit 1
+    AC_MSG_ERROR([can't create check program.])
 fi
 if test "x${voidPint}" = "xunknown"; then
-    AC_MSG_RESULT([can't determine????])
-    exit 1
+    AC_MSG_ERROR([can't determine????])
 else
     AC_MSG_RESULT([$voidPint])
 fi
@@ -1577,12 +1570,10 @@ addrIs64="unknown"
 if test -x ./addr64; then
     addrIs64=`./addr64`
 else
-    AC_MSG_RESULT([can't create check program. exit.])
-    exit 1
+    AC_MSG_ERROR([can't create check program.])
 fi
 if test "x$addrIs64" = "xunknown"; then
-    AC_MSG_RESULT([can't determine????])
-    exit 1
+    AC_MSG_ERROR([can't determine????])
 else
     if test "x$addrIs64" = "x8"; then
         AC_MSG_RESULT([yes])
@@ -1641,13 +1632,11 @@ if test "x${doQReal}" = "xyes"; then
     if test -f ${gmpInclude}/gmp.h; then
         true
     else
-        AC_MSG_RESULT([can't find ${gmpInclude}/gmp.h. exit.])
-        exit 1
+        AC_MSG_ERROR([can't find ${gmpInclude}/gmp.h.])
     fi
-    gmpLibs=`ls ${gmpInclude}/libgmp.* 2> /dev/null`
+    gmpLibs=`ls ${gmpLib}/libgmp.* 2> /dev/null`
     if test "x${gmpLibs}" = "x"; then
-        AC_MSG_RESULT([can't find ${gmpLib}/libgmp.*. exit.])
-        exit 1
+        AC_MSG_ERROR([can't find ${gmpLib}/libgmp.*.])
     fi
     gmpIncOpt="-I${gmpInclude}"
     gmpLibOpt="-L${gmpLib} -lgmp"
@@ -1675,15 +1664,13 @@ if test "x${doQReal}" = "xyes"; then
     if test -x $2; then
         ret=`$2 $4`
         if test "x${ret}" = "x"; then
-            AC_MSG_RESULT([can't determine??. exit.])
-            exit 1
+            AC_MSG_ERROR([can't determine??.])
         else
             rm -f $2 ${2}.*
             echo ${ret}
         fi
     else
-        AC_MSG_RESULT([can't create check program. exit.])
-        exit 1
+        AC_MSG_ERROR([can't create check program.])
     fi
     }
 
@@ -1700,8 +1687,7 @@ if test "x${doQReal}" = "xyes"; then
     8)
         omniExpT=${TYPE_INT64};;
     *)
-        AC_MSG_RESULT([can't determine basic type of mp_exp_t ??. exit.])
-        exit 1;;
+        AC_MSG_ERROR([can't determine basic type of mp_exp_t ??.])
     esac
     AC_DEFINE_UNQUOTED(OMNI_SIZEOF_QEXP_T, $eSz)
     AH_TEMPLATE(OMNI_SIZEOF_QEXP_T, [size of mp_exp_t])
@@ -1719,8 +1705,7 @@ if test "x${doQReal}" = "xyes"; then
     8)
         omniLimbT=${TYPE_INT64};;
     *)
-        AC_MSG_RESULT([can't determine basic type of mp_limb_t ??. exit.])
-        exit 1;;
+        AC_MSG_ERROR([can't determine basic type of mp_limb_t ??.]);;
     esac
     AC_DEFINE_UNQUOTED(OMNI_SIZEOF_QLIM_T, $lSz)
     AH_TEMPLATE(OMNI_SIZEOF_QLIM_T, [size of mp_limb_t])
@@ -1787,8 +1772,7 @@ if test "x${doQReal}" = "xyes"; then
     LIBS=${oLIBS}
     CFLAGS=${oCFLAGS}
     if test "x${hasFloor}" = "xno"; then
-        AC_MSG_RESULT([You have to use gmp3 or later. exit.])
-        exit 1
+        AC_MSG_ERROR([You have to use gmp3 or later.])
     fi
 fi
 
@@ -1970,8 +1954,7 @@ AC_SUBST(omniIncDir)
 # cpp
 cppCmd=${CPP}
 if test -z "${CPP}"; then
-   AC_MSG_FAILURE([Can't find any usable C preprosessor.])
-   exit 1
+   AC_MSG_ERROR([Can't find any usable C preprosessor.])
 fi
 AC_SUBST(cppCmd)
 
