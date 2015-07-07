@@ -7,6 +7,8 @@
 package exc.util;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import exc.object.XobjectFile;
 
@@ -382,6 +384,7 @@ public class omompx
     }
 
     // OpenMP translation
+//    OMP.debugFlag = true;
     if(openMP) {
       OMPtranslate omp_translator = new OMPtranslate(xobjFile);
       xobjFile.iterateDef(omp_translator);

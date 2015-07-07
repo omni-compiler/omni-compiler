@@ -277,7 +277,8 @@ OM_EXEC_C_PP = @OM_EXEC_C_PP@
 OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
-OPENMP_OPT = @OPENMP_OPT@
+OPENMP_OPT_C = @OPENMP_OPT_C@
+OPENMP_OPT_F = @OPENMP_OPT_F@
 OS = @OS@
 OSDEF = @OSDEF@
 OS_CFLAGS = @OS_CFLAGS@
@@ -738,7 +739,7 @@ install-exec-local:	$(doAllLib)
 	(cd $(DESTDIR)$(libdir); rm -f $(DEFAULT_LIB_NAME); ln -s $(DEFAULT_LIB) $(DEFAULT_LIB_NAME))
 
 html-local:
-	if test ! -e "../doc"; then mkdir ../doc; fi
+	if test ! -e "../doc"; then $(MKDIR_P) ../doc; fi
 	doxygen >/dev/null
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

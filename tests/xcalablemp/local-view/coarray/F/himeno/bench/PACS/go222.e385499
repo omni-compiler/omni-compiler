@@ -1,0 +1,25 @@
+gasnetrun: unable to locate a GASNet program in '/work/XMPTCA/hideto/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench/PACS/../mpi.x'
+gasnetrun: unable to locate a GASNet program in '/work/XMPTCA/hideto/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench/PACS/../mpi-nocom.x'
+gasnetrun: unable to locate a GASNet program in '/work/XMPTCA/hideto/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench/PACS/../mpi.x'
+gasnetrun: unable to locate a GASNet program in '/work/XMPTCA/hideto/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench/PACS/../mpi-nocom.x'
+gasnetrun: unable to locate a GASNet program in '/work/XMPTCA/hideto/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench/PACS/../mpi.x'
+[ERROR] Cannot allocate coarray. Heap memory size of corray is too small.
+        Please set the environmental variable "XMP_ONESIDED_HEAP_SIZE".
+        e.g.) export XMP_ONESIDED_HEAP_SIZE=135M (or more).
+[cli_0]: aborting job:
+application called MPI_Abort(MPI_COMM_WORLD, 1) - process 0
+[cli_4]: aborting job:
+application called MPI_Abort(MPI_COMM_WORLD, 1) - process 4
+[cli_2]: aborting job:
+application called MPI_Abort(MPI_COMM_WORLD, 1) - process 2
+[cli_1]: aborting job:
+application called MPI_Abort(MPI_COMM_WORLD, 1) - process 1
+[cli_6]: aborting job:
+application called MPI_Abort(MPI_COMM_WORLD, 1) - process 6
+[cli_5]: aborting job:
+application called MPI_Abort(MPI_COMM_WORLD, 1) - process 5
+[cli_3]: aborting job:
+application called MPI_Abort(MPI_COMM_WORLD, 1) - process 3
+[cli_7]: aborting job:
+application called MPI_Abort(MPI_COMM_WORLD, 1) - process 7
+gasnetrun: unable to locate a GASNet program in '/work/XMPTCA/hideto/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench/PACS/../mpi-nocom.x'

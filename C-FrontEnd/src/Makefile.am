@@ -1,9 +1,4 @@
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
 bin_PROGRAMS=C_Front
-
 MKDIR_P = @MKDIR_P@
 
 C_Front_SOURCES=\
@@ -68,7 +63,7 @@ clean-local:
 	rm -rf ../doc
 
 html-local:
-	if test ! -e "../doc"; then mkdir ../doc; fi
+	if test ! -e "../doc"; then $(MKDIR_P) ../doc; fi
 	doxygen >/dev/null
 
 .NOTPARALLEL:

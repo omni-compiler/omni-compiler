@@ -7,6 +7,7 @@
 package exc.openmp;
 
 import exc.object.*;
+import exc.xcodeml.XcodeMLtools;
 import exc.block.*;
 
 public class OMPtransPragmaBlock extends OMPtransPragma

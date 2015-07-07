@@ -226,7 +226,8 @@ OM_EXEC_C_PP = @OM_EXEC_C_PP@
 OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
-OPENMP_OPT = @OPENMP_OPT@
+OPENMP_OPT_C = @OPENMP_OPT_C@
+OPENMP_OPT_F = @OPENMP_OPT_F@
 OS = @OS@
 OSDEF = @OSDEF@
 OS_CFLAGS = @OS_CFLAGS@
@@ -558,7 +559,7 @@ all-local: $(TARGET)
 
 $(TARGET): $(SRC)
 	$(JAVAC) -encoding utf8 src/xcodeml/c/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
-	mkdir -p build
+	$(MKDIR_P) build
 	cd src; $(JAR) cf ../$@ xcodeml/c/*/*.class
 
 clean-local:
@@ -566,7 +567,7 @@ clean-local:
 	rm -f src/xcodeml/c/*/*.class
 
 install: $(TARGET)
-	mkdir -p ${javadir}
+	$(MKDIR_P) ${javadir}
 	$(INSTALL) $^ ${javadir}
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

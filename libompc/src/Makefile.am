@@ -40,6 +40,6 @@ install-exec-local:	$(doAllLib)
 	(cd $(DESTDIR)$(libdir); rm -f $(DEFAULT_LIB_NAME); ln -s $(DEFAULT_LIB) $(DEFAULT_LIB_NAME))
 
 html-local:
-	if test ! -e "../doc"; then mkdir ../doc; fi
+	if test ! -e "../doc"; then $(MKDIR_P) ../doc; fi
 	doxygen >/dev/null
 

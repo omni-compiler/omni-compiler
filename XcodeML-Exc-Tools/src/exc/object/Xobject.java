@@ -873,6 +873,10 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
     {
         return find(name, IXobject.FINDKIND_VAR);
     }
+    public Ident findCommonIdent(String name)
+    {
+	return find(name, IXobject.FINDKIND_COMMON);
+    }
 
     public boolean isEmptyList()
     {

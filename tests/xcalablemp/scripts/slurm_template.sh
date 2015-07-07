@@ -22,7 +22,8 @@ date +"%Y,%m,%d,%H,%M,%S" >> $OUTPUT_FILENAME
 make -j2
 make run
 
+echo $? > slurm_ret_code
+
 ## Date for creating graph of time line
 date +"%Y,%m,%d,%H,%M,%S" >> $OUTPUT_FILENAME
 
-echo $? > slurm_error_code

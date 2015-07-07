@@ -23,7 +23,10 @@ enum OMP_pragma {
 
     OMP_PARALLEL_FOR = 12, 	/* parallel <clause_list> */
     OMP_PARALLEL_SECTIONS = 13, 	/* parallel <clause_list> */
-
+    
+    OMP_TASK = 14,
+    OMP_SIMD = 15,
+    OMP_DECLARE = 16,
     /*
      * Fortran entry
      */
@@ -46,7 +49,6 @@ enum OMP_pragma {
     OMP_F_ORDERED = 117,		
     OMP_F_END_ORDERED = 118,		
     OMP_F_THREADPRIVATE = 119,	
-
     OMP_F_PARALLEL_DO = 120, 	
     OMP_F_END_PARALLEL_DO = 121, 	
     OMP_F_PARALLEL_SECTIONS = 122, 	
@@ -56,6 +58,17 @@ enum OMP_pragma {
     OMP_F_END_WORKSHARE = 131,
     OMP_F_PARALLEL_WORKSHARE = 132,
     OMP_F_END_PARALLEL_WORKSHARE = 133,
+    OMP_F_TASK = 134,
+    OMP_F_END_TASK = 135,
+    OMP_F_SIMD = 136,
+    OMP_F_END_SIMD = 137,
+    OMP_F_DO_SIMD = 138,
+    OMP_F_END_DO_SIMD = 139,
+    OMP_F_DECLARE_SIMD = 140,
+    OMP_F_END_DECLARE_SIMD = 141,
+    OMP_F_PARALLEL_DO_SIMD = 142,
+    OMP_F_END_PARALLEL_DO_SIMD = 143,
+
 };
 
 enum OMP_pragma_clause {
@@ -84,7 +97,19 @@ enum OMP_pragma_clause {
     OMP_DIR_ORDERED=20,
     OMP_DIR_IF=21,
     OMP_DIR_NOWAIT=22,
-    OMP_DIR_SCHEDULE=23
+    OMP_DIR_SCHEDULE=23,
+    OMP_DIR_NUM_THREADS=24,
+    OMP_DIR_TASK = 25,
+    OMP_DIR_DEPEND = 26,
+
+    OMP_DATA_DEPEND_IN =27,
+    OMP_DATA_DEPEND_OUT =28,
+    OMP_DATA_DEPEND_INOUT =29,
+
+    OMP_DIR_UNTIED = 30,
+    OMP_DIR_FINAL = 31,
+    OMP_DIR_MERGEABLE = 32
+
 };
 
 #define IS_OMP_DATA_CLAUSE(c) \

@@ -303,7 +303,8 @@ OM_EXEC_C_PP = @OM_EXEC_C_PP@
 OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
-OPENMP_OPT = @OPENMP_OPT@
+OPENMP_OPT_C = @OPENMP_OPT_C@
+OPENMP_OPT_F = @OPENMP_OPT_F@
 OS = @OS@
 OSDEF = @OSDEF@
 OS_CFLAGS = @OS_CFLAGS@
@@ -823,7 +824,7 @@ clean-local:
 	rm -rf ../doc
 
 html-local:
-	if test ! -e "../doc"; then mkdir ../doc; fi
+	if test ! -e "../doc"; then $(MKDIR_P) ../doc; fi
 	doxygen >/dev/null
 
 .NOTPARALLEL:

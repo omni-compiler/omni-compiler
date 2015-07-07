@@ -19,7 +19,7 @@ extern _Bool is_async;
 extern int _async_id;
 #endif
 
-static void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
+void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
   switch (datatype) {
     case _XMP_N_TYPE_BOOL:
       //{ *mpi_datatype = MPI_C_BOOL;			*datatype_size = sizeof(_Bool); 			break; }
@@ -50,18 +50,20 @@ static void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_
       { *mpi_datatype = MPI_DOUBLE;			*datatype_size = sizeof(double); 			break; }
     case _XMP_N_TYPE_LONG_DOUBLE:
       { *mpi_datatype = MPI_LONG_DOUBLE;		*datatype_size = sizeof(long double); 			break; }
-//  case _XMP_N_TYPE_FLOAT_IMAGINARY:
-//    { *mpi_datatype = MPI_FLOAT;			*datatype_size = sizeof(float _Imaginary); 		break; }
-//  case _XMP_N_TYPE_DOUBLE_IMAGINARY:
-//    { *mpi_datatype = MPI_DOUBLE;			*datatype_size = sizeof(double _Imaginary); 		break; }
-//  case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
-//    { *mpi_datatype = MPI_LONG_DOUBLE;		*datatype_size = sizeof(long double _Imaginary);	break; }
-//  case _XMP_N_TYPE_FLOAT_COMPLEX:
-//    { *mpi_datatype = MPI_C_FLOAT_COMPLEX;		*datatype_size = sizeof(float _Complex); 		break; }
-//  case _XMP_N_TYPE_DOUBLE_COMPLEX:
-//    { *mpi_datatype = MPI_C_DOUBLE_COMPLEX;		*datatype_size = sizeof(double _Complex); 		break; }
-//  case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
-//    { *mpi_datatype = MPI_C_LONG_DOUBLE_COMPLEX;	*datatype_size = sizeof(long double _Complex); 		break; }
+#ifdef __STD_IEC_559_COMPLEX__
+    case _XMP_N_TYPE_FLOAT_IMAGINARY:
+      { *mpi_datatype = MPI_FLOAT;			*datatype_size = sizeof(float _Imaginary); 		break; }
+    case _XMP_N_TYPE_DOUBLE_IMAGINARY:
+      { *mpi_datatype = MPI_DOUBLE;			*datatype_size = sizeof(double _Imaginary); 		break; }
+    case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+      { *mpi_datatype = MPI_LONG_DOUBLE;		*datatype_size = sizeof(long double _Imaginary);	break; }
+#endif
+    case _XMP_N_TYPE_FLOAT_COMPLEX:
+      { *mpi_datatype = MPI_C_FLOAT_COMPLEX;		*datatype_size = sizeof(float _Complex); 		break; }
+    case _XMP_N_TYPE_DOUBLE_COMPLEX:
+      { *mpi_datatype = MPI_C_DOUBLE_COMPLEX;		*datatype_size = sizeof(double _Complex); 		break; }
+    case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
+      { *mpi_datatype = MPI_C_LONG_DOUBLE_COMPLEX;	*datatype_size = sizeof(long double _Complex); 		break; }
     default:
       _XMP_fatal("unknown data type for reduction");
   }
@@ -162,9 +164,11 @@ static void _XMP_compare_reduce_results(int *cmp_buffer, void *temp_buffer, void
     case _XMP_N_TYPE_FLOAT:			_XMP_M_COMPARE_REDUCE_RESULTS_MAIN(float);
     case _XMP_N_TYPE_DOUBLE:			_XMP_M_COMPARE_REDUCE_RESULTS_MAIN(double);
     case _XMP_N_TYPE_LONG_DOUBLE:		_XMP_M_COMPARE_REDUCE_RESULTS_MAIN(long double);
+#ifdef __STD_IEC_559_COMPLEX__
     case _XMP_N_TYPE_FLOAT_IMAGINARY:
     case _XMP_N_TYPE_DOUBLE_IMAGINARY:
     case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+#endif
     case _XMP_N_TYPE_FLOAT_COMPLEX:
     case _XMP_N_TYPE_DOUBLE_COMPLEX:
     case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:

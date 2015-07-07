@@ -142,6 +142,18 @@ typedef struct _XMP_reflect_sched_type {
 #endif
 } _XMP_reflect_sched_t;
 
+// schedule of asynchronous reflect
+typedef struct _XMP_async_reflect_type {
+
+  int lwidth[_XMP_N_MAX_DIM], uwidth[_XMP_N_MAX_DIM];
+  _Bool is_periodic[_XMP_N_MAX_DIM];
+
+  MPI_Datatype *datatype;
+  MPI_Request *reqs;
+  int nreqs;
+
+} _XMP_async_reflect_t;
+
 // aligned array descriptor
 typedef struct _XMP_array_info_type {
   _Bool is_shadow_comm_member;
@@ -196,6 +208,8 @@ typedef struct _XMP_array_type {
   int dim;
   int type;
   size_t type_size;
+  MPI_Datatype mpi_type;
+  int order;
 
   // enable when is_allocated is true
   void *array_addr_p;
@@ -212,6 +226,8 @@ typedef struct _XMP_array_type {
 #endif
   unsigned long long total_elmts;
   // --------------------------------
+
+  _XMP_async_reflect_t *async_reflect;
 
   // FIXME do not use these members
   // enable when is_align_comm_member is true

@@ -82,7 +82,7 @@ target_triplet = @target@
 @GASNET_TRUE@am__append_1 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
 @GASNET_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
 @GASNET_TRUE@                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
-@GASNET_TRUE@                         xmpf_coarray_reduction.f90
+@GASNET_TRUE@                         xmpf_coarray_reduction.F90
 
 @GASNET_TRUE@am__append_2 = -D_XMP_GASNET
 @GASNET_TRUE@@POWERPC_TRUE@am__append_3 = -WF,-D_XMP_GASNET
@@ -91,7 +91,7 @@ target_triplet = @target@
 @FJRDMA_TRUE@am__append_6 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
 @FJRDMA_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
 @FJRDMA_TRUE@                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
-@FJRDMA_TRUE@                         xmpf_coarray_reduction.f90
+@FJRDMA_TRUE@                         xmpf_coarray_reduction.F90
 
 @FJRDMA_TRUE@am__append_7 = -D_XMP_FJRDMA
 @FJRDMA_TRUE@am__append_8 = -D_XMP_FJRDMA
@@ -154,7 +154,7 @@ am__libxmpf_a_SOURCES_DIST = $(XMPF_INC_DIR)/xmpf_internal.h \
 	xmpf_coarray_wrap.f90 xmpf_coarray_put.c xmpf_coarray_get.c \
 	xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
 	xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
-	xmpf_coarray_reduction.f90
+	xmpf_coarray_reduction.F90
 @GASNET_TRUE@am__objects_1 = xmpf_coarray.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_put.$(OBJEXT) \
@@ -380,7 +380,8 @@ OM_EXEC_C_PP = @OM_EXEC_C_PP@
 OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
-OPENMP_OPT = @OPENMP_OPT@
+OPENMP_OPT_C = @OPENMP_OPT_C@
+OPENMP_OPT_F = @OPENMP_OPT_F@
 OS = @OS@
 OSDEF = @OSDEF@
 OS_CFLAGS = @OS_CFLAGS@
@@ -846,14 +847,19 @@ xmpf_main.o: xmpf_main.F90
 %.f90: %.f90.sh
 	. $< > $@
 
+%.F90: %.F90.sh
+	. $< > $@
+
 install-exec-local: xmpf_main.o
-	test -z $(DESTDIR)$(libdir) || /bin/mkdir -p $(DESTDIR)$(libdir)
+	test -z $(DESTDIR)$(libdir) || $(MKDIR_P) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) xmpf_main.o $(DESTDIR)$(libdir)
 
 clean-local:
 	rm -f *~ *.core core core.*
 	rm -f xmpf_coarray_get_wrap.f90
 	rm -f xmpf_coarray_alloc_wrap.f90
+	rm -f xmpf_coarray_reduction.f90
+	rm -f xmpf_coarray_reduction.F90
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

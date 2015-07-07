@@ -1,0 +1,6 @@
+gasnetrun: unable to locate a GASNet program in '/work/XMPTCA/hideto/Project/OMNI-test/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench/PACS/../mpi.x'
+=>> PBS: job killed: walltime 2426 exceeded limit 2400
+*** Caught a signal: SIGTERM(15) on node 0/4
+*** Caught a signal: SIGTERM(15) on node 1/4
+*** Caught a signal: SIGTERM(15) on node 2/4
+*** Caught a signal: SIGTERM(15) on node 3/4

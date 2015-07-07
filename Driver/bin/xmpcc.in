@@ -143,7 +143,7 @@ fi
 [ $STOP_BACKEND = true ] && exit 0;
 
 ### Native Compiler ###
-[ $ENABLE_OPENMP = true ] && OMNI_MPICC_OPT="$OPENMP_OPT $OMNI_MPICC_OPT"
+[ $ENABLE_OPENMP = true ] && OMNI_MPICC_OPT="$OPENMP_OPT_C $OMNI_MPICC_OPT"
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
     FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a

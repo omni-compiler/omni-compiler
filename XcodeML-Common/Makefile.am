@@ -5,7 +5,7 @@ all-local: $(TARGET)
 
 $(TARGET): $(SRC)
 	$(JAVAC) -encoding utf8 src/xcodeml/*.java src/xcodeml/*/*.java -classpath ./src -Xlint:deprecation
-	mkdir -p build
+	$(MKDIR_P) build
 	cd src;	$(JAR) cf ../$@ ./xcodeml/*.class ./xcodeml/*/*.class
 
 clean-local:
@@ -14,5 +14,5 @@ clean-local:
 	rm -f src/xcodeml/*/*.class
 
 install: $(TARGET)
-	mkdir -p ${javadir}
+	$(MKDIR_P) ${javadir}
 	$(INSTALL) $^ ${javadir}
