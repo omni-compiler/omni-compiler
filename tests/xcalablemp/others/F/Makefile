@@ -14,7 +14,7 @@ all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o x
 	$(XFC) -c $<
 
 schedule_default.x: schedule_default.F90
-	$(XFC) schedule_default.F90 -c
+	$(XFC) --openmp schedule_default.F90 -c
 
 278\ spacefile.x: 278\ spacefile.f90
 	@rm -rf 278\ module; mkdir 278\ module
