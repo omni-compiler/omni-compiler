@@ -2460,8 +2460,9 @@ static void outx_OMP_sched_kind(int l,char *s,expv v)
     default:
       fatal("OMP Sched error");
     }
-//	printf("ARG2=%d\n",EXPV_INT_VALUE(expr_list_get_n(vv,1)));
-  outx_expv(l+4,expr_list_get_n(vv,1));
+	//printf("ARG2=%d\n",EXPV_INT_VALUE(expr_list_get_n(vv,1)));
+	if(expr_list_get_n(vv,1)!=NULL) 
+ 	outx_expv(l+4,expr_list_get_n(vv,1));
     outx_printi(l+3,"</list>\n");                                                                                                                                                                                
   outx_printi(l+1,"</list>\n");
 }
