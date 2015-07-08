@@ -2431,8 +2431,10 @@ static void outx_OMP_DATA_DEFAULT_kind(int l,char *s ,expv v)
 
 static void outx_OMP_sched_kind(int l,char *s,expv v)
 {
+  expr vv = EXPR_ARG2(v);
   outx_printi(l+2, "<string>%s</string>\n", s);
   //printf("EXPV_INT_VALUE(%d)\n",EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v))));
+//  printf("vv=%d\n",EXPV_INT_VALUE(expr_list_get_n(vv,0)));	  
   outx_printi(l+3,"<list>\n");                                                                                                                                                                                 
 
   switch(EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v))))
@@ -2458,7 +2460,8 @@ static void outx_OMP_sched_kind(int l,char *s,expv v)
     default:
       fatal("OMP Sched error");
     }
-  outx_expv(l+4,EXPR_ARG1(v));
+//	printf("ARG2=%d\n",EXPV_INT_VALUE(expr_list_get_n(vv,1)));
+  outx_expv(l+4,expr_list_get_n(vv,1));
     outx_printi(l+3,"</list>\n");                                                                                                                                                                                
   outx_printi(l+1,"</list>\n");
 }
