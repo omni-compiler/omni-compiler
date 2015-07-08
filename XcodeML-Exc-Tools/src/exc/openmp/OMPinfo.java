@@ -248,6 +248,7 @@ public class OMPinfo
 
         id = block.findVarIdent(name);
         if(id == null) {
+        	System.out.println(block.toXobject().toString());
             OMP.error(block.getLineNo(), "undefined variable in clause, '" + name + "'");
             return null;
         }
