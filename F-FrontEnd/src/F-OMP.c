@@ -435,7 +435,7 @@ void compile_OMP_directive(expr x)
 
     case OMP_F_TASK:
       push_ctl(CTL_OMP);
-      compile_OMP_pragma_clause(EXPR_ARG2(x),OMP_TASK,TRUE,
+      compile_OMP_pragma_clause(EXPR_ARG2(x),OMP_TASK,FALSE,
 				&pclause,&dclause);
       CTL_OMP_ARG(ctl_top) = list3(LIST,dir,pclause,dclause);
       EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;

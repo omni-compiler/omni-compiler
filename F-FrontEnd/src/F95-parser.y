@@ -1783,7 +1783,7 @@ omp_directive:
 	  { $$ = OMP_LIST(OMP_F_END_CRITICAL,list1(LIST,$4)); }
 	| OMPKW_TASK omp_clause_option
 	  { $$ = OMP_LIST(OMP_F_TASK,$2); }
-	| OMPKW_END OMPKW_TASK
+	| OMPKW_END OMPKW_TASK omp_nowait_option
 	  { $$ = OMP_LIST(OMP_F_END_TASK,NULL); }
 	| OMPKW_BARRIER
 	  { $$ = OMP_LIST(OMP_F_BARRIER,NULL); }
