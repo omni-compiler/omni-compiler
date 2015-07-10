@@ -15,6 +15,11 @@ libacc_a_SOURCES	= $(ACC_INC_DIR)/acc_internal.h $(ACC_INC_DIR)/acc_gpu_internal
 libacc_a_LIBADD		= acc_runtime.o acc_gpu_data_table.o acc_util.o \
 			  acc_gpu_runtime.o acc_gpu_data.o acc_gpu_stream.o acc_gpu_util.o acc_gpu_mpool.o acc_gpu_pack.o
 
+if TCA
+TCACFLAGS	= @TCA_CFLAGS@
+GPUCFLAGS	+= -D_XMP_TCA $(TCACFLAGS)
+endif
+
 .cu.o:
 	$(GPUCC) $(GPUCFLAGS) -I$(ACC_INC_DIR) -c -o $@ $<
 

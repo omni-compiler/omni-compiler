@@ -1053,16 +1053,21 @@ AC_ARG_WITH(TCA,
     [TCA_PREFIX="${withval}"; use_tca=yes], [use_tca=no])
 
 if test x$use_tca = xyes; then
-   if ! test -f $TCA_PREFIX/tca-api.h; then
-      AC_MSG_ERROR([$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>])
+   if ! test -f $TCA_PREFIX/include/tca-api.h; then
+      AC_MSG_ERROR([$TCA_PREFIX/include/tca-api.h not found. Please check --with-TCA=<DIR>])
+   fi
+   if ! test -f $TCA_PREFIX/lib/libtca.so; then
+      AC_MSG_ERROR([$TCA_PREFIX/lib/libtca.so not found. Please check --with-TCA=<DIR>])
    fi
 
-  MPI_CPPFLAGS="${MPI_CPPFLAGS} -I${TCA_PREFIX}"
-  MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}"
-  MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX} -ltca"
+  MPI_CPPFLAGS="${MPI_CPPFLAGS} -I${TCA_PREFIX}/include"
+  MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}/include"
+  MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX}/lib -ltca"
+  TCA_CFLAGS="-I${TCA_PREFIX}/include"
   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS ${MPI_CLIBS}"
 fi
 
+AC_SUBST(TCA_CFLAGS)
 AM_CONDITIONAL(TCA, test x${use_tca} = xyes)
 # --------------------------------------------------------------------
 # specify GASNet path

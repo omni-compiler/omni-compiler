@@ -1,29 +1,49 @@
 #include "acc_internal.h"
 #include "acc_gpu_internal.h"
 #include <stdio.h>
+#ifdef _XMP_TCA
+#include "tca-api.h"
+#endif
 
 void _ACC_gpu_alloc(void **addr, size_t size)
 {
   //printf("_ACC_gpu_alloc\n");
   _ACC_DEBUG("alloc addr=%p, size=%zd\n", addr, size)
   _ACC_gpu_init_current_device_if_not_inited();
+#ifdef _XMP_TCA
+  tcaresult result = tcaMalloc(addr, size, tcaMemoryGPU);
+  if (result != TCA_SUCCESS) {
+    printf("failed to tcaMalloc\n");
+    _ACC_fatal(tcaGetErrorString(result));
+  }
+#else
+  printf("cudaMalloc\n");
   cudaError_t cuda_err = cudaMalloc(addr, size);
   if (cuda_err != cudaSuccess) {
     printf("failed to allocate data on GPU\n");
     _ACC_gpu_fatal(cuda_err);
     //_ACC_fatal("failed to allocate data on GPU");
   }
+#endif
 }
 
 void _ACC_gpu_free(void *addr)
 {
   //printf("_ACC_gpu_free\n");
+#ifdef _XMP_TCA
+  tcaresult result = tcaFree(addr, tcaMemoryGPU);
+  if (result != TCA_SUCCESS) {
+    printf("failed to tcaFree\n");
+    _ACC_fatal(tcaGetErrorString(result));
+  }
+#else
   cudaError_t cuda_err = cudaFree(addr);
   if (cuda_err != cudaSuccess) {
     printf("failed to free data on GPU(%d)\n",(int)cuda_err);
     _ACC_gpu_fatal(cuda_err);
     //_ACC_fatal("failed to free data on GPU");
   }
+#endif
 }
 
 void _ACC_gpu_malloc(void **addr, size_t size)
