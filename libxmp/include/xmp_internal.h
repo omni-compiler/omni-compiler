@@ -449,24 +449,25 @@ struct _XMPTIMING
 #endif
 
 #ifdef _XMP_TCA
-#define TCA_CHECK(tca_call) do { \
-  int status = tca_call;         \
-  if(status != TCA_SUCCESS) {    \
-  if(status == TCA_ERROR_INVALID_VALUE) {                 \
-  fprintf(stderr,"(TCA) error TCA API, INVALID_VALUE\n"); \
-  exit(-1);                                               \
-  }else if(status == TCA_ERROR_OUT_OF_MEMORY){            \
-  fprintf(stderr,"(TCA) error TCA API, OUT_OF_MEMORY\n"); \
-  exit(-1);                                               \
-  }else if(status == TCA_ERROR_NOT_SUPPORTED){            \
-  fprintf(stderr,"(TCA) error TCA API, NOT_SUPPORTED\n"); \
-  exit(-1);                                               \
-  }else{                                                  \
-  fprintf(stderr,"(TCA) error TCA API, UNKWON\n");        \
-  exit(-1); \
-  }         \
-  }         \
-  }while (0)
+#include "tca-api.h"
+
+#define TCA_CHECK(call) do {						\
+    tcaresult result = call;						\
+    if (result != TCA_SUCCESS) {					\
+      fprintf(stderr, "TCA error in file '%s' in line %i : %s.\n",	\
+	      __FILE__, __LINE__, tcaGetErrorString(result));		\
+      exit(EXIT_FAILURE);						\
+    }									\
+  } while (0)
+
+#ifdef XACC_DEBUG
+#define _XACC_DEBUG(...) printf("%s(%d)[%s]: ", __FILE__, __LINE__, __func__); printf(__VA_ARGS__);
+#else
+#define _XACC_DEBUG(...)
+#endif
+
+extern void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
+extern void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
 #endif
 
 #ifdef _XMP_GASNET

@@ -8,8 +8,7 @@ void _XMP_reflect_init_acc(void *acc_addr, _XMP_array_t *array_desc)
   if(_XMP_world_size == 1) return;
 
 #ifdef _XMP_TCA
-  _XMP_create_TCA_handle(acc_addr, array_desc);
-  _XMP_create_TCA_desc(array_desc);
+  _XMP_reflect_init_tca(acc_addr, array_desc);
 #else
   _XMP_reflect_init_gpu(acc_addr, array_desc);
 #endif

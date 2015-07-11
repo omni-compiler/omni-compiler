@@ -220,6 +220,7 @@ typedef struct _XMP_array_type {
 #if defined(_XMP_TCA)
   void* tca_handle;
   _Bool set_handle;  // If tca_handle has been set, set_handle = true
+  void* tca_reflect_desc;
   int   dma_slot;
   int   wait_slot;
   int   wait_tag;

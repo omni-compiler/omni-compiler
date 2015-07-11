@@ -23,7 +23,7 @@ void _XMP_init(int argc, char** argv)
     _XMP_onesided_initialize(argc, argv);
 #endif
 #ifdef _XMP_TCA
-    _XMP_init_tca();
+    TCA_CHECK(tcaInit());
 #endif
   }
   _XMP_init_world(NULL, NULL);
