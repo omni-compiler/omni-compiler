@@ -390,7 +390,7 @@ public class AccKernel {
     }
     default: {
       Block resultBlock = b.copy();
-      if (outerParallelisms.isEmpty() || outerParallelisms.contains(ACCpragma.SEQ)) {
+      if (outerParallelisms.isEmpty() || !outerParallelisms.contains(ACCpragma.GANG)) {
         resultBlock = Bcons.IF(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accBlockIndex, Xcons.IntConstant(0)), resultBlock, Bcons.emptyBlock()); //if(_ACC_block_x_id == 0){b}
       } else if (!outerParallelisms.contains(ACCpragma.VECTOR)) {
         Block ifBlock = Bcons.IF(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accThreadIndex, Xcons.IntConstant(0)), resultBlock, null);  //if(_ACC_thread_x_id == 0){b}
@@ -417,7 +417,8 @@ public class AccKernel {
         }
       }
       //move decl initializer to body
-      if (decls != null) {
+      Block childBlock = body.getHead();
+      if (decls != null && !(childBlock.Opcode() == Xcode.FOR_STATEMENT && ((CforBlock)childBlock).getInitBBlock().isEmpty())) {
         List<Block> varInitBlocks = new ArrayList<Block>();
         for (Xobject x : (XobjList) decls) {
           XobjList decl = (XobjList) x;
