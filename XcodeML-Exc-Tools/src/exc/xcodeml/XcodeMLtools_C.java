@@ -714,9 +714,17 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
   /** process subArrayRef. */
   private XobjList enterSubArrayRef(Xcode code, Xtype type, Node subArrayRefNode) {
-    ArrayList<Node> childNodes = collectElementsExclude(subArrayRefNode,
-							"arrayAddr");
+
     Node arrayAddrNode = getElement(subArrayRefNode, "arrayAddr");
+    ArrayList<Node> childNodes;
+    if (arrayAddrNode != null){
+      childNodes = collectElementsExclude(subArrayRefNode, "arrayAddr");
+    }
+    else { // pointer
+      arrayAddrNode = getElement(subArrayRefNode, "Var");
+      childNodes = collectElementsExclude(subArrayRefNode, "Var");
+    }
+
     XobjList objList = enterAsXobjList(subArrayRefNode,
 				       code,
 				       type,

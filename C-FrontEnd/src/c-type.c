@@ -2475,17 +2475,18 @@ resolveType_subArrayRef(CExprOfBinaryNode *expr)
 
     CExprOfTypeDesc *aryTd = getRefType(td0);
 
-    if(aryTd == NULL || ETYP_IS_ARRAY(aryTd) == 0) {
-        addError((CExpr*)expr, CERR_136);
-        return NULL;
+    if (aryTd == NULL ||
+	(ETYP_IS_ARRAY(aryTd) == 0 && ETYP_IS_POINTER(aryTd) == 0)){
+      addError((CExpr*)expr, CERR_136);
+      return NULL;
     }
-
+    
     // get minimum subarray array element
     int aryDims = 0;
     CExprOfTypeDesc *td = NULL;
     CExprOfTypeDesc *tmpTd = aryTd, *elemTd0 = NULL;
 
-    while(ETYP_IS_ARRAY(tmpTd)) {
+    while (ETYP_IS_ARRAY(tmpTd) || ETYP_IS_POINTER(tmpTd)){
         ++aryDims;
         // order of aryTds is reverse to that of aryRefs
         CCOL_DL_CONS(&aryTds, tmpTd);

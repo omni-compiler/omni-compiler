@@ -3243,8 +3243,9 @@ public class XMPtranslateLocalPragma {
 	Ident sz = declIdentWithBlock(pb, "XMP_" + arrayName + "_ub" + Integer.toString(i),
 				      Xtype.intType);
 
-	Ident f = _globalDecl.declExternFunc("xmp_ubound", Xtype.intType);
-	Xobject args = Xcons.List(array.getDescId(), Xcons.IntConstant(i+1), sz.getAddr());
+	Ident f = _globalDecl.declExternFunc("xmp_array_ubound", Xtype.intType);
+	Xobject args = Xcons.List(array.getDescId().Ref(), Xcons.IntConstant(i+1),
+				  sz.getAddr());
 
 	pb.insert(Xcons.Set(ret.Ref(), Xcons.binaryOp(Xcode.PLUS_EXPR, f.Call(args), Xcons.IntConstant(i+1))));
 	sizeExpr = sz;
