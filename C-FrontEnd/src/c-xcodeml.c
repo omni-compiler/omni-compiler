@@ -1647,11 +1647,12 @@ void
 outxBody(FILE *fp, int indent, CExpr *stmts)
 {
     const char *bodyTag = "body";
-    if(hasSymbols(stmts)) {
-        outxContextWithTag(fp, indent, stmts, bodyTag);
-    } else {
-        outxChildrenWithTag(fp, indent, stmts, bodyTag);
-    }
+    outxContextWithTag(fp, indent, stmts, bodyTag);
+    /* if(hasSymbols(stmts)) { */
+    /*     outxContextWithTag(fp, indent, stmts, bodyTag); */
+    /* } else { */
+    /*     outxChildrenWithTag(fp, indent, stmts, bodyTag); */
+    /* } */
 }
 
 
