@@ -311,7 +311,7 @@ public class OMPinfo
         if(v.is_reduction) {
             v.setSharedArray(createSharedArray(v, 0, true));
         }
-
+        
         addVar(v);
         return v;
     }
@@ -408,7 +408,7 @@ public class OMPinfo
             if((v = i.findOMPvar(id.getName())) != null)
                 return v.getAddr();
 
-            if(i.pragma == OMPpragma.PARALLEL) {
+            if(i.pragma == OMPpragma.PARALLEL ||i.pragma==OMPpragma.TASK) {
                 return addRegionVar(b, i, id);
             }
         }
