@@ -30,23 +30,19 @@ int main(int argc, char **argv)
   int lo_shadow_index_2 = (N/P) * node_id_2 - 1;
   int hi_shadow_index_2 = (N/P) * (node_id_2+1);
 
-#pragma xmp loop (j, i) on t(j, i)
   for(int i=lo_shadow_index_1;i<lo_shadow_index_1+1;i++)
-    for(int j=0;j<N;j++)
+    for(int j = lo_shadow_index_2; j < hi_shadow_index_2+1; j++)
       a[i][j] = DUMMY_VAL;
 
-#pragma xmp loop (j, i) on t(j, i)
   for(int i=hi_shadow_index_1;i<hi_shadow_index_1+1;i++)
-    for(int j=0;j<N;j++)
+    for(int j = lo_shadow_index_2; j < hi_shadow_index_2+1; j++)
       a[i][j] = DUMMY_VAL;
 
-#pragma xmp loop (j, i) on t(j, i)
-  for(int i=0;i<N;i++)
+  for(int i = lo_shadow_index_1; i < hi_shadow_index_1+1; i++)
     for(int j=lo_shadow_index_2;j<lo_shadow_index_2+1;j++)
       a[i][j] = DUMMY_VAL;
 
-#pragma xmp loop (j, i) on t(j, i)
-  for(int i=0;i<N;i++)
+  for(int i = lo_shadow_index_1; i < hi_shadow_index_1+1; i++)
     for(int j=hi_shadow_index_2;j<hi_shadow_index_2+1;j++)
       a[i][j] = DUMMY_VAL;
 
@@ -70,27 +66,23 @@ int main(int argc, char **argv)
 
   if(lo_node_id_1 != DUMMY_NODE_ID)
     {
-#pragma xmp loop (j, i) on t(j, i)
       for(int i=lo_shadow_index_1;i<lo_shadow_index_1+1;i++)
-	for(int j=0;j<N;j++)
-	  if(a[i][j] != lo_node_id_1){
+	for(int j = lo_shadow_index_2+1; j < hi_shadow_index_2; j++)
+	  if(a[i][j] != lo_node_id_1)
 	    result = 1;
-	    printf("[%d]i=%d j=%d\n",node_id,i,j);}
     }
 
   if(hi_node_id_1 != DUMMY_NODE_ID)
     {
-#pragma xmp loop (j, i) on t(j, i)
       for(int i=hi_shadow_index_1;i<hi_shadow_index_1+1;i++)
-	for(int j=0;j<N;j++)
+	for(int j = lo_shadow_index_2+1; j < hi_shadow_index_2; j++)
 	  if(a[i][j] != hi_node_id_1)
 	    result = 1;
     }
 
   if(lo_node_id_2 != DUMMY_NODE_ID)
     {
-#pragma xmp loop (j, i) on t(j, i)
-      for(int i=0;i<N;i++)
+      for(int i = lo_shadow_index_1+1; i < hi_shadow_index_1; i++)
 	for(int j=lo_shadow_index_2;j<lo_shadow_index_2+1;j++)
 	  if(a[i][j] != lo_node_id_2)
 	    result = 1;
@@ -98,8 +90,7 @@ int main(int argc, char **argv)
 
   if(hi_node_id_2 != DUMMY_NODE_ID)
     {
-#pragma xmp loop (j, i) on t(j, i)
-      for(int i=0;i<N;i++)
+      for(int i = lo_shadow_index_1+1; i < hi_shadow_index_1; i++)
 	for(int j=hi_shadow_index_2;j<hi_shadow_index_2+1;j++)
 	  if(a[i][j] != hi_node_id_2)
 	    result = 1;
