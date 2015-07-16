@@ -41,12 +41,6 @@ omni_exec(){
     fi
 }
 
-## Clean object files
-echo -n "Clean object files ..."
-make clean 1> /dev/null
-make clean-tests 1> /dev/null
-echo "done"
-
 ## Create archive of the current omni-compiler
 echo -n "Compress ... "
 if test -d ${LOCAL_TMP_DIR}; then
@@ -55,7 +49,12 @@ if test -d ${LOCAL_TMP_DIR}; then
 else
     mkdir -p ${LOCAL_TMP_DIR}
     cd ..
-    omni_exec tar cfj ${LOCAL_TMP_DIR}/${ARCHIVE} ${OMNI}
+    omni_exec cp -a ${OMNI} ${LOCAL_TMP_DIR}/${OMNI}
+    cd ${LOCAL_TMP_DIR}/${OMNI}
+    make clean-tests > /dev/null
+    make clean > /dev/null
+    cd ..
+    omni_exec tar cfj ${ARCHIVE} ${OMNI}
 fi
 echo "done"
 
