@@ -1,5 +1,6 @@
 #include "xmp_internal.h"
 #include "tca-api.h"
+#include "xmp.h"
 #define _XMP_TCA_DMAC 0
 
 static void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
@@ -9,7 +10,7 @@ static void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
 
   size_t size = (size_t)(adesc->type_size * adesc->total_elmts);
 
-  _XACC_DEBUG("[%d] tcaCreateHandle size = %d addr=%p\n", _XMP_world_rank, size, acc_addr);
+  _XACC_DEBUG("[%d] tcaCreateHandle size = %zd addr=%p\n", _XMP_world_rank, size, acc_addr);
   tcaHandle tmp_handle;
   TCA_CHECK(tcaCreateHandle(&tmp_handle, acc_addr, size, tcaMemoryGPU));
 
@@ -165,34 +166,67 @@ static void _XMP_create_TCA_reflect_desc(_XMP_array_t *adesc)
     int wait_slot = adesc->wait_slot;
     int wait_tag = adesc->wait_tag;
     static int dma_flag = tcaDMAUseInternal|tcaDMAUseNotifyInternal|tcaDMANotify;
+    int dim_index;
+
+    xmp_nodes_index(adesc->array_nodes, i+1, &dim_index);
 
     if(count == 1){
-      if(lo_rank != -1){
-	TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &h[lo_rank], lo_dst_offset, 
-				       &h[_XMP_world_rank], lo_src_offset, width, 
-				       dma_flag, wait_slot, wait_tag));
-	lo_src_offset += reflect->stride;
-	lo_dst_offset += reflect->stride;
-      }
-      if(hi_rank != -1){
-	TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &h[hi_rank], hi_dst_offset,
-				       &h[_XMP_world_rank], hi_src_offset, width,
-				       dma_flag, wait_slot, wait_tag));
-	hi_src_offset += reflect->stride;
-	hi_dst_offset += reflect->stride;
+      if (dim_index % 2 == 0) {
+	if(lo_rank != -1){
+	  TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &h[lo_rank], lo_dst_offset, 
+				     &h[_XMP_world_rank], lo_src_offset, width, 
+				     dma_flag, wait_slot, wait_tag));
+	  lo_src_offset += reflect->stride;
+	  lo_dst_offset += reflect->stride;
+	}
+	if(hi_rank != -1){
+	  TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &h[hi_rank], hi_dst_offset,
+				     &h[_XMP_world_rank], hi_src_offset, width,
+				     dma_flag, wait_slot, wait_tag));
+	  hi_src_offset += reflect->stride;
+	  hi_dst_offset += reflect->stride;
+	}
+      } else {
+	if(hi_rank != -1){
+	  TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &h[hi_rank], hi_dst_offset,
+				     &h[_XMP_world_rank], hi_src_offset, width,
+				     dma_flag, wait_slot, wait_tag));
+	  hi_src_offset += reflect->stride;
+	  hi_dst_offset += reflect->stride;
+	}
+	if(lo_rank != -1){
+	  TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &h[lo_rank], lo_dst_offset, 
+				     &h[_XMP_world_rank], lo_src_offset, width, 
+				     dma_flag, wait_slot, wait_tag));
+	  lo_src_offset += reflect->stride;
+	  lo_dst_offset += reflect->stride;
+	}
       }
     }
     else if(count > 1){
       size_t pitch  = reflect->stride;
-      if(lo_rank != -1){
-	TCA_CHECK(tcaDescSetMemcpy2D(tca_reflect_desc, &h[lo_rank], lo_dst_offset, pitch,
-					 &h[_XMP_world_rank], lo_src_offset, pitch,
-					 width, count, dma_flag, wait_slot, wait_tag));
-      }
-      if(hi_rank != -1){
-	TCA_CHECK(tcaDescSetMemcpy2D(tca_reflect_desc, &h[hi_rank], hi_dst_offset, pitch,
-					 &h[_XMP_world_rank], hi_src_offset, pitch,
-					 width, count, dma_flag, wait_slot, wait_tag));
+      if (dim_index % 2 == 0) {
+	if(lo_rank != -1){
+	  TCA_CHECK(tcaDescSetMemcpy2D(tca_reflect_desc, &h[lo_rank], lo_dst_offset, pitch,
+				       &h[_XMP_world_rank], lo_src_offset, pitch,
+				       width, count, dma_flag, wait_slot, wait_tag));
+	}
+	if(hi_rank != -1){
+	  TCA_CHECK(tcaDescSetMemcpy2D(tca_reflect_desc, &h[hi_rank], hi_dst_offset, pitch,
+				       &h[_XMP_world_rank], hi_src_offset, pitch,
+				       width, count, dma_flag, wait_slot, wait_tag));
+	}
+      } else {
+	if(hi_rank != -1){
+	  TCA_CHECK(tcaDescSetMemcpy2D(tca_reflect_desc, &h[hi_rank], hi_dst_offset, pitch,
+				       &h[_XMP_world_rank], hi_src_offset, pitch,
+				       width, count, dma_flag, wait_slot, wait_tag));
+	}
+	if(lo_rank != -1){
+	  TCA_CHECK(tcaDescSetMemcpy2D(tca_reflect_desc, &h[lo_rank], lo_dst_offset, pitch,
+				       &h[_XMP_world_rank], lo_src_offset, pitch,
+				       width, count, dma_flag, wait_slot, wait_tag));
+	}
       }
     }
   }
