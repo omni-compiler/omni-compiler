@@ -1,6 +1,6 @@
 TOPDIR		= ../..
 prefix		= @prefix@
-CFLAGS		= @MPI_CFLAGS@ -I. -I$(TOPDIR)/include @DEFS@ @CPPFLAGS@
+CFLAGS		= @MPI_CFLAGS@ -I. -I$(TOPDIR)/include -I$(ARGOBOTS_PREFIX)/include @DEFS@ @CPPFLAGS@
 CC		= @MPI_CC@
 AR		= @AR@ cr
 RANLIB		= @RANLIB@

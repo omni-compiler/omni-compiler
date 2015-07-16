@@ -150,6 +150,13 @@ available_locks=""
 ignore_pair=""
 ompcLibAsmSrcs=""
 
+# specify Argobots path
+AC_ARG_WITH(argobots,
+    [  --with-argobots=DIR         argobots installation path (default: /usr)],
+    [ARGOBOTS_PREFIX="${withval}"], [ARGOBOTS_PREFIX="/usr"])
+
+AC_SUBST(ARGOBOTS_PREFIX)
+
 # Default thread type
 # Check whether --with-thread or --without-thread was given.
 AC_ARG_WITH(thread,
