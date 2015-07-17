@@ -460,14 +460,15 @@ struct _XMPTIMING
     }									\
   } while (0)
 
+extern void _XMP_reflect_init_tca(void *acc_addr, _XMP_array_t *array_desc);
+extern void _XMP_reflect_do_tca(_XMP_array_t *array_desc);
+
 #ifdef XACC_DEBUG
 #define _XACC_DEBUG(...) printf("%s(%d)[%s]: ", __FILE__, __LINE__, __func__); printf(__VA_ARGS__);
 #else
 #define _XACC_DEBUG(...)
 #endif
 
-extern void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
-extern void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
 #endif
 
 #ifdef _XMP_GASNET

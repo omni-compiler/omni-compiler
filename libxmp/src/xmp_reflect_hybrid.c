@@ -23,7 +23,7 @@ static void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
   adesc->set_handle = _XMP_N_INT_TRUE;
 }
 
-static void _XMP_reflect_acc_sched_dim(_XMP_array_t *adesc, int dim, int is_periodic)
+static void _XMP_reflect_acc_sched_dim(_XMP_array_t *adesc, void *acc_addr, int dim, int is_periodic)
 {
   _XMP_array_info_t *ai = &(adesc->info[dim]);
   _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
@@ -134,9 +134,13 @@ static void _XMP_reflect_acc_sched_dim(_XMP_array_t *adesc, int dim, int is_peri
   reflect->lo_dst_offset = lo_dst_offset;
   reflect->hi_src_offset = hi_src_offset;
   reflect->hi_dst_offset = hi_dst_offset;
+  reflect->lo_send_array = (char*)acc_addr + lo_src_offset;
+  reflect->lo_recv_array = (char*)acc_addr + hi_dst_offset;
+  reflect->hi_send_array = (char*)acc_addr + hi_src_offset;
+  reflect->hi_recv_array = (char*)acc_addr + lo_dst_offset;
 }
 
-static void _XMP_create_TCA_reflect_desc(_XMP_array_t *adesc)
+static void _XMP_create_TCA_reflect_desc(void *acc_addr, _XMP_array_t *adesc)
 {
   int array_dim = adesc->dim;
   
@@ -145,7 +149,7 @@ static void _XMP_create_TCA_reflect_desc(_XMP_array_t *adesc)
     if(ai->shadow_type == _XMP_N_SHADOW_NONE)
       continue;
     int is_periodic = _XMP_N_INT_FALSE; // FIX me
-    _XMP_reflect_acc_sched_dim(adesc, i, is_periodic);
+    _XMP_reflect_acc_sched_dim(adesc, acc_addr, i, is_periodic);
   }
 
   tcaHandle* h = (tcaHandle*)adesc->tca_handle;
@@ -171,37 +175,31 @@ static void _XMP_create_TCA_reflect_desc(_XMP_array_t *adesc)
     xmp_nodes_index(adesc->array_nodes, i+1, &dim_index);
 
     if(count == 1){
-      if (dim_index % 2 == 0) {
-	if(lo_rank != -1){
-	  TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &h[lo_rank], lo_dst_offset, 
-				     &h[_XMP_world_rank], lo_src_offset, width, 
-				     dma_flag, wait_slot, wait_tag));
-	  lo_src_offset += reflect->stride;
-	  lo_dst_offset += reflect->stride;
-	}
-	if(hi_rank != -1){
-	  TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &h[hi_rank], hi_dst_offset,
-				     &h[_XMP_world_rank], hi_src_offset, width,
-				     dma_flag, wait_slot, wait_tag));
-	  hi_src_offset += reflect->stride;
-	  hi_dst_offset += reflect->stride;
-	}
-      } else {
-	if(hi_rank != -1){
-	  TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &h[hi_rank], hi_dst_offset,
-				     &h[_XMP_world_rank], hi_src_offset, width,
-				     dma_flag, wait_slot, wait_tag));
-	  hi_src_offset += reflect->stride;
-	  hi_dst_offset += reflect->stride;
-	}
-	if(lo_rank != -1){
-	  TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &h[lo_rank], lo_dst_offset, 
-				     &h[_XMP_world_rank], lo_src_offset, width, 
-				     dma_flag, wait_slot, wait_tag));
-	  lo_src_offset += reflect->stride;
-	  lo_dst_offset += reflect->stride;
-	}
-      }
+      int target_lo_rank, target_hi_rank;
+
+      if (lo_rank != -1)
+	target_lo_rank = lo_rank;
+      else
+	target_lo_rank = MPI_PROC_NULL;
+
+      MPI_Recv_init(reflect->lo_recv_array, width, MPI_BYTE, target_lo_rank,
+		    0, MPI_COMM_WORLD, &reflect->req[0]);
+      MPI_Send_init(reflect->lo_send_array, width, MPI_BYTE, target_lo_rank,
+		    1, MPI_COMM_WORLD, &reflect->req[1]);
+      lo_src_offset += reflect->stride;
+      lo_dst_offset += reflect->stride;
+
+      if(hi_rank != -1)
+	target_hi_rank = hi_rank;
+      else
+	target_hi_rank = MPI_PROC_NULL;
+
+      MPI_Recv_init(reflect->hi_recv_array,  width, MPI_BYTE, target_hi_rank,
+		    1, MPI_COMM_WORLD, &reflect->req[2]);
+      MPI_Send_init(reflect->hi_send_array,  width, MPI_BYTE, target_hi_rank,
+		    0, MPI_COMM_WORLD, &reflect->req[3]);
+      hi_src_offset += reflect->stride;
+      hi_dst_offset += reflect->stride;
     }
     else if(count > 1){
       size_t pitch  = reflect->stride;
@@ -234,10 +232,10 @@ static void _XMP_create_TCA_reflect_desc(_XMP_array_t *adesc)
   TCA_CHECK(tcaDescSet(tca_reflect_desc, _XMP_TCA_DMAC));
 }
 
-void _XMP_reflect_init_tca(void *acc_addr, _XMP_array_t *adesc)
+void _XMP_reflect_init_hybrid(void *acc_addr, _XMP_array_t *adesc)
 {
   _XMP_create_TCA_handle(acc_addr, adesc);
-  _XMP_create_TCA_reflect_desc(adesc);
+  _XMP_create_TCA_reflect_desc(acc_addr, adesc);
 }
 
 static void _XMP_refect_wait_tca(_XMP_array_t *adesc)
@@ -253,22 +251,59 @@ static void _XMP_refect_wait_tca(_XMP_array_t *adesc)
       continue;
     int lo_rank = ai->reflect_acc_sched->lo_rank;
     int hi_rank = ai->reflect_acc_sched->hi_rank;
-    
-    if(lo_rank != -1) {
-      _XACC_DEBUG("[%d] lo wait from %d\n", _XMP_world_rank, lo_rank);
-      TCA_CHECK(tcaWaitDMARecvDesc(&h[lo_rank], wait_slot, wait_tag));
-    }
 
-    if(hi_rank != -1) {
-      _XACC_DEBUG("[%d] hi wait from %d\n", _XMP_world_rank, hi_rank);
-      TCA_CHECK(tcaWaitDMARecvDesc(&h[hi_rank], wait_slot, wait_tag));
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
+    int count = reflect->count;
+
+    if (count > 1){
+      if(lo_rank != -1) {
+	_XACC_DEBUG("[%d] lo wait from %d\n", _XMP_world_rank, lo_rank);
+	TCA_CHECK(tcaWaitDMARecvDesc(&h[lo_rank], wait_slot, wait_tag));
+      }
+
+      if(hi_rank != -1) {
+	_XACC_DEBUG("[%d] hi wait from %d\n", _XMP_world_rank, hi_rank);
+	TCA_CHECK(tcaWaitDMARecvDesc(&h[hi_rank], wait_slot, wait_tag));
+      }
     }
   }
 }
 
-void _XMP_reflect_do_tca(_XMP_array_t *adesc)
+static void _XMP_reflect_start_mpi(_XMP_array_t *adesc)
 {
+  for (int i = 0; i < adesc->dim; i++) {
+    _XMP_array_info_t *ai = &(adesc->info[i]);
+    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
+      continue;
+
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
+    int count = reflect->count;
+
+    if (count == 1)
+      MPI_Startall(4, reflect->req);
+  }
+}
+
+static void _XMP_reflect_wait_mpi(_XMP_array_t *adesc)
+{
+  for (int i = 0; i < adesc->dim; i++) {
+    _XMP_array_info_t *ai = &(adesc->info[i]);
+    if (ai->shadow_type == _XMP_N_SHADOW_NONE)
+      continue;
+
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
+    int count = reflect->count;
+
+    if (count == 1)
+      MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
+  }
+}
+
+void _XMP_reflect_do_hybrid(_XMP_array_t *adesc)
+{
+  _XMP_reflect_start_mpi(adesc);
   TCA_CHECK(tcaStartDMADesc(_XMP_TCA_DMAC));
+  _XMP_reflect_wait_mpi(adesc);
   _XMP_refect_wait_tca(adesc);
   MPI_Barrier(MPI_COMM_WORLD);
 }

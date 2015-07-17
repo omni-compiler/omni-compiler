@@ -168,8 +168,10 @@ extern void _XMP_reflect_do_acc(void *);
 extern void _XMP_reflect_acc(void *);
 
 #ifdef _XMP_TCA
-// xmp_tca.c
+// xmp_tca_util.c
 extern void _XMP_alloc_tca(void *);
+
+// xmp_reflect_tca.c
 extern void _XMP_reflect_init_tca(void *, _XMP_array_t *);
 extern void _XMP_reflect_do_tca(_XMP_array_t *);
 #endif

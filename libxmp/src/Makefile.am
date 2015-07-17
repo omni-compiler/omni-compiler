@@ -42,7 +42,7 @@ if INTELMKL
 endif
 
 if TCA
-    libxmp_a_SOURCES += xmp_reflect_tca.c
+    libxmp_a_SOURCES += xmp_reflect_tca.c xmp_reflect_hybrid.c xmp_tca_util.c
     CFLAGS        += -D_XMP_TCA
 endif
 
