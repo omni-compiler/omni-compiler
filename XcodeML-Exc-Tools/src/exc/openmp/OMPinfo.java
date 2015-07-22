@@ -858,6 +858,19 @@ public class OMPinfo
         return null;
     }
 
+    OMPinfo findContext(OMPpragma pragma, OMPpragma limit)
+    {
+        for (OMPinfo i = this.parent; i != null; i = i.parent) {
+            if (i.pragma == limit) {
+                break;
+            }
+            if (i.pragma == pragma) {
+                return i;
+            }
+        }
+        return null;
+    }
+
     public List<Xobject> getRegionArgs()
     {
         return region_args;
