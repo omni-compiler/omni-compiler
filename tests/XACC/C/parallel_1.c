@@ -11,9 +11,7 @@ double a[SIZE];
 int result = 0;
 int main()
 {
-  int num_comm = xmp_num_nodes();
   int node_id  = xmp_node_num();
-  int width    = SIZE/num_comm;
 
 #pragma xmp loop on t(i)
   for(int i=0; i<SIZE; i++)
@@ -24,7 +22,7 @@ int main()
 #pragma xmp loop on t(i)
 #pragma acc parallel loop copy(a)
     for(int i=0; i<SIZE; i++)
-      a[i] += i;
+      a[i] += (double)i;
   
   // Check 
 #pragma xmp loop on t(i)
