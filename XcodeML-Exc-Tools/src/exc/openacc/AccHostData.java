@@ -47,8 +47,8 @@ class AccHostData extends AccDirective {
 
           Xtype varType = var.getId().Type();
           Xobject new_x;
-          if(varType.isArray() || varType.isPointer()){
-            new_x = Xcons.Cast(varType, deviceAddr);
+          if(varType.isPointer()){
+            new_x = Xcons.Cast(Xtype.Pointer(x.Type().getRef()), deviceAddr);
           }else{
             new_x = Xcons.PointerRef(Xcons.Cast(Xtype.Pointer(varType), deviceAddr));
           }
