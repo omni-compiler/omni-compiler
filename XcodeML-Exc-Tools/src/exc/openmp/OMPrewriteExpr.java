@@ -109,7 +109,7 @@ public class OMPrewriteExpr
             OMP.debug("expr1=" + xx);
             if(xx == null)
                 continue;
-            
+
             if(xx instanceof Ident) {
                 if((v = OMPinfo.findOMPvarBySharedOrPrivate(b, xx.getName())) == null)
                     continue;

@@ -298,6 +298,6 @@ int main()
     return 1;
   }
 
-  printf("OK\n");
+  printf("PASS\n");
   return 0;
 }

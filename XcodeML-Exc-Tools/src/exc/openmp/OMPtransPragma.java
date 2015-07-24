@@ -328,7 +328,7 @@ public class OMPtransPragma
     Block transPragma(PragmaBlock pb)
     {
         OMPinfo i = (OMPinfo)pb.getProp(OMP.prop);
-
+        OMP.debug("Pragma:"+i.pragma);
         switch(i.pragma) {
         case BARRIER: /* barrier */
             return transBarrier(pb, i);
@@ -362,8 +362,8 @@ public class OMPtransPragma
         case ORDERED:
             return transOrdered(pb, i);
         
-        case TASK:
-        	return transTaskRegion(pb,i);
+//        case TASK:
+//        	return transTaskRegion(pb,i);
 	
         default:
             // OMP.fatal("unknown pragma");
@@ -584,14 +584,17 @@ public class OMPtransPragma
         {
             XobjList funcArgs = Xcons.List();
             int nargs = func_params.Nargs();
+            OMP.debug("nargs 0=" + nargs);
             
             for(Xobject a : func_params) {
                 //argument of character type passed with character length to runtime function
+                OMP.debug("func_params =" + a.Type().toString());
                 if(a.Type().isFcharacter())
                     ++nargs;
                 funcArgs.add(a);
             }
-            
+            OMP.debug("nargs=" + nargs);
+
             if(XmOption.isLanguageF() && nargs > OMPtransPragma.F_MAX_PARALLEL_PARAMS) {
                 XmLog.fatal(orgBody.getHeadLineNo(), "too many variables in parallel region.");
             }
@@ -689,14 +692,16 @@ public class OMPtransPragma
         {
             XobjList funcArgs = Xcons.List();
             int nargs = func_params.Nargs();
+            OMP.debug("nargs 0="+nargs);
             
             for(Xobject a : func_params) {
                 //argument of character type passed with character length to runtime function
+                OMP.debug("func_params =" + a.Type().toString());
                 if(a.Type().isFcharacter())
                     ++nargs;
                 funcArgs.add(a);
             }
-            
+            OMP.debug("nargs ="+nargs);
             if(XmOption.isLanguageF() && nargs > OMPtransPragma.F_MAX_PARALLEL_PARAMS) {
                 XmLog.fatal(orgBody.getHeadLineNo(), "too many variables in parallel region.");
             }
@@ -876,8 +881,8 @@ public class OMPtransPragma
         
         // rewrite array index range if needed.
         OMPrewriteExpr r = new OMPrewriteExpr();
-        for(Xobject a: (XobjList)i.getIdList())
-            r.run(a, b, i.env);
+        for(Xobject a: (XobjList)i.getIdList()){
+            r.run(a, b, i.env);}
         
         addFcalleeBlock(func_id, dop_func_id, body, id_list, calleeDelcls, fbBody, i);
         
@@ -917,15 +922,14 @@ public class OMPtransPragma
         Ident dop_func_id = Ident.FidentNotExternal(
             env.genExportSym(FParallelTaskWrapperPrefix, current_def.getName()), Xtype.FsubroutineType);
         Block bp;
-
         // move blocks to body
         BlockList body = Bcons.emptyBody(i.getIdList(), null);
         addDataSetupBlock(body, i);
         body.add(Bcons.COMPOUND(b.getBody()));
-        
+      
         bp = dataUpdateBlock(i);
         if(bp != null)
-	  body.add(bp);
+        	body.add(bp);
 
         FunctionBlock fb = getParentFuncBlock(b);
         if(fb == null)
@@ -948,8 +952,9 @@ public class OMPtransPragma
         
         // rewrite array index range if needed.
         OMPrewriteExpr r = new OMPrewriteExpr();
-        for(Xobject a: (XobjList)i.getIdList())
-            r.run(a, b, i.env);
+        for(Xobject a: (XobjList)i.getIdList()){
+        	OMP.debug("Task"+a.toString()+" "+b.toXobject().toString()+" "+i.pragma);
+            r.run(a, b, i.env);}
         
         addFcalleeBlock(func_id, dop_func_id, body, id_list, calleeDelcls, fbBody, i);
         
@@ -1434,7 +1439,7 @@ public class OMPtransPragma
         return Bcons.COMPOUND(body);
     }
     
-    public Block transTaskRegion(PragmaBlock b, OMPinfo i)
+    public Block transTaskRegions(PragmaBlock b, OMPinfo i)
     {
         if(XmOption.isLanguageC())
             return transCtaskRegion(b, i);
@@ -1470,7 +1475,8 @@ public class OMPtransPragma
 
     protected void addDataSetupBlock(BlockList bl, OMPinfo i)
     {
-        boolean flag = false;
+    	OMP.debug("addDataSetUPBlock");
+    	boolean flag = false;
         for(OMPvar v : i.getVarList()) {
             if(v.is_first_private || v.is_reduction || v.is_copyin || v.isVariableArray()) {
                 flag = true;
@@ -1479,6 +1485,7 @@ public class OMPtransPragma
         }
         if(!flag)
             return;
+    	OMP.debug("addDataSetUPBlock 2");
 
         BasicBlock bb = new BasicBlock();
         BlockList tmpbl = new BlockList();
@@ -1579,6 +1586,8 @@ public class OMPtransPragma
                 bl.add(b);
             }
         }
+    	OMP.debug("addDataSetUPBlock End");
+        
     }
     
     private void addCreductionUpdateBlock(BlockList body, OMPinfo i)
@@ -1603,7 +1612,7 @@ public class OMPtransPragma
                 Xcons.List(v.getPrivateAddr(), v.getSharedAddr(), Xcons.IntConstant(bt),
                     Xcons.IntConstant(v.reduction_op.getId()))));
         }
-        
+
         body.add(bb);
     }
     

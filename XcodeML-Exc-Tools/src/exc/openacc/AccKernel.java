@@ -521,7 +521,7 @@ public class AccKernel {
       Xobject collapseNumExpr = info.getIntExpr(ACCpragma.COLLAPSE);
       int collapseNum = collapseNumExpr != null ? collapseNumExpr.getInt() : 1;
       for (int i = 1; i < collapseNum; i++) {
-        tmpForBlock = (CforBlock) tmpForBlock.getBody().getHead();
+        tmpForBlock = AccLoop.findOutermostTightlyNestedForBlock(tmpForBlock.getBody().getHead());
         collapsedForBlockList.add(tmpForBlock);
         indVarSet.add(tmpForBlock.getInductionVar().getSym());
       }

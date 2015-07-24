@@ -13,6 +13,8 @@ class AccAtomic extends AccDirective {
   private Xcode _operator;
   private Xobject _operand;
   private Xobject _val;
+  private boolean _capturesNewValue;
+  private Xobject _capture;
 
   AccAtomic(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
@@ -49,9 +51,11 @@ class AccAtomic extends AccDirective {
     case UPDATE:
       checkUpdateStatement();
       break;
+    case CAPTURE:
+      checkCaptureStatementOrStructuredBlock();
+      break;
     case READ:
     case WRITE:
-    case CAPTURE:
     default:
       throw new ACCexception("'" + attribute.getName() + "' is not supported");
     }
@@ -88,6 +92,10 @@ class AccAtomic extends AccDirective {
 
     Xobject expr = st.getExpr();
 
+    checkUpdateExpr(expr);
+  }
+
+  private void checkUpdateExpr(Xobject expr) throws ACCexception {
     Xcode opcode = expr.Opcode();
     switch (opcode) {
     case POST_DECR_EXPR:
@@ -149,6 +157,38 @@ class AccAtomic extends AccDirective {
       throw new ACCexception("not numerical");
     }
   }
+  
+  void checkCaptureStatementOrStructuredBlock() throws ACCexception{
+    BlockList body = _pb.getBody();
+    if (body.isEmpty() || !body.isSingle()) {
+      throw new ACCexception("not a single block");
+    }
+    
+    Statement st = getSingleStatement(body.getHead());
+    if(st == null){
+      throw new ACCexception("capture clause for structured-block is unimplemented");
+    }
+
+    Xobject expr = st.getExpr();
+    
+    if(expr.Opcode() != Xcode.ASSIGN_EXPR){
+      throw new ACCexception("no captured value");
+    }
+    
+    Xobject leftExpr = expr.left();
+    Xobject rightExpr = expr.right();
+
+    checkUpdateExpr(rightExpr);
+    _capture = leftExpr;
+    switch(_operator){
+    case POST_INCR_EXPR:
+    case POST_DECR_EXPR:
+      _capturesNewValue = false;
+      break;
+    default:
+      _capturesNewValue = true;
+    }    
+  }
 
   Block makeAtomicBlock() throws ACCexception {
     Xobject atomicFuncCall = makeCudaAtomicFuncCall(Xcons.AddrOf(_operand), _val, _operator);
@@ -173,6 +213,9 @@ class AccAtomic extends AccDirective {
 
     if (!addr.Type().isPointer()) {
       throw new ACCexception("not addr");
+    }
+    if (_capturesNewValue){
+      throw new ACCexception("capturing new value is unimplemented");
     }
     Xtype castType = null;
     switch (op) {
@@ -231,7 +274,13 @@ class AccAtomic extends AccDirective {
     if (val != null) {
       args.add(val);
     }
-    return funcId.Call(args);
+    
+    Xobject funcCall = funcId.Call(args);
+    if(_capture != null){
+      return Xcons.Set(_capture, funcCall);
+    }
+
+    return funcCall;
   }
 
   private Xtype getCudaAtomicAddCastType() {
