@@ -75,6 +75,7 @@ public enum OMPpragma
     DATA_DEPEND_OUT,
     DATA_DEPEND_INOUT,
 
+    DATA_FINAL,
     DATA_UNTIED,
     DATA_MERGEABLE,
 

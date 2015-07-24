@@ -99,7 +99,7 @@ public class OMPpragmaParser implements ExternalPragmaParser
     
         case FOR:
             /* for <clause_list> */
-            rc = compile_OMP_pragma_clause(x.getArg(1), OMPpragma.FOR, false);
+        	rc = compile_OMP_pragma_clause(x.getArg(1), OMPpragma.FOR, false);
             return Xcons.List(Xcode.OMP_PRAGMA, x.getArg(0), rc.dclause, x.getArg(2));
 
         case SECTIONS:

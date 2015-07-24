@@ -248,7 +248,6 @@ public class OMPinfo
 
         id = block.findVarIdent(name);
         if(id == null) {
-        	System.out.println(block.toXobject().toString());
             OMP.error(block.getLineNo(), "undefined variable in clause, '" + name + "'");
             return null;
         }
@@ -408,7 +407,7 @@ public class OMPinfo
             if((v = i.findOMPvar(id.getName())) != null)
                 return v.getAddr();
 
-            if(i.pragma == OMPpragma.PARALLEL ||i.pragma==OMPpragma.TASK) {
+            if(i.pragma == OMPpragma.PARALLEL) {
                 return addRegionVar(b, i, id);
             }
         }

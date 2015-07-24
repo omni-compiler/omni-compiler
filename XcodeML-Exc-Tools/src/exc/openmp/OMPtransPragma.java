@@ -362,8 +362,8 @@ public class OMPtransPragma
         case ORDERED:
             return transOrdered(pb, i);
         
-        case TASK:
-        	return transTaskRegion(pb,i);
+//        case TASK:
+//        	return transTaskRegion(pb,i);
 	
         default:
             // OMP.fatal("unknown pragma");
@@ -882,7 +882,6 @@ public class OMPtransPragma
         // rewrite array index range if needed.
         OMPrewriteExpr r = new OMPrewriteExpr();
         for(Xobject a: (XobjList)i.getIdList()){
-        	System.out.println(a.toString()+" "+b.toXobject().toString()+" "+i.env);
             r.run(a, b, i.env);}
         
         addFcalleeBlock(func_id, dop_func_id, body, id_list, calleeDelcls, fbBody, i);
@@ -1440,7 +1439,7 @@ public class OMPtransPragma
         return Bcons.COMPOUND(body);
     }
     
-    public Block transTaskRegion(PragmaBlock b, OMPinfo i)
+    public Block transTaskRegions(PragmaBlock b, OMPinfo i)
     {
         if(XmOption.isLanguageC())
             return transCtaskRegion(b, i);

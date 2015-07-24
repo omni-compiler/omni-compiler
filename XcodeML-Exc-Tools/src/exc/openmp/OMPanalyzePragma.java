@@ -171,12 +171,16 @@ public class OMPanalyzePragma
                 }
             }
             break;
+            /*
         case TASK:
+        
             idLists = new ArrayList<XobjList>();
             for(Xobject a : (XobjList)pb.getClauses()) {
+            	System.out.println(a.toString());
                 c = OMPpragma.valueOf(a.getArg(0));
                 switch(c) {
                 case DIR_IF:
+                case DATA_FINAL:
                     info.setIfExpr(a.getArg(1));
                     break;
                 case DIR_NOWAIT:
@@ -195,12 +199,14 @@ public class OMPanalyzePragma
                     info.num_threads = a.getArg(1);
                     break;
                 default: // DATA_*
+                	if(a.getArg(1) == null) break;
                     for(Xobject aa : (XobjList)a.getArg(1))
                         info.declOMPvar(aa.getName(), c);
                     idLists.add((XobjList)a.getArg(1));
                     break;
                 }
             }
+            */
         case SIMD:
         case DECLARE:
 	    break;	
