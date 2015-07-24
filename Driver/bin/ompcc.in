@@ -195,10 +195,10 @@ fi
 # link
 if [ $ENABLE_ACC = true ]; then
     OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_GPUCC_LIB"
+    obj_files+=("$TRAVERSE_FILE_O")
 else
     obj_files+=("$OMPC_MAIN_O")
 fi
-obj_files+=("$TRAVERSE_FILE_O")
 
 [ "${output_file}" != "" ] && other_args+=("-o" "${output_file}")
 omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" $OMNI_LINKER_OPT
