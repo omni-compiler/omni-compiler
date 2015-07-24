@@ -34,10 +34,12 @@ function omni_exec_run()
 function omni_exec()
 {
     [ $VERBOSE = true -o $DRY_RUN = true ] && echo ${@+"$@"}
-    [ $DRY_RUN = false ] && ${@+"$@"}
-    if [ $? -ne 0 ]; then
-        [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
-        exit 1
+    if [ $DRY_RUN = false ]; then
+	${@+"$@"}
+	if [ $? -ne 0 ]; then
+            [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
+            exit 1
+	fi
     fi
 }
 
