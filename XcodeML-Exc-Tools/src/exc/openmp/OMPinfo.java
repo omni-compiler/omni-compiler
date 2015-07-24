@@ -37,6 +37,7 @@ public class OMPinfo
     Xobject sched_chunk;
     boolean ordered;
 
+    boolean simd;
     // for parallel region, OMPpragma.PARALLEL
     OMPpragma data_default = OMPpragma._DEFAULT_NOT_SET;
     Xobject num_threads;
@@ -309,7 +310,7 @@ public class OMPinfo
         if(v.is_reduction) {
             v.setSharedArray(createSharedArray(v, 0, true));
         }
-
+        
         addVar(v);
         return v;
     }

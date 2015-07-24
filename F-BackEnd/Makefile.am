@@ -13,5 +13,5 @@ clean-local:
 	rm -f src/xcodeml/f/*/*.class
 
 install: $(TARGET)
-	$(MKDIR_P) ${javadir}
-	$(INSTALL) $^ ${javadir}
+	$(MKDIR_P) $(DESTDIR)${javadir}
+	$(INSTALL) $^ $(DESTDIR)${javadir}

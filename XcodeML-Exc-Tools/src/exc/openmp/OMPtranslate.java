@@ -108,13 +108,18 @@ public class OMPtranslate implements XobjectDefVisitor
         if(OMP.hasError())
             return;
         
+        OMP.debug("3");
+
         anaPragma.run(fd, anaDecl);
         if(OMP.hasError())
             return;
 
+        OMP.debug("4");
+
         rewriteExpr.run(fd, anaDecl);
         if(OMP.hasError())
             return;
+        OMP.debug("5");
 
         transPragma.run(fd);
         if(OMP.hasError())

@@ -73,7 +73,7 @@ public class OMPanalyzePragma
         case PARALLEL: /* new parallel section */
         case FOR: /* loop <clause_list> */
         case SECTIONS: /* sections <clause_list> */
-            // Assume that the kinds of the cluases are already checked
+        	// Assume that the kinds of the cluases are already checked
             idLists = new ArrayList<XobjList>();
             for(Xobject a : (XobjList)pb.getClauses()) {
                 c = OMPpragma.valueOf(a.getArg(0));
@@ -118,33 +118,46 @@ public class OMPanalyzePragma
                         return;
                     }
                 } else {
-                    if(pb.getBody().getHead().Opcode() == Xcode.OMP_PRAGMA)
-			break;
+                    if(pb.getBody().getHead().Opcode() == Xcode.OMP_PRAGMA){
+                    	PragmaBlock pb2=(PragmaBlock)pb.getBody().getHead();
+                    	OMPinfo outer2 =outerOMPinfo(pb2);
+                    	OMPinfo info2 = new OMPinfo(OMPpragma.valueOf(pb2.getPragma()), outer2, pb2, omp_env);
+                    	OMPpragma pc=info2.pragma;
+                    	switch(pc)
+                    	{
+                    	case SIMD:
+                    		info.simd=true;
+                    		break;
+                    	}
+                    }else
                     if(pb.getBody().getHead().Opcode() != Xcode.F_DO_STATEMENT) {
                         OMP.error(pb.getLineNo(), "DO loop must follows DO directive");
                         return;
-		    }
+                    }	
                 }
-                ForBlock for_block = (ForBlock)pb.getBody().getHead();
-                for_block.Canonicalize();
-                if(!for_block.isCanonical()) {
-                    OMP.error(pb.getLineNo(), "not cannonical FOR/DO loop");
-                    return;
-                }
-                Xobject ind_var = for_block.getInductionVar();
-                if(!info.isPrivateOMPvar(ind_var.getName())) {
-                    OMPvar v = info.findOMPvar(ind_var.getName());
-                    if(v == null) {
-                        info.declOMPvar(ind_var.getName(), OMPpragma.DATA_PRIVATE);
-                    } else if(!v.is_last_private && v.is_shared) {
-                        /* loop variable may be lastprivate */
-                        OMP.error(pb.getLineNo(), "FOR/DO loop variable '" + v.id.getName()
-                            + "' is declared as shared");
-                        return;
-                    }
+                if(!info.simd)
+                {
+                	ForBlock for_block = (ForBlock)pb.getBody().getHead();
+                	for_block.Canonicalize();
+                	if(!for_block.isCanonical()) {
+                		OMP.error(pb.getLineNo(), "not cannonical FOR/DO loop");
+                		return;
+                	}	
+                	
+                	Xobject ind_var = for_block.getInductionVar();
+                	if(!info.isPrivateOMPvar(ind_var.getName())) {
+                		OMPvar v = info.findOMPvar(ind_var.getName());
+                		if(v == null) {
+                			info.declOMPvar(ind_var.getName(), OMPpragma.DATA_PRIVATE);
+                		} else if(!v.is_last_private && v.is_shared) {
+                			/* loop variable may be lastprivate */
+                			OMP.error(pb.getLineNo(), "FOR/DO loop variable '" + v.id.getName()
+                					+ "' is declared as shared");
+                			return;
+                		}	
+                	}	
                 }
             }
-
             if(p == OMPpragma.SECTIONS && outer != null && outer.pragma != OMPpragma.PARALLEL)
                 OMP.error(pb.getLineNo(), "'sections' directive is nested");
 
@@ -158,10 +171,45 @@ public class OMPanalyzePragma
                 }
             }
             break;
-	case TASK:
+            /*
+        case TASK:
+        
+            idLists = new ArrayList<XobjList>();
+            for(Xobject a : (XobjList)pb.getClauses()) {
+            	System.out.println(a.toString());
+                c = OMPpragma.valueOf(a.getArg(0));
+                switch(c) {
+                case DIR_IF:
+                case DATA_FINAL:
+                    info.setIfExpr(a.getArg(1));
+                    break;
+                case DIR_NOWAIT:
+                    info.no_wait = true;
+                    break;
+                case DIR_ORDERED:
+                    info.ordered = true;
+                    break;
+                case DIR_SCHEDULE:
+                    info.setSchedule(a.getArg(1));
+                    break;
+                case DATA_DEFAULT:
+                    info.data_default = OMPpragma.valueOf(a.getArg(1));
+                    break;
+                case DIR_NUM_THREADS:
+                    info.num_threads = a.getArg(1);
+                    break;
+                default: // DATA_*
+                	if(a.getArg(1) == null) break;
+                    for(Xobject aa : (XobjList)a.getArg(1))
+                        info.declOMPvar(aa.getName(), c);
+                    idLists.add((XobjList)a.getArg(1));
+                    break;
+                }
+            }
+            */
         case SIMD:
         case DECLARE:
-	    break;
+	    break;	
         case SINGLE: /* single <clause list> */
             for(XobjArgs a = pb.getClauses().getArgs(); a != null; a = a.nextArgs()) {
                 t = a.getArg();

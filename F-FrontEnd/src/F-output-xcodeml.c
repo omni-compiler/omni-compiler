@@ -2431,8 +2431,10 @@ static void outx_OMP_DATA_DEFAULT_kind(int l,char *s ,expv v)
 
 static void outx_OMP_sched_kind(int l,char *s,expv v)
 {
+  expr vv = EXPR_ARG2(v);
   outx_printi(l+2, "<string>%s</string>\n", s);
   //printf("EXPV_INT_VALUE(%d)\n",EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v))));
+//  printf("vv=%d\n",EXPV_INT_VALUE(expr_list_get_n(vv,0)));	  
   outx_printi(l+3,"<list>\n");                                                                                                                                                                                 
 
   switch(EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v))))
@@ -2458,7 +2460,9 @@ static void outx_OMP_sched_kind(int l,char *s,expv v)
     default:
       fatal("OMP Sched error");
     }
-  outx_expv(l+4,EXPR_ARG1(v));
+	//printf("ARG2=%d\n",EXPV_INT_VALUE(expr_list_get_n(vv,1)));
+	if(expr_list_get_n(vv,1)!=NULL) 
+ 	outx_expv(l+4,expr_list_get_n(vv,1));
     outx_printi(l+3,"</list>\n");                                                                                                                                                                                
   outx_printi(l+1,"</list>\n");
 }
@@ -2512,12 +2516,12 @@ outx_OMP_dir_clause_list(int l,expv v)
     case OMP_DIR_NUM_THREADS: s = "DIR_NUM_THREADS"; break;
     case OMP_DIR_NOWAIT: s = "DIR_NOWAIT"; break;
     case OMP_DIR_SCHEDULE: s = "DIR_SCHEDULE";  outx_OMP_sched_kind(l,s,vv);continue;
-    case OMP_DATA_DEPEND_IN: s = "DEPEND_IN";break;
-    case OMP_DATA_DEPEND_OUT: s = "DEPEND_OUT";break;
-    case OMP_DATA_DEPEND_INOUT: s = "DEPEND_INOUT";break;
-    case OMP_DIR_UNTIED: s = "UNTIED";break;
-    case OMP_DIR_MERGEABLE: s = "MERGEABLE";break;
-    case OMP_DIR_FINAL: s = "FINAL";break;
+    case OMP_DATA_DEPEND_IN: s = "DATA_DEPEND_IN";break;
+    case OMP_DATA_DEPEND_OUT: s = "DATA_DEPEND_OUT";break;
+    case OMP_DATA_DEPEND_INOUT: s = "DATA_DEPEND_INOUT";break;
+    case OMP_DATA_UNTIED: s = "DATA_UNTIED";break;
+    case OMP_DATA_MERGEABLE: s = "DATA_MERGEABLE";break;
+    case OMP_DATA_FINAL: s = "DATA_FINAL";break;
     default:
       fatal("out_OMP_dir_clause: unknown value=%d\n",EXPV_INT_VALUE(v));
     }

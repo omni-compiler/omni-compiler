@@ -378,8 +378,8 @@ public class omompx
       }
 
       if(xcodeWriter != null) {
-        xobjFile.Output(xcodeWriter);
-        xcodeWriter.flush();
+          xobjFile.Output(xcodeWriter);
+          xcodeWriter.flush();
       }
     }
 

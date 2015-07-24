@@ -49,7 +49,7 @@ class AccManager {
       for (int i = collapseNum; i > 0; i--) {
         forBlocks.add(fb);
         if (i > 1) {
-          fb = (CforBlock) (fb.getBody().getHead());
+          fb = AccLoop.findOutermostTightlyNestedForBlock(fb.getBody().getHead());
         }
       }
       execMethodMap.put(forBlock, new LoopExecInfo(forBlocks, forBlockExecMethods));
