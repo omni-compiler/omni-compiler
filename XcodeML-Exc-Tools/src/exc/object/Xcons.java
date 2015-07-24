@@ -206,6 +206,7 @@ public class Xcons
             type = type.getRef();
         switch(x.Opcode()) {
         case ARRAY_ADDR:
+            return Xcons.Symbol(Xcode.ARRAY_ADDR, type, x.getSym());
         case VAR_ADDR:
             return Xcons.Symbol(Xcode.VAR, type, x.getSym());
         case FUNC_ADDR:

@@ -42,6 +42,9 @@ abstract class AccDirective {
 
   Ident findVarIdent(String symbol){
     if(_pb == null) return _decl.findVarIdent(symbol);
+    if(_info.getPragma().isLoop()){
+      return _pb.getBody().getHead().findVarIdent(symbol);
+    }
     return _pb.findVarIdent(symbol);
   }
 

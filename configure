@@ -3021,7 +3021,6 @@ ac_config_headers="$ac_config_headers include/config.h Driver/atool/src/include/
 SHELL=`which bash` 1> /dev/null 2> /dev/null
 if test $? -ne 0; then
    as_fn_error $? "To run libtool you need a bash, not /bin/sh." "$LINENO" 5
-   exit 1
 fi
 export SHELL
 
@@ -3033,8 +3032,7 @@ do
   if test "$cmd" != ""; then
     which $cmd 2> /dev/null 1> /dev/null
     if test $? -eq 1; then
-      echo "$cmd not found"
-      exit 1
+      as_fn_error $? "$cmd not found" "$LINENO" 5
     fi
   fi
 done
@@ -12416,8 +12414,7 @@ case $lock_type in
     case $CPU in i386*|x86_64*|mips*|sparc*|alpha*|rs6000*)
       true;;
       *)
-      echo "$ac_t""spin lock is only available on i386, x86_64, mips, alpha, sparc and rs6000 architectures." 1>&6
-      exit 1;;
+      as_fn_error $? "\"$ac_t\"\"spin lock is only available on i386, x86_64, mips, alpha, sparc and rs6000 architectures." "$LINENO" 5;;
     esac;;
   *)
     true;;
@@ -22418,8 +22415,7 @@ else
       CFLAGS="${CFLAGS} -c99"
     ;;
     *)
-     echo "No supported C compiler was found."
-     exit 1 ;;
+    as_fn_error $? "No supported C compiler was found." "$LINENO" 5;;
     esac ;;
   esac
 fi
@@ -24880,9 +24876,7 @@ rm -rf ./szchk ./szchk.*
 $as_echo "Creating size check program" >&6; }
 ${CC} ${CPPFLAGS} ${CFLAGS} ${hasLLFlags} ./buildutils/szchk.c -o ./szchk
 if test ! -x ./szchk; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't create size check program. exit." >&5
-$as_echo "can't create size check program. exit." >&6; }
-    exit 1
+    as_fn_error $? "can't create size check program." "$LINENO" 5
 fi
 
 F2C_INT64_FLAGS=""
@@ -24947,14 +24941,10 @@ voidPint="unknown"
 if test -x ./chkvoidp; then
     voidPint=`./chkvoidp`
 else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't create check program. exit." >&5
-$as_echo "can't create check program. exit." >&6; }
-    exit 1
+    as_fn_error $? "can't create check program." "$LINENO" 5
 fi
 if test "x${voidPint}" = "xunknown"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't determine????" >&5
-$as_echo "can't determine????" >&6; }
-    exit 1
+    as_fn_error $? "can't determine????" "$LINENO" 5
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $voidPint" >&5
 $as_echo "$voidPint" >&6; }
@@ -24973,14 +24963,10 @@ addrIs64="unknown"
 if test -x ./addr64; then
     addrIs64=`./addr64`
 else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't create check program. exit." >&5
-$as_echo "can't create check program. exit." >&6; }
-    exit 1
+    as_fn_error $? "can't create check program." "$LINENO" 5
 fi
 if test "x$addrIs64" = "xunknown"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't determine????" >&5
-$as_echo "can't determine????" >&6; }
-    exit 1
+    as_fn_error $? "can't determine????" "$LINENO" 5
 else
     if test "x$addrIs64" = "x8"; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
@@ -25059,15 +25045,11 @@ if test "x${doQReal}" = "xyes"; then
     if test -f ${gmpInclude}/gmp.h; then
         true
     else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't find ${gmpInclude}/gmp.h. exit." >&5
-$as_echo "can't find ${gmpInclude}/gmp.h. exit." >&6; }
-        exit 1
+        as_fn_error $? "can't find ${gmpInclude}/gmp.h." "$LINENO" 5
     fi
-    gmpLibs=`ls ${gmpInclude}/libgmp.* 2> /dev/null`
+    gmpLibs=`ls ${gmpLib}/libgmp.* 2> /dev/null`
     if test "x${gmpLibs}" = "x"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't find ${gmpLib}/libgmp.*. exit." >&5
-$as_echo "can't find ${gmpLib}/libgmp.*. exit." >&6; }
-        exit 1
+        as_fn_error $? "can't find ${gmpLib}/libgmp.*." "$LINENO" 5
     fi
     gmpIncOpt="-I${gmpInclude}"
     gmpLibOpt="-L${gmpLib} -lgmp"
@@ -25104,17 +25086,13 @@ _ACEOF
     if test -x $2; then
         ret=`$2 $4`
         if test "x${ret}" = "x"; then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't determine??. exit." >&5
-$as_echo "can't determine??. exit." >&6; }
-            exit 1
+            as_fn_error $? "can't determine??." "$LINENO" 5
         else
             rm -f $2 ${2}.*
             echo ${ret}
         fi
     else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't create check program. exit." >&5
-$as_echo "can't create check program. exit." >&6; }
-        exit 1
+        as_fn_error $? "can't create check program." "$LINENO" 5
     fi
     }
 
@@ -25133,9 +25111,7 @@ $as_echo "${eSz}" >&6; }
     8)
         omniExpT=${TYPE_INT64};;
     *)
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't determine basic type of mp_exp_t ??. exit." >&5
-$as_echo "can't determine basic type of mp_exp_t ??. exit." >&6; }
-        exit 1;;
+        as_fn_error $? "can't determine basic type of mp_exp_t ??." "$LINENO" 5
     esac
     cat >>confdefs.h <<_ACEOF
 #define OMNI_SIZEOF_QEXP_T $eSz
@@ -25158,9 +25134,7 @@ $as_echo "${lSz}" >&6; }
     8)
         omniLimbT=${TYPE_INT64};;
     *)
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't determine basic type of mp_limb_t ??. exit." >&5
-$as_echo "can't determine basic type of mp_limb_t ??. exit." >&6; }
-        exit 1;;
+        as_fn_error $? "can't determine basic type of mp_limb_t ??." "$LINENO" 5;;
     esac
     cat >>confdefs.h <<_ACEOF
 #define OMNI_SIZEOF_QLIM_T $lSz
@@ -25258,9 +25232,7 @@ rm -f core conftest.err conftest.$ac_objext \
     LIBS=${oLIBS}
     CFLAGS=${oCFLAGS}
     if test "x${hasFloor}" = "xno"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: You have to use gmp3 or later. exit." >&5
-$as_echo "You have to use gmp3 or later. exit." >&6; }
-        exit 1
+        as_fn_error $? "You have to use gmp3 or later." "$LINENO" 5
     fi
 fi
 
@@ -25816,11 +25788,7 @@ fi
 # cpp
 cppCmd=${CPP}
 if test -z "${CPP}"; then
-   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "Can't find any usable C preprosessor.
-See \`config.log' for more details" "$LINENO" 5; }
-   exit 1
+   as_fn_error $? "Can't find any usable C preprosessor." "$LINENO" 5
 fi
 
 

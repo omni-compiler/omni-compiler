@@ -1783,7 +1783,7 @@ omp_directive:
 	  { $$ = OMP_LIST(OMP_F_END_CRITICAL,list1(LIST,$4)); }
 	| OMPKW_TASK omp_clause_option
 	  { $$ = OMP_LIST(OMP_F_TASK,$2); }
-	| OMPKW_END OMPKW_TASK
+	| OMPKW_END OMPKW_TASK omp_nowait_option
 	  { $$ = OMP_LIST(OMP_F_END_TASK,NULL); }
 	| OMPKW_BARRIER
 	  { $$ = OMP_LIST(OMP_F_BARRIER,NULL); }
@@ -1876,11 +1876,11 @@ omp_clause:
 	| OMPKW_DEPEND '(' omp_depend_op ':' omp_list ')'
 	{ $$ = OMP_LIST($3,$5); }
         | OMPKW_FINAL '(' expr ')'
-	{ $$ = OMP_LIST(OMP_DIR_FINAL,$3); }
+	{ $$ = OMP_LIST(OMP_DATA_FINAL,$3); }
         | OMPKW_UNTIED
-	{ $$ = OMP_LIST(OMP_DIR_UNTIED,NULL); }
+	{ $$ = OMP_LIST(OMP_DATA_UNTIED,NULL); }
         | OMPKW_MERGEABLE
-	{ $$ = OMP_LIST(OMP_DIR_MERGEABLE,NULL); }
+	{ $$ = OMP_LIST(OMP_DATA_MERGEABLE,NULL); }
 	;
 
 omp_depend_op:

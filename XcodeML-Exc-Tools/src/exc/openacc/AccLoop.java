@@ -186,13 +186,30 @@ class AccLoop extends AccDirective{
       input.add(p);
     }
   }
-
+  
+  static CforBlock findOutermostTightlyNestedForBlock(Block block){
+    if(block.Opcode() == Xcode.FOR_STATEMENT){
+      return (CforBlock)block;
+    }
+    
+    if(block.Opcode() == Xcode.COMPOUND_STATEMENT){
+      BlockList body = block.getBody();
+      XobjList idList = body.getIdentList();
+      if(body.isSingle() && (idList == null || idList.isEmptyList())){ //is compound-block non-meaningful
+        return findOutermostTightlyNestedForBlock(body.getHead());
+      }
+    }   
+    
+    return null;
+  }
+  
   private XobjList checkCollapsedLoop(Block block, int num_collapse) throws ACCexception{
-    if(block.Opcode() != Xcode.FOR_STATEMENT){
+    CforBlock forBlock = findOutermostTightlyNestedForBlock(block);
+
+    if(block == null){
       throw new ACCexception("lack of nested loops");
     }
-
-    CforBlock forBlock = (CforBlock)block;
+    
     if(! forBlock.isCanonical()){
       forBlock.Canonicalize();
       if(! forBlock.isCanonical()){

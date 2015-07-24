@@ -49,7 +49,12 @@ if test -d ${LOCAL_TMP_DIR}; then
 else
     mkdir -p ${LOCAL_TMP_DIR}
     cd ..
-    omni_exec tar cfj ${LOCAL_TMP_DIR}/${ARCHIVE} ${OMNI}
+    omni_exec cp -a ${OMNI} ${LOCAL_TMP_DIR}/${OMNI}
+    cd ${LOCAL_TMP_DIR}/${OMNI}
+    make clean-tests > /dev/null
+    make clean > /dev/null
+    cd ..
+    omni_exec tar cfj ${ARCHIVE} ${OMNI}
 fi
 echo "done"
 

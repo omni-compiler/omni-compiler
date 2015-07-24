@@ -1,0 +1,10 @@
+program main
+INTEGER ::i
+!$OMP PARALLEL
+!$OMP SINGLE
+!$OMP TASK 
+i=i+1
+!$OMP END TASK
+!$OMP END SINGLE
+!$OMP END PARALLEL
+end program main

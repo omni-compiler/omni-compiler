@@ -82,7 +82,7 @@ for c_file in "${c_files[@]}"; do
 
     # When ">" or ">>" is used, please use "omni_exec_echo" and "omni_exec_run" instead of "omni_exec".
     omni_exec_echo $OMNI_CPP_CMD $OMNI_CPP_OPT "${pp_add_opt[@]}" "${other_args[@]}" "${FILE_PP_C}" ">" "${FILE_PP_I}"
-    omni_exec_run  $OMNI_CPP_CMD $OMNI_CPP_OPT "${pp_add_opt[@]}" "${other_args[@]}" "${FILE_PP_C}" > "${FILE_PP_I}"
+    [ $DRY_RUN = false ] && omni_exec_run  $OMNI_CPP_CMD $OMNI_CPP_OPT "${pp_add_opt[@]}" "${other_args[@]}" "${FILE_PP_C}" > "${FILE_PP_I}"
     # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
 
     if [ $ONLY_PP = true ]; then
