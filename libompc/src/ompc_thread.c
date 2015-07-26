@@ -54,6 +54,7 @@ static ompc_thread_t ompc_thread_self();
 static struct ompc_proc *ompc_new_proc(void);
 static struct ompc_proc *ompc_current_proc(void);
 static struct ompc_proc *ompc_get_proc();
+static struct ompc_proc *ompc_get_proc_random();
 static void ompc_free_proc(struct ompc_proc *p);
 static struct ompc_thread *ompc_alloc_thread(struct ompc_proc *proc);
 static void ompc_free_thread(struct ompc_proc *proc, struct ompc_thread *p);
@@ -348,6 +349,12 @@ ompc_get_proc()
     return p;
 }
 
+static struct ompc_proc *
+ompc_get_proc_random()
+{
+    return &ompc_procs[rand() % ompc_max_threads];
+}
+
 static void
 ompc_free_proc(struct ompc_proc *p)
 {
@@ -480,7 +487,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 
     /* assign thread to proc */
     for( i = 0; i < n_thds; i++ ){
-        p = i == 0 ? cproc : ompc_get_proc();
+        p = ompc_get_proc_random();
         tp = ompc_alloc_thread(p);
         tp->parent = cthd;
         tp->num = i;                        /* set thread_num */
