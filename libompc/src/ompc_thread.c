@@ -228,7 +228,6 @@ ompc_init(int argc,char *argv[])
 
         /* add (and init proc table) this as master thread */
     cproc = ompc_new_proc();
-    __sync_fetch_and_add(&cproc->thread_count, 1);
     ompc_master_proc_id = _OMPC_PROC_SELF;
 
     if(ompc_debug_flag)
@@ -345,7 +344,6 @@ ompc_get_proc()
     if(++proc_last_used >= ompc_max_threads) proc_last_used = 0;
     p = &ompc_procs[proc_last_used];
     OMPC_PROC_UNLOCK();
-    __sync_fetch_and_add(&p->thread_count, 1);
 
     return p;
 }
@@ -353,7 +351,6 @@ ompc_get_proc()
 static void
 ompc_free_proc(struct ompc_proc *p)
 {
-    __sync_fetch_and_sub(&p->thread_count, 1);
 }
 
 /* allocate/get thread entry */
