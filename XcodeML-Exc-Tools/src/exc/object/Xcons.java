@@ -525,7 +525,7 @@ public class Xcons
                 if(x.isZeroConstant())
                     return Xcons.List(Xcode.UNARY_MINUS_EXPR, t, y);
             }
-            if(y.isZeroConstant()) {
+            if(y.isZeroConstant() && x.code != Xcode.ARRAY_ADDR) {
                 if (lt.equals(t))
                     return x;
                 else
