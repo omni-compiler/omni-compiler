@@ -451,7 +451,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         n_thds = 1;
         in_parallel = cthd->in_parallel;
     } else {
-        n_thds = (nthds < ompc_num_threads) ? (nthds) : (ompc_num_threads);
+        n_thds = cthd->parent == NULL ? 20 : 12;
         in_parallel = 1;
     }
 
@@ -480,7 +480,8 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 
     /* assign thread to proc */
     for( i = 0; i < n_thds; i++ ){
-        p = i == 0 ? cproc : ompc_get_proc();
+        int pidx = cthd->parent == NULL ? i * 12 : cthd->parent->num * 12 + i;
+        p = &ompc_procs[pidx];
         tp = ompc_alloc_thread(p);
         tp->parent = cthd;
         tp->num = i;                        /* set thread_num */
