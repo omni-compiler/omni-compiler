@@ -171,17 +171,19 @@ public class OMPanalyzePragma
                 }
             }
             break;
-            /*
         case TASK:
         
             idLists = new ArrayList<XobjList>();
             for(Xobject a : (XobjList)pb.getClauses()) {
+            	if(OMP.debugFlag==true)
             	System.out.println(a.toString());
                 c = OMPpragma.valueOf(a.getArg(0));
                 switch(c) {
                 case DIR_IF:
-                case DATA_FINAL:
                     info.setIfExpr(a.getArg(1));
+                    break;
+                case DATA_FINAL:
+                    info.setFinalExpr(a.getArg(1));
                     break;
                 case DIR_NOWAIT:
                     info.no_wait = true;
@@ -206,7 +208,6 @@ public class OMPanalyzePragma
                     break;
                 }
             }
-            */
         case SIMD:
         case DECLARE:
 	    break;	

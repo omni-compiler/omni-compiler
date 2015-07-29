@@ -42,7 +42,7 @@ public class OMPinfo
     OMPpragma data_default = OMPpragma._DEFAULT_NOT_SET;
     Xobject num_threads;
     boolean no_wait;
-    private Xobject if_expr;
+    private Xobject if_expr,final_expr;
     private List<Xobject> region_args; // for parallel region
     private List<Ident> region_params;
     private Xobject thdnum_var;
@@ -407,7 +407,7 @@ public class OMPinfo
             if((v = i.findOMPvar(id.getName())) != null)
                 return v.getAddr();
 
-            if(i.pragma == OMPpragma.PARALLEL) {
+            if(i.pragma == OMPpragma.PARALLEL || i.pragma == OMPpragma.TASK) {
                 return addRegionVar(b, i, id);
             }
         }
@@ -788,6 +788,15 @@ public class OMPinfo
             System.out.println("parallel if = " + if_expr);
     }
 
+    void setFinalExpr(Xobject cond)
+    {
+        final_expr = refOMPvarExpr(block.getParentBlock(), cond);
+        if(XmOption.isLanguageC() && !final_expr.Type().isIntegral())
+            final_expr = Xcons.Cast(Xtype.intType, final_expr);
+        if(OMP.debugFlag)
+            System.out.println("task final = " + final_expr);
+    }
+
     void setFlushVars(Xobject list)
     {
         // list is list of IDENT
@@ -887,6 +896,16 @@ public class OMPinfo
     public Xobject getIfExpr()
     {
         return if_expr;
+    }
+
+    public boolean hasFinalExpr()
+    {
+        return final_expr != null;
+    }
+    
+    public Xobject getFinalExpr()
+    {
+        return final_expr;
     }
 
     public Xobject getIdList()
