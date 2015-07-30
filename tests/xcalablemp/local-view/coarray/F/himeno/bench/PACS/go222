@@ -3,21 +3,25 @@
 #PBS -q tcaq 
 
 #PBS -l select=8:mpiprocs=1
-#PBS -l walltime=00:40:00
+#PBS -l walltime=00:30:00
 
 . /opt/Modules/default/init/bash
-#module load intel/15.0.2 intelmpi/5.0.0
-module load gnu/4.4.7 mvapich2/1.8.1_gnu_cuda-6.0.37 cuda/6.0.37
+module purge
+module load mvapich2-gdr/2.0_gnu_cuda-6.5
+module load cuda/6.5.14
 
 cd $PBS_O_WORKDIR
+export XMP_ONESIDED_HEAP_SIZE=512M
 
 echo Environment -------
 module list 2>&1
 echo "pwd = "; pwd
+echo "XMP_ONESIDED_HEAP_SIZE=$XMP_ONESIDED_HEAP_SIZE"
 echo -------------------
 
 
-EXE="mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x"
+#EXE="mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x"
+EXE="mpi.x mpi-nocom.x caf-wide.x caf-nocom.x caf-direct.x caf-direct-nocom.x"
 
 MODEL="M L XL"
 SHAPE=222
@@ -38,7 +42,11 @@ for f in ${EXE}; do
     #mpirun -np ${NODES} -s all ../$f < ${INFILE}
     ### for MVAPICH
     #@#mpirun_rsh -np ${NODES} --hostfile $PBS_NODEFILE ../$f < ${INFILE}      
-    $HOME/local/GASNet-1.24.2-Jun9/bin/gasnetrun_ibv -n ${NODES} -spawner=mpi ../$f < ${INFILE}
+    if [[ $f =~ ^mpi ]]; then
+        mpirun_rsh -np ${NODES} --hostfile $PBS_NODEFILE ../$f < ${INFILE}
+    else
+        ${GASNET_HOME}/bin/gasnetrun_ibv -n ${NODES} -spawner=mpi ../$f < ${INFILE}
+    fi
 done
 
 done

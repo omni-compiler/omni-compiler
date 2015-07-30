@@ -402,13 +402,14 @@ subroutine jacobi(nn,gosa)
 !
      call sendp(ndx,ndy,ndz)
 !
-     call mpi_allreduce(wgosa, &
-                        gosa, &
-                        1, &
-                        mpi_real4, &
-                        mpi_sum, &
-                        mpi_comm_world, &
-                        ierr)
+!V5!     call mpi_allreduce(wgosa, &
+!V5!                        gosa, &
+!V5!                        1, &
+!V5!                        mpi_real4, &
+!V5!                        mpi_sum, &
+!V5!                        mpi_comm_world, &
+!V5!                        ierr)
+     gosa=wgosa
 !
   enddo
 !! End of iteration

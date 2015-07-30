@@ -39,9 +39,9 @@
 module pres
   implicit none
   include 'xmp_coarray.h'
-  real(4),dimension(:,:,:),allocatable :: p
+  real(4),dimension(:,:,:),codimension[:,:,:],allocatable :: p
   real(4), allocatable, dimension(:,:), codimension[:,:,:] :: &
-       buf1l, buf1u,  buf2l, buf2u,  buf3l, buf3u
+       buf1l, buf1u
 end module pres
 !
 module mtrx
@@ -64,6 +64,7 @@ module others
   integer :: mx0,my0,mz0
   integer :: mimax,mjmax,mkmax
   integer :: imax,jmax,kmax
+  integer :: imax1,jmax1,kmax1
   real(4),parameter :: omega=0.8
 end module others
 !
@@ -104,10 +105,6 @@ program HimenoBMTxp_f90_CAF
 !
   allocate(buf1l(mjmax, mkmax)[ndx,ndy,*])
   allocate(buf1u(mjmax, mkmax)[ndx,ndy,*])
-  allocate(buf2l(2:mimax-1, mkmax)[ndx,ndy,*])
-  allocate(buf2u(2:mimax-1, mkmax)[ndx,ndy,*])
-  allocate(buf3l(2:mimax-1, 2:mjmax-1)[ndx,ndy,*])
-  allocate(buf3u(2:mimax-1, 2:mjmax-1)[ndx,ndy,*])
 !
 !! Initializing matrixes
   call initmt(mz,it)
@@ -185,9 +182,9 @@ subroutine readparam
 !
   implicit none
 !
-  integer :: itmp(3)[*]
+  integer, save :: itmp(3)[*]
 !!!  character(10) :: size[*]     !! to avoid bug #354
-  character(12) :: size(1)[*]
+  character(12), save :: size(1)[*]
 !
   if(id == 0) then
      print *,'For example:'
@@ -328,10 +325,11 @@ subroutine initmem
   use bound
   use work
   use others
+  use comm
 !
   implicit none
 !
-  allocate(p(mimax,mjmax,mkmax))
+  allocate(p(mimax,mjmax,mkmax)[ndx,ndy,*])
   allocate(a(mimax,mjmax,mkmax,4),b(mimax,mjmax,mkmax,3), &
            c(mimax,mjmax,mkmax,3))
   allocate(bnd(mimax,mjmax,mkmax))
@@ -485,13 +483,17 @@ subroutine initmax(mx,my,mz,ks)
      if(i /= ndz-1)  mz2(i)= mz2(i) + 1
   end do
 !
-  mimax=maxval(mx2(0:ndx-1))
-  mjmax=maxval(my2(0:ndy-1))
-  mkmax=maxval(mz2(0:ndz-1))
+  mimax=maxval(mx2(0:ndx-1)) + 1
+  mjmax=maxval(my2(0:ndy-1)) + 1
+  mkmax=maxval(mz2(0:ndz-1)) + 1
 !
   imax= mx2(iop(1))
   jmax= my2(iop(2))
   kmax= mz2(iop(3))
+!
+  if (iop(1) /= 0) imax1= mx2(iop(1)-1)
+  if (iop(2) /= 0) jmax1= my2(iop(2)-1)
+  if (iop(3) /= 0) kmax1= mz2(iop(3)-1)
 !
   if(iop(3) == 0) then
      ks= mz1(iop(3))
@@ -505,76 +507,5 @@ end subroutine initmax
 !
 !
 subroutine sendp()
-!
-  use pres
-  use others
-  use comm
-  implicit none
-  integer mex, mey, mez
-
-  mex = iop(1) + 1
-  mey = iop(2) + 1
-  mez = iop(3) + 1
-
-  !*** put z-axis
-  if (mez>1) then
-     buf3u(:,:)[mex,mey,mez-1] = p(2:mimax-1,2:mjmax-1,2     )
-  end if
-  if (mez<ndz) then
-     buf3l(:,:)[mex,mey,mez+1] = p(2:mimax-1,2:mjmax-1,kmax-1)
-  endif
-
-  sync all
-
-  !*** unpack z-axis
-  if (mez<ndz) then
-     p(2:mimax-1,2:mjmax-1,kmax) = buf3u(:,:)
-  end if
-  if (mez>1) then
-     p(2:mimax-1,2:mjmax-1,1   ) = buf3l(:,:)
-  endif
-
-  sync all
-
-  !*** put y-axis
-  if (mey>1) then
-     buf2u(:,:)[mex,mey-1,mez] = p(2:mimax-1,2     ,:)
-  end if
-  if (mey<ndy) then
-     buf2l(:,:)[mex,mey+1,mez] = p(2:mimax-1,jmax-1,:)
-  endif
-
-  sync all
-
-  !*** unpack y-axis
-  if (mey<ndy) then
-     p(2:mimax-1,jmax,:) = buf2u(:,:)
-  end if
-  if (mey>1) then
-     p(2:mimax-1,1   ,:) = buf2l(:,:)
-  endif
-
-  sync all
-
-  !*** put x-axis
-  if (mex>1) then
-     buf1u(:,:)[mex-1,mey,mez] = p(2     ,:,:)
-  end if
-  if (mex<ndx) then
-     buf1l(:,:)[mex+1,mey,mez] = p(imax-1,:,:)
-  endif
-
-  sync all
-
-  !*** unpack x-axis
-  if (mex<ndx) then
-     p(imax,:,:) = buf1u(:,:)
-  end if
-  if (mex>1) then
-     p(1   ,:,:) = buf1l(:,:)
-  endif
-
-  sync all
-
   return
 end subroutine sendp

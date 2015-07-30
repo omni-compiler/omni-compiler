@@ -487,9 +487,9 @@ subroutine initmax(mx,my,mz,ks)
      if(i /= ndz-1)  mz2(i)= mz2(i) + 1
   end do
 !
-  mimax=maxval(mx2(0:ndx-1))
-  mjmax=maxval(my2(0:ndy-1))
-  mkmax=maxval(mz2(0:ndz-1))
+  mimax=maxval(mx2(0:ndx-1)) + 1
+  mjmax=maxval(my2(0:ndy-1)) + 1
+  mkmax=maxval(mz2(0:ndz-1)) + 1
 !
   imax= mx2(iop(1))
   jmax= my2(iop(2))

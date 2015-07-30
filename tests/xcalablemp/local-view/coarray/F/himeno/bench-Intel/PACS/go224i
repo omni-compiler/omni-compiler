@@ -3,7 +3,7 @@
 #PBS -q tcaq 
 
 #PBS -l select=16:mpiprocs=1
-#PBS -l walltime=00:40:00
+#PBS -l walltime=00:30:00
 
 . /opt/Modules/default/init/bash
 module purge
@@ -18,12 +18,14 @@ echo "pwd = "; pwd
 echo -------------------
 
 
-EXE="mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x"
+EXE="mpi.x mpi-nocom.x caf-wide.x caf-nocom.x caf-direct.x caf-direct-nocom.x"
 
 MODEL="M L XL"
 SHAPE=224
 SHAPES="2 2 4"
 NODES=16
+
+export FOR_COARRAY_NUM_IMAGES=${NODES}
 
 for m in ${MODEL}; do
 INFILE=./stdin.${m}${SHAPE}
@@ -36,10 +38,12 @@ for f in ${EXE}; do
     echo "himenoBMT $f $m ${SHAPE} ($m-model/${NODES} nodes)"
     echo "****************************************************"
     ### for IntelMPI
-    mpirun -np ${NODES} -s all ../$f < ${INFILE}
-    ### for MVAPICH
-    #@#mpirun_rsh -np ${NODES} --hostfile $PBS_NODEFILE ../$f < ${INFILE}      
-    #$HOME/local/GASNet-1.24.2-Jun9/bin/gasnetrun_ibv -n ${NODES} -spawner=mpi ../$f < ${INFILE}
+    if [[ $f =~ ^mpi ]]; then
+        mpirun -np ${NODES} -s all -hostfile $PBS_FILE ../$f < ${INFILE}
+    else
+        mpdboot
+        ../$f < ${INFILE}
+    fi
 done
 
 done
