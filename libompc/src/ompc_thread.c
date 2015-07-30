@@ -447,11 +447,24 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     cproc = ompc_current_proc();
     cthd  = ompc_current_thread();
 
+    int num_threads_first, num_threads_second;
+    switch (ompc_max_threads) {
+        case 1: num_threads_first = 1; num_threads_second = 1; break;
+        case 2: num_threads_first = 2; num_threads_second = 1; break;
+        case 4: num_threads_first = 2; num_threads_second = 2; break;
+        case 8: num_threads_first = 4; num_threads_second = 2; break;
+        case 16: num_threads_first = 4; num_threads_second = 4; break;
+        case 32: num_threads_first = 8; num_threads_second = 4; break;
+        case 60: num_threads_first = 10; num_threads_second = 6; break;
+        case 120: num_threads_first = 12; num_threads_second = 10; break;
+        case 240: num_threads_first = 20; num_threads_second = 12; break;
+    }
+
     if (cond == 0) { /* serialized by parallel if(false) */
         n_thds = 1;
         in_parallel = cthd->in_parallel;
     } else {
-        n_thds = cthd->parent == NULL ? 20 : 12;
+        n_thds = cthd->parent == NULL ? num_threads_first : num_threads_second;
         in_parallel = 1;
     }
 
