@@ -1878,9 +1878,9 @@ omp_clause:
         | OMPKW_FINAL '(' expr ')'
 	{ $$ = OMP_LIST(OMP_DATA_FINAL,$3); }
         | OMPKW_UNTIED
-	{ $$ = OMP_LIST(OMP_DATA_UNTIED,NULL); }
+	{ $$ = OMP_LIST(OMP_DIR_UNTIED,NULL); }
         | OMPKW_MERGEABLE
-	{ $$ = OMP_LIST(OMP_DATA_MERGEABLE,NULL); }
+	{ $$ = OMP_LIST(OMP_DIR_MERGEABLE,NULL); }
 	;
 
 omp_depend_op:

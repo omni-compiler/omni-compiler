@@ -175,8 +175,7 @@ public class OMPanalyzePragma
         
             idLists = new ArrayList<XobjList>();
             for(Xobject a : (XobjList)pb.getClauses()) {
-            	if(OMP.debugFlag==true)
-            	System.out.println(a.toString());
+            	OMP.debug(a.toString());
                 c = OMPpragma.valueOf(a.getArg(0));
                 switch(c) {
                 case DIR_IF:
@@ -190,6 +189,14 @@ public class OMPanalyzePragma
                     break;
                 case DIR_ORDERED:
                     info.ordered = true;
+                    break;
+                case DIR_UNTIED:
+                    info.untied = true;
+                    OMP.debug("UNTIED");
+                    break;
+                case DIR_MERGEABLE:
+                    info.mergeable = true;
+                    OMP.debug("MERGEABLE");
                     break;
                 case DIR_SCHEDULE:
                     info.setSchedule(a.getArg(1));

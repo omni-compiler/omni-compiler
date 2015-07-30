@@ -36,6 +36,8 @@ public class OMPinfo
     OMPpragma sched = OMPpragma.SCHED_NONE; /* for DIR_SCHEDULE */
     Xobject sched_chunk;
     boolean ordered;
+    boolean untied;
+    boolean mergeable;
 
     boolean simd;
     // for parallel region, OMPpragma.PARALLEL
