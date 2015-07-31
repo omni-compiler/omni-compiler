@@ -721,7 +721,7 @@ public class OMPtransPragma
             XobjList funcArgs = Xcons.List();
             int nargs = func_params.Nargs();
             OMP.debug("nargs 0="+nargs);
-            
+
             for(Xobject a : func_params) {
                 //argument of character type passed with character length to runtime function
                 OMP.debug("func_params =" + a.Type().toString());
@@ -739,20 +739,20 @@ public class OMPtransPragma
             funcArgs.insert(fid);
 
             Xobject cond = null;
-            if(i.hasIfExpr()) {
-                cond = Ident.Fident(COND_VAR, Xtype.FlogicalType);
-                func_params.insert(cond);
-            } else {
-                cond = Xcons.FlogicalConstant(true);
-            }
-            funcArgs.insert(cond);
-            
             if(i.hasFinalExpr()) {
-                cond = Ident.Fident(COND_VAR+"_F", Xtype.FlogicalType);
+                cond = Ident.Fident("TASK_"+COND_VAR+"_F", Xtype.FlogicalType);
                 func_params.insert(cond);
             } else {
                 cond = Xcons.FlogicalConstant(false);
             }            
+            funcArgs.insert(cond);
+            
+            if(i.hasIfExpr()) {
+                cond = Ident.Fident("TASK_"+COND_VAR, Xtype.FlogicalType);
+                func_params.insert(cond);
+            } else {
+                cond = Xcons.FlogicalConstant(true);
+            }
             funcArgs.insert(cond);
             
             XobjList body_id_list = Xcons.List();
@@ -770,7 +770,6 @@ public class OMPtransPragma
                 body_id_list.add(id);
             
             completeFstructTypeSymbol(orgBody.getIdentList(), body_id_list);
-
             //funcArgs.insert(Xcons.IntConstant(nargs));
             BlockList body = new BlockList();
 
@@ -790,7 +789,7 @@ public class OMPtransPragma
                 parallelTaskFunc + "_" + nargs,
                 Xtype.FsubroutineType);
             body.add(idDoParallel.Call(funcArgs));
-            
+
             ((FunctionType)dop_func_id.Type()).setFuncParamIdList(func_params);
             XobjList decls = Xcons.List();
             nameMap.clear();

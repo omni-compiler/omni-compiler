@@ -187,9 +187,6 @@ public class OMPanalyzePragma
                 case DIR_NOWAIT:
                     info.no_wait = true;
                     break;
-                case DIR_ORDERED:
-                    info.ordered = true;
-                    break;
                 case DIR_UNTIED:
                     info.untied = true;
                     OMP.debug("UNTIED");
@@ -198,14 +195,8 @@ public class OMPanalyzePragma
                     info.mergeable = true;
                     OMP.debug("MERGEABLE");
                     break;
-                case DIR_SCHEDULE:
-                    info.setSchedule(a.getArg(1));
-                    break;
                 case DATA_DEFAULT:
                     info.data_default = OMPpragma.valueOf(a.getArg(1));
-                    break;
-                case DIR_NUM_THREADS:
-                    info.num_threads = a.getArg(1);
                     break;
                 default: // DATA_*
                 	if(a.getArg(1) == null) break;
