@@ -501,10 +501,10 @@ public class OMPtransPragma
         if(i.getNumThreads() != null)
             bblock.add(OMPfuncIdent(setNumThreadsFunc).Call(Xcons.List(i.getNumThreads())));
         
-        if(i.hasIfExpr())
-            funcArgs.insert(i.getIfExpr());
         if(i.hasFinalExpr())
     		funcArgs.insert(i.getFinalExpr());
+        if(i.hasIfExpr())
+            funcArgs.insert(i.getIfExpr());
         
         bblock.add(dop_func_id.Call(funcArgs));
         
@@ -739,6 +739,7 @@ public class OMPtransPragma
             funcArgs.insert(fid);
 
             Xobject cond = null;
+            
             if(i.hasFinalExpr()) {
                 cond = Ident.Fident("TASK_"+COND_VAR+"_F", Xtype.FlogicalType);
                 func_params.insert(cond);
@@ -811,17 +812,20 @@ public class OMPtransPragma
             Ident dummyFunc = Ident.FidentNotExternal(FdummyFunc, Xtype.FsubroutineType);
             //paramDecls.add(Xcons.List(Xcode.VAR_DECL, dummyNarg));
             //dopar_params.add(dummyNarg);
+
             if(!i.hasFinalExpr()) {
                 Ident c = Ident.Fident("cond_F", Xtype.FlogicalType);
                 paramDecls.add(Xcons.List(Xcode.VAR_DECL, c));
                 dopar_params.add(c);
-            }
+            }            
             
             if(!i.hasIfExpr()) {
                 Ident c = Ident.Fident("cond", Xtype.FlogicalType);
                 paramDecls.add(Xcons.List(Xcode.VAR_DECL, c));
                 dopar_params.add(c);
             }
+            
+
             paramDecls.add(Xcons.FinterfaceFunctionDecl(dummyFunc, null));
             for(Xobject a : func_params) {
                 a = convertFidentTypeForParamDecl((Ident)a, i);

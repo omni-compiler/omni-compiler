@@ -172,6 +172,8 @@ public class OMPanalyzePragma
             }
             break;
         case TASK:
+        	info.setIfExpr(Xcons.FlogicalConstant(true));
+            info.setFinalExpr(Xcons.FlogicalConstant(false));
         
             idLists = new ArrayList<XobjList>();
             for(Xobject a : (XobjList)pb.getClauses()) {
@@ -179,7 +181,7 @@ public class OMPanalyzePragma
                 c = OMPpragma.valueOf(a.getArg(0));
                 switch(c) {
                 case DIR_IF:
-                    info.setIfExpr(a.getArg(1));
+                	info.setIfExpr(a.getArg(1));
                     break;
                 case DATA_FINAL:
                     info.setFinalExpr(a.getArg(1));
