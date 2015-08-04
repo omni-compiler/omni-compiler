@@ -38,10 +38,10 @@
 !
 module pres
   implicit none
-  include 'xmp_coarray.h'
-  real(4),dimension(:,:,:),allocatable :: p
+!!!  include 'xmp_coarray.h'
+  real(4),dimension(:,:,:),codimension[:,:,:],allocatable :: p
   real(4), allocatable, dimension(:,:), codimension[:,:,:] :: &
-       buf1l, buf1u,  buf2l, buf2u,  buf3l, buf3u
+       buf1l, buf1u
 end module pres
 !
 module mtrx
@@ -64,6 +64,7 @@ module others
   integer :: mx0,my0,mz0
   integer :: mimax,mjmax,mkmax
   integer :: imax,jmax,kmax
+  integer :: imax1,jmax1,kmax1
   real(4),parameter :: omega=0.8
 end module others
 !
@@ -82,6 +83,8 @@ program HimenoBMTxp_f90_CAF
   use comm
 !
   implicit none
+!
+  include 'mpif.h'
 !
 !     ttarget specifys the measuring period in sec
   integer :: mx,my,mz
@@ -104,10 +107,6 @@ program HimenoBMTxp_f90_CAF
 !
   allocate(buf1l(mjmax, mkmax)[ndx,ndy,*])
   allocate(buf1u(mjmax, mkmax)[ndx,ndy,*])
-  allocate(buf2l(mimax, mkmax)[ndx,ndy,*])
-  allocate(buf2u(mimax, mkmax)[ndx,ndy,*])
-  allocate(buf3l(mimax, mjmax)[ndx,ndy,*])
-  allocate(buf3u(mimax, mjmax)[ndx,ndy,*])
 !
 !! Initializing matrixes
   call initmt(mz,it)
@@ -133,12 +132,14 @@ program HimenoBMTxp_f90_CAF
   gosa= 0.0
   cpu= 0.0
   sync all
-  cpu0= xmp_wtime()
+  cpu0= mpi_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= xmp_wtime() - cpu0
+  cpu1= mpi_wtime() - cpu0
 !
-  call co_max(cpu1, cpu)
+!!!  call co_max(cpu1, cpu)
+  call co_max(cpu1)
+  cpu = cpu1
 !
   flop=real(mx-2)*real(my-2)*real(mz-2)*34.0
   if(cpu /= 0.0) xmflops2=flop/cpu*1.0d-6*real(nn)
@@ -158,12 +159,14 @@ program HimenoBMTxp_f90_CAF
   gosa= 0.0
   cpu= 0.0
   sync all
-  cpu0= xmp_wtime()
+  cpu0= mpi_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= xmp_wtime() - cpu0
+  cpu1= mpi_wtime() - cpu0
 !
-  call co_max(cpu1, cpu)
+!!!  call co_max(cpu1, cpu)
+  call co_max(cpu1)
+  cpu = cpu1
 !
   if(id == 0) then
      if(cpu /= 0.0)  xmflops2=flop*1.0d-6/cpu*real(nn)
@@ -185,9 +188,8 @@ subroutine readparam
 !
   implicit none
 !
-  integer :: itmp(3)[*]
-!!!  character(10) :: size[*]     !! to avoid bug #354
-  character(12) :: size(1)[*]
+  integer, save :: itmp(3)[*]
+  character(12), save :: size[*]
 !
   if(id == 0) then
      print *,'For example:'
@@ -213,7 +215,7 @@ subroutine readparam
 !
   sync all
   if (id /= 0) then
-     itmp = itmp[1]
+     itmp(:) = itmp(:)[1]
      size = size[1]
   end if
   sync all
@@ -328,10 +330,11 @@ subroutine initmem
   use bound
   use work
   use others
+  use comm
 !
   implicit none
 !
-  allocate(p(mimax,mjmax,mkmax))
+  allocate(p(mimax,mjmax,mkmax)[ndx,ndy,*])
   allocate(a(mimax,mjmax,mkmax,4),b(mimax,mjmax,mkmax,3), &
            c(mimax,mjmax,mkmax,3))
   allocate(bnd(mimax,mjmax,mkmax))
@@ -387,7 +390,9 @@ subroutine jacobi(nn,gosa)
 !
      call sendp()
 !
-     call co_sum(wgosa, gosa)
+!!!     call co_sum(wgosa, gosa)
+     call co_sum(wgosa)
+     gosa = wgosa
 !
   enddo
 !! End of iteration
@@ -493,6 +498,10 @@ subroutine initmax(mx,my,mz,ks)
   jmax= my2(iop(2))
   kmax= mz2(iop(3))
 !
+  if (iop(1) /= 0) imax1= mx2(iop(1)-1)
+  if (iop(2) /= 0) jmax1= my2(iop(2)-1)
+  if (iop(3) /= 0) kmax1= mz2(iop(3)-1)
+!
   if(iop(3) == 0) then
      ks= mz1(iop(3))
   else
@@ -505,76 +514,5 @@ end subroutine initmax
 !
 !
 subroutine sendp()
-!
-  use pres
-  use others
-  use comm
-  implicit none
-  integer mex, mey, mez
-
-  mex = iop(1) + 1
-  mey = iop(2) + 1
-  mez = iop(3) + 1
-
-  !*** put z-axis
-  if (mez>1) then
-     buf3u(2:imax-1,2:jmax-1)[mex,mey,mez-1] = p(2:imax-1,2:jmax-1,2     )
-  end if
-  if (mez<ndz) then
-     buf3l(2:imax-1,2:jmax-1)[mex,mey,mez+1] = p(2:imax-1,2:jmax-1,kmax-1)
-  endif
-
-  sync all
-
-  !*** unpack z-axis
-  if (mez<ndz) then
-     p(2:imax-1,2:jmax-1,kmax) = buf3u(2:imax-1,2:jmax-1)
-  end if
-  if (mez>1) then
-     p(2:imax-1,2:jmax-1,1   ) = buf3l(2:imax-1,2:jmax-1)
-  endif
-
-  sync all
-
-  !*** put y-axis
-  if (mey>1) then
-     buf2u(2:imax-1,1:kmax)[mex,mey-1,mez] = p(2:imax-1,2     ,1:kmax)
-  end if
-  if (mey<ndy) then
-     buf2l(2:imax-1,1:kmax)[mex,mey+1,mez] = p(2:imax-1,jmax-1,1:kmax)
-  endif
-
-  sync all
-
-  !*** unpack y-axis
-  if (mey<ndy) then
-     p(2:imax-1,jmax,1:kmax) = buf2u(2:imax-1,1:kmax)
-  end if
-  if (mey>1) then
-     p(2:imax-1,1   ,1:kmax) = buf2l(2:imax-1,1:kmax)
-  endif
-
-  sync all
-
-  !*** put x-axis
-  if (mex>1) then
-     buf1u(1:jmax,1:kmax)[mex-1,mey,mez] = p(2     ,1:jmax,1:kmax)
-  end if
-  if (mex<ndx) then
-     buf1l(1:jmax,1:kmax)[mex+1,mey,mez] = p(imax-1,1:jmax,1:kmax)
-  endif
-
-  sync all
-
-  !*** unpack x-axis
-  if (mex<ndx) then
-     p(imax,1:jmax,1:kmax) = buf1u(1:jmax,1:kmax)
-  end if
-  if (mex>1) then
-     p(1   ,1:jmax,1:kmax) = buf1l(1:jmax,1:kmax)
-  endif
-
-  sync all
-
   return
 end subroutine sendp

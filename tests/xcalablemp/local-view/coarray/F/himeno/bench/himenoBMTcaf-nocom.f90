@@ -185,9 +185,9 @@ subroutine readparam
 !
   implicit none
 !
-  integer :: itmp(3)[*]
+  integer, save :: itmp(3)[*]
 !!!  character(10) :: size[*]     !! to avoid bug #354
-  character(12) :: size(1)[*]
+  character(12), save :: size(1)[*]
 !
   if(id == 0) then
      print *,'For example:'
@@ -485,9 +485,9 @@ subroutine initmax(mx,my,mz,ks)
      if(i /= ndz-1)  mz2(i)= mz2(i) + 1
   end do
 !
-  mimax=maxval(mx2(0:ndx-1))
-  mjmax=maxval(my2(0:ndy-1))
-  mkmax=maxval(mz2(0:ndz-1))
+  mimax=maxval(mx2(0:ndx-1)) + 1
+  mjmax=maxval(my2(0:ndy-1)) + 1
+  mkmax=maxval(mz2(0:ndz-1)) + 1
 !
   imax= mx2(iop(1))
   jmax= my2(iop(2))

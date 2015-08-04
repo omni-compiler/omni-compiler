@@ -75,8 +75,9 @@ public enum OMPpragma
     DATA_DEPEND_OUT,
     DATA_DEPEND_INOUT,
 
-    DATA_UNTIED,
-    DATA_MERGEABLE,
+    DATA_FINAL,
+    DIR_UNTIED,
+    DIR_MERGEABLE,
 
     DIR_ORDERED,
     DIR_IF,

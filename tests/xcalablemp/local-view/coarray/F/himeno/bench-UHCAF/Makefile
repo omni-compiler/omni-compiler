@@ -17,16 +17,17 @@
 #-----------------
 # UHCAF/GNU/mvapich2-GDR
 #-----------------
-MPI=mpif90
-CAF=uhcaf
+MPI=mpif90 -O2
 #MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include64
-#MPILIB=/opt/MPI/MVAPICH2-GDR/2.0/GNU/CUDA/6.5/include64
+#MPILIB=/opt/MPI/MVAPICH2-GDR/2.0/GNU/CUDA/6.5/include
 #MPILIB=/opt/MPI/IntelMPI/impi/4.1.1.036/include64
-#CAF=uhcaf --mpi -I$(MPILIB)
+MPILIB=$$MPI_HOME/include
+#MPILIB=$$MPI_HOME/include64
+CAF=uhcaf --mpi --static-libcaf --layer=gasnet-ibv -I$(MPILIB)  --verbose
+#CAF=uhcaf --mpi --static-libcaf --layer=gasnet-ibv  --verbose
 
-
-
-EXE=mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x
+#EXE=mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x caf-direct-nocom.x
+EXE=mpi.x mpi-nocom.x caf-wide.x caf-nocom.x caf-direct.x caf-direct-nocom.x
 
 all: $(EXE)
 
@@ -47,11 +48,6 @@ mpi-nocom.x: himenoBMTxpr-nocom.f90
 	$(MPI) $< -o $@
 
 run:	$(EXE:%.x=%.result)
-
-%.result: %.x
-	echo m >stdin.m122
-	echo "1 2 2" >>stdin.m122
-	mpirun -n 4 $< <stdin.m122
 
 clean:
 	rm -f $(EXE)
