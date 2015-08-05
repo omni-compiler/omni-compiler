@@ -21,43 +21,25 @@ export SHELL
 AC_SUBST(SHELL)
 
 # --------------------------------------------------------------------
-# check existence of commands set by user
-for cmd	in $CC $FC $MPI_CC $MPI_FC $JAVA $JAVAC $JAR
-do
-  if test "$cmd" != ""; then
-    which $cmd 2> /dev/null 1> /dev/null
-    if test $? -eq 1; then
-      AC_MSG_ERROR([$cmd not found])
-    fi
-  fi
-done
-
 # save environmental variables set by user
 userCFLAGS=${CFLAGS}
 userFCFLAGS=${FCFLAGS}
 
-userMPI_CPP=${MPI_CPP}
 userMPI_CPPFLAGS=${MPI_CPPFLAGS}
-userMPI_CC=${MPI_CC}
 userMPI_CFLAGS=${MPI_CFLAGS}
 userMPI_CLIBS=${MPI_CLIBS}
 
-userMPI_FPP=${MPI_FPP}
 userMPI_FPPFLAGS=${MPI_FPPFLAGS}
-userMPI_FC=${MPI_FC}
 userMPI_FCFLAGS=${MPI_FCFLAGS}
 userMPI_FCLIBS=${MPI_FCLIBS}
 
-userJAVA=${JAVA}
-userJAVAC=${JAVAC}
-userJAR=${JAR}
-
 # --------------------------------------------------------------------
 # Initialize for autoconf
-LT_INIT
-if test -z "$LIBTOOL"; then
-   AC_MSG_ERROR([Please install newer automake/autoconf/libtool. We recommend automake-1.14/autoconf-2.69/libtool-2.4.2.])
-fi
+#LT_INIT
+
+#if test -z "$LIBTOOL"; then
+#   AC_MSG_ERROR([Please install newer automake/autoconf/libtool. We recommend automake-1.14/autoconf-2.69/libtool-2.4.2.])
+#fi
 #AC_SUBST(LIBTOOL)
 #AC_SUBST(LIBTOOL_DEPS)
 
@@ -433,15 +415,13 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   XMPF_DEF="-D_XCALABLEMP"
 
 # MPI C
-  MPI_CC="mpifccpx"
-  MPI_CPP=$MPI_CC
+  AC_CHECK_PROG([MPI_CC], [mpifccpx], [mpifccpx])
   MPI_CFLAGS="-Kfast,openmp -Xg -noansi"
   MPI_CPPFLAGS="-E -Xg -noansi"
   MPI_CLIBS=""
 
 # MPI F
-  MPI_FC="mpifrtpx"
-  MPI_FPP=$MPI_FC
+  AC_CHECK_PROG([MPI_FC], [mpifrtpx], [mpifrtpx])
   MPI_FPPFLAGS="-E"
   MPI_FCFLAGS="-Kfast,openmp"
   MPI_MODINC="-M"
@@ -461,10 +441,10 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
   OMNI_X2X_FLAGS=""
 
 # ranlib & ar & nm
-  AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [:])
-  AC_CHECK_PROG([AR], [arpx], [arpx], [:])
+  AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx])
+  AC_CHECK_PROG([AR], [arpx], [arpx])
   ARFLAGS="cru"
-  AC_CHECK_PROG([NM], [nmpx], [nmpx], [:])
+  AC_CHECK_PROG([NM], [nmpx], [nmpx])
 
 elif test "$target" = "MIC-linux-gnu"; then
 # OpenMP
@@ -479,15 +459,13 @@ elif test "$target" = "MIC-linux-gnu"; then
   XMPF_DEF="-D_XCALABLEMP"
 
 # MPI C
-  MPI_CC="mpiicc"
-  MPI_CPP=$MPI_CC
+  AC_CHECK_PROG([MPI_CC], [mpiicc], [mpiicc])
   MPI_CPPFLAGS="-E -std=gnu99"
   MPI_CFLAGS="-fast $OPENMP_OPT_C"
   MPI_CLIBS=""
 
 # MPI F
-  MPI_FC="mpiifort"
-  MPI_FPP=$MPI_FC
+  AC_CHECK_PROG([MPI_FC], [mpiifort], [mpiifort])
   MPI_FPPFLAGS="-E"
   MPI_FCFLAGS="-fast $OPENMP_OPT_F"
   MPI_MODINC="-module"
@@ -507,10 +485,10 @@ elif test "$target" = "MIC-linux-gnu"; then
   OMNI_X2X_FLAGS=""
 
 # ranlib & ar & nm
-  AC_CHECK_TOOL([RANLIB], [ranlib], [:])
-  AC_CHECK_TOOL([AR], [ar], [:])
+  AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
+  AC_CHECK_PROG([AR], [ar], [ar])
   ARFLAGS="cru"
-  AC_CHECK_TOOL([NM], [nm], [:])
+  AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "Cray-linux-gnu"; then
 # OpenMP
@@ -525,15 +503,13 @@ elif test "$target" = "Cray-linux-gnu"; then
   XMPF_DEF="-D_XCALABLEMP"
 
 # MPI C
-  MPI_CC="cc"
-  MPI_CPP=$MPI_CC
+  AC_CHECK_PROG([MPI_CC], [cc], [cc])
   MPI_CPPFLAGS="-E -D_XMP_CRAY"
   MPI_CFLAGS="-O2 -hgnu $OPENMP_OPT_C"
   MPI_CLIBS=""
 
 # MPI F
-  MPI_FC="ftn"
-  MPI_FPP=$MPI_FC
+  AC_CHECK_PROG([MPI_FC], [ftn], [ftn])
   MPI_FPPFLAGS="-E"
   MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
   MPI_MODINC="-J"
@@ -553,10 +529,10 @@ elif test "$target" = "Cray-linux-gnu"; then
   OMNI_X2X_FLAGS=""
 
 # ranlib & ar & nm
-  AC_CHECK_TOOL([RANLIB], [ranlib], [:])
-  AC_CHECK_TOOL([AR], [ar], [:])
+  AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
+  AC_CHECK_PROG([AR], [ar], [ar])
   ARFLAGS="cru"
-  AC_CHECK_TOOL([NM], [nm], [:])
+  AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "sx-nec-superux"; then
 # OpenMP
@@ -571,15 +547,13 @@ elif test "$target" = "sx-nec-superux"; then
   XMPF_DEF="-D_XCALABLEMP"
 
 # MPI C
-  MPI_CC="sxmpic++"
-  MPI_CPP=$MPI_CC
+  AC_CHECK_PROG([MPI_CC], [sxmpic++], [sxmpic++])
   MPI_CPPFLAGS="-E"
   MPI_CFLAGS="-Chopt $OPENMP_OPT_C"
   MPI_CLIBS=""
 
 # MPI F
-  MPI_FC="sxmpif90"
-  MPI_FPP=$MPI_FC
+  AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
   MPI_FPPFLAGS="-E"
   MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
   MPI_MODINC="-to"
@@ -599,10 +573,10 @@ elif test "$target" = "sx-nec-superux"; then
   OMNI_X2X_FLAGS=""
 
 # ranlib & ar & nm
-  AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
-  AC_CHECK_PROG([AR], [sxar], [sxar], [:])
+  AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
+  AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
   ARFLAGS="cru"
-  AC_CHECK_PROG([NM], [sxnm], [sxnm], [:])
+  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
 
 elif test "$target" = "powerpc-ibm-cnk"; then
   # These options are referred to https://scwwwb.kek.jp/index.html
@@ -619,18 +593,8 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   XMPF_DEF="-WF,-D_XCALABLEMP"
 
 # MPI C
-  MPI_DIR="/bgsys/drivers/V1R2M1/ppc64/comm/bin/xl/"
-  if test -d $MPI_DIR; then
-    MPI_CC="$MPI_DIR/mpixlcxx_r"
-  else
-    MPI_CC="mpixlcxx_r"
-  fi
+  AC_CHECK_PROG([MPI_CC], [mpixlcxx_r], [mpixlcxx_r])
 
-# $MPICC cannot be used for XcodeML bug. 
-# Instead of $MPICC, $CC (gcc) is used. 
-# But, this is not a good idea. Wish to fix the bug.
-#  MPI_CPP=$MPI_CC
-  MPI_CPP=$CC
   MPI_CPPFLAGS="-E --std=c99"
 
   if test -d "/bgsys/drivers/ppcfloor/comm/include"; then
@@ -648,12 +612,8 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   fi
   
 # MPI F
-  if test -d $MPI_DIR; then
-    MPI_FC="/bgsys/drivers/V1R2M1/ppc64/comm/bin/xl/mpixlf90_r"
-  else
-    MPI_FC="mpixlf90_r"
-  fi
-  MPI_FPP=$MPI_FC
+  AC_CHECK_PROG([MPI_FC], [mpixlf90_r], [mpixlf90_r])
+  
   MPI_FPPFLAGS="-E"
   MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist -qextname $INC_PATH $OPENMP_OPT_F"
   MPI_MODINC="-I"
@@ -680,10 +640,10 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   OMNI_X2X_FLAGS=""
 
 # ranlib & ar & nm
-  AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
-  AC_CHECK_PROG([AR], [bgar], [bgar], [:])
+  AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
+  AC_CHECK_PROG([AR], [ar], [ar])
   ARFLAGS="cru"
-  AC_CHECK_PROG([NM], [nm], [nm], [:])
+  AC_CHECK_PROG([NM], [nm], [nm])
 
 elif test "$target" = "powerpc-hitachi-aix"; then
 # OpenMP
@@ -698,15 +658,13 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   XMPF_DEF="-WF,-D_XCALABLEMP"
 
 # MPI C
-  MPI_CC="mpCC_r"
-  MPI_CPP=$MPI_CC
+  AC_CHECK_PROG([MPI_CC], [mpCC_r], [mpCC_r])
   MPI_CPPFLAGS="-E"
   MPI_CFLAGS="-q64 -qhot -qsimd=auto -O5 $OPENMP_OPT_C"
   MPI_CLIBS=""
 
 # MPI F
-  MPI_FC="mpxlf90_r"
-  MPI_FPP=$MPI_FC
+  AC_CHECK_PROG([MPI_FC], [mpxlf90_r], [mpxlf90_r])
   MPI_FPPFLAGS="-E"
   MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $OPENMP_OPT_F"
   MPI_MODINC="-I"
@@ -726,30 +684,21 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   OMNI_X2X_FLAGS=""
 
 # ranlib & ar & nm
-  AC_CHECK_PROG([RANLIB], [echo], [echo], [:])
-  AC_CHECK_PROG([AR], [ar], [ar], [:])
+  AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
+  AC_CHECK_PROG([AR], [ar], [ar])
   ARFLAGS="-X32_64 cru"
-  AC_CHECK_PROG([NM], [nm], [nm], [:])
+  AC_CHECK_PROG([NM], [nm], [nm])
 
 else
   # ranlib & ar & nm
-  AC_CHECK_TOOL([RANLIB], [ranlib], [:])
-  AC_CHECK_TOOL([AR], [ar], [:])
+  AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
+  AC_CHECK_PROG([AR], [ar], [ar])
   ARFLAGS="cru"
-  AC_CHECK_TOOL([NM], [nm], [:])
+  AC_CHECK_PROG([NM], [nm], [nm])
 
   # C
-  if test "" != "$userMPI_CC"; then
-    MPI_CC=${userMPI_CC}
-  else
-    INTEL_MPICC=mpiicc
-    which ${INTEL_MPICC} 1>/dev/null 2>/dev/null
-    if test $? -eq 0; then
-      MPI_CC=${INTEL_MPICC}
-    else
-      MPI_CC=mpicc
-    fi
-  fi
+  AC_CHECK_PROG([MPI_CC], [mpiicc], [mpiicc])
+  AC_CHECK_PROG([MPI_CC], [mpicc], [mpicc])
 
   chk=`${MPI_CC} --version | head -n1`
   case $chk in
@@ -764,7 +713,6 @@ else
     XMPC_DEF="-D_XCALABLEMP"
 
     # MPI C
-    MPI_CPP=$MPI_CC
     MPI_CPPFLAGS="-E -std=gnu99"
     MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith $OPENMP_OPT_C"
     MPI_CLIBS=""
@@ -788,7 +736,6 @@ else
     XMPC_DEF="-D_XCALABLEMP"
 
     # MPI C
-    MPI_CPP=$MPI_CC
     ver=`$MPI_CC --version 2> /dev/null | head -n1`
     case $ver in
     *15*)
@@ -821,7 +768,6 @@ else
       XMPC_DEF="-D_XCALABLEMP"
 
       # MPI C
-      MPI_CPP=$MPI_CC
       MPI_CPPFLAGS="-E -c99"
       MPI_CFLAGS="-fast -c99 $OPENMP_OPT_C"
       MPI_CLIBS=""
@@ -854,17 +800,8 @@ else
   esac
 
   # Fortran
-  if test "" != "$userMPI_FC"; then
-    MPI_FC=${userMPI_FC}
-  else
-    INTEL_MPIFC=mpiifort
-    which ${INTEL_MPIFC} 1>/dev/null 2>/dev/null
-    if test $? -eq 0; then
-      MPI_FC=${INTEL_MPIFC}
-    else
-      MPI_FC=mpif90
-    fi
-  fi
+  AC_CHECK_PROG([MPI_FC], [mpiifort], [mpiifort])
+  AC_CHECK_PROG([MPI_FC], [mpif90], [mpif90])
 
   chk=`${MPI_FC} --version | head -n1`
   case $chk in
@@ -876,8 +813,6 @@ else
     XMPF_DEF="-D_XCALABLEMP"
 
     # MPI F
-    MPI_FC="mpif90"
-    MPI_FPP=$MPI_FC
     MPI_FPPFLAGS="-E"
     MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
     MPI_MODINC="-J"
@@ -896,7 +831,6 @@ else
     XMPF_DEF="-D_XCALABLEMP"
 
     # MPI F
-    MPI_FPP=$MPI_FC
     MPI_FPPFLAGS="-E"
     MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
     MPI_MODINC="-module"
@@ -921,8 +855,6 @@ else
       XMPF_DEF="-D_XCALABLEMP"
 
       # MPI F
-      MPI_FC="mpif90"
-      MPI_FPP=$MPI_FC
       MPI_FPPFLAGS="-E"
       MPI_FCFLAGS="-fast $OPENMP_OPT_F"
       MPI_MODINC="-module"
@@ -1138,24 +1070,8 @@ fi
 AC_SUBST(GASNET_LIBS)
 
 # Set user defined value.
-if test "${userMPI_CPP}" != ""; then
-  MPI_CPP="${userMPI_CPP}"
-fi
-
-if test	"${userMPI_CC}" != ""; then
-  MPI_CC="${userMPI_CC}"
-fi
-
 if test "${userMPI_CFLAGS}" != ""; then
   MPI_CFLAGS="${userMPI_CFLAGS}"
-fi
-
-if test "${userMPI_FC}" != ""; then
-  MPI_FC="${userMPI_FC}"
-fi
-
-if test "${userMPI_FCFLAGS}" != ""; then
-  MPI_FCFLAGS="${userMPI_FCFLAGS}"
 fi
 
 if test "${userCFLAGS}" != ""; then
@@ -1182,55 +1098,43 @@ else
 fi
 
 # --------------------------------------------------------------------
-# MPI3 for MPI FLAGS 
-if test "x${target}" = "xKcomputer-linux-gnu"; then
-  doMPI3=yes
-else
-  tmpmpi3=/tmp/tmpmpi3.$$.c
-  cat <<EOF > $tmpmpi3
-#include <mpi.h>
-MPI_VERSION
-MPI_SUBVERSION
-EOF
-  MPI_VERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -2 | head -1`
-  MPI_SUBVERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -1`
-  if test $MPI_VERSION -ge 3; then
-    doMPI3=yes
-  else
-    doMPI3=no
-  fi
-  rm -f $tmpmpi3
-fi
-
-if test "x${doMPI3}" = "xyes"; then
-  OMNI_X2X_FLAGS="${OMNI_X2X_FLAGS} -fasync"
-fi
-
-AM_CONDITIONAL(MPI3, test "x${doMPI3}" = "xyes" -o "x${target}" = "xKcomputer-linux-gnu")
-
-# --------------------------------------------------------------------
 # set userflags
-if test "${userFCFLAGS}" != ""; then
+if test -z ${MPI_CPP}; then
+  if test "$target" != "powerpc-ibm-cnk"; then
+    MPI_CPP="${MPI_CC}"
+  else
+    # $MPI_CC cannot be used for XcodeML bug in powerpc-ibm-cnk.
+    # Instead of $MPI_CC, $CC (gcc) is used.
+    # But, this is not a good idea. Wish to fix the bug.
+    MPI_CPP="${CC}"
+  fi
+fi
+	
+if test	-z ${MPI_FPP}; then
+  MPI_FPP="${MPI_FC}"
+fi
+
+if test "" != "${userFCFLAGS}"; then
   FCFLAGS="${userFCFLAGS}"
 fi
 
-if test "${userMPI_CPPFLAGS}" != ""; then
+if test "" != "${userMPI_CPPFLAGS}"; then
   MPI_CPPFLAGS="${userMPI_CPPFLAGS}"
 fi
 
-if test "${userMPI_FPP}" != ""; then
-  MPI_FPP="${userMPI_FPP}"
-fi
-
-if test "${userMPI_FPPFLAGS}" != ""; then
-  MPI_FPPFLAGS="${userMPI_FPPFLAGS}"
-fi
-
-if test "${userMPI_CLIBS}" != ""; then
+if test "" != "${userMPI_CLIBS}"; then
   MPI_CLIBS="${userMPI_CLIBS}"
 fi
 
-if test "${userMPI_FCLIBS}" != ""; then
+if test "" != "${userMPI_FPPFLAGS}"; then
+  MPI_FPPFLAGS="${userMPI_FPPFLAGS}"
+fi
+
+if test "" != "${userMPI_FCFLAGS}"; then
+   MPI_FCFLAGS="${userMPI_FCFLAGS}"
+fi
+ 
+if test "" != "${userMPI_FCLIBS}"; then
   MPI_FCLIBS="${userMPI_FCLIBS}"
 fi
 
@@ -1275,20 +1179,27 @@ AC_SUBST(OMNI_LNK_FCFLAGS)
 # Omni Common
 AC_SUBST(OMNI_X2X_FLAGS)
 
+# ranlib & ar & nm
+AC_SUBST(RANLIB)
+AC_SUBST(AR)
+AC_SUBST(NM)
+
 # check PGI compiler
 #chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
 #AM_CONDITIONAL(IS_PGI, test "$chk" != "")
 
 # check -lstdc++
-tmp_file_c=/tmp/_xmp.$$.c
-tmp_file_x=/tmp/_xmp.$$.x
-echo "int main(){return 0;}" > $tmp_file_c
-chk=`$MPI_CC -lstdc++ $tmp_file_c -o $tmp_file_x 2> /dev/null`
-if test $? -ne 0; then
-   rm -f $tmp_file_c $tmp_file_x
-   AC_MSG_ERROR([-lstdc++ is not found.])
-else
-   rm -f $tmp_file_c $tmp_file_x
+if test "$target" != "powerpc-hitachi-aix"; then
+  tmp_file_c=/tmp/_xmp.$$.c
+  tmp_file_x=/tmp/_xmp.$$.x
+  echo "int main(){return 0;}" > $tmp_file_c
+  chk=`$MPI_CC -lstdc++ $tmp_file_c -o $tmp_file_x 2> /dev/null`
+  if test $? -ne 0; then
+    rm -f $tmp_file_c $tmp_file_x
+    AC_MSG_ERROR([-lstdc++ is not found.])
+  else
+    rm -f $tmp_file_c $tmp_file_x
+  fi
 fi
 
 #AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
@@ -1296,6 +1207,33 @@ AM_CONDITIONAL(SUPERUX, test "$target" = "sx-nec-superux")
 
 #AC_SUBST(CRAY)
 AC_SUBST(SUPERUX)
+
+# --------------------------------------------------------------------
+# MPI3 for MPI FLAGS
+if test "x${target}" = "xKcomputer-linux-gnu"; then
+  doMPI3=yes
+else
+  tmpmpi3=/tmp/tmpmpi3.$$.c
+  cat <<EOF > $tmpmpi3
+#include <mpi.h>
+MPI_VERSION
+MPI_SUBVERSION
+EOF
+  MPI_VERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -2 | head -1`
+  MPI_SUBVERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -1`
+  if test $MPI_VERSION -ge 3; then
+    doMPI3=yes
+  else
+    doMPI3=no
+  fi
+  rm -f $tmpmpi3
+fi
+
+if test "x${doMPI3}" = "xyes"; then
+  OMNI_X2X_FLAGS="${OMNI_X2X_FLAGS} -fasync"
+fi
+
+AM_CONDITIONAL(MPI3, test "x${doMPI3}" = "xyes" -o "x${target}" = "xKcomputer-linux-gnu")
 
 # --------------------------------------------------------------------
 # check Perl versoin is 5
@@ -1323,23 +1261,10 @@ AC_SUBST(PERL5)
 
 # --------------------------------------------------------------------
 # check java
-if test "$userJAVA" != ""; then
-  JAVA="$userJAVA"
-else
-  JAVA=java
-fi
 
-if test	"$userJAVAC" != ""; then
-  JAVAC="$userJAVAC"
-else
-  JAVAC=javac
-fi
-
-if test "$userJAR" != ""; then
-  JAR="$userJAR"
-else
-  JAR=jar
-fi
+AC_CHECK_PROG([JAVA], [java], [java])
+AC_CHECK_PROG([JAVAC], [javac], [javac])
+AC_CHECK_PROG([JAR], [jar], [jar])
 
 which ${JAVA} 1>/dev/null 2>/dev/null
 if test $? -ne 0; then
