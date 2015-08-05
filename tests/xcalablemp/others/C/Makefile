@@ -2,7 +2,7 @@ COMPILER=$(shell xmpcc --show-env | grep OMNI_MPICC_CMD | sed 's/OMNI_MPICC_CMD=
 MPIPATH=$(shell which $(COMPILER) | xargs dirname | awk '{print $$1"/../include"}')
 XCC     = xmpcc -O2
 XRUN    = mpiexec
-EXES    = 117.x 119.x 278\ spacefile.x 293-hyphen.x 343_dynamicnode.x 344_include.x 355.x 377.x dnodes.x macro_in_pragma.x openmp.x static_desc.x
+EXES    = 117.x 119.x 278\ spacefile.x 293-hyphen.x 343_dynamicnode.x 344_include.x 355.x 377.x dnodes.x macro_in_pragma.x openmp.x static_desc.x 419.x
 
 .PHONY: clean all default run
 
@@ -26,6 +26,9 @@ openmp.x: openmp.c
 	$(XCC) -c $< --debug 1> /dev/null; \
 	[ ! -d __omni_tmp__ ] && exit 1; \
 	echo "PASS"; 
+
+419.x: 419.c
+	$(XCC) -omp 419.c -o 419.x
 
 #-- default rules
 .c.x:
@@ -51,6 +54,7 @@ run: macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 2
 	$(XRUN) -n 1 ./293-hyphen.x
 	$(XRUN) -n 1 ./278\ spacefile.x
 	$(XRUN) -n 4 ./static_desc.x
+	$(XRUN) -n 4 ./419.x
 
 #-- cleaning
 clean:
