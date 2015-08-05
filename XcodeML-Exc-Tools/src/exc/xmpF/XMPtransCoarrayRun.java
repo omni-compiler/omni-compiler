@@ -517,6 +517,7 @@ public class XMPtransCoarrayRun
         z = V2[k]**2                                    ! get 0D
         allocate (V3(1:10,20)[k1:k12,0:*],V4(10)[*])    ! allocate
         deallocate (V4)                                 ! deallocate
+        sync all                                        ! stop code motion beyond this line
         if (allocated(V3)) write(*,*) "yes"             ! intrinsic 'allocated'
         n1 = this_image(V1,1)                           ! intrinsic 'this_image'
         n3(:) = this_image(V3)                          ! intrinsic 'this_image'
@@ -536,10 +537,11 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)      ! m.
         call xmpf_coarray_set_varname(DP_V3, "V3", 2)           ! n.
         call xmpf_coarray_dealloc(DP_V3)                        ! j.
+        call xmpf_syncall(V1,V4,V2,V3)                          ! p.
         if (associated(V3)) write(*,*) "yes"                    ! l.
         n1 = this_image(DP_V1,1)                                ! l.
         n3(:) = this_image(DP_V3)                               ! l.
-        call xmpf_syncall()                                     ! i.
+        call xmpf_syncall(V1,V4,V2,V3)                          ! i. p.
         call xmpf_coarray_epilog(tag)                           ! i.
         return
       end subroutine
@@ -571,6 +573,10 @@ public class XMPtransCoarrayRun
     // i. initialization/finalization for auto-syncall and auto-deallocate
     if (_reservedAutoDealloc)
       genCallOfPrologAndEpilog();
+
+    // p. add visible coarrays as arguments of sync all statements 
+    //     to prohibit code motion
+    addVisibleCoarraysToSyncall(visibleCoarrays);
 
     // o. remove declarations for use-associated allocatable coarrays
     for (XMPcoarray coarray: useAssociatedCoarrays) {
@@ -653,6 +659,23 @@ public class XMPtransCoarrayRun
       XMP.fatal("generated null argument (genDeclOfCrayPointer)");
     decls.add(args);
   }
+
+
+  //-----------------------------------------------------
+  //  TRANSLATION i.
+  //  generate procedure prolog and epilog calls
+  //-----------------------------------------------------
+  //
+  private void addVisibleCoarraysToSynyncall(ArrayList<XMPcoarray> coarrays) {
+    Xobject args = _getCoarrayNamesIntoArgs(coarrays);
+
+    // for RETURN statement
+    BlockIterator bi = new topdownBlockIterator(fblock);
+    for (bi.init(); !bi.end(); bi.next()) {
+      Block block = bi.getBlock();
+      switch(block.Opcode()) {
+      case CALL_STATEMENT:
+
 
 
   //-----------------------------------------------------
