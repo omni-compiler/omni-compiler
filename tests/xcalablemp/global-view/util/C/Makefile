@@ -2,7 +2,7 @@ INCDIR = ../../../../../Driver/etc
 XMP_LINK_FLAGS=$(shell xmpcc --show-env | sed -n '/OMNI_LINKER_OPT=/p' | sed 's/OMNI_LINKER_OPT=//' | sed "s/\"//g")
 MPI_CC=$(shell xmpcc --show-env         | sed -n '/OMNI_MPICC_CMD=/p'  | sed 's/OMNI_MPICC_CMD=//'  | sed "s/\"//g")
 
-XCC     = xmpcc -O2
+XCC     = xmpcc
 XRUN    = mpiexec
 TESTS = $(wildcard *.c)
 EXES  = $(TESTS:.c=.x)

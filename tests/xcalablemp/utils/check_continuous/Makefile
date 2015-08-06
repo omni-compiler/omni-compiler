@@ -1,5 +1,5 @@
 CC=gcc
-OPT=-std=c99 -O2
+OPT=-std=c99
 
 all: 1dim.x 2dims.x 3dims.x 4dims.x
 

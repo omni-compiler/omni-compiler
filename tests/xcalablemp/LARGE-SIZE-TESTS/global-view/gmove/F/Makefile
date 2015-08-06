@@ -1,4 +1,4 @@
-XFC     = xmpf90 -O2
+XFC     = xmpf90
 XRUN    = mpiexec
 F_TESTS = $(wildcard *.f90)
 F_EXES  = $(F_TESTS:.f90=.x)
