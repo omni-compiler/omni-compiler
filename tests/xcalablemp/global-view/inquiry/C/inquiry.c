@@ -19,16 +19,12 @@ int gidx[3]={3,3,3}, lidx[3];
 #pragma xmp shadow a[0][0][1:2]
 
 void check(int irslt, int ians, int *error){
-
-  //printf("irslt=%d,ians=%d\n",irslt,ians);
-  if(irslt != ians){
+  if(irslt != ians)
     *error = *error + 1;
-  }
-
 }
 
-int main(){
-
+int main()
+{
   int irank, ierr, error=0;
   xmp_desc_t dt, dn, dt1, dn1, dn2;
   int ival,lb[3],ub[3],st[3],map[2];
@@ -164,7 +160,6 @@ int main(){
     check(lidx[1], 1, &error);
     check(lidx[2], 4, &error);
 
-
     if(error == 0){
       printf("PASS\n");
     }
@@ -172,10 +167,6 @@ int main(){
       fprintf(stderr, "ERROR count=%d\n",error);
       exit(1);
     }
-
-    return 0;
-
   }
-
+  return 0;
 }
-

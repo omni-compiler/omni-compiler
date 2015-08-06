@@ -1,6 +1,6 @@
 COMPILER=$(shell xmpcc --show-env | grep OMNI_MPICC_CMD | sed 's/OMNI_MPICC_CMD=//' | sed "s/\"//g" | xargs basename)
 MPIPATH=$(shell which $(COMPILER) | xargs dirname | awk '{print $$1"/../include"}')
-XCC     = xmpcc -O2
+XCC     = xmpcc
 XRUN    = mpiexec
 EXES    = 117.x 119.x 278\ spacefile.x 293-hyphen.x 343_dynamicnode.x 344_include.x 355.x 377.x dnodes.x macro_in_pragma.x openmp.x static_desc.x 419.x
 

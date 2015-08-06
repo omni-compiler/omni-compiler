@@ -36,6 +36,10 @@ userMPI_FCLIBS=${MPI_FCLIBS}
 # --------------------------------------------------------------------
 # Initialize for autoconf
 #LT_INIT
+# memo: LT_INIT sets RANLIB, NM, AR automatically.
+#       However, depending on machines, it wants to set the RANLIB, NM, AR by using AC_CHECK_PROG().
+#       Note that when a variable used in AC_CHECK_PROG() is set, AC_CHECK_PROG() do nothing.
+#       Therefore it comments out LT_INIT as a traial.
 
 #if test -z "$LIBTOOL"; then
 #   AC_MSG_ERROR([Please install newer automake/autoconf/libtool. We recommend automake-1.14/autoconf-2.69/libtool-2.4.2.])
@@ -573,7 +577,7 @@ elif test "$target" = "sx-nec-superux"; then
   OMNI_X2X_FLAGS=""
 
 # ranlib & ar & nm
-  AC_CHECK_PROG([RANLIB], [ranlib], [ranlib])
+  RANLIB="sxar -sq"
   AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
   ARFLAGS="cru"
   AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
@@ -928,11 +932,12 @@ if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
 fi
 
 AC_SUBST(LIBXML_PREFIX)
-if test LIBXML_PREFIX="/usr"; then
+if test LIBXML_PREFIX = "/usr"; then
    LIBXML_LIB=/usr/lib64
 else
    LIBXML_LIB=${LIBXML_PREFIX}/lib
 fi
+
 AC_SUBST(LIBXML_LIB)
 
 # --------------------------------------------------------------------
@@ -1189,7 +1194,7 @@ AC_SUBST(NM)
 #AM_CONDITIONAL(IS_PGI, test "$chk" != "")
 
 # check -lstdc++
-if test "$target" != "powerpc-hitachi-aix"; then
+if test "$target" != "powerpc-hitachi-aix" -a "target" != "sx-nec-superux"; then
   tmp_file_c=/tmp/_xmp.$$.c
   tmp_file_x=/tmp/_xmp.$$.x
   echo "int main(){return 0;}" > $tmp_file_c
