@@ -1194,7 +1194,7 @@ AC_SUBST(NM)
 #AM_CONDITIONAL(IS_PGI, test "$chk" != "")
 
 # check -lstdc++
-if test "$target" != "powerpc-hitachi-aix" -a "target" != "sx-nec-superux"; then
+if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sx-nec-superux"; then
   tmp_file_c=/tmp/_xmp.$$.c
   tmp_file_x=/tmp/_xmp.$$.x
   echo "int main(){return 0;}" > $tmp_file_c
