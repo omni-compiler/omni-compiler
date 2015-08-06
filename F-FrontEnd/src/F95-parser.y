@@ -381,7 +381,7 @@ gen_default_real_kind(void) {
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
 %type <val> result_opt type_keyword
 %type <val> action_statement95
-%type <val> action_coarray_statement coarray_keyword coarray_syncimages_keyword
+%type <val> action_coarray_statement coarray_syncall_keyword coarray_syncall_stat_keyword coarray_syncimages_keyword other_coarray_keyword
 %type <val> syncimages_arg_list
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
@@ -1324,16 +1324,33 @@ allocation:
         ;
 
 action_coarray_statement:
-          coarray_keyword parenthesis_arg_list_or_null
-        { $$ = list2(F_CALL_STATEMENT,$1,$2); }
+          coarray_syncall_keyword 
+        { $$ = list2(F_CALL_STATEMENT,$1,NULL); }
+        | coarray_syncall_stat_keyword '(' syncimages_arg_list ')'
+        { $$ = list2(F_CALL_STATEMENT,$1,$3); }
         | coarray_syncimages_keyword '(' syncimages_arg_list ')'
         { $$ = list2(F_CALL_STATEMENT,$1,$3); }
+        | other_coarray_keyword parenthesis_arg_list_or_null
+        { $$ = list2(F_CALL_STATEMENT,$1,$2); }
         ;
 
-coarray_keyword:
+coarray_syncall_keyword:
           SYNCALL
         { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_all")); }
-        | SYNCMEMORY
+        ;
+
+coarray_syncall_stat_keyword:
+          SYNCALL
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_all_stat")); }
+        ;
+
+coarray_syncimages_keyword:
+          SYNCIMAGES 
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_images")); }
+        ;
+
+other_coarray_keyword:
+          SYNCMEMORY
         { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_memory")); }
         | LOCK
         { $$ = GEN_NODE(IDENT, find_symbol("xmpf_lock")); }
@@ -1345,11 +1362,6 @@ coarray_keyword:
         { $$ = GEN_NODE(IDENT, find_symbol("xmpf_end_critical")); }
         | ERRORSTOP
         { $$ = GEN_NODE(IDENT, find_symbol("xmpf_error_stop")); }
-        ;
-
-coarray_syncimages_keyword:
-          SYNCIMAGES 
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_images")); }
         ;
 
 comma_or_null:

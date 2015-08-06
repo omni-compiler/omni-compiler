@@ -21,7 +21,8 @@ public class XMPtransCoarrayRun
   final static String THIS_IMAGE_NAME        = "xmpf_this_image";
   final static String COARRAY_PROLOG_NAME    = "xmpf_coarray_prolog";
   final static String COARRAY_EPILOG_NAME    = "xmpf_coarray_epilog";
-  final static String SYNCALL_NAME = "xmpf_sync_all_auto";   // another entry of syncall
+  final static String SYNCALL_NAME           = "xmpf_sync_all";
+  final static String AUTO_SYNCALL_NAME      = "xmpf_sync_all_auto";  // another entry of syncall
 
   // to handle host- and use-associations
   static ArrayList<XMPtransCoarrayRun> ancestors
@@ -662,20 +663,52 @@ public class XMPtransCoarrayRun
 
 
   //-----------------------------------------------------
-  //  TRANSLATION i.
-  //  generate procedure prolog and epilog calls
+  //  TRANSLATION p.
+  //  add coarrays as actual arguments to syncall library call
   //-----------------------------------------------------
   //
-  private void addVisibleCoarraysToSynyncall(ArrayList<XMPcoarray> coarrays) {
-    Xobject args = _getCoarrayNamesIntoArgs(coarrays);
-
-    // for RETURN statement
+  private void addVisibleCoarraysToSyncall(ArrayList<XMPcoarray> coarrays) {
     BlockIterator bi = new topdownBlockIterator(fblock);
     for (bi.init(); !bi.end(); bi.next()) {
-      Block block = bi.getBlock();
-      switch(block.Opcode()) {
-      case CALL_STATEMENT:
+      BasicBlock bb = bi.getBlock().getBasicBlock();
+      if (bb == null) continue;
+      for (Statement s = bb.getHead(); s != null; s = s.getNext()) {
+        Xobject xobj = s.getExpr();
+        if (_isCallForSyncall(xobj)) {
+          // found
+          Xobject args = _getCoarrayNamesIntoArgs(coarrays);
+          Xobject callExpr = xobj.getArg(0);
+          callExpr.setArg(1, args);
+        }
+      }
+    }
+  }
 
+  private Boolean _isCallForSyncall(Xobject xobj) {
+    
+    if (xobj == null || xobj.Opcode() != Xcode.EXPR_STATEMENT)
+      /* EXPR_STATEMENT conatains does not contain call statement */
+      /* F_ASSIGN_STATEMENT does not contain call statement */
+      return false;
+
+    Xobject callExpr = xobj.getArg(0);
+    if (callExpr == null || callExpr.Opcode() != Xcode.FUNCTION_CALL)
+      return false;
+
+    String fname = callExpr.getArg(0).getName();
+    if (fname == SYNCALL_NAME || fname == AUTO_SYNCALL_NAME)
+      return true;
+
+    return false;
+  }
+
+
+  private Xobject _getCoarrayNamesIntoArgs(ArrayList<XMPcoarray> coarrays) {
+    Xobject args = Xcons.List();
+    for (XMPcoarray coarray: coarrays)
+      args.add(Xcons.FvarRef(coarray.getIdent()));
+    return args;
+  }
 
 
   //-----------------------------------------------------
@@ -734,9 +767,9 @@ public class XMPtransCoarrayRun
   private void genCallOfPrologAndEpilog_syncall() {
     // generate "call xmpf_sync_all()" and add to the tail
     Xobject args = Xcons.List();
-    Ident fname = /*env.findVarIdent(SYNCALL_NAME, null);      // to avoid error of tool
+    Ident fname = /*env.findVarIdent(AUTO_SYNCALL_NAME, null);      // to avoid error of tool
     if (fname == null)
-    fname = */env.declExternIdent(SYNCALL_NAME,
+    fname = */env.declExternIdent(AUTO_SYNCALL_NAME,
                                   BasicType.FexternalSubroutineType);
     Xobject call = fname.callSubroutine(args);
     addEpilogStmt(call);
