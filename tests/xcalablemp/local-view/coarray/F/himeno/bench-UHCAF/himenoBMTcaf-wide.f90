@@ -38,7 +38,7 @@
 !
 module pres
   implicit none
-  include 'xmp_coarray.h'
+!!!  include 'xmp_coarray.h'
   real(4),dimension(:,:,:),allocatable :: p
   real(4), allocatable, dimension(:,:), codimension[:,:,:] :: &
        buf1l, buf1u,  buf2l, buf2u,  buf3l, buf3u
@@ -82,6 +82,8 @@ program HimenoBMTxp_f90_CAF
   use comm
 !
   implicit none
+!
+  include 'mpif.h'
 !
 !     ttarget specifys the measuring period in sec
   integer :: mx,my,mz
@@ -133,12 +135,14 @@ program HimenoBMTxp_f90_CAF
   gosa= 0.0
   cpu= 0.0
   sync all
-  cpu0= xmp_wtime()
+  cpu0= mpi_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= xmp_wtime() - cpu0
+  cpu1= mpi_wtime() - cpu0
 !
-  call co_max(cpu1, cpu)
+!!!  call co_max(cpu1, cpu)
+  call co_max(cpu1)
+  cpu = cpu1
 !
   flop=real(mx-2)*real(my-2)*real(mz-2)*34.0
   if(cpu /= 0.0) xmflops2=flop/cpu*1.0d-6*real(nn)
@@ -158,12 +162,14 @@ program HimenoBMTxp_f90_CAF
   gosa= 0.0
   cpu= 0.0
   sync all
-  cpu0= xmp_wtime()
+  cpu0= mpi_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= xmp_wtime() - cpu0
+  cpu1= mpi_wtime() - cpu0
 !
-  call co_max(cpu1, cpu)
+!!!  call co_max(cpu1, cpu)
+  call co_max(cpu1)
+  cpu = cpu1
 !
   if(id == 0) then
      if(cpu /= 0.0)  xmflops2=flop*1.0d-6/cpu*real(nn)
@@ -185,9 +191,8 @@ subroutine readparam
 !
   implicit none
 !
-  integer :: itmp(3)[*]
-!!!  character(10) :: size[*]     !! to avoid bug #354
-  character(12) :: size(1)[*]
+  integer, save :: itmp(3)[*]
+  character(12), save :: size[*]
 !
   if(id == 0) then
      print *,'For example:'
@@ -213,7 +218,7 @@ subroutine readparam
 !
   sync all
   if (id /= 0) then
-     itmp = itmp[1]
+     itmp(:) = itmp(:)[1]
      size = size[1]
   end if
   sync all
@@ -387,7 +392,9 @@ subroutine jacobi(nn,gosa)
 !
      call sendp()
 !
-     call co_sum(wgosa, gosa)
+!!!     call co_sum(wgosa, gosa)
+     call co_sum(wgosa)
+     gosa = wgosa
 !
   enddo
 !! End of iteration
@@ -485,9 +492,9 @@ subroutine initmax(mx,my,mz,ks)
      if(i /= ndz-1)  mz2(i)= mz2(i) + 1
   end do
 !
-  mimax=maxval(mx2(0:ndx-1))
-  mjmax=maxval(my2(0:ndy-1))
-  mkmax=maxval(mz2(0:ndz-1))
+  mimax=maxval(mx2(0:ndx-1)) + 1
+  mjmax=maxval(my2(0:ndy-1)) + 1
+  mkmax=maxval(mz2(0:ndz-1)) + 1
 !
   imax= mx2(iop(1))
   jmax= my2(iop(2))

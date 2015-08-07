@@ -588,7 +588,6 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
     list lp;
     expr c,v;
     expv pclause,dclause;
-
     pclause = EMPTY_LIST;
     dclause = EMPTY_LIST;
     if(x == NULL) goto ret; /* empy */
@@ -597,7 +596,7 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 	c = LIST_ITEM(lp);
 	switch(EXPR_INT(EXPR_ARG1(c))){
 	case OMP_DATA_DEFAULT:	/* default(shared|none|private) */
-	    if(!is_parallel){
+	  if(!is_parallel){
 		error_at_node(x,"'default' clause must be in PARALLEL");
 		break;
 	    }
@@ -606,13 +605,27 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 					  EXPR_ARG1(EXPR_ARG2(c))));
 	    break;
 	case OMP_DATA_SHARED:
-	    compile_OMP_name_list(EXPR_ARG2(c));
-	    if(!is_parallel){
+	    /* all pragma can have these */
+	  /* compile_OMP_name_list(EXPR_ARG2a(c));
+	    if(pragma == OMP_PARALLEL)
+	      pclause = list_put_last(pclause,c);
+	    else     
+	      dclause = list_put_last(dclause,c);
+	    break;
+	  */
+	  compile_OMP_name_list(EXPR_ARG2(c));
+	    if(!is_parallel && pragma!=OMP_TASK){
 		error_at_node(x,"'shared' clause must be in PARALLEL");
 		break;
 	    }
+            if(is_parallel){
 	    pclause = list_put_last(pclause,c);
+	    }
+	    else if(pragma == OMP_TASK){
+	    dclause = list_put_last(dclause,c);
+	    }
 	    break;
+	  
 	case OMP_DATA_COPYIN:
 	    compile_OMP_name_list(EXPR_ARG2(c));
 	    if(!is_parallel){
@@ -622,7 +635,7 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 	    pclause = list_put_last(pclause,c);
 	    break;
 	case OMP_DIR_IF:
-	    if(!is_parallel){
+	    if(!is_parallel && pragma != OMP_TASK){
 		error_at_node(x,"'if' clause must be in PARALLEL");
 		break;
 	    }
@@ -690,7 +703,23 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 	  }
 	  dclause = list_put_last(dclause,c);
 	  break;
-	case OMP_DIR_FINAL:
+	case OMP_DATA_FINAL:
+	    if(!is_parallel && pragma != OMP_TASK){
+		error_at_node(x,"'if' clause must be in PARALLEL");
+		break;
+	    }
+            if(pragma == OMP_PARALLEL){
+	    v = compile_expression(EXPR_ARG2(c));
+	    pclause = list_put_last(pclause,
+				    list2(LIST,EXPR_ARG1(c),v));
+	    }
+	    else if(pragma == OMP_TASK){
+	      v = compile_expression(EXPR_ARG2(c));
+	      dclause = list_put_last(dclause,
+				      list2(LIST,EXPR_ARG1(c),v));
+	    }
+	    break;
+	    /*
 	  if(pragma != OMP_TASK){
 		  error_at_node(x,"'final' clause must be in TASK");
 		  break;
@@ -699,7 +728,7 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 	  dclause = list_put_last(dclause,
 				  list2(LIST,EXPR_ARG1(c),v));
 	  break;
-
+	    */
 	case OMP_DATA_REDUCTION_PLUS:
 	case OMP_DATA_REDUCTION_MINUS:
 	case OMP_DATA_REDUCTION_MUL:

@@ -1,13 +1,15 @@
 !-------------------------------
 !  sync all
 !-------------------------------
-      interface xmpf_sync_all
-         subroutine xmpf_sync_all_nostat()
-         end subroutine xmpf_sync_all_nostat
-         subroutine xmpf_sync_all_stat_wrap(stat, errmsg)
+      interface
+!!         subroutine xmpf_sync_all(arg1, ...)
+!!           class(*) :: arg1
+!!         end subroutine xmpf_sync_all
+
+         subroutine xmpf_sync_all_stat(stat, errmsg)
            integer, intent(out) :: stat
            character(len=*), intent(out), optional :: errmsg
-         end subroutine xmpf_sync_all_stat_wrap
+         end subroutine xmpf_sync_all_stat
       end interface
 
 !-------------------------------

@@ -328,7 +328,7 @@ public class OMPtransPragma
     Block transPragma(PragmaBlock pb)
     {
         OMPinfo i = (OMPinfo)pb.getProp(OMP.prop);
-
+        OMP.debug("Pragma:"+i.pragma);
         switch(i.pragma) {
         case BARRIER: /* barrier */
             return transBarrier(pb, i);
@@ -365,9 +365,11 @@ public class OMPtransPragma
         case TASK:
         	return transTaskRegion(pb,i);
 	
+        case SIMD:
+        	return null;
         default:
-            // OMP.fatal("unknown pragma");
-            // ignore it
+             OMP.fatal("unknown pragma");
+//             ignore it
             return null;
         }
     }
@@ -486,6 +488,30 @@ public class OMPtransPragma
         ret_body.add(bblock);
     }
     
+    private void addFtaskCallerBlock(BlockList ret_body, Ident func_id, Ident dop_func_id, OMPinfo i)
+    {
+        List<Xobject> region_args = i.getRegionArgs();
+        BasicBlock bblock = new BasicBlock();
+        XobjList funcArgs = Xcons.List(func_id.getAddr());
+        
+        for(Xobject a : region_args) {
+            funcArgs.add(a);
+        }
+
+        if(i.getNumThreads() != null)
+            bblock.add(OMPfuncIdent(setNumThreadsFunc).Call(Xcons.List(i.getNumThreads())));
+        
+        if(i.hasFinalExpr())
+    		funcArgs.insert(i.getFinalExpr());
+        if(i.hasIfExpr())
+            funcArgs.insert(i.getIfExpr());
+        
+        bblock.add(dop_func_id.Call(funcArgs));
+        
+        ret_body.add(bblock);
+    }
+
+    
     private void addFcalleeBlock(Ident func_id, Ident dop_func_id, BlockList body,
         XobjList id_list, XobjList decls, BlockList orgBody, OMPinfo i)
     {
@@ -584,14 +610,17 @@ public class OMPtransPragma
         {
             XobjList funcArgs = Xcons.List();
             int nargs = func_params.Nargs();
+            OMP.debug("nargs 0=" + nargs);
             
             for(Xobject a : func_params) {
                 //argument of character type passed with character length to runtime function
+                OMP.debug("func_params =" + a.Type().toString());
                 if(a.Type().isFcharacter())
                     ++nargs;
                 funcArgs.add(a);
             }
-            
+            OMP.debug("nargs=" + nargs);
+
             if(XmOption.isLanguageF() && nargs > OMPtransPragma.F_MAX_PARALLEL_PARAMS) {
                 XmLog.fatal(orgBody.getHeadLineNo(), "too many variables in parallel region.");
             }
@@ -608,6 +637,7 @@ public class OMPtransPragma
                 cond = Xcons.FlogicalConstant(true);
             }
             funcArgs.insert(cond);
+
             
             XobjList body_id_list = Xcons.List();
             HashMap<String, Ident> nameMap = new HashMap<String, Ident>();
@@ -671,6 +701,7 @@ public class OMPtransPragma
                 paramDecls.add(Xcons.List(Xcode.VAR_DECL, c));
                 dopar_params.add(c);
             }
+            
             paramDecls.add(Xcons.FinterfaceFunctionDecl(dummyFunc, null));
             for(Xobject a : func_params) {
                 a = convertFidentTypeForParamDecl((Ident)a, i);
@@ -684,19 +715,21 @@ public class OMPtransPragma
                 Xcons.FinterfaceFunctionDecl(idDoParallel, paramDecls));
         }
         
-    private void addFparallelTaskWrapperBlock(Ident dop_func_id, XobjList func_params,
+    private void addFtaskWrapperBlock(Ident dop_func_id, XobjList func_params,
             BlockList orgBody, OMPinfo i)
         {
             XobjList funcArgs = Xcons.List();
             int nargs = func_params.Nargs();
-            
+            OMP.debug("nargs 0="+nargs);
+
             for(Xobject a : func_params) {
                 //argument of character type passed with character length to runtime function
+                OMP.debug("func_params =" + a.Type().toString());
                 if(a.Type().isFcharacter())
                     ++nargs;
                 funcArgs.add(a);
             }
-            
+            OMP.debug("nargs ="+nargs);
             if(XmOption.isLanguageF() && nargs > OMPtransPragma.F_MAX_PARALLEL_PARAMS) {
                 XmLog.fatal(orgBody.getHeadLineNo(), "too many variables in parallel region.");
             }
@@ -706,8 +739,17 @@ public class OMPtransPragma
             funcArgs.insert(fid);
 
             Xobject cond = null;
+            
+            if(i.hasFinalExpr()) {
+                cond = Ident.Fident("TASK_"+COND_VAR+"_F", Xtype.FlogicalType);
+                func_params.insert(cond);
+            } else {
+                cond = Xcons.FlogicalConstant(false);
+            }            
+            funcArgs.insert(cond);
+            
             if(i.hasIfExpr()) {
-                cond = Ident.Fident(COND_VAR, Xtype.FlogicalType);
+                cond = Ident.Fident("TASK_"+COND_VAR, Xtype.FlogicalType);
                 func_params.insert(cond);
             } else {
                 cond = Xcons.FlogicalConstant(true);
@@ -729,7 +771,6 @@ public class OMPtransPragma
                 body_id_list.add(id);
             
             completeFstructTypeSymbol(orgBody.getIdentList(), body_id_list);
-
             //funcArgs.insert(Xcons.IntConstant(nargs));
             BlockList body = new BlockList();
 
@@ -749,7 +790,7 @@ public class OMPtransPragma
                 parallelTaskFunc + "_" + nargs,
                 Xtype.FsubroutineType);
             body.add(idDoParallel.Call(funcArgs));
-            
+
             ((FunctionType)dop_func_id.Type()).setFuncParamIdList(func_params);
             XobjList decls = Xcons.List();
             nameMap.clear();
@@ -771,11 +812,20 @@ public class OMPtransPragma
             Ident dummyFunc = Ident.FidentNotExternal(FdummyFunc, Xtype.FsubroutineType);
             //paramDecls.add(Xcons.List(Xcode.VAR_DECL, dummyNarg));
             //dopar_params.add(dummyNarg);
+
+            if(!i.hasFinalExpr()) {
+                Ident c = Ident.Fident("cond_F", Xtype.FlogicalType);
+                paramDecls.add(Xcons.List(Xcode.VAR_DECL, c));
+                dopar_params.add(c);
+            }            
+            
             if(!i.hasIfExpr()) {
                 Ident c = Ident.Fident("cond", Xtype.FlogicalType);
                 paramDecls.add(Xcons.List(Xcode.VAR_DECL, c));
                 dopar_params.add(c);
             }
+            
+
             paramDecls.add(Xcons.FinterfaceFunctionDecl(dummyFunc, null));
             for(Xobject a : func_params) {
                 a = convertFidentTypeForParamDecl((Ident)a, i);
@@ -876,8 +926,8 @@ public class OMPtransPragma
         
         // rewrite array index range if needed.
         OMPrewriteExpr r = new OMPrewriteExpr();
-        for(Xobject a: (XobjList)i.getIdList())
-            r.run(a, b, i.env);
+        for(Xobject a: (XobjList)i.getIdList()){
+            r.run(a, b, i.env);}
         
         addFcalleeBlock(func_id, dop_func_id, body, id_list, calleeDelcls, fbBody, i);
         
@@ -917,15 +967,14 @@ public class OMPtransPragma
         Ident dop_func_id = Ident.FidentNotExternal(
             env.genExportSym(FParallelTaskWrapperPrefix, current_def.getName()), Xtype.FsubroutineType);
         Block bp;
-
         // move blocks to body
         BlockList body = Bcons.emptyBody(i.getIdList(), null);
         addDataSetupBlock(body, i);
         body.add(Bcons.COMPOUND(b.getBody()));
-        
+      
         bp = dataUpdateBlock(i);
         if(bp != null)
-	  body.add(bp);
+        	body.add(bp);
 
         FunctionBlock fb = getParentFuncBlock(b);
         if(fb == null)
@@ -948,15 +997,16 @@ public class OMPtransPragma
         
         // rewrite array index range if needed.
         OMPrewriteExpr r = new OMPrewriteExpr();
-        for(Xobject a: (XobjList)i.getIdList())
-            r.run(a, b, i.env);
+        for(Xobject a: (XobjList)i.getIdList()){
+        	OMP.debug("Task"+a.toString()+" "+b.toXobject().toString()+" "+i.pragma);
+            r.run(a, b, i.env);}
         
         addFcalleeBlock(func_id, dop_func_id, body, id_list, calleeDelcls, fbBody, i);
         
-        addFparallelTaskWrapperBlock(dop_func_id, dop_id_list, fbBody, i);
+        addFtaskWrapperBlock(dop_func_id, dop_id_list, fbBody, i);
         
         BlockList ret_body = Bcons.emptyBody();
-        addFcallerBlock(ret_body, func_id, dop_func_id, i);
+        addFtaskCallerBlock(ret_body, func_id, dop_func_id, i);
         
         // add interface of ompf_dop_#
         XobjList dop_params = Xcons.List();
@@ -1470,7 +1520,8 @@ public class OMPtransPragma
 
     protected void addDataSetupBlock(BlockList bl, OMPinfo i)
     {
-        boolean flag = false;
+    	OMP.debug("addDataSetUPBlock");
+    	boolean flag = false;
         for(OMPvar v : i.getVarList()) {
             if(v.is_first_private || v.is_reduction || v.is_copyin || v.isVariableArray()) {
                 flag = true;
@@ -1479,6 +1530,7 @@ public class OMPtransPragma
         }
         if(!flag)
             return;
+    	OMP.debug("addDataSetUPBlock 2");
 
         BasicBlock bb = new BasicBlock();
         BlockList tmpbl = new BlockList();
@@ -1579,6 +1631,8 @@ public class OMPtransPragma
                 bl.add(b);
             }
         }
+    	OMP.debug("addDataSetUPBlock End");
+        
     }
     
     private void addCreductionUpdateBlock(BlockList body, OMPinfo i)
@@ -1603,7 +1657,7 @@ public class OMPtransPragma
                 Xcons.List(v.getPrivateAddr(), v.getSharedAddr(), Xcons.IntConstant(bt),
                     Xcons.IntConstant(v.reduction_op.getId()))));
         }
-        
+
         body.add(bb);
     }
     

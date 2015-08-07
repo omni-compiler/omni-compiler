@@ -107,7 +107,7 @@ enum OMP_pragma_clause {
     OMP_DATA_DEPEND_INOUT =29,
 
     OMP_DIR_UNTIED = 30,
-    OMP_DIR_FINAL = 31,
+    OMP_DATA_FINAL = 31,
     OMP_DIR_MERGEABLE = 32
 
 };

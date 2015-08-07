@@ -21,7 +21,8 @@ public class XMPtransCoarrayRun
   final static String THIS_IMAGE_NAME        = "xmpf_this_image";
   final static String COARRAY_PROLOG_NAME    = "xmpf_coarray_prolog";
   final static String COARRAY_EPILOG_NAME    = "xmpf_coarray_epilog";
-  final static String SYNCALL_NAME = "xmpf_sync_all_auto";   // another entry of syncall
+  final static String SYNCALL_NAME           = "xmpf_sync_all";
+  final static String AUTO_SYNCALL_NAME      = "xmpf_sync_all_auto";  // another entry of syncall
 
   // to handle host- and use-associations
   static ArrayList<XMPtransCoarrayRun> ancestors
@@ -517,6 +518,7 @@ public class XMPtransCoarrayRun
         z = V2[k]**2                                    ! get 0D
         allocate (V3(1:10,20)[k1:k12,0:*],V4(10)[*])    ! allocate
         deallocate (V4)                                 ! deallocate
+        sync all                                        ! stop code motion beyond this line
         if (allocated(V3)) write(*,*) "yes"             ! intrinsic 'allocated'
         n1 = this_image(V1,1)                           ! intrinsic 'this_image'
         n3(:) = this_image(V3)                          ! intrinsic 'this_image'
@@ -536,10 +538,11 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_set_coshape(DP_V3, 2, k1, k2, 0)      ! m.
         call xmpf_coarray_set_varname(DP_V3, "V3", 2)           ! n.
         call xmpf_coarray_dealloc(DP_V3)                        ! j.
+        call xmpf_syncall(V1,V4,V2,V3)                          ! p.
         if (associated(V3)) write(*,*) "yes"                    ! l.
         n1 = this_image(DP_V1,1)                                ! l.
         n3(:) = this_image(DP_V3)                               ! l.
-        call xmpf_syncall()                                     ! i.
+        call xmpf_syncall(V1,V4,V2,V3)                          ! i. p.
         call xmpf_coarray_epilog(tag)                           ! i.
         return
       end subroutine
@@ -571,6 +574,10 @@ public class XMPtransCoarrayRun
     // i. initialization/finalization for auto-syncall and auto-deallocate
     if (_reservedAutoDealloc)
       genCallOfPrologAndEpilog();
+
+    // p. add visible coarrays as arguments of sync all statements 
+    //     to prohibit code motion
+    addVisibleCoarraysToSyncall(visibleCoarrays);
 
     // o. remove declarations for use-associated allocatable coarrays
     for (XMPcoarray coarray: useAssociatedCoarrays) {
@@ -656,6 +663,55 @@ public class XMPtransCoarrayRun
 
 
   //-----------------------------------------------------
+  //  TRANSLATION p.
+  //  add coarrays as actual arguments to syncall library call
+  //-----------------------------------------------------
+  //
+  private void addVisibleCoarraysToSyncall(ArrayList<XMPcoarray> coarrays) {
+    BlockIterator bi = new topdownBlockIterator(fblock);
+    for (bi.init(); !bi.end(); bi.next()) {
+      BasicBlock bb = bi.getBlock().getBasicBlock();
+      if (bb == null) continue;
+      for (Statement s = bb.getHead(); s != null; s = s.getNext()) {
+        Xobject xobj = s.getExpr();
+        if (_isCallForSyncall(xobj)) {
+          // found
+          Xobject args = _getCoarrayNamesIntoArgs(coarrays);
+          Xobject callExpr = xobj.getArg(0);
+          callExpr.setArg(1, args);
+        }
+      }
+    }
+  }
+
+  private Boolean _isCallForSyncall(Xobject xobj) {
+    
+    if (xobj == null || xobj.Opcode() != Xcode.EXPR_STATEMENT)
+      /* EXPR_STATEMENT conatains does not contain call statement */
+      /* F_ASSIGN_STATEMENT does not contain call statement */
+      return false;
+
+    Xobject callExpr = xobj.getArg(0);
+    if (callExpr == null || callExpr.Opcode() != Xcode.FUNCTION_CALL)
+      return false;
+
+    String fname = callExpr.getArg(0).getName();
+    if (fname == SYNCALL_NAME || fname == AUTO_SYNCALL_NAME)
+      return true;
+
+    return false;
+  }
+
+
+  private Xobject _getCoarrayNamesIntoArgs(ArrayList<XMPcoarray> coarrays) {
+    Xobject args = Xcons.List();
+    for (XMPcoarray coarray: coarrays)
+      args.add(Xcons.FvarRef(coarray.getIdent()));
+    return args;
+  }
+
+
+  //-----------------------------------------------------
   //  TRANSLATION i.
   //  generate procedure prolog and epilog calls
   //-----------------------------------------------------
@@ -711,9 +767,9 @@ public class XMPtransCoarrayRun
   private void genCallOfPrologAndEpilog_syncall() {
     // generate "call xmpf_sync_all()" and add to the tail
     Xobject args = Xcons.List();
-    Ident fname = /*env.findVarIdent(SYNCALL_NAME, null);      // to avoid error of tool
+    Ident fname = /*env.findVarIdent(AUTO_SYNCALL_NAME, null);      // to avoid error of tool
     if (fname == null)
-    fname = */env.declExternIdent(SYNCALL_NAME,
+    fname = */env.declExternIdent(AUTO_SYNCALL_NAME,
                                   BasicType.FexternalSubroutineType);
     Xobject call = fname.callSubroutine(args);
     addEpilogStmt(call);

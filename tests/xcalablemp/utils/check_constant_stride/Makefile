@@ -1,5 +1,5 @@
 CC=gcc
-OPT=-std=c99 -O2
+OPT=-std=c99
 
 all: 1dim-check 2dims-check 3dims-check 4dims-check 5dims-check 6dims-check 7dims-check
 

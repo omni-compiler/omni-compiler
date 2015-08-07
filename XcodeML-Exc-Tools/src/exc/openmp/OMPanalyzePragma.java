@@ -73,7 +73,7 @@ public class OMPanalyzePragma
         case PARALLEL: /* new parallel section */
         case FOR: /* loop <clause_list> */
         case SECTIONS: /* sections <clause_list> */
-            // Assume that the kinds of the cluases are already checked
+        	// Assume that the kinds of the cluases are already checked
             idLists = new ArrayList<XobjList>();
             for(Xobject a : (XobjList)pb.getClauses()) {
                 c = OMPpragma.valueOf(a.getArg(0));
@@ -171,10 +171,46 @@ public class OMPanalyzePragma
                 }
             }
             break;
-	case TASK:
+        case TASK:
+        	info.setIfExpr(Xcons.FlogicalConstant(true));
+            info.setFinalExpr(Xcons.FlogicalConstant(false));
+        
+            idLists = new ArrayList<XobjList>();
+            for(Xobject a : (XobjList)pb.getClauses()) {
+            	OMP.debug(a.toString());
+                c = OMPpragma.valueOf(a.getArg(0));
+                switch(c) {
+                case DIR_IF:
+                	info.setIfExpr(a.getArg(1));
+                    break;
+                case DATA_FINAL:
+                    info.setFinalExpr(a.getArg(1));
+                    break;
+                case DIR_NOWAIT:
+                    info.no_wait = true;
+                    break;
+                case DIR_UNTIED:
+                    info.untied = true;
+                    OMP.debug("UNTIED");
+                    break;
+                case DIR_MERGEABLE:
+                    info.mergeable = true;
+                    OMP.debug("MERGEABLE");
+                    break;
+                case DATA_DEFAULT:
+                    info.data_default = OMPpragma.valueOf(a.getArg(1));
+                    break;
+                default: // DATA_*
+                	if(a.getArg(1) == null) break;
+                    for(Xobject aa : (XobjList)a.getArg(1))
+                        info.declOMPvar(aa.getName(), c);
+                    idLists.add((XobjList)a.getArg(1));
+                    break;
+                }
+            }
         case SIMD:
         case DECLARE:
-	    break;
+	    break;	
         case SINGLE: /* single <clause list> */
             for(XobjArgs a = pb.getClauses().getArgs(); a != null; a = a.nextArgs()) {
                 t = a.getArg();

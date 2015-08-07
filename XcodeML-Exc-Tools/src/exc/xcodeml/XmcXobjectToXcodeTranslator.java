@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.xcodeml;
 
 import static xcodeml.util.XmLog.fatal;
@@ -960,7 +954,6 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         // directive
-
         case PRAGMA_LINE:
             e = addChildNodes(createElement(name),
                               trans(xobj.getArg(0).getString()));
@@ -969,7 +962,6 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNodes(createElement(name),
                               trans(xobj.getArg(0).getString()));
             break;
-
         case OMP_PRAGMA: {
             e = createElement(name);
 

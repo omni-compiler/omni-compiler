@@ -1,6 +1,6 @@
 #!/bin/bash
 
-scripts="go???"
+scripts="go???i"
 
 echo '[collection]----------------------------------------------'
 efiles=""

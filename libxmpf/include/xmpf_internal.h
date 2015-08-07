@@ -351,9 +351,9 @@ extern int this_image_(void);
 //extern int xmpf_num_nodes_(void);
 //extern int xmpf_node_num_(void);
 
-extern void xmpf_sync_all_nostat_(void);
+extern void xmpf_sync_all_(void);
 extern void xmpf_sync_all_auto_(void);
-extern void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen);
+extern void xmpf_sync_all_stat_core_(int *stat, char *msg, int *msglen);
 
 extern void xmpf_sync_memory_nostat_(void);
 extern void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen);

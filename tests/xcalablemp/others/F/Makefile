@@ -1,4 +1,4 @@
-XFC     = xmpf90 -O2
+XFC     = xmpf90
 XRUN    = mpiexec
 EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x 412.x
 
