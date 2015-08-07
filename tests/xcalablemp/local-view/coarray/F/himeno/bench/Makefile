@@ -33,7 +33,8 @@ CAF=xmpf90 --debug
 
 
 
-EXE=mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x
+#EXE=mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x
+EXE=mpi.x caf-wide.x caf-get.x 
 
 all: $(EXE)
 
