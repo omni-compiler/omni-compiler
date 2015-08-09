@@ -580,7 +580,8 @@ elif test "$target" = "sx-nec-superux"; then
   RANLIB="sxar -sq"
   AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
   ARFLAGS="cru"
-  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
+  NM="sxnm -px"
+#  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
 
 elif test "$target" = "powerpc-ibm-cnk"; then
   # These options are referred to https://scwwwb.kek.jp/index.html
