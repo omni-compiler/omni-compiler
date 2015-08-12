@@ -9,10 +9,10 @@
 #-----------------
 # XMP/ifort/GASNet
 #-----------------
-MPI=mpif90 -O2
-#MPI=mpif90 -O0
-CAF=xmpf90 -O2 --debug --verbose
-#CAF=xmpf90 -O0 --debug --verbose
+#MPI=mpif90 -O2
+MPI=mpif90 -O1
+#CAF=xmpf90 -O2 --debug --verbose
+CAF=xmpf90 -O1 --debug --verbose
 
 #-----------------
 # XMP/Fujitsu/RDMA
@@ -41,8 +41,11 @@ CAF=xmpf90 -O2 --debug --verbose
 
 
 
-EXE=mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x caf-direct-nocom.x
-#EXE=mpi.x mpi-nocom.x caf-wide.x caf-nocom.x caf-direct.x caf-direct-nocom.x
+#EXE=mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x caf-direct-nocom.x
+EXE=mpi.x mpi-nocom.x \
+    caf-wide.x caf-narrow.x caf-fit.x caf-nocom.x \
+    caf-direct.x caf-direct-nocom.x \
+    caf-fitp.x
 
 all: $(EXE)
 
