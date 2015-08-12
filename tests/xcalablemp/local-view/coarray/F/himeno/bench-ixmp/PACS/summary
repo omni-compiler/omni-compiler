@@ -1,0 +1,44 @@
+#!/bin/bash
+
+scripts="go???ix"
+
+echo '[collection]----------------------------------------------'
+efiles=""
+ofiles=""
+for f in $scripts; do
+    for fe in $f.e*; do
+        if [ -f $fe ]; then              # if $fe is a file
+            efiles="$efiles $fe"
+            ofiles="$ofiles ${fe/$f.e/$f.o}"
+        else
+            echo "file $f.exxxxxxx was not found"
+        fi
+    done
+done
+
+echo '[check errors] --------------------------------------------'
+err=0
+for f in $efiles; do
+    if [ -s $f ]; then              # if $fe is not an empty file
+        echo "$f --- ERROR"
+        err=1
+    else
+        echo "$f --- OK"
+    fi
+done
+#if [ $err -eq 1 ]; then
+#    exit 1
+#fi
+
+echo '[trial execution summary] --------------------------------'
+for f in $ofiles; do
+    echo 
+    echo $f
+    echo 
+    egrep '^himenoBMT' $f
+    echo 
+    egrep '^   MFLOPS' $f
+    echo 
+    egrep '^  MFLOPS' $f
+done
+
