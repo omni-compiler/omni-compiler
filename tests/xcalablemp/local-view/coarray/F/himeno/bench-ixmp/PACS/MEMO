@@ -1,0 +1,85 @@
+2015/08/07
+
+TRY-1
+XMP built w/ intel + Intel Fortran -O1, GASNet built w/ intel
+  1) intel/15.0.2     2) intelmpi/5.0.0
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+Currently Loaded Modulefiles:
+  1) intel/15.0.2     2) intelmpi/5.0.0
+OMNI_HOME   = /home/XMPTCA/hideto/Project/OMNI-ixmp
+MPI_HOME    = /opt/MPI/IntelMPI/5.0.0.028/
+UHCAF_HOME  = 
+GASNET_HOME = /work/XMPTCA/mnakao/work/GASNet-1.24.2-intel
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+Environment -------
+Currently Loaded Modulefiles:
+  1) intel/15.0.2     2) intelmpi/5.0.0
+pwd = 
+/home/XMPTCA/hideto/Project/OMNI-ixmp/omni-compiler/tests/xcalablemp/local-view/coarray/F/himeno/bench-ixmp/PACS
+XMP_ONESIDED_HEAP_SIZE=512M
+-------------------
+
+  case -O1
+$ result.sh all| grep NaN
+result.sh | grep NaN
+go122ix.o443587   L     4           caf-fit              NaN         6.92 GFLOPS 161.70349630 ms
+go122ix.o443587  XL     4           caf-fit              NaN         6.21 GFLOPS 1455.31359741 ms
+  case -O2  ... wrong value of variable gosa
+$ ../result.sh all| grep NaN
+go122ix.o443548   M     4          caf-wide              NaN        20.23 GFLOPS   6.77700083 ms
+go122ix.o443548   M     4           caf-fit              NaN        27.17 GFLOPS   5.04589517 ms
+go122ix.o443548   L     4           caf-fit              NaN        17.75 GFLOPS  63.01460523 ms
+go122ix.o443548  XL     4           caf-fit              NaN        20.98 GFLOPS 430.72151795 ms
+go222ix.o443547   M     8          caf-wide              NaN        45.12 GFLOPS   3.03836718 ms
+go222ix.o443547   M     8           caf-fit              NaN        44.62 GFLOPS   3.07247001 ms
+go222ix.o443547   L     8          caf-wide              NaN        28.19 GFLOPS  39.68860357 ms
+go222ix.o443547   L     8           caf-fit              NaN        29.66 GFLOPS  37.71542637 ms
+go222ix.o443547  XL     8           caf-fit              NaN        28.37 GFLOPS 318.59202363 ms
+go224ix.o443549   M    16          caf-wide              NaN       104.99 GFLOPS   1.30593942 ms
+go224ix.o443549   M    16           caf-fit              NaN       105.26 GFLOPS   1.30259685 ms
+go224ix.o443549   L    16          caf-wide              NaN        64.85 GFLOPS  17.25144682 ms
+go224ix.o443549   L    16           caf-fit              NaN        63.80 GFLOPS  17.53498722 ms
+go224ix.o443549  XL    16           caf-fit              NaN        60.57 GFLOPS 149.22231706 ms
+
+TRY-2
+XMP built w/ intel + Intel Fortran -O1, GASNet built w/ GNU
+Environment is similar except
+GASNET_HOME=/home/XMPTCA/hideto/local/GASNet-1.24.2-mvapich2-gdr
+go122igx (intel-gnu-xmp)
+        $GASNET_HOME/bin/gasnetrun_ibv -n ${NODES} -spawner=mpi ../$f < ${INFILE}
+
+result-igx.sh
+go122igx.o443686   M     4           caf-fit              NaN         6.96 GFLOPS  19.71116288 ms
+go122igx.o443686   L     4           caf-fit              NaN         6.86 GFLOPS 162.97808011 ms
+go122igx.o443686  XL     4           caf-fit              NaN         6.25 GFLOPS 1446.37966724 ms
+
+
+TRY-3
+Environment is similar except
+XMP_ONESIDED_HEAP_SIZE=2048M  (4 times lagrger)
+
+go122igx.e443690
+GASNet gasnetc_attach returning an error code: GASNET_ERR_BAD_ARG (Invalid function parameter passed)
+  at /work/XMPTCA/mnakao/GASNet-1.24.2/ibv-conduit/gasnet_core.c:1801
+  reason: segsize too large
+
+
+TRY-4
+Environment is similar except
+XMP_ONESIDED_HEAP_SIZE=1024M  (size between TRY-2 and TRY-3)
+
+result-igx.sh
+go122igx.o443692   M     4           caf-fit              NaN         7.01 GFLOPS  19.55044297 ms
+go122igx.o443692   L     4           caf-fit              NaN         7.01 GFLOPS 159.50168800 ms
+go122igx.o443692  XL     4           caf-fit              NaN         6.16 GFLOPS 1466.37619109 ms
+
+
+TRY-5
+himenoBMTcaf-fitp.f90
+  make p coarray
+
+result-igx.sh
+go122igx.o443695   M     4          caf-fitp              NaN         9.23 GFLOPS  14.84674954 ms
+go122igx.o443695   L     4          caf-fitp              NaN         8.88 GFLOPS 125.92367307 ms
+go122igx.o443695  XL     4          caf-fitp              NaN         8.16 GFLOPS 1107.85864901 ms
+
