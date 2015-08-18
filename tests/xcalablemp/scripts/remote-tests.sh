@@ -23,12 +23,11 @@ GASNET_PATH=/opt/GASNet-1.24.2
 
 ## Clean Temporal files and dirs
 clean_files(){
-    echo -n "Clean temporal files... "
+    echo "Clean temporal files ... "
     rm -rf ${LOCAL_TMP_DIR}
     ## Only once "rm -rf", rarely all files are not deleted, because slurm output files are created.
     ## So "rm -rf" are executed twice.
     ssh ${REMOTE_HOST} "rm -rf ${REMOTE_TMP_DIR} 2> /dev/null; rm -rf ${REMOTE_TMP_DIR}"
-    echo "done"
     exit 0
 }
 
@@ -42,7 +41,7 @@ omni_exec(){
 }
 
 ## Create archive of the current omni-compiler
-echo -n "Compress ... "
+echo "Compress ... "
 if test -d ${LOCAL_TMP_DIR}; then
     echo "Error ! ${LOCAL_TMP_DIR} exist"
     exit 1
@@ -56,10 +55,9 @@ else
     cd ..
     omni_exec tar cfj ${ARCHIVE} ${OMNI}
 fi
-echo "done"
 
 ## Transfer the current omni-compiler
-echo -n "Transfer archive ... "
+echo "Transfer archive ... "
 MKDIR_CMD="if test -d ${REMOTE_TMP_DIR}; then \
              echo \"Error ${REMOTE_HOST}:${REMOTE_TMP_DIR} exist\"; exit 1;\
            else\
@@ -67,23 +65,20 @@ MKDIR_CMD="if test -d ${REMOTE_TMP_DIR}; then \
            fi"
 omni_exec ssh ${REMOTE_HOST} ${MKDIR_CMD}
 omni_exec scp ${LOCAL_TMP_DIR}/${ARCHIVE} ${REMOTE_HOST}:${REMOTE_TMP_DIR}
-echo "done"
 
 ## Expand the current omni-compiler
-echo -n "Expand archive ..."
+echo "Expand archive ..."
 EXPAND_CMD="tar xfj ${REMOTE_TMP_DIR}/${ARCHIVE} -C ${REMOTE_TMP_DIR}"
 omni_exec ssh ${REMOTE_HOST} ${EXPAND_CMD}
-echo "done"
 
 ## Compile the current omni-compiler
-echo -n "Compile the Omni compiler ..."
+echo "Compile the Omni compiler ..."
 COMPILE_CMD="mkdir ${XMP_PATH}; \
              cd ${REMOTE_TMP_DIR}/${OMNI}; \
              sh autogen.sh; \
              ./configure --prefix=${XMP_PATH} --with-gasnet=${GASNET_PATH}; \
              make -j2; make install"
 omni_exec ssh ${REMOTE_HOST} ${COMPILE_CMD}
-echo "done"
 
 ## Run tests
 echo "Run tests ..."
@@ -114,6 +109,7 @@ CHECK_TESTS_CMD="cd ${REMOTE_TMP_DIR}/${OMNI};\
                  rm -f $SORTED_LIST"
 omni_exec ssh ${REMOTE_HOST} ${CHECK_TESTS_CMD}
 echo "done"
+echo "PASS ALL TESTS"
 
 clean_files
 exit 0

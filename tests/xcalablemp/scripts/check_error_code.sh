@@ -12,7 +12,7 @@ for subdir in ${TESTDIRS}; do
 done
 
 ELAPSED_TIME=0
-echo "Waiting to finish jobs ..."
+echo "Waiting until finish jobs ..."
 while : ; do
     sleep ${INTERVAL}
     ELAPSED_TIME=`expr ${ELAPSED_TIME} + ${INTERVAL}`
