@@ -80,7 +80,7 @@ README
   SSL2BLAMP is used automatically. We recommend this way.
 
 ** When using "--enable-SSL2BLAMP" in executing ./configure.
-  SSL2BLAMP is used in the XMP library. This option is for FX10.
+  SSL2BLAMP is used in the XMP library. This option is for FX10 and FX100.
 
 ** When using "--enable-intelmkl" in executing ./configure.
   Intel MKL is used in the XMP library. This option is for Intel compiler.

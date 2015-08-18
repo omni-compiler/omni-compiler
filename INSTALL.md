@@ -18,7 +18,7 @@
  * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel openmpi-devel libxml2-devel byacc make perl
 
 ## For local-view operations (coarray, post/wait, lock/unlock)
- * On the K computer or FX10, the Omni compiler automatically uses Fujitsu RDMA.
+ * On the K computer or FX10 or FX100, the Omni compiler automatically uses Fujitsu RDMA.
  * On the other system, please install GASNet (http://gasnet.lbl.gov) before installing the Omni compiler.
 
 ## For Omni OpenACC compiler
@@ -54,6 +54,9 @@
 
 ### On FX10
     $ ./configure --target=FX10-linux-gnu --prefix=[INSTALLATION PATH]
+
+### On FX100
+    $ ./configure --target=FX100-linux-gnu --prefix=[INSTALLATION PATH]
 
 ### On Cray machines
     $ ./configure --target=Cray-linux-gnu --prefix=[INSTALLATION PATH]
