@@ -80,7 +80,7 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 bin_PROGRAMS = C_Front$(EXEEXT)
-subdir = ./C-FrontEnd/src
+subdir = C-FrontEnd/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am c-parser.h \
 	c-parser.c c-lexer.c $(top_srcdir)/./buildutils/ylwrap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -427,9 +427,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./C-FrontEnd/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps C-FrontEnd/src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps ./C-FrontEnd/src/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps C-FrontEnd/src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

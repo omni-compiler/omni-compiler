@@ -10,16 +10,23 @@ subroutine co_%op%_%t%%k%(source, result)
   %type%(kind=%k%) :: source, result
   integer ierr
 
-  call mpi_allreduce(source, result, 1, %mpitype%, &
-       mpi_%op%, mpi_comm_world, ierr)
 #ifdef _XMP_GASNET
-  if (ierr == 0) then
-     call mpi_barrier(mpi_comm_world, ierr)
+  call mpi_barrier(mpi_comm_world, ierr, source, result)
+  if (ierr /= 0) then
+     call xmpf_coarray_fatal("CO_%OP% failed before mpi_allreduce")
   end if
 #endif
+  call mpi_allreduce(source, result, 1, %mpitype%, &
+       mpi_%op%, mpi_comm_world, ierr)
   if (ierr /= 0) then
      call xmpf_coarray_fatal("CO_%OP% failed at mpi_allreduce")
   end if
+#ifdef _XMP_GASNET
+  call mpi_barrier(mpi_comm_world, ierr, source, result)
+  if (ierr /= 0) then
+     call xmpf_coarray_fatal("CO_%OP% failed after mpi_allreduce")
+  end if
+#endif
   return
 end subroutine'
 

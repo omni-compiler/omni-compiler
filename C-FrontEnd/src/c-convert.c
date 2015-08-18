@@ -450,10 +450,21 @@ convs_forStmt(CExpr *forStmt, CSymbolTable *symTab, int *converted)
     if(EXPR_ISNULL(init) || EXPR_CODE(init) != EC_DECL)
         return NULL;
 
+    CExpr *x = exprListNextNData(EXPR_B(init)->e_nodes[1], 0);
+    CExpr *ctlVar = EXPR_B(exprListNextNData(x, 0))->e_nodes[1];
+    CExpr *initValue = EXPR_U(exprListNextNData(x, 2))->e_node;
+    EXPR_U(exprListNextNData(x, 2))->e_node = NULL;
+
     CExpr *compStmt = exprList2(EC_COMP_STMT, init, forStmt);
+
     exprCopyLineNum(compStmt, forStmt);
     exprListRemoveHead(forStmt); // remove init
-    exprListCons(exprNull(), forStmt);
+
+    CExpr *newInit = exprList1(EC_EXPRS, exprBinary(EC_ASSIGN, ctlVar, initValue));
+    resolveType(newInit);
+    exprListCons(newInit, forStmt); // add new init
+    //exprListCons(exprNull(), forStmt);
+
     EXPR_REF(compStmt);
 
     EXPR_ISCONVERTED(init) = 1;
