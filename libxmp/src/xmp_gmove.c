@@ -425,6 +425,7 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
 
   // recv phase
   void *recv_buffer = NULL;
+  void *recv_alloc = NULL;
   int wait_recv = _XMP_N_INT_FALSE;
   MPI_Request gmove_request;
   for (int i = 0; i < dst_shrink_nodes_size; i++) {
@@ -439,23 +440,40 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
         src_rank = src_ranks[i % src_shrink_nodes_size];
       }
 
-      recv_buffer = _XMP_alloc(total_elmts * type_size);
+      for (int i = 0; i < dst_dim; i++) {
+	_XMP_gtol_array_ref_triplet(dst_array, i, &(dst_lower[i]), &(dst_upper[i]), &(dst_stride[i]));
+      }
+      if(dst_dim == 1 && dst_stride[0] == 1){
+	recv_buffer = (char*)dst_addr + type_size * dst_lower[0];
+      }else{
+	recv_alloc = _XMP_alloc(total_elmts * type_size);
+	recv_buffer = recv_alloc;
+      }
       MPI_Irecv(recv_buffer, total_elmts, *mpi_datatype, src_rank, _XMP_N_MPI_TAG_GMOVE, *exec_comm, &gmove_request);
+      //      fprintf(stderr, "DEBUG: Proc(%d), Irecv(src=%d, total_elmnt=%llu)\n", exec_rank, src_rank, total_elmts);
     }
   }
 
   // send phase
   for (int i = 0; i < src_shrink_nodes_size; i++) {
     if (src_ranks[i] == exec_rank) {
-      void *send_buffer = _XMP_alloc(total_elmts * type_size);
+      void *send_buffer = NULL;
+      void *send_alloc = NULL;
       for (int j = 0; j < src_dim; j++) {
         _XMP_gtol_array_ref_triplet(src_array, j, &(src_lower[j]), &(src_upper[j]), &(src_stride[j]));
       }
-      _XMP_pack_array(send_buffer, src_addr, type, type_size, src_dim, src_lower, src_upper, src_stride, src_dim_acc);
+      if(src_dim == 1 && src_stride[0] == 1){
+	send_buffer = (char*)src_addr + type_size * src_lower[0];
+      }else{
+	send_alloc = _XMP_alloc(total_elmts * type_size);
+	send_buffer = send_alloc;
+	_XMP_pack_array(send_buffer, src_addr, type, type_size, src_dim, src_lower, src_upper, src_stride, src_dim_acc);
+      }
       if ((dst_shrink_nodes_size == src_shrink_nodes_size) ||
           (dst_shrink_nodes_size <  src_shrink_nodes_size)) {
         if (i < dst_shrink_nodes_size) {
           MPI_Send(send_buffer, total_elmts, *mpi_datatype, dst_ranks[i], _XMP_N_MPI_TAG_GMOVE, *exec_comm);
+	  //	  fprintf(stderr, "DEBUG: Proc(%d), Send(dst=%d, total_elmnt=%llu)\n", exec_rank, dst_ranks[i], total_elmts);
         }
       } else {
         int request_size = _XMP_M_COUNT_TRIPLETi(i, dst_shrink_nodes_size - 1, src_shrink_nodes_size);
@@ -465,6 +483,7 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
         for (int j = i; j < dst_shrink_nodes_size; j += src_shrink_nodes_size) {
           MPI_Isend(send_buffer, total_elmts, *mpi_datatype, dst_ranks[j], _XMP_N_MPI_TAG_GMOVE, *exec_comm,
                     requests + request_count);
+	  //	  fprintf(stderr, "DEBUG: Proc(%d), Isend(dst=%d, total_elmnt=%llu)\n", exec_rank, dst_ranks[j], total_elmts);
           request_count++;
         }
 
@@ -472,18 +491,17 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
         _XMP_free(requests);
       }
 
-      _XMP_free(send_buffer);
+      _XMP_free(send_alloc);
     }
   }
 
   // wait recv phase
   if (wait_recv) {
     MPI_Wait(&gmove_request, MPI_STATUS_IGNORE);
-    for (int i = 0; i < dst_dim; i++) {
-      _XMP_gtol_array_ref_triplet(dst_array, i, &(dst_lower[i]), &(dst_upper[i]), &(dst_stride[i]));
+    if(! (dst_dim == 1 && dst_stride[0] == 1)){
+      _XMP_unpack_array(dst_addr, recv_buffer, type, type_size, dst_dim, dst_lower, dst_upper, dst_stride, dst_dim_acc);
     }
-    _XMP_unpack_array(dst_addr, recv_buffer, type, type_size, dst_dim, dst_lower, dst_upper, dst_stride, dst_dim_acc);
-    _XMP_free(recv_buffer);
+    _XMP_free(recv_alloc);
   }
 
   _XMP_free(dst_ref);
