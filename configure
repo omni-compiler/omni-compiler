@@ -3754,7 +3754,7 @@ else
 fi
 
 
- if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
+ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
   FJRDMA_TRUE=
   FJRDMA_FALSE='#'
 else
@@ -6649,7 +6649,7 @@ _ACEOF
 #   But, the vendor field is mostly unused.
 #   Refer: http://wiki.osdev.org/Target_Triplet
 
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
+if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
 # OpenMP
   OPENMP_OPT_C="-Kopenmp"
   OPENMP_OPT_F=$OPENMP_OPT_C

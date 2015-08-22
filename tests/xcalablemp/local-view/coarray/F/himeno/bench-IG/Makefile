@@ -46,9 +46,13 @@ CAF=xmpf90 $(OPT_O) --debug --verbose -I/opt/MPI/IntelMPI/5.0.0.028/include64
 #CAF=uhcaf --mpi -I$(MPILIB)
 
 
-
+EXE=mpi.x caf-wide.x caf-narrow.x caf-fit.x caf-direct.x 
 #EXE=mpi.x mpi-nocom.x caf-wide.x caf-narrow.x caf-fit.x caf-nocom.x caf-direct.x caf-direct-nocom.x
-EXE=caf-fitw.x caf-narroww.x caf-fits.x caf-fitc.x
+#EXE=caf-fitw.x caf-narroww.x caf-fits.x caf-fitc.x
+#EXE=caf-narrow.x caf-fit.x caf-fits.x caf-fitss.x caf-fito.x
+#EXE=caf-narrow.x caf-fit.x caf-fits.x caf-fitc.x
+#try4 EXE=caf-narrow.x caf-fit.x caf-fitm.x caf-fitm100.x caf-fitm110.x caf-fitm011.x caf-fitm010.x caf-fitm001.x
+
 
 #EXE=mpi-nocom.x caf-tt1.x caf-tt2.x caf-tt3.x caf-tt4.x caf-tt5.x caf-tt6.x caf-tt7.x caf-tt9.x caf-ttm.x
 #EXE=mpi_try2.x fit_try2.x fit_try2w.x fit_try2g.x
@@ -93,5 +97,5 @@ run:	$(EXE:%.x=%.result)
 	mpirun -n 4 $< <stdin.m122
 
 clean:
-	rm -f $(EXE)
+	rm -f *.x
 	rm -rf a.out *.mod *.xmod *.o *~ __omni_tmp__

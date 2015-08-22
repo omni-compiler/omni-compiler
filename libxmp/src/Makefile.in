@@ -95,7 +95,7 @@ target_triplet = @target@
 @INTELMKL_TRUE@am__append_8 = -D_XMP_INTELMKL
 @TCA_TRUE@am__append_9 = xmp_reflect_tca.c
 @TCA_TRUE@am__append_10 = -D_XMP_TCA
-@XACC_TRUE@am__append_11 = xmp_reflect_acc.c xmp_reduce_acc.c xmp_bcast_acc.c xmp_reflect_gpu.c xmp_reduce_gpu.c xmp_gpu_pack.cu
+@XACC_TRUE@am__append_11 = xmp_reflect_acc.c xmp_reduce_acc.c xmp_bcast_acc.c xmp_reflect_gpu.c xmp_reduce_gpu.c xmp_gpu_pack.cu xmp_gmove_acc.c
 @XACC_TRUE@am__append_12 = -D_XMP_XACC -I@GPGPU_PREFIX@
 subdir = libxmp/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
@@ -160,7 +160,7 @@ am__libxmp_a_SOURCES_DIST = ../include/xmp_internal.h \
 	xmp_post_wait_fjrdma.c xmp_coarray_fjrdma.c \
 	xmp_coarray_fjrdma_utils.c xmp_reflect_tca.c xmp_reflect_acc.c \
 	xmp_reduce_acc.c xmp_bcast_acc.c xmp_reflect_gpu.c \
-	xmp_reduce_gpu.c xmp_gpu_pack.cu
+	xmp_reduce_gpu.c xmp_gpu_pack.cu xmp_gmove_acc.c
 @GASNET_TRUE@am__objects_1 = xmp_onesided.$(OBJEXT) \
 @GASNET_TRUE@	xmp_onesided_gasnet.$(OBJEXT) \
 @GASNET_TRUE@	xmp_coarray.$(OBJEXT) xmp_coarray_utils.$(OBJEXT) \
@@ -185,7 +185,7 @@ am__libxmp_a_SOURCES_DIST = ../include/xmp_internal.h \
 @XACC_TRUE@am__objects_4 = xmp_reflect_acc.$(OBJEXT) \
 @XACC_TRUE@	xmp_reduce_acc.$(OBJEXT) xmp_bcast_acc.$(OBJEXT) \
 @XACC_TRUE@	xmp_reflect_gpu.$(OBJEXT) xmp_reduce_gpu.$(OBJEXT) \
-@XACC_TRUE@	xmp_gpu_pack.$(OBJEXT)
+@XACC_TRUE@	xmp_gpu_pack.$(OBJEXT) xmp_gmove_acc.$(OBJEXT)
 am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_world.$(OBJEXT) xmp_nodes_stack.$(OBJEXT) \
 	xmp_nodes.$(OBJEXT) xmp_template.$(OBJEXT) \

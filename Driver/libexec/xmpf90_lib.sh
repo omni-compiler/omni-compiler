@@ -81,7 +81,7 @@ function xmpf90_set_parameters()
 		module_dir=("${1#-J}")
 		module_opt=("-M${module_dir[0]}")
 		target=`get_target`
-		if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
+		if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu" ]; then
                     other_args+=("${OMNI_MODINC}${module_dir}")
                 else
                     other_args+=("${OMNI_MODINC}" "${module_dir}")
@@ -90,7 +90,7 @@ function xmpf90_set_parameters()
 		module_dir=("${1#-J}")
                 module_opt=("-M${module_dir[0]}")
 		target=`get_target`
-		if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
+		if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu" ]; then
                     other_args+=("${OMNI_MODINC}${module_dir}")
                 else
                     other_args+=("${OMNI_MODINC}" "${module_dir}")

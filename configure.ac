@@ -278,7 +278,7 @@ AC_ARG_ENABLE(xacc,
     [  --enable-xacc           enable XcalableACC (false default)],
     [doXACC=yes], [doXACC=no])
 
-AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
+AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu")
 TARGET=$target
 AC_SUBST(TARGET)
 
@@ -406,7 +406,7 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 #   But, the vendor field is mostly unused.
 #   Refer: http://wiki.osdev.org/Target_Triplet
 
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
+if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
 # OpenMP
   OPENMP_OPT_C="-Kopenmp"
   OPENMP_OPT_F=$OPENMP_OPT_C

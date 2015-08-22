@@ -7,11 +7,10 @@ int a[20];
 #pragma xmp align a[i] with t(i)
 
 int main(){
-  int i;
 
 #pragma xmp loop on t(i)
 #pragma omp parallel for
-  for( i = 0; i < 20; i++)
+  for(int i = 0; i < 20; i++)
     a[i] = i;
 
 #pragma xmp task on p(1)
