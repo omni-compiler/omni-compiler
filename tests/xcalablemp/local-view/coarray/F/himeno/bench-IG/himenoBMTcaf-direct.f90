@@ -182,10 +182,10 @@ subroutine readparam
 !
   implicit none
 !
-!!#418  integer, save :: itmp(3)[*]
+!!#418:intel  integer, save :: itmp(3)[*]
   integer :: itmp(3)[*]
-!!!  character(10) :: size[*]     !! to avoid bug #354
-!!#418  character(12), save :: size(1)[*]
+!!#354:bug  character(10) :: size[*]
+!!#418:intel  character(12), save :: size(1)[*]
   character(12) :: size(1)[*]
 !
   if(id == 0) then
