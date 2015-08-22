@@ -47,10 +47,12 @@ CAF=xmpf90 $(OPT_O) --debug --verbose
 
 
 
-EXE=mpi.x mpi-nocom.x caf-wide.x caf-narrow.x caf-fit.x caf-nocom.x caf-direct.x caf-direct-nocom.x \
-    caf-fitw.x caf-narroww.x caf-fits.x caf-fitc.x \
-    caf-wideg.x caf-narrowg.x caf-fitg.x caf-directg.x
+#EXE=mpi.x mpi-nocom.x caf-wide.x caf-narrow.x caf-fit.x caf-nocom.x caf-direct.x caf-direct-nocom.x \
+#    caf-fitw.x caf-narroww.x caf-fits.x caf-fitc.x \
+#    caf-wideg.x caf-narrowg.x caf-fitg.x caf-directg.x
 #    caf-fitp.x
+
+EXE=mpi.x caf-wide.x caf-direct.x caf-nobuf.x caf-nocom.x
 
 all: $(EXE)
 

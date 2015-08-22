@@ -38,7 +38,8 @@
 !
 module pres
   implicit none
-  real(4),dimension(:,:,:),allocatable :: p
+  include 'xmp_coarray.h'
+  real(4),dimension(:,:,:),codimension[:,:,:],allocatable :: p
 end module pres
 !
 module mtrx
@@ -61,6 +62,7 @@ module others
   integer :: mx0,my0,mz0
   integer :: mimax,mjmax,mkmax
   integer :: imax,jmax,kmax
+  integer :: imax1,jmax1,kmax1
   real(4),parameter :: omega=0.8
 end module others
 !
@@ -69,24 +71,20 @@ module comm
   integer,parameter :: ndims=3
   integer :: ndx,ndy,ndz
   integer :: iop(3)
-  integer :: npx(2),npy(2),npz(2)
   integer :: npe,id
-  integer :: ijvec,jkvec,ikvec
-  integer :: mpi_comm_cart
 end module comm
+
+program HimenoBMTxp_f90_CAF
 !
-program HimenoBMTxp_f90_MPI
-!
+  use pres
   use others
   use comm
 !
   implicit none
 !
-  include 'mpif.h'
-!
 !     ttarget specifys the measuring period in sec
   integer :: mx,my,mz
-  integer :: nn,it,ierr
+  integer :: nn,it
   real(4) :: gosa,score
   real(4),parameter :: ttarget=60.0
   real(8) :: cpu,cpu0,cpu1,xmflops2,flop
@@ -113,7 +111,7 @@ program HimenoBMTxp_f90_MPI
      print *,' mimax=',mimax,' mjmax=',mjmax,' mkmax=',mkmax
      print *,' imax=',imax,' jmax=',jmax,' kmax=',kmax
      print *,' I-decomp= ',ndx,' J-decomp= ',ndy,' K-decomp= ',ndz
-     print *
+     print *,''                                ! modified for #407
   end if
 !
 !! Start measuring
@@ -126,19 +124,13 @@ program HimenoBMTxp_f90_MPI
 !
   gosa= 0.0
   cpu= 0.0
-  call mpi_barrier(mpi_comm_world,ierr)
-  cpu0= mpi_wtime()
+  sync all
+  cpu0= xmp_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= mpi_wtime() - cpu0
+  cpu1= xmp_wtime() - cpu0
 !
-  call mpi_allreduce(cpu1, &
-                     cpu, &
-                     1, &
-                     mpi_real8, &
-                     mpi_max, &
-                     mpi_comm_world, &
-                     ierr)
+  call co_max(cpu1, cpu)
 !
   flop=real(mx-2)*real(my-2)*real(mz-2)*34.0
   if(cpu /= 0.0) xmflops2=flop/cpu*1.0d-6*real(nn)
@@ -157,19 +149,13 @@ program HimenoBMTxp_f90_MPI
 !
   gosa= 0.0
   cpu= 0.0
-  call mpi_barrier(mpi_comm_world,ierr)
-  cpu0= mpi_wtime()
+  sync all
+  cpu0= xmp_wtime()
 !! Jacobi iteration
   call jacobi(nn,gosa)
-  cpu1= mpi_wtime() - cpu0
+  cpu1= xmp_wtime() - cpu0
 !
-  call mpi_allreduce(cpu1, &
-                     cpu, &
-                     1, &
-                     mpi_real8, &
-                     mpi_max, &
-                     mpi_comm_world, &
-                     ierr)
+  call co_max(cpu1, cpu)
 !
   if(id == 0) then
      if(cpu /= 0.0)  xmflops2=flop*1.0d-6/cpu*real(nn)
@@ -179,22 +165,23 @@ program HimenoBMTxp_f90_MPI
      score=xmflops2/82.84
      print *,' Score based on Pentium III 600MHz :',score
   end if
-  call mpi_finalize(ierr)
 !
   stop
-end program HimenoBMTxp_f90_MPI
+end program HimenoBMTxp_f90_CAF
 !
 !
 subroutine readparam
 !
+  use pres
   use comm
 !
   implicit none
 !
-  include 'mpif.h'
-!
-  integer :: itmp(3),ierr
-  character(10) :: size
+!!#418:intel  integer, save :: itmp(3)[*]
+  integer :: itmp(3)[*]
+!!#354:bug  character(10) :: size[*]
+!!#418:intel  character(12), save :: size(1)[*]
+  character(12) :: size(1)[*]
 !
   if(id == 0) then
      print *,'For example:'
@@ -206,7 +193,7 @@ subroutine readparam
      print *,'           XL  (1024x512x512)'
      print *,' Grid-size = '
      read(*,*) size
-     print *
+     print *,''                                ! modified for #407
      print *,'For example: '
      print *,'DDM pattern= '
      print *,'     1 1 2'
@@ -215,21 +202,15 @@ subroutine readparam
      print *,'     k-direction partitioning : 2'
      print *,' DDM pattern = '
      read(*,*) itmp(1),itmp(2),itmp(3)
-     print *
+     print *,''                                ! modified for #407
   end if
 !
-  call mpi_bcast(itmp, &
-                 3, &
-                 mpi_integer, &
-                 0, &
-                 mpi_comm_world, &
-                 ierr)
-  call mpi_bcast(size, &
-                 10, &
-                 mpi_character, &
-                 0, &
-                 mpi_comm_world, &
-                 ierr)
+  sync all
+  if (id /= 0) then
+     itmp = itmp[1]
+     size = size[1]
+  end if
+  sync all
 !
   ndx= itmp(1)
   ndy= itmp(2)
@@ -341,10 +322,11 @@ subroutine initmem
   use bound
   use work
   use others
+  use comm
 !
   implicit none
 !
-  allocate(p(mimax,mjmax,mkmax))
+  allocate(p(mimax,mjmax,mkmax)[ndx,ndy,*])
   allocate(a(mimax,mjmax,mkmax,4),b(mimax,mjmax,mkmax,3), &
            c(mimax,mjmax,mkmax,3))
   allocate(bnd(mimax,mjmax,mkmax))
@@ -365,11 +347,9 @@ subroutine jacobi(nn,gosa)
 !
   implicit none
 !
-  include 'mpif.h'
-!
   integer,intent(in) :: nn
   real(4),intent(inout) :: gosa
-  integer :: i,j,k,loop,ierr
+  integer :: i,j,k,loop
   real(4) :: s0,ss,wgosa
 !  
   do loop=1,nn
@@ -400,18 +380,17 @@ subroutine jacobi(nn,gosa)
      p(2:imax-1,2:jmax-1,2:kmax-1)= &
           wrk2(2:imax-1,2:jmax-1,2:kmax-1)
 !
-     call sendp(ndx,ndy,ndz)
+     call sendp()
 !
-     call mpi_allreduce(wgosa, &
-                        gosa, &
-                        1, &
-                        mpi_real4, &
-                        mpi_sum, &
-                        mpi_comm_world, &
-                        ierr)
+     call xmpf_touch(wgosa, gosa)
+     call co_sum(wgosa, gosa)
+     call xmpf_touch(wgosa, gosa)
 !
   enddo
 !! End of iteration
+
+  call xmpf_touch(wgosa, gosa)
+  sync all
   return
 end subroutine jacobi
 !
@@ -419,80 +398,28 @@ end subroutine jacobi
 !
 subroutine initcomm
 !
+  use pres
   use comm
+  use others
 !
   implicit none
 !
-  include 'mpif.h'
+  integer,allocatable:: dummy(:)[:,:,:]
 !
-  integer :: ierr,icomm,idm(3)
-  logical :: ipd(3),ir
-!
-  call mpi_init(ierr)
-  call mpi_comm_size(mpi_comm_world,npe,ierr)
-  call mpi_comm_rank(mpi_comm_world,id,ierr)
+  npe = num_images()
+  id = this_image() - 1
 !
   call readparam
+!
+  allocate(dummy(0)[ndx,ndy,*])
+  iop = this_image(dummy) - 1
 !
   if(ndx*ndy*ndz /= npe) then
      if(id == 0) then
         print *,'Invalid number of PE'
         print *,'Please check partitioning pattern or number of PE'
      end if
-     call mpi_finalize(ierr)
      stop
-  end if
-!
-  icomm= mpi_comm_world
-!
-  idm(1)= ndx
-  idm(2)= ndy
-  idm(3)= ndz
-!
-  ipd(1)= .false.
-  ipd(2)= .false.
-  ipd(3)= .false.
-  ir= .false.
-!
-  call mpi_cart_create(icomm, &
-                       ndims, &
-                       idm, &
-                       ipd, &
-                       ir, &
-                       mpi_comm_cart, &
-                       ierr)
-  call mpi_cart_get(mpi_comm_cart, &
-                    ndims, &
-                    idm, &
-                    ipd, &
-                    iop, &
-                    ierr)
-!
-  if(ndz > 1) then
-     call mpi_cart_shift(mpi_comm_cart, &
-                         2, &
-                         1, &
-                         npz(1), &
-                         npz(2), &
-                         ierr)
-  end if
-!
-  if(ndy > 1) then
-     call mpi_cart_shift(mpi_comm_cart, &
-                         1, &
-                         1, &
-                         npy(1), &
-                         npy(2), &
-                         ierr)
-  end if
-!
-  if(ndx > 1) then
-     call mpi_cart_shift(mpi_comm_cart, &
-                         0, &
-                         1, &
-                         npx(1), &
-                         npx(2), &
-                         ierr)
   end if
 !
   return
@@ -506,11 +433,9 @@ subroutine initmax(mx,my,mz,ks)
 !
   implicit none
 !
-  include 'mpif.h'
-!
   integer,intent(in) :: mx,my,mz
   integer,intent(out) :: ks
-  integer :: i,itmp,ierr
+  integer :: i,itmp
   integer :: mx1(0:ndx),my1(0:ndy),mz1(0:ndz)
   integer :: mx2(0:ndx),my2(0:ndy),mz2(0:ndz)
 !
@@ -519,15 +444,15 @@ subroutine initmax(mx,my,mz,ks)
   mx1(0)= 0
   do  i=1,ndx
      if(i <= mod(mx,ndx)) then
-        mx1(i)= mx1(i-1) + itmp + 1
+        mx1(i)= mx1(i-1) + itmp + 1    !! get my global lbound
      else
-        mx1(i)= mx1(i-1) + itmp
+        mx1(i)= mx1(i-1) + itmp        !! get my global lbound
      end if
   end do
   do i=0,ndx-1
-     mx2(i)= mx1(i+1) - mx1(i)
-     if(i /= 0)     mx2(i)= mx2(i) + 1
-     if(i /= ndx-1) mx2(i)= mx2(i) + 1
+     mx2(i)= mx1(i+1) - mx1(i)             !! get my width
+     if(i /= 0)     mx2(i)= mx2(i) + 1     !! add lower shadow
+     if(i /= ndx-1) mx2(i)= mx2(i) + 1     !! add upper shadow
   end do
 !
   itmp= my/ndy
@@ -560,13 +485,17 @@ subroutine initmax(mx,my,mz,ks)
      if(i /= ndz-1)  mz2(i)= mz2(i) + 1
   end do
 !
+  mimax=maxval(mx2(0:ndx-1)) + 1
+  mjmax=maxval(my2(0:ndy-1)) + 1
+  mkmax=maxval(mz2(0:ndz-1)) + 1
+!
   imax= mx2(iop(1))
   jmax= my2(iop(2))
   kmax= mz2(iop(3))
 !
-  mimax= imax + 1
-  mjmax= jmax + 1
-  mkmax= kmax + 1
+  if (iop(1) /= 0) imax1= mx2(iop(1)-1)
+  if (iop(2) /= 0) jmax1= my2(iop(2)-1)
+  if (iop(3) /= 0) kmax1= mz2(iop(3)-1)
 !
   if(iop(3) == 0) then
      ks= mz1(iop(3))
@@ -574,47 +503,54 @@ subroutine initmax(mx,my,mz,ks)
      ks= mz1(iop(3)) - 1
   end if
 !
-!!  j-k vector
-  if(ndx > 1) then
-     call mpi_type_vector(jmax*kmax, &
-                          1, &
-                          mimax, &
-                          mpi_real4, &
-                          jkvec, &
-                          ierr)
-     call mpi_type_commit(jkvec, &
-                          ierr)
-  end if
-!
-!!  i-k vector
-  if(ndy > 1) then
-     call mpi_type_vector(kmax, &
-                          imax, &
-                          mimax*mjmax, &
-                          mpi_real4, &
-                          ikvec, &
-                          ierr)
-     call mpi_type_commit(ikvec, &
-                          ierr)
-  end if
-!
-!!  i-j vector
-  if(ndz > 1) then
-     call mpi_type_vector(jmax, &
-                          imax, &
-                          mimax, &
-                          mpi_real4, &
-                          ijvec, &
-                          ierr)
-     call mpi_type_commit(ijvec, &
-                          ierr)
-  end if
-!
   return
 end subroutine initmax
 !
 !
 !
-subroutine sendp(ndx,ndy,ndz)
+subroutine sendp()
+!
+  use pres
+  use others
+  use comm
+  implicit none
+  integer mex, mey, mez
+
+  mex = iop(1) + 1
+  mey = iop(2) + 1
+  mez = iop(3) + 1
+
+  sync all
+
+  !*** put z-axis
+  if (mez>1) then
+     p(:,:,kmax1)[mex,mey,mez-1] = p(:,:,2     )
+  end if
+  if (mez<ndz) then
+     p(:,:,1    )[mex,mey,mez+1] = p(:,:,kmax-1)
+  endif
+
+  sync all
+
+  !*** put y-axis
+  if (mey>1) then
+     p(:,jmax1,:)[mex,mey-1,mez] = p(:,2     ,:)
+  end if
+  if (mey<ndy) then
+     p(:,1    ,:)[mex,mey+1,mez] = p(:,jmax-1,:)
+  endif
+
+  sync all
+
+  !*** put x-axis
+  if (mex>1) then
+     p(imax1,:,:)[mex-1,mey,mez] = p(2     ,:,:)
+  end if
+  if (mex<ndx) then
+     p(1    ,:,:)[mex+1,mey,mez] = p(imax-1,:,:)
+  endif
+
+  sync all
+
   return
 end subroutine sendp
