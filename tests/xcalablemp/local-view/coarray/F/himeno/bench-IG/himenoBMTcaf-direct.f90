@@ -387,10 +387,15 @@ subroutine jacobi(nn,gosa)
 !
      call sendp()
 !
+     call xmpf_touch(wgosa, gosa)
      call co_sum(wgosa, gosa)
+     call xmpf_touch(wgosa, gosa)
 !
   enddo
 !! End of iteration
+
+  call xmpf_touch(wgosa, gosa)
+  sync all
   return
 end subroutine jacobi
 !
@@ -519,6 +524,8 @@ subroutine sendp()
   mex = iop(1) + 1
   mey = iop(2) + 1
   mez = iop(3) + 1
+
+  sync all
 
   !*** put z-axis
   if (mez>1) then

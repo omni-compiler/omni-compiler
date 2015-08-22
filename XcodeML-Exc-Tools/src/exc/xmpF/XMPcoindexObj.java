@@ -198,7 +198,7 @@ public class XMPcoindexObj {
   //  run
   //------------------------------
   public Xobject toFuncRef() {
-    // type-6 used
+    // type6 used
     Xobject mold = getObj().getArg(0).getArg(0);   // object w/o coindex
     Xobject actualArgs = _makeActualArgs_type6(mold);
 
@@ -219,9 +219,9 @@ public class XMPcoindexObj {
   }
 
   public Xobject toCallStmt(Xobject rhs, Xobject condition) {
-    // type-6 used
+    // type7 used
     Xobject actualArgs =
-      _makeActualArgs_type6(_convRhsType(rhs),
+      _makeActualArgs_type7(_convRhsType(rhs),
                             condition);
 
     // "scalar" or "array" or "spread" will be selected.
@@ -308,6 +308,9 @@ public class XMPcoindexObj {
   /* generate actual arguments
    * cf. libxmpf/src/xmpf_coarray_put.c
    *
+   * Type-7:
+   *       add baseAddr to Type-6 as an extra argument 
+   *       in order to tell the optimization compiler the data will be referred.
    * Type-6:
    *       (void *descPtr, void* baseAddr, int element, int image,
    *        [void* rhs, int scheme,] int exprRank,
@@ -316,10 +319,19 @@ public class XMPcoindexObj {
    *        void* nextAddrN, int countN )
    *   where N is rank of the reference (0<=N<=15 in Fortran 2008).
    */
+  private Xobject _makeActualArgs_type7(Xobject addArg1) {
+    return _makeActualArgs_type7(addArg1, null);
+  }
+  private Xobject _makeActualArgs_type7(Xobject addArg1, Xobject addArg2) {
+    Xobject actualArgs = _makeActualArgs_type6(addArg1, addArg2);
+    Xobject coarrayName =  Xcons.FvarRef(coarray.getIdent());
+    actualArgs.add(coarrayName);
+    return actualArgs;
+  }
+
   private Xobject _makeActualArgs_type6(Xobject addArg1) {
     return _makeActualArgs_type6(addArg1, null);
   }
-
   private Xobject _makeActualArgs_type6(Xobject addArg1, Xobject addArg2) {
     XMPcoarray coarray = getCoarray();
 
