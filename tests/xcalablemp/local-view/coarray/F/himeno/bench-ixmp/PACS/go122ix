@@ -3,7 +3,7 @@
 #PBS -q tcaq 
 
 #PBS -l select=4:mpiprocs=1
-#PBS -l walltime=00:40:00
+#PBS -l walltime=00:30:00
 
 . /opt/Modules/default/init/bash
 module purge
@@ -20,9 +20,12 @@ echo -------------------
 
 
 #EXE="mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x caf-direct-nocom.x"
-EXE="mpi.x mpi-nocom.x caf-wide.x caf-nocom.x caf-direct.x caf-direct-nocom.x caf-narrow.x caf-fit.x"
+EXE="mpi.x caf-wide.x caf-narrow.x caf-fit.x caf-direct.x"
+#EXE="mpi.x caf-narrow.x caf-fit.x caf-fitw.x "
+#EXE="caf-fit.x caf-fitw.x "
 
 MODEL="M L XL"
+#MODEL="XL"
 SHAPE=122
 SHAPES="1 2 2"
 NODES=4

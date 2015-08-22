@@ -6,7 +6,8 @@ case "$sizespec" in
     "L") ;;
     "XL") ;;
     "all") ;;
-    *) echo "usage: $0 {M|L|XL|all}";
+    "") sizespec="all";;
+    *) echo "usage: $0 [M|L|XL|all]";
        exit 1;;
 esac
 

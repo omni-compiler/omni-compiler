@@ -16,10 +16,9 @@ CAF=xmpf90 $(OPT_O) --debug --verbose -I/opt/MPI/IntelMPI/5.0.0.028/include64
 #-----------------
 # XMP/ifort/GASNet
 #-----------------
-#MPI=mpif90 -O2
-#CAF=xmpf90 -O2 --debug --verbose
-#MPI=mpif90 -O0
-#CAF=xmpf90 -O0 --debug --verbose
+#OPT_O=-O2
+#MPI=mpiifort $(OPT_O)
+#CAF=xmpf90 $(OPT_O) --debug --verbose
 
 #-----------------
 # XMP/Fujitsu/RDMA
@@ -62,6 +61,7 @@ all: $(EXE)
 ### $ (echo m; echo 1 2 2) | mpirun -n 4 mpi.x > mpi122m.result
 ### $ (echo m; echo 1 2 2) | mpirun -n 4 caf-wide.x > caf-wide122m.result
 
+## for bench-IG
 fit_%.x: fit_%.f90
 	mpiifort $(OPT_O) -o $@ $< /home/XMPTCA/hideto/Project/OMNI-IG/lib/xmpf_main.o  -I/opt/MPI/IntelMPI/5.0.0.028/include64 -L/home/XMPTCA/hideto/Project/OMNI-IG/lib -lxmpf -lxmp -openmp -L/home/XMPTCA/hideto/work/local/GASNet-1.24.2-mvapich2-gdr/lib -L/usr/lib64 -L/opt/mellanox/fca/lib -lgasnet-ibv-seq -libverbs -lfca -lpthread -lrt -L/usr/lib/gcc/x86_64-redhat-linux/4.4.7 -lgcc -lm
 
