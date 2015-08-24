@@ -2087,6 +2087,8 @@ int m4[2]={20,25};
    return 0;
 }
 
+#include "mpi.h"
+
 int main(int argc, char **argv){
 
   test_matmul_001();
@@ -2099,25 +2101,40 @@ int main(int argc, char **argv){
   test_matmul_008();
   test_matmul_009();
   test_matmul_010();
+
+#if ((MPI_VERSION >= 3) || (MPI_VERSION == 2 && MPI_SUBVERSION >= 2))
   test_matmul_011();
+#endif
+
   test_matmul_012();
   test_matmul_013();
   test_matmul_014();
   test_matmul_015();
   test_matmul_016();
+
+#if ((MPI_VERSION >= 3) || (MPI_VERSION == 2 && MPI_SUBVERSION >= 2))
   test_matmul_017();
+#endif
+
   test_matmul_018();
   test_matmul_019();
   test_matmul_020();
   test_matmul_021();
   test_matmul_022();
+
+#if ((MPI_VERSION >= 3) || (MPI_VERSION == 2 && MPI_SUBVERSION >= 2))
   test_matmul_023();
+#endif
+
   test_matmul_024();
   test_matmul_025();
   test_matmul_026();
   test_matmul_027();
   test_matmul_028();
+
+#if ((MPI_VERSION >= 3) || (MPI_VERSION == 2 && MPI_SUBVERSION >= 2))
   test_matmul_029();
+#endif
 
   return 0;
 

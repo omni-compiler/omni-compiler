@@ -58,12 +58,16 @@ void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, i
     case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
       { *mpi_datatype = MPI_LONG_DOUBLE;		*datatype_size = sizeof(long double _Imaginary);	break; }
 #endif
+
+#if ((MPI_VERSION >= 3) || (MPI_VERSION == 2 && MPI_SUBVERSION >= 2))
     case _XMP_N_TYPE_FLOAT_COMPLEX:
       { *mpi_datatype = MPI_C_FLOAT_COMPLEX;		*datatype_size = sizeof(float _Complex); 		break; }
     case _XMP_N_TYPE_DOUBLE_COMPLEX:
       { *mpi_datatype = MPI_C_DOUBLE_COMPLEX;		*datatype_size = sizeof(double _Complex); 		break; }
     case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
       { *mpi_datatype = MPI_C_LONG_DOUBLE_COMPLEX;	*datatype_size = sizeof(long double _Complex); 		break; }
+#endif
+
     default:
       _XMP_fatal("unknown data type for reduction");
   }

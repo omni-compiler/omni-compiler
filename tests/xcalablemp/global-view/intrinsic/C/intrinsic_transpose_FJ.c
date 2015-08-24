@@ -1423,6 +1423,8 @@ int m2[2]={3,28};
 
 }
 
+#include "mpi.h"
+
 int main(){
 
   test_transpose_001();
@@ -1442,25 +1444,40 @@ int main(){
   test_transpose_015();
   test_transpose_016();
   test_transpose_017();
+
+#if ((MPI_VERSION >= 3) || (MPI_VERSION == 2 && MPI_SUBVERSION >= 2))
   test_transpose_018();
+#endif
+
   test_transpose_019();
   test_transpose_020();
   test_transpose_021();
   test_transpose_022();
   test_transpose_023();
+
+#if ((MPI_VERSION >= 3) || (MPI_VERSION == 2 && MPI_SUBVERSION >= 2))
   test_transpose_024();
+#endif
+
   test_transpose_025();
   test_transpose_026();
   test_transpose_027();
   test_transpose_028();
   test_transpose_029();
+
+#if ((MPI_VERSION >= 3) || (MPI_VERSION == 2 && MPI_SUBVERSION >= 2))
   test_transpose_030();
+#endif
+
   test_transpose_031();
   test_transpose_032();
   test_transpose_033();
   test_transpose_034();
   test_transpose_035();
+
+#if ((MPI_VERSION >= 3) || (MPI_VERSION == 2 && MPI_SUBVERSION >= 2))
   test_transpose_036();
+#endif
 
   return 0;
 
