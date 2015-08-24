@@ -1315,10 +1315,15 @@ int a[m][n],b[n][m];
 
 }
 
+#include "mpi.h"
+
 int main(){
 
+#if ((MPI_VERSION >= 3) || (MPI_VERSION == 2 && MPI_SUBVERSION >= 2))
   test_tr_a2a_bb_c16_1();
   test_tr_a2a_bb_c8_1();
+#endif
+
   test_tr_a2a_bb_i4_1();
   test_tr_a2a_bb_r4_1();
   test_tr_a2a_bb_r8_1();
@@ -1330,8 +1335,12 @@ int main(){
   test_tr_bca_bc_i4_2();
   test_tr_bca_bc_i4_3();
   test_tr_bca_bc_i4_4();
+
+#if ((MPI_VERSION >= 3) || (MPI_VERSION == 2 && MPI_SUBVERSION >= 2))
   test_tr_cp0_bc_c16_1();
   test_tr_cp0_bc_c8_1();
+#endif
+
   test_tr_cp0_bc_i4_1();
   test_tr_cp_bc_i4_1();
   test_tr_cp_bc_i4_2();
