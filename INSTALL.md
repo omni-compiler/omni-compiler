@@ -52,17 +52,18 @@
 ### On the K computer
     $ ./configure --target=Kcomputer-linux-gnu --prefix=[INSTALLATION PATH]
 
-### On FX10
+### On FX10/FX100
     $ ./configure --target=FX10-linux-gnu --prefix=[INSTALLATION PATH]
-
-### On FX100
+            or
     $ ./configure --target=FX100-linux-gnu --prefix=[INSTALLATION PATH]
 
 ### On Cray machines
     $ ./configure --target=Cray-linux-gnu --prefix=[INSTALLATION PATH]
 
-### On NEC SX machines
-    $ ./configure --target=sx-nec-superux --prefix=[INSTALLATION PATH]
+### On NEC SX9/SX-ACE
+    $ ./configure --target=sx9-nec-superux --prefix=[INSTALLATION PATH]
+            or
+    $ ./configure --target=sxace-nec-superux --prefix=[INSTALLATION PATH]
 
 ### On IBM BlueGene/Q
     We recommend to install openJDK for AIX (e.g. openjdk1.7.0-ppc-aix-port-linux-ppc64-b**.tar.bz2,

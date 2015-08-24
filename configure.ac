@@ -538,7 +538,54 @@ elif test "$target" = "Cray-linux-gnu"; then
   ARFLAGS="cru"
   AC_CHECK_PROG([NM], [nm], [nm])
 
-elif test "$target" = "sx-nec-superux"; then
+elif test "$target" = "sxace-nec-superux"; then
+# OpenMP
+  OPENMP_OPT_C="-Popenmp"
+  OPENMP_OPT_F=$OPENMP_OPT_C
+
+# CPP_OPT
+  CPP_OPT="-cpp"
+
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
+
+# MPI C
+  AC_CHECK_PROG([MPI_CC], [sxmpic++], [sxmpic++])
+  MPI_CPPFLAGS="-E"
+#  MPI_CFLAGS="-Chopt $OPENMP_OPT_C"  # Don't use OpenMP option because of SX-ACE bug [Xmp-dev:5418].
+  MPI_CFLAGS="-Chopt"
+  MPI_CLIBS=""
+
+# MPI F
+  AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
+  MPI_FPPFLAGS="-E"
+#  MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
+  MPI_FCFLAGS="-Chopt"
+  MPI_MODINC="-to"
+  MPI_FCLIBS=""
+
+# Omni C
+  OMNI_C2X_FLAGS=""
+  OMNI_NTV_CFLAGS="-Kgcc -w"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
+
+# Omni F
+  OMNI_F2X_FLAGS=""
+  OMNI_NTV_FCFLAGS="-f4 -w"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
+
+# ranlib & ar & nm
+  RANLIB="sxar -sq"
+  AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
+  ARFLAGS="cru"
+  NM="sxnm -px"
+#  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
+	
+elif test "$target" = "sx9-nec-superux"; then
 # OpenMP
   OPENMP_OPT_C="-Popenmp"
   OPENMP_OPT_F=$OPENMP_OPT_C
@@ -1195,7 +1242,7 @@ AC_SUBST(NM)
 #AM_CONDITIONAL(IS_PGI, test "$chk" != "")
 
 # check -lstdc++
-if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sx-nec-superux"; then
+if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sxace-nec-superux" -a "$target" != "sx9-nec-superux"; then
   tmp_file_c=/tmp/_xmp.$$.c
   tmp_file_x=/tmp/_xmp.$$.x
   echo "int main(){return 0;}" > $tmp_file_c
@@ -1209,7 +1256,7 @@ if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sx-nec-superux"; the
 fi
 
 #AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
-AM_CONDITIONAL(SUPERUX, test "$target" = "sx-nec-superux")
+AM_CONDITIONAL(SUPERUX, test "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux")
 
 #AC_SUBST(CRAY)
 AC_SUBST(SUPERUX)

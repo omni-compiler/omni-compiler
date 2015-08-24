@@ -4,7 +4,7 @@
 #   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
 #   Free Software Foundation, Inc.
 
-timestamp='2015-08-18'
+timestamp='2015-08-24'
 
 # This file is (in principle) common to ALL GNU software.
 # The presence of a machine in this file suggests that SOME GNU software
@@ -1077,10 +1077,14 @@ case $basic_machine in
 		basic_machine=sv1-cray
 		os=-unicos
 		;;
-        sx*)
-	        basic_machine=sx-nec
+        sx9*)
+	        basic_machine=sx9-nec
 		os=-superux
 		;;
+	sxace*)
+   	        basic_machine=sxace-nec
+	        os=-superux
+                ;;
 	symmetry)
 		basic_machine=i386-sequent
 		os=-dynix
