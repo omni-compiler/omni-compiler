@@ -1074,7 +1074,7 @@ AC_ARG_WITH(gasnet_conduit,
 if test x${use_gasnet} = xyes; then
   gasnet_conduit_flag=no
   if test "${GASNET_CONDUIT}" = ""; then
-    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
+    for c in smp udp mpi gm lapi elan vapi pami ibv portals gemini shmem dcmf sci
     do
       if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
          GASNET_CONDUIT=${c}
@@ -1113,7 +1113,6 @@ if test x${use_gasnet} = xyes; then
     unset __ECHO
   fi
 
-  MPI_CPPFLAGS="${MPI_CPPFLAGS} ${GASNET_CPPFLAGS}"
   MPI_CFLAGS="${MPI_CFLAGS} ${GASNET_CFLAGS} ${GASNET_CPPFLAGS}"
   MPI_CLIBS="${MPI_CLIBS} ${GASNET_LDFLAGS} ${GASNET_LIBS}"
   OMNI_LNK_CFLAGS="${OMNI_LNK_CFLAGS} ${GASNET_LIBS}"

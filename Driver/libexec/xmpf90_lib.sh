@@ -37,10 +37,6 @@ XcalableMP Options
 
   -omp,--openmp       : enable OpenMP.
   -xacc,--xcalableacc : enable XcalableACC.
-  --scalasca-all      : output results in scalasca format for all directives.
-  --scalasca          : output results in scalasca format for selected directives.
-  --tlog-all          : output results in tlog format for all directives.
-  --tlog              : output results in tlog format for selected directives.
 EOF
 }
 
