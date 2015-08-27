@@ -1,0 +1,49 @@
+#PBS -S /bin/bash
+#PBS -A XMPTCA
+#PBS -q tcaq 
+
+#PBS -l select=4:mpiprocs=1
+#PBS -l walltime=00:30:00
+
+. /opt/Modules/default/init/bash
+module purge
+module load intel/15.0.2 intelmpi/5.0.0
+
+cd $PBS_O_WORKDIR
+export XMP_ONESIDED_HEAP_SIZE=512M
+
+echo Environment -------
+module list 2>&1
+echo "pwd = "; pwd
+echo "XMP_ONESIDED_HEAP_SIZE=$XMP_ONESIDED_HEAP_SIZE"
+echo -------------------
+
+
+EXE="mpi.x caf-wide.x caf-direct.x caf-nobuf.x caf-nocom.x"
+
+
+MODEL="M L XL"
+SHAPE=122
+SHAPES="1 2 2"
+NODES=4
+
+for m in ${MODEL}; do
+INFILE=./stdin.${m}${SHAPE}
+echo "$m" > ${INFILE}
+echo "${SHAPES}" >> ${INFILE}
+
+for f in ${EXE}; do
+    echo
+    echo "****************************************************"
+    echo "himenoBMT $f $m ${SHAPE} ($m-model/${NODES} nodes)"
+    echo "****************************************************"
+    ### for IntelMPI
+    if [[ $f =~ ^mpi ]]; then
+        mpirun -np ${NODES} -s all ../$f < ${INFILE}
+    else
+        gasnetrun_ibv -n ${NODES} -spawner=mpi ../$f < ${INFILE}
+    fi
+done
+
+done
+

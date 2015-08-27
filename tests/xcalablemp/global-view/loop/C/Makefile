@@ -37,7 +37,6 @@ run: $(EXES)
 	$(XRUN) -n 8 ./reduction_raise2.x
 	$(XRUN) -n 8 ./reduction_max2.x
 	$(XRUN) -n 8 ./reduction_min2.x
-	$(XRUN) -n 8 ./reduction_mult2.x
 	$(XRUN) -n 8 ./reduction_or2.x
 	$(XRUN) -n 8 ./reduction_plus.x
 	$(XRUN) -n 16 ./reduction_plus3.x

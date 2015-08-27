@@ -278,7 +278,7 @@ AC_ARG_ENABLE(xacc,
     [  --enable-xacc           enable XcalableACC (false default)],
     [doXACC=yes], [doXACC=no])
 
-AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu")
+AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu")
 TARGET=$target
 AC_SUBST(TARGET)
 
@@ -406,7 +406,7 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 #   But, the vendor field is mostly unused.
 #   Refer: http://wiki.osdev.org/Target_Triplet
 
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
+if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
 # OpenMP
   OPENMP_OPT_C="-Kopenmp"
   OPENMP_OPT_F=$OPENMP_OPT_C
@@ -538,7 +538,54 @@ elif test "$target" = "Cray-linux-gnu"; then
   ARFLAGS="cru"
   AC_CHECK_PROG([NM], [nm], [nm])
 
-elif test "$target" = "sx-nec-superux"; then
+elif test "$target" = "sxace-nec-superux"; then
+# OpenMP
+  OPENMP_OPT_C="-Popenmp"
+  OPENMP_OPT_F=$OPENMP_OPT_C
+
+# CPP_OPT
+  CPP_OPT="-cpp"
+
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
+
+# MPI C
+  AC_CHECK_PROG([MPI_CC], [sxmpic++], [sxmpic++])
+  MPI_CPPFLAGS="-E"
+#  MPI_CFLAGS="-Chopt $OPENMP_OPT_C"  # Don't use OpenMP option because of SX-ACE bug [Xmp-dev:5418].
+  MPI_CFLAGS="-Chopt"
+  MPI_CLIBS=""
+
+# MPI F
+  AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
+  MPI_FPPFLAGS="-E"
+#  MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
+  MPI_FCFLAGS="-Chopt"
+  MPI_MODINC="-to"
+  MPI_FCLIBS=""
+
+# Omni C
+  OMNI_C2X_FLAGS=""
+  OMNI_NTV_CFLAGS="-Kgcc -w"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
+
+# Omni F
+  OMNI_F2X_FLAGS=""
+  OMNI_NTV_FCFLAGS="-f4 -w"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
+
+# ranlib & ar & nm
+  RANLIB="sxar -sq"
+  AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
+  ARFLAGS="cru"
+  NM="sxnm -px"
+#  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
+	
+elif test "$target" = "sx9-nec-superux"; then
 # OpenMP
   OPENMP_OPT_C="-Popenmp"
   OPENMP_OPT_F=$OPENMP_OPT_C
@@ -580,7 +627,8 @@ elif test "$target" = "sx-nec-superux"; then
   RANLIB="sxar -sq"
   AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
   ARFLAGS="cru"
-  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
+  NM="sxnm -px"
+#  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
 
 elif test "$target" = "powerpc-ibm-cnk"; then
   # These options are referred to https://scwwwb.kek.jp/index.html
@@ -1026,7 +1074,7 @@ AC_ARG_WITH(gasnet_conduit,
 if test x${use_gasnet} = xyes; then
   gasnet_conduit_flag=no
   if test "${GASNET_CONDUIT}" = ""; then
-    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
+    for c in smp udp mpi gm lapi elan vapi pami ibv portals gemini shmem dcmf sci
     do
       if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
          GASNET_CONDUIT=${c}
@@ -1065,7 +1113,6 @@ if test x${use_gasnet} = xyes; then
     unset __ECHO
   fi
 
-  MPI_CPPFLAGS="${MPI_CPPFLAGS} ${GASNET_CPPFLAGS}"
   MPI_CFLAGS="${MPI_CFLAGS} ${GASNET_CFLAGS} ${GASNET_CPPFLAGS}"
   MPI_CLIBS="${MPI_CLIBS} ${GASNET_LDFLAGS} ${GASNET_LIBS}"
   OMNI_LNK_CFLAGS="${OMNI_LNK_CFLAGS} ${GASNET_LIBS}"
@@ -1194,7 +1241,7 @@ AC_SUBST(NM)
 #AM_CONDITIONAL(IS_PGI, test "$chk" != "")
 
 # check -lstdc++
-if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sx-nec-superux"; then
+if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sxace-nec-superux" -a "$target" != "sx9-nec-superux"; then
   tmp_file_c=/tmp/_xmp.$$.c
   tmp_file_x=/tmp/_xmp.$$.x
   echo "int main(){return 0;}" > $tmp_file_c
@@ -1208,7 +1255,7 @@ if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sx-nec-superux"; the
 fi
 
 #AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
-AM_CONDITIONAL(SUPERUX, test "$target" = "sx-nec-superux")
+AM_CONDITIONAL(SUPERUX, test "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux")
 
 #AC_SUBST(CRAY)
 AC_SUBST(SUPERUX)

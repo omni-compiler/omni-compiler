@@ -2490,9 +2490,12 @@ public class XMPtranslateLocalPragma {
     boolean isHost = accOrHost.hasIdent("host");
     if(!isACC && !isHost){
       isHost = true;
+    }else if(isHost && isACC){
+      throw new XMPexception(pb.getLineNo(), "gmove for both acc and host is unimplemented");
     }
+    String funcPrefix = "_XMP_gmove_";
     if(isACC){
-      throw new XMPexception(pb.getLineNo(), "gmove for acc is not implemented");
+      funcPrefix += "acc_";
     }
     
     // check body
@@ -2547,7 +2550,7 @@ public class XMPtranslateLocalPragma {
 
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
-	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_LOCALCOPY_ARRAY", gmoveFuncArgs);
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "LOCALCOPY_ARRAY", gmoveFuncArgs);
           } else {				// !leftIsAlignedArray &&  rightIsAlignedArray  |-> broadcast
             Xtype arrayElmtType = rightAlignedArray.getType();
 
@@ -2561,7 +2564,7 @@ public class XMPtranslateLocalPragma {
 
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
-	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_BCAST_ARRAY", gmoveFuncArgs);
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_ARRAY", gmoveFuncArgs);
           }
         } else {
           if (rightAlignedArray == null) {	//  leftIsAlignedArray && !rightIsAlignedArray  |-> local assignment (home node)
@@ -2577,12 +2580,16 @@ public class XMPtranslateLocalPragma {
 
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
-	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_HOMECOPY_ARRAY", gmoveFuncArgs);
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "HOMECOPY_ARRAY", gmoveFuncArgs);
           } else {				//  leftIsAlignedArray &&  rightIsAlignedArray  |-> send/recv
             Xtype arrayElmtType = leftAlignedArray.getType();
 
             XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref(),
                                                 rightAlignedArray.getDescId().Ref());
+            if(isACC){
+              gmoveFuncArgs.add(leftAlignedArray.getAddrIdVoidRef());
+              gmoveFuncArgs.add(rightAlignedArray.getAddrIdVoidRef());
+            }
             if (arrayElmtType.getKind() == Xtype.BASIC) {
               gmoveFuncArgs.add(XMP.createBasicTypeConstantObj(arrayElmtType));
             } else {
@@ -2620,10 +2627,10 @@ public class XMPtranslateLocalPragma {
 	      // 2. All dimensions of right array are aligned (temporary).
 	      // 3. Templates of left array amd right array are the same.
 	      // 4. Both left array amd right array are must 2 dimentional array (temporary).
-	      gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_BCAST_TO_NOTALIGNED_ARRAY", gmoveFuncArgs);
+	      gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_TO_NOTALIGNED_ARRAY", gmoveFuncArgs);
 	    }
 	    else{
-	      gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_SENDRECV_ARRAY", gmoveFuncArgs);
+	      gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_ARRAY", gmoveFuncArgs);
 	    }
           }
         }
@@ -2644,14 +2651,14 @@ public class XMPtranslateLocalPragma {
                                               rightAlignedArray.getDescId().Ref());
           gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
 
-	  gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_BCAST_SCALAR", gmoveFuncArgs);
+	  gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_SCALAR", gmoveFuncArgs);
         }
       } else {
         if (rightAlignedArray == null) {	//  leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (home node)
           XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
           gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
 
-          Ident gmoveFuncId = _globalDecl.declExternFunc("_XMP_gmove_HOMECOPY_SCALAR", Xtype.intType);
+          Ident gmoveFuncId = _globalDecl.declExternFunc(funcPrefix + "HOMECOPY_SCALAR", Xtype.intType);
 	  gmoveFuncCallBlock = Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)), gmoveBody, null);
         } else {				//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv
           XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
@@ -2659,9 +2666,19 @@ public class XMPtranslateLocalPragma {
           gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
           gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
 
-	  gmoveFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_gmove_SENDRECV_SCALAR", gmoveFuncArgs);
+	  gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_SCALAR", gmoveFuncArgs);
         }
       }
+    }
+    
+    if(isACC){
+      XobjList vars = Xcons.List();
+      vars.add(Xcons.Symbol(Xcode.VAR, leftAlignedArray.getName()));
+      vars.add(Xcons.Symbol(Xcode.VAR, rightAlignedArray.getName()));
+      
+      gmoveFuncCallBlock = 
+      Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA",
+            Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), vars)), Bcons.blockList(gmoveFuncCallBlock));
     }
     
     // Why is the barrier needed ?

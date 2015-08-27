@@ -312,6 +312,9 @@ typedef struct _XMP_gmv_desc_type
   int *ub;
   int *st;
 
+#if defined(_XMP_XACC)
+  void *a_dev;
+#endif
 } _XMP_gmv_desc_t;
 
 //

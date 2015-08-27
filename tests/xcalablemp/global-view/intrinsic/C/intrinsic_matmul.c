@@ -2294,13 +2294,18 @@ int a[n1][n2],b[n2][n3],x[n1][n3];
 
 }
 
+#include "mpi.h"
 
 int main(){
 
   test_mm_aaa_b_b_b_r8();
   test_mm_aaa_bc_bc_bc_r8();
+
+#if ((MPI_VERSION >= 3) || (MPI_VERSION == 2 && MPI_SUBVERSION >= 2))
   test_mm_aaa_b_c_bc_c16();
   test_mm_aaa_b_c_bc_c8();
+#endif
+
   test_mm_aaa_b_c_bc_i4();
   test_mm_aaa_b_c_bc_r4();
   test_mm_aaa_b_c_bc_r8_ax();

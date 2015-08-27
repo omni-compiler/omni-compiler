@@ -4,6 +4,8 @@ FCFLAGS      = @MPI_FCFLAGS@ @OMNI_NTV_FCFLAGS@
 XMP_INC_DIR  =../../libxmp/include
 XMPF_INC_DIR =../include
 CFLAGS       = -I$(XMPF_INC_DIR) -I$(XMP_INC_DIR) @MPI_CFLAGS@
+PPFCCOMPILE = $(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+              $(AM_CPPFLAGS) $(AM_FCFLAGS) $(FCFLAGS)
 LDFLAGS      = @MPI_CLIBS@
 
 lib_LIBRARIES     = libxmpf.a

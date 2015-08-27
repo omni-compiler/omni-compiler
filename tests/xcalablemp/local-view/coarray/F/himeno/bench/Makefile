@@ -1,8 +1,8 @@
 #-----------------
 # XMP/gfortran/GASNet
 #-----------------
-MPI=mpif90 -O3
-CAF=xmpf90 -O3 --debug --verbose
+MPI=mpif90 -O2
+CAF=xmpf90 -O2 --debug --verbose
 #MPILIB=$$(dirname $$(dirname $$(which mpif90)))/include
 #CAF=xmpf90 --debug -I$(MPILIB) -g
 
@@ -38,8 +38,13 @@ CAF=xmpf90 -O3 --debug --verbose
 EXE=mpi.x caf-wide.x caf-get.x 
 =======
 #EXE=mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x caf-direct-nocom.x
+<<<<<<< HEAD
 EXE=mpi.x mpi-nocom.x caf-wide.x caf-nocom.x caf-direct.x caf-direct-nocom.x
 >>>>>>> bc56677024677752dfa6cbcf516b2d1f5c7f2ac0
+=======
+#EXE=mpi.x mpi-nocom.x caf-wide.x caf-nocom.x caf-direct.x caf-direct-nocom.x
+EXE=mpi.x caf-wide.x caf-direct.x caf-nobuf.x caf-nocom.x
+>>>>>>> 0764afcf2c2d48cd2b26e07126c0e3d8ee8f4857
 
 all: $(EXE)
 

@@ -3051,8 +3051,8 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
-# expand $ac_aux_dir to an absolute path
-am_aux_dir=`cd $ac_aux_dir && pwd`
+# Expand $ac_aux_dir to an absolute path.
+am_aux_dir=`cd "$ac_aux_dir" && pwd`
 
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
@@ -3449,6 +3449,7 @@ END
   fi
 fi
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
 $as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
     # Check whether --enable-maintainer-mode was given.
@@ -3754,7 +3755,7 @@ else
 fi
 
 
- if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
+ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
   FJRDMA_TRUE=
   FJRDMA_FALSE='#'
 else
@@ -6649,7 +6650,7 @@ _ACEOF
 #   But, the vendor field is mostly unused.
 #   Refer: http://wiki.osdev.org/Target_Triplet
 
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu"; then
+if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
 # OpenMP
   OPENMP_OPT_C="-Kopenmp"
   OPENMP_OPT_F=$OPENMP_OPT_C
@@ -7321,7 +7322,163 @@ fi
 
 
 
-elif test "$target" = "sx-nec-superux"; then
+elif test "$target" = "sxace-nec-superux"; then
+# OpenMP
+  OPENMP_OPT_C="-Popenmp"
+  OPENMP_OPT_F=$OPENMP_OPT_C
+
+# CPP_OPT
+  CPP_OPT="-cpp"
+
+# XcalableMP
+  XMPC_DEF="-D_XCALABLEMP"
+  XMPF_DEF="-D_XCALABLEMP"
+
+# MPI C
+  # Extract the first word of "sxmpic++", so it can be a program name with args.
+set dummy sxmpic++; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_MPI_CC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$MPI_CC"; then
+  ac_cv_prog_MPI_CC="$MPI_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_MPI_CC="sxmpic++"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+MPI_CC=$ac_cv_prog_MPI_CC
+if test -n "$MPI_CC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPI_CC" >&5
+$as_echo "$MPI_CC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  MPI_CPPFLAGS="-E"
+#  MPI_CFLAGS="-Chopt $OPENMP_OPT_C"  # Don't use OpenMP option because of SX-ACE bug [Xmp-dev:5418].
+  MPI_CFLAGS="-Chopt"
+  MPI_CLIBS=""
+
+# MPI F
+  # Extract the first word of "sxmpif90", so it can be a program name with args.
+set dummy sxmpif90; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_MPI_FC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$MPI_FC"; then
+  ac_cv_prog_MPI_FC="$MPI_FC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_MPI_FC="sxmpif90"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+MPI_FC=$ac_cv_prog_MPI_FC
+if test -n "$MPI_FC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPI_FC" >&5
+$as_echo "$MPI_FC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  MPI_FPPFLAGS="-E"
+#  MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
+  MPI_FCFLAGS="-Chopt"
+  MPI_MODINC="-to"
+  MPI_FCLIBS=""
+
+# Omni C
+  OMNI_C2X_FLAGS=""
+  OMNI_NTV_CFLAGS="-Kgcc -w"
+  OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
+
+# Omni F
+  OMNI_F2X_FLAGS=""
+  OMNI_NTV_FCFLAGS="-f4 -w"
+  OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
+
+# Omni Common
+  OMNI_X2X_FLAGS=""
+
+# ranlib & ar & nm
+  RANLIB="sxar -sq"
+  # Extract the first word of "sxar", so it can be a program name with args.
+set dummy sxar; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_AR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="sxar"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR="sxar"
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AR" >&5
+$as_echo "$AR" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  ARFLAGS="cru"
+  NM="sxnm -px"
+#  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
+
+elif test "$target" = "sx9-nec-superux"; then
 # OpenMP
   OPENMP_OPT_C="-Popenmp"
   OPENMP_OPT_F=$OPENMP_OPT_C
@@ -7472,44 +7629,8 @@ fi
 
 
   ARFLAGS="cru"
-  # Extract the first word of "sxnm", so it can be a program name with args.
-set dummy sxnm; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_NM+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$NM"; then
-  ac_cv_prog_NM="$NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_NM="sxnm"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM="sxnm"
-fi
-fi
-NM=$ac_cv_prog_NM
-if test -n "$NM"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
-$as_echo "$NM" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
+  NM="sxnm -px"
+#  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
 
 elif test "$target" = "powerpc-ibm-cnk"; then
   # These options are referred to https://scwwwb.kek.jp/index.html
@@ -8657,7 +8778,7 @@ fi
 if test x${use_gasnet} = xyes; then
   gasnet_conduit_flag=no
   if test "${GASNET_CONDUIT}" = ""; then
-    for c in smp udp mpi gm lapi elan vapi ibv portals gemini shmem dcmf sci
+    for c in smp udp mpi gm lapi elan vapi pami ibv portals gemini shmem dcmf sci
     do
       if test -d ${GASNET_PREFIX}/include/${c}-conduit; then
          GASNET_CONDUIT=${c}
@@ -8696,7 +8817,6 @@ if test x${use_gasnet} = xyes; then
     unset __ECHO
   fi
 
-  MPI_CPPFLAGS="${MPI_CPPFLAGS} ${GASNET_CPPFLAGS}"
   MPI_CFLAGS="${MPI_CFLAGS} ${GASNET_CFLAGS} ${GASNET_CPPFLAGS}"
   MPI_CLIBS="${MPI_CLIBS} ${GASNET_LDFLAGS} ${GASNET_LIBS}"
   OMNI_LNK_CFLAGS="${OMNI_LNK_CFLAGS} ${GASNET_LIBS}"
@@ -8825,7 +8945,7 @@ OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 #AM_CONDITIONAL(IS_PGI, test "$chk" != "")
 
 # check -lstdc++
-if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sx-nec-superux"; then
+if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sxace-nec-superux" -a "$target" != "sx9-nec-superux"; then
   tmp_file_c=/tmp/_xmp.$$.c
   tmp_file_x=/tmp/_xmp.$$.x
   echo "int main(){return 0;}" > $tmp_file_c
@@ -8839,7 +8959,7 @@ if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sx-nec-superux"; the
 fi
 
 #AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
- if test "$target" = "sx-nec-superux"; then
+ if test "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux"; then
   SUPERUX_TRUE=
   SUPERUX_FALSE='#'
 else
