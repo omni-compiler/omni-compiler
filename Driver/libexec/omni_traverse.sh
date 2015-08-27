@@ -89,7 +89,7 @@ done
 
 #--- get procedures to be traversed
 proc_cands=`$NM "${INFILES[@]}" | \
-    awk 'NF >= 2 && $(NF-1) ~ "^[BbDdRrSsTt]$" { print $NF }'`
+    awk 'NF >= 2 && $(NF-1) ~ "^[DdTt]$" { print $NF }'`
 procedures=()
 for name in $proc_cands; do
     name=${name#_}                # re-mangling for MacOS
