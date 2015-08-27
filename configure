@@ -3512,8 +3512,6 @@ ac_config_files="$ac_config_files Driver/bin/xmpcc"
 
 ac_config_files="$ac_config_files Driver/bin/xmpf90"
 
-ac_config_files="$ac_config_files Driver/libexec/omni_traverse"
-
 ac_config_files="$ac_config_files libxmp/include/Makefile"
 
 ac_config_files="$ac_config_files libxmp/src/Makefile"
@@ -13508,7 +13506,6 @@ do
     "Driver/bin/ompf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/ompf90" ;;
     "Driver/bin/xmpcc") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpcc" ;;
     "Driver/bin/xmpf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpf90" ;;
-    "Driver/libexec/omni_traverse") CONFIG_FILES="$CONFIG_FILES Driver/libexec/omni_traverse" ;;
     "libxmp/include/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/include/Makefile" ;;
     "libxmp/src/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src/Makefile" ;;
     "libxmp/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src_threads/Makefile" ;;

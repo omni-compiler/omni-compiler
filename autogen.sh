@@ -35,8 +35,7 @@ rm -rf Makefile config.cache config.log config.status autom4te.cache
 (cd Driver;
     rm -rf Makefile etc/java.conf etc/ompcc.conf \
     etc/xmpcc.conf etc/xmpf90.conf etc/ompf90.conf \
-    bin/ompcc bin/ompf90 bin/xmpcc bin/xmpf90 \
-    libexec/omni_traverse)
+    bin/ompcc bin/ompf90 bin/xmpcc bin/xmpf90)
 
 (cd libxmp;
     rm -rf src/Makefile)
