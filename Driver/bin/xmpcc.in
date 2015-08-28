@@ -193,7 +193,8 @@ omni_exec $OMNI_MPICC_CMD -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
 if [ $ENABLE_XACC = true ]; then
     TRAVERSE_FILE_XACC_C=${TEMP_DIR}/omni_traverse_xacc_${PID}.c
     TRAVERSE_FILE_XACC_O=${TEMP_DIR}/omni_traverse_xacc_${PID}.o
-    omni_exec $OMNI_TRAVERSE --C --prefix acc -o $TRAVERSE_FILE_XACC_C "${obj_files[@]}"
+    OMNI_TRAVERSE_OPT="--C --nm ${NM} --prefix acc"
+    omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_XACC_C "${obj_files[@]}"
     omni_exec $OMNI_MPICC_CMD -c $TRAVERSE_FILE_XACC_C -o $TRAVERSE_FILE_XACC_O
 fi
 
