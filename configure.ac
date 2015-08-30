@@ -1063,6 +1063,16 @@ fi
 
 AM_CONDITIONAL(GASNET, test x${use_gasnet} = xyes)
 
+# check use one-sided
+use_onesided=no
+if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
+   use_onesided=yes
+   how_onesided="Fujitsu RDMA"
+elif test x$use_gasnet = xyes; then
+   use_onesided=yes
+   how_onesided=GASNet
+fi
+
 # --------------------------------------------------------------------
 # specify GASNet conduit
 
@@ -2094,14 +2104,18 @@ cat << EOF
         please rerun ./configure MPI_CC=...
 
   Options:
-    BLAS Library          : $output_libblas
-    OpenACC               : $doOpenAcc
-    GASNet                : $use_gasnet
+    BLAS Library                                : $output_libblas
+    OpenACC                                     : $doOpenAcc
+    Onesided (Coarray, post/wait, lock/unlock)? : $use_onesided
 EOF
 
+if test x${use_onesided} = xyes; then
+  echo "      Communication Library                     : $how_onesided"
+fi
+
 if test x${use_gasnet} = xyes; then
-  echo "      Installed in        : $GASNET_PREFIX"
-  echo "      Conduit             : $GASNET_CONDUIT"
+  echo "      Installed in                              : $GASNET_PREFIX"
+  echo "      Conduit                                   : $GASNET_CONDUIT"
 fi
 if test x${use_tca} = xyes; then
   echo "    TCA                   : yes"
