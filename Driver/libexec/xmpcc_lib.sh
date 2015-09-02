@@ -114,10 +114,14 @@ function xmpcc_set_parameters()
 	    --scalasca-all)
 		ENABLE_SCALASCA_ALL=true;;
 	    --scalasca)
+		echo "Sorry. Not implement yet."
+		exit 0
 		ENABLE_SCALASCA=true;;
 	    --tlog-all)
 		ENABLE_TLOG_ALL=true;;
 	    --tlog)
+		echo "Sorry. Not implement yet."
+		exit 0
 		ENABLE_TLOG=true;;
             *)
 		other_args+=("$1");;

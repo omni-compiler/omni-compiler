@@ -58,7 +58,7 @@ class AccData extends AccDirective {
         }
       }
 
-      //if(var.getParent() != null) continue;
+      if(var.getParent() != null) continue;
 
       if(var.isPrivate() || var.isFirstprivate()){
         continue;

@@ -7,14 +7,13 @@
 MODE=1         # generate subroutines respectively for all groups
 #MODE=2          # generate one subroutine for all proceures of all groups
 
-NM="@NM@"
-#NM="cat"
-
 USAGE='usage: '$0' <option> ... <input_file> ...
   <option>
     --help               this help
     --verbose            verbose mode
     --F | --C            which language (necessary)
+    --nm                 nm command
+    --sr                 Option for HITACHI SR series
     --prefix <prefix>    prefix characters of the target procecdure names, such as xmpf and xmpc
     -o <output_file>     name of the output file (*.f90 or *.c file is expected)
   <input_file>           input file name (.o and .a files are expected)
@@ -24,6 +23,7 @@ USAGE='usage: '$0' <option> ... <input_file> ...
 # option analysis
 #--------------------------------------------------------------
 INFILES=()
+USE_SR=no
 while [ -n "$1" ]; do
     case "$1" in
     --help)     HELP=yes;;
@@ -31,6 +31,8 @@ while [ -n "$1" ]; do
     --F)        LANG=F;;
     --C)        LANG=C;;
     --prefix)   shift; PREFIX="$1";;
+    --nm)       shift; NM="$1";;
+    --sr)       USE_SR=yes;;
     -o)         shift; OUTFILE="$1";;
     *.o)        INFILES+=("$1");;
     *.a)        INFILES+=("$1");;
@@ -38,6 +40,15 @@ while [ -n "$1" ]; do
     esac
     shift
 done
+
+#--------------------------------------------------------------
+# set PREFIX for mangling 
+#--------------------------------------------------------------
+if [ $USE_SR = no ]; then
+    M_PREFIX="$PREFIX"
+else
+    M_PREFIX=."$PREFIX"
+fi
 
 if [ "$HELP" = "yes" -o "$LANG" = "" ]; then
    echo "$USAGE" 1>&2
@@ -66,31 +77,29 @@ trav_cands=`$NM "${INFILES[@]}" | \
     awk 'NF >= 2 && $(NF-1) ~ "^[U]$" { print $NF }'`
 traversers=()
 for name in $trav_cands; do
-    name=${name#.}                # re-mangling for Hitachi SR
     name=${name#_}                # re-mangling for MacOS
     case $name in
-        ${PREFIX}_traverse_?*)
+        ${M_PREFIX}_traverse_?*)
         case "$LANG" in 
             F) traversers+=( ${name%_} );;    # omit the last '_'
-            C) traversers+=( ${name} );;
+            C) traversers+=( ${name#.} );;    # omit the first '.' on the HITACHI SR
         esac;;
     esac
 done
 
 #--- get procedures to be traversed
 proc_cands=`$NM "${INFILES[@]}" | \
-    awk 'NF >= 2 && $(NF-1) ~ "^[BbDdRrSsTt]$" { print $NF }'`
+    awk 'NF >= 2 && $(NF-1) ~ "^[DdTt]$" { print $NF }'`
 procedures=()
 for name in $proc_cands; do
-    name=${name#.}                # re-mangling for Hitachi SR
     name=${name#_}                # re-mangling for MacOS
     case $name in
-        ${PREFIX}_traverse_*_?* )
+        ${M_PREFIX}_traverse_*_?* )
             case "$LANG" in
                 F) procedures+=( ${name%_} );;    # omit the last '_'
-                C) procedures+=( ${name} );;
+                C) procedures+=( ${name#.} );;    # omit the first '.' on the HITACHI SR
             esac;;
-        ${PREFIX}_traverse_* )
+        ${M_PREFIX}_traverse_* )
             echo found unacceptable name of traverse procedure: \"${name}\"
             error=yes;;
     esac

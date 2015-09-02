@@ -3512,8 +3512,6 @@ ac_config_files="$ac_config_files Driver/bin/xmpcc"
 
 ac_config_files="$ac_config_files Driver/bin/xmpf90"
 
-ac_config_files="$ac_config_files Driver/libexec/omni_traverse"
-
 ac_config_files="$ac_config_files libxmp/include/Makefile"
 
 ac_config_files="$ac_config_files libxmp/src/Makefile"
@@ -8763,6 +8761,16 @@ else
 fi
 
 
+# check use one-sided
+use_onesided=no
+if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
+   use_onesided=yes
+   how_onesided="Fujitsu RDMA"
+elif test x$use_gasnet = xyes; then
+   use_onesided=yes
+   how_onesided=GASNet
+fi
+
 # --------------------------------------------------------------------
 # specify GASNet conduit
 
@@ -13508,7 +13516,6 @@ do
     "Driver/bin/ompf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/ompf90" ;;
     "Driver/bin/xmpcc") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpcc" ;;
     "Driver/bin/xmpf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpf90" ;;
-    "Driver/libexec/omni_traverse") CONFIG_FILES="$CONFIG_FILES Driver/libexec/omni_traverse" ;;
     "libxmp/include/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/include/Makefile" ;;
     "libxmp/src/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src/Makefile" ;;
     "libxmp/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src_threads/Makefile" ;;
@@ -14318,14 +14325,18 @@ cat << EOF
         please rerun ./configure MPI_CC=...
 
   Options:
-    BLAS Library          : $output_libblas
-    OpenACC               : $doOpenAcc
-    GASNet                : $use_gasnet
+    BLAS Library                                : $output_libblas
+    OpenACC                                     : $doOpenAcc
+    Onesided (Coarray, post/wait, lock/unlock)? : $use_onesided
 EOF
 
+if test x${use_onesided} = xyes; then
+  echo "      Communication Library                     : $how_onesided"
+fi
+
 if test x${use_gasnet} = xyes; then
-  echo "      Installed in        : $GASNET_PREFIX"
-  echo "      Conduit             : $GASNET_CONDUIT"
+  echo "      Installed in                              : $GASNET_PREFIX"
+  echo "      Conduit                                   : $GASNET_CONDUIT"
 fi
 if test x${use_tca} = xyes; then
   echo "    TCA                   : yes"
