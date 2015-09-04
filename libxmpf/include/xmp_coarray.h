@@ -2,19 +2,44 @@
 !  coarray intrinsics
 !-------------------------------
 !! inquiry functions
-!     integer, external :: image_index
-!     integer, external :: lcobound, ucobound
+      integer, external :: image_index
+      integer, external :: xmpf_image_index
+!     interface
+!        integer function xmpf_image_index(descptr, coindexes)
+!          integer(8), intent(in) :: descptr
+!          integer, intent(in) :: coindexes(*)
+!        end function xmpf_image_index_coarray_sub
+!     end interface
+
+      integer, external :: lcobound, ucobound
+      interface xmpf_cobound
+         !! restriction: kind must be 4.
+         function xmpf_cobound_nodim(descptr, kind, lu, corank)         &
+     &    result(bounds)
+           integer(8), intent(in) :: descptr
+           integer, intent(in) :: corank, lu, kind
+           integer bounds(corank)           !! allocate here in Fortran
+         end function xmpf_cobound_nodim
+         !! restriction: kind must be 4.
+         function xmpf_cobound_dim(descptr, dim, kind, lu, corank)      &
+     &    result(bound)
+           integer(8), intent(in) :: descptr
+           integer, intent(in) :: corank, dim, lu, kind
+           integer bound
+         end function xmpf_cobound_dim
+      end interface
 
 !! transformation functions
       integer, external :: num_images, this_image
-
       interface xmpf_this_image
-         function xmpf_this_image_coarray_wrap(descptr, corank) result(image)
+         function xmpf_this_image_coarray_wrap(descptr, corank)         &
+     &    result(image)
            integer(8), intent(in) :: descptr
            integer, intent(in) :: corank
            integer image(corank)
          end function xmpf_this_image_coarray_wrap
-         function xmpf_this_image_coarray_dim(descptr, corank, dim) result(coindex)
+         function xmpf_this_image_coarray_dim(descptr, corank, dim)     &
+     &    result(coindex)
            integer(8), intent(in) :: descptr
            integer, intent(in) :: corank, dim
            integer coindex

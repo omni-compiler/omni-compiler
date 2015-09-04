@@ -1530,6 +1530,8 @@ io_item:
 expr:     lhs
         | L_ARRAY_CONSTRUCTOR array_constructor_list R_ARRAY_CONSTRUCTOR
         { $$ = list1(F95_ARRAY_CONSTRUCTOR, $2); }
+        | '[' array_constructor_list ']'
+        { $$ = list1(F95_ARRAY_CONSTRUCTOR, $2); }
         | '(' expr ')'  
         { $$ = $2; }
         | complex_const

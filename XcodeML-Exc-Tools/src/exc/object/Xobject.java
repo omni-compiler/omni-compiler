@@ -251,6 +251,11 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
         throw new UnsupportedOperationException(toString());
     }
     
+    public boolean canGetInt()
+    {
+        return false;
+    }
+
     /**
      * Returns string in XobjString.
      * Dummy method at base class, it causes exception.

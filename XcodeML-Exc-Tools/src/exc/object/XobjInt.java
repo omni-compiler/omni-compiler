@@ -28,6 +28,12 @@ public class XobjInt extends XobjConst
     }
 
     @Override
+    public boolean canGetInt()
+    {
+        return true;
+    }
+
+    @Override
     public Xobject copy()
     {
         return copyTo(new XobjInt(code, type, value, getFkind()));

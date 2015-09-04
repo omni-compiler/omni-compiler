@@ -137,8 +137,10 @@ public class XMPcoindexObj {
     int ltype = (lhsType == null) ? 0 : (lhsType.getKind());
     int rtype = (rhsType == null) ? 0 : (rhsType.getKind());
 
-    int lkind = (lhsKind == null) ? 0 : (lhsKind.getInt());
-    int rkind = (rhsKind == null) ? 0 : (rhsKind.getInt());
+    int lkind = (lhsKind == null || !lhsKind.canGetInt()) ? 0 :
+      (lhsKind.getInt());
+    int rkind = (rhsKind == null || !rhsKind.canGetInt()) ? 0 :
+      (rhsKind.getInt());
 
     if (ltype == 0 || rtype == 0) {
       // doubtful

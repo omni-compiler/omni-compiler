@@ -1,5 +1,5 @@
 !-----------------------------------------------------------------------
-!   this_image(coarray)
+!   array function this_image(coarray)
 !-----------------------------------------------------------------------
       function xmpf_this_image_coarray_wrap(descptr, corank) result(image)
         integer(8), intent(in) :: descptr
@@ -9,6 +9,20 @@
         call xmpf_this_image_coarray(descptr, corank, image)
         return
       end function xmpf_this_image_coarray_wrap
+
+
+!-----------------------------------------------------------------------
+!   array function lcobound/ucobound(coarray, kind)
+!-----------------------------------------------------------------------
+      function xmpf_cobound_nodim(descptr, kind, lu, corank)            &
+     & result(bounds)
+        integer(8), intent(in) :: descptr
+        integer, intent(in) :: corank, lu, kind
+        integer bounds(corank)           !! allocate here in Fortran
+
+        call xmpf_cobound_nodim_subr(descptr, kind, lu, corank, bounds)
+        return
+      end function xmpf_cobound_nodim
 
 
 !-----------------------------------------------------------------------

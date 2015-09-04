@@ -446,7 +446,7 @@ void xmpf_coarray_epilog_(void **tag)
 
 
 /*****************************************\
-   entry
+   entries
 \*****************************************/
 
 /** generate and return a descriptor for a coarray DUMMY ARGUMENT
@@ -628,47 +628,6 @@ void xmpf_coarray_set_varname_(void **descPtr, char *name, int *namelen)
   _XMPF_coarrayDebugPrint("*** set name of CoarrayInfo %s\n",
                           _dispCoarrayInfo(cinfo));
 }
-
-
-/*****************************************\
-  intrinsic functions
-\*****************************************/
-
-/*
- * get an image index corresponding to the current lower and upper cobounds
- */
-int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...)
-{
-  int i, idx, lb, ub, factor, count;
-  va_list(args);
-  va_start(args, corank);
-
-  CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
-
-  if (cp->corank != *corank) {
-    _XMPF_coarrayFatal("INTERNAL: found corank %d, which is different from the declared corank %d",
-                       *corank, cp->corank);
-  }
-
-  count = 0;
-  factor = 1;
-  for (i = 0; i < *corank; i++) {
-    idx = *va_arg(args, int*);
-    lb = cp->lcobound[i];
-    ub = cp->ucobound[i];
-    if (idx < lb || ub < idx) {
-      _XMPF_coarrayFatal("%d-th cosubscript of \'%s\', %d, is out of range %d to %d.",
-                         i+1, cp->name, idx, lb, ub);
-    }
-    count += (idx - lb) * factor;
-    factor *= cp->cosize[i];
-  }
-
-  va_end(args);
-
-  return count + 1;
-}
-
 
 
 
@@ -891,7 +850,7 @@ int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim)
   int k = *dim - 1;
 
   if (k < 0 || *corank <= k)
-    _XMP_fatal("Value of 'dim' out of range");
+    _XMP_fatal("Argument 'dim' of this_image is out of range");
 
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
 
@@ -919,6 +878,131 @@ void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[])
     magic /= size;
   }
 }
+
+
+/***********************************************\
+   inquire function lcobound/ucobound(coarray)
+   inquire function lcobound/ucobound(coarray ,dim)
+\***********************************************/
+
+int xmpf_cobound_dim_(void **descPtr, int *dim, int *kind,
+                      int *lu, int *corank)
+{
+  int index;
+  int k = *dim - 1;
+
+  if (*kind != 4)
+    _XMP_fatal("Only kind=4 is allowed in lcobound/ucobound.");
+
+  if (k < 0 || *corank <= k)
+    _XMP_fatal("Argument 'dim' of lcobound/ucobound is out of range");
+
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
+
+  if (*lu <= 0)
+    index = cinfo->lcobound[k];
+  else
+    index = cinfo->ucobound[k];
+
+  return index;
+}
+
+void xmpf_cobound_nodim_subr_(void **descPtr, int *kind, 
+                              int *lu, int *corank, int bounds[])
+{
+  if (*kind != 4)
+    _XMP_fatal("Only kind=4 is allowed in lcobound/ucobound.");
+
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
+
+  for (int i = 0; i < *corank; i++) {
+    if (*lu <= 0)
+      bounds[i] = cinfo->lcobound[i];
+    else
+      bounds[i] = cinfo->ucobound[i];
+  }
+}
+
+/*  other interface for internal use
+ */
+int xmpf_lcobound_(void **descPtr, int *dim)
+{
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
+  return cinfo->lcobound[*dim - 1];
+}
+
+int xmpf_ucobound_(void **descPtr, int *dim)
+{
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
+  return cinfo->ucobound[*dim - 1];
+}
+
+
+/***********************************************\
+   inquire function image_index(coarray, sub)
+\***********************************************/
+
+int xmpf_image_index_(void **descPtr, int coindexes[])
+{
+  int i, idx, lb, ub, factor, count;
+
+  CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
+
+  count = 0;
+  factor = 1;
+  for (i = 0; i < cp->corank; i++) {
+    idx = coindexes[i];
+    lb = cp->lcobound[i];
+    ub = cp->ucobound[i];
+    if (idx < lb || ub < idx) {
+      _XMPF_coarrayFatal("%d-th cosubscript of \'%s\', %d, "
+                         "is out of range %d to %d.",
+                         i+1, cp->name, idx, lb, ub);
+    }
+    count += (idx - lb) * factor;
+    factor *= cp->cosize[i];
+  }
+
+  return count + 1;
+}
+
+
+/*  another interface for internal use
+ */
+int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...)
+{
+  int i, idx, lb, ub, factor, count;
+  va_list(args);
+  va_start(args, corank);
+
+  CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
+
+  if (cp->corank != *corank) {
+    _XMPF_coarrayFatal("INTERNAL: found corank %d, which is "
+                       "different from the declared corank %d",
+                       *corank, cp->corank);
+  }
+
+  count = 0;
+  factor = 1;
+  for (i = 0; i < *corank; i++) {
+    idx = *va_arg(args, int*);
+    lb = cp->lcobound[i];
+    ub = cp->ucobound[i];
+    if (idx < lb || ub < idx) {
+      _XMPF_coarrayFatal("%d-th cosubscript of \'%s\', %d, "
+                         "is out of range %d to %d.",
+                         i+1, cp->name, idx, lb, ub);
+    }
+    count += (idx - lb) * factor;
+    factor *= cp->cosize[i];
+  }
+
+  va_end(args);
+
+  return count + 1;
+}
+
 
 
 /***********************************************\
