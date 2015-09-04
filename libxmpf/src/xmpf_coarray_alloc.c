@@ -944,7 +944,7 @@ int xmpf_ucobound_(void **descPtr, int *dim)
 
 int xmpf_image_index_(void **descPtr, int coindexes[])
 {
-  int i, idx, lb, ub, factor, count;
+  int i, idx, lb, ub, factor, count, image;
 
   CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
 
@@ -963,7 +963,11 @@ int xmpf_image_index_(void **descPtr, int coindexes[])
     factor *= cp->cosize[i];
   }
 
-  return count + 1;
+  image = count + 1;
+  if (image > num_images_())
+    image = 0;
+
+  return image;
 }
 
 
