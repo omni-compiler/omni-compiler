@@ -35,7 +35,7 @@ userMPI_FCLIBS=${MPI_FCLIBS}
 
 # --------------------------------------------------------------------
 # Initialize for autoconf
-#LT_INIT
+LT_INIT
 # memo: LT_INIT sets RANLIB, NM, AR automatically.
 #       However, depending on machines, it wants to set the RANLIB, NM, AR by using AC_CHECK_PROG().
 #       Note that when a variable used in AC_CHECK_PROG() is set, AC_CHECK_PROG() do nothing.
@@ -44,8 +44,8 @@ userMPI_FCLIBS=${MPI_FCLIBS}
 #if test -z "$LIBTOOL"; then
 #   AC_MSG_ERROR([Please install newer automake/autoconf/libtool. We recommend automake-1.14/autoconf-2.69/libtool-2.4.2.])
 #fi
-#AC_SUBST(LIBTOOL)
-#AC_SUBST(LIBTOOL_DEPS)
+AC_SUBST(LIBTOOL)
+AC_SUBST(LIBTOOL_DEPS)
 
 RM="rm -f"
 AC_SUBST(RM)
