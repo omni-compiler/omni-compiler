@@ -58,6 +58,11 @@ abstract class AccDirective {
           return var;
         }
       }
+      
+      ACCvar var = _decl.findACCvar(varId);
+      if(var != null){
+        return var;
+      }
     }
 
     return null;

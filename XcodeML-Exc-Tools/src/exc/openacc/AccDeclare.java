@@ -12,6 +12,16 @@ class AccDeclare extends AccData{
   }
 
   @Override
+  void analyze() throws ACCexception{
+    super.analyze();
+    if(isGlobal()){
+      for(ACCvar var : _info.getDeclarativeACCvarList()){
+        _decl.addACCvar(var);
+      }
+    }
+  }
+  
+  @Override
   void rewrite() throws ACCexception{
     BlockList initBody = Bcons.emptyBody();
     BlockList finalizeBody = Bcons.emptyBody();
