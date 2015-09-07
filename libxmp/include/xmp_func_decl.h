@@ -186,6 +186,16 @@ extern void _XMP_gmove_HOMECOPY_ARRAY(void *dst_array, int type, size_t type_siz
 extern void _XMP_gmove_SENDRECV_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
 extern void _XMP_gmove_BCAST_TO_NOTALIGNED_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
 
+// xmp_gmove_acc.c
+extern void _XMP_gmove_acc_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);
+extern int _XMP_gmove_acc_HOMECOPY_SCALAR(void *array, ...);
+extern void _XMP_gmove_acc_SENDRECV_SCALAR(void *dst_addr, void *src_addr, void *dst_array, void *src_array, ...);
+extern void _XMP_gmove_acc_LOCALCOPY_ARRAY(int type, size_t type_size, ...);
+extern void _XMP_gmove_acc_BCAST_ARRAY(void *src_array, int type, size_t type_size, ...);
+extern void _XMP_gmove_acc_HOMECOPY_ARRAY(void *dst_array, int type, size_t type_size, ...);
+extern void _XMP_gmove_acc_SENDRECV_ARRAY(void *dst_array, void *src_array, void *dst_array_dev, void *src_array_dev, int type, size_t type_size, ...);
+extern void _XMP_gmove_acc_BCAST_TO_NOTALIGNED_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
+
 // xmp_loop.c
 extern void _XMP_sched_loop_template_DUPLICATION(int ser_init, int ser_cond, int ser_step,
                                                  int *par_init, int *par_cond, int *par_step,

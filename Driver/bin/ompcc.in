@@ -186,9 +186,11 @@ for c_file in "${c_files[@]}"; do
     obj_files+=("${FILE_O}")
 done
 if [ $ENABLE_ACC = true ]; then
+    OMNI_TRAVERSE_OPT="--C --nm ${NM} --prefix acc"
+    [ ${TARGET} = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
     TRAVERSE_FILE_C=${TEMP_DIR}/omni_traverse_${PID}.c
     TRAVERSE_FILE_O=${TEMP_DIR}/omni_traverse_${PID}.o
-    omni_exec $OMNI_TRAVERSE  --C --prefix acc -o $TRAVERSE_FILE_C "${obj_files[@]}"
+    omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}"
     omni_exec $OMNI_CC_CMD -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
 fi
 

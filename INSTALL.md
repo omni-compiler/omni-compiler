@@ -18,7 +18,7 @@
  * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel openmpi-devel libxml2-devel byacc make perl
 
 ## For local-view operations (coarray, post/wait, lock/unlock)
- * On the K computer or FX10, the Omni compiler automatically uses Fujitsu RDMA.
+ * On the K computer or FX10 or FX100, the Omni compiler automatically uses Fujitsu RDMA.
  * On the other system, please install GASNet (http://gasnet.lbl.gov) before installing the Omni compiler.
 
 ## For Omni OpenACC compiler
@@ -52,14 +52,18 @@
 ### On the K computer
     $ ./configure --target=Kcomputer-linux-gnu --prefix=[INSTALLATION PATH]
 
-### On FX10
+### On FX10/FX100
     $ ./configure --target=FX10-linux-gnu --prefix=[INSTALLATION PATH]
+            or
+    $ ./configure --target=FX100-linux-gnu --prefix=[INSTALLATION PATH]
 
 ### On Cray machines
     $ ./configure --target=Cray-linux-gnu --prefix=[INSTALLATION PATH]
 
-### On NEC SX machines
-    $ ./configure --target=sx-nec-superux --prefix=[INSTALLATION PATH]
+### On NEC SX9/SX-ACE
+    $ ./configure --target=sx9-nec-superux --prefix=[INSTALLATION PATH]
+            or
+    $ ./configure --target=sxace-nec-superux --prefix=[INSTALLATION PATH]
 
 ### On IBM BlueGene/Q
     We recommend to install openJDK for AIX (e.g. openjdk1.7.0-ppc-aix-port-linux-ppc64-b**.tar.bz2,

@@ -757,7 +757,7 @@ static void _gasnet_scalar_shortcut_mput(const int target_rank, _XMP_coarray_t *
 					 const size_t dst_offset, const size_t dst_elmts,
 					 const size_t elmt_size)
 {
-  _XMP_array_section_t dst_info[0];
+  _XMP_array_section_t dst_info[1];
   dst_info[0].start    = dst_offset/elmt_size;
   dst_info[0].length   = dst_elmts;
   dst_info[0].stride   = 1;

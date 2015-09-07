@@ -1,7 +1,7 @@
 int a[10];
 double b[100];
 
-#pragma acc declare create(a) copy(b)
+#pragma acc declare create(a) copyin(b)
 
 int main()
 {

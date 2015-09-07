@@ -56,8 +56,10 @@ public class XMPtranslate implements XobjectDefVisitor
     String name = d.getName();
 
     Xtype funcType = d.getFuncType().copy();
-    funcType.setFuncResultName(null);
-    Ident funcId = Ident.FidentNotExternal("xmpf_" + name, funcType);
+    //funcType.setFuncResultName(null);
+    //Ident funcId = Ident.FidentNotExternal("xmpf_" + name, funcType);
+    Ident funcId = Ident.FidentNotExternal("xmpf_" + name, Xtype.FsubroutineType);
+    ((FunctionType)funcId.Type()).setFuncParam(funcType.getFuncParam());
     funcId.setProp(XMP_GENERATED_CHILD, true);
 
     // generate child's ID list
@@ -124,12 +126,13 @@ public class XMPtranslate implements XobjectDefVisitor
       args.add(id.Ref());
     }
 
-    if (funcType.isFsubroutine())
-      newFuncBody.add(funcId.callSubroutine(args));
-    else {
-      Ident dummy = Ident.FidentNotExternal(XMP.genSym("XMP_dummy"), funcType.getRef());
-      newFuncBody.add(Xcons.Set(dummy.Ref(), funcId.Call(args)));
-    }
+    newFuncBody.add(funcId.callSubroutine(args));
+    // if (funcType.isFsubroutine())
+    //   newFuncBody.add(funcId.callSubroutine(args));
+    // else {
+    //   Ident dummy = Ident.FidentNotExternal(XMP.genSym("XMP_dummy"), funcType.getRef());
+    //   newFuncBody.add(Xcons.Set(dummy.Ref(), funcId.Call(args)));
+    // }
 
     Xobject newDef = Xcons.List(Xcode.FUNCTION_DEFINITION, d.getNameObj(), (Xobject)idList,
 				(Xobject)decls, newFuncBody.toXobject());

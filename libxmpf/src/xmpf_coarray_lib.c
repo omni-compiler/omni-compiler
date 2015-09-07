@@ -21,6 +21,13 @@ void _XMPF_set_this_image()
 
 
 /*****************************************\
+  inquire functions
+\*****************************************/
+
+/* see in xmpf_coarray_alloc.c */
+
+
+/*****************************************\
   transformation functions
 \*****************************************/
 
@@ -46,11 +53,13 @@ int this_image_(void)
 
 /*****************************************\
   sync all
+  All arguments, which are described to prohibit overoptimization 
+  of compiler, are ignored in this library.
 \*****************************************/
 
 static unsigned int _count_syncall = 0;
 
-void xmpf_sync_all_nostat_(void)
+void xmpf_sync_all_(void)
 {
   _XMPF_checkIfInTask("syncall nostat");
 
@@ -78,7 +87,7 @@ void xmpf_sync_all_auto_(void)
                           _count_syncall, status);
 }
 
-void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen)
+void xmpf_sync_all_stat_core_(int *stat, char *msg, int *msglen)
 {
   _XMPF_checkIfInTask("syncall with stat");
 
@@ -92,8 +101,6 @@ void xmpf_sync_all_stat_(int *stat, char *msg, int *msglen)
 
   int status;
   xmp_sync_all(&status);
-  //  if (status != 0)
-  //    _XMPF_coarrayFatal("SYNC ALL failed (xmpf_sync_all_stat_)");
 }
 
 
@@ -127,6 +134,15 @@ void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen)
   xmp_sync_memory(&status);
   //  if (status != 0)
   //    _XMPF_coarrayFatal("SYNC MEMORY failed (xmpf_sync_memory_stat_)");
+}
+
+
+/* dummy function to supress compiler optimization
+ * usage: in a Fortran program:
+ *  call xmpf_touch(<any_variable_name> ...)
+ */
+void xmpf_touch_(void)
+{
 }
 
 

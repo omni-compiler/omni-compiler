@@ -270,8 +270,11 @@ public class XMPcoarray {
         XMP.error("Coarray variable cannot be a pointer: " + name);
       }
       if (isDummyArg()) {
-        if (!isScalar() && !isExplicitShape() && !isAllocatable())
-          XMP.error("Coarray dummy argument must be explicit-shaped or allocatable: "
+        if (isScalar() || isExplicitShape() || isAssumedSize() ||
+            isAssumedShape() || isAllocatable())
+          ;
+        else
+          XMP.error("Coarray dummy argument must be of explicit shape, assumed size, assumed shape, or allocatable: "
                     + name);
       }
     }

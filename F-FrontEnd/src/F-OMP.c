@@ -689,14 +689,14 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 	  }
 	  dclause = list_put_last(dclause,c);
 	  break;
-	case OMP_DATA_UNTIED:
+	case OMP_DIR_UNTIED:
 	  if(pragma != OMP_TASK){
 	    error_at_node(x,"'untied' clause must be in TASK");
 	    break;
 	  }
 	  dclause = list_put_last(dclause,c);
 	  break;
-	case OMP_DATA_MERGEABLE:
+	case OMP_DIR_MERGEABLE:
 	  if(pragma != OMP_TASK){
 	    error_at_node(x,"'mergeable' clause must be in TASK");
 		break;
