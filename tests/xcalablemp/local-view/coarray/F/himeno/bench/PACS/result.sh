@@ -6,12 +6,13 @@ case "$sizespec" in
     "L") ;;
     "XL") ;;
     "all") ;;
-    *) echo "usage: $0 {M|L|XL|all}";
+    "") sizespec="all";;
+    *) echo "usage: $0 [M|L|XL|all]";
        exit 1;;
 esac
 
 
-scripts="goM??? goL??? goXL??? go???"
+scripts="goM??? go???"
 
 
 echo '[collection]----------------------------------------------'
@@ -46,6 +47,7 @@ echo '[trial execution summary] --------------------------------'
 for f in $ofiles; do
     awk 'BEGIN {
        filename = "'$f'"
+       gosaline = 0
     }
     /^himenoBMT/ {
        split($2, work, ".")
@@ -60,12 +62,18 @@ for f in $ofiles; do
     }
     /^   MFLOPS/ {
        gosa = $5
+       if ( gosa == "" )
+           gosaline = NR + 1
+    }
+    NR == gosaline {
+       gosa = $1
+       gosaline = 0
     }
     /^  MFLOPS/ {
        mflops = $2
        time = $4
        if ("'$sizespec'" == size || "'$sizespec'" == "all")
-       printf "%s %3s %5d %12s %16s %12.2f GFLOPS %12.8f ms\n", filename, size, nodes, name, gosa, mflops/1000, 1000*time/nloop
+           printf "%s %3s %5d %17s %16s %12.2f GFLOPS %12.8f ms\n", filename, size, nodes, name, gosa, mflops/1000, 1000*time/nloop
     }
     END {
     }' $f

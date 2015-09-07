@@ -1,7 +1,7 @@
 MPI_FC=$(shell xmpf90 --show-env          | sed -n '/OMNI_MPIFC_CMD=/p'  | sed 's/OMNI_MPIFC_CMD=//'  | sed "s/\"//g")
 XMPF_LINK_FLAGS=$(shell xmpf90 --show-env | sed -n '/OMNI_LINKER_OPT=/p' | sed 's/OMNI_LINKER_OPT=//' | sed "s/\"//g") 
 
-XFC     = xmpf90 -O2
+XFC     = xmpf90
 XRUN    = mpiexec
 TESTS = $(wildcard *.f90)
 EXES  = $(TESTS:.f90=.x)

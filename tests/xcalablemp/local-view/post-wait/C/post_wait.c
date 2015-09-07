@@ -12,7 +12,7 @@ void init_tag(int tag[MAX_TAG]){
 void post_wait_local(){
 #pragma xmp task on p(1)
   {
-#pragma xmp post (p(1), -9)
+#pragma xmp post (p(1), 9)
 #pragma xmp post (p(1), 8)
 #pragma xmp post (p(1), 0)
 

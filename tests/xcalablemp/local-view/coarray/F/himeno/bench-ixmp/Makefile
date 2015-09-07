@@ -7,12 +7,18 @@
 #CAF=xmpf90 --debug -I$(MPILIB) -g
 
 #-----------------
+# IG Configuration XMP/ifort/IntelMPI&(GASNet/GNU)
+#-----------------
+#OPT_O=-O2
+#MPI=mpiifort $(OPT_O)
+#CAF=xmpf90 $(OPT_O) --debug --verbose -I/opt/MPI/IntelMPI/5.0.0.028/include64
+
+#-----------------
 # XMP/ifort/GASNet
 #-----------------
-MPI=mpif90 -O2
-#MPI=mpif90 -O0
-CAF=xmpf90 -O2 --debug --verbose
-#CAF=xmpf90 -O0 --debug --verbose
+OPT_O=-O2
+MPI=mpiifort $(OPT_O)
+CAF=xmpf90 $(OPT_O) --debug --verbose
 
 #-----------------
 # XMP/Fujitsu/RDMA
@@ -41,14 +47,20 @@ CAF=xmpf90 -O2 --debug --verbose
 
 
 
-EXE=mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x caf-direct-nocom.x
-#EXE=mpi.x mpi-nocom.x caf-wide.x caf-nocom.x caf-direct.x caf-direct-nocom.x
+#EXE=mpi.x mpi-nocom.x caf-wide.x caf-narrow.x caf-fit.x caf-nocom.x caf-direct.x caf-direct-nocom.x \
+#    caf-fitw.x caf-narroww.x caf-fits.x caf-fitc.x \
+#    caf-wideg.x caf-narrowg.x caf-fitg.x caf-directg.x
+#    caf-fitp.x
+
+EXE=mpi.x caf-wide.x caf-direct.x caf-nobuf.x caf-nocom.x
 
 all: $(EXE)
 
 ### ex.
 ### $ (echo m; echo 1 2 2) | mpirun -n 4 mpi.x > mpi122m.result
 ### $ (echo m; echo 1 2 2) | mpirun -n 4 caf-wide.x > caf-wide122m.result
+
+
 
 %.x: %.f90
 	$(CAF) $< -o $@

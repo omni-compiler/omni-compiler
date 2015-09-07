@@ -270,12 +270,19 @@ public class BasicType extends Xtype
       }
 
       // case: Fortran kind-parameter specified
-      if (fkind != null) {
+      /////////////////////////////
+      // temporary implementation:
+      // If fkind cannot be evaluated as an integer,
+      // ignore it and get element length from basic_type
+      /////////////////////////////
+      if (fkind != null && fkind.canGetInt()) {
         if (basic_type == FLOAT_COMPLEX ||
             basic_type == DOUBLE_COMPLEX ||
-            basic_type == LONG_DOUBLE_COMPLEX)
+            basic_type == LONG_DOUBLE_COMPLEX) {
           return fkind.getInt() * 2;
-        return fkind.getInt();
+        } else {
+          return fkind.getInt();
+        }
       }
 
       // otherwise

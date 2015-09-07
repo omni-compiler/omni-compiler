@@ -1901,8 +1901,24 @@ public class XMPrewriteExpr {
     for (iter2.init(); !iter2.end(); iter2.next()){
       Block block = iter2.getBlock();
       if (block.Opcode() == Xcode.OMP_PRAGMA){
-	Xobject clauses = ((PragmaBlock)block).getClauses();
+
+	PragmaBlock pragmaBlock = (PragmaBlock)block;
+
+	Xobject clauses = pragmaBlock.getClauses();
 	if (clauses != null) rewriteOmpClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable);
+
+	if (pragmaBlock.getPragma().equals("PARALLEL_FOR")){
+	  BlockList body = pragmaBlock.getBody();
+	  if (body.getDecls() != null){
+	    BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
+	    body.setIdentList(null);
+	    body.setDecls(null);
+	    newBody.add(Bcons.PRAGMA(Xcode.OMP_PRAGMA, pragmaBlock.getPragma(),
+				     pragmaBlock.getClauses(), body));
+	    pragmaBlock.replace(Bcons.COMPOUND(newBody));
+	  }
+	}
+
       }
     }
   }
@@ -1939,8 +1955,8 @@ public class XMPrewriteExpr {
           Xobject loop_var = null;
           BasicBlockIterator i = new BasicBlockIterator(pragmaBlock.getBody());
           for (Block b = pragmaBlock.getBody().getHead(); b != null; b = b.getNext()){
-            if (b.Opcode() == Xcode.F_DO_STATEMENT){
-              loop_var = ((FdoBlock)b).getInductionVar();
+            if (b.Opcode() == Xcode.FOR_STATEMENT){
+              loop_var = ((ForBlock)b).getInductionVar();
             }
           }
           if (loop_var == null) continue;

@@ -597,11 +597,11 @@ addSymbolAt(CExprOfSymbol *sym, CExpr *parent, CSymbolTable *symTab,
     assertExpr((CExpr*)sym, symTab != NULL);
 
     switch(symType) {
-    case ST_TYPE:
+    case ST_TYPE: 
     case ST_FUNC:
-    case ST_VAR:
+    case ST_VAR: 
     case ST_PARAM:
-    case ST_ENUM:
+    case ST_ENUM: 
         ht = &symTab->stb_identGroup;
         group = STB_IDENT;
         break;
@@ -672,8 +672,15 @@ addSymbolAt(CExprOfSymbol *sym, CExpr *parent, CSymbolTable *symTab,
                         td->e_preDeclType = htd;
                     }
                     break;
+		case ST_TYPE:
+		    // -----------------
+		    // typedef int hoge;
+		    // typedef hoge hoge;
+		    // -----------------
+		    // Above pattern is ignore for FX100.
+		  break;
                 default:
-                    addRedeclError(sym);
+		    addRedeclError(sym);
                     return;
                 }
                 checkAndMergeIdent(hsym, sym, ht);

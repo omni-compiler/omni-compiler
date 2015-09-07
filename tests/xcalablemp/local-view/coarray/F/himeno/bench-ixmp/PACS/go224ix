@@ -2,13 +2,12 @@
 #PBS -A XMPTCA
 #PBS -q tcaq 
 
-#PBS -l select=4:mpiprocs=1
-#PBS -l walltime=00:10:00
+#PBS -l select=16:mpiprocs=1
+#PBS -l walltime=00:30:00
 
 . /opt/Modules/default/init/bash
 module purge
-module load mvapich2-gdr/2.0_gnu_cuda-6.5
-module load cuda/6.5.14
+module load intel/15.0.2 intelmpi/5.0.0
 
 cd $PBS_O_WORKDIR
 export XMP_ONESIDED_HEAP_SIZE=512M
@@ -20,14 +19,13 @@ echo "XMP_ONESIDED_HEAP_SIZE=$XMP_ONESIDED_HEAP_SIZE"
 echo -------------------
 
 
-#EXE="mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x caf-direct-nocom.x"
-EXE="mpi.x mpi-nocom.x caf-wide.x caf-nocom.x caf-direct.x caf-direct-nocom.x"
+EXE="mpi.x caf-wide.x caf-direct.x caf-nobuf.x caf-nocom.x"
 
 
-MODEL="M"
-SHAPE=122
-SHAPES="1 2 2"
-NODES=4
+MODEL="M L XL"
+SHAPE=224
+SHAPES="2 2 4"
+NODES=16
 
 for m in ${MODEL}; do
 INFILE=./stdin.${m}${SHAPE}
@@ -40,13 +38,10 @@ for f in ${EXE}; do
     echo "himenoBMT $f $m ${SHAPE} ($m-model/${NODES} nodes)"
     echo "****************************************************"
     ### for IntelMPI
-    #mpirun -np ${NODES} -s all ../$f < ${INFILE}
-    ### for MVAPICH
-    #@#mpirun_rsh -np ${NODES} --hostfile $PBS_NODEFILE ../$f < ${INFILE}      
     if [[ $f =~ ^mpi ]]; then
-        mpirun_rsh -np ${NODES} --hostfile $PBS_NODEFILE ../$f < ${INFILE}
+        mpirun -np ${NODES} -s all ../$f < ${INFILE}
     else
-        ${GASNET_HOME}/bin/gasnetrun_ibv -n ${NODES} -spawner=mpi ../$f < ${INFILE}
+        gasnetrun_ibv -n ${NODES} -spawner=mpi ../$f < ${INFILE}
     fi
 done
 

@@ -1,5 +1,8 @@
 package exc.openacc;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import exc.block.Bcons;
 import exc.block.BlockList;
 import exc.object.*;
@@ -13,6 +16,7 @@ class ACCglobalDecl{
   private XobjList _globalConstructorFuncBody;
   private XobjList _globalDestructorFuncBody;
   private XobjectFile _env_device;
+  private Map<Ident, ACCvar> globalVarMap = new HashMap<Ident, ACCvar>();
   
   
   private static String ACC_INIT_FUNC_NAME = "_ACC_init";
@@ -216,5 +220,18 @@ class ACCglobalDecl{
     int dot = fullPath.lastIndexOf('.');
     int sep = fullPath.lastIndexOf('/');
     return fullPath.substring(sep + 1, dot);   // Delete extension and dirname　( "/tmp/hoge.c -> hoge" ).
+  }
+  
+  ACCvar findACCvar(Ident varId){
+    return globalVarMap.get(varId);
+  }
+  void addACCvar(ACCvar var){
+    Ident varId = var.getId();
+    
+    if(globalVarMap.containsKey(varId)){
+      ACC.fatal("variable '" + varId + "' is already declared");
+      return;
+    }
+    globalVarMap.put(varId, var);
   }
 }

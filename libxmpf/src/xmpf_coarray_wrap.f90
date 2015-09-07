@@ -1,5 +1,5 @@
 !-----------------------------------------------------------------------
-!   this_image(coarray)
+!   array function this_image(coarray)
 !-----------------------------------------------------------------------
       function xmpf_this_image_coarray_wrap(descptr, corank) result(image)
         integer(8), intent(in) :: descptr
@@ -12,19 +12,33 @@
 
 
 !-----------------------------------------------------------------------
+!   array function lcobound/ucobound(coarray, kind)
+!-----------------------------------------------------------------------
+      function xmpf_cobound_nodim(descptr, kind, lu, corank)            &
+     & result(bounds)
+        integer(8), intent(in) :: descptr
+        integer, intent(in) :: corank, lu, kind
+        integer bounds(corank)           !! allocate here in Fortran
+
+        call xmpf_cobound_nodim_subr(descptr, kind, lu, corank, bounds)
+        return
+      end function xmpf_cobound_nodim
+
+
+!-----------------------------------------------------------------------
 !   sync all
 !-----------------------------------------------------------------------
-      subroutine xmpf_sync_all_stat_wrap(stat, errmsg)
+      subroutine xmpf_sync_all_stat(stat, errmsg)
         integer, intent(out) :: stat
         character(len=*), intent(out), optional :: errmsg
         character(len=4) :: dummy
 
         if (present(errmsg)) then
-           call xmpf_sync_all_stat(stat, errmsg, len(errmsg))
+           call xmpf_sync_all_stat_core(stat, errmsg, len(errmsg))
         else
-           call xmpf_sync_all_stat(stat, dummy, 0)
+           call xmpf_sync_all_stat_core(stat, dummy, 0)
         endif
-      end subroutine xmpf_sync_all_stat_wrap
+      end subroutine xmpf_sync_all_stat
 
 !-----------------------------------------------------------------------
 !   sync memory

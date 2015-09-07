@@ -104,10 +104,10 @@ program HimenoBMTxp_f90_CAF
 !
   allocate(buf1l(mjmax, mkmax)[ndx,ndy,*])
   allocate(buf1u(mjmax, mkmax)[ndx,ndy,*])
-  allocate(buf2l(2:mimax-1, mkmax)[ndx,ndy,*])
-  allocate(buf2u(2:mimax-1, mkmax)[ndx,ndy,*])
-  allocate(buf3l(2:mimax-1, 2:mjmax-1)[ndx,ndy,*])
-  allocate(buf3u(2:mimax-1, 2:mjmax-1)[ndx,ndy,*])
+  allocate(buf2l(mimax, mkmax)[ndx,ndy,*])
+  allocate(buf2u(mimax, mkmax)[ndx,ndy,*])
+  allocate(buf3l(mimax, mjmax)[ndx,ndy,*])
+  allocate(buf3u(mimax, mjmax)[ndx,ndy,*])
 !
 !! Initializing matrixes
   call initmt(mz,it)
@@ -185,10 +185,10 @@ subroutine readparam
 !
   implicit none
 !
-!!#418  integer, save :: itmp(3)[*]
+!!#418:intel  integer, save :: itmp(3)[*]
   integer :: itmp(3)[*]
-!!!  character(10) :: size[*]     !! to avoid bug #354
-!!#418  character(12), save :: size(1)[*]
+!!#354:bug  character(10) :: size[*]
+!!#418:intel  character(12), save :: size(1)[*]
   character(12) :: size(1)[*]
 !
   if(id == 0) then
@@ -389,10 +389,15 @@ subroutine jacobi(nn,gosa)
 !
      call sendp()
 !
+     call xmpf_touch(wgosa, gosa)
      call co_sum(wgosa, gosa)
+     call xmpf_touch(wgosa, gosa)
 !
   enddo
 !! End of iteration
+
+  call xmpf_touch(wgosa, gosa)
+  sync all
   return
 end subroutine jacobi
 !
@@ -518,62 +523,64 @@ subroutine sendp()
   mey = iop(2) + 1
   mez = iop(3) + 1
 
+  sync all
+
   !*** put z-axis
   if (mez>1) then
-     buf3u(:,:)[mex,mey,mez-1] = p(2:mimax-1,2:mjmax-1,2     )
+     buf3u(2:imax-1,2:jmax-1)[mex,mey,mez-1] = p(2:imax-1,2:jmax-1,2     )
   end if
   if (mez<ndz) then
-     buf3l(:,:)[mex,mey,mez+1] = p(2:mimax-1,2:mjmax-1,kmax-1)
+     buf3l(2:imax-1,2:jmax-1)[mex,mey,mez+1] = p(2:imax-1,2:jmax-1,kmax-1)
   endif
 
   sync all
 
   !*** unpack z-axis
   if (mez<ndz) then
-     p(2:mimax-1,2:mjmax-1,kmax) = buf3u(:,:)
+     p(2:imax-1,2:jmax-1,kmax) = buf3u(2:imax-1,2:jmax-1)
   end if
   if (mez>1) then
-     p(2:mimax-1,2:mjmax-1,1   ) = buf3l(:,:)
+     p(2:imax-1,2:jmax-1,1   ) = buf3l(2:imax-1,2:jmax-1)
   endif
 
   sync all
 
   !*** put y-axis
   if (mey>1) then
-     buf2u(:,:)[mex,mey-1,mez] = p(2:mimax-1,2     ,:)
+     buf2u(2:imax-1,1:kmax)[mex,mey-1,mez] = p(2:imax-1,2     ,1:kmax)
   end if
   if (mey<ndy) then
-     buf2l(:,:)[mex,mey+1,mez] = p(2:mimax-1,jmax-1,:)
+     buf2l(2:imax-1,1:kmax)[mex,mey+1,mez] = p(2:imax-1,jmax-1,1:kmax)
   endif
 
   sync all
 
   !*** unpack y-axis
   if (mey<ndy) then
-     p(2:mimax-1,jmax,:) = buf2u(:,:)
+     p(2:imax-1,jmax,1:kmax) = buf2u(2:imax-1,1:kmax)
   end if
   if (mey>1) then
-     p(2:mimax-1,1   ,:) = buf2l(:,:)
+     p(2:imax-1,1   ,1:kmax) = buf2l(2:imax-1,1:kmax)
   endif
 
   sync all
 
   !*** put x-axis
   if (mex>1) then
-     buf1u(:,:)[mex-1,mey,mez] = p(2     ,:,:)
+     buf1u(1:jmax,1:kmax)[mex-1,mey,mez] = p(2     ,1:jmax,1:kmax)
   end if
   if (mex<ndx) then
-     buf1l(:,:)[mex+1,mey,mez] = p(imax-1,:,:)
+     buf1l(1:jmax,1:kmax)[mex+1,mey,mez] = p(imax-1,1:jmax,1:kmax)
   endif
 
   sync all
 
   !*** unpack x-axis
   if (mex<ndx) then
-     p(imax,:,:) = buf1u(:,:)
+     p(imax,1:jmax,1:kmax) = buf1u(1:jmax,1:kmax)
   end if
   if (mex>1) then
-     p(1   ,:,:) = buf1l(:,:)
+     p(1   ,1:jmax,1:kmax) = buf1l(1:jmax,1:kmax)
   endif
 
   sync all

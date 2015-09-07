@@ -224,6 +224,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
       return getChildList(n, xlist);
     }
 
+    case TEXT:
     case PRAGMA_LINE: {
       String contentText = getContentText(n);
       x = Xcons.List(code,

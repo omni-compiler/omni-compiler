@@ -1,4 +1,4 @@
-XCC     = xmpcc -O2
+XCC     = xmpcc
 XRUN    = mpiexec
 C_TESTS = $(wildcard *.c)
 C_EXES  = $(C_TESTS:.c=.x)

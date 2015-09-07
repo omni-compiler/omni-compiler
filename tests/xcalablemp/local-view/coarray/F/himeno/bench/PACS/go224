@@ -20,8 +20,8 @@ echo "XMP_ONESIDED_HEAP_SIZE=$XMP_ONESIDED_HEAP_SIZE"
 echo -------------------
 
 
-#EXE="mpi.x caf-direct.x caf-wide.x caf-narrow.x caf-fit.x mpi-nocom.x caf-nocom.x"
-EXE="mpi.x mpi-nocom.x caf-wide.x caf-nocom.x caf-direct.x caf-direct-nocom.x"
+EXE="mpi.x caf-wide.x caf-direct.x caf-nobuf.x caf-nocom.x"
+
 
 MODEL="M L XL"
 SHAPE=224

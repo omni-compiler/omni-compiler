@@ -2519,8 +2519,8 @@ outx_OMP_dir_clause_list(int l,expv v)
     case OMP_DATA_DEPEND_IN: s = "DATA_DEPEND_IN";break;
     case OMP_DATA_DEPEND_OUT: s = "DATA_DEPEND_OUT";break;
     case OMP_DATA_DEPEND_INOUT: s = "DATA_DEPEND_INOUT";break;
-    case OMP_DATA_UNTIED: s = "DATA_UNTIED";break;
-    case OMP_DATA_MERGEABLE: s = "DATA_MERGEABLE";break;
+    case OMP_DIR_UNTIED: s = "DIR_UNTIED";break;
+    case OMP_DIR_MERGEABLE: s = "DIR_MERGEABLE";break;
     case OMP_DATA_FINAL: s = "DATA_FINAL";break;
     default:
       fatal("out_OMP_dir_clause: unknown value=%d\n",EXPV_INT_VALUE(v));
