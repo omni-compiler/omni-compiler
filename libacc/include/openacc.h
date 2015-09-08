@@ -76,6 +76,12 @@ extern "C" {
   /* frees memory allocated by acc_malloc */
   void acc_free( void* );
 
+  /* maps previously allocated device data to the specified host data */
+  void acc_map_data( void*, void*, size_t );
+
+  /* unmaps device data from the specified host data*/
+  void acc_unmap_data( void* );
+  
 #ifdef __cplusplus
 }
 #endif
