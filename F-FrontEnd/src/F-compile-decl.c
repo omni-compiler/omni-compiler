@@ -4,6 +4,7 @@
 
 #include "F-front.h"
 #include "module-manager.h"
+#include "F-second-pass.h"
 #include <math.h>
 
 #define ROUND(a,b)    (b * ( (a+b-1)/b))
@@ -524,7 +525,10 @@ implicit_declaration(ID id)
         tp = IMPLICIT_TYPES[c-'a'];
         if (tp == NULL) {
             if (ID_CLASS(id) == CL_VAR) {
-	      error("attempt to use undefined type variable, %s", ID_NAME(id));
+/* FEAST delete start */
+	      /* error("attempt to use undefined type variable, %s", ID_NAME(id)); */
+              sp_link_id(id, 1, current_line);
+/* FEAST delete  end  */
 	      return;
             }
             else return;
