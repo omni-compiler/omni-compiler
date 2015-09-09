@@ -2583,7 +2583,7 @@ static int _XMP_gmove_garray_garray_opt(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gm
 	is_same_alignmanner(dst_array, src_array)){
 
       //
-      // just local lopy (no comms.)
+      // just local copy (no comms.)
       //
 
       for (int i = 0; i < dst_dim; i++) {
@@ -2980,8 +2980,9 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
   int dst_a_lb[dst_dim];
   for (int i = 0; i < dst_dim; i++) {
     dst_l[i] = va_arg(args, int);
-    dst_u[i] = dst_l[i] + va_arg(args, int)-1;
+    int size = va_arg(args, int);
     dst_s[i] = va_arg(args, int);
+    dst_u[i] = dst_l[i] + (size - 1) * dst_s[i];
     dst_d[i] = va_arg(args, unsigned long long);
     dst_a_lb[i]=0;
     _XMP_normalize_array_section(&gmv_desc_leftp, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
@@ -2995,8 +2996,9 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
   int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim];
   for (int i = 0; i < src_dim; i++) {
     src_l[i] = va_arg(args, int);
-    src_u[i] = src_l[i] + va_arg(args, int)-1;
+    int size = va_arg(args, int);
     src_s[i] = va_arg(args, int);
+    src_u[i] = src_l[i] + (size - 1) * src_s[i];
     src_d[i] = va_arg(args, unsigned long long);
     _XMP_normalize_array_section(&gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
@@ -3184,70 +3186,70 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
 }
 
 
-void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
-                               int type, size_t type_size, ...) {
+/* void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array, */
+/*                                int type, size_t type_size, ...) { */
 
-  _XMP_gmv_desc_t gmv_desc_leftp, gmv_desc_rightp;
-  //unsigned long long gmove_total_elmts = 0;
+/*   _XMP_gmv_desc_t gmv_desc_leftp, gmv_desc_rightp; */
+/*   //unsigned long long gmove_total_elmts = 0; */
 
-  va_list args;
-  va_start(args, type_size);
+/*   va_list args; */
+/*   va_start(args, type_size); */
 
-  // get dst info
-  unsigned long long dst_total_elmts = 1;
-  //void *dst_addr = dst_array->array_addr_p;
-  int dst_dim = dst_array->dim;
-  int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim]; unsigned long long dst_d[dst_dim];
-  for (int i = 0; i < dst_dim; i++) {
-    dst_l[i] = va_arg(args, int);
-    dst_u[i] = dst_l[i] + va_arg(args, int)-1;
-    dst_s[i] = va_arg(args, int);
-    dst_d[i] = va_arg(args, unsigned long long);
-    _XMP_normalize_array_section(&gmv_desc_leftp, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
-    dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
-  }
+/*   // get dst info */
+/*   unsigned long long dst_total_elmts = 1; */
+/*   //void *dst_addr = dst_array->array_addr_p; */
+/*   int dst_dim = dst_array->dim; */
+/*   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim]; unsigned long long dst_d[dst_dim]; */
+/*   for (int i = 0; i < dst_dim; i++) { */
+/*     dst_l[i] = va_arg(args, int); */
+/*     dst_u[i] = dst_l[i] + va_arg(args, int)-1; */
+/*     dst_s[i] = va_arg(args, int); */
+/*     dst_d[i] = va_arg(args, unsigned long long); */
+/*     _XMP_normalize_array_section(&gmv_desc_leftp, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i])); */
+/*     dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]); */
+/*   } */
 
-  // get src info
-  unsigned long long src_total_elmts = 1;
-  //void *src_addr = src_array->array_addr_p;
-  int src_dim = src_array->dim;;
-  int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim];
-  for (int i = 0; i < src_dim; i++) {
-    src_l[i] = va_arg(args, int);
-    src_u[i] = src_l[i] + va_arg(args, int)-1;
-    src_s[i] = va_arg(args, int);
-    src_d[i] = va_arg(args, unsigned long long);
-    _XMP_normalize_array_section(&gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
-    src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
-  }
-  va_end(args);
+/*   // get src info */
+/*   unsigned long long src_total_elmts = 1; */
+/*   //void *src_addr = src_array->array_addr_p; */
+/*   int src_dim = src_array->dim;; */
+/*   int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim]; */
+/*   for (int i = 0; i < src_dim; i++) { */
+/*     src_l[i] = va_arg(args, int); */
+/*     src_u[i] = src_l[i] + va_arg(args, int)-1; */
+/*     src_s[i] = va_arg(args, int); */
+/*     src_d[i] = va_arg(args, unsigned long long); */
+/*     _XMP_normalize_array_section(&gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i])); */
+/*     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]); */
+/*   } */
+/*   va_end(args); */
 
-  if (dst_total_elmts != src_total_elmts) {
-    _XMP_fatal("bad assign statement for gmove");
-  } else {
-    //gmove_total_elmts = dst_total_elmts;
-  }
+/*   if (dst_total_elmts != src_total_elmts) { */
+/*     _XMP_fatal("bad assign statement for gmove"); */
+/*   } else { */
+/*     //gmove_total_elmts = dst_total_elmts; */
+/*   } */
 
-  // do transpose
-  int dummy[7] = { 2, 2, 2, 2, 2, 2, 2 }; /* temporarily assuming maximum 7-dimensional */
+/*   // do transpose */
+/*   int dummy[7] = { 2, 2, 2, 2, 2, 2, 2 }; /\* temporarily assuming maximum 7-dimensional *\/ */
 
-  gmv_desc_leftp.is_global = true;       gmv_desc_rightp.is_global = true;
-  gmv_desc_leftp.ndims = dst_array->dim; gmv_desc_rightp.ndims = src_array->dim;
+/*   gmv_desc_leftp.is_global = true;       gmv_desc_rightp.is_global = true; */
+/*   gmv_desc_leftp.ndims = dst_array->dim; gmv_desc_rightp.ndims = src_array->dim; */
 
-  gmv_desc_leftp.a_desc = dst_array;     gmv_desc_rightp.a_desc = src_array;
+/*   gmv_desc_leftp.a_desc = dst_array;     gmv_desc_rightp.a_desc = src_array; */
 
-  gmv_desc_leftp.local_data = NULL;      gmv_desc_rightp.local_data = NULL;
-  gmv_desc_leftp.a_lb = NULL;            gmv_desc_rightp.a_lb = NULL;
-  gmv_desc_leftp.a_ub = NULL;            gmv_desc_rightp.a_ub = NULL;
+/*   gmv_desc_leftp.local_data = NULL;      gmv_desc_rightp.local_data = NULL; */
+/*   gmv_desc_leftp.a_lb = NULL;            gmv_desc_rightp.a_lb = NULL; */
+/*   gmv_desc_leftp.a_ub = NULL;            gmv_desc_rightp.a_ub = NULL; */
 
-  gmv_desc_leftp.kind = dummy;           gmv_desc_rightp.kind = dummy; // always triplet
-  gmv_desc_leftp.lb = dst_l;             gmv_desc_rightp.lb = src_l;
-  gmv_desc_leftp.ub = dst_u;             gmv_desc_rightp.ub = src_u;
-  gmv_desc_leftp.st = dst_s;             gmv_desc_rightp.st = src_s;
+/*   gmv_desc_leftp.kind = dummy;           gmv_desc_rightp.kind = dummy; // always triplet */
+/*   gmv_desc_leftp.lb = dst_l;             gmv_desc_rightp.lb = src_l; */
+/*   gmv_desc_leftp.ub = dst_u;             gmv_desc_rightp.ub = src_u; */
+/*   gmv_desc_leftp.st = dst_s;             gmv_desc_rightp.st = src_s; */
 
-  _XMP_gmove_array_array_common(&gmv_desc_leftp, &gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d);
+/*   _XMP_gmove_array_array_common(&gmv_desc_leftp, &gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d); */
 
-}
+/* } */
 
 // Test commicator cache mechanism for _XMP_gmove_BCAST_TO_NOTALIGNED_ARRAY
 #define GMOVE_COMM_CACHE_SIZE 10
@@ -3451,3 +3453,5 @@ void _XMP_gmove_BCAST_TO_NOTALIGNED_ARRAY(_XMP_array_t *dst_array, _XMP_array_t 
   }
   free(buf);
 }
+
+#include "xmp_gmove_1to1.c"

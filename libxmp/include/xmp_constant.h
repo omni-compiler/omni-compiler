@@ -109,4 +109,9 @@
 #define _XMP_GLOBAL_IO_ATOMIC			801
 #define _XMP_GLOBAL_IO_COLLECTIVE		802
 
+#define XMP_ENTIRE_NODES                        900
+#define XMP_EXECUTING_NODES                     901
+#define XMP_PRIMARY_NODES                       902
+#define XMP_EQUIVALENCE_NODES                   903
+
 #endif // _XMP_CONSTANT

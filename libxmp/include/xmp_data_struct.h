@@ -41,6 +41,7 @@ typedef struct _XMP_nodes_type {
   int is_member;
   int dim;
   int comm_size;
+  int attr;
 
   // enable when is_member is true
   int comm_rank;
