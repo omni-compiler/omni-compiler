@@ -42,12 +42,12 @@ if INTELMKL
 endif
 
 if TCA
-    libxmp_a_SOURCES += xmp_reflect_tca.c
+    libxmp_a_SOURCES += xmp_reflect_tca.c xmp_coarray_tca.c
     CFLAGS        += -D_XMP_TCA
 endif
 
 if XACC
-    libxmp_a_SOURCES += xmp_reflect_acc.c xmp_reduce_acc.c xmp_bcast_acc.c xmp_reflect_gpu.c xmp_reduce_gpu.c xmp_gpu_pack.cu xmp_gmove_acc.c
+    libxmp_a_SOURCES += xmp_reflect_acc.c xmp_reduce_acc.c xmp_bcast_acc.c xmp_reflect_gpu.c xmp_reduce_gpu.c xmp_gpu_pack.cu xmp_gmove_acc.c xmp_coarray_acc.c
     CFLAGS           += -D_XMP_XACC -I@GPGPU_PREFIX@
     GPUCC             = @GPU_CMD@
     GPUCFLAGS         = @GPU_CFLAGS@

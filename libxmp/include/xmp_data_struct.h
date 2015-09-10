@@ -283,6 +283,10 @@ typedef struct xmp_coarray{
   int *distance_of_image_elmts; // Distance between each dimension of image set.
                                 // e.g.) If "int a[10][20]:[4][2][*]", distance_of_image_elmts[0] is 1,
                                 //       distance_of_image_elmts[1] is 4, distance_of_image_elmts[2] is 8.
+#if defined(_XMP_XACC)
+  char **addr_dev;
+  char *real_addr_dev;
+#endif
 }_XMP_coarray_t;
 
 typedef struct _XMP_array_section{

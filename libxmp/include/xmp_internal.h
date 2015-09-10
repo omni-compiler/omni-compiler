@@ -421,6 +421,13 @@ extern int _XMP_is_the_same_constant_stride(const _XMP_array_section_t *, const 
 extern size_t _XMP_calc_stride(const _XMP_array_section_t *, const int, const size_t);
 #endif
 
+#ifdef _XMP_TCA
+void _XMP_tca_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size);
+void _XMP_tca_shortcut_put(const int target_rank, const size_t dst_offset, const size_t src_offset,
+			   const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
+			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size);
+#endif
+
 #ifdef _XMP_TIMING
 extern double t0, t1;
 #define _XMP_TSTART(t0)  ((t0) = MPI_Wtime())

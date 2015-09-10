@@ -162,6 +162,14 @@ extern void _XMP_coarray_shortcut_put_f(const int*, void*, const void*, const si
 extern void _XMP_coarray_shortcut_get(const int, void*, const void*, const size_t, const size_t, const size_t, const size_t);
 extern void _XMP_coarray_shortcut_get_f(const int*, void*, const void*, const size_t*, const size_t*, const size_t*, const size_t*);
 
+// xmp_coarray_acc.c
+int _XMP_coarray_get_total_elmts(void *coarray_desc);
+void _XMP_coarray_malloc_do_acc(void **coarray_desc, void *addr);
+void _XMP_coarray_shortcut_put_acc(const int target_image, const void *dst_desc, const void *src_desc, 
+				   const size_t dst_offset, const size_t src_offset, 
+				   const size_t dst_elmts, const size_t src_elmts,
+				   const int is_dst_on_acc, const int is_src_on_acc);
+
 // xmp_reflect_acc.c
 extern void _XMP_reflect_init_acc(void *, void *);
 extern void _XMP_reflect_do_acc(void *);
