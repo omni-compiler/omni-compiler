@@ -3,7 +3,7 @@
 #ifndef _OPENACC_HEADER
 #define _OPENACC_HEADER
 
-#include <stdlib.h>
+#include <stddef.h>
 
 #define _OPENACC 201111
 #define ACC_ASYNC_SYNC (-1)
