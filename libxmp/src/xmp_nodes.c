@@ -334,7 +334,7 @@ _XMP_nodes_t *_XMP_init_nodes_struct_GLOBAL(int dim, int *dim_size, int is_stati
   n->inherit_nodes = NULL;
   n->inherit_info = NULL;
 
-  n->attr = XMP_ENTIRE_NODES;
+  n->attr = _XMP_ENTIRE_NODES;
 
   // set dim_size if XMP_NODE_SIZEn is set.
 
@@ -423,7 +423,7 @@ _XMP_nodes_t *_XMP_init_nodes_struct_EXEC(int dim, int *dim_size, int is_static)
   n->inherit_nodes = inherit_nodes;
   n->inherit_info = _XMP_calc_inherit_info(inherit_nodes);
 
-  n->attr = XMP_EXECUTING_NODES;
+  n->attr = _XMP_EXECUTING_NODES;
 
   // calc info
   _XMP_init_nodes_info(n, dim_size, is_static);
@@ -454,7 +454,7 @@ _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NUMBER(int dim, int ref_lower, int re
   n->inherit_nodes = _XMP_world_nodes;
   n->inherit_info = _XMP_calc_inherit_info_by_ref(_XMP_world_nodes, shrink, l, u, s);
 
-  n->attr = XMP_ENTIRE_NODES;
+  n->attr = _XMP_ENTIRE_NODES;
 
   // calc info
   _XMP_init_nodes_info(n, dim_size, is_static);
@@ -517,7 +517,7 @@ _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *ref_node
   n->inherit_nodes = ref_nodes;
   n->inherit_info = _XMP_calc_inherit_info_by_ref(ref_nodes, shrink, ref_lower, ref_upper, ref_stride);
 
-  n->attr = XMP_EQUIVALENCE_NODES;
+  n->attr = _XMP_EQUIVALENCE_NODES;
 
   // calc info
   _XMP_init_nodes_info(n, dim_size, is_static);
