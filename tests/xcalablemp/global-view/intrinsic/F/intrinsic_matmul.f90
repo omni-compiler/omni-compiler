@@ -2,8 +2,10 @@ program test_mm
 
   call test_mm_aaa_b_b_b_r8()
   call test_mm_aaa_bc_bc_bc_r8()
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
   call test_mm_aaa_b_c_bc_c16()
-!  call test_mm_aaa_b_c_bc_c8()
+  call test_mm_aaa_b_c_bc_c8()
+#endif
   call test_mm_aaa_b_c_bc_i4()
   call test_mm_aaa_b_c_bc_r4()
   call test_mm_aaa_b_c_bc_r8_ax()

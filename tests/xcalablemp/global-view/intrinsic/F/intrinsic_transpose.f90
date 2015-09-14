@@ -2,8 +2,10 @@ program xmp_tr
 
 !$xmp nodes p(4)
 
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
 call test_tr_a2a_bb_c16_1()
-!call test_tr_a2a_bb_c8_1()
+call test_tr_a2a_bb_c8_1()
+#endif
 call test_tr_a2a_bb_i4_1()
 call test_tr_a2a_bb_r4_1()
 call test_tr_a2a_bb_r8_1()
@@ -15,8 +17,10 @@ call test_tr_bca_bc_i4_1()
 call test_tr_bca_bc_i4_2()
 call test_tr_bca_bc_i4_3()
 call test_tr_bca_bc_i4_4()
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
 call test_tr_cp0_bc_c16_1()
-!call test_tr_cp0_bc_c8_1()
+call test_tr_cp0_bc_c8_1()
+#endif
 call test_tr_cp0_bc_i4_1()
 call test_tr_cp0_bc_i4_2()
 call test_tr_cp0_bc_r4_1()
