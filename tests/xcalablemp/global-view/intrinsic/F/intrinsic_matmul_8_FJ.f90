@@ -5,25 +5,33 @@ program test_matmul_FJ
   call test_matmul_012()
   call test_matmul_013()
   call test_matmul_014()
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
   call test_matmul_015()
+#endif
   call test_matmul_016()
   call test_matmul_017()
   call test_matmul_018()
   call test_matmul_019()
   call test_matmul_020()
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
   call test_matmul_021()
+#endif
   call test_matmul_022()
   call test_matmul_023()
   call test_matmul_024()
   call test_matmul_025()
   call test_matmul_026()
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
   call test_matmul_027()
+#endif
   call test_matmul_028()
   call test_matmul_029()
   call test_matmul_030()
   call test_matmul_031()
   call test_matmul_032()
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
   call test_matmul_033()
+#endif
 
 end program
 
