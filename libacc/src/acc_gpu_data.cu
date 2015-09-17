@@ -81,6 +81,7 @@ static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_
 	host_data_d->is_original = true;
 
 	//about pagelock
+	/*
 	unsigned int flags;
 	cudaHostGetFlags(&flags, addr);
 	cudaError_t error = cudaGetLastError();
@@ -91,6 +92,8 @@ static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_
 	  //printf("memory is not pagelocked\n");
 	  host_data_d->is_pagelocked = false;
 	}
+	*/
+	host_data_d->is_pagelocked = _ACC_gpu_is_pagelocked(addr);
 	host_data_d->is_registered = false;
 
 	_ACC_gpu_add_data(host_data_d);
@@ -327,5 +330,53 @@ static void unregister_memory(void *host_addr){
   }
 }
 
+void _ACC_gpu_map_data(void *host_addr, void* device_addr, size_t size)
+{
+  _ACC_gpu_data_t *present_desc = NULL;
+  void *present_dev_addr;
+  _ACC_gpu_get_data_sub(&present_desc, &present_dev_addr, host_addr, 0, size);
+  if(present_desc != NULL){
+    _ACC_fatal("map_data: already mapped\n");
+  }
+
+  // alloc & init host descriptor
+  _ACC_gpu_data_t *host_data_d = (_ACC_gpu_data_t *)_ACC_alloc(sizeof(_ACC_gpu_data_t));
+  host_data_d->host_addr = host_addr;
+  ////device_addr
+  host_data_d->offset = 0;
+  host_data_d->size = size;
+  host_data_d->type_size = 1; //type_size;
+  host_data_d->dim = 1;
+  {
+    _ACC_gpu_array_t *array_info = (_ACC_gpu_array_t *)_ACC_alloc(sizeof(_ACC_gpu_array_t));
+    array_info->dim_offset = 0;
+    array_info->dim_elmnts = size;
+    array_info->dim_acc = 1;
+    host_data_d->array_info = array_info;
+  }
+
+  host_data_d->device_addr = device_addr;
+  host_data_d->is_original = false;
+
+  //about pagelock
+  host_data_d->is_pagelocked = _ACC_gpu_is_pagelocked(host_addr);
+  host_data_d->is_registered = false;
+
+  _ACC_gpu_add_data(host_data_d);
+  //printf("hostaddr=%p, size=%zu, offset=%zu\n", addr, size, offset);
+}
+
+void _ACC_gpu_unmap_data(void *host_addr)
+{
+  _ACC_gpu_data_t *desc;
+  _ACC_gpu_find_data(&desc, host_addr);
+
+  if(_ACC_gpu_remove_data(desc) == false){
+    _ACC_fatal("can't remove data from data table\n");
+  }
+
+  _ACC_free(desc->array_info);
+  _ACC_free(desc);
+}
 
 

@@ -56,6 +56,8 @@ extern "C" {
   int acc_on_device( acc_device_t );
   void* acc_malloc( size_t );
   void acc_free( void* );
+  void acc_map_data( void*, void*, size_t );
+  void acc_unmap_data( void* );
 
 
 #ifdef __cplusplus

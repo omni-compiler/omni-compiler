@@ -111,7 +111,7 @@ typedef struct _XMP_template_type {
 typedef struct _XMP_reflect_sched_type {
 
   int lo_width, hi_width;
-  _Bool is_periodic;
+  int is_periodic;
 
   MPI_Datatype datatype_lo;
   MPI_Datatype datatype_hi;

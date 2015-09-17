@@ -381,3 +381,40 @@ void acc_free( void* ptr)
     _ACC_fatal("acc_free : unknown device type");
   }
 }
+
+void acc_map_data(void *host_p, void *dev_p, size_t size)
+{
+  switch(current_device){
+  case acc_device_none:
+    _ACC_fatal("acc_map_data : device is not selected");
+    
+  case acc_device_host:
+    return;
+
+  case acc_device_nvidia:
+    _ACC_gpu_map_data(host_p, dev_p, size);
+    return;
+
+  default:
+    _ACC_fatal("acc_map_data : unknown device type");
+  }
+
+}
+
+void acc_unmap_data(void *host_p)
+{
+  switch(current_device){
+  case acc_device_none:
+    _ACC_fatal("acc_unmap_data : device is not selected");
+    
+  case acc_device_host:
+    return;
+
+  case acc_device_nvidia:
+    _ACC_gpu_unmap_data(host_p);
+    return;
+
+  default:
+    _ACC_fatal("acc_unmap_data : unknown device type");
+  }
+}

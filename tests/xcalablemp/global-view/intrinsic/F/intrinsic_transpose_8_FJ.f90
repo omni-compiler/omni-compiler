@@ -1,36 +1,48 @@
 program test_transpose_FJ
 
-!  call test_transpose_002()
-!  call test_transpose_003()
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
+  call test_transpose_002()
+  call test_transpose_003()
+#endif
   call test_transpose_017()
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
   call test_transpose_018()
-!  call test_transpose_019()
-!  call test_transpose_020()
+  call test_transpose_019()
+  call test_transpose_020()
+#endif
   call test_transpose_030()
   call test_transpose_031()
   call test_transpose_032()
   call test_transpose_033()
   call test_transpose_034()
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
   call test_transpose_035()
+#endif
   call test_transpose_036()
   call test_transpose_037()
   call test_transpose_038()
   call test_transpose_039()
   call test_transpose_040()
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
   call test_transpose_041()
+#endif
   call test_transpose_042()
   call test_transpose_043()
   call test_transpose_044()
   call test_transpose_045()
   call test_transpose_046()
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
   call test_transpose_047()
+#endif
   call test_transpose_048()
   call test_transpose_049()
   call test_transpose_050()
   call test_transpose_051()
   call test_transpose_052()
+#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
   call test_transpose_053()
-
+#endif
+  
 end program
 
 !subroutine test_transpose_002()

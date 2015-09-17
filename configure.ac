@@ -1301,6 +1301,8 @@ if test "x${doMPI3}" = "xyes"; then
 fi
 
 AM_CONDITIONAL(MPI3, test "x${doMPI3}" = "xyes" -o "x${target}" = "xKcomputer-linux-gnu")
+AC_SUBST(MPI_VERSION)
+AC_SUBST(MPI_SUBVERSION)
 
 # --------------------------------------------------------------------
 # check Perl versoin is 5
@@ -2104,7 +2106,7 @@ cat << EOF
     Fortran compiler (MPI_FC)                   : `which $MPI_FC`
     Fortran compiler flags (MPI_FCFLAGS)        : $MPI_FCFLAGS
     Fortran compiler linker flags (MPI_FCLIBS)  : $MPI_FCLIBS
-    Supoort MPI 3 ?                             : $doMPI3
+    MPI Version                                 : ${MPI_VERSION}.${MPI_SUBVERSION}
 
   Note: If you want to change above compilers and their options,
         please rerun ./configure MPI_CC=...
