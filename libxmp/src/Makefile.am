@@ -42,7 +42,11 @@ if INTELMKL
 endif
 
 if TCA
-    libxmp_a_SOURCES += xmp_reflect_tca.c xmp_coarray_tca.c
+#  xmp_coarray_gasnet_utils.c xmp_lock_unlock_gasnet.c xmp_lock_unlock.c
+    libxmp_a_SOURCES += xmp_onesided.c xmp_onesided_tca.c xmp_coarray.c xmp_coarray_utils.c xmp_coarray_local.c \
+			xmp_coarray_local_utils.c xmp_post_wait.c xmp_post_wait_tca.c \
+	                xmp_coarray_tca.c 
+    libxmp_a_SOURCES += xmp_reflect_tca.c
     CFLAGS        += -D_XMP_TCA
 endif
 

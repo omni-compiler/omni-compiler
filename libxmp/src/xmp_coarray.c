@@ -1096,6 +1096,8 @@ void _XMP_coarray_sync_memory()
   _XMP_gasnet_sync_memory();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_memory();
+#elif _XMP_TCA
+  _XMP_tca_sync_memory();
 #endif
 }
 
@@ -1108,6 +1110,8 @@ void xmp_sync_memory(const int* status)
   _XMP_gasnet_sync_memory();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_memory();
+#elif _XMP_TCA
+  _XMP_tca_sync_memory();
 #endif
 }
 
@@ -1194,6 +1198,8 @@ void _XMP_coarray_shortcut_put(const int target_image, _XMP_coarray_t *dst_desc,
 #elif _XMP_FJRDMA
     _XMP_fjrdma_shortcut_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, 
 			     dst_elmts, src_elmts, elmt_size);
+#elif _XMP_TCA
+    _XMP_fatal("_XMP_tca_shortcut_put is unimplemented");
 #endif
   }
 }

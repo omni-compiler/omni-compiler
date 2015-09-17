@@ -82,9 +82,11 @@ void _XMP_onesided_initialize(int argc, char **argv)
   _XMP_gasnet_initialize(argc, argv, _xmp_heap_size, _xmp_stride_size);
 #elif _XMP_FJRDMA
   _XMP_fjrdma_initialize(argc, argv);
+#elif _XMP_TCA
+  _XMP_tca_initialize(argc, argv);
 #endif
 
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA)
   _XMP_build_coarray_queue();
   _XMP_post_wait_initialize();
 #endif
@@ -97,5 +99,7 @@ void _XMP_onesided_finalize(const int return_val)
 #elif _XMP_FJRDMA
   if(_XMP_world_size > _XMP_FJRDMA_MAX_PROCS) return;
   else _XMP_fjrdma_finalize();
+#elif _XMP_TCA
+  _XMP_tca_finalize();
 #endif
 }
