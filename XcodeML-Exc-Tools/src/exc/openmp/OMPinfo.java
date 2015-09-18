@@ -220,7 +220,7 @@ public class OMPinfo
             // if declared as OMPvar, check it
             if((v = i.findOMPvar(name)) != null)
                 break;
-            if(i.pragma == OMPpragma.PARALLEL|| i.pragma==OMPpragma.TASK)
+            if(i.pragma == OMPpragma.PARALLEL||i.pragma == OMPpragma.TASK)
                 break; // not beyond parallel region
         }
         if(id != null) {
