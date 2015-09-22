@@ -297,6 +297,8 @@ void _XMP_coarray_malloc_do(void **coarray_desc, void *addr)
   _XMP_gasnet_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size);
 #elif _XMP_FJRDMA
   _XMP_fjrdma_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size);
+#elif _XMP_MPI3
+  _XMP_mpi_coarray_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size, false);
 #endif
   
   free(_image_elmts);  // Note: Do not free() _coarray_elmts.
@@ -1084,6 +1086,8 @@ void _XMP_coarray_sync_all()
   _XMP_gasnet_sync_all();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_all();
+#elif _XMP_MPI3
+  _XMP_mpi_sync_all();
 #endif
 }
 
@@ -1098,6 +1102,8 @@ void _XMP_coarray_sync_memory()
   _XMP_fjrdma_sync_memory();
 #elif _XMP_TCA
   _XMP_tca_sync_memory();
+#elif _XMP_MPI3
+  _XMP_mpi_sync_memory();
 #endif
 }
 
@@ -1112,6 +1118,8 @@ void xmp_sync_memory(const int* status)
   _XMP_fjrdma_sync_memory();
 #elif _XMP_TCA
   _XMP_tca_sync_memory();
+#elif _XMP_MPI3
+  _XMP_mpi_sync_memory();
 #endif
 }
 
@@ -1124,6 +1132,8 @@ void xmp_sync_all(const int* status)
   _XMP_gasnet_sync_all();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_all();
+#elif _XMP_MPI3
+  _XMP_mpi_sync_all();
 #endif
 }
 
@@ -1200,6 +1210,9 @@ void _XMP_coarray_shortcut_put(const int target_image, _XMP_coarray_t *dst_desc,
 			     dst_elmts, src_elmts, elmt_size);
 #elif _XMP_TCA
     _XMP_fatal("_XMP_tca_shortcut_put is unimplemented");
+#elif _XMP_MPI3
+    _XMP_mpi_shortcut_put(target_rank, dst_offset, src_offset, dst_desc, src_desc,
+			  dst_elmts, src_elmts, elmt_size, false);
 #endif
   }
 }

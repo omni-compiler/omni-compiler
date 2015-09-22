@@ -25,6 +25,8 @@ void _XMP_coarray_malloc_do_acc(void **coarray_desc, void *addr)
 
 #ifdef _XMP_TCA
   _XMP_tca_malloc_do(*coarray_desc, addr, total_coarray_elmts * c->elmt_size);
+#elif _XMP_MPI3
+  _XMP_mpi_coarray_malloc_do(*coarray_desc, addr, total_coarray_elmts * c->elmt_size, true);
 #else
   _XMP_fatal("_XMP_coarray_malloc_do_acc is unavailable");
 #endif
@@ -65,6 +67,9 @@ void _XMP_coarray_shortcut_put_acc(const int target_image, const _XMP_coarray_t 
 #ifdef _XMP_TCA
     _XMP_tca_shortcut_put(target_rank, dst_offset, src_offset, dst_desc, src_desc, 
 			  dst_elmts, src_elmts, elmt_size);
+#elif _XMP_MPI3
+    _XMP_mpi_shortcut_put(target_rank, dst_offset, src_offset, dst_desc, src_desc, 
+				   dst_elmts, src_elmts, elmt_size, true);
 #else
     _XMP_fatal("_XMP_coarray_shortcut_put_acc is unavailable");
 #endif

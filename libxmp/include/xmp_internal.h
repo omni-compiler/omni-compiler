@@ -315,7 +315,7 @@ extern void _XMP_threads_finalize(void);
 #endif
 
 // ----- for coarray & post/wait -------------------
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA)
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3)
 #define _XMP_DEFAULT_ONESIDED_HEAP_SIZE   "27M"
 #define _XMP_DEFAULT_ONESIDED_STRIDE_SIZE "5M"
 /* Momo:
@@ -442,6 +442,37 @@ void _XMP_tca_initialize(int argc, char **argv);
 void _XMP_tca_finalize();
 void _XMP_tca_lock();
 void _XMP_tca_unlock();
+#endif
+
+#ifdef _XMP_MPI3
+#define _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INITIAL_SIZE _XMP_COARRAY_QUEUE_INITIAL_SIZE        /** The same vaule may be good. */
+#define _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO  /** The same vaule may be good. */
+#define _XMP_MPI_ALIGNMENT                  8
+#define _XMP_MPI_POSTREQ_TAG                500
+extern size_t _xmp_mpi_onesided_heap_size;
+extern char *_xmp_mpi_onesided_buf;
+extern MPI_Win _xmp_mpi_onesided_win;
+#ifdef _XMP_XACC
+extern char *_xmp_mpi_onesided_buf_acc;
+extern MPI_Win _xmp_mpi_onesided_win_acc;
+#endif
+void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size);
+void _XMP_mpi_onesided_finalize();
+void _XMP_mpi_build_shift_queue(bool);
+void _XMP_mpi_destroy_shift_queue(bool);
+void _XMP_mpi_coarray_lastly_deallocate(bool);
+void _XMP_mpi_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size, bool is_acc);
+void _XMP_mpi_shortcut_put(const int target_rank, const size_t dst_offset, const size_t src_offset,
+			   const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
+			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc);
+
+void _XMP_mpi_sync_memory();
+void _XMP_mpi_sync_all();
+void _xmp_mpi_post_wait_initialize();
+void _xmp_mpi_post(const int node, const int tag);
+void _xmp_mpi_wait(const int node, const int tag);
+void _xmp_mpi_wait_node(const int node);
+void _xmp_mpi_wait_noargs();
 #endif
 
 #ifdef _XMP_TIMING
