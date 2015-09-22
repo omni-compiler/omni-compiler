@@ -11,8 +11,8 @@ struct _shift_queue_t{
 };
 static struct _shift_queue_t _shift_queue; /** Queue which saves shift information */
 static struct _shift_queue_t _shift_queue_acc;
-static unsigned int _num_of_puts = 0;
-static unsigned int _num_of_puts_acc = 0;
+static unsigned int _num_of_putgets = 0;
+static unsigned int _num_of_putgets_acc = 0;
 
 /**
    Set initial value to the shift queue
@@ -149,13 +149,14 @@ void _XMP_mpi_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const
 /*               [IN] dst_elmts    : Number of elements of destination  */
 /*               [IN] src_elmts    : Number of elements of source       */
 /*               [IN] elmt_size    : Element size                       */
+/*               [IN] is_acc       : Whether src and dst are acc or not */
 /* NOTE       : Both dst and src are continuous coarrays.               */
 /*              target_rank != __XMP_world_rank.                        */
 /* EXAMPLE    :                                                         */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_mpi_shortcut_put(const int target_rank, const size_t dst_offset, const size_t src_offset,
-			   const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
+void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+			   const size_t dst_offset, const size_t src_offset,
 			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc)
 {
   if(dst_elmts == src_elmts){
@@ -169,9 +170,9 @@ void _XMP_mpi_shortcut_put(const int target_rank, const size_t dst_offset, const
 	    is_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
 
     if(is_acc){
-      ++_num_of_puts_acc;
+      ++_num_of_putgets_acc;
     }else{
-      ++_num_of_puts;
+      ++_num_of_putgets;
     }
   }
   else if(src_elmts == 1){
@@ -183,24 +184,68 @@ void _XMP_mpi_shortcut_put(const int target_rank, const size_t dst_offset, const
   }
 }
 
+/************************************************************************/
+/* DESCRIPTION : Execute get operation without preprocessing            */
+/* ARGUMENT    : [IN] target_rank  : Target rank                        */
+/*               [OUT] *dst_desc   : Descriptor of destination coarray  */
+/*               [IN] *src_desc    : Descriptor of source coarray       */
+/*               [IN] dst_offset   : Offset size of destination coarray */
+/*               [IN] src_offset   : Offset size of source coarray      */
+/*               [IN] dst_elmts    : Number of elements of destination  */
+/*               [IN] src_elmts    : Number of elements of source       */
+/*               [IN] elmt_size    : Element size                       */
+/*               [IN] is_acc       : Whether src and dst are acc or not */
+/* NOTE       : Both dst and src are continuous coarrays.               */
+/*              target_rank != __XMP_world_rank.                        */
+/* EXAMPLE    :                                                         */
+/*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
+/************************************************************************/
+void _XMP_mpi_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+			   const size_t dst_offset, const size_t src_offset,
+			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc)
+{
+  if(dst_elmts == src_elmts){
+    size_t transfer_size = elmt_size * dst_elmts;
+    char *laddr = (is_acc? dst_desc->real_addr_dev : dst_desc->real_addr) + dst_offset;
+    char *raddr = (is_acc? src_desc->addr_dev[target_rank] : src_desc->addr[target_rank]) + src_offset;
+
+    XACC_DEBUG("get(dst_p=%p, size=%zd, target=%d, src_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_acc);
+    MPI_Get((void*)laddr, transfer_size, MPI_BYTE, target_rank,
+    	    (MPI_Aint)raddr, transfer_size, MPI_BYTE,
+	    is_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
+
+    if(is_acc){
+      ++_num_of_putgets_acc;
+    }else{
+      ++_num_of_putgets;
+    }
+  }
+  else if(src_elmts == 1){
+    _XMP_fatal("unimplemented");
+  }
+  else{
+    _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
+  }
+}
+
 /**
    Execute sync_memory
  */
 void _XMP_mpi_sync_memory()
 {
-  if(_num_of_puts > 0){
+  if(_num_of_putgets > 0){
     XACC_DEBUG("sync_memory(host)");
     //MPI_Win_flush_local_all(_xmp_mpi_onesided_win);
     MPI_Win_flush_all(_xmp_mpi_onesided_win);
 
-    _num_of_puts = 0;
+    _num_of_putgets = 0;
   }
 
-  if(_num_of_puts_acc > 0){
+  if(_num_of_putgets_acc > 0){
     XACC_DEBUG("sync_memory(acc)");
     //MPI_Win_flush_local_all(_xmp_mpi_onesided_win_acc);
     MPI_Win_flush_all(_xmp_mpi_onesided_win_acc);
-    _num_of_puts_acc = 0;
+    _num_of_putgets_acc = 0;
   }
 }
 

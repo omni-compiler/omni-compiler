@@ -1211,7 +1211,7 @@ void _XMP_coarray_shortcut_put(const int target_image, _XMP_coarray_t *dst_desc,
 #elif _XMP_TCA
     _XMP_fatal("_XMP_tca_shortcut_put is unimplemented");
 #elif _XMP_MPI3
-    _XMP_mpi_shortcut_put(target_rank, dst_offset, src_offset, dst_desc, src_desc,
+    _XMP_mpi_shortcut_put(target_rank, dst_desc, src_desc, dst_offset, src_offset,
 			  dst_elmts, src_elmts, elmt_size, false);
 #endif
   }
@@ -1248,6 +1248,9 @@ void _XMP_coarray_shortcut_get(const int target_image, _XMP_coarray_t *dst_desc,
 #elif _XMP_FJRDMA
     _XMP_fjrdma_shortcut_get(target_rank, dst_desc, src_desc, (uint64_t)dst_offset, (uint64_t)src_offset, 
 			     dst_elmts, src_elmts, elmt_size);
+#elif _XMP_MPI3
+    _XMP_mpi_shortcut_get(target_rank, dst_desc, src_desc, dst_offset, src_offset,
+			  dst_elmts, src_elmts, elmt_size, false);
 #endif
   }
 }
