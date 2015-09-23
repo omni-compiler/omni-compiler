@@ -115,6 +115,7 @@ void _xmp_mpi_post(const int node, const int tag)
   if(node == _XMP_world_rank){
     do_post(_XMP_world_rank, tag);
   } else{
+    //XACC_DEBUG("post (node=%d, tag=%d)", node, tag);
     MPI_Send(&tag, 1, MPI_INT, node, _XMP_N_MPI_TAG_POSTREQ, MPI_COMM_WORLD);
   }
 }

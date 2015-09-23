@@ -169,6 +169,11 @@ void _XMP_coarray_shortcut_put_acc(const int target_image, const void *dst_desc,
 				   const size_t dst_offset, const size_t src_offset, 
 				   const size_t dst_elmts, const size_t src_elmts,
 				   const int is_dst_on_acc, const int is_src_on_acc);
+void _XMP_coarray_shortcut_get_acc(const int target_image, const void *dst_desc, const void *src_desc, 
+				   const size_t dst_offset, const size_t src_offset, 
+				   const size_t dst_elmts, const size_t src_elmts,
+				   const int is_dst_on_acc, const int is_src_on_acc);
+extern void _XMP_coarray_rdma_do_acc(const int, void*, void*, void *, const int, const int);
 
 // xmp_reflect_acc.c
 extern void _XMP_reflect_init_acc(void *, void *);

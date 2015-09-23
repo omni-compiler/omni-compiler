@@ -257,3 +257,149 @@ void _XMP_mpi_sync_all()
   _XMP_mpi_sync_memory();
   MPI_Barrier(MPI_COMM_WORLD);
 }
+
+static void _mpi_continuous_put(const int target_rank, const _XMP_coarray_t *dst_desc, const void *src,
+				const size_t dst_offset, const size_t src_offset, const size_t transfer_size, const int is_dst_on_acc)
+{
+  char *laddr = (char*)src + src_offset;
+  char *raddr = (is_dst_on_acc? dst_desc->addr_dev[target_rank] : dst_desc->addr[target_rank]) + dst_offset;
+
+  XACC_DEBUG("continuous_put(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_dst_on_acc);
+  MPI_Put((void*)laddr, transfer_size, MPI_BYTE, target_rank,
+	  (MPI_Aint)raddr, transfer_size, MPI_BYTE,
+	  is_dst_on_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
+
+  if(is_dst_on_acc){
+    ++_num_of_putgets_acc;
+  }else{
+    ++_num_of_putgets;
+  }
+}
+
+static bool _check_block_stride(const int dims, const _XMP_array_section_t *info, long long *cnt, long long *bl, long long *str)
+{
+  long long count = 1;
+  long long blocklength = 1;
+  long long stride = 1;
+
+  for(int i = 0; i < dims; i++){
+    long long length = info[i].length;
+    long long elmts = info[i].elmts;
+
+    if(info[i].stride != 1){
+      if(count == 1 && blocklength == 1){
+	count = length;
+	blocklength = 1;
+	stride = info[i].stride;
+      }else{
+	return false;
+      }
+    }else if(blocklength == 1 || length == elmts){
+      blocklength *= length;
+      stride *= elmts;
+    }else if(count == 1){ //continuous -> blockstride
+      count = blocklength;
+      blocklength = length;
+      stride = elmts;
+    }else{
+      return false;
+    }
+  }
+
+  //output
+  *cnt = count;
+  *bl = blocklength;
+  *str = stride;
+  return true;
+}
+
+static void _mpi_non_continuous_put(const int target_rank, const _XMP_coarray_t *dst_desc, const void *src,
+				    const size_t dst_offset, const size_t src_offset,
+				    const int dst_dims, const int src_dims, 
+				    const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info,
+				    const size_t dst_elmts, const int is_dst_on_acc)
+{
+  //check stride
+  long long dst_cnt, dst_bl, dst_str;
+  long long src_cnt, src_bl, src_str;
+
+  bool is_dst_blockstride = _check_block_stride(dst_dims, dst_info, &dst_cnt, &dst_bl, &dst_str);
+  bool is_src_blockstride = _check_block_stride(src_dims, src_info, &src_cnt, &src_bl, &src_str);
+
+  if(is_dst_blockstride && is_src_blockstride && dst_cnt == src_cnt && dst_bl == src_bl && dst_str == src_str){
+    char *laddr = (char*)src + src_offset;
+    char *raddr = (is_dst_on_acc? dst_desc->addr_dev[target_rank] : dst_desc->addr[target_rank]) + dst_offset;
+
+    XACC_DEBUG("blockstride_put(src_p=%p, (c,bl,s)=(%lld,%lld,%lld), target=%d, dst_p=%p, is_acc=%d)", laddr, src_cnt,src_bl,src_str, target_rank, raddr, is_dst_on_acc);
+
+    MPI_Datatype blockstride_type;
+    size_t elmt_size = dst_desc->elmt_size;
+    MPI_Type_vector(dst_cnt, dst_bl * elmt_size, dst_str  * elmt_size, MPI_BYTE, &blockstride_type);
+    MPI_Type_commit(&blockstride_type);
+
+    int result=
+    MPI_Put((void*)laddr, 1, blockstride_type, target_rank,
+	    (MPI_Aint)raddr, 1, blockstride_type,
+	    is_dst_on_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
+
+    if(result != MPI_SUCCESS){
+      _XMP_fatal("put error");
+    }
+    MPI_Type_free(&blockstride_type);
+
+    if(is_dst_on_acc){
+      ++_num_of_putgets_acc;
+    }else{
+      ++_num_of_putgets;
+    }
+    
+  }else{
+    _XMP_fatal("not implemented non-continuous data");
+  }
+}
+
+/***************************************************************************************/
+/* DESCRIPTION : Execute put operation                                                 */
+/* ARGUMENT    : [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
+/*               [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
+/*               [IN] target_rank    : Target rank                                     */
+/*               [IN] dst_dims       : Number of dimensions of destination array       */
+/*               [IN] src_dims       : Number of dimensions of source array            */
+/*               [IN] *dst_info      : Information of destination array                */
+/*               [IN] *src_info      : Information of source array                     */
+/*               [OUT] *dst_desc     : Descriptor of destination coarray               */
+/*               [IN] *src_desc      : Descriptor of source array                      */
+/*               [IN] *src           : Pointer of source array                         */
+/*               [IN] dst_elmts      : Number of elements of destination array         */
+/*               [IN] src_elmts      : Number of elements of source array              */
+/***************************************************************************************/
+void _XMP_mpi_put(const int dst_continuous, const int src_continuous, const int target_rank, 
+		  const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
+		  const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
+		  const _XMP_coarray_t *src_desc, void *src, const int dst_elmts, const int src_elmts,
+		  const int is_dst_on_acc, const int is_src_on_acc)
+{
+  size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
+  size_t src_offset = _XMP_get_offset(src_info, src_dims);
+
+  size_t transfer_size = dst_desc->elmt_size * dst_elmts;
+  //_check_transfer_size(transfer_size);
+
+  if(dst_elmts == src_elmts){
+    if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
+      _mpi_continuous_put(target_rank, dst_desc, src, dst_offset, src_offset, transfer_size, is_dst_on_acc);
+    }
+    else{
+      _mpi_non_continuous_put(target_rank, dst_desc, src,
+			      dst_offset, src_offset, dst_dims, src_dims, dst_info, src_info, dst_elmts, is_dst_on_acc);
+    }
+  }
+  else{
+    if(src_elmts == 1){
+      _XMP_fatal("_XMP_mpi_put: scalar_mput is unimplemented");
+    }
+    else{
+      _XMP_fatal("Number of elements is invalid");
+    }
+  }
+}
