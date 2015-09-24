@@ -30,4 +30,14 @@ typedef struct _ACC_gpu_data_type {
   size_t type_size; //the size of an element
 } _ACC_gpu_data_t;
 
+typedef struct _ACC_gpu_data_list_type{
+  void *host_addr;
+  void *device_addr;
+  size_t size;
+  size_t offset;
+  bool is_pagelocked;
+  bool is_registered;
+  struct _ACC_gpu_data_list_type *next;
+}_ACC_gpu_data_list_t;
+
 #endif //_ACC_GPU_DATA_STRUCT
