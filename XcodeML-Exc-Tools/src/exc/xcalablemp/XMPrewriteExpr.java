@@ -1438,7 +1438,7 @@ public class XMPrewriteExpr {
     }
     else{
       newExpr = Xcons.binaryOp(Xcode.PLUS_EXPR,
-			       _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + coarray.getName()),
+			       _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + coarray.getName()).Ref(),
 			       newExpr);
       newExpr = Xcons.PointerRef(newExpr);
     }
