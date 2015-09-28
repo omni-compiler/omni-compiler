@@ -160,6 +160,7 @@ void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc
 			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc)
 {
   if(dst_elmts == src_elmts){
+    if(dst_elmts == 0) return;
     size_t transfer_size = elmt_size * dst_elmts;
     char *laddr = (is_acc? src_desc->real_addr_dev : src_desc->real_addr) + src_offset;
     char *raddr = (is_acc? dst_desc->addr_dev[target_rank] : dst_desc->addr[target_rank]) + dst_offset;
@@ -205,6 +206,7 @@ void _XMP_mpi_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_desc
 			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc)
 {
   if(dst_elmts == src_elmts){
+    if(dst_elmts == 0) return;
     size_t transfer_size = elmt_size * dst_elmts;
     char *laddr = (is_acc? dst_desc->real_addr_dev : dst_desc->real_addr) + dst_offset;
     char *raddr = (is_acc? src_desc->addr_dev[target_rank] : src_desc->addr[target_rank]) + src_offset;
@@ -261,6 +263,7 @@ void _XMP_mpi_sync_all()
 static void _mpi_continuous_put(const int target_rank, const _XMP_coarray_t *dst_desc, const void *src,
 				const size_t dst_offset, const size_t src_offset, const size_t transfer_size, const int is_dst_on_acc)
 {
+  if(transfer_size == 0) return;
   char *laddr = (char*)src + src_offset;
   char *raddr = (is_dst_on_acc? dst_desc->addr_dev[target_rank] : dst_desc->addr[target_rank]) + dst_offset;
 
