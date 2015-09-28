@@ -222,9 +222,9 @@ public class XMPtranslateLocalPragma {
 
     Ident funcIdAcc = _globalDecl.declExternFunc("_XMP_reflect_init_acc");
 
-    if(widthList.Nargs() != 0){
-      XMP.fatal("width clause in reflect_init has been not developed yet.");
-    }
+    // if(widthList.Nargs() != 0){
+    //   XMP.fatal("width clause in reflect_init has been not developed yet.");
+    // }
 
     XobjList args = Xcons.List();
     args.add(Xcons.String("USE_DEVICE"));
@@ -242,6 +242,21 @@ public class XMPtranslateLocalPragma {
         XMP.fatal(arrayName + " is not shadowed.");
       }
 
+      for (int j = 0; j < widthList.Nargs(); j++){
+	  XobjList width = (XobjList)widthList.getArg(j);
+
+	  // Here the stride means the periodic flag.
+	  // check wheter the shadow is full.
+	  if (width.getArg(2).getInt() == 1 && alignedArray.getShadowAt(j).getType() == XMPshadow.SHADOW_FULL){
+	      throw new XMPexception("Periodic reflect cannot be specified for a dimension with full shadow.");
+	  }
+
+	  Ident funcId = _globalDecl.declExternFunc("_XMP_set_reflect_gpu__");
+	  XobjList setFuncArgs = Xcons.List(alignedArray.getDescId().Ref(), Xcons.IntConstant(j),
+					    width.getArg(0), width.getArg(1), width.getArg(2));
+	  funcBody.add(Bcons.Statement(funcId.Call(setFuncArgs)));
+      }
+      
       Ident arrayDesc = _globalDecl.findVarIdent(XMP.DESC_PREFIX_ + arrayName);
       funcBody.add(Bcons.Statement(funcIdAcc.Call(Xcons.List(array, arrayDesc.Ref()))));
     }
