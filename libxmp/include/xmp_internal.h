@@ -268,6 +268,7 @@ extern _XMP_rsd_t *intersection_rsds(_XMP_rsd_t *_rsd1, _XMP_rsd_t *_rsd2);
 extern _XMP_csd_t *intersection_csds(_XMP_csd_t *csd1, _XMP_csd_t *csd2);
 extern _XMP_csd_t *alloc_csd(int n);
 extern void free_csd(_XMP_csd_t *csd);
+extern _XMP_csd_t *copy_csd(_XMP_csd_t *csd);
 extern void free_comm_set(_XMP_comm_set_t *comm_set);
 extern _XMP_csd_t *rsd2csd(_XMP_rsd_t *rsd);
 extern _XMP_csd_t *bsd2csd(_XMP_bsd_t *bsd);

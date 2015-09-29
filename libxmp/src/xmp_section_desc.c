@@ -1,4 +1,5 @@
 #include "xmp_internal.h"
+#include "xmp_math_function.h"
 
 void print_rsd(_XMP_rsd_t *rsd){
 
@@ -172,6 +173,17 @@ void free_csd(_XMP_csd_t *csd){
     _XMP_free(csd->u);
     _XMP_free(csd);
   }
+}
+
+
+_XMP_csd_t *copy_csd(_XMP_csd_t *csd){
+  _XMP_csd_t *new_csd = alloc_csd(csd->n);
+  for (int i = 0; i < csd->n; i++){
+    new_csd->l[i] = csd->l[i];
+    new_csd->u[i] = csd->u[i];
+  }
+  new_csd->s = csd->s;
+  return new_csd;
 }
 
 

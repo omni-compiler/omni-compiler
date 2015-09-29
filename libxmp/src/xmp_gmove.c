@@ -3351,7 +3351,6 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
   _XMP_unpack_comm_set = _XMPC_unpack_comm_set;
 
   _XMP_gmove_array_array_common(&gmv_desc_leftp, &gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d); 
-  //_XMP_gmove_1to1(&gmv_desc_leftp, &gmv_desc_rightp);
 }
 
 
@@ -3670,7 +3669,7 @@ get_owner_ref_csd(_XMP_array_t *adesc, int *lb, int *ub, int *st,
 
     for (int exec_rank = 0; exec_rank < n_exec_nodes; exec_rank++){
       for (int i = 0; i < n_adims; i++){
-  	owner_ref_csd[exec_rank][i] = csd_ref[i];
+  	owner_ref_csd[exec_rank][i] = copy_csd(csd_ref[i]);
       }
     }
 
@@ -3678,6 +3677,10 @@ get_owner_ref_csd(_XMP_array_t *adesc, int *lb, int *ub, int *st,
       reduce_csd(owner_ref_csd[exec_rank], n_adims);
     }
     
+    for (int adim = 0; adim < n_adims; adim++){
+      free_csd(csd_ref[adim]);
+    }
+
 #if XMP_DBG_OWNER_REGION
   if (myrank == DBG_RANK){
     for (int exec_rank = 0; exec_rank < n_exec_nodes; exec_rank++){
@@ -4021,7 +4024,6 @@ _XMPC_pack_comm_set(void *sendbuf, int sendbuf_size,
 
 }
 
-int k = 0;
 
 static void
 _XMPC_unpack_comm_set(void *recvbuf, int recvbuf_size,
@@ -4057,9 +4059,6 @@ _XMPC_unpack_comm_set(void *recvbuf, int recvbuf_size,
     xmp_barrier();
   }
 #endif
-
-  //if (k > 0) return;
-  k++;
 
   for (int src_node = 0; src_node < n_exec_nodes; src_node++){
 
@@ -4349,37 +4348,31 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   MPI_Comm *exec_comm = exec_nodes->comm;
 
   //
-  // LHS
+  // Get referenced and owned section
   //
+
+  // LHS
 
 #if XMP_DBG_OWNER_REGION
   if (myrank == DBG_RANK){
-    printf("\n");
-    printf("LHS -------------------------------------\n");
+    printf("\nLHS -------------------------------------\n");
   }
   fflush(stdout);
   xmp_barrier();
 #endif
-
-  // get referenced and owned section
 
   _XMP_csd_t *lhs_owner_ref_csd[n_exec_nodes][_XMP_N_MAX_DIM];
   get_owner_ref_csd(lhs_array, lhs_lb, lhs_ub, lhs_st, lhs_owner_ref_csd);
 
-  //
   // RHS
-  //
 
 #if XMP_DBG_OWNER_REGION
   if (myrank == DBG_RANK){
-    printf("\n");
-    printf("RHS -------------------------------------\n");
+    printf("\nRHS -------------------------------------\n");
   }
   fflush(stdout);
   xmp_barrier();
 #endif
-
-  // get referenced and owned section
 
   _XMP_csd_t *rhs_owner_ref_csd[n_exec_nodes][_XMP_N_MAX_DIM];
   get_owner_ref_csd(rhs_array, rhs_lb, rhs_ub, rhs_st, rhs_owner_ref_csd);
@@ -4392,246 +4385,32 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
 
 #if XMP_DBG
   if (myrank == DBG_RANK){
-    printf("\n");
-    printf("Send List -------------------------------------\n");
+    printf("\nSend List -------------------------------------\n");
   }
 #endif
 
-  //_XMP_csd_t *send_csd[n_exec_nodes][_XMP_N_MAX_DIM];
   _XMP_comm_set_t *send_comm_set[n_exec_nodes][_XMP_N_MAX_DIM];
   get_comm_list(gmv_desc_leftp, gmv_desc_rightp, lhs_owner_ref_csd, rhs_owner_ref_csd, send_comm_set);
-
-/*   for (int dst_node = 0; dst_node < n_exec_nodes; dst_node++){ */
-
-/*     _XMP_csd_t *r; */
-
-/*     int lhs_adim = 0; */
-/*     for (int rhs_adim = 0; rhs_adim < n_rhs_dims; rhs_adim++){ */
-
-/*       if (rhs_st[rhs_adim] == 0){ */
-/*   	r = alloc_csd(1); */
-/*   	r->l[0] = rhs_lb[rhs_adim]; */
-/*   	r->u[0] = rhs_lb[rhs_adim]; */
-/*   	r->s = 1; */
-/*       } */
-/*       else { */
-/*       	while (lhs_st[lhs_adim] == 0 && lhs_adim < n_lhs_dims) lhs_adim++; */
-/*       	if (lhs_adim == n_lhs_dims) _XMP_fatal("_XMP_gmove_1to1: lhs and rhs not conformable"); */
-/*       	_XMP_csd_t *l = lhs_owner_ref_csd[dst_node][lhs_adim]; */
-/* 	if (l){ */
-/* 	  r = alloc_csd(l->b); */
-/* 	  for (int i = 0; i < l->b; i++){ */
-/* 	    //r->l[i] = l->l[i] + rhs_lb[rhs_adim] - lhs_lb[lhs_adim]; */
-/* 	    //r->u[i] = l->u[i] + rhs_lb[rhs_adim] - lhs_lb[lhs_adim]; */
-/* 	    r->l[i] = (l->l[i] - lhs_lb[lhs_adim]) * rhs_st[rhs_adim] / lhs_st[lhs_adim] */
-/* 	            + rhs_lb[rhs_adim]; */
-/* 	    r->u[i] = (l->u[i] - lhs_lb[lhs_adim]) * rhs_st[rhs_adim] / lhs_st[lhs_adim] */
-/* 	            + rhs_lb[rhs_adim]; */
-/* 	  } */
-/* 	  r->s = l->s * rhs_st[rhs_adim] / lhs_st[lhs_adim]; */
-/* 	} */
-/* 	else { */
-/* 	  r = NULL; */
-/* 	} */
-/*       	lhs_adim++; */
-/*       } */
-
-/*       send_csd[dst_node][rhs_adim] = intersection_csds(r, rhs_owner_ref_csd[myrank][rhs_adim]); */
-
-/*       if (r) free_csd(r); */
-
-/*     } */
-
-/*     reduce_csd(send_csd[dst_node], n_rhs_dims); */
-
-/*   } */
-
-/* #if XMP_DBG */
-/*   fflush(stdout); */
-/*   xmp_barrier(); */
-
-/*   for (int exec_rank = 0; exec_rank < n_exec_nodes; exec_rank++){ */
-/*     if (myrank == exec_rank){ */
-/*       for (int dst_rank = 0; dst_rank < n_exec_nodes; dst_rank++){ */
-
-/*   	printf("\n"); */
-/*   	printf("[%d] -> [%d]\n", myrank, dst_rank); */
-
-/*   	for (int adim = 0; adim < n_rhs_dims; adim++){ */
-/*   	  printf("  %d: ", adim); print_csd(send_csd[dst_rank][adim]); */
-/*   	} */
-/*       } */
-/*     } */
-/*     fflush(stdout); */
-/*     xmp_barrier(); */
-/*   } */
-/* #endif */
 
   // Recv list
 
 #if XMP_DBG
   if (myrank == DBG_RANK){
-    printf("\n");
-    printf("Recv List -------------------------------------\n");
+    printf("\nRecv List -------------------------------------\n");
   }
 #endif
 
-  //_XMP_csd_t *recv_csd[n_exec_nodes][_XMP_N_MAX_DIM];
   _XMP_comm_set_t *recv_comm_set[n_exec_nodes][_XMP_N_MAX_DIM];
   get_comm_list(gmv_desc_rightp, gmv_desc_leftp, rhs_owner_ref_csd, lhs_owner_ref_csd, recv_comm_set);
 
-/*   for (int src_node = 0; src_node < n_exec_nodes; src_node++){ */
-
-/*     _XMP_csd_t *l; */
-
-/*     int rhs_adim = 0; */
-/*     for (int lhs_adim = 0; lhs_adim < n_lhs_dims; lhs_adim++){ */
-
-/*       if (lhs_st[lhs_adim] == 0){ */
-/*   	l = alloc_csd(1); */
-/*   	l->l[0] = lhs_lb[lhs_adim]; */
-/*   	l->u[0] = lhs_lb[lhs_adim]; */
-/*   	l->s = 1; */
-/*       } */
-/*       else { */
-/*       	while (rhs_st[rhs_adim] == 0 && rhs_adim < n_rhs_dims) rhs_adim++; */
-/*       	if (rhs_adim == n_rhs_dims) _XMP_fatal("_XMP_gmove_1to1: lhs and rhs not conformable"); */
-/*       	_XMP_csd_t *r = rhs_owner_ref_csd[src_node][rhs_adim]; */
-/* 	if (r){ */
-/* 	  l = alloc_csd(r->b); */
-/* 	  for (int i = 0; i < r->b; i++){ */
-/* 	    //l->l[i] = r->l[i] + lhs_lb[lhs_adim] - rhs_lb[rhs_adim]; */
-/* 	    //l->u[i] = r->u[i] + lhs_lb[lhs_adim] - rhs_lb[rhs_adim]; */
-/* 	    l->l[i] = (r->l[i] - rhs_lb[rhs_adim]) * lhs_st[lhs_adim] / rhs_st[rhs_adim] */
-/* 	            + lhs_lb[lhs_adim]; */
-/* 	    l->u[i] = (r->u[i] - rhs_lb[rhs_adim]) * lhs_st[lhs_adim] / rhs_st[rhs_adim] */
-/* 	            + lhs_lb[lhs_adim]; */
-/* 	  } */
-/* 	  l->s = r->s * lhs_st[lhs_adim] / rhs_st[rhs_adim]; */
-/* 	} */
-/* 	else { */
-/* 	  l = NULL; */
-/* 	} */
-/*       	rhs_adim++; */
-/*       } */
-
-/*       recv_csd[src_node][lhs_adim] = intersection_csds(l, lhs_owner_ref_csd[myrank][lhs_adim]); */
-
-/*       if (l) free_csd(l); */
-
-/*     } */
-
-/*     reduce_csd(recv_csd[src_node], n_lhs_dims); */
-
-/*   } */
-
-/* #if XMP_DBG */
-/*   for (int exec_rank = 0; exec_rank < n_exec_nodes; exec_rank++){ */
-/*     if (myrank == exec_rank){ */
-/*       for (int src_rank = 0; src_rank < n_exec_nodes; src_rank++){ */
-
-/*   	printf("\n"); */
-/*   	printf("[%d] <- [%d]\n", myrank, src_rank); */
-
-/*   	for (int adim = 0; adim < n_lhs_dims; adim++){ */
-/*   	  printf("  %d: ", adim); print_csd(recv_csd[src_rank][adim]); */
-/*   	} */
-/*       } */
-/*     } */
-/*     fflush(stdout); */
-/*     xmp_barrier(); */
-/*   } */
-/* #endif */
-
-  /* for (int rank = 0; rank < n_exec_nodes; rank++){ */
-  /*   for (int adim = 0; adim < n_lhs_dims; adim++){ */
-  /*     free_csd(lhs_owner_ref_csd[rank][adim]); */
-  /*   } */
-  /* } */
+  // free owner_ref_csd
 
   for (int rank = 0; rank < n_exec_nodes; rank++){
-    for (int adim = 0; adim < n_rhs_dims; adim++){
+    for (int adim = 0; adim < n_lhs_dims; adim++){
+      free_csd(lhs_owner_ref_csd[rank][adim]);
       free_csd(rhs_owner_ref_csd[rank][adim]);
     }
   }
-
-/*   // */
-/*   // Get communication sets */
-/*   // */
-
-/*   _XMP_comm_set_t *send_comm_set[n_exec_nodes][_XMP_N_MAX_DIM]; */
-
-/*   for (int dst_node = 0; dst_node < n_exec_nodes; dst_node++){ */
-/*     for (int adim = 0; adim < n_rhs_dims; adim++){ */
-/*       send_comm_set[dst_node][adim] = csd2comm_set(send_csd[dst_node][adim]); */
-/*     } */
-/*   } */
-
-/*   for (int dst_node = 0; dst_node < n_exec_nodes; dst_node++){ */
-/*     for (int adim = 0; adim < n_rhs_dims; adim++){ */
-/*       free_csd(send_csd[dst_node][adim]); */
-/*     } */
-/*   } */
-
-/* #if XMP_DBG */
-/*   if (myrank == DBG_RANK){ */
-/*     printf("\n"); */
-/*     printf("Send List -------------------------------------\n"); */
-/*   } */
-
-/*   for (int exec_rank = 0; exec_rank < n_exec_nodes; exec_rank++){ */
-/*     if (myrank == exec_rank){ */
-/*       for (int dst_rank = 0; dst_rank < n_exec_nodes; dst_rank++){ */
-
-/*   	printf("\n"); */
-/*   	printf("[%d] -> [%d]\n", myrank, dst_rank); */
-
-/*   	for (int adim = 0; adim < n_rhs_dims; adim++){ */
-/*   	  printf("  %d: ", adim); print_comm_set(send_comm_set[dst_rank][adim]); */
-/*   	} */
-/*       } */
-/*     } */
-/*     fflush(stdout); */
-/*     xmp_barrier(); */
-/*   } */
-/* #endif */
-
-/*   _XMP_comm_set_t *recv_comm_set[n_exec_nodes][_XMP_N_MAX_DIM]; */
-
-/*   for (int src_node = 0; src_node < n_exec_nodes; src_node++){ */
-/*     for (int adim = 0; adim < n_lhs_dims; adim++){ */
-/*       recv_comm_set[src_node][adim] = csd2comm_set(recv_csd[src_node][adim]); */
-/*     } */
-/*   } */
-
-/*   for (int src_node = 0; src_node < n_exec_nodes; src_node++){ */
-/*     for (int adim = 0; adim < n_lhs_dims; adim++){ */
-/*       free_csd(recv_csd[src_node][adim]); */
-/*     } */
-/*   } */
-
-/* #if XMP_DBG */
-/*   if (myrank == DBG_RANK){ */
-/*     printf("\n"); */
-/*     printf("Recv List -------------------------------------\n"); */
-/*   } */
-
-/*   for (int exec_rank = 0; exec_rank < n_exec_nodes; exec_rank++){ */
-/*     if (myrank == exec_rank){ */
-/*       for (int src_rank = 0; src_rank < n_exec_nodes; src_rank++){ */
-
-/*   	printf("\n"); */
-/*   	printf("[%d] <- [%d]\n", myrank, src_rank); */
-
-/*   	for (int adim = 0; adim < n_lhs_dims; adim++){ */
-/*   	  printf("  %d: ", adim); print_comm_set(recv_comm_set[src_rank][adim]); */
-/*   	} */
-/*       } */
-/*     } */
-/*     fflush(stdout); */
-/*     xmp_barrier(); */
-/*   } */
-/* #endif */
 
   //
   // Allocate buffers
@@ -4669,7 +4448,6 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   // Packing
   //
 
-  //_XMPC_pack_comm_set(sendbuf, sendbuf_size, rhs_array, send_comm_set);
   (*_XMP_pack_comm_set)(sendbuf, sendbuf_size, rhs_array, send_comm_set);
 
   //
@@ -4684,7 +4462,6 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   // Unpack
   //
 
-  //_XMPC_unpack_comm_set(recvbuf, recvbuf_size, lhs_array, recv_comm_set);
   (*_XMP_unpack_comm_set)(recvbuf, recvbuf_size, lhs_array, recv_comm_set);
 
   //
@@ -4697,11 +4474,6 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   for (int rank = 0; rank < n_exec_nodes; rank++){
     for (int adim = 0; adim < n_rhs_dims; adim++){
       free_comm_set(send_comm_set[rank][adim]);
-    }
-  }
-
-  for (int rank = 0; rank < n_exec_nodes; rank++){
-    for (int adim = 0; adim < n_lhs_dims; adim++){
       free_comm_set(recv_comm_set[rank][adim]);
     }
   }
