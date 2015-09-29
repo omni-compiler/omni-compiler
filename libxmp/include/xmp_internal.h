@@ -57,6 +57,8 @@ extern "C" {
 extern void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index);
 extern void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int dim,
 				 int type, size_t type_size, ...);
+extern void _XMP_init_array_desc_NOT_ALIGNED(_XMP_array_t **adesc, _XMP_template_t *template, int ndims,
+					     int type, size_t type_size, unsigned long long *dim_acc, void *ap);
 extern void _XMP_finalize_array_desc(_XMP_array_t *array);
 extern void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index);
 extern void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int template_index,
@@ -164,6 +166,8 @@ extern int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int
 extern void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
 				      int type, size_t type_size, ...);
 extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d);
+extern unsigned long long _XMP_gtol_calc_offset(_XMP_array_t *a, int g_idx[]);
+  //extern void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp);
 
 // xmp_loop.c
 extern int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
@@ -200,8 +204,13 @@ extern _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *r
                                                         int *dim_size, int is_static);
 extern void _XMP_finalize_nodes(_XMP_nodes_t *nodes);
 extern _XMP_nodes_t *_XMP_create_nodes_by_comm(int is_member, _XMP_comm_t *comm);
+extern void _XMP_calc_rank_array(_XMP_nodes_t *n, int *rank_array, int linear_rank);
 extern int _XMP_calc_linear_rank(_XMP_nodes_t *n, int *rank_array);
 extern int _XMP_calc_linear_rank_on_target_nodes(_XMP_nodes_t *n, int *rank_array, _XMP_nodes_t *target_nodes);
+extern _Bool _XMP_calc_coord_on_target_nodes2(_XMP_nodes_t *n, int *ncoord,
+					      _XMP_nodes_t *target_n, int *target_ncoord);
+extern _Bool _XMP_calc_coord_on_target_nodes(_XMP_nodes_t *n, int *ncoord, 
+					     _XMP_nodes_t *target_n, int *target_ncoord);
 extern _XMP_nodes_ref_t *_XMP_init_nodes_ref(_XMP_nodes_t *n, int *rank_array);
 extern void _XMP_finalize_nodes_ref(_XMP_nodes_ref_t *nodes_ref);
 extern _XMP_nodes_ref_t *_XMP_create_nodes_ref_for_target_nodes(_XMP_nodes_t *n, int *rank_array, _XMP_nodes_t *target_nodes);
@@ -249,6 +258,21 @@ extern void _XMP_reflect_async__(_XMP_array_t *a, int async_id);
 // xmp_runtime.c
 extern void _XMP_init(int argc, char** argv);
 extern void _XMP_finalize(int return_val);
+
+// xmp_section_desc.c
+extern void print_rsd(_XMP_rsd_t *rsd);
+extern void print_bsd(_XMP_bsd_t *bsd);
+extern void print_csd(_XMP_csd_t *csd);
+extern void print_comm_set(_XMP_comm_set_t *comm_set0);
+extern _XMP_rsd_t *intersection_rsds(_XMP_rsd_t *_rsd1, _XMP_rsd_t *_rsd2);
+extern _XMP_csd_t *intersection_csds(_XMP_csd_t *csd1, _XMP_csd_t *csd2);
+extern _XMP_csd_t *alloc_csd(int n);
+extern void free_csd(_XMP_csd_t *csd);
+extern void free_comm_set(_XMP_comm_set_t *comm_set);
+extern _XMP_csd_t *rsd2csd(_XMP_rsd_t *rsd);
+extern _XMP_csd_t *bsd2csd(_XMP_bsd_t *bsd);
+extern _XMP_comm_set_t *csd2comm_set(_XMP_csd_t *csd);
+extern void reduce_csd(_XMP_csd_t *csd[_XMP_N_MAX_DIM], int ndims);
 
 // xmp_shadow.c
 extern void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);

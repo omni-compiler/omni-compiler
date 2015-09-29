@@ -349,4 +349,43 @@ typedef struct _XMP_gpu_data_type {
   size_t size;
 } _XMP_gpu_data_t;
 
+
+// Regular Section Descriptor (RSD)
+// (l:u:s)
+typedef struct _XMP_rsd_type {
+  int l;
+  int u;
+  int s;
+} _XMP_rsd_t;
+
+// Basic Section Descriptor (BSD)
+// (l:u:b:c)
+// b = block width
+// c = cyclic length
+typedef struct _XMP_bsd_type {
+  int l;
+  int u;
+  int b;
+  int c;
+} _XMP_bsd_t;
+
+// Common Section Descriptor (CSD)
+// ((l_1,...,l_n):(u_1,...,u_n):s)
+// proposed in Gwan-Hwan Hwang , Jenq Kuen Lee, Communication set generations with CSD calculus and
+// expression-rewriting framework, Parallel Computing, v.25 n.9, p.1105-1130, Sept. 1999 
+typedef struct _XMP_csd_type {
+  int *l;
+  int *u;
+  int n;
+  int s;
+} _XMP_csd_t;
+
+// Communication Set
+// ((l_1:u_1),(l_2:u_2),...)
+typedef struct _XMP_comm_set_type {
+  int l;
+  int u;
+  struct _XMP_comm_set_type *next;
+} _XMP_comm_set_t;
+
 #endif // _XMP_DATA_STRUCT

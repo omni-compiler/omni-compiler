@@ -1033,6 +1033,139 @@ int _XMP_calc_linear_rank_on_target_nodes(_XMP_nodes_t *n, int *rank_array,
   }
 }
 
+
+//
+// check if n and (target_n or its ancestor) match and calc target_ncoord on target_n
+// corresponding to ncoord on n
+//
+_Bool
+_XMP_calc_coord_on_target_nodes2(_XMP_nodes_t *n, int *ncoord, 
+				 _XMP_nodes_t *target_n, int *target_ncoord){
+  if (n == target_n){
+    //printf("%d, %d\n", n->dim, target_n->dim);
+    memcpy(target_ncoord, ncoord, sizeof(int) * n->dim);
+    return true;
+  }
+  else if (n->attr == _XMP_ENTIRE_NODES && target_n->attr == _XMP_ENTIRE_NODES){
+    int rank = _XMP_calc_linear_rank(n, ncoord);
+    _XMP_calc_rank_array(target_n, target_ncoord, rank);
+    //xmp_dbg_printf("ncoord = %d, target_ncoord = %d\n", ncoord[0], target_ncoord[0]);
+    return true;
+  }
+
+  _XMP_nodes_t *target_p = target_n->inherit_nodes;
+  if (target_p){
+
+    int target_pcoord[_XMP_N_MAX_DIM];
+
+    if (_XMP_calc_coord_on_target_nodes2(n, ncoord, target_p, target_pcoord)){
+
+      //int target_prank = _XMP_calc_linear_rank(target_p, target_pcoord);
+      /* printf("dim = %d, m0 = %d, m1 = %d\n", */
+      /* 	     target_n->dim, target_n->info[0].multiplier, target_n->info[1].multiplier); */
+      //_XMP_calc_rank_array(target_n, target_ncoord, target_prank);
+
+      _XMP_nodes_inherit_info_t *inherit_info = target_n->inherit_info;
+
+      int target_rank = 0;
+      int multiplier = 1;
+
+      for (int i = 0; i < target_p->dim; i++) {
+      	if (inherit_info[i].shrink) {
+	  ;
+      	}
+      	else {
+      	  int target_rank_dim = (target_pcoord[i] - inherit_info[i].lower) / inherit_info[i].stride;
+	  target_rank += multiplier * target_rank_dim;
+	  multiplier *= inherit_info[i].size;
+      	}
+      }
+
+      _XMP_calc_rank_array(target_n, target_ncoord, target_rank);
+
+      /* int j = 0; */
+      /* for (int i = 0; i < target_p->dim; i++) { */
+      /* 	if (inherit_info[i].shrink) { */
+      /* 	  ; */
+      /* 	} */
+      /* 	else { */
+      /* 	  target_ncoord[j] = (target_pcoord[j] - inherit_info[i].lower) / inherit_info[i].stride; */
+      /* 	  j++; */
+      /* 	} */
+      /* } */
+
+      return true;
+    }
+
+  }
+
+  return false;
+
+}
+    
+//
+// check if n and target_n, or their ancestors, match and calc target_ncoord on target_n
+// corresponding to ncoord on n
+//
+_Bool
+_XMP_calc_coord_on_target_nodes(_XMP_nodes_t *n, int *ncoord, 
+				_XMP_nodes_t *target_n, int *target_ncoord){
+
+  if (_XMP_calc_coord_on_target_nodes2(n, ncoord, target_n, target_ncoord)){
+    return true;
+  }
+
+  _XMP_nodes_t *p = n->inherit_nodes;
+  if (p){
+
+    int pcoord[_XMP_N_MAX_DIM];
+
+    int rank = _XMP_calc_linear_rank(n, ncoord);
+    //_XMP_calc_rank_array(p, pcoord, rank);
+     
+    _XMP_nodes_inherit_info_t *inherit_info = n->inherit_info;
+
+    int multiplier[_XMP_N_MAX_DIM];
+    multiplier[0] = 1;
+    for (int i = 1; i < p->dim; i++){
+      multiplier[i] = multiplier[i-1] * inherit_info[i].size;
+    }
+
+    int j = rank;
+    for (int i = p->dim; i >= 0; i--){
+      if (inherit_info[i].shrink) {
+    	pcoord[i] = p->info[i].rank;
+      }
+      else {
+	int rank_dim = j / multiplier[i];
+    	pcoord[i] = inherit_info[i].stride * rank_dim + inherit_info[i].lower;
+	j = j % multiplier[i];
+      }
+    }
+
+    /* int j = 0; */
+    /* for (int i = 0; i < p->dim; i++) { */
+    /*   if (inherit_info[i].shrink) { */
+    /* 	pcoord[i] = p->info[i].rank; */
+    /*   } */
+    /*   else { */
+    /* 	pcoord[i] = inherit_info[i].stride * ncoord[j] + inherit_info[i].lower; */
+    /* 	j++; */
+    /*   } */
+    /* } */
+
+    if (_XMP_calc_coord_on_target_nodes(p, pcoord, target_n, target_ncoord)){
+      //printf("%d, %d\n", p->dim, target_n->dim);
+      return true;
+    }
+
+  }
+
+  return false;
+
+}
+
+
 _XMP_nodes_ref_t *_XMP_init_nodes_ref(_XMP_nodes_t *n, int *rank_array) {
   _XMP_nodes_ref_t *nodes_ref = _XMP_alloc(sizeof(_XMP_nodes_ref_t));
   int dim = n->dim;
