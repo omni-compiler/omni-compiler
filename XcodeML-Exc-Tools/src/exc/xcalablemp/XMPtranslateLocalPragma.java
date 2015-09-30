@@ -2485,7 +2485,7 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("gmove in/out directive is not supported yet");
 
     // acc or host
-    XobjList accOrHost = (XobjList)gmoveDecl.getArg(1);
+    XobjList accOrHost = (XobjList)gmoveDecl.getArg(2);
     boolean isACC = accOrHost.hasIdent("acc");
     boolean isHost = accOrHost.hasIdent("host");
     if(!isACC && !isHost){
@@ -2681,13 +2681,26 @@ public class XMPtranslateLocalPragma {
             Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), vars)), Bcons.blockList(gmoveFuncCallBlock));
     }
     
+    Xobject async = gmoveDecl.getArg(1);
+    if (async.Opcode() != Xcode.LIST){
+
+      if (!XmOption.isAsync()){
+	XMP.error(pb.getLineNo(), "MPI-3 is required to use the async clause on a bcast directive");
+      }
+
+      Ident f = _globalDecl.declExternFunc("xmpc_init_async");
+      pb.insert(f.Call(Xcons.List(async)));
+      Ident g = _globalDecl.declExternFunc("xmpc_start_async");
+      pb.add(g.Call(Xcons.List(async)));;
+    }
+
     // Why is the barrier needed ?
     //Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock, _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null)));
     Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock));
     pb.replace(gmoveBlock);
 
     // add function calls for profiling                                                                                    
-    Xobject profileClause = gmoveDecl.getArg(2);
+    Xobject profileClause = gmoveDecl.getArg(3);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp gmove:" + pb.getLineNo()));

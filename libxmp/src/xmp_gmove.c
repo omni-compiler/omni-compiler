@@ -19,6 +19,12 @@
 #define _XMP_SM_GTOL_BLOCK_CYCLIC(_b, _i, _m, _P) \
 (((((_i) - (_m)) / (((_P) * (_b)))) * (_b)) + (((_i) - (_m)) % (_b)))
 
+#ifdef _XMP_MPI3
+extern _Bool is_async;
+extern int _async_id;
+#endif
+
+
 void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
                                  int dim_index, int *lower, int *upper, int *stride) {
   _XMP_array_info_t *array_info = &(array->info[dim_index]);

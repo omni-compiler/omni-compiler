@@ -2111,7 +2111,7 @@ xmp_reflect_clause:
 /* 	   ; */
 xmp_gmove_clause:
 	    xmp_async_opt
-	    { $$ = list2(LIST, NULL, $1); }
+	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_NORMAL), $1); }
 	  | XMPKW_IN KW xmp_async_opt
 	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN), $3); }
           | XMPKW_OUT KW xmp_async_opt

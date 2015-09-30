@@ -734,6 +734,7 @@ public class XMPtransPragma
   private final static int GMOVE_OUT = 2;
 
   private Block translateGmove(PragmaBlock pb, XMPinfo i) {
+
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
 
@@ -743,11 +744,23 @@ public class XMPtransPragma
     Ident left_desc = buildGmoveDesc(left, bb, pb);
     Ident right_desc = buildGmoveDesc(right, bb, pb);
 
+    if (i.getAsyncId() != null){
+      Xobject arg = Xcons.List(i.getAsyncId());
+      Ident g = env.declInternIdent(XMP.init_async_f, Xtype.FsubroutineType);
+      bb.add(g.callSubroutine(arg));
+    }
+
     Ident f = env.declInternIdent(XMP.gmove_do_f, Xtype.FsubroutineType);
     Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(),
 			      Xcons.IntConstant(GMOVE_COLL));
     bb.add(f.callSubroutine(args));
 	    
+    if (i.getAsyncId() != null){
+      Xobject arg = Xcons.List(i.getAsyncId());
+      Ident g = env.declInternIdent(XMP.start_async_f, Xtype.FsubroutineType);
+      bb.add(g.callSubroutine(arg));
+    }
+
     return b;
   }
 
