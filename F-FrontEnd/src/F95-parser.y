@@ -1990,8 +1990,8 @@ xmp_directive:
 	    { $$ = XMP_LIST(XMP_LOOP,$3); }
 	  | XMPKW_REFLECT xmp_reflect_clause
 	    { $$ = XMP_LIST(XMP_REFLECT,$2); }
-	  | XMPKW_GMOVE xmp_gmove_clause
-	    { $$ = XMP_LIST(XMP_GMOVE,$2); }
+	  | XMPKW_GMOVE { need_keyword = TRUE; } xmp_gmove_clause
+	    { $$ = XMP_LIST(XMP_GMOVE,$3); }
 	  | XMPKW_BARRIER { need_keyword = TRUE; } xmp_barrier_clause
 	    { $$ = XMP_LIST(XMP_BARRIER,$3); }
 	  | XMPKW_REDUCTION xmp_reduction_clause
@@ -2101,10 +2101,22 @@ xmp_reflect_clause:
            { $$= list3(LIST,$2,$7,$10); }
 	   ;
 
+/* xmp_gmove_clause: */
+/* 	     xmp_gmove_opt xmp_clause_opt */
+/* 	     { $$ = list2(LIST,$1,$2); } */
+/* 	   ; */
+/* xmp_gmove_clause: */
+/* 	     xmp_gmove_opt KW xmp_async_opt */
+/* 	     { $$ = list2(LIST,$1,$3); } */
+/* 	   ; */
 xmp_gmove_clause:
-	     xmp_gmove_opt xmp_clause_opt
-	     { $$ = list2(LIST,$1,$2); }
-	   ;
+	    xmp_async_opt
+	    { $$ = list2(LIST, NULL, $1); }
+	  | XMPKW_IN KW xmp_async_opt
+	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN), $3); }
+          | XMPKW_OUT KW xmp_async_opt
+	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_OUT), $3); }
+          ;
 
 xmp_barrier_clause:
 	     xmp_ON xmp_obj_ref xmp_clause_opt
@@ -2263,11 +2275,11 @@ xmp_pos_var_list:
         | '/' ident_list '/' { $$=$2; }
 	;
 
-xmp_gmove_opt:
-	  /* NULL */ { $$= NULL; }
-	 | { need_keyword=TRUE; } XMPKW_IN { $$ = GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN); }
-	 | { need_keyword=TRUE; } XMPKW_OUT { $$ = GEN_NODE(INT_CONSTANT, XMP_GMOVE_OUT); }
-	 ;
+/* xmp_gmove_opt: */
+/* 	  /\* NULL *\/ { $$= NULL; } */
+/* 	 | { need_keyword=TRUE; } XMPKW_IN { $$ = GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN); } */
+/* 	 | { need_keyword=TRUE; } XMPKW_OUT { $$ = GEN_NODE(INT_CONSTANT, XMP_GMOVE_OUT); } */
+/* 	 ; */
 
 xmp_expr_list:
 	  expr
@@ -2355,7 +2367,6 @@ xmp_ASYNC: { need_keyword = TRUE; } XMPKW_ASYNC;
 xmp_NOWAIT: { need_keyword = TRUE; } XMPKW_NOWAIT;
 /* xmp_REDUCTION: { need_keyword = TRUE; } XMPKW_REDUCTION; */
 /* xmp_MASTER: { need_keyword = TRUE; } XMPKW_MASTER; */
-
 
 /*
  * (flag, mode)
