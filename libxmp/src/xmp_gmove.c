@@ -4414,6 +4414,8 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   for (int rank = 0; rank < n_exec_nodes; rank++){
     for (int adim = 0; adim < n_lhs_dims; adim++){
       free_csd(lhs_owner_ref_csd[rank][adim]);
+    }
+    for (int adim = 0; adim < n_rhs_dims; adim++){
       free_csd(rhs_owner_ref_csd[rank][adim]);
     }
   }
@@ -4480,6 +4482,8 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   for (int rank = 0; rank < n_exec_nodes; rank++){
     for (int adim = 0; adim < n_rhs_dims; adim++){
       free_comm_set(send_comm_set[rank][adim]);
+    }
+    for (int adim = 0; adim < n_lhs_dims; adim++){
       free_comm_set(recv_comm_set[rank][adim]);
     }
   }
