@@ -93,12 +93,12 @@ void _XMPF_gmove_scalar_garray__(void *scalar, _XMP_gmv_desc_t *gmv_desc_rightp)
 /*   } */
 
   int root_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ridx);
-  xmpf_dbg_printf("root_rank = %d\n", root_rank);
+  /* xmpf_dbg_printf("root_rank = %d\n", root_rank); */
 
   if (root_rank == exec_nodes->comm_rank){
     // I am the root.
     src_addr = _XMP_get_array_addr(array, ridx);
-    xmpf_dbg_printf("src_addr = %p\n", src_addr);
+    //    xmpf_dbg_printf("src_addr = %p\n", src_addr);
   }
 
   // broadcast

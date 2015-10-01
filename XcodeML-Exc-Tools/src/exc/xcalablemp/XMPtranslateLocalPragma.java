@@ -2600,38 +2600,42 @@ public class XMPtranslateLocalPragma {
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
 
-	    boolean flag = false;
-	    for(int i=0;i<leftAlignedArray.getDim();i++){   // 1
-	      if(leftAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
-		flag = true;
-	      }
-	    }
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_ARRAY", gmoveFuncArgs);
 
-	    for(int i=0;i<rightAlignedArray.getDim();i++){  // 2
-	      if(rightAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
-		flag = false;
-	      }
-	    }
+	    // BCAST_TO_NOTALIGNED_ARRAY doesn't work now
 
-	    String leftAlignedArrayTemplate  = leftAlignedArray.getAlignTemplate().getName();
-	    String rightAlignedArrayTemplate = rightAlignedArray.getAlignTemplate().getName();
-	    if(!leftAlignedArrayTemplate.equals(rightAlignedArrayTemplate)){ // 3
-	      flag = false;
-	    }
-	    if(!(leftAlignedArray.getDim() == 2 && rightAlignedArray.getDim() == 2)){  // 4
-	      flag = false;
-	    }
+	    // boolean flag = false;
+	    // for(int i=0;i<leftAlignedArray.getDim();i++){   // 1
+	    //   if(leftAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
+	    // 	flag = true;
+	    //   }
+	    // }
 
-	    if(flag == true){
-	      // 1. One of dimension of left array is not aligned.
-	      // 2. All dimensions of right array are aligned (temporary).
-	      // 3. Templates of left array amd right array are the same.
-	      // 4. Both left array amd right array are must 2 dimentional array (temporary).
-	      gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_TO_NOTALIGNED_ARRAY", gmoveFuncArgs);
-	    }
-	    else{
-	      gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_ARRAY", gmoveFuncArgs);
-	    }
+	    // for(int i=0;i<rightAlignedArray.getDim();i++){  // 2
+	    //   if(rightAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
+	    // 	flag = false;
+	    //   }
+	    // }
+
+	    // String leftAlignedArrayTemplate  = leftAlignedArray.getAlignTemplate().getName();
+	    // String rightAlignedArrayTemplate = rightAlignedArray.getAlignTemplate().getName();
+	    // if(!leftAlignedArrayTemplate.equals(rightAlignedArrayTemplate)){ // 3
+	    //   flag = false;
+	    // }
+	    // if(!(leftAlignedArray.getDim() == 2 && rightAlignedArray.getDim() == 2)){  // 4
+	    //   flag = false;
+	    // }
+
+	    // if(flag == true){
+	    //   // 1. One of dimension of left array is not aligned.
+	    //   // 2. All dimensions of right array are aligned (temporary).
+	    //   // 3. Templates of left array amd right array are the same.
+	    //   // 4. Both left array amd right array are must 2 dimentional array (temporary).
+	    //   gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_TO_NOTALIGNED_ARRAY", gmoveFuncArgs);
+	    // }
+	    // else{
+	    //   gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_ARRAY", gmoveFuncArgs);
+	    // }
           }
         }
       } else {
