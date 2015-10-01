@@ -19,10 +19,8 @@
 #define _XMP_SM_GTOL_BLOCK_CYCLIC(_b, _i, _m, _P) \
 (((((_i) - (_m)) / (((_P) * (_b)))) * (_b)) + (((_i) - (_m)) % (_b)))
 
-#ifdef _XMP_MPI3
 extern _Bool is_async;
 extern int _async_id;
-#endif
 
 
 void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
@@ -2696,7 +2694,8 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
 				   int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
 				   int *src_l, int *src_u, int *src_s, unsigned long long *src_d){
 
-  if (gmv_desc_leftp->is_global && gmv_desc_rightp->is_global){
+  // NOTE: asynchronous gmove aloways done by _XMP_gmove_1to1
+  if (!is_async && gmv_desc_leftp->is_global && gmv_desc_rightp->is_global){
     if (_XMP_gmove_garray_garray_opt(gmv_desc_leftp, gmv_desc_rightp,
 				     dst_l, dst_u, dst_s, dst_d,
 				     src_l, src_u, src_s, src_d)) return;
@@ -2987,7 +2986,7 @@ static void _XMPC_unpack_comm_set(void *recvbuf, int recvbuf_size,
 
 
 void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size, ...) {
-  unsigned long long gmove_total_elmts = 0;
+  //unsigned long long gmove_total_elmts = 0;
 
   _XMP_gmv_desc_t gmv_desc_leftp, gmv_desc_rightp;
   int dummy[7] = { 2, 2, 2, 2, 2, 2, 2 }; /* temporarily assuming maximum 7-dimensional */
@@ -3014,7 +3013,7 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
 
   // get src info
   unsigned long long src_total_elmts = 1;
-  void *src_addr = src_array->array_addr_p;
+  //void *src_addr = src_array->array_addr_p;
   int src_dim = src_array->dim;
   int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim];
   for (int i = 0; i < src_dim; i++) {
@@ -3032,7 +3031,7 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
   if (dst_total_elmts != src_total_elmts) {
     _XMP_fatal("bad assign statement for gmove");
   } else {
-    gmove_total_elmts = dst_total_elmts;
+    //gmove_total_elmts = dst_total_elmts;
   }
 
   gmv_desc_leftp.is_global = false;       gmv_desc_rightp.is_global = true;
@@ -4412,7 +4411,8 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   }
 #endif
 
-  _XMP_comm_set_t *recv_comm_set[n_exec_nodes][_XMP_N_MAX_DIM];
+  //_XMP_comm_set_t *recv_comm_set[n_exec_nodes][_XMP_N_MAX_DIM];
+  _XMP_comm_set_t *(*recv_comm_set)[_XMP_N_MAX_DIM] = _XMP_alloc(sizeof(_XMP_comm_set_t*) * n_exec_nodes *_XMP_N_MAX_DIM);
   get_comm_list(gmv_desc_rightp, gmv_desc_leftp, rhs_owner_ref_csd, lhs_owner_ref_csd, recv_comm_set);
 
   // free owner_ref_csd
@@ -4468,9 +4468,38 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   // communication
   //
 
+#ifdef _XMP_MPI3
+  if (is_async){
+
+    _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+
+    MPI_Ialltoallv(sendbuf, sendcounts, sdispls, rhs_array->mpi_type,
+		   recvbuf, recvcounts, rdispls, lhs_array->mpi_type,
+		   *exec_comm, &async->reqs[async->nreqs]);
+
+    async->nreqs++;
+
+    _XMP_async_gmove_t *gmove = _XMP_alloc(sizeof(_XMP_async_gmove_t));
+    gmove->sendbuf = sendbuf;
+    gmove->recvbuf = recvbuf;
+    gmove->recvbuf_size = recvbuf_size;
+    gmove->a = lhs_array;
+    gmove->comm_set = recv_comm_set;
+    async->gmove = gmove;
+
+    for (int rank = 0; rank < n_exec_nodes; rank++){
+      for (int adim = 0; adim < n_rhs_dims; adim++){
+	free_comm_set(send_comm_set[rank][adim]);
+      }
+    }
+
+    return;
+  }
+#endif
+
   MPI_Alltoallv(sendbuf, sendcounts, sdispls, rhs_array->mpi_type,
-  		recvbuf, recvcounts, rdispls, lhs_array->mpi_type,
-  		*exec_comm);
+		recvbuf, recvcounts, rdispls, lhs_array->mpi_type,
+		*exec_comm);
 
   //
   // Unpack
@@ -4493,5 +4522,7 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
       free_comm_set(recv_comm_set[rank][adim]);
     }
   }
+
+  _XMP_free(recv_comm_set);
 
 }

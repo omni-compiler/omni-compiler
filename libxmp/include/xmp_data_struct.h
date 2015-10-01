@@ -318,38 +318,6 @@ typedef struct _XMP_gmv_desc_type
 #endif
 } _XMP_gmv_desc_t;
 
-//
-// for asynchronous comms.
-//
-
-typedef struct _XMP_async_comm {
-  int async_id;
-  int nreqs;
-  MPI_Request *reqs;
-  struct _XMP_async_comm *next;
-} _XMP_async_comm_t;
-
-#define _XMP_ASYNC_COMM_SIZE 511
-
-#define _XMP_MAX_ASYNC_REQS (4 * _XMP_N_MAX_DIM * 10)
-
-
-
-typedef struct _XMP_gpu_array_type {
-  int gtol;
-  unsigned long long acc;
-} _XMP_gpu_array_t;
-
-typedef struct _XMP_gpu_data_type {
-  _Bool is_aligned_array;
-  void *host_addr;
-  void *device_addr;
-  _XMP_array_t *host_array_desc;
-  _XMP_gpu_array_t *device_array_desc;
-  size_t size;
-} _XMP_gpu_data_t;
-
-
 // Regular Section Descriptor (RSD)
 // (l:u:s)
 typedef struct _XMP_rsd_type {
@@ -387,5 +355,45 @@ typedef struct _XMP_comm_set_type {
   int u;
   struct _XMP_comm_set_type *next;
 } _XMP_comm_set_t;
+
+//
+// for asynchronous comms.
+//
+
+typedef struct _XMP_async_gmove {
+  void *sendbuf;
+  void *recvbuf;
+  int recvbuf_size;
+  _XMP_array_t *a;
+  _XMP_comm_set_t *(*comm_set)[_XMP_N_MAX_DIM];
+} _XMP_async_gmove_t;
+
+typedef struct _XMP_async_comm {
+  int async_id;
+  int nreqs;
+  MPI_Request *reqs;
+  _XMP_async_gmove_t *gmove;
+  struct _XMP_async_comm *next;
+} _XMP_async_comm_t;
+
+#define _XMP_ASYNC_COMM_SIZE 511
+
+#define _XMP_MAX_ASYNC_REQS (4 * _XMP_N_MAX_DIM * 10)
+
+
+
+typedef struct _XMP_gpu_array_type {
+  int gtol;
+  unsigned long long acc;
+} _XMP_gpu_array_t;
+
+typedef struct _XMP_gpu_data_type {
+  _Bool is_aligned_array;
+  void *host_addr;
+  void *device_addr;
+  _XMP_array_t *host_array_desc;
+  _XMP_gpu_array_t *device_array_desc;
+  size_t size;
+} _XMP_gpu_data_t;
 
 #endif // _XMP_DATA_STRUCT
