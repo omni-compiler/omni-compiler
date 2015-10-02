@@ -754,6 +754,12 @@ public class XMPtransPragma
     Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(),
 			      Xcons.IntConstant(GMOVE_COLL));
     bb.add(f.callSubroutine(args));
+
+    Ident d = env.declInternIdent(XMP.gmove_dealloc_f, Xtype.FsubroutineType);
+    Xobject args_l = Xcons.List(left_desc.Ref());
+    bb.add(d.callSubroutine(args_l));
+    Xobject args_r = Xcons.List(right_desc.Ref());
+    bb.add(d.callSubroutine(args_r));
 	    
     if (i.getAsyncId() != null){
       Xobject arg = Xcons.List(i.getAsyncId());

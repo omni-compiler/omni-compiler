@@ -326,14 +326,14 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
 {
   _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
 
-  int type = 0;
-  size_t type_size = 0;
+  //int type = 0;
+  //size_t type_size = 0;
 
-  unsigned long long gmove_total_elmts = 0;
+  //unsigned long long gmove_total_elmts = 0;
 
   // get dst info
   unsigned long long dst_total_elmts = 1;
-  void *dst_addr = gmv_desc_rightp->local_data;
+  //void *dst_addr = gmv_desc_rightp->local_data;
   int dst_dim = gmv_desc_leftp->ndims;
   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim];
   unsigned long long dst_d[dst_dim];
@@ -352,7 +352,7 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
 
   // get src info
   unsigned long long src_total_elmts = 1;
-  void *src_addr = src_array->array_addr_p;
+  //void *src_addr = src_array->array_addr_p;
   int src_dim = src_array->dim;
   int src_l[src_dim], src_u[src_dim], src_s[src_dim];
   unsigned long long src_d[src_dim];
@@ -368,7 +368,7 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
   if (dst_total_elmts != src_total_elmts) {
     _XMP_fatal("bad assign statement for gmove");
   } else {
-    gmove_total_elmts = dst_total_elmts;
+    //gmove_total_elmts = dst_total_elmts;
   }
 
   _XMP_pack_comm_set = _XMPF_pack_comm_set;
@@ -376,60 +376,60 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
 
   _XMP_gmove_array_array_common(gmv_desc_leftp, gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d);
 
-  int iflag =0;
-  if (iflag==1){
-  if (_XMP_IS_SINGLE) {
-    for (int i = 0; i < src_dim; i++) {
-      _XMP_gtol_array_ref_triplet(src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
-    }
+  /* int iflag =0; */
+  /* if (iflag==1){ */
+  /* if (_XMP_IS_SINGLE) { */
+  /*   for (int i = 0; i < src_dim; i++) { */
+  /*     _XMP_gtol_array_ref_triplet(src_array, i, &(src_l[i]), &(src_u[i]), &(src_s[i])); */
+  /*   } */
 
-    _XMP_gmove_localcopy_ARRAY(type, type_size,
-                               dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
-                               src_addr, src_dim, src_l, src_u, src_s, src_d);
-    return;
-  }
+  /*   _XMP_gmove_localcopy_ARRAY(type, type_size, */
+  /*                              dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d, */
+  /*                              src_addr, src_dim, src_l, src_u, src_s, src_d); */
+  /*   return; */
+  /* } */
 
-  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
-  _XMP_ASSERT(exec_nodes->is_member);
+  /* _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes(); */
+  /* _XMP_ASSERT(exec_nodes->is_member); */
 
-  _XMP_nodes_t *array_nodes = src_array->array_nodes;
-  int array_nodes_dim = array_nodes->dim;
-  int array_nodes_ref[array_nodes_dim];
-  for (int i = 0; i < array_nodes_dim; i++) {
-    array_nodes_ref[i] = 0;
-  }
+  /* _XMP_nodes_t *array_nodes = src_array->array_nodes; */
+  /* int array_nodes_dim = array_nodes->dim; */
+  /* int array_nodes_ref[array_nodes_dim]; */
+  /* for (int i = 0; i < array_nodes_dim; i++) { */
+  /*   array_nodes_ref[i] = 0; */
+  /* } */
 
-  int dst_lower[dst_dim], dst_upper[dst_dim], dst_stride[dst_dim];
-  int src_lower[src_dim], src_upper[src_dim], src_stride[src_dim];
-  do {
-    for (int i = 0; i < dst_dim; i++) {
-      dst_lower[i] = dst_l[i]; dst_upper[i] = dst_u[i]; dst_stride[i] = dst_s[i];
-    }
+  /* int dst_lower[dst_dim], dst_upper[dst_dim], dst_stride[dst_dim]; */
+  /* int src_lower[src_dim], src_upper[src_dim], src_stride[src_dim]; */
+  /* do { */
+  /*   for (int i = 0; i < dst_dim; i++) { */
+  /*     dst_lower[i] = dst_l[i]; dst_upper[i] = dst_u[i]; dst_stride[i] = dst_s[i]; */
+  /*   } */
 
-    for (int i = 0; i < src_dim; i++) {
-      src_lower[i] = src_l[i]; src_upper[i] = src_u[i]; src_stride[i] = src_s[i];
-    }
+  /*   for (int i = 0; i < src_dim; i++) { */
+  /*     src_lower[i] = src_l[i]; src_upper[i] = src_u[i]; src_stride[i] = src_s[i]; */
+  /*   } */
 
-    if (_XMP_calc_global_index_BCAST(dst_dim, dst_lower, dst_upper, dst_stride,
-                                     src_array, array_nodes_ref, src_lower, src_upper, src_stride)) {
-      int root_rank = _XMP_calc_linear_rank_on_target_nodes(array_nodes, array_nodes_ref, exec_nodes);
-      if (root_rank == (exec_nodes->comm_rank)) {
-        for (int i = 0; i < src_dim; i++) {
-          _XMP_gtol_array_ref_triplet(src_array, i, &(src_lower[i]), &(src_upper[i]), &(src_stride[i]));
-        }
-      }
+  /*   if (_XMP_calc_global_index_BCAST(dst_dim, dst_lower, dst_upper, dst_stride, */
+  /*                                    src_array, array_nodes_ref, src_lower, src_upper, src_stride)) { */
+  /*     int root_rank = _XMP_calc_linear_rank_on_target_nodes(array_nodes, array_nodes_ref, exec_nodes); */
+  /*     if (root_rank == (exec_nodes->comm_rank)) { */
+  /*       for (int i = 0; i < src_dim; i++) { */
+  /*         _XMP_gtol_array_ref_triplet(src_array, i, &(src_lower[i]), &(src_upper[i]), &(src_stride[i])); */
+  /*       } */
+  /*     } */
 
-      gmove_total_elmts -= _XMP_gmove_bcast_ARRAY(dst_addr, dst_dim, dst_lower, dst_upper, dst_stride, dst_d,
-                                                  src_addr, src_dim, src_lower, src_upper, src_stride, src_d,
-                                                  type, type_size, root_rank);
+  /*     gmove_total_elmts -= _XMP_gmove_bcast_ARRAY(dst_addr, dst_dim, dst_lower, dst_upper, dst_stride, dst_d, */
+  /*                                                 src_addr, src_dim, src_lower, src_upper, src_stride, src_d, */
+  /*                                                 type, type_size, root_rank); */
 
-      _XMP_ASSERT(gmove_total_elmts >= 0);
-      if (gmove_total_elmts == 0) {
-        return;
-      }
-    }
-  } while (_XMP_get_next_rank(array_nodes, array_nodes_ref));
-  }
+  /*     _XMP_ASSERT(gmove_total_elmts >= 0); */
+  /*     if (gmove_total_elmts == 0) { */
+  /*       return; */
+  /*     } */
+  /*   } */
+  /* } while (_XMP_get_next_rank(array_nodes, array_nodes_ref)); */
+  /* } */
 }
 
 
@@ -465,12 +465,12 @@ xmpf_gmv_g_alloc__(_XMP_gmv_desc_t **gmv_desc, _XMP_array_t **a_desc)
   _XMP_array_t *ap = *a_desc;
   int n = ap->dim;
 
-  gp = (_XMP_gmv_desc_t *)malloc(sizeof(_XMP_gmv_desc_t));
+  gp = (_XMP_gmv_desc_t *)_XMP_alloc(sizeof(_XMP_gmv_desc_t));
 
-  gp->kind = (int *)malloc(sizeof(int) * n);
-  gp->lb = (int *)malloc(sizeof(int) * n);
-  gp->ub = (int *)malloc(sizeof(int) * n);
-  gp->st = (int *)malloc(sizeof(int) * n);
+  gp->kind = (int *)_XMP_alloc(sizeof(int) * n);
+  gp->lb = (int *)_XMP_alloc(sizeof(int) * n);
+  gp->ub = (int *)_XMP_alloc(sizeof(int) * n);
+  gp->st = (int *)_XMP_alloc(sizeof(int) * n);
   
   if (!gp || !gp->kind || !gp->lb || !gp->st)
     _XMP_fatal("gmv_g_alloc: cannot alloc memory");
@@ -506,14 +506,14 @@ xmpf_gmv_l_alloc__(_XMP_gmv_desc_t **gmv_desc , void *local_data, int *ndims)
     _XMP_gmv_desc_t *gp;
     int n = *ndims;
 
-    gp = (_XMP_gmv_desc_t *)malloc(sizeof(_XMP_gmv_desc_t));
+    gp = (_XMP_gmv_desc_t *)_XMP_alloc(sizeof(_XMP_gmv_desc_t));
 
-    gp->kind = (int *)malloc(sizeof(int) * n);
-    gp->lb = (int *)malloc(sizeof(int) * n);
-    gp->ub = (int *)malloc(sizeof(int) * n);
-    gp->st = (int *)malloc(sizeof(int) * n);
-    gp->a_lb = (int *)malloc(sizeof(int) * n);
-    gp->a_ub = (int *)malloc(sizeof(int) * n);
+    gp->kind = (int *)_XMP_alloc(sizeof(int) * n);
+    gp->lb = (int *)_XMP_alloc(sizeof(int) * n);
+    gp->ub = (int *)_XMP_alloc(sizeof(int) * n);
+    gp->st = (int *)_XMP_alloc(sizeof(int) * n);
+    gp->a_lb = (int *)_XMP_alloc(sizeof(int) * n);
+    gp->a_ub = (int *)_XMP_alloc(sizeof(int) * n);
 
     gp->is_global = false;
     gp->ndims = n;
@@ -539,6 +539,24 @@ xmpf_gmv_l_dim_info__(_XMP_gmv_desc_t **gmv_desc , int *i_dim, int *a_lb, int *a
   gp->lb[i] = *lb;
   gp->ub[i] = *ub;
   gp->st[i] = *st;
+}
+
+
+void
+xmpf_gmv_dealloc__(_XMP_gmv_desc_t **gmv_desc){
+
+  _XMP_gmv_desc_t *gp = *gmv_desc;
+
+  _XMP_free(gp->kind);
+  _XMP_free(gp->lb);
+  _XMP_free(gp->ub);
+  _XMP_free(gp->st);
+
+  _XMP_free(gp->a_lb);
+  _XMP_free(gp->a_ub);
+
+  _XMP_free(gp);
+
 }
 
 
