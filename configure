@@ -3053,8 +3053,8 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
-# Expand $ac_aux_dir to an absolute path.
-am_aux_dir=`cd "$ac_aux_dir" && pwd`
+# expand $ac_aux_dir to an absolute path
+am_aux_dir=`cd $ac_aux_dir && pwd`
 
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
@@ -3450,7 +3450,6 @@ END
     as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
   fi
 fi
-
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
 $as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
@@ -8718,13 +8717,13 @@ fi
 
 
 if test x$use_tca = xyes; then
-   if ! test -f $TCA_PREFIX/tca-api.h; then
-      as_fn_error $? "$TCA_PREFIX/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
+   if ! test -f $TCA_PREFIX/include/tca-api.h; then
+      as_fn_error $? "$TCA_PREFIX/include/tca-api.h not found. Please check --with-TCA=<DIR>" "$LINENO" 5
    fi
 
-  MPI_CPPFLAGS="${MPI_CPPFLAGS} -I${TCA_PREFIX}"
-  MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}"
-  MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX} -ltca"
+  MPI_CPPFLAGS="${MPI_CPPFLAGS} -I${TCA_PREFIX}/include"
+  MPI_CFLAGS="${MPI_CFLAGS} -I${TCA_PREFIX}/include"
+  MPI_CLIBS="${MPI_CLIBS} -L${TCA_PREFIX}/lib -ltca"
   OMNI_LNK_CFLAGS="$OMNI_LNK_CFLAGS ${MPI_CLIBS}"
 fi
 

@@ -48,15 +48,14 @@ static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_
   size_t size = accumulation * type_size;
   size_t offset = (dim > 0)? array_info[0].dim_offset * array_info[0].dim_acc * type_size : 0;
 
-  _ACC_gpu_data_t *present_host_data_d = NULL;
-  void *present_dev_addr;
+  _ACC_gpu_data_list_t *present_data = NULL;
   //find host_data_d
   if(mode == INIT_PRESENT || mode == INIT_PRESENTOR){
-	_ACC_gpu_get_data_sub(&present_host_data_d, &present_dev_addr, addr, offset, size);
+    present_data = _ACC_gpu_find_data(addr, offset, size);
   }
 
   if(mode == INIT_PRESENT){
-	if(present_host_data_d == NULL){
+	if(present_data == NULL){
 	  _ACC_fatal("data not found");
 	}
   }
@@ -75,7 +74,7 @@ static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_
   host_data_d->array_info = array_info;
 
 
-  if(present_host_data_d == NULL){
+  if(present_data == NULL){
 	//device memory alloc
 	_ACC_gpu_alloc(&(host_data_d->device_addr), size);
 	host_data_d->is_original = true;
@@ -98,10 +97,12 @@ static void init_data(int mode, _ACC_gpu_data_t **host_data_desc, void **device_
 
 	_ACC_gpu_add_data(host_data_d);
   }else{
-	host_data_d->device_addr = (void *)((char*)(present_dev_addr) + offset);
+	/* host_data_d->device_addr corresponds to (host_data_d->host_addr + host_data_d->offset) */
+        host_data_d->device_addr = (char*)present_data->device_addr
+	  + ((char*)addr - (char*)present_data->host_addr) + (offset - present_data->offset);
 	host_data_d->is_original = false;
-    host_data_d->is_pagelocked = present_host_data_d->is_pagelocked;
-    host_data_d->is_registered = present_host_data_d->is_registered;
+	host_data_d->is_pagelocked = present_data->is_pagelocked;
+	host_data_d->is_registered = present_data->is_registered;
   }
 
   //printf("hostaddr=%p, size=%zu, offset=%zu\n", addr, size, offset);
@@ -120,7 +121,7 @@ void _ACC_finalize_data(_ACC_gpu_data_t *desc, int type) {
       unregister_memory(desc->host_addr);
     }
 
-    if(_ACC_gpu_remove_data(desc) == false){
+    if(_ACC_gpu_remove_data(desc->device_addr, desc->size) == false){
       _ACC_fatal("can't remove data from data table\n");
     }
     _ACC_gpu_free(desc->device_addr);
@@ -332,10 +333,7 @@ static void unregister_memory(void *host_addr){
 
 void _ACC_gpu_map_data(void *host_addr, void* device_addr, size_t size)
 {
-  _ACC_gpu_data_t *present_desc = NULL;
-  void *present_dev_addr;
-  _ACC_gpu_get_data_sub(&present_desc, &present_dev_addr, host_addr, 0, size);
-  if(present_desc != NULL){
+  if(_ACC_gpu_find_data(host_addr, 0, size) != NULL){
     _ACC_fatal("map_data: already mapped\n");
   }
 
@@ -368,15 +366,10 @@ void _ACC_gpu_map_data(void *host_addr, void* device_addr, size_t size)
 
 void _ACC_gpu_unmap_data(void *host_addr)
 {
-  _ACC_gpu_data_t *desc;
-  _ACC_gpu_find_data(&desc, host_addr);
-
-  if(_ACC_gpu_remove_data(desc) == false){
+  _ACC_gpu_data_list_t* data = _ACC_gpu_find_data(host_addr, 0/*offset*/, 1/*size*/);
+  if(_ACC_gpu_remove_data(data->device_addr, data->size) == false){
     _ACC_fatal("can't remove data from data table\n");
   }
-
-  _ACC_free(desc->array_info);
-  _ACC_free(desc);
 }
 
 

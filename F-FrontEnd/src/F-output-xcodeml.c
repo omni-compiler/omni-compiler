@@ -2372,6 +2372,8 @@ outx_OMP_pragma(int l, expv v)
             outx_varOrFunc(l1 + 1, lV);
         }
         outx_close(l1, "list");
+	if(EXPV_INT_VALUE(EXPR_ARG1(v)) == OMP_CRITICAL)
+	   outx_expv_withListTag(l1, EXPR_ARG3(v));
     }
 
     outx_expvClose(l, v);

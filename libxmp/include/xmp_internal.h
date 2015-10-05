@@ -315,7 +315,7 @@ extern void _XMP_threads_finalize(void);
 #endif
 
 // ----- for coarray & post/wait -------------------
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3)
 #define _XMP_DEFAULT_ONESIDED_HEAP_SIZE   "27M"
 #define _XMP_DEFAULT_ONESIDED_STRIDE_SIZE "5M"
 /* Momo:
@@ -421,6 +421,68 @@ extern int _XMP_is_the_same_constant_stride(const _XMP_array_section_t *, const 
 extern size_t _XMP_calc_stride(const _XMP_array_section_t *, const int, const size_t);
 #endif
 
+#ifdef _XMP_TCA
+void _XMP_tca_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size);
+void _XMP_tca_shortcut_put(const int target_rank, const size_t dst_offset, const size_t src_offset,
+			   const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
+			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size);
+void _XMP_tca_sync_memory();
+void _XMP_tca_comm_send(const int rank, const int tag, const int data);
+void _XMP_tca_comm_recv(const int rank, int *tag, int *data);
+#define _XMP_TCA_POSTREQ_TAG (10000)
+//xmp_post_wait_tca.c
+void _xmp_tca_post_wait_initialize();
+void _xmp_tca_postreq(const int node, const int tag);
+void _xmp_tca_post(const int node, const int tag);
+void _xmp_tca_wait(const int node, const int tag);
+void _xmp_tca_wait_node(const int node);
+void _xmp_tca_wait_noargs();
+//xmp_onesided_tca.c
+void _XMP_tca_initialize(int argc, char **argv);
+void _XMP_tca_finalize();
+void _XMP_tca_lock();
+void _XMP_tca_unlock();
+#endif
+
+#ifdef _XMP_MPI3
+#define _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INITIAL_SIZE _XMP_COARRAY_QUEUE_INITIAL_SIZE        /** The same vaule may be good. */
+#define _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO  /** The same vaule may be good. */
+#define _XMP_MPI_ALIGNMENT                  8
+#define _XMP_MPI_POSTREQ_TAG                500
+extern size_t _xmp_mpi_onesided_heap_size;
+extern char *_xmp_mpi_onesided_buf;
+extern MPI_Win _xmp_mpi_onesided_win;
+#ifdef _XMP_XACC
+extern char *_xmp_mpi_onesided_buf_acc;
+extern MPI_Win _xmp_mpi_onesided_win_acc;
+#endif
+void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size);
+void _XMP_mpi_onesided_finalize();
+void _XMP_mpi_build_shift_queue(bool);
+void _XMP_mpi_destroy_shift_queue(bool);
+void _XMP_mpi_coarray_lastly_deallocate(bool);
+void _XMP_mpi_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size, bool is_acc);
+void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+			   const size_t dst_offset, const size_t src_offset,
+			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc);
+void _XMP_mpi_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+			   const size_t dst_offset, const size_t src_offset,
+			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc);
+void _XMP_mpi_put(const int dst_continuous, const int src_continuous, const int target_rank, 
+		  const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
+		  const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
+		  const _XMP_coarray_t *src_desc, void *src, const int dst_elmts, const int src_elmts,
+		  const int is_dst_on_acc, const int is_src_on_acc);
+
+void _XMP_mpi_sync_memory();
+void _XMP_mpi_sync_all();
+void _xmp_mpi_post_wait_initialize();
+void _xmp_mpi_post(const int node, const int tag);
+void _xmp_mpi_wait(const int node, const int tag);
+void _xmp_mpi_wait_node(const int node);
+void _xmp_mpi_wait_noargs();
+#endif
+
 #ifdef _XMP_TIMING
 extern double t0, t1;
 #define _XMP_TSTART(t0)  ((t0) = MPI_Wtime())
@@ -453,20 +515,27 @@ struct _XMPTIMING
   int status = tca_call;         \
   if(status != TCA_SUCCESS) {    \
   if(status == TCA_ERROR_INVALID_VALUE) {                 \
-  fprintf(stderr,"(TCA) error TCA API, INVALID_VALUE\n"); \
+  fprintf(stderr,"(TCA) error TCA API, INVALID_VALUE (%s:%d)\n", __FILE__, __LINE__); \
   exit(-1);                                               \
   }else if(status == TCA_ERROR_OUT_OF_MEMORY){            \
-  fprintf(stderr,"(TCA) error TCA API, OUT_OF_MEMORY\n"); \
+  fprintf(stderr,"(TCA) error TCA API, OUT_OF_MEMORY (%s:%d)\n", __FILE__,__LINE__); \
   exit(-1);                                               \
   }else if(status == TCA_ERROR_NOT_SUPPORTED){            \
-  fprintf(stderr,"(TCA) error TCA API, NOT_SUPPORTED\n"); \
+  fprintf(stderr,"(TCA) error TCA API, NOT_SUPPORTED (%s:%d)\n", __FILE__,__LINE__); \
   exit(-1);                                               \
   }else{                                                  \
-  fprintf(stderr,"(TCA) error TCA API, UNKWON\n");        \
+  fprintf(stderr,"(TCA) error TCA API, UNKWON (%s:%d)\n", __FILE__,__LINE__);	\
   exit(-1); \
   }         \
   }         \
   }while (0)
+#endif
+
+#if defined(_XMP_XACC) && defined(DEBUG)
+#define XACC_DEBUG2(fmt, ...) fprintf(stderr, "XACC debug (%s:%d),rank=%d: "fmt"\n%s", __FILE__, __LINE__, _XMP_world_rank, __VA_ARGS__)
+#define XACC_DEBUG(...) XACC_DEBUG2(__VA_ARGS__, "")
+#else
+#define XACC_DEBUG(...) do{}while(0)
 #endif
 
 #ifdef _XMP_GASNET

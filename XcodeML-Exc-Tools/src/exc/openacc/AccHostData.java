@@ -39,6 +39,7 @@ class AccHostData extends AccDirective {
       XobjectIterator exprIter = new bottomupXobjectIterator(iter.getExpr());
       for (exprIter.init(); !exprIter.end(); exprIter.next()) {
         Xobject x = exprIter.getXobject();
+	if(x == null) continue;
         switch (x.Opcode()) {
         case VAR:
         {
