@@ -165,7 +165,7 @@ void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc
     char *laddr = (is_acc? src_desc->real_addr_dev : src_desc->real_addr) + src_offset;
     char *raddr = (is_acc? dst_desc->addr_dev[target_rank] : dst_desc->addr[target_rank]) + dst_offset;
 
-#if 1
+#if 0
     size_t size128k = (transfer_size / (128*1024)) * (128*1024);
     size_t size_rest = transfer_size - size128k;
     if(transfer_size >= (128*1024) && size_rest > 0 && size_rest <= (8*1024)){
@@ -182,7 +182,7 @@ void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc
     MPI_Put((void*)laddr, transfer_size, MPI_BYTE, target_rank,
     	    (MPI_Aint)raddr, transfer_size, MPI_BYTE,
 	    is_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
-#if 1
+#if 0
     }
 #endif
 
