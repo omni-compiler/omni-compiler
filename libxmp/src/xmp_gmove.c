@@ -1153,462 +1153,464 @@ void _XMP_align_local_idx(long long int global_idx, int *local_idx,
 
 }
 
-void _XMP_gmove_align_local_idx(long long int global_idx, int *local_idx,
-              _XMP_gmv_desc_t *gmv_desc, int array_axis, int *rank)
-{
-  if (gmv_desc->is_global == true){
-    _XMP_array_t *array = gmv_desc->a_desc;
-    _XMP_align_local_idx(global_idx, local_idx, array, array_axis, rank);
+/* void _XMP_gmove_align_local_idx(long long int global_idx, int *local_idx, */
+/*               _XMP_gmv_desc_t *gmv_desc, int array_axis, int *rank) */
+/* { */
+/*   if (gmv_desc->is_global == true){ */
+/*     _XMP_array_t *array = gmv_desc->a_desc; */
+/*     _XMP_align_local_idx(global_idx, local_idx, array, array_axis, rank); */
 
-  }else{
-    *local_idx=global_idx - gmv_desc->a_lb[array_axis];
-    *rank=0;
-  }
+/*   }else{ */
+/*     *local_idx=global_idx - gmv_desc->a_lb[array_axis]; */
+/*     *rank=0; */
+/*   } */
 
-}
+/* } */
 
-int _XMP_gmove_calc_seq_rank(int *count, int *rank_acc, int **irank, int dim, int *ref){
+/* int _XMP_gmove_calc_seq_rank(int *count, int *rank_acc, int **irank, int dim, int *ref){ */
 
-  int rank_ref = 0;
+/*   int rank_ref = 0; */
 
-  for(int i=0;i<dim;i++) rank_ref += rank_acc[i]*irank[i][count[i]];
+/*   for(int i=0;i<dim;i++) rank_ref += rank_acc[i]*irank[i][count[i]]; */
 
-  int exec_rank_ref = ref[rank_ref];
+/*   int exec_rank_ref = ref[rank_ref]; */
 
-  return exec_rank_ref;
+/*   return exec_rank_ref; */
 
-}
+/* } */
 
-int _XMP_gmove_calc_seq_loc(int *count, unsigned long long *array_acc, int **local_idx, int dim){
+/* int _XMP_gmove_calc_seq_loc(int *count, unsigned long long *array_acc, int **local_idx, int dim){ */
 
-  int loc_ref = 0;
+/*   int loc_ref = 0; */
 
-  for(int i=0;i<dim;i++) loc_ref += array_acc[i]*local_idx[i][count[i]];
+/*   for(int i=0;i<dim;i++) loc_ref += array_acc[i]*local_idx[i][count[i]]; */
 
-  return loc_ref;
+/*   return loc_ref; */
 
-}
+/* } */
 
-void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, 
-                                  int src_sub_dim, int src_dim, int dst_dim, 
-                                  int *src_sub_num_ref, int *dst_sub_num_ref, int *src_count, int *dst_count, 
-                                  int *num_triplet, 
-                                  int **src_irank, int **dst_irank, int *src_rank_acc, int *dst_rank_acc, 
-                                  int *src_num_myrank, int *dst_num_myrank, int *s2e, int *d2e, 
-                                  int *send_size_ref, int *recv_size_ref, int *recv_size_ref2, 
-                                  int *create_subcomm_flag, int *dst_color_ref){
+/* void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,  */
+/*                                   int src_sub_dim, int src_dim, int dst_dim,  */
+/*                                   int *src_sub_num_ref, int *dst_sub_num_ref, int *src_count, int *dst_count,  */
+/*                                   int *num_triplet,  */
+/*                                   int **src_irank, int **dst_irank, int *src_rank_acc, int *dst_rank_acc,  */
+/*                                   int *src_num_myrank, int *dst_num_myrank, int *s2e, int *d2e,  */
+/*                                   int *send_size_ref, int *recv_size_ref, int *recv_size_ref2,  */
+/*                                   int *create_subcomm_flag, int *dst_color_ref){ */
 
-  int i0,i1,i2,i3,i4,i5,i6;
-  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
-  int myrank = exec_nodes->comm_rank;
-  //int comm_size = exec_nodes->comm_size;
-  int src_seq_rank, dst_seq_rank;
-  //int *unpack_loc;
-  (*src_num_myrank)=0;
-  (*dst_num_myrank)=0;
+/*   int i0,i1,i2,i3,i4,i5,i6; */
+/*   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes(); */
+/*   int myrank = exec_nodes->comm_rank; */
+/*   //int comm_size = exec_nodes->comm_size; */
+/*   int src_seq_rank, dst_seq_rank; */
+/*   //int *unpack_loc; */
+/*   (*src_num_myrank)=0; */
+/*   (*dst_num_myrank)=0; */
 
-  switch(src_sub_dim){
-  case 1:
-    for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){
-      dst_count[dst_sub_num_ref[0]]=i0;
-      src_count[src_sub_num_ref[0]]=i0;
-      dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-      src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-      if(src_seq_rank==myrank){
-        (*src_num_myrank)++;
-        send_size_ref[dst_seq_rank]++;
-      }
-      if(dst_seq_rank==myrank){
-        (*dst_num_myrank)++;
-        recv_size_ref[src_seq_rank]++;
-      }
-      if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
-          (*create_subcomm_flag == 1)) {
-        if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
-           recv_size_ref2[src_seq_rank]++;
-        }
-      }
-      if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
-        recv_size_ref2[src_seq_rank]++;
-      }
-    }
-    break;
-  case 2:
-    for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){
-      for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){
-        dst_count[dst_sub_num_ref[1]]=i1;
-        src_count[src_sub_num_ref[1]]=i1;
-        dst_count[dst_sub_num_ref[0]]=i0;
-        src_count[src_sub_num_ref[0]]=i0;
-        dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-        src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-        if(src_seq_rank==myrank){
-          (*src_num_myrank)++;
-          send_size_ref[dst_seq_rank]++;
-        }
-        if(dst_seq_rank==myrank){
-          (*dst_num_myrank)++;
-          recv_size_ref[src_seq_rank]++;
-        }
-        if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
-           (*create_subcomm_flag == 1)) {
-          if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
-            recv_size_ref2[src_seq_rank]++;
-          }
-        }
-        if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
-          recv_size_ref2[src_seq_rank]++;
-        }
-      }
-    }
-    break;
-  case 3:
-    for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){
-      for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){
-        for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){
-          dst_count[dst_sub_num_ref[2]]=i2;
-          src_count[src_sub_num_ref[2]]=i2;
-          dst_count[dst_sub_num_ref[1]]=i1;
-          src_count[src_sub_num_ref[1]]=i1;
-          dst_count[dst_sub_num_ref[0]]=i0;
-          src_count[src_sub_num_ref[0]]=i0;
-          dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-          src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-          if(src_seq_rank==myrank){
-            (*src_num_myrank)++;
-            send_size_ref[dst_seq_rank]++;
-          }
-          if(dst_seq_rank==myrank){
-            (*dst_num_myrank)++;
-            recv_size_ref[src_seq_rank]++;
-          }
-          if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
-              (*create_subcomm_flag == 1)) {
-            if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
-              recv_size_ref2[src_seq_rank]++;
-            }
-          }
-          if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
-            recv_size_ref2[src_seq_rank]++;
-          }
-        }
-      }
-    }
-    break;
-  case 4:
-    for(i3=0;i3<num_triplet[src_sub_num_ref[3]];i3++){
-      for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){
-        for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){
-          for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){
-            dst_count[dst_sub_num_ref[3]]=i3;
-            src_count[src_sub_num_ref[3]]=i3;
-            dst_count[dst_sub_num_ref[2]]=i2;
-            src_count[src_sub_num_ref[2]]=i2;
-            dst_count[dst_sub_num_ref[1]]=i1;
-            src_count[src_sub_num_ref[1]]=i1;
-            dst_count[dst_sub_num_ref[0]]=i0;
-            src_count[src_sub_num_ref[0]]=i0;
-            dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-            src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-            if(src_seq_rank==myrank){
-              (*src_num_myrank)++;
-              send_size_ref[dst_seq_rank]++;
-            }
-            if(dst_seq_rank==myrank){
-              (*dst_num_myrank)++;
-              recv_size_ref[src_seq_rank]++;
-            }
-            if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
-                (*create_subcomm_flag == 1)) {
-              if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
-                recv_size_ref2[src_seq_rank]++;
-              }
-            }
-            if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
-              recv_size_ref2[src_seq_rank]++;
-            }
-          }
-        }
-      }
-    }
-    break;
-  case 5:
-    for(i4=0;i4<num_triplet[src_sub_num_ref[4]];i4++){
-      for(i3=0;i3<num_triplet[src_sub_num_ref[3]];i3++){
-        for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){
-          for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){
-            for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){
-              dst_count[dst_sub_num_ref[4]]=i4;
-              src_count[src_sub_num_ref[4]]=i4;
-              dst_count[dst_sub_num_ref[3]]=i3;
-              src_count[src_sub_num_ref[3]]=i3;
-              dst_count[dst_sub_num_ref[2]]=i2;
-              src_count[src_sub_num_ref[2]]=i2;
-              dst_count[dst_sub_num_ref[1]]=i1;
-              src_count[src_sub_num_ref[1]]=i1;
-              dst_count[dst_sub_num_ref[0]]=i0;
-              src_count[src_sub_num_ref[0]]=i0;
-              dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-              src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-              if(src_seq_rank==myrank){
-                (*src_num_myrank)++;
-                send_size_ref[dst_seq_rank]++;
-              }
-              if(dst_seq_rank==myrank){
-                (*dst_num_myrank)++;
-                recv_size_ref[src_seq_rank]++;
-              }
-              if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
-                  (*create_subcomm_flag == 1)) {
-                if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
-                  recv_size_ref2[src_seq_rank]++;
-                }
-              }
-              if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
-                recv_size_ref2[src_seq_rank]++;
-              }
-            }
-          }
-        }
-      }
-    }
-    break;
-  case 6:
-    for(i5=0;i5<num_triplet[src_sub_num_ref[5]];i5++){
-      for(i4=0;i4<num_triplet[src_sub_num_ref[4]];i4++){
-        for(i3=0;i3<num_triplet[src_sub_num_ref[3]];i3++){
-          for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){
-            for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){
-              for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){
-                dst_count[dst_sub_num_ref[5]]=i5;
-                src_count[src_sub_num_ref[5]]=i5;
-                dst_count[dst_sub_num_ref[4]]=i4;
-                src_count[src_sub_num_ref[4]]=i4;
-                dst_count[dst_sub_num_ref[3]]=i3;
-                src_count[src_sub_num_ref[3]]=i3;
-                dst_count[dst_sub_num_ref[2]]=i2;
-                src_count[src_sub_num_ref[2]]=i2;
-                dst_count[dst_sub_num_ref[1]]=i1;
-                src_count[src_sub_num_ref[1]]=i1;
-                dst_count[dst_sub_num_ref[0]]=i0;
-                src_count[src_sub_num_ref[0]]=i0;
-                dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-                src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-                if(src_seq_rank==myrank){
-                  (*src_num_myrank)++;
-                  send_size_ref[dst_seq_rank]++;
-                }
-                if(dst_seq_rank==myrank){
-                  (*dst_num_myrank)++;
-                  recv_size_ref[src_seq_rank]++;
-                }
-                if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
-                    (*create_subcomm_flag == 1)) {
-                  if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
-                    recv_size_ref2[src_seq_rank]++;
-                  }
-                }
-                if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
-                  recv_size_ref2[src_seq_rank]++;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    break;
-  case 7:
-    for(i6=0;i6<num_triplet[src_sub_num_ref[6]];i6++){
-      for(i5=0;i5<num_triplet[src_sub_num_ref[5]];i5++){
-        for(i4=0;i4<num_triplet[src_sub_num_ref[4]];i4++){
-          for(i3=0;i3<num_triplet[src_sub_num_ref[3]];i3++){
-            for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){
-              for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){
-                for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){
-                  dst_count[dst_sub_num_ref[6]]=i6;
-                  src_count[src_sub_num_ref[6]]=i6;
-                  dst_count[dst_sub_num_ref[5]]=i5;
-                  src_count[src_sub_num_ref[5]]=i5;
-                  dst_count[dst_sub_num_ref[4]]=i4;
-                  src_count[src_sub_num_ref[4]]=i4;
-                  dst_count[dst_sub_num_ref[3]]=i3;
-                  src_count[src_sub_num_ref[3]]=i3;
-                  dst_count[dst_sub_num_ref[2]]=i2;
-                  src_count[src_sub_num_ref[2]]=i2;
-                  dst_count[dst_sub_num_ref[1]]=i1;
-                  src_count[src_sub_num_ref[1]]=i1;
-                  dst_count[dst_sub_num_ref[0]]=i0;
-                  src_count[src_sub_num_ref[0]]=i0;
-                  dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-                  src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-                  if(src_seq_rank==myrank){
-                    (*src_num_myrank)++;
-                    send_size_ref[dst_seq_rank]++;
-                  }
-                  if(dst_seq_rank==myrank){
-                    (*dst_num_myrank)++;
-                    recv_size_ref[src_seq_rank]++;
-                  }
-                  if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) && 
-                      (*create_subcomm_flag == 1)) {
-                    if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){
-                      recv_size_ref2[src_seq_rank]++;
-                    }
-                  }
-                  if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){
-                    recv_size_ref2[src_seq_rank]++;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    break;
-  default:
-    _XMP_fatal("bad dimension of distributed array.");
-  }
+/*   switch(src_sub_dim){ */
+/*   case 1: */
+/*     for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
+/*       dst_count[dst_sub_num_ref[0]]=i0; */
+/*       src_count[src_sub_num_ref[0]]=i0; */
+/*       dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
+/*       src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
+/*       if(src_seq_rank==myrank){ */
+/*         (*src_num_myrank)++; */
+/*         send_size_ref[dst_seq_rank]++; */
+/*       } */
+/*       if(dst_seq_rank==myrank){ */
+/*         (*dst_num_myrank)++; */
+/*         recv_size_ref[src_seq_rank]++; */
+/*       } */
+/*       if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
+/*           (*create_subcomm_flag == 1)) { */
+/*         if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
+/*            recv_size_ref2[src_seq_rank]++; */
+/*         } */
+/*       } */
+/*       if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
+/*         recv_size_ref2[src_seq_rank]++; */
+/*       } */
+/*     } */
+/*     break; */
+/*   case 2: */
+/*     for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){ */
+/*       for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
+/*         dst_count[dst_sub_num_ref[1]]=i1; */
+/*         src_count[src_sub_num_ref[1]]=i1; */
+/*         dst_count[dst_sub_num_ref[0]]=i0; */
+/*         src_count[src_sub_num_ref[0]]=i0; */
+/*         dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
+/*         src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
+/*         if(src_seq_rank==myrank){ */
+/*           (*src_num_myrank)++; */
+/*           send_size_ref[dst_seq_rank]++; */
+/*         } */
+/*         if(dst_seq_rank==myrank){ */
+/*           (*dst_num_myrank)++; */
+/*           recv_size_ref[src_seq_rank]++; */
+/*         } */
+/*         if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
+/*            (*create_subcomm_flag == 1)) { */
+/*           if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
+/*             recv_size_ref2[src_seq_rank]++; */
+/*           } */
+/*         } */
+/*         if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
+/*           recv_size_ref2[src_seq_rank]++; */
+/*         } */
+/*       } */
+/*     } */
+/*     break; */
+/*   case 3: */
+/*     for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){ */
+/*       for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){ */
+/*         for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
+/*           dst_count[dst_sub_num_ref[2]]=i2; */
+/*           src_count[src_sub_num_ref[2]]=i2; */
+/*           dst_count[dst_sub_num_ref[1]]=i1; */
+/*           src_count[src_sub_num_ref[1]]=i1; */
+/*           dst_count[dst_sub_num_ref[0]]=i0; */
+/*           src_count[src_sub_num_ref[0]]=i0; */
+/*           dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
+/*           src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
+/*           if(src_seq_rank==myrank){ */
+/*             (*src_num_myrank)++; */
+/*             send_size_ref[dst_seq_rank]++; */
+/*           } */
+/*           if(dst_seq_rank==myrank){ */
+/*             (*dst_num_myrank)++; */
+/*             recv_size_ref[src_seq_rank]++; */
+/*           } */
+/*           if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
+/*               (*create_subcomm_flag == 1)) { */
+/*             if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
+/*               recv_size_ref2[src_seq_rank]++; */
+/*             } */
+/*           } */
+/*           if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
+/*             recv_size_ref2[src_seq_rank]++; */
+/*           } */
+/*         } */
+/*       } */
+/*     } */
+/*     break; */
+/*   case 4: */
+/*     for(i3=0;i3<num_triplet[src_sub_num_ref[3]];i3++){ */
+/*       for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){ */
+/*         for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){ */
+/*           for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
+/*             dst_count[dst_sub_num_ref[3]]=i3; */
+/*             src_count[src_sub_num_ref[3]]=i3; */
+/*             dst_count[dst_sub_num_ref[2]]=i2; */
+/*             src_count[src_sub_num_ref[2]]=i2; */
+/*             dst_count[dst_sub_num_ref[1]]=i1; */
+/*             src_count[src_sub_num_ref[1]]=i1; */
+/*             dst_count[dst_sub_num_ref[0]]=i0; */
+/*             src_count[src_sub_num_ref[0]]=i0; */
+/*             dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
+/*             src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
+/*             if(src_seq_rank==myrank){ */
+/*               (*src_num_myrank)++; */
+/*               send_size_ref[dst_seq_rank]++; */
+/*             } */
+/*             if(dst_seq_rank==myrank){ */
+/*               (*dst_num_myrank)++; */
+/*               recv_size_ref[src_seq_rank]++; */
+/*             } */
+/*             if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
+/*                 (*create_subcomm_flag == 1)) { */
+/*               if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
+/*                 recv_size_ref2[src_seq_rank]++; */
+/*               } */
+/*             } */
+/*             if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
+/*               recv_size_ref2[src_seq_rank]++; */
+/*             } */
+/*           } */
+/*         } */
+/*       } */
+/*     } */
+/*     break; */
+/*   case 5: */
+/*     for(i4=0;i4<num_triplet[src_sub_num_ref[4]];i4++){ */
+/*       for(i3=0;i3<num_triplet[src_sub_num_ref[3]];i3++){ */
+/*         for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){ */
+/*           for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){ */
+/*             for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
+/*               dst_count[dst_sub_num_ref[4]]=i4; */
+/*               src_count[src_sub_num_ref[4]]=i4; */
+/*               dst_count[dst_sub_num_ref[3]]=i3; */
+/*               src_count[src_sub_num_ref[3]]=i3; */
+/*               dst_count[dst_sub_num_ref[2]]=i2; */
+/*               src_count[src_sub_num_ref[2]]=i2; */
+/*               dst_count[dst_sub_num_ref[1]]=i1; */
+/*               src_count[src_sub_num_ref[1]]=i1; */
+/*               dst_count[dst_sub_num_ref[0]]=i0; */
+/*               src_count[src_sub_num_ref[0]]=i0; */
+/*               dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
+/*               src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
+/*               if(src_seq_rank==myrank){ */
+/*                 (*src_num_myrank)++; */
+/*                 send_size_ref[dst_seq_rank]++; */
+/*               } */
+/*               if(dst_seq_rank==myrank){ */
+/*                 (*dst_num_myrank)++; */
+/*                 recv_size_ref[src_seq_rank]++; */
+/*               } */
+/*               if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
+/*                   (*create_subcomm_flag == 1)) { */
+/*                 if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
+/*                   recv_size_ref2[src_seq_rank]++; */
+/*                 } */
+/*               } */
+/*               if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
+/*                 recv_size_ref2[src_seq_rank]++; */
+/*               } */
+/*             } */
+/*           } */
+/*         } */
+/*       } */
+/*     } */
+/*     break; */
+/*   case 6: */
+/*     for(i5=0;i5<num_triplet[src_sub_num_ref[5]];i5++){ */
+/*       for(i4=0;i4<num_triplet[src_sub_num_ref[4]];i4++){ */
+/*         for(i3=0;i3<num_triplet[src_sub_num_ref[3]];i3++){ */
+/*           for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){ */
+/*             for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){ */
+/*               for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
+/*                 dst_count[dst_sub_num_ref[5]]=i5; */
+/*                 src_count[src_sub_num_ref[5]]=i5; */
+/*                 dst_count[dst_sub_num_ref[4]]=i4; */
+/*                 src_count[src_sub_num_ref[4]]=i4; */
+/*                 dst_count[dst_sub_num_ref[3]]=i3; */
+/*                 src_count[src_sub_num_ref[3]]=i3; */
+/*                 dst_count[dst_sub_num_ref[2]]=i2; */
+/*                 src_count[src_sub_num_ref[2]]=i2; */
+/*                 dst_count[dst_sub_num_ref[1]]=i1; */
+/*                 src_count[src_sub_num_ref[1]]=i1; */
+/*                 dst_count[dst_sub_num_ref[0]]=i0; */
+/*                 src_count[src_sub_num_ref[0]]=i0; */
+/*                 dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
+/*                 src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
+/*                 if(src_seq_rank==myrank){ */
+/*                   (*src_num_myrank)++; */
+/*                   send_size_ref[dst_seq_rank]++; */
+/*                 } */
+/*                 if(dst_seq_rank==myrank){ */
+/*                   (*dst_num_myrank)++; */
+/*                   recv_size_ref[src_seq_rank]++; */
+/*                 } */
+/*                 if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
+/*                     (*create_subcomm_flag == 1)) { */
+/*                   if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
+/*                     recv_size_ref2[src_seq_rank]++; */
+/*                   } */
+/*                 } */
+/*                 if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
+/*                   recv_size_ref2[src_seq_rank]++; */
+/*                 } */
+/*               } */
+/*             } */
+/*           } */
+/*         } */
+/*       } */
+/*     } */
+/*     break; */
+/*   case 7: */
+/*     for(i6=0;i6<num_triplet[src_sub_num_ref[6]];i6++){ */
+/*       for(i5=0;i5<num_triplet[src_sub_num_ref[5]];i5++){ */
+/*         for(i4=0;i4<num_triplet[src_sub_num_ref[4]];i4++){ */
+/*           for(i3=0;i3<num_triplet[src_sub_num_ref[3]];i3++){ */
+/*             for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){ */
+/*               for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){ */
+/*                 for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
+/*                   dst_count[dst_sub_num_ref[6]]=i6; */
+/*                   src_count[src_sub_num_ref[6]]=i6; */
+/*                   dst_count[dst_sub_num_ref[5]]=i5; */
+/*                   src_count[src_sub_num_ref[5]]=i5; */
+/*                   dst_count[dst_sub_num_ref[4]]=i4; */
+/*                   src_count[src_sub_num_ref[4]]=i4; */
+/*                   dst_count[dst_sub_num_ref[3]]=i3; */
+/*                   src_count[src_sub_num_ref[3]]=i3; */
+/*                   dst_count[dst_sub_num_ref[2]]=i2; */
+/*                   src_count[src_sub_num_ref[2]]=i2; */
+/*                   dst_count[dst_sub_num_ref[1]]=i1; */
+/*                   src_count[src_sub_num_ref[1]]=i1; */
+/*                   dst_count[dst_sub_num_ref[0]]=i0; */
+/*                   src_count[src_sub_num_ref[0]]=i0; */
+/*                   dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
+/*                   src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
+/*                   if(src_seq_rank==myrank){ */
+/*                     (*src_num_myrank)++; */
+/*                     send_size_ref[dst_seq_rank]++; */
+/*                   } */
+/*                   if(dst_seq_rank==myrank){ */
+/*                     (*dst_num_myrank)++; */
+/*                     recv_size_ref[src_seq_rank]++; */
+/*                   } */
+/*                   if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
+/*                       (*create_subcomm_flag == 1)) { */
+/*                     if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
+/*                       recv_size_ref2[src_seq_rank]++; */
+/*                     } */
+/*                   } */
+/*                   if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
+/*                     recv_size_ref2[src_seq_rank]++; */
+/*                   } */
+/*                 } */
+/*               } */
+/*             } */
+/*           } */
+/*         } */
+/*       } */
+/*     } */
+/*     break; */
+/*   default: */
+/*     _XMP_fatal("bad dimension of distributed array."); */
+/*   } */
 
-}
+/* } */
 
-void _XMP_gmove_calc_color(int *color, int *div, int *mod, int *mult, int *num_term, int *target_rank){
+/* void _XMP_gmove_calc_color(int *color, int *div, int *mod, int *mult, int *num_term, int *target_rank){ */
 
-    *color=0;
-    for(int j=0;j<(*num_term);j++){
-      *color=*color+(((*target_rank)/div[j])%mod[j])*mult[j];
-    }
-}
+/*     *color=0; */
+/*     for(int j=0;j<(*num_term);j++){ */
+/*       *color=*color+(((*target_rank)/div[j])%mod[j])*mult[j]; */
+/*     } */
+/* } */
 
-void _XMP_gmove_create_subcomm(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, MPI_Comm *newcomm, int *create_subcomm_flag, int *d2e, int *dst_color_ref){
+/* void _XMP_gmove_create_subcomm(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, MPI_Comm *newcomm, int *create_subcomm_flag, int *d2e, int *dst_color_ref){ */
 
-  _XMP_array_t *dst_array;
-  _XMP_template_t *dst_template;
-  _XMP_nodes_t *dst_n;
-  int i, j, temp_index, nodes_index;
-  int dst_dim, dst_n_dim, dst_myrank, dst_align_flag[_XMP_N_MAX_DIM];
-  int dst_align_count=0;
+/*   _XMP_array_t *dst_array; */
+/*   _XMP_template_t *dst_template; */
+/*   _XMP_nodes_t *dst_n; */
+/*   int i, j, temp_index, nodes_index; */
+/*   int dst_dim, dst_n_dim, dst_myrank, dst_align_flag[_XMP_N_MAX_DIM]; */
+/*   int dst_align_count=0; */
 
-  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){
-    dst_dim = gmv_desc_leftp->ndims;
-    dst_array = gmv_desc_leftp->a_desc;
-    dst_template = dst_array->align_template;
-    dst_n = dst_template->onto_nodes;
-    dst_n_dim = dst_n->dim;
-    dst_myrank = dst_n->comm_rank;
+/*   if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){ */
+/*     dst_dim = gmv_desc_leftp->ndims; */
+/*     dst_array = gmv_desc_leftp->a_desc; */
+/*     dst_template = dst_array->align_template; */
+/*     dst_n = dst_template->onto_nodes; */
+/*     dst_n_dim = dst_n->dim; */
+/*     dst_myrank = dst_n->comm_rank; */
 
-    for(i=0;i<dst_n_dim;i++){
-      dst_align_flag[i]=0;
-    }
+/*     for(i=0;i<dst_n_dim;i++){ */
+/*       dst_align_flag[i]=0; */
+/*     } */
 
-    for(i=0;i<dst_dim;i++){
-      if ((dst_array->info[i].align_manner == _XMP_N_ALIGN_BLOCK)
-         || (dst_array->info[i].align_manner == _XMP_N_ALIGN_CYCLIC)
-         || (dst_array->info[i].align_manner == _XMP_N_ALIGN_BLOCK_CYCLIC)
-         || (dst_array->info[i].align_manner == _XMP_N_ALIGN_GBLOCK)) {
-        temp_index = dst_array->info[i].align_template_index;
-        nodes_index = dst_template->chunk[temp_index].onto_nodes_index;
-        dst_align_flag[nodes_index]=1;
-        dst_align_count++;
-      }
-    }
+/*     for(i=0;i<dst_dim;i++){ */
+/*       if ((dst_array->info[i].align_manner == _XMP_N_ALIGN_BLOCK) */
+/*          || (dst_array->info[i].align_manner == _XMP_N_ALIGN_CYCLIC) */
+/*          || (dst_array->info[i].align_manner == _XMP_N_ALIGN_BLOCK_CYCLIC) */
+/*          || (dst_array->info[i].align_manner == _XMP_N_ALIGN_GBLOCK)) { */
+/*         temp_index = dst_array->info[i].align_template_index; */
+/*         nodes_index = dst_template->chunk[temp_index].onto_nodes_index; */
+/*         dst_align_flag[nodes_index]=1; */
+/*         dst_align_count++; */
+/*       } */
+/*     } */
 
-    if (dst_align_count < dst_n_dim){
-      *create_subcomm_flag=1;
-    }else{
-      *create_subcomm_flag=0;
-    }
+/*     if (dst_align_count < dst_n_dim){ */
+/*       *create_subcomm_flag=1; */
+/*     }else{ */
+/*       *create_subcomm_flag=0; */
+/*     } */
 
-  }
+/*   } */
 
-  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true && *create_subcomm_flag == 1) {
-    int dst_psize[_XMP_N_MAX_DIM];
-    int noalign_flag;
-    int div[4], mod[4], mult[4];
+/*   if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true && *create_subcomm_flag == 1) { */
+/*     int dst_psize[_XMP_N_MAX_DIM]; */
+/*     int noalign_flag; */
+/*     int div[4], mod[4], mult[4]; */
 
-    if (dst_n_dim >= dst_dim ){
+/*     if (dst_n_dim >= dst_dim ){ */
 
-      dst_n_dim = dst_n->dim;
+/*       dst_n_dim = dst_n->dim; */
 
-      for(i=0;i<4;i++){
-        div[i]=1;
-        mod[i]=1;
-        mult[i]=1;
-      }
+/*       for(i=0;i<4;i++){ */
+/*         div[i]=1; */
+/*         mod[i]=1; */
+/*         mult[i]=1; */
+/*       } */
 
-      for(i=0;i<dst_n_dim;i++){
-        dst_psize[i]=0;
-      }
+/*       for(i=0;i<dst_n_dim;i++){ */
+/*         dst_psize[i]=0; */
+/*       } */
 
-      for(i=0;i<dst_dim;i++){
-        temp_index = dst_array->info[i].align_template_index;
-        nodes_index = dst_template->chunk[temp_index].onto_nodes_index;
-        if (temp_index==-1){
-          dst_psize[i]=dst_n->info[i].size;
-        }else{
-          dst_psize[nodes_index]=dst_n->info[nodes_index].size;
-        }
-      }
+/*       for(i=0;i<dst_dim;i++){ */
+/*         temp_index = dst_array->info[i].align_template_index; */
+/*         nodes_index = dst_template->chunk[temp_index].onto_nodes_index; */
+/*         if (temp_index==-1){ */
+/*           dst_psize[i]=dst_n->info[i].size; */
+/*         }else{ */
+/*           dst_psize[nodes_index]=dst_n->info[nodes_index].size; */
+/*         } */
+/*       } */
 
-      for(i=0;i<dst_n_dim;i++){
-        if (dst_psize[i]==0){
-          dst_psize[i]=dst_n->info[i].size;
-        }
-      }
+/*       for(i=0;i<dst_n_dim;i++){ */
+/*         if (dst_psize[i]==0){ */
+/*           dst_psize[i]=dst_n->info[i].size; */
+/*         } */
+/*       } */
 
-      /* Calculate the number of terms of a color polynomial*/
-      int dst_term_num_loc[4];
-      noalign_flag=1;
-      int num_term=0;
-      for(i=0;i<dst_n_dim;i++){
-        if (dst_align_flag[i] == 1){
-          if (noalign_flag==1){
-            num_term++;
-            noalign_flag=0;
-            dst_term_num_loc[num_term-1]=i-1;
-          }
-        }else{
-          noalign_flag=1;
-        }
-      }
+/*       /\* Calculate the number of terms of a color polynomial*\/ */
+/*       int dst_term_num_loc[4]; */
+/*       noalign_flag=1; */
+/*       int num_term=0; */
+/*       for(i=0;i<dst_n_dim;i++){ */
+/*         if (dst_align_flag[i] == 1){ */
+/*           if (noalign_flag==1){ */
+/*             num_term++; */
+/*             noalign_flag=0; */
+/*             dst_term_num_loc[num_term-1]=i-1; */
+/*           } */
+/*         }else{ */
+/*           noalign_flag=1; */
+/*         } */
+/*       } */
 
-      /* Calculate the coefficient of a color polynomial and create new communicator.*/
-      for(j=0;j<num_term;j++){
-        for(i=0;i<dst_term_num_loc[j]+1;i++){
-          div[j]=div[j]*dst_psize[i];
-          if(dst_align_flag[i]==1){
-            mult[j]=mult[j]*dst_psize[i];
-          }
-        }
-        for(i=dst_term_num_loc[j]+1;i<dst_n_dim;i++){
-          if(dst_align_flag[i]==1){
-            mod[j]=mod[j]*dst_psize[i];
-          }else{
-            break;
-          }
-        }
-      }
+/*       /\* Calculate the coefficient of a color polynomial and create new communicator.*\/ */
+/*       for(j=0;j<num_term;j++){ */
+/*         for(i=0;i<dst_term_num_loc[j]+1;i++){ */
+/*           div[j]=div[j]*dst_psize[i]; */
+/*           if(dst_align_flag[i]==1){ */
+/*             mult[j]=mult[j]*dst_psize[i]; */
+/*           } */
+/*         } */
+/*         for(i=dst_term_num_loc[j]+1;i<dst_n_dim;i++){ */
+/*           if(dst_align_flag[i]==1){ */
+/*             mod[j]=mod[j]*dst_psize[i]; */
+/*           }else{ */
+/*             break; */
+/*           } */
+/*         } */
+/*       } */
 
-      int color;
-      _XMP_gmove_calc_color(&color, div, mod, mult, &num_term, &dst_myrank);
+/*       int color; */
+/*       _XMP_gmove_calc_color(&color, div, mod, mult, &num_term, &dst_myrank); */
 
-      MPI_Comm newcomm0;
-      //MPI_Comm_split( *(MPI_Comm *)dst_n->comm, color, myrank, &newcomm0);
-      MPI_Comm_split( *(MPI_Comm *)dst_n->comm, color, dst_myrank, &newcomm0);
-      *newcomm=newcomm0;
+/*       MPI_Comm newcomm0; */
+/*       //MPI_Comm_split( *(MPI_Comm *)dst_n->comm, color, myrank, &newcomm0); */
+/*       MPI_Comm_split( *(MPI_Comm *)dst_n->comm, color, dst_myrank, &newcomm0); */
+/*       *newcomm=newcomm0; */
 
-      int dst_color_tmp;
-      for(int i=0;i<dst_n->comm_size;i++){
-        //_XMP_gmove_calc_color(&dst_color_ref[i], div, mod, mult, &num_term, &i);
-        _XMP_gmove_calc_color(&dst_color_tmp, div, mod, mult, &num_term, &i);
-        dst_color_ref[d2e[i]]=dst_color_tmp;
-      }
+/*       int dst_color_tmp; */
+/*       for(int i=0;i<dst_n->comm_size;i++){ */
+/*         //_XMP_gmove_calc_color(&dst_color_ref[i], div, mod, mult, &num_term, &i); */
+/*         _XMP_gmove_calc_color(&dst_color_tmp, div, mod, mult, &num_term, &i); */
+/*         dst_color_ref[d2e[i]]=dst_color_tmp; */
+/*       } */
 
-    }
-  }
-}
+/*     } */
+/*   } */
+/* } */
 
+
+#if 0
 void _XMP_gmove_1to1_old(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long  *src_d){
 
   _XMP_array_t *dst_array=NULL;
@@ -2458,7 +2460,7 @@ void _XMP_gmove_1to1_old(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_d
   free(dst_irank);
 
 }
-
+#endif
 
 static void _XMP_gmove_garray_garray_block_cyclic(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
 						  int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
@@ -3222,74 +3224,6 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
   _XMP_unpack_array(dst_addr, buffer, type, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
   _XMP_free(buffer);
 }
-
-
-/* void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array, */
-/*                                int type, size_t type_size, ...) { */
-
-/*   _XMP_gmv_desc_t gmv_desc_leftp, gmv_desc_rightp; */
-/*   //unsigned long long gmove_total_elmts = 0; */
-
-/*   va_list args; */
-/*   va_start(args, type_size); */
-
-/*   // get dst info */
-/*   unsigned long long dst_total_elmts = 1; */
-/*   //void *dst_addr = dst_array->array_addr_p; */
-/*   int dst_dim = dst_array->dim; */
-/*   int dst_l[dst_dim], dst_u[dst_dim], dst_s[dst_dim]; unsigned long long dst_d[dst_dim]; */
-/*   for (int i = 0; i < dst_dim; i++) { */
-/*     dst_l[i] = va_arg(args, int); */
-/*     int size = va_arg(args, int); */
-/*     dst_s[i] = va_arg(args, int); */
-/*     dst_u[i] = dst_l[i] + (size - 1) * dst_s[i]; */
-/*     dst_d[i] = va_arg(args, unsigned long long); */
-/*     _XMP_normalize_array_section(&gmv_desc_leftp, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i])); */
-/*     dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]); */
-/*   } */
-
-/*   // get src info */
-/*   unsigned long long src_total_elmts = 1; */
-/*   //void *src_addr = src_array->array_addr_p; */
-/*   int src_dim = src_array->dim;; */
-/*   int src_l[src_dim], src_u[src_dim], src_s[src_dim]; unsigned long long src_d[src_dim]; */
-/*   for (int i = 0; i < src_dim; i++) { */
-/*     src_l[i] = va_arg(args, int); */
-/*     int size = va_arg(args, int); */
-/*     src_s[i] = va_arg(args, int); */
-/*     src_u[i] = src_l[i] + (size - 1) * src_s[i]; */
-/*     src_d[i] = va_arg(args, unsigned long long); */
-/*     _XMP_normalize_array_section(&gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i])); */
-/*     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]); */
-/*   } */
-/*   va_end(args); */
-
-/*   if (dst_total_elmts != src_total_elmts) { */
-/*     _XMP_fatal("bad assign statement for gmove"); */
-/*   } else { */
-/*     //gmove_total_elmts = dst_total_elmts; */
-/*   } */
-
-/*   // do transpose */
-/*   int dummy[7] = { 2, 2, 2, 2, 2, 2, 2 }; /\* temporarily assuming maximum 7-dimensional *\/ */
-
-/*   gmv_desc_leftp.is_global = true;       gmv_desc_rightp.is_global = true; */
-/*   gmv_desc_leftp.ndims = dst_array->dim; gmv_desc_rightp.ndims = src_array->dim; */
-
-/*   gmv_desc_leftp.a_desc = dst_array;     gmv_desc_rightp.a_desc = src_array; */
-
-/*   gmv_desc_leftp.local_data = NULL;      gmv_desc_rightp.local_data = NULL; */
-/*   gmv_desc_leftp.a_lb = NULL;            gmv_desc_rightp.a_lb = NULL; */
-/*   gmv_desc_leftp.a_ub = NULL;            gmv_desc_rightp.a_ub = NULL; */
-
-/*   gmv_desc_leftp.kind = dummy;           gmv_desc_rightp.kind = dummy; // always triplet */
-/*   gmv_desc_leftp.lb = dst_l;             gmv_desc_rightp.lb = src_l; */
-/*   gmv_desc_leftp.ub = dst_u;             gmv_desc_rightp.ub = src_u; */
-/*   gmv_desc_leftp.st = dst_s;             gmv_desc_rightp.st = src_s; */
-
-/*   _XMP_gmove_array_array_common(&gmv_desc_leftp, &gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d); */
-
-/* } */
 
 
 void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
@@ -4411,7 +4345,6 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   }
 #endif
 
-  //_XMP_comm_set_t *recv_comm_set[n_exec_nodes][_XMP_N_MAX_DIM];
   _XMP_comm_set_t *(*recv_comm_set)[_XMP_N_MAX_DIM] = _XMP_alloc(sizeof(_XMP_comm_set_t*) * n_exec_nodes *_XMP_N_MAX_DIM);
   get_comm_list(gmv_desc_rightp, gmv_desc_leftp, rhs_owner_ref_csd, lhs_owner_ref_csd, recv_comm_set);
 
