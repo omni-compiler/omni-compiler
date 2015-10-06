@@ -473,6 +473,11 @@ void _XMP_mpi_put(const int dst_continuous, const int src_continuous, const int 
 		  const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
 		  const _XMP_coarray_t *src_desc, void *src, const int dst_elmts, const int src_elmts,
 		  const int is_dst_on_acc, const int is_src_on_acc);
+void _XMP_mpi_get(const int dst_continuous, const int src_continuous, const int target_rank,
+		  const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info,
+		  const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc,
+		  const _XMP_coarray_t *src_desc, void *src, const int dst_elmts, const int src_elmts,
+		  const int is_dst_on_acc, const int is_src_on_acc);
 
 void _XMP_mpi_sync_memory();
 void _XMP_mpi_sync_all();

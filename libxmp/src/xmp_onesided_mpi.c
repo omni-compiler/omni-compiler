@@ -2,21 +2,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
-#include <cuda_runtime.h>
 #include "xmp_internal.h"
+#ifdef _XMP_XACC
+#include <cuda_runtime.h>
+#endif
 
 size_t _xmp_mpi_onesided_heap_size; //host and device
 char *_xmp_mpi_onesided_buf;
 MPI_Win _xmp_mpi_onesided_win;
 //size_t _xmp_mpi_onesided_coarray_shift = 0;
 
-#ifdef _XMP_XACC
 char *_xmp_mpi_onesided_buf_acc;
 MPI_Win _xmp_mpi_onesided_win_acc;
 //size_t _xmp_mpi_onesided_coarray_shift_acc = 0;
 
 ////int _xmp_mpi_onesided_enable_host_device_comm = 0; //if 0 then use MPI_Win_create else MPI_Win_dynamic
-#endif
 
 #define CUDA_SAFE_CALL(call)						\
   do {                                                                  \

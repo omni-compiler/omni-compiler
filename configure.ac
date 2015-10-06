@@ -1063,22 +1063,6 @@ fi
 
 AM_CONDITIONAL(GASNET, test x${use_gasnet} = xyes)
 
-# check use one-sided
-isOnesided=no
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
-   isOnesided=yes
-   how_onesided="Fujitsu RDMA"
-   isCoarray=yes
-   isPostWait=yes
-   isLockUnlock=no
-elif test x$use_gasnet = xyes; then
-   isOnesided=yes
-   how_onesided=GASNet
-   isCoarray=yes
-   isPostWait=yes
-   isLockUnlock=yes
-fi
-
 # --------------------------------------------------------------------
 # specify GASNet conduit
 
@@ -1277,30 +1261,36 @@ AC_SUBST(SUPERUX)
 
 # --------------------------------------------------------------------
 # MPI3 for MPI FLAGS
-if test "x${target}" = "xKcomputer-linux-gnu"; then
-  doMPI3=yes
-else
-  tmpmpi3=/tmp/tmpmpi3.$$.c
-  cat <<EOF > $tmpmpi3
+tmpmpi3=/tmp/tmpmpi3.$$.c
+cat <<EOF > $tmpmpi3
 #include <mpi.h>
 MPI_VERSION
 MPI_SUBVERSION
 EOF
-  MPI_VERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -2 | head -1`
-  MPI_SUBVERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -1`
-  if test $MPI_VERSION -ge 3; then
-    doMPI3=yes
-  else
-    doMPI3=no
-  fi
-  rm -f $tmpmpi3
+MPI_VERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -2 | head -1`
+MPI_SUBVERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -1`
+if test $MPI_VERSION -ge 3; then
+  doMPI3=yes
+else
+  doMPI3=no
 fi
+rm -f $tmpmpi3
 
+if test "x${target}" = "xKcomputer-linux-gnu"; then
+   doMPI3=yes
+fi
+   
 if test "x${doMPI3}" = "xyes"; then
   OMNI_X2X_FLAGS="${OMNI_X2X_FLAGS} -fasync"
 fi
 
-AM_CONDITIONAL(MPI3, test "x${doMPI3}" = "xyes" -o "x${target}" = "xKcomputer-linux-gnu")
+use_mpi3_onesided=no
+if test "x${doMPI3}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu"; then
+  use_mpi3_onesided=yes
+fi
+
+AM_CONDITIONAL(MPI3, test "x${doMPI3}" = "xyes")
+AM_CONDITIONAL(MPI3_ONESIDED, test "x${use_mpi3_onesided}" = "xyes")
 AC_SUBST(MPI_VERSION)
 AC_SUBST(MPI_SUBVERSION)
 
@@ -2077,6 +2067,28 @@ if test -d .git; then
   fi
 fi
 
+# check use one-sided
+isOnesided=no
+if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
+  isOnesided=yes
+  how_onesided="Fujitsu RDMA"
+  isCoarray=yes
+  isPostWait=yes
+  isLockUnlock=no
+elif test x$use_gasnet = xyes; then
+  isOnesided=yes
+  how_onesided=GASNet
+  isCoarray=yes
+  isPostWait=yes
+  isLockUnlock=yes
+elif test x$use_mpi3_onesided = xyes; then
+  isOnesided=yes
+  how_onesided=MPI3
+  isCoarray=yes
+  isPostWait=no
+  isLockUnlock=no
+fi
+			      
 # --------------------------------------------------------------------
 # Output
 

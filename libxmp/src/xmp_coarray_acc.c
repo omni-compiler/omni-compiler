@@ -27,7 +27,7 @@ void _XMP_coarray_malloc_do_acc(void **coarray_desc, void *addr)
   _XMP_fatal("_XMP_coarray_malloc_do_acc is unavailable");
 #elif _XMP_TCA
   _XMP_tca_malloc_do(*coarray_desc, addr, total_coarray_elmts * c->elmt_size);
-#elif _XMP_MPI3
+#elif _XMP_MPI3_ONESIDED
   _XMP_mpi_coarray_malloc_do(*coarray_desc, addr, total_coarray_elmts * c->elmt_size, true);
 #else
   _XMP_fatal("_XMP_coarray_malloc_do_acc is unavailable");
@@ -63,7 +63,7 @@ void _XMP_coarray_shortcut_put_acc(const int target_image, const _XMP_coarray_t 
   }
   
   if(target_rank == _XMP_world_rank){
-#ifdef _XMP_MPI3
+#ifdef _XMP_MPI3_ONESIDED
     _XMP_mpi_shortcut_put(target_rank, dst_desc, src_desc, dst_offset, src_offset,
     				   dst_elmts, src_elmts, elmt_size, true);
 #else
@@ -78,7 +78,7 @@ void _XMP_coarray_shortcut_put_acc(const int target_image, const _XMP_coarray_t 
 #elif _XMP_TCA
     _XMP_tca_shortcut_put(target_rank, dst_offset, src_offset, dst_desc, src_desc, 
 			  dst_elmts, src_elmts, elmt_size);
-#elif _XMP_MPI3
+#elif _XMP_MPI3_ONESIDED
     _XMP_mpi_shortcut_put(target_rank, dst_desc, src_desc, dst_offset, src_offset,
 				   dst_elmts, src_elmts, elmt_size, true);
 #else
@@ -125,7 +125,7 @@ void _XMP_coarray_shortcut_get_acc(const int target_image, _XMP_coarray_t *dst_d
 #elif _XMP_TCA
     /* _XMP_tca_shortcut_get(target_rank, dst_offset, src_offset, dst_desc, src_desc,  */
     /* 			  dst_elmts, src_elmts, elmt_size); */
-#elif _XMP_MPI3
+#elif _XMP_MPI3_ONESIDED
     _XMP_mpi_shortcut_get(target_rank, dst_desc, src_desc, dst_offset, src_offset,
 			  dst_elmts, src_elmts, elmt_size, true);
 #else

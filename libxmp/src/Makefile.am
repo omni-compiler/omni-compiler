@@ -17,7 +17,7 @@ if GASNET
 	                xmp_coarray_gasnet.c xmp_coarray_gasnet_utils.c xmp_lock_unlock.c xmp_lock_unlock_gasnet.c
     CFLAGS           += -D_XMP_GASNET
 else
-if MPI3
+if MPI3_ONESIDED
 #xmp_coarray_mpi_util.c xmp_lock_unlock.c xmp_lock_unlock_mpi.c
     libxmp_a_SOURCES += xmp_onesided.c xmp_onesided_mpi.c xmp_coarray.c xmp_coarray_utils.c xmp_coarray_local.c \
 			xmp_coarray_local_utils.c xmp_post_wait.c xmp_post_wait_mpi.c \
@@ -34,6 +34,10 @@ endif
 
 if MPI3
     CFLAGS += -D_XMP_MPI3
+endif
+
+if MPI3_ONESIDED
+    CFLAGS += -D_XMP_MPI3_ONESIDED
 endif
 
 if LIBBLAS
