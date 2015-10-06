@@ -234,6 +234,7 @@ void _XMP_mpi_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_desc
     	    (MPI_Aint)raddr, transfer_size, MPI_BYTE,
 	    is_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
 
+    _XMP_mpi_sync_memory();
     MPI_Win_flush_all(is_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
   }
   else if(src_elmts == 1){
@@ -304,7 +305,8 @@ static void _mpi_continuous_get(const int target_rank, const _XMP_coarray_t *dst
   MPI_Get((void*)laddr, transfer_size, MPI_BYTE, target_rank,
 	  (MPI_Aint)raddr, transfer_size, MPI_BYTE,
 	  is_dst_on_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
-  
+
+  _XMP_mpi_sync_memory();
   MPI_Win_flush_all(is_dst_on_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
 }
 
@@ -423,7 +425,8 @@ static void _mpi_non_continuous_get(const int target_rank, const _XMP_coarray_t 
       _XMP_fatal("put error");
     }
     MPI_Type_free(&blockstride_type);
-    
+
+    _XMP_mpi_sync_memory();
     MPI_Win_flush_all(is_dst_on_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
 
   }else{
