@@ -16,20 +16,16 @@ import xcodeml.util.XmOption;
 
 public class OMPanalyzeDecl implements OMPfileEnv
 {
-    private XobjectFile env;
-    
-    private Vector<Ident> thdprv_vars = new Vector<Ident>();
-    
-    private static final String PROP_KEY = "OMPanalyzeDecl";
-    
-    private OMPanalyzeDecl parent;
+  private XobjectFile env;
+  private Vector<Ident> thdprv_vars = new Vector<Ident>();
+  private static final String PROP_KEY = "OMPanalyzeDecl";
+  private OMPanalyzeDecl parent;
+  private List<String> list = new LinkedList<String>();
 
-    private List list = new LinkedList();
-
-    public OMPanalyzeDecl(XobjectFile env)
-    {
-        this.env = env;
-    }
+  public OMPanalyzeDecl(XobjectFile env)
+  {
+    this.env = env;
+  }
     
     @Override
     public XobjectFile getFile()
@@ -122,7 +118,7 @@ public class OMPanalyzeDecl implements OMPfileEnv
 
             switch(id.getStorageClass()) {
             case FCOMMON_NAME:
-               list.add(id.getName());
+              list.add(id.getName());
             case EXTDEF:
             case EXTERN:
             case STATIC:

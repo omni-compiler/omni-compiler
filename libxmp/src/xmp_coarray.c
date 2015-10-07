@@ -297,6 +297,8 @@ void _XMP_coarray_malloc_do(void **coarray_desc, void *addr)
   _XMP_gasnet_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size);
 #elif _XMP_FJRDMA
   _XMP_fjrdma_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size);
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_coarray_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size, false);
 #endif
   
   free(_image_elmts);  // Note: Do not free() _coarray_elmts.
@@ -1040,6 +1042,10 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
 #elif _XMP_FJRDMA
       _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
 		      _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+#elif _XMP_MPI3_ONESIDED
+      _XMP_mpi_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
+		   _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
+		   _XMP_N_INT_FALSE, _XMP_N_INT_FALSE);
 #endif
     }
   }
@@ -1055,6 +1061,10 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
 #elif _XMP_FJRDMA
       _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
 		      _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+#elif _XMP_MPI3_ONESIDED
+      _XMP_mpi_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
+		   _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
+		   _XMP_N_INT_FALSE, _XMP_N_INT_FALSE);
 #endif
     }
   }
@@ -1084,6 +1094,8 @@ void _XMP_coarray_sync_all()
   _XMP_gasnet_sync_all();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_all();
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_sync_all();
 #endif
 }
 
@@ -1096,6 +1108,10 @@ void _XMP_coarray_sync_memory()
   _XMP_gasnet_sync_memory();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_memory();
+#elif _XMP_TCA
+  _XMP_tca_sync_memory();
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_sync_memory();
 #endif
 }
 
@@ -1108,6 +1124,10 @@ void xmp_sync_memory(const int* status)
   _XMP_gasnet_sync_memory();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_memory();
+#elif _XMP_TCA
+  _XMP_tca_sync_memory();
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_sync_memory();
 #endif
 }
 
@@ -1120,6 +1140,8 @@ void xmp_sync_all(const int* status)
   _XMP_gasnet_sync_all();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_all();
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_sync_all();
 #endif
 }
 
@@ -1194,6 +1216,11 @@ void _XMP_coarray_shortcut_put(const int target_image, _XMP_coarray_t *dst_desc,
 #elif _XMP_FJRDMA
     _XMP_fjrdma_shortcut_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, 
 			     dst_elmts, src_elmts, elmt_size);
+#elif _XMP_TCA
+    _XMP_fatal("_XMP_tca_shortcut_put is unimplemented");
+#elif _XMP_MPI3_ONESIDED
+    _XMP_mpi_shortcut_put(target_rank, dst_desc, src_desc, dst_offset, src_offset,
+			  dst_elmts, src_elmts, elmt_size, false);
 #endif
   }
 }
@@ -1229,6 +1256,9 @@ void _XMP_coarray_shortcut_get(const int target_image, _XMP_coarray_t *dst_desc,
 #elif _XMP_FJRDMA
     _XMP_fjrdma_shortcut_get(target_rank, dst_desc, src_desc, (uint64_t)dst_offset, (uint64_t)src_offset, 
 			     dst_elmts, src_elmts, elmt_size);
+#elif _XMP_MPI3_ONESIDED
+    _XMP_mpi_shortcut_get(target_rank, dst_desc, src_desc, dst_offset, src_offset,
+			  dst_elmts, src_elmts, elmt_size, false);
 #endif
   }
 }
@@ -1327,4 +1357,88 @@ void _XMP_coarray_lastly_deallocate()
 
   _XMP_coarray_t *_last_coarray_ptr = _pop_coarray_queue();
   _XMP_coarray_deallocate(_last_coarray_ptr);
+}
+
+/*****************************************************************************/
+/* DESCRIPTION : Execute put/get operation                                   */
+/* ARGUMENT    : [IN] rdma_code      : _XMP_N_COARRAY_PUT/_XMP_N_COARRAY_GET */
+/*               [IN/OUT] *remote_coarray : Descriptor of remote coarray     */
+/*               [IN/OUT] *local_array    : Descriptor of local coarray      */
+/*               [IN/OUT] *local_coarray  : Descriptor of local coarray      */
+/* NOTE        :                                                             */
+/*     If a local_array is NOT a coarray, local_coarray == NULL.             */
+/*****************************************************************************/
+void _XMP_coarray_rdma_do_acc(const int rdma_code, void *remote_coarray, void *local_array, void *local_coarray, const int is_dst_on_acc, const int is_src_on_acc)
+{
+  if(_transfer_coarray_elmts == 0 || _transfer_array_elmts == 0) return;
+
+  if(rdma_code == _XMP_N_COARRAY_GET){
+    if(_transfer_coarray_elmts != _transfer_array_elmts && _transfer_coarray_elmts != 1)
+      _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;
+    // e.g. a[0:3] = b[0:2]:[3] is NG, but a[0:3] = b[0:1]:[3] is OK
+  }
+  else if(rdma_code == _XMP_N_COARRAY_PUT){
+    if(_transfer_coarray_elmts != _transfer_array_elmts && _transfer_array_elmts != 1)
+      _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
+    // e.g. a[0:3]:[3] = b[0:2] is NG, but a[0:3]:[3] = b[0:1] is OK.
+  }
+
+  int target_rank = 0;
+  for(int i=0;i<_image_dims;i++)
+    target_rank += ((_XMP_coarray_t*)remote_coarray)->distance_of_image_elmts[i] * (_image_num[i] - 1);
+
+  for(int i=0;i<_coarray_dims;i++){
+    _coarray[i].elmts    = ((_XMP_coarray_t*)remote_coarray)->coarray_elmts[i];
+    _coarray[i].distance = ((_XMP_coarray_t*)remote_coarray)->distance_of_coarray_elmts[i];
+  }
+
+  int remote_coarray_is_continuous = _check_continuous(_coarray, _coarray_dims, _transfer_coarray_elmts);
+  int local_array_is_continuous    = _check_continuous(_array,   _array_dims,   _transfer_array_elmts); 
+
+  if(rdma_code == _XMP_N_COARRAY_PUT){
+    if(target_rank == _XMP_world_rank){
+      _XMP_fatal("_XMP_coarray_rdma_do_acc: local_put is unimplemented");
+      /* _XMP_local_put(remote_coarray, local_array, remote_coarray_is_continuous, local_array_is_continuous,  */
+      /* 		     _coarray_dims, _array_dims, _coarray, _array, _transfer_coarray_elmts, _transfer_array_elmts); */
+    }
+    else{
+#ifdef _XMP_GASNET
+      _XMP_gasnet_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
+		      _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+#elif _XMP_FJRDMA
+      _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
+		      _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+#elif _XMP_MPI3_ONESIDED
+      _XMP_mpi_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
+		   _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
+		   is_dst_on_acc, is_src_on_acc);
+#endif
+    }
+  }
+  else if(rdma_code == _XMP_N_COARRAY_GET){
+    if(target_rank == _XMP_world_rank){
+      _XMP_local_get(local_array, remote_coarray, local_array_is_continuous, remote_coarray_is_continuous,
+		     _array_dims, _coarray_dims, _array, _coarray, _transfer_array_elmts, _transfer_coarray_elmts);
+    }
+    else{
+#ifdef _XMP_GASNET
+      _XMP_gasnet_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank,
+		      _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+#elif _XMP_FJRDMA
+      _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
+		      _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+#elif _XMP_MPI3_ONESIDED
+      _XMP_mpi_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
+		   _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
+		   is_dst_on_acc, is_src_on_acc);
+#endif
+    }
+  }
+  else{
+    _XMP_fatal("Unexpected Operation !!");
+  }
+
+  free(_coarray);
+  free(_array);
+  free(_image_num);
 }

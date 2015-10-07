@@ -1,14 +1,14 @@
 program test_transpose_FJ
 
 #if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
-  call test_transpose_002()
-  call test_transpose_003()
+!!  call test_transpose_002()
+!!  call test_transpose_003()
 #endif
   call test_transpose_017()
 #if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
-  call test_transpose_018()
-  call test_transpose_019()
-  call test_transpose_020()
+!!  call test_transpose_018()
+!!  call test_transpose_019()
+!!  call test_transpose_020()
 #endif
   call test_transpose_030()
   call test_transpose_031()
