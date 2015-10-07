@@ -911,9 +911,11 @@ public class OMPtransPragma
 
         XobjList calleeDelcls = Xcons.List();
         BlockList fbBody = fb.getBody();
+
+        OMP.debug("transParallelRegion"+fbBody.getDecls().toString());
         
         threadprivateFSetup(calleeDelcls, fbBody.getDecls(), body, i, true);
-        
+        OMP.debug("fbBody:"+fbBody.getDecls().toString());
         XobjList id_list = Xcons.List();
         for(Ident x : i.getRegionParams())
             id_list.add(x);
@@ -982,6 +984,8 @@ public class OMPtransPragma
 
         XobjList calleeDelcls = Xcons.List();
         BlockList fbBody = fb.getBody();
+        
+        OMP.debug("transFtaskRegion"+fbBody.getDecls().toString());
         
         threadprivateFSetup(calleeDelcls, fbBody.getDecls(), body, i, true);
         

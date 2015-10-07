@@ -273,7 +273,7 @@ static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
   int count = 0, blocklength = 0;
   long long stride = 0;
 
-  if (_XMPF_running && (!_XMPC_running)){ /* for XMP/F */
+  if (adesc->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
 
     count = 1;
     blocklength = type_size;
@@ -289,7 +289,7 @@ static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
     }
 
   }
-  else if ((!_XMPF_running) && _XMPC_running){ /* for XMP/C */
+  else if (adesc->order == MPI_ORDER_C){ /* for XMP/C */
 
     count = 1;
     blocklength = type_size;
@@ -507,7 +507,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   int count = 0, blocklength = 0;
   long long stride = 0;
 
-  if (_XMPF_running && (!_XMPC_running)){ /* for XMP/F */
+  if (adesc->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
 
     count = 1;
     blocklength = type_size;
@@ -523,7 +523,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     }
 
   }
-  else if ((!_XMPF_running) && _XMPC_running){ /* for XMP/C */
+  else if (adesc->order == MPI_ORDER_C){ /* for XMP/C */
 
     count = 1;
     blocklength = type_size;
@@ -613,8 +613,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // Allocate buffers
   //
 
-  if ((_XMPF_running && target_dim != ndims - 1) ||
-      (_XMPC_running && target_dim != 0)){
+  if ((adesc->order == MPI_ORDER_FORTRAN && target_dim != ndims - 1) ||
+      (adesc->order == MPI_ORDER_C && target_dim != 0)){
     _XMP_free(reflect->lo_send_buf);
     _XMP_free(reflect->lo_recv_buf);
     _XMP_free(reflect->hi_send_buf);
@@ -627,8 +627,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
     lo_buf_size = lwidth * blocklength * count;
 
-    if ((_XMPF_running && target_dim == ndims - 1) ||
-	(_XMPC_running && target_dim == 0)){
+    if ((adesc->order == MPI_ORDER_FORTRAN && target_dim == ndims - 1) ||
+	(adesc->order == MPI_ORDER_C && target_dim == 0)){
       lo_send_buf = lo_send_array;
       lo_recv_buf = lo_recv_array;
     }
@@ -647,8 +647,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
     hi_buf_size = uwidth * blocklength * count;
 
-    if ((_XMPF_running && target_dim == ndims - 1) ||
-	(_XMPC_running && target_dim == 0)){
+    if ((adesc->order == MPI_ORDER_FORTRAN && target_dim == ndims - 1) ||
+	(adesc->order == MPI_ORDER_C && target_dim == 0)){
       hi_send_buf = hi_send_array;
       hi_recv_buf = hi_recv_array;
     }
@@ -1336,7 +1336,7 @@ static void _XMP_reflect_rdma_sched_dim(_XMP_array_t *adesc, int target_dim,
   int count = 0, blocklength = 0;
   long long stride = 0;
 
-  if (_XMPF_running && !_XMPC_running){ /* for XMP/F */
+  if (adesc->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
 
     count = 1;
     blocklength = type_size;
@@ -1352,7 +1352,7 @@ static void _XMP_reflect_rdma_sched_dim(_XMP_array_t *adesc, int target_dim,
     }
 
   }
-  else if (!_XMPF_running && _XMPC_running){ /* for XMP/C */
+  else if (adesc->order == MPI_ORDER_C){ /* for XMP/C */
 
     count = 1;
     blocklength = type_size;
@@ -1637,11 +1637,11 @@ int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index){
 
 /*   int lb = 0, ub = 0; */
 
-/*   if (_XMPF_running && (!_XMPC_running)){ /\* for XMP/F *\/ */
+/*   if (a->order == MPI_ORDER_FORTRAN){ /\* for XMP/F *\/ */
 /*     lb = 0; */
 /*     ub = a->dim - 1; */
 /*   } */
-/*   else if ((!_XMPF_running) && _XMPC_running){ /\* for XMP/C *\/ */
+/*   else if (a->order == MPI_ORDER_C){ /\* for XMP/C *\/ */
 /*     lb = 1; */
 /*     ub = a->dim; */
 /*   } */
@@ -1682,10 +1682,10 @@ int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index){
 static void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic)
 {
 
-  if (_XMPF_running && (!_XMPC_running)){ /* for XMP/F */
+  if (a->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
     if (i == a->dim - 1) return;
   }
-  else if ((!_XMPF_running) && _XMPC_running){ /* for XMP/C */
+  else if (a->order == MPI_ORDER_C){ /* for XMP/C */
     if (i == 0) return;
   }
   else {
@@ -1723,11 +1723,11 @@ void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_peri
 
   int lb = 0, ub = 0;
 
-  if (_XMPF_running && (!_XMPC_running)){ /* for XMP/F */
+  if (a->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
     lb = 0;
     ub = a->dim - 1;
   }
-  else if ((!_XMPF_running) && _XMPC_running){ /* for XMP/C */
+  else if (a->order == MPI_ORDER_C){ /* for XMP/C */
     lb = 1;
     ub = a->dim;
   }
@@ -1768,10 +1768,10 @@ void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_peri
 static void _XMP_reflect_unpack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic)
 {
 
-  if (_XMPF_running && (!_XMPC_running)){ /* for XMP/F */
+  if (a->order == MPI_ORDER_FORTRAN){ /* for XMP/F */
     if (i == a->dim - 1) return;
   }
-  else if ((!_XMPF_running) && _XMPC_running){ /* for XMP/C */
+  else if (a->order == MPI_ORDER_C){ /* for XMP/C */
     if (i == 0) return;
   }
   else {

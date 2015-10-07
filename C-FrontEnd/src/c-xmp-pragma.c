@@ -1540,6 +1540,8 @@ static CExpr* parse_GMOVE_clause()
     }
     else gmoveClause = (CExpr*)allocExprOfNumberConst2(XMP_GMOVE_NORMAL, BT_INT);
 
+    CExpr* async = parse_ASYNC_clause();
+
     CExpr* acc_or_host = parse_ACC_or_HOST_clause();
 
     CExpr* profileClause = (CExpr *)allocExprOfNull();
@@ -1548,7 +1550,7 @@ static CExpr* parse_GMOVE_clause()
     /*   pg_get_token(); */
     /* } */
 
-    return XMP_LIST3(gmoveClause, acc_or_host, profileClause);
+    return XMP_LIST4(gmoveClause, async, acc_or_host, profileClause);
 }
 
 static CExpr* parse_COARRAY_clause()

@@ -25,6 +25,7 @@ import exc.xcodeml.XcodeMLtools;
 import exc.xcodeml.XcodeMLtools_F;
 import exc.xcodeml.XcodeMLtools_Fmod;
 import exc.xcodeml.XcodeMLtools_C;
+import xcodeml.IXobject;
 import xcodeml.XmLanguage;
 import xcodeml.binding.XmXcodeProgram;
 import xcodeml.util.*;
@@ -327,6 +328,11 @@ public class omompx
           xobjFile.addHeaderLine("# include \"xmp_scalasca.h\"");
         }else if (doTlog == true) {
           xobjFile.addHeaderLine("# include \"xmp_tlog.h\"");
+        }
+      }
+      if(openACC){
+        if(xobjFile.findIdent("acc_init", IXobject.FINDKIND_ANY) == null){
+          xobjFile.addHeaderLine("# include \"openacc.h\"");
         }
       }
       xmpTranslator.finalize();

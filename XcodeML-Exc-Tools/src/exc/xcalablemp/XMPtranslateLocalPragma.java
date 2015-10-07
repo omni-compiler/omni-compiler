@@ -2485,7 +2485,7 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception("gmove in/out directive is not supported yet");
 
     // acc or host
-    XobjList accOrHost = (XobjList)gmoveDecl.getArg(1);
+    XobjList accOrHost = (XobjList)gmoveDecl.getArg(2);
     boolean isACC = accOrHost.hasIdent("acc");
     boolean isHost = accOrHost.hasIdent("host");
     if(!isACC && !isHost){
@@ -2687,7 +2687,7 @@ public class XMPtranslateLocalPragma {
     pb.replace(gmoveBlock);
 
     // add function calls for profiling                                                                                    
-    Xobject profileClause = gmoveDecl.getArg(2);
+    Xobject profileClause = gmoveDecl.getArg(3);
     if( _all_profile || (profileClause != null && _selective_profile)){
         if (doScalasca == true) {
             XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp gmove:" + pb.getLineNo()));

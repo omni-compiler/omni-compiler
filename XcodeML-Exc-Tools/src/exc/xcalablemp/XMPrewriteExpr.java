@@ -149,13 +149,16 @@ public class XMPrewriteExpr {
 
   private Xobject createShortcutCoarray(int imageDims, XobjList imageList, String commkind, 
                                         XMPcoarray dstCoarray, XMPcoarray srcCoarray,
-                                        Xobject dstCoarrayExpr, Xobject srcCoarrayExpr) throws XMPexception
+                                        Xobject dstCoarrayExpr, Xobject srcCoarrayExpr,
+                                        boolean isDstCoarrayOnAcc, boolean isSrcCoarrayOnAcc) throws XMPexception
   // dstCoarray is left expression. srcCoarray is right expression.
   {
     // Set Function Name
     // If image set is 2 dimension and Put operation,
     // function name is "_XMP_shortcut_put_image2"
+    boolean isAcc = isDstCoarrayOnAcc || isSrcCoarrayOnAcc;
     String funcName = "_XMP_coarray_shortcut_" + commkind;
+    if(isAcc) funcName += "_acc";
     Ident funcId = _globalDecl.declExternFunc(funcName);
     XobjList funcArgs = Xcons.List();
 
@@ -403,6 +406,12 @@ public class XMPrewriteExpr {
     }
     funcArgs.add(src_length);
 
+    if(isAcc){
+      //add location of coarray (host=0, acc=1)
+      funcArgs.add(Xcons.IntConstant(isDstCoarrayOnAcc? 1 : 0));
+      funcArgs.add(Xcons.IntConstant(isSrcCoarrayOnAcc? 1 : 0));
+    }
+
     // Create function
     Xobject newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
@@ -430,7 +439,7 @@ public class XMPrewriteExpr {
     if(coarray == null){
       throw new XMPexception("cannot find coarray '" + coarrayName + "'");
     }
-    
+
     // Get Coarray Dims
     XobjList funcArgs = Xcons.List();
     int coarrayDims;
@@ -481,14 +490,16 @@ public class XMPrewriteExpr {
       {
         XMPcoarray remoteCoarray = coarray;
         XMPcoarray localCoarray = _globalDecl.getXMPcoarray(localName, exprParentBlock);
+        boolean isRemoteCoarrayUseDevice = isUseDevice(remoteCoarray.getName(), exprParentBlock);
+        boolean isLocalCoarrayUseDevice = isUseDevice(localCoarray.getName(), exprParentBlock);
         if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF)
           {  // put a[:]:[1] = b[:];
             return createShortcutCoarray(imageDims, imageList, "put", remoteCoarray, localCoarray,
-                                         coarrayExpr.getArg(0), localExpr);
+                                         coarrayExpr.getArg(0), localExpr, isRemoteCoarrayUseDevice, isLocalCoarrayUseDevice);
           }
         else{ // get a[:] = b[:]:[1]
           return createShortcutCoarray(imageDims, imageList, "get", localCoarray, remoteCoarray,
-                                       localExpr, coarrayExpr.getArg(0));
+                                       localExpr, coarrayExpr.getArg(0), isRemoteCoarrayUseDevice, isLocalCoarrayUseDevice);
         }
       }
 
@@ -615,7 +626,6 @@ public class XMPrewriteExpr {
     iter.insertStatement(newExpr);
 
     // Set function _XMP_coarray_rdma_do()
-    funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_do");
     funcArgs = Xcons.List();
     if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF){
       funcArgs.add(Xcons.IntConstant(XMPcoarray.PUT));
@@ -624,13 +634,18 @@ public class XMPrewriteExpr {
       funcArgs.add(Xcons.IntConstant(XMPcoarray.GET));
     }
 
+    boolean isLocalOnDevice = false;
+    boolean isRemoteOnDevice = false;
+    
     // Get Coarray Descriptor
     funcArgs.add(Xcons.SymbolRef(coarray.getDescId()));
+    isRemoteOnDevice = isUseDevice(coarray.getName(), exprParentBlock);
 
     // Get Local Pointer Name
     if(localExpr.Opcode() == Xcode.SUB_ARRAY_REF || localExpr.Opcode() == Xcode.ARRAY_REF){
       Xobject varAddr = localExpr.getArg(0);
       String varName = varAddr.getName();
+      isLocalOnDevice = isUseDevice(varName, exprParentBlock);
       XMPcoarray localArray = _globalDecl.getXMPcoarray(varName, exprParentBlock);
       if(localArray == null){
 	  funcArgs.add(varAddr);
@@ -644,6 +659,7 @@ public class XMPrewriteExpr {
     }
     else if(localExpr.Opcode() == Xcode.VAR){
       String varName = localExpr.getName();
+      isLocalOnDevice = isUseDevice(varName, exprParentBlock);
       XMPcoarray localVar = _globalDecl.getXMPcoarray(varName, exprParentBlock);
       if(localVar == null){
 	Xobject varAddr = Xcons.AddrOf(localExpr);
@@ -663,6 +679,14 @@ public class XMPrewriteExpr {
       throw new XMPexception("Not supported this coarray Syntax");
     }
 
+    boolean isAcc = isRemoteOnDevice || isLocalOnDevice;
+    if(isAcc){
+      funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_do_acc");
+      funcArgs.add(Xcons.IntConstant(isRemoteOnDevice? 1 : 0));
+      funcArgs.add(Xcons.IntConstant(isLocalOnDevice? 1 : 0));
+    }else{
+      funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_do");
+    }
     newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
     iter.insertStatement(newExpr);
@@ -1414,7 +1438,7 @@ public class XMPrewriteExpr {
     }
     else{
       newExpr = Xcons.binaryOp(Xcode.PLUS_EXPR,
-			       _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + coarray.getName()),
+			       _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + coarray.getName()).Ref(),
 			       newExpr);
       newExpr = Xcons.PointerRef(newExpr);
     }
@@ -2124,7 +2148,7 @@ public class XMPrewriteExpr {
 	  String arraySizeName = "_ACC_size_" + arrayAddr.getSym();
           Ident arraySizeId = body.declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
 	  
-          Block getArraySizeFuncCall = _globalDecl.createFuncCallBlock("_XMP_get_array_total_elmts", Xcons.List(descId.Ref()));
+          Block getArraySizeFuncCall = _globalDecl.createFuncCallBlock("_XMP_coarray_get_total_elmts", Xcons.List(descId.Ref()));
           body.insert(Xcons.Set(arraySizeId.Ref(), getArraySizeFuncCall.toXobject()));
           
           XobjList arrayRef = Xcons.List(coarrayAddrRef, Xcons.List(Xcons.IntConstant(0), arraySizeId.Ref()));
@@ -2152,6 +2176,89 @@ public class XMPrewriteExpr {
       return arrayRef;
   }
 
+  void rewriteACCPragma(XobjectDef def){
+    Xobject x = def.getDef();
+    Xobject pragma = x.getArg(0);
+
+    if(! pragma.getString().equals("DECLARE")){
+      return;
+    }
+
+    XobjList clauses = (XobjList)x.getArg(1);
+    for(XobjArgs args = clauses.getArgs(); args != null; args = args.nextArgs()){ //for(Xobject clause : clauses){
+      Xobject clause = args.getArg();
+      Xobject clauseKind = clause.getArg(0);
+      if(! clauseKind.getString().equals("CREATE")){
+        XMP.fatal("'" + clauseKind.getString() + "' clause for coarray is not implemented yet");
+      }
+      XobjList clauseArgs = (XobjList)clause.getArg(1);
+      for(XobjArgs args2 = clauseArgs.getArgs(); args2 != null; args2 = args2.nextArgs()){ //for(Xobject var : clauseArgs){
+        Xobject var = args2.getArg();
+        String varName = var.getName();
+        XMPcoarray coarray = _globalDecl.getXMPcoarray(varName);
+        if(coarray == null) continue;
+
+        if(coarray.getVarId().getStorageClass() != StorageClass.EXTERN){
+          //add func call like "_XMP_coarray_malloc_do_acc(&(_XMP_COARRAY_DESC_a), &(_XMP_COARRAY_ADDR_DEV_a));"
+          Xtype elementType = coarray.getElmtType();
+          Ident devPointerId = _globalDecl.declStaticIdent(XMP.COARRAY_ADDR_PREFIX_ + "DEV_" + varName, Xtype.Pointer(elementType));
+          String funcName = "_XMP_coarray_malloc_do_acc";
+          XobjList funcArgs = Xcons.List(coarray.getDescId().getAddr(),
+                  devPointerId.getAddr());
+          _globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
+
+          //add func call like "acc_map_data(_XMP_COARRAY_ADDR_a, _XMP_COARRAY_ADDR_DEV_a, _XMP_coarray_get_total_elmts(_XMP_COARRAY_DESC_a) * sizeof(int));"
+          Ident getTotalElmtFuncId = _globalDecl.declExternFunc("_XMP_coarray_get_total_elmts", Xtype.intType);
+          Xobject getTotalElmtFuncCall = getTotalElmtFuncId.Call(Xcons.List(coarray.getDescId().Ref()));
+          Ident hostPointerId = _globalDecl.findVarIdent(XMP.COARRAY_ADDR_PREFIX_ + varName);
+          funcName = "acc_map_data";
+          funcArgs = Xcons.List(hostPointerId.Ref(),
+                  devPointerId.Ref(),
+                  Xcons.binaryOp(Xcode.MUL_EXPR,
+                          Xcons.SizeOf(elementType),
+                          getTotalElmtFuncCall));
+          _globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
+        }
+
+
+        //remove var from clause
+        clauseArgs.removeArgs(args2);
+      }
+      if(clauseArgs.isEmpty()){
+        //remove clause
+        clauses.removeArgs(args);
+      }
+    }
+
+    if(clauses.isEmpty()){
+      //delete directive
+      def.setDef(Xcons.List(Xcode.TEXT,
+              Xcons.String("/* OpenACC declare directive is removed by XcalableACC */")));
+    }
+  }
+
+  private boolean isUseDevice(String varName, Block block){
+    Ident varId = block.findVarIdent(varName);
+    if(varId == null) return false;
+    
+    for(Block b = block; b != null; b = b.getParentBlock()){
+      if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
+      PragmaBlock pb = (PragmaBlock)b;
+      if(! pb.getPragma().equals("HOST_DATA")) continue;
+
+      for(Xobject clause : (XobjList)pb.getClauses()){
+        if(! clause.getArg(0).getString().equals("USE_DEVICE")) continue;
+
+        for(Xobject var : (XobjList)clause.getArg(1)){
+          if(var.getSym().equals(varName) && b.findVarIdent(varName) == varId){
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
 
   public  void rewriteVarDecl(Xobject varDecl, boolean isLocal) {
     assert(varDecl.Opcode() == Xcode.VAR_DECL);

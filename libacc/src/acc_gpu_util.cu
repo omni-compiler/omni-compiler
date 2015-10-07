@@ -1,6 +1,7 @@
 #include "acc_internal.h"
 #include "acc_gpu_internal.h"
 #include <stdio.h>
+#include <stdbool.h>
 
 void _ACC_gpu_alloc(void **addr, size_t size)
 {
@@ -119,3 +120,11 @@ int _ACC_gpu_get_num_devices()
   return count;
 }
 */
+
+bool _ACC_gpu_is_pagelocked(void *p)
+{
+  unsigned int flags;
+  cudaHostGetFlags(&flags, p);
+  cudaError_t error = cudaGetLastError();
+  return (error == cudaSuccess);
+}
