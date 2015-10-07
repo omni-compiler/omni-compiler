@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "xmp_internal.h"
 
-#ifdef _XMP_GASNET
+#if defined(_XMP_GASNET) || defined(_XMP_MPI3_ONESIDED)
 static void _check_unit(char *env, char *env_val)
 {
   int len = strlen(env_val);
@@ -82,9 +82,15 @@ void _XMP_onesided_initialize(int argc, char **argv)
   _XMP_gasnet_initialize(argc, argv, _xmp_heap_size, _xmp_stride_size);
 #elif _XMP_FJRDMA
   _XMP_fjrdma_initialize(argc, argv);
+#elif _XMP_TCA
+  _XMP_tca_initialize(argc, argv);
+#elif _XMP_MPI3_ONESIDED
+  size_t _xmp_heap_size;
+  _xmp_heap_size   = _get_size("XMP_ONESIDED_HEAP_SIZE");
+  _XMP_mpi_onesided_initialize(argc, argv, _xmp_heap_size);
 #endif
 
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA)
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
   _XMP_build_coarray_queue();
   _XMP_post_wait_initialize();
 #endif
@@ -97,5 +103,9 @@ void _XMP_onesided_finalize(const int return_val)
 #elif _XMP_FJRDMA
   if(_XMP_world_size > _XMP_FJRDMA_MAX_PROCS) return;
   else _XMP_fjrdma_finalize();
+#elif _XMP_TCA
+  _XMP_tca_finalize();
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_onesided_finalize();
 #endif
 }

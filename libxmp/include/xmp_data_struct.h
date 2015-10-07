@@ -110,7 +110,7 @@ typedef struct _XMP_template_type {
 typedef struct _XMP_reflect_sched_type {
 
   int lo_width, hi_width;
-  _Bool is_periodic;
+  int is_periodic;
 
   MPI_Datatype datatype_lo;
   MPI_Datatype datatype_hi;
@@ -283,6 +283,8 @@ typedef struct xmp_coarray{
   int *distance_of_image_elmts; // Distance between each dimension of image set.
                                 // e.g.) If "int a[10][20]:[4][2][*]", distance_of_image_elmts[0] is 1,
                                 //       distance_of_image_elmts[1] is 4, distance_of_image_elmts[2] is 8.
+  char **addr_dev;
+  char *real_addr_dev;
 }_XMP_coarray_t;
 
 typedef struct _XMP_array_section{

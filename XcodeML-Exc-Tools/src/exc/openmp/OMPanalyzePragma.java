@@ -29,7 +29,7 @@ public class OMPanalyzePragma
         this.omp_env = omp_env;
         Block b;
         Block fblock = def.getBlock();
-
+        OMP.debug("run");
         // pass1: traverse to collect information about OMP pramga
         if(OMP.debugFlag)
             System.out.println("pass1:");
@@ -48,6 +48,7 @@ public class OMPanalyzePragma
 
     OMPinfo outerOMPinfo(Block b)
     {
+        OMP.debug("outerOMPinfo");
         for(Block bp = b.getParentBlock(); bp != null; bp = bp.getParentBlock()) {
             if(bp.Opcode() == Xcode.OMP_PRAGMA) {
                 return (OMPinfo)bp.getProp(OMP.prop);
@@ -61,6 +62,7 @@ public class OMPanalyzePragma
         OMPinfo outer = outerOMPinfo(pb);
         OMPinfo info = new OMPinfo(OMPpragma.valueOf(pb.getPragma()), outer, pb, omp_env);
         pb.setProp(OMP.prop, info);
+        OMP.debug("checkPragma");
 
         OMPpragma p = info.pragma;
         OMPpragma c;
@@ -70,6 +72,9 @@ public class OMPanalyzePragma
         topdownBlockIterator bitr;
 
         switch(p) {
+        case TASK:
+    	info.setIfExpr(Xcons.FlogicalConstant(true));
+        info.setFinalExpr(Xcons.FlogicalConstant(false));
         case PARALLEL: /* new parallel section */
         case FOR: /* loop <clause_list> */
         case SECTIONS: /* sections <clause_list> */
@@ -80,6 +85,9 @@ public class OMPanalyzePragma
                 switch(c) {
                 case DIR_IF:
                     info.setIfExpr(a.getArg(1));
+                    break;
+                case DATA_FINAL:
+                    info.setFinalExpr(a.getArg(1));
                     break;
                 case DIR_NOWAIT:
                     info.no_wait = true;
@@ -95,6 +103,20 @@ public class OMPanalyzePragma
                     break;
                 case DIR_NUM_THREADS:
                     info.num_threads = a.getArg(1);
+                    break;
+                case DIR_UNTIED:
+                    info.untied = true;
+                    OMP.debug("UNTIED");
+                    break;
+                case DIR_MERGEABLE:
+                    info.mergeable = true;
+                    OMP.debug("MERGEABLE");
+                    break;
+                case DATA_DEPEND_IN:
+                case DATA_DEPEND_OUT:
+                case DATA_DEPEND_INOUT:
+                    info.mergeable = true;
+                    OMP.debug("DEPEND");
                     break;
                 default: // DATA_*
                     for(Xobject aa : (XobjList)a.getArg(1))
@@ -171,43 +193,6 @@ public class OMPanalyzePragma
                 }
             }
             break;
-        case TASK:
-        	info.setIfExpr(Xcons.FlogicalConstant(true));
-            info.setFinalExpr(Xcons.FlogicalConstant(false));
-        
-            idLists = new ArrayList<XobjList>();
-            for(Xobject a : (XobjList)pb.getClauses()) {
-            	OMP.debug(a.toString());
-                c = OMPpragma.valueOf(a.getArg(0));
-                switch(c) {
-                case DIR_IF:
-                	info.setIfExpr(a.getArg(1));
-                    break;
-                case DATA_FINAL:
-                    info.setFinalExpr(a.getArg(1));
-                    break;
-                case DIR_NOWAIT:
-                    info.no_wait = true;
-                    break;
-                case DIR_UNTIED:
-                    info.untied = true;
-                    OMP.debug("UNTIED");
-                    break;
-                case DIR_MERGEABLE:
-                    info.mergeable = true;
-                    OMP.debug("MERGEABLE");
-                    break;
-                case DATA_DEFAULT:
-                    info.data_default = OMPpragma.valueOf(a.getArg(1));
-                    break;
-                default: // DATA_*
-                	if(a.getArg(1) == null) break;
-                    for(Xobject aa : (XobjList)a.getArg(1))
-                        info.declOMPvar(aa.getName(), c);
-                    idLists.add((XobjList)a.getArg(1));
-                    break;
-                }
-            }
         case SIMD:
         case DECLARE:
 	    break;	
@@ -295,6 +280,7 @@ public class OMPanalyzePragma
 
     boolean isAtomicExpr(Xobject x)
     {
+        OMP.debug("isAtomicExpr");
         switch(x.Opcode()) {
         case POST_INCR_EXPR:
         case POST_DECR_EXPR:
@@ -317,6 +303,7 @@ public class OMPanalyzePragma
     /** create atomic expression */
     private Xobject makeAtomicExpr(Xobject x)
     {
+        OMP.debug("makeAtomicExpr");
         return XmOption.isLanguageC() ? makeAtomicExprC(x) : makeAtomicExprF(x);
     }
     
@@ -325,6 +312,7 @@ public class OMPanalyzePragma
     {
         Xobject lv = x.left();
         Xobject rv = x.right();
+        OMP.debug("makeAtomicExprC");
         switch(rv.Opcode()) {
         case PLUS_EXPR:
             if(lv.equals(rv.left()))
@@ -373,6 +361,8 @@ public class OMPanalyzePragma
     /** Fortran: create atomic expression */
     private Xobject makeAtomicExprF(Xobject x)
     {
+        OMP.debug("makeAtomicExprF");
+
         if(x.Opcode() != Xcode.F_ASSIGN_STATEMENT)
             return null;
         

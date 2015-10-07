@@ -48,6 +48,10 @@ public class XMPtranslate implements XobjectDefVisitor {
         // for coarray declaration of XMP1.2
         _rewriteExpr.rewriteVarDecl(x, false);   // isLocal=false
         break;
+
+      case ACC_PRAGMA:
+        _rewriteExpr.rewriteACCPragma(def);
+        break;
       }
       return;
     }

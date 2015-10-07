@@ -1,26 +1,16 @@
 #include <stdlib.h>
 #include "xmpf_internal.h"
 #include "config.h"
-void xmpf_finalize_all__();
 //#define DBG 1
 
 /*
  * For xmpf, initialize all
  */
 
-void call_xmpf_finalize_all__(){
-  xmpf_finalize_all__();
-}
-
 void xmpf_init_all__()
 {
   _XMP_init(0, NULL);
 
-  /* 
-     On SR16000, when calling MPI_Finalize from atexit(),
-     the atexit must be called after MPI_Init().
-   */
-  atexit(call_xmpf_finalize_all__);
   _XMP_check_reflect_type();
 
   _XMPC_running = 0;
