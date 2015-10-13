@@ -32,6 +32,7 @@ while [ -n "$1" ]; do
     --C)        LANG=C;;
     --prefix)   shift; PREFIX="$1";;
     --nm)       shift; NM="$1";;
+    --nm_opt)   shift; NM_OPT="$1";;
     --sr)       USE_SR=yes;;
     -o)         shift; OUTFILE="$1";;
     *.o)        INFILES+=("$1");;
@@ -57,7 +58,7 @@ fi
 
 if [ "$VERBOSE" = "yes" ]; then
    echo ---------------------------
-   echo NM=$NM
+   echo NM=$NM $NM_OPT
    echo HELP=$HELP
    echo VERBOSE=$VERBOSE
    echo LANG=$LANG
@@ -73,7 +74,7 @@ fi
 #--------------------------------------------------------------
 
 #--- get traverse procedures
-trav_cands=`$NM "${INFILES[@]}" | \
+trav_cands=`$NM $NM_OPT "${INFILES[@]}" | \
     awk 'NF >= 2 && $(NF-1) ~ "^[U]$" { print $NF }'`
 traversers=()
 for name in $trav_cands; do
@@ -88,7 +89,7 @@ for name in $trav_cands; do
 done
 
 #--- get procedures to be traversed
-proc_cands=`$NM "${INFILES[@]}" | \
+proc_cands=`$NM $NM_OPT "${INFILES[@]}" | \
     awk 'NF >= 2 && $(NF-1) ~ "^[DdTt]$" { print $NF }'`
 procedures=()
 for name in $proc_cands; do

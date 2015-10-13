@@ -560,7 +560,7 @@ elif test "$target" = "sxace-nec-superux"; then
   AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
   MPI_FPPFLAGS="-E"
 #  MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
-  MPI_FCFLAGS="-Chopt"
+  MPI_FCFLAGS="-Chopt -f2003"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
 
@@ -571,7 +571,7 @@ elif test "$target" = "sxace-nec-superux"; then
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_NTV_FCFLAGS="-f4 -w"
+  OMNI_NTV_FCFLAGS="-f4 -w -f2003"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
@@ -581,7 +581,8 @@ elif test "$target" = "sxace-nec-superux"; then
   RANLIB="sxar -sq"
   AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
   ARFLAGS="cru"
-  NM="sxnm -px"
+  NM="sxnm"
+  NM_OPT="-px"
 #  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
 	
 elif test "$target" = "sx9-nec-superux"; then
@@ -605,7 +606,7 @@ elif test "$target" = "sx9-nec-superux"; then
 # MPI F
   AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
+  MPI_FCFLAGS="-Chopt -f2003 $OPENMP_OPT_F"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
 
@@ -626,7 +627,8 @@ elif test "$target" = "sx9-nec-superux"; then
   RANLIB="sxar -sq"
   AC_CHECK_PROG([AR], [sxar], [sxar], [sxar])
   ARFLAGS="cru"
-  NM="sxnm -px"
+  NM="sxnm"
+  NM_OPT="-px"
 #  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
 
 elif test "$target" = "powerpc-ibm-cnk"; then
@@ -1234,6 +1236,7 @@ AC_SUBST(OMNI_X2X_FLAGS)
 AC_SUBST(RANLIB)
 AC_SUBST(AR)
 AC_SUBST(NM)
+AC_SUBST(NM_OPT)
 
 # check PGI compiler
 #chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
