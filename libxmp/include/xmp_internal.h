@@ -315,7 +315,7 @@ extern void _XMP_threads_finalize(void);
 #endif
 
 // ----- for coarray & post/wait -------------------
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3)
+#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
 #define _XMP_DEFAULT_ONESIDED_HEAP_SIZE   "27M"
 #define _XMP_DEFAULT_ONESIDED_STRIDE_SIZE "5M"
 /* Momo:
@@ -444,7 +444,7 @@ void _XMP_tca_lock();
 void _XMP_tca_unlock();
 #endif
 
-#ifdef _XMP_MPI3
+#ifdef _XMP_MPI3_ONESIDED
 #define _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INITIAL_SIZE _XMP_COARRAY_QUEUE_INITIAL_SIZE        /** The same vaule may be good. */
 #define _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO  /** The same vaule may be good. */
 #define _XMP_MPI_ALIGNMENT                  8
