@@ -344,6 +344,7 @@ MPI_MODINC = @MPI_MODINC@
 MPI_SUBVERSION = @MPI_SUBVERSION@
 MPI_VERSION = @MPI_VERSION@
 NM = @NM@
+NM_OPT = @NM_OPT@
 OBJEXT = @OBJEXT@
 OMNI_C2X_FLAGS = @OMNI_C2X_FLAGS@
 OMNI_F2X_FLAGS = @OMNI_F2X_FLAGS@
@@ -810,7 +811,7 @@ xmpf_main.o: xmpf_main.F90
 	$(FC) $(FCFLAGS) $< -c
 
 %.f90: %.f90.sh
-	. $< > $@
+	. $< $(TARGET) > $@
 
 %.F90: %.F90.sh
 	. $< > $@

@@ -53,7 +53,7 @@ if FJRDMA
 endif
 
 %.f90: %.f90.sh
-	. $< > $@
+	. $< $(TARGET) > $@
 
 %.F90: %.F90.sh
 	. $< > $@

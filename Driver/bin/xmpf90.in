@@ -200,7 +200,8 @@ for file in "${f_files[@]}"; do
 done
 
 obj_files+=("$XMPF_MAIN_O")
-OMNI_TRAVERSE_OPT="--F --nm ${NM} --prefix xmpf"
+OMNI_TRAVERSE_OPT="--F --prefix xmpf --nm ${NM}"
+[ "${NM_OPT}" != "" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --nm_opt ${NM_OPT}"
 [ ${TARGET} = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
 TRAVERSE_FILE=${TEMP_DIR}/omni_traverse_${PID}.f90
 omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE "${obj_files[@]}"
