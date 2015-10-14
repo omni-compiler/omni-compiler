@@ -718,7 +718,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         		switch(OMPpragma.valueOf(xobj))
         		{
     			case SCHED_STATIC:
-    				xobj.setName("STSTIC");
+    				xobj.setName("STATIC");
     				break;    
     			case SCHED_DYNAMIC:
     				xobj.setName("DYNAMIC");
