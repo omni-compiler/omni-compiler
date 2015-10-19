@@ -52,6 +52,7 @@
 !-------------------------------
 !! synchronization
       include "xmp_coarray_sync.h"
+!!!      include "xmp_coarray_sync_sxace.h"
 
 !! reference of coindexed objects
       include "xmp_coarray_get.h"

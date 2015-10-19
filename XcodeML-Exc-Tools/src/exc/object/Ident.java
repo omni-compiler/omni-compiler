@@ -283,8 +283,14 @@ public class Ident extends Xobject
     @Override
     public Xobject cfold(Block block)
     {
+      //////////
+      //System.out.println("%%% gaccha");
+      //////////
       if (fparam_value != null) {
         Xobject that = ((XobjList)fparam_value).args.arg;
+        //////////
+        //System.out.println("%%%   get that="+that);
+        //////////
         return that.cfold(block);
       }
       return this.copy();

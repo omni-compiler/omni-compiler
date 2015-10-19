@@ -352,6 +352,18 @@ void xmpf_coarray_malloc_pool_(void)
   pool_currentAddr = pool_chunk->orgAddr;
 }
 
+/*
+ * End of string in Fortran may not have '\0'.
+ * However, strndup() of gcc-4.8.4 assumes '\0' at end of string.
+ * Therefore, we define a new function _xmp_strndup() instead of strndup().
+ */
+static char* _xmp_strndup(char *name, const int namelen)
+{
+  char *buf = (char *)malloc(namelen + 1);
+  memcpy(buf, name, namelen);
+  buf[namelen] = '\0';
+  return buf;
+}
 
 /*
  * have a share of memory in the pool
@@ -369,7 +381,7 @@ void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
   CoarrayInfo_t *cinfo =
     _getShareOfCoarray(*count, (size_t)(*element));
 
-  cinfo->name = strndup(name, *namelen);
+  cinfo->name = _xmp_strndup(name, *namelen);
 
   *descPtr = (void*)cinfo;
   *crayPtr = cinfo->baseAddr;
@@ -623,7 +635,7 @@ void xmpf_coarray_set_varname_(void **descPtr, char *name, int *namelen)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
 
-  cinfo->name = strndup(name, *namelen);
+  cinfo->name = _xmp_strndup(name, *namelen);
 
   _XMPF_coarrayDebugPrint("*** set name of CoarrayInfo %s\n",
                           _dispCoarrayInfo(cinfo));
@@ -646,7 +658,7 @@ ResourceSet_t *_newResourceSet(char *name, int namelen)
   rset->tailChunk->prev = rset->headChunk;
   rset->headChunk->parent = rset;
   rset->tailChunk->parent = rset;
-  rset->name = strndup(name, namelen);
+  rset->name = _xmp_strndup(name, namelen);
   return rset;
 }
 

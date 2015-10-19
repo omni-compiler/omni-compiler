@@ -709,6 +709,7 @@ MPI3_TRUE
 SUPERUX
 SUPERUX_FALSE
 SUPERUX_TRUE
+NM_OPT
 OMNI_X2X_FLAGS
 OMNI_LNK_FCFLAGS
 OMNI_NTV_FCFLAGS
@@ -7418,7 +7419,7 @@ fi
 
   MPI_FPPFLAGS="-E"
 #  MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
-  MPI_FCFLAGS="-Chopt"
+  MPI_FCFLAGS="-Chopt -f2003"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
 
@@ -7429,7 +7430,7 @@ fi
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_NTV_FCFLAGS="-f4 -w"
+  OMNI_NTV_FCFLAGS="-f4 -w -f2003"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
@@ -7476,7 +7477,8 @@ fi
 
 
   ARFLAGS="cru"
-  NM="sxnm -px"
+  NM="sxnm"
+  NM_OPT="-px"
 #  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
 
 elif test "$target" = "sx9-nec-superux"; then
@@ -7572,7 +7574,7 @@ fi
 
 
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
+  MPI_FCFLAGS="-Chopt -f2003 $OPENMP_OPT_F"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
 
@@ -7630,7 +7632,8 @@ fi
 
 
   ARFLAGS="cru"
-  NM="sxnm -px"
+  NM="sxnm"
+  NM_OPT="-px"
 #  AC_CHECK_PROG([NM], [sxnm], [sxnm], [sxnm])
 
 elif test "$target" = "powerpc-ibm-cnk"; then
@@ -8937,6 +8940,7 @@ OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 
 
 # ranlib & ar & nm
+
 
 
 

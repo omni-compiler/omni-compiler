@@ -185,15 +185,20 @@ for c_file in "${c_files[@]}"; do
 done
 TRAVERSE_FILE_C=${TEMP_DIR}/omni_traverse_${PID}.c
 TRAVERSE_FILE_O=${TEMP_DIR}/omni_traverse_${PID}.o
-OMNI_TRAVERSE_OPT="--C --nm ${NM} --prefix xmpc"
-[ ${TARGET} = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
+OMNI_TRAVERSE_OPT="--C --nm ${NM}"
+if [ $ENABLE_XACC = false ]; then
+    OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --prefix xmpc"
+else
+    OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --prefix acc"
+fi
+[ "${NM_OPT}" != "" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --nm_opt ${NM_OPT}"
+[ "${TARGET}" = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
 omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_C "${obj_files[@]}"
 
 omni_exec $OMNI_MPICC_CMD -c $TRAVERSE_FILE_C -o $TRAVERSE_FILE_O
 if [ $ENABLE_XACC = true ]; then
     TRAVERSE_FILE_XACC_C=${TEMP_DIR}/omni_traverse_xacc_${PID}.c
     TRAVERSE_FILE_XACC_O=${TEMP_DIR}/omni_traverse_xacc_${PID}.o
-    OMNI_TRAVERSE_OPT="--C --nm ${NM} --prefix acc"
     omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE_XACC_C "${obj_files[@]}"
     omni_exec $OMNI_MPICC_CMD -c $TRAVERSE_FILE_XACC_C -o $TRAVERSE_FILE_XACC_O
 fi
