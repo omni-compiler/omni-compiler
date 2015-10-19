@@ -250,8 +250,8 @@ public class BasicType extends Xtype
           put(DOUBLE_IMAGINARY       , 8 );
           put(LONG_DOUBLE_IMAGINARY  , 8 );    // ???
           put(FLOAT_COMPLEX          , 8 );
-          put(DOUBLE_COMPLEX         , 8 ); // should be 16 but bug347. 
-          put(LONG_DOUBLE_COMPLEX    ,16 );    // ???
+          put(DOUBLE_COMPLEX         ,16 );
+          put(LONG_DOUBLE_COMPLEX    ,32 );    // ???
           put(GCC_BUILTIN_VA_LIST    , 0 );
           put(F_CHARACTER            , 1 );
           put(F_NUMERIC              , 0 );
