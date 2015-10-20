@@ -331,6 +331,7 @@ extern void _XMP_threads_finalize(void);
 #define _XMP_POSTREQ_TABLE_INITIAL_SIZE 32         /**< This value is trial */
 #define _XMP_POSTREQ_TABLE_INCREMENT_RATIO (1.5)   /**< This value is trial */
 extern size_t _XMP_get_offset(const _XMP_array_section_t *, const int);
+extern void _XMP_coarray_set_info(_XMP_coarray_t* c);
 extern void _XMP_post_wait_initialize();
 #define _XMP_PACK         0
 #define _XMP_UNPACK       1
@@ -452,9 +453,11 @@ void _XMP_tca_unlock();
 extern size_t _xmp_mpi_onesided_heap_size;
 extern char *_xmp_mpi_onesided_buf;
 extern MPI_Win _xmp_mpi_onesided_win;
+extern MPI_Win _xmp_mpi_distarray_win;
 #ifdef _XMP_XACC
 extern char *_xmp_mpi_onesided_buf_acc;
 extern MPI_Win _xmp_mpi_onesided_win_acc;
+extern MPI_Win _xmp_mpi_distarray_win_acc;
 #endif
 void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size);
 void _XMP_mpi_onesided_finalize();
@@ -462,6 +465,7 @@ void _XMP_mpi_build_shift_queue(bool);
 void _XMP_mpi_destroy_shift_queue(bool);
 void _XMP_mpi_coarray_lastly_deallocate(bool);
 void _XMP_mpi_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size, bool is_acc);
+void _XMP_mpi_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size, const bool is_acc);
 void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 			   const size_t dst_offset, const size_t src_offset,
 			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc);
@@ -486,6 +490,8 @@ void _xmp_mpi_post(const int node, const int tag);
 void _xmp_mpi_wait(const int node, const int tag);
 void _xmp_mpi_wait_node(const int node);
 void _xmp_mpi_wait_noargs();
+
+MPI_Win _XMP_mpi_coarray_get_window(const _XMP_coarray_t *desc, bool is_acc);
 #endif
 
 #ifdef _XMP_TIMING

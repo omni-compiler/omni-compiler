@@ -258,10 +258,10 @@ void _XMP_coarray_malloc_image_info_7(const int i1, const int i2, const int i3, 
   _image_elmts[6] = total_node_size / total_image_size;
 }
 
-/**
-   Create coarray object and allocate coarray.
- */
-void _XMP_coarray_malloc_do(void **coarray_desc, void *addr)
+/*
+   Set infomation to coarray descriptor
+*/
+void _XMP_coarray_set_info(_XMP_coarray_t* c)
 {
   int *distance_of_coarray_elmts = _XMP_alloc(sizeof(int) * _coarray_dims);
 
@@ -284,14 +284,24 @@ void _XMP_coarray_malloc_do(void **coarray_desc, void *addr)
   }
   distance_of_image_elmts[0] = 1;
 
-  _XMP_coarray_t* c = _XMP_alloc(sizeof(_XMP_coarray_t));
   c->elmt_size      = _elmt_size;
   c->coarray_dims   = _coarray_dims;
   c->coarray_elmts  = _coarray_elmts;
   c->image_dims     = _image_dims;
   c->distance_of_coarray_elmts = distance_of_coarray_elmts;
   c->distance_of_image_elmts   = distance_of_image_elmts;
-  *coarray_desc                = c;
+
+  free(_image_elmts);  // Note: Do not free() _coarray_elmts.
+}
+
+/**
+   Create coarray object and allocate coarray.
+ */
+void _XMP_coarray_malloc_do(void **coarray_desc, void *addr)
+{
+  _XMP_coarray_t* c = _XMP_alloc(sizeof(_XMP_coarray_t));
+  _XMP_coarray_set_info(c);
+  *coarray_desc = c;
 
 #ifdef _XMP_GASNET
   _XMP_gasnet_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size);
@@ -301,9 +311,27 @@ void _XMP_coarray_malloc_do(void **coarray_desc, void *addr)
   _XMP_mpi_coarray_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size, false);
 #endif
   
-  free(_image_elmts);  // Note: Do not free() _coarray_elmts.
-
   _push_coarray_queue(c);
+}
+
+/** 
+   Attach memory to coarray
+ */
+void _XMP_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size)
+{
+  _XMP_coarray_set_info(coarray_desc);
+
+#ifdef _XMP_GASNET
+  //not implemented
+  _XMP_fatal("_XMP_gasnet_coarray_attach is not implemented\n");
+#elif _XMP_FJRDMA
+  //not implemented
+  _XMP_fatal("_XMP_fjrdma_coarray_attach is not implemented\n");
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_coarray_attach(coarray_desc, addr, coarray_size, false);
+#endif
+
+  _push_coarray_queue(coarray_desc);
 }
 
 /**
