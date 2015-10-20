@@ -16,6 +16,12 @@ static bool _is_coarray_win_acc_flushed = true;
 static bool _is_distarray_win_flushed = true;
 static bool _is_distarray_win_acc_flushed = true;
 
+static void _mpi_continuous_put(const int target_rank, const _XMP_coarray_t *dst_desc, const void *src,
+				const size_t dst_offset, const size_t src_offset, const size_t transfer_size, const int is_dst_on_acc);
+static void _mpi_continuous_get(const int target_rank, const _XMP_coarray_t *dst_desc, const void *src,
+				const size_t dst_offset, const size_t src_offset, const size_t transfer_size, const int is_dst_on_acc);
+
+
 static void set_flushed_flag(bool is_normal, bool is_acc, bool flag)
 {
   if(is_normal){
@@ -198,39 +204,13 @@ void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc
 			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc)
 {
   if(dst_elmts == src_elmts){
-    if(dst_elmts == 0) return;
     size_t transfer_size = elmt_size * dst_elmts;
-    char *laddr = (is_acc? src_desc->real_addr_dev : src_desc->real_addr) + src_offset;
-    char *raddr = (is_acc? dst_desc->addr_dev[target_rank] : dst_desc->addr[target_rank]) + dst_offset;
-    MPI_Win win = get_window(dst_desc, is_acc);
-
-#if 0
-    size_t size128k = (transfer_size / (128*1024)) * (128*1024);
-    size_t size_rest = transfer_size - size128k;
-    if(transfer_size >= (128*1024) && size_rest > 0 && size_rest <= (8*1024)){
-      XACC_DEBUG("put(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d) divied! (%d,%d)", laddr, transfer_size, target_rank, raddr, is_acc, size128k, size_rest);
-      MPI_Put((void*)laddr, size128k, MPI_BYTE, target_rank,
-    	      (MPI_Aint)raddr, size128k, MPI_BYTE,
-    	      is_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
-      MPI_Put((void*)(laddr+size128k), size_rest, MPI_BYTE, target_rank,
-    	      (MPI_Aint)(raddr+size128k), size_rest, MPI_BYTE,
-    	      is_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
-    }else{
-#endif
-    XACC_DEBUG("put(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_acc);
-    MPI_Put((void*)laddr, transfer_size, MPI_BYTE, target_rank,
-    	    (MPI_Aint)raddr, transfer_size, MPI_BYTE,
-	    win);
-#if 0
-    }
-#endif
-
-  }
-  else if(src_elmts == 1){
+    char *src = (is_acc? src_desc->real_addr_dev : src_desc->real_addr);
+    _mpi_continuous_put(target_rank, dst_desc, src, dst_offset, src_offset, transfer_size, is_acc);
+  }else if(src_elmts == 1){
     _XMP_fatal("unimplemented");
     //_gasnet_scalar_shortcut_mput(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
-  }
-  else{
+  }else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
 }
@@ -256,24 +236,13 @@ void _XMP_mpi_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_desc
 			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc)
 {
   if(dst_elmts == src_elmts){
-    if(dst_elmts == 0) return;
     size_t transfer_size = elmt_size * dst_elmts;
-    char *laddr = (is_acc? dst_desc->real_addr_dev : dst_desc->real_addr) + dst_offset;
-    char *raddr = (is_acc? src_desc->addr_dev[target_rank] : src_desc->addr[target_rank]) + src_offset;
-    MPI_Win win = get_window(dst_desc, is_acc);
-
-    XACC_DEBUG("get(dst_p=%p, size=%zd, target=%d, src_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_acc);
-    MPI_Get((void*)laddr, transfer_size, MPI_BYTE, target_rank,
-    	    (MPI_Aint)raddr, transfer_size, MPI_BYTE,
-	    win);
-
-    _XMP_mpi_sync_memory();
-    MPI_Win_flush_all(win);
-  }
-  else if(src_elmts == 1){
+    char *src = (is_acc? dst_desc->real_addr_dev : dst_desc->real_addr);
+    _mpi_continuous_get(target_rank, dst_desc, src,
+			dst_offset, src_offset, transfer_size, is_acc);
+  }else if(src_elmts == 1){
     _XMP_fatal("unimplemented");
-  }
-  else{
+  }else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
 }
@@ -334,9 +303,28 @@ static void _mpi_continuous_put(const int target_rank, const _XMP_coarray_t *dst
   MPI_Win win = get_window(dst_desc, is_dst_on_acc);
 
   XACC_DEBUG("continuous_put(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_dst_on_acc);
+
+#if 1
   MPI_Put((void*)laddr, transfer_size, MPI_BYTE, target_rank,
 	  (MPI_Aint)raddr, transfer_size, MPI_BYTE,
 	  win);
+#else
+  size_t size_multiple128k = (transfer_size / (128*1024)) * (128*1024);
+  size_t size_rest = transfer_size - size_multiple128k;
+  if(transfer_size >= (128*1024) && size_rest > 0 && size_rest <= (8*1024)){
+    XACC_DEBUG("put(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d) divied! (%d,%d)", laddr, transfer_size, target_rank, raddr, is_dst_on_acc, size128k, size_rest);
+    MPI_Put((void*)laddr, size_multiple128k, MPI_BYTE, target_rank,
+	    (MPI_Aint)raddr, size_multiple128k, MPI_BYTE,
+	    is_dst_on_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
+    MPI_Put((void*)(laddr+size_multiple128k), size_rest, MPI_BYTE, target_rank,
+	    (MPI_Aint)(raddr+size_multiple128k), size_rest, MPI_BYTE,
+	    is_dst_on_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
+  }else{
+    MPI_Put((void*)laddr, transfer_size, MPI_BYTE, target_rank,
+	    (MPI_Aint)raddr, transfer_size, MPI_BYTE,
+	    win);
+  }
+#endif
 
 }
 
