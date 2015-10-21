@@ -275,8 +275,8 @@ void _XMP_mpi_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_desc
   if(dst_elmts == src_elmts){
     size_t transfer_size = elmt_size * dst_elmts;
     char *src = get_local_addr(dst_desc, is_acc);
-    _mpi_continuous_get(target_rank, dst_desc, src,
-			dst_offset, src_offset, transfer_size, is_acc);
+    _mpi_continuous_get(target_rank, src_desc, src,
+			src_offset, dst_offset, transfer_size, is_acc);
   }else if(src_elmts == 1){
     _XMP_fatal("unimplemented");
   }else{
