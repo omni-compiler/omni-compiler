@@ -337,12 +337,11 @@ static void _mpi_continuous_get(const int target_rank, const _XMP_coarray_t *dst
   MPI_Win win = get_window(dst_desc, is_dst_on_acc);
 
   XACC_DEBUG("continuous_get(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_dst_on_acc);
-  MPI_Get((void*)laddr, transfer_size, MPI_BYTE, target_rank,
+  MPI_Request req;
+  MPI_Rget((void*)laddr, transfer_size, MPI_BYTE, target_rank,
 	  (MPI_Aint)raddr, transfer_size, MPI_BYTE,
-	  win);
-
-  _XMP_mpi_sync_memory();
-  MPI_Win_flush_all(win);
+	  win, &req);
+  MPI_Wait(&req, MPI_STATUS_IGNORE);
 }
 
 static bool _check_block_stride(const int dims, const _XMP_array_section_t *info, long long *cnt, long long *bl, long long *str)
@@ -447,18 +446,18 @@ static void _mpi_non_continuous_get(const int target_rank, const _XMP_coarray_t 
     MPI_Type_vector(dst_cnt, dst_bl * elmt_size, dst_str  * elmt_size, MPI_BYTE, &blockstride_type);
     MPI_Type_commit(&blockstride_type);
 
+    MPI_Request req;
     int result=
-      MPI_Get((void*)laddr, 1, blockstride_type, target_rank,
+      MPI_Rget((void*)laddr, 1, blockstride_type, target_rank,
 	      (MPI_Aint)raddr, 1, blockstride_type,
-	      win);
+	       win, &req);
     
     if(result != MPI_SUCCESS){
       _XMP_fatal("put error");
     }
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
     MPI_Type_free(&blockstride_type);
 
-    _XMP_mpi_sync_memory();
-    MPI_Win_flush_all(is_dst_on_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
 
   }else{
     _XMP_fatal("not implemented non-continuous data");
