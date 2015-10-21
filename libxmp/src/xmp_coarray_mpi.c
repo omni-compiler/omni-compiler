@@ -344,24 +344,29 @@ static void _mpi_continuous_put(const int target_rank, const _XMP_coarray_t *dst
   XACC_DEBUG("continuous_put(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_dst_on_acc);
 
 #if 1
-  MPI_Put((void*)laddr, transfer_size, MPI_BYTE, target_rank,
+  MPI_Request req;
+  MPI_Rput((void*)laddr, transfer_size, MPI_BYTE, target_rank,
 	  (MPI_Aint)raddr, transfer_size, MPI_BYTE,
-	  win);
+	   win, &req);
+  MPI_Wait(&req, MPI_STATUS_IGNORE);
 #else
+  MPI_Request req[2];
   size_t size_multiple128k = (transfer_size / (128*1024)) * (128*1024);
   size_t size_rest = transfer_size - size_multiple128k;
   if(transfer_size >= (128*1024) && size_rest > 0 && size_rest <= (8*1024)){
     XACC_DEBUG("put(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d) divied! (%d,%d)", laddr, transfer_size, target_rank, raddr, is_dst_on_acc, size128k, size_rest);
-    MPI_Put((void*)laddr, size_multiple128k, MPI_BYTE, target_rank,
+    MPI_Rput((void*)laddr, size_multiple128k, MPI_BYTE, target_rank,
 	    (MPI_Aint)raddr, size_multiple128k, MPI_BYTE,
-	    is_dst_on_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
-    MPI_Put((void*)(laddr+size_multiple128k), size_rest, MPI_BYTE, target_rank,
+	     win,req);
+    MPI_Rput((void*)(laddr+size_multiple128k), size_rest, MPI_BYTE, target_rank,
 	    (MPI_Aint)(raddr+size_multiple128k), size_rest, MPI_BYTE,
-	    is_dst_on_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
+	    win,req+1);
+    MPI_Waitall(2, req, MPI_STATUSES_IGNORE);
   }else{
-    MPI_Put((void*)laddr, transfer_size, MPI_BYTE, target_rank,
+    MPI_Rput((void*)laddr, transfer_size, MPI_BYTE, target_rank,
 	    (MPI_Aint)raddr, transfer_size, MPI_BYTE,
-	    win);
+	     win,req);
+    MPI_Wait(req, MPI_STATUS_IGNORE);
   }
 #endif
 
@@ -445,14 +450,16 @@ static void _mpi_non_continuous_put(const int target_rank, const _XMP_coarray_t 
     MPI_Type_vector(dst_cnt, dst_bl * elmt_size, dst_str  * elmt_size, MPI_BYTE, &blockstride_type);
     MPI_Type_commit(&blockstride_type);
 
+    MPI_Request req;
     int result=
-    MPI_Put((void*)laddr, 1, blockstride_type, target_rank,
+    MPI_Rput((void*)laddr, 1, blockstride_type, target_rank,
 	    (MPI_Aint)raddr, 1, blockstride_type,
-	    win);
+	     win, &req);
 
     if(result != MPI_SUCCESS){
       _XMP_fatal("put error");
     }
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
     MPI_Type_free(&blockstride_type);
 
   }else{
