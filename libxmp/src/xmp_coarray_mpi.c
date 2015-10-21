@@ -438,6 +438,7 @@ static void _mpi_non_continuous_get(const int target_rank, const _XMP_coarray_t 
   if(is_dst_blockstride && is_src_blockstride && dst_cnt == src_cnt && dst_bl == src_bl && dst_str == src_str){
     char *laddr = (char*)src + src_offset;
     char *raddr = (is_dst_on_acc? dst_desc->addr_dev[target_rank] : dst_desc->addr[target_rank]) + dst_offset;
+    MPI_Win win = get_window(dst_desc, is_dst_on_acc);
 
     XACC_DEBUG("blockstride_get(src_p=%p, (c,bl,s)=(%lld,%lld,%lld), target=%d, dst_p=%p, is_acc=%d)", laddr, src_cnt,src_bl,src_str, target_rank, raddr, is_dst_on_acc);
 
@@ -449,7 +450,7 @@ static void _mpi_non_continuous_get(const int target_rank, const _XMP_coarray_t 
     int result=
       MPI_Get((void*)laddr, 1, blockstride_type, target_rank,
 	      (MPI_Aint)raddr, 1, blockstride_type,
-	      is_dst_on_acc? _xmp_mpi_onesided_win_acc : _xmp_mpi_onesided_win);
+	      win);
     
     if(result != MPI_SUCCESS){
       _XMP_fatal("put error");
