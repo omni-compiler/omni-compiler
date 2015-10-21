@@ -285,11 +285,11 @@ typedef struct xmp_coarray{
                                 //       distance_of_image_elmts[1] is 4, distance_of_image_elmts[2] is 8.
 #ifdef _XMP_MPI3_ONESIDED
   MPI_Win win;
-#ifdef _XMP_XACC
+  //#ifdef _XMP_XACC
   char **addr_dev;
   char *real_addr_dev;
   MPI_Win win_acc;
-#endif
+  //#endif
 #endif
 }_XMP_coarray_t;
 

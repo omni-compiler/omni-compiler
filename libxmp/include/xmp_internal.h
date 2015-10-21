@@ -454,11 +454,11 @@ extern size_t _xmp_mpi_onesided_heap_size;
 extern char *_xmp_mpi_onesided_buf;
 extern MPI_Win _xmp_mpi_onesided_win;
 extern MPI_Win _xmp_mpi_distarray_win;
-#ifdef _XMP_XACC
+//#ifdef _XMP_XACC
 extern char *_xmp_mpi_onesided_buf_acc;
 extern MPI_Win _xmp_mpi_onesided_win_acc;
 extern MPI_Win _xmp_mpi_distarray_win_acc;
-#endif
+//#endif
 void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size);
 void _XMP_mpi_onesided_finalize();
 void _XMP_mpi_build_shift_queue(bool);
