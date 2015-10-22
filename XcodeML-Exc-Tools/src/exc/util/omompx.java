@@ -352,10 +352,7 @@ public class omompx
       if(exc.xmpF.XMP.hasErrors())
         System.exit(1);
 
-
-      ///////////////////////////////
-      //if (caf_translator0.containsCoarray()) {
-      ///////////////////////////////
+      if (caf_translator0.containsCoarray()) {
 
         //XMP.warning("translating coarray features");
 
@@ -375,9 +372,7 @@ public class omompx
           System.exit(1);
         caf_translator2.finish();
 
-      ///////////////////////////////
-      //} else {    // without coarray features
-      ///////////////////////////////
+      } else {    // without coarray features
 
         // XMP Fortran
         exc.xmpF.XMPtranslate
@@ -387,9 +382,7 @@ public class omompx
           System.exit(1);
         xmp_translator.finish();
 
-      ////////////////////////
-      //}
-      ////////////////////////
+      }
 
       if(xcodeWriter != null) {
           xobjFile.Output(xcodeWriter);
