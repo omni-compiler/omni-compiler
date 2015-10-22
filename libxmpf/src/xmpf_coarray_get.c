@@ -105,7 +105,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
   va_list argList;
   va_start(argList, rank);
 
-  if (*element % BOUNDARY_BYTE != 0) {
+  if (*element % ONESIDED_BOUNDARY != 0) {
     _XMP_fatal("violation of boundary in reference of a coindexed object\n"
                "  xmpf_coarray_get_array_, " __FILE__);
     return;
@@ -153,7 +153,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
 
 int _select_getscheme_scalar(int element)
 {
-  if (element % BOUNDARY_BYTE > 0)
+  if (element % ONESIDED_BOUNDARY > 0)
     return SCHEME_ExtraBufferGet;
 
   // SCHEME_ExtraDirectGet should not be used because 

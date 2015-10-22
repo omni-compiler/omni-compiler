@@ -1618,7 +1618,7 @@ public class XMPtransCoarrayRun
       return;
     }
 
-    // replace function name 'image'
+    // replace function name 'image_index'
     XobjString newFname = Xcons.Symbol(Xcode.IDENT, IMAGE_INDEX_NAME);
     xobj.setArg(0, newFname);
 

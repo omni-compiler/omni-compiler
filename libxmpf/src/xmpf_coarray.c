@@ -77,17 +77,9 @@ void _coarray_msg(int sw)
   }
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_MSG=%d\n"
-                          "  %zd-byte boundary\n"
-                          "  with %s\n",
-                          sw, BOUNDARY_BYTE,
-#if defined(_XMP_FJRDMA)
-                          "FJRDMA"
-#elif defined(_XMP_GASNET)
-                          "GASNET"
-#else
-                          "(something unknown)"
-#endif
-                          );
+                          "  %u-byte boundary\n"
+                          "  over %s\n",
+                          sw, ONESIDED_BOUNDARY, COMM_LAYER);
 }
 
 

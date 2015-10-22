@@ -248,7 +248,7 @@ size_t _roundUpElementSize(int count, size_t element)
   size_t elementRU;
 
   // boundary check and recovery
-  if (element % BOUNDARY_BYTE == 0) {
+  if (element % ONESIDED_BOUNDARY == 0) {
     elementRU = element;
   } else if (count == 1) {              // scalar or one-element array
     /* round up */

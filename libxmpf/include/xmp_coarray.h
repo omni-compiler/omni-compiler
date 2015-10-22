@@ -2,7 +2,6 @@
 !  coarray intrinsics
 !-------------------------------
 !! inquiry functions
-      integer, external :: image_index
       integer, external :: xmpf_image_index
 !     interface
 !        integer function xmpf_image_index(descptr, coindexes)
@@ -11,7 +10,6 @@
 !        end function xmpf_image_index_coarray_sub
 !     end interface
 
-      integer, external :: lcobound, ucobound
       interface xmpf_cobound
          !! restriction: kind must be 4.
          function xmpf_cobound_nodim(descptr, kind, lu, corank)         &
@@ -30,7 +28,7 @@
       end interface
 
 !! transformation functions
-      integer, external :: num_images, this_image
+      integer, external :: num_images, this_image   !! raw name libraries
       interface xmpf_this_image
          function xmpf_this_image_coarray_wrap(descptr, corank)         &
      &    result(image)

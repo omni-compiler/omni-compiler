@@ -276,14 +276,22 @@ extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void
 #define TRUE   1
 #define FALSE  0
 
-#ifdef _XMP_FJRDMA
-#  define BOUNDARY_BYTE ((size_t)4)
+#if defined(_XMP_FJRDMA)
+#  define ONESIDED_BOUNDARY ((size_t)4)
+#  define ONESIDED_COMM_LAYER "FJRDMA"
+#elif defined(_XMP_GASNET)
+#  define ONESIDED_BOUNDARY ((size_t)1)
+#  define ONESIDED_COMM_LAYER "GASNET"
+#elif defined(_XMP_MPI3_ONESIDED)
+#  define ONESIDED_BOUNDARY ((size_t)1)
+#  define ONESIDED_COMM_LAYER "MPI3_ONESIDED"
 #else
-#  define BOUNDARY_BYTE ((size_t)1)
+#  define ONESIDED_BOUNDARY ((size_t)1)
+#  define ONESIDED_COMM_LAYER "(something unknown)"
 #endif
 
 #define ROUND_UP(n,p)         (((((size_t)(n))-1)/(p)+1)*(p))
-#define ROUND_UP_BOUNDARY(n)  ROUND_UP((n),BOUNDARY_BYTE)
+#define ROUND_UP_BOUNDARY(n)  ROUND_UP((n),ONESIDED_BOUNDARY)
 
 #define MALLOC_UNIT  ((size_t)4)
 #define ROUND_UP_UNIT(n)      ROUND_UP((n),MALLOC_UNIT)

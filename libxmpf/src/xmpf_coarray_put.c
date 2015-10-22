@@ -112,7 +112,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
   char *buf;
   int i;
 
-  if (*element % BOUNDARY_BYTE != 0) {
+  if (*element % ONESIDED_BOUNDARY != 0) {
     _XMP_fatal("violation of boundary writing to a coindexed variable\n"
                "  xmpf_coarray_put_array_, " __FILE__);
     return;
@@ -170,7 +170,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
   char *buf, *p;
   int i, nelems;
 
-  if (*element % BOUNDARY_BYTE != 0) {
+  if (*element % ONESIDED_BOUNDARY != 0) {
     _XMP_fatal("violation of boundary writing a scalar to a coindexed variable");
     return;
   }
@@ -218,13 +218,13 @@ int _select_putscheme_scalar(int condition, int element)
   //
   // 2015.06.15 change back to conditional decision
   if (condition >= 1) {
-   if (element % BOUNDARY_BYTE == 0)
+   if (element % ONESIDED_BOUNDARY == 0)
       return SCHEME_BufferPut;
     return SCHEME_ExtraBufferPut;
   }
 #endif
   
-  if (element % BOUNDARY_BYTE == 0)
+  if (element % ONESIDED_BOUNDARY == 0)
     return SCHEME_DirectPut;
   return SCHEME_ExtraDirectPut;
 }
