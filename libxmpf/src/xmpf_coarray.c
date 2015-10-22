@@ -79,7 +79,7 @@ void _coarray_msg(int sw)
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_MSG=%d\n"
                           "  %u-byte boundary\n"
                           "  over %s\n",
-                          sw, ONESIDED_BOUNDARY, COMM_LAYER);
+                          sw, ONESIDED_BOUNDARY, ONESIDED_COMM_LAYER);
 }
 
 
