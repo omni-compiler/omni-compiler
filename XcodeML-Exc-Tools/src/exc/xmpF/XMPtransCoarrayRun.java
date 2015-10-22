@@ -229,12 +229,10 @@ public class XMPtransCoarrayRun
       transExecPart_visibleCoarrays();
     }
 
-    ///////////////////////////////
-    //// SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
-    ////  convert main program to soubroutine xmpf_main
-    //if (_isMainProgram())
-    //  _convMainProgramToSubroutine("xmpf_main");
-    ///////////////////////////////
+    // SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
+    //  convert main program to soubroutine xmpf_main
+    if (_isMainProgram())
+      _convMainProgramToSubroutine("xmpf_main");
   }
 
 
