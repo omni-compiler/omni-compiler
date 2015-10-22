@@ -17,6 +17,22 @@ int _XMP_coarray_get_total_elmts(void *coarray_desc)
   return total_coarray_elmts;
 }
 
+/** 
+   Attach memory to coarray
+ */
+void _XMP_coarray_attach_acc(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size)
+{
+  _XMP_coarray_set_info(coarray_desc);
+
+#ifdef _XMP_GASNET
+  _XMP_fatal("_XMP_coarray_attach_acc is unavailable");
+#elif _XMP_FJRDMA
+  _XMP_fatal("_XMP_coarray_attach_acc is unavailable");
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_coarray_attach(coarray_desc, addr, coarray_size, true);
+#endif
+}
+
 void _XMP_coarray_malloc_do_acc(void **coarray_desc, void *addr)
 {
   _XMP_coarray_t* c = *coarray_desc;

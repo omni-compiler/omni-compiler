@@ -90,6 +90,7 @@ extern void _XMP_coarray_malloc_image_info_7(const int, const int, const int, co
 
 extern void _XMP_coarray_malloc_do_f(void **, void *);
 extern void _XMP_coarray_malloc_do(void **, void *);
+extern void _XMP_coarray_attach(void **, void *, const size_t);
 extern void _XMP_coarray_lastly_deallocate();
 
 extern void _XMP_coarray_rdma_coarray_set_1(const int, const int, const int);
