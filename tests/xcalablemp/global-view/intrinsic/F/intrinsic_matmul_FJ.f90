@@ -5,19 +5,11 @@ program test_matmul_Fjt
   call test_matmul_003()
   call test_matmul_004()
 #if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
-<<<<<<< HEAD
-!!  call test_matmul_005()
-#endif
-  call test_matmul_006()
-#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
-!!  call test_matmul_007()
-=======
 !  call test_matmul_005()
 #endif
   call test_matmul_006()
 #if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
 !  call test_matmul_007()
->>>>>>> dbb307853c244f732af8ea91d76e24d76c64437e
 #endif
   call test_matmul_008()
   call test_matmul_009()

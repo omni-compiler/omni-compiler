@@ -1,16 +1,6 @@
 program test_transpose_FJ
 
 #if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
-<<<<<<< HEAD
-!!  call test_transpose_002()
-!!  call test_transpose_003()
-#endif
-  call test_transpose_017()
-#if ((XMP_MPI_VERSION >= 3) || (XMP_MPI_VERSION == 2 && XMP_MPI_SUBVERSION >= 2))
-!!  call test_transpose_018()
-!!  call test_transpose_019()
-!!  call test_transpose_020()
-=======
 !  call test_transpose_002()
 !  call test_transpose_003()
 #endif
@@ -19,7 +9,6 @@ program test_transpose_FJ
   call test_transpose_018()
 !  call test_transpose_019()
 !  call test_transpose_020()
->>>>>>> dbb307853c244f732af8ea91d76e24d76c64437e
 #endif
   call test_transpose_030()
   call test_transpose_031()
