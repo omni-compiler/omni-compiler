@@ -46,14 +46,14 @@ ompc_barrier()
     struct ompc_thread *tp;
 
     tp = ompc_current_thread();
-    ompc_thread_barrier(tp->num, tp->parent);
+    ompc_tree_barrier(tp, &tp->parent->tree_barrier_desc, tp->num);
 }
 
 
 void
 ompc_barrier_tid(struct ompc_thread *tp)
 {
-    ompc_thread_barrier(tp->num, tp->parent);
+    ompc_tree_barrier(tp, &tp->parent->tree_barrier_desc, tp->num);
 }
 
 
@@ -907,7 +907,7 @@ ompc_copyin_thdprv(void *datap,void *global_datap,int size)
  */
 #define DO_REDUCTION_INTEGRAL(type_t,t) {\
     vals[id].r_v.t = *((type_t *)in_p); \
-    if(tpp != NULL) ompc_thread_barrier(id,tpp); \
+    if(tpp != NULL) ompc_tree_barrier(tp, &tpp->tree_barrier_desc, id); \
     if(id == 0) { \
         any_type v; int i; \
         v.t = *((type_t *)out_p); \
@@ -951,12 +951,12 @@ ompc_copyin_thdprv(void *datap,void *global_datap,int size)
         } \
         *((type_t *)out_p) = v.t; \
     } \
-    if(tpp != NULL) ompc_thread_barrier(id,tpp); \
+    if(tpp != NULL) ompc_tree_barrier(tp, &tpp->tree_barrier_desc, id); \
 }
 
 #define DO_REDUCTION_FLOAT(type_t,t) { \
     vals[id].r_v.t = *((type_t *)in_p); \
-    if(tpp != NULL) ompc_thread_barrier(id,tpp); \
+    if(tpp != NULL) ompc_tree_barrier(tp, &tpp->tree_barrier_desc, id); \
     if(id == 0){ \
         any_type v; int i; \
         v.t = *((type_t *)out_p); \
@@ -991,12 +991,12 @@ ompc_copyin_thdprv(void *datap,void *global_datap,int size)
         } \
         *((type_t *)out_p) = v.t; \
     } \
-    if(tpp != NULL) ompc_thread_barrier(id,tpp); \
+    if(tpp != NULL) ompc_tree_barrier(tp, &tpp->tree_barrier_desc, id); \
 }
 
 #define DO_REDUCTION_COMPLEX(type_t,t) { \
     vals[id].r_v.t = *((type_t *)in_p); \
-    if(tpp != NULL) ompc_thread_barrier(id,tpp); \
+    if(tpp != NULL) ompc_tree_barrier(tp, &tpp->tree_barrier_desc, id); \
     if(id == 0){ \
         any_type v; int i; \
         v.t = *((type_t *)out_p); \
@@ -1015,7 +1015,7 @@ ompc_copyin_thdprv(void *datap,void *global_datap,int size)
         } \
         *((type_t *)out_p) = v.t; \
      } \
-     if(tpp != NULL) ompc_thread_barrier(id,tpp); \
+     if(tpp != NULL) ompc_tree_barrier(tp, &tpp->tree_barrier_desc, id); \
 }
 
 

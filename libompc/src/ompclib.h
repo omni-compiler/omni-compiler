@@ -143,6 +143,8 @@ struct ompc_thread {
         any_type r_v;  /* for reduction */
         char _padding[CACHE_LINE_SIZE-sizeof(int)-sizeof(any_type)];
     } barrier_flags[MAX_PROC];
+    
+    struct ompc_tree_barrier_desc tree_barrier_desc;
 };
 
 

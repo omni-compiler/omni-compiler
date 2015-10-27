@@ -475,6 +475,8 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         cthd->barrier_flags[i]._v = cthd->barrier_sense;
         cthd->in_flags[i]._v = 0;
     }
+    
+    ompc_init_tree_barrier(&cthd->tree_barrier_desc, n_thds);
 
     ompc_thread_t *children = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * n_thds);
 
@@ -485,6 +487,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         tp->parent = cthd;
         tp->num = i;                        /* set thread_num */
         tp->in_parallel = in_parallel;
+        tp->barrier_sense = 0;
 
         if (i == 0) {
             tp->nargs = nargs;
@@ -512,6 +515,8 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     ABT_mutex_free(&cthd->broadcast_mutex);
     ABT_mutex_free(&cthd->reduction_mutex);
     free(children);
+    
+    ompc_finalize_tree_barrier(&cthd->tree_barrier_desc);
 
     if (cthd->parent == NULL) {
         proc_last_used = 0;
