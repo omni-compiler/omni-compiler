@@ -37,13 +37,12 @@ static _Bool init_node(struct ompc_tree_barrier_desc *desc,
     }
     mynode->num_children = mynode->count = num_children;
     
-    if (num_children > 0) {
+    if (num_children == 2) {
         ABT_mutex_create(&mynode->mutex);
         ABT_cond_create(&mynode->cond);
-        return 1;
     }
     
-    return 0;
+    return num_children > 0;
 }
 
 void ompc_init_tree_barrier(struct ompc_tree_barrier_desc *desc,
@@ -61,7 +60,7 @@ void ompc_init_tree_barrier(struct ompc_tree_barrier_desc *desc,
 void ompc_finalize_tree_barrier(struct ompc_tree_barrier_desc *desc)
 {
     for (int i = 0; i < desc->node_count; i++) {
-        if (desc->nodes[i].num_children > 0) {
+        if (desc->nodes[i].num_children == 2) {
             ABT_cond_free(&desc->nodes[i].cond);
             ABT_mutex_free(&desc->nodes[i].mutex);
         }
@@ -76,7 +75,11 @@ static void wait_on_node(struct ompc_tree_barrier_node *node,
             wait_on_node(node->parent, sense);
         }
         node->count = node->num_children;
-        node->sense = sense;
+        if (node->num_children == 2) {
+            OMPC_SIGNAL(node->sense = sense, node->cond, node->mutex);
+        } else {
+            node->sense = sense;
+        }
     } else {
         OMPC_WAIT_UNTIL(node->sense == sense, node->cond, node->mutex);
     }
