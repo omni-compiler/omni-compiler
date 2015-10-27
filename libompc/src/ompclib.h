@@ -70,6 +70,26 @@ struct ompc_proc {
     ABT_mutex free_thr_mutex;
 };
 
+struct ompc_tree_barrier_node
+{
+    int num_children;
+    int count;
+    _Bool sense;
+    struct ompc_tree_barrier_node *parent;
+    ABT_mutex mutex;
+    ABT_cond cond;
+};
+
+struct ompc_tree_barrier_desc
+{
+    int num_threads;
+    int num_leaves;
+    int node_count;
+    int leaf_count;
+    struct ompc_tree_barrier_node nodes[MAX_PROC - 1];
+    struct ompc_tree_barrier_node *leaves[MAX_PROC / 2];
+};
+
 struct ompc_thread {
     ompc_thread_t tid;                  /* ULT id given by ABT_thread_self() */
     struct ompc_thread *parent;         /*  */
@@ -159,6 +179,13 @@ void ompc_exit_critical (ompc_lock_t **);
 void ompc_set_runtime_schedule(char *s);
 
 ompc_proc_t ompc_xstream_self();
+
+void ompc_init_tree_barrier(struct ompc_tree_barrier_desc *desc,
+                            int num_threads);
+void ompc_finalize_tree_barrier(struct ompc_tree_barrier_desc *desc);
+void ompc_tree_barrier(struct ompc_thread *thread,
+                       struct ompc_tree_barrier_desc *desc,
+                       int thread_num);
 
 /* GNUC and Intel Fortran supports __sync_synchronize */
 #define MBAR() __sync_synchronize()
