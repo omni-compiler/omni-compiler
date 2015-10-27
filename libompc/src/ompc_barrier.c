@@ -48,6 +48,8 @@ static _Bool init_node(struct ompc_tree_barrier_desc *desc,
 void ompc_init_tree_barrier(struct ompc_tree_barrier_desc *desc,
                             int num_threads)
 {
+    desc->node_count = 0;
+    desc->leaf_count = 0;
     desc->num_threads = num_threads;
     desc->num_leaves = (num_threads + 1) / 2;
     int height = 0;
