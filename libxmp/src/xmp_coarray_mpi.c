@@ -264,7 +264,8 @@ void _XMP_mpi_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const
 /*               [IN] dst_elmts    : Number of elements of destination  */
 /*               [IN] src_elmts    : Number of elements of source       */
 /*               [IN] elmt_size    : Element size                       */
-/*               [IN] is_acc       : Whether src and dst are acc or not */
+/*               [IN] is_dst_on_acc: Whether dst is on acc or not       */
+/*               [IN] is_src_on_acc: Whether src is on acc or not       */
 /* NOTE       : Both dst and src are continuous coarrays.               */
 /*              target_rank != __XMP_world_rank.                        */
 /* EXAMPLE    :                                                         */
@@ -272,17 +273,21 @@ void _XMP_mpi_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const
 /************************************************************************/
 void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 			   const size_t dst_offset, const size_t src_offset,
-			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc)
+			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_dst_on_acc, const bool is_src_on_acc)
 {
   size_t transfer_size = elmt_size * dst_elmts;
-  char *src = get_local_addr(src_desc, is_acc);
+  char *src = get_local_addr(src_desc, is_src_on_acc);
   if(dst_elmts == src_elmts){
-    _mpi_continuous(_XMP_N_COARRAY_PUT, target_rank, dst_desc, src, dst_offset, src_offset, transfer_size, is_acc);
+    _mpi_continuous(_XMP_N_COARRAY_PUT,
+		    target_rank,
+		    dst_desc, src,
+		    dst_offset, src_offset,
+		    transfer_size, is_dst_on_acc);
   }else if(src_elmts == 1){
     _mpi_scalar_shortcut_mput(target_rank,
 			      dst_desc, src,
 			      dst_offset, src_offset,
-			      dst_elmts, is_acc);
+			      dst_elmts, is_dst_on_acc);
   }else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
@@ -298,7 +303,8 @@ void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc
 /*               [IN] dst_elmts    : Number of elements of destination  */
 /*               [IN] src_elmts    : Number of elements of source       */
 /*               [IN] elmt_size    : Element size                       */
-/*               [IN] is_acc       : Whether src and dst are acc or not */
+/*               [IN] is_dst_on_acc: Whether dst is on acc or not       */
+/*               [IN] is_src_on_acc: Whether src is on acc or not       */
 /* NOTE       : Both dst and src are continuous coarrays.               */
 /*              target_rank != __XMP_world_rank.                        */
 /* EXAMPLE    :                                                         */
@@ -306,24 +312,135 @@ void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc
 /************************************************************************/
 void _XMP_mpi_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 			   const size_t dst_offset, const size_t src_offset,
-			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc)
+			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_dst_on_acc, const bool is_src_on_acc)
 {
   size_t transfer_size = elmt_size * dst_elmts;
-  char *dst = get_local_addr(dst_desc, is_acc);
+  char *dst = get_local_addr(dst_desc, is_dst_on_acc);
   if(dst_elmts == src_elmts){
     _mpi_continuous(_XMP_N_COARRAY_GET,
 		    target_rank,
 		    src_desc, dst,
 		    src_offset, dst_offset,
-		    transfer_size, is_acc);
+		    transfer_size, is_src_on_acc);
   }else if(src_elmts == 1){
     _mpi_scalar_shortcut_mget(target_rank,
 			      dst, src_desc,
 			      dst_offset, src_offset,
 			      dst_elmts,
-			      is_acc);
+			      is_src_on_acc);
   }else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
+  }
+}
+
+/***************************************************************************************/
+/* DESCRIPTION : Execute put operation                                                 */
+/* ARGUMENT    : [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
+/*               [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
+/*               [IN] target_rank    : Target rank                                     */
+/*               [IN] dst_dims       : Number of dimensions of destination array       */
+/*               [IN] src_dims       : Number of dimensions of source array            */
+/*               [IN] *dst_info      : Information of destination array                */
+/*               [IN] *src_info      : Information of source array                     */
+/*               [OUT] *dst_desc     : Descriptor of destination coarray               */
+/*               [IN] *src           : Pointer of source array                         */
+/*               [IN] dst_elmts      : Number of elements of destination array         */
+/*               [IN] src_elmts      : Number of elements of source array              */
+/*               [IN] is_dst_on_acc  : Is destination on accelerator ? (TRUE/FALSE)    */
+/***************************************************************************************/
+void _XMP_mpi_put(const int dst_continuous, const int src_continuous, const int target_rank, 
+		  const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
+		  const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
+		  const void *src, const int dst_elmts, const int src_elmts,
+		  const int is_dst_on_acc)
+{
+  size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
+  size_t src_offset = _XMP_get_offset(src_info, src_dims);
+  size_t transfer_size = dst_desc->elmt_size * dst_elmts;
+
+  if(dst_elmts == src_elmts){
+    if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
+      _mpi_continuous(_XMP_N_COARRAY_PUT,
+		      target_rank,
+		      dst_desc, src,
+		      dst_offset, src_offset,
+		      transfer_size, is_dst_on_acc);
+    }
+    else{
+      _mpi_non_continuous(_XMP_N_COARRAY_PUT, target_rank,
+			  dst_desc, src,
+			  dst_offset, src_offset,
+			  dst_dims, src_dims,
+			  dst_info, src_info,
+			  dst_elmts, is_dst_on_acc);
+    }
+  }
+  else{
+    if(src_elmts == 1){
+      _mpi_scalar_mput(target_rank,
+		       dst_desc, src,
+		       dst_offset, src_offset,
+		       dst_dims,
+		       dst_info,
+		       is_dst_on_acc);
+    }
+    else{
+      _XMP_fatal("Number of elements is invalid");
+    }
+  }
+}
+
+/***************************************************************************************/
+/* DESCRIPTION : Execute get operation                                                 */
+/* ARGUMENT    : [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
+/*               [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
+/*               [IN] target_rank    : Target rank                                     */
+/*               [IN] src_dims       : Number of dimensions of source array            */
+/*               [IN] dst_dims       : Number of dimensions of destination array       */
+/*               [IN] *src_info      : Information of source array                     */
+/*               [IN] *dst_info      : Information of destination array                */
+/*               [IN] *src_desc      : Descriptor of source array                      */
+/*               [OUT] *dst          : Pointer of destination array                    */
+/*               [IN] src_elmts      : Number of elements of source array              */
+/*               [IN] dst_elmts      : Number of elements of destination array         */
+/*               [IN] is_src_on_acc  : Is source on accelerator ? (TRUE/FALSE)         */
+/***************************************************************************************/
+void _XMP_mpi_get(const int src_continuous, const int dst_continuous, const int target_rank,
+		  const int src_dims, const int dst_dims, const _XMP_array_section_t *src_info,
+		  const _XMP_array_section_t *dst_info, const _XMP_coarray_t *src_desc,
+		  void *dst, const int src_elmts, const int dst_elmts,
+		  const int is_src_on_acc)
+{
+  size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
+  size_t src_offset = _XMP_get_offset(src_info, src_dims);
+  size_t transfer_size = src_desc->elmt_size * src_elmts;
+
+  XACC_DEBUG("_XMP_mpi_get, dst_elmts = %d, src_elmts = %d\n", src_elmts, dst_elmts);
+
+  if(src_elmts == dst_elmts){
+    if(src_continuous == _XMP_N_INT_TRUE && dst_continuous == _XMP_N_INT_TRUE){
+      _mpi_continuous(_XMP_N_COARRAY_GET, 
+		      target_rank,
+		      src_desc, dst,
+		      src_offset, dst_offset,
+		      transfer_size, is_src_on_acc);
+    }else{
+      _mpi_non_continuous(_XMP_N_COARRAY_GET, target_rank,
+			  src_desc, dst,
+			  src_offset, dst_offset,
+			  src_dims, dst_dims,
+			  src_info, dst_info,
+			  src_elmts, is_src_on_acc);
+    }
+  }else if(src_elmts == 1){
+    _mpi_scalar_mget(target_rank,
+		     dst, src_desc,
+		     dst_offset, src_offset,
+		     dst_dims,
+		     dst_info,
+		     is_src_on_acc);
+  }else{
+    _XMP_fatal("Number of elements is invalid");
   }
 }
 
@@ -499,65 +616,6 @@ static void _mpi_non_continuous(const int op, const int target_rank,
 }
 
 
-/***************************************************************************************/
-/* DESCRIPTION : Execute put operation                                                 */
-/* ARGUMENT    : [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
-/*               [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
-/*               [IN] target_rank    : Target rank                                     */
-/*               [IN] dst_dims       : Number of dimensions of destination array       */
-/*               [IN] src_dims       : Number of dimensions of source array            */
-/*               [IN] *dst_info      : Information of destination array                */
-/*               [IN] *src_info      : Information of source array                     */
-/*               [OUT] *dst_desc     : Descriptor of destination coarray               */
-/*               [IN] *src_desc      : Descriptor of source array                      */
-/*               [IN] *src           : Pointer of source array                         */
-/*               [IN] dst_elmts      : Number of elements of destination array         */
-/*               [IN] src_elmts      : Number of elements of source array              */
-/***************************************************************************************/
-void _XMP_mpi_put(const int dst_continuous, const int src_continuous, const int target_rank, 
-		  const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
-		  const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
-		  const _XMP_coarray_t *src_desc, void *src, const int dst_elmts, const int src_elmts,
-		  const int is_dst_on_acc, const int is_src_on_acc)
-{
-  size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
-  size_t src_offset = _XMP_get_offset(src_info, src_dims);
-
-  size_t transfer_size = dst_desc->elmt_size * dst_elmts;
-  //_check_transfer_size(transfer_size);
-
-  if(dst_elmts == src_elmts){
-    if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-      //_mpi_continuous_put(target_rank, dst_desc, src, dst_offset, src_offset, transfer_size, is_dst_on_acc);
-      _mpi_continuous(_XMP_N_COARRAY_PUT,
-		      target_rank,
-		      dst_desc, src,
-		      dst_offset, src_offset,
-		      transfer_size, is_dst_on_acc);
-    }
-    else{
-      _mpi_non_continuous(_XMP_N_COARRAY_PUT, target_rank,
-			  dst_desc, src,
-			  dst_offset, src_offset,
-			  dst_dims, src_dims,
-			  dst_info, src_info,
-			  dst_elmts, is_dst_on_acc);
-    }
-  }
-  else{
-    if(src_elmts == 1){
-      _mpi_scalar_mput(target_rank,
-		       dst_desc, src,
-		       dst_offset, src_offset,
-		       dst_dims,
-		       dst_info,
-		       is_dst_on_acc);
-    }
-    else{
-      _XMP_fatal("Number of elements is invalid");
-    }
-  }
-}
 
 static void _mpi_scalar_mput(const int target_rank, 
 			     const _XMP_coarray_t *dst_desc, const void *src,
@@ -697,68 +755,6 @@ static void _mpi_scalar_shortcut_mget(const int target_rank,
 }
 
 
-/***************************************************************************************/
-/* DESCRIPTION : Execute get operation                                                 */
-/* ARGUMENT    : [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
-/*               [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
-/*               [IN] target_rank    : Target rank                                     */
-/*               [IN] dst_dims       : Number of dimensions of destination array       */
-/*               [IN] src_dims       : Number of dimensions of source array            */
-/*               [IN] *dst_info      : Information of destination array                */
-/*               [IN] *src_info      : Information of source array                     */
-/*               [OUT] *dst_desc     : Descriptor of destination coarray               */
-/*               [IN] *src_desc      : Descriptor of source array                      */
-/*               [IN] *src           : Pointer of source array                         */
-/*               [IN] dst_elmts      : Number of elements of destination array         */
-/*               [IN] src_elmts      : Number of elements of source array              */
-/***************************************************************************************/
-void _XMP_mpi_get(const int dst_continuous, const int src_continuous, const int target_rank,
-		  const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info,
-		  const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc,
-		  const _XMP_coarray_t *src_desc, void *src, const int dst_elmts, const int src_elmts,
-		  const int is_dst_on_acc, const int is_src_on_acc)
-{
-  //FIXME currently, dst = remote, src = local
-
-  size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
-  size_t src_offset = _XMP_get_offset(src_info, src_dims);
-
-  size_t transfer_size = dst_desc->elmt_size * dst_elmts;
-  //_check_transfer_size(transfer_size);
-
-  XACC_DEBUG("_XMP_mpi_get, dst_elmts = %d, src_elmts = %d\n", dst_elmts, src_elmts);
-
-  if(dst_elmts == src_elmts){
-    if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-      _mpi_continuous(_XMP_N_COARRAY_GET, 
-		      target_rank,
-		      dst_desc, src,
-		      dst_offset, src_offset,
-		      transfer_size, is_dst_on_acc);
-    }
-    else{
-      _mpi_non_continuous(_XMP_N_COARRAY_GET, target_rank,
-			  dst_desc, src,
-			  dst_offset, src_offset,
-			  dst_dims, src_dims,
-			  dst_info, src_info,
-			  dst_elmts, is_dst_on_acc);
-    }
-  }
-  else{
-    if(dst_elmts == 1){
-      _mpi_scalar_mget(target_rank,
-		       src, dst_desc,
-		       src_offset, dst_offset,
-		       src_dims,
-		       src_info,
-		       is_dst_on_acc);
-    }
-    else{
-      _XMP_fatal("Number of elements is invalid");
-    }
-  }
-}
 
 void _XMP_mpi_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size, const bool is_acc)
 {
