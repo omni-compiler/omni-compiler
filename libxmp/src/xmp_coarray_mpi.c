@@ -18,10 +18,20 @@ static bool _is_coarray_win_acc_flushed = true;
 static bool _is_distarray_win_flushed = true;
 static bool _is_distarray_win_acc_flushed = true;
 
-static void _mpi_continuous_put(const int target_rank, const _XMP_coarray_t *dst_desc, const void *src,
-				const size_t dst_offset, const size_t src_offset, const size_t transfer_size, const int is_dst_on_acc);
-static void _mpi_continuous_get(const int target_rank, const _XMP_coarray_t *dst_desc, const void *src,
-				const size_t dst_offset, const size_t src_offset, const size_t transfer_size, const int is_dst_on_acc);
+static void _mpi_continuous(const int op,
+			    const int target_rank, 
+			    const _XMP_coarray_t *remote_desc, const void *local,
+			    const size_t remote_offset, const size_t local_offset,
+			    const size_t transfer_size, const int is_remote_on_acc);
+
+static void _mpi_non_continuous(const int op,
+				const int target_rank,
+				const _XMP_coarray_t *remote_desc, const void *local_ptr,
+				const size_t remote_offset, const size_t local_offset,
+				const int remote_dims, const int local_dims,
+				const _XMP_array_section_t *remote_info, const _XMP_array_section_t *local_info,
+				const size_t remote_elmts, const int is_remote_on_acc);
+
 static void _mpi_scalar_mput(const int target_rank, 
 			     const _XMP_coarray_t *dst_desc, const void *src,
 			     const size_t dst_offset, const size_t src_offset,
@@ -267,9 +277,8 @@ void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc
   size_t transfer_size = elmt_size * dst_elmts;
   char *src = get_local_addr(src_desc, is_acc);
   if(dst_elmts == src_elmts){
-    _mpi_continuous_put(target_rank, dst_desc, src, dst_offset, src_offset, transfer_size, is_acc);
+    _mpi_continuous(_XMP_N_COARRAY_PUT, target_rank, dst_desc, src, dst_offset, src_offset, transfer_size, is_acc);
   }else if(src_elmts == 1){
-    //    _XMP_fatal("unimplemented");
     _mpi_scalar_shortcut_mput(target_rank,
 			      dst_desc, src,
 			      dst_offset, src_offset,
@@ -302,8 +311,11 @@ void _XMP_mpi_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_desc
   size_t transfer_size = elmt_size * dst_elmts;
   char *dst = get_local_addr(dst_desc, is_acc);
   if(dst_elmts == src_elmts){
-    _mpi_continuous_get(target_rank, src_desc, dst,
-			src_offset, dst_offset, transfer_size, is_acc);
+    _mpi_continuous(_XMP_N_COARRAY_GET,
+		    target_rank,
+		    src_desc, dst,
+		    src_offset, dst_offset,
+		    transfer_size, is_acc);
   }else if(src_elmts == 1){
     _mpi_scalar_shortcut_mget(target_rank,
 			      dst, src_desc,
@@ -364,23 +376,35 @@ void _XMP_mpi_sync_all()
   MPI_Barrier(MPI_COMM_WORLD);
 }
 
-static void _mpi_continuous_put(const int target_rank, const _XMP_coarray_t *dst_desc, const void *src,
-				const size_t dst_offset, const size_t src_offset, const size_t transfer_size, const int is_dst_on_acc)
+static void _mpi_continuous(const int op,
+			    const int target_rank, 
+			    const _XMP_coarray_t *remote_desc, const void *local,
+			    const size_t remote_offset, const size_t local_offset,
+			    const size_t transfer_size, const int is_remote_on_acc)
 {
   if(transfer_size == 0) return;
-  char *laddr = (char*)src + src_offset;
-  char *raddr = get_remote_addr(dst_desc, target_rank, is_dst_on_acc) + dst_offset;
-  MPI_Win win = get_window(dst_desc, is_dst_on_acc);
-
-  XACC_DEBUG("continuous_put(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_dst_on_acc);
-
-#if 1
+  char *laddr = (char*)local + local_offset;
+  char *raddr = get_remote_addr(remote_desc, target_rank, is_remote_on_acc) + remote_offset;
+  MPI_Win win = get_window(remote_desc, is_remote_on_acc);
   MPI_Request req;
-  MPI_Rput((void*)laddr, transfer_size, MPI_BYTE, target_rank,
-	  (MPI_Aint)raddr, transfer_size, MPI_BYTE,
-	   win, &req);
-  MPI_Wait(&req, MPI_STATUS_IGNORE);
-#else
+
+  if(op == _XMP_N_COARRAY_PUT){
+    XACC_DEBUG("continuous_put(local=%p, size=%zd, target=%d, remote=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_remote_on_acc);
+    MPI_Rput((void*)laddr, transfer_size, MPI_BYTE, target_rank,
+	     (MPI_Aint)raddr, transfer_size, MPI_BYTE,
+	     win, &req);
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+  }else if(op == _XMP_N_COARRAY_GET){
+    XACC_DEBUG("continuous_get(local=%p, size=%zd, target=%d, remote=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_remote_on_acc);
+    MPI_Rget((void*)laddr, transfer_size, MPI_BYTE, target_rank,
+	     (MPI_Aint)raddr, transfer_size, MPI_BYTE,
+	     win, &req);
+    MPI_Wait(&req, MPI_STATUS_IGNORE);
+  }else{
+    _XMP_fatal("invalid coarray operation type");
+  }
+
+  /*
   MPI_Request req[2];
   size_t size_multiple128k = (transfer_size / (128*1024)) * (128*1024);
   size_t size_rest = transfer_size - size_multiple128k;
@@ -399,81 +423,20 @@ static void _mpi_continuous_put(const int target_rank, const _XMP_coarray_t *dst
 	     win,req);
     MPI_Wait(req, MPI_STATUS_IGNORE);
   }
-#endif
-
+  */
 }
 
-static void _mpi_continuous_get(const int target_rank, const _XMP_coarray_t *dst_desc, const void *src,
-				const size_t dst_offset, const size_t src_offset, const size_t transfer_size, const int is_dst_on_acc)
-{
-  if(transfer_size == 0) return;
-  char *laddr = (char*)src + src_offset;
-  char *raddr = get_remote_addr(dst_desc, target_rank, is_dst_on_acc) + dst_offset;
-  MPI_Win win = get_window(dst_desc, is_dst_on_acc);
-
-  XACC_DEBUG("continuous_get(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_dst_on_acc);
-  MPI_Request req;
-  MPI_Rget((void*)laddr, transfer_size, MPI_BYTE, target_rank,
-	  (MPI_Aint)raddr, transfer_size, MPI_BYTE,
-	  win, &req);
-  MPI_Wait(&req, MPI_STATUS_IGNORE);
-}
-
-static void _mpi_non_continuous(const int op_type, const int target_rank,
+static void _mpi_non_continuous(const int op, const int target_rank,
 				const _XMP_coarray_t *remote_desc, const void *local_ptr,
 				const size_t remote_offset, const size_t local_offset,
 				const int remote_dims, const int local_dims,
 				const _XMP_array_section_t *remote_info, const _XMP_array_section_t *local_info,
 				const size_t remote_elmts, const int is_remote_on_acc)
 {
-  //FIXME consider not only start and length but also stride
-
   char *laddr = (char*)local_ptr + local_offset;
   char *raddr = get_remote_addr(remote_desc, target_rank, is_remote_on_acc) + remote_offset;
   MPI_Win win = get_window(remote_desc, is_remote_on_acc);
 
-#if 0
-  int local_sizes[_XMP_N_MAX_DIM], local_subsizes[_XMP_N_MAX_DIM], local_starts[_XMP_N_MAX_DIM];
-  int remote_sizes[_XMP_N_MAX_DIM], remote_subsizes[_XMP_N_MAX_DIM], remote_starts[_XMP_N_MAX_DIM];
-  for(int i = 0; i < local_dims; i++){
-    local_sizes[i] = local_info[i].elmts;
-    local_subsizes[i] = local_info[i].length;
-    local_starts[i] = local_info[i].start;
-    fprintf(stderr, "dim=%d, start=%lld, length=%lld, stride=%lld\n", i, local_info[i].start, local_info[i].length, local_info[i].stride);
-  }
-  for(int i = 0; i < remote_dims; i++){
-    remote_sizes[i] = remote_info[i].elmts;
-    remote_subsizes[i] = remote_info[i].length;
-    remote_starts[i] = remote_info[i].start;
-  }
-
-  MPI_Datatype local_subarray_type, remote_subarray_type;
-  MPI_Datatype element_type;
-  MPI_Type_contiguous(remote_elmts, MPI_BYTE, &element_type);
-  MPI_Type_commit(&element_type);
-  MPI_Type_create_subarray(remote_dims, remote_sizes, remote_subsizes, remote_starts, MPI_ORDER_C, element_type, &remote_subarray_type);
-  MPI_Type_commit(&remote_subarray_type);
-  MPI_Type_create_subarray(local_dims, local_sizes, local_subsizes, local_starts, MPI_ORDER_C, element_type, &local_subarray_type);
-  MPI_Type_commit(&local_subarray_type);
-
-  MPI_Request req;
-  if(op_type == _XMP_N_COARRAY_PUT){
-    MPI_Rput((void*)laddr, 1, local_subarray_type, target_rank,
-	     (MPI_Aint)raddr, 1, remote_subarray_type, 
-	     win, &req);
-  }else if (op_type == _XMP_N_COARRAY_GET){
-    MPI_Rget((void*)laddr, 1, local_subarray_type, target_rank,
-	     (MPI_Aint)raddr, 1, remote_subarray_type, remote_el
-	     win, &req);
-  }else{
-    _XMP_fatal("invalid coarray operation type");
-  }
-  MPI_Wait(&req, MPI_STATUS_IGNORE);
-    
-  MPI_Type_free(&local_subarray_type);
-  MPI_Type_free(&remote_subarray_type);
-  MPI_Type_free(&element_type);
-#else
   MPI_Datatype local_types[_XMP_N_MAX_DIM], remote_types[_XMP_N_MAX_DIM];
   MPI_Datatype local_vec_types[_XMP_N_MAX_DIM], remote_vec_types[_XMP_N_MAX_DIM];
   //long long local_start_offset = 0;
@@ -488,9 +451,6 @@ static void _mpi_non_continuous(const int op_type, const int target_rank,
     //local_start_offset += section->start * section->distance;
     MPI_Datatype oldtype = (i == local_dims - 1)? MPI_BYTE : local_types[i+1];
     XACC_DEBUG("local, dim=%d, start=%lld, length=%lld, stride=%lld, (c,b,s)=(%d,%d,%d)\n", i, section->start, section->length, section->stride, count, blocklength, stride);
-    /* if(i==2&&section->start==1&&section->length==1&&section->stride==1){ */
-    /*   raise(SIGABRT); */
-    /* } */
 
     MPI_Type_vector(count, blocklength, stride, oldtype, local_vec_types + i);
     MPI_Type_commit(local_vec_types + i);
@@ -502,7 +462,6 @@ static void _mpi_non_continuous(const int op_type, const int target_rank,
     int count = section->length;
     int blocklength = (i == remote_dims - 1)? element_size : 1;
     int stride = section->stride * blocklength;
-    //remote_start_offset += section->start * section->distance;
     MPI_Datatype oldtype = (i == remote_dims - 1)? MPI_BYTE : remote_types[i+1];
     XACC_DEBUG("remote, dim=%d, start=%lld, length=%lld, stride=%lld, (c,b,s)=(%d,%d,%d)\n", i, section->start, section->length, section->stride, count, blocklength, stride);
 
@@ -512,16 +471,14 @@ static void _mpi_non_continuous(const int op_type, const int target_rank,
     MPI_Type_commit(remote_types + i);
   }
 
-  //  laddr += local_start_offset;// * element_size;
-  //  raddr += remote_start_offset;// * element_size;
 
   //  XACC_DEBUG("nonc_put(src_p=%p, target=%d, dst_p=%p, is_acc=%d)", laddr, src_cnt,src_bl,src_str, target_rank, raddr, is_dst_on_acc);
   MPI_Request req;
-  if(op_type == _XMP_N_COARRAY_PUT){
+  if(op == _XMP_N_COARRAY_PUT){
     MPI_Rput((void*)laddr, 1, local_types[0], target_rank,
 	     (MPI_Aint)raddr, 1, remote_types[0], 
 	     win, &req);
-  }else if (op_type == _XMP_N_COARRAY_GET){
+  }else if (op == _XMP_N_COARRAY_GET){
     MPI_Rget((void*)laddr, 1, local_types[0], target_rank,
 	     (MPI_Aint)raddr, 1, remote_types[0], 
 	     win, &req);
@@ -539,9 +496,6 @@ static void _mpi_non_continuous(const int op_type, const int target_rank,
     MPI_Type_free(remote_types + i);
     MPI_Type_free(remote_vec_types + i);
   }
-  
-#endif
-
 }
 
 
@@ -574,7 +528,12 @@ void _XMP_mpi_put(const int dst_continuous, const int src_continuous, const int 
 
   if(dst_elmts == src_elmts){
     if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-      _mpi_continuous_put(target_rank, dst_desc, src, dst_offset, src_offset, transfer_size, is_dst_on_acc);
+      //_mpi_continuous_put(target_rank, dst_desc, src, dst_offset, src_offset, transfer_size, is_dst_on_acc);
+      _mpi_continuous(_XMP_N_COARRAY_PUT,
+		      target_rank,
+		      dst_desc, src,
+		      dst_offset, src_offset,
+		      transfer_size, is_dst_on_acc);
     }
     else{
       _mpi_non_continuous(_XMP_N_COARRAY_PUT, target_rank,
@@ -634,6 +593,8 @@ static void _mpi_scalar_mput(const int target_rank,
       if(idxs[i+1] >= length){
 	idxs[i+1] -= length;
 	++idxs[i];
+      }else{
+	break;
       }
     }
     if(idxs[0] > 0){
@@ -769,7 +730,11 @@ void _XMP_mpi_get(const int dst_continuous, const int src_continuous, const int 
 
   if(dst_elmts == src_elmts){
     if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-      _mpi_continuous_get(target_rank, dst_desc, src, dst_offset, src_offset, transfer_size, is_dst_on_acc);
+      _mpi_continuous(_XMP_N_COARRAY_GET, 
+		      target_rank,
+		      dst_desc, src,
+		      dst_offset, src_offset,
+		      transfer_size, is_dst_on_acc);
     }
     else{
       _mpi_non_continuous(_XMP_N_COARRAY_GET, target_rank,
