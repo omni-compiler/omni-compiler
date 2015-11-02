@@ -334,6 +334,22 @@ void _XMP_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const size_t 
   _push_coarray_queue(coarray_desc);
 }
 
+/** 
+   Detach memory from coarray
+ */
+void _XMP_coarray_detach(_XMP_coarray_t *coarray_desc)
+{
+#ifdef _XMP_GASNET
+  //not implemented
+  _XMP_fatal("_XMP_gasnet_coarray_detach is not implemented\n");
+#elif _XMP_FJRDMA
+  //not implemented
+  _XMP_fatal("_XMP_fjrdma_coarray_detach is not implemented\n");
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_coarray_detach(coarray_desc, false);
+#endif
+}
+
 /**
    Wrapper function of _XMP_coarray_malloc_do()
 */

@@ -759,3 +759,31 @@ void _XMP_mpi_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const siz
     coarray_desc->win = win;
   }
 }
+
+void _XMP_mpi_coarray_detach(_XMP_coarray_t *coarray_desc, const bool is_acc)
+{
+  MPI_Win win = _xmp_mpi_distarray_win;
+  void *real_addr = coarray_desc->real_addr;
+#ifdef _XMP_XACC
+  if(is_acc){
+    win = _xmp_mpi_distarray_win_acc;
+    real_addr = coarray_desc->real_addr_dev;
+  }
+#endif
+
+  MPI_Win_detach(win, real_addr);
+
+  if(is_acc){
+#ifdef _XMP_XACC
+    _XMP_free(coarray_desc->addr_dev);
+    coarray_desc->addr_dev = NULL;
+    coarray_desc->real_addr_dev = NULL;
+    coarray_desc->win_acc = MPI_WIN_NULL;
+#endif
+  }else{
+    _XMP_free(coarray_desc->addr);
+    coarray_desc->addr = NULL;
+    coarray_desc->real_addr = NULL;
+    coarray_desc->win = MPI_WIN_NULL;
+  }
+}
