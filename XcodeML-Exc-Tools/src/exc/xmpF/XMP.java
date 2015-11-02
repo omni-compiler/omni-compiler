@@ -114,6 +114,7 @@ public class XMP {
   public final static String gmove_g_dim_info_f = "xmpf_gmv_g_dim_info_";
   public final static String gmove_l_dim_info_f = "xmpf_gmv_l_dim_info_";
   public final static String gmove_do_f = "xmpf_gmv_do_";
+  public final static String gmove_dealloc_f = "xmpf_gmv_dealloc_";
   
   public final static String finalize_all_f = "xmpf_finalize_all_";
 
@@ -191,11 +192,14 @@ public class XMP {
       Fkind = type.getFkind();
       if(Fkind != null && Fkind.isIntConstant()){
 	switch(Fkind.getInt()){
-	case 8:
+	case 4:
 	  t = BasicType.FLOAT_COMPLEX;
 	  break;
-	case 16:
+	case 8:
 	  t = BasicType.DOUBLE_COMPLEX;
+	  break;
+	case 16:
+	  t = BasicType.LONG_DOUBLE_COMPLEX;
 	  break;
 	}
       }

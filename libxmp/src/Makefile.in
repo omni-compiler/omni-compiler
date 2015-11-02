@@ -162,10 +162,10 @@ am__libxmp_a_SOURCES_DIST = ../include/xmp_internal.h \
 	xmp_barrier.c xmp_reduce.c xmp_bcast.c xmp_align.c \
 	xmp_shadow.c xmp_array_section.c xmp_loop.c xmp_gmove.c \
 	xmp_math_function.c xmp_runtime.c xmp_tlog_runtime.c xmp_io.c \
-	xmp_reflect.c xmp_pack_vector.c xmp_intrinsic.c xmp_sort.c \
-	xmp_async.c xmp_onesided.c xmp_onesided_gasnet.c xmp_coarray.c \
-	xmp_coarray_utils.c xmp_coarray_local.c \
-	xmp_coarray_local_utils.c xmp_post_wait.c \
+	xmp_reflect.c xmp_pack_vector.c xmp_intrinsic.c \
+	xmp_section_desc.c xmp_sort.c xmp_async.c xmp_onesided.c \
+	xmp_onesided_gasnet.c xmp_coarray.c xmp_coarray_utils.c \
+	xmp_coarray_local.c xmp_coarray_local_utils.c xmp_post_wait.c \
 	xmp_post_wait_gasnet.c xmp_coarray_gasnet.c \
 	xmp_coarray_gasnet_utils.c xmp_lock_unlock.c \
 	xmp_lock_unlock_gasnet.c xmp_onesided_mpi.c \
@@ -228,9 +228,9 @@ am_libxmp_a_OBJECTS = xmp_lib.$(OBJEXT) xmp_util.$(OBJEXT) \
 	xmp_runtime.$(OBJEXT) xmp_tlog_runtime.$(OBJEXT) \
 	xmp_io.$(OBJEXT) xmp_reflect.$(OBJEXT) \
 	xmp_pack_vector.$(OBJEXT) xmp_intrinsic.$(OBJEXT) \
-	xmp_sort.$(OBJEXT) xmp_async.$(OBJEXT) $(am__objects_1) \
-	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
-	$(am__objects_5)
+	xmp_section_desc.$(OBJEXT) xmp_sort.$(OBJEXT) \
+	xmp_async.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
+	$(am__objects_3) $(am__objects_4) $(am__objects_5)
 libxmp_a_OBJECTS = $(am_libxmp_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -530,9 +530,9 @@ libxmp_a_SOURCES = ../include/xmp_internal.h ../include/xmp_constant.h \
 	xmp_align.c xmp_shadow.c xmp_array_section.c xmp_loop.c \
 	xmp_gmove.c xmp_math_function.c xmp_runtime.c \
 	xmp_tlog_runtime.c xmp_io.c xmp_reflect.c xmp_pack_vector.c \
-	xmp_intrinsic.c xmp_sort.c xmp_async.c $(am__append_1) \
-	$(am__append_3) $(am__append_4) $(am__append_11) \
-	$(am__append_13)
+	xmp_intrinsic.c xmp_section_desc.c xmp_sort.c xmp_async.c \
+	$(am__append_1) $(am__append_3) $(am__append_4) \
+	$(am__append_11) $(am__append_13)
 @XACC_TRUE@GPUCC = @GPU_CMD@
 @XACC_TRUE@GPUCFLAGS = @GPU_CFLAGS@
 all: all-am

@@ -41,6 +41,7 @@ typedef struct _XMP_nodes_type {
   int is_member;
   int dim;
   int comm_size;
+  int attr;
 
   // enable when is_member is true
   int comm_rank;
@@ -325,14 +326,61 @@ typedef struct _XMP_gmv_desc_type
 #endif
 } _XMP_gmv_desc_t;
 
+// Regular Section Descriptor (RSD)
+// (l:u:s)
+typedef struct _XMP_rsd_type {
+  int l;
+  int u;
+  int s;
+} _XMP_rsd_t;
+
+// Basic Section Descriptor (BSD)
+// (l:u:b:c)
+// b = block width
+// c = cyclic length
+typedef struct _XMP_bsd_type {
+  int l;
+  int u;
+  int b;
+  int c;
+} _XMP_bsd_t;
+
+// Common Section Descriptor (CSD)
+// ((l_1,...,l_n):(u_1,...,u_n):s)
+// proposed in Gwan-Hwan Hwang , Jenq Kuen Lee, Communication set generations with CSD calculus and
+// expression-rewriting framework, Parallel Computing, v.25 n.9, p.1105-1130, Sept. 1999 
+typedef struct _XMP_csd_type {
+  int *l;
+  int *u;
+  int n;
+  int s;
+} _XMP_csd_t;
+
+// Communication Set
+// ((l_1:u_1),(l_2:u_2),...)
+typedef struct _XMP_comm_set_type {
+  int l;
+  int u;
+  struct _XMP_comm_set_type *next;
+} _XMP_comm_set_t;
+
 //
 // for asynchronous comms.
 //
+
+typedef struct _XMP_async_gmove {
+  void *sendbuf;
+  void *recvbuf;
+  int recvbuf_size;
+  _XMP_array_t *a;
+  _XMP_comm_set_t *(*comm_set)[_XMP_N_MAX_DIM];
+} _XMP_async_gmove_t;
 
 typedef struct _XMP_async_comm {
   int async_id;
   int nreqs;
   MPI_Request *reqs;
+  _XMP_async_gmove_t *gmove;
   struct _XMP_async_comm *next;
 } _XMP_async_comm_t;
 

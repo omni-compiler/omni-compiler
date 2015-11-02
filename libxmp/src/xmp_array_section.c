@@ -899,7 +899,7 @@ static void _XMP_unpack_array_7_GENERAL(void *dst_addr, void *buf_addr, size_t t
 void _XMP_normalize_array_section(_XMP_gmv_desc_t *gmv_desc, int idim, int *lower, int *upper, int *stride) {
   // setup temporary variables
 
-  _XMP_array_t *array = gmv_desc->a_desc;
+  //_XMP_array_t *array = gmv_desc->a_desc;
   int l, u;
   int s = *(stride);
   if (s > 0) {
@@ -910,24 +910,25 @@ void _XMP_normalize_array_section(_XMP_gmv_desc_t *gmv_desc, int idim, int *lowe
     l = *upper;
     u = *lower;
   }
-  else {
-    if (*lower==0 && *upper==0){
-      if (gmv_desc->is_global == true){
-         l = array->info[idim].ser_lower;
-         u = array->info[idim].ser_upper;
-         s = 1;
-      }else{
-         l = gmv_desc->a_lb[idim];
-         u = gmv_desc->a_ub[idim];
-         s = 1;
-      }
-    }else{
-      l = *lower;
-      u = *lower;
-      s = 1;
-    }
-   // _XMP_fatal("the stride of <array-section> is 0");
-   // l = 0; u = 0; // XXX dummy
+  else { // s == 0 (scalar), do nothing
+    return;
+   /*  if (*lower==0 && *upper==0){ */
+   /*    if (gmv_desc->is_global == true){ */
+   /*       l = array->info[idim].ser_lower; */
+   /*       u = array->info[idim].ser_upper; */
+   /*       s = 1; */
+   /*    }else{ */
+   /*       l = gmv_desc->a_lb[idim]; */
+   /*       u = gmv_desc->a_ub[idim]; */
+   /*       s = 1; */
+   /*    } */
+   /*  }else{ */
+   /*    l = *lower; */
+   /*    u = *lower; */
+   /*    s = 1; */
+   /*  } */
+   /* // _XMP_fatal("the stride of <array-section> is 0"); */
+   /* // l = 0; u = 0; // XXX dummy */
   }
 
   // normalize values
