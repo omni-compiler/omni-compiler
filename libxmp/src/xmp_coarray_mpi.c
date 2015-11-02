@@ -39,7 +39,7 @@ static void _mpi_scalar_mput(const int target_rank,
 			     const _XMP_array_section_t *dst_info,
 			     const bool is_dst_on_acc);
 static void _mpi_scalar_mget(const int target_rank, 
-			     const void *dst, const _XMP_coarray_t *src_desc,
+			     void *dst, const _XMP_coarray_t *src_desc,
 			     const size_t dst_offset, const size_t src_offset,
 			     const int dst_dims, 
 			     const _XMP_array_section_t *dst_info,
@@ -629,7 +629,6 @@ static void _mpi_scalar_mput(const int target_rank,
 			     const _XMP_array_section_t *dst_info,
 			     const bool is_dst_on_acc)
 {
-  //  if(transfer_size == 0) return;
   char *laddr = (char*)src + src_offset;
   char *raddr = get_remote_addr(dst_desc, target_rank, is_dst_on_acc) + dst_offset;
   MPI_Win win = get_window(dst_desc, is_dst_on_acc);
@@ -637,21 +636,23 @@ static void _mpi_scalar_mput(const int target_rank,
 
   XACC_DEBUG("scalar_mput(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d)", laddr, element_size, target_rank, raddr, is_dst_on_acc);
 
-  long long idxs[dst_dims+1];
-  for(int i = 0; i < dst_dims+1; i++) idxs[i]=0;
+  int allelmt_dim = _XMP_get_dim_of_allelmts(dst_dims, dst_info);
+  size_t allelmt_size = (allelmt_dim == dst_dims)? element_size : dst_info[allelmt_dim].distance * dst_info[allelmt_dim].elmts;
+  long long idxs[allelmt_dim+1];
+  for(int i = 0; i < allelmt_dim+1; i++) idxs[i]=0;
 
   while(1){
     size_t offset = 0;
-    for(int i = 0; i < dst_dims; i++){
+    for(int i = 0; i < allelmt_dim; i++){
       offset += dst_info[i].distance * idxs[i+1] * dst_info[i].stride;
     }
 
-    MPI_Put((void*)laddr, element_size, MPI_BYTE, target_rank,
-	    (MPI_Aint)(raddr+offset), element_size, MPI_BYTE,
+    MPI_Put((void*)laddr, allelmt_size, MPI_BYTE, target_rank,
+	    (MPI_Aint)(raddr+offset), allelmt_size, MPI_BYTE,
 	    win);
 
-    ++idxs[dst_dims];
-    for(int i = dst_dims-1; i >= 0; i--){
+    ++idxs[allelmt_dim];
+    for(int i = allelmt_dim-1; i >= 0; i--){
       long long length = dst_info[i].length;
       if(idxs[i+1] >= length){
 	idxs[i+1] -= length;
@@ -667,8 +668,40 @@ static void _mpi_scalar_mput(const int target_rank,
   MPI_Win_flush_local(target_rank, win);
 }
 
+static void _unpack_scalar(char *dst, const int dst_dims, const char* src, 
+			   const _XMP_array_section_t* dst_info)
+{
+  size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
+  switch (dst_dims){
+  case 1:
+    _XMP_stride_memcpy_1dim(dst + dst_offset, src, dst_info, dst_info[0].distance, _XMP_SCALAR_MCOPY);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst + dst_offset, src, dst_info, dst_info[1].distance, _XMP_SCALAR_MCOPY);
+    break;
+  case 3:
+    _XMP_stride_memcpy_3dim(dst + dst_offset, src, dst_info, dst_info[2].distance, _XMP_SCALAR_MCOPY);
+    break;
+  case 4:
+    _XMP_stride_memcpy_4dim(dst + dst_offset, src, dst_info, dst_info[3].distance, _XMP_SCALAR_MCOPY);
+    break;
+  case 5:
+    _XMP_stride_memcpy_5dim(dst + dst_offset, src, dst_info, dst_info[4].distance, _XMP_SCALAR_MCOPY);
+    break;
+  case 6:
+    _XMP_stride_memcpy_6dim(dst + dst_offset, src, dst_info, dst_info[5].distance, _XMP_SCALAR_MCOPY);
+    break;
+  case 7:
+    _XMP_stride_memcpy_7dim(dst + dst_offset, src, dst_info, dst_info[6].distance, _XMP_SCALAR_MCOPY);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray is too big.");
+    break;
+  }
+}
+
 static void _mpi_scalar_mget(const int target_rank, 
-			     const void *dst, const _XMP_coarray_t *src_desc,
+			     void *dst, const _XMP_coarray_t *src_desc,
 			     const size_t dst_offset, const size_t src_offset,
 			     const int dst_dims, 
 			     const _XMP_array_section_t *dst_info,
@@ -687,29 +720,7 @@ static void _mpi_scalar_mget(const int target_rank,
 	   win, &req);
   MPI_Wait(&req, MPI_STATUS_IGNORE);
 
-  long long idxs[dst_dims+1];
-  for(int i = 0; i < dst_dims+1; i++) idxs[i]=0;
-
-  while(1){
-    size_t offset = 0;
-    for(int i = 0; i < dst_dims; i++){
-      offset += dst_info[i].distance * idxs[i+1] * dst_info[i].stride;
-    }
-
-    memcpy(laddr + offset, laddr, transfer_size);
-
-    ++idxs[dst_dims];
-    for(int i = dst_dims-1; i >= 0; i--){
-      long long length = dst_info[i].length;
-      if(idxs[i+1] >= length){
-	idxs[i+1] -= length;
-	++idxs[i];
-      }
-    }
-    if(idxs[0] > 0){
-      break;
-    }
-  }
+  _unpack_scalar((char*)dst, dst_dims, laddr, dst_info);
 }
 
 
