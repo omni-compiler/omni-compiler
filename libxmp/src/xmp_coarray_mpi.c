@@ -44,17 +44,6 @@ static void _mpi_scalar_mget(const int target_rank,
 			     const int dst_dims, 
 			     const _XMP_array_section_t *dst_info,
 			     const bool is_src_on_acc);
-static void _mpi_scalar_shortcut_mput(const int target_rank, 
-				      const _XMP_coarray_t *dst_desc, const void *src,
-				      const size_t dst_offset, const size_t src_offset,
-				      const size_t dst_elmts,
-				      const bool is_dst_on_acc);
-static void _mpi_scalar_shortcut_mget(const int target_rank, 
-				      const void *dst, const _XMP_coarray_t *src_desc,
-				      const size_t dst_offset, const size_t src_offset,
-				      const size_t dst_elmts,
-				      const bool is_src_on_acc);
-
 
 static void set_flushed_flag(bool is_normal, bool is_acc, bool flag)
 {
@@ -284,10 +273,19 @@ void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc
 		    dst_offset, src_offset,
 		    transfer_size, is_dst_on_acc);
   }else if(src_elmts == 1){
-    _mpi_scalar_shortcut_mput(target_rank,
-			      dst_desc, src,
-			      dst_offset, src_offset,
-			      dst_elmts, is_dst_on_acc);
+    _XMP_array_section_t dst_info;
+    dst_info.start = dst_offset / elmt_size;
+    dst_info.length = dst_elmts;
+    dst_info.stride = 1;
+    dst_info.elmts = dst_info.start + dst_info.length;
+    dst_info.distance = elmt_size;
+
+    _mpi_scalar_mput(target_rank,
+		     dst_desc, src,
+		     dst_offset, src_offset,
+		     1 /*dst_dims*/,
+		     &dst_info,
+		     is_dst_on_acc);
   }else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
@@ -323,11 +321,18 @@ void _XMP_mpi_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_desc
 		    src_offset, dst_offset,
 		    transfer_size, is_src_on_acc);
   }else if(src_elmts == 1){
-    _mpi_scalar_shortcut_mget(target_rank,
-			      dst, src_desc,
-			      dst_offset, src_offset,
-			      dst_elmts,
-			      is_src_on_acc);
+    _XMP_array_section_t dst_info;
+    dst_info.start = dst_offset / elmt_size;
+    dst_info.length = dst_elmts;
+    dst_info.stride = 1;
+    dst_info.elmts = dst_info.start + dst_info.length;
+    dst_info.distance = elmt_size;
+    _mpi_scalar_mget(target_rank,
+		     dst, src_desc,
+		     dst_offset, src_offset,
+		     1 /*dst_dims*/,
+		     &dst_info,
+		     is_src_on_acc);
   }else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
@@ -628,9 +633,9 @@ static void _mpi_scalar_mput(const int target_rank,
   char *laddr = (char*)src + src_offset;
   char *raddr = get_remote_addr(dst_desc, target_rank, is_dst_on_acc) + dst_offset;
   MPI_Win win = get_window(dst_desc, is_dst_on_acc);
-  size_t transfer_size = dst_desc->elmt_size;
+  size_t element_size = dst_desc->elmt_size;
 
-  XACC_DEBUG("scalar_mput(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_dst_on_acc);
+  XACC_DEBUG("scalar_mput(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d)", laddr, element_size, target_rank, raddr, is_dst_on_acc);
 
   long long idxs[dst_dims+1];
   for(int i = 0; i < dst_dims+1; i++) idxs[i]=0;
@@ -641,8 +646,8 @@ static void _mpi_scalar_mput(const int target_rank,
       offset += dst_info[i].distance * idxs[i+1] * dst_info[i].stride;
     }
 
-    MPI_Put((void*)laddr, transfer_size, MPI_BYTE, target_rank,
-	    (MPI_Aint)(raddr+offset), transfer_size, MPI_BYTE,
+    MPI_Put((void*)laddr, element_size, MPI_BYTE, target_rank,
+	    (MPI_Aint)(raddr+offset), element_size, MPI_BYTE,
 	    win);
 
     ++idxs[dst_dims];
@@ -658,28 +663,6 @@ static void _mpi_scalar_mput(const int target_rank,
     if(idxs[0] > 0){
       break;
     }
-  }
-  MPI_Win_flush_local(target_rank, win);
-}
-
-static void _mpi_scalar_shortcut_mput(const int target_rank, 
-				      const _XMP_coarray_t *dst_desc, const void *src,
-				      const size_t dst_offset, const size_t src_offset,
-				      const size_t dst_elmts,
-				      const bool is_dst_on_acc)
-{
-  char *laddr = (char*)src + src_offset;
-  char *raddr = get_remote_addr(dst_desc, target_rank, is_dst_on_acc) + dst_offset;
-  MPI_Win win = get_window(dst_desc, is_dst_on_acc);
-  size_t element_size = dst_desc->elmt_size;
-  size_t transfer_size = element_size * dst_elmts;
-
-  XACC_DEBUG("scalar_shortcut_mput(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_dst_on_acc);
-
-  for(size_t offset = 0; offset < transfer_size; offset += element_size){
-    MPI_Put((void*)laddr, element_size, MPI_BYTE, target_rank,
-	    (MPI_Aint)(raddr+offset), element_size, MPI_BYTE,
-	    win);
   }
   MPI_Win_flush_local(target_rank, win);
 }
@@ -729,30 +712,6 @@ static void _mpi_scalar_mget(const int target_rank,
   }
 }
 
-static void _mpi_scalar_shortcut_mget(const int target_rank, 
-				      const void *dst, const _XMP_coarray_t *src_desc,
-				      const size_t dst_offset, const size_t src_offset,
-				      const size_t dst_elmts,
-				      const bool is_src_on_acc)
-{
-  char *laddr = (char*)dst + dst_offset;
-  char *raddr = get_remote_addr(src_desc, target_rank, is_src_on_acc) + src_offset;
-  MPI_Win win = get_window(src_desc, is_src_on_acc);
-  size_t element_size = src_desc->elmt_size;
-  size_t transfer_size = element_size * dst_elmts;
-
-  XACC_DEBUG("scalar_shortcut_mget(local_p=%p, size=%zd, target=%d, remote_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_src_on_acc);
-
-  MPI_Request req;
-  MPI_Rget((void*)laddr, element_size, MPI_BYTE, target_rank,
-	   (MPI_Aint)raddr, element_size, MPI_BYTE,
-	   win, &req);
-  MPI_Wait(&req, MPI_STATUS_IGNORE);
-
-  for(size_t offset = element_size; offset < transfer_size; offset += element_size){
-    memcpy(laddr + offset, laddr, element_size);
-  }
-}
 
 
 
