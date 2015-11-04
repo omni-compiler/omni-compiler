@@ -45,11 +45,9 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
 
   switch (scheme) {
   case SCHEME_DirectGet:
-    if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("select SCHEME_DirectGet/scalar\n"
-                              "  *baseAddr=%p, *element=%d\n",
-                              *baseAddr, *element);
-    }
+    _XMPF_coarrayDebugPrint("select SCHEME_DirectGet/scalar\n"
+                            "  *baseAddr=%p, *element=%d\n",
+                            *baseAddr, *element);
     _getVector(*descPtr, *baseAddr, *element, *coindex, result);
     break;
 
@@ -57,11 +55,9 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
     {
       char buf[*element];
 
-      if (_XMPF_coarrayMsg) {
-        _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/scalar\n",
-                                "  *baseAddr=%p, *element=%zd, buf=%p\n",
-                                *baseAddr, *element, buf);
-      }
+      _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/scalar\n",
+                              "  *baseAddr=%p, *element=%zd, buf=%p\n",
+                              *baseAddr, *element, buf);
       _getVector(*descPtr, *baseAddr, *element, *coindex, buf);
       (void)memcpy(result, buf, *element);
     }
@@ -72,11 +68,9 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
       size_t elementRU = ROUND_UP_BOUNDARY(*element);
       char buf[elementRU];
 
-      if (_XMPF_coarrayMsg) {
-        _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferGet/scalar\n",
-                                "  *baseAddr=%p, elementRU=%zd, buf=%p\n",
-                                *baseAddr, elementRU, buf);
-      }
+      _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferGet/scalar\n",
+                              "  *baseAddr=%p, elementRU=%zd, buf=%p\n",
+                              *baseAddr, elementRU, buf);
       _getVector(*descPtr, *baseAddr, elementRU, *coindex, buf);
       (void)memcpy(result, buf, *element);
     }
@@ -107,7 +101,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
 
   if (*element % ONESIDED_BOUNDARY != 0) {
     _XMP_fatal("violation of boundary in reference of a coindexed object\n"
-               "  xmpf_coarray_get_array_, " __FILE__);
+              "  xmpf_coarray_get_array_, " __FILE__);
     return;
   }
 
@@ -119,11 +113,9 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
 
   switch (scheme) {
   case SCHEME_DirectGet:
-    if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("select SCHEME_DirectGet/array\n"
-                              "  *baseAddr=%p, *element=%d\n",
-                              *baseAddr, *element);
-    }
+    _XMPF_coarrayDebugPrint("select SCHEME_DirectGet/array\n"
+                            "  *baseAddr=%p, *element=%d\n",
+                            *baseAddr, *element);
     _getCoarray(*descPtr, *baseAddr, *coindex, result, *element, *rank, skip, count);
     break;
 
@@ -132,10 +124,8 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
     for (i = 0; i < *rank; i++) {
       bufsize *= count[i];
     }
-    if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/array\n"
-                              "  bufsize=%zd\n", bufsize);
-    }
+    _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/array\n"
+                            "  bufsize=%zd\n", bufsize);
     buf = malloc(bufsize);
     _getCoarray(*descPtr, *baseAddr, *coindex, buf, *element, *rank, skip, count);
     (void)memcpy(result, buf, bufsize);
@@ -182,10 +172,9 @@ void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *result,
                  int bytes, int rank, int skip[], int count[])
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
-    if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("GET %d bytes fully contiguous ===\n", bytes);
-      fprintf(stderr, "  coindex %d gets from %d\n", XMPF_this_image, coindex);
-    }
+    _XMPF_coarrayDebugPrint("GET %d bytes fully contiguous ===\n"
+                            "  coindex %d gets from %d\n",
+                            bytes, XMPF_this_image, coindex);
     _getVector(descPtr, baseAddr, bytes, coindex, result);
     return;
   }
@@ -199,7 +188,7 @@ void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *result,
   // not contiguous any more
   char* dst = result;
 
-  if (_XMPF_coarrayMsg) {
+  if (XMPF_get_coarrayMsg()) {
     char work[200];
     char* p;
     sprintf(work, "GET %d", bytes);

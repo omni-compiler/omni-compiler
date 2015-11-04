@@ -45,11 +45,9 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
 
   switch (scheme) {
   case SCHEME_DirectPut:
-    if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/scalar\n"
-                              "  *baseAddr=%p, *element=%d\n",
-                              *baseAddr, *element);
-    }
+    _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/scalar\n"
+                            "  *baseAddr=%p, *element=%d\n",
+                            *baseAddr, *element);
     _putVector(*descPtr, *baseAddr, *element, *coindex, rhs);
     break;
     
@@ -57,11 +55,9 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     {
       size_t elementRU = ROUND_UP_BOUNDARY(*element);
 
-      if (_XMPF_coarrayMsg) {
-        _XMPF_coarrayDebugPrint("select SCHEME_ExtraDirectPut/scalar\n"
-                                "  *baseAddr=%p, *element=%d, elementRU=%zd\n",
-                                *baseAddr, *element, elementRU);
-      }
+      _XMPF_coarrayDebugPrint("select SCHEME_ExtraDirectPut/scalar\n"
+                              "  *baseAddr=%p, *element=%d, elementRU=%zd\n",
+                              *baseAddr, *element, elementRU);
       _putVector(*descPtr, *baseAddr, elementRU, *coindex, rhs);
     }
     break;
@@ -70,11 +66,9 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     {
       char buf[*element];
 
-      if (_XMPF_coarrayMsg) {
-        _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/scalar\n"
-                                "  *baseAddr=%p, *element=%zd, buf=%p\n",
-                                *baseAddr, *element, buf);
-      }
+      _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/scalar\n"
+                              "  *baseAddr=%p, *element=%zd, buf=%p\n",
+                              *baseAddr, *element, buf);
       (void)memcpy(buf, rhs, *element);
       _putVector(*descPtr, *baseAddr, *element, *coindex, buf);
     }
@@ -85,11 +79,9 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
       size_t elementRU = ROUND_UP_BOUNDARY(*element);
       char buf[elementRU];
 
-      if (_XMPF_coarrayMsg) {
-        _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferPut/scalar\n"
-                                "  *baseAddr=%p, elementRU=%zd, buf=%p\n",
-                                *baseAddr, elementRU, buf);
-      }
+      _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferPut/scalar\n"
+                              "  *baseAddr=%p, elementRU=%zd, buf=%p\n",
+                              *baseAddr, elementRU, buf);
       (void)memcpy(buf, rhs, *element);
       _putVector(*descPtr, *baseAddr, elementRU, *coindex, buf);
     }
@@ -134,9 +126,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
 
   switch (scheme) {
   case SCHEME_DirectPut:
-    if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/array\n");
-    }
+    _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/array\n");
     _putCoarray(*descPtr, *baseAddr, *coindex, rhs, *element, *rank, skip, count);
     break;
 
@@ -145,10 +135,8 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
     for (i = 0; i < *rank; i++) {
       bufsize *= count[i];
     }
-    if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/array\n");
-      fprintf(stderr, "  bufsize=%zd\n", bufsize);
-    }
+    _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/array\n"
+                            "  bufsize=%zd\n", bufsize);
     buf = malloc(bufsize);
     (void)memcpy(buf, rhs, bufsize);
     _putCoarray(*descPtr, *baseAddr, *coindex, buf, *element, *rank, skip, count);
@@ -245,10 +233,9 @@ void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
                  int bytes, int rank, int skip[], int count[])
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
-    if (_XMPF_coarrayMsg) {
-      _XMPF_coarrayDebugPrint("PUT %d bytes fully contiguous ===\n", bytes);
-      fprintf(stderr, "  coindex %d puts to %d\n", XMPF_this_image, coindex);
-    }
+    _XMPF_coarrayDebugPrint("PUT %d bytes fully contiguous ===\n"
+                            "  coindex %d puts to %d\n",
+                            bytes, XMPF_this_image, coindex);
     _putVector(descPtr, baseAddr, bytes, coindex, rhs);
     return;
   }
@@ -262,7 +249,7 @@ void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
   // not contiguous any more
   char* src = rhs;
 
-  if (_XMPF_coarrayMsg) {
+  if (XMPF_get_coarrayMsg()) {
     char work[200];
     char* p;
     sprintf(work, "PUT %d", bytes);

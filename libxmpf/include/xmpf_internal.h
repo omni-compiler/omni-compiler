@@ -309,7 +309,11 @@ extern int _XMP_boundaryByte;     // communication boundary (bytes)
 extern void _XMPF_coarray_init(void); 
 extern void _XMPF_coarray_finalize(void); 
 
-extern int _XMPF_coarrayMsg;          // default: debug message off
+int XMPF_get_coarrayMsg(void);
+
+void XMPF_set_poolThreshold(unsigned size);
+unsigned XMPF_get_poolThreshold(void);
+
 extern void xmpf_coarray_msg_(int *sw);
 
 extern char *_XMPF_errmsg;   // to answer ERRMSG argument in Fortran

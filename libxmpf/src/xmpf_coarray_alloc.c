@@ -79,10 +79,13 @@ static void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2);
 static void _freeCoarrayInfo(CoarrayInfo_t *cinfo);
 static char *_dispCoarrayInfo(CoarrayInfo_t *cinfo);
 
-static CoarrayInfo_t *_getShareOfCoarray(int count, size_t element);
+//static CoarrayInfo_t *_getShareOfCoarray(int count, size_t element);
+static CoarrayInfo_t *_getShareOfStaticCoarray(size_t thisSize, size_t elementRU);
+static CoarrayInfo_t *_allocLargeStaticCoarray(size_t thisSize, size_t elementRU);
 
 // allocation and deallocation
 static MemoryChunk_t *_mallocMemoryChunk(int count, size_t element);
+static MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes, size_t elementRU);
 
 // malloc/free history
 static void _initMallocHistory(void);
@@ -254,7 +257,7 @@ size_t _roundUpElementSize(int count, size_t element)
     /* round up */
     elementRU = ROUND_UP_BOUNDARY(element);
     _XMPF_coarrayDebugPrint("round-up element size\n"
-                            "  count=%d, element=%d to %zd\n",
+                            "  count=%d, element=%d to %u\n",
                             count, element, elementRU);
   } else {
     /* restriction */
@@ -268,34 +271,46 @@ size_t _roundUpElementSize(int count, size_t element)
 
 MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
 {
-  void *desc;
-  char *orgAddr;
-  size_t nbytes;
   MemoryChunk_t *chunk;
 
   size_t elementRU = _roundUpElementSize(count, element);
-  nbytes = (size_t)count * elementRU;
+  unsigned nbytes = (unsigned)count * elementRU;
 
+  // make memory-chunk even if size nbyte=0
+  /*****************************
   if (nbytes == 0) {
-    _XMPF_coarrayDebugPrint("*** no memory-chunk allocated\n");
+    _XMPF_coarrayDebugPrint("*** no memory pool needed\n");
 
     chunk = _newMemoryChunk(NULL, NULL, 0);
     return chunk;
   }
+  ******************************/
+
+  chunk = _mallocMemoryChunk_core(nbytes, elementRU);
+
+  // stack to mallocHistory
+  _addMemoryChunkToMallocHistory(chunk);
+
+  return chunk;
+}
+
+
+MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes, size_t elementRU)
+{
+  void *desc;
+  char *orgAddr;
+  MemoryChunk_t *chunk;
 
   // _XMP_coarray_malloc() and set mallocInfo
-  _XMP_coarray_malloc_info_1(nbytes, 1);           // set shape
+  _XMP_coarray_malloc_info_1(nbytes, (size_t)1);   // set shape
   _XMP_coarray_malloc_image_info_1();              // set coshape
   _XMP_coarray_malloc_do(&desc, &orgAddr);         // malloc
 
   chunk = _newMemoryChunk(desc, orgAddr, nbytes);
 
   _XMPF_coarrayDebugPrint("*** MemoryChunk %s allocated\n"
-                          "  (count=%d, element=%d)\n",
-                          _dispMemoryChunk(chunk), count, element);
-
-  // stack to mallocHistory
-  _addMemoryChunkToMallocHistory(chunk);
+                          "  (%u bytes, elementRU=%u)\n",
+                          _dispMemoryChunk(chunk), nbytes, elementRU);
 
   return chunk;
 }
@@ -341,7 +356,7 @@ void xmpf_coarray_free_(void **descPtr)
 void xmpf_coarray_malloc_pool_(void)
 {
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC_POOL\n"
-                          "  required pool_totalSize = %zd\n",
+                          "  required pool_totalSize = %u\n",
                           pool_totalSize);
 
   // init malloc/free history
@@ -378,8 +393,19 @@ void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
                               int *count, int *element,
                               char *name, int *namelen)
 {
-  CoarrayInfo_t *cinfo =
-    _getShareOfCoarray(*count, (size_t)(*element));
+  size_t elementRU = _roundUpElementSize(*count, (size_t)(*element));
+  size_t nbytes = (size_t)(*count) * elementRU;
+
+  CoarrayInfo_t *cinfo;
+
+  _XMPF_coarrayDebugPrint("STATIC COARRAY ALLOCATION name=\'%*s\'\n"
+                          "  *count=%d, *element=%d, nbytes=%u, elementRU=%u\n",
+                          *namelen, name, *count, *element, nbytes, elementRU);
+
+  if (nbytes > XMPF_get_poolThreshold())
+    cinfo = _allocLargeStaticCoarray(nbytes, elementRU);
+  else
+    cinfo = _getShareOfStaticCoarray(nbytes, elementRU);
 
   cinfo->name = _xmp_strndup(name, *namelen);
 
@@ -388,31 +414,45 @@ void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
 }
 
 
-CoarrayInfo_t *_getShareOfCoarray(int count, size_t element)
+CoarrayInfo_t *_allocLargeStaticCoarray(size_t nbytes, size_t elementRU)
 {
-  _XMPF_checkIfInTask("static coarray allocation");
+  _XMPF_checkIfInTask("allocation of static coarray");
 
-  size_t elementRU = _roundUpElementSize(count, element);
+  _XMPF_coarrayDebugPrint("*** a larger static coarray (%u bytes)\n", nbytes);
+
+  // malloc memory-chunk
+  MemoryChunk_t *chunk = _mallocMemoryChunk_core(nbytes, elementRU);
+  _XMPF_coarrayDebugPrint("*** new MemoryChunk %s\n",
+                          _dispMemoryChunk(chunk));
+
+  // make coarrayInfo and linkage
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr, nbytes);
+  _addCoarrayInfo(chunk, cinfo);
+
+  return cinfo;
+}
+
+
+CoarrayInfo_t *_getShareOfStaticCoarray(size_t nbytes, size_t elementRU)
+{
+  _XMPF_checkIfInTask("share of static coarray");
+
+  _XMPF_coarrayDebugPrint("*** a smaller static coarray (%u bytes)\n", nbytes);
 
   // allocate and set _coarrayInfo
-  size_t thisSize = (size_t)count * elementRU;
-  CoarrayInfo_t *cinfo = _newCoarrayInfo(pool_currentAddr, thisSize);
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(pool_currentAddr, nbytes);
   _addCoarrayInfo(pool_chunk, cinfo);
 
-  // check: too large allocation
-  if (pool_currentAddr + thisSize > pool_chunk->orgAddr + pool_totalSize) {
+  // check: lack of memory pool
+  if (pool_currentAddr + nbytes > pool_chunk->orgAddr + pool_totalSize) {
     _XMPF_coarrayFatal("insufficient memory pool for static coarrays: "
                       "xmpf_coarray_share_pool_() in %s", __FILE__);
   }
 
-  _XMPF_coarrayDebugPrint("*** get share of coarray \'%s\' in memory pool:\n"
-                          "  address = %p\n"
-                          "  size    = %zd\n"
-                          "  (originally, count = %d, element = %zd)\n",
-                          cinfo->name, pool_currentAddr,
-                          thisSize, count, element);
+  _XMPF_coarrayDebugPrint("*** got a %u-byte share of the memory pool (address=%p)\n",
+                          nbytes, pool_currentAddr);
 
-  pool_currentAddr += thisSize;
+  pool_currentAddr += nbytes;
 
   return cinfo;
 }
@@ -423,9 +463,15 @@ void xmpf_coarray_count_size_(int *count, int *element)
   size_t thisSize = (size_t)(*count) * (size_t)(*element);
   size_t mallocSize = ROUND_UP_UNIT(thisSize);
 
-  _XMPF_coarrayDebugPrint("*** count-up allocation size: %zd[byte].\n", mallocSize);
+  if (mallocSize > XMPF_get_poolThreshold()) {
+    _XMPF_coarrayDebugPrint("*** out of count: size %u exceeds threshold %u [byte].\n",
+                            mallocSize, XMPF_get_poolThreshold());
+    return;
+  }
 
   pool_totalSize += mallocSize;
+  _XMPF_coarrayDebugPrint("*** count up: add %u, total %u [byte].\n",
+                          mallocSize, pool_totalSize);
 }
 
 
@@ -744,7 +790,7 @@ void _freeMemoryChunk(MemoryChunk_t *chunk)
   CoarrayInfo_t *cinfo;
 
   // found a formal-deallocated memory chunk that should be free
-  _XMPF_coarrayDebugPrint("*** freeing a garbage MemoryChunk %s, %zd bytes\n",
+  _XMPF_coarrayDebugPrint("*** freeing a garbage MemoryChunk %s, %u bytes\n",
                           _dispMemoryChunk(chunk), chunk->nbytes);
 
   forallCoarrayInfo (cinfo, chunk) {
@@ -763,7 +809,7 @@ char *_dispMemoryChunk(MemoryChunk_t *chunk)
 {
   static char work[200];
 
-  (void)sprintf(work, "%p, %zd bytes", chunk, chunk->nbytes);
+  (void)sprintf(work, "<%p, %u bytes>", chunk, chunk->nbytes);
   return work;
 }
 

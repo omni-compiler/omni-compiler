@@ -1,22 +1,89 @@
 #include "xmpf_internal.h"
 
-static void _coarray_msg(int sw);
-
 #define DIV_CEILING(m,n)  (((m)-1)/(n)+1)
 
+//#define POOL_THRESHOLD (40)          // 40B for test
+#define POOL_THRESHOLD (40*1024*1024)          // 40MB
+
+
 /*****************************************\
-  runtime environment
+  static vars and functions
 \*****************************************/
 
-int _XMPF_coarrayMsg = 0;          // default: message off
-int _XMPF_coarrayErr = 0;          // default: aggressive error check off
+static int _XMPF_coarrayMsg = 0;          // default: message off
+static int _XMPF_coarrayErr = 0;          // default: aggressive error check off
+static unsigned _XMPF_poolThreshold = POOL_THRESHOLD;
 
-/* initialization called in xmpf_main
- *  1. set static variable _this_image and _num_nodes
- *  2. read environment variable XMPF_COARRAY_MSG
+static void _set_coarrayMsg(int sw)
+{
+  switch (sw) {
+  case 0:
+  default:
+    if (_XMPF_coarrayMsg)
+      _XMPF_coarrayDebugPrint("Switch _XMPF_coarrayMsg=0. Bye!\n");
+    _XMPF_coarrayMsg = 0;
+    return;
+
+  case 1:
+    if (_XMPF_coarrayMsg == 0)
+      _XMPF_coarrayDebugPrint("Switch _XMPF_coarrayMsg=1.\n");
+    _XMPF_coarrayMsg = 1;
+    break;
+  }
+}
+
+
+/*****************************************\
+  static vars and functions
+\*****************************************/
+
+int XMPF_get_coarrayMsg(void)
+{
+  return _XMPF_coarrayMsg;
+}
+
+
+void XMPF_set_poolThreshold(unsigned size)
+{
+  _XMPF_poolThreshold = size;
+
+  _XMPF_coarrayDebugPrint("set _XMPF_poolThreshold = %u\n",
+                          _XMPF_poolThreshold);
+}
+
+
+unsigned XMPF_get_poolThreshold(void)
+{
+  return _XMPF_poolThreshold;
+}
+
+
+/*****************************************\
+  hidden API
+\*****************************************/
+
+/*
+ *  hidden subroutine interface,
+ *   which can be used in the user program
+ */
+void xmpf_coarray_msg_(int *sw)
+{
+  _set_coarrayMsg(*sw);
+}
+
+
+/*****************************************\
+  initialization called in xmpf_main
+\*****************************************/
+
+/*  1. set static variable _this_image and _num_nodes
+ *  2. read environment variable XMPF_COARRAY_MSG and set _XMPF_coarrayMsg
  *     usage: <v1><d><v2><d>...<vn>
  *        <vk>  value for image index k
  *        <d>   delimiter ',' or ' '
+ *  3. read environmrnt variable XMPF_COARRAY_POOL and set
+ *     _XMPF_poolThreshold
+ *     usage: [0-9]+[kKmMgG]?
  */
 void _XMPF_coarray_init(void)
 {
@@ -26,22 +93,78 @@ void _XMPF_coarray_init(void)
   _XMPF_set_this_image();
 
   /*
-   * read environment variable
+   * read environment variables
    */
-  char *tok, *work, *env;
-  int i;
+  char *tok, *work, *env1, *env2;
+  int i, stat;
   char delim[] = ", ";
+  unsigned len;
+  char c;
 
-  env = getenv("XMPF_COARRAY_MSG");
-  if (env == NULL) 
-    return;
-
-  work = strdup(env);
-  tok = strtok(work, delim);
-  for (i = 1; tok != NULL; i++, tok = strtok(NULL, delim)) {
-    if (XMPF_this_image == i)
-      _coarray_msg(atoi(tok));
+  env1 = getenv("XMPF_COARRAY_MSG");
+  if (env1 != NULL) {
+    work = strdup(env1);
+    tok = strtok(work, delim);
+    for (i = 1; tok != NULL; i++, tok = strtok(NULL, delim)) {
+      if (XMPF_this_image == i)
+        _set_coarrayMsg(atoi(tok));
+    }
   }
+
+  env2 = getenv("XMPF_COARRAY_POOL");
+  if (env2 != NULL) {
+    work = strdup(env2);
+    stat = sscanf(work, "%u%c", &len, &c);
+
+    switch (stat) {
+    case EOF:
+    case 0:
+      // use default value of poolThread
+      break;
+
+    case 1:
+      XMPF_set_poolThreshold(len);
+      break;
+
+    case 2:
+      switch (c) {
+      case 'k':
+      case 'K':
+        XMPF_set_poolThreshold(len * 1024);
+        break;
+      case 'm':
+      case 'M':
+        XMPF_set_poolThreshold(len * 1024 * 1024);
+        break;
+      case 'g':
+      case 'G':
+        XMPF_set_poolThreshold(len * 1024 * 1024 * 1024);
+        break;
+      default:
+        _XMPF_coarrayFatal("Usage of XMPF_COARRAY_POOL: [0-9]+[kKmMgG]?");
+        break;
+      }
+      break;
+
+    default:
+      _XMPF_coarrayFatal("Illegal value of environ variable XMPF_COARRAY_POOL.\n"
+                         "  Usage: [0-9]+[kKmMgG]?");
+      break;
+    }
+  }
+
+  _XMPF_coarrayDebugPrint("Execution time environment\n"
+                          "   communication layer  :  %s\n"
+                          "   coarray boundary     :  %u bytes\n"
+                          "   environment vars     :  XMPF_COARRAY_MSG=%s\n"
+                          "                           XMPF_COARRAY_POOL=%s\n"
+                          "   _XMPF_coarrayMsg     :  %d\n"
+                          "   _XMPF_poolThreshold  :  %u bytes\n",
+                          ONESIDED_COMM_LAYER, ONESIDED_BOUNDARY,
+                          env1 ? env1 : "", env2 ? env2 : "",
+                          XMPF_get_coarrayMsg(),
+                          XMPF_get_poolThreshold()
+                          );
 }
 
 
@@ -51,41 +174,6 @@ void _XMPF_coarray_finalize(void)
 {
   xmpf_sync_all_auto_();
 }
-
-
-/*
- *  hidden subroutine interface,
- *   which can be used in the user program
- */
-void xmpf_coarray_msg_(int *sw)
-{
-  _coarray_msg(*sw);
-}
-
-void _coarray_msg(int sw)
-{
-  switch (sw) {
-  case 0:
-  default:
-    _XMPF_coarrayDebugPrint("xmpf_coarray_msg OFF\n");
-    _XMPF_coarrayMsg = 0;
-    return;
-
-  case 1:
-    _XMPF_coarrayMsg = 1;
-    break;
-  }
-
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MSG=%d\n"
-                          "  %u-byte boundary\n"
-                          "  over %s\n",
-                          sw, ONESIDED_BOUNDARY, ONESIDED_COMM_LAYER);
-}
-
-
-/*****************************************\
-  internal information
-\*****************************************/
 
 
 /*****************************************\
