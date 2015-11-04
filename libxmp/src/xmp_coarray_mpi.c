@@ -129,7 +129,7 @@ void _XMP_mpi_destroy_shift_queue(bool is_acc)
 {
   struct _shift_queue_t *shift_queue = is_acc? &_shift_queue_acc : &_shift_queue;
 
-  free(shift_queue->shifts);
+  _XMP_free(shift_queue->shifts);
   shift_queue->shifts = NULL;
 }
 
@@ -175,7 +175,7 @@ static size_t _pop_shift_queue(struct _shift_queue_t *shift_queue)
 /**
    Deallocate memory region when calling _XMP_coarray_lastly_deallocate()
 */
-void _XMP_mpi_onesided_coarray_lastly_deallocate(bool is_acc){
+void _XMP_mpi_coarray_lastly_deallocate(bool is_acc){
   struct _shift_queue_t *shift_queue = is_acc? &_shift_queue_acc : &_shift_queue;
   _pop_shift_queue(shift_queue);
 }

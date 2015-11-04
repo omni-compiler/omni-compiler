@@ -1379,7 +1379,7 @@ static void _XMP_coarray_deallocate(_XMP_coarray_t *c)
   if(c == NULL) return;
 
   free(c->addr);
-#ifndef _XMP_GASNET
+#if !defined(_XMP_GASNET) && !defined(_XMP_MPI3_ONESIDED)
   free(c->real_addr);
 #endif
   free(c->coarray_elmts);
@@ -1397,6 +1397,8 @@ void _XMP_coarray_lastly_deallocate()
   _XMP_gasnet_coarray_lastly_deallocate();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_coarray_lastly_deallocate();
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_coarray_lastly_deallocate(false);
 #endif
 
   _XMP_coarray_t *_last_coarray_ptr = _pop_coarray_queue();
