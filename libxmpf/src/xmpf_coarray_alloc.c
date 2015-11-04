@@ -288,9 +288,6 @@ MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
 
   chunk = _mallocMemoryChunk_core(nbytes, elementRU);
 
-  // stack to mallocHistory
-  _addMemoryChunkToMallocHistory(chunk);
-
   return chunk;
 }
 
@@ -311,6 +308,9 @@ MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes, size_t elementRU)
   _XMPF_coarrayDebugPrint("*** MemoryChunk %s allocated\n"
                           "  (%u bytes, elementRU=%u)\n",
                           _dispMemoryChunk(chunk), nbytes, elementRU);
+
+  // stack to mallocHistory
+  _addMemoryChunkToMallocHistory(chunk);
 
   return chunk;
 }
@@ -519,15 +519,18 @@ void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag)
   MemoryChunkOrder_t *chunkP;
   MemoryChunk_t *chunk, *myChunk;
 
-  if (rset == NULL)
-    rset = _newResourceSet("(pool)", strlen("(pool)"));
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_GET_DESCPTR\n"
+                          "  coarray dummy argument: %p\n", baseAddr);
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_GET_DESCPTR\n");
-  _XMPF_coarrayDebugPrint("  coarray dummy argument: %p\n", baseAddr);
+  if (rset == NULL)
+    rset = _newResourceSet("(POOL)", strlen("(POOL)"));
 
   // generate a new descPtr for an allocatable dummy coarray
   CoarrayInfo_t *cinfo = _newCoarrayInfo_empty();
 
+  /* current implementation:
+     look for my memory chunk into all MemoryChunkOrder
+  */
   myChunk = NULL;
   forallMemoryChunkOrder(chunkP) {
     chunk = chunkP->chunk;
@@ -545,7 +548,7 @@ void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag)
     _addCoarrayInfo(myChunk, cinfo);
 
   } else {
-    _XMPF_coarrayDebugPrint("*** no memory chunk owns me. baseAddr=%p, chunk: free\n",
+    _XMPF_coarrayDebugPrint("*** ILLEGAL: no memory chunk owns me. baseAddr=%p, chunk: free\n",
                             baseAddr);
   }
 
