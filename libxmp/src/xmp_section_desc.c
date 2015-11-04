@@ -1,3 +1,4 @@
+#include <string.h>
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 

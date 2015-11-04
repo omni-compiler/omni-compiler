@@ -266,24 +266,24 @@ typedef struct xmp_coarray{
   size_t elmt_size; // Element size of a coarray. A unit of it is Byte.
                     // e.g.) "int a[10]:[*]" is 4.
 
-  int coarray_dims; // Number of dimensions of coarray.
-                    // e.g.) "int a[10][20]:[4][2][*]" is 2.
+  unsigned int coarray_dims; // Number of dimensions of coarray.
+                             // e.g.) "int a[10][20]:[4][2][*]" is 2.
 
-  int *coarray_elmts; // Number of elements of each dimension of a coarray.
-                      // e.g.) If "int a[10][20]:[*]", coarray_elmts[0] is 10, coarray_elmts[1] is 20.
-                      //       If a coarray is scalar, coarray_elmts[0] is 1.
+  unsigned int *coarray_elmts; // Number of elements of each dimension of a coarray.
+                               // e.g.) If "int a[10][20]:[*]", coarray_elmts[0] is 10, coarray_elmts[1] is 20.
+                               //       If a coarray is scalar, coarray_elmts[0] is 1.
 
-  int *distance_of_coarray_elmts; // Distance between each dimension of coarray. A unit of the distance is Byte.
-                                  // e.g.) If "int a[10][20][30]:[*]", distance_of_coarray_elmts[0] is 2400 (20*30*sizeof(int)),
-                                  //       distance_of_coarray_elmts[1] is 120 (30*sizeof(int)),
-                                  //       distance_of_coarray_elmts[0] is 4 (sizeof(int)).
+  unsigned int *distance_of_coarray_elmts; // Distance between each dimension of coarray. A unit of the distance is Byte.
+                                           // e.g.) If "int a[10][20][30]:[*]", distance_of_coarray_elmts[0] is 2400 (20*30*sizeof(int)),
+                                           //       distance_of_coarray_elmts[1] is 120 (30*sizeof(int)),
+                                           //       distance_of_coarray_elmts[0] is 4 (sizeof(int)).
 
-  int image_dims; // Number of dimensions of image set.
-                  // e.g.) If "int a[10][20]:[4][2][*]" is 3.
+  unsigned int image_dims; // Number of dimensions of image set.
+                           // e.g.) If "int a[10][20]:[4][2][*]" is 3.
 
-  int *distance_of_image_elmts; // Distance between each dimension of image set.
-                                // e.g.) If "int a[10][20]:[4][2][*]", distance_of_image_elmts[0] is 1,
-                                //       distance_of_image_elmts[1] is 4, distance_of_image_elmts[2] is 8.
+  unsigned int *distance_of_image_elmts; // Distance between each dimension of image set.
+                                         // e.g.) If "int a[10][20]:[4][2][*]", distance_of_image_elmts[0] is 1,
+                                         //       distance_of_image_elmts[1] is 4, distance_of_image_elmts[2] is 8.
 #ifdef _XMP_MPI3_ONESIDED
   MPI_Win win;
   //#ifdef _XMP_XACC

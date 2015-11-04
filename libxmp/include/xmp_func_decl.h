@@ -72,13 +72,17 @@ extern void _XMP_gasnet_not_continuous_put();
 extern void _XMP_gasnet_continuous_put();
 extern void _XMP_gasnet_not_continuous_get();
 extern void _XMP_gasnet_continuous_get();
-extern void _XMP_coarray_malloc_info_1(const int, const size_t);
-extern void _XMP_coarray_malloc_info_2(const int, const int, const size_t);
-extern void _XMP_coarray_malloc_info_3(const int, const int, const int, const size_t);
-extern void _XMP_coarray_malloc_info_4(const int, const int, const int, const int, const size_t);
-extern void _XMP_coarray_malloc_info_5(const int, const int, const int, const int, const int, const size_t);
-extern void _XMP_coarray_malloc_info_6(const int, const int, const int, const int, const int, const int, const size_t);
-extern void _XMP_coarray_malloc_info_7(const int, const int, const int, const int, const int, const int, const int, const size_t);
+extern void _XMP_coarray_malloc_info_1(const unsigned int, const size_t);
+extern void _XMP_coarray_malloc_info_2(const unsigned int, const unsigned int, const size_t);
+extern void _XMP_coarray_malloc_info_3(const unsigned int, const unsigned int, const unsigned int, const size_t);
+extern void _XMP_coarray_malloc_info_4(const unsigned int, const unsigned int, const unsigned int, const unsigned int, 
+				       const size_t);
+extern void _XMP_coarray_malloc_info_5(const unsigned int, const unsigned int, const unsigned int, const unsigned int, 
+				       const unsigned int, const size_t);
+extern void _XMP_coarray_malloc_info_6(const unsigned int, const unsigned int, const unsigned int, const unsigned int, 
+				       const unsigned int, const unsigned int, const size_t);
+extern void _XMP_coarray_malloc_info_7(const unsigned int, const unsigned int, const unsigned int, const unsigned int, 
+				       const unsigned int, const unsigned int, const unsigned int, const size_t);
 
 extern void _XMP_coarray_malloc_image_info_1();
 extern void _XMP_coarray_malloc_image_info_2(const int);

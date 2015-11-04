@@ -21,14 +21,14 @@ public class XMPcoarray {
   private String		_name;
   private Xtype			_elmtType;
   private int			_varDim;
-  private Vector<Integer>	_sizeVector;
+  private Vector<Long>          _sizeVector;
   private int                   _imageDim;
   private Vector<Integer>       _imageVector;
   private Xobject		_varAddr;
   private Ident			_varId;
   private Ident			_descId;
 
-  public XMPcoarray(String name, Xtype elmtType, int varDim, Vector<Integer> sizeVector, int imageDim, Vector<Integer> imageVector,
+  public XMPcoarray(String name, Xtype elmtType, int varDim, Vector<Long> sizeVector, int imageDim, Vector<Integer> imageVector,
                     Xobject varAddr, Ident varId, Ident descId) {
     _name        = name;
     _elmtType    = elmtType;
@@ -53,8 +53,8 @@ public class XMPcoarray {
     return _varDim;
   }
 
-  public int getSizeAt(int index) {
-    return _sizeVector.get(index).intValue();
+  public long getSizeAt(int index) {
+      return _sizeVector.get(index).intValue();
   }
 
   public int getImageDim() {
@@ -141,30 +141,23 @@ public class XMPcoarray {
       throw new XMPexception("coarray dimension should be less than " + (XMP.MAX_DIM + 1));
     }
 
-    // _XMP_coarray_malloc_set()
-    //    String funcName = new String("_XMP_coarray_malloc_set");
-    //    XobjList funcArgs = Xcons.List(Xcons.SizeOf(elmtType), Xcons.IntConstant(varDim), Xcons.IntConstant(imageDim));
-    //    if(is_output){
-    //      globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
-    //    }
-
     // _XMP_coarray_malloc_array_info_X()
     String funcName = new String("_XMP_coarray_malloc_info_");
     funcName = funcName + Integer.toString(varDim);
     XobjList funcArgs = Xcons.List();
-    Vector<Integer> sizeVector = new Vector<Integer>(varDim);
+    Vector<Long> sizeVector = new Vector<Long>(varDim);
     if(!isArray){
-      sizeVector.add(new Integer(1));
-      funcArgs.add(Xcons.IntConstant(1));
+      sizeVector.add(new Long(1));
+      funcArgs.add(Xcons.Cast(Xtype.unsignedType, Xcons.LongLongConstant(0, 1)));
     }
     else{
       for(int i=0;i<varDim;i++,varType=varType.getRef()){
-        int dimSize = (int)varType.getArraySize();
+        long dimSize = (long)varType.getArraySize();
         if((dimSize == 0) || (dimSize == -1)) {
           throw new XMPexception("array size should be declared statically");
         }
-        sizeVector.add(new Integer(dimSize));
-        funcArgs.add(Xcons.IntConstant(dimSize));
+        sizeVector.add(new Long(dimSize));
+	funcArgs.add(Xcons.Cast(Xtype.unsignedType, Xcons.LongLongConstant(0, dimSize)));
       }
     }
     

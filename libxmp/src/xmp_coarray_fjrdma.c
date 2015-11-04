@@ -6,32 +6,97 @@
 #include "mpi.h"
 #include "mpi-ext.h"
 #include "xmp_internal.h"
-#define _XMP_FJRDMA_MAX_SIZE 16777212
-#define _XMP_FJRDMA_MAX_MEMID     511
-#define _XMP_FJRDMA_MAX_MPUT     1993
-#define _XMP_FJRDMA_MAX_MGET      100 /** This value is a trial */
-#define _XMP_FJRDMA_MAX_COMM       60 /** This value is a trial */
-#define _XMP_FJRDMA_TAG             0
-#define _XMP_FJRDMA_START_MEMID     2
+#define _XMP_FJRDMA_MAX_SIZE   16777212
+#define _XMP_FJRDMA_MAX_MEMID       511
+#define _XMP_FJRDMA_MAX_MPUT       1993
+#define _XMP_FJRDMA_MAX_MGET        100 /** This value is trial */
+#define _XMP_FJRDMA_MAX_COMM         60 /** This value is trial */
+#define _XMP_FJRDMA_TAG               0
+#define _XMP_FJRDMA_START_MEMID       2
 
-static int _num_of_puts = 0;
+static int _num_of_puts = 0, _num_of_gets = 0;
 static struct FJMPI_Rdma_cq _cq;
 static int _memid = _XMP_FJRDMA_START_MEMID; // _memid = 0 is used to put/get operations.
                                              // _memid = 1 is used to post/wait operations.
 /**
-   Check transfer_size is less than _XMP_FJRDMA_MAX_SIZE and 4-Byte align
+   transfer_size must be 4-Byte align
 */
 static void _check_transfer_size(const size_t transfer_size)
 {
-  if(transfer_size > _XMP_FJRDMA_MAX_SIZE){
-    fprintf(stderr, "transfer_size is too large (%zu)\n", transfer_size);
-    exit(1);
-  }
-
   if((transfer_size&0x3) != 0){  // transfer_size % 4 != 0
     fprintf(stderr, "transfer_size must be multiples of four (%zu)\n", transfer_size);
     exit(1);
   }
+}
+
+/**
+   The _XMP_FJMPI_Rdma_put() is a wrapper function of the FJMPI_Rdma_put().
+   FJMPI_Rdma_put() cannot transfer more than _XMP_FJRDMA_MAX_SIZE(about 16MB) data.
+   Thus, the _XMP_FJMPI_Rdma_put() executes mutiple put operations to trasfer more than 16MB data.
+*/
+static void _XMP_FJMPI_Rdma_put(const int target_rank, uint64_t raddr, uint64_t laddr, 
+				const size_t transfer_size)
+{
+  if(transfer_size <= _XMP_FJRDMA_MAX_SIZE){
+    FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_FLAG_NIC);
+    _num_of_puts++;
+  }
+  else{
+    int times = transfer_size / _XMP_FJRDMA_MAX_SIZE;
+    int rest  = transfer_size - _XMP_FJRDMA_MAX_SIZE * times;
+
+    for(int i=0;i<times;i++){
+      FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, _XMP_FJRDMA_MAX_SIZE, _XMP_FLAG_NIC);
+      raddr += _XMP_FJRDMA_MAX_SIZE;
+      laddr += _XMP_FJRDMA_MAX_SIZE;
+      _num_of_puts++;
+    }
+    
+    if(rest != 0){
+      FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, rest, _XMP_FLAG_NIC);
+      _num_of_puts++;
+    }
+  }
+}
+
+/**
+   The _XMP_FJMPI_Rdma_get() is a wrapper function of the FJMPI_Rdma_get().
+   FJMPI_Rdma_get() cannot transfer more than _XMP_FJRDMA_MAX_SIZE(about 16MB) data.
+   Thus, the _XMP_FJMPI_Rdma_get() executes mutiple put operations to trasfer more than 16MB data.
+*/
+static void _XMP_FJMPI_Rdma_get(const int target_rank, uint64_t raddr, uint64_t laddr,
+				const size_t transfer_size)
+{
+  // To complete put operations before the following get operation.
+  _XMP_fjrdma_sync_memory();
+
+  if(transfer_size <= _XMP_FJRDMA_MAX_SIZE){
+    FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_FLAG_NIC);
+    _num_of_gets++;
+  }
+  else{
+    int times = transfer_size / _XMP_FJRDMA_MAX_SIZE;
+    int rest  = transfer_size - _XMP_FJRDMA_MAX_SIZE * times;
+
+    for(int i=0;i<times;i++){
+      FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, _XMP_FJRDMA_MAX_SIZE, _XMP_FLAG_NIC);
+      raddr += _XMP_FJRDMA_MAX_SIZE;
+      laddr += _XMP_FJRDMA_MAX_SIZE;
+      _num_of_gets++;
+    }
+
+    if(rest != 0){
+      FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, rest, _XMP_FLAG_NIC);
+      _num_of_gets++;
+    }
+  }
+}
+
+static void _complete_get_operations()
+{
+  while(_num_of_gets != 0)
+    if(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) == FJMPI_RDMA_NOTICE)
+      _num_of_gets--;
 }
 
 #if defined(OMNI_TARGET_CPU_FX10) || defined(OMNI_TARGET_CPU_FX100)
@@ -47,16 +112,19 @@ static void _check_transfer_size(const size_t transfer_size)
 /* NOTE       : This function is used instead of FJMPI_Rdma_mput() which is used */
 /*              on the K computer                                                */
 /*********************************************************************************/
-static void _FX10_Rdma_mput(const int target_rank, const uint64_t *raddrs, const uint64_t *laddrs,
+static void _FX10_Rdma_mput(const int target_rank, uint64_t *raddrs, uint64_t *laddrs,
                             const size_t *lengths, const int stride, const size_t transfer_elmts)
 {
   if(stride == 0){
     for(int i=0;i<transfer_elmts;i++)
-      FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddrs[i], laddrs[i], lengths[i], _XMP_FLAG_NIC);
+      _XMP_FJMPI_Rdma_put(target_rank, raddrs[i], laddrs[i], lengths[i]);
   }
   else{
-    for(int i=0;i<transfer_elmts;i++)
-      FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddrs[0]+i*stride, laddrs[0]+i*stride, lengths[0], _XMP_FLAG_NIC);
+    for(int i=0;i<transfer_elmts;i++){
+      _XMP_FJMPI_Rdma_put(target_rank, raddrs[0], laddrs[0], lengths[0]);
+      raddrs[0] += i*stride;
+      laddrs[0] += i*stride;
+    }
   }
 }
 #endif
@@ -90,7 +158,6 @@ static void _RDMA_mput(const size_t target_rank, uint64_t* raddrs, uint64_t* lad
   _num_of_puts++;
 #elif defined(OMNI_TARGET_CPU_FX10) || defined(OMNI_TARGET_CPU_FX100)
   _FX10_Rdma_mput(target_rank, raddrs, laddrs, lengths, stride, transfer_elmts);
-  _num_of_puts += transfer_elmts;
 #endif
 
   _release_MRQ();
@@ -193,17 +260,15 @@ void _XMP_fjrdma_shortcut_put(const int target_rank, const uint64_t dst_offset, 
   uint64_t laddr = (uint64_t)src_desc->addr[_XMP_world_rank] + src_offset;
 
   if(dst_elmts == src_elmts){
-    FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_FLAG_NIC);
-    _num_of_puts++;
+    _XMP_FJMPI_Rdma_put(target_rank, raddr, laddr, transfer_size);
   }
   else if(src_elmts == 1){
     uint64_t raddrs[dst_elmts], laddrs[dst_elmts];
     size_t lengths[dst_elmts];
-    for(int i=0;i<dst_elmts;i++) raddrs[i] = raddr + i * elmt_size;
-    for(int i=0;i<dst_elmts;i++) laddrs[i] = laddr;
+    for(int i=0;i<dst_elmts;i++) raddrs[i]  = raddr + i * elmt_size;
+    for(int i=0;i<dst_elmts;i++) laddrs[i]  = laddr;
     for(int i=0;i<dst_elmts;i++) lengths[i] = elmt_size;
     _fjrdma_scalar_mput_do(target_rank, raddrs, laddrs, lengths, dst_elmts, elmt_size);
-    // Note "_num_of_puts" is incremented in _fjrdma_scalar_mput_do()
   }
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
@@ -238,8 +303,7 @@ static void _fjrdma_continuous_put(const int target_rank, const uint64_t dst_off
   else
     laddr = (uint64_t)src_desc->addr[_XMP_world_rank] + src_offset;
 
-  FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_FLAG_NIC);
-  _num_of_puts++;
+  _XMP_FJMPI_Rdma_put(target_rank, raddr, laddr, transfer_size);
 
   if(src_desc == NULL)   
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
@@ -490,16 +554,12 @@ void _XMP_fjrdma_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_d
   _XMP_fjrdma_sync_memory();
 
   if(dst_elmts == src_elmts){
-    FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_FLAG_NIC);
-
-    // To complete the above get operation.
-    while(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) != FJMPI_RDMA_NOTICE);
+    _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, transfer_size);
+    _complete_get_operations();
   }
   else if(src_elmts == 1){
-    FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, elmt_size, _XMP_FLAG_NIC);
-
-    // To complete the above get operation.
-    while(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) != FJMPI_RDMA_NOTICE);
+    _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, elmt_size);
+    _complete_get_operations();
 
     char *dst = dst_desc->real_addr + dst_offset;
     for(int i=1;i<dst_elmts;i++)
@@ -537,13 +597,8 @@ static void _fjrdma_continuous_get(const int target_rank, const uint64_t dst_off
   else
     laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_offset;
   
-  // To complete put operations before the following get operation.
-  _XMP_fjrdma_sync_memory();
-
-  FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_FLAG_NIC);
-
-  // To complete the above get operation.
-  while(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) != FJMPI_RDMA_NOTICE);
+  _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, transfer_size);
+  _complete_get_operations();
 
   if(dst_desc == NULL)
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
@@ -590,16 +645,9 @@ static void _fjrdma_NON_continuous_get(const int target_rank, const uint64_t dst
   _XMP_set_coarray_addresses_with_chunk(raddrs, raddr, src_info, src_dims, copy_chunk, copy_elmts);
   _XMP_set_coarray_addresses_with_chunk(laddrs, laddr, dst_info, dst_dims, copy_chunk, copy_elmts);
 
-  // To complete put operations before the following get operation.
-  _XMP_fjrdma_sync_memory();
-
   if(copy_elmts <= _XMP_FJRDMA_MAX_MGET){
     for(int i=0;i<copy_elmts;i++)
-      FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddrs[i], laddrs[i], copy_chunk, _XMP_FLAG_NIC);
-
-    // To complete the above get operation.
-    for(int i=0;i<copy_elmts;i++)
-      while(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) != FJMPI_RDMA_NOTICE);
+      _XMP_FJMPI_Rdma_get(target_rank, raddrs[i], laddrs[i], copy_chunk);
   }
   else{
     int times      = copy_elmts / _XMP_FJRDMA_MAX_MGET + 1;
@@ -608,14 +656,11 @@ static void _fjrdma_NON_continuous_get(const int target_rank, const uint64_t dst
     for(int i=0;i<times;i++){
       size_t tmp_elmts = (i != times-1)? _XMP_FJRDMA_MAX_MGET : rest_elmts;
       for(int j=0;j<tmp_elmts;j++)
-	FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddrs[j+i*_XMP_FJRDMA_MAX_MGET], laddrs[j+i*_XMP_FJRDMA_MAX_MGET], 
-		       copy_chunk, _XMP_FLAG_NIC);
-
-      // To complete the above get operation.
-      for(int i=0;i<tmp_elmts;i++)
-	while(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) != FJMPI_RDMA_NOTICE);
+	_XMP_FJMPI_Rdma_get(target_rank, raddrs[j+i*_XMP_FJRDMA_MAX_MGET], laddrs[j+i*_XMP_FJRDMA_MAX_MGET], copy_chunk);
     }
   }
+
+  _complete_get_operations();
 
   if(dst_desc == NULL)
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
@@ -650,13 +695,8 @@ static void _fjrdma_scalar_mget(const int target_rank, const uint64_t dst_offset
   else
     laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_offset;
 
-  // To complete put operations before the following get operation.
-  _XMP_fjrdma_sync_memory();
-
-  FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, elmt_size, _XMP_FLAG_NIC);
-
-  // To complete the above get operation.
-  while(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) != FJMPI_RDMA_NOTICE);
+  _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, elmt_size);
+  _complete_get_operations();
 
   // Local copy (Note that number of copies is one time more in following _XMP_stride_memcpy_Xdim())
   char *src_addr = dst + dst_offset;
