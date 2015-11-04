@@ -9,6 +9,7 @@
  */
 
 #include "F-front.h"
+#include "F-second-pass.h"
 #include <math.h>
 
 static expv compile_args _ANSI_ARGS_((expr args));
@@ -936,9 +937,15 @@ compile_expression(expr x)
                 }
                 EXPV_TYPE(v) = ID_TYPE(id);
             }
-            if(!expv_is_specification(v))
-                error_at_node(EXPR_ARG1(x),
-                    "character string length must be integer.");
+/* FEAST change start */
+            /* if(!expv_is_specification(v)) */
+            /*     error_at_node(EXPR_ARG1(x), */
+            /*         "character string length must be integer."); */
+            if(!expv_is_specification(v)){
+              EXPV_TYPE(v) = NULL;
+              sp_link_expr((expr)v, 2, current_line);
+            }
+/* FEAST change  end  */
             return v;
         }
         case PLUS_EXPR:
@@ -1104,7 +1111,12 @@ compile_ident_expression(expr x)
 
     done:
     if (ret == NULL) {
-        fatal("%s: invalid code", __func__);
+/* FEAST change start */
+        /* fatal("%s: invalid code", __func__); */
+      EXPV_TYPE(x) = NULL;
+      ret = (expv)x;
+      sp_link_expr((expr)x, 3, current_line);
+/* FEAST change  end  */
     }
 
     return ret;

@@ -6,6 +6,7 @@
 
 #include "F-front.h"
 #include "F-output-xcodeml.h"
+#include "F-second-pass.h"
 #include <math.h>
 
 /* for debug */
@@ -447,6 +448,9 @@ char *argv[];
     initialize_compile();
 
     /* start processing */
+/* FEAST add start */
+    second_pass_init();
+/* FEAST add  end  */
     parseError = yyparse();
     if (nerrors != 0 ||
         parseError != 0) {
@@ -454,6 +458,16 @@ char *argv[];
     }
     nerrors = 0;
 
+/* FEAST add start */
+    /* second pass */
+    parseError = second_pass();
+    /* printf("parseError = %d, nerrors = %d\n", parseError, nerrors); */
+    if (nerrors != 0 ||
+        parseError != 0) {
+        goto Done;
+    }
+/* FEAST add  end  */
+    
     /* end compile */
     if (unit_ctl_level != 0) {
         error("contains stack is not closed properly");

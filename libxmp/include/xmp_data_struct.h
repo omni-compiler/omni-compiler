@@ -41,6 +41,7 @@ typedef struct _XMP_nodes_type {
   int is_member;
   int dim;
   int comm_size;
+  int attr;
 
   // enable when is_member is true
   int comm_rank;
@@ -265,24 +266,24 @@ typedef struct xmp_coarray{
   size_t elmt_size; // Element size of a coarray. A unit of it is Byte.
                     // e.g.) "int a[10]:[*]" is 4.
 
-  int coarray_dims; // Number of dimensions of coarray.
-                    // e.g.) "int a[10][20]:[4][2][*]" is 2.
+  unsigned int coarray_dims; // Number of dimensions of coarray.
+                             // e.g.) "int a[10][20]:[4][2][*]" is 2.
 
-  int *coarray_elmts; // Number of elements of each dimension of a coarray.
-                      // e.g.) If "int a[10][20]:[*]", coarray_elmts[0] is 10, coarray_elmts[1] is 20.
-                      //       If a coarray is scalar, coarray_elmts[0] is 1.
+  unsigned int *coarray_elmts; // Number of elements of each dimension of a coarray.
+                               // e.g.) If "int a[10][20]:[*]", coarray_elmts[0] is 10, coarray_elmts[1] is 20.
+                               //       If a coarray is scalar, coarray_elmts[0] is 1.
 
-  int *distance_of_coarray_elmts; // Distance between each dimension of coarray. A unit of the distance is Byte.
-                                  // e.g.) If "int a[10][20][30]:[*]", distance_of_coarray_elmts[0] is 2400 (20*30*sizeof(int)),
-                                  //       distance_of_coarray_elmts[1] is 120 (30*sizeof(int)),
-                                  //       distance_of_coarray_elmts[0] is 4 (sizeof(int)).
+  unsigned int *distance_of_coarray_elmts; // Distance between each dimension of coarray. A unit of the distance is Byte.
+                                           // e.g.) If "int a[10][20][30]:[*]", distance_of_coarray_elmts[0] is 2400 (20*30*sizeof(int)),
+                                           //       distance_of_coarray_elmts[1] is 120 (30*sizeof(int)),
+                                           //       distance_of_coarray_elmts[0] is 4 (sizeof(int)).
 
-  int image_dims; // Number of dimensions of image set.
-                  // e.g.) If "int a[10][20]:[4][2][*]" is 3.
+  unsigned int image_dims; // Number of dimensions of image set.
+                           // e.g.) If "int a[10][20]:[4][2][*]" is 3.
 
-  int *distance_of_image_elmts; // Distance between each dimension of image set.
-                                // e.g.) If "int a[10][20]:[4][2][*]", distance_of_image_elmts[0] is 1,
-                                //       distance_of_image_elmts[1] is 4, distance_of_image_elmts[2] is 8.
+  unsigned int *distance_of_image_elmts; // Distance between each dimension of image set.
+                                         // e.g.) If "int a[10][20]:[4][2][*]", distance_of_image_elmts[0] is 1,
+                                         //       distance_of_image_elmts[1] is 4, distance_of_image_elmts[2] is 8.
 #ifdef _XMP_MPI3_ONESIDED
   MPI_Win win;
   //#ifdef _XMP_XACC
@@ -325,14 +326,61 @@ typedef struct _XMP_gmv_desc_type
 #endif
 } _XMP_gmv_desc_t;
 
+// Regular Section Descriptor (RSD)
+// (l:u:s)
+typedef struct _XMP_rsd_type {
+  int l;
+  int u;
+  int s;
+} _XMP_rsd_t;
+
+// Basic Section Descriptor (BSD)
+// (l:u:b:c)
+// b = block width
+// c = cyclic length
+typedef struct _XMP_bsd_type {
+  int l;
+  int u;
+  int b;
+  int c;
+} _XMP_bsd_t;
+
+// Common Section Descriptor (CSD)
+// ((l_1,...,l_n):(u_1,...,u_n):s)
+// proposed in Gwan-Hwan Hwang , Jenq Kuen Lee, Communication set generations with CSD calculus and
+// expression-rewriting framework, Parallel Computing, v.25 n.9, p.1105-1130, Sept. 1999 
+typedef struct _XMP_csd_type {
+  int *l;
+  int *u;
+  int n;
+  int s;
+} _XMP_csd_t;
+
+// Communication Set
+// ((l_1:u_1),(l_2:u_2),...)
+typedef struct _XMP_comm_set_type {
+  int l;
+  int u;
+  struct _XMP_comm_set_type *next;
+} _XMP_comm_set_t;
+
 //
 // for asynchronous comms.
 //
+
+typedef struct _XMP_async_gmove {
+  void *sendbuf;
+  void *recvbuf;
+  int recvbuf_size;
+  _XMP_array_t *a;
+  _XMP_comm_set_t *(*comm_set)[_XMP_N_MAX_DIM];
+} _XMP_async_gmove_t;
 
 typedef struct _XMP_async_comm {
   int async_id;
   int nreqs;
   MPI_Request *reqs;
+  _XMP_async_gmove_t *gmove;
   struct _XMP_async_comm *next;
 } _XMP_async_comm_t;
 

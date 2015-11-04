@@ -730,8 +730,9 @@ public class XMPanalyzePragma
 
   private void analyzeGmove(Xobject gmoveDecl, BlockList body, 
 			    XMPinfo info, PragmaBlock pb) {
-    Xobject gmoveOpt = gmoveDecl.getArg(0);
-    Xobject Opt = gmoveDecl.getArg(1);
+    Xobject gmoveOpt = gmoveDecl.getArg(0); // NORMAL | IN | OUT
+    Xobject asyncOpt = gmoveDecl.getArg(1);
+    //Xobject Opt = gmoveDecl.getArg(2);
 
     // check body is single statement.
     Block b = body.getHead();
@@ -755,6 +756,12 @@ public class XMPanalyzePragma
     if(XMP.hasError()) return;
     
     info.setGmoveOperands(left,right);
+
+    if (asyncOpt != null && !XmOption.isAsync()){
+      XMP.errorAt(pb, "MPI-3 is required to use the async clause on a gmove directive");
+    }
+
+    info.setAsyncId(asyncOpt);
   }
 
   private boolean checkGmoveOperand(Xobject x, PragmaBlock pb){

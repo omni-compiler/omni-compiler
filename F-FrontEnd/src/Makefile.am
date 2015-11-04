@@ -8,7 +8,7 @@ F_Front_SOURCES= F95-main.c C-expr-mem.c C-exprcode.c F-datatype.c F-ident.c \
 	xcodeml-node.c xcodeml-parse.c \
 	xcodeml-util.c xcodeml-type.c xcodeml-traverse.c xcodeml-output-F.c \
 	F-dump.c F-type-attr-tbl.c module-manager.c hash.c F-input-xmod.c \
-	F-module-procedure.c
+	F-module-procedure.c F-second-pass.c
 
 AM_YFLAGS=-v
 
