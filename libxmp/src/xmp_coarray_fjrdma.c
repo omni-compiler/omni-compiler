@@ -122,8 +122,8 @@ static void _FX10_Rdma_mput(const int target_rank, uint64_t *raddrs, uint64_t *l
   else{
     for(int i=0;i<transfer_elmts;i++){
       _XMP_FJMPI_Rdma_put(target_rank, raddrs[0], laddrs[0], lengths[0]);
-      raddrs[0] += i*stride;
-      laddrs[0] += i*stride;
+      raddrs[0] += stride;
+      laddrs[0] += stride;
     }
   }
 }
