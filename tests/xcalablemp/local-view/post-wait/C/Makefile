@@ -17,6 +17,7 @@ all default: $(EXES)
 run: 
 	$(XRUN) -np 4 ./post_wait.x
 	$(XRUN) -np 4 ./post_wait_massive.x
+	$(XRUN) -np 4 ./post_wait_massive_2.x
 
 clean:
 	rm -f $(EXES) $(C_OBJS)

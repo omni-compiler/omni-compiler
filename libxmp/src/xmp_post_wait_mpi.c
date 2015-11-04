@@ -152,7 +152,7 @@ void _xmp_mpi_wait_node(const int node)
     if(recv_node == node){
       return;
     }
-    add_request(recv_node, recv_tag);
+    do_post(recv_node, recv_tag);
   }
 }
 
@@ -178,6 +178,6 @@ void _xmp_mpi_wait(const int node, const int tag)
       XACC_DEBUG("wait end (recved)");
       return;
     }
-    add_request(recv_node, recv_tag);
+    do_post(recv_node, recv_tag);
   }
 }
