@@ -96,7 +96,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_T_Module_OBJECTS = export_module.$(OBJEXT) import_module.$(OBJEXT) \
 	safe-ctype.$(OBJEXT) trans_module.$(OBJEXT) xmalloc.$(OBJEXT)
 T_Module_OBJECTS = $(am_T_Module_OBJECTS)
-T_Module_LDADD = $(LDADD)
+T_Module_DEPENDENCIES =
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
 am__v_P_0 = false
@@ -163,7 +163,7 @@ AUTOMAKE = ${SHELL} /home/mnakao/omni-compiler/buildutils/missing automake-1.14
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -O -fno-exceptions -fasynchronous-unwind-tables $(DOPT) $(WOPT)
+CFLAGS = -g -O2 -std=gnu99 -Wall -Wpointer-arith
 CPP = gcc -E
 CPPFLAGS = -DOMNI_CPU_X86_64 -DOMNI_OS_LINUX -DNDEBUG 
 CPP_OPT = -cpp
@@ -201,7 +201,7 @@ JAR = jar
 JAVA = java
 JAVAC = javac
 JAVA_OPT = -Xmx200m -Xms200m
-LDFLAGS = -lgmp -lmpfr -lz
+LDFLAGS = 
 LEX = flex
 LEXLIB = -lfl
 LEX_OUTPUT_ROOT = lex.yy
@@ -295,7 +295,7 @@ TYPE_INT64 = long int
 VERSION = 0.9.1
 XMPC_DEF = -D_XCALABLEMP
 XMPF_DEF = -D_XCALABLEMP
-XMPPKG_CHANGELOG_DATE = Thu, 05 Nov 2015 14:48:19 +0900
+XMPPKG_CHANGELOG_DATE = Thu, 05 Nov 2015 15:40:47 +0900
 XMPPKG_GROUP = Development Languages
 XMPPKG_LICENSE = LGPLv2
 XMPPKG_MAINTAINER = Hitoshi Murai <h-murai@riken.jp>
@@ -386,6 +386,8 @@ T_Module_SOURCES = export_module.c import_module.c safe-ctype.c trans_module.c x
 INC = -I./include
 DOPT = -DIN_GCC_FRONTEND -DIN_GCC -DHAVE_CONFIG_H -D_ZLIB_
 WOPT = -W -Wall -Wwrite-strings -Wcast-qual -Wmissing-format-attribute -pedantic -Wno-long-long -Wno-variadic-macros -Wno-overlength-strings -w
+AM_CFLAGS = -O -fno-exceptions -fasynchronous-unwind-tables $(DOPT) $(WOPT) $(INC)
+T_Module_LDADD = -lgmp -lmpfr -lz
 cur_dir = `pwd`
 HED = $(shell ls include/*.h)
 all: all-am
@@ -474,6 +476,9 @@ mostlyclean-compile:
 
 distclean-compile:
 	-rm -f *.tab.c
+
+.c.o:
+	$(AM_V_CC)$(COMPILE) -c -o $@ $<
 
 .c.obj:
 	$(AM_V_CC)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
@@ -597,7 +602,9 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
+clean: clean-am
+
+clean-am: clean-binPROGRAMS clean-generic clean-local mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
@@ -665,26 +672,23 @@ uninstall-am: uninstall-binPROGRAMS
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic cscopelist-am ctags ctags-am \
-	distclean distclean-compile distclean-generic distclean-tags \
-	distdir dvi dvi-am html html-am info info-am install \
-	install-am install-binPROGRAMS install-data install-data-am \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-info install-info-am \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
-	ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-binPROGRAMS
+	clean-binPROGRAMS clean-generic clean-local cscopelist-am \
+	ctags ctags-am distclean distclean-compile distclean-generic \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-binPROGRAMS install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-binPROGRAMS
 
 
 all: $(OBJ)
 	test -f xmpmod || sed -e "s|@@XMP_PATH@@|$(cur_dir)|g" < utils/xmpmod.bs > xmpmod
 	chmod 755 xmpmod
-
-.c.o:
-	$(CC) $(CFLAGS) -c $< $(INC)
 
 #depend
 xmalloc.o       :xmalloc.c       ${HED}
@@ -693,7 +697,7 @@ import_module.o :import_module.c ${HED}
 export_module.o :export_module.c ${HED}
 trans_module.o  :trans_module.c  ${HED}
 
-clean:
+clean-local:
 	$(RM) *.o
 
 cleanall:

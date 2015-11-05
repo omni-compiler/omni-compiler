@@ -6,16 +6,17 @@
  * MPI Implementation (supports MPI-2)
  * libxml2
  * make
-
+ * (If you use gfortran) gmp, mpfr
+ 
 ## On Debian GNU/Linux and Ubuntu
  The following packages may be needed to be installed previously:
 
- * flex gcc gfortran g++ openjdk-7-jdk libopenmpi-dev openmpi-bin libxml2-dev byacc make perl
+ * flex gcc gfortran g++ openjdk-7-jdk libopenmpi-dev openmpi-bin libxml2-dev byacc make perl libmpfr-dev libgmp-dev
 
 ## On Red Hat and CentOS
  The following packages may be needed to be installed previously:
 
- * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel openmpi-devel libxml2-devel byacc make perl
+ * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel openmpi-devel libxml2-devel byacc make perl libmpfr-dev libgmp-dev
 
 ## For local-view operations (coarray, post/wait, lock/unlock)
  * On the K computer or FX10 or FX100, the Omni compiler automatically uses Fujitsu RDMA.
