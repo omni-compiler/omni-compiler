@@ -298,8 +298,8 @@ public class XMPtransCoarrayRun
       subroutine EX1
         use M1
 
-        real :: V1(1:10,1:20)                                        ! f.
-        complex(8), save :: V2                                       ! f.
+        real :: V1(1:10,1:20)                                        ! f. f1.
+        complex(8) :: V2                                             ! f. f1.
 
         !-- for use-associated static coarray V1
         integer(8) :: DP_V1                                          ! a.
@@ -340,6 +340,9 @@ public class XMPtransCoarrayRun
 
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(staticLocalCoarrays);
+
+    // f1. remove SAVE attributes from declarations of coarrays
+    removeSaveAttr(staticLocalCoarrays);
   }
 
 
@@ -354,7 +357,7 @@ public class XMPtransCoarrayRun
     output:
     --------------------------------------------
       subroutine EX1  or  module EX1
-        integer, pointer :: V3(:,:)                                  ! f. h.
+        integer, pointer :: V3(:,:)                                  ! f. f1. h.
         integer(8) :: DP_V3                                          ! a.
         ...
       end subroutine  or  end module
@@ -368,6 +371,9 @@ public class XMPtransCoarrayRun
 
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(allocatableLocalCoarrays);
+
+    // f1. remove SAVE attributes from declarations of coarrays
+    removeSaveAttr(allocatableLocalCoarrays);
 
     // h. replace allocatable attributes with pointer attributes
     replaceAllocatableWithPointer(allocatableLocalCoarrays);
@@ -1410,6 +1416,16 @@ public class XMPtransCoarrayRun
   }
 
 
+  //-----------------------------------------------------
+  //  TRANSLATION f1.
+  //  remove SAVE attributes from declarations of coarrays
+  //-----------------------------------------------------
+  //
+  private void removeSaveAttr(ArrayList<XMPcoarray> coarrays) {
+    for (XMPcoarray coarray: coarrays) {
+      coarray.resetSaveAttr();
+    }
+  }
 
   //-----------------------------------------------------
   //  TRANSLATION h.

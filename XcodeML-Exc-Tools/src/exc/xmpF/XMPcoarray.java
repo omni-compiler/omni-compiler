@@ -580,6 +580,18 @@ public class XMPcoarray {
     }
   }
 
+  public void resetSaveAttr() {
+    for (Xtype type = ident.Type(); type != null; ) {
+      type.setIsFsave(false);
+      if (type.copied != null)
+        type = type.copied;
+      else if (type.isBasic())
+        break;
+      else
+        type = type.getRef();
+    }
+  }
+
   public Boolean isPointer() {
     return isPointer;
   }
