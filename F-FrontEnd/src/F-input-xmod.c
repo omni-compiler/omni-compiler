@@ -2515,6 +2515,9 @@ input_module(xmlTextReaderPtr reader, struct module * mod)
     return TRUE;
 }
 
+#include <stdlib.h>
+#define _XMPMOD_NAME "T_Module"
+
 /**
  * input module from .xmod file
  */
@@ -2526,6 +2529,7 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
     const char * filepath;
     xmlTextReaderPtr reader;
 
+    // search for "xxx.xmod"
     bzero(filename, sizeof(filename));
     strcpy(filename, SYM_NAME(mod_name));
     strcat(filename, ".xmod");
@@ -2533,6 +2537,29 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
     filepath = search_include_path(filename);
 
     reader = xmlNewTextReaderFilename(filepath);
+
+#if defined _MPI_FC && _MPI_FC == gfortran
+    // if not found, then search for "xxx.mod" and convert it into "xxx.xmod"
+    if (reader == NULL){
+      char filename2[FILE_NAME_LEN];
+      const char * filepath2;
+
+      bzero(filename2, sizeof(filename));
+      strcpy(filename2, SYM_NAME(mod_name));
+      strcat(filename2, ".mod");
+      filepath2 = search_include_path(filename2);
+
+      char command[FILE_NAME_LEN + 9];
+      bzero(command, sizeof(filename2) + 9);
+      strcpy(command, _XMPMOD_NAME);
+      strcat(command, " ");
+      strcat(command, filepath2);
+      if (system(command) != 0) return FALSE;
+
+      reader = xmlNewTextReaderFilename(filepath);
+    }
+#endif
+
     if (reader == NULL)
         return FALSE;
 
