@@ -59,6 +59,9 @@ F-FrontEnd/src/F95-parser.c
 F-FrontEnd/src/F95-parser.output
 F-FrontEnd/src/F_Front
 F-FrontEnd/src/Makefile
+F-FrontEnd/gnu_module/T_Module
+F-FrontEnd/gnu_module/xmpmod
+F-FrontEnd/gnu_module/Makefile
 XcodeML-Common/Makefile
 XcodeML-Common/ant.properties
 XcodeML-Common/build/

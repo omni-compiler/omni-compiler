@@ -63,6 +63,7 @@ AC_CONFIG_FILES(XcodeML-Common/Makefile)
 AC_CONFIG_FILES(C-FrontEnd/src/Makefile)
 AC_CONFIG_FILES(C-BackEnd/Makefile)
 AC_CONFIG_FILES(F-FrontEnd/src/Makefile)
+AC_CONFIG_FILES(F-FrontEnd/gnu_module/Makefile)
 AC_CONFIG_FILES(F-BackEnd/Makefile)
 AC_CONFIG_FILES(XcodeML-Exc-Tools/Makefile)
 AC_CONFIG_FILES(XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java)
@@ -1238,6 +1239,15 @@ AC_SUBST(AR)
 AC_SUBST(NM)
 AC_SUBST(NM_OPT)
 
+# check gfortran-based MPI as a backend compiler ?
+chk=`${MPI_FC} --version | head -n1`
+case $chk in
+  "GNU Fortran"*) IS_MPI_GFORTRAN=yes;;
+  *)              IS_MPI_GFORTRAN=no;;
+esac
+AM_CONDITIONAL(MPI_GFORTRAN, test "$IS_MPI_GFORTRAN" = "yes")
+#AC_SUBST(MPI_GFORTRAN)
+
 # check PGI compiler
 #chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
 #AM_CONDITIONAL(IS_PGI, test "$chk" != "")
@@ -1260,7 +1270,7 @@ fi
 AM_CONDITIONAL(SUPERUX, test "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux")
 
 #AC_SUBST(CRAY)
-AC_SUBST(SUPERUX)
+#AC_SUBST(SUPERUX)
 
 # --------------------------------------------------------------------
 # MPI3 for MPI FLAGS

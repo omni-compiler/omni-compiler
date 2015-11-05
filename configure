@@ -706,9 +706,10 @@ MPI3_ONESIDED_FALSE
 MPI3_ONESIDED_TRUE
 MPI3_FALSE
 MPI3_TRUE
-SUPERUX
 SUPERUX_FALSE
 SUPERUX_TRUE
+MPI_GFORTRAN_FALSE
+MPI_GFORTRAN_TRUE
 NM_OPT
 OMNI_X2X_FLAGS
 OMNI_LNK_FCFLAGS
@@ -3056,8 +3057,8 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
-# expand $ac_aux_dir to an absolute path
-am_aux_dir=`cd $ac_aux_dir && pwd`
+# Expand $ac_aux_dir to an absolute path.
+am_aux_dir=`cd "$ac_aux_dir" && pwd`
 
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
@@ -3454,6 +3455,7 @@ END
   fi
 fi
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
 $as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
     # Check whether --enable-maintainer-mode was given.
@@ -3491,6 +3493,8 @@ ac_config_files="$ac_config_files C-FrontEnd/src/Makefile"
 ac_config_files="$ac_config_files C-BackEnd/Makefile"
 
 ac_config_files="$ac_config_files F-FrontEnd/src/Makefile"
+
+ac_config_files="$ac_config_files F-FrontEnd/gnu_module/Makefile"
 
 ac_config_files="$ac_config_files F-BackEnd/Makefile"
 
@@ -8945,6 +8949,22 @@ OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 
 
 
+# check gfortran-based MPI as a backend compiler ?
+chk=`${MPI_FC} --version | head -n1`
+case $chk in
+  "GNU Fortran"*) IS_MPI_GFORTRAN=yes;;
+  *)              IS_MPI_GFORTRAN=no;;
+esac
+ if test "$IS_MPI_GFORTRAN" = "yes"; then
+  MPI_GFORTRAN_TRUE=
+  MPI_GFORTRAN_FALSE='#'
+else
+  MPI_GFORTRAN_TRUE='#'
+  MPI_GFORTRAN_FALSE=
+fi
+
+#AC_SUBST(MPI_GFORTRAN)
+
 # check PGI compiler
 #chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
 #AM_CONDITIONAL(IS_PGI, test "$chk" != "")
@@ -8974,7 +8994,7 @@ fi
 
 
 #AC_SUBST(CRAY)
-
+#AC_SUBST(SUPERUX)
 
 # --------------------------------------------------------------------
 # MPI3 for MPI FLAGS
@@ -12907,6 +12927,10 @@ if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
   as_fn_error $? "conditional \"GASNET\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${MPI_GFORTRAN_TRUE}" && test -z "${MPI_GFORTRAN_FALSE}"; then
+  as_fn_error $? "conditional \"MPI_GFORTRAN\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${SUPERUX_TRUE}" && test -z "${SUPERUX_FALSE}"; then
   as_fn_error $? "conditional \"SUPERUX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -13520,6 +13544,7 @@ do
     "C-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES C-FrontEnd/src/Makefile" ;;
     "C-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES C-BackEnd/Makefile" ;;
     "F-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/Makefile" ;;
+    "F-FrontEnd/gnu_module/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/gnu_module/Makefile" ;;
     "F-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES F-BackEnd/Makefile" ;;
     "XcodeML-Exc-Tools/Makefile") CONFIG_FILES="$CONFIG_FILES XcodeML-Exc-Tools/Makefile" ;;
     "XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java") CONFIG_FILES="$CONFIG_FILES XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java" ;;

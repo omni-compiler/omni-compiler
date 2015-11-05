@@ -140,9 +140,8 @@ static int second_pass_clean()
   return err_num;
 }
 
-static int slen=0;
-
 #if 0
+static int slen=0;
 static void second_pass_expv_scan(expv v)
 {
   enum expr_code code;

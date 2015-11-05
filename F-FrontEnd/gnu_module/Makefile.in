@@ -79,11 +79,9 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = F_Front$(EXEEXT)
-@MPI_GFORTRAN_TRUE@am__append_1 = -D_MPI_FC=gfortran
-subdir = ./F-FrontEnd/src
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am F95-parser.c \
-	$(top_srcdir)/./buildutils/ylwrap ChangeLog
+bin_PROGRAMS = T_Module$(EXEEXT)
+subdir = ./F-FrontEnd/gnu_module
+DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -95,22 +93,10 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_F_Front_OBJECTS = F95-main.$(OBJEXT) C-expr-mem.$(OBJEXT) \
-	C-exprcode.$(OBJEXT) F-datatype.$(OBJEXT) F-ident.$(OBJEXT) \
-	F95-parser.$(OBJEXT) F-mem.$(OBJEXT) F-compile.$(OBJEXT) \
-	F-compile-decl.$(OBJEXT) F-compile-expr.$(OBJEXT) \
-	F-opt-expv.$(OBJEXT) F-output-xcodeml.$(OBJEXT) \
-	F-io-xcodeml.$(OBJEXT) F-data.$(OBJEXT) F-datasub.$(OBJEXT) \
-	F-equiv.$(OBJEXT) F-varutil.$(OBJEXT) F-intrinsic.$(OBJEXT) \
-	F-intrinsics-table.$(OBJEXT) F-OMP.$(OBJEXT) F-XMP.$(OBJEXT) \
-	xcodeml-node.$(OBJEXT) xcodeml-parse.$(OBJEXT) \
-	xcodeml-util.$(OBJEXT) xcodeml-type.$(OBJEXT) \
-	xcodeml-traverse.$(OBJEXT) xcodeml-output-F.$(OBJEXT) \
-	F-dump.$(OBJEXT) F-type-attr-tbl.$(OBJEXT) \
-	module-manager.$(OBJEXT) hash.$(OBJEXT) F-input-xmod.$(OBJEXT) \
-	F-module-procedure.$(OBJEXT) F-second-pass.$(OBJEXT)
-F_Front_OBJECTS = $(am_F_Front_OBJECTS)
-F_Front_DEPENDENCIES =
+am_T_Module_OBJECTS = export_module.$(OBJEXT) import_module.$(OBJEXT) \
+	safe-ctype.$(OBJEXT) trans_module.$(OBJEXT) xmalloc.$(OBJEXT)
+T_Module_OBJECTS = $(am_T_Module_OBJECTS)
+T_Module_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -138,17 +124,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-@MAINTAINER_MODE_FALSE@am__skipyacc = test -f $@ ||
-am__yacc_c2h = sed -e s/cc$$/hh/ -e s/cpp$$/hpp/ -e s/cxx$$/hxx/ \
-		   -e s/c++$$/h++/ -e s/c$$/h/
-YACCCOMPILE = $(YACC) $(AM_YFLAGS) $(YFLAGS)
-AM_V_YACC = $(am__v_YACC_@AM_V@)
-am__v_YACC_ = $(am__v_YACC_@AM_DEFAULT_V@)
-am__v_YACC_0 = @echo "  YACC    " $@;
-am__v_YACC_1 = 
-YLWRAP = $(top_srcdir)/./buildutils/ylwrap
-SOURCES = $(F_Front_SOURCES)
-DIST_SOURCES = $(F_Front_SOURCES)
+SOURCES = $(T_Module_SOURCES)
+DIST_SOURCES = $(T_Module_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -186,7 +163,7 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
-CFLAGS = @CFLAGS@
+CFLAGS = -O -fno-exceptions -fasynchronous-unwind-tables $(DOPT) $(WOPT)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPP_OPT = @CPP_OPT@
@@ -224,7 +201,7 @@ JAR = @JAR@
 JAVA = @JAVA@
 JAVAC = @JAVAC@
 JAVA_OPT = @JAVA_OPT@
-LDFLAGS = @LDFLAGS@
+LDFLAGS = -lgmp -lmpfr -lz
 LEX = @LEX@
 LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
@@ -405,24 +382,16 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-F_Front_SOURCES = F95-main.c C-expr-mem.c C-exprcode.c F-datatype.c F-ident.c \
-	F95-parser.y F-mem.c F-compile.c F-compile-decl.c F-compile-expr.c \
-	F-opt-expv.c F-output-xcodeml.c F-io-xcodeml.c \
-	F-data.c F-datasub.c F-equiv.c F-varutil.c \
-	F-intrinsic.c F-intrinsics-table.c F-OMP.c F-XMP.c \
-	xcodeml-node.c xcodeml-parse.c \
-	xcodeml-util.c xcodeml-type.c xcodeml-traverse.c xcodeml-output-F.c \
-	F-dump.c F-type-attr-tbl.c module-manager.c hash.c F-input-xmod.c \
-	F-module-procedure.c F-second-pass.c
-
-AM_YFLAGS = -v
-AM_CFLAGS = -DBUGFIX -D__XCODEML__ -DYYDEBUG \
-	-I$(LIBXML_PREFIX)/include/libxml2 $(am__append_1)
-F_Front_LDADD = -L$(LIBXML_LIB) -lxml2 -lm
+T_Module_SOURCES = export_module.c import_module.c safe-ctype.c trans_module.c xmalloc.c
+INC = -I./include
+DOPT = -DIN_GCC_FRONTEND -DIN_GCC -DHAVE_CONFIG_H -D_ZLIB_
+WOPT = -W -Wall -Wwrite-strings -Wcast-qual -Wmissing-format-attribute -pedantic -Wno-long-long -Wno-variadic-macros -Wno-overlength-strings -w
+cur_dir = `pwd`
+HED = $(shell ls include/*.h)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .o .obj .y
+.SUFFIXES: .c .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -432,9 +401,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./F-FrontEnd/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./F-FrontEnd/gnu_module/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps ./F-FrontEnd/src/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./F-FrontEnd/gnu_module/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -496,9 +465,9 @@ uninstall-binPROGRAMS:
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
 
-F_Front$(EXEEXT): $(F_Front_OBJECTS) $(F_Front_DEPENDENCIES) $(EXTRA_F_Front_DEPENDENCIES) 
-	@rm -f F_Front$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(F_Front_OBJECTS) $(F_Front_LDADD) $(LIBS)
+T_Module$(EXEEXT): $(T_Module_OBJECTS) $(T_Module_DEPENDENCIES) $(EXTRA_T_Module_DEPENDENCIES) 
+	@rm -f T_Module$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(T_Module_OBJECTS) $(T_Module_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -506,14 +475,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-.c.o:
-	$(AM_V_CC)$(COMPILE) -c -o $@ $<
-
 .c.obj:
 	$(AM_V_CC)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-.y.c:
-	$(AM_V_YACC)$(am__skipyacc) $(SHELL) $(YLWRAP) $< y.tab.c $@ y.tab.h `echo $@ | $(am__yacc_c2h)` y.output $*.output -- $(YACCCOMPILE)
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -634,10 +597,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-	-rm -f F95-parser.c
-clean: clean-am
-
-clean-am: clean-binPROGRAMS clean-generic clean-local mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
@@ -650,7 +610,7 @@ dvi-am:
 
 html: html-am
 
-html-am: html-local
+html-am:
 
 info: info-am
 
@@ -705,38 +665,39 @@ uninstall-am: uninstall-binPROGRAMS
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic clean-local cscopelist-am \
-	ctags ctags-am distclean distclean-compile distclean-generic \
-	distclean-tags distdir dvi dvi-am html html-am html-local info \
-	info-am install install-am install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-binPROGRAMS
+	clean-binPROGRAMS clean-generic cscopelist-am ctags ctags-am \
+	distclean distclean-compile distclean-generic distclean-tags \
+	distdir dvi dvi-am html html-am info info-am install \
+	install-am install-binPROGRAMS install-data install-data-am \
+	install-dvi install-dvi-am install-exec install-exec-am \
+	install-html install-html-am install-info install-info-am \
+	install-man install-pdf install-pdf-am install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
+	ps ps-am tags tags-am uninstall uninstall-am \
+	uninstall-binPROGRAMS
 
 
-C-exprcode.h: C-exprcode.def C-exprcode.h.awk
-	$(AWK) -f C-exprcode.h.awk < C-exprcode.def > C-exprcode.h
+all: $(OBJ)
+	test -f xmpmod || sed -e "s|@@XMP_PATH@@|$(cur_dir)|g" < utils/xmpmod.bs > xmpmod
+	chmod 755 xmpmod
 
-C-exprcode.c: C-exprcode.def C-exprcode.c.awk
-	$(AWK) -f C-exprcode.c.awk < C-exprcode.def > C-exprcode.c
+.c.o:
+	$(CC) $(CFLAGS) -c $< $(INC)
 
-$(F_Front_SOURCES): C-exprcode.h
+#depend
+xmalloc.o       :xmalloc.c       ${HED}
+safe-ctype.o    :safe-ctype.c    ${HED}
+import_module.o :import_module.c ${HED}
+export_module.o :export_module.c ${HED}
+trans_module.o  :trans_module.c  ${HED}
 
-F-intrinsic.c F-intrinsics-table.c: F-intrinsics-types.h
-F95-parser.c:	F95-lex.c F95-parser.y
+clean:
+	$(RM) *.o
 
-clean-local:
-	rm -rf ../doc
-	rm -f *~ core core.* *.core
-
-html-local:
-	if test ! -e "../doc"; then $(MKDIR_P) ../doc; fi
-	doxygen >/dev/null
+cleanall:
+	$(RM) *.o $(bin_PROGRAMS) xmpmod
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

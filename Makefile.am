@@ -2,6 +2,10 @@ SUBDIRS=XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src F-BackEnd \
 	XcodeML-Exc-Tools Driver/src libtlog/src_threads libtlog/src_mpi \
         libxmp/include libxmp/src libxmp/src_threads libxmpf/include libxmpf/src
 
+if MPI_GFORTRAN
+    SUBDIRS+=F-FrontEnd/gnu_module
+endif
+
 if !SUPERUX
     SUBDIRS+=libompc/src libompf/src
 endif

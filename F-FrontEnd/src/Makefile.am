@@ -14,6 +14,10 @@ AM_YFLAGS=-v
 
 AM_CFLAGS=-DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML_PREFIX)/include/libxml2 
 
+if MPI_GFORTRAN
+    AM_CFLAGS+=-D_MPI_FC=gfortran
+endif
+
 F_Front_LDADD=-L$(LIBXML_LIB) -lxml2 -lm
 
 C-exprcode.h: C-exprcode.def C-exprcode.h.awk
