@@ -18,6 +18,46 @@ static int _num_of_puts = 0, _num_of_gets = 0;
 static struct FJMPI_Rdma_cq _cq;
 static int _memid = _XMP_FJRDMA_START_MEMID; // _memid = 0 is used to put/get operations.
                                              // _memid = 1 is used to post/wait operations.
+
+/**
+   Execute sync_memory for put operation
+ */
+static void _XMP_fjrdma_sync_memory_put()
+{
+  while(_num_of_puts != 0)
+    if(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) == FJMPI_RDMA_NOTICE)
+      _num_of_puts--;
+}
+
+/**
+   Execute sync_memory for get operation
+*/
+static void _XMP_fjrdma_sync_memory_get()
+{
+  while(_num_of_gets != 0)
+    if(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) == FJMPI_RDMA_NOTICE)
+      _num_of_gets--;
+}
+
+/**
+   Execute sync_memory
+*/
+void _XMP_fjrdma_sync_memory()
+{
+  _XMP_fjrdma_sync_memory_put();
+  // _XMP_fjrdma_sync_memory_get don't need to be executed
+}
+
+/**
+   Execute sync_all
+*/
+void _XMP_fjrdma_sync_all()
+{
+  _XMP_fjrdma_sync_memory();
+  MPI_Barrier(MPI_COMM_WORLD);
+}
+
+
 /**
    transfer_size must be 4-Byte align
 */
@@ -90,13 +130,6 @@ static void _XMP_FJMPI_Rdma_get(const int target_rank, uint64_t raddr, uint64_t 
       _num_of_gets++;
     }
   }
-}
-
-static void _complete_get_operations()
-{
-  while(_num_of_gets != 0)
-    if(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) == FJMPI_RDMA_NOTICE)
-      _num_of_gets--;
 }
 
 #if defined(OMNI_TARGET_CPU_FX10) || defined(OMNI_TARGET_CPU_FX100)
@@ -555,11 +588,11 @@ void _XMP_fjrdma_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_d
 
   if(dst_elmts == src_elmts){
     _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, transfer_size);
-    _complete_get_operations();
+    _XMP_fjrdma_sync_memory_get();
   }
   else if(src_elmts == 1){
     _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, elmt_size);
-    _complete_get_operations();
+    _XMP_fjrdma_sync_memory_get();
 
     char *dst = dst_desc->real_addr + dst_offset;
     for(int i=1;i<dst_elmts;i++)
@@ -598,7 +631,7 @@ static void _fjrdma_continuous_get(const int target_rank, const uint64_t dst_off
     laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_offset;
   
   _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, transfer_size);
-  _complete_get_operations();
+  _XMP_fjrdma_sync_memory_get();
 
   if(dst_desc == NULL)
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
@@ -659,8 +692,7 @@ static void _fjrdma_NON_continuous_get(const int target_rank, const uint64_t dst
 	_XMP_FJMPI_Rdma_get(target_rank, raddrs[j+i*_XMP_FJRDMA_MAX_MGET], laddrs[j+i*_XMP_FJRDMA_MAX_MGET], copy_chunk);
     }
   }
-
-  _complete_get_operations();
+  _XMP_fjrdma_sync_memory_get();
 
   if(dst_desc == NULL)
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
@@ -696,7 +728,7 @@ static void _fjrdma_scalar_mget(const int target_rank, const uint64_t dst_offset
     laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_offset;
 
   _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, elmt_size);
-  _complete_get_operations();
+  _XMP_fjrdma_sync_memory_get();
 
   // Local copy (Note that number of copies is one time more in following _XMP_stride_memcpy_Xdim())
   char *src_addr = dst + dst_offset;
@@ -780,20 +812,23 @@ void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const i
 }
 
 /**
-   Execute sync_memory
- */
-void _XMP_fjrdma_sync_memory()
-{
-  while(_num_of_puts != 0)
-    if(FJMPI_Rdma_poll_cq(_XMP_SEND_NIC, &_cq) == FJMPI_RDMA_NOTICE)
-      _num_of_puts--;
-}
-
-/**
-   Execute sync_all
+   Execute sync images
 */
-void _XMP_fjrdma_sync_all()
+void _XMP_fjrdma_sync_images(int num, int* image_set, int* status)
 {
   _XMP_fjrdma_sync_memory();
-  MPI_Barrier(MPI_COMM_WORLD);
+
+  if(num == 0){
+    return;
+  }
+  else if(num < 0){
+    fprintf(stderr, "Invalid value is used in xmp_sync_memory. The first argument is %d\n", num);
+    _XMP_fatal_nomsg();
+  }
+
+  for(int i=0;i<num;i++)
+    image_set[i] = image_set[i] - 1;
+
+  _xmp_fjrdma_post_sync_images(num, image_set);
+  _xmp_fjrdma_wait_sync_images(num, image_set);
 }

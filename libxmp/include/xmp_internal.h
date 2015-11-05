@@ -412,14 +412,18 @@ extern void _XMP_gasnet_shortcut_get(const int, _XMP_coarray_t*, void*,
 #define _XMP_POSTREQ_NIC_FLAG (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_REMOTE_NOTICE)
 #define _XMP_TEMP_MEMID 0
 #define _XMP_POSTREQ_ID 1
-#define _XMP_FJRDMA_INTERVAL 8192
-#define _XMP_FJRDMA_MAX_PROCS 82944
+#define _XMP_FJRDMA_INTERVAL         8192
+#define _XMP_FJRDMA_MAX_PROCS       82944
+#define _XMP_FJRDMA_SYNC_IMAGES_TAG    14
 
 #include <mpi-ext.h>
 extern void _XMP_fjrdma_initialize(int, char**);
 extern void _XMP_fjrdma_finalize();
 extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
+extern void _XMP_fjrdma_sync_images(int, int*, int*);
+extern void _xmp_fjrdma_post_sync_images(const int, const int*);
+extern void _xmp_fjrdma_wait_sync_images(const int, const int*);
 extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, const size_t);
 extern void _XMP_fjrdma_put(const int, const int, const int, const int, const int, const _XMP_array_section_t *,  
 			    const _XMP_array_section_t *, const _XMP_coarray_t *, const _XMP_coarray_t *, void *,

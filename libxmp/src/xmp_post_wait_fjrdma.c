@@ -81,8 +81,9 @@ static void add_postreq(const int node, const int tag)
  */
 void _xmp_fjrdma_post(const int node, const int tag)
 {
-  if(tag < 0 || tag > 14){
-    fprintf(stderr, "tag is %d : On the K computer or FX10, 0 <= tag <= 14\n", tag);
+  // tag = 14(_XMP_FJRDMA_SYNC_IMAGES_TAG) is used in xmp_coarray_fjrdma.c for xmp_sync_images()
+  if(tag < 0 || tag > 13){
+    fprintf(stderr, "tag is %d : On the K computer or FX10, 0 <= tag <= 13\n", tag);
     _XMP_fatal_nomsg();
   }
 
@@ -96,6 +97,33 @@ void _xmp_fjrdma_post(const int node, const int tag)
   }
 }
 
+/**
+ * Post operation for sync_images
+ *
+ * @param[in] number of nodes
+ * @param[in] node set
+ */
+void _xmp_fjrdma_post_sync_images(const int num, const int node_set[num])
+{
+  int tag = _XMP_FJRDMA_SYNC_IMAGES_TAG;
+  int num_of_puts = 0;
+  struct FJMPI_Rdma_cq cq;
+
+  for(int i=0;i<num;i++){
+    int target = node_set[i];
+    if(target == _XMP_world_rank){
+      add_postreq(target, tag);
+    }
+    else{
+      FJMPI_Rdma_put(target, tag, _remote_rdma_addr[target], _local_rdma_addr, sizeof(double), _XMP_POSTREQ_NIC_FLAG);
+      num_of_puts++;
+    }
+  }
+
+  for(int i=0;i<num_of_puts;i++)
+    while(FJMPI_Rdma_poll_cq(_XMP_POSTREQ_SEND_NIC, &cq) != FJMPI_RDMA_NOTICE);
+}
+
 static void shift_postreq(const int index)
 {
   if(index != _postreq.num-1){  // Not last request
@@ -106,11 +134,11 @@ static void shift_postreq(const int index)
   _postreq.num--;
 }
 
-// If the table does not have the post request, return false;
-static bool remove_postreq_node(const int node)
+// If the table does not have the post request, return false
+static bool remove_postreq(const int node, const int tag)
 {
   for(int i=_postreq.num-1;i>=0;i--){
-    if(node == _postreq.table[i].node){
+    if(_postreq.table[i].node == node && _postreq.table[i].tag == tag && _postreq.table[i].tag != _XMP_FJRDMA_SYNC_IMAGES_TAG){
       shift_postreq(i);
       return _XMP_N_INT_TRUE;
     }
@@ -118,11 +146,35 @@ static bool remove_postreq_node(const int node)
   return _XMP_N_INT_FALSE;
 }
 
-// If the table does not have the post request, return false;
-static bool remove_postreq(const int node, const int tag)
+// If the table does not have the post request, return false
+static bool remove_postreq_node(const int node)
 {
   for(int i=_postreq.num-1;i>=0;i--){
-    if(node == _postreq.table[i].node && tag == _postreq.table[i].tag){
+    if(_postreq.table[i].node == node && _postreq.table[i].tag != _XMP_FJRDMA_SYNC_IMAGES_TAG){
+      shift_postreq(i);
+      return _XMP_N_INT_TRUE;
+    }
+  }
+  return _XMP_N_INT_FALSE;
+}
+
+// If the table does not have the post request, return false
+static bool remove_postreq_noargs()
+{
+  for(int i=_postreq.num-1;i>=0;i--){
+    if(_postreq.table[i].tag != _XMP_FJRDMA_SYNC_IMAGES_TAG){
+      shift_postreq(i);
+      return _XMP_N_INT_TRUE;
+    }
+  }
+  return _XMP_N_INT_FALSE;
+}
+
+// If the table does not have the post request, return false
+static bool remove_postreq_sync_images(const int node)
+{
+  for(int i=_postreq.num-1;i>=0;i--){
+    if(_postreq.table[i].node == node && _postreq.table[i].tag == _XMP_FJRDMA_SYNC_IMAGES_TAG){
       shift_postreq(i);
       return _XMP_N_INT_TRUE;
     }
@@ -138,6 +190,11 @@ static bool remove_postreq(const int node, const int tag)
  */
 void _xmp_fjrdma_wait(const int node, const int tag)
 {
+  if(tag < 0 || tag > 13){
+    fprintf(stderr, "tag is %d : On the K computer or FX10, 0 <= tag <= 13\n", tag);
+    _XMP_fatal_nomsg();
+  }
+
   struct FJMPI_Rdma_cq cq;
 
   while(1){
@@ -172,10 +229,35 @@ void _xmp_fjrdma_wait_node(const int node)
  */
 void _xmp_fjrdma_wait_noargs()
 {
-  if(_postreq.num == 0){
-    struct FJMPI_Rdma_cq cq;
-    while(FJMPI_Rdma_poll_cq(_XMP_POSTREQ_RECV_NIC, &cq) != FJMPI_RDMA_HALFWAY_NOTICE);
+  struct FJMPI_Rdma_cq cq;
+
+  while(1){
+    bool table_has_postreq = remove_postreq_noargs();
+    if(table_has_postreq) break;
+
+    if(FJMPI_Rdma_poll_cq(_XMP_POSTREQ_RECV_NIC, &cq) == FJMPI_RDMA_HALFWAY_NOTICE)
+      add_postreq(cq.pid, cq.tag);
   }
-  else
-    _postreq.num--;
+}
+
+/**
+ * Wait operation for sync_images
+ *
+ * @param[in] number of nodes
+ * @param[in] node set
+ */
+void _xmp_fjrdma_wait_sync_images(const int num, const int node_set[num])
+{
+  struct FJMPI_Rdma_cq cq;
+
+  for(int i=0;i<num;i++){
+    int target = node_set[i];
+    while(1){
+      bool table_has_postreq = remove_postreq_sync_images(target);
+      if(table_has_postreq) break;
+      
+      if(FJMPI_Rdma_poll_cq(_XMP_POSTREQ_RECV_NIC, &cq) == FJMPI_RDMA_HALFWAY_NOTICE)
+	add_postreq(cq.pid, cq.tag);
+    }
+  }
 }
