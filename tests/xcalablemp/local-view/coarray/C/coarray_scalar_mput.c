@@ -7,7 +7,8 @@
 long a[N], a_ans[N];
 float b[N][N], b_ans[N][N];
 double c[N][N][N], c_ans[N][N][N];
-#pragma xmp coarray a,b,c : [*]
+int d[N], d_ans[N];
+#pragma xmp coarray a,b,c,d : [*]
 int status, return_val = 0;
 
 void initialize_coarrays(int me)
@@ -23,6 +24,9 @@ void initialize_coarrays(int me)
     for(int j=0;j<N;j++)
       for(int k=0;k<N;k++)
 	c[i][j][k] = c_ans[i][j][k] = 0;
+
+  for(int i=0;i<N;i++)
+    d[i] = d_ans[i] = i + me * 100;
 
   xmp_sync_all(&status);
 }
@@ -131,6 +135,36 @@ void check_3(int me){
   if(flag == FALSE) return_val = 1;
 }
 
+void test_4(int me){
+  //test for shortcut_put
+  if(me == 2){
+    a[0:5]:[1] = a[5];   // put
+    xmp_sync_memory(&status);
+  }
+
+  if(me == 1){
+    for(int i=0;i<5;i++)
+      a_ans[i] = 205;
+  }
+  
+  xmp_sync_all(&status);
+}
+
+void check_4(int me){
+  int flag = TRUE;
+  
+  for(int i=0;i<N;i++){
+    if(d[i] != d_ans[i]){
+      flag = FALSE;
+      printf("[%d] d[%d] check_4 : fall\nd[%d] = %d (True value is %d)\n",
+             me, i, i, d[i], d_ans[i]);
+    }
+  }
+  
+  if(flag == TRUE && me == 2)   printf("check_4 : PASS\n");
+  if(flag == FALSE) return_val = 1;
+}
+
 int main(){
   int me = xmp_node_num();
   
@@ -144,6 +178,9 @@ int main(){
   
   test_3(me);
   check_3(me);
+
+  test_4(me);
+  check_4(me);
 
 #pragma xmp barrier
 #pragma xmp reduction(MAX:return_val)

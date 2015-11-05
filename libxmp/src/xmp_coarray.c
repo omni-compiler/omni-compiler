@@ -335,6 +335,22 @@ void _XMP_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const size_t 
   _push_coarray_queue(coarray_desc);
 }
 
+/** 
+   Detach memory from coarray
+ */
+void _XMP_coarray_detach(_XMP_coarray_t *coarray_desc)
+{
+#ifdef _XMP_GASNET
+  //not implemented
+  _XMP_fatal("_XMP_gasnet_coarray_detach is not implemented\n");
+#elif _XMP_FJRDMA
+  //not implemented
+  _XMP_fatal("_XMP_fjrdma_coarray_detach is not implemented\n");
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_coarray_detach(coarray_desc, false);
+#endif
+}
+
 /**
    Wrapper function of _XMP_coarray_malloc_do()
 */
@@ -1073,8 +1089,8 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
 		      _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
       _XMP_mpi_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
-		   _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
-		   _XMP_N_INT_FALSE, _XMP_N_INT_FALSE);
+		   _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
+		   _XMP_N_INT_FALSE);
 #endif
     }
   }
@@ -1092,8 +1108,8 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
 		      _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
       _XMP_mpi_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
-		   _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
-		   _XMP_N_INT_FALSE, _XMP_N_INT_FALSE);
+		   _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
+		   _XMP_N_INT_FALSE);
 #endif
     }
   }
@@ -1249,7 +1265,7 @@ void _XMP_coarray_shortcut_put(const int target_image, _XMP_coarray_t *dst_desc,
     _XMP_fatal("_XMP_tca_shortcut_put is unimplemented");
 #elif _XMP_MPI3_ONESIDED
     _XMP_mpi_shortcut_put(target_rank, dst_desc, src_desc, dst_offset, src_offset,
-			  dst_elmts, src_elmts, elmt_size, false);
+			  dst_elmts, src_elmts, elmt_size, false, false);
 #endif
   }
 }
@@ -1287,7 +1303,7 @@ void _XMP_coarray_shortcut_get(const int target_image, _XMP_coarray_t *dst_desc,
 			     dst_elmts, src_elmts, elmt_size);
 #elif _XMP_MPI3_ONESIDED
     _XMP_mpi_shortcut_get(target_rank, dst_desc, src_desc, dst_offset, src_offset,
-			  dst_elmts, src_elmts, elmt_size, false);
+			  dst_elmts, src_elmts, elmt_size, false, false);
 #endif
   }
 }
@@ -1364,7 +1380,7 @@ static void _XMP_coarray_deallocate(_XMP_coarray_t *c)
   if(c == NULL) return;
 
   free(c->addr);
-#ifndef _XMP_GASNET
+#if !defined(_XMP_GASNET) && !defined(_XMP_MPI3_ONESIDED)
   free(c->real_addr);
 #endif
   free(c->coarray_elmts);
@@ -1382,6 +1398,8 @@ void _XMP_coarray_lastly_deallocate()
   _XMP_gasnet_coarray_lastly_deallocate();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_coarray_lastly_deallocate();
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_coarray_lastly_deallocate(false);
 #endif
 
   _XMP_coarray_t *_last_coarray_ptr = _pop_coarray_queue();
@@ -1397,7 +1415,7 @@ void _XMP_coarray_lastly_deallocate()
 /* NOTE        :                                                             */
 /*     If a local_array is NOT a coarray, local_coarray == NULL.             */
 /*****************************************************************************/
-void _XMP_coarray_rdma_do_acc(const int rdma_code, void *remote_coarray, void *local_array, void *local_coarray, const int is_dst_on_acc, const int is_src_on_acc)
+void _XMP_coarray_rdma_do_acc(const int rdma_code, void *remote_coarray, void *local_array, void *local_coarray, const int is_remote_on_acc, const int is_local_on_acc)
 {
   if(_transfer_coarray_elmts == 0 || _transfer_array_elmts == 0) return;
 
@@ -1439,8 +1457,8 @@ void _XMP_coarray_rdma_do_acc(const int rdma_code, void *remote_coarray, void *l
 		      _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
       _XMP_mpi_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
-		   _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
-		   is_dst_on_acc, is_src_on_acc);
+		   _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
+		   is_remote_on_acc);
 #endif
     }
   }
@@ -1458,8 +1476,8 @@ void _XMP_coarray_rdma_do_acc(const int rdma_code, void *remote_coarray, void *l
 		      _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
       _XMP_mpi_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
-		   _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
-		   is_dst_on_acc, is_src_on_acc);
+		   _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
+		   is_remote_on_acc);
 #endif
     }
   }

@@ -491,22 +491,23 @@ void _XMP_mpi_destroy_shift_queue(bool);
 void _XMP_mpi_coarray_lastly_deallocate(bool);
 void _XMP_mpi_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size, bool is_acc);
 void _XMP_mpi_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size, const bool is_acc);
+void _XMP_mpi_coarray_detach(_XMP_coarray_t *coarray_desc, const bool is_acc);
 void _XMP_mpi_shortcut_put(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 			   const size_t dst_offset, const size_t src_offset,
-			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc);
+			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_dst_on_acc, const bool is_src_on_acc);
 void _XMP_mpi_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 			   const size_t dst_offset, const size_t src_offset,
-			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_acc);
+			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_dst_on_acc, const bool is_src_on_acc);
 void _XMP_mpi_put(const int dst_continuous, const int src_continuous, const int target_rank, 
 		  const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
 		  const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
-		  const _XMP_coarray_t *src_desc, void *src, const int dst_elmts, const int src_elmts,
-		  const int is_dst_on_acc, const int is_src_on_acc);
-void _XMP_mpi_get(const int dst_continuous, const int src_continuous, const int target_rank,
-		  const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info,
-		  const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc,
-		  const _XMP_coarray_t *src_desc, void *src, const int dst_elmts, const int src_elmts,
-		  const int is_dst_on_acc, const int is_src_on_acc);
+		  const void *src, const int dst_elmts, const int src_elmts,
+		  const int is_dst_on_acc);
+void _XMP_mpi_get(const int src_continuous, const int dst_continuous, const int target_rank,
+		  const int src_dims, const int dst_dims, const _XMP_array_section_t *src_info,
+		  const _XMP_array_section_t *dst_info, const _XMP_coarray_t *src_desc,
+		  void *dst, const int src_elmts, const int dst_elmts,
+		  const int is_src_on_acc);
 
 void _XMP_mpi_sync_memory();
 void _XMP_mpi_sync_all();
@@ -567,7 +568,7 @@ struct _XMPTIMING
   }while (0)
 #endif
 
-#if defined(_XMP_XACC) && defined(DEBUG)
+#if /*defined(_XMP_XACC) && */defined(DEBUG)
 #define XACC_DEBUG2(fmt, ...) fprintf(stderr, "XACC debug (%s:%d),rank=%d: "fmt"\n%s", __FILE__, __LINE__, _XMP_world_rank, __VA_ARGS__)
 #define XACC_DEBUG(...) XACC_DEBUG2(__VA_ARGS__, "")
 #else
