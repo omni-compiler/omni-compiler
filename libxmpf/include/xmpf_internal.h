@@ -265,8 +265,6 @@ extern void _XMP_coarray_rdma_image_set_1(const int);
 
 //extern void _XMP_coarray_rdma_do_f(const int*, const void*, const void*, const void*);
 extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void *);
-//extern void _XMP_coarray_sync_all();
-//extern void _XMP_coarray_sync_memory();
 //extern size_t get_offset(const void *, const int);
 //extern void _XMP_coarray_shortcut_put(const int, const void*, const void*, const size_t, const size_t, const size_t);
 //extern void _XMP_coarray_shortcut_put_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);

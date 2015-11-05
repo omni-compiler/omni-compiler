@@ -1161,7 +1161,7 @@ void _XMP_coarray_sync_memory()
 }
 
 /**
-   Execute sync_all()
+   Execute sync_memory()
 */
 void xmp_sync_memory(const int* status)
 {
@@ -1177,7 +1177,7 @@ void xmp_sync_memory(const int* status)
 }
 
 /**
-   Execute sync_memory()
+   Execute sync_all()
 */
 void xmp_sync_all(const int* status)
 {
@@ -1191,27 +1191,17 @@ void xmp_sync_all(const int* status)
 }
 
 /**
-   Execute sync_image()
-*/
-void xmp_sync_image(int image, int* status)
-{
-  _XMP_fatal("Not implement xmp_sync_images()");
-}
-
-/**
-   Wrapper function of xmp_sync_image()
-*/
-void xmp_sync_image_f(int *image, int* status)
-{
-  xmp_sync_image(*image, status);
-}
-
-/**
    Execute sync_images()
 */
 void xmp_sync_images(int num, int* image_set, int* status)
 {
-  _XMP_fatal("Not implement xmp_sync_images_images()");
+  #ifdef _XMP_GASNET
+  _XMP_fatal("Not implement xmp_sync_images()");
+#elif _XMP_FJRDMA
+  _XMP_fjrdma_sync_images(num, image_set, status);
+#elif _XMP_MPI3_ONESIDED
+  _XMP_fatal("Not implement xmp_sync_images()");
+#endif
 }
 
 /**
@@ -1220,6 +1210,22 @@ void xmp_sync_images(int num, int* image_set, int* status)
 void xmp_sync_images_f(int *num, int* image_set, int* status)
 {
   xmp_sync_images(*num, image_set, status);
+}
+
+/**
+   Execute sync_image()
+*/
+void xmp_sync_image(int image, int* status)
+{
+  xmp_sync_images(1, &image, status);
+}
+
+/**
+   Wrapper function of xmp_sync_image()
+*/
+void xmp_sync_image_f(int *image, int* status)
+{
+  xmp_sync_images(1, image, status);
 }
 
 /**
