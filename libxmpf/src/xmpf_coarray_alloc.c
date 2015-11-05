@@ -124,7 +124,7 @@ struct _memoryChunk_t {
   ResourceSet_t   *parent;
   BOOL             isGarbage;    // true if already encountered DEALLOCATE stmt
   char            *orgAddr;      // local address of the allocated memory
-  size_t           nbytes;       // allocated size of memory [bytes]
+  unsigned         nbytes;       // allocated size of memory [bytes]
   void            *desc;         // address of the lower layer's descriptor 
   CoarrayInfo_t   *headCoarray;
   CoarrayInfo_t   *tailCoarray;
@@ -946,6 +946,17 @@ void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[])
    inquire function lcobound/ucobound(coarray ,dim)
 \***********************************************/
 
+void lcobound_(void)
+{
+  _XMPF_coarrayFatal("INTERNAL ERROR: illegal call of lcobound_");
+}
+
+void ucobound_(void)
+{
+  _XMPF_coarrayFatal("INTERNAL ERROR: illegal call of ucobound_");
+}
+
+
 int xmpf_cobound_dim_(void **descPtr, int *dim, int *kind,
                       int *lu, int *corank)
 {
@@ -1002,6 +1013,12 @@ int xmpf_ucobound_(void **descPtr, int *dim)
 /***********************************************\
    inquire function image_index(coarray, sub)
 \***********************************************/
+
+void image_index_(void)
+{
+  _XMPF_coarrayFatal("INTERNAL ERROR: illegal call of image_index_");
+}
+
 
 int xmpf_image_index_(void **descPtr, int coindexes[])
 {

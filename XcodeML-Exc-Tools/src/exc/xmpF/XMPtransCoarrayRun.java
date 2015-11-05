@@ -20,8 +20,6 @@ public class XMPtransCoarrayRun
   final static String COARRAY_DEALLOC_PREFIX = "xmpf_coarray_dealloc";
   final static String THIS_IMAGE_NAME        = "xmpf_this_image";  // generic
   final static String COBOUND_NAME           = "xmpf_cobound";  // generic
-  final static String COBOUND_DIM_NAME       = "xmpf_cobound_dim";
-  final static String COBOUND_NODIM_NAME     = "xmpf_cobound_nodim";
   final static String IMAGE_INDEX_NAME       = "xmpf_image_index";
   final static String COARRAY_PROLOG_NAME    = "xmpf_coarray_prolog";
   final static String COARRAY_EPILOG_NAME    = "xmpf_coarray_epilog";
@@ -1427,9 +1425,12 @@ public class XMPtransCoarrayRun
 
   //-----------------------------------------------------
   //  TRANSLATION l.
-  //  fake intrinsic function 'allocated' with 'associated'
-  //  replace this_image(V, ...) with this_image(DP_V, ...)
-  //  replace image_index(V, ...) with image_index(DP_V, ...)
+  //  - fake intrinsic function 'allocated' with 'associated'
+  //  - replace this_image(V, ...) with THIS_IMAGE_NAME(DP_V, ...)
+  //    except this_image()
+  //  - replace image_index(V, ...) with IMAGE_INDEX_NAME(DP_V, ...)
+  //  - replace lcobound(V, ...) with COBOUND_NAME(DP_V, ..., 0, corank)
+  //  - replace ucobound(V, ...) with COBOUND_NAME(DP_V, ..., 1, corank)
   //-----------------------------------------------------
   //
   private void replaceFunctionCalls(ArrayList<XMPcoarray> coarrays) {
@@ -1563,16 +1564,14 @@ public class XMPtransCoarrayRun
     Ident descPtr = coarray.getDescPointerId();
     Xobject luExpr = Xcons.IntConstant(lu);
     Xobject corankExpr = Xcons.IntConstant(coarray.getCorank());
+
+    // replace function name lcobound/ucobound to COBOUND_NAME
+    newFname = Xcons.Symbol(Xcode.IDENT, COBOUND_NAME);
+
     if (arg2 != null) {
-      // replace function name lcobound/ucobound to COBOUND_DIM_NAME
-      //newFname = Xcons.Symbol(Xcode.IDENT, COBOUND_DIM_NAME);
-      newFname = Xcons.Symbol(Xcode.IDENT, COBOUND_NAME);
       // replace actual arguments (descPtr, dim, kind, lu, corank)
       newActualArgs = Xcons.List(descPtr, arg2, arg3, luExpr, corankExpr);
     } else {
-      // replace function name lcobound/ucobound to COBOUND_NODIM_NAME
-      //newFname = Xcons.Symbol(Xcode.IDENT, COBOUND_NODIM_NAME);
-      newFname = Xcons.Symbol(Xcode.IDENT, COBOUND_NAME);
       // replace actual arguments (descPtr, kind, lu, corank)
       newActualArgs = Xcons.List(descPtr, arg3, luExpr, corankExpr);
     }
