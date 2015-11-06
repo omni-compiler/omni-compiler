@@ -708,8 +708,12 @@ MPI3_FALSE
 MPI3_TRUE
 SUPERUX_FALSE
 SUPERUX_TRUE
-MPI_GFORTRAN_FALSE
-MPI_GFORTRAN_TRUE
+MPFR_LIB_DIR
+MPFR_INCLUDE_DIR
+GMP_LIB_DIR
+GMP_INCLUDE_DIR
+XMOD2MOD_FALSE
+XMOD2MOD_TRUE
 NM_OPT
 OMNI_X2X_FLAGS
 OMNI_LNK_FCFLAGS
@@ -744,8 +748,8 @@ SSL2BLAMP_FALSE
 SSL2BLAMP_TRUE
 LIBBLAS_FALSE
 LIBBLAS_TRUE
-LIBXML_LIB
-LIBXML_PREFIX
+LIBXML2_LIB_DIR
+LIBXML2_INCLUDE_DIR
 GPGPU_PREFIX
 GPU_CFLAGS
 GPU_CMD
@@ -899,11 +903,20 @@ enable_debug
 enable_openacc
 enable_atool
 enable_xacc
+enable_xmod2mod
 enable_dependency_tracking
 with_gpucc
 with_gpu_cflags
 with_cuda
-with_libxml
+with_libxml2
+with_libxml2_include
+with_libxml2_lib
+with_mpfr
+with_mpfr_include
+with_mpfr_lib
+with_gmp
+with_gmp_include
+with_gmp_lib
 with_libblas
 enable_SSL2BLAMP
 enable_intelmkl
@@ -911,8 +924,6 @@ with_TCA
 with_gasnet
 with_gasnet_conduit
 enable_mreal
-with_gmp_lib
-with_gmp_include
 with_precision
 '
       ac_precious_vars='build_alias
@@ -1559,6 +1570,7 @@ Optional Features:
   --enable-openacc        enable OpenACC (false default)
   --enable-atool          enable atool (false default)
   --enable-xacc           enable XcalableACC (false default)
+  --enable-xmod2mod       enable to translate .xmod to .mod (false default)
   --enable-dependency-tracking
                           do not reject slow dependency extractors
   --disable-dependency-tracking
@@ -1575,7 +1587,21 @@ Optional Packages:
   --with-gpucc=CMD            GPU C compiler (default: nvcc)
   --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
   --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
-  --with-libxml=DIR           libxml installation path (default: /usr)
+  --with-libxml2=DIR          specify prefix directory for installed libxml2 package (default: /usr)
+                              Equivalent to --with-libxml2-include=PATH/include plus
+                                            --with-libxml2-lib=PATH/lib64
+  --with-libxml2-include=DIR  specify directory for installed libxml2 include files
+  --with-libxml2-lib=DIR      specify directory for installed libxml2 library
+  --with-mpfr=DIR             specify prefix directory for installed mpfr package (default: /usr)
+                              Equivalent to --with-mpfr-include=PATH/include plus
+                                            --with-mpfr-lib=PATH/lib64
+  --with-mpfr-include=DIR     specify directory for installed mpfr include files
+  --with-mpfr-lib=DIR         specify directory for installed mpfr library
+  --with-gmp=DIR              specify prefix directory for installed gmp package (default: /usr)
+                              Equivalent to --with-gmp-include=PATH/include plus
+                                            --with-gmp-lib=PATH/lib64
+  --with-gmp-include=DIR      specify directory for installed gmp include files
+  --with-gmp-lib=DIR          specify directory for installed gmp library
   --with-libblas=DIR          BLAS Library (e.g. /foo/blas_LINUX.a)
   --with-TCA=DIR              TCA installation path
   --with-gasnet=DIR           GASNet installation path
@@ -3057,8 +3083,8 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
-# expand $ac_aux_dir to an absolute path
-am_aux_dir=`cd $ac_aux_dir && pwd`
+# Expand $ac_aux_dir to an absolute path.
+am_aux_dir=`cd "$ac_aux_dir" && pwd`
 
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
@@ -3455,6 +3481,7 @@ END
   fi
 fi
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
 $as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
     # Check whether --enable-maintainer-mode was given.
@@ -3757,6 +3784,14 @@ if test "${enable_xacc+set}" = set; then :
   enableval=$enable_xacc; doXACC=yes
 else
   doXACC=no
+fi
+
+
+# Check whether --enable-xmod2mod was given.
+if test "${enable_xmod2mod+set}" = set; then :
+  enableval=$enable_xmod2mod; doxmod2mod=yes
+else
+  doxmod2mod=no
 fi
 
 
@@ -8615,25 +8650,124 @@ fi
 # specify libxmp path
 
 
-# Check whether --with-libxml was given.
-if test "${with_libxml+set}" = set; then :
-  withval=$with_libxml; LIBXML_PREFIX="${withval}"
+# Check whether --with-libxml2 was given.
+if test "${with_libxml2+set}" = set; then :
+  withval=$with_libxml2; LIBXML2_PREFIX="${withval}"
 else
-  LIBXML_PREFIX="/usr"
+  LIBXML2_PREFIX="/usr"
 fi
 
 
-if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   as_fn_error $? "parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help" "$LINENO" 5
-fi
 
-
-if test LIBXML_PREFIX = "/usr"; then
-   LIBXML_LIB=/usr/lib64
+# Check whether --with-libxml2-include was given.
+if test "${with_libxml2_include+set}" = set; then :
+  withval=$with_libxml2_include; LIBXML2_INCLUDE_DIR="${withval}"
 else
-   LIBXML_LIB=${LIBXML_PREFIX}/lib
+  LIBXML2_INCLUDE_DIR="${LIBXML2_PREFIX}/include/"
 fi
 
+
+
+# Check whether --with-libxml2-lib was given.
+if test "${with_libxml2_lib+set}" = set; then :
+  withval=$with_libxml2_lib; LIBXML2_LIB_DIR="${withval}"
+else
+  LIBXML2_LIB_DIR="${LIBXML2_PREFIX}/lib64"
+fi
+
+
+# check dirs
+if ! test -d "$LIBXML2_INCLUDE_DIR"; then
+  as_fn_error $? "$LIBXML2_INCLUDE_DIR not found.  Please attach --with-libxml2=<DIR> or --with-libxml2-include=<DIR>." "$LINENO" 5
+fi
+
+if ! test -d "$LIBXML2_LIB_DIR"; then
+   LIBXML2_LIB_DIR=${LIBXML2_PREFIX}/lib
+fi
+
+if ! test -d "$LIBXML2_LIB_DIR"; then
+  as_fn_error $? "$LIBXML2_LIB_DIR not found.  Please attach --with-libxml2=<DIR> or --with-libxml2-lib=<DIR>." "$LINENO" 5
+fi
+
+# check libxml/parser.h
+tmp_file=/tmp/_omni_$$.c
+echo "#include <libxml/parser.h>" > $tmp_file
+${CC} -E -I$LIBXML2_INCLUDE_DIR/libxml2 $tmp_file 2> /dev/null > /dev/null
+if test $? -ne 0; then
+  rm -f $tmp_file
+  as_fn_error $? "parser.h not found. Please attach --with-libxml2=<DIR> or --with-libxml2-include=<DIR>." "$LINENO" 5
+fi
+
+# check -lxml2
+echo "int main(){return 0;}" > $tmp_file
+${CC} -L$LIBXML2_LIB_DIR -lxml2 $tmp_file
+if test $? -ne 0; then
+  rm -f $tmp_file
+  as_fn_error $? "-lxml2 not found. Please attach --with-libxml2=<DIR> or --with-libxml2-lib=<DIR>." "$LINENO" 5
+fi
+rm -f $tmp_file
+
+
+
+
+# --------------------------------------------------------------------
+# specify mpfr path
+
+
+# Check whether --with-mpfr was given.
+if test "${with_mpfr+set}" = set; then :
+  withval=$with_mpfr; MPFR_PREFIX="${withval}"
+else
+  MPFR_PREFIX="/usr"
+fi
+
+
+
+# Check whether --with-mpfr-include was given.
+if test "${with_mpfr_include+set}" = set; then :
+  withval=$with_mpfr_include; MPFR_INCLUDE_DIR="${withval}"
+else
+  MPFR_INCLUDE_DIR="${MPFR_PREFIX}/include"
+fi
+
+
+
+# Check whether --with-mpfr-lib was given.
+if test "${with_mpfr_lib+set}" = set; then :
+  withval=$with_mpfr_lib; MPFR_LIB_DIR="${withval}"
+else
+  MPFR_LIB_DIR="${MPFR_PREFIX}/lib64"
+fi
+
+
+# --------------------------------------------------------------------
+# specify gmp path
+
+
+# Check whether --with-gmp was given.
+if test "${with_gmp+set}" = set; then :
+  withval=$with_gmp; GMP_PREFIX="${withval}"
+else
+  GMP_PREFIX="/usr"
+fi
+
+
+
+# Check whether --with-gmp-include was given.
+if test "${with_gmp_include+set}" = set; then :
+  withval=$with_gmp_include; GMP_INCLUDE_DIR="${withval}"
+else
+  GMP_INCLUDE_DIR="${GMP_PREFIX}/include"
+fi
+
+
+
+# Check whether --with-gmp-lib was given.
+if test "${with_gmp_lib+set}" = set; then :
+  withval=$with_gmp_lib; GMP_LIB_DIR="${withval}"
+else
+  GMP_LIB_DIR="${GMP_PREFIX}/lib64"
+fi
 
 
 # --------------------------------------------------------------------
@@ -8948,21 +9082,101 @@ OMNI_F_PP="$MPI_FPP $MPI_FPPFLAGS"
 
 
 
-# check gfortran-based MPI as a backend compiler ?
+# check gfortran-based MPI as a backend compiler.
+# Note that this check statement must be execute after confirming $MPI_FC
 chk=`${MPI_FC} --version | head -n1`
 case $chk in
-  "GNU Fortran"*) IS_MPI_GFORTRAN=yes;;
-  *)              IS_MPI_GFORTRAN=no;;
+  "GNU Fortran"*) KIND_MPI_FORTRAN=gfortran;;
+   *            ) KIND_MPI_FORTRAN=other
 esac
- if test "$IS_MPI_GFORTRAN" = "yes"; then
-  MPI_GFORTRAN_TRUE=
-  MPI_GFORTRAN_FALSE='#'
-else
-  MPI_GFORTRAN_TRUE='#'
-  MPI_GFORTRAN_FALSE=
+
+if test "$doxmod2mod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
+   as_fn_error $? "\"--enable-xmod2mod option can be used when Backend compiler is gfortran.\"" "$LINENO" 5
 fi
 
-#AC_SUBST(MPI_GFORTRAN)
+IS_XMOD2MOD=no
+if test "$doxmod2mod" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
+  IS_XMOD2MOD=yes
+fi
+
+ if test "$IS_XMOD2MOD" = "yes"; then
+  XMOD2MOD_TRUE=
+  XMOD2MOD_FALSE='#'
+else
+  XMOD2MOD_TRUE='#'
+  XMOD2MOD_FALSE=
+fi
+
+
+if test "$IS_XMOD2MOD" = "yes"; then
+  #### GMP ####
+  # check dirs
+  if ! test -d "$GMP_INCLUDE_DIR"; then
+    as_fn_error $? "$GMP_INCLUDE_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-include=<DIR>." "$LINENO" 5
+  fi
+
+  if ! test -d "$GMP_LIB_DIR"; then
+    GMP_LIB_DIR=${GMP_PREFIX}/lib
+    if ! test -d "$GMP_LIB_DIR"; then
+      as_fn_error $? "$GMP_LIB_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
+    fi
+  fi
+
+  # check gmp.h
+  tmp_file=/tmp/_omni_$$.c
+  echo "#include <gmp.h>" > $tmp_file
+  ${CC} -E -I$GMP_INCLUDE_DIR $tmp_file 2> /dev/null > /dev/null
+  if test $? -ne 0; then
+    rm -f $tmp_file
+    as_fn_error $? "gmp.h not found. Please attach --with-gmp=<DIR> or --with-gmp-include=<DIR>." "$LINENO" 5
+  fi
+
+  # check -lgmp
+  echo "int main(){return 0;}" > $tmp_file
+  ${CC} -L$GMP_LIB_DIR -lgmp $tmp_file
+  if test $? -ne 0; then
+    rm -f $tmp_file
+    as_fn_error $? "-lgmp not found. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
+  fi
+  rm -f $tmp_file
+
+
+
+
+  #### MPFR ####
+  # check dirs
+  if ! test -d "$MPFR_INCLUDE_DIR"; then
+    as_fn_error $? "$MPFR_INCLUDE_DIR not found.  Please attach --with-mpfr=<DIR> or --with-mpfr-include=<DIR>." "$LINENO" 5
+  fi
+
+  if ! test -d "$MPFR_LIB_DIR"; then
+    MPFR_LIB_DIR=${MPFR_PREFIX}/lib
+    if ! test -d "$MPFR_LIB_DIR"; then
+      as_fn_error $? "$MPFR_LIB_DIR not found.  Please attach --with-mpfr=<DIR> or --with-mpfr-lib=<DIR>." "$LINENO" 5
+    fi
+  fi
+
+  # check mpfr.h
+  tmp_file=/tmp/_omni_$$.c
+  echo "#include <mpfr.h>" > $tmp_file
+  ${CC} -E -I$MPFR_INCLUDE_DIR -I$GMP_INCLUDE_DIR $tmp_file 2> /dev/null > /dev/null
+  if test $? -ne 0; then
+    rm -f $tmp_file
+    as_fn_error $? "mpfr.h not found. Please attach --with-mpfr=<DIR> or --with-mpfr-include=<DIR>." "$LINENO" 5
+  fi
+
+  # check -lmpfr
+  echo "int main(){return 0;}" > $tmp_file
+  ${CC} -L$MPFR_LIB_DIR -lmpfr $tmp_file
+  if test $? -ne 0; then
+    rm -f $tmp_file
+    as_fn_error $? "-lmpfr not found. Please attach --with-mpfr=<DIR> or --with-mpfr-lib=<DIR>." "$LINENO" 5
+  fi
+  rm -f $tmp_file
+
+
+
+fi
 
 # check PGI compiler
 #chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
@@ -12926,8 +13140,8 @@ if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
   as_fn_error $? "conditional \"GASNET\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${MPI_GFORTRAN_TRUE}" && test -z "${MPI_GFORTRAN_FALSE}"; then
-  as_fn_error $? "conditional \"MPI_GFORTRAN\" was never defined.
+if test -z "${XMOD2MOD_TRUE}" && test -z "${XMOD2MOD_FALSE}"; then
+  as_fn_error $? "conditional \"XMOD2MOD\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SUPERUX_TRUE}" && test -z "${SUPERUX_FALSE}"; then

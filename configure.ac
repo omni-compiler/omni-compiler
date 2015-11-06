@@ -278,6 +278,10 @@ AC_ARG_ENABLE(xacc,
     [  --enable-xacc           enable XcalableACC (false default)],
     [doXACC=yes], [doXACC=no])
 
+AC_ARG_ENABLE(xmod2mod,
+    [  --enable-xmod2mod       enable to translate .xmod to .mod (false default)],
+    [doxmod2mod=yes], [doxmod2mod=no])
+
 AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu")
 TARGET=$target
 AC_SUBST(TARGET)
@@ -973,22 +977,87 @@ AC_SUBST(GPGPU_PREFIX)
 # --------------------------------------------------------------------
 # specify libxmp path
 
-AC_ARG_WITH(libxml,
-    [  --with-libxml=DIR           libxml installation path (default: /usr)],
-    [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="/usr"])
+AC_ARG_WITH(libxml2,
+    [  --with-libxml2=DIR          specify prefix directory for installed libxml2 package (default: /usr)
+                              Equivalent to --with-libxml2-include=PATH/include plus
+                                            --with-libxml2-lib=PATH/lib64],
+    [LIBXML2_PREFIX="${withval}"], [LIBXML2_PREFIX="/usr"])
 
-if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help])
+AC_ARG_WITH(libxml2-include,
+    [  --with-libxml2-include=DIR  specify directory for installed libxml2 include files],
+    [LIBXML2_INCLUDE_DIR="${withval}"], [LIBXML2_INCLUDE_DIR="${LIBXML2_PREFIX}/include/"])
+
+AC_ARG_WITH(libxml2-lib,
+    [  --with-libxml2-lib=DIR      specify directory for installed libxml2 library],
+    [LIBXML2_LIB_DIR="${withval}"], [LIBXML2_LIB_DIR="${LIBXML2_PREFIX}/lib64"])
+
+# check dirs
+if ! test -d "$LIBXML2_INCLUDE_DIR"; then
+  AC_MSG_ERROR([$LIBXML2_INCLUDE_DIR not found.  Please attach --with-libxml2=<DIR> or --with-libxml2-include=<DIR>.])
 fi
 
-AC_SUBST(LIBXML_PREFIX)
-if test LIBXML_PREFIX = "/usr"; then
-   LIBXML_LIB=/usr/lib64
-else
-   LIBXML_LIB=${LIBXML_PREFIX}/lib
+if ! test -d "$LIBXML2_LIB_DIR"; then
+   LIBXML2_LIB_DIR=${LIBXML2_PREFIX}/lib
 fi
 
-AC_SUBST(LIBXML_LIB)
+if ! test -d "$LIBXML2_LIB_DIR"; then
+  AC_MSG_ERROR([$LIBXML2_LIB_DIR not found.  Please attach --with-libxml2=<DIR> or --with-libxml2-lib=<DIR>.])
+fi
+
+# check libxml/parser.h
+tmp_file=/tmp/_omni_$$.c
+echo "#include <libxml/parser.h>" > $tmp_file
+${CC} -E -I$LIBXML2_INCLUDE_DIR/libxml2 $tmp_file 2> /dev/null > /dev/null
+if test $? -ne 0; then
+  rm -f $tmp_file
+  AC_MSG_ERROR([parser.h not found. Please attach --with-libxml2=<DIR> or --with-libxml2-include=<DIR>.])
+fi
+
+# check -lxml2
+echo "int main(){return 0;}" > $tmp_file
+${CC} -L$LIBXML2_LIB_DIR -lxml2 $tmp_file
+if test $? -ne 0; then
+  rm -f $tmp_file
+  AC_MSG_ERROR([-lxml2 not found. Please attach --with-libxml2=<DIR> or --with-libxml2-lib=<DIR>.])
+fi
+rm -f $tmp_file
+      
+AC_SUBST(LIBXML2_INCLUDE_DIR)
+AC_SUBST(LIBXML2_LIB_DIR)
+										    
+# --------------------------------------------------------------------
+# specify mpfr path
+
+AC_ARG_WITH(mpfr,
+    [  --with-mpfr=DIR             specify prefix directory for installed mpfr package (default: /usr)
+                              Equivalent to --with-mpfr-include=PATH/include plus
+                                            --with-mpfr-lib=PATH/lib64],
+    [MPFR_PREFIX="${withval}"], [MPFR_PREFIX="/usr"])
+
+AC_ARG_WITH(mpfr-include,
+    [  --with-mpfr-include=DIR     specify directory for installed mpfr include files],
+    [MPFR_INCLUDE_DIR="${withval}"], [MPFR_INCLUDE_DIR="${MPFR_PREFIX}/include"])
+
+AC_ARG_WITH(mpfr-lib,
+    [  --with-mpfr-lib=DIR         specify directory for installed mpfr library],
+    [MPFR_LIB_DIR="${withval}"], [MPFR_LIB_DIR="${MPFR_PREFIX}/lib64"])
+
+# --------------------------------------------------------------------
+# specify gmp path
+
+AC_ARG_WITH(gmp,
+    [  --with-gmp=DIR              specify prefix directory for installed gmp package (default: /usr)
+                              Equivalent to --with-gmp-include=PATH/include plus
+                                            --with-gmp-lib=PATH/lib64],
+    [GMP_PREFIX="${withval}"], [GMP_PREFIX="/usr"])
+
+AC_ARG_WITH(gmp-include,
+    [  --with-gmp-include=DIR      specify directory for installed gmp include files],
+    [GMP_INCLUDE_DIR="${withval}"], [GMP_INCLUDE_DIR="${GMP_PREFIX}/include"])
+
+AC_ARG_WITH(gmp-lib,
+    [  --with-gmp-lib=DIR          specify directory for installed gmp library],
+    [GMP_LIB_DIR="${withval}"], [GMP_LIB_DIR="${GMP_PREFIX}/lib64"])
 
 # --------------------------------------------------------------------
 # set BLAS
@@ -1239,14 +1308,94 @@ AC_SUBST(AR)
 AC_SUBST(NM)
 AC_SUBST(NM_OPT)
 
-# check gfortran-based MPI as a backend compiler ?
+# check gfortran-based MPI as a backend compiler.
+# Note that this check statement must be execute after confirming $MPI_FC
 chk=`${MPI_FC} --version | head -n1`
 case $chk in
-  "GNU Fortran"*) IS_MPI_GFORTRAN=yes;;
-  *)              IS_MPI_GFORTRAN=no;;
+  "GNU Fortran"*) KIND_MPI_FORTRAN=gfortran;;
+   *            ) KIND_MPI_FORTRAN=other
 esac
-AM_CONDITIONAL(MPI_GFORTRAN, test "$IS_MPI_GFORTRAN" = "yes")
-#AC_SUBST(MPI_GFORTRAN)
+
+if test "$doxmod2mod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
+   AC_MSG_ERROR("--enable-xmod2mod option can be used when Backend compiler is gfortran.")
+fi
+
+IS_XMOD2MOD=no
+if test "$doxmod2mod" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
+  IS_XMOD2MOD=yes
+fi
+
+AM_CONDITIONAL(XMOD2MOD, test "$IS_XMOD2MOD" = "yes")
+
+if test "$IS_XMOD2MOD" = "yes"; then
+  #### GMP ####
+  # check dirs
+  if ! test -d "$GMP_INCLUDE_DIR"; then
+    AC_MSG_ERROR([$GMP_INCLUDE_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-include=<DIR>.])
+  fi
+  
+  if ! test -d "$GMP_LIB_DIR"; then
+    GMP_LIB_DIR=${GMP_PREFIX}/lib
+    if ! test -d "$GMP_LIB_DIR"; then
+      AC_MSG_ERROR([$GMP_LIB_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
+    fi
+  fi
+
+  # check gmp.h
+  tmp_file=/tmp/_omni_$$.c
+  echo "#include <gmp.h>" > $tmp_file
+  ${CC} -E -I$GMP_INCLUDE_DIR $tmp_file 2> /dev/null > /dev/null
+  if test $? -ne 0; then
+    rm -f $tmp_file
+    AC_MSG_ERROR([gmp.h not found. Please attach --with-gmp=<DIR> or --with-gmp-include=<DIR>.])
+  fi
+
+  # check -lgmp
+  echo "int main(){return 0;}" > $tmp_file
+  ${CC} -L$GMP_LIB_DIR -lgmp $tmp_file
+  if test $? -ne 0; then
+    rm -f $tmp_file
+    AC_MSG_ERROR([-lgmp not found. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
+  fi
+  rm -f $tmp_file
+
+  AC_SUBST(GMP_INCLUDE_DIR)
+  AC_SUBST(GMP_LIB_DIR)
+
+  #### MPFR ####
+  # check dirs
+  if ! test -d "$MPFR_INCLUDE_DIR"; then
+    AC_MSG_ERROR([$MPFR_INCLUDE_DIR not found.  Please attach --with-mpfr=<DIR> or --with-mpfr-include=<DIR>.])
+  fi
+
+  if ! test -d "$MPFR_LIB_DIR"; then
+    MPFR_LIB_DIR=${MPFR_PREFIX}/lib
+    if ! test -d "$MPFR_LIB_DIR"; then
+      AC_MSG_ERROR([$MPFR_LIB_DIR not found.  Please attach --with-mpfr=<DIR> or --with-mpfr-lib=<DIR>.])
+    fi
+  fi
+
+  # check mpfr.h
+  tmp_file=/tmp/_omni_$$.c
+  echo "#include <mpfr.h>" > $tmp_file
+  ${CC} -E -I$MPFR_INCLUDE_DIR -I$GMP_INCLUDE_DIR $tmp_file 2> /dev/null > /dev/null
+  if test $? -ne 0; then
+    rm -f $tmp_file
+    AC_MSG_ERROR([mpfr.h not found. Please attach --with-mpfr=<DIR> or --with-mpfr-include=<DIR>.])
+  fi
+
+  # check -lmpfr
+  echo "int main(){return 0;}" > $tmp_file
+  ${CC} -L$MPFR_LIB_DIR -lmpfr $tmp_file
+  if test $? -ne 0; then
+    rm -f $tmp_file
+    AC_MSG_ERROR([-lmpfr not found. Please attach --with-mpfr=<DIR> or --with-mpfr-lib=<DIR>.])
+  fi
+  rm -f $tmp_file
+
+  AC_SUBST(MPFR_INCLUDE_DIR)
+  AC_SUBST(MPFR_LIB_DIR)
+fi
 
 # check PGI compiler
 #chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`

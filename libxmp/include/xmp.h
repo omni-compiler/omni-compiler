@@ -88,8 +88,8 @@ extern void     xmp_sched_template_index(int* local_start_index, int* local_end_
 					 const xmp_desc_t template, const int template_dim);
 extern void     xmp_sync_memory(const int* status);
 extern void     xmp_sync_all(const int* status);
-extern void     xmp_sync_image(int image, int* status);
-extern void     xmp_sync_images(int num, int* image_set, int* status);
+extern void     xmp_sync_image(const int image, int* status);
+extern void     xmp_sync_images(const int num, int* image_set, int* status);
 extern void     xmp_sync_images_all(int* status);
 
 extern void     xmp_sort_up(xmp_desc_t a_desc, xmp_desc_t b_desc);

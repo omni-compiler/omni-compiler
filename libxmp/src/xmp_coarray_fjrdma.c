@@ -814,7 +814,7 @@ void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const i
 /**
    Execute sync images
 */
-void _XMP_fjrdma_sync_images(int num, int* image_set, int* status)
+void _XMP_fjrdma_sync_images(const int num, int* image_set, int* status)
 {
   _XMP_fjrdma_sync_memory();
 

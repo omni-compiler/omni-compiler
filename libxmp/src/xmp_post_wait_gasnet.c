@@ -143,3 +143,10 @@ void _xmp_gasnet_wait(const int node, const int tag)
 {
   GASNET_BLOCKUNTIL(remove_request(node, tag));
 }
+
+
+void _xmp_gasnet_post_sync_images(const int node, const int node_set[node]){
+}
+
+void _xmp_gasnet_wait_sync_images(const int node, const int node_set[node]){
+}

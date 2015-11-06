@@ -1193,10 +1193,10 @@ void xmp_sync_all(const int* status)
 /**
    Execute sync_images()
 */
-void xmp_sync_images(int num, int* image_set, int* status)
+void xmp_sync_images(const int num, int* image_set, int* status)
 {
-  #ifdef _XMP_GASNET
-  _XMP_fatal("Not implement xmp_sync_images()");
+#ifdef _XMP_GASNET
+  _XMP_gasnet_sync_images(num, image_set, status);
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_images(num, image_set, status);
 #elif _XMP_MPI3_ONESIDED
@@ -1207,7 +1207,7 @@ void xmp_sync_images(int num, int* image_set, int* status)
 /**
    Wrapper function of xmp_sync_images()
  */
-void xmp_sync_images_f(int *num, int* image_set, int* status)
+void xmp_sync_images_f(const int *num, int* image_set, int* status)
 {
   xmp_sync_images(*num, image_set, status);
 }

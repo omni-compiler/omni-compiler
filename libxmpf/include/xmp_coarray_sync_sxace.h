@@ -102,7 +102,7 @@
 ! logical(kind=atomic_logical_kind), whose kind is defined in the 
 ! intrinsic module iso_fortran_env [J.Reid, N1824:15.3].
 
-      interface atmic_define
+      interface atomic_define
 !!         subroutine atomic_define_i2(atom, value)
 !!         integer, intent(out) :: atom
 !!         integer(2), intent(in) :: value
@@ -129,7 +129,7 @@
          end subroutine
       end interface
 
-      interface atmic_ref
+      interface atomic_ref
 !!         subroutine atomic_ref_i2(value, atom)
 !!         integer(2), intent(out) :: value
 !!         integer, intent(in) :: atom

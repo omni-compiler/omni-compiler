@@ -869,3 +869,25 @@ void _XMP_gasnet_shortcut_get(const int target_rank, _XMP_coarray_t *dst_desc, v
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
 }
+
+/**
+   Execute sync images
+*/
+void _XMP_gasnet_sync_images(const int num, int image_set[num], int *status)
+{
+  _XMP_gasnet_sync_memory();
+
+  if(num == 0){
+    return;
+  }
+  else if(num < 0){
+    fprintf(stderr, "Invalid value is used in xmp_sync_memory. The first argument is %d\n", num);
+    _XMP_fatal_nomsg();
+  }
+
+  for(int i=0;i<num;i++)
+    image_set[i] = image_set[i] - 1;
+
+  _xmp_gasnet_post_sync_images(num, image_set);
+  _xmp_gasnet_wait_sync_images(num, image_set);
+}

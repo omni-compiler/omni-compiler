@@ -353,8 +353,10 @@ extern void _XMP_threads_finalize(void);
 #define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INITIAL_SIZE _XMP_COARRAY_QUEUE_INITIAL_SIZE        /** The same vaule may be good. */
 #define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO  /** The same vaule may be good. */
 
-#define _XMP_POSTREQ_TABLE_INITIAL_SIZE 32         /**< This value is trial */
-#define _XMP_POSTREQ_TABLE_INCREMENT_RATIO (1.5)   /**< This value is trial */
+#define _XMP_POSTREQ_TABLE_INITIAL_SIZE             32  /**< This value is trial */
+#define _XMP_POSTREQ_SYNC_IMAGES_INITIAL_SIZE       32  /**< This value is trial */
+#define _XMP_POSTREQ_TABLE_INCREMENT_RATIO       (1.5)  /**< This value is trial */
+#define _XMP_POSTREQ_SYNC_IMAGES_INCREMENT_RATIO (1.5)  /**< This value is trial */
 extern size_t _XMP_get_offset(const _XMP_array_section_t *, const int);
 extern void _XMP_coarray_set_info(_XMP_coarray_t* c);
 extern void _XMP_post_wait_initialize();
@@ -392,6 +394,7 @@ extern void _XMP_gasnet_get(const int, const int, const int, const int, const in
 			    const _XMP_array_section_t*, const _XMP_coarray_t*, const void*, const size_t, const size_t);
 extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
+extern void _XMP_gasnet_sync_images(const int, int*, int*);
 extern void _xmp_gasnet_post_wait_initialize();
 extern void _xmp_gasnet_post(const int, const int);
 extern void _xmp_gasnet_wait_noargs();
@@ -402,6 +405,8 @@ extern void _XMP_gasnet_shortcut_put(const int, _XMP_coarray_t*, void*,
 				     const size_t, const size_t, const size_t, const size_t);
 extern void _XMP_gasnet_shortcut_get(const int, _XMP_coarray_t*, void*,
                                      const size_t, const size_t, const size_t, const size_t);
+extern void _xmp_gasnet_post_sync_images(const int, const int*);
+extern void _xmp_gasnet_wait_sync_images(const int, const int*);
 #endif
 
 #ifdef _XMP_FJRDMA
@@ -421,7 +426,7 @@ extern void _XMP_fjrdma_initialize(int, char**);
 extern void _XMP_fjrdma_finalize();
 extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
-extern void _XMP_fjrdma_sync_images(int, int*, int*);
+extern void _XMP_fjrdma_sync_images(const int, int*, int*);
 extern void _xmp_fjrdma_post_sync_images(const int, const int*);
 extern void _xmp_fjrdma_wait_sync_images(const int, const int*);
 extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, const size_t);

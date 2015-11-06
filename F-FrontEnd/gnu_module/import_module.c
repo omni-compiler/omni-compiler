@@ -1,6 +1,3 @@
-/*
-*/
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +51,7 @@
 
 #define ICE_EXIT_CODE 4
 
-#define PTRDIFF_TYPE            "int"
+#define PTRDIFF_TYPE       "int"
 #define INT_TYPE_SIZE         32
 
 extern int  mod_version;
