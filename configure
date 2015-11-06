@@ -712,8 +712,8 @@ MPFR_LIB_DIR
 MPFR_INCLUDE_DIR
 GMP_LIB_DIR
 GMP_INCLUDE_DIR
-XMOD2MOD_FALSE
-XMOD2MOD_TRUE
+MOD2XMOD_FALSE
+MOD2XMOD_TRUE
 NM_OPT
 OMNI_X2X_FLAGS
 OMNI_LNK_FCFLAGS
@@ -903,7 +903,7 @@ enable_debug
 enable_openacc
 enable_atool
 enable_xacc
-enable_xmod2mod
+enable_mod2xmod
 enable_dependency_tracking
 with_gpucc
 with_gpu_cflags
@@ -1570,7 +1570,7 @@ Optional Features:
   --enable-openacc        enable OpenACC (false default)
   --enable-atool          enable atool (false default)
   --enable-xacc           enable XcalableACC (false default)
-  --enable-xmod2mod       enable to translate .xmod to .mod (false default)
+  --enable-mod2xmod       enable to translate .mod to .xmod on only gfortran (false default)
   --enable-dependency-tracking
                           do not reject slow dependency extractors
   --disable-dependency-tracking
@@ -3787,11 +3787,11 @@ else
 fi
 
 
-# Check whether --enable-xmod2mod was given.
-if test "${enable_xmod2mod+set}" = set; then :
-  enableval=$enable_xmod2mod; doxmod2mod=yes
+# Check whether --enable-mod2xmod was given.
+if test "${enable_mod2xmod+set}" = set; then :
+  enableval=$enable_mod2xmod; domod2xmod=yes
 else
-  doxmod2mod=no
+  domod2xmod=no
 fi
 
 
@@ -8690,22 +8690,23 @@ if ! test -d "$LIBXML2_LIB_DIR"; then
 fi
 
 # check libxml/parser.h
-tmp_file=/tmp/_omni_$$.c
-echo "#include <libxml/parser.h>" > $tmp_file
-${CC} -E -I$LIBXML2_INCLUDE_DIR/libxml2 $tmp_file 2> /dev/null > /dev/null
+tmp_file=/tmp/_omni_$$
+tmp_file_c=/tmp/_omni_$$.c
+echo "#include <libxml/parser.h>" > $tmp_file_c
+${CC} -E -I$LIBXML2_INCLUDE_DIR/libxml2 $tmp_file_c 2> /dev/null > /dev/null
 if test $? -ne 0; then
-  rm -f $tmp_file
+  rm -f $tmp_file_c
   as_fn_error $? "parser.h not found. Please attach --with-libxml2=<DIR> or --with-libxml2-include=<DIR>." "$LINENO" 5
 fi
 
 # check -lxml2
-echo "int main(){return 0;}" > $tmp_file
-${CC} -L$LIBXML2_LIB_DIR -lxml2 $tmp_file
+echo "int main(){return 0;}" > $tmp_file_c
+${CC} -L$LIBXML2_LIB_DIR -lxml2 $tmp_file_c -o $tmp_file
 if test $? -ne 0; then
-  rm -f $tmp_file
+  rm -f $tmp_file $tmp_file_c
   as_fn_error $? "-lxml2 not found. Please attach --with-libxml2=<DIR> or --with-libxml2-lib=<DIR>." "$LINENO" 5
 fi
-rm -f $tmp_file
+rm -f $tmp_file $tmp_file_c
 
 
 
@@ -9090,25 +9091,25 @@ case $chk in
    *            ) KIND_MPI_FORTRAN=other
 esac
 
-if test "$doxmod2mod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
-   as_fn_error $? "\"--enable-xmod2mod option can be used when Backend compiler is gfortran.\"" "$LINENO" 5
+if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
+   as_fn_error $? "\"--enable-mod2xmod option can be used when Backend compiler is gfortran.\"" "$LINENO" 5
 fi
 
-IS_XMOD2MOD=no
-if test "$doxmod2mod" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
-  IS_XMOD2MOD=yes
+IS_MOD2XMOD=no
+if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
+  IS_MOD2XMOD=yes
 fi
 
- if test "$IS_XMOD2MOD" = "yes"; then
-  XMOD2MOD_TRUE=
-  XMOD2MOD_FALSE='#'
+ if test "$IS_MOD2XMOD" = "yes"; then
+  MOD2XMOD_TRUE=
+  MOD2XMOD_FALSE='#'
 else
-  XMOD2MOD_TRUE='#'
-  XMOD2MOD_FALSE=
+  MOD2XMOD_TRUE='#'
+  MOD2XMOD_FALSE=
 fi
 
 
-if test "$IS_XMOD2MOD" = "yes"; then
+if test "$IS_MOD2XMOD" = "yes"; then
   #### GMP ####
   # check dirs
   if ! test -d "$GMP_INCLUDE_DIR"; then
@@ -9123,22 +9124,23 @@ if test "$IS_XMOD2MOD" = "yes"; then
   fi
 
   # check gmp.h
-  tmp_file=/tmp/_omni_$$.c
-  echo "#include <gmp.h>" > $tmp_file
-  ${CC} -E -I$GMP_INCLUDE_DIR $tmp_file 2> /dev/null > /dev/null
+  tmp_file=/tmp/_omni_$$
+  tmp_file_c=/tmp/_omni_$$.c
+  echo "#include <gmp.h>" > $tmp_file_c
+  ${CC} -E -I$GMP_INCLUDE_DIR $tmp_file_c 2> /dev/null > /dev/null
   if test $? -ne 0; then
-    rm -f $tmp_file
+    rm -f $tmp_file_c
     as_fn_error $? "gmp.h not found. Please attach --with-gmp=<DIR> or --with-gmp-include=<DIR>." "$LINENO" 5
   fi
 
   # check -lgmp
-  echo "int main(){return 0;}" > $tmp_file
-  ${CC} -L$GMP_LIB_DIR -lgmp $tmp_file
+  echo "int main(){return 0;}" > $tmp_file_c
+  ${CC} -L$GMP_LIB_DIR -lgmp $tmp_file_c -o $tmp_file
   if test $? -ne 0; then
-    rm -f $tmp_file
+    rm -f $tmp_file $tmp_file_c
     as_fn_error $? "-lgmp not found. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
   fi
-  rm -f $tmp_file
+  rm -f $tmp_file $tmp_file_c
 
 
 
@@ -9157,22 +9159,21 @@ if test "$IS_XMOD2MOD" = "yes"; then
   fi
 
   # check mpfr.h
-  tmp_file=/tmp/_omni_$$.c
-  echo "#include <mpfr.h>" > $tmp_file
-  ${CC} -E -I$MPFR_INCLUDE_DIR -I$GMP_INCLUDE_DIR $tmp_file 2> /dev/null > /dev/null
+  echo "#include <mpfr.h>" > $tmp_file_c
+  ${CC} -E -I$MPFR_INCLUDE_DIR -I$GMP_INCLUDE_DIR $tmp_file_c 2> /dev/null > /dev/null
   if test $? -ne 0; then
-    rm -f $tmp_file
+    rm -f $tmp_file_c
     as_fn_error $? "mpfr.h not found. Please attach --with-mpfr=<DIR> or --with-mpfr-include=<DIR>." "$LINENO" 5
   fi
 
   # check -lmpfr
-  echo "int main(){return 0;}" > $tmp_file
-  ${CC} -L$MPFR_LIB_DIR -lmpfr $tmp_file
+  echo "int main(){return 0;}" > $tmp_file_c
+  ${CC} -L$MPFR_LIB_DIR -lmpfr $tmp_file_c -o $tmp_file
   if test $? -ne 0; then
-    rm -f $tmp_file
+    rm -f $tmp_file tmp_file_c
     as_fn_error $? "-lmpfr not found. Please attach --with-mpfr=<DIR> or --with-mpfr-lib=<DIR>." "$LINENO" 5
   fi
-  rm -f $tmp_file
+  rm -f $tmp_file tmp_file_c
 
 
 
@@ -13140,8 +13141,8 @@ if test -z "${GASNET_TRUE}" && test -z "${GASNET_FALSE}"; then
   as_fn_error $? "conditional \"GASNET\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${XMOD2MOD_TRUE}" && test -z "${XMOD2MOD_FALSE}"; then
-  as_fn_error $? "conditional \"XMOD2MOD\" was never defined.
+if test -z "${MOD2XMOD_TRUE}" && test -z "${MOD2XMOD_FALSE}"; then
+  as_fn_error $? "conditional \"MOD2XMOD\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SUPERUX_TRUE}" && test -z "${SUPERUX_FALSE}"; then
@@ -14619,6 +14620,10 @@ if test x${isOnesided} = xyes; then
   echo "      Coarray                    : $isCoarray"
   echo "      Post/Wait                  : $isPostWait"
   echo "      Lock/Unlock                : $isLockUnlock"
+fi
+
+if test x${domod2xmod} = xyes; then
+  echo "    Translate .mod to .xmod      : $domod2xmod"
 fi
 
 if test x${use_tca} = xyes; then

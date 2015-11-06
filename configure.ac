@@ -278,9 +278,9 @@ AC_ARG_ENABLE(xacc,
     [  --enable-xacc           enable XcalableACC (false default)],
     [doXACC=yes], [doXACC=no])
 
-AC_ARG_ENABLE(xmod2mod,
-    [  --enable-xmod2mod       enable to translate .xmod to .mod (false default)],
-    [doxmod2mod=yes], [doxmod2mod=no])
+AC_ARG_ENABLE(mod2xmod,
+    [  --enable-mod2xmod       enable to translate .mod to .xmod on only gfortran (false default)],
+    [domod2xmod=yes], [domod2xmod=no])
 
 AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu")
 TARGET=$target
@@ -1005,22 +1005,23 @@ if ! test -d "$LIBXML2_LIB_DIR"; then
 fi
 
 # check libxml/parser.h
-tmp_file=/tmp/_omni_$$.c
-echo "#include <libxml/parser.h>" > $tmp_file
-${CC} -E -I$LIBXML2_INCLUDE_DIR/libxml2 $tmp_file 2> /dev/null > /dev/null
+tmp_file=/tmp/_omni_$$
+tmp_file_c=/tmp/_omni_$$.c
+echo "#include <libxml/parser.h>" > $tmp_file_c
+${CC} -E -I$LIBXML2_INCLUDE_DIR/libxml2 $tmp_file_c 2> /dev/null > /dev/null
 if test $? -ne 0; then
-  rm -f $tmp_file
+  rm -f $tmp_file_c
   AC_MSG_ERROR([parser.h not found. Please attach --with-libxml2=<DIR> or --with-libxml2-include=<DIR>.])
 fi
 
 # check -lxml2
-echo "int main(){return 0;}" > $tmp_file
-${CC} -L$LIBXML2_LIB_DIR -lxml2 $tmp_file
+echo "int main(){return 0;}" > $tmp_file_c
+${CC} -L$LIBXML2_LIB_DIR -lxml2 $tmp_file_c -o $tmp_file
 if test $? -ne 0; then
-  rm -f $tmp_file
+  rm -f $tmp_file $tmp_file_c
   AC_MSG_ERROR([-lxml2 not found. Please attach --with-libxml2=<DIR> or --with-libxml2-lib=<DIR>.])
 fi
-rm -f $tmp_file
+rm -f $tmp_file $tmp_file_c
       
 AC_SUBST(LIBXML2_INCLUDE_DIR)
 AC_SUBST(LIBXML2_LIB_DIR)
@@ -1316,18 +1317,18 @@ case $chk in
    *            ) KIND_MPI_FORTRAN=other
 esac
 
-if test "$doxmod2mod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
-   AC_MSG_ERROR("--enable-xmod2mod option can be used when Backend compiler is gfortran.")
+if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
+   AC_MSG_ERROR("--enable-mod2xmod option can be used when Backend compiler is gfortran.")
 fi
 
-IS_XMOD2MOD=no
-if test "$doxmod2mod" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
-  IS_XMOD2MOD=yes
+IS_MOD2XMOD=no
+if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
+  IS_MOD2XMOD=yes
 fi
 
-AM_CONDITIONAL(XMOD2MOD, test "$IS_XMOD2MOD" = "yes")
+AM_CONDITIONAL(MOD2XMOD, test "$IS_MOD2XMOD" = "yes")
 
-if test "$IS_XMOD2MOD" = "yes"; then
+if test "$IS_MOD2XMOD" = "yes"; then
   #### GMP ####
   # check dirs
   if ! test -d "$GMP_INCLUDE_DIR"; then
@@ -1342,22 +1343,23 @@ if test "$IS_XMOD2MOD" = "yes"; then
   fi
 
   # check gmp.h
-  tmp_file=/tmp/_omni_$$.c
-  echo "#include <gmp.h>" > $tmp_file
-  ${CC} -E -I$GMP_INCLUDE_DIR $tmp_file 2> /dev/null > /dev/null
+  tmp_file=/tmp/_omni_$$
+  tmp_file_c=/tmp/_omni_$$.c
+  echo "#include <gmp.h>" > $tmp_file_c
+  ${CC} -E -I$GMP_INCLUDE_DIR $tmp_file_c 2> /dev/null > /dev/null
   if test $? -ne 0; then
-    rm -f $tmp_file
+    rm -f $tmp_file_c
     AC_MSG_ERROR([gmp.h not found. Please attach --with-gmp=<DIR> or --with-gmp-include=<DIR>.])
   fi
 
   # check -lgmp
-  echo "int main(){return 0;}" > $tmp_file
-  ${CC} -L$GMP_LIB_DIR -lgmp $tmp_file
+  echo "int main(){return 0;}" > $tmp_file_c
+  ${CC} -L$GMP_LIB_DIR -lgmp $tmp_file_c -o $tmp_file
   if test $? -ne 0; then
-    rm -f $tmp_file
+    rm -f $tmp_file $tmp_file_c
     AC_MSG_ERROR([-lgmp not found. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
   fi
-  rm -f $tmp_file
+  rm -f $tmp_file $tmp_file_c
 
   AC_SUBST(GMP_INCLUDE_DIR)
   AC_SUBST(GMP_LIB_DIR)
@@ -1376,22 +1378,21 @@ if test "$IS_XMOD2MOD" = "yes"; then
   fi
 
   # check mpfr.h
-  tmp_file=/tmp/_omni_$$.c
-  echo "#include <mpfr.h>" > $tmp_file
-  ${CC} -E -I$MPFR_INCLUDE_DIR -I$GMP_INCLUDE_DIR $tmp_file 2> /dev/null > /dev/null
+  echo "#include <mpfr.h>" > $tmp_file_c
+  ${CC} -E -I$MPFR_INCLUDE_DIR -I$GMP_INCLUDE_DIR $tmp_file_c 2> /dev/null > /dev/null
   if test $? -ne 0; then
-    rm -f $tmp_file
+    rm -f $tmp_file_c
     AC_MSG_ERROR([mpfr.h not found. Please attach --with-mpfr=<DIR> or --with-mpfr-include=<DIR>.])
   fi
 
   # check -lmpfr
-  echo "int main(){return 0;}" > $tmp_file
-  ${CC} -L$MPFR_LIB_DIR -lmpfr $tmp_file
+  echo "int main(){return 0;}" > $tmp_file_c
+  ${CC} -L$MPFR_LIB_DIR -lmpfr $tmp_file_c -o $tmp_file
   if test $? -ne 0; then
-    rm -f $tmp_file
+    rm -f $tmp_file tmp_file_c
     AC_MSG_ERROR([-lmpfr not found. Please attach --with-mpfr=<DIR> or --with-mpfr-lib=<DIR>.])
   fi
-  rm -f $tmp_file
+  rm -f $tmp_file tmp_file_c
 
   AC_SUBST(MPFR_INCLUDE_DIR)
   AC_SUBST(MPFR_LIB_DIR)
@@ -2306,6 +2307,10 @@ if test x${isOnesided} = xyes; then
   echo "      Lock/Unlock                : $isLockUnlock"
 fi
 
+if test x${domod2xmod} = xyes; then
+  echo "    Translate .mod to .xmod      : $domod2xmod"
+fi
+  
 if test x${use_tca} = xyes; then
   echo "    TCA                   : yes"
 fi

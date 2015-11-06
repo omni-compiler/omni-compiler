@@ -2,7 +2,7 @@ SUBDIRS=XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src F-BackEnd \
 	XcodeML-Exc-Tools Driver/src libtlog/src_threads libtlog/src_mpi \
         libxmp/include libxmp/src libxmp/src_threads libxmpf/include libxmpf/src
 
-if XMOD2MOD
+if MOD2XMOD
     SUBDIRS+=F-FrontEnd/gnu_module
 endif
 

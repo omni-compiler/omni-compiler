@@ -185,7 +185,7 @@ EXEEXT =
 F2C_INT64_FLAGS = -DAllow_TYQUAD
 FC = gfortran
 FCFLAGS = -g -O2
-GASNET_LIBS = 
+GASNET_LIBS = -L/home/mnakao/work/GASNet-1.24.2/lib -lgasnet-mpi-seq -lammpi -lrt -L/usr/lib/gcc/x86_64-linux-gnu/4.9 -lgcc -lm
 GMP_INCLUDE_DIR = /usr/include
 GMP_LIB_DIR = /usr/lib
 GPGPU_PREFIX = /usr/local/cuda
@@ -221,8 +221,8 @@ MM5TGT =
 MPFR_INCLUDE_DIR = /usr/include
 MPFR_LIB_DIR = /usr/lib
 MPI_CC = mpicc
-MPI_CFLAGS = -O2 -std=gnu99 -Wall -Wpointer-arith -fopenmp
-MPI_CLIBS = 
+MPI_CFLAGS = -O2 -std=gnu99 -Wall -Wpointer-arith -fopenmp -O3 --param max-inline-insns-single=35000 --param inline-unit-growth=10000 --param large-function-growth=200000 -Winline -DGASNET_SEQ -I/home/mnakao/work/GASNet-1.24.2/include -I/home/mnakao/work/GASNet-1.24.2/include/mpi-conduit
+MPI_CLIBS =  -O3 --param max-inline-insns-single=35000 --param inline-unit-growth=10000 --param large-function-growth=200000 -Winline -L/home/mnakao/work/GASNet-1.24.2/lib -lgasnet-mpi-seq -lammpi -lrt -L/usr/lib/gcc/x86_64-linux-gnu/4.9 -lgcc -lm
 MPI_CPP = mpicc
 MPI_CPPFLAGS = -E -std=gnu99
 MPI_FC = mpif90
@@ -240,8 +240,8 @@ OMNI_C2X_FLAGS =
 OMNI_F2X_FLAGS = 
 OMNI_F_PP = mpif90 -E
 OMNI_HOME = /home/mnakao/work/xmp-trunk
-OMNI_LNK_CFLAGS = -std=gnu99 -lm -fopenmp 
-OMNI_LNK_FCFLAGS = -ffree-form -fcray-pointer -fopenmp -lgomp 
+OMNI_LNK_CFLAGS = -std=gnu99 -lm -fopenmp  -L/home/mnakao/work/GASNet-1.24.2/lib -lgasnet-mpi-seq -lammpi -lrt -L/usr/lib/gcc/x86_64-linux-gnu/4.9 -lgcc -lm
+OMNI_LNK_FCFLAGS = -ffree-form -fcray-pointer -fopenmp -lgomp  -L/home/mnakao/work/GASNet-1.24.2/lib -lgasnet-mpi-seq -lammpi -lrt -L/usr/lib/gcc/x86_64-linux-gnu/4.9 -lgcc -lm
 OMNI_NTV_CFLAGS = -std=gnu99 -lm
 OMNI_NTV_FCFLAGS = -ffree-form -fcray-pointer
 OMNI_X2X_FLAGS = -gnu
@@ -299,7 +299,7 @@ TYPE_INT64 = long int
 VERSION = 0.9.1
 XMPC_DEF = -D_XCALABLEMP
 XMPF_DEF = -D_XCALABLEMP
-XMPPKG_CHANGELOG_DATE = Fri, 06 Nov 2015 15:57:23 +0900
+XMPPKG_CHANGELOG_DATE = Fri, 06 Nov 2015 17:51:23 +0900
 XMPPKG_GROUP = Development Languages
 XMPPKG_LICENSE = LGPLv2
 XMPPKG_MAINTAINER = Hitoshi Murai <h-murai@riken.jp>
