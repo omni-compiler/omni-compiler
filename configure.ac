@@ -434,6 +434,7 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
   MPI_FCFLAGS="-Kfast,openmp"
   MPI_MODINC="-M"
   MPI_FCLIBS=""
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -478,6 +479,7 @@ elif test "$target" = "MIC-linux-gnu"; then
   MPI_FCFLAGS="-fast $OPENMP_OPT_F"
   MPI_MODINC="-module"
   MPI_FCLIBS=""
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -522,6 +524,7 @@ elif test "$target" = "Cray-linux-gnu"; then
   MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
   MPI_MODINC="-J"
   MPI_FCLIBS=""
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -568,6 +571,7 @@ elif test "$target" = "sxace-nec-superux"; then
   MPI_FCFLAGS="-Chopt -f2003"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -614,6 +618,7 @@ elif test "$target" = "sx9-nec-superux"; then
   MPI_FCFLAGS="-Chopt -f2003 $OPENMP_OPT_F"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -683,6 +688,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   fi
 
   MPI_FCLIBS=$MPI_CLIBS
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -727,6 +733,7 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $OPENMP_OPT_F"
   MPI_MODINC="-I"
   MPI_FCLIBS=""
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -875,6 +882,7 @@ else
     MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
     MPI_MODINC="-J"
     MPI_FCLIBS=""
+    KIND_MPI_FORTRAN=gfortran
 
     # Omni F
     OMNI_F2X_FLAGS=""
@@ -893,6 +901,7 @@ else
     MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
     MPI_MODINC="-module"
     MPI_FCLIBS=""
+    KIND_MPI_FORTRAN=other
 
     # Omni F
     OMNI_F2X_FLAGS=""
@@ -917,6 +926,7 @@ else
       MPI_FCFLAGS="-fast $OPENMP_OPT_F"
       MPI_MODINC="-module"
       MPI_FCLIBS=""
+      KIND_MPI_FORTRAN=other
 
       # Omni F
       OMNI_F2X_FLAGS=""
@@ -1309,14 +1319,7 @@ AC_SUBST(AR)
 AC_SUBST(NM)
 AC_SUBST(NM_OPT)
 
-# check gfortran-based MPI as a backend compiler.
-# Note that this check statement must be execute after confirming $MPI_FC
-chk=`${MPI_FC} --version | head -n1`
-case $chk in
-  "GNU Fortran"*) KIND_MPI_FORTRAN=gfortran;;
-   *            ) KIND_MPI_FORTRAN=other
-esac
-
+# check --enable-mod2xmod
 if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
    AC_MSG_ERROR("--enable-mod2xmod option can be used when Backend compiler is gfortran.")
 fi

@@ -396,7 +396,9 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-include_HEADERS = xmp_lib.h xmp_coarray.h xmp_coarray_get.h xmp_coarray_alloc.h xmp_coarray_sync.h xmp_coarray_sync_sxace.h
+include_HEADERS = xmp_lib.h xmp_coarray.h xmp_coarray_get.h xmp_coarray_alloc.h
+@SUPERUX_FALSE@COARRAY_SYNC_H = xmp_coarray_sync.h
+@SUPERUX_TRUE@COARRAY_SYNC_H = xmp_coarray_sync_sxace.h
 all: all-am
 
 .SUFFIXES:
@@ -541,7 +543,6 @@ installdirs:
 	for dir in "$(DESTDIR)$(includedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -652,6 +653,11 @@ uninstall-am: uninstall-includeHEADERS
 	mostlyclean mostlyclean-generic pdf pdf-am ps ps-am tags \
 	tags-am uninstall uninstall-am uninstall-includeHEADERS
 
+
+install:
+	mkdir -p $(includedir)
+	$(INSTALL) -m 644 $(COARRAY_SYNC_H) $(includedir)/xmp_coarray_sync.h
+	$(INSTALL) -m 644 $(include_HEADERS) $(includedir)/
 
 xmp_coarray_get.h:  xmp_coarray_get.h.sh
 	. $< $(TARGET) > $@

@@ -108,3 +108,4 @@ libxmpf/src/xmpf_coarray_get_wrap.f90
 libxmpf/include/xmp_coarray_alloc.h
 libxmpf/include/xmp_coarray_get.h
 libxmpf/src/xmpf_coarray_reduction.F90
+
