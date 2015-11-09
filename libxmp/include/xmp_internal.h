@@ -119,6 +119,7 @@ extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
 
 extern void _XMP_onesided_initialize(int, char **);
 extern void _XMP_onesided_finalize(const int);
+extern void _XMP_build_sync_images_table();
 extern void _XMP_build_coarray_queue();
 extern void _XMP_coarray_lastly_deallocate();
 extern void _XMP_set_stride(size_t*, const _XMP_array_section_t*, const int, const size_t, const size_t);
@@ -354,9 +355,7 @@ extern void _XMP_threads_finalize(void);
 #define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO  /** The same vaule may be good. */
 
 #define _XMP_POSTREQ_TABLE_INITIAL_SIZE             32  /**< This value is trial */
-#define _XMP_POSTREQ_SYNC_IMAGES_INITIAL_SIZE       32  /**< This value is trial */
 #define _XMP_POSTREQ_TABLE_INCREMENT_RATIO       (1.5)  /**< This value is trial */
-#define _XMP_POSTREQ_SYNC_IMAGES_INCREMENT_RATIO (1.5)  /**< This value is trial */
 extern size_t _XMP_get_offset(const _XMP_array_section_t *, const int);
 extern void _XMP_coarray_set_info(_XMP_coarray_t* c);
 extern void _XMP_post_wait_initialize();
@@ -410,16 +409,20 @@ extern void _xmp_gasnet_wait_sync_images(const int, const int*);
 #endif
 
 #ifdef _XMP_FJRDMA
-#define _XMP_FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
-#define _XMP_SEND_NIC FJMPI_RDMA_LOCAL_NIC0
-#define _XMP_POSTREQ_SEND_NIC FJMPI_RDMA_LOCAL_NIC2
-#define _XMP_POSTREQ_RECV_NIC FJMPI_RDMA_LOCAL_NIC3
+#define _XMP_COARRAY_FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
+#define _XMP_COARRAY_SEND_NIC  FJMPI_RDMA_LOCAL_NIC0
+
+#define _XMP_SYNC_IMAGES_FLAG_NIC (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_REMOTE_NOTICE)
+#define _XMP_SYNC_IMAGES_SEND_NIC  FJMPI_RDMA_LOCAL_NIC0
+#define _XMP_SYNC_IMAGES_RECV_NIC  FJMPI_RDMA_LOCAL_NIC1
 #define _XMP_POSTREQ_NIC_FLAG (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_REMOTE_NOTICE)
-#define _XMP_TEMP_MEMID 0
-#define _XMP_POSTREQ_ID 1
-#define _XMP_FJRDMA_INTERVAL         8192
-#define _XMP_FJRDMA_MAX_PROCS       82944
-#define _XMP_FJRDMA_SYNC_IMAGES_TAG    14
+#define _XMP_POSTREQ_SEND_NIC  FJMPI_RDMA_LOCAL_NIC2
+#define _XMP_POSTREQ_RECV_NIC  FJMPI_RDMA_LOCAL_NIC3
+#define _XMP_TEMP_MEMID     0
+#define _XMP_POSTREQ_ID     1
+#define _XMP_SYNC_IMAGES_ID 2
+#define _XMP_INIT_RDMA_INTERVAL      8192
+#define _XMP_ONESIDED_MAX_PROCS     82944
 
 #include <mpi-ext.h>
 extern void _XMP_fjrdma_initialize(int, char**);
@@ -427,8 +430,7 @@ extern void _XMP_fjrdma_finalize();
 extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
 extern void _XMP_fjrdma_sync_images(const int, int*, int*);
-extern void _xmp_fjrdma_post_sync_images(const int, const int*);
-extern void _xmp_fjrdma_wait_sync_images(const int, const int*);
+extern void _XMP_fjrdma_build_sync_images_table();
 extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, const size_t);
 extern void _XMP_fjrdma_put(const int, const int, const int, const int, const int, const _XMP_array_section_t *,  
 			    const _XMP_array_section_t *, const _XMP_coarray_t *, const _XMP_coarray_t *, void *,
