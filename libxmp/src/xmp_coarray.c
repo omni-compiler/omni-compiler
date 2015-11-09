@@ -1333,6 +1333,18 @@ void _XMP_coarray_shortcut_get_f(const int *target, void *dst, const void *src, 
 }
 
 /**
+   Build table for sync images
+*/
+void _XMP_build_sync_images_table()
+{
+#ifdef _XMP_GASNET
+#elif _XMP_FJRDMA
+  _XMP_fjrdma_build_sync_images_table();
+#elif _XMP_MPI3_ONESIDED
+#endif
+}
+
+/**
    Build queue for coarray
 */
 void _XMP_build_coarray_queue()

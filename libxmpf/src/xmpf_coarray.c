@@ -11,7 +11,7 @@
 \*****************************************/
 
 static int _XMPF_coarrayMsg = 0;          // default: message off
-static int _XMPF_coarrayErr = 0;          // default: aggressive error check off
+//static int _XMPF_coarrayErr = 0;          // default: aggressive error check off
 static unsigned _XMPF_poolThreshold = POOL_THRESHOLD;
 
 static void _set_coarrayMsg(int sw)

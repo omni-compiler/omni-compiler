@@ -65,10 +65,10 @@ static size_t _get_size(char *env)
 void _XMP_onesided_initialize(int argc, char **argv)
 {
 #ifdef _XMP_FJRDMA
-  if(_XMP_world_size > _XMP_FJRDMA_MAX_PROCS){
+  if(_XMP_world_size > _XMP_ONESIDED_MAX_PROCS){
     if(_XMP_world_rank == 0)
       fprintf(stderr, "Warning : Onesided operations cannot be not used in %d processes (up to %d processes)\n", 
-	      _XMP_world_size, _XMP_FJRDMA_MAX_PROCS);
+	      _XMP_world_size, _XMP_ONESIDED_MAX_PROCS);
 
     return;
   }
@@ -91,6 +91,7 @@ void _XMP_onesided_initialize(int argc, char **argv)
 #endif
 
 #if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
+  _XMP_build_sync_images_table();
   _XMP_build_coarray_queue();
   _XMP_post_wait_initialize();
 #endif
@@ -101,7 +102,7 @@ void _XMP_onesided_finalize(const int return_val)
 #ifdef _XMP_GASNET
   _XMP_gasnet_finalize(return_val);
 #elif _XMP_FJRDMA
-  if(_XMP_world_size > _XMP_FJRDMA_MAX_PROCS) return;
+  if(_XMP_world_size > _XMP_ONESIDED_MAX_PROCS) return;
   else _XMP_fjrdma_finalize();
 #elif _XMP_TCA
   _XMP_tca_finalize();
