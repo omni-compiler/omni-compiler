@@ -393,6 +393,7 @@ extern void _XMP_gasnet_get(const int, const int, const int, const int, const in
 			    const _XMP_array_section_t*, const _XMP_coarray_t*, const void*, const size_t, const size_t);
 extern void _XMP_gasnet_sync_all();
 extern void _XMP_gasnet_sync_memory();
+extern void _XMP_gasnet_build_sync_images_table();
 extern void _XMP_gasnet_sync_images(const int, int*, int*);
 extern void _xmp_gasnet_post_wait_initialize();
 extern void _xmp_gasnet_post(const int, const int);
@@ -406,6 +407,8 @@ extern void _XMP_gasnet_shortcut_get(const int, _XMP_coarray_t*, void*,
                                      const size_t, const size_t, const size_t, const size_t);
 extern void _xmp_gasnet_post_sync_images(const int, const int*);
 extern void _xmp_gasnet_wait_sync_images(const int, const int*);
+extern void _xmp_gasnet_add_notify(gasnet_token_t t, const int);
+extern void _xmp_gasnet_notiy_reply(gasnet_token_t t);
 #endif
 
 #ifdef _XMP_FJRDMA
@@ -636,10 +639,11 @@ extern void _XMP_unpack_coarray(char*, const int, const char*, const _XMP_array_
 #define _XMP_GASNET_UNPACK_REPLY               207
 #define _XMP_GASNET_PACK                       208
 #define _XMP_GASNET_UNPACK_GET_REPLY           209
-#define _XMP_GASNET_PACK_USGIN_BUF             210
+#define _XMP_GASNET_PACK_USING_BUF             210
 #define _XMP_GASNET_UNPACK_GET_REPLY_USING_BUF 211
 #define _XMP_GASNET_PACK_GET_HANDLER           212
 #define _XMP_GASNET_UNPACK_GET_REPLY_NONC      213
+#define _XMP_GASNET_ADD_NOTIFY                 214
 extern void _xmp_gasnet_lock_request(gasnet_token_t, int, uint32_t, uint32_t);
 extern void _xmp_gasnet_setlockstate(gasnet_token_t, int);
 extern void _xmp_gasnet_do_setlockstate(int);

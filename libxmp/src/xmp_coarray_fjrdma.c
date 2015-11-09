@@ -823,7 +823,7 @@ void _XMP_fjrdma_build_sync_images_table()
   _sync_images_table = malloc(sizeof(unsigned int) * _XMP_world_size);
 
   for(int i=0;i<_XMP_world_size;i++)
-    _sync_images_table[i] = 0;
+    _sync_images_table[i] = _XMP_N_INT_FALSE;
 
   double *token     = _XMP_alloc(sizeof(double));
   _local_rdma_addr  = FJMPI_Rdma_reg_mem(_XMP_SYNC_IMAGES_ID, token, sizeof(double));
@@ -846,6 +846,16 @@ void _XMP_fjrdma_build_sync_images_table()
 }
 
 /**
+   Add rank to table
+   *
+   * @param[in]  rank rank number
+   */
+static void _add_sync_images_table(const int rank)
+{
+  _sync_images_table[rank] = _XMP_N_INT_TRUE;
+}
+
+/**
    Notify to nodes
    *
    * @param[in]  num        number of nodes
@@ -853,12 +863,20 @@ void _XMP_fjrdma_build_sync_images_table()
    */
 static void _notify_sync_images(const int num, int *rank_set)
 {
+  int num_of_requests = 0;
+  
   for(int i=0;i<num;i++)
-    FJMPI_Rdma_put(rank_set[i], _XMP_SYNC_IMAGES_TAG, _remote_rdma_addr[rank_set[i]], 
-		   _local_rdma_addr, sizeof(double), _XMP_SYNC_IMAGES_FLAG_NIC);
+    if(rank_set[i] == _XMP_world_rank){
+      _add_sync_images_table(_XMP_world_rank);
+    }
+    else{
+      FJMPI_Rdma_put(rank_set[i], _XMP_SYNC_IMAGES_TAG, _remote_rdma_addr[rank_set[i]], 
+		     _local_rdma_addr, sizeof(double), _XMP_SYNC_IMAGES_FLAG_NIC);
+      num_of_requests++;
+    }
 
   struct FJMPI_Rdma_cq cq;
-  for(int i=0;i<num;i++)
+  for(int i=0;i<num_of_requests;i++)
     while(FJMPI_Rdma_poll_cq(_XMP_SYNC_IMAGES_SEND_NIC, &cq) != FJMPI_RDMA_NOTICE);  // Wait until finishing above put operations
 }
 
@@ -867,13 +885,14 @@ static void _notify_sync_images(const int num, int *rank_set)
    *
    * @param[in]  num        number of nodes
    * @param[in]  *rank_set  rank set
+   * @praam[in]  old_wait_sync_images[num] old images set
 */
 static _Bool _check_sync_images_table(const int num, int *rank_set)
 {
   int checked = 0;
 
   for(int i=0;i<num;i++)
-    if(_sync_images_table[rank_set[i]] != 0)
+    if(_sync_images_table[rank_set[i]] == _XMP_N_INT_TRUE)
       checked++;
 
   if(checked == num) return true;
@@ -881,20 +900,11 @@ static _Bool _check_sync_images_table(const int num, int *rank_set)
 }
 
 /**
-   Add rank to table
-   *
-   * @param[in]  rank rank number
-   */
-static void _add_sync_images_table(const int rank)
-{
-  _sync_images_table[rank]++;
-}
-
-/**
    Wait until recieving all request from all node
    *
-   * @param[in]  num        number of nodes
-   * @param[in]  *rank_set  rank set
+   * @param[in]  num                       number of nodes
+   * @param[in]  *rank_set                 rank set
+   * @praam[in]  old_wait_sync_images[num] old images set
 */
 static void _wait_sync_images(const int num, int *rank_set)
 {
@@ -914,9 +924,6 @@ static void _wait_sync_images(const int num, int *rank_set)
    * @param[in]  num         number of nodes
    * @param[in]  *image_set  image set
    * @param[out] status      status
-   This algorithm is referred as following,
-   Eachempati Deepak, Jun Hyoung Joon, Chapman Barbara, "An Open-source Compiler and Runtime Implementation for 
-   Coarray Fortran", Proceedings of the Fourth Conference on Partitioned Global Address Space Programming Model, 2010.
 */
 void _XMP_fjrdma_sync_images(const int num, int* image_set, int* status)
 {
@@ -939,5 +946,5 @@ void _XMP_fjrdma_sync_images(const int num, int* image_set, int* status)
 
   // Update table for post-processing
   for(int i=0;i<num;i++)
-    _sync_images_table[rank_set[i]]--;
+    _sync_images_table[rank_set[i]] = _XMP_N_INT_FALSE;
 }
