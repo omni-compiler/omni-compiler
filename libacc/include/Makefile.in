@@ -79,7 +79,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-subdir = libacc/include
+subdir = ./libacc/include
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(include_HEADERS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -396,8 +396,8 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-include_HEADERS = acc.h acc_internal.h \
-		acc_gpu.h acc_gpu_constant.h acc_gpu_data_struct.h acc_gpu_internal.h \
+include_HEADERS = acc.h \
+		acc_gpu.h acc_gpu_constant.h \
 		acc_gpu_func.hpp acc_gpu_reduction.hpp acc_gpu_atomic.hpp \
 		openacc.h
 
@@ -413,9 +413,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps libacc/include/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./libacc/include/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps libacc/include/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./libacc/include/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
