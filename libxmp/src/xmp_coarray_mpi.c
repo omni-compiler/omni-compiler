@@ -560,36 +560,26 @@ static void _mpi_non_continuous(const int op, const int target_rank,
   MPI_Win win = get_window(remote_desc, is_remote_on_acc);
 
   MPI_Datatype local_types[_XMP_N_MAX_DIM], remote_types[_XMP_N_MAX_DIM];
-  MPI_Datatype local_vec_types[_XMP_N_MAX_DIM], remote_vec_types[_XMP_N_MAX_DIM];
-  //long long local_start_offset = 0;
-  //long long remote_start_offset = 0;
   size_t element_size = remote_desc->elmt_size;
 
   for(int i = local_dims - 1; i >= 0; i--){
     const _XMP_array_section_t *section = local_info + i;
     int count = section->length;
     int blocklength = (i == local_dims - 1)? element_size : 1;
-    int stride = section->stride * blocklength;
-    //local_start_offset += section->start * section->distance;
+    int stride = section->distance * section->stride;
     MPI_Datatype oldtype = (i == local_dims - 1)? MPI_BYTE : local_types[i+1];
     XACC_DEBUG("local, dim=%d, start=%lld, length=%lld, stride=%lld, (c,b,s)=(%d,%d,%d)\n", i, section->start, section->length, section->stride, count, blocklength, stride);
-
-    MPI_Type_vector(count, blocklength, stride, oldtype, local_vec_types + i);
-    MPI_Type_commit(local_vec_types + i);
-    MPI_Type_create_resized(local_vec_types[i], 0, section->elmts*section->distance, local_types + i);
+    MPI_Type_create_hvector(count, blocklength, stride, oldtype, local_types + i);
     MPI_Type_commit(local_types + i);
   }
   for(int i = remote_dims - 1; i >= 0; i--){
     const _XMP_array_section_t *section = remote_info + i;
     int count = section->length;
     int blocklength = (i == remote_dims - 1)? element_size : 1;
-    int stride = section->stride * blocklength;
+    int stride = section->distance * section->stride;
     MPI_Datatype oldtype = (i == remote_dims - 1)? MPI_BYTE : remote_types[i+1];
     XACC_DEBUG("remote, dim=%d, start=%lld, length=%lld, stride=%lld, (c,b,s)=(%d,%d,%d)\n", i, section->start, section->length, section->stride, count, blocklength, stride);
-
-    MPI_Type_vector(count, blocklength, stride, oldtype, remote_vec_types + i);
-    MPI_Type_commit(remote_vec_types + i);
-    MPI_Type_create_resized(remote_vec_types[i], 0, section->elmts*section->distance, remote_types + i);
+    MPI_Type_create_hvector(count, blocklength, stride, oldtype, remote_types + i);
     MPI_Type_commit(remote_types + i);
   }
 
@@ -610,13 +600,11 @@ static void _mpi_non_continuous(const int op, const int target_rank,
   MPI_Wait(&req, MPI_STATUS_IGNORE);
 
   //free datatype
-  for(int i = 0; i < local_dims - 1; i++){
+  for(int i = 0; i < local_dims; i++){
     MPI_Type_free(local_types + i);
-    MPI_Type_free(local_vec_types + i);
   }
-  for(int i = 0; i < remote_dims - 1; i++){
+  for(int i = 0; i < remote_dims; i++){
     MPI_Type_free(remote_types + i);
-    MPI_Type_free(remote_vec_types + i);
   }
 }
 
