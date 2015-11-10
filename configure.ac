@@ -2251,7 +2251,7 @@ elif test x$use_mpi3_onesided = xyes; then
   isOnesided=yes
   how_onesided=MPI3
   isCoarray=yes
-  isPostWait=no
+  isPostWait=yes
   isLockUnlock=no
 fi
 			      
