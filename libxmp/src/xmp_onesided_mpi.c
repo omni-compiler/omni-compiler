@@ -37,14 +37,13 @@ void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size)
   _xmp_mpi_onesided_heap_size = heap_size;
 
   XACC_DEBUG("alloc memory size=%zd\n", heap_size);
-  _xmp_mpi_onesided_buf = _XMP_alloc(heap_size);
   XACC_DEBUG("alloced _xmp_mpi_onesided_buf(%p)\n", _xmp_mpi_onesided_buf);
-  MPI_Win_create((void*)_xmp_mpi_onesided_buf, //window address
-		 heap_size, //window size
-		 sizeof(char), //gap size
-		 MPI_INFO_NULL,
-		 MPI_COMM_WORLD,
-		 &_xmp_mpi_onesided_win);
+  MPI_Win_allocate(heap_size, //window size
+		   sizeof(char), //gap size
+		   MPI_INFO_NULL,
+		   MPI_COMM_WORLD,
+		   &_xmp_mpi_onesided_buf, //window address
+		   &_xmp_mpi_onesided_win);
 
   _XMP_mpi_build_shift_queue(false);
   MPI_Win_lock_all(0, _xmp_mpi_onesided_win);
@@ -80,7 +79,6 @@ void _XMP_mpi_onesided_finalize(){
   _XMP_mpi_destroy_shift_queue(false);
   MPI_Win_free(&_xmp_mpi_onesided_win);
   XACC_DEBUG("free _xmp_mpi_onesided_buf(%p)\n", _xmp_mpi_onesided_buf);
-  _XMP_free(_xmp_mpi_onesided_buf);
 
   MPI_Win_unlock_all(_xmp_mpi_distarray_win);
   MPI_Win_free(&_xmp_mpi_distarray_win);
