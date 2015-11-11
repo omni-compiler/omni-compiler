@@ -17,6 +17,7 @@
 #define _XMP_N_MPI_TAG_REFLECT_LO		11
 #define _XMP_N_MPI_TAG_REFLECT_HI		12
 #define _XMP_N_MPI_TAG_POSTREQ			13
+#define _XMP_N_MPI_TAG_SYNCREQ			14
 
 // used by task
 #define _XMP_N_NODES_REF			20
