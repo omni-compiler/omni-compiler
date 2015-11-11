@@ -874,6 +874,72 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
       return this.copy();
     }
 
+    public Xobject lbound(int dim)
+    {
+      Fshape shape = new Fshape(this);
+      return shape.lbound(dim);
+    }
+    public Xobject lbound(int dim, Block block)
+    {
+      Fshape shape = new Fshape(this, block);
+      return shape.lbound(dim);
+    }
+  
+    public Xobject[] lbounds()
+    {
+      Fshape shape = new Fshape(this);
+      return shape.lbounds();
+    }
+    public Xobject[] lbounds(Block block)
+    {
+      Fshape shape = new Fshape(this, block);
+      return shape.lbounds();
+    }
+
+    public Xobject ubound(int dim)
+    {
+      Fshape shape = new Fshape(this);
+      return shape.ubound(dim);
+    }
+    public Xobject ubound(int dim, Block block)
+    {
+      Fshape shape = new Fshape(this, block);
+      return shape.ubound(dim);
+    }
+
+    public Xobject[] ubounds()
+    {
+      Fshape shape = new Fshape(this);
+      return shape.ubounds();
+    }
+    public Xobject[] ubounds(Block block)
+    {
+      Fshape shape = new Fshape(this, block);
+      return shape.ubounds();
+    }
+
+    public Xobject extent(int dim)
+    {
+      Fshape shape = new Fshape(this);
+      return shape.extent(dim);
+    }
+    public Xobject extent(int dim, Block block)
+    {
+      Fshape shape = new Fshape(this, block);
+      return shape.extent(dim);
+    }
+    public Xobject[] extents()
+
+    {
+      Fshape shape = new Fshape(this);
+      return shape.extents();
+    }
+    public Xobject[] extents(Block block)
+    {
+      Fshape shape = new Fshape(this, block);
+      return shape.extents();
+    }
+
     public Ident findVarIdent(String name)
     {
         return find(name, IXobject.FINDKIND_VAR);

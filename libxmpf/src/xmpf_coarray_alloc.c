@@ -381,7 +381,8 @@ static char* _xmp_strndup(char *name, const int namelen)
 }
 
 /*
- * have a share of memory in the pool
+ * have a share of memory in the pool (if smaller)
+ * or allocate individually (if larger)
  *    out: descPtr: pointer to descriptor CoarrayInfo_t
  *         crayPtr: cray pointer to the coarray object
  *    in:  count  : count of elements
@@ -389,16 +390,16 @@ static char* _xmp_strndup(char *name, const int namelen)
  *         name   : name of the coarray (for debugging)
  *         namelen: character length of name
  */
-void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
-                              int *count, int *element,
-                              char *name, int *namelen)
+void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
+                                int *count, int *element,
+                                char *name, int *namelen)
 {
   size_t elementRU = _roundUpElementSize(*count, (size_t)(*element));
   size_t nbytes = (size_t)(*count) * elementRU;
 
   CoarrayInfo_t *cinfo;
 
-  _XMPF_coarrayDebugPrint("STATIC COARRAY ALLOCATION name=\'%*s\'\n"
+  _XMPF_coarrayDebugPrint("COARRAY_ALLOC_STATIC name=\'%*s\'\n"
                           "  *count=%d, *element=%d, nbytes=%u, elementRU=%u\n",
                           *namelen, name, *count, *element, nbytes, elementRU);
 
@@ -418,7 +419,7 @@ CoarrayInfo_t *_allocLargeStaticCoarray(size_t nbytes, size_t elementRU)
 {
   _XMPF_checkIfInTask("allocation of static coarray");
 
-  _XMPF_coarrayDebugPrint("*** a larger static coarray (%u bytes)\n", nbytes);
+  _XMPF_coarrayDebugPrint("*** LARGER (%u bytes)\n", nbytes);
 
   // malloc memory-chunk
   MemoryChunk_t *chunk = _mallocMemoryChunk_core(nbytes, elementRU);
@@ -437,7 +438,7 @@ CoarrayInfo_t *_getShareOfStaticCoarray(size_t nbytes, size_t elementRU)
 {
   _XMPF_checkIfInTask("share of static coarray");
 
-  _XMPF_coarrayDebugPrint("*** a smaller static coarray (%u bytes)\n", nbytes);
+  _XMPF_coarrayDebugPrint("*** SMALLER (%u bytes)\n", nbytes);
 
   // allocate and set _coarrayInfo
   CoarrayInfo_t *cinfo = _newCoarrayInfo(pool_currentAddr, nbytes);
