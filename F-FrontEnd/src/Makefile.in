@@ -80,7 +80,7 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 bin_PROGRAMS = F_Front$(EXEEXT)
-@MPI_GFORTRAN_TRUE@am__append_1 = -D_MPI_FC=gfortran
+@MOD2XMOD_TRUE@am__append_1 = -D_MPI_FC=gfortran
 subdir = F-FrontEnd/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am F95-parser.c \
 	$(top_srcdir)/./buildutils/ylwrap ChangeLog
@@ -209,6 +209,8 @@ F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 GASNET_LIBS = @GASNET_LIBS@
+GMP_INCLUDE_DIR = @GMP_INCLUDE_DIR@
+GMP_LIB_DIR = @GMP_LIB_DIR@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CFLAGS = @GPU_CFLAGS@
 GPU_CMD = @GPU_CMD@
@@ -230,8 +232,8 @@ LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
-LIBXML_LIB = @LIBXML_LIB@
-LIBXML_PREFIX = @LIBXML_PREFIX@
+LIBXML2_INCLUDE_DIR = @LIBXML2_INCLUDE_DIR@
+LIBXML2_LIB_DIR = @LIBXML2_LIB_DIR@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKE = @MAKE@
@@ -239,6 +241,8 @@ MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
+MPFR_INCLUDE_DIR = @MPFR_INCLUDE_DIR@
+MPFR_LIB_DIR = @MPFR_LIB_DIR@
 MPI_CC = @MPI_CC@
 MPI_CFLAGS = @MPI_CFLAGS@
 MPI_CLIBS = @MPI_CLIBS@
@@ -417,8 +421,8 @@ F_Front_SOURCES = F95-main.c C-expr-mem.c C-exprcode.c F-datatype.c F-ident.c \
 
 AM_YFLAGS = -v
 AM_CFLAGS = -DBUGFIX -D__XCODEML__ -DYYDEBUG \
-	-I$(LIBXML_PREFIX)/include/libxml2 $(am__append_1)
-F_Front_LDADD = -L$(LIBXML_LIB) -lxml2 -lm
+	-I$(LIBXML2_INCLUDE_DIR)/libxml2 $(am__append_1)
+F_Front_LDADD = -L$(LIBXML2_LIB_DIR) -lxml2 -lm
 all: all-am
 
 .SUFFIXES:

@@ -12,13 +12,13 @@ F_Front_SOURCES= F95-main.c C-expr-mem.c C-exprcode.c F-datatype.c F-ident.c \
 
 AM_YFLAGS=-v
 
-AM_CFLAGS=-DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML_PREFIX)/include/libxml2 
+AM_CFLAGS=-DBUGFIX -D__XCODEML__ -DYYDEBUG -I$(LIBXML2_INCLUDE_DIR)/libxml2
 
-if MPI_GFORTRAN
+if MOD2XMOD
     AM_CFLAGS+=-D_MPI_FC=gfortran
 endif
 
-F_Front_LDADD=-L$(LIBXML_LIB) -lxml2 -lm
+F_Front_LDADD=-L$(LIBXML2_LIB_DIR) -lxml2 -lm
 
 C-exprcode.h: C-exprcode.def C-exprcode.h.awk
 	$(AWK) -f C-exprcode.h.awk < C-exprcode.def > C-exprcode.h

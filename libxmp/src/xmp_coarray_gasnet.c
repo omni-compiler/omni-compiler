@@ -13,6 +13,8 @@ struct _shift_queue_t{
 static struct _shift_queue_t _shift_queue; /** Queue which saves shift information */
 #define _XMP_STRIDE_REG  0
 #define _XMP_STRIDE_DONE 1
+static unsigned int *_sync_images_table;
+static gasnet_hsl_t _hsl;
 
 /**
    Set initial value to the shift queue
@@ -607,7 +609,7 @@ static void _gasnet_nonc_to_c_get(const int target_rank, const size_t dst_offset
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
   }
   else if(transfer_size < _xmp_gasnet_stride_size){
-    gasnet_AMRequestMedium4(target_rank, _XMP_GASNET_PACK_USGIN_BUF, archive, am_request_size,
+    gasnet_AMRequestMedium4(target_rank, _XMP_GASNET_PACK_USING_BUF, archive, am_request_size,
                             HIWORD(src_desc->addr[target_rank]), LOWORD(src_desc->addr[target_rank]), src_dims,
                             _XMP_world_rank);
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
@@ -655,7 +657,7 @@ static void _gasnet_nonc_to_nonc_get(const int target_rank, const int dst_dims, 
     size_t am_request_size = sizeof(_XMP_array_section_t) * src_dims;
     char *archive = malloc(am_request_size);
     memcpy(archive, src_info, am_request_size);
-    gasnet_AMRequestMedium4(target_rank, _XMP_GASNET_PACK_USGIN_BUF, archive, am_request_size,
+    gasnet_AMRequestMedium4(target_rank, _XMP_GASNET_PACK_USING_BUF, archive, am_request_size,
                             HIWORD(src_desc->addr[target_rank]), LOWORD(src_desc->addr[target_rank]), src_dims,
                             _XMP_world_rank);
     GASNET_BLOCKUNTIL(done_get_flag == _XMP_N_INT_TRUE);
@@ -868,4 +870,112 @@ void _XMP_gasnet_shortcut_get(const int target_rank, _XMP_coarray_t *dst_desc, v
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
+}
+
+/**
+ * Build table and Initialize for sync images
+ */
+void _XMP_gasnet_build_sync_images_table()
+{
+  _sync_images_table = malloc(sizeof(unsigned int) * _XMP_world_size);
+
+  gasnet_hsl_lock(&_hsl);
+  for(int i=0;i<_XMP_world_size;i++)
+    _sync_images_table[i] = 0;
+  gasnet_hsl_unlock(&_hsl);
+}
+
+static void _add_notify(const int rank)
+{
+  gasnet_hsl_lock(&_hsl);
+  _sync_images_table[rank]++;
+  gasnet_hsl_unlock(&_hsl);
+}
+
+void _xmp_gasnet_add_notify(gasnet_token_t token, const int rank)
+{
+  _add_notify(rank);
+}
+
+/**
+   Notify to nodes
+   *
+   * @param[in]  num        number of nodes
+   * @param[in]  *rank_set  rank set
+   */
+static void _notify_sync_images(const int num, int *rank_set)
+{
+  for(int i=0;i<num;i++){
+    if(rank_set[i] == _XMP_world_rank){
+      _add_notify(_XMP_world_rank);
+    }
+    else{
+      gasnet_AMRequestShort1(rank_set[i], _XMP_GASNET_ADD_NOTIFY, _XMP_world_rank);
+    }
+  }
+}
+
+/**
+   Check to recieve all request from all node
+   *
+   * @param[in] num                    number of nodes
+   * @param[in] *rank_set              rank set
+   */
+static _Bool _check_sync_images_table(const int num, int *rank_set)
+{
+  int checked = 0;
+
+  for(int i=0;i<num;i++)
+    if(_sync_images_table[rank_set[i]] > 0) checked++;
+
+  if(checked == num) return true;
+  else               return false;
+}
+
+/**
+   Wait until recieving all request from all node
+   *
+   * @param[in] num                    number of nodes
+   * @param[in] *rank_set              rank set
+   */
+static void _wait_sync_images(const int num, int *rank_set)
+{
+  while(1){
+    if(_check_sync_images_table(num, rank_set)) break;
+    gasnet_AMPoll();
+  }
+}
+
+/**
+   Execute sync images
+   *
+   * @param[in]  num         number of nodes
+   * @param[in]  *image_set  image set
+   * @param[out] status      status
+*/
+void _XMP_gasnet_sync_images(const int num, int image_set[num], int *status)
+{
+  _XMP_gasnet_sync_memory();
+  
+  if(num == 0){
+    return;
+  }
+  else if(num < 0){
+    fprintf(stderr, "Invalid value is used in xmp_sync_memory. The first argument is %d\n", num);
+    _XMP_fatal_nomsg();
+  }
+  
+  int rank_set[num];
+
+  for(int i=0;i<num;i++)
+    rank_set[i] = image_set[i] - 1;
+
+  _notify_sync_images(num, rank_set);
+  _wait_sync_images(num, rank_set);
+
+  // Update table for post-processing
+  gasnet_hsl_lock(&_hsl);
+  for(int i=0;i<num;i++)
+    _sync_images_table[rank_set[i]]--;
+  gasnet_hsl_unlock(&_hsl);
 }

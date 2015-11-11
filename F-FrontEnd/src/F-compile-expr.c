@@ -2071,7 +2071,7 @@ compile_coarray_ref(expr coarrayRef){
   }
 
   if (tp->codims->corank != n){
-    error_at_node(image_selector, "wrong number of cosubscript on '%s'");
+    error_at_node(image_selector, "wrong number of cosubscript.");
     return NULL;
   }
 

@@ -17,22 +17,6 @@ extern "C" {
   void* _ACC_gpu_get_current_mpool();
   void _ACC_gpu_init_current_device_if_not_inited();
 
-  //acc_gpu_data.c
-  //  void _ACC_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
-  //  void _ACC_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
-  //  void _ACC_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, ...);
-  void _ACC_init_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
-  void _ACC_pinit_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
-  void _ACC_find_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
-  void _ACC_finalize_data(_ACC_gpu_data_t *desc, int type);
-  void _ACC_pcopy_data(_ACC_gpu_data_t *desc, int direction, int asyncId);
-  void _ACC_copy_data(_ACC_gpu_data_t *desc, int direction, int asyncId);
-  //  void _ACC_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, ...);
-  void _ACC_copy_subdata(_ACC_gpu_data_t *desc, int direction, int asyncId, unsigned long long lower[], unsigned long long length[]);
-  //void _ACC_gpu_copy_data_async_default(_ACC_gpu_data_t *desc, size_t offset, size_t size, int direction);
-  void _ACC_gpu_map_data(void *host_addr, void* device_addr, size_t size);
-  void _ACC_gpu_unmap_data(void *host_addr);
-
   //acc_gpu_util.cu
   void _ACC_gpu_alloc(void **addr, size_t size);
   void _ACC_gpu_malloc(void **addr, size_t size);
@@ -42,15 +26,10 @@ extern "C" {
   //  void _ACC_gpu_copy_async_all(void *host_addr, void *device_addr, size_t size, int direction);
   void _ACC_gpu_copy_async(void *host_addr, void *device_addr, size_t size, int direction, int id);
   bool _ACC_gpu_is_pagelocked(void *p);
-
-  //acc_gpu_data_table.c
-  void _ACC_gpu_init_data_table();
-  void _ACC_gpu_finalize_data_table();
-  void _ACC_gpu_add_data(_ACC_gpu_data_t *host_desc);
-  _Bool _ACC_gpu_remove_data(void *device_addr, size_t size);
-  void _ACC_gpu_get_data(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *host_addr, size_t size);
-  void _ACC_gpu_get_data_sub(_ACC_gpu_data_t **host_data_desc, void **device_addr, void *host_addr, size_t offset, size_t size);
-  _ACC_gpu_data_list_t* _ACC_gpu_find_data(void *host_addr, size_t offset, size_t size);
+  void _ACC_gpu_register_memory(void *host_addr, size_t size);
+  void _ACC_gpu_unregister_memory(void *host_addr);
+  void *_ACC_alloc_pinned(size_t size);
+  void _ACC_free_pinned(void *p);
 
   //acc_gpu_stream.cu
   void* _ACC_gpu_init_stream_map(int table_size);
@@ -75,8 +54,8 @@ extern "C" {
   void _ACC_gpu_mpool_free(void *ptr, void *mpool);
 
   //acc_gpu_pack.cu
-  void _ACC_gpu_pack_data(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info);
-  void _ACC_gpu_unpack_data(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info);
+  void _ACC_gpu_pack_data(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info, int asyncId);
+  void _ACC_gpu_unpack_data(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info, int asyncId);
   void _ACC_gpu_pack_data_host(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info);
   void _ACC_gpu_unpack_data_host(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info);
   void _ACC_gpu_pack_vector(void *dst, void *src, unsigned long long count, unsigned long long blocklength, unsigned long long stride, size_t typesize, int asyncId);

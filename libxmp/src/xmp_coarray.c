@@ -1193,10 +1193,10 @@ void xmp_sync_all(const int* status)
 /**
    Execute sync_images()
 */
-void xmp_sync_images(int num, int* image_set, int* status)
+void xmp_sync_images(const int num, int* image_set, int* status)
 {
-  #ifdef _XMP_GASNET
-  _XMP_fatal("Not implement xmp_sync_images()");
+#ifdef _XMP_GASNET
+  _XMP_gasnet_sync_images(num, image_set, status);
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_images(num, image_set, status);
 #elif _XMP_MPI3_ONESIDED
@@ -1207,7 +1207,7 @@ void xmp_sync_images(int num, int* image_set, int* status)
 /**
    Wrapper function of xmp_sync_images()
  */
-void xmp_sync_images_f(int *num, int* image_set, int* status)
+void xmp_sync_images_f(const int *num, int* image_set, int* status)
 {
   xmp_sync_images(*num, image_set, status);
 }
@@ -1330,6 +1330,19 @@ void _XMP_coarray_shortcut_get_f(const int *target, void *dst, const void *src, 
 				 const size_t *src_offset, const size_t *dst_elmts, const size_t *src_elmts)
 {
   _XMP_coarray_shortcut_get(*target, dst, src, *dst_offset, *src_offset, *dst_elmts, *src_elmts);
+}
+
+/**
+   Build table for sync images
+*/
+void _XMP_build_sync_images_table()
+{
+#ifdef _XMP_GASNET
+  _XMP_gasnet_build_sync_images_table();
+#elif _XMP_FJRDMA
+  _XMP_fjrdma_build_sync_images_table();
+#elif _XMP_MPI3_ONESIDED
+#endif
 }
 
 /**

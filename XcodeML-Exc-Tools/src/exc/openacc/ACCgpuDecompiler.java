@@ -43,6 +43,8 @@ class ACCgpuDecompiler {
       Writer w = new BufferedWriter(new FileWriter(ACCutil.removeExtension(env.getSourceFileName()) + GPU_SRC_EXTENSION), BUFFER_SIZE);
       ACCgpuDecompileWriter writer = new ACCgpuDecompileWriter(w, envDevice);
       
+      writer.println("#include \"acc.h\"");
+      writer.println("#include \"acc_gpu.h\"");
       writer.println("#include \"acc_gpu_func.hpp\"");
       if(XmOption.isXcalableMP()){
         writer.println("#include \"xmp_index_macro.h\"");

@@ -508,23 +508,21 @@ static void _mpi_continuous(const int op,
   char *laddr = (char*)local + local_offset;
   char *raddr = get_remote_addr(remote_desc, target_rank, is_remote_on_acc) + remote_offset;
   MPI_Win win = get_window(remote_desc, is_remote_on_acc);
-  MPI_Request req;
 
   if(op == _XMP_N_COARRAY_PUT){
     XACC_DEBUG("continuous_put(local=%p, size=%zd, target=%d, remote=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_remote_on_acc);
-    MPI_Rput((void*)laddr, transfer_size, MPI_BYTE, target_rank,
-	     (MPI_Aint)raddr, transfer_size, MPI_BYTE,
-	     win, &req);
-    MPI_Wait(&req, MPI_STATUS_IGNORE);
+    MPI_Put((void*)laddr, transfer_size, MPI_BYTE, target_rank,
+	    (MPI_Aint)raddr, transfer_size, MPI_BYTE,
+	    win);
   }else if(op == _XMP_N_COARRAY_GET){
     XACC_DEBUG("continuous_get(local=%p, size=%zd, target=%d, remote=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_remote_on_acc);
-    MPI_Rget((void*)laddr, transfer_size, MPI_BYTE, target_rank,
-	     (MPI_Aint)raddr, transfer_size, MPI_BYTE,
-	     win, &req);
-    MPI_Wait(&req, MPI_STATUS_IGNORE);
+    MPI_Get((void*)laddr, transfer_size, MPI_BYTE, target_rank,
+	    (MPI_Aint)raddr, transfer_size, MPI_BYTE,
+	    win);
   }else{
     _XMP_fatal("invalid coarray operation type");
   }
+  MPI_Win_flush_local(target_rank, win);
 
   /*
   MPI_Request req[2];
@@ -560,63 +558,50 @@ static void _mpi_non_continuous(const int op, const int target_rank,
   MPI_Win win = get_window(remote_desc, is_remote_on_acc);
 
   MPI_Datatype local_types[_XMP_N_MAX_DIM], remote_types[_XMP_N_MAX_DIM];
-  MPI_Datatype local_vec_types[_XMP_N_MAX_DIM], remote_vec_types[_XMP_N_MAX_DIM];
-  //long long local_start_offset = 0;
-  //long long remote_start_offset = 0;
   size_t element_size = remote_desc->elmt_size;
 
   for(int i = local_dims - 1; i >= 0; i--){
     const _XMP_array_section_t *section = local_info + i;
     int count = section->length;
     int blocklength = (i == local_dims - 1)? element_size : 1;
-    int stride = section->stride * blocklength;
-    //local_start_offset += section->start * section->distance;
+    int stride = section->distance * section->stride;
     MPI_Datatype oldtype = (i == local_dims - 1)? MPI_BYTE : local_types[i+1];
     XACC_DEBUG("local, dim=%d, start=%lld, length=%lld, stride=%lld, (c,b,s)=(%d,%d,%d)\n", i, section->start, section->length, section->stride, count, blocklength, stride);
-
-    MPI_Type_vector(count, blocklength, stride, oldtype, local_vec_types + i);
-    MPI_Type_commit(local_vec_types + i);
-    MPI_Type_create_resized(local_vec_types[i], 0, section->elmts*section->distance, local_types + i);
+    MPI_Type_create_hvector(count, blocklength, stride, oldtype, local_types + i);
     MPI_Type_commit(local_types + i);
   }
   for(int i = remote_dims - 1; i >= 0; i--){
     const _XMP_array_section_t *section = remote_info + i;
     int count = section->length;
     int blocklength = (i == remote_dims - 1)? element_size : 1;
-    int stride = section->stride * blocklength;
+    int stride = section->distance * section->stride;
     MPI_Datatype oldtype = (i == remote_dims - 1)? MPI_BYTE : remote_types[i+1];
     XACC_DEBUG("remote, dim=%d, start=%lld, length=%lld, stride=%lld, (c,b,s)=(%d,%d,%d)\n", i, section->start, section->length, section->stride, count, blocklength, stride);
-
-    MPI_Type_vector(count, blocklength, stride, oldtype, remote_vec_types + i);
-    MPI_Type_commit(remote_vec_types + i);
-    MPI_Type_create_resized(remote_vec_types[i], 0, section->elmts*section->distance, remote_types + i);
+    MPI_Type_create_hvector(count, blocklength, stride, oldtype, remote_types + i);
     MPI_Type_commit(remote_types + i);
   }
 
 
   //  XACC_DEBUG("nonc_put(src_p=%p, target=%d, dst_p=%p, is_acc=%d)", laddr, src_cnt,src_bl,src_str, target_rank, raddr, is_dst_on_acc);
-  MPI_Request req;
   if(op == _XMP_N_COARRAY_PUT){
-    MPI_Rput((void*)laddr, 1, local_types[0], target_rank,
-	     (MPI_Aint)raddr, 1, remote_types[0], 
-	     win, &req);
+    MPI_Put((void*)laddr, 1, local_types[0], target_rank,
+	    (MPI_Aint)raddr, 1, remote_types[0], 
+	    win);
   }else if (op == _XMP_N_COARRAY_GET){
-    MPI_Rget((void*)laddr, 1, local_types[0], target_rank,
-	     (MPI_Aint)raddr, 1, remote_types[0], 
-	     win, &req);
+    MPI_Get((void*)laddr, 1, local_types[0], target_rank,
+	    (MPI_Aint)raddr, 1, remote_types[0], 
+	    win);
   }else{
     _XMP_fatal("invalid coarray operation type");
   }
-  MPI_Wait(&req, MPI_STATUS_IGNORE);
+  MPI_Win_flush_local(target_rank, win);
 
   //free datatype
-  for(int i = 0; i < local_dims - 1; i++){
+  for(int i = 0; i < local_dims; i++){
     MPI_Type_free(local_types + i);
-    MPI_Type_free(local_vec_types + i);
   }
-  for(int i = 0; i < remote_dims - 1; i++){
+  for(int i = 0; i < remote_dims; i++){
     MPI_Type_free(remote_types + i);
-    MPI_Type_free(remote_vec_types + i);
   }
 }
 
@@ -714,11 +699,10 @@ static void _mpi_scalar_mget(const int target_rank,
 
   XACC_DEBUG("scalar_mget(local_p=%p, size=%zd, target=%d, remote_p=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_src_on_acc);
 
-  MPI_Request req;
-  MPI_Rget((void*)laddr, transfer_size, MPI_BYTE, target_rank,
-	   (MPI_Aint)raddr, transfer_size, MPI_BYTE,
-	   win, &req);
-  MPI_Wait(&req, MPI_STATUS_IGNORE);
+  MPI_Get((void*)laddr, transfer_size, MPI_BYTE, target_rank,
+	  (MPI_Aint)raddr, transfer_size, MPI_BYTE,
+	  win);
+  MPI_Win_flush_local(target_rank, win);
 
   _unpack_scalar((char*)dst, dst_dims, laddr, dst_info);
 }

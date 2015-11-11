@@ -6,7 +6,6 @@
  * MPI Implementation (supports MPI-2)
  * libxml2
  * make
- * (If you use gfortran) gmp, mpfr
  
 ## On Debian GNU/Linux and Ubuntu
  The following packages may be needed to be installed previously:
