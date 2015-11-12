@@ -5,6 +5,8 @@
 #include <signal.h>
 #include <string.h>
 
+#define _SYNCIMAGE_SENDRECV
+
 struct _shift_queue_t{
   unsigned int max_size;   /**< Max size of queue */
   unsigned int      num;   /**< How many shifts are in this queue */
@@ -17,6 +19,8 @@ static bool _is_coarray_win_flushed = true;
 static bool _is_coarray_win_acc_flushed = true;
 static bool _is_distarray_win_flushed = true;
 static bool _is_distarray_win_acc_flushed = true;
+static unsigned int *_sync_images_table;
+static unsigned int *_sync_images_table_disp;
 
 static void _mpi_continuous(const int op,
 			    const int target_rank, 
@@ -770,4 +774,149 @@ void _XMP_mpi_coarray_detach(_XMP_coarray_t *coarray_desc, const bool is_acc)
     coarray_desc->real_addr = NULL;
     coarray_desc->win = MPI_WIN_NULL;
   }
+}
+
+
+/**
+ * Build table and Initialize for sync images
+ */
+void _XMP_mpi_build_sync_images_table()
+{
+  struct _shift_queue_t *shift_queue = &_shift_queue;
+  _sync_images_table = (unsigned int*)(_xmp_mpi_onesided_buf + shift_queue->total_shift);
+  _sync_images_table_disp = (unsigned int*)(shift_queue->total_shift);
+
+  size_t table_size = sizeof(unsigned int) * _XMP_world_size;
+  size_t shift;
+  if(table_size % _XMP_MPI_ALIGNMENT == 0)
+    shift = table_size;
+  else{
+    shift = ((table_size / _XMP_MPI_ALIGNMENT) + 1) * _XMP_MPI_ALIGNMENT;
+  }
+  _push_shift_queue(shift_queue, shift);
+
+  for(int i=0;i<_XMP_world_size;i++)
+    _sync_images_table[i] = 0;
+
+  MPI_Barrier(MPI_COMM_WORLD);
+}
+
+#ifndef _SYNCIMAGE_SENDRECV
+/**
+   Add rank to remote table
+   *
+   * @param[in]  target_rank rank number
+   * @param[in]  rank rank number
+   * @param[in]  value value
+   */
+static void _add_remote_sync_images_table(const int target_rank, const int rank, const int value)
+{
+  const int val = value;
+  MPI_Accumulate(&val, 1, MPI_INT, target_rank,
+		 (MPI_Aint)&_sync_images_table_disp[rank], 1, MPI_INT, MPI_SUM, _xmp_mpi_onesided_win);
+  XACC_DEBUG("accumulate(%d, %d) += %d", target_rank, rank, value);
+}
+#endif
+
+/**
+   Add rank to table
+   *
+   * @param[in]  rank rank number
+   * @param[in]  value value
+   */
+static void _add_sync_images_table(const int rank, const int value)
+{
+#ifdef _SYNCIMAGE_SENDRECV
+  _sync_images_table[rank] += value;
+#else
+  _add_remote_sync_images_table(_XMP_world_rank, rank, value);
+#endif
+}
+
+/**
+   Notify to nodes
+   *
+   * @param[in]  num        number of nodes
+   * @param[in]  *rank_set  rank set
+   */
+static void _notify_sync_images(const int num, int *rank_set)
+{
+  for(int i=0;i<num;i++){
+    if(rank_set[i] == _XMP_world_rank){
+      _add_sync_images_table(_XMP_world_rank, 1);
+    }else{
+#ifdef _SYNCIMAGE_SENDRECV
+      MPI_Send(NULL, 0, MPI_BYTE, rank_set[i], _XMP_N_MPI_TAG_SYNCREQ, MPI_COMM_WORLD);
+#else
+      _add_remote_sync_images_table(rank_set[i], _XMP_world_rank, 1);
+#endif
+    }
+  }
+
+#ifndef _SYNCIMAGE_SENDRECV
+  //MPI_Win_flush_all(_xmp_mpi_onesided_win);
+#endif
+}
+
+
+/**
+   Wait until recieving all request from all node
+   *
+   * @param[in]  num                       number of nodes
+   * @param[in]  *rank_set                 rank set
+*/
+static void _wait_sync_images(const int num, int *rank_set)
+{
+  while(1){
+    bool flag = true;
+
+    for(int i=0;i<num;i++){
+      if(rank_set[i] < 0) continue;
+      if(_sync_images_table[rank_set[i]] > 0){
+	_add_sync_images_table(rank_set[i], -1);
+	rank_set[i] = -1;
+      }else{
+	flag = false;
+      }
+    }
+
+    if(flag) break;
+
+#ifdef _SYNCIMAGE_SENDRECV
+    MPI_Status status;
+    MPI_Recv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE, _XMP_N_MPI_TAG_SYNCREQ, MPI_COMM_WORLD, &status);
+    _add_sync_images_table(status.MPI_SOURCE, 1);
+#else
+    MPI_Win_flush_local_all(_xmp_mpi_onesided_win);
+#endif
+  }
+}
+
+
+/**
+   Execute sync images
+   *
+   * @param[in]  num         number of nodes
+   * @param[in]  *image_set  image set
+   * @param[out] status      status
+*/
+void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
+{
+  _XMP_mpi_sync_memory();
+
+  if(num == 0){
+    return;
+  }
+  else if(num < 0){
+    fprintf(stderr, "Invalid value is used in xmp_sync_memory. The first argument is %d\n", num);
+    _XMP_fatal_nomsg();
+  }
+
+  int rank_set[num];
+  for(int i=0;i<num;i++){
+    rank_set[i] = image_set[i] - 1;
+  }
+
+  _notify_sync_images(num, rank_set);
+  _wait_sync_images(num, rank_set);
 }

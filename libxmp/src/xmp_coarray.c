@@ -1200,7 +1200,7 @@ void xmp_sync_images(const int num, int* image_set, int* status)
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_images(num, image_set, status);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_fatal("Not implement xmp_sync_images()");
+  _XMP_mpi_sync_images(num, image_set, status);
 #endif
 }
 
@@ -1342,6 +1342,7 @@ void _XMP_build_sync_images_table()
 #elif _XMP_FJRDMA
   _XMP_fjrdma_build_sync_images_table();
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_build_sync_images_table();
 #endif
 }
 
