@@ -345,7 +345,7 @@ public class FconstFolder
 
     /*** I don't know which representation is reliable ***/
 
-    _restricton("cannot evaluate intrinsic function \'kind\'");
+    _restrict("cannot evaluate intrinsic function \'kind\'");
 
     //////////////////////
     System.out.println("GACCHA KIND");
