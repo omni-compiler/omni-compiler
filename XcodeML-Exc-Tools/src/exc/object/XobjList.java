@@ -447,12 +447,11 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
     @Override
     public Xobject cfold(Block block)
     {
-      Xobject that = copy();
-      for (XobjArgs a = ((XobjList)that).args; a != null; a = a.nextArgs()) {
-        if (a.getArg() != null)
-          a.setArg(a.getArg().cfold(block));
-      }
-      return (Xobject)that;
+      FconstFolder cfolder = new FconstFolder(this, block);
+      Xobject result = cfolder.run();
+      if (result == null)
+        return this;
+      return result;
     }
 
 

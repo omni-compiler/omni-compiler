@@ -36,16 +36,18 @@ void _ACC_gpu_pack_data_kernel(void *dst, void *src, int dim, unsigned long long
   }
 }
 
-void _ACC_gpu_pack_data(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info){
+void _ACC_gpu_pack_data(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info, int asyncId){
   unsigned long long num_blocks = (total_elmnts - 1)/ (NUM_THREADS_OF_PACK_UNPACK) + 1;
   unsigned int num_blocks_ = (unsigned int)((num_blocks - 1) / _ACC_GPU_MAX_NUM_BLOCKS + 1);
-  _ACC_gpu_pack_data_kernel<1><<<num_blocks_,NUM_THREADS_OF_PACK_UNPACK>>>(dst, src, dim, total_elmnts, type_size, info);
+  cudaStream_t st = _ACC_gpu_get_stream(asyncId);  
+  _ACC_gpu_pack_data_kernel<1><<<num_blocks_,NUM_THREADS_OF_PACK_UNPACK,0,st>>>(dst, src, dim, total_elmnts, type_size, info);
 }
 
-void _ACC_gpu_unpack_data(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info){
+void _ACC_gpu_unpack_data(void *dst, void *src, int dim, unsigned long long total_elmnts, int type_size, unsigned long long* info, int asyncId){
   unsigned long long num_blocks = (total_elmnts - 1)/ (NUM_THREADS_OF_PACK_UNPACK) + 1;
   unsigned int num_blocks_ = (unsigned int)((num_blocks - 1) / _ACC_GPU_MAX_NUM_BLOCKS + 1);
-  _ACC_gpu_pack_data_kernel<0><<<num_blocks_,NUM_THREADS_OF_PACK_UNPACK>>>(dst, src, dim, total_elmnts, type_size, info);
+  cudaStream_t st = _ACC_gpu_get_stream(asyncId);  
+  _ACC_gpu_pack_data_kernel<0><<<num_blocks_,NUM_THREADS_OF_PACK_UNPACK,0,st>>>(dst, src, dim, total_elmnts, type_size, info);
 }
 
 template<typename T, int isPack> static
@@ -171,26 +173,26 @@ void _ACC_gpu_pack_vector(void *dst, void *src, unsigned long long count, unsign
   }
   ty = numThreads / tx;
   by = (count-1)/ty + 1;
-  int by_ = (by - 1) / _ACC_GPU_MAX_NUM_BLOCKS + 1;
-  dim3 gridDim(bx,by_);
+  //int by_ = (by - 1) / _ACC_GPU_MAX_NUM_BLOCKS + 1;
+  dim3 gridDim(bx, by);
   dim3 blockDim(tx, ty);
 
   //printf("blocklen=%d, count=%d, grid(%d,%d), block(%d,%d)\n", blocklength_c, count, bx,by,tx,ty);
   switch(typesize){
   case 1:
-    pack_vector_kernel<char, 1><<<gridDim, blockDim>>>((char *)dst, (char *)src, count, blocklength, stride);
+    pack_vector_kernel<char, 1><<<gridDim, blockDim, 0, st>>>((char *)dst, (char *)src, count, blocklength, stride);
     break;
   case 2:
-    pack_vector_kernel<short, 1><<<gridDim, blockDim>>>((short *)dst, (short *)src, count, blocklength, stride);
+    pack_vector_kernel<short, 1><<<gridDim, blockDim, 0, st>>>((short *)dst, (short *)src, count, blocklength, stride);
     break;
   case 4:
-    pack_vector_kernel<int, 1><<<gridDim, blockDim>>>((int *)dst, (int *)src, count, blocklength, stride);
+    pack_vector_kernel<int, 1><<<gridDim, blockDim, 0, st>>>((int *)dst, (int *)src, count, blocklength, stride);
     break;
   case 8:
-    pack_vector_kernel<long long, 1><<<gridDim, blockDim>>>((long long *)dst, (long long *)src, count, blocklength, stride);
+    pack_vector_kernel<long long, 1><<<gridDim, blockDim, 0, st>>>((long long *)dst, (long long *)src, count, blocklength, stride);
     break;
   default:
-    pack_vector_kernel<char, 1><<<gridDim, blockDim>>>((char *)dst, (char *)src, count, blocklength * typesize, stride * typesize);
+    pack_vector_kernel<char, 1><<<gridDim, blockDim, 0, st>>>((char *)dst, (char *)src, count, blocklength * typesize, stride * typesize);
   }
 }
 
@@ -217,19 +219,19 @@ void _ACC_gpu_unpack_vector(void *dst, void *src, unsigned long long count, unsi
   //printf("blocklen=%d, count=%d, grid(%d,%d), block(%d,%d)\n", blocklength, count, bx,by,tx,ty);
   switch(typesize){
   case 1:
-    pack_vector_kernel<char, 0><<<gridDim, blockDim>>>((char *)dst, (char *)src, count, blocklength, stride);
+    pack_vector_kernel<char, 0><<<gridDim, blockDim, 0, st>>>((char *)dst, (char *)src, count, blocklength, stride);
     break;
   case 2:
-    pack_vector_kernel<short, 0><<<gridDim, blockDim>>>((short *)dst, (short *)src, count, blocklength, stride);
+    pack_vector_kernel<short, 0><<<gridDim, blockDim, 0, st>>>((short *)dst, (short *)src, count, blocklength, stride);
     break;
   case 4:
-    pack_vector_kernel<int, 0><<<gridDim, blockDim>>>((int *)dst, (int *)src, count, blocklength, stride);
+    pack_vector_kernel<int, 0><<<gridDim, blockDim, 0, st>>>((int *)dst, (int *)src, count, blocklength, stride);
     break;
   case 8:
-    pack_vector_kernel<long long, 0><<<gridDim, blockDim>>>((long long *)dst, (long long *)src, count, blocklength, stride);
+    pack_vector_kernel<long long, 0><<<gridDim, blockDim, 0, st>>>((long long *)dst, (long long *)src, count, blocklength, stride);
     break;
   default:
-    pack_vector_kernel<char, 0><<<gridDim, blockDim>>>((char *)dst, (char *)src, count, blocklength * typesize, stride * typesize);
+    pack_vector_kernel<char, 0><<<gridDim, blockDim, 0, st>>>((char *)dst, (char *)src, count, blocklength * typesize, stride * typesize);
   }
 }
 

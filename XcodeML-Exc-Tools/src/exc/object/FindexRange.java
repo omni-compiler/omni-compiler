@@ -261,6 +261,6 @@ public class FindexRange
 
   public int getFrank()
   {
-    return 1;
+    return rank;
   }
 }

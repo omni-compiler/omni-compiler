@@ -1,11 +1,9 @@
-// calculate floor(a/b)
 #ifndef _ACC_GPU_FUNC
 #define _ACC_GPU_FUNC
 
-#include "acc_internal.h"
-#include "acc_gpu_internal.h"
 #include "acc_gpu_reduction.hpp"
 
+// calculate floor(a/b)
 #define _ACC_M_FLOORi(a_, b_) ((a_) / (b_))
 #define _ACC_M_COUNT_TRIPLETi(l_, u_, s_) ( ((u_) >= (l_))? _ACC_M_FLOORi((u_) - (l_), s_) + 1 : 0)
 #define _ACC_M_CEILi(a_, b_) (((a_) % (b_)) == 0 ? ((a_) / (b_)) : ((a_) / (b_)) + 1)
@@ -25,17 +23,6 @@
 #define _ACC_thread_z_id threadIdx.z
 #define _ACC_grid_x_dim gridDim.x
 
-/*
-void init_block_thread_x_id_iter(int *b_init, int *b_cond, int *b_step, int b_total){
-  int tmp = _ACC_M_CEILi(b_total, gridDim.x);
-  int mod = tmp % blockDim.x;
-  int gang_size = (mod == 0)? tmp : (tmp + blockDim.x - mod);
-  *b_init = gang_size * blockIdx.x; // blockidx.x=2
-  *b_cond = *b_init + gang_size; // 512
-  *b_step = blockDim.x; //128
-}
-*/
-
 template<typename T, typename T0>
 __device__
 static void _ACC_gpu_init_block_x_iter(T *gang_iter, T *gang_cond, T *gang_step, T0 totaliter){
@@ -52,18 +39,6 @@ static void _ACC_gpu_init_thread_x_iter(T *iter, T *cond, T *step, T0 totaliter)
   *cond = totaliter;
   *step = blockDim.x;
 }
-
-// __device__
-// static void _ACC_gpu_init_block_thread_x_iter(int *bt_idx, int *bt_cond, int *bt_step, int lower, int upper, int strid){
-//   int totalIter = _ACC_M_COUNT_TRIPLETi(lower, upper - 1, strid);
-//   int gang_size = _ACC_M_CEILi(totalIter, gridDim.x);
-//   //  int mod = gang_size % blockDim.x;
-//   //  if(mod != 0){ gang_size = gang_size - mod + blockDim.x; }
-//   *bt_idx  = gang_size * blockIdx.x + threadIdx.x;
-//   //*bt_cond = _ACC_M_MIN(*bt_idx + gang_size, totalIter); //incorrect!
-//   *bt_cond = _ACC_M_MIN(gang_size * (blockIdx.x + 1), totalIter);
-//   *bt_step = blockDim.x;
-// }
 
 template<typename T, typename T0>
 __device__
@@ -154,14 +129,6 @@ static void _ACC_GPU_ADJUST_GRID(int *gridX,int *gridY, int *gridZ, int limit){
     }*/
 }
 
-static void _ACC_GPU_CHECK_ERROR(const char funcname[]){
-  cudaError_t lastError = cudaGetLastError();
-  if(lastError != cudaSuccess){
-    fprintf(stderr, "error occured at %s\n", funcname);
-    _ACC_gpu_fatal(lastError);
-  }
-}
-
 __device__
 static void _ACC_calc_niter(int *niter, int init, int cond, int step){
   *niter = _ACC_M_COUNT_TRIPLETi(init, cond - 1, step);
@@ -196,26 +163,5 @@ __device__
 static void _ACC_init_private(void **p_prv, void *array, size_t size){
   *p_prv = (char *)array + size * blockIdx.x;
 }
-
-/*
-static void _ACC_gpu_mpool_alloc(void **ptr, long long size, void *mpool, long long *pos){
-  const int align = 128;
-  long long aligned_size = ((size - 1) / align + 1) * align;
-  if(*pos + aligned_size <= _ACC_GPU_MPOOL_BLOCK_SIZE){
-    *ptr = ((char*)mpool) + *pos;
-    *pos += aligned_size;
-  }else{
-    _ACC_gpu_alloc(ptr, size);
-  }
-}
-
-static void _ACC_gpu_mpool_free(void *ptr, void *mpool)
-{
-  long long pos = (long long)((char*)ptr - (char*)mpool);
-  if(pos < 0 || pos >= _ACC_GPU_MPOOL_BLOCK_SIZE){
-    _ACC_gpu_free(ptr);
-  }
-}
-*/
 
 #endif //_ACC_GPU_FUNC

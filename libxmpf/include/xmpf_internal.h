@@ -337,9 +337,9 @@ extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
 extern void xmpf_coarray_free_(void **descPtr);
 
 extern void xmpf_coarray_malloc_pool_(void);
-extern void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
-                                     int *count, int *element,
-                                     char *name, int *namelen);
+extern void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
+                                       int *count, int *element,
+                                       char *name, int *namelen);
 extern void xmpf_coarray_count_size_(int *count, int *element);
 
 extern void xmpf_coarray_prolog_(void **tag, char *name, int *namelen);

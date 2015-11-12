@@ -18,7 +18,7 @@ import java.util.*;
 public class XMPcoarrayInitProcedure {
 
   final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
-  final static String SHARE_POOL_NAME = "xmpf_coarray_share_pool";
+  final static String ALLOC_STATIC_NAME = "xmpf_coarray_alloc_static";
 
   private Boolean DEBUG = false;          // switch the value on gdb !!
 
@@ -221,7 +221,7 @@ public class XMPcoarrayInitProcedure {
       if (args.hasNullArg())
         XMP.fatal("INTERNAL: generated null argument (buildSubroutine_initcoarray)");
 
-      Ident subr = body.declLocalIdent(SHARE_POOL_NAME,
+      Ident subr = body.declLocalIdent(ALLOC_STATIC_NAME,
                                        BasicType.FexternalSubroutineType);
       body.add(subr.callSubroutine(args));
     }
@@ -266,7 +266,7 @@ public class XMPcoarrayInitProcedure {
     varNames2.add(varName2);
     callSizeStmts.add(" CALL " + COUNT_SIZE_NAME + " ( " + 
                       count + " , " + elem + " )");
-    callInitStmts.add(" CALL " + SHARE_POOL_NAME + " ( " + 
+    callInitStmts.add(" CALL " + ALLOC_STATIC_NAME + " ( " + 
                       varName1 + " , " +varName2 + " , " +
                       count + " , " + elem + " )");
   }
