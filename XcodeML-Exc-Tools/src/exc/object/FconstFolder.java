@@ -25,7 +25,7 @@ public class FconstFolder
   // case: binary or unary operation
   private XobjList oprds;
 
-  // status of _getArgAsInt()
+  // status of _getArgAsInt(), _getIntConstArg(), _getArg()
   private boolean failed = false;
 
 
@@ -52,7 +52,7 @@ public class FconstFolder
     if (verbose)
       _info("Valur of " + expr);
 
-    Xobject result = evalAsSpecificationExpr();
+    Xobject result = evalAsInitializationExpr();
 
     if (verbose)
       _info("      is " + result);
@@ -61,7 +61,7 @@ public class FconstFolder
   }
 
 
-  public Xobject evalAsSpecificationExpr()
+  public Xobject evalAsInitializationExpr()
   {
     Xobject result;
 
@@ -218,18 +218,18 @@ public class FconstFolder
 
   private Xobject _evalIntrinsic_lboundWithoutDim()
   {
-    Xobject arg_array = _getArgOrNull("array", 0);
+    Xobject arg_array = _getArg("array", 0);
     if (failed)
       return null;
 
     // not supported yet
-    _error("cannot evaluate intrinsic function lbound without dim");
+    _error("cannot evaluate intrinsic function \'lbound\' without \'dim\'");
     return null;
   }
 
   private Xobject _evalIntrinsic_lboundWithDim()
   {
-    Xobject arg_array = _getArgOrNull("array", 0);
+    Xobject arg_array = _getArg("array", 0);
     int dim = _getArgAsInt("dim", 1);
     if (failed)
       return null;
@@ -240,18 +240,18 @@ public class FconstFolder
 
   private Xobject _evalIntrinsic_uboundWithoutDim()
   {
-    Xobject arg_array = _getArgOrNull("array", 0);
+    Xobject arg_array = _getArg("array", 0);
     if (failed)
       return null;
 
     // not supported yet
-    _error("cannot evaluate intrinsic function lbound without dim");
+    _error("cannot evaluate intrinsic function \'lbound\' without \'dim\'");
     return null;
   }
 
   private Xobject _evalIntrinsic_uboundWithDim()
   {
-    Xobject arg_array = _getArgOrNull("array", 0);
+    Xobject arg_array = _getArg("array", 0);
     int dim = _getArgAsInt("dim", 1);
     if (failed)
       return null;
@@ -262,7 +262,7 @@ public class FconstFolder
 
   private Xobject _evalIntrinsic_shape()
   {
-    Xobject arg_source = _getArgOrNull("source", 0);
+    Xobject arg_source = _getArg("source", 0);
     if (failed)
       return null;
 
@@ -274,7 +274,7 @@ public class FconstFolder
 
   private Xobject _evalIntrinsic_sizeWithoutDim()
   {
-    Xobject arg_array = _getArgOrNull("array", 0);
+    Xobject arg_array = _getArg("array", 0);
     if (failed)
       return null;
 
@@ -283,7 +283,7 @@ public class FconstFolder
 
   private Xobject _evalIntrinsic_sizeWithDim()
   {
-    Xobject arg_array = _getArgOrNull("array", 0);
+    Xobject arg_array = _getArg("array", 0);
     int dim = _getArgAsInt("dim", 1);
     if (failed)
       return null;
@@ -302,7 +302,7 @@ public class FconstFolder
       if (ext1.isIntConstant()) {
         sizeL = sizeL * ext1.getInt();
         if (sizeL >= 0x1<<31) {
-          _warn("too large constant expression found");
+          _warn("integer operation overflow to get array size");
           return null;
         }
       } else {
@@ -317,31 +317,35 @@ public class FconstFolder
 
   private Xobject _evalIntrinsic_lcobound()
   {
-    Xobject arg_coarray = _getArgOrNull("coarray", 0);
+    Xobject arg_coarray = _getArg("coarray", 0);
     if (failed)
       return null;
 
-    _error("cannot evaluate intrinsic function lcobound");
+    _error("cannot evaluate intrinsic function \'lcobound\'");
     return null;
   }
 
 
   private Xobject _evalIntrinsic_ucobound()
   {
-    Xobject arg_coarray = _getArgOrNull("coarray", 0);
+    Xobject arg_coarray = _getArg("coarray", 0);
     if (failed)
       return null;
 
-    _error("cannot evaluate intrinsic function ucobound");
+    _error("cannot evaluate intrinsic function \'ucobound\'");
     return null;
   }
 
 
   private Xobject _evalIntrinsic_kind()
   {
-    Xobject arg_x = _getArgOrNull("x", 0);
+    Xobject arg_x = _getArg("x", 0);
     if (failed)
       return null;
+
+    /*** I don't know which representation is reliable ***/
+
+    _restricton("cannot evaluate intrinsic function \'kind\'");
 
     //////////////////////
     System.out.println("GACCHA KIND");
@@ -418,14 +422,17 @@ public class FconstFolder
       return null;
 
     int val = _getArgAsInt("a1", 0);
+    if (failed)
+      return null;
+
     for (int i = 2; i < nargs; i++) {
       int val1 = _getArgAsInt(null, i);
+      if (failed)
+        return null;
       if (val1 > val)
         val = val1;
     }
 
-    if (failed)
-      return null;
     return Xcons.IntConstant(val);
   }
 
@@ -436,14 +443,17 @@ public class FconstFolder
       return null;
 
     int val = _getArgAsInt("a1", 0);
+    if (failed)
+      return null;
+
     for (int i = 1; i < nargs; i++) {
       int val1 = _getArgAsInt(null, i);
+      if (failed)
+        return null;
       if (val1 < val)
         val = val1;
     }
 
-    if (failed)
-      return null;
     return Xcons.IntConstant(val);
   }
 
@@ -607,31 +617,29 @@ public class FconstFolder
   \*************************************************/
   private int _getArgAsInt(String name, int pos)
   {
-    Xobject arg = _getIntConstArgOrNull(name, pos);
-    if (arg == null)
-      return 0;          // failed is already true.
+    Xobject arg = _getIntConstArg(name, pos);
+    if (failed)
+      return 0;
 
     return arg.getInt();
   }
 
-  private Xobject _getIntConstArgOrNull(String name, int pos)
+  private Xobject _getIntConstArg(String name, int pos)
   {
-    Xobject arg = _getArgOrNull(name, pos);
+    Xobject arg = _getArg(name, pos);
+    if (failed)
+      return null;
 
     arg = arg.cfold(block);     // do constant folding
-    if(!arg.isIntConstant()) {
-      _restrict("Cannot evaluate the argumet #" + (pos+1) + 
-                " of function \'" + fname + 
-                "\' as an integer constant.");
+    if (!arg.isIntConstant()) {
       failed = true;
       return null;
     }
-
     return arg;
   }
 
 
-  private Xobject _getArgOrNull(String name, int pos)
+  private Xobject _getArg(String name, int pos)
   {
     Xobject arg;
     if (name != null)
@@ -640,8 +648,6 @@ public class FconstFolder
       arg = argList.getArgOrNull(pos);
 
     if (arg == null) {
-      _restrict("Not found the argumet #" + (pos+1) + 
-                " of function \'" + fname + "\'");
       failed = true;
       return null;
     }
