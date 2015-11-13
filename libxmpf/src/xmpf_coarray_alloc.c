@@ -44,6 +44,7 @@
 #define IsLastMemoryChunk(chk)   ((chk)->next->next == NULL)
 #define IsEmptyMemoryChunk(chk)  ((chk)->headCoarray->next->next == NULL)
 
+#define IsEmptyResourceSet(rs)   ((rs)->headChunk->next->next == NULL)
 
 /*****************************************\
   typedef and static declaration
@@ -206,11 +207,11 @@ int xmpf_coarray_garbage_bytes_()
 /***********************************************\
   ALLOCATE statement
   Type-1: alloc/free by the low-level library
+  Steps:
+    1. malloc calling the lower-level library
+    2. make a MemoryChunk having a CoarrayInfo
 \***********************************************/
 
-/*  1. malloc by the low-level library
- *  2. make a memoryChunk with one coarrayInfo
- */
 void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                           int *count, int *element, void **tag)
 {
@@ -228,7 +229,7 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
     rset = (ResourceSet_t*)(*tag);
     _addMemoryChunk(rset, chunk);
 
-    _XMPF_coarrayDebugPrint("*** added MemoryChunk %s to rset=%p\n",
+    _XMPF_coarrayDebugPrint("*** MemoryChunk %s added to rset=%p\n",
                             _dispMemoryChunk(chunk), rset);
   }
 
@@ -331,8 +332,7 @@ void xmpf_coarray_free_(void **descPtr)
   // SYNCALL_AUTO
   xmpf_sync_all_auto_();
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_FREE\n"
-                          "  MemoryChunk %s\n",
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_FREE for MemoryChunk %s\n",
                           _dispMemoryChunk(chunk));
 
   // unlink and free CoarrayInfo keeping MemoryChunk
@@ -423,7 +423,7 @@ CoarrayInfo_t *_allocLargeStaticCoarray(size_t nbytes, size_t elementRU)
 
   // malloc memory-chunk
   MemoryChunk_t *chunk = _mallocMemoryChunk_core(nbytes, elementRU);
-  _XMPF_coarrayDebugPrint("*** new MemoryChunk %s\n",
+  _XMPF_coarrayDebugPrint("*** MemoryChunk %s malloc-ed\n",
                           _dispMemoryChunk(chunk));
 
   // make coarrayInfo and linkage
@@ -450,7 +450,7 @@ CoarrayInfo_t *_getShareOfStaticCoarray(size_t nbytes, size_t elementRU)
                       "xmpf_coarray_share_pool_() in %s", __FILE__);
   }
 
-  _XMPF_coarrayDebugPrint("*** got a %u-byte share of the memory pool (address=%p)\n",
+  _XMPF_coarrayDebugPrint("*** memory share %uB from the pool <%p>\n",
                           nbytes, pool_currentAddr);
 
   pool_currentAddr += nbytes;
@@ -465,13 +465,13 @@ void xmpf_coarray_count_size_(int *count, int *element)
   size_t mallocSize = ROUND_UP_UNIT(thisSize);
 
   if (mallocSize > XMPF_get_poolThreshold()) {
-    _XMPF_coarrayDebugPrint("*** out of count: size %u exceeds threshold %u [byte].\n",
+    _XMPF_coarrayDebugPrint("*** no count: size %uB exceeds threshold %uB\n",
                             mallocSize, XMPF_get_poolThreshold());
     return;
   }
 
   pool_totalSize += mallocSize;
-  _XMPF_coarrayDebugPrint("*** count up: add %u, total %u [byte].\n",
+  _XMPF_coarrayDebugPrint("*** count up: add %uB, currently total %uB\n",
                           mallocSize, pool_totalSize);
 }
 
@@ -493,12 +493,9 @@ void xmpf_coarray_epilog_(void **tag)
 
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
 
-  // SYNCALL_AUTO
-  xmpf_sync_all_auto_();
-
   _XMPF_coarrayDebugPrint("EPILOG CODE. rset=%p\n", rset);
 
-  _freeResourceSet(rset);
+  _freeResourceSet(rset);     // with or without automatic SYNCALL
 
   *tag = NULL;
 }
@@ -543,13 +540,15 @@ void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag)
   }
 
   if (myChunk != NULL) {
-    _XMPF_coarrayDebugPrint("*** found my chunk. baseAddr=%p, chunk->orgAddr=%p\n",
+    _XMPF_coarrayDebugPrint("*** MemoryChunk %s is my home.\n",
+                            _dispMemoryChunk(myChunk));                    
+    _XMPF_coarrayDebugPrint("*** my baseAddr=%p, chunk->orgAddr=%p\n",
                             baseAddr, chunk->orgAddr);
 
     _addCoarrayInfo(myChunk, cinfo);
 
   } else {
-    _XMPF_coarrayDebugPrint("*** ILLEGAL: no memory chunk owns me. baseAddr=%p, chunk: free\n",
+    _XMPF_coarrayDebugPrint("*** ILLEGAL: No MemoryChunk owns me. baseAddr=%p\n",
                             baseAddr);
   }
 
@@ -601,7 +600,7 @@ void _garbageCollectMallocHistory()
 {
   MemoryChunkOrder_t *chunkP;
 
-  _XMPF_coarrayDebugPrint("GARBAGE COLLECTION\n");
+  _XMPF_coarrayDebugPrint("GARBAGE COLLECTION starts\n");
 
   forallMemoryChunkOrderRev(chunkP) {
     if (!chunkP->chunk->isGarbage)
@@ -716,13 +715,24 @@ void _freeResourceSet(ResourceSet_t *rset)
 {
   MemoryChunk_t *chunk;
 
-  forallMemoryChunk (chunk, rset) {
-    // unlink memory chunk as a garbage
-    _unlinkMemoryChunk(chunk);
+  if (IsEmptyResourceSet(rset)) {
+    // avoid automatic syncall (ID=465)
+    _XMPF_coarrayDebugPrint("*** avoid automatic syncall and garbage collection\n");
   }
 
-  // now chance of garbabe collection
-  _garbageCollectMallocHistory();
+  else {
+    // SYNCALL_AUTO
+    xmpf_sync_all_auto_();
+
+    forallMemoryChunk (chunk, rset) {
+      // unlink memory chunk as a garbage
+      _unlinkMemoryChunk(chunk);
+    }
+
+    // now chance of garbabe collection
+    _garbageCollectMallocHistory();
+  }
+
   free(rset);
 }
 
@@ -775,6 +785,9 @@ void _unlinkMemoryChunk(MemoryChunk_t *chunk2)
   MemoryChunk_t *chunk1 = chunk2->prev;
   MemoryChunk_t *chunk3 = chunk2->next;
 
+  _XMPF_coarrayDebugPrint("*** MemoryChunk %s unlinking from parent %p\n",
+                          _dispMemoryChunk(chunk2), chunk2->parent);
+
   if (chunk1 != NULL) {
     chunk1->next = chunk3;
     chunk2->prev = NULL;
@@ -793,14 +806,13 @@ void _freeMemoryChunk(MemoryChunk_t *chunk)
 {
   CoarrayInfo_t *cinfo;
 
-  // found a formal-deallocated memory chunk that should be free
-  _XMPF_coarrayDebugPrint("*** freeing a garbage MemoryChunk %s, %u bytes\n",
-                          _dispMemoryChunk(chunk), chunk->nbytes);
-
   forallCoarrayInfo (cinfo, chunk) {
     _unlinkCoarrayInfo(cinfo);
     _freeCoarrayInfo(cinfo);
   }
+
+  _XMPF_coarrayDebugPrint("*** MemoryChunk %s freeing\n",
+                          _dispMemoryChunk(chunk));
 
   // free the last memory chunk object
   _XMP_coarray_lastly_deallocate();
@@ -813,7 +825,7 @@ char *_dispMemoryChunk(MemoryChunk_t *chunk)
 {
   static char work[200];
 
-  (void)sprintf(work, "<%p, %u bytes>", chunk, chunk->nbytes);
+  (void)sprintf(work, "<%p, %uB>", chunk, chunk->nbytes);
   return work;
 }
 
@@ -854,7 +866,7 @@ void _addCoarrayInfo(MemoryChunk_t *parent, CoarrayInfo_t *cinfo2)
   cinfo2->next = cinfo3;
   cinfo2->parent = parent;
 
-  _XMPF_coarrayDebugPrint("*** added CoarrayInfo %s to MemoryChunk %s\n",
+  _XMPF_coarrayDebugPrint("*** CoarrayInfo %s added to MemoryChunk %s\n",
                           _dispCoarrayInfo(cinfo2), _dispMemoryChunk(parent));
 }
 
@@ -869,7 +881,7 @@ void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2)
   cinfo2->next = NULL;
   cinfo2->parent = NULL;
 
-  _XMPF_coarrayDebugPrint("*** unlinked CoarrayInfo %s from MemoryChunk %s\n",
+  _XMPF_coarrayDebugPrint("*** CoarrayInfo %s unlinked from MemoryChunk %s\n",
                           _dispCoarrayInfo(cinfo2),
                           _dispMemoryChunk(cinfo1->parent));
 }
@@ -891,11 +903,11 @@ char *_dispCoarrayInfo(CoarrayInfo_t *cinfo)
   char *name = cinfo->name;
   if (name) {
     if (strlen(name) > 280)
-      (void)sprintf(work, "%p (longname)", cinfo);
+      (void)sprintf(work, "<%p (too-long-name)>", cinfo);
     else
-      (void)sprintf(work, "%p \'%s\'", cinfo, name);
+      (void)sprintf(work, "<%p \'%s\'>", cinfo, name);
   } else {
-    (void)sprintf(work, "%p (noname)", cinfo);
+    (void)sprintf(work, "<%p (noname)>", cinfo);
   }
   return work;
 }

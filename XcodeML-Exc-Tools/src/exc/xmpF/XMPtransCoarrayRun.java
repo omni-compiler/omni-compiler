@@ -9,7 +9,7 @@ import java.util.*;
  */
 public class XMPtransCoarrayRun
 {
-  private Boolean DEBUG = false;       // change me in debugger
+  private Boolean DEBUG = true;       // change me in debugger
 
   // constants
   final static String VAR_TAG_NAME = "xmpf_resource_tag";
@@ -63,8 +63,7 @@ public class XMPtransCoarrayRun
   private ArrayList<Xobject> _prologStmts = new ArrayList<Xobject>();
   private ArrayList<Xobject> _epilogStmts = new ArrayList<Xobject>();
 
-  private Boolean _reservedAutoDealloc;
-  private Boolean _reservedAutoSyncall;   // not used. Aoto-syncalls are called in runtime.
+  private Boolean _autoDealloc;
 
 
   //------------------------------------------------------------
@@ -210,8 +209,7 @@ public class XMPtransCoarrayRun
         
 
   private void run1_procedure() {
-    reserveAutoDealloc(false);
-    reserveAutoSyncall(false);
+    set_autoDealloc(false);
 
     // convert specification and declaration part
     transDeclPart_staticLocal();
@@ -582,7 +580,7 @@ public class XMPtransCoarrayRun
     replaceFunctionCalls(visibleCoarrays);
 
     // i. initialization/finalization for auto-syncall and auto-deallocate
-    if (_reservedAutoDealloc)
+    if (get_autoDealloc())
       genCallOfPrologAndEpilog();
 
     // p. add visible coarrays as arguments of sync all statements 
@@ -737,10 +735,26 @@ public class XMPtransCoarrayRun
   private void genPrologStmts() {
     // for the begining of the procedure
     BlockList blist = fblock.getBody().getHead().getBody();
-    for (int i = _prologStmts.size() - 1; i >= 0; i--)
+    int nlines = _prologStmts.size();
+
+    for (int i = nlines - 1; i >= 0; i--)
       blist.insert(_prologStmts.get(i));
 
     // restriction: for the ENTRY statement
+    if (nlines > 0 && _findEntryStmtInBlock(fblock)) {
+      XMP.error("restriction: An ENTRY statement is not allowed in the " +
+                "program including coarray features.");
+    }
+  }
+
+  private Boolean _findEntryStmtInBlock(Block fblock) {
+    BlockIterator bi = new topdownBlockIterator(fblock);
+    for (bi.init(); !bi.end(); bi.next()) {
+      Block block = bi.getBlock();
+      if (block.Opcode() == Xcode.F_ENTRY_DECL)
+        return true;
+    }
+    return false;
   }
 
   private void genEpilogStmts() {
@@ -869,7 +883,6 @@ public class XMPtransCoarrayRun
           // found -- convert the statement
           Xobject callExpr = coindexVarStmtToCallStmt(assignExpr, coarrays);
           s.setExpr(callExpr);
-          reserveAutoSyncall();
         }
       }
     }
@@ -954,7 +967,6 @@ public class XMPtransCoarrayRun
         // found target to convert
         Xobject funcCall = coindexObjToFuncRef(xobj, coarrays);
         xi.setXobject(funcCall);
-        reserveAutoSyncall();
         done = true;
       }
     }
@@ -1780,7 +1792,7 @@ public class XMPtransCoarrayRun
 
     // Prolog/Epilog codes are necessary if and only if the resource tag is
     // defined.
-    reserveAutoDealloc();
+    set_autoDealloc(true);
 
     return _resourceTagId;
   }
@@ -1813,20 +1825,12 @@ public class XMPtransCoarrayRun
   }
 
 
-  // for automatic syncall at the end of the program
-  private void reserveAutoSyncall() {
-    reserveAutoSyncall(true);
-  }
-  private void reserveAutoSyncall(Boolean sw) {
-    _reservedAutoSyncall = sw;
-  }
-
   // for automatic deallocation at the end of the program
-  private void reserveAutoDealloc() {
-    reserveAutoDealloc(true);
+  private Boolean get_autoDealloc() {
+    return _autoDealloc;
   }
-  private void reserveAutoDealloc(Boolean sw) {
-    _reservedAutoDealloc = sw;
+  private void set_autoDealloc(Boolean sw) {
+    _autoDealloc = sw;
   }
 
 }
