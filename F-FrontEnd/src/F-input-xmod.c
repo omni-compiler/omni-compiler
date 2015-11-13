@@ -2549,6 +2549,8 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
       strcat(filename2, ".mod");
       filepath2 = search_include_path(filename2);
 
+      if (!filepath2) return FALSE;
+
       char command[FILE_NAME_LEN + 9];
       bzero(command, sizeof(filename2) + 9);
       strcpy(command, _XMPMOD_NAME);
