@@ -12,7 +12,7 @@ OUT_allo= allo1.x allo3.x
 OUT_epi= allodeallo.x #epi2 #epi1
 OUT_etc=allo_pipo3.x allo_loop2.x allo_hiloop.x #allo_hicall #char12  host_assoc
 OUT_inq=this_image.x cobound.x #image_index.x
-OUT_debug=bug418.x bug418-2.x
+OUT_debug=bug418.x bug418-2.x bug468.x
 
 #OUT_err= init1ERR recursiveERR
 
