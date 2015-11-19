@@ -568,7 +568,7 @@ elif test "$target" = "sxace-nec-superux"; then
   AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
   MPI_FPPFLAGS="-E"
 #  MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
-  MPI_FCFLAGS="-Chopt -f2003"
+  MPI_FCFLAGS="-Chopt -f2003 -Wf,-ptr,byte"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
   KIND_MPI_FORTRAN=other
@@ -580,7 +580,7 @@ elif test "$target" = "sxace-nec-superux"; then
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_NTV_FCFLAGS="-f4 -w -f2003"
+  OMNI_NTV_FCFLAGS="-f4 -w -f2003 -Wf,-ptr,byte"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
@@ -615,7 +615,7 @@ elif test "$target" = "sx9-nec-superux"; then
 # MPI F
   AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-Chopt -f2003 $OPENMP_OPT_F"
+  MPI_FCFLAGS="-Chopt -f2003 $OPENMP_OPT_F -Wf,-ptr,byte"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
   KIND_MPI_FORTRAN=other
@@ -627,7 +627,7 @@ elif test "$target" = "sx9-nec-superux"; then
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_NTV_FCFLAGS="-f4 -w"
+  OMNI_NTV_FCFLAGS="-f4 -w -Wf,-ptr,byte"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
