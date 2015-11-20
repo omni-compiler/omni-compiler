@@ -331,6 +331,7 @@ public class XMPenv {
   /*
    *  wrapper -- for collect init
    */
+  /***********************************
   public String getTailText() {
     return env.getTailText();
   }
@@ -340,5 +341,5 @@ public class XMPenv {
   public void addTailText(String text) {
     env.addTailText(text);
   }
-
+  ***********************************/
 }
