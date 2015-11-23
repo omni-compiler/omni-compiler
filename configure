@@ -3083,8 +3083,8 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
-# expand $ac_aux_dir to an absolute path
-am_aux_dir=`cd $ac_aux_dir && pwd`
+# Expand $ac_aux_dir to an absolute path.
+am_aux_dir=`cd "$ac_aux_dir" && pwd`
 
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
@@ -3480,6 +3480,7 @@ END
     as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
   fi
 fi
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
 $as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
@@ -7457,8 +7458,8 @@ $as_echo "no" >&6; }
 fi
 
 
-  MPI_FPPFLAGS="-E"
-#  MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
+  # Fix:[Xmp-dev:5723] [xmp-bts:0432]
+  MPI_FPPFLAGS="-P -D__SX__ -D_FLOAT0 -I."
   MPI_FCFLAGS="-Chopt -f2003 -Wf,-ptr,byte"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
@@ -9007,18 +9008,23 @@ fi
 # --------------------------------------------------------------------
 # set userflags
 if test -z ${MPI_CPP}; then
-  if test "$target" != "powerpc-ibm-cnk"; then
-    MPI_CPP="${MPI_CC}"
-  else
+  if test "$target" = "powerpc-ibm-cnk"; then
     # $MPI_CC cannot be used for XcodeML bug in powerpc-ibm-cnk.
     # Instead of $MPI_CC, $CC (gcc) is used.
     # But, this is not a good idea. Wish to fix the bug.
     MPI_CPP="${CC}"
+  else
+    MPI_CPP="${MPI_CC}"
   fi
 fi
 
 if test	-z ${MPI_FPP}; then
-  MPI_FPP="${MPI_FC}"
+  if test "$target" = "sxace-nec-superux"; then
+    # Fix:[Xmp-dev:5723] [xmp-bts:0432]
+    MPI_FPP=sxcpp
+  else
+    MPI_FPP="${MPI_FC}"
+  fi
 fi
 
 if test "" != "${userFCFLAGS}"; then

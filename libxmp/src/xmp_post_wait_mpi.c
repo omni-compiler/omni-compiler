@@ -110,7 +110,7 @@ void receive_request(int *node, int *tag)
  * @param[in] node node number
  * @param[in] tag  tag
  */
-void _xmp_mpi_post(const int node, const int tag)
+void _xmp_mpi_post(const int node, int tag)
 {
   if(node == _XMP_world_rank){
     do_post(_XMP_world_rank, tag);

@@ -526,7 +526,7 @@ void _XMP_mpi_get(const int src_continuous, const int dst_continuous, const int 
 void _XMP_mpi_sync_memory();
 void _XMP_mpi_sync_all();
 void _xmp_mpi_post_wait_initialize();
-void _xmp_mpi_post(const int node, const int tag);
+void _xmp_mpi_post(const int node, int tag);
 void _xmp_mpi_wait(const int node, const int tag);
 void _xmp_mpi_wait_node(const int node);
 void _xmp_mpi_wait_noargs();
