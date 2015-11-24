@@ -25,6 +25,7 @@ public class XMPtransCoarrayRun
   final static String COARRAY_EPILOG_NAME    = "xmpf_coarray_epilog";
   final static String SYNCALL_NAME           = "xmpf_sync_all";
   final static String AUTO_SYNCALL_NAME      = "xmpf_sync_all_auto";  // another entry of syncall
+  final static String FINALIZE_PROGRAM_NAME  = XMP.finalize_all_f;
 
   // to handle host- and use-associations
   static ArrayList<XMPtransCoarrayRun> ancestors
@@ -529,7 +530,10 @@ public class XMPtransCoarrayRun
         n1 = this_image(V1,1)                           ! coarray intrinsic
         n2(:) = this_image(V3)                          ! coarray intrinsic
         n3 = image_index(V1,(/1,2/))                    ! coarray intrinsic
+        ...
         return                                          ! dealloc V3 automatically
+        ...
+        stop                                            ! finalize program
       end subroutine
     --------------------------------------------
     output:
@@ -550,9 +554,13 @@ public class XMPtransCoarrayRun
         n1 = xmpf_this_image(DP_V1,1)                           ! l.
         n2(:) = this_image(DP_V3)                               ! l.
         n3 = xmpf_image_index(DP_V1,(/1,2/))                    ! l.
+        ...
         call xmpf_syncall(V1,V4,V2,V3)                          ! i. p.
         call xmpf_coarray_epilog(tag)                           ! i.
         return
+        ...
+        call xmpf_finalize_all_f()                              ! k.
+        stop
       end subroutine
 
     !! Additionally, two subroutines xmpf_traverse_* will    ! b.
@@ -582,6 +590,9 @@ public class XMPtransCoarrayRun
     // i. initialization/finalization for auto-syncall and auto-deallocate
     if (get_autoDealloc())
       genCallOfPrologAndEpilog();
+
+    // k. insert finalization call before STOP statements
+    insertFinalizationCall();
 
     // p. add visible coarrays as arguments of sync all statements 
     //     to prohibit code motion
@@ -716,6 +727,41 @@ public class XMPtransCoarrayRun
     for (XMPcoarray coarray: coarrays)
       args.add(Xcons.FvarRef(coarray.getIdent()));
     return args;
+  }
+
+
+  //-----------------------------------------------------
+  //  TRANSLATION k. 
+  //  insert finalization call before STOP statements
+  //  ZANTEI VERSION: 
+  //    This function is used until joining caf and xmp translators.
+  //-----------------------------------------------------
+  //
+  private void insertFinalizationCall() {
+    // for STOP statement
+    BasicBlockIterator bbi = new BasicBlockIterator(fblock);
+    for (bbi.init(); !bbi.end(); bbi.next()) {
+      StatementIterator si = bbi.getBasicBlock().statements();
+      while (si.hasNext()) {
+        Statement st = si.next();
+        Xobject stmt = st.getExpr();
+        if (stmt == null)
+          continue;
+
+        switch(stmt.Opcode()) {
+        case F_STOP_STATEMENT:
+          LineNo lineno = stmt.getLineNo();
+          Ident func =                        // find or generate function name
+            env.declInternIdent(FINALIZE_PROGRAM_NAME, Xtype.FsubroutineType);
+          Xobject call = func.callSubroutine();
+          call.setLineNo(lineno);
+          st.insert(call);
+          break;
+        default:
+          break;
+        }
+      }
+    }
   }
 
 
