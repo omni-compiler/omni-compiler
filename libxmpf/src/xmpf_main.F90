@@ -18,10 +18,6 @@
       !! user's main program converted to a subroutine
       call xmpf_main
 
-#if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_MPI3_ONESIDED)
-      call xmpf_sync_all_auto
-#endif
-
       !! src: libxmpf/src/xmpf_misc.c
       !! incl. FJMPI_Rdma_finalize(), _XMP_finalize, etc.
       call xmpf_finalize_all_

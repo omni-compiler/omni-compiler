@@ -498,7 +498,7 @@ public class omompx
       }
       decompiler.decompile(context, xcodeDoc, decompWriter);
       // for collect-init
-      decompWriter.write(xobjFile.getTailText());
+      //decompWriter.write(xobjFile.getTailText());
       decompWriter.flush();
     
       if(!dump && outputDecomp) {

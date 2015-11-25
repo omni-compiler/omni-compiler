@@ -1,0 +1,10 @@
+mpid(0): execution of `call_sync_all.x' failed. Check executable file=`call_sync_all.x' or internal error has occured
+mpid(0): execution of `call_sync_all.x' failed. Check executable file=`call_sync_all.x' or internal error has occured
+mpid(0): errno = 8; Exec format error
+mpid(0): execution of `call_sync_all.xsxa3117: mpid: Error in execv: Exec format error
+sxa3117: mpid: MPI program execution aborted
+MPI process (universe = 0, rank = 0) terminated by exit(1)
+MPI process (universe 0, rank 1) terminated by signal(15); Software termination 
+MPI process terminated by signal(15)
+MPI process (universe 0, rank 2) terminated by signal(15); Software termination 
+MPI process terminated by signal(15)

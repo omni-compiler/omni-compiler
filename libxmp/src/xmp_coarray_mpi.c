@@ -618,15 +618,27 @@ static void _mpi_scalar_mput(const int target_rank,
 			     const _XMP_array_section_t *dst_info,
 			     const bool is_dst_on_acc)
 {
-  char *laddr = (char*)src + src_offset;
+  int allelmt_dim = _XMP_get_dim_of_allelmts(dst_dims, dst_info);
+  size_t element_size = dst_desc->elmt_size;
+  size_t allelmt_size = (allelmt_dim == dst_dims)? element_size : dst_info[allelmt_dim].distance * dst_info[allelmt_dim].elmts;
+  char *laddr = (allelmt_dim == dst_dims)? ((char*)src + src_offset) : _XMP_alloc(allelmt_size);
   char *raddr = get_remote_addr(dst_desc, target_rank, is_dst_on_acc) + dst_offset;
   MPI_Win win = get_window(dst_desc, is_dst_on_acc);
-  size_t element_size = dst_desc->elmt_size;
 
   XACC_DEBUG("scalar_mput(src_p=%p, size=%zd, target=%d, dst_p=%p, is_acc=%d)", laddr, element_size, target_rank, raddr, is_dst_on_acc);
 
-  int allelmt_dim = _XMP_get_dim_of_allelmts(dst_dims, dst_info);
-  size_t allelmt_size = (allelmt_dim == dst_dims)? element_size : dst_info[allelmt_dim].distance * dst_info[allelmt_dim].elmts;
+  XACC_DEBUG("allelmt_dim=%d, dst_dims=%d", allelmt_dim, dst_dims);
+  if(allelmt_dim != dst_dims){
+    //mcopy
+    _XMP_array_section_t info;
+    info.start = 0;
+    info.length = allelmt_size/element_size;
+    info.stride = 1;
+    info.elmts = info.length;
+    info.distance = element_size;
+    _XMP_stride_memcpy_1dim(laddr, (char*)src+src_offset, &info, element_size, _XMP_SCALAR_MCOPY);
+    XACC_DEBUG("mcopy(%lld, %lld, %lld), %lld",info.start, info.length, info.stride, info.elmts);
+  }
   long long idxs[allelmt_dim+1];
   for(int i = 0; i < allelmt_dim+1; i++) idxs[i]=0;
 
@@ -655,6 +667,9 @@ static void _mpi_scalar_mput(const int target_rank,
     }
   }
   MPI_Win_flush_local(target_rank, win);
+  if(allelmt_dim != dst_dims){
+    _XMP_free(laddr);
+  }
 }
 
 static void _unpack_scalar(char *dst, const int dst_dims, const char* src, 

@@ -117,11 +117,15 @@ public class XMPcoarrayInitProcedure {
      */
     switch(version) {
     case 1:   // generate as Fortran program text
+      XMP.fatal("INTERNAL: found extinct version of notation " + 
+                "in XMPcoarrayInitProcedure");
+      /***************
       fillinSizeProcText();
       fillinInitProcText();
 
       for (String text: procTexts)
         env.addTailText(text);
+      ***********/
       break;
 
     case 2:   // build and link it at the tail of XMPenv

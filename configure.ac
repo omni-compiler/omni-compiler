@@ -566,9 +566,9 @@ elif test "$target" = "sxace-nec-superux"; then
 
 # MPI F
   AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
-  MPI_FPPFLAGS="-E"
-#  MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
-  MPI_FCFLAGS="-Chopt -f2003"
+  # Fix:[Xmp-dev:5723] [xmp-bts:0432]
+  MPI_FPPFLAGS="-P -D__SX__ -D_FLOAT0 -I."
+  MPI_FCFLAGS="-Chopt -f2003 -Wf,-ptr,byte"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
   KIND_MPI_FORTRAN=other
@@ -580,7 +580,7 @@ elif test "$target" = "sxace-nec-superux"; then
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_NTV_FCFLAGS="-f4 -w -f2003"
+  OMNI_NTV_FCFLAGS="-f4 -w -f2003 -Wf,-ptr,byte"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
@@ -615,7 +615,7 @@ elif test "$target" = "sx9-nec-superux"; then
 # MPI F
   AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-Chopt -f2003 $OPENMP_OPT_F"
+  MPI_FCFLAGS="-Chopt -f2003 $OPENMP_OPT_F -Wf,-ptr,byte"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
   KIND_MPI_FORTRAN=other
@@ -627,7 +627,7 @@ elif test "$target" = "sx9-nec-superux"; then
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_NTV_FCFLAGS="-f4 -w"
+  OMNI_NTV_FCFLAGS="-f4 -w -Wf,-ptr,byte"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
@@ -1234,18 +1234,23 @@ fi
 # --------------------------------------------------------------------
 # set userflags
 if test -z ${MPI_CPP}; then
-  if test "$target" != "powerpc-ibm-cnk"; then
-    MPI_CPP="${MPI_CC}"
-  else
+  if test "$target" = "powerpc-ibm-cnk"; then
     # $MPI_CC cannot be used for XcodeML bug in powerpc-ibm-cnk.
     # Instead of $MPI_CC, $CC (gcc) is used.
     # But, this is not a good idea. Wish to fix the bug.
     MPI_CPP="${CC}"
+  else
+    MPI_CPP="${MPI_CC}"
   fi
 fi
 	
 if test	-z ${MPI_FPP}; then
-  MPI_FPP="${MPI_FC}"
+  if test "$target" = "sxace-nec-superux"; then
+    # Fix:[Xmp-dev:5723] [xmp-bts:0432]
+    MPI_FPP=sxcpp
+  else
+    MPI_FPP="${MPI_FC}"
+  fi
 fi
 
 if test "" != "${userFCFLAGS}"; then
