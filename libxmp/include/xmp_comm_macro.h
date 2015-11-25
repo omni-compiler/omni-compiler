@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 #ifndef _XMP_COMM_MACRO
 #define _XMP_COMM_MACRO
 

@@ -592,16 +592,8 @@ struct _XMPTIMING
 #endif
 
 #ifdef _XMP_GASNET
+#include "xmp_lock.h"
 #define _XMP_LOCK_CHUNK 8       // for lock
-
-typedef struct xmp_lock{
-  int islocked;
-  gasnet_hsl_t  hsl;
-  int  wait_size;   /* How many elements in wait_list */
-  int  wait_head;   /* Index for next dequeue */
-  int  wait_tail;   /* Index for next enqueue */
-  int *wait_list;   /* Circular queue of waiting threads */
-} xmp_gasnet_lock_t;
 
 typedef enum {
   _XMP_LOCKSTATE_WAITING = 300,    /* waiting for a reply */
@@ -611,10 +603,10 @@ typedef enum {
   _XMP_LOCKSTATE_DONE        /* unlock op complete */
 } xmp_gasnet_lock_state_t;
 
-extern void _xmp_gasnet_lock(_XMP_coarray_t*, int, int);
-extern void _xmp_gasnet_unlock(_XMP_coarray_t*, int, int);
+extern void _xmp_gasnet_lock(_XMP_coarray_t*, const unsigned int, const unsigned int);
+extern void _xmp_gasnet_unlock(_XMP_coarray_t*, const unsigned int, const unsigned int);
 extern void _xmp_gasnet_do_lock(int, xmp_gasnet_lock_t*, int*);
-extern void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t*, int);
+extern void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t*, const unsigned int);
 extern void _xmp_gasnet_do_unlock(int, xmp_gasnet_lock_t*, int*, int*);
 extern void _xmp_gasnet_do_lockhandoff(int);
 extern void _xmp_gasnet_unpack(gasnet_token_t, const char*, const size_t, 
@@ -727,12 +719,6 @@ extern void _xmp_gasnet_unpack_get_reply_nonc(gasnet_token_t, char *, size_t, co
     upcr_poll_nofence();              \
   } while (0)
 #endif
-
-#define _xmp_lock_t xmp_gasnet_lock_t
-
-extern void _xmp_lock(_XMP_coarray_t*, int, int);
-extern void _xmp_unlock(_XMP_coarray_t*, int, int);
-extern void _xmp_lock_initialize(_xmp_lock_t*, int);
 
 #endif // _XMP_GASNET
 

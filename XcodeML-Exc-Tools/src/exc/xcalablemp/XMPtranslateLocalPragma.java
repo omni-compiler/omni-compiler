@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 
 import exc.block.*;
@@ -19,7 +13,6 @@ public class XMPtranslateLocalPragma {
   private boolean		doScalasca = false;
   private boolean		doTlog = false;
   private XobjectDef		currentDef;
-
   private XMPgenSym             tmpSym;
 
   public XMPtranslateLocalPragma(XMPglobalDecl globalDecl) {
@@ -106,14 +99,18 @@ public class XMPtranslateLocalPragma {
         { translateGmove(pb);			break; }
       case ARRAY:
 	{ translateArray(pb);                   break; }
-      case SYNC_MEMORY:
-        { translateSyncMemory(pb);		break; }
-      case SYNC_ALL:
-        { translateSyncAll(pb);                 break; }
+        //      case SYNC_MEMORY:
+        //        { translateSyncMemory(pb);		break; }
+        //      case SYNC_ALL:
+        //        { translateSyncAll(pb);                 break; }
       case POST:
         { translatePost(pb);                    break; }
       case WAIT:
         { translateWait(pb);                    break; }
+      case LOCK:
+        { translateLockUnlock(pb, "_XMP_lock_");   break; }
+      case UNLOCK:
+        { translateLockUnlock(pb, "_XMP_unlock_"); break; }
       case LOCAL_ALIAS:
         { translateLocalAlias(pb);		break; }
       case WAIT_ASYNC:
@@ -336,12 +333,62 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void translateSyncMemory(PragmaBlock pb) throws XMPexception {
-    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_memory", null));
-  }
+  //  private void translateSyncMemory(PragmaBlock pb) throws XMPexception {
+  //    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_memory", null));
+  //  }
 
-  private void translateSyncAll(PragmaBlock pb) throws XMPexception {
-    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_all", null));
+  //  private void translateSyncAll(PragmaBlock pb) throws XMPexception {
+  //    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_all", null));
+  //  }
+
+  private void translateLockUnlock(PragmaBlock pb, String funcNamePrefix) throws XMPexception {
+    XobjList lockDecl   = (XobjList)pb.getClauses();
+    XobjList lockObjVar = (XobjList)lockDecl.getArg(0);
+    String coarrayName  = XMPutil.getXobjSymbolName(lockObjVar.getArg(0));
+    XMPcoarray coarray  = _globalDecl.getXMPcoarray(coarrayName);
+    if(coarray == null)
+      throw new XMPexception("Variable in #pragma xmp lock() must be coarray");
+    
+    // When lockDecl.Nargs() is 1,
+    // The specified lock object does not have a codimension.
+    // e.g.) #pragma xmp lock(lock_obj)
+    int imageDims = 0;
+    if(lockDecl.Nargs() != 1)
+      imageDims = lockDecl.getArg(1).Nargs();
+    
+    if(imageDims != 0)
+      if(lockDecl.getArg(1).Nargs() != coarray.getImageDim())
+        throw new XMPexception("Invalid number of dimensions of '" + coarrayName + "'");
+
+    // Set descriptor of lock object
+    XobjList funcArgs = Xcons.List();
+    funcArgs.add(Xcons.SymbolRef(coarray.getDescId()));
+
+    // Set offset
+    //  e.g. xmp_lock_t lockobj[a][b][c]:[*]; #pragma xmp lock(lockobj[3][2][1]:[x]) -> offset = 3*b*c + 2*c + 1
+    int arrayDims = lockObjVar.Nargs() - 1;
+    Xobject offset = null;
+    for(int i=0;i<arrayDims;i++){
+      Xobject tmp = lockObjVar.getArg(i+1);
+      for(int j=i+1;j<arrayDims;j++){
+        tmp = Xcons.binaryOp(Xcode.MUL_EXPR, tmp, Xcons.IntConstant((int)coarray.getSizeAt(j)));
+      }
+      if(offset == null)
+        offset = tmp;
+      else
+        offset = Xcons.binaryOp(Xcode.PLUS_EXPR, offset, tmp);
+    }
+    if(offset == null)
+      funcArgs.add(Xcons.IntConstant(0));
+    else
+      funcArgs.add(offset);
+
+    if(imageDims != 0)
+      for(int i=0;i<lockDecl.getArg(1).Nargs();i++)
+        funcArgs.add(lockDecl.getArg(1).getArg(i));
+
+    String funcName = funcNamePrefix + String.valueOf(imageDims);
+    pb.replace(_globalDecl.createFuncCallBlock(funcName, funcArgs));
   }
 
   private void translatePost(PragmaBlock pb) throws XMPexception {

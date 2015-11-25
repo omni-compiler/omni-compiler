@@ -1466,6 +1466,17 @@ AC_SUBST(MPI_VERSION)
 AC_SUBST(MPI_SUBVERSION)
 
 # --------------------------------------------------------------------
+if test x${use_gasnet} = xyes; then
+  ONESIDED_CPPFLAGS="-D_XMP_GASNET"
+elif test x${use_mpi3_onesided} = xyes; then
+  ONESIDED_CPPFLAGS="-D_XMP_MPI3_ONESIDED"
+elif test x${target} = xKcomputer-linux-gnu -o x${target} = xFX10-linux-gnu -o x${target} = xFX100-linux-gnu; then
+  ONESIDED_CPPFLAGS="-D_XMP_FJRDMA"
+fi
+
+AC_SUBST(ONESIDED_CPPFLAGS)
+
+# --------------------------------------------------------------------
 # check Perl versoin is 5
 PERL5=""
 AC_PATH_PROGS(PERL5, perl)

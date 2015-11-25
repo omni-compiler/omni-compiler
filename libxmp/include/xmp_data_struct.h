@@ -1,8 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
 #ifndef _XMP_DATA_STRUCT
 #define _XMP_DATA_STRUCT
 #include <mpi.h>

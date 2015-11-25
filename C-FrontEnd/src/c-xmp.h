@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 #ifndef _C_XMP_H
 #define _C_XMP_H
 
@@ -23,18 +17,17 @@ enum XMP_pragma {
     XMP_BCAST		= 113,
     XMP_COARRAY		= 114,
     XMP_TEMPLATE_FIX	= 115,
-    XMP_POST            = 116,
-    XMP_WAIT            = 117,
-    XMP_WAIT_ASYNC      = 118,
-    XMP_ARRAY		= 119,
-
-    XMP_END_TASK	= 120,
-    XMP_END_TASKS	= 121,
-
-    XMP_REFLECT_INIT    = 122,
-    XMP_REFLECT_DO      = 123,
-
-    XMP_STATIC_DESC     = 124,
+    XMP_LOCK            = 116,
+    XMP_UNLOCK          = 117,
+    XMP_POST            = 118,
+    XMP_WAIT            = 119,
+    XMP_WAIT_ASYNC      = 120,
+    XMP_ARRAY		= 121,
+    XMP_END_TASK	= 122,
+    XMP_END_TASKS	= 123,
+    XMP_REFLECT_INIT    = 124,
+    XMP_REFLECT_DO      = 125,
+    XMP_STATIC_DESC     = 126,
 
     XMP_MASTER_IO	= 130,
     XMP_MASTER_IO_BEGIN	= 131,

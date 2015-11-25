@@ -167,7 +167,7 @@ int
 main(argc, argv) 
 int argc; 
 char *argv[]; 
-{ 
+{
     extern int fixed_format_flag;
     extern int max_line_len;
     extern int max_cont_line;

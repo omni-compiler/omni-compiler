@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 #include <stdlib.h>
 #include <stdarg.h> 
 #include <wchar.h>
@@ -124,9 +118,11 @@ char *xmpDirectiveName(int c)
   case XMP_ARRAY:        return "ARRAY";
   case XMP_POST:         return "POST";
   case XMP_WAIT:         return "WAIT";
+  case XMP_LOCK:         return "LOCK";
+  case XMP_UNLOCK:       return "UNLOCK";
   case XMP_TEMPLATE_FIX: return "TEMPLATE_FIX";
   case XMP_REFLECT_INIT: return "REFLECT_INIT";
-  case XMP_REFLECT_DO: return "REFLECT_DO";
+  case XMP_REFLECT_DO:   return "REFLECT_DO";
   case XMP_WAIT_ASYNC:   return "WAIT_ASYNC";
   default:               return "OMP???";
   }

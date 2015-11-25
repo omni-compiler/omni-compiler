@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 import exc.block.Block;
 
@@ -42,7 +36,6 @@ public class StructType extends CompositeType
         throw new UnsupportedOperationException
           ("Restriction: could not get size of a structure as integer");
     }
-
 
     @Override
     public Xtype copy(String id)
