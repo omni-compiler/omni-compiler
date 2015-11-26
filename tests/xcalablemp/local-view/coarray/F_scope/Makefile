@@ -7,7 +7,7 @@ OUT_host= host2.x host1.x
 OUT_bug403= bug403.x bug403OK.x #bug403 FuncDefBlock.Finalize()
 OUT_module= mod1.x modalloc.x nestModule.x
 OUT_epi= #autosyncall1 autosyncall2
-OUT_bug= bug451.x sakagami457.x sakagami458-join.x sakagami459-join.x sakagami460-join.x
+OUT_bug= bug451.x sakagami457.x sakagami458-join.x sakagami459-join.x #sakagami460-join.x
 
 
 #OUT_err=entry1ERR
