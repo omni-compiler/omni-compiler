@@ -36,12 +36,13 @@ public class XMPcoarray {
   private Boolean _isUseAssociated;
   private Boolean _wasMovedFromModule = false;
 
-  // corresponding cray pointer and descriptor
+  // corresponding cray pointer, descriptor and common block names
   private String _crayPtrName = null;
   private Ident crayPtrId = null;
   private String _descPtrName = null;
   private Ident descPtrId = null;
-
+  private String homeBlockName = null;
+  
   // context
   protected XMPenv env;
   protected XobjectDef def;
@@ -53,21 +54,35 @@ public class XMPcoarray {
   //------------------------------
   //  CONSTRUCTOR
   //------------------------------
-  public XMPcoarray(Ident ident, FuncDefBlock funcDef, XMPenv env) {
+  public XMPcoarray(Ident ident, FuncDefBlock funcDef, XMPenv env)
+  {
     this(ident, funcDef.getDef(), funcDef.getBlock(), env);
   }
-  public XMPcoarray(Ident ident, XobjectDef def, FunctionBlock fblock, XMPenv env) {
-    this.ident = ident;
+  public XMPcoarray(Ident ident, FuncDefBlock funcDef, XMPenv env,
+                    String homeBlockName)
+  {
+    this(ident, funcDef.getDef(), funcDef.getBlock(), env, homeBlockName);
+  }
+  public XMPcoarray(Ident ident, XobjectDef def, FunctionBlock fblock, XMPenv env)
+  {
     this.env = env;
     this.def = def;
     this.fblock = fblock;
-    name = ident.getName();
-    //originalType = ident.Type().copy();
-    isAllocatable = ident.Type().isFallocatable();
-    isPointer = ident.Type().isFpointer();
-    _isUseAssociated = (ident.getFdeclaredModule() != null);
-    if (DEBUG) System.out.println("[XMPcoarray] new coarray = "+this);
+    setIdent(ident);
+    homeBlockName = ident.getFdeclaredModule();
+    if (homeBlockName == null)
+      homeBlockName = def.getName();
   }
+  public XMPcoarray(Ident ident, XobjectDef def, FunctionBlock fblock, XMPenv env,
+                    String homeBlockName)
+  {
+    this.env = env;
+    this.def = def;
+    this.fblock = fblock;
+    setIdent(ident);
+    this.homeBlockName = homeBlockName;
+  }
+
 
   //------------------------------
   //  actions
@@ -641,8 +656,40 @@ public class XMPcoarray {
     return ident;
   }
 
+  public void setIdent(Ident ident) {
+    this.ident = ident;
+    name = ident.getName();
+
+    isAllocatable = ident.Type().isFallocatable();
+    isPointer = ident.Type().isFpointer();
+    _isUseAssociated = (ident.getFdeclaredModule() != null);
+  }
+
+  public XobjectDef getDef() {
+    return def;
+  }
+
+  public FunctionBlock getFblock() {
+    return fblock;
+  }
+
   public XMPenv getEnv() {
     return env;
+  }
+
+  public String getHomeBlockName()
+  {
+    return homeBlockName;
+  }
+
+  public String getDescCommonName()
+  {
+    return VAR_DESCPOINTER_PREFIX + "_" + homeBlockName;
+  }
+
+  public String getCrayCommonName()
+  {
+    return VAR_CRAYPOINTER_PREFIX + "_" + homeBlockName;
   }
 
   public String getCrayPointerName() {
@@ -670,6 +717,7 @@ public class XMPcoarray {
 
     return descPtrId;
   }
+
 
   /*************** should be deleted .....
   ***************************/
@@ -786,56 +834,39 @@ public class XMPcoarray {
   //   ******** under construction *********
   //------------------------------------------------------------
 
-  /* TEMPORARY VERSION
-   *   getFkind().getKind() is useful, which is integer as Xtype.Fxxx
-   */
-  public Xtype getFtype() {
-    Xtype ftype = ident.Type();
-    if (ftype.getKind() == Xtype.F_ARRAY)
-      ftype = ftype.getRef();
-    return ftype;
+  private Xtype _getXtype() {
+    Xtype xtype = ident.Type();
+    if (xtype.getKind() == Xtype.F_ARRAY)
+      xtype = xtype.getRef();
+    return xtype;
   }
 
-  /* TEMPORARY VERSION
-   *   getFkind().getInt() is useful.
-   */
+  public int getFtypeNumber() {
+    return _getXtype().getBasicType();
+  }
+
   public Xobject getFkind() {
-    return getFtype().getFkind();
+    return _getXtype().getFkind();
   }
 
   /*
    * return a name of Fortran intrinsic function
    */
-  private String getTypeIntrinsicName() {
-    return getTypeIntrinsicName(getType());
+  public String getFtypeString() {
+    String name = _getTypeIntrinName_1(getFtypeNumber());
+    return name;
   }
-
-  private String getTypeIntrinsicName(Xtype xtype) {
-    String name = null;
-
-    switch (xtype.getKind()) {
-    case Xtype.F_ARRAY:
-      name = _getTypeIntrinName_1(xtype.getRef());
-      break;
-    case Xtype.BASIC:
-      name = _getTypeIntrinName_1(xtype);
-      break;
-    case Xtype.STRUCT:
-      //XMP.error("internal error: STRUCT unsupported in _getTypeSuffix()");
-    default:
-      //XMP.error("internal error: unexpected kind in _getTypeSuffix(): xtype.getKind()");
-      break;
-    }
-
+  public String getFtypeString(int typeNumber) {
+    String name = _getTypeIntrinName_1(typeNumber);
     return name;
   }
 
   /// see also BasicType.getElementLength
-  private String _getTypeIntrinName_1(Xtype xtype) {
-    String key = null;
-    switch(xtype.getBasicType()) {
+  private String _getTypeIntrinName_1(int typeNumber) {
+
+    switch(typeNumber) {
     case BasicType.BOOL:
-      key = "l";
+      name = "logical";
       break;
     case BasicType.SHORT:
     case BasicType.UNSIGNED_SHORT:
@@ -845,30 +876,34 @@ public class XMPcoarray {
     case BasicType.UNSIGNED_LONG:
     case BasicType.LONGLONG:
     case BasicType.UNSIGNED_LONGLONG:
-      key = "int";
+      name = "int";
       break;
     case BasicType.FLOAT:
     case BasicType.DOUBLE:
     case BasicType.LONG_DOUBLE:
-      key = "real";
+      name = "real";
       break;
     case BasicType.FLOAT_COMPLEX:
     case BasicType.DOUBLE_COMPLEX:
     case BasicType.LONG_DOUBLE_COMPLEX:
-      key = "cmplx";
+      name = "cmplx";
       break;
     case BasicType.CHAR:
     case BasicType.UNSIGNED_CHAR:
     case BasicType.F_CHARACTER:
-      key = "c";
+      name = "char";
+      break;
+
+    case BasicType.F_NUMERIC_ALL:
+      name = null;
       break;
 
     default:
-      XMP.fatal("found unsupported type of coarray");
+      XMP.fatal("found illegal type number in BasicType: " + typeNumber);
       break;
     }
 
-    return key;
+    return name;
   }
 
 }
