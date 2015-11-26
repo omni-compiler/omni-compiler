@@ -6,20 +6,21 @@
  * MPI Implementation (supports MPI-2)
  * libxml2
  * make
+ * [Optional] mpfr, gmp (when using --enable-mod2xmod option)
  
 ## On Debian GNU/Linux and Ubuntu
  The following packages may be needed to be installed previously:
 
- * flex gcc gfortran g++ openjdk-7-jdk libopenmpi-dev openmpi-bin libxml2-dev byacc make perl libmpfr-dev libgmp-dev
+ * flex gcc gfortran g++ openjdk-7-jdk libopenmpi-dev openmpi-bin libxml2-dev byacc make perl
 
 ## On Red Hat and CentOS
  The following packages may be needed to be installed previously:
 
- * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel openmpi-devel libxml2-devel byacc make perl libmpfr-dev libgmp-dev
+ * flex gcc gfortran gcc-c++ java-1.7.0-openjdk-devel openmpi-devel libxml2-devel byacc make perl
 
 ## For local-view operations (coarray, post/wait, lock/unlock)
- * On the K computer or FX10 or FX100, the Omni compiler automatically uses Fujitsu RDMA.
- * On the other system, please install GASNet (http://gasnet.lbl.gov) before installing the Omni compiler.
+ * On the K computer/FX10/FX100, the Omni compiler automatically uses Fujitsu RDMA.
+ * On the other system, please install GASNet (http://gasnet.lbl.gov) or MPI3 library before installing the Omni compiler.
 
 ## For Omni OpenACC compiler
  * Need to install CUDA (https://developer.nvidia.com/cuda-zone).
@@ -32,11 +33,11 @@
     $ ./configure CC=gcc FC=gfortran   // PGI compiler
 
  If you want to use Coarray functions
-    $ ./configure --with-gasnet=[GASNet INSTALLATION PATH] --with-gasnet-conduit=[GASNet-Conduit]
+    $ ./configure --with-gasnet=[GASNet INSTALLATION PATH] --with-gasnet-conduit=[GASNet conduit]
 
-    The "GASNet-Conduit" is a method how GASnet uses an interconnect.
+    The "GASNet conduit" is a method how GASNet uses an interconnect.
 
-    If you omit "--with-gasnet-conduit=[GASNet-Conduit]",
+    If you omit "--with-gasnet-conduit=[GASNet conduit]",
     the Omni compiler automatically selects an appropriate conduit.
 
     If you specify "--with-gasnet-conduit=mpi", the execute file can execute on the most clusters.
