@@ -1,10 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
-
 #include <sys/param.h>
 #include <ctype.h>
 #include <string.h>
@@ -64,6 +57,8 @@ static CExpr* parse_COARRAY_clause_p3();
 static CExpr* parse_ARRAY_clause();
 static CExpr* parse_POST_clause();
 static CExpr* parse_WAIT_clause();
+static CExpr* parse_LOCK_clause();
+static CExpr* parse_UNLOCK_clause();
 //static CExpr* parse_LOCAL_ALIAS_clause();
 static CExpr* parse_WIDTH_list();
 static CExpr* parse_ASYNC_clause();
@@ -115,8 +110,7 @@ int XMP_has_err = 0;
 /*
  * for XcalableMP directives
  */
-CExpr*
-lexParsePragmaXMP(char *p, int *token) // p is buffer
+CExpr* lexParsePragmaXMP(char *p, int *token) // p is buffer
 {
   //skip pragma[space]xmp[space]*
   p = lexSkipSpace(lexSkipWordP(lexSkipSpace(lexSkipWord(lexSkipSpace(lexSkipSharp(lexSkipSpace(p)))))));
@@ -234,6 +228,16 @@ int parse_XMP_pragma()
         pg_get_token();
         pg_XMP_list = parse_WAIT_clause();
     }
+    else if (PG_IS_IDENT("lock")) {
+        pg_XMP_pragma = XMP_LOCK;
+        pg_get_token();
+        pg_XMP_list = parse_LOCK_clause();
+    }
+    else if (PG_IS_IDENT("unlock")) {
+        pg_XMP_pragma = XMP_UNLOCK;
+        pg_get_token();
+        pg_XMP_list = parse_UNLOCK_clause();
+    }
     else if (PG_IS_IDENT("wait_async")) {
         pg_XMP_pragma = XMP_WAIT_ASYNC;
         pg_get_token();
@@ -253,20 +257,18 @@ int parse_XMP_pragma()
       pg_XMP_pragma = XMP_REFLECT_DO;
       pg_get_token();
       pg_XMP_list = parse_REFLECT_DO_clause();
-#ifdef not
-    } else if (PG_IS_IDENT("sync_memory")) {
-        pg_XMP_pragma = XMP_SYNC_MEMORY;
-        pg_get_token();
-        pg_XMP_list = null;
-    } else if (PG_IS_IDENT("sync_all")) {
-        pg_XMP_pragma = XMP_SYNC_ALL;
-        pg_get_token();
-        pg_XMP_list = null;
-    } else if (PG_IS_IDENT("local_alias")) {
-        pg_XMP_pragma = XMP_LOCAL_ALIAS;
-        pg_get_token();
-        pg_XMP_list = parse_LOCAL_ALIAS_clause();
-#endif
+      //    } else if (PG_IS_IDENT("sync_memory")) {
+      //        pg_XMP_pragma = XMP_SYNC_MEMORY;
+      //        pg_get_token();
+      //        pg_XMP_list = null;
+      //    } else if (PG_IS_IDENT("sync_all")) {
+      //        pg_XMP_pragma = XMP_SYNC_ALL;
+      //        pg_get_token();
+      //        pg_XMP_list = null;
+      //    } else if (PG_IS_IDENT("local_alias")) {
+      //        pg_XMP_pragma = XMP_LOCAL_ALIAS;
+      //        pg_get_token();
+      //        pg_XMP_list = parse_LOCAL_ALIAS_clause();
     } else {
         addError(NULL,"unknown XcalableMP directive, '%s'",pg_tok_buf);
     syntax_err:
@@ -1720,10 +1722,85 @@ static CExpr* parse_WAIT_clause()
   return XMP_LIST2(nodeNum, tag);
 }
 
-//static CExpr* parse_LOCAL_ALIAS_clause()
-//{
-//    return NULL;
-//}
+static CExpr* parse_LOCK_clause()
+{
+  if(pg_tok != '(')
+    XMP_Error0("'(' is expected before <coarray>");
+  else
+    pg_get_token();
+
+  CExpr* coarrayRef = EMPTY_LIST;
+  coarrayRef = exprListAdd(coarrayRef, pg_tok_val);
+  pg_get_token();
+
+  if(pg_tok == ')'){ // Without coarray image (e.g. #pragma xmp lock (lockobj))
+    pg_get_token();
+    return XMP_LIST1(coarrayRef);
+  }
+
+  if(pg_tok != ':'){
+    if(pg_tok != '['){
+      XMP_Error0("'[' is expected before <coarray-dim>");
+    }
+    else{
+      pg_get_token();
+      coarrayRef = exprListAdd(coarrayRef, pg_parse_expr());
+      if(pg_tok != ']')
+	XMP_Error0("']' is expected after <coarray-dim>");
+      
+      while(1){
+	pg_get_token();
+	if(pg_tok == '['){
+	  pg_get_token();
+	  coarrayRef = exprListAdd(coarrayRef, pg_parse_expr());
+	  if(pg_tok != ']')
+	    XMP_Error0("']' is expected after <coarray-dim>");
+	}
+	else
+	  break;
+      }
+    }
+  }
+  
+  if(pg_tok == ')'){ // Without coarray image (e.g. #pragma xmp lock (lockobj[c]))
+    pg_get_token();
+    return XMP_LIST1(coarrayRef);
+  }
+  
+  CExpr* coarrayDim = EMPTY_LIST;
+  pg_get_token(); // skip ':'
+  if(pg_tok != '[')
+    XMP_Error0("'[' is expected before <coarray-dim>");
+  else
+    pg_get_token();
+  coarrayDim = exprListAdd(coarrayDim, pg_parse_expr());
+  if(pg_tok != ']')
+    XMP_Error0("']' is expected after <coarray-dim>");
+
+  while(1){
+    pg_get_token();
+    if(pg_tok == '['){
+      pg_get_token();
+      coarrayDim = exprListAdd(coarrayDim, pg_parse_expr());
+      if(pg_tok != ']')
+	XMP_Error0("']' is expected after <coarray-dim>");
+    }
+    else
+      break;
+  }
+  
+  if(pg_tok != ')')
+    XMP_Error0("')' is expected after <coarray>");
+  else
+    pg_get_token();
+
+  return XMP_LIST2(coarrayRef, coarrayDim);
+}
+
+static CExpr* parse_UNLOCK_clause()
+{
+  return parse_LOCK_clause();
+}
 
 static CExpr* parse_WIDTH_list()
 {

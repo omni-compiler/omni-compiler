@@ -20,7 +20,8 @@ schedule_default.x: schedule_default.F90
 	$(XFC) --openmp schedule_default.F90 -c
 
 278\ spacefile.x: 278\ spacefile.f90
-	@rm -rf 278\ module; mkdir 278\ module
+	@rm -rf 278\ module
+	mkdir 278\ module
 	$(XFC) 278\ spacefile.f90 -J278\ module -o 278\ spacefile.x -cpp -DSTRING='"P A S S"'
 
 module_test0.x: module0.o main.o

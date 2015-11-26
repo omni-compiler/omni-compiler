@@ -6,7 +6,7 @@ README
 -----
 # Implementation Status
  Some features in the language specification are not supported in this release.
- (You can download the specification of XMP from "http://www.xcalablemp.org")
+ (You can download the specification of XMP from "http://xcalablemp.org")
 
  See "docs/STATUS/$(version).md"
 

@@ -1,13 +1,5 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 
-//import xcodeml.c.binding.gen.XbcId;
-//import xcodeml.f.binding.gen.XbfId;
 import xcodeml.util.XmLog;
 
 /**

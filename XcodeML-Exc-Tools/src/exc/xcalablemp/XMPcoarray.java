@@ -1,13 +1,8 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 
 import exc.object.*;
 import exc.block.*;
+import xcodeml.IXobject;
 import java.util.Vector;
 
 public class XMPcoarray {
@@ -84,6 +79,7 @@ public class XMPcoarray {
   public static void translateCoarray(XobjList coarrayDecl, XMPglobalDecl globalDecl,
                                       boolean isLocalPragma, XMPsymbolTable localXMPsymbolTable) throws XMPexception {
     String coarrayName = coarrayDecl.getArg(0).getString();
+
     if(globalDecl.getXMPcoarray(coarrayName) != null) {
       throw new XMPexception("coarray " + coarrayName + " is already declared");
     }
@@ -127,7 +123,7 @@ public class XMPcoarray {
       elmtType = varType;
       varAddr = varId.getAddr();
     }
-
+  
     Xobject elmtTypeRef = null;
     if (elmtType.getKind() == Xtype.BASIC) {
       elmtTypeRef = XMP.createBasicTypeConstantObj(elmtType);
@@ -141,14 +137,18 @@ public class XMPcoarray {
       throw new XMPexception("coarray dimension should be less than " + (XMP.MAX_DIM + 1));
     }
 
-    // _XMP_coarray_malloc_array_info_X()
+    // _XMP_coarray_malloc_info_X()
     String funcName = new String("_XMP_coarray_malloc_info_");
-    funcName = funcName + Integer.toString(varDim);
+    funcName += Integer.toString(varDim);
     XobjList funcArgs = Xcons.List();
+    XobjList lockFuncArgs = Xcons.List();  // This variable may be used for _xmp_lock_initialize()
     Vector<Long> sizeVector = new Vector<Long>(varDim);
+
     if(!isArray){
       sizeVector.add(new Long(1));
-      funcArgs.add(Xcons.Cast(Xtype.unsignedType, Xcons.LongLongConstant(0, 1)));
+      Xobject arg = Xcons.Cast(Xtype.unsignedType, Xcons.LongLongConstant(0, 1));
+      funcArgs.add(arg);
+      lockFuncArgs.add(arg);
     }
     else{
       for(int i=0;i<varDim;i++,varType=varType.getRef()){
@@ -157,12 +157,14 @@ public class XMPcoarray {
           throw new XMPexception("array size should be declared statically");
         }
         sizeVector.add(new Long(dimSize));
-	funcArgs.add(Xcons.Cast(Xtype.unsignedType, Xcons.LongLongConstant(0, dimSize)));
+        Xobject arg = Xcons.Cast(Xtype.unsignedType, Xcons.LongLongConstant(0, dimSize));
+	funcArgs.add(arg);
+        lockFuncArgs.add(arg);
       }
     }
     
+    funcArgs.add(Xcons.SizeOf(elmtType));
     if(is_output){
-      funcArgs.add(Xcons.SizeOf(elmtType));
       globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
     }
 
@@ -208,6 +210,20 @@ public class XMPcoarray {
       globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
     }
     
+    // _xmp_lock_initialize()
+    XobjectFile _env = globalDecl.getEnv();
+    Ident id = _env.findIdent("xmp_lock_t", IXobject.FINDKIND_TAGNAME);
+    if(id != null){
+      if(id.Type() == elmtType){
+        funcName = new String("_XMP_lock_initialize_");
+        funcName += Integer.toString(varDim);
+        lockFuncArgs.insert(addrId);
+        
+        if(is_output){
+          globalDecl.addGlobalInitFuncCall(funcName, lockFuncArgs);
+        }
+      }
+    }
     XMPcoarray coarrayEntry = new XMPcoarray(name, elmtType, varDim, sizeVector, 
                                              imageDim, imageVector, varAddr, varId, descId);
 
