@@ -40,10 +40,11 @@ public class XMPtransCoarrayRun
   private FunctionBlock fblock;
 
   private ArrayList<XMPcoarray> useAssociatedCoarrays;
-  private ArrayList<XMPcoarray> localCoarrays;   // local + use-acc + host-module-acc
+  private ArrayList<XMPcoarray> localCoarrays;
 
   // localCoarrays is divided into the following four
   private ArrayList<XMPcoarray> staticLocalCoarrays;
+  //private ArrayList<XMPcoarray> staticLocalCoarraysEx;  // add use-acc & host-module-acc
   private ArrayList<XMPcoarray> allocatableLocalCoarrays;
   private ArrayList<XMPcoarray> staticDummyCoarrays;
   private ArrayList<XMPcoarray> allocatableDummyCoarrays;
@@ -222,8 +223,9 @@ public class XMPtransCoarrayRun
       }
     }
 
-    // resolve use-associated coarrays and
-    // host-module-associated static coarrays
+    // resolve the problem on static coarrays in a module
+    // - move all coarrays to use-associating procedures
+    // - move static coarrays to directly host-associated procedures
     for (XMPcoarray coarray: useAssociatedCoarrays) {
       XMPcoarray coarray2 = _copyCoarrayToMergeIn(coarray);
       localCoarrays.add(coarray2);
@@ -231,12 +233,10 @@ public class XMPtransCoarrayRun
     if (hostModuleRun != null && hostProcedureRun == null) {
       // found a module procedure
       for (XMPcoarray coarray: hostModuleRun.localCoarrays) {
-        XMPcoarray coarray2 = _copyCoarrayToMergeIn(coarray);
-        ////////////// RETHINK!!
-        //localCoarrays.add(coarray2);
-        if (coarray2.isExplicitShape())
+        if (coarray.isExplicitShape()) {
+          XMPcoarray coarray2 = _copyCoarrayToMergeIn(coarray);
           localCoarrays.add(coarray2);
-        //////////////
+        }
       }
     }      
 
@@ -292,7 +292,7 @@ public class XMPtransCoarrayRun
      *  A name of coarray will be searched in this priority.
      */
     visibleCoarrays = new ArrayList<XMPcoarray>();
-    visibleCoarrays.addAll(localCoarrays);
+    _mergeCoarraysByName(visibleCoarrays, localCoarrays);
     _mergeCoarraysByName(visibleCoarrays, useAssociatedCoarrays);
 
     if (hostProcedureRun != null)

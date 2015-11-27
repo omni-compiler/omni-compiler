@@ -33,7 +33,7 @@ public class XMPcoarray {
   //private Xtype originalType;
   private Boolean isAllocatable;
   private Boolean isPointer;
-  private Boolean _isUseAssociated;
+  private Boolean isUseAssociated;
   private Boolean _wasMovedFromModule = false;
 
   // corresponding cray pointer, descriptor and common block names
@@ -111,19 +111,9 @@ public class XMPcoarray {
       return;
     }
 
-    //    if (isUseAssociated()) {
-    //      return;
-    //    }
-
-
     String descPtrName = getDescPointerName();
     BlockList blist = fblock.getBody();
     
-    // generate declaration of descPtrId
-    //    descPtrId = blist.declLocalIdent(descPtrName,
-    //                                     BasicType.Fint8Type,
-    //                                     StorageClass.FLOCAL,
-    //                                     null);
     descPtrId = env.declInternIdent(descPtrName,
                                     BasicType.Fint8Type);
   }
@@ -647,7 +637,7 @@ public class XMPcoarray {
   }
 
   public Boolean isUseAssociated() {
-    return _isUseAssociated;
+    return isUseAssociated;
   }
 
 
@@ -662,7 +652,7 @@ public class XMPcoarray {
 
     isAllocatable = ident.Type().isFallocatable();
     isPointer = ident.Type().isFpointer();
-    _isUseAssociated = (ident.getFdeclaredModule() != null);
+    isUseAssociated = (ident.getFdeclaredModule() != null);
   }
 
   public XobjectDef getDef() {

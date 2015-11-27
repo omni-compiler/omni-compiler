@@ -371,7 +371,6 @@ public class omompx
         if(exc.xmpF.XMP.hasErrors())
           System.exit(1);
         caf_translator2.finish();
-
       } else {    // without coarray features
 
         // XMP Fortran
