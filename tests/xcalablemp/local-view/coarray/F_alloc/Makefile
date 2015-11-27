@@ -2,9 +2,8 @@
 #OPT= -g --debug --verbose
 NPE=3
 
-OUT_decl= decl3.x #decl1
-#OUT_size= size1 size1-2 #size2 #sample #size1-err
-### size2: assumed shape dummy coarray
+OUT_decl= decl3.x decl1.x
+OUT_size= size1.x size1-2.x #sample #size1-err
 #OUT_rt  =  inquiry
 OUT_NG =  allo2NG.x
 
@@ -14,9 +13,10 @@ OUT_etc=allo_pipo3.x allo_loop2.x allo_hiloop.x #allo_hicall #char12  host_assoc
 OUT_inq=this_image.x cobound.x #image_index.x
 OUT_debug=bug418.x bug418-2.x bug468.x
 
-#OUT_err= init1ERR recursiveERR
+#OUT_err= init1ERR.x recursiveERR.x
 
-OUT_stat=#allo_stat
+OUT_interface=interface.x  # assumed-shape coarray
+OUT_stat=#allo_stat.x
 
 OUT = $(OUT_epi) $(OUT_etc) $(OUT_decl) $(OUT_size) $(OUT_allo) $(OUT_inq) $(OUT_debug)
 

@@ -1,5 +1,5 @@
 DIRS=./test_fe ../F_get ../F_put ../F_alloc ../F_scope ../F_cfold
-DIRS_SUBMIT=../F_get ../F_put ../F_alloc ../F_scope
+DIRS_SUBMIT=../F_get ../F_put ../F_alloc ../F_scope ../F_cfold
 
 .PHONY: clean all run allall runall rerun submit cleanall
 
