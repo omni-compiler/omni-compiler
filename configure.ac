@@ -450,10 +450,10 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
   OMNI_X2X_FLAGS=""
 
 # ranlib & ar & nm
-  AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx])
-  AC_CHECK_PROG([AR], [arpx], [arpx])
+  AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [ranlib])
+  AC_CHECK_PROG([AR], [arpx], [arpx], [ar])
   ARFLAGS="cru"
-  AC_CHECK_PROG([NM], [nmpx], [nmpx])
+  AC_CHECK_PROG([NM], [nmpx], [nmpx], [nm])
 
 elif test "$target" = "MIC-linux-gnu"; then
 # OpenMP
