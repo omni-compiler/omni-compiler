@@ -551,7 +551,8 @@ static void kway_inplace_merge_sort(void *a, int *start, int k){
 
 static void do_gmove(void *buf, int *bufStart, _XMP_array_t *b_desc){
 
-  _XMP_nodes_t *n_desc = b_desc->array_nodes;
+  //_XMP_nodes_t *n_desc = b_desc->array_nodes;
+  _XMP_nodes_t *n_desc = b_desc->align_template->onto_nodes;
   _XMP_template_t *t_desc;
   _XMP_array_t *buf_desc;
 

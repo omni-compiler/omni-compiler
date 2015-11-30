@@ -3,7 +3,7 @@ XRUN    = mpiexec
 EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x 412.x
 
 all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
-     228.x 45_save.o 358_result.x 377.x 261.o 162.o 383.x 384.o 392.x 393.o 278\ spacefile.x derived.o func.o save_desc.x schedule_default.x task001.x
+     103.x 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o save_desc.x schedule_default.x task001.x
 
 .SUFFIXES: .x .o .f90
 
@@ -20,7 +20,8 @@ schedule_default.x: schedule_default.F90
 	$(XFC) --openmp schedule_default.F90 -c
 
 278\ spacefile.x: 278\ spacefile.f90
-	@rm -rf 278\ module; mkdir 278\ module
+	@rm -rf 278\ module
+	mkdir 278\ module
 	$(XFC) 278\ spacefile.f90 -J278\ module -o 278\ spacefile.x -cpp -DSTRING='"P A S S"'
 
 module_test0.x: module0.o main.o
@@ -118,6 +119,7 @@ run:
 	export XMP_NODE_SIZE1=2; \
 	$(XRUN) -np 8 ./dnodes.x
 	$(XRUN) -np 4 ./refobj.x
+	$(XRUN) -np 2 ./103.x
 	$(XRUN) -np 1 ./228.x
 	$(XRUN) -np 1 ./358_result.x
 	$(XRUN) -np 2 ./383.x

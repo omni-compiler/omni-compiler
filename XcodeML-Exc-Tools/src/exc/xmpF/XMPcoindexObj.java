@@ -119,53 +119,62 @@ public class XMPcoindexObj {
   }    
 
 
-  /* TEMPORARY VERSION
-   *  not conversion but only error checking
+  /*  Implicit type conversion if necessary
+   *  ex.  RHS -> int(RHS)
+   *  ex.  RHS -> real(RHS,8)
    */
-  private Xobject _convRhsType(Xobject rhs) {
-    Xtype lhsType = coarray.getFtype();
+  private Xobject _convRhsType(Xobject rhs)
+  {
+    String lhsTypeStr = coarray.getFtypeString();
     Xobject lhsKind = coarray.getFkind();
 
-    Xtype rhsType;
-    Xobject rhsKind;
+    if (lhsTypeStr == null) {
+      XMP.warning("No cast function for RHS was generated because of " +
+                  "unknown type of coarray LHS: " + coarray);
+      return rhs;
+    }
 
-    rhsType = rhs.Type();
+    Xtype rhsType = rhs.Type();
     if (rhsType.getKind() == Xtype.F_ARRAY)
       rhsType = rhsType.getRef();
-    rhsKind = rhsType.getFkind();
+    String rhsTypeStr = coarray.getFtypeString(rhsType.getBasicType());
+    Xobject rhsKind = rhsType.getFkind();
 
-    int ltype = (lhsType == null) ? 0 : (lhsType.getKind());
-    int rtype = (rhsType == null) ? 0 : (rhsType.getKind());
+    if (lhsKind == null) {      // case default kind
+      if (rhsKind == null && lhsTypeStr.equals(rhsTypeStr)) {
+        // same type and same default kind
+        return rhs;
+      }
 
-    int lkind = (lhsKind == null || !lhsKind.canGetInt()) ? 0 :
-      (lhsKind.getInt());
-    int rkind = (rhsKind == null || !rhsKind.canGetInt()) ? 0 :
-      (rhsKind.getInt());
-
-    if (ltype == 0 || rtype == 0) {
-      // doubtful
-      XMP.warning("Automatic type conversion will not be generated " +
-                  "in this coindexed assignment statement.");
-      return rhs;
+      //XMP.warning("Invoked automatic type conversion ("+lhsTypeStr+")", block);
+      return _convTypeByIntrinsicCall(lhsTypeStr, rhs);
     }
 
-    if (ltype != rtype) {
-      // error
-      XMP.error("current restriction: found coindexed assignment statement " +
-                "with implicit type conversion");
-      return rhs;
+    if (lhsTypeStr.equals(rhsTypeStr) && rhsKind != null) {
+      if (lhsKind.canGetInt() && rhsKind.canGetInt() &&
+          lhsKind.getInt() == rhsKind.getInt())
+        // same type and same kind
+        return rhs;
     }
 
-    if (lkind != 0 && rkind != 0 && lkind != rkind) {
-      // error
-      XMP.error("current restriction: found coindexed assignment statement " +
-                "with implicit type-kind conversion");
-      return rhs;
-    }
+    //XMP.warning("Invoked automatic type conversion ("+lhsTypeStr+" with kind)", block);
+    return _convTypeByIntrinsicCall(lhsTypeStr, rhs, lhsKind);
+  }
 
-    // Though it is still doubtful in the case (lkind == 0 || rkind == ).
+  private Xobject _convTypeByIntrinsicCall(String fname, Xobject expr)
+  {
+    //FunctionType ftype = new FunctionType(Xtype.FunspecifiedType, Xtype.TQ_FINTRINSIC);
+    FunctionType ftype = new FunctionType(Xtype.FintType, Xtype.TQ_FINTRINSIC);
+    Ident fident = getEnv().declIntrinsicIdent(fname, ftype);
+    return fident.Call(Xcons.List(expr));
+  }
 
-    return rhs;
+  private Xobject _convTypeByIntrinsicCall(String fname, Xobject expr, Xobject kind)
+  {
+    //FunctionType ftype = new FunctionType(Xtype.FunspecifiedType, Xtype.TQ_FINTRINSIC);
+    FunctionType ftype = new FunctionType(Xtype.FintType, Xtype.TQ_FINTRINSIC);
+    Ident fident = getEnv().declIntrinsicIdent(fname, ftype);
+    return fident.Call(Xcons.List(expr, kind));
   }
 
 

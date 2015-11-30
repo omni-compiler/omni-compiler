@@ -16,6 +16,7 @@ all default: $(EXES)
 run: $(EXES)
 	$(XRUN) -n 16 ./bcast_async.x
 	$(XRUN) -n 8 ./plus2_async.x
+	$(XRUN) -n 4 ./gmove_async.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

@@ -2,6 +2,10 @@ SUBDIRS=XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src F-BackEnd \
 	XcodeML-Exc-Tools Driver/src libtlog/src_threads libtlog/src_mpi \
         libxmp/include libxmp/src libxmp/src_threads libxmpf/include libxmpf/src
 
+if MOD2XMOD
+    SUBDIRS+=F-FrontEnd/gnu_module
+endif
+
 if !SUPERUX
     SUBDIRS+=libompc/src libompf/src
 endif
@@ -48,11 +52,15 @@ BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
 LARGE_TESTDIRS = "others/C"
 
 if GASNET
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"  "local-view/coarray/F_alloc"  "local-view/coarray/F_get"  "local-view/coarray/F_put"  "local-view/coarray/F_scope"  "local-view/coarray/F_cfold"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F" \
+	       "local-view/coarray/F_alloc" "local-view/coarray/F_get" "local-view/coarray/F_put" "local-view/coarray/F_scope" \
+	       "local-view/coarray/F_cfold" "local-view/lock-unlock/C"
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if FJRDMA
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"  "local-view/coarray/F_alloc"  "local-view/coarray/F_get"  "local-view/coarray/F_put"  "local-view/coarray/F_scope"  "local-view/coarray/F_cfold"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/coarray/F" \
+	       "local-view/coarray/F_alloc" "local-view/coarray/F_get" "local-view/coarray/F_put" "local-view/coarray/F_scope" \
+	       "local-view/coarray/F_cfold"
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if MPI3

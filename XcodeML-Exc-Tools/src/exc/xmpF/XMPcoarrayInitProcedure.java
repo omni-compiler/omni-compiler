@@ -18,7 +18,7 @@ import java.util.*;
 public class XMPcoarrayInitProcedure {
 
   final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
-  final static String SHARE_POOL_NAME = "xmpf_coarray_share_pool";
+  final static String ALLOC_STATIC_NAME = "xmpf_coarray_alloc_static";
 
   private Boolean DEBUG = false;          // switch the value on gdb !!
 
@@ -30,7 +30,8 @@ public class XMPcoarrayInitProcedure {
 
   /* for each procedure */
   private String sizeProcName, initProcName;  // names of procedures to generate
-  private String commonName1, commonName2;    // common block names
+  private String commonName1 = null;    // common block name for descptr
+  private String commonName2 = null;    // common block name for crayptr
 
   /* for all variables of a procedure */
   private ArrayList<String> varNames1, varNames2;
@@ -41,15 +42,12 @@ public class XMPcoarrayInitProcedure {
   //------------------------------
   public XMPcoarrayInitProcedure(ArrayList<XMPcoarray> staticCoarrays,
                                  String sizeProcName, String initProcName,
-                                 String commonName1, String commonName2,
                                  XMPenv env) {
     _init_forFile();
 
     this.staticCoarrays = staticCoarrays;
     this.sizeProcName = sizeProcName;
     this.initProcName = initProcName;
-    this.commonName1 = commonName1;
-    this.commonName2 = commonName2;
     this.env = env;
     varNames1 = new ArrayList<String>();
     varNames2 = new ArrayList<String>();
@@ -85,11 +83,9 @@ public class XMPcoarrayInitProcedure {
       subroutine xmpf_traverse_initcoarray_ex1
         integer(8) :: DP_V1, DP_V2
         integer(8) :: CP_V1, CP_V2
-        common /xmpf_DP_EX1/ DP_V1, DP_V2
-        common /xmpf_CP_EX1/ CP_V1, CP_V2
+        common /xmpf_DP_EX1/ DP_V2
+        common /xmpf_CP_EX1/ CP_V2
 
-        call xmpf_coarray_share_pool(DP_V1, CP_V1, 200, 4, "V1", 2)
-        call xmpf_coarray_set_coshape(DP_V1, 2, 1, 4, 1)
         call xmpf_coarray_share_pool(DP_V2, CP_V2, 1, 16, "V2", 2)
         call xmpf_coarray_set_coshape(DP_V2, 1, 0)
       end subroutine
@@ -117,11 +113,15 @@ public class XMPcoarrayInitProcedure {
      */
     switch(version) {
     case 1:   // generate as Fortran program text
+      XMP.fatal("INTERNAL: found extinct version of notation " + 
+                "in XMPcoarrayInitProcedure");
+      /***************
       fillinSizeProcText();
       fillinInitProcText();
 
       for (String text: procTexts)
         env.addTailText(text);
+      ***********/
       break;
 
     case 2:   // build and link it at the tail of XMPenv
@@ -180,6 +180,18 @@ public class XMPcoarrayInitProcedure {
       String descPtrName = coarray.getDescPointerName();
       String crayPtrName = coarray.getCrayPointerName();
 
+      if (commonName1 == null)
+        commonName1 = coarray.getDescCommonName();
+      else if (!commonName1.equals(coarray.getDescCommonName()))
+        XMP.fatal("INTERNAL: inconsistent descptr common block names " +
+                  commonName1 + " and " + coarray.getDescCommonName());
+
+      if (commonName2 == null)
+        commonName2 = coarray.getCrayCommonName();
+      else if (!commonName2.equals(coarray.getCrayCommonName()))
+        XMP.fatal("INTERNAL: inconsistent crayptr common block names " +
+                  commonName2 + " and " + coarray.getCrayCommonName());
+
       // for pointer to descriptor
       Ident descPtrId =
         body.declLocalIdent(descPtrName,
@@ -221,7 +233,7 @@ public class XMPcoarrayInitProcedure {
       if (args.hasNullArg())
         XMP.fatal("INTERNAL: generated null argument (buildSubroutine_initcoarray)");
 
-      Ident subr = body.declLocalIdent(SHARE_POOL_NAME,
+      Ident subr = body.declLocalIdent(ALLOC_STATIC_NAME,
                                        BasicType.FexternalSubroutineType);
       body.add(subr.callSubroutine(args));
     }
@@ -266,7 +278,7 @@ public class XMPcoarrayInitProcedure {
     varNames2.add(varName2);
     callSizeStmts.add(" CALL " + COUNT_SIZE_NAME + " ( " + 
                       count + " , " + elem + " )");
-    callInitStmts.add(" CALL " + SHARE_POOL_NAME + " ( " + 
+    callInitStmts.add(" CALL " + ALLOC_STATIC_NAME + " ( " + 
                       varName1 + " , " +varName2 + " , " +
                       count + " , " + elem + " )");
   }

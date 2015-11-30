@@ -82,6 +82,11 @@ extern int _XMP_world_size;
 extern int _XMP_world_rank;
 
 /* From xmp_align.c */
+void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type, _XMP_template_t **t_desc);
+void xmpf_array_dealloc__(_XMP_array_t **a_desc);
+void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx,
+		       int *lower, int *upper, int *t_idx, int *off);
+void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr);
 void _XMP_finalize_array_desc(_XMP_array_t *array);
 void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index);
 void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int template_index,
@@ -260,8 +265,6 @@ extern void _XMP_coarray_rdma_image_set_1(const int);
 
 //extern void _XMP_coarray_rdma_do_f(const int*, const void*, const void*, const void*);
 extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void *);
-//extern void _XMP_coarray_sync_all();
-//extern void _XMP_coarray_sync_memory();
 //extern size_t get_offset(const void *, const int);
 //extern void _XMP_coarray_shortcut_put(const int, const void*, const void*, const size_t, const size_t, const size_t);
 //extern void _XMP_coarray_shortcut_put_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
@@ -276,14 +279,22 @@ extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void
 #define TRUE   1
 #define FALSE  0
 
-#ifdef _XMP_FJRDMA
-#  define BOUNDARY_BYTE ((size_t)4)
+#if defined(_XMP_FJRDMA)
+#  define ONESIDED_BOUNDARY ((size_t)4)
+#  define ONESIDED_COMM_LAYER "FJRDMA"
+#elif defined(_XMP_GASNET)
+#  define ONESIDED_BOUNDARY ((size_t)1)
+#  define ONESIDED_COMM_LAYER "GASNET"
+#elif defined(_XMP_MPI3_ONESIDED)
+#  define ONESIDED_BOUNDARY ((size_t)1)
+#  define ONESIDED_COMM_LAYER "MPI3_ONESIDED"
 #else
-#  define BOUNDARY_BYTE ((size_t)1)
+#  define ONESIDED_BOUNDARY ((size_t)1)
+#  define ONESIDED_COMM_LAYER "(something unknown)"
 #endif
 
 #define ROUND_UP(n,p)         (((((size_t)(n))-1)/(p)+1)*(p))
-#define ROUND_UP_BOUNDARY(n)  ROUND_UP((n),BOUNDARY_BYTE)
+#define ROUND_UP_BOUNDARY(n)  ROUND_UP((n),ONESIDED_BOUNDARY)
 
 #define MALLOC_UNIT  ((size_t)4)
 #define ROUND_UP_UNIT(n)      ROUND_UP((n),MALLOC_UNIT)
@@ -301,7 +312,11 @@ extern int _XMP_boundaryByte;     // communication boundary (bytes)
 extern void _XMPF_coarray_init(void); 
 extern void _XMPF_coarray_finalize(void); 
 
-extern int _XMPF_coarrayMsg;          // default: debug message off
+int XMPF_get_coarrayMsg(void);
+
+void XMPF_set_poolThreshold(unsigned size);
+unsigned XMPF_get_poolThreshold(void);
+
 extern void xmpf_coarray_msg_(int *sw);
 
 extern char *_XMPF_errmsg;   // to answer ERRMSG argument in Fortran
@@ -322,9 +337,9 @@ extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
 extern void xmpf_coarray_free_(void **descPtr);
 
 extern void xmpf_coarray_malloc_pool_(void);
-extern void xmpf_coarray_share_pool_(void **descPtr, char **crayPtr,
-                                     int *count, int *element,
-                                     char *name, int *namelen);
+extern void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
+                                       int *count, int *element,
+                                       char *name, int *namelen);
 extern void xmpf_coarray_count_size_(int *count, int *element);
 
 extern void xmpf_coarray_prolog_(void **tag, char *name, int *namelen);

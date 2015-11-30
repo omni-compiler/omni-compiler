@@ -1,0 +1,96 @@
+[2] OK
+[1] OK
+[3] OK
+
+     ******  Program Information  ******
+  Real Time (sec)               :             0.071380
+  User Time (sec)               :             0.006884
+  Sys  Time (sec)               :             0.038054
+  Vector Time (sec)             :             0.003540
+  Inst. Count                   :              1577666.
+  V. Inst. Count                :               138804.
+  V. Element Count              :             33802242.
+  V. Load Element Count         :                27181.
+  FLOP Count                    :                  664.
+  MOPS                          :          5119.277164
+  MFLOPS                        :             0.096456
+  MOPS   (concurrent)           :          5120.020921
+  MFLOPS (concurrent)           :             0.096470
+  A. V. Length                  :           243.524985
+  V. Op. Ratio (%)              :            95.917092
+  Memory Size (MB)              :           576.000000
+  Max Concurrent Proc.          :                    1.
+    Conc. Time(>= 1) (sec)      :             0.006883
+  Event Busy Count              :                    0.
+  Event Wait (sec)              :             0.000000
+  Lock Busy Count               :                    0.
+  Lock Wait (sec)               :             0.000000
+  Barrier Busy Count            :                    0.
+  Barrier Wait (sec)            :             0.000000
+  MIPS                          :           229.178675
+  MIPS (concurrent)             :           229.211972
+  I-Cache (sec)                 :             0.000367
+  O-Cache (sec)                 :             0.000775
+  Bank Conflict Time
+    CPU Port Conf. (sec)        :             0.000231
+    Memory Network Conf. (sec)  :             0.000412
+  ADB Hit Element Ratio (%)     :             0.000000
+
+bug456-2.x(lang:f90): signal trap(SIGTERM: Software termination)
+  Start Time (date)    :  Tue Nov 24 11:30:34 JST 2015
+bug456-2.x(lang:f90): signal trap(SIGTERM: Software termination)
+  End   Time (date)    :  Tue Nov 24 11:30:35 JST 2015
+
+     ******  Program Information  ******
+  Real Time (sec)               :             0.072999
+
+     ******  Program Information  ******
+  Real Time (sec)               :             0.082783
+  User Time (sec)               :             0.011011
+  Sys  Time (sec)               :             0.038875
+  Vector Time (sec)             :             0.005339
+  Inst. Count                   :              3358047.
+  V. Inst. Count                :               161673.
+  V. Element Count              :             33966403.
+  V. Load Element Count         :               109465.
+  FLOP Count                    :                  648.
+  MOPS                          :          3375.059214
+  MFLOPS                        :             0.058850
+  MOPS   (concurrent)           :          3374.752724
+  MFLOPS (concurrent)           :             0.058845
+  A. V. Length                  :           210.093231
+  V. Op. Ratio (%)              :            91.398990
+  Memory Size (MB)              :           576.000000
+  Max Concurrent Proc.          :                    1.
+    Conc. Time(>= 1) (sec)      :             0.011012
+  Event Busy Count              :                    0.
+  Event Wait (sec)              :             0.000000
+  Lock Busy Count               :                    0.
+  Lock Wait (sec)               :             0.000000
+  Barrier Busy Count            :                    0.
+  Barrier Wait (sec)            :             0.000000
+  MIPS                          :           304.972028
+  MIPS (concurrent)             :           304.944333
+  I-Cache (sec)                 :             0.000383
+  O-Cache (sec)                 :             0.000905
+  Bank Conflict Time
+    CPU Port Conf. (sec)        :             0.000457
+    Memory Network Conf. (sec)  :             0.000578
+  ADB Hit Element Ratio (%)     :             0.233865
+
+  User Time (sec)               :             0.008043
+  Start Time (date)    :  Tue Nov 24 11:30:34 JST 2015
+  Sys  Time (sec)               :             0.038943
+  End   Time (date)    :  Tue Nov 24 11:30:35 JST 2015
+  Vector Time (sec)             :             0.003793
+  Inst. Count                   :              2386335.
+  V. Inst. Count                :               144967.
+  V. Element Count              :             33841129.
+  V. Load Element Count         :                46885.
+  FLOP Count                    :                 1644.
+  MOPS                          :          4486.198806
+  MFLOPS                        :             0.204401
+MPI process (universe 0, rank 2) terminated by signal(33); Abort parallel program (deadlock) (dumped to core.9842)
+sxa3117: mpid: MPI process terminated by signal(33)
+MPI process (universe 0, rank 0) terminated by signal(36); Deadlock detected (dumped to core.9840)
+MPI process terminated by signal(36)

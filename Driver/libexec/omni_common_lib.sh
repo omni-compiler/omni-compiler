@@ -31,16 +31,16 @@ function omni_exec_run()
     [ $DRY_RUN = false ] && ${@+"$@"}
 }
 
+function error_process()
+{
+    [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
+    exit 1
+}
+
 function omni_exec()
 {
     [ $VERBOSE = true -o $DRY_RUN = true ] && echo ${@+"$@"}
-    if [ $DRY_RUN = false ]; then
-	${@+"$@"}
-	if [ $? -ne 0 ]; then
-            [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
-            exit 1
-	fi
-    fi
+    [ $DRY_RUN = false ] && ${@+"$@"} || error_process
 }
 
 function omni_f_check_file_exist()

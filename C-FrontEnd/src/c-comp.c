@@ -1084,7 +1084,6 @@ compile_dataDefOrDecl(CExpr *dataDef, CExpr *parent)
             }
         }
     } else {
-
         CCOL_DListNode *ite;
         CExprOfTypeDesc *attrTd = ((td == td0) ? NULL : td0);
 

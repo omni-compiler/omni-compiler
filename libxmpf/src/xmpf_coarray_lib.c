@@ -68,7 +68,7 @@ void xmpf_sync_all_(void)
   int status = 0;
   xmp_sync_all(&status);
 
-  _XMPF_coarrayDebugPrint("SYNCALL out (_count_syncall=%d, status=%d)\n",
+  _XMPF_coarrayDebugPrint("SYNCALL done (count:%d, stat:%d)\n",
                           _count_syncall, status);
 }
 
@@ -83,7 +83,7 @@ void xmpf_sync_all_auto_(void)
   int status = 0;
   xmp_sync_all(&status);
 
-  _XMPF_coarrayDebugPrint("SYNCALL_AUTO out (_count_syncall=%d, status=%d)\n",
+  _XMPF_coarrayDebugPrint("SYNCALL_AUTO done (count:%d, stat:%d)\n",
                           _count_syncall, status);
 }
 

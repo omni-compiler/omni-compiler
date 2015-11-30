@@ -3733,7 +3733,7 @@ public class XfDecompileDomVisitor {
 
             Node valueListNode = XmDomUtil.getElement(n, "valueList");
             if (valueListNode != null &&
-                XmDomUtil.collectChildNodes(n).size() > 0) {
+                XmDomUtil.collectChildNodes(valueListNode).size() > 0) {
                 writer.writeToken(", ");
             }
 

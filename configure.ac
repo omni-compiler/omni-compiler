@@ -1,7 +1,7 @@
 #AC_PREREQ(2.60)
 #LT_PREREQ(2.4)
 
-AC_INIT([Omni Compiler], [0.9.1], [h-murai@riken.jp], [omni])
+AC_INIT([Omni Compiler], [0.9.2], [h-murai@riken.jp], [omni])
 
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
@@ -63,6 +63,7 @@ AC_CONFIG_FILES(XcodeML-Common/Makefile)
 AC_CONFIG_FILES(C-FrontEnd/src/Makefile)
 AC_CONFIG_FILES(C-BackEnd/Makefile)
 AC_CONFIG_FILES(F-FrontEnd/src/Makefile)
+AC_CONFIG_FILES(F-FrontEnd/gnu_module/Makefile)
 AC_CONFIG_FILES(F-BackEnd/Makefile)
 AC_CONFIG_FILES(XcodeML-Exc-Tools/Makefile)
 AC_CONFIG_FILES(XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java)
@@ -284,6 +285,10 @@ AC_ARG_ENABLE(xacc,
     [  --enable-xacc           enable XcalableACC (false default)],
     [doXACC=yes], [doXACC=no])
 
+AC_ARG_ENABLE(mod2xmod,
+    [  --enable-mod2xmod       enable to translate .mod to .xmod on only gfortran (false default)],
+    [domod2xmod=yes], [domod2xmod=no])
+
 AM_CONDITIONAL(FJRDMA, test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu")
 TARGET=$target
 AC_SUBST(TARGET)
@@ -436,6 +441,7 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
   MPI_FCFLAGS="-Kfast,openmp"
   MPI_MODINC="-M"
   MPI_FCLIBS=""
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -451,10 +457,10 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
   OMNI_X2X_FLAGS=""
 
 # ranlib & ar & nm
-  AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx])
-  AC_CHECK_PROG([AR], [arpx], [arpx])
+  AC_CHECK_PROG([RANLIB], [ranlibpx], [ranlibpx], [ranlib])
+  AC_CHECK_PROG([AR], [arpx], [arpx], [ar])
   ARFLAGS="cru"
-  AC_CHECK_PROG([NM], [nmpx], [nmpx])
+  AC_CHECK_PROG([NM], [nmpx], [nmpx], [nm])
 
 elif test "$target" = "MIC-linux-gnu"; then
 # OpenMP
@@ -480,6 +486,7 @@ elif test "$target" = "MIC-linux-gnu"; then
   MPI_FCFLAGS="-fast $OPENMP_OPT_F"
   MPI_MODINC="-module"
   MPI_FCLIBS=""
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -524,6 +531,7 @@ elif test "$target" = "Cray-linux-gnu"; then
   MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
   MPI_MODINC="-J"
   MPI_FCLIBS=""
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -565,11 +573,12 @@ elif test "$target" = "sxace-nec-superux"; then
 
 # MPI F
   AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
-  MPI_FPPFLAGS="-E"
-#  MPI_FCFLAGS="-Chopt $OPENMP_OPT_F"
-  MPI_FCFLAGS="-Chopt -f2003"
+  # Fix:[Xmp-dev:5723] [xmp-bts:0432]
+  MPI_FPPFLAGS="-P -D__SX__ -D_FLOAT0 -I."
+  MPI_FCFLAGS="-Chopt -f2003 -Wf,-ptr,byte"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -578,7 +587,7 @@ elif test "$target" = "sxace-nec-superux"; then
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_NTV_FCFLAGS="-f4 -w -f2003"
+  OMNI_NTV_FCFLAGS="-f4 -w -f2003 -Wf,-ptr,byte"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
@@ -613,9 +622,10 @@ elif test "$target" = "sx9-nec-superux"; then
 # MPI F
   AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
   MPI_FPPFLAGS="-E"
-  MPI_FCFLAGS="-Chopt -f2003 $OPENMP_OPT_F"
+  MPI_FCFLAGS="-Chopt -f2003 $OPENMP_OPT_F -Wf,-ptr,byte"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -624,7 +634,7 @@ elif test "$target" = "sx9-nec-superux"; then
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_NTV_FCFLAGS="-f4 -w"
+  OMNI_NTV_FCFLAGS="-f4 -w -Wf,-ptr,byte"
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
@@ -685,6 +695,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   fi
 
   MPI_FCLIBS=$MPI_CLIBS
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -729,6 +740,7 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $OPENMP_OPT_F"
   MPI_MODINC="-I"
   MPI_FCLIBS=""
+  KIND_MPI_FORTRAN=other
 
 # Omni C
   OMNI_C2X_FLAGS=""
@@ -877,6 +889,7 @@ else
     MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
     MPI_MODINC="-J"
     MPI_FCLIBS=""
+    KIND_MPI_FORTRAN=gfortran
 
     # Omni F
     OMNI_F2X_FLAGS=""
@@ -895,6 +908,7 @@ else
     MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
     MPI_MODINC="-module"
     MPI_FCLIBS=""
+    KIND_MPI_FORTRAN=other
 
     # Omni F
     OMNI_F2X_FLAGS=""
@@ -919,6 +933,7 @@ else
       MPI_FCFLAGS="-fast $OPENMP_OPT_F"
       MPI_MODINC="-module"
       MPI_FCLIBS=""
+      KIND_MPI_FORTRAN=other
 
       # Omni F
       OMNI_F2X_FLAGS=""
@@ -979,22 +994,88 @@ AC_SUBST(GPGPU_PREFIX)
 # --------------------------------------------------------------------
 # specify libxmp path
 
-AC_ARG_WITH(libxml,
-    [  --with-libxml=DIR           libxml installation path (default: /usr)],
-    [LIBXML_PREFIX="${withval}"], [LIBXML_PREFIX="/usr"])
+AC_ARG_WITH(libxml2,
+    [  --with-libxml2=DIR          specify prefix directory for installed libxml2 package (default: /usr)
+                              Equivalent to --with-libxml2-include=PATH/include plus
+                                            --with-libxml2-lib=PATH/lib64],
+    [LIBXML2_PREFIX="${withval}"], [LIBXML2_PREFIX="/usr"])
 
-if ! test -f $LIBXML_PREFIX/include/libxml2/libxml/parser.h; then
-   AC_MSG_ERROR([parser.h not found. Please attach or check --with-libxml=<DIR>. See ./configure --help])
+AC_ARG_WITH(libxml2-include,
+    [  --with-libxml2-include=DIR  specify directory for installed libxml2 include files],
+    [LIBXML2_INCLUDE_DIR="${withval}"], [LIBXML2_INCLUDE_DIR="${LIBXML2_PREFIX}/include/"])
+
+AC_ARG_WITH(libxml2-lib,
+    [  --with-libxml2-lib=DIR      specify directory for installed libxml2 library],
+    [LIBXML2_LIB_DIR="${withval}"], [LIBXML2_LIB_DIR="${LIBXML2_PREFIX}/lib64"])
+
+# check dirs
+if ! test -d "$LIBXML2_INCLUDE_DIR"; then
+  AC_MSG_ERROR([$LIBXML2_INCLUDE_DIR not found.  Please attach --with-libxml2=<DIR> or --with-libxml2-include=<DIR>.])
 fi
 
-AC_SUBST(LIBXML_PREFIX)
-if test LIBXML_PREFIX = "/usr"; then
-   LIBXML_LIB=/usr/lib64
-else
-   LIBXML_LIB=${LIBXML_PREFIX}/lib
+if ! test -d "$LIBXML2_LIB_DIR"; then
+   LIBXML2_LIB_DIR=${LIBXML2_PREFIX}/lib
 fi
 
-AC_SUBST(LIBXML_LIB)
+if ! test -d "$LIBXML2_LIB_DIR"; then
+  AC_MSG_ERROR([$LIBXML2_LIB_DIR not found.  Please attach --with-libxml2=<DIR> or --with-libxml2-lib=<DIR>.])
+fi
+
+# check libxml/parser.h
+tmp_file=/tmp/_omni_$$
+tmp_file_c=/tmp/_omni_$$.c
+echo "#include <libxml/parser.h>" > $tmp_file_c
+${CC} -E -I$LIBXML2_INCLUDE_DIR/libxml2 $tmp_file_c 2> /dev/null > /dev/null
+if test $? -ne 0; then
+  rm -f $tmp_file_c
+  AC_MSG_ERROR([parser.h not found. Please attach --with-libxml2=<DIR> or --with-libxml2-include=<DIR>.])
+fi
+
+# check -lxml2
+echo "int main(){return 0;}" > $tmp_file_c
+${CC} -L$LIBXML2_LIB_DIR -lxml2 $tmp_file_c -o $tmp_file
+if test $? -ne 0; then
+  rm -f $tmp_file $tmp_file_c
+  AC_MSG_ERROR([-lxml2 not found. Please attach --with-libxml2=<DIR> or --with-libxml2-lib=<DIR>.])
+fi
+rm -f $tmp_file $tmp_file_c
+      
+AC_SUBST(LIBXML2_INCLUDE_DIR)
+AC_SUBST(LIBXML2_LIB_DIR)
+										    
+# --------------------------------------------------------------------
+# specify mpfr path
+
+AC_ARG_WITH(mpfr,
+    [  --with-mpfr=DIR             specify prefix directory for installed mpfr package (default: /usr)
+                              Equivalent to --with-mpfr-include=PATH/include plus
+                                            --with-mpfr-lib=PATH/lib64],
+    [MPFR_PREFIX="${withval}"], [MPFR_PREFIX="/usr"])
+
+AC_ARG_WITH(mpfr-include,
+    [  --with-mpfr-include=DIR     specify directory for installed mpfr include files],
+    [MPFR_INCLUDE_DIR="${withval}"], [MPFR_INCLUDE_DIR="${MPFR_PREFIX}/include"])
+
+AC_ARG_WITH(mpfr-lib,
+    [  --with-mpfr-lib=DIR         specify directory for installed mpfr library],
+    [MPFR_LIB_DIR="${withval}"], [MPFR_LIB_DIR="${MPFR_PREFIX}/lib64"])
+
+# --------------------------------------------------------------------
+# specify gmp path
+
+AC_ARG_WITH(gmp,
+    [  --with-gmp=DIR              specify prefix directory for installed gmp package (default: /usr)
+                              Equivalent to --with-gmp-include=PATH/include plus
+                                            --with-gmp-lib=PATH/lib64],
+    [GMP_PREFIX="${withval}"], [GMP_PREFIX="/usr"])
+
+AC_ARG_WITH(gmp-include,
+    [  --with-gmp-include=DIR      specify directory for installed gmp include files],
+    [GMP_INCLUDE_DIR="${withval}"], [GMP_INCLUDE_DIR="${GMP_PREFIX}/include"])
+
+AC_ARG_WITH(gmp-lib,
+    [  --with-gmp-lib=DIR          specify directory for installed gmp library],
+    [GMP_LIB_DIR="${withval}"], [GMP_LIB_DIR="${GMP_PREFIX}/lib64"])
 
 # --------------------------------------------------------------------
 # set BLAS
@@ -1160,18 +1241,23 @@ fi
 # --------------------------------------------------------------------
 # set userflags
 if test -z ${MPI_CPP}; then
-  if test "$target" != "powerpc-ibm-cnk"; then
-    MPI_CPP="${MPI_CC}"
-  else
+  if test "$target" = "powerpc-ibm-cnk"; then
     # $MPI_CC cannot be used for XcodeML bug in powerpc-ibm-cnk.
     # Instead of $MPI_CC, $CC (gcc) is used.
     # But, this is not a good idea. Wish to fix the bug.
     MPI_CPP="${CC}"
+  else
+    MPI_CPP="${MPI_CC}"
   fi
 fi
 	
 if test	-z ${MPI_FPP}; then
-  MPI_FPP="${MPI_FC}"
+  if test "$target" = "sxace-nec-superux"; then
+    # Fix:[Xmp-dev:5723] [xmp-bts:0432]
+    MPI_FPP=sxcpp
+  else
+    MPI_FPP="${MPI_FC}"
+  fi
 fi
 
 if test "" != "${userFCFLAGS}"; then
@@ -1245,6 +1331,88 @@ AC_SUBST(AR)
 AC_SUBST(NM)
 AC_SUBST(NM_OPT)
 
+# check --enable-mod2xmod
+if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
+   AC_MSG_ERROR("--enable-mod2xmod option can be used when Backend compiler is gfortran.")
+fi
+
+IS_MOD2XMOD=no
+if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
+  IS_MOD2XMOD=yes
+fi
+
+AM_CONDITIONAL(MOD2XMOD, test "$IS_MOD2XMOD" = "yes")
+
+if test "$IS_MOD2XMOD" = "yes"; then
+  #### GMP ####
+  # check dirs
+  if ! test -d "$GMP_INCLUDE_DIR"; then
+    AC_MSG_ERROR([$GMP_INCLUDE_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-include=<DIR>.])
+  fi
+  
+  if ! test -d "$GMP_LIB_DIR"; then
+    GMP_LIB_DIR=${GMP_PREFIX}/lib
+    if ! test -d "$GMP_LIB_DIR"; then
+      AC_MSG_ERROR([$GMP_LIB_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
+    fi
+  fi
+
+  # check gmp.h
+  tmp_file=/tmp/_omni_$$
+  tmp_file_c=/tmp/_omni_$$.c
+  echo "#include <gmp.h>" > $tmp_file_c
+  ${CC} -E -I$GMP_INCLUDE_DIR $tmp_file_c 2> /dev/null > /dev/null
+  if test $? -ne 0; then
+    rm -f $tmp_file_c
+    AC_MSG_ERROR([gmp.h not found. Please attach --with-gmp=<DIR> or --with-gmp-include=<DIR>.])
+  fi
+
+  # check -lgmp
+  echo "int main(){return 0;}" > $tmp_file_c
+  ${CC} -L$GMP_LIB_DIR -lgmp $tmp_file_c -o $tmp_file
+  if test $? -ne 0; then
+    rm -f $tmp_file $tmp_file_c
+    AC_MSG_ERROR([-lgmp not found. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
+  fi
+  rm -f $tmp_file $tmp_file_c
+
+  AC_SUBST(GMP_INCLUDE_DIR)
+  AC_SUBST(GMP_LIB_DIR)
+
+  #### MPFR ####
+  # check dirs
+  if ! test -d "$MPFR_INCLUDE_DIR"; then
+    AC_MSG_ERROR([$MPFR_INCLUDE_DIR not found.  Please attach --with-mpfr=<DIR> or --with-mpfr-include=<DIR>.])
+  fi
+
+  if ! test -d "$MPFR_LIB_DIR"; then
+    MPFR_LIB_DIR=${MPFR_PREFIX}/lib
+    if ! test -d "$MPFR_LIB_DIR"; then
+      AC_MSG_ERROR([$MPFR_LIB_DIR not found.  Please attach --with-mpfr=<DIR> or --with-mpfr-lib=<DIR>.])
+    fi
+  fi
+
+  # check mpfr.h
+  echo "#include <mpfr.h>" > $tmp_file_c
+  ${CC} -E -I$MPFR_INCLUDE_DIR -I$GMP_INCLUDE_DIR $tmp_file_c 2> /dev/null > /dev/null
+  if test $? -ne 0; then
+    rm -f $tmp_file_c
+    AC_MSG_ERROR([mpfr.h not found. Please attach --with-mpfr=<DIR> or --with-mpfr-include=<DIR>.])
+  fi
+
+  # check -lmpfr
+  echo "int main(){return 0;}" > $tmp_file_c
+  ${CC} -L$MPFR_LIB_DIR -lmpfr $tmp_file_c -o $tmp_file
+  if test $? -ne 0; then
+    rm -f $tmp_file tmp_file_c
+    AC_MSG_ERROR([-lmpfr not found. Please attach --with-mpfr=<DIR> or --with-mpfr-lib=<DIR>.])
+  fi
+  rm -f $tmp_file tmp_file_c
+
+  AC_SUBST(MPFR_INCLUDE_DIR)
+  AC_SUBST(MPFR_LIB_DIR)
+fi
+
 # check PGI compiler
 #chk=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1 | grep pgcc`
 #AM_CONDITIONAL(IS_PGI, test "$chk" != "")
@@ -1267,7 +1435,7 @@ fi
 AM_CONDITIONAL(SUPERUX, test "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux")
 
 #AC_SUBST(CRAY)
-AC_SUBST(SUPERUX)
+#AC_SUBST(SUPERUX)
 
 # --------------------------------------------------------------------
 # MPI3 for MPI FLAGS
@@ -1303,6 +1471,17 @@ AM_CONDITIONAL(MPI3, test "x${doMPI3}" = "xyes")
 AM_CONDITIONAL(MPI3_ONESIDED, test "x${use_mpi3_onesided}" = "xyes")
 AC_SUBST(MPI_VERSION)
 AC_SUBST(MPI_SUBVERSION)
+
+# --------------------------------------------------------------------
+if test x${use_gasnet} = xyes; then
+  ONESIDED_CPPFLAGS="-D_XMP_GASNET"
+elif test x${use_mpi3_onesided} = xyes; then
+  ONESIDED_CPPFLAGS="-D_XMP_MPI3_ONESIDED"
+elif test x${target} = xKcomputer-linux-gnu -o x${target} = xFX10-linux-gnu -o x${target} = xFX100-linux-gnu; then
+  ONESIDED_CPPFLAGS="-D_XMP_FJRDMA"
+fi
+
+AC_SUBST(ONESIDED_CPPFLAGS)
 
 # --------------------------------------------------------------------
 # check Perl versoin is 5
@@ -2095,7 +2274,7 @@ elif test x$use_mpi3_onesided = xyes; then
   isOnesided=yes
   how_onesided=MPI3
   isCoarray=yes
-  isPostWait=no
+  isPostWait=yes
   isLockUnlock=no
 fi
 			      
@@ -2154,6 +2333,10 @@ if test x${isOnesided} = xyes; then
   echo "      Lock/Unlock                : $isLockUnlock"
 fi
 
+if test x${domod2xmod} = xyes; then
+  echo "    Translate .mod to .xmod      : $domod2xmod"
+fi
+  
 if test x${use_tca} = xyes; then
   echo "    TCA                   : yes"
 fi

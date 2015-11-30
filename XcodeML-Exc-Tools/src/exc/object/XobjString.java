@@ -59,19 +59,59 @@ public class XobjString extends XobjConst
     @Override
     public Xobject cfold(Block block)
     {
-      if (value == null) 
-        return this.copy();
-
-      Xobject id_list = block.getBody().getIdentList();
-      if (id_list == null)
-        return this.copy();
-
-      Ident ident = id_list.findVarIdent(value);
+      Ident ident = findIdent(block);
       if (ident == null)
         return this.copy();
 
       return ident.cfold(block);
     }
+
+    public Ident findIdent(Block block)
+    {
+      if (value == null) 
+        return null;
+
+      Xobject id_list = block.getBody().getIdentList();
+      if (id_list == null)
+        return null;
+
+      Ident ident = id_list.findVarIdent(value);
+      return ident;
+    }
+
+
+    public Xobject lbound(int dim, Block block)
+    {
+      Fshape shape = new Fshape(this, block);
+      return shape.lbound(dim);
+    }
+    public Xobject ubound(int dim, Block block)
+    {
+      Fshape shape = new Fshape(this, block);
+      return shape.ubound(dim);
+    }
+    public Xobject extent(int dim, Block block)
+    {
+      Fshape shape = new Fshape(this, block);
+      return shape.extent(dim);
+    }
+
+    public Xobject[] lbounds(Block block)
+    {
+      Fshape shape = new Fshape(this, block);
+      return shape.lbounds();
+    }
+    public Xobject[] ubounds(Block block)
+    {
+      Fshape shape = new Fshape(this, block);
+      return shape.ubounds();
+    }
+    public Xobject[] extents(Block block)
+    {
+      Fshape shape = new Fshape(this, block);
+      return shape.extents();
+    }
+
 
     @Override
     public Xobject copy()

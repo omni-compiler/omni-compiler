@@ -1,11 +1,5 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
-import exc.block.Block;
+import exc.block.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -284,9 +278,32 @@ public class Ident extends Xobject
     public Xobject cfold(Block block)
     {
       if (fparam_value != null) {
-        Xobject that = ((XobjList)fparam_value).args.arg;
-        return that.cfold(block);
+        // I don't know why but fparam_value is always in this form.
+        if (fparam_value.Nargs() == 2 && fparam_value.getArg(1) == null) {
+          Xobject value = fparam_value.getArg(0);
+          return value.cfold(block);
+        } else {
+          XmLog.fatal("Ident.cfold: unknown form of fparam_value");
+        }
       }
+
+      if (declared_module != null) {
+        XobjectDefEnv xobjDefEnv = ((FunctionBlock)block).getEnv();
+        XobjectFile xobjFile = (XobjectFile)xobjDefEnv;
+
+        if (xobjFile.findVarIdent(declared_module) == null)
+          XmLog.fatal("Ident.cfold: not found module name in globalSymbols: " + 
+                      declared_module);
+
+        for (XobjectDef punit: xobjFile.getDefs()) {
+          if (declared_module.equals(punit.getName())) {
+            // found the module that declares this ident
+            Ident ident2 = punit.getDef().findVarIdent(name);
+            return ident2.cfold(block);
+          }
+        }
+      }
+
       return this.copy();
     }
 
