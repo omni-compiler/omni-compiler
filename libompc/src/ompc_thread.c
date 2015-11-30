@@ -58,7 +58,6 @@ static void ompc_free_proc(struct ompc_proc *p);
 static struct ompc_thread *ompc_alloc_thread(struct ompc_proc *proc);
 static void ompc_free_thread(struct ompc_proc *proc, struct ompc_thread *p);
 /*static*/ struct ompc_thread *ompc_current_thread(void);
-static void ompc_thread_barrier2(int id, struct ompc_thread *tpp);
 
 extern void ompc_call_fsub(struct ompc_thread *tp);
 
@@ -476,7 +475,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         cthd->in_flags[i]._v = 0;
     }
     
-    ompc_init_tree_barrier(&cthd->tree_barrier_desc, n_thds);
+    ompc_tree_barrier_init(&cthd->tree_barrier, n_thds);
 
     ompc_thread_t *children = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * n_thds);
 
@@ -516,7 +515,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     ABT_mutex_free(&cthd->reduction_mutex);
     free(children);
     
-    ompc_finalize_tree_barrier(&cthd->tree_barrier_desc);
+    ompc_tree_barrier_finalize(&cthd->tree_barrier);
 
     if (cthd->parent == NULL) {
         proc_last_used = 0;
@@ -593,52 +592,6 @@ ompc_thread_barrier(int id, struct ompc_thread *tpp)
     if(ompc_log_flag) tlog_barrier_OUT(id);
 #endif // USE_LOG
 }
-
-
-void
-ompc_thread_barrier2(int id, struct ompc_thread *tpp)
-{
-    int sen0,n;
-
-    if(tpp == NULL) return; /* not in parallel */
-#ifdef USE_LOG
-    if(ompc_log_flag) tlog_barrier_IN(id);
-#endif // USE_LOG
-    sen0 = tpp->barrier_sense ^ 1;
-    n = tpp->num_thds;
-
-#if 1  // USE_ARGOBOTS
-    if (id == 0) {
-        for (int i = 1; i < n; i++) {
-            OMPC_WAIT_UNTIL((volatile int)tpp->barrier_flags[i]._v == sen0,
-                tpp->reduction_cond, tpp->reduction_mutex);
-        }
-        tpp->barrier_sense = sen0;
-        MBAR();
-    } else {
-        ABT_mutex_lock(tpp->reduction_mutex);
-        tpp->barrier_flags[id]._v = sen0;
-        ABT_cond_signal(tpp->reduction_cond);
-        ABT_mutex_unlock(tpp->reduction_mutex);
-    }
-#else
-    if (id == 0) {
-        int j;
-        for ( j = 1 ; j < n ; j++ ) {
-            OMPC_WAIT((volatile int)tpp->barrier_flags[j]._v != sen0);
-        }
-        tpp->barrier_sense = sen0;
-        MBAR();
-    } else {
-        tpp->barrier_flags[id]._v = sen0;
-    }
-#endif  // USE_ARGOBOTS
-
-#ifdef USE_LOG
-    if(ompc_log_flag) tlog_barrier_OUT(id);
-#endif // USE_LOG
-}
-
 
 void
 ompc_current_thread_barrier()

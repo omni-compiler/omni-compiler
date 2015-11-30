@@ -9,88 +9,73 @@
 
 #include "ompclib.h"
 
-// returns whether mynode has any children
-static _Bool init_node(struct ompc_tree_barrier_desc *desc,
-                       struct ompc_tree_barrier_node *parent,
-                       int height)
-{
-    struct ompc_tree_barrier_node *mynode = &desc->nodes[desc->node_count++];
-    mynode->sense = 0;
-    mynode->parent = parent;
-    
-    int num_children;
-    if (height == 0) {
-        if (desc->leaf_count < desc->num_leaves) {
-            desc->leaves[desc->leaf_count++] = mynode;
-            num_children = desc->leaf_count * 2 > desc->num_threads ? 1 : 2;
-        } else {
-            num_children = 0;
-        }
-    } else {
-        if (!init_node(desc, mynode, height - 1)) {
-            num_children = 0;
-        } else if (!init_node(desc, mynode, height - 1)) {
-            num_children = 1;
-        } else {
-            num_children = 2;
-        }
-    }
-    mynode->num_children = mynode->count = num_children;
-    
-    if (num_children == 2) {
-        ABT_mutex_create(&mynode->mutex);
-        ABT_cond_create(&mynode->cond);
-    }
-    
-    return num_children > 0;
-}
-
-void ompc_init_tree_barrier(struct ompc_tree_barrier_desc *desc,
+void ompc_tree_barrier_init(struct ompc_tree_barrier *barrier,
                             int num_threads)
 {
-    desc->node_count = 0;
-    desc->leaf_count = 0;
-    desc->num_threads = num_threads;
-    desc->num_leaves = (num_threads + 1) / 2;
-    int height = 0;
-    for (int n = num_threads; n > 1; n /= 2) {
-        height++;
+    barrier->depth = 0;
+    for (int n = num_threads; n > 2; n = (n + 1) / 2) {
+        barrier->depth++;
     }
-    init_node(desc, NULL, height);
-}
 
-void ompc_finalize_tree_barrier(struct ompc_tree_barrier_desc *desc)
-{
-    for (int i = 0; i < desc->node_count; i++) {
-        if (desc->nodes[i].num_children == 2) {
-            ABT_cond_free(&desc->nodes[i].cond);
-            ABT_mutex_free(&desc->nodes[i].mutex);
+    for (int d = 0; d <= barrier->depth; d++) {
+        int start_idx = (1 << d) - 1;
+        int leaf_incr = 2 << (barrier->depth - d);
+        int leaf_count = 0;
+        for (int i = 0; i < (1 << d); i++) {
+            if (leaf_count >= num_threads) break;
+            struct ompc_tree_barrier_node *node = &barrier->nodes[start_idx + i];
+            int num_children = num_threads > leaf_count + leaf_incr / 2 ? 2 : 1;
+            node->num_children = node->count = num_children;
+            node->sense = 0;
+            if (num_children == 2) {
+                ABT_mutex_create(&node->mutex);
+                ABT_cond_create(&node->cond);
+            }
+            leaf_count += leaf_incr;
         }
     }
 }
 
-static void wait_on_node(struct ompc_tree_barrier_node *node,
-                         _Bool sense)
+void ompc_tree_barrier_finalize(struct ompc_tree_barrier *barrier)
 {
-    if (__sync_fetch_and_sub(&node->count, 1) == 1) {
-        if (node->parent != NULL) {
-            wait_on_node(node->parent, sense);
+    for (int d = 0; d <= barrier->depth; d++) {
+        int start_idx = (1 << d) - 1;
+        for (int i = 0; i < (1 << d); i++) {
+            struct ompc_tree_barrier_node *node = &barrier->nodes[start_idx + i];
+            if (node->num_children == 2) {
+                ABT_mutex_free(&node->mutex);
+                ABT_cond_free(&node->cond);
+            }
         }
+    }
+}
+
+void ompc_tree_barrier_wait(struct ompc_tree_barrier *barrier,
+                            struct ompc_thread *thread)
+{
+    int node_idx = (1 << barrier->depth) + (thread->num >> 1) - 1;
+    int stack_count = 0;
+    _Bool sense = !thread->barrier_sense;
+    thread->barrier_sense = sense;
+
+    while (1) {
+        struct ompc_tree_barrier_node *node = &barrier->nodes[node_idx];
+        if (__sync_fetch_and_sub(&node->count, 1) != 1) {
+            OMPC_WAIT_UNTIL(node->sense == sense, node->cond, node->mutex);
+            break;
+        }
+        thread->node_stack[stack_count++] = node;
+        if (node_idx == 0) break;
+        node_idx = (node_idx - 1) >> 1;
+    }
+
+    while (stack_count > 0) {
+        struct ompc_tree_barrier_node *node = thread->node_stack[--stack_count];
         node->count = node->num_children;
         if (node->num_children == 2) {
             OMPC_SIGNAL(node->sense = sense, node->cond, node->mutex);
         } else {
             node->sense = sense;
         }
-    } else {
-        OMPC_WAIT_UNTIL(node->sense == sense, node->cond, node->mutex);
     }
-}
-
-void ompc_tree_barrier(struct ompc_thread *thread,
-                       struct ompc_tree_barrier_desc *desc,
-                       int thread_num)
-{
-    thread->barrier_sense = !thread->barrier_sense;
-    wait_on_node(desc->leaves[thread_num / 2], thread->barrier_sense);
 }

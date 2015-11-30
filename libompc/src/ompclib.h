@@ -55,7 +55,8 @@ typedef struct {
 } ompc_nest_lock_t;
 
 #define N_PROC_DEFAULT  4        /* default */
-#define MAX_PROC        256
+#define LOG_MAX_PROC    8
+#define MAX_PROC        (1 << LOG_MAX_PROC)  // 256
 
 #define CACHE_LINE_SIZE 64  // x86-64
 
@@ -79,20 +80,15 @@ struct ompc_tree_barrier_node
 {
     int num_children;
     int count;
-    _Bool sense;
-    struct ompc_tree_barrier_node *parent;
+    _Bool volatile sense;
     ABT_mutex mutex;
     ABT_cond cond;
-};
+} __attribute__((aligned(CACHE_LINE_SIZE)));
 
-struct ompc_tree_barrier_desc
+struct ompc_tree_barrier
 {
-    int num_threads;
-    int num_leaves;
-    int node_count;
-    int leaf_count;
+    int depth;
     struct ompc_tree_barrier_node nodes[MAX_PROC - 1];
-    struct ompc_tree_barrier_node *leaves[MAX_PROC / 2];
 };
 
 struct ompc_thread {
@@ -142,14 +138,15 @@ struct ompc_thread {
     volatile int out_count;
 
     /* structure for barrier in this team */
-    volatile int barrier_sense;
+    _Bool barrier_sense;
+    struct ompc_tree_barrier_node *node_stack[LOG_MAX_PROC];
     volatile struct barrier_flag {
         int _v;
         any_type r_v;  /* for reduction */
         char _padding[CACHE_LINE_SIZE-sizeof(int)-sizeof(any_type)];
     } barrier_flags[MAX_PROC];
     
-    struct ompc_tree_barrier_desc tree_barrier_desc;
+    struct ompc_tree_barrier tree_barrier;
 };
 
 
@@ -187,12 +184,11 @@ void ompc_set_runtime_schedule(char *s);
 
 ompc_proc_t ompc_xstream_self();
 
-void ompc_init_tree_barrier(struct ompc_tree_barrier_desc *desc,
+void ompc_tree_barrier_init(struct ompc_tree_barrier *barrier,
                             int num_threads);
-void ompc_finalize_tree_barrier(struct ompc_tree_barrier_desc *desc);
-void ompc_tree_barrier(struct ompc_thread *thread,
-                       struct ompc_tree_barrier_desc *desc,
-                       int thread_num);
+void ompc_tree_barrier_finalize(struct ompc_tree_barrier *barrier);
+void ompc_tree_barrier_wait(struct ompc_tree_barrier *barrier,
+                            struct ompc_thread *thread);
 
 /* GNUC and Intel Fortran supports __sync_synchronize */
 #define MBAR() __sync_synchronize()
