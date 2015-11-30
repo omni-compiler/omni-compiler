@@ -1,15 +1,8 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 
 import exc.block.*;
 import exc.object.*;
 import exc.openacc.ACCpragma;
-
 import java.util.*;
 
 public class XMPrewriteExpr {
@@ -1397,7 +1390,7 @@ public class XMPrewriteExpr {
     for(int i=0; i<coarray.getVarDim(); i++){
       Xobject tmp = null;
       for(int j=coarray.getVarDim()-1; j>i; j--){
-        int size = coarray.getSizeAt(j);
+	  int size = (int)coarray.getSizeAt(j);
         if(tmp == null){
           tmp = Xcons.Int(Xcode.INT_CONSTANT, size);
         } else{
@@ -2260,7 +2253,7 @@ public class XMPrewriteExpr {
     return false;
   }
 
-  public  void rewriteVarDecl(Xobject varDecl, boolean isLocal) {
+  public void rewriteVarDecl(Xobject varDecl, boolean isLocal) {
     assert(varDecl.Opcode() == Xcode.VAR_DECL);
 
     String varName = varDecl.getArg(0).getName();

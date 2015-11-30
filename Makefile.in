@@ -78,14 +78,21 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@SUPERUX_FALSE@am__append_1 = libompc/src libompf/src
-@ACC_TRUE@am__append_2 = libacc/src libacc/include
-@ATOOL_TRUE@am__append_3 = Driver/atool
-@GASNET_TRUE@am__append_4 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"  "local-view/coarray/F_alloc"  "local-view/coarray/F_get"  "local-view/coarray/F_put"  "local-view/coarray/F_scope"  "local-view/coarray/F_cfold"
-@GASNET_TRUE@am__append_5 = "local-view/coarray/C/"
-@FJRDMA_TRUE@am__append_6 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F"  "local-view/coarray/F_alloc"  "local-view/coarray/F_get"  "local-view/coarray/F_put"  "local-view/coarray/F_scope"  "local-view/coarray/F_cfold"
-@FJRDMA_TRUE@am__append_7 = "local-view/coarray/C/"
-@MPI3_TRUE@am__append_8 = "global-view/async/C/" "global-view/async/F/"
+@MOD2XMOD_TRUE@am__append_1 = F-FrontEnd/gnu_module
+@SUPERUX_FALSE@am__append_2 = libompc/src libompf/src
+@ACC_TRUE@am__append_3 = libacc/src libacc/include
+@ATOOL_TRUE@am__append_4 = Driver/atool
+@GASNET_TRUE@am__append_5 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C"  "local-view/coarray/F" \
+@GASNET_TRUE@	       "local-view/coarray/F_alloc" "local-view/coarray/F_get" "local-view/coarray/F_put" "local-view/coarray/F_scope" \
+@GASNET_TRUE@	       "local-view/coarray/F_cfold" "local-view/lock-unlock/C"
+
+@GASNET_TRUE@am__append_6 = "local-view/coarray/C/"
+@FJRDMA_TRUE@am__append_7 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/coarray/F" \
+@FJRDMA_TRUE@	       "local-view/coarray/F_alloc" "local-view/coarray/F_get" "local-view/coarray/F_put" "local-view/coarray/F_scope" \
+@FJRDMA_TRUE@	       "local-view/coarray/F_cfold"
+
+@FJRDMA_TRUE@am__append_8 = "local-view/coarray/C/"
+@MPI3_TRUE@am__append_9 = "global-view/async/C/" "global-view/async/F/"
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
@@ -115,10 +122,9 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/Driver/atool/src/cmd/Makefile.in \
 	$(top_srcdir)/Driver/atool/src/cmd/paths.h.in \
 	./buildutils/compile ./buildutils/config.guess \
-	./buildutils/config.sub ./buildutils/depcomp \
-	./buildutils/install-sh ./buildutils/missing \
-	./buildutils/ylwrap ./buildutils/ltmain.sh \
-	$(top_srcdir)/./buildutils/compile \
+	./buildutils/config.sub ./buildutils/install-sh \
+	./buildutils/missing ./buildutils/ylwrap \
+	./buildutils/ltmain.sh $(top_srcdir)/./buildutils/compile \
 	$(top_srcdir)/./buildutils/config.guess \
 	$(top_srcdir)/./buildutils/config.sub \
 	$(top_srcdir)/./buildutils/install-sh \
@@ -206,8 +212,8 @@ CSCOPE = cscope
 DIST_SUBDIRS = XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src \
 	F-BackEnd XcodeML-Exc-Tools Driver/src libtlog/src_threads \
 	libtlog/src_mpi libxmp/include libxmp/src libxmp/src_threads \
-	libxmpf/include libxmpf/src libompc/src libompf/src libacc/src \
-	libacc/include Driver/atool
+	libxmpf/include libxmpf/src F-FrontEnd/gnu_module libompc/src \
+	libompf/src libacc/src libacc/include Driver/atool
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -285,6 +291,8 @@ F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 GASNET_LIBS = @GASNET_LIBS@
+GMP_INCLUDE_DIR = @GMP_INCLUDE_DIR@
+GMP_LIB_DIR = @GMP_LIB_DIR@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CFLAGS = @GPU_CFLAGS@
 GPU_CMD = @GPU_CMD@
@@ -306,8 +314,8 @@ LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
-LIBXML_LIB = @LIBXML_LIB@
-LIBXML_PREFIX = @LIBXML_PREFIX@
+LIBXML2_INCLUDE_DIR = @LIBXML2_INCLUDE_DIR@
+LIBXML2_LIB_DIR = @LIBXML2_LIB_DIR@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKE = @MAKE@
@@ -315,6 +323,8 @@ MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
+MPFR_INCLUDE_DIR = @MPFR_INCLUDE_DIR@
+MPFR_LIB_DIR = @MPFR_LIB_DIR@
 MPI_CC = @MPI_CC@
 MPI_CFLAGS = @MPI_CFLAGS@
 MPI_CLIBS = @MPI_CLIBS@
@@ -350,6 +360,7 @@ OM_EXEC_C_PP = @OM_EXEC_C_PP@
 OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
+ONESIDED_CPPFLAGS = @ONESIDED_CPPFLAGS@
 OPENMP_OPT_C = @OPENMP_OPT_C@
 OPENMP_OPT_F = @OPENMP_OPT_F@
 OS = @OS@
@@ -385,7 +396,6 @@ SIZEOF_UNSIGNED_SHORT = @SIZEOF_UNSIGNED_SHORT@
 SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
 STRIP = @STRIP@
-SUPERUX = @SUPERUX@
 TARGET = @TARGET@
 TARGET_ARCH = @TARGET_ARCH@
 TOPDIR = @TOPDIR@
@@ -486,7 +496,7 @@ SUBDIRS = XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src \
 	F-BackEnd XcodeML-Exc-Tools Driver/src libtlog/src_threads \
 	libtlog/src_mpi libxmp/include libxmp/src libxmp/src_threads \
 	libxmpf/include libxmpf/src $(am__append_1) $(am__append_2) \
-	$(am__append_3)
+	$(am__append_3) $(am__append_4)
 XMPPKG_TMPDIR_TOP = /tmp/@XMPPKG_NAME@
 XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/tmp
 DEB_VER_FILE = /etc/debian_version
@@ -505,10 +515,10 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	"global-view/gblock/F/" "global-view/align/C/" \
 	"global-view/align/F/" "global-view/intrinsic/C/" \
 	"global-view/intrinsic/F/" "global-view/util/C/" \
-	"global-view/util/F/" "others/F" "others/C" $(am__append_4) \
-	$(am__append_6) $(am__append_8)
+	"global-view/util/F/" "others/F" "others/C" $(am__append_5) \
+	$(am__append_7) $(am__append_9)
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
-LARGE_TESTDIRS = "others/C" $(am__append_5) $(am__append_7)
+LARGE_TESTDIRS = "others/C" $(am__append_6) $(am__append_8)
 DELETABLES = Driver/bin/ompcc \
 	Driver/bin/ompf90 \
 	Driver/bin/xmpf90 \

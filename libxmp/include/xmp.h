@@ -1,8 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
 #ifndef MPI_PORTABLE_PLATFORM_H
 #define MPI_PORTABLE_PLATFORM_H
 #endif 
@@ -26,7 +21,11 @@
 #include <stddef.h>
 #include <mpi.h>
 
-typedef void *xmp_desc_t;
+// Typedef
+typedef void* xmp_desc_t;
+#ifdef _XMP_GASNET
+#include "xmp_lock.h"
+#endif
 
 // ----- libxmp
 extern MPI_Comm	xmp_get_mpi_comm(void);
@@ -88,16 +87,13 @@ extern void     xmp_sched_template_index(int* local_start_index, int* local_end_
 					 const xmp_desc_t template, const int template_dim);
 extern void     xmp_sync_memory(const int* status);
 extern void     xmp_sync_all(const int* status);
-extern void     xmp_sync_image(int image, int* status);
-extern void     xmp_sync_images(int num, int* image_set, int* status);
+extern void     xmp_sync_image(const int image, int* status);
+extern void     xmp_sync_images(const int num, int* image_set, int* status);
 extern void     xmp_sync_images_all(int* status);
-
 extern void     xmp_sort_up(xmp_desc_t a_desc, xmp_desc_t b_desc);
 extern void     xmp_sort_down(xmp_desc_t a_desc, xmp_desc_t b_desc);
-
 extern void    *xmp_malloc(xmp_desc_t d, ...);
 extern void     xmp_free(xmp_desc_t d);
-
 extern void     xmp_exit(int status);
 
 // ----- libxmp_gpu

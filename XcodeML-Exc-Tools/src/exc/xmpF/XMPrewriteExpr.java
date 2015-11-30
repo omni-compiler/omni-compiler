@@ -518,54 +518,77 @@ public class XMPrewriteExpr
 
       if (!a.isFullShadow(dim_i)){
 
-	// check this expression is ver+offset
 	Xobject e = i.getArg(0);
-	// we need normalize?
-	Xobject v = null;
-	Xobject offset = null;
-	if(e.isVariable()){
-	  v = e;
-	} else {
-	  switch(e.Opcode()){
-	  case PLUS_EXPR:
-	    if(e.left().isVariable()){
-	      v = e.left();
-	      offset = e.right();
-	    } else if(e.right().isVariable()){
-	      v = e.right();
-	      offset = e.left();
-	    }
-	    break;
-	  case MINUS_EXPR:
-	    if(e.left().isVariable()){
-	      v = e.left();
-	      offset = Xcons.unaryOp(Xcode.UNARY_MINUS_EXPR,e.right());
-	    }
-	    break;
+	Xobject x = null;
+
+	if (e.isVariable()){
+	  x = convertLocalIndex(e, dim_i, a, bb, block);
+	  if (localIndexOffset != null){
+	    x = Xcons.binaryOp(Xcode.PLUS_EXPR, x, localIndexOffset);
 	  }
 	}
-
-	if (v != null){
-	  v = convertLocalIndex(v, dim_i, a, bb, block);
-	  if (v != null){
-	      if (localIndexOffset != null){
-		  if (offset != null)
-		      offset = Xcons.binaryOp(Xcode.PLUS_EXPR,
-					      localIndexOffset, offset);
-		  else 
-		      offset = localIndexOffset;
-	      }
-	      if (offset != null)
-		  v = Xcons.binaryOp(Xcode.PLUS_EXPR, v, offset);
-
-	      Xobject x = a.convertOffset(dim_i);
-	      if (x != null)
-		  v = Xcons.binaryOp(Xcode.MINUS_EXPR, v, x);
-	      //v = Xcons.binaryOp(Xcode.MINUS_EXPR, v, a.convertOffset(dim_i));
-	      i.setArg(0, v);
-	      return i;
-	  }
+	else {
+	  x = e.copy();
+	  int cnt = convertLocalIndexInExpression(x, dim_i, a, bb, block, 0);
+	  if (cnt != 1) x = null;
 	}
+
+	if (x != null){
+	  Xobject y = a.convertOffset(dim_i);
+	  if (y != null)
+	    x = Xcons.binaryOp(Xcode.MINUS_EXPR, x, y);
+	  i.setArg(0, x);
+	  return i;
+	}
+
+	// // check this expression is ver+offset
+	// Xobject e = i.getArg(0);
+	// // we need normalize?
+	// Xobject v = null;
+	// Xobject offset = null;
+	// if(e.isVariable()){
+	//   v = e;
+	// } else {
+	//   switch(e.Opcode()){
+	//   case PLUS_EXPR:
+	//     if(e.left().isVariable()){
+	//       v = e.left();
+	//       offset = e.right();
+	//     } else if(e.right().isVariable()){
+	//       v = e.right();
+	//       offset = e.left();
+	//     }
+	//     break;
+	//   case MINUS_EXPR:
+	//     if(e.left().isVariable()){
+	//       v = e.left();
+	//       offset = Xcons.unaryOp(Xcode.UNARY_MINUS_EXPR,e.right());
+	//     }
+	//     break;
+	//   }
+	// }
+
+	// if (v != null){
+	//   v = convertLocalIndex(v, dim_i, a, bb, block);
+	//   if (v != null){
+	//       if (localIndexOffset != null){
+	// 	  if (offset != null)
+	// 	      offset = Xcons.binaryOp(Xcode.PLUS_EXPR,
+	// 				      localIndexOffset, offset);
+	// 	  else 
+	// 	      offset = localIndexOffset;
+	//       }
+	//       if (offset != null)
+	// 	  v = Xcons.binaryOp(Xcode.PLUS_EXPR, v, offset);
+
+	//       Xobject x = a.convertOffset(dim_i);
+	//       if (x != null)
+	// 	  v = Xcons.binaryOp(Xcode.MINUS_EXPR, v, x);
+	//       //v = Xcons.binaryOp(Xcode.MINUS_EXPR, v, a.convertOffset(dim_i));
+	//       i.setArg(0, v);
+	//       return i;
+	//   }
+	// }
 
       }
 
@@ -608,6 +631,55 @@ public class XMPrewriteExpr
       XMP.errorAt(block,"bad expression in XMP array index");
       return null;
     }
+  }
+
+  private int convertLocalIndexInExpression(Xobject x, int dim_i, XMParray a,
+					    BasicBlock bb, Block block, int cnt){
+
+    Xobject v;
+
+    switch (x.Opcode()){
+
+    case PLUS_EXPR:
+
+      if (x.right().isVariable()){
+	v = convertLocalIndex(x.right(), dim_i, a, bb, block);
+	if (v != null){
+	  if (localIndexOffset != null)
+	    v = Xcons.binaryOp(Xcode.PLUS_EXPR, v, localIndexOffset);
+	  x.setRight(v);
+	  cnt++;
+	}
+      }
+      else {
+	cnt = convertLocalIndexInExpression(x.right(), dim_i, a, bb, block, cnt);
+      }
+
+      // fall through
+
+    case MINUS_EXPR:
+
+      // how to deal with the case for a(1 - (2 - i)) ???
+
+      if (x.left().isVariable()){
+	v = convertLocalIndex(x.left(), dim_i, a, bb, block);
+	if (v != null){
+	  if (localIndexOffset != null)
+	    v = Xcons.binaryOp(Xcode.PLUS_EXPR, v, localIndexOffset);
+	  x.setLeft(v);
+	  cnt++;
+	}
+      }
+      else {
+	cnt = convertLocalIndexInExpression(x.left(), dim_i, a, bb, block, cnt);
+      }
+
+      break;
+
+    }
+    
+    return cnt;
+
   }
 
   private void insertSizeArray(Statement st, FunctionBlock fb){

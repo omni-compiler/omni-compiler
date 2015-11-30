@@ -371,7 +371,6 @@ public class omompx
         if(exc.xmpF.XMP.hasErrors())
           System.exit(1);
         caf_translator2.finish();
-
       } else {    // without coarray features
 
         // XMP Fortran
@@ -381,6 +380,7 @@ public class omompx
         if(exc.xmpF.XMP.hasErrors())
           System.exit(1);
         xmp_translator.finish();
+
       }
 
       if(xcodeWriter != null) {
@@ -497,7 +497,7 @@ public class omompx
       }
       decompiler.decompile(context, xcodeDoc, decompWriter);
       // for collect-init
-      decompWriter.write(xobjFile.getTailText());
+      //decompWriter.write(xobjFile.getTailText());
       decompWriter.flush();
     
       if(!dump && outputDecomp) {

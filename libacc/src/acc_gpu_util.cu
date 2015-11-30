@@ -82,26 +82,27 @@ void _ACC_gpu_copy_async(void *host_addr, void *device_addr, size_t size, int di
   }
 }
 
-/*
-_Bool _ACC_gpu_register_memory(void *host_addr, size_t size){
-  printf("register_memory\n");
+void _ACC_gpu_register_memory(void *host_addr, size_t size){
+  //printf("register_memory\n");
   cudaError_t cuda_err = cudaHostRegister(host_addr, size, cudaHostRegisterPortable);
   if( cuda_err != cudaSuccess){
-    return false;
+    _ACC_gpu_fatal(cuda_err);
+    //return false;
   }else{
-    return true;
+    //return true;
   }
 }
 
-_Bool _ACC_gpu_unregister_memory(void *host_addr){
-  printf("unregister_memory\n");
+void _ACC_gpu_unregister_memory(void *host_addr){
+  //printf("unregister_memory\n");
   cudaError_t cuda_err = cudaHostUnregister(host_addr);
   if( cuda_err != cudaSuccess){
-    return false;
+    _ACC_gpu_fatal(cuda_err);
+    //return false;
   }else{
-    return true;
+    //return true;
   }
-  }*/
+}
 
 
 void _ACC_gpu_fatal(cudaError_t error)
@@ -127,4 +128,21 @@ bool _ACC_gpu_is_pagelocked(void *p)
   cudaHostGetFlags(&flags, p);
   cudaError_t error = cudaGetLastError();
   return (error == cudaSuccess);
+}
+
+void *_ACC_alloc_pinned(size_t size){
+  void *addr;
+  cudaError_t err = cudaMallocHost((void**)&addr, size);
+  if(err != cudaSuccess){
+    _ACC_gpu_fatal(err);
+  }
+  return addr;
+}
+
+void _ACC_free_pinned(void *p)
+{
+  cudaError_t err = cudaFreeHost(p);
+  if(err != cudaSuccess){
+    _ACC_gpu_fatal(err);
+  }
 }

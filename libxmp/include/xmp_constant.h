@@ -17,6 +17,7 @@
 #define _XMP_N_MPI_TAG_REFLECT_LO		11
 #define _XMP_N_MPI_TAG_REFLECT_HI		12
 #define _XMP_N_MPI_TAG_POSTREQ			13
+#define _XMP_N_MPI_TAG_SYNCREQ			14
 
 // used by task
 #define _XMP_N_NODES_REF			20
@@ -109,5 +110,10 @@
 #define _XMP_GLOBAL_IO_DIRECT			800
 #define _XMP_GLOBAL_IO_ATOMIC			801
 #define _XMP_GLOBAL_IO_COLLECTIVE		802
+
+#define _XMP_ENTIRE_NODES                        2000
+#define _XMP_EXECUTING_NODES                     2001
+#define _XMP_PRIMARY_NODES                       2002
+#define _XMP_EQUIVALENCE_NODES                   2003
 
 #endif // _XMP_CONSTANT

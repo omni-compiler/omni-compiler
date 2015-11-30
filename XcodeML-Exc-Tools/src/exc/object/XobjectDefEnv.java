@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.object;
 
 import java.util.LinkedList;
@@ -134,7 +128,10 @@ public class XobjectDefEnv extends PropObject
                         if(id.getStorageClass() == StorageClass.FTYPE_NAME ||
                             id.getStorageClass() == StorageClass.TAGNAME)
                             return id;
-                        break;
+                    case IXobject.FINDKIND_TYPEDEF_NAME:
+                      if(id.getStorageClass() == StorageClass.TYPEDEF_NAME)
+                        return id;
+                      break;
                     }
                 }
             }

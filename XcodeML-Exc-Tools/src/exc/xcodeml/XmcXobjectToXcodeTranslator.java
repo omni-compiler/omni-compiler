@@ -982,8 +982,10 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
                         addChildNode(g, trans(a.getArg(0).getString()));
 
-			Xobject vars = a.getArg(1);
-                        if (vars != null){
+			if (a.Nargs() > 1){
+
+			  Xobject vars = a.getArg(1);
+			  if (vars != null){
 
 			    if (vars instanceof XobjString){
 			      addChildNode(g, trans(vars));
@@ -995,6 +997,8 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 			      }
 			      addChildNode(g, g1);
 			    }
+
+			  }
 
 			}
 

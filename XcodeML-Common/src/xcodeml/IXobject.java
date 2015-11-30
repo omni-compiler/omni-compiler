@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml;
 
 public interface IXobject
@@ -16,6 +10,7 @@ public interface IXobject
     public static int FINDKIND_COMMON = 2;
     /** find() argument: find tag, structure name symbol */
     public static int FINDKIND_TAGNAME = 3;
+    public static int FINDKIND_TYPEDEF_NAME = 4;
 
     /**
      * get line number.

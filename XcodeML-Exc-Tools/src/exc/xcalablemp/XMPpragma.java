@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 
 import exc.object.Xobject;
@@ -29,10 +23,12 @@ public enum XMPpragma {
   BCAST,
   COARRAY,
   ARRAY,
-  SYNC_MEMORY,
-  SYNC_ALL,
+  //  SYNC_MEMORY,
+  //  SYNC_ALL,
   POST,
   WAIT,
+  LOCK,
+  UNLOCK,
   LOCAL_ALIAS,
   WAIT_ASYNC,
   TEMPLATE_FIX,

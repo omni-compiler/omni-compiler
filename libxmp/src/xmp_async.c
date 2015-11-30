@@ -1,7 +1,7 @@
 #include "xmp_internal.h"
 #include <string.h>
 
-_XMP_async_comm_t _XMP_async_comm_tab[_XMP_ASYNC_COMM_SIZE] = { {0, 0, NULL, NULL} };
+_XMP_async_comm_t _XMP_async_comm_tab[_XMP_ASYNC_COMM_SIZE] = { {0, 0, NULL, NULL, NULL} };
 
 #if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
 static void _XMP_wait_async_rdma(_XMP_async_comm_t *async);
@@ -10,14 +10,36 @@ static void _XMP_wait_async_rdma(_XMP_async_comm_t *async);
 _XMP_async_comm_t *_XMP_get_async(int async_id);
 void _XMP_pop_async(int async_id);
 
-#ifdef _XMP_MPI3
 _Bool is_async = false;
 int _async_id;
-#endif
+
+extern void (*_XMP_unpack_comm_set)(void *recvbuf, int recvbuf_size,
+				    _XMP_array_t *a, _XMP_comm_set_t *comm_set[][_XMP_N_MAX_DIM]);
 
 //
 //
 //
+
+static void _XMP_finalize_async_gmove(_XMP_async_gmove_t *gmove){
+
+  // Unpack
+  (*_XMP_unpack_comm_set)(gmove->recvbuf, gmove->recvbuf_size, gmove->a, gmove->comm_set);
+
+  // Deallocate temporarls
+  _XMP_free(gmove->sendbuf);
+  _XMP_free(gmove->recvbuf);
+
+  int n_exec_nodes = _XMP_get_execution_nodes()->comm_size;
+
+  for (int rank = 0; rank < n_exec_nodes; rank++){
+    for (int adim = 0; adim < gmove->a->dim; adim++){
+      free_comm_set(gmove->comm_set[rank][adim]);
+    }
+  }
+
+  _XMP_free(gmove->comm_set);
+
+}
 
 void _XMP_wait_async__(int async_id)
 {
@@ -41,6 +63,13 @@ void _XMP_wait_async__(int async_id)
   _XMP_TSTART(t0);
   MPI_Waitall(nreqs, reqs, MPI_STATUSES_IGNORE);
   _XMP_TEND(xmptiming_.t_wait, t0);
+
+  //
+  // for asynchronous gmove
+  //
+
+  _XMP_async_gmove_t *gmove = async->gmove;
+  if (gmove) _XMP_finalize_async_gmove(gmove);
 
   _XMP_pop_async(async_id);
 
@@ -72,8 +101,14 @@ int xmp_test_async_(int *async_id)
   MPI_Testall(nreqs, reqs, &flag, MPI_STATUSES_IGNORE);
 
   if (flag){
+
+    _XMP_async_gmove_t *gmove = async->gmove;
+    if (gmove) _XMP_finalize_async_gmove(gmove);
+
     _XMP_pop_async(*async_id);
+
     return 1;
+
   }
   else {
     return 0;
@@ -216,6 +251,7 @@ _XMP_async_comm_t *_XMP_get_or_create_async(int async_id)
   async->async_id = async_id;
   async->nreqs = 0;
   async->reqs = _XMP_alloc(sizeof(MPI_Request) * _XMP_MAX_ASYNC_REQS);
+  async->gmove = NULL;
   async->next = NULL;
 
   return async;
@@ -240,11 +276,14 @@ void _XMP_pop_async(int async_id)
       async->nreqs = t->nreqs;
       async->reqs = t->reqs;
       async->next = t->next;
+      _XMP_free(t->gmove);
       _XMP_free(t);
     }
     else {
       async->nreqs = 0;
       _XMP_free(async->reqs);
+      _XMP_free(async->gmove);
+      async->gmove = NULL;
     }
 
     return;
@@ -259,6 +298,7 @@ void _XMP_pop_async(int async_id)
       if (async->async_id == async_id){
 	prev->next = async->next;
 	_XMP_free(async->reqs);
+	_XMP_free(async->gmove);
 	_XMP_free(async);
 	return;
       }

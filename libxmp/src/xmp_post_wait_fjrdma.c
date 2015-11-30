@@ -48,7 +48,7 @@ void _xmp_fjrdma_post_wait_initialize()
     else
       _remote_rdma_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, _XMP_POSTREQ_ID);
 
-    if(ncount > _XMP_FJRDMA_INTERVAL){
+    if(ncount > _XMP_INIT_RDMA_INTERVAL){
       MPI_Barrier(MPI_COMM_WORLD);
       ncount = 0;
     }

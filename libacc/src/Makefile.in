@@ -124,11 +124,11 @@ am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libacc_a_AR = $(AR) $(ARFLAGS)
-libacc_a_DEPENDENCIES = acc_runtime.o acc_gpu_data_table.o acc_util.o \
-	acc_gpu_runtime.o acc_gpu_data.o acc_gpu_stream.o \
-	acc_gpu_util.o acc_gpu_mpool.o acc_gpu_pack.o
-am_libacc_a_OBJECTS = acc_gpu_data_table.$(OBJEXT) \
-	acc_runtime.$(OBJEXT) acc_util.$(OBJEXT)
+libacc_a_DEPENDENCIES = acc_runtime.o acc_memory_table.o acc_util.o \
+	acc_gpu_runtime.o acc_gpu_stream.o acc_gpu_util.o \
+	acc_gpu_mpool.o acc_gpu_pack.o
+am_libacc_a_OBJECTS = acc_memory_table.$(OBJEXT) acc_runtime.$(OBJEXT) \
+	acc_util.$(OBJEXT) acc_data.$(OBJEXT) acc_memory_gpu.$(OBJEXT)
 libacc_a_OBJECTS = $(am_libacc_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -216,6 +216,8 @@ F2C_INT64_FLAGS = @F2C_INT64_FLAGS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
 GASNET_LIBS = @GASNET_LIBS@
+GMP_INCLUDE_DIR = @GMP_INCLUDE_DIR@
+GMP_LIB_DIR = @GMP_LIB_DIR@
 GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CFLAGS = @GPU_CFLAGS@
 GPU_CMD = @GPU_CMD@
@@ -237,8 +239,8 @@ LEXLIB = @LEXLIB@
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
-LIBXML_LIB = @LIBXML_LIB@
-LIBXML_PREFIX = @LIBXML_PREFIX@
+LIBXML2_INCLUDE_DIR = @LIBXML2_INCLUDE_DIR@
+LIBXML2_LIB_DIR = @LIBXML2_LIB_DIR@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKE = @MAKE@
@@ -246,6 +248,8 @@ MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 MKRULESDIR = @MKRULESDIR@
 MM5TGT = @MM5TGT@
+MPFR_INCLUDE_DIR = @MPFR_INCLUDE_DIR@
+MPFR_LIB_DIR = @MPFR_LIB_DIR@
 MPI_CC = @MPI_CC@
 MPI_CFLAGS = @MPI_CFLAGS@
 MPI_CLIBS = @MPI_CLIBS@
@@ -281,6 +285,7 @@ OM_EXEC_C_PP = @OM_EXEC_C_PP@
 OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
+ONESIDED_CPPFLAGS = @ONESIDED_CPPFLAGS@
 OPENMP_OPT_C = @OPENMP_OPT_C@
 OPENMP_OPT_F = @OPENMP_OPT_F@
 OS = @OS@
@@ -316,7 +321,6 @@ SIZEOF_UNSIGNED_SHORT = @SIZEOF_UNSIGNED_SHORT@
 SIZEOF_VOID_P = @SIZEOF_VOID_P@
 SIZEOF__BOOL = @SIZEOF__BOOL@
 STRIP = @STRIP@
-SUPERUX = @SUPERUX@
 TARGET = @TARGET@
 TARGET_ARCH = @TARGET_ARCH@
 TOPDIR = @TOPDIR@
@@ -424,10 +428,10 @@ LINK = $(CCLD) $(AM_CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 lib_LIBRARIES = libacc.a
 libacc_a_SOURCES = $(ACC_INC_DIR)/acc_internal.h $(ACC_INC_DIR)/acc_gpu_internal.h \
 			  $(ACC_INC_DIR)/acc_gpu_constant.h $(ACC_INC_DIR)/acc_gpu_data_struct.h \
-			  acc_gpu_data_table.c acc_runtime.c acc_util.c
+			  acc_memory_table.c acc_runtime.c acc_util.c acc_data.c acc_memory_gpu.c
 
-libacc_a_LIBADD = acc_runtime.o acc_gpu_data_table.o acc_util.o \
-			  acc_gpu_runtime.o acc_gpu_data.o acc_gpu_stream.o acc_gpu_util.o acc_gpu_mpool.o acc_gpu_pack.o
+libacc_a_LIBADD = acc_runtime.o acc_memory_table.o acc_util.o \
+			  acc_gpu_runtime.o acc_gpu_stream.o acc_gpu_util.o acc_gpu_mpool.o acc_gpu_pack.o
 
 all: all-am
 

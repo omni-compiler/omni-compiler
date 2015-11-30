@@ -9,7 +9,7 @@ import java.util.*;
  */
 public class XMPtransCoarrayRun
 {
-  private Boolean DEBUG = false;       // change me in debugger
+  private Boolean DEBUG = true;       // change me in debugger
 
   // constants
   final static String VAR_TAG_NAME = "xmpf_resource_tag";
@@ -20,13 +20,12 @@ public class XMPtransCoarrayRun
   final static String COARRAY_DEALLOC_PREFIX = "xmpf_coarray_dealloc";
   final static String THIS_IMAGE_NAME        = "xmpf_this_image";  // generic
   final static String COBOUND_NAME           = "xmpf_cobound";  // generic
-  final static String COBOUND_DIM_NAME       = "xmpf_cobound_dim";
-  final static String COBOUND_NODIM_NAME     = "xmpf_cobound_nodim";
   final static String IMAGE_INDEX_NAME       = "xmpf_image_index";
   final static String COARRAY_PROLOG_NAME    = "xmpf_coarray_prolog";
   final static String COARRAY_EPILOG_NAME    = "xmpf_coarray_epilog";
   final static String SYNCALL_NAME           = "xmpf_sync_all";
   final static String AUTO_SYNCALL_NAME      = "xmpf_sync_all_auto";  // another entry of syncall
+  final static String FINALIZE_PROGRAM_NAME  = XMP.finalize_all_f;
 
   // to handle host- and use-associations
   static ArrayList<XMPtransCoarrayRun> ancestors
@@ -45,28 +44,28 @@ public class XMPtransCoarrayRun
 
   // localCoarrays is divided into the following four
   private ArrayList<XMPcoarray> staticLocalCoarrays;
+  //private ArrayList<XMPcoarray> staticLocalCoarraysEx;  // add use-acc & host-module-acc
   private ArrayList<XMPcoarray> allocatableLocalCoarrays;
   private ArrayList<XMPcoarray> staticDummyCoarrays;
   private ArrayList<XMPcoarray> allocatableDummyCoarrays;
 
-  // localCoarrays + useAssociatedCoarrays + the parent's visibleCoarrays
-  private ArrayList<XMPcoarray> visibleCoarrays;    // available after run1()
+  // the host module and the host procedure
+  private String hostModuleName,hostProcedureName;
+  private XMPtransCoarrayRun hostModuleRun, hostProcedureRun;
 
-  // to find the parent object of XMPtransCoarrayRun
-  private ArrayList<XMPtransCoarrayRun> pastRuns;
+  // localCoarrays + useAssociatedCoarrays + the host's visibleCoarrays
+  private ArrayList<XMPcoarray> visibleCoarrays;    // available after run1()
 
   //private XMPinitProcedure initProcedure;
   private String initProcTextForFile;
 
   private String traverseCountName, traverseInitName;
-  private String descCommonName, crayCommonName;
   private Ident _resourceTagId = null;
 
   private ArrayList<Xobject> _prologStmts = new ArrayList<Xobject>();
   private ArrayList<Xobject> _epilogStmts = new ArrayList<Xobject>();
 
-  private Boolean _reservedAutoDealloc;
-  private Boolean _reservedAutoSyncall;   // not used. Aoto-syncalls are called in runtime.
+  private Boolean _autoDealloc;
 
 
   //------------------------------------------------------------
@@ -76,8 +75,10 @@ public class XMPtransCoarrayRun
                             ArrayList<XMPtransCoarrayRun> pastRuns, int pass) {
     this.def = def;
     this.env = env;
-    this.pastRuns = pastRuns;
     name = def.getName();
+
+    _setHostName();
+    _setHostRun(pastRuns);
 
     funcDef = new FuncDefBlock(def);
     fblock = funcDef.getBlock();
@@ -86,8 +87,6 @@ public class XMPtransCoarrayRun
     String postfix = _genNewProcPostfix();
     traverseCountName = TRAV_COUNTCOARRAY_PREFIX + postfix;
     traverseInitName = TRAV_INITCOARRAY_PREFIX + postfix;
-    descCommonName = XMPcoarray.VAR_DESCPOINTER_PREFIX + "_" + name;
-    crayCommonName = XMPcoarray.VAR_CRAYPOINTER_PREFIX + "_" + name;
 
     _setLocalCoarrays();
     /* visibleCoarrays will be set after run1 */
@@ -99,6 +98,110 @@ public class XMPtransCoarrayRun
     XMP.exitByError();   // exit if error was found.
   }
 
+
+  private void _setHostName()
+  {
+    hostModuleName = null;
+    hostProcedureName = null;
+
+    XobjectDef parentDef = def.getParent();
+    if (parentDef == null)
+      return;
+
+    switch(parentDef.getDef().Opcode()) {
+    case F_MODULE_DEFINITION:
+      hostModuleName = parentDef.getName();
+      break;
+
+    case FUNCTION_DEFINITION:
+      hostProcedureName = parentDef.getName();
+      XobjectDef granParentDef = parentDef.getParent();
+      if (granParentDef != null) {
+        switch(granParentDef.getDef().Opcode()) {
+        case F_MODULE_DEFINITION:
+          hostModuleName = granParentDef.getName();
+          break;
+        default:
+          XMP.fatal("INTERNAL: unexpected nest of procedures " + 
+                    name + ", " + hostProcedureName + ", " + 
+                    granParentDef.getName());
+          break;
+        }
+      }
+      break;
+
+    default:
+      break;
+    }
+  }
+
+
+  private void _setHostRun(ArrayList<XMPtransCoarrayRun> pastRuns)
+  {
+    hostModuleRun = null;
+    hostProcedureRun = null;
+
+    XobjectDef pdef = def.getParent();
+    if (pdef == null)
+      return;
+
+    switch (pdef.getDef().Opcode()) {
+    case FUNCTION_DEFINITION:
+      _setHostRun_proc(pdef, pastRuns);
+      break;
+    case F_MODULE_DEFINITION:
+      _setHostRun_module(pdef, pastRuns);
+      break;
+    default:
+      XMP.fatal("INTERNAL: illegal opcode of parent XobjectDef: " +
+                pdef.getDef().Opcode());
+      break;
+    }
+  }
+
+  private void _setHostRun_proc(XobjectDef pdef,
+                                ArrayList<XMPtransCoarrayRun> pastRuns)
+  {
+    for (XMPtransCoarrayRun run: pastRuns) {
+      if (pdef == run.def) {
+        hostProcedureRun = run;
+        break;
+      }
+    }
+
+    if (hostProcedureRun == null)
+      XMP.fatal("INTERNAL: Host procedure \'" + hostProcedureName +
+                "\' is expected in pastRuns before \'" + name + "\'");
+
+    XobjectDef ppdef = pdef.getParent();
+    if (ppdef == null)
+      return;
+
+    switch (ppdef.getDef().Opcode()) {
+    case F_MODULE_DEFINITION:
+      _setHostRun_module(ppdef, pastRuns);
+      break;
+    default:
+      XMP.fatal("INTERNAL: illegal opcode of ground-parent XobjectDef: " +
+                ppdef.getDef().Opcode());
+      break;
+    }
+  }
+    
+  private void _setHostRun_module(XobjectDef pdef,
+                                  ArrayList<XMPtransCoarrayRun> pastRuns)
+  {
+    for (XMPtransCoarrayRun run: pastRuns) {
+      if (pdef == run.def) {
+        hostModuleRun = run;
+        break;
+      }
+    }
+
+    if (hostModuleRun == null)
+      XMP.fatal("INTERNAL: Host module \'" + hostModuleName +
+                "\' is expected in pastRuns before \'" + name + "\'");
+  }
 
 
   /*  set coarrays declared in the current procedure as localCoarrays
@@ -120,15 +223,22 @@ public class XMPtransCoarrayRun
       }
     }
 
-    // resolve use-associated coarrays
-    // - merge static coarrays into localCoarrays
-    // - merge also use-associated coarrays into localCoarrays,
-    //   though they and their descPtrId will be eliminated after.
+    // resolve the problem on static coarrays in a module
+    // - move all coarrays to use-associating procedures
+    // - move static coarrays to directly host-associated procedures
     for (XMPcoarray coarray: useAssociatedCoarrays) {
-      //      if (coarray.isExplicitShape())   // found it
-      XMPcoarray coarray2 = copyCoarrayInLocalCoarrays(coarray);
-      coarray2.setWasMovedFromModule(true);
+      XMPcoarray coarray2 = _copyCoarrayToMergeIn(coarray);
+      localCoarrays.add(coarray2);
     }
+    if (hostModuleRun != null && hostProcedureRun == null) {
+      // found a module procedure
+      for (XMPcoarray coarray: hostModuleRun.localCoarrays) {
+        if (coarray.isExplicitShape()) {
+          XMPcoarray coarray2 = _copyCoarrayToMergeIn(coarray);
+          localCoarrays.add(coarray2);
+        }
+      }
+    }      
 
     // divide localCoarrays into four types
     staticLocalCoarrays = new ArrayList<XMPcoarray>();
@@ -150,10 +260,31 @@ public class XMPtransCoarrayRun
     }
   }
 
+  /*
+   *  useful to copy host- and use-associcated coarrays into the list of
+   *  local coarrays.
+   */
+  private XMPcoarray _copyCoarrayToMergeIn(XMPcoarray coarray1)
+  {
+    Ident ident1 = coarray1.getIdent();
+    Xtype type2 = ident1.Type().copy();
+    String name = coarray1.getName();
+    env.removeIdent(name, null);
+    Ident ident2 = env.declIdent(name, type2);
+    ident2.setFdeclaredModule(null);
+
+    // reset ident, name, isAllocatable, isPointer and _isUseAssociated
+    // but not changed homeBlockName, declCommonName and crayCommonName
+    XMPcoarray coarray2 = new XMPcoarray(ident2, def, fblock, env,
+                                         coarray1.getHomeBlockName());
+    coarray2.setWasMovedFromModule(true);
+    return coarray2;
+  }
+
 
   /*  set coarrays declared in used modules as useAssociatedCoarrays
    */
-  private void _setVisibleCoarrays(ArrayList<XMPtransCoarrayRun> pastRuns) {
+  private void _setVisibleCoarrays() {
     /*  set visible coarrays
      *   1. add coarrays declared in the current procedure,
      *   2. add all use-associated coarrays, and
@@ -161,28 +292,33 @@ public class XMPtransCoarrayRun
      *  A name of coarray will be searched in this priority.
      */
     visibleCoarrays = new ArrayList<XMPcoarray>();
-    visibleCoarrays.addAll(localCoarrays);
-    visibleCoarrays.addAll(useAssociatedCoarrays);
+    _mergeCoarraysByName(visibleCoarrays, localCoarrays);
+    _mergeCoarraysByName(visibleCoarrays, useAssociatedCoarrays);
 
-    XobjectDef pdef = def.getParent();
-    if (pdef != null) {
-      // I have a host procedure.  I.e., I am an internal procedure.
+    if (hostProcedureRun != null)
+      _mergeCoarraysByName(visibleCoarrays, hostProcedureRun.visibleCoarrays);
+    else if (hostModuleRun != null)
+      _mergeCoarraysByName(visibleCoarrays, hostModuleRun.visibleCoarrays);
+  }
 
-      XMPtransCoarrayRun hostRun = null;
-      for (XMPtransCoarrayRun run: pastRuns) {
-        if (pdef == run.def) {
-          // found the host (my parent) procedure
-          hostRun = run;
+  private void _mergeCoarraysByName(ArrayList<XMPcoarray> coarrays1,
+                                    ArrayList<XMPcoarray> coarrays2)
+  {
+    ArrayList<XMPcoarray> newCoarrays = new ArrayList();
+    for (XMPcoarray coarray2: coarrays2) {
+      boolean found = false;
+      String name2 = coarray2.getName();
+      for (XMPcoarray coarray1: coarrays1) {
+        if (name2.equals(coarray1.getName())) {
+          found = true;
           break;
         }
       }
-
-      if (hostRun == null) {
-        XMP.fatal("illegal top-down iterator of procedures");
-      } else {
-        visibleCoarrays.addAll(hostRun.visibleCoarrays);
-      }
+      if (!found)
+        newCoarrays.add(coarray2);
     }
+
+    coarrays1.addAll(newCoarrays);
   }
 
 
@@ -201,8 +337,8 @@ public class XMPtransCoarrayRun
    */
   public void run1() {
     // error check for each coarray declaration
-    for (XMPcoarray coarray: localCoarrays)
-      coarray.errorCheck();
+    //    for (XMPcoarray coarray: localCoarrays)
+    //      coarray.errorCheck();
 
     if (_isModule())
       run1_module();
@@ -212,8 +348,7 @@ public class XMPtransCoarrayRun
         
 
   private void run1_procedure() {
-    reserveAutoDealloc(false);
-    reserveAutoSyncall(false);
+    set_autoDealloc(false);
 
     // convert specification and declaration part
     transDeclPart_staticLocal();
@@ -223,7 +358,7 @@ public class XMPtransCoarrayRun
 
     // To avoid trouble of the shallow/deep copies, visibleCoarrays
     // should be made after execution of transDeclPart_*.
-    _setVisibleCoarrays(pastRuns);
+    _setVisibleCoarrays();
 
     if (!_isModule()) {
       transExecPart_visibleCoarrays();
@@ -266,7 +401,7 @@ public class XMPtransCoarrayRun
 
     // To avoid trouble of the shallow/deep copies, visibleCoarrays
     // should be made after execution of transDeclPart_*.
-    _setVisibleCoarrays(pastRuns);
+    _setVisibleCoarrays();
 
     // funcDef.Finalize() is not needed.
   }
@@ -287,7 +422,11 @@ public class XMPtransCoarrayRun
 
 
   /**
-    Handling local and use-associated static coarrays in a procedure
+    Handling pseudo-local static coarrays in a procedure.
+    Pseudo-local static coarrays are:
+    - procedure-local static coarrays in procedures,
+    - use-associated static coarrays, and
+    - host-associated static coarrays in module procedures.
     --------------------------------------------
       subroutine EX1
         use M1   !! contains "real :: V1(10,20)[4,*]"  ! use-associated static
@@ -300,8 +439,8 @@ public class XMPtransCoarrayRun
       subroutine EX1
         use M1
 
-        real :: V1(1:10,1:20)                                        ! f.
-        complex(8), save :: V2                                       ! f.
+        real :: V1(1:10,1:20)                                        ! f. f1.
+        complex(8) :: V2                                             ! f. f1.
 
         !-- for use-associated static coarray V1
         integer(8) :: DP_V1                                          ! a.
@@ -342,6 +481,9 @@ public class XMPtransCoarrayRun
 
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(staticLocalCoarrays);
+
+    // f1. remove SAVE attributes from declarations of coarrays
+    removeSaveAttr(staticLocalCoarrays);
   }
 
 
@@ -356,7 +498,7 @@ public class XMPtransCoarrayRun
     output:
     --------------------------------------------
       subroutine EX1  or  module EX1
-        integer, pointer :: V3(:,:)                                  ! f. h.
+        integer, pointer :: V3(:,:)                                  ! f. f1. h.
         integer(8) :: DP_V3                                          ! a.
         ...
       end subroutine  or  end module
@@ -370,6 +512,9 @@ public class XMPtransCoarrayRun
 
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(allocatableLocalCoarrays);
+
+    // f1. remove SAVE attributes from declarations of coarrays
+    removeSaveAttr(allocatableLocalCoarrays);
 
     // h. replace allocatable attributes with pointer attributes
     replaceAllocatableWithPointer(allocatableLocalCoarrays);
@@ -527,7 +672,10 @@ public class XMPtransCoarrayRun
         n1 = this_image(V1,1)                           ! coarray intrinsic
         n2(:) = this_image(V3)                          ! coarray intrinsic
         n3 = image_index(V1,(/1,2/))                    ! coarray intrinsic
+        ...
         return                                          ! dealloc V3 automatically
+        ...
+        stop                                            ! finalize program
       end subroutine
     --------------------------------------------
     output:
@@ -548,9 +696,13 @@ public class XMPtransCoarrayRun
         n1 = xmpf_this_image(DP_V1,1)                           ! l.
         n2(:) = this_image(DP_V3)                               ! l.
         n3 = xmpf_image_index(DP_V1,(/1,2/))                    ! l.
+        ...
         call xmpf_syncall(V1,V4,V2,V3)                          ! i. p.
         call xmpf_coarray_epilog(tag)                           ! i.
         return
+        ...
+        call xmpf_finalize_all_f()                              ! k.
+        stop
       end subroutine
 
     !! Additionally, two subroutines xmpf_traverse_* will    ! b.
@@ -578,8 +730,11 @@ public class XMPtransCoarrayRun
     replaceFunctionCalls(visibleCoarrays);
 
     // i. initialization/finalization for auto-syncall and auto-deallocate
-    if (_reservedAutoDealloc)
+    if (get_autoDealloc())
       genCallOfPrologAndEpilog();
+
+    // k. insert finalization call before STOP statements
+    insertFinalizationCall();
 
     // p. add visible coarrays as arguments of sync all statements 
     //     to prohibit code motion
@@ -619,20 +774,30 @@ public class XMPtransCoarrayRun
     if (coarrays.isEmpty())
       return;
 
-    // descriptor pointer
-    Xobject cnameObj = Xcons.Symbol(Xcode.IDENT, descCommonName);
-    Xobject varList = Xcons.List();
-    for (XMPcoarray coarray: coarrays) {
-      Ident descPtrId = coarray.getDescPointerId();
-      varList.add(Xcons.FvarRef(descPtrId));
-    }
-    if (varList.hasNullArg())
-      XMP.fatal("generated null argument (genCommonStmt)");
+    ArrayList<String> cnameList = new ArrayList();
+    for (XMPcoarray coarray0: coarrays) {
+      String cname = coarray0.getDescCommonName();
+      if (cnameList.contains(cname))
+        continue;
 
-    // declaration 
-    Xobject decls = fblock.getBody().getDecls();
-    decls.add(Xcons.List(Xcode.F_COMMON_DECL,
-                         Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList)));
+      // found new common block to be declared
+      cnameList.add(cname);
+
+      Xobject cnameObj = Xcons.Symbol(Xcode.IDENT, cname);
+      Xobject varList = Xcons.List();
+      for (XMPcoarray coarray: coarrays) {
+        if (cname.equals(coarray.getDescCommonName())) {
+          Ident descPtrId = coarray.getDescPointerId();
+          varList.add(Xcons.FvarRef(descPtrId));
+        }
+      }
+
+      // add declaration 
+      Xobject decls = fblock.getBody().getDecls();
+      Xobject args = Xcons.List(Xcode.F_COMMON_DECL,
+                                Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList));
+      decls.add(args);
+    }
   }
 
 
@@ -647,24 +812,35 @@ public class XMPtransCoarrayRun
     if (coarrays.isEmpty())
       return;
 
+    // genDecl_crayPointer
     for (XMPcoarray coarray: coarrays) {
       coarray.genDecl_crayPointer();
     }
 
-    Xobject cnameObj = Xcons.Symbol(Xcode.IDENT, crayCommonName);
-    Xobject varList = Xcons.List();
-    for (XMPcoarray coarray: coarrays) {
-      Ident crayPtrId = coarray.getCrayPointerId();
-      varList.add(Xcons.FvarRef(crayPtrId));
-    }
+    ArrayList<String> cnameList = new ArrayList();
+    for (XMPcoarray coarray0: coarrays) {
+      String cname = coarray0.getCrayCommonName();
+      if (cnameList.contains(cname))
+        continue;
 
-    // declaration 
-    Xobject decls = fblock.getBody().getDecls();
-    Xobject args = Xcons.List(Xcode.F_COMMON_DECL,
-                              Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList));
-    if (args.hasNullArg())
-      XMP.fatal("generated null argument (genDeclOfCrayPointer)");
-    decls.add(args);
+      // found new common block to be declared
+      cnameList.add(cname);
+
+      Xobject cnameObj = Xcons.Symbol(Xcode.IDENT, cname);
+      Xobject varList = Xcons.List();
+      for (XMPcoarray coarray: coarrays) {
+        if (cname.equals(coarray.getCrayCommonName())) {
+          Ident crayPtrId = coarray.getCrayPointerId();
+          varList.add(Xcons.FvarRef(crayPtrId));
+        }
+      }
+
+      // add declaration 
+      Xobject decls = fblock.getBody().getDecls();
+      Xobject args = Xcons.List(Xcode.F_COMMON_DECL,
+                                Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList));
+      decls.add(args);
+    }
   }
 
 
@@ -718,6 +894,41 @@ public class XMPtransCoarrayRun
 
 
   //-----------------------------------------------------
+  //  TRANSLATION k. 
+  //  insert finalization call before STOP statements
+  //  ZANTEI VERSION: 
+  //    This function is used until joining caf and xmp translators.
+  //-----------------------------------------------------
+  //
+  private void insertFinalizationCall() {
+    // for STOP statement
+    BasicBlockIterator bbi = new BasicBlockIterator(fblock);
+    for (bbi.init(); !bbi.end(); bbi.next()) {
+      StatementIterator si = bbi.getBasicBlock().statements();
+      while (si.hasNext()) {
+        Statement st = si.next();
+        Xobject stmt = st.getExpr();
+        if (stmt == null)
+          continue;
+
+        switch(stmt.Opcode()) {
+        case F_STOP_STATEMENT:
+          LineNo lineno = stmt.getLineNo();
+          Ident func =                        // find or generate function name
+            env.declInternIdent(FINALIZE_PROGRAM_NAME, Xtype.FsubroutineType);
+          Xobject call = func.callSubroutine();
+          call.setLineNo(lineno);
+          st.insert(call);
+          break;
+        default:
+          break;
+        }
+      }
+    }
+  }
+
+
+  //-----------------------------------------------------
   //  TRANSLATION i.
   //  generate procedure prolog and epilog calls
   //-----------------------------------------------------
@@ -733,10 +944,26 @@ public class XMPtransCoarrayRun
   private void genPrologStmts() {
     // for the begining of the procedure
     BlockList blist = fblock.getBody().getHead().getBody();
-    for (int i = _prologStmts.size() - 1; i >= 0; i--)
+    int nlines = _prologStmts.size();
+
+    for (int i = nlines - 1; i >= 0; i--)
       blist.insert(_prologStmts.get(i));
 
     // restriction: for the ENTRY statement
+    if (nlines > 0 && _findEntryStmtInBlock(fblock)) {
+      XMP.error("restriction: An ENTRY statement is not allowed in the " +
+                "program including coarray features.");
+    }
+  }
+
+  private Boolean _findEntryStmtInBlock(Block fblock) {
+    BlockIterator bi = new topdownBlockIterator(fblock);
+    for (bi.init(); !bi.end(); bi.next()) {
+      Block block = bi.getBlock();
+      if (block.Opcode() == Xcode.F_ENTRY_DECL)
+        return true;
+    }
+    return false;
   }
 
   private void genEpilogStmts() {
@@ -865,7 +1092,6 @@ public class XMPtransCoarrayRun
           // found -- convert the statement
           Xobject callExpr = coindexVarStmtToCallStmt(assignExpr, coarrays);
           s.setExpr(callExpr);
-          reserveAutoSyncall();
         }
       }
     }
@@ -950,7 +1176,6 @@ public class XMPtransCoarrayRun
         // found target to convert
         Xobject funcCall = coindexObjToFuncRef(xobj, coarrays);
         xi.setXobject(funcCall);
-        reserveAutoSyncall();
         done = true;
       }
     }
@@ -979,7 +1204,15 @@ public class XMPtransCoarrayRun
   // and generate and add an initialization routine into the
   // same file (see XMPcoarrayInitProcedure)
   //
-  private void genAllocOfStaticCoarrays(ArrayList<XMPcoarray> coarrays) {
+  private void genAllocOfStaticCoarrays(ArrayList<XMPcoarray> coarrays0) {
+
+    ArrayList<XMPcoarray> coarrays = new ArrayList();
+    for (XMPcoarray coarray: coarrays0) {
+      if (coarray.wasMovedFromModule())
+        continue;
+      coarrays.add(coarray);
+    }
+
     // do nothing if no coarrays are declared.
     if (coarrays.isEmpty())
       return;
@@ -989,7 +1222,7 @@ public class XMPtransCoarrayRun
       new XMPcoarrayInitProcedure(coarrays,
                                   traverseCountName,
                                   traverseInitName,
-                                  descCommonName, crayCommonName, env);
+                                  env);
     coarrayInit.run();
   }
 
@@ -1392,26 +1625,17 @@ public class XMPtransCoarrayRun
       coarray.hideCodimensions();
   }
 
-  /*
-   *  useful to move host- and use-associcated coarrays into the list of local coarrays.
-   */
-  private XMPcoarray copyCoarrayInLocalCoarrays(XMPcoarray coarray1) {
-    Xtype type1 = coarray1.getIdent().Type().copy();
-    String name1 = coarray1.getName();
-    env.removeIdent(name1, null);
-    Ident ident2 = env.declIdent(name1, type1);
-    ident2.setFdeclaredModule(null);
 
-    BlockList blist1 = coarray1.fblock.getBody();
-    BlockList blist2 = fblock.getBody();
-
-    XMPcoarray coarray2 = new XMPcoarray(ident2, def, fblock, env);
-
-    localCoarrays.add(coarray2);
-    return coarray2;
+  //-----------------------------------------------------
+  //  TRANSLATION f1.
+  //  remove SAVE attributes from declarations of coarrays
+  //-----------------------------------------------------
+  //
+  private void removeSaveAttr(ArrayList<XMPcoarray> coarrays) {
+    for (XMPcoarray coarray: coarrays) {
+      coarray.resetSaveAttr();
+    }
   }
-
-
 
   //-----------------------------------------------------
   //  TRANSLATION h.
@@ -1427,9 +1651,12 @@ public class XMPtransCoarrayRun
 
   //-----------------------------------------------------
   //  TRANSLATION l.
-  //  fake intrinsic function 'allocated' with 'associated'
-  //  replace this_image(V, ...) with this_image(DP_V, ...)
-  //  replace image_index(V, ...) with image_index(DP_V, ...)
+  //  - fake intrinsic function 'allocated' with 'associated'
+  //  - replace this_image(V, ...) with THIS_IMAGE_NAME(DP_V, ...)
+  //    except this_image()
+  //  - replace image_index(V, ...) with IMAGE_INDEX_NAME(DP_V, ...)
+  //  - replace lcobound(V, ...) with COBOUND_NAME(DP_V, ..., 0, corank)
+  //  - replace ucobound(V, ...) with COBOUND_NAME(DP_V, ..., 1, corank)
   //-----------------------------------------------------
   //
   private void replaceFunctionCalls(ArrayList<XMPcoarray> coarrays) {
@@ -1563,16 +1790,14 @@ public class XMPtransCoarrayRun
     Ident descPtr = coarray.getDescPointerId();
     Xobject luExpr = Xcons.IntConstant(lu);
     Xobject corankExpr = Xcons.IntConstant(coarray.getCorank());
+
+    // replace function name lcobound/ucobound to COBOUND_NAME
+    newFname = Xcons.Symbol(Xcode.IDENT, COBOUND_NAME);
+
     if (arg2 != null) {
-      // replace function name lcobound/ucobound to COBOUND_DIM_NAME
-      //newFname = Xcons.Symbol(Xcode.IDENT, COBOUND_DIM_NAME);
-      newFname = Xcons.Symbol(Xcode.IDENT, COBOUND_NAME);
       // replace actual arguments (descPtr, dim, kind, lu, corank)
       newActualArgs = Xcons.List(descPtr, arg2, arg3, luExpr, corankExpr);
     } else {
-      // replace function name lcobound/ucobound to COBOUND_NODIM_NAME
-      //newFname = Xcons.Symbol(Xcode.IDENT, COBOUND_NODIM_NAME);
-      newFname = Xcons.Symbol(Xcode.IDENT, COBOUND_NAME);
       // replace actual arguments (descPtr, kind, lu, corank)
       newActualArgs = Xcons.List(descPtr, arg3, luExpr, corankExpr);
     }
@@ -1616,7 +1841,7 @@ public class XMPtransCoarrayRun
       return;
     }
 
-    // replace function name 'image'
+    // replace function name 'image_index'
     XobjString newFname = Xcons.Symbol(Xcode.IDENT, IMAGE_INDEX_NAME);
     xobj.setArg(0, newFname);
 
@@ -1765,7 +1990,7 @@ public class XMPtransCoarrayRun
 
     // Prolog/Epilog codes are necessary if and only if the resource tag is
     // defined.
-    reserveAutoDealloc();
+    set_autoDealloc(true);
 
     return _resourceTagId;
   }
@@ -1798,20 +2023,12 @@ public class XMPtransCoarrayRun
   }
 
 
-  // for automatic syncall at the end of the program
-  private void reserveAutoSyncall() {
-    reserveAutoSyncall(true);
-  }
-  private void reserveAutoSyncall(Boolean sw) {
-    _reservedAutoSyncall = sw;
-  }
-
   // for automatic deallocation at the end of the program
-  private void reserveAutoDealloc() {
-    reserveAutoDealloc(true);
+  private Boolean get_autoDealloc() {
+    return _autoDealloc;
   }
-  private void reserveAutoDealloc(Boolean sw) {
-    _reservedAutoDealloc = sw;
+  private void set_autoDealloc(Boolean sw) {
+    _autoDealloc = sw;
   }
 
 }

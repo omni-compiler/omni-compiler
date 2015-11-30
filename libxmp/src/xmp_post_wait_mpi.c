@@ -110,7 +110,7 @@ void receive_request(int *node, int *tag)
  * @param[in] node node number
  * @param[in] tag  tag
  */
-void _xmp_mpi_post(const int node, const int tag)
+void _xmp_mpi_post(const int node, int tag)
 {
   if(node == _XMP_world_rank){
     do_post(_XMP_world_rank, tag);
@@ -152,7 +152,7 @@ void _xmp_mpi_wait_node(const int node)
     if(recv_node == node){
       return;
     }
-    add_request(recv_node, recv_tag);
+    do_post(recv_node, recv_tag);
   }
 }
 
@@ -178,6 +178,6 @@ void _xmp_mpi_wait(const int node, const int tag)
       XACC_DEBUG("wait end (recved)");
       return;
     }
-    add_request(recv_node, recv_tag);
+    do_post(recv_node, recv_tag);
   }
 }

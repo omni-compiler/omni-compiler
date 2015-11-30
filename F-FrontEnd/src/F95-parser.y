@@ -827,10 +827,12 @@ type_spec0:
         { $$ = list2(LIST,GEN_NODE(F_TYPE_NODE,TYPE_CHAR),$2); }
         | KW_DOUBLE
         { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_REAL),
-                      gen_default_real_kind()); }
+		      GEN_NODE(INT_CONSTANT, 8)); }
+		      //                      gen_default_real_kind()); }
         | KW_DCOMPLEX   
         { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_COMPLEX),
-                      gen_default_real_kind()); }
+		      GEN_NODE(INT_CONSTANT, 8)); }
+		      //                      gen_default_real_kind()); }
         ;
 
 type_keyword:

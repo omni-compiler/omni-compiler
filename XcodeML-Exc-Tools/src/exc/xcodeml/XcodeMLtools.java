@@ -1,11 +1,3 @@
-/*
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
-// package exc.xcodeml;
-
 package exc.xcodeml;
 
 import java.io.*;

@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 
 import exc.block.*;
@@ -19,7 +13,6 @@ public class XMPtranslateLocalPragma {
   private boolean		doScalasca = false;
   private boolean		doTlog = false;
   private XobjectDef		currentDef;
-
   private XMPgenSym             tmpSym;
 
   public XMPtranslateLocalPragma(XMPglobalDecl globalDecl) {
@@ -106,14 +99,18 @@ public class XMPtranslateLocalPragma {
         { translateGmove(pb);			break; }
       case ARRAY:
 	{ translateArray(pb);                   break; }
-      case SYNC_MEMORY:
-        { translateSyncMemory(pb);		break; }
-      case SYNC_ALL:
-        { translateSyncAll(pb);                 break; }
+        //      case SYNC_MEMORY:
+        //        { translateSyncMemory(pb);		break; }
+        //      case SYNC_ALL:
+        //        { translateSyncAll(pb);                 break; }
       case POST:
         { translatePost(pb);                    break; }
       case WAIT:
         { translateWait(pb);                    break; }
+      case LOCK:
+        { translateLockUnlock(pb, "_XMP_lock_");   break; }
+      case UNLOCK:
+        { translateLockUnlock(pb, "_XMP_unlock_"); break; }
       case LOCAL_ALIAS:
         { translateLocalAlias(pb);		break; }
       case WAIT_ASYNC:
@@ -336,12 +333,62 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void translateSyncMemory(PragmaBlock pb) throws XMPexception {
-    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_memory", null));
-  }
+  //  private void translateSyncMemory(PragmaBlock pb) throws XMPexception {
+  //    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_memory", null));
+  //  }
 
-  private void translateSyncAll(PragmaBlock pb) throws XMPexception {
-    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_all", null));
+  //  private void translateSyncAll(PragmaBlock pb) throws XMPexception {
+  //    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_all", null));
+  //  }
+
+  private void translateLockUnlock(PragmaBlock pb, String funcNamePrefix) throws XMPexception {
+    XobjList lockDecl   = (XobjList)pb.getClauses();
+    XobjList lockObjVar = (XobjList)lockDecl.getArg(0);
+    String coarrayName  = XMPutil.getXobjSymbolName(lockObjVar.getArg(0));
+    XMPcoarray coarray  = _globalDecl.getXMPcoarray(coarrayName);
+    if(coarray == null)
+      throw new XMPexception("Variable in #pragma xmp lock() must be coarray");
+    
+    // When lockDecl.Nargs() is 1,
+    // The specified lock object does not have a codimension.
+    // e.g.) #pragma xmp lock(lock_obj)
+    int imageDims = 0;
+    if(lockDecl.Nargs() != 1)
+      imageDims = lockDecl.getArg(1).Nargs();
+    
+    if(imageDims != 0)
+      if(lockDecl.getArg(1).Nargs() != coarray.getImageDim())
+        throw new XMPexception("Invalid number of dimensions of '" + coarrayName + "'");
+
+    // Set descriptor of lock object
+    XobjList funcArgs = Xcons.List();
+    funcArgs.add(Xcons.SymbolRef(coarray.getDescId()));
+
+    // Set offset
+    //  e.g. xmp_lock_t lockobj[a][b][c]:[*]; #pragma xmp lock(lockobj[3][2][1]:[x]) -> offset = 3*b*c + 2*c + 1
+    int arrayDims = lockObjVar.Nargs() - 1;
+    Xobject offset = null;
+    for(int i=0;i<arrayDims;i++){
+      Xobject tmp = lockObjVar.getArg(i+1);
+      for(int j=i+1;j<arrayDims;j++){
+        tmp = Xcons.binaryOp(Xcode.MUL_EXPR, tmp, Xcons.IntConstant((int)coarray.getSizeAt(j)));
+      }
+      if(offset == null)
+        offset = tmp;
+      else
+        offset = Xcons.binaryOp(Xcode.PLUS_EXPR, offset, tmp);
+    }
+    if(offset == null)
+      funcArgs.add(Xcons.IntConstant(0));
+    else
+      funcArgs.add(offset);
+
+    if(imageDims != 0)
+      for(int i=0;i<lockDecl.getArg(1).Nargs();i++)
+        funcArgs.add(lockDecl.getArg(1).getArg(i));
+
+    String funcName = funcNamePrefix + String.valueOf(imageDims);
+    pb.replace(_globalDecl.createFuncCallBlock(funcName, funcArgs));
   }
 
   private void translatePost(PragmaBlock pb) throws XMPexception {
@@ -2600,38 +2647,42 @@ public class XMPtranslateLocalPragma {
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
 
-	    boolean flag = false;
-	    for(int i=0;i<leftAlignedArray.getDim();i++){   // 1
-	      if(leftAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
-		flag = true;
-	      }
-	    }
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_ARRAY", gmoveFuncArgs);
 
-	    for(int i=0;i<rightAlignedArray.getDim();i++){  // 2
-	      if(rightAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
-		flag = false;
-	      }
-	    }
+	    // BCAST_TO_NOTALIGNED_ARRAY doesn't work now
 
-	    String leftAlignedArrayTemplate  = leftAlignedArray.getAlignTemplate().getName();
-	    String rightAlignedArrayTemplate = rightAlignedArray.getAlignTemplate().getName();
-	    if(!leftAlignedArrayTemplate.equals(rightAlignedArrayTemplate)){ // 3
-	      flag = false;
-	    }
-	    if(!(leftAlignedArray.getDim() == 2 && rightAlignedArray.getDim() == 2)){  // 4
-	      flag = false;
-	    }
+	    // boolean flag = false;
+	    // for(int i=0;i<leftAlignedArray.getDim();i++){   // 1
+	    //   if(leftAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
+	    // 	flag = true;
+	    //   }
+	    // }
 
-	    if(flag == true){
-	      // 1. One of dimension of left array is not aligned.
-	      // 2. All dimensions of right array are aligned (temporary).
-	      // 3. Templates of left array amd right array are the same.
-	      // 4. Both left array amd right array are must 2 dimentional array (temporary).
-	      gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_TO_NOTALIGNED_ARRAY", gmoveFuncArgs);
-	    }
-	    else{
-	      gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_ARRAY", gmoveFuncArgs);
-	    }
+	    // for(int i=0;i<rightAlignedArray.getDim();i++){  // 2
+	    //   if(rightAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
+	    // 	flag = false;
+	    //   }
+	    // }
+
+	    // String leftAlignedArrayTemplate  = leftAlignedArray.getAlignTemplate().getName();
+	    // String rightAlignedArrayTemplate = rightAlignedArray.getAlignTemplate().getName();
+	    // if(!leftAlignedArrayTemplate.equals(rightAlignedArrayTemplate)){ // 3
+	    //   flag = false;
+	    // }
+	    // if(!(leftAlignedArray.getDim() == 2 && rightAlignedArray.getDim() == 2)){  // 4
+	    //   flag = false;
+	    // }
+
+	    // if(flag == true){
+	    //   // 1. One of dimension of left array is not aligned.
+	    //   // 2. All dimensions of right array are aligned (temporary).
+	    //   // 3. Templates of left array amd right array are the same.
+	    //   // 4. Both left array amd right array are must 2 dimentional array (temporary).
+	    //   gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_TO_NOTALIGNED_ARRAY", gmoveFuncArgs);
+	    // }
+	    // else{
+	    //   gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_ARRAY", gmoveFuncArgs);
+	    // }
           }
         }
       } else {
@@ -2681,6 +2732,19 @@ public class XMPtranslateLocalPragma {
             Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), vars)), Bcons.blockList(gmoveFuncCallBlock));
     }
     
+    Xobject async = gmoveDecl.getArg(1);
+    if (async.Opcode() != Xcode.LIST){
+
+      if (!XmOption.isAsync()){
+	XMP.error(pb.getLineNo(), "MPI-3 is required to use the async clause on a bcast directive");
+      }
+
+      Ident f = _globalDecl.declExternFunc("xmpc_init_async");
+      pb.insert(f.Call(Xcons.List(async)));
+      Ident g = _globalDecl.declExternFunc("xmpc_start_async");
+      pb.add(g.Call(Xcons.List(async)));;
+    }
+
     // Why is the barrier needed ?
     //Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock, _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null)));
     Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock));
@@ -2781,7 +2845,8 @@ public class XMPtranslateLocalPragma {
           castedArrayRefs.add(Xcons.Cast(Xtype.intType, x));
           //castedArrayRefs.add(Xcons.Cast(Xtype.intType, x)); // for C-style triplet
           castedArrayRefs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-          castedArrayRefs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+          //castedArrayRefs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+	  castedArrayRefs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
           castedArrayRefs.add(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(dim)));
         }
 
