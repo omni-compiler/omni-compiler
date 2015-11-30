@@ -6828,6 +6828,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_RANLIB" && ac_cv_prog_RANLIB="ranlib"
 fi
 fi
 RANLIB=$ac_cv_prog_RANLIB
@@ -6865,6 +6866,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_AR" && ac_cv_prog_AR="ar"
 fi
 fi
 AR=$ac_cv_prog_AR
@@ -6903,6 +6905,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_prog_NM" && ac_cv_prog_NM="nm"
 fi
 fi
 NM=$ac_cv_prog_NM
