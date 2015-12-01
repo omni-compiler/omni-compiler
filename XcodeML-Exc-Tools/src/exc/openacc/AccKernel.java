@@ -487,7 +487,7 @@ public class AccKernel {
     }
 
     if (info == null || !info.getPragma().isLoop()) {
-      return makeSequentialLoop(forBlock, deviceKernelBuildInfo);
+      return makeSequentialLoop(forBlock, deviceKernelBuildInfo, null);
     }
 
     Xobject numGangsExpr = info.getIntExpr(ACCpragma.NUM_GANGS); //info.getNumGangsExp();
@@ -501,7 +501,7 @@ public class AccKernel {
     String execMethodName = gpuManager.getMethodName(forBlock);
     EnumSet<ACCpragma> execMethodSet = gpuManager.getMethodType(forBlock);
     if (execMethodSet.isEmpty() || execMethodSet.contains(ACCpragma.SEQ)) { //if execMethod is not defined or seq
-      return makeSequentialLoop(forBlock, deviceKernelBuildInfo);
+      return makeSequentialLoop(forBlock, deviceKernelBuildInfo, info);
 //      loopStack.push(new Loop(forBlock));
 //      BlockList body = Bcons.blockList(makeCoreBlock(forBlock.getBody(), deviceKernelBuildInfo, prevExecMethodName));
 //      loopStack.pop();
@@ -743,22 +743,36 @@ public class AccKernel {
     }
   }
 
-  private Block makeSequentialLoop(CforBlock forBlock, DeviceKernelBuildInfo deviceKernelBuildInfo) {
+  private Block makeSequentialLoop(CforBlock forBlock, DeviceKernelBuildInfo deviceKernelBuildInfo, AccInformation info) {
     loopStack.push(new Loop(forBlock));
     BlockList body = Bcons.blockList(makeCoreBlock(forBlock.getBody(), deviceKernelBuildInfo));
     loopStack.pop();
 
     //FIXME this is not good for nothing parallelism kernel
     Set<ACCpragma> outerParallelisms = AccLoop.getOuterParallelism(forBlock);
+    BlockList resultBody = Bcons.emptyBody();
+    if(info != null){
+      for(ACCvar var : info.getACCvarList()){
+        if(var.isPrivate()){
+          resultBody.declLocalIdent(var.getName(), var.getId().Type());
+        }
+      }
+    }
+
     if (outerParallelisms.contains(ACCpragma.VECTOR)) {
-      return Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), body);
+      resultBody.add(Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), body));
+      return Bcons.COMPOUND(resultBody);
     }
     forBlock.Canonicalize();
     if (forBlock.isCanonical()) {
       Xobject originalInductionVar = forBlock.getInductionVar();
       Ident originalInductionVarId = forBlock.findVarIdent(originalInductionVar.getName());
 
-      BlockList resultBody = Bcons.emptyBody();
+      for(Xobject xobj : resultBody.getIdentList()){
+        Ident id = (Ident)xobj;
+        id.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+      }
+
       Ident inductionVarId = resultBody.declLocalIdent("_ACC_loop_iter_" + originalInductionVar.getName(),
               originalInductionVar.Type());
       Block mainLoop = Bcons.FOR(Xcons.Set(inductionVarId.Ref(), forBlock.getLowerBound()),
