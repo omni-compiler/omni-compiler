@@ -768,9 +768,12 @@ public class AccKernel {
       Xobject originalInductionVar = forBlock.getInductionVar();
       Ident originalInductionVarId = forBlock.findVarIdent(originalInductionVar.getName());
 
-      for(Xobject xobj : resultBody.getIdentList()){
-        Ident id = (Ident)xobj;
-        id.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+      XobjList identList = resultBody.getIdentList();
+      if(identList != null){
+	for(Xobject xobj : identList){
+	  Ident id = (Ident)xobj;
+	  id.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+	}
       }
 
       Ident inductionVarId = resultBody.declLocalIdent("_ACC_loop_iter_" + originalInductionVar.getName(),
