@@ -994,7 +994,7 @@ public class AccKernel {
     case Xtype.ENUM: {
       // check whether id is firstprivate!
       ACCvar var = _kernelInfo.findACCvar(ACCpragma.FIRSTPRIVATE, varName);
-      if (var == null /*kernelInfo.isVarAllocated(varName)*/ || _useMemPoolOuterIdSet.contains(id)) {
+      if (var == null /*kernelInfo.isVarAllocated(varName)*/ || _useMemPoolOuterIdSet.contains(id) || var.getDevicePtr() != null) {
         return Ident.Local(varName, Xtype.Pointer(id.Type()));
       } else {
         return Ident.Local(varName, id.Type());
