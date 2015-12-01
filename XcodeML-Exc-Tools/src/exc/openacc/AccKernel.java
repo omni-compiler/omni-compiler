@@ -1314,6 +1314,7 @@ public class AccKernel {
       case ADDR_OF:
       case POINTER_REF:
       case CAST_EXPR:
+      case MEMBER_ADDR:
         return getAssignedXobject(x.getArg(0));
       case PLUS_EXPR:
       case MINUS_EXPR: {
