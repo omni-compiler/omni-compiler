@@ -7,9 +7,9 @@ OUT_io     = cn1d1-writeNGB.x
 OUT_arg    = actualarg.x triplet.x actualarg-2.x actualarg-3.x
 OUT_nest   = nest.x putget-2NGB.x putget-3NGB.x putget-4.x putget-5.x putget-6NGB.x #  nest-2NGB putgetNGB
 OUT_lib    = a1d1-5.x
-###OUT_mod    = module-1 module-2
+OUT_mod    = module-1.x module-2.x
 OUT_entire = axd0-1.x axd1-1.x axd2-1.x
-OUT_bound  = cn1-2okB.x  #l0-1okB.x cannot run on SX
+OUT_bound  = cn1-2okB.x  l0-1okB.x #cannot run on SX
 
 #not supported
 #OUT_struct = struct0d
