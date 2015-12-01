@@ -301,7 +301,7 @@ public class XMPrewriteExpr {
       position = Xcons.IntConstant(0);
     }
     else{
-      throw new XMPexception("Not supported this coarray Syntax");
+      throw new XMPexception("Not supported this coarray Syntax1");
     }
     Xtype elmtType = dstCoarray.getElmtType();
     position = Xcons.binaryOp(Xcode.MUL_EXPR, position, Xcons.SizeOf(elmtType));
@@ -344,7 +344,7 @@ public class XMPrewriteExpr {
       position = Xcons.IntConstant(0);
     }
     else{
-      throw new XMPexception("Not supported this coarray Syntax");
+      throw new XMPexception("Not supported this coarray Syntax2");
     }
     position = Xcons.binaryOp(Xcode.MUL_EXPR, position, Xcons.SizeOf(elmtType));
     funcArgs.add(position);
@@ -370,7 +370,7 @@ public class XMPrewriteExpr {
       dst_length = Xcons.IntConstant(1);
     }
     else{
-      throw new XMPexception("Not supported this coarray Syntax");
+      throw new XMPexception("Not supported this coarray Syntax3");
     }
     funcArgs.add(dst_length);
 
@@ -395,7 +395,7 @@ public class XMPrewriteExpr {
       src_length = Xcons.IntConstant(1);
     }
     else{
-      throw new XMPexception("Not supported this coarray Syntax");
+      throw new XMPexception("Not supported this coarray Syntax4");
     }
     funcArgs.add(src_length);
 
@@ -444,7 +444,7 @@ public class XMPrewriteExpr {
       coarrayDims = 1;
     }
     else{
-      throw new XMPexception("Not supported this coarray Syntax");
+      throw new XMPexception("Not supported this coarray Syntax5");
     }
 
     // Get Local Dims
@@ -457,8 +457,12 @@ public class XMPrewriteExpr {
       Ident varId = localExpr.findVarIdent(localName);
       localDims = varId.Type().getNumDimensions();
     }
-    else if(localExpr.Opcode() == Xcode.VAR){
-      localName = localExpr.getName();
+    else if(localExpr.Opcode() == Xcode.VAR || localExpr.Opcode() == Xcode.POINTER_REF){
+      if(localExpr.Opcode() == Xcode.VAR)
+        localName = localExpr.getName();
+      else
+        localName = localExpr.getArg(0).getName();
+      
       isArray = false;
       localDims = 1;
     }
@@ -469,7 +473,9 @@ public class XMPrewriteExpr {
       throw new XMPexception("Not supported a Constant Value at coarray Syntax");
     }
     else{
-      throw new XMPexception("Not supported this coarray Syntax");
+      System.out.println(localExpr.Opcode());
+      System.out.println(Xcode.ARRAY_ADDR);
+      throw new XMPexception("Not supported this coarray Syntax6");
     }
 
     // Get image Dims
@@ -543,7 +549,7 @@ public class XMPrewriteExpr {
       funcArgs.add(Xcons.IntConstant(1)); // stride
     }
     else{
-      throw new XMPexception("Not supported this coarray Syntax");
+      throw new XMPexception("Not supported this coarray Syntax7");
     }
     Xobject newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
@@ -650,8 +656,13 @@ public class XMPrewriteExpr {
 	  funcArgs.add(Xcons.SymbolRef(localArray.getDescId()));
       }
     }
-    else if(localExpr.Opcode() == Xcode.VAR){
-      String varName = localExpr.getName();
+    else if(localExpr.Opcode() == Xcode.VAR || localExpr.Opcode() == Xcode.POINTER_REF){
+      String varName;
+      if(localExpr.Opcode() == Xcode.VAR)
+        varName = localExpr.getName();
+      else
+        varName = localExpr.getArg(0).getName();
+      
       isLocalOnDevice = isUseDevice(varName, exprParentBlock);
       XMPcoarray localVar = _globalDecl.getXMPcoarray(varName, exprParentBlock);
       if(localVar == null){
@@ -669,7 +680,7 @@ public class XMPrewriteExpr {
       throw new XMPexception("Not supported a Constant Value at coarray Syntax");
     }
     else{
-      throw new XMPexception("Not supported this coarray Syntax");
+      throw new XMPexception("Not supported this coarray Syntax8");
     }
 
     boolean isAcc = isRemoteOnDevice || isLocalOnDevice;
@@ -791,7 +802,7 @@ public class XMPrewriteExpr {
     if(myExpr.Opcode() == Xcode.CO_ARRAY_REF)
       myExpr = myExpr.getArg(0);
 
-    if(myExpr.Opcode() == Xcode.VAR || myExpr.Opcode() == Xcode.ARRAY_REF){
+    if(myExpr.Opcode() == Xcode.VAR || myExpr.Opcode() == Xcode.ARRAY_REF || myExpr.Opcode() == Xcode.POINTER_REF){
       return true;
     }
     else if(myExpr.Opcode() == Xcode.SUB_ARRAY_REF){
@@ -957,7 +968,7 @@ public class XMPrewriteExpr {
       }
     }
     else{
-      throw new XMPexception("Not supported this coarray Syntax");
+      throw new XMPexception("Not supported this coarray Syntax9");
     }
 
     return false;
@@ -967,7 +978,10 @@ public class XMPrewriteExpr {
     if(myExpr.Opcode() == Xcode.ARRAY_REF || myExpr.Opcode() == Xcode.SUB_ARRAY_REF){
       myExpr = myExpr.getArg(0);
     }
-    
+
+    if(myExpr.Opcode() == Xcode.POINTER_REF)
+      myExpr = myExpr.getArg(0);
+
     XMPcoarray coarray = _globalDecl.getXMPcoarray(myExpr.getSym(), block);
     
     if(coarray == null)
