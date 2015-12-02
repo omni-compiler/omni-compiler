@@ -606,9 +606,9 @@ public class AccKernel {
         has64bitIndVar = true;
         break;
       }
-      Xobject init = tmpForBlock.getLowerBound();
-      Xobject cond = tmpForBlock.getUpperBound();
-      Xobject step = tmpForBlock.getStep();
+      Xobject init = tmpForBlock.getLowerBound().copy();
+      Xobject cond = tmpForBlock.getUpperBound().copy();
+      Xobject step = tmpForBlock.getStep().copy();
       Ident vIdxId = Ident.Local("_ACC_idx_" + indVarName, idxVarType);
       Ident indVarId = Ident.Local(indVarName, indVarType);
       Ident nIterId = resultBlockBuilder.declLocalIdent("_ACC_niter_" + indVarName, idxVarType);
