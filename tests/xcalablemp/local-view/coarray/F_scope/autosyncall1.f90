@@ -13,7 +13,7 @@ end subroutine autosyncall
 program main
   include "xmp_coarray.h"
   call autosyncall(1,1)
-  call autosyncall(13,12)
+  call autosyncall(13,15)
   call autosyncall(5,2)
   call autosyncall(2,2)
   print '("[",i0,"] OK")', this_image()
