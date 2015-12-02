@@ -415,9 +415,6 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
   OPENMP_OPT_C="-Kopenmp"
   OPENMP_OPT_F=$OPENMP_OPT_C
 
-# CPP_OPT
-  CPP_OPT="-Cpp"
-
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
   XMPF_DEF="-D_XCALABLEMP"
@@ -430,7 +427,7 @@ if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$t
 
 # MPI F
   AC_CHECK_PROG([MPI_FC], [mpifrtpx], [mpifrtpx])
-  MPI_FPPFLAGS="-E"
+  MPI_FPPFLAGS="-E -Cpp"
   MPI_FCFLAGS="-Kfast,openmp"
   MPI_MODINC="-M"
   MPI_FCLIBS=""
@@ -460,9 +457,6 @@ elif test "$target" = "MIC-linux-gnu"; then
   OPENMP_OPT_C="-mp"
   OPENMP_OPT_F=$OPENMP_OPT_C
 
-# CPP_OPT
-  CPP_OPT="-cpp"
-
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
   XMPF_DEF="-D_XCALABLEMP"
@@ -475,7 +469,7 @@ elif test "$target" = "MIC-linux-gnu"; then
 
 # MPI F
   AC_CHECK_PROG([MPI_FC], [mpiifort], [mpiifort])
-  MPI_FPPFLAGS="-E"
+  MPI_FPPFLAGS="-E -cpp"
   MPI_FCFLAGS="-fast $OPENMP_OPT_F"
   MPI_MODINC="-module"
   MPI_FCLIBS=""
@@ -505,9 +499,6 @@ elif test "$target" = "Cray-linux-gnu"; then
   OPENMP_OPT_C="-h omp"
   OPENMP_OPT_F=$OPENMP_OPT_C
 
-# CPP_OPT
-  CPP_OPT="-cpp"
-
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
   XMPF_DEF="-D_XCALABLEMP"
@@ -520,7 +511,7 @@ elif test "$target" = "Cray-linux-gnu"; then
 
 # MPI F
   AC_CHECK_PROG([MPI_FC], [ftn], [ftn])
-  MPI_FPPFLAGS="-E"
+  MPI_FPPFLAGS="-E -cpp"
   MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
   MPI_MODINC="-J"
   MPI_FCLIBS=""
@@ -549,9 +540,6 @@ elif test "$target" = "sxace-nec-superux"; then
 # OpenMP
   OPENMP_OPT_C="-Popenmp"
   OPENMP_OPT_F=$OPENMP_OPT_C
-
-# CPP_OPT
-  CPP_OPT="-cpp"
 
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
@@ -599,9 +587,6 @@ elif test "$target" = "sx9-nec-superux"; then
   OPENMP_OPT_C="-Popenmp"
   OPENMP_OPT_F=$OPENMP_OPT_C
 
-# CPP_OPT
-  CPP_OPT="-cpp"
-
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
   XMPF_DEF="-D_XCALABLEMP"
@@ -614,7 +599,7 @@ elif test "$target" = "sx9-nec-superux"; then
 
 # MPI F
   AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
-  MPI_FPPFLAGS="-E"
+  MPI_FPPFLAGS="-E -cpp"
   MPI_FCFLAGS="-Chopt -f2003 $OPENMP_OPT_F -Wf,-ptr,byte"
   MPI_MODINC="-to"
   MPI_FCLIBS=""
@@ -648,9 +633,6 @@ elif test "$target" = "powerpc-ibm-cnk"; then
   OPENMP_OPT_C="-qsmp=omp"
   OPENMP_OPT_F=$OPENMP_OPT_C
 
-# CPP_OPT
-  CPP_OPT="-cpp"
-
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
   XMPF_DEF="-WF,-D_XCALABLEMP"
@@ -677,7 +659,7 @@ elif test "$target" = "powerpc-ibm-cnk"; then
 # MPI F
   AC_CHECK_PROG([MPI_FC], [mpixlf90_r], [mpixlf90_r])
   
-  MPI_FPPFLAGS="-E"
+  MPI_FPPFLAGS="-E -cpp"
   MPI_FCFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist -qextname $INC_PATH $OPENMP_OPT_F"
   MPI_MODINC="-I"
 
@@ -714,9 +696,6 @@ elif test "$target" = "powerpc-hitachi-aix"; then
   OPENMP_OPT_C="-qsmp=omp"
   OPENMP_OPT_F=$OPENMP_OPT_C
 
-# CPP_OPT
-  CPP_OPT="-cpp"
-
 # XcalableMP
   XMPC_DEF="-D_XCALABLEMP"
   XMPF_DEF="-WF,-D_XCALABLEMP"
@@ -729,7 +708,7 @@ elif test "$target" = "powerpc-hitachi-aix"; then
 
 # MPI F
   AC_CHECK_PROG([MPI_FC], [mpxlf90_r], [mpxlf90_r])
-  MPI_FPPFLAGS="-E"
+  MPI_FPPFLAGS="-E -cpp"
   MPI_FCFLAGS="-q64 -qhot -qsimd=auto -O5 -qextname $OPENMP_OPT_F"
   MPI_MODINC="-I"
   MPI_FCLIBS=""
@@ -771,9 +750,6 @@ else
     # OpenMP
     OPENMP_OPT_C="-fopenmp"
 
-    # CPP_OPT
-    CPP_OPT="-cpp"
-
     # XcalableMP
     XMPC_DEF="-D_XCALABLEMP"
 
@@ -793,9 +769,6 @@ else
   *ICC*)
     # OpenMP
     OPENMP_OPT_C="-openmp"
-
-    # CPP_OPT
-    CPP_OPT="-cpp"
 
     # XcalableMP
     XMPC_DEF="-D_XCALABLEMP"
@@ -825,9 +798,6 @@ else
     pgcc*)
       # OpenMP
       OPENMP_OPT_C="-mp"
-
-      # CPP_OPT
-      CPP_OPT="-Mpreprocess"
 
       # XcalableMP
       XMPC_DEF="-D_XCALABLEMP"
@@ -878,7 +848,7 @@ else
     XMPF_DEF="-D_XCALABLEMP"
 
     # MPI F
-    MPI_FPPFLAGS="-E"
+    MPI_FPPFLAGS="-E -cpp"
     MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
     MPI_MODINC="-J"
     MPI_FCLIBS=""
@@ -897,7 +867,7 @@ else
     XMPF_DEF="-D_XCALABLEMP"
 
     # MPI F
-    MPI_FPPFLAGS="-E"
+    MPI_FPPFLAGS="-E -cpp"
     MPI_FCFLAGS="-O2 $OPENMP_OPT_F"
     MPI_MODINC="-module"
     MPI_FCLIBS=""
@@ -915,14 +885,11 @@ else
       # OpenMP
       OPENMP_OPT_F="-mp"
 
-      # CPP_OPT
-      CPP_OPT="-Mpreprocess"
-
       # XcalableMP
       XMPF_DEF="-D_XCALABLEMP"
 
       # MPI F
-      MPI_FPPFLAGS="-E"
+      MPI_FPPFLAGS="-E -Mpreprocess"
       MPI_FCFLAGS="-fast $OPENMP_OPT_F"
       MPI_MODINC="-module"
       MPI_FCLIBS=""
@@ -1280,9 +1247,6 @@ fi
 # OpenMP
 AC_SUBST(OPENMP_OPT_C)
 AC_SUBST(OPENMP_OPT_F)
-
-# CPP_OPT
-AC_SUBST(CPP_OPT)
 
 # XcalableMP
 AC_SUBST(XMPC_DEF)
