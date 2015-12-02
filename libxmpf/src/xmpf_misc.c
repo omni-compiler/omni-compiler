@@ -37,6 +37,12 @@ void xmpf_finalize_all__()
   xmpf_sync_all_auto_();
 #endif
 
+  xmpf_finalize_each__();
+}
+
+void xmpf_finalize_each__()
+{
+
 #if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
   FJMPI_Rdma_finalize();
 #endif

@@ -71,6 +71,8 @@ void _XMP_G2L(long long int global_idx,int *local_idx,
 /* From xmpf_misc.c */
 void xmpf_dbg_printf(char *fmt, ...);
 size_t _XMP_get_datatype_size(int datatype);
+void xmpf_finalize_all__(void);
+void xmpf_finalize_each__(void);
 
 
 /* From xmpf_gcomm.c */
