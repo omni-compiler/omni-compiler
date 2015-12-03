@@ -44,8 +44,35 @@ class AccLoop extends AccDirective{
       collapseNum = collapseNumExpr.getInt();
     }
     XobjList inductionVarList = checkCollapsedLoop(_pb.getBody().getHead(), collapseNum);
-    for(Xobject inductionVar : inductionVarList){
-      String symbol = inductionVar.getSym();
+    Set<Ident> inductionVariableSet = new HashSet<Ident>();
+    for(Xobject xobj : inductionVarList){
+      Ident id = _pb.findVarIdent(xobj.getName());
+      if(id == null){
+        throw new ACCexception("ident of induction variable is not found");
+      }
+      inductionVariableSet.add(id);
+    }
+
+    //add loop inductionvariable which is not collapsed
+    BlockIterator blockIterator = new topdownBlockIterator(_pb.getBody());
+    for(blockIterator.init(); !blockIterator.end(); blockIterator.next()){
+      Block b = blockIterator.getBlock();
+      if(b.Opcode() == Xcode.ACC_PRAGMA){
+        PragmaBlock pb = (PragmaBlock)b;
+        if(ACCpragma.valueOf(pb.getPragma()).isLoop()) break;
+      }
+      if(b.Opcode() != Xcode.FOR_STATEMENT) continue;
+      CforBlock cforBlock = (CforBlock)b;
+      if(! cforBlock.isCanonical()) cforBlock.Canonicalize();
+      Xobject indVarXobj = cforBlock.getInductionVar();
+      if(indVarXobj == null)continue;
+      Ident id = cforBlock.findVarIdent(indVarXobj.getName());
+      inductionVariableSet.add(id);
+    }
+
+    //for(Xobject inductionVar : inductionVarList){
+    for(Ident inductionVarId : inductionVariableSet){
+      String symbol = inductionVarId.getSym();
       ACCvar var = _info.findACCvar(symbol);
       if(var == null){
         _info.addVar(ACCpragma.PRIVATE, Xcons.Symbol(Xcode.VAR, symbol));
