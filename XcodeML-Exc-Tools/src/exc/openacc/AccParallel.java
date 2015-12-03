@@ -34,9 +34,15 @@ class AccParallel extends AccData{
       String varName = id.getName();
       if(_info.isDeclared(varName)) continue; //if declared in same directive
 
-      ACCvar var = findParentVar(id);
+      ACCvar parentVar = findParentVar(id);
+      ACCvar var = _info.findACCvar(varName);
 
-      if (!id.Type().isPointer() && (ACC.version >= 20 || readOnlyOuterIdSet.contains(id)) && var == null/* not appeared in outer data clause*/) {
+      boolean isReductionVariableInKernel = isReductionVariableInKernel(id);
+
+      if (!id.Type().isPointer() && (ACC.version >= 20 || readOnlyOuterIdSet.contains(id))
+              && parentVar == null/* not appeared in outer data clause*/
+              && (var == null || !var.isReduction()) /* not reduction variable in the directive */
+              && !isReductionVariableInKernel /* not reduction variable in the kernel*/ ) {
         _info.addVar(ACCpragma.FIRSTPRIVATE, Xcons.Symbol(Xcode.VAR, varName));
       }else {
         _info.addVar(ACCpragma.PRESENT_OR_COPY, Xcons.Symbol(Xcode.VAR, varName));
@@ -45,6 +51,22 @@ class AccParallel extends AccData{
 
     //this is the end of analyze
     super.analyze();
+  }
+
+  private boolean isReductionVariableInKernel(Ident id)
+  {
+    BlockIterator blockIterator = new topdownBlockIterator(_pb.getBody());
+    for(blockIterator.init(); !blockIterator.end(); blockIterator.next()){
+      Block b = blockIterator.getBlock();
+      if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
+      AccDirective directive = (AccDirective)b.getProp(AccDirective.prop);
+      AccInformation info = directive.getInfo();
+      ACCvar var = info.findReductionACCvar(id.getName());
+      if(var.getId() == id){
+        return true;
+      }
+    }
+    return false;
   }
 
   void completeParallelism() throws ACCexception{
