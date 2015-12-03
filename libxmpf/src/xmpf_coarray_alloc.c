@@ -258,14 +258,13 @@ size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
   } else if (count == 1) {              // scalar or one-element array
     /* round up */
     elementRU = ROUND_UP_BOUNDARY(element);
-    _XMPF_coarrayDebugPrint("round-up element size\n"
-                            "  name=%*s, count=%d, element=%d to %u\n",
-                            namelen, name, count, element, elementRU);
+    _XMPF_coarrayDebugPrint("round-up element size %d to %u (name=\"%*s\")\n",
+                            element, elementRU, namelen, name);
   } else {
     /* restriction */
     _XMPF_coarrayFatal("boundary violation detected in coarray allocation\n"
-                            "  name=%*s, element=%d\n",
-                            namelen, name, element);
+                       "  element size %d (name=\"%*s\")\n",
+                       element, namelen, name);
   }
 
   return elementRU;
@@ -275,9 +274,10 @@ size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
 MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
 {
   MemoryChunk_t *chunk;
+  static const char *name = "(unk)";
+  static const int namelen = 5;
 
-  size_t elementRU = _roundUpElementSize(count, element,
-                                         "(unk)", strlen("(unk)"));
+  size_t elementRU = _roundUpElementSize(count, element, name, namelen);
   unsigned nbytes = (unsigned)count * elementRU;
 
   // make memory-chunk even if size nbyte=0
