@@ -18,7 +18,7 @@ echo "[F_scope]"
 
 for f in @OUT@; do
     echo $f
-    mpiexec -n 3 ./$f ;;
+    mpiexec -n 3 ./$f
 done
 
 

@@ -2,7 +2,7 @@
 
 SRC= $(OUT:%.x=%.f90)
 RESULT=$(SRC:.f90=.result)
-.SUFFIXES: .x .f90
+.SUFFIXES: .x .f90 .xmod
 
 .f90.x:
 	xmpf90 $(OPT) -o $@ $<

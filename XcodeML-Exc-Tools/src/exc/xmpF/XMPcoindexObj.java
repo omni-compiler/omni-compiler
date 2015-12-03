@@ -219,10 +219,14 @@ public class XMPcoindexObj {
     String funcName = COARRAYGET_PREFIX + exprRank + "d";
     Ident funcIdent = getEnv().findVarIdent(funcName, null);
     if (funcIdent == null) {
+      // bug460: funcIdent could not find because the module declaring the
+      // name is not defined in the same file.
       Xtype baseType = _getBasicType(xtype);   // regard type as its basic type
                                                //// RETHINK! It might be neutral type?
       Xtype funcType = Xtype.Function(baseType);
       funcIdent = getEnv().declExternIdent(funcName, funcType);
+      // This workaround for bug460 does not work well.
+      //funcIdent = Ident.Fident(funcName, null);
     }                                           
 
     Xobject funcRef = funcIdent.Call(actualArgs);
