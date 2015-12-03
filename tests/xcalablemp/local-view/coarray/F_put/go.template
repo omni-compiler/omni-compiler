@@ -14,7 +14,8 @@
 #OPT="-mca mpi_print_stats 1 -mca coll_tuned_use_6d_algorithm 1 -mca coll_tuned_prealloc_size 2600"
 
 echo
-echo "[test_put]"
+echo "[test_put] export XMP_ONESIDED_HEAP_SIZE=70M"
+export XMP_ONESIDED_HEAP_SIZE=70M
 
 for f in @OUT@; do
     echo $f
