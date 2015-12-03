@@ -128,7 +128,7 @@ public class AccKernel {
       }
 
       Ident devicePtrId = var.getDevicePtr();
-      if (_readOnlyOuterIdSet.contains(id) && devicePtrId == null) { //is this condition appropriate?
+      if(!var.isArray() && var.isFirstprivate()){
         return id.Ref(); //host scalar data
       }
 
