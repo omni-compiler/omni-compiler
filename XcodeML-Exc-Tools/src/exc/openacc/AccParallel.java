@@ -34,7 +34,9 @@ class AccParallel extends AccData{
       String varName = id.getName();
       if(_info.isDeclared(varName)) continue; //if declared in same directive
 
-      if (!id.Type().isPointer() && (ACC.version >= 20 || readOnlyOuterIdSet.contains(id))) {
+      ACCvar var = findParentVar(id);
+
+      if (!id.Type().isPointer() && (ACC.version >= 20 || readOnlyOuterIdSet.contains(id)) && var == null/* not appeared in outer data clause*/) {
         _info.addVar(ACCpragma.FIRSTPRIVATE, Xcons.Symbol(Xcode.VAR, varName));
       }else {
         _info.addVar(ACCpragma.PRESENT_OR_COPY, Xcons.Symbol(Xcode.VAR, varName));
