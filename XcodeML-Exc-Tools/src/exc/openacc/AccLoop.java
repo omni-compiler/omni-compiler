@@ -44,17 +44,15 @@ class AccLoop extends AccDirective{
       collapseNum = collapseNumExpr.getInt();
     }
     XobjList inductionVarList = checkCollapsedLoop(_pb.getBody().getHead(), collapseNum);
-    Set<Ident> inductionVariableSet = new HashSet<Ident>();
+    //Set<Ident> inductionVariableSet = new HashSet<Ident>();
+    Set<String> inductionVariableSymbolSet = new HashSet<String>();
+    CforBlock mainforBlock = findOutermostTightlyNestedForBlock(_pb.getBody().getHead());
     for(Xobject xobj : inductionVarList){
-      Ident id = _pb.findVarIdent(xobj.getName());
-      if(id == null){
-        throw new ACCexception("ident of induction variable is not found");
-      }
-      inductionVariableSet.add(id);
+      inductionVariableSymbolSet.add(xobj.getSym());
     }
 
     //add loop inductionvariable which is not collapsed
-    BlockIterator blockIterator = new topdownBlockIterator(_pb.getBody());
+    BlockIterator blockIterator = new topdownBlockIterator(mainforBlock.getBody());
     for(blockIterator.init(); !blockIterator.end(); blockIterator.next()){
       Block b = blockIterator.getBlock();
       if(b.Opcode() == Xcode.ACC_PRAGMA){
@@ -66,13 +64,15 @@ class AccLoop extends AccDirective{
       if(! cforBlock.isCanonical()) cforBlock.Canonicalize();
       Xobject indVarXobj = cforBlock.getInductionVar();
       if(indVarXobj == null)continue;
-      Ident id = cforBlock.findVarIdent(indVarXobj.getName());
-      inductionVariableSet.add(id);
+      String indVarName = indVarXobj.getName();
+      Ident id = cforBlock.findVarIdent(indVarName);
+      if(id !=null && id == mainforBlock.findVarIdent(indVarName)){
+        //inductionVariableSet.add(id);
+        inductionVariableSymbolSet.add(indVarName);
+      }
     }
 
-    //for(Xobject inductionVar : inductionVarList){
-    for(Ident inductionVarId : inductionVariableSet){
-      String symbol = inductionVarId.getSym();
+    for(String symbol : inductionVariableSymbolSet){
       ACCvar var = _info.findACCvar(symbol);
       if(var == null){
         _info.addVar(ACCpragma.PRIVATE, Xcons.Symbol(Xcode.VAR, symbol));
