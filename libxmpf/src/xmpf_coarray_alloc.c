@@ -248,7 +248,7 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
 }
 
 
-size_t _roundUpElementSize(int count, size_t element)
+size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
 {
   size_t elementRU;
 
@@ -259,12 +259,13 @@ size_t _roundUpElementSize(int count, size_t element)
     /* round up */
     elementRU = ROUND_UP_BOUNDARY(element);
     _XMPF_coarrayDebugPrint("round-up element size\n"
-                            "  count=%d, element=%d to %u\n",
-                            count, element, elementRU);
+                            "  name=%*s, count=%d, element=%d to %u\n",
+                            namelen, name, count, element, elementRU);
   } else {
     /* restriction */
-    _XMPF_coarrayFatal("boundary violation caused by coarray allocation\n"
-                       "  (xmpf_coarray_malloc_() in %s)", __FILE__);
+    _XMPF_coarrayFatal("boundary violation detected in coarray allocation\n"
+                            "  name=%*s, element=%d\n",
+                            namelen, name, element);
   }
 
   return elementRU;
@@ -275,7 +276,8 @@ MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
 {
   MemoryChunk_t *chunk;
 
-  size_t elementRU = _roundUpElementSize(count, element);
+  size_t elementRU = _roundUpElementSize(count, element,
+                                         "(unk)", strlen("(unk)"));
   unsigned nbytes = (unsigned)count * elementRU;
 
   // make memory-chunk even if size nbyte=0
@@ -395,7 +397,8 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                 int *count, int *element,
                                 char *name, int *namelen)
 {
-  size_t elementRU = _roundUpElementSize(*count, (size_t)(*element));
+  size_t elementRU = _roundUpElementSize(*count, (size_t)(*element),
+                                         name, *namelen);
   size_t nbytes = (size_t)(*count) * elementRU;
 
   CoarrayInfo_t *cinfo;
