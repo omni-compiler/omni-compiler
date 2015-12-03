@@ -62,7 +62,7 @@ class AccParallel extends AccData{
       AccDirective directive = (AccDirective)b.getProp(AccDirective.prop);
       AccInformation info = directive.getInfo();
       ACCvar var = info.findReductionACCvar(id.getName());
-      if(var.getId() == id){
+      if(var != null && var.getId() == id){
         return true;
       }
     }
