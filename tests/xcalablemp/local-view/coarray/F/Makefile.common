@@ -48,7 +48,7 @@ RUN/go.sh: go.template Makefile
 
 ### clean
 clean:
-	rm -f *~ *.o $(OUT) *.result a.out
+	rm -f *~ *.o *.x *.result a.out
 	rm -rf __omni_tmp__/
 	rm -f omni_traverse*.o
 	rm -f $(OUT:%=RUN/%)

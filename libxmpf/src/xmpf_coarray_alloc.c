@@ -98,6 +98,7 @@ static MemoryChunkOrder_t *_newMemoryChunkOrder(MemoryChunk_t *chunk);
 static void _unlinkMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
 static void _freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
 
+static char* _toOrdinalNumberString(int n);
 
 
 /*****************************************\
@@ -274,7 +275,7 @@ size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
 MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
 {
   MemoryChunk_t *chunk;
-  static const char *name = "(unk)";
+  static char *name = "(unk)";
   static const int namelen = 5;
 
   size_t elementRU = _roundUpElementSize(count, element, name, namelen);
@@ -1049,10 +1050,19 @@ int xmpf_image_index_(void **descPtr, int coindexes[])
     idx = coindexes[i];
     lb = cp->lcobound[i];
     ub = cp->ucobound[i];
-    if (idx < lb || ub < idx) {
-      _XMPF_coarrayFatal("%d-th cosubscript of \'%s\', %d, "
-                         "is out of range %d to %d.",
-                         i+1, cp->name, idx, lb, ub);
+    if (idx < lb) {
+      _XMPF_coarrayDebugPrint
+        ("The %s cosubscript of coarray \'%s\' is too small.\n"
+         "  value=%d, range=[%d,%d]\n",
+         _toOrdinalNumberString(i), cp->name, idx, lb, ub);
+      return 0;
+    }
+    if (ub < idx && i < cp->corank - 1) {
+      _XMPF_coarrayDebugPrint
+        ("The %s cosubscript of coarray \'%s\' is too large.\n"
+         "  value=%d, range=[%d,%d]\n",
+         _toOrdinalNumberString(i), cp->name, idx, lb, ub);
+      return 0;
     }
     count += (idx - lb) * factor;
     factor *= cp->cosize[i];
@@ -1118,7 +1128,31 @@ size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   char* orgAddr = cinfo->parent->orgAddr;
-  int offset = ((size_t)baseAddr - (size_t)orgAddr);
+  //int offset = ((size_t)baseAddr - (size_t)orgAddr);
+  int offset = baseAddr - orgAddr;
   return offset;
 }
 
+
+/***********************************************\
+   local
+\***********************************************/
+
+char* _toOrdinalNumberString(int n)
+{
+  static char work[6];
+
+  switch (n) {
+  case 1:
+    return "1st";
+  case 2:
+    return "2nd";
+  case 3:
+    return "3rd";
+  default:
+    break;
+  }
+
+  sprintf(work, "%dth", n);
+  return work;
+}
