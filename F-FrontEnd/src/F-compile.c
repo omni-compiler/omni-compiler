@@ -4185,6 +4185,14 @@ compile_CALL_statement(expr x)
         if(PROC_EXT_ID(id))
             EXT_PROC_TYPE(PROC_EXT_ID(id)) = tp;
     }
+    else if (PROC_CLASS(id) == P_INTRINSIC && ID_TYPE(id) != NULL){
+      TYPE_DESC tp = ID_TYPE(id);
+      TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+      TYPE_UNSET_IMPLICIT(tp);
+      TYPE_SET_USED_EXPLICIT(tp);
+      ID_TYPE(id) = tp;
+      if (PROC_EXT_ID(id)) EXT_PROC_TYPE(PROC_EXT_ID(id)) = tp;
+    }      
 
 #if 0
     /*

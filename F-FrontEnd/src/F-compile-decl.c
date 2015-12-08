@@ -506,10 +506,12 @@ implicit_declaration(ID id)
     TYPE_DESC tp;
     char c;
 
-    if (ID_CLASS(id) == CL_MAIN ||
-        (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_INTRINSIC)) {
-        return;
-    }
+    /* if (ID_CLASS(id) == CL_MAIN || */
+    /*     (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_INTRINSIC)) { */
+    /*     return; */
+    /* } */
+
+    if (ID_CLASS(id) == CL_MAIN) return;
 
     if (CURRENT_STATE == INEXEC && !ID_COULD_BE_IMPLICITLY_TYPED(id)) {
         /* use parent type as is */
@@ -2906,6 +2908,10 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
              if (TYPE_IS_PARAMETER(tp)) {
                  ID_CLASS(id) = CL_PARAM;
              }
+	     else if (TYPE_IS_INTRINSIC(tp)){
+	       ID_CLASS(id) = CL_PROC;
+	       PROC_CLASS(id) = P_INTRINSIC;
+	     }
         }
 
         if (value != NULL && EXPR_CODE(value) != F_DATA_DECL) {

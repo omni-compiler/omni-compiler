@@ -69,7 +69,8 @@ public class XMPtranslate implements XobjectDefVisitor
 
     for (Xobject k: (XobjList)idList){
       Ident id = (Ident)k;
-      if (id.getStorageClass() == StorageClass.FPARAM){
+      if (id.getStorageClass() == StorageClass.FPARAM ||
+	  id.getStorageClass() == StorageClass.FFUNC){
     	childIdList.add(id.copy());
       }
     }
@@ -84,7 +85,8 @@ public class XMPtranslate implements XobjectDefVisitor
       if (kk.Opcode() == Xcode.F_COMMON_DECL ||
 	  kk.Opcode() == Xcode.F_DATA_DECL) continue;
       Ident id = d.findIdent(kk.getArg(0).getName());
-      if (id != null && id.getStorageClass() == StorageClass.FPARAM){
+      if (id != null && (id.getStorageClass() == StorageClass.FPARAM ||
+			 id.getStorageClass() == StorageClass.FFUNC)){
 	childDecls.add(kk.copy());
       }
     }
