@@ -900,6 +900,9 @@ public class XMPcoarray {
       break;
 
     case BasicType.F_NUMERIC_ALL:
+      tname = null;
+      break;
+
     default:
       XMP.fatal("found illegal type number in BasicType: " + typeNumber);
       break;

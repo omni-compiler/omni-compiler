@@ -7,7 +7,7 @@ real*8 :: a(lx,ly)[*]
 do i = 1, lx
    a(i,1) = i
 end do
-asyncall
+syncall
 nerr=0
 eps=0.000001
 if (abs(a(1,1)-a(1,1)[2])>eps) nerr=nerr+1
