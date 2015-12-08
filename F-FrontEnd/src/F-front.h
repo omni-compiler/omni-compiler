@@ -358,6 +358,8 @@ extern int leave_comment_flag;
 
 #define EMPTY_LIST list0(LIST)
 
+#define NAME_FOR_NONAME_PROGRAM "xmpf_main"
+
 /*
  * I/O information specifiers
  */

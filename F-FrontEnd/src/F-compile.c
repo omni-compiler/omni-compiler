@@ -1015,7 +1015,7 @@ compile_exec_statement(expr x)
       if (CURRENT_STATE == OUTSIDE) {
 	begin_procedure();
 	//declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
-	declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
+	declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
 			  NULL, NULL, NULL, NULL);
       }
 
@@ -1249,7 +1249,7 @@ check_INDCL()
         begin_procedure();
         if (unit_ctl_level == 0)
 	  //declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
-	  declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
+	  declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
 			    NULL, NULL, NULL, NULL);
     case INSIDE:        
         CURRENT_STATE = INDCL;
@@ -1266,7 +1266,7 @@ check_INEXEC()
     if (CURRENT_STATE == OUTSIDE) {
         begin_procedure();
         if (unit_ctl_level == 0)
-            declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
+            declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
                               NULL, NULL, NULL, NULL);
         else
             declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
