@@ -83,7 +83,37 @@ compile_intrinsic_call(ID id, expv args) {
     EXT_ID extid;
 
     if (SYM_TYPE(ID_SYM(id)) != S_INTR) {
-        fatal("%s: not intrinsic symbol", __func__);
+      //fatal("%s: not intrinsic symbol", __func__);
+
+      // declarea as intrinsic but not defined in the intrinc table
+
+      SYM_TYPE(ID_SYM(id)) = S_INTR;
+
+      if (args == NULL) {
+        args = list0(LIST);
+      }
+
+      if (ID_TYPE(id) == NULL) implicit_declaration(id);
+      tp = ID_TYPE(id);
+      //tp = BASIC_TYPE_DESC(TYPE_SUBR);
+
+      expv symV = expv_sym_term(F_FUNC, NULL, ID_SYM(id));
+
+      ftp = function_type(tp);
+      TYPE_SET_INTRINSIC(ftp);
+
+      extid = new_external_id_for_external_decl(ID_SYM(id), ftp);
+      ID_TYPE(id) = ftp;
+      PROC_EXT_ID(id) = extid;
+      if (TYPE_IS_EXTERNAL(tp)){
+	ID_STORAGE(id) = STG_EXT;
+      }
+      else{
+	EXT_PROC_CLASS(extid) = EP_INTRINSIC;
+      }
+
+      ret = expv_cons(FUNCTION_CALL, tp, symV, args);
+      return ret;
     }
 
     ep = &(intrinsic_table[SYM_VAL(ID_SYM(id))]);

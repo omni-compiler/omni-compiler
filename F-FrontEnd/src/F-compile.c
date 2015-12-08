@@ -1015,7 +1015,7 @@ compile_exec_statement(expr x)
       if (CURRENT_STATE == OUTSIDE) {
 	begin_procedure();
 	//declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
-	declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
+	declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
 			  NULL, NULL, NULL, NULL);
       }
 
@@ -1249,7 +1249,7 @@ check_INDCL()
         begin_procedure();
         if (unit_ctl_level == 0)
 	  //declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
-	  declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
+	  declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
 			    NULL, NULL, NULL, NULL);
     case INSIDE:        
         CURRENT_STATE = INDCL;
@@ -1266,7 +1266,7 @@ check_INEXEC()
     if (CURRENT_STATE == OUTSIDE) {
         begin_procedure();
         if (unit_ctl_level == 0)
-            declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol("main")),
+            declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
                               NULL, NULL, NULL, NULL);
         else
             declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
@@ -4185,6 +4185,14 @@ compile_CALL_statement(expr x)
         if(PROC_EXT_ID(id))
             EXT_PROC_TYPE(PROC_EXT_ID(id)) = tp;
     }
+    else if (PROC_CLASS(id) == P_INTRINSIC && ID_TYPE(id) != NULL){
+      TYPE_DESC tp = ID_TYPE(id);
+      TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+      TYPE_UNSET_IMPLICIT(tp);
+      TYPE_SET_USED_EXPLICIT(tp);
+      ID_TYPE(id) = tp;
+      if (PROC_EXT_ID(id)) EXT_PROC_TYPE(PROC_EXT_ID(id)) = tp;
+    }      
 
 #if 0
     /*
