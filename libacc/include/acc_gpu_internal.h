@@ -10,6 +10,7 @@ extern "C" {
 
   //acc_gpu_runtime.c
   void _ACC_gpu_init(void);
+  void _ACC_gpu_init_api(void);
   void _ACC_gpu_finalize(void);
   void _ACC_gpu_set_device_num(int num);
   int _ACC_gpu_get_device_num();
