@@ -30,7 +30,7 @@
       interface xmpf_sync_images
          subroutine xmpf_sync_image_nostat(image)  ! no wrapper
            integer, intent(in) :: image
-         end subroutine xmpf_sync_image_nostat_wrap
+         end subroutine xmpf_sync_image_nostat
          subroutine xmpf_sync_images_nostat_wrap(images)
            integer, intent(in) :: images(:)
          end subroutine xmpf_sync_images_nostat_wrap
