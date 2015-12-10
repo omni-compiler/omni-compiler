@@ -23,7 +23,7 @@ static int host_device_num = 1; //host_default_device_num;
 //const int gpu_default_device_num = 1;
 //static int gpu_device_num = 1; //gpu_default_device_num;
 
-static void _ACC_init_( acc_device_t acc_device );
+static void _ACC_initialize( acc_device_t acc_device );
 
 void _ACC_init(int argc, char** argv) {
   _ACC_DEBUG("begin\n")
@@ -52,7 +52,7 @@ void _ACC_init(int argc, char** argv) {
       _ACC_fatal("invalid device type is defined by ACC_DEVICE_TYPE");
     }
   }
-  _ACC_init_(device_t);
+  _ACC_initialize(device_t);
 
   char *acc_device_num;
   acc_device_num = getenv("ACC_DEVICE_NUM");
@@ -63,6 +63,12 @@ void _ACC_init(int argc, char** argv) {
     acc_set_device_num(dev_num, device_t);
   }
   _ACC_DEBUG("end\n")
+}
+
+//for Fortran
+void acc_init_(int *argc, char** argv)
+{
+  _ACC_init(*argc, argv);
 }
 
 void _ACC_finalize(void) {
@@ -84,6 +90,12 @@ void _ACC_finalize(void) {
     _ACC_runtime_working = false;
   }
   _ACC_DEBUG("end\n");
+}
+
+//for Fortran
+void acc_finalize_()
+{
+  _ACC_finalize();
 }
 
 int acc_get_num_devices( acc_device_t acc_device )
@@ -262,7 +274,7 @@ void acc_async_wait_all()
   }
 }
 
-static void _ACC_init_( acc_device_t acc_device )
+static void _ACC_initialize( acc_device_t acc_device )
 {
   switch(acc_device){
   case acc_device_none:
@@ -270,14 +282,14 @@ static void _ACC_init_( acc_device_t acc_device )
     return;
 
   case acc_device_default:
-    _ACC_init_( default_device );
+    _ACC_initialize( default_device );
     return;
 
   case acc_device_host:
     return;
 
   case acc_device_not_host:
-    _ACC_init_( default_not_host_device );
+    _ACC_initialize( default_not_host_device );
     return;
 
   case acc_device_nvidia:
@@ -285,7 +297,7 @@ static void _ACC_init_( acc_device_t acc_device )
     return;
 
   default:
-    _ACC_fatal("_ACC_init_ : unknows device type");
+    _ACC_fatal("_ACC_initialize : unknows device type");
   }
 }
 
