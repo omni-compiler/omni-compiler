@@ -184,7 +184,8 @@ compile_intrinsic_call(ID id, expv args) {
             }
             tp = EXPV_TYPE(a);
             if (!(isValidType(tp))) {
-                return NULL;    /* error recovery */
+	      //return NULL;    /* error recovery */
+	      continue;
             }
             if (compare_intrinsic_arg_type(a, tp,
                                            ((isVarArgs == 0) ?
@@ -212,8 +213,9 @@ compile_intrinsic_call(ID id, expv args) {
         if (INTR_RETURN_TYPE(ep) != INTR_TYPE_NONE) {
             tp = get_intrinsic_return_type(ep, args, kindV);
             if (!(isValidType(tp))) {
-                fatal("%s: can't determine return type.", __func__);
-                return NULL;
+	      //fatal("%s: can't determine return type.", __func__);
+	      //return NULL;
+	      tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
             }
         } else {
             tp = BASIC_TYPE_DESC(TYPE_SUBR);
