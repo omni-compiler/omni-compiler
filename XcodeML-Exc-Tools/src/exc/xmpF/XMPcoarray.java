@@ -332,24 +332,36 @@ public class XMPcoarray {
   //------------------------------
   //  evaluate index
   //------------------------------
-  public int getElementLength() {
+  public int getElementLengthOrNot() {
     Xobject elem = getElementLengthExpr(); 
-    if (!elem.isIntConstant()) {
-      XMP.error("current restriction: " +
-                "could not numerically evaluate the element length of: "+name);
-      return 0;
-    }
+    if (elem == null || !elem.isIntConstant())
+      return -1;
     return elem.getInt();
+  }
+
+  public int getElementLength() {
+    int elem = getElementLengthOrNot(); 
+    if (elem < 0) {
+      XMP.fatal("current restriction: " +
+                "could not numerically evaluate the element length of: "+name);
+    }
+    return elem;
   }
 
   public Xobject getElementLengthExpr() {
     return getElementLengthExpr(fblock);
   }
   public Xobject getElementLengthExpr(Block block) {
+    // try #1: look into Xobject
     Xobject elem = ident.Type().getElementLengthExpr(block);    // see BasicType.java
-    if (elem == null)
-      XMP.error("current restriction: " + 
-                "could not find the element length of: "+name);
+    if (elem != null)
+      return elem;
+
+    // try #2: build intrinsic function call like sizeof()
+    //// NOT SUPPORTED YET
+    XMP.error("current restriction: " + 
+              "could not find the element length of: "+name);
+
     return elem;
   }
 
@@ -843,21 +855,21 @@ public class XMPcoarray {
    * return a name of Fortran intrinsic function
    */
   public String getFtypeString() {
-    String name = _getTypeIntrinName_1(getFtypeNumber());
-    return name;
+    return _getTypeIntrinName_1(getFtypeNumber());
   }
   public String getFtypeString(int typeNumber) {
-    String name = _getTypeIntrinName_1(typeNumber);
-    return name;
+    return _getTypeIntrinName_1(typeNumber);
   }
 
   /// see also BasicType.getElementLength
   private String _getTypeIntrinName_1(int typeNumber) {
+    String tname = null;
 
     switch(typeNumber) {
     case BasicType.BOOL:
-      name = "logical";
+      tname = "logical";
       break;
+
     case BasicType.SHORT:
     case BasicType.UNSIGNED_SHORT:
     case BasicType.INT:
@@ -866,26 +878,29 @@ public class XMPcoarray {
     case BasicType.UNSIGNED_LONG:
     case BasicType.LONGLONG:
     case BasicType.UNSIGNED_LONGLONG:
-      name = "int";
+      tname = "int";
       break;
+
     case BasicType.FLOAT:
     case BasicType.DOUBLE:
     case BasicType.LONG_DOUBLE:
-      name = "real";
+      tname = "real";
       break;
+
     case BasicType.FLOAT_COMPLEX:
     case BasicType.DOUBLE_COMPLEX:
     case BasicType.LONG_DOUBLE_COMPLEX:
-      name = "cmplx";
+      tname = "cmplx";
       break;
+
     case BasicType.CHAR:
     case BasicType.UNSIGNED_CHAR:
     case BasicType.F_CHARACTER:
-      name = "char";
+      tname = "char";
       break;
 
     case BasicType.F_NUMERIC_ALL:
-      name = null;
+      tname = null;
       break;
 
     default:
@@ -893,7 +908,7 @@ public class XMPcoarray {
       break;
     }
 
-    return name;
+    return tname;
   }
 
 }

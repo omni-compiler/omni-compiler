@@ -1054,14 +1054,14 @@ int xmpf_image_index_(void **descPtr, int coindexes[])
       _XMPF_coarrayDebugPrint
         ("The %s cosubscript of coarray \'%s\' is too small.\n"
          "  value=%d, range=[%d,%d]\n",
-         _toOrdinalNumberString(i), cp->name, idx, lb, ub);
+         _toOrdinalNumberString(i+1), cp->name, idx, lb, ub);
       return 0;
     }
     if (ub < idx && i < cp->corank - 1) {
       _XMPF_coarrayDebugPrint
         ("The %s cosubscript of coarray \'%s\' is too large.\n"
          "  value=%d, range=[%d,%d]\n",
-         _toOrdinalNumberString(i), cp->name, idx, lb, ub);
+         _toOrdinalNumberString(i+1), cp->name, idx, lb, ub);
       return 0;
     }
     count += (idx - lb) * factor;
