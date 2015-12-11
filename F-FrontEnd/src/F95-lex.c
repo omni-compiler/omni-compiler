@@ -2767,6 +2767,28 @@ next_line0:
             linelen--;
         }
     }
+
+    /* truncate characters after '!' */
+    if (line_buffer[0] != '!' ||
+	is_pragma_sentinel( &sentinels, line_buffer, &index)){
+      int isInQuote = inQuote;
+      for (int i = 6; i < linelen; i++){
+	if (!isInQuote){
+	  if (line_buffer[i] == '!'){
+	    line_buffer[i] = 0x0a;
+	    line_buffer[i+1] = 0x0;
+	    linelen = i;
+	    break;
+	  }
+	  else if (line_buffer[i] == '\'' || line_buffer[i] == '"'){
+	    isInQuote = line_buffer[i];
+	  }
+	}
+	else if (line_buffer[i] == isInQuote){
+	  isInQuote = 0;
+	}
+      }
+    }
     
     /*  replace coment letter to '!' */
     if( line_buffer[0]=='C'||line_buffer[0]=='c'||line_buffer[0]=='*' ){
