@@ -93,6 +93,11 @@ class AccParallel extends AccData{
 
   @Override
   void rewrite() throws ACCexception {
+    if(isDisabled()){
+      _pb.replace(Bcons.COMPOUND(_pb.getBody()));
+      return;
+    }
+
     //build
     BlockList beginBody = Bcons.emptyBody();
     for(Block b : initBlockList) beginBody.add(b);
