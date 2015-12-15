@@ -3083,8 +3083,8 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
-# expand $ac_aux_dir to an absolute path
-am_aux_dir=`cd $ac_aux_dir && pwd`
+# Expand $ac_aux_dir to an absolute path.
+am_aux_dir=`cd "$ac_aux_dir" && pwd`
 
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
@@ -3480,6 +3480,7 @@ END
     as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
   fi
 fi
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
 $as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
@@ -7450,7 +7451,7 @@ fi
 
   # Fix:[Xmp-dev:5723] [xmp-bts:0432]
   MPI_FPPFLAGS="-P -D__SX__ -D_FLOAT0 -I."
-  MPI_FCFLAGS="-Chopt -f2003 -Wf,-ptr,byte"
+  MPI_FCFLAGS="-Chopt -f2003 -Wf,-ptr,byte -dW"  # Fix: [xmp-bts:0475]
   MPI_MODINC="-to"
   MPI_FCLIBS=""
   KIND_MPI_FORTRAN=other
@@ -7462,7 +7463,7 @@ fi
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_NTV_FCFLAGS="-f4 -w -f2003 -Wf,-ptr,byte"
+  OMNI_NTV_FCFLAGS="-f4 -w -f2003 -Wf,-ptr,byte -dW" # Fix: [xmp-bts:0475]
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common

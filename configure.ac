@@ -556,7 +556,7 @@ elif test "$target" = "sxace-nec-superux"; then
   AC_CHECK_PROG([MPI_FC], [sxmpif90], [sxmpif90])
   # Fix:[Xmp-dev:5723] [xmp-bts:0432]
   MPI_FPPFLAGS="-P -D__SX__ -D_FLOAT0 -I."
-  MPI_FCFLAGS="-Chopt -f2003 -Wf,-ptr,byte"
+  MPI_FCFLAGS="-Chopt -f2003 -Wf,-ptr,byte -dW"  # Fix: [xmp-bts:0475]
   MPI_MODINC="-to"
   MPI_FCLIBS=""
   KIND_MPI_FORTRAN=other
@@ -568,7 +568,7 @@ elif test "$target" = "sxace-nec-superux"; then
 
 # Omni F
   OMNI_F2X_FLAGS=""
-  OMNI_NTV_FCFLAGS="-f4 -w -f2003 -Wf,-ptr,byte"
+  OMNI_NTV_FCFLAGS="-f4 -w -f2003 -Wf,-ptr,byte -dW" # Fix: [xmp-bts:0475]
   OMNI_LNK_FCFLAGS="$OMNI_NTV_FCFLAGS $OPENMP_OPT_F"
 
 # Omni Common
