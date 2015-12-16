@@ -6,14 +6,15 @@
 #include "mpi.h"
 #include "mpi-ext.h"
 #include "xmp_internal.h"
-#define _XMP_FJRDMA_MAX_SIZE   16777212
-#define _XMP_FJRDMA_MAX_MEMID       511
-#define _XMP_FJRDMA_MAX_MPUT       1993
-#define _XMP_FJRDMA_MAX_MGET        100 /** This value is trial */
-#define _XMP_FJRDMA_MAX_COMM         60 /** This value is trial */
-#define _XMP_FJRDMA_TAG               0
-#define _XMP_SYNC_IMAGES_TAG          1
-#define _XMP_FJRDMA_START_MEMID       3
+#define _XMP_FJRDMA_MAX_SIZE          16777212
+#define _XMP_FJRDMA_MAX_MALLOC_SIZE 4294967295 /* 4*1024^3-1 */
+#define _XMP_FJRDMA_MAX_MEMID              511
+#define _XMP_FJRDMA_MAX_MPUT              1993
+#define _XMP_FJRDMA_MAX_MGET               100 /** This value is trial */
+#define _XMP_FJRDMA_MAX_COMM                60 /** This value is trial */
+#define _XMP_FJRDMA_TAG                      0
+#define _XMP_SYNC_IMAGES_TAG                 1
+#define _XMP_FJRDMA_START_MEMID              3
 
 static int _num_of_puts = 0, _num_of_gets = 0;
 static struct FJMPI_Rdma_cq _cq;
@@ -226,18 +227,22 @@ static void _fjrdma_scalar_mput_do(const size_t target_rank, uint64_t* raddrs, u
   }
 }
 
-/**********************************************************************/
-/* DESCRIPTION : Execute malloc operation for coarray                 */
-/* ARGUMENT    : [OUT] *coarray_desc : Descriptor of new coarray      */
-/*               [OUT] **addr        : Double pointer of new coarray  */
-/*               [IN] coarray_size   : Coarray size                   */
-/**********************************************************************/
-void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
+/***********************************************************************/
+/* DESCRIPTION : Execute malloc operation for coarray                  */
+/* ARGUMENT    : [OUT] *coarray_desc  : Descriptor of new coarray      */
+/*               [OUT] **addr         : Double pointer of new coarray  */
+/*               [IN] coarray_size_ul : Coarray size                   */
+/***********************************************************************/
+void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const unsigned long coarray_size_ul)
 {
   uint64_t *each_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
   if(_memid == _XMP_FJRDMA_MAX_MEMID)
     _XMP_fatal("Too many coarrays. Number of coarrays is not more than 510.");
 
+  if(coarray_size_ul > _XMP_FJRDMA_MAX_MALLOC_SIZE)
+    _XMP_fatal("Size of a coarray must be less than 4*1024^3-1 byte.");
+
+  unsigned int coarray_size = (unsigned int)coarray_size_ul;
   *addr = _XMP_alloc(coarray_size);
   uint64_t laddr = FJMPI_Rdma_reg_mem(_memid, *addr, coarray_size);
 

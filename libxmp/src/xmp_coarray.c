@@ -7,7 +7,8 @@
 #include "xmp_constant.h"
 
 static size_t _elmt_size;
-static unsigned int _coarray_dims, *_coarray_elmts, _total_coarray_elmts;
+static unsigned int _coarray_dims, *_coarray_elmts;
+static unsigned long _total_coarray_elmts;
 static unsigned int _image_dims, *_image_elmts;
 
 static int *_image_num, _array_dims;
@@ -305,11 +306,11 @@ void _XMP_coarray_malloc_do(void **coarray_desc, void *addr)
   *coarray_desc = c;
 
 #ifdef _XMP_GASNET
-  _XMP_gasnet_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size);
+  _XMP_gasnet_malloc_do(*coarray_desc, addr, ((size_t)_total_coarray_elmts)*_elmt_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size);
+  _XMP_fjrdma_malloc_do(*coarray_desc, addr, _total_coarray_elmts*_elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_coarray_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size, false);
+  _XMP_mpi_coarray_malloc_do(*coarray_desc, addr, ((size_t)_total_coarray_elmts)*_elmt_size, false);
 #endif
   
   _push_coarray_queue(c);
