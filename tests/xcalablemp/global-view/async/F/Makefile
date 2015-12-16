@@ -1,4 +1,4 @@
-XCC     = xmpf90
+XFC     = xmpf90
 XRUN    = mpiexec
 TESTS = $(wildcard *.f90)
 EXES  = $(TESTS:.f90=.x)
@@ -11,7 +11,7 @@ all default: $(EXES)
 .SUFFIXES: .x .f90
 
 .f90.x:
-	$(XCC) -o $@ $<
+	$(XFC) -o $@ $<
 
 run: $(EXES)
 	$(XRUN) -n 8 ./bcast_async.x
