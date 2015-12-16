@@ -352,17 +352,29 @@ public class XMPcoarray {
     return getElementLengthExpr(fblock);
   }
   public Xobject getElementLengthExpr(Block block) {
-    // try #1: look into Xobject
     Xobject elem = ident.Type().getElementLengthExpr(block);    // see BasicType.java
     if (elem != null)
       return elem;
 
-    // try #2: build intrinsic function call like sizeof()
-    //// NOT SUPPORTED YET
-    XMP.error("current restriction: " + 
-              "could not find the element length of: "+name);
+    // The element length was not detected from the Ident.
 
-    return elem;
+    if (getRank() == 0) {    // scalar coarray
+      // copy type
+      // size(transfer(ident, (/" "/))
+      Ident sizeId = declIntIntrinsicIdent("size");
+      Ident transferId = declIntIntrinsicIdent("transfer");
+      Xobject arg1 = Xcons.FvarRef(ident);
+      Xobject arg21 = Xcons.FcharacterConstant(Xtype.FcharacterType, " ", null);
+      Xobject arg2 = Xcons.List(Xcode.F_ARRAY_CONSTRUCTOR,
+                                _getCharFarrayType(1),
+                                arg21);
+      Xobject transfer = transferId.Call(Xcons.List(arg1, arg2));
+      Xobject size = sizeId.Call(Xcons.List(transfer));
+      return size;
+    } else {                 // array coarray
+    }
+
+    return null;
   }
 
   public int getTotalArraySize() {
@@ -598,15 +610,18 @@ public class XMPcoarray {
   }
 
   public void resetSaveAttr() {
-    for (Xtype type = ident.Type(); type != null; ) {
-      type.setIsFsave(false);
-      if (type.copied != null)
-        type = type.copied;
-      else if (type.isBasic())
-        break;
-      else
-        type = type.getRef();
-    }
+    Xtype type = ident.Type();
+    _resetSaveAttrInType(type);
+  }
+
+  private void _resetSaveAttrInType(Xtype type) {
+    type.setIsFsave(false);
+
+    if (type.copied != null) 
+      _resetSaveAttrInType(type.copied);
+
+    if (type.isArray() || type.isFarray())
+      _resetSaveAttrInType(type.getRef());
   }
 
   public Boolean isPointer() {
@@ -859,6 +874,13 @@ public class XMPcoarray {
   }
   public String getFtypeString(int typeNumber) {
     return _getTypeIntrinName_1(typeNumber);
+  }
+
+
+  private Xtype _getCharFarrayType(int size) {
+    Xtype ref = Xtype.FcharacterType;
+    Xtype type = Xtype.Farray(ref, Xcons.IntConstant(size));
+    return type;
   }
 
   /// see also BasicType.getElementLength
