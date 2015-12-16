@@ -2767,6 +2767,28 @@ next_line0:
             linelen--;
         }
     }
+
+    /* truncate characters after '!' */
+    if (line_buffer[0] != '!' ||
+	is_pragma_sentinel( &sentinels, line_buffer, &index)){
+      int isInQuote = prevline_is_inQuote;
+      for (int i = 6; i < linelen; i++){
+	if (!isInQuote){
+	  if (line_buffer[i] == '!'){
+	    line_buffer[i] = 0x0a;
+	    line_buffer[i+1] = 0x0;
+	    linelen = i;
+	    break;
+	  }
+	  else if (line_buffer[i] == '\'' || line_buffer[i] == '"'){
+	    isInQuote = line_buffer[i];
+	  }
+	}
+	else if (line_buffer[i] == isInQuote){
+	  isInQuote = 0;
+	}
+      }
+    }
     
     /*  replace coment letter to '!' */
     if( line_buffer[0]=='C'||line_buffer[0]=='c'||line_buffer[0]=='*' ){
@@ -2949,15 +2971,23 @@ KeepOnGoin:
                 goto Newline;
             }
             if( c == '\'' && inComment == FALSE ){
-                if( line_buffer[i] == inQuote )
-                    inQuote = 0;
-                else if (!inQuote)
-                    inQuote = c;
+	      if (c == inQuote ){
+		inQuote = 0;
+		prevline_is_inQuote = 0;
+	      }
+	      else if (!inQuote){
+		inQuote = c;
+		prevline_is_inQuote = c;
+	      }
             } else if( c == '"' && inComment == FALSE ){
-                if( line_buffer[i] == inQuote)
-                    inQuote = 0;
-                else if (!inQuote)
-                    inQuote = c;
+	      if (c == inQuote){
+		inQuote = 0;
+		prevline_is_inQuote = 0;
+	      }
+	      else if (!inQuote){
+		inQuote = c;
+		prevline_is_inQuote = c;
+	      }
             }
             if( c == '!' && inQuote == 0) {
                 inComment = TRUE;
@@ -3039,8 +3069,9 @@ KeepOnGoin:
         }
     }
 
-    if (check_cont && IS_CONT_LINE(stn_cols))
-        return(ST_CONT);
+    if (check_cont && IS_CONT_LINE(stn_cols)){
+      return(ST_CONT);
+    }
     else
         return(ST_INIT);
 }
@@ -3432,11 +3463,14 @@ checkInQuote(cur, dst, inQuotePtr, quoteCharPtr, newCurPtr, newDstPtr)
     } else {
         if (*cur == *quoteCharPtr) {
             cur++;
-	    if ((fixed_format_flag && *cur == '\0') ||
-		(!fixed_format_flag && *cur == '&' && *(cur+1) == '\0')){
-	      last_char_in_quote_is_quote = TRUE;
-	    }
-            else if (*cur != *quoteCharPtr) {
+	    // Now last_char_in_quote_is_quote is always FALSE.
+	    // Therefore some codes in this file should be deleted.
+	    /* if ((fixed_format_flag && *cur == '\0') || */
+	    /* 	(!fixed_format_flag && *cur == '&' && *(cur+1) == '\0')){ */
+	    /*   last_char_in_quote_is_quote = TRUE; */
+	    /* } */
+            /* else */
+	    if (*cur != *quoteCharPtr) {
                 *dst++ = QUOTE;
                 *inQuotePtr = FALSE;
                 *quoteCharPtr = '\0';
