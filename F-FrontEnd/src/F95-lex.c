@@ -32,6 +32,7 @@ int line_buf_size;
 #define ST_BUF_SIZE     st_buf_size
 #define LINE_BUF_SIZE   line_buf_size
 
+#define UNDER_ST_BUF_SIZE(top,p) ((p-top)<ST_BUF_SIZE)
 #define UNDER_LINE_BUF_SIZE(top,p) ((p-top)<LINE_BUF_SIZE)
 
 int st_class;           /* token for classify statement */
@@ -654,7 +655,7 @@ token()
     case '\0':
         return(EOS);
     case QUOTE:
-        for(p = buffio; UNDER_LINE_BUF_SIZE(buffio,p)&&((ch = *bufptr++) != QUOTE) ;)
+        for(p = buffio; UNDER_ST_BUF_SIZE(buffio,p)&&((ch = *bufptr++) != QUOTE) ;)
 	    if (ch == '\0')
 		break;
 	    else
