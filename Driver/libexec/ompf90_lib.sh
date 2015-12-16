@@ -56,11 +56,13 @@ function ompf90_show_env()
 
 function get_target()
 {
-    ompf90 --show-env | grep TARGET | sed 's/TARGET=//' | sed "s/\"//g"
+    DIR=$(cd $(dirname $0); pwd)
+    grep TARGET $DIR/../etc/xmpf90.conf | sed 's/TARGET=//' | sed "s/\"//g"
 }
 
 function ompf90_set_parameters()
 {
+    target=`get_target`
     while [ -n "$1" ]; do
         case "$1" in
             *.f90|*.f|*.F90|*.F)
@@ -75,7 +77,6 @@ function ompf90_set_parameters()
 		shift;
 		module_dir=("${1#-J}")
                 module_opt=("-M${module_dir[0]}")
-                target=`get_target`
                 if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
                     other_args+=("${OMNI_MODINC}${module_dir}")
                 else
@@ -84,7 +85,6 @@ function ompf90_set_parameters()
             -J?*)
                 module_dir=("${1#-J}")
                 module_opt=("-M${module_dir[0]}")
-                target=`get_target`
                 if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
                     other_args+=("${OMNI_MODINC}${module_dir}")
                 else
@@ -101,6 +101,13 @@ function ompf90_set_parameters()
 		other_args+=("$1")
                 module_dir=("${1#-I}")
                 trans_module_opt+=("-M${module_dir[0]}");;
+	    -ew) # Fix [xmp-bts:475]
+		if [ "$target" = "sxace-nec-superux" ]; then
+		    echo "On SX-ACE, \"-ew\" option cannot be used."
+		    exit 1
+		else
+		    other_args+=("$1")
+		fi;;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)
