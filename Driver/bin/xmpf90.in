@@ -203,7 +203,7 @@ OMNI_TRAVERSE_OPT="--F --prefix xmpf --nm ${NM}"
 [ "${NM_OPT}" != "" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --nm_opt ${NM_OPT}"
 [ ${TARGET} = "powerpc-hitachi-aix" ] && OMNI_TRAVERSE_OPT="${OMNI_TRAVERSE_OPT} --sr"
 TRAVERSE_FILE=${TEMP_DIR}/omni_traverse_${PID}.f90
-omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE "${obj_files[@]}"
+omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE "${obj_files[@]}" "${archive_files[@]}"
 
 # link
 [ $ENABLE_TLOG_ALL = true -o $ENABLE_TLOG = true ] && OMNI_LINKER_OPT="-ltlog_mpi $OMNI_LINKER_OPT"
