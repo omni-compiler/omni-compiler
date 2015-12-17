@@ -263,8 +263,8 @@ public class XfDecompileDomVisitor {
 
                 String topTypeName = topType.getNodeName();
                 if ("FbasicType".equals(topTypeName)) {
-                    isPublicEmit = XmDomUtil.getAttrBool(topType, "is_public");
-                    isPrivateEmit = XmDomUtil.getAttrBool(topType, "is_private");
+                    isPublicEmit |= XmDomUtil.getAttrBool(topType, "is_public");
+                    isPrivateEmit |= XmDomUtil.getAttrBool(topType, "is_private");
                     _writeBasicType(topType, typeList);
                 } else if ("FstructType".equals(topTypeName)) {
                     String aliasStructTypeName =
