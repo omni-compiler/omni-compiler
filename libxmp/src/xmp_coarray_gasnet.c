@@ -6,14 +6,14 @@ static int _xmp_gasnet_stride_wait_size = 0;
 static int _xmp_gasnet_stride_queue_size = _XMP_GASNET_STRIDE_INIT_SIZE;
 volatile static int done_get_flag;
 struct _shift_queue_t{
-  unsigned int max_size;   /**< Max size of queue */
-  unsigned int      num;   /**< How many shifts are in this queue */
-  size_t        *shifts;   /**< shifts array */
+  size_t max_size;  /**< Max size of queue */
+  int         num;  /**< How many shifts are in this queue */
+  size_t  *shifts;  /**< shifts array */
 };
 static struct _shift_queue_t _shift_queue; /** Queue which saves shift information */
 #define _XMP_STRIDE_REG  0
 #define _XMP_STRIDE_DONE 1
-static unsigned int *_sync_images_table;
+static int *_sync_images_table;
 static gasnet_hsl_t _hsl;
 
 /**

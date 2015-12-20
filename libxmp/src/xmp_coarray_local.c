@@ -56,15 +56,17 @@ static void _local_NON_continuous_copy(char *dst, const char *src, const int dst
 
     // Set stride
     _XMP_set_stride(dst_stride, dst_info, dst_dims, copy_chunk, copy_elmts);
-    // The _is_the_same_shape() is used to reduce cost of the second _XMP_set_stride()
-    if(_is_the_same_shape(dst_dims, src_dims, dst_info, src_info))
-      for(int i=0;i<copy_elmts;i++)
+
+    if(_is_the_same_shape(dst_dims, src_dims, dst_info, src_info)){
+      // The _is_the_same_shape() is used to reduce cost of the second _XMP_set_stride()
+      for(size_t i=0;i<copy_elmts;i++)
 	src_stride[i] = dst_stride[i];
+    }
     else
       _XMP_set_stride(src_stride, src_info, src_dims, copy_chunk, copy_elmts);
 
     // Execute local memory copy
-    for(int i=0;i<copy_elmts;i++)
+    for(size_t i=0;i<copy_elmts;i++)
       memcpy(dst+dst_stride[i], src+src_stride[i], copy_chunk);
   }
   else if(src_elmts == 1){     /* a[0:100:2]:[1] = b[2]; or a[0:100:2] = b[2]:[1]; */

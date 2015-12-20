@@ -7,7 +7,6 @@
 #include "mpi-ext.h"
 #include "xmp_internal.h"
 #define _XMP_FJRDMA_MAX_SIZE          16777212
-#define _XMP_FJRDMA_MAX_MALLOC_SIZE 4294967295 /* 4*1024^3-1 */
 #define _XMP_FJRDMA_MAX_MEMID              511
 #define _XMP_FJRDMA_MAX_MPUT              1993
 #define _XMP_FJRDMA_MAX_MGET               100 /** This value is trial */
@@ -154,11 +153,11 @@ static void _FX10_Rdma_mput(const int target_rank, uint64_t *raddrs, uint64_t *l
                             const size_t *lengths, const int stride, const size_t transfer_elmts)
 {
   if(stride == 0){
-    for(int i=0;i<transfer_elmts;i++)
+    for(size_t i=0;i<transfer_elmts;i++)
       _XMP_FJMPI_Rdma_put(target_rank, raddrs[i], laddrs[i], lengths[i]);
   }
   else{
-    for(int i=0;i<transfer_elmts;i++){
+    for(size_t i=0;i<transfer_elmts;i++){
       _XMP_FJMPI_Rdma_put(target_rank, raddrs[0], laddrs[0], lengths[0]);
       raddrs[0] += stride;
       laddrs[0] += stride;
@@ -233,16 +232,12 @@ static void _fjrdma_scalar_mput_do(const size_t target_rank, uint64_t* raddrs, u
 /*               [OUT] **addr         : Double pointer of new coarray  */
 /*               [IN] coarray_size_ul : Coarray size                   */
 /***********************************************************************/
-void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const unsigned long coarray_size_ul)
+void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
 {
   uint64_t *each_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
   if(_memid == _XMP_FJRDMA_MAX_MEMID)
     _XMP_fatal("Too many coarrays. Number of coarrays is not more than 510.");
 
-  if(coarray_size_ul > _XMP_FJRDMA_MAX_MALLOC_SIZE)
-    _XMP_fatal("Size of a coarray must be less than 4*1024^3-1 byte.");
-
-  unsigned int coarray_size = (unsigned int)coarray_size_ul;
   *addr = _XMP_alloc(coarray_size);
   uint64_t laddr = FJMPI_Rdma_reg_mem(_memid, *addr, coarray_size);
 
@@ -307,9 +302,9 @@ void _XMP_fjrdma_shortcut_put(const int target_rank, const uint64_t dst_offset, 
   else if(src_elmts == 1){
     uint64_t raddrs[dst_elmts], laddrs[dst_elmts];
     size_t lengths[dst_elmts];
-    for(int i=0;i<dst_elmts;i++) raddrs[i]  = raddr + i * elmt_size;
-    for(int i=0;i<dst_elmts;i++) laddrs[i]  = laddr;
-    for(int i=0;i<dst_elmts;i++) lengths[i] = elmt_size;
+    for(size_t i=0;i<dst_elmts;i++) raddrs[i]  = raddr + i * elmt_size;
+    for(size_t i=0;i<dst_elmts;i++) laddrs[i]  = laddr;
+    for(size_t i=0;i<dst_elmts;i++) lengths[i] = elmt_size;
     _fjrdma_scalar_mput_do(target_rank, raddrs, laddrs, lengths, dst_elmts, elmt_size);
   }
   else{
@@ -384,8 +379,8 @@ static void _fjrdma_scalar_mput(const int target_rank, const uint64_t dst_offset
 
   // Set parameters for FJMPI_Rdma_mput
   _XMP_set_coarray_addresses(raddr, dst_info, dst_dims, transfer_elmts, raddrs);
-  for(int i=0;i<transfer_elmts;i++) laddrs[i] = laddr;
-  for(int i=0;i<transfer_elmts;i++) lengths[i] = elmt_size;
+  for(size_t i=0;i<transfer_elmts;i++) laddrs[i] = laddr;
+  for(size_t i=0;i<transfer_elmts;i++) lengths[i] = elmt_size;
 
   _fjrdma_scalar_mput_do(target_rank, raddrs, laddrs, lengths, transfer_elmts, elmt_size);
 
@@ -469,7 +464,7 @@ static void _fjrdma_NON_continuous_general_mput(const int target_rank, uint64_t 
   // Set parameters for FJMPI_Rdma_mput
   _XMP_set_coarray_addresses_with_chunk(raddrs, raddr, dst_info, dst_dims, copy_chunk, copy_elmts);
   _XMP_set_coarray_addresses_with_chunk(laddrs, laddr, src_info, src_dims, copy_chunk, copy_elmts);
-  for(int i=0;i<copy_elmts;i++) lengths[i] = copy_chunk;
+  for(size_t i=0;i<copy_elmts;i++) lengths[i] = copy_chunk;
 
   _fjrdma_scalar_mput_do(target_rank, raddrs, laddrs, lengths, copy_elmts, elmt_size);
 }
@@ -604,7 +599,7 @@ void _XMP_fjrdma_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_d
     _XMP_fjrdma_sync_memory_get();
 
     char *dst = dst_desc->real_addr + dst_offset;
-    for(int i=1;i<dst_elmts;i++)
+    for(size_t i=1;i<dst_elmts;i++)
       memcpy(dst+i*elmt_size, dst, elmt_size);
   }
   else{
@@ -688,7 +683,7 @@ static void _fjrdma_NON_continuous_get(const int target_rank, const uint64_t dst
   _XMP_set_coarray_addresses_with_chunk(laddrs, laddr, dst_info, dst_dims, copy_chunk, copy_elmts);
 
   if(copy_elmts <= _XMP_FJRDMA_MAX_MGET){
-    for(int i=0;i<copy_elmts;i++)
+    for(size_t i=0;i<copy_elmts;i++)
       _XMP_FJMPI_Rdma_get(target_rank, raddrs[i], laddrs[i], copy_chunk);
   }
   else{

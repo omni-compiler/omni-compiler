@@ -123,8 +123,8 @@ extern void _XMP_build_sync_images_table();
 extern void _XMP_build_coarray_queue();
 extern void _XMP_coarray_lastly_deallocate();
 extern void _XMP_set_stride(size_t*, const _XMP_array_section_t*, const int, const size_t, const size_t);
-extern size_t _XMP_calc_copy_chunk(const unsigned int, const _XMP_array_section_t*);
-extern unsigned int _XMP_get_dim_of_allelmts(const int, const _XMP_array_section_t*);
+extern size_t _XMP_calc_copy_chunk(const int, const _XMP_array_section_t*);
+extern int _XMP_get_dim_of_allelmts(const int, const _XMP_array_section_t*);
 extern void _XMP_local_put(_XMP_coarray_t *, const void *, const int, const int, const int, const int, 
 			   const _XMP_array_section_t *, const _XMP_array_section_t *, const size_t, const size_t);
 extern void _XMP_local_get(void *, const _XMP_coarray_t *, const int, const int, const int, const int, 
@@ -356,6 +356,7 @@ extern void _XMP_threads_finalize(void);
 
 #define _XMP_POSTREQ_TABLE_INITIAL_SIZE             32  /**< This value is trial */
 #define _XMP_POSTREQ_TABLE_INCREMENT_RATIO       (1.5)  /**< This value is trial */
+extern void _XMP_check_less_than_SIZE_MAX(const long s);
 extern size_t _XMP_get_offset(const _XMP_array_section_t *, const int);
 extern void _XMP_coarray_set_info(_XMP_coarray_t* c);
 extern void _XMP_post_wait_initialize();

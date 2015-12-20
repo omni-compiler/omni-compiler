@@ -1129,7 +1129,8 @@ size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr)
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   char* orgAddr = cinfo->parent->orgAddr;
   //int offset = ((size_t)baseAddr - (size_t)orgAddr);
-  int offset = baseAddr - orgAddr;
+  size_t offset = baseAddr - orgAddr;
+  
   return offset;
 }
 

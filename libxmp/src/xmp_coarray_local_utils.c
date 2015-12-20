@@ -17,7 +17,7 @@
 /*   a[:][0]     (copy_chunk_dim = 2) -> 1 * sizeof(int)                 */
 /*   a[0][:10:2] (copy_chunk_dim = 2) -> 1 * sizeof(int)                 */
 /*************************************************************************/
-size_t _XMP_calc_copy_chunk(const unsigned int copy_chunk_dim, const _XMP_array_section_t* array)
+size_t _XMP_calc_copy_chunk(const int copy_chunk_dim, const _XMP_array_section_t* array)
 {
   if(copy_chunk_dim == 0)   // All elements are copied
     return array[0].length * array[0].distance;
@@ -40,26 +40,26 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
 		     const size_t chunk_size, const size_t copy_elmts)
 {
   // Temporally variables to reduce offset calculation
-  size_t stride_offset[dims], tmp[dims];
+  size_t stride_offset[dims], tmp[dims], chunk_len, num = 0;
+  
   for(int i=0;i<dims;i++)
     stride_offset[i] = array_info[i].stride * array_info[i].distance;
 
   // array_info[dims-1].distance is an element size
   // chunk_size >= array_info[dims-1].distance
   switch (dims){
-    int chunk_len;
   case 1:
     chunk_len = chunk_size / array_info[0].distance;
-    for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
+    for(size_t i=0;i<array_info[0].length;i+=chunk_len){
       stride[num++] = stride_offset[0] * i;
     }
     break;
   case 2:
     if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
       chunk_len = chunk_size / array_info[1].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j+=chunk_len){
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
           tmp[1] = stride_offset[1] * j;
           stride[num++] = tmp[0] + tmp[1];
         }
@@ -67,7 +67,7 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else{                               // chunk_size >= array_info[0].distance
       chunk_len = chunk_size / array_info[0].distance;
-      for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
+      for(size_t i=0;i<array_info[0].length;i+=chunk_len){
 	stride[num++] = stride_offset[0] * i;
       }
     }
@@ -75,11 +75,11 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
   case 3:
     if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
       chunk_len = chunk_size / array_info[2].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-	  for(int k=0;k<array_info[2].length;k+=chunk_len){
+	  for(size_t k=0;k<array_info[2].length;k+=chunk_len){
 	    tmp[2] = stride_offset[2] * k;
 	    stride[num++] = tmp[0] + tmp[1] + tmp[2];
 	  }
@@ -88,9 +88,9 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
       chunk_len = chunk_size / array_info[1].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j+=chunk_len){
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
           tmp[1] = stride_offset[1] * j;
 	  stride[num++] = tmp[0] + tmp[1];
 	}
@@ -98,7 +98,7 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else{                                   // chunk_size >= array_info[0].distance
       chunk_len = chunk_size / array_info[0].distance;
-      for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
+      for(size_t i=0;i<array_info[0].length;i+=chunk_len){
         stride[num++] = stride_offset[0] * i;
       }
     }
@@ -106,13 +106,13 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
   case 4:
     if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
       chunk_len = chunk_size / array_info[3].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k++){
+          for(size_t k=0;k<array_info[2].length;k++){
             tmp[2] = stride_offset[2] * k;
-	    for(int l=0;l<array_info[3].length;l+=chunk_len){
+	    for(size_t l=0;l<array_info[3].length;l+=chunk_len){
 	      tmp[3] = stride_offset[3] * l;
 	      stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
 	    }
@@ -122,11 +122,11 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
       chunk_len = chunk_size / array_info[2].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
 	tmp[0] = stride_offset[0] * i;
-	for(int j=0;j<array_info[1].length;j++){
+	for(size_t j=0;j<array_info[1].length;j++){
 	  tmp[1] = stride_offset[1] * j;
-	  for(int k=0;k<array_info[2].length;k+=chunk_len){
+	  for(size_t k=0;k<array_info[2].length;k+=chunk_len){
 	    tmp[2] = stride_offset[2] * k;
 	    stride[num++] = tmp[0] + tmp[1] + tmp[2];
 	  }
@@ -135,9 +135,9 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
       chunk_len = chunk_size / array_info[1].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j+=chunk_len){
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
           tmp[1] = stride_offset[1] * j;
           stride[num++] = tmp[0] + tmp[1];
         }
@@ -145,7 +145,7 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else{                                   // chunk_size >= array_info[0].distance
       chunk_len = chunk_size / array_info[0].distance;
-      for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
+      for(size_t i=0;i<array_info[0].length;i+=chunk_len){
         stride[num++] = stride_offset[0] * i;
       }
     }
@@ -153,15 +153,15 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
   case 5:
     if(array_info[3].distance > chunk_size){ // array_info[3].distance > chunk_size >= array_info[4].distance
       chunk_len = chunk_size / array_info[4].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k++){
+          for(size_t k=0;k<array_info[2].length;k++){
             tmp[2] = stride_offset[2] * k;
-            for(int l=0;l<array_info[3].length;l++){
+            for(size_t l=0;l<array_info[3].length;l++){
               tmp[3] = stride_offset[3] * l;
-	      for(int m=0;m<array_info[4].length;m+=chunk_len){
+	      for(size_t m=0;m<array_info[4].length;m+=chunk_len){
 		tmp[4] = stride_offset[4] * m;
 		stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
 	      }
@@ -172,13 +172,13 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
       chunk_len = chunk_size / array_info[3].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k++){
+          for(size_t k=0;k<array_info[2].length;k++){
             tmp[2] = stride_offset[2] * k;
-            for(int l=0;l<array_info[3].length;l+=chunk_len){
+            for(size_t l=0;l<array_info[3].length;l+=chunk_len){
               tmp[3] = stride_offset[3] * l;
               stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
             }
@@ -188,11 +188,11 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
       chunk_len = chunk_size / array_info[2].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k+=chunk_len){
+          for(size_t k=0;k<array_info[2].length;k+=chunk_len){
             tmp[2] = stride_offset[2] * k;
             stride[num++] = tmp[0] + tmp[1] + tmp[2];
           }
@@ -201,9 +201,9 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
       chunk_len = chunk_size / array_info[1].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j+=chunk_len){
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
           tmp[1] = stride_offset[1] * j;
           stride[num++] = tmp[0] + tmp[1];
         }
@@ -211,7 +211,7 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else{                                   // chunk_size >= array_info[0].distance
       chunk_len = chunk_size / array_info[0].distance;
-      for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
+      for(size_t i=0;i<array_info[0].length;i+=chunk_len){
         stride[num++] = stride_offset[0] * i;
       }
     }
@@ -219,17 +219,17 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
   case 6:
     if(array_info[4].distance > chunk_size){ // array_info[4].distance > chunk_size >= array_info[5].distance
       chunk_len = chunk_size / array_info[5].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k++){
+          for(size_t k=0;k<array_info[2].length;k++){
             tmp[2] = stride_offset[2] * k;
-            for(int l=0;l<array_info[3].length;l++){
+            for(size_t l=0;l<array_info[3].length;l++){
               tmp[3] = stride_offset[3] * l;
-              for(int m=0;m<array_info[4].length;m++){
+              for(size_t m=0;m<array_info[4].length;m++){
                 tmp[4] = stride_offset[4] * m;
-		for(int n=0;n<array_info[5].length;n+=chunk_len){
+		for(size_t n=0;n<array_info[5].length;n+=chunk_len){
 		  tmp[5] = stride_offset[5] * n;
 		  stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5];
 		}
@@ -241,15 +241,15 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[3].distance > chunk_size){ // array_info[3].distance > chunk_size >= array_info[4].distance
       chunk_len = chunk_size / array_info[4].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k++){
+          for(size_t k=0;k<array_info[2].length;k++){
             tmp[2] = stride_offset[2] * k;
-            for(int l=0;l<array_info[3].length;l++){
+            for(size_t l=0;l<array_info[3].length;l++){
               tmp[3] = stride_offset[3] * l;
-              for(int m=0;m<array_info[4].length;m+=chunk_len){
+              for(size_t m=0;m<array_info[4].length;m+=chunk_len){
                 tmp[4] = stride_offset[4] * m;
                 stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
               }
@@ -260,13 +260,13 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
       chunk_len = chunk_size / array_info[3].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k++){
+          for(size_t k=0;k<array_info[2].length;k++){
             tmp[2] = stride_offset[2] * k;
-            for(int l=0;l<array_info[3].length;l+=chunk_len){
+            for(size_t l=0;l<array_info[3].length;l+=chunk_len){
               tmp[3] = stride_offset[3] * l;
               stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
             }
@@ -276,11 +276,11 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
       chunk_len = chunk_size / array_info[2].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k+=chunk_len){
+          for(size_t k=0;k<array_info[2].length;k+=chunk_len){
             tmp[2] = stride_offset[2] * k;
             stride[num++] = tmp[0] + tmp[1] + tmp[2];
           }
@@ -289,9 +289,9 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
       chunk_len = chunk_size / array_info[1].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j+=chunk_len){
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
           tmp[1] = stride_offset[1] * j;
           stride[num++] = tmp[0] + tmp[1];
         }
@@ -299,7 +299,7 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else{                                   // chunk_size >= array_info[0].distance
       chunk_len = chunk_size / array_info[0].distance;
-      for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
+      for(size_t i=0;i<array_info[0].length;i+=chunk_len){
         stride[num++] = stride_offset[0] * i;
       }
     }
@@ -307,19 +307,19 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
   case 7:
     if(array_info[5].distance > chunk_size){ // array_info[5].distance > chunk_size >= array_info[6].distance
       chunk_len = chunk_size / array_info[6].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k++){
+          for(size_t k=0;k<array_info[2].length;k++){
             tmp[2] = stride_offset[2] * k;
-            for(int l=0;l<array_info[3].length;l++){
+            for(size_t l=0;l<array_info[3].length;l++){
               tmp[3] = stride_offset[3] * l;
-              for(int m=0;m<array_info[4].length;m++){
+              for(size_t m=0;m<array_info[4].length;m++){
                 tmp[4] = stride_offset[4] * m;
-                for(int n=0;n<array_info[5].length;n++){
+                for(size_t n=0;n<array_info[5].length;n++){
                   tmp[5] = stride_offset[5] * n;
-		  for(int p=0;p<array_info[6].length;p+=chunk_len){
+		  for(size_t p=0;p<array_info[6].length;p+=chunk_len){
 		    tmp[6] = stride_offset[6] * p;
 		    stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6];
 		  }
@@ -332,17 +332,17 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[4].distance > chunk_size){ // array_info[4].distance > chunk_size >= array_info[5].distance
       chunk_len = chunk_size / array_info[5].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k++){
+          for(size_t k=0;k<array_info[2].length;k++){
             tmp[2] = stride_offset[2] * k;
-            for(int l=0;l<array_info[3].length;l++){
+            for(size_t l=0;l<array_info[3].length;l++){
               tmp[3] = stride_offset[3] * l;
-              for(int m=0;m<array_info[4].length;m++){
+              for(size_t m=0;m<array_info[4].length;m++){
                 tmp[4] = stride_offset[4] * m;
-                for(int n=0;n<array_info[5].length;n+=chunk_len){
+                for(size_t n=0;n<array_info[5].length;n+=chunk_len){
                   tmp[5] = stride_offset[5] * n;
                   stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5];
                 }
@@ -354,15 +354,15 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[3].distance > chunk_size){ // array_info[3].distance > chunk_size >= array_info[4].distance
       chunk_len = chunk_size / array_info[4].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k++){
+          for(size_t k=0;k<array_info[2].length;k++){
             tmp[2] = stride_offset[2] * k;
-            for(int l=0;l<array_info[3].length;l++){
+            for(size_t l=0;l<array_info[3].length;l++){
               tmp[3] = stride_offset[3] * l;
-              for(int m=0;m<array_info[4].length;m+=chunk_len){
+              for(size_t m=0;m<array_info[4].length;m+=chunk_len){
                 tmp[4] = stride_offset[4] * m;
                 stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
               }
@@ -373,13 +373,13 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
       chunk_len = chunk_size / array_info[3].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k++){
+          for(size_t k=0;k<array_info[2].length;k++){
             tmp[2] = stride_offset[2] * k;
-            for(int l=0;l<array_info[3].length;l+=chunk_len){
+            for(size_t l=0;l<array_info[3].length;l+=chunk_len){
               tmp[3] = stride_offset[3] * l;
               stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
             }
@@ -389,11 +389,11 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
       chunk_len = chunk_size / array_info[2].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j++){
+        for(size_t j=0;j<array_info[1].length;j++){
           tmp[1] = stride_offset[1] * j;
-          for(int k=0;k<array_info[2].length;k+=chunk_len){
+          for(size_t k=0;k<array_info[2].length;k+=chunk_len){
             tmp[2] = stride_offset[2] * k;
             stride[num++] = tmp[0] + tmp[1] + tmp[2];
           }
@@ -402,9 +402,9 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
       chunk_len = chunk_size / array_info[1].distance;
-      for(int i=0,num=0;i<array_info[0].length;i++){
+      for(size_t i=0;i<array_info[0].length;i++){
         tmp[0] = stride_offset[0] * i;
-        for(int j=0;j<array_info[1].length;j+=chunk_len){
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
           tmp[1] = stride_offset[1] * j;
           stride[num++] = tmp[0] + tmp[1];
         }
@@ -412,7 +412,7 @@ void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, con
     }
     else{                                   // chunk_size >= array_info[0].distance
       chunk_len = chunk_size / array_info[0].distance;
-      for(int i=0,num=0;i<array_info[0].length;i+=chunk_len){
+      for(size_t i=0;i<array_info[0].length;i+=chunk_len){
         stride[num++] = stride_offset[0] * i;
       }
     }
