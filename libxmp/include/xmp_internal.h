@@ -438,10 +438,10 @@ extern void _XMP_fjrdma_build_sync_images_table();
 extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, const unsigned long);
 extern void _XMP_fjrdma_put(const int, const int, const int, const int, const int, const _XMP_array_section_t *,  
 			    const _XMP_array_section_t *, const _XMP_coarray_t *, const _XMP_coarray_t *, void *,
-			    const int, const int);
+			    const size_t, const size_t);
 extern void _XMP_fjrdma_get(const int, const int, const int, const int, const int, const _XMP_array_section_t *, 
 			    const _XMP_array_section_t *, const _XMP_coarray_t *, const _XMP_coarray_t *, void *,
-			    const int, const int);
+			    const size_t, const size_t);
 extern void _XMP_fjrdma_shortcut_put(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, 
 				     const _XMP_coarray_t *, const size_t, const size_t, const size_t);
 extern void _XMP_fjrdma_shortcut_get(const int, const _XMP_coarray_t *, const _XMP_coarray_t *,

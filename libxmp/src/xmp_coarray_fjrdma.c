@@ -534,7 +534,7 @@ static void _fjrdma_NON_continuous_put(const int target_rank, const uint64_t dst
 void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const int target_rank, 
 		     const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
 		     const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
-		     const _XMP_coarray_t *src_desc, void *src, const int dst_elmts, const int src_elmts)
+		     const _XMP_coarray_t *src_desc, void *src, const size_t dst_elmts, const size_t src_elmts)
 {
   uint64_t dst_offset = (uint64_t)_XMP_get_offset(dst_info, dst_dims);
   uint64_t src_offset = (uint64_t)_XMP_get_offset(src_info, src_dims);
@@ -629,8 +629,9 @@ static void _fjrdma_continuous_get(const int target_rank, const uint64_t dst_off
   uint64_t raddr = (uint64_t)src_desc->addr[target_rank] + src_offset;
   uint64_t laddr;
 
-  if(dst_desc == NULL)
+  if(dst_desc == NULL){
     laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, dst + dst_offset, transfer_size);
+  }
   else
     laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_offset;
   
@@ -724,7 +725,7 @@ static void _fjrdma_scalar_mget(const int target_rank, const uint64_t dst_offset
 {
   uint64_t raddr = (uint64_t)src_desc->addr[target_rank] + src_offset;
   uint64_t laddr;
-  size_t elmt_size = dst_desc->elmt_size;
+  size_t elmt_size = src_desc->elmt_size;
 
   if(dst_desc == NULL)
     laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, dst + dst_offset, elmt_size);
@@ -787,7 +788,7 @@ void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const i
 		     const int src_dims, const int dst_dims, 
 		     const _XMP_array_section_t *src_info, const _XMP_array_section_t *dst_info, 
 		     const _XMP_coarray_t *src_desc, const _XMP_coarray_t *dst_desc, void *dst,
-		     const int src_elmts, const int dst_elmts)
+		     const size_t src_elmts, const size_t dst_elmts)
 {
   uint64_t dst_offset = (uint64_t)_XMP_get_offset(dst_info, dst_dims);
   uint64_t src_offset = (uint64_t)_XMP_get_offset(src_info, src_dims);
