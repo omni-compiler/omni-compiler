@@ -266,8 +266,8 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
             ai->shadow_size_lo = ai->par_lower - ai->ser_lower;
             ai->shadow_size_hi = ai->ser_upper - ai->par_upper;
 
-            ai->local_lower = ai->par_lower;
-            ai->local_upper = ai->par_upper;
+            ai->local_lower = ai->par_lower - ai->ser_lower;
+            ai->local_upper = ai->par_upper - ai->ser_lower;
             ai->local_stride = ai->par_stride;
             ai->alloc_size = ai->ser_size;
           }

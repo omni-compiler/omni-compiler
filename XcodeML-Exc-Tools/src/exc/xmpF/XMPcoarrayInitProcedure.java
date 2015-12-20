@@ -153,10 +153,15 @@ public class XMPcoarrayInitProcedure {
 
     for (XMPcoarray coarray: staticCoarrays) {
       // "CALL coarray_count_size(count, elem)"
-      int elem = coarray.getElementLength();
+      Xobject elem = coarray.getElementLengthExpr();
+
+      if (elem == null) {
+        XMP.error("current restriction: " + 
+                  "could not find the element length of: "+coarray.getName());
+      }
+
       int count = coarray.getTotalArraySize();
-      Xobject args = Xcons.List(Xcons.IntConstant(count),
-                                Xcons.IntConstant(elem));
+      Xobject args = Xcons.List(Xcons.IntConstant(count), elem);
       Ident subr = body.declLocalIdent(COUNT_SIZE_NAME,
                                        BasicType.FexternalSubroutineType);
       body.add(subr.callSubroutine(args));
@@ -176,7 +181,11 @@ public class XMPcoarrayInitProcedure {
     Xobject decls = Xcons.List();
 
     for (XMPcoarray coarray: staticCoarrays) {
-      int elem = coarray.getElementLength();
+      Xobject elem = coarray.getElementLengthExpr();
+      //////////////////////////////
+      if (elem==null)
+        XMP.fatal("GACCHA!  elem must not be null.");
+      //////////////////////////////
       int count = coarray.getTotalArraySize();
       String descPtrName = coarray.getDescPointerName();
       String crayPtrName = coarray.getCrayPointerName();
@@ -228,7 +237,7 @@ public class XMPcoarrayInitProcedure {
       Xobject args = Xcons.List(descPtrId,
                                 crayPtrId,
                                 Xcons.IntConstant(count),
-                                Xcons.IntConstant(elem),
+                                elem,
                                 varNameObj,
                                 Xcons.IntConstant(varName.length()));
       if (args.hasNullArg())

@@ -3156,10 +3156,10 @@ compile_codimensions(expr dims, int is_alloc){
 	error("only last cobound may be \"*\"");
     }
     else if (EXPR_CODE(x) == LIST){ /* (LIST lower upper) */
-      lower = EXPR_ARG1(x);
-      upper = EXPR_ARG2(x);
+      lower = compile_expression(EXPR_ARG1(x));
+      upper = compile_expression(EXPR_ARG2(x));
       /* step comes from compile_array_ref() */
-      step = expr_list_get_n(x, 2);
+      step = compile_expression(expr_list_get_n(x, 2));
     }
 /*     else if (EXPR_CODE(x) == F_INDEX_RANGE) { */
 /*       lower = EXPR_ARG1(x); */
@@ -3167,7 +3167,7 @@ compile_codimensions(expr dims, int is_alloc){
 /*       step  = EXPR_ARG3(x); */
 /*     } */
     else {
-      upper = x;
+      upper = compile_expression(x);
     }
 
     if (is_alloc && (lower || upper || step)){

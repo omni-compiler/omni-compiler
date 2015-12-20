@@ -2947,7 +2947,7 @@ KeepOnGoin:
      * read body of line
      */
     bp = line_buffer;
-    inQuote = 0;
+    inQuote = prevline_is_inQuote;
     maxChars = max_line_len - 6;
     if ( line_buffer[body_offset] == '\n') {
         line_buffer[0] = '\0';
