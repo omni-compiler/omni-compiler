@@ -16,7 +16,7 @@ static int test_basic()
   }
 
   //basic pattern
-#pragma acc parallel loop
+#pragma acc parallel loop copy(sum_0,sum_1,sum_2,sum_3,sum_4)
   for(i = 0; i < N; i++){
 #pragma acc atomic
     sum_0 += 2;

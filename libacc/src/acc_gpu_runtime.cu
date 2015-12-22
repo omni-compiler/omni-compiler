@@ -57,6 +57,11 @@ void _ACC_gpu_init(void) {
   _ACC_gpu_set_device_num(0); //set device to default
 }
 
+void _ACC_gpu_init_api(void)
+{
+  _ACC_gpu_init_current_device_if_not_inited();
+}
+
 void _ACC_gpu_finalize(void) {
   //finalize each GPU
   for(int i=0;i<_ACC_gpu_device_count;i++){

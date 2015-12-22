@@ -8,7 +8,7 @@ static int test_basic()
   int sum_1 = 0;
 
   //basic pattern
-#pragma acc parallel loop
+#pragma acc parallel loop copy(sum_0, sum_1)
   for(i = 0; i < N; i++){
 #pragma acc atomic
     sum_0++;

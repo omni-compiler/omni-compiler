@@ -26,6 +26,7 @@ public class ACC {
   public static final String PRESENT_OR_COPY_DATA_FUNC_NAME = "_ACC_pcopy_data";
   public static final String FIND_DATA_FUNC_NAME = "_ACC_find_data";
 
+  public static int version = 20;
 
   public static void exitByError() {
     if (errorFlag) System.exit(1);
