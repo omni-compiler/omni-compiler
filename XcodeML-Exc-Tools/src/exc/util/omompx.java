@@ -12,6 +12,7 @@ import java.util.List;
 
 import exc.object.XobjectFile;
 
+import exc.openacc.ACC;
 import exc.openacc.AccTranslator;
 import exc.openmp.OMP;
 import exc.openmp.OMPtranslate;
@@ -204,8 +205,11 @@ public class omompx
       } else if (arg.startsWith("-max_assumed_shape=")) {
 	  String n = arg.substring(19);
 	  exc.xmpF.XMP.MAX_ASSUMED_SHAPE = Integer.parseInt(n);
-      } else if (arg.equals("-no-ldg")){
+      } else if (arg.equals("-no-ldg")) {
         exc.openacc.ACC.useReadOnlyDataCache = false;
+      } else if (arg.startsWith("-default-veclen=")){
+        String n = arg.substring("-default-veclen=".length());
+        ACC.defaultVectorLength = Integer.parseInt(n);
       } else if(arg.startsWith("-")){
         error("unknown option " + arg);
       } else if(inXmlFile == null) {

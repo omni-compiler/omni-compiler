@@ -12,6 +12,7 @@ public class ACC {
   private static boolean errorFlag      = false;
   
   public static boolean useReadOnlyDataCache = true;
+  public static int defaultVectorLength = 256;
 
   public static final int ACC_ASYNC_SYNC = -1;
   public static final int ACC_ASYNC_NOVAL = -2;

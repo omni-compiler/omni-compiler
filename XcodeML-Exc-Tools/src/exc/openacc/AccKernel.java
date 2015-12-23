@@ -967,7 +967,7 @@ public class AccKernel {
       Xobject reductionKernelCall = reductionKernelId.Call(reductionKernelCallArgs);
 
       Xobject constant1 = Xcons.IntConstant(1);
-      reductionKernelCall.setProp(ACCgpuDecompiler.GPU_FUNC_CONF, Xcons.List(Xcons.IntConstant(reductionKernelVarCount), constant1, constant1, Xcons.IntConstant(256), constant1, constant1));
+      reductionKernelCall.setProp(ACCgpuDecompiler.GPU_FUNC_CONF, Xcons.List(Xcons.IntConstant(reductionKernelVarCount), constant1, constant1, Xcons.IntConstant(ACC.defaultVectorLength), constant1, constant1));
       Object asyncObj;
       if (_kernelInfo.hasClause(ACCpragma.ASYNC)) {
         Xobject asyncExp = _kernelInfo.getIntExpr(ACCpragma.ASYNC);
