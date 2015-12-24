@@ -128,7 +128,7 @@ public class AccKernel {
       }
 
       Ident devicePtrId = var.getDevicePtr();
-      if (_readOnlyOuterIdSet.contains(id) && devicePtrId == null) { //is this condition appropriate?
+      if(!var.isArray() && var.isFirstprivate()){
         return id.Ref(); //host scalar data
       }
 
@@ -487,7 +487,7 @@ public class AccKernel {
     }
 
     if (info == null || !info.getPragma().isLoop()) {
-      return makeSequentialLoop(forBlock, deviceKernelBuildInfo);
+      return makeSequentialLoop(forBlock, deviceKernelBuildInfo, null);
     }
 
     Xobject numGangsExpr = info.getIntExpr(ACCpragma.NUM_GANGS); //info.getNumGangsExp();
@@ -501,7 +501,7 @@ public class AccKernel {
     String execMethodName = gpuManager.getMethodName(forBlock);
     EnumSet<ACCpragma> execMethodSet = gpuManager.getMethodType(forBlock);
     if (execMethodSet.isEmpty() || execMethodSet.contains(ACCpragma.SEQ)) { //if execMethod is not defined or seq
-      return makeSequentialLoop(forBlock, deviceKernelBuildInfo);
+      return makeSequentialLoop(forBlock, deviceKernelBuildInfo, info);
 //      loopStack.push(new Loop(forBlock));
 //      BlockList body = Bcons.blockList(makeCoreBlock(forBlock.getBody(), deviceKernelBuildInfo, prevExecMethodName));
 //      loopStack.pop();
@@ -606,9 +606,9 @@ public class AccKernel {
         has64bitIndVar = true;
         break;
       }
-      Xobject init = tmpForBlock.getLowerBound();
-      Xobject cond = tmpForBlock.getUpperBound();
-      Xobject step = tmpForBlock.getStep();
+      Xobject init = tmpForBlock.getLowerBound().copy();
+      Xobject cond = tmpForBlock.getUpperBound().copy();
+      Xobject step = tmpForBlock.getStep().copy();
       Ident vIdxId = Ident.Local("_ACC_idx_" + indVarName, idxVarType);
       Ident indVarId = Ident.Local(indVarName, indVarType);
       Ident nIterId = resultBlockBuilder.declLocalIdent("_ACC_niter_" + indVarName, idxVarType);
@@ -743,22 +743,39 @@ public class AccKernel {
     }
   }
 
-  private Block makeSequentialLoop(CforBlock forBlock, DeviceKernelBuildInfo deviceKernelBuildInfo) {
+  private Block makeSequentialLoop(CforBlock forBlock, DeviceKernelBuildInfo deviceKernelBuildInfo, AccInformation info) {
     loopStack.push(new Loop(forBlock));
     BlockList body = Bcons.blockList(makeCoreBlock(forBlock.getBody(), deviceKernelBuildInfo));
     loopStack.pop();
 
     //FIXME this is not good for nothing parallelism kernel
     Set<ACCpragma> outerParallelisms = AccLoop.getOuterParallelism(forBlock);
+    BlockList resultBody = Bcons.emptyBody();
+    if(info != null){
+      for(ACCvar var : info.getACCvarList()){
+        if(var.isPrivate()){
+          resultBody.declLocalIdent(var.getName(), var.getId().Type());
+        }
+      }
+    }
+
     if (outerParallelisms.contains(ACCpragma.VECTOR)) {
-      return Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), body);
+      resultBody.add(Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), body));
+      return Bcons.COMPOUND(resultBody);
     }
     forBlock.Canonicalize();
     if (forBlock.isCanonical()) {
       Xobject originalInductionVar = forBlock.getInductionVar();
       Ident originalInductionVarId = forBlock.findVarIdent(originalInductionVar.getName());
 
-      BlockList resultBody = Bcons.emptyBody();
+      XobjList identList = resultBody.getIdentList();
+      if(identList != null){
+	for(Xobject xobj : identList){
+	  Ident id = (Ident)xobj;
+	  id.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
+	}
+      }
+
       Ident inductionVarId = resultBody.declLocalIdent("_ACC_loop_iter_" + originalInductionVar.getName(),
               originalInductionVar.Type());
       Block mainLoop = Bcons.FOR(Xcons.Set(inductionVarId.Ref(), forBlock.getLowerBound()),
@@ -950,7 +967,7 @@ public class AccKernel {
       Xobject reductionKernelCall = reductionKernelId.Call(reductionKernelCallArgs);
 
       Xobject constant1 = Xcons.IntConstant(1);
-      reductionKernelCall.setProp(ACCgpuDecompiler.GPU_FUNC_CONF, Xcons.List(Xcons.IntConstant(reductionKernelVarCount), constant1, constant1, Xcons.IntConstant(256), constant1, constant1));
+      reductionKernelCall.setProp(ACCgpuDecompiler.GPU_FUNC_CONF, Xcons.List(Xcons.IntConstant(reductionKernelVarCount), constant1, constant1, Xcons.IntConstant(ACC.defaultVectorLength), constant1, constant1));
       Object asyncObj;
       if (_kernelInfo.hasClause(ACCpragma.ASYNC)) {
         Xobject asyncExp = _kernelInfo.getIntExpr(ACCpragma.ASYNC);
@@ -994,7 +1011,7 @@ public class AccKernel {
     case Xtype.ENUM: {
       // check whether id is firstprivate!
       ACCvar var = _kernelInfo.findACCvar(ACCpragma.FIRSTPRIVATE, varName);
-      if (var == null /*kernelInfo.isVarAllocated(varName)*/ || _useMemPoolOuterIdSet.contains(id)) {
+      if (var == null /*kernelInfo.isVarAllocated(varName)*/ || _useMemPoolOuterIdSet.contains(id) || var.getDevicePtr() != null) {
         return Ident.Local(varName, Xtype.Pointer(id.Type()));
       } else {
         return Ident.Local(varName, id.Type());
@@ -1297,6 +1314,7 @@ public class AccKernel {
       case ADDR_OF:
       case POINTER_REF:
       case CAST_EXPR:
+      case MEMBER_ADDR:
         return getAssignedXobject(x.getArg(0));
       case PLUS_EXPR:
       case MINUS_EXPR: {

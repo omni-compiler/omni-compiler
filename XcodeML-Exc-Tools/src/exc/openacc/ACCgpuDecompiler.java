@@ -33,7 +33,7 @@ class ACCgpuDecompiler {
       if(type.isStruct() || type.isEnum() || type.isUnion()){
 	Ident id = findIdent((XobjList)env.getGlobalIdentList(), type);
 	if(id != null){
-	  globalIdList.add(id);
+	  globalIdList.cons(id);
 	  type.setTagIdent(id);
 	}
       }

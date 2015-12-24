@@ -8,7 +8,7 @@ int test_int()
   int i;
   int idx = 0;
 
-#pragma acc parallel loop
+#pragma acc parallel loop copyin(idx)
   for(i=0;i<N;i++){
     int my_idx;
 #pragma acc atomic capture
@@ -30,7 +30,7 @@ int test_unsignedint()
   int i;
   unsigned int idx = 0;
 
-#pragma acc parallel loop
+#pragma acc parallel loop copyin(idx)
   for(i=0;i<N;i++){
     unsigned int my_idx;
 #pragma acc atomic capture
@@ -52,7 +52,7 @@ int test_long()
   int i;
   long idx = 0;
 
-#pragma acc parallel loop
+#pragma acc parallel loop copyin(idx)
   for(i=0;i<N;i++){
     long my_idx;
 #pragma acc atomic capture
@@ -74,7 +74,7 @@ int test_unsignedlong()
   int i;
   unsigned long idx = 0;
 
-#pragma acc parallel loop
+#pragma acc parallel loop copyin(idx)
   for(i=0;i<N;i++){
     unsigned long my_idx;
 #pragma acc atomic capture
@@ -96,7 +96,7 @@ int test_longlong()
   int i;
   long long idx = 0;
 
-#pragma acc parallel loop
+#pragma acc parallel loop copyin(idx)
   for(i=0;i<N;i++){
     long long my_idx;
 #pragma acc atomic capture
@@ -118,7 +118,7 @@ int test_unsignedlonglong()
   int i;
   unsigned long long idx = 0;
 
-#pragma acc parallel loop
+#pragma acc parallel loop copyin(idx)
   for(i=0;i<N;i++){
     unsigned long long my_idx;
 #pragma acc atomic capture

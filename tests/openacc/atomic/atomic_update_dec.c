@@ -8,7 +8,7 @@ static int test_basic()
   int red_1 = 0;
 
   //basic pattern
-#pragma acc parallel loop
+#pragma acc parallel loop copy(red_0, red_1)
   for(i = 0; i < N; i++){
 #pragma acc atomic
     red_0--;

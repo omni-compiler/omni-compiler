@@ -304,7 +304,7 @@ public class XMPtransCoarrayRun
   private void _mergeCoarraysByName(ArrayList<XMPcoarray> coarrays1,
                                     ArrayList<XMPcoarray> coarrays2)
   {
-    ArrayList<XMPcoarray> newCoarrays = new ArrayList();
+    ArrayList<XMPcoarray> newCoarrays = new ArrayList<XMPcoarray>();
     for (XMPcoarray coarray2: coarrays2) {
       boolean found = false;
       String name2 = coarray2.getName();
@@ -774,7 +774,7 @@ public class XMPtransCoarrayRun
     if (coarrays.isEmpty())
       return;
 
-    ArrayList<String> cnameList = new ArrayList();
+    ArrayList<String> cnameList = new ArrayList<String>();
     for (XMPcoarray coarray0: coarrays) {
       String cname = coarray0.getDescCommonName();
       if (cnameList.contains(cname))
@@ -817,7 +817,7 @@ public class XMPtransCoarrayRun
       coarray.genDecl_crayPointer();
     }
 
-    ArrayList<String> cnameList = new ArrayList();
+    ArrayList<String> cnameList = new ArrayList<String>();
     for (XMPcoarray coarray0: coarrays) {
       String cname = coarray0.getCrayCommonName();
       if (cnameList.contains(cname))
@@ -1206,7 +1206,7 @@ public class XMPtransCoarrayRun
   //
   private void genAllocOfStaticCoarrays(ArrayList<XMPcoarray> coarrays0) {
 
-    ArrayList<XMPcoarray> coarrays = new ArrayList();
+    ArrayList<XMPcoarray> coarrays = new ArrayList<XMPcoarray>();
     for (XMPcoarray coarray: coarrays0) {
       if (coarray.wasMovedFromModule())
         continue;
