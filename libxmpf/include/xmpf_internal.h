@@ -187,6 +187,12 @@ void _XMP_reflect__(_XMP_array_t *a_desc);
 void _XMP_wait_async__(int async_id);
 void _XMP_reflect_async__(_XMP_array_t *a_desc, int async_id);
 
+/* From xmpf_pack.c */
+void _XMPF_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,
+		      int array_dim, int *l, int *u, int *s, unsigned long long *d);
+void _XMPF_unpack_array(void *dst, void *buffer, int array_type, size_t array_type_size,
+			int array_dim, int *l, int *u, int *s, unsigned long long *d);
+
 /* From xmp_coarray.c */
 extern void _XMP_gasnet_not_continuous_put();
 extern void _XMP_gasnet_continuous_put();

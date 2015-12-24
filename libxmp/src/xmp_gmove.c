@@ -194,13 +194,13 @@ unsigned long long _XMP_gmove_bcast_ARRAY(void *dst_addr, int dst_dim,
     if (dst_buffer_elmts != src_buffer_elmts) {
       _XMP_fatal("bad assign statement for gmove");
     } else {
-      _XMP_pack_array(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
+      (*_xmp_pack_array)(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
     }
   }
 
   _XMP_gmove_bcast(buffer, type_size, dst_buffer_elmts, root_rank);
 
-  _XMP_unpack_array(dst_addr, buffer, type, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
+  (*_xmp_unpack_array)(dst_addr, buffer, type, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
   _XMP_free(buffer);
 
   return dst_buffer_elmts;
@@ -239,8 +239,8 @@ void _XMP_gmove_localcopy_ARRAY(int type, int type_size,
   }
 
   void *buffer = _XMP_alloc(dst_buffer_elmts * type_size);
-  _XMP_pack_array(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
-  _XMP_unpack_array(dst_addr, buffer, type, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
+  (*_xmp_pack_array)(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
+  (*_xmp_unpack_array)(dst_addr, buffer, type, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
   _XMP_free(buffer);
 }
 
@@ -471,7 +471,7 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
       }else{
 	send_alloc = _XMP_alloc(total_elmts * type_size);
 	send_buffer = send_alloc;
-	_XMP_pack_array(send_buffer, src_addr, type, type_size, src_dim, src_lower, src_upper, src_stride, src_dim_acc);
+	(*_xmp_pack_array)(send_buffer, src_addr, type, type_size, src_dim, src_lower, src_upper, src_stride, src_dim_acc);
       }
       if ((dst_shrink_nodes_size == src_shrink_nodes_size) ||
           (dst_shrink_nodes_size <  src_shrink_nodes_size)) {
@@ -503,7 +503,7 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
   if (wait_recv) {
     MPI_Wait(&gmove_request, MPI_STATUS_IGNORE);
     if(! (dst_dim == 1 && dst_stride[0] == 1)){
-      _XMP_unpack_array(dst_addr, recv_buffer, type, type_size, dst_dim, dst_lower, dst_upper, dst_stride, dst_dim_acc);
+      (*_xmp_unpack_array)(dst_addr, recv_buffer, type, type_size, dst_dim, dst_lower, dst_upper, dst_stride, dst_dim_acc);
     }
     _XMP_free(recv_alloc);
   }
@@ -3220,8 +3220,8 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
   }
 
   void *buffer = _XMP_alloc(dst_buffer_elmts * type_size);
-  _XMP_pack_array(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
-  _XMP_unpack_array(dst_addr, buffer, type, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
+  (*_xmp_pack_array)(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
+  (*_xmp_unpack_array)(dst_addr, buffer, type, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
   _XMP_free(buffer);
 }
 

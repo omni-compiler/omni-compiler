@@ -309,8 +309,8 @@ void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
   }
 
   void *buffer = _XMP_alloc(dst_buffer_elmts * type_size);
-  _XMP_pack_array(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
-  _XMP_unpack_array(dst_addr, buffer, type, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
+  (*_xmp_pack_array)(buffer, src_addr, type, type_size, src_dim, src_l, src_u, src_s, src_d);
+  (*_xmp_unpack_array)(dst_addr, buffer, type, type_size, dst_dim, dst_l, dst_u, dst_s, dst_d);
   _XMP_free(buffer);
 
 }
