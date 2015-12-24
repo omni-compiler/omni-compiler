@@ -12,6 +12,11 @@ static int _XMP_runtime_working = _XMP_N_INT_FALSE;
 int _XMPC_running = 1;
 int _XMPF_running = 0;
 
+void (*_xmp_pack_array)(void *buffer, void *src, int array_type, size_t array_type_size,
+			int array_dim, int *l, int *u, int *s, unsigned long long *d) = _XMPC_pack_array;
+void (*_xmp_unpack_array)(void *dst, void *buffer, int array_type, size_t array_type_size,
+			  int array_dim, int *l, int *u, int *s, unsigned long long *d) = _XMPC_unpack_array;
+
 void _XMP_init(int argc, char** argv)
 {
   if (!_XMP_runtime_working) {

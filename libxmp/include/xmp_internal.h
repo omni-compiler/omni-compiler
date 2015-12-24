@@ -52,6 +52,13 @@ extern "C" {
 #define template template_
 #endif
 
+// ----- extern variables ------------------------------------------------------
+extern void (*_xmp_pack_array)(void *buffer, void *src, int array_type, size_t array_type_size,
+			       int array_dim, int *l, int *u, int *s, unsigned long long *d);
+extern void (*_xmp_unpack_array)(void *dst, void *buffer, int array_type, size_t array_type_size,
+				 int array_dim, int *l, int *u, int *s, unsigned long long *d);
+
+
 // ----- libxmp ------------------------------------------------------
 // xmp_align.c
 extern void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index);
@@ -80,19 +87,23 @@ extern void _XMP_dealloc_array(_XMP_array_t *array_desc);
 
 // xmp_array_section.c
 extern void _XMP_normalize_array_section(_XMP_gmv_desc_t *gmv_desc, int idim, int *lower, int *upper, int *stride);
-// FIXME make these static
-extern void _XMP_pack_array_BASIC(void *buffer, void *src, int array_type,
-                                         int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size,
-                                           int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
-                                           int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XMP_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
-                                             int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XMP_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,
-                            int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t array_type_size,
-                              int array_dim, int *l, int *u, int *s, unsigned long long *d);
+/* // FIXME make these static */
+/* extern void _XMPC_pack_array_BASIC(void *buffer, void *src, int array_type, */
+/* 				   int array_dim, int *l, int *u, int *s, unsigned long long *d); */
+/* extern void _XMPC_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size, */
+/* 				     int array_dim, int *l, int *u, int *s, unsigned long long *d); */
+/* extern void _XMPC_unpack_array_BASIC(void *dst, void *buffer, int array_type, */
+/* 				     int array_dim, int *l, int *u, int *s, unsigned long long *d); */
+/* extern void _XMPC_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size, */
+/* 				       int array_dim, int *l, int *u, int *s, unsigned long long *d); */
+/* extern void _XMP_pack_array(void *buffer, void *src, int array_type, size_t array_type_size, */
+/*                             int array_dim, int *l, int *u, int *s, unsigned long long *d); */
+/* extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t array_type_size, */
+/*                               int array_dim, int *l, int *u, int *s, unsigned long long *d); */
+extern void _XMPC_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,
+			     int array_dim, int *l, int *u, int *s, unsigned long long *d);
+extern void _XMPC_unpack_array(void *dst, void *buffer, int array_type, size_t array_type_size,
+			       int array_dim, int *l, int *u, int *s, unsigned long long *d);
 
 // xmp_async.c
 _XMP_async_comm_t *_XMP_get_or_create_async(int async_id);
