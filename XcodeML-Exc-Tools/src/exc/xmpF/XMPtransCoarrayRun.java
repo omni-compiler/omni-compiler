@@ -366,8 +366,10 @@ public class XMPtransCoarrayRun
 
     // SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
     //  convert main program to soubroutine xmpf_main
-    if (_isMainProgram())
-      _convMainProgramToSubroutine("xmpf_main");
+    ///////////////////////////////
+    //if (_isMainProgram())
+    //_convMainProgramToSubroutine("xmpf_main");
+    ///////////////////////////////
   }
 
 
