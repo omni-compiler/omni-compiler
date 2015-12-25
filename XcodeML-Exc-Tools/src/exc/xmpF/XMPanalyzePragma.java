@@ -757,6 +757,8 @@ public class XMPanalyzePragma
     
     info.setGmoveOperands(left,right);
 
+    info.setGmoveOpt(gmoveOpt);
+
     if (asyncOpt != null && !XmOption.isAsync()){
       XMP.errorAt(pb, "MPI-3 is required to use the async clause on a gmove directive");
     }

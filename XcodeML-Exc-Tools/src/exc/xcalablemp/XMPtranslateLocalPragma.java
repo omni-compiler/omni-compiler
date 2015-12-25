@@ -2526,10 +2526,8 @@ public class XMPtranslateLocalPragma {
     BlockList gmoveBody = pb.getBody();
     Block gmoveFuncCallBlock = null;
 
-    // gmove in/out is not implemented
+    // GMOVE_NORMAL | GMOVE_IN | GMOVE_OUT
     Xobject gmoveClause = gmoveDecl.getArg(0);
-    if(XMPcollective.GMOVE_IN == gmoveClause.getInt() || XMPcollective.GMOVE_OUT == gmoveClause.getInt())
-      throw new XMPexception("gmove in/out directive is not supported yet");
 
     // acc or host
     XobjList accOrHost = (XobjList)gmoveDecl.getArg(2);
@@ -2568,7 +2566,6 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(checkBodyErrMsg);
     }
 
-    // FIXME consider in, out clause
     Xobject leftExpr = assignStmt.left();
     XMPpair<XMPalignedArray, XobjList> leftExprInfo = getXMPalignedArrayExpr(pb, leftExpr);
     XMPalignedArray leftAlignedArray = leftExprInfo.getFirst();
@@ -2597,6 +2594,7 @@ public class XMPtranslateLocalPragma {
 
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    gmoveFuncArgs.add(gmoveClause);
 	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "LOCALCOPY_ARRAY", gmoveFuncArgs);
           } else {				// !leftIsAlignedArray &&  rightIsAlignedArray  |-> broadcast
             Xtype arrayElmtType = rightAlignedArray.getType();
@@ -2611,6 +2609,7 @@ public class XMPtranslateLocalPragma {
 
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    gmoveFuncArgs.add(gmoveClause);
 	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_ARRAY", gmoveFuncArgs);
           }
         } else {
@@ -2627,6 +2626,7 @@ public class XMPtranslateLocalPragma {
 
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    gmoveFuncArgs.add(gmoveClause);
 	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "HOMECOPY_ARRAY", gmoveFuncArgs);
           } else {				//  leftIsAlignedArray &&  rightIsAlignedArray  |-> send/recv
             Xtype arrayElmtType = leftAlignedArray.getType();
@@ -2646,6 +2646,7 @@ public class XMPtranslateLocalPragma {
 
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    gmoveFuncArgs.add(gmoveClause);
 
 	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_ARRAY", gmoveFuncArgs);
 
@@ -2701,6 +2702,7 @@ public class XMPtranslateLocalPragma {
           XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
                                               rightAlignedArray.getDescId().Ref());
           gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	  gmoveFuncArgs.add(gmoveClause);
 
 	  gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_SCALAR", gmoveFuncArgs);
         }
@@ -2708,6 +2710,7 @@ public class XMPtranslateLocalPragma {
         if (rightAlignedArray == null) {	//  leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (home node)
           XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
           gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+	  gmoveFuncArgs.add(gmoveClause);
 
           Ident gmoveFuncId = _globalDecl.declExternFunc(funcPrefix + "HOMECOPY_SCALAR", Xtype.intType);
 	  gmoveFuncCallBlock = Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)), gmoveBody, null);
@@ -2716,6 +2719,7 @@ public class XMPtranslateLocalPragma {
                                               leftAlignedArray.getDescId().Ref(), rightAlignedArray.getDescId().Ref());
           gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
           gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	  gmoveFuncArgs.add(gmoveClause);
 
 	  gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_SCALAR", gmoveFuncArgs);
         }

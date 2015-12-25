@@ -72,7 +72,7 @@ void *_XMP_get_array_addr(_XMP_array_t *a, int *gidx)
 //
 // s = ga(i)
 //
-void _XMPF_gmove_scalar_garray__(void *scalar, _XMP_gmv_desc_t *gmv_desc_rightp)
+void _XMPF_gmove_scalar_garray__(void *scalar, _XMP_gmv_desc_t *gmv_desc_rightp, int mode)
 {
   _XMP_array_t *array = gmv_desc_rightp->a_desc;
   int type_size = array->type_size;
@@ -108,7 +108,7 @@ void _XMPF_gmove_scalar_garray__(void *scalar, _XMP_gmv_desc_t *gmv_desc_rightp)
 //
 // ga(i) = s
 //
-void _XMPF_gmove_garray_scalar__(_XMP_gmv_desc_t *gmv_desc_leftp, void *scalar)
+void _XMPF_gmove_garray_scalar__(_XMP_gmv_desc_t *gmv_desc_leftp, void *scalar, int mode)
 {
   _XMP_array_t *array = gmv_desc_leftp->a_desc;
   int type_size = array->type_size;
@@ -148,7 +148,8 @@ static void _XMPF_unpack_comm_set(void *recvbuf, int recvbuf_size,
 // ga(:) = gb(:)
 //
 void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
-			       _XMP_gmv_desc_t *gmv_desc_rightp)
+			       _XMP_gmv_desc_t *gmv_desc_rightp,
+			       int mode)
 {
   _XMP_array_t *dst_array = gmv_desc_leftp->a_desc;
   _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
@@ -203,7 +204,8 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
 // ga(:) = la(:)
 //
 void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
-			       _XMP_gmv_desc_t *gmv_desc_rightp)
+			       _XMP_gmv_desc_t *gmv_desc_rightp,
+			       int mode)
 {
   _XMP_array_t *dst_array = gmv_desc_leftp->a_desc;
   _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
@@ -320,7 +322,8 @@ void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
 // la(:) = ga(:)
 //
 void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
-			       _XMP_gmv_desc_t *gmv_desc_rightp)
+			       _XMP_gmv_desc_t *gmv_desc_rightp,
+			       int mode)
 {
   _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
 
@@ -566,19 +569,19 @@ xmpf_gmv_do__(_XMP_gmv_desc_t **gmv_desc_left, _XMP_gmv_desc_t **gmv_desc_right,
   _XMP_gmv_desc_t *gmv_desc_rightp = *gmv_desc_right;
 
   if (gmv_desc_leftp->is_global && gmv_desc_rightp->is_global){
-    _XMPF_gmove_garray_garray(gmv_desc_leftp, gmv_desc_rightp);
+    _XMPF_gmove_garray_garray(gmv_desc_leftp, gmv_desc_rightp, *mode);
   }
   else if (gmv_desc_leftp->is_global && !gmv_desc_rightp->is_global){
     if (gmv_desc_rightp->ndims == 0){
-      _XMPF_gmove_garray_scalar__(gmv_desc_leftp, gmv_desc_rightp->local_data);
+      _XMPF_gmove_garray_scalar__(gmv_desc_leftp, gmv_desc_rightp->local_data, *mode);
     }
     else {
-      _XMPF_gmove_garray_larray(gmv_desc_leftp, gmv_desc_rightp);
+      _XMPF_gmove_garray_larray(gmv_desc_leftp, gmv_desc_rightp, *mode);
     }
   }
   else if (!gmv_desc_leftp->is_global && gmv_desc_rightp->is_global){
     if (gmv_desc_leftp->ndims == 0){
-      _XMPF_gmove_scalar_garray__(gmv_desc_leftp->local_data, gmv_desc_rightp);
+      _XMPF_gmove_scalar_garray__(gmv_desc_leftp->local_data, gmv_desc_rightp, *mode);
     }
     else {
 
@@ -596,7 +599,7 @@ xmpf_gmv_do__(_XMP_gmv_desc_t **gmv_desc_left, _XMP_gmv_desc_t **gmv_desc_right,
       xmpf_array_set_local_array__(&a, gmv_desc_leftp->local_data);
       gmv_desc_leftp->a_desc = a;
 
-      _XMPF_gmove_larray_garray(gmv_desc_leftp, gmv_desc_rightp);
+      _XMPF_gmove_larray_garray(gmv_desc_leftp, gmv_desc_rightp, *mode);
 
       xmpf_array_dealloc__(&a);
 

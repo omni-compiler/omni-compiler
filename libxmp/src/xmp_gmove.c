@@ -532,6 +532,7 @@ void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array
     }
     root_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ref_index);
   }
+  int mode = va_arg(args, int);
   va_end(args);
 
   // broadcast
@@ -559,6 +560,7 @@ int _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
 
     execHere = execHere && _XMP_check_gmove_array_ref_inclusion_SCALAR(array, i, ref_index);
   }
+  int mode = va_arg(args, int);
   va_end(args);
 
   return execHere;
@@ -595,6 +597,7 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     }
     src_ref = _XMP_create_gmove_nodes_ref_SCALAR(src_array, src_ref_index);
   }
+  int mode = va_arg(args, int);
   va_end(args);
 
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
@@ -703,6 +706,8 @@ void _XMP_gmove_LOCALCOPY_ARRAY(int type, size_t type_size, ...) {
     src_d[i] = va_arg(args, unsigned long long);
     _XMP_normalize_array_section(&gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
   }
+
+  int mode = va_arg(args, int);
 
   va_end(args);
 
@@ -3028,6 +3033,8 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
   }
 
+  int mode = va_arg(args, int);
+
   va_end(args);
 
   if (dst_total_elmts != src_total_elmts) {
@@ -3159,6 +3166,8 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
   }
 
+  int mode = va_arg(args, int);
+
   va_end(args);
 
   if (dst_total_elmts != src_total_elmts) {
@@ -3263,6 +3272,8 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
     _XMP_normalize_array_section(&gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
     if (src_s[i] != 0) src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
   }
+
+  int mode = va_arg(args, int);
 
   va_end(args);
 
@@ -3381,6 +3392,9 @@ void _XMP_gmove_BCAST_TO_NOTALIGNED_ARRAY(_XMP_array_t *dst_array, _XMP_array_t 
     src_d[i] = va_arg(args, unsigned long long);
     _XMP_normalize_array_section(&gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
   }
+
+  int mode = va_arg(args, int);
+
   va_end(args);
 
   MPI_Datatype mpi_datatype;

@@ -729,9 +729,9 @@ public class XMPtransPragma
   private final static int GMOVE_INDEX = 1;
   private final static int GMOVE_RANGE = 2;
   
-  private final static int GMOVE_COLL   = 0;
-  private final static int GMOVE_IN = 1;
-  private final static int GMOVE_OUT = 2;
+  private final static int GMOVE_COLL   = 400;
+  private final static int GMOVE_IN = 401;
+  private final static int GMOVE_OUT = 402;
 
   private Block translateGmove(PragmaBlock pb, XMPinfo i) {
 
@@ -751,8 +751,9 @@ public class XMPtransPragma
     }
 
     Ident f = env.declInternIdent(XMP.gmove_do_f, Xtype.FsubroutineType);
-    Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(),
-			      Xcons.IntConstant(GMOVE_COLL));
+    // Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(),
+    // 			      Xcons.IntConstant(GMOVE_COLL));
+    Xobject args = Xcons.List(left_desc.Ref(), right_desc.Ref(), i.getGmoveOpt());
     bb.add(f.callSubroutine(args));
 
     Ident d = env.declInternIdent(XMP.gmove_dealloc_f, Xtype.FsubroutineType);
