@@ -128,6 +128,13 @@ typedef struct _XMP_coarray_list_type {
 extern _XMP_coarray_list_t *_XMP_coarray_list_head;
 extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
 
+#ifdef _XMP_MPI3_ONESIDED
+extern void _XMP_coarray_malloc_info_n(const long*, const int, const size_t);
+extern void _XMP_coarray_malloc_image_info_n(const int*, const int);
+extern void _XMP_coarray_attach(_XMP_coarray_t*, void*, const size_t);
+extern void _XMP_coarray_detach(_XMP_coarray_t*);
+#endif
+
 extern void _XMP_onesided_initialize(int, char **);
 extern void _XMP_onesided_finalize(const int);
 extern void _XMP_build_sync_images_table();

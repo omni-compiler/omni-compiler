@@ -135,6 +135,21 @@ void _XMP_coarray_malloc_info_7(const long n1, const long n2, const long n3, con
 }
 
 /**
+   Set n-dim coarray information
+*/
+void _XMP_coarray_malloc_info_n(const long *n, const int ndims, const size_t elmt_size)
+{
+  _elmt_size           = elmt_size;
+  _coarray_dims        = ndims;
+  _coarray_elmts       = malloc(sizeof(long) * _coarray_dims);
+  _total_coarray_elmts = 1;
+  for (int i = 0; i < ndims; i++){
+    _coarray_elmts[i]    = n[i];
+    _total_coarray_elmts *= n[i];
+  }
+}
+
+/**
     Set 1-dim image information
  */
 void _XMP_coarray_malloc_image_info_1()
@@ -255,6 +270,25 @@ void _XMP_coarray_malloc_image_info_7(const int i1, const int i2, const int i3, 
   _image_elmts[4] = i5;
   _image_elmts[5] = i6;
   _image_elmts[6] = total_node_size / (i1*i2*i3*i4*i5*i6);
+}
+
+void _XMP_coarray_malloc_image_info_n(const int *i, const int ndims)
+{
+  int total_node_size  = _XMP_get_execution_nodes()->comm_size;
+
+  int t = 1;
+  for (int j = 0; j < ndims-1; j++){
+    t *= i[j];
+  }
+
+  _check_coarray_image(total_node_size, t);
+
+  _image_dims    = ndims;
+  _image_elmts   = malloc(sizeof(int) * _image_dims);
+  for (int j = 0; j < ndims-1; j++){
+    _image_elmts[j] = i[j];
+  }
+  _image_elmts[ndims-1] = total_node_size / t;
 }
 
 /*

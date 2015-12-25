@@ -53,6 +53,10 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   a->align_comm_size = 1;
   a->align_comm_rank = _XMP_N_INVALID_RANK;
 
+#ifdef _XMP_MPI3_ONESIDED
+  a->coarray = NULL;
+#endif
+
   //a->num_reqs = -1;
 
   //if (!template->is_fixed) _XMP_fatal("target template is not fixed");
@@ -113,6 +117,10 @@ void _XMP_init_array_desc_NOT_ALIGNED(_XMP_array_t **adesc, _XMP_template_t *tem
   a->align_comm = NULL;
   a->align_comm_size = 1;
   a->align_comm_rank = _XMP_N_INVALID_RANK;
+
+#ifdef _XMP_MPI3_ONESIDED
+  a->coarray = NULL;
+#endif
 
   a->is_shrunk_template = false;
 
@@ -230,6 +238,13 @@ void _XMP_finalize_array_desc(_XMP_array_t *array) {
     if (array->array_nodes)
       _XMP_finalize_nodes(array->array_nodes);
   }
+
+#ifdef _XMP_MPI3_ONESIDED
+  if (array->coarray){
+    _XMP_coarray_detach(array->coarray);
+    _XMP_free(array->coarray);
+  }
+#endif
 
   _XMP_free(array);
 }
