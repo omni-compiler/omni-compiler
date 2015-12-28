@@ -35,8 +35,8 @@ public class XMPtransCoarrayRun
 
   private String name;
 
-  private FuncDefBlock funcDef;
   private XobjectDef def;
+  FuncDefBlock funcDef;
 
   private ArrayList<XMPcoarray> useAssociatedCoarrays;
   private ArrayList<XMPcoarray> localCoarrays;
@@ -76,11 +76,11 @@ public class XMPtransCoarrayRun
     this.env = env;
     name = def.getName();
 
-    _setHostName();
-    _setHostRun(pastRuns);
-
     funcDef = new FuncDefBlock(def);
     env.setCurrentDef(funcDef);
+
+    _setHostName();
+    _setHostRun(pastRuns);
 
     String postfix = _genNewProcPostfix();
     traverseCountName = TRAV_COUNTCOARRAY_PREFIX + postfix;
@@ -97,11 +97,12 @@ public class XMPtransCoarrayRun
   }
 
 
+  /*******************************
   public void finalize() {
     // finalize fblock in funcDef
     funcDef.Finalize();
   }
-
+  *********************************/
 
   private void _setHostName()
   {
@@ -352,6 +353,7 @@ public class XMPtransCoarrayRun
         
 
   private void run1_procedure() {
+    // flag for automatic deallocation of allocatable coarrays
     set_autoDealloc(false);
 
     // convert specification and declaration part
@@ -364,6 +366,8 @@ public class XMPtransCoarrayRun
     // should be made after execution of transDeclPart_*.
     _setVisibleCoarrays();
     transExecPart_visibleCoarrays();
+
+    funcDef.Finalize();
 
     if (!"1".equals(System.getenv("XMP_CASCADE"))) {
       // SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
@@ -2034,6 +2038,5 @@ public class XMPtransCoarrayRun
   private FunctionBlock getFblock() {
     return funcDef.getBlock();
   }
-
 }
 

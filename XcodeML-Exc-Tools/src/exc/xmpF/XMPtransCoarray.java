@@ -62,7 +62,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
       transCoarrayRun.run1();
       // assuming top-down translation along host-association
       pastRuns.add(transCoarrayRun);
-      transCoarrayRun.finalize();
+      //transCoarrayRun.finalize();
       break;
 
     case 2:               // second pass for modules
@@ -70,7 +70,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
         return;
       transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2);
       transCoarrayRun.run2();
-      transCoarrayRun.finalize();
+      //transCoarrayRun.finalize();
       break;
 
     default:
