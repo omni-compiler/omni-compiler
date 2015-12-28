@@ -358,9 +358,9 @@ public class omompx
       Boolean containsCoarray = caf_translator0.containsCoarray();
       caf_translator0.finish();
 
-      String cascadeMode = System.getenv("XMP_CASCADE");
+      Boolean cascadeMode = "1".equals(System.getenv("XMP_CASCADE"));
 
-      if (containsCoarray || "1".equals(cascadeMode)) {
+      if (containsCoarray || cascadeMode) {
         // Coarray Fortran pass#1
         exc.xmpF.XMPtransCoarray
           caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1);
@@ -378,7 +378,7 @@ public class omompx
         caf_translator2.finish();
       }
 
-      if (!containsCoarray || "1".equals(cascadeMode)) {
+      if (!containsCoarray || cascadeMode) {
         // XMP Fortran
         exc.xmpF.XMPtranslate
           xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
