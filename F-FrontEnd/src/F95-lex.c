@@ -3112,12 +3112,23 @@ is_fixed_cond_statement_label( char *  label )
 static void _warning_if_doubtfulLongLine(char *buf, int maxLen)
 {
   int i;
+
   for (i = maxLen; isspace(buf[i]); i++) ;
-
   if (buf[i] == '&' || buf[i] == '!')
-    return;                          // It seems intentional.
+    // It seems intentional bacause the first non-space character
+    // is '&' or '!'.
+    return;
 
-  // It seems a user's bug.
+  if (buf[0] == 'c' || buf[0] == 'C')
+    // It seems a comment line
+    return;
+
+  for (i = 0; i < maxLen; i++)
+    if (buf[i] == '!')
+      // It may be a comment line or a comment region.
+      return;
+
+  // Otherwise, it seems a user's bug.
   warning_lineno( &read_lineno, 
                   "line contains more than %d characters",
                   maxLen);
