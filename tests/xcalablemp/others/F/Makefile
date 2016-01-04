@@ -1,9 +1,9 @@
 XFC     = xmpf90
 XRUN    = mpiexec
-EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x 412.x
+EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x 397.x 412.x
 
 all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
-     103.x 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o save_desc.x schedule_default.x task001.x 152.x
+     103.x 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o save_desc.x schedule_default.x task001.x 152.x 397.x
 
 .SUFFIXES: .x .o .f90
 
@@ -11,6 +11,12 @@ all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o x
 	$(XFC) -o $@ $<
 
 .f90.o:
+	$(XFC) -c $<
+
+.f.x:
+	$(XFC) -o $@ $<
+
+.f.o:
 	$(XFC) -c $<
 
 task001.x: task001.f90
@@ -124,6 +130,7 @@ run:
 	$(XRUN) -np 1 ./358_result.x
 	$(XRUN) -np 2 ./383.x
 	$(XRUN) -np 1 ./392.x
+	$(XRUN) -np 1 ./397.x
 	$(XRUN) -np 1 ./278\ spacefile.x
 	$(XRUN) -np 4 ./save_desc.x
 

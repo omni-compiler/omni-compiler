@@ -196,6 +196,7 @@ static int      read_fixed_format _ANSI_ARGS_((void));
 static int      read_free_format _ANSI_ARGS_((void));
 static int      readline_free_format _ANSI_ARGS_((void));
 static int      readline_fixed_format _ANSI_ARGS_((void));
+static void     _warning_if_doubtfulLongLine (char *buf, int maxLen);
 static int      is_fixed_cond_statement_label _ANSI_ARGS_((char *  label));
 #ifdef not
 static int      is_OCL_sentinel _ANSI_ARGS_((char **));
@@ -258,7 +259,10 @@ initialize_lex()
   extern int mcLn_no;
   extern long mcStart;
 
-  line_buf_size = max_line_len + 2 + 1; /* CRLF + \0 */
+  if (fixed_format_flag)
+    line_buf_size = 300;      // for bug #397
+  else
+    line_buf_size = max_line_len + 2 + 1; /* CRLF + \0 */
   st_buf_size = max_line_len * (max_cont_line + 1) + 1;
 
   line_buffer = XMALLOC(char *, line_buf_size);
@@ -2768,6 +2772,14 @@ next_line0:
             linelen--;
         }
     }
+    // for bug #397
+    if (linelen > max_line_len) {
+      _warning_if_doubtfulLongLine(line_buffer, max_line_len);
+      line_buffer[max_line_len] = 0x0a;
+      for (int i = max_line_len + 1; i <= linelen; )
+        line_buffer[i++] = 0x0;
+      linelen = max_line_len;
+    }
 
     /* truncate characters after '!' */
     if (line_buffer[0] != '!' ||
@@ -3095,6 +3107,20 @@ is_fixed_cond_statement_label( char *  label )
     if (isdigit(label[2])&&isdigit(label[3])&&isspace(label[4])) return TRUE;
 
     return FALSE;
+}
+
+static void _warning_if_doubtfulLongLine(char *buf, int maxLen)
+{
+  int i;
+  for (i = maxLen; isspace(buf[i]); i++) ;
+
+  if (buf[i] == '&' || buf[i] == '!')
+    return;                          // It seems intentional.
+
+  // It seems a user's bug.
+  warning_lineno( &read_lineno, 
+                  "line contains more than %d characters",
+                  maxLen);
 }
 
 static int
