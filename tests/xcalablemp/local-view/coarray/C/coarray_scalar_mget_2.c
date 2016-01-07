@@ -58,7 +58,7 @@ void test_1(int me)
 }
 
 void check_1(int me){
-  int i, j, flag = TRUE;
+  int i, flag = TRUE;
   
   for(i=0; i<N; i++){
     if( a[i] != a_test[i] ){
@@ -159,7 +159,7 @@ void test_4(int me)
 }
 
 void check_4(int me){
-  int i, j, flag = TRUE;
+  int i, flag = TRUE;
   
   for(i=0; i<N; i++){
     if( d[i] != d_test[i] ){

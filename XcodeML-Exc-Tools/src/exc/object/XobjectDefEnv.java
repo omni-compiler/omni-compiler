@@ -28,6 +28,10 @@ public class XobjectDefEnv extends PropObject
     
     public void setIdentList(Xobject identList)
     {
+      ///////////////////////////////////////////////
+      //System.out.println("+++ XobjectDefEnv.setIdentList(identList): identList=");
+      //System.out.println(identList);
+      ///////////////////////////////////////////////
         this.identList = identList;
     }
 

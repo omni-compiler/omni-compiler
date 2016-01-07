@@ -32,6 +32,7 @@ int line_buf_size;
 #define ST_BUF_SIZE     st_buf_size
 #define LINE_BUF_SIZE   line_buf_size
 
+#define UNDER_ST_BUF_SIZE(top,p) ((p-top)<ST_BUF_SIZE)
 #define UNDER_LINE_BUF_SIZE(top,p) ((p-top)<LINE_BUF_SIZE)
 
 int st_class;           /* token for classify statement */
@@ -195,6 +196,7 @@ static int      read_fixed_format _ANSI_ARGS_((void));
 static int      read_free_format _ANSI_ARGS_((void));
 static int      readline_free_format _ANSI_ARGS_((void));
 static int      readline_fixed_format _ANSI_ARGS_((void));
+static void     _warning_if_doubtfulLongLine (char *buf, int maxLen);
 static int      is_fixed_cond_statement_label _ANSI_ARGS_((char *  label));
 #ifdef not
 static int      is_OCL_sentinel _ANSI_ARGS_((char **));
@@ -257,7 +259,10 @@ initialize_lex()
   extern int mcLn_no;
   extern long mcStart;
 
-  line_buf_size = max_line_len + 2 + 1; /* CRLF + \0 */
+  if (fixed_format_flag)
+    line_buf_size = 300;      // for bug #397
+  else
+    line_buf_size = max_line_len + 2 + 1; /* CRLF + \0 */
   st_buf_size = max_line_len * (max_cont_line + 1) + 1;
 
   line_buffer = XMALLOC(char *, line_buf_size);
@@ -654,7 +659,7 @@ token()
     case '\0':
         return(EOS);
     case QUOTE:
-        for(p = buffio; UNDER_LINE_BUF_SIZE(buffio,p)&&((ch = *bufptr++) != QUOTE) ;)
+        for(p = buffio; UNDER_ST_BUF_SIZE(buffio,p)&&((ch = *bufptr++) != QUOTE) ;)
 	    if (ch == '\0')
 		break;
 	    else
@@ -2767,6 +2772,36 @@ next_line0:
             linelen--;
         }
     }
+    // for bug #397
+    if (linelen > max_line_len) {
+      _warning_if_doubtfulLongLine(line_buffer, max_line_len);
+      line_buffer[max_line_len] = 0x0a;
+      for (int i = max_line_len + 1; i <= linelen; )
+        line_buffer[i++] = 0x0;
+      linelen = max_line_len;
+    }
+
+    /* truncate characters after '!' */
+    if (line_buffer[0] != '!' ||
+	is_pragma_sentinel( &sentinels, line_buffer, &index)){
+      int isInQuote = prevline_is_inQuote;
+      for (int i = 6; i < linelen; i++){
+	if (!isInQuote){
+	  if (line_buffer[i] == '!'){
+	    line_buffer[i] = 0x0a;
+	    line_buffer[i+1] = 0x0;
+	    linelen = i;
+	    break;
+	  }
+	  else if (line_buffer[i] == '\'' || line_buffer[i] == '"'){
+	    isInQuote = line_buffer[i];
+	  }
+	}
+	else if (line_buffer[i] == isInQuote){
+	  isInQuote = 0;
+	}
+      }
+    }
     
     /*  replace coment letter to '!' */
     if( line_buffer[0]=='C'||line_buffer[0]=='c'||line_buffer[0]=='*' ){
@@ -2924,7 +2959,7 @@ KeepOnGoin:
      * read body of line
      */
     bp = line_buffer;
-    inQuote = 0;
+    inQuote = prevline_is_inQuote;
     maxChars = max_line_len - 6;
     if ( line_buffer[body_offset] == '\n') {
         line_buffer[0] = '\0';
@@ -2949,15 +2984,23 @@ KeepOnGoin:
                 goto Newline;
             }
             if( c == '\'' && inComment == FALSE ){
-                if( line_buffer[i] == inQuote )
-                    inQuote = 0;
-                else if (!inQuote)
-                    inQuote = c;
+	      if (c == inQuote ){
+		inQuote = 0;
+		prevline_is_inQuote = 0;
+	      }
+	      else if (!inQuote){
+		inQuote = c;
+		prevline_is_inQuote = c;
+	      }
             } else if( c == '"' && inComment == FALSE ){
-                if( line_buffer[i] == inQuote)
-                    inQuote = 0;
-                else if (!inQuote)
-                    inQuote = c;
+	      if (c == inQuote){
+		inQuote = 0;
+		prevline_is_inQuote = 0;
+	      }
+	      else if (!inQuote){
+		inQuote = c;
+		prevline_is_inQuote = c;
+	      }
             }
             if( c == '!' && inQuote == 0) {
                 inComment = TRUE;
@@ -3039,8 +3082,9 @@ KeepOnGoin:
         }
     }
 
-    if (check_cont && IS_CONT_LINE(stn_cols))
-        return(ST_CONT);
+    if (check_cont && IS_CONT_LINE(stn_cols)){
+      return(ST_CONT);
+    }
     else
         return(ST_INIT);
 }
@@ -3063,6 +3107,31 @@ is_fixed_cond_statement_label( char *  label )
     if (isdigit(label[2])&&isdigit(label[3])&&isspace(label[4])) return TRUE;
 
     return FALSE;
+}
+
+static void _warning_if_doubtfulLongLine(char *buf, int maxLen)
+{
+  int i;
+
+  for (i = maxLen; isspace(buf[i]); i++) ;
+  if (buf[i] == '&' || buf[i] == '!')
+    // It seems intentional bacause the first non-space character
+    // is '&' or '!'.
+    return;
+
+  if (buf[0] == 'c' || buf[0] == 'C')
+    // It seems a comment line
+    return;
+
+  for (i = 0; i < maxLen; i++)
+    if (buf[i] == '!')
+      // It may be a comment line or a comment region.
+      return;
+
+  // Otherwise, it seems a user's bug.
+  warning_lineno( &read_lineno, 
+                  "line contains more than %d characters",
+                  maxLen);
 }
 
 static int
@@ -3432,11 +3501,14 @@ checkInQuote(cur, dst, inQuotePtr, quoteCharPtr, newCurPtr, newDstPtr)
     } else {
         if (*cur == *quoteCharPtr) {
             cur++;
-	    if ((fixed_format_flag && *cur == '\0') ||
-		(!fixed_format_flag && *cur == '&' && *(cur+1) == '\0')){
-	      last_char_in_quote_is_quote = TRUE;
-	    }
-            else if (*cur != *quoteCharPtr) {
+	    // Now last_char_in_quote_is_quote is always FALSE.
+	    // Therefore some codes in this file should be deleted.
+	    /* if ((fixed_format_flag && *cur == '\0') || */
+	    /* 	(!fixed_format_flag && *cur == '&' && *(cur+1) == '\0')){ */
+	    /*   last_char_in_quote_is_quote = TRUE; */
+	    /* } */
+            /* else */
+	    if (*cur != *quoteCharPtr) {
                 *dst++ = QUOTE;
                 *inQuotePtr = FALSE;
                 *quoteCharPtr = '\0';

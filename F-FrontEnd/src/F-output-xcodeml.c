@@ -3446,9 +3446,10 @@ outx_functionType_EXT(int l, EXT_ID ep)
         outx_true(TYPE_IS_PURE(tp), "is_pure");
         outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
 
-	if (TYPE_IS_EXTERNAL(tp) ||
+	if (!TYPE_IS_INTRINSIC(tp) &&
+	    (TYPE_IS_EXTERNAL(tp) ||
 	    (XMP_flag && !TYPE_IS_FOR_FUNC_SELF(tp) &&
-	     !EXT_PROC_IS_INTRINSIC(ep) && !EXT_PROC_IS_MODULE_PROCEDURE(ep) && !EXT_PROC_IS_INTERNAL(ep))){
+	     !EXT_PROC_IS_INTRINSIC(ep) && !EXT_PROC_IS_MODULE_PROCEDURE(ep) && !EXT_PROC_IS_INTERNAL(ep)))){
 	  outx_true(TRUE, "is_external");
 	}
 

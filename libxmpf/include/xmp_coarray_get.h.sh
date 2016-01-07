@@ -33,20 +33,20 @@ print_function() {
         echo "      integer(8), intent(in) :: nextaddr${i}"
     done
     case ${DIM} in
-        0)  echo "      ${typekind} :: mold" ;;
-        1)  echo "      ${typekind} :: mold(count1)" ;;
-        *)  echo72 "      ${typekind} :: mold(count1"
-            echo -n "         "
+        0)  echo    "      ${typekind} :: mold" ;;
+        1)  echo    "      ${typekind} :: mold(count1)" ;;
+        *)  echo72  "      ${typekind} ::"
+            echo -n "     &   mold(count1"
             for i in `seq 2 ${DIM}`; do
                 echo -n ",count${i}"
             done
             echo ')' ;;
     esac
     case ${DIM} in
-        0)  echo "      ${typekind} :: val" ;;
-        1)  echo "      ${typekind} :: val(count1)" ;;
-        *)  echo72 "      ${typekind} :: val(count1"
-            echo -n "         "
+        0)  echo    "      ${typekind} :: val" ;;
+        1)  echo    "      ${typekind} :: val(count1)" ;;
+        *)  echo72  "      ${typekind} ::"
+            echo -n "     &   val(count1"
             for i in `seq 2 ${DIM}`; do
                 echo -n ",count${i}"
             done

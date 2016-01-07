@@ -4,7 +4,7 @@ int main()
   int array[10];
   int i;
   
-#pragma acc parallel num_gangs(1)
+#pragma acc parallel num_gangs(1) copy(a)
   {
     a += 2;
 #pragma acc loop vector private(a)

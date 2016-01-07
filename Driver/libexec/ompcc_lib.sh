@@ -33,8 +33,9 @@ Process Options
 
 Omni OpenACC Options
 
-  -acc, --openacc : Enable OpenACC.
-  --no-ldg        : Disable use of read-only data cache.
+  -acc, --openacc         : Enable OpenACC.
+  --no-ldg                : Disable use of read-only data cache.
+  --default-veclen=LENGTH : Specify default vector length (default: 256)
 EOF
 }
 
@@ -108,6 +109,8 @@ function ompcc_set_parameters()
 		ENABLE_ACC=true;;
 	    --no-ldg)
 		DISABLE_LDG=true;;
+	    --default-veclen=*)
+		DEFAULT_VECLEN="${1#--default-veclen=}";;
             *)
 		other_args+=("$1");;
 	esac

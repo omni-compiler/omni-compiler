@@ -13,7 +13,7 @@ class AccManager {
   private Xobject vectorLength = null;
   private final Map<CforBlock, LoopExecInfo> execMethodMap = new HashMap<CforBlock, LoopExecInfo>();
 
-  private final int DEFAULT_THREAD_NUM = 256;
+  private final int DEFAULT_THREAD_NUM = ACC.defaultVectorLength;
 
   //private final boolean useWorker = false;
 

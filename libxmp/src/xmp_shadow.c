@@ -91,6 +91,7 @@ static void _XMP_reflect_shadow_FULL_ALLGATHER(void *array_addr, _XMP_array_t *a
   _XMP_free(pack_buffer);
 }
 
+
 static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array_desc, int array_index) {
   _XMP_ASSERT(array_desc->is_allocated);
 
@@ -115,33 +116,48 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
   MPI_Type_contiguous(array_type_size, MPI_BYTE, &mpi_datatype);
   MPI_Type_commit(&mpi_datatype);
 
-  // alloc buffer
-  void *bcast_buffer = _XMP_alloc(chunk_width * (ai->dim_elmts) * array_type_size);
-
   // calc index
   int pack_lower[array_dim], pack_upper[array_dim];
   int unpack_lower[array_dim], unpack_upper[array_dim];
   int stride[array_dim];
   unsigned long long dim_acc[array_dim];
+  int count = 1;
   for (int i = 0; i < array_dim; i++) {
-    pack_lower[i] = array_desc->info[i].local_lower;
-    pack_upper[i] = array_desc->info[i].local_upper;
+
+    int width;
+
+    if (i == array_index){
+      pack_lower[i] = array_desc->info[i].local_lower;
+      pack_upper[i] = array_desc->info[i].local_upper;
+      stride[i] = array_desc->info[i].local_stride;
+      width = _XMP_M_COUNT_TRIPLETi(pack_lower[i], pack_upper[i], stride[i]);
+    }
+    else {
+      pack_lower[i] = 0;
+      pack_upper[i] = array_desc->info[i].ser_upper - array_desc->info[i].ser_lower;
+      stride[i] = 1;
+      width = pack_upper[i] - pack_lower[i] + 1;
+    }      
 
     unpack_lower[i] = pack_lower[i];
     unpack_upper[i] = pack_upper[i];
 
-    stride[i] = array_desc->info[i].local_stride;
     dim_acc[i] = array_desc->info[i].dim_acc;
+
+    count *= width;
   }
 
+  // alloc buffer
+  void *bcast_buffer = _XMP_alloc(count * array_type_size);
+
   for (int i = 0; i < size; i++) {
-    int bcast_width = 0;
+    //int bcast_width = 0;
     if (i == rank) {
       // pack data
-      _XMP_pack_array(bcast_buffer, array_addr, array_type, array_type_size,
-                      array_dim, pack_lower, pack_upper, stride, dim_acc);
+      _xmp_pack_array(bcast_buffer, array_addr, array_type, array_type_size,
+		       array_dim, pack_lower, pack_upper, stride, dim_acc);
 
-      bcast_width = _XMP_M_COUNT_TRIPLETi(pack_lower[array_index], pack_upper[array_index], stride[array_index]);
+      //bcast_width = _XMP_M_COUNT_TRIPLETi(pack_lower[array_index], pack_upper[array_index], stride[array_index]);
     }
     else {
       // calc unpack index
@@ -151,7 +167,7 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
             unpack_lower[array_index] = i * chunk_width;
 
             if (i == (size - 1)) {
-              unpack_upper[array_index] = ai->ser_upper;
+              unpack_upper[array_index] = ai->ser_upper - ai->ser_lower;
             }
             else {
               unpack_upper[array_index] = unpack_lower[array_index] + chunk_width - 1;
@@ -178,17 +194,19 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
           _XMP_fatal("unknown align manner");
       }
 
-      bcast_width = _XMP_M_COUNT_TRIPLETi(unpack_lower[array_index], unpack_upper[array_index], stride[array_index]);
+      //bcast_width = _XMP_M_COUNT_TRIPLETi(unpack_lower[array_index], unpack_upper[array_index], stride[array_index]);
     }
 
     // bcast data
-    MPI_Bcast(bcast_buffer, bcast_width * ai->dim_elmts, mpi_datatype, i, *((MPI_Comm *)ai->shadow_comm));
+    //MPI_Bcast(bcast_buffer, bcast_width * ai->dim_elmts, mpi_datatype, i, *((MPI_Comm *)ai->shadow_comm));
+    MPI_Bcast(bcast_buffer, count, mpi_datatype, i, *((MPI_Comm *)ai->shadow_comm));
 
     if (i != rank) {
       // unpack data
-      _XMP_unpack_array(array_addr, bcast_buffer, array_type, array_type_size,
-                        array_dim, unpack_lower, unpack_upper, stride, dim_acc);
+      _xmp_unpack_array(array_addr, bcast_buffer, array_type, array_type_size,
+			 array_dim, unpack_lower, unpack_upper, stride, dim_acc);
     }
+
   }
 
   MPI_Type_free(&mpi_datatype);
@@ -266,8 +284,8 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
             ai->shadow_size_lo = ai->par_lower - ai->ser_lower;
             ai->shadow_size_hi = ai->ser_upper - ai->par_upper;
 
-            ai->local_lower = ai->par_lower;
-            ai->local_upper = ai->par_upper;
+            ai->local_lower = ai->par_lower - ai->ser_lower;
+            ai->local_upper = ai->par_upper - ai->ser_lower;
             ai->local_stride = ai->par_stride;
             ai->alloc_size = ai->ser_size;
           }
@@ -442,8 +460,8 @@ void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_add
       }
 
       // pack data
-      _XMP_pack_array(*lo_buffer, array_addr, array_type, array_desc->type_size,
-                      array_dim, lower, upper, stride, dim_acc);
+      (*_xmp_pack_array)(*lo_buffer, array_addr, array_type, array_desc->type_size,
+			 array_dim, lower, upper, stride, dim_acc);
     }
   }
 
@@ -475,8 +493,8 @@ void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_add
       }
 
       // pack data
-      _XMP_pack_array(*hi_buffer, array_addr, array_type, array_desc->type_size,
-                      array_dim, lower, upper, stride, dim_acc);
+      (*_xmp_pack_array)(*hi_buffer, array_addr, array_type, array_desc->type_size,
+			 array_dim, lower, upper, stride, dim_acc);
     }
   }
 }
@@ -530,8 +548,8 @@ void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_add
       }
 
       // unpack data
-      _XMP_unpack_array(array_addr, lo_buffer, array_type, array_desc->type_size,
-                        array_dim, lower, upper, stride, dim_acc);
+      (*_xmp_unpack_array)(array_addr, lo_buffer, array_type, array_desc->type_size,
+			   array_dim, lower, upper, stride, dim_acc);
 
       // free buffer
       _XMP_free(lo_buffer);
@@ -563,8 +581,8 @@ void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_add
       }
 
       // unpack data
-      _XMP_unpack_array(array_addr, hi_buffer, array_type, array_desc->type_size,
-                        array_dim, lower, upper, stride, dim_acc);
+      (*_xmp_unpack_array)(array_addr, hi_buffer, array_type, array_desc->type_size,
+			   array_dim, lower, upper, stride, dim_acc);
 
       // free buffer
       _XMP_free(hi_buffer);

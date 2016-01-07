@@ -105,6 +105,11 @@ class AccKernels extends AccData {
 
   @Override
   void rewrite() throws ACCexception{
+    if(isDisabled()) {
+      _pb.replace(Bcons.COMPOUND(_pb.getBody()));
+      return;
+    }
+
     //build
     BlockList beginBody = Bcons.emptyBody();
     for(Block b : initBlockList) beginBody.add(b);
@@ -128,7 +133,7 @@ class AccKernels extends AccData {
     }
 
     Xobject ifExpr = _info.getIntExpr(ACCpragma.IF);
-    boolean isEnabled = (ifExpr == null || ifExpr.isIntConstant());
+    boolean isEnabled = (ifExpr == null || (ifExpr.isIntConstant() && !ifExpr.isZeroConstant()));
     if(isEnabled){
       resultBody.add(beginBlock);
       resultBody.add(kernelsBlock);

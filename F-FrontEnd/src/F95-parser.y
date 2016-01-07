@@ -350,6 +350,7 @@ static void append_pragma_str _ANSI_ARGS_((char *p));
 /* statement name */
 expr st_name;
 
+/************************* NOT USED
 static expr
 gen_default_real_kind(void) {
     return list2(F_ARRAY_REF,
@@ -359,6 +360,7 @@ gen_default_real_kind(void) {
                                         0.0,
                                         strdup("0.0D0"))));
 }
+**********************************/
     
 %}
 

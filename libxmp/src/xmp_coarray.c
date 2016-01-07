@@ -7,16 +7,20 @@
 #include "xmp_constant.h"
 
 static size_t _elmt_size;
-static unsigned int _coarray_dims, *_coarray_elmts, _total_coarray_elmts;
-static unsigned int _image_dims, *_image_elmts;
+static int _coarray_dims;
+static long *_coarray_elmts, _total_coarray_elmts;
 
-static int *_image_num, _array_dims;
-static int _transfer_coarray_elmts, _transfer_array_elmts;
+static int _image_dims, *_image_elmts;
+
+static int _array_dims;
+static long _transfer_coarray_elmts, _transfer_array_elmts;
+static int *_image_num;
+
 static _XMP_array_section_t *_coarray, *_array;
 struct _coarray_queue_t{
-  unsigned int     max_size;   /**< Max size of queue */
-  unsigned int          num;   /**< How many coarrays are in this queue */
-  _XMP_coarray_t **coarrays;   /**< pointer of coarrays */
+  size_t           max_size; /**< Max size of queue */
+  int                   num; /**< How many coarrays are in this queue */
+  _XMP_coarray_t **coarrays; /**< pointer of coarrays */
 };
 static struct _coarray_queue_t _coarray_queue;
 static void _push_coarray_queue(_XMP_coarray_t *c);
@@ -24,11 +28,11 @@ static void _push_coarray_queue(_XMP_coarray_t *c);
 /**
    Set 1-dim coarray information 
  */
-void _XMP_coarray_malloc_info_1(const unsigned int n1, const size_t elmt_size)
+void _XMP_coarray_malloc_info_1(const long n1, const size_t elmt_size)
 {
   _elmt_size           = elmt_size;
   _coarray_dims        = 1;
-  _coarray_elmts       = malloc(sizeof(unsigned int) * _coarray_dims);
+  _coarray_elmts       = malloc(sizeof(long) * _coarray_dims);
   _coarray_elmts[0]    = n1;
   _total_coarray_elmts = n1;
 }
@@ -36,11 +40,11 @@ void _XMP_coarray_malloc_info_1(const unsigned int n1, const size_t elmt_size)
 /**
    Set 2-dim coarray information
 */
-void _XMP_coarray_malloc_info_2(const unsigned int n1, const unsigned int n2, const size_t elmt_size)
+void _XMP_coarray_malloc_info_2(const long n1, const long n2, const size_t elmt_size)
 {
   _elmt_size           = elmt_size;
   _coarray_dims        = 2;
-  _coarray_elmts       = malloc(sizeof(unsigned int) * _coarray_dims);
+  _coarray_elmts       = malloc(sizeof(long) * _coarray_dims);
   _coarray_elmts[0]    = n1;
   _coarray_elmts[1]    = n2;
   _total_coarray_elmts = n1*n2;
@@ -49,11 +53,11 @@ void _XMP_coarray_malloc_info_2(const unsigned int n1, const unsigned int n2, co
 /**
    Set 3-dim coarray information
 */
-void _XMP_coarray_malloc_info_3(const unsigned int n1, const unsigned int n2, const unsigned int n3, const size_t elmt_size)
+void _XMP_coarray_malloc_info_3(const long n1, const long n2, const long n3, const size_t elmt_size)
 {
   _elmt_size           = elmt_size;
   _coarray_dims        = 3;
-  _coarray_elmts       = malloc(sizeof(unsigned int) * _coarray_dims);
+  _coarray_elmts       = malloc(sizeof(long) * _coarray_dims);
   _coarray_elmts[0]    = n1;
   _coarray_elmts[1]    = n2;
   _coarray_elmts[2]    = n3;
@@ -63,12 +67,12 @@ void _XMP_coarray_malloc_info_3(const unsigned int n1, const unsigned int n2, co
 /**
    Set 4-dim coarray information
 */
-void _XMP_coarray_malloc_info_4(const unsigned int n1, const unsigned int n2, const unsigned int n3, const unsigned int n4,
+void _XMP_coarray_malloc_info_4(const long n1, const long n2, const long n3, const long n4,
 				const size_t elmt_size)
 {
   _elmt_size           = elmt_size;
   _coarray_dims        = 4;
-  _coarray_elmts       = malloc(sizeof(unsigned int) * _coarray_dims);
+  _coarray_elmts       = malloc(sizeof(long) * _coarray_dims);
   _coarray_elmts[0]    = n1;
   _coarray_elmts[1]    = n2;
   _coarray_elmts[2]    = n3;
@@ -79,12 +83,12 @@ void _XMP_coarray_malloc_info_4(const unsigned int n1, const unsigned int n2, co
 /**
    Set 5-dim coarray information
 */
-void _XMP_coarray_malloc_info_5(const unsigned int n1, const unsigned int n2, const unsigned int n3, const unsigned int n4,
-				const unsigned int n5, const size_t elmt_size)
+void _XMP_coarray_malloc_info_5(const long n1, const long n2, const long n3, const long n4,
+				const long n5, const size_t elmt_size)
 {
   _elmt_size           = elmt_size;
   _coarray_dims        = 5;
-  _coarray_elmts       = malloc(sizeof(unsigned int) * _coarray_dims);
+  _coarray_elmts       = malloc(sizeof(long) * _coarray_dims);
   _coarray_elmts[0]    = n1;
   _coarray_elmts[1]    = n2;
   _coarray_elmts[2]    = n3;
@@ -96,12 +100,12 @@ void _XMP_coarray_malloc_info_5(const unsigned int n1, const unsigned int n2, co
 /**
    Set 6-dim coarray information
 */
-void _XMP_coarray_malloc_info_6(const unsigned int n1, const unsigned int n2, const unsigned int n3, const unsigned int n4,
-				const unsigned int n5, const unsigned int n6, const size_t elmt_size)
+void _XMP_coarray_malloc_info_6(const long n1, const long n2, const long n3, const long n4,
+				const long n5, const long n6, const size_t elmt_size)
 {
   _elmt_size           = elmt_size;
   _coarray_dims        = 6;
-  _coarray_elmts       = malloc(sizeof(unsigned int) * _coarray_dims);
+  _coarray_elmts       = malloc(sizeof(long) * _coarray_dims);
   _coarray_elmts[0]    = n1;
   _coarray_elmts[1]    = n2;
   _coarray_elmts[2]    = n3;
@@ -114,12 +118,12 @@ void _XMP_coarray_malloc_info_6(const unsigned int n1, const unsigned int n2, co
 /**
    Set 7-dim coarray information
 */
-void _XMP_coarray_malloc_info_7(const unsigned int n1, const unsigned int n2, const unsigned int n3, const unsigned int n4, 
-				const unsigned int n5, const unsigned int n6, const unsigned int n7, const size_t elmt_size)
+void _XMP_coarray_malloc_info_7(const long n1, const long n2, const long n3, const long n4, 
+				const long n5, const long n6, const long n7, const size_t elmt_size)
 {
   _elmt_size           = elmt_size;
   _coarray_dims        = 7;
-  _coarray_elmts       = malloc(sizeof(unsigned int) * _coarray_dims);
+  _coarray_elmts       = malloc(sizeof(long) * _coarray_dims);
   _coarray_elmts[0]    = n1;
   _coarray_elmts[1]    = n2;
   _coarray_elmts[2]    = n3;
@@ -143,72 +147,68 @@ void _XMP_coarray_malloc_image_info_1()
 /**
    Check total_node_size and total_image_size are valid.
  */
-static void _check_coarray_image(const unsigned int total_node_size, const unsigned int total_image_size)
+static void _check_coarray_image(const int total_node_size, const int image_size)
 {
-  if(total_node_size % total_image_size != 0)
+  if(total_node_size % image_size != 0)
     _XMP_fatal("Wrong coarray image size.");
 }
 
 /**
     Set 2-dim image information
 */
-void _XMP_coarray_malloc_image_info_2(const unsigned int i1)
+void _XMP_coarray_malloc_image_info_2(const int i1)
 {
-  unsigned int total_node_size  = (unsigned)_XMP_get_execution_nodes()->comm_size;
-  unsigned int total_image_size = i1;
+  int total_node_size  = _XMP_get_execution_nodes()->comm_size;
 
-  _check_coarray_image(total_node_size, total_image_size);
+  _check_coarray_image(total_node_size, i1);
     
   _image_dims     = 2;
   _image_elmts    = malloc(sizeof(int) * _image_dims);
   _image_elmts[0] = i1;
-  _image_elmts[1] = total_node_size / total_image_size;
+  _image_elmts[1] = total_node_size / i1;
 }
 
 /**
     Set 3-dim image information
 */
-void _XMP_coarray_malloc_image_info_3(const unsigned int i1, const unsigned int i2)
+void _XMP_coarray_malloc_image_info_3(const int i1, const int i2)
 {
-  unsigned int total_node_size  = (unsigned)_XMP_get_execution_nodes()->comm_size;
-  unsigned int total_image_size = i1*i2;
-
-  _check_coarray_image(total_node_size, total_image_size);
+  int total_node_size  = _XMP_get_execution_nodes()->comm_size;
+ 
+  _check_coarray_image(total_node_size, i1*i2);
 
   _image_dims     = 3;
   _image_elmts    = malloc(sizeof(int) * _image_dims);
   _image_elmts[0] = i1;
   _image_elmts[1] = i2;
-  _image_elmts[2] = total_node_size / total_image_size;
+  _image_elmts[2] = total_node_size / (i1*i2);
 }
 
 /**
     Set 4-dim image information
 */
-void _XMP_coarray_malloc_image_info_4(const unsigned int i1, const unsigned int i2, const unsigned int i3)
+void _XMP_coarray_malloc_image_info_4(const int i1, const int i2, const int i3)
 {
-  unsigned int total_node_size  = (unsigned)_XMP_get_execution_nodes()->comm_size;
-  unsigned int total_image_size = i1*i2*i3;
+  int total_node_size  = _XMP_get_execution_nodes()->comm_size;
 
-  _check_coarray_image(total_node_size, total_image_size);
+  _check_coarray_image(total_node_size, i1*i2*i3);
 
   _image_dims     = 4;
   _image_elmts    = malloc(sizeof(int) * _image_dims);
   _image_elmts[0] = i1;
   _image_elmts[1] = i2;
   _image_elmts[2] = i3;
-  _image_elmts[3] = total_node_size / total_image_size;
+  _image_elmts[3] = total_node_size / (i1*i2*i3);
 }
 
 /**
     Set 5-dim image information
 */
-void _XMP_coarray_malloc_image_info_5(const unsigned int i1, const unsigned int i2, const unsigned int i3, const unsigned int i4)
+void _XMP_coarray_malloc_image_info_5(const int i1, const int i2, const int i3, const int i4)
 {
-  unsigned int total_node_size  = (unsigned)_XMP_get_execution_nodes()->comm_size;
-  unsigned int total_image_size = i1*i2*i3*i4;
+  int total_node_size  = _XMP_get_execution_nodes()->comm_size;
 
-  _check_coarray_image(total_node_size, total_image_size);
+  _check_coarray_image(total_node_size, i1*i2*i3*i4);
 
   _image_dims     = 5;
   _image_elmts    = malloc(sizeof(int) * _image_dims);
@@ -216,19 +216,18 @@ void _XMP_coarray_malloc_image_info_5(const unsigned int i1, const unsigned int 
   _image_elmts[1] = i2;
   _image_elmts[2] = i3;
   _image_elmts[3] = i4;
-  _image_elmts[4] = total_node_size / total_image_size;
+  _image_elmts[4] = total_node_size / (i1*i2*i3*i4);
 }
 
 /**
     Set 6-dim image information
 */
-void _XMP_coarray_malloc_image_info_6(const unsigned int i1, const unsigned int i2, const unsigned int i3, const unsigned int i4,
-                                      const unsigned int i5)
+void _XMP_coarray_malloc_image_info_6(const int i1, const int i2, const int i3, const int i4,
+                                      const int i5)
 {
-  unsigned int total_node_size  = (unsigned)_XMP_get_execution_nodes()->comm_size;
-  unsigned int total_image_size = i1*i2*i3*i4*i5;
+  int total_node_size  = _XMP_get_execution_nodes()->comm_size;
 
-  _check_coarray_image(total_node_size, total_image_size);
+  _check_coarray_image(total_node_size, i1*i2*i3*i4*i5);
 
   _image_dims    = 6;
   _image_elmts   = malloc(sizeof(int) * _image_dims);
@@ -237,16 +236,15 @@ void _XMP_coarray_malloc_image_info_6(const unsigned int i1, const unsigned int 
   _image_elmts[2] = i3;
   _image_elmts[3] = i4;
   _image_elmts[4] = i5;
-  _image_elmts[5] = total_node_size / total_image_size;
+  _image_elmts[5] = total_node_size / (i1*i2*i3*i4*i5);
 }
 
-void _XMP_coarray_malloc_image_info_7(const unsigned int i1, const unsigned int i2, const unsigned int i3, const unsigned int i4,
-                                      const unsigned int i5, const unsigned int i6)
+void _XMP_coarray_malloc_image_info_7(const int i1, const int i2, const int i3, const int i4,
+                                      const int i5, const int i6)
 {
-  unsigned int total_node_size  = (unsigned)_XMP_get_execution_nodes()->comm_size;
-  unsigned int total_image_size = i1*i2*i3*i4*i5*i6;
+  int total_node_size  = _XMP_get_execution_nodes()->comm_size;
 
-  _check_coarray_image(total_node_size, total_image_size);
+  _check_coarray_image(total_node_size, i1*i2*i3*i4*i5*i6);
 
   _image_dims    = 7;
   _image_elmts   = malloc(sizeof(int) * _image_dims);
@@ -256,7 +254,7 @@ void _XMP_coarray_malloc_image_info_7(const unsigned int i1, const unsigned int 
   _image_elmts[3] = i4;
   _image_elmts[4] = i5;
   _image_elmts[5] = i6;
-  _image_elmts[6] = total_node_size / total_image_size;
+  _image_elmts[6] = total_node_size / (i1*i2*i3*i4*i5*i6);
 }
 
 /*
@@ -264,10 +262,10 @@ void _XMP_coarray_malloc_image_info_7(const unsigned int i1, const unsigned int 
 */
 void _XMP_coarray_set_info(_XMP_coarray_t* c)
 {
-  unsigned int *distance_of_coarray_elmts = _XMP_alloc(sizeof(unsigned int) * _coarray_dims);
+  long *distance_of_coarray_elmts = _XMP_alloc(sizeof(long) * _coarray_dims);
 
-  for(unsigned int i=0;i<_coarray_dims-1;i++){
-    unsigned int distance = 1;
+  for(int i=0;i<_coarray_dims-1;i++){
+    long distance = 1;
     for(int j=i+1;j<_coarray_dims;j++){
       distance *= _coarray_elmts[j];
     }
@@ -275,9 +273,9 @@ void _XMP_coarray_set_info(_XMP_coarray_t* c)
   }
   distance_of_coarray_elmts[_coarray_dims-1] = _elmt_size;
 
-  unsigned int *distance_of_image_elmts = _XMP_alloc(sizeof(unsigned int) * _image_dims);
-  for(unsigned int i=_image_dims-1;i>=1;i--){
-    unsigned int distance = 1;  
+  int *distance_of_image_elmts = _XMP_alloc(sizeof(int) * _image_dims);
+  for(int i=_image_dims-1;i>=1;i--){
+    int distance = 1;  
     for(int j=0;j<i;j++){
       distance *= _image_elmts[j];
     }
@@ -285,10 +283,10 @@ void _XMP_coarray_set_info(_XMP_coarray_t* c)
   }
   distance_of_image_elmts[0] = 1;
 
-  c->elmt_size      = _elmt_size;
-  c->coarray_dims   = _coarray_dims;
-  c->coarray_elmts  = _coarray_elmts;
-  c->image_dims     = _image_dims;
+  c->elmt_size                 = _elmt_size;
+  c->coarray_dims              = _coarray_dims;
+  c->coarray_elmts             = _coarray_elmts;
+  c->image_dims                = _image_dims;
   c->distance_of_coarray_elmts = distance_of_coarray_elmts;
   c->distance_of_image_elmts   = distance_of_image_elmts;
 
@@ -304,12 +302,15 @@ void _XMP_coarray_malloc_do(void **coarray_desc, void *addr)
   _XMP_coarray_set_info(c);
   *coarray_desc = c;
 
+  long transfer_size = _total_coarray_elmts*_elmt_size;
+  _XMP_check_less_than_SIZE_MAX(transfer_size);
+  
 #ifdef _XMP_GASNET
-  _XMP_gasnet_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size);
+  _XMP_gasnet_malloc_do(*coarray_desc, addr, (size_t)transfer_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size);
+  _XMP_fjrdma_malloc_do(*coarray_desc, addr, (size_t)transfer_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_coarray_malloc_do(*coarray_desc, addr, (size_t)_total_coarray_elmts*_elmt_size, false);
+  _XMP_mpi_coarray_malloc_do(*coarray_desc, addr, (size_t)transfer_size, false);
 #endif
   
   _push_coarray_queue(c);
@@ -362,7 +363,7 @@ void _XMP_coarray_malloc_do_f(void **coarray_desc, void *addr)
 /**
    Set transfer 1-dim coarray information
  */
-void _XMP_coarray_rdma_coarray_set_1(const int start1, const int length1, const int stride1)
+void _XMP_coarray_rdma_coarray_set_1(const long start1, const long length1, const long stride1)
 {
   _transfer_coarray_elmts = length1;
   _coarray_dims           = 1;
@@ -376,8 +377,8 @@ void _XMP_coarray_rdma_coarray_set_1(const int start1, const int length1, const 
 /**
    Set transfer 2-dim coarray information
 */
-void _XMP_coarray_rdma_coarray_set_2(const int start1, const int length1, const int stride1, 
-				     const int start2, const int length2, const int stride2)
+void _XMP_coarray_rdma_coarray_set_2(const long start1, const long length1, const long stride1, 
+				     const long start2, const long length2, const long stride2)
 {
   _transfer_coarray_elmts = length1 * length2;
   _coarray_dims           = 2;
@@ -395,9 +396,9 @@ void _XMP_coarray_rdma_coarray_set_2(const int start1, const int length1, const 
 /**
    Set transfer 3-dim coarray information
 */
-void _XMP_coarray_rdma_coarray_set_3(const int start1, const int length1, const int stride1, 
-				     const int start2, const int length2, const int stride2,
-                                     const int start3, const int length3, const int stride3)
+void _XMP_coarray_rdma_coarray_set_3(const long start1, const long length1, const long stride1, 
+				     const long start2, const long length2, const long stride2,
+                                     const long start3, const long length3, const long stride3)
 {
   _transfer_coarray_elmts = length1 * length2 * length3;
   _coarray_dims           = 3;
@@ -419,10 +420,10 @@ void _XMP_coarray_rdma_coarray_set_3(const int start1, const int length1, const 
 /**
    Set transfer 4-dim coarray information
 */
-void _XMP_coarray_rdma_coarray_set_4(const int start1, const int length1, const int stride1, 
-				     const int start2, const int length2, const int stride2,
-                                     const int start3, const int length3, const int stride3, 
-				     const int start4, const int length4, const int stride4)
+void _XMP_coarray_rdma_coarray_set_4(const long start1, const long length1, const long stride1, 
+				     const long start2, const long length2, const long stride2,
+                                     const long start3, const long length3, const long stride3, 
+				     const long start4, const long length4, const long stride4)
 {
   _transfer_coarray_elmts = length1 * length2 * length3 * length4;
   _coarray_dims           = 4;
@@ -448,11 +449,11 @@ void _XMP_coarray_rdma_coarray_set_4(const int start1, const int length1, const 
 /**
    Set transfer 5-dim coarray information
 */
-void _XMP_coarray_rdma_coarray_set_5(const int start1, const int length1, const int stride1, 
-				     const int start2, const int length2, const int stride2,
-                                     const int start3, const int length3, const int stride3, 
-				     const int start4, const int length4, const int stride4,
-                                     const int start5, const int length5, const int stride5)
+void _XMP_coarray_rdma_coarray_set_5(const long start1, const long length1, const long stride1, 
+				     const long start2, const long length2, const long stride2,
+                                     const long start3, const long length3, const long stride3, 
+				     const long start4, const long length4, const long stride4,
+                                     const long start5, const long length5, const long stride5)
 {
   _transfer_coarray_elmts = length1 * length2 * length3 * length4 * length5;
   _coarray_dims           = 5;
@@ -482,12 +483,12 @@ void _XMP_coarray_rdma_coarray_set_5(const int start1, const int length1, const 
 /**
    Set transfer 6-dim coarray information
 */
-void _XMP_coarray_rdma_coarray_set_6(const int start1, const int length1, const int stride1, 
-				     const int start2, const int length2, const int stride2,
-                                     const int start3, const int length3, const int stride3, 
-				     const int start4, const int length4, const int stride4,
-                                     const int start5, const int length5, const int stride5, 
-				     const int start6, const int length6, const int stride6)
+void _XMP_coarray_rdma_coarray_set_6(const long start1, const long length1, const long stride1, 
+				     const long start2, const long length2, const long stride2,
+                                     const long start3, const long length3, const long stride3, 
+				     const long start4, const long length4, const long stride4,
+                                     const long start5, const long length5, const long stride5, 
+				     const long start6, const long length6, const long stride6)
 {
   _transfer_coarray_elmts = length1 * length2 * length3 * length4 * length5 * length6;
   _coarray_dims           = 6;
@@ -521,13 +522,13 @@ void _XMP_coarray_rdma_coarray_set_6(const int start1, const int length1, const 
 /**
    Set transfer 7-dim coarray information
 */
-void _XMP_coarray_rdma_coarray_set_7(const int start1, const int length1, const int stride1, 
-				     const int start2, const int length2, const int stride2,
-				     const int start3, const int length3, const int stride3, 
-				     const int start4, const int length4, const int stride4,
-				     const int start5, const int length5, const int stride5, 
-				     const int start6, const int length6, const int stride6,
-				     const int start7, const int length7, const int stride7)
+void _XMP_coarray_rdma_coarray_set_7(const long start1, const long length1, const long stride1, 
+				     const long start2, const long length2, const long stride2,
+				     const long start3, const long length3, const long stride3, 
+				     const long start4, const long length4, const long stride4,
+				     const long start5, const long length5, const long stride5, 
+				     const long start6, const long length6, const long stride6,
+				     const long start7, const long length7, const long stride7)
 {
   _transfer_coarray_elmts = length1 * length2 * length3 * length4 * length5 * length6 * length7;
   _coarray_dims           = 7;
@@ -565,8 +566,8 @@ void _XMP_coarray_rdma_coarray_set_7(const int start1, const int length1, const 
 /**
    Set transfer 1-dim array information
  */
-void _XMP_coarray_rdma_array_set_1(const int start1, const int length1, const int stride1,
-				   const int elmts1, const int distance1)
+void _XMP_coarray_rdma_array_set_1(const long start1, const long length1, const long stride1,
+				   const long elmts1, const long distance1)
 {
   _transfer_array_elmts = length1;
   _array_dims           = 1;
@@ -582,10 +583,10 @@ void _XMP_coarray_rdma_array_set_1(const int start1, const int length1, const in
 /**
    Set transfer 2-dim array information
 */
-void _XMP_coarray_rdma_array_set_2(const int start1, const int length1, const int stride1,
-				   const int elmts1, const int distance1,
-                                   const int start2, const int length2, const int stride2,
-				   const int elmts2, const int distance2)
+void _XMP_coarray_rdma_array_set_2(const long start1, const long length1, const long stride1,
+				   const long elmts1, const long distance1,
+                                   const long start2, const long length2, const long stride2,
+				   const long elmts2, const long distance2)
 {
   _transfer_array_elmts = length1 * length2;
   _array_dims           = 2;
@@ -607,12 +608,12 @@ void _XMP_coarray_rdma_array_set_2(const int start1, const int length1, const in
 /**
    Set transfer 3-dim array information
 */
-void _XMP_coarray_rdma_array_set_3(const int start1, const int length1, const int stride1,
-				   const int elmts1, const int distance1,
-                                   const int start2, const int length2, const int stride2,
-				   const int elmts2, const int distance2,
-                                   const int start3, const int length3, const int stride3,
-				   const int elmts3, const int distance3)
+void _XMP_coarray_rdma_array_set_3(const long start1, const long length1, const long stride1,
+				   const long elmts1, const long distance1,
+                                   const long start2, const long length2, const long stride2,
+				   const long elmts2, const long distance2,
+                                   const long start3, const long length3, const long stride3,
+				   const long elmts3, const long distance3)
 {
   _transfer_array_elmts = length1 * length2 * length3;
   _array_dims           = 3;
@@ -640,14 +641,14 @@ void _XMP_coarray_rdma_array_set_3(const int start1, const int length1, const in
 /**
    Set transfer 4-dim array information
 */
-void _XMP_coarray_rdma_array_set_4(const int start1, const int length1, const int stride1,
-				   const int elmts1, const int distance1,
-                                   const int start2, const int length2, const int stride2,
-				   const int elmts2, const int distance2,
-                                   const int start3, const int length3, const int stride3,
-				   const int elmts3, const int distance3,
-                                   const int start4, const int length4, const int stride4,
-				   const int elmts4, const int distance4)
+void _XMP_coarray_rdma_array_set_4(const long start1, const long length1, const long stride1,
+				   const long elmts1, const long distance1,
+                                   const long start2, const long length2, const long stride2,
+				   const long elmts2, const long distance2,
+                                   const long start3, const long length3, const long stride3,
+				   const long elmts3, const long distance3,
+                                   const long start4, const long length4, const long stride4,
+				   const long elmts4, const long distance4)
 {
   _transfer_array_elmts = length1 * length2 * length3 * length4;
   _array_dims           = 4;
@@ -681,16 +682,16 @@ void _XMP_coarray_rdma_array_set_4(const int start1, const int length1, const in
 /**
    Set transfer 5-dim array information
 */
-void _XMP_coarray_rdma_array_set_5(const int start1, const int length1, const int stride1,
-				   const int elmts1, const int distance1,
-                                   const int start2, const int length2, const int stride2,
-				   const int elmts2, const int distance2,
-                                   const int start3, const int length3, const int stride3,
-				   const int elmts3, const int distance3,
-                                   const int start4, const int length4, const int stride4,
-				   const int elmts4, const int distance4,
-                                   const int start5, const int length5, const int stride5,
-				   const int elmts5, const int distance5)
+void _XMP_coarray_rdma_array_set_5(const long start1, const long length1, const long stride1,
+				   const long elmts1, const long distance1,
+                                   const long start2, const long length2, const long stride2,
+				   const long elmts2, const long distance2,
+                                   const long start3, const long length3, const long stride3,
+				   const long elmts3, const long distance3,
+                                   const long start4, const long length4, const long stride4,
+				   const long elmts4, const long distance4,
+                                   const long start5, const long length5, const long stride5,
+				   const long elmts5, const long distance5)
 {
   _transfer_array_elmts = length1 * length2 * length3 * length4 * length5;
   _array_dims           = 5;
@@ -730,18 +731,18 @@ void _XMP_coarray_rdma_array_set_5(const int start1, const int length1, const in
 /**
    Set transfer 6-dim array information
 */
-void _XMP_coarray_rdma_array_set_6(const int start1, const int length1, const int stride1,
-				   const int elmts1, const int distance1,
-				   const int start2, const int length2, const int stride2,
-				   const int elmts2, const int distance2,
-                                   const int start3, const int length3, const int stride3,
-				   const int elmts3, const int distance3,
-                                   const int start4, const int length4, const int stride4,
-				   const int elmts4, const int distance4,
-                                   const int start5, const int length5, const int stride5,
-				   const int elmts5, const int distance5,
-                                   const int start6, const int length6, const int stride6,
-				   const int elmts6, const int distance6)
+void _XMP_coarray_rdma_array_set_6(const long start1, const long length1, const long stride1,
+				   const long elmts1, const long distance1,
+				   const long start2, const long length2, const long stride2,
+				   const long elmts2, const long distance2,
+                                   const long start3, const long length3, const long stride3,
+				   const long elmts3, const long distance3,
+                                   const long start4, const long length4, const long stride4,
+				   const long elmts4, const long distance4,
+                                   const long start5, const long length5, const long stride5,
+				   const long elmts5, const long distance5,
+                                   const long start6, const long length6, const long stride6,
+				   const long elmts6, const long distance6)
 {
   _transfer_array_elmts = length1 * length2 * length3 * length4 * length5 * length6;
   _array_dims           = 6;
@@ -787,20 +788,20 @@ void _XMP_coarray_rdma_array_set_6(const int start1, const int length1, const in
 /**
    Set transfer 7-dim array information
 */
-void _XMP_coarray_rdma_array_set_7(const int start1, const int length1, const int stride1,
-				   const int elmts1, const int distance1,
-				   const int start2, const int length2, const int stride2,
-				   const int elmts2, const int distance2,
-				   const int start3, const int length3, const int stride3,
-				   const int elmts3, const int distance3,
-				   const int start4, const int length4, const int stride4,
-				   const int elmts4, const int distance4,
-				   const int start5, const int length5, const int stride5,
-				   const int elmts5, const int distance5,
-				   const int start6, const int length6, const int stride6,
-				   const int elmts6, const int distance6,
-				   const int start7, const int length7, const int stride7,
-				   const int elmts7, const int distance7)
+void _XMP_coarray_rdma_array_set_7(const long start1, const long length1, const long stride1,
+				   const long elmts1, const long distance1,
+				   const long start2, const long length2, const long stride2,
+				   const long elmts2, const long distance2,
+				   const long start3, const long length3, const long stride3,
+				   const long elmts3, const long distance3,
+				   const long start4, const long length4, const long stride4,
+				   const long elmts4, const long distance4,
+				   const long start5, const long length5, const long stride5,
+				   const long elmts5, const long distance5,
+				   const long start6, const long length6, const long stride6,
+				   const long elmts6, const long distance6,
+				   const long start7, const long length7, const long stride7,
+				   const long elmts7, const long distance7)
 {
   _transfer_array_elmts = length1 * length2 * length3 * length4 * length5 * length6 * length7;
   _array_dims           = 7;
@@ -954,7 +955,7 @@ void _XMP_coarray_rdma_image_set_7(const int n1, const int n2, const int n3, con
 /*               a[0:2][:] -> TRUE                                       */
 /*               a[:][1]   -> FALSE                                      */
 /*************************************************************************/
-static int _check_continuous(const _XMP_array_section_t *array_info, const int dims, const int elmts)
+static int _check_continuous(const _XMP_array_section_t *array_info, const int dims, const long elmts)
 {
   // Only 1 elements is transferred.
   // e.g.) a[2]
@@ -1075,21 +1076,27 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
   int remote_coarray_is_continuous = _check_continuous(_coarray, _coarray_dims, _transfer_coarray_elmts);
   int local_array_is_continuous    = _check_continuous(_array,   _array_dims,   _transfer_array_elmts); 
 
+  // _XMP_local_put(), _XMP_gasnet_put(), ... don't support to transfer long data size now.
+  // _XMP_check_less_than_SIZE_MAX() checks whether the trasfer size is less than SIZE_MAX, defined in <limits.h>.
+  size_t elmt_size  = ((_XMP_coarray_t*)remote_coarray)->elmt_size;
+  _XMP_check_less_than_SIZE_MAX(_transfer_coarray_elmts*elmt_size); // fix me
+  _XMP_check_less_than_SIZE_MAX(_transfer_array_elmts*elmt_size);   // fix me
+  
   if(rdma_code == _XMP_N_COARRAY_PUT){
     if(target_rank == _XMP_world_rank){
       _XMP_local_put(remote_coarray, local_array, remote_coarray_is_continuous, local_array_is_continuous, 
-		     _coarray_dims, _array_dims, _coarray, _array, _transfer_coarray_elmts, _transfer_array_elmts);
+		     _coarray_dims, _array_dims, _coarray, _array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
     }
     else{
 #ifdef _XMP_GASNET
       _XMP_gasnet_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
-		      _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+		      _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_FJRDMA
       _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
-		      _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+		      _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
       _XMP_mpi_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
-		   _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
+		   _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts,
 		   _XMP_N_INT_FALSE);
 #endif
     }
@@ -1097,18 +1104,18 @@ void _XMP_coarray_rdma_do(const int rdma_code, void *remote_coarray, void *local
   else if(rdma_code == _XMP_N_COARRAY_GET){
     if(target_rank == _XMP_world_rank){
       _XMP_local_get(local_array, remote_coarray, local_array_is_continuous, remote_coarray_is_continuous,
-		     _array_dims, _coarray_dims, _array, _coarray, _transfer_array_elmts, _transfer_coarray_elmts);
+		     _array_dims, _coarray_dims, _array, _coarray, (size_t)_transfer_array_elmts, (size_t)_transfer_coarray_elmts);
     }
     else{
 #ifdef _XMP_GASNET
       _XMP_gasnet_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank,
-		      _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+		      _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_FJRDMA
       _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
-		      _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
+		      _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
       _XMP_mpi_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
-		   _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
+		   _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts,
 		   _XMP_N_INT_FALSE);
 #endif
     }
@@ -1250,8 +1257,7 @@ void xmp_sync_images_all(int* status)
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
 void _XMP_coarray_shortcut_put(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
-			       const size_t dst_offset, const size_t src_offset, 
-			       const size_t dst_elmts, const size_t src_elmts)
+			       const long dst_offset, const long src_offset, const long dst_elmts, const long src_elmts)
 {
   int target_rank = target_image - 1;
   size_t elmt_size = dst_desc->elmt_size;
@@ -1261,17 +1267,19 @@ void _XMP_coarray_shortcut_put(const int target_image, _XMP_coarray_t *dst_desc,
 			       dst_elmts, src_elmts, elmt_size);
   }
   else{
+    _XMP_check_less_than_SIZE_MAX(dst_elmts);
+    _XMP_check_less_than_SIZE_MAX(src_elmts);
 #ifdef _XMP_GASNET
     _XMP_gasnet_shortcut_put(target_rank, dst_desc, src_desc->addr[_XMP_world_rank]+src_offset,
-			     dst_offset, dst_elmts, src_elmts, elmt_size);
+			     (size_t)dst_offset, (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_FJRDMA
     _XMP_fjrdma_shortcut_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, 
-			     dst_elmts, src_elmts, elmt_size);
+			     (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_TCA
     _XMP_fatal("_XMP_tca_shortcut_put is unimplemented");
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_shortcut_put(target_rank, dst_desc, src_desc, dst_offset, src_offset,
-			  dst_elmts, src_elmts, elmt_size, false, false);
+    _XMP_mpi_shortcut_put(target_rank, dst_desc, src_desc, (size_t)dst_offset, (size_t)src_offset,
+			  (size_t)dst_elmts, (size_t)src_elmts, elmt_size, false, false);
 #endif
   }
 }
@@ -1290,8 +1298,8 @@ void _XMP_coarray_shortcut_put(const int target_image, _XMP_coarray_t *dst_desc,
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
 void _XMP_coarray_shortcut_get(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
-			       const size_t dst_offset, const size_t src_offset, 
-			       const size_t dst_elmts, const size_t src_elmts)
+			       const long dst_offset, const long src_offset, const long dst_elmts,
+			       const long src_elmts)
 {
   int target_rank = target_image - 1;
   size_t elmt_size = dst_desc->elmt_size;
@@ -1301,15 +1309,17 @@ void _XMP_coarray_shortcut_get(const int target_image, _XMP_coarray_t *dst_desc,
 			       dst_elmts, src_elmts, elmt_size);
   }
   else{
+    _XMP_check_less_than_SIZE_MAX(dst_elmts);
+    _XMP_check_less_than_SIZE_MAX(src_elmts);
 #ifdef _XMP_GASNET
-    _XMP_gasnet_shortcut_get(target_rank, dst_desc, src_desc->addr[target_rank]+src_offset, dst_offset,
-                             dst_elmts, src_elmts, elmt_size);
+    _XMP_gasnet_shortcut_get(target_rank, dst_desc, src_desc->addr[target_rank]+src_offset, (size_t)dst_offset,
+                             (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_FJRDMA
     _XMP_fjrdma_shortcut_get(target_rank, dst_desc, src_desc, (uint64_t)dst_offset, (uint64_t)src_offset, 
-			     dst_elmts, src_elmts, elmt_size);
+			     (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_shortcut_get(target_rank, dst_desc, src_desc, dst_offset, src_offset,
-			  dst_elmts, src_elmts, elmt_size, false, false);
+    _XMP_mpi_shortcut_get(target_rank, dst_desc, src_desc, (size_t)dst_offset, (size_t)src_offset,
+			  (size_t)dst_elmts, (size_t)src_elmts, elmt_size, false, false);
 #endif
   }
 }
@@ -1317,8 +1327,8 @@ void _XMP_coarray_shortcut_get(const int target_image, _XMP_coarray_t *dst_desc,
 /**
    Wrapper function of _XMP_coarray_shortcut_put()
 */
-void _XMP_coarray_shortcut_put_f(const int *target, void *dst, const void *src, const size_t *dst_offset, 
-				 const size_t *src_offset, const size_t *dst_elmts, const size_t *src_elmts)
+void _XMP_coarray_shortcut_put_f(const int *target, void *dst, const void *src, const long *dst_offset, 
+				 const long *src_offset, const long *dst_elmts, const long *src_elmts)
 {
   _XMP_coarray_shortcut_put(*target, dst, src, *dst_offset, *src_offset, *dst_elmts, *src_elmts);
 }
@@ -1326,8 +1336,8 @@ void _XMP_coarray_shortcut_put_f(const int *target, void *dst, const void *src, 
 /**
    Wrapper function of _XMP_coarray_shortcut_get()
 */
-void _XMP_coarray_shortcut_get_f(const int *target, void *dst, const void *src, const size_t *dst_offset, 
-				 const size_t *src_offset, const size_t *dst_elmts, const size_t *src_elmts)
+void _XMP_coarray_shortcut_get_f(const int *target, void *dst, const void *src, const long *dst_offset, 
+				 const long *src_offset, const long *dst_elmts, const long *src_elmts)
 {
   _XMP_coarray_shortcut_get(*target, dst, src, *dst_offset, *src_offset, *dst_elmts, *src_elmts);
 }
@@ -1435,7 +1445,8 @@ void _XMP_coarray_lastly_deallocate()
 /* NOTE        :                                                             */
 /*     If a local_array is NOT a coarray, local_coarray == NULL.             */
 /*****************************************************************************/
-void _XMP_coarray_rdma_do_acc(const int rdma_code, void *remote_coarray, void *local_array, void *local_coarray, const int is_remote_on_acc, const int is_local_on_acc)
+void _XMP_coarray_rdma_do_acc(const int rdma_code, void *remote_coarray, void *local_array,
+			      void *local_coarray, const int is_remote_on_acc, const int is_local_on_acc)
 {
   if(_transfer_coarray_elmts == 0 || _transfer_array_elmts == 0) return;
 

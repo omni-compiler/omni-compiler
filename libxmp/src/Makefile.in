@@ -304,7 +304,6 @@ CFLAGS = @MPI_CFLAGS@ -I../include -I$(TLOG_INC_DIR) $(am__append_2) \
 	$(am__append_12) $(am__append_14)
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
-CPP_OPT = @CPP_OPT@
 CPU = @CPU@
 CPUDEF = @CPUDEF@
 CXX = @CXX@

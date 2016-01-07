@@ -16,7 +16,7 @@ static int test_basic()
   }
 
   //basic pattern
-#pragma acc parallel loop
+#pragma acc parallel loop copy(red_0,red_1,red_2,red_3,red_4)
   for(i = 0; i < N; i++){
 #pragma acc atomic
     red_0 -= 2;

@@ -2,7 +2,7 @@
 
 SRC= $(OUT:%.x=%.f90)
 RESULT=$(SRC:.f90=.result)
-.SUFFIXES: .x .f90
+.SUFFIXES: .x .f90 .xmod
 
 .f90.x:
 	xmpf90 $(OPT) -o $@ $<
@@ -11,15 +11,15 @@ RESULT=$(SRC:.f90=.result)
 	xmpcc $(OPT) -o $@ $<
 
 %.result: %.x
-	mpirun -n $(NPE) $< 2>&1 | tee $@
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $< 2>&1 | tee $@
 
 %.result: %.f90
-	xmpf90 $(OPT) -o $* $<
-	mpirun -n $(NPE) $* 2>&1 | tee $@
+	xmpf90 $(OPT) -o $*.x $<
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $*.x 2>&1 | tee $@
 
 %.result: %.c
-	xmpcc $(OPT) -o $* $<
-	mpirun -n $(NPE) $* 2>&1 >$@
+	xmpcc $(OPT) -o $*.x $<
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $*.x 2>&1 >$@
 	cat $@
 
 RUN/%.x:: %.x
@@ -48,12 +48,11 @@ RUN/go.sh: go.template Makefile
 
 ### clean
 clean:
-	rm -f *~ *.o $(OUT) *.result a.out
+	rm -f *~ *.o *.x *.result a.out
 	rm -rf __omni_tmp__/
 	rm -f omni_traverse*.o
 	rm -f $(OUT:%=RUN/%)
 	rm -f *.mod *.xmod
-	rm -rf RUN
 
 clean-result:
 	rm -f $(RESULT)

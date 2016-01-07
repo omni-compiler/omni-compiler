@@ -1,0 +1,23 @@
+echo a0d0-2.x --------------; mpirun -np 3 a0d0-2.x
+echo a0d0-3.x --------------; mpirun -np 3 a0d0-3.x
+echo a1d1-1.x --------------; mpirun -np 3 a1d1-1.x
+echo a1d1-2.x --------------; mpirun -np 3 a1d1-2.x
+echo a1d1-3.x --------------; mpirun -np 3 a1d1-3.x
+echo a1d1-4.x --------------; mpirun -np 3 a1d1-4.x
+echo a2d0.x --------------; mpirun -np 3 a2d0.x
+echo a2d1-2.x --------------; mpirun -np 3 a2d1-2.x
+echo a2d1-3.x --------------; mpirun -np 3 a2d1-3.x
+echo a2d1.x --------------; mpirun -np 3 a2d1.x
+echo a2d2-1-1.x --------------; mpirun -np 3 a2d2-1-1.x
+echo a2d2-1-5.x --------------; mpirun -np 3 a2d2-1-5.x
+echo a2d2-2NGB.x --------------; mpirun -np 3 a2d2-2NGB.x
+echo a2d2.x --------------; mpirun -np 3 a2d2.x
+echo a3d3.x --------------; mpirun -np 3 a3d3.x
+echo a6d3-1.x --------------; mpirun -np 3 a6d3-1.x
+echo a6d3-2.x --------------; mpirun -np 3 a6d3-2.x
+echo a6d3.x --------------; mpirun -np 3 a6d3.x
+echo a6d4-1.x --------------; mpirun -np 3 a6d4-1.x
+echo a6d4-2.x --------------; mpirun -np 3 a6d4-2.x
+echo bug462.x --------------; (export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np 3 bug462.x)
+echo s-1.x --------------; mpirun -np 3 s-1.x
+echo s-2.x --------------; mpirun -np 3 s-2.x

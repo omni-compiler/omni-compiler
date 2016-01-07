@@ -98,6 +98,7 @@ static MemoryChunkOrder_t *_newMemoryChunkOrder(MemoryChunk_t *chunk);
 static void _unlinkMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
 static void _freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
 
+static char* _toOrdinalNumberString(int n);
 
 
 /*****************************************\
@@ -174,15 +175,17 @@ int xmpf_coarray_allocated_bytes_()
 {
   MemoryChunkOrder_t *chunkp;
   MemoryChunk_t *chunk;
-  size_t size;
+  size_t size, size1;
 
   size = 0;
   forallMemoryChunkOrder(chunkp) {
     chunk = chunkp->chunk;
-    size += chunk->nbytes;
+    size1 = size + chunk->nbytes;
+    if (size1 < size)
+      _XMPF_coarrayFatal("More than %llu-bytes of memory required for static coarrays", ~(size_t)0 );
+    size = size1;
   }
 
-  // returns illegal value if it exceeds huge(int)
   return size;
 }
 
@@ -199,7 +202,6 @@ int xmpf_coarray_garbage_bytes_()
       size += chunk->nbytes;
   }
 
-  // returns illegal value if it exceeds huge(int)
   return size;
 }
 
@@ -247,7 +249,7 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
 }
 
 
-size_t _roundUpElementSize(int count, size_t element)
+size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
 {
   size_t elementRU;
 
@@ -257,13 +259,13 @@ size_t _roundUpElementSize(int count, size_t element)
   } else if (count == 1) {              // scalar or one-element array
     /* round up */
     elementRU = ROUND_UP_BOUNDARY(element);
-    _XMPF_coarrayDebugPrint("round-up element size\n"
-                            "  count=%d, element=%d to %u\n",
-                            count, element, elementRU);
+    _XMPF_coarrayDebugPrint("round-up element size %d to %u (name=\"%*s\")\n",
+                            element, elementRU, namelen, name);
   } else {
     /* restriction */
-    _XMPF_coarrayFatal("violation of boundary: xmpf_coarray_malloc_() in %s",
-                       __FILE__);
+    _XMPF_coarrayFatal("boundary violation detected in coarray allocation\n"
+                       "  element size %d (name=\"%*s\")\n",
+                       element, namelen, name);
   }
 
   return elementRU;
@@ -273,8 +275,10 @@ size_t _roundUpElementSize(int count, size_t element)
 MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
 {
   MemoryChunk_t *chunk;
+  static char *name = "(unk)";
+  static const int namelen = 5;
 
-  size_t elementRU = _roundUpElementSize(count, element);
+  size_t elementRU = _roundUpElementSize(count, element, name, namelen);
   unsigned nbytes = (unsigned)count * elementRU;
 
   // make memory-chunk even if size nbyte=0
@@ -394,7 +398,8 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                 int *count, int *element,
                                 char *name, int *namelen)
 {
-  size_t elementRU = _roundUpElementSize(*count, (size_t)(*element));
+  size_t elementRU = _roundUpElementSize(*count, (size_t)(*element),
+                                         name, *namelen);
   size_t nbytes = (size_t)(*count) * elementRU;
 
   CoarrayInfo_t *cinfo;
@@ -1045,10 +1050,19 @@ int xmpf_image_index_(void **descPtr, int coindexes[])
     idx = coindexes[i];
     lb = cp->lcobound[i];
     ub = cp->ucobound[i];
-    if (idx < lb || ub < idx) {
-      _XMPF_coarrayFatal("%d-th cosubscript of \'%s\', %d, "
-                         "is out of range %d to %d.",
-                         i+1, cp->name, idx, lb, ub);
+    if (idx < lb) {
+      _XMPF_coarrayDebugPrint
+        ("The %s cosubscript of coarray \'%s\' is too small.\n"
+         "  value=%d, range=[%d,%d]\n",
+         _toOrdinalNumberString(i+1), cp->name, idx, lb, ub);
+      return 0;
+    }
+    if (ub < idx && i < cp->corank - 1) {
+      _XMPF_coarrayDebugPrint
+        ("The %s cosubscript of coarray \'%s\' is too large.\n"
+         "  value=%d, range=[%d,%d]\n",
+         _toOrdinalNumberString(i+1), cp->name, idx, lb, ub);
+      return 0;
     }
     count += (idx - lb) * factor;
     factor *= cp->cosize[i];
@@ -1114,7 +1128,32 @@ size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   char* orgAddr = cinfo->parent->orgAddr;
-  int offset = ((size_t)baseAddr - (size_t)orgAddr);
+  //int offset = ((size_t)baseAddr - (size_t)orgAddr);
+  size_t offset = baseAddr - orgAddr;
+  
   return offset;
 }
 
+
+/***********************************************\
+   local
+\***********************************************/
+
+char* _toOrdinalNumberString(int n)
+{
+  static char work[6];
+
+  switch (n) {
+  case 1:
+    return "1st";
+  case 2:
+    return "2nd";
+  case 3:
+    return "3rd";
+  default:
+    break;
+  }
+
+  sprintf(work, "%dth", n);
+  return work;
+}

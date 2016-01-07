@@ -35,9 +35,8 @@ public class XMPtransCoarrayRun
 
   private String name;
 
-  private FuncDefBlock funcDef;
   private XobjectDef def;
-  private FunctionBlock fblock;
+  FuncDefBlock funcDef;
 
   private ArrayList<XMPcoarray> useAssociatedCoarrays;
   private ArrayList<XMPcoarray> localCoarrays;
@@ -77,12 +76,11 @@ public class XMPtransCoarrayRun
     this.env = env;
     name = def.getName();
 
+    funcDef = new FuncDefBlock(def);
+    env.setCurrentDef(funcDef);
+
     _setHostName();
     _setHostRun(pastRuns);
-
-    funcDef = new FuncDefBlock(def);
-    fblock = funcDef.getBlock();
-    env.setCurrentDef(funcDef);
 
     String postfix = _genNewProcPostfix();
     traverseCountName = TRAV_COUNTCOARRAY_PREFIX + postfix;
@@ -98,6 +96,13 @@ public class XMPtransCoarrayRun
     XMP.exitByError();   // exit if error was found.
   }
 
+
+  /*******************************
+  public void finalize() {
+    // finalize fblock in funcDef
+    funcDef.Finalize();
+  }
+  *********************************/
 
   private void _setHostName()
   {
@@ -215,7 +220,7 @@ public class XMPtransCoarrayRun
       Ident ident = (Ident)obj;
       if (ident.wasCoarray()) {
         // found it is a coarray or a variable converted from a coarray
-        XMPcoarray coarray = new XMPcoarray(ident, def, fblock, env);
+        XMPcoarray coarray = new XMPcoarray(ident, def, getFblock(), env);
         if (coarray.isUseAssociated())
           useAssociatedCoarrays.add(coarray);
         else
@@ -275,7 +280,7 @@ public class XMPtransCoarrayRun
 
     // reset ident, name, isAllocatable, isPointer and _isUseAssociated
     // but not changed homeBlockName, declCommonName and crayCommonName
-    XMPcoarray coarray2 = new XMPcoarray(ident2, def, fblock, env,
+    XMPcoarray coarray2 = new XMPcoarray(ident2, def, getFblock(), env,
                                          coarray1.getHomeBlockName());
     coarray2.setWasMovedFromModule(true);
     return coarray2;
@@ -304,7 +309,7 @@ public class XMPtransCoarrayRun
   private void _mergeCoarraysByName(ArrayList<XMPcoarray> coarrays1,
                                     ArrayList<XMPcoarray> coarrays2)
   {
-    ArrayList<XMPcoarray> newCoarrays = new ArrayList();
+    ArrayList<XMPcoarray> newCoarrays = new ArrayList<XMPcoarray>();
     for (XMPcoarray coarray2: coarrays2) {
       boolean found = false;
       String name2 = coarray2.getName();
@@ -348,6 +353,7 @@ public class XMPtransCoarrayRun
         
 
   private void run1_procedure() {
+    // flag for automatic deallocation of allocatable coarrays
     set_autoDealloc(false);
 
     // convert specification and declaration part
@@ -359,15 +365,16 @@ public class XMPtransCoarrayRun
     // To avoid trouble of the shallow/deep copies, visibleCoarrays
     // should be made after execution of transDeclPart_*.
     _setVisibleCoarrays();
+    transExecPart_visibleCoarrays();
 
-    if (!_isModule()) {
-      transExecPart_visibleCoarrays();
+    funcDef.Finalize();
+
+    if (!"1".equals(System.getenv("XMP_CASCADE"))) {
+      // SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
+      //  convert main program to soubroutine xmpf_main
+      if (_isMainProgram())
+        _convMainProgramToSubroutine("xmpf_main");
     }
-
-    // SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
-    //  convert main program to soubroutine xmpf_main
-    if (_isMainProgram())
-      _convMainProgramToSubroutine("xmpf_main");
   }
 
 
@@ -402,8 +409,6 @@ public class XMPtransCoarrayRun
     // To avoid trouble of the shallow/deep copies, visibleCoarrays
     // should be made after execution of transDeclPart_*.
     _setVisibleCoarrays();
-
-    // funcDef.Finalize() is not needed.
   }
 
 
@@ -746,8 +751,6 @@ public class XMPtransCoarrayRun
         removeDeclOfCoarray(coarray);
     }
 
-    // finalize fblock in funcDef
-    funcDef.Finalize();
   }
 
 
@@ -774,7 +777,7 @@ public class XMPtransCoarrayRun
     if (coarrays.isEmpty())
       return;
 
-    ArrayList<String> cnameList = new ArrayList();
+    ArrayList<String> cnameList = new ArrayList<String>();
     for (XMPcoarray coarray0: coarrays) {
       String cname = coarray0.getDescCommonName();
       if (cnameList.contains(cname))
@@ -793,7 +796,7 @@ public class XMPtransCoarrayRun
       }
 
       // add declaration 
-      Xobject decls = fblock.getBody().getDecls();
+      Xobject decls = getFblock().getBody().getDecls();
       Xobject args = Xcons.List(Xcode.F_COMMON_DECL,
                                 Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList));
       decls.add(args);
@@ -817,7 +820,7 @@ public class XMPtransCoarrayRun
       coarray.genDecl_crayPointer();
     }
 
-    ArrayList<String> cnameList = new ArrayList();
+    ArrayList<String> cnameList = new ArrayList<String>();
     for (XMPcoarray coarray0: coarrays) {
       String cname = coarray0.getCrayCommonName();
       if (cnameList.contains(cname))
@@ -836,7 +839,7 @@ public class XMPtransCoarrayRun
       }
 
       // add declaration 
-      Xobject decls = fblock.getBody().getDecls();
+      Xobject decls = getFblock().getBody().getDecls();
       Xobject args = Xcons.List(Xcode.F_COMMON_DECL,
                                 Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList));
       decls.add(args);
@@ -850,7 +853,7 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //
   private void addVisibleCoarraysToSyncall(ArrayList<XMPcoarray> coarrays) {
-    BlockIterator bi = new topdownBlockIterator(fblock);
+    BlockIterator bi = new topdownBlockIterator(getFblock());
     for (bi.init(); !bi.end(); bi.next()) {
       BasicBlock bb = bi.getBlock().getBasicBlock();
       if (bb == null) continue;
@@ -902,7 +905,7 @@ public class XMPtransCoarrayRun
   //
   private void insertFinalizationCall() {
     // for STOP statement
-    BasicBlockIterator bbi = new BasicBlockIterator(fblock);
+    BasicBlockIterator bbi = new BasicBlockIterator(getFblock());
     for (bbi.init(); !bbi.end(); bbi.next()) {
       StatementIterator si = bbi.getBasicBlock().statements();
       while (si.hasNext()) {
@@ -943,21 +946,21 @@ public class XMPtransCoarrayRun
 
   private void genPrologStmts() {
     // for the begining of the procedure
-    BlockList blist = fblock.getBody().getHead().getBody();
+    BlockList blist = getFblock().getBody().getHead().getBody();
     int nlines = _prologStmts.size();
 
     for (int i = nlines - 1; i >= 0; i--)
       blist.insert(_prologStmts.get(i));
 
     // restriction: for the ENTRY statement
-    if (nlines > 0 && _findEntryStmtInBlock(fblock)) {
+    if (nlines > 0 && _findEntryStmtInBlock()) {
       XMP.error("restriction: An ENTRY statement is not allowed in the " +
                 "program including coarray features.");
     }
   }
 
-  private Boolean _findEntryStmtInBlock(Block fblock) {
-    BlockIterator bi = new topdownBlockIterator(fblock);
+  private Boolean _findEntryStmtInBlock() {
+    BlockIterator bi = new topdownBlockIterator(getFblock());
     for (bi.init(); !bi.end(); bi.next()) {
       Block block = bi.getBlock();
       if (block.Opcode() == Xcode.F_ENTRY_DECL)
@@ -968,7 +971,7 @@ public class XMPtransCoarrayRun
 
   private void genEpilogStmts() {
     // for RETURN statement
-    BlockIterator bi = new topdownBlockIterator(fblock);
+    BlockIterator bi = new topdownBlockIterator(getFblock());
     for (bi.init(); !bi.end(); bi.next()) {
       Block block = bi.getBlock();
       switch(block.Opcode()) {
@@ -985,7 +988,7 @@ public class XMPtransCoarrayRun
     }
 
     // for the end of the procedure
-    BlockList blist = fblock.getBody().getHead().getBody();
+    BlockList blist = getFblock().getBody().getHead().getBody();
 
     if (blist.getTail().Opcode() == Xcode.RETURN_STATEMENT)
       return;     // to avoid generating unreachable statements
@@ -1077,7 +1080,7 @@ public class XMPtransCoarrayRun
   //  to subroutine calls
   //-----------------------------------------------------
   private void convCoidxStmtsToSubrCalls(ArrayList<XMPcoarray> coarrays) {
-    BlockIterator bi = new topdownBlockIterator(fblock);
+    BlockIterator bi = new topdownBlockIterator(getFblock());
 
     for (bi.init(); !bi.end(); bi.next()) {
 
@@ -1206,7 +1209,7 @@ public class XMPtransCoarrayRun
   //
   private void genAllocOfStaticCoarrays(ArrayList<XMPcoarray> coarrays0) {
 
-    ArrayList<XMPcoarray> coarrays = new ArrayList();
+    ArrayList<XMPcoarray> coarrays = new ArrayList<XMPcoarray>();
     for (XMPcoarray coarray: coarrays0) {
       if (coarray.wasMovedFromModule())
         continue;
@@ -1234,7 +1237,7 @@ public class XMPtransCoarrayRun
   //
   private void convAllocateStmts(ArrayList<XMPcoarray> coarrays) {
     BasicBlockIterator bbi =
-      new BasicBlockIterator(fblock);    // see XMPrewriteExpr iter3 loop
+      new BasicBlockIterator(getFblock());    // see XMPrewriteExpr iter3 loop
     
     for (bbi.init(); !bbi.end(); bbi.next()) {
       StatementIterator si = bbi.getBasicBlock().statements();
@@ -1269,7 +1272,7 @@ public class XMPtransCoarrayRun
 
   private void convDellocateStmts(ArrayList<XMPcoarray> coarrays) {
     BasicBlockIterator bbi =
-      new BasicBlockIterator(fblock);    // see XMPrewriteExpr iter3 loop
+      new BasicBlockIterator(getFblock());    // see XMPrewriteExpr iter3 loop
     
     for (bbi.init(); !bbi.end(); bbi.next()) {
       StatementIterator si = bbi.getBasicBlock().statements();
@@ -1378,7 +1381,7 @@ public class XMPtransCoarrayRun
     // as a name of intrinsic function.
     //  ... found this is not correct judgement for host association: #
     //
-    Ident id = env.findVarIdent(obj.getName(), fblock);
+    Ident id = env.findVarIdent(obj.getName(), getFblock());
     if (id == null)
       return true;          // regarded as intrinsic 
 
@@ -1517,7 +1520,7 @@ public class XMPtransCoarrayRun
       countExpr = Xcons.binaryOp(Xcode.MUL_EXPR,
                                  countExpr,
                                  _getExtentInIndexRange(shape.getArg(i))
-                                 ).cfold(fblock);
+                                 ).cfold(getFblock());
     }
 
     return countExpr;
@@ -1546,7 +1549,7 @@ public class XMPtransCoarrayRun
     if (lbound == null)
       return Xcons.IntConstant(1);
 
-    return lbound.cfold(fblock);
+    return lbound.cfold(getFblock());
   }
 
 
@@ -1571,7 +1574,7 @@ public class XMPtransCoarrayRun
     if (ubound == null)
       XMP.fatal("illegal upper bound specified in ALLOCATE statement");
 
-    return ubound.cfold(fblock);
+    return ubound.cfold(getFblock());
   }
 
 
@@ -1610,7 +1613,7 @@ public class XMPtransCoarrayRun
     if (extent == null)
       XMP.fatal("illegal extent of a dimension specified in ALLOCATE statement");
 
-    return extent.cfold(fblock);
+    return extent.cfold(getFblock());
   }
 
 
@@ -1981,7 +1984,7 @@ public class XMPtransCoarrayRun
   //------------------------------
   private Ident getResourceTagId() {
     if (_resourceTagId == null) {
-      BlockList blist = fblock.getBody();
+      BlockList blist = getFblock().getBody();
       _resourceTagId = blist.declLocalIdent(VAR_TAG_NAME,
                                             BasicType.Fint8Type,
                                             StorageClass.FLOCAL,
@@ -2031,5 +2034,9 @@ public class XMPtransCoarrayRun
     _autoDealloc = sw;
   }
 
+
+  private FunctionBlock getFblock() {
+    return funcDef.getBlock();
+  }
 }
 

@@ -52,6 +52,13 @@ extern "C" {
 #define template template_
 #endif
 
+// ----- extern variables ------------------------------------------------------
+extern void (*_xmp_pack_array)(void *buffer, void *src, int array_type, size_t array_type_size,
+			       int array_dim, int *l, int *u, int *s, unsigned long long *d);
+extern void (*_xmp_unpack_array)(void *dst, void *buffer, int array_type, size_t array_type_size,
+				 int array_dim, int *l, int *u, int *s, unsigned long long *d);
+
+
 // ----- libxmp ------------------------------------------------------
 // xmp_align.c
 extern void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index);
@@ -80,19 +87,23 @@ extern void _XMP_dealloc_array(_XMP_array_t *array_desc);
 
 // xmp_array_section.c
 extern void _XMP_normalize_array_section(_XMP_gmv_desc_t *gmv_desc, int idim, int *lower, int *upper, int *stride);
-// FIXME make these static
-extern void _XMP_pack_array_BASIC(void *buffer, void *src, int array_type,
-                                         int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XMP_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size,
-                                           int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XMP_unpack_array_BASIC(void *dst, void *buffer, int array_type,
-                                           int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XMP_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size,
-                                             int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XMP_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,
-                            int array_dim, int *l, int *u, int *s, unsigned long long *d);
-extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t array_type_size,
-                              int array_dim, int *l, int *u, int *s, unsigned long long *d);
+/* // FIXME make these static */
+/* extern void _XMPC_pack_array_BASIC(void *buffer, void *src, int array_type, */
+/* 				   int array_dim, int *l, int *u, int *s, unsigned long long *d); */
+/* extern void _XMPC_pack_array_GENERAL(void *buffer, void *src, size_t array_type_size, */
+/* 				     int array_dim, int *l, int *u, int *s, unsigned long long *d); */
+/* extern void _XMPC_unpack_array_BASIC(void *dst, void *buffer, int array_type, */
+/* 				     int array_dim, int *l, int *u, int *s, unsigned long long *d); */
+/* extern void _XMPC_unpack_array_GENERAL(void *dst, void *buffer, size_t array_type_size, */
+/* 				       int array_dim, int *l, int *u, int *s, unsigned long long *d); */
+/* extern void _XMP_pack_array(void *buffer, void *src, int array_type, size_t array_type_size, */
+/*                             int array_dim, int *l, int *u, int *s, unsigned long long *d); */
+/* extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t array_type_size, */
+/*                               int array_dim, int *l, int *u, int *s, unsigned long long *d); */
+extern void _XMPC_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,
+			     int array_dim, int *l, int *u, int *s, unsigned long long *d);
+extern void _XMPC_unpack_array(void *dst, void *buffer, int array_type, size_t array_type_size,
+			       int array_dim, int *l, int *u, int *s, unsigned long long *d);
 
 // xmp_async.c
 _XMP_async_comm_t *_XMP_get_or_create_async(int async_id);
@@ -123,8 +134,8 @@ extern void _XMP_build_sync_images_table();
 extern void _XMP_build_coarray_queue();
 extern void _XMP_coarray_lastly_deallocate();
 extern void _XMP_set_stride(size_t*, const _XMP_array_section_t*, const int, const size_t, const size_t);
-extern size_t _XMP_calc_copy_chunk(const unsigned int, const _XMP_array_section_t*);
-extern unsigned int _XMP_get_dim_of_allelmts(const int, const _XMP_array_section_t*);
+extern size_t _XMP_calc_copy_chunk(const int, const _XMP_array_section_t*);
+extern int _XMP_get_dim_of_allelmts(const int, const _XMP_array_section_t*);
 extern void _XMP_local_put(_XMP_coarray_t *, const void *, const int, const int, const int, const int, 
 			   const _XMP_array_section_t *, const _XMP_array_section_t *, const size_t, const size_t);
 extern void _XMP_local_get(void *, const _XMP_coarray_t *, const int, const int, const int, const int, 
@@ -356,6 +367,7 @@ extern void _XMP_threads_finalize(void);
 
 #define _XMP_POSTREQ_TABLE_INITIAL_SIZE             32  /**< This value is trial */
 #define _XMP_POSTREQ_TABLE_INCREMENT_RATIO       (1.5)  /**< This value is trial */
+extern void _XMP_check_less_than_SIZE_MAX(const long s);
 extern size_t _XMP_get_offset(const _XMP_array_section_t *, const int);
 extern void _XMP_coarray_set_info(_XMP_coarray_t* c);
 extern void _XMP_post_wait_initialize();
@@ -434,13 +446,13 @@ extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
 extern void _XMP_fjrdma_sync_images(const int, int*, int*);
 extern void _XMP_fjrdma_build_sync_images_table();
-extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, const size_t);
+extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, const unsigned long);
 extern void _XMP_fjrdma_put(const int, const int, const int, const int, const int, const _XMP_array_section_t *,  
 			    const _XMP_array_section_t *, const _XMP_coarray_t *, const _XMP_coarray_t *, void *,
-			    const int, const int);
+			    const size_t, const size_t);
 extern void _XMP_fjrdma_get(const int, const int, const int, const int, const int, const _XMP_array_section_t *, 
 			    const _XMP_array_section_t *, const _XMP_coarray_t *, const _XMP_coarray_t *, void *,
-			    const int, const int);
+			    const size_t, const size_t);
 extern void _XMP_fjrdma_shortcut_put(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, 
 				     const _XMP_coarray_t *, const size_t, const size_t, const size_t);
 extern void _XMP_fjrdma_shortcut_get(const int, const _XMP_coarray_t *, const _XMP_coarray_t *,
