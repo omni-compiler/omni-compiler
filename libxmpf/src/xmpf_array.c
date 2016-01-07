@@ -336,7 +336,7 @@ void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr)
 
   long asize[dim];
   for (int i = 0; i < dim; i++){
-    asize[i] = a->info[i].alloc_size;
+    asize[i] = a->info[dim - 1 - i].alloc_size;
   }
   _XMP_coarray_malloc_info_n(asize, dim, a->type_size);
 

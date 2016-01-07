@@ -69,6 +69,11 @@
 #define _XMP_N_SHADOW_NORMAL			401
 #define _XMP_N_SHADOW_FULL			402
 
+// defined in exc.xcalablemp.XMPcollective
+#define _XMP_N_GMOVE_NORMAL			400
+#define _XMP_N_GMOVE_IN				401
+#define _XMP_N_GMOVE_OUT			402
+
 // defined in exc.object.BasicType + 500
 #define _XMP_N_TYPE_BOOL			502
 #define _XMP_N_TYPE_CHAR			503

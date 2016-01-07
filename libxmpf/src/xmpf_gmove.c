@@ -196,7 +196,10 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
   _XMP_pack_comm_set = _XMPF_pack_comm_set;
   _XMP_unpack_comm_set = _XMPF_unpack_comm_set;
 
-  _XMP_gmove_array_array_common(gmv_desc_leftp, gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d);
+  _XMP_gmove_array_array_common(gmv_desc_leftp, gmv_desc_rightp,
+				dst_l, dst_u, dst_s, dst_d,
+				src_l, src_u, src_s, src_d,
+				mode);
 
 }
 
@@ -375,7 +378,10 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
   _XMP_pack_comm_set = _XMPF_pack_comm_set;
   _XMP_unpack_comm_set = _XMPF_unpack_comm_set;
 
-  _XMP_gmove_array_array_common(gmv_desc_leftp, gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d);
+  _XMP_gmove_array_array_common(gmv_desc_leftp, gmv_desc_rightp,
+				dst_l, dst_u, dst_s, dst_d,
+				src_l, src_u, src_s, src_d,
+				mode);
 
   /* int iflag =0; */
   /* if (iflag==1){ */

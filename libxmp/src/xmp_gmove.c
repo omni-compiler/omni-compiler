@@ -532,7 +532,7 @@ void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array
     }
     root_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ref_index);
   }
-  int mode = va_arg(args, int);
+  //int mode = va_arg(args, int);
   va_end(args);
 
   // broadcast
@@ -560,7 +560,7 @@ int _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) {
 
     execHere = execHere && _XMP_check_gmove_array_ref_inclusion_SCALAR(array, i, ref_index);
   }
-  int mode = va_arg(args, int);
+  //int mode = va_arg(args, int);
   va_end(args);
 
   return execHere;
@@ -597,7 +597,7 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
     }
     src_ref = _XMP_create_gmove_nodes_ref_SCALAR(src_array, src_ref_index);
   }
-  int mode = va_arg(args, int);
+  //int mode = va_arg(args, int);
   va_end(args);
 
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
@@ -707,7 +707,7 @@ void _XMP_gmove_LOCALCOPY_ARRAY(int type, size_t type_size, ...) {
     _XMP_normalize_array_section(&gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
   }
 
-  int mode = va_arg(args, int);
+  //int mode = va_arg(args, int);
 
   va_end(args);
 
@@ -1158,1314 +1158,6 @@ void _XMP_align_local_idx(long long int global_idx, int *local_idx,
 
 }
 
-/* void _XMP_gmove_align_local_idx(long long int global_idx, int *local_idx, */
-/*               _XMP_gmv_desc_t *gmv_desc, int array_axis, int *rank) */
-/* { */
-/*   if (gmv_desc->is_global == true){ */
-/*     _XMP_array_t *array = gmv_desc->a_desc; */
-/*     _XMP_align_local_idx(global_idx, local_idx, array, array_axis, rank); */
-
-/*   }else{ */
-/*     *local_idx=global_idx - gmv_desc->a_lb[array_axis]; */
-/*     *rank=0; */
-/*   } */
-
-/* } */
-
-/* int _XMP_gmove_calc_seq_rank(int *count, int *rank_acc, int **irank, int dim, int *ref){ */
-
-/*   int rank_ref = 0; */
-
-/*   for(int i=0;i<dim;i++) rank_ref += rank_acc[i]*irank[i][count[i]]; */
-
-/*   int exec_rank_ref = ref[rank_ref]; */
-
-/*   return exec_rank_ref; */
-
-/* } */
-
-/* int _XMP_gmove_calc_seq_loc(int *count, unsigned long long *array_acc, int **local_idx, int dim){ */
-
-/*   int loc_ref = 0; */
-
-/*   for(int i=0;i<dim;i++) loc_ref += array_acc[i]*local_idx[i][count[i]]; */
-
-/*   return loc_ref; */
-
-/* } */
-
-/* void _XMP_gmove_calc_elmts_myrank(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,  */
-/*                                   int src_sub_dim, int src_dim, int dst_dim,  */
-/*                                   int *src_sub_num_ref, int *dst_sub_num_ref, int *src_count, int *dst_count,  */
-/*                                   int *num_triplet,  */
-/*                                   int **src_irank, int **dst_irank, int *src_rank_acc, int *dst_rank_acc,  */
-/*                                   int *src_num_myrank, int *dst_num_myrank, int *s2e, int *d2e,  */
-/*                                   int *send_size_ref, int *recv_size_ref, int *recv_size_ref2,  */
-/*                                   int *create_subcomm_flag, int *dst_color_ref){ */
-
-/*   int i0,i1,i2,i3,i4,i5,i6; */
-/*   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes(); */
-/*   int myrank = exec_nodes->comm_rank; */
-/*   //int comm_size = exec_nodes->comm_size; */
-/*   int src_seq_rank, dst_seq_rank; */
-/*   //int *unpack_loc; */
-/*   (*src_num_myrank)=0; */
-/*   (*dst_num_myrank)=0; */
-
-/*   switch(src_sub_dim){ */
-/*   case 1: */
-/*     for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
-/*       dst_count[dst_sub_num_ref[0]]=i0; */
-/*       src_count[src_sub_num_ref[0]]=i0; */
-/*       dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
-/*       src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
-/*       if(src_seq_rank==myrank){ */
-/*         (*src_num_myrank)++; */
-/*         send_size_ref[dst_seq_rank]++; */
-/*       } */
-/*       if(dst_seq_rank==myrank){ */
-/*         (*dst_num_myrank)++; */
-/*         recv_size_ref[src_seq_rank]++; */
-/*       } */
-/*       if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
-/*           (*create_subcomm_flag == 1)) { */
-/*         if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
-/*            recv_size_ref2[src_seq_rank]++; */
-/*         } */
-/*       } */
-/*       if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
-/*         recv_size_ref2[src_seq_rank]++; */
-/*       } */
-/*     } */
-/*     break; */
-/*   case 2: */
-/*     for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){ */
-/*       for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
-/*         dst_count[dst_sub_num_ref[1]]=i1; */
-/*         src_count[src_sub_num_ref[1]]=i1; */
-/*         dst_count[dst_sub_num_ref[0]]=i0; */
-/*         src_count[src_sub_num_ref[0]]=i0; */
-/*         dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
-/*         src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
-/*         if(src_seq_rank==myrank){ */
-/*           (*src_num_myrank)++; */
-/*           send_size_ref[dst_seq_rank]++; */
-/*         } */
-/*         if(dst_seq_rank==myrank){ */
-/*           (*dst_num_myrank)++; */
-/*           recv_size_ref[src_seq_rank]++; */
-/*         } */
-/*         if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
-/*            (*create_subcomm_flag == 1)) { */
-/*           if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
-/*             recv_size_ref2[src_seq_rank]++; */
-/*           } */
-/*         } */
-/*         if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
-/*           recv_size_ref2[src_seq_rank]++; */
-/*         } */
-/*       } */
-/*     } */
-/*     break; */
-/*   case 3: */
-/*     for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){ */
-/*       for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){ */
-/*         for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
-/*           dst_count[dst_sub_num_ref[2]]=i2; */
-/*           src_count[src_sub_num_ref[2]]=i2; */
-/*           dst_count[dst_sub_num_ref[1]]=i1; */
-/*           src_count[src_sub_num_ref[1]]=i1; */
-/*           dst_count[dst_sub_num_ref[0]]=i0; */
-/*           src_count[src_sub_num_ref[0]]=i0; */
-/*           dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
-/*           src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
-/*           if(src_seq_rank==myrank){ */
-/*             (*src_num_myrank)++; */
-/*             send_size_ref[dst_seq_rank]++; */
-/*           } */
-/*           if(dst_seq_rank==myrank){ */
-/*             (*dst_num_myrank)++; */
-/*             recv_size_ref[src_seq_rank]++; */
-/*           } */
-/*           if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
-/*               (*create_subcomm_flag == 1)) { */
-/*             if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
-/*               recv_size_ref2[src_seq_rank]++; */
-/*             } */
-/*           } */
-/*           if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
-/*             recv_size_ref2[src_seq_rank]++; */
-/*           } */
-/*         } */
-/*       } */
-/*     } */
-/*     break; */
-/*   case 4: */
-/*     for(i3=0;i3<num_triplet[src_sub_num_ref[3]];i3++){ */
-/*       for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){ */
-/*         for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){ */
-/*           for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
-/*             dst_count[dst_sub_num_ref[3]]=i3; */
-/*             src_count[src_sub_num_ref[3]]=i3; */
-/*             dst_count[dst_sub_num_ref[2]]=i2; */
-/*             src_count[src_sub_num_ref[2]]=i2; */
-/*             dst_count[dst_sub_num_ref[1]]=i1; */
-/*             src_count[src_sub_num_ref[1]]=i1; */
-/*             dst_count[dst_sub_num_ref[0]]=i0; */
-/*             src_count[src_sub_num_ref[0]]=i0; */
-/*             dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
-/*             src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
-/*             if(src_seq_rank==myrank){ */
-/*               (*src_num_myrank)++; */
-/*               send_size_ref[dst_seq_rank]++; */
-/*             } */
-/*             if(dst_seq_rank==myrank){ */
-/*               (*dst_num_myrank)++; */
-/*               recv_size_ref[src_seq_rank]++; */
-/*             } */
-/*             if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
-/*                 (*create_subcomm_flag == 1)) { */
-/*               if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
-/*                 recv_size_ref2[src_seq_rank]++; */
-/*               } */
-/*             } */
-/*             if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
-/*               recv_size_ref2[src_seq_rank]++; */
-/*             } */
-/*           } */
-/*         } */
-/*       } */
-/*     } */
-/*     break; */
-/*   case 5: */
-/*     for(i4=0;i4<num_triplet[src_sub_num_ref[4]];i4++){ */
-/*       for(i3=0;i3<num_triplet[src_sub_num_ref[3]];i3++){ */
-/*         for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){ */
-/*           for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){ */
-/*             for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
-/*               dst_count[dst_sub_num_ref[4]]=i4; */
-/*               src_count[src_sub_num_ref[4]]=i4; */
-/*               dst_count[dst_sub_num_ref[3]]=i3; */
-/*               src_count[src_sub_num_ref[3]]=i3; */
-/*               dst_count[dst_sub_num_ref[2]]=i2; */
-/*               src_count[src_sub_num_ref[2]]=i2; */
-/*               dst_count[dst_sub_num_ref[1]]=i1; */
-/*               src_count[src_sub_num_ref[1]]=i1; */
-/*               dst_count[dst_sub_num_ref[0]]=i0; */
-/*               src_count[src_sub_num_ref[0]]=i0; */
-/*               dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
-/*               src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
-/*               if(src_seq_rank==myrank){ */
-/*                 (*src_num_myrank)++; */
-/*                 send_size_ref[dst_seq_rank]++; */
-/*               } */
-/*               if(dst_seq_rank==myrank){ */
-/*                 (*dst_num_myrank)++; */
-/*                 recv_size_ref[src_seq_rank]++; */
-/*               } */
-/*               if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
-/*                   (*create_subcomm_flag == 1)) { */
-/*                 if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
-/*                   recv_size_ref2[src_seq_rank]++; */
-/*                 } */
-/*               } */
-/*               if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
-/*                 recv_size_ref2[src_seq_rank]++; */
-/*               } */
-/*             } */
-/*           } */
-/*         } */
-/*       } */
-/*     } */
-/*     break; */
-/*   case 6: */
-/*     for(i5=0;i5<num_triplet[src_sub_num_ref[5]];i5++){ */
-/*       for(i4=0;i4<num_triplet[src_sub_num_ref[4]];i4++){ */
-/*         for(i3=0;i3<num_triplet[src_sub_num_ref[3]];i3++){ */
-/*           for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){ */
-/*             for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){ */
-/*               for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
-/*                 dst_count[dst_sub_num_ref[5]]=i5; */
-/*                 src_count[src_sub_num_ref[5]]=i5; */
-/*                 dst_count[dst_sub_num_ref[4]]=i4; */
-/*                 src_count[src_sub_num_ref[4]]=i4; */
-/*                 dst_count[dst_sub_num_ref[3]]=i3; */
-/*                 src_count[src_sub_num_ref[3]]=i3; */
-/*                 dst_count[dst_sub_num_ref[2]]=i2; */
-/*                 src_count[src_sub_num_ref[2]]=i2; */
-/*                 dst_count[dst_sub_num_ref[1]]=i1; */
-/*                 src_count[src_sub_num_ref[1]]=i1; */
-/*                 dst_count[dst_sub_num_ref[0]]=i0; */
-/*                 src_count[src_sub_num_ref[0]]=i0; */
-/*                 dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
-/*                 src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
-/*                 if(src_seq_rank==myrank){ */
-/*                   (*src_num_myrank)++; */
-/*                   send_size_ref[dst_seq_rank]++; */
-/*                 } */
-/*                 if(dst_seq_rank==myrank){ */
-/*                   (*dst_num_myrank)++; */
-/*                   recv_size_ref[src_seq_rank]++; */
-/*                 } */
-/*                 if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
-/*                     (*create_subcomm_flag == 1)) { */
-/*                   if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
-/*                     recv_size_ref2[src_seq_rank]++; */
-/*                   } */
-/*                 } */
-/*                 if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
-/*                   recv_size_ref2[src_seq_rank]++; */
-/*                 } */
-/*               } */
-/*             } */
-/*           } */
-/*         } */
-/*       } */
-/*     } */
-/*     break; */
-/*   case 7: */
-/*     for(i6=0;i6<num_triplet[src_sub_num_ref[6]];i6++){ */
-/*       for(i5=0;i5<num_triplet[src_sub_num_ref[5]];i5++){ */
-/*         for(i4=0;i4<num_triplet[src_sub_num_ref[4]];i4++){ */
-/*           for(i3=0;i3<num_triplet[src_sub_num_ref[3]];i3++){ */
-/*             for(i2=0;i2<num_triplet[src_sub_num_ref[2]];i2++){ */
-/*               for(i1=0;i1<num_triplet[src_sub_num_ref[1]];i1++){ */
-/*                 for(i0=0;i0<num_triplet[src_sub_num_ref[0]];i0++){ */
-/*                   dst_count[dst_sub_num_ref[6]]=i6; */
-/*                   src_count[src_sub_num_ref[6]]=i6; */
-/*                   dst_count[dst_sub_num_ref[5]]=i5; */
-/*                   src_count[src_sub_num_ref[5]]=i5; */
-/*                   dst_count[dst_sub_num_ref[4]]=i4; */
-/*                   src_count[src_sub_num_ref[4]]=i4; */
-/*                   dst_count[dst_sub_num_ref[3]]=i3; */
-/*                   src_count[src_sub_num_ref[3]]=i3; */
-/*                   dst_count[dst_sub_num_ref[2]]=i2; */
-/*                   src_count[src_sub_num_ref[2]]=i2; */
-/*                   dst_count[dst_sub_num_ref[1]]=i1; */
-/*                   src_count[src_sub_num_ref[1]]=i1; */
-/*                   dst_count[dst_sub_num_ref[0]]=i0; */
-/*                   src_count[src_sub_num_ref[0]]=i0; */
-/*                   dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e); */
-/*                   src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e); */
-/*                   if(src_seq_rank==myrank){ */
-/*                     (*src_num_myrank)++; */
-/*                     send_size_ref[dst_seq_rank]++; */
-/*                   } */
-/*                   if(dst_seq_rank==myrank){ */
-/*                     (*dst_num_myrank)++; */
-/*                     recv_size_ref[src_seq_rank]++; */
-/*                   } */
-/*                   if ((gmv_desc_leftp->is_global== true) && (gmv_desc_rightp->is_global==true) &&  */
-/*                       (*create_subcomm_flag == 1)) { */
-/*                     if(dst_color_ref[dst_seq_rank]==dst_color_ref[myrank]){ */
-/*                       recv_size_ref2[src_seq_rank]++; */
-/*                     } */
-/*                   } */
-/*                   if((gmv_desc_leftp->is_global==false) && (gmv_desc_rightp->is_global==true)){ */
-/*                     recv_size_ref2[src_seq_rank]++; */
-/*                   } */
-/*                 } */
-/*               } */
-/*             } */
-/*           } */
-/*         } */
-/*       } */
-/*     } */
-/*     break; */
-/*   default: */
-/*     _XMP_fatal("bad dimension of distributed array."); */
-/*   } */
-
-/* } */
-
-/* void _XMP_gmove_calc_color(int *color, int *div, int *mod, int *mult, int *num_term, int *target_rank){ */
-
-/*     *color=0; */
-/*     for(int j=0;j<(*num_term);j++){ */
-/*       *color=*color+(((*target_rank)/div[j])%mod[j])*mult[j]; */
-/*     } */
-/* } */
-
-/* void _XMP_gmove_create_subcomm(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, MPI_Comm *newcomm, int *create_subcomm_flag, int *d2e, int *dst_color_ref){ */
-
-/*   _XMP_array_t *dst_array; */
-/*   _XMP_template_t *dst_template; */
-/*   _XMP_nodes_t *dst_n; */
-/*   int i, j, temp_index, nodes_index; */
-/*   int dst_dim, dst_n_dim, dst_myrank, dst_align_flag[_XMP_N_MAX_DIM]; */
-/*   int dst_align_count=0; */
-
-/*   if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){ */
-/*     dst_dim = gmv_desc_leftp->ndims; */
-/*     dst_array = gmv_desc_leftp->a_desc; */
-/*     dst_template = dst_array->align_template; */
-/*     dst_n = dst_template->onto_nodes; */
-/*     dst_n_dim = dst_n->dim; */
-/*     dst_myrank = dst_n->comm_rank; */
-
-/*     for(i=0;i<dst_n_dim;i++){ */
-/*       dst_align_flag[i]=0; */
-/*     } */
-
-/*     for(i=0;i<dst_dim;i++){ */
-/*       if ((dst_array->info[i].align_manner == _XMP_N_ALIGN_BLOCK) */
-/*          || (dst_array->info[i].align_manner == _XMP_N_ALIGN_CYCLIC) */
-/*          || (dst_array->info[i].align_manner == _XMP_N_ALIGN_BLOCK_CYCLIC) */
-/*          || (dst_array->info[i].align_manner == _XMP_N_ALIGN_GBLOCK)) { */
-/*         temp_index = dst_array->info[i].align_template_index; */
-/*         nodes_index = dst_template->chunk[temp_index].onto_nodes_index; */
-/*         dst_align_flag[nodes_index]=1; */
-/*         dst_align_count++; */
-/*       } */
-/*     } */
-
-/*     if (dst_align_count < dst_n_dim){ */
-/*       *create_subcomm_flag=1; */
-/*     }else{ */
-/*       *create_subcomm_flag=0; */
-/*     } */
-
-/*   } */
-
-/*   if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true && *create_subcomm_flag == 1) { */
-/*     int dst_psize[_XMP_N_MAX_DIM]; */
-/*     int noalign_flag; */
-/*     int div[4], mod[4], mult[4]; */
-
-/*     if (dst_n_dim >= dst_dim ){ */
-
-/*       dst_n_dim = dst_n->dim; */
-
-/*       for(i=0;i<4;i++){ */
-/*         div[i]=1; */
-/*         mod[i]=1; */
-/*         mult[i]=1; */
-/*       } */
-
-/*       for(i=0;i<dst_n_dim;i++){ */
-/*         dst_psize[i]=0; */
-/*       } */
-
-/*       for(i=0;i<dst_dim;i++){ */
-/*         temp_index = dst_array->info[i].align_template_index; */
-/*         nodes_index = dst_template->chunk[temp_index].onto_nodes_index; */
-/*         if (temp_index==-1){ */
-/*           dst_psize[i]=dst_n->info[i].size; */
-/*         }else{ */
-/*           dst_psize[nodes_index]=dst_n->info[nodes_index].size; */
-/*         } */
-/*       } */
-
-/*       for(i=0;i<dst_n_dim;i++){ */
-/*         if (dst_psize[i]==0){ */
-/*           dst_psize[i]=dst_n->info[i].size; */
-/*         } */
-/*       } */
-
-/*       /\* Calculate the number of terms of a color polynomial*\/ */
-/*       int dst_term_num_loc[4]; */
-/*       noalign_flag=1; */
-/*       int num_term=0; */
-/*       for(i=0;i<dst_n_dim;i++){ */
-/*         if (dst_align_flag[i] == 1){ */
-/*           if (noalign_flag==1){ */
-/*             num_term++; */
-/*             noalign_flag=0; */
-/*             dst_term_num_loc[num_term-1]=i-1; */
-/*           } */
-/*         }else{ */
-/*           noalign_flag=1; */
-/*         } */
-/*       } */
-
-/*       /\* Calculate the coefficient of a color polynomial and create new communicator.*\/ */
-/*       for(j=0;j<num_term;j++){ */
-/*         for(i=0;i<dst_term_num_loc[j]+1;i++){ */
-/*           div[j]=div[j]*dst_psize[i]; */
-/*           if(dst_align_flag[i]==1){ */
-/*             mult[j]=mult[j]*dst_psize[i]; */
-/*           } */
-/*         } */
-/*         for(i=dst_term_num_loc[j]+1;i<dst_n_dim;i++){ */
-/*           if(dst_align_flag[i]==1){ */
-/*             mod[j]=mod[j]*dst_psize[i]; */
-/*           }else{ */
-/*             break; */
-/*           } */
-/*         } */
-/*       } */
-
-/*       int color; */
-/*       _XMP_gmove_calc_color(&color, div, mod, mult, &num_term, &dst_myrank); */
-
-/*       MPI_Comm newcomm0; */
-/*       //MPI_Comm_split( *(MPI_Comm *)dst_n->comm, color, myrank, &newcomm0); */
-/*       MPI_Comm_split( *(MPI_Comm *)dst_n->comm, color, dst_myrank, &newcomm0); */
-/*       *newcomm=newcomm0; */
-
-/*       int dst_color_tmp; */
-/*       for(int i=0;i<dst_n->comm_size;i++){ */
-/*         //_XMP_gmove_calc_color(&dst_color_ref[i], div, mod, mult, &num_term, &i); */
-/*         _XMP_gmove_calc_color(&dst_color_tmp, div, mod, mult, &num_term, &i); */
-/*         dst_color_ref[d2e[i]]=dst_color_tmp; */
-/*       } */
-
-/*     } */
-/*   } */
-/* } */
-
-
-#if 0
-void _XMP_gmove_1to1_old(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long  *src_d){
-
-  _XMP_array_t *dst_array=NULL;
-  _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
-  _XMP_template_t *dst_template=NULL;
-  _XMP_template_t *src_template = src_array->align_template;
-  _XMP_nodes_t *dst_n=NULL;
-  _XMP_nodes_t *src_n = src_template->onto_nodes;
-  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
-  MPI_Comm *exec_comm = exec_nodes->comm;
-  int myrank = exec_nodes->comm_rank;
-  int exec_comm_size = exec_nodes->comm_size;
-  int dst_comm_size=-1, dst_comm_rank=-1, src_comm_size = src_n->comm_size;
-
-  void *dst_addr=NULL, *src_addr=NULL;
-  int dst_dim = gmv_desc_leftp->ndims;
-  int src_dim = gmv_desc_rightp->ndims;
-  int dst_sub_dim=0, src_sub_dim=0;
-  int *drank=NULL, *srank=NULL,*d2e=NULL, *s2e=NULL,*dst_color_ref=NULL;
-
-  size_t type_size=0;
-  MPI_Group dst_grp, src_grp, exec_grp;
-
-  MPI_Comm_group(*exec_comm, &exec_grp);
-
-  if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){
-    dst_array = gmv_desc_leftp->a_desc;
-    dst_template = dst_array->align_template;
-    dst_n = dst_template->onto_nodes;
-    dst_comm_size = dst_n->comm_size;
-    dst_comm_rank = dst_n->comm_rank;
-    type_size = dst_array->type_size;
-    dst_addr = dst_array->array_addr_p;
-    src_addr = src_array->array_addr_p;
-    MPI_Comm dst_comm = *(MPI_Comm *)dst_n->comm;
-    MPI_Comm src_comm = *(MPI_Comm *)src_n->comm;
-    MPI_Comm_group(dst_comm, &dst_grp);
-    MPI_Comm_group(src_comm, &src_grp);
-    drank = (int *)malloc(dst_comm_size*sizeof(int));
-    srank = (int *)malloc(src_comm_size*sizeof(int));
-    d2e = (int *)malloc(dst_comm_size*sizeof(int));
-    s2e = (int *)malloc(src_comm_size*sizeof(int));
-    dst_color_ref = (int *)malloc(exec_comm_size*sizeof(int));
-    for(int i=0;i<dst_comm_size;i++) drank[i]=i;
-    for(int i=0;i<src_comm_size;i++) srank[i]=i;
-    for(int i=0;i<dst_comm_size;i++) d2e[i]=MPI_PROC_NULL;
-    for(int i=0;i<src_comm_size;i++) s2e[i]=MPI_PROC_NULL;
-    for(int i=0;i<dst_comm_size;i++) dst_color_ref[i]=MPI_PROC_NULL;
-    if(dst_array->is_allocated){
-      MPI_Group_translate_ranks(dst_grp, dst_comm_size, drank, exec_grp, d2e);
-    }
-    MPI_Allreduce(MPI_IN_PLACE, d2e, dst_comm_size, MPI_INT, MPI_MAX, *exec_comm);
-    if(src_array->is_allocated){
-      MPI_Group_translate_ranks(src_grp, src_comm_size, srank, exec_grp, s2e);
-    }
-    MPI_Allreduce(MPI_IN_PLACE, s2e, src_comm_size, MPI_INT, MPI_MAX, *exec_comm);
-    free(drank);
-    free(srank);
-  }else if(gmv_desc_leftp->is_global == false && gmv_desc_rightp->is_global == true){
-    dst_addr = gmv_desc_leftp->local_data;
-    src_addr = src_array->array_addr_p;
-    type_size = src_array->type_size;
-    MPI_Comm src_comm = *(MPI_Comm *)src_n->comm;
-    MPI_Comm_group(src_comm, &src_grp);
-    srank = (int *)malloc(src_comm_size*sizeof(int));
-    d2e = (int *)malloc(exec_comm_size*sizeof(int));
-    s2e = (int *)malloc(src_comm_size*sizeof(int));
-    for(int i=0;i<src_comm_size;i++) srank[i]=i;
-    for(int i=0;i<exec_comm_size;i++) d2e[i]=i;
-    for(int i=0;i<src_comm_size;i++) s2e[i]=MPI_PROC_NULL;
-    if(src_array->is_allocated){
-      MPI_Group_translate_ranks(src_grp, src_comm_size, srank, exec_grp, s2e);
-    }
-    MPI_Allreduce(MPI_IN_PLACE, s2e, exec_comm_size, MPI_INT, MPI_MAX, *exec_comm);
-    free(srank);
-  }else if(gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == false){
-    dst_array = gmv_desc_leftp->a_desc;
-    dst_template = dst_array->align_template;
-    dst_n = dst_template->onto_nodes;
-    type_size = dst_array->type_size;
-    dst_addr = dst_array->array_addr_p;
-    src_addr = gmv_desc_rightp->local_data;
-  }
-
-  int **src_local_idx=NULL, **dst_local_idx=NULL;
-  int **src_irank=NULL,**dst_irank=NULL;
-  int src_rank_acc[_XMP_N_MAX_DIM], dst_rank_acc[_XMP_N_MAX_DIM];
-  int src_num[_XMP_N_MAX_DIM], dst_num[_XMP_N_MAX_DIM];
-  int dst_num_myrank_total=0, src_num_myrank_total=0;
-  //int root_rank;
-  unsigned long long dst_array_acc[_XMP_N_MAX_DIM];
-  unsigned long long src_array_acc[_XMP_N_MAX_DIM];
-  int i,j,jj,i0,i1,i2,i3,i4,i5,i6;
-  int temp_index, nodes_index, create_subcomm_flag=0;
-
-  int dst_sub_num_ref[_XMP_N_MAX_DIM], src_sub_num_ref[_XMP_N_MAX_DIM];
-  int dst_count[_XMP_N_MAX_DIM], src_count[_XMP_N_MAX_DIM];
-
-  src_local_idx=(int **)malloc(_XMP_N_MAX_DIM*sizeof(int *));
-  src_irank=(int **)malloc(_XMP_N_MAX_DIM*sizeof(int *));
-  dst_local_idx=(int **)malloc(_XMP_N_MAX_DIM*sizeof(int *));
-  dst_irank=(int **)malloc(_XMP_N_MAX_DIM*sizeof(int *));
-
-  for (i=0;i<_XMP_N_MAX_DIM;i++){
-    src_num[i]=1;
-    dst_num[i]=1;
-    src_rank_acc[i]=0;
-    dst_rank_acc[i]=0;
-    src_sub_num_ref[i]=0;
-    dst_sub_num_ref[i]=0;
-    src_count[i]=0;
-    dst_count[i]=0;
-  }
-
-  for (i=0;i<src_dim;i++){
-    src_num[i]=_XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
-    if (src_num[i] > 1) {
-      src_sub_num_ref[src_sub_dim]=i;
-      src_sub_dim++;
-    }
-  }
-  if (src_sub_dim == 0) src_sub_dim=src_dim;
-
-  for (i=0;i<_XMP_N_MAX_DIM;i++){
-    src_local_idx[i]=(int *)malloc(src_num[i]*sizeof(int));
-    src_irank[i]=(int *)malloc(src_num[i]*sizeof(int));
-    if (i>=src_dim){
-      src_local_idx[i][0]=0;
-      src_irank[i][0]=0;
-    }
-  }
-
-  for (i=0;i<src_dim;i++){
-    temp_index = src_array->info[i].align_template_index;
-    nodes_index = src_template->chunk[temp_index].onto_nodes_index;
-    src_array_acc[i] = src_array->info[i].dim_acc;
-    if (temp_index == -1){
-      src_rank_acc[i]=0;
-    }else{
-      src_rank_acc[i]=src_n->info[nodes_index].multiplier;
-    }
-
-    jj=0;
-    for (j = src_l[i]; j<=src_u[i]; j+=src_s[i]){
-
-      _XMP_gmove_align_local_idx(j, &(src_local_idx[i][jj]),
-                    gmv_desc_rightp, i, &(src_irank[i][jj]));
-      jj++;
-
-    }
-  }
-
-  unsigned long long dst_total_elmts=1;
-
-  int dst_num_myindex, dst_num_myindex_total=1;
-  int dst_myindex[_XMP_N_MAX_DIM];
-
-  for (i=0;i<dst_dim;i++){
-    dst_num[i]=_XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
-    if (dst_num[i] > 1) {
-      dst_sub_num_ref[dst_sub_dim]=i;
-      dst_sub_dim++;
-    }
-  }
-
-  if (dst_sub_dim == 0) dst_sub_dim=dst_dim;
-
-  for (i=0;i<_XMP_N_MAX_DIM;i++){
-    dst_local_idx[i]=(int *)malloc(dst_num[i]*sizeof(int));
-    dst_irank[i]=(int *)malloc(dst_num[i]*sizeof(int));
-    if (i>=dst_dim){
-      dst_local_idx[i][0]=0;
-      dst_irank[i][0]=0;
-    }
-  }
-
-  if (gmv_desc_leftp->is_global == true){
-    for (i=0;i<dst_dim;i++){
-      dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
-      temp_index = dst_array->info[i].align_template_index;
-      nodes_index = dst_template->chunk[temp_index].onto_nodes_index;
-      dst_array_acc[i] = dst_array->info[i].dim_acc;
-      if (temp_index == -1){
-        dst_myindex[i]=0;
-        dst_rank_acc[i]=0;
-      }else{
-        dst_myindex[i]=dst_n->info[nodes_index].rank;
-        dst_rank_acc[i]=dst_n->info[nodes_index].multiplier;
-      }
-
-      jj=0;
-      dst_num_myindex=0;
-      for (j = dst_l[i]; j<=dst_u[i]; j+=dst_s[i]){
-
-        _XMP_gmove_align_local_idx(j, &dst_local_idx[i][jj],
-                      gmv_desc_leftp, i, &dst_irank[i][jj]);
-        if (dst_irank[i][jj] == dst_myindex[i]) dst_num_myindex++;
-        jj++;
-      }
-      dst_num_myindex_total *=dst_num_myindex;
-    }
-  }else{
-    for (i=0;i<dst_dim;i++){
-      dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
-      dst_myindex[i]=0;
-      dst_rank_acc[i]=0;
-      dst_array_acc[i]=dst_d[i];
-
-      jj=0;
-      dst_num_myindex=0;
-      for (j = dst_l[i]; j<=dst_u[i]; j+=dst_s[i]){
-        _XMP_gmove_align_local_idx(j, &dst_local_idx[i][jj],
-                      gmv_desc_leftp, i, &dst_irank[i][jj]);
-        if (dst_irank[i][jj] == dst_myindex[i]) dst_num_myindex++;
-        jj++;
-      }
-      dst_num_myindex_total *=dst_num_myindex;
-    }
-  }
-
-  int *send_size_ref=(int *)malloc(exec_comm_size*sizeof(int));
-  int *recv_size_ref=(int *)malloc(exec_comm_size*sizeof(int));
-  int *recv_size_ref2=(int *)malloc(exec_comm_size*sizeof(int));
-  int *send_addr_ref=(int *)malloc(exec_comm_size*sizeof(int));
-  int *recv_addr_ref=(int *)malloc(exec_comm_size*sizeof(int));
-  int *recv_addr_ref2=(int *)malloc(exec_comm_size*sizeof(int));
-  int *send_count_ref=(int *)malloc(exec_comm_size*sizeof(int));
-  int *recv_count_ref=(int *)malloc(exec_comm_size*sizeof(int));
-  int *recv_count_ref2=(int *)malloc(exec_comm_size*sizeof(int));
-  
-  size_t dst_type_size=type_size;
-  size_t src_type_size=src_array->type_size;
-
-  for(int i=0;i<exec_comm_size;i++) send_size_ref[i] = 0;
-  for(int i=0;i<exec_comm_size;i++) recv_size_ref[i] = 0;
-  for(int i=0;i<exec_comm_size;i++) recv_size_ref2[i] = 0;
-  for(int i=0;i<exec_comm_size;i++) send_addr_ref[i] = 0;
-  for(int i=0;i<exec_comm_size;i++) recv_addr_ref[i] = 0;
-  for(int i=0;i<exec_comm_size;i++) recv_addr_ref2[i] = 0;
-
-  //int newcomm_rank, num_term=0;
-  MPI_Comm newcomm;
-  _XMP_gmove_create_subcomm(gmv_desc_leftp, gmv_desc_rightp, &newcomm, &create_subcomm_flag, d2e, dst_color_ref);
-
-  _XMP_gmove_calc_elmts_myrank(gmv_desc_leftp, gmv_desc_rightp, src_sub_dim, src_dim, dst_dim, src_sub_num_ref, dst_sub_num_ref, src_count, dst_count, src_num, src_irank, dst_irank, src_rank_acc, dst_rank_acc, &src_num_myrank_total, &dst_num_myrank_total, s2e, d2e, send_size_ref, recv_size_ref, recv_size_ref2, &create_subcomm_flag, dst_color_ref);
-
-  int isend_count=0, irecv_count=0, irecv_count2=0;
-  int count_acc=0, count_acc_tmp=0;
-  for(int i=0;i<exec_comm_size;i++) {
-    if(send_size_ref[i] > 0){
-      count_acc_tmp += send_size_ref[i];
-      send_addr_ref[i]=count_acc;
-      count_acc=count_acc_tmp;
-      isend_count++;
-    }
-  }
-
-  count_acc=0, count_acc_tmp=0;
-  for(int i=0;i<exec_comm_size;i++) {
-    if(recv_size_ref[i] > 0){
-      count_acc_tmp += recv_size_ref[i];
-      recv_addr_ref[i]=count_acc;
-      count_acc=count_acc_tmp;
-      irecv_count++;
-    }
-  }
-
-  count_acc=0, count_acc_tmp=0;
-  for(int i=0;i<exec_comm_size;i++) {
-    if(recv_size_ref2[i] > 0){
-      count_acc_tmp += recv_size_ref2[i];
-      recv_addr_ref2[i]=count_acc;
-      count_acc=count_acc_tmp;
-      irecv_count2++;
-    }
-  }
-
-  for(int i=0;i<exec_comm_size;i++) send_count_ref[i] = send_addr_ref[i];
-  for(int i=0;i<exec_comm_size;i++) recv_count_ref[i] = recv_addr_ref[i];
-  for(int i=0;i<exec_comm_size;i++) recv_count_ref2[i] = recv_addr_ref2[i];
-
-  char *send_buf, *recv_buf;
-  MPI_Request *dst_request;
-  MPI_Request *src_request;
-  MPI_Status *dst_status;
-  MPI_Status *src_status;
-  dst_request=(MPI_Request *)malloc(irecv_count*sizeof(MPI_Request));
-  dst_status=(MPI_Status *)malloc(irecv_count*sizeof(MPI_Status));
-  src_request=(MPI_Request *)malloc(isend_count*sizeof(MPI_Request));
-  src_status=(MPI_Status *)malloc(isend_count*sizeof(MPI_Status));
-  send_buf=(char *)malloc(src_num_myrank_total*src_type_size*sizeof(char));
-  recv_buf=(char *)malloc(dst_num_myindex_total*dst_type_size*sizeof(char));
-  int dst_seq_rank, src_seq_rank, dst_seq_loc, src_seq_loc;
-
-
-  switch(src_sub_dim){
-  case 1:
-    for(i=0;i<dst_num[dst_sub_num_ref[0]];i++){
-      dst_count[dst_sub_num_ref[0]]=i;
-      src_count[src_sub_num_ref[0]]=i;
-      src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-      src_seq_loc=_XMP_gmove_calc_seq_loc(src_count, src_array_acc, src_local_idx, src_dim);
-      dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-      if (src_seq_rank == myrank){
-           memcpy((char *)send_buf+send_count_ref[dst_seq_rank]*src_type_size,
-                  (char *)src_addr+src_seq_loc*src_type_size, src_type_size);
-           send_count_ref[dst_seq_rank]++;
-      }
-    }
-    break;
-  case 2:
-    for(i1=0;i1<dst_num[dst_sub_num_ref[1]];i1++){
-      for(i0=0;i0<dst_num[dst_sub_num_ref[0]];i0++){
-        dst_count[dst_sub_num_ref[1]]=i1;
-        src_count[src_sub_num_ref[1]]=i1;
-        dst_count[dst_sub_num_ref[0]]=i0;
-        src_count[src_sub_num_ref[0]]=i0;
-        src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-        src_seq_loc=_XMP_gmove_calc_seq_loc(src_count, src_array_acc, src_local_idx, src_dim);
-        dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-        if (src_seq_rank == myrank){
-          memcpy((char *)send_buf+send_count_ref[dst_seq_rank]*src_type_size,
-                 (char *)src_addr+src_seq_loc*src_type_size, src_type_size);
-          send_count_ref[dst_seq_rank]++;
-        }
-      }
-    }
-    break;
-  case 3:
-    for(i2=0;i2<dst_num[dst_sub_num_ref[2]];i2++){
-      for(i1=0;i1<dst_num[dst_sub_num_ref[1]];i1++){
-        for(i0=0;i0<dst_num[dst_sub_num_ref[0]];i0++){
-          dst_count[dst_sub_num_ref[2]]=i2;
-          src_count[src_sub_num_ref[2]]=i2;
-          dst_count[dst_sub_num_ref[1]]=i1;
-          src_count[src_sub_num_ref[1]]=i1;
-          dst_count[dst_sub_num_ref[0]]=i0;
-          src_count[src_sub_num_ref[0]]=i0;
-          src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-          src_seq_loc=_XMP_gmove_calc_seq_loc(src_count, src_array_acc, src_local_idx, src_dim);
-          dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-          if (src_seq_rank == myrank){
-            memcpy((char *)send_buf+send_count_ref[dst_seq_rank]*src_type_size,
-                   (char *)src_addr+src_seq_loc*src_type_size, src_type_size);
-            send_count_ref[dst_seq_rank]++;
-          }
-        }
-      }
-    }
-    break;
-  case 4:
-    for(i3=0;i3<dst_num[dst_sub_num_ref[3]];i3++){
-      for(i2=0;i2<dst_num[dst_sub_num_ref[2]];i2++){
-        for(i1=0;i1<dst_num[dst_sub_num_ref[1]];i1++){
-          for(i0=0;i0<dst_num[dst_sub_num_ref[0]];i0++){
-            dst_count[dst_sub_num_ref[3]]=i3;
-            src_count[src_sub_num_ref[3]]=i3;
-            dst_count[dst_sub_num_ref[2]]=i2;
-            src_count[src_sub_num_ref[2]]=i2;
-            dst_count[dst_sub_num_ref[1]]=i1;
-            src_count[src_sub_num_ref[1]]=i1;
-            dst_count[dst_sub_num_ref[0]]=i0;
-            src_count[src_sub_num_ref[0]]=i0;
-            src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-            src_seq_loc=_XMP_gmove_calc_seq_loc(src_count, src_array_acc, src_local_idx, src_dim);
-            dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-            if (src_seq_rank == myrank){
-              memcpy((char *)send_buf+send_count_ref[dst_seq_rank]*src_type_size,
-                     (char *)src_addr+src_seq_loc*src_type_size, src_type_size);
-              send_count_ref[dst_seq_rank]++;
-            }
-          }
-        }
-      }
-    }
-    break;
-  case 5:
-    for(i4=0;i4<dst_num[dst_sub_num_ref[4]];i4++){
-      for(i3=0;i3<dst_num[dst_sub_num_ref[3]];i3++){
-        for(i2=0;i2<dst_num[dst_sub_num_ref[2]];i2++){
-          for(i1=0;i1<dst_num[dst_sub_num_ref[1]];i1++){
-            for(i0=0;i0<dst_num[dst_sub_num_ref[0]];i0++){
-              dst_count[dst_sub_num_ref[4]]=i4;
-              src_count[src_sub_num_ref[4]]=i4;
-              dst_count[dst_sub_num_ref[3]]=i3;
-              src_count[src_sub_num_ref[3]]=i3;
-              dst_count[dst_sub_num_ref[2]]=i2;
-              src_count[src_sub_num_ref[2]]=i2;
-              dst_count[dst_sub_num_ref[1]]=i1;
-              src_count[src_sub_num_ref[1]]=i1;
-              dst_count[dst_sub_num_ref[0]]=i0;
-              src_count[src_sub_num_ref[0]]=i0;
-              src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-              src_seq_loc=_XMP_gmove_calc_seq_loc(src_count, src_array_acc, src_local_idx, src_dim);
-              dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-              if (src_seq_rank == myrank){
-                memcpy((char *)send_buf+send_count_ref[dst_seq_rank]*src_type_size,
-                       (char *)src_addr+src_seq_loc*src_type_size, src_type_size);
-                send_count_ref[dst_seq_rank]++;
-              }
-            }
-          }
-        }
-      }
-    }
-    break;
-  case 6:
-    for(i5=0;i5<dst_num[dst_sub_num_ref[5]];i5++){
-      for(i4=0;i4<dst_num[dst_sub_num_ref[4]];i4++){
-        for(i3=0;i3<dst_num[dst_sub_num_ref[3]];i3++){
-          for(i2=0;i2<dst_num[dst_sub_num_ref[2]];i2++){
-            for(i1=0;i1<dst_num[dst_sub_num_ref[1]];i1++){
-              for(i0=0;i0<dst_num[dst_sub_num_ref[0]];i0++){
-                dst_count[dst_sub_num_ref[5]]=i5;
-                src_count[src_sub_num_ref[5]]=i5;
-                dst_count[dst_sub_num_ref[4]]=i4;
-                src_count[src_sub_num_ref[4]]=i4;
-                dst_count[dst_sub_num_ref[3]]=i3;
-                src_count[src_sub_num_ref[3]]=i3;
-                dst_count[dst_sub_num_ref[2]]=i2;
-                src_count[src_sub_num_ref[2]]=i2;
-                dst_count[dst_sub_num_ref[1]]=i1;
-                src_count[src_sub_num_ref[1]]=i1;
-                dst_count[dst_sub_num_ref[0]]=i0;
-                src_count[src_sub_num_ref[0]]=i0;
-                src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-                src_seq_loc=_XMP_gmove_calc_seq_loc(src_count, src_array_acc, src_local_idx, src_dim);
-                dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-                if (src_seq_rank == myrank){
-                  memcpy((char *)send_buf+send_count_ref[dst_seq_rank]*src_type_size,
-                         (char *)src_addr+src_seq_loc*src_type_size, src_type_size);
-                  send_count_ref[dst_seq_rank]++;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    break;
-  case 7:
-    for(i6=0;i6<dst_num[dst_sub_num_ref[6]];i6++){
-      for(i5=0;i5<dst_num[dst_sub_num_ref[5]];i5++){
-        for(i4=0;i4<dst_num[dst_sub_num_ref[4]];i4++){
-          for(i3=0;i3<dst_num[dst_sub_num_ref[3]];i3++){
-            for(i2=0;i2<dst_num[dst_sub_num_ref[2]];i2++){
-              for(i1=0;i1<dst_num[dst_sub_num_ref[1]];i1++){
-                for(i0=0;i0<dst_num[dst_sub_num_ref[0]];i0++){
-                  dst_count[dst_sub_num_ref[6]]=i6;
-                  src_count[src_sub_num_ref[6]]=i6;
-                  dst_count[dst_sub_num_ref[5]]=i5;
-                  src_count[src_sub_num_ref[5]]=i5;
-                  dst_count[dst_sub_num_ref[4]]=i4;
-                  src_count[src_sub_num_ref[4]]=i4;
-                  dst_count[dst_sub_num_ref[3]]=i3;
-                  src_count[src_sub_num_ref[3]]=i3;
-                  dst_count[dst_sub_num_ref[2]]=i2;
-                  src_count[src_sub_num_ref[2]]=i2;
-                  dst_count[dst_sub_num_ref[1]]=i1;
-                  src_count[src_sub_num_ref[1]]=i1;
-                  dst_count[dst_sub_num_ref[0]]=i0;
-                  src_count[src_sub_num_ref[0]]=i0;
-                  src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-                  src_seq_loc=_XMP_gmove_calc_seq_loc(src_count, src_array_acc, src_local_idx, src_dim);
-                  dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-                  if (src_seq_rank == myrank){
-                    memcpy((char *)send_buf+send_count_ref[dst_seq_rank]*src_type_size,
-                           (char *)src_addr+src_seq_loc*src_type_size, src_type_size);
-                    send_count_ref[dst_seq_rank]++;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    break;
-  default:
-    _XMP_fatal("_XMP_: src_sub_dim unknown a dimension number");
-  }
-
-  int icount=0;
-  for(int i=0;i<exec_comm_size;i++){
-    if(send_size_ref[i] > 0){
-      MPI_Isend((char *)send_buf+send_addr_ref[i]*src_type_size,
-                send_size_ref[i]*src_type_size, MPI_BYTE, i,
-                _XMP_N_MPI_TAG_GMOVE, *exec_comm, &src_request[icount]);
-      icount++;
-    }
-  }
-  icount=0;
-  for(int i=0;i<exec_comm_size;i++){
-    if(recv_size_ref[i] > 0){
-      MPI_Irecv((char *)recv_buf+recv_addr_ref[i]*dst_type_size,
-                recv_size_ref[i]*dst_type_size, MPI_BYTE, i,
-                _XMP_N_MPI_TAG_GMOVE, *exec_comm, &dst_request[icount]);
-      icount++;
-    }
-  }
-  MPI_Waitall(isend_count, src_request, src_status);
-  MPI_Waitall(irecv_count, dst_request, dst_status);
-
-  int iroot=0;
-  /* bcast & unpack */
-  if (gmv_desc_rightp->is_global == true){
-    if (gmv_desc_leftp->is_global == true && create_subcomm_flag == 1){
-      if(dst_array->is_allocated){
-        MPI_Bcast(recv_buf, dst_num_myindex_total*dst_type_size, MPI_BYTE, iroot, newcomm);
-      }
-    }else if (gmv_desc_leftp->is_global == false){
-      MPI_Bcast(recv_buf, dst_num_myindex_total*dst_type_size, MPI_BYTE, iroot, *exec_comm);
-    }
-  }
-
-  //int mycolor, dst_color;
-  switch(dst_sub_dim){
-  case 1:
-    for(i=0;i<src_num[src_sub_num_ref[0]];i++){
-      dst_count[dst_sub_num_ref[0]]=i;
-      src_count[src_sub_num_ref[0]]=i;
-      dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-      dst_seq_loc=_XMP_gmove_calc_seq_loc(dst_count, dst_array_acc, dst_local_idx, dst_dim);
-      src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-      if (gmv_desc_rightp->is_global == true){
-        if (gmv_desc_leftp->is_global == true && create_subcomm_flag == 0){
-          if (dst_seq_rank == myrank){
-            memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                   (char *)recv_buf+recv_count_ref[src_seq_rank]*dst_type_size, dst_type_size);
-            recv_count_ref[src_seq_rank]++;
-          }
-        }else if(gmv_desc_leftp->is_global == true && create_subcomm_flag == 1){
-          if (dst_color_ref[dst_seq_rank] == dst_color_ref[d2e[dst_comm_rank]]){
-            memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                   (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-            recv_count_ref2[src_seq_rank]++;
-          }
-        }else if(gmv_desc_leftp->is_global == false){
-          memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                 (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-          recv_count_ref2[src_seq_rank]++;
-        }
-      }
-    }
-    break;
-  case 2:
-    for(i1=0;i1<src_num[src_sub_num_ref[1]];i1++){
-      for(i0=0;i0<src_num[src_sub_num_ref[0]];i0++){
-        dst_count[dst_sub_num_ref[1]]=i1;
-        src_count[src_sub_num_ref[1]]=i1;
-        dst_count[dst_sub_num_ref[0]]=i0;
-        src_count[src_sub_num_ref[0]]=i0;
-        dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-        dst_seq_loc=_XMP_gmove_calc_seq_loc(dst_count, dst_array_acc, dst_local_idx, dst_dim);
-        src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-        if (gmv_desc_rightp->is_global == true){
-          if (gmv_desc_leftp->is_global == true && create_subcomm_flag == 0){
-            if (dst_seq_rank == myrank){
-              memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                     (char *)recv_buf+recv_count_ref[src_seq_rank]*dst_type_size, dst_type_size);
-              recv_count_ref[src_seq_rank]++;
-            }
-          }else if(gmv_desc_leftp->is_global == true && create_subcomm_flag == 1){
-            if (dst_color_ref[dst_seq_rank] == dst_color_ref[myrank]){
-              memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                     (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-              recv_count_ref2[src_seq_rank]++;
-            }
-          }else if(gmv_desc_leftp->is_global == false){
-            memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                   (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-            recv_count_ref2[src_seq_rank]++;
-          }
-        }
-      }
-    }
-    break;
-  case 3:
-    for(i2=0;i2<src_num[src_sub_num_ref[2]];i2++){
-      for(i1=0;i1<src_num[src_sub_num_ref[1]];i1++){
-        for(i0=0;i0<src_num[src_sub_num_ref[0]];i0++){
-          dst_count[dst_sub_num_ref[2]]=i2;
-          src_count[src_sub_num_ref[2]]=i2;
-          dst_count[dst_sub_num_ref[1]]=i1;
-          src_count[src_sub_num_ref[1]]=i1;
-          dst_count[dst_sub_num_ref[0]]=i0;
-          src_count[src_sub_num_ref[0]]=i0;
-          dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-          dst_seq_loc=_XMP_gmove_calc_seq_loc(dst_count, dst_array_acc, dst_local_idx, dst_dim);
-          src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-          if (gmv_desc_rightp->is_global == true){
-            if (gmv_desc_leftp->is_global == true && create_subcomm_flag == 0){
-              if (dst_seq_rank == myrank){
-                memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                       (char *)recv_buf+recv_count_ref[src_seq_rank]*dst_type_size, dst_type_size);
-                recv_count_ref[src_seq_rank]++;
-              }
-            }else if(gmv_desc_leftp->is_global == true && create_subcomm_flag == 1){
-              if (dst_color_ref[dst_seq_rank] == dst_color_ref[myrank]){
-                memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                       (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-                recv_count_ref2[src_seq_rank]++;
-              }
-            }else if(gmv_desc_leftp->is_global == false){
-              memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                     (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-              recv_count_ref2[src_seq_rank]++;
-            }
-          }
-        }
-      }
-    }
-
-    break;
-  case 4:
-    for(i3=0;i3<src_num[src_sub_num_ref[3]];i3++){
-      for(i2=0;i2<src_num[src_sub_num_ref[2]];i2++){
-        for(i1=0;i1<src_num[src_sub_num_ref[1]];i1++){
-          for(i0=0;i0<src_num[src_sub_num_ref[0]];i0++){
-            dst_count[dst_sub_num_ref[3]]=i3;
-            src_count[src_sub_num_ref[3]]=i3;
-            dst_count[dst_sub_num_ref[2]]=i2;
-            src_count[src_sub_num_ref[2]]=i2;
-            dst_count[dst_sub_num_ref[1]]=i1;
-            src_count[src_sub_num_ref[1]]=i1;
-            dst_count[dst_sub_num_ref[0]]=i0;
-            src_count[src_sub_num_ref[0]]=i0;
-            dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-            dst_seq_loc=_XMP_gmove_calc_seq_loc(dst_count, dst_array_acc, dst_local_idx, dst_dim);
-            src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-            if (gmv_desc_rightp->is_global == true){
-              if (gmv_desc_leftp->is_global == true && create_subcomm_flag == 0){
-                if (dst_seq_rank == myrank){
-                  memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                         (char *)recv_buf+recv_count_ref[src_seq_rank]*dst_type_size, dst_type_size);
-                  recv_count_ref[src_seq_rank]++;
-                }
-              }else if(gmv_desc_leftp->is_global == true && create_subcomm_flag == 1){
-                if (dst_color_ref[dst_seq_rank] == dst_color_ref[myrank]){
-                  memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                         (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-                  recv_count_ref2[src_seq_rank]++;
-                }
-              }else if(gmv_desc_leftp->is_global == false){
-                memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                       (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-                recv_count_ref2[src_seq_rank]++;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    break;
-  case 5:
-    icount=0;
-    for(i4=0;i4<src_num[src_sub_num_ref[4]];i4++){
-      for(i3=0;i3<src_num[src_sub_num_ref[3]];i3++){
-        for(i2=0;i2<src_num[src_sub_num_ref[2]];i2++){
-          for(i1=0;i1<src_num[src_sub_num_ref[1]];i1++){
-            for(i0=0;i0<src_num[src_sub_num_ref[0]];i0++){
-              dst_count[dst_sub_num_ref[4]]=i4;
-              src_count[src_sub_num_ref[4]]=i4;
-              dst_count[dst_sub_num_ref[3]]=i3;
-              src_count[src_sub_num_ref[3]]=i3;
-              dst_count[dst_sub_num_ref[2]]=i2;
-              src_count[src_sub_num_ref[2]]=i2;
-              dst_count[dst_sub_num_ref[1]]=i1;
-              src_count[src_sub_num_ref[1]]=i1;
-              dst_count[dst_sub_num_ref[0]]=i0;
-              src_count[src_sub_num_ref[0]]=i0;
-              dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-              dst_seq_loc=_XMP_gmove_calc_seq_loc(dst_count, dst_array_acc, dst_local_idx, dst_dim);
-              src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-              if (gmv_desc_rightp->is_global == true){
-                if (gmv_desc_leftp->is_global == true && create_subcomm_flag == 0){
-                  if (dst_seq_rank == myrank){
-                    memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                           (char *)recv_buf+recv_count_ref[src_seq_rank]*dst_type_size, dst_type_size);
-                    recv_count_ref[src_seq_rank]++;
-                  }
-                }else if(gmv_desc_leftp->is_global == true && create_subcomm_flag == 1){
-                  if (dst_color_ref[dst_seq_rank] == dst_color_ref[myrank]){
-                    memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                           (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-                    recv_count_ref2[src_seq_rank]++;
-                  }
-                }else if(gmv_desc_leftp->is_global == false){
-                  memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                         (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-                  recv_count_ref2[src_seq_rank]++;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    break;
-  case 6:
-    icount=0;
-    for(i5=0;i5<src_num[src_sub_num_ref[5]];i5++){
-      for(i4=0;i4<src_num[src_sub_num_ref[4]];i4++){
-        for(i3=0;i3<src_num[src_sub_num_ref[3]];i3++){
-          for(i2=0;i2<src_num[src_sub_num_ref[2]];i2++){
-            for(i1=0;i1<src_num[src_sub_num_ref[1]];i1++){
-              for(i0=0;i0<src_num[src_sub_num_ref[0]];i0++){
-                dst_count[dst_sub_num_ref[5]]=i5;
-                src_count[src_sub_num_ref[5]]=i5;
-                dst_count[dst_sub_num_ref[4]]=i4;
-                src_count[src_sub_num_ref[4]]=i4;
-                dst_count[dst_sub_num_ref[3]]=i3;
-                src_count[src_sub_num_ref[3]]=i3;
-                dst_count[dst_sub_num_ref[2]]=i2;
-                src_count[src_sub_num_ref[2]]=i2;
-                dst_count[dst_sub_num_ref[1]]=i1;
-                src_count[src_sub_num_ref[1]]=i1;
-                dst_count[dst_sub_num_ref[0]]=i0;
-                src_count[src_sub_num_ref[0]]=i0;
-                dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-                dst_seq_loc=_XMP_gmove_calc_seq_loc(dst_count, dst_array_acc, dst_local_idx, dst_dim);
-                src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-                if (gmv_desc_rightp->is_global == true){
-                  if (gmv_desc_leftp->is_global == true && create_subcomm_flag == 0){
-                    if (dst_seq_rank == myrank){
-                      memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                             (char *)recv_buf+recv_count_ref[src_seq_rank]*dst_type_size, dst_type_size);
-                      recv_count_ref[src_seq_rank]++;
-                    }
-                  }else if(gmv_desc_leftp->is_global == true && create_subcomm_flag == 1){
-                    if (dst_color_ref[dst_seq_rank] == dst_color_ref[myrank]){
-                      memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                             (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-                      recv_count_ref2[src_seq_rank]++;
-                    }
-                  }else if(gmv_desc_leftp->is_global == false){
-                    memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                           (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-                    recv_count_ref2[src_seq_rank]++;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    break;
-  case 7:
-    icount=0;
-    for(i6=0;i6<src_num[src_sub_num_ref[6]];i6++){
-      for(i5=0;i5<src_num[src_sub_num_ref[5]];i5++){
-        for(i4=0;i4<src_num[src_sub_num_ref[4]];i4++){
-          for(i3=0;i3<src_num[src_sub_num_ref[3]];i3++){
-            for(i2=0;i2<src_num[src_sub_num_ref[2]];i2++){
-              for(i1=0;i1<src_num[src_sub_num_ref[1]];i1++){
-                for(i0=0;i0<src_num[src_sub_num_ref[0]];i0++){
-                  dst_count[dst_sub_num_ref[6]]=i6;
-                  src_count[src_sub_num_ref[6]]=i6;
-                  dst_count[dst_sub_num_ref[5]]=i5;
-                  src_count[src_sub_num_ref[5]]=i5;
-                  dst_count[dst_sub_num_ref[4]]=i4;
-                  src_count[src_sub_num_ref[4]]=i4;
-                  dst_count[dst_sub_num_ref[3]]=i3;
-                  src_count[src_sub_num_ref[3]]=i3;
-                  dst_count[dst_sub_num_ref[2]]=i2;
-                  src_count[src_sub_num_ref[2]]=i2;
-                  dst_count[dst_sub_num_ref[1]]=i1;
-                  src_count[src_sub_num_ref[1]]=i1;
-                  dst_count[dst_sub_num_ref[0]]=i0;
-                  src_count[src_sub_num_ref[0]]=i0;
-                  dst_seq_rank=_XMP_gmove_calc_seq_rank(dst_count, dst_rank_acc, dst_irank, dst_dim, d2e);
-                  dst_seq_loc=_XMP_gmove_calc_seq_loc(dst_count, dst_array_acc, dst_local_idx, dst_dim);
-                  src_seq_rank=_XMP_gmove_calc_seq_rank(src_count, src_rank_acc, src_irank, src_dim, s2e);
-                  if (gmv_desc_rightp->is_global == true){
-                    if (gmv_desc_leftp->is_global == true && create_subcomm_flag == 0){
-                      if (dst_seq_rank == myrank){
-                        memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                               (char *)recv_buf+recv_count_ref[src_seq_rank]*dst_type_size, dst_type_size);
-                        recv_count_ref[src_seq_rank]++;
-                      }
-                    }else if(gmv_desc_leftp->is_global == true && create_subcomm_flag == 1){
-                      if (dst_color_ref[dst_seq_rank] == dst_color_ref[myrank]){
-                        memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                               (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-                        recv_count_ref2[src_seq_rank]++;
-                      }
-                    }else if(gmv_desc_leftp->is_global == false){
-                      memcpy((char *)dst_addr+dst_seq_loc*dst_type_size,
-                             (char *)recv_buf+recv_count_ref2[src_seq_rank]*dst_type_size, dst_type_size);
-                      recv_count_ref2[src_seq_rank]++;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    break;
-  default:
-    _XMP_fatal("_XMP_: dst_sub_dim unknown a dimension number");
-  }
-
-  if (gmv_desc_rightp->is_global == true){
-    free(d2e);
-    free(s2e);
-  }
-  if (gmv_desc_rightp->is_global == true && gmv_desc_leftp->is_global == true){
-    free(dst_color_ref);
-  }
-
-  free(dst_request);
-  free(src_request);
-  free(dst_status);
-  free(src_status);
-
-  free(send_size_ref);
-  free(recv_size_ref);
-  free(recv_size_ref2);
-  free(send_count_ref);
-  free(recv_count_ref);
-  free(recv_count_ref2);
-  free(send_addr_ref);
-  free(recv_addr_ref);
-  free(recv_addr_ref2);
-  free(send_buf);
-  free(recv_buf);
-
-  for (int i=0;i<_XMP_N_MAX_DIM;i++){
-    free(src_local_idx[i]);
-    free(src_irank[i]);
-  }
-  for (int i=0;i<_XMP_N_MAX_DIM;i++){
-    free(dst_local_idx[i]);
-    free(dst_irank[i]);
-  }
-  free(src_local_idx);
-  free(src_irank);
-  free(dst_local_idx);
-  free(dst_irank);
-
-}
-#endif
 
 static void _XMP_gmove_garray_garray_block_cyclic(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
 						  int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
@@ -2694,18 +1386,20 @@ static int _XMP_gmove_garray_garray_opt(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gm
 }
 
 
-static void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp);
-
+static void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
+static void _XMP_gmove_in(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
+			  _XMP_comm_set_t *recv_comm_set[][_XMP_N_MAX_DIM]);
 
 void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
 				   int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
-				   int *src_l, int *src_u, int *src_s, unsigned long long *src_d){
+				   int *src_l, int *src_u, int *src_s, unsigned long long *src_d,
+				   int mode){
 
   // NOTE: asynchronous gmove aloways done by _XMP_gmove_1to1
   if (!is_async && gmv_desc_leftp->is_global && gmv_desc_rightp->is_global){
     if (_XMP_gmove_garray_garray_opt(gmv_desc_leftp, gmv_desc_rightp,
-				     dst_l, dst_u, dst_s, dst_d,
-				     src_l, src_u, src_s, src_d)) return;
+  				     dst_l, dst_u, dst_s, dst_d,
+  				     src_l, src_u, src_s, src_d)) return;
     // fall through
   }
 
@@ -2713,272 +1407,11 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
   /* 		      dst_l, dst_u, dst_s, dst_d, */
   /* 		      src_l, src_u, src_s, src_d); */
 
-  _XMP_gmove_1to1(gmv_desc_leftp, gmv_desc_rightp);
+  _XMP_gmove_1to1(gmv_desc_leftp, gmv_desc_rightp, mode);
 
   return;
 
 }
-
-
-/* void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d){ */
-
-/*   _XMP_array_t *dst_array=NULL; */
-/*   _XMP_array_t *src_array = gmv_desc_rightp->a_desc; */
-/*   _XMP_template_t *dst_template=NULL, *src_template=NULL; */
-/*   _XMP_nodes_t *dst_nodes=NULL, *src_nodes=NULL; */
-
-/*   void *dst_addr=NULL, *src_addr=NULL; */
-/*   int type=-1; */
-/*   size_t type_size=0; */
-/*   int dst_dim = gmv_desc_leftp->ndims; */
-/*   int src_dim = gmv_desc_rightp->ndims; */
-/*   int dst_num=-1, src_num=-1, dst_sub_dim=-1, src_sub_dim=-1; */
-/*   int dst_comm_size=-1, src_comm_size=-1; */
-/*   int exec_comm_size = _XMP_get_execution_nodes()->comm_size; */
-
-/*   if (gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == true){ */
-/*     dst_array = gmv_desc_leftp->a_desc; */
-/*     type = dst_array->type; */
-/*     type_size = dst_array->type_size; */
-/*     dst_addr = dst_array->array_addr_p; */
-/*     src_addr = src_array->array_addr_p; */
-/*     dst_template = dst_array->align_template; */
-/*     src_template = src_array->align_template; */
-/*     dst_nodes = dst_template->onto_nodes; */
-/*     src_nodes = src_template->onto_nodes; */
-/*     dst_comm_size = dst_nodes->comm_size; */
-/*     src_comm_size = src_nodes->comm_size; */
-/*   }else if(gmv_desc_leftp->is_global == false && gmv_desc_rightp->is_global == true){ */
-/*     dst_addr = gmv_desc_leftp->local_data; */
-/*     src_addr = src_array->array_addr_p; */
-/*     type = src_array->type; */
-/*     type_size = src_array->type_size; */
-/*   }else if(gmv_desc_leftp->is_global == true && gmv_desc_rightp->is_global == false){ */
-/*     dst_array = gmv_desc_leftp->a_desc; */
-/*     type = dst_array->type; */
-/*     type_size = dst_array->type_size; */
-/*     dst_addr = dst_array->array_addr_p; */
-/*     src_addr = gmv_desc_rightp->local_data; */
-/*   } */
-
-/*   for (int i=0;i<dst_dim;i++){ */
-/*     dst_num=_XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]); */
-/*     if (dst_num > 1) { */
-/*       dst_sub_dim++; */
-/*     } */
-/*   } */
-
-/*   for (int i=0;i<src_dim;i++){ */
-/*     src_num=_XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]); */
-/*     if (src_num > 1) { */
-/*       src_sub_dim++; */
-/*     } */
-/*   } */
-
-/*   if ((gmv_desc_leftp->is_global == true) && (gmv_desc_rightp->is_global == true)){ */
-/*     if ((exec_comm_size == dst_comm_size) && (exec_comm_size == src_comm_size)){ */
-/*         if (is_same_array_shape(dst_array, src_array) && */
-/*            is_same_template_shape(dst_array->align_template, src_array->align_template) && */
-/*            is_same_axis(dst_array, src_array) && */
-/*            is_same_offset(dst_array, src_array) && */
-/*            is_same_alignmanner(dst_array, src_array) && */
-/*            is_whole(gmv_desc_leftp) && is_whole(gmv_desc_rightp)) { */
-
-
-/*         for (int i = 0; i < dst_dim; i++) { */
-/*           dst_l[i]=dst_array->info[i].local_lower; */
-/*           dst_u[i]=dst_array->info[i].local_upper; */
-/*           dst_s[i]=dst_array->info[i].local_stride; */
-/*         } */
-
-/*         for (int i = 0; i < src_dim; i++) { */
-/*           src_l[i]=src_array->info[i].local_lower; */
-/*           src_u[i]=src_array->info[i].local_upper; */
-/*           src_s[i]=src_array->info[i].local_stride; */
-/*         } */
-
-/*         _XMP_gmove_localcopy_ARRAY(type, type_size, */
-/*                                    (void *)dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d, */
-/*                                    (void *)src_addr, src_dim, src_l, src_u, src_s, src_d); */
-/*         return; */
-/*       } */
-
-/*       if (is_same_array_shape(dst_array, src_array) && */
-/*           is_whole(gmv_desc_leftp) && is_whole(gmv_desc_rightp) && */
-/*           is_one_block(dst_array) && is_one_block(src_array) && */
-/*           (dst_array->dim >= dst_array->align_template->dim) && */
-/*           (src_array->dim >= src_array->align_template->dim)){ */
-/*         if (_XMP_gmove_transpose(gmv_desc_leftp, gmv_desc_rightp)) return; */
-/*       } */
-/*     } */
-/*   } */
-
-/* // temporary check flag : chk_flag */
-
-/*   int chk_flag=0, dst_chk_flag, src_chk_flag; */
-
-/*   if (gmv_desc_leftp->is_global == true */
-/*      && gmv_desc_rightp->is_global == true){ */
-
-/*      for(int i=0; i<dst_template->dim;i++){ */
-/*        if ((dst_template->chunk[i].dist_manner !=_XMP_N_DIST_BLOCK) */
-/*           && (dst_template->chunk[i].dist_manner !=_XMP_N_DIST_CYCLIC)){ */
-/*           dst_chk_flag=0; */
-/*           break; */
-/*        }else{ */
-/*           dst_chk_flag=1; */
-/*        } */
-/*      } */
-
-/*      for(int i=0; i<src_template->dim;i++){ */
-/*        if ((src_template->chunk[i].dist_manner !=_XMP_N_DIST_BLOCK) */
-/*           && (src_template->chunk[i].dist_manner !=_XMP_N_DIST_CYCLIC)){ */
-/*           src_chk_flag=0; */
-/*           break; */
-/*        }else{ */
-/*           src_chk_flag=1; */
-/*        } */
-/*      } */
-
-/*      if (dst_dim==dst_nodes->dim){ */
-/*         if(src_dim==src_nodes->dim){ */
-
-/*           for(int i=0; i<dst_dim;i++){ */
-/*             if ((dst_array->info[i].align_subscript != 0 ) */
-/*                || ((dst_array->info[i].align_manner !=_XMP_N_ALIGN_BLOCK) */
-/*                   && (dst_array->info[i].align_manner !=_XMP_N_ALIGN_CYCLIC))){ */
-/*               dst_chk_flag=0; */
-/*               break; */
-/*             } */
-/*           } */
-
-/*           for(int i=0; i<src_dim;i++){ */
-/*             if ((src_array->info[i].align_subscript != 0 ) */
-/*                || ((src_array->info[i].align_manner !=_XMP_N_ALIGN_BLOCK) */
-/*                   && (src_array->info[i].align_manner !=_XMP_N_ALIGN_CYCLIC))){ */
-/*                 src_chk_flag=0; */
-/*                 break; */
-/*              } */
-/*           } */
-
-/*         } */
-
-/*         if (is_whole(gmv_desc_leftp) && is_whole(gmv_desc_rightp)){ */
-/*         }else{ */
-/*           dst_chk_flag=0; */
-/*           src_chk_flag=0; */
-/*         } */
-
-/*      }else if (dst_dim < dst_nodes->dim){ */
-/*         if(src_dim < src_nodes->dim){ */
-/*           if((dst_nodes->dim != 2)  */
-/*             || (src_nodes->dim != 2) */
-/*             || (dst_array->info[0].align_subscript != 0) */
-/*             || (src_array->info[0].align_subscript != 0)){ */
-/*             dst_chk_flag=0; */
-/*             src_chk_flag=0; */
-/*           } */
-/*         }else{ */
-/*           dst_chk_flag=0; */
-/*           src_chk_flag=0; */
-/*         } */
-/*      }else if (dst_dim > dst_nodes->dim){ */
-/*         if (src_dim > src_nodes->dim){ */
-/*            if (_XMPF_running == 1 */
-/*                && _XMPC_running == 0){ */
-/*               dst_chk_flag=0; */
-/*               src_chk_flag=0; */
-/*            } */
-/*         }else{ */
-/*            dst_chk_flag=0; */
-/*            src_chk_flag=0; */
-/*         } */
-/*      } */
-
-/*      if (dst_chk_flag==1 && src_chk_flag==1) chk_flag=1; */
-
-/*      if ((exec_comm_size != dst_comm_size) || (exec_comm_size != src_comm_size)) chk_flag=0; */
-
-/*   } */
-
-/*   if (chk_flag == 1) { */
-
-/*     MPI_Datatype mpi_datatype; */
-/*     MPI_Type_contiguous(type_size, MPI_BYTE, &mpi_datatype); */
-/*     MPI_Type_commit(&mpi_datatype); */
-
-/*     _XMP_nodes_t *dst_array_nodes = dst_array->array_nodes; */
-/*     int dst_array_nodes_dim = dst_array_nodes->dim; */
-/*     int dst_array_nodes_ref[dst_array_nodes_dim]; */
-/*     for (int i = 0; i < dst_array_nodes_dim; i++) { */
-/*       dst_array_nodes_ref[i] = 0; */
-/*     } */
-
-
-/*     for(int i=0;i<dst_dim;i++){ */
-/*       if (dst_array->info[i].align_manner ==_XMP_N_ALIGN_BLOCK_CYCLIC){ */
-/*         break; */
-/*       } */
-/*     } */
-
-/*     for(int i=0;i<src_dim;i++){ */
-/*       if (src_array->info[i].align_manner ==_XMP_N_ALIGN_BLOCK_CYCLIC){ */
-/*         break; */
-/*       } */
-/*     } */
-
-/*     _XMP_nodes_t *src_array_nodes = src_array->array_nodes; */
-/*     int src_array_nodes_dim = src_array_nodes->dim; */
-/*     int src_array_nodes_ref[src_array_nodes_dim]; */
-
-/*     int dst_lower[dst_dim], dst_upper[dst_dim], dst_stride[dst_dim]; */
-/*     int src_lower[src_dim], src_upper[src_dim], src_stride[src_dim]; */
-/*     do { */
-/*       for (int i = 0; i < dst_dim; i++) { */
-/*         dst_lower[i] = dst_l[i]; dst_upper[i] = dst_u[i]; dst_stride[i] = dst_s[i]; */
-/*       } */
-
-/*       for (int i = 0; i < src_dim; i++) { */
-/*         src_lower[i] = src_l[i]; src_upper[i] = src_u[i]; src_stride[i] = src_s[i]; */
-/*       } */
-
-/*       if (_XMP_calc_global_index_BCAST(src_dim, src_lower, src_upper, src_stride, */
-/*                                      dst_array, dst_array_nodes_ref, dst_lower, dst_upper, dst_stride)) { */
-/*         for (int i = 0; i < src_array_nodes_dim; i++) { */
-/*           src_array_nodes_ref[i] = 0; */
-/*         } */
-
-/*         int recv_lower[dst_dim], recv_upper[dst_dim], recv_stride[dst_dim]; */
-/*         int send_lower[src_dim], send_upper[src_dim], send_stride[src_dim]; */
-/*         do { */
-/*           for (int i = 0; i < dst_dim; i++) { */
-/*             recv_lower[i] = dst_lower[i]; recv_upper[i] = dst_upper[i]; recv_stride[i] = dst_stride[i]; */
-/*           } */
-
-/*           for (int i = 0; i < src_dim; i++) { */
-/*             send_lower[i] = src_lower[i]; send_upper[i] = src_upper[i]; send_stride[i] = src_stride[i]; */
-/*           } */
-
-/*           if (_XMP_calc_global_index_BCAST(dst_dim, recv_lower, recv_upper, recv_stride, */
-/*                                          src_array, src_array_nodes_ref, send_lower, send_upper, send_stride)) { */
-/*             _XMP_sendrecv_ARRAY(type, type_size, &mpi_datatype, */
-/*                               dst_array, dst_array_nodes_ref, */
-/*                               recv_lower, recv_upper, recv_stride, dst_d, */
-/*                               src_array, src_array_nodes_ref, */
-/*                               send_lower, send_upper, send_stride, src_d); */
-/*           } */
-/*         } while (_XMP_get_next_rank(src_array_nodes, src_array_nodes_ref)); */
-/*       } */
-/*     } while (_XMP_get_next_rank(dst_array_nodes, dst_array_nodes_ref)); */
-
-/*     MPI_Type_free(&mpi_datatype); */
-
-/*   }else { */
-
-/*     _XMP_gmove_1to1(gmv_desc_leftp, gmv_desc_rightp, dst_l, dst_u, dst_s, dst_d, src_l, src_u, src_s, src_d); */
-
-/*   } */
-/* } */
 
 
 void (*_XMP_pack_comm_set)(void *sendbuf, int sendbuf_size,
@@ -3071,7 +1504,8 @@ void _XMP_gmove_BCAST_ARRAY(_XMP_array_t *src_array, int type, size_t type_size,
 
   _XMP_gmove_array_array_common(&gmv_desc_leftp, &gmv_desc_rightp,
 				dst_l, dst_u, dst_s, dst_d,
-				src_l, src_u, src_s, src_d);
+				src_l, src_u, src_s, src_d,
+				mode);
 
   _XMP_finalize_array_desc(a);
 
@@ -3166,7 +1600,7 @@ void _XMP_gmove_HOMECOPY_ARRAY(_XMP_array_t *dst_array, int type, size_t type_si
     src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
   }
 
-  int mode = va_arg(args, int);
+  //int mode = va_arg(args, int);
 
   va_end(args);
 
@@ -3304,7 +1738,8 @@ void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
 
   _XMP_gmove_array_array_common(&gmv_desc_leftp, &gmv_desc_rightp,
 				dst_l, dst_u, dst_s, dst_d,
-				src_l, src_u, src_s, src_d); 
+				src_l, src_u, src_s, src_d,
+				mode); 
 }
 
 
@@ -4285,7 +2720,7 @@ get_comm_list(_XMP_gmv_desc_t *gmv_desc0, _XMP_gmv_desc_t *gmv_desc1,
 
 
 static void
-_XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp){
+_XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int mode){
 
   _XMP_array_t *lhs_array = gmv_desc_leftp->a_desc;
   int *lhs_lb = gmv_desc_leftp->lb;
@@ -4372,6 +2807,8 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
       free_csd(rhs_owner_ref_csd[rank][adim]);
     }
   }
+
+  if (mode == _XMP_N_GMOVE_NORMAL){
 
   //
   // Allocate buffers
@@ -4461,6 +2898,16 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   _XMP_free(sendbuf);
   _XMP_free(recvbuf);
 
+  }
+#ifdef _XMP_MPI3_ONESIDED
+  else if (mode == _XMP_N_GMOVE_IN){
+    _XMP_gmove_in(gmv_desc_leftp, gmv_desc_rightp, recv_comm_set);
+  }
+  else { // mode == _XMP_N_GMOVE_OUT
+    //_XMP_gmove_out(gmv_desc_leftp, gmv_desc_rightp, send_comm_set);
+  }
+#endif
+
   for (int rank = 0; rank < n_exec_nodes; rank++){
     for (int adim = 0; adim < n_rhs_dims; adim++){
       free_comm_set(send_comm_set[rank][adim]);
@@ -4473,3 +2920,224 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   _XMP_free(recv_comm_set);
 
 }
+
+
+#ifdef _XMP_MPI3_ONESIDED
+
+typedef struct _XMP_gmv_section_type {
+  int ndims;
+  long lb[_XMP_N_MAX_DIM];
+  long len[_XMP_N_MAX_DIM];
+  long st[_XMP_N_MAX_DIM];
+} _XMP_gmv_section_t;
+
+typedef struct _XMP_gmv_inout_list_type {
+  _XMP_gmv_section_t org;
+  _XMP_gmv_section_t tgt;
+  struct _XMP_gmv_inout_list_type *next;
+} _XMP_gmv_inout_list_t;
+
+
+static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
+				       _XMP_gmv_desc_t *gmv_desc_tgt,
+				       _XMP_comm_set_t *org_comm_set[],
+				       _XMP_gmv_inout_list_t *gmv_inout_listh){
+
+  _XMP_array_t *org_array = gmv_desc_org->a_desc;
+  int *org_lb = gmv_desc_org->lb;
+  int *org_st = gmv_desc_org->st;
+  int org_ndims = gmv_desc_org->ndims;
+
+  _XMP_array_t *tgt_array = gmv_desc_tgt->a_desc;
+  int *tgt_lb = gmv_desc_tgt->lb;
+  int *tgt_st = gmv_desc_tgt->st;
+  int tgt_ndims = gmv_desc_tgt->ndims;
+
+  //  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
+  //  int n_exec_nodes = exec_nodes->comm_size;
+
+  _XMP_comm_set_t *c[org_ndims];
+  int org_i[org_ndims], tgt_i[tgt_ndims];
+  long org_len[org_ndims], tgt_len[tgt_ndims];
+
+  _XMP_gmv_inout_list_t *gmv_inout_list = gmv_inout_listh;
+
+  switch (org_ndims){
+
+  case 1:
+    break;
+
+  case 2:
+
+    for (c[0] = org_comm_set[0]; c[0]; c[0] = c[0]->next){
+      org_i[0] = c[0]->l;
+      org_len[0] = c[0]->u - c[0]->l + 1;
+      tgt_i[0] = (org_i[0] - org_lb[0]) * tgt_st[0] / org_st[0] + tgt_lb[0];
+      tgt_len[0] = c[0]->u - c[0]->l + 1;
+    for (c[1] = org_comm_set[1]; c[1]; c[1] = c[1]->next){
+      org_len[1] = c[1]->u - c[1]->l + 1;
+      org_i[1] = c[1]->l;
+      tgt_i[1] = (org_i[1] - org_lb[1]) * tgt_st[1] / org_st[1] + tgt_lb[1];
+      tgt_len[1] = c[1]->u - c[1]->l + 1;
+
+      int lidx[_XMP_N_MAX_DIM];
+
+      _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
+      t->next = NULL;
+
+      xmp_array_gtol(org_array, org_i, lidx);
+      t->org.ndims = org_ndims;
+
+      if (org_array->order == MPI_ORDER_FORTRAN){
+	for (int i = 0; i < org_ndims; i++){
+	  t->org.lb[i] = lidx[org_ndims - 1 - i];
+	  t->org.len[i] = org_len[org_ndims - 1 - i];
+	  t->org.st[i] = 1;
+	}
+      }
+      else {
+	for (int i = 0; i < org_ndims; i++){
+	  t->org.lb[i] = lidx[i];
+	  t->org.len[i] = org_len[i];
+	  t->org.st[i] = 1;
+	}
+      }
+
+      xmp_array_gtol(tgt_array, tgt_i, lidx);
+      t->tgt.ndims = tgt_ndims;
+
+      if (org_array->order == MPI_ORDER_FORTRAN){
+	for (int i = 0; i < tgt_ndims; i++){
+	  t->tgt.lb[i] = lidx[tgt_ndims - 1 - i];
+	  t->tgt.len[i] = tgt_len[tgt_ndims - 1 - i];
+	  t->tgt.st[i] = 1;
+	}
+      }
+      else {
+	for (int i = 0; i < tgt_ndims; i++){
+	  t->tgt.lb[i] = lidx[i];
+	  t->tgt.len[i] = tgt_len[i];
+	  t->tgt.st[i] = 1;
+	}
+      }
+
+      gmv_inout_list->next = t;
+      gmv_inout_list = t;
+
+    }
+    }
+
+    break;
+
+  default:
+    _XMP_fatal("wrong array dimension");
+
+  }
+
+
+}
+
+
+static void print_gmv_inout_list(_XMP_gmv_inout_list_t *gmv_inout_listh){
+
+  for (_XMP_gmv_inout_list_t *gmv_inout_list = gmv_inout_listh;
+       gmv_inout_list; gmv_inout_list = gmv_inout_list->next){
+
+    _XMP_gmv_section_t *org = &gmv_inout_list->org;
+
+    printf(" ORG: (");
+    for (int i = 0; i < org->ndims; i++){
+      printf("%ld:%ld:%ld, ", org->lb[i], org->len[i], org->st[i]);
+    } 
+    printf(")\n");
+
+    _XMP_gmv_section_t *tgt = &gmv_inout_list->tgt;
+    
+    printf(" TGT: (");
+    for (int i = 0; i < tgt->ndims; i++){
+      printf("%ld:%ld:%ld, ", tgt->lb[i], tgt->len[i], tgt->st[i]);
+    }
+    printf(")\n");
+
+  }
+
+}
+
+// a(:) = b(:)[i]
+static void _XMP_gmove_in(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
+			  _XMP_comm_set_t *org_comm_set[][_XMP_N_MAX_DIM]){
+
+  _XMP_array_t *lhs_array = gmv_desc_leftp->a_desc;
+  int lhs_ndims = gmv_desc_leftp->ndims;
+  _XMP_coarray_t *lhs_coarray = lhs_array->coarray;
+  void *lhs_addr = lhs_array->array_addr_p;
+
+  _XMP_array_t *rhs_array = gmv_desc_rightp->a_desc;
+  int rhs_ndims = gmv_desc_rightp->ndims;
+  _XMP_coarray_t *rhs_coarray = rhs_array->coarray;
+
+  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
+  int myrank = exec_nodes->comm_rank;
+  int n_exec_nodes = exec_nodes->comm_size;
+
+  long elmts[lhs_ndims];
+  long distance[lhs_ndims];
+
+  if (lhs_array->order == MPI_ORDER_FORTRAN){
+    for (int i = 0; i < lhs_ndims; i++){
+      elmts[i] = lhs_array->info[lhs_ndims - 1 - i].alloc_size;
+      distance[i] = lhs_array->info[lhs_ndims - 1 - i].dim_acc * lhs_array->type_size;
+    }
+  }
+  else {
+    for (int i = 0; i < lhs_ndims; i++){
+      elmts[i] = lhs_array->info[i].alloc_size;
+      distance[i] = lhs_array->info[i].dim_acc;
+    }
+  }
+
+  for (int tgt_node = 0; tgt_node < n_exec_nodes; tgt_node++){
+
+    //if (myrank == 1 && tgt_node == 0){
+
+    int ncoord[_XMP_N_MAX_DIM];
+    _XMP_calc_rank_array(exec_nodes, ncoord, tgt_node);
+    for (int i = 0; i < n_exec_nodes; i++) ncoord[i]++; // to one-based.
+    _XMP_coarray_rdma_image_set_n(n_exec_nodes, ncoord);
+
+    _XMP_gmv_inout_list_t gmv_inout_listh;
+    gmv_inout_listh.next = NULL;
+    _XMP_conv_comm_set_to_list(gmv_desc_leftp, gmv_desc_rightp,
+			       org_comm_set[tgt_node], &gmv_inout_listh);
+
+    for (_XMP_gmv_inout_list_t *gmv_inout_list = gmv_inout_listh.next;
+	 gmv_inout_list; gmv_inout_list = gmv_inout_list->next){
+
+      printf("[%d gets from %d]\n", myrank, tgt_node);
+      print_gmv_inout_list(gmv_inout_list);
+
+      long *lhs_lbound = gmv_inout_list->org.lb;
+      long *lhs_length = gmv_inout_list->org.len;
+      long *lhs_stride = gmv_inout_list->org.st;
+      long *rhs_lbound = gmv_inout_list->tgt.lb;
+      long *rhs_length = gmv_inout_list->tgt.len;
+      long *rhs_stride = gmv_inout_list->tgt.st;
+
+      // set lhs
+      _XMP_coarray_rdma_array_set_n(lhs_ndims, lhs_lbound, lhs_length, lhs_stride, elmts, distance);
+
+      // set rhs
+      _XMP_coarray_rdma_coarray_set_n(rhs_ndims, rhs_lbound, rhs_length, rhs_stride);
+
+      // do comms.
+      _XMP_coarray_rdma_do(_XMP_N_COARRAY_GET, rhs_coarray, lhs_addr, lhs_coarray);
+
+    }
+    //}
+  }
+
+  // free gmv_inout_list
+
+}
+
+#endif

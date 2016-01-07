@@ -133,6 +133,11 @@ extern void _XMP_coarray_malloc_info_n(const long*, const int, const size_t);
 extern void _XMP_coarray_malloc_image_info_n(const int*, const int);
 extern void _XMP_coarray_attach(_XMP_coarray_t*, void*, const size_t);
 extern void _XMP_coarray_detach(_XMP_coarray_t*);
+extern void _XMP_coarray_rdma_coarray_set_n(const int, const long[], const long[], const long[]);
+extern void _XMP_coarray_rdma_array_set_n(const int, const long[], const long[], const long[],
+					  const long[], const long[]);
+extern void _XMP_coarray_rdma_image_set_n(const int, const int[]);
+extern void _XMP_coarray_rdma_do(const int, void*, void*, void*);
 #endif
 
 extern void _XMP_onesided_initialize(int, char **);
@@ -184,7 +189,7 @@ extern int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int
 					int *src_l, int *src_u, int *src_s);
 extern void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
 				      int type, size_t type_size, ...);
-extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d);
+extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d, int mode);
 extern unsigned long long _XMP_gtol_calc_offset(_XMP_array_t *a, int g_idx[]);
   //extern void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp);
 

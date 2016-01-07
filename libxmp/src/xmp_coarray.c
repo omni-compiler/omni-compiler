@@ -598,6 +598,24 @@ void _XMP_coarray_rdma_coarray_set_7(const long start1, const long length1, cons
 }
 
 /**
+   Set transfer n-dim coarray information
+*/
+void _XMP_coarray_rdma_coarray_set_n(const int n,
+				     const long start[], const long length[], const long stride[]) 
+{
+  _transfer_coarray_elmts = 1;
+  _coarray_dims           = n;
+  _coarray                = malloc(sizeof(_XMP_array_section_t) * _coarray_dims);
+
+  for (int i = 0; i < n; i++){
+    _transfer_coarray_elmts *= length[i];
+    _coarray[i].start       = start[i];
+    _coarray[i].length      = length[i];
+    _coarray[i].stride      = ((length[i] == 1)? 1 : stride[i]);
+  }
+}
+
+/**
    Set transfer 1-dim array information
  */
 void _XMP_coarray_rdma_array_set_1(const long start1, const long length1, const long stride1,
@@ -885,6 +903,27 @@ void _XMP_coarray_rdma_array_set_7(const long start1, const long length1, const 
 }
 
 /**
+   Set transfer n-dim array information
+*/
+void _XMP_coarray_rdma_array_set_n(const int n,
+				   const long start[], const long length[], const long stride[],
+				   const long elmts[], const long distance[])
+{
+  _transfer_array_elmts = 1;
+  _array_dims           = n;
+  _array                = malloc(sizeof(_XMP_array_section_t) * _array_dims);
+
+  for (int i = 0; i < n; i++){
+    _transfer_array_elmts *= length[i];
+    _array[i].start       = start[i];
+    _array[i].length      = length[i];
+    _array[i].stride      = ((length[i] == 1)? 1 : stride[i]);
+    _array[i].elmts       = elmts[i];
+    _array[i].distance    = distance[i];
+  }
+}
+
+/**
    Set 1-dim image information
  */
 void _XMP_coarray_rdma_image_set_1(const int n1)
@@ -976,6 +1015,19 @@ void _XMP_coarray_rdma_image_set_7(const int n1, const int n2, const int n3, con
   _image_num[4] = n5;
   _image_num[5] = n6;
   _image_num[6] = n7;
+}
+
+/**
+   Set n-dim image information
+*/
+void _XMP_coarray_rdma_image_set_n(const int ndims, const int n[])
+{
+  _image_dims   = ndims;
+  _image_num    = malloc(sizeof(int) * _image_dims);
+
+  for (int i = 0; i < ndims; i++){
+    _image_num[i] = n[i];
+  }
 }
 
 /*************************************************************************/
