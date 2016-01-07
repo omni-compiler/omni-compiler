@@ -12,6 +12,7 @@ public class ACC {
   private static boolean errorFlag      = false;
   
   public static boolean useReadOnlyDataCache = true;
+  public static int defaultVectorLength = 256;
 
   public static final int ACC_ASYNC_SYNC = -1;
   public static final int ACC_ASYNC_NOVAL = -2;
@@ -26,6 +27,7 @@ public class ACC {
   public static final String PRESENT_OR_COPY_DATA_FUNC_NAME = "_ACC_pcopy_data";
   public static final String FIND_DATA_FUNC_NAME = "_ACC_find_data";
 
+  public static int version = 20;
 
   public static void exitByError() {
     if (errorFlag) System.exit(1);

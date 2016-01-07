@@ -18,10 +18,7 @@ echo "[F_scope]"
 
 for f in @OUT@; do
     echo $f
-    case $f in 
-        *NGB)  echo "...skip" ;;
-        *)     mpiexec -n 3 ./$f ;;
-    esac
+    mpiexec -n 3 ./$f
 done
 
 

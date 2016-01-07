@@ -1,6 +1,7 @@
 #ifndef _XMP_DATA_STRUCT
 #define _XMP_DATA_STRUCT
 #include <mpi.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include "xmp_constant.h"
 #if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
@@ -261,24 +262,24 @@ typedef struct xmp_coarray{
   size_t elmt_size; // Element size of a coarray. A unit of it is Byte.
                     // e.g.) "int a[10]:[*]" is 4.
 
-  unsigned int coarray_dims; // Number of dimensions of coarray.
-                             // e.g.) "int a[10][20]:[4][2][*]" is 2.
+  int coarray_dims; // Number of dimensions of coarray.
+                    // e.g.) "int a[10][20]:[4][2][*]" is 2.
 
-  unsigned int *coarray_elmts; // Number of elements of each dimension of a coarray.
-                               // e.g.) If "int a[10][20]:[*]", coarray_elmts[0] is 10, coarray_elmts[1] is 20.
-                               //       If a coarray is scalar, coarray_elmts[0] is 1.
+  long *coarray_elmts; // Number of elements of each dimension of a coarray.
+                       // e.g.) When "int a[10][20]:[*]", coarray_elmts[0] is 10, coarray_elmts[1] is 20.
+                       //       If a coarray is scalar, coarray_elmts[0] is 1.
 
-  unsigned int *distance_of_coarray_elmts; // Distance between each dimension of coarray. A unit of the distance is Byte.
-                                           // e.g.) If "int a[10][20][30]:[*]", distance_of_coarray_elmts[0] is 2400 (20*30*sizeof(int)),
-                                           //       distance_of_coarray_elmts[1] is 120 (30*sizeof(int)),
-                                           //       distance_of_coarray_elmts[0] is 4 (sizeof(int)).
+  long *distance_of_coarray_elmts; // Distance between each dimension of coarray. A unit of the distance is Byte.
+                                   // e.g.) When "int a[10][20][30]:[*]", distance_of_coarray_elmts[0] is 2400 (20*30*sizeof(int)),
+                                   //       distance_of_coarray_elmts[1] is 120 (30*sizeof(int)),
+                                   //       distance_of_coarray_elmts[0] is 4 (sizeof(int)).
 
-  unsigned int image_dims; // Number of dimensions of image set.
-                           // e.g.) If "int a[10][20]:[4][2][*]" is 3.
+  int image_dims; // Number of dimensions of image set.
+                  // e.g.) When "int a[10][20]:[4][2][*]" is 3.
 
-  unsigned int *distance_of_image_elmts; // Distance between each dimension of image set.
-                                         // e.g.) If "int a[10][20]:[4][2][*]", distance_of_image_elmts[0] is 1,
-                                         //       distance_of_image_elmts[1] is 4, distance_of_image_elmts[2] is 8.
+  int *distance_of_image_elmts; // Distance between each dimension of image set.
+                                // e.g.) When "int a[10][20]:[4][2][*]", distance_of_image_elmts[0] is 1,
+                                //       distance_of_image_elmts[1] is 4, distance_of_image_elmts[2] is 8.
 #ifdef _XMP_MPI3_ONESIDED
   MPI_Win win;
   //#ifdef _XMP_XACC
@@ -290,14 +291,14 @@ typedef struct xmp_coarray{
 }_XMP_coarray_t;
 
 typedef struct _XMP_array_section{
-  long long start;
-  long long length;
-  long long stride;
-  long long elmts;    // Number of elements in each dimension
-  long long distance; // Distance between each dimension of an array.
-                      // e.g.) If "int a[10][20][30]", _XMP_array_section_t[0].distance is 20*30*sizeof(int),
-                      //       _XMP_array_section_t[1].distance is 30*sizeof(int), 
-                      //       _XMP_array_section_t[0].distance is sizeof(int),
+  long start;
+  long length;
+  long stride;
+  long elmts;    // Number of elements in each dimension
+  long distance; // Distance between each dimension of an array.
+                 // e.g.) When "int a[10][20][30]", _XMP_array_section_t[0].distance is 20*30*sizeof(int),
+                 //       _XMP_array_section_t[1].distance is 30*sizeof(int), 
+                 //       _XMP_array_section_t[0].distance is sizeof(int),
 } _XMP_array_section_t;
 
 typedef struct _XMP_gmv_desc_type

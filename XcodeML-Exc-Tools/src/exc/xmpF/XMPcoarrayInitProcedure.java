@@ -63,7 +63,7 @@ public class XMPcoarrayInitProcedure {
   /**
     an example of source program:
     --------------------------------------------
-      subroutine EX1(V4)  or  module EX1
+      subroutine EX1  or  module EX1
         use M1   !! contains "real :: V1(10,20)[4,*]"  ! use-associated static coarray
         complex(8), save :: V2[0:*]                    ! local static coarray
         !! other coarrays, i.e., allocatable coarrays and dummy coarrays are handled by
@@ -75,18 +75,17 @@ public class XMPcoarrayInitProcedure {
 
     converted program and generated subroutines:
     --------------------------------------------
-      subroutine xmpf_traverse_coarraysize_ex1
-        call xmpf_coarray_count_size(200, 4)
+      subroutine xmpf_traverse_countcoarray_ex1
         call xmpf_coarray_count_size(1, 16)
       end subroutine
 
       subroutine xmpf_traverse_initcoarray_ex1
-        integer(8) :: DP_V1, DP_V2
-        integer(8) :: CP_V1, CP_V2
+        integer(8) :: DP_V2
+        integer(8) :: CP_V2
         common /xmpf_DP_EX1/ DP_V2
         common /xmpf_CP_EX1/ CP_V2
 
-        call xmpf_coarray_share_pool(DP_V2, CP_V2, 1, 16, "V2", 2)
+        call xmpf_coarray_alloc_static(DP_V2, CP_V2, 1, 16, "V2", 2)
         call xmpf_coarray_set_coshape(DP_V2, 1, 0)
       end subroutine
     --------------------------------------------
@@ -101,12 +100,14 @@ public class XMPcoarrayInitProcedure {
 
   public void run(int version) {
     for (XMPcoarray coarray: staticCoarrays) {
-      int elem = coarray.getElementLength();
-      int count = coarray.getTotalArraySize();
       String descPtrName = coarray.getDescPointerName();
       String crayPtrName = coarray.getCrayPointerName();
 
+      /**************
+      int elem = coarray.getElementLength();
+      int count = coarray.getTotalArraySize();
       addForVarText(descPtrName, crayPtrName, count, elem);
+      *******************/
     }
 
     /* generate the two subroutines in the same file
@@ -125,12 +126,12 @@ public class XMPcoarrayInitProcedure {
       break;
 
     case 2:   // build and link it at the tail of XMPenv
-      buildSubroutine_coarraysize();
+      buildSubroutine_countcoarray();
       buildSubroutine_initcoarray();
       break;
 
     case 3:   // similar to case 2, with changing descr-ID of serno to pointer
-      buildSubroutine_coarraysize();
+      buildSubroutine_countcoarray();
       buildSubroutine_initcoarray();
       break;
     }
@@ -139,23 +140,28 @@ public class XMPcoarrayInitProcedure {
 
   /*
    *  Version 2 & 3:
-   *    buildSubroutine_coarraysize
+   *    buildSubroutine_countcoarray
    *    buildSubroutine_initcoarray
    *
    *   build subroutines as Xobject and
    *   link them at the tail of XMPenv
    */
 
-  private void buildSubroutine_coarraysize() {
+  private void buildSubroutine_countcoarray() {
     BlockList body = Bcons.emptyBody();         // new body of the building procedure
     Xobject decls = Xcons.List();
 
     for (XMPcoarray coarray: staticCoarrays) {
       // "CALL coarray_count_size(count, elem)"
-      int elem = coarray.getElementLength();
+      Xobject elem = coarray.getElementLengthExpr();
+
+      if (elem == null) {
+        XMP.error("current restriction: " + 
+                  "could not find the element length of: "+coarray.getName());
+      }
+
       int count = coarray.getTotalArraySize();
-      Xobject args = Xcons.List(Xcons.IntConstant(count),
-                                Xcons.IntConstant(elem));
+      Xobject args = Xcons.List(Xcons.IntConstant(count), elem);
       Ident subr = body.declLocalIdent(COUNT_SIZE_NAME,
                                        BasicType.FexternalSubroutineType);
       body.add(subr.callSubroutine(args));
@@ -175,7 +181,9 @@ public class XMPcoarrayInitProcedure {
     Xobject decls = Xcons.List();
 
     for (XMPcoarray coarray: staticCoarrays) {
-      int elem = coarray.getElementLength();
+      Xobject elem = coarray.getElementLengthExpr();
+      if (elem==null)
+        XMP.fatal("elem must not be null.");
       int count = coarray.getTotalArraySize();
       String descPtrName = coarray.getDescPointerName();
       String crayPtrName = coarray.getCrayPointerName();
@@ -220,14 +228,14 @@ public class XMPcoarrayInitProcedure {
       decls.add(commonStmt1);
       decls.add(commonStmt2);
 
-      // "CALL coarray_share_pool(descPtr, crayPtr, count, elem, name, namelen)"
+      // "CALL coarray_alloc_static(descPtr, crayPtr, count, elem, name, namelen)"
       String varName = coarray.getName();
       Xobject varNameObj = 
         Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
       Xobject args = Xcons.List(descPtrId,
                                 crayPtrId,
                                 Xcons.IntConstant(count),
-                                Xcons.IntConstant(elem),
+                                elem,
                                 varNameObj,
                                 Xcons.IntConstant(varName.length()));
       if (args.hasNullArg())
@@ -258,8 +266,9 @@ public class XMPcoarrayInitProcedure {
       Xobject setCoshape = coarray.makeStmt_setCoshape(env);
       blist2.add(setCoshape);
 
-      Xobject setVarName = coarray.makeStmt_setVarName(env);
-      blist2.add(setVarName);
+      // no longer needed. coarray_alloc_static includes setting of the name.
+      //Xobject setVarName = coarray.makeStmt_setVarName(env);
+      //blist2.add(setVarName);
     }
 
     funcDef2.Finalize();
@@ -271,7 +280,7 @@ public class XMPcoarrayInitProcedure {
   /*
    *  Version 1 (incomplete handling of allocatable coarray)
    */
-
+  /**************************
   private void addForVarText(String varName1, String varName2, 
                              int count, int elem) {
     varNames1.add(varName1);
@@ -282,8 +291,9 @@ public class XMPcoarrayInitProcedure {
                       varName1 + " , " +varName2 + " , " +
                       count + " , " + elem + " )");
   }
+  ****************************/
 
-
+  /**************************
   private void fillinSizeProcText() {
     if (varNames1.size() == 0)
       return;
@@ -298,8 +308,9 @@ public class XMPcoarrayInitProcedure {
     text += "END SUBROUTINE " + sizeProcName + "\n";
     procTexts.add(text);
   }
+  ****************************/
 
-
+  /**************************
   private void fillinInitProcText() {
     if (varNames1.size() == 0)
       return;
@@ -343,6 +354,7 @@ public class XMPcoarrayInitProcedure {
     text += "END SUBROUTINE " + initProcName + "\n";
     procTexts.add(text);
   }
+  *************************/
 
 
   /*

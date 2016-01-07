@@ -16,7 +16,10 @@ import java.util.*;
 public class XMPcoindexObj {
   // constants
   final static String COARRAYPUT_PREFIX = "xmpf_coarray_put";
+
   final static String COARRAYGET_PREFIX = "xmpf_coarray_get";
+  final static String COARRAYGET_SCALAR_NAME = "xmpf_coarray_get_scalar";
+  final static String COARRAYGET_ARRAY_NAME = "xmpf_coarray_get_array";
 
   // attributes
   String name;
@@ -209,8 +212,36 @@ public class XMPcoindexObj {
   //  run
   //------------------------------
   public Xobject toFuncRef() {
-    // type6 used
+    Xtype type = getType();
+    Xobject funcRef;
+    if (type.isStruct())
+      funcRef = toFuncRef_struct();
+    else
+      funcRef = toFuncRef_basic();
+    return funcRef;
+  }
+
+  private Xobject toFuncRef_struct() {
+    // transfer(get_as_string, obj)
+
+    // call runtime as character(len=1), dimension(sizeof(obj))
+    Xobject mold = Xcons.FcharacterConstant(Xtype.FcharacterType, " ", null);
+    Xobject funcRef = toFuncRef_core(mold);  
+
+    // cast operation
+    Ident transferId = declIntIntrinsicIdent("transfer");
+    Xobject castExpr = transferId.Call(Xcons.List(funcRef, getIdent()));
+
+    return castExpr;
+  }
+
+  private Xobject toFuncRef_basic() {
     Xobject mold = getObj().getArg(0).getArg(0);   // object w/o coindex
+    return toFuncRef_core(mold);
+  }
+
+  private Xobject toFuncRef_core(Xobject mold) {
+    // type6 used
     Xobject actualArgs = _makeActualArgs_type6(mold);
 
     Xtype xtype = getType().copy();
@@ -219,10 +250,14 @@ public class XMPcoindexObj {
     String funcName = COARRAYGET_PREFIX + exprRank + "d";
     Ident funcIdent = getEnv().findVarIdent(funcName, null);
     if (funcIdent == null) {
+      // bug460: funcIdent could not find because the module declaring the
+      // name is not defined in the same file.
       Xtype baseType = _getBasicType(xtype);   // regard type as its basic type
                                                //// RETHINK! It might be neutral type?
       Xtype funcType = Xtype.Function(baseType);
       funcIdent = getEnv().declExternIdent(funcName, funcType);
+      // This workaround for bug460 does not work well.
+      //funcIdent = Ident.Fident(funcName, null);
     }                                           
 
     Xobject funcRef = funcIdent.Call(actualArgs);

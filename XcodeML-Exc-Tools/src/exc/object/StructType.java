@@ -26,8 +26,9 @@ public class StructType extends CompositeType
     @Override
     public Xobject getElementLengthExpr(Block block)
     {
-        throw new UnsupportedOperationException
-          ("Restriction: could not get size of a structure");
+      //throw new UnsupportedOperationException
+      //("Restriction: could not get size of a structure");
+      return null;
     }
 
     @Override

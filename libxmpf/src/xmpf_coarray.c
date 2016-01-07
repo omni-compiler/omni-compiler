@@ -193,19 +193,6 @@ void _XMPF_checkIfInTask(char *msgopt)
 }
 
 
-void _XMPF_coarrayDebugPrint(char *format, ...)
-{
-  if (!_XMPF_coarrayMsg)
-    return;
-
-  char work[1000];
-  va_list list;
-  va_start(list, format);
-  vsprintf(work, format, list);
-  fprintf(stderr, "CAF[%d] %s", XMPF_this_image, work);
-  va_end(list);
-}
-
 void xmpf_coarray_fatal_(char *msg, int *msglen)
 {
   _XMPF_coarrayFatal("%*s", *msglen, msg);
@@ -213,12 +200,26 @@ void xmpf_coarray_fatal_(char *msg, int *msglen)
 
 void _XMPF_coarrayFatal(char *format, ...)
 {
-  char work[1000];
+  char work[300];
   va_list list;
   va_start(list, format);
   vsprintf(work, format, list);
+  fprintf(stderr, "CAF[%d] %s", XMPF_this_image, work);
   va_end(list);
-  _XMP_fatal(work);
+
+  xmpf_finalize_each__();
 }
 
+void _XMPF_coarrayDebugPrint(char *format, ...)
+{
+  if (!_XMPF_coarrayMsg)
+    return;
+
+  char work[300];
+  va_list list;
+  va_start(list, format);
+  vsprintf(work, format, list);
+  fprintf(stderr, "CAF[%d] %s", XMPF_this_image, work);
+  va_end(list);
+}
 

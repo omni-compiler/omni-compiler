@@ -332,14 +332,20 @@ public class XMPcoarray {
   //------------------------------
   //  evaluate index
   //------------------------------
-  public int getElementLength() {
+  public int getElementLengthOrNot() {
     Xobject elem = getElementLengthExpr(); 
-    if (!elem.isIntConstant()) {
-      XMP.error("current restriction: " +
-                "could not numerically evaluate the element length of: "+name);
-      return 0;
-    }
+    if (elem == null || !elem.isIntConstant())
+      return -1;
     return elem.getInt();
+  }
+
+  public int getElementLength() {
+    int elem = getElementLengthOrNot(); 
+    if (elem < 0) {
+      XMP.fatal("current restriction: " +
+                "could not numerically evaluate the element length of: "+name);
+    }
+    return elem;
   }
 
   public Xobject getElementLengthExpr() {
@@ -347,10 +353,28 @@ public class XMPcoarray {
   }
   public Xobject getElementLengthExpr(Block block) {
     Xobject elem = ident.Type().getElementLengthExpr(block);    // see BasicType.java
-    if (elem == null)
-      XMP.error("current restriction: " + 
-                "could not find the element length of: "+name);
-    return elem;
+    if (elem != null)
+      return elem;
+
+    // The element length was not detected from the Ident.
+
+    if (getRank() == 0) {    // scalar coarray
+      // copy type
+      // size(transfer(ident, (/" "/))
+      Ident sizeId = declIntIntrinsicIdent("size");
+      Ident transferId = declIntIntrinsicIdent("transfer");
+      Xobject arg1 = Xcons.FvarRef(ident);
+      Xobject arg21 = Xcons.FcharacterConstant(Xtype.FcharacterType, " ", null);
+      Xobject arg2 = Xcons.List(Xcode.F_ARRAY_CONSTRUCTOR,
+                                _getCharFarrayType(1),
+                                arg21);
+      Xobject transfer = transferId.Call(Xcons.List(arg1, arg2));
+      Xobject size = sizeId.Call(Xcons.List(transfer));
+      return size;
+    } else {                 // array coarray
+    }
+
+    return null;
   }
 
   public int getTotalArraySize() {
@@ -586,15 +610,18 @@ public class XMPcoarray {
   }
 
   public void resetSaveAttr() {
-    for (Xtype type = ident.Type(); type != null; ) {
-      type.setIsFsave(false);
-      if (type.copied != null)
-        type = type.copied;
-      else if (type.isBasic())
-        break;
-      else
-        type = type.getRef();
-    }
+    Xtype type = ident.Type();
+    _resetSaveAttrInType(type);
+  }
+
+  private void _resetSaveAttrInType(Xtype type) {
+    type.setIsFsave(false);
+
+    if (type.copied != null) 
+      _resetSaveAttrInType(type.copied);
+
+    if (type.isArray() || type.isFarray())
+      _resetSaveAttrInType(type.getRef());
   }
 
   public Boolean isPointer() {
@@ -843,21 +870,28 @@ public class XMPcoarray {
    * return a name of Fortran intrinsic function
    */
   public String getFtypeString() {
-    String name = _getTypeIntrinName_1(getFtypeNumber());
-    return name;
+    return _getTypeIntrinName_1(getFtypeNumber());
   }
   public String getFtypeString(int typeNumber) {
-    String name = _getTypeIntrinName_1(typeNumber);
-    return name;
+    return _getTypeIntrinName_1(typeNumber);
+  }
+
+
+  private Xtype _getCharFarrayType(int size) {
+    Xtype ref = Xtype.FcharacterType;
+    Xtype type = Xtype.Farray(ref, Xcons.IntConstant(size));
+    return type;
   }
 
   /// see also BasicType.getElementLength
   private String _getTypeIntrinName_1(int typeNumber) {
+    String tname = null;
 
     switch(typeNumber) {
     case BasicType.BOOL:
-      name = "logical";
+      tname = "logical";
       break;
+
     case BasicType.SHORT:
     case BasicType.UNSIGNED_SHORT:
     case BasicType.INT:
@@ -866,26 +900,29 @@ public class XMPcoarray {
     case BasicType.UNSIGNED_LONG:
     case BasicType.LONGLONG:
     case BasicType.UNSIGNED_LONGLONG:
-      name = "int";
+      tname = "int";
       break;
+
     case BasicType.FLOAT:
     case BasicType.DOUBLE:
     case BasicType.LONG_DOUBLE:
-      name = "real";
+      tname = "real";
       break;
+
     case BasicType.FLOAT_COMPLEX:
     case BasicType.DOUBLE_COMPLEX:
     case BasicType.LONG_DOUBLE_COMPLEX:
-      name = "cmplx";
+      tname = "cmplx";
       break;
+
     case BasicType.CHAR:
     case BasicType.UNSIGNED_CHAR:
     case BasicType.F_CHARACTER:
-      name = "char";
+      tname = "char";
       break;
 
     case BasicType.F_NUMERIC_ALL:
-      name = null;
+      tname = null;
       break;
 
     default:
@@ -893,7 +930,7 @@ public class XMPcoarray {
       break;
     }
 
-    return name;
+    return tname;
   }
 
 }
