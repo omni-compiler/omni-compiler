@@ -5,40 +5,60 @@
 #-------------------------------------------------------
 
 template='
-subroutine co_%op%_%t%%k%(source, result)
+subroutine xmpf_co_%op%%dim%d_%tk%(source, result)
   include "mpif.h"
-  %type%(kind=%k%) :: source, result
+  %typeandkind%, intent(in) :: source%shape%
+  %typeandkind%, intent(out) :: result%shape%
   integer ierr
-
 #ifdef _XMP_GASNET
   call mpi_barrier(mpi_comm_world, ierr, source, result)
   if (ierr /= 0) then
-     call xmpf_coarray_fatal("CO_%OP% failed before mpi_allreduce")
+     call xmpf_coarray_fatal("CO_%OP% failed at mpi_barrier before mpi_allreduce")
   end if
 #endif
-  call mpi_allreduce(source, result, 1, %mpitype%, &
+  call mpi_allreduce(source, result, %size%, %mpitype%, &
        mpi_%op%, mpi_comm_world, ierr)
   if (ierr /= 0) then
-     call xmpf_coarray_fatal("CO_%OP% failed at mpi_allreduce")
+     call xmpf_coarray_fatal("CO_%OP% failed in mpi_allreduce")
   end if
 #ifdef _XMP_GASNET
   call mpi_barrier(mpi_comm_world, ierr, source, result)
   if (ierr /= 0) then
-     call xmpf_coarray_fatal("CO_%OP% failed after mpi_allreduce")
+     call xmpf_coarray_fatal("CO_%OP% failed at mpi_barrier after mpi_allreduce")
   end if
 #endif
+
   return
 end subroutine'
 
 print_procedure() {
+    dim="$6"
+    case $dim in
+        0) shape="";;
+        1) shape="(:)";;
+        2) shape="(:,:)";;
+        3) shape="(:,:,:)";;
+        4) shape="(:,:,:,:)";;
+        5) shape="(:,:,:,:,:)";;
+        6) shape="(:,:,:,:,:,:)";;
+        7) shape="(:,:,:,:,:,:,:)";;
+    esac
+    case $dim in
+        0) size="1";;
+        *) size="size(source)";;
+    esac
+
     echo "$template" | sed '
 s/%op%/'$1'/g
 s/%OP%/'$2'/g
-s/%type%/'$3'/g
-s/%t%/'$4'/g
-s/%k%/'$5'/g
-s/%mpitype%/'$6'/g'
+s/%typeandkind%/'$3'/g
+s/%tk%/'$4'/g
+s/%mpitype%/'$5'/g
+s/%dim%/'$dim'/g
+s/%shape%/'$shape'/g
+s/%size%/'$size'/g'
 }
+
 
 print_reduction() {
     echo '
@@ -46,9 +66,22 @@ print_reduction() {
 !  coarray intrinsic co_'$1'
 !-------------------------------'
 
-    print_procedure "$@" integer i 4 mpi_integer
-    print_procedure "$@" real    r 4 mpi_real4
-    print_procedure "$@" real    r 8 mpi_real8
+    for DIM in `seq 0 7`
+    do
+        if test "sxace-nec-superux" != "$TARGET"; then    ## integer(2) cannot be used on SX-ACE
+            print_procedure $1 $2 'integer(2)' i2  mpi_integer2 ${DIM}
+        fi
+        print_procedure $1 $2 'integer(4)' i4  mpi_integer4 ${DIM}
+        print_procedure $1 $2 'integer(8)' i8  mpi_integer8 ${DIM}
+
+        print_procedure $1 $2 'real(4)'    r4  mpi_real4 ${DIM}
+        print_procedure $1 $2 'real(8)'    r8  mpi_real8 ${DIM}
+
+        if test "$1" == "sum"; then
+            print_procedure $1 $2 'complex(4)' z8  mpi_complex ${DIM}
+            print_procedure $1 $2 'complex(8)' z16 mpi_double_complex ${DIM}
+        fi
+    done
 }
 
 
