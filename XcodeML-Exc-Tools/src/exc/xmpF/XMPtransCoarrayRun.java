@@ -15,7 +15,7 @@ public class XMPtransCoarrayRun
   final static String VAR_TAG_NAME = "xmpf_resource_tag";
   final static String TRAV_COUNTCOARRAY_PREFIX = "xmpf_traverse_countcoarray";
   final static String TRAV_INITCOARRAY_PREFIX = "xmpf_traverse_initcoarray";
-  final static String GET_DESCPOINTER_NAME   = "xmpf_coarray_get_descptr";
+  final static String FIND_DESCPOINTER_NAME   = "xmpf_coarray_find_descptr";
   final static String COARRAY_ALLOC_PREFIX   = "xmpf_coarray_alloc";
   final static String COARRAY_DEALLOC_PREFIX = "xmpf_coarray_dealloc";
   final static String THIS_IMAGE_NAME        = "xmpf_this_image";  // generic
@@ -1049,14 +1049,18 @@ public class XMPtransCoarrayRun
     Ident subr, descPtrId;
 
     for (XMPcoarray coarray: dummyLocalcoarrays) {
-      // a2. call "get_descptr(descPtr, baseAddr, tag)"
+      // a2. call "get_descptr(descPtr, baseAddr, tag, varname, varnamelen)"
       descPtrId = coarray.getDescPointerId();
+      String varname = coarray.getName();
       args = Xcons.List(descPtrId, coarray.getIdent(),
-                        Xcons.FvarRef(getResourceTagId()));
-      subr = env.declExternIdent(GET_DESCPOINTER_NAME,
+                        Xcons.FvarRef(getResourceTagId()),
+                        Xcons.FcharacterConstant(Xtype.FcharacterType,
+                                                 varname, null),
+                        Xcons.IntConstant(varname.length()));
+      subr = env.declExternIdent(FIND_DESCPOINTER_NAME,
                                  BasicType.FexternalSubroutineType);
       if (args.hasNullArg())
-        XMP.fatal("generated null argument " + GET_DESCPOINTER_NAME +
+        XMP.fatal("generated null argument " + FIND_DESCPOINTER_NAME +
                   "(genDefinitionOfDescPointer)");
 
       subrCall = subr.callSubroutine(args);
