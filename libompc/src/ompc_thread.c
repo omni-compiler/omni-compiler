@@ -13,6 +13,24 @@
 #include "exc_platform.h"
 #include "ompclib.h"
 
+#include "abt_logger.h"
+
+static ABT_key tls_key;
+static void tls_free(void *value) {
+    free(value);
+}
+
+#include <hwloc.h>
+static hwloc_topology_t topo;
+static hwloc_const_cpuset_t allset;
+static void thread_affinity_setup(int i) {
+    hwloc_obj_t core = hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, i);
+    hwloc_cpuset_t set = hwloc_bitmap_dup(core->cpuset);
+    hwloc_bitmap_singlify(set);
+    hwloc_set_cpubind(topo, set, HWLOC_CPUBIND_THREAD);
+    hwloc_bitmap_free(set);
+}
+
 #define PROC_HASH_SIZE  0x100L
 #define PROC_HASH_MASK (PROC_HASH_SIZE-1)
 #define PROC_HASH_IDX(ID) ((unsigned long int)((unsigned long int)(ID) & (PROC_HASH_MASK)))
@@ -30,11 +48,6 @@ volatile int ompc_proc_counter = 0;    /* thread generation counter */
 volatile int ompc_max_threads; /* max number of thread */
 volatile int ompc_num_threads; /* number of team member? */
 
-int ompc_n_proc = N_PROC_DEFAULT;      /* number of PE */
-int ompc_bind_procs = FALSE;   /* default */
-
-static int ompc_num_fork = 10;
-
 /* system lock variables */
 ompc_lock_t ompc_proc_lock_obj, ompc_thread_lock_obj;
 
@@ -51,12 +64,10 @@ static void *ompc_slave_proc(void *);
 static void ompc_xstream_setup();
 static void ompc_thread_wrapper_func(void *arg);
 static ompc_thread_t ompc_thread_self();
-static struct ompc_proc *ompc_new_proc(void);
+static struct ompc_proc *ompc_new_proc(int i);
 static struct ompc_proc *ompc_current_proc(void);
-static struct ompc_proc *ompc_get_proc();
-static void ompc_free_proc(struct ompc_proc *p);
-static struct ompc_thread *ompc_alloc_thread(struct ompc_proc *proc);
-static void ompc_free_thread(struct ompc_proc *proc, struct ompc_thread *p);
+static struct ompc_proc *ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur, int tid);
+static struct ompc_thread *ompc_alloc_thread(void);
 /*static*/ struct ompc_thread *ompc_current_thread(void);
 
 extern void ompc_call_fsub(struct ompc_thread *tp);
@@ -64,27 +75,26 @@ extern void ompc_call_fsub(struct ompc_thread *tp);
 /* 
  * initialize library
  */
-#ifdef not
-void
-ompc_init_proc_num(int pnum)
-{
-    ompc_n_proc = pnum;
-    ompc_init();
-}
-#endif
-
 void
 ompc_init(int argc,char *argv[])
 {
     char  * cp;
     int t, r, val;
-    long lnp;
     struct ompc_thread *tp;
     struct ompc_proc *cproc;
     size_t maxstack = 0;
 
     static ABT_xstream xstreams[MAX_PROC];
     ABT_init(argc, argv);
+    tls_key = ABT_KEY_NULL;
+    ABT_key_create(tls_free, &tls_key);
+
+    // hwloc init
+    hwloc_topology_init(&topo);
+    hwloc_topology_load(topo);
+    allset = hwloc_topology_get_complete_cpuset(topo);
+//    int num_numa_nodes = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_NUMANODE);
+    // hwloc init end
 
     {
       char buff[BUFSIZ];
@@ -96,7 +106,7 @@ ompc_init(int argc,char *argv[])
       if ( fp == NULL ){
         fprintf (stderr, "cannot open \"%s\".\n"
                  "cannot get maximum number of processors.\n", procfile);
-        lnp = 1;
+        ompc_max_threads = 1;
       }
       else {
         npes = 0;
@@ -106,13 +116,10 @@ ompc_init(int argc,char *argv[])
           }
         }
         fclose (fp);
-        lnp = (npes == 0)? 1: npes;
+        ompc_max_threads = (npes == 0)? 1: npes;
       }
     }
 
-    if (ompc_n_proc != lnp)
-        ompc_n_proc = lnp;
-    
     atexit(ompc_finalize);
 
     cp = getenv("OMPC_DEBUG");
@@ -128,10 +135,6 @@ ompc_init(int argc,char *argv[])
         tlog_init(argv[0]);
     }
 #endif /* USE_LOG */
-
-    cp = getenv("OMPC_BIND_PROCS");
-    if(cp != NULL && (strcmp(cp, "TRUE") == 0 || strcmp(cp, "true") == 0))
-        ompc_bind_procs = TRUE;
 
     cp = getenv("OMP_SCHEDULE");
     if(cp != NULL)
@@ -153,27 +156,17 @@ ompc_init(int argc,char *argv[])
     if ( cp != NULL ){
         sscanf(cp, "%d", &val);
         if(val <= 0) ompc_fatal("bad OMPC_NUM_PROCS(<= 0)");
-        ompc_n_proc = val;
+        ompc_max_threads = val;
     }
-
-    ompc_max_threads = ompc_n_proc;   /* max number of thread, default */
 
     cp = getenv("OMP_NUM_THREADS");     /* a number of team member */
     if ( cp == NULL )
-        ompc_num_threads = ompc_n_proc;
+        ompc_num_threads = ompc_max_threads;
     else {
         sscanf(cp, "%d", &val);
         if(val <= 0) ompc_fatal("bad OMP_NUM_THREADS(<= 0)");
         ompc_num_threads = val;
-
-        if(ompc_num_threads > ompc_max_threads)
-            ompc_max_threads = ompc_num_threads;
     }
-
-    /* ompc_num_threads cannot be different from
-     * ompc_max_threads in Omni. 
-     */
-    ompc_max_threads = ompc_num_threads;
 
     cp = getenv("OMPC_STACK_SIZE");   /* stack size of threads */
     if ( cp != NULL ){
@@ -199,15 +192,6 @@ ompc_init(int argc,char *argv[])
         }
     }
 
-    cp = getenv("OMPC_NUM_FORK");
-    if (cp != NULL) {
-        sscanf(cp, "%d", &val);
-        if (val <= 0) {
-            ompc_fatal("OMPC_NUM_FORK must be > 0");
-        }
-        ompc_num_fork = val;
-    }
-
     ompc_task_end = 0;
 
     /* hash table initialize */
@@ -226,17 +210,18 @@ ompc_init(int argc,char *argv[])
     ompc_atomic_init_lock ();  /* initialize atomic lock */
 
         /* add (and init proc table) this as master thread */
-    cproc = ompc_new_proc();
+    cproc = ompc_new_proc(0);
     ompc_master_proc_id = _OMPC_PROC_SELF;
 
     if(ompc_debug_flag)
         fprintf(stderr, "Creating %d slave thread ...\n", ompc_max_threads-1);
 
+    thread_affinity_setup(0);
     for( t = 1; t < ompc_max_threads; t++ ){
         if(ompc_debug_flag) fprintf(stderr, "Creating slave %d  ...\n", t);
 
         r = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[t]);
-        ABT_thread_create_on_xstream(xstreams[t], ompc_xstream_setup, NULL, ABT_THREAD_ATTR_NULL, NULL);
+        ABT_thread_create_on_xstream(xstreams[t], ompc_xstream_setup, (void *)t, ABT_THREAD_ATTR_NULL, NULL);
 
         if ( r ){
             extern int errno;
@@ -249,12 +234,14 @@ ompc_init(int argc,char *argv[])
     OMPC_WAIT((volatile int)ompc_proc_counter != (volatile int)ompc_max_threads);
 
     /* setup master root thread */
-    tp = ompc_alloc_thread(cproc);
+    tp = ompc_alloc_thread();
     tp->num             = 0;    /* team master */
     tp->in_parallel     = 0;
     tp->parent          = NULL;
     tp->tid = ompc_thread_self();
-    ABT_thread_set_local_storage(tp->tid, (void *)tp);
+    ABT_key_set(tls_key, (void *)tp);
+
+    ABTL_init(ompc_max_threads);
 
     if(ompc_debug_flag) fprintf(stderr, "init end(Master)\n");
 }
@@ -286,13 +273,15 @@ ompc_is_master_proc()
 
 /* setup new ompc_proc: master is always at first proc table */
 static struct ompc_proc *
-ompc_new_proc()
+ompc_new_proc(int i)
 {
     struct ompc_proc  * p, ** pp;
     ompc_proc_t  id = _OMPC_PROC_SELF;
 
+    // static scheduling
+    p = &ompc_procs[i];
+
     OMPC_PROC_LOCK();
-    p = &ompc_procs[ompc_proc_counter];
     ompc_proc_counter++;
 
     p->pid = id;
@@ -302,8 +291,6 @@ ompc_new_proc()
     *pp = p;
     OMPC_PROC_UNLOCK();
 
-    ABT_mutex_create(&p->free_thr_mutex);
-
     return p;
 }
 
@@ -312,7 +299,7 @@ ompc_current_thread()
 {
     ABT_thread abt_thread = ompc_thread_self();
     struct ompc_thread *tp;
-    ABT_thread_get_local_storage(abt_thread, (void **)&tp);
+    ABT_key_get(tls_key, (void **)&tp);
     return tp;
 }
 
@@ -334,65 +321,51 @@ ompc_current_proc()
 
 /* get thread from free list */
 static struct ompc_proc *
-ompc_get_proc()
+ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur, int tid)
 {
-    struct ompc_proc *p;
-    int i;
+    if (par->parallel_nested_level >= 1) {
+        cur->proc_num = par->proc_num + tid;
+    }
+    else {
+        OMPC_PROC_LOCK();
+        cur->proc_num = proc_last_used * 4;
+        proc_last_used++;
+        if(proc_last_used == 4) proc_last_used = 0;
+        OMPC_PROC_UNLOCK();
+    }
 
-    OMPC_PROC_LOCK();
-    if(++proc_last_used >= ompc_max_threads) proc_last_used = 0;
-    p = &ompc_procs[proc_last_used];
-    OMPC_PROC_UNLOCK();
-
-    return p;
-}
-
-static void
-ompc_free_proc(struct ompc_proc *p)
-{
+    return &ompc_procs[cur->proc_num];
 }
 
 /* allocate/get thread entry */
 static struct ompc_thread *
-ompc_alloc_thread(struct ompc_proc *proc)
+ompc_alloc_thread(void)
 {
     struct ompc_thread *p;
 
-    ABT_mutex_lock(proc->free_thr_mutex);
-    if ((p = proc->free_thr) != NULL) {
-        proc->free_thr = p->freelist;
-        ABT_mutex_unlock(proc->free_thr_mutex);
-    } else {
-        ABT_mutex_unlock(proc->free_thr_mutex);
-        p = (struct ompc_thread *)malloc(sizeof(struct ompc_thread));
-        if (p == NULL)
-            ompc_fatal("ompc_alloc_thread: malloc failed");
+    p = (struct ompc_thread *)malloc(sizeof(struct ompc_thread));
+    if (p == NULL) {
+        ompc_fatal("ompc_alloc_thread: malloc failed");
     }
 
-    p->freelist = NULL;
-    p->link = NULL;
-    
+    p->parallel_nested_level = 0;
+    p->proc_num = -1;
+
     return p;
 }
 
-static void
-ompc_free_thread(struct ompc_proc *proc,struct ompc_thread *p)
+static void ompc_xstream_setup(void *arg)
 {
-    ABT_mutex_lock(proc->free_thr_mutex);
-    p->freelist = proc->free_thr;
-    proc->free_thr = p;
-    ABT_mutex_unlock(proc->free_thr_mutex);
-}
+    int es_idx = (int)arg;
 
-static void ompc_xstream_setup()
-{
 #ifdef USE_LOG
     if(ompc_log_flag) {
       tlog_slave_init ();
     }
 #endif /* USE_LOG */
 
-    ompc_new_proc();
+    ompc_new_proc(es_idx);
+    thread_affinity_setup(es_idx);
 }
 
 static void ompc_thread_wrapper_func(void *arg)
@@ -402,6 +375,11 @@ static void ompc_thread_wrapper_func(void *arg)
     struct ompc_thread *tp = cthd->parent;
     int i = cthd->num;
 
+    ABT_key_set(tls_key, (void *)cthd);
+
+    int event_wrapper_wait;
+    event_wrapper_wait = ABTL_log_start(0 + tp->parallel_nested_level);
+
     if (!tp->run_children) {
         ABT_mutex_lock(tp->broadcast_mutex);
         while (!tp->run_children) {
@@ -409,6 +387,11 @@ static void ompc_thread_wrapper_func(void *arg)
         }
         ABT_mutex_unlock(tp->broadcast_mutex);
     }
+
+    ABTL_log_end(event_wrapper_wait);
+
+    int event_wrapper_func;
+    event_wrapper_func = ABTL_log_start(2 + tp->parallel_nested_level);
 
 # ifdef USE_LOG
     if(ompc_log_flag) tlog_parallel_IN(i);
@@ -429,9 +412,7 @@ static void ompc_thread_wrapper_func(void *arg)
     if(ompc_log_flag) tlog_parallel_OUT(i);
 # endif /* USE_LOG */
 
-    /* on return, clean up */
-    ompc_free_thread(cproc, cthd);    /* free thread & put me to freelist */
-    ompc_free_proc(cproc);
+    ABTL_log_end(event_wrapper_func);
 }
 
 /* called from compiled code. */
@@ -445,6 +426,9 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 
     cproc = ompc_current_proc();
     cthd  = ompc_current_thread();
+
+    int event_parallel_exec;
+    event_parallel_exec = ABTL_log_start(6 + cthd->parallel_nested_level);
 
     if (cond == 0) { /* serialized by parallel if(false) */
         n_thds = 1;
@@ -475,17 +459,18 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         cthd->in_flags[i]._v = 0;
     }
     
-    ompc_tree_barrier_init(&cthd->tree_barrier, n_thds);
+//    ompc_tree_barrier_init(&cthd->tree_barrier, n_thds);
 
     ompc_thread_t *children = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * n_thds);
 
     /* assign thread to proc */
     for( i = 0; i < n_thds; i++ ){
-        p = i == 0 ? cproc : ompc_get_proc();
-        tp = ompc_alloc_thread(p);
+        tp = ompc_alloc_thread();
+        p = ompc_get_proc(cthd, tp, i);
         tp->parent = cthd;
         tp->num = i;                        /* set thread_num */
         tp->in_parallel = in_parallel;
+        tp->parallel_nested_level = cthd->parallel_nested_level + 1;
         tp->barrier_sense = 0;
 
         if (i == 0) {
@@ -496,13 +481,17 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         ABT_thread_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
             (void *)tp, ABT_THREAD_ATTR_NULL, (ABT_thread *)(&tp->tid));
         children[i] = tp->tid;
-        ABT_thread_set_local_storage(tp->tid, (void *)tp);
     }
 
     ABT_mutex_lock(cthd->broadcast_mutex);
     cthd->run_children = 1;
     ABT_cond_broadcast(cthd->broadcast_cond);
     ABT_mutex_unlock(cthd->broadcast_mutex);
+
+    ABTL_log_end(event_parallel_exec);
+
+    int event_parallel_join;
+    event_parallel_join = ABTL_log_start(8 + cthd->parallel_nested_level);
 
     for (i = 0; i < n_thds; i++) {
         ABT_thread_join(children[i]);
@@ -515,24 +504,26 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     ABT_mutex_free(&cthd->reduction_mutex);
     free(children);
     
-    ompc_tree_barrier_finalize(&cthd->tree_barrier);
+//    ompc_tree_barrier_finalize(&cthd->tree_barrier);
 
     if (cthd->parent == NULL) {
         proc_last_used = 0;
     }
+
+    ABTL_log_end(event_parallel_join);
 }
 
 
 void
 ompc_do_parallel(cfunc f, void *args)
 {
-    ompc_do_parallel_main (-1, 1, ompc_num_fork, f, args);
+    ompc_do_parallel_main (-1, 1, ompc_num_threads, f, args);
 }
 
 void
 ompc_do_parallel_if (int cond, cfunc f, void *args)
 {
-    ompc_do_parallel_main (-1, cond, ompc_num_fork, f, args);
+    ompc_do_parallel_main (-1, cond, ompc_num_threads, f, args);
 }
 
 
@@ -618,10 +609,20 @@ ompc_terminate (int exitcode)
 {
     for (int i = 1; i < ompc_proc_counter; i++) {
         ABT_xstream_free((ABT_xstream *)&(ompc_procs[i].pid));
-        ABT_mutex_free(&ompc_procs[i].free_thr_mutex);
     }
 
+    free(ompc_procs);
+
+    // FIXME this causes segmentation fault on ABT_finalize():
+    // incorrect destructor pointer for primary ULT
+    // ABT_key_free(&tls_key);
+
+    ABTL_dump_log();
+    ABTL_finalize();
     ABT_finalize();
+
+    hwloc_topology_destroy(topo);
+    hwloc_bitmap_free(allset);
 
     exit (exitcode);
 }

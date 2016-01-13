@@ -141,6 +141,13 @@ AC_ARG_WITH(argobots,
 
 AC_SUBST(ARGOBOTS_PREFIX)
 
+# specify hwloc path
+AC_ARG_WITH(hwloc,
+    [  --with-hwloc=DIR         hwloc installation path (default: /usr)],
+    [HWLOC_PREFIX="${withval}"], [HWLOC_PREFIX="/usr"])
+
+AC_SUBST(HWLOC_PREFIX)
+
 # Default thread type
 # Check whether --with-thread or --without-thread was given.
 AC_ARG_WITH(thread,

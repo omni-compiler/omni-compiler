@@ -56,13 +56,13 @@ void omp_set_num_threads(int num)
 
 int omp_get_max_threads()
 {
-    return ompc_num_threads;
+    return ompc_max_threads;
 }
 
 
 int omp_get_num_procs()
 {
-    return ompc_n_proc;
+    return ompc_max_threads;
 }
 
 

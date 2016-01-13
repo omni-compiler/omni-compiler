@@ -65,15 +65,12 @@ typedef void* (*cfunc)();
 extern volatile int ompc_nested;       /* nested enable/disable */
 extern volatile int ompc_dynamic;      /* dynamic enable/disable */
 extern volatile int ompc_max_threads;  /* max number of thread */
-extern int ompc_n_proc;
 
 /* OMP processor structure */
 struct ompc_proc {
     ompc_proc_t pid;           /* thread id give by [p]thread_self() */
     unsigned int pe;
     struct ompc_proc *link;     /* hash link */
-    struct ompc_thread *free_thr;
-    ABT_mutex free_thr_mutex;
 };
 
 struct ompc_tree_barrier_node
@@ -94,11 +91,11 @@ struct ompc_tree_barrier
 struct ompc_thread {
     ompc_thread_t tid;                  /* ULT id given by ABT_thread_self() */
     struct ompc_thread *parent;         /*  */
-    struct ompc_thread *freelist;       /* freelist next */
-    struct ompc_thread *link;           /* hash link */
     int num;            /* the thread number of this thread in team */
     int num_thds;       /* current running thread, refenced by children */
     int in_parallel;    /* current thread executes the region in parellel */
+    int parallel_nested_level;
+    int proc_num;
     cfunc func;
     int nargs;
     void *args;
@@ -138,7 +135,8 @@ struct ompc_thread {
     volatile int out_count;
 
     /* structure for barrier in this team */
-    _Bool barrier_sense;
+    //_Bool barrier_sense;
+    volatile int barrier_sense;
     struct ompc_tree_barrier_node *node_stack[LOG_MAX_PROC];
     volatile struct barrier_flag {
         int _v;
@@ -152,7 +150,6 @@ struct ompc_thread {
 
 /* library prototypes */
 void ompc_init(int argc,char *argv[]);
-void ompc_init_proc_num(int);
 void ompc_do_parallel(cfunc f,void *args);
 void ompc_finalize(void);
 void ompc_fatal(char *msg);
