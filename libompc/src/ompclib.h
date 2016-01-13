@@ -94,8 +94,9 @@ struct ompc_thread {
     int num;            /* the thread number of this thread in team */
     int num_thds;       /* current running thread, refenced by children */
     int in_parallel;    /* current thread executes the region in parellel */
-    int parallel_nested_level;
-    int proc_num;
+    int parallel_nested_level; // FIXME for logging, delete this after test
+    int es_start;
+    int es_length;
     cfunc func;
     int nargs;
     void *args;

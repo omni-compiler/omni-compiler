@@ -66,7 +66,8 @@ static void ompc_thread_wrapper_func(void *arg);
 static ompc_thread_t ompc_thread_self();
 static struct ompc_proc *ompc_new_proc(int i);
 static struct ompc_proc *ompc_current_proc(void);
-static struct ompc_proc *ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur, int tid);
+static struct ompc_proc *ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur,
+                                       int thread_num, int num_threads);
 static struct ompc_thread *ompc_alloc_thread(void);
 /*static*/ struct ompc_thread *ompc_current_thread(void);
 
@@ -321,20 +322,26 @@ ompc_current_proc()
 
 /* get thread from free list */
 static struct ompc_proc *
-ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur, int tid)
+ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur,
+              int thread_num, int num_threads)
 {
-    if (par->parallel_nested_level >= 1) {
-        cur->proc_num = par->proc_num + tid;
+    int es_start = par->es_start;
+    int es_length = par->es_length;
+
+    if (num_threads > es_length) {
+        cur->es_start = es_start + (thread_num % es_length);
+        cur->es_length = 1;
     }
     else {
-        OMPC_PROC_LOCK();
-        cur->proc_num = proc_last_used * 4;
-        proc_last_used++;
-        if(proc_last_used == 4) proc_last_used = 0;
-        OMPC_PROC_UNLOCK();
+        int chunk_size = es_length / num_threads;
+        cur->es_start = es_start + (thread_num * chunk_size);
+        cur->es_length = chunk_size;
     }
 
-    return &ompc_procs[cur->proc_num];
+    // FIXME for debug
+    // printf("par[%d:%d] -> cur[%d:%d] | %d th thread in %d threads\n", es_start, es_length, cur->es_start, cur->es_length, thread_num, num_threads);
+
+    return &ompc_procs[cur->es_start];
 }
 
 /* allocate/get thread entry */
@@ -349,7 +356,8 @@ ompc_alloc_thread(void)
     }
 
     p->parallel_nested_level = 0;
-    p->proc_num = -1;
+    p->es_start = 0;
+    p->es_length = ompc_max_threads;
 
     return p;
 }
@@ -466,7 +474,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     /* assign thread to proc */
     for( i = 0; i < n_thds; i++ ){
         tp = ompc_alloc_thread();
-        p = ompc_get_proc(cthd, tp, i);
+        p = ompc_get_proc(cthd, tp, i, n_thds);
         tp->parent = cthd;
         tp->num = i;                        /* set thread_num */
         tp->in_parallel = in_parallel;
