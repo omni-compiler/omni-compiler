@@ -108,12 +108,6 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/Driver/bin/xmpcc.in \
 	$(top_srcdir)/Driver/bin/xmpf90.in \
 	$(top_srcdir)/libtlog/src_mpi/bin/tlogview.in \
-	$(top_srcdir)/release/debian/changelog.in \
-	$(top_srcdir)/release/debian/control.in \
-	$(top_srcdir)/release/debian/rules.in \
-	$(top_srcdir)/release/xcalablemp.spec.in \
-	$(top_srcdir)/release/make_rpm.sh.in \
-	$(top_srcdir)/release/make_deb.sh.in \
 	$(top_srcdir)/Driver/atool/mk/vars.mk.in \
 	$(top_srcdir)/Driver/atool/Makefile.in \
 	$(top_srcdir)/Driver/atool/src/lib/Makefile.in \
@@ -143,10 +137,7 @@ CONFIG_CLEAN_FILES =  \
 	Driver/etc/ompcc.conf Driver/etc/ompf90.conf \
 	Driver/etc/xmpcc.conf Driver/etc/xmpf90.conf Driver/bin/ompcc \
 	Driver/bin/ompf90 Driver/bin/xmpcc Driver/bin/xmpf90 \
-	libtlog/src_mpi/bin/tlogview release/debian/changelog \
-	release/debian/control release/debian/rules \
-	release/xcalablemp.spec release/make_rpm.sh \
-	release/make_deb.sh Driver/atool/mk/vars.mk \
+	libtlog/src_mpi/bin/tlogview Driver/atool/mk/vars.mk \
 	Driver/atool/Makefile Driver/atool/src/lib/Makefile \
 	Driver/atool/src/include/nata/Makefile \
 	Driver/atool/src/include/nata/nata_platform.h \
@@ -404,20 +395,6 @@ TYPE_INT64 = @TYPE_INT64@
 VERSION = @VERSION@
 XMPC_DEF = @XMPC_DEF@
 XMPF_DEF = @XMPF_DEF@
-XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
-XMPPKG_GROUP = @XMPPKG_GROUP@
-XMPPKG_LICENSE = @XMPPKG_LICENSE@
-XMPPKG_MAINTAINER = @XMPPKG_MAINTAINER@
-XMPPKG_NAME = @XMPPKG_NAME@
-XMPPKG_PACKAGER = @XMPPKG_PACKAGER@
-XMPPKG_PREFIX = @XMPPKG_PREFIX@
-XMPPKG_PRIORITY = @XMPPKG_PRIORITY@
-XMPPKG_RELEASE = @XMPPKG_RELEASE@
-XMPPKG_SECTION = @XMPPKG_SECTION@
-XMPPKG_SUMMARY = @XMPPKG_SUMMARY@
-XMPPKG_URL = @XMPPKG_URL@
-XMPPKG_VENDOR = @XMPPKG_VENDOR@
-XMPPKG_VERSION = @XMPPKG_VERSION@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
 abs_builddir = @abs_builddir@
@@ -496,6 +473,7 @@ SUBDIRS = XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src \
 	libtlog/src_mpi libxmp/include libxmp/src libxmp/src_threads \
 	libxmpf/include libxmpf/src $(am__append_1) $(am__append_2) \
 	$(am__append_3) $(am__append_4)
+XMPPKG_NAME = @XMPPKG_NAME@
 XMPPKG_TMPDIR_TOP = /tmp/@XMPPKG_NAME@
 XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/tmp
 DEB_VER_FILE = /etc/debian_version
@@ -628,18 +606,6 @@ Driver/bin/xmpcc: $(top_builddir)/config.status $(top_srcdir)/Driver/bin/xmpcc.i
 Driver/bin/xmpf90: $(top_builddir)/config.status $(top_srcdir)/Driver/bin/xmpf90.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 libtlog/src_mpi/bin/tlogview: $(top_builddir)/config.status $(top_srcdir)/libtlog/src_mpi/bin/tlogview.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-release/debian/changelog: $(top_builddir)/config.status $(top_srcdir)/release/debian/changelog.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-release/debian/control: $(top_builddir)/config.status $(top_srcdir)/release/debian/control.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-release/debian/rules: $(top_builddir)/config.status $(top_srcdir)/release/debian/rules.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-release/xcalablemp.spec: $(top_builddir)/config.status $(top_srcdir)/release/xcalablemp.spec.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-release/make_rpm.sh: $(top_builddir)/config.status $(top_srcdir)/release/make_rpm.sh.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-release/make_deb.sh: $(top_builddir)/config.status $(top_srcdir)/release/make_deb.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 Driver/atool/mk/vars.mk: $(top_builddir)/config.status $(top_srcdir)/Driver/atool/mk/vars.mk.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
