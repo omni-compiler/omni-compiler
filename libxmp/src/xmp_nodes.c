@@ -504,9 +504,13 @@ _XMP_nodes_t *_XMP_init_nodes_struct_NODES_NAMED(int dim, _XMP_nodes_t *ref_node
   }
 
   MPI_Comm *comm = _XMP_alloc(sizeof(MPI_Comm));
-  //MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
-  MPI_Comm_split(*((MPI_Comm *)ref_nodes->comm), color, _XMP_world_rank, comm);
-
+  if(comm_size == 1){
+    MPI_Comm_dup(MPI_COMM_SELF, comm);
+  }
+  else{
+    //MPI_Comm_split(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm), color, _XMP_world_rank, comm);
+    MPI_Comm_split(*((MPI_Comm *)ref_nodes->comm), color, _XMP_world_rank, comm);
+  }
   _XMP_nodes_t *n = _XMP_create_new_nodes(is_member, dim, comm_size, (_XMP_comm_t *)comm);
 
   // calc inherit info
