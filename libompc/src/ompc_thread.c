@@ -325,6 +325,7 @@ static struct ompc_proc *
 ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur,
               int thread_num, int num_threads)
 {
+///*
     int es_start = par->es_start;
     int es_length = par->es_length;
 
@@ -342,6 +343,19 @@ ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur,
     // printf("par[%d:%d] -> cur[%d:%d] | %d th thread in %d threads\n", es_start, es_length, cur->es_start, cur->es_length, thread_num, num_threads);
 
     return &ompc_procs[cur->es_start];
+//*/
+/* round-robin
+    struct ompc_proc *p;
+    int i;
+
+    OMPC_PROC_LOCK();
+    if(++proc_last_used >= ompc_max_threads) proc_last_used = 0;
+    p = &ompc_procs[proc_last_used];
+    cur->es_start = proc_last_used;
+    OMPC_PROC_UNLOCK();
+
+    return p;
+*/
 }
 
 /* allocate/get thread entry */

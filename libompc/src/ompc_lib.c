@@ -22,6 +22,13 @@ int omp_get_thread_num()
     return tp->num;
 }
 
+// FIXME for debug, delete this after test
+int omp_get_es_num()
+{
+    struct ompc_thread *tp;
+    tp = ompc_current_thread();
+    return tp->es_start;
+}
 
 int omp_get_num_threads()
 {

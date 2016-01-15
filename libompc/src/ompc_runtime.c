@@ -49,13 +49,13 @@ ompc_barrier()
 
     tp = ompc_current_thread();
 
-//    int event_barrier;
-//    event_barrier = ABTL_log_start(4 + tp->parent->parallel_nested_level);
+    int event_barrier;
+    event_barrier = ABTL_log_start(4 + tp->parent->parallel_nested_level);
 
     //ompc_tree_barrier_wait(&tp->parent->tree_barrier, tp);
     ompc_thread_barrier(tp->num, tp->parent);
 
-//    ABTL_log_end(event_barrier);
+    ABTL_log_end(event_barrier);
 }
 
 
