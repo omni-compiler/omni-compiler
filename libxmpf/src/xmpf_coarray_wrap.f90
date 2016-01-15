@@ -113,3 +113,13 @@
         endif
       end subroutine xmpf_sync_allimages_stat_wrap
 
+
+!-----------------------------------------------------------------------
+!   fatal error
+!-----------------------------------------------------------------------
+
+      subroutine xmpf_coarray_fatal(msg)
+        character(*) :: msg
+        call xmpf_coarray_fatal_with_len(msg, len(msg))
+      end subroutine xmpf_coarray_fatal
+

@@ -333,7 +333,7 @@ extern void xmpf_copy_errmsg_(char *errmsg, int *msglen);
 extern int _XMPF_nowInTask(void);   // for restriction check
 extern void _XMPF_checkIfInTask(char *msgopt);   // restriction check
 extern void _XMPF_coarrayDebugPrint(char *format, ...);
-extern void xmpf_coarray_fatal_(char *msg, int *msglen);
+extern void xmpf_coarray_fatal_with_len_(char *msg, int *msglen);
 extern void _XMPF_coarrayFatal(char *format, ...);
 
 extern void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[]);

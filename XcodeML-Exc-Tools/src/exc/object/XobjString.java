@@ -66,6 +66,32 @@ public class XobjString extends XobjConst
       return ident.cfold(block);
     }
 
+    @Override
+    public Xobject getSubscripts()
+    {
+      switch (Opcode()) {
+      case VAR:
+        return null;
+      default:
+        break;
+      }
+      throw new UnsupportedOperationException(toString());
+    }
+
+    @Override
+    public int getFrank(Block block)
+    {
+      switch (Opcode()) {
+      case VAR:
+        Ident ident = findIdent(block);
+        if (ident == null)
+          throw new UnsupportedOperationException(toString());
+        return ident.getFrank();
+      default:
+        return 0;       // scalar
+      }
+    }
+
     public Ident findIdent(Block block)
     {
       if (value == null) 

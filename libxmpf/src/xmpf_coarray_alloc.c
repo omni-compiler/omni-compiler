@@ -485,7 +485,7 @@ void xmpf_coarray_prolog_(void **tag, char *name, int *namelen)
 {
   ResourceSet_t *rset = _newResourceSet(name, *namelen);
 
-  _XMPF_coarrayDebugPrint("PROLOG CODE. rset=%p\n", rset);
+  _XMPF_coarrayDebugPrint("PROLOG CODE. name=\'%s\', rset=%p\n", rset->name, rset);
 
   *tag = (void*)rset;
 }
@@ -498,7 +498,7 @@ void xmpf_coarray_epilog_(void **tag)
 
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
 
-  _XMPF_coarrayDebugPrint("EPILOG CODE. rset=%p\n", rset);
+  _XMPF_coarrayDebugPrint("EPILOG CODE. name=\'%s\', rset=%p\n", rset->name, rset);
 
   _freeResourceSet(rset);     // with or without automatic SYNCALL
 

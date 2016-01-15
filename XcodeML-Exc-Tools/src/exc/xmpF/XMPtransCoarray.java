@@ -172,13 +172,16 @@ public class XMPtransCoarray implements XobjectDefVisitor
     // True if it is a name of coarray intrinsic procedures or
     // a library and it should be converted in run1 or run2.
     // Else, false even if it is a name of itrinsic procedure.
-    return false;
+
+    return XMPtransCoarrayRun.intrinsicProcedureNames.contains(name);
   }
 
 
-
   public boolean containsCoarray() {
-    return (_nCoarrays > 0 || _nCoidxObjs > 0 || _nCoarrayLibs > 0);
+    // check if there are any coarrays or any coarray libraries.
+    if (_nCoarrays > 0 || _nCoidxObjs > 0 || _nCoarrayLibs > 0)
+      return true;
+    return false;
   }
 }
 

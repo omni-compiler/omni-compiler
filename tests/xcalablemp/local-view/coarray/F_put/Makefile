@@ -9,8 +9,9 @@ OUT_NGB   = a2d2-2NGB.x
 #OUT_type  = a1d1-typeNG
 #OUT_err  = l0-2NG
 OUT_BUG   = bug462.x
+OUT_reduct = bcast0.x bcast1.x bcast2.x bcast3.x
 
 #OUT=$(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_type) $(OUT_NGB)
-OUT=$(OUT_BUG) $(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_NGB)
+OUT=$(OUT_reduct) $(OUT_BUG) $(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_NGB)
 
 include ../F/Makefile.common
