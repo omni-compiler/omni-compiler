@@ -18,28 +18,6 @@ if ATOOL
     SUBDIRS+=Driver/atool
 endif
 
-XMPPKG_NAME=@XMPPKG_NAME@
-XMPPKG_TMPDIR_TOP=/tmp/@XMPPKG_NAME@
-XMPPKG_TMPDIR:=$(XMPPKG_TMPDIR_TOP)/tmp
-DEB_VER_FILE=/etc/debian_version
-RH_REL_FILE=/etc/redhat-release
-
-release-rpm:
-	if test -f $(RH_REL_FILE) ; then \
-	  $(MKDIR_P) $(XMPPKG_TMPDIR_TOP); \
-	  bash release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
-	  rm -rf $(XMPPKG_TMPDIR_TOP); \
-	fi
-
-release-deb:
-	if test -f $(DEB_VER_FILE) ; then \
-	  $(MKDIR_P) $(XMPPKG_TMPDIR); \
-	  bash release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
-	  rm -rf $(XMPPKG_TMPDIR_TOP); \
-	fi
-
-release: release-rpm release-deb
-
 BASE_TESTDIR = "tests/xcalablemp/"
 TESTDIRS = "global-view/array/C/" "global-view/array/F/" "global-view/bcast/C/" "global-view/bcast/F/" \
 	   "global-view/loop/C" "global-view/loop/F" "global-view/reduction/C" "global-view/reduction/F" \
@@ -67,7 +45,7 @@ if MPI3
    TESTDIRS += "global-view/async/C/" "global-view/async/F/"
 endif
 
-.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests
+.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests release slurm slurm-check slurm-timeline remote-tests clean-local distclean-local
 
 tests: 
 	@for subdir in $(TESTDIRS) ; do \
@@ -102,6 +80,20 @@ run-large-tests:
 	  $(MAKE) run -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
+
+PACKAGE_NAME = omnicompiler-@VERSION@
+WORKDIR = /tmp/$(PACKAGE_NAME)
+release:
+	@if [ -e $(WORKDIR) ]; then \
+	  echo "Exist ! $(WORKDIR). Please delete it."; exit 1; \
+	fi; \
+	cp -a . $(WORKDIR); cd $(WORKDIR); \
+	rm -rf .git .gitignore; \
+	sh autogen.sh; ./configure; \
+	find . -name Makefile.in -exec touch \{\} \;
+	cd /tmp; tar cjf @TOPDIR@/$(PACKAGE_NAME).tar.bz2 $(PACKAGE_NAME); \
+	echo "Created $(PACKAGE_NAME).tar.bz2"; \
+	rm -rf $(WORKDIR)
 
 slurm:
 	bash ./tests/xcalablemp/scripts/create_sorted_list.sh $(BASE_TESTDIR) $(TESTDIRS) > $(SORTED_LIST); \
@@ -148,11 +140,7 @@ DELETABLES = Driver/bin/ompcc \
 	tests/C-test/Makefile \
 	tests/F-test/OMP-test/Makefile \
 	tests/clinpack/Makefile \
-	tests/tiny/Makefile \
-	$(XMPPKG_TMPDIR_TOP) \
-	${XMPPKG_NAME}*.tar.gz \
-	${XMPPKG_NAME}*.deb \
-	${XMPPKG_NAME}*.rpm
+	tests/tiny/Makefile
 
 distclean-local:
 	if test ! -z "$(DELETABLES)"; then \
