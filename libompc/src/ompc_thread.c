@@ -312,6 +312,7 @@ ompc_init(int argc,char *argv[])
 
     // master ES(0) setup
     ompc_master_proc_id = _OMPC_PROC_SELF;
+    ABT_xstream_self(&xstreams[0]);
 #ifdef __TEST_WORK_STEALING
     for (int i = 0; i < ompc_max_threads; i++) {
         ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC,
@@ -724,14 +725,17 @@ ompc_current_thread_barrier()
 void
 ompc_terminate(int exitcode)
 {
-    for (int i = 1; i < ompc_proc_counter; i++) {
+    for (int i = 1; i < ompc_max_threads; i++) {
         ABT_xstream_join(ompc_procs[i].pid);
         ABT_xstream_free((ABT_xstream *)&(ompc_procs[i].pid));
-#ifdef __TEST_WORK_STEALING
-        // sched[0] will be deallocated by the argobots runtime
-        ABT_sched_free(&scheds[i]);
-#endif
     }
+
+#ifdef __TEST_WORK_STEALING
+    // scheds[0] will be deallocated by the argobots runtime
+    for (int i = 1; i < ompc_max_threads; i++) {
+        ABT_sched_free(&scheds[i]);
+    }
+#endif
 
     free(ompc_procs);
 
