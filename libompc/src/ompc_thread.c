@@ -82,7 +82,6 @@ ompc_init(int argc,char *argv[])
     char  * cp;
     int t, r, val;
     struct ompc_thread *tp;
-    struct ompc_proc *cproc;
     size_t maxstack = 0;
 
     static ABT_xstream xstreams[MAX_PROC];
@@ -210,21 +209,21 @@ ompc_init(int argc,char *argv[])
     ompc_critical_init ();     /* initialize critical lock */
     ompc_atomic_init_lock ();  /* initialize atomic lock */
 
-        /* add (and init proc table) this as master thread */
-    cproc = ompc_new_proc(0);
+    /* add (and init proc table) this as master thread */
     ompc_master_proc_id = _OMPC_PROC_SELF;
 
     if(ompc_debug_flag)
         fprintf(stderr, "Creating %d slave thread ...\n", ompc_max_threads-1);
 
+    ompc_new_proc(0);
     thread_affinity_setup(0);
-    for( t = 1; t < ompc_max_threads; t++ ){
-        if(ompc_debug_flag) fprintf(stderr, "Creating slave %d  ...\n", t);
+    for (t = 1; t < ompc_max_threads; t++) {
+        if (ompc_debug_flag) fprintf(stderr, "Creating slave %d  ...\n", t);
 
         r = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[t]);
         ABT_thread_create_on_xstream(xstreams[t], ompc_xstream_setup, (void *)t, ABT_THREAD_ATTR_NULL, NULL);
 
-        if ( r ){
+        if (r) {
             extern int errno;
             fprintf(stderr, "thread create fails at id %d:%d errno=%d\n", t, r, errno);
             perror("thread creation");
@@ -244,7 +243,7 @@ ompc_init(int argc,char *argv[])
 
     ABTL_init(ompc_max_threads);
 
-    if(ompc_debug_flag) fprintf(stderr, "init end(Master)\n");
+    if (ompc_debug_flag) fprintf(stderr, "init end(Master)\n");
 }
 
 
@@ -392,7 +391,6 @@ static void ompc_xstream_setup(void *arg)
 
 static void ompc_thread_wrapper_func(void *arg)
 {
-    struct ompc_proc *cproc = ompc_current_proc();
     struct ompc_thread *cthd = (struct ompc_thread *)arg;
     struct ompc_thread *tp = cthd->parent;
     int i = cthd->num;
@@ -442,11 +440,10 @@ void
 ompc_do_parallel_main (int nargs, int cond, int nthds,
     cfunc f, void *args)
 {
-    struct ompc_proc *cproc, *p;
+    struct ompc_proc *p;
     struct ompc_thread *cthd, *tp;
     int i, n_thds, in_parallel;
 
-    cproc = ompc_current_proc();
     cthd  = ompc_current_thread();
 
     int event_parallel_exec;
