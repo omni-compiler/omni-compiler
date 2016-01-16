@@ -13,14 +13,16 @@
 #include "exc_platform.h"
 #include "ompclib.h"
 
+#include <hwloc.h>
 #include "abt_logger.h"
+
+static ABT_sched scheds[MAX_PROC];
 
 static ABT_key tls_key;
 static void tls_free(void *value) {
     free(value);
 }
 
-#include <hwloc.h>
 static hwloc_topology_t topo;
 static hwloc_const_cpuset_t allset;
 static void thread_affinity_setup(int i) {
@@ -29,6 +31,106 @@ static void thread_affinity_setup(int i) {
     hwloc_bitmap_singlify(set);
     hwloc_set_cpubind(topo, set, HWLOC_CPUBIND_THREAD);
     hwloc_bitmap_free(set);
+}
+
+typedef struct {
+    uint32_t event_freq;
+} sched_data_t;
+
+static int sched_init(ABT_sched sched, ABT_sched_config config) {
+    sched_data_t *p_data = (sched_data_t *)calloc(1, sizeof(sched_data_t));
+
+    ABT_sched_config_read(config, 1, &p_data->event_freq);
+    ABT_sched_set_data(sched, (void *)p_data);
+
+    return ABT_SUCCESS;
+}
+
+static int sched_free(ABT_sched sched)
+{
+    sched_data_t *p_data;
+
+    ABT_sched_get_data(sched, (void **)&p_data);
+    free(p_data);
+
+    return ABT_SUCCESS;
+}
+
+static void sched_run(ABT_sched sched)
+{
+    uint32_t work_count = 0;
+    sched_data_t *p_data;
+    int num_pools;
+    ABT_pool *pools;
+    ABT_unit unit;
+    int target;
+    ABT_bool stop;
+    unsigned seed = time(NULL);
+
+    ABT_sched_get_data(sched, (void **)&p_data);
+    ABT_sched_get_num_pools(sched, &num_pools);
+    pools = (ABT_pool *)malloc(num_pools * sizeof(ABT_pool));
+    ABT_sched_get_pools(sched, num_pools, 0, pools);
+
+    while (1) {
+        /* Execute one work unit from the scheduler's pool */
+        ABT_pool_pop(pools[0], &unit);
+        if (unit != ABT_UNIT_NULL) {
+            ABT_xstream_run_unit(unit, pools[0]);
+        } else if (num_pools > 1) {
+            /* Steal a work unit from other pools */
+            target = (num_pools == 2) ? 1 : (rand_r(&seed) % (num_pools-1) + 1);
+            ABT_pool_pop(pools[target], &unit);
+            if (unit != ABT_UNIT_NULL) {
+                ABT_xstream_run_unit(unit, pools[target]);
+            }
+        }
+
+        if (++work_count >= p_data->event_freq) {
+            work_count = 0;
+            ABT_sched_has_to_stop(sched, &stop);
+            if (stop == ABT_TRUE) break;
+            ABT_xstream_check_events(sched);
+        }
+    }
+
+    free(pools);
+}
+
+static void create_scheds(int num, ABT_pool *pools, ABT_sched *scheds)
+{
+    ABT_sched_config config;
+    ABT_pool *my_pools;
+    int i, k;
+
+    ABT_sched_config_var cv_event_freq = {
+        .idx = 0,
+        .type = ABT_SCHED_CONFIG_INT
+    };
+
+    ABT_sched_def sched_def = {
+        .type = ABT_SCHED_TYPE_ULT,
+        .init = sched_init,
+        .run = sched_run,
+        .free = sched_free,
+        .get_migr_pool = NULL
+    };
+
+    /* Create a scheduler config */
+    ABT_sched_config_create(&config, cv_event_freq, 10,
+                            ABT_sched_config_var_end);
+
+    my_pools = (ABT_pool *)malloc(num * sizeof(ABT_pool));
+    for (i = 0; i < num; i++) {
+        for (k = 0; k < num; k++) {
+            my_pools[k] = pools[(i + k) % num];
+        }
+
+        ABT_sched_create(&sched_def, num, my_pools, config, &scheds[i]);
+    }
+    free(my_pools);
+
+    ABT_sched_config_free(&config);
 }
 
 #define PROC_HASH_SIZE  0x100L
@@ -80,8 +182,8 @@ ompc_init(int argc,char *argv[])
 {
     // FIXME temporary impl, needs refactoring
     static ABT_xstream xstreams[MAX_PROC];
-    static ABT_sched   scheds[MAX_PROC];
     static ABT_pool    pools[MAX_PROC];
+
     ABT_init(argc, argv);
     tls_key = ABT_KEY_NULL;
     ABT_key_create(tls_free, &tls_key);
@@ -210,29 +312,38 @@ ompc_init(int argc,char *argv[])
     // hash table initialize
     bzero(ompc_proc_htable, sizeof(ompc_proc_htable));
 
+    // argobots scheduler init
+    for (int i = 0; i < ompc_max_threads; i++) {
+        ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC,
+                              ABT_TRUE, &pools[i]);
+    }
+
+    create_scheds(ompc_max_threads, pools, scheds);
+
     // master ES(0) setup
     ompc_master_proc_id = _OMPC_PROC_SELF;
     ompc_xstream_setup(0);
 
     // slave ES(1~max_threads-1) setup
-    if(ompc_debug_flag) fprintf(stderr, "Creating %d slave thread ...\n", ompc_max_threads-1);
-    for (int t = 1; t < ompc_max_threads; t++) {
-        if (ompc_debug_flag) fprintf(stderr, "Creating slave %d  ...\n", t);
+    if (ompc_debug_flag) fprintf(stderr, "Creating %d slave thread ...\n", ompc_max_threads - 1);
+    for (int i = 1; i < ompc_max_threads; i++) {
+        if (ompc_debug_flag) fprintf(stderr, "Creating slave %d  ...\n", i);
 
-        int r = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[t]);
-        ABT_thread_create_on_xstream(xstreams[t], ompc_xstream_setup, (void *)t, ABT_THREAD_ATTR_NULL, NULL);
-
-        if (r) {
+        int res = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[i]);
+        if (res) {
             extern int errno;
-            fprintf(stderr, "thread create fails at id %d:%d errno=%d\n", t, r, errno);
+            fprintf(stderr, "thread create fails at id %d:%d errno=%d\n", i, res, errno);
             perror("thread creation");
             exit(1);
         }
+
+        size_t tid = (size_t)i;
+        ABT_thread_create_on_xstream(xstreams[i], ompc_xstream_setup, (void *)tid, ABT_THREAD_ATTR_NULL, NULL);
     }
 
     OMPC_WAIT((volatile int)ompc_proc_counter != (volatile int)ompc_max_threads);
 
-    /* setup master root thread */
+    // setup master root thread
     struct ompc_thread *tp = ompc_alloc_thread();
     tp->num             = 0;    /* team master */
     tp->in_parallel     = 0;
@@ -240,6 +351,7 @@ ompc_init(int argc,char *argv[])
     tp->tid = ompc_thread_self();
     ABT_key_set(tls_key, (void *)tp);
 
+    // argobots logger init
     ABTL_init(ompc_max_threads);
 
     if (ompc_debug_flag) fprintf(stderr, "init end(Master)\n");
@@ -296,7 +408,6 @@ ompc_new_proc(int i)
 /*static*/ struct ompc_thread *
 ompc_current_thread()
 {
-    ABT_thread abt_thread = ompc_thread_self();
     struct ompc_thread *tp;
     ABT_key_get(tls_key, (void **)&tp);
     return tp;
@@ -313,7 +424,7 @@ ompc_current_proc()
         if ( p->pid == id )
             return p;
     }
-    fprintf(stderr, "pid=%d\n", (unsigned int)id);
+    fprintf(stderr, "pid=%d\n", (unsigned int)(size_t)id);
     ompc_fatal("unknown proc is running");
     return NULL;
 }
@@ -376,7 +487,7 @@ ompc_alloc_thread(void)
 
 static void ompc_xstream_setup(void *arg)
 {
-    int es_idx = (int)arg;
+    int es_idx = (int)(size_t)arg;
 
 #ifdef USE_LOG
     if (ompc_log_flag && (es_idx != 0)) {
@@ -391,10 +502,9 @@ static void ompc_xstream_setup(void *arg)
 static void ompc_thread_wrapper_func(void *arg)
 {
     struct ompc_thread *cthd = (struct ompc_thread *)arg;
-    struct ompc_thread *tp = cthd->parent;
-    int i = cthd->num;
-
     ABT_key_set(tls_key, (void *)cthd);
+
+    struct ompc_thread *tp = cthd->parent;
 
     int event_wrapper_wait;
     event_wrapper_wait = ABTL_log_start(0 + tp->parallel_nested_level);
@@ -623,10 +733,13 @@ ompc_current_thread_barrier()
 
 
 void
-ompc_terminate (int exitcode)
+ompc_terminate(int exitcode)
 {
     for (int i = 1; i < ompc_proc_counter; i++) {
+        ABT_xstream_join(ompc_procs[i].pid);
         ABT_xstream_free((ABT_xstream *)&(ompc_procs[i].pid));
+        // sched[0] will be deallocated by the argobots runtime
+        ABT_sched_free(&scheds[i]);
     }
 
     free(ompc_procs);
