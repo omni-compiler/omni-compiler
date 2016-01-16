@@ -60,7 +60,6 @@ static int proc_last_used = 0;
 static ompc_proc_t ompc_master_proc_id;
 
 /* prototype */
-static void *ompc_slave_proc(void *);
 static void ompc_xstream_setup();
 static void ompc_thread_wrapper_func(void *arg);
 static ompc_thread_t ompc_thread_self();
@@ -79,12 +78,10 @@ extern void ompc_call_fsub(struct ompc_thread *tp);
 void
 ompc_init(int argc,char *argv[])
 {
-    char  * cp;
-    int t, r, val;
-    struct ompc_thread *tp;
-    size_t maxstack = 0;
-
+    // FIXME temporary impl, needs refactoring
     static ABT_xstream xstreams[MAX_PROC];
+    static ABT_sched   scheds[MAX_PROC];
+    static ABT_pool    pools[MAX_PROC];
     ABT_init(argc, argv);
     tls_key = ABT_KEY_NULL;
     ABT_key_create(tls_free, &tls_key);
@@ -122,6 +119,8 @@ ompc_init(int argc,char *argv[])
 
     atexit(ompc_finalize);
 
+    char *cp;
+    int val;
     cp = getenv("OMPC_DEBUG");
     if(cp != NULL){
         ompc_debug_flag = TRUE;
@@ -168,7 +167,9 @@ ompc_init(int argc,char *argv[])
         ompc_num_threads = val;
     }
 
-    cp = getenv("OMPC_STACK_SIZE");   /* stack size of threads */
+    // FIXME not available
+    /*
+    cp = getenv("OMPC_STACK_SIZE");   // stack size of threads
     if ( cp != NULL ){
         char lstr[64];
         size_t len = strlen(cp);
@@ -185,23 +186,15 @@ ompc_init(int argc,char *argv[])
         strncpy(lstr, cp, len);
         sscanf(lstr, "%d", &val);
         if ( val <= 0 ) ompc_fatal("bad OMPC_STACK_SIZE(<= 0)");
-        maxstack = val*unit;
+        size_t maxstack = val*unit;
         if ( maxstack < DEF_STACK_SIZE ){
-            maxstack = 0;       /* default */
+            maxstack = 0;       // default/
             printf("Stack size is not change, because it is less than the default(=1MB).\n");
         }
     }
+    */
 
     ompc_task_end = 0;
-
-    /* hash table initialize */
-    bzero(ompc_proc_htable, sizeof(ompc_proc_htable));
-
-    /* allocate proc structure */
-    ompc_procs =
-        (struct ompc_proc *)malloc(sizeof(struct ompc_proc)*ompc_max_threads);
-    if(ompc_procs == NULL) ompc_fatal("Cannot allocate proc table.");
-    bzero(ompc_procs,sizeof(struct ompc_proc)*ompc_max_threads);
 
     /* init system lock */
     ompc_init_lock(&ompc_proc_lock_obj);
@@ -209,18 +202,24 @@ ompc_init(int argc,char *argv[])
     ompc_critical_init ();     /* initialize critical lock */
     ompc_atomic_init_lock ();  /* initialize atomic lock */
 
-    /* add (and init proc table) this as master thread */
+    // allocate proc structure
+    ompc_procs = (struct ompc_proc *)malloc(sizeof(struct ompc_proc) * ompc_max_threads);
+    if (ompc_procs == NULL) ompc_fatal("Cannot allocate proc table.");
+    bzero(ompc_procs, sizeof(struct ompc_proc) * ompc_max_threads);
+
+    // hash table initialize
+    bzero(ompc_proc_htable, sizeof(ompc_proc_htable));
+
+    // master ES(0) setup
     ompc_master_proc_id = _OMPC_PROC_SELF;
+    ompc_xstream_setup(0);
 
-    if(ompc_debug_flag)
-        fprintf(stderr, "Creating %d slave thread ...\n", ompc_max_threads-1);
-
-    ompc_new_proc(0);
-    thread_affinity_setup(0);
-    for (t = 1; t < ompc_max_threads; t++) {
+    // slave ES(1~max_threads-1) setup
+    if(ompc_debug_flag) fprintf(stderr, "Creating %d slave thread ...\n", ompc_max_threads-1);
+    for (int t = 1; t < ompc_max_threads; t++) {
         if (ompc_debug_flag) fprintf(stderr, "Creating slave %d  ...\n", t);
 
-        r = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[t]);
+        int r = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[t]);
         ABT_thread_create_on_xstream(xstreams[t], ompc_xstream_setup, (void *)t, ABT_THREAD_ATTR_NULL, NULL);
 
         if (r) {
@@ -234,7 +233,7 @@ ompc_init(int argc,char *argv[])
     OMPC_WAIT((volatile int)ompc_proc_counter != (volatile int)ompc_max_threads);
 
     /* setup master root thread */
-    tp = ompc_alloc_thread();
+    struct ompc_thread *tp = ompc_alloc_thread();
     tp->num             = 0;    /* team master */
     tp->in_parallel     = 0;
     tp->parent          = NULL;
@@ -380,8 +379,8 @@ static void ompc_xstream_setup(void *arg)
     int es_idx = (int)arg;
 
 #ifdef USE_LOG
-    if(ompc_log_flag) {
-      tlog_slave_init ();
+    if (ompc_log_flag && (es_idx != 0)) {
+      tlog_slave_init();
     }
 #endif /* USE_LOG */
 
