@@ -70,7 +70,6 @@ extern volatile int ompc_max_threads;  /* max number of thread */
 struct ompc_proc {
     ompc_proc_t pid;           /* thread id give by [p]thread_self() */
     unsigned int pe;
-    struct ompc_proc *link;     /* hash link */
 };
 
 struct ompc_tree_barrier_node
