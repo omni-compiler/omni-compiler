@@ -17,6 +17,10 @@
 #include "abt_logger.h"
 
 #define __ABTL_LOG_ENABLE
+// __ABTL_LOG_LEVEL
+// 0: outer loop, used for flat OpenMP version
+// 1: inner loop, used for nested OpenMP version
+#define __ABTL_LOG_LEVEL 1
 //#define __TEST_WORK_STEALING
 
 // FIXME temporary impl, needs refactoring
@@ -546,7 +550,9 @@ static void ompc_thread_wrapper_func(void *arg)
 
 #ifdef __ABTL_LOG_ENABLE
     int event_wrapper_func;
-    if (tp->parallel_nested_level == 1) event_wrapper_func = ABTL_log_start(3);
+    if (tp->parallel_nested_level == __ABTL_LOG_LEVEL) {
+        event_wrapper_func = ABTL_log_start(2 + __ABTL_LOG_LEVEL);
+    }
 #endif
 
 # ifdef USE_LOG
@@ -569,7 +575,9 @@ static void ompc_thread_wrapper_func(void *arg)
 # endif /* USE_LOG */
 
 #ifdef __ABTL_LOG_ENABLE
-    if (tp->parallel_nested_level == 1) ABTL_log_end(event_wrapper_func);
+    if (tp->parallel_nested_level == __ABTL_LOG_LEVEL) {
+        ABTL_log_end(event_wrapper_func);
+    }
 #endif
 }
 
@@ -836,7 +844,7 @@ ompc_get_num_threads (struct ompc_thread *tp)
 
 // FIXME this function is used for num_threads clause
 // not for omp_set_num_threads()
-// modify runtime API
+// modify runtime API, e.g. omp_set_num_threads_clause()
 void ompc_set_num_threads(int n) {
     // FIXME assumes that OMP_NESTED=TRUE
     // add error check

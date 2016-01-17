@@ -414,6 +414,10 @@ public class OMPtransPragma
         List<Xobject> region_args = i.getRegionArgs();
         
         if(region_args.size() == 0) {
+            if(i.getNumThreads() != null)
+                ret_body.add(Bcons.Statement(OMPfuncIdent(setNumThreadsFunc).Call(
+                    Xcons.List(i.getNumThreads()))));
+
             if(i.hasIfExpr())
                 ret_body.add(Bcons.Statement(OMPfuncIdent(doParallelIfFunc).Call(
                     Xcons.List(i.getIfExpr(), func_id.Ref()))));
