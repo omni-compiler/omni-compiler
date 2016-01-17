@@ -96,6 +96,7 @@ struct ompc_thread {
     int parallel_nested_level; // FIXME for logging, delete this after test
     int es_start;
     int es_length;
+    int set_num_thds;
     cfunc func;
     int nargs;
     void *args;

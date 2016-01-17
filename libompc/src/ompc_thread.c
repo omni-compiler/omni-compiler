@@ -497,6 +497,7 @@ ompc_alloc_thread(void)
     p->parallel_nested_level = 0;
     p->es_start = 0;
     p->es_length = ompc_max_threads;
+    p->set_num_thds = -1;
 
     return p;
 }
@@ -591,7 +592,18 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         n_thds = 1;
         in_parallel = cthd->in_parallel;
     } else {
-        n_thds = (nthds < ompc_num_threads) ? (nthds) : (ompc_num_threads);
+// FIXME old (pthread) impl
+//        n_thds = (nthds < ompc_num_threads) ? (nthds) : (ompc_num_threads);
+// FIXME temporary impl
+// assume OMP_NESTED=TRUE
+// read OpenMP specification
+// nthds is not used, modify runtime API
+        if ((cthd->set_num_thds) == -1) {
+            n_thds = ompc_num_threads;
+        }
+        else {
+            n_thds = cthd->set_num_thds;
+        }
         in_parallel = 1;
     }
 
@@ -822,13 +834,15 @@ ompc_get_num_threads (struct ompc_thread *tp)
         return tp->num_thds;
 }
 
-void
-ompc_set_num_threads(int n)
-{
-    extern void omp_set_num_threads();
-    omp_set_num_threads(n);
+// FIXME this function is used for num_threads clause
+// not for omp_set_num_threads()
+// modify runtime API
+void ompc_set_num_threads(int n) {
+    // FIXME assumes that OMP_NESTED=TRUE
+    // add error check
+    struct ompc_thread *tp = ompc_current_thread();
+    tp->set_num_thds = n;
 }
-
 
 int
 ompc_get_thread_num()
