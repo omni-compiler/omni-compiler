@@ -16,6 +16,9 @@
 #include <hwloc.h>
 #include "abt_logger.h"
 
+// FIXME temporary impl, needs refactoring
+static ABT_xstream xstreams[MAX_PROC];
+
 static ABT_key tls_key;
 static void tls_free(void *value) {
     free(value);
@@ -78,17 +81,23 @@ static void sched_run(ABT_sched sched) {
         if (unit != ABT_UNIT_NULL) {
             ABT_xstream_run_unit(unit, sched_pools[0]);
         }
-/*
         else if (num_pools > 1) {
-            unsigned seed = time(NULL);
             // Steal a work unit from other pools
-            int target = (num_pools == 2) ? 1 : (rand_r(&seed) % (num_pools-1) + 1);
-            ABT_pool_pop(sched_pools[target], &unit);
-            if (unit != ABT_UNIT_NULL) {
-                ABT_xstream_run_unit(unit, sched_pools[target]);
+            // RANDOM
+            unsigned seed = time(NULL);
+            int target_pool_idx = (num_pools == 2) ? 1 : (rand_r(&seed) % (num_pools - 1) + 1);
+            ABT_pool target_pool = sched_pools[target_pool_idx];
+
+            size_t target_pool_size;
+            ABT_pool_get_size(target_pool, &target_pool_size);
+            if (target_pool_size > 0) {
+                // Pop one work unit
+                ABT_pool_pop(target_pool, &unit);
+                if (unit != ABT_UNIT_NULL) {
+                    ABT_xstream_run_unit(unit, target_pool);
+                }
             }
         }
-*/
 
         if (++work_count >= p_data->event_freq) {
             work_count = 0;
@@ -137,6 +146,11 @@ static void create_scheds(void)
 
     ABT_sched_config_free(&config);
 }
+
+static void sched_setup(void *arg) {
+    int idx = (int)(size_t)arg;
+    ABT_xstream_set_main_sched(xstreams[idx], scheds[idx]);
+}
 #endif // __TEST_WORK_STEALING
 
 #define PROC_HASH_SIZE  0x100L
@@ -183,9 +197,6 @@ extern void ompc_call_fsub(struct ompc_thread *tp);
 void
 ompc_init(int argc,char *argv[])
 {
-    // FIXME temporary impl, needs refactoring
-    static ABT_xstream xstreams[MAX_PROC];
-
     ABT_init(argc, argv);
     tls_key = ABT_KEY_NULL;
     ABT_key_create(tls_free, &tls_key);
@@ -311,32 +322,32 @@ ompc_init(int argc,char *argv[])
     if (ompc_procs == NULL) ompc_fatal("Cannot allocate proc table.");
     bzero(ompc_procs, sizeof(struct ompc_proc) * ompc_max_threads);
 
-    // master ES(0) setup
+    // inig ompc_master_proc_id
     ompc_master_proc_id = _OMPC_PROC_SELF;
-    ABT_xstream_self(&xstreams[0]);
+
 #ifdef __TEST_WORK_STEALING
+    // work stealing scheduler setup
     for (int i = 0; i < ompc_max_threads; i++) {
         ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC,
                               ABT_TRUE, &pools[i]);
     }
 
     create_scheds();
-    ABT_xstream_set_main_sched(xstreams[0], scheds[0]);
 #endif
-    ompc_xstream_setup(0);
 
-    // slave ES(1~max_threads-1) setup
+    // ES setup
     ABT_thread threads[MAX_PROC];
     if (ompc_debug_flag) fprintf(stderr, "Creating %d slave thread ...\n", ompc_max_threads - 1);
-    for (int i = 1; i < ompc_max_threads; i++) {
+    for (int i = 0; i < ompc_max_threads; i++) {
         if (ompc_debug_flag) fprintf(stderr, "Creating slave %d  ...\n", i);
 
-#ifdef __TEST_WORK_STEALING
-        int res = ABT_xstream_create(scheds[i], &xstreams[i]);
-#else
-        int res = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[i]);
-#endif
+        if (i == 0) {
+            ABT_xstream_self(&xstreams[0]);
+            ompc_xstream_setup(0);
+            continue;
+        }
 
+        int res = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[i]);
         if (res) {
             extern int errno;
             fprintf(stderr, "thread create fails at id %d:%d errno=%d\n", i, res, errno);
@@ -354,7 +365,23 @@ ompc_init(int argc,char *argv[])
         ABT_thread_free(&threads[i]);
     }
 
-    OMPC_WAIT((volatile int)ompc_proc_counter != (volatile int)ompc_max_threads);
+#ifdef __TEST_WORK_STEALING
+    for (int i = 0; i < ompc_max_threads; i++) {
+        if (i == 0) {
+            sched_setup(0);
+            continue;
+        }
+
+        size_t tid = (size_t)i;
+        ABT_thread_create_on_xstream(xstreams[i], sched_setup,
+                                     (void *)tid, ABT_THREAD_ATTR_NULL, &(threads[i]));
+    }
+
+    for (int i = 1; i < ompc_max_threads; i++) {
+        ABT_thread_join(threads[i]);
+        ABT_thread_free(&threads[i]);
+    }
+#endif // __TEST_WORK_STEALING
 
     // setup master root thread
     struct ompc_thread *tp = ompc_alloc_thread();
@@ -591,13 +618,12 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
             tp->args = args;
         }
 
-#ifdef __TEST_WORK_STEALING
-        ABT_thread_create(pools[i], ompc_thread_wrapper_func, (void *)tp,
-                          ABT_THREAD_ATTR_NULL, (ABT_thread *)(&tp->tid));
-#else
+// XXX for debug, seems to use the ES of the parent ULT if exists
+//        ABT_thread_create(pools[i], ompc_thread_wrapper_func, (void *)tp,
+//                          ABT_THREAD_ATTR_NULL, (ABT_thread *)(&tp->tid));
+// XXX safe to use?
         ABT_thread_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
             (void *)tp, ABT_THREAD_ATTR_NULL, (ABT_thread *)(&tp->tid));
-#endif
 
         children[i] = tp->tid;
     }
