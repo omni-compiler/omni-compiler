@@ -31,7 +31,7 @@ static void thread_affinity_setup(int i) {
     hwloc_bitmap_free(set);
 }
 
-//#define __TEST_WORK_STEALING
+#define __TEST_WORK_STEALING
 
 #ifdef __TEST_WORK_STEALING
 static ABT_sched scheds[MAX_PROC];
@@ -50,58 +50,59 @@ static int sched_init(ABT_sched sched, ABT_sched_config config) {
     return ABT_SUCCESS;
 }
 
-static int sched_free(ABT_sched sched)
-{
-    sched_data_t *p_data;
+static int sched_free(ABT_sched sched) {
+    void *p_data;
 
-    ABT_sched_get_data(sched, (void **)&p_data);
+    ABT_sched_get_data(sched, &p_data);
     free(p_data);
 
     return ABT_SUCCESS;
 }
 
-static void sched_run(ABT_sched sched)
-{
-    uint32_t work_count = 0;
+static void sched_run(ABT_sched sched) {
     sched_data_t *p_data;
-    int num_pools;
-    ABT_pool *pools;
-    ABT_unit unit;
-    int target;
-    ABT_bool stop;
-    unsigned seed = time(NULL);
-
     ABT_sched_get_data(sched, (void **)&p_data);
-    ABT_sched_get_num_pools(sched, &num_pools);
-    pools = (ABT_pool *)malloc(num_pools * sizeof(ABT_pool));
-    ABT_sched_get_pools(sched, num_pools, 0, pools);
 
+    int num_pools;
+    ABT_sched_get_num_pools(sched, &num_pools);
+
+    ABT_pool *sched_pools;
+    sched_pools = (ABT_pool *)malloc(sizeof(ABT_pool) * num_pools);
+    ABT_sched_get_pools(sched, num_pools, 0, sched_pools);
+
+    uint32_t work_count = 0;
+    ABT_unit unit;
     while (1) {
-        /* Execute one work unit from the scheduler's pool */
-        ABT_pool_pop(pools[0], &unit);
+        // Execute one work unit from the scheduler's pool
+        ABT_pool_pop(sched_pools[0], &unit);
         if (unit != ABT_UNIT_NULL) {
-            ABT_xstream_run_unit(unit, pools[0]);
-        } else if (num_pools > 1) {
-            /* Steal a work unit from other pools */
-            target = (num_pools == 2) ? 1 : (rand_r(&seed) % (num_pools-1) + 1);
-            ABT_pool_pop(pools[target], &unit);
+            ABT_xstream_run_unit(unit, sched_pools[0]);
+        }
+/*
+        else if (num_pools > 1) {
+            unsigned seed = time(NULL);
+            // Steal a work unit from other pools
+            int target = (num_pools == 2) ? 1 : (rand_r(&seed) % (num_pools-1) + 1);
+            ABT_pool_pop(sched_pools[target], &unit);
             if (unit != ABT_UNIT_NULL) {
-                ABT_xstream_run_unit(unit, pools[target]);
+                ABT_xstream_run_unit(unit, sched_pools[target]);
             }
         }
+*/
 
         if (++work_count >= p_data->event_freq) {
             work_count = 0;
+            ABT_bool stop;
             ABT_sched_has_to_stop(sched, &stop);
             if (stop == ABT_TRUE) break;
             ABT_xstream_check_events(sched);
         }
     }
 
-    free(pools);
+    free(sched_pools);
 }
 
-static void create_scheds(int num, ABT_pool *pools, ABT_sched *scheds)
+static void create_scheds(void)
 {
     ABT_sched_config config;
     ABT_pool *my_pools;
@@ -124,13 +125,13 @@ static void create_scheds(int num, ABT_pool *pools, ABT_sched *scheds)
     ABT_sched_config_create(&config, cv_event_freq, 10,
                             ABT_sched_config_var_end);
 
-    my_pools = (ABT_pool *)malloc(num * sizeof(ABT_pool));
-    for (i = 0; i < num; i++) {
-        for (k = 0; k < num; k++) {
-            my_pools[k] = pools[(i + k) % num];
+    my_pools = (ABT_pool *)malloc(sizeof(ABT_pool) * ompc_max_threads);
+    for (i = 0; i < ompc_max_threads; i++) {
+        for (k = 0; k < ompc_max_threads; k++) {
+            my_pools[k] = pools[(i + k) % ompc_max_threads];
         }
 
-        ABT_sched_create(&sched_def, num, my_pools, config, &scheds[i]);
+        ABT_sched_create(&sched_def, ompc_max_threads, my_pools, config, &scheds[i]);
     }
     free(my_pools);
 
@@ -319,7 +320,7 @@ ompc_init(int argc,char *argv[])
                               ABT_TRUE, &pools[i]);
     }
 
-    create_scheds(ompc_max_threads, pools, scheds);
+    create_scheds();
     ABT_xstream_set_main_sched(xstreams[0], scheds[0]);
 #endif
     ompc_xstream_setup(0);
