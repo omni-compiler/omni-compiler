@@ -12,6 +12,8 @@
 
 #include "abt_logger.h"
 
+#define __ABTL_LOG_ENABLE
+
 extern struct ompc_thread *ompc_current_thread(void);
 static void ompc_static_bsched_tid(struct ompc_thread *tp, 
         indvar_t *lb, indvar_t *up, int ubofs, int *step);
@@ -49,13 +51,21 @@ ompc_barrier()
 
     tp = ompc_current_thread();
 
+/*
+#ifdef __ABTL_LOG_ENABLE
     int event_barrier;
-    event_barrier = ABTL_log_start(4 + tp->parent->parallel_nested_level);
+    if (tp->parent->parallel_nested_level == 1) event_barrier = ABTL_log_start(5);
+#endif
+*/
 
     //ompc_tree_barrier_wait(&tp->parent->tree_barrier, tp);
     ompc_thread_barrier(tp->num, tp->parent);
 
-    ABTL_log_end(event_barrier);
+/*
+#ifdef __ABTL_LOG_ENABLE
+    if (tp->parent->parallel_nested_level == 1) ABTL_log_end(event_barrier);
+#endif
+*/
 }
 
 

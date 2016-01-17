@@ -16,6 +16,9 @@
 #include <hwloc.h>
 #include "abt_logger.h"
 
+#define __ABTL_LOG_ENABLE
+//#define __TEST_WORK_STEALING
+
 // FIXME temporary impl, needs refactoring
 static ABT_xstream xstreams[MAX_PROC];
 
@@ -33,8 +36,6 @@ static void thread_affinity_setup(int i) {
     hwloc_set_cpubind(topo, set, HWLOC_CPUBIND_THREAD);
     hwloc_bitmap_free(set);
 }
-
-#define __TEST_WORK_STEALING
 
 #ifdef __TEST_WORK_STEALING
 static ABT_sched scheds[MAX_PROC];
@@ -521,8 +522,12 @@ static void ompc_thread_wrapper_func(void *arg)
 
     struct ompc_thread *tp = cthd->parent;
 
+/*
+#ifdef __ABTL_LOG_ENABLE
     int event_wrapper_wait;
-    event_wrapper_wait = ABTL_log_start(0 + tp->parallel_nested_level);
+    if (tp->parallel_nested_level == 1) event_wrapper_wait = ABTL_log_start(1);
+#endif
+*/
 
     if (!tp->run_children) {
         ABT_mutex_lock(tp->broadcast_mutex);
@@ -532,10 +537,16 @@ static void ompc_thread_wrapper_func(void *arg)
         ABT_mutex_unlock(tp->broadcast_mutex);
     }
 
-    ABTL_log_end(event_wrapper_wait);
+/*
+#ifdef __ABTL_LOG_ENABLE
+    if (tp->parallel_nested_level == 1) ABTL_log_end(event_wrapper_wait);
+#endif
+*/
 
+#ifdef __ABTL_LOG_ENABLE
     int event_wrapper_func;
-    event_wrapper_func = ABTL_log_start(2 + tp->parallel_nested_level);
+    if (tp->parallel_nested_level == 1) event_wrapper_func = ABTL_log_start(3);
+#endif
 
 # ifdef USE_LOG
     if(ompc_log_flag) tlog_parallel_IN(i);
@@ -556,7 +567,9 @@ static void ompc_thread_wrapper_func(void *arg)
     if(ompc_log_flag) tlog_parallel_OUT(i);
 # endif /* USE_LOG */
 
-    ABTL_log_end(event_wrapper_func);
+#ifdef __ABTL_LOG_ENABLE
+    if (tp->parallel_nested_level == 1) ABTL_log_end(event_wrapper_func);
+#endif
 }
 
 /* called from compiled code. */
@@ -566,8 +579,12 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 {
     struct ompc_thread *cthd = ompc_current_thread();
 
+/*
+#ifdef __ABTL_LOG_ENABLE
     int event_parallel_exec;
-    event_parallel_exec = ABTL_log_start(6 + cthd->parallel_nested_level);
+    if (cthd->parallel_nested_level == 1) event_parallel_exec = ABTL_log_start(7);
+#endif
+*/
 
     int n_thds, in_parallel;
     if (cond == 0) { /* serialized by parallel if(false) */
@@ -633,10 +650,14 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     ABT_cond_broadcast(cthd->broadcast_cond);
     ABT_mutex_unlock(cthd->broadcast_mutex);
 
-    ABTL_log_end(event_parallel_exec);
+/*
+#ifdef __ABTL_LOG_ENABLE
+    if (cthd->parallel_nested_level == 1) ABTL_log_end(event_parallel_exec);
 
     int event_parallel_join;
-    event_parallel_join = ABTL_log_start(8 + cthd->parallel_nested_level);
+    if (cthd->parallel_nested_level == 1)  event_parallel_join = ABTL_log_start(9);
+#endif
+*/
 
     for (int i = 0; i < n_thds; i++) {
         ABT_thread_join(children[i]);
@@ -655,7 +676,11 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         proc_last_used = 0;
     }
 
-    ABTL_log_end(event_parallel_join);
+/*
+#ifdef __ABTL_LOG_ENABLE
+    if (cthd->parallel_nested_level == 1) ABTL_log_end(event_parallel_join);
+#endif
+*/
 }
 
 
@@ -796,7 +821,6 @@ ompc_get_num_threads (struct ompc_thread *tp)
     else 
         return tp->num_thds;
 }
-
 
 void
 ompc_set_num_threads(int n)
