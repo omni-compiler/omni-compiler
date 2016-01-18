@@ -1,4 +1,5 @@
                                                                       2015.04.21
+                                                                      Ver 0.9.2
 
               Coarray Fortran features and the current restrictions
 
