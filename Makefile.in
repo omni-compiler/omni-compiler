@@ -108,12 +108,6 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/Driver/bin/xmpcc.in \
 	$(top_srcdir)/Driver/bin/xmpf90.in \
 	$(top_srcdir)/libtlog/src_mpi/bin/tlogview.in \
-	$(top_srcdir)/release/debian/changelog.in \
-	$(top_srcdir)/release/debian/control.in \
-	$(top_srcdir)/release/debian/rules.in \
-	$(top_srcdir)/release/xcalablemp.spec.in \
-	$(top_srcdir)/release/make_rpm.sh.in \
-	$(top_srcdir)/release/make_deb.sh.in \
 	$(top_srcdir)/Driver/atool/mk/vars.mk.in \
 	$(top_srcdir)/Driver/atool/Makefile.in \
 	$(top_srcdir)/Driver/atool/src/lib/Makefile.in \
@@ -143,10 +137,7 @@ CONFIG_CLEAN_FILES =  \
 	Driver/etc/ompcc.conf Driver/etc/ompf90.conf \
 	Driver/etc/xmpcc.conf Driver/etc/xmpf90.conf Driver/bin/ompcc \
 	Driver/bin/ompf90 Driver/bin/xmpcc Driver/bin/xmpf90 \
-	libtlog/src_mpi/bin/tlogview release/debian/changelog \
-	release/debian/control release/debian/rules \
-	release/xcalablemp.spec release/make_rpm.sh \
-	release/make_deb.sh Driver/atool/mk/vars.mk \
+	libtlog/src_mpi/bin/tlogview Driver/atool/mk/vars.mk \
 	Driver/atool/Makefile Driver/atool/src/lib/Makefile \
 	Driver/atool/src/include/nata/Makefile \
 	Driver/atool/src/include/nata/nata_platform.h \
@@ -371,7 +362,7 @@ OS_LDFLAGS = @OS_LDFLAGS@
 OS_LIBS = @OS_LIBS@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
-PACKAGE_NAME = @PACKAGE_NAME@
+PACKAGE_NAME = omnicompiler-@VERSION@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
@@ -404,20 +395,6 @@ TYPE_INT64 = @TYPE_INT64@
 VERSION = @VERSION@
 XMPC_DEF = @XMPC_DEF@
 XMPF_DEF = @XMPF_DEF@
-XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
-XMPPKG_GROUP = @XMPPKG_GROUP@
-XMPPKG_LICENSE = @XMPPKG_LICENSE@
-XMPPKG_MAINTAINER = @XMPPKG_MAINTAINER@
-XMPPKG_NAME = @XMPPKG_NAME@
-XMPPKG_PACKAGER = @XMPPKG_PACKAGER@
-XMPPKG_PREFIX = @XMPPKG_PREFIX@
-XMPPKG_PRIORITY = @XMPPKG_PRIORITY@
-XMPPKG_RELEASE = @XMPPKG_RELEASE@
-XMPPKG_SECTION = @XMPPKG_SECTION@
-XMPPKG_SUMMARY = @XMPPKG_SUMMARY@
-XMPPKG_URL = @XMPPKG_URL@
-XMPPKG_VENDOR = @XMPPKG_VENDOR@
-XMPPKG_VERSION = @XMPPKG_VERSION@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
 abs_builddir = @abs_builddir@
@@ -496,10 +473,6 @@ SUBDIRS = XcodeML-Common C-FrontEnd/src C-BackEnd F-FrontEnd/src \
 	libtlog/src_mpi libxmp/include libxmp/src libxmp/src_threads \
 	libxmpf/include libxmpf/src $(am__append_1) $(am__append_2) \
 	$(am__append_3) $(am__append_4)
-XMPPKG_TMPDIR_TOP = /tmp/@XMPPKG_NAME@
-XMPPKG_TMPDIR := $(XMPPKG_TMPDIR_TOP)/tmp
-DEB_VER_FILE = /etc/debian_version
-RH_REL_FILE = /etc/redhat-release
 BASE_TESTDIR = "tests/xcalablemp/"
 TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	"global-view/bcast/C/" "global-view/bcast/F/" \
@@ -518,6 +491,7 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	$(am__append_7) $(am__append_9)
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
 LARGE_TESTDIRS = "others/C" $(am__append_6) $(am__append_8)
+WORKDIR = /tmp/$(PACKAGE_NAME)
 DELETABLES = Driver/bin/ompcc \
 	Driver/bin/ompf90 \
 	Driver/bin/xmpf90 \
@@ -543,11 +517,7 @@ DELETABLES = Driver/bin/ompcc \
 	tests/C-test/Makefile \
 	tests/F-test/OMP-test/Makefile \
 	tests/clinpack/Makefile \
-	tests/tiny/Makefile \
-	$(XMPPKG_TMPDIR_TOP) \
-	${XMPPKG_NAME}*.tar.gz \
-	${XMPPKG_NAME}*.deb \
-	${XMPPKG_NAME}*.rpm
+	tests/tiny/Makefile
 
 all: all-recursive
 
@@ -628,18 +598,6 @@ Driver/bin/xmpcc: $(top_builddir)/config.status $(top_srcdir)/Driver/bin/xmpcc.i
 Driver/bin/xmpf90: $(top_builddir)/config.status $(top_srcdir)/Driver/bin/xmpf90.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 libtlog/src_mpi/bin/tlogview: $(top_builddir)/config.status $(top_srcdir)/libtlog/src_mpi/bin/tlogview.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-release/debian/changelog: $(top_builddir)/config.status $(top_srcdir)/release/debian/changelog.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-release/debian/control: $(top_builddir)/config.status $(top_srcdir)/release/debian/control.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-release/debian/rules: $(top_builddir)/config.status $(top_srcdir)/release/debian/rules.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-release/xcalablemp.spec: $(top_builddir)/config.status $(top_srcdir)/release/xcalablemp.spec.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-release/make_rpm.sh: $(top_builddir)/config.status $(top_srcdir)/release/make_rpm.sh.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-release/make_deb.sh: $(top_builddir)/config.status $(top_srcdir)/release/make_deb.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 Driver/atool/mk/vars.mk: $(top_builddir)/config.status $(top_srcdir)/Driver/atool/mk/vars.mk.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
@@ -1073,23 +1031,7 @@ uninstall-am:
 	tags-am uninstall uninstall-am
 
 
-release-rpm:
-	if test -f $(RH_REL_FILE) ; then \
-	  $(MKDIR_P) $(XMPPKG_TMPDIR_TOP); \
-	  bash release/make_rpm.sh $(CURDIR) $(XMPPKG_TMPDIR_TOP); \
-	  rm -rf $(XMPPKG_TMPDIR_TOP); \
-	fi
-
-release-deb:
-	if test -f $(DEB_VER_FILE) ; then \
-	  $(MKDIR_P) $(XMPPKG_TMPDIR); \
-	  bash release/make_deb.sh $(CURDIR) $(XMPPKG_TMPDIR); \
-	  rm -rf $(XMPPKG_TMPDIR_TOP); \
-	fi
-
-release: release-rpm release-deb
-
-.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests
+.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests release slurm slurm-check slurm-timeline remote-tests clean-local distclean-local
 
 tests: 
 	@for subdir in $(TESTDIRS) ; do \
@@ -1124,6 +1066,17 @@ run-large-tests:
 	  $(MAKE) run -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
+release:
+	@if [ -e $(WORKDIR) ]; then \
+	  echo "Exist ! $(WORKDIR). Please delete it."; exit 1; \
+	fi; \
+	cp -a . $(WORKDIR); cd $(WORKDIR); \
+	rm -rf .git .gitignore; \
+	sh autogen.sh; ./configure; \
+	find . -name Makefile.in -exec touch \{\} \;
+	cd /tmp; tar cjf @TOPDIR@/$(PACKAGE_NAME).tar.bz2 $(PACKAGE_NAME); \
+	echo "Created $(PACKAGE_NAME).tar.bz2"; \
+	rm -rf $(WORKDIR)
 
 slurm:
 	bash ./tests/xcalablemp/scripts/create_sorted_list.sh $(BASE_TESTDIR) $(TESTDIRS) > $(SORTED_LIST); \

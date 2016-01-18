@@ -404,7 +404,7 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
 
   CoarrayInfo_t *cinfo;
 
-  _XMPF_coarrayDebugPrint("COARRAY_ALLOC_STATIC name=\'%*s\'\n"
+  _XMPF_coarrayDebugPrint("COARRAY_ALLOC_STATIC varname=\'%*s\'\n"
                           "  *count=%d, *element=%d, nbytes=%u, elementRU=%u\n",
                           *namelen, name, *count, *element, nbytes, elementRU);
 
@@ -485,7 +485,7 @@ void xmpf_coarray_prolog_(void **tag, char *name, int *namelen)
 {
   ResourceSet_t *rset = _newResourceSet(name, *namelen);
 
-  _XMPF_coarrayDebugPrint("PROLOG CODE. rset=%p\n", rset);
+  _XMPF_coarrayDebugPrint("PROLOG CODE. name=\'%s\', rset=%p\n", rset->name, rset);
 
   *tag = (void*)rset;
 }
@@ -498,7 +498,7 @@ void xmpf_coarray_epilog_(void **tag)
 
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
 
-  _XMPF_coarrayDebugPrint("EPILOG CODE. rset=%p\n", rset);
+  _XMPF_coarrayDebugPrint("EPILOG CODE. name=\'%s\', rset=%p\n", rset->name, rset);
 
   _freeResourceSet(rset);     // with or without automatic SYNCALL
 
@@ -516,14 +516,15 @@ void xmpf_coarray_epilog_(void **tag)
  *      to the memory chunk, and
  *   3. return coarrayInfo as descPtr
  */
-void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag)
+void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
+                                void **tag, char *name, int *namelen)
 {
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
   MemoryChunkOrder_t *chunkP;
-  MemoryChunk_t *chunk, *myChunk;
+  MemoryChunk_t *myChunk;
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_GET_DESCPTR\n"
-                          "  coarray dummy argument: %p\n", baseAddr);
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_FIND_DESCPTR varname=\'%*s\'\n",
+                          *namelen, name);
 
   if (rset == NULL)
     rset = _newResourceSet("(POOL)", strlen("(POOL)"));
@@ -536,7 +537,7 @@ void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag)
   */
   myChunk = NULL;
   forallMemoryChunkOrder(chunkP) {
-    chunk = chunkP->chunk;
+  MemoryChunk_t* chunk = chunkP->chunk;
     if (chunk->orgAddr <= baseAddr && baseAddr < chunk->orgAddr + chunk->nbytes) {
       // found the memory chunk
       myChunk = chunk;
@@ -544,18 +545,20 @@ void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag)
     }
   }
 
-  if (myChunk != NULL) {
-    _XMPF_coarrayDebugPrint("*** MemoryChunk %s is my home.\n",
-                            _dispMemoryChunk(myChunk));                    
-    _XMPF_coarrayDebugPrint("*** my baseAddr=%p, chunk->orgAddr=%p\n",
-                            baseAddr, chunk->orgAddr);
-
-    _addCoarrayInfo(myChunk, cinfo);
-
-  } else {
-    _XMPF_coarrayDebugPrint("*** ILLEGAL: No MemoryChunk owns me. baseAddr=%p\n",
-                            baseAddr);
+  if (myChunk == NULL) {
+    _XMPF_coarrayDebugPrint("*** ILLEGAL: home MemoryChunk was not found. "
+                            "baseAddr=%p\n", baseAddr);
+    _XMPF_coarrayFatal("The actual argument corresponding to \'%*s\' "
+                       "should be a coarray.\n", *namelen, name);
   }
+
+
+  _XMPF_coarrayDebugPrint("*** found home MemoryChunk %s\n"
+                          "*** my baseAddr=%p, chunk->orgAddr=%p\n",
+                          _dispMemoryChunk(myChunk),
+                          baseAddr, myChunk->orgAddr);
+
+  _addCoarrayInfo(myChunk, cinfo);
 
   // return coarrayInfo as descPtr
   *descPtr = (void*)cinfo;
@@ -1117,6 +1120,12 @@ int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...)
 /***********************************************\
    inquire functions (internal)
 \***********************************************/
+
+char *_XMPF_get_coarrayName(void *descPtr)
+{
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
+  return cinfo->name;
+}
 
 void *_XMPF_get_coarrayDesc(void *descPtr)
 {

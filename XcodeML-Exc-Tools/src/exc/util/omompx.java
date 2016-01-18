@@ -355,11 +355,13 @@ public class omompx
       xobjFile.iterateDef(caf_translator0);
       if(exc.xmpF.XMP.hasErrors())
         System.exit(1);
+      Boolean containsCoarray = caf_translator0.containsCoarray();
+      caf_translator0.finish();
 
-      if (caf_translator0.containsCoarray()) {
+      Boolean cascadeMode = "1".equals(System.getenv("XMP_CASCADE"));
+      Boolean onlyCafMode = "1".equals(System.getenv("XMP_ONLYCAF"));
 
-        //XMP.warning("translating coarray features");
-
+      if (containsCoarray || cascadeMode || onlyCafMode) {
         // Coarray Fortran pass#1
         exc.xmpF.XMPtransCoarray
           caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1);
@@ -375,8 +377,9 @@ public class omompx
         if(exc.xmpF.XMP.hasErrors())
           System.exit(1);
         caf_translator2.finish();
-      } else {    // without coarray features
+      }
 
+      if ((!containsCoarray || cascadeMode) && !onlyCafMode) {
         // XMP Fortran
         exc.xmpF.XMPtranslate
           xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
@@ -384,7 +387,6 @@ public class omompx
         if(exc.xmpF.XMP.hasErrors())
           System.exit(1);
         xmp_translator.finish();
-
       }
 
       if(xcodeWriter != null) {

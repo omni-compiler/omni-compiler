@@ -377,6 +377,57 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
         return true;
     }
     
+    @Override
+    public int getFrank(Block block)
+    {
+      switch (Opcode()) {
+      case F_ARRAY_REF:
+      case F_VAR_REF:
+      case CO_ARRAY_REF:
+        Xobject subscripts = getSubscripts();
+        if (subscripts == null)
+          throw new UnsupportedOperationException
+            ("internal error: XobjList.getSubscripts() is null");
+        int rank = 0;
+        for (int i = 0; i < subscripts.Nargs(); i++) {
+          Xobject subscr = subscripts.getArg(i);
+          rank = rank + subscr.getFrank(block);
+        }
+        return rank;
+
+      case F_ARRAY_INDEX:
+        return getArg(0).getFrank(block);
+
+      case F_INDEX_RANGE:
+        return 1;
+
+      default:
+        throw new UnsupportedOperationException
+          ("unexpected Opcode in XobjList.getFrank(): " + Opcode());
+      }
+    }
+
+    @Override
+    public Xobject getSubscripts()
+    {
+      switch (Opcode()) {
+      case F_ARRAY_REF:
+        return getArg(1);
+      case F_VAR_REF:
+        return getArg(0).getSubscripts();
+      case CO_ARRAY_REF:
+        return getArg(0).getSubscripts();
+      case F_ARRAY_INDEX:
+        // a scalar or vector subscript
+        return null;
+      case F_INDEX_RANGE:
+      default:
+        throw new UnsupportedOperationException
+          ("unexpected Opcode in XobjList.getSubscripts(): " + Opcode());
+      }
+    }
+
+
     public void reverse()
     {
         if(args == null)

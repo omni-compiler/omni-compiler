@@ -40,7 +40,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
     
 
   //-----------------------------------------
-  //  do transform for each procedure and module
+  //  do transform for a procedure or a module
   //-----------------------------------------
 
   public void doDef(XobjectDef d) {
@@ -62,6 +62,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
       transCoarrayRun.run1();
       // assuming top-down translation along host-association
       pastRuns.add(transCoarrayRun);
+      //transCoarrayRun.finalize();
       break;
 
     case 2:               // second pass for modules
@@ -69,6 +70,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
         return;
       transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2);
       transCoarrayRun.run2();
+      //transCoarrayRun.finalize();
       break;
 
     default:
@@ -170,13 +172,16 @@ public class XMPtransCoarray implements XobjectDefVisitor
     // True if it is a name of coarray intrinsic procedures or
     // a library and it should be converted in run1 or run2.
     // Else, false even if it is a name of itrinsic procedure.
-    return false;
+
+    return XMPtransCoarrayRun.intrinsicProcedureNames.contains(name);
   }
 
 
-
   public boolean containsCoarray() {
-    return (_nCoarrays > 0 || _nCoidxObjs > 0 || _nCoarrayLibs > 0);
+    // check if there are any coarrays or any coarray libraries.
+    if (_nCoarrays > 0 || _nCoidxObjs > 0 || _nCoarrayLibs > 0)
+      return true;
+    return false;
   }
 }
 

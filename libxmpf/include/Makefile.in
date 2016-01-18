@@ -309,20 +309,6 @@ TYPE_INT64 = @TYPE_INT64@
 VERSION = @VERSION@
 XMPC_DEF = @XMPC_DEF@
 XMPF_DEF = @XMPF_DEF@
-XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
-XMPPKG_GROUP = @XMPPKG_GROUP@
-XMPPKG_LICENSE = @XMPPKG_LICENSE@
-XMPPKG_MAINTAINER = @XMPPKG_MAINTAINER@
-XMPPKG_NAME = @XMPPKG_NAME@
-XMPPKG_PACKAGER = @XMPPKG_PACKAGER@
-XMPPKG_PREFIX = @XMPPKG_PREFIX@
-XMPPKG_PRIORITY = @XMPPKG_PRIORITY@
-XMPPKG_RELEASE = @XMPPKG_RELEASE@
-XMPPKG_SECTION = @XMPPKG_SECTION@
-XMPPKG_SUMMARY = @XMPPKG_SUMMARY@
-XMPPKG_URL = @XMPPKG_URL@
-XMPPKG_VENDOR = @XMPPKG_VENDOR@
-XMPPKG_VERSION = @XMPPKG_VERSION@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
 abs_builddir = @abs_builddir@
@@ -396,7 +382,7 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-include_HEADERS = xmp_lib.h xmp_coarray.h xmp_coarray_get.h xmp_coarray_alloc.h
+include_HEADERS = xmp_lib.h xmp_coarray.h xmp_coarray_get.h xmp_coarray_alloc.h xmp_coarray_reduction.h
 @SUPERUX_FALSE@COARRAY_SYNC_H = xmp_coarray_sync.h
 @SUPERUX_TRUE@COARRAY_SYNC_H = xmp_coarray_sync_sxace.h
 all: all-am
@@ -665,9 +651,13 @@ xmp_coarray_get.h:  xmp_coarray_get.h.sh
 xmp_coarray_alloc.h:  xmp_coarray_alloc.h.sh
 	. $< $(TARGET) > $@
 
+xmp_coarray_reduction.h:  xmp_coarray_reduction.h.sh
+	. $< $(TARGET) > $@
+
 clean-local:
 	rm -f xmp_coarray_get.h
 	rm -f xmp_coarray_alloc.h
+	rm -f xmp_coarray_reduction.h
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

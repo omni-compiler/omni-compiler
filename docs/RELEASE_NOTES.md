@@ -1,5 +1,10 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 0.9.3      2016/01/18
+* Improve performance of the task directive on a single node
+* Support a full shadow for multi-dimensional arrays in XMP/F
+* Fixed lots of bugs.
+
 # ver. 0.9.2      2015/11/27
 * Support the async clause of the gmove directive.
 * Support MPI3 coarray features.

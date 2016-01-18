@@ -14,16 +14,16 @@ BUG451= bug451.x
 BUG457= sakagami457.x
 BUG458= sakagami458-join.x 
 BUG459= sakagami459-join.x 
-BUG460= sakagami460-join.x sakagami460-2.x bug460OK.x
+BUG460= sakagami460-join.x sakagami460-2.x bug460-3.x
 BUG472= bug472.x bug472G1.x bug472G2.x 
 
-SPECIALS= bug460OK.x # bug460get.x bug460put.x
+SPECIALS= # bug460get.x bug460put.x
 
 #OUT_err=entry1ERR
 
 #host3 host2-1 ... problem in gfortran?
 
-OUT= $(SPECIALS) $(OUT_bug) $(OUT_host) $(OUT_module) $(OUT_epi) $(OUT_darg) 
+OUT= $(OUT_bug) $(OUT_host) $(OUT_module) $(OUT_epi) $(OUT_darg) 
 
 include ../F/Makefile.common
 
@@ -37,9 +37,9 @@ bug460put.x: bug460-mod.o bug460put-main.f90
 	xmpf90 $(OPT) -o $@ bug460-mod.o bug460put-main.f90
 
 
-bug460OK-mod.o: bug460OK-mod.f90
+bug460-3-mod.o: bug460-3-mod.f90
 	xmpf90 -c $(OPT) $<
 
-bug460OK.x: bug460OK-mod.o bug460OK.f90
-	xmpf90 $(OPT) -o $@ bug460OK-mod.o bug460OK.f90
+bug460-3.x: bug460-3-mod.o bug460-3.f90
+	xmpf90 $(OPT) -o $@ bug460-3-mod.o bug460-3.f90
 

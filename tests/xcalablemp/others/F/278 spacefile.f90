@@ -8,7 +8,6 @@ program main
   string = STRING
   if ( string == "P A S S" ) then
      print *, "PASS"
-     call exit(0)
   else
      print *, "ERROR"
      call exit(1)

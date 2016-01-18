@@ -333,7 +333,7 @@ extern void xmpf_copy_errmsg_(char *errmsg, int *msglen);
 extern int _XMPF_nowInTask(void);   // for restriction check
 extern void _XMPF_checkIfInTask(char *msgopt);   // restriction check
 extern void _XMPF_coarrayDebugPrint(char *format, ...);
-extern void xmpf_coarray_fatal_(char *msg, int *msglen);
+extern void xmpf_coarray_fatal_with_len_(char *msg, int *msglen);
 extern void _XMPF_coarrayFatal(char *format, ...);
 
 extern void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[]);
@@ -353,7 +353,8 @@ extern void xmpf_coarray_count_size_(int *count, int *element);
 extern void xmpf_coarray_prolog_(void **tag, char *name, int *namelen);
 extern void xmpf_coarray_epilog_(void **tag);
 
-extern void xmpf_coarray_get_descptr_(void **descPtr, char *baseAddr, void **tag);
+extern void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
+                                       void **tag, char *name, int *namelen);
 extern void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...);
 extern void xmpf_coarray_set_varname_(void **descPtr, char *name, int *namelen);
 
@@ -364,6 +365,7 @@ extern int xmpf_coarray_garbage_bytes_(void);
 
 extern void *_XMPF_get_coarrayDesc(void *descPtr);
 extern size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr);
+extern char *_XMPF_get_coarrayName(void *descPtr);
 
 
 /* xmpf_coarray_lib.c */

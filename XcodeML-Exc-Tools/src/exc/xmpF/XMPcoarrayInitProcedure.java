@@ -182,10 +182,8 @@ public class XMPcoarrayInitProcedure {
 
     for (XMPcoarray coarray: staticCoarrays) {
       Xobject elem = coarray.getElementLengthExpr();
-      //////////////////////////////
       if (elem==null)
-        XMP.fatal("GACCHA!  elem must not be null.");
-      //////////////////////////////
+        XMP.fatal("elem must not be null.");
       int count = coarray.getTotalArraySize();
       String descPtrName = coarray.getDescPointerName();
       String crayPtrName = coarray.getCrayPointerName();
