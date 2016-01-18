@@ -41,6 +41,9 @@ public class XMPrewriteExpr {
     XMPlocalDecl.setupConstructor(fb);
     XMPlocalDecl.setupDestructor(fb);
 
+    // add a barrier at the end of the original main
+    if (fb.getName() == "main") addBarrier(fb);
+
     def.Finalize();
   }
 
@@ -2289,6 +2292,29 @@ public class XMPrewriteExpr {
         XMP.error(varDecl.getLineNo(), e.getMessage());
       }
     }
+  }
+
+  private void addBarrier(FunctionBlock fb){
+
+    topdownBlockIterator iter = new topdownBlockIterator(fb);
+
+    for (iter.init(); !iter.end(); iter.next()) {
+
+      Block b = iter.getBlock();
+
+      // insert a barrier before each return statement
+      if (b.Opcode() == Xcode.RETURN_STATEMENT){
+    	Ident f = _globalDecl.declExternFunc("_XMP_barrier_EXEC", Xtype.Function(Xtype.voidType));
+    	b.insert(f.Call(Xcons.List()));
+      }
+	
+    }
+
+    // add a barrier at the end of the function
+    Ident f = _globalDecl.declExternFunc("_XMP_barrier_EXEC", Xtype.Function(Xtype.voidType));
+    BlockList bl = fb.getBody().getHead().getBody();
+    bl.add(f.Call(Xcons.List()));
+
   }
 
 }

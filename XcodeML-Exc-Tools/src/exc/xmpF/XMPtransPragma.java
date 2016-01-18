@@ -47,6 +47,11 @@ public class XMPtransPragma
     BlockList prolog = Bcons.emptyBody();
     BlockList epilog = Bcons.emptyBody();
     buildXMPobjectBlock(prolog, epilog);
+
+    if (def.getDef().getName().equals(XMPtranslate.XMPmainFunc)){
+      Ident f = env.declIdent("xmp_barrier", Xtype.FsubroutineType);
+      epilog.add(f.callSubroutine(Xcons.List()));
+    }
     
     // move OMP_THREADPRIVATE to the head of prolog
     // NOTE: Hereafter any addition of statements to prolog must be done

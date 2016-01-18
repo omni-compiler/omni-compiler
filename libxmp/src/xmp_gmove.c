@@ -1396,7 +1396,7 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
 				   int mode){
 
   // NOTE: asynchronous gmove aloways done by _XMP_gmove_1to1
-  if (!is_async && gmv_desc_leftp->is_global && gmv_desc_rightp->is_global){
+  if (!is_async && gmv_desc_leftp->is_global && gmv_desc_rightp->is_global && mode == _XMP_N_GMOVE_NORMAL){
     if (_XMP_gmove_garray_garray_opt(gmv_desc_leftp, gmv_desc_rightp,
   				     dst_l, dst_u, dst_s, dst_d,
   				     src_l, src_u, src_s, src_d)) return;
@@ -2624,7 +2624,17 @@ get_comm_list(_XMP_gmv_desc_t *gmv_desc0, _XMP_gmv_desc_t *gmv_desc1,
 
   _XMP_csd_t *comm_csd[n_exec_nodes][_XMP_N_MAX_DIM];
 
+  int scalar_flag = 1;
+  for (int i0 = 0; i0 < ndims0; i0++) scalar_flag &= (st0[i0] == 0);
+
   for (int r_rank = 0; r_rank < n_exec_nodes; r_rank++){
+
+    /* if (scalar_flag){ */
+    /*   for (int i1 = 0; i1 < ndims1; i1++){ */
+    /* 	comm_set[r_rank][i1] = csd2comm_set(owner_ref_csd1[r_rank][i1]); */
+    /*   } */
+    /* } */
+    /* else { */
 
     _XMP_csd_t *r;
 
@@ -2637,6 +2647,12 @@ get_comm_list(_XMP_gmv_desc_t *gmv_desc0, _XMP_gmv_desc_t *gmv_desc1,
   	r->u[0] = lb1[i1];
   	r->s = 1;
       }
+      /* else if (scalar_flag){ */
+      /* 	r = alloc_csd(1); */
+      /* 	r->l[0] = lb1[i1]; */
+      /* 	r->u[0] = ub1[i1]; */
+      /* 	r->s = st1[i1]; */
+      /* } */
       else {
       	while (st0[i0] == 0 && i0 < ndims0) i0++;
       	if (i0 == ndims0) _XMP_fatal("_XMP_gmove_1to1: lhs and rhs not conformable");
@@ -2667,6 +2683,7 @@ get_comm_list(_XMP_gmv_desc_t *gmv_desc0, _XMP_gmv_desc_t *gmv_desc1,
       comm_set[r_rank][i1] = csd2comm_set(comm_csd[r_rank][i1]);
     }
 
+    /* } */
   }
 
 /* #if XMP_DBG */
@@ -2938,6 +2955,44 @@ typedef struct _XMP_gmv_inout_list_type {
 } _XMP_gmv_inout_list_t;
 
 
+static void _XMP_set_comm_list(_XMP_array_t *a, _XMP_gmv_section_t *sec, int gidx[], long len[]){
+
+  int lidx[_XMP_N_MAX_DIM];
+
+  int ndims = a->dim;
+
+  xmp_array_gtol(a, gidx, lidx);
+  sec->ndims = ndims;
+
+  if (a->order == MPI_ORDER_FORTRAN){
+    for (int i = 0; i < ndims; i++){
+      sec->lb[i] = lidx[ndims - 1 - i];
+      sec->len[i] = len[ndims - 1 - i];
+      sec->st[i] = 1;
+    }
+  }
+  else {
+    for (int i = 0; i < ndims; i++){
+      sec->lb[i] = lidx[i];
+      sec->len[i] = len[i];
+      sec->st[i] = 1;
+    }
+  }
+
+}
+
+
+#define SET_I_AND_LEN(k) \
+  { org_i[k] = c[k]->l; \
+    org_len[k] = c[k]->u - c[k]->l + 1; \
+    if (org_st[k] != 0){ \
+      tgt_i[tgt_dim[k]] = (org_i[k] - org_lb[k]) \
+                        * tgt_st[tgt_dim[k]] / org_st[k] + tgt_lb[tgt_dim[k]]; \
+      tgt_len[tgt_dim[k]] = c[k]->u - c[k]->l + 1; \
+    } \
+  }
+
+
 static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
 				       _XMP_gmv_desc_t *gmv_desc_tgt,
 				       _XMP_comm_set_t *org_comm_set[],
@@ -2962,70 +3017,109 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
 
   _XMP_gmv_inout_list_t *gmv_inout_list = gmv_inout_listh;
 
+  int j = 0;
+  int tgt_dim[org_ndims];
+  for (int i = 0; i < org_ndims; i++){
+    if (org_st[i] != 0){
+      while (tgt_st[j] == 0 && j < tgt_ndims){
+	tgt_i[j] = tgt_lb[j];
+	tgt_len[j] = 1;
+	j++;
+      }
+    }
+    tgt_dim[i] = j++;
+  }
+  for (; j < tgt_ndims; j++){
+    tgt_i[j] = tgt_lb[j];
+    tgt_len[j] = 1;
+  }    
+
   switch (org_ndims){
 
   case 1:
-    break;
-
-  case 2:
 
     for (c[0] = org_comm_set[0]; c[0]; c[0] = c[0]->next){
-      org_i[0] = c[0]->l;
-      org_len[0] = c[0]->u - c[0]->l + 1;
-      tgt_i[0] = (org_i[0] - org_lb[0]) * tgt_st[0] / org_st[0] + tgt_lb[0];
-      tgt_len[0] = c[0]->u - c[0]->l + 1;
-    for (c[1] = org_comm_set[1]; c[1]; c[1] = c[1]->next){
-      org_len[1] = c[1]->u - c[1]->l + 1;
-      org_i[1] = c[1]->l;
-      tgt_i[1] = (org_i[1] - org_lb[1]) * tgt_st[1] / org_st[1] + tgt_lb[1];
-      tgt_len[1] = c[1]->u - c[1]->l + 1;
-
-      int lidx[_XMP_N_MAX_DIM];
+      SET_I_AND_LEN(0);
+      /* org_i[0] = c[0]->l; */
+      /* org_len[0] = c[0]->u - c[0]->l + 1; */
+      /* if (org_st[0] != 0){ */
+      /* 	tgt_i[tgt_dim[0]] = (org_i[tgt_dim[0]] - org_lb[tgt_dim[0]]) */
+      /* 	                  * tgt_st[tgt_dim[0]] / org_st[tgt_dim[0]] + tgt_lb[tgt_dim[0]]; */
+      /* 	tgt_len[tgt_dim[0]] = c[tgt_dim[0]]->u - c[tgt_dim[0]]->l + 1; */
+      /* } */
 
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      xmp_array_gtol(org_array, org_i, lidx);
-      t->org.ndims = org_ndims;
-
-      if (org_array->order == MPI_ORDER_FORTRAN){
-	for (int i = 0; i < org_ndims; i++){
-	  t->org.lb[i] = lidx[org_ndims - 1 - i];
-	  t->org.len[i] = org_len[org_ndims - 1 - i];
-	  t->org.st[i] = 1;
-	}
-      }
-      else {
-	for (int i = 0; i < org_ndims; i++){
-	  t->org.lb[i] = lidx[i];
-	  t->org.len[i] = org_len[i];
-	  t->org.st[i] = 1;
-	}
-      }
-
-      xmp_array_gtol(tgt_array, tgt_i, lidx);
-      t->tgt.ndims = tgt_ndims;
-
-      if (org_array->order == MPI_ORDER_FORTRAN){
-	for (int i = 0; i < tgt_ndims; i++){
-	  t->tgt.lb[i] = lidx[tgt_ndims - 1 - i];
-	  t->tgt.len[i] = tgt_len[tgt_ndims - 1 - i];
-	  t->tgt.st[i] = 1;
-	}
-      }
-      else {
-	for (int i = 0; i < tgt_ndims; i++){
-	  t->tgt.lb[i] = lidx[i];
-	  t->tgt.len[i] = tgt_len[i];
-	  t->tgt.st[i] = 1;
-	}
-      }
+      _XMP_set_comm_list(org_array, &t->org, org_i, org_len);
+      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
 
     }
-    }
+
+    break;
+
+  case 2:
+
+    for (c[0] = org_comm_set[0]; c[0]; c[0] = c[0]->next){
+      SET_I_AND_LEN(0);
+      /* org_i[0] = c[0]->l; */
+      /* org_len[0] = c[0]->u - c[0]->l + 1; */
+      /* tgt_i[0] = (org_i[0] - org_lb[0]) * tgt_st[0] / org_st[0] + tgt_lb[0]; */
+      /* tgt_len[0] = c[0]->u - c[0]->l + 1; */
+    for (c[1] = org_comm_set[1]; c[1]; c[1] = c[1]->next){
+      SET_I_AND_LEN(1);
+      /* org_i[1] = c[1]->l; */
+      /* org_len[1] = c[1]->u - c[1]->l + 1; */
+      /* tgt_i[1] = (org_i[1] - org_lb[1]) * tgt_st[1] / org_st[1] + tgt_lb[1]; */
+      /* tgt_len[1] = c[1]->u - c[1]->l + 1; */
+
+      _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
+      t->next = NULL;
+
+      _XMP_set_comm_list(org_array, &t->org, org_i, org_len);
+      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len);
+
+      gmv_inout_list->next = t;
+      gmv_inout_list = t;
+
+    }}
+
+    break;
+
+  case 3:
+
+    for (c[0] = org_comm_set[0]; c[0]; c[0] = c[0]->next){
+      SET_I_AND_LEN(0);
+      /* org_i[0] = c[0]->l; */
+      /* org_len[0] = c[0]->u - c[0]->l + 1; */
+      /* tgt_i[0] = (org_i[0] - org_lb[0]) * tgt_st[0] / org_st[0] + tgt_lb[0]; */
+      /* tgt_len[0] = c[0]->u - c[0]->l + 1; */
+    for (c[1] = org_comm_set[1]; c[1]; c[1] = c[1]->next){
+      SET_I_AND_LEN(1);
+      /* org_i[1] = c[1]->l; */
+      /* org_len[1] = c[1]->u - c[1]->l + 1; */
+      /* tgt_i[1] = (org_i[1] - org_lb[1]) * tgt_st[1] / org_st[1] + tgt_lb[1]; */
+      /* tgt_len[1] = c[1]->u - c[1]->l + 1; */
+    for (c[2] = org_comm_set[2]; c[2]; c[2] = c[2]->next){
+      SET_I_AND_LEN(2);
+      /* org_i[2] = c[2]->l; */
+      /* org_len[2] = c[2]->u - c[2]->l + 1; */
+      /* tgt_i[2] = (org_i[2] - org_lb[2]) * tgt_st[2] / org_st[2] + tgt_lb[2]; */
+      /* tgt_len[2] = c[2]->u - c[2]->l + 1; */
+
+      _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
+      t->next = NULL;
+
+      _XMP_set_comm_list(org_array, &t->org, org_i, org_len);
+      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len);
+
+      gmv_inout_list->next = t;
+      gmv_inout_list = t;
+
+    }}}
 
     break;
 
@@ -3038,6 +3132,7 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
 }
 
 
+#if XMP_DBG
 static void print_gmv_inout_list(_XMP_gmv_inout_list_t *gmv_inout_listh){
 
   for (_XMP_gmv_inout_list_t *gmv_inout_list = gmv_inout_listh;
@@ -3062,6 +3157,8 @@ static void print_gmv_inout_list(_XMP_gmv_inout_list_t *gmv_inout_listh){
   }
 
 }
+#endif
+
 
 // a(:) = b(:)[i]
 static void _XMP_gmove_in(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
@@ -3077,8 +3174,11 @@ static void _XMP_gmove_in(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_
   _XMP_coarray_t *rhs_coarray = rhs_array->coarray;
 
   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
+#if XMP_DBG
   int myrank = exec_nodes->comm_rank;
+#endif
   int n_exec_nodes = exec_nodes->comm_size;
+  int ndims_exec_nodes = exec_nodes->dim;
 
   long elmts[lhs_ndims];
   long distance[lhs_ndims];
@@ -3098,23 +3198,23 @@ static void _XMP_gmove_in(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_
 
   for (int tgt_node = 0; tgt_node < n_exec_nodes; tgt_node++){
 
-    //if (myrank == 1 && tgt_node == 0){
-
-    int ncoord[_XMP_N_MAX_DIM];
-    _XMP_calc_rank_array(exec_nodes, ncoord, tgt_node);
-    for (int i = 0; i < n_exec_nodes; i++) ncoord[i]++; // to one-based.
-    _XMP_coarray_rdma_image_set_n(n_exec_nodes, ncoord);
-
     _XMP_gmv_inout_list_t gmv_inout_listh;
     gmv_inout_listh.next = NULL;
     _XMP_conv_comm_set_to_list(gmv_desc_leftp, gmv_desc_rightp,
 			       org_comm_set[tgt_node], &gmv_inout_listh);
 
+#if XMP_DBG
+    printf("[%d gets from %d]\n", myrank, tgt_node);
+    print_gmv_inout_list(gmv_inout_listh.next);
+#endif
+
     for (_XMP_gmv_inout_list_t *gmv_inout_list = gmv_inout_listh.next;
 	 gmv_inout_list; gmv_inout_list = gmv_inout_list->next){
 
-      printf("[%d gets from %d]\n", myrank, tgt_node);
-      print_gmv_inout_list(gmv_inout_list);
+      int ncoord[_XMP_N_MAX_DIM];
+      _XMP_calc_rank_array(exec_nodes, ncoord, tgt_node);
+      for (int i = 0; i < ndims_exec_nodes; i++) ncoord[i]++; // to one-based.
+      _XMP_coarray_rdma_image_set_n(ndims_exec_nodes, ncoord);
 
       long *lhs_lbound = gmv_inout_list->org.lb;
       long *lhs_length = gmv_inout_list->org.len;
@@ -3133,10 +3233,16 @@ static void _XMP_gmove_in(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_
       _XMP_coarray_rdma_do(_XMP_N_COARRAY_GET, rhs_coarray, lhs_addr, lhs_coarray);
 
     }
-    //}
-  }
 
-  // free gmv_inout_list
+    // free gmv_inout_list
+    _XMP_gmv_inout_list_t *gmv_inout_list = gmv_inout_listh.next;
+    while (gmv_inout_list){
+      _XMP_gmv_inout_list_t *next = gmv_inout_list->next;
+      _XMP_free(gmv_inout_list);
+      gmv_inout_list = next;
+    }
+
+  }
 
 }
 

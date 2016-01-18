@@ -178,6 +178,7 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
   int src_dim = src_array->dim;
   int src_l[src_dim], src_u[src_dim], src_s[src_dim];
   unsigned long long src_d[src_dim];
+  int scalar_flag = 1;
   for (int i = 0; i < src_dim; i++) {
     src_l[i] = gmv_desc_rightp->lb[i];
     src_u[i] = gmv_desc_rightp->ub[i];
@@ -185,9 +186,10 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
     src_d[i] = src_array->info[i].dim_acc;
     _XMP_normalize_array_section(gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
     if (src_s[i] != 0) src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
+    scalar_flag &= (src_s[i] == 0);
   }
 
-  if (dst_total_elmts != src_total_elmts) {
+  if (dst_total_elmts != src_total_elmts && !scalar_flag){
     _XMP_fatal("bad assign statement for gmove");
   } else {
     //gmove_total_elmts = dst_total_elmts;
@@ -233,7 +235,7 @@ void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
     dst_s[i] = gmv_desc_leftp->st[i];
     dst_d[i] = dst_array->info[i].dim_acc;
     _XMP_normalize_array_section(gmv_desc_leftp, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
-    dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
+    if (dst_s[i] != 0) dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
   }
 
   // get src info
@@ -242,16 +244,18 @@ void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
   int src_dim = src_array->dim;
   int src_l[src_dim], src_u[src_dim], src_s[src_dim];
   unsigned long long src_d[src_dim];
+  int scalar_flag = 1;
   for (int i = 0; i < src_dim; i++) {
     src_l[i] = gmv_desc_rightp->lb[i];
     src_u[i] = gmv_desc_rightp->ub[i];
     src_s[i] = gmv_desc_rightp->st[i];
     src_d[i] = src_array->info[i].dim_acc;
     _XMP_normalize_array_section(gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
-    src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
+    if (src_s[i] != 0) src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
+    scalar_flag &= (src_s[i] == 0);
   }
 
-  if (dst_total_elmts != src_total_elmts) {
+  if (dst_total_elmts != src_total_elmts && !scalar_flag){
     _XMP_fatal("bad assign statement for gmove");
   }
 
@@ -351,7 +355,7 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
       dst_d[i] = dst_d[i-1]*(gmv_desc_leftp->a_ub[i] - gmv_desc_leftp->a_lb[i]+1);
     }
     _XMP_normalize_array_section(gmv_desc_leftp, i, &(dst_l[i]), &(dst_u[i]), &(dst_s[i]));
-    dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
+    if (dst_s[i] != 0) dst_total_elmts *= _XMP_M_COUNT_TRIPLETi(dst_l[i], dst_u[i], dst_s[i]);
   }
 
   // get src info
@@ -360,16 +364,18 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
   int src_dim = src_array->dim;
   int src_l[src_dim], src_u[src_dim], src_s[src_dim];
   unsigned long long src_d[src_dim];
+  int scalar_flag = 1;
   for (int i = 0; i < src_dim; i++) {
     src_l[i] = gmv_desc_rightp->lb[i];
     src_u[i] = gmv_desc_rightp->ub[i];
     src_s[i] = gmv_desc_rightp->st[i];
     src_d[i] = src_array->info[i].dim_acc;
     _XMP_normalize_array_section(gmv_desc_rightp, i, &(src_l[i]), &(src_u[i]), &(src_s[i]));
-    src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
+    if (src_s[i] != 0) src_total_elmts *= _XMP_M_COUNT_TRIPLETi(src_l[i], src_u[i], src_s[i]);
+    scalar_flag &= (src_s[i] == 0);
   }
 
-  if (dst_total_elmts != src_total_elmts) {
+  if (dst_total_elmts != src_total_elmts && !scalar_flag){
     _XMP_fatal("bad assign statement for gmove");
   } else {
     //gmove_total_elmts = dst_total_elmts;
@@ -494,6 +500,11 @@ xmpf_gmv_g_alloc__(_XMP_gmv_desc_t **gmv_desc, _XMP_array_t **a_desc)
 }
 
 
+#define XMP_GMOVE_ALL   0
+#define XMP_GMOVE_INDEX 1
+#define XMP_GMOVE_RANGE 2
+
+
 void
 xmpf_gmv_g_dim_info__(_XMP_gmv_desc_t **gmv_desc , int *i_dim,
 		      int *kind, int *lb, int *ub, int *st)
@@ -501,9 +512,23 @@ xmpf_gmv_g_dim_info__(_XMP_gmv_desc_t **gmv_desc , int *i_dim,
   _XMP_gmv_desc_t *gp = *gmv_desc;
   int i = *i_dim;
   gp->kind[i] = *kind;
-  gp->lb[i] = *lb;
-  gp->ub[i] = *ub;
-  gp->st[i] = *st;
+
+  switch (*kind){
+  case XMP_GMOVE_ALL:
+    gp->lb[i] = gp->a_desc->info[i].ser_lower;
+    gp->ub[i] = gp->a_desc->info[i].ser_upper;
+    gp->st[i] = 1;
+    break;
+  case XMP_GMOVE_INDEX:
+  case XMP_GMOVE_RANGE:
+    gp->lb[i] = *lb;
+    gp->ub[i] = *ub;
+    gp->st[i] = *st;
+    break;
+  default:
+    _XMP_fatal("wrong gmove kind");
+  }
+
 }
 
 
