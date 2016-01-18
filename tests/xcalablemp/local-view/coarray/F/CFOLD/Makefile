@@ -8,4 +8,4 @@ OUT_bug=bug456-2.x bug457-2.x # bug456.x bug457.x
 
 OUT=$(OUT_intrin) $(OUT_param) $(OUT_bug)
 
-include ../F/Makefile.common
+include ../Makefile.common

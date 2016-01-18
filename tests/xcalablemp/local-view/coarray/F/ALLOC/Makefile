@@ -23,5 +23,5 @@ OUT_stat=#allo_stat.x
 
 OUT = $(OUT_epi) $(OUT_etc) $(OUT_decl) $(OUT_size) $(OUT_allo) $(OUT_inq) $(OUT_debug)
 
-include ../F/Makefile.common
+include ../Makefile.common
 

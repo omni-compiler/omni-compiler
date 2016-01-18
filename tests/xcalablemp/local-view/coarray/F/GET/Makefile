@@ -21,4 +21,4 @@ OUT_struct = #str0-1.x NOW!!!
 #OUT=nest nest-2
 OUT = $(OUT_basic) $(OUT_struct) $(OUT_io) $(OUT_arg) $(OUT_nest) $(OUT_lib) $(OUT_mod) $(OUT_entire) $(OUT_bound)
 
-include ../F/Makefile.common
+include ../Makefile.common

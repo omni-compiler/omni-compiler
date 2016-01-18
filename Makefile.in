@@ -82,14 +82,14 @@ target_triplet = @target@
 @SUPERUX_FALSE@am__append_2 = libompc/src libompf/src
 @ACC_TRUE@am__append_3 = libacc/src libacc/include
 @ATOOL_TRUE@am__append_4 = Driver/atool
-@GASNET_TRUE@am__append_5 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" "local-view/coarray/F" \
-@GASNET_TRUE@	       "local-view/coarray/F_alloc" "local-view/coarray/F_get" "local-view/coarray/F_put" "local-view/coarray/F_scope" \
-@GASNET_TRUE@	       "local-view/coarray/F_cfold" "local-view/lock-unlock/C"
+@GASNET_TRUE@am__append_5 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" "local-view/coarray/F/LIB" \
+@GASNET_TRUE@	       "local-view/coarray/F/ALLOC" "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
+@GASNET_TRUE@	       "local-view/coarray/F/CFOLD" "local-view/lock-unlock/C"
 
 @GASNET_TRUE@am__append_6 = "local-view/coarray/C/"
-@FJRDMA_TRUE@am__append_7 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" "local-view/coarray/F" \
-@FJRDMA_TRUE@	       "local-view/coarray/F_alloc" "local-view/coarray/F_get" "local-view/coarray/F_put" "local-view/coarray/F_scope" \
-@FJRDMA_TRUE@	       "local-view/coarray/F_cfold"
+@FJRDMA_TRUE@am__append_7 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" "local-view/coarray/F/LIB" \
+@FJRDMA_TRUE@	       "local-view/coarray/F/ALLOC" "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
+@FJRDMA_TRUE@	       "local-view/coarray/F/CFOLD"
 
 @FJRDMA_TRUE@am__append_8 = "local-view/coarray/C/"
 @MPI3_TRUE@am__append_9 = "global-view/async/C/" "global-view/async/F/"
