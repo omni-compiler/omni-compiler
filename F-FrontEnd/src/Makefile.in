@@ -81,7 +81,7 @@ host_triplet = @host@
 target_triplet = @target@
 bin_PROGRAMS = F_Front$(EXEEXT)
 @MOD2XMOD_TRUE@am__append_1 = -D_MPI_FC=gfortran
-subdir = F-FrontEnd/src
+subdir = ./F-FrontEnd/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am F95-parser.c \
 	$(top_srcdir)/./buildutils/ylwrap ChangeLog
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -422,9 +422,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps F-FrontEnd/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./F-FrontEnd/src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps F-FrontEnd/src/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./F-FrontEnd/src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

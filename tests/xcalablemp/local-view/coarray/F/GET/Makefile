@@ -3,7 +3,7 @@
 NPE=3
 
 OUT_basic  = a1d1-4.x a1d1-1.x a6d3-1.x cn1-1NGB.x cn2-1NGB.x
-OUT_io     = cn1d1-writeNGB.x
+OUT_io     = #cn1d1-writeNGB.x (comment out for SX)
 OUT_arg    = actualarg.x triplet.x actualarg-2.x actualarg-3.x
 OUT_nest   = nest.x putget-2NGB.x putget-3NGB.x putget-4.x putget-5.x putget-6NGB.x #  nest-2NGB putgetNGB
 OUT_lib    = a1d1-5.x
