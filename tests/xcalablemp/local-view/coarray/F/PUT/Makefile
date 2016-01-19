@@ -13,4 +13,4 @@ OUT_BUG   = bug462.x
 #OUT=$(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_type) $(OUT_NGB)
 OUT=$(OUT_BUG) $(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_NGB)
 
-include ../F/Makefile.common
+include ../Makefile.common

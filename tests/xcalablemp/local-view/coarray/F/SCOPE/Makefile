@@ -25,7 +25,7 @@ SPECIALS= # bug460get.x bug460put.x
 
 OUT= $(OUT_bug) $(OUT_host) $(OUT_module) $(OUT_epi) $(OUT_darg) 
 
-include ../F/Makefile.common
+include ../Makefile.common
 
 bug460-mod.o: bug460-mod.f90
 	xmpf90 -c $(OPT) $<
