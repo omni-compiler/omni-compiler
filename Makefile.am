@@ -24,10 +24,19 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" "global-view/bcast/C/" 
 	   "global-view/shadow-reflect/C/" "global-view/shadow-reflect/F/" "global-view/task/C"  "global-view/task/F" \
 	   "global-view/template_fix/C/" "global-view/template_fix/F/" "global-view/gmove/C/" "global-view/gmove/F/" \
 	   "global-view/inquiry/C/" "global-view/inquiry/F/" "global-view/gblock/C/" "global-view/gblock/F/" \
-	   "global-view/align/C/" "global-view/align/F/" "global-view/intrinsic/C/" "global-view/intrinsic/F/" \
+	   "global-view/align/C/" "global-view/align/F/" "global-view/intrinsic/F/" \
 	   "global-view/util/C/" "global-view/util/F/" "others/F" "others/C"
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
 LARGE_TESTDIRS = "others/C"
+
+# "global-view/intrinsic/C/" includes imaginary numbers.
+# But SUPERUX and POWERPC cannot deal with imaginary numbers.
+if !SUPERUX
+  TESTDIRS += "global-view/intrinsic/C/"
+endif
+if !POWERPC
+  TESTDIRS += "global-view/intrinsic/C/"
+endif
 
 if GASNET
    TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
