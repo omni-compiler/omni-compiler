@@ -19,7 +19,10 @@
   if (ser_step == 0) _XMP_fatal("loop step is 0"); \
   if (ser_step == 1) ser_cond--; \
   else { \
-    if (ser_step > 0) ser_cond -= ((ser_cond - ser_init) % ser_step); \
+    if (ser_step > 0){ \
+      ser_cond--; \
+      ser_cond -= ((ser_cond - ser_init) % ser_step);	\
+    } \
     else { \
       if(reverse_iter != _XMP_N_INT_TRUE) /* This branch hides warning in _XMP_sched_loop_nodes() */	\
         reverse_iter = _XMP_N_INT_TRUE; \
