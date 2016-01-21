@@ -72,23 +72,27 @@ function ompf90_set_parameters()
             *.o)
                 obj_files+=("$1");;
             -o)
-                shift; output_file=("$1");;
+		shift
+                if [ "$target" = "sxace-nec-superux" ]; then
+		    single_quote_output_file=("'$1'")
+		fi
+		output_file=("$1");;
             -J)
 		shift;
 		module_dir=("${1#-J}")
                 module_opt=("-M${module_dir[0]}")
-                if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
-                    other_args+=("${OMNI_MODINC}${module_dir}")
+                if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu" ]; then
+                    module_dirs+=("${OMNI_MODINC}${module_dir}")
                 else
-                    other_args+=("${OMNI_MODINC}" "${module_dir}")
+                    module_dirs+=("${OMNI_MODINC}" "${module_dir}")
                 fi;;
             -J?*)
                 module_dir=("${1#-J}")
                 module_opt=("-M${module_dir[0]}")
-                if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" ]; then
-                    other_args+=("${OMNI_MODINC}${module_dir}")
+                if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu" ]; then
+                    module_dirs+=("${OMNI_MODINC}${module_dir}")
                 else
-                    other_args+=("${OMNI_MODINC}" "${module_dir}")
+                    module_dirs+=("${OMNI_MODINC}" "${module_dir}")
                 fi;;
 	    -I)
                 shift;
@@ -101,6 +105,10 @@ function ompf90_set_parameters()
 		other_args+=("$1")
                 module_dir=("${1#-I}")
                 trans_module_opt+=("-M${module_dir[0]}");;
+	    -l?*)
+		lib_args+=("$1");;
+	    -D?*)
+		define_opts+=("$1");;
 	    -ew) # Fix [xmp-bts:475]
 		if [ "$target" = "sxace-nec-superux" ]; then
 		    echo "On SX-ACE, \"-ew\" option cannot be used."

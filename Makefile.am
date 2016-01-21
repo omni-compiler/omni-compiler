@@ -31,10 +31,7 @@ LARGE_TESTDIRS = "others/C"
 
 # "global-view/intrinsic/C/" includes imaginary numbers.
 # But SUPERUX and POWERPC cannot deal with imaginary numbers.
-if !SUPERUX
-  TESTDIRS += "global-view/intrinsic/C/"
-endif
-if !POWERPC
+if !SUPERUX_OR_POWERPC
   TESTDIRS += "global-view/intrinsic/C/"
 endif
 

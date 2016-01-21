@@ -55,8 +55,15 @@ function xmpcc_show_env()
     fi
 }
 
+function get_target()
+{
+    DIR=$(cd $(dirname $0); pwd)
+    grep TARGET $DIR/../etc/xmpcc.conf | sed 's/TARGET=//' | sed "s/\"//g"
+}
+
 function xmpcc_set_parameters()
 {
+    target=`get_target`
     while [ -n "$1" ]; do
 	case "$1" in
 	    *.c)
@@ -66,11 +73,20 @@ function xmpcc_set_parameters()
 	    *.o)
 		obj_files+=("$1");;
 	    -o)
-		shift; output_file=("$1");;
+		shift;
+                if [ "$target" = "sxace-nec-superux" ]; then
+		    single_quote_output_file=("'$1'")
+		    single_quote_output_file=${single_quote_output_file//\ /\\ }
+		fi
+		output_file=("$1");;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)
 		ONLY_PP=true;;
+	    -D?*)
+		define_opts+=("$1");;
+	    -l?*)
+		lib_args+=("$1");;
             -v|--verbose)
 		VERBOSE=true;;
 	    --version)

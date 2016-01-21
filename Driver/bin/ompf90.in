@@ -27,12 +27,15 @@ STOP_BACKEND=false
 STOP_COMPILE=false
 
 ### Set options ###
-# e.g.) ompf90 -I/usr/lib a.f b.F c.f90 d.F90 e.o --tmp --Wlfoo lib.a -o a.out
+# e.g.) ompf90 -I/usr/lib a.f b.F c.f90 d.F90 e.o --tmp --Wlfoo lib.a -DTEST -Jdir -lm -o a.out
 #
 #  output_file="a.out"              # Output file
 #  f_files="a.f b.F c.f90 d.F90"    # All fortran files
 #  archive_files="lib.a"            # Archive files
 #  obj_files="e.o"                  # Object files
+#  module_dirs="-Jdir"              # Module dirs (Actually, the variables are changed in xmpf90_set_parameters)
+#  lib_args="-lm"                   # Library files
+#  define_opts="-DTEST"             # Define options
 #  other_args="-I/usr/lib"          # Options for Preprocessor, Compiler, and Linker
 # 
 #  Note that "-omp" is extracted by ompf90_set_parameters, and set "ENABLE_OPENMP".
@@ -42,6 +45,9 @@ output_file=()
 f_files=()
 archive_files=()
 obj_files=()
+module_dirs=()
+lib_args=()
+define_opts=()
 other_args=()
 
 # Additional options defined by command line (e.g. --Wl..)
@@ -78,8 +84,8 @@ for file in "${f_files[@]}"; do
 
     if [ $EXT = "F90" -o $EXT = "F" -o $ENABLE_CPP = true ]; then
         # When ">" or ">>" is used, please use "omni_exec_echo" and "omni_exec_run" instead of "omni_exec".
-	omni_exec_echo $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" ">" "${FILE_PP}"
-	[ $DRY_RUN = false ] && omni_exec_run  $OMNI_FPP_CMD "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" > "${FILE_PP}"
+	omni_exec_echo $OMNI_FPP_CMD "${define_opts[@]}" "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" ">" "${FILE_PP}"
+	[ $DRY_RUN = false ] && omni_exec_run  $OMNI_FPP_CMD "${define_opts[@]}" "${include_opt[@]}" "${pp_add_opt[@]}" $OMNI_FPP_OPT "${other_args[@]}" "${FILE}" > "${FILE_PP}"
         # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
 
 	if [ $ONLY_PP = true ]; then
@@ -156,7 +162,7 @@ for file in "${f_files[@]}"; do
     FILE_F90=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.F90
     FILE_O=${TEMP_DIR}/"${FILE_NAME}"_${EXT}.o
 
-    omni_exec $OMNI_FC_CMD "${native_add_opt[@]}" $OMNI_FC_OPT "${other_args[@]}" "${FILE_F90}" -o "${FILE_O}"
+    omni_exec $OMNI_FC_CMD "${module_dirs[@]}" "${native_add_opt[@]}" $OMNI_FC_OPT "${other_args[@]}" "${FILE_F90}" -o "${FILE_O}"
 
     ### GPU Compiler ###
     FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
@@ -192,9 +198,11 @@ done
 # link
 [ $ENABLE_ACC = true ] && OMNI_LINKER_OPT="$OMNI_GPUCC_LIB $OMNI_LINKER_OPT"
 obj_files+=("$OMPF_MAIN_O")
+
+[ "$target" = "sxace-nec-superux" ] && output_file=("${single_quote_output_file}")
 [ "${output_file}" != "" ] && other_args+=("-o" "${output_file}")
 
-omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" $OMNI_LINKER_OPT
+omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" "${lib_args[@]}" $OMNI_LINKER_OPT
     
 ### Delete temporal directory ###
 [ $ENABLE_DEBUG = false ] && omni_exec rm -rf "${TEMP_DIR}"

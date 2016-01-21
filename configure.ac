@@ -1204,6 +1204,8 @@ if test -z ${MPI_CPP}; then
     # Instead of $MPI_CC, $CC (gcc) is used.
     # But, this is not a good idea. Wish to fix the bug.
     MPI_CPP="${CC}"
+  elif test "$target" = "sxace-nec-superux"; then
+    MPI_CPP=sxcpp
   else
     MPI_CPP="${MPI_CC}"
   fi
@@ -1388,6 +1390,7 @@ fi
 
 #AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
 AM_CONDITIONAL(SUPERUX, test "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux")
+AM_CONDITIONAL(SUPERUX_OR_POWERPC, test "$target" = "powerpc-hitachi-aix" -o "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux")
 
 #AC_SUBST(CRAY)
 #AC_SUBST(SUPERUX)
