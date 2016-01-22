@@ -171,7 +171,22 @@ for file in "${f_files[@]}"; do
     FILE_F90=${TEMP_DIR}/"${FILE_NAME}"_${EXT}_in.F90
     FILE_O=${TEMP_DIR}/"${FILE_NAME}"_${EXT}.o
 
-    omni_exec $OMNI_MPIFC_CMD "${module_dirs[@]}" "${native_add_opt[@]}" $OMNI_MPIFC_OPT "${other_args[@]}" "${FILE_F90}" -o "${FILE_O}"
+    if [ "$target" != "sxace-nec-superux" ]; then
+	[ "${module_dir}" != "" ] && omni_exec mkdir -p "${module_dir}"
+	omni_exec $OMNI_MPIFC_CMD "${module_dirs[@]}" "${native_add_opt[@]}" $OMNI_MPIFC_OPT "${other_args[@]}" "${FILE_F90}" -o "${FILE_O}"
+    else
+	## On SX-ACE, when indicating "${FILE_F90}" by an absolute path, "-to" option is ignored.
+	## Moreover "-to" option indicates directory for not only module files but also object files.
+	## Therefore after creating object files in a directory indicated by "-to" option, move them to a current directry.
+	if [ "${module_dir}" = "" ]; then
+	    omni_exec $OMNI_MPIFC_CMD "${include_opt[@]}" "${module_dirs[@]}" "${native_add_opt[@]}" $OMNI_MPIFC_OPT "${other_args[@]}" "${FILE_F90}" -o "${FILE_O}"
+	else
+	    omni_exec mkdir -p "${module_dir}"
+	    [ $ENABLE_DEBUG = true ] && omni_exec mkdir -p "${module_dir}"/__omni_tmp__/
+	    omni_exec $OMNI_MPIFC_CMD "${include_opt[@]}" "${module_dirs[@]}" "${native_add_opt[@]}" $OMNI_MPIFC_OPT "${other_args[@]}" "${FILE_F90}"
+	    omni_exec mv "${module_dir}"/"${FILE_NAME}"_${EXT}_in.o ${FILE_O}
+	fi
+    fi
 
     ### GPU Compiler ###
     FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
@@ -220,7 +235,7 @@ obj_files+=("$TRAVERSE_FILE_O")
 
 if [ "$target" != "sxace-nec-superux" -a "${output_file}" != "" ]; then
     other_args+=("-o" "${output_file[@]}")
-elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
+elif [ "$target" = "sxace-nec-superux" -a "${output_file}" != "" ]; then
     output_file=${output_file//\ /\\ }  # replace [space] -> \[space]
     other_args+=("-o" "'${output_file[@]}'")
 fi

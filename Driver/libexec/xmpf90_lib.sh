@@ -81,6 +81,11 @@ function xmpf90_set_parameters()
 		module_opt=("-M${module_dir[0]}")
 		if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu" ]; then
                     module_dirs+=("${OMNI_MODINC}${module_dir}")
+		elif [ "$target" = "sxace-nec-superux" ]; then
+		    ## On SX-ACE, a file name which includes space, for example "xmpf90 -J hoge\ hoge",
+		    ## the space must be add. For example, sxmpif90 -to hoge  hoge. This reason is why ?
+		    include_opt+=("-I" "${module_dir// /  }")
+		    module_dirs=("${OMNI_MODINC}" "${module_dir// /  }")
                 else
                     module_dirs+=("${OMNI_MODINC}" "${module_dir}")
                 fi;;
@@ -89,6 +94,9 @@ function xmpf90_set_parameters()
                 module_opt=("-M${module_dir[0]}")
 		if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu" ]; then
                     module_dirs+=("${OMNI_MODINC}${module_dir}")
+		elif [ "$target" = "sxace-nec-superux" ]; then
+		    include_opt+=("-I" "${module_dir// /  }")
+		    module_dirs=("${OMNI_MODINC}" "${module_dir// /  }")
                 else
                     module_dirs+=("${OMNI_MODINC}" "${module_dir}")
 		fi;;
@@ -96,13 +104,13 @@ function xmpf90_set_parameters()
 		shift; 
 		include_opt+=("-I$1")
 		other_args+=("-I$1")
-		module_dir=("${1#-I}")
-		trans_module_opt+=("-M${module_dir[0]}");;
+		tmp_dir=("${1#-I}")
+		trans_module_opt+=("-M${tmp_dir[0]}");;
 	    -I?*)
 		include_opt+=("$1")
 		other_args+=("$1")
-		module_dir=("${1#-I}")
-		trans_module_opt+=("-M${module_dir[0]}");;
+		tmp_dir=("${1#-I}")
+		trans_module_opt+=("-M${tmp_dir[0]}");;
 	    -l?*)
 		lib_args+=("$1");;
 	    -D?*)
