@@ -56,7 +56,7 @@ endif
 	. $< $(TARGET) > $@
 
 %.F90: %.F90.sh
-	. $< > $@
+	. $< $(TARGET) > $@
 
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || $(MKDIR_P) $(DESTDIR)$(libdir)
@@ -66,5 +66,4 @@ clean-local:
 	rm -f *~ *.core core core.*
 	rm -f xmpf_coarray_get_wrap.f90
 	rm -f xmpf_coarray_alloc_wrap.f90
-	rm -f xmpf_coarray_reduction.f90
 	rm -f xmpf_coarray_reduction.F90

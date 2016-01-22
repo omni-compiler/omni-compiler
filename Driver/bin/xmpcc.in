@@ -31,12 +31,14 @@ ENABLE_TLOG_ALL=false
 ENABLE_TLOG=false
 
 ### Set options ###
-# e.g.) xmpcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a -omp -o a.out
+# e.g.) xmpcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a -omp -DTEST -lm -o a.out
 #  
 #  output_file="a.out"              # Output file
 #  c_files="a.c b.c"                # C files
 #  archive_files="lib.a"            # Archive files
 #  obj_files="c.o"                  # Object files
+#  lib_args="-lm"                   # Library files
+#  define_opts="-DTEST"             # Define options
 #  other_args="-I/usr/lib"          # Options for Preprocessor, Compiler, and Linker
 # 
 #  Note that "-omp" is extracted by xmpcc_set_parameters(), and set "ENABLE_OPENMP".
@@ -46,6 +48,8 @@ output_file=()
 c_files=()
 archive_files=()
 obj_files=()
+lib_args=()
+define_opts=()
 other_args=()
 
 # Additional options defined by command line (e.g. --Wl..)
@@ -81,8 +85,8 @@ for c_file in "${c_files[@]}"; do
     omni_exec $OMNI_REPLACE_PRAGMA_CMD $OMNI_REPLACE_PRAGMA_OPT "${C_FILE}" -o "${FILE_PP_C}"
 
     # When ">" or ">>" is used, please use "omni_exec_echo" and "omni_exec_run" instead of "omni_exec".
-    omni_exec_echo $OMNI_CPP_CMD $OMNI_CPP_OPT "${pp_add_opt[@]}" "${other_args[@]}" "${FILE_PP_C}" ">" "${FILE_PP_I}"
-    [ $DRY_RUN = false ] && omni_exec_run  $OMNI_CPP_CMD $OMNI_CPP_OPT "${pp_add_opt[@]}" "${other_args[@]}" "${FILE_PP_C}" > "${FILE_PP_I}"
+    omni_exec_echo $OMNI_CPP_CMD $OMNI_CPP_OPT "${pp_add_opt[@]}" "${define_opts[@]}" "${other_args[@]}" "${FILE_PP_C}" ">" "${FILE_PP_I}"
+    [ $DRY_RUN = false ] && omni_exec_run  $OMNI_CPP_CMD $OMNI_CPP_OPT "${pp_add_opt[@]}" "${define_opts[@]}" "${other_args[@]}" "${FILE_PP_C}" > "${FILE_PP_I}"
     # AIX compiler cannot output file with ".i" suffix. So, ">" is used.
 
     if [ $ONLY_PP = true ]; then
@@ -205,13 +209,21 @@ fi
 # link
 [ $ENABLE_SCALASCA_ALL = true -o $ENABLE_SCALASCA = true ] && OMNI_LINKER_CMD="scalasca -instrument -user $OMNI_LINKER_CMD"
 [ $ENABLE_TLOG_ALL = true -o $ENABLE_TLOG = true ] && OMNI_LINKER_OPT="-ltlog_mpi $OMNI_LINKER_OPT"
-[ "${output_file}" != "" ] && other_args+=("-o" "${output_file}")
+
+if [ "$target" != "sxace-nec-superux" -a "${output_file}" != "" ]; then
+    other_args+=("-o" "${output_file[@]}")
+elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
+    output_file=${output_file//\ /\\ }  # replace [space] -> \[space]
+    other_args+=("-o" "'${output_file[@]}'")
+fi
+
 obj_files+=("$TRAVERSE_FILE_O")
 if [ $ENABLE_XACC = true ]; then
     OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_GPUCC_LIB"
     obj_files+=("$TRAVERSE_FILE_XACC_O")
 fi
-omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" $OMNI_LINKER_OPT
+
+omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" "${lib_args[@]}" $OMNI_LINKER_OPT
 
 ### Delete temporal directory ###
 [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
