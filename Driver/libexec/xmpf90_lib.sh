@@ -74,9 +74,6 @@ function xmpf90_set_parameters()
 		obj_files+=("$1");;
 	    -o)
                 shift;
-		if [ "$target" = "sxace-nec-superux" ]; then
-		    single_quote_output_file=("'$1'")
-		fi
 		output_file=("$1");;
 	    -J)
 		shift;

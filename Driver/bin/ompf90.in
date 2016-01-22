@@ -199,8 +199,12 @@ done
 [ $ENABLE_ACC = true ] && OMNI_LINKER_OPT="$OMNI_GPUCC_LIB $OMNI_LINKER_OPT"
 obj_files+=("$OMPF_MAIN_O")
 
-[ "$target" = "sxace-nec-superux" ] && output_file=("${single_quote_output_file}")
-[ "${output_file}" != "" ] && other_args+=("-o" "${output_file}")
+if [ "$target" != "sxace-nec-superux" -a "${output_file}" != "" ]; then
+    other_args+=("-o" "${output_file[@]}")
+elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
+    output_file=${output_file//\ /\\ }  # replace [space] -> \[space]
+    other_args+=("-o" "'${output_file[@]}'")
+fi
 
 omni_exec $OMNI_LINKER_CMD "${obj_files[@]}" "${linker_add_opt[@]}" "${other_args[@]}" "${archive_files[@]}" "${lib_args[@]}" $OMNI_LINKER_OPT
     

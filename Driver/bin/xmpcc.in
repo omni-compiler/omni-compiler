@@ -210,8 +210,12 @@ fi
 [ $ENABLE_SCALASCA_ALL = true -o $ENABLE_SCALASCA = true ] && OMNI_LINKER_CMD="scalasca -instrument -user $OMNI_LINKER_CMD"
 [ $ENABLE_TLOG_ALL = true -o $ENABLE_TLOG = true ] && OMNI_LINKER_OPT="-ltlog_mpi $OMNI_LINKER_OPT"
 
-[ "$target" = "sxace-nec-superux" ] && output_file=("${single_quote_output_file}")
-[ "${output_file}" != "" ] && other_args+=("-o" "${output_file}")
+if [ "$target" != "sxace-nec-superux" -a "${output_file}" != "" ]; then
+    other_args+=("-o" "${output_file[@]}")
+elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
+    output_file=${output_file//\ /\\ }  # replace [space] -> \[space]
+    other_args+=("-o" "'${output_file[@]}'")
+fi
 
 obj_files+=("$TRAVERSE_FILE_O")
 if [ $ENABLE_XACC = true ]; then

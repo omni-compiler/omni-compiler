@@ -71,10 +71,6 @@ function ompcc_set_parameters()
                 obj_files+=("$1");;
             -o)
 		shift;
-		if [ "$target" = "sxace-nec-superux" ]; then
-		    single_quote_output_file=("'$1'")
-		    single_quote_output_file=${single_quote_output_file//\ /\\ }
-		fi
 		output_file=("$1");;
             -c)
 		ENABLE_LINKER=false;;
