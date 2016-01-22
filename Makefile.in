@@ -82,17 +82,22 @@ target_triplet = @target@
 @SUPERUX_FALSE@am__append_2 = libompc/src libompf/src
 @ACC_TRUE@am__append_3 = libacc/src libacc/include
 @ATOOL_TRUE@am__append_4 = Driver/atool
-@GASNET_TRUE@am__append_5 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
+
+# "global-view/intrinsic/C/" includes imaginary numbers.
+# But SUPERUX and POWERPC cannot deal with imaginary numbers.
+@SUPERUX_FALSE@am__append_5 = "global-view/intrinsic/C/"
+@POWERPC_FALSE@am__append_6 = "global-view/intrinsic/C/"
+@GASNET_TRUE@am__append_7 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
 @GASNET_TRUE@	       "local-view/coarray/F/LIB" "local-view/coarray/F/ALLOC" "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
 @GASNET_TRUE@	       "local-view/coarray/F/CFOLD" "local-view/lock-unlock/C"
 
-@GASNET_TRUE@am__append_6 = "local-view/coarray/C/"
-@FJRDMA_TRUE@am__append_7 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
+@GASNET_TRUE@am__append_8 = "local-view/coarray/C/"
+@FJRDMA_TRUE@am__append_9 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
 @FJRDMA_TRUE@               "local-view/coarray/F/LIB" "local-view/coarray/F/ALLOC" "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
 @FJRDMA_TRUE@	       "local-view/coarray/F/CFOLD" 
 
-@FJRDMA_TRUE@am__append_8 = "local-view/coarray/C/"
-@MPI3_TRUE@am__append_9 = "global-view/async/C/" "global-view/async/F/"
+@FJRDMA_TRUE@am__append_10 = "local-view/coarray/C/"
+@MPI3_TRUE@am__append_11 = "global-view/async/C/" "global-view/async/F/"
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
@@ -362,7 +367,7 @@ OS_LDFLAGS = @OS_LDFLAGS@
 OS_LIBS = @OS_LIBS@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
-PACKAGE_NAME = omnicompiler-@VERSION@
+PACKAGE_NAME = omnicompiler-$(VERSION)
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
@@ -485,12 +490,12 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" \
 	"global-view/gmove/F/" "global-view/inquiry/C/" \
 	"global-view/inquiry/F/" "global-view/gblock/C/" \
 	"global-view/gblock/F/" "global-view/align/C/" \
-	"global-view/align/F/" "global-view/intrinsic/C/" \
-	"global-view/intrinsic/F/" "global-view/util/C/" \
-	"global-view/util/F/" "others/F" "others/C" $(am__append_5) \
-	$(am__append_7) $(am__append_9)
+	"global-view/align/F/" "global-view/intrinsic/F/" \
+	"global-view/util/C/" "global-view/util/F/" "others/F" \
+	"others/C" $(am__append_5) $(am__append_6) $(am__append_7) \
+	$(am__append_9) $(am__append_11)
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
-LARGE_TESTDIRS = "others/C" $(am__append_6) $(am__append_8)
+LARGE_TESTDIRS = "others/C" $(am__append_8) $(am__append_10)
 WORKDIR = /tmp/$(PACKAGE_NAME)
 DELETABLES = Driver/bin/ompcc \
 	Driver/bin/ompf90 \

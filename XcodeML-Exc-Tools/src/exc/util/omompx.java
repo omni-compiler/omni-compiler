@@ -362,6 +362,10 @@ public class omompx
       Boolean onlyCafMode = "1".equals(System.getenv("XMP_ONLYCAF"));
 
       if (containsCoarray || cascadeMode || onlyCafMode) {
+        if (cascadeMode || onlyCafMode) {
+          System.out.println("Translating CAF Program File: " +
+                             xobjFile.getSourceFileName());
+        }
         // Coarray Fortran pass#1
         exc.xmpF.XMPtransCoarray
           caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1);
@@ -380,6 +384,10 @@ public class omompx
       }
 
       if ((!containsCoarray || cascadeMode) && !onlyCafMode) {
+        if (cascadeMode) {
+          System.out.println("Translating XMP/F Program File: " +
+                             xobjFile.getSourceFileName());
+        }
         // XMP Fortran
         exc.xmpF.XMPtranslate
           xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
