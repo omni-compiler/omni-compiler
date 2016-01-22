@@ -12,7 +12,7 @@
 
 #include "abt_logger.h"
 
-#define __ABTL_LOG_ENABLE
+//#define __ABTL_LOG_ENABLE
 
 extern struct ompc_thread *ompc_current_thread(void);
 static void ompc_static_bsched_tid(struct ompc_thread *tp, 
@@ -58,8 +58,8 @@ ompc_barrier()
 #endif
 */
 
-    //ompc_tree_barrier_wait(&tp->parent->tree_barrier, tp);
-    ompc_thread_barrier(tp->num, tp->parent);
+    ompc_tree_barrier_wait(&tp->parent->tree_barrier, tp);
+    //ompc_thread_barrier(tp->num, tp->parent);
 
 /*
 #ifdef __ABTL_LOG_ENABLE
@@ -72,8 +72,8 @@ ompc_barrier()
 void
 ompc_barrier_tid(struct ompc_thread *tp)
 {
-    //ompc_tree_barrier_wait(&tp->parent->tree_barrier, tp);
-    ompc_thread_barrier(tp->num, tp->parent);
+    ompc_tree_barrier_wait(&tp->parent->tree_barrier, tp);
+    //ompc_thread_barrier(tp->num, tp->parent);
 }
 
 

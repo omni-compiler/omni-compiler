@@ -15,8 +15,9 @@
 
 #include <hwloc.h>
 #include "abt_logger.h"
+#include <errno.h>
 
-#define __ABTL_LOG_ENABLE
+//#define __ABTL_LOG_ENABLE
 // __ABTL_LOG_LEVEL
 // 0: outer loop, used for flat OpenMP version
 // 1: inner loop, used for nested OpenMP version
@@ -34,10 +35,22 @@ static void tls_free(void *value) {
 static hwloc_topology_t topo;
 static hwloc_const_cpuset_t allset;
 static void thread_affinity_setup(int i) {
-    hwloc_obj_t core = hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, i);
+    hwloc_obj_t core = hwloc_get_obj_by_type(topo, HWLOC_OBJ_PU, i);
     hwloc_cpuset_t set = hwloc_bitmap_dup(core->cpuset);
-    hwloc_bitmap_singlify(set);
-    hwloc_set_cpubind(topo, set, HWLOC_CPUBIND_THREAD);
+
+    int res;
+    res = hwloc_set_cpubind(topo, set, HWLOC_CPUBIND_THREAD | HWLOC_CPUBIND_STRICT);
+    if (res) {
+        int err = errno;
+        printf("[%d] error: hwloc_set_cpubind(): %d\n", i, err);
+    }
+
+    res = hwloc_set_membind(topo, set, HWLOC_MEMBIND_FIRSTTOUCH, HWLOC_MEMBIND_THREAD | HWLOC_MEMBIND_STRICT);
+    if (res) {
+        int err = errno;
+        printf("[%d] error: hwloc_set_membind(): %d\n", i, err);
+    }
+
     hwloc_bitmap_free(set);
 }
 
@@ -210,6 +223,15 @@ ompc_init(int argc,char *argv[])
     hwloc_topology_init(&topo);
     hwloc_topology_load(topo);
     allset = hwloc_topology_get_complete_cpuset(topo);
+/*
+    hwloc_cpuset_t set = hwloc_bitmap_dup(allset);
+    int res = hwloc_set_membind(topo, set, HWLOC_MEMBIND_FIRSTTOUCH, HWLOC_MEMBIND_PROCESS);
+    if (res) {
+        int err = errno;
+        printf("error: hwloc_set_membind(): %d\n", err);
+    }
+    hwloc_bitmap_free(set);
+*/
 //    int num_numa_nodes = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_NUMANODE);
     // hwloc init end
 
@@ -636,7 +658,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         cthd->in_flags[i]._v = 0;
     }
     
-//    ompc_tree_barrier_init(&cthd->tree_barrier, n_thds);
+    ompc_tree_barrier_init(&cthd->tree_barrier, n_thds);
 
     ompc_thread_t *children = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * n_thds);
 
@@ -655,10 +677,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
             tp->args = args;
         }
 
-// XXX for debug, seems to use the ES of the parent ULT if exists
-//        ABT_thread_create(pools[i], ompc_thread_wrapper_func, (void *)tp,
-//                          ABT_THREAD_ATTR_NULL, (ABT_thread *)(&tp->tid));
-// XXX safe to use?
         ABT_thread_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
             (void *)tp, ABT_THREAD_ATTR_NULL, (ABT_thread *)(&tp->tid));
 
@@ -690,7 +708,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     ABT_mutex_free(&cthd->reduction_mutex);
     free(children);
     
-//    ompc_tree_barrier_finalize(&cthd->tree_barrier);
+    ompc_tree_barrier_finalize(&cthd->tree_barrier);
 
     if (cthd->parent == NULL) {
         proc_last_used = 0;
@@ -815,7 +833,9 @@ ompc_terminate(int exitcode)
     // incorrect destructor pointer for primary ULT
     // ABT_key_free(&tls_key);
 
+#ifdef __ABTL_LOG_ENABLE
     ABTL_dump_log();
+#endif
     ABTL_finalize();
     ABT_finalize();
 
