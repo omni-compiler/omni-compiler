@@ -77,28 +77,28 @@ function ompf90_set_parameters()
             -J)
 		shift;
 		module_dir=("${1#-J}")
-                module_opt=("-M${module_dir[0]}")
-                if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu" ]; then
-                    module_dirs+=("${OMNI_MODINC}${module_dir}")
+		module_opt=("-M${module_dir[0]}")
+		if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu" ]; then
+		    module_dirs+=("${OMNI_MODINC}${module_dir}")
 		elif [ "$target" = "sxace-nec-superux" ]; then
-		    ## On SX-ACE, a file name which includes space, for example "xmpf90 -J hoge\ hoge",
-		    ## the space must be add. For example, sxmpif90 -to hoge  hoge. This reason is why ?
-		    module_dirs=("${OMNI_MODINC}" "${module_dir// /  }")
-                else
-                    module_dirs+=("${OMNI_MODINC}" "${module_dir}")
-                fi;;
-            -J?*)
-                module_dir=("${1#-J}")
-                module_opt=("-M${module_dir[0]}")
-                if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu" ]; then
-                    module_dirs+=("${OMNI_MODINC}${module_dir}")
+		    module_dir="${module_dir//\ /\\ }" # replace [space] -> \[space]
+		    include_opt+=("-I" "${module_dir}")
+		    module_dirs=("${OMNI_MODINC}" "${module_dir}")
+		else
+		    module_dirs+=("${OMNI_MODINC}" "${module_dir}")
+		fi;;
+	    -J?*)
+		module_dir=("${1#-J}")
+		module_opt=("-M${module_dir[0]}")
+		if [ "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu" ]; then
+		    module_dirs+=("${OMNI_MODINC}${module_dir}")
 		elif [ "$target" = "sxace-nec-superux" ]; then
-		    ## On SX-ACE, a file name which includes space, for example "xmpf90 -J hoge\ hoge",
-		    ## the space must be add. For example, sxmpif90 -to hoge  hoge. This reason is why ?
-		    module_dirs=("${OMNI_MODINC}" "${module_dir// /  }")
-                else
-                    module_dirs+=("${OMNI_MODINC}" "${module_dir}")
-                fi;;
+		    tmodule_dir="${module_dir//\ /\\ }" # replace [space] -> \[space]
+		    include_opt+=("-I" "${module_dir}")
+		    module_dirs=("${OMNI_MODINC}" "${module_dir}")
+		else
+		    module_dirs+=("${OMNI_MODINC}" "${module_dir}")
+		fi;;
 	    -I)
                 shift;
 		include_opt+=("-I$1")

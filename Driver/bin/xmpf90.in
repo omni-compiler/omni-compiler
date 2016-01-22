@@ -181,8 +181,7 @@ for file in "${f_files[@]}"; do
 	if [ "${module_dir}" = "" ]; then
 	    omni_exec $OMNI_MPIFC_CMD "${include_opt[@]}" "${module_dirs[@]}" "${native_add_opt[@]}" $OMNI_MPIFC_OPT "${other_args[@]}" "${FILE_F90}" -o "${FILE_O}"
 	else
-	    omni_exec mkdir -p "${module_dir}"
-	    [ $ENABLE_DEBUG = true ] && omni_exec mkdir -p "${module_dir}"/__omni_tmp__/
+            omni_exec mkdir -p "${module_dir}"
 	    omni_exec $OMNI_MPIFC_CMD "${include_opt[@]}" "${module_dirs[@]}" "${native_add_opt[@]}" $OMNI_MPIFC_OPT "${other_args[@]}" "${FILE_F90}"
 	    omni_exec mv "${module_dir}"/"${FILE_NAME}"_${EXT}_in.o ${FILE_O}
 	fi
