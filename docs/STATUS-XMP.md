@@ -13,7 +13,7 @@ Implementation Status version 0.9.3
 * Not support "post/wait" and "lock/unlock" directives in XMP/Fortran
 * Not support "post/wait" and "lock/unlock" directives on the K computer/FX10/FX100
 * Not support "post/wait" and "lock/unlock" directives when using MPI3
-* Implementation status on Coarray Fortran is shown in CAF-v0.9.3.md
+* Implementation status on Coarray Fortran is shown in STATUS-CAF.md
 
 # Intrinsic and Library Procedures
 * Not support the following functions
