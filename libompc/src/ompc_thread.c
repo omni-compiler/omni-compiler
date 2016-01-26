@@ -35,8 +35,9 @@ static void tls_free(void *value) {
 static hwloc_topology_t topo;
 static hwloc_const_cpuset_t allset;
 static void thread_affinity_setup(int i) {
-    hwloc_obj_t core = hwloc_get_obj_by_type(topo, HWLOC_OBJ_PU, i);
+    hwloc_obj_t core = hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, i);
     hwloc_cpuset_t set = hwloc_bitmap_dup(core->cpuset);
+    hwloc_bitmap_singlify(set);
 
     int res;
     res = hwloc_set_cpubind(topo, set, HWLOC_CPUBIND_THREAD | HWLOC_CPUBIND_STRICT);
