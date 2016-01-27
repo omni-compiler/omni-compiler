@@ -646,20 +646,19 @@ xmpf_gmv_do__(_XMP_gmv_desc_t **gmv_desc_left, _XMP_gmv_desc_t **gmv_desc_right,
 #define XMP_DBG 0
 #define DBG_RANK 0
 
+extern _XMP_nodes_t *gmv_nodes;
+extern int n_gmv_nodes;
 
 static void
 _XMPF_pack_comm_set(void *sendbuf, int sendbuf_size,
 		    _XMP_array_t *a, _XMP_comm_set_t *comm_set[][_XMP_N_MAX_DIM]){
-
-  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
-  int n_exec_nodes = exec_nodes->comm_size;
 
   int ndims = a->dim;
 
   char *buf = (char *)sendbuf;
   char *src = (char *)a->array_addr_p;
 
-  for (int dst_node = 0; dst_node < n_exec_nodes; dst_node++){
+  for (int dst_node = 0; dst_node < n_gmv_nodes; dst_node++){
 
     _XMP_comm_set_t *c[ndims];
 
@@ -800,15 +799,15 @@ _XMPF_pack_comm_set(void *sendbuf, int sendbuf_size,
   }
 
 #if XMP_DBG
-  int myrank = exec_nodes->comm_rank;
+  int myrank = gmv_nodes->comm_rank;
 
   if (myrank == 0){
     printf("\n");
     printf("Send buffer -------------------------------------\n");
   }
 
-  for (int exec_rank = 0; exec_rank < n_exec_nodes; exec_rank++){
-    if (myrank == exec_rank){
+  for (int gmv_rank = 0; gmv_rank < n_gmv_nodes; gmv_rank++){
+    if (myrank == gmv_rank){
       printf("\n");
       printf("[%d]\n", myrank);
       for (int i = 0; i < sendbuf_size; i++){
@@ -828,9 +827,7 @@ static void
 _XMPF_unpack_comm_set(void *recvbuf, int recvbuf_size,
 		      _XMP_array_t *a, _XMP_comm_set_t *comm_set[][_XMP_N_MAX_DIM]){
 
-  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
-  //int myrank = exec_nodes->comm_rank;
-  int n_exec_nodes = exec_nodes->comm_size;
+  //int myrank = gmv_nodes->comm_rank;
 
   int ndims = a->dim;
 
@@ -838,7 +835,7 @@ _XMPF_unpack_comm_set(void *recvbuf, int recvbuf_size,
   char *dst = (char *)a->array_addr_p;
 
 #if XMP_DBG
-  int myrank = exec_nodes->comm_rank;
+  int myrank = gmv_nodes->comm_rank;
 
     fflush(stdout);
     xmp_barrier();
@@ -848,8 +845,8 @@ _XMPF_unpack_comm_set(void *recvbuf, int recvbuf_size,
     printf("Recv buffer -------------------------------------\n");
   }
 
-  for (int exec_rank = 0; exec_rank < n_exec_nodes; exec_rank++){
-    if (myrank == exec_rank){
+  for (int gmv_rank = 0; gmv_rank < n_gmv_nodes; gmv_rank++){
+    if (myrank == gmv_rank){
       printf("\n");
       printf("[%d]\n", myrank);
       for (int i = 0; i < recvbuf_size; i++){
@@ -862,7 +859,7 @@ _XMPF_unpack_comm_set(void *recvbuf, int recvbuf_size,
   }
 #endif
 
-  for (int src_node = 0; src_node < n_exec_nodes; src_node++){
+  for (int src_node = 0; src_node < n_gmv_nodes; src_node++){
 
     _XMP_comm_set_t *c[ndims];
 

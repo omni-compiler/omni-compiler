@@ -338,9 +338,12 @@ void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr)
   for (int i = 0; i < dim; i++){
     asize[i] = a->info[dim - 1 - i].alloc_size;
   }
+
   _XMP_coarray_malloc_info_n(asize, dim, a->type_size);
 
-  _XMP_nodes_t *ndesc = a->align_template->onto_nodes;
+  //_XMP_nodes_t *ndesc = a->align_template->onto_nodes;
+  //_XMP_nodes_t *ndesc = _XMP_get_execution_nodes();
+  _XMP_nodes_t *ndesc = _XMP_world_nodes;
   int ndims_node = ndesc->dim;
   int nsize[ndims_node-1];
   for (int i = 0; i < ndims_node-1; i++){

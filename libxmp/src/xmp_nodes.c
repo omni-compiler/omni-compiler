@@ -1166,6 +1166,24 @@ _XMP_calc_coord_on_target_nodes(_XMP_nodes_t *n, int *ncoord,
 }
 
 
+/* _XMP_nodes_t *get_common_ancestor_nodes(_XMP_nodes_t *n0, _XMP_nodes_t *n1){ */
+
+/*   if (_XMP_compare_nodes(n0, n1)) return n0; */
+
+/*   _XMP_nodes_t *p1 = n1->inherit_nodes; */
+/*   while (p1){ */
+/*     if (_XMP_compare_nodes(n0, p1)) return n0; */
+/*     p1 = p1->inherit_nodes; */
+/*   } */
+
+/*   _XMP_nodes_t *p0 = n0->inherit_nodes; */
+/*   if (p0) return get_common_ancestor_nodes(p0, n1); */
+
+/*   return NULL; */
+
+/* } */
+
+
 _XMP_nodes_ref_t *_XMP_init_nodes_ref(_XMP_nodes_t *n, int *rank_array) {
   _XMP_nodes_ref_t *nodes_ref = _XMP_alloc(sizeof(_XMP_nodes_ref_t));
   int dim = n->dim;
