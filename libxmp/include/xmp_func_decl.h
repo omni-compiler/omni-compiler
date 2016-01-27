@@ -179,6 +179,7 @@ extern void _XMP_coarray_rdma_do_acc(const int, void*, void*, void *, const int,
 extern void _XMP_reflect_init_acc(void *, void *);
 extern void _XMP_reflect_do_acc(void *);
 extern void _XMP_reflect_acc(void *);
+extern void _XMP_set_reflect_acc__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
 
 #ifdef _XMP_TCA
 // xmp_tca.c
