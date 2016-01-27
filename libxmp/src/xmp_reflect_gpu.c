@@ -51,7 +51,7 @@ static const int useSingleStreamLimit = 1; //16 * 1024; //element
 #define TLOG_LOG(log) do{}while(0)
 #endif
 
-void _XMP_set_reflect_gpu__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
+void _XMP_set_reflect_gpu(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 			    int is_periodic)
 {
   _xmpf_set_reflect_flag = 1;

@@ -166,6 +166,7 @@ extern void _XMP_coarray_shortcut_get_f(const int*, void*, const void*, const si
 extern void _XMP_reflect_init_acc(void *, void *);
 extern void _XMP_reflect_do_acc(void *);
 extern void _XMP_reflect_acc(void *);
+extern void _XMP_set_reflect_acc__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
 
 #ifdef _XMP_TCA
 // xmp_tca.c

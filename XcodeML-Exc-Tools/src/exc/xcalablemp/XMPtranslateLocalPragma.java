@@ -251,7 +251,7 @@ public class XMPtranslateLocalPragma {
 	      throw new XMPexception("Periodic reflect cannot be specified for a dimension with full shadow.");
 	  }
 
-	  Ident funcId = _globalDecl.declExternFunc("_XMP_set_reflect_gpu__");
+	  Ident funcId = _globalDecl.declExternFunc("_XMP_set_reflect_acc__");
 	  XobjList setFuncArgs = Xcons.List(alignedArray.getDescId().Ref(), Xcons.IntConstant(j),
 					    width.getArg(0), width.getArg(1), width.getArg(2));
 	  funcBody.add(Bcons.Statement(funcId.Call(setFuncArgs)));
