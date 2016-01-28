@@ -935,3 +935,12 @@ void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
   _notify_sync_images(num, rank_set);
   _wait_sync_images(num, rank_set);
 }
+
+
+void _XMP_sync_images_EXEC(int* status)
+{
+  MPI_Win_flush_all(_xmp_mpi_onesided_win);
+  _XMP_barrier_EXEC();
+}
+
+
