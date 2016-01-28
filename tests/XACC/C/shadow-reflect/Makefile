@@ -20,7 +20,6 @@ run: $(EXES)
 	qsub ./reflect_acc_2_massive.sh
 	qsub ./reflect_acc_2_dup_1.sh
 	qsub ./reflect_acc_2_dup_2.sh
-	qsub ./parallel.sh
 
 clean:
 	rm -f $(EXES) $(OBJS)
