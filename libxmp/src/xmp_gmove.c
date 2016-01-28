@@ -2598,9 +2598,12 @@ static int _XMP_gmove_garray_garray_opt(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gm
 	dst_s[i] = dst_array->info[i].local_stride;
       }
 
-      _XMP_gmove_localcopy_ARRAY(type, type_size,
-				 dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
-				 src_addr, src_dim, dst_l, dst_u, dst_s, dst_d);
+      if (dst_array->is_allocated){ // src_array->is_allocated
+	_XMP_gmove_localcopy_ARRAY(type, type_size,
+				   dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
+				   src_addr, src_dim, dst_l, dst_u, dst_s, dst_d);
+      }
+
       return 1;
 
     }
