@@ -83,12 +83,12 @@ struct ompc_tree_barrier_node
 
 struct ompc_tree_barrier
 {
+    int num_threads;
     int depth;
     struct ompc_tree_barrier_node nodes[MAX_PROC - 1];
 };
 
 struct ompc_thread {
-    ompc_thread_t tid;                  /* ULT id given by ABT_thread_self() */
     struct ompc_thread *parent;         /*  */
     int num;            /* the thread number of this thread in team */
     int num_thds;       /* current running thread, refenced by children */

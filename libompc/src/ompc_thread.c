@@ -14,7 +14,9 @@
 #include "ompclib.h"
 
 #include <hwloc.h>
+#ifdef __ABTL_LOG_ENABLE
 #include "abt_logger.h"
+#endif
 #include <errno.h>
 
 //#define __ABTL_LOG_ENABLE
@@ -23,6 +25,7 @@
 // 1: inner loop, used for nested OpenMP version
 #define __ABTL_LOG_LEVEL 1
 //#define __TEST_WORK_STEALING
+#define __OMNI_TEST_TASKLET__
 
 // FIXME temporary impl, needs refactoring
 static ABT_xstream xstreams[MAX_PROC];
@@ -34,10 +37,20 @@ static void tls_free(void *value) {
 
 static hwloc_topology_t topo;
 static hwloc_const_cpuset_t allset;
+static int hwloc_ncores;
 static void thread_affinity_setup(int i) {
-    hwloc_obj_t core = hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, i);
+    int thread_num;
+    if (ompc_max_threads >= hwloc_ncores) {
+        thread_num = i % hwloc_ncores;
+    }
+    else { // ompc_max_threads < hwloc_ncores
+        int chunk_size = hwloc_ncores / ompc_max_threads;
+        thread_num = i * chunk_size;
+    }
+
+    hwloc_obj_t core = hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, thread_num);
     hwloc_cpuset_t set = hwloc_bitmap_dup(core->cpuset);
-    hwloc_bitmap_singlify(set);
+//    hwloc_bitmap_singlify(set);
 
     int res;
     res = hwloc_set_cpubind(topo, set, HWLOC_CPUBIND_THREAD | HWLOC_CPUBIND_STRICT);
@@ -224,6 +237,7 @@ ompc_init(int argc,char *argv[])
     hwloc_topology_init(&topo);
     hwloc_topology_load(topo);
     allset = hwloc_topology_get_complete_cpuset(topo);
+    hwloc_ncores = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_CORE);
 /*
     hwloc_cpuset_t set = hwloc_bitmap_dup(allset);
     int res = hwloc_set_membind(topo, set, HWLOC_MEMBIND_FIRSTTOUCH, HWLOC_MEMBIND_PROCESS);
@@ -416,11 +430,12 @@ ompc_init(int argc,char *argv[])
     tp->num             = 0;    /* team master */
     tp->in_parallel     = 0;
     tp->parent          = NULL;
-    tp->tid = ompc_thread_self();
     ABT_key_set(tls_key, (void *)tp);
 
     // argobots logger init
+#ifdef __ABTL_LOG_ENABLE
     ABTL_init(ompc_max_threads);
+#endif
 
     if (ompc_debug_flag) fprintf(stderr, "init end(Master)\n");
 }
@@ -557,6 +572,7 @@ static void ompc_thread_wrapper_func(void *arg)
 #endif
 */
 
+/* FIXME test and remove
     if (!tp->run_children) {
         ABT_mutex_lock(tp->broadcast_mutex);
         while (!tp->run_children) {
@@ -564,6 +580,7 @@ static void ompc_thread_wrapper_func(void *arg)
         }
         ABT_mutex_unlock(tp->broadcast_mutex);
     }
+*/
 
 /*
 #ifdef __ABTL_LOG_ENABLE
@@ -645,11 +662,13 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     cthd->func = f;
 
     /* initialize flag, mutex, and cond */
+/* FIXME test and remove
     cthd->run_children = 0;
     ABT_mutex_create(&cthd->broadcast_mutex);
     ABT_mutex_create(&cthd->reduction_mutex);
     ABT_cond_create(&cthd->broadcast_cond);
     ABT_cond_create(&cthd->reduction_cond);
+*/
 
     /* initialize barrier structure */
     cthd->out_count = 0;
@@ -661,7 +680,17 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     
     ompc_tree_barrier_init(&cthd->tree_barrier, n_thds);
 
+#ifdef __OMNI_TEST_TASKLET__
+    void *children;
+    if (cthd->parallel_nested_level == 0) {
+        children = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * n_thds);
+    }
+    else {
+        children = (ABT_task *)malloc(sizeof(ABT_task) * n_thds);
+    }
+#else
     ompc_thread_t *children = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * n_thds);
+#endif
 
     /* assign thread to proc */
     for (int i = 0; i < n_thds; i++ ) {
@@ -678,16 +707,27 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
             tp->args = args;
         }
 
+#ifdef __OMNI_TEST_TASKLET__
+        if (cthd->parallel_nested_level == 0) {
+            ABT_thread_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
+                (void *)tp, ABT_THREAD_ATTR_NULL, &(((ABT_thread *)children)[i]));
+        }
+        else {
+            ABT_task_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
+                (void *)tp, &(((ABT_task *)children)[i]));
+        }
+#else
         ABT_thread_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
-            (void *)tp, ABT_THREAD_ATTR_NULL, (ABT_thread *)(&tp->tid));
-
-        children[i] = tp->tid;
+            (void *)tp, ABT_THREAD_ATTR_NULL, (ABT_thread *)(&(children[i])));
+#endif
     }
 
+/* FIXME test and remove
     ABT_mutex_lock(cthd->broadcast_mutex);
     cthd->run_children = 1;
     ABT_cond_broadcast(cthd->broadcast_cond);
     ABT_mutex_unlock(cthd->broadcast_mutex);
+*/
 
 /*
 #ifdef __ABTL_LOG_ENABLE
@@ -697,18 +737,32 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     if (cthd->parallel_nested_level == 1)  event_parallel_join = ABTL_log_start(9);
 #endif
 */
-
     for (int i = 0; i < n_thds; i++) {
+#ifdef __OMNI_TEST_TASKLET__
+        if (cthd->parallel_nested_level == 0) {
+          ABT_thread *child_UTLs = (ABT_thread *)children;
+          ABT_thread_join(child_UTLs[i]);
+          ABT_thread_free(&child_UTLs[i]);
+        }
+        else {
+          ABT_task *child_tasks = (ABT_task *)children;
+          ABT_task_free(&child_tasks[i]);
+        }
+#else
         ABT_thread_join(children[i]);
         ABT_thread_free(&children[i]);
+#endif
     }
 
+/* FIXME test and remove
     ABT_cond_free(&cthd->broadcast_cond);
     ABT_cond_free(&cthd->reduction_cond);
     ABT_mutex_free(&cthd->broadcast_mutex);
     ABT_mutex_free(&cthd->reduction_mutex);
+*/
+
     free(children);
-    
+
     ompc_tree_barrier_finalize(&cthd->tree_barrier);
 
     if (cthd->parent == NULL) {
@@ -743,6 +797,8 @@ void
 ompc_thread_barrier(int id, struct ompc_thread *tpp)
 {
     int sen0,n;
+
+    printf("wrong barrier used!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
     if(tpp == NULL) return; /* not in parallel */
 #ifdef USE_LOG
@@ -836,8 +892,8 @@ ompc_terminate(int exitcode)
 
 #ifdef __ABTL_LOG_ENABLE
     ABTL_dump_log();
-#endif
     ABTL_finalize();
+#endif
     ABT_finalize();
 
     hwloc_topology_destroy(topo);
@@ -867,8 +923,6 @@ ompc_get_num_threads (struct ompc_thread *tp)
 // not for omp_set_num_threads()
 // modify runtime API, e.g. omp_set_num_threads_clause()
 void ompc_set_num_threads(int n) {
-    // FIXME assumes that OMP_NESTED=TRUE
-    // add error check
     struct ompc_thread *tp = ompc_current_thread();
     tp->set_num_thds = n;
 }

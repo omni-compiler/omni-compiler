@@ -12,6 +12,9 @@
 void ompc_tree_barrier_init(struct ompc_tree_barrier *barrier,
                             int num_threads)
 {
+    barrier->num_threads = num_threads;
+    if (num_threads == 1) return;
+
     barrier->depth = 0;
     for (int n = num_threads; n > 2; n = (n + 1) / 2) {
         barrier->depth++;
@@ -27,10 +30,12 @@ void ompc_tree_barrier_init(struct ompc_tree_barrier *barrier,
             int num_children = num_threads > leaf_count + leaf_incr / 2 ? 2 : 1;
             node->num_children = node->count = num_children;
             node->sense = 0;
+/* FIXME
             if (num_children == 2) {
                 ABT_mutex_create(&node->mutex);
                 ABT_cond_create(&node->cond);
             }
+*/
             leaf_count += leaf_incr;
         }
     }
@@ -38,6 +43,7 @@ void ompc_tree_barrier_init(struct ompc_tree_barrier *barrier,
 
 void ompc_tree_barrier_finalize(struct ompc_tree_barrier *barrier)
 {
+/* FIXME
     for (int d = 0; d <= barrier->depth; d++) {
         int start_idx = (1 << d) - 1;
         for (int i = 0; i < (1 << d); i++) {
@@ -48,20 +54,25 @@ void ompc_tree_barrier_finalize(struct ompc_tree_barrier *barrier)
             }
         }
     }
+*/
 }
 
 void ompc_tree_barrier_wait(struct ompc_tree_barrier *barrier,
                             struct ompc_thread *thread)
 {
+    if (barrier->num_threads == 1) return;
+
     int node_idx = (1 << barrier->depth) + (thread->num >> 1) - 1;
     int stack_count = 0;
-    _Bool sense = !thread->barrier_sense;
+    volatile _Bool sense = !thread->barrier_sense;
     thread->barrier_sense = sense;
 
     while (1) {
         struct ompc_tree_barrier_node *node = &barrier->nodes[node_idx];
         if (__sync_fetch_and_sub(&node->count, 1) != 1) {
-            OMPC_WAIT_UNTIL(node->sense == sense, node->cond, node->mutex);
+// FIXME
+//          OMPC_WAIT_UNTIL(node->sense == sense, node->cond, node->mutex);
+            OMPC_WAIT(node->sense != sense);
             break;
         }
         thread->node_stack[stack_count++] = node;
@@ -72,10 +83,14 @@ void ompc_tree_barrier_wait(struct ompc_tree_barrier *barrier,
     while (stack_count > 0) {
         struct ompc_tree_barrier_node *node = thread->node_stack[--stack_count];
         node->count = node->num_children;
+/* FIXME
         if (node->num_children == 2) {
             OMPC_SIGNAL(node->sense = sense, node->cond, node->mutex);
         } else {
+*/
             node->sense = sense;
+/* FIXME
         }
+*/
     }
 }

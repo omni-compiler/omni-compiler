@@ -10,9 +10,11 @@
 #include "exc_platform.h"
 #include "ompclib.h"
 
-#include "abt_logger.h"
-
 //#define __ABTL_LOG_ENABLE
+
+#ifdef __ABTL_LOG_ENABLE
+#include "abt_logger.h"
+#endif
 
 extern struct ompc_thread *ompc_current_thread(void);
 static void ompc_static_bsched_tid(struct ompc_thread *tp, 
