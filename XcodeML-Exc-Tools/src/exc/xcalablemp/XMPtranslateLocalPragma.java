@@ -690,9 +690,8 @@ public class XMPtranslateLocalPragma {
     BlockList taskFuncCallBlockList = Bcons.emptyBody();
 
     Ident taskDescId = null;
-    if (!nocomm_flag){
-
-      if (tasksFlag == true){
+    if(!nocomm_flag){
+      if(tasksFlag == true){
 	taskDescId = parentBlock.getBody().declLocalIdent(tmpSym.getStr("_XMP_TASK_desc"),
 							  Xtype.voidPtrType, StorageClass.AUTO,
 							  Xcons.Cast(Xtype.voidPtrType,
@@ -704,12 +703,10 @@ public class XMPtranslateLocalPragma {
 							  Xcons.Cast(Xtype.voidPtrType,
 								     Xcons.IntConstant(0)));
       }
-
       execFuncArgs.cons(taskDescId.getAddr());
-
     }
 
-    Ident execFuncId = execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSuffix, Xtype.intType);
+    Ident execFuncId = _globalDecl.declExternFunc("_XMP_exec_task_" + execFuncSuffix, Xtype.intType);
 
     Block taskFuncCallBlock;
     if (tasksFlag == true){
@@ -728,7 +725,7 @@ public class XMPtranslateLocalPragma {
 
     if (!nocomm_flag){
       XobjList arg = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
-      taskBody.add(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
+      taskFuncCallBlockList.add(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
     }
 
     // add function calls for profiling                                                              
@@ -1699,7 +1696,7 @@ public class XMPtranslateLocalPragma {
   private Block createCommTaskBlock(BlockList body, String execFuncSuffix, XobjList execFuncArgs) throws XMPexception {
     // setup barrier finalizer
     setupFinalizer(body, _globalDecl.declExternFunc("_XMP_pop_nodes"), null);
-
+    
     // create function call
     BlockList taskBody = Bcons.emptyBody();
     Ident taskDescId = taskBody.declLocalIdent("_XMP_TASK_desc", Xtype.voidPtrType, StorageClass.AUTO,
@@ -1709,6 +1706,10 @@ public class XMPtranslateLocalPragma {
     Block execBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), body, null);
     taskBody.add(execBlock);
 
+    Ident taskFinalizeId = _globalDecl.declExternFunc("_XMP_exec_task_NODES_FINALIZE", Xtype.voidType);
+    XobjList args = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
+    taskBody.add(taskFinalizeId.Call(args));
+    
     return Bcons.COMPOUND(taskBody);
   }
 
@@ -1722,7 +1723,8 @@ public class XMPtranslateLocalPragma {
     XobjList onRef = (XobjList)barrierDecl.getArg(0);
     if (onRef == null || onRef.Nargs() == 0) {
       barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null);
-    } else {
+    }
+    else {
       //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
       XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
       String execFuncSuffix = execOnRefArgs.getFirst();
@@ -1731,14 +1733,15 @@ public class XMPtranslateLocalPragma {
       if (splitComm) {
         BlockList barrierBody = Bcons.blockList(_globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null));
 	barrierFuncCallBlock = createCommTaskBlock(barrierBody, execFuncSuffix, execFuncArgs);
-      } else {
+      }
+      else {
 	barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_" + execFuncSuffix, execFuncArgs);
       }
     }
 
     pb.replace(barrierFuncCallBlock);
 
-    // add function calls for profiling                                                                                
+    // add function calls for profiling                                                                     
     Xobject profileClause = barrierDecl.getArg(1);
     if ( _all_profile || (profileClause != null && _selective_profile)){
 	if (doScalasca == true) {
@@ -1756,7 +1759,6 @@ public class XMPtranslateLocalPragma {
 	barrierFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
 	barrierFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
     }
-
   }
 
   private void translateReduction(PragmaBlock pb) throws XMPexception {
@@ -2270,7 +2272,6 @@ public class XMPtranslateLocalPragma {
 
     Xobject async = bcastDecl.getArg(3);
     if (async.Opcode() != Xcode.LIST){
-
       if (!XmOption.isAsync()){
 	XMP.error(pb.getLineNo(), "MPI-3 is required to use the async clause on a bcast directive");
       }
