@@ -7,7 +7,6 @@
  * @file ompc_thread.c
  */
 
-//#define __ABTL_LOG_ENABLE
 //#define __TEST_WORK_STEALING
 //#define __OMNI_TEST_TASKLET__
 
@@ -18,9 +17,6 @@
 #include "ompclib.h"
 
 #include <hwloc.h>
-#ifdef __ABTL_LOG_ENABLE
-#include "abt_logger.h"
-#endif
 #include <errno.h>
 
 // FIXME temporary impl, needs refactoring
@@ -429,11 +425,6 @@ ompc_init(int argc,char *argv[])
     tp->parent          = NULL;
     ABT_key_set(tls_key, (void *)tp);
 
-    // argobots logger init
-#ifdef __ABTL_LOG_ENABLE
-    ABTL_init(ompc_max_threads);
-#endif
-
     if (ompc_debug_flag) fprintf(stderr, "init end(Master)\n");
 }
 
@@ -833,10 +824,6 @@ ompc_terminate(int exitcode)
     // incorrect destructor pointer for primary ULT
     // ABT_key_free(&tls_key);
 
-#ifdef __ABTL_LOG_ENABLE
-    ABTL_dump_log();
-    ABTL_finalize();
-#endif
     ABT_finalize();
 
     hwloc_topology_destroy(topo);
