@@ -7,6 +7,10 @@
  * @file ompc_thread.c
  */
 
+//#define __ABTL_LOG_ENABLE
+//#define __TEST_WORK_STEALING
+//#define __OMNI_TEST_TASKLET__
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,14 +22,6 @@
 #include "abt_logger.h"
 #endif
 #include <errno.h>
-
-//#define __ABTL_LOG_ENABLE
-// __ABTL_LOG_LEVEL
-// 0: outer loop, used for flat OpenMP version
-// 1: inner loop, used for nested OpenMP version
-#define __ABTL_LOG_LEVEL 1
-//#define __TEST_WORK_STEALING
-#define __OMNI_TEST_TASKLET__
 
 // FIXME temporary impl, needs refactoring
 static ABT_xstream xstreams[MAX_PROC];
@@ -565,13 +561,6 @@ static void ompc_thread_wrapper_func(void *arg)
 
     struct ompc_thread *tp = cthd->parent;
 
-/*
-#ifdef __ABTL_LOG_ENABLE
-    int event_wrapper_wait;
-    if (tp->parallel_nested_level == 1) event_wrapper_wait = ABTL_log_start(1);
-#endif
-*/
-
 /* FIXME test and remove
     if (!tp->run_children) {
         ABT_mutex_lock(tp->broadcast_mutex);
@@ -581,19 +570,6 @@ static void ompc_thread_wrapper_func(void *arg)
         ABT_mutex_unlock(tp->broadcast_mutex);
     }
 */
-
-/*
-#ifdef __ABTL_LOG_ENABLE
-    if (tp->parallel_nested_level == 1) ABTL_log_end(event_wrapper_wait);
-#endif
-*/
-
-#ifdef __ABTL_LOG_ENABLE
-    int event_wrapper_func;
-    if (tp->parallel_nested_level == __ABTL_LOG_LEVEL) {
-        event_wrapper_func = ABTL_log_start(2 + __ABTL_LOG_LEVEL);
-    }
-#endif
 
 # ifdef USE_LOG
     if(ompc_log_flag) tlog_parallel_IN(i);
@@ -613,12 +589,6 @@ static void ompc_thread_wrapper_func(void *arg)
 # ifdef USE_LOG
     if(ompc_log_flag) tlog_parallel_OUT(i);
 # endif /* USE_LOG */
-
-#ifdef __ABTL_LOG_ENABLE
-    if (tp->parallel_nested_level == __ABTL_LOG_LEVEL) {
-        ABTL_log_end(event_wrapper_func);
-    }
-#endif
 }
 
 /* called from compiled code. */
@@ -627,13 +597,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     cfunc f, void *args)
 {
     struct ompc_thread *cthd = ompc_current_thread();
-
-/*
-#ifdef __ABTL_LOG_ENABLE
-    int event_parallel_exec;
-    if (cthd->parallel_nested_level == 1) event_parallel_exec = ABTL_log_start(7);
-#endif
-*/
 
     int n_thds, in_parallel;
     if (cond == 0) { /* serialized by parallel if(false) */
@@ -729,14 +692,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     ABT_mutex_unlock(cthd->broadcast_mutex);
 */
 
-/*
-#ifdef __ABTL_LOG_ENABLE
-    if (cthd->parallel_nested_level == 1) ABTL_log_end(event_parallel_exec);
-
-    int event_parallel_join;
-    if (cthd->parallel_nested_level == 1)  event_parallel_join = ABTL_log_start(9);
-#endif
-*/
     for (int i = 0; i < n_thds; i++) {
 #ifdef __OMNI_TEST_TASKLET__
         if (cthd->parallel_nested_level == 0) {
@@ -768,12 +723,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     if (cthd->parent == NULL) {
         proc_last_used = 0;
     }
-
-/*
-#ifdef __ABTL_LOG_ENABLE
-    if (cthd->parallel_nested_level == 1) ABTL_log_end(event_parallel_join);
-#endif
-*/
 }
 
 
