@@ -678,7 +678,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         cthd->in_flags[i]._v = 0;
     }
     
-    ompc_tree_barrier_init(&cthd->tree_barrier, n_thds);
+//    ompc_tree_barrier_init(&cthd->tree_barrier, n_thds);
 
 #ifdef __OMNI_TEST_TASKLET__
     void *children;
@@ -763,7 +763,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 
     free(children);
 
-    ompc_tree_barrier_finalize(&cthd->tree_barrier);
+//    ompc_tree_barrier_finalize(&cthd->tree_barrier);
 
     if (cthd->parent == NULL) {
         proc_last_used = 0;
@@ -798,14 +798,12 @@ ompc_thread_barrier(int id, struct ompc_thread *tpp)
 {
     int sen0,n;
 
-    printf("wrong barrier used!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-
     if(tpp == NULL) return; /* not in parallel */
 #ifdef USE_LOG
     if(ompc_log_flag) tlog_barrier_IN(id);
 #endif // USE_LOG
 
-#if 1  // USE_ARGOBOTS
+#if 0  // USE_ARGOBOTS
     sen0 = ~tpp->barrier_sense;
     n = tpp->num_thds;
 

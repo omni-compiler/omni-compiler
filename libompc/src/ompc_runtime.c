@@ -60,8 +60,8 @@ ompc_barrier()
 #endif
 */
 
-    ompc_tree_barrier_wait(&tp->parent->tree_barrier, tp);
-    //ompc_thread_barrier(tp->num, tp->parent);
+    //ompc_tree_barrier_wait(&tp->parent->tree_barrier, tp);
+    ompc_thread_barrier(tp->num, tp->parent);
 
 /*
 #ifdef __ABTL_LOG_ENABLE
@@ -74,8 +74,8 @@ ompc_barrier()
 void
 ompc_barrier_tid(struct ompc_thread *tp)
 {
-    ompc_tree_barrier_wait(&tp->parent->tree_barrier, tp);
-    //ompc_thread_barrier(tp->num, tp->parent);
+    //ompc_tree_barrier_wait(&tp->parent->tree_barrier, tp);
+    ompc_thread_barrier(tp->num, tp->parent);
 }
 
 
@@ -929,7 +929,7 @@ ompc_copyin_thdprv(void *datap,void *global_datap,int size)
  */
 #define DO_REDUCTION_INTEGRAL(type_t,t) {\
     vals[id].r_v.t = *((type_t *)in_p); \
-    if(tpp != NULL) ompc_tree_barrier_wait(&tpp->tree_barrier, tp); \
+    if(tpp != NULL) ompc_thread_barrier(id,tpp); \
     if(id == 0) { \
         any_type v; int i; \
         v.t = *((type_t *)out_p); \
@@ -973,12 +973,12 @@ ompc_copyin_thdprv(void *datap,void *global_datap,int size)
         } \
         *((type_t *)out_p) = v.t; \
     } \
-    if(tpp != NULL) ompc_tree_barrier_wait(&tpp->tree_barrier, tp); \
+    if(tpp != NULL) ompc_thread_barrier(id,tpp); \
 }
 
 #define DO_REDUCTION_FLOAT(type_t,t) { \
     vals[id].r_v.t = *((type_t *)in_p); \
-    if(tpp != NULL) ompc_tree_barrier_wait(&tpp->tree_barrier, tp); \
+    if(tpp != NULL) ompc_thread_barrier(id,tpp); \
     if(id == 0){ \
         any_type v; int i; \
         v.t = *((type_t *)out_p); \
@@ -1013,12 +1013,12 @@ ompc_copyin_thdprv(void *datap,void *global_datap,int size)
         } \
         *((type_t *)out_p) = v.t; \
     } \
-    if(tpp != NULL) ompc_tree_barrier_wait(&tpp->tree_barrier, tp); \
+    if(tpp != NULL) ompc_thread_barrier(id,tpp); \
 }
 
 #define DO_REDUCTION_COMPLEX(type_t,t) { \
     vals[id].r_v.t = *((type_t *)in_p); \
-    if(tpp != NULL) ompc_tree_barrier_wait(&tpp->tree_barrier, tp); \
+    if(tpp != NULL) ompc_thread_barrier(id,tpp); \
     if(id == 0){ \
         any_type v; int i; \
         v.t = *((type_t *)out_p); \
@@ -1037,7 +1037,7 @@ ompc_copyin_thdprv(void *datap,void *global_datap,int size)
         } \
         *((type_t *)out_p) = v.t; \
      } \
-     if(tpp != NULL) ompc_tree_barrier_wait(&tpp->tree_barrier, tp); \
+    if(tpp != NULL) ompc_thread_barrier(id,tpp); \
 }
 
 
