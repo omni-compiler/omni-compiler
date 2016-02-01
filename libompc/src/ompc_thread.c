@@ -28,7 +28,7 @@ static ABT_xstream xstreams[MAX_PROC];
 
 static ABT_key tls_key;
 static void tls_free(void *value) {
-    free(value);
+    // do nothing
 }
 
 static hwloc_topology_t topo;
@@ -214,7 +214,7 @@ static ompc_thread_t ompc_thread_self();
 static struct ompc_proc *ompc_new_proc(int i);
 static struct ompc_proc *ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur,
                                        int thread_num, int num_threads);
-static struct ompc_thread *ompc_alloc_thread(void);
+static void ompc_init_thread(struct ompc_thread *tp);
 /*static*/ struct ompc_thread *ompc_current_thread(void);
 
 extern void ompc_call_fsub(struct ompc_thread *tp);
@@ -422,7 +422,8 @@ ompc_init(int argc,char *argv[])
 #endif // __TEST_WORK_STEALING
 
     // setup master root thread
-    struct ompc_thread *tp = ompc_alloc_thread();
+    struct ompc_thread *tp = (struct ompc_thread *)malloc(sizeof(struct ompc_thread));
+    ompc_init_thread(tp);
     tp->num             = 0;    /* team master */
     tp->in_parallel     = 0;
     tp->parent          = NULL;
@@ -521,23 +522,11 @@ ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur,
 */
 }
 
-/* allocate/get thread entry */
-static struct ompc_thread *
-ompc_alloc_thread(void)
-{
-    struct ompc_thread *p;
-
-    p = (struct ompc_thread *)malloc(sizeof(struct ompc_thread));
-    if (p == NULL) {
-        ompc_fatal("ompc_alloc_thread: malloc failed");
-    }
-
+static void ompc_init_thread(struct ompc_thread *p) {
     p->parallel_nested_level = 0;
     p->es_start = 0;
     p->es_length = ompc_max_threads;
     p->set_num_thds = -1;
-
-    return p;
 }
 
 static void ompc_xstream_setup(void *arg)
@@ -655,9 +644,11 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     ompc_thread_t *children = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * n_thds);
 #endif
 
+    struct ompc_thread *tp_list = (struct ompc_thread *)malloc(sizeof(struct ompc_thread) * n_thds);
     /* assign thread to proc */
     for (int i = 0; i < n_thds; i++ ) {
-        struct ompc_thread *tp = ompc_alloc_thread();
+        struct ompc_thread *tp = &(tp_list[i]);
+        ompc_init_thread(tp);
         struct ompc_proc *p = ompc_get_proc(cthd, tp, i, n_thds);
         tp->parent = cthd;
         tp->num = i;                        /* set thread_num */
@@ -717,6 +708,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 */
 
     free(children);
+    free(tp_list);
 
 //    ompc_tree_barrier_finalize(&cthd->tree_barrier);
 
@@ -832,6 +824,10 @@ ompc_terminate(int exitcode)
 #endif
 
     free(ompc_procs);
+
+    // removing master root thread
+    struct ompc_thread *tp = ompc_current_thread();
+    free(tp);
 
     // FIXME this causes segmentation fault on ABT_finalize():
     // incorrect destructor pointer for primary ULT
