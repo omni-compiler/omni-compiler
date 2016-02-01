@@ -230,17 +230,6 @@ ompc_init(int argc,char *argv[])
     hwloc_topology_load(topo);
     allset = hwloc_topology_get_complete_cpuset(topo);
     hwloc_ncores = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_CORE);
-/*
-    hwloc_cpuset_t set = hwloc_bitmap_dup(allset);
-    int res = hwloc_set_membind(topo, set, HWLOC_MEMBIND_FIRSTTOUCH, HWLOC_MEMBIND_PROCESS);
-    if (res) {
-        int err = errno;
-        printf("error: hwloc_set_membind(): %d\n", err);
-    }
-    hwloc_bitmap_free(set);
-*/
-//    int num_numa_nodes = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_NUMANODE);
-    // hwloc init end
 
     {
       char buff[BUFSIZ];
@@ -315,33 +304,6 @@ ompc_init(int argc,char *argv[])
         if(val <= 0) ompc_fatal("bad OMP_NUM_THREADS(<= 0)");
         ompc_num_threads = val;
     }
-
-    // FIXME not available
-    /*
-    cp = getenv("OMPC_STACK_SIZE");   // stack size of threads
-    if ( cp != NULL ){
-        char lstr[64];
-        size_t len = strlen(cp);
-        int unit = 1;
-
-        if ( strncmp(&cp[len-1], "k", 1) == 0 || strncmp(&cp[len-1], "K", 1) == 0 ){
-            len -= 1;
-            unit *= 1024;
-        }
-        else if ( strncmp(&cp[len-1], "m", 1) == 0 || strncmp(&cp[len-1], "M", 1) == 0 ){
-            len -= 1;
-            unit *= 1024*1024;
-        }
-        strncpy(lstr, cp, len);
-        sscanf(lstr, "%d", &val);
-        if ( val <= 0 ) ompc_fatal("bad OMPC_STACK_SIZE(<= 0)");
-        size_t maxstack = val*unit;
-        if ( maxstack < DEF_STACK_SIZE ){
-            maxstack = 0;       // default/
-            printf("Stack size is not change, because it is less than the default(=1MB).\n");
-        }
-    }
-    */
 
     ompc_task_end = 0;
 
@@ -480,7 +442,6 @@ static struct ompc_proc *
 ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur,
               int thread_num, int num_threads)
 {
-///*
     int es_start = par->es_start;
     int es_length = par->es_length;
 
@@ -494,23 +455,7 @@ ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur,
         cur->es_length = chunk_size;
     }
 
-    // FIXME for debug
-    // printf("par[%d:%d] -> cur[%d:%d] | %d th thread in %d threads\n", es_start, es_length, cur->es_start, cur->es_length, thread_num, num_threads);
-
     return &ompc_procs[cur->es_start];
-//*/
-/* round-robin
-    struct ompc_proc *p;
-    int i;
-
-    OMPC_PROC_LOCK();
-    if(++proc_last_used >= ompc_max_threads) proc_last_used = 0;
-    p = &ompc_procs[proc_last_used];
-    cur->es_start = proc_last_used;
-    OMPC_PROC_UNLOCK();
-
-    return p;
-*/
 }
 
 static void ompc_init_thread(struct ompc_thread *p) {
@@ -540,16 +485,6 @@ static void ompc_thread_wrapper_func(void *arg)
     ABT_key_set(tls_key, (void *)cthd);
 
     struct ompc_thread *tp = cthd->parent;
-
-/* FIXME test and remove
-    if (!tp->run_children) {
-        ABT_mutex_lock(tp->broadcast_mutex);
-        while (!tp->run_children) {
-            ABT_cond_wait(tp->broadcast_cond, tp->broadcast_mutex);
-        }
-        ABT_mutex_unlock(tp->broadcast_mutex);
-    }
-*/
 
 # ifdef USE_LOG
     if(ompc_log_flag) tlog_parallel_IN(i);
@@ -603,15 +538,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     cthd->nargs = nargs;
     cthd->args = args;
     cthd->func = f;
-
-    /* initialize flag, mutex, and cond */
-/* FIXME test and remove
-    cthd->run_children = 0;
-    ABT_mutex_create(&cthd->broadcast_mutex);
-    ABT_mutex_create(&cthd->reduction_mutex);
-    ABT_cond_create(&cthd->broadcast_cond);
-    ABT_cond_create(&cthd->reduction_cond);
-*/
 
     /* initialize barrier structure */
     cthd->out_count = 0;
@@ -667,13 +593,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 #endif
     }
 
-/* FIXME test and remove
-    ABT_mutex_lock(cthd->broadcast_mutex);
-    cthd->run_children = 1;
-    ABT_cond_broadcast(cthd->broadcast_cond);
-    ABT_mutex_unlock(cthd->broadcast_mutex);
-*/
-
     for (int i = 0; i < n_thds; i++) {
 #ifdef __OMNI_TEST_TASKLET__
         if (cthd->parallel_nested_level == 0) {
@@ -690,13 +609,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         ABT_thread_free(&children[i]);
 #endif
     }
-
-/* FIXME test and remove
-    ABT_cond_free(&cthd->broadcast_cond);
-    ABT_cond_free(&cthd->reduction_cond);
-    ABT_mutex_free(&cthd->broadcast_mutex);
-    ABT_mutex_free(&cthd->reduction_mutex);
-*/
 
     free(children);
     free(tp_list);
