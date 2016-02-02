@@ -944,3 +944,8 @@ void _XMP_sync_images_EXEC(int* status)
 }
 
 
+void _XMP_sync_images_COMM(MPI_Comm *comm, int* status)
+{
+  MPI_Win_flush_all(_xmp_mpi_onesided_win);
+  MPI_Barrier(*comm);
+}

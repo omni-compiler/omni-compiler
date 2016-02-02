@@ -369,6 +369,7 @@ typedef struct _XMP_comm_set_type {
 //
 
 typedef struct _XMP_async_gmove {
+  int mode;
   void *sendbuf;
   void *recvbuf;
   int recvbuf_size;
