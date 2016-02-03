@@ -25,6 +25,8 @@
 static ABT_xstream          xstreams[MAX_PROC];
 static ABT_pool             pools[MAX_PROC];
 static struct ompc_ult_pool ult_pools[MAX_PROC];
+static int ult_created[MAX_PROC];
+static int ult_reused[MAX_PROC];
 
 static ABT_key tls_key;
 static void tls_free(void *value) {
@@ -214,7 +216,7 @@ static struct ompc_proc *ompc_new_proc(int i);
 static int ompc_get_ES_num(struct ompc_thread *par, struct ompc_thread *cur,
                            int thread_num, int num_threads);
 static void ompc_start_thread(int ES_num, struct ompc_thread *tp,
-                              void (*thread_func)(void *), void *arg);
+                              void (*thread_func)(void *));
 static void ompc_end_thread(int ES_num, struct ompc_thread *tp);
 static void ompc_init_thread(struct ompc_thread *tp);
 /*static*/ struct ompc_thread *ompc_current_thread(void);
@@ -474,22 +476,25 @@ ompc_get_ES_num(struct ompc_thread *par, struct ompc_thread *cur,
 
 static void
 ompc_start_thread(int ES_num, struct ompc_thread *tp,
-                  void (*thread_func)(void *), void *arg)
+                  void (*thread_func)(void *))
 {
     struct ompc_ult_pool *ult_pool = &(ult_pools[ES_num]);
     ompc_thread_t *ult_ptr;
-    if (ult_pool->size_created == ult_pool->size_used) {
-        if (ult_pool->size_allocated == ULT_POOL_SIZE) {
+//    if (ult_pool->size_created == ult_pool->size_used) {
+        if (ult_pool->size_created == ULT_POOL_SIZE) {
             ompc_fatal("cannot create new ULT");
         }
 
-        int idx = ult_pool->size_used;
+        int idx = ult_pool->size_created;
         ult_ptr = &(ult_pool->ult_list[idx]);
         ABT_thread_create(pools[ES_num], thread_func,
                           (void *)tp, ABT_THREAD_ATTR_NULL, ult_ptr);
         idx++;
         ult_pool->size_created = idx;
         ult_pool->size_used = idx;
+
+        (ult_created[ES_num])++;
+/*
     }
     else { // ult_pool->size_created > ult_pool->size_used
         int idx = ult_pool->size_used;
@@ -497,7 +502,10 @@ ompc_start_thread(int ES_num, struct ompc_thread *tp,
         ABT_thread_revive(pools[ES_num], thread_func,
                           (void *)tp, ult_ptr);
         ult_pool->size_used = idx + 1;
+
+        (ult_reused[ES_num])++;
     }
+*/
 
     tp->ult_ptr = ult_ptr;
 }
@@ -608,8 +616,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     else {
         children = (ABT_task *)malloc(sizeof(ABT_task) * n_thds);
     }
-#else
-    ompc_thread_t *children = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * n_thds);
 #endif
 
     struct ompc_thread *tp_list = (struct ompc_thread *)malloc(sizeof(struct ompc_thread) * n_thds);
@@ -617,7 +623,8 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     for (int i = 0; i < n_thds; i++ ) {
         struct ompc_thread *tp = &(tp_list[i]);
         ompc_init_thread(tp);
-        int ES_num = ompc_get_ES_num(cthd, tp, i, n_thds);
+        ompc_get_ES_num(cthd, tp, i, n_thds);
+        int ES_num = tp->es_start;
         tp->parent = cthd;
         tp->num = i;                        /* set thread_num */
         tp->in_parallel = in_parallel;
@@ -639,8 +646,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
                             (void *)tp, &(((ABT_task *)children)[i]));
         }
 #else
-        ABT_thread_create(pools[ES_num], ompc_thread_wrapper_func,
-                          (void *)tp, ABT_THREAD_ATTR_NULL, (ABT_thread *)(&(children[i])));
+        ompc_start_thread(ES_num, tp, ompc_thread_wrapper_func);
 #endif
     }
 
@@ -656,12 +662,14 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
           ABT_task_free(&child_tasks[i]);
         }
 #else
-        ABT_thread_join(children[i]);
-        ABT_thread_free(&children[i]);
+        struct ompc_thread *tp = &(tp_list[i]);
+        ompc_end_thread(tp->es_start, tp);
 #endif
     }
 
+#ifdef __OMNI_TEST_TASKLET__
     free(children);
+#endif
     free(tp_list);
 
 //    ompc_tree_barrier_finalize(&cthd->tree_barrier);
@@ -789,6 +797,8 @@ ompc_terminate(int exitcode)
 
     for (int i = 0; i < ompc_max_threads; i++) {
         free(ult_pools[i].ult_list);
+        printf("ES[%d] ult created = %d | reused = %d\n",
+               i, ult_created[i], ult_reused[i]);
     }
 
     ABT_finalize();
