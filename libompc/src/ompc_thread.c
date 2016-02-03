@@ -480,7 +480,7 @@ ompc_start_thread(int ES_num, struct ompc_thread *tp,
 {
     struct ompc_ult_pool *ult_pool = &(ult_pools[ES_num]);
     ompc_thread_t *ult_ptr;
-//    if (ult_pool->size_created == ult_pool->size_used) {
+    if (ult_pool->size_created == ult_pool->size_used) {
         if (ult_pool->size_created == ULT_POOL_SIZE) {
             ompc_fatal("cannot create new ULT");
         }
@@ -494,7 +494,6 @@ ompc_start_thread(int ES_num, struct ompc_thread *tp,
         ult_pool->size_used = idx;
 
         (ult_created[ES_num])++;
-/*
     }
     else { // ult_pool->size_created > ult_pool->size_used
         int idx = ult_pool->size_used;
@@ -505,7 +504,6 @@ ompc_start_thread(int ES_num, struct ompc_thread *tp,
 
         (ult_reused[ES_num])++;
     }
-*/
 
     tp->ult_ptr = ult_ptr;
 }
@@ -635,6 +633,21 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
             tp->nargs = nargs;
             tp->args = args;
         }
+
+/*
+    ABT_key_set(tls_key, (void *)tp);
+    if ( cthd->nargs < 0) {
+        if ( cthd->args != NULL )
+            (*cthd->func)(cthd->args, tp);
+        else
+            (*cthd->func)(tp);
+    } else {
+        ompc_call_fsub(cthd);
+    }
+    ABT_key_set(tls_key, (void *)cthd);
+
+        } else {
+*/
 
 #ifdef __OMNI_TEST_TASKLET__
         if (cthd->parallel_nested_level == 0) {
@@ -797,8 +810,8 @@ ompc_terminate(int exitcode)
 
     for (int i = 0; i < ompc_max_threads; i++) {
         free(ult_pools[i].ult_list);
-        printf("ES[%d] ult created = %d | reused = %d\n",
-               i, ult_created[i], ult_reused[i]);
+//        printf("ES[%d] ult created = %d | reused = %d\n",
+//               i, ult_created[i], ult_reused[i]);
     }
 
     ABT_finalize();
