@@ -88,7 +88,16 @@ struct ompc_tree_barrier
     struct ompc_tree_barrier_node nodes[MAX_PROC - 1];
 };
 
+struct ompc_ult_pool {
+    ompc_thread_t *ult_list;
+    int size_allocated;
+    int size_created;
+    int size_used;
+};
+
 struct ompc_thread {
+    ompc_thread_t *ult_ptr;
+    
     struct ompc_thread *parent;         /*  */
     int num;            /* the thread number of this thread in team */
     int num_thds;       /* current running thread, refenced by children */

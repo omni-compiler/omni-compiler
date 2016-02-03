@@ -7,8 +7,8 @@
  * @file ompc_thread.c
  */
 
-//#define __TEST_WORK_STEALING
-//#define __OMNI_TEST_TASKLET__
+//#define __TEST_WORK_STEALING  // FIXME do not use these now
+//#define __OMNI_TEST_TASKLET__ // FIXME
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -19,8 +19,12 @@
 #include <hwloc.h>
 #include <errno.h>
 
+#define ULT_POOL_SIZE 1024
+
 // FIXME temporary impl, needs refactoring
-static ABT_xstream xstreams[MAX_PROC];
+static ABT_xstream          xstreams[MAX_PROC];
+static ABT_pool             pools[MAX_PROC];
+static struct ompc_ult_pool ult_pools[MAX_PROC];
 
 static ABT_key tls_key;
 static void tls_free(void *value) {
@@ -62,7 +66,6 @@ static void thread_affinity_setup(int i) {
 
 #ifdef __TEST_WORK_STEALING
 static ABT_sched scheds[MAX_PROC];
-static ABT_pool  pools[MAX_PROC];
 
 typedef struct {
     uint32_t event_freq;
@@ -208,8 +211,11 @@ static void ompc_xstream_setup();
 static void ompc_thread_wrapper_func(void *arg);
 static ompc_thread_t ompc_thread_self();
 static struct ompc_proc *ompc_new_proc(int i);
-static struct ompc_proc *ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur,
-                                       int thread_num, int num_threads);
+static int ompc_get_ES_num(struct ompc_thread *par, struct ompc_thread *cur,
+                           int thread_num, int num_threads);
+static void ompc_start_thread(int ES_num, struct ompc_thread *tp,
+                              void (*thread_func)(void *), void *arg);
+static void ompc_end_thread(int ES_num, struct ompc_thread *tp);
 static void ompc_init_thread(struct ompc_thread *tp);
 /*static*/ struct ompc_thread *ompc_current_thread(void);
 
@@ -322,6 +328,7 @@ ompc_init(int argc,char *argv[])
     ompc_master_proc_id = _OMPC_PROC_SELF;
 
 #ifdef __TEST_WORK_STEALING
+    // FIXME variable pools is used for main pools for ESs
     // work stealing scheduler setup
     for (int i = 0; i < ompc_max_threads; i++) {
         ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC,
@@ -337,8 +344,14 @@ ompc_init(int argc,char *argv[])
     for (int i = 0; i < ompc_max_threads; i++) {
         if (ompc_debug_flag) fprintf(stderr, "Creating slave %d  ...\n", i);
 
+        ult_pools[i].ult_list = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * ULT_POOL_SIZE);
+        ult_pools[i].size_allocated = ULT_POOL_SIZE;
+        ult_pools[i].size_created = 0;
+        ult_pools[i].size_used = 0;
+
         if (i == 0) {
             ABT_xstream_self(&xstreams[0]);
+            ABT_xstream_get_main_pools(xstreams[0], 1, &pools[0]);
             ompc_xstream_setup(0);
             continue;
         }
@@ -351,9 +364,11 @@ ompc_init(int argc,char *argv[])
             exit(1);
         }
 
+        ABT_xstream_get_main_pools(xstreams[i], 1, &pools[i]);
+
         size_t tid = (size_t)i;
-        ABT_thread_create_on_xstream(xstreams[i], ompc_xstream_setup,
-                                     (void *)tid, ABT_THREAD_ATTR_NULL, &(threads[i]));
+        ABT_thread_create(pools[i], ompc_xstream_setup,
+                          (void *)tid, ABT_THREAD_ATTR_NULL, &(threads[i]));
     }
 
     for (int i = 1; i < ompc_max_threads; i++) {
@@ -369,8 +384,8 @@ ompc_init(int argc,char *argv[])
         }
 
         size_t tid = (size_t)i;
-        ABT_thread_create_on_xstream(xstreams[i], sched_setup,
-                                     (void *)tid, ABT_THREAD_ATTR_NULL, &(threads[i]));
+        ABT_thread_create(pools[i], sched_setup,
+                          (void *)tid, ABT_THREAD_ATTR_NULL, &(threads[i]));
     }
 
     for (int i = 1; i < ompc_max_threads; i++) {
@@ -437,10 +452,9 @@ ompc_current_thread()
     return tp;
 }
 
-/* get thread from free list */
-static struct ompc_proc *
-ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur,
-              int thread_num, int num_threads)
+static int
+ompc_get_ES_num(struct ompc_thread *par, struct ompc_thread *cur,
+                int thread_num, int num_threads)
 {
     int es_start = par->es_start;
     int es_length = par->es_length;
@@ -455,7 +469,44 @@ ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur,
         cur->es_length = chunk_size;
     }
 
-    return &ompc_procs[cur->es_start];
+    return cur->es_start;
+}
+
+static void
+ompc_start_thread(int ES_num, struct ompc_thread *tp,
+                  void (*thread_func)(void *), void *arg)
+{
+    struct ompc_ult_pool *ult_pool = &(ult_pools[ES_num]);
+    ompc_thread_t *ult_ptr;
+    if (ult_pool->size_created == ult_pool->size_used) {
+        if (ult_pool->size_allocated == ULT_POOL_SIZE) {
+            ompc_fatal("cannot create new ULT");
+        }
+
+        int idx = ult_pool->size_used;
+        ult_ptr = &(ult_pool->ult_list[idx]);
+        ABT_thread_create(pools[ES_num], thread_func,
+                          (void *)tp, ABT_THREAD_ATTR_NULL, ult_ptr);
+        idx++;
+        ult_pool->size_created = idx;
+        ult_pool->size_used = idx;
+    }
+    else { // ult_pool->size_created > ult_pool->size_used
+        int idx = ult_pool->size_used;
+        ult_ptr = &(ult_pool->ult_list[idx]);
+        ABT_thread_revive(pools[ES_num], thread_func,
+                          (void *)tp, ult_ptr);
+        ult_pool->size_used = idx + 1;
+    }
+
+    tp->ult_ptr = ult_ptr;
+}
+
+static void
+ompc_end_thread(int ES_num, struct ompc_thread *tp)
+{
+    ABT_thread_join(*(tp->ult_ptr));
+    (ult_pools[ES_num].size_used)--;
 }
 
 static void ompc_init_thread(struct ompc_thread *p) {
@@ -566,7 +617,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     for (int i = 0; i < n_thds; i++ ) {
         struct ompc_thread *tp = &(tp_list[i]);
         ompc_init_thread(tp);
-        struct ompc_proc *p = ompc_get_proc(cthd, tp, i, n_thds);
+        int ES_num = ompc_get_ES_num(cthd, tp, i, n_thds);
         tp->parent = cthd;
         tp->num = i;                        /* set thread_num */
         tp->in_parallel = in_parallel;
@@ -580,16 +631,16 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 
 #ifdef __OMNI_TEST_TASKLET__
         if (cthd->parallel_nested_level == 0) {
-            ABT_thread_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
-                (void *)tp, ABT_THREAD_ATTR_NULL, &(((ABT_thread *)children)[i]));
+            ABT_thread_create(pools[ES_num], ompc_thread_wrapper_func,
+                              (void *)tp, ABT_THREAD_ATTR_NULL, &(((ABT_thread *)children)[i]));
         }
         else {
-            ABT_task_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
-                (void *)tp, &(((ABT_task *)children)[i]));
+            ABT_task_create(pools[ES_num], ompc_thread_wrapper_func,
+                            (void *)tp, &(((ABT_task *)children)[i]));
         }
 #else
-        ABT_thread_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
-            (void *)tp, ABT_THREAD_ATTR_NULL, (ABT_thread *)(&(children[i])));
+        ABT_thread_create(pools[ES_num], ompc_thread_wrapper_func,
+                          (void *)tp, ABT_THREAD_ATTR_NULL, (ABT_thread *)(&(children[i])));
 #endif
     }
 
@@ -735,6 +786,10 @@ ompc_terminate(int exitcode)
     // FIXME this causes segmentation fault on ABT_finalize():
     // incorrect destructor pointer for primary ULT
     // ABT_key_free(&tls_key);
+
+    for (int i = 0; i < ompc_max_threads; i++) {
+        free(ult_pools[i].ult_list);
+    }
 
     ABT_finalize();
 
