@@ -618,7 +618,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 
     struct ompc_thread *tp_list = (struct ompc_thread *)malloc(sizeof(struct ompc_thread) * n_thds);
     /* assign thread to proc */
-    for (int i = 0; i < n_thds; i++ ) {
+    for (int i = n_thds - 1; i >= 0; --i) {
         struct ompc_thread *tp = &(tp_list[i]);
         ompc_init_thread(tp);
         ompc_get_ES_num(cthd, tp, i, n_thds);
@@ -632,38 +632,38 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         if (i == 0) {
             tp->nargs = nargs;
             tp->args = args;
-        }
 
-/*
-    ABT_key_set(tls_key, (void *)tp);
-    if ( cthd->nargs < 0) {
-        if ( cthd->args != NULL )
-            (*cthd->func)(cthd->args, tp);
-        else
-            (*cthd->func)(tp);
-    } else {
-        ompc_call_fsub(cthd);
-    }
-    ABT_key_set(tls_key, (void *)cthd);
-
-        } else {
-*/
-
-#ifdef __OMNI_TEST_TASKLET__
-        if (cthd->parallel_nested_level == 0) {
-            ABT_thread_create(pools[ES_num], ompc_thread_wrapper_func,
-                              (void *)tp, ABT_THREAD_ATTR_NULL, &(((ABT_thread *)children)[i]));
+            ABT_key_set(tls_key, (void *)tp);
+            if (cthd->nargs < 0) {
+                if (cthd->args != NULL ) {
+                    (*cthd->func)(cthd->args, tp);
+                }
+                else {
+                    (*cthd->func)(tp);
+                }
+            }
+            else {
+                ompc_call_fsub(cthd);
+            }
+            ABT_key_set(tls_key, (void *)cthd);
         }
         else {
-            ABT_task_create(pools[ES_num], ompc_thread_wrapper_func,
-                            (void *)tp, &(((ABT_task *)children)[i]));
-        }
+#ifdef __OMNI_TEST_TASKLET__
+            if (cthd->parallel_nested_level == 0) {
+                ABT_thread_create(pools[ES_num], ompc_thread_wrapper_func,
+                                  (void *)tp, ABT_THREAD_ATTR_NULL, &(((ABT_thread *)children)[i]));
+            }
+            else {
+                ABT_task_create(pools[ES_num], ompc_thread_wrapper_func,
+                                (void *)tp, &(((ABT_task *)children)[i]));
+            }
 #else
-        ompc_start_thread(ES_num, tp, ompc_thread_wrapper_func);
+            ompc_start_thread(ES_num, tp, ompc_thread_wrapper_func);
 #endif
+        }
     }
 
-    for (int i = 0; i < n_thds; i++) {
+    for (int i = 1; i < n_thds; i++) {
 #ifdef __OMNI_TEST_TASKLET__
         if (cthd->parallel_nested_level == 0) {
           ABT_thread *child_UTLs = (ABT_thread *)children;
