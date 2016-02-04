@@ -20,7 +20,6 @@
 
 #include <abt.h>
 typedef ABT_xstream ompc_proc_t;
-typedef ABT_thread ompc_thread_t;
 #define _YIELD_ME_ ABT_thread_yield()
 #define OMPC_WAIT(cond) while (cond) { _YIELD_ME_; }
 #define MAX_SPIN_COUNT 0
@@ -89,7 +88,7 @@ struct ompc_tree_barrier
 };
 
 struct ompc_ult_pool {
-    ompc_thread_t *ult_list;
+    ABT_thread *ult_list;
     int size_allocated;
     int size_created;
     int size_used;
@@ -103,7 +102,7 @@ struct ompc_tasklet_pool {
 };
 
 struct ompc_thread {
-    ompc_thread_t *ult_ptr;
+    ABT_thread *ult_ptr;
     ABT_task *tasklet_ptr;
     
     struct ompc_thread *parent;         /*  */

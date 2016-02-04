@@ -211,16 +211,13 @@ static ompc_proc_t ompc_master_proc_id;
 /* prototype */
 static void ompc_xstream_setup();
 static void ompc_thread_wrapper_func(void *arg);
-static ompc_thread_t ompc_thread_self();
 static struct ompc_proc *ompc_new_proc(int i);
 static int ompc_get_ES_num(struct ompc_thread *par, struct ompc_thread *cur,
                            int thread_num, int num_threads);
-static void ompc_start_ult(int ES_num, struct ompc_thread *tp,
-                           void (*thread_func)(void *));
-static void ompc_start_tasklet(int ES_num, struct ompc_thread *tp,
-                               void (*thread_func)(void *));
-static void ompc_end_ult(int ES_num, struct ompc_thread *tp);
-static void ompc_end_tasklet(int ES_num, struct ompc_thread *tp);
+static void ompc_start_ult(struct ompc_thread *tp, void (*thread_func)(void *));
+static void ompc_start_tasklet(struct ompc_thread *tp, void (*thread_func)(void *));
+static void ompc_end_ult(struct ompc_thread *tp);
+static void ompc_end_tasklet(struct ompc_thread *tp);
 static void ompc_init_thread(struct ompc_thread *tp);
 /*static*/ struct ompc_thread *ompc_current_thread(void);
 
@@ -349,7 +346,7 @@ ompc_init(int argc,char *argv[])
     for (int i = 0; i < ompc_max_threads; i++) {
         if (ompc_debug_flag) fprintf(stderr, "Creating slave %d  ...\n", i);
 
-        ult_pools[i].ult_list = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * ULT_POOL_SIZE);
+        ult_pools[i].ult_list = (ABT_thread *)malloc(sizeof(ABT_thread) * ULT_POOL_SIZE);
         ult_pools[i].size_allocated = ULT_POOL_SIZE;
         ult_pools[i].size_created = 0;
         ult_pools[i].size_used = 0;
@@ -483,11 +480,12 @@ ompc_get_ES_num(struct ompc_thread *par, struct ompc_thread *cur,
 }
 
 static void
-ompc_start_ult(int ES_num, struct ompc_thread *tp,
+ompc_start_ult(struct ompc_thread *tp,
                void (*thread_func)(void *))
 {
+    int ES_num = tp->es_start;
     struct ompc_ult_pool *ult_pool = &(ult_pools[ES_num]);
-    ompc_thread_t *ult_ptr;
+    ABT_thread *ult_ptr;
     if (ult_pool->size_created == ult_pool->size_used) {
         if (ult_pool->size_created == ULT_POOL_SIZE) {
             ompc_fatal("cannot create new ULT");
@@ -512,9 +510,10 @@ ompc_start_ult(int ES_num, struct ompc_thread *tp,
 }
 
 static void
-ompc_start_tasklet(int ES_num, struct ompc_thread *tp,
+ompc_start_tasklet(struct ompc_thread *tp,
                    void (*thread_func)(void *))
 {
+    int ES_num = tp->es_start;
     struct ompc_tasklet_pool *tasklet_pool = &(tasklet_pools[ES_num]);
     ABT_task *tasklet_ptr;
     if (tasklet_pool->size_created == tasklet_pool->size_used) {
@@ -541,21 +540,21 @@ ompc_start_tasklet(int ES_num, struct ompc_thread *tp,
 }
 
 static void
-ompc_end_ult(int ES_num, struct ompc_thread *tp)
+ompc_end_ult(struct ompc_thread *tp)
 {
     ABT_thread_join(*(tp->ult_ptr));
-    (ult_pools[ES_num].size_used)--;
+    (ult_pools[tp->es_start].size_used)--;
 }
 
 static void
-ompc_end_tasklet(int ES_num, struct ompc_thread *tp)
+ompc_end_tasklet(struct ompc_thread *tp)
 {
     ABT_task_state state;
     do {
         ABT_task_get_state(*(tp->tasklet_ptr), &state);
         ABT_thread_yield();
     } while (state != ABT_TASK_STATE_TERMINATED);
-    (tasklet_pools[ES_num].size_used)--;
+    (tasklet_pools[tp->es_start].size_used)--;
 }
 
 static void ompc_init_thread(struct ompc_thread *p) {
@@ -655,7 +654,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         struct ompc_thread *tp = &(tp_list[i]);
         ompc_init_thread(tp);
         ompc_get_ES_num(cthd, tp, i, n_thds);
-        int ES_num = tp->es_start;
         tp->parent = cthd;
         tp->num = i;                        /* set thread_num */
         tp->in_parallel = in_parallel;
@@ -686,13 +684,13 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         else {
 #ifdef __OMNI_TEST_TASKLET__
             if (cthd->parallel_nested_level == 0) {
-                ompc_start_ult(ES_num, tp, ompc_thread_wrapper_func);
+                ompc_start_ult(tp, ompc_thread_wrapper_func);
             }
             else {
-                ompc_start_tasklet(ES_num, tp, ompc_thread_wrapper_func);
+                ompc_start_tasklet(tp, ompc_thread_wrapper_func);
             }
 #else
-            ompc_start_ult(ES_num, tp, ompc_thread_wrapper_func);
+            ompc_start_ult(tp, ompc_thread_wrapper_func);
 #endif
         }
     }
@@ -701,13 +699,13 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         struct ompc_thread *tp = &(tp_list[i]);
 #ifdef __OMNI_TEST_TASKLET__
         if (cthd->parallel_nested_level == 0) {
-            ompc_end_ult(tp->es_start, tp);
+            ompc_end_ult(tp);
         }
         else {
-            ompc_end_tasklet(tp->es_start, tp);
+            ompc_end_tasklet(tp);
         }
 #else
-        ompc_end_ult(tp->es_start, tp);
+        ompc_end_ult(tp);
 #endif
     }
 
@@ -901,12 +899,4 @@ ompc_xstream_self()
     ABT_xstream xstream;
     ABT_xstream_self(&xstream);
     return xstream;
-}
-
-static ompc_thread_t
-ompc_thread_self()
-{
-    ABT_thread thread;
-    ABT_thread_self(&thread);
-    return thread;
 }
