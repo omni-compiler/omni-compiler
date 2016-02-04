@@ -699,10 +699,10 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...) {
 
 void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc,
 		       unsigned long long *acc[]) {
-  if (!array_desc->is_allocated) {
-    *array_addr = NULL;
-    return;
-  }
+  /* if (!array_desc->is_allocated) { */
+  /*   *array_addr = NULL; */
+  /*   return; */
+  /* } */
 
   unsigned long long total_elmts = 1;
   int dim = array_desc->dim;
@@ -724,6 +724,33 @@ void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc,
   // set members
   array_desc->array_addr_p = *array_addr;
   array_desc->total_elmts = total_elmts;
+
+  // for gmove in/out
+
+#ifdef _XMP_MPI3_ONESIDED
+  _XMP_coarray_t *c = (_XMP_coarray_t *)_XMP_alloc(sizeof(_XMP_coarray_t));
+
+  long asize[dim];
+  for (int i = 0; i < dim; i++){
+    asize[i] = array_desc->info[i].alloc_size;
+  }
+
+  _XMP_coarray_malloc_info_n(asize, dim, array_desc->type_size);
+
+  //_XMP_nodes_t *ndesc = a->align_template->onto_nodes;
+  //_XMP_nodes_t *ndesc = _XMP_get_execution_nodes();
+  _XMP_nodes_t *ndesc = _XMP_world_nodes;
+  int ndims_node = ndesc->dim;
+  int nsize[ndims_node-1];
+  for (int i = 0; i < ndims_node-1; i++){
+    nsize[i] = ndesc->info[i].size;
+  }
+  _XMP_coarray_malloc_image_info_n(nsize, ndims_node);
+
+  _XMP_coarray_attach(c, *array_addr, array_desc->total_elmts * array_desc->type_size);
+
+  array_desc->coarray = c;
+#endif
 
 #ifdef _XMP_TCA
   _XMP_alloc_tca(array_desc);

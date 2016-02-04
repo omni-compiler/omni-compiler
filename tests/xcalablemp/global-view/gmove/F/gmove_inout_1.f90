@@ -9,6 +9,7 @@ module mod0
 
   integer a(N)
 !$xmp align a(i) with t1(i)
+!$xmp shadow a(2:1)
 
 !$xmp template t2(N)
 !$xmp distribute t2(cyclic) onto p

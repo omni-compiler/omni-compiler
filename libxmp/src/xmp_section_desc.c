@@ -189,6 +189,15 @@ _XMP_csd_t *copy_csd(_XMP_csd_t *csd){
 }
 
 
+int get_csd_size(_XMP_csd_t *csd){
+  int size = 0;
+  for (int i = 0; i < csd->n; i++){
+    size += _XMP_M_COUNT_TRIPLETi(csd->l[i], csd->u[i], csd->s);
+  }
+  return size;
+}
+
+
 void free_comm_set(_XMP_comm_set_t *comm_set){
 
   while (comm_set){

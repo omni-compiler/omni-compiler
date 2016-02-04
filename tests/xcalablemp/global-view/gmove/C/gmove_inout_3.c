@@ -14,12 +14,14 @@
 
 int a[N][N][N];
 #pragma xmp align a[i][j][k] with t1(i,j,k)
+#pragma xmp shadow a[0][2:1][1:0]
 
 #pragma xmp template t2(0:N-1,0:N-1,0:N-1)
 #pragma xmp distribute t2(block,cyclic,*) onto p2
 
 int b[N][N][N];
 #pragma xmp align b[i][j][k] with t2(i,j,k)
+#pragma shadow b[0:1][0][0]
 
 
 //--------------------------------------------------------

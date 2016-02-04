@@ -293,6 +293,7 @@ extern _XMP_csd_t *intersection_csds(_XMP_csd_t *csd1, _XMP_csd_t *csd2);
 extern _XMP_csd_t *alloc_csd(int n);
 extern void free_csd(_XMP_csd_t *csd);
 extern _XMP_csd_t *copy_csd(_XMP_csd_t *csd);
+extern int get_csd_size(_XMP_csd_t *csd);
 extern void free_comm_set(_XMP_comm_set_t *comm_set);
 extern _XMP_csd_t *rsd2csd(_XMP_rsd_t *rsd);
 extern _XMP_csd_t *bsd2csd(_XMP_bsd_t *bsd);
@@ -336,6 +337,7 @@ extern void _XMP_free(void *p);
 extern void _XMP_fatal(char *msg);
 extern void _XMP_fatal_nomsg();
 extern void _XMP_unexpected_error(void);
+extern void _XMP_warning(char *msg);
 
 // xmp_world.c
 extern int _XMP_world_size;

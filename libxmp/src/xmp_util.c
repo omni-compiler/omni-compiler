@@ -51,6 +51,10 @@ void _XMP_unexpected_error(void) {
   _XMP_fatal("unexpected error in runtime");
 }
 
+void _XMP_warning(char *msg){
+  fprintf(stderr, "[RANK:%d] XcalableMP runtime warning: %s\n", _XMP_world_rank, msg);
+}
+
 _Bool union_triplet(int lb0, int ub0, int st0, int lb1, int ub1, int st1){
 
   if (ub0 < lb0 || ub1 < lb0) return false;

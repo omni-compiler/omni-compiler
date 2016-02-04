@@ -12,12 +12,14 @@ module mod0
 
   integer a(N,N,N)
 !$xmp align a(i,j,k) with t1(i,j,k)
+!$xmp shadow a(0,2:1,1:0)
 
 !$xmp template t2(N,N,N)
 !$xmp distribute t2(block,cyclic,*) onto p2
 
   integer b(N,N,N)
 !$xmp align b(i,j,k) with t2(i,j,k)
+!$xmp shadow b(0:1,0,0)
 
 end module mod0
 

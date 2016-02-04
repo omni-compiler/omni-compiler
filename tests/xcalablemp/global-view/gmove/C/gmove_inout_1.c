@@ -11,6 +11,7 @@
 
 int a[N];
 #pragma xmp align a[i] with t1(i)
+#pragma xmp shadow a[2:1]
 
 #pragma xmp template t2(0:N-1)
 #pragma xmp distribute t2(cyclic) onto p
