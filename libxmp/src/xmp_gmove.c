@@ -3079,8 +3079,21 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
 
   }
   else { // mode == _XMP_N_GMOVE_OUT
+
     _XMP_gmove_inout(gmv_desc_rightp, gmv_desc_leftp, send_comm_set, _XMP_N_COARRAY_PUT);
-    _XMP_sync_images_EXEC(NULL);
+
+    if (is_async){
+      _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+      async->nreqs++;
+      _XMP_async_gmove_t *gmove = _XMP_alloc(sizeof(_XMP_async_gmove_t));
+      gmove->mode = mode;
+      gmove->sendbuf = _XMP_get_execution_nodes()->comm; // NOTE: the sendbuf field is used for an improper purpose.
+      async->gmove = gmove;
+    }
+    else {
+      _XMP_sync_images_EXEC(NULL);
+    }
+
   }
 #else
   else {
@@ -3668,6 +3681,8 @@ static void _XMP_gmove_inout(_XMP_gmv_desc_t *gmv_desc_org, _XMP_gmv_desc_t *gmv
     if (rdma_type == _XMP_N_COARRAY_GET) printf("[%d gets from %d]\n", myrank, tgt_node);
     else printf("[%d puts to %d]\n", myrank, tgt_node);
     print_gmv_inout_list(gmv_inout_listh.next);
+    fflush(stdout);
+    xmp_barrier();
 #endif
 
     long coarray_elmts[tgt_ndims], coarray_distance[tgt_ndims];

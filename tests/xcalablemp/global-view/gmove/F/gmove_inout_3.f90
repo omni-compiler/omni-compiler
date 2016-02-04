@@ -70,8 +70,10 @@ integer :: result = 0
 
 !$xmp barrier
 
+#if (XMP_MPI_VERSION == 3)
 !$xmp gmove in
   a = b
+#endif
 
 !$xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
   do k = 1, N
@@ -122,8 +124,10 @@ integer :: result = 0
 
 !$xmp barrier
 
+#if (XMP_MPI_VERSION == 3)
 !$xmp gmove in async(10)
   a = b
+#endif
 
 !$xmp wait_async(10)
 
@@ -176,8 +180,10 @@ integer :: result = 0
 
 !$xmp barrier
 
+#if (XMP_MPI_VERSION == 3)
 !$xmp gmove out
   a = b
+#endif
 
 !$xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
   do k = 1, N
@@ -228,8 +234,10 @@ integer :: result = 0
 
 !$xmp barrier
 
+#if (XMP_MPI_VERSION == 3)
 !$xmp gmove out async(10)
   a = b
+#endif
 
 !$xmp wait_async(10)
 

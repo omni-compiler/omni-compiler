@@ -74,11 +74,13 @@ void _XMP_wait_async__(int async_id)
 
   if (gmove){
     if (gmove->mode == _XMP_N_GMOVE_NORMAL) _XMP_finalize_async_gmove(gmove);
+#ifdef _XMP_MPI3_ONESIDED
     else {
       int status;
       // NOTE: the send_buf field is used for an improper purpose.
       _XMP_sync_images_COMM((MPI_Comm *)gmove->sendbuf, &status);
     }
+#endif
   }
 
   _XMP_pop_async(async_id);

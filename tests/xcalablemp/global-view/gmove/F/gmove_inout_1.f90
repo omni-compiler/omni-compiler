@@ -59,8 +59,10 @@ integer :: result = 0
 
 !$xmp barrier
 
+#if (XMP_MPI_VERSION == 3)
 !$xmp gmove in
   a = b
+#endif
 
 !$xmp loop (i) on t1(i) reduction(+:result)
   do i = 1, N
@@ -99,8 +101,10 @@ integer :: result = 0
 
 !$xmp barrier
 
+#if (XMP_MPI_VERSION == 3)
 !$xmp gmove in async(10)
   a = b
+#endif
 
 !$xmp wait_async(10)
 
@@ -141,8 +145,10 @@ integer :: result = 0
 
 !$xmp barrier
 
+#if (XMP_MPI_VERSION == 3)
 !$xmp gmove out
   a = b
+#endif
 
 !$xmp loop (i) on t1(i) reduction(+:result)
   do i = 1, N
@@ -181,8 +187,10 @@ integer :: result = 0
 
 !$xmp barrier
 
+#if (XMP_MPI_VERSION == 3)
 !$xmp gmove out async(10)
   a = b
+#endif
 
 !$xmp wait_async(10)
 
