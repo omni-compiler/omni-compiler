@@ -506,9 +506,9 @@ public class XMPtranslateLocalPragma {
       String execFuncSurfix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
-      if(splitComm){
+      if (splitComm) {
         BlockList waitAsyncBody = Bcons.blockList(funcCallBlock);
-	funcCallBlock = createCommTaskBlock(waitAsyncBody, execFuncSurfix, execFuncArgs, false);
+	funcCallBlock = createCommTaskBlock(waitAsyncBody, execFuncSurfix, execFuncArgs);
       }
     }
 
@@ -1693,7 +1693,7 @@ public class XMPtranslateLocalPragma {
     return bl.declLocalIdent(identName, type);
   }
 
-  private Block createCommTaskBlock(BlockList body, String execFuncSuffix, XobjList execFuncArgs, Boolean is_async) throws XMPexception {
+  private Block createCommTaskBlock(BlockList body, String execFuncSuffix, XobjList execFuncArgs) throws XMPexception {
     // setup barrier finalizer
     setupFinalizer(body, _globalDecl.declExternFunc("_XMP_pop_nodes"), null);
     
@@ -1706,11 +1706,9 @@ public class XMPtranslateLocalPragma {
     Block execBlock = Bcons.IF(BasicBlock.Cond(execFuncId.Call(execFuncArgs)), body, null);
     taskBody.add(execBlock);
 
-    if(!is_async){
-      Ident taskFinalizeId = _globalDecl.declExternFunc("_XMP_exec_task_NODES_FINALIZE", Xtype.voidType);
-      XobjList args = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
-      taskBody.add(taskFinalizeId.Call(args));
-    }
+    Ident taskFinalizeId = _globalDecl.declExternFunc("_XMP_exec_task_NODES_FINALIZE", Xtype.voidType);
+    XobjList args = Xcons.List(Xcode.POINTER_REF, taskDescId.Ref());
+    taskBody.add(taskFinalizeId.Call(args));
     
     return Bcons.COMPOUND(taskBody);
   }
@@ -1734,7 +1732,7 @@ public class XMPtranslateLocalPragma {
       XobjList execFuncArgs = execOnRefArgs.getThird();
       if (splitComm) {
         BlockList barrierBody = Bcons.blockList(_globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null));
-	barrierFuncCallBlock = createCommTaskBlock(barrierBody, execFuncSuffix, execFuncArgs, false);
+	barrierFuncCallBlock = createCommTaskBlock(barrierBody, execFuncSuffix, execFuncArgs);
       }
       else {
 	barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_" + execFuncSuffix, execFuncArgs);
@@ -1767,8 +1765,6 @@ public class XMPtranslateLocalPragma {
     // start translation
     XobjList reductionDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    Xobject async = reductionDecl.getArg(2);
-    Boolean is_async = (async.Opcode() != Xcode.LIST)? true : false;
 
     // create function arguments
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
@@ -1787,20 +1783,19 @@ public class XMPtranslateLocalPragma {
     // create function call
     Block reductionFuncCallBlock = null;
     XobjList onRef = (XobjList)reductionDecl.getArg(1);
-    if(onRef == null || onRef.Nargs() == 0){
+    if (onRef == null || onRef.Nargs() == 0) {
 	reductionFuncCallBlock = createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList);
     }
-    else{
+    else {
       //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
       XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
       String execFuncSuffix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
-      
       if (splitComm) {
         BlockList reductionBody = Bcons.blockList(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC",
                                                                                null, reductionFuncArgsList));
-	reductionFuncCallBlock = createCommTaskBlock(reductionBody, execFuncSuffix, execFuncArgs, is_async);
+	reductionFuncCallBlock = createCommTaskBlock(reductionBody, execFuncSuffix, execFuncArgs);
       }
       else {
         reductionFuncCallBlock = createReductionFuncCallBlock(false, reductionFuncType + "_" + execFuncSuffix,
@@ -1819,7 +1814,9 @@ public class XMPtranslateLocalPragma {
             Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), vars)), Bcons.blockList(reductionFuncCallBlock));
     }
 
-    if(is_async){
+    Xobject async = reductionDecl.getArg(2);
+    if (async.Opcode() != Xcode.LIST){
+
       if (!XmOption.isAsync()){
 	XMP.error(pb.getLineNo(), "MPI-3 is required to use the async clause on a reduction directive");
       }
@@ -2225,8 +2222,6 @@ public class XMPtranslateLocalPragma {
     // start translation
     XobjList bcastDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-    Xobject async = bcastDecl.getArg(3);
-    Boolean is_async = (async.Opcode() != Xcode.LIST)? true : false;
 
     // acc or host
     XobjList accOrHost = (XobjList)bcastDecl.getArg(4);
@@ -2263,7 +2258,7 @@ public class XMPtranslateLocalPragma {
       if (splitComm) {
         BlockList bcastBody = Bcons.blockList(createBcastFuncCallBlock(true, "EXEC",
                                                                        null, bcastArgsList, execFromRefArgs, isACC));
-	bcastFuncCallBlock = createCommTaskBlock(bcastBody, execFuncSuffix, execFuncArgs, is_async);
+	bcastFuncCallBlock = createCommTaskBlock(bcastBody, execFuncSuffix, execFuncArgs);
       }
       else {
 	bcastFuncCallBlock = createBcastFuncCallBlock(false, execFuncSuffix,
@@ -2275,8 +2270,9 @@ public class XMPtranslateLocalPragma {
       bcastFuncCallBlock = Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA", Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"),varList)), Bcons.blockList(bcastFuncCallBlock));
     }
 
-    if(is_async){
-      if(!XmOption.isAsync()){
+    Xobject async = bcastDecl.getArg(3);
+    if (async.Opcode() != Xcode.LIST){
+      if (!XmOption.isAsync()){
 	XMP.error(pb.getLineNo(), "MPI-3 is required to use the async clause on a bcast directive");
       }
 
