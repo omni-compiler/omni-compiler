@@ -95,8 +95,16 @@ struct ompc_ult_pool {
     int size_used;
 };
 
+struct ompc_tasklet_pool {
+    ABT_task *tasklet_list;
+    int size_allocated;
+    int size_created;
+    int size_used;
+};
+
 struct ompc_thread {
     ompc_thread_t *ult_ptr;
+    ABT_task *tasklet_ptr;
     
     struct ompc_thread *parent;         /*  */
     int num;            /* the thread number of this thread in team */

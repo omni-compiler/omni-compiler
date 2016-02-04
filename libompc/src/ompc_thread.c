@@ -8,7 +8,7 @@
  */
 
 //#define __TEST_WORK_STEALING  // FIXME do not use these now
-//#define __OMNI_TEST_TASKLET__ // FIXME
+//#define __OMNI_TEST_TASKLET__
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -20,13 +20,13 @@
 #include <errno.h>
 
 #define ULT_POOL_SIZE 1024
+#define TASKLET_POOL_SIZE 1024
 
 // FIXME temporary impl, needs refactoring
-static ABT_xstream          xstreams[MAX_PROC];
-static ABT_pool             pools[MAX_PROC];
-static struct ompc_ult_pool ult_pools[MAX_PROC];
-static int ult_created[MAX_PROC];
-static int ult_reused[MAX_PROC];
+static ABT_xstream              xstreams[MAX_PROC];
+static ABT_pool                 pools[MAX_PROC];
+static struct ompc_ult_pool     ult_pools[MAX_PROC];
+static struct ompc_tasklet_pool tasklet_pools[MAX_PROC];
 
 static ABT_key tls_key;
 static void tls_free(void *value) {
@@ -215,9 +215,12 @@ static ompc_thread_t ompc_thread_self();
 static struct ompc_proc *ompc_new_proc(int i);
 static int ompc_get_ES_num(struct ompc_thread *par, struct ompc_thread *cur,
                            int thread_num, int num_threads);
-static void ompc_start_thread(int ES_num, struct ompc_thread *tp,
-                              void (*thread_func)(void *));
-static void ompc_end_thread(int ES_num, struct ompc_thread *tp);
+static void ompc_start_ult(int ES_num, struct ompc_thread *tp,
+                           void (*thread_func)(void *));
+static void ompc_start_tasklet(int ES_num, struct ompc_thread *tp,
+                               void (*thread_func)(void *));
+static void ompc_end_ult(int ES_num, struct ompc_thread *tp);
+static void ompc_end_tasklet(int ES_num, struct ompc_thread *tp);
 static void ompc_init_thread(struct ompc_thread *tp);
 /*static*/ struct ompc_thread *ompc_current_thread(void);
 
@@ -351,6 +354,11 @@ ompc_init(int argc,char *argv[])
         ult_pools[i].size_created = 0;
         ult_pools[i].size_used = 0;
 
+        tasklet_pools[i].tasklet_list = (ABT_task *)malloc(sizeof(ABT_task) * TASKLET_POOL_SIZE);
+        tasklet_pools[i].size_allocated = TASKLET_POOL_SIZE;
+        tasklet_pools[i].size_created = 0;
+        tasklet_pools[i].size_used = 0;
+
         if (i == 0) {
             ABT_xstream_self(&xstreams[0]);
             ABT_xstream_get_main_pools(xstreams[0], 1, &pools[0]);
@@ -475,8 +483,8 @@ ompc_get_ES_num(struct ompc_thread *par, struct ompc_thread *cur,
 }
 
 static void
-ompc_start_thread(int ES_num, struct ompc_thread *tp,
-                  void (*thread_func)(void *))
+ompc_start_ult(int ES_num, struct ompc_thread *tp,
+               void (*thread_func)(void *))
 {
     struct ompc_ult_pool *ult_pool = &(ult_pools[ES_num]);
     ompc_thread_t *ult_ptr;
@@ -489,30 +497,65 @@ ompc_start_thread(int ES_num, struct ompc_thread *tp,
         ult_ptr = &(ult_pool->ult_list[idx]);
         ABT_thread_create(pools[ES_num], thread_func,
                           (void *)tp, ABT_THREAD_ATTR_NULL, ult_ptr);
-        idx++;
-        ult_pool->size_created = idx;
-        ult_pool->size_used = idx;
-
-        (ult_created[ES_num])++;
+        (ult_pool->size_created)++;
+        (ult_pool->size_used)++;
     }
     else { // ult_pool->size_created > ult_pool->size_used
         int idx = ult_pool->size_used;
         ult_ptr = &(ult_pool->ult_list[idx]);
         ABT_thread_revive(pools[ES_num], thread_func,
                           (void *)tp, ult_ptr);
-        ult_pool->size_used = idx + 1;
-
-        (ult_reused[ES_num])++;
+        (ult_pool->size_used)++;
     }
 
     tp->ult_ptr = ult_ptr;
 }
 
 static void
-ompc_end_thread(int ES_num, struct ompc_thread *tp)
+ompc_start_tasklet(int ES_num, struct ompc_thread *tp,
+                   void (*thread_func)(void *))
+{
+    struct ompc_tasklet_pool *tasklet_pool = &(tasklet_pools[ES_num]);
+    ABT_task *tasklet_ptr;
+    if (tasklet_pool->size_created == tasklet_pool->size_used) {
+        if (tasklet_pool->size_created == ULT_POOL_SIZE) {
+            ompc_fatal("cannot create new Tasklet");
+        }
+
+        int idx = tasklet_pool->size_created;
+        tasklet_ptr = &(tasklet_pool->tasklet_list[idx]);
+        ABT_task_create(pools[ES_num], thread_func,
+                        (void *)tp, tasklet_ptr);
+        (tasklet_pool->size_created)++;
+        (tasklet_pool->size_used)++;
+    }
+    else { // tasklet_pool->size_created > tasklet_pool->size_used
+        int idx = tasklet_pool->size_used;
+        tasklet_ptr = &(tasklet_pool->tasklet_list[idx]);
+        ABT_task_revive(pools[ES_num], thread_func,
+                        (void *)tp, tasklet_ptr);
+        (tasklet_pool->size_used)++;
+    }
+
+    tp->tasklet_ptr = tasklet_ptr;
+}
+
+static void
+ompc_end_ult(int ES_num, struct ompc_thread *tp)
 {
     ABT_thread_join(*(tp->ult_ptr));
     (ult_pools[ES_num].size_used)--;
+}
+
+static void
+ompc_end_tasklet(int ES_num, struct ompc_thread *tp)
+{
+    ABT_task_state state;
+    do {
+        ABT_task_get_state(*(tp->tasklet_ptr), &state);
+        ABT_thread_yield();
+    } while (state != ABT_TASK_STATE_TERMINATED);
+    (tasklet_pools[ES_num].size_used)--;
 }
 
 static void ompc_init_thread(struct ompc_thread *p) {
@@ -606,16 +649,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     
 //    ompc_tree_barrier_init(&cthd->tree_barrier, n_thds);
 
-#ifdef __OMNI_TEST_TASKLET__
-    void *children;
-    if (cthd->parallel_nested_level == 0) {
-        children = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * n_thds);
-    }
-    else {
-        children = (ABT_task *)malloc(sizeof(ABT_task) * n_thds);
-    }
-#endif
-
     struct ompc_thread *tp_list = (struct ompc_thread *)malloc(sizeof(struct ompc_thread) * n_thds);
     /* assign thread to proc */
     for (int i = n_thds - 1; i >= 0; --i) {
@@ -633,6 +666,9 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
             tp->nargs = nargs;
             tp->args = args;
 
+            // runs thread 0 on the current ULT
+            // FIXME check: is this safe?
+            // ULT and Tasklet in the same team
             ABT_key_set(tls_key, (void *)tp);
             if (cthd->nargs < 0) {
                 if (cthd->args != NULL ) {
@@ -650,39 +686,31 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         else {
 #ifdef __OMNI_TEST_TASKLET__
             if (cthd->parallel_nested_level == 0) {
-                ABT_thread_create(pools[ES_num], ompc_thread_wrapper_func,
-                                  (void *)tp, ABT_THREAD_ATTR_NULL, &(((ABT_thread *)children)[i]));
+                ompc_start_ult(ES_num, tp, ompc_thread_wrapper_func);
             }
             else {
-                ABT_task_create(pools[ES_num], ompc_thread_wrapper_func,
-                                (void *)tp, &(((ABT_task *)children)[i]));
+                ompc_start_tasklet(ES_num, tp, ompc_thread_wrapper_func);
             }
 #else
-            ompc_start_thread(ES_num, tp, ompc_thread_wrapper_func);
+            ompc_start_ult(ES_num, tp, ompc_thread_wrapper_func);
 #endif
         }
     }
 
     for (int i = 1; i < n_thds; i++) {
+        struct ompc_thread *tp = &(tp_list[i]);
 #ifdef __OMNI_TEST_TASKLET__
         if (cthd->parallel_nested_level == 0) {
-          ABT_thread *child_UTLs = (ABT_thread *)children;
-          ABT_thread_join(child_UTLs[i]);
-          ABT_thread_free(&child_UTLs[i]);
+            ompc_end_ult(tp->es_start, tp);
         }
         else {
-          ABT_task *child_tasks = (ABT_task *)children;
-          ABT_task_free(&child_tasks[i]);
+            ompc_end_tasklet(tp->es_start, tp);
         }
 #else
-        struct ompc_thread *tp = &(tp_list[i]);
-        ompc_end_thread(tp->es_start, tp);
+        ompc_end_ult(tp->es_start, tp);
 #endif
     }
 
-#ifdef __OMNI_TEST_TASKLET__
-    free(children);
-#endif
     free(tp_list);
 
 //    ompc_tree_barrier_finalize(&cthd->tree_barrier);
@@ -809,9 +837,15 @@ ompc_terminate(int exitcode)
     // ABT_key_free(&tls_key);
 
     for (int i = 0; i < ompc_max_threads; i++) {
+        for (int j = 0; j < ult_pools[i].size_created; j++) {
+            ABT_thread_free(&(ult_pools[i].ult_list[j]));
+        }
         free(ult_pools[i].ult_list);
-//        printf("ES[%d] ult created = %d | reused = %d\n",
-//               i, ult_created[i], ult_reused[i]);
+
+        for (int j = 0; j < tasklet_pools[i].size_created; j++) {
+            ABT_task_free(&(tasklet_pools[i].tasklet_list[j]));
+        }
+        free(tasklet_pools[i].tasklet_list);
     }
 
     ABT_finalize();
