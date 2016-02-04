@@ -661,19 +661,16 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         tp->barrier_sense = 0;
 
         if (i == 0) {
-            tp->nargs = nargs;
-            tp->args = args;
-
             // runs thread 0 on the current ULT
             // FIXME check: is this safe?
             // ULT and Tasklet in the same team
             ABT_key_set(tls_key, (void *)tp);
-            if (cthd->nargs < 0) {
-                if (cthd->args != NULL ) {
-                    (*cthd->func)(cthd->args, tp);
+            if (nargs < 0) {
+                if (args != NULL ) {
+                    (*f)(args, tp);
                 }
                 else {
-                    (*cthd->func)(tp);
+                    (*f)(tp);
                 }
             }
             else {
