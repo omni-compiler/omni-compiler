@@ -182,10 +182,14 @@ void _XMP_init(int argc, char** argv);
 void _XMP_finalize(int);
 
 /* From xmp_reflect.c */
-void _XMP_set_reflect__(_XMP_array_t *a_desc, int dim, int lwidth, int uwidth, int is_periodic);
-void _XMP_reflect__(_XMP_array_t *a_desc);
-void _XMP_wait_async__(int async_id);
-void _XMP_reflect_async__(_XMP_array_t *a_desc, int async_id);
+extern void _XMP_set_reflect__(_XMP_array_t *a_desc, int dim, int lwidth, int uwidth, int is_periodic);
+extern void _XMP_reflect__(_XMP_array_t *a_desc);
+extern void _XMP_wait_async__(int async_id);
+extern void _XMP_reflect_async__(_XMP_array_t *a_desc, int async_id);
+extern _XMP_async_comm_t* _XMP_get_current_async();
+extern _XMP_async_comm_t* _XMP_get_async(int);
+extern void xmpc_init_async(int);
+extern void xmpc_start_async();
 
 /* From xmpf_pack.c */
 void _XMPF_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,
@@ -407,4 +411,9 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
                                      int *coindex, char *result);
 extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char *result, int *rank, ...);
+
+/* xmpf_async.c */
+#ifdef _XMP_MPI3
+extern _Bool xmp_is_async();
+#endif
 

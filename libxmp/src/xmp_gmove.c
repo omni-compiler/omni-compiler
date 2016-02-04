@@ -19,10 +19,6 @@
 #define _XMP_SM_GTOL_BLOCK_CYCLIC(_b, _i, _m, _P) \
 (((((_i) - (_m)) / (((_P) * (_b)))) * (_b)) + (((_i) - (_m)) % (_b)))
 
-extern _Bool is_async;
-extern int _async_id;
-
-
 void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
                                  int dim_index, int *lower, int *upper, int *stride) {
   _XMP_array_info_t *array_info = &(array->info[dim_index]);
@@ -2700,7 +2696,7 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
 				   int *src_l, int *src_u, int *src_s, unsigned long long *src_d){
 
   // NOTE: asynchronous gmove aloways done by _XMP_gmove_1to1
-  if (!is_async && gmv_desc_leftp->is_global && gmv_desc_rightp->is_global){
+  if (!xmp_is_async() && gmv_desc_leftp->is_global && gmv_desc_rightp->is_global){
     if (_XMP_gmove_garray_garray_opt(gmv_desc_leftp, gmv_desc_rightp,
 				     dst_l, dst_u, dst_s, dst_d,
 				     src_l, src_u, src_s, src_d)) return;
@@ -4425,9 +4421,9 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   //
 
 #ifdef _XMP_MPI3
-  if (is_async){
+  if (xmp_is_async()){
 
-    _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+    _XMP_async_comm_t *async = _XMP_get_current_async();
 
     MPI_Ialltoallv(sendbuf, sendcounts, sdispls, rhs_array->mpi_type,
 		   recvbuf, recvcounts, rdispls, lhs_array->mpi_type,

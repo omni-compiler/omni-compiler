@@ -224,9 +224,18 @@ public class XMPshadow {
       }
 
       if (asyncId != null){
-	Ident funcId = globalDecl.declExternFunc("_XMP_reflect_async__");
-	XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref(), asyncId);
-	reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
+        Ident funcId1 = globalDecl.declExternFunc("xmpc_init_async");
+        XobjList funcArgs1 = Xcons.List(asyncId);
+
+	Ident funcId2 = globalDecl.declExternFunc("_XMP_reflect_async__");
+	XobjList funcArgs2 = Xcons.List(alignedArray.getDescId().Ref(), asyncId);
+
+        Ident funcId3 = globalDecl.declExternFunc("xmpc_start_async");
+        XobjList funcArgs3 = Xcons.List();
+
+        reflectFuncBody.add(Bcons.Statement(funcId1.Call(funcArgs1)));
+	reflectFuncBody.add(Bcons.Statement(funcId2.Call(funcArgs2)));
+        reflectFuncBody.add(Bcons.Statement(funcId3.Call(funcArgs3)));
       }
       else {
 	Ident funcId = globalDecl.declExternFunc("_XMP_reflect__");
