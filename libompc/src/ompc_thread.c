@@ -345,9 +345,10 @@ ompc_init(int argc,char *argv[])
         if (ompc_debug_flag) fprintf(stderr, "Creating slave %d  ...\n", i);
 
         ult_pools[i].ult_list = (ABT_thread *)malloc(sizeof(ABT_thread) * ULT_POOL_SIZE);
+        ult_pools[i].idle_ult_list = (ABT_thread **)malloc(sizeof(ABT_thread *) * ULT_POOL_SIZE);
         ult_pools[i].size_allocated = ULT_POOL_SIZE;
         ult_pools[i].size_created = 0;
-        ult_pools[i].size_used = 0;
+        ult_pools[i].size_idle = 0;
 
         tasklet_pools[i].tasklet_list = (ABT_task *)malloc(sizeof(ABT_task) * TASKLET_POOL_SIZE);
         tasklet_pools[i].size_allocated = TASKLET_POOL_SIZE;
@@ -484,7 +485,7 @@ ompc_start_ult(struct ompc_thread *tp,
     int ES_num = tp->es_start;
     struct ompc_ult_pool *ult_pool = &(ult_pools[ES_num]);
     ABT_thread *ult_ptr;
-    if (ult_pool->size_created == ult_pool->size_used) {
+    if (ult_pool->size_idle == 0) {
         if (ult_pool->size_created == ULT_POOL_SIZE) {
             ompc_fatal("cannot create new ULT");
         }
@@ -494,14 +495,13 @@ ompc_start_ult(struct ompc_thread *tp,
         ABT_thread_create(pools[ES_num], thread_func,
                           (void *)tp, ABT_THREAD_ATTR_NULL, ult_ptr);
         (ult_pool->size_created)++;
-        (ult_pool->size_used)++;
     }
-    else { // ult_pool->size_created > ult_pool->size_used
-        int idx = ult_pool->size_used;
-        ult_ptr = &(ult_pool->ult_list[idx]);
+    else { // ult_pool->size_idle > 0
+        int idx = ult_pool->size_idle - 1;
+        ult_ptr = ult_pool->idle_ult_list[idx];
         ABT_thread_revive(pools[ES_num], thread_func,
                           (void *)tp, ult_ptr);
-        (ult_pool->size_used)++;
+        (ult_pool->size_idle)--;
     }
 
     tp->ult_ptr = ult_ptr;
@@ -540,8 +540,13 @@ ompc_start_tasklet(struct ompc_thread *tp,
 static void
 ompc_end_ult(struct ompc_thread *tp)
 {
+    int ES_num = tp->es_start;
+    struct ompc_ult_pool *ult_pool = &(ult_pools[ES_num]);
+
     ABT_thread_join(*(tp->ult_ptr));
-    (ult_pools[tp->es_start].size_used)--;
+    int idle_idx = ult_pool->size_idle;
+    ult_pool->idle_ult_list[idle_idx] = tp->ult_ptr;
+    (ult_pool->size_idle)++;
 }
 
 static void
@@ -834,6 +839,7 @@ ompc_terminate(int exitcode)
             ABT_thread_free(&(ult_pools[i].ult_list[j]));
         }
         free(ult_pools[i].ult_list);
+        free(ult_pools[i].idle_ult_list);
 
         for (int j = 0; j < tasklet_pools[i].size_created; j++) {
             ABT_task_free(&(tasklet_pools[i].tasklet_list[j]));

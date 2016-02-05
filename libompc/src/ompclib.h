@@ -89,9 +89,10 @@ struct ompc_tree_barrier
 
 struct ompc_ult_pool {
     ABT_thread *ult_list;
+    ABT_thread **idle_ult_list;
     int size_allocated;
     int size_created;
-    int size_used;
+    int size_idle;
 };
 
 struct ompc_tasklet_pool {
