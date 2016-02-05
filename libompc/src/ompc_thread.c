@@ -34,7 +34,6 @@ static void tls_free(void *value) {
 }
 
 static hwloc_topology_t topo;
-static hwloc_const_cpuset_t allset;
 static int hwloc_ncores;
 static void thread_affinity_setup(int i) {
     int thread_num;
@@ -236,9 +235,8 @@ ompc_init(int argc,char *argv[])
     // hwloc init
     hwloc_topology_init(&topo);
     hwloc_topology_load(topo);
-    allset = hwloc_topology_get_complete_cpuset(topo);
     hwloc_ncores = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_CORE);
-
+    
     {
       char buff[BUFSIZ];
       FILE *fp;
@@ -517,7 +515,7 @@ ompc_start_tasklet(struct ompc_thread *tp,
     struct ompc_tasklet_pool *tasklet_pool = &(tasklet_pools[ES_num]);
     ABT_task *tasklet_ptr;
     if (tasklet_pool->size_created == tasklet_pool->size_used) {
-        if (tasklet_pool->size_created == ULT_POOL_SIZE) {
+        if (tasklet_pool->size_created == TASKLET_POOL_SIZE) {
             ompc_fatal("cannot create new Tasklet");
         }
 
@@ -846,7 +844,6 @@ ompc_terminate(int exitcode)
     ABT_finalize();
 
     hwloc_topology_destroy(topo);
-    hwloc_bitmap_free(allset);
 
     exit (exitcode);
 }
