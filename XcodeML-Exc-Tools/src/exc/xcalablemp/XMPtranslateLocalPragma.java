@@ -499,7 +499,6 @@ public class XMPtranslateLocalPragma {
 
     Block funcCallBlock = Bcons.COMPOUND(funcBody);
 
-    
     // the following code comes from translateBcast.
     XobjList onRef = (XobjList)pb.getClauses().getArg(1);
     if(onRef != null && onRef.getArgs() != null){
@@ -510,17 +509,12 @@ public class XMPtranslateLocalPragma {
       if (splitComm) {
         BlockList waitAsyncBody = Bcons.blockList(funcCallBlock);
         funcCallBlock = createCommTaskBlock(waitAsyncBody, execFuncSurfix, execFuncArgs);
-        BlockList bl = funcCallBlock.getBody();
-        for(Xobject i: funcArgs){
-          bl.add(_globalDecl.declExternFunc("xmpc_end_async").Call(Xcons.List(i)));
-        }
       }
     }
-    else{
-      BlockList bl = funcCallBlock.getBody();
-      for(Xobject i: funcArgs){
-        bl.add(_globalDecl.declExternFunc("xmpc_end_async").Call(Xcons.List(i)));
-      }
+
+    BlockList bl = funcCallBlock.getBody();
+    for(Xobject i: funcArgs){
+      bl.add(_globalDecl.declExternFunc("xmpc_end_async").Call(Xcons.List(i)));
     }
 
     pb.replace(funcCallBlock);
