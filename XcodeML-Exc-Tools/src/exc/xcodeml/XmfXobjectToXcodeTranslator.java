@@ -1454,6 +1454,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                         _collectDependName(((Ident)a).getValue(), idSet);
                     }
                 }
+		break;
+	    case Xtype.FUNCTION:
+                _collectDependName(t.getRef(), idSet);
                 break;
             }
         }
