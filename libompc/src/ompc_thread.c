@@ -499,9 +499,9 @@ ompc_start_ult(struct ompc_thread *tp,
     else { // ult_pool->size_idle > 0
         int idx = ult_pool->size_idle - 1;
         ult_ptr = ult_pool->idle_ult_list[idx];
+        (ult_pool->size_idle)--;
         ABT_thread_revive(pools[ES_num], thread_func,
                           (void *)tp, ult_ptr);
-        (ult_pool->size_idle)--;
     }
 
     tp->ult_ptr = ult_ptr;
