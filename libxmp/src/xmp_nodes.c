@@ -882,16 +882,15 @@ void _XMP_exec_task_NODES_FINALIZE(_XMP_task_desc_t *task_desc)
 {
   if(task_desc == NULL) return;
   
-  if(xmp_is_async()){        // Keep a node descriptor.
-    _XMP_free(task_desc);  // After wait_async directive,
-    return;                // the node descriptor is freed.
+  if(xmp_is_async()){
+    // Keep a node descriptor. After wait_async directive,
+    // the node descriptor is freed.
+    _XMP_nodes_dealloc_after_wait_async(task_desc->nodes); 
+    _XMP_free(task_desc);
+    return;
   }
-  
-  if(!task_desc->nodes->use_subcomm)
-    _XMP_finalize_comm(task_desc->nodes->comm);
 
-  _XMP_free(task_desc->nodes->inherit_info);
-  _XMP_free(task_desc->nodes);
+  _XMP_finalize_nodes(task_desc->nodes);
   _XMP_free(task_desc);
 }
 
@@ -948,9 +947,6 @@ int _XMP_exec_task_NODES_PART(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_no
   _XMP_nodes_t *n = _XMP_init_nodes_struct_NODES_NAMED(1, ref_nodes, shrink, ref_lower, ref_upper, ref_stride,
                                                        &acc_dim_size, _XMP_N_INT_TRUE);
   _XMP_set_task_desc(desc, n, n->is_member, ref_nodes, ref_lower, ref_upper, ref_stride);
-  
-  if(xmp_is_async())
-    _XMP_nodes_dealloc_after_wait_async(n);
   
   if(n->is_member){
     _XMP_push_nodes(n);
