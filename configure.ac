@@ -1496,8 +1496,9 @@ AC_SUBST(javadir)
 
 # java option
 # Fix: #338
-JAVA_OPT="-Xmx400m -Xms200m"
 #JAVA_OPT="-Xmx200m -Xms200m"
+#JAVA_OPT="-Xmx400m -Xms200m"
+JAVA_OPT="-Xmx1600m -Xms800m"
 AC_SUBST(JAVA_OPT)
 
 #--------------------------------------------------------------------
