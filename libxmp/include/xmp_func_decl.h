@@ -43,7 +43,8 @@ extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t ar
 
 // xmp_async.c
 extern void xmpc_init_async(int async_id);
-extern void xmpc_start_async(int async_id);
+extern void xmpc_start_async();
+extern void xmpc_end_async(int async_id);
 
 // xmp_barrier.c
 extern void _XMP_barrier_NODES_ENTIRE(void *nodes);
@@ -179,6 +180,7 @@ extern void _XMP_coarray_rdma_do_acc(const int, void*, void*, void *, const int,
 extern void _XMP_reflect_init_acc(void *, void *);
 extern void _XMP_reflect_do_acc(void *);
 extern void _XMP_reflect_acc(void *);
+extern void _XMP_set_reflect_acc__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
 
 #ifdef _XMP_TCA
 // xmp_tca.c

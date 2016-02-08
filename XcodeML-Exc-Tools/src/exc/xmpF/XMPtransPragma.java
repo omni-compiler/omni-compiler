@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni XcalableMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package exc.xmpF;
 
 import exc.object.*;
@@ -342,10 +336,15 @@ public class XMPtransPragma
     Ident f, g, h;
 
     f = env.declInternIdent(XMP.reflect_f,Xtype.FsubroutineType);
-
+    
+    if (info.getAsyncId() != null){
+      Xobject arg = Xcons.List(info.getAsyncId());
+      g = env.declInternIdent(XMP.init_async_f, Xtype.FsubroutineType);
+      bb.add(g.callSubroutine(arg));
+    }
+    
     Vector<XMParray> reflectArrays = info.getReflectArrays();
     for(XMParray a: reflectArrays){
-
       for (int i = 0; i < info.widthList.size(); i++){
 	  g = env.declInternIdent(XMP.set_reflect_f,Xtype.FsubroutineType);
 	  XMPdimInfo w = info.widthList.get(i);
@@ -368,6 +367,12 @@ public class XMPtransPragma
       else {
 	  bb.add(f.callSubroutine(Xcons.List(a.getDescId().Ref())));
       }
+    }
+
+    if (info.getAsyncId() != null){
+      Xobject arg = Xcons.List();
+      g = env.declInternIdent(XMP.start_async_f, Xtype.FsubroutineType);
+      bb.add(g.callSubroutine(arg));
     }
 
     return b;
@@ -495,7 +500,8 @@ public class XMPtransPragma
     }
 
     if (info.getAsyncId() != null){
-      Xobject arg = Xcons.List(info.getAsyncId());
+      //      Xobject arg = Xcons.List(info.getAsyncId());
+      Xobject arg = Xcons.List();
       Ident g = env.declInternIdent(XMP.start_async_f, Xtype.FsubroutineType);
       ret_body.add(g.callSubroutine(arg));
     }
@@ -596,7 +602,8 @@ public class XMPtransPragma
     }
 
     if (info.getAsyncId() != null){
-      Xobject arg = Xcons.List(info.getAsyncId());
+      //      Xobject arg = Xcons.List(info.getAsyncId());
+      Xobject arg = Xcons.List();
       Ident g = env.declInternIdent(XMP.start_async_f, Xtype.FsubroutineType);
       ret_body.add(g.callSubroutine(arg));
     }

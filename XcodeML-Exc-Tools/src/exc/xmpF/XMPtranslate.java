@@ -65,7 +65,7 @@ public class XMPtranslate implements XobjectDefVisitor
     // generate child's ID list
 
     Xobject idList = d.getFuncIdList();
-    Xobject childIdList = Xcons.List();
+    Xobject childIdList = Xcons.List(Xcode.ID_LIST);
 
     for (Xobject k: (XobjList)idList){
       Ident id = (Ident)k;

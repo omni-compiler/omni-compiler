@@ -30,7 +30,12 @@
 ### On a general linux cluster
     $ ./configure --prefix=[INSTALLATION PATH]
          or
-    $ ./configure CC=gcc FC=gfortran   // PGI compiler
+    $ ./configure CC=gcc FC=gfortran MPI_CC=mpicc MPI_FC=mpif90
+
+    CC and FC are frontend compilers, and the binary created by them are used on a local machine.
+    MPI_CC and MPI_FC are native compilers, and the binary created by them are used on compute machines.
+    Note that PGI compiler cannot be used as CC and FC, but can be used as MPI_CC and MPI_FC.
+    If you want to use PGI compiler, please use another compiler for CC and FC.
 
  If you want to use Coarray functions
     $ ./configure --with-gasnet=[GASNet INSTALLATION PATH] --with-gasnet-conduit=[GASNet conduit]

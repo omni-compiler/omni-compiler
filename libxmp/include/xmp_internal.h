@@ -58,7 +58,6 @@ extern void (*_xmp_pack_array)(void *buffer, void *src, int array_type, size_t a
 extern void (*_xmp_unpack_array)(void *dst, void *buffer, int array_type, size_t array_type_size,
 				 int array_dim, int *l, int *u, int *s, unsigned long long *d);
 
-
 // ----- libxmp ------------------------------------------------------
 // xmp_align.c
 extern void _XMP_calc_array_dim_elmts(_XMP_array_t *array, int array_index);
@@ -106,7 +105,10 @@ extern void _XMPC_unpack_array(void *dst, void *buffer, int array_type, size_t a
 			       int array_dim, int *l, int *u, int *s, unsigned long long *d);
 
 // xmp_async.c
-_XMP_async_comm_t *_XMP_get_or_create_async(int async_id);
+extern _XMP_async_comm_t *_XMP_get_current_async();
+extern void _XMP_initialize_async_comm_tab();
+extern void _XMP_nodes_dealloc_after_wait_async(_XMP_nodes_t* n);
+extern void xmpc_end_async(int);
 
 // xmp_barrier.c
 extern void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes);
@@ -334,12 +336,17 @@ extern void _XMP_init_world(int *argc, char ***argv);
 extern void _XMP_finalize_world(void);
 extern int _XMP_split_world_by_color(int color);
 
+
+// xmp_async.c
+extern _Bool xmp_is_async();
+  
 #ifdef _XMP_XACC
 extern void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
 extern void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
 extern int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);
 extern void _XMP_reduce_gpu_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
 extern void _XMP_reduce_gpu_CLAUSE(void *data_addr, int count, int datatype, int op);
+extern void _XMP_set_reflect_gpu(_XMP_array_t *a, int dim, int lwidth, int uwidth, int is_periodic);
 #endif
 
 // ----- libxmp_threads ----------------------------------------------

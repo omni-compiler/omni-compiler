@@ -19,10 +19,6 @@
 #define _XMP_SM_GTOL_BLOCK_CYCLIC(_b, _i, _m, _P) \
 (((((_i) - (_m)) / (((_P) * (_b)))) * (_b)) + (((_i) - (_m)) % (_b)))
 
-extern _Bool is_async;
-extern int _async_id;
-
-
 void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
                                  int dim_index, int *lower, int *upper, int *stride) {
   _XMP_array_info_t *array_info = &(array->info[dim_index]);
@@ -2598,9 +2594,12 @@ static int _XMP_gmove_garray_garray_opt(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gm
 	dst_s[i] = dst_array->info[i].local_stride;
       }
 
-      _XMP_gmove_localcopy_ARRAY(type, type_size,
-				 dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
-				 src_addr, src_dim, dst_l, dst_u, dst_s, dst_d);
+      if (dst_array->is_allocated){ // src_array->is_allocated
+	_XMP_gmove_localcopy_ARRAY(type, type_size,
+				   dst_addr, dst_dim, dst_l, dst_u, dst_s, dst_d,
+				   src_addr, src_dim, dst_l, dst_u, dst_s, dst_d);
+      }
+
       return 1;
 
     }
@@ -2697,7 +2696,7 @@ void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_des
 				   int *src_l, int *src_u, int *src_s, unsigned long long *src_d){
 
   // NOTE: asynchronous gmove aloways done by _XMP_gmove_1to1
-  if (!is_async && gmv_desc_leftp->is_global && gmv_desc_rightp->is_global){
+  if (!xmp_is_async() && gmv_desc_leftp->is_global && gmv_desc_rightp->is_global){
     if (_XMP_gmove_garray_garray_opt(gmv_desc_leftp, gmv_desc_rightp,
 				     dst_l, dst_u, dst_s, dst_d,
 				     src_l, src_u, src_s, src_d)) return;
@@ -3541,18 +3540,21 @@ get_owner_csd(_XMP_array_t *a, int adim, int ncoord[]){
     break;
 	
   case _XMP_N_ALIGN_BLOCK:
-    /* printf("[%d] ser_lower = %d, ser_upper = %d, par_lower = %d, par_upper = %d, subscript = %d\n",*/
-    /* 	   nidx, ainfo->ser_lower, ainfo->ser_upper, ainfo->par_lower, ainfo->par_upper, */
-    /* 	   ainfo->align_subscript); */
-    bsd.l = tinfo->ser_lower + tchunk->par_chunk_width * nidx - ainfo->align_subscript;
-    bsd.u = MIN(tinfo->ser_lower + tchunk->par_chunk_width * (nidx + 1) - 1 - ainfo->align_subscript,
-		tinfo->ser_upper - ainfo->align_subscript);
-    bsd.b = 1;
-    bsd.c = 1;
-    break;
-
+    {
+      /* printf("[%d] ser_lower = %d, ser_upper = %d, par_lower = %d, par_upper = %d, subscript = %lld\n", */
+      /* 	   nidx, ainfo->ser_lower, ainfo->ser_upper, ainfo->par_lower, ainfo->par_upper, */
+      /* 	   ainfo->align_subscript); */
+      bsd.l = tinfo->ser_lower + tchunk->par_chunk_width * nidx - ainfo->align_subscript;
+      long long t = tinfo->ser_lower + tchunk->par_chunk_width * (nidx + 1) - 1 - ainfo->align_subscript;
+      bsd.u = MIN(t, tinfo->ser_upper - ainfo->align_subscript);
+      bsd.b = 1;
+      bsd.c = 1;
+      break;
+    }
   case _XMP_N_ALIGN_CYCLIC:
   case _XMP_N_ALIGN_BLOCK_CYCLIC:
+    /* printf("[%d] ser_lower = %d, par_width = %d, subscript = %d\n", */
+    /* 	   nidx, ainfo->ser_lower, tchunk->par_width, ainfo->align_subscript); */
     bsd.l = tinfo->ser_lower + (nidx * tchunk->par_width) - ainfo->align_subscript;
     bsd.u = tinfo->ser_upper;
     bsd.b = tchunk->par_width;
@@ -3567,12 +3569,29 @@ get_owner_csd(_XMP_array_t *a, int adim, int ncoord[]){
     break;
       
   default:
-    printf("%d %d\n", adim, ainfo->align_manner);
     _XMP_fatal("_XMP_gmove_1to1: unknown distribution format");
 
   }
 
-  return bsd2csd(&bsd);
+  _XMP_csd_t *csd = bsd2csd(&bsd);
+
+  _XMP_bsd_t bsd_declared = { ainfo->ser_lower, ainfo->ser_upper, 1, 1 };
+  _XMP_csd_t *csd_declared = bsd2csd(&bsd_declared);
+
+  _XMP_csd_t *owner_csd = intersection_csds(csd, csd_declared);
+
+  free_csd(csd);
+  free(csd_declared);
+
+  return owner_csd;
+
+  //return bsd2csd(&bsd);
+
+  /* bsd.l = MAX(bsd.l, ainfo->ser_lower); */
+  /* bsd.u = MIN(bsd.u, ainfo->ser_upper); */
+
+  /* if (bsd.u < ainfo->ser_lower || ainfo->ser_upper < bsd.l) return NULL; */
+  /* else return bsd2csd(&bsd); */
 
 }
 
@@ -4402,9 +4421,9 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
   //
 
 #ifdef _XMP_MPI3
-  if (is_async){
+  if (xmp_is_async()){
 
-    _XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
+    _XMP_async_comm_t *async = _XMP_get_current_async();
 
     MPI_Ialltoallv(sendbuf, sendcounts, sdispls, rhs_array->mpi_type,
 		   recvbuf, recvcounts, rdispls, lhs_array->mpi_type,
