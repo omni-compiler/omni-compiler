@@ -33,6 +33,7 @@ public class OMPtransPragma
     public String doParallelIfFunc;
     public String parallelTaskFunc;
     public String parallelTaskIfFunc;
+    public String taskwaitFunc;
     	
     public String defaultShedFunc;
     public String blockShedFunc;
@@ -129,6 +130,10 @@ public class OMPtransPragma
             currentThreadBarrierFunc = "ompc_current_thread_barrier";
             doParallelFunc = "ompc_do_parallel";
             doParallelIfFunc = "ompc_do_parallel_if";
+
+            parallelTaskFunc = "ompc_do_task";
+            parallelTaskIfFunc = "ompc_do_task_if";
+            taskwaitFunc = "ompc_taskwait";
     
             defaultShedFunc = "ompc_default_sched";
             blockShedFunc = "ompc_static_bsched";
@@ -367,11 +372,20 @@ public class OMPtransPragma
 	
         case SIMD:
         	return null;
+
+        case TASKWAIT:
+            return transTaskwait(pb, i);
+
         default:
              OMP.fatal("unknown pragma");
 //             ignore it
             return null;
         }
+    }
+
+    private Block transTaskwait(PragmaBlock pragmaBlock, OMPinfo info)
+    {
+        return Bcons.Statement(OMPfuncIdent(taskwaitFunc).Call(null));
     }
 
     public Block transBarrier(PragmaBlock b, OMPinfo i)
@@ -468,7 +482,7 @@ public class OMPtransPragma
 
         // make prototype for func_id
         ((FunctionType)func_id.Type()).setFuncParamIdList(param_id_list);
-        current_def.insertBeforeThis(XobjectDef.Func(func_id,
+        current_def.addAfterThis(XobjectDef.Func(func_id,
             param_id_list, null, body.toXobject()));
     }
 
@@ -1498,8 +1512,67 @@ public class OMPtransPragma
             return transCtaskRegion(b, i);
         return transFtaskRegion(b, i);
     }
-    public Block transCtaskRegion(PragmaBlock b,OMPinfo i){return null;}
-    
+
+    public Block transCtaskRegion(PragmaBlock pragmaBlock, OMPinfo info)
+    {
+        // turn the task block into a function
+        Ident funcId = current_def.declStaticIdent(
+            env.genSym(OMPfuncPrefix), Xtype.Function(Xtype.voidType));
+        BlockList body = Bcons.emptyBody(info.getIdList(), null);
+        addDataSetupBlock(body, info);
+        body.add(Bcons.COMPOUND(pragmaBlock.getBody()));
+        Block updateBlock = dataUpdateBlock(info);
+        if (updateBlock != null) {
+            body.add(updateBlock);
+        }
+        addCcalleeBlock(body, funcId, info);
+
+        // replace the task directive with a runtime function call
+        BlockList retBody = Bcons.emptyBody();
+        addCTaskCallerBlock(retBody, funcId, info);
+        return Bcons.COMPOUND(retBody);
+    }
+
+    private void addCTaskCallerBlock(BlockList body, Ident funcId, OMPinfo info)
+    {
+        List<Xobject> regionArgs = info.getRegionArgs();
+        XobjInt tied = Xcons.IntConstant(info.untied ? 0 : 1);
+
+        if (regionArgs.size() == 0) {
+            if (info.hasIfExpr()) {
+                body.add(Bcons.Statement(OMPfuncIdent(parallelTaskIfFunc).Call(
+                    Xcons.List(info.getIfExpr(), funcId.Ref(), Xcons.IntConstant(0), tied)
+                )));
+            } else {
+                body.add(Bcons.Statement(OMPfuncIdent(parallelTaskFunc).Call(
+                    Xcons.List(funcId.Ref(), Xcons.IntConstant(0), tied)
+                )));
+            }
+            return;
+        }
+
+        // pass the region arguments through an array of void pointers
+        Ident argsArray = Ident.Local(ARGV_VAR, Xtype.Array(Xtype.voidPtrType, regionArgs.size()));
+        body.addIdent(argsArray);
+        BasicBlock block = new BasicBlock();
+        for (int i = 0; i < regionArgs.size(); i++) {
+            Xobject assignmentStatement = Xcons.Set(argsArray.Index(i),
+                Xcons.Cast(Xtype.voidPtrType, regionArgs.get(i)));
+            block.add(assignmentStatement);
+        }
+
+        if (info.hasIfExpr()) {
+            block.add(OMPfuncIdent(parallelTaskIfFunc).Call(
+                Xcons.List(info.getIfExpr(), funcId.Ref(), argsArray.Ref(), tied)
+            ));
+        } else {
+            block.add(OMPfuncIdent(parallelTaskFunc).Call(
+                Xcons.List(funcId.Ref(), argsArray.Ref(), tied)
+            ));
+        }
+        body.add(block);
+    }
+
     public Block transSimd(PragmaBlock b, OMPinfo i)
     {
         BlockList body = b.getBody();

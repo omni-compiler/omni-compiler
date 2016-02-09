@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 #include "exc_platform.h"
 #include "ompclib.h"
 
@@ -206,7 +208,6 @@ static ompc_proc_t ompc_master_proc_id;
 /* prototype */
 static void ompc_xstream_setup();
 static void ompc_thread_wrapper_func(void *arg);
-static ompc_thread_t ompc_thread_self();
 static struct ompc_proc *ompc_new_proc(int i);
 static struct ompc_proc *ompc_get_proc(struct ompc_thread *par, struct ompc_thread *cur,
                                        int thread_num, int num_threads);
@@ -385,7 +386,11 @@ ompc_init(int argc,char *argv[])
     tp->num             = 0;    /* team master */
     tp->in_parallel     = 0;
     tp->parent          = NULL;
-    ABT_key_set(tls_key, (void *)tp);
+    tp->implicit_task.child_tasks = NULL;
+    tp->implicit_task.child_task_count = 0;
+    tp->implicit_task.child_task_capacity = 0;
+    ABT_key_set(tls_key, (void *)&tp->implicit_task);
+    current_thread = tp;
 
     if (ompc_debug_flag) fprintf(stderr, "init end(Master)\n");
 }
@@ -429,12 +434,18 @@ ompc_new_proc(int i)
     return p;
 }
 
-/*static*/ struct ompc_thread *
+static struct ompc_task *
+ompc_current_task()
+{
+    struct ompc_task *task;
+    ABT_key_get(tls_key, (void **)&task);
+    return task;
+}
+
+struct ompc_thread *
 ompc_current_thread()
 {
-    struct ompc_thread *tp;
-    ABT_key_get(tls_key, (void **)&tp);
-    return tp;
+    return current_thread;
 }
 
 /* get thread from free list */
@@ -482,7 +493,7 @@ static void ompc_xstream_setup(void *arg)
 static void ompc_thread_wrapper_func(void *arg)
 {
     struct ompc_thread *cthd = (struct ompc_thread *)arg;
-    ABT_key_set(tls_key, (void *)cthd);
+    ABT_key_set(tls_key, (void *)&cthd->implicit_task);
 
     struct ompc_thread *tp = cthd->parent;
 
@@ -504,6 +515,8 @@ static void ompc_thread_wrapper_func(void *arg)
 # ifdef USE_LOG
     if(ompc_log_flag) tlog_parallel_OUT(i);
 # endif /* USE_LOG */
+
+    ABT_sched_finish(current_thread->scheduler);
 }
 
 /* called from compiled code. */
@@ -543,11 +556,10 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     cthd->out_count = 0;
     cthd->in_count = 0;
     for (int i = 0; i < n_thds; i++ ) {
-        cthd->barrier_flags[i]._v = cthd->barrier_sense;
         cthd->in_flags[i]._v = 0;
     }
-    
-//    ompc_tree_barrier_init(&cthd->tree_barrier, n_thds);
+
+    ompc_tree_barrier_init(&cthd->tree_barrier, n_thds);
 
 #ifdef __OMNI_TEST_TASKLET__
     void *children;
@@ -558,7 +570,8 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         children = (ABT_task *)malloc(sizeof(ABT_task) * n_thds);
     }
 #else
-    ompc_thread_t *children = (ompc_thread_t *)malloc(sizeof(ompc_thread_t) * n_thds);
+    ABT_pool pools[2];  // 0: private pool, 1: shared pool
+    ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC, ABT_TRUE, &pools[1]);
 #endif
 
     struct ompc_thread *tp_list = (struct ompc_thread *)malloc(sizeof(struct ompc_thread) * n_thds);
@@ -588,8 +601,20 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
                 (void *)tp, &(((ABT_task *)children)[i]));
         }
 #else
-        ABT_thread_create_on_xstream((ABT_xstream)(p->pid), ompc_thread_wrapper_func,
-            (void *)tp, ABT_THREAD_ATTR_NULL, (ABT_thread *)(&(children[i])));
+        ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPSC,
+                              ABT_TRUE, &pools[0]);
+        ABT_sched_create(&task_sched_def, 2, pools, ABT_SCHED_CONFIG_NULL, &tp->scheduler);
+        ompc_event_init(&tp->sched_finished);
+        ABT_sched_set_data(tp->scheduler, tp);
+
+        tp->implicit_task.child_tasks = NULL;
+        tp->implicit_task.child_task_count = 0;
+        tp->implicit_task.child_task_capacity = 0;
+        ABT_thread_create(pools[0], ompc_thread_wrapper_func, tp, ABT_THREAD_ATTR_NULL, NULL);
+
+        ABT_pool target_pool;
+        ABT_xstream_get_main_pools(p->pid, 1, &target_pool);
+        ABT_pool_add_sched(target_pool, tp->scheduler);
 #endif
     }
 
@@ -605,21 +630,82 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
           ABT_task_free(&child_tasks[i]);
         }
 #else
-        ABT_thread_join(children[i]);
-        ABT_thread_free(&children[i]);
+        ompc_event_wait(&tp_list[i].sched_finished);
+        ompc_event_finalize(&tp_list[i].sched_finished);
 #endif
     }
 
+#ifdef __OMNI_TEST_TASKLET__
     free(children);
+#endif
+
     free(tp_list);
 
-//    ompc_tree_barrier_finalize(&cthd->tree_barrier);
+    ompc_tree_barrier_finalize(&cthd->tree_barrier);
 
     if (cthd->parent == NULL) {
         proc_last_used = 0;
     }
 }
 
+static void
+task_wrapper_func(void *arg)
+{
+    ABT_thread thread;
+    ABT_thread_self(&thread);
+    struct ompc_task *task = (struct ompc_task *)arg;
+    ABT_key_set(tls_key, task);
+
+    if (task->nargs < 0) {
+        // call C function
+        if (task->args != NULL) {
+            task->func(task->args);
+        } else {
+            task->func();
+        }
+    } else {
+        // call Fortran function
+        // not implemented yet
+    }
+
+    for (int i = 0; i < task->child_task_count; i++) {
+        ABT_thread_join(task->child_tasks[i]);
+        ABT_thread_free(&task->child_tasks[i]);
+    }
+    free(task->child_tasks);
+    free(task);
+}
+
+static void
+do_task_main(int nargs, _Bool cond, cfunc func, void *args, _Bool tied)
+{
+    struct ompc_task *task = malloc(sizeof(struct ompc_task));
+    task->func = func;
+    task->nargs = nargs;
+    task->args = args;
+    task->child_tasks = NULL;
+    task->child_task_count = 0;
+    task->child_task_capacity = 0;
+
+    ABT_pool shared_pool;
+    ABT_thread task_thread;
+    ABT_sched_get_pools(current_thread->scheduler, 1, 1, &shared_pool);
+    ABT_thread_create(shared_pool, task_wrapper_func, task, ABT_THREAD_ATTR_NULL, &task_thread);
+
+    if (cond) {
+        struct ompc_task *curr_task = ompc_current_task();
+        if (curr_task->child_task_count == curr_task->child_task_capacity) {
+            curr_task->child_task_capacity = curr_task->child_task_capacity == 0
+                ? 10 : curr_task->child_task_capacity * 2;
+            curr_task->child_tasks = realloc(curr_task->child_tasks,
+                curr_task->child_task_capacity * sizeof(struct ompc_task));
+        }
+        curr_task->child_tasks[curr_task->child_task_count++] = task_thread;
+    } else {
+        ABT_thread_join(task_thread);
+        ABT_thread_free(&task_thread);
+    }
+}
 
 void
 ompc_do_parallel(cfunc f, void *args)
@@ -633,62 +719,27 @@ ompc_do_parallel_if (int cond, cfunc f, void *args)
     ompc_do_parallel_main (-1, cond, ompc_num_threads, f, args);
 }
 
-
-/* 
- * Barrier 
- */
 void
-ompc_thread_barrier(int id, struct ompc_thread *tpp)
+ompc_do_task(cfunc func, void *args, _Bool tied)
 {
-    int sen0,n;
+    do_task_main(-1, 1, func, args, tied);
+}
 
-    if(tpp == NULL) return; /* not in parallel */
-#ifdef USE_LOG
-    if(ompc_log_flag) tlog_barrier_IN(id);
-#endif // USE_LOG
+void
+ompc_do_task_if(_Bool cond, cfunc func, void *args, _Bool tied)
+{
+    do_task_main(-1, cond, func, args, tied);
+}
 
-#if 0  // USE_ARGOBOTS
-    sen0 = ~tpp->barrier_sense;
-    n = tpp->num_thds;
-
-    if (id == 0) {
-        for (int i = 1; i < n; i++) {
-            OMPC_WAIT_UNTIL((volatile int)tpp->barrier_flags[i]._v == sen0,
-                tpp->reduction_cond, tpp->reduction_mutex);
-        }
-
-        ABT_mutex_lock(tpp->broadcast_mutex);
-        tpp->barrier_sense = sen0;
-        ABT_cond_broadcast(tpp->broadcast_cond);
-        ABT_mutex_unlock(tpp->broadcast_mutex);
-    } else {
-        ABT_mutex_lock(tpp->reduction_mutex);
-        tpp->barrier_flags[id]._v = sen0;
-        ABT_cond_signal(tpp->reduction_cond);
-        ABT_mutex_unlock(tpp->reduction_mutex);
-
-        OMPC_WAIT_UNTIL((volatile int)tpp->barrier_sense == sen0,
-            tpp->broadcast_cond, tpp->broadcast_mutex);
+void
+ompc_taskwait()
+{
+    struct ompc_task *task = ompc_current_task();
+    for (int i = 0; i < task->child_task_count; i++) {
+        ABT_thread_join(task->child_tasks[i]);
+        ABT_thread_free(&task->child_tasks[i]);
     }
-#else
-    sen0 = tpp->barrier_sense ^ 1;
-    n = tpp->num_thds;
-    if (id == 0){
-        int j;
-        for ( j = 1 ; j < n ; j++ )
-          OMPC_WAIT((volatile int)tpp->barrier_flags[j]._v != sen0);
-        tpp->barrier_sense = sen0;
-        MBAR();
-    } else {
-        tpp->barrier_flags[id]._v = sen0;
-        MBAR();
-        OMPC_WAIT ((volatile int)tpp->barrier_sense != sen0);
-    }
-#endif  // USE_ARGOBOTS
-
-#ifdef USE_LOG
-    if(ompc_log_flag) tlog_barrier_OUT(id);
-#endif // USE_LOG
+    task->child_task_count = 0;
 }
 
 void
@@ -707,7 +758,7 @@ ompc_current_thread_barrier()
         id = tp->num;
     }
 
-    ompc_thread_barrier(id, tpp);
+    ompc_tree_barrier_wait(&tpp->tree_barrier, tp);
 }
 
 
@@ -789,12 +840,4 @@ ompc_xstream_self()
     ABT_xstream xstream;
     ABT_xstream_self(&xstream);
     return xstream;
-}
-
-static ompc_thread_t
-ompc_thread_self()
-{
-    ABT_thread thread;
-    ABT_thread_self(&thread);
-    return thread;
 }

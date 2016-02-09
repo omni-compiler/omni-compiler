@@ -37,6 +37,7 @@ public enum OMPpragma
     THREADPRIVATE,      /* threadprivate <namelist> */
     PARALLEL_FOR,       /* parallel <clause_list> */
     PARALLEL_SECTIONS,  /* parallel <clause_list> */
+    TASKWAIT,           /* taskwait */
     FUNCTION_BODY,
     
     /*

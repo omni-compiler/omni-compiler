@@ -22,7 +22,10 @@ enum OMP_pragma {
     OMP_THREADPRIVATE = 11,	/* threadprivate <namelist> */
 
     OMP_PARALLEL_FOR = 12, 	/* parallel <clause_list> */
-    OMP_PARALLEL_SECTIONS = 13 	/* parallel <clause_list> */
+    OMP_PARALLEL_SECTIONS = 13, 	/* parallel <clause_list> */
+    
+    OMP_TASK = 14,        /* task <clause list> */
+    OMP_TASKWAIT = 15     /* taskwait */
 };
 
 #define IS_OMP_PRAGMA_CODE(code) (((int)(code)) < 100)
@@ -51,7 +54,8 @@ enum OMP_pragma_clause {
     OMP_DIR_IF=21,
     OMP_DIR_NOWAIT=22,
     OMP_DIR_SCHEDULE=23,
-    OMP_DIR_NUM_THREADS=24
+    OMP_DIR_NUM_THREADS=24,
+    OMP_DIR_UNTIED = 25
 };
 
 enum OMP_sched_clause {

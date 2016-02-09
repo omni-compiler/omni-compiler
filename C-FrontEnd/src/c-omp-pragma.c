@@ -53,6 +53,9 @@
  *    <list> <string> OMP_DIR_NUM_THREADS </strign> expr </list>
  *  C_Front: (OMP_DIR_NUM_THREADS expr) 
  *
+ * [untied_clause] =
+ *     <list> <string> OMP_DIR_UNTIED </string> null </list>
+ *  C_Front: (OMP_DIR_UNTIED null)
  */
 
 static int parse_OMP_pragma(void);
@@ -210,6 +213,20 @@ int parse_OMP_pragma()
       ret = PRAGMA_EXEC;
       goto chk_end;
   }
+  
+  if (PG_IS_IDENT("task")) {
+    pg_OMP_pragma = OMP_TASK;
+    pg_get_token();
+    if ((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+    goto chk_end;
+  }
+  
+  if (PG_IS_IDENT("taskwait")) {
+    pg_OMP_pragma = OMP_TASKWAIT;
+    ret = PRAGMA_EXEC;
+    pg_get_token();
+    goto chk_end;
+  }
   addError(NULL,"OMP:unknown OMP directive, '%s'",pg_tok_buf);
  syntax_err:
     return 0;
@@ -314,6 +331,9 @@ static CExpr* parse_OMP_clauses()
 	    if(pg_tok != ')') goto syntax_err;
 	    pg_get_token();
 	    c = OMP_PG_LIST(OMP_DIR_NUM_THREADS,v);
+  } else if (PG_IS_IDENT("untied")) {
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_DIR_UNTIED, NULL);
 	} else {
 	  addError(NULL,"unknown OMP directive clause '%s'",pg_tok_buf);
 	    goto syntax_err;

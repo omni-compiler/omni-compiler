@@ -64,6 +64,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
   switch(clause->e_aux){
   case OMP_DIR_ORDERED:
   case OMP_DIR_NOWAIT:
+  case OMP_DIR_UNTIED:
       break;
 
   case OMP_DIR_IF:
@@ -123,6 +124,8 @@ char *ompDirectiveName(int c)
   case OMP_THREADPRIVATE:return "THREADPRIVATE";
   case OMP_PARALLEL_FOR:return "PARALLEL_FOR";
   case OMP_PARALLEL_SECTIONS:return "PARALLEL_SECTIONS";
+  case OMP_TASK: return "TASK";
+  case OMP_TASKWAIT: return "TASKWAIT";
   default: return "OMP???";
   }
 }
@@ -153,6 +156,7 @@ char *ompClauseName(int c)
   case OMP_DIR_NOWAIT: return "DIR_NOWAIT";
   case OMP_DIR_SCHEDULE: return "DIR_SCHEDULE";
   case OMP_DIR_NUM_THREADS: return "DIR_NUM_THREADS";
+  case OMP_DIR_UNTIED: return "DIR_UNTIED";
   default:  return "???OMP???";
   }
 }

@@ -5,7 +5,7 @@ CC		= @MPI_CC@
 AR		= @AR@ cr
 RANLIB		= @RANLIB@
 
-SRCS		= ompc_thread.c ompc_lock.c ompc_lib.c ompc_runtime.c timer.c ompf_runtime.c ompf_thread.c ompc_barrier.c
+SRCS		= ompc_thread.c ompc_lock.c ompc_lib.c ompc_runtime.c timer.c ompf_runtime.c ompf_thread.c ompc_sync.c ompc_task_scheduler.c
 OMPCRTOBJ	= ompc_main.o
 OMPCRTOBJ_SRC	= ompc_main.c
 OMPFRTOBJ	= ompf_main.o

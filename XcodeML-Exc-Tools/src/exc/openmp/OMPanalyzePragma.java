@@ -72,9 +72,14 @@ public class OMPanalyzePragma
         topdownBlockIterator bitr;
 
         switch(p) {
-        case TASK:
-    	info.setIfExpr(Xcons.FlogicalConstant(true));
-        info.setFinalExpr(Xcons.FlogicalConstant(false));
+        case TASK: /* task <clause list> */
+            info.untied = false;
+            if (XmOption.isLanguageC()) {
+                info.setFinalExpr(Xcons.IntConstant(0));
+            } else {
+                info.setIfExpr(Xcons.FlogicalConstant(true));
+                info.setFinalExpr(Xcons.FlogicalConstant(false));
+            }
         case PARALLEL: /* new parallel section */
         case FOR: /* loop <clause_list> */
         case SECTIONS: /* sections <clause_list> */
@@ -271,6 +276,8 @@ public class OMPanalyzePragma
             break;
         case THREADPRIVATE:
             omp_env.declThreadPrivate(def.getDef().getDef(), pb, pb.getClauses());
+            break;
+        case TASKWAIT:
             break;
         default:
             OMP.fatal("unknown OpenMP pramga = " + p);
