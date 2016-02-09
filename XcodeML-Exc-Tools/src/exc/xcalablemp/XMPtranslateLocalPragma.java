@@ -1923,14 +1923,13 @@ public class XMPtranslateLocalPragma {
 	  
 	  // FIXME not good implementation
 	  XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-	  //XMPalignedArray specAlignedArray = _globalDecl.getXMPalignedArray(specName, localXMPsymbolTable);
-	  XMPalignedArray specAlignedArray = _globalDecl.getXMPalignedArray(specName, pb);
-	  if (specAlignedArray == null) {
+	  XMPalignedArray specAlignedArray   = _globalDecl.getXMPalignedArray(specName, pb);
+	  if(specAlignedArray == null){
 	    specRef = specId.Ref();
 	    count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arraySpecType));
 	  }
-	  else {
-	    if (isClause) {
+	  else{
+	    if(isClause){
 	      throw new XMPexception("aligned arrays cannot be used in reduction clause");
 	    }
 	    
@@ -2316,18 +2315,89 @@ public class XMPtranslateLocalPragma {
     }
   }
 
+  private boolean check_all(Xobject length, Xobject size){
+    return length.equals(size);
+  }
+  
+  private boolean check_one(Xobject length){
+    return length.equals(Xcons.IntConstant(1));
+  }
+  
+  private boolean check_continuous_of_array(int dims, Xobject length[], Xobject size[]) throws XMPexception{
+    boolean is_continuous = false;
+
+    switch (dims){
+    case 1: is_continuous = true;
+      break;
+    case 2:
+      if(check_one(length[0]) || check_all(length[1], size[1]))
+        is_continuous = true;
+      break;
+    case 3:
+      if((check_one(length[0]) && check_one(length[1])) ||
+         (check_one(length[0]) && check_all(length[2], size[2])) ||
+         (check_all(length[1], size[1]) && check_all(length[2], size[2])))
+        is_continuous = true;
+      break;
+    case 4:
+      if((check_one(length[0]) && check_one(length[1]) && check_one(length[2])) ||
+         (check_one(length[0]) && check_one(length[1]) && check_all(length[3], size[3])) ||
+         (check_one(length[0]) && check_all(length[2], size[2]) && check_all(length[3], size[3])) ||
+         (check_all(length[1], size[1]) && check_all(length[2], size[2]) && check_all(length[3], size[3])))
+        is_continuous = true;
+      break;
+    case 5:
+      if((check_one(length[0]) && check_one(length[1]) && check_one(length[2]) && check_one(length[3])) ||
+         (check_one(length[0]) && check_one(length[1]) && check_one(length[2]) && check_all(length[4], size[4])) ||
+         (check_one(length[0]) && check_one(length[1]) && check_all(length[3], size[3]) && check_all(length[4], size[4])) ||
+         (check_one(length[0]) && check_all(length[2], size[2]) && check_all(length[3], size[3]) && check_all(length[4], size[4])) ||
+         (check_all(length[1], size[1]) && check_all(length[2], size[2]) && check_all(length[3], size[3]) && check_all(length[4], size[4])))
+        is_continuous = true;
+      break;
+    case 6:
+      if((check_one(length[0]) && check_one(length[1]) && check_one(length[2]) && check_one(length[3]) && check_one(length[4])) ||
+         (check_one(length[0]) && check_one(length[1]) && check_one(length[2]) && check_one(length[3]) && check_all(length[5], size[5])) ||
+         (check_one(length[0]) && check_one(length[1]) && check_one(length[2]) && check_all(length[4], size[4]) && check_all(length[5], size[5])) ||
+         (check_one(length[0]) && check_one(length[1]) && check_all(length[3], size[3]) && check_all(length[4], size[4]) && check_all(length[5], size[5])) ||
+         (check_one(length[0]) && check_all(length[2], size[2]) && check_all(length[3], size[3]) && check_all(length[4], size[4]) && check_all(length[5], size[5])) ||
+         (check_all(length[1], size[1]) && check_all(length[2], size[2]) && check_all(length[3], size[3]) && check_all(length[4], size[4]) && check_all(length[5], size[5])))
+        is_continuous = true;
+      break;
+    case 7:
+      if((check_one(length[0]) && check_one(length[1]) && check_one(length[2]) && check_one(length[3]) && check_one(length[4]) && check_one(length[5])) ||
+         (check_one(length[0]) && check_one(length[1]) && check_one(length[2]) && check_one(length[3]) && check_one(length[4]) && check_all(length[6], size[6])) ||
+         (check_one(length[0]) && check_one(length[1]) && check_one(length[2]) && check_one(length[3]) && check_all(length[5], size[5]) && check_all(length[6], size[6])) ||
+         (check_one(length[0]) && check_one(length[1]) && check_one(length[2]) && check_all(length[4], size[4]) && check_all(length[5], size[5]) && check_all(length[6], size[6])) ||
+         (check_one(length[0]) && check_one(length[1]) && check_all(length[3], size[3]) && check_all(length[4], size[4]) && check_all(length[5], size[5]) && check_all(length[6], size[6])) ||
+         (check_one(length[0]) && check_all(length[2], size[2]) && check_all(length[3], size[3]) && check_all(length[4], size[4]) && check_all(length[5], size[5]) && check_all(length[6], size[6])) ||
+         (check_all(length[1], size[1]) && check_all(length[2], size[2]) && check_all(length[3], size[3]) && check_all(length[4], size[4]) && check_all(length[5], size[5]) && check_all(length[6], size[6])))
+        is_continuous = true;
+      break;
+    default:
+      throw new XMPexception("A wrong data type for broadcast");
+    }
+
+    return is_continuous;
+  }
+  
   private Vector<XobjList> createBcastArgsList(XobjList varList, PragmaBlock pb) throws XMPexception {
     Vector<XobjList> returnVector = new Vector<XobjList>();
 
     for (XobjArgs i = varList.getArgs(); i != null; i = i.nextArgs()) {
-      String varName = i.getArg().getString();
-
-      XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(varName, pb);
-      Ident varId = typedSpec.getFirst();
-      Xtype varType = typedSpec.getSecond();
-
-      XobjLong count = null;
-      switch (varType.getKind()) {
+      if(i.getArg().isVariable()){
+        // The variable indicated in bcast directive is variable name.
+        // For example,
+        // ---
+        // int a[10], b[10][10];
+        // #pragma xmp bcast (a,b)
+        // ---
+        String varName = i.getArg().getString();
+        XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(varName, pb);
+        Ident varId = typedSpec.getFirst();
+        Xtype varType = typedSpec.getSecond();
+        
+        XobjLong count = null;
+        switch (varType.getKind()) {
         case Xtype.BASIC:
         case Xtype.STRUCT:
         case Xtype.UNION:
@@ -2351,12 +2421,88 @@ public class XMPtranslateLocalPragma {
               default:
                 throw new XMPexception("array '" + varName + "' has has a wrong data type for broadcast");
             }
-
-            count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arrayVarType));
-            returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(((ArrayType)varType).getArrayElementType())));
+            
+            if(arrayVarType.getArraySizeExpr() == null){
+              // Number of elements is static
+              // int a[10];
+              // #pragma xmp bcast (a)
+              count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arrayVarType));
+              returnVector.add(Xcons.List(varId.Ref(), count, Xcons.SizeOf(arrayVarType.getArrayElementType())));
+            }
+            else{
+              // Number of elements is defined in arguments
+              // void hoge(int n, int a[n]){
+              // #pragma xmp bcast (a)
+              returnVector.add(Xcons.List(varId.Ref(), arrayVarType.getArraySizeExpr(),
+                                          Xcons.SizeOf(arrayVarType.getArrayElementType())));
+            }
           } break;
         default:
           throw new XMPexception("'" + varName + "' has a wrong data type for broadcast");
+        }
+      }
+      else{
+        // The variable indicated in bcast directive is array with array section.
+        // For example,
+        // ---
+        // int a[10], b[10][10];
+        // #pragma xmp bcast (a[:],b[2:5][:])
+        // ---
+        String varName = i.getArg().getArg(0).getString();
+        XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(varName, pb);
+        Ident varId = typedSpec.getFirst();
+        Xtype varType = typedSpec.getSecond();
+
+        int dims = varType.getNumDimensions();
+        if(dims != i.getArg().getArg(1).Nargs())
+          throw new XMPexception(varName + " has a wrong dimension");
+        
+        Xobject[] start  = new Xobject[dims];
+        Xobject[] length = new Xobject[dims];
+        Xobject[] size   = new Xobject[dims];
+        Xobject total_length = null;
+
+        for(int j=0;j<dims;j++){
+          Xobject triplet = i.getArg().getArg(1).getArg(j);
+          size[j] = XMPutil.getArrayElmt(varType, j);
+          if(triplet.isVariable() || triplet.isIntConstant()){
+            start[j]  = triplet;
+            length[j] = Xcons.IntConstant(1);
+          }
+          else{
+            start[j] = triplet.getArg(0);
+            if(triplet.getArg(1).isVariable() || triplet.getArg(1).isIntConstant()){
+              length[j] = triplet.getArg(1);
+            }
+            else{
+              length[j] = (triplet.getArg(1) == null || triplet.getArg(1).isEmpty())?
+                Xcons.binaryOp(Xcode.MINUS_EXPR, size[j], start[j]) : triplet.getArg(1);
+            }
+          }
+          total_length = (j==0)? length[j] : Xcons.binaryOp(Xcode.MUL_EXPR, total_length, length[j]);
+        }
+
+        // Check the array is continuous or not.
+        // Note that when XMP runtime supports stride bcast communication,
+        // the following if-statment will be removed.
+        if(! check_continuous_of_array(dims, length, size))
+          throw new XMPexception("Stride bcast operation is not supported");
+
+        Xobject[] acc_size = new Xobject[dims];
+        for(int j=0;j<dims;j++)
+          for(int k=j+1;k<dims;k++)
+            acc_size[j] = (k==j+1)? size[k] : Xcons.binaryOp(Xcode.MUL_EXPR, acc_size[j], size[k]);
+        
+        acc_size[dims-1] = Xcons.IntConstant(1);
+
+        Xobject offset = Xcons.binaryOp(Xcode.MUL_EXPR, start[0], acc_size[0]);
+        for(int j=1;j<dims;j++){
+          offset = Xcons.binaryOp(Xcode.PLUS_EXPR, offset, Xcons.binaryOp(Xcode.MUL_EXPR, start[j], acc_size[j]));
+        }
+        offset = Xcons.binaryOp(Xcode.MUL_EXPR, offset, Xcons.SizeOf(varType.getArrayElementType()));
+
+        returnVector.add(Xcons.List(Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.Cast(Xtype.Pointer(BasicType.charType), varId.Ref()), offset),
+                                    total_length, Xcons.SizeOf(varType.getArrayElementType())));
       }
     }
 
