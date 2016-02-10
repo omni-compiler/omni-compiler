@@ -193,9 +193,9 @@ void _XMPF_checkIfInTask(char *msgopt)
 }
 
 
-void xmpf_coarray_fatal_(char *msg, int *msglen)
+void xmpf_coarray_fatal_with_len_(char *msg, int *msglen)
 {
-  _XMPF_coarrayFatal("%*s", *msglen, msg);
+  _XMPF_coarrayFatal("FATAL ERROR: %*s\n", *msglen, msg);
 }
 
 void _XMPF_coarrayFatal(char *format, ...)

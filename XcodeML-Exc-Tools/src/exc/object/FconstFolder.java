@@ -294,7 +294,7 @@ public class FconstFolder
 
   private Xobject _eval_sizeProduct(Xobject array)
   {
-    int rank = array.getFrank();
+    int rank = array.getFrank(block);
     long sizeL = 1L;
 
     for (int i = 0; i < rank; i++) {

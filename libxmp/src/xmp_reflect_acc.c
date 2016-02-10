@@ -33,3 +33,13 @@ void _XMP_reflect_acc(void *addr)
 #ifdef _XMP_TCA
 #endif
 }
+
+void _XMP_set_reflect_acc__(_XMP_array_t *a, int dim, int lwidth, int uwidth, int is_periodic)
+{
+#ifdef _XMP_TCA
+  //
+#else
+  _XMP_set_reflect_gpu(a, dim, lwidth, uwidth, is_periodic);
+#endif
+
+}

@@ -15,17 +15,29 @@ public class XMPtransCoarrayRun
   final static String VAR_TAG_NAME = "xmpf_resource_tag";
   final static String TRAV_COUNTCOARRAY_PREFIX = "xmpf_traverse_countcoarray";
   final static String TRAV_INITCOARRAY_PREFIX = "xmpf_traverse_initcoarray";
-  final static String GET_DESCPOINTER_NAME   = "xmpf_coarray_get_descptr";
+  final static String FIND_DESCPOINTER_NAME   = "xmpf_coarray_find_descptr";
   final static String COARRAY_ALLOC_PREFIX   = "xmpf_coarray_alloc";
   final static String COARRAY_DEALLOC_PREFIX = "xmpf_coarray_dealloc";
   final static String THIS_IMAGE_NAME        = "xmpf_this_image";  // generic
   final static String COBOUND_NAME           = "xmpf_cobound";  // generic
   final static String IMAGE_INDEX_NAME       = "xmpf_image_index";
+  final static String CO_BROADCAST_PREFIX    = "xmpf_co_broadcast";
+  final static String CO_SUM_PREFIX          = "xmpf_co_sum";
+  final static String CO_MAX_PREFIX          = "xmpf_co_max";
+  final static String CO_MIN_PREFIX          = "xmpf_co_min";
   final static String COARRAY_PROLOG_NAME    = "xmpf_coarray_prolog";
   final static String COARRAY_EPILOG_NAME    = "xmpf_coarray_epilog";
   final static String SYNCALL_NAME           = "xmpf_sync_all";
   final static String AUTO_SYNCALL_NAME      = "xmpf_sync_all_auto";  // another entry of syncall
   final static String FINALIZE_PROGRAM_NAME  = XMP.finalize_all_f;
+
+  // generic intrinsic names that will be renamed in pass1 and pass2
+  final static List<String> intrinsicProcedureNames = 
+    Arrays.asList( "this_image",
+                   "lcobound", "ucobound",
+                   "image_index",
+                   "co_broadcast",
+                   "co_sum", "co_max", "co_min" );
 
   // to handle host- and use-associations
   static ArrayList<XMPtransCoarrayRun> ancestors
@@ -1049,14 +1061,18 @@ public class XMPtransCoarrayRun
     Ident subr, descPtrId;
 
     for (XMPcoarray coarray: dummyLocalcoarrays) {
-      // a2. call "get_descptr(descPtr, baseAddr, tag)"
+      // a2. call "get_descptr(descPtr, baseAddr, tag, varname, varnamelen)"
       descPtrId = coarray.getDescPointerId();
+      String varname = coarray.getName();
       args = Xcons.List(descPtrId, coarray.getIdent(),
-                        Xcons.FvarRef(getResourceTagId()));
-      subr = env.declExternIdent(GET_DESCPOINTER_NAME,
+                        Xcons.FvarRef(getResourceTagId()),
+                        Xcons.FcharacterConstant(Xtype.FcharacterType,
+                                                 varname, null),
+                        Xcons.IntConstant(varname.length()));
+      subr = env.declExternIdent(FIND_DESCPOINTER_NAME,
                                  BasicType.FexternalSubroutineType);
       if (args.hasNullArg())
-        XMP.fatal("generated null argument " + GET_DESCPOINTER_NAME +
+        XMP.fatal("generated null argument " + FIND_DESCPOINTER_NAME +
                   "(genDefinitionOfDescPointer)");
 
       subrCall = subr.callSubroutine(args);
@@ -1658,6 +1674,8 @@ public class XMPtransCoarrayRun
   //  - replace this_image(V, ...) with THIS_IMAGE_NAME(DP_V, ...)
   //    except this_image()
   //  - replace image_index(V, ...) with IMAGE_INDEX_NAME(DP_V, ...)
+  //  - replace co_broadcast(V, ...) with CO_BROADCAST_PREFIX<dim>d(V, ...)
+  //  - replace co_sum/min/max(V, ...) with CO_SUM/MIN/MAX_PREFIX<dim>d(V, ...)
   //  - replace lcobound(V, ...) with COBOUND_NAME(DP_V, ..., 0, corank)
   //  - replace ucobound(V, ...) with COBOUND_NAME(DP_V, ..., 1, corank)
   //-----------------------------------------------------
@@ -1679,12 +1697,50 @@ public class XMPtransCoarrayRun
         _replaceThisImage(xobj, coarrays);
       else if (fname.equalsIgnoreCase("image_index"))
         _replaceImageIndex(xobj, coarrays);
+      else if (fname.equalsIgnoreCase("co_broadcast"))
+        _replaceCoReduction(xobj, fname, CO_BROADCAST_PREFIX);
+      else if (fname.equalsIgnoreCase("co_sum"))
+        _replaceCoReduction(xobj, fname, CO_SUM_PREFIX);
+      else if (fname.equalsIgnoreCase("co_max"))
+        _replaceCoReduction(xobj, fname, CO_MAX_PREFIX);
+      else if (fname.equalsIgnoreCase("co_min"))
+        _replaceCoReduction(xobj, fname, CO_MIN_PREFIX);
       else if (fname.equalsIgnoreCase("lcobound"))
         _replaceCobound(xobj, coarrays, 0);
       else if (fname.equalsIgnoreCase("ucobound"))
         _replaceCobound(xobj, coarrays, 1);
     }
   }
+
+  /* replace "co_broadcast/sum/max/min(source, ...)"
+   *  with "xmpf_co_broadcast/sum/max/min<dim>d(source, ...)"
+   *  where <dim> is the rank of argument source
+   *
+   *  To avoid bug478, subroutine name co_xxx is converted into the 
+   *  intermedeate name co_xxx<dim>d before the final conversion by 
+   *  the compiler into co_xxx<dim>d_<typekind>.
+   */
+  private void _replaceCoReduction(Xobject xobj, String fname, String prefix) {
+    XobjList actualArgs = (XobjList)xobj.getArg(1);
+    int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
+
+    if (nargs != 2) {
+      XMP.error("Too few or too many arguments are found in " + fname);
+      return;
+    }
+
+    // get the first argument 'source'
+    Xobject arg1 = actualArgs.getArgWithKeyword("source", 0);
+    if (arg1 == null) {
+      XMP.error("Argument \'source\' was not found in " + fname);
+      return;
+    }
+
+    int rank = arg1.getFrank(getFblock());
+    XobjString newFname = Xcons.Symbol(Xcode.IDENT, prefix + rank + "d");
+    xobj.setArg(0, newFname);
+  }
+
 
   /* replace "allocated(coarray)" with "associated(coarray)"
    */

@@ -117,23 +117,29 @@ do
     echo "!-----------------------------------------------------------------------"
     echo "      interface xmpf_coarray_dealloc${DIM}d"
     echo "!-----------------------------------------------------------------------"
-    echo "!!!  real(kind=16) is not supported in XMP/F"
-    echo "!!!  complex(kind=16) (32bytes) is not supported in XMP/F"
     echo ""
     if test "sxace-nec-superux" != "$TARGET"; then    ## integer(2) cannot be used on SX-ACE
 	print_subr_dealloc i2  "integer(2)"
     fi
     print_subr_dealloc i4  "integer(4)"      
     print_subr_dealloc i8  "integer(8)"
+
     if test "sxace-nec-superux" != "$TARGET"; then    ## logical(2) cannot be used on SX-ACE
 	print_subr_dealloc l2  "logical(2)"
     fi
     print_subr_dealloc l4  "logical(4)"      
     print_subr_dealloc l8  "logical(8)"      
+
     print_subr_dealloc r4  "real(4)"         
     print_subr_dealloc r8  "real(8)"         
+    echo "!!!  real(kind=16) is not supported in XMP/F"
+    echo ""
+
     print_subr_dealloc z8  "complex(4)"      
     print_subr_dealloc z16 "complex(8)"      
+    echo "!!!  complex(kind=16) (32bytes) is not supported in XMP/F"
+    echo ""
+
     print_subr_dealloc cn  "character(*)" 
 
     echo "      end interface"

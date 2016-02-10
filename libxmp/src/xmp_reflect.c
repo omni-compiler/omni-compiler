@@ -831,7 +831,7 @@ static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is
 /*   // Start Comm. */
 /*   // */
 
-/*   _XMP_async_comm_t *async = _XMP_get_or_create_async(async_id); */
+/*   _XMP_async_comm_t *async = _XMP_get_current_async(); */
 
 /*   reqs = &async->reqs[async->nreqs]; */
 
@@ -909,7 +909,7 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id){
 static void _XMP_reflect_async_cardinal(_XMP_array_t *a, int async_id)
 {
 
-  _XMP_async_comm_t *async = _XMP_get_or_create_async(async_id);
+  _XMP_async_comm_t *async = _XMP_get_current_async();
   MPI_Request *reqs = &async->reqs[async->nreqs];
   int nreqs = 0;
 
@@ -1046,7 +1046,7 @@ static void _XMP_reflect_async_ordinal(_XMP_array_t *a, int async_id){
 
   }
 
-  _XMP_async_comm_t *async = _XMP_get_or_create_async(async_id);
+  _XMP_async_comm_t *async = _XMP_get_current_async();
   MPI_Request *reqs = &async->reqs[async->nreqs];
 
   // copy to async
@@ -1562,7 +1562,7 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id)
   _XMP_reflect_sched(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, 1);
   _XMP_reflect_start(a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, async_id);
 
-  _XMP_async_comm_t *async = _XMP_get_or_create_async(async_id);
+  _XMP_async_comm_t *async = _XMP_get_current_async();
   _XMP_free(async->reqs); async->reqs = NULL; // reqs not needed in RDMA reflects.
 
   for (int i = 0; i < a->dim; i++){

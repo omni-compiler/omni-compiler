@@ -65,11 +65,11 @@ void xmpf_sync_all_(void)
 
   _count_syncall += 1;
 
-  int status = 0;
-  xmp_sync_all(&status);
+  int state = 0;
+  xmp_sync_all(&state);
 
-  _XMPF_coarrayDebugPrint("SYNCALL done (count:%d, stat:%d)\n",
-                          _count_syncall, status);
+  _XMPF_coarrayDebugPrint("SYNCALL done (count:%d, stat=%d)\n",
+                          _count_syncall, state);
 }
 
 /* entry for automatic syncall at the end of procedures
@@ -80,11 +80,11 @@ void xmpf_sync_all_auto_(void)
 
   _count_syncall += 1;
 
-  int status = 0;
-  xmp_sync_all(&status);
+  int state = 0;
+  xmp_sync_all(&state);
 
-  _XMPF_coarrayDebugPrint("SYNCALL_AUTO done (count:%d, stat:%d)\n",
-                          _count_syncall, status);
+  _XMPF_coarrayDebugPrint("SYNCALL_AUTO done (count:%d, stat=%d)\n",
+                          _count_syncall, state);
 }
 
 void xmpf_sync_all_stat_core_(int *stat, char *msg, int *msglen)
@@ -99,8 +99,8 @@ void xmpf_sync_all_stat_core_(int *stat, char *msg, int *msglen)
     fprintf(stderr, "  -- ignored.\n");
   }
 
-  int status;
-  xmp_sync_all(&status);
+  int state;
+  xmp_sync_all(&state);
 }
 
 
@@ -112,10 +112,11 @@ void xmpf_sync_memory_nostat_(void)
 {
   _XMPF_checkIfInTask("syncmemory nostat");
 
-  int status;
-  xmp_sync_memory(&status);
-  //  if (status != 0)
-  //    _XMPF_coarrayFatal("SYNC MEMORY failed (xmpf_sync_memory_nostat_)");
+  int state;
+  xmp_sync_memory(&state);
+
+  _XMPF_coarrayDebugPrint("SYNC MEMORY done (stat=%d)\n",
+                          state);
 }
 
 void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen)
@@ -125,15 +126,15 @@ void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen)
   static BOOL firstCall = TRUE;
   if (firstCall) {
     firstCall = FALSE;
-    fprintf(stderr, "not supported yet: "
-            "stat= specifier in SYNC MEMORY statement\n");
-    fprintf(stderr, "  -- ignored.\n");
+    fprintf(stderr, "Warning: "
+            "STAT= specifier of SYNC MEMORY is not supported yet and ignored.\n");
   }
 
-  int status;
-  xmp_sync_memory(&status);
-  //  if (status != 0)
-  //    _XMPF_coarrayFatal("SYNC MEMORY failed (xmpf_sync_memory_stat_)");
+  int state;
+  xmp_sync_memory(&state);
+
+  _XMPF_coarrayDebugPrint("SYNC MEMORY (with stat) done (stat=%d)\n",
+                          state);
 }
 
 
@@ -152,10 +153,16 @@ void xmpf_touch_(void)
 
 void xmpf_sync_image_nostat_(int *image)
 {
-  int status;
-  xmp_sync_image(*image, &status);
-  //  if (status != 0)
-  //    _XMPF_coarrayFatal("SYNC IMAGES failed (xmpf_sync_image_nostat_)");
+  int state;
+
+  if (*image <= 0)
+    _XMPF_coarrayFatal("ABORT: illegal image number (%d) found in SYNC IMAGES\n",
+                       *image);
+
+  _XMPF_coarrayDebugPrint("SYNC IMAGES(image=%d) starts...\n", *image);
+  xmp_sync_image(*image, &state);
+  _XMPF_coarrayDebugPrint("SYNC IMAGES(image=%d) ends. (stat=%d)\n",
+                          *image, state);
 }
 
 void xmpf_sync_image_stat_(int *image, int *stat, char *msg, int *msglen)
@@ -163,26 +170,22 @@ void xmpf_sync_image_stat_(int *image, int *stat, char *msg, int *msglen)
   static BOOL firstCall = TRUE;
   if (firstCall) {
     firstCall = FALSE;
-    fprintf(stderr, "not supported yet: "
-            "stat= specifier in SYNC IMAGES (<image>) statement\n");
-    fprintf(stderr, "  -- ignored.\n");
+    fprintf(stderr, "Warning: "
+            "STAT= specifier of SYNC IMAGES is not supported yet and ignored.\n");
   }
 
   _XMPF_checkIfInTask("syncimage with stat");
-
-  int status;
-  xmp_sync_image(*image, &status);
-  //  if (status != 0)
-  //    _XMPF_coarrayFatal("SYNC IMAGES failed (xmpf_sync_image_stat_)");
+  xmpf_sync_image_nostat_(image);
 }
 
 
 void xmpf_sync_images_nostat_(int *images, int *size)
 {
-  int status;
-  xmp_sync_images(*size, images, &status);
-  //  if (status != 0)
-  //    _XMPF_coarrayFatal("SYNC IMAGES failed (xmpf_sync_images_nostat_)");
+  int state;
+
+  _XMPF_coarrayDebugPrint("SYNC IMAGES (1-to-N) starts...\n");
+  xmp_sync_images(*size, images, &state);
+  _XMPF_coarrayDebugPrint("SYNC IMAGES (1-to-N) ends. (stat=%d)\n", state);
 }
 
 void xmpf_sync_images_stat_(int *images, int *size, int *stat,
@@ -191,26 +194,23 @@ void xmpf_sync_images_stat_(int *images, int *size, int *stat,
   static BOOL firstCall = TRUE;
   if (firstCall) {
     firstCall = FALSE;
-    fprintf(stderr, "not supported yet: "
-            "stat= specifier in SYNC IMAGES (<images>) statement\n");
-    fprintf(stderr, "  -- ignored.\n");
+    fprintf(stderr, "Warning: "
+            "STAT= specifier of SYNC IMAGES is not supported yet and ignored.\n");
   }
 
   _XMPF_checkIfInTask("syncimage with stat");
-
-  int status;
-  xmp_sync_images(*size, images, &status);
-  //  if (status != 0)
-  //    _XMPF_coarrayFatal("SYNC IMAGES failed (xmpf_sync_images_stat_)");
+  xmpf_sync_images_nostat_(images, size);
 }
 
 
 void xmpf_sync_allimages_nostat_(void)
 {
-  int status;
-  xmp_sync_images_all(&status);
-  //  if (status != 0)
-  //    _XMPF_coarrayFatal("SYNC IMAGES failed (xmpf_sync_allimages_nostat_)");
+  int state;
+
+  _XMPF_coarrayDebugPrint("SYNC IMAGES (1-to-ALL) starts...\n");
+  xmp_sync_images_all(&state);
+  _XMPF_coarrayDebugPrint("SYNC IMAGES (1-to-ALL) ends. (stat=%d)\n",
+                          state);
 }
 
 void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen)
@@ -218,17 +218,12 @@ void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen)
   static BOOL firstCall = TRUE;
   if (firstCall) {
     firstCall = FALSE;
-    fprintf(stderr, "not supported yet: "
-            "stat= specifier in SYNC IMAGES (*) statement\n");
-    fprintf(stderr, "  -- ignored.\n");
+    fprintf(stderr, "Warning: "
+            "STAT= specifier of SYNC IMAGES is not supported yet and ignored.\n");
   }
 
   _XMPF_checkIfInTask("syncimage with stat");
-
-  int status;
-  xmp_sync_images_all(&status);
-  //  if (status != 0)
-  //    _XMPF_coarrayFatal("SYNC IMAGES failed (xmpf_sync_allimages_stat_)");
+  xmpf_sync_allimages_nostat_();
 }
 
 

@@ -1,0 +1,21 @@
+#OPT= --debug
+#OPT= -g --debug --verbose
+NPE=3
+
+OUT_inq=this_image.x cobound.x image_index0.x image_index1.x #image_index.x
+OUT_bcast = bcast0.x bcast1.x bcast2.x bcast3.x
+OUT_reduct = reduct.x #reduct7.x
+
+
+OUT=$(OUT_inq) $(OUT_bcast) $(OUT_reduct)
+
+
+include ../Makefile.common
+
+#reduct7.result: reduct7.x
+#	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np 7 $< 2>&1 | tee $@
+
+#reduct7.result: reduct7.f90
+#	xmpf90 $(OPT) -o $*.x $<
+#	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np 7 $*.x 2>&1 | tee $@
+

@@ -6,6 +6,8 @@
  */
 package exc.object;
 
+import exc.block.Block;
+
 /**
  * represents constant elements.
  */
@@ -25,7 +27,7 @@ public abstract class XobjConst extends Xobject
     }
 
     @Override
-    public int getFrank()
+    public int getFrank(Block block)
     {
         return 0;
     }

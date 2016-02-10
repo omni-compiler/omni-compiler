@@ -27,6 +27,9 @@ void _XMP_init(int argc, char** argv)
 #if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
     _XMP_onesided_initialize(argc, argv);
 #endif
+#ifdef _XMP_MPI3
+    _XMP_initialize_async_comm_tab();
+#endif
   }
   _XMP_init_world(NULL, NULL);
   _XMP_runtime_working = _XMP_N_INT_TRUE;
