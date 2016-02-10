@@ -373,8 +373,13 @@ extern char *_XMPF_get_coarrayName(void *descPtr);
 
 
 /* xmpf_coarray_lib.c */
-extern int XMPF_this_image, XMPF_num_images;
-extern void _XMPF_set_this_image(void);
+extern int XMPF_initial_this_image, XMPF_initial_num_images;
+extern void _XMPF_set_initial_this_image(void);
+extern void _XMPF_set_initial_num_images(void);
+extern int _XMPF_get_initial_this_image(void);
+extern int _XMPF_get_initial_num_images(void);
+extern int _XMPF_get_current_this_image(void);
+extern int _XMPF_get_current_num_images(void);
 extern int num_images_(void);
 extern int this_image_(void);
 //extern int xmpf_num_nodes_(void);

@@ -936,7 +936,7 @@ int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim)
 
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
 
-  magic = XMPF_this_image - 1;
+  magic = _XMPF_get_current_this_image() - 1;
   for (int i = 0; i < k; i++) {
     size = cinfo->cosize[i];
     magic /= size;
@@ -952,7 +952,7 @@ void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[])
 
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
 
-  magic = XMPF_this_image - 1;
+  magic = _XMPF_get_current_this_image() - 1;
   for (int i = 0; i < *corank; i++) {
     size = cinfo->cosize[i];
     index = magic % size;

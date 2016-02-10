@@ -90,7 +90,8 @@ void _XMPF_coarray_init(void)
   /*
    *  set who-am-i
    */
-  _XMPF_set_this_image();
+  _XMPF_set_initial_this_image();
+  _XMPF_set_initial_num_images();
 
   /*
    * read environment variables
@@ -106,7 +107,7 @@ void _XMPF_coarray_init(void)
     work = strdup(env1);
     tok = strtok(work, delim);
     for (i = 1; tok != NULL; i++, tok = strtok(NULL, delim)) {
-      if (XMPF_this_image == i)
+      if (_XMPF_get_current_this_image() == i)
         _set_coarrayMsg(atoi(tok));
     }
   }
@@ -188,10 +189,10 @@ int _XMPF_nowInTask()
 void _XMPF_checkIfInTask(char *msgopt)
 {
   if (_XMPF_nowInTask())
-    _XMPF_coarrayFatal("current restriction: cannot use %s in any task construct",
+    _XMPF_coarrayFatal("current restriction: "
+                       "cannot use %s in any task construct\n",
                        msgopt);
 }
-
 
 void xmpf_coarray_fatal_with_len_(char *msg, int *msglen)
 {
@@ -204,7 +205,7 @@ void _XMPF_coarrayFatal(char *format, ...)
   va_list list;
   va_start(list, format);
   vsprintf(work, format, list);
-  fprintf(stderr, "CAF[%d] %s", XMPF_this_image, work);
+  fprintf(stderr, "CAF[%d] %s", _XMPF_get_current_this_image(), work);
   va_end(list);
 
   xmpf_finalize_each__();
@@ -219,7 +220,7 @@ void _XMPF_coarrayDebugPrint(char *format, ...)
   va_list list;
   va_start(list, format);
   vsprintf(work, format, list);
-  fprintf(stderr, "CAF[%d] %s", XMPF_this_image, work);
+  fprintf(stderr, "CAF[%d] %s", _XMPF_get_current_this_image(), work);
   va_end(list);
 }
 

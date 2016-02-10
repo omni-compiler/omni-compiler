@@ -363,8 +363,8 @@ public class omompx
 
       if (containsCoarray || cascadeMode || onlyCafMode) {
         if (cascadeMode || onlyCafMode) {
-          System.out.println("File to be translated as a CAF Program: " +
-                             xobjFile.getSourceFileName());
+          System.out.println("File " + xobjFile.getSourceFileName() +
+                             " is being translated as a CAF Program.");
         }
         // Coarray Fortran pass#1
         exc.xmpF.XMPtransCoarray
@@ -385,8 +385,8 @@ public class omompx
 
       if ((!containsCoarray || cascadeMode) && !onlyCafMode) {
         if (cascadeMode) {
-          System.out.println("File to be translated as an XMP/F Program: " +
-                             xobjFile.getSourceFileName());
+          System.out.println("File " +  xobjFile.getSourceFileName() +
+                             " is being translated as an XMP/F Program.");
         }
         // XMP Fortran
         exc.xmpF.XMPtranslate
