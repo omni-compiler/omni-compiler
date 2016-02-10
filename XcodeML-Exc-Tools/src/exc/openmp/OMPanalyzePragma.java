@@ -279,6 +279,8 @@ public class OMPanalyzePragma
             break;
         case TASKWAIT:
             break;
+        case TASKYIELD:
+            break;
         default:
             OMP.fatal("unknown OpenMP pramga = " + p);
             break;

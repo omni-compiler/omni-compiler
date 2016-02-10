@@ -743,6 +743,12 @@ ompc_taskwait()
 }
 
 void
+ompc_taskyield()
+{
+    ABT_thread_yield();
+}
+
+void
 ompc_current_thread_barrier()
 {
     int id;

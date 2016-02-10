@@ -38,6 +38,7 @@ public enum OMPpragma
     PARALLEL_FOR,       /* parallel <clause_list> */
     PARALLEL_SECTIONS,  /* parallel <clause_list> */
     TASKWAIT,           /* taskwait */
+    TASKYIELD,          /* taskyield */
     FUNCTION_BODY,
     
     /*

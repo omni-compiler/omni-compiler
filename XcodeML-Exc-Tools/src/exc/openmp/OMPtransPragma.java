@@ -34,6 +34,7 @@ public class OMPtransPragma
     public String parallelTaskFunc;
     public String parallelTaskIfFunc;
     public String taskwaitFunc;
+    public String taskyieldFunc;
     	
     public String defaultShedFunc;
     public String blockShedFunc;
@@ -134,6 +135,7 @@ public class OMPtransPragma
             parallelTaskFunc = "ompc_do_task";
             parallelTaskIfFunc = "ompc_do_task_if";
             taskwaitFunc = "ompc_taskwait";
+            taskyieldFunc = "ompc_taskyield";
     
             defaultShedFunc = "ompc_default_sched";
             blockShedFunc = "ompc_static_bsched";
@@ -376,11 +378,19 @@ public class OMPtransPragma
         case TASKWAIT:
             return transTaskwait(pb, i);
 
+        case TASKYIELD:
+            return transTaskyield(pb, i);
+
         default:
              OMP.fatal("unknown pragma");
 //             ignore it
             return null;
         }
+    }
+
+    private Block transTaskyield(PragmaBlock pragmaBlock, OMPinfo info)
+    {
+        return Bcons.Statement(OMPfuncIdent(taskyieldFunc).Call(null));
     }
 
     private Block transTaskwait(PragmaBlock pragmaBlock, OMPinfo info)

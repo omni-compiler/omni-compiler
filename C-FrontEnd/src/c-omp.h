@@ -25,7 +25,8 @@ enum OMP_pragma {
     OMP_PARALLEL_SECTIONS = 13, 	/* parallel <clause_list> */
     
     OMP_TASK = 14,        /* task <clause list> */
-    OMP_TASKWAIT = 15     /* taskwait */
+    OMP_TASKWAIT = 15,    /* taskwait */
+    OMP_TASKYIELD = 16    /* taskyield */
 };
 
 #define IS_OMP_PRAGMA_CODE(code) (((int)(code)) < 100)
