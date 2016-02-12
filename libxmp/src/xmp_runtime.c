@@ -30,6 +30,7 @@ void _XMP_init(int argc, char** argv)
 #ifdef _XMP_MPI3
     _XMP_initialize_async_comm_tab();
 #endif
+    xmp_reduce_initialize();
   }
   _XMP_init_world(NULL, NULL);
   _XMP_runtime_working = _XMP_N_INT_TRUE;

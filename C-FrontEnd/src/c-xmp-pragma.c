@@ -49,7 +49,6 @@ static CExpr* parse_REDUCTION_clause();
 static CExpr* parse_BARRIER_clause();
 static CExpr* parse_BCAST_clause();
 static CExpr* parse_GMOVE_clause();
-
 static CExpr* parse_COARRAY_clause();
 static CExpr* parse_COARRAY_clause_p1();
 static CExpr* parse_COARRAY_clause_p2();
@@ -64,7 +63,6 @@ static CExpr* parse_WIDTH_list();
 static CExpr* parse_ASYNC_clause();
 static CExpr* parse_WAIT_ASYNC_clause();
 static CExpr* parse_TEMPLATE_FIX_clause();
-
 static CExpr* parse_REFLECT_INIT_clause();
 static CExpr* parse_REFLECT_DO_clause();
 
@@ -1345,25 +1343,19 @@ CExpr *parse_Reduction_opt()
     list = EMPTY_LIST;
 
     do {
-
         pg_get_token();
-
 	CExpr *specList = XMP_LIST1(pg_tok_val);
         CExpr *locVarList = EMPTY_LIST;
 
 	pg_get_token();
-
 	if (loc_var_flag){
-
 	  if (pg_tok != '/'){
 	    XMP_Error0("'/' is expected after <reduction-variable>");
 	    return NULL;
 	  }
 
           do {
-
             pg_get_token();
-
             if (pg_tok == PG_IDENT)
               locVarList = exprListAdd(locVarList, pg_tok_val);
 	    /* else if (pg_tok() == '*'){  // Pointer Reference */
@@ -1382,14 +1374,11 @@ CExpr *parse_Reduction_opt()
               XMP_Error0("'/' or ',' is expected after <reduction-spec>");
 	      return NULL;
 	    }
-
           } while (1);
 
 	  list = exprListAdd(list, exprListAdd(specList, locVarList));
-
           pg_get_token();
 	  if (pg_tok != ',') break;
-
 	  pg_get_token();
 	}
 	else
@@ -1435,12 +1424,8 @@ CExpr *parse_Reduction_ref()
     case PG_OROR:
 	op = XMP_DATA_REDUCE_LOR; break;
     case PG_IDENT:
-	if(PG_IS_IDENT("max")) op = XMP_DATA_REDUCE_MAX;
+	if(PG_IS_IDENT("max"))      op = XMP_DATA_REDUCE_MAX;
 	else if(PG_IS_IDENT("min")) op = XMP_DATA_REDUCE_MIN;
-	/* else if(PG_IS_IDENT("firstmax")) op = XMP_DATA_REDUCE_FIRSTMAX; */
-	/* else if(PG_IS_IDENT("firstmin")) op = XMP_DATA_REDUCE_FIRSTMIN; */
-	/* else if(PG_IS_IDENT("lastmax")) op = XMP_DATA_REDUCE_LASTMAX; */
-	/* else if(PG_IS_IDENT("lastmin")) op = XMP_DATA_REDUCE_LASTMIN; */
 	else goto unknown_err;
 	break;
     default:
@@ -1448,13 +1433,31 @@ CExpr *parse_Reduction_ref()
 	XMP_Error0("unknown operation in reduction clause");
 	goto ret;
     }
+    
     pg_get_token();
     if(pg_tok != ':') goto err;
     pg_get_token();
     list = EMPTY_LIST;
     while(pg_tok == PG_IDENT){
-        list = exprListAdd(list, XMP_LIST2(pg_tok_val, EMPTY_LIST));
+      list = exprListAdd(list, XMP_LIST2(pg_tok_val, EMPTY_LIST));
+      //      list = exprListAdd(list, pg_tok_val);
 	pg_get_token();
+	if(pg_tok == '/'){
+	  if(op == XMP_DATA_REDUCE_MAX)      op = XMP_DATA_REDUCE_MAXLOC;
+	  else if(op == XMP_DATA_REDUCE_MIN) op = XMP_DATA_REDUCE_MINLOC;
+	  else goto err;
+	  do{
+	    pg_get_token();
+	    CExpr *v = pg_tok_val;
+	    pg_get_token();
+	    if(pg_tok != '[')
+	      list = exprListAdd(list, v);
+	    else
+	      list = exprListAdd(list, XMP_LIST2(v, parse_XMP_C_subscript_list()));
+	  } while(pg_tok == ',');
+	  if(pg_tok != '/') goto err;
+	  pg_get_token();
+	}
 	if(pg_tok != ',') break;
 	pg_get_token();
     }

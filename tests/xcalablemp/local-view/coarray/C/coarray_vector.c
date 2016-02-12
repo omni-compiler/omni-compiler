@@ -206,6 +206,11 @@ void check_4(int me){
   else return_val = 1;
 }
 
+void bug_107()
+{
+  
+}
+
 int main(){
   int me;
   
@@ -224,6 +229,8 @@ int main(){
   communicate_4(me);
   check_4(me);
 
+  bug_107();
+  
 #pragma xmp barrier
 #pragma xmp reduction(MAX:return_val)
   return return_val;

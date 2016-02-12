@@ -261,6 +261,7 @@ extern void _XMPF_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
 					   void *addr, int count, int datatype, int op,
 					   int num_locs, void **loc_vars, int *loc_types);
 extern void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op);
+extern void xmp_reduce_initialize();
 
 // xmp_reflect.c
 extern void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
