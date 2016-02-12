@@ -1796,7 +1796,7 @@ public class XMPtranslateLocalPragma {
     return Xcons.binaryOp(Xcode.MUL_EXPR, offset_size, Xcons.SizeOf(varType.getArrayElementType()));
   }
   
-  private void createLocReduction(PragmaBlock pb, XobjList reductionRef, Xobject reductionOp) throws XMPexception {
+  private void createLocReduction(PragmaBlock pb, XobjList reductionRef, Xobject reductionOp, XobjList onRef) throws XMPexception {
     Xobject reductionVariable = reductionRef.getArg(1).getArg(0).getArg(0);
     int numLocationVariables = reductionRef.getArg(1).Nargs() - 1;
 
@@ -1858,7 +1858,24 @@ public class XMPtranslateLocalPragma {
     reductionBody.add(_globalDecl.createFuncCallBlock("xmp_reduce_loc_execute", args));
 
     // Output
-    pb.replace(Bcons.COMPOUND(reductionBody));
+    Block reductionBodyBlock = null;
+    if (onRef != null && onRef.Nargs() != 0){
+      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
+      String execFuncSuffix = execOnRefArgs.getFirst();
+      boolean splitComm     = execOnRefArgs.getSecond().booleanValue();
+      XobjList execFuncArgs = execOnRefArgs.getThird();
+      if(splitComm){
+        reductionBodyBlock = createCommTaskBlock(reductionBody, execFuncSuffix, execFuncArgs);
+      }
+      else{
+        reductionBodyBlock = Bcons.COMPOUND(reductionBody);
+      }
+    }
+    else{
+      reductionBodyBlock = Bcons.COMPOUND(reductionBody);
+    }
+    
+    pb.replace(reductionBodyBlock);
   }
   
   private void translateReduction(PragmaBlock pb) throws XMPexception {
@@ -1882,18 +1899,18 @@ public class XMPtranslateLocalPragma {
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
     XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
 
+    // create function call
+    XobjList onRef = (XobjList)reductionDecl.getArg(1);
+    
     // When MAXLOC or MINLOC, another flow, which does not use a variadic function in runtime, is executed.
     if(reductionOp.getInt() == XMPcollective.REDUCE_MAXLOC || reductionOp.getInt() == XMPcollective.REDUCE_MINLOC){
-      createLocReduction(pb, reductionRef, reductionOp);
+      createLocReduction(pb, reductionRef, reductionOp, onRef);
       return;
     }
 
+    Block reductionFuncCallBlock = null;
     Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false, null, null);
     String reductionFuncType = createReductionFuncType(reductionRef, pb, isACC);
-
-    // create function call
-    Block reductionFuncCallBlock = null;
-    XobjList onRef = (XobjList)reductionDecl.getArg(1);
 
     if (onRef == null || onRef.Nargs() == 0){
       reductionFuncCallBlock = createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList);
