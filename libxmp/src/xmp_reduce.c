@@ -1,8 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
 #ifndef MPI_PORTABLE_PLATFORM_H
 #define MPI_PORTABLE_PLATFORM_H
 #endif 
@@ -13,11 +8,6 @@
 #include <float.h>
 #include "mpi.h"
 #include "xmp_internal.h"
-
-#ifdef _XMP_MPI3
-extern _Bool is_async;
-extern int _async_id;
-#endif
 
 void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
   switch (datatype) {
@@ -239,24 +229,21 @@ void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int da
   _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
   _XMP_setup_reduce_op(&mpi_op, op);
 
-  // reduce
 #ifdef _XMP_MPI3
-      if (is_async){
-	_XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
-	MPI_Iallreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm),
-		       &async->reqs[async->nreqs]);
-	async->nreqs++;
-      }
-      else
+  if(xmp_is_async()){
+    _XMP_async_comm_t *async = _XMP_get_current_async();
+    MPI_Iallreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm),
+		   &async->reqs[async->nreqs]);
+    async->nreqs++;
+  }
+  else
 #endif
-	MPI_Allreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
+    MPI_Allreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 }
 
-// _XMP_M_REDUCE_EXEC(addr, count, datatype, op) is in xmp_comm_macro.h
-
-void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
-                                   void *addr, int count, int datatype, int op,
-                                   int num_locs, ...) {
+void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count,
+				   int datatype, int op, int num_locs, ...)
+{
   if (count == 0) {
     return; // FIXME not good implementation
   }

@@ -972,8 +972,7 @@ CExpr *parse_XMP_align_source_list()
     return NULL;
 }
 
-
-#ifdef not
+#if isnot
 CExpr *parse_XMP_C_subscript_list()
 {
     CExpr* list;
@@ -1125,6 +1124,61 @@ CExpr *parse_COL2_name_list()
     return NULL;
 }
 
+static CExpr* parse_XMP_C_subscript_list()
+{
+  CExpr* list;
+  CExpr *v1,*v2;
+
+  list = EMPTY_LIST;
+
+  if(pg_tok != '[') {
+    addError(NULL,"parse_XMP_C_subscript_list: first token= '['");
+  }
+  pg_get_token();
+
+  while(1){
+    v1 = v2 = NULL;
+    switch(pg_tok){
+    case ']':  goto err;
+    case ',':  goto err;
+      break;
+    case ':':
+      v1 = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      break;
+    default:
+      v1 = pg_parse_expr();
+    }
+
+    if(pg_tok == ':') goto subarray;
+    list = exprListAdd(list, v1);
+    goto next;
+
+  subarray:
+    pg_get_token();
+    if(pg_tok != ']'){
+      v2 = pg_parse_expr();
+    }
+    list = exprListAdd(list, XMP_LIST2(v1,v2));
+
+  next:
+    if(pg_tok == ']'){
+      pg_get_token();
+    }else goto err;
+
+    if(pg_tok != '['){
+      break;
+    }else{
+      pg_get_token();
+    }
+  }
+
+  return list;
+
+ err:
+  addError(NULL, "Syntax error in scripts of XMP directive");
+  return NULL;
+}
+
 CExpr *parse_name_list()
 {
     CExpr* list;
@@ -1133,10 +1187,15 @@ CExpr *parse_name_list()
     if (pg_tok == '(') {
         pg_get_token();
 	while(pg_tok == PG_IDENT){
-	    list = exprListAdd(list, pg_tok_val);
-	    pg_get_token();
-	    if(pg_tok != ',') break;
-	    pg_get_token();
+	  CExpr *v = pg_tok_val;
+	  pg_get_token();
+	  if(pg_tok != '[')
+	    list = exprListAdd(list, v);
+	  else
+	    list = exprListAdd(list, XMP_LIST2(v, parse_XMP_C_subscript_list()));
+
+	  if(pg_tok != ',') break;
+	  pg_get_token();
 	}
 	if (pg_tok == ')'){
 	  pg_get_token();

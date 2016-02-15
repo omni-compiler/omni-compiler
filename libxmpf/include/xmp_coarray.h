@@ -59,51 +59,7 @@
       include "xmp_coarray_alloc.h"
 
 !! reduction subroutines
-!!      include "xmp_coarray_reduction.h"
-      interface co_sum
-         subroutine co_sum_i4(source, result)
-           integer(4), intent(in)  :: source
-           integer(4), intent(out) :: result
-         end subroutine co_sum_i4
-         subroutine co_sum_r4(source, result)
-           real(4), intent(in)  :: source
-           real(4), intent(out) :: result
-         end subroutine co_sum_r4
-         subroutine co_sum_r8(source, result)
-           real(8), intent(in)  :: source
-           real(8), intent(out) :: result
-         end subroutine co_sum_r8
-      end interface
-
-      interface co_max
-         subroutine co_max_i4(source, result)
-           integer(4), intent(in)  :: source
-           integer(4), intent(out) :: result
-         end subroutine co_max_i4
-         subroutine co_max_r4(source, result)
-           real(4), intent(in)  :: source
-           real(4), intent(out) :: result
-         end subroutine co_max_r4
-         subroutine co_max_r8(source, result)
-           real(8), intent(in)  :: source
-           real(8), intent(out) :: result
-         end subroutine co_max_r8
-      end interface
-
-      interface co_min
-         subroutine co_min_i4(source, result)
-           integer(4), intent(in)  :: source
-           integer(4), intent(out) :: result
-         end subroutine co_min_i4
-         subroutine co_min_r4(source, result)
-           real(4), intent(in)  :: source
-           real(4), intent(out) :: result
-         end subroutine co_min_r4
-         subroutine co_min_r8(source, result)
-           real(8), intent(in)  :: source
-           real(8), intent(out) :: result
-         end subroutine co_min_r8
-      end interface
+      include "xmp_coarray_reduction.h"
 
 !! hidden utilities
       integer, external :: xmpf_coarray_allocated_bytes

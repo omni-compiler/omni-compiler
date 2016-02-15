@@ -69,14 +69,7 @@ public class XMPcoindexObj {
   }
 
   private Xobject _getSubscripts(Xobject obj) {
-    Xobject varRef = obj.getArg(0).getArg(0);
-    if (varRef.Opcode() == Xcode.F_ARRAY_REF)        // subarray
-      return varRef.getArg(1);
-    else if (varRef.Opcode() == Xcode.VAR)    // scalar or whole array
-      return null;
-    else
-      XMP.fatal("broken Xcode to describe a coindexed object");
-    return null;
+    return obj.getSubscripts();
   }
 
   private Xobject _getCosubscripts(Xobject obj) {
@@ -439,7 +432,22 @@ public class XMPcoindexObj {
   //------------------------------
   public Boolean isScalarIndex(int i) {
     Xobject subscr = subscripts.getArg(i);
-    return (subscr.Opcode() == Xcode.F_ARRAY_INDEX);
+    if (subscr.Opcode() != Xcode.F_ARRAY_INDEX)
+      return (subscr.getFrank(getBlock()) == 0);
+    return false;
+  }
+
+  public Boolean isVectorIndex(int i) {
+    Xobject subscr = subscripts.getArg(i);
+    if (subscr.Opcode() != Xcode.F_ARRAY_INDEX) {
+      switch (subscr.getFrank(getBlock())) {
+      case 0: return false;
+      case 1: return true;
+      default:
+        XMP.fatal("unexpected subscript expression: "+subscr);
+      }
+    }
+    return false;
   }
 
   public Boolean isTripletIndex(int i) {

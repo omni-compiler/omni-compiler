@@ -42,12 +42,12 @@ typedef struct _XMP_nodes_type {
   // enable when is_member is true
   int comm_rank;
   _XMP_comm_t *comm;
-  // -----------------------------
+  _XMP_comm_t *subcomm;  // enable when attr is _XMP_ENTIRE_NODES
+  int use_subcomm;       // enable when attr is _XMP_ENTIRE_NODES
 
   struct _XMP_nodes_type *inherit_nodes;
   // enable when inherit_nodes is not NULL
   _XMP_nodes_inherit_info_t *inherit_info;
-  // -------------------------------------
   _XMP_nodes_info_t info[1];
 } _XMP_nodes_t;
 
@@ -373,18 +373,19 @@ typedef struct _XMP_async_gmove {
 } _XMP_async_gmove_t;
 
 typedef struct _XMP_async_comm {
-  int async_id;
-  int nreqs;
+  int   async_id;
+  int   nreqs;
+  int   nnodes;
+  _Bool is_used;
   MPI_Request *reqs;
+  _XMP_nodes_t **node;
   _XMP_async_gmove_t *gmove;
   struct _XMP_async_comm *next;
 } _XMP_async_comm_t;
 
 #define _XMP_ASYNC_COMM_SIZE 511
-
-#define _XMP_MAX_ASYNC_REQS (4 * _XMP_N_MAX_DIM * 10)
-
-
+#define _XMP_MAX_ASYNC_REQS  (4 * _XMP_N_MAX_DIM * 10)
+#define _XMP_MAX_ASYNC_NODES (20)
 
 typedef struct _XMP_gpu_array_type {
   int gtol;

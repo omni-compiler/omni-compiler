@@ -359,8 +359,13 @@ public class omompx
       caf_translator0.finish();
 
       Boolean cascadeMode = "1".equals(System.getenv("XMP_CASCADE"));
+      Boolean onlyCafMode = "1".equals(System.getenv("XMP_ONLYCAF"));
 
-      if (containsCoarray || cascadeMode) {
+      if (containsCoarray || cascadeMode || onlyCafMode) {
+        if (cascadeMode || onlyCafMode) {
+          System.out.println("File to be translated as a CAF Program: " +
+                             xobjFile.getSourceFileName());
+        }
         // Coarray Fortran pass#1
         exc.xmpF.XMPtransCoarray
           caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1);
@@ -378,7 +383,11 @@ public class omompx
         caf_translator2.finish();
       }
 
-      if (!containsCoarray || cascadeMode) {
+      if ((!containsCoarray || cascadeMode) && !onlyCafMode) {
+        if (cascadeMode) {
+          System.out.println("File to be translated as an XMP/F Program: " +
+                             xobjFile.getSourceFileName());
+        }
         // XMP Fortran
         exc.xmpF.XMPtranslate
           xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);

@@ -1,8 +1,8 @@
 XFC     = xmpf90
 XRUN    = mpiexec
-EXES    = exit.x module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x 397.x 412.x
+EXES    = module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x 397.x 412.x
 
-all: module_test.x exit.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
+all: module_test.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
      103.x 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o save_desc.x schedule_default.x task001.x 152.x 397.x
 
 .SUFFIXES: .x .o .f90
@@ -32,12 +32,6 @@ schedule_default.x: schedule_default.F90
 
 module_test0.x: module0.o main.o
 	$(XFC) -o module_test0.x module0.o main.o
-
-exit.x: exit.o
-	$(XFC) -o exit.x exit.o
-
-exit.o: exit.f90
-	$(XFC) -c exit.f90
 
 module_test1.o: module_test2.o module_test1.f90
 	$(XFC) -c module_test1.f90
@@ -118,7 +112,6 @@ refobj.x: refobj.f90
 
 run:
 	$(XRUN) -np 2 ./module_test.x
-	$(XRUN) -np 2 ./exit.x
 	$(XRUN) -np 2 ./module_test0.x
 	$(XRUN) -np 4 ./arg.x
 	export XMP_NODE_SIZE0=2; \

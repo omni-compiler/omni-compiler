@@ -12,8 +12,8 @@ void xmpf_reflect__(_XMP_array_t **a_desc)
   _XMP_reflect__(*a_desc);
 }
 
-
 void xmpf_reflect_async__(_XMP_array_t **a_desc, int *async_id)
 {
   _XMP_reflect_async__(*a_desc, *async_id);
 }
+

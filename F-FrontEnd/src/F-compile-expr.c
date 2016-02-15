@@ -440,7 +440,7 @@ compile_expression(expr x)
                     return compile_substr_ref(x);
                 } else {
                     if(id)
-                        error("%s is not array nor character", ID_NAME(id));
+                        error("%s is not an array nor a character", ID_NAME(id));
                     else
                         error("not array nor character", ID_NAME(id));
                     goto err;
@@ -2000,7 +2000,7 @@ compile_coarray_ref(expr coarrayRef){
   tp = get_rightmost_id_type(obj);
   if (!tp) return NULL;
   if (!tp->codims){
-    error_at_node(coarrayRef, "Only coarrays can be coindexed.");
+    error_at_node(coarrayRef, "The variable is not declared as a coarray.");
     return NULL;
   }
 

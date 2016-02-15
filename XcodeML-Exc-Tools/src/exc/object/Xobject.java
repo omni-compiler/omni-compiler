@@ -339,10 +339,20 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
      *     Rank of a subarray is equal to or less than the rank of
      *     the host array.
      */
-    public int getFrank()
+    public int getFrank(Block block)
     {
-        throw new UnsupportedOperationException(toString());
+        Xobject subscripts = getSubscripts();
+        if (subscripts == null)
+          throw new UnsupportedOperationException(toString());
+        return subscripts.getFrank(block);
     }
+
+    public Xobject getSubscripts()
+    {
+        Xobject varRef = getArg(0).getArg(0);
+        return varRef.getSubscripts();
+    }
+
 
     /**
      * Return argument list in XobjArgs.
