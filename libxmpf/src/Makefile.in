@@ -465,20 +465,6 @@ TYPE_INT64 = @TYPE_INT64@
 VERSION = @VERSION@
 XMPC_DEF = @XMPC_DEF@
 XMPF_DEF = @XMPF_DEF@
-XMPPKG_CHANGELOG_DATE = @XMPPKG_CHANGELOG_DATE@
-XMPPKG_GROUP = @XMPPKG_GROUP@
-XMPPKG_LICENSE = @XMPPKG_LICENSE@
-XMPPKG_MAINTAINER = @XMPPKG_MAINTAINER@
-XMPPKG_NAME = @XMPPKG_NAME@
-XMPPKG_PACKAGER = @XMPPKG_PACKAGER@
-XMPPKG_PREFIX = @XMPPKG_PREFIX@
-XMPPKG_PRIORITY = @XMPPKG_PRIORITY@
-XMPPKG_RELEASE = @XMPPKG_RELEASE@
-XMPPKG_SECTION = @XMPPKG_SECTION@
-XMPPKG_SUMMARY = @XMPPKG_SUMMARY@
-XMPPKG_URL = @XMPPKG_URL@
-XMPPKG_VENDOR = @XMPPKG_VENDOR@
-XMPPKG_VERSION = @XMPPKG_VERSION@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
 abs_builddir = @abs_builddir@
@@ -890,7 +876,7 @@ xmpf_main.o: xmpf_main.F90
 	. $< $(TARGET) > $@
 
 %.F90: %.F90.sh
-	. $< > $@
+	. $< $(TARGET) > $@
 
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || $(MKDIR_P) $(DESTDIR)$(libdir)
@@ -900,7 +886,6 @@ clean-local:
 	rm -f *~ *.core core core.*
 	rm -f xmpf_coarray_get_wrap.f90
 	rm -f xmpf_coarray_alloc_wrap.f90
-	rm -f xmpf_coarray_reduction.f90
 	rm -f xmpf_coarray_reduction.F90
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
