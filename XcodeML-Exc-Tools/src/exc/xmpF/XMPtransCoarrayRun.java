@@ -98,13 +98,6 @@ public class XMPtransCoarrayRun
     traverseCountName = TRAV_COUNTCOARRAY_PREFIX + postfix;
     traverseInitName = TRAV_INITCOARRAY_PREFIX + postfix;
 
-    _setLocalCoarrays();
-    /* visibleCoarrays will be set after run1 */
-
-    if (pass == 1) {
-      _check_ifIncludeXmpLib();
-    }
-
     XMP.exitByError();   // exit if error was found.
   }
 
@@ -240,22 +233,28 @@ public class XMPtransCoarrayRun
       }
     }
 
-    // resolve the problem on static coarrays in a module
-    // - move all coarrays to use-associating procedures
-    // - move static coarrays to directly host-associated procedures
+    // To resolve such a restricton on coarrays in a module, that the 
+    // Cray's POINTER statement cannnot be used in a module in Fujitsu
+    // Fortran, the definition of a coarray in the module will be moved
+    // into all procedures that uses the module and all module procedures
+    // of the module.
+    // ACTION here:
+    // - copy all coarrays defined in the modules I am using
+    // - copy all explicit-shaped coarrays defind in my host (parent)
+    //   module if I am a module procedure
     for (XMPcoarray coarray: useAssociatedCoarrays) {
       XMPcoarray coarray2 = _copyCoarrayToMergeIn(coarray);
       localCoarrays.add(coarray2);
     }
     if (hostModuleRun != null && hostProcedureRun == null) {
-      // found a module procedure
+      // found I am a module procedure
       for (XMPcoarray coarray: hostModuleRun.localCoarrays) {
         if (coarray.isExplicitShape()) {
           XMPcoarray coarray2 = _copyCoarrayToMergeIn(coarray);
           localCoarrays.add(coarray2);
         }
       }
-    }      
+    }
 
     // divide localCoarrays into four types
     staticLocalCoarrays = new ArrayList<XMPcoarray>();
@@ -302,11 +301,12 @@ public class XMPtransCoarrayRun
   /*  set coarrays declared in used modules as useAssociatedCoarrays
    */
   private void _setVisibleCoarrays() {
-    /*  set visible coarrays
+    /*  set visible coarrays from host-associated parent procedures.
      *   1. add coarrays declared in the current procedure,
      *   2. add all use-associated coarrays, and
      *   3. add all visible coarrays of the host-associated procedure
      *  A name of coarray will be searched in this priority.
+     *  (DOUBTFUL: use-association might already be solved into local?)
      */
     visibleCoarrays = new ArrayList<XMPcoarray>();
     _mergeCoarraysByName(visibleCoarrays, localCoarrays);
@@ -356,6 +356,11 @@ public class XMPtransCoarrayRun
     // error check for each coarray declaration
     //    for (XMPcoarray coarray: localCoarrays)
     //      coarray.errorCheck();
+
+    _setLocalCoarrays();
+    /* visibleCoarrays will be set after run1 */
+
+    _check_ifIncludeXmpLib();
 
     if (_isModule())
       run1_module();
@@ -430,10 +435,14 @@ public class XMPtransCoarrayRun
    */
   public void run2() {
 
-    if (_isModule()) {
-      // convert specification and declaration part
-      transModule_staticLocal2();
-    }
+    if (!_isModule())
+      return;                 // do nothing
+
+    _setLocalCoarrays();
+    /* visibleCoarrays will be set after run1 */
+
+    // convert specification and declaration part
+    transModule_staticLocal2();
   }
 
 
@@ -1985,12 +1994,12 @@ public class XMPtransCoarrayRun
     }
 
     /* check a typical name defined in xmp_coarray.h */
-    //    Ident id = def.findIdent("xmpf_coarray_get0d");
-    //    if (id == null) {
-    //      /* xmpf_lib.h seems not included. */
-    //      XMP.error("current restriction: " + 
-    //                "\'xmp_coarray.h\' must be included to use coarray features.");
-    //    }
+    Ident id = def.findIdent("xmpf_coarray_get0d");
+    if (id == null) {
+      /* xmpf_lib.h seems not included. */
+      XMP.error("current restriction: " + 
+                "\'xmp_coarray.h\' must be included to use coarray features.");
+    }
   }
 
   private boolean _isCoarrayReferred() {

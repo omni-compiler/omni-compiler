@@ -11,7 +11,8 @@ void _XMPF_set_initial_this_image()
   int rank;
 
   if (MPI_Comm_rank(MPI_COMM_WORLD, &rank) != 0)
-    _XMPF_coarrayFatal("INTERNAL ERROR: illegal node rank of mine");
+    _XMPF_coarrayFatal("INTERNAL ERROR: "
+                       "MPI_Comm_rank(MPI_COMM_WORLD, ) failed");
 
   XMPF_initial_this_image = rank + 1;
 }
@@ -21,7 +22,8 @@ void _XMPF_set_initial_num_images()
   int size;
 
   if (MPI_Comm_size(MPI_COMM_WORLD, &size) != 0)
-    _XMPF_coarrayFatal("INTERNAL ERROR: illegal node size of COMM_WORLD");
+    _XMPF_coarrayFatal("INTERNAL ERROR: "
+                       "MPI_Comm_size(MPI_COMM_WORLD, ) failed");
   XMPF_initial_num_images = size;
 }
 
