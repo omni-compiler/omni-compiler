@@ -746,6 +746,8 @@ public class XMPtransPragma
     Xobject left = i.getGmoveLeft();
     Xobject right = i.getGmoveRight();
     
+    if (left == null && right == null) return pb.getBody().getHead();
+
     Ident left_desc = buildGmoveDesc(left, bb, pb);
     Ident right_desc = buildGmoveDesc(right, bb, pb);
 

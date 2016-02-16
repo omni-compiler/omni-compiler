@@ -1670,7 +1670,7 @@ public class XMPtranslateLocalPragma {
     forBlock.getCondBBlock().setExpr(Xcons.binaryOp(Xcode.LOG_LT_EXPR, loopIndex, parallelCondId.Ref()));
   }
 
-  private Ident declIdentWithBlock(Block b, String identName, Xtype type) {
+  static Ident declIdentWithBlock(Block b, String identName, Xtype type) {
 
     Block bb = getOuterSchedPoint(b);
 
@@ -2572,7 +2572,8 @@ public class XMPtranslateLocalPragma {
 
     Xobject rightExpr = assignStmt.right();
     XMPpair<XMPalignedArray, XobjList> rightExprInfo = getXMPalignedArrayExpr(pb, assignStmt.right());
-    XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
+    XMPalignedArray rightAlignedArray = null;
+    if (rightExprInfo != null) rightAlignedArray = rightExprInfo.getFirst();
 
     boolean leftHasSubArrayRef = (leftExpr.Opcode() == Xcode.SUB_ARRAY_REF);
     boolean rightHasSubArrayRef = (rightExpr.Opcode() == Xcode.SUB_ARRAY_REF);
@@ -2686,9 +2687,64 @@ public class XMPtranslateLocalPragma {
 	    // }
           }
         }
-      } else {
+      }
+      else { // leftHasSubArrayRef && !rightHasSubArrayRef
+        if (leftAlignedArray == null){
+          if (rightAlignedArray == null){
+	    gmoveFuncCallBlock = Bcons.COMPOUND(gmoveBody);
+	  }
+	  else {
+            Xtype arrayElmtType = rightAlignedArray.getType();
+
+            XobjList gmoveFuncArgs = Xcons.List(rightAlignedArray.getDescId().Ref());
+
+            if (arrayElmtType.getKind() == Xtype.BASIC) {
+              gmoveFuncArgs.add(XMP.createBasicTypeConstantObj(arrayElmtType));
+            }
+	    else {
+              gmoveFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
+            }
+            gmoveFuncArgs.add(Xcons.SizeOf(arrayElmtType));
+
+            gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+            gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    gmoveFuncArgs.add(gmoveClause);
+
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "LSECTION_GSCALAR", gmoveFuncArgs);
+	  }
+	}
+	else {
+          if (rightAlignedArray == null){
+	    Block arrayBlock = convertGmoveToArray(pb, leftAlignedArray, leftExpr, rightExpr);
+	    pb.replace(arrayBlock);
+	    translateArray((PragmaBlock)arrayBlock);
+	    return;
+	  }
+	  else { // G(:) = g(i)
+            Xtype arrayElmtType = leftAlignedArray.getType();
+
+            XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref(),
+                                                rightAlignedArray.getDescId().Ref());
+
+            if (arrayElmtType.getKind() == Xtype.BASIC) {
+              gmoveFuncArgs.add(XMP.createBasicTypeConstantObj(arrayElmtType));
+            }
+	    else {
+              gmoveFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
+            }
+            gmoveFuncArgs.add(Xcons.SizeOf(arrayElmtType));
+
+            gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+            gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    gmoveFuncArgs.add(gmoveClause);
+
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "GSECTION_GSCALAR", gmoveFuncArgs);
+	  }
+	}
+	
         // FIXME implement
-        throw new XMPexception("not implemented yet");
+        //throw new XMPexception("not implemented yet");
+	//System.err.printf("not implemented yet\n");
       }
     } else {
       if (rightHasSubArrayRef) {
@@ -2773,14 +2829,59 @@ public class XMPtranslateLocalPragma {
     
   }
 
+  private Block convertGmoveToArray(PragmaBlock pb, XMPalignedArray leftAlignedArray, Xobject leftExpr, Xobject rightExpr){
+
+    Xobject onRef = Xcons.List();
+    Xobject t = Xcons.Symbol(Xcode.VAR, leftAlignedArray.getAlignTemplate().getName());
+    onRef.add(t);
+
+    Xobject subscripts = Xcons.List();
+    for (int i = 0; i < leftAlignedArray.getAlignTemplate().getDim(); i++){
+      subscripts.add(null);
+    }
+
+    XobjList arrayRefs = (XobjList)leftExpr.getArg(1);
+
+    for (int i = 0; i < leftAlignedArray.getDim(); i++){
+
+      int alignSubscriptIndex = leftAlignedArray.getAlignSubscriptIndexAt(i);
+      Xobject alignSubscriptOffset = leftAlignedArray.getAlignSubscriptExprAt(i);
+
+      Xobject sub = arrayRefs.getArg(i);
+      Xobject triplet;
+      if (sub.Opcode() == Xcode.LIST){
+	Xobject lb = sub.getArg(0);
+	if (alignSubscriptOffset != null) lb = Xcons.binaryOp(Xcode.PLUS_EXPR, lb, alignSubscriptOffset);
+	Xobject ub = sub.getArg(1);
+	Xobject st = sub.getArg(2);
+	triplet = Xcons.List(lb, ub, st);
+      }
+      else {
+	Xobject lb = sub.getArg(0);
+	if (alignSubscriptOffset != null) lb = Xcons.binaryOp(Xcode.PLUS_EXPR, lb, alignSubscriptOffset);
+	Xobject ub = lb;
+	Xobject st = Xcons.IntConstant(1);
+	triplet = Xcons.List(lb, ub, st);
+      }	
+
+      subscripts.setArg(alignSubscriptIndex, triplet);
+    }
+    onRef.add(subscripts);
+
+    Xobject args = Xcons.List(onRef);
+    return Bcons.PRAGMA(Xcode.XMP_PRAGMA, "LOOP", args, pb.getBody());
+
+  }
+
   private XMPpair<XMPalignedArray, XobjList> getXMPalignedArrayExpr(PragmaBlock pb, Xobject expr) throws XMPexception {
     switch (expr.Opcode()) {
       case ARRAY_REF:
         return parseArrayRefExpr(pb, expr);
       case SUB_ARRAY_REF:
         return parseSubArrayRefExpr(pb, expr, getArrayAccList(pb, expr));
+      case VAR:
+	return null;
       default:
-        // FIXME support var-ref
         throw new XMPexception("unsupported expression: gmove");
     }
   }
