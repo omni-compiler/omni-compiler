@@ -36,12 +36,9 @@ static int xmpf_running=0;
 static void _XMP_Alltoall(const void *sendbuf, unsigned long long count, 
 			  void *recvbuf, MPI_Comm comm)
 {
-  MPI_Datatype type;
+  MPI_Datatype type = MPI_BYTE; // count < INT_MAX
 
-  if(count < INT_MAX){
-    type = MPI_BYTE;
-  }
-  else{
+  if(count >= INT_MAX){
     if(count % sizeof(int) == 0 && count/sizeof(int) < INT_MAX){
       type  = MPI_INT;
       count /= sizeof(int);
