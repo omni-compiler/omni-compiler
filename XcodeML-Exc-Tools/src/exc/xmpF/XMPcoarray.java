@@ -18,6 +18,7 @@ public class XMPcoarray {
   // name of library
   public final static String VAR_DESCPOINTER_PREFIX = "xmpf_descptr";
   public final static String VAR_CRAYPOINTER_PREFIX = "xmpf_crayptr";
+  public final static String CBLK_COARRAYS_PREFIX = "xmpf_coarrays";
   final static String XMPF_LCOBOUND = "xmpf_lcobound";
   final static String XMPF_UCOBOUND = "xmpf_ucobound";
   final static String XMPF_COSIZE = "xmpf_cosize";
@@ -707,6 +708,11 @@ public class XMPcoarray {
   public String getCrayCommonName()
   {
     return VAR_CRAYPOINTER_PREFIX + "_" + homeBlockName;
+  }
+
+  public String getCoarrayCommonName()
+  {
+    return CBLK_COARRAYS_PREFIX + "_" + homeBlockName;
   }
 
   public String getCrayPointerName() {

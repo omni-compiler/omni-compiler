@@ -282,15 +282,6 @@ MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
   unsigned nbytes = (unsigned)count * elementRU;
 
   // make memory-chunk even if size nbyte=0
-  /*****************************
-  if (nbytes == 0) {
-    _XMPF_coarrayDebugPrint("*** no memory pool needed\n");
-
-    chunk = _newMemoryChunk(NULL, NULL, 0);
-    return chunk;
-  }
-  ******************************/
-
   chunk = _mallocMemoryChunk_core(nbytes, elementRU);
 
   return chunk;

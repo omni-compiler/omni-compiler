@@ -9,6 +9,12 @@ import java.util.*;
  */
 public class XMPtransCoarrayRun
 {
+  /*  Versions 3 and 4 are available now.
+   *    3: stable version
+   *    4: challenging optimization
+   */
+  private int version = 3;       // default
+
   private Boolean DEBUG = true;       // change me in debugger
 
   // constants
@@ -101,13 +107,16 @@ public class XMPtransCoarrayRun
     XMP.exitByError();   // exit if error was found.
   }
 
-
   /*******************************
   public void finalize() {
     // finalize fblock in funcDef
     funcDef.Finalize();
   }
   *********************************/
+
+  public void set_version(int version) {
+    this.version = version;
+  }
 
   private void _setHostName()
   {
@@ -233,15 +242,17 @@ public class XMPtransCoarrayRun
       }
     }
 
-    // To resolve such a restricton on coarrays in a module, that the 
-    // Cray's POINTER statement cannnot be used in a module in Fujitsu
-    // Fortran, the definition of a coarray in the module will be moved
-    // into all procedures that uses the module and all module procedures
-    // of the module.
-    // ACTION here:
-    // - copy all coarrays defined in the modules I am using
-    // - copy all explicit-shaped coarrays defind in my host (parent)
-    //   module if I am a module procedure
+    /** For Version 3:
+     *    To resolve such a restricton on coarrays in a module, that the 
+     *    Cray's POINTER statement cannnot be used in any module in Fujitsu
+     *    Fortran, the definition of a coarray in the module will be moved
+     *    into all procedures that uses the module and all module procedures
+     *    of the module.
+     *  ACTION:
+     *    - Copy all coarrays defined in the modules I am using.
+     *    - Copy all explicit-shaped coarrays defind in my host module
+     *      if I am a module procedure.
+     */
     for (XMPcoarray coarray: useAssociatedCoarrays) {
       XMPcoarray coarray2 = _copyCoarrayToMergeIn(coarray);
       localCoarrays.add(coarray2);
@@ -460,7 +471,7 @@ public class XMPtransCoarrayRun
         ...
       end subroutine
     --------------------------------------------
-    output:
+    output (ver.3):
     --------------------------------------------
       subroutine EX1
         use M1
@@ -490,6 +501,17 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
+
+    output (ver.4):
+      Instead of translation c. above:
+    --------------------------------------------
+        common /xmpf_CP_M1/ CP_V1                                    ! c.
+        pointer (CP_V1, V1)                                          ! c.
+    --------------------------------------------
+      Coarray variable itself is specified in the common block
+    --------------------------------------------
+        common /xmpf_CP_M1/ V1                                       ! c4.
+    --------------------------------------------
   */
   private void transDeclPart_staticLocal() {
 
@@ -499,8 +521,15 @@ public class XMPtransCoarrayRun
     // a1. make common association of descriptor pointers
     genCommonStmt(staticLocalCoarrays);
 
-    // c. link cray-pointers with data object
-    genDeclOfCrayPointer(staticLocalCoarrays);
+    if (version == 3) {
+      // c. link cray-pointers with data object
+      genDeclOfCrayPointer(staticLocalCoarrays);
+    } else if (version == 4) {
+      // c4. generate common block for data
+      genCommonBlockForCoarrays(staticLocalCoarrays);
+    } else {
+      XMP.fatal("illegal version number: " + version);
+    }
 
     // b. generate allocation into init procedure
     genAllocOfStaticCoarrays(staticLocalCoarrays);
@@ -826,9 +855,45 @@ public class XMPtransCoarrayRun
 
 
   //-----------------------------------------------------
-  //  TRANSLATION c.
-  //  link cray pointers with data objects and
-  //  generate their common association
+  //  TRANSLATION c4 for Ver.4
+  //    generate common block for coarray variables
+  //-----------------------------------------------------
+  //
+  private void genCommonBlockForCoarrays(ArrayList<XMPcoarray> coarrays) {
+    // do nothing if no coarrays are declared.
+    if (coarrays.isEmpty())
+      return;
+
+    ArrayList<String> cnameList = new ArrayList<String>();
+    for (XMPcoarray coarray0: coarrays) {
+      String cname = coarray0.getCoarrayCommonName();
+      if (cnameList.contains(cname))
+        continue;
+
+      // found new common block to be declared
+      cnameList.add(cname);
+
+      Xobject cnameObj = Xcons.Symbol(Xcode.IDENT, cname);
+      Xobject varList = Xcons.List();
+      for (XMPcoarray coarray: coarrays) {
+        if (cname.equals(coarray.getCoarrayCommonName())) {
+          Ident coarrayId = coarray.getIdent();
+          varList.add(Xcons.FvarRef(coarrayId));
+        }
+      }
+
+      // add declaration 
+      Xobject decls = getFblock().getBody().getDecls();
+      Xobject args = Xcons.List(Xcode.F_COMMON_DECL,
+                                Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList));
+      decls.add(args);
+    }
+  }
+
+  //-----------------------------------------------------
+  //  TRANSLATION c for Ver.3
+  //    link cray pointers with data objects and
+  //    generate their common association
   //-----------------------------------------------------
   //
   private void genDeclOfCrayPointer(ArrayList<XMPcoarray> coarrays) {
@@ -1250,7 +1315,7 @@ public class XMPtransCoarrayRun
       new XMPcoarrayInitProcedure(coarrays,
                                   traverseCountName,
                                   traverseInitName,
-                                  env);
+                                  env, version);
     coarrayInit.run();
   }
 

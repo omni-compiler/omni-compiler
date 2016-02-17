@@ -316,6 +316,22 @@ void _XMP_coarray_malloc_do(void **coarray_desc, void *addr)
   _push_coarray_queue(c);
 }
 
+#ifdef _XMP_FJRDMA
+void _XMP_coarray_regmem_do(void **coarray_desc, void *addr)
+{
+  _XMP_coarray_t* c = _XMP_alloc(sizeof(_XMP_coarray_t));
+  _XMP_coarray_set_info(c);
+  *coarray_desc = c;
+
+  long transfer_size = _total_coarray_elmts*_elmt_size;
+  _XMP_check_less_than_SIZE_MAX(transfer_size);
+  
+  _XMP_fjrdma_regmem_do(*coarray_desc, addr, (size_t)transfer_size);
+  _push_coarray_queue(c);
+}
+#endif
+
+
 /** 
    Attach memory to coarray
  */

@@ -19,19 +19,27 @@ public class XMPcoarrayInitProcedure {
 
   final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
   final static String ALLOC_STATIC_NAME = "xmpf_coarray_alloc_static";
+  final static String RECMEM_STATIC_NAME = "xmpf_coarray_recmem_static";
 
   private Boolean DEBUG = false;          // switch the value on gdb !!
 
 
   /* for all procedures */
   private ArrayList<String> procTexts;
-  ArrayList<XMPcoarray> staticCoarrays;
-  XMPenv env;
+  private ArrayList<XMPcoarray> staticCoarrays;
+  private XMPenv env;
+
+  /*  Versions 3 and 4 are available currently.
+   *    3: stable version
+   *    4: challenging optimization only if using FJRDMA
+   */
+  private int version;    // defined by the constructor
 
   /* for each procedure */
   private String sizeProcName, initProcName;  // names of procedures to generate
   private String commonName1 = null;    // common block name for descptr
-  private String commonName2 = null;    // common block name for crayptr
+  private String commonName2 = null;    // common block name for crayptr (Ver.3)
+                                        //                   or coarrays (Ver.4)
 
   /* for all variables of a procedure */
   private ArrayList<String> varNames1, varNames2;
@@ -42,13 +50,14 @@ public class XMPcoarrayInitProcedure {
   //------------------------------
   public XMPcoarrayInitProcedure(ArrayList<XMPcoarray> staticCoarrays,
                                  String sizeProcName, String initProcName,
-                                 XMPenv env) {
+                                 XMPenv env, int version) {
     _init_forFile();
 
     this.staticCoarrays = staticCoarrays;
     this.sizeProcName = sizeProcName;
     this.initProcName = initProcName;
     this.env = env;
+    this.version = version;
     varNames1 = new ArrayList<String>();
     varNames2 = new ArrayList<String>();
     callInitStmts = new ArrayList<String>();
@@ -73,13 +82,14 @@ public class XMPcoarrayInitProcedure {
       end subroutine  or  end module
     --------------------------------------------
 
-    converted program and generated subroutines:
+    converted program and generated subroutines
+    Ver.3:
     --------------------------------------------
-      subroutine xmpf_traverse_countcoarray_ex1
+      subroutine xmpf_traverse_countcoarray_EX1
         call xmpf_coarray_count_size(1, 16)
       end subroutine
 
-      subroutine xmpf_traverse_initcoarray_ex1
+      subroutine xmpf_traverse_initcoarray_EX1
         integer(8) :: DP_V2
         integer(8) :: CP_V2
         common /xmpf_DP_EX1/ DP_V2
@@ -89,16 +99,32 @@ public class XMPcoarrayInitProcedure {
         call xmpf_coarray_set_coshape(DP_V2, 1, 0)
       end subroutine
     --------------------------------------------
-      DP_Vn: pointer to descriptor of each coarray Vn
-      CP_Vn: cray poiter to the coarray object Vn
-      An allocated portion may be shared with some coarrays.
+      xmpf_DP_EX1 : name of a common block for procedure EX1
+      DP_V2       : pointer to descriptor of coarray V2
+      xmpf_CP_EX1 : name of a common block for procedure EX1
+      CP_V2       : cray poiter to coarray V2
+
+    Ver.4:
+    For GASNet, Ver.4 is equivalent to Ver.3
+    For FJRDMA:
+    --------------------------------------------
+      // no subroutine xmpf_traverse_countcoarray_EX1
+
+      subroutine xmpf_traverse_initcoarray_EX1
+        common /xmpf_DP_EX1/ DP_V2
+        common /xmpf_CO_EX1/ V2
+
+        call xmpf_coarray_regmem_static(DP_V2, LOC(V2), 1, 16, "V2", 2)
+        call xmpf_coarray_set_coshape(DP_V2, 1, 0)
+      end subroutine
+    --------------------------------------------
+      xmpf_DP_EX1 : name of a common block for procedure EX1
+      DP_V2       : pointer to descriptor of coarray V2
+      xmpf_CO_EX1 : name of a common block for procedure EX1
+      V2          : name of a coarray
   */
 
   public void run() {
-    run(3);
-  }
-
-  public void run(int version) {
     for (XMPcoarray coarray: staticCoarrays) {
       String descPtrName = coarray.getDescPointerName();
       String crayPtrName = coarray.getCrayPointerName();
@@ -114,33 +140,47 @@ public class XMPcoarrayInitProcedure {
      */
     switch(version) {
     case 1:   // generate as Fortran program text
-      XMP.fatal("INTERNAL: found extinct version of notation " + 
-                "in XMPcoarrayInitProcedure");
-      /***************
+      XMP.fatal("INTERNAL: extinct version #" + version +
+                "specified in XMPcoarrayInitProcedure");
+      /*------
       fillinSizeProcText();
       fillinInitProcText();
 
       for (String text: procTexts)
         env.addTailText(text);
-      ***********/
+      -------*/
       break;
 
     case 2:   // build and link it at the tail of XMPenv
+      XMP.fatal("INTERNAL: extinct version #" + version +
+                "specified in XMPcoarrayInitProcedure");
+      /*--------
       buildSubroutine_countcoarray();
       buildSubroutine_initcoarray();
+      --------*/
       break;
 
     case 3:   // similar to case 2, with changing descr-ID of serno to pointer
       buildSubroutine_countcoarray();
       buildSubroutine_initcoarray();
       break;
+
+    case 4:   // new version to avoid using cray pointers
+      buildSubroutine_initcoarray();
+      break;
+
+    default:
+      XMP.fatal("INTERNAL: illegal version #" + version +
+                "specified in XMPcoarrayInitProcedure");
+      break;
     }
   }
 
 
   /*
-   *  Version 2 & 3:
+   *  Version 3:
    *    buildSubroutine_countcoarray
+   *  Version 3 & 4:
    *    buildSubroutine_initcoarray
    *
    *   build subroutines as Xobject and
@@ -241,8 +281,18 @@ public class XMPcoarrayInitProcedure {
       if (args.hasNullArg())
         XMP.fatal("INTERNAL: generated null argument (buildSubroutine_initcoarray)");
 
-      Ident subr = body.declLocalIdent(ALLOC_STATIC_NAME,
-                                       BasicType.FexternalSubroutineType);
+      Ident subr;
+      if (version == 3) {
+        subr = body.declLocalIdent(ALLOC_STATIC_NAME,
+                                   BasicType.FexternalSubroutineType);
+      } else if (version == 4) {
+        subr = body.declLocalIdent(RECMEM_STATIC_NAME,
+                                   BasicType.FexternalSubroutineType);
+      } else {
+        XMP.fatal("INTERNAL: illegal version # " + version + 
+                  " in buildSubroutine_initcoarray");
+        return;
+      }
       body.add(subr.callSubroutine(args));
     }
 
