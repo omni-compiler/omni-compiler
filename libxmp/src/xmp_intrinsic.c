@@ -33,7 +33,7 @@ static int xmpf_running=0;
 
 /* The function _XMP_Alltoall() is a wrapper function for MPI_Alltoall(). */
 /* This function supports "unsigned long long" type for send/recv counts. */
-static void _XMP_Alltoall(const void *sendbuf, unsigned long long count, 
+static void _XMP_Alltoall(void *sendbuf, unsigned long long count, 
 			  void *recvbuf, MPI_Comm comm)
 {
   MPI_Datatype type = MPI_BYTE; // count < INT_MAX
