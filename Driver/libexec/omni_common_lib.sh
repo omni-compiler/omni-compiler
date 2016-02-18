@@ -40,7 +40,9 @@ function error_process()
 function omni_exec()
 {
     [ $VERBOSE = true -o $DRY_RUN = true ] && echo ${@+"$@"}
-    [ $DRY_RUN = false ] && ${@+"$@"} || error_process
+    if [ $DRY_RUN = false ]; then
+	${@+"$@"} || error_process
+    fi
 }
 
 function omni_f_check_file_exist()
