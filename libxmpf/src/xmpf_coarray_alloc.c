@@ -80,13 +80,21 @@ static void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2);
 static void _freeCoarrayInfo(CoarrayInfo_t *cinfo);
 static char *_dispCoarrayInfo(CoarrayInfo_t *cinfo);
 
-//static CoarrayInfo_t *_getShareOfCoarray(int count, size_t element);
-static CoarrayInfo_t *_getShareOfStaticCoarray(size_t thisSize, size_t elementRU);
-static CoarrayInfo_t *_allocLargeStaticCoarray(size_t thisSize, size_t elementRU);
+static CoarrayInfo_t *_getShareOfStaticCoarray(size_t thisSize,
+                                               size_t elementRU);
+static CoarrayInfo_t *_allocLargeStaticCoarray(size_t thisSize,
+                                               size_t elementRU);
+static CoarrayInfo_t *_regmemStaticCoarray(void *baseAddr, size_t thisSize,
+                                           size_t elementRU);
 
 // allocation and deallocation
 static MemoryChunk_t *_mallocMemoryChunk(int count, size_t element);
-static MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes, size_t elementRU);
+static MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes,
+                                              size_t elementRU);
+static MemoryChunk_t *_regmemMemoryChunk_core(void *baseAddr, unsigned nbytes,
+                                              size_t elementRU);
+static MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes,
+                                            size_t elementRU);
 
 // malloc/free history
 static void _initMallocHistory(void);
@@ -287,8 +295,19 @@ MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
   return chunk;
 }
 
-
 MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes, size_t elementRU)
+{
+  return _constructMemoryChunk(NULL, nbytes, elementRU);
+}
+
+MemoryChunk_t *_regmemMemoryChunk_core(void *baseAddr, unsigned nbytes,
+                                       size_t elementRU)
+{
+  return _constructMemoryChunk(nbytes, elementRU, NULL);
+}
+
+MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes,
+                                     size_t elementRU)
 {
   void *desc;
   char *orgAddr;
@@ -297,11 +316,15 @@ MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes, size_t elementRU)
   // _XMP_coarray_malloc() and set mallocInfo
   _XMP_coarray_malloc_info_1(nbytes, (size_t)1);   // set shape
   _XMP_coarray_malloc_image_info_1();              // set coshape
-  _XMP_coarray_malloc_do(&desc, &orgAddr);         // malloc
+  if (baseAddr == NULL) {
+    _XMP_coarray_malloc_do(&desc, &orgAddr);         // malloc
+    chunk = _newMemoryChunk(desc, orgAddr, nbytes);
+  } else {
+    _XMP_coarray_regmem_do(&desc, baseAddr);         // register memory
+    chunk = _newMemoryChunk(desc, baseAddr, nbytes);
+  }
 
-  chunk = _newMemoryChunk(desc, orgAddr, nbytes);
-
-  _XMPF_coarrayDebugPrint("*** MemoryChunk %s allocated\n"
+  _XMPF_coarrayDebugPrint("*** MemoryChunk %s was made.\n"
                           "  (%u bytes, elementRU=%u)\n",
                           _dispMemoryChunk(chunk), nbytes, elementRU);
 
@@ -383,7 +406,7 @@ static char* _xmp_strndup(char *name, const int namelen)
  *    in:  count  : count of elements
  *         element: element size
  *         name   : name of the coarray (for debugging)
- *         namelen: character length of name
+ *         namelen: character length of name (for debugging)
  */
 void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                 int *count, int *element,
@@ -408,6 +431,61 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
 
   *descPtr = (void*)cinfo;
   *crayPtr = cinfo->baseAddr;
+}
+
+
+/*
+ * Similar to xmpf_coarray_alloc_static_() except that the coarray is 
+ * allocated not by the runtime but by the Fortran system.
+ *    out: descPtr : pointer to descriptor CoarrayInfo_t
+ *    in:  baseAddr: local base address of a coarray
+ *         count   : count of elements
+ *         element : element size
+ *         name    : name of the coarray (for debugging)
+ *         namelen : character length of name (for debugging)
+ */
+void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
+                                int *count, int *element,
+                                 char *name, int *namelen)
+{
+  CoarrayInfo_t *cinfo;
+
+  // boundary check
+  if (*element % ONESIDED_BOUNDARY != 0) {
+    /* restriction */
+    _XMPF_coarrayFatal("boundary violation detected for coarray \'%s\'\n"
+                       "  element size %d\n",
+                       namelen, name, element);
+  }
+
+  size_t elementRU = (size_t)(*element);
+  size_t nbytes = (size_t)(*count) * elementRU;
+
+  _XMPF_coarrayDebugPrint("COARRAY_REGMEM_STATIC varname=\'%*s\'\n",
+                          *namelen, name);
+
+  cinfo = _regmemStaticCoarray(*baseAddr, nbytes, elementRU);
+  cinfo->name = _xmp_strndup(name, *namelen);
+
+  *descPtr = (void*)cinfo;
+}
+
+
+CoarrayInfo_t *_regmemStaticCoarray(void *baseAddr, size_t nbytes,
+                                    size_t elementRU)
+{
+  _XMPF_checkIfInTask("allocation of static coarray");
+
+  _XMPF_coarrayDebugPrint("*** REG-MEM (%u bytes)\n", nbytes);
+
+  // get memory-chunk and set baseAddr
+  MemoryChunk_t *chunk = _regmemMemoryChunk_core(baseAddr, nbytes, elementRU);
+
+  // make coarrayInfo and linkage
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr, nbytes);
+  _addCoarrayInfo(chunk, cinfo);
+
+  return cinfo;
 }
 
 

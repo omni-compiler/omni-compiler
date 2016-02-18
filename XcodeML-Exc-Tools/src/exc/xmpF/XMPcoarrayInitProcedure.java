@@ -19,7 +19,7 @@ public class XMPcoarrayInitProcedure {
 
   final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
   final static String ALLOC_STATIC_NAME = "xmpf_coarray_alloc_static";
-  final static String RECMEM_STATIC_NAME = "xmpf_coarray_recmem_static";
+  final static String REGMEM_STATIC_NAME = "xmpf_coarray_regmem_static";
 
   private Boolean DEBUG = false;          // switch the value on gdb !!
 
@@ -85,11 +85,11 @@ public class XMPcoarrayInitProcedure {
     converted program and generated subroutines
     Ver.3:
     --------------------------------------------
-      subroutine xmpf_traverse_countcoarray_EX1
+      subroutine xmpf_traverse_countcoarrays_EX1
         call xmpf_coarray_count_size(1, 16)
       end subroutine
 
-      subroutine xmpf_traverse_initcoarray_EX1
+      subroutine xmpf_traverse_initcoarrays_EX1
         integer(8) :: DP_V2
         integer(8) :: CP_V2
         common /xmpf_DP_EX1/ DP_V2
@@ -108,9 +108,9 @@ public class XMPcoarrayInitProcedure {
     For GASNet, Ver.4 is equivalent to Ver.3
     For FJRDMA:
     --------------------------------------------
-      // no subroutine xmpf_traverse_countcoarray_EX1
+      // no subroutine xmpf_traverse_countcoarrays_EX1
 
-      subroutine xmpf_traverse_initcoarray_EX1
+      subroutine xmpf_traverse_initcoarrays_EX1
         common /xmpf_DP_EX1/ DP_V2
         common /xmpf_CO_EX1/ V2
 
@@ -155,18 +155,19 @@ public class XMPcoarrayInitProcedure {
       XMP.fatal("INTERNAL: extinct version #" + version +
                 "specified in XMPcoarrayInitProcedure");
       /*--------
-      buildSubroutine_countcoarray();
-      buildSubroutine_initcoarray();
+      buildSubroutine_countcoarrays();
+      buildSubroutine_initcoarrays();
       --------*/
       break;
 
     case 3:   // similar to case 2, with changing descr-ID of serno to pointer
-      buildSubroutine_countcoarray();
-      buildSubroutine_initcoarray();
+      buildSubroutine_countcoarrays();
+      buildSubroutine_initcoarrays();
       break;
 
     case 4:   // new version to avoid using cray pointers
-      buildSubroutine_initcoarray();
+      buildSubroutine_countcoarrays();
+      buildSubroutine_initcoarrays();
       break;
 
     default:
@@ -179,15 +180,17 @@ public class XMPcoarrayInitProcedure {
 
   /*
    *  Version 3:
-   *    buildSubroutine_countcoarray
-   *  Version 3 & 4:
-   *    buildSubroutine_initcoarray
+   *    buildSubroutine_countcoarrays()
+   *    buildSubroutine_initcoarrays()
+   *  Version 4:
+   *    buildSubroutine_countcoarrays()
+   *    buildSubroutine_initcoarrays()
    *
    *   build subroutines as Xobject and
    *   link them at the tail of XMPenv
    */
 
-  private void buildSubroutine_countcoarray() {
+  private void buildSubroutine_countcoarrays() {
     BlockList body = Bcons.emptyBody();         // new body of the building procedure
     Xobject decls = Xcons.List();
 
@@ -216,85 +219,12 @@ public class XMPcoarrayInitProcedure {
   }
 
 
-  private void buildSubroutine_initcoarray() {
+  private void buildSubroutine_initcoarrays() {
     BlockList body = Bcons.emptyBody();         // new body of the building procedure
     Xobject decls = Xcons.List();
 
-    for (XMPcoarray coarray: staticCoarrays) {
-      Xobject elem = coarray.getElementLengthExpr();
-      if (elem==null)
-        XMP.fatal("elem must not be null.");
-      int count = coarray.getTotalArraySize();
-      String descPtrName = coarray.getDescPointerName();
-      String crayPtrName = coarray.getCrayPointerName();
-
-      if (commonName1 == null)
-        commonName1 = coarray.getDescCommonName();
-      else if (!commonName1.equals(coarray.getDescCommonName()))
-        XMP.fatal("INTERNAL: inconsistent descptr common block names " +
-                  commonName1 + " and " + coarray.getDescCommonName());
-
-      if (commonName2 == null)
-        commonName2 = coarray.getCrayCommonName();
-      else if (!commonName2.equals(coarray.getCrayCommonName()))
-        XMP.fatal("INTERNAL: inconsistent crayptr common block names " +
-                  commonName2 + " and " + coarray.getCrayCommonName());
-
-      // for pointer to descriptor
-      Ident descPtrId =
-        body.declLocalIdent(descPtrName,
-                            Xtype.Farray(BasicType.Fint8Type),
-                            StorageClass.FLOCAL,   //or StorageClass.FCOMMON 
-                            null);
-
-      // for the cray pointer  (cf. XMPcoarray.declareIdents() )
-      Ident crayPtrId =
-        body.declLocalIdent(crayPtrName,
-                            Xtype.Farray(BasicType.Fint8Type),
-                            StorageClass.FLOCAL,   //or StorageClass.FCOMMON 
-                            null);   //or [F] Xcons.FvarRef(dmy) [C] ident.Ref()
-
-      // build "common /codescr_foo/ descPtr" and "common /crayPtr_foo/ crayPtr"
-      Xobject commonStmt1 =
-        Xcons.List(Xcode.F_COMMON_DECL,
-                   Xcons.List(Xcode.F_VAR_LIST,
-                              Xcons.Symbol(Xcode.IDENT, commonName1),
-                              Xcons.List(Xcons.FvarRef(descPtrId))));
-      Xobject commonStmt2 =
-        Xcons.List(Xcode.F_COMMON_DECL,
-                   Xcons.List(Xcode.F_VAR_LIST,
-                              Xcons.Symbol(Xcode.IDENT, commonName2),
-                              Xcons.List(Xcons.FvarRef(crayPtrId))));
-      decls.add(commonStmt1);
-      decls.add(commonStmt2);
-
-      // "CALL coarray_alloc_static(descPtr, crayPtr, count, elem, name, namelen)"
-      String varName = coarray.getName();
-      Xobject varNameObj = 
-        Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
-      Xobject args = Xcons.List(descPtrId,
-                                crayPtrId,
-                                Xcons.IntConstant(count),
-                                elem,
-                                varNameObj,
-                                Xcons.IntConstant(varName.length()));
-      if (args.hasNullArg())
-        XMP.fatal("INTERNAL: generated null argument (buildSubroutine_initcoarray)");
-
-      Ident subr;
-      if (version == 3) {
-        subr = body.declLocalIdent(ALLOC_STATIC_NAME,
-                                   BasicType.FexternalSubroutineType);
-      } else if (version == 4) {
-        subr = body.declLocalIdent(RECMEM_STATIC_NAME,
-                                   BasicType.FexternalSubroutineType);
-      } else {
-        XMP.fatal("INTERNAL: illegal version # " + version + 
-                  " in buildSubroutine_initcoarray");
-        return;
-      }
-      body.add(subr.callSubroutine(args));
-    }
+    for (XMPcoarray coarray: staticCoarrays)
+      _gen_initcoarray(coarray, body, decls);
 
     // construct a new procedure
     Ident procedure = env.declExternIdent(initProcName, Xtype.FsubroutineType);
@@ -324,6 +254,105 @@ public class XMPcoarrayInitProcedure {
     funcDef2.Finalize();
 
     env.setCurrentDef(funcDef1);
+  }
+
+
+  private void set_commonName1(XMPcoarray coarray) {
+    String name = coarray.getDescCommonName();
+
+    if (commonName1 == null)
+      commonName1 = name;
+    else if (!commonName1.equals(name))
+      XMP.fatal("INTERNAL: inconsistent descptr common block names " +
+                commonName1 + " and " + name);
+  }
+
+  private void set_commonName2(XMPcoarray coarray) {
+    String name;
+    if (version == 4)
+      name = coarray.getCoarrayCommonName();
+    else
+      name = coarray.getCrayCommonName();
+    
+    if (commonName2 == null)
+      commonName2 = name;
+    else if (!commonName2.equals(name)) 
+      XMP.fatal("INTERNAL: inconsistent second common block names " +
+                commonName2 + " and " + name);
+  }
+
+
+  private void _gen_initcoarray(XMPcoarray coarray, BlockList body, Xobject decls) {
+    Xobject elem = coarray.getElementLengthExpr();
+    if (elem==null)
+      XMP.fatal("elem must not be null.");
+    int count = coarray.getTotalArraySize();
+
+    set_commonName1(coarray);
+    set_commonName2(coarray);
+
+    String descPtrName = coarray.getDescPointerName();
+    String crayPtrName = coarray.getCrayPointerName();
+
+    // for pointer to descriptor
+    Ident descPtrId =
+      body.declLocalIdent(descPtrName,
+                          Xtype.Farray(BasicType.Fint8Type),
+                          StorageClass.FLOCAL,   //or StorageClass.FCOMMON 
+                          null);
+    
+    // for the cray pointer  (cf. XMPcoarray.declareIdents() )
+    Ident crayPtrId =
+      body.declLocalIdent(crayPtrName,
+                          Xtype.Farray(BasicType.Fint8Type),
+                          StorageClass.FLOCAL,   //or StorageClass.FCOMMON 
+                          null);   //or [F] Xcons.FvarRef(dmy) [C] ident.Ref()
+
+    // build "common /codescr_foo/ descPtr" and "common /crayPtr_foo/ crayPtr"
+    Xobject commonStmt1 =
+      Xcons.List(Xcode.F_COMMON_DECL,
+                 Xcons.List(Xcode.F_VAR_LIST,
+                            Xcons.Symbol(Xcode.IDENT, commonName1),
+                            Xcons.List(Xcons.FvarRef(descPtrId))));
+    Xobject commonStmt2 =
+      Xcons.List(Xcode.F_COMMON_DECL,
+                 Xcons.List(Xcode.F_VAR_LIST,
+                            Xcons.Symbol(Xcode.IDENT, commonName2),
+                            Xcons.List(Xcons.FvarRef(crayPtrId))));
+    decls.add(commonStmt1);
+    decls.add(commonStmt2);
+
+    // "CALL coarray_alloc_static(descPtr, crayPtr, count, elem, name, namelen)"
+    // "CALL coarray_regmem_static(descPtr, LOC(v), count, elem, name, namelen)"
+    String varName = coarray.getName();
+    Xobject varNameObj = 
+      Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
+    Xobject args = Xcons.List(descPtrId,
+                              ///////////////////////  LOC(var)
+                              crayPtrId,
+                              Xcons.IntConstant(count),
+                              elem,
+                              varNameObj,
+                              Xcons.IntConstant(varName.length()));
+    if (args.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (buildSubroutine_initcoarrays)");
+
+    Ident subr;
+    switch (version) {
+    case 3:
+      subr = body.declLocalIdent(ALLOC_STATIC_NAME,
+                                 BasicType.FexternalSubroutineType);
+      body.add(subr.callSubroutine(args));
+      break;
+    case 4:
+      subr = body.declLocalIdent(REGMEM_STATIC_NAME,
+                                 BasicType.FexternalSubroutineType);
+      body.add(subr.callSubroutine(args));
+      break;
+    default:
+      XMP.fatal("INTERNAL: illegal version # " + version + 
+                " in buildSubroutine_initcoarrays");
+    }
   }
 
 

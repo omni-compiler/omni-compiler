@@ -116,6 +116,8 @@ public class XMPtransCoarrayRun
 
   public void set_version(int version) {
     this.version = version;
+    if (version == 4)
+      XMP.warning("Working Coarray Fortran Version 4 -- trial version");
   }
 
   private void _setHostName()

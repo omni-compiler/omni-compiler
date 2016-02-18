@@ -1,4 +1,4 @@
-#OPT= --debug
+#OPT= --Wx-fcoarray=4
 #OPT= -g --debug --verbose
 NPE=3
 

@@ -220,6 +220,7 @@ extern void _XMP_coarray_malloc_image_info_1();
 
 //extern void _XMP_coarray_malloc_do_f(void **, void *);
 extern void _XMP_coarray_malloc_do(void **, void *);
+extern void _XMP_coarray_regmem_do(void **, void *);
 
 extern void _XMP_coarray_rdma_coarray_set_1(const long, const long, const long);
 //extern void _XMP_coarray_rdma_coarray_set_2(const int, const int, const int, const int, const int, const int);
@@ -352,6 +353,9 @@ extern void xmpf_coarray_malloc_pool_(void);
 extern void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                        int *count, int *element,
                                        char *name, int *namelen);
+extern void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
+                                        int *count, int *element,
+                                        char *name, int *namelen);
 extern void xmpf_coarray_count_size_(int *count, int *element);
 
 extern void xmpf_coarray_prolog_(void **tag, char *name, int *namelen);
