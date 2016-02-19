@@ -224,7 +224,7 @@ public class XMPcoarrayInitProcedure {
     Xobject decls = Xcons.List();
 
     for (XMPcoarray coarray: staticCoarrays)
-      _gen_initcoarray(coarray, body, decls);
+      build_initEachCoarray(coarray, body, decls);
 
     // construct a new procedure
     Ident procedure = env.declExternIdent(initProcName, Xtype.FsubroutineType);
@@ -282,77 +282,83 @@ public class XMPcoarrayInitProcedure {
   }
 
 
-  private void _gen_initcoarray(XMPcoarray coarray, BlockList body, Xobject decls) {
+  private void build_initEachCoarray(XMPcoarray coarray,
+                                     BlockList body, Xobject decls) {
     Xobject elem = coarray.getElementLengthExpr();
     if (elem==null)
       XMP.fatal("elem must not be null.");
     int count = coarray.getTotalArraySize();
 
+    /*-------------------------------*\
+     * specification part
+    \*-------------------------------*/
+
+    // "common /xmpf_descptr_foo/ descPtr_var"
     set_commonName1(coarray);
-    set_commonName2(coarray);
-
     String descPtrName = coarray.getDescPointerName();
-    String crayPtrName = coarray.getCrayPointerName();
-
-    // for pointer to descriptor
     Ident descPtrId =
       body.declLocalIdent(descPtrName,
                           Xtype.Farray(BasicType.Fint8Type),
                           StorageClass.FLOCAL,   //or StorageClass.FCOMMON 
                           null);
-    
-    // for the cray pointer  (cf. XMPcoarray.declareIdents() )
-    Ident crayPtrId =
-      body.declLocalIdent(crayPtrName,
-                          Xtype.Farray(BasicType.Fint8Type),
-                          StorageClass.FLOCAL,   //or StorageClass.FCOMMON 
-                          null);   //or [F] Xcons.FvarRef(dmy) [C] ident.Ref()
-
-    // build "common /codescr_foo/ descPtr" and "common /crayPtr_foo/ crayPtr"
     Xobject commonStmt1 =
       Xcons.List(Xcode.F_COMMON_DECL,
                  Xcons.List(Xcode.F_VAR_LIST,
                             Xcons.Symbol(Xcode.IDENT, commonName1),
                             Xcons.List(Xcons.FvarRef(descPtrId))));
+    decls.add(commonStmt1);
+
+    // "common /xmpf_crayptr_foo/ crayPtr_var"   (case: Ver.3)
+    // "common /xmpf_coarray_foo/ var"           (case: Ver.4)
+    set_commonName2(coarray);
+    Ident ident2;
+    if (version == 4) {
+      ident2 = coarray.getIdent();
+    } else {
+      String crayPtrName = coarray.getCrayPointerName();
+      ident2 = body.declLocalIdent(crayPtrName,
+                                   Xtype.Farray(BasicType.Fint8Type),
+                                   StorageClass.FLOCAL,  //or StorageClass.FCOMMON 
+                                   null);
+    }
     Xobject commonStmt2 =
       Xcons.List(Xcode.F_COMMON_DECL,
                  Xcons.List(Xcode.F_VAR_LIST,
                             Xcons.Symbol(Xcode.IDENT, commonName2),
-                            Xcons.List(Xcons.FvarRef(crayPtrId))));
-    decls.add(commonStmt1);
+                            Xcons.List(Xcons.FvarRef(ident2))));
     decls.add(commonStmt2);
 
-    // "CALL coarray_alloc_static(descPtr, crayPtr, count, elem, name, namelen)"
-    // "CALL coarray_regmem_static(descPtr, LOC(v), count, elem, name, namelen)"
+    /*-------------------------------*\
+     * execution part
+    \*-------------------------------*/
+
+    // "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"  (case: Ver.3)
+    // "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"    (case: Ver.4)
+    Xobject arg2;
+    String fname;
+    if (version == 4) {
+      FunctionType ftype = new FunctionType(Xtype.Fint8Type, Xtype.TQ_FINTRINSIC);
+      Ident locId = env.declIntrinsicIdent("loc", ftype);
+      arg2 = locId.Call(Xcons.List(ident2));
+      fname = REGMEM_STATIC_NAME;
+    } else {
+      arg2 = (Xobject)ident2;
+      fname = ALLOC_STATIC_NAME;
+    }
+
     String varName = coarray.getName();
     Xobject varNameObj = 
       Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
     Xobject args = Xcons.List(descPtrId,
-                              ///////////////////////  LOC(var)
-                              crayPtrId,
+                              arg2,
                               Xcons.IntConstant(count),
                               elem,
                               varNameObj,
                               Xcons.IntConstant(varName.length()));
     if (args.hasNullArg())
       XMP.fatal("INTERNAL: generated null argument (buildSubroutine_initcoarrays)");
-
-    Ident subr;
-    switch (version) {
-    case 3:
-      subr = body.declLocalIdent(ALLOC_STATIC_NAME,
-                                 BasicType.FexternalSubroutineType);
-      body.add(subr.callSubroutine(args));
-      break;
-    case 4:
-      subr = body.declLocalIdent(REGMEM_STATIC_NAME,
-                                 BasicType.FexternalSubroutineType);
-      body.add(subr.callSubroutine(args));
-      break;
-    default:
-      XMP.fatal("INTERNAL: illegal version # " + version + 
-                " in buildSubroutine_initcoarrays");
-    }
+    Ident subr = body.declLocalIdent(fname, BasicType.FexternalSubroutineType);
+    body.add(subr.callSubroutine(args));
   }
 
 
