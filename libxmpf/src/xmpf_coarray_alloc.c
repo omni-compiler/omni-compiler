@@ -451,7 +451,8 @@ void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
   CoarrayInfo_t *cinfo;
 
   // boundary check
-  if (*element % ONESIDED_BOUNDARY != 0) {
+  if ((size_t)(*baseAddr) % ONESIDED_BOUNDARY != 0 ||
+      *element % ONESIDED_BOUNDARY != 0) {
     /* restriction */
     _XMPF_coarrayFatal("boundary violation detected for coarray \'%s\'\n"
                        "  element size %d\n",

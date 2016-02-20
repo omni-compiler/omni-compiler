@@ -235,7 +235,7 @@ static void _fjrdma_scalar_mput_do(const size_t target_rank, uint64_t* raddrs, u
 void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
 {
   *addr = _XMP_alloc(coarray_size);
-  _XMP_fjrdma_regmem_do(coarray_desc, addr, coarray_size);
+  _XMP_fjrdma_regmem_do(coarray_desc, *addr, coarray_size);
 }
 
 
@@ -243,16 +243,16 @@ void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size
 /* DESCRIPTION : Register the local address of the coarray and get the */
 /*               descriptor                                            */
 /* ARGUMENT    : [OUT] *coarray_desc  : Descriptor of new coarray      */
-/*               [IN]  **addr         : Double pointer of new coarray  */
+/*               [IN]  *addr          : Pointer to the coarray         */
 /*               [IN]  coarray_size   : Coarray size                   */
 /***********************************************************************/
-void _XMP_fjrdma_regmem_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
+void _XMP_fjrdma_regmem_do(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size)
 {
   uint64_t *each_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
   if(_memid == _XMP_FJRDMA_MAX_MEMID)
     _XMP_fatal("Too many coarrays. Number of coarrays is not more than 510.");
 
-  uint64_t laddr = FJMPI_Rdma_reg_mem(_memid, *addr, coarray_size);
+  uint64_t laddr = FJMPI_Rdma_reg_mem(_memid, addr, coarray_size);
 
   MPI_Barrier(MPI_COMM_WORLD);
   for(int ncount=0,i=1; i<_XMP_world_size+1; ncount++,i++){
@@ -268,7 +268,7 @@ void _XMP_fjrdma_regmem_do(_XMP_coarray_t *coarray_desc, void **addr, const size
     }
   }
 
-  coarray_desc->real_addr = *addr;
+  coarray_desc->real_addr = addr;
   coarray_desc->addr = (void *)each_addr;
   _memid++;
 }
