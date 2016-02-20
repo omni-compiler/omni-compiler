@@ -299,7 +299,7 @@ public class XMPcoarrayInitProcedure {
     Ident descPtrId =
       body.declLocalIdent(descPtrName,
                           Xtype.Farray(BasicType.Fint8Type),
-                          StorageClass.FLOCAL,   //or StorageClass.FCOMMON 
+                          StorageClass.FCOMMON,   //or StorageClass.FLOCAL
                           null);
     Xobject commonStmt1 =
       Xcons.List(Xcode.F_COMMON_DECL,
@@ -308,17 +308,40 @@ public class XMPcoarrayInitProcedure {
                             Xcons.List(Xcons.FvarRef(descPtrId))));
     decls.add(commonStmt1);
 
-    // "common /xmpf_crayptr_foo/ crayPtr_var"   (case: Ver.3)
-    // "common /xmpf_coarray_foo/ var"           (case: Ver.4)
+    // (case: Ver.3)
+    //    "common /xmpf_crayptr_foo/ crayPtr_var"   
+    // (case: Ver.4)
+    //    TYPE var(N)
+    //    "common /xmpf_coarray_foo/ var"           
     set_commonName2(coarray);
     Ident ident2;
     if (version == 4) {
-      ident2 = coarray.getIdent();
+      Xtype type1 = coarray.getIdent().Type();
+      Xtype type2;
+      switch (type1.getKind()) {
+      case Xtype.BASIC:
+        type2 = type1.copy();
+        type2.removeCodimensions();
+        break;
+      case Xtype.F_ARRAY:
+        Xobject[] sizeExprs2 = new Xobject[1];
+        sizeExprs2[0] = Xcons.FindexRange(Xcons.IntConstant(count));
+        type2 = new FarrayType(coarray.getName(),
+                               type1.getRef().copy(),
+                               type1.getTypeQualFlags(),
+                               sizeExprs2);
+        break;
+      default:
+        XMP.fatal("unexpected kind of Xtype of coarray " + coarray.getName());
+        return;   // to avoid warning message from javac
+      }
+      ident2 = body.declLocalIdent(coarray.getName(), type2);
+      ident2.setStorageClass(StorageClass.FCOMMON);
     } else {
       String crayPtrName = coarray.getCrayPointerName();
       ident2 = body.declLocalIdent(crayPtrName,
                                    Xtype.Farray(BasicType.Fint8Type),
-                                   StorageClass.FLOCAL,  //or StorageClass.FCOMMON 
+                                   StorageClass.FCOMMON,  //or StorageClass.FLOCAL
                                    null);
     }
     Xobject commonStmt2 =

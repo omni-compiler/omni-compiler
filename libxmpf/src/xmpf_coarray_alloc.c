@@ -303,7 +303,7 @@ MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes, size_t elementRU)
 MemoryChunk_t *_regmemMemoryChunk_core(void *baseAddr, unsigned nbytes,
                                        size_t elementRU)
 {
-  return _constructMemoryChunk(nbytes, elementRU, NULL);
+  return _constructMemoryChunk(baseAddr, nbytes, elementRU);
 }
 
 MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes,
