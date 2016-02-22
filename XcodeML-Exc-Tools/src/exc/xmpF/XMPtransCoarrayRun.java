@@ -9,6 +9,12 @@ import java.util.*;
  */
 public class XMPtransCoarrayRun
 {
+  /*  Versions 3 and 4 are available now.
+   *    3: stable version
+   *    4: challenging optimization
+   */
+  private int version = 3;       // default
+
   private Boolean DEBUG = true;       // change me in debugger
 
   // constants
@@ -98,16 +104,8 @@ public class XMPtransCoarrayRun
     traverseCountName = TRAV_COUNTCOARRAY_PREFIX + postfix;
     traverseInitName = TRAV_INITCOARRAY_PREFIX + postfix;
 
-    _setLocalCoarrays();
-    /* visibleCoarrays will be set after run1 */
-
-    if (pass == 1) {
-      _check_ifIncludeXmpLib();
-    }
-
     XMP.exitByError();   // exit if error was found.
   }
-
 
   /*******************************
   public void finalize() {
@@ -115,6 +113,12 @@ public class XMPtransCoarrayRun
     funcDef.Finalize();
   }
   *********************************/
+
+  public void set_version(int version) {
+    this.version = version;
+    if (version == 4)
+      XMP.warning("Working Coarray Fortran Version 4 -- trial version");
+  }
 
   private void _setHostName()
   {
@@ -240,22 +244,30 @@ public class XMPtransCoarrayRun
       }
     }
 
-    // resolve the problem on static coarrays in a module
-    // - move all coarrays to use-associating procedures
-    // - move static coarrays to directly host-associated procedures
+    /** For Version 3:
+     *    To resolve such a restricton on coarrays in a module, that the 
+     *    Cray's POINTER statement cannnot be used in any module in Fujitsu
+     *    Fortran, the definition of a coarray in the module will be moved
+     *    into all procedures that uses the module and all module procedures
+     *    of the module.
+     *  ACTION:
+     *    - Copy all coarrays defined in the modules I am using.
+     *    - Copy all explicit-shaped coarrays defind in my host module
+     *      if I am a module procedure.
+     */
     for (XMPcoarray coarray: useAssociatedCoarrays) {
       XMPcoarray coarray2 = _copyCoarrayToMergeIn(coarray);
       localCoarrays.add(coarray2);
     }
     if (hostModuleRun != null && hostProcedureRun == null) {
-      // found a module procedure
+      // found I am a module procedure
       for (XMPcoarray coarray: hostModuleRun.localCoarrays) {
         if (coarray.isExplicitShape()) {
           XMPcoarray coarray2 = _copyCoarrayToMergeIn(coarray);
           localCoarrays.add(coarray2);
         }
       }
-    }      
+    }
 
     // divide localCoarrays into four types
     staticLocalCoarrays = new ArrayList<XMPcoarray>();
@@ -302,11 +314,12 @@ public class XMPtransCoarrayRun
   /*  set coarrays declared in used modules as useAssociatedCoarrays
    */
   private void _setVisibleCoarrays() {
-    /*  set visible coarrays
+    /*  set visible coarrays from host-associated parent procedures.
      *   1. add coarrays declared in the current procedure,
      *   2. add all use-associated coarrays, and
      *   3. add all visible coarrays of the host-associated procedure
      *  A name of coarray will be searched in this priority.
+     *  (DOUBTFUL: use-association might already be solved into local?)
      */
     visibleCoarrays = new ArrayList<XMPcoarray>();
     _mergeCoarraysByName(visibleCoarrays, localCoarrays);
@@ -356,6 +369,11 @@ public class XMPtransCoarrayRun
     // error check for each coarray declaration
     //    for (XMPcoarray coarray: localCoarrays)
     //      coarray.errorCheck();
+
+    _setLocalCoarrays();
+    /* visibleCoarrays will be set after run1 */
+
+    _check_ifIncludeXmpLib();
 
     if (_isModule())
       run1_module();
@@ -430,10 +448,14 @@ public class XMPtransCoarrayRun
    */
   public void run2() {
 
-    if (_isModule()) {
-      // convert specification and declaration part
-      transModule_staticLocal2();
-    }
+    if (!_isModule())
+      return;                 // do nothing
+
+    _setLocalCoarrays();
+    /* visibleCoarrays will be set after run1 */
+
+    // convert specification and declaration part
+    transModule_staticLocal2();
   }
 
 
@@ -451,7 +473,7 @@ public class XMPtransCoarrayRun
         ...
       end subroutine
     --------------------------------------------
-    output:
+    output (ver.3):
     --------------------------------------------
       subroutine EX1
         use M1
@@ -481,6 +503,17 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       DP_Vn: pointer to descriptor of each coarray Vn
       CP_Vn: cray poiter to the coarray object Vn
+
+    output (ver.4):
+      Instead of translation c. above:
+    --------------------------------------------
+        common /xmpf_CP_M1/ CP_V1                                    ! c.
+        pointer (CP_V1, V1)                                          ! c.
+    --------------------------------------------
+      Coarray variable itself is specified in the common block
+    --------------------------------------------
+        common /xmpf_CP_M1/ V1                                       ! c4.
+    --------------------------------------------
   */
   private void transDeclPart_staticLocal() {
 
@@ -490,8 +523,15 @@ public class XMPtransCoarrayRun
     // a1. make common association of descriptor pointers
     genCommonStmt(staticLocalCoarrays);
 
-    // c. link cray-pointers with data object
-    genDeclOfCrayPointer(staticLocalCoarrays);
+    if (version == 3) {
+      // c. link cray-pointers with data object
+      genDeclOfCrayPointer(staticLocalCoarrays);
+    } else if (version == 4) {
+      // c4. generate common block for data
+      genCommonBlockForCoarrays(staticLocalCoarrays);
+    } else {
+      XMP.fatal("illegal version number: " + version);
+    }
 
     // b. generate allocation into init procedure
     genAllocOfStaticCoarrays(staticLocalCoarrays);
@@ -817,9 +857,45 @@ public class XMPtransCoarrayRun
 
 
   //-----------------------------------------------------
-  //  TRANSLATION c.
-  //  link cray pointers with data objects and
-  //  generate their common association
+  //  TRANSLATION c4 for Ver.4
+  //    generate common block for coarray variables
+  //-----------------------------------------------------
+  //
+  private void genCommonBlockForCoarrays(ArrayList<XMPcoarray> coarrays) {
+    // do nothing if no coarrays are declared.
+    if (coarrays.isEmpty())
+      return;
+
+    ArrayList<String> cnameList = new ArrayList<String>();
+    for (XMPcoarray coarray0: coarrays) {
+      String cname = coarray0.getCoarrayCommonName();
+      if (cnameList.contains(cname))
+        continue;
+
+      // found new common block to be declared
+      cnameList.add(cname);
+
+      Xobject cnameObj = Xcons.Symbol(Xcode.IDENT, cname);
+      Xobject varList = Xcons.List();
+      for (XMPcoarray coarray: coarrays) {
+        if (cname.equals(coarray.getCoarrayCommonName())) {
+          Ident coarrayId = coarray.getIdent();
+          varList.add(Xcons.FvarRef(coarrayId));
+        }
+      }
+
+      // add declaration 
+      Xobject decls = getFblock().getBody().getDecls();
+      Xobject args = Xcons.List(Xcode.F_COMMON_DECL,
+                                Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList));
+      decls.add(args);
+    }
+  }
+
+  //-----------------------------------------------------
+  //  TRANSLATION c for Ver.3
+  //    link cray pointers with data objects and
+  //    generate their common association
   //-----------------------------------------------------
   //
   private void genDeclOfCrayPointer(ArrayList<XMPcoarray> coarrays) {
@@ -1241,7 +1317,7 @@ public class XMPtransCoarrayRun
       new XMPcoarrayInitProcedure(coarrays,
                                   traverseCountName,
                                   traverseInitName,
-                                  env);
+                                  env, version);
     coarrayInit.run();
   }
 
@@ -1985,12 +2061,12 @@ public class XMPtransCoarrayRun
     }
 
     /* check a typical name defined in xmp_coarray.h */
-    //    Ident id = def.findIdent("xmpf_coarray_get0d");
-    //    if (id == null) {
-    //      /* xmpf_lib.h seems not included. */
-    //      XMP.error("current restriction: " + 
-    //                "\'xmp_coarray.h\' must be included to use coarray features.");
-    //    }
+    Ident id = def.findIdent("xmpf_coarray_get0d");
+    if (id == null) {
+      /* xmpf_lib.h seems not included. */
+      XMP.error("current restriction: " + 
+                "\'xmp_coarray.h\' must be included to use coarray features.");
+    }
   }
 
   private boolean _isCoarrayReferred() {

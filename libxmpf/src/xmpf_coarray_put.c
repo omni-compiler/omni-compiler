@@ -235,7 +235,7 @@ void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
   if (rank == 0) {  // fully contiguous after perfect collapsing
     _XMPF_coarrayDebugPrint("PUT %d bytes fully contiguous ===\n"
                             "  coindex %d puts to %d\n",
-                            bytes, XMPF_this_image, coindex);
+                            bytes, XMPF_initial_this_image, coindex);
     _putVector(descPtr, baseAddr, bytes, coindex, rhs);
     return;
   }

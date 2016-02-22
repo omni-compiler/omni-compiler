@@ -220,6 +220,7 @@ extern void _XMP_coarray_malloc_image_info_1();
 
 //extern void _XMP_coarray_malloc_do_f(void **, void *);
 extern void _XMP_coarray_malloc_do(void **, void *);
+extern void _XMP_coarray_regmem_do(void **, void *);
 
 extern void _XMP_coarray_rdma_coarray_set_1(const long, const long, const long);
 //extern void _XMP_coarray_rdma_coarray_set_2(const int, const int, const int, const int, const int, const int);
@@ -352,6 +353,9 @@ extern void xmpf_coarray_malloc_pool_(void);
 extern void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                        int *count, int *element,
                                        char *name, int *namelen);
+extern void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
+                                        int *count, int *element,
+                                        char *name, int *namelen);
 extern void xmpf_coarray_count_size_(int *count, int *element);
 
 extern void xmpf_coarray_prolog_(void **tag, char *name, int *namelen);
@@ -373,8 +377,13 @@ extern char *_XMPF_get_coarrayName(void *descPtr);
 
 
 /* xmpf_coarray_lib.c */
-extern int XMPF_this_image, XMPF_num_images;
-extern void _XMPF_set_this_image(void);
+extern int XMPF_initial_this_image, XMPF_initial_num_images;
+extern void _XMPF_set_initial_this_image(void);
+extern void _XMPF_set_initial_num_images(void);
+extern int _XMPF_get_initial_this_image(void);
+extern int _XMPF_get_initial_num_images(void);
+extern int _XMPF_get_current_this_image(void);
+extern int _XMPF_get_current_num_images(void);
 extern int num_images_(void);
 extern int this_image_(void);
 //extern int xmpf_num_nodes_(void);

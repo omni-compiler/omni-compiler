@@ -58,7 +58,7 @@ public class omompx
   private static void usage()
   {
     final String[] lines = {
-      "arguments: [-xc|-xf] [-l] [-fopenmp] [-f[no]coarray] [-dxcode] [-ddecomp] [-dump]",
+      "arguments: [-xc|-xf] [-l] [-fopenmp] [-f[{no|auto}]coarray] [-dxcode] [-ddecomp] [-dump]",
       "           <input XcodeML file>",
       "           [-o <output reconstructed XcodeML file>]",
       "",
@@ -67,7 +67,8 @@ public class omompx
       "  -l           suppress line directive in decompiled code.",
       "  -fopenmp     enable OpenMP translation.",
       "  -fcoarry     enable coarray translation.",
-      "  -fnocoarry   pass without coarray translation (default).",
+      "  -fnocoarry   pass without coarray translation (default for C).",
+      "  -fautocoarry enable coarray translation only if any coarray features are used (default, only for Fortran).",
       "  -fatomicio   enable transforming Fortran IO statements to atomic operations.",
       "  -w N         set max columns to N for Fortran source.",
       "  -gnu         decompile for GNU Fortran (default).",
@@ -105,6 +106,8 @@ public class omompx
     boolean openMP = false;
     boolean openACC = false;
     boolean coarray = false;
+    boolean autocoarray = true;
+    boolean is_coarray_V4 = false;         // TEMPORARY
     boolean xcalableMP = false;
     boolean xcalableMPthreads = false;
     boolean xcalableMPGPU = false;
@@ -135,8 +138,14 @@ public class omompx
         openMP = true;
       } else if(arg.equals("-fcoarray")) {
         coarray = true;
+        autocoarray = false;
+      } else if(arg.equals("-fcoarray=4")) {     // TEMPORARY
+        is_coarray_V4 = true;
       } else if(arg.equals("-fnocoarray")) {
         coarray = false;
+        autocoarray = false;
+      } else if(arg.equals("-fautocoarray")) {
+        autocoarray = true;
       } else if(arg.equals("-facc")) {
         openACC = true; 
       } else if(arg.equals("-fxmp")) {
@@ -349,26 +358,33 @@ public class omompx
 
     if(xmpf) {  // XcalableMP xmpF translation
 
-      // Error check and light analysis
-      exc.xmpF.XMPtransCoarray
-        caf_translator0 = new exc.xmpF.XMPtransCoarray(xobjFile, 0);
-      xobjFile.iterateDef(caf_translator0);
-      if(exc.xmpF.XMP.hasErrors())
-        System.exit(1);
-      Boolean containsCoarray = caf_translator0.containsCoarray();
-      caf_translator0.finish();
+      Boolean containsCoarray = false;
 
-      Boolean cascadeMode = "1".equals(System.getenv("XMP_CASCADE"));
+      // environment variable analysis
       Boolean onlyCafMode = "1".equals(System.getenv("XMP_ONLYCAF"));
+      Boolean cascadeMode = "1".equals(System.getenv("XMP_CASCADE"));
+
+      if (coarray == true || autocoarray == true) {
+        // Coarray Fortran pass#0 -- detect if any coarray features are used
+        exc.xmpF.XMPtransCoarray
+          caf_translator0 = new exc.xmpF.XMPtransCoarray(xobjFile, 0);
+        xobjFile.iterateDef(caf_translator0);
+        if(exc.xmpF.XMP.hasErrors())
+          System.exit(1);
+        containsCoarray = caf_translator0.containsCoarray();
+        caf_translator0.finish();
+      }
 
       if (containsCoarray || cascadeMode || onlyCafMode) {
         if (cascadeMode || onlyCafMode) {
-          System.out.println("File to be translated as a CAF Program: " +
-                             xobjFile.getSourceFileName());
+          System.out.println("File " + xobjFile.getSourceFileName() +
+                             " is being translated as a CAF Program.");
         }
         // Coarray Fortran pass#1
         exc.xmpF.XMPtransCoarray
           caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1);
+        if (is_coarray_V4)
+          caf_translator1.set_version(4);
         xobjFile.iterateDef(caf_translator1);
         if(exc.xmpF.XMP.hasErrors())
           System.exit(1);
@@ -385,8 +401,8 @@ public class omompx
 
       if ((!containsCoarray || cascadeMode) && !onlyCafMode) {
         if (cascadeMode) {
-          System.out.println("File to be translated as an XMP/F Program: " +
-                             xobjFile.getSourceFileName());
+          System.out.println("File " +  xobjFile.getSourceFileName() +
+                             " is being translated as an XMP/F Program.");
         }
         // XMP Fortran
         exc.xmpF.XMPtranslate

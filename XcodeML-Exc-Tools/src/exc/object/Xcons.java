@@ -876,6 +876,11 @@ public class Xcons
         return FindexRange(lb, ub, null);
     }
     
+    public static Xobject FindexRange(Xobject ub)
+    {
+        return FindexRange(Xcons.IntConstant(1), ub, null);
+    }
+    
     public static Xobject FindexRangeOfAssumedShape()
     {
         return Xcons.List(Xcode.F_INDEX_RANGE, (Xobject)null, null, null, IntConstant(1));

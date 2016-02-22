@@ -179,7 +179,7 @@ void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *result,
   if (rank == 0) {  // fully contiguous after perfect collapsing
     _XMPF_coarrayDebugPrint("GET %d bytes fully contiguous ===\n"
                             "  coindex %d gets from %d\n",
-                            bytes, XMPF_this_image, coindex);
+                            bytes, XMPF_initial_this_image, coindex);
     _getVector(descPtr, baseAddr, bytes, coindex, result);
     return;
   }
