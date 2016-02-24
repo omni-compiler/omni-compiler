@@ -92,8 +92,6 @@ int num_images_(void)
  */
 int this_image_(void)
 {
-  int image;
-
   //_XMPF_checkIfInTask("THIS_IMAGE");
 
   return _XMPF_get_current_this_image();

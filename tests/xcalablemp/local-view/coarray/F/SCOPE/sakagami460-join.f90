@@ -33,7 +33,7 @@ ni = num_images()
 nsum = 5050*50*ni*(ni+1)/2
 if (abs(asum-nsum)>eps) then
    nerr=nerr+1
-   print '("[",i0,"] sum should be about ",i0," but ",f20.10)', me, nsum, asum
+   print '("[",i0,"] sum should be about ",i0," but ",f20.2)', me, nsum, asum
 endif
 
 call final_msg(nerr, me)

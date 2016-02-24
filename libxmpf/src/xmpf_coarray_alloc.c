@@ -67,6 +67,7 @@ static void _addMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk);
 static void _unlinkMemoryChunk(MemoryChunk_t *chunk);
 static void _freeMemoryChunk(MemoryChunk_t *chunk);
 static char *_dispMemoryChunk(MemoryChunk_t *chunk);
+static MemoryChunk_t *_getMemoryChunkFromLocalAddress(char *addr);
 
 static MemoryChunk_t *pool_chunk = NULL;
 static size_t pool_totalSize = 0;
@@ -590,7 +591,6 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
                                 void **tag, char *name, int *namelen)
 {
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
-  MemoryChunkOrder_t *chunkP;
   MemoryChunk_t *myChunk;
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_FIND_DESCPTR varname=\'%*s\'\n",
@@ -602,18 +602,8 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
   // generate a new descPtr for an allocatable dummy coarray
   CoarrayInfo_t *cinfo = _newCoarrayInfo_empty();
 
-  /* current implementation:
-     look for my memory chunk into all MemoryChunkOrder
-  */
-  myChunk = NULL;
-  forallMemoryChunkOrder(chunkP) {
-  MemoryChunk_t* chunk = chunkP->chunk;
-    if (chunk->orgAddr <= baseAddr && baseAddr < chunk->orgAddr + chunk->nbytes) {
-      // found the memory chunk
-      myChunk = chunk;
-      break;
-    }
-  }
+  // search my MemoryChunk only from baseAddr
+  myChunk = _getMemoryChunkFromLocalAddress(baseAddr);
 
   if (myChunk == NULL) {
     _XMPF_coarrayDebugPrint("*** ILLEGAL: home MemoryChunk was not found. "
@@ -905,6 +895,25 @@ char *_dispMemoryChunk(MemoryChunk_t *chunk)
 
   (void)sprintf(work, "<%p, %uB>", chunk, chunk->nbytes);
   return work;
+}
+
+
+MemoryChunk_t *_getMemoryChunkFromLocalAddress(char *addr)
+{
+  MemoryChunkOrder_t *chunkP;
+  MemoryChunk_t *chunk;
+
+  /* current implementation:
+     look for my memory chunk into all MemoryChunkOrder
+  */
+  forallMemoryChunkOrder(chunkP) {
+    chunk = chunkP->chunk;
+    if (chunk->orgAddr <= addr && addr < chunk->orgAddr + chunk->nbytes) {
+      // found the memory chunk
+      return chunk;
+    }
+  }
+  return NULL;
 }
 
 
@@ -1211,6 +1220,23 @@ size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr)
   size_t offset = baseAddr - orgAddr;
   
   return offset;
+}
+
+void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
+                                    size_t *offset, char **name)
+{
+  MemoryChunk_t* chunk = _getMemoryChunkFromLocalAddress(localAddr);
+  if (chunk == NULL) {
+    *orgAddr = NULL;
+    *offset = 0;
+    *name = "(not found)";
+    return NULL;
+  }
+
+  *orgAddr = chunk->orgAddr;
+  *offset = localAddr - *orgAddr;
+  *name = chunk->headCoarray->next->name;
+  return chunk->desc;
 }
 
 

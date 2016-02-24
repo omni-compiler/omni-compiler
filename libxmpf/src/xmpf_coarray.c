@@ -11,6 +11,8 @@
 \*****************************************/
 
 static int _XMPF_coarrayMsg = 0;          // default: message off
+static int _XMPF_coarrayMsg_last;         // for _XMPF_set/reset_coarrayMsg()
+
 //static int _XMPF_coarrayErr = 0;          // default: aggressive error check off
 static unsigned _XMPF_poolThreshold = POOL_THRESHOLD;
 
@@ -37,9 +39,21 @@ static void _set_coarrayMsg(int sw)
   static vars and functions
 \*****************************************/
 
-int XMPF_get_coarrayMsg(void)
+int _XMPF_get_coarrayMsg(void)
 {
   return _XMPF_coarrayMsg;
+}
+
+
+void _XMPF_set_coarrayMsg(int sw)
+{
+  _XMPF_coarrayMsg_last = _XMPF_coarrayMsg;
+  _XMPF_coarrayMsg = sw;
+}
+
+void _XMPF_reset_coarrayMsg(void)
+{
+  _XMPF_coarrayMsg = _XMPF_coarrayMsg_last;
 }
 
 
@@ -163,7 +177,7 @@ void _XMPF_coarray_init(void)
                           "   _XMPF_poolThreshold  :  %u bytes\n",
                           ONESIDED_COMM_LAYER, ONESIDED_BOUNDARY,
                           env1 ? env1 : "", env2 ? env2 : "",
-                          XMPF_get_coarrayMsg(),
+                          _XMPF_get_coarrayMsg(),
                           XMPF_get_poolThreshold()
                           );
 }
