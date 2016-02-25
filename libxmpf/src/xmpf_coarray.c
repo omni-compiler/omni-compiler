@@ -222,7 +222,9 @@ void _XMPF_coarrayFatal(char *format, ...)
   fprintf(stderr, "CAF[%d] %s", _XMPF_get_current_this_image(), work);
   va_end(list);
 
-  xmpf_finalize_each__();
+  //xmpf_finalize_each__();   This causes deadlock sometimes.
+
+  _XMP_fatal("fatal error detected by Coarray/F runtime.");
 }
 
 void _XMPF_coarrayDebugPrint(char *format, ...)

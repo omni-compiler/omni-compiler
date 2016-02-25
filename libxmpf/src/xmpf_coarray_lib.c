@@ -200,7 +200,7 @@ void xmpf_touch_(void)
 
 void xmpf_sync_image_nostat_(int *image)
 {
-  int state;
+  int state = 0;
 
   if (*image <= 0)
     _XMPF_coarrayFatal("ABORT: illegal image number (%d) found in SYNC IMAGES\n",

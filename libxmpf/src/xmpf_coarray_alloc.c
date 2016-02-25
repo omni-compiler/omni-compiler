@@ -613,10 +613,8 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
   }
 
 
-  _XMPF_coarrayDebugPrint("*** found home MemoryChunk %s\n"
-                          "*** my baseAddr=%p, chunk->orgAddr=%p\n",
-                          _dispMemoryChunk(myChunk),
-                          baseAddr, myChunk->orgAddr);
+  _XMPF_coarrayDebugPrint("*** found my home MemoryChunk %s\n",
+                          _dispMemoryChunk(myChunk));
 
   _addCoarrayInfo(myChunk, cinfo);
 
@@ -891,9 +889,29 @@ void _freeMemoryChunk(MemoryChunk_t *chunk)
 
 char *_dispMemoryChunk(MemoryChunk_t *chunk)
 {
-  static char work[200];
+  static char work[30+30*4];
+  CoarrayInfo_t *cinfo;
+  int count;
 
-  (void)sprintf(work, "<%p, %uB>", chunk, chunk->nbytes);
+  (void)sprintf(work, "<%p %u bytes ", chunk, chunk->nbytes);
+
+  count = 0;
+  forallCoarrayInfo(cinfo, chunk) {
+    if (++count == 4) {
+      strcat(work, "...");
+      break;
+    } 
+    if (cinfo->name) {
+      strcat(work, "\'");
+      strncat(work, cinfo->name, 20);
+      strcat(work, "\'");
+    } else {
+      strcat(work, "(null)");
+    }
+  }
+
+  strcat(work, ">");
+
   return work;
 }
 

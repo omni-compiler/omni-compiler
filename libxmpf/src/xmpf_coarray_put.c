@@ -75,7 +75,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/scalar\n");
 
     if (avail_DMA)
-      _putVectorDMA(descPtr, baseAddr, *element, coindex,
+      _putVectorDMA(*descPtr, *baseAddr, *element, *coindex,
                     descDMA, offsetDMA, nameDMA);
     else
       _putVector(*descPtr, *baseAddr, *element, *coindex, rhs);
@@ -90,7 +90,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
                               *baseAddr, *element, elementRU);
 
       if (avail_DMA)
-        _putVectorDMA(descPtr, baseAddr, elementRU, coindex,
+        _putVectorDMA(*descPtr, *baseAddr, elementRU, *coindex,
                       descDMA, offsetDMA, nameDMA);
       else
         _putVector(*descPtr, *baseAddr, elementRU, *coindex, rhs);
