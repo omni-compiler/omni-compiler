@@ -311,11 +311,12 @@ public class XMPcoarrayInitProcedure {
     // (case: Ver.3)
     //    "common /xmpf_crayptr_foo/ crayPtr_var"   
     // (case: Ver.4)
-    //    TYPE var(N)
+    //    TYPE var(N)  !! without SAVE attr.
     //    "common /xmpf_coarray_foo/ var"           
     set_commonName2(coarray);
     Ident ident2;
     if (version == 4) {
+      coarray.resetSaveAttr();
       Xtype type1 = coarray.getIdent().Type();
       Xtype type2;
       switch (type1.getKind()) {

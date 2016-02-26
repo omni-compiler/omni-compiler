@@ -611,8 +611,13 @@ public class XMPcoarray {
   }
 
   public void resetSaveAttr() {
-    Xtype type = ident.Type();
-    _resetSaveAttrInType(type);
+    //    Xtype type = ident.Type();
+    //    _resetSaveAttrInType(type);
+    _resetSaveAttrInType(ident.Type());
+
+    // How various!
+    if (ident.getStorageClass() == StorageClass.FSAVE)
+      ident.setStorageClass(StorageClass.FLOCAL);
   }
 
   private void _resetSaveAttrInType(Xtype type) {
