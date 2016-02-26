@@ -1721,53 +1721,44 @@ public class XMPrewriteExpr {
     return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
   }
 
-  public static void rewriteLoopIndexInLoop(Xobject expr, String loopIndexName,
+  public static void rewriteLoopIndexInLoop(Xobject expr, ArrayList<String> iteraterList,
 					    XMPtemplate templateObj, int templateIndex,
                                             XMPglobalDecl globalDecl, Block block) throws XMPexception {
     if (expr == null) return;
+
+    String loopIndexName = iteraterList.get(iteraterList.size() - 1);
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject myExpr = iter.getXobject();
       if (myExpr == null) {
         continue;
-      } else if (myExpr.isRewrittedByXmp()) {
+      }
+      else if (myExpr.isRewrittedByXmp()) {
         continue;
       }
+      
       switch (myExpr.Opcode()) {
       case VAR:
 	{
 	  if (loopIndexName.equals(myExpr.getSym())) {
 	    iter.setXobject(calcLtoG(templateObj, templateIndex, myExpr));
 	  }
-	} break;
+	}
+        break;
       case ARRAY_REF:
 	{
 	  XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(myExpr.getArg(0).getSym(), block);
 	  if (alignedArray == null) {
 	    rewriteLoopIndexVar(templateObj, templateIndex, loopIndexName, myExpr);
-	  } else {
-	    myExpr.setArg(1, rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
-							  loopIndexName, (XobjList)myExpr.getArg(1)));
 	  }
-	} break;
+          else {
+            myExpr.setArg(1, rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
+                                                          iteraterList, (XobjList)myExpr.getArg(1)));
+	  }
+	}
+        break;
       case POINTER_REF:
 	{
-	  // Xobject addr_expr = myExpr.getArg(0);
-	  // if (addr_expr.Opcode() == Xcode.PLUS_EXPR){
-
-	  //   Xobject pointer = addr_expr.getArg(0);
-	  //   Xobject offset = addr_expr.getArg(1);
-
-	  //   if (pointer.Opcode() == Xcode.VAR){
-	  //     XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(pointer.getSym(), block);
-	  //     if (alignedArray != null){
-	  // 	  addr_expr.setArg(0, alignedArray.getAddrId().Ref());
-	  // 	  addr_expr.setArg(1, rewriteLoopIndexArrayRef(templateObj, templateIndex, alignedArray, 0,
-	  // 						       loopIndexName, offset));
-	  //     }
-	  //   }
-	  // }
-
 	  XMPalignedArray alignedArray = null;
 	  XobjList indexList = Xcons.List();
 
@@ -1783,17 +1774,13 @@ public class XMPrewriteExpr {
 	      alignedArray = globalDecl.getXMPalignedArray(addr_expr.getSym(), block);
 	      break;
 	    }
-
 	  }
 
 	  if (alignedArray != null){
 	    Xobject newExpr = Xcons.arrayRef(alignedArray.getType(), alignedArray.getAddrId().Ref(),
 					     rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
-									  loopIndexName, indexList));
+									  iteraterList, indexList));
 	    iter.setXobject(newExpr);
-	    // myExpr.getArg(0).setArg(0, alignedArray.getAddrId().Ref());
-	    // myExpr.getArg(0).setArg(1, rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
-	    // 							    loopIndexName, indexList));
 	  }
 
 	  break;
@@ -1828,16 +1815,14 @@ public class XMPrewriteExpr {
   }
 
   private static XobjList rewriteLoopIndexArrayRefList(XMPtemplate t, int ti, XMPalignedArray a,
-                                                       String loopIndexName, XobjList arrayRefList) throws XMPexception
+                                                       ArrayList<String> iteraterList, XobjList arrayRefList) throws XMPexception
   {
-    if (arrayRefList == null) {
-      return null;
-    }
+    if (arrayRefList == null)  return null;
 
     XobjList newArrayRefList = Xcons.List();
     int arrayDimIdx = 0;
     for (Xobject x : arrayRefList) {
-      newArrayRefList.add(rewriteLoopIndexArrayRef(t, ti, a, arrayDimIdx, loopIndexName, x));
+      newArrayRefList.add(rewriteLoopIndexArrayRef(t, ti, a, arrayDimIdx, iteraterList, x));
       arrayDimIdx++;
       x.setIsRewrittedByXmp(true);
     }
@@ -1846,16 +1831,19 @@ public class XMPrewriteExpr {
   }
 
   private static Xobject rewriteLoopIndexArrayRef(XMPtemplate t, int ti, XMPalignedArray a, int ai,
-                                                  String loopIndexName, Xobject arrayRef) throws XMPexception
+                                                  ArrayList<String> iteraterList, Xobject arrayRef) throws XMPexception
   {
     if (arrayRef.Opcode() == Xcode.VAR) {
-      if (loopIndexName.equals(arrayRef.getString())) {
-        return calcShadow(t, ti, a, ai, arrayRef);
-      } else {
-        return arrayRef;
+      Xobject myExpr = arrayRef;
+      for(String x : iteraterList){
+        if (x.equals(arrayRef.getString())){
+          myExpr = calcShadow(t, ti, a, ai, myExpr);
+        }
       }
+      return myExpr;
     }
-
+    
+    String loopIndexName = iteraterList.get(iteraterList.size() - 1);
     topdownXobjectIterator iter = new topdownXobjectIterator(arrayRef);
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject myExpr = iter.getXobject();
@@ -1866,26 +1854,28 @@ public class XMPrewriteExpr {
       }
 
       switch (myExpr.Opcode()) {
-        case VAR:
-          {
-            if (loopIndexName.equals(myExpr.getString())) {
-              iter.setXobject(calcShadow(t, ti, a, ai, myExpr));
-            }
-          } break;
-        default:
+      case VAR:
+        {
+          if (loopIndexName.equals(myExpr.getString())) {
+            iter.setXobject(calcShadow(t, ti, a, ai, myExpr));
+          }
+        }
+        break;
+      default:
       }
     }
+    
     return arrayRef;
   }
-
+  
   private static Xobject calcShadow(XMPtemplate t, int ti, XMPalignedArray a, int ai,
                                     Xobject expr) throws XMPexception {
     expr.setIsRewrittedByXmp(true);
-    if(a.getAlignSubscriptIndexAt(ai) != null){  // null is an asterisk
-      if (ti != a.getAlignSubscriptIndexAt(ai).intValue()) {
-	throw new XMPexception("array ref is not consistent with array alignment");
-      }
-    }
+    //    if(a.getAlignSubscriptIndexAt(ai) != null){  // null is an asterisk
+    //      if (ti != a.getAlignSubscriptIndexAt(ai).intValue()) {
+    //	throw new XMPexception("array ref is not consistent with array alignment");
+    //      }
+    //    }
 
     XMPshadow shadow = a.getShadowAt(ai);
     switch (shadow.getType()) {
