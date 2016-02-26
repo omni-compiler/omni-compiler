@@ -445,12 +445,19 @@ public class BlockList
                 }
             }
         }
-        if(id_list == null && decls == null)
+        //        if(id_list == null && decls == null)
+        //            return v;
+        //        else if(XmOption.isLanguageC())
+        //            return Xcons.CompoundStatement(id_list, decls, v);
+        //        else
+        //            return Xcons.FstatementList(v);
+        if(XmOption.isLanguageC()) {
+          if(id_list == null && decls == null)
             return v;
-        else if(XmOption.isLanguageC())
-            return Xcons.CompoundStatement(id_list, decls, v);
+          return Xcons.CompoundStatement(id_list, decls, v);
+        }
         else
-            return Xcons.FstatementList(v);
+          return Xcons.FstatementList(v);
     }
     
     @Override
