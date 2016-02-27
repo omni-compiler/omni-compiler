@@ -1191,10 +1191,11 @@ public class XMPtranslateLocalPragma {
 
   private void translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
-    ArrayList<String> iteraterList = new ArrayList<String>();  // Not used 
+    ArrayList<String> iteraterList = new ArrayList<String>(); // Not used
+    XobjList loopVarList = (XobjList)loopDecl.getArg(0);
 
     // schedule loop
-    scheduleLoop(pb, schedBaseBlock, schedBaseBlock, iteraterList);
+    scheduleLoop(pb, schedBaseBlock, schedBaseBlock, iteraterList, loopVarList);
     insertScheduleIndexFunction(pb, schedBaseBlock, schedBaseBlock, iteraterList);
   }
 
@@ -1215,7 +1216,7 @@ public class XMPtranslateLocalPragma {
     ArrayList<String> iteraterList = new ArrayList<String>();
     while (it.hasNext()) {
       CforBlock forBlock = it.next();
-      scheduleLoop(pb, forBlock, schedBaseBlock, iteraterList);
+      scheduleLoop(pb, forBlock, schedBaseBlock, iteraterList, loopVarList);
     }
 
     it = loopVector.iterator();
@@ -1415,14 +1416,14 @@ public class XMPtranslateLocalPragma {
     return reductionBody;
   }
 
-  private void scheduleLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock, ArrayList<String> iteraterList) throws XMPexception {
+  private void scheduleLoop(PragmaBlock pb, CforBlock forBlock, CforBlock schedBaseBlock, ArrayList<String> iteraterList,
+                            XobjList loopVarList) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(schedBaseBlock);
 
     // analyze <on-ref>
     Xobject onRef = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
-    //XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
     XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, schedBaseBlock);
     if (onRefObj == null) {
       throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
@@ -1432,15 +1433,10 @@ public class XMPtranslateLocalPragma {
       case XMPobject.TEMPLATE:
         {
           XMPtemplate onRefTemplate = (XMPtemplate)onRefObj;
-          // if (!onRefTemplate.isFixed()) {
-          //   throw new XMPexception("template '" + onRefObjName + "' is not fixed");
-          // }
-
           if (!onRefTemplate.isDistributed()) {
             throw new XMPexception("template '" + onRefObjName + "' is not distributed");
           }
-
-          callLoopSchedFuncTemplate(onRefTemplate, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock, iteraterList);
+          callLoopSchedFuncTemplate(onRefTemplate, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock, iteraterList, loopVarList);
         } break;
       case XMPobject.NODES:
         callLoopSchedFuncNodes((XMPnodes)onRefObj, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock);
@@ -1529,7 +1525,8 @@ public class XMPtranslateLocalPragma {
   }
 
   private void callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList,
-                                         CforBlock forBlock, CforBlock schedBaseBlock, ArrayList<String> iteraterList) throws XMPexception {
+                                         CforBlock forBlock, CforBlock schedBaseBlock, ArrayList<String> iteraterList,
+                                         XobjList loopVarList) throws XMPexception {
     Xobject loopIndex = forBlock.getInductionVar();
     String loopIndexName = loopIndex.getSym();
     iteraterList.add(loopIndexName);
@@ -1591,25 +1588,28 @@ public class XMPtranslateLocalPragma {
     }
 
     // rewrite loop index in loop
-    BlockList body = getLoopBody(forBlock);
-    BasicBlockExprIterator iter = new BasicBlockExprIterator(body);
-    for (iter.init(); !iter.end(); iter.next()){
-      XMPrewriteExpr.rewriteLoopIndexInLoop(iter.getExpr(), iteraterList,
+    BasicBlockExprIterator iter = new BasicBlockExprIterator(getLoopBody(forBlock));
+
+    for (iter.init(); !iter.end(); iter.next()) {
+      XMPrewriteExpr.rewriteLoopIndexInLoop(iter.getExpr(), loopIndexName,
       					    templateObj, templateIndexArg.getInt(),
-      					    _globalDecl, forBlock);
+      					    _globalDecl, forBlock, loopVarList);
     }
 
     // rewrite loop index in initializer in loop
-    for (Block b = body.getHead(); b != null; b = b.getNext()){
-      if (b.getBody() == null) continue;
-      topdownXobjectIterator iter_decls = new topdownXobjectIterator(b.getBody().getDecls());
+    BlockList body = getLoopBody(forBlock);
 
-      for (iter_decls.init(); !iter_decls.end(); iter_decls.next()) {
-        XMPrewriteExpr.rewriteLoopIndexInLoop(iter_decls.getXobject(), iteraterList,
-                                              templateObj, templateIndexArg.getInt(),
-                                              _globalDecl, forBlock);
+    for (Block b = body.getHead(); b != null; b = b.getNext()){
+      
+      if (b.getBody() == null) continue;
+      topdownXobjectIterator iter2 = new topdownXobjectIterator(b.getBody().getDecls());
+      for (iter2.init(); !iter2.end(); iter2.next()) {
+	XMPrewriteExpr.rewriteLoopIndexInLoop(iter2.getXobject(), loopIndexName,
+					      templateObj, templateIndexArg.getInt(),
+					      _globalDecl, forBlock, loopVarList);
       }
     }
+
   }
 
   private void callLoopSchedFuncNodes(XMPnodes nodesObj, XobjList nodesSubscriptList,
