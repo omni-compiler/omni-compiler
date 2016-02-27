@@ -25,6 +25,17 @@ int main(){
       }
     }
   }
+
+#pragma xmp loop (j,i) on t(j,i)
+  for(int i=0;i<N;i++){
+    for(int j=0;j<N;j++){
+      int v = a[i][j];
+      if(v != a[i][j]){
+	printf("Error! : a[%d][%d] = %d, v = %d\n", i, j, a[i][j], v);
+	exit(1);
+      }
+    }
+  }
   
 #pragma xmp task on p(1,1)
   printf("PASS\n");
