@@ -2842,17 +2842,22 @@ get_comm_list(_XMP_gmv_desc_t *gmv_desc0, _XMP_gmv_desc_t *gmv_desc1,
 
   _XMP_csd_t *comm_csd[n_gmv_nodes][_XMP_N_MAX_DIM];
 
-  //int scalar_flag = 1;
-  //for (int i0 = 0; i0 < ndims0; i0++) scalar_flag &= (st0[i0] == 0);
+  int scalar_flag = 1;
+  for (int i0 = 0; i0 < ndims0; i0++) scalar_flag &= (st0[i0] == 0);
 
   for (int r_rank = 0; r_rank < n_gmv_nodes; r_rank++){
 
-    /* if (scalar_flag){ */
-    /*   for (int i1 = 0; i1 < ndims1; i1++){ */
-    /* 	comm_set[r_rank][i1] = csd2comm_set(owner_ref_csd1[r_rank][i1]); */
-    /*   } */
-    /* } */
-    /* else { */
+    if (scalar_flag){
+      for (int i0 = 0; i0 < ndims0; i0++){
+    	if (owner_ref_csd0[r_rank][i0] == NULL){
+	  for (int i1 = 0; i1 < ndims1; i1++){
+	    comm_csd[r_rank][i1] = NULL;
+	    comm_set[r_rank][i1] = NULL;
+	  }
+	  goto next;
+	}
+      }
+    }
 
     _XMP_csd_t *r;
 
@@ -2901,7 +2906,8 @@ get_comm_list(_XMP_gmv_desc_t *gmv_desc0, _XMP_gmv_desc_t *gmv_desc1,
       comm_set[r_rank][i1] = csd2comm_set(comm_csd[r_rank][i1]);
     }
 
-    /* } */
+  next:
+    ;
   }
 
 /* #if XMP_DBG */
@@ -3311,13 +3317,14 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
 	tgt_len[j] = 1;
 	j++;
       }
+      tgt_dim[i] = j++;
     }
-    tgt_dim[i] = j++;
   }
+
   for (; j < tgt_ndims; j++){
     tgt_i[j] = tgt_lb[j];
     tgt_len[j] = 1;
-  }    
+  }
 
   switch (org_ndims){
 
