@@ -35,8 +35,8 @@ Process Options
 
 XcalableMP Options
 
-  -omp,--openmp       : enable OpenMP.
-  -xacc,--xcalableacc : enable XcalableACC.
+  -omp,--openmp        : enable OpenMP.
+  -max_assumed_shape=N : specifies the maximum number of assumed-shape array arguments (default is 16)
 EOF
 }
 
