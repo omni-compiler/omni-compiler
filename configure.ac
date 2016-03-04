@@ -945,9 +945,9 @@ AC_SUBST(GPU_CFLAGS)
 
 AC_ARG_WITH(cuda,
     [  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)],
-    [GPGPU_PREFIX="${withval}"], [GPGPU_PREFIX="/usr/local/cuda"])
+    [CUDA_PREFIX="${withval}"], [CUDA_PREFIX="/usr/local/cuda"])
 
-AC_SUBST(GPGPU_PREFIX)
+AC_SUBST(CUDA_PREFIX)
 
 # --------------------------------------------------------------------
 # specify libxmp path
