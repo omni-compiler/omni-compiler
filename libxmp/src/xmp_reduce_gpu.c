@@ -1,4 +1,4 @@
-#include <include/cuda_runtime.h>
+#include <cuda_runtime.h>
 #include <xmp_internal.h>
 
 void _XMP_reduce_gpu_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);

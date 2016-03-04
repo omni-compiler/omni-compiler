@@ -25,10 +25,12 @@ STOP_BACKEND=false
 STOP_COMPILE=false
 ENABLE_OPENMP=false
 ENABLE_XACC=false
-ENABLE_SCALASCA_ALL=false
 ENABLE_SCALASCA=false
-ENABLE_TLOG_ALL=false
+ENABLE_SCALASCA_ALL=false
+ENABLE_SCALASCA_SELECTIVE=false
 ENABLE_TLOG=false
+ENABLE_TLOG_ALL=false
+ENABLE_TLOG_SELECTIVE=false
 
 ### Set options ###
 # e.g.) xmpcc -I/usr/lib a.c b.c c.o --tmp --Wlfoo lib.a -omp -DTEST -lm -o a.out
@@ -115,10 +117,10 @@ done
 [ $STOP_FRONTEND = true ] && exit 0;
 
 ### Translator ###
-[ $ENABLE_TLOG_ALL = true ]     && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -tlog-all"
-[ $ENABLE_TLOG = true ]         && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -tlog"
-[ $ENABLE_SCALASCA_ALL = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -scalasca-all"
-[ $ENABLE_SCALASCA = true ]     && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -scalasca"
+[ $ENABLE_TLOG_ALL           = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -tlog-all"
+[ $ENABLE_TLOG_SELECTIVE     = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -tlog-selective"
+[ $ENABLE_SCALASCA_ALL       = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -scalasca-all"
+[ $ENABLE_SCALASCA_SELECTIVE = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -scalasca-selective"
 [ $ENABLE_XACC = true ]         && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -facc"
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
@@ -148,7 +150,7 @@ fi
 
 ### Native Compiler ###
 [ $ENABLE_OPENMP = true ] && OMNI_MPICC_OPT="$OPENMP_OPT_C $OMNI_MPICC_OPT"
-[ $ENABLE_SCALASCA_ALL = true -o $ENABLE_SCALASCA = true ] && OMNI_MPICC_CMD="scalasca -instrument -user $OMNI_MPICC_CMD"
+[ $ENABLE_SCALASCA = true ] && OMNI_MPICC_CMD="scalasca -instrument -user $OMNI_MPICC_CMD"
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
     FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
@@ -207,8 +209,8 @@ if [ $ENABLE_XACC = true ]; then
 fi
 
 # link
-[ $ENABLE_SCALASCA_ALL = true -o $ENABLE_SCALASCA = true ] && OMNI_LINKER_CMD="scalasca -instrument -user $OMNI_LINKER_CMD"
-[ $ENABLE_TLOG_ALL = true -o $ENABLE_TLOG = true ] && OMNI_LINKER_OPT="-ltlog_mpi $OMNI_LINKER_OPT"
+[ $ENABLE_SCALASCA = true ] && OMNI_LINKER_CMD="scalasca -instrument -user $OMNI_LINKER_CMD"
+[ $ENABLE_TLOG     = true ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT -ltlog_mpi"
 
 if [ "$target" != "sxace-nec-superux" -a "${output_file}" != "" ]; then
     other_args+=("-o" "${output_file[@]}")

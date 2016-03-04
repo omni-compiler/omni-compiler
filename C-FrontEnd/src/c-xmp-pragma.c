@@ -9,6 +9,7 @@
 #include "c-const.h"
 #include "c-option.h"
 #include "c-xmp.h"
+
 extern char* lexSkipSharp(char *);
 
 /*
@@ -58,52 +59,52 @@ static CExpr* parse_POST_clause();
 static CExpr* parse_WAIT_clause();
 static CExpr* parse_LOCK_clause();
 static CExpr* parse_UNLOCK_clause();
-//static CExpr* parse_LOCAL_ALIAS_clause();
 static CExpr* parse_WIDTH_list();
 static CExpr* parse_ASYNC_clause();
 static CExpr* parse_WAIT_ASYNC_clause();
 static CExpr* parse_TEMPLATE_FIX_clause();
 static CExpr* parse_REFLECT_INIT_clause();
 static CExpr* parse_REFLECT_DO_clause();
+static CExpr* parse_task_ON_ref();
 
 static CExpr* parse_COL2_name_list();
 static CExpr* parse_XMP_subscript_list();
 static CExpr* parse_XMP_size_list();
 static CExpr* parse_XMP_range_list();
-//static CExpr* parse_XMP_C_subscript_list();
 static CExpr* parse_ON_ref();
 static CExpr* parse_XMP_dist_fmt_list();
 static CExpr* parse_Reduction_opt();
 static CExpr* parse_XMP_opt();
 static CExpr* parse_ACC_or_HOST_clause();
+static CExpr* parse_PROFILE_clause();
+static void parse_ASYNC_ACC_or_HOST_PROFILE(CExpr**, CExpr**, CExpr**);
+static CExpr *parse_XMP_loop_subscript_list();
 
 static CExpr* _xmp_pg_list(int omp_code,CExpr* args);
+static int pg_XMP_pragma;
+CExpr* pg_XMP_list;
+int XMP_has_err = 0;
 
-#define XMP_PG_LIST(pg,args) _xmp_pg_list(pg,args)
-#define XMP_LIST1(arg1) (CExpr*)allocExprOfList1(EC_UNDEF,arg1)
-#define XMP_LIST2(arg1,arg2) (CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2)
-#define XMP_LIST3(arg1,arg2,arg3) (CExpr*)allocExprOfList3(EC_UNDEF,arg1,arg2,arg3)
-#define XMP_LIST4(arg1,arg2,arg3,arg4) (CExpr*)allocExprOfList4(EC_UNDEF,arg1,arg2,arg3,arg4)
-#define XMP_LIST5(arg1,arg2,arg3,arg4,arg5) (CExpr*)allocExprOfList5(EC_UNDEF,arg1,arg2,arg3,arg4,arg5)
+#define XMP_PG_LIST(pg,args)                     _xmp_pg_list(pg,args)
+#define XMP_LIST1(arg1)                          (CExpr*)allocExprOfList1(EC_UNDEF,arg1)
+#define XMP_LIST2(arg1,arg2)                     (CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2)
+#define XMP_LIST3(arg1,arg2,arg3)                (CExpr*)allocExprOfList3(EC_UNDEF,arg1,arg2,arg3)
+#define XMP_LIST4(arg1,arg2,arg3,arg4)           (CExpr*)allocExprOfList4(EC_UNDEF,arg1,arg2,arg3,arg4)
+#define XMP_LIST5(arg1,arg2,arg3,arg4,arg5)      (CExpr*)allocExprOfList5(EC_UNDEF,arg1,arg2,arg3,arg4,arg5)
 #define XMP_LIST6(arg1,arg2,arg3,arg4,arg5,arg6) (CExpr*)allocExprOfList6(EC_UNDEF,arg1,arg2,arg3,arg4,arg5,arg6)
 
-#define XMP_Error0(msg) addError(NULL,msg)
+#define XMP_Error0(msg)      addError(NULL,msg)
 #define XMP_error1(msg,arg1) addError(NULL,msg,arg1)
+#define EMPTY_LIST (CExpr *)allocExprOfList(EC_UNDEF)
 
 static CExpr* _xmp_pg_list(int xmp_code,CExpr* args)
 {
   CExprOfList *lp;
   lp = allocExprOfList1(EC_UNDEF,args);
   lp->e_aux = xmp_code;
+  
   return (CExpr *)lp;
 }
-
-#define EMPTY_LIST (CExpr *)allocExprOfList(EC_UNDEF)
-
-static int pg_XMP_pragma;
-CExpr* pg_XMP_list;
-
-int XMP_has_err = 0;
 
 /*
  * for XcalableMP directives
@@ -112,9 +113,7 @@ CExpr* lexParsePragmaXMP(char *p, int *token) // p is buffer
 {
   //skip pragma[space]xmp[space]*
   p = lexSkipSpace(lexSkipWordP(lexSkipSpace(lexSkipWord(lexSkipSpace(lexSkipSharp(lexSkipSpace(p)))))));
-
   pg_cp = p; // set the pointer
-
   *token = parse_XMP_pragma();
 
   if(pg_XMP_list == NULL) pg_XMP_list = EMPTY_LIST;
@@ -125,271 +124,262 @@ CExpr* lexParsePragmaXMP(char *p, int *token) // p is buffer
 
 int parse_XMP_pragma()
 {
-    int ret = PRAGMA_EXEC; /* default */
-    pg_XMP_list = NULL;
+  int ret = PRAGMA_EXEC; /* default */
+  pg_XMP_list = NULL;
 
+  pg_get_token();
+  if(pg_tok != PG_IDENT) goto syntax_err;
+
+  if (PG_IS_IDENT("nodes")) {
+    pg_XMP_pragma = XMP_NODES;
     pg_get_token();
-    if(pg_tok != PG_IDENT) goto syntax_err;
+    pg_XMP_list = parse_NODES_clause();
+  }
+  else if (PG_IS_IDENT("template")) {
+    pg_XMP_pragma = XMP_TEMPLATE;
+    pg_get_token();
+    pg_XMP_list = parse_TEMPLATE_clause();
+  }
+  else if (PG_IS_IDENT("distribute")) {
+    pg_XMP_pragma = XMP_DISTRIBUTE;
+    pg_get_token();
+    pg_XMP_list = parse_DISTRIBUTE_clause();
+  }
+  else if (PG_IS_IDENT("align")) {
+    pg_XMP_pragma = XMP_ALIGN;
+    pg_get_token();
+    pg_XMP_list = parse_ALIGN_clause();
+  }
+  else if (PG_IS_IDENT("shadow")) {
+    pg_XMP_pragma = XMP_SHADOW;
+    pg_get_token();
+    pg_XMP_list = parse_SHADOW_clause();
+  }
+  else if (PG_IS_IDENT("static_desc")) {
+    pg_XMP_pragma = XMP_STATIC_DESC;
+    pg_get_token();
+    pg_XMP_list = parse_STATIC_DESC_clause();
+  }
+  else if (PG_IS_IDENT("task")) {
+    pg_XMP_pragma = XMP_TASK;
+    ret = PRAGMA_PREFIX;
+    pg_get_token();
+    pg_XMP_list = parse_TASK_clause();
+  }
+  else if (PG_IS_IDENT("tasks")) {
+    pg_XMP_pragma = XMP_TASKS;
+    ret = PRAGMA_PREFIX;
+    pg_get_token();
+    pg_XMP_list = parse_TASKS_clause();
+  }
+  else if (PG_IS_IDENT("loop")) {
+    pg_XMP_pragma = XMP_LOOP;
+    ret = PRAGMA_PREFIX;
+    pg_get_token();
+    pg_XMP_list = parse_LOOP_clause();
+  }
+  else if (PG_IS_IDENT("reflect")) {
+    pg_XMP_pragma = XMP_REFLECT;
+    pg_get_token();
+    pg_XMP_list = parse_REFLECT_clause();
+  }
+  else if (PG_IS_IDENT("barrier")) {
+    pg_XMP_pragma = XMP_BARRIER;
+    pg_get_token();
+    pg_XMP_list = parse_BARRIER_clause();
+  }
+  else if (PG_IS_IDENT("reduction")) {
+    pg_XMP_pragma = XMP_REDUCTION;
+    pg_get_token();
+    pg_XMP_list = parse_REDUCTION_clause();
+  }
+  else if (PG_IS_IDENT("bcast")) {
+    pg_XMP_pragma = XMP_BCAST;
+    pg_get_token();
+    pg_XMP_list = parse_BCAST_clause();
+  }
+  else if (PG_IS_IDENT("gmove")) {
+    pg_XMP_pragma = XMP_GMOVE;
+    ret = PRAGMA_PREFIX;
+    pg_get_token();
+    pg_XMP_list = parse_GMOVE_clause();
+  }
+  else if (PG_IS_IDENT("coarray")) {
+    pg_XMP_pragma = XMP_COARRAY;
+    pg_get_token();
+    pg_XMP_list = parse_COARRAY_clause();
+  }
+  else if (PG_IS_IDENT("array")) {
+    pg_XMP_pragma = XMP_ARRAY;
+    ret = PRAGMA_PREFIX;
+    pg_get_token();
+    pg_XMP_list = parse_ARRAY_clause();
+  }
+  else if (PG_IS_IDENT("post")) {
+    pg_XMP_pragma = XMP_POST;
+    pg_get_token();
+    pg_XMP_list = parse_POST_clause();
+  }
+  else if (PG_IS_IDENT("wait")) {
+    pg_XMP_pragma = XMP_WAIT;
+    pg_get_token();
+    pg_XMP_list = parse_WAIT_clause();
+  }
+  else if (PG_IS_IDENT("lock")) {
+    pg_XMP_pragma = XMP_LOCK;
+    pg_get_token();
+    pg_XMP_list = parse_LOCK_clause();
+  }
+  else if (PG_IS_IDENT("unlock")) {
+    pg_XMP_pragma = XMP_UNLOCK;
+    pg_get_token();
+    pg_XMP_list = parse_UNLOCK_clause();
+  }
+  else if (PG_IS_IDENT("wait_async")) {
+    pg_XMP_pragma = XMP_WAIT_ASYNC;
+    pg_get_token();
+    pg_XMP_list = parse_WAIT_ASYNC_clause();
+  }
+  else if (PG_IS_IDENT("template_fix")) {
+    pg_XMP_pragma = XMP_TEMPLATE_FIX;
+    pg_get_token();
+    pg_XMP_list = parse_TEMPLATE_FIX_clause();
+  }
+  else if (PG_IS_IDENT("reflect_init")) {
+    pg_XMP_pragma = XMP_REFLECT_INIT;
+    pg_get_token();
+    pg_XMP_list = parse_REFLECT_INIT_clause();
+  }
+  else if (PG_IS_IDENT("reflect_do")) {
+    pg_XMP_pragma = XMP_REFLECT_DO;
+    pg_get_token();
+    pg_XMP_list = parse_REFLECT_DO_clause();
+  }
+  else {
+    addError(NULL,"unknown XcalableMP directive, '%s'",pg_tok_buf);
+  syntax_err:
+    return 0;
+  }
 
-    if (PG_IS_IDENT("nodes")) {
-        pg_XMP_pragma = XMP_NODES;
-        pg_get_token();
-        pg_XMP_list = parse_NODES_clause();
-    }
-    else if (PG_IS_IDENT("template")) {
-        pg_XMP_pragma = XMP_TEMPLATE;
-        pg_get_token();
-        pg_XMP_list = parse_TEMPLATE_clause();
-    }
-    else if (PG_IS_IDENT("distribute")) {
-        pg_XMP_pragma = XMP_DISTRIBUTE;
-        pg_get_token();
-        pg_XMP_list = parse_DISTRIBUTE_clause();
-    }
-    else if (PG_IS_IDENT("align")) {
-        pg_XMP_pragma = XMP_ALIGN;
-        pg_get_token();
-        pg_XMP_list = parse_ALIGN_clause();
-    }
-    else if (PG_IS_IDENT("shadow")) {
-        pg_XMP_pragma = XMP_SHADOW;
-        pg_get_token();
-        pg_XMP_list = parse_SHADOW_clause();
-    }
-    else if (PG_IS_IDENT("static_desc")) {
-        pg_XMP_pragma = XMP_STATIC_DESC;
-        pg_get_token();
-        pg_XMP_list = parse_STATIC_DESC_clause();
-    }
-    else if (PG_IS_IDENT("task")) {
-        pg_XMP_pragma = XMP_TASK;
-        ret = PRAGMA_PREFIX;
-        pg_get_token();
-        pg_XMP_list = parse_TASK_clause();
-    }
-    else if (PG_IS_IDENT("tasks")) {
-        pg_XMP_pragma = XMP_TASKS;
-        ret = PRAGMA_PREFIX;
-        pg_get_token();
-        pg_XMP_list = parse_TASKS_clause();
-    }
-    else if (PG_IS_IDENT("loop")) {
-        pg_XMP_pragma = XMP_LOOP;
-        ret = PRAGMA_PREFIX;
-        pg_get_token();
-        pg_XMP_list = parse_LOOP_clause();
-    }
-    else if (PG_IS_IDENT("reflect")) {
-        pg_XMP_pragma = XMP_REFLECT;
-        pg_get_token();
-        pg_XMP_list = parse_REFLECT_clause();
-    }
-    else if (PG_IS_IDENT("barrier")) {
-        pg_XMP_pragma = XMP_BARRIER;
-        pg_get_token();
-        pg_XMP_list = parse_BARRIER_clause();
-    }
-    else if (PG_IS_IDENT("reduction")) {
-        pg_XMP_pragma = XMP_REDUCTION;
-        pg_get_token();
-        pg_XMP_list = parse_REDUCTION_clause();
-    }
-    else if (PG_IS_IDENT("bcast")) {
-        pg_XMP_pragma = XMP_BCAST;
-        pg_get_token();
-        pg_XMP_list = parse_BCAST_clause();
-    }
-    else if (PG_IS_IDENT("gmove")) {
-        pg_XMP_pragma = XMP_GMOVE;
-        ret = PRAGMA_PREFIX;
-        pg_get_token();
-        pg_XMP_list = parse_GMOVE_clause();
-    }
-    else if (PG_IS_IDENT("coarray")) {
-        pg_XMP_pragma = XMP_COARRAY;
-        pg_get_token();
-        pg_XMP_list = parse_COARRAY_clause();
-    }
-    else if (PG_IS_IDENT("array")) {
-        pg_XMP_pragma = XMP_ARRAY;
-        ret = PRAGMA_PREFIX;
-        pg_get_token();
-        pg_XMP_list = parse_ARRAY_clause();
-    }
-    else if (PG_IS_IDENT("post")) {
-        pg_XMP_pragma = XMP_POST;
-        pg_get_token();
-        pg_XMP_list = parse_POST_clause();
-    }
-    else if (PG_IS_IDENT("wait")) {
-        pg_XMP_pragma = XMP_WAIT;
-        pg_get_token();
-        pg_XMP_list = parse_WAIT_clause();
-    }
-    else if (PG_IS_IDENT("lock")) {
-        pg_XMP_pragma = XMP_LOCK;
-        pg_get_token();
-        pg_XMP_list = parse_LOCK_clause();
-    }
-    else if (PG_IS_IDENT("unlock")) {
-        pg_XMP_pragma = XMP_UNLOCK;
-        pg_get_token();
-        pg_XMP_list = parse_UNLOCK_clause();
-    }
-    else if (PG_IS_IDENT("wait_async")) {
-        pg_XMP_pragma = XMP_WAIT_ASYNC;
-        pg_get_token();
-        pg_XMP_list = parse_WAIT_ASYNC_clause();
-    }
-    else if (PG_IS_IDENT("template_fix")) {
-        pg_XMP_pragma = XMP_TEMPLATE_FIX;
-        pg_get_token();
-        pg_XMP_list = parse_TEMPLATE_FIX_clause();
-    }
-    else if (PG_IS_IDENT("reflect_init")) {
-        pg_XMP_pragma = XMP_REFLECT_INIT;
-        pg_get_token();
-        pg_XMP_list = parse_REFLECT_INIT_clause();
-    }
-    else if (PG_IS_IDENT("reflect_do")) {
-      pg_XMP_pragma = XMP_REFLECT_DO;
-      pg_get_token();
-      pg_XMP_list = parse_REFLECT_DO_clause();
-      //    } else if (PG_IS_IDENT("sync_memory")) {
-      //        pg_XMP_pragma = XMP_SYNC_MEMORY;
-      //        pg_get_token();
-      //        pg_XMP_list = null;
-      //    } else if (PG_IS_IDENT("sync_all")) {
-      //        pg_XMP_pragma = XMP_SYNC_ALL;
-      //        pg_get_token();
-      //        pg_XMP_list = null;
-      //    } else if (PG_IS_IDENT("local_alias")) {
-      //        pg_XMP_pragma = XMP_LOCAL_ALIAS;
-      //        pg_get_token();
-      //        pg_XMP_list = parse_LOCAL_ALIAS_clause();
-    } else {
-        addError(NULL,"unknown XcalableMP directive, '%s'",pg_tok_buf);
-    syntax_err:
-        return 0;
-    }
-
-    if(pg_tok != 0) addError(NULL,"extra arguments for XMP directive");
-    return ret;
+  if(pg_tok != 0) addError(NULL,"extra arguments for XMP directive");
+  return ret;
 }
 
-CExpr* parse_task_ON_ref();
+CExpr* parse_NODES_clause()
+{
+  CExpr* nodesNameList = NULL;
+  CExpr* nodesSizeList, *inheritedNodes;
 
-CExpr* parse_NODES_clause() {
-    CExpr* nodesNameList = NULL;
-    CExpr* nodesSizeList, *inheritedNodes;
+  // parse <nodes-name>
+  if (pg_tok == PG_IDENT) {
+    nodesNameList = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  } 
 
-    // parse <nodes-name>
-    if (pg_tok == PG_IDENT) {
-	nodesNameList = XMP_LIST1(pg_tok_val);
-	pg_get_token();
-    } 
-
-    // parse (<nodes-size>, ...)
-    if (pg_tok != '('){
-	addError(NULL, "'(' is expected after <nodes-name>");
-	goto err;
-    } 
-    //nodesSizeList = parse_XMP_subscript_list();
-    nodesSizeList = parse_XMP_size_list();
-
-    // parse { <empty> | =* | =<nodes-ref> }
-    if (pg_tok == '=') {
+  // parse (<nodes-size>, ...)
+  if (pg_tok != '('){
+    addError(NULL, "'(' is expected after <nodes-name>");
+    goto err;
+  } 
+  nodesSizeList = parse_XMP_size_list();
+  
+  // parse { <empty> | =* | =<nodes-ref> }
+  if (pg_tok == '=') {
+    pg_get_token();
+    if (pg_tok == '*') {
       pg_get_token();
-      if (pg_tok == '*') {
-	  pg_get_token();
-	  inheritedNodes = XMP_PG_LIST(XMP_NODES_INHERIT_EXEC,NULL);
-      } else {
-	  inheritedNodes = XMP_PG_LIST(XMP_NODES_INHERIT_NODES, 
-				       parse_task_ON_ref());
-      } 
-    } else 
-      inheritedNodes = XMP_PG_LIST(XMP_NODES_INHERIT_GLOBAL, NULL);
-    
-    if (nodesNameList == NULL) 
-	nodesNameList = parse_COL2_name_list();
-    
-    return XMP_LIST3(nodesNameList, nodesSizeList, inheritedNodes);
-
-  err:
-    XMP_has_err = 1;
-    return NULL;
+      inheritedNodes = XMP_PG_LIST(XMP_NODES_INHERIT_EXEC,NULL);
+    }
+    else {
+      inheritedNodes = XMP_PG_LIST(XMP_NODES_INHERIT_NODES, parse_task_ON_ref());
+    } 
+  }
+  else 
+    inheritedNodes = XMP_PG_LIST(XMP_NODES_INHERIT_GLOBAL, NULL);
+  
+  if (nodesNameList == NULL) 
+    nodesNameList = parse_COL2_name_list();
+  
+  return XMP_LIST3(nodesNameList, nodesSizeList, inheritedNodes);
+  
+ err:
+  XMP_has_err = 1;
+  return NULL;
 }
 
 CExpr *parse_TEMPLATE_clause()
 {
-    CExpr* templateNameList = NULL;
-    CExpr* templateSpecList;
+  CExpr* templateNameList = NULL;
+  CExpr* templateSpecList;
 
-    // parse <template-name>
-    if (pg_tok == PG_IDENT) {
-	templateNameList = XMP_LIST1(pg_tok_val);
-	pg_get_token();
-    } 
-
-    // parse (<template-spec>, ...)
-    if (pg_tok != '(') {
-	XMP_Error0("'(' is expected after <template-name>");
-	goto err;
-    } else 
-      //templateSpecList = parse_XMP_subscript_list();
-      templateSpecList = parse_XMP_range_list();
-
-    if (templateNameList == NULL) 
-	templateNameList = parse_COL2_name_list();
-	
-    return XMP_LIST2(templateNameList, templateSpecList);
-
-  err:
-    XMP_has_err = 1;
-    return NULL;
+  // parse <template-name>
+  if (pg_tok == PG_IDENT) {
+    templateNameList = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  } 
+  
+  // parse (<template-spec>, ...)
+  if (pg_tok != '(') {
+    XMP_Error0("'(' is expected after <template-name>");
+    goto err;
+  }
+  else 
+    templateSpecList = parse_XMP_range_list();
+  
+  if(templateNameList == NULL) 
+    templateNameList = parse_COL2_name_list();
+  
+  return XMP_LIST2(templateNameList, templateSpecList);
+  
+ err:
+  XMP_has_err = 1;
+  return NULL;
 }
 
 CExpr* parse_DISTRIBUTE_clause() 
 {
-    CExpr* templateNameList = NULL;
-    CExpr* distFormatList, *nodesName;
+  CExpr* templateNameList = NULL;
+  CExpr* distFormatList, *nodesName;
     
-    // parse <template-name>
-    if (pg_tok == PG_IDENT) {
-	templateNameList = XMP_LIST1(pg_tok_val);
-	pg_get_token();
-    } 
+  // parse <template-name>
+  if (pg_tok == PG_IDENT) {
+    templateNameList = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  } 
 
-    // parse (<dist-format>, ...)
-    if (pg_tok != '('){
-	XMP_Error0("'(' is expected after <template-name>");
-	goto err;
-    } else
-	distFormatList = parse_XMP_dist_fmt_list();
+  // parse (<dist-format>, ...)
+  if (pg_tok != '('){
+    XMP_Error0("'(' is expected after <template-name>");
+    goto err;
+  }
+  else
+    distFormatList = parse_XMP_dist_fmt_list();
     
-    if(PG_IS_IDENT("onto")){
-        pg_get_token();
-    } else {
-	XMP_Error0("onto is missing");
-	goto err;
-    }
+  if(PG_IS_IDENT("onto")){
+    pg_get_token();
+  }
+  else {
+    XMP_Error0("onto is missing");
+    goto err;
+  }
 
-    if (pg_tok == PG_IDENT){
-	nodesName = pg_tok_val;
-	pg_get_token();
-    } else {
-	XMP_Error0("<nodes-name> is expected after 'onto'");
-	goto err;
-    }
+  if (pg_tok == PG_IDENT){
+    nodesName = pg_tok_val;
+    pg_get_token();
+  }
+  else {
+    XMP_Error0("<nodes-name> is expected after 'onto'");
+    goto err;
+  }
 
-    if (templateNameList == NULL) 
-	templateNameList = parse_COL2_name_list();
+  if (templateNameList == NULL) 
+    templateNameList = parse_COL2_name_list();
     
-    return XMP_LIST3(templateNameList, distFormatList, nodesName);
+  return XMP_LIST3(templateNameList, distFormatList, nodesName);
 
-  err:
-    XMP_has_err = 1;
-    return NULL;
+ err:
+  XMP_has_err = 1;
+  return NULL;
 }
 
 CExpr *parse_XMP_align_source_list(void);
@@ -397,159 +387,163 @@ CExpr *parse_XMP_align_subscript_list(void);
 
 CExpr* parse_ALIGN_clause()
 {
-    CExpr* arrayNameList = NULL;
-    CExpr* alignSourceList, *alignSubscriptList, *templateName;
+  CExpr* arrayNameList = NULL;
+  CExpr* alignSourceList, *alignSubscriptList, *templateName;
 
-    // parse <array-name>
-    if (pg_tok == PG_IDENT) {
-	arrayNameList = XMP_LIST1(pg_tok_val);
-	pg_get_token();
-    } 
+  // parse <array-name>
+  if (pg_tok == PG_IDENT) {
+    arrayNameList = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  } 
 
-    // parse [align-source] ...
-    if (pg_tok != '['){
-      XMP_Error0("'[' is expected");
-      goto err;
-    } else 
-      //alignSourceList = parse_XMP_C_subscript_list();
-      alignSourceList = parse_XMP_align_source_list();
-
-    if(PG_IS_IDENT("with"))
-	pg_get_token();
-    else {
-	XMP_Error0("'with' is missing");
-	goto err;
+  // parse [align-source] ...
+  if (pg_tok != '['){
+    XMP_Error0("'[' is expected");
+    goto err;
     }
+  else 
+    alignSourceList = parse_XMP_align_source_list();
 
-    if (pg_tok == PG_IDENT){
-	templateName = pg_tok_val;
-	pg_get_token();
-    } else {
-	XMP_Error0("<template-name> is expected after 'with'");
-	goto err;
-    }
+  if(PG_IS_IDENT("with"))
+    pg_get_token();
+  else {
+    XMP_Error0("'with' is missing");
+    goto err;
+  }
 
-    //    alignSubscriptList = parse_XMP_subscript_list();
-    alignSubscriptList = parse_XMP_align_subscript_list();
+  if (pg_tok == PG_IDENT){
+    templateName = pg_tok_val;
+    pg_get_token();
+  }
+  else {
+    XMP_Error0("<template-name> is expected after 'with'");
+    goto err;
+  }
 
-    if (arrayNameList == NULL) 
-	arrayNameList = parse_COL2_name_list();
+  alignSubscriptList = parse_XMP_align_subscript_list();
 
-    return XMP_LIST4(arrayNameList, alignSourceList, 
-		     templateName, alignSubscriptList);
-  err:
-    XMP_has_err = 1;
-    return NULL;
+  if (arrayNameList == NULL) 
+    arrayNameList = parse_COL2_name_list();
+
+  return XMP_LIST4(arrayNameList, alignSourceList, 
+		   templateName, alignSubscriptList);
+ err:
+  XMP_has_err = 1;
+  return NULL;
 }
 
 CExpr *parse_XMP_shadow_width_list();
 
-CExpr* parse_SHADOW_clause() {
-    CExpr* arrayNameList = NULL;
-    CExpr* shadowWidthList;
+CExpr* parse_SHADOW_clause()
+{
+  CExpr* arrayNameList = NULL;
+  CExpr* shadowWidthList;
 
-    // parse <array-name>
-    if (pg_tok == PG_IDENT) {
-	arrayNameList = XMP_LIST1(pg_tok_val);
-	pg_get_token();
-    } 
+  // parse <array-name>
+  if (pg_tok == PG_IDENT) {
+    arrayNameList = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  } 
 
-    // parse [shadow-width] ...
-    if (pg_tok != '['){
-      XMP_Error0("'[' is expected");
-      goto err;
-    } else 
-      //shadowWidthList = parse_XMP_C_subscript_list();
+  // parse [shadow-width] ...
+  if (pg_tok != '['){
+    XMP_Error0("'[' is expected");
+    goto err;
+  }
+  else 
       shadowWidthList = parse_XMP_shadow_width_list();
+  
+  if (arrayNameList == NULL) 
+    arrayNameList = parse_COL2_name_list();
+  
+  return XMP_LIST2(arrayNameList, shadowWidthList);
+  
+ err:
+  XMP_has_err = 1;
+  return NULL;
+}
 
-    if (arrayNameList == NULL) 
-	arrayNameList = parse_COL2_name_list();
+CExpr* parse_STATIC_DESC_clause()
+{
+  CExpr* objectNameList = NULL;
 
-    return XMP_LIST2(arrayNameList, shadowWidthList);
-
-  err:
+  // parse <array-name>
+  if (pg_tok == PG_IDENT) {
+    objectNameList = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  } 
+  
+  if (objectNameList == NULL) 
+    objectNameList = parse_COL2_name_list();
+  
+  if (objectNameList != NULL)
+    return XMP_LIST1(objectNameList);
+  else {
     XMP_has_err = 1;
     return NULL;
+  }
 }
 
-CExpr* parse_STATIC_DESC_clause() {
-    CExpr* objectNameList = NULL;
+CExpr* parse_TASK_clause()
+{
+  CExpr* onRef = NULL;
+  CExpr* opt;
+  
+  if(PG_IS_IDENT("on"))
+    pg_get_token();
+  else {
+    XMP_Error0("'on' is missing");
+    goto err;
+  }
+  
+  onRef = parse_task_ON_ref();
 
-    // parse <array-name>
-    if (pg_tok == PG_IDENT) {
-	objectNameList = XMP_LIST1(pg_tok_val);
-	pg_get_token();
-    } 
+  int nocomm_flag = 0;
+  if (PG_IS_IDENT("nocomm")){
+    pg_get_token();
+    nocomm_flag = 1;
+  }
+  
+  opt = parse_XMP_opt();
 
-    if (objectNameList == NULL) 
-	objectNameList = parse_COL2_name_list();
-
-    if (objectNameList != NULL)
-      return XMP_LIST1(objectNameList);
-    else {
-      XMP_has_err = 1;
-      return NULL;
-    }
+  CExpr *async, *profile, *acc_or_host; // async and acc_or_host is not used
+  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+  
+  return XMP_LIST4(onRef, (CExpr*)allocExprOfNumberConst2(nocomm_flag, BT_INT), opt, profile);
+  
+ err:
+  XMP_has_err = 1;
+  return NULL;
 }
-
-CExpr* parse_TASK_clause() {
-    CExpr* onRef = NULL;
-    CExpr* opt;
-
-    if(PG_IS_IDENT("on"))
-      pg_get_token();
-    else {
-      XMP_Error0("'on' is missing");
-      goto err;
-    }
-	
-    //onRef = parse_ON_ref();
-    onRef = parse_task_ON_ref();
-
-    int nocomm_flag = 0;
-    if (PG_IS_IDENT("nocomm")){
-      pg_get_token();
-      nocomm_flag = 1;
-    }
-    
-    opt = parse_XMP_opt();
-
-    return XMP_LIST3(onRef, (CExpr*)allocExprOfNumberConst2(nocomm_flag, BT_INT), opt);
-
-  err:
-    XMP_has_err = 1;
-    return NULL;
-}
-
-CExpr *parse_XMP_loop_subscript_list();
 
 CExpr* parse_LOOP_clause()
 {
-    CExpr *subscriptList = NULL;
-    CExpr *onRef, *reductionOpt, *opt;
+  CExpr *subscriptList = NULL;
+  CExpr *onRef, *reductionOpt, *opt;
 
-    if(pg_tok == '('){
-      //subscriptList = parse_XMP_subscript_list();
-      subscriptList = parse_XMP_loop_subscript_list();
-    }
+  if(pg_tok == '(')
+    subscriptList = parse_XMP_loop_subscript_list();
 
-    if(PG_IS_IDENT("on"))
-      pg_get_token();
-    else {
-      XMP_Error0("'on' is missing");
-      goto err;
-    }
+  if(PG_IS_IDENT("on"))
+    pg_get_token();
+  else {
+    XMP_Error0("'on' is missing");
+    goto err;
+  }
     
-    onRef = parse_ON_ref();
-    CExpr *reduction_opt = parse_Reduction_opt();
-    reductionOpt = reduction_opt ? XMP_LIST1(reduction_opt) : EMPTY_LIST;
-    opt = parse_XMP_opt();
-    
-    return XMP_LIST4(subscriptList,onRef,reductionOpt,opt);
+  onRef = parse_ON_ref();
+  CExpr *reduction_opt = parse_Reduction_opt();
+  reductionOpt = reduction_opt ? XMP_LIST1(reduction_opt) : EMPTY_LIST;
+  opt = parse_XMP_opt();
+
+  CExpr *async, *profile, *acc_or_host; // async and acc_or_host is not used
+  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+
+  return XMP_LIST5(subscriptList,onRef,reductionOpt,opt,profile);
 
   err:
-    XMP_has_err = 1;
-    return NULL;
+  XMP_has_err = 1;
+  return NULL;
 }
 
 #define SHADOW_NONE   400
@@ -1286,14 +1280,6 @@ CExpr *parse_task_ON_ref()
       XMP_has_err = 1;
       return NULL;
     }
-
-/*     if(pg_tok != '('){ */
-/* 	XMP_Error0("syntax error in reference object by 'on'"); */
-/* 	XMP_has_err = 1; */
-/* 	return NULL; */
-/*     } */
-/*     subscript = parse_XMP_subscript_list(); */
-/*     return XMP_LIST2(ident,subscript); */
 }
 
 CExpr *parse_Reduction_opt()
@@ -1470,151 +1456,102 @@ CExpr *parse_Reduction_ref()
     return NULL;
 }
 
-CExpr *parse_XMP_opt()
+static CExpr *parse_XMP_opt()
 {
-  //return NULL;
   return (CExpr *)allocExprOfNull();
 }
 
-CExpr *parse_TASKS_clause()
+static CExpr *parse_TASKS_clause()
 {
-  //return (CExpr *)allocExprOfNull();
   return NULL;
 }
 
 static CExpr* parse_REFLECT_clause()
 {
-    CExpr *arrayNameList = parse_name_list();
-    CExpr *widthList = parse_WIDTH_list();
-    CExpr *async = parse_ASYNC_clause();
-    /* CExpr *async = (CExpr *)allocExprOfNull(); */
-
-    /* if (PG_IS_IDENT("async")){ */
-    /*   pg_get_token(); */
-    /*   if (pg_tok != '(') goto err; */
-    /*   pg_get_token(); */
-    /*   async = pg_parse_expr(); */
-    /*   if (pg_tok != ')') goto err; */
-    /*   pg_get_token(); */
-    /* } */
-
-    CExpr *acc_or_host = parse_ACC_or_HOST_clause();
-
-    CExpr *profileClause = (CExpr *)allocExprOfNull();
-    /* if (pg_is_ident("profile")) { */
-    /*     profileClause = Xcons.StringConstant("profile"); */
-    /*     pg_get_token(); */
-    /* } */
-
-    return XMP_LIST5(arrayNameList, widthList, async, acc_or_host, profileClause);
-/*
- err:
-    XMP_Error0("syntax error in the REFLECT directive");
-    XMP_has_err = 1;
-    return NULL;
-*/
+  CExpr *arrayNameList = parse_name_list();
+  CExpr *widthList = parse_WIDTH_list();
+  CExpr *async, *acc_or_host, *profile;
+  
+  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+  return XMP_LIST5(arrayNameList, widthList, async, acc_or_host, profile);
 }
-
 
 static CExpr* parse_REDUCTION_clause()
 {
-    CExpr* reductionRef = parse_Reduction_ref();
-    CExpr* onRef = (CExpr *)allocExprOfNull();
-    CExpr* async;
-    CExpr* acc_or_host = (CExpr *)allocExprOfNull();
-
-    if (PG_IS_IDENT("on")) {
-      pg_get_token();
-      onRef = parse_task_ON_ref();
-    }
-
-    async = parse_ASYNC_clause();
-
-    acc_or_host = parse_ACC_or_HOST_clause();
-
-    CExpr* profileClause = (CExpr *)allocExprOfNull();
-    /* if (pg_is_ident("profile")) { */
-    /* 	    profileClause = Xcons.StringConstant("profile"); */
-    /* 	    pg_get_token(); */
-    /* 	} */
-
-    return XMP_LIST5(reductionRef, onRef, async, acc_or_host, profileClause);
+  CExpr* reductionRef = parse_Reduction_ref();
+  CExpr* onRef        = (CExpr *)allocExprOfNull();
+  CExpr *async, *profile, *acc_or_host;
+  
+  if (PG_IS_IDENT("on")) {
+    pg_get_token();
+    onRef = parse_task_ON_ref();
+  }
+  
+  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+  
+  return XMP_LIST5(reductionRef, onRef, async, acc_or_host, profile);
 }
 
 static CExpr* parse_BARRIER_clause()
 {
-    CExpr* onRef = (CExpr *)allocExprOfNull();
-    if (PG_IS_IDENT("on")) {
-      pg_get_token();
-      onRef = parse_task_ON_ref();
-    }
+  CExpr* onRef = (CExpr *)allocExprOfNull();
+  if (PG_IS_IDENT("on")) {
+    pg_get_token();
+    onRef = parse_task_ON_ref();
+  }
 
-    CExpr* profileClause = (CExpr *)allocExprOfNull();
-    /* if (pg_is_ident("profile")) { */
-    /* 	profileClause = Xcons.StringConstant("profile"); */
-    /* 	pg_get_token(); */
-    /* } */
-
-    return XMP_LIST2(onRef, profileClause);
+  CExpr *async, *profile, *acc_or_host; // async and acc_or_host is not used
+  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+  
+  return XMP_LIST2(onRef, profile);
 }
 
 static CExpr* parse_BCAST_clause()
 {
-    CExpr* varList = parse_name_list();
-
-    CExpr* fromRef = (CExpr *)allocExprOfNull();;
-    if (PG_IS_IDENT("from")) {
-      pg_get_token();
-      fromRef = parse_task_ON_ref();
-    }
-    else {
-      fromRef = (CExpr *)allocExprOfNull();;
-    }
-
-    CExpr* onRef = (CExpr *)allocExprOfNull();;
-    if (PG_IS_IDENT("on")) {
-      pg_get_token();
-      onRef = parse_task_ON_ref();
-    }
-    else onRef = (CExpr *)allocExprOfNull();;
-
-    CExpr* async = parse_ASYNC_clause();
-
-    CExpr* acc_or_host = parse_ACC_or_HOST_clause();
-
-    CExpr* profileClause = (CExpr *)allocExprOfNull();;
-    /* if (PG_IS_IDENT("profile")) { */
-    /*     profileClause = Xcons.StringConstant("profile"); */
-    /*     pg_get_token(); */
-    /* } */
-
-    return XMP_LIST6(varList, fromRef, onRef, async, acc_or_host, profileClause);
+  CExpr* varList = parse_name_list();
+  CExpr *async, *acc_or_host, *profile;
+  
+  CExpr* fromRef = (CExpr *)allocExprOfNull();
+  if (PG_IS_IDENT("from")) {
+    pg_get_token();
+    fromRef = parse_task_ON_ref();
+  }
+  else {
+    fromRef = (CExpr *)allocExprOfNull();
+  }
+  
+  CExpr* onRef = (CExpr *)allocExprOfNull();
+  if (PG_IS_IDENT("on")) {
+    pg_get_token();
+    onRef = parse_task_ON_ref();
+  }
+  else{
+    onRef = (CExpr *)allocExprOfNull();
+  }
+  
+  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+  
+  return XMP_LIST6(varList, fromRef, onRef, async, acc_or_host, profile);
 }
 
 static CExpr* parse_GMOVE_clause()
 {
-    CExpr* gmoveClause = (CExpr *)allocExprOfNull();
-    if (PG_IS_IDENT("in")) {
-      gmoveClause = (CExpr*)allocExprOfNumberConst2(XMP_GMOVE_IN, BT_INT);
-      pg_get_token();
-    }
-    else if (PG_IS_IDENT("out")) {
-      gmoveClause = (CExpr*)allocExprOfNumberConst2(XMP_GMOVE_OUT, BT_INT);
-      pg_get_token();
-    }
-    else gmoveClause = (CExpr*)allocExprOfNumberConst2(XMP_GMOVE_NORMAL, BT_INT);
+  CExpr* gmoveClause = (CExpr *)allocExprOfNull();
+  CExpr *async, *acc_or_host, *profile;
+  
+  if (PG_IS_IDENT("in")) {
+    gmoveClause = (CExpr*)allocExprOfNumberConst2(XMP_GMOVE_IN, BT_INT);
+    pg_get_token();
+  }
+  else if (PG_IS_IDENT("out")) {
+    gmoveClause = (CExpr*)allocExprOfNumberConst2(XMP_GMOVE_OUT, BT_INT);
+    pg_get_token();
+  }
+  else gmoveClause = (CExpr*)allocExprOfNumberConst2(XMP_GMOVE_NORMAL, BT_INT);
+  
+  parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);  
 
-    CExpr* async = parse_ASYNC_clause();
-
-    CExpr* acc_or_host = parse_ACC_or_HOST_clause();
-
-    CExpr* profileClause = (CExpr *)allocExprOfNull();
-    /* if (PG_IS_IDENT("profile")) { */
-    /*   profileClause = Xcons.StringConstant("profile"); */
-    /*   pg_get_token(); */
-    /* } */
-
-    return XMP_LIST4(gmoveClause, async, acc_or_host, profileClause);
+  return XMP_LIST4(gmoveClause, async, acc_or_host, profile);
 }
 
 static CExpr* parse_COARRAY_clause()
@@ -1875,18 +1812,15 @@ static CExpr* parse_WIDTH_list()
   pg_get_token();
 
   if (pg_tok == '(') {
-
     pg_get_token();
 
     while(1){
-
       v1 = v2 = NULL;
       periodic_flag = 0;
 
       if (pg_tok == '/'){
 	pg_get_token();
 	if (!PG_IS_IDENT("periodic")) goto err;
-
 	pg_get_token();
 	if (pg_tok != '/') goto err;
 
@@ -1920,7 +1854,6 @@ static CExpr* parse_WIDTH_list()
       }
 
     next:
-
       list = exprListAdd(list, XMP_LIST3(v1, v2, (CExpr*)allocExprOfNumberConst2(periodic_flag, BT_INT)));
 
       if (pg_tok == ')'){
@@ -1937,34 +1870,31 @@ static CExpr* parse_WIDTH_list()
   return list;
 
  err:
-
   XMP_Error0("syntax error in the WIDTH clause");
   XMP_has_err = 1;
   return NULL;
-
 }
-
 
 static CExpr* parse_ASYNC_clause()
 {
-  CExpr *async = (CExpr *)allocExprOfNull();
-
   if (PG_IS_IDENT("async")){
     pg_get_token();
     if (pg_tok != '(') goto err;
     pg_get_token();
-    async = pg_parse_expr();
+    CExpr* async = pg_parse_expr();
     if (pg_tok != ')') goto err;
     pg_get_token();
+    
+    return async;
   }
-
-  return async;
+  else{
+    return NULL;
+  }
 
  err:
     XMP_Error0("syntax error in the REFLECT directive");
     XMP_has_err = 1;
     return NULL;
-
 }
 
 static CExpr* parse_WAIT_ASYNC_clause()
@@ -1978,10 +1908,8 @@ static CExpr* parse_WAIT_ASYNC_clause()
     return XMP_LIST2(asyncIdList, onRef);
 }
 
-
 static CExpr* parse_TEMPLATE_FIX_clause()
 {
-
   CExpr *distFormatList = NULL;
   CExpr *templateNameList;
   CExpr *templateSpecList = NULL;
@@ -2076,5 +2004,36 @@ static CExpr* parse_REFLECT_DO_clause()
      acc_or_host = exprListAdd(acc_or_host, pg_tok_val);
      pg_get_token();
    }
-   return acc_or_host;
+
+   if(acc_or_host != EMPTY_LIST)
+     return acc_or_host;
+   else
+     return NULL;
  }
+
+static CExpr* parse_PROFILE_clause()
+{
+  if(PG_IS_IDENT("profile")){
+    CExpr* profile = pg_tok_val;
+    pg_get_token();
+    return profile;
+  }
+  else{
+    return NULL;
+  }
+}
+
+static void parse_ASYNC_ACC_or_HOST_PROFILE(CExpr** async, CExpr** acc_or_host, CExpr** profile)
+{
+  *async = *acc_or_host = *profile = NULL;
+
+  while(pg_tok != 0){ // Check until the end of clause
+    if(*async == NULL)       *async       = parse_ASYNC_clause();
+    if(*acc_or_host == NULL) *acc_or_host = parse_ACC_or_HOST_clause();
+    if(*profile == NULL)     *profile     = parse_PROFILE_clause();
+  }
+
+  if(*async == NULL)       *async       = (CExpr *)allocExprOfNull();
+  if(*acc_or_host == NULL) *acc_or_host = (CExpr *)allocExprOfNull();
+  if(*profile == NULL)     *profile     = (CExpr *)allocExprOfNull();
+}
