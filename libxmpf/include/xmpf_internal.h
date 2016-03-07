@@ -279,10 +279,12 @@ extern void _XMP_coarray_rdma_image_set_1(const int);
 //extern void _XMP_coarray_rdma_do_f(const int*, const void*, const void*, const void*);
 extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void *);
 //extern size_t get_offset(const void *, const int);
-//extern void _XMP_coarray_shortcut_put(const int, const void*, const void*, const size_t, const size_t, const size_t);
-//extern void _XMP_coarray_shortcut_put_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
-//extern void _XMP_coarray_shortcut_get(const int, const void*, const void*, const size_t, const size_t, const size_t);
-//extern void _XMP_coarray_shortcut_get_f(const int*, const void*, const void*, const size_t*, const size_t*, const size_t*);
+
+/* libxmp/include/xmp_func_decl.h */
+extern void _XMP_coarray_shortcut_put(const int, void*, const void*, const long, const long, const long, const long);
+//extern void _XMP_coarray_shortcut_put_f(const int*, void*, const void*, const long*, const long*, const long*, const long*);
+extern void _XMP_coarray_shortcut_get(const int, void*, const void*, const long, const long, const long, const long);
+//extern void _XMP_coarray_shortcut_get_f(const int*, void*, const void*, const long*, const long*, const long*, const long*);
 
 
 /******************************************\
@@ -325,7 +327,9 @@ extern int _XMP_boundaryByte;     // communication boundary (bytes)
 extern void _XMPF_coarray_init(void); 
 extern void _XMPF_coarray_finalize(void); 
 
-int XMPF_get_coarrayMsg(void);
+extern int _XMPF_get_coarrayMsg(void);
+extern void _XMPF_set_coarrayMsg(int sw);
+extern void _XMPF_reset_coarrayMsg(void);
 
 void XMPF_set_poolThreshold(unsigned size);
 unsigned XMPF_get_poolThreshold(void);
@@ -371,10 +375,11 @@ extern int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...);
 extern int xmpf_coarray_allocated_bytes_(void);
 extern int xmpf_coarray_garbage_bytes_(void);
 
+extern char *_XMPF_get_coarrayName(void *descPtr);
 extern void *_XMPF_get_coarrayDesc(void *descPtr);
 extern size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr);
-extern char *_XMPF_get_coarrayName(void *descPtr);
-
+extern void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
+                                           size_t *offset, char **nameAddr);
 
 /* xmpf_coarray_lib.c */
 extern int XMPF_initial_this_image, XMPF_initial_num_images;

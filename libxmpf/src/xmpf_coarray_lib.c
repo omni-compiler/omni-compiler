@@ -92,8 +92,6 @@ int num_images_(void)
  */
 int this_image_(void)
 {
-  int image;
-
   //_XMPF_checkIfInTask("THIS_IMAGE");
 
   return _XMPF_get_current_this_image();
@@ -202,7 +200,7 @@ void xmpf_touch_(void)
 
 void xmpf_sync_image_nostat_(int *image)
 {
-  int state;
+  int state = 0;
 
   if (*image <= 0)
     _XMPF_coarrayFatal("ABORT: illegal image number (%d) found in SYNC IMAGES\n",

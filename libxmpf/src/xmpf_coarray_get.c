@@ -193,7 +193,7 @@ void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *result,
   // not contiguous any more
   char* dst = result;
 
-  if (XMPF_get_coarrayMsg()) {
+  if (_XMPF_get_coarrayMsg()) {
     char work[200];
     char* p;
     sprintf(work, "GET %d", bytes);
