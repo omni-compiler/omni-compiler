@@ -72,62 +72,93 @@ void *_XMP_get_array_addr(_XMP_array_t *a, int *gidx)
 //
 // s = ga(i)
 //
-void _XMPF_gmove_scalar_garray__(void *scalar, _XMP_gmv_desc_t *gmv_desc_rightp, int mode)
+static void
+_XMPF_gmove_scalar_garray__(void *scalar, _XMP_gmv_desc_t *gmv_desc_rightp, int mode)
 {
-  _XMP_array_t *array = gmv_desc_rightp->a_desc;
-  int type_size = array->type_size;
-  void *src_addr = NULL;
-  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
+  if (mode == _XMP_N_GMOVE_NORMAL){
 
-  int ndims = gmv_desc_rightp->ndims;
-  int ridx[ndims];
+    _XMP_array_t *array = gmv_desc_rightp->a_desc;
+    int type_size = array->type_size;
+    void *src_addr = NULL;
+    _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
 
-  for (int i = 0; i < ndims; i++) {
-    ridx[i] = gmv_desc_rightp->lb[i];
-  }
+    int ndims = gmv_desc_rightp->ndims;
+    int ridx[ndims];
 
-  //  xmpf_dbg_printf("gmove : a->array_addr_p = %p\n", array->array_addr_p);
+    for (int i = 0; i < ndims; i++) {
+      ridx[i] = gmv_desc_rightp->lb[i];
+    }
+
+    //  xmpf_dbg_printf("gmove : a->array_addr_p = %p\n", array->array_addr_p);
 /*   if (_XMP_IS_SINGLE){ */
 /*     memcpy(scalar, src_addr, type_size); */
 /*     return; */
 /*   } */
 
-  int root_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ridx);
-  /* xmpf_dbg_printf("root_rank = %d\n", root_rank); */
+    int root_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ridx);
+    /* xmpf_dbg_printf("root_rank = %d\n", root_rank); */
 
-  if (root_rank == exec_nodes->comm_rank){
-    // I am the root.
-    src_addr = _XMP_get_array_addr(array, ridx);
-    //    xmpf_dbg_printf("src_addr = %p\n", src_addr);
+    if (root_rank == exec_nodes->comm_rank){
+      // I am the root.
+      src_addr = _XMP_get_array_addr(array, ridx);
+      //    xmpf_dbg_printf("src_addr = %p\n", src_addr);
+    }
+
+    // broadcast
+    _XMP_gmove_bcast_SCALAR(scalar, src_addr, type_size, root_rank);
+
   }
-
-  // broadcast
-  _XMP_gmove_bcast_SCALAR(scalar, src_addr, type_size, root_rank);
+  else if (mode == _XMP_N_GMOVE_IN){
+#ifdef _XMP_MPI3_ONESIDED
+    _XMP_gmove_inout_scalar(scalar, gmv_desc_rightp, _XMP_N_COARRAY_GET);
+#else
+    _XMP_fatal("Not supported gmove in/out on non-MPI3 environments");
+#endif
+  }
+  else {
+    _XMP_fatal("_XMPF_gmove_scalar_garray: wrong gmove mode");
+  }
+    
 }
 
 //
 // ga(i) = s
 //
-void _XMPF_gmove_garray_scalar__(_XMP_gmv_desc_t *gmv_desc_leftp, void *scalar, int mode)
+static void
+_XMPF_gmove_garray_scalar__(_XMP_gmv_desc_t *gmv_desc_leftp, void *scalar, int mode)
 {
-  _XMP_array_t *array = gmv_desc_leftp->a_desc;
-  int type_size = array->type_size;
-  void *dst_addr = NULL;
-  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
+  if (mode == _XMP_N_GMOVE_NORMAL){
 
-  int ndims = gmv_desc_leftp->ndims;
-  int lidx[ndims];
+    _XMP_array_t *array = gmv_desc_leftp->a_desc;
+    int type_size = array->type_size;
+    void *dst_addr = NULL;
+    _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
 
-  for (int i = 0; i < ndims; i++) {
-    lidx[i] = gmv_desc_leftp->lb[i];
+    int ndims = gmv_desc_leftp->ndims;
+    int lidx[ndims];
+
+    for (int i = 0; i < ndims; i++) {
+      lidx[i] = gmv_desc_leftp->lb[i];
+    }
+
+    int owner_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, lidx);
+
+    if (owner_rank == exec_nodes->comm_rank){
+      // I am the owner.
+      dst_addr = _XMP_get_array_addr(array, lidx);
+      memcpy(dst_addr, scalar, type_size);
+    }
+
   }
-
-  int owner_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, lidx);
-
-  if (owner_rank == exec_nodes->comm_rank){
-    // I am the owner.
-    dst_addr = _XMP_get_array_addr(array, lidx);
-    memcpy(dst_addr, scalar, type_size);
+  else if (mode == _XMP_N_GMOVE_OUT){
+#ifdef _XMP_MPI3_ONESIDED
+    _XMP_gmove_inout_scalar(scalar, gmv_desc_leftp, _XMP_N_COARRAY_PUT);
+#else
+    _XMP_fatal("Not supported gmove in/out on non-MPI3 environments");
+#endif
+  }
+  else {
+    _XMP_fatal("_XMPF_gmove_garray_scalar: wrong gmove mode");
   }
 
 }
@@ -148,9 +179,10 @@ void _XMP_gmove_gsection_scalar(_XMP_array_t *lhs_array, int *lhs_lb, int *lhs_u
 //
 // ga(:) = gb(:)
 //
-void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
-			       _XMP_gmv_desc_t *gmv_desc_rightp,
-			       int mode)
+static void
+_XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
+			  _XMP_gmv_desc_t *gmv_desc_rightp,
+			  int mode)
 {
   _XMP_array_t *dst_array = gmv_desc_leftp->a_desc;
   _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
@@ -193,29 +225,29 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
   }
 
   if (dst_total_elmts != src_total_elmts && !src_scalar_flag){
-    _XMP_fatal("bad assign statement for gmove");
+    _XMP_fatal("wrong assign statement for gmove");
   } else {
     //gmove_total_elmts = dst_total_elmts;
   }
 
   if (mode == _XMP_N_GMOVE_NORMAL){
 
-  if (dst_scalar_flag && src_scalar_flag){
-    void *dst_addr = (char *)dst_array->array_addr_p + _XMP_gtol_calc_offset(dst_array, dst_l);
-    void *src_addr = (char *)src_array->array_addr_p + _XMP_gtol_calc_offset(src_array, src_l);
-    _XMP_gmove_SENDRECV_SCALAR2(dst_addr, src_addr,
-				dst_array, src_array,
-				dst_l, src_l);
-    return;
-  }
-  else if (!dst_scalar_flag && src_scalar_flag){
-    char *tmp = _XMP_alloc(src_array->type_size);
-    char *src_addr = (char *)src_array->array_addr_p + _XMP_gtol_calc_offset(src_array, src_l);
-    _XMP_gmove_BCAST_SCALAR2(tmp, src_addr, src_array, src_l);
-    _XMP_gmove_gsection_scalar(dst_array, dst_l, dst_u, dst_s, tmp);
-    _XMP_free(tmp);
-    return;
-  }
+    if (dst_scalar_flag && src_scalar_flag){
+      void *dst_addr = (char *)dst_array->array_addr_p + _XMP_gtol_calc_offset(dst_array, dst_l);
+      void *src_addr = (char *)src_array->array_addr_p + _XMP_gtol_calc_offset(src_array, src_l);
+      _XMP_gmove_SENDRECV_SCALAR2(dst_addr, src_addr,
+				  dst_array, src_array,
+				  dst_l, src_l);
+      return;
+    }
+    else if (!dst_scalar_flag && src_scalar_flag){
+      char *tmp = _XMP_alloc(src_array->type_size);
+      char *src_addr = (char *)src_array->array_addr_p + _XMP_gtol_calc_offset(src_array, src_l);
+      _XMP_gmove_BCAST_SCALAR2(tmp, src_addr, src_array, src_l);
+      _XMP_gmove_gsection_scalar(dst_array, dst_l, dst_u, dst_s, tmp);
+      _XMP_free(tmp);
+      return;
+    }
 
   }
 
@@ -231,9 +263,10 @@ void _XMPF_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
 //
 // ga(:) = la(:)
 //
-void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
-			       _XMP_gmv_desc_t *gmv_desc_rightp,
-			       int mode)
+static void
+_XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
+			  _XMP_gmv_desc_t *gmv_desc_rightp,
+			  int mode)
 {
   _XMP_array_t *dst_array = gmv_desc_leftp->a_desc;
 
@@ -278,24 +311,36 @@ void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
   }
 
   if (dst_total_elmts != src_total_elmts && !src_scalar_flag){
-    _XMP_fatal("bad assign statement for gmove");
+    _XMP_fatal("wrong assign statement for gmove");
+  }
+
+  char *scalar = (char *)src_addr;
+  if (src_scalar_flag){
+    for (int i = 0; i < src_dim; i++){
+      scalar += ((src_l[i] - 1) * src_d[i] * type_size);
+    }
   }
 
   if (mode == _XMP_N_GMOVE_OUT){
     _XMP_pack_comm_set = _XMPF_pack_comm_set;
     _XMP_unpack_comm_set = _XMPF_unpack_comm_set;
-    _XMP_gmove_array_array_common(gmv_desc_leftp, gmv_desc_rightp,
-				  dst_l, dst_u, dst_s, dst_d,
-				  src_l, src_u, src_s, src_d,
-				  mode);
+    if (src_scalar_flag){
+#ifdef _XMP_MPI3_ONESIDED
+      _XMP_gmove_inout_scalar(scalar, gmv_desc_leftp, _XMP_N_COARRAY_PUT);
+#else
+      _XMP_fatal("Not supported gmove in/out on non-MPI3 environments");
+#endif
+    }
+    else {
+      _XMP_gmove_array_array_common(gmv_desc_leftp, gmv_desc_rightp,
+				    dst_l, dst_u, dst_s, dst_d,
+				    src_l, src_u, src_s, src_d,
+				    mode);
+    }
     return;
   }
 
   if (dst_scalar_flag && src_scalar_flag){
-    char *scalar = (char *)src_addr;
-    for (int i = 0; i < src_dim; i++){
-      scalar += ((src_l[i] - 1) * src_d[i] * type_size);
-    }
     _XMPF_gmove_garray_scalar__(gmv_desc_leftp, scalar, mode);
     return;
   }
@@ -332,7 +377,7 @@ void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
         } else if (src_dim_index < src_dim) {
           src_dim_index++;
         } else {
-          _XMP_fatal("bad assign statement for gmove");
+          _XMP_fatal("wrong assign statement for gmove");
         }
       } while (1);
 
@@ -355,7 +400,7 @@ void _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
 
   // alloc buffer
   if (dst_buffer_elmts != src_buffer_elmts) {
-    _XMP_fatal("bad assign statement for gmove");
+    _XMP_fatal("wrong assign statement for gmove");
   }
 
   void *buffer = _XMP_alloc(dst_buffer_elmts * type_size);
@@ -372,9 +417,10 @@ void _XMP_gmove_lsection_scalar(char *dst, int ndims, int *lb, int *ub, int *st,
 //
 // la(:) = ga(:)
 //
-void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
-			       _XMP_gmv_desc_t *gmv_desc_rightp,
-			       int mode)
+static void
+_XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
+			  _XMP_gmv_desc_t *gmv_desc_rightp,
+			  int mode)
 {
   _XMP_array_t *src_array = gmv_desc_rightp->a_desc;
 
@@ -423,7 +469,7 @@ void _XMPF_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
   }
 
   if (dst_total_elmts != src_total_elmts && !src_scalar_flag){
-    _XMP_fatal("bad assign statement for gmove");
+    _XMP_fatal("wrong assign statement for gmove");
   }
 
   if (mode == _XMP_N_GMOVE_NORMAL){

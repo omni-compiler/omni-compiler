@@ -777,7 +777,8 @@ public class XMPanalyzePragma
     }
     else if (left_is_global){
       if (!right_is_global){
-	if (convertGmoveToArray(pb, left, right)) return;
+	if (gmoveOpt.getInt() == XMP.GMOVE_NORMAL &&
+	    convertGmoveToArray(pb, left, right)) return;
       }
       // else if (right_is_scalar){
       // 	// make bcast

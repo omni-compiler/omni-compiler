@@ -180,6 +180,7 @@ void _XMP_gmove_SENDRECV_SCALAR2(void *dst_addr, void *src_addr,
 				 int dst_ref_index[], int src_ref_index[]);
 
 extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d, int mode);
+extern void _XMP_gmove_inout_scalar(void *scalar, _XMP_gmv_desc_t *gmv_desc, int rdma_type);
 
 /* From xmp_runtime.c */
 void _XMP_init(int argc, char** argv);
