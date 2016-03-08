@@ -538,9 +538,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -1036,7 +1036,7 @@ uninstall-am:
 	tags-am uninstall uninstall-am
 
 
-.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests release slurm slurm-check slurm-timeline remote-tests clean-local distclean-local
+.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests release slurm slurm-check remote-tests clean-local distclean-local testdirs
 
 tests: 
 	@for subdir in $(TESTDIRS) ; do \
@@ -1071,6 +1071,9 @@ run-large-tests:
 	  $(MAKE) run -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
+
+testdirs:
+	echo $(TESTDIRS)
 release:
 	@if [ -e $(WORKDIR) ]; then \
 	  echo "Exist ! $(WORKDIR). Please delete it."; exit 1; \
@@ -1089,9 +1092,6 @@ slurm:
 
 slurm-check:
 	@bash ./tests/xcalablemp/scripts/check_error_code.sh $(BASE_TESTDIR) $(TESTDIRS)
-
-slurm-timeline:
-	@bash ./tests/xcalablemp/scripts/create_timeline.sh /home/mnakao/public_html/timeline $(JOB_NUM) $(ELAPSE_TIME_SEC) $(BASE_TESTDIR) $(SORTED_LIST) $(TESTDIRS)
 
 remote-tests:
 	@bash ./tests/xcalablemp/scripts/remote-tests.sh $(USER)
