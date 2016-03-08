@@ -11,6 +11,8 @@
 \*****************************************/
 
 static int _XMPF_coarrayMsg = 0;          // default: message off
+static int _XMPF_coarrayMsg_last;         // for _XMPF_set/reset_coarrayMsg()
+
 //static int _XMPF_coarrayErr = 0;          // default: aggressive error check off
 static unsigned _XMPF_poolThreshold = POOL_THRESHOLD;
 
@@ -37,9 +39,21 @@ static void _set_coarrayMsg(int sw)
   static vars and functions
 \*****************************************/
 
-int XMPF_get_coarrayMsg(void)
+int _XMPF_get_coarrayMsg(void)
 {
   return _XMPF_coarrayMsg;
+}
+
+
+void _XMPF_set_coarrayMsg(int sw)
+{
+  _XMPF_coarrayMsg_last = _XMPF_coarrayMsg;
+  _XMPF_coarrayMsg = sw;
+}
+
+void _XMPF_reset_coarrayMsg(void)
+{
+  _XMPF_coarrayMsg = _XMPF_coarrayMsg_last;
 }
 
 
@@ -90,7 +104,8 @@ void _XMPF_coarray_init(void)
   /*
    *  set who-am-i
    */
-  _XMPF_set_this_image();
+  _XMPF_set_initial_this_image();
+  _XMPF_set_initial_num_images();
 
   /*
    * read environment variables
@@ -106,7 +121,7 @@ void _XMPF_coarray_init(void)
     work = strdup(env1);
     tok = strtok(work, delim);
     for (i = 1; tok != NULL; i++, tok = strtok(NULL, delim)) {
-      if (XMPF_this_image == i)
+      if (_XMPF_get_current_this_image() == i)
         _set_coarrayMsg(atoi(tok));
     }
   }
@@ -162,7 +177,7 @@ void _XMPF_coarray_init(void)
                           "   _XMPF_poolThreshold  :  %u bytes\n",
                           ONESIDED_COMM_LAYER, ONESIDED_BOUNDARY,
                           env1 ? env1 : "", env2 ? env2 : "",
-                          XMPF_get_coarrayMsg(),
+                          _XMPF_get_coarrayMsg(),
                           XMPF_get_poolThreshold()
                           );
 }
@@ -188,10 +203,10 @@ int _XMPF_nowInTask()
 void _XMPF_checkIfInTask(char *msgopt)
 {
   if (_XMPF_nowInTask())
-    _XMPF_coarrayFatal("current restriction: cannot use %s in any task construct",
+    _XMPF_coarrayFatal("current restriction: "
+                       "cannot use %s in any task construct\n",
                        msgopt);
 }
-
 
 void xmpf_coarray_fatal_with_len_(char *msg, int *msglen)
 {
@@ -204,10 +219,12 @@ void _XMPF_coarrayFatal(char *format, ...)
   va_list list;
   va_start(list, format);
   vsprintf(work, format, list);
-  fprintf(stderr, "CAF[%d] %s", XMPF_this_image, work);
+  fprintf(stderr, "CAF[%d] %s", _XMPF_get_current_this_image(), work);
   va_end(list);
 
-  xmpf_finalize_each__();
+  //xmpf_finalize_each__();   This causes deadlock sometimes.
+
+  _XMP_fatal("fatal error detected by Coarray/F runtime.");
 }
 
 void _XMPF_coarrayDebugPrint(char *format, ...)
@@ -219,7 +236,7 @@ void _XMPF_coarrayDebugPrint(char *format, ...)
   va_list list;
   va_start(list, format);
   vsprintf(work, format, list);
-  fprintf(stderr, "CAF[%d] %s", XMPF_this_image, work);
+  fprintf(stderr, "CAF[%d] %s", _XMPF_get_current_this_image(), work);
   va_end(list);
 }
 

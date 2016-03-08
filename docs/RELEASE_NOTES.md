@@ -1,8 +1,15 @@
 Omni Compiler Software RELEASE NOTES
 
-# ver. 0.9.3      2016/01/18
-* Improve performance of the task directive on a single node
-* Support a full shadow for multi-dimensional arrays in XMP/F
+# ver. 0.9.4      2016/04/??
+* Support max/min loc in reduction directive.
+* Support array section in bcast directive.
+* Fixed lots of bugs.
+
+# ver. 0.9.3      2016/01/25
+* Improve performance of the task directive on a single node.
+* Support a full shadow for multi-dimensional arrays in XMP/F.
+* Support coarray Fortran features on NEC SX-ACE.
+* Support Fortran2013 intrinsic functions co_brroadcast(source, source_image), co_sum(source, result), co_max(source, result) and co_min(source, result).
 * Fixed lots of bugs.
 
 # ver. 0.9.2      2015/11/27

@@ -315,7 +315,7 @@
 
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_width_opt xmp_width_opt1 xmp_async_opt xmp_async_opt1 xmp_width_list xmp_width
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width
-%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width
+%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width xmp_coarray_clause
 
 %type <code> xmp_reduction_op
 
@@ -2019,7 +2019,8 @@ xmp_directive:
 	  | XMPKW_GLOBAL_IO xmp_global_io_options
 	    { $$ = XMP_LIST(XMP_GLOBAL_IO_BEGIN, $2); }
 
-/*	  | XMPKW_COARRAY */
+	  | XMPKW_COARRAY xmp_coarray_clause
+	    { $$ = XMP_LIST(XMP_COARRAY, $2); }
 	  ;
 
 xmp_nodes_clause:
@@ -2411,6 +2412,10 @@ xmp_global_io_options:
 	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, INT_MAX),
 			 GEN_NODE(INT_CONSTANT, XMP_GLOBAL_IO_DIRECT)); }
 	  ;
+
+xmp_coarray_clause:
+	    xmp_ON IDENTIFIER COL2 xmp_name_list
+	     { $$ = list2(LIST,$2,$4); }
 
 %%
 #include "F95-lex.c"

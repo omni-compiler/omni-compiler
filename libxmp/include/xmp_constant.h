@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 #ifndef _XMP_CONSTANT
 #define _XMP_CONSTANT
 
@@ -63,6 +57,8 @@
 #define _XMP_N_REDUCE_EQV                       314
 #define _XMP_N_REDUCE_NEQV                      315
 #define _XMP_N_REDUCE_MINUS                     316
+#define _XMP_N_REDUCE_MAXLOC                    317
+#define _XMP_N_REDUCE_MINLOC                    318
 
 // defined in exc.xcalablemp.XMPshadow
 #define _XMP_N_SHADOW_NONE			400

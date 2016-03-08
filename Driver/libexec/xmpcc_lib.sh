@@ -33,12 +33,10 @@ Process Options
 
 XcalableMP Options
 
-  -omp,--openmp       : enable OpenMP.
-  -xacc,--xcalableacc : enable XcalableACC.
-  --scalasca-all      : output results in scalasca format for all directives.
-  --scalasca          : output results in scalasca format for selected directives.
-  --tlog-all          : output results in tlog format for all directives.
-  --tlog              : output results in tlog format for selected directives.
+  -omp,--openmp                       : enable OpenMP.
+  -xacc,--xcalableacc                 : enable XcalableACC.
+  --profile [scalasca|tlog]           : output results in scalasca or tlog format for all directives.
+  --selective-profile [scalasca|tlog] : output results in scalasca or tlog format for selected directives.
 EOF
 }
 
@@ -55,8 +53,15 @@ function xmpcc_show_env()
     fi
 }
 
+function get_target()
+{
+    DIR=$(cd $(dirname $0); pwd)
+    grep TARGET $DIR/../etc/xmpcc.conf | sed 's/TARGET=//' | sed "s/\"//g"
+}
+
 function xmpcc_set_parameters()
 {
+    target=`get_target`
     while [ -n "$1" ]; do
 	case "$1" in
 	    *.c)
@@ -66,11 +71,16 @@ function xmpcc_set_parameters()
 	    *.o)
 		obj_files+=("$1");;
 	    -o)
-		shift; output_file=("$1");;
+		shift;
+		output_file=("$1");;
             -c)
 		ENABLE_LINKER=false;;
 	    -E)
 		ONLY_PP=true;;
+	    -D?*)
+		define_opts+=("$1");;
+	    -l?*)
+		lib_args+=("$1");;
             -v|--verbose)
 		VERBOSE=true;;
 	    --version)
@@ -111,18 +121,24 @@ function xmpcc_set_parameters()
 		ENABLE_OPENMP=true;;
 	    --xcalableacc|-xacc)
 		ENABLE_XACC=true;;
-	    --scalasca-all)
-		ENABLE_SCALASCA_ALL=true;;
-	    --scalasca)
-		echo "Sorry. Not implement yet."
-		exit 0
-		ENABLE_SCALASCA=true;;
-	    --tlog-all)
-		ENABLE_TLOG_ALL=true;;
-	    --tlog)
-		echo "Sorry. Not implement yet."
-		exit 0
-		ENABLE_TLOG=true;;
+	    --profile)
+		shift;
+		if [ "scalasca" = "$1" ]; then
+		    ENABLE_SCALASCA=true; ENABLE_SCALASCA_ALL=true
+		elif [ "tlog" = "$1" ]; then
+		    ENABLE_TLOG=true; ENABLE_TLOG_ALL=true
+		else
+		    echo "Unknown profile format"; exit 1
+		fi;;
+	    --selective-profile)
+		shift;
+		if [ "scalasca" = "$1" ]; then
+		    ENABLE_SCALASCA=true; ENABLE_SCALASCA_SELECTIVE=true
+		elif [ "tlog" = "$1" ]; then
+		    ENABLE_TLOG=true; ENABLE_TLOG_SELECTIVE=true
+		else
+		    echo "Unknown profile format"; exit 1
+		fi;;
             *)
 		other_args+=("$1");;
 	esac

@@ -42,12 +42,12 @@ typedef struct _XMP_nodes_type {
   // enable when is_member is true
   int comm_rank;
   _XMP_comm_t *comm;
-  // -----------------------------
+  _XMP_comm_t *subcomm;  // enable when attr is _XMP_ENTIRE_NODES
+  int use_subcomm;       // enable when attr is _XMP_ENTIRE_NODES
 
   struct _XMP_nodes_type *inherit_nodes;
   // enable when inherit_nodes is not NULL
   _XMP_nodes_inherit_info_t *inherit_info;
-  // -------------------------------------
   _XMP_nodes_info_t info[1];
 } _XMP_nodes_t;
 
@@ -157,21 +157,46 @@ typedef struct _XMP_array_info_type {
   _Bool is_regular_chunk;
   int align_manner;
 
-  int ser_lower;
-  int ser_upper;
-  int ser_size;
+  int ser_lower;  // Lower bound of a global array, and output value of xmp_array_lbound().
+  int ser_upper;  // Upper bound of a global array, and output value of xmp_array_lbound().
+  int ser_size;   // Size of a global array.
 
   // enable when is_allocated is true
-  int par_lower;
-  int par_upper;
-  int par_stride;
-  int par_size;
+  int par_lower;  // Lower bound of a global array on a node.
+  int par_upper;  // Upper bound of a global array on a node.
+  int par_stride; // Stride of a global array on a node.
+  int par_size;   // Size of a global array on a node.
 
-  int local_lower;
-  int local_upper;
-  int local_stride;
-  int alloc_size;
+  int local_lower;  // Lower bound of a local array
+  int local_upper;  // Upper bound of a local array
+  int local_stride; // Stride of a local array
+  int alloc_size;   // Number of elements of a local array
 
+  // ex1)
+  // #pragma xmp template t(0:19)
+  // #pragma xmp nodes p(4)
+  // #pragma xmp distribute t(block) onto p
+  // int a[20];
+  // #pragma xmp align a[i] with t(i)
+  //
+  // ser_lower   -> 0, ser_upper   -> 19, ser_size -> 20
+  // par_lower   -> 5*(xmp_node_num()-1),
+  // par_upper   -> 5*xmp_node_num()-1, par_size -> 5
+  // local_lower -> 0, local_upper -> 4, alloc_size -> 5
+
+  // ex2)
+  // #pragma xmp template t(0:19)
+  // #pragma xmp nodes p(4)
+  // #pragma xmp distribute t(block) onto p
+  // int a[20];
+  // #pragma xmp align a[i] with t(i)
+  // #pragma xmp shadow a[1]
+  //
+  // Values of ser_lower, ser_upper, ser_size, par_lower, par_upper, par_size are
+  // the same of ex1).
+  //
+  // local_lower -> 1, local_upper -> 5, alloc_size -> 7
+  
   int *temp0;
   int temp0_v;
 
@@ -378,18 +403,19 @@ typedef struct _XMP_async_gmove {
 } _XMP_async_gmove_t;
 
 typedef struct _XMP_async_comm {
-  int async_id;
-  int nreqs;
+  int   async_id;
+  int   nreqs;
+  int   nnodes;
+  _Bool is_used;
   MPI_Request *reqs;
+  _XMP_nodes_t **node;
   _XMP_async_gmove_t *gmove;
   struct _XMP_async_comm *next;
 } _XMP_async_comm_t;
 
 #define _XMP_ASYNC_COMM_SIZE 511
-
-#define _XMP_MAX_ASYNC_REQS (4 * _XMP_N_MAX_DIM * 10)
-
-
+#define _XMP_MAX_ASYNC_REQS  (4 * _XMP_N_MAX_DIM * 10)
+#define _XMP_MAX_ASYNC_NODES (20)
 
 typedef struct _XMP_gpu_array_type {
   int gtol;

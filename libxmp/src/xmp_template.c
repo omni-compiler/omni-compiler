@@ -1,8 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
 #ifndef MPI_PORTABLE_PLATFORM_H
 #define MPI_PORTABLE_PLATFORM_H
 #endif 
@@ -12,48 +7,47 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
-_XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed) {
+_XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed)
+{
   // alloc descriptor
   _XMP_template_t *t = _XMP_alloc(sizeof(_XMP_template_t) +
                                   sizeof(_XMP_template_info_t) * (dim - 1));
 
   // calc members
-  t->on_ref_id = _XMP_get_on_ref_id();
-
-  t->is_fixed = is_fixed;
+  t->on_ref_id      = _XMP_get_on_ref_id();
+  t->is_fixed       = is_fixed;
   t->is_distributed = false;
-  t->is_owner = false;
-
-  t->dim = dim;
-
-  t->onto_nodes = NULL;
-  t->chunk = NULL;
+  t->is_owner       = false;
+  t->dim            = dim;
+  t->onto_nodes     = NULL;
+  t->chunk          = NULL;
 
   return t;
 }
 
-void _XMP_calc_template_size(_XMP_template_t *t) {
+void _XMP_calc_template_size(_XMP_template_t *t)
+{
   int dim;
-  if (t->is_fixed) {
+  if(t->is_fixed){
     dim = t->dim;
   }
-  else {
-    dim = t->dim - 1;
+  else{
+    dim = t->dim-1;
   }
 
-  for (int i = 0; i < dim; i++) {
+  for(int i=0;i<dim;i++){
     int ser_lower = t->info[i].ser_lower;
     int ser_upper = t->info[i].ser_upper;
 
-    if (ser_lower > ser_upper) {
+    if(ser_lower > ser_upper)
       _XMP_fatal("the lower bound of template should be less than or equal to the upper bound");
-    }
 
     t->info[i].ser_size = _XMP_M_COUNTi(ser_lower, ser_upper);
   }
 }
 
-static void _XMP_validate_template_ref(int *lower, int *upper, int *stride, int lb, int ub) {
+static void _XMP_validate_template_ref(int *lower, int *upper, int *stride, int lb, int ub)
+{
   // setup temporary variables
   int l, u, s = *stride;
   if (s > 0) {
@@ -266,14 +260,15 @@ int _XMP_check_template_ref_inclusion(int ref_lower, int ref_upper, int ref_stri
   }
 }
 
-void _XMP_init_template_FIXED(_XMP_template_t **template, int dim, ...) {
+void _XMP_init_template_FIXED(_XMP_template_t **template, int dim, ...)
+{
   // alloc descriptor
   _XMP_template_t *t = _XMP_create_template_desc(dim, true);
 
   // calc info
   va_list args;
   va_start(args, dim);
-  for (int i = 0; i < dim; i++) {
+  for(int i=0;i<dim;i++){
     t->info[i].ser_lower = va_arg(args, long long);
     t->info[i].ser_upper = va_arg(args, long long);
   }
@@ -284,25 +279,8 @@ void _XMP_init_template_FIXED(_XMP_template_t **template, int dim, ...) {
   *template = t;
 }
 
-/* void _XMP_init_template_UNFIXED(_XMP_template_t **template, int dim, ...) { */
-/*   // alloc descriptor */
-/*   _XMP_template_t *t = _XMP_create_template_desc(dim, false); */
-
-/*   // calc info */
-/*   va_list args; */
-/*   va_start(args, dim); */
-/*   for(int i = 0; i < dim - 1; i++) { */
-/*     t->info[i].ser_lower = va_arg(args, long long); */
-/*     t->info[i].ser_upper = va_arg(args, long long); */
-/*   } */
-/*   va_end(args); */
-
-/*   _XMP_calc_template_size(t); */
-
-/*   *template = t; */
-/* } */
-
-void _XMP_init_template_UNFIXED(_XMP_template_t **template, int dim) {
+void _XMP_init_template_UNFIXED(_XMP_template_t **template, int dim)
+{
   *template = _XMP_create_template_desc(dim, false);
 }
 
@@ -322,12 +300,12 @@ void _XMP_set_template_size(_XMP_template_t *t, int dim, ...) {
 
 }
 
-void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes) {
+void _XMP_init_template_chunk(_XMP_template_t *template, _XMP_nodes_t *nodes)
+{
   template->is_distributed = true;
-  template->is_owner = nodes->is_member;
-
-  template->onto_nodes = nodes;
-  template->chunk = _XMP_alloc(sizeof(_XMP_template_chunk_t) * (template->dim));
+  template->is_owner       = nodes->is_member;
+  template->onto_nodes     = nodes;
+  template->chunk          = _XMP_alloc(sizeof(_XMP_template_chunk_t) * (template->dim));
 }
 
 void _XMP_finalize_template(_XMP_template_t *template) {
@@ -364,58 +342,60 @@ void _XMP_dist_template_DUPLICATION(_XMP_template_t *template, int template_inde
   chunk->onto_nodes_info = NULL;
 }
 
-void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int nodes_index) {
+void _XMP_dist_template_BLOCK(_XMP_template_t *template, int template_index, int nodes_index)
+{
   _XMP_ASSERT(template->is_fixed);
   _XMP_ASSERT(template->is_distributed);
 
-  _XMP_nodes_t *nodes = template->onto_nodes;
-
+  _XMP_nodes_t *nodes          = template->onto_nodes;
   _XMP_template_chunk_t *chunk = &(template->chunk[template_index]);
-  _XMP_template_info_t *ti = &(template->info[template_index]);
-  _XMP_nodes_info_t *ni = &(nodes->info[nodes_index]);
+  _XMP_template_info_t *ti     = &(template->info[template_index]);
+  _XMP_nodes_info_t *ni        = &(nodes->info[nodes_index]);
 
   unsigned long long nodes_size = ni->size;
 
   // calc parallel members
   unsigned long long chunk_width = _XMP_M_CEILi(ti->ser_size, nodes_size);
 
-  if (nodes->is_member) {
+  if(nodes->is_member){
     unsigned long long nodes_rank = ni->rank;
     unsigned long long owner_nodes_size = _XMP_M_CEILi(ti->ser_size, chunk_width);
 
     chunk->par_lower = nodes_rank * chunk_width + ti->ser_lower;
-    if (nodes_rank == (owner_nodes_size - 1)) {
+    if(nodes_rank == (owner_nodes_size - 1)){
       chunk->par_upper = ti->ser_upper;
     }
-    else if (nodes_rank >= owner_nodes_size) {
+    else if (nodes_rank >= owner_nodes_size){
       template->is_owner = false;
     }
-    else {
+    else{
       chunk->par_upper = chunk->par_lower + chunk_width - 1;
     }
   }
 
-  chunk->par_width = 1;
-
-  chunk->par_stride = 1;
+  chunk->par_width       = 1;
+  chunk->par_stride      = 1;
   chunk->par_chunk_width = chunk_width;
-  chunk->dist_manner = _XMP_N_DIST_BLOCK;
-  if ((ti->ser_size % nodes_size) == 0) {
+  chunk->dist_manner     = _XMP_N_DIST_BLOCK;
+  
+  if((ti->ser_size % nodes_size) == 0){
     chunk->is_regular_chunk = true;
   }
-  else {
+  else{
     chunk->is_regular_chunk = false;
   }
 
   chunk->onto_nodes_index = nodes_index;
-  chunk->onto_nodes_info = ni;
+  chunk->onto_nodes_info  = ni;
 }
 
-void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index) {
+void _XMP_dist_template_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index)
+{
   _XMP_dist_template_CYCLIC_WIDTH(template, template_index, nodes_index, 1);
 }
 
-void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index, unsigned long long width) {
+void _XMP_dist_template_BLOCK_CYCLIC(_XMP_template_t *template, int template_index, int nodes_index, unsigned long long width)
+{
   _XMP_dist_template_CYCLIC_WIDTH(template, template_index, nodes_index, width);
 }
 
@@ -475,28 +455,28 @@ void _XMP_dist_template_GBLOCK(_XMP_template_t *template, int template_index, in
 }
 
 _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *ref_template, int *shrink,
-                                                long long *ref_lower, long long *ref_upper, long long *ref_stride) {
+                                                long long *ref_lower, long long *ref_upper, long long *ref_stride)
+{
   _XMP_ASSERT(ref_template->is_fixed);
   _XMP_ASSERT(ref_template->is_distributed);
 
   _XMP_nodes_t *onto_nodes = ref_template->onto_nodes;
   int onto_nodes_dim = onto_nodes->dim;
-
   int onto_nodes_shrink[onto_nodes_dim];
   int onto_nodes_ref_lower[onto_nodes_dim];
   int onto_nodes_ref_upper[onto_nodes_dim];
   int onto_nodes_ref_stride[onto_nodes_dim];
-  for (int i = 0; i < onto_nodes_dim; i++) {
+  
+  for(int i=0;i<onto_nodes_dim;i++)
     onto_nodes_shrink[i] = 1;
-  }
 
   int new_nodes_dim = 0;
   int new_nodes_dim_size[_XMP_N_MAX_DIM];
-
   int acc_dim_size = 1;
   int ref_template_dim = ref_template->dim;
-  for (int i = 0; i < ref_template_dim; i++) {
-    if (shrink[i]) {
+  
+  for(int i=0;i<ref_template_dim;i++){
+    if(shrink[i]){
       continue;
     }
 
@@ -528,8 +508,8 @@ _XMP_nodes_t *_XMP_create_nodes_by_template_ref(_XMP_template_t *ref_template, i
   }
 
   return _XMP_init_nodes_struct_NODES_NAMED(new_nodes_dim, onto_nodes, onto_nodes_shrink,
-                                            onto_nodes_ref_lower, onto_nodes_ref_upper, onto_nodes_ref_stride,
-                                            new_nodes_dim_size, _XMP_N_INT_TRUE);
+                                            onto_nodes_ref_lower, onto_nodes_ref_upper,
+					    onto_nodes_ref_stride, new_nodes_dim_size, _XMP_N_INT_TRUE);
 }
 
 int _XMP_exec_task_TEMPLATE_PART(_XMP_task_desc_t **task_desc, _XMP_template_t *ref_template, ...) {

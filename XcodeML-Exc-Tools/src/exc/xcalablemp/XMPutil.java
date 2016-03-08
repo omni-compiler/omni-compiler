@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 package exc.xcalablemp;
 
 import exc.block.*;
@@ -85,7 +79,8 @@ public class XMPutil {
 
     if (loopIterTable == null) {
       return null;
-    } else {
+    }
+    else {
       return loopIterTable.get(indVarName);
     }
   }
@@ -99,9 +94,28 @@ public class XMPutil {
       } else {
         return arraySize * getArrayElmtCount(arrayType.getRef());
       }
-    } else {
+    }
+    else {
       return 1;
     }
+  }
+
+  public static Xobject getArrayElmt(Xtype type, int dim) throws XMPexception {
+    if(dim < 0)
+      throw new XMPexception("int dim must be more than 0");
+
+    if(!type.isArray())
+      return Xcons.IntConstant(1);
+    
+    ArrayType arrayType = (ArrayType)type;
+    for(int i=0;i<dim;i++)
+      arrayType = (ArrayType)arrayType.getRef();
+
+    long arraySize = arrayType.getArraySize();
+    if(arraySize == 0 || arraySize == -1)
+      return arrayType.getArraySizeExpr();
+    else
+      return Xcons.IntConstant((int)arrayType.getArraySize());
   }
 
   public static XMPpair<Ident, Xtype> findTypedVar(String name, PragmaBlock pb) throws XMPexception {

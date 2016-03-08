@@ -21,7 +21,7 @@ you need to use xmp_sync_all() or barrier directive to divide communication.
   /* ... local-view program ... */
 ---
 
-## The K computer and FX10
+## The K computer, FX100, and FX10
 * Coarray transfer data size is 16,777,212 (2^24-4) Byte and fewer.
 * Post tag value is 0 and over && 14 and fewer (0 <= tag <= 14).
 * The number of coarrays in one application is 508 and fewer.

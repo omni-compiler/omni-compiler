@@ -38,83 +38,85 @@ public class XMP {
   public final static int REDUCE_EQV            = 314;
   public final static int REDUCE_NEQV           = 315;
   public final static int REDUCE_MINUS          = 316;
+  public final static int REDUCE_MAXLOC         = 317;
+  public final static int REDUCE_MINLOC         = 318;
 
-  public final static int GMOVE_NORMAL	= 400;
-  public final static int GMOVE_IN	= 401;
-  public final static int GMOVE_OUT	= 402;
+  public final static int GMOVE_NORMAL	        = 400;
+  public final static int GMOVE_IN              = 401;
+  public final static int GMOVE_OUT	        = 402;
 
-  public final static int MAX_DIM			= 7;
-  public       static int MAX_ASSUMED_SHAPE             = 16;
-  public final static int NONBASIC_TYPE			= 99 /*599*/;
+  public final static int MAX_DIM		= 7;
+  public       static int MAX_ASSUMED_SHAPE     = 16;
+  public final static int NONBASIC_TYPE		= 99 /*599*/;
 
-  public final static String SIZE_ARRAY_NAME            = "xmp_size_array";
-  public final static String XMP_COMMON_NAME            = "XMP_COMMON";
+  public final static String SIZE_ARRAY_NAME    = "xmp_size_array";
+  public final static String XMP_COMMON_NAME    = "XMP_COMMON";
 
-  public final static String PREFIX_			= "XMP__";
-  public final static String DESC_PREFIX_		= "XMP_DESC_";
-  public final static String SAVE_DESC_PREFIX_		= "XMP_SAVE_";    
+  public final static String PREFIX_		= "XMP__";
+  public final static String DESC_PREFIX_	= "XMP_DESC_";
+  public final static String SAVE_DESC_PREFIX_	= "XMP_SAVE_";    
 
-  public final static String ASTERISK			= "* @{ASTERISK}@";
-  public final static String COLON			= ": @{COLON}@";
+  public final static String ASTERISK		= "* @{ASTERISK}@";
+  public final static String COLON		= ": @{COLON}@";
 
-  public final static String epilog_label_f = "99999";
+  public final static String epilog_label_f     = "99999";
 
-  public final static String nodes_alloc_f = "xmpf_nodes_alloc_";
-  public final static String nodes_dim_size_f = "xmpf_nodes_dim_size_";
+  public final static String nodes_alloc_f       = "xmpf_nodes_alloc_";
+  public final static String nodes_dim_size_f    = "xmpf_nodes_dim_size_";
   public final static String nodes_init_GLOBAL_f = "xmpf_nodes_init_GLOBAL_";
-  public final static String nodes_init_EXEC_f = "xmpf_nodes_init_EXEC_";
-  public final static String nodes_init_NODES_f = "xmpf_nodes_init_NODES_";
-  public final static String nodes_dealloc_f = "xmpf_nodes_dealloc_";
+  public final static String nodes_init_EXEC_f   = "xmpf_nodes_init_EXEC_";
+  public final static String nodes_init_NODES_f  = "xmpf_nodes_init_NODES_";
+  public final static String nodes_dealloc_f     = "xmpf_nodes_dealloc_";
 
-  public final static String template_alloc_f = "xmpf_template_alloc_";
+  public final static String template_alloc_f    = "xmpf_template_alloc_";
   public final static String template_dim_info_f = "xmpf_template_dim_info_";
-  public final static String template_init_f = "xmpf_template_init_";
-  public final static String template_dealloc_f = "xmpf_template_dealloc_";
+  public final static String template_init_f     = "xmpf_template_init_";
+  public final static String template_dealloc_f  = "xmpf_template_dealloc_";
 
-  public final static String array_alloc_f = "xmpf_array_alloc_";
-  public final static String init_allocated_f = "xmp_f_init_allocated_";
-  public final static String array_align_info_f = "xmpf_align_info_";
-  public final static String array_init_f = "xmpf_array_init_";
-  public final static String array_get_local_size_f = "xmpf_array_get_local_size_off_";
+  public final static String array_alloc_f       = "xmpf_array_alloc_";
+  public final static String init_allocated_f    = "xmp_f_init_allocated_";
+  public final static String array_align_info_f  = "xmpf_align_info_";
+  public final static String array_init_f        = "xmpf_array_init_";
+  public final static String array_get_local_size_f  = "xmpf_array_get_local_size_off_";
   public final static String array_set_local_array_f = "xmpf_array_set_local_array_";
-  public final static String array_init_shadow_f = "xmpf_array_init_shadow_";
-  public final static String array_dealloc_f = "xmpf_array_dealloc_";
-  public final static String array_deallocate_f = "xmpf_array_deallocate_";
+  public final static String array_init_shadow_f     = "xmpf_array_init_shadow_";
+  public final static String array_dealloc_f         = "xmpf_array_dealloc_";
+  public final static String array_deallocate_f      = "xmpf_array_deallocate_";
 
-  public final static String ref_templ_alloc_f = "xmpf_ref_templ_alloc_";
-  public final static String ref_nodes_alloc_f = "xmpf_ref_nodes_alloc_";
-  public final static String ref_dealloc_f = "xmpf_ref_dealloc_";
+  public final static String ref_templ_alloc_f   = "xmpf_ref_templ_alloc_";
+  public final static String ref_nodes_alloc_f   = "xmpf_ref_nodes_alloc_";
+  public final static String ref_dealloc_f       = "xmpf_ref_dealloc_";
   public final static String ref_set_loop_info_f = "xmpf_ref_set_loop_info_";
-  public final static String ref_set_dim_info_f = "xmpf_ref_set_dim_info_";
-  public final static String ref_init_f = "xmpf_ref_init_";
+  public final static String ref_set_dim_info_f  = "xmpf_ref_set_dim_info_";
+  public final static String ref_init_f          = "xmpf_ref_init_";
 
-  public final static String loop_test_f = "xmpf_loop_test_";
+  public final static String loop_test_f      = "xmpf_loop_test_";
   public final static String loop_test_skip_f = "xmpf_loop_test_skip_";
-  public final static String loop_sched_f = "xmpf_loop_sched_";
-  public final static String l2g_f = "xmpf_l2g_";
+  public final static String loop_sched_f     = "xmpf_loop_sched_";
+  public final static String l2g_f            = "xmpf_l2g_";
 
-  public final static String set_reflect_f = "xmpf_set_reflect_";
-  public final static String reflect_f = "xmpf_reflect_";
-  public final static String reflect_async_f = "xmpf_reflect_async_";
-  public final static String init_async_f = "xmpf_init_async_";
-  public final static String start_async_f = "xmpf_start_async_";
-  public final static String wait_async_f = "xmpf_wait_async_";
-  public final static String barrier_f = "xmpf_barrier_";
-  public final static String reduction_f = "xmpf_reduction_";
-  public final static String reduction_loc_f = "xmpf_reduction_loc_";
-  public final static String bcast_f = "xmpf_bcast_";
+  public final static String set_reflect_f    = "xmpf_set_reflect_";
+  public final static String reflect_f        = "xmpf_reflect_";
+  public final static String reflect_async_f  = "xmpf_reflect_async_";
+  public final static String init_async_f     = "xmpf_init_async_";
+  public final static String start_async_f    = "xmpf_start_async_";
+  public final static String wait_async_f     = "xmpf_wait_async_";
+  public final static String barrier_f        = "xmpf_barrier_";
+  public final static String reduction_f      = "xmpf_reduction_";
+  public final static String reduction_loc_f  = "xmpf_reduction_loc_";
+  public final static String bcast_f          = "xmpf_bcast_";
 
   public final static String create_task_nodes_f = "xmpf_create_task_nodes_";
-  public final static String test_task_on_f = "xmpf_test_task_on_nodes_";
-  public final static String end_task_f = "xmpf_end_task_";
-  public final static String test_task_nocomm_f = "xmpf_test_task_nocomm_";
+  public final static String test_task_on_f      = "xmpf_test_task_on_nodes_";
+  public final static String end_task_f          = "xmpf_end_task_";
+  public final static String test_task_nocomm_f  = "xmpf_test_task_nocomm_";
 
-  public final static String gmove_g_alloc_f = "xmpf_gmv_g_alloc_";
-  public final static String gmove_l_alloc_f = "xmpf_gmv_l_alloc_";
-  public final static String gmove_g_dim_info_f = "xmpf_gmv_g_dim_info_";
-  public final static String gmove_l_dim_info_f = "xmpf_gmv_l_dim_info_";
-  public final static String gmove_do_f = "xmpf_gmv_do_";
-  public final static String gmove_dealloc_f = "xmpf_gmv_dealloc_";
+  public final static String gmove_g_alloc_f     = "xmpf_gmv_g_alloc_";
+  public final static String gmove_l_alloc_f     = "xmpf_gmv_l_alloc_";
+  public final static String gmove_g_dim_info_f  = "xmpf_gmv_g_dim_info_";
+  public final static String gmove_l_dim_info_f  = "xmpf_gmv_l_dim_info_";
+  public final static String gmove_do_f          = "xmpf_gmv_do_";
+  public final static String gmove_dealloc_f     = "xmpf_gmv_dealloc_";
   
   public final static String finalize_all_f = "xmpf_finalize_all_";
 

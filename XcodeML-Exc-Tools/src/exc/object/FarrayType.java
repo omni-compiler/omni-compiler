@@ -50,6 +50,11 @@ public class FarrayType extends Xtype
         return sizeExprs;
     }
 
+    public void setFarraySizeExpr(Xobject[] sizeEexprs)
+    {
+        this.sizeExprs = sizeExprs;
+    }
+
     @Override
     public Xobject getTotalArraySizeExpr(Block block)
     {

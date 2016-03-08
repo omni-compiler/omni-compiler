@@ -1,7 +1,7 @@
 #include "xmp_internal.h"
-#include "include/cuda_runtime.h"
-#include<stdio.h>
-#include<stdlib.h>
+#include <cuda_runtime.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
 void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
@@ -16,11 +16,12 @@ void _XMP_gpu_unpack_vector2_async(char * restrict dst0, char * restrict src0, i
 				    int count, size_t typesize, cudaStream_t st);
 
 static void _XMP_reflect_wait(_XMP_array_t *a);
+static void _XMP_reflect_(_XMP_array_t *a, int dummy);
 
 static void _XMP_reflect_start(_XMP_array_t *a, int dummy);
 static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic, int is_async, void *dev_addr);
 static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
-					 int lwidth, int uwidth, int is_periodic, void *dev_array_addr);
+					 int lwidth, int uwidth, int is_periodic, void *dev_array_addr, int *, int *);
 static int _xmpf_set_reflect_flag = 0;
 static int _xmp_lwidth[_XMP_N_MAX_DIM] = {0};
 static int _xmp_uwidth[_XMP_N_MAX_DIM] = {0};
@@ -29,7 +30,7 @@ static int _xmp_is_periodic[_XMP_N_MAX_DIM] = {0};
 static char useHostBuffer = 1;
 static char packVector = 1;
 //static const char useSingleKernel = 0;
-static const int useSingleStreamLimit = 16 * 1024; //element
+static const int useSingleStreamLimit = 1; //16 * 1024; //element
 
 // Macro to catch CUDA errors in CUDA runtime calls
 #define CUDA_SAFE_CALL(call)						\
@@ -49,6 +50,15 @@ static const int useSingleStreamLimit = 16 * 1024; //element
 #else
 #define TLOG_LOG(log) do{}while(0)
 #endif
+
+void _XMP_set_reflect_gpu(_XMP_array_t *a, int dim, int lwidth, int uwidth,
+			    int is_periodic)
+{
+  _xmpf_set_reflect_flag = 1;
+  _xmp_lwidth[dim] = lwidth;
+  _xmp_uwidth[dim] = uwidth;
+  _xmp_is_periodic[dim] = is_periodic;
+}
 
 static void gpu_memcpy_async(void *dst, void *src, size_t size, void *async_id)
 {
@@ -118,8 +128,9 @@ void _XMP_reflect_init_gpu(void *dev_addr,_XMP_array_t *a)
 void _XMP_reflect_do_gpu(_XMP_array_t *array_desc){
   _XMP_RETURN_IF_SINGLE;
 
-  _XMP_reflect_start(array_desc, 0);
-  _XMP_reflect_wait(array_desc);
+  //  _XMP_reflect_start(array_desc, 0);
+  //  _XMP_reflect_wait(array_desc);
+  _XMP_reflect_(array_desc, 0);
 }
 
 
@@ -157,7 +168,7 @@ static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
 	//
       }
 
-      if (lwidth[i] || uwidth[i]){
+      if (1/*lwidth[i] || uwidth[i]*/){
 
 	_XMP_ASSERT(reflect);
 
@@ -171,7 +182,7 @@ static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
 	  reflect->is_periodic = is_periodic[i];
 
 	  if (/*_xmp_reflect_pack_flag && !is_async*/ 1){
-	    _XMP_reflect_pcopy_sched_dim(a, i, lwidth[i], uwidth[i], is_periodic[i], dev_addr);
+	    _XMP_reflect_pcopy_sched_dim(a, i, lwidth[i], uwidth[i], is_periodic[i], dev_addr, lwidth, uwidth);
 	  }
 	  else {
 	    //_XMP_reflect_normal_sched_dim(a, i, lwidth[i], uwidth[i], is_periodic[i]);
@@ -190,7 +201,7 @@ static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
 }
 
 static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
-					 int lwidth, int uwidth, int is_periodic, void *dev_array_addr){
+					 int lwidth, int uwidth, int is_periodic, void *dev_array_addr, int *lwidths, int *uwidths){
   //printf("desc=%p, tardim=%d, lw=%d, uw=%d, devp=%p\n", adesc, target_dim, lwidth, uwidth, dev_array_addr);
   
   if (lwidth == 0 && uwidth == 0) return;
@@ -256,7 +267,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
   int count = 0, blocklength = 0;
   long long stride = 0;
-  int count_offset = 0;
+  //  int count_offset = 0;
 
   if (_XMPF_running && !_XMPC_running){ /* for XMP/F */
 
@@ -281,18 +292,76 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     stride = ainfo[ndims-1].alloc_size * type_size;
 
     
-    if(target_dim > 0){
-      count *= ainfo[0].par_size;
-      count_offset = ainfo[0].shadow_size_lo;
+    /* if(target_dim > 0){ */
+    /*   count *= ainfo[0].par_size; */
+    /*   count_offset = ainfo[0].shadow_size_lo; */
+    /* } */
+    /* for (int i = 1; i < target_dim; i++){ */
+    /*   count *= ainfo[i].alloc_size; */
+    /* } */
+
+    /* for (int i = ndims - 2; i >= target_dim; i--){ */
+    /*   blocklength *= ainfo[i+1].alloc_size; */
+    /*   stride *= ainfo[i].alloc_size; */
+    /* } */
+
+    if(target_dim == 0){
+      count *= 1;
+      if(ndims >= 2){
+	blocklength *= (ainfo[1].par_size + lwidths[1] + uwidths[1]);
+      }
+    }else{
+      count *= (ainfo[0].par_size + lwidths[0] + uwidths[0]);
+      for(int i = 1; i < target_dim; i++){
+	count *= ainfo[i].alloc_size;
+      }
+      blocklength *= ainfo[target_dim+1].alloc_size;
+      stride *= ainfo[target_dim].alloc_size;
     }
-    for (int i = 1; i < target_dim; i++){
-      count *= ainfo[i].alloc_size;
+    for(int i = target_dim+2; i < ndims; i++){
+      blocklength *= ainfo[i].alloc_size;
+    }
+    for(int i = target_dim+1 ; i < ndims - 1; i++){
+      stride *= ainfo[i].alloc_size;
+    }
+
+    /* mod_4 */
+    count = 1;
+    blocklength = 1;
+    stride = 1;
+
+    for(int i = 0; i < ndims; i++){
+      int fact = (i == target_dim)? 1 : (ainfo[i].par_size + lwidths[i] + uwidths[i]);
+      int alloc_size = ainfo[i].alloc_size;
+
+      if(blocklength == 1 || fact == alloc_size){
+	blocklength *= fact;
+	stride *= alloc_size;
+      }else if(count == 1 && target_dim != 0){ //to be contiguous if target_dim==0
+	count = blocklength;
+	blocklength = fact;
+	stride = alloc_size;
+      }else{
+	blocklength *= alloc_size;
+	stride *= alloc_size;
+      }
+      //printf("tar=%d, i=%d, fact=%d, allocsize=%d, (%d,%d,%lld)\n", target_dim, i, fact, alloc_size, count , blocklength, stride);
+    }
+
+    blocklength *= type_size;
+    stride *= type_size;
+    /* mod_4 end */
+    
+    /* it used at 150717
+    for (int i = 1; i <= target_dim; i++){
+      count *= ainfo[i-1].alloc_size;
     }
 
     for (int i = ndims - 2; i >= target_dim; i--){
       blocklength *= ainfo[i+1].alloc_size;
       stride *= ainfo[i].alloc_size;
     }
+    */
 
     /* for (int i = target_dim + 1; i < ndims; i++){ */
     /*   blocklength *= ainfo[i].alloc_size; */
@@ -301,7 +370,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     /*   stride *= ainfo[i].alloc_size; */
     /* } */
 
-    //    printf("count =%d, blength=%d, stride=%d\n", count ,blocklength,stride);
+    //    printf("count =%d, blength=%d, stride=%lld\n", count ,blocklength, stride);
     //    printf("ainfo[0].par_size=%d\n", ainfo[0].par_size);
     //    printf("count_ofset=%d,\n", count_offset);
   }
@@ -316,7 +385,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // for lower reflect
 
   if (lwidth){
-    lo_send_array = lo_recv_array = (void *)((char*)dev_array_addr + count_offset * stride);
+    lo_send_array = lo_recv_array = (void *)((char*)dev_array_addr + /*count_offset*/0 * stride);
 
     for (int i = 0; i < ndims; i++) {
       int lb_send, lb_recv;
@@ -342,7 +411,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // for upper reflect
 
   if (uwidth){
-    hi_send_array = hi_recv_array = (void *)((char*)dev_array_addr + count_offset * stride);
+    hi_send_array = hi_recv_array = (void *)((char*)dev_array_addr + /*count_offset*/0 * stride);
 
     for (int i = 0; i < ndims; i++) {
       int lb_send, lb_recv;
@@ -370,6 +439,11 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   }
   if(packVector || count == 1){
     MPI_Type_contiguous(blocklength * lwidth * count, MPI_BYTE, &reflect->datatype_lo);
+    //    MPI_Type_contiguous(blocklength * lwidth * count / type_size, MPI_FLOAT, &reflect->datatype_lo);
+    fprintf(stderr, "dim=%d, send elements lo = %d\n", target_dim, blocklength * lwidth * count / type_size);
+    //fprintf(stderr, "useHostBuf=%c , packVector=%c\n", useHostBuffer, packVector);
+    //    if(useHostBuffer){ fprintf(stderr,"using host buffer\n"); }
+    //    if(packVector){ fprintf(stderr, "using pack vector\n"); }
   }else{
     MPI_Type_vector(count, blocklength * lwidth, stride, MPI_BYTE, &reflect->datatype_lo);
   }
@@ -381,6 +455,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   }
   if(packVector || count == 1){
     MPI_Type_contiguous(blocklength * uwidth * count, MPI_BYTE, &reflect->datatype_hi);
+    //    MPI_Type_contiguous(blocklength * uwidth * count / type_size, MPI_FLOAT, &reflect->datatype_hi);
+    fprintf(stderr, "dim=%d, send elements hi = %d\n", target_dim, blocklength * uwidth * count / type_size);    
   }else{
     MPI_Type_vector(count, blocklength * uwidth, stride, MPI_BYTE, &reflect->datatype_hi);
   }
@@ -480,6 +556,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     src = MPI_PROC_NULL;
     dst = MPI_PROC_NULL;
   }
+  //  fprintf(stderr, "dim=%d,  lo_src=%d, lo_dst=%d\n", target_dim, src, dst);
 
   if (reflect->req[0] != MPI_REQUEST_NULL){
     MPI_Request_free(&reflect->req[0]);
@@ -503,6 +580,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     src = MPI_PROC_NULL;
     dst = MPI_PROC_NULL;
   }
+  //  fprintf(stderr, "dim=%d,  hi_src=%d, hi_dst=%d\n", target_dim, src, dst);
 
   if (reflect->req[2] != MPI_REQUEST_NULL){
     MPI_Request_free(&reflect->req[2]);
@@ -823,4 +901,73 @@ static void _XMP_reflect_wait(_XMP_array_t *a)
     }
   }
   TLOG_LOG(TLOG_EVENT_7_OUT);
+}
+
+static void _XMP_reflect_(_XMP_array_t *a, int dummy)
+{
+  int packSkipDim = 0;
+  if (_XMPF_running && !_XMPC_running){ /* for XMP/F */
+    packSkipDim = a->dim - 1;
+  } else if (!_XMPF_running && _XMPC_running){ /* for XMP/C */
+    packSkipDim = 0;
+  } else {
+    _XMP_fatal("cannot determin the base language.");
+  }
+
+  for (int i = 0; i < a->dim; i++){
+    _XMP_array_info_t *ai = &(a->info[i]);
+    if(! ai->is_shadow_comm_member) continue;
+    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
+    int lo_width = reflect->lo_width;
+    int hi_width = reflect->hi_width;
+    if (!lo_width && !hi_width) continue;
+
+    //pack etc...
+    TLOG_LOG(TLOG_EVENT_5_IN);
+    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+      if(packVector && (i != packSkipDim)){
+	gpu_pack_vector2(reflect, a->type_size);
+      }
+      TLOG_LOG(TLOG_EVENT_9);
+      if(useHostBuffer){
+	gpu_update_host(reflect);
+      }
+      if((packVector && i != packSkipDim) || useHostBuffer){
+	gpu_pack_wait(reflect);
+	TLOG_LOG(TLOG_EVENT_2);
+      }
+    }
+    TLOG_LOG(TLOG_EVENT_5_OUT);
+
+    //start
+    TLOG_LOG(TLOG_EVENT_6_IN);
+
+    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+      MPI_Startall(4, reflect->req);
+    }
+    TLOG_LOG(TLOG_EVENT_6_OUT);
+
+    //wait
+    TLOG_LOG(TLOG_EVENT_7_IN);
+    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+      MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
+    }
+    TLOG_LOG(TLOG_EVENT_7_OUT);
+
+    //unpack etc...
+    TLOG_LOG(TLOG_EVENT_8_IN);
+    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+      if(useHostBuffer){
+	gpu_update_device(reflect);
+      }
+      TLOG_LOG(TLOG_EVENT_4);
+      if(packVector && (i != packSkipDim)){
+	gpu_unpack(reflect, a->type_size);
+      }
+      if((packVector && i != packSkipDim) || useHostBuffer){
+	gpu_unpack_wait(reflect);
+      }
+    }
+    TLOG_LOG(TLOG_EVENT_8_OUT);
+  }
 }

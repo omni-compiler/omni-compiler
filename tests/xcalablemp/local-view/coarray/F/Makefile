@@ -1,25 +1,16 @@
-DIRS=./test_fe ../F_get ../F_put ../F_alloc ../F_scope ../F_cfold
-DIRS_SUBMIT=../F_get ../F_put ../F_alloc ../F_scope ../F_cfold
+#DIRS=MIX FE ALLOC LIB GET PUT SCOPE CFOLD
+DIRS=FE ALLOC LIB GET PUT SCOPE CFOLD
+#DIRS_SUBMIT=MIX ALLOC LIB GET PUT SCOPE CFOLD
+DIRS_SUBMIT=ALLOC LIB GET PUT SCOPE CFOLD
 
-.PHONY: clean all run allall runall rerun submit cleanall
+.PHONY: clean all run rerun submit
 
 all:
-	$(MAKE) -C ./test_fe all
-
-run:
-	$(MAKE) -C ./test_fe -j1 run
-
-clean:
-	$(MAKE) -C ./test_fe clean
-
-
-
-allall:
 	for d in $(DIRS); do \
 	  $(MAKE) -C $$d all; \
 	done
 
-runall:
+run:
 	for d in $(DIRS); do \
 	  $(MAKE) -C $$d -j1 run; \
 	done
@@ -34,7 +25,7 @@ submit:
 	  $(MAKE) -C $$d submit; \
 	done
 
-cleanall:
+clean:
 	for d in $(DIRS); do \
 	  $(MAKE) -C $$d clean; \
 	done

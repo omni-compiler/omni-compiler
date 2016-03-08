@@ -1,23 +1,14 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
 #ifndef MPI_PORTABLE_PLATFORM_H
 #define MPI_PORTABLE_PLATFORM_H
 #endif 
 
 #include <string.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <limits.h>
 #include <float.h>
 #include "mpi.h"
 #include "xmp_internal.h"
-
-#ifdef _XMP_MPI3
-extern _Bool is_async;
-extern int _async_id;
-#endif
 
 void _XMP_setup_reduce_type(MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
   switch (datatype) {
@@ -239,31 +230,23 @@ void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int da
   _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
   _XMP_setup_reduce_op(&mpi_op, op);
 
-  // reduce
 #ifdef _XMP_MPI3
-      if (is_async){
-	_XMP_async_comm_t *async = _XMP_get_or_create_async(_async_id);
-	MPI_Iallreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm),
-		       &async->reqs[async->nreqs]);
-	async->nreqs++;
-      }
-      else
+  if(xmp_is_async()){
+    _XMP_async_comm_t *async = _XMP_get_current_async();
+    MPI_Iallreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm),
+		   &async->reqs[async->nreqs]);
+    async->nreqs++;
+  }
+  else
 #endif
-	MPI_Allreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
+    MPI_Allreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 }
 
-// _XMP_M_REDUCE_EXEC(addr, count, datatype, op) is in xmp_comm_macro.h
-
-void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
-                                   void *addr, int count, int datatype, int op,
-                                   int num_locs, ...) {
-  if (count == 0) {
-    return; // FIXME not good implementation
-  }
-
-  if (!nodes->is_member) {
-    return;
-  }
+void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count,
+				   int datatype, int op, int num_locs, ...)
+{
+  if(count == 0)        return; // FIXME not good implementation
+  if(!nodes->is_member) return;
 
   // setup information
   MPI_Datatype mpi_datatype;
@@ -377,7 +360,8 @@ void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op) {
   MPI_Allreduce(MPI_IN_PLACE, data_addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)(_XMP_get_execution_nodes())->comm));
 }
 
-void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...) {
+void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...)
+{
   _XMP_nodes_t *nodes = _XMP_get_execution_nodes();
   _XMP_ASSERT(nodes->is_member);
 
@@ -508,3 +492,198 @@ int _XMP_init_reduce_comm_TEMPLATE(_XMP_template_t *template, ...) {
     return _XMP_N_INT_TRUE;
   }
 }
+
+/****************************************************************************/
+/* DESCRIPTION : MAXLOC operation for reduction directive with (max:x/y,z/) */
+/****************************************************************************/
+static void _reduce_maxloc(void *in, void *inout, int *len, MPI_Datatype *dptr)
+{
+  int data_size;
+  MPI_Type_size(*dptr, &data_size);
+  int size = (*len) * data_size;
+
+  long double a, b;
+  memcpy(&a, inout, sizeof(long double));
+  memcpy(&b, in,    sizeof(long double));
+  
+  if(a<b){
+    memcpy(inout, in, size);
+  }
+  else if(a==b){
+    int a_loc, b_loc;
+    memcpy(&a_loc, (char *)inout + sizeof(long double), sizeof(int));
+    memcpy(&b_loc, (char *)in    + sizeof(long double), sizeof(int));
+    if(b_loc<a_loc)
+      memcpy(inout, in, size);
+  }
+}
+
+/****************************************************************************/
+/* DESCRIPTION : MINLOC operation for reduction directive with (min:x/y,z/) */
+/****************************************************************************/
+static void _reduce_minloc(void *in, void *inout, int *len, MPI_Datatype *dptr)
+{
+  int data_size;
+  MPI_Type_size(*dptr, &data_size);
+  int size = (*len) * data_size;
+
+  long double a, b;
+  memcpy(&a, inout, sizeof(long double));
+  memcpy(&b, in,    sizeof(long double));
+
+  if(a>b){
+    memcpy(inout, in, size);
+  }
+  else if(a==b){
+    int a_loc, b_loc;
+    memcpy(&a_loc, (char *)inout + sizeof(long double), sizeof(int));
+    memcpy(&b_loc, (char *)in    + sizeof(long double), sizeof(int));
+    if(b_loc<a_loc)
+      memcpy(inout, in, size);
+  }
+}
+
+static MPI_Op _xmp_maxloc, _xmp_minloc;
+/**********************************************************************/
+/* DESCRIPTION : Initialization for reduction directive               */
+/* NOTE        : This function is called once in beginning of program */
+/**********************************************************************/
+void xmp_reduce_initialize()
+{
+  MPI_Op_create(_reduce_maxloc, 1, &_xmp_maxloc);
+  MPI_Op_create(_reduce_minloc, 1, &_xmp_minloc);
+}
+
+static int *_size;
+static void **_addr;
+static long double _value;
+static int _node_num, _nlocs, _num, _datatype;
+static void *_value_addr;
+/***************************************************************************/
+/* DESCRIPTION : Allocate memory for reduction directive with (max:x/y,z/) */
+/*               or (min:x/y,z/)                                           */
+/* ARGUMENT    : [IN] nlocs : Number of "location-variable"                */
+/*             : [IN] value : Value of "reduction-variable"                */
+/* NOTE        : value has been casted by translator                       */
+/***************************************************************************/
+void xmp_reduce_loc_init(const int nlocs, const long double value, void *value_addr, const int datatype)
+{
+  _nlocs      = nlocs;
+  _value      = value;
+  _value_addr = value_addr;
+  _datatype   = datatype;
+  _node_num   = _XMP_get_execution_nodes()->comm_rank;
+  
+  _addr = malloc(sizeof(void *) * (nlocs+2));
+  _addr[0] = &_value;
+  _addr[1] = &_node_num;
+
+  _size = malloc(sizeof(int) * (nlocs+2));
+  _size[0] = sizeof(long double);
+  _size[1] = sizeof(int);
+  
+  _num = 2;
+}
+
+/****************************************************************************/
+/* DESCRIPTION : Set information for reduction directive with (max:x/y,z/)  */
+/*               or (min:x/y,z/). In detail, information of y and z are set */
+/* ARGUMENT    : [IN] *buf   : Address of "location-variable"               */
+/*             : [IN] length : length of each "location-variable"           */
+/*             : [IN] s      : size of each "location-variable"             */
+/****************************************************************************/
+void xmp_reduce_loc_set(void *buf, const int length, const size_t s)
+{
+  _addr[_num] = buf;
+  _size[_num] = length * s;
+  _num++;
+}
+
+/***********************************************************/
+/* DESCRIPTION : Define value with cast                    */
+/* ARGUMENT    : [OUT] *addr    : Address of defined value */
+/*             : [IN]  value    : value                    */
+/*             : [IN]  datatype : datatype                 */
+/***********************************************************/
+#define _XMP_M_DEFINE_WITH_CAST(type, addr, value) *(type *)addr = (type)value;
+static void _cast_define_double_value(void* addr, long double value, int datatype)
+{
+  switch (datatype){
+  case _XMP_N_TYPE_BOOL:
+    _XMP_M_DEFINE_WITH_CAST(_Bool,              addr, value); break;
+  case _XMP_N_TYPE_CHAR:
+    _XMP_M_DEFINE_WITH_CAST(char,               addr, value); break;
+  case _XMP_N_TYPE_UNSIGNED_CHAR:
+    _XMP_M_DEFINE_WITH_CAST(unsigned char,      addr, value); break;
+  case _XMP_N_TYPE_SHORT:
+    _XMP_M_DEFINE_WITH_CAST(short,              addr, value); break;
+  case _XMP_N_TYPE_UNSIGNED_SHORT:
+    _XMP_M_DEFINE_WITH_CAST(unsigned short,     addr, value); break;
+  case _XMP_N_TYPE_INT:
+    _XMP_M_DEFINE_WITH_CAST(int,                addr, value); break;
+  case _XMP_N_TYPE_UNSIGNED_INT:
+    _XMP_M_DEFINE_WITH_CAST(unsigned int,       addr, value); break;
+  case _XMP_N_TYPE_LONG:
+    _XMP_M_DEFINE_WITH_CAST(long,               addr, value); break;
+  case _XMP_N_TYPE_UNSIGNED_LONG:
+    _XMP_M_DEFINE_WITH_CAST(unsigned long,      addr, value); break;
+  case _XMP_N_TYPE_LONGLONG:
+    _XMP_M_DEFINE_WITH_CAST(long long,          addr, value); break;
+  case _XMP_N_TYPE_UNSIGNED_LONGLONG:
+    _XMP_M_DEFINE_WITH_CAST(unsigned long long, addr, value); break;
+  case _XMP_N_TYPE_FLOAT:
+    _XMP_M_DEFINE_WITH_CAST(float,              addr, value); break;
+  case _XMP_N_TYPE_DOUBLE:
+    _XMP_M_DEFINE_WITH_CAST(double,             addr, value); break;
+  case _XMP_N_TYPE_LONG_DOUBLE:
+    _XMP_M_DEFINE_WITH_CAST(long double,        addr, value); break;
+  default:
+    _XMP_fatal("unknown data type for reduction max/min loc");
+  }
+}
+
+/*************************************************************************************/
+/* DESCRIPTION : Execution reduction directive with (max:x/y,z/) or (min:x/y,z/)     */
+/* ARGUMENT    : [IN] *node : Node descriptor                                        */
+/*               [IN] op    : Operand (_XMP_N_REDUCE_MAXLOC or _XMP_N_REDUCE_MINLOC) */
+/*************************************************************************************/
+void xmp_reduce_loc_execute(const int op)
+{
+  _XMP_nodes_t *nodes = _XMP_get_execution_nodes();
+
+  if(nodes->is_member && nodes->comm_size != 1){
+    size_t total_reduce_size = 0;
+    for(int i=0;i<_nlocs+2;i++)
+      total_reduce_size += _size[i];
+
+    char *buffer  = malloc(total_reduce_size);
+
+    size_t offset = 0;
+    for(int i=0;i<_nlocs+2;i++){
+      memcpy(buffer + offset, _addr[i], _size[i]);
+      offset += _size[i];
+    }
+
+    if(op == _XMP_N_REDUCE_MAXLOC)
+      MPI_Allreduce(MPI_IN_PLACE, buffer, total_reduce_size, MPI_BYTE, _xmp_maxloc, *((MPI_Comm *)nodes->comm));
+    else if(op == _XMP_N_REDUCE_MINLOC)
+      MPI_Allreduce(MPI_IN_PLACE, buffer, total_reduce_size, MPI_BYTE, _xmp_minloc, *((MPI_Comm *)nodes->comm));
+    else
+      _XMP_fatal("Unknown operation in reduction directve");
+
+    offset = 0;
+    for(int i=0;i<_nlocs+2;i++){
+      memcpy(_addr[i], buffer + offset, _size[i]);
+      offset += _size[i];
+    }
+
+    long double value = *(long double *)_addr[0];
+    _cast_define_double_value(_value_addr, value, _datatype);
+    
+    free(buffer);
+  }
+  
+  free(_size);
+  free(_addr);
+}
+

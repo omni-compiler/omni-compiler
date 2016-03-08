@@ -22,6 +22,8 @@ run: $(EXES)
 	$(XRUN) -n 4 ./plus.x
 	$(XRUN) -n 4 ./max.x
 	$(XRUN) -n 4 ./min.x
+	$(XRUN) -n 4 ./max_loc.x
+	$(XRUN) -n 4 ./min_loc.x
 	$(XRUN) -n 4 ./raise.x
 	$(XRUN) -n 8 ./plus2.x
 	$(XRUN) -n 8 ./max2.x

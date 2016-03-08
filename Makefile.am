@@ -24,21 +24,27 @@ TESTDIRS = "global-view/array/C/" "global-view/array/F/" "global-view/bcast/C/" 
 	   "global-view/shadow-reflect/C/" "global-view/shadow-reflect/F/" "global-view/task/C"  "global-view/task/F" \
 	   "global-view/template_fix/C/" "global-view/template_fix/F/" "global-view/gmove/C/" "global-view/gmove/F/" \
 	   "global-view/inquiry/C/" "global-view/inquiry/F/" "global-view/gblock/C/" "global-view/gblock/F/" \
-	   "global-view/align/C/" "global-view/align/F/" "global-view/intrinsic/C/" "global-view/intrinsic/F/" \
+	   "global-view/align/C/" "global-view/align/F/" "global-view/intrinsic/F/" \
 	   "global-view/util/C/" "global-view/util/F/" "others/F" "others/C"
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
 LARGE_TESTDIRS = "others/C"
 
+# "global-view/intrinsic/C/" includes imaginary numbers.
+# But SUPERUX and POWERPC cannot deal with imaginary numbers.
+if !SUPERUX_OR_POWERPC
+  TESTDIRS += "global-view/intrinsic/C/"
+endif
+
 if GASNET
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" "local-view/coarray/F" \
-	       "local-view/coarray/F_alloc" "local-view/coarray/F_get" "local-view/coarray/F_put" "local-view/coarray/F_scope" \
-	       "local-view/coarray/F_cfold" "local-view/lock-unlock/C"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
+	       "local-view/coarray/F/LIB" "local-view/coarray/F/ALLOC" "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
+	       "local-view/coarray/F/CFOLD" "local-view/lock-unlock/C"
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if FJRDMA
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" "local-view/coarray/F" \
-	       "local-view/coarray/F_alloc" "local-view/coarray/F_get" "local-view/coarray/F_put" "local-view/coarray/F_scope" \
-	       "local-view/coarray/F_cfold"
+   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
+               "local-view/coarray/F/LIB" "local-view/coarray/F/ALLOC" "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
+	       "local-view/coarray/F/CFOLD" 
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if MPI3
@@ -81,7 +87,7 @@ run-large-tests:
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
-PACKAGE_NAME = omnicompiler-@VERSION@
+PACKAGE_NAME = omnicompiler-$(VERSION)
 WORKDIR = /tmp/$(PACKAGE_NAME)
 release:
 	@if [ -e $(WORKDIR) ]; then \

@@ -18,6 +18,7 @@ public class XMPcoarray {
   // name of library
   public final static String VAR_DESCPOINTER_PREFIX = "xmpf_descptr";
   public final static String VAR_CRAYPOINTER_PREFIX = "xmpf_crayptr";
+  public final static String CBLK_COARRAYS_PREFIX   = "xmpf_coarrayvar";
   final static String XMPF_LCOBOUND = "xmpf_lcobound";
   final static String XMPF_UCOBOUND = "xmpf_ucobound";
   final static String XMPF_COSIZE = "xmpf_cosize";
@@ -610,8 +611,13 @@ public class XMPcoarray {
   }
 
   public void resetSaveAttr() {
-    Xtype type = ident.Type();
-    _resetSaveAttrInType(type);
+    //    Xtype type = ident.Type();
+    //    _resetSaveAttrInType(type);
+    _resetSaveAttrInType(ident.Type());
+
+    // How various!
+    if (ident.getStorageClass() == StorageClass.FSAVE)
+      ident.setStorageClass(StorageClass.FLOCAL);
   }
 
   private void _resetSaveAttrInType(Xtype type) {
@@ -707,6 +713,11 @@ public class XMPcoarray {
   public String getCrayCommonName()
   {
     return VAR_CRAYPOINTER_PREFIX + "_" + homeBlockName;
+  }
+
+  public String getCoarrayCommonName()
+  {
+    return CBLK_COARRAYS_PREFIX + "_" + homeBlockName;
   }
 
   public String getCrayPointerName() {

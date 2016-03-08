@@ -40,6 +40,7 @@ run: $(EXES)
 	$(XRUN) -n 4 ./gmove_G2L_index.x
 	$(XRUN) -n 2 ./gmove_inout_1.x
 	$(XRUN) -n 8 ./gmove_inout_3.x
+	$(XRUN) -n 2 ./484.x
 
 clean:
 	rm -f $(EXES) $(OBJS) _xmpf_module_INIT.o chk.o

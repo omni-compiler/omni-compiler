@@ -1,22 +1,69 @@
 #include "xmpf_internal.h"
 
-/*****************************************\
-  initialization
-\*****************************************/
+/*************************************************\
+  this_image/num_images for the initial state
+\*************************************************/
 
-int XMPF_this_image, XMPF_num_images;
+int XMPF_initial_this_image, XMPF_initial_num_images;
 
-void _XMPF_set_this_image()
+void _XMPF_set_initial_this_image()
 {
-  int size, rank;
+  int rank;
+
+  if (MPI_Comm_rank(MPI_COMM_WORLD, &rank) != 0)
+    _XMPF_coarrayFatal("INTERNAL ERROR: "
+                       "MPI_Comm_rank(MPI_COMM_WORLD, ) failed");
+
+  XMPF_initial_this_image = rank + 1;
+}
+
+void _XMPF_set_initial_num_images()
+{
+  int size;
 
   if (MPI_Comm_size(MPI_COMM_WORLD, &size) != 0)
-    _XMPF_coarrayFatal("INTERNAL ERROR: illegal node size of COMM_WORLD");
-  if (MPI_Comm_rank(MPI_COMM_WORLD, &rank) != 0)
-    _XMPF_coarrayFatal("INTERNAL ERROR: illegal node rank of mine");
+    _XMPF_coarrayFatal("INTERNAL ERROR: "
+                       "MPI_Comm_size(MPI_COMM_WORLD, ) failed");
+  XMPF_initial_num_images = size;
+}
 
-  XMPF_num_images = size;
-  XMPF_this_image = rank + 1;
+int _XMPF_get_initial_this_image()
+{
+  return XMPF_initial_this_image;
+}
+
+int _XMPF_get_initial_num_images()
+{
+  return XMPF_initial_num_images;
+}
+
+
+/*************************************************\
+  this_image/num_images for the current context
+\*************************************************/
+
+/* 'this image' in a task region is defined as (MPI rank + 1),
+ * which is not always equal to node_num of XMP.
+ */
+int _XMPF_get_current_this_image()
+{
+  // for inside of task block
+  if (xmp_num_nodes() < xmp_all_num_nodes()) {
+    int rank;
+    _XMP_nodes_t *nodes = _XMP_get_execution_nodes();
+    if (MPI_Comm_rank(*((MPI_Comm*)nodes->comm), &rank) == 0) {
+      // got rank for the current communicator successfully
+      return rank + 1;
+    }
+  }
+
+  // get this_image for the initial communicator
+  return _XMPF_get_initial_this_image();
+}
+
+int _XMPF_get_current_num_images()
+{
+  return xmp_num_nodes();
 }
 
 
@@ -35,9 +82,9 @@ void _XMPF_set_this_image()
  */
 int num_images_(void)
 {
-  _XMPF_checkIfInTask("NUM_IMAGES");
+  //_XMPF_checkIfInTask("NUM_IMAGES");
 
-  return XMPF_num_images;
+  return _XMPF_get_current_num_images();
 }
 
 
@@ -45,9 +92,9 @@ int num_images_(void)
  */
 int this_image_(void)
 {
-  _XMPF_checkIfInTask("THIS_IMAGE");
+  //_XMPF_checkIfInTask("THIS_IMAGE");
 
-  return XMPF_this_image;
+  return _XMPF_get_current_this_image();
 }
 
 
@@ -153,7 +200,7 @@ void xmpf_touch_(void)
 
 void xmpf_sync_image_nostat_(int *image)
 {
-  int state;
+  int state = 0;
 
   if (*image <= 0)
     _XMPF_coarrayFatal("ABORT: illegal image number (%d) found in SYNC IMAGES\n",

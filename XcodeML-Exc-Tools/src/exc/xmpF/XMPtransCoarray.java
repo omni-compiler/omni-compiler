@@ -18,6 +18,8 @@ public class XMPtransCoarray implements XobjectDefVisitor
 {
   XMPenv env;
   private int pass;
+  private int version = 0;   // Default version number is defined
+                             // in XMPtransCoarrayRun.
 
   private ArrayList<XMPtransCoarrayRun> pastRuns;
   int _nCoarrays = 0;
@@ -40,6 +42,15 @@ public class XMPtransCoarray implements XobjectDefVisitor
     
 
   //-----------------------------------------
+  //  set
+  //-----------------------------------------
+
+  public void set_version(int version) {
+    this.version = version;
+  }
+
+
+  //-----------------------------------------
   //  do transform for a procedure or a module
   //-----------------------------------------
 
@@ -59,6 +70,8 @@ public class XMPtransCoarray implements XobjectDefVisitor
 
     case 1:               // for both procedures and modules
       transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 1);
+      if (version != 0)
+        transCoarrayRun.set_version(version);
       transCoarrayRun.run1();
       // assuming top-down translation along host-association
       pastRuns.add(transCoarrayRun);

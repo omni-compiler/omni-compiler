@@ -11,6 +11,7 @@ import static xcodeml.util.XmLog.fatal_dump;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -1293,7 +1294,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         }
 
         public void sort(XobjList declList) {
-            Map<String, Xobject> declMap = new HashMap<String, Xobject>();
+            Map<String, Xobject> declMap = new LinkedHashMap<String, Xobject>();
             List<Xobject> headDeclList = new ArrayList<Xobject>();
             List<Xobject> tailDeclList = new ArrayList<Xobject>();
 
@@ -1453,6 +1454,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                         _collectDependName(((Ident)a).getValue(), idSet);
                     }
                 }
+		break;
+	    case Xtype.FUNCTION:
+                _collectDependName(t.getRef(), idSet);
                 break;
             }
         }

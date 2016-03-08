@@ -43,7 +43,8 @@ extern void _XMP_unpack_array(void *dst, void *buffer, int array_type, size_t ar
 
 // xmp_async.c
 extern void xmpc_init_async(int async_id);
-extern void xmpc_start_async(int async_id);
+extern void xmpc_start_async();
+extern void xmpc_end_async(int async_id);
 
 // xmp_barrier.c
 extern void _XMP_barrier_NODES_ENTIRE(void *nodes);
@@ -88,6 +89,7 @@ extern void _XMP_coarray_malloc_image_info_7(const int, const int, const int, co
 
 extern void _XMP_coarray_malloc_do_f(void **, void *);
 extern void _XMP_coarray_malloc_do(void **, void *);
+extern void _XMP_coarray_regmem_do(void **, void *);   // for Coarray F Ver.4
 extern void _XMP_coarray_attach(void **, void *, const size_t);
 extern void _XMP_coarray_detach(void **);
 extern void _XMP_coarray_lastly_deallocate();
@@ -179,6 +181,7 @@ extern void _XMP_coarray_rdma_do_acc(const int, void*, void*, void *, const int,
 extern void _XMP_reflect_init_acc(void *, void *);
 extern void _XMP_reflect_do_acc(void *);
 extern void _XMP_reflect_acc(void *);
+extern void _XMP_set_reflect_acc__(void *a, int dim, int lwidth, int uwidth, int is_periodic);
 
 #ifdef _XMP_TCA
 // xmp_tca.c
@@ -272,6 +275,9 @@ extern void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op)
 extern void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...);
 extern int _XMP_init_reduce_comm_NODES(void *nodes, ...);
 extern int _XMP_init_reduce_comm_TEMPLATE(void *template, ...);
+extern void xmp_reduce_loc_init(const int nlocs, const long double value, void *value_addr, const int datatype);
+extern void xmp_reduce_loc_set(void *buf, const int length, const size_t s);
+extern void xmp_reduce_loc_execute(const int op);
 
 // xmp_reduce_acc.c
 extern void _XMP_reduce_acc_NODES_ENTIRE(void *nodes, void *dev_addr, int count, int datatype, int op);
