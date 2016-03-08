@@ -571,6 +571,8 @@ compile_expression(expr x)
             bLType = bottom_type(lt);
             bRType = bottom_type(rt);
 
+	    if (!bLType || !bRType) return NULL;
+
             if (TYPE_IS_NOT_FIXED(bLType) || TYPE_IS_NOT_FIXED(bRType)) {
                 type_is_not_fixed = TRUE;
             }
@@ -1440,6 +1442,8 @@ expv_assignment(expv v1, expv v2)
 
     TYPE_DESC tp1 = EXPV_TYPE(v1);
     TYPE_DESC tp2 = EXPV_TYPE(v2);
+
+    if (!tp1 || !tp2) return NULL;
 
     if (EXPV_CODE(v2) == F95_ARRAY_CONSTRUCTOR) {
         if (!IS_ARRAY_TYPE(tp1)) {
