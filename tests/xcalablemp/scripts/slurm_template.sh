@@ -11,6 +11,7 @@
 
 cd @DIRNAME@
 export PATH=@XMP_PATH@/bin:$PATH
+export PATH=@MPI_PATH@/bin:$PATH
 
 ## Date for creating graph of time line
 OUTPUT_FILENAME=timeline.dat

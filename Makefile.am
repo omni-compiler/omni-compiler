@@ -103,7 +103,7 @@ release:
 
 slurm:
 	bash ./tests/xcalablemp/scripts/create_sorted_list.sh $(BASE_TESTDIR) $(TESTDIRS) > $(SORTED_LIST); \
-	bash ./tests/xcalablemp/scripts/make_slurm.sh $(XMP_PATH) $(SORTED_LIST) $(BASE_TESTDIR)
+	bash ./tests/xcalablemp/scripts/make_slurm.sh $(XMP_PATH) $(MPI_PATH) $(SORTED_LIST) $(BASE_TESTDIR)
 
 slurm-check:
 	@bash ./tests/xcalablemp/scripts/check_error_code.sh $(BASE_TESTDIR) $(TESTDIRS)
