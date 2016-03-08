@@ -3068,13 +3068,8 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
-<<<<<<< HEAD
 # expand $ac_aux_dir to an absolute path
 am_aux_dir=`cd $ac_aux_dir && pwd`
-=======
-# Expand $ac_aux_dir to an absolute path.
-am_aux_dir=`cd "$ac_aux_dir" && pwd`
->>>>>>> f4b70121c6089bdac6be81edc73fe47c7f8c9875
 
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
@@ -3145,7 +3140,6 @@ $as_echo "no" >&6; }
 fi
 
 
-<<<<<<< HEAD
 fi
 if test -z "$ac_cv_prog_STRIP"; then
   ac_ct_STRIP=$STRIP
@@ -3181,43 +3175,6 @@ if test -n "$ac_ct_STRIP"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_STRIP" >&5
 $as_echo "$ac_ct_STRIP" >&6; }
 else
-=======
-fi
-if test -z "$ac_cv_prog_STRIP"; then
-  ac_ct_STRIP=$STRIP
-  # Extract the first word of "strip", so it can be a program name with args.
-set dummy strip; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_ac_ct_STRIP+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$ac_ct_STRIP"; then
-  ac_cv_prog_ac_ct_STRIP="$ac_ct_STRIP" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_STRIP="strip"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_STRIP=$ac_cv_prog_ac_ct_STRIP
-if test -n "$ac_ct_STRIP"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_STRIP" >&5
-$as_echo "$ac_ct_STRIP" >&6; }
-else
->>>>>>> f4b70121c6089bdac6be81edc73fe47c7f8c9875
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
@@ -3518,7 +3475,6 @@ else
   USE_MAINTAINER_MODE=yes
 fi
 
-<<<<<<< HEAD
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $USE_MAINTAINER_MODE" >&5
 $as_echo "$USE_MAINTAINER_MODE" >&6; }
    if test $USE_MAINTAINER_MODE = yes; then
@@ -3531,103 +3487,8 @@ fi
 
   MAINT=$MAINTAINER_MODE_TRUE
 
-=======
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
-$as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
-    # Check whether --enable-maintainer-mode was given.
-if test "${enable_maintainer_mode+set}" = set; then :
-  enableval=$enable_maintainer_mode; USE_MAINTAINER_MODE=$enableval
-else
-  USE_MAINTAINER_MODE=yes
-fi
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $USE_MAINTAINER_MODE" >&5
-$as_echo "$USE_MAINTAINER_MODE" >&6; }
-   if test $USE_MAINTAINER_MODE = yes; then
-  MAINTAINER_MODE_TRUE=
-  MAINTAINER_MODE_FALSE='#'
-else
-  MAINTAINER_MODE_TRUE='#'
-  MAINTAINER_MODE_FALSE=
-fi
-
-  MAINT=$MAINTAINER_MODE_TRUE
->>>>>>> f4b70121c6089bdac6be81edc73fe47c7f8c9875
 
 
-MKDIR_P="install -m 755 -d"
-
-<<<<<<< HEAD
-
-TOPDIR=${ac_pwd}
-
-
-# --------------------------------------------------------------------
-ac_config_files="$ac_config_files XcodeML-Common/Makefile"
-
-ac_config_files="$ac_config_files C-FrontEnd/src/Makefile"
-
-ac_config_files="$ac_config_files C-BackEnd/Makefile"
-
-ac_config_files="$ac_config_files F-FrontEnd/src/Makefile"
-
-ac_config_files="$ac_config_files F-FrontEnd/gnu_module/Makefile"
-
-ac_config_files="$ac_config_files F-BackEnd/Makefile"
-
-ac_config_files="$ac_config_files XcodeML-Exc-Tools/Makefile"
-
-ac_config_files="$ac_config_files XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java"
-
-ac_config_files="$ac_config_files Driver/src/Makefile"
-
-ac_config_files="$ac_config_files Driver/etc/ompcc.conf"
-
-ac_config_files="$ac_config_files Driver/etc/ompf90.conf"
-
-ac_config_files="$ac_config_files Driver/etc/xmpcc.conf"
-
-ac_config_files="$ac_config_files Driver/etc/xmpf90.conf"
-
-ac_config_files="$ac_config_files Driver/bin/ompcc"
-
-ac_config_files="$ac_config_files Driver/bin/ompf90"
-
-ac_config_files="$ac_config_files Driver/bin/xmpcc"
-
-ac_config_files="$ac_config_files Driver/bin/xmpf90"
-
-ac_config_files="$ac_config_files libxmp/include/Makefile"
-
-ac_config_files="$ac_config_files libxmp/src/Makefile"
-
-ac_config_files="$ac_config_files libxmp/src_threads/Makefile"
-
-ac_config_files="$ac_config_files libxmpf/include/Makefile"
-
-ac_config_files="$ac_config_files libxmpf/src/Makefile"
-
-
-# --------------------------------------------------------------------
-# check on what system we are running.
-
-#AC_CANONICAL_SYSTEM
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking os" >&5
-$as_echo_n "checking os... " >&6; }
-
-HOSTARCH=`./buildutils/config.guess | grep -v Linking`
-CPU=`echo $HOSTARCH | awk -F- '{ print $1 }' | sed 's/\./_/g'`
-OS=`echo $HOSTARCH | awk -F- '{ print $3 }' | sed 's/\./_/g'`
-PPTGT=""
-MM5TGT=""
-
-case $CPU in
-    i*86)    CPU=i386;;
-    x86_64*) CPU=x86_64;;
-    alpha*)  CPU=alpha;;
-esac
-
-=======
 MKDIR_P="install -m 755 -d"
 
 
@@ -3699,7 +3560,6 @@ case $CPU in
     alpha*)  CPU=alpha;;
 esac
 
->>>>>>> f4b70121c6089bdac6be81edc73fe47c7f8c9875
 case $OS in
     sunos*)   OS=sunos;;
     solaris*) OS=solaris;;
