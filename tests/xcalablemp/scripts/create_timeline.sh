@@ -11,6 +11,7 @@ TIMELINE_FILE=timeline.dat
 STATIC_COLORS=('red' 'darkred' 'mistyrose' 'steelblue' 'lightsteelblue' 'darkblue' 'yellowgreen' 'darkolivegreen' 'lime' 'magenta' 'darkmagenta' 'mediumpurple' '#cbb69d' '#603913' '#c69c6e')
 NUM_OF_STATIC_COLORS=${#STATIC_COLORS[*]}
 TIME_LINE_DATA=""
+NODE_NAME_LIST=""
 NUM_OF_DIRS=0
 TIMELINE_WIDTH=1500
 
@@ -21,6 +22,7 @@ for dat in autogen.dat configure.dat make.dat timeline.dat; do
 	NODE_NAME=`head -2 ${FILE} | tail -1`
 	START_TIME=`head -3 ${FILE} | tail -1`
 	END_TIME=`tail -1 ${FILE}`
+        NODE_NAME_LIST+="$NODE_NAME\n"
 	TIME_LINE_DATA+="['"${NODE_NAME}"',\t"
 	TIME_LINE_DATA+="'"${JOB_NAME}"',\t"
 	TIME_LINE_DATA+=" new Date(${START_TIME}),\t"
