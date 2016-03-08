@@ -5,9 +5,6 @@ OUTPUT_DIR=$1
 JOB_NUM=$2
 ELAPSED_TIME_SEC=$3
 SORTED_LIST=$4
-shift; shift; shift; shift
-TESTDIRS=$@
-CURRENT_DIR=`pwd`
 
 ## Set static variable
 TIMELINE_FILE=timeline.dat
@@ -18,40 +15,17 @@ NUM_OF_DIRS=0
 TIMELINE_WIDTH=1500
 
 ## Set Data of master
-for dat in autogen.dat configure.dat make.dat; do
-    for onesided in GASNet MPI3; do
-	FILE=${CURRENT_DIR}/${onesided}/${dat}
-	if [ -f ${FILE} ]; then
-	    JOB_NAME=`head -1 ${FILE}`
-	    NODE_NAME=`head -2 ${FILE} | tail -1`
-	    START_TIME=`head -3 ${FILE} | tail -1`
-	    END_TIME=`tail -1 ${FILE}`
-	    TIME_LINE_DATA+="['"${NODE_NAME}"',\t"
-	    TIME_LINE_DATA+="'"${JOB_NAME}"',\t"
-	    TIME_LINE_DATA+=" new Date(${START_TIME}),\t"
-	    TIME_LINE_DATA+=" new Date(${END_TIME})],\n"
-	    NUM_OF_DIRS=`expr $NUM_OF_DIRS + 1`
-	fi
-    done
-done
-
-## Set Data of slave
-NODE_NAME_LIST=""
-for subdir in ${TESTDIRS}; do
-    for onesided in GASNet MPI3; do
-	FILE=${CURRENT_DIR}/${onesided}/tests/xcalablemp/${subdir}/${TIMELINE_FILE}
-	if [ -f ${FILE} ]; then
-	    JOB_NAME=`head -1 ${FILE}`
-	    NODE_NAME=`head -2 ${FILE} | tail -1`
-	    NODE_NAME_LIST+="$NODE_NAME\n"
-	    START_TIME=`head -3 ${FILE} | tail -1`
-	    END_TIME=`tail -1 ${FILE}`
-	    TIME_LINE_DATA+="['"${NODE_NAME}"',\t"
-	    TIME_LINE_DATA+="'"${JOB_NAME}"',\t"
-	    TIME_LINE_DATA+=" new Date(${START_TIME}),\t"
-	    TIME_LINE_DATA+=" new Date(${END_TIME})],\n"
-	    NUM_OF_DIRS=`expr $NUM_OF_DIRS + 1`
-	fi
+for dat in autogen.dat configure.dat make.dat timeline.dat; do
+    for FILE in `find ./ -name ${dat}`; do
+	JOB_NAME=`head -1 ${FILE}`
+	NODE_NAME=`head -2 ${FILE} | tail -1`
+	START_TIME=`head -3 ${FILE} | tail -1`
+	END_TIME=`tail -1 ${FILE}`
+	TIME_LINE_DATA+="['"${NODE_NAME}"',\t"
+	TIME_LINE_DATA+="'"${JOB_NAME}"',\t"
+	TIME_LINE_DATA+=" new Date(${START_TIME}),\t"
+	TIME_LINE_DATA+=" new Date(${END_TIME})],\n"
+	NUM_OF_DIRS=`expr $NUM_OF_DIRS + 1`
     done
 done
 TIME_LINE_DATA=`echo -e $TIME_LINE_DATA | sort -n`
