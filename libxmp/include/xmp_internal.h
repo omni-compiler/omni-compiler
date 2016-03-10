@@ -142,11 +142,14 @@ extern void _XMP_coarray_rdma_array_set_n(const int, const long[], const long[],
 					  const long[], const long[]);
 extern void _XMP_coarray_rdma_image_set_n(const int, const int[]);
 extern void _XMP_coarray_rdma_do(const int, void*, void*, void*);
+extern void _XMP_coarray_rdma_do2(const int rdma_code, void *remote_coarray, void *local_array, void *local_coarray,
+				  const long coarray_elmts[], const long coarray_distance[]);
 #endif
 
 extern void _XMP_onesided_initialize(int, char **);
 extern void _XMP_onesided_finalize(const int);
 extern void _XMP_build_sync_images_table();
+extern void _XMP_sync_images_EXEC(int* status);
 extern void _XMP_build_coarray_queue();
 extern void _XMP_coarray_lastly_deallocate();
 extern void _XMP_set_stride(size_t*, const _XMP_array_section_t*, const int, const size_t, const size_t);

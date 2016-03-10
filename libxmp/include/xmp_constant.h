@@ -112,9 +112,14 @@
 #define _XMP_GLOBAL_IO_ATOMIC			801
 #define _XMP_GLOBAL_IO_COLLECTIVE		802
 
-#define _XMP_ENTIRE_NODES                        2000
-#define _XMP_EXECUTING_NODES                     2001
-#define _XMP_PRIMARY_NODES                       2002
-#define _XMP_EQUIVALENCE_NODES                   2003
+#define _XMP_ENTIRE_NODES			2000
+#define _XMP_EXECUTING_NODES			2001
+#define _XMP_PRIMARY_NODES			2002
+#define _XMP_EQUIVALENCE_NODES			2003
+
+// defined in exc.xmpF.XMPtransPragma
+#define XMP_N_GMOVE_ALL				0
+#define XMP_N_GMOVE_INDEX			1
+#define XMP_N_GMOVE_RANGE			2
 
 #endif // _XMP_CONSTANT

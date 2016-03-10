@@ -174,8 +174,8 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
                          int *dst_lower, int *dst_upper, int *dst_stride, unsigned long long *dst_dim_acc,
                          _XMP_array_t *src_array, int *src_array_nodes_ref,
                          int *src_lower, int *src_upper, int *src_stride, unsigned long long *src_dim_acc);
-void _XMP_gmove_BCAST_SCALAR2(void *dst_addr, void *src_addr, _XMP_array_t *array, int ref_index[]);
-void _XMP_gmove_SENDRECV_SCALAR2(void *dst_addr, void *src_addr,
+void _XMP_gmove_BCAST_GSCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array, int ref_index[]);
+void _XMP_gmove_SENDRECV_GSCALAR(void *dst_addr, void *src_addr,
 				 _XMP_array_t *dst_array, _XMP_array_t *src_array,
 				 int dst_ref_index[], int src_ref_index[]);
 

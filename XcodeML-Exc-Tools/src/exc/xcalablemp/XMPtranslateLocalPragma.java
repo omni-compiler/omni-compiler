@@ -2780,22 +2780,23 @@ public class XMPtranslateLocalPragma {
       if (rightHasSubArrayRef) {
         if (leftAlignedArray == null) {
           if (rightAlignedArray == null) {	// !leftIsAlignedArray && !rightIsAlignedArray  |-> local assignment (every node)
-            String arrayName = getArrayName(leftExpr);
-            Ident arrayId = pb.findVarIdent(arrayName);
-            Xtype arrayElmtType = arrayId.Type().getArrayElementType();
+	    gmoveFuncCallBlock = Bcons.COMPOUND(gmoveBody);
+            // String arrayName = getArrayName(leftExpr);
+            // Ident arrayId = pb.findVarIdent(arrayName);
+            // Xtype arrayElmtType = arrayId.Type().getArrayElementType();
 
-            XobjList gmoveFuncArgs = null;
-            if (arrayElmtType.getKind() == Xtype.BASIC) {
-              gmoveFuncArgs = Xcons.List(XMP.createBasicTypeConstantObj(arrayElmtType));
-            } else {
-              gmoveFuncArgs = Xcons.List(Xcons.IntConstant(XMP.NONBASIC_TYPE));
-            }
-            gmoveFuncArgs.add(Xcons.SizeOf(arrayElmtType));
+            // XobjList gmoveFuncArgs = null;
+            // if (arrayElmtType.getKind() == Xtype.BASIC) {
+            //   gmoveFuncArgs = Xcons.List(XMP.createBasicTypeConstantObj(arrayElmtType));
+            // } else {
+            //   gmoveFuncArgs = Xcons.List(Xcons.IntConstant(XMP.NONBASIC_TYPE));
+            // }
+            // gmoveFuncArgs.add(Xcons.SizeOf(arrayElmtType));
 
-            gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
-            gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
-	    gmoveFuncArgs.add(gmoveClause);
-	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "LOCALCOPY_ARRAY", gmoveFuncArgs);
+            // gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+            // gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    // gmoveFuncArgs.add(gmoveClause);
+	    // gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "LOCALCOPY_ARRAY", gmoveFuncArgs);
           } else {				// !leftIsAlignedArray &&  rightIsAlignedArray  |-> broadcast
             Xtype arrayElmtType = rightAlignedArray.getType();
 

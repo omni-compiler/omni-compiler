@@ -761,7 +761,12 @@ public class XMPanalyzePragma
     boolean left_is_global = checkGmoveOperand(left,pb);
     boolean right_is_global = checkGmoveOperand(right,pb);
 
+    boolean left_is_scalar = isScalar(left);
     boolean right_is_scalar = isScalar(right);
+
+    if (left_is_scalar && !right_is_scalar){
+      XMP.fatal("Incompatible ranks in assignment.");
+    }
 
     if (!left_is_global){
       if (!right_is_global){
@@ -866,10 +871,10 @@ public class XMPanalyzePragma
 
   private boolean convertGmoveToArray(PragmaBlock pb, Xobject left, Xobject right){
 
-    boolean lhs_is_scalar = isScalar(left);
-    boolean rhs_is_scalar = isScalar(right);
+    // boolean lhs_is_scalar = isScalar(left);
+    // boolean rhs_is_scalar = isScalar(right);
 
-    if (!lhs_is_scalar && rhs_is_scalar){
+    // if (!lhs_is_scalar && rhs_is_scalar){
 
       pb.setPragma("ARRAY");
 
@@ -908,10 +913,10 @@ public class XMPanalyzePragma
       Xobject decl = Xcons.List(onRef);
       pb.setClauses(decl);
 
-    }
-    else { // lhs_is_scalar || !rhs_is_scalar){
-      return false;
-    }
+    // }
+    // else { // lhs_is_scalar || !rhs_is_scalar){
+    //   return false;
+    // }
 
     return true;
 
@@ -1093,8 +1098,7 @@ public class XMPanalyzePragma
 	  Xobject sub = subscripts1.getArg(i);
 	  if (sub.Opcode() == Xcode.F_INDEX_RANGE){
 
-	    int tidx = array1.getAlignSubscriptIndexAt(i);
-	    if (tidx == -1) continue;
+	    //int tidx = array1.getAlignSubscriptIndexAt(i);
 
 	    Xobject lb, st;
 
@@ -1114,7 +1118,15 @@ public class XMPanalyzePragma
 
 	    Xobject expr;
 	    //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
-	    Ident loopVar = varListTemplate.get(tidx);
+
+	    Ident loopVar;
+	    if (array1 != null){
+	      int tidx = array1.getAlignSubscriptIndexAt(i);
+	      loopVar = varListTemplate.get(tidx);
+	    }
+	    else
+	      loopVar = varList.get(k);
+
 	    if (loopVar == null) XMP.fatal("array on rhs does not conform to that on lhs.");
 	    expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
 	    expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);
