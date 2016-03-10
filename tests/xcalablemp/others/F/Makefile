@@ -128,7 +128,6 @@ run:
 	$(XRUN) -np 1 ./392.x
 	$(XRUN) -np 1 ./397.x
 	$(XRUN) -np 1 ./278\ spacefile.x
-	$(XRUN) -np 1 ./double_option.x
 	$(XRUN) -np 4 ./save_desc.x
 
 clean:
