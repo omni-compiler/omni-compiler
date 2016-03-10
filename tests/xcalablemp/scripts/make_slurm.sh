@@ -5,8 +5,9 @@ if test -f $XMP_PATH; then
     echo "make XMP_PATH=[install path]"
     exit 1
 fi
-SORTED_LIST=$2
-BASE_TESTDIR=$3
+MPI_PATH=$2
+SORTED_LIST=$3
+BASE_TESTDIR=$4
 
 echo "--------"
 echo "Num of files  Directory Name"
@@ -22,7 +23,10 @@ for subdir in `awk '{print $2}' $SORTED_LIST`; do
     JOBNAME=`echo $subdir | awk -F/ '{print $(NF-1)"-"$NF}'`
     sed "s/@JOBNAME@/$JOBNAME/" $BFILE > $BFILE-2
     NORM_XMP_PATH=`echo $XMP_PATH | sed "s/\//\\\\\\\\\//g"`
-    sed "s/@XMP_PATH@/$NORM_XMP_PATH/" $BFILE-2 > $BFILE; rm $BFILE-2
+    sed "s/@XMP_PATH@/$NORM_XMP_PATH/" $BFILE-2 > $BFILE
+    NORM_MPI_PATH=`echo $MPI_PATH | sed "s/\//\\\\\\\\\//g"`
+    sed "s/@MPI_PATH@/$NORM_MPI_PATH/" $BFILE > $BFILE-2
+    mv $BFILE-2 $BFILE
     echo -n "[$subdir] "
     sbatch $BFILE
 done
