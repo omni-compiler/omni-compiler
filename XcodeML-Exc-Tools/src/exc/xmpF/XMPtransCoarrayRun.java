@@ -576,7 +576,9 @@ public class XMPtransCoarrayRun
 
     if (version == 6) {
       // b6. generate IF-block incl. regmem-call at the top of body
-      genRegmemOfStaticCoarrays(staticLocalCoarrays);
+      ////////////
+      //genRegmemOfStaticCoarrays(staticLocalCoarrays);
+      ////////////
     } else {
       // b. generate allocation into the init procedure
       genAllocOfStaticCoarrays(staticLocalCoarrays);
