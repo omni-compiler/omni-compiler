@@ -1,7 +1,7 @@
 #include "xmp_internal.h"
-#include "include/cuda_runtime.h"
-#include<stdio.h>
-#include<stdlib.h>
+#include <cuda_runtime.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
 void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);

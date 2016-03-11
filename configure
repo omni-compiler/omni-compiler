@@ -737,7 +737,7 @@ LIBBLAS_FALSE
 LIBBLAS_TRUE
 LIBXML2_LIB_DIR
 LIBXML2_INCLUDE_DIR
-GPGPU_PREFIX
+CUDA_PREFIX
 GPU_CFLAGS
 GPU_CMD
 ARFLAGS
@@ -6652,7 +6652,7 @@ _ACEOF
 # (1) Local compiler (for compiling C_Front and so on)
 #   CC, FC, CFLAGS, FCFLAGS, ...
 #
-# (2) MPI compiler (for compiling libxmp and so on) to cross compile
+# (2) Native compiler (for compiling libxmp and so on) to cross compile
 #  MPI_CC, MPI_FC, MPI_CFLAGS, MPI_FCFLAGS, ...
 #
 # (3) Omni compiler (for using xmpcc and xmpf90 commands)
@@ -8602,9 +8602,9 @@ fi
 
 # Check whether --with-cuda was given.
 if test "${with_cuda+set}" = set; then :
-  withval=$with_cuda; GPGPU_PREFIX="${withval}"
+  withval=$with_cuda; CUDA_PREFIX="${withval}"
 else
-  GPGPU_PREFIX="/usr/local/cuda"
+  CUDA_PREFIX="/usr/local/cuda"
 fi
 
 
@@ -14536,8 +14536,8 @@ cat << EOF
     Java compiler (JAVAC)                : `which $JAVAC`
     Java Archive Tool (JAR)              : `which $JAR`
 
-  MPI Compilers:
-    C preprocessor flags (MPI_CPP)              : `which $MPI_CPP`
+  Native Compilers:
+    C preprocessor (MPI_CPP)                    : `which $MPI_CPP`
     C preprocessor flags (MPI_CPPFLAGS)         : $MPI_CPPFLAGS
     C compiler (MPI_CC)                         : `which $MPI_CC`
     C compiler flags (MPI_CFLAGS)               : $MPI_CFLAGS

@@ -268,6 +268,7 @@ CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPU = @CPU@
 CPUDEF = @CPUDEF@
+CUDA_PREFIX = @CUDA_PREFIX@
 CXX = @CXX@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
@@ -287,7 +288,6 @@ FCFLAGS = @FCFLAGS@
 GASNET_LIBS = @GASNET_LIBS@
 GMP_INCLUDE_DIR = @GMP_INCLUDE_DIR@
 GMP_LIB_DIR = @GMP_LIB_DIR@
-GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CFLAGS = @GPU_CFLAGS@
 GPU_CMD = @GPU_CMD@
 GREP = @GREP@
@@ -1036,7 +1036,7 @@ uninstall-am:
 	tags-am uninstall uninstall-am
 
 
-.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests release slurm slurm-check slurm-timeline remote-tests clean-local distclean-local
+.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests release slurm slurm-check remote-tests clean-local distclean-local testdirs
 
 tests: 
 	@for subdir in $(TESTDIRS) ; do \
@@ -1071,6 +1071,9 @@ run-large-tests:
 	  $(MAKE) run -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
+
+testdirs:
+	echo $(TESTDIRS)
 release:
 	@if [ -e $(WORKDIR) ]; then \
 	  echo "Exist ! $(WORKDIR). Please delete it."; exit 1; \
@@ -1085,13 +1088,10 @@ release:
 
 slurm:
 	bash ./tests/xcalablemp/scripts/create_sorted_list.sh $(BASE_TESTDIR) $(TESTDIRS) > $(SORTED_LIST); \
-	bash ./tests/xcalablemp/scripts/make_slurm.sh $(XMP_PATH) $(SORTED_LIST) $(BASE_TESTDIR)
+	bash ./tests/xcalablemp/scripts/make_slurm.sh $(XMP_PATH) $(MPI_PATH) $(SORTED_LIST) $(BASE_TESTDIR)
 
 slurm-check:
 	@bash ./tests/xcalablemp/scripts/check_error_code.sh $(BASE_TESTDIR) $(TESTDIRS)
-
-slurm-timeline:
-	@bash ./tests/xcalablemp/scripts/create_timeline.sh /home/mnakao/public_html/timeline $(JOB_NUM) $(ELAPSE_TIME_SEC) $(BASE_TESTDIR) $(SORTED_LIST) $(TESTDIRS)
 
 remote-tests:
 	@bash ./tests/xcalablemp/scripts/remote-tests.sh $(USER)

@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: $
- * $TSUKUBA_Copyright:
- *  $
- */
-
 #ifndef _XMP_TLOG_H_
 #define _XMP_TLOG_H_
 

@@ -21,11 +21,11 @@ you need to use xmp_sync_all() or barrier directive to divide communication.
   /* ... local-view program ... */
 ---
 
-## The K computer and FX10
-* Coarray transfer data size is 16,777,212 (2^24-4) Byte and fewer.
-* Post tag value is 0 and over && 14 and fewer (0 <= tag <= 14).
-* The number of coarrays in one application is 508 and fewer.
-* Onesided operations cannot be used in more than 82944 processes.
+## On the K computer, FX100, and FX10
+* The number of coarrays in an application is 508 and fewer
+* An application cannot be used in more than 82,944 processes
+* Coarray transfer data size is 16,777,212 (2^24-4) byte and fewer
+* Post tag value is 0 and over && 14 and fewer (0 <= tag <= 14)
 
-# Only XMP/Fortran
+# For module file of XcalableMP/Fortran
 * In "use statement", only a module compiled with the Omni XMP Fortran Compiler can be used.
