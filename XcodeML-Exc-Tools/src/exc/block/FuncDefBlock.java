@@ -30,12 +30,11 @@ public class FuncDefBlock
     public FuncDefBlock(XobjectDef def)
     {
         this.def = def;
-        fblock = (FunctionBlock)def.getProp(funcBlockProp); // check cache
-        if(fblock == null) {
-            def.setDef(canonicalizeExpr(def.getDef()));
-            fblock = Bcons.buildFunctionBlock(def);
-            def.setProp(funcBlockProp, fblock);
-        }
+	// System.out.println("getDef="+def.getDef());
+	def.setDef(canonicalizeExpr(def.getDef()));
+	fblock = Bcons.buildFunctionBlock(def);
+	// System.out.println("fblock="+fblock);
+	def.setProp(funcBlockProp, fblock);
     }
 
     /** make clone */
@@ -77,8 +76,11 @@ public class FuncDefBlock
 
     public void Finalize()
     {
-        // System.out.println("-- Finalize:"); print();
-        def.setDef(fblock.toXobject());
+	if(fblock != null)
+	    def.setDef(fblock.toXobject());
+	else 
+	    def.setDef(null);
+        // System.out.println("-- Finalize:="+def.getDef());
         def.remProp(funcBlockProp); // flush cache
     }
 
@@ -131,6 +133,12 @@ public class FuncDefBlock
         debug_out.print(fblock);
         debug_out.flush();
     }
+
+  @Override
+  public String toString()
+  {
+    return "[FuncDefBlock:" + fblock + "]";
+  }
 
     public void searchCommonMember(String name,OMPanalyzeDecl env,XobjectDef d)
     {
