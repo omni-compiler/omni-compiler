@@ -739,6 +739,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         	}
         	addChildNode(e,trans(xobj.getName()));        	
         	break;
+
         case OMP_PRAGMA: {
 	    e = createElement(name);
 
@@ -802,6 +803,18 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             
         }
 //System.out.println(xcode.toString());
+	    break;
+
+	case XMP_PRAGMA: {
+	    e = createElement(name);
+
+	    Element f0 = createElement("string");
+
+	    addChildNode(f0, trans(xobj.getArg(0).getString()));
+	    addChildNode(e, f0);
+	    addChildNode(e, trans(xobj.getArg(1)));
+	    addChildNode(e, trans(xobj.getArg(2)));
+	}
 	    break;
 
         default:
