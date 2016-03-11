@@ -113,10 +113,24 @@ public class XMPcoarray {
     }
 
     String descPtrName = getDescPointerName();
-    BlockList blist = fblock.getBody();
+    //BlockList blist = fblock.getBody();
     
     descPtrId = env.declInternIdent(descPtrName,
                                     BasicType.Fint8Type);
+  }
+
+  public void genDecl_descPointer(Boolean isSave, Xobject initValue) {
+    if(descPtrId != null) {
+      XMP.fatal("descPtrId is already set.");
+    }
+
+    String descPtrName = getDescPointerName();
+    Xtype xtype = Xtype.Fint8Type;
+    if (isSave)
+      _setSaveAttrInType(xtype);
+
+    descPtrId = env.declInternIdent(descPtrName, xtype);
+    descPtrId.setFparamValue(Xcons.List(initValue, null));
   }
 
 
@@ -618,6 +632,16 @@ public class XMPcoarray {
     // How various!
     if (ident.getStorageClass() == StorageClass.FSAVE)
       ident.setStorageClass(StorageClass.FLOCAL);
+  }
+
+  public void setSaveAttr() {
+    // I don't know whether both settings are really necessary.
+    _setSaveAttrInType(ident.Type());
+    ident.setStorageClass(StorageClass.FSAVE);
+  }
+
+  private void _setSaveAttrInType(Xtype type) {
+    type.setIsFsave(true);
   }
 
   private void _resetSaveAttrInType(Xtype type) {

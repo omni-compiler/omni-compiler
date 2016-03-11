@@ -165,14 +165,20 @@ public class XMPcoarrayInitProcedure {
       buildSubroutine_initcoarrays();
       break;
 
-    case 4:   // new version to avoid using cray pointers
+    case 4:   // temporary version for FJ-RDMA and MPI3: avoiding malloc in runtime
+      buildSubroutine_countcoarrays();
+      buildSubroutine_initcoarrays();
+      break;
+
+    case 6:   // temporary version for FJ-RDMA and MPI3: avoiding cray pointers
+      // case: module
       buildSubroutine_countcoarrays();
       buildSubroutine_initcoarrays();
       break;
 
     default:
-      XMP.fatal("INTERNAL: illegal version #" + version +
-                "specified in XMPcoarrayInitProcedure");
+      XMP.fatal("INTERNAL: unexpected version number (" + version +
+                ") specified in XMPcoarrayInitProcedure");
       break;
     }
   }
@@ -245,10 +251,6 @@ public class XMPcoarrayInitProcedure {
     for (XMPcoarray coarray: staticCoarrays) {
       Xobject setCoshape = coarray.makeStmt_setCoshape(env);
       blist2.add(setCoshape);
-
-      // no longer needed. coarray_alloc_static includes setting of the name.
-      //Xobject setVarName = coarray.makeStmt_setVarName(env);
-      //blist2.add(setVarName);
     }
 
     funcDef2.Finalize();
