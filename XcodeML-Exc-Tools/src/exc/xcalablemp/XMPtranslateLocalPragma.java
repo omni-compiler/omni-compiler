@@ -132,33 +132,6 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  private void addProfileFunctions(Xobject profileClause, Block funcCallBlock, String directiveName, PragmaBlock pb) throws XMPexception{
-    
-    boolean isProfile = false;
-    if(profileClause != null)
-      if(profileClause.Opcode() == Xcode.VAR && profileClause.getName() == "profile")
-        isProfile = true;
-    isProfile = isProfile && _selective_profile;
-    
-    if(_all_profile || isProfile){
-      if(doScalasca == true){
-        String lowerName = directiveName.toLowerCase();
-        XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp " + lowerName + ":" + pb.getLineNo()));
-        funcCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
-        funcCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
-      }
-      else if(doTlog == true){
-        String upperName = directiveName.toUpperCase();
-        funcCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_" + upperName + "_IN", null));
-        funcCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_" + upperName + "_OUT", null));
-      }
-    }
-    else if(isProfile && doTlog == false){
-      funcCallBlock.insert(createScalascaProfileOffCall(null));
-      funcCallBlock.add(createScalascaProfileOnfCall(null));
-    }
-  }
-  
   private void translateNodes(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
 
@@ -562,8 +535,22 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(pb.getLineNo(), "reflect for acc is not implemented");
     }
     
+    // add function calls for profiling            
     Xobject profileClause = pb.getClauses().getArg(4);
-    addProfileFunctions(profileClause, reflectFuncCallBlock, "reflect", pb);
+    if( _all_profile || (profileClause != null && _selective_profile)){
+        if (doScalasca == true) {
+            XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reflect:" + pb.getLineNo()));
+            reflectFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
+            reflectFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
+        } else if (doTlog == true) {
+            reflectFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_REFLECT_IN", null));
+            reflectFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_REFLECT_OUT", null));
+        }
+    } else if(profileClause == null && _selective_profile && doTlog == false){
+        XobjList profileFuncArgs = null;
+        reflectFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
+        reflectFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
+    }
   }
 
   private void translateGpuData(PragmaBlock pb) throws XMPexception {
@@ -578,8 +565,7 @@ public class XMPtranslateLocalPragma {
     if (!XmOption.isXcalableMPGPU()) {
       XMP.warning("use -enable-gpu option to enable 'acc relfect' directive");
       translateReflect(pb);
-    }
-    else {
+    } else {
       XMPshadow.translateGpuReflect(pb, _globalDecl);
     }
   }
@@ -661,6 +647,7 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateTask(PragmaBlock pb) throws XMPexception {
+
     // start translation
     XobjList taskDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
@@ -734,8 +721,22 @@ public class XMPtranslateLocalPragma {
       taskFuncCallBlockList.add(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
     }
 
-    Xobject profileClause = taskDecl.getArg(3);
-    addProfileFunctions(profileClause, taskFuncCallBlock, "task", pb);
+    // add function calls for profiling                                                              
+    Xobject profileClause = taskDecl.getArg(2);
+    if( _all_profile || (profileClause != null && _selective_profile)){
+        if (doScalasca == true) {
+            XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp task:" + pb.getLineNo()));
+            taskFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
+            taskFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
+        } else if (doTlog == true) {
+            taskFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_TASK_IN", null));
+            taskFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_TASK_OUT", null));
+        }
+    } else if(profileClause == null && _selective_profile && doTlog == false){
+        XobjList profileFuncArgs = null;
+        taskFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
+        taskFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
+    }
   }
 
   private void translateTasks(PragmaBlock pb) {
@@ -755,8 +756,7 @@ public class XMPtranslateLocalPragma {
       loopIterList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName()));
       loopDecl.setArg(0, loopIterList);
       translateFollowingLoop(pb, schedBaseBlock);
-    }
-    else {
+    } else {
       translateMultipleLoop(pb, schedBaseBlock);
     }
 
@@ -766,8 +766,7 @@ public class XMPtranslateLocalPragma {
       XobjList schedVarList = null;
       if (loopDecl.getArg(0) == null) {
         schedVarList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getSym()));
-      }
-      else {
+      } else {
         schedVarList = (XobjList)loopDecl.getArg(0).copy();
       }
 
@@ -784,22 +783,18 @@ public class XMPtranslateLocalPragma {
         if (XmOption.isXcalableMPGPU()) {
           Block newLoopBlock = translateGpuClause(pb, reductionRefList, schedBaseBlock);
           schedBaseBlock.replace(newLoopBlock);
-        }
-        else {
+        } else {
           XMP.warning("use '-enable-gpu' compiler option to use gpu clause");
         }
-      }
-      else if (devName.equals("threads")) {
+      } else if (devName.equals("threads")) {
         if (XmOption.isXcalableMPthreads()) {
           XobjList devArgs = (XobjList)multicoreClause.getArg(1);
           Block newLoopBlock = translateThreadsClauseToOMPpragma(devArgs, reductionRefList, schedBaseBlock, loopIterList);
           schedBaseBlock.replace(newLoopBlock);
-        }
-        else {
+        } else {
           XMP.warning("use '-enable-threads' compiler option to use 'threads' clause");
         }
-      }
-      else {
+      } else {
         throw new XMPexception("unknown clause in loop directive");
       }
     }
@@ -807,19 +802,33 @@ public class XMPtranslateLocalPragma {
     // rewrite array refs in loop
     topdownXobjectIterator iter = new topdownXobjectIterator(getLoopBody(schedBaseBlock).toXobject());
     for (iter.init(); !iter.end(); iter.next()) {
+      //XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, XMPlocalDecl.getXMPsymbolTable(pb));
       XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, schedBaseBlock);
     }
 
+    
     // replace pragma
     Block loopFuncCallBlock = Bcons.COMPOUND(loopBody);
     pb.replace(loopFuncCallBlock);
 
-    // add function calls for profiling
-    Xobject profileClause = null;
-    if (loopDecl.Nargs() > 4)
-      profileClause = loopDecl.getArg(4);
+    if (loopDecl.Nargs() < 5) return;
 
-    addProfileFunctions(profileClause, loopFuncCallBlock, "loop", pb);
+    // add function calls for profiling
+    Xobject profileClause = loopDecl.getArg(4);
+    if( _all_profile || (profileClause != null && _selective_profile)){
+        if (doScalasca == true) {
+            XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp loop:" + pb.getLineNo()));
+            loopFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
+            loopFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
+        } else if (doTlog == true) {
+            loopFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_LOOP_IN", null));
+            loopFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_LOOP_OUT", null));
+        }
+    } else if(profileClause == null && _selective_profile && doTlog == false){
+        XobjList profileFuncArgs = null;
+        loopFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
+        loopFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
+    }
   }
 
   // XXX only supports C language
@@ -1182,8 +1191,9 @@ public class XMPtranslateLocalPragma {
 
   private void translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
-    ArrayList<String> iteraterList = new ArrayList<String>();  // Not used
+    ArrayList<String> iteraterList = new ArrayList<String>();  // Not used 
 
+    // schedule loop
     scheduleLoop(pb, schedBaseBlock, schedBaseBlock, iteraterList);
     insertScheduleIndexFunction(pb, schedBaseBlock, schedBaseBlock, iteraterList);
   }
@@ -1221,6 +1231,7 @@ public class XMPtranslateLocalPragma {
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(schedBaseBlock);
     Xobject onRef = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
+    //XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
     XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, schedBaseBlock);
 
     XMPtemplate templateObj = (XMPtemplate)onRefObj;
@@ -1411,6 +1422,7 @@ public class XMPtranslateLocalPragma {
     // analyze <on-ref>
     Xobject onRef = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
+    //XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
     XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, schedBaseBlock);
     if (onRefObj == null) {
       throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
@@ -1420,13 +1432,16 @@ public class XMPtranslateLocalPragma {
       case XMPobject.TEMPLATE:
         {
           XMPtemplate onRefTemplate = (XMPtemplate)onRefObj;
+          // if (!onRefTemplate.isFixed()) {
+          //   throw new XMPexception("template '" + onRefObjName + "' is not fixed");
+          // }
+
           if (!onRefTemplate.isDistributed()) {
             throw new XMPexception("template '" + onRefObjName + "' is not distributed");
           }
 
           callLoopSchedFuncTemplate(onRefTemplate, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock, iteraterList);
-        }
-        break;
+        } break;
       case XMPobject.NODES:
         callLoopSchedFuncNodes((XMPnodes)onRefObj, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock);
         break;
@@ -1513,8 +1528,8 @@ public class XMPtranslateLocalPragma {
     throw new XMPexception("cannot find the loop statement");
   }
 
-  private void callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList, CforBlock forBlock,
-                                         CforBlock schedBaseBlock, ArrayList<String> iteraterList) throws XMPexception {
+  private void callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList,
+                                         CforBlock forBlock, CforBlock schedBaseBlock, ArrayList<String> iteraterList) throws XMPexception {
     Xobject loopIndex = forBlock.getInductionVar();
     String loopIndexName = loopIndex.getSym();
     iteraterList.add(loopIndexName);
@@ -1524,7 +1539,6 @@ public class XMPtranslateLocalPragma {
     XobjInt templateIndexArg = null;
     int distManner = 0;
     String distMannerString = null;
-
     for (XobjArgs i = templateSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
       if (templateIndex >= templateDim) {
         throw new XMPexception("wrong template dimensions, too many");
@@ -1580,24 +1594,25 @@ public class XMPtranslateLocalPragma {
     BasicBlockExprIterator iter = new BasicBlockExprIterator(getLoopBody(forBlock));
 
     for (iter.init(); !iter.end(); iter.next()) {
+      // XMPrewriteExpr.rewriteLoopIndexInLoop(iter.getExpr(), loopIndexName,
+      //                                       templateObj, templateIndexArg.getInt(),
+      //                                       _globalDecl, XMPlocalDecl.getXMPsymbolTable(forBlock));
       XMPrewriteExpr.rewriteLoopIndexInLoop(iter.getExpr(), loopIndexName,
-                                            templateObj, templateIndexArg.getInt(),
-                                            _globalDecl, forBlock);
+      					    templateObj, templateIndexArg.getInt(),
+      					    _globalDecl, forBlock);
     }
 
     // rewrite loop index in initializer in loop
     BlockList body = getLoopBody(forBlock);
+
     for (Block b = body.getHead(); b != null; b = b.getNext()){
+      
       if (b.getBody() == null) continue;
-      topdownXobjectIterator iter_decl = new topdownXobjectIterator(b.getBody().getDecls());
-      for (iter_decl.init(); !iter_decl.end(); iter_decl.next()) {
-        int num = 0;
-        for (XobjArgs i = templateSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
-          String indexName = i.getArg().getString();
-          XMPrewriteExpr.rewriteLoopIndexInLoop(iter_decl.getXobject(), indexName,
-                                                templateObj, num, _globalDecl, forBlock);
-          num++;
-        }
+      topdownXobjectIterator iter2 = new topdownXobjectIterator(b.getBody().getDecls());
+      for (iter2.init(); !iter2.end(); iter2.next()) {
+	XMPrewriteExpr.rewriteLoopIndexInLoop(iter2.getXobject(), loopIndexName,
+					      templateObj, templateIndexArg.getInt(),
+					      _globalDecl, forBlock);
       }
     }
 
@@ -1702,6 +1717,7 @@ public class XMPtranslateLocalPragma {
       barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null);
     }
     else {
+      //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
       XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
       String execFuncSuffix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
@@ -1717,8 +1733,24 @@ public class XMPtranslateLocalPragma {
 
     pb.replace(barrierFuncCallBlock);
 
+    // add function calls for profiling                                                                     
     Xobject profileClause = barrierDecl.getArg(1);
-    addProfileFunctions(profileClause, barrierFuncCallBlock, "barrier", pb);
+    if ( _all_profile || (profileClause != null && _selective_profile)){
+	if (doScalasca == true) {
+	    XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp barrier:" + pb.getLineNo()));
+	    barrierFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
+	    barrierFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
+	} else if (doTlog == true) {
+	    barrierFuncCallBlock.insert(
+					createTlogMacroInvoke("_XMP_M_TLOG_BARRIER_IN", null));
+	    barrierFuncCallBlock.add(
+				     createTlogMacroInvoke("_XMP_M_TLOG_BARRIER_OUT", null));
+	}
+    } else if (profileClause == null && _selective_profile && doTlog == false){
+	XobjList profileFuncArgs = null;
+	barrierFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
+	barrierFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
+    }
   }
 
 
@@ -1921,9 +1953,25 @@ public class XMPtranslateLocalPragma {
     }
     
     pb.replace(reductionFuncCallBlock);
-    
+
+    // add function calls for profiling
     Xobject profileClause = reductionDecl.getArg(4);
-    addProfileFunctions(profileClause, reductionFuncCallBlock, "reduction", pb);
+    if( _all_profile || (profileClause != null && _selective_profile)){
+      if (doScalasca == true) {
+        XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reduction:" + pb.getLineNo()));
+        reductionFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
+        reductionFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
+      }
+      else if (doTlog == true) {
+        reductionFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_REDUCTION_IN", null));
+        reductionFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_REDUCTION_OUT", null));
+      }
+    }
+    else if(profileClause == null && _selective_profile && doTlog == false){
+      XobjList profileFuncArgs = null;
+      reductionFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
+      reductionFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
+    }
   }
 
   private String createReductionFuncType(XobjList reductionRef, PragmaBlock pb, boolean isACC) throws XMPexception {
@@ -2357,6 +2405,8 @@ public class XMPtranslateLocalPragma {
       }
 
       BlockList bl = bcastFuncCallBlock.getBody();
+      //      Ident taskDesc = bl.findLocalIdent("_XMP_TASK_desc");
+      //      Xobject arg = (taskDesc != null)? taskDesc.Ref() : Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));
       
       bl.insert(_globalDecl.declExternFunc("xmpc_init_async").Call(Xcons.List(async)));
       bl.add(_globalDecl.declExternFunc("xmpc_start_async").Call(Xcons.List()));
@@ -2364,8 +2414,24 @@ public class XMPtranslateLocalPragma {
 
     pb.replace(bcastFuncCallBlock);
 
+    // add function calls for profiling                                                                                    
     Xobject profileClause = bcastDecl.getArg(5);
-    addProfileFunctions(profileClause, bcastFuncCallBlock, "bcast", pb);
+    if(_all_profile || (profileClause != null && _selective_profile)){
+      if (doScalasca == true){
+        XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp bcast:" + pb.getLineNo()));
+        bcastFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
+        bcastFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
+      }
+      else if (doTlog == true){
+        bcastFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_BCAST_IN", null));
+        bcastFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_BCAST_OUT", null));
+      }
+    }
+    else if(profileClause == null && _selective_profile && doTlog == false){
+        XobjList profileFuncArgs = null;
+        bcastFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
+        bcastFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
+    }
   }
 
   private boolean check_all(Xobject length, Xobject size){
@@ -2847,15 +2913,48 @@ public class XMPtranslateLocalPragma {
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
 
 	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_ARRAY", gmoveFuncArgs);
+
+	    // BCAST_TO_NOTALIGNED_ARRAY doesn't work now
+
+	    // boolean flag = false;
+	    // for(int i=0;i<leftAlignedArray.getDim();i++){   // 1
+	    //   if(leftAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
+	    // 	flag = true;
+	    //   }
+	    // }
+
+	    // for(int i=0;i<rightAlignedArray.getDim();i++){  // 2
+	    //   if(rightAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
+	    // 	flag = false;
+	    //   }
+	    // }
+
+	    // String leftAlignedArrayTemplate  = leftAlignedArray.getAlignTemplate().getName();
+	    // String rightAlignedArrayTemplate = rightAlignedArray.getAlignTemplate().getName();
+	    // if(!leftAlignedArrayTemplate.equals(rightAlignedArrayTemplate)){ // 3
+	    //   flag = false;
+	    // }
+	    // if(!(leftAlignedArray.getDim() == 2 && rightAlignedArray.getDim() == 2)){  // 4
+	    //   flag = false;
+	    // }
+
+	    // if(flag == true){
+	    //   // 1. One of dimension of left array is not aligned.
+	    //   // 2. All dimensions of right array are aligned (temporary).
+	    //   // 3. Templates of left array amd right array are the same.
+	    //   // 4. Both left array amd right array are must 2 dimentional array (temporary).
+	    //   gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_TO_NOTALIGNED_ARRAY", gmoveFuncArgs);
+	    // }
+	    // else{
+	    //   gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_ARRAY", gmoveFuncArgs);
+	    // }
           }
         }
-      }
-      else {
+      } else {
         // FIXME implement
         throw new XMPexception("not implemented yet");
       }
-    }
-    else {
+    } else {
       if (rightHasSubArrayRef) {
         throw new XMPexception("syntax error in gmove assign statement");
       }
@@ -2907,11 +3006,29 @@ public class XMPtranslateLocalPragma {
       }
     }
 
+    // Why is the barrier needed ?
+    //Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock, _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null)));
     Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock));
     pb.replace(gmoveBlock);
 
+    // add function calls for profiling                                                                                    
     Xobject profileClause = gmoveDecl.getArg(3);
-    addProfileFunctions(profileClause, gmoveFuncCallBlock, "gmove", pb);
+    if( _all_profile || (profileClause != null && _selective_profile)){
+        if (doScalasca == true) {
+            XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp gmove:" + pb.getLineNo()));
+            gmoveBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
+            gmoveBlock.add(createScalascaEndProfileCall(profileFuncArgs));
+        }
+        else if (doTlog == true) {
+            gmoveBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_GMOVE_IN", null));
+            gmoveBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_GMOVE_OUT", null));
+        }
+    }
+    else if(profileClause == null && _selective_profile && doTlog == false){
+        XobjList profileFuncArgs = null;
+        gmoveBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
+        gmoveBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
+    }
   }
 
   private XMPpair<XMPalignedArray, XobjList> getXMPalignedArrayExpr(PragmaBlock pb, Xobject expr) throws XMPexception {

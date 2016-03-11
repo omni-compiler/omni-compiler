@@ -8,7 +8,7 @@ README
  Some features in the language specification are not supported in this release.
  (You can download the specification of XMP from "http://xcalablemp.org")
 
- See "docs/STATUS-XMP.md and docs/STATUS-CAF.md"
+ See "docs/STATUS/$(version).md"
 
 -----
 # How to use
@@ -25,14 +25,14 @@ README
 
 ## Environment Variables
 * XMP_ONESIDED_HEAP_SIZE
- ** This value is used by using GASNet and MPI3 **
+ **Note that on the K computer this value is not used.**
  This value specifies memory size for coarray. The default size is 16MB.
  To set this value, please execute as follows:
 
     $ export XMP_ONESIDED_HEAP_SIZE=32M
 
 * XMP_ONESIDED_STRIDE_SIZE
- ** This value is used by using GASNet **
+ **Note that on the K computer this value is not used.**
  This value specifies memory size for coarray stride operation.
  The default size is 1MB.
  To set this value, please execute as follows:
@@ -91,9 +91,11 @@ README
 -----
 # Profiling Options in XMP/C
  Omni XMP compiler supports profiler interfaces of Scalasca and tlog.
- The tlog is included in this package.
- To use the profiler interface of Scalasca, you need to download from
- Scalasca website (http://www.scalasca.org).
+ The tlog is included in this package. To use the profiler interface of Scalasca,
+ you need to download and compile it from Scalasca website (http://www.scalasca.org).
+ To use the scalasca, please set the following environmental variable.
+
+    $ export SCALASCA_HOME = [Scalasca-INSTALL-DIR]
 
  To specify directives for profiling, please add "profile" to directive.
 

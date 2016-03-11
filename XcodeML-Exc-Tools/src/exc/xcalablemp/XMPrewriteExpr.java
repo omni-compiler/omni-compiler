@@ -1721,41 +1721,53 @@ public class XMPrewriteExpr {
     return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
   }
 
-  public static void rewriteLoopIndexInLoop(Xobject expr, String loopIndexName, XMPtemplate templateObj,
-                                            int templateIndex, XMPglobalDecl globalDecl, Block block) throws XMPexception {
+  public static void rewriteLoopIndexInLoop(Xobject expr, String loopIndexName,
+					    XMPtemplate templateObj, int templateIndex,
+                                            XMPglobalDecl globalDecl, Block block) throws XMPexception {
     if (expr == null) return;
     topdownXobjectIterator iter = new topdownXobjectIterator(expr);
     for (iter.init(); !iter.end(); iter.next()) {
       Xobject myExpr = iter.getXobject();
       if (myExpr == null) {
         continue;
-      }
-      else if (myExpr.isRewrittedByXmp()) {
+      } else if (myExpr.isRewrittedByXmp()) {
         continue;
       }
-      
       switch (myExpr.Opcode()) {
       case VAR:
 	{
 	  if (loopIndexName.equals(myExpr.getSym())) {
 	    iter.setXobject(calcLtoG(templateObj, templateIndex, myExpr));
 	  }
-	}
-        break;
+	} break;
       case ARRAY_REF:
 	{
 	  XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(myExpr.getArg(0).getSym(), block);
 	  if (alignedArray == null) {
 	    rewriteLoopIndexVar(templateObj, templateIndex, loopIndexName, myExpr);
-	  }
-          else {
+	  } else {
 	    myExpr.setArg(1, rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
 							  loopIndexName, (XobjList)myExpr.getArg(1)));
 	  }
-	}
-        break;
+	} break;
       case POINTER_REF:
 	{
+	  // Xobject addr_expr = myExpr.getArg(0);
+	  // if (addr_expr.Opcode() == Xcode.PLUS_EXPR){
+
+	  //   Xobject pointer = addr_expr.getArg(0);
+	  //   Xobject offset = addr_expr.getArg(1);
+
+	  //   if (pointer.Opcode() == Xcode.VAR){
+	  //     XMPalignedArray alignedArray = globalDecl.getXMPalignedArray(pointer.getSym(), block);
+	  //     if (alignedArray != null){
+	  // 	  addr_expr.setArg(0, alignedArray.getAddrId().Ref());
+	  // 	  addr_expr.setArg(1, rewriteLoopIndexArrayRef(templateObj, templateIndex, alignedArray, 0,
+	  // 						       loopIndexName, offset));
+	  //     }
+	  //   }
+	  // }
+
 	  XMPalignedArray alignedArray = null;
 	  XobjList indexList = Xcons.List();
 
@@ -1779,6 +1791,9 @@ public class XMPrewriteExpr {
 					     rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
 									  loopIndexName, indexList));
 	    iter.setXobject(newExpr);
+	    // myExpr.getArg(0).setArg(0, alignedArray.getAddrId().Ref());
+	    // myExpr.getArg(0).setArg(1, rewriteLoopIndexArrayRefList(templateObj, templateIndex, alignedArray,
+	    // 							    loopIndexName, indexList));
 	  }
 
 	  break;
@@ -1821,7 +1836,6 @@ public class XMPrewriteExpr {
 
     XobjList newArrayRefList = Xcons.List();
     int arrayDimIdx = 0;
-
     for (Xobject x : arrayRefList) {
       newArrayRefList.add(rewriteLoopIndexArrayRef(t, ti, a, arrayDimIdx, loopIndexName, x));
       arrayDimIdx++;
@@ -1837,8 +1851,7 @@ public class XMPrewriteExpr {
     if (arrayRef.Opcode() == Xcode.VAR) {
       if (loopIndexName.equals(arrayRef.getString())) {
         return calcShadow(t, ti, a, ai, arrayRef);
-      }
-      else {
+      } else {
         return arrayRef;
       }
     }
