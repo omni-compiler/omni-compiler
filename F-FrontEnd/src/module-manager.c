@@ -49,7 +49,7 @@ add_module_id(struct module * mod, ID id)
 // TODO check this
 #define AVAILABLE_ID(id)                           \
     ID_CLASS(id)   == CL_NAMELIST ||               \
-    (ID_TYPE(id) && !TYPE_IS_PRIVATE(ID_TYPE(id))  \
+    (!TYPE_IS_PRIVATE(ID_TYPE(id))                 \
     && (      ID_CLASS(id)   == CL_VAR             \
            || ID_CLASS(id)   == CL_ENTRY           \
            || ID_CLASS(id)   == CL_PARAM           \

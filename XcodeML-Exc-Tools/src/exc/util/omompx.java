@@ -83,10 +83,10 @@ public class omompx
       "  -dump        output Xcode file and decompiled file to standard output.",
       "  -domp        enable output OpenMP translation debug message.",
       " Profiling Options:",
-      "  -scalasca-all       : output results in scalasca format for all directives.",
-      "  -scalasca-selective : output results in scalasca format for selected directives.",
-      "  -tlog-all           : output results in tlog format for all directives.",
-      "  -tlog-selective     : output results in tlog format for selected directives.",
+      "  -scalasca-all      : output results in scalasca format for all directives.",
+      "  -scalasca          : output results in scalasca format for selected directives.",
+      "  -tlog-all          : output results in tlog format for all directives.",
+      "  -tlog              : output results in tlog format for selected directives.",
       "",
       "  -enable-threads  enable 'threads' clause",
       "  -enable-gpu      enable xmp-dev directive/clauses"
@@ -107,7 +107,6 @@ public class omompx
     boolean openACC = false;
     boolean coarray = false;
     boolean autocoarray = true;
-    boolean is_coarray_V4 = false;         // TEMPORARY
     boolean xcalableMP = false;
     boolean xcalableMPthreads = false;
     boolean xcalableMPGPU = false;
@@ -120,6 +119,7 @@ public class omompx
     boolean selective_profile = false;
     boolean doScalasca = false;
     boolean doTlog = false;
+    int caf_version = 3;         // TEMPORARY
     int maxColumns = 0;
         
     for(int i = 0; i < args.length; ++i) {
@@ -140,7 +140,9 @@ public class omompx
         coarray = true;
         autocoarray = false;
       } else if(arg.equals("-fcoarray=4")) {     // TEMPORARY
-        is_coarray_V4 = true;
+        caf_version = 4;
+      } else if(arg.equals("-fcoarray=6")) {     // TEMPORARY
+        caf_version = 6;
       } else if(arg.equals("-fnocoarray")) {
         coarray = false;
         autocoarray = false;
@@ -189,13 +191,13 @@ public class omompx
         XmOption.setCompilerVendor(XmOption.COMP_VENDOR_GNU);
       } else if(arg.equals("-intel")) {
         XmOption.setCompilerVendor(XmOption.COMP_VENDOR_INTEL);
-      } else if (arg.equals("-scalasca-selective")) {
+      } else if (arg.equals("-scalasca")) {
         selective_profile = true;
         doScalasca = true;
       } else if (arg.equals("-scalasca-all")) {
         all_profile = true;
         doScalasca = true;
-      } else if (arg.equals("-tlog-selective")) {
+      } else if (arg.equals("-tlog")) {
         selective_profile = true;
         doTlog = true;
       } else if (arg.equals("-tlog-all")) {
@@ -383,8 +385,7 @@ public class omompx
         // Coarray Fortran pass#1
         exc.xmpF.XMPtransCoarray
           caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1);
-        if (is_coarray_V4)
-          caf_translator1.set_version(4);
+        caf_translator1.set_version(caf_version);
         xobjFile.iterateDef(caf_translator1);
         if(exc.xmpF.XMP.hasErrors())
           System.exit(1);

@@ -151,43 +151,19 @@ function ompf90_set_parameters()
 		VERBOSE=true; STOP_BACKEND=true;;
 	    --stop-compile)
 		VERBOSE=true; STOP_COMPILE=true;;
-	    --Wp*)
-		local tmp=("${1#--Wp}")
-		for v in $tmp
-		do
-		    pp_add_opt+=("$v")
-		done;;
-	    --Wf*)
-		local tmp=("${1#--Wf}")
-		for v in $tmp
-		do
-		    frontend_add_opt+=("$v")
-		done;;
-	    --Wx*)
-		local tmp=("${1#--Wx}")
-		for v in $tmp
-		do
-		    xcode_translator_add_opt+=("$v")
-		done;;
-	    --Wn*)
-		local tmp=("${1#--Wn}")
-		for v in $tmp
-		do
-		    native_add_opt+=("$v")
-		done;;
-	    --Wb*)
-		local tmp=("${1#--Wb}")
-		for v in $tmp
-		do
-		    backend_add_opt+=("$v")
-		done;;
-	    --Wl*)
-		local tmp=("${1#--Wl}")
-		for v in $tmp
-		do
-		    linker_add_opt+=("$v")
-		done;;
-	    --openmp|-omp)
+            --Wp*)
+                pp_add_opt+=("${1#--Wp}");;
+            --Wf*)
+                frontend_add_opt+=("${1#--Wf}");;
+            --Wx*)
+                xcode_translator_add_opt+=("${1#--Wx}");;
+            --Wn*)
+                native_add_opt+=("${1#--Wn}");;
+            --Wb*)
+                backend_add_opt+=("${1#--Wb}");;
+            --Wl*)
+                linker_add_opt+=("${1#--Wl}");;
+            --openmp|-omp)
                 ENABLE_OPENMP=true;;
 	    -acc|--openacc)
 		omni_error_exit "OpenACC for ompf90 has been not implemented yet."

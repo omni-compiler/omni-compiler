@@ -165,14 +165,20 @@ public class XMPcoarrayInitProcedure {
       buildSubroutine_initcoarrays();
       break;
 
-    case 4:   // new version to avoid using cray pointers
+    case 4:   // temporary version for FJ-RDMA and MPI3: avoiding malloc in runtime
+      buildSubroutine_countcoarrays();
+      buildSubroutine_initcoarrays();
+      break;
+
+    case 6:   // temporary version for FJ-RDMA and MPI3: avoiding cray pointers
+      // case: module
       buildSubroutine_countcoarrays();
       buildSubroutine_initcoarrays();
       break;
 
     default:
-      XMP.fatal("INTERNAL: illegal version #" + version +
-                "specified in XMPcoarrayInitProcedure");
+      XMP.fatal("INTERNAL: unexpected version number (" + version +
+                ") specified in XMPcoarrayInitProcedure");
       break;
     }
   }
@@ -245,10 +251,6 @@ public class XMPcoarrayInitProcedure {
     for (XMPcoarray coarray: staticCoarrays) {
       Xobject setCoshape = coarray.makeStmt_setCoshape(env);
       blist2.add(setCoshape);
-
-      // no longer needed. coarray_alloc_static includes setting of the name.
-      //Xobject setVarName = coarray.makeStmt_setVarName(env);
-      //blist2.add(setVarName);
     }
 
     funcDef2.Finalize();
@@ -356,11 +358,13 @@ public class XMPcoarrayInitProcedure {
      * execution part
     \*-------------------------------*/
 
-    // "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"  (case: Ver.3)
-    // "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"    (case: Ver.4)
+    // (case: Ver.3)
+    //   "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"
+    // (case: Ver.4 or Ver.6(module))
+    //   "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"
     Xobject arg2;
     String fname;
-    if (version == 4) {
+    if (version == 4 || version == 6) {
       FunctionType ftype = new FunctionType(Xtype.Fint8Type, Xtype.TQ_FINTRINSIC);
       Ident locId = env.declIntrinsicIdent("loc", ftype);
       arg2 = locId.Call(Xcons.List(ident2));

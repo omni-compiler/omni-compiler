@@ -10,6 +10,16 @@ all:
 	  $(MAKE) -C $$d all; \
 	done
 
+all4:
+	for d in $(DIRS); do \
+	  $(MAKE) -C $$d all4; \
+	done
+
+all6:
+	for d in $(DIRS); do \
+	  $(MAKE) -C $$d all6; \
+	done
+
 run:
 	for d in $(DIRS); do \
 	  $(MAKE) -C $$d -j1 run; \

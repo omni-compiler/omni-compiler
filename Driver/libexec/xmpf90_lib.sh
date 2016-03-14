@@ -153,41 +153,17 @@ function xmpf90_set_parameters()
 	    --stop-compile)
 		VERBOSE=true; STOP_COMPILE=true;;
             --Wp*)
-		local tmp=("${1#--Wp}")
-		for v in $tmp
-		do
-		    pp_add_opt+=("$v")
-		done;;
+                pp_add_opt+=("${1#--Wp}");;
             --Wf*)
-		local tmp=("${1#--Wf}")
-		for v in $tmp
-		do
-		    frontend_add_opt+=("$v")
-		done;;
+                frontend_add_opt+=("${1#--Wf}");;
             --Wx*)
-		local tmp=("${1#--Wx}")
-		for v in $tmp
-		do
-		    xcode_translator_add_opt+=("$v")
-		done;;
+                xcode_translator_add_opt+=("${1#--Wx}");;
             --Wn*)
-		local tmp=("${1#--Wn}")
-		for v in $tmp
-		do
-		    native_add_opt+=("$v")
-		done;;
+                native_add_opt+=("${1#--Wn}");;
             --Wb*)
-		local tmp=("${1#--Wb}")
-		for v in $tmp
-		do
-		    backend_add_opt+=("$v")
-		done;;
+                backend_add_opt+=("${1#--Wb}");;
             --Wl*)
-		local tmp=("${1#--Wl}")
-		for v in $tmp
-		do
-		    linker_add_opt+=("$v")
-		done;;
+                linker_add_opt+=("${1#--Wl}");;
 	    --openmp|-omp)
 		ENABLE_OPENMP=true;;
 	    --xcalableacc|-xacc)

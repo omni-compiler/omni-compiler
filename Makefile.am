@@ -51,7 +51,7 @@ if MPI3
    TESTDIRS += "global-view/async/C/" "global-view/async/F/"
 endif
 
-.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests release slurm slurm-check remote-tests clean-local distclean-local testdirs
+.PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests release slurm slurm-check slurm-timeline remote-tests clean-local distclean-local
 
 tests: 
 	@for subdir in $(TESTDIRS) ; do \
@@ -87,9 +87,6 @@ run-large-tests:
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
-testdirs:
-	echo $(TESTDIRS)
-
 PACKAGE_NAME = omnicompiler-$(VERSION)
 WORKDIR = /tmp/$(PACKAGE_NAME)
 release:
@@ -106,10 +103,13 @@ release:
 
 slurm:
 	bash ./tests/xcalablemp/scripts/create_sorted_list.sh $(BASE_TESTDIR) $(TESTDIRS) > $(SORTED_LIST); \
-	bash ./tests/xcalablemp/scripts/make_slurm.sh $(XMP_PATH) $(MPI_PATH) $(SORTED_LIST) $(BASE_TESTDIR)
+	bash ./tests/xcalablemp/scripts/make_slurm.sh $(XMP_PATH) $(SORTED_LIST) $(BASE_TESTDIR)
 
 slurm-check:
 	@bash ./tests/xcalablemp/scripts/check_error_code.sh $(BASE_TESTDIR) $(TESTDIRS)
+
+slurm-timeline:
+	@bash ./tests/xcalablemp/scripts/create_timeline.sh /home/mnakao/public_html/timeline $(JOB_NUM) $(ELAPSE_TIME_SEC) $(BASE_TESTDIR) $(SORTED_LIST) $(TESTDIRS)
 
 remote-tests:
 	@bash ./tests/xcalablemp/scripts/remote-tests.sh $(USER)

@@ -26,4 +26,4 @@ Implementation Status version 0.9.3
 # Known issues
 ## XMP/C
 * In "for statement" with loop directive, a distributed array cannot be used with different distribution manner.
-* In "for statement" with loop directive, index in a non-distributed array is not correct.
+* In "for statement" with loop directive, index in a non-distributed array is not correct. ([xmp-users-ja:2]).
