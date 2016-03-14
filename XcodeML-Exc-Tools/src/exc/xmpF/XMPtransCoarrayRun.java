@@ -1394,30 +1394,34 @@ public class XMPtransCoarrayRun
     Ident subrIdent =
       blist.declLocalIdent(subrName, BasicType.FexternalSubroutineType);
 
-    ArrayList<Xobject> newStmts = new ArrayList<Xobject>();
-
+    XobjList thenBlock = Xcons.List();
     for (XMPcoarray coarray: coarrays) {
       if (coarray.wasMovedFromModule())
         continue;
 
       // buffer init statememts
       Xobject stmt = genStmt_regmemForCoarray(coarray, subrIdent);
-      newStmts.add(stmt);
+      thenBlock.add(stmt);
     }
 
     // return if no procedure-local coarrays
-    if (newStmts.isEmpty())
+    if (thenBlock.Nargs() == 0)
       return;
 
-    // IF-block
-    Ident descPtr = coarrays.get(0).getDescPointerId();
+    // IF-condition expr.
+    XMPcoarray firstCoarray = coarrays.get(0);
+    Ident descPtr = firstCoarray.getDescPointerId();
     Xobject zero_8 = Xcons.IntConstant(0, Xtype.intType, "8");
-    Xobject condExpr = Xcons.binaryOp(Xcode.LOG_NEQ_EXPR, descPtr, zero_8);
+    Xobject condExpr = Xcons.binaryOp(Xcode.LOG_EQ_EXPR,
+                                      (Xobject)descPtr,
+                                      zero_8);
 
-    ////////////////////
-    XobjList ifBlock = Xcons.List(Xcode.F_IF_STATEMENT,
-                                  condExpr, null, null);
-    ////////////////////
+    // IF construct
+    XobjList ifBlock = Xcons.List(Xcode.F_IF_STATEMENT, (Xtype)null,
+                                  (Xobject)null,
+                                  (Xobject)condExpr,     // IF condition
+                                  thenBlock,             // THEN block
+                                  null);                 // ELSE block
     addPrologStmt(ifBlock);
   }
 
