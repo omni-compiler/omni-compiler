@@ -95,7 +95,7 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size
 
   if(_xmp_gasnet_coarray_shift > _xmp_gasnet_heap_size){
     if(_XMP_world_rank == 0){
-      fprintf(stderr, "[ERROR] Cannot allocate coarray. Heap memory size of corray is too small.\n");
+      fprintf(stderr, "[ERROR] Cannot allocate coarray. Heap memory size of coarray is too small.\n");
       fprintf(stderr, "        Please set the environmental variable \"XMP_ONESIDED_HEAP_SIZE\".\n");
       fprintf(stderr, "        e.g.) export XMP_ONESIDED_HEAP_SIZE=%zuM (or more).\n",
 	      (_xmp_gasnet_coarray_shift/1024/1024)+1);
