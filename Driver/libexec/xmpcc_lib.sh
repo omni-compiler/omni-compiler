@@ -106,33 +106,63 @@ function xmpcc_set_parameters()
 	    --stop-compile)
 		VERBOSE=true; STOP_COMPILE=true;;
 	    --Wp*)
-		pp_add_opt+=("${1#--Wp}");;
-            --Wf*)
-		frontend_add_opt+=("${1#--Wf}");;
-            --Wx*)
-		xcode_translator_add_opt+=("${1#--Wx}");;
+		local tmp=("${1#--Wp}")
+		for v in $tmp
+		do
+		    pp_add_opt+=("$v")
+		done;;
+	    --Wf*)
+		local tmp=("${1#--Wf}")
+		for v in $tmp
+		do
+		    frontend_add_opt+=("$v")
+		done;;
+	    --Wx*)
+		local tmp=("${1#--Wx}")
+		for v in $tmp
+		do
+		    xcode_translator_add_opt+=("$v")
+		done;;
 	    --Wn*)
-		native_add_opt+=("${1#--Wn}");;
-            --Wb*)
-		backend_add_opt+=("${1#--Wb}");;
-            --Wl*)
-		linker_add_opt+=("${1#--Wl}");;
+		local tmp=("${1#--Wn}")
+		for v in $tmp
+		do
+		    native_add_opt+=("$v")
+		done;;
+	    --Wb*)
+		local tmp=("${1#--Wb}")
+		for v in $tmp
+		do
+		    backend_add_opt+=("$v")
+		done;;
+	    --Wl*)
+		local tmp=("${1#--Wl}")
+		for v in $tmp
+		do
+		    linker_add_opt+=("$v")
+		done;;
 	    --openmp|-omp)
 		ENABLE_OPENMP=true;;
 	    --xcalableacc|-xacc)
 		ENABLE_XACC=true;;
-	    --scalasca-all)
-		ENABLE_SCALASCA_ALL=true;;
-	    --scalasca)
-		echo "Sorry. Not implement yet."
-		exit 0
-		ENABLE_SCALASCA=true;;
-	    --tlog-all)
-		ENABLE_TLOG_ALL=true;;
-	    --tlog)
-		echo "Sorry. Not implement yet."
-		exit 0
-		ENABLE_TLOG=true;;
+	    --profile)
+		shift;
+		if [ "scalasca" = "$1" ]; then
+		    ENABLE_SCALASCA=true; ENABLE_SCALASCA_ALL=true
+		elif [ "tlog" = "$1" ]; then
+		    ENABLE_TLOG=true; ENABLE_TLOG_ALL=true
+		else
+		    echo "Unknown profile format"; exit 1
+		fi;;
+	    --selective-profile)
+		shift;
+		if [ "scalasca" = "$1" ]; then
+		    ENABLE_SCALASCA=true; ENABLE_SCALASCA_SELECTIVE=true
+		elif [ "tlog" = "$1" ]; then
+		    ENABLE_TLOG=true; ENABLE_TLOG_SELECTIVE=true
+		else
+		    echo "Unknown profile format"; exit 1
+		fi;;
             *)
 		other_args+=("$1");;
 	esac
