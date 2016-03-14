@@ -2,13 +2,16 @@ COMPILER=$(shell xmpcc --show-env | grep OMNI_MPICC_CMD | sed 's/OMNI_MPICC_CMD=
 MPIPATH=$(shell which $(COMPILER) | xargs dirname | awk '{print $$1"/../include"}')
 XCC     = xmpcc
 XRUN    = mpiexec
-EXES    = 117.x 119.x 278\ spacefile.x 293-hyphen.x 343_dynamicnode.x 344_include.x 355.x 377.x dnodes.x macro_in_pragma.x openmp.x static_desc.x 419.x ident.x
+EXES    = 117.x 119.x 278\ spacefile.x 293-hyphen.x 343_dynamicnode.x 344_include.x 355.x 377.x dnodes.x macro_in_pragma.x openmp.x static_desc.x 419.x ident.x tlog.x
 
 .PHONY: clean all default run
 
 all default: $(EXES)
 
 .SUFFIXES: .x .c
+
+tlog.x: tlog.c
+	$(XCC) $^ -o $@ --profile tlog
 
 344_include.x: 344_include.c
 	$(XCC) -I$(MPIPATH) $^ -o $@
@@ -34,7 +37,7 @@ openmp.x: openmp.c
 .c.x:
 	$(XCC) -o $@ $<
 
-run: macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 293-hyphen.x
+run:
 	$(XRUN) -n 4 ./macro_in_pragma.x
 	export XMP_NODE_SIZE0=2; \
 	export XMP_NODE_SIZE1=2; \
@@ -55,8 +58,9 @@ run: macro_in_pragma.x dnodes.x openmp.x 119.x 343_dynamicnode.x 344_include.x 2
 	$(XRUN) -n 1 ./278\ spacefile.x
 	$(XRUN) -n 4 ./static_desc.x
 	$(XRUN) -n 4 ./419.x
+	$(XRUN) -n 4 ./tlog.x; if [ ! -f trace.log ]; then exit 1; fi
 
 #-- cleaning
 clean:
-	rm -f $(EXES) *.o
+	rm -f $(EXES) *.o trace.log
 	rm -rf __omni_tmp__

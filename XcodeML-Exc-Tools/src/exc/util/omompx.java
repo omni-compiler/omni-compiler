@@ -83,10 +83,10 @@ public class omompx
       "  -dump        output Xcode file and decompiled file to standard output.",
       "  -domp        enable output OpenMP translation debug message.",
       " Profiling Options:",
-      "  -scalasca-all      : output results in scalasca format for all directives.",
-      "  -scalasca          : output results in scalasca format for selected directives.",
-      "  -tlog-all          : output results in tlog format for all directives.",
-      "  -tlog              : output results in tlog format for selected directives.",
+      "  -scalasca-all       : output results in scalasca format for all directives.",
+      "  -scalasca-selective : output results in scalasca format for selected directives.",
+      "  -tlog-all           : output results in tlog format for all directives.",
+      "  -tlog-selective     : output results in tlog format for selected directives.",
       "",
       "  -enable-threads  enable 'threads' clause",
       "  -enable-gpu      enable xmp-dev directive/clauses"
@@ -191,13 +191,13 @@ public class omompx
         XmOption.setCompilerVendor(XmOption.COMP_VENDOR_GNU);
       } else if(arg.equals("-intel")) {
         XmOption.setCompilerVendor(XmOption.COMP_VENDOR_INTEL);
-      } else if (arg.equals("-scalasca")) {
+      } else if (arg.equals("-scalasca-selective")) {
         selective_profile = true;
         doScalasca = true;
       } else if (arg.equals("-scalasca-all")) {
         all_profile = true;
         doScalasca = true;
-      } else if (arg.equals("-tlog")) {
+      } else if (arg.equals("-tlog-selective")) {
         selective_profile = true;
         doTlog = true;
       } else if (arg.equals("-tlog-all")) {

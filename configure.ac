@@ -386,7 +386,7 @@ AC_DEFINE_UNQUOTED(OBJEXT, "${OBJEXT}")
 # (1) Local compiler (for compiling C_Front and so on)
 #   CC, FC, CFLAGS, FCFLAGS, ...
 #
-# (2) MPI compiler (for compiling libxmp and so on) to cross compile
+# (2) Native compiler (for compiling libxmp and so on) to cross compile
 #  MPI_CC, MPI_FC, MPI_CFLAGS, MPI_FCFLAGS, ...
 #
 # (3) Omni compiler (for using xmpcc and xmpf90 commands)
@@ -945,9 +945,9 @@ AC_SUBST(GPU_CFLAGS)
 
 AC_ARG_WITH(cuda,
     [  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)],
-    [GPGPU_PREFIX="${withval}"], [GPGPU_PREFIX="/usr/local/cuda"])
+    [CUDA_PREFIX="${withval}"], [CUDA_PREFIX="/usr/local/cuda"])
 
-AC_SUBST(GPGPU_PREFIX)
+AC_SUBST(CUDA_PREFIX)
 
 # --------------------------------------------------------------------
 # specify libxmp path
@@ -2220,8 +2220,8 @@ cat << EOF
     Java compiler (JAVAC)                : `which $JAVAC`
     Java Archive Tool (JAR)              : `which $JAR`
 
-  MPI Compilers:
-    C preprocessor flags (MPI_CPP)              : `which $MPI_CPP`
+  Native Compilers:
+    C preprocessor (MPI_CPP)                    : `which $MPI_CPP`
     C preprocessor flags (MPI_CPPFLAGS)         : $MPI_CPPFLAGS
     C compiler (MPI_CC)                         : `which $MPI_CC`
     C compiler flags (MPI_CFLAGS)               : $MPI_CFLAGS
