@@ -358,11 +358,13 @@ public class XMPcoarrayInitProcedure {
      * execution part
     \*-------------------------------*/
 
-    // "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"  (case: Ver.3)
-    // "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"    (case: Ver.4)
+    // (case: Ver.3)
+    //   "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"
+    // (case: Ver.4 or Ver.6(module))
+    //   "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"
     Xobject arg2;
     String fname;
-    if (version == 4) {
+    if (version == 4 || version == 6) {
       FunctionType ftype = new FunctionType(Xtype.Fint8Type, Xtype.TQ_FINTRINSIC);
       Ident locId = env.declIntrinsicIdent("loc", ftype);
       arg2 = locId.Call(Xcons.List(ident2));

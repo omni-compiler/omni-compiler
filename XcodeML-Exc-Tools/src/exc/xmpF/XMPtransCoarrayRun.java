@@ -81,7 +81,6 @@ public class XMPtransCoarrayRun
 
   private ArrayList<Xobject> _prologStmts = new ArrayList<Xobject>();
   private ArrayList<Xobject> _epilogStmts = new ArrayList<Xobject>();
-  private ArrayList<Xobject> _prologIfBlockStmts = new ArrayList<Xobject>();
 
   private Boolean _autoDealloc;
 
@@ -576,9 +575,7 @@ public class XMPtransCoarrayRun
 
     if (version == 6) {
       // b6. generate IF-block incl. regmem-call at the top of body
-      ////////////
-      //genRegmemOfStaticCoarrays(staticLocalCoarrays);
-      ////////////
+      genRegmemOfStaticCoarrays(staticLocalCoarrays);
     } else {
       // b. generate allocation into the init procedure
       genAllocOfStaticCoarrays(staticLocalCoarrays);
@@ -841,8 +838,8 @@ public class XMPtransCoarrayRun
     replaceFunctionCalls(visibleCoarrays);
 
     // i. initialization/finalization for auto-syncall and auto-deallocate
-    if (get_autoDealloc())
-      genCallOfPrologAndEpilog();
+    //    and initialization of descPtr (only Ver.6)
+    genCallOfPrologAndEpilog();
 
     // k. insert finalization call before STOP statements
     insertFinalizationCall();
@@ -1089,17 +1086,8 @@ public class XMPtransCoarrayRun
     genCallOfPrologAndEpilog_dealloc();
 
     // perform prolog/epilog code generations
-    genPrologIfBlockStmts();   // IF-block on the top of body
-    genPrologStmts();          // CALL-stmts on the top of body
-    genEpilogStmts();          // CALL-stmts before RETURN- and END-stmts
-  }
-
-  private void genPrologIfBlockStmts() {
-    int nlines = _prologIfBlockStmts.size();
-    if (nlines == 0)
-      return;
-
-    // generate IF-block guard
+    genPrologStmts();          // stmts on the top of body
+    genEpilogStmts();          // stmts before RETURN- and END-stmts
   }
 
   private void genPrologStmts() {
@@ -1389,6 +1377,81 @@ public class XMPtransCoarrayRun
                                   traverseInitName,
                                   env, version);
     coarrayInit.run();
+  }
+
+
+  //-----------------------------------------------------
+  //  TRANSLATION b6. (for Ver.6)
+  //  generate reg-mem call of static coarrays
+  //-----------------------------------------------------
+  // and generate and add an initialization routine into the
+  // same file (see XMPcoarrayInitProcedure)
+  //
+  private void genRegmemOfStaticCoarrays(ArrayList<XMPcoarray> coarrays) {
+
+    BlockList blist = getFblock().getBody();
+    String subrName = XMPcoarrayInitProcedure.REGMEM_STATIC_NAME;
+    Ident subrIdent =
+      blist.declLocalIdent(subrName, BasicType.FexternalSubroutineType);
+
+    ArrayList<Xobject> newStmts = new ArrayList<Xobject>();
+
+    for (XMPcoarray coarray: coarrays) {
+      if (coarray.wasMovedFromModule())
+        continue;
+
+      // buffer init statememts
+      Xobject stmt = genStmt_regmemForCoarray(coarray, subrIdent);
+      newStmts.add(stmt);
+    }
+
+    // return if no procedure-local coarrays
+    if (newStmts.isEmpty())
+      return;
+
+    // IF-block
+    Ident descPtr = coarrays.get(0).getDescPointerId();
+    Xobject zero_8 = Xcons.IntConstant(0, Xtype.intType, "8");
+    Xobject condExpr = Xcons.binaryOp(Xcode.LOG_NEQ_EXPR, descPtr, zero_8);
+
+    ////////////////////
+    XobjList ifBlock = Xcons.List(Xcode.F_IF_STATEMENT,
+                                  condExpr, null, null);
+    ////////////////////
+    addPrologStmt(ifBlock);
+  }
+
+
+  //  "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"
+  //
+  private Xobject genStmt_regmemForCoarray(XMPcoarray coarray, Ident subrIdent) {
+    // arg1
+    Ident descPtr = coarray.getDescPointerId();
+    // arg2
+    FunctionType ftype = new FunctionType(Xtype.Fint8Type, Xtype.TQ_FINTRINSIC);
+    Ident locId = env.declIntrinsicIdent("loc", ftype);
+    Xobject locCall = locId.Call(Xcons.List(coarray.getIdent()));
+    // arg3
+    Xobject count = coarray.getTotalArraySizeExpr();
+    // arg4
+    Xobject elem = coarray.getElementLengthExpr();
+    if (elem==null)
+      XMP.fatal("elem must not be null.");
+    // arg5
+    String varName = coarray.getName();
+    Xobject varNameObj = 
+      Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
+    // arg6
+    Xobject nameLen = Xcons.IntConstant(varName.length());
+
+    // args
+    Xobject args = Xcons.List(descPtr, locCall, count, elem,
+                              varNameObj, nameLen);
+    if (args.hasNullArg())
+      XMP.fatal("INTERNAL: contains null argument");
+
+    // CALL stmt
+    return subrIdent.callSubroutine(args);
   }
 
 
