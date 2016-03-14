@@ -439,6 +439,8 @@ public class XMPtransCoarrayRun
     // To avoid trouble of the shallow/deep copies, visibleCoarrays
     // should be made after execution of transDeclPart_*.
     _setVisibleCoarrays();
+
+    funcDef.Finalize();
   }
 
 
