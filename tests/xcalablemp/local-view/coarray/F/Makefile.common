@@ -6,6 +6,8 @@ RESULT=$(SRC:.f90=.result)
 
 OUT4= $(OUT:%.x=%.x4)
 OUT6= $(OUT:%.x=%.x6)
+RESULT4=$(RESULT:.result=.result4)
+RESULT6=$(RESULT:.result=.result6)
 
 .f90.x:
 	xmpf90 $(OPT) -o $@ $<
@@ -20,6 +22,12 @@ OUT6= $(OUT:%.x=%.x6)
 	xmpf90 $(OPT) --Wx-fcoarray=6 -o $@ $<
 
 %.result: %.x
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $< 2>&1 | tee $@
+
+%.result4: %.x4
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $< 2>&1 | tee $@
+
+%.result6: %.x6
 	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $< 2>&1 | tee $@
 
 %.result: %.f90
@@ -47,7 +55,9 @@ all6:     $(OUT6)
 ### execute on local environment
 run:	$(RESULT)
 
-rerun:  clean-result run
+run4:	$(RESULT4)
+
+run6:	$(RESULT6)
 
 ### prepare to execute on K/FX10
 submit: all RUN RUN/go.sh $(OUT:%=RUN/%)
@@ -67,6 +77,7 @@ clean:
 	rm -f $(OUT:%=RUN/%)
 	rm -f *.mod *.xmod
 
-clean-result:
-	rm -f $(RESULT)
+clean-all: clean
+	rm -f *.x4 *.result4
+	rm -f *.x6 *.result6
 

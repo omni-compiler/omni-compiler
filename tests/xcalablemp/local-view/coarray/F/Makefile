@@ -3,6 +3,9 @@ DIRS=FE ALLOC LIB GET PUT SCOPE CFOLD
 #DIRS_SUBMIT=MIX ALLOC LIB GET PUT SCOPE CFOLD
 DIRS_SUBMIT=ALLOC LIB GET PUT SCOPE CFOLD
 
+# usage: make [OPT=--debug] [all4|all6]
+
+
 .PHONY: clean all run rerun submit
 
 all:
@@ -38,5 +41,10 @@ submit:
 clean:
 	for d in $(DIRS); do \
 	  $(MAKE) -C $$d clean; \
+	done
+
+clean-all:
+	for d in $(DIRS); do \
+	  $(MAKE) -C $$d clean-all; \
 	done
 

@@ -25,6 +25,7 @@ public class XMPcoarray {
   final static String GET_IMAGE_INDEX_NAME = "xmpf_coarray_get_image_index";
   final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
   final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
+  final static String GET_DESCR_ID_NAME = "xmpf_get_descr_id";
 
   // original attributes
   private Ident ident;
@@ -119,6 +120,7 @@ public class XMPcoarray {
                                     BasicType.Fint8Type);
   }
 
+  /***********************
   public void genDecl_descPointer(Boolean isSave, Xobject initValue) {
     if(descPtrId != null) {
       XMP.fatal("descPtrId is already set.");
@@ -132,7 +134,7 @@ public class XMPcoarray {
     descPtrId = env.declInternIdent(descPtrName, xtype);
     descPtrId.setFparamValue(Xcons.List(initValue, null));
   }
-
+  **************************/
 
 
   /*
@@ -635,9 +637,17 @@ public class XMPcoarray {
   }
 
   public void setSaveAttr() {
-    // I don't know whether both settings are really necessary.
-    _setSaveAttrInType(ident.Type());
+    // This seems not correct because it might cause serious side effects on other
+    // idents having the same subtree of Xtype.
+    //_setSaveAttrInType(ident.Type());
     ident.setStorageClass(StorageClass.FSAVE);
+  }
+
+  public void setSaveAttrToDescPointer() {
+    // This seems not correct because it might cause serious side effects on other
+    // idents having the same subtree of Xtype.
+    //_setSaveAttrInType(getDescPointerId().Type());
+    getDescPointerId().setStorageClass(StorageClass.FSAVE);
   }
 
   private void _setSaveAttrInType(Xtype type) {
@@ -773,12 +783,14 @@ public class XMPcoarray {
 
   /*************** should be deleted .....
   ***************************/
+  /** No no, this may be used again in Ver.6
+  ***/
   public Xobject getDescPointerIdExpr(Xobject baseAddr) {
     if (descPtrId != null)
       return descPtrId;
 
     Ident funcIdent =
-      getEnv().declExternIdent("xmpf_get_descr_id", Xtype.FintFunctionType);
+      getEnv().declExternIdent(GET_DESCR_ID_NAME, Xtype.FintFunctionType);
     Xobject descId = funcIdent.Call(Xcons.List(baseAddr));
     return descId;
   }
