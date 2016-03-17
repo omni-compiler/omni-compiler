@@ -9,15 +9,6 @@ import java.util.*;
  */
 public class XMPtransCoarrayRun
 {
-  /*  Versions 3 (for all) and 4 & 6 (for FJ-RDMA & MPI3) are now available.
-   *    3: generates explicit Cray-POINTER and COMON stmts for the cray pointer.
-   *    4: generates COMMON stmt for static local coarrays and no Cray-POINTER.
-   *    6: generates no COMMON and no Cray-POINTER for static local coarrays.
-   */
-  private int version;
-
-  private Boolean DEBUG = true;       // change me in debugger
-
   // constants
   final static String VAR_TAG_NAME = "xmpf_resource_tag";
   final static String TRAV_COUNTCOARRAY_PREFIX = "xmpf_traverse_countcoarray";
@@ -46,16 +37,24 @@ public class XMPtransCoarrayRun
                    "co_broadcast",
                    "co_sum", "co_max", "co_min" );
 
+
+  /*  Versions 3 (for all) and 4 & 6 (for FJ-RDMA & MPI3) are now available.
+   *    3: generates explicit Cray-POINTER and COMON stmts for the cray pointer.
+   *    4: generates COMMON stmt for static local coarrays and no Cray-POINTER.
+   *    6: generates no COMMON and no Cray-POINTER for static local coarrays.
+   */
+  private int version;
+
+  private Boolean DEBUG = true;       // change me in debugger
+
+  private XMPenv env;
+  private String name;
+  private XobjectDef def;
+  FuncDefBlock funcDef;
+
   // to handle host- and use-associations
   static ArrayList<XMPtransCoarrayRun> ancestors
     = new ArrayList<XMPtransCoarrayRun>();
-
-  private XMPenv env;
-
-  private String name;
-
-  private XobjectDef def;
-  FuncDefBlock funcDef;
 
   // coarrays in the Ident List are divied into two:
   private ArrayList<XMPcoarray> localCoarrays;         // procedire-local coarrays
@@ -438,15 +437,6 @@ public class XMPtransCoarrayRun
     // flag for automatic deallocation of allocatable coarrays
     set_autoDealloc(false);
 
-    //----for debug
-    //XMP.warning("run1_procedure, version=" + version + ", procedure=" + getName());
-    //XMP.warning("staticLocalCoarrays): " + staticLocalCoarrays);
-    //XMP.warning("allocatableLocalCoarrays): " + allocatableLocalCoarrays);
-    //XMP.warning("staticDummyCoarrays): " + staticDummyCoarrays);
-    //XMP.warning("allocatableDummyCoarrays): " + allocatableDummyCoarrays);
-    //XMP.warning("staticAssociatedCoarrays): " + staticAssociatedCoarrays);
-    //XMP.warning("allocatableAssociatedCoarrays): " + allocatableAssociatedCoarrays);
-
     // convert specification and declaration part
     transDeclPart_staticLocal();
     transDeclPart_allocatableLocal();
@@ -721,7 +711,7 @@ public class XMPtransCoarrayRun
   */
   private void transDeclPart_allocatableAssociated() {
     // a. declare descriptor pointers
-    genDeclOfDescPointer(allocatableLocalCoarrays);
+    genDeclOfDescPointer(allocatableAssociatedCoarrays);
   }
 
 
@@ -1872,7 +1862,7 @@ public class XMPtransCoarrayRun
 
     Xobject descId = coarray.getDescPointerId();
     if (descId == null)
-      descId = Xcons.IntConstant(0, Xtype.Fint8Type, "8");
+      descId = Xcons.IntConstant(0, Xtype.Fint8Type, "8");    // descId = 0_8
     Xobject args = Xcons.List(descId,
                               Xcons.FvarRef(coarray.getIdent()),
                               _buildCountExpr(shape, rank),
@@ -2449,6 +2439,46 @@ public class XMPtransCoarrayRun
   //------------------------------
   //  tool
   //------------------------------
+  public String toString() {
+    String s = 
+      "\n  int version = " +  version +
+      "\n  Boolean DEBUG = " +  DEBUG +
+      "\n  XMPenv env = " +  env +
+      "\n  String name = " +  name +
+      "\n  XobjectDef def = " +  def +
+      "\n  FuncDefBlock funcDef = " +
+      "\n  ArrayList<XMPcoarray> localCoarrays = " +  _coarrayNames(localCoarrays) +
+      "\n    ArrayList<XMPcoarray> staticLocalCoarrays = " +  _coarrayNames(staticLocalCoarrays) +
+      "\n    ArrayList<XMPcoarray> allocatableLocalCoarrays = " +  _coarrayNames(allocatableLocalCoarrays) +
+      "\n    ArrayList<XMPcoarray> staticDummyCoarrays = " +  _coarrayNames(staticDummyCoarrays) +
+      "\n    ArrayList<XMPcoarray> allocatableDummyCoarrays = " +  _coarrayNames(allocatableDummyCoarrays) +
+      "\n  ArrayList<XMPcoarray> useAssociatedCoarrays = " +  _coarrayNames(useAssociatedCoarrays) +
+      "\n    ArrayList<XMPcoarray> staticAssociatedCoarrays = " +  _coarrayNames(staticAssociatedCoarrays) +
+      "\n    ArrayList<XMPcoarray> allocatableAssociatedCoarrays = " +  _coarrayNames(allocatableAssociatedCoarrays) +
+      "\n  String hostModuleName = " +  hostModuleName +
+      "\n  String hostProcedureName = " +  hostProcedureName +
+      "\n  XMPtransCoarrayRun hostModuleRun = " +  hostModuleRun +
+      "\n  XMPtransCoarrayRun hostProcedureRun = " +  hostProcedureRun +
+      "\n  ArrayList<XMPcoarray> visibleCoarrays = " +  _coarrayNames(visibleCoarrays) +
+      "\n  String traverseCountName = " +  traverseCountName +
+      "\n  String traverseInitName = " +  traverseInitName +
+      "\n  Ident _resourceTagId = " +  _resourceTagId +
+      "\n  ArrayList<Xobject> _prologStmts = " +  _prologStmts +
+      "\n  ArrayList<Xobject> _epilogStmts = " +  _epilogStmts +
+      "\n  Boolean _autoDealloc = " +  _autoDealloc;
+    return s;
+  }
+
+  private String _coarrayNames(ArrayList<XMPcoarray> coarrays) {
+    String s = "[";
+    String sep = "";
+    for (XMPcoarray coarray: coarrays) {
+      s += sep + coarray.getName();
+      sep = ",";
+    }
+    return s + "]";
+  }
+        
   private Ident getResourceTagId() {
     if (_resourceTagId == null) {
       BlockList blist = getFblock().getBody();

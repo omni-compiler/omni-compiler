@@ -190,7 +190,7 @@ public class XMPcoarray {
     args.add(_getLboundInIndexRange(coshape.getArg(corank - 1)));
     if (args.hasNullArg())
       XMP.fatal("generated null argument " + SET_COSHAPE_NAME + 
-                "(makeStmt_setCoshape(coshape))");
+                " (XMPcoarray.makeStmt_setCoshape(coshape))");
 
     Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
     if (subr == null) {
@@ -775,7 +775,7 @@ public class XMPcoarray {
 
   public Ident getDescPointerId() {
     if (descPtrId == null)
-      XMP.warning("INTERNAL: illeagal null descPtrId");
+      XMP.warning("INTERNAL: illegal null descPtrId (XMPcoppy.getDescPointerId)");
 
     return descPtrId;
   }
@@ -834,18 +834,24 @@ public class XMPcoarray {
   //}
 
   public String toString() {
-    return toString(ident);
-  }
-  public String toString(Xobject obj) {
-    return "Xobject(" + obj.getName()
-      + ",rank=" + obj.Type().getNumDimensions()
-      + ",corank=" + obj.Type().getCorank()
-      + ")";
-  }
-  public String toString(Xtype type) {
-    return "Xtype(rank=" + type.getNumDimensions()
-      + ",corank=" + type.getCorank()
-      + ")";
+    String s = 
+      "\n  Ident ident = " +  ident +
+      "\n  String name = " +  name +
+      "\n  FindexRange indexRange = " +  indexRange +
+      "\n  FindexRange coindexRange = " +  coindexRange +
+      "\n  Boolean isAllocatable = " +  isAllocatable +
+      "\n  Boolean isPointer = " +  isPointer +
+      "\n  Boolean isUseAssociated = " +  isUseAssociated +
+      "\n  Boolean _wasMovedFromModule = " + _wasMovedFromModule +
+      "\n  String _crayPtrName = " +  _crayPtrName +
+      "\n  Ident crayPtrId = " +  crayPtrId +
+      "\n  String _descPtrName = " +  _descPtrName +
+      "\n  Ident descPtrId = " +  descPtrId +
+      "\n  String homeBlockName = " +  homeBlockName +
+      "\n  XMPenv env = " +  env +
+      "\n  XobjectDef def = " +  def + ": name=" + def.getName() +
+      "\n  FunctionBlock fblock" + ": name=" + def.getName();
+    return s;
   }
 
 
