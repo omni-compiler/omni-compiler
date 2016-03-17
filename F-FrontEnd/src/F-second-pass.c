@@ -1,5 +1,8 @@
 #include "F-front.h"
-/* #include "test.h" */
+/* #define FE_DEBUG */
+#ifdef FE_DEBUG
+#include "test.h"
+#endif
 
 #define TYPE_ID 1
 #define TYPE_EXPR 2
@@ -130,6 +133,11 @@ static int second_pass_clean()
       error("%s: invalid code", SYM_NAME(EXPR_SYM(list->info.ep)));
       err_num++;
       break;
+    case 4:
+      current_line = list->line;
+      error("attempt to use undefined type function, %s", ID_NAME(list->info.id));
+      err_num++;
+      break;
     default:
       break;
     }
@@ -140,9 +148,10 @@ static int second_pass_clean()
   return err_num;
 }
 
+
+#ifdef FE_DEBUG
 static int slen=0;
 
-#if 0
 static void second_pass_expv_scan(expv v)
 {
   enum expr_code code;
@@ -489,83 +498,117 @@ static void second_pass_expv_scan(expv v)
 
 int second_pass()
 {
-  /* EXT_ID ep; */
-  /* ID     id; */
-  /* list   lp; */
-  /* FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS) { */
-  /*   if(EXT_SYM(ep)){ */
-  /*     printf("ext symbol name: %s\n", SYM_NAME(EXT_SYM(ep))); */
-  /*     FOR_ITEMS_IN_LIST(lp, EXT_PROC_ARGS(ep)){ */
-  /*       printf("  args type: %s\n", _expr_code[EXPR_CODE(LIST_ITEM(lp))]); */
-  /*     } */
-  /*     FOREACH_ID(id, EXT_PROC_ID_LIST(ep)){ */
-  /*       if(id){ */
-  /*         printf("  proc symbol name: %s(%p)(class=%d)", ID_NAME(id), ID_SYM(id), ID_CLASS(id)); */
-  /*         if(ID_TYPE(id) == NULL){ */
-  /*           printf(" (type null)"); */
-  /*         } */
-  /*         printf("\n"); */
-  /*       } */
-  /*     } */
-  /*     FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(ep)) { */
-  /*       if(id){ */
-  /*         printf("  common block symbol name: %s", ID_NAME(id)); */
-  /*         printf("\n"); */
-  /*       } */
-  /*     } */
-  /*   } */
+#ifdef FE_DEBUG
+  EXT_ID ep;
+  ID     id;
+  list   lp;
+  FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS) {
+    if(EXT_SYM(ep)){
+      printf("ext symbol name: %s\n", SYM_NAME(EXT_SYM(ep)));
+      FOR_ITEMS_IN_LIST(lp, EXT_PROC_ARGS(ep)){
+        printf("  args type: %s\n", _expr_code[EXPR_CODE(LIST_ITEM(lp))]);
+      }
+      FOREACH_ID(id, EXT_PROC_ID_LIST(ep)){
+        if(id){
+          printf("  proc symbol name: %s(%p)(class=%d)", ID_NAME(id), ID_SYM(id), ID_CLASS(id));
+          if(ID_TYPE(id) == NULL){
+            printf(" (type null)");
+          } else {
+            printf(" (type = %d)", ID_TYPE(id)->basic_type);
+          }
+          printf("\n");
+        }
+      }
+      if(EXT_PROC_CONT_EXT_SYMS(ep)){
+        FOREACH_ID(id, EXT_PROC_ID_LIST(EXT_PROC_CONT_EXT_SYMS(ep))){
+          if(id){
+            printf("  contains symbol name: %s(%p)(class=%d)", ID_NAME(id), ID_SYM(id), ID_CLASS(id));
+            if(ID_TYPE(id) == NULL){
+              printf(" (type null)");
+            } else {
+              printf(" (type = %d)", ID_TYPE(id)->basic_type);
+            }
+            printf("\n");
+          }
+        }
+      }
+/* EXT_PROC_CONT_EXT_SYMS */
+      FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(ep)) {
+        if(id){
+          printf("  common block symbol name: %s", ID_NAME(id));
+          printf("\n");
+        }
+      }
+    }
 
-  /*   if(EXT_PROC_BODY(ep)){ */
-  /*     EXT_ID contains_1, contains_1_ep; */
-  /*     EXT_ID contains_2, contains_2_ep; */
-  /*     second_pass_expv_scan(EXT_PROC_BODY(ep)); */
-  /*     contains_1 = EXT_PROC_CONT_EXT_SYMS(ep); */
-  /*     if(contains_1){ */
-  /*       slen++; */
-  /*       FOREACH_EXT_ID(contains_1_ep, contains_1){ */
-  /*         second_pass_expv_scan(EXT_PROC_BODY(contains_1_ep)); */
-  /*         contains_2 = EXT_PROC_CONT_EXT_SYMS(contains_1_ep); */
-  /*         if(contains_2){ */
-  /*           slen++; */
-  /*           FOREACH_EXT_ID(contains_2_ep, contains_2){ */
-  /*             second_pass_expv_scan(EXT_PROC_BODY(contains_2_ep)); */
+    if(EXT_PROC_BODY(ep)){
+      EXT_ID contains_1, contains_1_ep;
+      EXT_ID contains_2, contains_2_ep;
+      second_pass_expv_scan(EXT_PROC_BODY(ep));
+      contains_1 = EXT_PROC_CONT_EXT_SYMS(ep);
+      if(contains_1){
+        slen++;
+        FOREACH_EXT_ID(contains_1_ep, contains_1){
+          second_pass_expv_scan(EXT_PROC_BODY(contains_1_ep));
+          contains_2 = EXT_PROC_CONT_EXT_SYMS(contains_1_ep);
+          if(contains_2){
+            slen++;
+            FOREACH_EXT_ID(contains_2_ep, contains_2){
+              second_pass_expv_scan(EXT_PROC_BODY(contains_2_ep));
               
-  /*           } */
-  /*           slen--; */
-  /*         } */
-  /*       } */
-  /*       slen--; */
-  /*     } */
-  /*   } */
-  /* } */
+            }
+            slen--;
+          }
+        }
+        slen--;
+      }
+    }
+  }
+#endif
 
   SP_LIST *sp_list;
   FOREACH_SP_LIST(sp_list){
     int i;
-    /* debug */
-    /* if(sp_list->type == TYPE_ID){ /\* ID *\/ */
-    /*   printf(" undefined symbol name: %s(%p) class=%d: nest=(", */
-    /*          ID_NAME(sp_list->info.id), ID_SYM(sp_list->info.id), ID_CLASS(sp_list->info.id)); */
-    /* } else {                    /\* expr *\/ */
-    /*   printf(" undefined expr: %s: nest=(", _expr_code[EXPR_CODE(sp_list->info.ep)]); */
-    /* } */
-    /* for(i=0; i<=sp_list->nest_level; i++){ */
-    /*   printf("%s", SYM_NAME(EXT_SYM(sp_list->nest_ext_id[i]))); */
-    /*   if(i!=sp_list->nest_level){ */
-    /*     printf(","); */
-    /*   } */
-    /* } */
-    /* printf(")\n"); */
 
+#ifdef FE_DEBUG
+    /* debug */
+    if(sp_list->type == TYPE_ID){ /* ID */
+      printf(" undefined symbol name: %s(%p) class=%d: nest=(",
+             ID_NAME(sp_list->info.id), ID_SYM(sp_list->info.id), ID_CLASS(sp_list->info.id));
+    } else {                    /* expr */
+      printf(" undefined expr: %s: nest=(", _expr_code[EXPR_CODE(sp_list->info.ep)]);
+    }
+    for(i=0; i<=sp_list->nest_level; i++){
+      printf("%s", SYM_NAME(EXT_SYM(sp_list->nest_ext_id[i])));
+      if(i!=sp_list->nest_level){
+        printf(",");
+      }
+    }
+    printf(")\n");
+#endif
+    
     /* fix ID & expr */
     if(sp_list->type == TYPE_ID){ /* ID */
       int is_exist = 0;
-      for(i=sp_list->nest_level-1; i>=0 && !is_exist; i--){
+      if(EXT_PROC_CONT_EXT_SYMS(sp_list->nest_ext_id[0])){
         ID id;
-        FOREACH_ID(id, EXT_PROC_ID_LIST(sp_list->nest_ext_id[i])){
-          if(ID_SYM(id) == ID_SYM(sp_list->info.id)){
-            is_exist = 1;
-            break;
+        FOREACH_ID(id, EXT_PROC_ID_LIST(EXT_PROC_CONT_EXT_SYMS(sp_list->nest_ext_id[0]))){
+          if(ID_CLASS(id) == CL_PROC){
+            if(ID_SYM(id) == ID_SYM(sp_list->info.id)){
+              is_exist = 1;
+              break;
+            }
+          }
+        }
+      }
+      if(!is_exist){
+        for(i=sp_list->nest_level-1; i>=0 && !is_exist; i--){
+          ID id;
+          FOREACH_ID(id, EXT_PROC_ID_LIST(sp_list->nest_ext_id[i])){
+            if(ID_SYM(id) == ID_SYM(sp_list->info.id)){
+              is_exist = 1;
+              break;
+            }
           }
         }
       }
