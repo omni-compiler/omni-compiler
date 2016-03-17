@@ -42,7 +42,19 @@ RESULT6=$(RESULT:.result=.result6)
 RUN/%.x:: %.x
 	cp $< $@
 
+RUN/%.x4:: %.x4
+	cp $< $@
+
+RUN/%.x6:: %.x6
+	cp $< $@
+
 RUN/%.x:: 
+	touch $@
+
+RUN/%.x4:: 
+	touch $@
+
+RUN/%.x6:: 
 	touch $@
 
 ### compile test programs
@@ -63,11 +75,23 @@ run6:	$(RESULT6)
 submit: all RUN RUN/go.sh $(OUT:%=RUN/%)
 	cd RUN; pjsub go.sh
 
+submit4: all4 RUN RUN/go4.sh $(OUT4:%=RUN/%)
+	cd RUN; pjsub go4.sh
+
+submit6: all6 RUN RUN/go6.sh $(OUT6:%=RUN/%)
+	cd RUN; pjsub go6.sh
+
 RUN:
 	mkdir RUN
 
 RUN/go.sh: go.template Makefile
 	sed "s/@OUT@/$(OUT)/" $< >$@
+
+RUN/go4.sh: go.template Makefile
+	sed "s/@OUT@/$(OUT4)/" $< >$@
+
+RUN/go6.sh: go.template Makefile
+	sed "s/@OUT@/$(OUT6)/" $< >$@
 
 ### clean
 clean:

@@ -38,6 +38,16 @@ submit:
 	  $(MAKE) -C $$d submit; \
 	done
 
+submit4:
+	for d in $(DIRS_SUBMIT); do \
+	  $(MAKE) -C $$d submit4; \
+	done
+
+submit6:
+	for d in $(DIRS_SUBMIT); do \
+	  $(MAKE) -C $$d submit6; \
+	done
+
 clean:
 	for d in $(DIRS); do \
 	  $(MAKE) -C $$d clean; \
