@@ -2381,12 +2381,13 @@ public class XMPtransCoarrayRun
       return;
     }
 
-    /* check a typical name defined in xmp_coarray.h */
+    /* check whether xmp_coarray.h is included */
     Ident id = def.findIdent("xmpf_coarray_get0d");
     if (id == null) {
       /* xmpf_lib.h seems not included. */
       XMP.error("current restriction: " + 
-                "\'xmp_coarray.h\' must be included to use coarray features.");
+                "\'xmp_coarray.h\' must be included to use coarray features " +
+                "in procodrure/module: " + getName());
     }
   }
 
@@ -2398,14 +2399,23 @@ public class XMPtransCoarrayRun
 
   private boolean _isCoarrayIntrinsicUsed() {
     final String[] _coarrayIntrinsics = {
-      "xmpf_sync_all",
-      "xmpf_sync_images", 
-      "xmpf_lock",
-      "xmpf_unlock",
+      "co_broadcast",
+      "co_max",
+      "co_min",
+      "co_sum",
+      "image_index",
+      "lcobound",
+      "num_images",
+      "this_image",
+      "ucocound",
       "xmpf_critical",
       "xmpf_end_critical",
-      "xmpf_sync_memory",
       "xmpf_error_stop",
+      "xmpf_lock",
+      "xmpf_sync_all",
+      "xmpf_sync_images", 
+      "xmpf_sync_memory",
+      "xmpf_unlock",
       };
     final List coarrayIntrinsics = 
       Arrays.asList(_coarrayIntrinsics);
