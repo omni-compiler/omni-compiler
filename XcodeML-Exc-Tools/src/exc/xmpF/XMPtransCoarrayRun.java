@@ -547,7 +547,7 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       subroutine EX1
         real, save :: V1(1:10,1:20)                                  ! f. f6.
-        integer(8), save :: descptr_V1                               ! a. a6.
+        integer(8), save :: descptr_V1 = 0_8                         ! a. a6.
 
         if (descptr_V1 == 0_8) then                                  ! b6.
           call xmpf_coarray_regmem_static(descptr_V2, LOC(V2), 1, 8, "V2", 2)
@@ -1060,26 +1060,25 @@ public class XMPtransCoarrayRun
 
   //-----------------------------------------------------
   //  TRANSLATION a6.
-  //  add SAVE attributes to desc-pointers of coarrays
+  //  add SAVE attributes (if needed) and set initial value zero
+  //  to desc-pointers of coarrays
   //-----------------------------------------------------
   //
   private void addSaveAttrToDescPointer(ArrayList<XMPcoarray> coarrays) {
     if (def.isFmoduleDef())  // module
       return;
+
     Xtype ft = def.getFuncType();
-    if (ft != null && ft.isFprogram())  // main program
-      return;
+    if (ft == null || !ft.isFprogram()) {     // subroutine or function
+      for (XMPcoarray coarray: coarrays) {
+        coarray.setSaveAttrToDescPointer();   // add SAVE attr.
+      }
+    }
 
     for (XMPcoarray coarray: coarrays) {
-      coarray.setSaveAttrToDescPointer();
+      coarray.setZeroToDescPointer();
     }
   }
-
-  //private void genDeclOfDescPointerWithSaveInit(ArrayList<XMPcoarray> localCoarrays) {
-  //  for (XMPcoarray coarray: localCoarrays)
-  //  coarray.genDecl_descPointer(true, Xcons.IntConstant(0, Xtype.intType, "8"));
-  //}
-
 
   //-----------------------------------------------------
   //  TRANSLATION c4 for Ver.4
@@ -1568,6 +1567,11 @@ public class XMPtransCoarrayRun
 
       // buffer init statememts
       Xobject stmt = genStmt_regmemForCoarray(coarray, subrIdent);
+      thenBlock.add(stmt);
+    }
+
+    for (XMPcoarray coarray: coarrays) {
+      Xobject stmt = coarray.makeStmt_setCoshape(env);
       thenBlock.add(stmt);
     }
 

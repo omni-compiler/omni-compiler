@@ -650,6 +650,11 @@ public class XMPcoarray {
     getDescPointerId().setStorageClass(StorageClass.FSAVE);
   }
 
+  public void setZeroToDescPointer() {
+    Xobject zero = Xcons.IntConstant(0, Xtype.intType, "8");
+    getDescPointerId().setFparamValue(Xcons.List(zero, null));
+  }
+
   private void _setSaveAttrInType(Xtype type) {
     type.setIsFsave(true);
   }
