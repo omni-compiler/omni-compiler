@@ -758,8 +758,8 @@ public class XMPanalyzePragma
     Xobject right = x.right();
     
     // opcode must be VAR or ARRAY_REF
-    boolean left_is_global = checkGmoveOperand(left,pb);
-    boolean right_is_global = checkGmoveOperand(right,pb);
+    boolean left_is_global = checkGmoveOperand(left, gmoveOpt.getInt() == XMP.GMOVE_OUT, pb);
+    boolean right_is_global = checkGmoveOperand(right, gmoveOpt.getInt() == XMP.GMOVE_IN, pb);
 
     boolean left_is_scalar = isScalar(left);
     boolean right_is_scalar = isScalar(right);
@@ -804,7 +804,7 @@ public class XMPanalyzePragma
     info.setAsyncId(asyncOpt);
   }
 
-  private boolean checkGmoveOperand(Xobject x, PragmaBlock pb){
+  private boolean checkGmoveOperand(Xobject x, boolean remotely_accessed, PragmaBlock pb){
 
     Ident id = null;
     XMParray array = null;
@@ -822,6 +822,9 @@ public class XMPanalyzePragma
 	XMP.fatal("array in F_ARRAY_REF is not declared");
       array = XMParray.getArray(id);
       if(array != null){
+	if (remotely_accessed && id.getStorageClass() != StorageClass.FSAVE){
+	  XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
+	}
 	if (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.ARRAY) a.setProp(XMP.RWprotected, array);
 	return true;
       }
@@ -832,6 +835,9 @@ public class XMPanalyzePragma
 	XMP.fatal("variable" + x.getName() + "is not declared");
       array = XMParray.getArray(id);
       if (array != null){
+	if (remotely_accessed && id.getStorageClass() != StorageClass.FSAVE){
+	  XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
+	}
 	if (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.ARRAY) x.setProp(XMP.RWprotected, array);
 	return true;
       }
@@ -976,7 +982,7 @@ public class XMPanalyzePragma
     Xobject right = x.right();
 
     // opcode must be VAR or ARRAY_REF
-    boolean left_is_global = checkGmoveOperand(left, pb);
+    boolean left_is_global = checkGmoveOperand(left, false, pb);
     //boolean right_is_global = checkGmoveOperand(right, pb);
 
     //if (!left_is_global && !right_is_global)

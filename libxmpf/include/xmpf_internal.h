@@ -88,7 +88,7 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type, _XMP_templ
 void xmpf_array_dealloc__(_XMP_array_t **a_desc);
 void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx,
 		       int *lower, int *upper, int *t_idx, int *off);
-void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr);
+void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr, int is_coarray);
 void _XMP_finalize_array_desc(_XMP_array_t *array);
 void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index);
 void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int template_index,

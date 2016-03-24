@@ -719,7 +719,7 @@ static void xmpf_larray_alloc__(_XMP_array_t **a, _XMP_gmv_desc_t *gmv_desc, int
     int t_idx = -1; int off = 0;
     xmpf_align_info__(a, &i, gmv_desc->a_lb + i, gmv_desc->a_ub + i, &t_idx, &off);
   }
-  xmpf_array_set_local_array__(a, gmv_desc->local_data);
+  xmpf_array_set_local_array__(a, gmv_desc->local_data, 0);
   gmv_desc->a_desc = *a;
 }
 

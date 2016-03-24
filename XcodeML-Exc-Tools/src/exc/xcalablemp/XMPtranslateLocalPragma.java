@@ -2774,6 +2774,20 @@ public class XMPtranslateLocalPragma {
     XMPalignedArray rightAlignedArray = null;
     if (rightExprInfo != null) rightAlignedArray = rightExprInfo.getFirst();
 
+    if (rightAlignedArray != null){
+      StorageClass sclass = rightAlignedArray.getArrayId().getStorageClass();
+      if (gmoveClause.getInt() == XMPcollective.GMOVE_IN &&
+	  sclass != StorageClass.EXTDEF && sclass != StorageClass.EXTERN)
+      XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
+    }
+
+    if (leftAlignedArray != null){
+      StorageClass sclass = leftAlignedArray.getArrayId().getStorageClass();
+      if (gmoveClause.getInt() == XMPcollective.GMOVE_OUT &&
+	  sclass != StorageClass.EXTDEF && sclass != StorageClass.EXTERN)
+	XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
+    }
+
     boolean leftHasSubArrayRef = (leftExpr.Opcode() == Xcode.SUB_ARRAY_REF);
     boolean rightHasSubArrayRef = (rightExpr.Opcode() == Xcode.SUB_ARRAY_REF);
     if (leftHasSubArrayRef) {

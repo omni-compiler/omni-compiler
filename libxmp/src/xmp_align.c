@@ -622,7 +622,7 @@ EXIT_CALC_PARALLEL_MEMBERS:
   ai->align_template_index = template_index;
 }
 
-void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...)
+void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, int is_coarray, ...)
 {
   /* if (!array_desc->is_allocated) { */
   /*   *array_addr = NULL; */
@@ -633,7 +633,7 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...)
   int dim = array_desc->dim;
   
   va_list args;
-  va_start(args, array_desc);
+  va_start(args, is_coarray);
   for(int i=dim-1;i>=0;i--){
     unsigned long long *acc = va_arg(args, unsigned long long *);
     *acc = total_elmts;
@@ -655,28 +655,30 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...)
   // for gmove in/out
 
 #ifdef _XMP_MPI3_ONESIDED
-  _XMP_coarray_t *c = (_XMP_coarray_t *)_XMP_alloc(sizeof(_XMP_coarray_t));
+  if (is_coarray){
+    _XMP_coarray_t *c = (_XMP_coarray_t *)_XMP_alloc(sizeof(_XMP_coarray_t));
 
-  long asize[dim];
-  for (int i = 0; i < dim; i++){
-    asize[i] = array_desc->info[i].alloc_size;
+    long asize[dim];
+    for (int i = 0; i < dim; i++){
+      asize[i] = array_desc->info[i].alloc_size;
+    }
+
+    _XMP_coarray_malloc_info_n(asize, dim, array_desc->type_size);
+
+    //_XMP_nodes_t *ndesc = a->align_template->onto_nodes;
+    //_XMP_nodes_t *ndesc = _XMP_get_execution_nodes();
+    _XMP_nodes_t *ndesc = _XMP_world_nodes;
+    int ndims_node = ndesc->dim;
+    int nsize[ndims_node-1];
+    for (int i = 0; i < ndims_node-1; i++){
+      nsize[i] = ndesc->info[i].size;
+    }
+    _XMP_coarray_malloc_image_info_n(nsize, ndims_node);
+
+    _XMP_coarray_attach(c, *array_addr, array_desc->total_elmts * array_desc->type_size);
+
+    array_desc->coarray = c;
   }
-
-  _XMP_coarray_malloc_info_n(asize, dim, array_desc->type_size);
-
-  //_XMP_nodes_t *ndesc = a->align_template->onto_nodes;
-  //_XMP_nodes_t *ndesc = _XMP_get_execution_nodes();
-  _XMP_nodes_t *ndesc = _XMP_world_nodes;
-  int ndims_node = ndesc->dim;
-  int nsize[ndims_node-1];
-  for (int i = 0; i < ndims_node-1; i++){
-    nsize[i] = ndesc->info[i].size;
-  }
-  _XMP_coarray_malloc_image_info_n(nsize, ndims_node);
-
-  _XMP_coarray_attach(c, *array_addr, array_desc->total_elmts * array_desc->type_size);
-
-  array_desc->coarray = c;
 #endif
 
 #ifdef _XMP_TCA
@@ -684,7 +686,7 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...)
 #endif
 }
 
-void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc,
+void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc, int is_coarray,
 		       unsigned long long *acc[]) {
   /* if (!array_desc->is_allocated) { */
   /*   *array_addr = NULL; */
@@ -715,28 +717,30 @@ void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc,
   // for gmove in/out
 
 #ifdef _XMP_MPI3_ONESIDED
-  _XMP_coarray_t *c = (_XMP_coarray_t *)_XMP_alloc(sizeof(_XMP_coarray_t));
+  if (is_coarray){
+    _XMP_coarray_t *c = (_XMP_coarray_t *)_XMP_alloc(sizeof(_XMP_coarray_t));
 
-  long asize[dim];
-  for (int i = 0; i < dim; i++){
-    asize[i] = array_desc->info[i].alloc_size;
+    long asize[dim];
+    for (int i = 0; i < dim; i++){
+      asize[i] = array_desc->info[i].alloc_size;
+    }
+
+    _XMP_coarray_malloc_info_n(asize, dim, array_desc->type_size);
+
+    //_XMP_nodes_t *ndesc = a->align_template->onto_nodes;
+    //_XMP_nodes_t *ndesc = _XMP_get_execution_nodes();
+    _XMP_nodes_t *ndesc = _XMP_world_nodes;
+    int ndims_node = ndesc->dim;
+    int nsize[ndims_node-1];
+    for (int i = 0; i < ndims_node-1; i++){
+      nsize[i] = ndesc->info[i].size;
+    }
+    _XMP_coarray_malloc_image_info_n(nsize, ndims_node);
+
+    _XMP_coarray_attach(c, *array_addr, array_desc->total_elmts * array_desc->type_size);
+    
+    array_desc->coarray = c;
   }
-
-  _XMP_coarray_malloc_info_n(asize, dim, array_desc->type_size);
-
-  //_XMP_nodes_t *ndesc = a->align_template->onto_nodes;
-  //_XMP_nodes_t *ndesc = _XMP_get_execution_nodes();
-  _XMP_nodes_t *ndesc = _XMP_world_nodes;
-  int ndims_node = ndesc->dim;
-  int nsize[ndims_node-1];
-  for (int i = 0; i < ndims_node-1; i++){
-    nsize[i] = ndesc->info[i].size;
-  }
-  _XMP_coarray_malloc_image_info_n(nsize, ndims_node);
-
-  _XMP_coarray_attach(c, *array_addr, array_desc->total_elmts * array_desc->type_size);
-
-  array_desc->coarray = c;
 #endif
 
 #ifdef _XMP_TCA
