@@ -198,7 +198,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
     //////////////////////////////
     // if (FALSE) {
     //////////////////////////////
-    if (bufsize <= COMM_BUFF_SIZE) {
+    if (bufsize <= XMPF_get_commBuffSize()) {
       // using static buffer sharing in the memory pool
       _XMPF_coarrayDebugPrint("select SCHEME_BufferPut-DMA/array\n"
                               "  bufsize=%zd\n", bufsize);
@@ -270,7 +270,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
   //////////////////////////////
   // if (FALSE) {
   //////////////////////////////
-  if (bufsize <= COMM_BUFF_SIZE) {
+  if (bufsize <= XMPF_get_commBuffSize()) {
     // using static buffer sharing in the memory pool
     _XMPF_coarrayDebugPrint("select SCHEME_BufferSpread-DMA/array\n"
                             "  bufsize=%zd\n", bufsize);
