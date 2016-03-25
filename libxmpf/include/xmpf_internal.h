@@ -321,7 +321,7 @@ extern void _XMP_coarray_shortcut_get(const int, void*, const void*, const long,
 
 /*-- parameters --*/
 #define DESCR_ID_MAX   250
-#define SMALL_WORK_SIZE_KB  10
+
 extern int _XMP_boundaryByte;     // communication boundary (bytes)
 
 /*-- codes --*/
@@ -336,8 +336,9 @@ extern int _XMPF_get_coarrayMsg(void);
 extern void _XMPF_set_coarrayMsg(int sw);
 extern void _XMPF_reset_coarrayMsg(void);
 
-void XMPF_set_poolThreshold(unsigned size);
-unsigned XMPF_get_poolThreshold(void);
+extern void XMPF_set_poolThreshold(unsigned size);
+extern unsigned XMPF_get_poolThreshold(void);
+extern size_t XMPF_get_commBuffSize(void);
 
 extern void xmpf_coarray_msg_(int *sw);
 
@@ -385,6 +386,8 @@ extern void *_XMPF_get_coarrayDesc(void *descPtr);
 extern size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr);
 extern void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
                                            size_t *offset, char **nameAddr);
+extern void *_XMPF_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
+                                           char **name);
 
 /* xmpf_coarray_lib.c */
 extern int XMPF_initial_this_image, XMPF_initial_num_images;

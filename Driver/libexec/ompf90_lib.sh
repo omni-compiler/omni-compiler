@@ -15,9 +15,9 @@ Compile Driver Options
    --version         : print version.
    -h,--help         : print usage.
    --show-env        : show environment variables.
-   --tmp             : output parallel code (__omni_tmp__<file>).
+   --tmp             : output translated code to __omni_tmp__<file>.
    --dry             : only print processing status (not compile).
-   --debug           : save intermediate files in __omni_tmp__.
+   --debug           : save intermediate files to __omni_tmp__/.
    --stop-pp         : save intermediate files and stop after preprocess.
    --stop-frontend   : save intermediate files and stop after frontend.
    --stop-translator : save intermediate files and stop after translator.
@@ -26,16 +26,16 @@ Compile Driver Options
 
 Process Options
 
-  --Wp[option] : Add preprocessor option.
-  --Wf[option] : Add frontend option.
-  --Wx[option] : Add Xcode translator option.
-  --Wb[option] : Add backend option.
-  --Wn[option] : Add native compiler option.
-  --Wl[option] : Add linker option.
+  --Wp[option] : add preprocessor option.
+  --Wf[option] : add frontend option.
+  --Wx[option] : add Xcode translator option.
+  --Wb[option] : add backend option.
+  --Wn[option] : add native compiler option.
+  --Wl[option] : add linker option.
 
 Omni OpenACC Options
 
-  -acc, --openacc : Enable OpenACC.
+  -acc, --openacc : enable OpenACC function.
 EOF
 }
 
@@ -151,19 +151,43 @@ function ompf90_set_parameters()
 		VERBOSE=true; STOP_BACKEND=true;;
 	    --stop-compile)
 		VERBOSE=true; STOP_COMPILE=true;;
-            --Wp*)
-                pp_add_opt+=("${1#--Wp}");;
-            --Wf*)
-                frontend_add_opt+=("${1#--Wf}");;
-            --Wx*)
-                xcode_translator_add_opt+=("${1#--Wx}");;
-            --Wn*)
-                native_add_opt+=("${1#--Wn}");;
-            --Wb*)
-                backend_add_opt+=("${1#--Wb}");;
-            --Wl*)
-                linker_add_opt+=("${1#--Wl}");;
-            --openmp|-omp)
+	    --Wp*)
+		local tmp=("${1#--Wp}")
+		for v in $tmp
+		do
+		    pp_add_opt+=("$v")
+		done;;
+	    --Wf*)
+		local tmp=("${1#--Wf}")
+		for v in $tmp
+		do
+		    frontend_add_opt+=("$v")
+		done;;
+	    --Wx*)
+		local tmp=("${1#--Wx}")
+		for v in $tmp
+		do
+		    xcode_translator_add_opt+=("$v")
+		done;;
+	    --Wn*)
+		local tmp=("${1#--Wn}")
+		for v in $tmp
+		do
+		    native_add_opt+=("$v")
+		done;;
+	    --Wb*)
+		local tmp=("${1#--Wb}")
+		for v in $tmp
+		do
+		    backend_add_opt+=("$v")
+		done;;
+	    --Wl*)
+		local tmp=("${1#--Wl}")
+		for v in $tmp
+		do
+		    linker_add_opt+=("$v")
+		done;;
+	    --openmp|-omp)
                 ENABLE_OPENMP=true;;
 	    -acc|--openacc)
 		omni_error_exit "OpenACC for ompf90 has been not implemented yet."

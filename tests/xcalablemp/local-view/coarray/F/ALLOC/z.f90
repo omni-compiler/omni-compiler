@@ -1,13 +1,7 @@
-program allo2
+subroutine ppp
   include "xmp_coarray.h"
-  real, allocatable :: a(:)[:] 
+  integer :: itmp(3)[*]
 
-  call allo
+end subroutine ppp
 
-contains
-  subroutine allo
-    allocate (a(10))
-  end subroutine allo
-      
-      
-end program allo2
+

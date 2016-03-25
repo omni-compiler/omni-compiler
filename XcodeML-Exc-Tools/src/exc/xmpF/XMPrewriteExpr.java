@@ -725,7 +725,8 @@ public class XMPrewriteExpr
     if (param_list == null || arg_list == null) return;
 
     int k = 0;
-    for (int i = 0; i < arg_list.Nargs(); i++){
+    int nargs = Math.min(arg_list.Nargs(), param_list.Nargs());
+    for (int i = 0; i < nargs; i++){
 
       if (!param_list.getArg(i).Type().isFassumedShape()) continue;
 	

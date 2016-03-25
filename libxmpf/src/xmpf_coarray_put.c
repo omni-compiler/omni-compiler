@@ -184,23 +184,49 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
   switch (scheme) {
   case SCHEME_DirectPut:
     _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/array\n");
-    _putCoarray(*descPtr, *baseAddr, *coindex, rhs, *element, *rank, skip, count,
+    _putCoarray(*descPtr, *baseAddr, *coindex, rhs,
+                *element, *rank, skip, count,
                 descDMA, offsetDMA, nameDMA);
     break;
 
   case SCHEME_BufferPut:
-// TO BE ENHANCED:
-//  The buffer should be allocated in registered memory to use `shortcut' put routine.
     bufsize = *element;
     for (i = 0; i < *rank; i++) {
       bufsize *= count[i];
     }
-    _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/array\n"
-                            "  bufsize=%zd\n", bufsize);
-    buf = malloc(bufsize);
-    (void)memcpy(buf, rhs, bufsize);
-    _putCoarray(*descPtr, *baseAddr, *coindex, buf, *element, *rank, skip, count,
-                NULL, 0, "(runtime buffer)");
+
+    //////////////////////////////
+    // if (FALSE) {
+    //////////////////////////////
+    if (bufsize <= XMPF_get_commBuffSize()) {
+      // using static buffer sharing in the memory pool
+      _XMPF_coarrayDebugPrint("select SCHEME_BufferPut-DMA/array\n"
+                              "  bufsize=%zd\n", bufsize);
+
+      void *descDMA;
+      size_t offsetDMA;
+      char *nameDMA;
+      char *localBuf;
+      descDMA = _XMPF_get_localBufCoarrayDesc(&localBuf, &offsetDMA, &nameDMA);
+      (void)memcpy(localBuf, rhs, bufsize);
+      _putCoarray(*descPtr, *baseAddr, *coindex, localBuf,
+                  *element, *rank, skip, count,
+                  descDMA, offsetDMA, nameDMA);
+    } else {
+      // default: runtime-allocated buffer for large data
+      _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/array\n"
+                              "  bufsize=%zd\n", bufsize);
+
+      buf = malloc(bufsize);
+      (void)memcpy(buf, rhs, bufsize);
+      _putCoarray(*descPtr, *baseAddr, *coindex, buf,
+                  *element, *rank, skip, count,
+                  NULL, 0, "(runtime buffer)");
+      ////////////////////////////
+      //free(buf);
+      ///////////////////////////// 
+    }
+
     break;
 
   default:
@@ -240,11 +266,38 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
   for (i = 0; i < *rank; i++)
     nelems *= count[i];
   bufsize = nelems * (*element);
-  buf = malloc(bufsize);
-  for (i = 0, p = buf; i < nelems; i++, p += *element)
-    (void)memcpy(p, rhs, *element);
-  _putCoarray(*descPtr, *baseAddr, *coindex, buf, *element, *rank, skip, count,
-              NULL, 0, "(runtime copies)");
+
+  //////////////////////////////
+  // if (FALSE) {
+  //////////////////////////////
+  if (bufsize <= XMPF_get_commBuffSize()) {
+    // using static buffer sharing in the memory pool
+    _XMPF_coarrayDebugPrint("select SCHEME_BufferSpread-DMA/array\n"
+                            "  bufsize=%zd\n", bufsize);
+
+    void *descDMA;
+    size_t offsetDMA;
+    char *nameDMA;
+    char *localBuf;
+    descDMA = _XMPF_get_localBufCoarrayDesc(&localBuf, &offsetDMA, &nameDMA);
+    for (i = 0, p = localBuf; i < nelems; i++, p += *element)
+      (void)memcpy(p, rhs, *element);
+    _putCoarray(*descPtr, *baseAddr, *coindex, localBuf,
+                *element, *rank, skip, count,
+                descDMA, offsetDMA, nameDMA);
+  } else {
+    // default: runtime-allocated buffer for large data
+    _XMPF_coarrayDebugPrint("select SCHEME_BufferSpread/array\n"
+                            "  bufsize=%zd\n", bufsize);
+
+    buf = malloc(bufsize);
+    for (i = 0, p = buf; i < nelems; i++, p += *element)
+      (void)memcpy(p, rhs, *element);
+    _putCoarray(*descPtr, *baseAddr, *coindex, buf,
+                *element, *rank, skip, count,
+                NULL, 0, "(runtime copies)");
+    free(buf);
+  }
 }
 
 

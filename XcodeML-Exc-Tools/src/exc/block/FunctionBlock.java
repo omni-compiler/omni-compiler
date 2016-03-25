@@ -65,10 +65,23 @@ public class FunctionBlock extends CompoundBlock
     @Override
     public Xobject toXobject()
     {
-        Xobject x = new XobjList(Opcode(),
-				 name, body.id_list,
-				 body.decls, body.head.toXobject(), 
-				 gcc_attrs);
+	Xobject x;
+	// System.out.println("opcode = "+Opcode()+" head="+body.head);
+	// System.out.println("body = "+body);
+	// System.out.println("body.toXobject = "+body.toXobject());
+	if(Opcode() == Xcode.F_MODULE_DEFINITION){
+	    x = new XobjList(Opcode(),
+			     name, body.id_list,
+			     body.decls, 
+			     body.toXobject());
+	} else {
+	    x = new XobjList(Opcode(),
+			     name, body.id_list,
+			     body.decls, 
+			     (body.head != null)?
+			     body.head.toXobject():null, 
+			     gcc_attrs);
+	}
         x.setLineNo(getLineNo());
         return x;
     }

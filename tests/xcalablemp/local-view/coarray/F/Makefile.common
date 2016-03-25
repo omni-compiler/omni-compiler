@@ -4,13 +4,30 @@ SRC= $(OUT:%.x=%.f90)
 RESULT=$(SRC:.f90=.result)
 .SUFFIXES: .x .f90 .xmod
 
+OUT4= $(OUT:%.x=%.x4)
+OUT6= $(OUT:%.x=%.x6)
+RESULT4=$(RESULT:.result=.result4)
+RESULT6=$(RESULT:.result=.result6)
+
 .f90.x:
 	xmpf90 $(OPT) -o $@ $<
 
 .c.x:
 	xmpcc $(OPT) -o $@ $<
 
+%.x4:  %.f90
+	xmpf90 $(OPT) --Wx-fcoarray=4 -o $@ $<
+
+%.x6:  %.f90
+	xmpf90 $(OPT) --Wx-fcoarray=6 -o $@ $<
+
 %.result: %.x
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $< 2>&1 | tee $@
+
+%.result4: %.x4
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $< 2>&1 | tee $@
+
+%.result6: %.x6
 	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $< 2>&1 | tee $@
 
 %.result: %.f90
@@ -25,26 +42,56 @@ RESULT=$(SRC:.f90=.result)
 RUN/%.x:: %.x
 	cp $< $@
 
+RUN/%.x4:: %.x4
+	cp $< $@
+
+RUN/%.x6:: %.x6
+	cp $< $@
+
 RUN/%.x:: 
+	touch $@
+
+RUN/%.x4:: 
+	touch $@
+
+RUN/%.x6:: 
 	touch $@
 
 ### compile test programs
 all:     $(OUT)
 
+all4:     $(OUT4)
+
+all6:     $(OUT6)
+
 ### execute on local environment
 run:	$(RESULT)
 
-rerun:  clean-result run
+run4:	$(RESULT4)
+
+run6:	$(RESULT6)
 
 ### prepare to execute on K/FX10
 submit: all RUN RUN/go.sh $(OUT:%=RUN/%)
 	cd RUN; pjsub go.sh
+
+submit4: all4 RUN RUN/go4.sh $(OUT4:%=RUN/%)
+	cd RUN; pjsub go4.sh
+
+submit6: all6 RUN RUN/go6.sh $(OUT6:%=RUN/%)
+	cd RUN; pjsub go6.sh
 
 RUN:
 	mkdir RUN
 
 RUN/go.sh: go.template Makefile
 	sed "s/@OUT@/$(OUT)/" $< >$@
+
+RUN/go4.sh: go.template Makefile
+	sed "s/@OUT@/$(OUT4)/" $< >$@
+
+RUN/go6.sh: go.template Makefile
+	sed "s/@OUT@/$(OUT6)/" $< >$@
 
 ### clean
 clean:
@@ -54,6 +101,7 @@ clean:
 	rm -f $(OUT:%=RUN/%)
 	rm -f *.mod *.xmod
 
-clean-result:
-	rm -f $(RESULT)
+clean-all: clean
+	rm -f *.x4 *.result4
+	rm -f *.x6 *.result6
 

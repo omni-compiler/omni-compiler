@@ -29,9 +29,12 @@ public class XMPcoarrayInitProcedure {
   private ArrayList<XMPcoarray> staticCoarrays;
   private XMPenv env;
 
-  /*  Versions 3 and 4 are available currently.
-   *    3: stable version
-   *    4: challenging optimization only if using FJRDMA
+  /*  Versions 3, 4 & 6 are available currently.
+   *    3: bootup time allocation and registration using cray pointer (default)
+   *    4: For static coarrays on FJ-RDMA and MPI3,
+   *       static allocation/bootup time registration w/o cray pointer using common
+   *    6: For static coarrays on FJ-RDMA and MPI3,
+   *       static allocation/first time registration w/o cray pointer w/o common
    */
   private int version;    // defined by the constructor
 
@@ -104,9 +107,7 @@ public class XMPcoarrayInitProcedure {
       xmpf_CP_EX1 : name of a common block for procedure EX1
       CP_V2       : cray poiter to coarray V2
 
-    Ver.4:
-    For GASNet, Ver.4 is equivalent to Ver.3
-    For FJRDMA:
+    Ver.4 for FJRDMA and MPI3:
     --------------------------------------------
       // no subroutine xmpf_traverse_countcoarrays_EX1
 
@@ -118,23 +119,21 @@ public class XMPcoarrayInitProcedure {
         call xmpf_coarray_set_coshape(DP_V2, 1, 0)
       end subroutine
     --------------------------------------------
-      xmpf_DP_EX1 : name of a common block for procedure EX1
-      DP_V2       : pointer to descriptor of coarray V2
-      xmpf_CO_EX1 : name of a common block for procedure EX1
-      V2          : name of a coarray
+
+    Ver.6 for FJRDMA and MPI3, only for modules EX1:
+    --------------------------------------------
+      // no subroutine xmpf_traverse_countcoarrays_EX1
+
+      subroutine xmpf_traverse_initcoarrays_EX1
+        use EX1
+
+        call xmpf_coarray_regmem_static(DP_V2, LOC(V2), 1, 16, "V2", 2)
+        call xmpf_coarray_set_coshape(DP_V2, 1, 0)
+      end subroutine
+    --------------------------------------------
   */
 
   public void run() {
-    for (XMPcoarray coarray: staticCoarrays) {
-      String descPtrName = coarray.getDescPointerName();
-      String crayPtrName = coarray.getCrayPointerName();
-
-      /**************
-      int elem = coarray.getElementLength();
-      int count = coarray.getTotalArraySize();
-      addForVarText(descPtrName, crayPtrName, count, elem);
-      *******************/
-    }
 
     /* generate the two subroutines in the same file
      */
@@ -165,14 +164,19 @@ public class XMPcoarrayInitProcedure {
       buildSubroutine_initcoarrays();
       break;
 
-    case 4:   // new version to avoid using cray pointers
-      buildSubroutine_countcoarrays();
+    case 4:   // temporary version for FJ-RDMA and MPI3
+      //buildSubroutine_countcoarrays();   // unnecessary?
+      buildSubroutine_initcoarrays();
+      break;
+
+    case 6:   // temporary version for FJ-RDMA and MPI3
+      // case: module
       buildSubroutine_initcoarrays();
       break;
 
     default:
-      XMP.fatal("INTERNAL: illegal version #" + version +
-                "specified in XMPcoarrayInitProcedure");
+      XMP.fatal("INTERNAL: unexpected version number (" + version +
+                ") specified in XMPcoarrayInitProcedure");
       break;
     }
   }
@@ -183,7 +187,8 @@ public class XMPcoarrayInitProcedure {
    *    buildSubroutine_countcoarrays()
    *    buildSubroutine_initcoarrays()
    *  Version 4:
-   *    buildSubroutine_countcoarrays()
+   *    buildSubroutine_initcoarrays()
+   *  Version 6 (module):
    *    buildSubroutine_initcoarrays()
    *
    *   build subroutines as Xobject and
@@ -193,6 +198,12 @@ public class XMPcoarrayInitProcedure {
   private void buildSubroutine_countcoarrays() {
     BlockList body = Bcons.emptyBody();         // new body of the building procedure
     Xobject decls = Xcons.List();
+
+    if (version != 3) {
+      XMP.fatal("unexpected version " + version + 
+                " in buildSubroutine_countcoarrays");
+      return;
+    }
 
     for (XMPcoarray coarray: staticCoarrays) {
       // "CALL coarray_count_size(count, elem)"
@@ -245,10 +256,6 @@ public class XMPcoarrayInitProcedure {
     for (XMPcoarray coarray: staticCoarrays) {
       Xobject setCoshape = coarray.makeStmt_setCoshape(env);
       blist2.add(setCoshape);
-
-      // no longer needed. coarray_alloc_static includes setting of the name.
-      //Xobject setVarName = coarray.makeStmt_setVarName(env);
-      //blist2.add(setVarName);
     }
 
     funcDef2.Finalize();
@@ -269,7 +276,7 @@ public class XMPcoarrayInitProcedure {
 
   private void set_commonName2(XMPcoarray coarray) {
     String name;
-    if (version == 4)
+    if (version >= 4)
       name = coarray.getCoarrayCommonName();
     else
       name = coarray.getCrayCommonName();
@@ -293,36 +300,43 @@ public class XMPcoarrayInitProcedure {
      * specification part
     \*-------------------------------*/
 
-    // "common /xmpf_descptr_foo/ descPtr_var"
-    set_commonName1(coarray);
+    // verseions all
+    //   "common /xmpf_descptr_foo/ descPtr_var"
     String descPtrName = coarray.getDescPointerName();
-    Ident descPtrId =
-      body.declLocalIdent(descPtrName,
-                          Xtype.Farray(BasicType.Fint8Type),
-                          StorageClass.FCOMMON,   //or StorageClass.FLOCAL
-                          null);
-    Xobject commonStmt1 =
-      Xcons.List(Xcode.F_COMMON_DECL,
-                 Xcons.List(Xcode.F_VAR_LIST,
-                            Xcons.Symbol(Xcode.IDENT, commonName1),
-                            Xcons.List(Xcons.FvarRef(descPtrId))));
-    decls.add(commonStmt1);
+    Ident descPtrId = null;
+    if (version >= 3) {
+      set_commonName1(coarray);
+      descPtrId = body.declLocalIdent(descPtrName,
+                                      Xtype.Farray(BasicType.Fint8Type),
+                                      StorageClass.FCOMMON,
+                                      null);
+      Xobject commonStmt1 =
+        Xcons.List(Xcode.F_COMMON_DECL,
+                   Xcons.List(Xcode.F_VAR_LIST,
+                              Xcons.Symbol(Xcode.IDENT, commonName1),
+                              Xcons.List(Xcons.FvarRef(descPtrId))));
+      decls.add(commonStmt1);
+    } else {
+      XMP.fatal("unexpected version");
+    }
 
-    // (case: Ver.3)
+    // version 3
     //    "common /xmpf_crayptr_foo/ crayPtr_var"   
-    // (case: Ver.4)
-    //    TYPE var(N)  !! without SAVE attr.
+    // versions 4 & 6
+    //    "TYPE var(N)"  !! without SAVE attr.
     //    "common /xmpf_coarray_foo/ var"           
     set_commonName2(coarray);
     Ident ident2;
-    if (version == 4) {
-      coarray.resetSaveAttr();
+    if (version >= 4) {
+      // Version 4 & 6: generate common block for coarrays themselves
+      //coarray.resetSaveAttr();   // This seems not correct due to the side effect.
       Xtype type1 = coarray.getIdent().Type();
       Xtype type2;
       switch (type1.getKind()) {
       case Xtype.BASIC:
         type2 = type1.copy();
         type2.removeCodimensions();
+        _resetSaveAttrInType(type2);      // reset SAVE attribute
         break;
       case Xtype.F_ARRAY:
         Xobject[] sizeExprs2 = new Xobject[1];
@@ -331,20 +345,24 @@ public class XMPcoarrayInitProcedure {
                                type1.getRef().copy(),
                                type1.getTypeQualFlags(),
                                sizeExprs2);
+        _resetSaveAttrInType(type2);      // reset SAVE attribute
         break;
       default:
         XMP.fatal("unexpected kind of Xtype of coarray " + coarray.getName());
         return;   // to avoid warning message from javac
       }
       ident2 = body.declLocalIdent(coarray.getName(), type2);
-      ident2.setStorageClass(StorageClass.FCOMMON);
-    } else {
+      ident2.setStorageClass(StorageClass.FCOMMON);   // reset SAVE attribute again
+
+    } else {  
+      // Version 3: generate common block for cray-pointers
       String crayPtrName = coarray.getCrayPointerName();
       ident2 = body.declLocalIdent(crayPtrName,
                                    Xtype.Farray(BasicType.Fint8Type),
                                    StorageClass.FCOMMON,  //or StorageClass.FLOCAL
                                    null);
     }
+
     Xobject commonStmt2 =
       Xcons.List(Xcode.F_COMMON_DECL,
                  Xcons.List(Xcode.F_VAR_LIST,
@@ -356,11 +374,13 @@ public class XMPcoarrayInitProcedure {
      * execution part
     \*-------------------------------*/
 
-    // "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"  (case: Ver.3)
-    // "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"    (case: Ver.4)
+    // version 3
+    //   "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"
+    // versions 4 & 6
+    //   "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"
     Xobject arg2;
     String fname;
-    if (version == 4) {
+    if (version >= 4) {
       FunctionType ftype = new FunctionType(Xtype.Fint8Type, Xtype.TQ_FINTRINSIC);
       Ident locId = env.declIntrinsicIdent("loc", ftype);
       arg2 = locId.Call(Xcons.List(ident2));
@@ -505,7 +525,15 @@ public class XMPcoarrayInitProcedure {
     procTexts = new ArrayList<String>();
   }
 
+  private void _resetSaveAttrInType(Xtype type) {
+    type.setIsFsave(false);
 
+    if (type.copied != null) 
+      _resetSaveAttrInType(type.copied);
+
+    if (type.isArray() || type.isFarray())
+      _resetSaveAttrInType(type.getRef());
+  }
 }
 
 
