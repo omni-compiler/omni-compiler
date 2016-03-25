@@ -31,8 +31,12 @@ public class XMPtransCoarray implements XobjectDefVisitor
   //-----------------------------------------
 
   public XMPtransCoarray(XobjectFile env, int pass) {
+    this(env, pass, 0);
+  }
+  public XMPtransCoarray(XobjectFile env, int pass, int version) {
     this.env = new XMPenv(env);
     this.pass = pass;
+    set_version(version);
     pastRuns = new ArrayList<XMPtransCoarrayRun>();
   }
 
@@ -69,9 +73,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
       break;
 
     case 1:               // for both procedures and modules
-      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 1);
-      if (version != 0)
-        transCoarrayRun.set_version(version);
+      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 1, version);
       transCoarrayRun.run1();
       // assuming top-down translation along host-association
       pastRuns.add(transCoarrayRun);
@@ -81,7 +83,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
     case 2:               // second pass for modules
       if (!is_module)
         return;
-      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2);
+      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2, version);
       transCoarrayRun.run2();
       //transCoarrayRun.finalize();
       break;

@@ -84,12 +84,12 @@ public class CompoundBlock extends Block
     public String toString()
     {
         StringBuilder s = new StringBuilder(256);
-        s.append("(CompoundBlock ");
+        s.append("(CompoundBlock:"+ Opcode().toString()+" ");
         s.append(Opcode());
-        s.append(" ");
+        s.append(" body=");
         s.append(body);
-        s.append(" ");
-        s.append(getBasicBlock());
+        // s.append(" bb=");
+        // s.append(getBasicBlock());
         s.append(")");
         return s.toString();
     }

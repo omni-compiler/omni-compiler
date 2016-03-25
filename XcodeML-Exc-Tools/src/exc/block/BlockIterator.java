@@ -11,7 +11,7 @@ package exc.block;
  */
 public abstract class BlockIterator
 {
-    Block currentBlock;
+    Block currentBlock = null;
 
     /** constructor with block */
     public BlockIterator(Block b)

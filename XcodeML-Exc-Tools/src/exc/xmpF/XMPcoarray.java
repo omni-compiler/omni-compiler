@@ -25,6 +25,7 @@ public class XMPcoarray {
   final static String GET_IMAGE_INDEX_NAME = "xmpf_coarray_get_image_index";
   final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
   final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
+  final static String GET_DESCR_ID_NAME = "xmpf_get_descr_id";
 
   // original attributes
   private Ident ident;
@@ -113,12 +114,27 @@ public class XMPcoarray {
     }
 
     String descPtrName = getDescPointerName();
-    BlockList blist = fblock.getBody();
+    //BlockList blist = fblock.getBody();
     
     descPtrId = env.declInternIdent(descPtrName,
                                     BasicType.Fint8Type);
   }
 
+  /***********************
+  public void genDecl_descPointer(Boolean isSave, Xobject initValue) {
+    if(descPtrId != null) {
+      XMP.fatal("descPtrId is already set.");
+    }
+
+    String descPtrName = getDescPointerName();
+    Xtype xtype = Xtype.Fint8Type;
+    if (isSave)
+      _setSaveAttrInType(xtype);
+
+    descPtrId = env.declInternIdent(descPtrName, xtype);
+    descPtrId.setFparamValue(Xcons.List(initValue, null));
+  }
+  **************************/
 
 
   /*
@@ -174,7 +190,7 @@ public class XMPcoarray {
     args.add(_getLboundInIndexRange(coshape.getArg(corank - 1)));
     if (args.hasNullArg())
       XMP.fatal("generated null argument " + SET_COSHAPE_NAME + 
-                "(makeStmt_setCoshape(coshape))");
+                " (XMPcoarray.makeStmt_setCoshape(coshape))");
 
     Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
     if (subr == null) {
@@ -620,6 +636,29 @@ public class XMPcoarray {
       ident.setStorageClass(StorageClass.FLOCAL);
   }
 
+  public void setSaveAttr() {
+    // This seems not correct because it might cause serious side effects on other
+    // idents having the same subtree of Xtype.
+    //_setSaveAttrInType(ident.Type());
+    ident.setStorageClass(StorageClass.FSAVE);
+  }
+
+  public void setSaveAttrToDescPointer() {
+    // This seems not correct because it might cause serious side effects on other
+    // idents having the same subtree of Xtype.
+    //_setSaveAttrInType(getDescPointerId().Type());
+    getDescPointerId().setStorageClass(StorageClass.FSAVE);
+  }
+
+  public void setZeroToDescPointer() {
+    Xobject zero = Xcons.IntConstant(0, Xtype.intType, "8");
+    getDescPointerId().setFparamValue(Xcons.List(zero, null));
+  }
+
+  private void _setSaveAttrInType(Xtype type) {
+    type.setIsFsave(true);
+  }
+
   private void _resetSaveAttrInType(Xtype type) {
     type.setIsFsave(false);
 
@@ -741,7 +780,7 @@ public class XMPcoarray {
 
   public Ident getDescPointerId() {
     if (descPtrId == null)
-      XMP.warning("INTERNAL: illeagal null descPtrId");
+      XMP.warning("INTERNAL: illegal null descPtrId (XMPcoppy.getDescPointerId)");
 
     return descPtrId;
   }
@@ -749,12 +788,14 @@ public class XMPcoarray {
 
   /*************** should be deleted .....
   ***************************/
+  /** No no, this may be used again in Ver.6
+  ***/
   public Xobject getDescPointerIdExpr(Xobject baseAddr) {
     if (descPtrId != null)
       return descPtrId;
 
     Ident funcIdent =
-      getEnv().declExternIdent("xmpf_get_descr_id", Xtype.FintFunctionType);
+      getEnv().declExternIdent(GET_DESCR_ID_NAME, Xtype.FintFunctionType);
     Xobject descId = funcIdent.Call(Xcons.List(baseAddr));
     return descId;
   }
@@ -798,18 +839,24 @@ public class XMPcoarray {
   //}
 
   public String toString() {
-    return toString(ident);
-  }
-  public String toString(Xobject obj) {
-    return "Xobject(" + obj.getName()
-      + ",rank=" + obj.Type().getNumDimensions()
-      + ",corank=" + obj.Type().getCorank()
-      + ")";
-  }
-  public String toString(Xtype type) {
-    return "Xtype(rank=" + type.getNumDimensions()
-      + ",corank=" + type.getCorank()
-      + ")";
+    String s = 
+      "\n  Ident ident = " +  ident +
+      "\n  String name = " +  name +
+      "\n  FindexRange indexRange = " +  indexRange +
+      "\n  FindexRange coindexRange = " +  coindexRange +
+      "\n  Boolean isAllocatable = " +  isAllocatable +
+      "\n  Boolean isPointer = " +  isPointer +
+      "\n  Boolean isUseAssociated = " +  isUseAssociated +
+      "\n  Boolean _wasMovedFromModule = " + _wasMovedFromModule +
+      "\n  String _crayPtrName = " +  _crayPtrName +
+      "\n  Ident crayPtrId = " +  crayPtrId +
+      "\n  String _descPtrName = " +  _descPtrName +
+      "\n  Ident descPtrId = " +  descPtrId +
+      "\n  String homeBlockName = " +  homeBlockName +
+      "\n  XMPenv env = " +  env +
+      "\n  XobjectDef def = " +  def + ": name=" + def.getName() +
+      "\n  FunctionBlock fblock" + ": name=" + def.getName();
+    return s;
   }
 
 

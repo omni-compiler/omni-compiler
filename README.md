@@ -26,7 +26,7 @@ README
 ## Environment Variables
 * XMP_ONESIDED_HEAP_SIZE
  ** This value is used by using GASNet and MPI3 **
- This value specifies memory size for coarray. The default size is 16MB.
+ This value specifies memory size for onesided function. The default size is 16MB.
  To set this value, please execute as follows:
 
     $ export XMP_ONESIDED_HEAP_SIZE=32M

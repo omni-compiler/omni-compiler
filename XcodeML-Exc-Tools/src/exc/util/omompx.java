@@ -107,7 +107,6 @@ public class omompx
     boolean openACC = false;
     boolean coarray = false;
     boolean autocoarray = true;
-    boolean is_coarray_V4 = false;         // TEMPORARY
     boolean xcalableMP = false;
     boolean xcalableMPthreads = false;
     boolean xcalableMPGPU = false;
@@ -120,6 +119,7 @@ public class omompx
     boolean selective_profile = false;
     boolean doScalasca = false;
     boolean doTlog = false;
+    int caf_version = 3;         // TEMPORARY
     int maxColumns = 0;
         
     for(int i = 0; i < args.length; ++i) {
@@ -140,7 +140,9 @@ public class omompx
         coarray = true;
         autocoarray = false;
       } else if(arg.equals("-fcoarray=4")) {     // TEMPORARY
-        is_coarray_V4 = true;
+        caf_version = 4;
+      } else if(arg.equals("-fcoarray=6")) {     // TEMPORARY
+        caf_version = 6;
       } else if(arg.equals("-fnocoarray")) {
         coarray = false;
         autocoarray = false;
@@ -382,9 +384,7 @@ public class omompx
         }
         // Coarray Fortran pass#1
         exc.xmpF.XMPtransCoarray
-          caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1);
-        if (is_coarray_V4)
-          caf_translator1.set_version(4);
+          caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1, caf_version);
         xobjFile.iterateDef(caf_translator1);
         if(exc.xmpF.XMP.hasErrors())
           System.exit(1);
@@ -392,7 +392,7 @@ public class omompx
 
         // Coarray Fortran pass#2
         exc.xmpF.XMPtransCoarray
-          caf_translator2 = new exc.xmpF.XMPtransCoarray(xobjFile, 2);
+          caf_translator2 = new exc.xmpF.XMPtransCoarray(xobjFile, 2, caf_version);
         xobjFile.iterateDef(caf_translator2);
         if(exc.xmpF.XMP.hasErrors())
           System.exit(1);
