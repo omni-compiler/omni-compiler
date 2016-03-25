@@ -366,7 +366,14 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
 	    if (caseList.Opcode() == Xcode.F_STATEMENT_LIST){
 		for (Xobject a : (XobjList)caseList) {
-		    addChildNode(e, trans(a));
+		    if (a.Opcode() == Xcode.F_STATEMENT_LIST){
+			for (Xobject b : (XobjList)a){
+			    addChildNode(e, trans(b));
+			}
+		    }
+		    else {
+			addChildNode(e, trans(a));
+		    }
 		}
 	    }
 	    else {
