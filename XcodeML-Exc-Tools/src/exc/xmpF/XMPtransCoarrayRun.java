@@ -417,7 +417,7 @@ public class XMPtransCoarrayRun
     if (version > 3)
       disp_version("run1, " + getName());
 
-    if (_isModule()) {
+    if (isModule()) {
       run1_module();
     } else {
       run1_procedure();
@@ -425,7 +425,7 @@ public class XMPtransCoarrayRun
       if (!"1".equals(System.getenv("XMP_CASCADE"))) {
         // SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
         //  convert main program to soubroutine xmpf_main
-        if (_isMainProgram())
+        if (isMainProgram())
           _convMainProgramToSubroutine("xmpf_main");
       }
     }
@@ -488,7 +488,7 @@ public class XMPtransCoarrayRun
    */
   public void run2() {
 
-    if (!_isModule())
+    if (!isModule())
       return;                 // do nothing
 
     _setLocalCoarrays();
@@ -1065,11 +1065,15 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //
   private void addSaveAttrToDescPointer(ArrayList<XMPcoarray> coarrays) {
-    if (def.isFmoduleDef())  // module
+    if (isModule()) {
+      XMP.fatal("unexpected situation (XMPtransCoarrayRun.addSaveAttrToDescPointer)");
       return;
+    }
 
-    Xtype ft = def.getFuncType();
-    if (ft == null || !ft.isFprogram()) {     // subroutine or function
+    /* This is not necessary because these variables have implicit SAVE
+     * attributes bue to the initialization value defined later.
+     */
+    if (!isMainProgram()) {
       for (XMPcoarray coarray: coarrays) {
         coarray.setSaveAttrToDescPointer();   // add SAVE attr.
       }
@@ -2437,12 +2441,12 @@ public class XMPtransCoarrayRun
   //------------------------------
   //  inquire
   //------------------------------
-  private boolean _isMainProgram() {
+  private boolean isMainProgram() {
     Xtype ft = def.getFuncType();
     return (ft != null && ft.isFprogram());
   }
 
-  private boolean _isModule() {
+  private boolean isModule() {
     return  def.isFmoduleDef();
   }
 

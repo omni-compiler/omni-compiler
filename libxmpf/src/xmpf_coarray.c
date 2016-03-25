@@ -2,8 +2,14 @@
 
 #define DIV_CEILING(m,n)  (((m)-1)/(n)+1)
 
-//#define POOL_THRESHOLD (40)          // 40B for test
+/* Threshold of memory size to share in the pool
+ */
 #define POOL_THRESHOLD (40*1024*1024)          // 40MB
+
+/* Size of the communication buffer prepared for short communications
+ * to avoid allocation and registration every communication time
+ */
+#define COMM_BUFF_SIZE  (40000)                // ~40kB
 
 
 /*****************************************\
@@ -15,6 +21,7 @@ static int _XMPF_coarrayMsg_last;         // for _XMPF_set/reset_coarrayMsg()
 
 //static int _XMPF_coarrayErr = 0;          // default: aggressive error check off
 static unsigned _XMPF_poolThreshold = POOL_THRESHOLD;
+static size_t _XMPF_commBuffSize = COMM_BUFF_SIZE;
 
 static void _set_coarrayMsg(int sw)
 {
@@ -69,6 +76,11 @@ void XMPF_set_poolThreshold(unsigned size)
 unsigned XMPF_get_poolThreshold(void)
 {
   return _XMPF_poolThreshold;
+}
+
+size_t XMPF_get_commBuffSize(void)
+{
+  return _XMPF_commBuffSize;
 }
 
 
@@ -174,11 +186,13 @@ void _XMPF_coarray_init(void)
                           "   environment vars     :  XMPF_COARRAY_MSG=%s\n"
                           "                           XMPF_COARRAY_POOL=%s\n"
                           "   _XMPF_coarrayMsg     :  %d\n"
-                          "   _XMPF_poolThreshold  :  %u bytes\n",
+                          "   _XMPF_poolThreshold  :  %u bytes\n"
+                          "   _XMPF_commBuffSize   :  %u bytes\n",
                           ONESIDED_COMM_LAYER, ONESIDED_BOUNDARY,
                           env1 ? env1 : "", env2 ? env2 : "",
                           _XMPF_get_coarrayMsg(),
-                          XMPF_get_poolThreshold()
+                          XMPF_get_poolThreshold(),
+                          XMPF_get_commBuffSize()
                           );
 }
 
