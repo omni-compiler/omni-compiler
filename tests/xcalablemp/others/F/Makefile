@@ -3,7 +3,7 @@ XRUN    = mpiexec
 EXES    = module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x 397.x 412.x
 
 all: module_test.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
-     103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o save_desc.x schedule_default.o task001.o 152.x 397.x double_option.x
+     103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o save_desc.x schedule_default.o task001.o 152.x 397.x double_option.x nargs.o
 
 .SUFFIXES: .x .o .f90
 
@@ -18,6 +18,9 @@ all: module_test.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.
 
 .f.o:
 	$(XFC) -c $<
+
+nargs.o: nargs.f90
+	$(XFC) -c --Wn"-w" $<
 
 double_option.x: double_option.f90
 	$(XFC) -o double_option.x --Wn"-O2 -O2" double_option.f90
