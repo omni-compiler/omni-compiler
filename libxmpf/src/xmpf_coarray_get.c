@@ -156,9 +156,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
       _getCoarray(*descPtr, *baseAddr, *coindex, buf, *element,
                   *rank, skip, count);
       (void)memcpy(result, buf, bufsize);
-      ////////////////////////////
-      //free(buf);
-      /////////////////////////////
+      free(buf);
     }
     break;
 

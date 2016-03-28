@@ -23,6 +23,7 @@ enddo
 b=sum(a)
 syncall
 
+asum=0.0
 do i = 1, num_images()
   asum = asum + b[i]
 end do

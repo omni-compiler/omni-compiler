@@ -223,6 +223,7 @@ int xmpf_coarray_allocated_bytes_()
   MemoryChunk_t *chunk;
   size_t size, size1;
 
+  // sum all sizes of MemoryChunks
   size = 0;
   forallMemoryChunkOrder(chunkp) {
     chunk = chunkp->chunk;
@@ -232,6 +233,10 @@ int xmpf_coarray_allocated_bytes_()
                          ~(size_t)0 );
     size = size1;
   }
+
+  // subtract the size of the localBuf CoarrayInfo
+  // because this is not allocated by the user
+  size -= _cinfo_localBuf->nbytes;
 
   return size;
 }

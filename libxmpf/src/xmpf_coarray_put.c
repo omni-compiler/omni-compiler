@@ -222,9 +222,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
       _putCoarray(*descPtr, *baseAddr, *coindex, buf,
                   *element, *rank, skip, count,
                   NULL, 0, "(runtime buffer)");
-      ////////////////////////////
-      //free(buf);
-      ///////////////////////////// 
+      free(buf);
     }
 
     break;
