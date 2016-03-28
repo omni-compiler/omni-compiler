@@ -44,7 +44,7 @@ extern void _XMPF_reset_coarrayMsg(void);
 
 extern void XMPF_set_poolThreshold(unsigned size);
 extern unsigned XMPF_get_poolThreshold(void);
-extern size_t XMPF_get_commBuffSize(void);
+extern size_t XMPF_get_localBufSize(void);
 
 extern void xmpf_coarray_msg_(int *sw);
 

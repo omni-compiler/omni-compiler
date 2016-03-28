@@ -150,7 +150,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
     //////////////////////////////
     // if (FALSE) {
     //////////////////////////////
-    if (bufsize <= XMPF_get_commBuffSize()) {
+    if (bufsize <= XMPF_get_localBufSize()) {
       // using static buffer sharing the memory pool
       _XMPF_coarrayDebugPrint("select SCHEME_BufferGet-DMA/array\n"
                               "  bufsize=%zd, \'%s\'\n", bufsize,

@@ -422,13 +422,13 @@ void xmpf_coarray_malloc_pool_(void)
 {
   int one = 1;
 
-  size_t commBuffSize = XMPF_get_commBuffSize();
+  size_t localBufSize = XMPF_get_localBufSize();
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC_POOL\n"
                           "  totally required %u + comm_buff %u [bytes]\n",
-                          pool_totalSize, commBuffSize);
+                          pool_totalSize, localBufSize);
 
-  pool_totalSize += commBuffSize;
+  pool_totalSize += localBufSize;
 
   // init malloc/free history (STRUCTURE-II)
   _initMallocHistory();
@@ -442,8 +442,8 @@ void xmpf_coarray_malloc_pool_(void)
 
   // share communication buffer in the pool
   //-- instead of xmpf_coarray_alloc_static_
-  _cinfo_localBuf = _getShareOfStaticCoarray(commBuffSize,  // nbytes
-                                             commBuffSize); // elementRU
+  _cinfo_localBuf = _getShareOfStaticCoarray(localBufSize,  // nbytes
+                                             localBufSize); // elementRU
   _cinfo_localBuf->name = "(comm_buff)";
   //-- call of xmpf_coarray_set_coshape_
   xmpf_coarray_set_coshape_(&_cinfo_localBuf, &one, &one);

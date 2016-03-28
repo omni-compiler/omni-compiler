@@ -129,7 +129,8 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
                                 "  *baseAddr=%p, *element=%zd, _localBuf_baseAddr=%p\n",
                                 *baseAddr, *element, _localBuf_baseAddr);
         (void)memcpy(_localBuf_baseAddr, rhs, *element);
-        _putVector(*descPtr, *baseAddr, *element, *coindex, _localBuf_baseAddr);
+        _putVectorDMA(*descPtr, *baseAddr, *element, *coindex,
+                      _localBuf_desc, _localBuf_offset, _localBuf_name);
       } else {  // old version
         char buf[*element];
         _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/scalar\n"
@@ -150,7 +151,8 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
                                 "  *baseAddr=%p, elementRU=%zd, _localBuf_baseAddr=%p\n",
                                 *baseAddr, elementRU, _localBuf_baseAddr);
         (void)memcpy(_localBuf_baseAddr, rhs, *element);
-        _putVector(*descPtr, *baseAddr, elementRU, *coindex, _localBuf_baseAddr);
+        _putVectorDMA(*descPtr, *baseAddr, elementRU, *coindex,
+                      _localBuf_desc, _localBuf_offset, _localBuf_name);
       } else {  // old version
         char buf[elementRU];
         _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferPut/scalar\n"
@@ -238,7 +240,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
     //////////////////////////////
     // if (FALSE) {
     //////////////////////////////
-    if (bufsize <= XMPF_get_commBuffSize()) {
+    if (bufsize <= XMPF_get_localBufSize()) {
       // using static buffer sharing in the memory pool
       _XMPF_coarrayDebugPrint("select SCHEME_BufferPut-DMA/array\n"
                               "  bufsize=%zd\n", bufsize);
@@ -303,7 +305,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
   //////////////////////////////
   // if (FALSE) {
   //////////////////////////////
-  if (bufsize <= XMPF_get_commBuffSize()) {
+  if (bufsize <= XMPF_get_localBufSize()) {
     // using static buffer sharing in the memory pool
     _XMPF_coarrayDebugPrint("select SCHEME_BufferSpread-DMA/array\n"
                             "  bufsize=%zd\n", bufsize);
