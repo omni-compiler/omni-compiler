@@ -33,6 +33,24 @@ static void _getVectorByElement(char *desc, int start, int vlength,
 #endif
 
 /***************************************************\
+    initialization
+\***************************************************/
+
+void *_localBuf_desc;           // descriptor of the memory pool
+size_t _localBuf_offset;        // offset of the local buffer in the memory pool
+char *_localBuf_baseAddr;       // local base address of the local buffer
+char *_localBuf_name;           // name of the local buffer
+
+
+void _XMPF_coarrayInit_get()
+{
+  _localBuf_desc = _XMPF_get_localBufCoarrayDesc(&_localBuf_baseAddr,
+                                                 &_localBuf_offset,
+                                                 &_localBuf_name);
+}
+
+
+/***************************************************\
     entry
 \***************************************************/
 

@@ -133,12 +133,15 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
 extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition,
                                      int *rank, ...);
+extern void _XMPF_coarrayInit_put(void);
+
 
 /* xmpf_coarray_get.c */
 extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *result);
 extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char *result, int *rank, ...);
+extern void _XMPF_coarrayInit_get(void);
 
 /* xmpf_async.c */
 #ifdef _XMP_MPI3

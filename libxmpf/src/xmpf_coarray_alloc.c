@@ -447,6 +447,10 @@ void xmpf_coarray_malloc_pool_(void)
   _cinfo_localBuf->name = "(comm_buff)";
   //-- call of xmpf_coarray_set_coshape_
   xmpf_coarray_set_coshape_(&_cinfo_localBuf, &one, &one);
+
+  // init library internal
+  _XMPF_coarrayInit_get();
+  _XMPF_coarrayInit_put();
 }
 
 /*
@@ -1482,12 +1486,12 @@ void *_XMPF_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
                                     char **name)
 {
   MemoryChunk_t *chunk = _cinfo_localBuf->parent;
-  char *orgAddr = chunk->orgAddr;
+  char *orgAddr = chunk->orgAddr;                    // origin address of the memory pool
 
-  *baseAddr = _cinfo_localBuf->baseAddr;
-  *offset = _cinfo_localBuf->baseAddr - orgAddr;
-  *name = _cinfo_localBuf->name;
-  return chunk->desc;
+  *baseAddr = _cinfo_localBuf->baseAddr;             // base address of the local buffer
+  *offset = orgAddr - *baseAddr;                     // offset of the local buffer in the memory pool
+  *name = _cinfo_localBuf->name;                     // name of the local buffer
+  return chunk->desc;                                // descriptor of the memory pool
 }
 
 
