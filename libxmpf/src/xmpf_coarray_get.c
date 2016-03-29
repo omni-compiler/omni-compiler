@@ -3,7 +3,7 @@
  *
  */
 
-#include <stdarg.h>
+#include <assert.h>
 #include "xmpf_internal.h"
 
 // communication schemes
@@ -12,25 +12,26 @@
 #define SCHEME_ExtraDirectGet  22   // DirectGet with extra data
 #define SCHEME_ExtraBufferGet  23   // BufferGet with extra data
 
-static int _select_getscheme_scalar(int element);
-static int _select_getscheme_array(void);
+static int _select_getscheme_scalar(int element, BOOL avail_DMA);
+static int _select_getscheme_array(BOOL avail_DMA);
 
 static void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *res,
-                        int bytes, int rank, int skip[], int count[]);
+                        int bytes, int rank, int skip[], int count[],
+                        void *descDMA, size_t offsetDMA, char *nameDMA);
 
-static char *_getVectorIter(void *descPtr, char *baseAddr, int bytes,
-                            int coindex, char *dst,
-                            int loops, int skip[], int count[]);
+static char *_getVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
+                            char *dst, int loops, int skip[], int count[],
+                            void *descDMA, size_t offsetDMA, char *nameDMA);
+
+static void _getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
+                           void *descDMA, size_t offsetDMA, char *nameDMA);
+
+static void _getVector_buffer(void *descPtr, char *baseAddr, int bytes1, int coindex,
+                              char *result, int bytes2);
 
 static void _getVector(void *descPtr, char *baseAddr, int bytes,
                        int coindex, char *dst);
-#if 0
-/* disused */
-static void _getVectorByByte(void *descPtr, char *baseAddr, int bytes,
-                             int coindex, char *dst);
-static void _getVectorByElement(char *desc, int start, int vlength,
-                                int coindex, char *dst);
-#endif
+
 
 /***************************************************\
     initialization
@@ -59,41 +60,52 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
 {
   _XMPF_checkIfInTask("a scalar coindexed object");
 
-  int scheme = _select_getscheme_scalar(*element);
+  /*--------------------------------------*\
+   * get descriptor and others from the   *
+   * local address if already registered  *
+  \*--------------------------------------*/
+  void *descDMA;
+  size_t offsetDMA;
+  char *orgAddrDMA;
+  char *nameDMA;
+  int avail_DMA;
+
+  descDMA = _XMPF_get_coarrayDescFromAddr(result, &orgAddrDMA, &offsetDMA, &nameDMA);
+  avail_DMA = descDMA ? 1 : 0;
+
+  /*--------------------------------------*\
+   * select scheme                        *
+  \*--------------------------------------*/
+  int scheme = _select_getscheme_scalar(*element, avail_DMA);
 
   switch (scheme) {
   case SCHEME_DirectGet:
-    _XMPF_coarrayDebugPrint("select SCHEME_DirectGet/scalar\n"
-                            "  *baseAddr=%p, *element=%d, \'%s\'\n",
-                            *baseAddr, *element,
-                            _XMPF_get_coarrayName(*descPtr));
-    _getVector(*descPtr, *baseAddr, *element, *coindex, result);
+    {
+      _XMPF_coarrayDebugPrint("SCHEME_DirectGet/scalar selected\n");
+
+      assert(avail_DMA);
+      _getVector_DMA(*descPtr, *baseAddr, *element, *coindex,
+                     descDMA, offsetDMA, nameDMA);
+    }
     break;
 
   case SCHEME_BufferGet:
     {
-      char buf[*element];
+      _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/scalar\n");
 
-      _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/scalar\n",
-                              "  *baseAddr=%p, *element=%d, buf=%p, \'%s\'\n",
-                              *baseAddr, *element, buf,
-                            _XMPF_get_coarrayName(*descPtr));
-      _getVector(*descPtr, *baseAddr, *element, *coindex, buf);
-      (void)memcpy(result, buf, *element);
+      _getVector_buffer(*descPtr, *baseAddr, *element, *coindex,
+                        result, *element);
     }
     break;
 
   case SCHEME_ExtraBufferGet:
     {
       size_t elementRU = ROUND_UP_BOUNDARY(*element);
-      char buf[elementRU];
 
-      _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferGet/scalar\n",
-                              "  *baseAddr=%p, elementRU=%d, buf=%p, \'%s\'\n",
-                              *baseAddr, elementRU, buf,
-                            _XMPF_get_coarrayName(*descPtr));
-      _getVector(*descPtr, *baseAddr, elementRU, *coindex, buf);
-      (void)memcpy(result, buf, *element);
+      _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferGet/scalar\n");
+
+      _getVector_buffer(*descPtr, *baseAddr, elementRU, *coindex,
+                        result, *element);
     }
     break;
 
@@ -108,23 +120,21 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
 {
   _XMPF_checkIfInTask("an array coindexed object");
 
-  size_t bufsize;
-  char *buf;
-  int i;
-
-  int scheme = _select_getscheme_array();
-
-  char **nextAddr;
-  int skip[MAX_RANK];
-  int count[MAX_RANK];
-  va_list argList;
-  va_start(argList, rank);
-
   if (*element % ONESIDED_BOUNDARY != 0) {
     _XMP_fatal("violation of boundary in reference of a coindexed object\n"
               "  xmpf_coarray_get_array_, " __FILE__);
     return;
   }
+
+  /*--------------------------------------*\
+   *   argument analysis                  *
+  \*--------------------------------------*/
+  va_list argList;
+  va_start(argList, rank);
+
+  char **nextAddr;
+  int skip[MAX_RANK];
+  int count[MAX_RANK];
 
   for (int i = 0; i < *rank; i++) {
     nextAddr = (va_arg(argList, char**));
@@ -132,50 +142,39 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
     count[i] = *(va_arg(argList, int*));
   }
 
+  /*--------------------------------------*\
+   * get information for DMA              *
+  \*--------------------------------------*/
+  void *descDMA;
+  size_t offsetDMA;
+  char *orgAddrDMA;
+  char *nameDMA;
+  int avail_DMA;
+
+  descDMA = _XMPF_get_coarrayDescFromAddr(result, &orgAddrDMA, &offsetDMA, &nameDMA);
+  avail_DMA = descDMA ? 1 : 0;
+
+  /*--------------------------------------*\
+   * select scheme                        *
+  \*--------------------------------------*/
+  int scheme = _select_getscheme_array(avail_DMA);
+
+  /*--------------------------------------*\
+   * action                               *
+  \*--------------------------------------*/
   switch (scheme) {
   case SCHEME_DirectGet:
-    _XMPF_coarrayDebugPrint("select SCHEME_DirectGet/array\n"
-                            "  *baseAddr=%p, *element=%d, \'%s\'\n",
-                            *baseAddr, *element,
-                            _XMPF_get_coarrayName(*descPtr));
-    _getCoarray(*descPtr, *baseAddr, *coindex, result, *element, *rank, skip, count);
+    _XMPF_coarrayDebugPrint("select SCHEME_DirectGet/array\n");
+    _getCoarray(*descPtr, *baseAddr, *coindex, result,
+                *element, *rank, skip, count,
+                descDMA, offsetDMA, nameDMA);
     break;
 
   case SCHEME_BufferGet:
-    bufsize = *element;
-    for (i = 0; i < *rank; i++) {
-      bufsize *= count[i];
-    }
-
-    //////////////////////////////
-    // if (FALSE) {
-    //////////////////////////////
-    if (bufsize <= XMPF_get_localBufSize()) {
-      // using static buffer sharing the memory pool
-      _XMPF_coarrayDebugPrint("select SCHEME_BufferGet-DMA/array\n"
-                              "  bufsize=%zd, \'%s\'\n", bufsize,
-                              _XMPF_get_coarrayName(*descPtr));
-
-      void *descDMA;
-      size_t offsetDMA;
-      char *nameDMA;
-      char *localBuf;
-      descDMA = _XMPF_get_localBufCoarrayDesc(&localBuf, &offsetDMA, &nameDMA);
-      _getCoarray(*descPtr, *baseAddr, *coindex, localBuf,
-                  *element, *rank, skip, count);
-      (void)memcpy(result, localBuf, bufsize);
-
-    } else {
-      // default: runtime-allocated buffer for large data
-      _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/array\n"
-                              "  bufsize=%zd, \'%s\'\n", bufsize,
-                              _XMPF_get_coarrayName(*descPtr));
-      buf = malloc(bufsize);
-      _getCoarray(*descPtr, *baseAddr, *coindex, buf, *element,
-                  *rank, skip, count);
-      (void)memcpy(result, buf, bufsize);
-      free(buf);
-    }
+    _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/array\n");
+    _getCoarray(*descPtr, *baseAddr, *coindex, result,
+                *element, *rank, skip, count,
+                NULL, 0, "(localBuf)");
     break;
 
   default:
@@ -188,47 +187,55 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
     sub
 \***************************************************/
 
-int _select_getscheme_scalar(int element)
+/* REMARKING CONDITIONS:
+ *  - The result variable may be invisible to FJ-RDMA.
+ *  - The length of put/get communication must be divisible by
+ *    ONESIDED_BOUNDARY. Else, SCHEME_Extra... should be selected.
+ *  - SCHEME_ExtraDirectGet should not be used because the extra
+ *    copy to local destination might overwrite neighboring data.
+ *  - Array element of coarray is divisible by ONESIDED_BOUNDARY
+ *    due to a restriction.
+ */
+
+int _select_getscheme_scalar(int element, BOOL avail_DMA)
 {
   if (element % ONESIDED_BOUNDARY > 0)
     return SCHEME_ExtraBufferGet;
 
-  // SCHEME_ExtraDirectGet should not be used because 
-  // the extra area overwritten may be valid data.
+  if (avail_DMA)
+    return SCHEME_DirectGet;
 
-#ifdef _XMP_FJRDMA
-  // The result scalar variable may be invisible to FJ-RDMA.
   return SCHEME_BufferGet;
-#else
-  return SCHEME_DirectGet;
-#endif
 }
 
-int _select_getscheme_array(void)
+int _select_getscheme_array(BOOL avail_DMA)
 {
-#ifdef _XMP_FJRDMA
-  // The result array variable may be invisible to FJ-RDMA.
+  if (avail_DMA)
+    return SCHEME_DirectGet;
+
   return SCHEME_BufferGet;
-#else
-  return SCHEME_DirectGet;
-#endif
 }
 
 
 void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *result,
-                 int bytes, int rank, int skip[], int count[])
+                 int bytes, int rank, int skip[], int count[],
+                 void *descDMA, size_t offsetDMA, char *nameDMA)
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
-    _XMPF_coarrayDebugPrint("GET %d bytes fully contiguous ===\n"
-                            "  coindex %d gets from %d\n",
-                            bytes, XMPF_initial_this_image, coindex);
-    _getVector(descPtr, baseAddr, bytes, coindex, result);
+    if (descDMA != NULL)   // DMA available
+      _getVector_DMA(descPtr, baseAddr, bytes, coindex,
+                     descDMA, offsetDMA, nameDMA);
+    else
+      _getVector_buffer(descPtr, baseAddr, bytes, coindex,
+                        result, bytes);
     return;
   }
 
   if (bytes == skip[0]) {  // contiguous
+    // colapse the axis recursively
     _getCoarray(descPtr, baseAddr, coindex, result,
-                bytes * count[0], rank - 1, skip + 1, count + 1);
+                bytes * count[0], rank - 1, skip + 1, count + 1,
+                descDMA, offsetDMA, nameDMA);
     return;
   }
 
@@ -248,74 +255,149 @@ void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *result,
   }
 
   dst = _getVectorIter(descPtr, baseAddr, bytes, coindex, dst,
-                       rank, skip, count);
+                       rank, skip, count,
+                       descDMA, offsetDMA, nameDMA);
 }
 
   
-char *_getVectorIter(void *descPtr, char *baseAddr, int bytes,
-                     int coindex, char *dst,
-                     int loops, int skip[], int count[])
+char *_getVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
+                     char *dst, int loops, int skip[], int count[],
+                     void *descDMA, size_t offsetDMA, char *nameDMA)
 {
   char* src = baseAddr;
   int n = count[loops - 1];
   int gap = skip[loops - 1];
 
   if (loops == 1) {
-    for (int i = 0; i < n; i++) {
-      _getVector(descPtr, src, bytes, coindex, dst);
-      dst += bytes;
-      src += gap;
+    if (descDMA != NULL) {  // DMA available
+      for (int i = 0; i < n; i++) {
+        _getVector_DMA(descPtr, src, bytes, coindex,
+                       descDMA, offsetDMA, nameDMA);
+        dst += bytes;
+        src += gap;
+      }
+    } else {    // recursive communication with static buffer
+      for (int i = 0; i < n; i++) {
+        _getVector_buffer(descPtr, src, bytes, coindex,
+                          dst, bytes);
+        dst += bytes;
+        src += gap;
+      }
     }
-  } else {
-    for (int i = 0; i < n; i++) {
-      dst = _getVectorIter(descPtr, baseAddr + i * gap, bytes,
-                           coindex, dst,
-                           loops - 1, skip, count);
-    }
+    return dst;
+  }
+
+  for (int i = 0; i < n; i++) {
+    dst = _getVectorIter(descPtr, baseAddr + i * gap, bytes,
+                         coindex, dst,
+                         loops - 1, skip, count,
+                         descDMA, offsetDMA, nameDMA);
   }
   return dst;
 }
 
 
-void _getVector(void *descPtr, char *src, int bytes, int coindex, char *dst)
+void _getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
+                    void *descDMA, size_t offsetDMA, char *nameDMA)
 {
   char* desc = _XMPF_get_coarrayDesc(descPtr);
-  size_t offset = _XMPF_get_coarrayOffset(descPtr, src);
+  size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
 
-  _XMPF_coarrayDebugPrint("*** _getVector offset=%zd, dst=%p, bytes=%d\n",
-                          offset, dst, bytes);
+  _XMPF_coarrayDebugPrint("from [%d] GET_VECTOR RDMA-DMA, %d bytes\n"
+                          "  src (RDMA): \'%s\', offset=%zd\n"
+                          "  dst (DMA) : \'%s\', offset=%zd\n",
+                          coindex, bytes,
+                          _XMPF_get_coarrayName(descPtr), offset,
+                          nameDMA, offsetDMA);
 
-  _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // coindexed-object
-  _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // result
-  _XMP_coarray_rdma_image_set_1(coindex);
-  _XMP_coarray_rdma_do(COARRAY_GET_CODE, desc, dst, NULL);
+  // ACTION
+  _XMP_coarray_shortcut_get(coindex,
+                            descDMA,   desc,
+                            offsetDMA, offset,
+                            bytes,     bytes);
+}
 
-  _XMPF_coarrayDebugPrint("*** _getVector done\n");
+
+void _getVector_buffer(void *descPtr, char *baseAddr, int bytes1, int coindex,
+                       char *result, int bytes2)
+{
+  size_t rest1, rest2, bufSize;
+  char *src, *dst;
+
+  src = baseAddr;
+  dst = result;
+  bufSize = XMPF_get_localBufSize();
+
+  // communication for every buffer size
+  for (rest1 = bytes1, rest2 = bytes2;
+       rest1 > bufSize;
+       rest1 -= bufSize, rest2 -=bufSize) {
+    _getVector_DMA(descPtr, src, bufSize, coindex,
+                   _localBuf_desc, _localBuf_offset, _localBuf_name);
+
+    _XMPF_coarrayDebugPrint("MEMCPY %d bytes\n"
+                            "  src: \'%s\'\n"
+                            "  dst: addr=%p\n",
+                            bufSize,
+                            _localBuf_name,
+                            dst);
+    (void)memcpy(dst, _localBuf_baseAddr, bufSize);
+
+    src += bufSize;
+    dst += bufSize;
+  }
+
+  _getVector_DMA(descPtr, src, rest1, coindex,
+                 _localBuf_desc, _localBuf_offset, _localBuf_name);
+
+  _XMPF_coarrayDebugPrint("MEMCPY %d bytes\n"
+                          "  src: \'%s\'\n"
+                          "  dst: addr=%p\n",
+                          rest2,
+                          _localBuf_name,
+                          dst);
+  (void)memcpy(dst, _localBuf_baseAddr, rest2);
 }
 
 
 #if 0
-/* disused
- */
-void _getVectorByByte(void *descPtr, char *src, int bytes,
-                      int coindex, char *dst)
+//////// obsolete
+void _getVector(void *descPtr, char *baseAddr, int bytes, int coindex,
+                char *dst)
 {
   char* desc = _XMPF_get_coarrayDesc(descPtr);
-  int start = _XMPF_get_coarrayStart(descPtr, src);
-  // The element that was recorded when the data was allocated is used.
-  int element = _XMPF_get_coarrayElement(descPtr);
-  int vlength = bytes / element;
+  size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
 
-  _getVectorByElement(desc, start, vlength, coindex, dst);
+  if ((size_t)bytes <= XMPF_get_localBufSize()) {
+    _XMPF_coarrayDebugPrint("to [%d] GET_VECTOR RDMA-DMA-memcpy, %d bytes\n"
+                            "  source      (RDMA): \'%s\', offset=%zd\n"
+                            "  destination (DMA) : static buffer in the pool, offset=%zd\n",
+                            coindex, bytes,
+                            _XMPF_get_coarrayName(descPtr), offset,
+                            _localBuf_offset);
+
+    // ACTION
+    _XMP_coarray_shortcut_get(coindex,
+                              _localBuf_desc,   desc,
+                              _localBuf_offset, offset,
+                              bytes,            bytes);
+    (void)memcpy(dst, _localBuf_baseAddr, bytes);
+
+  } else {
+    _XMPF_coarrayDebugPrint("to [%d] GET_VECTOR regmem&RDMA, %d bytes\n"
+                            "  source      (RDMA): \'%s\', offset=%zd\n"
+                            "  destination       : dynamically-allocated buffer, addr=%p\n",
+                            coindex, bytes,
+                            _XMPF_get_coarrayName(descPtr), offset,
+                            dst);
+
+    // ACTION
+    _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // coindexed-object
+    _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // result
+    _XMP_coarray_rdma_image_set_1(coindex);
+    _XMP_coarray_rdma_do(COARRAY_GET_CODE, desc, dst, NULL);
+  }
 }
-
-void _getVectorByElement(char *desc, int start, int vlength,
-                         int coindex, char *dst)
-{
-  _XMP_coarray_rdma_coarray_set_1(start, vlength, 1);    // coindexed-object
-  _XMP_coarray_rdma_array_set_1(0, vlength, 1, 1, 1);    // result
-  _XMP_coarray_rdma_image_set_1(coindex);
-  _XMP_coarray_rdma_do(COARRAY_GET_CODE, desc, dst, NULL);
-}
-
 #endif
+
+

@@ -28,13 +28,6 @@ static void _putVectorDMA(void *descPtr, char *baseAddr, int bytes, int coindex,
 
 static void _putVector(void *descPtr, char *baseAddr, int bytes,
                        int coindex, char* src);
-#if 0
-/* disused */
-static void _putVectorByByte(void *descPtr, char *baseAddr, int bytes,
-                             int coindex, char* src);
-static void _putVectorByElement(char *desc, int start, int vlength,
-                                int coindex, char* src);
-#endif
 
 
 /***************************************************\
@@ -91,13 +84,14 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
   \*--------------------------------------*/
   switch (scheme) {
   case SCHEME_DirectPut:
-    if (avail_DMA) {
-      _XMPF_coarrayDebugPrint("select SCHEME_DirectPut-DMA/scalar\n");
-      _putVectorDMA(*descPtr, *baseAddr, *element, *coindex,
-                    descDMA, offsetDMA, nameDMA);
-    } else {
-      _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/scalar\n");
-      _putVector(*descPtr, *baseAddr, *element, *coindex, rhs);
+    {
+      _XMPF_coarrayDebugPrint("SCHEME_DirectPut/scalar selected\n");
+
+      if (avail_DMA)
+        _putVectorDMA(*descPtr, *baseAddr, *element, *coindex,
+                      descDMA, offsetDMA, nameDMA);
+      else
+        _putVector(*descPtr, *baseAddr, *element, *coindex, rhs);
     }
     break;
     
@@ -105,40 +99,24 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     {
       size_t elementRU = ROUND_UP_BOUNDARY(*element);
 
-      if (avail_DMA) {
-        _XMPF_coarrayDebugPrint("select SCHEME_ExtraDirectPut-DMA/scalar\n"
-                                "  *baseAddr=%p, *element=%d, elementRU=%zd\n",
-                                *baseAddr, *element, elementRU);
+      _XMPF_coarrayDebugPrint("SCHEME_ExtraDirectPut/scalar selected, elementRU=%zd\n",
+                              elementRU);
 
+      if (avail_DMA)
         _putVectorDMA(*descPtr, *baseAddr, elementRU, *coindex,
                       descDMA, offsetDMA, nameDMA);
-      } else {
-        _XMPF_coarrayDebugPrint("select SCHEME_ExtraDirectPut/scalar\n"
-                                "  *baseAddr=%p, *element=%d, elementRU=%zd\n",
-                                *baseAddr, *element, elementRU);
-
+      else
         _putVector(*descPtr, *baseAddr, elementRU, *coindex, rhs);
-      }
     }
     break;
 
   case SCHEME_BufferPut:
     {
-      if (TRUE) {
-        _XMPF_coarrayDebugPrint("select SCHEME_BufferPut-DMA/scalar\n"
-                                "  *baseAddr=%p, *element=%zd, _localBuf_baseAddr=%p\n",
-                                *baseAddr, *element, _localBuf_baseAddr);
-        (void)memcpy(_localBuf_baseAddr, rhs, *element);
-        _putVectorDMA(*descPtr, *baseAddr, *element, *coindex,
-                      _localBuf_desc, _localBuf_offset, _localBuf_name);
-      } else {  // old version
-        char buf[*element];
-        _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/scalar\n"
-                                "  *baseAddr=%p, *element=%zd, buf=%p\n",
-                                *baseAddr, *element, buf);
-        (void)memcpy(buf, rhs, *element);
-        _putVector(*descPtr, *baseAddr, *element, *coindex, buf);
-      }
+      _XMPF_coarrayDebugPrint("SCHEME_BufferPut/scalar selected\n");
+
+      (void)memcpy(_localBuf_baseAddr, rhs, *element);
+      _putVectorDMA(*descPtr, *baseAddr, *element, *coindex,
+                    _localBuf_desc, _localBuf_offset, _localBuf_name);
     }
     break;
 
@@ -146,21 +124,12 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     {
       size_t elementRU = ROUND_UP_BOUNDARY(*element);
 
-      if (TRUE) {
-        _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferPut/scalar\n"
-                                "  *baseAddr=%p, elementRU=%zd, _localBuf_baseAddr=%p\n",
-                                *baseAddr, elementRU, _localBuf_baseAddr);
-        (void)memcpy(_localBuf_baseAddr, rhs, *element);
-        _putVectorDMA(*descPtr, *baseAddr, elementRU, *coindex,
-                      _localBuf_desc, _localBuf_offset, _localBuf_name);
-      } else {  // old version
-        char buf[elementRU];
-        _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferPut/scalar\n"
-                                "  *baseAddr=%p, elementRU=%zd, buf=%p\n",
-                                *baseAddr, elementRU, buf);
-        (void)memcpy(buf, rhs, *element);
-        _putVector(*descPtr, *baseAddr, elementRU, *coindex, buf);
-      }
+      _XMPF_coarrayDebugPrint("SCHEME_ExtraBufferPut/scalar selected, elementRU=%zd\n",
+                              elementRU);
+
+      (void)memcpy(_localBuf_baseAddr, rhs, *element);
+      _putVectorDMA(*descPtr, *baseAddr, elementRU, *coindex,
+                    _localBuf_desc, _localBuf_offset, _localBuf_name);
     }
     break;
 
@@ -374,7 +343,7 @@ int _select_putscheme_array(int condition, int avail_DMA)
 #ifdef _XMP_FJRDMA
   if (!avail_DMA) {
     if (condition >= 1) {         // very conservative choice
-      return SCHEME_BufferPut;
+      return SCHEME_BufferPut;    // most cases in FJRDMA
     }
   }
 #endif
@@ -385,12 +354,12 @@ int _select_putscheme_array(int condition, int avail_DMA)
 
 void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
                  int bytes, int rank, int skip[], int count[],
-                 void *descDMA, size_t offsetDMA, char *rhs_name)
+                 void *descDMA, size_t offsetDMA, char *nameDMA)
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
     if (descDMA != NULL)
       _putVectorDMA(descPtr, baseAddr, bytes, coindex,
-                    descDMA, offsetDMA, rhs_name);
+                    descDMA, offsetDMA, nameDMA);
     else
       _putVector(descPtr, baseAddr, bytes, coindex, rhs);
     return;
@@ -399,7 +368,7 @@ void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
   if (bytes == skip[0]) {  // regarded as contiguous
     _putCoarray(descPtr, baseAddr, coindex, rhs,
                 bytes * count[0], rank - 1, skip + 1, count + 1,
-                descDMA, offsetDMA, rhs_name);
+                descDMA, offsetDMA, nameDMA);
     return;
   }
 
@@ -420,13 +389,13 @@ void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
 
   src = _putVectorIter(descPtr, baseAddr, bytes, coindex, src,
                        rank, skip, count,
-                       descDMA, offsetDMA, rhs_name);
+                       descDMA, offsetDMA, nameDMA);
 }
 
   
 char *_putVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
                      char *src, int loops, int skip[], int count[],
-                     void *descDMA, size_t offsetDMA, char *rhs_name)
+                     void *descDMA, size_t offsetDMA, char *nameDMA)
 {
   char* dst = baseAddr;
   int n = count[loops - 1];
@@ -436,7 +405,7 @@ char *_putVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
     for (int i = 0; i < n; i++) {
       if (descDMA != NULL)
         _putVectorDMA(descPtr, dst, bytes, coindex,
-                      descDMA, offsetDMA, rhs_name);
+                      descDMA, offsetDMA, nameDMA);
       else
         _putVector(descPtr, dst, bytes, coindex, src);
       src += bytes;
@@ -446,7 +415,7 @@ char *_putVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
     for (int i = 0; i < n; i++) {
       src = _putVectorIter(descPtr, baseAddr + i * gap, bytes,
                            coindex, src, loops - 1, skip, count,
-                           descDMA, offsetDMA, rhs_name);
+                           descDMA, offsetDMA, nameDMA);
     }
   }
   return src;
@@ -459,20 +428,18 @@ void _putVectorDMA(void *descPtr, char *baseAddr, int bytes, int coindex,
   char* desc = _XMPF_get_coarrayDesc(descPtr);
   size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
 
-  _XMPF_coarrayDebugPrint("PUT %d-byte vector to [%d] (DMA-to-RDMA)\n"
-                          "  destination (RDMA): \'%s\', offset=%zd\n"
-                          "  source      (DMA) : \'%s\', offset=%zd\n",
-                          bytes, coindex,
-                          _XMPF_get_coarrayName(descPtr), offset,
-                          nameDMA, offsetDMA);
+  _XMPF_coarrayDebugPrint("to [%d] PUT_VECTOR DMA-RDMA, %d bytes\n"
+                          "  source      (DMA) : \'%s\', offset=%zd\n"
+                          "  destination (RDMA): \'%s\', offset=%zd\n",
+                          coindex, bytes,
+                          nameDMA, offsetDMA,
+                          _XMPF_get_coarrayName(descPtr), offset);
 
   // ACTION
   _XMP_coarray_shortcut_put(coindex,
                             desc,   descDMA,
                             offset, offsetDMA,
                             bytes,  bytes);
-
-  _XMPF_coarrayDebugPrint("*** _putVector RDMA-DMA done\n");
 }
 
 void _putVector(void *descPtr, char *baseAddr, int bytes, int coindex,
@@ -481,45 +448,35 @@ void _putVector(void *descPtr, char *baseAddr, int bytes, int coindex,
   char* desc = _XMPF_get_coarrayDesc(descPtr);
   size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
 
-  _XMPF_coarrayDebugPrint("PUT %d-byte vector to [%d] (buffer-to-RDMA)\n"
-                          "  destination (RDMA): \'%s\', offset=%zd\n"
-                          "  source (buffer)   : addr=%p\n",
-                          bytes, coindex,
-                          _XMPF_get_coarrayName(descPtr), offset,
-                          baseAddr);
+  if ((size_t)bytes <= XMPF_get_localBufSize()) {
+    _XMPF_coarrayDebugPrint("to [%d] PUT_VECTOR memcpy-DMA-RDMA, %d bytes\n"
+                            "  source      (DMA) : static buffer in the pool, offset=%zd\n"
+                            "  destination (RDMA): \'%s\', offset=%zd\n",
+                            coindex, bytes,
+                            _localBuf_offset,
+                            _XMPF_get_coarrayName(descPtr), offset);
 
-  // ACTION
-  _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // LHS (remote)
-  _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // RHS (local)
-  _XMP_coarray_rdma_image_set_1(coindex);
-  _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, src, NULL);
+    // ACTION
+    (void)memcpy(_localBuf_baseAddr, src, bytes);
+    _XMP_coarray_shortcut_put(coindex,
+                              desc,   _localBuf_desc,
+                              offset, _localBuf_offset,
+                              bytes,  bytes);
 
-  _XMPF_coarrayDebugPrint("*** _putVector RDMA-genaral done\n");
+  } else {
+    _XMPF_coarrayDebugPrint("to [%d] PUT_VECTOR RDMA, %d bytes\n"
+                            "  source            : dynamically-allocated buffer, addr=%p\n"
+                            "  destination (RDMA): \'%s\', offset=%zd\n",
+                            coindex, bytes,
+                            src,
+                            _XMPF_get_coarrayName(descPtr), offset);
+
+    // ACTION
+    _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // LHS (remote)
+    _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // RHS (local)
+    _XMP_coarray_rdma_image_set_1(coindex);
+    _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, src, NULL);
+  }
 }
 
 
-#if 0
-/* disused
- */
-void _putVectorByByte(void *descPtr, char *baseAddr, int bytes,
-                      int coindex, char *src)
-{
-  char* desc = _XMPF_get_coarrayDesc(descPtr);
-  int start = _XMPF_get_coarrayStart(descPtr, baseAddr);
-  // The element that was recorded when the data was allocated is used.
-  int element = _XMPF_get_coarrayElement(descPtr);
-  int vlength = bytes / element;
-
-  _putVectorByElement(desc, start, vlength, coindex, src);
-}
-
-void _putVectorByElement(char *desc, int start, int vlength,
-                         int coindex, char* src)
-{
-  _XMP_coarray_rdma_coarray_set_1(start, vlength, 1);    // LHS
-  _XMP_coarray_rdma_array_set_1(0, vlength, 1, 1, 1);    // RHS
-  _XMP_coarray_rdma_image_set_1(coindex);
-  _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, src, NULL);
-}
-
-#endif

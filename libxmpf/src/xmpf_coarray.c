@@ -9,7 +9,7 @@
 /* Size of the communication buffer prepared for short communications
  * to avoid allocation and registration every communication time
  */
-#define COMM_BUFF_SIZE  (40000)                // ~40kB
+#define LOCAL_BUF_SIZE  (40000)                // ~40kB
 
 
 /*****************************************\
@@ -21,7 +21,7 @@ static int _XMPF_coarrayMsg_last;         // for _XMPF_set/reset_coarrayMsg()
 
 //static int _XMPF_coarrayErr = 0;          // default: aggressive error check off
 static unsigned _XMPF_poolThreshold = POOL_THRESHOLD;
-static size_t _XMPF_localBufSize = COMM_BUFF_SIZE;
+static size_t _XMPF_localBufSize = LOCAL_BUF_SIZE;
 
 static void _set_coarrayMsg(int sw)
 {
@@ -43,8 +43,12 @@ static void _set_coarrayMsg(int sw)
 
 
 /*****************************************\
-  static vars and functions
+  static and extern functions
 \*****************************************/
+
+static void _set_poolThreshold(unsigned size);
+static void _set_localBufSize(unsigned size);
+static unsigned _envStringToBytes(char *str, char *envVarName);
 
 int _XMPF_get_coarrayMsg(void)
 {
@@ -64,12 +68,21 @@ void _XMPF_reset_coarrayMsg(void)
 }
 
 
-void XMPF_set_poolThreshold(unsigned size)
+static void _set_poolThreshold(unsigned size)
 {
   _XMPF_poolThreshold = size;
 
   _XMPF_coarrayDebugPrint("set _XMPF_poolThreshold = %u\n",
                           _XMPF_poolThreshold);
+}
+
+
+static void _set_localBufSize(unsigned size)
+{
+  _XMPF_localBufSize = size;
+
+  _XMPF_coarrayDebugPrint("set _XMPF_localBufSize = %u\n",
+                          _XMPF_localBufSize);
 }
 
 
@@ -122,11 +135,10 @@ void _XMPF_coarray_init(void)
   /*
    * read environment variables
    */
-  char *tok, *work, *env1, *env2;
-  int i, stat;
+  char *tok, *work, *env1, *env2, *env3;
+  int i;
   char delim[] = ", ";
   unsigned len;
-  char c;
 
   env1 = getenv("XMPF_COARRAY_MSG");
   if (env1 != NULL) {
@@ -140,60 +152,86 @@ void _XMPF_coarray_init(void)
 
   env2 = getenv("XMPF_COARRAY_POOL");
   if (env2 != NULL) {
-    work = strdup(env2);
-    stat = sscanf(work, "%u%c", &len, &c);
-
-    switch (stat) {
-    case EOF:
-    case 0:
-      // use default value of poolThread
-      break;
-
-    case 1:
-      XMPF_set_poolThreshold(len);
-      break;
-
-    case 2:
-      switch (c) {
-      case 'k':
-      case 'K':
-        XMPF_set_poolThreshold(len * 1024);
-        break;
-      case 'm':
-      case 'M':
-        XMPF_set_poolThreshold(len * 1024 * 1024);
-        break;
-      case 'g':
-      case 'G':
-        XMPF_set_poolThreshold(len * 1024 * 1024 * 1024);
-        break;
-      default:
-        _XMPF_coarrayFatal("Usage of XMPF_COARRAY_POOL: [0-9]+[kKmMgG]?");
-        break;
-      }
-      break;
-
-    default:
-      _XMPF_coarrayFatal("Illegal value of environ variable XMPF_COARRAY_POOL.\n"
-                         "  Usage: [0-9]+[kKmMgG]?");
-      break;
-    }
+    len = _envStringToBytes(env2, "XMPF_COARRAY_POOL");
+    if (len != 0)
+      _set_poolThreshold(len);
   }
+    
+  env3 = getenv("XMPF_COARRAY_BUF");
+  if (env3 != NULL) {
+    len = _envStringToBytes(env3, "XMPF_COARRAY_BUF");
+    if (len != 0)
+      _set_localBufSize(len);
+  }
+    
 
   _XMPF_coarrayDebugPrint("Execution time environment\n"
                           "   communication layer  :  %s\n"
                           "   coarray boundary     :  %u bytes\n"
                           "   environment vars     :  XMPF_COARRAY_MSG=%s\n"
                           "                           XMPF_COARRAY_POOL=%s\n"
-                          "   _XMPF_coarrayMsg     :  %d\n"
-                          "   _XMPF_poolThreshold  :  %u bytes\n"
-                          "   _XMPF_localBufSize   :  %u bytes\n",
+                          "                           XMPF_COARRAY_BUF=%s\n"
+                          "Specified Parameters\n"
+                          "   runtime message          :  %s\n"
+                          "   pooling threshold        :  %u bytes\n"
+                          "   static local-buffer size :  %u bytes\n",
                           ONESIDED_COMM_LAYER, ONESIDED_BOUNDARY,
-                          env1 ? env1 : "", env2 ? env2 : "",
-                          _XMPF_get_coarrayMsg(),
+                          env1 ? env1 : "",
+                          env2 ? env2 : "",
+                          env3 ? env3 : "",
+                          _XMPF_get_coarrayMsg() ? "on" : "off",
                           XMPF_get_poolThreshold(),
                           XMPF_get_localBufSize()
                           );
+}
+
+
+
+static unsigned _envStringToBytes(char *str, char *envVarName)
+{
+  unsigned len;
+  unsigned char c;
+  int stat;
+
+  stat = sscanf(str, "%u%c", &len, &c);
+
+  switch (stat) {
+  case EOF:
+  case 0:
+    // use default value of poolThread
+    break;
+
+  case 1:
+    return len;
+
+  case 2:
+    switch (c) {
+    case 'k':
+    case 'K':
+      return len * 1024;
+
+    case 'm':
+    case 'M':
+      return len * 1024 * 1024;
+
+    case 'g':
+    case 'G':
+      return len * 1024 * 1024 * 1024;
+
+    default:
+      _XMPF_coarrayFatal("Usage of environment variable %s: [0-9]+[kKmMgG]?", envVarName);
+      break;
+    }
+    break;
+
+  default:
+    _XMPF_coarrayFatal("Illegal value of environ variable XMPF_COARRAY_POOL.\n"
+                       "  Usage: [0-9]+[kKmMgG]?");
+    break;
+  }
+
+  // error
+  return 0;
 }
 
 

@@ -425,8 +425,9 @@ void xmpf_coarray_malloc_pool_(void)
   size_t localBufSize = XMPF_get_localBufSize();
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC_POOL\n"
-                          "  totally required %u + comm_buff %u [bytes]\n",
-                          pool_totalSize, localBufSize);
+                          "  static buffer (localBuf) allocated   : %u bytes\n",
+                          "  user-defined static coarays allocated: %u bytes\n",
+                          localBufSize, pool_totalSize);
 
   pool_totalSize += localBufSize;
 
@@ -444,7 +445,7 @@ void xmpf_coarray_malloc_pool_(void)
   //-- instead of xmpf_coarray_alloc_static_
   _cinfo_localBuf = _getShareOfStaticCoarray(localBufSize,  // nbytes
                                              localBufSize); // elementRU
-  _cinfo_localBuf->name = "(comm_buff)";
+  _cinfo_localBuf->name = "(localBuf)";
   //-- call of xmpf_coarray_set_coshape_
   xmpf_coarray_set_coshape_(&_cinfo_localBuf, &one, &one);
 
@@ -607,13 +608,13 @@ void xmpf_coarray_count_size_(int *count, int *element)
   size_t mallocSize = ROUND_UP_UNIT(thisSize);
 
   if (mallocSize > XMPF_get_poolThreshold()) {
-    _XMPF_coarrayDebugPrint("*** no count: size %uB exceeds threshold %uB\n",
+    _XMPF_coarrayDebugPrint("*** no count: size %u bytes exceeds threshold %u bytes\n",
                             mallocSize, XMPF_get_poolThreshold());
     return;
   }
 
   pool_totalSize += mallocSize;
-  _XMPF_coarrayDebugPrint("*** count up: add %uB, currently total %uB\n",
+  _XMPF_coarrayDebugPrint("*** count up %u bytes, totally %u bytes\n",
                           mallocSize, pool_totalSize);
 }
 
