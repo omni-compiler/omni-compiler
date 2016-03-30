@@ -149,15 +149,6 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
   }
 #endif
 
-  ////////////////////////////////////////////
-  printf("%%%%%%%% *rank=%d\n", *rank);
-  for (int i = 0; i < *rank; i++) {
-    printf("%%%%%%%% i=%d, skip[i]=%d, count[i]=%d\n", 
-           i, skip[i], count[i]);
-  }
-  ////////////////////////////////////////////
-
-
   /*--------------------------------------*\
    * Check whether the local address      *
    * result is already registered for DMA *
