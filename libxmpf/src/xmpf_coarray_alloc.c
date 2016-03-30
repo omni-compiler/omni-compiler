@@ -608,13 +608,15 @@ void xmpf_coarray_count_size_(int *count, int *element)
   size_t mallocSize = ROUND_UP_UNIT(thisSize);
 
   if (mallocSize > XMPF_get_poolThreshold()) {
-    _XMPF_coarrayDebugPrint("*** no count: size %u bytes exceeds threshold %u bytes\n",
-                            mallocSize, XMPF_get_poolThreshold());
+    _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE: no count\n"
+                            "  larger than pooling threshold: %u bytes\n",
+                            mallocSize);
     return;
   }
 
   pool_totalSize += mallocSize;
-  _XMPF_coarrayDebugPrint("*** count up %u bytes, totally %u bytes\n",
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE: count up\n"
+                          "  %u bytes, totally %u bytes\n",
                           mallocSize, pool_totalSize);
 }
 

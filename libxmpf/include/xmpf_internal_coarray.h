@@ -5,6 +5,8 @@
 #define TRUE   1
 #define FALSE  0
 
+#define GET_INTERFACE_TYPE 8
+
 #if defined(_XMP_FJRDMA)
 #  define ONESIDED_BOUNDARY ((size_t)4)
 #  define ONESIDED_COMM_LAYER "FJRDMA"
@@ -138,8 +140,14 @@ extern void _XMPF_coarrayInit_put(void);
 /* xmpf_coarray_get.c */
 extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *result);
+#if GET_INTERFACE_TYPE==8
+extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *element,
+                                    int *coindex, char *result, int *rank,
+                                    int skip[], int count[]);
+#else
 extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char *result, int *rank, ...);
+#endif
 extern void _XMPF_coarrayInit_get(void);
 
 /* xmpf_async.c */

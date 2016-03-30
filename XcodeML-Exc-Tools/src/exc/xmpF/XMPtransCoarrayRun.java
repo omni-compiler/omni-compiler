@@ -2390,12 +2390,12 @@ public class XMPtransCoarrayRun
     }
 
     /* check whether xmp_coarray.h is included */
-    Ident id = def.findIdent("xmpf_coarray_get0d");
+    Ident id = def.findIdent("xmpf_image_index");
     if (id == null) {
       /* xmpf_lib.h seems not included. */
       XMP.error("current restriction: " + 
-                "\'xmp_coarray.h\' must be included to use coarray features " +
-                "in procodrure/module: " + getName());
+                "\'xmp_coarray.h\' must be included to use any coarray features " +
+                "in the procodrure/module: " + getName());
     }
   }
 

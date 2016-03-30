@@ -114,8 +114,14 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
 }
 
 
+#if GET_INTERFACE_TYPE==8
+extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *element,
+                                    int *coindex, char *result, int *rank,
+                                    int skip[], int count[])
+#else
 extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char *result, int *rank, ...)
+#endif
 {
   _XMPF_checkIfInTask("an array coindexed object");
 
@@ -125,6 +131,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
     return;
   }
 
+#if GET_INTERFACE_TYPE!=8
   /*--------------------------------------*\
    *   argument analysis                  *
   \*--------------------------------------*/
@@ -140,6 +147,16 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
     skip[i] = *nextAddr - *baseAddr;
     count[i] = *(va_arg(argList, int*));
   }
+#endif
+
+  ////////////////////////////////////////////
+  printf("%%%%%%%% *rank=%d\n", *rank);
+  for (int i = 0; i < *rank; i++) {
+    printf("%%%%%%%% i=%d, skip[i]=%d, count[i]=%d\n", 
+           i, skip[i], count[i]);
+  }
+  ////////////////////////////////////////////
+
 
   /*--------------------------------------*\
    * Check whether the local address      *

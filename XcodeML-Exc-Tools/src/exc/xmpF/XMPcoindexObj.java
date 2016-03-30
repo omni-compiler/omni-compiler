@@ -18,8 +18,9 @@ public class XMPcoindexObj {
   final static String COARRAYPUT_PREFIX = "xmpf_coarray_put";
 
   final static String COARRAYGET_PREFIX = "xmpf_coarray_get";
-  final static String COARRAYGET_SCALAR_NAME = "xmpf_coarray_get_scalar";
-  final static String COARRAYGET_ARRAY_NAME = "xmpf_coarray_get_array";
+  //final static String COARRAYGET_SCALAR_NAME = "xmpf_coarray_get_scalar";
+  //final static String COARRAYGET_ARRAY_NAME = "xmpf_coarray_get_array";
+  final static String COARRAYGET_GENERIC_NAME = "xmpf_coarray_get_generic";
 
   // attributes
   String name;
@@ -219,7 +220,8 @@ public class XMPcoindexObj {
 
     // call runtime as character(len=1), dimension(sizeof(obj))
     Xobject mold = Xcons.FcharacterConstant(Xtype.FcharacterType, " ", null);
-    Xobject funcRef = toFuncRef_core(mold);  
+    //Xobject funcRef = toFuncRef_core_type6(mold);  
+    Xobject funcRef = toFuncRef_core_type8(mold);  
 
     // cast operation
     Ident transferId = declIntIntrinsicIdent("transfer");
@@ -230,10 +232,27 @@ public class XMPcoindexObj {
 
   private Xobject toFuncRef_basic() {
     Xobject mold = getObj().getArg(0).getArg(0);   // object w/o coindex
-    return toFuncRef_core(mold);
+    //return toFuncRef_core_type6(mold);
+    return toFuncRef_core_type8(mold);
   }
 
-  private Xobject toFuncRef_core(Xobject mold) {
+  private Xobject toFuncRef_core_type8(Xobject mold) {
+    // type8 used
+    Xobject actualArgs = _makeActualArgs_type8(mold);
+
+    String funcName = COARRAYGET_GENERIC_NAME;
+    Ident funcIdent = getEnv().findVarIdent(funcName, null);
+    if (funcIdent == null) {
+      Xtype baseType = new BasicType(BasicType.F_NUMERIC_ALL);
+                                               // should be F_ALL or F_GENERIC if possible
+      Xtype funcType = Xtype.Function(baseType);
+      funcIdent = getEnv().declExternIdent(funcName, funcType);
+    }                                           
+    Xobject funcRef = funcIdent.Call(actualArgs);
+    return funcRef;
+  }
+
+  private Xobject toFuncRef_core_type6(Xobject mold) {
     // type6 used
     Xobject actualArgs = _makeActualArgs_type6(mold);
 
@@ -256,6 +275,7 @@ public class XMPcoindexObj {
     Xobject funcRef = funcIdent.Call(actualArgs);
     return funcRef;
   }
+
 
   public Xobject toCallStmt(Xobject rhs, Xobject condition) {
     // type7 used
@@ -347,9 +367,16 @@ public class XMPcoindexObj {
   /* generate actual arguments
    * cf. libxmpf/src/xmpf_coarray_put.c
    *
+   * Type-8:
+   *   utilize F90 generic-name interface
+   *       COARRAYGET_GENERIC_NAME(descPtr, src, coindex) result(dst)
+   *       integer(8), intent(in)          :: descPtr
+   *       integer, intent(in)             :: coindex
+   *       anytype&kind_anydim, intent(in) :: src
+   *       sametype&kind_samedim           :: dst
    * Type-7:
-   *       add baseAddr to Type-6 as an extra argument 
-   *       in order to tell the optimization compiler the data will be referred.
+   *   add baseAddr to Type-6 as an extra argument 
+   *   in order to tell the optimization compiler the data will be referred.
    * Type-6:
    *       (void *descPtr, void* baseAddr, int element, int image,
    *        [void* rhs, int scheme,] int exprRank,
@@ -358,6 +385,21 @@ public class XMPcoindexObj {
    *        void* nextAddrN, int countN )
    *   where N is rank of the reference (0<=N<=15 in Fortran 2008).
    */
+  private Xobject _makeActualArgs_type8(Xobject mold) {
+    XMPcoarray coarray = getCoarray();
+    Xobject baseAddr = getBaseAddr();
+    Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
+    Xobject src = mold;
+    Xobject coindex = coarray.getImageIndex(baseAddr, cosubscripts);
+    Xobject actualArgs =
+      Xcons.List(descPtr, src, coindex);
+
+    if (actualArgs.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (_makeActualArgs_type8)");
+
+    return actualArgs;
+  }
+
   private Xobject _makeActualArgs_type7(Xobject addArg1) {
     return _makeActualArgs_type7(addArg1, null);
   }
