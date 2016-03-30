@@ -26,12 +26,13 @@ static char *_getVectorIter(void *descPtr, char *baseAddr, int bytes, int coinde
 static void _getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                            void *descDMA, size_t offsetDMA, char *nameDMA);
 
-static void _getVector_buffer(void *descPtr, char *baseAddr, int bytes1, int coindex,
-                              char *result, int bytes2);
+static void _getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
+                              char *result, int bytes);
 
+#if 0   //obsolete
 static void _getVector(void *descPtr, char *baseAddr, int bytes,
                        int coindex, char *dst);
-
+#endif
 
 /***************************************************\
     initialization
@@ -61,8 +62,9 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
   _XMPF_checkIfInTask("a scalar coindexed object");
 
   /*--------------------------------------*\
-   * get descriptor and others from the   *
-   * local address if already registered  *
+   * Check whether the local address      *
+   * result is already registered for DMA *
+   * and, if so, get the descriptor, etc. *
   \*--------------------------------------*/
   void *descDMA;
   size_t offsetDMA;
@@ -80,29 +82,26 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
 
   switch (scheme) {
   case SCHEME_DirectGet:
-    {
-      _XMPF_coarrayDebugPrint("SCHEME_DirectGet/scalar selected\n");
+    _XMPF_coarrayDebugPrint("SCHEME_DirectGet/scalar selected\n");
 
-      assert(avail_DMA);
-      _getVector_DMA(*descPtr, *baseAddr, *element, *coindex,
-                     descDMA, offsetDMA, nameDMA);
-    }
+    assert(avail_DMA);
+    _getVector_DMA(*descPtr, *baseAddr, *element, *coindex,
+                   descDMA, offsetDMA, nameDMA);
     break;
 
   case SCHEME_BufferGet:
-    {
-      _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/scalar\n");
+    _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/scalar\n");
 
-      _getVector_buffer(*descPtr, *baseAddr, *element, *coindex,
-                        result, *element);
-    }
+    _getVector_buffer(*descPtr, *baseAddr, *element, *coindex,
+                      result, *element);
     break;
 
   case SCHEME_ExtraBufferGet:
     {
       size_t elementRU = ROUND_UP_BOUNDARY(*element);
 
-      _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferGet/scalar\n");
+      _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferGet/scalar. elementRU=%ud\n",
+                              elementRU);
 
       _getVector_buffer(*descPtr, *baseAddr, elementRU, *coindex,
                         result, *element);
@@ -143,7 +142,9 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
   }
 
   /*--------------------------------------*\
-   * get information for DMA              *
+   * Check whether the local address      *
+   * result is already registered for DMA *
+   * and, if so, get the descriptor, etc. *
   \*--------------------------------------*/
   void *descDMA;
   size_t offsetDMA;
@@ -184,7 +185,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
 
 
 /***************************************************\
-    sub
+    select schemes
 \***************************************************/
 
 /* REMARKING CONDITIONS:
@@ -217,6 +218,10 @@ int _select_getscheme_array(BOOL avail_DMA)
 }
 
 
+/***************************************************\
+    sub
+\***************************************************/
+
 void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *result,
                  int bytes, int rank, int skip[], int count[],
                  void *descDMA, size_t offsetDMA, char *nameDMA)
@@ -231,7 +236,7 @@ void _getCoarray(void *descPtr, char *baseAddr, int coindex, char *result,
     return;
   }
 
-  if (bytes == skip[0]) {  // contiguous
+  if (bytes == skip[0]) {  // The first axis is contiguous
     // colapse the axis recursively
     _getCoarray(descPtr, baseAddr, coindex, result,
                 bytes * count[0], rank - 1, skip + 1, count + 1,
@@ -276,7 +281,7 @@ char *_getVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
         dst += bytes;
         src += gap;
       }
-    } else {    // recursive communication with static buffer
+    } else {    // recursive getVector with static buffer
       for (int i = 0; i < n; i++) {
         _getVector_buffer(descPtr, src, bytes, coindex,
                           dst, bytes);
@@ -318,8 +323,8 @@ void _getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
 }
 
 
-void _getVector_buffer(void *descPtr, char *baseAddr, int bytes1, int coindex,
-                       char *result, int bytes2)
+void _getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
+                       char *result, int bytes)
 {
   size_t rest1, rest2, bufSize;
   char *src, *dst;
@@ -329,7 +334,7 @@ void _getVector_buffer(void *descPtr, char *baseAddr, int bytes1, int coindex,
   bufSize = XMPF_get_localBufSize();
 
   // communication for every buffer size
-  for (rest1 = bytes1, rest2 = bytes2;
+  for (rest1 = bytesRU, rest2 = bytes;
        rest1 > bufSize;
        rest1 -= bufSize, rest2 -=bufSize) {
     _getVector_DMA(descPtr, src, bufSize, coindex,
@@ -360,8 +365,7 @@ void _getVector_buffer(void *descPtr, char *baseAddr, int bytes1, int coindex,
 }
 
 
-#if 0
-//////// obsolete
+#if 0   //obsolete
 void _getVector(void *descPtr, char *baseAddr, int bytes, int coindex,
                 char *dst)
 {
