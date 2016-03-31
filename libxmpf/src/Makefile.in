@@ -79,30 +79,36 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@GASNET_TRUE@am__append_1 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-@GASNET_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
+@GASNET_TRUE@am__append_1 = xmpf_coarray.c xmpf_coarray_wrap.f90 \
+@GASNET_TRUE@                         xmpf_coarray_lib.c \
+@GASNET_TRUE@                         xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
+@GASNET_TRUE@                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
 @GASNET_TRUE@                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
 @GASNET_TRUE@                         xmpf_coarray_reduction.F90
 
 @GASNET_TRUE@am__append_2 = -D_XMP_GASNET
 @GASNET_TRUE@@POWERPC_TRUE@am__append_3 = -WF,-D_XMP_GASNET
 @GASNET_TRUE@@POWERPC_FALSE@am__append_4 = -D_XMP_GASNET
-@MPI3_ONESIDED_TRUE@am__append_5 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-@MPI3_ONESIDED_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
+@MPI3_ONESIDED_TRUE@am__append_5 = xmpf_coarray.c xmpf_coarray_wrap.f90 \
+@MPI3_ONESIDED_TRUE@                         xmpf_coarray_lib.c \
+@MPI3_ONESIDED_TRUE@                         xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
+@MPI3_ONESIDED_TRUE@                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
 @MPI3_ONESIDED_TRUE@                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
 @MPI3_ONESIDED_TRUE@                         xmpf_coarray_reduction.F90
 
 @MPI3_ONESIDED_TRUE@am__append_6 = -D_XMP_MPI3_ONESIDED
 @MPI3_ONESIDED_TRUE@am__append_7 = -D_XMP_MPI3_ONESIDED
 @MPI3_TRUE@am__append_8 = -D_XMP_MPI3
-@FJRDMA_TRUE@am__append_9 = xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-@FJRDMA_TRUE@                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
+@FJRDMA_TRUE@am__append_9 = xmpf_coarray.c xmpf_coarray_wrap.f90 \
+@FJRDMA_TRUE@                         xmpf_coarray_lib.c \
+@FJRDMA_TRUE@                         xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
+@FJRDMA_TRUE@                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
 @FJRDMA_TRUE@                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
 @FJRDMA_TRUE@                         xmpf_coarray_reduction.F90
 
 @FJRDMA_TRUE@am__append_10 = -D_XMP_FJRDMA
 @FJRDMA_TRUE@am__append_11 = -D_XMP_FJRDMA
-subdir = libxmpf/src
+subdir = ./libxmpf/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -153,33 +159,36 @@ am__libxmpf_a_SOURCES_DIST = $(XMPF_INC_DIR)/xmpf_internal.h \
 	xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
 	xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c \
 	xmpf_task.c xmpf_template.c xmpf_coarray.c \
-	xmpf_coarray_wrap.f90 xmpf_coarray_put.c xmpf_coarray_get.c \
-	xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
-	xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
-	xmpf_coarray_reduction.F90
+	xmpf_coarray_wrap.f90 xmpf_coarray_lib.c xmpf_coarray_put.c \
+	xmpf_coarray_put_wrap.f90 xmpf_coarray_get.c \
+	xmpf_coarray_get_wrap.f90 xmpf_coarray_alloc.c \
+	xmpf_coarray_alloc_wrap.f90 xmpf_coarray_reduction.F90
 @GASNET_TRUE@am__objects_1 = xmpf_coarray.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
-@GASNET_TRUE@	xmpf_coarray_put.$(OBJEXT) \
-@GASNET_TRUE@	xmpf_coarray_get.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_lib.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_put.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_put_wrap.$(OBJEXT) \
+@GASNET_TRUE@	xmpf_coarray_get.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_alloc.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_alloc_wrap.$(OBJEXT) \
 @GASNET_TRUE@	xmpf_coarray_reduction.$(OBJEXT)
 @MPI3_ONESIDED_TRUE@am__objects_2 = xmpf_coarray.$(OBJEXT) \
 @MPI3_ONESIDED_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
-@MPI3_ONESIDED_TRUE@	xmpf_coarray_put.$(OBJEXT) \
-@MPI3_ONESIDED_TRUE@	xmpf_coarray_get.$(OBJEXT) \
 @MPI3_ONESIDED_TRUE@	xmpf_coarray_lib.$(OBJEXT) \
+@MPI3_ONESIDED_TRUE@	xmpf_coarray_put.$(OBJEXT) \
+@MPI3_ONESIDED_TRUE@	xmpf_coarray_put_wrap.$(OBJEXT) \
+@MPI3_ONESIDED_TRUE@	xmpf_coarray_get.$(OBJEXT) \
 @MPI3_ONESIDED_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT) \
 @MPI3_ONESIDED_TRUE@	xmpf_coarray_alloc.$(OBJEXT) \
 @MPI3_ONESIDED_TRUE@	xmpf_coarray_alloc_wrap.$(OBJEXT) \
 @MPI3_ONESIDED_TRUE@	xmpf_coarray_reduction.$(OBJEXT)
 @FJRDMA_TRUE@am__objects_3 = xmpf_coarray.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_wrap.$(OBJEXT) \
-@FJRDMA_TRUE@	xmpf_coarray_put.$(OBJEXT) \
-@FJRDMA_TRUE@	xmpf_coarray_get.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_lib.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_put.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_put_wrap.$(OBJEXT) \
+@FJRDMA_TRUE@	xmpf_coarray_get.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_get_wrap.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_alloc.$(OBJEXT) \
 @FJRDMA_TRUE@	xmpf_coarray_alloc_wrap.$(OBJEXT) \
@@ -511,9 +520,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps libxmpf/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./libxmpf/src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps libxmpf/src/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./libxmpf/src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -811,6 +820,7 @@ install-exec-local: xmpf_main.o
 
 clean-local:
 	rm -f *~ *.core core core.*
+	rm -f xmpf_coarray_put_wrap.f90
 	rm -f xmpf_coarray_get_wrap.f90
 	rm -f xmpf_coarray_alloc_wrap.f90
 	rm -f xmpf_coarray_reduction.F90

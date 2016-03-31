@@ -187,7 +187,7 @@ void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen)
 
 /* dummy function to supress compiler optimization
  * usage: in a Fortran program:
- *  call xmpf_touch(<any_variable_name> ...)
+ *  call xmpf_touch(<any_variable_name>, ...)
  */
 void xmpf_touch_(void)
 {
@@ -272,7 +272,6 @@ void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen)
   _XMPF_checkIfInTask("syncimage with stat");
   xmpf_sync_allimages_nostat_();
 }
-
 
 
 /*****************************************\

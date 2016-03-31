@@ -114,7 +114,7 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
 }
 
 
-#if GET_INTERFACE_TYPE==8
+#if GET_INTERFACE_TYPE == 8
 extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char *result, int *rank,
                                     int skip[], int count[])
@@ -131,7 +131,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
     return;
   }
 
-#if GET_INTERFACE_TYPE!=8
+#if GET_INTERFACE_TYPE != 8
   /*--------------------------------------*\
    *   argument analysis                  *
   \*--------------------------------------*/

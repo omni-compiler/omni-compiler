@@ -447,7 +447,7 @@ void xmpf_coarray_malloc_pool_(void)
                                              localBufSize); // elementRU
   _cinfo_localBuf->name = "(localBuf)";
   //-- call of xmpf_coarray_set_coshape_
-  xmpf_coarray_set_coshape_(&_cinfo_localBuf, &one, &one);
+  xmpf_coarray_set_coshape_((void **)(&_cinfo_localBuf), &one, &one);
 
   // init library internal
   _XMPF_coarrayInit_get();

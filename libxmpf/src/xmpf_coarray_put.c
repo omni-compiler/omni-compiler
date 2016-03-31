@@ -12,9 +12,8 @@
 #define SCHEME_ExtraDirectPut  12   // DirectPut with extra data
 #define SCHEME_ExtraBufferPut  13   // BufferPut with extra data
 
-static int _select_putscheme_scalar(int condition, int element, int avail_DMA);
-static int _select_putscheme_array(int condition, int avail_DMA);
-
+static int _select_putscheme_scalar(int element, int avail_DMA);
+static int _select_putscheme_array(int avail_DMA);
 
 static void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
                         int bytes, int rank, int skip[], int count[],
@@ -69,8 +68,13 @@ void _XMPF_coarrayInit_put()
     entry
 \***************************************************/
 
+#if PUT_INTERFACE_TYPE == 8
+extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *element,
+                                     int *coindex, char *rhs)
+#else
 extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition)
+#endif
 {
   _XMPF_checkIfInTask("scalar coindexed variable");
 
@@ -91,7 +95,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
   /*--------------------------------------*\
    * select scheme                        *
   \*--------------------------------------*/
-  int scheme = _select_putscheme_scalar(*condition, *element, avail_DMA);
+  int scheme = _select_putscheme_scalar(*element, avail_DMA);
 
   /*--------------------------------------*\
    * action                               *
@@ -139,9 +143,15 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
 }
 
 
+#if PUT_INTERFACE_TYPE == 8
+extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *element,
+                                    int *coindex, char *rhs, int *rank,
+                                    int skip[], int skip_rhs[], int count[])
+#else
 extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char *rhs, int *condition,
                                     int *rank, ...)
+#endif
 {
   _XMPF_checkIfInTask("an array coindexed variable");
 
@@ -151,6 +161,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
     return;
   }
 
+#if PUT_INTERFACE_TYPE != 8
   /*--------------------------------------*\
    *   argument analysis                  *
   \*--------------------------------------*/
@@ -166,6 +177,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
     skip[i] = *nextAddr - *baseAddr;
     count[i] = *(va_arg(argList, int*));       // count1, count2, ...
   }
+#endif
 
   /*--------------------------------------*\
    * Check whether the local address rhs  *
@@ -184,7 +196,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
   /*--------------------------------------*\
    * select scheme                        *
   \*--------------------------------------*/
-  int scheme = _select_putscheme_array(*condition, avail_DMA);
+  int scheme = _select_putscheme_array(avail_DMA);
 
   /*--------------------------------------*\
    * action                               *
@@ -210,9 +222,15 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
 }
 
 
+#if PUT_INTERFACE_TYPE == 8
+extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *element,
+                                     int *coindex, char *rhs, int *rank,
+                                     int skip[], int count[])
+#else
 extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition,
                                      int *rank, ...)
+#endif
 {
   _XMPF_checkIfInTask("an array coindexed variable (spread)");
 
@@ -222,6 +240,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
     return;
   }
 
+#if PUT_INTERFACE_TYPE != 8
   /*--------------------------------------*\
    *   argument analysis                  *
   \*--------------------------------------*/
@@ -237,6 +256,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
     skip[i] = *nextAddr - *baseAddr;
     count[i] = *(va_arg(argList, int*));       // count1, count2, ...
   }
+#endif
 
   /*--------------------------------------*\
    * select scheme                        *
@@ -253,6 +273,38 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
 
 
 /***************************************************\
+    entry for error messages
+\***************************************************/
+
+void xmpf_coarray_put_err_len_(void **descPtr,
+                               int *len_mold, int *len_src)
+{
+  char *name = _XMPF_get_coarrayName(*descPtr);
+
+  _XMPF_coarrayDebugPrint("xmpf_coarray_put_err_len_\n"
+                          "  coarray name=\'%s\', len(mold)=%d, len(src)=%d\n",
+                          name, *len_mold, *len_src);
+
+  _XMPF_coarrayFatal("mismatch length-parameters found in "
+                     "put-communication on coarray \'%s\'", name);
+}
+
+
+void xmpf_coarray_put_err_size_(void **descPtr, int *dim,
+                                int *size_mold, int *size_src)
+{
+  char *name = _XMPF_get_coarrayName(*descPtr);
+
+  _XMPF_coarrayDebugPrint("xmpf_coarray_put_err_size_\n"
+                          "  coarray name=\'%s\', i=%d, size(mold,i)=%d, size(src,i)=%d\n",
+                          name, *dim, *size_mold, *size_src);
+
+  _XMPF_coarrayFatal("Mismatch sizes of %d-th dimension found in "
+                     "put-communication on coarray \'%s\'", *dim, name);
+}
+
+
+/***************************************************\
     sub
 \***************************************************/
 
@@ -262,14 +314,8 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
  *    ONESIDED_BOUNDARY. Else, SCHEME_Extra... should be selected.
  *  - Array element of coarray is divisible by ONESIDED_BOUNDARY
  *    due to a restriction.
- *
- * INPUT HINTS:
- *   condition=1: It may be necessary to use buffer copy because
- *                the address of RHS may not be accessed by FJ-RDMA.
- *   condition=0: Otherwise.
  */
-
-int _select_putscheme_scalar(int condition, int element, int avail_DMA)
+int _select_putscheme_scalar(int element, int avail_DMA)
 {
   if (avail_DMA)
     if (element % ONESIDED_BOUNDARY == 0)
@@ -283,7 +329,7 @@ int _select_putscheme_scalar(int condition, int element, int avail_DMA)
       return SCHEME_ExtraBufferPut;
 }
 
-int _select_putscheme_array(int condition, int avail_DMA)
+int _select_putscheme_array(int avail_DMA)
 {
   if (avail_DMA)
     return SCHEME_DirectPut;
@@ -552,6 +598,7 @@ void _spreadVector_buffer(void *descPtr, char *baseAddr, int bytes, int coindex,
   _putVector_DMA(descPtr, dst, rest, coindex,
                  _localBuf_desc, _localBuf_offset, _localBuf_name);
 }
+
 
 
 #if 0    

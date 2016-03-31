@@ -21,18 +21,18 @@ print_function_scalar() {
     element="$3"
 
     echo   '!-----------------------------------------------------------------------'
-    echo72 "      function xmpf_coarray_get0d_${tk}(descptr, src, coindex)"
+    echo72 "      function xmpf_coarray_get0d_${tk}(descptr, coindex, mold)"
     echo   '     &   result(dst)'
     echo   '!-----------------------------------------------------------------------'
     echo   '      integer(8), intent(in) :: descptr'
     echo   '      integer, intent(in) :: coindex'
-    echo   "      ${typekind}, intent(in) :: src"
+    echo   "      ${typekind}, intent(in) :: mold"
     case ${typekind} in
-        'character(*)')  echo    "      character(len=len(src)) :: dst";;
+        'character(*)')  echo    "      character(len=len(mold)) :: dst";;
         *)               echo    "      ${typekind} :: dst";;
     esac
     echo   ''
-    echo72 "      call xmpf_coarray_get_scalar(descptr, loc(src), ${element},"
+    echo72 "      call xmpf_coarray_get_scalar(descptr, loc(mold), ${element},"
     echo   '     &   coindex, dst)'
     echo   '      return'
     echo   '      end function'
@@ -45,47 +45,46 @@ print_function_array() {
     typekind="$2"
     element="$3"
 
-    echo   '!-----------------------------------------------------------------------'
-    echo72 "      function xmpf_coarray_get${DIM}d_${tk}(descptr, src, coindex)"
-    echo   '     &   result(dst)'
-    echo   '!-----------------------------------------------------------------------'
-    echo   '      integer(8), intent(in) :: descptr'
-    echo   '      integer, intent(in) :: coindex'
+    echo    '!-----------------------------------------------------------------------'
+    echo72  "      function xmpf_coarray_get${DIM}d_${tk}(descptr, coindex, mold)"
+    echo    '     &   result(dst)'
+    echo    '!-----------------------------------------------------------------------'
+    echo    '      integer(8), intent(in) :: descptr'
+    echo    '      integer, intent(in) :: coindex'
 
-    case ${DIM} in
-        1)  echo    "      ${typekind}, intent(in) :: src(:)" ;;
-        *)  echo -n "      ${typekind}, intent(in) :: src(:"
-            for i in `seq 2 ${DIM}`; do
-                echo -n ',:'
-            done
-            echo ')' ;;
-    esac
+    echo -n "      ${typekind}, intent(in) :: mold("
+    sep=''
+    for i in `seq 1 ${DIM}`; do
+        echo -n "${sep}:"
+        sep=','
+    done
+    echo ')'
 
     case ${typekind} in
-        'character(*)')  echo72  "      character(len=len(src)) ::";;
+        'character(*)')  echo72  "      character(len=len(mold)) ::";;
         *)               echo72  "      ${typekind} ::";;
     esac
     if test ${DIM} -le 4; then
         sep='     &   dst( '
         for i in `seq 1 ${DIM}`; do
-            echo -n "${sep}size(src,$i)"
+            echo -n "${sep}size(mold,$i)"
             sep=', '
         done
     else
-        echo72  '     &   dst( size(src,1), size(src,2), size(src,3), size(src,4),'
+        echo72  '     &   dst( size(mold,1), size(mold,2), size(mold,3), size(mold,4),'
         sep='     &        '
         for i in `seq 5 ${DIM}`; do
-            echo -n "${sep}size(src,$i)"
+            echo -n "${sep}size(mold,$i)"
             sep=', '
         done
     fi
     echo    ' )'
 
     echo    '      integer(8) :: base'
-    echo    "      integer :: skip(${DIM}), extent(${DIM})"
+    echo    "      integer :: i, skip(${DIM}), extent(${DIM})"
     echo    ''
 
-    echo -n '      base = loc(src('
+    echo -n '      base = loc(mold('
     sep=''
     for i in `seq 1 ${DIM}`; do
         echo -n ${sep}1
@@ -94,11 +93,11 @@ print_function_array() {
     echo    '))'
 
     echo    "      do i = 1, ${DIM}"
-    echo    '         extent(i) = size(src,i)'
+    echo    '        extent(i) = size(mold,i)'
     echo    '      end do'
 
     for i in `seq 1 ${DIM}`; do
-        echo -n "      skip($i) = int( loc(src("
+        echo -n "      skip($i) = int( loc(mold("
         sep=''
         for j in `seq 1 ${DIM}`; do
             if test $i -eq $j; then
@@ -153,7 +152,7 @@ do
     print_function r8  "real(8)"        8
     print_function z8  "complex(4)"     8
     print_function z16 "complex(8)"     16
-    print_function cn  "character(*)"   "len(src)"
+    print_function cn  "character(*)"   "len(mold)"
 done
 
 exit

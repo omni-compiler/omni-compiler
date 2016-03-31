@@ -55,6 +55,9 @@
 !! reference of coindexed objects
       include "xmp_coarray_get.h"
 
+!! assignment statements to coindex variables
+      include "xmp_coarray_put.h"
+
 !! allocate statement
       include "xmp_coarray_alloc.h"
 
@@ -65,3 +68,13 @@
       integer, external :: xmpf_coarray_allocated_bytes
       integer, external :: xmpf_coarray_garbage_bytes
 
+!!! This is not useful definition because it cannot be found by 
+!!! XMPenv.findVarIdent(...) and therefore will be double-defined.
+!!      interface
+!!        integer function xmpf_coarray_get_image_index                   &
+!!     &    (descptr, corank, i1, i2, i3, i4, i5, i6, i7)
+!!        integer(8), intent(in) :: descptr
+!!        integer, intent(in) :: corank, i1
+!!        integer, intent(in), optional :: i2, i3, i4, i5, i6, i7
+!!        end function
+!!      end interface

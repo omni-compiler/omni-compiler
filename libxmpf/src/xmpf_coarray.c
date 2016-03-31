@@ -164,21 +164,20 @@ void _XMPF_coarray_init(void)
       _set_localBufSize(len);
   }
     
-
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_INIT\n"
-                          "Execution time environment\n"
+  _XMPF_coarrayDebugPrint("Execution time environment\n"
                           "   communication layer  :  %s (%u-byte boundary)\n"
                           "   environment vars     :  XMPF_COARRAY_MSG=%s\n"
                           "                           XMPF_COARRAY_POOL=%s\n"
-                          "                           XMPF_COARRAY_BUF=%s\n"
-                          "Specified Parameters\n"
-                          "   runtime message switch        :  %s\n"
-                          "   pooling/allocation threshold  :  %u bytes\n"
-                          "   static buffer (localBuf) size :  %u bytes\n",
+                          "                           XMPF_COARRAY_BUF=%s\n",
                           ONESIDED_COMM_LAYER, ONESIDED_BOUNDARY,
                           env1 ? env1 : "",
                           env2 ? env2 : "",
-                          env3 ? env3 : "",
+                          env3 ? env3 : ""
+                          );
+  _XMPF_coarrayDebugPrint("Specified Parameters\n"
+                          "   runtime message switch        :  %s\n"
+                          "   pooling/allocation threshold  :  %u bytes\n"
+                          "   static buffer (localBuf) size :  %u bytes\n",
                           _XMPF_get_coarrayMsg() ? "on" : "off",
                           XMPF_get_poolThreshold(),
                           XMPF_get_localBufSize()

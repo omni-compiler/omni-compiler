@@ -18,8 +18,10 @@ xmpf_main.o: xmpf_main.F90
 	$(FC) $(FCFLAGS) $< -c
 
 if GASNET
-    libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
+    libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 \
+                         xmpf_coarray_lib.c \
+                         xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
+                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
                          xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
                          xmpf_coarray_reduction.F90
     CFLAGS            += -D_XMP_GASNET
@@ -31,8 +33,10 @@ endif
 endif
 
 if MPI3_ONESIDED
-    libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
+    libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 \
+                         xmpf_coarray_lib.c \
+                         xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
+                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
                          xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
                          xmpf_coarray_reduction.F90
     CFLAGS            += -D_XMP_MPI3_ONESIDED
@@ -44,8 +48,10 @@ if MPI3
 endif
 
 if FJRDMA
-    libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_put.c \
-                         xmpf_coarray_get.c xmpf_coarray_lib.c xmpf_coarray_get_wrap.f90 \
+    libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 \
+                         xmpf_coarray_lib.c \
+                         xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
+                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
                          xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
                          xmpf_coarray_reduction.F90
     CFLAGS            += -D_XMP_FJRDMA
@@ -64,6 +70,7 @@ install-exec-local: xmpf_main.o
 
 clean-local:
 	rm -f *~ *.core core core.*
+	rm -f xmpf_coarray_put_wrap.f90
 	rm -f xmpf_coarray_get_wrap.f90
 	rm -f xmpf_coarray_alloc_wrap.f90
 	rm -f xmpf_coarray_reduction.F90

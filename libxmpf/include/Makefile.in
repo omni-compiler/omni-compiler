@@ -79,7 +79,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-subdir = libxmpf/include
+subdir = ./libxmpf/include
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(include_HEADERS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -382,7 +382,7 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-include_HEADERS = xmp_lib.h xmp_coarray.h xmp_coarray_get.h xmp_coarray_alloc.h xmp_coarray_reduction.h
+include_HEADERS = xmp_lib.h xmp_coarray.h xmp_coarray_put.h xmp_coarray_get.h xmp_coarray_alloc.h xmp_coarray_reduction.h
 @SUPERUX_FALSE@COARRAY_SYNC_H = xmp_coarray_sync.h
 @SUPERUX_TRUE@COARRAY_SYNC_H = xmp_coarray_sync_sxace.h
 all: all-am
@@ -397,9 +397,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps libxmpf/include/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./libxmpf/include/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps libxmpf/include/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./libxmpf/include/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -645,6 +645,9 @@ install:
 	$(INSTALL) -m 644 $(COARRAY_SYNC_H) $(includedir)/xmp_coarray_sync.h
 	$(INSTALL) -m 644 $(include_HEADERS) $(includedir)/
 
+xmp_coarray_put.h:  xmp_coarray_put.h.sh
+	. $< $(TARGET) > $@
+
 xmp_coarray_get.h:  xmp_coarray_get.h.sh
 	. $< $(TARGET) > $@
 
@@ -655,6 +658,7 @@ xmp_coarray_reduction.h:  xmp_coarray_reduction.h.sh
 	. $< $(TARGET) > $@
 
 clean-local:
+	rm -f xmp_coarray_put.h
 	rm -f xmp_coarray_get.h
 	rm -f xmp_coarray_alloc.h
 	rm -f xmp_coarray_reduction.h

@@ -6,6 +6,7 @@
 #define FALSE  0
 
 #define GET_INTERFACE_TYPE 8
+#define PUT_INTERFACE_TYPE 8
 
 #if defined(_XMP_FJRDMA)
 #  define ONESIDED_BOUNDARY ((size_t)4)
@@ -126,6 +127,16 @@ extern void xmpf_sync_allimages_nostat_(void);
 extern void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen);
 
 /* xmpf_coarray_put.c */
+#if PUT_INTERFACE_TYPE==8
+extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *element,
+                                     int *coindex, char *rhs);
+extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *element,
+                                    int *coindex, char *rhs, int *rank,
+                                    int skip[], int skip_rhs[], int count[]);
+extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *element,
+                                     int *coindex, char *rhs, int *rank,
+                                     int skip[], int count[]);
+#else
 extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition);
 extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *element,
@@ -134,6 +145,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
 extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition,
                                      int *rank, ...);
+#endif
 extern void _XMPF_coarrayInit_put(void);
 
 
