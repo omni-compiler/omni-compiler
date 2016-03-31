@@ -49,10 +49,15 @@ void gmove_in(){
 
 #pragma xmp barrier
 
+#pragma xmp task on p1
+  {
 #if (XMP_MPI_VERSION == 3)
 #pragma xmp gmove in
-  a[:][:][:] = b[:][:][:];
+    a[:][:][:] = b[:][:][:];
 #endif
+  }
+
+#pragma xmp barrier
 
 #pragma xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
   for (int i = 0; i < N; i++){
@@ -102,12 +107,17 @@ void gmove_in_async(){
 
 #pragma xmp barrier
 
+#pragma xmp task on p1
+  {
 #if (XMP_MPI_VERSION == 3)
 #pragma xmp gmove in async(10)
-  a[:][:][:] = b[:][:][:];
+    a[:][:][:] = b[:][:][:];
 #endif
 
 #pragma xmp wait_async (10)
+  }
+
+#pragma xmp barrier
 
 #pragma xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
   for (int i = 0; i < N; i++){
@@ -157,10 +167,15 @@ void gmove_out(){
 
 #pragma xmp barrier
 
+#pragma xmp task on p2
+  {
 #if (XMP_MPI_VERSION == 3)
 #pragma xmp gmove out
-  a[:][:][:] = b[:][:][:];
+    a[:][:][:] = b[:][:][:];
 #endif
+  }
+
+#pragma xmp barrier
 
 #pragma xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
   for (int i = 0; i < N; i++){
@@ -210,12 +225,17 @@ void gmove_out_async(){
 
 #pragma xmp barrier
 
+#pragma xmp task on p2
+  {
 #if (XMP_MPI_VERSION == 3)
 #pragma xmp gmove out async(10)
-  a[:][:][:] = b[:][:][:];
+    a[:][:][:] = b[:][:][:];
 #endif
 
 #pragma xmp wait_async (10)
+  }
+
+#pragma xmp barrier
 
 #pragma xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
   for (int i = 0; i < N; i++){

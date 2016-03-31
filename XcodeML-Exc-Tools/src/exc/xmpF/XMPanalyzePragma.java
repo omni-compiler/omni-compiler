@@ -435,7 +435,7 @@ public class XMPanalyzePragma
 	  case PLUS_EXPR:
 	  case MINUS_EXPR:
 	    if(!t.left().isVariable())
-	      XMP.errorAt(pb,"left hand-side in align-subscript must be a variable");
+	      XMP.errorAt(pb,"left-hand side in align-subscript must be a variable");
 	    else {
 	      v = t.left();
 	      off = t.right();
@@ -768,6 +768,12 @@ public class XMPanalyzePragma
       XMP.fatal("Incompatible ranks in assignment.");
     }
 
+    if (!right_is_global && gmoveOpt.getInt() == XMP.GMOVE_IN)
+      XMP.errorAt(pb, "RHS should be global in GMOVE IN.");
+
+    if (!left_is_global && gmoveOpt.getInt() == XMP.GMOVE_OUT)
+      XMP.errorAt(pb, "LHS should be global in GMOVE OUT.");
+
     if (!left_is_global){
       if (!right_is_global){
 	// local assignment
@@ -783,6 +789,7 @@ public class XMPanalyzePragma
     else if (left_is_global){
       if (!right_is_global){
 	if (gmoveOpt.getInt() == XMP.GMOVE_NORMAL &&
+	    !left_is_scalar &&
 	    convertGmoveToArray(pb, left, right)) return;
       }
       // else if (right_is_scalar){

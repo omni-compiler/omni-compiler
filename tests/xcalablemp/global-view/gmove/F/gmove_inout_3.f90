@@ -72,24 +72,30 @@ integer :: result = 0
 
 !$xmp barrier
 
+!$xmp task on p1
+
 #if (XMP_MPI_VERSION == 3)
 !$xmp gmove in
   a = b
 #endif
+
+!$xmp end task
+
+!$xmp barrier
 
 !$xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
   do k = 1, N
      do j = 1, N
         do i = 1, N
            if (a(i,j,k) /= i*10000 + j*100 + k) then
-              !write(*,*) "(", xmp_node_num(), ")", i, j, k, a(i,j,k)
+              write(*,*) "(", xmp_node_num(), ")", i, j, k, a(i,j,k)
               result = 1
            end if
         end do
      end do
   end do
 
-!$xmp task on p0(1)
+!$xmp task on p0(1) nocomm
   if (result /= 0) then
      write(*,*) "ERROR in gmove_in"
      call exit(1)
@@ -126,12 +132,18 @@ integer :: result = 0
 
 !$xmp barrier
 
+!$xmp task on p1
+
 #if (XMP_MPI_VERSION == 3)
 !$xmp gmove in async(10)
   a = b
 #endif
 
 !$xmp wait_async(10)
+
+!$xmp end task
+
+!$xmp barrier
 
 !$xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
   do k = 1, N
@@ -145,7 +157,7 @@ integer :: result = 0
      end do
   end do
 
-!$xmp task on p0(1)
+!$xmp task on p0(1) nocomm
   if (result /= 0) then
      write(*,*) "ERROR in gmove_in"
      call exit(1)
@@ -182,10 +194,16 @@ integer :: result = 0
 
 !$xmp barrier
 
+!$xmp task on p2
+
 #if (XMP_MPI_VERSION == 3)
 !$xmp gmove out
   a = b
 #endif
+
+!$xmp end task
+
+!$xmp barrier
 
 !$xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
   do k = 1, N
@@ -236,12 +254,18 @@ integer :: result = 0
 
 !$xmp barrier
 
+!$xmp task on p2
+
 #if (XMP_MPI_VERSION == 3)
 !$xmp gmove out async(10)
   a = b
 #endif
 
 !$xmp wait_async(10)
+
+!$xmp end task
+
+!$xmp barrier
 
 !$xmp loop (i,j,k) on t1(i,j,k) reduction(+:result)
   do k = 1, N

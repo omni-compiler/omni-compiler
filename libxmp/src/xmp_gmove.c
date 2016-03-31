@@ -39,7 +39,7 @@ static void _XMP_gmove_inout(_XMP_gmv_desc_t *gmv_desc_org, _XMP_gmv_desc_t *gmv
 #endif
 
 #define XMP_DBG 0
-#define DBG_RANK 0
+#define DBG_RANK 4
 #define XMP_DBG_OWNER_REGION 0
 
 _XMP_nodes_t *gmv_nodes;
@@ -143,7 +143,7 @@ static void _XMP_calc_gmove_rank_array_SCALAR(_XMP_array_t *array, int *ref_inde
       _XMP_template_chunk_t *chunk = &(template->chunk[ai->align_template_index]);
       int onto_nodes_index = chunk->onto_nodes_index;
       _XMP_ASSERT(array_nodes_index != _XMP_N_NO_ONTO_NODES);
-
+      if (onto_nodes_index == -1) continue;
       int array_nodes_index = _XMP_calc_nodes_index_from_inherit_nodes_index(array->array_nodes, onto_nodes_index);
       rank_array[array_nodes_index] = _XMP_calc_template_owner_SCALAR(template, template_index,
                                                                       ref_index[i] + ai->align_subscript);
@@ -2944,9 +2944,9 @@ get_comm_list(_XMP_gmv_desc_t *gmv_desc0, _XMP_gmv_desc_t *gmv_desc1,
   int *st1 = gmv_desc1->st;
   int ndims1 = array1->dim;
 
-  _XMP_nodes_t *gmv_nodes = _XMP_get_execution_nodes();
+  //_XMP_nodes_t *gmv_nodes = _XMP_get_execution_nodes();
   int myrank = gmv_nodes->comm_rank;
-  int n_gmv_nodes = gmv_nodes->comm_size;
+  //int n_gmv_nodes = gmv_nodes->comm_size;
 
   _XMP_csd_t *comm_csd[n_gmv_nodes][_XMP_N_MAX_DIM];
 
@@ -3353,7 +3353,8 @@ typedef struct _XMP_gmv_inout_list_type {
 } _XMP_gmv_inout_list_t;
 
 
-static void _XMP_set_comm_list(_XMP_array_t *a, _XMP_gmv_section_t *sec, int gidx[], long len[]){
+static void _XMP_set_comm_list(_XMP_array_t *a, _XMP_gmv_section_t *sec,
+			       int gidx[], long len[], int st[]){
 
   int lidx[_XMP_N_MAX_DIM];
 
@@ -3366,14 +3367,14 @@ static void _XMP_set_comm_list(_XMP_array_t *a, _XMP_gmv_section_t *sec, int gid
     for (int i = 0; i < ndims; i++){
       sec->lb[i] = lidx[ndims - 1 - i];
       sec->len[i] = len[ndims - 1 - i];
-      sec->st[i] = 1;
+      sec->st[i] = st[ndims - 1 - i];
     }
   }
   else {
     for (int i = 0; i < ndims; i++){
       sec->lb[i] = lidx[i];
       sec->len[i] = len[i];
-      sec->st[i] = 1;
+      sec->st[i] = st[i];
     }
   }
 
@@ -3384,17 +3385,34 @@ static void _XMP_set_comm_list(_XMP_array_t *a, _XMP_gmv_section_t *sec, int gid
   { if (!org_is_scalar){ \
       org_i[k] = c[k]->l; \
       org_len[k] = c[k]->u - c[k]->l + 1; \
-      if (org_st[k] != 0){ \
+      org_stride[k] = 1; \
+      if (org_st[k] != 0 && tgt_dim[k] != -1){ \
 	tgt_i[tgt_dim[k]] = (org_i[k] - org_lb[k]) \
                           * tgt_st[tgt_dim[k]] / org_st[k] + tgt_lb[tgt_dim[k]]; \
 	tgt_len[tgt_dim[k]] = c[k]->u - c[k]->l + 1; \
+        tgt_stride[tgt_dim[k]] = tgt_st[tgt_dim[k]]; \
       } \
     } \
-    else { \
+    else if (!tgt_is_scalar){ \
       tgt_i[k] = c[k]->l; \
       tgt_len[k] = c[k]->u - c[k]->l + 1; \
+      tgt_stride[k] = tgt_st[k]; \
     } \
   }
+
+/* #define SET_I_AND_LEN(k) \ */
+/*   { if (!org_is_scalar){ \ */
+/*       org_i[k] = c[k]->l; \ */
+/*       org_len[k] = c[k]->u - c[k]->l + 1; \ */
+/*       org_stride[k] = 1; \ */
+/*       if (org_st[k] != 0 && tgt_dim[k] != -1){ \ */
+/* 	tgt_i[tgt_dim[k]] = (org_i[k] - org_lb[k]) \ */
+/*                           * tgt_st[tgt_dim[k]] / org_st[k] + tgt_lb[tgt_dim[k]]; \ */
+/* 	tgt_len[tgt_dim[k]] = c[k]->u - c[k]->l + 1; \ */
+/*         tgt_stride[tgt_dim[k]] = tgt_st[tgt_dim[k]]; \ */
+/*       } \ */
+/*     } \ */
+/*   } */
 
 
 static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
@@ -3415,10 +3433,14 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
   _XMP_comm_set_t *c[org_ndims];
   int org_i[org_ndims], tgt_i[tgt_ndims];
   long org_len[org_ndims], tgt_len[tgt_ndims];
+  int org_stride[org_ndims], tgt_stride[tgt_ndims];
   int tgt_dim[org_ndims];
 
   int org_is_scalar = 1;
   for (int i = 0; i < org_ndims; i++) org_is_scalar &= (org_st[i] == 0);
+
+  int tgt_is_scalar = 1;
+  for (int i = 0; i < tgt_ndims; i++) tgt_is_scalar &= (tgt_st[i] == 0);
 
   _XMP_gmv_inout_list_t *gmv_inout_list = gmv_inout_listh;
 
@@ -3432,7 +3454,8 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
 	  tgt_len[j] = 1;
 	  j++;
 	}
-	tgt_dim[i] = j++;
+	if (j < tgt_ndims) tgt_dim[i] = j++;
+	else tgt_dim[i] = -1;
       }
     }
 
@@ -3442,14 +3465,64 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
     }
 
   }
-  else {
+  else { // org_is_scalar
 
     for (int i = 0; i < org_ndims; i++){
       org_i[i] = org_lb[i];
       org_len[i] = 1;
+      org_stride[i] = 1;
+      tgt_dim[i] = -1;
+    }
+
+    if (tgt_is_scalar){
+      for (int i = 0; i < tgt_ndims; i++){
+	tgt_i[i] = tgt_lb[i];
+	tgt_len[i] = 1;
+	tgt_stride[i] = 1;
+      }
     }
 
   }
+
+  /* if (!org_is_scalar){ */
+
+  /*   int j = 0; */
+  /*   for (int i = 0; i < org_ndims; i++){ */
+  /*     if (org_st[i] != 0){ */
+  /* 	while (tgt_st[j] == 0 && j < tgt_ndims){ */
+  /* 	  tgt_i[j] = tgt_lb[j]; */
+  /* 	  tgt_len[j] = 1; */
+  /* 	  j++; */
+  /* 	} */
+  /* 	if (j < tgt_ndims) tgt_dim[i] = j++; */
+  /* 	else tgt_dim[i] = -1; */
+  /*     } */
+  /*   } */
+
+  /*   for (; j < tgt_ndims; j++){ */
+  /*     tgt_i[j] = tgt_lb[j]; */
+  /*     tgt_len[j] = 1; */
+  /*   } */
+
+  /* } */
+  /* else { */
+
+  /*   for (int i = 0; i < org_ndims; i++){ */
+  /*     org_i[i] = org_lb[i]; */
+  /*     org_len[i] = 1; */
+  /*     org_stride[i] = 1; */
+  /*     tgt_dim[i] = -1; */
+  /*   } */
+
+  /*   /\* // tgt_st == 0 *\/ */
+
+  /*   /\* for (int i = 0; i < tgt_ndims; i++){ *\/ */
+  /*   /\*   tgt_i[i] = tgt_lb[i]; *\/ */
+  /*   /\*   tgt_len[i] = 1; *\/ */
+  /*   /\*   tgt_stride[i] = 1; *\/ */
+  /*   /\* } *\/ */
+
+  /* } */
 
   switch (org_ndims){
 
@@ -3461,8 +3534,8 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(org_array, &t->org, org_i, org_len);
-      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len);
+      _XMP_set_comm_list(org_array, &t->org, org_i, org_len, org_stride);
+      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len, tgt_stride);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3481,8 +3554,8 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(org_array, &t->org, org_i, org_len);
-      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len);
+      _XMP_set_comm_list(org_array, &t->org, org_i, org_len, org_stride);
+      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len, tgt_stride);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3503,8 +3576,8 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(org_array, &t->org, org_i, org_len);
-      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len);
+      _XMP_set_comm_list(org_array, &t->org, org_i, org_len, org_stride);
+      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len, tgt_stride);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3527,8 +3600,8 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(org_array, &t->org, org_i, org_len);
-      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len);
+      _XMP_set_comm_list(org_array, &t->org, org_i, org_len, org_stride);
+      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len, tgt_stride);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3553,8 +3626,8 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(org_array, &t->org, org_i, org_len);
-      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len);
+      _XMP_set_comm_list(org_array, &t->org, org_i, org_len, org_stride);
+      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len, tgt_stride);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3581,8 +3654,8 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(org_array, &t->org, org_i, org_len);
-      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len);
+      _XMP_set_comm_list(org_array, &t->org, org_i, org_len, org_stride);
+      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len, tgt_stride);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3611,8 +3684,8 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(org_array, &t->org, org_i, org_len);
-      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len);
+      _XMP_set_comm_list(org_array, &t->org, org_i, org_len, org_stride);
+      _XMP_set_comm_list(tgt_array, &t->tgt, tgt_i, tgt_len, tgt_stride);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3632,6 +3705,7 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
 #define SET_I_AND_LEN_2(k) \
   { i[k] = c[k]->l; \
     len[k] = c[k]->u - c[k]->l + 1; \
+    st[k] = 1; \
   }
 
 
@@ -3644,6 +3718,7 @@ static void _XMP_conv_comm_set_to_list_2(_XMP_array_t *a,
   _XMP_comm_set_t *c[ndims];
   int i[ndims];
   long len[ndims];
+  int st[ndims];
 
   _XMP_gmv_inout_list_t *gmv_inout_list = gmv_inout_listh;
 
@@ -3657,7 +3732,7 @@ static void _XMP_conv_comm_set_to_list_2(_XMP_array_t *a,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(a, &t->tgt, i, len);
+      _XMP_set_comm_list(a, &t->tgt, i, len, st);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3676,7 +3751,7 @@ static void _XMP_conv_comm_set_to_list_2(_XMP_array_t *a,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(a, &t->tgt, i, len);
+      _XMP_set_comm_list(a, &t->tgt, i, len, st);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3697,7 +3772,7 @@ static void _XMP_conv_comm_set_to_list_2(_XMP_array_t *a,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(a, &t->tgt, i, len);
+      _XMP_set_comm_list(a, &t->tgt, i, len, st);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3720,7 +3795,7 @@ static void _XMP_conv_comm_set_to_list_2(_XMP_array_t *a,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(a, &t->tgt, i, len);
+      _XMP_set_comm_list(a, &t->tgt, i, len, st);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3745,7 +3820,7 @@ static void _XMP_conv_comm_set_to_list_2(_XMP_array_t *a,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(a, &t->tgt, i, len);
+      _XMP_set_comm_list(a, &t->tgt, i, len, st);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3772,7 +3847,7 @@ static void _XMP_conv_comm_set_to_list_2(_XMP_array_t *a,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(a, &t->tgt, i, len);
+      _XMP_set_comm_list(a, &t->tgt, i, len, st);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3801,7 +3876,7 @@ static void _XMP_conv_comm_set_to_list_2(_XMP_array_t *a,
       _XMP_gmv_inout_list_t *t = _XMP_alloc(sizeof(_XMP_gmv_inout_list_t));
       t->next = NULL;
 
-      _XMP_set_comm_list(a, &t->tgt, i, len);
+      _XMP_set_comm_list(a, &t->tgt, i, len, st);
 
       gmv_inout_list->next = t;
       gmv_inout_list = t;
@@ -3820,7 +3895,6 @@ static void _XMP_conv_comm_set_to_list_2(_XMP_array_t *a,
 
 #if XMP_DBG
 static void print_gmv_inout_list(_XMP_gmv_inout_list_t *gmv_inout_listh){
-
   for (_XMP_gmv_inout_list_t *gmv_inout_list = gmv_inout_listh;
        gmv_inout_list; gmv_inout_list = gmv_inout_list->next){
 

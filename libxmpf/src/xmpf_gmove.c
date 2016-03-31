@@ -280,7 +280,7 @@ _XMPF_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp,
   int type = dst_array->type;
   size_t type_size = dst_array->type_size;
 
-  if (!dst_array->is_allocated) return;
+  if (!dst_array->is_allocated && mode != _XMP_N_GMOVE_OUT) return;
 
   // get dst info
   unsigned long long dst_total_elmts = 1;
@@ -721,6 +721,7 @@ static void xmpf_larray_alloc__(_XMP_array_t **a, _XMP_gmv_desc_t *gmv_desc, int
   }
   xmpf_array_set_local_array__(a, gmv_desc->local_data, 0);
   gmv_desc->a_desc = *a;
+  gmv_desc->a_desc->total_elmts = -1; // temporal descriptor
 }
 
 
