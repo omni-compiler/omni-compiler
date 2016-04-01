@@ -655,17 +655,11 @@ task_wrapper_func(void *arg)
     ABT_thread_self(&thread);
     struct ompc_task *task = (struct ompc_task *)arg;
     ABT_key_set(tls_key, task);
-
-    if (task->nargs < 0) {
-        // call C function
-        if (task->args != NULL) {
-            task->func(task->args);
-        } else {
-            task->func();
-        }
+    
+    if (task->args != NULL) {
+        task->func(task->args);
     } else {
-        // call Fortran function
-        // not implemented yet
+        task->func();
     }
 
     for (int i = 0; i < task->child_task_count; i++) {
@@ -673,6 +667,7 @@ task_wrapper_func(void *arg)
         ABT_thread_free(&task->child_tasks[i]);
     }
     free(task->child_tasks);
+    free(task->args);
     free(task);
 }
 
@@ -682,7 +677,9 @@ do_task_main(int nargs, _Bool cond, cfunc func, void *args, _Bool tied)
     struct ompc_task *task = malloc(sizeof(struct ompc_task));
     task->func = func;
     task->nargs = nargs;
-    task->args = args;
+    void *args_dup = malloc(nargs * sizeof(void *));
+    memcpy(args_dup, args, nargs * sizeof(void *));
+    task->args = args_dup;
     task->child_tasks = NULL;
     task->child_task_count = 0;
     task->child_task_capacity = 0;
@@ -720,15 +717,15 @@ ompc_do_parallel_if (int cond, cfunc f, void *args)
 }
 
 void
-ompc_do_task(cfunc func, void *args, _Bool tied)
+ompc_do_task(int nargs, cfunc func, void *args, _Bool tied)
 {
-    do_task_main(-1, 1, func, args, tied);
+    do_task_main(nargs, 1, func, args, tied);
 }
 
 void
-ompc_do_task_if(_Bool cond, cfunc func, void *args, _Bool tied)
+ompc_do_task_if(int nargs, _Bool cond, cfunc func, void *args, _Bool tied)
 {
-    do_task_main(-1, cond, func, args, tied);
+    do_task_main(nargs, cond, func, args, tied);
 }
 
 void

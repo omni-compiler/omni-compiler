@@ -1547,15 +1547,16 @@ public class OMPtransPragma
     {
         List<Xobject> regionArgs = info.getRegionArgs();
         XobjInt tied = Xcons.IntConstant(info.untied ? 0 : 1);
+        int nargs = regionArgs.size();
 
-        if (regionArgs.size() == 0) {
+        if (nargs == 0) {
             if (info.hasIfExpr()) {
                 body.add(Bcons.Statement(OMPfuncIdent(parallelTaskIfFunc).Call(
-                    Xcons.List(info.getIfExpr(), funcId.Ref(), Xcons.IntConstant(0), tied)
+                    Xcons.List(Xcons.IntConstant(0), info.getIfExpr(), funcId.Ref(), Xcons.IntConstant(0), tied)
                 )));
             } else {
                 body.add(Bcons.Statement(OMPfuncIdent(parallelTaskFunc).Call(
-                    Xcons.List(funcId.Ref(), Xcons.IntConstant(0), tied)
+                    Xcons.List(Xcons.IntConstant(0), funcId.Ref(), Xcons.IntConstant(0), tied)
                 )));
             }
             return;
@@ -1573,11 +1574,11 @@ public class OMPtransPragma
 
         if (info.hasIfExpr()) {
             block.add(OMPfuncIdent(parallelTaskIfFunc).Call(
-                Xcons.List(info.getIfExpr(), funcId.Ref(), argsArray.Ref(), tied)
+                Xcons.List(Xcons.IntConstant(nargs), info.getIfExpr(), funcId.Ref(), argsArray.Ref(), tied)
             ));
         } else {
             block.add(OMPfuncIdent(parallelTaskFunc).Call(
-                Xcons.List(funcId.Ref(), argsArray.Ref(), tied)
+                Xcons.List(Xcons.IntConstant(nargs), funcId.Ref(), argsArray.Ref(), tied)
             ));
         }
         body.add(block);
