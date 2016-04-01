@@ -555,12 +555,13 @@ void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array
   for (int i = 0; i < array_dim; i++) {
     ref_index[i] = va_arg(args, int);
   }
-  root_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ref_index);
+  //root_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ref_index);
 
   int mode = va_arg(args, int);
   va_end(args);
 
   if (mode == _XMP_N_GMOVE_NORMAL){
+    root_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ref_index);
     _XMP_gmove_bcast_SCALAR(dst_addr, src_addr, type_size, root_rank);
   }
   else if (mode == _XMP_N_GMOVE_IN){
@@ -655,7 +656,7 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   for (int i = 0; i < dst_array_dim; i++) {
     dst_ref_index[i] = va_arg(args, int);
   }
-  dst_ref = _XMP_create_gmove_nodes_ref_SCALAR(dst_array, dst_ref_index);
+  //dst_ref = _XMP_create_gmove_nodes_ref_SCALAR(dst_array, dst_ref_index);
 
   _XMP_nodes_ref_t *src_ref;
   int src_array_dim = src_array->dim;
@@ -664,12 +665,15 @@ void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr,
   for (int i = 0; i < src_array_dim; i++) {
     src_ref_index[i] = va_arg(args, int);
   }
-  src_ref = _XMP_create_gmove_nodes_ref_SCALAR(src_array, src_ref_index);
+  //src_ref = _XMP_create_gmove_nodes_ref_SCALAR(src_array, src_ref_index);
 
   int mode = va_arg(args, int);
   va_end(args);
 
   if (mode == _XMP_N_GMOVE_NORMAL){
+
+    dst_ref = _XMP_create_gmove_nodes_ref_SCALAR(dst_array, dst_ref_index);
+    src_ref = _XMP_create_gmove_nodes_ref_SCALAR(src_array, src_ref_index);
 
     _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
     _XMP_ASSERT(exec_nodes->is_member);

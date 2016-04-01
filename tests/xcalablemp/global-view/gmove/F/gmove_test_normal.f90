@@ -90,7 +90,9 @@ program gmove_test_normal
   write(*,*) "PASS"
 !$xmp end task
 #else
+!$xmp task on p0(1,1) nocomm
   write(*,*) "Skipped"
+!$xmp end task
 #endif
 
 end program gmove_test_normal

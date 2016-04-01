@@ -2788,6 +2788,14 @@ public class XMPtranslateLocalPragma {
 	XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
     }
 
+    if (rightAlignedArray == null && gmoveClause.getInt() == XMPcollective.GMOVE_IN){
+      XMP.fatal("gmove in cannot be applied to a local rhs.");
+    }
+
+    if (leftAlignedArray == null && gmoveClause.getInt() == XMPcollective.GMOVE_OUT){
+      XMP.fatal("gmove out cannot be applied to a local lhs.");
+    }
+
     boolean leftHasSubArrayRef = (leftExpr.Opcode() == Xcode.SUB_ARRAY_REF);
     boolean rightHasSubArrayRef = (rightExpr.Opcode() == Xcode.SUB_ARRAY_REF);
     if (leftHasSubArrayRef) {
@@ -2944,11 +2952,18 @@ public class XMPtranslateLocalPragma {
       }
 
       if (leftAlignedArray == null) {
-        if (rightAlignedArray == null) {	// !leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (every node)
+        if (rightAlignedArray == null) { // !leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (every node)
 	  gmoveFuncCallBlock = Bcons.COMPOUND(gmoveBody);
         } else {				// !leftIsAlignedArray &&  rightIsAlignedArray	|-> broadcast
-          XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
+
+	  Xobject rightAddr = (gmoveClause.getInt() == XMPcollective.GMOVE_IN) ?
+	    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)) : Xcons.AddrOf(rightExpr);
+          XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), rightAddr,
                                               rightAlignedArray.getDescId().Ref());
+
+          // XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
+          //                                     rightAlignedArray.getDescId().Ref());
+
           gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
 	  gmoveFuncArgs.add(gmoveClause);
 
@@ -2956,7 +2971,7 @@ public class XMPtranslateLocalPragma {
         }
       }
       else {
-        if (rightAlignedArray == null) {	//  leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (home node)
+        if (rightAlignedArray == null) { //  leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (home node)
 	  if (gmoveClause.getInt() == XMPcollective.GMOVE_NORMAL){
 	    XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
 	    gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
@@ -2967,14 +2982,33 @@ public class XMPtranslateLocalPragma {
 	  }
 	  else if (gmoveClause.getInt() == XMPcollective.GMOVE_OUT){
 	    XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref(), Xcons.AddrOf(rightExpr));
-	    gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+
+	    //gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+	    XobjList accList = getArrayAccList(pb, assignStmt.left());
+	    int dim = 0;
+	    for (Xobject x : leftExprInfo.getSecond()){
+	      gmoveFuncArgs.add(x);
+	      gmoveFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+	      gmoveFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
+	      gmoveFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(dim)));
+	      dim++;
+	    }
+
 	    gmoveFuncArgs.add(gmoveClause);
 	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "INOUT_SCALAR", gmoveFuncArgs);
 	  }
         }
 	else {				//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv
-          XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
+
+	  Xobject leftAddr = (gmoveClause.getInt() == XMPcollective.GMOVE_OUT) ?
+	    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)) : Xcons.AddrOf(leftExpr);
+	  Xobject rightAddr = (gmoveClause.getInt() == XMPcollective.GMOVE_IN) ?
+	    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)) : Xcons.AddrOf(rightExpr);
+          XobjList gmoveFuncArgs = Xcons.List(leftAddr, rightAddr,
                                               leftAlignedArray.getDescId().Ref(), rightAlignedArray.getDescId().Ref());
+
+          // XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
+          //                                     leftAlignedArray.getDescId().Ref(), rightAlignedArray.getDescId().Ref());
           gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
           gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
 	  gmoveFuncArgs.add(gmoveClause);

@@ -67,7 +67,7 @@ end module mod0
 
 
 !--------------------------------------------------------
-program gmove_test_in
+program gmove_test_out
 
   use mod0
 
@@ -87,10 +87,12 @@ program gmove_test_in
   write(*,*) "PASS"
 !$xmp end task
 #else
+!$xmp task on p0(1) nocomm
   write(*,*) "Skipped"
+!$xmp end task
 #endif
 
-end program gmove_test_in
+end program gmove_test_out
 
 
 !--------------------------------------------------------
