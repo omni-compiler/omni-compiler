@@ -15,8 +15,12 @@ import java.util.*;
  */
 public class XMPcoindexObj {
   // version switch
-  final static int GetInterfaceType = 8;           // last implementation: 6
-  final static int PutInterfaceType = 8;           // last implementation: 7
+  ////////////////////////////////////////////
+  final static int GetInterfaceType = 6;           // last implementation: 6
+  final static int PutInterfaceType = 7;           // last implementation: 7
+  //final static int GetInterfaceType = 8;           // last implementation: 6
+  //final static int PutInterfaceType = 8;           // last implementation: 7
+  ////////////////////////////////////////////
 
   // constants
   final static String COARRAYPUT_PREFIX = "xmpf_coarray_put";

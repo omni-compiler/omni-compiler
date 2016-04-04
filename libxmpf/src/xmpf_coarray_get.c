@@ -348,7 +348,7 @@ void _getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
     _getVector_DMA(descPtr, src, bufSize, coindex,
                    _localBuf_desc, _localBuf_offset, _localBuf_name);
 
-    _XMPF_coarrayDebugPrint("MEMCPY %d bytes\n"
+    _XMPF_coarrayDebugPrint("MEMCPY %d bytes, partial\n"
                             "  src: \'%s\'\n"
                             "  dst: addr=%p\n",
                             bufSize,
@@ -363,7 +363,7 @@ void _getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
   _getVector_DMA(descPtr, src, rest1, coindex,
                  _localBuf_desc, _localBuf_offset, _localBuf_name);
 
-  _XMPF_coarrayDebugPrint("MEMCPY %d bytes\n"
+  _XMPF_coarrayDebugPrint("MEMCPY %d bytes, final\n"
                           "  src: \'%s\'\n"
                           "  dst: addr=%p\n",
                           rest2,

@@ -5,8 +5,12 @@
 #define TRUE   1
 #define FALSE  0
 
-#define GET_INTERFACE_TYPE 8
-#define PUT_INTERFACE_TYPE 8
+///////////////////////////////////
+#define GET_INTERFACE_TYPE 6
+#define PUT_INTERFACE_TYPE 7
+//#define GET_INTERFACE_TYPE 8
+//#define PUT_INTERFACE_TYPE 8
+///////////////////////////////////
 
 #if defined(_XMP_FJRDMA)
 #  define ONESIDED_BOUNDARY ((size_t)4)
@@ -44,9 +48,9 @@ extern void _XMPF_coarray_finalize(void);
 extern int _XMPF_get_coarrayMsg(void);
 extern void _XMPF_set_coarrayMsg(int sw);
 extern void _XMPF_reset_coarrayMsg(void);
-
 extern unsigned XMPF_get_poolThreshold(void);
 extern size_t XMPF_get_localBufSize(void);
+extern BOOL XMPF_isSafeBufferMode(void);
 
 extern void xmpf_coarray_msg_(int *sw);
 

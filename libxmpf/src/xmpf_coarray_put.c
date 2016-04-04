@@ -23,12 +23,14 @@ static char *_putVectorIter(void *descPtr, char *baseAddr, int bytes, int coinde
                             char *src, int loops, int skip[], int count[],
                             void *descDMA, size_t offsetDMA, char *rhs_name);
 
-static void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
-                              char *rhs, int bytes);
+static void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU,
+                              int coindex, char *rhs, int bytes);
+
+static void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
+                                   int coindex, char *rhs, int bytes);
 
 static void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                            void *descDMA, size_t offsetDMA, char *nameDMA);
-
 
 static void _spreadCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
                            int bytes, int rank, int skip[], int count[],
@@ -421,11 +423,17 @@ char *_putVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
 }
 
 
-void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
-                       char *rhs, int bytes)
+void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU,
+                       int coindex, char *rhs, int bytes)
 {
   size_t rest1, rest2, bufSize;
   char *src, *dst;
+
+  if (XMPF_isSafeBufferMode()) {
+    _putVector_buffer_SAFE(descPtr, baseAddr, bytesRU,
+                           coindex, rhs, bytes);
+    return;
+  }
 
   src = rhs;
   dst = baseAddr;
@@ -435,6 +443,7 @@ void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
   for (rest1 = bytesRU, rest2 = bytes;
        rest1 > bufSize;
        rest1 -= bufSize, rest2 -=bufSize) {
+
     _XMPF_coarrayDebugPrint("MEMCPY %d bytes, continued\n"
                             "  src: addr=%p\n"
                             "  dst: \'%s\'\n",
@@ -450,7 +459,7 @@ void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
     dst += bufSize;
   }
 
-  _XMPF_coarrayDebugPrint("MEMCPY %d bytes\n"
+  _XMPF_coarrayDebugPrint("MEMCPY %d bytes, final\n"
                           "  src: addr=%p\n"
                           "  dst: \'%s\'\n",
                           rest2,
@@ -481,6 +490,46 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                             desc,   descDMA,
                             offset, offsetDMA,
                             bytes,  bytes);
+}
+
+
+// SAFE mode without using localBuf
+//
+void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
+                            int coindex, char *rhs, int bytes)
+{
+  char *desc = _XMPF_get_coarrayDesc(descPtr);
+  size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
+
+  // MALLOC & MEMCPY
+  char *buf = (char*)malloc(sizeof(char) * bytesRU);
+
+  _XMPF_coarrayDebugPrint("MEMCPY, SAFE MODE, %d bytes\n"
+                          "  src: addr=%p\n"
+                          "  dst: addr=%p\n",
+                          bytes,
+                          rhs,
+                          buf);
+  (void)memcpy(buf, rhs, bytes);
+
+  _XMPF_coarrayDebugPrint("to [%d] PUT_VECTOR RDMA, SAFE MODE, %d bytes\n"
+                          "  source            : dynamically-allocated buffer, addr=%p\n"
+                          "  destination (RDMA): \'%s\', offset=%zd\n",
+                          coindex, bytes,
+                          buf,
+                          _XMPF_get_coarrayName(descPtr), offset);
+
+  // ACTION
+  _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // LHS (remote)
+  _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // RHS (local)
+  _XMP_coarray_rdma_image_set_1(coindex);
+  _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, buf, NULL);
+
+  // FREE
+  _XMPF_coarrayDebugPrint("FREE, SAFE MODE\n"
+                          "  addr=%p\n",
+                          buf);
+  free(buf);
 }
 
 

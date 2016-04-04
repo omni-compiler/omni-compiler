@@ -22,6 +22,7 @@ static int _XMPF_coarrayMsg_last;         // for _XMPF_set/reset_coarrayMsg()
 //static int _XMPF_coarrayErr = 0;          // default: aggressive error check off
 static unsigned _XMPF_poolThreshold = POOL_THRESHOLD;
 static size_t _XMPF_localBufSize = LOCAL_BUF_SIZE;
+static BOOL _XMPF_isSafeBufferMode = FALSE;
 
 static void _set_coarrayMsg(int sw)
 {
@@ -97,6 +98,17 @@ size_t XMPF_get_localBufSize(void)
 }
 
 
+unsigned _set_isSafeBufferMode(BOOL sw)
+{
+  _XMPF_isSafeBufferMode = sw;
+}
+
+BOOL XMPF_isSafeBufferMode(void)
+{
+  return _XMPF_isSafeBufferMode;
+}
+
+
 /*****************************************\
   hidden API
 \*****************************************/
@@ -135,7 +147,7 @@ void _XMPF_coarray_init(void)
   /*
    * read environment variables
    */
-  char *tok, *work, *env1, *env2, *env3;
+  char *tok, *work, *env1, *env2, *env3, *env4;
   int i;
   char delim[] = ", ";
   unsigned len;
@@ -164,23 +176,33 @@ void _XMPF_coarray_init(void)
       _set_localBufSize(len);
   }
     
+  env4 = getenv("XMPF_COARRAY_SAFE");
+  if (env4 != NULL) {
+    _set_isSafeBufferMode(atoi(env4));
+  }
+    
   _XMPF_coarrayDebugPrint("Execution time environment\n"
                           "   communication layer  :  %s (%u-byte boundary)\n"
                           "   environment vars     :  XMPF_COARRAY_MSG=%s\n"
                           "                           XMPF_COARRAY_POOL=%s\n"
-                          "                           XMPF_COARRAY_BUF=%s\n",
+                          "                           XMPF_COARRAY_BUF=%s\n"
+                          "                           XMPF_COARRAY_SAFE=%s\n",
                           ONESIDED_COMM_LAYER, ONESIDED_BOUNDARY,
                           env1 ? env1 : "",
                           env2 ? env2 : "",
-                          env3 ? env3 : ""
+                          env3 ? env3 : "",
+                          env4 ? env4 : ""
                           );
+
   _XMPF_coarrayDebugPrint("Specified Parameters\n"
                           "   runtime message switch        :  %s\n"
                           "   pooling/allocation threshold  :  %u bytes\n"
-                          "   static buffer (localBuf) size :  %u bytes\n",
+                          "   static buffer (localBuf) size :  %u bytes\n"
+                          "   safe buffer mode              :  %s\n",
                           _XMPF_get_coarrayMsg() ? "on" : "off",
                           XMPF_get_poolThreshold(),
-                          XMPF_get_localBufSize()
+                          XMPF_get_localBufSize(),
+                          XMPF_isSafeBufferMode() ? "on" : "off"
                           );
 }
 

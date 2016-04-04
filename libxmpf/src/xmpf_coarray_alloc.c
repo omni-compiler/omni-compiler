@@ -1445,7 +1445,7 @@ int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...)
     ub = cp->ucobound[i];
     if (idx < lb || ub < idx) {
       _XMPF_coarrayFatal("%d-th cosubscript of \'%s\', %d, "
-                         "is out of range %d to %d.",
+                         "is out of range %d to %d.\n",
                          i+1, cp->name, idx, lb, ub);
     }
     count += (idx - lb) * factor;
