@@ -5,12 +5,12 @@
 #define TRUE   1
 #define FALSE  0
 
-///////////////////////////////////
-#define GET_INTERFACE_TYPE 6
-#define PUT_INTERFACE_TYPE 7
-//#define GET_INTERFACE_TYPE 8
-//#define PUT_INTERFACE_TYPE 8
-///////////////////////////////////
+// GET/PUT Interface types
+// (see also XcodeML-Exc-Tools/src/exc/xmpF/XMPcoindexObj.java)
+//#define GET_INTERFACE_TYPE 6           // varid last implementation
+#define GET_INTERFACE_TYPE 8
+//#define PUT_INTERFACE_TYPE 7           // varid last implementation
+#define PUT_INTERFACE_TYPE 8
 
 #if defined(_XMP_FJRDMA)
 #  define ONESIDED_BOUNDARY ((size_t)4)

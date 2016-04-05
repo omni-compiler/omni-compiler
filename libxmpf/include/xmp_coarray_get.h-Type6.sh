@@ -1,8 +1,9 @@
 #!/bin/bash
 
 #-------------------------------------------------------
-#  generator for xmp_lib_coarray_get.h
-#  see also ../src/xmpf_coarray_get_wrap.f90[.sh]
+#  GET INTERFACE TYPE 6
+#  generator for xmp_coarray_get.h
+#  see also ../src/xmpf_coarray_get_wrap.f90{,.sh}
 #-------------------------------------------------------
 
 #--------------------

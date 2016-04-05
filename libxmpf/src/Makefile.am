@@ -14,6 +14,12 @@ libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_main.F90 xmpf_array.c x
                     xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
 		    xmpf_template.c
 
+%.f90: %.f90.sh
+	. $< $(TARGET) > $@
+
+%.F90: %.F90.sh
+	. $< $(TARGET) > $@
+
 xmpf_main.o: xmpf_main.F90
 	$(FC) $(FCFLAGS) $< -c
 
@@ -57,12 +63,6 @@ if FJRDMA
     CFLAGS            += -D_XMP_FJRDMA
     FCFLAGS           += -D_XMP_FJRDMA
 endif
-
-%.f90: %.f90.sh
-	. $< $(TARGET) > $@
-
-%.F90: %.F90.sh
-	. $< $(TARGET) > $@
 
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || $(MKDIR_P) $(DESTDIR)$(libdir)

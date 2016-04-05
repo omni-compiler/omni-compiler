@@ -6,6 +6,8 @@
 #  see also ../include/xmp_coarray_put.h{,.sh}
 #-------------------------------------------------------
 
+#DEBUG=1
+
 #--------------------
 #  sub
 #--------------------
@@ -28,6 +30,12 @@ print_subroutine_scalar() {
     echo   '      integer, intent(in) :: coindex'
     echo   "      ${typekind}, intent(in) :: mold, src"
     echo   ''
+
+# DEBUG MESSAGE
+    if [ "${DEBUG}" == "1" ]; then
+        echo   "      print *, \"SELECTED SPECIFIC SUBROUTINE:\""
+        echo   "      print *, \" xmpf_coarray_put0d_${tk}(descptr, coindex, mold, src)\""
+    fi
 
 # ERROR CHECK
     if [ "${typekind}" == "character(*)" ]; then
@@ -78,6 +86,12 @@ print_subroutine_array() {
     echo    '      integer(8) :: base, base_s'
     echo    "      integer :: i, skip(${DIM}), skip_s(${DIM}), extent(${DIM})"
     echo    ''
+
+# DEBUG MESSAGE
+    if [ "${DEBUG}" == "1" ]; then
+        echo   "      print *, \"SELECTED SPECIFIC SUBROUTINE:\""
+        echo   "      print *, \" xmpf_coarray_put${DIM}d_${tk}(descptr, coindex, mold, src)\""
+    fi
 
 # ERROR CHECK
     if [ "${typekind}" == "character(*)" ]; then

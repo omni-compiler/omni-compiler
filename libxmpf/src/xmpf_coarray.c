@@ -50,6 +50,7 @@ static void _set_coarrayMsg(int sw)
 static void _set_poolThreshold(unsigned size);
 static void _set_localBufSize(unsigned size);
 static unsigned _envStringToBytes(char *str, char *envVarName);
+static void _set_isSafeBufferMode(BOOL sw);
 
 int _XMPF_get_coarrayMsg(void)
 {
@@ -98,7 +99,7 @@ size_t XMPF_get_localBufSize(void)
 }
 
 
-unsigned _set_isSafeBufferMode(BOOL sw)
+void _set_isSafeBufferMode(BOOL sw)
 {
   _XMPF_isSafeBufferMode = sw;
 }
@@ -179,6 +180,10 @@ void _XMPF_coarray_init(void)
   env4 = getenv("XMPF_COARRAY_SAFE");
   if (env4 != NULL) {
     _set_isSafeBufferMode(atoi(env4));
+    if (XMPF_isSafeBufferMode())
+      fprintf(stderr, "CAF[%d] <SAFE MODE> for PUT-communication\n"
+              " - Dynamic malloc (without free) is used instead of static buffer localBuf.\n",
+              _XMPF_get_current_this_image());
   }
     
   _XMPF_coarrayDebugPrint("Execution time environment\n"
@@ -198,11 +203,14 @@ void _XMPF_coarray_init(void)
                           "   runtime message switch        :  %s\n"
                           "   pooling/allocation threshold  :  %u bytes\n"
                           "   static buffer (localBuf) size :  %u bytes\n"
-                          "   safe buffer mode              :  %s\n",
+                          "   safe buffer mode (PUT only)   :  %s\n"
+                          "   GET-communication interface   :  type %d\n"
+                          "   PUT-communication interface   :  type %d\n",
                           _XMPF_get_coarrayMsg() ? "on" : "off",
                           XMPF_get_poolThreshold(),
                           XMPF_get_localBufSize(),
-                          XMPF_isSafeBufferMode() ? "on" : "off"
+                          XMPF_isSafeBufferMode() ? "on" : "off",
+                          GET_INTERFACE_TYPE, PUT_INTERFACE_TYPE
                           );
 }
 
@@ -296,7 +304,7 @@ void _XMPF_coarrayFatal(char *format, ...)
 
   //xmpf_finalize_each__();   This causes deadlock sometimes.
 
-  _XMP_fatal("fatal error detected by Coarray/F runtime.");
+  _XMP_fatal("fatal error in XMP Coarray/F runtime.");
 }
 
 void _XMPF_coarrayDebugPrint(char *format, ...)

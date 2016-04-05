@@ -14,20 +14,17 @@ import java.util.*;
  * Madiator for coindexed object such as a(i,j)[k]
  */
 public class XMPcoindexObj {
-  // version switch
-  ////////////////////////////////////////////
-  final static int GetInterfaceType = 6;           // last implementation: 6
-  final static int PutInterfaceType = 7;           // last implementation: 7
-  //final static int GetInterfaceType = 8;           // last implementation: 6
-  //final static int PutInterfaceType = 8;           // last implementation: 7
-  ////////////////////////////////////////////
+
+  // GET/PUT Interface types
+  // (see also 1libxmpf/include/xmpf_internal_coarray.h)
+  //final static int GetInterfaceType = 6;           // valid last implementation
+  final static int GetInterfaceType = 8;
+  //final static int PutInterfaceType = 7;           // valid last implementation
+  final static int PutInterfaceType = 8;
 
   // constants
-  final static String COARRAYPUT_PREFIX = "xmpf_coarray_put";
-
-  final static String COARRAYGET_PREFIX = "xmpf_coarray_get";
-  //final static String COARRAYGET_SCALAR_NAME = "xmpf_coarray_get_scalar";
-  //final static String COARRAYGET_ARRAY_NAME = "xmpf_coarray_get_array";
+  final static String COARRAYPUT_PREFIX = "xmpf_coarray_put";                // for Type 7
+  final static String COARRAYGET_PREFIX = "xmpf_coarray_get";                // for Type 6
   final static String COARRAYGET_GENERIC_NAME = "xmpf_coarray_get_generic";  // for Type 8
   final static String COARRAYPUT_GENERIC_NAME = "xmpf_coarray_put_generic";  // for Type 8
 

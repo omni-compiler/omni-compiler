@@ -16,11 +16,11 @@ static int _select_putscheme_scalar(int element, int avail_DMA);
 static int _select_putscheme_array(int avail_DMA);
 
 static void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
-                        int bytes, int rank, int skip[], int count[],
+                        int bytes, int rank, int skip[], int skip_rhs[], int count[],
                         void *descDMA, size_t offsetDMA, char *rhs_name);
 
 static char *_putVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
-                            char *src, int loops, int skip[], int count[],
+                            char *src, int loops, int skip[], int skip_kind[], int count[],
                             void *descDMA, size_t offsetDMA, char *rhs_name);
 
 static void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU,
@@ -164,6 +164,9 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
   }
 
 #if PUT_INTERFACE_TYPE != 8
+
+  int *skip_rhs = NULL;    // means RHS is always fully contiguous.
+
   /*--------------------------------------*\
    *   argument analysis                  *
   \*--------------------------------------*/
@@ -207,14 +210,14 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
   case SCHEME_DirectPut:
     _XMPF_coarrayDebugPrint("select SCHEME_DirectPut/array\n");
     _putCoarray(*descPtr, *baseAddr, *coindex, rhs,
-                *element, *rank, skip, count,
+                *element, *rank, skip, skip_rhs, count,
                 descDMA, offsetDMA, nameDMA);
     break;
 
   case SCHEME_BufferPut:
     _XMPF_coarrayDebugPrint("select SCHEME_BufferPut/array\n");
     _putCoarray(*descPtr, *baseAddr, *coindex, rhs,
-                *element, *rank, skip, count,
+                *element, *rank, skip, skip_rhs, count,
                 NULL, 0, "(localBuf)");
     break;
 
@@ -345,7 +348,7 @@ int _select_putscheme_array(int avail_DMA)
 \***************************************************/
 
 void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
-                 int bytes, int rank, int skip[], int count[],
+                 int bytes, int rank, int skip[], int skip_rhs[], int count[],
                  void *descDMA, size_t offsetDMA, char *nameDMA)
 {
   if (rank == 0) {  // fully contiguous after perfect collapsing
@@ -358,15 +361,19 @@ void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
     return;
   }
 
-  if (bytes == skip[0]) {  // The first axis is contiguous
-    // colapse the axis recursively
-    _putCoarray(descPtr, baseAddr, coindex, rhs,
-                bytes * count[0], rank - 1, skip + 1, count + 1,
-                descDMA, offsetDMA, nameDMA);
-    return;
+  /* This judgement is not yet the best for the buffered scheme.
+   */
+  if (bytes == skip[0]) {      // The first axis of the coarray is contiguous
+    if (bytes == skip_rhs[0]) {   // The first axis of RHS is contiguous
+      // colapse the axis recursively
+      _putCoarray(descPtr, baseAddr, coindex, rhs,
+                  bytes * count[0], rank - 1, skip + 1, skip_rhs + 1, count + 1,
+                  descDMA, offsetDMA, nameDMA);
+      return;
+    }
   }
 
-  // not contiguous any more
+  // not contiguous coarray and RHS any more
   char* src = rhs;
 
   if (_XMPF_get_coarrayMsg()) {
@@ -382,41 +389,43 @@ void _putCoarray(void *descPtr, char *baseAddr, int coindex, char *rhs,
   }
 
   src = _putVectorIter(descPtr, baseAddr, bytes, coindex, src,
-                       rank, skip, count,
+                       rank, skip, skip_rhs, count,
                        descDMA, offsetDMA, nameDMA);
 }
 
   
 char *_putVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
-                     char *src, int loops, int skip[], int count[],
+                     char *src, int loops, int skip[], int skip_rhs[], int count[],
                      void *descDMA, size_t offsetDMA, char *nameDMA)
 {
   char* dst = baseAddr;
   int n = count[loops - 1];
   int gap = skip[loops - 1];
+  int gap_rhs = skip_rhs ? skip_rhs[loops - 1] : bytes;
 
   if (loops == 1) {
-    if (descDMA != NULL) {   // DMA available
+    if (descDMA != NULL) {   // DMA
       for (int i = 0; i < n; i++) {
         _putVector_DMA(descPtr, dst, bytes, coindex,
                        descDMA, offsetDMA, nameDMA);
-        src += bytes;
+        src += gap_rhs;
         dst += gap;
       }
     } else {     // recursive putVector with static buffer
       for (int i = 0; i < n; i++) {
         _putVector_buffer(descPtr, dst, bytes, coindex,
                           src, bytes);
-        src += bytes;
+        src += gap_rhs;
         dst += gap;
       }
     }
+    return src;
   }
 
   for (int i = 0; i < n; i++) {
     src = _putVectorIter(descPtr, baseAddr + i * gap, bytes,
                          coindex, src,
-                         loops - 1, skip, count,
+                         loops - 1, skip, skip_rhs, count,
                          descDMA, offsetDMA, nameDMA);
   }
   return src;
@@ -502,7 +511,7 @@ void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
   size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
 
   // MALLOC & MEMCPY
-  char *buf = (char*)malloc(sizeof(char) * bytesRU);
+  char *buf = (char*)_XMP_alloc(sizeof(char) * bytesRU);
 
   _XMPF_coarrayDebugPrint("MEMCPY, SAFE MODE, %d bytes\n"
                           "  src: addr=%p\n"
@@ -526,10 +535,10 @@ void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
   _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, buf, NULL);
 
   // FREE
-  _XMPF_coarrayDebugPrint("FREE, SAFE MODE\n"
+  _XMPF_coarrayDebugPrint("DO NOT FREE in SAFE MODE\n"
                           "  addr=%p\n",
                           buf);
-  free(buf);
+  //_XMP_free(buf);  // for safe, changing the address every time
 }
 
 

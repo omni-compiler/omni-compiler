@@ -805,14 +805,14 @@ uninstall-am: uninstall-libLIBRARIES
 	uninstall-am uninstall-libLIBRARIES
 
 
-xmpf_main.o: xmpf_main.F90
-	$(FC) $(FCFLAGS) $< -c
-
 %.f90: %.f90.sh
 	. $< $(TARGET) > $@
 
 %.F90: %.F90.sh
 	. $< $(TARGET) > $@
+
+xmpf_main.o: xmpf_main.F90
+	$(FC) $(FCFLAGS) $< -c
 
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || $(MKDIR_P) $(DESTDIR)$(libdir)
