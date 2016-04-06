@@ -376,7 +376,7 @@ void _putCoarray_DMA(void *descPtr, char *baseAddr, int coindex, char *rhs,
     }
   }
 
-  // not contiguous coarray and RHS any more
+  // Coarray or RHS is non-contiguous
   char* src = rhs;
 
   if (_XMPF_get_coarrayMsg()) {
@@ -407,7 +407,7 @@ void _putCoarray_buffer(void *descPtr, char *baseAddr, int coindex, char *rhs,
     return;
   }
 
-  /* This judgement is not yet the best for the buffered scheme.
+  /* This judgement is not the best for the buffered scheme.
    */
   if (bytes == skip[0]) {      // The first axis of the coarray is contiguous
     if (bytes == skip_rhs[0]) {   // The first axis of RHS is contiguous
@@ -419,7 +419,7 @@ void _putCoarray_buffer(void *descPtr, char *baseAddr, int coindex, char *rhs,
     }
   }
 
-  // not contiguous coarray and RHS any more
+  // Coarray or RHS is non-contiguous
   char* src = rhs;
 
   if (_XMPF_get_coarrayMsg()) {
@@ -470,6 +470,28 @@ void _putVectorIter_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
 }
 
 
+void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
+                    void *descDMA, size_t offsetDMA, char *nameDMA)
+{
+  char* desc = _XMPF_get_coarrayDesc(descPtr);
+  size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
+
+  _XMPF_coarrayDebugPrint("to [%d] PUT_VECTOR DMA-RDMA, %d bytes\n"
+                          "  src (DMA) : \'%s\', offset=%zd\n"
+                          "  dst (RDMA): \'%s\', offset=%zd\n",
+                          coindex, bytes,
+                          nameDMA, offsetDMA,
+                          _XMPF_get_coarrayName(descPtr), offset);
+
+  // ACTION
+  _XMP_coarray_shortcut_put(coindex,
+                            desc,   descDMA,
+                            offset, offsetDMA,
+                            bytes,  bytes);
+}
+
+
+
 void _putVectorIter_buffer(void *descPtr, char *baseAddr, int bytes, int coindex,
                            char *src, int loops, int skip[], int skip_rhs[], int count[])
 {
@@ -500,27 +522,6 @@ void _putVectorIter_buffer(void *descPtr, char *baseAddr, int bytes, int coindex
 }
 
 
-void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
-                    void *descDMA, size_t offsetDMA, char *nameDMA)
-{
-  char* desc = _XMPF_get_coarrayDesc(descPtr);
-  size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
-
-  _XMPF_coarrayDebugPrint("to [%d] PUT_VECTOR DMA-RDMA, %d bytes\n"
-                          "  src (DMA) : \'%s\', offset=%zd\n"
-                          "  dst (RDMA): \'%s\', offset=%zd\n",
-                          coindex, bytes,
-                          nameDMA, offsetDMA,
-                          _XMPF_get_coarrayName(descPtr), offset);
-
-  // ACTION
-  _XMP_coarray_shortcut_put(coindex,
-                            desc,   descDMA,
-                            offset, offsetDMA,
-                            bytes,  bytes);
-}
-
-
 void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU,
                        int coindex, char *rhs, int bytes)
 {
@@ -548,6 +549,7 @@ void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU,
                             bufSize,
                             src,
                             _localBuf_name);
+
     (void)memcpy(_localBuf_baseAddr, src, bufSize);
 
     _putVector_DMA(descPtr, dst, bufSize, coindex,
