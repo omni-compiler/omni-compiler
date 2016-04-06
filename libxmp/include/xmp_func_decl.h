@@ -201,6 +201,9 @@ extern void _XMP_gmove_BCAST_ARRAY(void *src_array, int type, size_t type_size, 
 extern void _XMP_gmove_HOMECOPY_ARRAY(void *dst_array, int type, size_t type_size, ...);
 extern void _XMP_gmove_SENDRECV_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
 extern void _XMP_gmove_BCAST_TO_NOTALIGNED_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
+extern void _XMP_gmove_GSECTION_GSCALAR(void *dst_array, void *src_array, int type, size_t type_size, ...);
+extern void _XMP_gmove_LSECTION_GSCALAR(void *src_array, int type, size_t type_size, void *dst, int dst_dim, ...);
+extern void _XMP_gmove_INOUT_SCALAR(void *dst_array, void *scalar, ...);
 
 // xmp_gmove_acc.c
 extern void _XMP_gmove_acc_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);
