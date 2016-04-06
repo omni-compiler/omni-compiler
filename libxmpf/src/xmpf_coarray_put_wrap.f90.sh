@@ -156,7 +156,7 @@ print_subroutine_array() {
 
     echo   ''
     echo72 "      call xmpf_coarray_put_array(descptr, base, ${element},"
-    echo   "     &   coindex, src, ${DIM}, skip, skip_s, extent)"
+    echo   "     &   coindex, base_s, ${DIM}, skip, skip_s, extent)"
     echo   '      return'
     echo   '      end subroutine'
     echo   ''

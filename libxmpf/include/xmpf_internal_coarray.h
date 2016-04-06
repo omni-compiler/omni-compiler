@@ -135,7 +135,7 @@ extern void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen);
 extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs);
 extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *element,
-                                    int *coindex, char *rhs, int *rank,
+                                    int *coindex, char **rhsAddr, int *rank,
                                     int skip[], int skip_rhs[], int count[]);
 extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, int *rank,
