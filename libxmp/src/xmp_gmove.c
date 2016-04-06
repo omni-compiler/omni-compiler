@@ -39,7 +39,7 @@ static void _XMP_gmove_inout(_XMP_gmv_desc_t *gmv_desc_org, _XMP_gmv_desc_t *gmv
 #endif
 
 #define XMP_DBG 0
-#define DBG_RANK 4
+#define DBG_RANK 3
 #define XMP_DBG_OWNER_REGION 0
 
 _XMP_nodes_t *gmv_nodes;
@@ -3262,6 +3262,24 @@ _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_right
     		  recvbuf, recvcounts, rdispls, lhs_array->mpi_type,
     		  *gmv_comm);
 
+    /* int tag = 0; */
+    /* int i = 0; */
+    /* MPI_Request reqs[n_gmv_nodes * 2]; */
+
+    /* for (int rank = 0; rank < n_gmv_nodes; rank++){ */
+
+    /*   if (sendcounts[rank]){ */
+    /* 	MPI_Isend((char*)sendbuf + sdispls[rank] * rhs_array->type_size, */
+    /* 		  sendcounts[rank], rhs_array->mpi_type, rank, tag, *gmv_comm, &reqs[i++]); */
+    /*   } */
+    /*   if (recvcounts[rank]){ */
+    /* 	MPI_Irecv((char*)recvbuf + rdispls[rank] * rhs_array->type_size, */
+    /* 		  recvcounts[rank], lhs_array->mpi_type, rank, tag, *gmv_comm, &reqs[i++]); */
+    /*   } */
+    /* } */
+
+    /* MPI_Waitall(i, reqs, MPI_STATUS_IGNORE); */
+
     //
     // Unpack
     //
@@ -3487,46 +3505,6 @@ static void _XMP_conv_comm_set_to_list(_XMP_gmv_desc_t *gmv_desc_org,
     }
 
   }
-
-  /* if (!org_is_scalar){ */
-
-  /*   int j = 0; */
-  /*   for (int i = 0; i < org_ndims; i++){ */
-  /*     if (org_st[i] != 0){ */
-  /* 	while (tgt_st[j] == 0 && j < tgt_ndims){ */
-  /* 	  tgt_i[j] = tgt_lb[j]; */
-  /* 	  tgt_len[j] = 1; */
-  /* 	  j++; */
-  /* 	} */
-  /* 	if (j < tgt_ndims) tgt_dim[i] = j++; */
-  /* 	else tgt_dim[i] = -1; */
-  /*     } */
-  /*   } */
-
-  /*   for (; j < tgt_ndims; j++){ */
-  /*     tgt_i[j] = tgt_lb[j]; */
-  /*     tgt_len[j] = 1; */
-  /*   } */
-
-  /* } */
-  /* else { */
-
-  /*   for (int i = 0; i < org_ndims; i++){ */
-  /*     org_i[i] = org_lb[i]; */
-  /*     org_len[i] = 1; */
-  /*     org_stride[i] = 1; */
-  /*     tgt_dim[i] = -1; */
-  /*   } */
-
-  /*   /\* // tgt_st == 0 *\/ */
-
-  /*   /\* for (int i = 0; i < tgt_ndims; i++){ *\/ */
-  /*   /\*   tgt_i[i] = tgt_lb[i]; *\/ */
-  /*   /\*   tgt_len[i] = 1; *\/ */
-  /*   /\*   tgt_stride[i] = 1; *\/ */
-  /*   /\* } *\/ */
-
-  /* } */
 
   switch (org_ndims){
 
