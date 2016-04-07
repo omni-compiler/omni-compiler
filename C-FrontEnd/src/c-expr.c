@@ -1325,16 +1325,19 @@ allocExprOfNumberConst(CExprCodeEnum exprCode, CBasicTypeEnum bt,
 	      case BT_CHAR:
 		if(n > UCHAR_MAX) overRange1 = 1;
 		else if(n > SCHAR_MAX) bt = BT_UNSIGNED_CHAR;
-		overRange1 = 1;
+		break;
 	      case BT_SHORT:
 		if(n > USHRT_MAX) overRange1 = 1;
 		else if(n > SHRT_MAX) bt = BT_UNSIGNED_SHORT;
+		break;
 	      case BT_INT:
 		if(n > UINT_MAX) overRange1 = 1;
 		else if(n > INT_MAX) bt = BT_UNSIGNED_INT;
+		break;
 	      case BT_LONG:
-		if(n > ULONG_MAX) overRange1 = 1;
+		if(n > (unsigned long long)ULONG_MAX) overRange1 = 1;  //cast avoids a bug when using PGI compiler
 		else if(n > LONG_MAX) bt = BT_UNSIGNED_LONG;
+		break;
 	      default:
 		break;
 	      }
