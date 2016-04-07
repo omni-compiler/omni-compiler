@@ -318,7 +318,7 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_SELECTED_INT_KIND,   INTR_NAME_GENERIC,      "selected_int_kind",    0,      {INTR_TYPE_INT},        INTR_TYPE_INT,  1, -6, LANGSPEC_F90 },
 
     // SELECTED_REAL_KIND ([P, R])
-    { INTR_SELECTED_REAL_KIND,  INTR_NAME_GENERIC,      "selected_real_kind",   0,      {},                             INTR_TYPE_INT,  0, -6, LANGSPEC_F90 },
+    { INTR_SELECTED_REAL_KIND,  INTR_NAME_GENERIC,      "selected_real_kind",   0,      {INTR_TYPE_NONE},               INTR_TYPE_INT,  0, -6, LANGSPEC_F90 },
     { INTR_SELECTED_REAL_KIND,  INTR_NAME_GENERIC,      "",                     0,      {INTR_TYPE_INT},                INTR_TYPE_INT,  1, 0, LANGSPEC_F90 },
     { INTR_SELECTED_REAL_KIND,  INTR_NAME_GENERIC,      "",                     0,      {INTR_TYPE_INT, INTR_TYPE_INT}, INTR_TYPE_INT,  2, 0, LANGSPEC_F90 },
 
@@ -649,7 +649,7 @@ intrinsic_entry intrinsic_table[] = {
     /* 21. Intrinsic subroutines */
 
     // DATE_AND_TIME ([DATE, TIME, ZONE, VALUES])
-    { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "date_and_time",        0,      {},                                                     INTR_TYPE_NONE, 0, -1, LANGSPEC_F90 },
+    { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "date_and_time",        0,      { INTR_TYPE_NONE },                                     INTR_TYPE_NONE, 0, -1, LANGSPEC_F90 },
     { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_CHAR },                                     INTR_TYPE_NONE, 1, -1, LANGSPEC_F90 },
     { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_CHAR, INTR_TYPE_CHAR },                     INTR_TYPE_NONE, 2, -1, LANGSPEC_F90 },
     { INTR_DATE_AND_TIME,       INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_CHAR, INTR_TYPE_CHAR, INTR_TYPE_CHAR },     INTR_TYPE_NONE, 3, -1, LANGSPEC_F90 },
@@ -663,7 +663,7 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_RANDOM_NUMBER,      INTR_NAME_GENERIC,      "random_number",        0,      { INTR_TYPE_ALL_REAL },                                 INTR_TYPE_NONE, 1, -1, LANGSPEC_F90 },
 
     // RANDOM_SEED ([SIZE, PUT, GET])
-    { INTR_RANDOM_SEED,         INTR_NAME_GENERIC,      "random_seed",          0,      {},                                                     INTR_TYPE_NONE, 0, -1, LANGSPEC_F90 },
+    { INTR_RANDOM_SEED,         INTR_NAME_GENERIC,      "random_seed",          0,      { INTR_TYPE_NONE },                                     INTR_TYPE_NONE, 0, -1, LANGSPEC_F90 },
     { INTR_RANDOM_SEED,         INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT },                                      INTR_TYPE_NONE, 1, -1, LANGSPEC_F90 },
     { INTR_RANDOM_SEED,         INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT, INTR_TYPE_INT_ARRAY },                  INTR_TYPE_NONE, 2, -1, LANGSPEC_F90 },
     { INTR_RANDOM_SEED,         INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT, INTR_TYPE_INT_ARRAY, INTR_TYPE_INT_ARRAY },     INTR_TYPE_NONE, 3, -1, LANGSPEC_F90 },
@@ -671,7 +671,7 @@ intrinsic_entry intrinsic_table[] = {
 
 
     // SYSTEM_CLOCK ([COUNT, COUNT_RATE, COUNT_MAX])
-    { INTR_SYSTEM_CLOCK,        INTR_NAME_GENERIC,      "system_clock",         0,      {},                                             INTR_TYPE_NONE, 0, -6, LANGSPEC_F90 },
+    { INTR_SYSTEM_CLOCK,        INTR_NAME_GENERIC,      "system_clock",         0,      { INTR_TYPE_NONE },                             INTR_TYPE_NONE, 0, -6, LANGSPEC_F90 },
     { INTR_SYSTEM_CLOCK,        INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT },                              INTR_TYPE_NONE, 1, -6, LANGSPEC_F90 },
     { INTR_SYSTEM_CLOCK,        INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT, INTR_TYPE_INT },               INTR_TYPE_NONE, 2, -6, LANGSPEC_F90 },
     { INTR_SYSTEM_CLOCK,        INTR_NAME_GENERIC,      "",                     0,      { INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT },        INTR_TYPE_NONE, 3, -6, LANGSPEC_F90 },
@@ -708,7 +708,7 @@ intrinsic_entry intrinsic_table[] = {
     /* 20. Pointer association status functions */
 
     // NULL ([MOLD])
-    { INTR_NULL,       INTR_NAME_GENERIC,      "null",          0,      { },                                    INTR_TYPE_LHS, 0, -7, LANGSPEC_F95 },
+    { INTR_NULL,       INTR_NAME_GENERIC,      "null",          0,      { INTR_TYPE_NONE },                     INTR_TYPE_LHS, 0, -7, LANGSPEC_F95 },
     { INTR_NULL,       INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_ANY_ARRAY_ALLOCATABLE },    INTR_TYPE_TARGET, 1, 0,  LANGSPEC_F95 },
     { INTR_NULL,       INTR_NAME_GENERIC,      "",              0,      { INTR_TYPE_POINTER },                  INTR_TYPE_TARGET, 1, 0,  LANGSPEC_F95 },
 
@@ -721,19 +721,19 @@ intrinsic_entry intrinsic_table[] = {
 
     { INTR_DESC_OF,        INTR_NAME_GENERIC,      "xmp_desc_of",         0,      {INTR_TYPE_ANY},       INTR_TYPE_DREAL,  1, -8, LANGSPEC_NONSTD },
 
-    { INTR_GET_MPI_COMM,        INTR_NAME_GENERIC,      "xmp_get_mpi_comm",         0,      {},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+    { INTR_GET_MPI_COMM,        INTR_NAME_GENERIC,      "xmp_get_mpi_comm",         0,      {INTR_TYPE_NONE},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
 
-    { INTR_NUM_NODES,        INTR_NAME_GENERIC,      "xmp_num_nodes",         0,      {},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+    { INTR_NUM_NODES,        INTR_NAME_GENERIC,      "xmp_num_nodes",         0,      {INTR_TYPE_NONE},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
 
-    { INTR_NODE_NUM,         INTR_NAME_GENERIC,      "xmp_node_num",          0,      {},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+    { INTR_NODE_NUM,         INTR_NAME_GENERIC,      "xmp_node_num",          0,      {INTR_TYPE_NONE},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
 
-    { INTR_ALL_NUM_NODES,        INTR_NAME_GENERIC,      "xmp_all_num_nodes",         0,      {},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+    { INTR_ALL_NUM_NODES,        INTR_NAME_GENERIC,      "xmp_all_num_nodes",         0,      {INTR_TYPE_NONE},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
 
-    { INTR_ALL_NODE_NUM,         INTR_NAME_GENERIC,      "xmp_all_node_num",          0,      {},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+    { INTR_ALL_NODE_NUM,         INTR_NAME_GENERIC,      "xmp_all_node_num",          0,      {INTR_TYPE_NONE},       INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
 
-    { INTR_WTIME,         INTR_NAME_GENERIC,      "xmp_wtime",          0,      {},       INTR_TYPE_DREAL,  0, -8, LANGSPEC_NONSTD },
+    { INTR_WTIME,         INTR_NAME_GENERIC,      "xmp_wtime",          0,      {INTR_TYPE_NONE},       INTR_TYPE_DREAL,  0, -8, LANGSPEC_NONSTD },
 
-    { INTR_WTICK,         INTR_NAME_GENERIC,      "xmp_wtick",          0,      {},       INTR_TYPE_DREAL,  0, -8, LANGSPEC_NONSTD },
+    { INTR_WTICK,         INTR_NAME_GENERIC,      "xmp_wtick",          0,      {INTR_TYPE_NONE},       INTR_TYPE_DREAL,  0, -8, LANGSPEC_NONSTD },
 
     { INTR_ARRAY_NDIMS,         INTR_NAME_GENERIC,      "xmp_array_ndims",          0,      {INTR_TYPE_ANY, INTR_TYPE_INT},       INTR_TYPE_INT, 2, -8, LANGSPEC_NONSTD },
 

@@ -1,3 +1,5 @@
+XMP_MPI_VERSION=$(shell xmpf90 --show-env | sed -n '/MPI_VERSION=/p' | sed 's/MPI_VERSION=//' | sed "s/\"//g")
+
 XFC     = xmpf90
 XRUN    = mpiexec
 TESTS = $(wildcard *.f90)
@@ -14,7 +16,7 @@ chk.o: ./chk/chk.f90
 	$(XFC) -c $^ -o $@
 
 %.x: %.f90 chk.o
-	$(XFC) -o $@ $< ./chk.o
+	$(XFC) -cpp -o $@ $< ./chk.o -DXMP_MPI_VERSION=$(XMP_MPI_VERSION)
 
 run: $(EXES)
 	$(XRUN) -n 2 ./gmove_lc_2.x
@@ -36,7 +38,12 @@ run: $(EXES)
 	$(XRUN) -n 8 ./gmove_G2L_8.x
 	$(XRUN) -n 16 ./gmove_G2L_16.x
 	$(XRUN) -n 4 ./gmove_G2L_index.x
+	$(XRUN) -n 2 ./gmove_inout_1.x
+	$(XRUN) -n 8 ./gmove_inout_3.x
 	$(XRUN) -n 2 ./484.x
+	$(XRUN) -n 4 ./gmove_test_normal.x
+	$(XRUN) -n 8 ./gmove_test_in.x
+	$(XRUN) -n 8 ./gmove_test_out.x
 
 clean:
 	rm -f $(EXES) $(OBJS) _xmpf_module_INIT.o chk.o

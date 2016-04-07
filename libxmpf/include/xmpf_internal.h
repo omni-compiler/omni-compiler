@@ -88,7 +88,7 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type, _XMP_templ
 void xmpf_array_dealloc__(_XMP_array_t **a_desc);
 void xmpf_align_info__(_XMP_array_t **a_desc, int *a_idx,
 		       int *lower, int *upper, int *t_idx, int *off);
-void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr);
+void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr, int is_coarray);
 void _XMP_finalize_array_desc(_XMP_array_t *array);
 void _XMP_align_array_NOT_ALIGNED(_XMP_array_t *array, int array_index);
 void _XMP_align_array_DUPLICATION(_XMP_array_t *array, int array_index, int template_index,
@@ -174,8 +174,13 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
                          int *dst_lower, int *dst_upper, int *dst_stride, unsigned long long *dst_dim_acc,
                          _XMP_array_t *src_array, int *src_array_nodes_ref,
                          int *src_lower, int *src_upper, int *src_stride, unsigned long long *src_dim_acc);
+void _XMP_gmove_BCAST_GSCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array, int ref_index[]);
+void _XMP_gmove_SENDRECV_GSCALAR(void *dst_addr, void *src_addr,
+				 _XMP_array_t *dst_array, _XMP_array_t *src_array,
+				 int dst_ref_index[], int src_ref_index[]);
 
-extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d);
+extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d, int mode);
+extern void _XMP_gmove_inout_scalar(void *scalar, _XMP_gmv_desc_t *gmv_desc, int rdma_type);
 
 /* From xmp_runtime.c */
 void _XMP_init(int argc, char** argv);
@@ -277,7 +282,7 @@ extern void _XMP_coarray_rdma_image_set_1(const int);
 //extern void _XMP_coarray_rdma_image_set_7(const int, const int, const int, const int, const int, const int, const int);
 
 //extern void _XMP_coarray_rdma_do_f(const int*, const void*, const void*, const void*);
-extern void _XMP_coarray_rdma_do(const int, const void*, const void*, const void *);
+extern void _XMP_coarray_rdma_do(const int, void*, void*, void *);
 //extern size_t get_offset(const void *, const int);
 
 /* libxmp/include/xmp_func_decl.h */

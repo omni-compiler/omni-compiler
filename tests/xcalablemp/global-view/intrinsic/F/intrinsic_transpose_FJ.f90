@@ -1236,7 +1236,7 @@ subroutine test_transpose_037()
   integer,parameter:: M=23, N=31
   integer*4 a(M,N), b(N,M)
   integer error
-  integer m1(2)=(/13,18/)
+  integer m1(4)=(/5,8,8,10/)
 !$xmp nodes q(16)
 !$xmp nodes pa(2,4)=q(1:8)
 !$xmp nodes pb(2,2,2)=q(1:8)
@@ -1275,7 +1275,7 @@ subroutine test_transpose_038()
   integer,parameter:: M=23, N=31
   integer*8 a(M,N), b(N,M)
   integer error
-  integer m1(2)=(/13,23/)
+  integer m1(4)=(/5,8,10,13/)
 !$xmp nodes q(16)
 !$xmp nodes pa(2,4)=q(1:8)
 !$xmp nodes pb(8)=q(1:8)
@@ -1632,7 +1632,7 @@ subroutine test_transpose_047()
   integer,parameter:: M=23, N=31
   complex*16 a(M,N), b(N,M)
   integer error
-  integer m1(2)=(/1,22/)
+  integer m1(4)=(/1,2,3,17/)
 !$xmp nodes q(16)
 !$xmp nodes pa(2,4)=q(1:8)
 !$xmp nodes pb(2,2,2)=q(1:8)
@@ -1875,7 +1875,7 @@ subroutine test_transpose_053()
   integer,parameter:: M=23, N=31
   complex*16 a(M,N), b(N,M)
   integer error
-  integer m2(2)=(/16,21/)
+  integer m2(2)=(/11,16/)
   integer m3(2)=(/21,10/)
 !$xmp nodes q(16)
 !$xmp nodes pa(8)=q(1:8)

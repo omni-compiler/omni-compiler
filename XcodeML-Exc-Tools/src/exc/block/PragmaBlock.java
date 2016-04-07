@@ -33,6 +33,11 @@ public class PragmaBlock extends CompoundBlock
         return pragma;
     }
 
+    public void setPragma(String pragma)
+    {
+	this.pragma = pragma;
+    }
+
     public Xobject getClauses()
     {
         return args;

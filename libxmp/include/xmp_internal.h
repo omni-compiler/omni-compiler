@@ -80,8 +80,8 @@ extern void _XMP_align_array_GBLOCK(_XMP_array_t *array, int array_index, int te
 extern void _XMP_init_array_nodes(_XMP_array_t *array);
 extern void _XMP_init_array_comm(_XMP_array_t *array, ...);
 extern void _XMP_init_array_comm2(_XMP_array_t *array, int args[]);
-extern void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...);
-extern void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc, unsigned long long *acc[]);
+extern void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, int is_coarray, ...);
+extern void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc, int is_coarray, unsigned long long *acc[]);
 extern void _XMP_dealloc_array(_XMP_array_t *array_desc);
 
 // xmp_array_section.c
@@ -130,9 +130,26 @@ typedef struct _XMP_coarray_list_type {
 extern _XMP_coarray_list_t *_XMP_coarray_list_head;
 extern _XMP_coarray_list_t *_XMP_coarray_list_tail;
 
+#ifdef _XMP_MPI3_ONESIDED
+extern void _XMP_coarray_malloc_info_n(const long*, const int, const size_t);
+extern void _XMP_coarray_malloc_image_info_n(const int*, const int);
+extern void _XMP_coarray_attach(_XMP_coarray_t*, void*, const size_t);
+extern void _XMP_coarray_detach(_XMP_coarray_t*);
+extern void _XMP_coarray_rdma_coarray_set_n(const int, const long[], const long[], const long[]);
+extern void _XMP_coarray_rdma_array_set_1(const long start1, const long length1, const long stride1,
+					  const long elmts1, const long distance1);
+extern void _XMP_coarray_rdma_array_set_n(const int, const long[], const long[], const long[],
+					  const long[], const long[]);
+extern void _XMP_coarray_rdma_image_set_n(const int, const int[]);
+extern void _XMP_coarray_rdma_do(const int, void*, void*, void*);
+extern void _XMP_coarray_rdma_do2(const int rdma_code, void *remote_coarray, void *local_array, void *local_coarray,
+				  const long coarray_elmts[], const long coarray_distance[]);
+#endif
+
 extern void _XMP_onesided_initialize(int, char **);
 extern void _XMP_onesided_finalize(const int);
 extern void _XMP_build_sync_images_table();
+extern void _XMP_sync_images_EXEC(int* status);
 extern void _XMP_build_coarray_queue();
 extern void _XMP_coarray_lastly_deallocate();
 extern void _XMP_set_stride(size_t*, const _XMP_array_section_t*, const int, const size_t, const size_t);
@@ -179,7 +196,8 @@ extern int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int
 					int *src_l, int *src_u, int *src_s);
 extern void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
 				      int type, size_t type_size, ...);
-extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d);
+extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d, int mode);
+extern void _XMP_gmove_inout_scalar(void *scalar, _XMP_gmv_desc_t *gmv_desc, int rdma_type);
 extern unsigned long long _XMP_gtol_calc_offset(_XMP_array_t *a, int g_idx[]);
   //extern void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp);
 
@@ -284,6 +302,7 @@ extern _XMP_csd_t *intersection_csds(_XMP_csd_t *csd1, _XMP_csd_t *csd2);
 extern _XMP_csd_t *alloc_csd(int n);
 extern void free_csd(_XMP_csd_t *csd);
 extern _XMP_csd_t *copy_csd(_XMP_csd_t *csd);
+extern int get_csd_size(_XMP_csd_t *csd);
 extern void free_comm_set(_XMP_comm_set_t *comm_set);
 extern _XMP_csd_t *rsd2csd(_XMP_rsd_t *rsd);
 extern _XMP_csd_t *bsd2csd(_XMP_bsd_t *bsd);
@@ -327,6 +346,7 @@ extern void _XMP_free(void *p);
 extern void _XMP_fatal(char *msg);
 extern void _XMP_fatal_nomsg();
 extern void _XMP_unexpected_error(void);
+extern void _XMP_warning(char *msg);
 
 // xmp_world.c
 extern int _XMP_world_size;
@@ -552,6 +572,8 @@ void _xmp_mpi_wait(const int node, const int tag);
 void _xmp_mpi_wait_node(const int node);
 void _xmp_mpi_wait_noargs();
 void _XMP_mpi_sync_images(const int num, int *image_set, int *status);
+void _XMP_sync_images_EXEC(int* status);
+void _XMP_sync_images_COMM(MPI_Comm *comm, int* status);
 void _XMP_mpi_build_sync_images_table();
 
 MPI_Win _XMP_mpi_coarray_get_window(const _XMP_coarray_t *desc, bool is_acc);

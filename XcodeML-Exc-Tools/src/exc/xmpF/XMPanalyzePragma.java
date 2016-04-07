@@ -47,12 +47,23 @@ public class XMPanalyzePragma
     for(i.init(); !i.end(); i.next()) {
       b = i.getBlock();
       if(XMP.debugFlag)	System.out.println("pass1=" + b);
-      if(b.Opcode() == Xcode.XMP_PRAGMA){
+
+      if (b.Opcode() == Xcode.XMP_PRAGMA){
+
 	PragmaBlock pb = (PragmaBlock)b;
+
+	// These two pragmas must be processed in advance because they may be converted into another
+	// ones, which will be processed again later.
+
+	if (XMPpragma.valueOf(pb.getPragma()) == XMPpragma.GMOVE){
+	  analyzePragma(pb);
+	}
+
 	if (XMPpragma.valueOf(pb.getPragma()) == XMPpragma.ARRAY){
 	  b = analyzeArray(pb);
-	  if(b != null) i.setBlock(b);
+	  if (b != null) i.setBlock(b);
 	}
+
 	analyzePragma((PragmaBlock)b);
       }
     }
@@ -216,7 +227,7 @@ public class XMPanalyzePragma
       break;
 
     case GMOVE:
-      analyzeGmove(pb.getClauses(),pb.getBody(), info, pb);
+      analyzeGmove(pb.getClauses(), pb.getBody(), info, pb);
       break;
 
     case COARRAY:
@@ -424,7 +435,7 @@ public class XMPanalyzePragma
 	  case PLUS_EXPR:
 	  case MINUS_EXPR:
 	    if(!t.left().isVariable())
-	      XMP.errorAt(pb,"left hand-side in align-subscript must be a variable");
+	      XMP.errorAt(pb,"left-hand side in align-subscript must be a variable");
 	    else {
 	      v = t.left();
 	      off = t.right();
@@ -747,15 +758,51 @@ public class XMPanalyzePragma
     Xobject right = x.right();
     
     // opcode must be VAR or ARRAY_REF
-    boolean left_is_global = checkGmoveOperand(left,pb);
-    boolean right_is_global = checkGmoveOperand(right,pb);
+    boolean left_is_global = checkGmoveOperand(left, gmoveOpt.getInt() == XMP.GMOVE_OUT, pb);
+    boolean right_is_global = checkGmoveOperand(right, gmoveOpt.getInt() == XMP.GMOVE_IN, pb);
 
-    if(!left_is_global && !right_is_global)
-      XMP.errorAt(pb,"local assignment for gmove");
-    
+    boolean left_is_scalar = isScalar(left);
+    boolean right_is_scalar = isScalar(right);
+
+    if (left_is_scalar && !right_is_scalar){
+      XMP.fatal("Incompatible ranks in assignment.");
+    }
+
+    if (!right_is_global && gmoveOpt.getInt() == XMP.GMOVE_IN)
+      XMP.errorAt(pb, "RHS should be global in GMOVE IN.");
+
+    if (!left_is_global && gmoveOpt.getInt() == XMP.GMOVE_OUT)
+      XMP.errorAt(pb, "LHS should be global in GMOVE OUT.");
+
+    if (!left_is_global){
+      if (!right_is_global){
+	// local assignment
+	info.setGmoveOperands(null, null);
+	return;
+      }
+      // else if (right_is_scalar){
+      // 	// make bcast
+      // 	info.setGmoveOperands(null, null);
+      // 	return;
+      // }
+    }
+    else if (left_is_global){
+      if (!right_is_global){
+	if (gmoveOpt.getInt() == XMP.GMOVE_NORMAL &&
+	    !left_is_scalar &&
+	    convertGmoveToArray(pb, left, right)) return;
+      }
+      // else if (right_is_scalar){
+      // 	// make bcast
+      // 	if (convertGmoveToArray(pb, left, right)) return;
+      // }
+    }
+
     if(XMP.hasError()) return;
     
     info.setGmoveOperands(left,right);
+
+    info.setGmoveOpt(gmoveOpt);
 
     if (asyncOpt != null && !XmOption.isAsync()){
       XMP.errorAt(pb, "MPI-3 is required to use the async clause on a gmove directive");
@@ -764,7 +811,7 @@ public class XMPanalyzePragma
     info.setAsyncId(asyncOpt);
   }
 
-  private boolean checkGmoveOperand(Xobject x, PragmaBlock pb){
+  private boolean checkGmoveOperand(Xobject x, boolean remotely_accessed, PragmaBlock pb){
 
     Ident id = null;
     XMParray array = null;
@@ -782,7 +829,10 @@ public class XMPanalyzePragma
 	XMP.fatal("array in F_ARRAY_REF is not declared");
       array = XMParray.getArray(id);
       if(array != null){
-	if (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.ARRAY) a.setProp(XMP.RWprotected,array);
+	if (remotely_accessed && id.getStorageClass() != StorageClass.FSAVE){
+	  XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
+	}
+	if (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.ARRAY) a.setProp(XMP.RWprotected, array);
 	return true;
       }
       break;
@@ -792,15 +842,108 @@ public class XMPanalyzePragma
 	XMP.fatal("variable" + x.getName() + "is not declared");
       array = XMParray.getArray(id);
       if (array != null){
+	if (remotely_accessed && id.getStorageClass() != StorageClass.FSAVE){
+	  XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
+	}
 	if (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.ARRAY) x.setProp(XMP.RWprotected, array);
 	return true;
       }
       break;
+    case F_LOGICAL_CONSTATNT:
+    case F_CHARACTER_CONSTATNT:
+    case F_COMPLEX_CONSTATNT:
+    case STRING_CONSTANT:
+    case INT_CONSTANT:
+    case FLOAT_CONSTANT:
+    case LONGLONG_CONSTANT:
+    case MOE_CONSTANT:
+      return false;
     default:
       XMP.errorAt(pb,"gmove must be followed by simple assignment");
     }
     return false;
   }
+
+  private boolean isScalar(Xobject x){
+    switch (x.Opcode()){
+    case F_ARRAY_REF:
+      XobjList subscripts = (XobjList)x.getArg(1);
+      Xobject var = x.getArg(0).getArg(0);
+      int n = var.Type().getNumDimensions();
+      for (int i = 0; i < n; i++){
+	Xobject sub = subscripts.getArg(i);
+	if (sub.Opcode() == Xcode.F_INDEX_RANGE) return false;
+      }
+      break;
+    case VAR:
+      if (x.Type().getKind() == Xtype.F_ARRAY) return false;
+      break;
+    }
+    return true;
+  }
+
+  private boolean convertGmoveToArray(PragmaBlock pb, Xobject left, Xobject right){
+
+    // boolean lhs_is_scalar = isScalar(left);
+    // boolean rhs_is_scalar = isScalar(right);
+
+    // if (!lhs_is_scalar && rhs_is_scalar){
+
+      pb.setPragma("ARRAY");
+
+      Xobject onRef = Xcons.List();
+
+      Xobject a = left.getArg(0).getArg(0);
+      a.remProp(XMP.RWprotected);
+      Ident id = env.findVarIdent(a.getName(), pb);
+      assert id != null;
+      XMParray array = XMParray.getArray(id);
+      assert array != null;
+
+      Xobject t = Xcons.Symbol(Xcode.VAR, array.getAlignTemplate().getName());
+      onRef.add(t);
+
+      Xobject subscripts = Xcons.List();
+      for (int i = 0; i < array.getAlignTemplate().getDim(); i++){
+	subscripts.add(null);
+      }
+
+      for (int i = 0; i < array.getDim(); i++){
+	int alignSubscriptIndex = array.getAlignSubscriptIndexAt(i);
+	Xobject alignSubscriptOffset = array.getAlignSubscriptOffsetAt(i);
+
+	Xobject lb = left.getArg(1).getArg(i).getArg(0);
+	if (alignSubscriptOffset != null) lb = Xcons.binaryOp(Xcode.PLUS_EXPR, lb, alignSubscriptOffset);
+	Xobject ub = left.getArg(1).getArg(i).getArg(1);
+	if (alignSubscriptOffset != null) ub = Xcons.binaryOp(Xcode.PLUS_EXPR, ub, alignSubscriptOffset);
+	Xobject st = left.getArg(1).getArg(i).getArg(2);
+	Xobject triplet = Xcons.List(lb, ub, st);
+
+	subscripts.setArg(alignSubscriptIndex, triplet);
+      }
+      onRef.add(subscripts);
+
+      Xobject decl = Xcons.List(onRef);
+      pb.setClauses(decl);
+
+    // }
+    // else { // lhs_is_scalar || !rhs_is_scalar){
+    //   return false;
+    // }
+
+    return true;
+
+  }
+
+  // private boolean isScalar(Xobject x){
+  //   if (x.Opcode() == Xcode.F_ARRAY_REF){
+  //     for (XobjArgs args = x.getArg(1).getArgs(); args != null;
+  // 	   args = args.nextArgs()){
+  // 	if (args.getArg().Opcode() != Xcode.F_ARRAY_INDEX) return false;
+  //     }
+  //   }
+  //   return true;
+  // }
 
   private void analyzeCoarray(Xobject coarrayPragma){
     XMP.fatal("analyzeCoarray");
@@ -846,7 +989,7 @@ public class XMPanalyzePragma
     Xobject right = x.right();
 
     // opcode must be VAR or ARRAY_REF
-    boolean left_is_global = checkGmoveOperand(left, pb);
+    boolean left_is_global = checkGmoveOperand(left, false, pb);
     //boolean right_is_global = checkGmoveOperand(right, pb);
 
     //if (!left_is_global && !right_is_global)
@@ -968,8 +1111,7 @@ public class XMPanalyzePragma
 	  Xobject sub = subscripts1.getArg(i);
 	  if (sub.Opcode() == Xcode.F_INDEX_RANGE){
 
-	    int tidx = array1.getAlignSubscriptIndexAt(i);
-	    if (tidx == -1) continue;
+	    //int tidx = array1.getAlignSubscriptIndexAt(i);
 
 	    Xobject lb, st;
 
@@ -989,7 +1131,15 @@ public class XMPanalyzePragma
 
 	    Xobject expr;
 	    //expr = Xcons.binaryOp(Xcode.MUL_EXPR, varList.get(k).Ref(), st);
-	    Ident loopVar = varListTemplate.get(tidx);
+
+	    Ident loopVar;
+	    if (array1 != null){
+	      int tidx = array1.getAlignSubscriptIndexAt(i);
+	      loopVar = varListTemplate.get(tidx);
+	    }
+	    else
+	      loopVar = varList.get(k);
+
 	    if (loopVar == null) XMP.fatal("array on rhs does not conform to that on lhs.");
 	    expr = Xcons.binaryOp(Xcode.MUL_EXPR, loopVar.Ref(), st);
 	    expr = Xcons.binaryOp(Xcode.PLUS_EXPR, expr, lb);

@@ -99,13 +99,29 @@ void _XMP_wait_async__(int async_id)
   }
 #endif
 
-  //  _XMP_TSTART(t0);
-  MPI_Waitall(nreqs, reqs, MPI_STATUSES_IGNORE);
-  //  _XMP_TEND(xmptiming_.t_wait, t0);
-
-  // for asynchronous gmove
   _XMP_async_gmove_t *gmove = async->gmove;
-  if(gmove) _XMP_finalize_async_gmove(gmove);
+
+  if (!gmove || gmove->mode == _XMP_N_GMOVE_NORMAL){
+    _XMP_TSTART(t0);
+    MPI_Waitall(nreqs, reqs, MPI_STATUSES_IGNORE);
+    _XMP_TEND(xmptiming_.t_wait, t0);
+  }
+
+  //
+  // for asynchronous gmove
+  //
+
+  if (gmove){
+    if (gmove->mode == _XMP_N_GMOVE_NORMAL) _XMP_finalize_async_gmove(gmove);
+#ifdef _XMP_MPI3_ONESIDED
+    else {
+      int status;
+      // NOTE: the send_buf field is used for an improper purpose.
+      _XMP_sync_images_COMM((MPI_Comm *)gmove->sendbuf, &status);
+    }
+#endif
+  }
+
 }
 
 // NOTE: xmp_test_async is defined in the spec and invoked in both XMP/C and XMP/F.

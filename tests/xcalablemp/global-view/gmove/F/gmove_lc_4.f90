@@ -66,7 +66,7 @@ character(*) tname
 integer i
 integer,parameter :: n=4
 integer a(n,n),b(n)
-integer m(2)=(/2,2/)
+integer m(4)=(/1,1,1,1/)
 !$xmp nodes p(4)
 !$xmp nodes q(4)
 !$xmp template tx(n)
@@ -109,7 +109,7 @@ character(*) tname
 integer i
 integer,parameter :: n=4
 integer a(n,n),b(n)
-integer m(2)=(/2,2/)
+integer m(4)=(/1,1,1,1/)
 !$xmp nodes p(4)
 !$xmp nodes q(4)
 !$xmp template tx(n)

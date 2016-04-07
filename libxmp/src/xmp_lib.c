@@ -578,7 +578,7 @@ void *xmp_malloc(xmp_desc_t d, ...)
   _XMP_init_array_nodes(a);
 
   void *array_addr;
-  _XMP_alloc_array2(&array_addr, a, acc);
+  _XMP_alloc_array2(&array_addr, a, 1, acc);
 
   return array_addr;
 }
