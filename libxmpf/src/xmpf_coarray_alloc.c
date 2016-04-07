@@ -424,9 +424,9 @@ void xmpf_coarray_malloc_pool_(void)
 
   size_t localBufSize = XMPF_get_localBufSize();
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC_POOL\n"
-                          "  static buffer (localBuf) allocated   : %u bytes\n",
-                          "  user-defined static coarays allocated: %u bytes\n",
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC_POOL contains:\n"
+                          "  system-defined local buffer :%10u bytes\n"
+                          "  user-defined coarays        :%10u bytes\n",
                           localBufSize, pool_totalSize);
 
   pool_totalSize += localBufSize;
@@ -608,9 +608,10 @@ void xmpf_coarray_count_size_(int *count, int *element)
   size_t mallocSize = ROUND_UP_UNIT(thisSize);
 
   if (mallocSize > XMPF_get_poolThreshold()) {
-    _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE: no count\n"
-                            "  larger than pooling threshold: %u bytes\n",
-                            mallocSize);
+    _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE: no count because of the size\n"
+                            "  pooling threshold :%10u bytes\n"
+                            "  data size         :%10u bytes\n",
+                            XMPF_get_poolThreshold(), mallocSize);
     return;
   }
 
@@ -1006,7 +1007,7 @@ void _freeResourceSet(ResourceSet_t *rset)
 
   if (IsEmptyResourceSet(rset)) {
     // avoid automatic syncall (ID=465)
-    _XMPF_coarrayDebugPrint("*** avoid automatic syncall and garbage collection\n");
+    _XMPF_coarrayDebugPrint("*** omitted automatic syncall and garbage collection\n");
   }
 
   else {

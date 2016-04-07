@@ -316,7 +316,7 @@ void _getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
   char* desc = _XMPF_get_coarrayDesc(descPtr);
   size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
 
-  _XMPF_coarrayDebugPrint("from [%d] GET_VECTOR RDMA-DMA, %d bytes\n"
+  _XMPF_coarrayDebugPrint("from [%d] GET_VECTOR, RDMA-DMA, %d bytes\n"
                           "  src (RDMA): \'%s\', offset=%zd\n"
                           "  dst (DMA) : \'%s\', offset=%zd\n",
                           coindex, bytes,
@@ -348,9 +348,9 @@ void _getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
     _getVector_DMA(descPtr, src, bufSize, coindex,
                    _localBuf_desc, _localBuf_offset, _localBuf_name);
 
-    _XMPF_coarrayDebugPrint("MEMCPY %d bytes, partial\n"
-                            "  src: \'%s\'\n"
-                            "  dst: addr=%p\n",
+    _XMPF_coarrayDebugPrint("MEMCPY %d bytes, cont\'d\n"
+                            "  from: \'%s\'\n"
+                            "  to  : addr=%p\n",
                             bufSize,
                             _localBuf_name,
                             dst);
@@ -364,8 +364,8 @@ void _getVector_buffer(void *descPtr, char *baseAddr, int bytesRU, int coindex,
                  _localBuf_desc, _localBuf_offset, _localBuf_name);
 
   _XMPF_coarrayDebugPrint("MEMCPY %d bytes, final\n"
-                          "  src: \'%s\'\n"
-                          "  dst: addr=%p\n",
+                          "  from: \'%s\'\n"
+                          "  to  : addr=%p\n",
                           rest2,
                           _localBuf_name,
                           dst);
@@ -381,7 +381,7 @@ void _getVector(void *descPtr, char *baseAddr, int bytes, int coindex,
   size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
 
   if ((size_t)bytes <= XMPF_get_localBufSize()) {
-    _XMPF_coarrayDebugPrint("to [%d] GET_VECTOR RDMA-DMA-memcpy, %d bytes\n"
+    _XMPF_coarrayDebugPrint("to [%d] GET_VECTOR, RDMA-DMA-memcpy, %d bytes\n"
                             "  source      (RDMA): \'%s\', offset=%zd\n"
                             "  destination (DMA) : static buffer in the pool, offset=%zd\n",
                             coindex, bytes,
@@ -396,7 +396,7 @@ void _getVector(void *descPtr, char *baseAddr, int bytes, int coindex,
     (void)memcpy(dst, _localBuf_baseAddr, bytes);
 
   } else {
-    _XMPF_coarrayDebugPrint("to [%d] GET_VECTOR regmem&RDMA, %d bytes\n"
+    _XMPF_coarrayDebugPrint("to [%d] GET_VECTOR, regmem&RDMA, %d bytes\n"
                             "  source      (RDMA): \'%s\', offset=%zd\n"
                             "  destination       : dynamically-allocated buffer, addr=%p\n",
                             coindex, bytes,

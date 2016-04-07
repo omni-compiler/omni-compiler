@@ -9,7 +9,8 @@ PPFCCOMPILE = $(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 LDFLAGS      = @MPI_CLIBS@
 
 lib_LIBRARIES     = libxmpf.a
-libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_main.F90 xmpf_array.c xmpf_async.c xmpf_gcomm.c \
+libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h $(XMPF_INC_DIR)/xmpf_internal_coarray.h \
+                    xmpf_main.F90 xmpf_array.c xmpf_async.c xmpf_gcomm.c \
                     xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
                     xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
 		    xmpf_template.c

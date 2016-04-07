@@ -155,11 +155,12 @@ am__v_AR_1 =
 libxmpf_a_AR = $(AR) $(ARFLAGS)
 libxmpf_a_LIBADD =
 am__libxmpf_a_SOURCES_DIST = $(XMPF_INC_DIR)/xmpf_internal.h \
-	xmpf_main.F90 xmpf_array.c xmpf_async.c xmpf_gcomm.c \
-	xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
-	xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c \
-	xmpf_task.c xmpf_template.c xmpf_coarray.c \
-	xmpf_coarray_wrap.f90 xmpf_coarray_lib.c xmpf_coarray_put.c \
+	$(XMPF_INC_DIR)/xmpf_internal_coarray.h xmpf_main.F90 \
+	xmpf_array.c xmpf_async.c xmpf_gcomm.c xmpf_gmove.c \
+	xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c xmpf_nodes.c \
+	xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
+	xmpf_template.c xmpf_coarray.c xmpf_coarray_wrap.f90 \
+	xmpf_coarray_lib.c xmpf_coarray_put.c \
 	xmpf_coarray_put_wrap.f90 xmpf_coarray_get.c \
 	xmpf_coarray_get_wrap.f90 xmpf_coarray_alloc.c \
 	xmpf_coarray_alloc_wrap.f90 xmpf_coarray_reduction.F90
@@ -501,7 +502,8 @@ PPFCCOMPILE = $(FC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
               $(AM_CPPFLAGS) $(AM_FCFLAGS) $(FCFLAGS)
 
 lib_LIBRARIES = libxmpf.a
-libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h xmpf_main.F90 \
+libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h \
+	$(XMPF_INC_DIR)/xmpf_internal_coarray.h xmpf_main.F90 \
 	xmpf_array.c xmpf_async.c xmpf_gcomm.c xmpf_gmove.c \
 	xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c xmpf_nodes.c \
 	xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
