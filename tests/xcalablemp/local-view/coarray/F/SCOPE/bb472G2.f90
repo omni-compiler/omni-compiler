@@ -4,10 +4,13 @@ module mmm
   !$xmp distribute t(block) onto p
   real a(10,10)
   !$xmp align a(*,i) with t(i)
+contains
+  subroutine mmmm
+    !$xmp reflect (a)
+  end subroutine mmmm
 end module mmm
 
 use mmm
-!$xmp reflect (a)
+call mmmm
 print *,"OK"
-end 
-
+end
