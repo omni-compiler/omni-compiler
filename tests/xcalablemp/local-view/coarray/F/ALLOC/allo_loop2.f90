@@ -1,3 +1,6 @@
+!! This is a large program. 
+!! It works in ten seconds on my local environment.
+
   program times2
     include "xmp_coarray.h"
     real, allocatable :: a(:,:)[:]

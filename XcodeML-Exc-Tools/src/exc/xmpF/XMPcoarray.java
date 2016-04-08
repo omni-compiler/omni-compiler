@@ -93,15 +93,24 @@ public class XMPcoarray {
   // declare cray-pointer variable correspoinding to this.
   //
   public void genDecl_crayPointer() {
+    genDecl_crayPointer(false);
+  }
+  public void genDecl_crayPointer(Boolean saved) {
     BlockList blist = fblock.getBody();
     String crayPtrName = getCrayPointerName();
+
+    StorageClass sclass;
+    if (saved)
+      sclass = StorageClass.FSAVE;
+    else
+      sclass = StorageClass.FLOCAL;
 
     // generate declaration of crayPtrId
     Xtype crayPtrType = Xtype.Farray(BasicType.Fint8Type);
     crayPtrType.setIsFcrayPointer(true);
     crayPtrId = blist.declLocalIdent(crayPtrName,
                                      crayPtrType,
-                                     StorageClass.FLOCAL,
+                                     sclass,
                                      Xcons.FvarRef(ident));  // ident.Ref() if C
   }
 

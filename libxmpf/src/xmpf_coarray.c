@@ -2,6 +2,11 @@
 
 #define DIV_CEILING(m,n)  (((m)-1)/(n)+1)
 
+
+/*****************************************\
+  performance parameters
+\*****************************************/
+
 /* Threshold of memory size to share in the pool
  */
 #define POOL_THRESHOLD (40*1024*1024)          // 40MB
@@ -9,7 +14,7 @@
 /* Size of the communication buffer prepared for short communications
  * to avoid allocation and registration every communication time
  */
-#define LOCAL_BUF_SIZE  (40000)                // ~40kB
+#define LOCAL_BUF_SIZE  (400000)               // ~400kB
 
 
 /*****************************************\
