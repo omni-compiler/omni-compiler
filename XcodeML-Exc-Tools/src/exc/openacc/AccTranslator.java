@@ -1,5 +1,7 @@
 package exc.openacc;
 
+import exc.block.FuncDefBlock;
+import exc.block.FunctionBlock;
 import exc.object.*;
 import xcodeml.util.XmOption;
 
@@ -28,20 +30,50 @@ public class AccTranslator implements XobjectDefVisitor {
 
   @Override
   public void doDef(XobjectDef def) {
-    _infoReader.doDef(def);
+    if (def.isFuncDef()) {
+      FuncDefBlock fd = new FuncDefBlock(def);
+      FunctionBlock fb = fd.getBlock();
+      doFuncDef(fb);
+      fd.Finalize();
+    } else {
+      Xobject x = def.getDef();
+      doNonFuncDef(x);
+    }
+  }
+
+  private void doFuncDef(FunctionBlock fb){
+    _infoReader.doFuncDef(fb);
     ACC.exitByError();
-    _analyzer.doDef(def);
+    _analyzer.doFuncDef(fb);
     ACC.exitByError();
 
     if(_onlyAnalyze) {
-      _infoWriter.doDef(def);
+      _infoWriter.doFuncDef(fb);
       ACC.exitByError();
       return;
     }
 
-    _generator.doDef(def);
+    _generator.doFuncDef(fb);
     ACC.exitByError();
-    _rewrite.doDef(def);
+    _rewrite.doFuncDef(fb);
+    ACC.exitByError();
+  }
+
+  private void doNonFuncDef(Xobject x){
+    _infoReader.doNonFuncDef(x);
+    ACC.exitByError();
+    _analyzer.doNonFuncDef(x);
+    ACC.exitByError();
+
+    if(_onlyAnalyze) {
+      _infoWriter.doNonFuncDef(x);
+      ACC.exitByError();
+      return;
+    }
+
+    _generator.doNonFuncDef(x);
+    ACC.exitByError();
+    _rewrite.doNonFuncDef(x);
     ACC.exitByError();
   }
 
