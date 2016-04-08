@@ -5,7 +5,7 @@ import exc.object.*;
 
 class AccInfoWriter extends AccProcessor {
   public AccInfoWriter(ACCglobalDecl globalDecl) {
-    super(globalDecl, true, true, false);
+    super(globalDecl, true, false);
   }
 
   void doGlobalAccPragma(Xobject def) throws ACCexception {
