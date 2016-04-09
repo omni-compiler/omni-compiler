@@ -27,6 +27,8 @@ public class XMPcoarray {
   final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
   final static String GET_DESCR_ID_NAME = "xmpf_get_descr_id";
 
+  final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
+
   // original attributes
   private Ident ident;
   private String name;
@@ -129,21 +131,33 @@ public class XMPcoarray {
                                     BasicType.Fint8Type);
   }
 
-  /***********************
-  public void genDecl_descPointer(Boolean isSave, Xobject initValue) {
-    if(descPtrId != null) {
-      XMP.fatal("descPtrId is already set.");
+
+
+  /*
+   *  b. "CALL coarray_count_size(count, elem)"
+   */
+  public Xobject makeStmt_countCoarrays()
+  {
+    BlockList blist = fblock.getBody();
+    return makeStmt_countCoarrays(blist);
+  }
+
+  public Xobject makeStmt_countCoarrays(BlockList blist)
+  {
+    Xobject elem = getElementLengthExpr();
+
+    if (elem == null) {
+      XMP.error("current restriction: " + 
+                "could not find the element length of: "+getName());
     }
 
-    String descPtrName = getDescPointerName();
-    Xtype xtype = Xtype.Fint8Type;
-    if (isSave)
-      _setSaveAttrInType(xtype);
+    int count = getTotalArraySize();
+    Xobject args = Xcons.List(Xcons.IntConstant(count), elem);
+    Ident subr = blist.declLocalIdent(COUNT_SIZE_NAME,
+                                      BasicType.FexternalSubroutineType);
 
-    descPtrId = env.declInternIdent(descPtrName, xtype);
-    descPtrId.setFparamValue(Xcons.List(initValue, null));
+    return subr.callSubroutine(args);
   }
-  **************************/
 
 
   /*

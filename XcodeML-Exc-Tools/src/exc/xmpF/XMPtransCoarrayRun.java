@@ -39,19 +39,37 @@ public class XMPtransCoarrayRun
 
 
   /** Available Versions currently:
-   *  3 (for all): A cray-pointer correspoinding to each coarray is visible in the
-   *    output code and common-associated to an initializing subroutine.
-   *  4 (for FJ-RDMA and MPI3): The converted coarray variable is common-associated
-   *    to an initializing subroutine. It is allocated in the Fortran system as usual
-   *    and registered with the underlying communication library.
-   *  6 (for FJ-RDMA and MPI3, under restrictions): A coarray variable keeps 
-   *    procedure-local during conversion. It is allocated in the Fortran system as 
-   *    usual and registered at the first call of the procedure.
-   *  7 (for all): A coarray variable keeps procedure-local during conversion.
-   *    For FJ-RDMA and MPI3, it is allocated in the Fortran system as usual and 
-   *    registered with the underlying communication library via an ENTRY procedure
-   *    in the procedure. For GASNet, it is allocated in and registered with the 
-   *    underlying communication library via an ENTRY procedure in the procedure.
+   *
+   *  3 Static coarray variables are allocated inside the comunincation library 
+   *    and registered with the communication library by the initializer, which
+   *    is automatically generated at compile time corresponding to the program
+   *    and executed just before the execution of the program.
+   *    The initializer informs the program of the address of the coarrays via
+   *    common-associated cray ponters.
+   *
+   *  4 (Supported only for FJ-RDMA and MPI3.) Static coarray variables are allocated
+   *    allocated statically by the Fortran system as usual. The initializer accepts 
+   *    the addresses of the coarrays from the user program by common-association,
+   *    and registers the addresses with the commmunication library. Cray pointers 
+   *    are not used.
+   *
+   *  6 (Supported only For FJ-RDMA and MPI3 with some restriction.) Procedure-local
+   *    static coarrays are allocated statically by the Fortran system as usual.
+   *    Instead of using the initializer for the procedure-local coarrays, the 
+   *    registration of coarrays with the communication library is coused at the
+   *    entry point of the first call of the procedure. Cray pointers are not used.
+   *
+   *  7 The initializer is generated as a part of the corresponding procedure 
+   *    starting with the ENTRY statement. So, coarrays declared in the procedure are 
+   *    commonly visible to the procedure and to the initializer as procedure-local 
+   *    variables. 
+   *    For FJ-RDMA and MPI3, procedure-local static coarrays are allocated by the
+   *    Fortran system as usual and registered with the communication library by
+   *    the initializer. Cray pointers or common accociation are not used.
+   *    For GASNet, procedure-local static coarrays are allocated in GASnet and 
+   *    and registered with GASNet by the initializer. The initializer informs the 
+   *    program of the address of a coarray via a Cray pointer. Common association
+   *    is not used.
    */
 
   private int version;
@@ -659,7 +677,7 @@ public class XMPtransCoarrayRun
       removeSaveAttr(staticLocalCoarrays);
       if (version == 4) {
         // f4. generate common block for data
-        genCommonBlockForCoarrays(staticLocalCoarrays);
+        genCommonBlockForStaticCoarrays(staticLocalCoarrays);
       }
     }
   }
@@ -709,7 +727,7 @@ public class XMPtransCoarrayRun
 
     if (version >= 4) {
       // c4. generate common block for data
-      genCommonBlockForCoarrays(staticAssociatedCoarrays);
+      genCommonBlockForStaticCoarrays(staticAssociatedCoarrays);
     } else {
       // c. generate Cray-POINTER and COMMON statements
       genDeclOfCrayPointer(staticAssociatedCoarrays);
@@ -1164,7 +1182,7 @@ public class XMPtransCoarrayRun
   //    generate common block for coarray variables
   //-----------------------------------------------------
   //
-  private void genCommonBlockForCoarrays(ArrayList<XMPcoarray> coarrays) {
+  private void genCommonBlockForStaticCoarrays(ArrayList<XMPcoarray> coarrays) {
     // do nothing if no coarrays are declared.
     if (coarrays.isEmpty())
       return;
@@ -1653,13 +1671,13 @@ public class XMPtransCoarrayRun
     if (selectAlloc) {
       // "call xmpf_coarray_alloc_static(descptr_V1, crayptr_V1, ...)"
       for (XMPcoarray coarray: coarrays) {
-        Xobject stmt = genStmt_allocForCoarray(coarray);
+        Xobject stmt = genStmt_allocStaticCoarrays(coarray);
         addExtraStmt(stmt);
       }
     } else {
       // "call xmpf_coarray_regmem_static(descptr_V1, LOC(V1), ...)"
       for (XMPcoarray coarray: coarrays) {
-        Xobject stmt = genStmt_regmemForCoarray(coarray);
+        Xobject stmt = genStmt_regmemStaticCoarrays(coarray);
         addExtraStmt(stmt);
       }
     }
@@ -1713,7 +1731,7 @@ public class XMPtransCoarrayRun
       if (coarray.wasMovedFromModule())
         continue;
 
-      Xobject stmt = genStmt_regmemForCoarray(coarray);
+      Xobject stmt = genStmt_regmemStaticCoarrays(coarray);
       thenBlock.add(stmt);
     }
 
@@ -1745,16 +1763,9 @@ public class XMPtransCoarrayRun
 
 
 
-  //  "call xmpf_coarray_count_size(...)" 
-  //
-  ////////////////////////////////////////////////
-  /////////////////////////////////////////////////
-
-
-
   //  "call xmpf_coarray_alloc_static(descptr_var, crayptr_var, ...)" 
   //
-  private Xobject genStmt_allocForCoarray(XMPcoarray coarray)
+  private Xobject genStmt_allocStaticCoarrays(XMPcoarray coarray)
   {
     BlockList blist = getFblock().getBody();
 
@@ -1775,7 +1786,7 @@ public class XMPtransCoarrayRun
 
   //  "CALL xmpf_coarray_regmem_static(descPtr_var, LOC(var), ... )"
   //
-  private Xobject genStmt_regmemForCoarray(XMPcoarray coarray)
+  private Xobject genStmt_regmemStaticCoarrays(XMPcoarray coarray)
   {
     BlockList blist = getFblock().getBody();
 
