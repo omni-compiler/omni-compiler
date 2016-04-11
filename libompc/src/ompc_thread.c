@@ -664,8 +664,8 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 
     ompc_tree_barrier_init(&cthd->tree_barrier, n_thds);
 
-    ABT_pool pools[2];  // 0: private pool, 1: shared pool
-    ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC, ABT_TRUE, &pools[1]);
+    ABT_pool sched_pools[2];  // 0: private pool, 1: shared pool
+    ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC, ABT_TRUE, &sched_pools[1]);
 
     struct ompc_thread *tp_list = (struct ompc_thread *)malloc(sizeof(struct ompc_thread) * n_thds);
     /* assign thread to proc */
@@ -688,15 +688,15 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         }
 #else
         ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPSC,
-                              ABT_TRUE, &pools[0]);
-        ABT_sched_create(&task_sched_def, 2, pools, ABT_SCHED_CONFIG_NULL, &tp->scheduler);
+                              ABT_TRUE, &sched_pools[0]);
+        ABT_sched_create(&task_sched_def, 2, sched_pools, ABT_SCHED_CONFIG_NULL, &tp->scheduler);
         ompc_event_init(&tp->sched_finished);
         ABT_sched_set_data(tp->scheduler, tp);
 
         tp->implicit_task.child_tasks = NULL;
         tp->implicit_task.child_task_count = 0;
         tp->implicit_task.child_task_capacity = 0;
-        ompc_start_ult(tp, ompc_thread_wrapper_func, pools[0]);
+        ompc_start_ult(tp, ompc_thread_wrapper_func, sched_pools[0]);
         ABT_pool_add_sched(pools[tp->es_start], tp->scheduler);
 #endif
     }
