@@ -864,9 +864,7 @@ ompc_terminate(int exitcode)
     struct ompc_thread *tp = ompc_current_thread();
     free(tp);
 
-    // FIXME this causes segmentation fault on ABT_finalize():
-    // incorrect destructor pointer for primary ULT
-    // ABT_key_free(&tls_key);
+    ABT_key_free(&tls_key);
 
     for (int i = 0; i < ompc_max_threads; i++) {
         for (int j = 0; j < ult_pools[i].size_created; j++) {
