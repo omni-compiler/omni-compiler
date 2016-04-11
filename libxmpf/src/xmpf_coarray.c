@@ -81,7 +81,9 @@ static void _set_poolThreshold(unsigned size)
 
 static void _set_localBufSize(unsigned size)
 {
-  _XMPF_localBufSize = size;
+  unsigned sizeRU = ROUND_UP_BOUNDARY(ROUND_UP_UNIT(size));
+
+  _XMPF_localBufSize = sizeRU;
 
   _XMPF_coarrayDebugPrint("set _XMPF_localBufSize = %u\n",
                           _XMPF_localBufSize);
@@ -180,24 +182,26 @@ void _XMPF_coarray_init(void)
   env4 = getenv("XMPF_COARRAY_SAFE");
   if (env4 != NULL) {
     _set_isSafeBufferMode(atoi(env4));
-    if (XMPF_isSafeBufferMode())
-      fprintf(stderr, "CAF[%d] <SAFE MODE> for PUT-communication\n"
-              " - Dynamic malloc (without free) is used instead of static buffer localBuf.\n",
-              _XMPF_get_current_this_image());
   }
     
-  _XMPF_coarrayDebugPrint("Execution time environment\n"
-                          "   communication layer  :  %s (%u-byte boundary)\n"
-                          "   environment vars     :  XMPF_COARRAY_MSG=%s\n"
-                          "                           XMPF_COARRAY_POOL=%s\n"
-                          "                           XMPF_COARRAY_BUF=%s\n"
-                          "                           XMPF_COARRAY_SAFE=%s\n",
-                          ONESIDED_COMM_LAYER, ONESIDED_BOUNDARY,
-                          env1 ? env1 : "",
-                          env2 ? env2 : "",
-                          env3 ? env3 : "",
-                          env4 ? env4 : ""
-                          );
+  if (env1&&*env1 || env2&&*env2 || env3&&*env3 || env4&&*env4) {
+    _XMPF_set_coarrayMsg(TRUE);
+
+    _XMPF_coarrayDebugPrint("Execution time environment\n"
+                            "   communication layer  :  %s (%u-byte boundary)\n"
+                            "   environment vars     :  XMPF_COARRAY_MSG=%s\n"
+                            "                           XMPF_COARRAY_POOL=%s\n"
+                            "                           XMPF_COARRAY_BUF=%s\n"
+                            "                           XMPF_COARRAY_SAFE=%s\n",
+                            ONESIDED_COMM_LAYER, ONESIDED_BOUNDARY,
+                            env1 ? env1 : "",
+                            env2 ? env2 : "",
+                            env3 ? env3 : "",
+                            env4 ? env4 : ""
+                            );
+
+    _XMPF_reset_coarrayMsg();
+  }
 
   _XMPF_coarrayDebugPrint("Specified Parameters\n"
                           "   runtime message switch        :  %s\n"
