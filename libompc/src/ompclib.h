@@ -26,7 +26,6 @@
 
 #include <abt.h>
 typedef ABT_xstream ompc_proc_t;
-typedef ABT_thread ompc_thread_t;
 #define _YIELD_ME_ ABT_thread_yield()
 #define OMPC_WAIT(cond) while (cond) { _YIELD_ME_; }
 #define _OMPC_PROC_SELF ompc_xstream_self()
@@ -65,7 +64,25 @@ struct ompc_task {
     int child_task_capacity;
 };
 
+struct ompc_ult_pool {
+    ABT_thread *ult_list;
+    ABT_thread **idle_ult_list;
+    int size_allocated;
+    int size_created;
+    int size_idle;
+};
+
+struct ompc_tasklet_pool {
+    ABT_task *tasklet_list;
+    int size_allocated;
+    int size_created;
+    int size_used;
+};
+
 struct ompc_thread {
+    ABT_thread *ult_ptr;
+    ABT_task *tasklet_ptr;
+    
     struct ompc_thread *parent;         /*  */
     int num;            /* the thread number of this thread in team */
     int num_thds;       /* current running thread, refenced by children */
