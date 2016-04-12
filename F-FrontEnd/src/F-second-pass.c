@@ -135,6 +135,8 @@ static int second_pass_clean()
       break;
     case 4:
       current_line = list->line;
+      TYPE_DESC tp = list->info.id->type;
+      if (tp && !TYPE_IS_NOT_FIXED(tp)) break;
       error("attempt to use undefined type function, %s", ID_NAME(list->info.id));
       err_num++;
       break;
