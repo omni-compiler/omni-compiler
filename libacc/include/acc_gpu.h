@@ -37,6 +37,7 @@ extern "C" {
 
 
   void _ACC_gpu_mpool_get(void **ptr);
+  void _ACC_gpu_mpool_get_async(void **ptr, int id);
   void _ACC_gpu_mpool_alloc(void **ptr, long long size, void *mpool, long long *pos);
   void _ACC_gpu_mpool_free(void *ptr, void *mpool);
   void _ACC_gpu_copy(void *host_addr, void *device_addr, size_t size, int direction);
