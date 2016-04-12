@@ -17,9 +17,6 @@ import java.util.*;
  */
 public class XMPcoarrayInitProcedure {
 
-  final static String ALLOC_STATIC_NAME = "xmpf_coarray_alloc_static";
-  final static String REGMEM_STATIC_NAME = "xmpf_coarray_regmem_static";
-
   private Boolean DEBUG = false;          // switch the value on gdb !!
 
 
@@ -364,38 +361,19 @@ public class XMPcoarrayInitProcedure {
     /*-------------------------------*\
      * execution part
     \*-------------------------------*/
-    // version 3
-    //   "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"
     // versions 4 & 6
     //   "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"
-    Xobject arg2;
-    String fname;
+    // version 3
+    //   "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"
     if (version == 4 || version == 6) {
-      FunctionType ftype = new FunctionType(Xtype.Fint8Type, Xtype.TQ_FINTRINSIC);
-      Ident locId = env.declIntrinsicIdent("loc", ftype);
-      arg2 = locId.Call(Xcons.List(ident2));
-      fname = REGMEM_STATIC_NAME;
+      Xobject subrCall = coarray.makeStmt_regmemStatic(body);
+      body.add(subrCall);
     } else if (version == 3) {
-      arg2 = (Xobject)ident2;
-      fname = ALLOC_STATIC_NAME;
+      Xobject subrCall = coarray.makeStmt_allocStatic(body);
+      body.add(subrCall);
     } else {
       XMP.fatal("INTERNAL: unexpected version number");
-      return;
     }
-
-    String varName = coarray.getName();
-    Xobject varNameObj = 
-      Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
-    Xobject args = Xcons.List(descPtrId,
-                              arg2,
-                              Xcons.IntConstant(count),
-                              elem,
-                              varNameObj,
-                              Xcons.IntConstant(varName.length()));
-    if (args.hasNullArg())
-      XMP.fatal("INTERNAL: generated null argument (buildSubroutine_initcoarrays)");
-    Ident subr = body.declLocalIdent(fname, BasicType.FexternalSubroutineType);
-    body.add(subr.callSubroutine(args));
   }
 
 
