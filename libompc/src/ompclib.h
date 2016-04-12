@@ -59,7 +59,7 @@ struct ompc_task {
     cfunc func;
     int nargs;
     void *args;
-    ABT_thread *child_tasks;
+    ABT_thread **child_task_ptrs;
     int child_task_count;
     int child_task_capacity;
 };

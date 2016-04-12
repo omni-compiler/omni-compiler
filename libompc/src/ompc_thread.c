@@ -215,9 +215,10 @@ static void ompc_thread_wrapper_func(void *arg);
 static struct ompc_proc *ompc_new_proc(int i);
 static int ompc_get_ES_num(struct ompc_thread *par, struct ompc_thread *cur,
                            int thread_num, int num_threads);
-static void ompc_start_ult(struct ompc_thread *tp, void (*thread_func)(void *), ABT_pool pool);
+static void ompc_start_ult(ABT_pool pool, int es_num, void (*thread_func)(void *),
+               void *arg, ABT_thread **newthread);
 static void ompc_start_tasklet(struct ompc_thread *tp, void (*thread_func)(void *));
-static void ompc_end_ult(struct ompc_thread *tp);
+static void ompc_end_ult(ABT_thread *thread, int es_num);
 static void ompc_end_tasklet(struct ompc_thread *tp);
 static void ompc_init_thread(struct ompc_thread *tp);
 /*static*/ struct ompc_thread *ompc_current_thread(void);
@@ -408,7 +409,7 @@ ompc_init(int argc,char *argv[])
     tp->num             = 0;    /* team master */
     tp->in_parallel     = 0;
     tp->parent          = NULL;
-    tp->implicit_task.child_tasks = NULL;
+    tp->implicit_task.child_task_ptrs = NULL;
     tp->implicit_task.child_task_count = 0;
     tp->implicit_task.child_task_capacity = 0;
     ABT_key_set(tls_key, (void *)&tp->implicit_task);
@@ -491,12 +492,13 @@ ompc_get_ES_num(struct ompc_thread *par, struct ompc_thread *cur,
 }
 
 static void
-ompc_start_ult(struct ompc_thread *tp,
+ompc_start_ult(ABT_pool pool,
+               int es_num,
                void (*thread_func)(void *),
-               ABT_pool pool)
+               void *arg,
+               ABT_thread **newthread)
 {
-    int ES_num = tp->es_start;
-    struct ompc_ult_pool *ult_pool = &(ult_pools[ES_num]);
+    struct ompc_ult_pool *ult_pool = &(ult_pools[es_num]);
     ABT_thread *ult_ptr;
     if (ult_pool->size_idle == 0) {
         if (ult_pool->size_created == ULT_POOL_SIZE) {
@@ -506,7 +508,7 @@ ompc_start_ult(struct ompc_thread *tp,
         int idx = ult_pool->size_created;
         ult_ptr = &(ult_pool->ult_list[idx]);
         ABT_thread_create(pool, thread_func,
-                          (void *)tp, ABT_THREAD_ATTR_NULL, ult_ptr);
+                          (void *)arg, ABT_THREAD_ATTR_NULL, ult_ptr);
         (ult_pool->size_created)++;
     }
     else { // ult_pool->size_idle > 0
@@ -514,10 +516,10 @@ ompc_start_ult(struct ompc_thread *tp,
         ult_ptr = ult_pool->idle_ult_list[idx];
         (ult_pool->size_idle)--;
         ABT_thread_revive(pool, thread_func,
-                          (void *)tp, ult_ptr);
+                          (void *)arg, ult_ptr);
     }
 
-    tp->ult_ptr = ult_ptr;
+    *newthread = ult_ptr;
 }
 
 static void
@@ -551,13 +553,12 @@ ompc_start_tasklet(struct ompc_thread *tp,
 }
 
 static void
-ompc_end_ult(struct ompc_thread *tp)
+ompc_end_ult(ABT_thread *thread, int es_num)
 {
-    int ES_num = tp->es_start;
-    struct ompc_ult_pool *ult_pool = &(ult_pools[ES_num]);
+    struct ompc_ult_pool *ult_pool = &(ult_pools[es_num]);
 
     int idle_idx = ult_pool->size_idle;
-    ult_pool->idle_ult_list[idle_idx] = tp->ult_ptr;
+    ult_pool->idle_ult_list[idle_idx] = thread;
     (ult_pool->size_idle)++;
 }
 
@@ -693,10 +694,10 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
         ompc_event_init(&tp->sched_finished);
         ABT_sched_set_data(tp->scheduler, tp);
 
-        tp->implicit_task.child_tasks = NULL;
+        tp->implicit_task.child_task_ptrs = NULL;
         tp->implicit_task.child_task_count = 0;
         tp->implicit_task.child_task_capacity = 0;
-        ompc_start_ult(tp, ompc_thread_wrapper_func, sched_pools[0]);
+        ompc_start_ult(sched_pools[0], tp->es_start, ompc_thread_wrapper_func, tp, &tp->ult_ptr);
         ABT_pool_add_sched(pools[tp->es_start], tp->scheduler);
 #endif
     }
@@ -713,7 +714,7 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
 #else
         ompc_event_wait(&tp_list[i].sched_finished);
         ompc_event_finalize(&tp_list[i].sched_finished);
-        ompc_end_ult(tp);
+        ompc_end_ult(tp->ult_ptr, tp->es_start);
 #endif
     }
 
@@ -741,10 +742,10 @@ task_wrapper_func(void *arg)
     }
 
     for (int i = 0; i < task->child_task_count; i++) {
-        ABT_thread_join(task->child_tasks[i]);
-        ABT_thread_free(&task->child_tasks[i]);
+        ABT_thread_join(*task->child_task_ptrs[i]);
+        ompc_end_ult(task->child_task_ptrs[i], current_thread->es_start);
     }
-    free(task->child_tasks);
+    free(task->child_task_ptrs);
     free(task->args);
     free(task);
 }
@@ -758,27 +759,28 @@ do_task_main(int nargs, _Bool cond, cfunc func, void *args, _Bool tied)
     void *args_dup = malloc(nargs * sizeof(void *));
     memcpy(args_dup, args, nargs * sizeof(void *));
     task->args = args_dup;
-    task->child_tasks = NULL;
+    task->child_task_ptrs = NULL;
     task->child_task_count = 0;
     task->child_task_capacity = 0;
 
     ABT_pool shared_pool;
-    ABT_thread task_thread;
+    ABT_thread *task_thread_ptr;
     ABT_sched_get_pools(current_thread->scheduler, 1, 1, &shared_pool);
-    ABT_thread_create(shared_pool, task_wrapper_func, task, ABT_THREAD_ATTR_NULL, &task_thread);
+    ompc_start_ult(shared_pool, current_thread->es_start, task_wrapper_func,
+                   task, &task_thread_ptr);
 
     if (cond) {
         struct ompc_task *curr_task = ompc_current_task();
         if (curr_task->child_task_count == curr_task->child_task_capacity) {
             curr_task->child_task_capacity = curr_task->child_task_capacity == 0
                 ? 10 : curr_task->child_task_capacity * 2;
-            curr_task->child_tasks = realloc(curr_task->child_tasks,
-                curr_task->child_task_capacity * sizeof(struct ompc_task));
+            curr_task->child_task_ptrs = realloc(curr_task->child_task_ptrs,
+                curr_task->child_task_capacity * sizeof(ABT_thread *));
         }
-        curr_task->child_tasks[curr_task->child_task_count++] = task_thread;
+        curr_task->child_task_ptrs[curr_task->child_task_count++] = task_thread_ptr;
     } else {
-        ABT_thread_join(task_thread);
-        ABT_thread_free(&task_thread);
+        ABT_thread_join(*task_thread_ptr);
+        ompc_end_ult(task_thread_ptr, current_thread->es_start);
     }
 }
 
@@ -811,8 +813,8 @@ ompc_taskwait()
 {
     struct ompc_task *task = ompc_current_task();
     for (int i = 0; i < task->child_task_count; i++) {
-        ABT_thread_join(task->child_tasks[i]);
-        ABT_thread_free(&task->child_tasks[i]);
+        ABT_thread_join(*task->child_task_ptrs[i]);
+        ompc_end_ult(task->child_task_ptrs[i], current_thread->es_start);
     }
     task->child_task_count = 0;
 }
