@@ -67,6 +67,8 @@ void _xmp_gasnet_postreq(gasnet_token_t token, const int node, const int tag)
  */
 void _xmp_gasnet_post(const int node, const int tag)
 {
+  _XMP_gasnet_sync_memory();
+  
   if(node == _XMP_world_rank){
     do_post(_XMP_world_rank, tag);
   } else{
@@ -120,6 +122,7 @@ static bool remove_request(const int node, const int tag)
  */
 void _xmp_gasnet_wait_noargs()
 {
+  _XMP_gasnet_sync_memory();
   GASNET_BLOCKUNTIL(remove_request_noargs());
 }
 
@@ -130,6 +133,7 @@ void _xmp_gasnet_wait_noargs()
  */
 void _xmp_gasnet_wait_node(const int node)
 {
+  _XMP_gasnet_sync_memory();
   GASNET_BLOCKUNTIL(remove_request_node(node));
 }
 
@@ -141,6 +145,7 @@ void _xmp_gasnet_wait_node(const int node)
  */
 void _xmp_gasnet_wait(const int node, const int tag)
 {
+  _XMP_gasnet_sync_memory();
   GASNET_BLOCKUNTIL(remove_request(node, tag));
 }
 

@@ -159,6 +159,8 @@ void _xmp_fjrdma_wait(const int node, const int tag)
  */
 void _xmp_fjrdma_wait_node(const int node)
 {
+  _XMP_fjrdma_sync_memory();
+  
   struct FJMPI_Rdma_cq cq;
 
   while(1){
@@ -175,6 +177,8 @@ void _xmp_fjrdma_wait_node(const int node)
  */
 void _xmp_fjrdma_wait_noargs()
 {
+  _XMP_fjrdma_sync_memory();
+  
   if(_postreq.num == 0){
     struct FJMPI_Rdma_cq cq;
     while(FJMPI_Rdma_poll_cq(_XMP_POSTREQ_RECV_NIC, &cq) != FJMPI_RDMA_HALFWAY_NOTICE);
