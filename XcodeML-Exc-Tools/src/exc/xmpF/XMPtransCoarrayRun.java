@@ -19,10 +19,10 @@ public class XMPtransCoarrayRun
   final static String THIS_IMAGE_NAME        = "xmpf_this_image";  // generic
   final static String COBOUND_NAME           = "xmpf_cobound";  // generic
   final static String IMAGE_INDEX_NAME       = "xmpf_image_index";
-  final static String CO_BROADCAST_PREFIX    = "xmpf_co_broadcast";
-  final static String CO_SUM_PREFIX          = "xmpf_co_sum";
-  final static String CO_MAX_PREFIX          = "xmpf_co_max";
-  final static String CO_MIN_PREFIX          = "xmpf_co_min";
+  final static String CO_BROADCAST_NAME      = "xmpf_co_broadcast_generic";
+  final static String CO_SUM_NAME            = "xmpf_co_sum_generic";
+  final static String CO_MAX_NAME            = "xmpf_co_max_generic";
+  final static String CO_MIN_NAME            = "xmpf_co_min_generic";
   final static String COARRAY_PROLOG_NAME    = "xmpf_coarray_prolog";
   final static String COARRAY_EPILOG_NAME    = "xmpf_coarray_epilog";
   final static String SYNCALL_NAME           = "xmpf_sync_all";
@@ -2340,8 +2340,8 @@ public class XMPtransCoarrayRun
   //  - replace this_image(V, ...) with THIS_IMAGE_NAME(descptr_V, ...)
   //    except this_image()
   //  - replace image_index(V, ...) with IMAGE_INDEX_NAME(descptr_V, ...)
-  //  - replace co_broadcast(V, ...) with CO_BROADCAST_PREFIX<dim>d(V, ...)
-  //  - replace co_sum/min/max(V, ...) with CO_SUM/MIN/MAX_PREFIX<dim>d(V, ...)
+  //  - replace co_broadcast(V, ...) with CO_BROADCAST_NAME(V, ...)
+  //  - replace co_sum/min/max(V, ...) with CO_SUM/MIN/MAX_NAME(V, ...)
   //  - replace lcobound(V, ...) with COBOUND_NAME(descptr_V, ..., 0, corank)
   //  - replace ucobound(V, ...) with COBOUND_NAME(descptr_V, ..., 1, corank)
   //-----------------------------------------------------
@@ -2364,13 +2364,13 @@ public class XMPtransCoarrayRun
       else if (fname.equalsIgnoreCase("image_index"))
         _replaceImageIndex(xobj, coarrays);
       else if (fname.equalsIgnoreCase("co_broadcast"))
-        _replaceCoReduction(xobj, fname, CO_BROADCAST_PREFIX);
+        _replaceCoReduction(xobj, fname, CO_BROADCAST_NAME);
       else if (fname.equalsIgnoreCase("co_sum"))
-        _replaceCoReduction(xobj, fname, CO_SUM_PREFIX);
+        _replaceCoReduction(xobj, fname, CO_SUM_NAME);
       else if (fname.equalsIgnoreCase("co_max"))
-        _replaceCoReduction(xobj, fname, CO_MAX_PREFIX);
+        _replaceCoReduction(xobj, fname, CO_MAX_NAME);
       else if (fname.equalsIgnoreCase("co_min"))
-        _replaceCoReduction(xobj, fname, CO_MIN_PREFIX);
+        _replaceCoReduction(xobj, fname, CO_MIN_NAME);
       else if (fname.equalsIgnoreCase("lcobound"))
         _replaceCobound(xobj, coarrays, 0);
       else if (fname.equalsIgnoreCase("ucobound"))
@@ -2385,8 +2385,9 @@ public class XMPtransCoarrayRun
    *  To avoid bug478, subroutine name co_xxx is converted into the 
    *  intermedeate name co_xxx<dim>d before the final conversion by 
    *  the compiler into co_xxx<dim>d_<typekind>.
+   *  --> challenge!
    */
-  private void _replaceCoReduction(Xobject xobj, String fname, String prefix) {
+  private void _replaceCoReduction(Xobject xobj, String fname, String genelicName) {
     XobjList actualArgs = (XobjList)xobj.getArg(1);
     int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
 
@@ -2403,7 +2404,7 @@ public class XMPtransCoarrayRun
     }
 
     int rank = arg1.getFrank(getFblock());
-    XobjString newFname = Xcons.Symbol(Xcode.IDENT, prefix + rank + "d");
+    XobjString newFname = Xcons.Symbol(Xcode.IDENT, genelicName);
     xobj.setArg(0, newFname);
   }
 
