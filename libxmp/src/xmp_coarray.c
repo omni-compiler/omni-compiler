@@ -1547,6 +1547,7 @@ void _XMP_build_sync_images_table()
   _XMP_gasnet_build_sync_images_table();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_build_sync_images_table();
+#elif _XMP_TCA
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_build_sync_images_table();
 #endif
