@@ -870,13 +870,17 @@ ompc_terminate(int exitcode)
 
     for (int i = 0; i < ompc_max_threads; i++) {
         for (int j = 0; j < ult_pools[i].size_created; j++) {
-            ABT_thread_free(&(ult_pools[i].ult_list[j]));
+            if (ult_pools[i].ult_list[j] != ABT_THREAD_NULL) {
+                ABT_thread_free(&(ult_pools[i].ult_list[j]));
+            }
         }
         free(ult_pools[i].ult_list);
         free(ult_pools[i].idle_ult_list);
 
         for (int j = 0; j < tasklet_pools[i].size_created; j++) {
-            ABT_task_free(&(tasklet_pools[i].tasklet_list[j]));
+            if (tasklet_pools[i].tasklet_list[j] != ABT_TASK_NULL) {
+                ABT_task_free(&(tasklet_pools[i].tasklet_list[j]));
+            }
         }
         free(tasklet_pools[i].tasklet_list);
     }
