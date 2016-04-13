@@ -68,7 +68,7 @@ program gmove_test_normal
 
   use mod0
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
   call gmove_gs_gs
   call gmove_gs_ge
   call gmove_ge_ge
@@ -112,7 +112,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove
   a(1:N/4, N/2+1:N, 5:N-1) = b(N/2+1:N:2, 1:N/2, 1:N-5)
 #endif
@@ -157,7 +157,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove
   a(1:N/4, N/2+1:N, 5:N-1) = b(3,4,5)
 #endif
@@ -197,7 +197,7 @@ subroutine gmove_ge_ge
 
 !$xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove
   a(7,8,9) = b(3,4,5)
 #endif
@@ -229,7 +229,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove
   a(1:N/4, N/2+1:N, 5:N-1) = x(N/2+1:N:2, 1:N/2, 1:N-5)
 #endif
@@ -272,7 +272,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove
   a(1:N/4, N/2+1:N, 5:N-1) = x(3,4,5)
 #endif
@@ -312,7 +312,7 @@ subroutine gmove_ge_le
 
 !$xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove
   a(7,8,9) = x(3,4,5)
 #endif
@@ -344,7 +344,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove
   a(1:N/4, N/2+1:N, 5:N-1) = s
 #endif
@@ -384,7 +384,7 @@ subroutine gmove_ge_s
 
 !$xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove
   a(7,8,9) = s
 #endif
@@ -416,7 +416,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove
   x(1:N/4, N/2+1:N, 5:N-1) = b(N/2+1:N:2, 1:N/2, 1:N-5)
 #endif
@@ -460,7 +460,7 @@ integer :: result = 0
 
 !$xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove
   x(1:N/4, N/2+1:N, 5:N-1) = b(3,4,5)
 #endif
@@ -503,7 +503,7 @@ subroutine gmove_le_ge
 
 !$xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove
   x(7,8,9) = b(3,4,5)
 #endif
@@ -541,7 +541,7 @@ subroutine gmove_s_ge
 
 !$xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove
   s = b(3,4,5)
 #endif

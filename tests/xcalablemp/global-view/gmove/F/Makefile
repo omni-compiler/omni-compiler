@@ -1,4 +1,4 @@
-XMP_MPI_VERSION=$(shell xmpf90 --show-env | sed -n '/MPI_VERSION=/p' | sed 's/MPI_VERSION=//' | sed "s/\"//g")
+ONESIDED_LIB=$(shell xmpf90 --show-env | sed -n '/ONESIDED_LIB=/p' | sed 's/ONESIDED_LIB=//' | sed "s/\"//g")
 
 XFC     = xmpf90
 XRUN    = mpiexec
@@ -15,8 +15,15 @@ all default: $(EXES)
 chk.o: ./chk/chk.f90
 	$(XFC) -c $^ -o $@
 
+FFLAG = 
+ifeq ($(ONESIDED_LIB),MPI3)
+        FFLAG = -cpp -D_MPI3
+else
+        FFLAG = -cpp
+endif
+
 %.x: %.f90 chk.o
-	$(XFC) -cpp -o $@ $< ./chk.o -DXMP_MPI_VERSION=$(XMP_MPI_VERSION)
+	$(XFC) $(FFLAG) -o $@ $< ./chk.o
 
 run: $(EXES)
 	$(XRUN) -n 2 ./gmove_lc_2.x

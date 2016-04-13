@@ -29,7 +29,7 @@ program test
 
   use mod0
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
   call gmove_in
   call gmove_in_async
   call gmove_out
@@ -74,7 +74,7 @@ integer :: result = 0
 
 !$xmp task on p1
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove in
   a = b
 #endif
@@ -134,7 +134,7 @@ integer :: result = 0
 
 !$xmp task on p1
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove in async(10)
   a = b
 #endif
@@ -196,7 +196,7 @@ integer :: result = 0
 
 !$xmp task on p2
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove out
   a = b
 #endif
@@ -256,7 +256,7 @@ integer :: result = 0
 
 !$xmp task on p2
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove out async(10)
   a = b
 #endif

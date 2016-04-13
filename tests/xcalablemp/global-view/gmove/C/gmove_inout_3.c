@@ -51,7 +51,7 @@ void gmove_in(){
 
 #pragma xmp task on p1
   {
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove in
     a[:][:][:] = b[:][:][:];
 #endif
@@ -109,7 +109,7 @@ void gmove_in_async(){
 
 #pragma xmp task on p1
   {
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove in async(10)
     a[:][:][:] = b[:][:][:];
 #endif
@@ -169,7 +169,7 @@ void gmove_out(){
 
 #pragma xmp task on p2
   {
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove out
     a[:][:][:] = b[:][:][:];
 #endif
@@ -227,7 +227,7 @@ void gmove_out_async(){
 
 #pragma xmp task on p2
   {
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove out async(10)
     a[:][:][:] = b[:][:][:];
 #endif
@@ -263,7 +263,7 @@ void gmove_out_async(){
 //--------------------------------------------------------
 int main(){
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
   gmove_in();
   gmove_in_async();
   gmove_out();

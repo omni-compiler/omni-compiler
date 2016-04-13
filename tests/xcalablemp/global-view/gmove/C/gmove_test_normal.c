@@ -78,7 +78,7 @@ void gmove_gs_gs(){
 
 #pragma xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove
   a[0:N/4][N/2:N/2][4:N-5] = b[N/2:N/4:2][0:N/2][0:N-5];
 #endif
@@ -119,7 +119,7 @@ void gmove_gs_ge(){
 
 #pragma xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove
   a[0:N/4][N/2:N/2][4:N-5] = b[3][4][5];
 #endif
@@ -157,7 +157,7 @@ void gmove_ge_ge(){
 
 #pragma xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove
   a[7][8][9] = b[3][4][5];
 #endif
@@ -187,7 +187,7 @@ void gmove_gs_ls(){
 
 #pragma xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove
   a[0:N/4][N/2:N/2][4:N-5] = b[N/2:N/4:2][0:N/2][0:N-5];
 #endif
@@ -228,7 +228,7 @@ void gmove_gs_ls(){
 
 /* #pragma xmp barrier */
 
-/* #if (XMP_MPI_VERSION == 3) */
+/* #if (ONESIDED_LIB == MPI3) */
 /* #pragma xmp gmove */
 /*   a[0:N/4][N/2:N/2][4:N-5] = x[3][4][5]; */
 /* #endif */
@@ -266,7 +266,7 @@ void gmove_ge_le(){
 
 #pragma xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove
   a[7][8][9] = x[3][4][5];
 #endif
@@ -296,7 +296,7 @@ void gmove_ge_le(){
 
 /* #pragma xmp barrier */
 
-/* #if (XMP_MPI_VERSION == 3) */
+/* #if (ONESIDED_LIB == MPI3) */
 /* #pragma xmp gmove */
 /*   a[0:N/4][N/2:N/2][4:N-5] = s; */
 /* #endif */
@@ -334,7 +334,7 @@ void gmove_ge_s(){
 
 #pragma xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove
   a[7][8][9] = s;
 #endif
@@ -364,7 +364,7 @@ void gmove_ls_gs(){
 
 #pragma xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove
   x[0:N/4][N/2:N/2][4:N-5] = b[N/2:N/4:2][0:N/2][0:N-5];
 #endif
@@ -406,7 +406,7 @@ void gmove_ls_ge(){
 
 #pragma xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove
   x[0:N/4][N/2:N/2][4:N-5] = b[3][4][5];
 #endif
@@ -448,7 +448,7 @@ void gmove_le_ge(){
 
 #pragma xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove
   x[7][8][9] = b[3][4][5];
 #endif
@@ -484,7 +484,7 @@ void gmove_s_ge(){
 
 #pragma xmp barrier
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove
   s = b[3][4][5];
 #endif
@@ -513,7 +513,7 @@ void gmove_s_ge(){
 //--------------------------------------------------------
 int main(){
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
   gmove_gs_gs();
   gmove_gs_ge();
   gmove_ge_ge();

@@ -71,7 +71,7 @@ program gmove_test_in
 
   use mod0
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
   call gmove_gs_gs
   call gmove_gs_ge
   call gmove_ge_ge
@@ -110,7 +110,7 @@ integer :: result = 0
 
 !$xmp task on p1
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove in
   a(1:N/4, N/2+1:N, 5:N-1) = b(N/2+1:N:2, 1:N/2, 1:N-5)
 #endif
@@ -157,7 +157,7 @@ integer :: result = 0
 
 !$xmp task on p1
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove in
   a(1:N/4, N/2+1:N, 5:N-1) = b(3,4,5)
 #endif
@@ -201,7 +201,7 @@ subroutine gmove_ge_ge
 
 !$xmp task on p1
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove in
   a(7,8,9) = b(3,4,5)
 #endif
@@ -237,7 +237,7 @@ integer :: result = 0
 
 !$xmp task on p1
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove in
   x(1:N/4, N/2+1:N, 5:N-1) = b(N/2+1:N:2, 1:N/2, 1:N-5)
 #endif
@@ -285,7 +285,7 @@ integer :: result = 0
 
 !$xmp task on p1
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove in
   x(1:N/4, N/2+1:N, 5:N-1) = b(3,4,5)
 #endif
@@ -332,7 +332,7 @@ subroutine gmove_le_ge
 
 !$xmp task on p1
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove in
   x(7,8,9) = b(3,4,5)
 #endif
@@ -374,7 +374,7 @@ subroutine gmove_s_ge
 
 !$xmp task on p1
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 !$xmp gmove in
   s = b(3,4,5)
 #endif
