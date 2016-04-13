@@ -1397,8 +1397,8 @@ if test "x${doMPI3}" = "xyes"; then
 fi
 
 if test x${use_tca} = xyes; then
-  if test "x${doMPI3}" = "xno"; then
-    echo "Error!! TCA must use MPI version 3"
+  if test x${doMPI3} = xno -a x${use_gasnet} = xno; then
+    echo "Error!! TCA must use MPI version 3 or GASNet"
     exit 1
   fi  
 fi
