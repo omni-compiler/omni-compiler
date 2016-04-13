@@ -6,7 +6,7 @@ import exc.object.Xobject;
 
 class AccAnalyzer extends AccProcessor {
   public AccAnalyzer(ACCglobalDecl globalDecl) {
-    super(globalDecl, true, false, false);
+    super(globalDecl, true, false);
   }
 
   void doGlobalAccPragma(Xobject def) throws ACCexception {

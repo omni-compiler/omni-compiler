@@ -99,10 +99,6 @@ public class XMPtranslateLocalPragma {
         { translateGmove(pb);			break; }
       case ARRAY:
 	{ translateArray(pb);                   break; }
-        //      case SYNC_MEMORY:
-        //        { translateSyncMemory(pb);		break; }
-        //      case SYNC_ALL:
-        //        { translateSyncAll(pb);                 break; }
       case POST:
         { translatePost(pb);                    break; }
       case WAIT:
@@ -136,6 +132,33 @@ public class XMPtranslateLocalPragma {
     }
   }
 
+  private void addProfileFunctions(Xobject profileClause, Block funcCallBlock, String directiveName, PragmaBlock pb) throws XMPexception{
+    
+    boolean isProfile = false;
+    if(profileClause != null)
+      if(profileClause.Opcode() == Xcode.VAR && profileClause.getName() == "profile")
+        isProfile = true;
+    isProfile = isProfile && _selective_profile;
+    
+    if(_all_profile || isProfile){
+      if(doScalasca == true){
+        String lowerName = directiveName.toLowerCase();
+        XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp " + lowerName + ":" + pb.getLineNo()));
+        funcCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
+        funcCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
+      }
+      else if(doTlog == true){
+        String upperName = directiveName.toUpperCase();
+        funcCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_" + upperName + "_IN", null));
+        funcCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_" + upperName + "_OUT", null));
+      }
+    }
+    else if(isProfile && doTlog == false){
+      funcCallBlock.insert(createScalascaProfileOffCall(null));
+      funcCallBlock.add(createScalascaProfileOnfCall(null));
+    }
+  }
+  
   private void translateNodes(PragmaBlock pb) throws XMPexception {
     checkDeclPragmaLocation(pb);
 
@@ -348,14 +371,6 @@ public class XMPtranslateLocalPragma {
     }
   }
 
-  //  private void translateSyncMemory(PragmaBlock pb) throws XMPexception {
-  //    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_memory", null));
-  //  }
-
-  //  private void translateSyncAll(PragmaBlock pb) throws XMPexception {
-  //    pb.replace(_globalDecl.createFuncCallBlock("_XMP_coarray_sync_all", null));
-  //  }
-
   private void translateLockUnlock(PragmaBlock pb, String funcNamePrefix) throws XMPexception {
     XobjList lockDecl   = (XobjList)pb.getClauses();
     XobjList lockObjVar = (XobjList)lockDecl.getArg(0);
@@ -547,22 +562,8 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(pb.getLineNo(), "reflect for acc is not implemented");
     }
     
-    // add function calls for profiling            
     Xobject profileClause = pb.getClauses().getArg(4);
-    if( _all_profile || (profileClause != null && _selective_profile)){
-        if (doScalasca == true) {
-            XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reflect:" + pb.getLineNo()));
-            reflectFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
-            reflectFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
-        } else if (doTlog == true) {
-            reflectFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_REFLECT_IN", null));
-            reflectFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_REFLECT_OUT", null));
-        }
-    } else if(profileClause == null && _selective_profile && doTlog == false){
-        XobjList profileFuncArgs = null;
-        reflectFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
-        reflectFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
-    }
+    addProfileFunctions(profileClause, reflectFuncCallBlock, "reflect", pb);
   }
 
   private void translateGpuData(PragmaBlock pb) throws XMPexception {
@@ -577,7 +578,8 @@ public class XMPtranslateLocalPragma {
     if (!XmOption.isXcalableMPGPU()) {
       XMP.warning("use -enable-gpu option to enable 'acc relfect' directive");
       translateReflect(pb);
-    } else {
+    }
+    else {
       XMPshadow.translateGpuReflect(pb, _globalDecl);
     }
   }
@@ -659,7 +661,6 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateTask(PragmaBlock pb) throws XMPexception {
-
     // start translation
     XobjList taskDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
@@ -733,22 +734,8 @@ public class XMPtranslateLocalPragma {
       taskFuncCallBlockList.add(_globalDecl.createFuncCallBlock("_XMP_exec_task_NODES_FINALIZE", arg));
     }
 
-    // add function calls for profiling                                                              
-    Xobject profileClause = taskDecl.getArg(2);
-    if( _all_profile || (profileClause != null && _selective_profile)){
-        if (doScalasca == true) {
-            XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp task:" + pb.getLineNo()));
-            taskFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
-            taskFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
-        } else if (doTlog == true) {
-            taskFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_TASK_IN", null));
-            taskFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_TASK_OUT", null));
-        }
-    } else if(profileClause == null && _selective_profile && doTlog == false){
-        XobjList profileFuncArgs = null;
-        taskFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
-        taskFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
-    }
+    Xobject profileClause = taskDecl.getArg(3);
+    addProfileFunctions(profileClause, taskFuncCallBlock, "task", pb);
   }
 
   private void translateTasks(PragmaBlock pb) {
@@ -768,7 +755,8 @@ public class XMPtranslateLocalPragma {
       loopIterList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getName()));
       loopDecl.setArg(0, loopIterList);
       translateFollowingLoop(pb, schedBaseBlock);
-    } else {
+    }
+    else {
       translateMultipleLoop(pb, schedBaseBlock);
     }
 
@@ -778,7 +766,8 @@ public class XMPtranslateLocalPragma {
       XobjList schedVarList = null;
       if (loopDecl.getArg(0) == null) {
         schedVarList = Xcons.List(Xcons.String(schedBaseBlock.getInductionVar().getSym()));
-      } else {
+      }
+      else {
         schedVarList = (XobjList)loopDecl.getArg(0).copy();
       }
 
@@ -795,18 +784,22 @@ public class XMPtranslateLocalPragma {
         if (XmOption.isXcalableMPGPU()) {
           Block newLoopBlock = translateGpuClause(pb, reductionRefList, schedBaseBlock);
           schedBaseBlock.replace(newLoopBlock);
-        } else {
+        }
+        else {
           XMP.warning("use '-enable-gpu' compiler option to use gpu clause");
         }
-      } else if (devName.equals("threads")) {
+      }
+      else if (devName.equals("threads")) {
         if (XmOption.isXcalableMPthreads()) {
           XobjList devArgs = (XobjList)multicoreClause.getArg(1);
           Block newLoopBlock = translateThreadsClauseToOMPpragma(devArgs, reductionRefList, schedBaseBlock, loopIterList);
           schedBaseBlock.replace(newLoopBlock);
-        } else {
+        }
+        else {
           XMP.warning("use '-enable-threads' compiler option to use 'threads' clause");
         }
-      } else {
+      }
+      else {
         throw new XMPexception("unknown clause in loop directive");
       }
     }
@@ -814,33 +807,19 @@ public class XMPtranslateLocalPragma {
     // rewrite array refs in loop
     topdownXobjectIterator iter = new topdownXobjectIterator(getLoopBody(schedBaseBlock).toXobject());
     for (iter.init(); !iter.end(); iter.next()) {
-      //XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, XMPlocalDecl.getXMPsymbolTable(pb));
       XMPrewriteExpr.rewriteArrayRefInLoop(iter.getXobject(), _globalDecl, schedBaseBlock);
     }
 
-    
     // replace pragma
     Block loopFuncCallBlock = Bcons.COMPOUND(loopBody);
     pb.replace(loopFuncCallBlock);
 
-    if (loopDecl.Nargs() < 5) return;
-
     // add function calls for profiling
-    Xobject profileClause = loopDecl.getArg(4);
-    if( _all_profile || (profileClause != null && _selective_profile)){
-        if (doScalasca == true) {
-            XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp loop:" + pb.getLineNo()));
-            loopFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
-            loopFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
-        } else if (doTlog == true) {
-            loopFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_LOOP_IN", null));
-            loopFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_LOOP_OUT", null));
-        }
-    } else if(profileClause == null && _selective_profile && doTlog == false){
-        XobjList profileFuncArgs = null;
-        loopFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
-        loopFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
-    }
+    Xobject profileClause = null;
+    if (loopDecl.Nargs() > 4)
+      profileClause = loopDecl.getArg(4);
+
+    addProfileFunctions(profileClause, loopFuncCallBlock, "loop", pb);
   }
 
   // XXX only supports C language
@@ -1203,9 +1182,8 @@ public class XMPtranslateLocalPragma {
 
   private void translateFollowingLoop(PragmaBlock pb, CforBlock schedBaseBlock) throws XMPexception {
     XobjList loopDecl = (XobjList)pb.getClauses();
-    ArrayList<String> iteraterList = new ArrayList<String>();  // Not used 
+    ArrayList<String> iteraterList = new ArrayList<String>();  // Not used
 
-    // schedule loop
     scheduleLoop(pb, schedBaseBlock, schedBaseBlock, iteraterList);
     insertScheduleIndexFunction(pb, schedBaseBlock, schedBaseBlock, iteraterList);
   }
@@ -1243,7 +1221,6 @@ public class XMPtranslateLocalPragma {
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(schedBaseBlock);
     Xobject onRef = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
-    //XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
     XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, schedBaseBlock);
 
     XMPtemplate templateObj = (XMPtemplate)onRefObj;
@@ -1405,8 +1382,7 @@ public class XMPtranslateLocalPragma {
     // create init block
     Ident getRankFuncId = _globalDecl.declExternFunc("_XMP_get_execution_nodes_rank", Xtype.intType);
     IfBlock reductionInitIfBlock = (IfBlock)Bcons.IF(BasicBlock.Cond(Xcons.binaryOp(Xcode.LOG_NEQ_EXPR, getRankFuncId.Call(null),
-                                                                                                        Xcons.IntConstant(0))),
-                                                     null, null);
+                                                                                    Xcons.IntConstant(0))), null, null);
 
     // create function call
     Iterator<Xobject> it = reductionRefList.iterator();
@@ -1435,7 +1411,6 @@ public class XMPtranslateLocalPragma {
     // analyze <on-ref>
     Xobject onRef = loopDecl.getArg(1);
     String onRefObjName = onRef.getArg(0).getString();
-    //XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, localXMPsymbolTable);
     XMPobject onRefObj = _globalDecl.getXMPobject(onRefObjName, schedBaseBlock);
     if (onRefObj == null) {
       throw new XMPexception("cannot find '" + onRefObjName + "' nodes/template");
@@ -1445,16 +1420,13 @@ public class XMPtranslateLocalPragma {
       case XMPobject.TEMPLATE:
         {
           XMPtemplate onRefTemplate = (XMPtemplate)onRefObj;
-          // if (!onRefTemplate.isFixed()) {
-          //   throw new XMPexception("template '" + onRefObjName + "' is not fixed");
-          // }
-
           if (!onRefTemplate.isDistributed()) {
             throw new XMPexception("template '" + onRefObjName + "' is not distributed");
           }
 
           callLoopSchedFuncTemplate(onRefTemplate, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock, iteraterList);
-        } break;
+        }
+        break;
       case XMPobject.NODES:
         callLoopSchedFuncNodes((XMPnodes)onRefObj, (XobjList)onRef.getArg(1), forBlock, schedBaseBlock);
         break;
@@ -1541,8 +1513,8 @@ public class XMPtranslateLocalPragma {
     throw new XMPexception("cannot find the loop statement");
   }
 
-  private void callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList,
-                                         CforBlock forBlock, CforBlock schedBaseBlock, ArrayList<String> iteraterList) throws XMPexception {
+  private void callLoopSchedFuncTemplate(XMPtemplate templateObj, XobjList templateSubscriptList, CforBlock forBlock,
+                                         CforBlock schedBaseBlock, ArrayList<String> iteraterList) throws XMPexception {
     Xobject loopIndex = forBlock.getInductionVar();
     String loopIndexName = loopIndex.getSym();
     iteraterList.add(loopIndexName);
@@ -1552,6 +1524,7 @@ public class XMPtranslateLocalPragma {
     XobjInt templateIndexArg = null;
     int distManner = 0;
     String distMannerString = null;
+
     for (XobjArgs i = templateSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
       if (templateIndex >= templateDim) {
         throw new XMPexception("wrong template dimensions, too many");
@@ -1607,25 +1580,24 @@ public class XMPtranslateLocalPragma {
     BasicBlockExprIterator iter = new BasicBlockExprIterator(getLoopBody(forBlock));
 
     for (iter.init(); !iter.end(); iter.next()) {
-      // XMPrewriteExpr.rewriteLoopIndexInLoop(iter.getExpr(), loopIndexName,
-      //                                       templateObj, templateIndexArg.getInt(),
-      //                                       _globalDecl, XMPlocalDecl.getXMPsymbolTable(forBlock));
       XMPrewriteExpr.rewriteLoopIndexInLoop(iter.getExpr(), loopIndexName,
-      					    templateObj, templateIndexArg.getInt(),
-      					    _globalDecl, forBlock);
+                                            templateObj, templateIndexArg.getInt(),
+                                            _globalDecl, forBlock);
     }
 
     // rewrite loop index in initializer in loop
     BlockList body = getLoopBody(forBlock);
-
     for (Block b = body.getHead(); b != null; b = b.getNext()){
-      
       if (b.getBody() == null) continue;
-      topdownXobjectIterator iter2 = new topdownXobjectIterator(b.getBody().getDecls());
-      for (iter2.init(); !iter2.end(); iter2.next()) {
-	XMPrewriteExpr.rewriteLoopIndexInLoop(iter2.getXobject(), loopIndexName,
-					      templateObj, templateIndexArg.getInt(),
-					      _globalDecl, forBlock);
+      topdownXobjectIterator iter_decl = new topdownXobjectIterator(b.getBody().getDecls());
+      for (iter_decl.init(); !iter_decl.end(); iter_decl.next()) {
+        int num = 0;
+        for (XobjArgs i = templateSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
+          String indexName = i.getArg().getString();
+          XMPrewriteExpr.rewriteLoopIndexInLoop(iter_decl.getXobject(), indexName,
+                                                templateObj, num, _globalDecl, forBlock);
+          num++;
+        }
       }
     }
 
@@ -1687,7 +1659,7 @@ public class XMPtranslateLocalPragma {
     forBlock.getCondBBlock().setExpr(Xcons.binaryOp(Xcode.LOG_LT_EXPR, loopIndex, parallelCondId.Ref()));
   }
 
-  private Ident declIdentWithBlock(Block b, String identName, Xtype type) {
+  static Ident declIdentWithBlock(Block b, String identName, Xtype type) {
 
     Block bb = getOuterSchedPoint(b);
 
@@ -1730,7 +1702,6 @@ public class XMPtranslateLocalPragma {
       barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null);
     }
     else {
-      //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
       XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
       String execFuncSuffix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
@@ -1746,60 +1717,180 @@ public class XMPtranslateLocalPragma {
 
     pb.replace(barrierFuncCallBlock);
 
-    // add function calls for profiling                                                                     
     Xobject profileClause = barrierDecl.getArg(1);
-    if ( _all_profile || (profileClause != null && _selective_profile)){
-	if (doScalasca == true) {
-	    XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp barrier:" + pb.getLineNo()));
-	    barrierFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
-	    barrierFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
-	} else if (doTlog == true) {
-	    barrierFuncCallBlock.insert(
-					createTlogMacroInvoke("_XMP_M_TLOG_BARRIER_IN", null));
-	    barrierFuncCallBlock.add(
-				     createTlogMacroInvoke("_XMP_M_TLOG_BARRIER_OUT", null));
-	}
-    } else if (profileClause == null && _selective_profile && doTlog == false){
-	XobjList profileFuncArgs = null;
-	barrierFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
-	barrierFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
-    }
+    addProfileFunctions(profileClause, barrierFuncCallBlock, "barrier", pb);
   }
 
+
+  private Xobject setStartLengthSize(Xobject obj, Xtype varType, int dims, Xobject[] start, Xobject[] length, Xobject[] size) throws XMPexception {
+    Xobject total_length = null;
+    
+    for(int j=0;j<dims;j++){
+      Xobject triplet = obj.getArg(1).getArg(j);
+      size[j] = XMPutil.getArrayElmt(varType, j);
+      if(triplet.isVariable() || triplet.isIntConstant()){
+        start[j]  = triplet;
+        length[j] = Xcons.IntConstant(1);
+      }
+      else{
+        start[j] = triplet.getArg(0);
+        if(triplet.getArg(1).isVariable() || triplet.getArg(1).isIntConstant()){
+          length[j] = triplet.getArg(1);
+        }
+        else{
+          length[j] = (triplet.getArg(1) == null || triplet.getArg(1).isEmpty())?
+            Xcons.binaryOp(Xcode.MINUS_EXPR, size[j], start[j]) : triplet.getArg(1);
+        }
+      }
+      total_length = (j==0)? length[j] : Xcons.binaryOp(Xcode.MUL_EXPR, total_length, length[j]);
+    }
+    return total_length;
+  }
+
+
+  private void setAccSize(int dims, Xobject[] size, Xobject[] acc_size){
+    for(int j=0;j<dims;j++)
+      for(int k=j+1;k<dims;k++)
+        acc_size[j] = (k==j+1)? size[k] : Xcons.binaryOp(Xcode.MUL_EXPR, acc_size[j], size[k]);
+
+    acc_size[dims-1] = Xcons.IntConstant(1);
+  }
+
+  private Xobject calcOffsetSize(int dims, Xobject[] start, Xobject[] acc_size, Xtype varType){
+    Xobject offset_size = Xcons.binaryOp(Xcode.MUL_EXPR, start[0], acc_size[0]);
+    for(int j=1;j<dims;j++){
+      offset_size = Xcons.binaryOp(Xcode.PLUS_EXPR, offset_size, Xcons.binaryOp(Xcode.MUL_EXPR, start[j], acc_size[j]));
+    }
+    return Xcons.binaryOp(Xcode.MUL_EXPR, offset_size, Xcons.SizeOf(varType.getArrayElementType()));
+  }
+  
+  private void createLocReduction(PragmaBlock pb, XobjList reductionRef, Xobject reductionOp, XobjList onRef) throws XMPexception {
+    Xobject reductionVariable = reductionRef.getArg(1).getArg(0).getArg(0);
+    int numLocationVariables = reductionRef.getArg(1).Nargs() - 1;
+
+    // Create xmp_reduce_loc_init()
+    BlockList reductionBody = Bcons.emptyBody();
+    String reductionVariableName = reductionVariable.getName();
+    Ident reductionVariableId = pb.findVarIdent(reductionVariableName);
+    Xtype reductionVariableType = reductionVariableId.Type();
+    XobjList args = Xcons.List(Xcons.IntConstant(numLocationVariables), Xcons.Cast(BasicType.longdoubleType, reductionVariable),
+                               reductionVariableId.getAddr(), XMP.createBasicTypeConstantObj(reductionVariableType));
+    reductionBody.add(_globalDecl.createFuncCallBlock("xmp_reduce_loc_init", args));
+
+    // Create xmp_reduce_loc_set();
+    for(int i=0;i<numLocationVariables;i++){
+      Xobject reductionLocation = reductionRef.getArg(1).getArg(i+1);
+      boolean is_scalar = reductionLocation.isVarRef();
+      Xobject varAddr, varLength, varSize;
+      if(is_scalar){ // scalar
+        String varName = reductionLocation.getName();
+        Ident varId = pb.findVarIdent(varName);
+        Xtype varType = varId.Type();
+
+        varAddr   = varId.getAddr();
+        varLength = Xcons.IntConstant(1);
+        varSize   = Xcons.SizeOf(varType);
+      }
+      else{ // array
+        String varName = reductionLocation.getArg(0).getName();
+        Ident varId = pb.findVarIdent(varName);
+        Xtype varType = varId.Type();
+        int dims = varType.getNumDimensions();
+
+        Xobject[] start  = new Xobject[dims];
+        Xobject[] length = new Xobject[dims];
+        Xobject[] size   = new Xobject[dims];
+        Xobject total_length = setStartLengthSize(reductionLocation, varType, dims, start, length, size);
+
+        // Check the array is continuous or not.
+        // Note that when XMP runtime supports stride bcast communication,
+        // the following if-statment will be removed.
+        if(! check_continuous_of_array(dims, length, size))
+          throw new XMPexception("Stride bcast operation is not supported");
+
+        Xobject[] acc_size = new Xobject[dims];
+        setAccSize(dims, size, acc_size);
+        Xobject offsetSize = calcOffsetSize(dims, start, acc_size, varType);
+
+        varAddr   = Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.Cast(Xtype.Pointer(BasicType.charType), varId.Ref()), offsetSize);
+        varLength = total_length;
+        varSize   = Xcons.SizeOf(varType.getArrayElementType());
+      }
+      
+      args = Xcons.List(varAddr, varLength, varSize);
+      reductionBody.add(_globalDecl.createFuncCallBlock("xmp_reduce_loc_set", args));
+    }
+
+    // Create xmp_reduce_loc_execute()
+    args = Xcons.List(reductionOp);
+    reductionBody.add(_globalDecl.createFuncCallBlock("xmp_reduce_loc_execute", args));
+
+    // Output
+    Block reductionBodyBlock = null;
+    if (onRef != null && onRef.Nargs() != 0){
+      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
+      String execFuncSuffix = execOnRefArgs.getFirst();
+      boolean splitComm     = execOnRefArgs.getSecond().booleanValue();
+      XobjList execFuncArgs = execOnRefArgs.getThird();
+      if(splitComm){
+        reductionBodyBlock = createCommTaskBlock(reductionBody, execFuncSuffix, execFuncArgs);
+      }
+      else{
+        reductionBodyBlock = Bcons.COMPOUND(reductionBody);
+      }
+    }
+    else{
+      reductionBodyBlock = Bcons.COMPOUND(reductionBody);
+    }
+    
+    pb.replace(reductionBodyBlock);
+  }
+  
   private void translateReduction(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList reductionDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
-    // create function arguments
-    XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
+    // Check host or acc clause for XcalableACC
     XobjList accOrHost = (XobjList)reductionDecl.getArg(3);
-    boolean isHost = accOrHost.hasIdent("host");
-    boolean isACC = accOrHost.hasIdent("acc");
+    boolean isHost     = accOrHost.hasIdent("host");
+    boolean isACC      = accOrHost.hasIdent("acc");
+
     if(!isHost && !isACC){
       isHost = true;
-    }else if(isHost && isACC){
+    }
+    else if(isHost && isACC){
       throw new XMPexception(pb.getLineNo(), "reduction for both acc and host is unimplemented");
     }
-    Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb,
-                                                                     false, null, null);
-    String reductionFuncType = createReductionFuncType(reductionRef, pb, isACC);
+
+    // create function arguments
+    XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
+    XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
 
     // create function call
-    Block reductionFuncCallBlock = null;
     XobjList onRef = (XobjList)reductionDecl.getArg(1);
-    if (onRef == null || onRef.Nargs() == 0) {
-	reductionFuncCallBlock = createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList);
+    
+    // When MAXLOC or MINLOC, another flow, which does not use a variadic function in runtime, is executed.
+    if(reductionOp.getInt() == XMPcollective.REDUCE_MAXLOC || reductionOp.getInt() == XMPcollective.REDUCE_MINLOC){
+      createLocReduction(pb, reductionRef, reductionOp, onRef);
+      return;
     }
-    else {
-      //XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, localXMPsymbolTable);
+
+    Block reductionFuncCallBlock = null;
+    Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false, null, null);
+    String reductionFuncType = createReductionFuncType(reductionRef, pb, isACC);
+
+    if (onRef == null || onRef.Nargs() == 0){
+      reductionFuncCallBlock = createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList);
+    }
+    else{
       XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
       String execFuncSuffix = execOnRefArgs.getFirst();
       boolean splitComm = execOnRefArgs.getSecond().booleanValue();
       XobjList execFuncArgs = execOnRefArgs.getThird();
       if (splitComm) {
-        BlockList reductionBody = Bcons.blockList(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC",
-                                                                               null, reductionFuncArgsList));
+        BlockList reductionBody =
+          Bcons.blockList(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList));
 	reductionFuncCallBlock = createCommTaskBlock(reductionBody, execFuncSuffix, execFuncArgs);
       }
       else {
@@ -1820,40 +1911,19 @@ public class XMPtranslateLocalPragma {
     }
 
     Xobject async = reductionDecl.getArg(2);
-    if (async.Opcode() != Xcode.LIST){
-
-      if (!XmOption.isAsync()){
+    if(async.Opcode() != Xcode.LIST){
+      if(!XmOption.isAsync())
 	XMP.error(pb.getLineNo(), "MPI-3 is required to use the async clause on a reduction directive");
-      }
 
       BlockList bl = reductionFuncCallBlock.getBody();
-      //      Ident taskDesc = bl.findLocalIdent("_XMP_TASK_desc");
-      //      Xobject arg = (taskDesc != null)? taskDesc.Ref() : Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));
-
       bl.insert(_globalDecl.declExternFunc("xmpc_init_async").Call(Xcons.List(async)));
       bl.add(_globalDecl.declExternFunc("xmpc_start_async").Call(Xcons.List()));
     }
     
     pb.replace(reductionFuncCallBlock);
-
-    // add function calls for profiling
+    
     Xobject profileClause = reductionDecl.getArg(4);
-    if( _all_profile || (profileClause != null && _selective_profile)){
-        if (doScalasca == true) {
-            XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp reduction:" + pb.getLineNo()));
-            reductionFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
-            reductionFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
-        } else if (doTlog == true) {
-            reductionFuncCallBlock.insert(
-					  createTlogMacroInvoke("_XMP_M_TLOG_REDUCTION_IN", null));
-            reductionFuncCallBlock.add(
-				       createTlogMacroInvoke("_XMP_M_TLOG_REDUCTION_OUT", null));
-        }
-    } else if(profileClause == null && _selective_profile && doTlog == false){
-        XobjList profileFuncArgs = null;
-        reductionFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
-        reductionFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
-    }
+    addProfileFunctions(profileClause, reductionFuncCallBlock, "reduction", pb);
   }
 
   private String createReductionFuncType(XobjList reductionRef, PragmaBlock pb, boolean isACC) throws XMPexception {
@@ -1870,6 +1940,8 @@ public class XMPtranslateLocalPragma {
       case XMPcollective.REDUCE_LXOR:
       case XMPcollective.REDUCE_MAX:
       case XMPcollective.REDUCE_MIN:
+      case XMPcollective.REDUCE_MAXLOC:
+      case XMPcollective.REDUCE_MINLOC:
         return isACC? new String("reduce_acc") : new String("reduce");
       case XMPcollective.REDUCE_FIRSTMAX:
       case XMPcollective.REDUCE_FIRSTMIN:
@@ -1884,9 +1956,9 @@ public class XMPtranslateLocalPragma {
   private Vector<XobjList> createReductionArgsList(XobjList reductionRef, PragmaBlock pb, boolean isClause,
                                                    CforBlock schedBaseBlock, IfBlock reductionInitIfBlock) throws XMPexception {
     Vector<XobjList> returnVector = new Vector<XobjList>();
-
     XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
     XobjList reductionSpecList = (XobjList)reductionRef.getArg(1);
+
     for (XobjArgs i = reductionSpecList.getArgs(); i != null; i = i.nextArgs()) {
       XobjList reductionSpec = (XobjList)i.getArg();
       String specName = reductionSpec.getArg(0).getString();
@@ -1958,13 +2030,11 @@ public class XMPtranslateLocalPragma {
       }
 
       XobjList reductionFuncArgs = Xcons.List(specRef, count, elmtType, reductionOp);
-
       // declare temp variable for reduction
       if (isClause) {
         createReductionInitStatement(specId, isArray, count, basicSpecType, reductionOp.getInt(),
                                      schedBaseBlock, reductionInitIfBlock);
       }
-      
       if(isPointer){
 	Xobject varaddr = (Xobject)reductionFuncArgs.getArg(0);
 	reductionFuncArgs.setArg(0, Xcons.PointerRef(varaddr));
@@ -1972,7 +2042,6 @@ public class XMPtranslateLocalPragma {
 
       // add extra args for (firstmax, firstmin, lastmax, lastmin) if needed
       createFLMMreductionArgs(reductionOp.getInt(), (XobjList)reductionSpec.getArg(1), reductionFuncArgs, pb);
-
       returnVector.add(reductionFuncArgs);
     }
 
@@ -2121,6 +2190,8 @@ public class XMPtranslateLocalPragma {
       case XMPcollective.REDUCE_LXOR:
       case XMPcollective.REDUCE_MAX:
       case XMPcollective.REDUCE_MIN:
+      case XMPcollective.REDUCE_MAXLOC:
+      case XMPcollective.REDUCE_MINLOC:
         return;
       case XMPcollective.REDUCE_FIRSTMAX:
       case XMPcollective.REDUCE_FIRSTMIN:
@@ -2286,8 +2357,6 @@ public class XMPtranslateLocalPragma {
       }
 
       BlockList bl = bcastFuncCallBlock.getBody();
-      //      Ident taskDesc = bl.findLocalIdent("_XMP_TASK_desc");
-      //      Xobject arg = (taskDesc != null)? taskDesc.Ref() : Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));
       
       bl.insert(_globalDecl.declExternFunc("xmpc_init_async").Call(Xcons.List(async)));
       bl.add(_globalDecl.declExternFunc("xmpc_start_async").Call(Xcons.List()));
@@ -2295,24 +2364,8 @@ public class XMPtranslateLocalPragma {
 
     pb.replace(bcastFuncCallBlock);
 
-    // add function calls for profiling                                                                                    
     Xobject profileClause = bcastDecl.getArg(5);
-    if(_all_profile || (profileClause != null && _selective_profile)){
-      if (doScalasca == true){
-        XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp bcast:" + pb.getLineNo()));
-        bcastFuncCallBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
-        bcastFuncCallBlock.add(createScalascaEndProfileCall(profileFuncArgs));
-      }
-      else if (doTlog == true){
-        bcastFuncCallBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_BCAST_IN", null));
-        bcastFuncCallBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_BCAST_OUT", null));
-      }
-    }
-    else if(profileClause == null && _selective_profile && doTlog == false){
-        XobjList profileFuncArgs = null;
-        bcastFuncCallBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
-        bcastFuncCallBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
-    }
+    addProfileFunctions(profileClause, bcastFuncCallBlock, "bcast", pb);
   }
 
   private boolean check_all(Xobject length, Xobject size){
@@ -2460,27 +2513,7 @@ public class XMPtranslateLocalPragma {
         Xobject[] start  = new Xobject[dims];
         Xobject[] length = new Xobject[dims];
         Xobject[] size   = new Xobject[dims];
-        Xobject total_length = null;
-
-        for(int j=0;j<dims;j++){
-          Xobject triplet = i.getArg().getArg(1).getArg(j);
-          size[j] = XMPutil.getArrayElmt(varType, j);
-          if(triplet.isVariable() || triplet.isIntConstant()){
-            start[j]  = triplet;
-            length[j] = Xcons.IntConstant(1);
-          }
-          else{
-            start[j] = triplet.getArg(0);
-            if(triplet.getArg(1).isVariable() || triplet.getArg(1).isIntConstant()){
-              length[j] = triplet.getArg(1);
-            }
-            else{
-              length[j] = (triplet.getArg(1) == null || triplet.getArg(1).isEmpty())?
-                Xcons.binaryOp(Xcode.MINUS_EXPR, size[j], start[j]) : triplet.getArg(1);
-            }
-          }
-          total_length = (j==0)? length[j] : Xcons.binaryOp(Xcode.MUL_EXPR, total_length, length[j]);
-        }
+        Xobject total_length = setStartLengthSize(i.getArg(), varType, dims, start, length, size);
 
         // Check the array is continuous or not.
         // Note that when XMP runtime supports stride bcast communication,
@@ -2489,17 +2522,8 @@ public class XMPtranslateLocalPragma {
           throw new XMPexception("Stride bcast operation is not supported");
 
         Xobject[] acc_size = new Xobject[dims];
-        for(int j=0;j<dims;j++)
-          for(int k=j+1;k<dims;k++)
-            acc_size[j] = (k==j+1)? size[k] : Xcons.binaryOp(Xcode.MUL_EXPR, acc_size[j], size[k]);
-        
-        acc_size[dims-1] = Xcons.IntConstant(1);
-
-        Xobject offset = Xcons.binaryOp(Xcode.MUL_EXPR, start[0], acc_size[0]);
-        for(int j=1;j<dims;j++){
-          offset = Xcons.binaryOp(Xcode.PLUS_EXPR, offset, Xcons.binaryOp(Xcode.MUL_EXPR, start[j], acc_size[j]));
-        }
-        offset = Xcons.binaryOp(Xcode.MUL_EXPR, offset, Xcons.SizeOf(varType.getArrayElementType()));
+        setAccSize(dims, size, acc_size);
+        Xobject offset = calcOffsetSize(dims, start, acc_size, varType);
 
         returnVector.add(Xcons.List(Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.Cast(Xtype.Pointer(BasicType.charType), varId.Ref()), offset),
                                     total_length, Xcons.SizeOf(varType.getArrayElementType())));
@@ -2700,10 +2724,8 @@ public class XMPtranslateLocalPragma {
     BlockList gmoveBody = pb.getBody();
     Block gmoveFuncCallBlock = null;
 
-    // gmove in/out is not implemented
+    // GMOVE_NORMAL | GMOVE_IN | GMOVE_OUT
     Xobject gmoveClause = gmoveDecl.getArg(0);
-    if(XMPcollective.GMOVE_IN == gmoveClause.getInt() || XMPcollective.GMOVE_OUT == gmoveClause.getInt())
-      throw new XMPexception("gmove in/out directive is not supported yet");
 
     // acc or host
     XobjList accOrHost = (XobjList)gmoveDecl.getArg(2);
@@ -2742,14 +2764,37 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(checkBodyErrMsg);
     }
 
-    // FIXME consider in, out clause
     Xobject leftExpr = assignStmt.left();
     XMPpair<XMPalignedArray, XobjList> leftExprInfo = getXMPalignedArrayExpr(pb, leftExpr);
-    XMPalignedArray leftAlignedArray = leftExprInfo.getFirst();
+    XMPalignedArray leftAlignedArray = null;
+    if (leftExprInfo != null) leftAlignedArray = leftExprInfo.getFirst();
 
     Xobject rightExpr = assignStmt.right();
     XMPpair<XMPalignedArray, XobjList> rightExprInfo = getXMPalignedArrayExpr(pb, assignStmt.right());
-    XMPalignedArray rightAlignedArray = rightExprInfo.getFirst();
+    XMPalignedArray rightAlignedArray = null;
+    if (rightExprInfo != null) rightAlignedArray = rightExprInfo.getFirst();
+
+    if (rightAlignedArray != null){
+      StorageClass sclass = rightAlignedArray.getArrayId().getStorageClass();
+      if (gmoveClause.getInt() == XMPcollective.GMOVE_IN &&
+	  sclass != StorageClass.EXTDEF && sclass != StorageClass.EXTERN)
+      XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
+    }
+
+    if (leftAlignedArray != null){
+      StorageClass sclass = leftAlignedArray.getArrayId().getStorageClass();
+      if (gmoveClause.getInt() == XMPcollective.GMOVE_OUT &&
+	  sclass != StorageClass.EXTDEF && sclass != StorageClass.EXTERN)
+	XMP.fatal("Current limitation: Only a SAVE or MODULE variable can be the target of gmove in/out.");
+    }
+
+    if (rightAlignedArray == null && gmoveClause.getInt() == XMPcollective.GMOVE_IN){
+      XMP.fatal("gmove in cannot be applied to a local rhs.");
+    }
+
+    if (leftAlignedArray == null && gmoveClause.getInt() == XMPcollective.GMOVE_OUT){
+      XMP.fatal("gmove out cannot be applied to a local lhs.");
+    }
 
     boolean leftHasSubArrayRef = (leftExpr.Opcode() == Xcode.SUB_ARRAY_REF);
     boolean rightHasSubArrayRef = (rightExpr.Opcode() == Xcode.SUB_ARRAY_REF);
@@ -2757,21 +2802,23 @@ public class XMPtranslateLocalPragma {
       if (rightHasSubArrayRef) {
         if (leftAlignedArray == null) {
           if (rightAlignedArray == null) {	// !leftIsAlignedArray && !rightIsAlignedArray  |-> local assignment (every node)
-            String arrayName = getArrayName(leftExpr);
-            Ident arrayId = pb.findVarIdent(arrayName);
-            Xtype arrayElmtType = arrayId.Type().getArrayElementType();
+	    gmoveFuncCallBlock = Bcons.COMPOUND(gmoveBody);
+            // String arrayName = getArrayName(leftExpr);
+            // Ident arrayId = pb.findVarIdent(arrayName);
+            // Xtype arrayElmtType = arrayId.Type().getArrayElementType();
 
-            XobjList gmoveFuncArgs = null;
-            if (arrayElmtType.getKind() == Xtype.BASIC) {
-              gmoveFuncArgs = Xcons.List(XMP.createBasicTypeConstantObj(arrayElmtType));
-            } else {
-              gmoveFuncArgs = Xcons.List(Xcons.IntConstant(XMP.NONBASIC_TYPE));
-            }
-            gmoveFuncArgs.add(Xcons.SizeOf(arrayElmtType));
+            // XobjList gmoveFuncArgs = null;
+            // if (arrayElmtType.getKind() == Xtype.BASIC) {
+            //   gmoveFuncArgs = Xcons.List(XMP.createBasicTypeConstantObj(arrayElmtType));
+            // } else {
+            //   gmoveFuncArgs = Xcons.List(Xcons.IntConstant(XMP.NONBASIC_TYPE));
+            // }
+            // gmoveFuncArgs.add(Xcons.SizeOf(arrayElmtType));
 
-            gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
-            gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
-	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "LOCALCOPY_ARRAY", gmoveFuncArgs);
+            // gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+            // gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    // gmoveFuncArgs.add(gmoveClause);
+	    // gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "LOCALCOPY_ARRAY", gmoveFuncArgs);
           } else {				// !leftIsAlignedArray &&  rightIsAlignedArray  |-> broadcast
             Xtype arrayElmtType = rightAlignedArray.getType();
 
@@ -2785,6 +2832,7 @@ public class XMPtranslateLocalPragma {
 
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    gmoveFuncArgs.add(gmoveClause);
 	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_ARRAY", gmoveFuncArgs);
           }
         }
@@ -2802,6 +2850,7 @@ public class XMPtranslateLocalPragma {
 
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    gmoveFuncArgs.add(gmoveClause);
 	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "HOMECOPY_ARRAY", gmoveFuncArgs);
           } else {				//  leftIsAlignedArray &&  rightIsAlignedArray  |-> send/recv
             Xtype arrayElmtType = leftAlignedArray.getType();
@@ -2821,78 +2870,148 @@ public class XMPtranslateLocalPragma {
 
             gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
             gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    gmoveFuncArgs.add(gmoveClause);
 
 	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_ARRAY", gmoveFuncArgs);
-
-	    // BCAST_TO_NOTALIGNED_ARRAY doesn't work now
-
-	    // boolean flag = false;
-	    // for(int i=0;i<leftAlignedArray.getDim();i++){   // 1
-	    //   if(leftAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
-	    // 	flag = true;
-	    //   }
-	    // }
-
-	    // for(int i=0;i<rightAlignedArray.getDim();i++){  // 2
-	    //   if(rightAlignedArray.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED){
-	    // 	flag = false;
-	    //   }
-	    // }
-
-	    // String leftAlignedArrayTemplate  = leftAlignedArray.getAlignTemplate().getName();
-	    // String rightAlignedArrayTemplate = rightAlignedArray.getAlignTemplate().getName();
-	    // if(!leftAlignedArrayTemplate.equals(rightAlignedArrayTemplate)){ // 3
-	    //   flag = false;
-	    // }
-	    // if(!(leftAlignedArray.getDim() == 2 && rightAlignedArray.getDim() == 2)){  // 4
-	    //   flag = false;
-	    // }
-
-	    // if(flag == true){
-	    //   // 1. One of dimension of left array is not aligned.
-	    //   // 2. All dimensions of right array are aligned (temporary).
-	    //   // 3. Templates of left array amd right array are the same.
-	    //   // 4. Both left array amd right array are must 2 dimentional array (temporary).
-	    //   gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_TO_NOTALIGNED_ARRAY", gmoveFuncArgs);
-	    // }
-	    // else{
-	    //   gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_ARRAY", gmoveFuncArgs);
-	    // }
           }
         }
-      } else {
-        // FIXME implement
-        throw new XMPexception("not implemented yet");
       }
-    } else {
+      else { // leftHasSubArrayRef && !rightHasSubArrayRef
+        if (leftAlignedArray == null){
+          if (rightAlignedArray == null){
+	    gmoveFuncCallBlock = Bcons.COMPOUND(gmoveBody);
+	  }
+	  else {
+            Xtype arrayElmtType = rightAlignedArray.getType();
+
+            XobjList gmoveFuncArgs = Xcons.List(rightAlignedArray.getDescId().Ref());
+
+            if (arrayElmtType.getKind() == Xtype.BASIC) {
+              gmoveFuncArgs.add(XMP.createBasicTypeConstantObj(arrayElmtType));
+            }
+	    else {
+              gmoveFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
+            }
+            gmoveFuncArgs.add(Xcons.SizeOf(arrayElmtType));
+
+            gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+            gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    gmoveFuncArgs.add(gmoveClause);
+
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "LSECTION_GSCALAR", gmoveFuncArgs);
+	  }
+	}
+	else {
+          if (rightAlignedArray == null){
+	    if (gmoveClause.getInt() == XMPcollective.GMOVE_NORMAL){
+	      Block arrayBlock = convertGmoveToArray(pb, leftAlignedArray, leftExpr, rightExpr);
+	      pb.replace(arrayBlock);
+	      translateArray((PragmaBlock)arrayBlock);
+	      return;
+	    }
+	    else if (gmoveClause.getInt() == XMPcollective.GMOVE_OUT){
+	      XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref(), Xcons.AddrOf(rightExpr));
+	      gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+	      gmoveFuncArgs.add(gmoveClause);
+	      gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "INOUT_SCALAR", gmoveFuncArgs);
+	    }
+	    else { // GMOVE_IN
+	      XMP.fatal("gmove in cannot be applied to a local rhs.");
+	    }
+	  }
+	  else { // G(:) = g(i)
+            Xtype arrayElmtType = leftAlignedArray.getType();
+
+            XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref(),
+                                                rightAlignedArray.getDescId().Ref());
+
+            if (arrayElmtType.getKind() == Xtype.BASIC) {
+              gmoveFuncArgs.add(XMP.createBasicTypeConstantObj(arrayElmtType));
+            }
+	    else {
+              gmoveFuncArgs.add(Xcons.IntConstant(XMP.NONBASIC_TYPE));
+            }
+            gmoveFuncArgs.add(Xcons.SizeOf(arrayElmtType));
+
+            gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+            gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	    gmoveFuncArgs.add(gmoveClause);
+
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "GSECTION_GSCALAR", gmoveFuncArgs);
+	  }
+	}
+	
+        // FIXME implement
+        //throw new XMPexception("not implemented yet");
+	//System.err.printf("not implemented yet\n");
+      }
+    }
+    else {
       if (rightHasSubArrayRef) {
         throw new XMPexception("syntax error in gmove assign statement");
       }
 
       if (leftAlignedArray == null) {
-        if (rightAlignedArray == null) {	// !leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (every node)
+        if (rightAlignedArray == null) { // !leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (every node)
 	  gmoveFuncCallBlock = Bcons.COMPOUND(gmoveBody);
         } else {				// !leftIsAlignedArray &&  rightIsAlignedArray	|-> broadcast
-          XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
+
+	  Xobject rightAddr = (gmoveClause.getInt() == XMPcollective.GMOVE_IN) ?
+	    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)) : Xcons.AddrOf(rightExpr);
+          XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), rightAddr,
                                               rightAlignedArray.getDescId().Ref());
+
+          // XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
+          //                                     rightAlignedArray.getDescId().Ref());
+
           gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	  gmoveFuncArgs.add(gmoveClause);
 
 	  gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "BCAST_SCALAR", gmoveFuncArgs);
         }
       }
       else {
-        if (rightAlignedArray == null) {	//  leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (home node)
-          XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
-          gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+        if (rightAlignedArray == null) { //  leftIsAlignedArray && !rightIsAlignedArray	|-> local assignment (home node)
+	  if (gmoveClause.getInt() == XMPcollective.GMOVE_NORMAL){
+	    XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref());
+	    gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+	    gmoveFuncArgs.add(gmoveClause);
 
-          Ident gmoveFuncId = _globalDecl.declExternFunc(funcPrefix + "HOMECOPY_SCALAR", Xtype.intType);
-	  gmoveFuncCallBlock = Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)), gmoveBody, null);
+	    Ident gmoveFuncId = _globalDecl.declExternFunc(funcPrefix + "HOMECOPY_SCALAR", Xtype.intType);
+	    gmoveFuncCallBlock = Bcons.IF(BasicBlock.Cond(gmoveFuncId.Call(gmoveFuncArgs)), gmoveBody, null);
+	  }
+	  else if (gmoveClause.getInt() == XMPcollective.GMOVE_OUT){
+	    XobjList gmoveFuncArgs = Xcons.List(leftAlignedArray.getDescId().Ref(), Xcons.AddrOf(rightExpr));
+
+	    //gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
+	    XobjList accList = getArrayAccList(pb, assignStmt.left());
+	    int dim = 0;
+	    for (Xobject x : leftExprInfo.getSecond()){
+	      gmoveFuncArgs.add(x);
+	      gmoveFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
+	      gmoveFuncArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
+	      gmoveFuncArgs.add(Xcons.Cast(Xtype.unsignedlonglongType, accList.getArg(dim)));
+	      dim++;
+	    }
+
+	    gmoveFuncArgs.add(gmoveClause);
+	    gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "INOUT_SCALAR", gmoveFuncArgs);
+	  }
         }
-        else {				//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv
-          XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
+	else {				//  leftIsAlignedArray &&  rightIsAlignedArray	|-> send/recv
+
+	  Xobject leftAddr = (gmoveClause.getInt() == XMPcollective.GMOVE_OUT) ?
+	    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)) : Xcons.AddrOf(leftExpr);
+	  Xobject rightAddr = (gmoveClause.getInt() == XMPcollective.GMOVE_IN) ?
+	    Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)) : Xcons.AddrOf(rightExpr);
+          XobjList gmoveFuncArgs = Xcons.List(leftAddr, rightAddr,
                                               leftAlignedArray.getDescId().Ref(), rightAlignedArray.getDescId().Ref());
+
+          // XobjList gmoveFuncArgs = Xcons.List(Xcons.AddrOf(leftExpr), Xcons.AddrOf(rightExpr),
+          //                                     leftAlignedArray.getDescId().Ref(), rightAlignedArray.getDescId().Ref());
           gmoveFuncArgs.mergeList(leftExprInfo.getSecond());
           gmoveFuncArgs.mergeList(rightExprInfo.getSecond());
+	  gmoveFuncArgs.add(gmoveClause);
 
 	  gmoveFuncCallBlock = _globalDecl.createFuncCallBlock(funcPrefix + "SENDRECV_SCALAR", gmoveFuncArgs);
         }
@@ -2916,29 +3035,55 @@ public class XMPtranslateLocalPragma {
       }
     }
 
-    // Why is the barrier needed ?
-    //Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock, _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null)));
     Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock));
     pb.replace(gmoveBlock);
 
-    // add function calls for profiling                                                                                    
     Xobject profileClause = gmoveDecl.getArg(3);
-    if( _all_profile || (profileClause != null && _selective_profile)){
-        if (doScalasca == true) {
-            XobjList profileFuncArgs = Xcons.List(Xcons.StringConstant("#xmp gmove:" + pb.getLineNo()));
-            gmoveBlock.insert(createScalascaStartProfileCall(profileFuncArgs));
-            gmoveBlock.add(createScalascaEndProfileCall(profileFuncArgs));
-        }
-        else if (doTlog == true) {
-            gmoveBlock.insert(createTlogMacroInvoke("_XMP_M_TLOG_GMOVE_IN", null));
-            gmoveBlock.add(createTlogMacroInvoke("_XMP_M_TLOG_GMOVE_OUT", null));
-        }
+    addProfileFunctions(profileClause, gmoveFuncCallBlock, "gmove", pb);
+  }
+
+  private Block convertGmoveToArray(PragmaBlock pb, XMPalignedArray leftAlignedArray, Xobject leftExpr, Xobject rightExpr){
+
+    Xobject onRef = Xcons.List();
+    Xobject t = Xcons.Symbol(Xcode.VAR, leftAlignedArray.getAlignTemplate().getName());
+    onRef.add(t);
+
+    Xobject subscripts = Xcons.List();
+    for (int i = 0; i < leftAlignedArray.getAlignTemplate().getDim(); i++){
+      subscripts.add(null);
     }
-    else if(profileClause == null && _selective_profile && doTlog == false){
-        XobjList profileFuncArgs = null;
-        gmoveBlock.insert(createScalascaProfileOffCall(profileFuncArgs));
-        gmoveBlock.add(createScalascaProfileOnfCall(profileFuncArgs));
+
+    XobjList arrayRefs = (XobjList)leftExpr.getArg(1);
+
+    for (int i = 0; i < leftAlignedArray.getDim(); i++){
+
+      int alignSubscriptIndex = leftAlignedArray.getAlignSubscriptIndexAt(i);
+      Xobject alignSubscriptOffset = leftAlignedArray.getAlignSubscriptExprAt(i);
+
+      Xobject sub = arrayRefs.getArg(i);
+      Xobject triplet;
+      if (sub.Opcode() == Xcode.LIST){
+	Xobject lb = sub.getArg(0);
+	if (alignSubscriptOffset != null) lb = Xcons.binaryOp(Xcode.PLUS_EXPR, lb, alignSubscriptOffset);
+	Xobject ub = sub.getArg(1);
+	Xobject st = sub.getArg(2);
+	triplet = Xcons.List(lb, ub, st);
+      }
+      else {
+	Xobject lb = sub.getArg(0);
+	if (alignSubscriptOffset != null) lb = Xcons.binaryOp(Xcode.PLUS_EXPR, lb, alignSubscriptOffset);
+	Xobject ub = lb;
+	Xobject st = Xcons.IntConstant(1);
+	triplet = Xcons.List(lb, ub, st);
+      }	
+
+      subscripts.setArg(alignSubscriptIndex, triplet);
     }
+    onRef.add(subscripts);
+
+    Xobject args = Xcons.List(onRef);
+    return Bcons.PRAGMA(Xcode.XMP_PRAGMA, "LOOP", args, pb.getBody());
+
   }
 
   private XMPpair<XMPalignedArray, XobjList> getXMPalignedArrayExpr(PragmaBlock pb, Xobject expr) throws XMPexception {
@@ -2947,8 +3092,9 @@ public class XMPtranslateLocalPragma {
         return parseArrayRefExpr(pb, expr);
       case SUB_ARRAY_REF:
         return parseSubArrayRefExpr(pb, expr, getArrayAccList(pb, expr));
+      case VAR:
+	return null;
       default:
-        // FIXME support var-ref
         throw new XMPexception("unsupported expression: gmove");
     }
   }

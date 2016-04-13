@@ -1,8 +1,10 @@
 #OPT= --debug
+#OPT= --Wx-fcoarray=4 --debug
 #OPT= -g --debug --verbose
 NPE=3
 
-OUT_OK    = a1d1-3.x a1d1-2.x a1d1-1.x a6d3.x a6d4-2.x a6d3-1.x a6d3-2.x a3d3.x a2d2.x a2d2-1-1.x a2d2-1-5.x s-2.x s-1.x a1d1-4.x a6d4-1.x a0d0-2.x a0d0-3.x
+OUT_OK    = a1d1-3.x a1d1-2.x a1d1-1.x a6d3.x a6d3-1.x a6d3-2.x a3d3.x a2d2.x a2d2-1-1.x a2d2-1-5.x s-2.x s-1.x a1d1-4.x a0d0-2.x a0d0-3.x
+
 OUT_NG    = a2d0.x a2d1.x a2d1-2.x a2d1-3.x
 OUT_bound = #l0-3okB.x cannot run on SX
 OUT_NGB   = a2d2-2NGB.x

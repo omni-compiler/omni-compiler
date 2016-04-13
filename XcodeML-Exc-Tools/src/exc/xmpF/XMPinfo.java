@@ -44,6 +44,7 @@ public class XMPinfo
 
   // for gmove
   Xobject gmoveLeft,gmoveRight;
+  Xobject gmoveOpt;
 
   // for template_fix
   XMPtemplate template;
@@ -143,6 +144,12 @@ public class XMPinfo
   public Xobject getGmoveLeft() { return gmoveLeft; }
   
   public Xobject getGmoveRight() { return gmoveRight; }
+
+  public void setGmoveOpt(Xobject _gmoveOpt){
+    gmoveOpt = _gmoveOpt;
+  }
+
+  public Xobject getGmoveOpt() { return gmoveOpt; }
 
   public void setTemplateFix(XMPtemplate t, XobjList sList, XobjList dList){
     template = t;

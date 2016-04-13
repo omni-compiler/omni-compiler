@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #ifdef _XMP_LIBBLAS
 #ifdef _XMP_SSL2BLAMP
@@ -29,6 +30,30 @@ extern void _XMP_align_local_idx(long long int global_idx, int *local_idx,
                                  _XMP_array_t *array, int array_axis, int *rank);
 
 static int xmpf_running=0;
+
+/* The function _XMP_Alltoall() is a wrapper function for MPI_Alltoall(). */
+/* This function supports "unsigned long long" type for send/recv counts. */
+static void _XMP_Alltoall(void *sendbuf, unsigned long long count, 
+			  void *recvbuf, MPI_Comm comm)
+{
+  MPI_Datatype type = MPI_BYTE; // count < INT_MAX
+
+  if(count >= INT_MAX){
+    if(count % sizeof(int) == 0 && count/sizeof(int) < INT_MAX){
+      type  = MPI_INT;
+      count /= sizeof(int);
+    }
+    else if(count % sizeof(double) == 0 && count/sizeof(double) < INT_MAX){
+      type  = MPI_DOUBLE;
+      count /= sizeof(double);
+    }
+    else{
+      _XMP_fatal("Invalid data size in _XMP_Alltoall().");
+    }
+  }
+  
+  MPI_Alltoall(sendbuf, count, type, recvbuf, count, type, comm);
+}
 
 #ifdef DEBUG
 static void show_all(_XMP_array_t *p)
@@ -872,7 +897,6 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
    show_all(src_d);             /* debug write */
    show_all(dst_d);             /* debug write */
 #endif
-   
    /* allocate check */
    if(dst_d->is_allocated){
       dst_alloc_size[0] = dst_d->info[0].alloc_size;
@@ -1035,14 +1059,16 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
 
    /* communication */
    /* start_collection("feast_alltoall"); */
-   MPI_Alltoall(send_buf, src_w*dst_w*type_size, MPI_CHAR,
-                recv_buf, src_w*dst_w*type_size, MPI_CHAR, *((MPI_Comm*)_XMP_get_execution_nodes()->comm));
+   //   MPI_Alltoall(send_buf, src_w*dst_w*type_size, MPI_CHAR,
+   //                recv_buf, src_w*dst_w*type_size, MPI_CHAR, *((MPI_Comm*)_XMP_get_execution_nodes()->comm));
+   _XMP_Alltoall(send_buf, src_w*dst_w*type_size, recv_buf,
+		 *((MPI_Comm*)_XMP_get_execution_nodes()->comm));
    /* stop_collection("feast_alltoall"); */
 
    /* unpack */
    addr_p = (char*)(dst_d->array_addr_p);
    if(xmpf_running){           /* Fortran */
-      if(dist_dim == 1){
+     if(dist_dim == 1){
          /* start_collection("feast_unpack"); */
 #pragma omp parallel for private(j,k)
          for(j=dst_d->info[1].local_lower; j<=dst_d->info[1].local_upper; j++){
@@ -1053,7 +1079,8 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
             }
          }
          /* stop_collection("feast_unpack"); */
-      } else if(dst_d->info[0].shadow_size_lo != 0 || dst_d->info[0].shadow_size_hi != 0){
+      }
+      else if(dst_d->info[0].shadow_size_lo != 0 || dst_d->info[0].shadow_size_hi != 0){
          for(j=dst_d->info[1].local_lower; j<=dst_d->info[1].local_upper; j++){
             memcpy(addr_p+(dst_alloc_size[0]*j+dst_d->info[0].local_lower)*type_size,
                    recv_buf+((j-dst_d->info[1].local_lower)*dst_w)*type_size,
@@ -1093,15 +1120,12 @@ static void xmp_transpose_alltoall(_XMP_array_t *dst_d, _XMP_array_t *src_d, int
 }
 
 
-static void xmp_transpose_original(_XMP_array_t *dst_array, _XMP_array_t *src_array, int opt){
-
+static void xmp_transpose_original(_XMP_array_t *dst_array, _XMP_array_t *src_array, int opt)
+{
   int nnodes;
-
   int dst_block_dim, src_block_dim;
-
   void *sendbuf=NULL, *recvbuf=NULL;
   unsigned long long count, bufsize;
-
   int dst_chunk_size, type_size;
   int src_chunk_size, src_ser_size;
 
@@ -1162,9 +1186,10 @@ static void xmp_transpose_original(_XMP_array_t *dst_array, _XMP_array_t *src_ar
   }else if (opt ==1){
     recvbuf = src_array->array_addr_p;
   }
+
   /* start_collection("org_alltoall"); */
-  MPI_Alltoall(sendbuf, count * type_size, MPI_BYTE, recvbuf, count * type_size,
-               MPI_BYTE, *((MPI_Comm *)src_array->align_template->onto_nodes->comm));
+  _XMP_Alltoall(sendbuf, count * type_size, recvbuf, 
+		*((MPI_Comm *)src_array->align_template->onto_nodes->comm));
   /* stop_collection("org_alltoall"); */
 
   if (dst_block_dim == 1){
@@ -1183,7 +1208,6 @@ static void xmp_transpose_original(_XMP_array_t *dst_array, _XMP_array_t *src_ar
       _XMP_free(sendbuf);
     }
   }
-
 
   return;
 }
@@ -1408,7 +1432,8 @@ void xmp_transpose(void *dst_p, void *src_p, int opt)
       show_array(dst_d, NULL);
 #endif
 
-   } else if(xmpf_running && same_nodes && same_align && regular && !duplicate &&
+   } 
+   else if(xmpf_running && same_nodes && same_align && regular && !duplicate &&
              dist_num == 1 && dist_dim == 1 && dst_d->info[dist_dim].align_manner == _XMP_N_ALIGN_BLOCK &&
              dst_d->info[dist_dim].shadow_size_lo == 0 && dst_d->info[dist_dim].shadow_size_hi == 0 &&
              src_d->info[dist_dim].shadow_size_lo == 0 && src_d->info[dist_dim].shadow_size_hi == 0){
@@ -1417,7 +1442,8 @@ void xmp_transpose(void *dst_p, void *src_p, int opt)
       xmp_transpose_original(dst_d, src_d, opt);
       /* stop_collection("xmp_transpose_original"); */
       
-   } else if(same_nodes && same_align && regular && !duplicate && dist_num == 1){
+   } 
+   else if(same_nodes && same_align && regular && !duplicate && dist_num == 1){
       /* collective MPI communication transpose */
       /* start_collection("xmp_transpose_alltoall"); */
       xmp_transpose_alltoall(dst_d, src_d, opt, dist_dim);
@@ -1428,7 +1454,8 @@ void xmp_transpose(void *dst_p, void *src_p, int opt)
    /*    /\* collective MPI communication transpose *\/ */
    /*    xmp_transpose_alltoallv(dst_d, src_d, opt, dist_dim); */
       
-   } else {
+   } 
+   else {
       /* pack/unpack + sendrecv */
       xmp_transpose_no_opt(dst_d, src_d, opt);
    }

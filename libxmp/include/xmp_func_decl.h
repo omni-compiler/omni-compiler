@@ -89,6 +89,7 @@ extern void _XMP_coarray_malloc_image_info_7(const int, const int, const int, co
 
 extern void _XMP_coarray_malloc_do_f(void **, void *);
 extern void _XMP_coarray_malloc_do(void **, void *);
+extern void _XMP_coarray_regmem_do(void **, void *);   // for Coarray F Ver.4
 extern void _XMP_coarray_attach(void **, void *, const size_t);
 extern void _XMP_coarray_detach(void **);
 extern void _XMP_coarray_lastly_deallocate();
@@ -200,6 +201,9 @@ extern void _XMP_gmove_BCAST_ARRAY(void *src_array, int type, size_t type_size, 
 extern void _XMP_gmove_HOMECOPY_ARRAY(void *dst_array, int type, size_t type_size, ...);
 extern void _XMP_gmove_SENDRECV_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
 extern void _XMP_gmove_BCAST_TO_NOTALIGNED_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
+extern void _XMP_gmove_GSECTION_GSCALAR(void *dst_array, void *src_array, int type, size_t type_size, ...);
+extern void _XMP_gmove_LSECTION_GSCALAR(void *src_array, int type, size_t type_size, void *dst, int dst_dim, ...);
+extern void _XMP_gmove_INOUT_SCALAR(void *dst_array, void *scalar, ...);
 
 // xmp_gmove_acc.c
 extern void _XMP_gmove_acc_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);
@@ -271,6 +275,9 @@ extern void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op)
 extern void _XMP_reduce_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...);
 extern int _XMP_init_reduce_comm_NODES(void *nodes, ...);
 extern int _XMP_init_reduce_comm_TEMPLATE(void *template, ...);
+extern void xmp_reduce_loc_init(const int nlocs, const long double value, void *value_addr, const int datatype);
+extern void xmp_reduce_loc_set(void *buf, const int length, const size_t s);
+extern void xmp_reduce_loc_execute(const int op);
 
 // xmp_reduce_acc.c
 extern void _XMP_reduce_acc_NODES_ENTIRE(void *nodes, void *dev_addr, int count, int datatype, int op);

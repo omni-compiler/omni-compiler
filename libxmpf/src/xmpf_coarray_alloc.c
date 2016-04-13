@@ -1,9 +1,10 @@
 #include <string.h>
 #include "xmpf_internal.h"
 
-#define BOOL   int
-#define TRUE   1
-#define FALSE  0
+/*****************************************\
+  macro definitions
+\*****************************************/
+#define _SortedChunkTableInitSize 256
 
 #define DIV_CEILING(m,n)  (((m)-1)/(n)+1)
 
@@ -46,66 +47,30 @@
 
 #define IsEmptyResourceSet(rs)   ((rs)->headChunk->next->next == NULL)
 
+
 /*****************************************\
-  typedef and static declaration
+  typedef
 \*****************************************/
 
+// MEMORY MANAGEMENT STRUCTURE-I (for automatic deallocation)
 typedef struct _resourceSet_t  ResourceSet_t;
 typedef struct _memoryChunk_t  MemoryChunk_t;
 typedef struct _coarrayInfo_t  CoarrayInfo_t;
 
+// MEMORY MANAGEMENT STRUCTURE-II (for dynamic ALLOCATE/DEALLOCATE stmts.)
 typedef struct _memoryChunkStack_t  MemoryChunkStack_t;
 typedef struct _memoryChunkOrder_t  MemoryChunkOrder_t;
 
-// access functions for resource set
-static ResourceSet_t *_newResourceSet(char *name, int namelen);
-static void _freeResourceSet(ResourceSet_t *rset);
-
-// access functions for memory chunk
-static MemoryChunk_t *_newMemoryChunk(void *desc, char *orgAddr, size_t nbytes);
-static void _addMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk);
-static void _unlinkMemoryChunk(MemoryChunk_t *chunk);
-static void _freeMemoryChunk(MemoryChunk_t *chunk);
-static char *_dispMemoryChunk(MemoryChunk_t *chunk);
-
-static MemoryChunk_t *pool_chunk = NULL;
-static size_t pool_totalSize = 0;
-static char *pool_currentAddr;
-
-// access functions for coarray info
-static CoarrayInfo_t *_newCoarrayInfo_empty(void);
-static CoarrayInfo_t *_newCoarrayInfo(char *baseAddr, size_t nbytes);
-static void _addCoarrayInfo(MemoryChunk_t *chunk, CoarrayInfo_t *cinfo2);
-static void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2);
-static void _freeCoarrayInfo(CoarrayInfo_t *cinfo);
-static char *_dispCoarrayInfo(CoarrayInfo_t *cinfo);
-
-//static CoarrayInfo_t *_getShareOfCoarray(int count, size_t element);
-static CoarrayInfo_t *_getShareOfStaticCoarray(size_t thisSize, size_t elementRU);
-static CoarrayInfo_t *_allocLargeStaticCoarray(size_t thisSize, size_t elementRU);
-
-// allocation and deallocation
-static MemoryChunk_t *_mallocMemoryChunk(int count, size_t element);
-static MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes, size_t elementRU);
-
-// malloc/free history
-static void _initMallocHistory(void);
-static void _addMemoryChunkToMallocHistory(MemoryChunk_t *chunk);
-static void _garbageCollectMallocHistory(void);
-
-// historical order
-static MemoryChunkOrder_t *_newMemoryChunkOrder(MemoryChunk_t *chunk);
-static void _unlinkMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
-static void _freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
-
-static char* _toOrdinalNumberString(int n);
+// MEMORY MANAGEMENT STRUCTURE-III (for binary search in memory chunks)
+typedef struct _sortedChunkTable_t  SortedChunkTable_t;
 
 
 /*****************************************\
   inernal structures
 \*****************************************/
 
-/** runtime resource corresponding to a procedure or to the entire program
+/** MEMORY MANAGEMENT STRUCTURE-I (for automatic deallocation)
+ *  runtime resource corresponding to a procedure or to the entire program.
  *  A tag, cast of the address of a resource-set, is an interface to Fortran.
  */
 struct _resourceSet_t {
@@ -151,14 +116,13 @@ struct _coarrayInfo_t {
 
 
 
-/** structure to manage the history of malloc
+/** MEMORY MANAGEMENT STRUCTURE-II (for dynamic ALLOCATE/DEALLOCATE stmts.)
+ *  structure to manage the history of malloc/free
  */
 struct _memoryChunkStack_t {
   MemoryChunkOrder_t  *head;
   MemoryChunkOrder_t  *tail;
 };
-
-static MemoryChunkStack_t _mallocStack;
 
 struct _memoryChunkOrder_t {
   MemoryChunkOrder_t  *prev;
@@ -166,6 +130,88 @@ struct _memoryChunkOrder_t {
   MemoryChunk_t       *chunk;
 };
 
+
+/** MEMORY MANAGEMENT STRUCTURE-III (for quick search of memory chunks)
+ *  table of memory chunks sorted in order of local address
+ */
+struct _sortedChunkTable_t {
+  unsigned long   orgAddr;
+  MemoryChunk_t  *chunk;
+};
+
+
+/*****************************************\
+  static declarations
+\*****************************************/
+
+// access functions for resource set
+static ResourceSet_t *_newResourceSet(char *name, int namelen);
+static void _freeResourceSet(ResourceSet_t *rset);
+
+// access functions for memory chunk
+static MemoryChunk_t *_newMemoryChunk(void *desc, char *orgAddr, size_t nbytes);
+static void _addMemoryChunkInResourceSet(ResourceSet_t *rset, MemoryChunk_t *chunk);
+static void _unlinkMemoryChunk(MemoryChunk_t *chunk);
+static void _unlinkMemoryChunkInResourceSet(MemoryChunk_t *chunk);
+static void _freeMemoryChunk(MemoryChunk_t *chunk);
+static char *_dispMemoryChunk(MemoryChunk_t *chunk);
+static MemoryChunk_t *_getMemoryChunkFromLocalAddress(char *addr);
+
+static MemoryChunk_t *pool_chunk = NULL;
+static size_t pool_totalSize = 0;
+static char *pool_currentAddr;
+
+// access functions for coarray info
+static CoarrayInfo_t *_newCoarrayInfo_empty(void);
+static CoarrayInfo_t *_newCoarrayInfo(char *baseAddr, size_t nbytes);
+static void _addCoarrayInfo(MemoryChunk_t *chunk, CoarrayInfo_t *cinfo2);
+static void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2);
+static void _freeCoarrayInfo(CoarrayInfo_t *cinfo);
+static char *_dispCoarrayInfo(CoarrayInfo_t *cinfo);
+
+static CoarrayInfo_t *_getShareOfStaticCoarray(size_t thisSize,
+                                               size_t elementRU);
+static CoarrayInfo_t *_allocLargeStaticCoarray(size_t thisSize,
+                                               size_t elementRU);
+static CoarrayInfo_t *_regmemStaticCoarray(void *baseAddr, size_t thisSize,
+                                           size_t elementRU);
+
+// CoarrayInfo for the static communication buffer
+static CoarrayInfo_t *_cinfo_localBuf;  
+
+// allocation and deallocation
+static MemoryChunk_t *_mallocMemoryChunk(int count, size_t element);
+static MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes,
+                                              size_t elementRU);
+static MemoryChunk_t *_regmemMemoryChunk_core(void *baseAddr, unsigned nbytes,
+                                              size_t elementRU);
+static MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes,
+                                            size_t elementRU);
+
+// malloc/free history (STRUCTURE-II)
+static MemoryChunkStack_t _mallocStack;
+
+static void _initMallocHistory(void);
+static void _addMemoryChunkToMallocHistory(MemoryChunk_t *chunk);
+static void _garbageCollectMallocHistory(void);
+
+// historical order
+static MemoryChunkOrder_t *_newMemoryChunkOrder(MemoryChunk_t *chunk);
+static void _unlinkMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
+static void _freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
+
+static char* _toOrdinalNumberString(int n);
+
+// sorted chunk table (STRUCTURE-III)
+static SortedChunkTable_t *_sortedChunkTable;
+static size_t _sortedChunkTableMallocSize;
+static size_t _sortedChunkTableSize;
+
+static void _initSortedChunkTable(void);
+static void _addMemoryChunkInSortedChunkTable(MemoryChunk_t *chunk);
+static void _delMemoryChunkInSortedChunkTable(MemoryChunk_t *chunk);
+static MemoryChunk_t *_findMemoryChunkInSortedChunkTable(char *addr);
+static int _searchSortedChunkTable(unsigned long addrKey, BOOL *found);
 
 /***********************************************\
   hidden utility functions
@@ -177,14 +223,20 @@ int xmpf_coarray_allocated_bytes_()
   MemoryChunk_t *chunk;
   size_t size, size1;
 
+  // sum all sizes of MemoryChunks
   size = 0;
   forallMemoryChunkOrder(chunkp) {
     chunk = chunkp->chunk;
     size1 = size + chunk->nbytes;
     if (size1 < size)
-      _XMPF_coarrayFatal("More than %llu-bytes of memory required for static coarrays", ~(size_t)0 );
+      _XMPF_coarrayFatal("More than %llu-bytes of memory required for static coarrays\n",
+                         ~(size_t)0 );
     size = size1;
   }
+
+  // subtract the size of the localBuf CoarrayInfo
+  // because this is not allocated by the user
+  size -= _cinfo_localBuf->nbytes;
 
   return size;
 }
@@ -229,7 +281,7 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
 
   if (*tag != NULL) {
     rset = (ResourceSet_t*)(*tag);
-    _addMemoryChunk(rset, chunk);
+    _addMemoryChunkInResourceSet(rset, chunk);
 
     _XMPF_coarrayDebugPrint("*** MemoryChunk %s added to rset=%p\n",
                             _dispMemoryChunk(chunk), rset);
@@ -282,22 +334,24 @@ MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
   unsigned nbytes = (unsigned)count * elementRU;
 
   // make memory-chunk even if size nbyte=0
-  /*****************************
-  if (nbytes == 0) {
-    _XMPF_coarrayDebugPrint("*** no memory pool needed\n");
-
-    chunk = _newMemoryChunk(NULL, NULL, 0);
-    return chunk;
-  }
-  ******************************/
-
   chunk = _mallocMemoryChunk_core(nbytes, elementRU);
 
   return chunk;
 }
 
-
 MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes, size_t elementRU)
+{
+  return _constructMemoryChunk(NULL, nbytes, elementRU);
+}
+
+MemoryChunk_t *_regmemMemoryChunk_core(void *baseAddr, unsigned nbytes,
+                                       size_t elementRU)
+{
+  return _constructMemoryChunk(baseAddr, nbytes, elementRU);
+}
+
+MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes,
+                                     size_t elementRU)
 {
   void *desc;
   char *orgAddr;
@@ -306,16 +360,23 @@ MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes, size_t elementRU)
   // _XMP_coarray_malloc() and set mallocInfo
   _XMP_coarray_malloc_info_1(nbytes, (size_t)1);   // set shape
   _XMP_coarray_malloc_image_info_1();              // set coshape
-  _XMP_coarray_malloc_do(&desc, &orgAddr);         // malloc
+  if (baseAddr == NULL) {
+    _XMP_coarray_malloc_do(&desc, &orgAddr);         // malloc
+    chunk = _newMemoryChunk(desc, orgAddr, nbytes);
+  } else {
+    _XMP_coarray_regmem_do(&desc, baseAddr);         // register memory
+    chunk = _newMemoryChunk(desc, baseAddr, nbytes);
+  }
 
-  chunk = _newMemoryChunk(desc, orgAddr, nbytes);
-
-  _XMPF_coarrayDebugPrint("*** MemoryChunk %s allocated\n"
+  _XMPF_coarrayDebugPrint("*** MemoryChunk %s was made.\n"
                           "  (%u bytes, elementRU=%u)\n",
                           _dispMemoryChunk(chunk), nbytes, elementRU);
 
-  // stack to mallocHistory
+  // stack to mallocHistory (STRUCTURE-II)
   _addMemoryChunkToMallocHistory(chunk);
+
+  // add to _sortedChunkTable (STRUCTURE-III)
+  _addMemoryChunkInSortedChunkTable(chunk);
 
   return chunk;
 }
@@ -359,16 +420,38 @@ void xmpf_coarray_free_(void **descPtr)
 
 void xmpf_coarray_malloc_pool_(void)
 {
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC_POOL\n"
-                          "  required pool_totalSize = %u\n",
-                          pool_totalSize);
+  int one = 1;
 
-  // init malloc/free history
+  size_t localBufSize = XMPF_get_localBufSize();
+
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC_POOL contains:\n"
+                          "  system-defined local buffer :%10u bytes\n"
+                          "  user-defined coarays        :%10u bytes\n",
+                          localBufSize, pool_totalSize);
+
+  pool_totalSize += localBufSize;
+
+  // init malloc/free history (STRUCTURE-II)
   _initMallocHistory();
 
-  // malloc
+  // init sorted chunk table (STRUCTURE-III)
+  _initSortedChunkTable();
+
+  // malloc the pool
   pool_chunk = _mallocMemoryChunk(1, pool_totalSize);
   pool_currentAddr = pool_chunk->orgAddr;
+
+  // share communication buffer in the pool
+  //-- instead of xmpf_coarray_alloc_static_
+  _cinfo_localBuf = _getShareOfStaticCoarray(localBufSize,  // nbytes
+                                             localBufSize); // elementRU
+  _cinfo_localBuf->name = "(localBuf)";
+  //-- call of xmpf_coarray_set_coshape_
+  xmpf_coarray_set_coshape_((void **)(&_cinfo_localBuf), &one, &one);
+
+  // init library internal
+  _XMPF_coarrayInit_get();
+  _XMPF_coarrayInit_put();
 }
 
 /*
@@ -392,7 +475,7 @@ static char* _xmp_strndup(char *name, const int namelen)
  *    in:  count  : count of elements
  *         element: element size
  *         name   : name of the coarray (for debugging)
- *         namelen: character length of name
+ *         namelen: character length of name (for debugging)
  */
 void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                 int *count, int *element,
@@ -408,11 +491,13 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                           "  *count=%d, *element=%d, nbytes=%u, elementRU=%u\n",
                           *namelen, name, *count, *element, nbytes, elementRU);
 
-  if (nbytes > XMPF_get_poolThreshold())
+  if (nbytes > XMPF_get_poolThreshold()) {
+    _XMPF_coarrayDebugPrint("*** LARGER (%u bytes) than _XMPF_poolThreshold\n", nbytes);
     cinfo = _allocLargeStaticCoarray(nbytes, elementRU);
-  else
+  } else {
+    _XMPF_coarrayDebugPrint("*** SMALLER (%u bytes) than or eq to _XMPF_poolThreshold\n", nbytes);
     cinfo = _getShareOfStaticCoarray(nbytes, elementRU);
-
+  }
   cinfo->name = _xmp_strndup(name, *namelen);
 
   *descPtr = (void*)cinfo;
@@ -420,11 +505,65 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
 }
 
 
-CoarrayInfo_t *_allocLargeStaticCoarray(size_t nbytes, size_t elementRU)
+/*
+ * Similar to xmpf_coarray_alloc_static_() except that the coarray is 
+ * allocated not by the runtime but by the Fortran system.
+ *    out: descPtr : pointer to descriptor CoarrayInfo_t
+ *    in:  baseAddr: local base address of a coarray
+ *         count   : count of elements
+ *         element : element size
+ *         name    : name of the coarray (for debugging)
+ *         namelen : character length of name (for debugging)
+ */
+void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
+                                int *count, int *element,
+                                 char *name, int *namelen)
+{
+  CoarrayInfo_t *cinfo;
+
+  // boundary check
+  if ((size_t)(*baseAddr) % ONESIDED_BOUNDARY != 0 ||
+      *element % ONESIDED_BOUNDARY != 0) {
+    /* restriction */
+    _XMPF_coarrayFatal("boundary violation detected for coarray \'%s\'\n"
+                       "  element size %d\n",
+                       namelen, name, element);
+  }
+
+  size_t elementRU = (size_t)(*element);
+  size_t nbytes = (size_t)(*count) * elementRU;
+
+  _XMPF_coarrayDebugPrint("COARRAY_REGMEM_STATIC varname=\'%*s\'\n",
+                          *namelen, name);
+
+  cinfo = _regmemStaticCoarray(*baseAddr, nbytes, elementRU);
+  cinfo->name = _xmp_strndup(name, *namelen);
+
+  *descPtr = (void*)cinfo;
+}
+
+
+CoarrayInfo_t *_regmemStaticCoarray(void *baseAddr, size_t nbytes,
+                                    size_t elementRU)
 {
   _XMPF_checkIfInTask("allocation of static coarray");
 
-  _XMPF_coarrayDebugPrint("*** LARGER (%u bytes)\n", nbytes);
+  _XMPF_coarrayDebugPrint("*** REG-MEM (%u bytes)\n", nbytes);
+
+  // get memory-chunk and set baseAddr
+  MemoryChunk_t *chunk = _regmemMemoryChunk_core(baseAddr, nbytes, elementRU);
+
+  // make coarrayInfo and linkage
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr, nbytes);
+  _addCoarrayInfo(chunk, cinfo);
+
+  return cinfo;
+}
+
+
+CoarrayInfo_t *_allocLargeStaticCoarray(size_t nbytes, size_t elementRU)
+{
+  _XMPF_checkIfInTask("allocation of static coarray");
 
   // malloc memory-chunk
   MemoryChunk_t *chunk = _mallocMemoryChunk_core(nbytes, elementRU);
@@ -443,19 +582,18 @@ CoarrayInfo_t *_getShareOfStaticCoarray(size_t nbytes, size_t elementRU)
 {
   _XMPF_checkIfInTask("share of static coarray");
 
-  _XMPF_coarrayDebugPrint("*** SMALLER (%u bytes)\n", nbytes);
-
   // allocate and set _coarrayInfo
   CoarrayInfo_t *cinfo = _newCoarrayInfo(pool_currentAddr, nbytes);
   _addCoarrayInfo(pool_chunk, cinfo);
 
   // check: lack of memory pool
   if (pool_currentAddr + nbytes > pool_chunk->orgAddr + pool_totalSize) {
-    _XMPF_coarrayFatal("insufficient memory pool for static coarrays: "
-                      "xmpf_coarray_share_pool_() in %s", __FILE__);
+    _XMPF_coarrayFatal("INTERNAL ERROR: "
+                       "insufficient memory pool for static coarrays: "
+                       "xmpf_coarray_share_pool_() in %s", __FILE__);
   }
 
-  _XMPF_coarrayDebugPrint("*** memory share %uB from the pool <%p>\n",
+  _XMPF_coarrayDebugPrint("*** memory share %u bytes from the pool <%p>\n",
                           nbytes, pool_currentAddr);
 
   pool_currentAddr += nbytes;
@@ -470,13 +608,16 @@ void xmpf_coarray_count_size_(int *count, int *element)
   size_t mallocSize = ROUND_UP_UNIT(thisSize);
 
   if (mallocSize > XMPF_get_poolThreshold()) {
-    _XMPF_coarrayDebugPrint("*** no count: size %uB exceeds threshold %uB\n",
-                            mallocSize, XMPF_get_poolThreshold());
+    _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE: no count because of the size\n"
+                            "  pooling threshold :%10u bytes\n"
+                            "  data size         :%10u bytes\n",
+                            XMPF_get_poolThreshold(), mallocSize);
     return;
   }
 
   pool_totalSize += mallocSize;
-  _XMPF_coarrayDebugPrint("*** count up: add %uB, currently total %uB\n",
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE: count up\n"
+                          "  %u bytes, totally %u bytes\n",
                           mallocSize, pool_totalSize);
 }
 
@@ -520,7 +661,6 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
                                 void **tag, char *name, int *namelen)
 {
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
-  MemoryChunkOrder_t *chunkP;
   MemoryChunk_t *myChunk;
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_FIND_DESCPTR varname=\'%*s\'\n",
@@ -532,18 +672,8 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
   // generate a new descPtr for an allocatable dummy coarray
   CoarrayInfo_t *cinfo = _newCoarrayInfo_empty();
 
-  /* current implementation:
-     look for my memory chunk into all MemoryChunkOrder
-  */
-  myChunk = NULL;
-  forallMemoryChunkOrder(chunkP) {
-  MemoryChunk_t* chunk = chunkP->chunk;
-    if (chunk->orgAddr <= baseAddr && baseAddr < chunk->orgAddr + chunk->nbytes) {
-      // found the memory chunk
-      myChunk = chunk;
-      break;
-    }
-  }
+  // search my MemoryChunk only from baseAddr
+  myChunk = _getMemoryChunkFromLocalAddress(baseAddr);
 
   if (myChunk == NULL) {
     _XMPF_coarrayDebugPrint("*** ILLEGAL: home MemoryChunk was not found. "
@@ -553,10 +683,8 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
   }
 
 
-  _XMPF_coarrayDebugPrint("*** found home MemoryChunk %s\n"
-                          "*** my baseAddr=%p, chunk->orgAddr=%p\n",
-                          _dispMemoryChunk(myChunk),
-                          baseAddr, myChunk->orgAddr);
+  _XMPF_coarrayDebugPrint("*** found my home MemoryChunk %s\n",
+                          _dispMemoryChunk(myChunk));
 
   _addCoarrayInfo(myChunk, cinfo);
 
@@ -566,6 +694,160 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
 
 
 /*****************************************\
+   STRUCTURE-III
+   management of sorted memory-chunk table
+\*****************************************/
+
+void _initSortedChunkTable(void)
+{
+  _sortedChunkTableMallocSize = _SortedChunkTableInitSize;
+
+  _sortedChunkTable = (SortedChunkTable_t*)
+    malloc(sizeof(SortedChunkTable_t) * _sortedChunkTableMallocSize);
+
+  _sortedChunkTableSize = 2;
+  _sortedChunkTable[0].orgAddr = 0L;
+  _sortedChunkTable[0].chunk = NULL;
+  _sortedChunkTable[1].orgAddr = ~0L;
+  _sortedChunkTable[1].chunk = NULL;
+}
+
+
+void _addMemoryChunkInSortedChunkTable(MemoryChunk_t *chunk)
+{
+  int idx;
+  BOOL found;
+  unsigned long addrKey;
+
+  // condition check
+  if (chunk == NULL || chunk->nbytes == 0)
+    return;      // empty memory-chunk structure
+
+  // adjust malloc size
+  if (_sortedChunkTableSize == _sortedChunkTableMallocSize) {
+    _sortedChunkTableMallocSize *= 2;
+    _sortedChunkTable = (SortedChunkTable_t*)
+      realloc(_sortedChunkTable,
+              sizeof(SortedChunkTable_t) * _sortedChunkTableMallocSize);
+  }
+
+  // search
+  addrKey = (unsigned long)(chunk->orgAddr);
+  idx = _searchSortedChunkTable(addrKey, &found);
+  if (found) {
+    _XMPF_coarrayFatal("_addMemoryChunkInSortedChunkTable() failed\n"
+                       "because Memory-chunk (including coarray \'%s\') was "
+                       "already booked in _sortedChunkTable\n",
+                       chunk->headCoarray->next->name);
+  }
+
+  // shift
+  for (int i = _sortedChunkTableSize - 1; i > idx; i--) {
+    _sortedChunkTable[i+1].orgAddr = _sortedChunkTable[i].orgAddr;
+    _sortedChunkTable[i+1].chunk = _sortedChunkTable[i].chunk;
+  }
+
+  // add
+  _sortedChunkTable[idx+1].orgAddr = addrKey;
+  _sortedChunkTable[idx+1].chunk = chunk;
+
+  ++_sortedChunkTableSize;
+}
+
+
+void _delMemoryChunkInSortedChunkTable(MemoryChunk_t *chunk)
+{
+  int idx;
+  BOOL found;
+  unsigned long addrKey;
+
+  // adjust malloc size
+  if (_sortedChunkTableSize*4 <= _sortedChunkTableMallocSize &&
+      _sortedChunkTableMallocSize > _SortedChunkTableInitSize) {
+    _sortedChunkTableMallocSize /= 2;
+    _sortedChunkTable = (SortedChunkTable_t*)
+      realloc(_sortedChunkTable,
+              sizeof(SortedChunkTable_t) * _sortedChunkTableMallocSize);
+  }
+
+  // search
+  addrKey = (unsigned long)(chunk->orgAddr);
+  idx = _searchSortedChunkTable(addrKey, &found);
+  if (!found) {
+    _XMPF_coarrayFatal("_delMemoryChunkInSortedChunkTable() failed\n"
+                       "because Memory-chunk (including coarray \'%s\') is "
+                       "not booked in _sortedChunkTable\n",
+                       chunk->headCoarray->next->name);
+  }
+
+  --_sortedChunkTableSize;
+
+  // overwrite and shift
+  for (int i = idx; i < _sortedChunkTableSize; i++) {
+    _sortedChunkTable[i].orgAddr = _sortedChunkTable[i+1].orgAddr;
+    _sortedChunkTable[i].chunk = _sortedChunkTable[i+1].chunk;
+  }
+}
+
+/*  NULL if not found
+ */
+MemoryChunk_t *_findMemoryChunkInSortedChunkTable(char *addr)
+{
+  int idx;
+  BOOL found;
+  unsigned long addrKey = (unsigned long)addr;
+
+  idx = _searchSortedChunkTable(addrKey, &found);
+  if (!found)
+    return NULL;
+
+  return _sortedChunkTable[idx].chunk;
+}
+
+/* lowest-level routine using binary search
+ */
+int _searchSortedChunkTable(unsigned long addrKey, BOOL *found)
+{
+  int idx_low = 0;
+  int idx_over = _sortedChunkTableSize - 1;
+  int idx;
+  unsigned long addrKey_idx;
+  MemoryChunk_t *chunk;
+
+
+  // binary search
+  // initial condition:
+  //   _sortedChunkTable[idx_low].orgAddr==0L
+  //   _sortedChunkTable[idx_over].orgAddr==~0L
+  for (idx = (idx_low + idx_over) / 2;
+       idx > idx_low;
+       idx = (idx_low + idx_over) / 2) {
+    addrKey_idx = _sortedChunkTable[idx].orgAddr;
+    if (addrKey == addrKey_idx) {
+      // found the same address
+      *found = TRUE;
+      return idx;
+    }
+    else if (addrKey < addrKey_idx)
+      // It is less than idx.
+      idx_over = idx;
+    else
+      // It is greater than or equal to idx.
+      idx_low = idx;
+  }
+
+  // check if the address is included in the memory-chunk
+  chunk = _sortedChunkTable[idx].chunk;
+  if (chunk == NULL)
+    *found = FALSE;
+  else 
+    *found = (addrKey < (unsigned long)(chunk->orgAddr + chunk->nbytes));
+  return idx;
+}
+
+
+/*****************************************\
+   STRUCTURE-II
    management of the history of malloc/free
 \*****************************************/
 
@@ -725,7 +1007,7 @@ void _freeResourceSet(ResourceSet_t *rset)
 
   if (IsEmptyResourceSet(rset)) {
     // avoid automatic syncall (ID=465)
-    _XMPF_coarrayDebugPrint("*** avoid automatic syncall and garbage collection\n");
+    _XMPF_coarrayDebugPrint("*** omitted automatic syncall and garbage collection\n");
   }
 
   else {
@@ -772,7 +1054,7 @@ MemoryChunk_t *_newMemoryChunk(void *desc, char *orgAddr, size_t nbytes)
 }
 
 
-void _addMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk2)
+void _addMemoryChunkInResourceSet(ResourceSet_t *rset, MemoryChunk_t *chunk2)
 {
   MemoryChunk_t *chunk3 = rset->tailChunk;
   MemoryChunk_t *chunk1 = chunk3->prev;
@@ -786,10 +1068,21 @@ void _addMemoryChunk(ResourceSet_t *rset, MemoryChunk_t *chunk2)
 }
 
 
-void _unlinkMemoryChunk(MemoryChunk_t *chunk2)
+void _unlinkMemoryChunk(MemoryChunk_t *chunk)
 {
-  chunk2->isGarbage = TRUE;
+  // STRUCTURE-II
+  chunk->isGarbage = TRUE;
 
+  // STRUCTURE-III
+  _delMemoryChunkInSortedChunkTable(chunk);
+
+  // STRUCTURE-I
+  _unlinkMemoryChunkInResourceSet(chunk);
+}
+
+
+void _unlinkMemoryChunkInResourceSet(MemoryChunk_t *chunk2)
+{
   MemoryChunk_t *chunk1 = chunk2->prev;
   MemoryChunk_t *chunk3 = chunk2->next;
 
@@ -831,12 +1124,62 @@ void _freeMemoryChunk(MemoryChunk_t *chunk)
 
 char *_dispMemoryChunk(MemoryChunk_t *chunk)
 {
-  static char work[200];
+  static char work[30+30*4];
+  CoarrayInfo_t *cinfo;
+  int count;
 
-  (void)sprintf(work, "<%p, %uB>", chunk, chunk->nbytes);
+  (void)sprintf(work, "<%p %u bytes ", chunk, chunk->nbytes);
+
+  count = 0;
+  forallCoarrayInfo(cinfo, chunk) {
+    if (++count == 4) {
+      strcat(work, "...");
+      break;
+    } 
+    if (cinfo->name) {
+      strcat(work, "\'");
+      strncat(work, cinfo->name, 20);
+      strcat(work, "\'");
+    } else {
+      strcat(work, "(null)");
+    }
+  }
+
+  strcat(work, ">");
+
   return work;
 }
 
+
+/*   NEW VERSION for Ver.6-conversion
+ */
+MemoryChunk_t *_getMemoryChunkFromLocalAddress(char *addr)
+{
+  return _findMemoryChunkInSortedChunkTable(addr);
+}
+
+/***************************************
+ *    OLD VERSION
+ */
+/**************************
+MemoryChunk_t *_getMemoryChunkFromLocalAddress(char *addr)
+{
+  MemoryChunkOrder_t *chunkP;
+  MemoryChunk_t *chunk;
+
+  ** current implementation:
+     look for my memory chunk into all MemoryChunkOrder
+  /
+  forallMemoryChunkOrder(chunkP) {
+    chunk = chunkP->chunk;
+    if (chunk->orgAddr <= addr && addr < chunk->orgAddr + chunk->nbytes) {
+      // found the memory chunk
+      return chunk;
+    }
+  }
+  return NULL;
+}
+*************************/
 
 /*****************************************\
   access functions for CoarrayInfo_t
@@ -936,7 +1279,7 @@ int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim)
 
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
 
-  magic = XMPF_this_image - 1;
+  magic = _XMPF_get_current_this_image() - 1;
   for (int i = 0; i < k; i++) {
     size = cinfo->cosize[i];
     magic /= size;
@@ -952,7 +1295,7 @@ void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[])
 
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
 
-  magic = XMPF_this_image - 1;
+  magic = _XMPF_get_current_this_image() - 1;
   for (int i = 0; i < *corank; i++) {
     size = cinfo->cosize[i];
     index = magic % size;
@@ -1103,7 +1446,7 @@ int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...)
     ub = cp->ucobound[i];
     if (idx < lb || ub < idx) {
       _XMPF_coarrayFatal("%d-th cosubscript of \'%s\', %d, "
-                         "is out of range %d to %d.",
+                         "is out of range %d to %d.\n",
                          i+1, cp->name, idx, lb, ub);
     }
     count += (idx - lb) * factor;
@@ -1141,6 +1484,36 @@ size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr)
   size_t offset = baseAddr - orgAddr;
   
   return offset;
+}
+
+void *_XMPF_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
+                                    char **name)
+{
+  MemoryChunk_t *chunk = _cinfo_localBuf->parent;
+  char *orgAddr = chunk->orgAddr;                    // origin address of the memory pool
+
+  *baseAddr = _cinfo_localBuf->baseAddr;             // base address of the local buffer
+  *offset = orgAddr - *baseAddr;                     // offset of the local buffer in the memory pool
+  *name = _cinfo_localBuf->name;                     // name of the local buffer
+  return chunk->desc;                                // descriptor of the memory pool
+}
+
+
+void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
+                                    size_t *offset, char **name)
+{
+  MemoryChunk_t* chunk = _getMemoryChunkFromLocalAddress(localAddr);
+  if (chunk == NULL) {
+    *orgAddr = NULL;
+    *offset = 0;
+    *name = "(not found)";
+    return NULL;
+  }
+
+  *orgAddr = chunk->orgAddr;
+  *offset = localAddr - *orgAddr;
+  *name = chunk->headCoarray->next->name;
+  return chunk->desc;
 }
 
 

@@ -17,39 +17,48 @@ MPI_Comm xmp_get_mpi_comm(void)
 void xmp_init_mpi(int *argc, char ***argv) {}
 void xmp_finalize_mpi(void) {}
 
-void xmp_init(int *argc, char ***argv) {
+void xmp_init(int *argc, char ***argv)
+{
   _XMP_init(*argc, *argv);
 }
 
-void xmp_finalize(void) {
+void xmp_finalize(void)
+{
   _XMP_finalize(0);
 }
 
-int xmp_num_nodes(void) {
+int xmp_num_nodes(void)
+{
   return _XMP_get_execution_nodes()->comm_size;
 }
 
-int xmp_node_num(void) {
+int xmp_node_num(void)
+{
   return _XMP_get_execution_nodes()->comm_rank + 1;
 }
 
-void xmp_barrier(void) {
+void xmp_barrier(void)
+{
   _XMP_barrier_EXEC();
 }
 
-int xmp_all_num_nodes(void) {
+int xmp_all_num_nodes(void)
+{
   return _XMP_world_size;
 }
 
-int xmp_all_node_num(void) {
+int xmp_all_node_num(void)
+{
   return _XMP_world_rank + 1;
 }
 
-double xmp_wtime(void) {
+double xmp_wtime(void)
+{
   return MPI_Wtime();
 }
 
-double xmp_wtick(void) {
+double xmp_wtick(void)
+{
   return MPI_Wtick();
 }
 
@@ -89,7 +98,8 @@ int xmp_array_gsize(xmp_desc_t d, int dim)
 int xmp_array_lsize(xmp_desc_t d, int dim, int *lsize)
 {
   _XMP_array_t *a = (_XMP_array_t *)d;
-  *lsize = a->info[dim-1].par_size;
+  //  *lsize = a->info[dim-1].par_size;
+  *lsize = a->info[dim-1].alloc_size;
   return 0;
 }
 
@@ -180,24 +190,23 @@ int xmp_array_owner(xmp_desc_t d, int ndims, int index[ndims], int dim)
 
 int xmp_array_lead_dim(xmp_desc_t d, int size[])
 {
-   int i, ndims;
   _XMP_array_t *a = (_XMP_array_t *)d;
 
+  int ndims;
   xmp_array_ndims(d, &ndims);
-  for (i=0;i<ndims;i++){
-    size[i] = a->info[i].par_size;
-  }
+  for(int i=0;i<ndims;i++)
+    size[i] = (int)a->info[i].dim_acc;
 
   return 0;
 }
 
 int xmp_array_gtol(xmp_desc_t d, int g_idx[], int l_idx[])
 {
-  int i, ndims, rank;
   _XMP_array_t *a = (_XMP_array_t *)d;
 
+  int ndims, rank;
   xmp_array_ndims(d, &ndims);
-  for (i=0;i<ndims;i++){
+  for(int i=0;i<ndims;i++){
     _XMP_align_local_idx((long long int)g_idx[i], &l_idx[i], a, i, &rank);
   }
 
@@ -283,7 +292,6 @@ int xmp_align_replicated(xmp_desc_t d, int dim, int *replicated)
   }
 
   return 0;
-
 }
 
 int xmp_align_template(xmp_desc_t d, xmp_desc_t *dt)
@@ -570,7 +578,7 @@ void *xmp_malloc(xmp_desc_t d, ...)
   _XMP_init_array_nodes(a);
 
   void *array_addr;
-  _XMP_alloc_array2(&array_addr, a, acc);
+  _XMP_alloc_array2(&array_addr, a, 1, acc);
 
   return array_addr;
 }

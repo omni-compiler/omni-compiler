@@ -8,5 +8,6 @@ end module mmm
 
 use mmm
 !$xmp reflect (a)
+print *,"OK"
 end 
 

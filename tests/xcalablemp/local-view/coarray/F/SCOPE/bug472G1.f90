@@ -7,5 +7,6 @@ end module mmm
 use mmm
 real a(10,10)
 !$xmp align a(*,i) with t(i)
+print *,"OK"
 end 
 

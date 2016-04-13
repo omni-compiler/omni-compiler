@@ -15,11 +15,15 @@ OMNI=`basename ${PWD}`
 PID=$$
 LOCAL_TMP_DIR=/tmp/tmp.${PID}
 REMOTE_TMP_DIR=/home/${USER}/.tmp.${PID}
+REMOTE_GASNET_DIR=${REMOTE_TMP_DIR}/gasnet
+REMOTE_MPI3_DIR=${REMOTE_TMP_DIR}/mpi3
 ARCHIVE=archive.tar.bz2
 REMOTE_HOST=${USER}@omni-compiler.org
-XMP_PATH=${REMOTE_TMP_DIR}/work
+XMP_GASNET_PATH=${REMOTE_GASNET_DIR}/work
+XMP_MPI3_PATH=${REMOTE_MPI3_DIR}/work
 GASNET_PATH=/opt/GASNet-1.24.2
-#JOBS=${LOCAL_TMP_DIR}/jobs
+MPI3_PATH=/opt/openmpi-1.8.4
+SORTED_LIST=/tmp/xmp_sorted.$$
 
 ## Clean Temporal files and dirs
 clean_files(){
@@ -27,7 +31,7 @@ clean_files(){
     rm -rf ${LOCAL_TMP_DIR}
     ## Only once "rm -rf", rarely all files are not deleted, because slurm output files are created.
     ## So "rm -rf" are executed twice.
-    ssh ${REMOTE_HOST} "rm -rf ${REMOTE_TMP_DIR} 2> /dev/null; rm -rf ${REMOTE_TMP_DIR}"
+    ssh ${REMOTE_HOST} "rm -rf ${REMOTE_TMP_DIR} 2> /dev/null; sleep 1; rm -rf ${REMOTE_TMP_DIR}"
     exit 0
 }
 
@@ -40,7 +44,7 @@ omni_exec(){
     fi
 }
 
-## Create archive of the current omni-compiler
+## Create archive of omni-compiler
 echo "Compress ... "
 if test -d ${LOCAL_TMP_DIR}; then
     echo "Error ! ${LOCAL_TMP_DIR} exist"
@@ -56,7 +60,7 @@ else
     omni_exec tar cfj ${ARCHIVE} ${OMNI}
 fi
 
-## Transfer the current omni-compiler
+## Transfer omni-compiler
 echo "Transfer archive ... "
 MKDIR_CMD="if test -d ${REMOTE_TMP_DIR}; then \
              echo \"Error ${REMOTE_HOST}:${REMOTE_TMP_DIR} exist\"; exit 1;\
@@ -66,26 +70,45 @@ MKDIR_CMD="if test -d ${REMOTE_TMP_DIR}; then \
 omni_exec ssh ${REMOTE_HOST} ${MKDIR_CMD}
 omni_exec scp ${LOCAL_TMP_DIR}/${ARCHIVE} ${REMOTE_HOST}:${REMOTE_TMP_DIR}
 
-## Expand the current omni-compiler
+## Expand omni-compiler
 echo "Expand archive ..."
-EXPAND_CMD="tar xfj ${REMOTE_TMP_DIR}/${ARCHIVE} -C ${REMOTE_TMP_DIR}"
+EXPAND_CMD="mkdir -p ${REMOTE_GASNET_DIR}; \
+            tar xfj ${REMOTE_TMP_DIR}/${ARCHIVE} -C ${REMOTE_GASNET_DIR};\
+            mkdir -p ${REMOTE_MPI3_DIR}; \
+            tar xfj ${REMOTE_TMP_DIR}/${ARCHIVE} -C ${REMOTE_MPI3_DIR}"
 omni_exec ssh ${REMOTE_HOST} ${EXPAND_CMD}
 
-## Compile the current omni-compiler
-echo "Compile the Omni compiler ..."
-COMPILE_CMD="mkdir ${XMP_PATH}; \
-             cd ${REMOTE_TMP_DIR}/${OMNI}; \
+## GASNet
+### Compile omni-compiler with GASNet
+echo -e "\n----------------------------------"
+echo "  Test omni compiler with GASNet"
+echo "----------------------------------"
+COMPILE_CMD="cd ${REMOTE_GASNET_DIR}/${OMNI}; \
              sh autogen.sh; \
-             ./configure --prefix=${XMP_PATH} --with-gasnet=${GASNET_PATH}; \
+             ./configure --prefix=${XMP_GASNET_PATH} --with-gasnet=${GASNET_PATH}; \
              make -j2; make install"
 omni_exec ssh ${REMOTE_HOST} ${COMPILE_CMD}
 
-## Run tests
-echo "Run tests ..."
-SORTED_LIST=/tmp/xmp_sorted.$$
-RUN_TESTS_CMD="cd ${REMOTE_TMP_DIR}/${OMNI}; \
-               make slurm XMP_PATH=${XMP_PATH} SORTED_LIST=${SORTED_LIST}"
-cd ${LOCAL_TMP_DIR}
+### Run tests for omni-compiler with GASNet
+RUN_TESTS_CMD="cd ${REMOTE_GASNET_DIR}/${OMNI}; \
+               make slurm XMP_PATH=${XMP_GASNET_PATH} MPI_PATH=/usr SORTED_LIST=${SORTED_LIST}"
+omni_exec ssh ${REMOTE_HOST} ${RUN_TESTS_CMD}
+
+## MPI3
+### Compile omni-compiler with MPI3
+echo -e "\n----------------------------------"
+echo "  Test omni compiler with MPI3"
+echo "----------------------------------"
+COMPILE_CMD="cd ${REMOTE_MPI3_DIR}/${OMNI}; \
+             sh autogen.sh; \
+             export PATH=${MPI3_PATH}/bin:$PATH; \
+             ./configure --prefix=${XMP_MPI3_PATH}; \
+             make -j2; make install"
+omni_exec ssh ${REMOTE_HOST} ${COMPILE_CMD}
+
+### Run tests for omni-compiler with MPI3
+RUN_TESTS_CMD="cd ${REMOTE_MPI3_DIR}/${OMNI}; \
+               make slurm XMP_PATH=${XMP_MPI3_PATH} MPI_PATH=${MPI3_PATH} SORTED_LIST=${SORTED_LIST}"
 omni_exec ssh ${REMOTE_HOST} ${RUN_TESTS_CMD}
 
 # Note : The cancel_jobs() often leaves jobs.
@@ -104,11 +127,15 @@ omni_exec ssh ${REMOTE_HOST} ${RUN_TESTS_CMD}
 #
 # trap "cancel_jobs" 1 2 3 15
 
-CHECK_TESTS_CMD="cd ${REMOTE_TMP_DIR}/${OMNI};\
-                 make slurm-check;\
+## Check finishing tests
+CHECK_TESTS_CMD="cd ${REMOTE_GASNET_DIR}/${OMNI}; \
+                 make slurm-check; \
+                 echo omni compiler with GASNet tests done; \
+                 cd ${REMOTE_MPI3_DIR}/${OMNI}; \
+                 make slurm-check; \
+                 echo omni compiler with MPI3 tests done; \
                  rm -f $SORTED_LIST"
 omni_exec ssh ${REMOTE_HOST} ${CHECK_TESTS_CMD}
-echo "done"
 echo "PASS ALL TESTS"
 
 clean_files

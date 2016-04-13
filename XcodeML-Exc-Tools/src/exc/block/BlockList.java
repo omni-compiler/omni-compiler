@@ -445,19 +445,26 @@ public class BlockList
                 }
             }
         }
-        if(id_list == null && decls == null)
+        //        if(id_list == null && decls == null)
+        //            return v;
+        //        else if(XmOption.isLanguageC())
+        //            return Xcons.CompoundStatement(id_list, decls, v);
+        //        else
+        //            return Xcons.FstatementList(v);
+        if(XmOption.isLanguageC()) {
+          if(id_list == null && decls == null)
             return v;
-        else if(XmOption.isLanguageC())
-            return Xcons.CompoundStatement(id_list, decls, v);
+          return Xcons.CompoundStatement(id_list, decls, v);
+        }
         else
-            return Xcons.FstatementList(v);
+          return Xcons.FstatementList(v);
     }
     
     @Override
     public String toString()
     {
         StringBuilder s = new StringBuilder(256);
-        s.append("[BlockList ");
+        s.append("[BlockList id_list="+id_list);
         int i = 0;
         for(Block b = head; b != null; b = b.getNext()) {
             if(i++ > 0)

@@ -14,12 +14,19 @@ import java.util.*;
  * Madiator for coindexed object such as a(i,j)[k]
  */
 public class XMPcoindexObj {
-  // constants
-  final static String COARRAYPUT_PREFIX = "xmpf_coarray_put";
 
-  final static String COARRAYGET_PREFIX = "xmpf_coarray_get";
-  final static String COARRAYGET_SCALAR_NAME = "xmpf_coarray_get_scalar";
-  final static String COARRAYGET_ARRAY_NAME = "xmpf_coarray_get_array";
+  // GET/PUT Interface types
+  // (see also 1libxmpf/include/xmpf_internal_coarray.h)
+  //final static int GetInterfaceType = 6;           // valid last implementation
+  final static int GetInterfaceType = 8;
+  //final static int PutInterfaceType = 7;           // valid last implementation
+  final static int PutInterfaceType = 8;
+
+  // constants
+  final static String COARRAYPUT_PREFIX = "xmpf_coarray_put";                // for Type 7
+  final static String COARRAYGET_PREFIX = "xmpf_coarray_get";                // for Type 6
+  final static String COARRAYGET_GENERIC_NAME = "xmpf_coarray_get_generic";  // for Type 8
+  final static String COARRAYPUT_GENERIC_NAME = "xmpf_coarray_put_generic";  // for Type 8
 
   // attributes
   String name;
@@ -202,7 +209,7 @@ public class XMPcoindexObj {
 
 
   //------------------------------
-  //  run
+  //  run: GET communication
   //------------------------------
   public Xobject toFuncRef() {
     Xtype type = getType();
@@ -229,11 +236,43 @@ public class XMPcoindexObj {
   }
 
   private Xobject toFuncRef_basic() {
-    Xobject mold = getObj().getArg(0).getArg(0);   // object w/o coindex
+    Xobject mold = getObj().getArg(0).getArg(0);   // coindexed object w/o coindex
     return toFuncRef_core(mold);
   }
 
-  private Xobject toFuncRef_core(Xobject mold) {
+
+  Xobject toFuncRef_core(Xobject mold) {
+    switch (GetInterfaceType) {
+    case 6:
+      return toFuncRef_core_type6(mold);  
+    case 8:
+      return toFuncRef_core_type8(mold);  
+    default:
+      XMP.fatal("INTERNAL: obsoleted Get Interface Type: " +
+                GetInterfaceType);
+      break;
+    }
+    return null;
+  }
+
+  private Xobject toFuncRef_core_type8(Xobject mold) {
+    // type8 used
+    Xobject actualArgs = _makeActualArgs_type8(mold);
+
+    String funcName = COARRAYGET_GENERIC_NAME;
+    Ident funcIdent = getEnv().findVarIdent(funcName, null);
+    if (funcIdent == null) {
+      Xtype baseType = new BasicType(BasicType.F_NUMERIC_ALL);
+                                            // ^^^^^^^^^^^^^ 
+                                            // should be F_ALL or F_GENERIC if possible
+      Xtype funcType = Xtype.Function(baseType);
+      funcIdent = getEnv().declExternIdent(funcName, funcType);
+    }                                           
+    Xobject funcRef = funcIdent.Call(actualArgs);
+    return funcRef;
+  }
+
+  private Xobject toFuncRef_core_type6(Xobject mold) {
     // type6 used
     Xobject actualArgs = _makeActualArgs_type6(mold);
 
@@ -257,11 +296,53 @@ public class XMPcoindexObj {
     return funcRef;
   }
 
+
+  //------------------------------
+  //  run: PUT communication
+  //------------------------------
   public Xobject toCallStmt(Xobject rhs, Xobject condition) {
+    Xtype type = getType();
+    Xobject subrStmt;
+    Xobject mold;
+
+    if (type.isStruct()) {
+      XMP.fatal("Not supported type of coarray: " + getName());
+      return null;
+    } else {
+      mold = getObj().getArg(0).getArg(0);   // coindexed var. w/o coindex
+    }
+
+    switch (PutInterfaceType) {
+    case 8:
+      return toCallStmt_type8(mold, rhs);
+    case 7:
+      return toCallStmt_type7(rhs, condition);
+    default:
+      XMP.fatal("INTERNAL: obsoleted Get Interface Type: " +
+                PutInterfaceType);
+      break;
+    }
+    return null;
+  }
+
+  public Xobject toCallStmt_type8(Xobject mold, Xobject rhs) {
+    // type8 used
+    Xobject actualArgs = _makeActualArgs_type8(mold, rhs);
+
+    String subrName = COARRAYPUT_GENERIC_NAME;
+    Ident subrIdent = getEnv().findVarIdent(subrName, null);
+    if (subrIdent == null) {
+      subrIdent = getEnv().declExternIdent(subrName,
+                                           Xtype.FexternalSubroutineType);
+    }
+    Xobject subrCall = subrIdent.callSubroutine(actualArgs);
+    return subrCall;
+  }
+
+  public Xobject toCallStmt_type7(Xobject rhs, Xobject condition) {
     // type7 used
     Xobject actualArgs =
-      _makeActualArgs_type7(_convRhsType(rhs),
-                            condition);
+      _makeActualArgs_type7(_convRhsType(rhs), condition);
 
     // "scalar" or "array" or "spread" will be selected.
     String pattern = _selectCoarrayPutPattern(rhs);
@@ -301,55 +382,19 @@ public class XMPcoindexObj {
   /* generate actual arguments
    * cf. libxmpf/src/xmpf_coarray_put.c
    *
-   * Type-5:
-   *       (void *descptr, void* baseAddr, int element, int image,
-   *        [void* rhs, int scheme,] int exprRank,
-   *        void* nextAddr1, int count1,
-   *        ...
-   *        void* nextAddrN, int countN )
-   *   where N is rank of the reference (0<=N<=15 in Fortran 2008).
-   */
-  private Xobject _makeActualArgs_type5() {
-    return _makeActualArgs_type5(null, null);
-  }
-
-  private Xobject _makeActualArgs_type5(Xobject rhs, Xobject condition) {
-    XMPcoarray coarray = getCoarray();
-
-    Xobject baseAddr = getBaseAddr();
-    Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
-    Xobject element = coarray.getElementLengthExpr();
-    Xobject image = coarray.getImageIndex(baseAddr, cosubscripts);
-    Xobject actualArgs = Xcons.List(descPtr, baseAddr, element, image);
-
-    if (rhs != null)
-      actualArgs.add(_convRhsType(rhs));
-    if (condition != null)
-      actualArgs.add(condition);
-
-    actualArgs.add(Xcons.IntConstant(exprRank));
-
-    int hostRank = coarray.getRank();
-    for (int i = 0; i < hostRank; i++) {
-      if (isTripletIndex(i)) {
-        actualArgs.add(getNeighboringAddr(i));
-        actualArgs.add(getSizeFromTriplet(i));
-      }
-    }
-
-    if (actualArgs.hasNullArg())
-      XMP.fatal("INTERNAL: generated null argument (_makeActualArgs_type5)");
-
-    return actualArgs;
-  }
-
-
-  /* generate actual arguments
-   * cf. libxmpf/src/xmpf_coarray_put.c
-   *
+   * Type-8:
+   *   utilize F90 generic-name interface
+   *     COARRAYGET_GENERIC_NAME(descPtr, coindex, mold) result(dst)
+   *     COARRAYPUT_GENERIC_NAME(descPtr, coindex, mold, src)
+   *       integer(8), intent(in)            :: descPtr
+   *       integer, intent(in)               :: coindex
+   *       anytype&kind_anydim, intent(in)   :: mold
+   *         local data corresponding to the coindexed remote object/variable
+   *       same type&kind, same rank as mold :: src
+   *       same type&kind, same rank as mold :: dst
    * Type-7:
-   *       add baseAddr to Type-6 as an extra argument 
-   *       in order to tell the optimization compiler the data will be referred.
+   *   add baseAddr to Type-6 as an extra argument 
+   *   in order to tell the optimization compiler the data will be referred.
    * Type-6:
    *       (void *descPtr, void* baseAddr, int element, int image,
    *        [void* rhs, int scheme,] int exprRank,
@@ -358,6 +403,30 @@ public class XMPcoindexObj {
    *        void* nextAddrN, int countN )
    *   where N is rank of the reference (0<=N<=15 in Fortran 2008).
    */
+  private Xobject _makeActualArgs_type8(Xobject mold, Xobject src) {
+    Xobject actualArgs = _makeActualArgs_type8();
+    actualArgs.add(mold);
+    actualArgs.add(src);
+    return actualArgs;
+  }
+  private Xobject _makeActualArgs_type8(Xobject mold) {
+    Xobject actualArgs = _makeActualArgs_type8();
+    actualArgs.add(mold);
+    return actualArgs;
+  }
+  private Xobject _makeActualArgs_type8() {
+    XMPcoarray coarray = getCoarray();
+    Xobject baseAddr = getBaseAddr();
+    Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
+    Xobject coindex = coarray.getImageIndex(baseAddr, cosubscripts);
+    Xobject actualArgs = Xcons.List(descPtr, coindex);
+
+    if (actualArgs.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (_makeActualArgs_type8)");
+
+    return actualArgs;
+  }
+
   private Xobject _makeActualArgs_type7(Xobject addArg1) {
     return _makeActualArgs_type7(addArg1, null);
   }
@@ -404,7 +473,7 @@ public class XMPcoindexObj {
   }
 
 
-  // TEMPORARY VERSION
+  // TEMPORARY VERSION (for Type 6)
   private Xtype _getBasicType(Xtype xtype) {
 
     int baseTypeCode = 0;
@@ -424,6 +493,52 @@ public class XMPcoindexObj {
     }
 
     return new BasicType(baseTypeCode);
+  }
+
+
+  /* generate actual arguments
+   * cf. libxmpf/src/xmpf_coarray_put.c
+   *
+   * Type-5:
+   *       (void *descptr, void* baseAddr, int element, int image,
+   *        [void* rhs, int scheme,] int exprRank,
+   *        void* nextAddr1, int count1,
+   *        ...
+   *        void* nextAddrN, int countN )
+   *   where N is rank of the reference (0<=N<=15 in Fortran 2008).
+   */
+  private Xobject _makeActualArgs_type5() {
+    return _makeActualArgs_type5(null, null);
+  }
+
+  private Xobject _makeActualArgs_type5(Xobject rhs, Xobject condition) {
+    XMPcoarray coarray = getCoarray();
+
+    Xobject baseAddr = getBaseAddr();
+    Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
+    Xobject element = coarray.getElementLengthExpr();
+    Xobject image = coarray.getImageIndex(baseAddr, cosubscripts);
+    Xobject actualArgs = Xcons.List(descPtr, baseAddr, element, image);
+
+    if (rhs != null)
+      actualArgs.add(_convRhsType(rhs));
+    if (condition != null)
+      actualArgs.add(condition);
+
+    actualArgs.add(Xcons.IntConstant(exprRank));
+
+    int hostRank = coarray.getRank();
+    for (int i = 0; i < hostRank; i++) {
+      if (isTripletIndex(i)) {
+        actualArgs.add(getNeighboringAddr(i));
+        actualArgs.add(getSizeFromTriplet(i));
+      }
+    }
+
+    if (actualArgs.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (_makeActualArgs_type5)");
+
+    return actualArgs;
   }
 
 

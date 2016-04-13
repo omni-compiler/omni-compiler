@@ -80,7 +80,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-subdir = Driver/src
+subdir = ./Driver/src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(dist_libexec_SCRIPTS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -163,6 +163,7 @@ CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPU = @CPU@
 CPUDEF = @CPUDEF@
+CUDA_PREFIX = @CUDA_PREFIX@
 CXX = @CXX@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
@@ -182,7 +183,6 @@ FCFLAGS = @FCFLAGS@
 GASNET_LIBS = @GASNET_LIBS@
 GMP_INCLUDE_DIR = @GMP_INCLUDE_DIR@
 GMP_LIB_DIR = @GMP_LIB_DIR@
-GPGPU_PREFIX = @GPGPU_PREFIX@
 GPU_CFLAGS = @GPU_CFLAGS@
 GPU_CMD = @GPU_CMD@
 GREP = @GREP@
@@ -250,6 +250,7 @@ OM_EXEC_F_COMPILER = @OM_EXEC_F_COMPILER@
 OM_EXEC_F_LINKER = @OM_EXEC_F_LINKER@
 OM_EXEC_F_PP = @OM_EXEC_F_PP@
 ONESIDED_CPPFLAGS = @ONESIDED_CPPFLAGS@
+ONESIDED_LIB = @ONESIDED_LIB@
 OPENMP_OPT_C = @OPENMP_OPT_C@
 OPENMP_OPT_F = @OPENMP_OPT_F@
 OS = @OS@
@@ -386,9 +387,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps Driver/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./Driver/src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps Driver/src/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps ./Driver/src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
