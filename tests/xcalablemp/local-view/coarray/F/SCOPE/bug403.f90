@@ -9,7 +9,6 @@ end subroutine
 
 program main
 call c(1,2)
+write(*,*) "OK"
 end
-
-
 

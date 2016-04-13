@@ -363,11 +363,16 @@ void _XMP_coarray_regmem_do(void **coarray_desc, void *addr)
   long transfer_size = _total_coarray_elmts*_elmt_size;
   _XMP_check_less_than_SIZE_MAX(transfer_size);
   
-#if _XMP_FJRDMA
+#if _XMP_GASNET
+  //not implemented
+  _XMP_fatal("_XMP_coarray_regmem_do is not supported over GASNet.\n");
+#elif _XMP_FJRDMA
   _XMP_fjrdma_regmem_do(*coarray_desc, addr, (size_t)transfer_size);
-#else
-  _XMP_fatal("_XMP_coarray_regmem_do is not supported except for FJRDMA.\n");
+#elif _XMP_MPI3_ONESIDED
+  //not implemented
+  _XMP_fatal("_XMP_coarray_regmem_do is not supported over MPI3.\n");
 #endif
+
   _push_coarray_queue(c);
 }
 

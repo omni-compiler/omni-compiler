@@ -66,7 +66,7 @@ public class omompx
       "  -xf          process XcodeML/Fortran document.",
       "  -l           suppress line directive in decompiled code.",
       "  -fopenmp     enable OpenMP translation.",
-      "  -fcoarry     enable coarray translation.",
+      "  -fcoarry[=suboption]  enable coarray translation optionally with a suboption.",
       "  -fnocoarry   pass without coarray translation (default for C).",
       "  -fautocoarry enable coarray translation only if any coarray features are used (default, only for Fortran).",
       "  -fatomicio   enable transforming Fortran IO statements to atomic operations.",
@@ -106,6 +106,7 @@ public class omompx
     boolean openMP = false;
     boolean openACC = false;
     boolean coarray = false;
+    String coarray_suboption = "";
     boolean autocoarray = true;
     boolean xcalableMP = false;
     boolean xcalableMPthreads = false;
@@ -119,7 +120,6 @@ public class omompx
     boolean selective_profile = false;
     boolean doScalasca = false;
     boolean doTlog = false;
-    int caf_version = 3;         // TEMPORARY
     int maxColumns = 0;
         
     for(int i = 0; i < args.length; ++i) {
@@ -139,15 +139,13 @@ public class omompx
       } else if(arg.equals("-fcoarray")) {
         coarray = true;
         autocoarray = false;
-      } else if(arg.equals("-fcoarray=4")) {     // TEMPORARY
-        caf_version = 4;
-      } else if(arg.equals("-fcoarray=6")) {     // TEMPORARY
-        caf_version = 6;
       } else if(arg.equals("-fnocoarray")) {
         coarray = false;
         autocoarray = false;
       } else if(arg.equals("-fautocoarray")) {
         autocoarray = true;
+      } else if(arg.startsWith("-fcoarray=")) {
+        coarray_suboption += arg.substring(arg.indexOf("=")+1);
       } else if(arg.equals("-facc")) {
         openACC = true; 
       } else if(arg.equals("-fxmp")) {
@@ -369,7 +367,7 @@ public class omompx
       if (coarray == true || autocoarray == true) {
         // Coarray Fortran pass#0 -- detect if any coarray features are used
         exc.xmpF.XMPtransCoarray
-          caf_translator0 = new exc.xmpF.XMPtransCoarray(xobjFile, 0);
+          caf_translator0 = new exc.xmpF.XMPtransCoarray(xobjFile, 0, coarray_suboption);
         xobjFile.iterateDef(caf_translator0);
         if(exc.xmpF.XMP.hasErrors())
           System.exit(1);
@@ -384,7 +382,7 @@ public class omompx
         }
         // Coarray Fortran pass#1
         exc.xmpF.XMPtransCoarray
-          caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1, caf_version);
+          caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1, coarray_suboption);
         xobjFile.iterateDef(caf_translator1);
         if(exc.xmpF.XMP.hasErrors())
           System.exit(1);
@@ -392,7 +390,7 @@ public class omompx
 
         // Coarray Fortran pass#2
         exc.xmpF.XMPtransCoarray
-          caf_translator2 = new exc.xmpF.XMPtransCoarray(xobjFile, 2, caf_version);
+          caf_translator2 = new exc.xmpF.XMPtransCoarray(xobjFile, 2, coarray_suboption);
         xobjFile.iterateDef(caf_translator2);
         if(exc.xmpF.XMP.hasErrors())
           System.exit(1);

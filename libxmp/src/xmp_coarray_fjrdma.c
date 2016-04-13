@@ -10,10 +10,11 @@
 #define _XMP_FJRDMA_MAX_MEMID              511
 #define _XMP_FJRDMA_MAX_MPUT              1993
 #define _XMP_FJRDMA_MAX_MGET               100 /** This value is trial */
-#define _XMP_FJRDMA_MAX_COMM                60 /** This value is trial */
 #define _XMP_FJRDMA_TAG                      0
 #define _XMP_SYNC_IMAGES_TAG                 1
 #define _XMP_FJRDMA_START_MEMID              3
+#define _XMP_FJRDMA_MAX_PUT               60 /** This value is trial */
+#define _XMP_FJRDMA_MAX_GET               60 /** This value is trial */
 
 static int _num_of_puts = 0, _num_of_gets = 0;
 static struct FJMPI_Rdma_cq _cq;
@@ -41,6 +42,26 @@ static void _XMP_fjrdma_sync_memory_get()
   while(_num_of_gets != 0)
     if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC, &_cq) == FJMPI_RDMA_NOTICE)
       _num_of_gets--;
+}
+
+/**
+   Add 1 to _num_of_puts.
+ */
+static void _add_num_of_puts()
+{
+  _num_of_puts++;
+  if(_num_of_puts > _XMP_FJRDMA_MAX_PUT)
+    _XMP_fjrdma_sync_memory_put();
+}
+
+/**
+   Add 1 to _num_of_gets.
+*/
+static void _add_num_of_gets()
+{
+  _num_of_gets++;
+  if(_num_of_gets > _XMP_FJRDMA_MAX_GET)
+    _XMP_fjrdma_sync_memory_get();
 }
 
 /**
@@ -83,7 +104,7 @@ static void _XMP_FJMPI_Rdma_put(const int target_rank, uint64_t raddr, uint64_t 
 {
   if(transfer_size <= _XMP_FJRDMA_MAX_SIZE){
     FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC);
-    _num_of_puts++;
+    _add_num_of_puts();
   }
   else{
     int times = transfer_size / _XMP_FJRDMA_MAX_SIZE;
@@ -93,12 +114,12 @@ static void _XMP_FJMPI_Rdma_put(const int target_rank, uint64_t raddr, uint64_t 
       FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, _XMP_FJRDMA_MAX_SIZE, _XMP_COARRAY_FLAG_NIC);
       raddr += _XMP_FJRDMA_MAX_SIZE;
       laddr += _XMP_FJRDMA_MAX_SIZE;
-      _num_of_puts++;
+      _add_num_of_puts();
     }
     
     if(rest != 0){
       FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, rest, _XMP_COARRAY_FLAG_NIC);
-      _num_of_puts++;
+      _add_num_of_puts();
     }
   }
 }
@@ -116,7 +137,7 @@ static void _XMP_FJMPI_Rdma_get(const int target_rank, uint64_t raddr, uint64_t 
 
   if(transfer_size <= _XMP_FJRDMA_MAX_SIZE){
     FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC);
-    _num_of_gets++;
+    _add_num_of_gets();
   }
   else{
     int times = transfer_size / _XMP_FJRDMA_MAX_SIZE;
@@ -126,12 +147,12 @@ static void _XMP_FJMPI_Rdma_get(const int target_rank, uint64_t raddr, uint64_t 
       FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, _XMP_FJRDMA_MAX_SIZE, _XMP_COARRAY_FLAG_NIC);
       raddr += _XMP_FJRDMA_MAX_SIZE;
       laddr += _XMP_FJRDMA_MAX_SIZE;
-      _num_of_gets++;
+      _add_num_of_gets();
     }
 
     if(rest != 0){
       FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, rest, _XMP_COARRAY_FLAG_NIC);
-      _num_of_gets++;
+      _add_num_of_gets();
     }
   }
 }
@@ -166,17 +187,6 @@ static void _FX10_Rdma_mput(const int target_rank, uint64_t *raddrs, uint64_t *l
 }
 #endif
 
-/**
-   Prevent MRQ overflow : Without this function, MRQ overflow often occurs.
-                          Perhaps, RDMA put/get functions internally use MRQ.
-                          This function should be used before and in put/get operations.
-*/
-static void _release_MRQ()
-{
-  if(_num_of_puts > _XMP_FJRDMA_MAX_COMM)
-    _XMP_fjrdma_sync_memory();
-}
-
 /*********************************************************************************/
 /* DESCRIPTION : Wrapper function for multiple put operations                    */
 /* ARGUMENT    : [IN] target_rank    : Target rank                               */
@@ -192,12 +202,10 @@ static void _RDMA_mput(const size_t target_rank, uint64_t* raddrs, uint64_t* lad
 {
 #if defined(OMNI_TARGET_CPU_KCOMPUTER)
   FJMPI_Rdma_mput(target_rank, _XMP_FJRDMA_TAG, raddrs, laddrs, lengths, stride, transfer_elmts, _XMP_COARRAY_FLAG_NIC);
-  _num_of_puts++;
+  _add_num_of_puts();
 #elif defined(OMNI_TARGET_CPU_FX10) || defined(OMNI_TARGET_CPU_FX100)
   _FX10_Rdma_mput(target_rank, raddrs, laddrs, lengths, stride, transfer_elmts);
 #endif
-
-  _release_MRQ();
 }
 
 /************************************************************************/
@@ -323,8 +331,6 @@ void _XMP_fjrdma_shortcut_put(const int target_rank, const uint64_t dst_offset, 
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
-
-  _release_MRQ();
 }
 
 /*************************************************************************/
@@ -572,7 +578,6 @@ void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const i
       _XMP_fatal("Number of elements is invalid");
     }
   }
-  _release_MRQ();
 }
 
 /************************************************************************/
@@ -600,9 +605,6 @@ void _XMP_fjrdma_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_d
   uint64_t raddr = (uint64_t)src_desc->addr[target_rank] + src_offset;
   uint64_t laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_offset;
   
-  // To complete put operations before the following get operation.
-  _XMP_fjrdma_sync_memory();
-
   if(dst_elmts == src_elmts){
     _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, transfer_size);
     _XMP_fjrdma_sync_memory_get();
@@ -618,7 +620,6 @@ void _XMP_fjrdma_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_d
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
-  _release_MRQ();
 }
 
 /************************************************************************/
@@ -826,7 +827,6 @@ void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const i
       _XMP_fatal("Number of elements is invalid");
     }
   }
-  _release_MRQ();
 }
 
 /**

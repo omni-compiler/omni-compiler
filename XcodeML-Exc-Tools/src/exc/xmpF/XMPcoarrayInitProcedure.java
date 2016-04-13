@@ -17,10 +17,6 @@ import java.util.*;
  */
 public class XMPcoarrayInitProcedure {
 
-  final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
-  final static String ALLOC_STATIC_NAME = "xmpf_coarray_alloc_static";
-  final static String REGMEM_STATIC_NAME = "xmpf_coarray_regmem_static";
-
   private Boolean DEBUG = false;          // switch the value on gdb !!
 
 
@@ -197,7 +193,6 @@ public class XMPcoarrayInitProcedure {
 
   private void buildSubroutine_countcoarrays() {
     BlockList body = Bcons.emptyBody();         // new body of the building procedure
-    Xobject decls = Xcons.List();
 
     if (version != 3) {
       XMP.fatal("unexpected version " + version + 
@@ -207,24 +202,17 @@ public class XMPcoarrayInitProcedure {
 
     for (XMPcoarray coarray: staticCoarrays) {
       // "CALL coarray_count_size(count, elem)"
-      Xobject elem = coarray.getElementLengthExpr();
+      Xobject callStmt = coarray.makeStmt_countCoarrays(body);
 
-      if (elem == null) {
-        XMP.error("current restriction: " + 
-                  "could not find the element length of: "+coarray.getName());
-      }
-
-      int count = coarray.getTotalArraySize();
-      Xobject args = Xcons.List(Xcons.IntConstant(count), elem);
-      Ident subr = body.declLocalIdent(COUNT_SIZE_NAME,
-                                       BasicType.FexternalSubroutineType);
-      body.add(subr.callSubroutine(args));
+      body.add(callStmt);
     }
 
     // construct a new procedure
+    Xobject decls = Xcons.List();
     Ident procedure = env.declExternIdent(sizeProcName, Xtype.FsubroutineType);
     XobjectDef def2 = XobjectDef.Func(procedure, body.getIdentList(),
                                       decls, body.toXobject());
+
     // link the new procedure as my sister
     env.getEnv().add(def2);
   }
@@ -373,117 +361,20 @@ public class XMPcoarrayInitProcedure {
     /*-------------------------------*\
      * execution part
     \*-------------------------------*/
-
-    // version 3
-    //   "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"
     // versions 4 & 6
     //   "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"
-    Xobject arg2;
-    String fname;
-    if (version >= 4) {
-      FunctionType ftype = new FunctionType(Xtype.Fint8Type, Xtype.TQ_FINTRINSIC);
-      Ident locId = env.declIntrinsicIdent("loc", ftype);
-      arg2 = locId.Call(Xcons.List(ident2));
-      fname = REGMEM_STATIC_NAME;
+    // version 3
+    //   "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"
+    if (version == 4 || version == 6) {
+      Xobject subrCall = coarray.makeStmt_regmemStatic(body);
+      body.add(subrCall);
+    } else if (version == 3) {
+      Xobject subrCall = coarray.makeStmt_allocStatic(body);
+      body.add(subrCall);
     } else {
-      arg2 = (Xobject)ident2;
-      fname = ALLOC_STATIC_NAME;
+      XMP.fatal("INTERNAL: unexpected version number");
     }
-
-    String varName = coarray.getName();
-    Xobject varNameObj = 
-      Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
-    Xobject args = Xcons.List(descPtrId,
-                              arg2,
-                              Xcons.IntConstant(count),
-                              elem,
-                              varNameObj,
-                              Xcons.IntConstant(varName.length()));
-    if (args.hasNullArg())
-      XMP.fatal("INTERNAL: generated null argument (buildSubroutine_initcoarrays)");
-    Ident subr = body.declLocalIdent(fname, BasicType.FexternalSubroutineType);
-    body.add(subr.callSubroutine(args));
   }
-
-
-  /*
-   *  Version 1 (incomplete handling of allocatable coarray)
-   */
-  /**************************
-  private void addForVarText(String varName1, String varName2, 
-                             int count, int elem) {
-    varNames1.add(varName1);
-    varNames2.add(varName2);
-    callSizeStmts.add(" CALL " + COUNT_SIZE_NAME + " ( " + 
-                      count + " , " + elem + " )");
-    callInitStmts.add(" CALL " + ALLOC_STATIC_NAME + " ( " + 
-                      varName1 + " , " +varName2 + " , " +
-                      count + " , " + elem + " )");
-  }
-  ****************************/
-
-  /**************************
-  private void fillinSizeProcText() {
-    if (varNames1.size() == 0)
-      return;
-
-    String text = "\n";
-    text += "SUBROUTINE " + sizeProcName + "\n";
-
-    // call sizecount stmts
-    for (String stmt: callSizeStmts)
-      text += stmt +"\n";
-
-    text += "END SUBROUTINE " + sizeProcName + "\n";
-    procTexts.add(text);
-  }
-  ****************************/
-
-  /**************************
-  private void fillinInitProcText() {
-    if (varNames1.size() == 0)
-      return;
-
-    String text = "\n";
-    text += "SUBROUTINE " + initProcName + "\n";
-
-    // type specification stmt for varNames1
-    for (String name: varNames1)
-      text += " INTEGER :: " + name + "\n";
-
-    // type specification stmt for varNames2
-    for (String name: varNames2)
-      text += " INTEGER(8) :: " + name + "\n";
-
-    // common stmt for varNames1
-    for (String name: varNames1)
-      text += " COMMON / " + commonName1 + " / " + name + "\n";
-
-    // common stmt for varNames2
-    for (String name: varNames2)
-      text += " COMMON / " + commonName2 + " / " + name + "\n";
-
-    if (DEBUG) {
-      text += " WRITE(*,*) \"[XMPcoarrayInitProcedure] start SUBROUTINE " +
-        initProcName + "\"\n";
-    }
-
-    // call initialization stmts
-    for (String stmt: callInitStmts) {
-      if (DEBUG) {
-        text += " WRITE(*,*) \" calling " + stmt + "\"\n";
-      }
-      text += stmt +"\n";
-    }
-
-    if (DEBUG) {
-      text += " WRITE(*,*) \"[XMPcoarrayInitProcedure] end SUBROUTINE " +
-        initProcName + "\"\n";
-    }
-    text += "END SUBROUTINE " + initProcName + "\n";
-    procTexts.add(text);
-  }
-  *************************/
 
 
   /*

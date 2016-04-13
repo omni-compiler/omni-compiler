@@ -18,8 +18,8 @@ public class XMPtransCoarray implements XobjectDefVisitor
 {
   XMPenv env;
   private int pass;
-  private int version = 0;   // Default version number is defined
-                             // in XMPtransCoarrayRun.
+  private int version;
+  private Boolean useGASNet;
 
   private ArrayList<XMPtransCoarrayRun> pastRuns;
   int _nCoarrays = 0;
@@ -30,17 +30,16 @@ public class XMPtransCoarray implements XobjectDefVisitor
   //  constructor
   //-----------------------------------------
 
-  public XMPtransCoarray(XobjectFile env, int pass) {
-    this(env, pass, 0);
-  }
-  public XMPtransCoarray(XobjectFile env, int pass, int version) {
+  public XMPtransCoarray(XobjectFile env, int pass, String suboption)
+  {
     this.env = new XMPenv(env);
     this.pass = pass;
-    set_version(version);
+    _set_version(suboption);
     pastRuns = new ArrayList<XMPtransCoarrayRun>();
   }
 
-  public void finish() {
+  public void finish()
+  {
     env.finalize();
   }
     
@@ -49,8 +48,26 @@ public class XMPtransCoarray implements XobjectDefVisitor
   //  set
   //-----------------------------------------
 
-  public void set_version(int version) {
-    this.version = version;
+  private void _set_version(String suboption)
+  {
+    // default
+    version = 3;
+    useGASNet = false;
+
+    if ("".equals(suboption)) {
+      // default
+    } else if ("4".equals(suboption)) {
+      version = 4;
+    } else if ("6".equals(suboption)) {
+      version = 6;
+    } else if ("7".equals(suboption)) {
+      version = 7;
+    } else if ("7g".equals(suboption)) {
+      version = 7;
+      useGASNet = true;
+    } else {
+      XMP.fatal("suboption usage: -fcoarray[={4|6|7|7g}]");
+    }
   }
 
 
@@ -58,7 +75,8 @@ public class XMPtransCoarray implements XobjectDefVisitor
   //  do transform for a procedure or a module
   //-----------------------------------------
 
-  public void doDef(XobjectDef d) {
+  public void doDef(XobjectDef d)
+  {
     boolean is_module = d.isFmoduleDef();
     XMPtransCoarrayRun transCoarrayRun;
 
@@ -73,7 +91,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
       break;
 
     case 1:               // for both procedures and modules
-      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 1, version);
+      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 1, version, useGASNet);
       transCoarrayRun.run1();
       // assuming top-down translation along host-association
       pastRuns.add(transCoarrayRun);
@@ -83,7 +101,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
     case 2:               // second pass for modules
       if (!is_module)
         return;
-      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2, version);
+      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2, version, useGASNet);
       transCoarrayRun.run2();
       //transCoarrayRun.finalize();
       break;
@@ -102,7 +120,8 @@ public class XMPtransCoarray implements XobjectDefVisitor
    *  - any coarray declarations
    * in the module.
    */
-  private void errorCheck_module(XobjectDef def) {
+  private void errorCheck_module(XobjectDef def)
+  {
     // check coarray declarations
     Xobject idList = def.getFuncIdList();
     for (Xobject obj: (XobjList)idList) {
@@ -157,7 +176,8 @@ public class XMPtransCoarray implements XobjectDefVisitor
   }
 
 
-  private void errorCheck_ident(Ident ident, XobjectDef def) {
+  private void errorCheck_ident(Ident ident, XobjectDef def)
+  {
     // restriction: initialization
 
     // non-save non-allocatable coarray in recursive procedure
@@ -170,7 +190,8 @@ public class XMPtransCoarray implements XobjectDefVisitor
   }
 
 
-  private boolean _isRecursiveProcedure(XobjectDef def) {
+  private boolean _isRecursiveProcedure(XobjectDef def)
+  {
     Xobject d = def.getDef();
     if (d.Opcode() == Xcode.F_MODULE_DEFINITION)
       return false;
@@ -179,11 +200,13 @@ public class XMPtransCoarray implements XobjectDefVisitor
   }
 
 
-  private void errorCheck_coidxObj(Xobject xobj, XobjectDef def) {
+  private void errorCheck_coidxObj(Xobject xobj, XobjectDef def)
+  {
   }
 
 
-  private boolean isCoarrayLibraryName(String name) {
+  private boolean isCoarrayLibraryName(String name)
+  {
     // True if it is a name of coarray intrinsic procedures or
     // a library and it should be converted in run1 or run2.
     // Else, false even if it is a name of itrinsic procedure.
@@ -192,7 +215,8 @@ public class XMPtransCoarray implements XobjectDefVisitor
   }
 
 
-  public boolean containsCoarray() {
+  public boolean containsCoarray()
+  {
     // check if there are any coarrays or any coarray libraries.
     if (_nCoarrays > 0 || _nCoidxObjs > 0 || _nCoarrayLibs > 0)
       return true;

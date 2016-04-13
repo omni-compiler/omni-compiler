@@ -571,11 +571,16 @@ compile_expression(expr x)
             bLType = bottom_type(lt);
             bRType = bottom_type(rt);
 
-	    if (!bLType || !bRType) return NULL;
-
-            if (TYPE_IS_NOT_FIXED(bLType) || TYPE_IS_NOT_FIXED(bRType)) {
+/* FEAST change start */
+            /* if (TYPE_IS_NOT_FIXED(bLType) || TYPE_IS_NOT_FIXED(bRType)) { */
+            /*     type_is_not_fixed = TRUE; */
+            /* } */
+            if(bLType == NULL || bRType == NULL){
+                type_is_not_fixed = TRUE;
+            } else if (TYPE_IS_NOT_FIXED(bLType) || TYPE_IS_NOT_FIXED(bRType)) {
                 type_is_not_fixed = TRUE;
             }
+/* FEAST change end */
 
             switch (biop) {
             case ARITB:
@@ -670,6 +675,12 @@ compile_expression(expr x)
                 /*
                  * First of all, check if which side is reshaped type.
                  */
+/* FEAST add start */
+                if(!lt || !rt){
+                  type_is_not_fixed = TRUE;
+                  goto doEmit;
+                }
+/* FEAST add end */                
                 if (TYPE_IS_RESHAPED(lt) || TYPE_IS_RESHAPED(rt)) {
                     if (bType == NULL) {
                         tp = TYPE_IS_RESHAPED(rt) ? lt : rt;
@@ -768,7 +779,10 @@ compile_expression(expr x)
             }
 
             doEmit:
-            if (type_is_not_fixed)
+/* FEAST CHANGE start */
+            /* if (type_is_not_fixed) */
+            if(type_is_not_fixed && tp)
+/* FEAST CHANGE end */
                 TYPE_SET_NOT_FIXED(bottom_type(tp));
             return expv_cons(op, tp, left, right);
         }
@@ -1443,7 +1457,11 @@ expv_assignment(expv v1, expv v2)
     TYPE_DESC tp1 = EXPV_TYPE(v1);
     TYPE_DESC tp2 = EXPV_TYPE(v2);
 
-    if (!tp1 || !tp2) return NULL;
+/* FEAST add start */
+    if(!tp1 || !tp2){
+      return NULL;
+    }
+/* FEAST add end */
 
     if (EXPV_CODE(v2) == F95_ARRAY_CONSTRUCTOR) {
         if (!IS_ARRAY_TYPE(tp1)) {
@@ -2370,6 +2388,12 @@ compile_function_call(ID f_id, expr args) {
             /* f_id is not defined yet. */
             tp = (ID_TYPE(f_id) != NULL) ? ID_TYPE(f_id) : new_type_desc();
             TYPE_SET_USED_EXPLICIT(tp);
+/* FEAST add start */
+            if(tp->basic_type == TYPE_UNKNOWN){
+              /* ID_TYPE(f_id) = NULL; */
+              sp_link_id(f_id, 4, current_line);
+            }
+/* FEAST add  end  */
 
             a = compile_args(args);
 #if 0

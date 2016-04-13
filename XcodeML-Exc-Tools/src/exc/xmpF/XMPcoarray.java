@@ -27,6 +27,10 @@ public class XMPcoarray {
   final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
   final static String GET_DESCR_ID_NAME = "xmpf_get_descr_id";
 
+  final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
+  final static String ALLOC_STATIC_NAME = "xmpf_coarray_alloc_static";
+  final static String REGMEM_STATIC_NAME = "xmpf_coarray_regmem_static";
+
   // original attributes
   private Ident ident;
   private String name;
@@ -93,15 +97,24 @@ public class XMPcoarray {
   // declare cray-pointer variable correspoinding to this.
   //
   public void genDecl_crayPointer() {
+    genDecl_crayPointer(false);
+  }
+  public void genDecl_crayPointer(Boolean saved) {
     BlockList blist = fblock.getBody();
     String crayPtrName = getCrayPointerName();
+
+    StorageClass sclass;
+    if (saved)
+      sclass = StorageClass.FSAVE;
+    else
+      sclass = StorageClass.FLOCAL;
 
     // generate declaration of crayPtrId
     Xtype crayPtrType = Xtype.Farray(BasicType.Fint8Type);
     crayPtrType.setIsFcrayPointer(true);
     crayPtrId = blist.declLocalIdent(crayPtrName,
                                      crayPtrType,
-                                     StorageClass.FLOCAL,
+                                     sclass,
                                      Xcons.FvarRef(ident));  // ident.Ref() if C
   }
 
@@ -120,21 +133,140 @@ public class XMPcoarray {
                                     BasicType.Fint8Type);
   }
 
-  /***********************
-  public void genDecl_descPointer(Boolean isSave, Xobject initValue) {
-    if(descPtrId != null) {
-      XMP.fatal("descPtrId is already set.");
+
+
+  /*
+   *  b. "CALL coarray_count_size(count, elem)"
+   */
+  public Xobject makeStmt_countCoarrays()
+  {
+    BlockList blist = fblock.getBody();
+    return makeStmt_countCoarrays(blist);
+  }
+
+  public Xobject makeStmt_countCoarrays(BlockList blist)
+  {
+    Xobject elem = getElementLengthExpr();
+
+    if (elem == null) {
+      XMP.error("current restriction: " + 
+                "could not find the element length of: "+getName());
     }
 
-    String descPtrName = getDescPointerName();
-    Xtype xtype = Xtype.Fint8Type;
-    if (isSave)
-      _setSaveAttrInType(xtype);
+    int count = getTotalArraySize();
+    Xobject args = Xcons.List(Xcons.IntConstant(count), elem);
+    Ident subr = blist.declLocalIdent(COUNT_SIZE_NAME,
+                                      BasicType.FexternalSubroutineType);
 
-    descPtrId = env.declInternIdent(descPtrName, xtype);
-    descPtrId.setFparamValue(Xcons.List(initValue, null));
+    return subr.callSubroutine(args);
   }
-  **************************/
+
+
+  /*
+   *  b. "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"
+   *     for Ver. 4, 6 and 7/FJ&MPI3
+   */
+  public Xobject makeStmt_regmemStatic()
+  {
+    BlockList blist = fblock.getBody();
+    return makeStmt_regmemStatic(blist);
+  }
+
+  public Xobject makeStmt_regmemStatic(BlockList blist)
+  {
+    String subrName = REGMEM_STATIC_NAME;
+    Ident subrIdent =
+      blist.declLocalIdent(subrName, BasicType.FexternalSubroutineType);
+
+    // arg2
+    FunctionType ftype = new FunctionType(Xtype.Fint8Type, Xtype.TQ_FINTRINSIC);
+    Ident locId = env.declIntrinsicIdent("loc", ftype);
+    Xobject locCall = locId.Call(Xcons.List(getIdent()));
+
+    // get args
+    Xobject args = _getCommonArgs(locCall);
+
+    // CALL stmt
+    return subrIdent.callSubroutine(args);
+  }
+
+   
+  /*
+   *  b. "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"
+   *     for Ver. 3 and 7/GASNet
+   */
+  public Xobject makeStmt_allocStatic()
+  {
+    BlockList blist = fblock.getBody();
+    return makeStmt_allocStatic(blist);
+  }
+
+  public Xobject makeStmt_allocStatic(BlockList blist)
+  {
+    String subrName = ALLOC_STATIC_NAME;
+    Ident subrIdent =
+      blist.declLocalIdent(subrName, BasicType.FexternalSubroutineType);
+
+    // arg2
+    Ident crayPtrId = getCrayPointerId();
+
+    // get args
+    Xobject args = _getCommonArgs(crayPtrId);
+
+    // CALL stmt
+    return subrIdent.callSubroutine(args);
+  }
+
+
+  // common arguments
+  //
+  private Xobject _getCommonArgs(Xobject arg2)
+  {
+    // arg1
+    Ident descPtr = getDescPointerId();
+    // arg3
+    Xobject count = getTotalArraySizeExpr();
+    // arg4
+    Xobject elem = getElementLengthExpr();
+    if (elem==null)
+      XMP.fatal("elem must not be null.");
+    // arg5
+    String varName = getName();
+    Xobject varNameObj = 
+      Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
+    // arg6
+    Xobject nameLen = Xcons.IntConstant(varName.length());
+
+    // args
+    Xobject args = Xcons.List(descPtr,
+                              arg2,
+                              count,
+                              elem,
+                              varNameObj,
+                              nameLen);
+    if (args.hasNullArg())
+      XMP.fatal("INTERNAL: contains null argument");
+
+    return args;
+  }
+
+
+  /*****************************************************
+    String varName = coarray.getName();
+    Xobject varNameObj = 
+      Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
+    Xobject args = Xcons.List(descPtrId,
+                              arg2,
+                              Xcons.IntConstant(count),
+                              elem,
+                              varNameObj,
+                              Xcons.IntConstant(varName.length()));
+    if (args.hasNullArg())
+      XMP.fatal("INTERNAL: generated null argument (buildSubroutine_initcoarrays)");
+    Ident subr = body.declLocalIdent(fname, BasicType.FexternalSubroutineType);
+
+    Xobject subrCall = subr.callSubroutine(args);
+  *******************************************************/
 
 
   /*
@@ -768,6 +900,11 @@ public class XMPcoarray {
   }
 
   public Ident getCrayPointerId() {
+    if (descPtrId == null) {
+      XMP.warning("INTERNAL: illegal null crayPtrId (XMPcoppy.getCrayPointerId)");
+      return null;
+    }
+
     return crayPtrId;
   }
 
@@ -780,8 +917,10 @@ public class XMPcoarray {
   }
 
   public Ident getDescPointerId() {
-    if (descPtrId == null)
+    if (descPtrId == null) {
       XMP.warning("INTERNAL: illegal null descPtrId (XMPcoppy.getDescPointerId)");
+      return null;
+    }
 
     return descPtrId;
   }

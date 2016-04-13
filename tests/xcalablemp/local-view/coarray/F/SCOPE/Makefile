@@ -15,7 +15,7 @@ BUG457= sakagami457.x
 BUG458= #sakagami458-join.x   ## Type8 NG
 BUG459= #sakagami459-join.x   ## Type8 NG
 BUG460= sakagami460-join.x sakagami460-2.x #bug460-3.x (err in SX because of bug479)
-BUG472= bug472.x bug472G1.x bug472G2.x 
+BUG472= bug472.x bug472G1.x bug472G2.x bb472.x bb472G1.x bb472G2.x
 
 SPECIALS= # bug460get.x bug460put.x
 
