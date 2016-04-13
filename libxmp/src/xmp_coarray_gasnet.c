@@ -117,8 +117,6 @@ void _XMP_gasnet_sync_memory()
     GASNET_BLOCKUNTIL(_xmp_gasnet_stride_queue[i] == _XMP_STRIDE_DONE);
 
   _xmp_gasnet_stride_wait_size = 0;
-
-  gasnet_wait_syncnbi_puts();
 }
 
 /**
@@ -145,8 +143,8 @@ static void _gasnet_c_to_c_put(const int target_rank, const size_t dst_offset,
 			       const size_t src_offset, const _XMP_coarray_t *dst_desc, 
 			       const void *src, const size_t transfer_size)
 {
-  gasnet_put_nbi_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, (char *)src+src_offset, 
-		      transfer_size);
+  gasnet_put_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, (char *)src+src_offset, 
+		  transfer_size);
 }
 
 /*****************************************************************************************/
@@ -810,7 +808,7 @@ void _XMP_gasnet_shortcut_put(const int target_rank, _XMP_coarray_t *dst_desc, v
 			      const size_t src_elmts, const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){
-    gasnet_put_nbi_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
+    gasnet_put_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
   }
   else if(src_elmts == 1){
     _gasnet_scalar_shortcut_mput(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);

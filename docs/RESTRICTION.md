@@ -24,7 +24,6 @@ you need to use xmp_sync_all() or barrier directive to divide communication.
 ## On the K computer, FX100, and FX10
 * The number of coarrays in an application is 508 or less
 * An application cannot be used in more than 82,944 processes
-* The coarray transfer data size is 16,777,212 (2^24-4) bytes or less
 * Post tag value is between 0 and 14 (0 <= tag <= 14)
 
 # For module file of XcalableMP/Fortran

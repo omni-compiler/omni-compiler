@@ -84,7 +84,7 @@ void gmove_gs_gs(){
 #pragma xmp task on p1
   {
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove in
   a[0:N/4][N/2:N/2][4:N-5] = b[N/2:N/4:2][0:N/2][0:N-5];
 #endif
@@ -130,7 +130,7 @@ void gmove_gs_ge(){
 #pragma xmp task on p1
   {
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove in
   a[0:N/4][N/2:N/2][4:N-5] = b[3][4][5];
 #endif
@@ -173,7 +173,7 @@ void gmove_ge_ge(){
 #pragma xmp task on p1
   {
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove in
   a[7][8][9] = b[3][4][5];
 #endif
@@ -208,7 +208,7 @@ void gmove_ls_gs(){
 #pragma xmp task on p1
   {
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove in
   x[0:N/4][N/2:N/2][4:N-5] = b[N/2:N/4:2][0:N/2][0:N-5];
 #endif
@@ -255,7 +255,7 @@ void gmove_ls_ge(){
 #pragma xmp task on p1
   {
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove in
   x[0:N/4][N/2:N/2][4:N-5] = b[3][4][5];
 #endif
@@ -302,7 +302,7 @@ void gmove_le_ge(){
 #pragma xmp task on p1
   {
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove in
   x[7][8][9] = b[3][4][5];
 #endif
@@ -343,7 +343,7 @@ void gmove_s_ge(){
 #pragma xmp task on p1
   {
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
 #pragma xmp gmove in
   s = b[3][4][5];
 #endif
@@ -374,7 +374,7 @@ void gmove_s_ge(){
 //--------------------------------------------------------
 int main(){
 
-#if (XMP_MPI_VERSION == 3)
+#ifdef _MPI3
   gmove_gs_gs();
   gmove_gs_ge();
   gmove_ge_ge();

@@ -625,6 +625,7 @@ ac_includes_default="\
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+ONESIDED_LIB
 MKRULESDIR
 TARGET_ARCH
 API_FLAVOR
@@ -3068,8 +3069,8 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
-# expand $ac_aux_dir to an absolute path
-am_aux_dir=`cd $ac_aux_dir && pwd`
+# Expand $ac_aux_dir to an absolute path.
+am_aux_dir=`cd "$ac_aux_dir" && pwd`
 
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
@@ -3466,6 +3467,7 @@ END
   fi
 fi
 
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
 $as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
     # Check whether --enable-maintainer-mode was given.
@@ -3493,52 +3495,6 @@ MKDIR_P="install -m 755 -d"
 
 
 TOPDIR=${ac_pwd}
-
-
-# --------------------------------------------------------------------
-ac_config_files="$ac_config_files XcodeML-Common/Makefile"
-
-ac_config_files="$ac_config_files C-FrontEnd/src/Makefile"
-
-ac_config_files="$ac_config_files C-BackEnd/Makefile"
-
-ac_config_files="$ac_config_files F-FrontEnd/src/Makefile"
-
-ac_config_files="$ac_config_files F-FrontEnd/gnu_module/Makefile"
-
-ac_config_files="$ac_config_files F-BackEnd/Makefile"
-
-ac_config_files="$ac_config_files XcodeML-Exc-Tools/Makefile"
-
-ac_config_files="$ac_config_files XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java"
-
-ac_config_files="$ac_config_files Driver/src/Makefile"
-
-ac_config_files="$ac_config_files Driver/etc/ompcc.conf"
-
-ac_config_files="$ac_config_files Driver/etc/ompf90.conf"
-
-ac_config_files="$ac_config_files Driver/etc/xmpcc.conf"
-
-ac_config_files="$ac_config_files Driver/etc/xmpf90.conf"
-
-ac_config_files="$ac_config_files Driver/bin/ompcc"
-
-ac_config_files="$ac_config_files Driver/bin/ompf90"
-
-ac_config_files="$ac_config_files Driver/bin/xmpcc"
-
-ac_config_files="$ac_config_files Driver/bin/xmpf90"
-
-ac_config_files="$ac_config_files libxmp/include/Makefile"
-
-ac_config_files="$ac_config_files libxmp/src/Makefile"
-
-ac_config_files="$ac_config_files libxmp/src_threads/Makefile"
-
-ac_config_files="$ac_config_files libxmpf/include/Makefile"
-
-ac_config_files="$ac_config_files libxmpf/src/Makefile"
 
 
 # --------------------------------------------------------------------
@@ -12909,6 +12865,88 @@ ac_config_commands="$ac_config_commands depend"
 
 unset program_transform_name
 
+# --------------------------------------------------------------------
+# Set version file
+VERSIONTXT="./Driver/etc/version"
+if test -d .git; then
+  which git 1>/dev/null 2>/dev/null
+  if test $? -eq 0; then
+    VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
+    echo -n Version:0.9.3, ${VERSION} > ${VERSIONTXT}
+  else
+    echo -n "This omni compiler was compiled on no-git environment however git clone it." > ${VERSIONTXT}
+  fi
+fi
+
+# check use one-sided
+isOnesided=no
+if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
+  isOnesided=yes
+  ONESIDED_LIB="Fujitsu RDMA"
+  isCoarray=yes
+  isPostWait=yes
+  isLockUnlock=no
+elif test x$use_gasnet = xyes; then
+  isOnesided=yes
+  ONESIDED_LIB=GASNet
+  isCoarray=yes
+  isPostWait=yes
+  isLockUnlock=yes
+elif test x$use_mpi3_onesided = xyes; then
+  isOnesided=yes
+  ONESIDED_LIB=MPI3
+  isCoarray=yes
+  isPostWait=yes
+  isLockUnlock=no
+fi
+
+
+# --------------------------------------------------------------------
+ac_config_files="$ac_config_files XcodeML-Common/Makefile"
+
+ac_config_files="$ac_config_files C-FrontEnd/src/Makefile"
+
+ac_config_files="$ac_config_files C-BackEnd/Makefile"
+
+ac_config_files="$ac_config_files F-FrontEnd/src/Makefile"
+
+ac_config_files="$ac_config_files F-FrontEnd/gnu_module/Makefile"
+
+ac_config_files="$ac_config_files F-BackEnd/Makefile"
+
+ac_config_files="$ac_config_files XcodeML-Exc-Tools/Makefile"
+
+ac_config_files="$ac_config_files XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java"
+
+ac_config_files="$ac_config_files Driver/src/Makefile"
+
+ac_config_files="$ac_config_files Driver/etc/ompcc.conf"
+
+ac_config_files="$ac_config_files Driver/etc/ompf90.conf"
+
+ac_config_files="$ac_config_files Driver/etc/xmpcc.conf"
+
+ac_config_files="$ac_config_files Driver/etc/xmpf90.conf"
+
+ac_config_files="$ac_config_files Driver/bin/ompcc"
+
+ac_config_files="$ac_config_files Driver/bin/ompf90"
+
+ac_config_files="$ac_config_files Driver/bin/xmpcc"
+
+ac_config_files="$ac_config_files Driver/bin/xmpf90"
+
+ac_config_files="$ac_config_files libxmp/include/Makefile"
+
+ac_config_files="$ac_config_files libxmp/src/Makefile"
+
+ac_config_files="$ac_config_files libxmp/src_threads/Makefile"
+
+ac_config_files="$ac_config_files libxmpf/include/Makefile"
+
+ac_config_files="$ac_config_files libxmpf/src/Makefile"
+
+
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -13711,6 +13749,25 @@ do
   case $ac_config_target in
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "Driver/atool/src/include/nata/nata_config.h") CONFIG_HEADERS="$CONFIG_HEADERS Driver/atool/src/include/nata/nata_config.h" ;;
+    "libompc/src/Makefile") CONFIG_FILES="$CONFIG_FILES libompc/src/Makefile" ;;
+    "libompf/src/Makefile") CONFIG_FILES="$CONFIG_FILES libompf/src/Makefile" ;;
+    "libtlog/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libtlog/src_threads/Makefile" ;;
+    "libtlog/src_mpi/Makefile") CONFIG_FILES="$CONFIG_FILES libtlog/src_mpi/Makefile" ;;
+    "libtlog/src_mpi/bin/tlogview") CONFIG_FILES="$CONFIG_FILES libtlog/src_mpi/bin/tlogview" ;;
+    "libacc/src/Makefile") CONFIG_FILES="$CONFIG_FILES libacc/src/Makefile" ;;
+    "libacc/include/Makefile") CONFIG_FILES="$CONFIG_FILES libacc/include/Makefile" ;;
+    "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
+    "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "Driver/atool/mk/vars.mk") CONFIG_FILES="$CONFIG_FILES Driver/atool/mk/vars.mk" ;;
+    "Driver/atool/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/atool/Makefile" ;;
+    "Driver/atool/src/lib/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/lib/Makefile" ;;
+    "Driver/atool/src/include/nata/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/include/nata/Makefile" ;;
+    "Driver/atool/src/include/nata/nata_platform.h") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/include/nata/nata_platform.h" ;;
+    "Driver/atool/src/cmd/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/cmd/Makefile" ;;
+    "Driver/atool/src/cmd/paths.h") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/cmd/paths.h" ;;
+    "modify-config") CONFIG_COMMANDS="$CONFIG_COMMANDS modify-config" ;;
+    "includes") CONFIG_COMMANDS="$CONFIG_COMMANDS includes" ;;
+    "depend") CONFIG_COMMANDS="$CONFIG_COMMANDS depend" ;;
     "XcodeML-Common/Makefile") CONFIG_FILES="$CONFIG_FILES XcodeML-Common/Makefile" ;;
     "C-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES C-FrontEnd/src/Makefile" ;;
     "C-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES C-BackEnd/Makefile" ;;
@@ -13733,25 +13790,6 @@ do
     "libxmp/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libxmp/src_threads/Makefile" ;;
     "libxmpf/include/Makefile") CONFIG_FILES="$CONFIG_FILES libxmpf/include/Makefile" ;;
     "libxmpf/src/Makefile") CONFIG_FILES="$CONFIG_FILES libxmpf/src/Makefile" ;;
-    "libompc/src/Makefile") CONFIG_FILES="$CONFIG_FILES libompc/src/Makefile" ;;
-    "libompf/src/Makefile") CONFIG_FILES="$CONFIG_FILES libompf/src/Makefile" ;;
-    "libtlog/src_threads/Makefile") CONFIG_FILES="$CONFIG_FILES libtlog/src_threads/Makefile" ;;
-    "libtlog/src_mpi/Makefile") CONFIG_FILES="$CONFIG_FILES libtlog/src_mpi/Makefile" ;;
-    "libtlog/src_mpi/bin/tlogview") CONFIG_FILES="$CONFIG_FILES libtlog/src_mpi/bin/tlogview" ;;
-    "libacc/src/Makefile") CONFIG_FILES="$CONFIG_FILES libacc/src/Makefile" ;;
-    "libacc/include/Makefile") CONFIG_FILES="$CONFIG_FILES libacc/include/Makefile" ;;
-    "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
-    "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "Driver/atool/mk/vars.mk") CONFIG_FILES="$CONFIG_FILES Driver/atool/mk/vars.mk" ;;
-    "Driver/atool/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/atool/Makefile" ;;
-    "Driver/atool/src/lib/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/lib/Makefile" ;;
-    "Driver/atool/src/include/nata/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/include/nata/Makefile" ;;
-    "Driver/atool/src/include/nata/nata_platform.h") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/include/nata/nata_platform.h" ;;
-    "Driver/atool/src/cmd/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/cmd/Makefile" ;;
-    "Driver/atool/src/cmd/paths.h") CONFIG_FILES="$CONFIG_FILES Driver/atool/src/cmd/paths.h" ;;
-    "modify-config") CONFIG_COMMANDS="$CONFIG_COMMANDS modify-config" ;;
-    "includes") CONFIG_COMMANDS="$CONFIG_COMMANDS includes" ;;
-    "depend") CONFIG_COMMANDS="$CONFIG_COMMANDS depend" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -14482,42 +14520,6 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 ${MAKE} clean
-
-# --------------------------------------------------------------------
-# Set version file
-VERSIONTXT="./Driver/etc/version"
-if test -d .git; then
-  which git 1>/dev/null 2>/dev/null
-  if test $? -eq 0; then
-    VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
-    echo -n Version:0.9.3, ${VERSION} > ${VERSIONTXT}
-  else
-    echo -n "This omni compiler was compiled on no-git environment however git clone it." > ${VERSIONTXT}
-  fi
-fi
-
-# check use one-sided
-isOnesided=no
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
-  isOnesided=yes
-  how_onesided="Fujitsu RDMA"
-  isCoarray=yes
-  isPostWait=yes
-  isLockUnlock=no
-elif test x$use_gasnet = xyes; then
-  isOnesided=yes
-  how_onesided=GASNet
-  isCoarray=yes
-  isPostWait=yes
-  isLockUnlock=yes
-elif test x$use_mpi3_onesided = xyes; then
-  isOnesided=yes
-  how_onesided=MPI3
-  isCoarray=yes
-  isPostWait=yes
-  isLockUnlock=no
-fi
-
 # --------------------------------------------------------------------
 # Output
 
@@ -14559,7 +14561,7 @@ cat << EOF
 EOF
 
 if test x${isOnesided} = xyes; then
-  echo "      Communication Library      : $how_onesided"
+  echo "      Communication Library      : $ONESIDED_LIB"
 fi
 
 if test x${use_gasnet} = xyes; then

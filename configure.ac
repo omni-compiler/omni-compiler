@@ -57,30 +57,6 @@ TOPDIR=${ac_pwd}
 AC_SUBST(TOPDIR)
 
 # --------------------------------------------------------------------
-AC_CONFIG_FILES(XcodeML-Common/Makefile)
-AC_CONFIG_FILES(C-FrontEnd/src/Makefile)
-AC_CONFIG_FILES(C-BackEnd/Makefile)
-AC_CONFIG_FILES(F-FrontEnd/src/Makefile)
-AC_CONFIG_FILES(F-FrontEnd/gnu_module/Makefile)
-AC_CONFIG_FILES(F-BackEnd/Makefile)
-AC_CONFIG_FILES(XcodeML-Exc-Tools/Makefile)
-AC_CONFIG_FILES(XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java)
-AC_CONFIG_FILES(Driver/src/Makefile)
-AC_CONFIG_FILES(Driver/etc/ompcc.conf)
-AC_CONFIG_FILES(Driver/etc/ompf90.conf)
-AC_CONFIG_FILES(Driver/etc/xmpcc.conf)
-AC_CONFIG_FILES(Driver/etc/xmpf90.conf)
-AC_CONFIG_FILES(Driver/bin/ompcc)
-AC_CONFIG_FILES(Driver/bin/ompf90)
-AC_CONFIG_FILES(Driver/bin/xmpcc)
-AC_CONFIG_FILES(Driver/bin/xmpf90)
-AC_CONFIG_FILES(libxmp/include/Makefile)
-AC_CONFIG_FILES(libxmp/src/Makefile)
-AC_CONFIG_FILES(libxmp/src_threads/Makefile)
-AC_CONFIG_FILES(libxmpf/include/Makefile)
-AC_CONFIG_FILES(libxmpf/src/Makefile)
-
-# --------------------------------------------------------------------
 # check on what system we are running.
 
 #AC_CANONICAL_SYSTEM
@@ -2164,9 +2140,6 @@ AC_CONFIG_COMMANDS([depend],
 
 unset program_transform_name
 
-AC_OUTPUT
-${MAKE} clean
-
 # --------------------------------------------------------------------
 # Set version file
 VERSIONTXT="./Driver/etc/version"
@@ -2184,24 +2157,51 @@ fi
 isOnesided=no
 if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
   isOnesided=yes
-  how_onesided="Fujitsu RDMA"
+  ONESIDED_LIB="Fujitsu RDMA"
   isCoarray=yes
   isPostWait=yes
   isLockUnlock=no
 elif test x$use_gasnet = xyes; then
   isOnesided=yes
-  how_onesided=GASNet
+  ONESIDED_LIB=GASNet
   isCoarray=yes
   isPostWait=yes
   isLockUnlock=yes
 elif test x$use_mpi3_onesided = xyes; then
   isOnesided=yes
-  how_onesided=MPI3
+  ONESIDED_LIB=MPI3
   isCoarray=yes
   isPostWait=yes
   isLockUnlock=no
 fi
-			      
+AC_SUBST(ONESIDED_LIB)
+
+# --------------------------------------------------------------------
+AC_CONFIG_FILES(XcodeML-Common/Makefile)
+AC_CONFIG_FILES(C-FrontEnd/src/Makefile)
+AC_CONFIG_FILES(C-BackEnd/Makefile)
+AC_CONFIG_FILES(F-FrontEnd/src/Makefile)
+AC_CONFIG_FILES(F-FrontEnd/gnu_module/Makefile)
+AC_CONFIG_FILES(F-BackEnd/Makefile)
+AC_CONFIG_FILES(XcodeML-Exc-Tools/Makefile)
+AC_CONFIG_FILES(XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java)
+AC_CONFIG_FILES(Driver/src/Makefile)
+AC_CONFIG_FILES(Driver/etc/ompcc.conf)
+AC_CONFIG_FILES(Driver/etc/ompf90.conf)
+AC_CONFIG_FILES(Driver/etc/xmpcc.conf)
+AC_CONFIG_FILES(Driver/etc/xmpf90.conf)
+AC_CONFIG_FILES(Driver/bin/ompcc)
+AC_CONFIG_FILES(Driver/bin/ompf90)
+AC_CONFIG_FILES(Driver/bin/xmpcc)
+AC_CONFIG_FILES(Driver/bin/xmpf90)
+AC_CONFIG_FILES(libxmp/include/Makefile)
+AC_CONFIG_FILES(libxmp/src/Makefile)
+AC_CONFIG_FILES(libxmp/src_threads/Makefile)
+AC_CONFIG_FILES(libxmpf/include/Makefile)
+AC_CONFIG_FILES(libxmpf/src/Makefile)
+
+AC_OUTPUT
+${MAKE} clean
 # --------------------------------------------------------------------
 # Output
 
@@ -2243,7 +2243,7 @@ cat << EOF
 EOF
 
 if test x${isOnesided} = xyes; then
-  echo "      Communication Library      : $how_onesided"
+  echo "      Communication Library      : $ONESIDED_LIB"
 fi
 
 if test x${use_gasnet} = xyes; then
