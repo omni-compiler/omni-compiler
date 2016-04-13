@@ -1,6 +1,8 @@
-!-------------------------------
-!  coarray intrinsics
-!-------------------------------
+!! This file is alive only for compatibility.
+
+!! These functions are not solved yet.
+      integer, external :: num_images, this_image   !! raw name libraries
+
 !! inquiry functions
       integer, external :: xmpf_image_index
 !     interface
@@ -10,71 +12,7 @@
 !        end function xmpf_image_index_coarray_sub
 !     end interface
 
-      interface xmpf_cobound
-         !! restriction: kind must be 4.
-         function xmpf_cobound_nodim(descptr, kind, lu, corank)         &
-     &    result(bounds)
-           integer(8), intent(in) :: descptr
-           integer, intent(in) :: corank, lu, kind
-           integer bounds(corank)           !! allocate here in Fortran
-         end function xmpf_cobound_nodim
-         !! restriction: kind must be 4.
-         function xmpf_cobound_dim(descptr, dim, kind, lu, corank)      &
-     &    result(bound)
-           integer(8), intent(in) :: descptr
-           integer, intent(in) :: corank, dim, lu, kind
-           integer bound
-         end function xmpf_cobound_dim
-      end interface
-
-!! transformation functions
-      integer, external :: num_images, this_image   !! raw name libraries
-      interface xmpf_this_image
-         function xmpf_this_image_coarray_wrap(descptr, corank)         &
-     &    result(image)
-           integer(8), intent(in) :: descptr
-           integer, intent(in) :: corank
-           integer image(corank)
-         end function xmpf_this_image_coarray_wrap
-         function xmpf_this_image_coarray_dim(descptr, corank, dim)     &
-     &    result(coindex)
-           integer(8), intent(in) :: descptr
-           integer, intent(in) :: corank, dim
-           integer coindex
-         end function xmpf_this_image_coarray_dim
-      end interface
-
-
-!-------------------------------
-!  coarray runtime interface
-!-------------------------------
-!! synchronization
-      include "xmp_coarray_sync.h"
-!!!      include "xmp_coarray_sync_sxace.h"
-
-!! reference of coindexed objects
-      include "xmp_coarray_get.h"
-
-!! assignment statements to coindex variables
-      include "xmp_coarray_put.h"
-
-!! allocate statement
-      include "xmp_coarray_alloc.h"
-
-!! reduction subroutines
-      include "xmp_coarray_reduction.h"
-
 !! hidden utilities
       integer, external :: xmpf_coarray_allocated_bytes
       integer, external :: xmpf_coarray_garbage_bytes
 
-!!! This is not useful definition because it cannot be found by 
-!!! XMPenv.findVarIdent(...) and therefore will be double-defined.
-!!      interface
-!!        integer function xmpf_coarray_get_image_index                   &
-!!     &    (descptr, corank, i1, i2, i3, i4, i5, i6, i7)
-!!        integer(8), intent(in) :: descptr
-!!        integer, intent(in) :: corank, i1
-!!        integer, intent(in), optional :: i2, i3, i4, i5, i6, i7
-!!        end function
-!!      end interface

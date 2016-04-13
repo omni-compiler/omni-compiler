@@ -458,7 +458,10 @@ public class XMPtransCoarrayRun
     _setLocalCoarrays();
     /* visibleCoarrays will be set after run1 */
 
-    _check_ifIncludeXmpLib();
+    /////////////////////////////////////
+    // SKIP 
+    /////////_check_ifIncludeXmpLib();
+    /////////////////////////////////////
 
     if (version > 3)
       disp_version("run1, " + getName());

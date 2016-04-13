@@ -1,3 +1,5 @@
+include_HEADERS = xmpf_coarray_decl.mod
+
 CC           = @MPI_CC@
 FC           = @MPI_FC@
 FCFLAGS      = @MPI_FCFLAGS@ @OMNI_NTV_FCFLAGS@
@@ -21,6 +23,12 @@ libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h $(XMPF_INC_DIR)/xmpf_interna
 %.F90: %.F90.sh
 	. $< $(TARGET) > $@
 
+%.mod:  %.f90
+	$(FC) $(FCFLAGS) -c -I $(includedir) $<
+
+%.o:  %.f90
+	$(FC) $(FCFLAGS) -c -I $(includedir) $<
+
 xmpf_main.o: xmpf_main.F90
 	$(FC) $(FCFLAGS) $< -c
 
@@ -30,7 +38,7 @@ if GASNET
                          xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
                          xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
                          xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
-                         xmpf_coarray_reduction.F90
+                         xmpf_coarray_reduction.F90 xmpf_coarray_decl.f90
     CFLAGS            += -D_XMP_GASNET
 if POWERPC
     FCFLAGS           += -WF,-D_XMP_GASNET
@@ -45,7 +53,7 @@ if MPI3_ONESIDED
                          xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
                          xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
                          xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
-                         xmpf_coarray_reduction.F90
+                         xmpf_coarray_reduction.F90 xmpf_coarray_decl.f90
     CFLAGS            += -D_XMP_MPI3_ONESIDED
     FCFLAGS           += -D_XMP_MPI3_ONESIDED
 endif
@@ -60,7 +68,7 @@ if FJRDMA
                          xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
                          xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
                          xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
-                         xmpf_coarray_reduction.F90
+                         xmpf_coarray_reduction.F90 xmpf_coarray_decl.f90
     CFLAGS            += -D_XMP_FJRDMA
     FCFLAGS           += -D_XMP_FJRDMA
 endif
@@ -75,3 +83,4 @@ clean-local:
 	rm -f xmpf_coarray_get_wrap.f90
 	rm -f xmpf_coarray_alloc_wrap.f90
 	rm -f xmpf_coarray_reduction.F90
+	rm -f xmpf_coarray_decl.o  xmpf_coarray_decl.mod
