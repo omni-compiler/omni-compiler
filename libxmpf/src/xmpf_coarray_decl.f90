@@ -79,8 +79,7 @@ module xmpf_coarray_decl
 contains
   !! test
   subroutine xmpf_coarray_hello
-    write(*,100) this_image()
-100 format("[",i0,"] Hello Coarray")
+    write(*,*) "Hello Coarray"
   end subroutine xmpf_coarray_hello
 
 end module xmpf_coarray_decl
