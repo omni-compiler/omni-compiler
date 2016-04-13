@@ -16,29 +16,14 @@ libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h $(XMPF_INC_DIR)/xmpf_interna
                     xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
                     xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
 		    xmpf_template.c
-
-%.f90: %.f90.sh
-	. $< $(TARGET) > $@
-
-%.F90: %.F90.sh
-	. $< $(TARGET) > $@
-
-%.mod:  %.f90
-	$(FC) $(FCFLAGS) -c -I $(includedir) $<
-
-%.o:  %.f90
-	$(FC) $(FCFLAGS) -c -I $(includedir) $<
-
-xmpf_main.o: xmpf_main.F90
-	$(FC) $(FCFLAGS) $< -c
+libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 \
+	            xmpf_coarray_lib.c \
+                    xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
+                    xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
+                    xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
+                    xmpf_coarray_reduction.F90 xmpf_coarray_decl.f90
 
 if GASNET
-    libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 \
-                         xmpf_coarray_lib.c \
-                         xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
-                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
-                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
-                         xmpf_coarray_reduction.F90 xmpf_coarray_decl.f90
     CFLAGS            += -D_XMP_GASNET
 if POWERPC
     FCFLAGS           += -WF,-D_XMP_GASNET
@@ -48,12 +33,6 @@ endif
 endif
 
 if MPI3_ONESIDED
-    libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 \
-                         xmpf_coarray_lib.c \
-                         xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
-                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
-                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
-                         xmpf_coarray_reduction.F90 xmpf_coarray_decl.f90
     CFLAGS            += -D_XMP_MPI3_ONESIDED
     FCFLAGS           += -D_XMP_MPI3_ONESIDED
 endif
@@ -63,15 +42,33 @@ if MPI3
 endif
 
 if FJRDMA
-    libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 \
-                         xmpf_coarray_lib.c \
-                         xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
-                         xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
-                         xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
-                         xmpf_coarray_reduction.F90 xmpf_coarray_decl.f90
     CFLAGS            += -D_XMP_FJRDMA
     FCFLAGS           += -D_XMP_FJRDMA
 endif
+
+if SUPERUX
+  COARRAY_SYNC_H = xmp_coarray_sync_sxace.h
+else
+  COARRAY_SYNC_H = xmp_coarray_sync.h
+endif
+
+WORKDIR = ./include_work
+
+%.f90: %.f90.sh
+	. $< $(TARGET) > $@
+
+%.F90: %.F90.sh
+	. $< $(TARGET) > $@
+
+xmpf_coarray_decl.mod xmpf_coarray_decl.o:  xmpf_coarray_decl.f90
+	rm -rf $(WORKDIR)
+	mkdir $(WORKDIR)
+	cp -p ../include/*.h $(WORKDIR)
+	cp -p ../include/$(COARRAY_SYNC_H) $(WORKDIR)/xmp_coarray_sync.h
+	$(FC) $(FCFLAGS) -c -I $(WORKDIR) $<
+
+xmpf_main.o: xmpf_main.F90
+	$(FC) $(FCFLAGS) $< -c
 
 install-exec-local: xmpf_main.o
 	test -z $(DESTDIR)$(libdir) || $(MKDIR_P) $(DESTDIR)$(libdir)
@@ -83,4 +80,5 @@ clean-local:
 	rm -f xmpf_coarray_get_wrap.f90
 	rm -f xmpf_coarray_alloc_wrap.f90
 	rm -f xmpf_coarray_reduction.F90
+	rm -rf $(WORKDIR)
 	rm -f xmpf_coarray_decl.o  xmpf_coarray_decl.mod
