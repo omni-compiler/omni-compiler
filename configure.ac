@@ -1396,10 +1396,18 @@ if test "x${doMPI3}" = "xyes"; then
   OMNI_X2X_FLAGS="${OMNI_X2X_FLAGS} -fasync"
 fi
 
+if test x${use_tca} = xyes; then
+  if test x${doMPI3} = xno -a x${use_gasnet} = xno; then
+    echo "Error!! TCA must use MPI version 3 or GASNet"
+    exit 1
+  fi  
+fi
+
 use_mpi3_onesided=no
 if test "x${doMPI3}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu"; then
   use_mpi3_onesided=yes
 fi
+
 
 AM_CONDITIONAL(MPI3, test "x${doMPI3}" = "xyes")
 AM_CONDITIONAL(MPI3_ONESIDED, test "x${use_mpi3_onesided}" = "xyes")
@@ -2203,6 +2211,11 @@ AC_CONFIG_FILES(libxmpf/src/Makefile)
 AC_OUTPUT
 ${MAKE} clean
 # --------------------------------------------------------------------
+if test x${use_tca} = xyes; then
+  ONESIDED_LIB="$ONESIDED_LIB + TCA"
+fi
+
+# --------------------------------------------------------------------
 # Output
 
 cat << EOF
@@ -2259,9 +2272,5 @@ fi
 
 if test x${domod2xmod} = xyes; then
   echo "    Translate .mod to .xmod      : $domod2xmod"
-fi
-  
-if test x${use_tca} = xyes; then
-  echo "    TCA                   : yes"
 fi
 echo "=================================================="

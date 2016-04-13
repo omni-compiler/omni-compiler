@@ -424,7 +424,7 @@ one_statement:
         ;
 
 statement:      /* entry */
-          PROGRAM program_name
+          PROGRAM IDENTIFIER
           { $$ = list1(F_PROGRAM_STATEMENT,$2); }
         | ENDPROGRAM name_or_null
           { $$ = list1(F95_ENDPROGRAM_STATEMENT,$2); }

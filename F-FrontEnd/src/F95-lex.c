@@ -345,6 +345,7 @@ seems_type_or_func_attr(int kw) {
             kw == KW_INTEGER ||
             kw == KW_LOGICAL ||
             kw == KW_REAL ||
+	    kw == CONSTANT ||
             kw == PURE ||
             kw == RECURSIVE) ? TRUE : FALSE;
 }
