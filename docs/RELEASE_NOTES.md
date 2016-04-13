@@ -1,5 +1,10 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 0.9.4      2016/04/??
+* Support max/min loc in reduction directive.
+* Support array section in bcast directive.
+* Fixed lots of bugs.
+
 # ver. 0.9.3      2016/01/25
 * Improve performance of the task directive on a single node.
 * Support a full shadow for multi-dimensional arrays in XMP/F.

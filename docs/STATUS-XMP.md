@@ -17,13 +17,13 @@ Implementation Status version 0.9.3
 
 # Intrinsic and Library Procedures
 * Not support the following functions
-    * xmp_get_primary_image_index()
-    * xmp_get_image_index()
-    * xmp_sync_image()
-    * xmp_sync_images_all()
-    * xmp_nodes_attr()
+* xmp_get_primary_image_index()
+* xmp_get_image_index()
+* xmp_sync_image()
+* xmp_sync_images_all()
+* xmp_nodes_attr()
 
 # Known issues
 ## XMP/C
 * In "for statement" with loop directive, a distributed array cannot be used with different distribution manner.
-* In "for statement" with loop directive, index in a non-distributed array is not correct. ([xmp-users-ja:2]).
+* In "for statement" with loop directive, index in a non-distributed array is not correct.

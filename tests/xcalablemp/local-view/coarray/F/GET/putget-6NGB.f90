@@ -11,7 +11,8 @@
   sync all
 
 !--------- exec
-  if (me==2) a1d1(2:a1d1(3)[2_2])[3] = tmp(2:6)
+!!  if (me==2) a1d1(2:a1d1(3)[2_2])[3] = tmp(2:6)
+  if (me==2) a1d1(2:a1d1(3)[2])[3] = tmp(2:6)
   sync all
 
 !--------- check

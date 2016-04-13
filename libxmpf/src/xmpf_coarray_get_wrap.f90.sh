@@ -1,9 +1,12 @@
 #!/bin/bash
 
 #-------------------------------------------------------
-#  generator of xmp_coarray_get_wrap.f90
-#  see also ../include/xmp_lib_coarray_get.h
+#  GET INTERFACE TYPE 8
+#  generator for xmp_coarray_get_wrap.f90
+#  see also ../include/xmp_coarray_get.h{,.sh}
 #-------------------------------------------------------
+
+#DEBUG=1
 
 #--------------------
 #  sub
@@ -14,89 +17,161 @@ echo72 () {
     echo "$str"
 }
 
-print_function() {
-    tk=$1
-    typekind=$2
-    echo72     "      function xmpf_coarray_get${DIM}d_${tk}(descptr, baseaddr, element,"
-    echo72     "     &   coindex, mold, rank"
-    for i in `seq 1 ${DIM}`; do
-        echo72 "     &   , nextaddr${i}, count${i}"
-    done
-    echo '     &   ) result(val)'
-    echo '      integer(8), intent(in) :: descptr'
-    echo '      integer, intent(in) :: element, coindex, rank'
-    for i in `seq 1 ${DIM}`; do
-        echo "      integer, intent(in) :: count${i}"
-    done
-    echo '      integer(8), intent(in) :: baseaddr'
-    for i in `seq 1 ${DIM}`; do
-        echo "      integer(8), intent(in) :: nextaddr${i}"
-    done
-    case ${DIM} in
-        0)  echo "      ${typekind} :: mold" ;;
-        1)  echo "      ${typekind} :: mold(count1)" ;;
-        *)  echo72 "      ${typekind} :: mold(count1"
-            echo -n "         "
-            for i in `seq 2 ${DIM}`; do
-                echo -n ",count${i}"
-            done
-            echo ')' ;;
-    esac
-    case ${DIM} in
-        0)  echo "      ${typekind} :: val" ;;
-        1)  echo "      ${typekind} :: val(count1)" ;;
-        *)  echo72 "      ${typekind} :: val(count1"
-            echo -n "         "
-            for i in `seq 2 ${DIM}`; do
-                echo -n ",count${i}"
-            done
-            echo ')' ;;
-    esac
-    echo
+print_function_scalar() {
+    tk="$1"
+    typekind="$2"
+    element="$3"
 
-    case ${DIM} in
-        0)  echo72 "      call xmpf_coarray_get_scalar(descptr, baseaddr, element,"
-            echo   "     &   coindex, val)"
-            ;;
-        *)  echo72 "      call xmpf_coarray_get_array(descptr, baseaddr, element,"
-            echo72 "     &   coindex, val, rank"
-            for i in `seq 1 ${DIM}`; do
-                echo72 "     &   , nextaddr${i}, count${i}"
-            done
-            echo '     &   )'
-            ;;
+# DECLARATION
+    echo   '!-----------------------------------------------------------------------'
+    echo72 "      function xmpf_coarray_get0d_${tk}(descptr, coindex, mold)"
+    echo   '     &   result(dst)'
+    echo   '!-----------------------------------------------------------------------'
+    echo   '      integer(8), intent(in) :: descptr'
+    echo   '      integer, intent(in) :: coindex'
+    echo   "      ${typekind}, intent(in) :: mold"
+    case ${typekind} in
+        'character(*)')  echo    "      character(len=len(mold)) :: dst";;
+        *)               echo    "      ${typekind} :: dst";;
     esac
-    echo
+    echo   ''
 
-    echo "      end function"
-    echo
+# DEBUG MESSAGE
+    if [ "${DEBUG}" == "1" ]; then
+        echo   "      print *, \"SELECTED SPECIFIC FUNCTION:\""
+        echo   "      print *, \" xmpf_coarray_get0d_${tk}(descptr, coindex, mold)\""
+    fi
+
+# EXECUTION
+    echo72 "      call xmpf_coarray_get_scalar(descptr, loc(mold), ${element},"
+    echo   '     &   coindex, dst)'
+    echo   '      return'
+    echo   '      end function'
+    echo   ''
 }
 
+
+print_function_array() {
+    tk="$1"
+    typekind="$2"
+    element="$3"
+
+# DECLARATION
+    echo    '!-----------------------------------------------------------------------'
+    echo72  "      function xmpf_coarray_get${DIM}d_${tk}(descptr, coindex, mold)"
+    echo    '     &   result(dst)'
+    echo    '!-----------------------------------------------------------------------'
+    echo    '      integer(8), intent(in) :: descptr'
+    echo    '      integer, intent(in) :: coindex'
+
+    echo -n "      ${typekind}, intent(in) :: mold("
+    sep=''
+    for i in `seq 1 ${DIM}`; do
+        echo -n "${sep}:"
+        sep=','
+    done
+    echo ')'
+
+    case ${typekind} in
+        'character(*)')  echo72  "      character(len=len(mold)) ::";;
+        *)               echo72  "      ${typekind} ::";;
+    esac
+    if test ${DIM} -le 4; then
+        sep='     &   dst( '
+        for i in `seq 1 ${DIM}`; do
+            echo -n "${sep}size(mold,$i)"
+            sep=', '
+        done
+    else
+        echo72  '     &   dst( size(mold,1), size(mold,2), size(mold,3), size(mold,4),'
+        sep='     &        '
+        for i in `seq 5 ${DIM}`; do
+            echo -n "${sep}size(mold,$i)"
+            sep=', '
+        done
+    fi
+    echo    ' )'
+
+    echo    '      integer(8) :: base'
+    echo    "      integer :: i, skip(${DIM}), extent(${DIM})"
+    echo    ''
+
+# DEBUG MESSAGE
+    if [ "${DEBUG}" == "1" ]; then
+        echo   "      print *, \"SELECTED SPECIFIC FUNCTION:\""
+        echo   "      print *, \" xmpf_coarray_get${DIM}d_${tk}(descptr, coindex, mold)\""
+    fi
+
+# EXECUTION
+    echo -n '      base = loc(mold('
+    sep=''
+    for i in `seq 1 ${DIM}`; do
+        echo -n ${sep}1
+        sep=','
+    done
+    echo    '))'
+
+    echo    "      do i = 1, ${DIM}"
+    echo    '        extent(i) = size(mold,i)'
+    echo    '      end do'
+
+    for i in `seq 1 ${DIM}`; do
+        echo -n "      skip($i) = int( loc(mold("
+        sep=''
+        for j in `seq 1 ${DIM}`; do
+            if test $i -eq $j; then
+                echo -n ${sep}2
+            else
+                echo -n ${sep}1
+            fi
+            sep=','
+        done
+        echo ")) - base )"
+    done
+
+    echo   ''
+    echo72 "      call xmpf_coarray_get_array(descptr, base, ${element},"
+    echo   "     &   coindex, dst, ${DIM}, skip, extent)"
+    echo   '      return'
+    echo   '      end function'
+    echo   ''
+}
+
+
+print_function() {
+    case ${DIM} in
+        0) print_function_scalar "$@" ;;
+        *) print_function_array  "$@" ;;
+    esac
+}
 
 #--------------------
 #  main
 #--------------------
-echo "!! This file is automatically generated by xmpf_coarray_get_wrap.f90.sh"
-echo
 
 TARGET=$1
+
+echo "!! This file is automatically generated by $0"
+echo '!! GET INTERFACE TYPE 8'
+echo
+
 for DIM in `seq 0 7`
 do
     if test "sxace-nec-superux" != "$TARGET"; then    ## integer(2) cannot be used on SX-ACE
-	print_function i2  "integer(2)"
+	print_function i2  "integer(2)"     2
     fi
-    print_function i4  "integer(4)"      
-    print_function i8  "integer(8)"
+    print_function i4  "integer(4)"     4
+    print_function i8  "integer(8)"     8
     if test "sxace-nec-superux" != "$TARGET"; then    ## logical(2) cannot be used on SX-ACE
-	print_function l2  "logical(2)"
+	print_function l2  "logical(2)"     2
     fi
-    print_function l4  "logical(4)"      
-    print_function l8  "logical(8)"      
-    print_function r4  "real(4)"         
-    print_function r8  "real(8)"         
-    print_function z8  "complex(4)"      
-    print_function z16 "complex(8)"      
-    print_function cn  "character(element)" 
+    print_function l4  "logical(4)"     4
+    print_function l8  "logical(8)"     8
+    print_function r4  "real(4)"        4
+    print_function r8  "real(8)"        8
+    print_function z8  "complex(4)"     8
+    print_function z16 "complex(8)"     16
+    print_function cn  "character(*)"   "len(mold)"
 done
 
 exit

@@ -2268,7 +2268,8 @@ outx_constants(int l, expv v)
         }
         if(tp == NULL)
             tp = type_INT;
-        tid = getBasicTypeID(TYPE_BASIC_TYPE(tp));
+        //tid = getBasicTypeID(TYPE_BASIC_TYPE(tp));
+	tid = getTypeID(tp);
         goto print_constant;
 
     case FLOAT_CONSTANT:
@@ -2278,7 +2279,8 @@ outx_constants(int l, expv v)
             sprintf(buf, "%Lf", EXPV_FLOAT_VALUE(v));
         if(tp == NULL)
             tp = type_REAL;
-        tid = getBasicTypeID(TYPE_BASIC_TYPE(tp));
+        //tid = getBasicTypeID(TYPE_BASIC_TYPE(tp));
+	tid = getTypeID(tp);
         goto print_constant;
 
     case STRING_CONSTANT:

@@ -697,8 +697,9 @@ public class XMPalignedArray {
 	  bodyList.add(Xcons.List(Xcode.EXPR_STATEMENT, Xcons.Set(alignedArray.getFlagId().Ref(), Xcons.IntConstant(1))));
       }
       else {
-
-	XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(), alignedArray.getDescId().Ref());
+	Xobject isCoarray = (arrayId.getStorageClass() == StorageClass.EXTDEF) ? Xcons.IntConstant(1) : Xcons.IntConstant(0);
+	XobjList allocFuncArgs = Xcons.List(alignedArray.getAddrIdVoidAddr(), alignedArray.getDescId().Ref(),
+					    isCoarray);
 	for (int i = alignedArray.getDim() - 1; i >= 0; i--) {
 	  allocFuncArgs.add(Xcons.Cast(Xtype.Pointer(Xtype.unsignedlonglongType),
 				       alignedArray.getAccIdAt(i).getAddr()));

@@ -582,7 +582,7 @@ static void do_gmove(void *buf, int *bufStart, _XMP_array_t *b_desc){
 
   _XMP_gmove_SENDRECV_ARRAY(b_desc, buf_desc, type, datasize,
   			    b_desc->info[0].ser_lower, n, 1, (unsigned long long)1,
-  			    0, n, 1, (unsigned long long)1);
+  			    0, n, 1, (unsigned long long)1, _XMP_N_GMOVE_NORMAL);
 
   _XMP_finalize_array_desc(buf_desc);
   _XMP_finalize_template(t_desc);

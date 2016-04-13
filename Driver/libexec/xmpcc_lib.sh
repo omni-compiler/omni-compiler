@@ -13,9 +13,9 @@ Compile Driver Options
    --version         : print version.
    -h,--help         : print usage.
    --show-env        : show environment variables.
-   --tmp             : output parallel code (__omni_tmp__<file>).
+   --tmp             : output translated code to __omni_tmp__<file>.
    --dry             : only print processing status (not compile).
-   --debug           : save intermediate files in __omni_tmp__.
+   --debug           : save intermediate files to __omni_tmp__/.
    --stop-pp         : save intermediate files and stop after preprocess.
    --stop-frontend   : save intermediate files and stop after frontend.
    --stop-translator : save intermediate files and stop after translator.
@@ -24,21 +24,19 @@ Compile Driver Options
 
 Process Options
 
-  --Wp[option] : Add preprocessor option.
-  --Wf[option] : Add frontend option.
-  --Wx[option] : Add Xcode translator option.
-  --Wb[option] : Add backend option.
-  --Wn[option] : Add native compiler option.
-  --Wl[option] : Add linker option.
+  --Wp[option] : add preprocessor option.
+  --Wf[option] : add frontend option.
+  --Wx[option] : add Xcode translator option.
+  --Wb[option] : add backend option.
+  --Wn[option] : add native compiler option.
+  --Wl[option] : add linker option.
 
 XcalableMP Options
 
-  -omp,--openmp       : enable OpenMP.
-  -xacc,--xcalableacc : enable XcalableACC.
-  --scalasca-all      : output results in scalasca format for all directives.
-  --scalasca          : output results in scalasca format for selected directives.
-  --tlog-all          : output results in tlog format for all directives.
-  --tlog              : output results in tlog format for selected directives.
+  -omp,--openmp                       : enable OpenMP function.
+  -xacc,--xcalableacc                 : enable XcalableACC function.
+  --profile [scalasca|tlog]           : output results in scalasca or tlog format for all directives.
+  --selective-profile [scalasca|tlog] : output results in scalasca or tlog format for selected directives.
 EOF
 }
 
@@ -108,33 +106,63 @@ function xmpcc_set_parameters()
 	    --stop-compile)
 		VERBOSE=true; STOP_COMPILE=true;;
 	    --Wp*)
-		pp_add_opt+=("${1#--Wp}");;
-            --Wf*)
-		frontend_add_opt+=("${1#--Wf}");;
-            --Wx*)
-		xcode_translator_add_opt+=("${1#--Wx}");;
+		local tmp=("${1#--Wp}")
+		for v in $tmp
+		do
+		    pp_add_opt+=("$v")
+		done;;
+	    --Wf*)
+		local tmp=("${1#--Wf}")
+		for v in $tmp
+		do
+		    frontend_add_opt+=("$v")
+		done;;
+	    --Wx*)
+		local tmp=("${1#--Wx}")
+		for v in $tmp
+		do
+		    xcode_translator_add_opt+=("$v")
+		done;;
 	    --Wn*)
-		native_add_opt+=("${1#--Wn}");;
-            --Wb*)
-		backend_add_opt+=("${1#--Wb}");;
-            --Wl*)
-		linker_add_opt+=("${1#--Wl}");;
+		local tmp=("${1#--Wn}")
+		for v in $tmp
+		do
+		    native_add_opt+=("$v")
+		done;;
+	    --Wb*)
+		local tmp=("${1#--Wb}")
+		for v in $tmp
+		do
+		    backend_add_opt+=("$v")
+		done;;
+	    --Wl*)
+		local tmp=("${1#--Wl}")
+		for v in $tmp
+		do
+		    linker_add_opt+=("$v")
+		done;;
 	    --openmp|-omp)
 		ENABLE_OPENMP=true;;
 	    --xcalableacc|-xacc)
 		ENABLE_XACC=true;;
-	    --scalasca-all)
-		ENABLE_SCALASCA_ALL=true;;
-	    --scalasca)
-		echo "Sorry. Not implement yet."
-		exit 0
-		ENABLE_SCALASCA=true;;
-	    --tlog-all)
-		ENABLE_TLOG_ALL=true;;
-	    --tlog)
-		echo "Sorry. Not implement yet."
-		exit 0
-		ENABLE_TLOG=true;;
+	    --profile)
+		shift;
+		if [ "scalasca" = "$1" ]; then
+		    ENABLE_SCALASCA=true; ENABLE_SCALASCA_ALL=true
+		elif [ "tlog" = "$1" ]; then
+		    ENABLE_TLOG=true; ENABLE_TLOG_ALL=true
+		else
+		    echo "Unknown profile format"; exit 1
+		fi;;
+	    --selective-profile)
+		shift;
+		if [ "scalasca" = "$1" ]; then
+		    ENABLE_SCALASCA=true; ENABLE_SCALASCA_SELECTIVE=true
+		elif [ "tlog" = "$1" ]; then
+		    ENABLE_TLOG=true; ENABLE_TLOG_SELECTIVE=true
+		else
+		    echo "Unknown profile format"; exit 1
+		fi;;
             *)
 		other_args+=("$1");;
 	esac

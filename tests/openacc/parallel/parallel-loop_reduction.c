@@ -46,21 +46,28 @@ int main()
       sum += array[i];
     }
   }
-  //vefify
+  //verify
   if(sum != 3825) return 4;
 
 
   sum = 50;
 #pragma acc parallel loop reduction(+:sum) vector_length(32)
   for(i=0;i<100;i++) sum += array[i];
-  //vefify
+  //verify
   if(sum != 5000) return 5;
 
   sum = 50;
 #pragma acc parallel loop reduction(+:sum) vector_length(512)
   for(i=0;i<100;i++) sum += array[i];
-  //vefify
+  //verify
   if(sum != 5000) return 6;
   
+  sum = -1;
+#pragma acc parallel loop reduction(+:sum) async(3)
+  for(i=0;i<50000;i++) sum += i;
+#pragma acc wait(3)
+  //verify
+  if(sum != 1249974999) return 7;
+
   return 0;
 }

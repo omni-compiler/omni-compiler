@@ -3,29 +3,18 @@ package exc.openacc;
 import exc.object.*;
 import exc.block.*;
 
-abstract class AccProcessor implements XobjectDefVisitor {
+abstract class AccProcessor {
   final ACCglobalDecl _globalDecl;
   final private boolean _isTopdown;
-  final private boolean _isFinal;
   final private boolean _warnUnknownPragma;
 
-  AccProcessor(ACCglobalDecl globalDecl, boolean isTopdown, boolean isFinal, boolean warnUnknownPragma) {
+  AccProcessor(ACCglobalDecl globalDecl, boolean isTopdown, boolean warnUnknownPragma) {
     _globalDecl = globalDecl;
     _isTopdown = isTopdown;
-    _isFinal = isFinal;
     _warnUnknownPragma = warnUnknownPragma;
   }
 
-  public void doDef(XobjectDef def) {
-    if (def.isFuncDef()) {
-      doFuncDef(def);
-    } else {
-      doNonFuncDef(def);
-    }
-  }
-
-  private void doNonFuncDef(XobjectDef def) {
-    Xobject x = def.getDef();
+  void doNonFuncDef(Xobject x) {
     switch (x.Opcode()){
     case ACC_PRAGMA:
       try{
@@ -43,10 +32,7 @@ abstract class AccProcessor implements XobjectDefVisitor {
     }
   }
 
-  private void doFuncDef(XobjectDef def){
-    FuncDefBlock fd = new FuncDefBlock(def);
-    FunctionBlock fb = fd.getBlock();
-
+  void doFuncDef(FunctionBlock fb){
     BlockIterator blockIterator;
     if(_isTopdown){
       blockIterator = new topdownBlockIterator(fb);
@@ -71,10 +57,6 @@ abstract class AccProcessor implements XobjectDefVisitor {
         break;
       default:
       }
-    }
-
-    if(_isFinal){
-      fd.Finalize();
     }
   }
 

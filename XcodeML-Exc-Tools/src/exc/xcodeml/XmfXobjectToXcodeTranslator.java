@@ -366,7 +366,14 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
 	    if (caseList.Opcode() == Xcode.F_STATEMENT_LIST){
 		for (Xobject a : (XobjList)caseList) {
-		    addChildNode(e, trans(a));
+		    if (a.Opcode() == Xcode.F_STATEMENT_LIST){
+			for (Xobject b : (XobjList)a){
+			    addChildNode(e, trans(b));
+			}
+		    }
+		    else {
+			addChildNode(e, trans(a));
+		    }
 		}
 	    }
 	    else {
@@ -739,6 +746,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         	}
         	addChildNode(e,trans(xobj.getName()));        	
         	break;
+
         case OMP_PRAGMA: {
 	    e = createElement(name);
 
@@ -802,6 +810,18 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             
         }
 //System.out.println(xcode.toString());
+	    break;
+
+	case XMP_PRAGMA: {
+	    e = createElement(name);
+
+	    Element f0 = createElement("string");
+
+	    addChildNode(f0, trans(xobj.getArg(0).getString()));
+	    addChildNode(e, f0);
+	    addChildNode(e, trans(xobj.getArg(1)));
+	    addChildNode(e, trans(xobj.getArg(2)));
+	}
 	    break;
 
         default:

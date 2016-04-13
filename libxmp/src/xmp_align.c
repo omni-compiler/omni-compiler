@@ -52,6 +52,11 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   a->align_comm      = NULL;
   a->align_comm_size = 1;
   a->align_comm_rank = _XMP_N_INVALID_RANK;
+
+#ifdef _XMP_MPI3_ONESIDED
+  a->coarray = NULL;
+#endif
+
   //a->num_reqs = -1;
 
   //if (!template->is_fixed) _XMP_fatal("target template is not fixed");
@@ -65,17 +70,32 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
     
     _XMP_array_info_t *ai = &(a->info[i]);
     ai->is_shadow_comm_member = false;
-    ai->ser_lower             = 0;   // array lower is always 0 in C
-    ai->ser_upper             = size - 1;
-    ai->ser_size              = size;
-    ai->shadow_type           = _XMP_N_SHADOW_NONE;
-    ai->shadow_size_lo        = 0;
-    ai->shadow_size_hi        = 0;
-    ai->reflect_sched         = NULL;
-    ai->shadow_comm           = NULL;
-    ai->shadow_comm_size      = 1;
-    ai->shadow_comm_rank      = _XMP_N_INVALID_RANK;
-    ai->align_template_index  = -1;
+
+    // array lower is always 0 in C
+    ai->ser_lower = 0;
+    ai->ser_upper = size - 1;
+    ai->ser_size = size;
+
+    ai->par_lower = 0;
+    ai->par_upper = 0;
+    ai->par_stride = 0;
+    ai->par_size = 0;
+    ai->local_lower = 0;
+    ai->local_upper = 0;
+    ai->local_stride = 0;
+    ai->alloc_size = 0;
+
+    ai->shadow_type = _XMP_N_SHADOW_NONE;
+    ai->shadow_size_lo  = 0;
+    ai->shadow_size_hi  = 0;
+
+    ai->reflect_sched = NULL;
+
+    ai->shadow_comm = NULL;
+    ai->shadow_comm_size = 1;
+    ai->shadow_comm_rank = _XMP_N_INVALID_RANK;
+
+    ai->align_template_index = -1;
   }
   va_end(args);
 
@@ -105,6 +125,10 @@ void _XMP_init_array_desc_NOT_ALIGNED(_XMP_array_t **adesc, _XMP_template_t *tem
   a->align_comm = NULL;
   a->align_comm_size = 1;
   a->align_comm_rank = _XMP_N_INVALID_RANK;
+
+#ifdef _XMP_MPI3_ONESIDED
+  a->coarray = NULL;
+#endif
 
   a->is_shrunk_template = false;
 
@@ -214,6 +238,13 @@ void _XMP_finalize_array_desc(_XMP_array_t *array)
   if(array->is_shrunk_template)
     if(array->array_nodes)
       _XMP_finalize_nodes(array->array_nodes);
+
+#ifdef _XMP_MPI3_ONESIDED
+  if (array->coarray){
+    _XMP_coarray_detach(array->coarray);
+    _XMP_free(array->coarray);
+  }
+#endif
 
   _XMP_free(array);
 }
@@ -591,18 +622,18 @@ EXIT_CALC_PARALLEL_MEMBERS:
   ai->align_template_index = template_index;
 }
 
-void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...)
+void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, int is_coarray, ...)
 {
-  if(!array_desc->is_allocated){
-    *array_addr = NULL;
-    return;
-  }
+  /* if (!array_desc->is_allocated) { */
+  /*   *array_addr = NULL; */
+  /*   return; */
+  /* } */
 
   unsigned long long total_elmts = 1;
   int dim = array_desc->dim;
   
   va_list args;
-  va_start(args, array_desc);
+  va_start(args, is_coarray);
   for(int i=dim-1;i>=0;i--){
     unsigned long long *acc = va_arg(args, unsigned long long *);
     *acc = total_elmts;
@@ -621,17 +652,46 @@ void _XMP_alloc_array(void **array_addr, _XMP_array_t *array_desc, ...)
   array_desc->array_addr_p = *array_addr;
   array_desc->total_elmts  = total_elmts;
 
+  // for gmove in/out
+
+#ifdef _XMP_MPI3_ONESIDED
+  if (is_coarray){
+    _XMP_coarray_t *c = (_XMP_coarray_t *)_XMP_alloc(sizeof(_XMP_coarray_t));
+
+    long asize[dim];
+    for (int i = 0; i < dim; i++){
+      asize[i] = array_desc->info[i].alloc_size;
+    }
+
+    _XMP_coarray_malloc_info_n(asize, dim, array_desc->type_size);
+
+    //_XMP_nodes_t *ndesc = a->align_template->onto_nodes;
+    //_XMP_nodes_t *ndesc = _XMP_get_execution_nodes();
+    _XMP_nodes_t *ndesc = _XMP_world_nodes;
+    int ndims_node = ndesc->dim;
+    int nsize[ndims_node-1];
+    for (int i = 0; i < ndims_node-1; i++){
+      nsize[i] = ndesc->info[i].size;
+    }
+    _XMP_coarray_malloc_image_info_n(nsize, ndims_node);
+
+    _XMP_coarray_attach(c, *array_addr, array_desc->total_elmts * array_desc->type_size);
+
+    array_desc->coarray = c;
+  }
+#endif
+
 #ifdef _XMP_TCA
   _XMP_alloc_tca(array_desc);
 #endif
 }
 
-void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc,
+void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc, int is_coarray,
 		       unsigned long long *acc[]) {
-  if (!array_desc->is_allocated) {
-    *array_addr = NULL;
-    return;
-  }
+  /* if (!array_desc->is_allocated) { */
+  /*   *array_addr = NULL; */
+  /*   return; */
+  /* } */
 
   unsigned long long total_elmts = 1;
   int dim = array_desc->dim;
@@ -653,6 +713,35 @@ void _XMP_alloc_array2(void **array_addr, _XMP_array_t *array_desc,
   // set members
   array_desc->array_addr_p = *array_addr;
   array_desc->total_elmts = total_elmts;
+
+  // for gmove in/out
+
+#ifdef _XMP_MPI3_ONESIDED
+  if (is_coarray){
+    _XMP_coarray_t *c = (_XMP_coarray_t *)_XMP_alloc(sizeof(_XMP_coarray_t));
+
+    long asize[dim];
+    for (int i = 0; i < dim; i++){
+      asize[i] = array_desc->info[i].alloc_size;
+    }
+
+    _XMP_coarray_malloc_info_n(asize, dim, array_desc->type_size);
+
+    //_XMP_nodes_t *ndesc = a->align_template->onto_nodes;
+    //_XMP_nodes_t *ndesc = _XMP_get_execution_nodes();
+    _XMP_nodes_t *ndesc = _XMP_world_nodes;
+    int ndims_node = ndesc->dim;
+    int nsize[ndims_node-1];
+    for (int i = 0; i < ndims_node-1; i++){
+      nsize[i] = ndesc->info[i].size;
+    }
+    _XMP_coarray_malloc_image_info_n(nsize, ndims_node);
+
+    _XMP_coarray_attach(c, *array_addr, array_desc->total_elmts * array_desc->type_size);
+    
+    array_desc->coarray = c;
+  }
+#endif
 
 #ifdef _XMP_TCA
   _XMP_alloc_tca(array_desc);

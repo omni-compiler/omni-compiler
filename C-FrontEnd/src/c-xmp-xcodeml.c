@@ -73,6 +73,8 @@ void outx_XMP_Clause(FILE *fp, int indent, CExprOfList* clauseList)
     case XMP_DATA_REDUCE_EQV:
     case XMP_DATA_REDUCE_NEQV:
     case XMP_DATA_REDUCE_MINUS:
+    case XMP_DATA_REDUCE_MAXLOC:
+    case XMP_DATA_REDUCE_MINLOC:
       outxPrint(fp, indent1+1, "<intConstant type=\"int\">%d</intConstant>\n", clauseList->e_aux);
       break;
 

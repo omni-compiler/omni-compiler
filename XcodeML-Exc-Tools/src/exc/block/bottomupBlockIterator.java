@@ -29,12 +29,13 @@ public class bottomupBlockIterator extends BlockIterator
     public void init()
     {
         index = 0;
-        currentBlock = blocks.elementAt(0);
+        if(blocks != null) currentBlock = blocks.elementAt(0);
     }
 
     @Override
     public void init(Block b)
     {
+	if(b == null) return;
         blocks = new Vector<Block>();
         bottomupTraverse(b);
         index = 0;
@@ -43,6 +44,7 @@ public class bottomupBlockIterator extends BlockIterator
 
     public void init(BlockList body)
     {
+	if(body == null) return;
         blocks = new Vector<Block>();
         bottomupTraverse(body);
         index = 0;
@@ -74,6 +76,7 @@ public class bottomupBlockIterator extends BlockIterator
     @Override
     public void next()
     {
+	if(currentBlock == null) return;
         if(++index >= blocks.size())
             currentBlock = null;
         else
@@ -83,12 +86,14 @@ public class bottomupBlockIterator extends BlockIterator
     @Override
     public boolean end()
     {
+	if(currentBlock == null) return true;
         return index >= blocks.size();
     }
 
     @Override
     public int size()
     {
+	if(blocks == null) return 0;
         return blocks.size();
     }
 }

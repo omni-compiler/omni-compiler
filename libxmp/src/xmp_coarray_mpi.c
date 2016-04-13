@@ -225,7 +225,7 @@ void _XMP_mpi_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const
   if(total_shift > _xmp_mpi_onesided_heap_size){
     fprintf(stderr, "_xmp_mpi_onesided_heap_size=%zd\n", _xmp_mpi_onesided_heap_size);
     if(_XMP_world_rank == 0){
-      fprintf(stderr, "[ERROR] Cannot allocate coarray. Heap memory size of corray is too small.\n");
+      fprintf(stderr, "[ERROR] Cannot allocate coarray. Heap memory size of coarray is too small.\n");
       fprintf(stderr, "        Please set the environmental variable \"XMP_ONESIDED_HEAP_SIZE\".\n");
       fprintf(stderr, "        e.g.) export XMP_ONESIDED_HEAP_SIZE=%zuM (or more).\n",
 	      (total_shift/1024/1024)+1);
@@ -934,4 +934,18 @@ void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
 
   _notify_sync_images(num, rank_set);
   _wait_sync_images(num, rank_set);
+}
+
+
+void _XMP_sync_images_EXEC(int* status)
+{
+  MPI_Win_flush_all(_xmp_mpi_onesided_win);
+  _XMP_barrier_EXEC();
+}
+
+
+void _XMP_sync_images_COMM(MPI_Comm *comm, int* status)
+{
+  MPI_Win_flush_all(_xmp_mpi_onesided_win);
+  MPI_Barrier(*comm);
 }

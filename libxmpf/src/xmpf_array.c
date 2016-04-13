@@ -31,6 +31,10 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
 
   a->array_nodes = NULL;
 
+#ifdef _XMP_MPI3_ONESIDED
+  a->coarray = NULL;
+#endif
+
   //a->num_reqs = -1;
   //a->mpi_req_shadow = _XMP_alloc(sizeof(MPI_Request) * 4 * (*n_dim));
 
@@ -307,7 +311,7 @@ int _memid = 0;
 extern int _memid;
 #endif
 
-void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr)
+void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr, int is_coarray)
 {
   _XMP_array_t *a = *a_desc;
 
@@ -324,6 +328,35 @@ void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr)
   a->total_elmts = total_elmts;
 
   a->array_addr_p = array_addr;
+
+  // for gmove in/out
+
+#ifdef _XMP_MPI3_ONESIDED
+  if (is_coarray){
+    _XMP_coarray_t *c = (_XMP_coarray_t *)_XMP_alloc(sizeof(_XMP_coarray_t));
+
+    long asize[dim];
+    for (int i = 0; i < dim; i++){
+      asize[i] = a->info[dim - 1 - i].alloc_size;
+    }
+
+    _XMP_coarray_malloc_info_n(asize, dim, a->type_size);
+
+    //_XMP_nodes_t *ndesc = a->align_template->onto_nodes;
+    //_XMP_nodes_t *ndesc = _XMP_get_execution_nodes();
+    _XMP_nodes_t *ndesc = _XMP_world_nodes;
+    int ndims_node = ndesc->dim;
+    int nsize[ndims_node-1];
+    for (int i = 0; i < ndims_node-1; i++){
+      nsize[i] = ndesc->info[i].size;
+    }
+    _XMP_coarray_malloc_image_info_n(nsize, ndims_node);
+
+    _XMP_coarray_attach(c, array_addr, a->total_elmts * a->type_size);
+
+    a->coarray = c;
+  }
+#endif
 
 #if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
   _memid = _memid % 511;

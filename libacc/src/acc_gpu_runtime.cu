@@ -10,13 +10,14 @@ int _ACC_gpu_device_count;
 //int _ACC_gpu_max_block_dim_y;
 //int _ACC_gpu_max_block_dim_z;
 
+static bool _runtime_working = false;
 static int current_device_num = 0;
 static int default_device_num = 0;
 static void init_device(int dev_num);
 static void finalize_device(int dev_num);
 
 typedef struct acc_context{
-  char isInitialized;
+  bool isInitialized;
   void *stream_map;
   void *mpool;
 }acc_context;
@@ -33,6 +34,9 @@ static int get_actual_device_num(int n)
 }
 
 void _ACC_gpu_init(void) {
+  if(_runtime_working == true){
+    return;
+  }
   cudaError_t cuda_err;
   int i;
 
@@ -49,12 +53,14 @@ void _ACC_gpu_init(void) {
 
   contexts = (acc_context*)_ACC_alloc(sizeof(acc_context) * _ACC_gpu_device_count);
   for(i = 0; i< _ACC_gpu_device_count; i++){
-	contexts[i].isInitialized = 0;
+	contexts[i].isInitialized = false;
 	contexts[i].stream_map = NULL;
 	contexts[i].mpool = NULL;
   }
 
   _ACC_gpu_set_device_num(0); //set device to default
+
+  _runtime_working = true;
 }
 
 void _ACC_gpu_init_api(void)
@@ -63,15 +69,19 @@ void _ACC_gpu_init_api(void)
 }
 
 void _ACC_gpu_finalize(void) {
+  if(_runtime_working == false){
+    return;
+  }
   //finalize each GPU
   for(int i=0;i<_ACC_gpu_device_count;i++){
-	if(contexts[i].isInitialized){
+	if(contexts[i].isInitialized == true){
 	  _ACC_gpu_set_device_num(i+1);
 	  finalize_device(i);
 	}
   }
 
   _ACC_free(contexts);
+  _runtime_working = false;
 }
 
 int _ACC_gpu_get_num_devices()
@@ -145,7 +155,7 @@ static void init_device(int dev_num){ //0-based
 
 
   //init mpool
-	contexts[get_actual_device_num(dev_num)].isInitialized = 1;
+	contexts[get_actual_device_num(dev_num)].isInitialized = true;
   contexts[get_actual_device_num(dev_num)].mpool = _ACC_gpu_mpool_init();
   //init stream hashmap
   contexts[get_actual_device_num(dev_num)].stream_map = _ACC_gpu_init_stream_map(16);
@@ -156,11 +166,11 @@ static void finalize_device(int dev_num){
   //finalize stream hashmap for previous device
   acc_context cont = contexts[dev_num];
   //printf("finalize_map(%d, %p)\n", dev_num, cont.stream_map);
-  if(contexts[get_actual_device_num(dev_num)].isInitialized){
+  if(contexts[get_actual_device_num(dev_num)].isInitialized == true){
 	_ACC_gpu_finalize_stream_map(cont.stream_map);
 	_ACC_gpu_mpool_finalize(cont.mpool);
   }
-  contexts[get_actual_device_num(dev_num)].isInitialized = 0;
+  contexts[get_actual_device_num(dev_num)].isInitialized = false;
 }
 
 void _ACC_gpu_set_device_num(int num)
@@ -197,7 +207,7 @@ int _ACC_gpu_get_device_num(){
 
 void _ACC_gpu_init_device_if_not_inited(int num) //0-based
 {
-  if(! contexts[get_actual_device_num(num)].isInitialized){
+  if(! contexts[get_actual_device_num(num)].isInitialized == true){
 	init_device(num);
   }
 }

@@ -21,5 +21,7 @@ int main(){
   if(xmp_node_num() == 1)
     printf("PASS\n");
 
+  xmp_sync_all(NULL);
+
   return 0;
 }
