@@ -14,8 +14,8 @@ public class XMPtransCoarrayRun
   final static String TRAV_COUNTCOARRAY_PREFIX = "xmpf_traverse_countcoarray";
   final static String TRAV_INITCOARRAY_PREFIX = "xmpf_traverse_initcoarray";
   final static String FIND_DESCPOINTER_NAME   = "xmpf_coarray_find_descptr";
-  final static String COARRAY_ALLOC_PREFIX   = "xmpf_coarray_alloc";
-  final static String COARRAY_DEALLOC_PREFIX = "xmpf_coarray_dealloc";
+  final static String COARRAY_ALLOC_NAME     = "xmpf_coarray_alloc_generic";
+  final static String COARRAY_DEALLOC_NAME   = "xmpf_coarray_dealloc_generic";
   final static String THIS_IMAGE_NAME        = "xmpf_this_image";  // generic
   final static String COBOUND_NAME           = "xmpf_cobound";  // generic
   final static String IMAGE_INDEX_NAME       = "xmpf_image_index";
@@ -2143,7 +2143,7 @@ public class XMPtransCoarrayRun
       args.add(_getLboundInIndexRange(shape.getArg(i)));
       args.add(_getUboundInIndexRange(shape.getArg(i)));
     }
-    String subrName = COARRAY_ALLOC_PREFIX + rank + "d";
+    String subrName = COARRAY_ALLOC_NAME;
     if (args.hasNullArg())
       XMP.fatal("generated null argument for " + subrName +
                 "(makeStmt_coarrayAlloc)");
@@ -2162,7 +2162,7 @@ public class XMPtransCoarrayRun
 
     Xobject args = Xcons.List(coarray.getDescPointerId(),
                               Xcons.FvarRef(coarray.getIdent()));
-    String subrName = COARRAY_DEALLOC_PREFIX + rank + "d";
+    String subrName = COARRAY_DEALLOC_NAME;
     if (args.hasNullArg())
       XMP.fatal("generated null argument for " + subrName +
                 "(makeStmt_coarrayDealloc)");
