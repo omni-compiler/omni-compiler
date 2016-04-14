@@ -76,6 +76,10 @@ public class XMPnodes extends XMPobject {
       XMP.errorAt(pb,"XMP object '"+_name+"' is already declared");
       return;
     }
+    else if(env.findVarIdent(_name, pb) != null){
+      XMP.errorAt(pb, "variable '"+_name+"' is already declared");
+      return;
+    }
 
     // declare nodes desciptor
     _descId = env.declObjectId(XMP.DESC_PREFIX_ + _name, pb);

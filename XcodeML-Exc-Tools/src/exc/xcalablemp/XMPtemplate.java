@@ -225,6 +225,7 @@ public class XMPtemplate extends XMPobject {
     if (isLocalPragma) {
       //XMPlocalDecl.checkObjectNameCollision(templateName, funcBlockList, localXMPsymbolTable);
       XMPlocalDecl.checkObjectNameCollision(templateName, parentBlock.getBody(), localXMPsymbolTable);
+      globalDecl.checkObjectNameCollision(templateName);
       isStaticDesc = localXMPsymbolTable.isStaticDesc(templateName);
     }
     else {

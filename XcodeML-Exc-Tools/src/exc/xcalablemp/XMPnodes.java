@@ -57,6 +57,7 @@ public class XMPnodes extends XMPobject {
     if (isLocalPragma) {
       //XMPlocalDecl.checkObjectNameCollision(nodesName, funcBlockList, localXMPsymbolTable);
       XMPlocalDecl.checkObjectNameCollision(nodesName, parentBlock.getBody(), localXMPsymbolTable);
+      globalDecl.checkObjectNameCollision(nodesName);
     } else {
       globalDecl.checkObjectNameCollision(nodesName);
     }
