@@ -102,6 +102,11 @@ extern void *_XMPF_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
                                            char **name);
 
 /* xmpf_coarray_lib.c */
+extern int xmpf_num_images_(void);
+extern int xmpf_this_image_noargs_(void);
+//extern int xmpf_num_nodes_(void);
+//extern int xmpf_node_num_(void);
+
 extern int XMPF_initial_this_image, XMPF_initial_num_images;
 extern void _XMPF_set_initial_this_image(void);
 extern void _XMPF_set_initial_num_images(void);
@@ -109,10 +114,6 @@ extern int _XMPF_get_initial_this_image(void);
 extern int _XMPF_get_initial_num_images(void);
 extern int _XMPF_get_current_this_image(void);
 extern int _XMPF_get_current_num_images(void);
-extern int num_images_(void);
-extern int this_image_(void);
-//extern int xmpf_num_nodes_(void);
-//extern int xmpf_node_num_(void);
 
 extern void xmpf_sync_all_(void);
 extern void xmpf_sync_all_auto_(void);

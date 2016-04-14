@@ -36,9 +36,15 @@ module xmpf_coarray_decl
          end function xmpf_cobound_dim
       end interface
 
-!! transformation functions
+      interface
+         integer function xmpf_num_images()
+         end function xmpf_num_images
+      end interface
 
       interface xmpf_this_image
+         function xmpf_this_image_noargs() result(image)
+           integer image
+         end function xmpf_this_image_noargs
          function xmpf_this_image_coarray_wrap(descptr, corank)         &
      &    result(image)
            integer(8), intent(in) :: descptr

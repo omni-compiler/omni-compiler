@@ -80,7 +80,7 @@ int _XMPF_get_current_num_images()
 
 /*  MPI_Comm_size() of the current communicator
  */
-int num_images_(void)
+int xmpf_num_images_(void)
 {
   //_XMPF_checkIfInTask("NUM_IMAGES");
 
@@ -90,7 +90,7 @@ int num_images_(void)
 
 /*  (MPI_Comm_rank() + 1) in the current communicator
  */
-int this_image_(void)
+int xmpf_this_image_noargs_(void)
 {
   //_XMPF_checkIfInTask("THIS_IMAGE");
 
