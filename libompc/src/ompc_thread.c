@@ -205,7 +205,6 @@ ompc_lock_t ompc_proc_lock_obj, ompc_thread_lock_obj;
 
 /* proc table */
 struct ompc_proc *ompc_procs;
-static int proc_last_used = 0;
 
 static ompc_proc_t ompc_master_proc_id;
 
@@ -721,10 +720,6 @@ ompc_do_parallel_main (int nargs, int cond, int nthds,
     free(tp_list);
 
     ompc_tree_barrier_finalize(&cthd->tree_barrier);
-
-    if (cthd->parent == NULL) {
-        proc_last_used = 0;
-    }
 }
 
 static void
