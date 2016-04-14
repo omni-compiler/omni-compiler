@@ -1,5 +1,5 @@
   program this_image2
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
 
 !$xmp nodes n1(2,4)
 !$xmp nodes n2(2,2)=n1(:,3:4)
@@ -19,7 +19,7 @@
   end program this_image2
 
   subroutine two_way(a,count,me)
-    include 'xmp_coarray.h'
+!!     include 'xmp_coarray.h'
 
     integer count,me
     real a(10,20)[2,*],b(10,20)[2,*]

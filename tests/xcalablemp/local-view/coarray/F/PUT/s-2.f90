@@ -1,5 +1,5 @@
   program test_s
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     complex*16 v[*], vv
 !!    integer xmp_node_num
     integer nerr

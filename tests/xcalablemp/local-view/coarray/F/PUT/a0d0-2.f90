@@ -1,5 +1,5 @@
   program a0d0
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real a0[*]
     integer xmp_node_num
     real data0, data1

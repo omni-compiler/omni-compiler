@@ -1,4 +1,4 @@
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   parameter(n1=10)
   integer, parameter:: n2=3
 

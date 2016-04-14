@@ -2671,16 +2671,21 @@ public class XMPtransCoarrayRun
   }
 
   private boolean _isCoarrayIntrinsicUsed() {
+
+    /* This list should match with F-FrontEnd/src/F-intrinsics-table.c.
+     */
     final String[] _coarrayIntrinsics = {
+      // functions
+      "num_images",
+      "this_image",
+      "image_index",
+      "lcobound",
+      "ucocound",
+      // subroutines
       "co_broadcast",
       "co_max",
       "co_min",
       "co_sum",
-      "image_index",
-      "lcobound",
-      "num_images",
-      "this_image",
-      "ucocound",
       "xmpf_critical",
       "xmpf_end_critical",
       "xmpf_error_stop",
@@ -2690,6 +2695,7 @@ public class XMPtransCoarrayRun
       "xmpf_sync_memory",
       "xmpf_unlock",
       };
+
     final List coarrayIntrinsics = 
       Arrays.asList(_coarrayIntrinsics);
 

@@ -1,4 +1,5 @@
-  include "xmp_coarray.h"
+  implicit real (a-h,o-z)
+!!   include "xmp_coarray.h"
   real :: b(1:2,3:5)[6:*]
   integer buf1(1), buf3(3)
   real, allocatable :: a(:,:)[:,:,:]

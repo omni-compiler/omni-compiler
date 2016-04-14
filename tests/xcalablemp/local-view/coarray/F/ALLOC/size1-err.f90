@@ -1,5 +1,5 @@
 subroutine sub(V3)
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   integer n(10)
   integer :: V3(:)[:,:]      !! not allowed in F2008: implicit size
 

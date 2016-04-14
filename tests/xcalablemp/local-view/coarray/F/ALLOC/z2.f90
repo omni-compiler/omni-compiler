@@ -1,5 +1,5 @@
 subroutine azz
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     integer*8 a(100)[*]
 
     do i=1,100

@@ -1,5 +1,5 @@
   program gettest_triplet
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
 
     integer*8 a(10)[2,*], b(10)
     integer nerr

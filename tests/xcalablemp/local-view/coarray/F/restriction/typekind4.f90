@@ -1,4 +1,4 @@
-  include "xmp_coarray.h"
+!!  include "xmp_coarray.h"
   complex(kind=4),allocatable :: a(:)[:]
 !!error  complex(kind=16),allocatable :: a(:)[:]
 !!abend  double complex,allocatable :: a(:)[:]

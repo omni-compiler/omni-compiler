@@ -11,6 +11,14 @@ module xmpf_coarray_decl
 !-------------------------------
 !  coarray intrinsics
 !-------------------------------
+
+      interface
+         integer function xmpf_image_index(descptr, coindexes)
+           integer(8), intent(in) :: descptr
+           integer, intent(in) :: coindexes(*)
+         end function xmpf_image_index
+      end interface
+
       interface xmpf_cobound
          !! restriction: kind must be 4.
          function xmpf_cobound_nodim(descptr, kind, lu, corank)         &

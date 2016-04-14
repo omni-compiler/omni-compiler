@@ -1,5 +1,5 @@
   module mmm
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real*8 aaa(10,10)[3,*]
   end module mmm
 
