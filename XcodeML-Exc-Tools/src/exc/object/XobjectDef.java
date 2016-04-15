@@ -194,7 +194,7 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
 
   public Xobject getFuncBody()
   {
-    return def.getArg(3);
+    return def.getArgOrNull(3);
   }
 
   public Xobject getFuncGccAttributes()
