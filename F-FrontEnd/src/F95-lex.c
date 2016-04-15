@@ -1713,9 +1713,13 @@ get_keyword_optional_blank(int class)
     case END:
         if((cl = get_keyword(end_keywords)) != UNKNOWN){
             if(cl == KW_BLOCK){
+	        while(isspace(*bufptr)) bufptr++;   /* skip space */
                 if(get_keyword(keywords) == DATA) return ENDBLOCKDATA;
                 break;
             }
+	    else if (cl == BLOCKDATA){
+	      return ENDBLOCKDATA;
+	    }
             return cl;
         }
         break;
@@ -3699,6 +3703,7 @@ struct keyword_token keywords[ ] =
     { "endprogram",     ENDPROGRAM },
     { "endselect",      ENDSELECT },
     { "endsubroutine",  ENDSUBROUTINE },
+    { "endblockdata",   ENDBLOCKDATA },
     { "endtype",        ENDTYPE },
     { "endwhere",       ENDWHERE },
     { "end",            END  },
@@ -3781,6 +3786,7 @@ struct keyword_token keywords[ ] =
 struct keyword_token end_keywords[ ] = 
 {
     { "block",          KW_BLOCK },
+    { "blockdata",      BLOCKDATA },
     { "critical",       ENDCRITICAL },     /* #060 coarray */
     { "do",             ENDDO },
     { "file",           ENDFILE },

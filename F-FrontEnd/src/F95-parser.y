@@ -463,6 +463,8 @@ statement:      /* entry */
           { $$ = list2(F95_MODULEPROCEDURE_STATEMENT, $2, make_int_enode(0)); }
         | BLOCKDATA program_name
           { $$ = list1(F_BLOCK_STATEMENT,$2); }
+        | ENDBLOCKDATA name_or_null
+          { $$ = list1(F95_ENDBLOCKDATA_STATEMENT,$2); }
         | SUBROUTINE IDENTIFIER dummy_arg_list
           { $$ = list3(F_SUBROUTINE_STATEMENT,$2,$3,NULL); }
         | func_prefix SUBROUTINE IDENTIFIER dummy_arg_list
