@@ -14,7 +14,8 @@ libxmp_a_SOURCES = ../include/xmp_internal.h ../include/xmp_constant.h ../includ
 if GASNET
     libxmp_a_SOURCES += xmp_onesided.c xmp_onesided_gasnet.c xmp_coarray.c xmp_coarray_utils.c xmp_coarray_local.c \
 			xmp_coarray_local_utils.c xmp_post_wait.c xmp_post_wait_gasnet.c \
-	                xmp_coarray_gasnet.c xmp_coarray_gasnet_utils.c xmp_lock_unlock.c xmp_lock_unlock_gasnet.c
+	                xmp_coarray_gasnet.c xmp_coarray_gasnet_utils.c xmp_lock_unlock.c xmp_lock_unlock_gasnet.c \
+			xmp_intrinsic_gasnet.c
     CFLAGS           += -D_XMP_GASNET
 else
 if MPI3_ONESIDED
@@ -28,7 +29,7 @@ endif
 if FJRDMA
     libxmp_a_SOURCES += xmp_onesided.c xmp_onesided_fjrdma.c xmp_coarray.c xmp_coarray_utils.c xmp_coarray_local.c \
 			xmp_coarray_local_utils.c xmp_post_wait.c xmp_post_wait_fjrdma.c \
-	                xmp_coarray_fjrdma.c xmp_coarray_fjrdma_utils.c
+	                xmp_coarray_fjrdma.c xmp_coarray_fjrdma_utils.c xmp_intrinsic_fjrdma.c
     CFLAGS           += -D_XMP_FJRDMA
 endif
 

@@ -449,6 +449,8 @@ extern void _xmp_gasnet_post_sync_images(const int, const int*);
 extern void _xmp_gasnet_wait_sync_images(const int, const int*);
 extern void _xmp_gasnet_add_notify(gasnet_token_t t, const int);
 extern void _xmp_gasnet_notiy_reply(gasnet_token_t t);
+extern void _XMP_gasnet_atomic_define(int, _XMP_coarray_t*, size_t, int, size_t);
+extern void _XMP_gasnet_atomic_ref(int, _XMP_coarray_t*, size_t, int*, size_t);
 #endif
 
 #ifdef _XMP_FJRDMA
@@ -500,6 +502,8 @@ extern void _XMP_set_coarray_addresses_with_chunk(uint64_t*, const uint64_t, con
 extern int _XMP_is_the_same_constant_stride(const _XMP_array_section_t *, const _XMP_array_section_t *, 
 					    const int, const int);
 extern size_t _XMP_calc_stride(const _XMP_array_section_t *, const int, const size_t);
+extern void _XMP_fjrdma_atomic_define(int, _XMP_coarray_t*, size_t, int, size_t);
+extern void _XMP_fjrdma_atomic_ref(int, _XMP_coarray_t*, size_t, int*, size_t);
 #endif
 
 #ifdef _XMP_TCA
