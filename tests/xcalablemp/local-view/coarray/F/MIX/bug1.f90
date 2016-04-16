@@ -1,4 +1,4 @@
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   !$xmp nodes nd(2)
   !$xmp template t(29)
   !$xmp distribute t(block) onto nd

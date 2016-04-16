@@ -1,5 +1,5 @@
 program epi3
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   real, allocatable :: a(:)[:] 
 
   write(*,*) "F ? ", allocated(a)
@@ -10,7 +10,7 @@ program epi3
 
 contains
   subroutine allo(a)
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real, allocatable :: a(:)[:] 
     real, allocatable :: al(:)[:] 
     

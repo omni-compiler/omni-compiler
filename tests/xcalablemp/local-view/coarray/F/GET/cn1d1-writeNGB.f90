@@ -1,5 +1,5 @@
   program cn1d1_write
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     integer*2 a(100)[*], a_org(100)
     integer nerr
     character(200) wbuf1(1), wbuf2(1)[*], tmp

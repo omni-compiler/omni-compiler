@@ -10,7 +10,7 @@ program main
 end program main
 
 subroutine sub(V3, k1, k2)
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   integer :: V3(:)[2,*], k1, k2
 
   integer n(10)

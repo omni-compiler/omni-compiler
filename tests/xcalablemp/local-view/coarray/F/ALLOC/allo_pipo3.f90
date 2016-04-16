@@ -1,5 +1,5 @@
   program pipo3
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real, allocatable :: abc(:,:)[:]
     real*8, allocatable :: def(:,:)[:]
     complex*16, allocatable :: ghi(:,:)[:]
@@ -36,7 +36,7 @@
 
   subroutine check(alloc, garbage, msg, nerr)
     implicit none
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     integer alloc, garbage, nerr
     character(*) msg
     integer nerr1, alloc1, garbage1, me
@@ -66,7 +66,7 @@
   end subroutine check
 
   subroutine final_msg(nerr)
-    include 'xmp_coarray.h'
+!!     include 'xmp_coarray.h'
     if (nerr==0) then 
        print '("[",i0,"] OK")', this_image()
     else

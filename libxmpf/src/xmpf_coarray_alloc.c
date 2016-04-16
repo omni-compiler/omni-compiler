@@ -955,7 +955,7 @@ void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...)
   }
 
   // the last axis specified as lcobound:*
-  n_images = num_images_();
+  n_images = _XMPF_get_current_num_images();
   cp->lcobound[n-1] = *va_arg(args, int*);
   cp->cosize[n-1] = DIV_CEILING(n_images, count);
   cp->ucobound[n-1] = cp->lcobound[n-1] + cp->cosize[n-1] - 1;
@@ -1415,7 +1415,7 @@ int xmpf_image_index_(void **descPtr, int coindexes[])
   }
 
   image = count + 1;
-  if (image > num_images_())
+  if (image > _XMPF_get_current_num_images())
     image = 0;
 
   return image;

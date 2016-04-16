@@ -1,5 +1,5 @@
       PROGRAM zzz
-      include 'xmp_coarray.h'
+!!       include 'xmp_coarray.h'
 
 !$xmp nodes p(3)
 !$xmp nodes q(1,2)=p(2:3)

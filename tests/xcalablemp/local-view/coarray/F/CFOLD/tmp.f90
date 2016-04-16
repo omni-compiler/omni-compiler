@@ -1,6 +1,6 @@
 !parameter(lx=100,ly=lx/2)
 parameter(lx=100,ly=50)
-include 'xmp_coarray.h'
+!! include 'xmp_coarray.h'
 real*8 :: a(lx,ly+2)[*]
 do i = 1, lx
    a(i,1) = i

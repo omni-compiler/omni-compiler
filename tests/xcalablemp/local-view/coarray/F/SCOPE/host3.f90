@@ -3,7 +3,7 @@
   end program main
 
   subroutine sub1
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real a(10)[*]
 
   contains

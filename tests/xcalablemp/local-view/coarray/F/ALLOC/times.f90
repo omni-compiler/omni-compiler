@@ -1,5 +1,5 @@
   program times
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
 
     real, allocatable :: abig(:)[:,:], bbig(:,:)[:]
 

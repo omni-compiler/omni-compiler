@@ -1,11 +1,11 @@
   program put_a2d1_NG
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     complex a1(3)[*]
     call realsub(a1)
   end program
 
   subroutine realsub(a2)
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real a2(2,3)[*]
     integer xmp_node_num, xmp_num_nodes
     integer nerr

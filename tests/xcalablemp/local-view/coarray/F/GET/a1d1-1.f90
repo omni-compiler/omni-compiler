@@ -1,5 +1,5 @@
   program a1d1
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     integer*8 a(100)[*]
     integer b(100)
     integer nerr

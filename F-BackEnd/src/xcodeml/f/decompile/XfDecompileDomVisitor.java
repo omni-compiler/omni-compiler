@@ -308,10 +308,14 @@ public class XfDecompileDomVisitor {
         }
 
         if (XmDomUtil.getAttrBool(funcTypeNode, "is_external")) {
+          if (_isNameDefinedWithUseStmt(symbol.getSymbolName())) {
+            // do not output since the name is defined in module xmpf_coarray_decl
+          } else {
             if (isFirstToken == false)
                 writer.setupNewLine();
             writer.writeToken("EXTERNAL ");
             writer.writeToken(symbol.getSymbolName());
+          }
         }
     }
 
@@ -2811,6 +2815,7 @@ public class XfDecompileDomVisitor {
                 invokeEnter(XmDomUtil.getElement(functionTypeNode, "params"));
 
                 writer.writeToken(")");
+
             } else {
                 // ========
                 // FUNCTION
@@ -2859,6 +2864,12 @@ public class XfDecompileDomVisitor {
             // ========
             writer.incrementIndentLevel();
             typeManager.enterScope();
+            //////////////////////////////
+            if (true) {
+              writer.writeToken("use xmpf_coarray_decl");
+              writer.setupNewLine();
+            }
+            //////////////////////////////
 
             // ======
             // Inside
@@ -3248,10 +3259,16 @@ public class XfDecompileDomVisitor {
             // ========
             writer.incrementIndentLevel();
             typeManager.enterScope();
+            //////////////////////////////
+            if (true) {
+              writer.writeToken("use xmpf_coarray_decl");
+              writer.setupNewLine();
+            }
+            //////////////////////////////
 
             // ======
             // Inside
-            // ======h
+            // ======
             invokeEnter(XmDomUtil.getElement(n, "symbols"));
 
             invokeEnter(XmDomUtil.getElement(n, "declarations"));
@@ -4186,7 +4203,10 @@ public class XfDecompileDomVisitor {
 
             // Note:
             // If it is built-in function, it is not on the type table.
-            if (XmDomUtil.getAttrBool(n, "is_intrinsic") == false) {
+            // Either if the name is defined in module xmpf_coarray_decl, it should
+            // not be declared here.
+            if (XmDomUtil.getAttrBool(n, "is_intrinsic") == false &&
+                !_isNameDefinedWithUseStmt(functionName)) {
                 XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
                 Node typeChoice = typeManager.findType(functionNameNode);
                 if (typeChoice == null) {
@@ -5502,6 +5522,27 @@ public class XfDecompileDomVisitor {
         @Override public void enter(Node n) {
             invokeEnter(XmDomUtil.getContent(n));
         }
+    }
+
+
+    private Boolean _isNameDefinedWithUseStmt(String name) {
+      final String[] libNames = {
+        "xmpf_cobound", "xmpf_this_image",
+        "xmpf_coarray_get_generic", "xmpf_coarray_put_generic",
+        "xmpf_coarray_alloc_generic", "xmpf_coarray_dealloc_generic",
+        "xmpf_co_broadcast_generic", 
+        "xmpf_co_sum_generic", "xmpf_co_max_generic", "xmpf_co_min_generic", 
+        //        "num_images", "this_image", "image_index",
+        "xmpf_sync_memory", "xmpf_symc_images",
+        "xmpf_sync_all", "xmpf_lock", "xmpf_unlock",
+        "xmpf_critical", "xmpf_end_critical", "xmpf_error_stop" };
+
+      // find if the name is declared in module xmpf_coarray_decl
+      for (String libName: libNames)
+        if (libName.equals(name))
+          return true;
+
+      return false;
     }
 
 

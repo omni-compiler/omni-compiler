@@ -1,5 +1,5 @@
 module mmm
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
 end module mmm
 
 use mmm

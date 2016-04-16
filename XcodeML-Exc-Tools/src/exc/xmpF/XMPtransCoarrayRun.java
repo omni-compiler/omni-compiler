@@ -16,6 +16,7 @@ public class XMPtransCoarrayRun
   final static String FIND_DESCPOINTER_NAME   = "xmpf_coarray_find_descptr";
   final static String COARRAY_ALLOC_NAME     = "xmpf_coarray_alloc_generic";
   final static String COARRAY_DEALLOC_NAME   = "xmpf_coarray_dealloc_generic";
+  final static String NUM_IMAGES_NAME        = "xmpf_num_images";
   final static String THIS_IMAGE_NAME        = "xmpf_this_image";  // generic
   final static String COBOUND_NAME           = "xmpf_cobound";  // generic
   final static String IMAGE_INDEX_NAME       = "xmpf_image_index";
@@ -458,7 +459,10 @@ public class XMPtransCoarrayRun
     _setLocalCoarrays();
     /* visibleCoarrays will be set after run1 */
 
-    _check_ifIncludeXmpLib();
+    /////////////////////////////////////
+    // SKIP 
+    /////////_check_ifIncludeXmpLib();
+    /////////////////////////////////////
 
     if (version > 3)
       disp_version("run1, " + getName());
@@ -2337,8 +2341,9 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //  TRANSLATION l.
   //  - fake intrinsic function 'allocated' with 'associated'
+  //  - replace num_images() with NUM_IMAGES_NAME()
+  //  - replace this_image() with THIS_IMAGE_NAME()
   //  - replace this_image(V, ...) with THIS_IMAGE_NAME(descptr_V, ...)
-  //    except this_image()
   //  - replace image_index(V, ...) with IMAGE_INDEX_NAME(descptr_V, ...)
   //  - replace co_broadcast(V, ...) with CO_BROADCAST_NAME(V, ...)
   //  - replace co_sum/min/max(V, ...) with CO_SUM/MIN/MAX_NAME(V, ...)
@@ -2359,6 +2364,8 @@ public class XMPtransCoarrayRun
 
       if (fname.equalsIgnoreCase("allocated"))
         _replaceAllocatedWithAssociated(xobj, coarrays);
+      else if (fname.equalsIgnoreCase("num_images"))
+        _replaceNumImages(xobj, coarrays);
       else if (fname.equalsIgnoreCase("this_image"))
         _replaceThisImage(xobj, coarrays);
       else if (fname.equalsIgnoreCase("image_index"))
@@ -2423,20 +2430,39 @@ public class XMPtransCoarrayRun
 
   /* replace intrinsic this_image
    */
+  private void _replaceNumImages(Xobject xobj, ArrayList<XMPcoarray> coarrays) {
+    Xobject fname = xobj.getArg(0);
+    XobjList actualArgs = (XobjList)xobj.getArg(1);
+    int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
+
+    if (nargs > 0) {
+      XMP.error("No arguments are expected in num_images().");
+      return;
+    }
+
+    // replace function name 'this_image'
+    XobjString newFname = Xcons.Symbol(Xcode.IDENT, NUM_IMAGES_NAME);
+    xobj.setArg(0, newFname);
+  }
+
+  /* replace intrinsic this_image
+   */
   private void _replaceThisImage(Xobject xobj, ArrayList<XMPcoarray> coarrays) {
     Xobject fname = xobj.getArg(0);
     XobjList actualArgs = (XobjList)xobj.getArg(1);
     int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
 
-    if (nargs == 0) {
-      // no conversion: this_image() with no argument
-      return;
-    }
-
     if (nargs > 2) {
       XMP.error("Too many arguments was found in this_image().");
       return;
     }
+
+    // replace function name 'this_image'
+    XobjString newFname = Xcons.Symbol(Xcode.IDENT, THIS_IMAGE_NAME);
+    xobj.setArg(0, newFname);
+
+    if (nargs == 0)
+      return;
 
     Xobject arg1 = actualArgs.getArgWithKeyword("coarray", 0);
     if (arg1 == null) {
@@ -2449,11 +2475,7 @@ public class XMPtransCoarrayRun
       return;
     }
 
-    // replace function name 'this_image'
-    XobjString newFname = Xcons.Symbol(Xcode.IDENT, THIS_IMAGE_NAME);
-    xobj.setArg(0, newFname);
-
-    // replace actual arguments
+    // replace argument COARRAY
     Ident descPtr = coarray.getDescPointerId();
     Xobject corankExpr = Xcons.IntConstant(coarray.getCorank());
     Xobject newActualArgs = Xcons.List(descPtr, corankExpr);
@@ -2668,16 +2690,21 @@ public class XMPtransCoarrayRun
   }
 
   private boolean _isCoarrayIntrinsicUsed() {
+
+    /* This list should match with F-FrontEnd/src/F-intrinsics-table.c.
+     */
     final String[] _coarrayIntrinsics = {
+      // functions
+      "num_images",
+      "this_image",
+      "image_index",
+      "lcobound",
+      "ucocound",
+      // subroutines
       "co_broadcast",
       "co_max",
       "co_min",
       "co_sum",
-      "image_index",
-      "lcobound",
-      "num_images",
-      "this_image",
-      "ucocound",
       "xmpf_critical",
       "xmpf_end_critical",
       "xmpf_error_stop",
@@ -2687,6 +2714,7 @@ public class XMPtransCoarrayRun
       "xmpf_sync_memory",
       "xmpf_unlock",
       };
+
     final List coarrayIntrinsics = 
       Arrays.asList(_coarrayIntrinsics);
 
