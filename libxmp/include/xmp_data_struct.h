@@ -285,6 +285,10 @@ typedef struct xmp_coarray{
   char **addr;      // Pointer to each node.
                     // e.g.) xmp_coarray.addr[2] is a pointer of an object on node 2.
 
+#ifdef _XMP_FJRDMA
+  uint64_t laddr;  // On the FJRDMA machines, xmp_coarray.addr[_XMP_world_rank] is not local address of a coarray,
+                   // Thus, "laddr" is defined the local address.
+#endif
   char *real_addr; // Pointer to local node.
                    // Note that xmp_coarray.addr[my_rank] may not be a pointer of an object.
 
@@ -309,9 +313,6 @@ typedef struct xmp_coarray{
   int *distance_of_image_elmts; // Distance between each dimension of image set.
                                 // e.g.) When "int a[10][20]:[4][2][*]", distance_of_image_elmts[0] is 1,
                                 //       distance_of_image_elmts[1] is 4, distance_of_image_elmts[2] is 8.
-#ifdef _XMP_FJRDMA
-  uint64_t laddr_the_same_node;
-#endif
 #ifdef _XMP_MPI3_ONESIDED
   MPI_Win win;
   //#ifdef _XMP_XACC
