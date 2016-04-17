@@ -258,12 +258,15 @@ void _XMP_fjrdma_regmem_do(_XMP_coarray_t *coarray_desc, void *addr, const size_
     _XMP_fatal("Too many coarrays. Number of coarrays is not more than 510.");
 
   uint64_t laddr = FJMPI_Rdma_reg_mem(_memid, addr, coarray_size);
+  uint64_t laddr_the_same_node;
 
   MPI_Barrier(MPI_COMM_WORLD);
   for(int ncount=0,i=1; i<_XMP_world_size+1; ncount++,i++){
     int partner_rank = (_XMP_world_rank + _XMP_world_size - i) % _XMP_world_size;
-    if(partner_rank == _XMP_world_rank)
+    if(partner_rank == _XMP_world_rank){
       each_addr[partner_rank] = laddr;
+      laddr_the_same_node = FJMPI_Rdma_get_remote_addr(partner_rank, _memid);
+    }
     else
       each_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, _memid);
 
@@ -274,6 +277,7 @@ void _XMP_fjrdma_regmem_do(_XMP_coarray_t *coarray_desc, void *addr, const size_
   }
 
   coarray_desc->real_addr = addr;
+  coarray_desc->laddr_the_same_node = laddr_the_same_node;
   coarray_desc->addr = (void *)each_addr;
   _memid++;
 }

@@ -3,13 +3,12 @@
 void _XMP_fjrdma_atomic_define(int target_rank, _XMP_coarray_t *dst_desc, size_t dst_offset, int value,
 			       _XMP_coarray_t *src_desc, size_t src_offset, size_t elmt_size)
 {
-  if(target_rank == _XMP_world_rank){
-    memcpy((char *)dst_desc->real_addr + dst_offset * elmt_size, &value, elmt_size);
-    return;
-  }
+  uint64_t raddr, laddr;
+  if(target_rank != _XMP_world_rank)
+    raddr = (uint64_t)dst_desc->addr[target_rank] + elmt_size * dst_offset;
+  else
+    raddr = (uint64_t)dst_desc->laddr_the_same_node + elmt_size * dst_offset;
 
-  uint64_t raddr = (uint64_t)dst_desc->addr[target_rank] + elmt_size * dst_offset;
-  uint64_t laddr;
   if(src_desc == NULL){
     laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, &value, elmt_size);
   }
@@ -28,13 +27,12 @@ void _XMP_fjrdma_atomic_define(int target_rank, _XMP_coarray_t *dst_desc, size_t
 void _XMP_fjrdma_atomic_ref(int target_rank ,_XMP_coarray_t *dst_desc, size_t dst_offset, int* value,
 			    _XMP_coarray_t *src_desc, size_t src_offset, size_t elmt_size)
 {
-  if(target_rank == _XMP_world_rank){
-    memcpy(value, (char *)dst_desc->real_addr + dst_offset * elmt_size, elmt_size);
-    return;
-  }
+  uint64_t raddr, laddr;
+  if(target_rank != _XMP_world_rank)
+    raddr = (uint64_t)dst_desc->addr[target_rank] + elmt_size * dst_offset;
+  else
+    raddr = (uint64_t)dst_desc->laddr_the_same_node + elmt_size * dst_offset;
 
-  uint64_t raddr = (uint64_t)dst_desc->addr[target_rank] + elmt_size * dst_offset;
-  uint64_t laddr;
   if(src_desc == NULL){
     laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, value, elmt_size);
   }
