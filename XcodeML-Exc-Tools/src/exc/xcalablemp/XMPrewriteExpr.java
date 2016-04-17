@@ -1455,10 +1455,12 @@ public class XMPrewriteExpr {
       }
       String localName = (localExpr.Opcode() == Xcode.VAR)? localExpr.getName() : localExpr.getArg(0).getName();
       funcArgs.add(_globalDecl.getXMPcoarray(localName, block).getDescId());
+      funcArgs.add(getCoarrayOffset(localExpr, _globalDecl.getXMPcoarray(localName, block)));
     }
     else{
       funcArgs.add(localExpr);
       funcArgs.add(Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0))); // NULL
+      funcArgs.add(Xcons.IntConstant(0));                                // offset (This value is not used)
     }
 
     // The variable must be an int-type
@@ -1512,6 +1514,7 @@ public class XMPrewriteExpr {
     if(localExpr.Opcode() == Xcode.INT_CONSTANT){
       funcArgs.add(localExpr);
       funcArgs.add(Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0))); // NULL
+      funcArgs.add(Xcons.IntConstant(0));                                // offset (This value is not used)
     }
     else{
       // When localExpr is coarray, descriptor of the coarray is added to argument
@@ -1524,10 +1527,12 @@ public class XMPrewriteExpr {
         }
         String localName = (localExpr.Opcode() == Xcode.VAR)? localExpr.getName() : localExpr.getArg(0).getName();
         funcArgs.add(_globalDecl.getXMPcoarray(localName, block).getDescId());
+	funcArgs.add(getCoarrayOffset(localExpr, _globalDecl.getXMPcoarray(localName, block)));
       }
       else{
         funcArgs.add(localExpr);
         funcArgs.add(Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0))); // NULL
+	funcArgs.add(Xcons.IntConstant(0));                                // offset (This value is not used)
       }
     }
     
