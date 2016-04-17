@@ -6328,7 +6328,7 @@ void xmpf_unpack_nomask(void *a_p, void *v_p)
 }
 
 
-void _XMP_atomic_define_0(void *coarray_desc, size_t offset, int value, size_t elmt_size)
+void _XMP_atomic_define_0(void *coarray_desc, size_t offset, int value, void *local_desc, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   //  memcpy(((char *)c->real_addr) + offset * elmt_size, &value, elmt_size);
@@ -6340,7 +6340,8 @@ void _XMP_atomic_define_0(void *coarray_desc, size_t offset, int value, size_t e
 #endif
 }
 
-void _XMP_atomic_define_1(void *coarray_desc, size_t offset, int image0, int value, size_t elmt_size)
+void _XMP_atomic_define_1(void *coarray_desc, size_t offset, int image0, int value, void *local_desc,
+			  size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = image0 - 1;
@@ -6352,7 +6353,8 @@ void _XMP_atomic_define_1(void *coarray_desc, size_t offset, int image0, int val
 #endif
 }
 
-void _XMP_atomic_define_2(void *coarray_desc, size_t offset, int image0, int image1, int value, size_t elmt_size)
+void _XMP_atomic_define_2(void *coarray_desc, size_t offset, int image0, int image1, int value, void *local_desc,
+			  size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
@@ -6366,7 +6368,7 @@ void _XMP_atomic_define_2(void *coarray_desc, size_t offset, int image0, int ima
 }
 
 void _XMP_atomic_define_3(void *coarray_desc, size_t offset, int image0, int image1, int image2,
-			  int value, size_t elmt_size)
+			  int value, void *local_desc, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
@@ -6381,7 +6383,7 @@ void _XMP_atomic_define_3(void *coarray_desc, size_t offset, int image0, int ima
 }
 
 void _XMP_atomic_define_4(void *coarray_desc, size_t offset, int image0, int image1, int image2,
-			  int image3, int value, size_t elmt_size)
+			  int image3, int value, void *local_desc, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
@@ -6397,7 +6399,7 @@ void _XMP_atomic_define_4(void *coarray_desc, size_t offset, int image0, int ima
 }
 
 void _XMP_atomic_define_5(void *coarray_desc, size_t offset, int image0, int image1, int image2,
-			  int image3, int image4, int value, size_t elmt_size)
+			  int image3, int image4, int value, void *local_desc, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
@@ -6414,7 +6416,7 @@ void _XMP_atomic_define_5(void *coarray_desc, size_t offset, int image0, int ima
 }
 
 void _XMP_atomic_define_6(void *coarray_desc, size_t offset, int image0, int image1, int image2,
-			  int image3, int image4, int image5, int value, size_t elmt_size)
+			  int image3, int image4, int image5, int value, void *local_desc, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
@@ -6432,7 +6434,8 @@ void _XMP_atomic_define_6(void *coarray_desc, size_t offset, int image0, int ima
 }
 
 void _XMP_atomic_define_7(void *coarray_desc, size_t offset, int image0, int image1, int image2,
-			  int image3, int image4, int image5, int image6, int value, size_t elmt_size)
+			  int image3, int image4, int image5, int image6, int value, void *local_desc,
+			  size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
@@ -6450,7 +6453,7 @@ void _XMP_atomic_define_7(void *coarray_desc, size_t offset, int image0, int ima
 #endif
 }
 
-void _XMP_atomic_ref_0(void *coarray_desc, size_t offset, int *value, size_t elmt_size)
+void _XMP_atomic_ref_0(void *coarray_desc, size_t offset, int *value, void *local_desc, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   
@@ -6462,7 +6465,7 @@ void _XMP_atomic_ref_0(void *coarray_desc, size_t offset, int *value, size_t elm
 #endif
 }
 
-void _XMP_atomic_ref_1(void *coarray_desc, size_t offset, int image0, int *value, size_t elmt_size)
+void _XMP_atomic_ref_1(void *coarray_desc, size_t offset, int image0, int *value, void *local_desc, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = image0 - 1;
@@ -6474,7 +6477,8 @@ void _XMP_atomic_ref_1(void *coarray_desc, size_t offset, int image0, int *value
 #endif
 }
 
-void _XMP_atomic_ref_2(void *coarray_desc, size_t offset, int image0, int image1, int *value, size_t elmt_size)
+void _XMP_atomic_ref_2(void *coarray_desc, size_t offset, int image0, int image1, int *value, void *local_desc,
+		       size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
@@ -6488,7 +6492,7 @@ void _XMP_atomic_ref_2(void *coarray_desc, size_t offset, int image0, int image1
 }
 
 void _XMP_atomic_ref_3(void *coarray_desc, size_t offset, int image0, int image1, int image2,
-		       int *value, size_t elmt_size)
+		       int *value, void *local_desc, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
@@ -6503,7 +6507,7 @@ void _XMP_atomic_ref_3(void *coarray_desc, size_t offset, int image0, int image1
 }
 
 void _XMP_atomic_ref_4(void *coarray_desc, size_t offset, int image0, int image1, int image2,
-		       int image3, int *value, size_t elmt_size)
+		       int image3, int *value, void *local_desc, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
@@ -6519,7 +6523,7 @@ void _XMP_atomic_ref_4(void *coarray_desc, size_t offset, int image0, int image1
 }
 
 void _XMP_atomic_ref_5(void *coarray_desc, size_t offset, int image0, int image1, int image2,
-		       int image3, int image4, int *value, size_t elmt_size)
+		       int image3, int image4, int *value, void *local_desc, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
@@ -6536,7 +6540,7 @@ void _XMP_atomic_ref_5(void *coarray_desc, size_t offset, int image0, int image1
 }
 
 void _XMP_atomic_ref_6(void *coarray_desc, size_t offset, int image0, int image1, int image2,
-		       int image3, int image4, int image5, int *value, size_t elmt_size)
+		       int image3, int image4, int image5, int *value, void *local_desc, size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)
@@ -6554,7 +6558,8 @@ void _XMP_atomic_ref_6(void *coarray_desc, size_t offset, int image0, int image1
 }
 
 void _XMP_atomic_ref_7(void *coarray_desc, size_t offset, int image0, int image1, int image2,
-		       int image3, int image4, int image5, int image6, int *value, size_t elmt_size)
+		       int image3, int image4, int image5, int image6, int *value, void *local_desc,
+		       size_t elmt_size)
 {
   _XMP_coarray_t* c = (_XMP_coarray_t*)coarray_desc;
   int target_rank = c->distance_of_image_elmts[0] * (image0 - 1)

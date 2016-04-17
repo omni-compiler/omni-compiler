@@ -1119,11 +1119,12 @@ public class XMPrewriteExpr {
   }
 
   private boolean isCoarray(Xobject myExpr, Block block){
-    if(myExpr.Opcode() == Xcode.ARRAY_REF || myExpr.Opcode() == Xcode.SUB_ARRAY_REF){
+    if(myExpr.Opcode() == Xcode.ARRAY_REF || myExpr.Opcode() == Xcode.SUB_ARRAY_REF ||
+       myExpr.Opcode() == Xcode.ADDR_OF){
       myExpr = myExpr.getArg(0);
     }
 
-    if(myExpr.Opcode() == Xcode.POINTER_REF)
+    if(myExpr.Opcode() == Xcode.POINTER_REF || myExpr.Opcode() == Xcode.ARRAY_REF)
       myExpr = myExpr.getArg(0);
 
     XMPcoarray coarray = _globalDecl.getXMPcoarray(myExpr.getSym(), block);
@@ -1413,11 +1414,11 @@ public class XMPrewriteExpr {
       coarrayName = coarrayExpr.getArg(0).getName();
     }
     else{
-      throw new XMPexception("UNKNOWN DATA TYPE in xmp_atomic_ref().");
+      throw new XMPexception("UNKNOWN DATA TYPE of the 1st argument in xmp_atomic_ref().");
     }
     
-    XMPcoarray coarray  = _globalDecl.getXMPcoarray(coarrayName, block);
-    XobjList funcArgs   = Xcons.List(coarray.getDescId());
+    XMPcoarray coarray = _globalDecl.getXMPcoarray(coarrayName, block);
+    XobjList funcArgs  = Xcons.List(coarray.getDescId());
 
     if(coarray == null)
       throw new XMPexception("cannot find coarray '" + coarrayName + "'");
@@ -1436,13 +1437,31 @@ public class XMPrewriteExpr {
     // Add offset
     funcArgs.add(getCoarrayOffset(coarrayExpr, coarray));
 
+    // Get Coarray Dims
     int imageDims = (coarrayExpr.Opcode() == Xcode.CO_ARRAY_REF)? coarray.getImageDim() : 0;
     String funcName = "_XMP_atomic_ref_" + imageDims;
     Ident funcId    = _globalDecl.declExternFunc(funcName);
     for(int i=0;i<imageDims;i++)
       funcArgs.add(coarrayExpr.getArg(1).getArg(i));
-      
-    funcArgs.add(localExpr);
+
+    // When localExpr is coarray, descriptor of the coarray is added to argument
+    if(isCoarray(localExpr, block)){
+      localExpr = localExpr.getArg(0);
+      if(localExpr.Opcode() == Xcode.VAR){
+        funcArgs.add(rewriteVarRef(localExpr, block, false));
+      }
+      else{  //  else if(localExpr.Opcode() == Xcode.ARRAY_REF){
+        funcArgs.add(Xcons.AddrOf(rewriteArrayRef(localExpr, block)));
+      }
+      String localName = (localExpr.Opcode() == Xcode.VAR)? localExpr.getName() : localExpr.getArg(0).getName();
+      funcArgs.add(_globalDecl.getXMPcoarray(localName, block).getDescId());
+    }
+    else{
+      funcArgs.add(localExpr);
+      funcArgs.add(Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0))); // NULL
+    }
+
+    // The variable must be an int-type
     funcArgs.add(Xcons.SizeOf(Xtype.intType));
     
     return funcId.Call(funcArgs);
@@ -1463,11 +1482,11 @@ public class XMPrewriteExpr {
       coarrayName = coarrayExpr.getArg(0).getName();
     }
     else{
-      throw new XMPexception("UNKNOWN DATA TYPE in xmp_atomic_define().");
+      throw new XMPexception("UNKNOWN DATA TYPE of the 1st argument in xmp_atomic_define().");
     }
 
-    XMPcoarray coarray  = _globalDecl.getXMPcoarray(coarrayName, block);
-    XobjList funcArgs   = Xcons.List(coarray.getDescId());
+    XMPcoarray coarray = _globalDecl.getXMPcoarray(coarrayName, block);
+    XobjList funcArgs  = Xcons.List(coarray.getDescId());
 
     if(coarray == null)
       throw new XMPexception("cannot find coarray '" + coarrayName + "'");
@@ -1490,7 +1509,29 @@ public class XMPrewriteExpr {
     for(int i=0;i<imageDims;i++)
       funcArgs.add(coarrayExpr.getArg(1).getArg(i));
 
-    funcArgs.add(localExpr);
+    if(localExpr.Opcode() == Xcode.INT_CONSTANT){
+      funcArgs.add(localExpr);
+      funcArgs.add(Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0))); // NULL
+    }
+    else{
+      // When localExpr is coarray, descriptor of the coarray is added to argument
+      if(isCoarray(localExpr, block)){
+        if(localExpr.Opcode() == Xcode.VAR){
+          funcArgs.add(rewriteVarRef(localExpr, block, true));
+        }
+        else{ //  else if(localExpr.Opcode() == Xcode.ARRAY_REF){
+          funcArgs.add(rewriteArrayRef(localExpr, block));
+        }
+        String localName = (localExpr.Opcode() == Xcode.VAR)? localExpr.getName() : localExpr.getArg(0).getName();
+        funcArgs.add(_globalDecl.getXMPcoarray(localName, block).getDescId());
+      }
+      else{
+        funcArgs.add(localExpr);
+        funcArgs.add(Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0))); // NULL
+      }
+    }
+    
+    // The variable must be an int-type
     funcArgs.add(Xcons.SizeOf(Xtype.intType));
     
     return funcId.Call(funcArgs);
