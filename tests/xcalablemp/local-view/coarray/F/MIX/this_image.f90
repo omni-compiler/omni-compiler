@@ -1,5 +1,4 @@
       PROGRAM zzz
-!!       include 'xmp_coarray.h'
 
 !$xmp nodes p(8)
 !$xmp nodes p2(2,4)=p
@@ -23,13 +22,6 @@
       nm2=num_images()
 !$xmp end task
 
-!!! A subarray of node is not supported in XMP translator
-!!!$xmp task on p2(1,:)
-!!      me3=this_image()
-!!      nm3=num_images()
-!!      print*,"I am",me,"and",me3,"in",nm3
-!!!$xmp end task
-
 !$xmp task on p3
       me5=this_image()
       nm5=num_images()
@@ -51,24 +43,6 @@
             end if
          end do
       end do
-
-!!! A subarray of node is not supported in XMP translator
-!!      k0=0
-!!      k3=0
-!!      do j=1,4
-!!         do i=1,2
-!!            k0=k0+1
-!!            if (i==1) then
-!!               k3=k3+1
-!!               if (me==k0) then
-!!                  if (me3/=k3) then
-!!                     nerr=nerr+1
-!!                     write(*,100) me,"me3",k3,me3
-!!                  endif
-!!               end if
-!!            end if
-!!         end do
-!!      end do
 
       k0=1
       k5=0

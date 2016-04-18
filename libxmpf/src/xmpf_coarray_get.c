@@ -59,7 +59,7 @@ void _XMPF_coarrayInit_get()
 extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *result)
 {
-  _XMPF_checkIfInTask("a scalar coindexed object");
+  int coindex0 = _XMPF_get_initial_image(*coindex);
 
   /*--------------------------------------*\
    * Check whether the local address      *
@@ -85,14 +85,14 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
     _XMPF_coarrayDebugPrint("SCHEME_DirectGet/scalar selected\n");
 
     assert(avail_DMA);
-    _getVector_DMA(*descPtr, *baseAddr, *element, *coindex,
+    _getVector_DMA(*descPtr, *baseAddr, *element, coindex0,
                    descDMA, offsetDMA, nameDMA);
     break;
 
   case SCHEME_BufferGet:
     _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/scalar\n");
 
-    _getVector_buffer(*descPtr, *baseAddr, *element, *coindex,
+    _getVector_buffer(*descPtr, *baseAddr, *element, coindex0,
                       result, *element);
     break;
 
@@ -103,7 +103,7 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
       _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferGet/scalar. elementRU=%ud\n",
                               elementRU);
 
-      _getVector_buffer(*descPtr, *baseAddr, elementRU, *coindex,
+      _getVector_buffer(*descPtr, *baseAddr, elementRU, coindex0,
                         result, *element);
     }
     break;
@@ -123,7 +123,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
                                     int *coindex, char *result, int *rank, ...)
 #endif
 {
-  _XMPF_checkIfInTask("an array coindexed object");
+  int coindex0 = _XMPF_get_initial_image(*coindex);
 
   if (*element % ONESIDED_BOUNDARY != 0) {
     _XMP_fatal("violation of boundary in reference of a coindexed object\n"
@@ -174,14 +174,14 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
   switch (scheme) {
   case SCHEME_DirectGet:
     _XMPF_coarrayDebugPrint("select SCHEME_DirectGet/array\n");
-    _getCoarray(*descPtr, *baseAddr, *coindex, result,
+    _getCoarray(*descPtr, *baseAddr, coindex0, result,
                 *element, *rank, skip, count,
                 descDMA, offsetDMA, nameDMA);
     break;
 
   case SCHEME_BufferGet:
     _XMPF_coarrayDebugPrint("select SCHEME_BufferGet/array\n");
-    _getCoarray(*descPtr, *baseAddr, *coindex, result,
+    _getCoarray(*descPtr, *baseAddr, coindex0, result,
                 *element, *rank, skip, count,
                 NULL, 0, "(localBuf)");
     break;

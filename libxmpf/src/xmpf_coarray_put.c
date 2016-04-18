@@ -111,7 +111,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
                                      int *coindex, char *rhs, int *condition)
 #endif
 {
-  _XMPF_checkIfInTask("scalar coindexed variable");
+  int coindex0 = _XMPF_get_initial_image(*coindex);
 
   /*--------------------------------------*\
    * Check whether the local address rhs  *
@@ -142,7 +142,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     _XMPF_coarrayDebugPrint("SCHEME_DirectPut/scalar selected\n");
     assert(avail_DMA);
 
-    _putVector_DMA(*descPtr, *baseAddr, *element, *coindex,
+    _putVector_DMA(*descPtr, *baseAddr, *element, coindex0,
                    descDMA, offsetDMA, nameDMA);
     break;
     
@@ -152,14 +152,14 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
                             elementRU);
     assert(avail_DMA);
 
-    _putVector_DMA(*descPtr, *baseAddr, elementRU, *coindex,
+    _putVector_DMA(*descPtr, *baseAddr, elementRU, coindex0,
                    descDMA, offsetDMA, nameDMA);
     break;
 
   case SCHEME_BufferPut:
     _XMPF_coarrayDebugPrint("SCHEME_BufferPut/scalar selected\n");
 
-    _putVector_buffer(*descPtr, *baseAddr, *element, *coindex,
+    _putVector_buffer(*descPtr, *baseAddr, *element, coindex0,
                       rhs, *element);
     break;
 
@@ -168,7 +168,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     _XMPF_coarrayDebugPrint("SCHEME_ExtraBufferPut/scalar selected. elementRU=%ud\n",
                             elementRU);
 
-    _putVector_buffer(*descPtr, *baseAddr, elementRU, *coindex,
+    _putVector_buffer(*descPtr, *baseAddr, elementRU, coindex0,
                       rhs, *element);
     break;
 
@@ -188,7 +188,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
                                     int *rank, ...)
 #endif
 {
-  _XMPF_checkIfInTask("an array coindexed variable");
+  int coindex0 = _XMPF_get_initial_image(*coindex);
 
   if (*element % ONESIDED_BOUNDARY != 0) {
     _XMP_fatal("violation of boundary writing to a coindexed variable\n"
@@ -244,14 +244,14 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
   switch (scheme) {
   case SCHEME_DirectPut:
     _XMPF_coarrayDebugPrint("SCHEME_DirectPut/array selected\n");
-    _putCoarray_DMA(*descPtr, *baseAddr, *coindex, rhs,
+    _putCoarray_DMA(*descPtr, *baseAddr, coindex0, rhs,
                     *element, *rank, skip, skip_rhs, count,
                     descDMA, offsetDMA, nameDMA);
     break;
 
   case SCHEME_BufferPut:
     _XMPF_coarrayDebugPrint("SCHEME_BufferPut/array selected\n");
-    _putCoarray_buffer(*descPtr, *baseAddr, *coindex, rhs,
+    _putCoarray_buffer(*descPtr, *baseAddr, coindex0, rhs,
                        *element, *rank, skip, skip_rhs, count);
     break;
 
@@ -271,7 +271,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
                                      int *rank, ...)
 #endif
 {
-  _XMPF_checkIfInTask("an array coindexed variable (spread)");
+  int coindex0 = _XMPF_get_initial_image(*coindex);
 
   if (*element % ONESIDED_BOUNDARY != 0) {
     _XMP_fatal("violation of boundary writing a scalar to a coindexed variable\n"
@@ -306,7 +306,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
   /*--------------------------------------*\
    * action                               *
   \*--------------------------------------*/
-  _spreadCoarray(*descPtr, *baseAddr, *coindex, rhs,
+  _spreadCoarray(*descPtr, *baseAddr, coindex0, rhs,
                  *element, *rank, skip, count, *element);
 }
 

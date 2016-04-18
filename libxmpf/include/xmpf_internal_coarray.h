@@ -112,8 +112,12 @@ extern void _XMPF_set_initial_this_image(void);
 extern void _XMPF_set_initial_num_images(void);
 extern int _XMPF_get_initial_this_image(void);
 extern int _XMPF_get_initial_num_images(void);
+
+extern BOOL _XMPF_is_subset_exec(void);
+extern MPI_Comm _XMPF_get_current_comm(void);
 extern int _XMPF_get_current_this_image(void);
 extern int _XMPF_get_current_num_images(void);
+extern int _XMPF_get_initial_image(int image);
 
 extern void xmpf_sync_all_(void);
 extern void xmpf_sync_all_auto_(void);
