@@ -88,7 +88,7 @@ target_triplet = @target@
 @SUPERUX_OR_POWERPC_FALSE@am__append_5 = "global-view/intrinsic/C/"
 @GASNET_TRUE@am__append_6 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
 @GASNET_TRUE@	       "local-view/coarray/F/LIB" "local-view/coarray/F/ALLOC" "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
-@GASNET_TRUE@	       "local-view/coarray/F/CFOLD" "local-view/lock-unlock/C"
+@GASNET_TRUE@	       "local-view/coarray/F/CFOLD" "local-view/lock-unlock/C" "local-view/intrinsic/C"
 
 @GASNET_TRUE@am__append_7 = "local-view/coarray/C/"
 @FJRDMA_TRUE@am__append_8 = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
@@ -539,9 +539,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps ./Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps ./Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

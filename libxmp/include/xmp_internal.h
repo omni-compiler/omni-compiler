@@ -21,6 +21,7 @@ extern int _XMPF_running;
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <string.h>
 // --------------- macro functions -----------------------------------
 #ifdef DEBUG
 #define _XMP_ASSERT(_flag) \
@@ -449,6 +450,8 @@ extern void _xmp_gasnet_post_sync_images(const int, const int*);
 extern void _xmp_gasnet_wait_sync_images(const int, const int*);
 extern void _xmp_gasnet_add_notify(gasnet_token_t t, const int);
 extern void _xmp_gasnet_notiy_reply(gasnet_token_t t);
+extern void _XMP_gasnet_atomic_define(int, _XMP_coarray_t*, size_t, int, size_t);
+extern void _XMP_gasnet_atomic_ref(int, _XMP_coarray_t*, size_t, int*, size_t);
 #endif
 
 #ifdef _XMP_FJRDMA
@@ -461,11 +464,14 @@ extern void _xmp_gasnet_notiy_reply(gasnet_token_t t);
 #define _XMP_POSTREQ_NIC_FLAG (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_REMOTE_NOTICE)
 #define _XMP_POSTREQ_SEND_NIC  FJMPI_RDMA_LOCAL_NIC2
 #define _XMP_POSTREQ_RECV_NIC  FJMPI_RDMA_LOCAL_NIC3
-#define _XMP_TEMP_MEMID     0
-#define _XMP_POSTREQ_ID     1
-#define _XMP_SYNC_IMAGES_ID 2
+#define _XMP_TEMP_MEMID         0
+#define _XMP_POSTREQ_ID         1
+#define _XMP_SYNC_IMAGES_ID     2
+#define _XMP_FJRDMA_START_MEMID 3
 #define _XMP_INIT_RDMA_INTERVAL      8192
 #define _XMP_ONESIDED_MAX_PROCS     82944
+#define _XMP_FJRDMA_TAG         0
+#define _XMP_SYNC_IMAGES_TAG    1
 
 #include <mpi-ext.h>
 extern void _XMP_fjrdma_initialize(int, char**);
@@ -500,6 +506,12 @@ extern void _XMP_set_coarray_addresses_with_chunk(uint64_t*, const uint64_t, con
 extern int _XMP_is_the_same_constant_stride(const _XMP_array_section_t *, const _XMP_array_section_t *, 
 					    const int, const int);
 extern size_t _XMP_calc_stride(const _XMP_array_section_t *, const int, const size_t);
+extern void _XMP_add_num_of_puts();
+extern void _XMP_add_num_of_gets();
+extern void _XMP_fjrdma_sync_memory_put();
+extern void _XMP_fjrdma_sync_memory_get();
+extern void _XMP_fjrdma_atomic_define(int, _XMP_coarray_t*, size_t, int, _XMP_coarray_t*, size_t, size_t);
+extern void _XMP_fjrdma_atomic_ref(int, _XMP_coarray_t*, size_t, int*, _XMP_coarray_t*, size_t, size_t);
 #endif
 
 #ifdef _XMP_TCA
