@@ -189,7 +189,7 @@ void _XMPF_coarray_init(void)
     _set_isSafeBufferMode(atoi(env4));
   }
     
-  if ((env1&&*env1) || (env2&&*env2) || (env3&&*env3) || (env4&&*env4)) {
+  if (_XMPF_coarrayMsg || (env2&&*env2) || (env3&&*env3) || (env4&&*env4)) {
     _XMPF_set_coarrayMsg(TRUE);
 
     _XMPF_coarrayDebugPrint("Execution time environment\n"
@@ -320,6 +320,8 @@ void _XMPF_coarrayFatal(char *format, ...)
 
 void _XMPF_coarrayDebugPrint(char *format, ...)
 {
+  int current, initial;
+
   if (!_XMPF_coarrayMsg)
     return;
 
@@ -327,7 +329,13 @@ void _XMPF_coarrayDebugPrint(char *format, ...)
   va_list list;
   va_start(list, format);
   vsprintf(work, format, list);
-  fprintf(stderr, "CAF[%d] %s", _XMPF_get_current_this_image(), work);
   va_end(list);
+
+  current = _XMPF_get_current_this_image();
+  initial = _XMPF_get_initial_this_image();
+  if (current == initial)
+    fprintf(stderr, "CAF[%d] %s", initial, work);
+  else
+    fprintf(stderr, "CAF[%d/currently %d] %s", initial, current, work);
 }
 

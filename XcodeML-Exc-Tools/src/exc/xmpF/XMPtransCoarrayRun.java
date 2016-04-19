@@ -472,7 +472,7 @@ public class XMPtransCoarrayRun
     } else {
       run1_procedure();
 
-      if (!"1".equals(System.getenv("XMP_CASCADE"))) {
+      if ("1".equals(System.getenv("XMP_ONLYCAF"))) {
         // SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
         //  convert main program to soubroutine xmpf_main
         if (isMainProgram())

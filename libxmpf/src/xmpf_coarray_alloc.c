@@ -200,7 +200,7 @@ static MemoryChunkOrder_t *_newMemoryChunkOrder(MemoryChunk_t *chunk);
 static void _unlinkMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
 static void _freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
 
-static char* _toOrdinalNumberString(int n);
+static char* _to_Nth(int n);
 
 // sorted chunk table (STRUCTURE-III)
 static SortedChunkTable_t *_sortedChunkTable;
@@ -1400,14 +1400,14 @@ int xmpf_image_index_(void **descPtr, int coindexes[])
       _XMPF_coarrayDebugPrint
         ("The %s cosubscript of coarray \'%s\' is too small.\n"
          "  value=%d, range=[%d,%d]\n",
-         _toOrdinalNumberString(i+1), cp->name, idx, lb, ub);
+         _to_Nth(i+1), cp->name, idx, lb, ub);
       return 0;
     }
     if (ub < idx && i < cp->corank - 1) {
       _XMPF_coarrayDebugPrint
         ("The %s cosubscript of coarray \'%s\' is too large.\n"
          "  value=%d, range=[%d,%d]\n",
-         _toOrdinalNumberString(i+1), cp->name, idx, lb, ub);
+         _to_Nth(i+1), cp->name, idx, lb, ub);
       return 0;
     }
     count += (idx - lb) * factor;
@@ -1445,9 +1445,9 @@ int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...)
     lb = cp->lcobound[i];
     ub = cp->ucobound[i];
     if (idx < lb || ub < idx) {
-      _XMPF_coarrayFatal("%d-th cosubscript of \'%s\', %d, "
+      _XMPF_coarrayFatal("%s cosubscript of \'%s\', %d, "
                          "is out of range %d to %d.\n",
-                         i+1, cp->name, idx, lb, ub);
+                         _to_Nth(i+1), cp->name, idx, lb, ub);
     }
     count += (idx - lb) * factor;
     factor *= cp->cosize[i];
@@ -1521,7 +1521,7 @@ void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
    local
 \***********************************************/
 
-char* _toOrdinalNumberString(int n)
+char* _to_Nth(int n)
 {
   static char work[6];
 
@@ -1532,6 +1532,12 @@ char* _toOrdinalNumberString(int n)
     return "2nd";
   case 3:
     return "3rd";
+  case 21:
+    return "21st";
+  case 22:
+    return "22nd";
+  case 23:
+    return "23rd";
   default:
     break;
   }

@@ -231,7 +231,8 @@ public class XMPanalyzePragma
       break;
 
     case COARRAY:
-      // { translateCoarrayDecl(x);   		break; }
+      XMPcoarray.analyzeCoarray(pb.getClauses(), env, pb);
+      break;
 
     case ARRAY:
       //analyzeArray(pb.getClauses(), pb.getBody(), info, pb);
@@ -945,9 +946,6 @@ public class XMPanalyzePragma
   //   return true;
   // }
 
-  private void analyzeCoarray(Xobject coarrayPragma){
-    XMP.fatal("analyzeCoarray");
-  }
 
   private Block analyzeArray(PragmaBlock pb){
 

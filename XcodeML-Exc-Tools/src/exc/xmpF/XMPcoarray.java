@@ -14,6 +14,8 @@ import java.util.*;
  * Madiator for each coarray
  */
 public class XMPcoarray {
+  // name of property 
+  private final static String XMP_COARRAY_NODES_PROP = "XMP_COARRAY_NODES_PROP";
 
   // name of library
   public final static String VAR_DESCPOINTER_PREFIX = "xmpf_descptr";
@@ -89,6 +91,52 @@ public class XMPcoarray {
     this.homeBlockName = homeBlockName;
   }
 
+
+  //------------------------------
+  //  parsing
+  //------------------------------
+  public static void analyzeCoarray(Xobject coarrayPragma,
+                                    XMPenv env, PragmaBlock pb) {
+
+    String nodesName = coarrayPragma.getArg(0).getString();
+    XobjList coarrayNameList = (XobjList)coarrayPragma.getArg(1);
+
+    for(Xobject xobj: coarrayNameList){
+      String coarrayName = xobj.getString();
+      analyzeEachCoarray(coarrayName, nodesName, env, pb);
+      if(XMP.hasError()) break;
+    }
+  }
+
+
+  private static void analyzeEachCoarray(String name, String nodesName,
+                                         XMPenv env, PragmaBlock pb) {
+
+    Ident ident = env.findVarIdent(name, pb);
+
+    // error check #1
+    if (ident == null || !ident.isCoarray()) {
+      XMP.errorAt(pb, "not declared as a coarray variable: " + name);
+      return;
+    }
+
+    // error check #2
+    if (getProp_nodes(ident) != null) {
+      XMP.errorAt(pb, "double-declaration in coarray directives: " + name);
+      return;
+    }
+
+    setProp_nodes(ident, nodesName);
+  }
+
+
+  private static String getProp_nodes(Ident ident) {
+    return (String)ident.getProp(XMP_COARRAY_NODES_PROP);
+  }
+
+  private static void setProp_nodes(Ident ident, String nodesName) {
+    ident.setProp(XMP_COARRAY_NODES_PROP, nodesName);
+  }
 
   //------------------------------
   //  actions

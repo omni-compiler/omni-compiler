@@ -81,9 +81,12 @@ int _XMPF_get_current_this_image()
 
 int _XMPF_get_initial_image(int image)
 {
-  if (_XMPF_is_subset_exec())
+  if (_XMPF_is_subset_exec()) {
+    _XMPF_coarrayDebugPrint("*** get initial image from image %d\n", image);
+
     return _translate_images(_XMPF_get_current_comm(), image,
                              MPI_COMM_WORLD);
+  }
   return image;
 }
 
@@ -423,7 +426,7 @@ int _translate_images(MPI_Comm comm1, int image1, MPI_Comm comm2)
                        "stat1=%d, stat2=%d, stat3=%d",
                        stat1, stat2, stat3);
 
-  _XMPF_coarrayDebugPrint("***IMAGE NUMBER translated from %d to %d",
+  _XMPF_coarrayDebugPrint("***IMAGE NUMBER translated from %d to %d\n",
                           image1, image2);
 
   return image2;
