@@ -1647,7 +1647,10 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
 
     nDims = TYPE_N_DIM(tp);
 
-    if (!IS_ARRAY_TYPE(tp)) fatal("%s: not ARRAY_TYPE", __func__);
+    if (!IS_ARRAY_TYPE(tp)){ //fatal("%s: not ARRAY_TYPE", __func__);
+      error_at_id(id, "%s: not ARRAY_TYPE", ID_NAME(id));
+      return NULL;
+    }
     if (!TYPE_DIM_FIXED(tp)) fix_array_dimensions(tp);
 
     /*

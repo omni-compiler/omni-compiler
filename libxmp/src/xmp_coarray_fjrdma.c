@@ -6,12 +6,12 @@
 #include "mpi.h"
 #include "mpi-ext.h"
 #include "xmp_internal.h"
-#define _XMP_FJRDMA_MAX_SIZE          16777212
-#define _XMP_FJRDMA_MAX_MEMID              511
-#define _XMP_FJRDMA_MAX_MPUT              1993
-#define _XMP_FJRDMA_MAX_MGET               100 /** This value is trial */
-#define _XMP_FJRDMA_MAX_PUT               60 /** This value is trial */
-#define _XMP_FJRDMA_MAX_GET               60 /** This value is trial */
+#define _XMP_FJRDMA_MAX_SIZE  16777212
+#define _XMP_FJRDMA_MAX_MEMID      511
+#define _XMP_FJRDMA_MAX_MPUT      1993
+#define _XMP_FJRDMA_MAX_MGET       100 /** This value is trial */
+#define _XMP_FJRDMA_MAX_PUT         60 /** This value is trial */
+#define _XMP_FJRDMA_MAX_GET         60 /** This value is trial */
 
 static int _num_of_puts = 0, _num_of_gets = 0;
 static struct FJMPI_Rdma_cq _cq;
@@ -257,16 +257,12 @@ void _XMP_fjrdma_regmem_do(_XMP_coarray_t *coarray_desc, void *addr, const size_
   if(_memid == _XMP_FJRDMA_MAX_MEMID)
     _XMP_fatal("Too many coarrays. Number of coarrays is not more than 510.");
 
-  uint64_t laddr = FJMPI_Rdma_reg_mem(_memid, addr, coarray_size);
+  coarray_desc->laddr = FJMPI_Rdma_reg_mem(_memid, addr, coarray_size);
 
   MPI_Barrier(MPI_COMM_WORLD);
   for(int ncount=0,i=1; i<_XMP_world_size+1; ncount++,i++){
     int partner_rank = (_XMP_world_rank + _XMP_world_size - i) % _XMP_world_size;
-    if(partner_rank == _XMP_world_rank)
-      each_addr[partner_rank] = laddr;
-    else
-      each_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, _memid);
-
+    each_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, _memid);
     if(ncount > _XMP_INIT_RDMA_INTERVAL){
       MPI_Barrier(MPI_COMM_WORLD);
       ncount = 0;
@@ -312,7 +308,7 @@ void _XMP_fjrdma_shortcut_put(const int target_rank, const uint64_t dst_offset, 
   _check_transfer_size(transfer_size);
 
   uint64_t raddr = (uint64_t)dst_desc->addr[target_rank] + dst_offset;
-  uint64_t laddr = (uint64_t)src_desc->addr[_XMP_world_rank] + src_offset;
+  uint64_t laddr = src_desc->laddr + src_offset;
 
   if(dst_elmts == src_elmts){
     _XMP_FJMPI_Rdma_put(target_rank, raddr, laddr, transfer_size);
@@ -354,7 +350,7 @@ static void _fjrdma_continuous_put(const int target_rank, const uint64_t dst_off
   if(src_desc == NULL)
     laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, src + src_offset, transfer_size);
   else
-    laddr = (uint64_t)src_desc->addr[_XMP_world_rank] + src_offset;
+    laddr = src_desc->laddr + src_offset;
 
   _XMP_FJMPI_Rdma_put(target_rank, raddr, laddr, transfer_size);
 
@@ -391,7 +387,7 @@ static void _fjrdma_scalar_mput(const int target_rank, const uint64_t dst_offset
   if(src_desc == NULL)
     laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, src + src_offset, elmt_size);
   else
-    laddr = (uint64_t)src_desc->addr[_XMP_world_rank] + src_offset;
+    laddr = src_desc->laddr + src_offset;
 
   // Set parameters for FJMPI_Rdma_mput
   _XMP_set_coarray_addresses(raddr, dst_info, dst_dims, transfer_elmts, raddrs);
@@ -516,7 +512,7 @@ static void _fjrdma_NON_continuous_put(const int target_rank, const uint64_t dst
     laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, src, array_size) + src_offset;
   }
   else{
-    laddr = (uint64_t)src_desc->addr[_XMP_world_rank] + src_offset;
+    laddr = src_desc->laddr + src_offset;
   }
 
   if(_XMP_is_the_same_constant_stride(dst_info, src_info, dst_dims, src_dims)){
@@ -600,7 +596,7 @@ void _XMP_fjrdma_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_d
   _check_transfer_size(transfer_size);
 
   uint64_t raddr = (uint64_t)src_desc->addr[target_rank] + src_offset;
-  uint64_t laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_offset;
+  uint64_t laddr = dst_desc->laddr + dst_offset;
   
   if(dst_elmts == src_elmts){
     _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, transfer_size);
@@ -644,7 +640,7 @@ static void _fjrdma_continuous_get(const int target_rank, const uint64_t dst_off
     laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, dst + dst_offset, transfer_size);
   }
   else
-    laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_offset;
+    laddr = dst_desc->laddr + dst_offset;
   
   _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, transfer_size);
   _XMP_fjrdma_sync_memory_get();
@@ -687,7 +683,7 @@ static void _fjrdma_NON_continuous_get(const int target_rank, const uint64_t dst
     laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, dst, array_size) + dst_offset;
   }
   else{
-    laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_offset;
+    laddr = dst_desc->laddr + dst_offset;
   }
 
   // Set parameters for multipul FJMPI_Rdma_get()
@@ -741,7 +737,7 @@ static void _fjrdma_scalar_mget(const int target_rank, const uint64_t dst_offset
   if(dst_desc == NULL)
     laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, dst + dst_offset, elmt_size);
   else
-    laddr = (uint64_t)dst_desc->addr[_XMP_world_rank] + dst_offset;
+    laddr = dst_desc->laddr + dst_offset;
 
   _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, elmt_size);
   _XMP_fjrdma_sync_memory_get();
@@ -844,10 +840,7 @@ void _XMP_fjrdma_build_sync_images_table()
   MPI_Barrier(MPI_COMM_WORLD);
   for(int ncount=0,i=1; i<_XMP_world_size+1; ncount++,i++){
     int partner_rank = (_XMP_world_rank + _XMP_world_size - i) % _XMP_world_size;
-    if(partner_rank == _XMP_world_rank)
-      _remote_rdma_addr[partner_rank] = _local_rdma_addr;
-    else
-      _remote_rdma_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, _XMP_SYNC_IMAGES_ID);
+    _remote_rdma_addr[partner_rank] = FJMPI_Rdma_get_remote_addr(partner_rank, _XMP_SYNC_IMAGES_ID);
 
     if(ncount > _XMP_INIT_RDMA_INTERVAL){
       MPI_Barrier(MPI_COMM_WORLD);

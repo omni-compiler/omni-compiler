@@ -19,6 +19,9 @@ int main()
     }
     xmp_sync_memory(NULL);
   }
+
+  if(xmp_node_num() == 1)
+    printf("PASS\n");
   
   return 0;
 }

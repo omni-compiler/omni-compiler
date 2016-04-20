@@ -16,6 +16,9 @@ void check()
 #pragma xmp reduction(min:flag)
   if(flag == FALSE)
     exit(1);
+  else
+    if(xmp_node_num() == 1)
+      printf("PASS\n");
 }
 
 void test1(int value)
@@ -155,6 +158,6 @@ int main()
   test2_c(xmp_node_num()); check();
   test3(xmp_node_num());   check();
   test3_c(xmp_node_num()); check();
-  
+
   return 0;
 }
