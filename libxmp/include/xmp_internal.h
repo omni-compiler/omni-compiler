@@ -425,8 +425,10 @@ extern size_t _XMP_calc_max_copy_chunk(const int, const int, const _XMP_array_se
 	gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);   \
   } while (0)
 
+
 extern void _XMP_gasnet_malloc_do(_XMP_coarray_t *, void **, const size_t);
 extern void _XMP_gasnet_initialize(int, char**, const size_t, const size_t);
+extern void _XMP_gasnet_intrinsic_initialize();
 extern void _XMP_gasnet_finalize(const int);
 extern void _XMP_gasnet_put(const int, const int, const int, const int, const int, const _XMP_array_section_t*, 
 			    const _XMP_array_section_t*, const _XMP_coarray_t*, const void*, const size_t, const size_t);
@@ -673,6 +675,10 @@ extern void _xmp_gasnet_pack(gasnet_token_t, const char*, const size_t,
 extern void _xmp_gasnet_unpack_get_reply(gasnet_token_t, char *, size_t, const int, const int);
 extern void _XMP_pack_coarray(char*, const char*, const int, const _XMP_array_section_t*);
 extern void _XMP_unpack_coarray(char*, const int, const char*, const _XMP_array_section_t*, const int);
+extern void _xmp_gasnet_atomic_define_do(gasnet_token_t, const char*, const size_t, const int, const int);
+extern void _xmp_gasnet_atomic_define_reply_do(gasnet_token_t);
+extern void _xmp_gasnet_atomic_ref_do(gasnet_token_t, const size_t, const int, const int, const int, const int);
+extern void _xmp_gasnet_atomic_ref_reply_do(gasnet_token_t, int *, size_t, const int, const int);
 
 /* Every handler function needs a uniqe number between 200-255.   
  * The Active Message library reserves ID's 1-199 for itself: client libs must
@@ -693,6 +699,11 @@ extern void _XMP_unpack_coarray(char*, const int, const char*, const _XMP_array_
 #define _XMP_GASNET_PACK_GET_HANDLER           212
 #define _XMP_GASNET_UNPACK_GET_REPLY_NONC      213
 #define _XMP_GASNET_ADD_NOTIFY                 214
+#define _XMP_GASNET_ATOMIC_DEFINE_DO           215
+#define _XMP_GASNET_ATOMIC_DEFINE_REPLY_DO     216
+#define _XMP_GASNET_ATOMIC_REF_DO              217
+#define _XMP_GASNET_ATOMIC_REF_REPLY_DO        218
+
 extern void _xmp_gasnet_lock_request(gasnet_token_t, int, uint32_t, uint32_t);
 extern void _xmp_gasnet_setlockstate(gasnet_token_t, int);
 extern void _xmp_gasnet_do_setlockstate(int);
