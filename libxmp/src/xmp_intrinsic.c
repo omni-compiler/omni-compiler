@@ -6338,6 +6338,7 @@ void _XMP_atomic_define_0(void *dst_desc, size_t dst_offset, int value, void *sr
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_define(_XMP_world_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_define(_XMP_world_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6352,6 +6353,7 @@ void _XMP_atomic_define_1(void *dst_desc, size_t dst_offset, int image0, int val
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6367,6 +6369,7 @@ void _XMP_atomic_define_2(void *dst_desc, size_t dst_offset, int image0, int ima
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6383,6 +6386,7 @@ void _XMP_atomic_define_3(void *dst_desc, size_t dst_offset, int image0, int ima
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6400,6 +6404,7 @@ void _XMP_atomic_define_4(void *dst_desc, size_t dst_offset, int image0, int ima
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6418,6 +6423,7 @@ void _XMP_atomic_define_5(void *dst_desc, size_t dst_offset, int image0, int ima
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6438,6 +6444,7 @@ void _XMP_atomic_define_6(void *dst_desc, size_t dst_offset, int image0, int ima
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6459,6 +6466,7 @@ void _XMP_atomic_define_7(void *dst_desc, size_t dst_offset, int image0, int ima
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_define(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_define(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6473,6 +6481,7 @@ void _XMP_atomic_ref_0(void *dst_desc, size_t dst_offset, int *value, void *src_
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_ref(_XMP_world_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_ref(_XMP_world_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6487,6 +6496,7 @@ void _XMP_atomic_ref_1(void *dst_desc, size_t dst_offset, int image0, int *value
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6502,6 +6512,7 @@ void _XMP_atomic_ref_2(void *dst_desc, size_t dst_offset, int image0, int image1
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6518,6 +6529,7 @@ void _XMP_atomic_ref_3(void *dst_desc, size_t dst_offset, int image0, int image1
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6535,6 +6547,7 @@ void _XMP_atomic_ref_4(void *dst_desc, size_t dst_offset, int image0, int image1
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6554,6 +6567,7 @@ void _XMP_atomic_ref_5(void *dst_desc, size_t dst_offset, int image0, int image1
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6574,6 +6588,7 @@ void _XMP_atomic_ref_6(void *dst_desc, size_t dst_offset, int image0, int image1
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
 
@@ -6595,5 +6610,6 @@ void _XMP_atomic_ref_7(void *dst_desc, size_t dst_offset, int image0, int image1
 #elif _XMP_FJRDMA
   _XMP_fjrdma_atomic_ref(target_rank, c, dst_offset, value, src_desc, src_offset, elmt_size);
 #elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_atomic_ref(target_rank, c, dst_offset, value, elmt_size);
 #endif
 }
