@@ -591,6 +591,8 @@ void _XMP_sync_images_COMM(MPI_Comm *comm, int* status);
 void _XMP_mpi_build_sync_images_table();
 
 MPI_Win _XMP_mpi_coarray_get_window(const _XMP_coarray_t *desc, bool is_acc);
+void _XMP_mpi_atomic_define(int, _XMP_coarray_t*, size_t, int, size_t);
+void _XMP_mpi_atomic_ref(int, _XMP_coarray_t*, size_t, int*, size_t);
 #endif
 
 #ifdef _XMP_TIMING
