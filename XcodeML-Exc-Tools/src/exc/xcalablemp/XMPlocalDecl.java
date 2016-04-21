@@ -31,6 +31,9 @@ public class XMPlocalDecl {
       // FIXME generate unique name
       throw new XMPexception("cannot declare template desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
     }
+
+    // BlockList parentBL = scopeBL.getParentList();
+    // if (parentBL != null) checkObjectNameCollision(name, parentBL, objectTable);
   }
 
   public static FunctionBlock findParentFunctionBlock(Block block) {

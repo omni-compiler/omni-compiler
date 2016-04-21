@@ -254,7 +254,7 @@ public class XMPrewriteExpr
 	    if (obj != null) {
 	      Xobject desc = obj.getDescId();
 	      iter.setXobject(desc);
-	      env.removeIdent(objName, block);
+	      //env.removeIdent(objName, block);
 	      break;
 	    }
 

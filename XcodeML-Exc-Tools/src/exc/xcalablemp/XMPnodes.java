@@ -57,7 +57,7 @@ public class XMPnodes extends XMPobject {
     if (isLocalPragma) {
       //XMPlocalDecl.checkObjectNameCollision(nodesName, funcBlockList, localXMPsymbolTable);
       XMPlocalDecl.checkObjectNameCollision(nodesName, parentBlock.getBody(), localXMPsymbolTable);
-      globalDecl.checkObjectNameCollision(nodesName);
+      //globalDecl.checkObjectNameCollision(nodesName);
     } else {
       globalDecl.checkObjectNameCollision(nodesName);
     }
@@ -70,9 +70,11 @@ public class XMPnodes extends XMPobject {
     Ident nodesDescId = null;
     if (isLocalPragma) {
       //nodesDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + nodesName, pb);
-      nodesDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + nodesName, parentBlock);
+      //nodesDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + nodesName, parentBlock);
+      nodesDescId = XMPlocalDecl.addObjectId2(nodesName, parentBlock);
     } else {
-      nodesDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + nodesName, Xtype.voidPtrType);
+      //nodesDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + nodesName, Xtype.voidPtrType);
+      nodesDescId = globalDecl.declStaticIdent(nodesName, Xtype.voidPtrType);
     }
 
     if (is_static_desc) nodesDescId.setStorageClass(StorageClass.STATIC);

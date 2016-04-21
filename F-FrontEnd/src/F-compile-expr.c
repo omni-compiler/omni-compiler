@@ -2478,8 +2478,14 @@ compile_function_call(ID f_id, expr args) {
         }
 
         case P_INTRINSIC:
-            v = compile_intrinsic_call(f_id, compile_data_args(args));
-            break;
+	  //v = compile_intrinsic_call(f_id, compile_data_args(args));
+	  if (strncmp(ID_NAME(f_id), "xmp_desc_of", 11) == 0){
+	    v = compile_intrinsic_call(f_id, args);
+	  }
+	  else {
+	    v = compile_intrinsic_call(f_id, compile_data_args(args));
+	  }
+	  break;
 
         case P_STFUNCT:
             v = statement_function_call(f_id, compile_args(args));

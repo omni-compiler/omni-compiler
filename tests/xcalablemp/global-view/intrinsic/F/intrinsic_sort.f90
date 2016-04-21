@@ -26,21 +26,21 @@ program sort_test
 
   use keys
 
-  integer k, p
+  integer k
 
   me = xmp_node_num() - 1
   nprocs = xmp_num_nodes()
 
   allocate (m(nprocs))
 
-  p = 0
+  k = 0
 
   do i = 1, nprocs - 1
     m(i) = nprocs * 2 * i
-    p = p + m(i)
+    k = k + m(i)
   end do
 
-  m(nprocs) = n - p
+  m(nprocs) = n - k
 
   call int_block
   call real_gblock

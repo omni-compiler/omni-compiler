@@ -154,7 +154,8 @@ package exc.xmpF;
      }
 
      // declare template desciptor
-     _descId =  env.declObjectId(XMP.DESC_PREFIX_ + _name, pb);
+     //_descId =  env.declObjectId(XMP.DESC_PREFIX_ + _name, pb);
+     _descId =  env.declObjectId(_name, pb);
 
      // declare template object
      _dim = 0;

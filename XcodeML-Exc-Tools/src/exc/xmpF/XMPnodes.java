@@ -82,7 +82,8 @@ public class XMPnodes extends XMPobject {
     }
 
     // declare nodes desciptor
-    _descId = env.declObjectId(XMP.DESC_PREFIX_ + _name, pb);
+    //_descId = env.declObjectId(XMP.DESC_PREFIX_ + _name, pb);
+    _descId = env.declObjectId(_name, pb);
 
     // declare nodes object, count the numer of Dimension, demension = arg(2)
     _dim = 0;

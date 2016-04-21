@@ -225,7 +225,7 @@ public class XMPtemplate extends XMPobject {
     if (isLocalPragma) {
       //XMPlocalDecl.checkObjectNameCollision(templateName, funcBlockList, localXMPsymbolTable);
       XMPlocalDecl.checkObjectNameCollision(templateName, parentBlock.getBody(), localXMPsymbolTable);
-      globalDecl.checkObjectNameCollision(templateName);
+      //globalDecl.checkObjectNameCollision(templateName);
       isStaticDesc = localXMPsymbolTable.isStaticDesc(templateName);
     }
     else {
@@ -236,10 +236,12 @@ public class XMPtemplate extends XMPobject {
     Ident templateDescId = null;
     if (isLocalPragma) {
       //templateDescId = XMPlocalDecl.addObjectId(XMP.DESC_PREFIX_ + templateName, pb);
-      templateDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + templateName, parentBlock);
+      //templateDescId = XMPlocalDecl.addObjectId2(XMP.DESC_PREFIX_ + templateName, parentBlock);
+      templateDescId = XMPlocalDecl.addObjectId2(templateName, parentBlock);
     }
     else {
-      templateDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + templateName, Xtype.voidPtrType);
+      //templateDescId = globalDecl.declStaticIdent(XMP.DESC_PREFIX_ + templateName, Xtype.voidPtrType);
+      templateDescId = globalDecl.declStaticIdent(templateName, Xtype.voidPtrType);
     }
 
     if (isStaticDesc) templateDescId.setStorageClass(StorageClass.STATIC);
