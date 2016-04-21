@@ -452,7 +452,7 @@ extern void _xmp_gasnet_post_sync_images(const int, const int*);
 extern void _xmp_gasnet_wait_sync_images(const int, const int*);
 extern void _xmp_gasnet_add_notify(gasnet_token_t t, const int);
 extern void _xmp_gasnet_notiy_reply(gasnet_token_t t);
-extern void _XMP_gasnet_atomic_define(int, _XMP_coarray_t*, size_t, int, size_t);
+extern void _XMP_gasnet_atomic_define(int, _XMP_coarray_t*, size_t, int, _XMP_coarray_t*, size_t, size_t);
 extern void _XMP_gasnet_atomic_ref(int, _XMP_coarray_t*, size_t, int*, size_t);
 #endif
 
@@ -677,10 +677,14 @@ extern void _xmp_gasnet_pack(gasnet_token_t, const char*, const size_t,
 extern void _xmp_gasnet_unpack_get_reply(gasnet_token_t, char *, size_t, const int, const int);
 extern void _XMP_pack_coarray(char*, const char*, const int, const _XMP_array_section_t*);
 extern void _XMP_unpack_coarray(char*, const int, const char*, const _XMP_array_section_t*, const int);
-extern void _xmp_gasnet_atomic_define_do(gasnet_token_t, const char*, const size_t, const int, const int);
-extern void _xmp_gasnet_atomic_define_reply_do(gasnet_token_t);
-extern void _xmp_gasnet_atomic_ref_do(gasnet_token_t, const size_t, const int, const int, const int, const int);
-extern void _xmp_gasnet_atomic_ref_reply_do(gasnet_token_t, int *, size_t, const int, const int);
+extern void _xmp_gasnet_atomic_define_do(gasnet_token_t, const char*, const size_t, gasnet_handlerarg_t,
+					 gasnet_handlerarg_t, gasnet_handlerarg_t, gasnet_handlerarg_t);
+extern void _xmp_gasnet_atomic_define_reply_do(gasnet_token_t, gasnet_handlerarg_t, gasnet_handlerarg_t);
+extern void _xmp_gasnet_atomic_ref_do(gasnet_token_t, const size_t, gasnet_handlerarg_t, gasnet_handlerarg_t,
+				      gasnet_handlerarg_t, gasnet_handlerarg_t, gasnet_handlerarg_t,
+				      gasnet_handlerarg_t);
+extern void _xmp_gasnet_atomic_ref_reply_do(gasnet_token_t, int *, size_t, gasnet_handlerarg_t,
+					    gasnet_handlerarg_t, gasnet_handlerarg_t, gasnet_handlerarg_t);
 
 /* Every handler function needs a uniqe number between 200-255.   
  * The Active Message library reserves ID's 1-199 for itself: client libs must
