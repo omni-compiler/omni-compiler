@@ -7,7 +7,8 @@ int val = true;
 int main()
 {
   int iam = xmp_node_num();
-
+  locked = true;
+  
   if(iam == 1){
     xmp_sync_memory(NULL);
     xmp_atomic_define(locked:[2], false);
