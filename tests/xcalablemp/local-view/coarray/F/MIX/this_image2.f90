@@ -1,5 +1,4 @@
   program this_image2
-!!     include "xmp_coarray.h"
 
 !$xmp nodes n1(2,4)   
 
@@ -138,11 +137,13 @@
     integer imag_d
     integer table(8,0:3,2)    !! data,d,phase
 
+    !! phase 1
     table(:,0,1)=(/1,3,5,1,3,2,2,1/)
     table(:,1,1)=(/2,3,6,2,3,3,2,1/)
     table(:,2,1)=(/1,4,7,1,4,1,1,2/)
     table(:,3,1)=(/2,4,8,2,4,2,1,2/)
 
+    !! phase 2
     table(:,0,2)=(/2,1,2,2,1,2,1,1/)
     table(:,1,2)=(/2,2,4,2,2,1,2,1/)
     table(:,2,2)=(/2,3,6,2,3,3,2,1/)
@@ -178,7 +179,7 @@
     endif
 
 
-120 format("[",i0,"] ",a," should be ",i0," but ",i0," (pase ",i0,")")
+120 format("[",i0,"] ",a," should be ",i0," but ",i0," (phase ",i0,")")
 
   end subroutine two_way
 

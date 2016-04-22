@@ -111,7 +111,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
                                      int *coindex, char *rhs, int *condition)
 #endif
 {
-  int coindex0 = _XMPF_get_initial_image(*coindex);
+  int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
   /*--------------------------------------*\
    * Check whether the local address rhs  *
@@ -188,7 +188,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
                                     int *rank, ...)
 #endif
 {
-  int coindex0 = _XMPF_get_initial_image(*coindex);
+  int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
   if (*element % ONESIDED_BOUNDARY != 0) {
     _XMP_fatal("violation of boundary writing to a coindexed variable\n"
@@ -271,7 +271,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
                                      int *rank, ...)
 #endif
 {
-  int coindex0 = _XMPF_get_initial_image(*coindex);
+  int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
   if (*element % ONESIDED_BOUNDARY != 0) {
     _XMP_fatal("violation of boundary writing a scalar to a coindexed variable\n"

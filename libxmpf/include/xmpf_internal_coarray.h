@@ -107,17 +107,26 @@ extern int xmpf_this_image_noargs_(void);
 //extern int xmpf_num_nodes_(void);
 //extern int xmpf_node_num_(void);
 
+extern MPI_Comm _XMPF_get_communicatorFromDescPtr(void *descPtr);
+
 extern int XMPF_initial_this_image, XMPF_initial_num_images;
-extern void _XMPF_set_initial_this_image(void);
-extern void _XMPF_set_initial_num_images(void);
-extern int _XMPF_get_initial_this_image(void);
-extern int _XMPF_get_initial_num_images(void);
+extern void _XMPF_set_this_image_initial(void);
+extern void _XMPF_set_num_images_initial(void);
+extern int _XMPF_this_image_initial(void);
+extern int _XMPF_num_images_initial(void);
 
 extern BOOL _XMPF_is_subset_exec(void);
-extern MPI_Comm _XMPF_get_current_comm(void);
-extern int _XMPF_get_current_this_image(void);
-extern int _XMPF_get_current_num_images(void);
-extern int _XMPF_get_initial_image(int image);
+extern MPI_Comm _XMPF_get_comm_current(void);
+extern int _XMPF_this_image_current(void);
+extern int _XMPF_num_images_current(void);
+extern int _XMPF_transImage_current2initial(int image);
+extern int _XMPF_get_initial_image_withDescPtr(int image, void *descPtr);
+
+extern MPI_Comm _XMPF_get_comm_onNodes(_XMP_nodes_t *nodes);
+extern int _XMPF_num_images_onNodes(_XMP_nodes_t *nodes);
+extern int _XMPF_this_image_onNodes(_XMP_nodes_t *nodes);
+
+extern int _XMPF_transImage_withComm(MPI_Comm comm1, int image1, MPI_Comm comm2);
 
 extern void xmpf_sync_all_(void);
 extern void xmpf_sync_all_auto_(void);

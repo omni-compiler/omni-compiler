@@ -471,18 +471,15 @@ public class XMPcoarray {
   //
   public void build_setMappingNodes(BlockList blist)
   {
-    blist.add(makeStmt_setMappingNodes());
+    if (nodesDescId != null)
+      blist.add(makeStmt_setMappingNodes());
   }
 
   public Xobject makeStmt_setMappingNodes()
   {
-    // descPtrId must be declarad previously in the coaray pass
+    // descPtrId must be declarad previously in the coarray pass
     if (descPtrId == null)
       descPtrId = env.findVarIdent(getDescPointerName(), fblock);
-
-    if (nodesDescId == null)
-      XMP.fatal("INTERNAL: nodesDescId expected to generate call of " +
-                MAP_NODES_NAME);
 
     Xobject args = Xcons.List(descPtrId, nodesDescId);
     Ident subr = env.findVarIdent(MAP_NODES_NAME, null);

@@ -149,8 +149,8 @@ void _XMPF_coarray_init(void)
   /*
    *  set who-am-i
    */
-  _XMPF_set_initial_this_image();
-  _XMPF_set_initial_num_images();
+  _XMPF_set_this_image_initial();
+  _XMPF_set_num_images_initial();
 
   /*
    * read environment variables
@@ -165,7 +165,7 @@ void _XMPF_coarray_init(void)
     work = strdup(env1);
     tok = strtok(work, delim);
     for (i = 1; tok != NULL; i++, tok = strtok(NULL, delim)) {
-      if (_XMPF_get_current_this_image() == i)
+      if (_XMPF_this_image_current() == i)
         _set_coarrayMsg(atoi(tok));
     }
   }
@@ -331,11 +331,11 @@ void _XMPF_coarrayDebugPrint(char *format, ...)
   vsprintf(work, format, list);
   va_end(list);
 
-  current = _XMPF_get_current_this_image();
-  initial = _XMPF_get_initial_this_image();
+  current = _XMPF_this_image_current();
+  initial = _XMPF_this_image_initial();
   if (current == initial)
     fprintf(stderr, "CAF[%d] %s", initial, work);
   else
-    fprintf(stderr, "CAF[%d/currently %d] %s", initial, current, work);
+    fprintf(stderr, "CAF[%d(now %d)] %s", initial, current, work);
 }
 

@@ -59,7 +59,7 @@ void _XMPF_coarrayInit_get()
 extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *result)
 {
-  int coindex0 = _XMPF_get_initial_image(*coindex);
+  int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
   /*--------------------------------------*\
    * Check whether the local address      *
@@ -123,7 +123,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
                                     int *coindex, char *result, int *rank, ...)
 #endif
 {
-  int coindex0 = _XMPF_get_initial_image(*coindex);
+  int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
   if (*element % ONESIDED_BOUNDARY != 0) {
     _XMP_fatal("violation of boundary in reference of a coindexed object\n"
