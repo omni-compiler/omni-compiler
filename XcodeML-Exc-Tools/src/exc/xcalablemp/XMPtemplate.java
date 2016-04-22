@@ -225,6 +225,13 @@ public class XMPtemplate extends XMPobject {
     if (isLocalPragma) {
       //XMPlocalDecl.checkObjectNameCollision(templateName, funcBlockList, localXMPsymbolTable);
       XMPlocalDecl.checkObjectNameCollision(templateName, parentBlock.getBody(), localXMPsymbolTable);
+
+      // check parameters
+      Block fb = parentBlock.getParentBlock().getParentBlock();
+      if (fb != null && fb.Opcode() == Xcode.FUNCTION_DEFINITION){
+	XMPlocalDecl.checkObjectNameCollision(templateName, fb.getBody(), localXMPsymbolTable);
+      }
+
       //globalDecl.checkObjectNameCollision(templateName);
       isStaticDesc = localXMPsymbolTable.isStaticDesc(templateName);
     }

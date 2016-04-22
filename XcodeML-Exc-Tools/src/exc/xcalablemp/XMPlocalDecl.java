@@ -18,6 +18,7 @@ public class XMPlocalDecl {
 
   // FIXME move to this func to XMPglobalDecl
   public static void checkObjectNameCollision(String name, BlockList scopeBL, XMPsymbolTable objectTable) throws XMPexception {
+
     // check name collision - parameters
     if (scopeBL.findLocalIdent(name) != null)
       throw new XMPexception("'" + name + "' is already declared");
@@ -26,14 +27,11 @@ public class XMPlocalDecl {
     if (objectTable.getXMPobject(name) != null)
       throw new XMPexception("'" + name + "' is already declared");
 
-    // check name collision - descriptor name
-    if (scopeBL.findLocalIdent(XMP.DESC_PREFIX_ + name) != null) {
-      // FIXME generate unique name
-      throw new XMPexception("cannot declare template desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
-    }
-
-    // BlockList parentBL = scopeBL.getParentList();
-    // if (parentBL != null) checkObjectNameCollision(name, parentBL, objectTable);
+    // // check name collision - descriptor name
+    // if (scopeBL.findLocalIdent(XMP.DESC_PREFIX_ + name) != null) {
+    //   // FIXME generate unique name
+    //   throw new XMPexception("cannot declare template desciptor, '" + XMP.DESC_PREFIX_ + name + "' is already declared");
+    // }
   }
 
   public static FunctionBlock findParentFunctionBlock(Block block) {
