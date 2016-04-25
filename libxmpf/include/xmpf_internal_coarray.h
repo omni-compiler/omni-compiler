@@ -67,6 +67,8 @@ extern void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[]);
 extern int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim);
 
 /* xmpf_coarray_alloc.c */
+typedef struct _coarrayInfo_t CoarrayInfo_t;
+
 extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                                  int *count, int *element, void **tag);
 extern void xmpf_coarray_free_(void **descPtr);
@@ -96,18 +98,22 @@ extern int xmpf_coarray_garbage_bytes_(void);
 extern char *_XMPF_get_coarrayName(void *descPtr);
 extern void *_XMPF_get_coarrayDesc(void *descPtr);
 extern size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr);
-extern void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
-                                           size_t *offset, char **nameAddr);
 extern void *_XMPF_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
                                            char **name);
+extern void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
+                                           size_t *offset, char **nameAddr);
+extern MPI_Comm _XMPF_get_communicatorFromDescPtr(void *descPtr);
+
+
+extern void _XMPF_coarray_set_nodes(CoarrayInfo_t *cinfo, _XMP_nodes_t *nodes);
+//extern _XMP_nodes_t *_XMPF_coarray_get_nodes(CoarrayInfo_t *cinfo);
 
 /* xmpf_coarray_lib.c */
 extern int xmpf_num_images_(void);
 extern int xmpf_this_image_noargs_(void);
 //extern int xmpf_num_nodes_(void);
 //extern int xmpf_node_num_(void);
-
-extern MPI_Comm _XMPF_get_communicatorFromDescPtr(void *descPtr);
+extern void xmpf_get_comm_current_(int *comm);
 
 extern int XMPF_initial_this_image, XMPF_initial_num_images;
 extern void _XMPF_set_this_image_initial(void);
@@ -179,6 +185,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
                                     int *coindex, char *result, int *rank, ...);
 #endif
 extern void _XMPF_coarrayInit_get(void);
+
 
 /* xmpf_async.c */
 #ifdef _XMP_MPI3

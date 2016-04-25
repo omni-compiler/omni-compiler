@@ -6,7 +6,6 @@
      integer s1[*], a1(10,20)[*], a2(10,20)[2,*], a3(10,20)[3,*]
      integer t1[*], b1(10,20)[*], b2(10,20)[2,*], b3(10,20)[3,*]
 
-!!!! syntax error in F_Front
 !$xmp coarray on p :: s1,a1,a2,a3
 !$xmp coarray on q :: t1,b1,b2,b3
 

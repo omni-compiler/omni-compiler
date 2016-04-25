@@ -15,27 +15,30 @@ subroutine xmpf_co_broadcast%dim%d_%tk%(source, source_image)
   include "mpif.h"
   %typeandkind%, intent(inout) :: source%shape%
   integer, intent(in) :: source_image
-  integer ierr
+  integer comm, ierr
 
   if (source_image <= 0) then
      call xmpf_coarray_fatal("The second argument of CO_BROADCAST must be positive.")
   end if
-#ifdef _XMP_GASNET
-  call mpi_barrier(mpi_comm_world, ierr, source, result)
-  if (ierr /= 0) then
-     call xmpf_coarray_fatal("CO_BROADCAST failed at mpi_barrier before mpi_bcast")
-  end if
-#endif
-  call mpi_bcast(source, %size%, %mpitype%, source_image - 1, mpi_comm_world, ierr)
+
+  call xmpf_get_comm_current(comm);
+
+!!#ifdef _XMP_GASNET
+!!  call mpi_barrier(comm, ierr, source, result)
+!!  if (ierr /= 0) then
+!!     call xmpf_coarray_fatal("CO_BROADCAST failed at mpi_barrier before mpi_bcast")
+!!  end if
+!!#endif
+  call mpi_bcast(source, %size%, %mpitype%, source_image - 1, comm, ierr)
   if (ierr /= 0) then
      call xmpf_coarray_fatal("CO_BROADCAST failed in mpi_bcast")
   end if
-#ifdef _XMP_GASNET
-  call mpi_barrier(mpi_comm_world, ierr, source, result)
-  if (ierr /= 0) then
-     call xmpf_coarray_fatal("CO_BROADCAST failed at mpi_barrier after mpi_bcast")
-  end if
-#endif
+!!#ifdef _XMP_GASNET
+!!  call mpi_barrier(comm, ierr, source, result)
+!!  if (ierr /= 0) then
+!!     call xmpf_coarray_fatal("CO_BROADCAST failed at mpi_barrier after mpi_bcast")
+!!  end if
+!!#endif
 
   return
 end subroutine'
@@ -45,24 +48,26 @@ subroutine xmpf_co_%op%%dim%d_%tk%(source, result)
   include "mpif.h"
   %typeandkind%, intent(in) :: source%shape%
   %typeandkind%, intent(out) :: result%shape%
-  integer ierr
+  integer comm, ierr
 
-#ifdef _XMP_GASNET
-  call mpi_barrier(mpi_comm_world, ierr, source, result)
-  if (ierr /= 0) then
-     call xmpf_coarray_fatal("CO_%OP% failed at mpi_barrier before mpi_allreduce")
-  end if
-#endif
-  call mpi_allreduce(source, result, %size%, %mpitype%, mpi_%op%, mpi_comm_world, ierr)
+  call xmpf_get_comm_current(comm);
+
+!!#ifdef _XMP_GASNET
+!!  call mpi_barrier(comm, ierr, source, result)
+!!  if (ierr /= 0) then
+!!     call xmpf_coarray_fatal("CO_%OP% failed at mpi_barrier before mpi_allreduce")
+!!  end if
+!!#endif
+  call mpi_allreduce(source, result, %size%, %mpitype%, mpi_%op%, comm, ierr)
   if (ierr /= 0) then
      call xmpf_coarray_fatal("CO_%OP% failed in mpi_allreduce")
   end if
-#ifdef _XMP_GASNET
-  call mpi_barrier(mpi_comm_world, ierr, source, result)
-  if (ierr /= 0) then
-     call xmpf_coarray_fatal("CO_%OP% failed at mpi_barrier after mpi_allreduce")
-  end if
-#endif
+!!#ifdef _XMP_GASNET
+!!  call mpi_barrier(comm, ierr, source, result)
+!!  if (ierr /= 0) then
+!!     call xmpf_coarray_fatal("CO_%OP% failed at mpi_barrier after mpi_allreduce")
+!!  end if
+!!#endif
 
   return
 end subroutine'
@@ -136,21 +141,21 @@ print_broadcast_all() {
     for DIM in `seq 0 7`
     do
         if test "sxace-nec-superux" != "$TARGET"; then    ## SX-Fortran does not support integer(2).
-            print_broadcast 'integer(2)' i2  mpi_integer2 ${DIM}
+            print_broadcast 'integer(2)' i2  MPI_INTEGER2 ${DIM}
         fi
-        print_broadcast 'integer(4)' i4  mpi_integer4 ${DIM}
-        print_broadcast 'integer(8)' i8  mpi_integer8 ${DIM}
+        print_broadcast 'integer(4)' i4  MPI_INTEGER4 ${DIM}
+        print_broadcast 'integer(8)' i8  MPI_INTEGER8 ${DIM}
 
-        print_broadcast 'real(4)'    r4  mpi_real4 ${DIM}
-        print_broadcast 'real(8)'    r8  mpi_real8 ${DIM}
+        print_broadcast 'real(4)'    r4  MPI_REAL4 ${DIM}
+        print_broadcast 'real(8)'    r8  MPI_REAL8 ${DIM}
 
-        print_broadcast 'complex(4)' z8  mpi_complex ${DIM}
-        print_broadcast 'complex(8)' z16 mpi_double_complex ${DIM}
+        print_broadcast 'complex(4)' z8  MPI_COMPLEX ${DIM}
+        print_broadcast 'complex(8)' z16 MPI_DOUBLE_COMPLEX ${DIM}
 
         if test "sxace-nec-superux" != "$TARGET"; then    ## SX-Fortran does not support logical(2).
-            print_broadcast 'logical(2)' l2  mpi_integer2 ${DIM}
+            print_broadcast 'logical(2)' l2  MPI_INTEGER2 ${DIM}
         fi
-        print_broadcast 'logical(4)' l4  mpi_logical ${DIM}
+        print_broadcast 'logical(4)' l4  MPI_LOGICAL ${DIM}
     done
 }
 
@@ -164,17 +169,17 @@ print_reduction_all() {
     for DIM in `seq 0 7`
     do
         if test "sxace-nec-superux" != "$TARGET"; then    ## SX-Fortran does not support integer(2).
-            print_reduction $1 $2 'integer(2)' i2  mpi_integer2 ${DIM}
+            print_reduction $1 $2 'integer(2)' i2  MPI_INTEGER2 ${DIM}
         fi
-        print_reduction $1 $2 'integer(4)' i4  mpi_integer4 ${DIM}
-        print_reduction $1 $2 'integer(8)' i8  mpi_integer8 ${DIM}
+        print_reduction $1 $2 'integer(4)' i4  MPI_INTEGER4 ${DIM}
+        print_reduction $1 $2 'integer(8)' i8  MPI_INTEGER8 ${DIM}
 
-        print_reduction $1 $2 'real(4)'    r4  mpi_real4 ${DIM}
-        print_reduction $1 $2 'real(8)'    r8  mpi_real8 ${DIM}
+        print_reduction $1 $2 'real(4)'    r4  MPI_REAL4 ${DIM}
+        print_reduction $1 $2 'real(8)'    r8  MPI_REAL8 ${DIM}
 
         if test "$1" == "sum"; then
-            print_reduction $1 $2 'complex(4)' z8  mpi_complex ${DIM}
-            print_reduction $1 $2 'complex(8)' z16 mpi_double_complex ${DIM}
+            print_reduction $1 $2 'complex(4)' z8  MPI_COMPLEX ${DIM}
+            print_reduction $1 $2 'complex(8)' z16 MPI_DOUBLE_COMPLEX ${DIM}
         fi
     done
 }

@@ -19,11 +19,11 @@
 !$xmp task on p2(1,:)
       me3=this_image()
       nm3=num_images()
-      if (me3.ne.xmp_node_num()) then
+      if (me3.ne.xmp_node_num()) then   !! current impementation assumed
          nerr=nerr+1
          write(*,110) "this_image()", me3,"xmp_node_num()", xmp_node_num()
       endif
-      if (nm3.ne.xmp_num_nodes()) then
+      if (nm3.ne.xmp_num_nodes()) then   !! current impementation assumed
          nerr=nerr+1
          write(*,110) "num_images()", nm3,"xmp_num_nodes()", xmp_num_nodes()
       endif

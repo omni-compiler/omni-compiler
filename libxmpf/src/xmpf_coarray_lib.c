@@ -39,10 +39,17 @@ int _XMPF_num_images_initial()
 
 
 /*************************************************\
-  CURRENT images and communicators
+  CURRENT images
 \*************************************************/
 /*  see struct _XMP_nodes_type in libxmp/include/xmp_data_struct.h
  */
+
+/* entry
+ */
+void xmpf_get_comm_current_(int *comm)
+{
+  *comm = _XMPF_get_comm_current();
+}
 
 BOOL _XMPF_is_subset_exec()
 {
@@ -100,7 +107,7 @@ int _XMPF_num_images_onNodes(_XMP_nodes_t *nodes)
 int _XMPF_this_image_onNodes(_XMP_nodes_t *nodes)
 {
   if (!nodes->is_member)
-    return 0;
+    return 0;   // This image is out of the node.
   return nodes->comm_rank + 1;
 }
 

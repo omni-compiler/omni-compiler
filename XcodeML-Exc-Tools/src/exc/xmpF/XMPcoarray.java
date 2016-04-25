@@ -28,12 +28,12 @@ public class XMPcoarray {
   final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
   final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
   final static String GET_DESCR_ID_NAME = "xmpf_get_descr_id";
+  final static String SET_NODES_NAME = "xmpf_coarray_set_nodes";
 
   final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
   final static String ALLOC_STATIC_NAME = "xmpf_coarray_alloc_static";
   final static String REGMEM_STATIC_NAME = "xmpf_coarray_regmem_static";
 
-  final static String MAP_NODES_NAME = "xmpf_coarray_map_nodes";
 
   // original attributes
   private Ident ident;
@@ -466,7 +466,7 @@ public class XMPcoarray {
 
   //-----------------------------------------------------
   //  For XMPtransPragma
-  //  generate and add "CALL set_map_nodes(descPtr, nodesDesc)"
+  //  generate and add "CALL xmpf_coarray_set_nodes(descPtr, nodesDesc)"
   //-----------------------------------------------------
   //
   public void build_setMappingNodes(BlockList blist)
@@ -482,9 +482,9 @@ public class XMPcoarray {
       descPtrId = env.findVarIdent(getDescPointerName(), fblock);
 
     Xobject args = Xcons.List(descPtrId, nodesDescId);
-    Ident subr = env.findVarIdent(MAP_NODES_NAME, null);
+    Ident subr = env.findVarIdent(SET_NODES_NAME, null);
     if (subr == null) {
-      subr = env.declExternIdent(MAP_NODES_NAME,
+      subr = env.declExternIdent(SET_NODES_NAME,
                                  BasicType.FexternalSubroutineType);
     }
     Xobject subrCall = subr.callSubroutine(args);

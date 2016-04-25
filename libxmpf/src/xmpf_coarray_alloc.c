@@ -55,7 +55,7 @@
 // MEMORY MANAGEMENT STRUCTURE-I (for automatic deallocation)
 typedef struct _resourceSet_t  ResourceSet_t;
 typedef struct _memoryChunk_t  MemoryChunk_t;
-typedef struct _coarrayInfo_t  CoarrayInfo_t;
+//typedef struct _coarrayInfo_t  CoarrayInfo_t;   moved into xmpf_internal_coarray.h
 
 // MEMORY MANAGEMENT STRUCTURE-II (for dynamic ALLOCATE/DEALLOCATE stmts.)
 typedef struct _memoryChunkStack_t  MemoryChunkStack_t;
@@ -112,7 +112,7 @@ struct _coarrayInfo_t {
   int            *lcobound;  // array of lower cobounds [0..(corank-1)]
   int            *ucobound;  // array of upper cobounds [0..(corank-1)]
   int            *cosize;    // cosize[k] = max(ucobound[k]-lcobound[k]+1, 0)
-  void           *nodesDesc; // XMP descriptor of the nodes mapping to (if any)
+  _XMP_nodes_t   *nodes;     // XMP descriptor for the mapping nodes (if any)
 };
 
 
@@ -1272,10 +1272,23 @@ char *_dispCoarrayInfo(CoarrayInfo_t *cinfo)
    set XMP descriptor of the corresponding nodes
 \***********************************************/
 
-void xmpf_coarray_map_nodes_(void **descPtr, void **nodesDesc)
+void xmpf_coarray_set_nodes_(void **descPtr, void **nodesDesc)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
-  cinfo->nodesDesc = *nodesDesc;
+  _XMP_nodes_t *nodes = (_XMP_nodes_t*)(*nodesDesc);
+  _XMPF_coarray_set_nodes(cinfo, nodes);
+}
+
+
+void _XMPF_coarray_set_nodes(CoarrayInfo_t *cinfo, _XMP_nodes_t *nodes)
+{
+  cinfo->nodes = nodes;
+}
+
+
+_XMP_nodes_t *_XMPF_coarray_get_nodes(CoarrayInfo_t *cinfo)
+{
+  return cinfo->nodes;
 }
 
 
@@ -1285,24 +1298,69 @@ void xmpf_coarray_map_nodes_(void **descPtr, void **nodesDesc)
    inquire function this_image(coarray, dim)
 \***********************************************/
 
-static int xmpf_this_image_coarray_dim(CoarrayInfo_t *cinfo, int corank, int dim)
+static int xmpf_this_image_coarray_dim(CoarrayInfo_t *cinfo, int corank, int dim);
+static void xmpf_this_image_coarray(CoarrayInfo_t *cinfo, int corank, int image[]);
+
+int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim)
 {
-  int size, index, image_init, image_coarray, magic;
+  return xmpf_this_image_coarray_dim((CoarrayInfo_t*)(*descPtr), *corank, *dim);
+}
+
+void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[])
+{
+  xmpf_this_image_coarray((CoarrayInfo_t*)(*descPtr), *corank, image);
+}
+
+
+void xmpf_this_image_coarray(CoarrayInfo_t *cinfo, int corank, int image[])
+{
+  int size, index, image_coarray, magic;
+  _XMP_nodes_t *nodes;
+
+  nodes = _XMPF_coarray_get_nodes(cinfo);
+  if (nodes != NULL) {
+    image_coarray = _XMPF_this_image_onNodes(nodes);
+  } else {
+    image_coarray = _XMPF_this_image_current();
+  }
+
+  if (image_coarray == 0) {    // This image is out of the nodes.
+    for (int i = 0; i < corank; i++)
+      image[i] = 0;
+    return;
+  }
+
+  magic = image_coarray - 1;
+  for (int i = 0; i < corank; i++) {
+    size = cinfo->cosize[i];
+    index = magic % size;
+    image[i] = index + cinfo->lcobound[i];
+    magic /= size;
+  }
+}
+
+
+int xmpf_this_image_coarray_dim(CoarrayInfo_t *cinfo, int corank, int dim)
+{
+  int size, index, image_coarray, magic;
+  //int image_init;
   int k;
-  MPI_Comm comm_coarray;
+  _XMP_nodes_t *nodes;
+  //MPI_Comm comm_coarray;
 
   if (dim <= 0 || corank < dim)
     _XMPF_coarrayFatal("Too large or non-positive argument 'dim' of this_image:"
                       "%d\n", dim);
 
-  image_init = _XMPF_this_image_initial();
-  comm_coarray = _get_communicatorFromCoarrayInfo(cinfo);
-  if (comm_coarray == MPI_COMM_NULL) {
-    image_coarray = image_init;
+  nodes = _XMPF_coarray_get_nodes(cinfo);
+  if (nodes != NULL) {
+    image_coarray = _XMPF_this_image_onNodes(nodes);
   } else {
-    image_coarray = _XMPF_transImage_withComm(MPI_COMM_WORLD, image_init,
-                                              comm_coarray);
+    image_coarray = _XMPF_this_image_current();
   }
+
+  if (image_coarray == 0)    // This image is out of the nodes.
+    return 0;
 
   magic = image_coarray - 1;
   k = dim - 1;
@@ -1314,28 +1372,6 @@ static int xmpf_this_image_coarray_dim(CoarrayInfo_t *cinfo, int corank, int dim
   index = magic % size;
   return index + cinfo->lcobound[k];
 }
-
-int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim)
-{
-  return xmpf_this_image_coarray_dim((CoarrayInfo_t*)(*descPtr), *corank, *dim);
-}
-
-
-void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[])
-{
-  int size, index, magic;
-
-  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
-
-  magic = _XMPF_this_image_current() - 1;
-  for (int i = 0; i < *corank; i++) {
-    size = cinfo->cosize[i];
-    index = magic % size;
-    image[i] = index + cinfo->lcobound[i];
-    magic /= size;
-  }
-}
-
 
 /***********************************************\
   ENTRY
@@ -1563,12 +1599,12 @@ MPI_Comm _get_communicatorFromCoarrayInfo(CoarrayInfo_t *cinfo)
   if (cinfo == NULL)
     return MPI_COMM_NULL;
 
-  _XMP_nodes_t *nodesDesc = (_XMP_nodes_t *)(cinfo->nodesDesc);
+  _XMP_nodes_t *nodes = cinfo->nodes;
 
-  if (nodesDesc == NULL)
+  if (nodes == NULL)
     return MPI_COMM_NULL;
 
-  return *(long*)(nodesDesc->comm);
+  return *(long*)(nodes->comm);
 }
 
 
