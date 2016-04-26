@@ -17,7 +17,7 @@ PROGRAM zzz
     !$xmp task on p(1:4)
        me1 = this_image()
        ntmp = aa(1)[me1+4]
-!!       !$xmp image(p)
+       !$xmp image(p)
           sync images(me1+4)
        aa(2)[me1+4] = ntmp
     !$xmp end task
@@ -25,7 +25,7 @@ PROGRAM zzz
     !$xmp task on p(5:8)
        me2 = this_image()
        ntmp = aa(1)[me2]
-!!       !$xmp image(p)
+       !$xmp image(p)
           sync images(me2)
        aa(2)[me2] = ntmp
     !$xmp end task

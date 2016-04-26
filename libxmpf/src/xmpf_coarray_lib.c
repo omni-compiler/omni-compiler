@@ -115,8 +115,7 @@ int _XMPF_this_image_onNodes(_XMP_nodes_t *nodes)
 /*************************************************\
   Translation of images
 \*************************************************/
-/*  get image2 of MPI communicatior comm2 that is corresponding to 
- *  image1 in MPI communicatior comm1.
+/*  get image2 of MPI communicatior comm2 corresponding to image1 of comm1.
  */
 int _XMPF_transImage_withComm(MPI_Comm comm1, int image1, MPI_Comm comm2)
 {
@@ -128,8 +127,8 @@ int _XMPF_transImage_withComm(MPI_Comm comm1, int image1, MPI_Comm comm2)
   stat1 = MPI_Comm_group(comm1, &group1);
   stat2 = MPI_Comm_group(comm2, &group2);
 
-  //                 (in:Group1, n, rank1[n], Group2, out:rank2[n])
   stat3 = MPI_Group_translate_ranks(group1, 1, &rank1, group2, &rank2);
+  //                           (in:Group1, n, rank1[n], Group2, out:rank2[n])
   if (rank2 == MPI_UNDEFINED)
     image2 = 0;
   else 
@@ -153,6 +152,12 @@ int _XMPF_transImage_withComm(MPI_Comm comm1, int image1, MPI_Comm comm2)
 
 static int _transImage_current2initial(int image)
 {
+  int num = _XMPF_num_images_current();
+
+  if (image <= 0 || num < image)
+    _XMPF_coarrayFatal("ERROR: image index (%d) specified out of range (1 to %d)\n",
+                       image, num);
+
   if (!_XMPF_is_subset_exec())
     return image;
 
@@ -399,10 +404,6 @@ void xmpf_sync_image_nostat_(int *image)
 {
   int state = 0;
   int image0 = _XMPF_transImage_current2initial(*image);
-
-  if (image0 <= 0)
-    _XMPF_coarrayFatal("ABORT: illegal image number (%d) found in SYNC IMAGES",
-                       image0);
 
   _XMPF_coarrayDebugPrint("SYNC IMAGES(image=%d) starts...\n", image0);
   xmp_sync_image(image0, &state);

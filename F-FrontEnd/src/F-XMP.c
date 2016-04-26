@@ -316,7 +316,11 @@ void compile_XMP_directive(expr x)
 
     case XMP_COARRAY:
       check_INDCL();
-      /* not yet */
+      output_statement(x);
+      break;
+
+    case XMP_IMAGE:
+      check_INEXEC();
       output_statement(x);
       break;
 

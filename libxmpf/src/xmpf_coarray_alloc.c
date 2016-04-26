@@ -272,7 +272,9 @@ int xmpf_coarray_garbage_bytes_()
 void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                           int *count, int *element, void **tag)
 {
-  _XMPF_checkIfInTask("allocatable coarray allocation");
+  ////////////////////////////////////////
+  //_XMPF_checkIfInTask("allocatable coarray allocation");
+  ////////////////////////////////////////
   ResourceSet_t *rset;
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC\n");

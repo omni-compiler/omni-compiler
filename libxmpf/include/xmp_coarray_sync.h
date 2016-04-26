@@ -59,20 +59,21 @@
 !  coarray lock/unlock
 !-------------------------------
 !!!! not supported yet
-      interface
-         subroutine xmpf_lock(stat, errmsg)
-         integer, optional, intent(out) :: stat
-         character(len=*), optional, intent(out) :: errmsg
-         end subroutine
-      end interface
-
-!!!! not supported yet
-      interface
-         subroutine xmpf_unlock(stat, errmsg)
-         integer, optional, intent(out) :: stat
-         character(len=*), optional, intent(out) :: errmsg
-         end subroutine
-      end interface
+!!      interface
+!!         subroutine xmpf_lock(lock_var, stat, errmsg)
+!!         type(lock_type) :: lock_var
+!!         integer, optional, intent(out) :: stat
+!!         character(len=*), optional, intent(out) :: errmsg
+!!         end subroutine
+!!      end interface
+!!
+!!      interface
+!!         subroutine xmpf_unlock(lock_var, stat, errmsg)
+!!         type(lock_type) :: lock_var
+!!         integer, optional, intent(out) :: stat
+!!         character(len=*), optional, intent(out) :: errmsg
+!!         end subroutine
+!!      end interface
 
 !-------------------------------
 !  coarray critical construct

@@ -189,6 +189,13 @@ public class XMPtransPragma
       return translateGmove(pb,info);
     case TEMPLATE_FIX:
       return translateTemplateFix(pb, info);
+
+    case IMAGE:
+      //////////////////////////
+      System.out.println("GACCHA IMAGE in XMPtransPragma\n");
+      //////////////////////////
+      return Bcons.emptyBlock();
+
     case ARRAY:
       // should not reaach here.
 

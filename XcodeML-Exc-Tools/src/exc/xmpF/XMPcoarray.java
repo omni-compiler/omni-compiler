@@ -103,10 +103,10 @@ public class XMPcoarray {
 
 
   //------------------------------
-  //  parsing
+  //  parse: COARRAY directive
   //------------------------------
-  public static void analyzeCoarray(Xobject coarrayPragma,
-                                    XMPenv env, PragmaBlock pb) {
+  public static void analyzeCoarrayDirective(Xobject coarrayPragma,
+                                             XMPenv env, PragmaBlock pb) {
 
     String nodesName = coarrayPragma.getArg(0).getString();
     XobjList coarrayNameList = (XobjList)coarrayPragma.getArg(1);
@@ -146,6 +146,56 @@ public class XMPcoarray {
 
   private static void setProp_nodes(Ident ident, String nodesName) {
     ident.setProp(XMP_COARRAY_NODES_PROP, nodesName);
+  }
+
+  private static void setProp_nodes(Xobject xobj, String nodesName) {
+    xobj.setProp(XMP_COARRAY_NODES_PROP, nodesName);
+  }
+
+
+  //------------------------------
+  //  parse: IMAGE directive
+  //------------------------------
+  public static void analyzeImageDirective(Xobject imagePragma,
+                                           XMPenv env, PragmaBlock pb) {
+
+    String nodesName = imagePragma.getArg(0).getString();
+
+    Block nextBlock = pb.getNext();
+    while (_isSkippableBlockForImageDir(nextBlock))
+      nextBlock = nextBlock.getNext();
+
+    if (nextBlock == null)
+      XMP.errorAt(pb, "Illegal IMAGE directive here");
+
+    Statement nextStmt = nextBlock.getBasicBlock().getHead();
+
+    if (!_isTargetStmtOfImageDir(nextStmt))
+      XMP.errorAt(pb, "Invalid IMAGE directive for the succeeding statement");
+
+    Xobject xobj = nextStmt.getExpr();
+    setProp_nodes(xobj, nodesName);
+  }
+
+  private static Boolean _isSkippableBlockForImageDir(Block block) {
+    // All empty and comment lines seem to be deleted already...
+    return false;
+  }
+
+  private static boolean _isTargetStmtOfImageDir(Statement nextStmt) {
+    Xobject xobj = nextStmt.getExpr();
+    Xcode xcode = xobj.Opcode();
+
+    if (xcode == Xcode.F_ASSIGN_STATEMENT ||
+        xcode == Xcode.EXPR_STATEMENT) {
+      // It may include:
+      //   this_image() or num_images()
+      // Or may be:
+      //   call co_{sum|min|max), syncall, syncimages, or critical
+      return true;
+    }
+
+    return false;
   }
 
 

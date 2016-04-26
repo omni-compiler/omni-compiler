@@ -150,6 +150,9 @@ extern void xmpf_sync_images_stat_(int *images, int *size,
 extern void xmpf_sync_allimages_nostat_(void);
 extern void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen);
 
+extern void xmpf_critical_(void);
+extern void xmpf_end_critical_(void);
+
 /* xmpf_coarray_put.c */
 #if PUT_INTERFACE_TYPE==8
 extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *element,
