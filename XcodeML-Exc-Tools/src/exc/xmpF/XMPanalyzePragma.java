@@ -235,7 +235,7 @@ public class XMPanalyzePragma
       break;
 
     case IMAGE:
-      XMPcoarray.analyzeImageDirective(pb.getClauses(), env, pb);
+      XMPtransCoarrayRun.analyzeImageDirective(pb.getClauses(), env, pb);
       break;
 
     case ARRAY:

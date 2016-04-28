@@ -19,7 +19,7 @@ module xmpf_coarray_decl
          end function xmpf_image_index
       end interface
 
-      interface xmpf_cobound
+      interface xmpf_cobound_generic
          !! restriction: kind must be 4.
          function xmpf_cobound_nodim(descptr, kind, lu, corank)         &
      &    result(bounds)
@@ -41,7 +41,7 @@ module xmpf_coarray_decl
          end function xmpf_num_images
       end interface
 
-      interface xmpf_this_image
+      interface xmpf_this_image_generic
          function xmpf_this_image_noargs() result(image)
            integer image
          end function xmpf_this_image_noargs
@@ -67,8 +67,8 @@ module xmpf_coarray_decl
       include "xmp_coarray_sync.h"
 !!!      include "xmp_coarray_sync_sxace.h"
 
-!!! This is not useful definition because it cannot be found by 
-!!! XMPenv.findVarIdent(...) and therefore will be double-defined.
+!!! This is not useful definition because it could not be found by 
+!!! XMPenv.findVarIdent(...) and therefore would be double-defined.
 !!      interface
 !!        integer function xmpf_coarray_get_image_index                   &
 !!     &    (descptr, corank, i1, i2, i3, i4, i5, i6, i7)

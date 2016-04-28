@@ -21,7 +21,7 @@ subroutine xmpf_co_broadcast%dim%d_%tk%(source, source_image)
      call xmpf_coarray_fatal("The second argument of CO_BROADCAST must be positive.")
   end if
 
-  call xmpf_get_comm_current(comm);
+  call xmpf_consume_comm_current(comm);
 
 !!#ifdef _XMP_GASNET
 !!  call mpi_barrier(comm, ierr, source, result)
@@ -50,7 +50,7 @@ subroutine xmpf_co_%op%%dim%d_%tk%(source, result)
   %typeandkind%, intent(out) :: result%shape%
   integer comm, ierr
 
-  call xmpf_get_comm_current(comm);
+  call xmpf_consume_comm_current(comm);
 
 !!#ifdef _XMP_GASNET
 !!  call mpi_barrier(comm, ierr, source, result)

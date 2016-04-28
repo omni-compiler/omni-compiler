@@ -1270,7 +1270,7 @@ char *_dispCoarrayInfo(CoarrayInfo_t *cinfo)
 
 
 /***********************************************\
-  ENTRY
+  ENTRY: for COARRAY directive
    set XMP descriptor of the corresponding nodes
 \***********************************************/
 
@@ -1291,6 +1291,46 @@ void _XMPF_coarray_set_nodes(CoarrayInfo_t *cinfo, _XMP_nodes_t *nodes)
 _XMP_nodes_t *_XMPF_coarray_get_nodes(CoarrayInfo_t *cinfo)
 {
   return cinfo->nodes;
+}
+
+
+/***********************************************\
+  ENTRY: for IMAGE directive
+   set the nodes specified with IMAGE directive
+\***********************************************/
+
+static _XMP_nodes_t *_image_nodes;
+
+void xmpf_coarray_set_image_nodes_(void **nodesDesc)
+{
+  _XMP_nodes_t *nodes = (_XMP_nodes_t*)(*nodesDesc);
+  _XMPF_coarray_set_image_nodes(nodes);
+}
+
+
+void _XMPF_coarray_clean_image_nodes()
+{
+  _image_nodes = NULL;
+}
+
+void _XMPF_coarray_set_image_nodes(_XMP_nodes_t *nodes)
+{
+  if (_image_nodes != NULL)
+    _XMP_fatal("INTERNAL: _image_nodes was not consumed but is defined.");
+  _image_nodes = nodes;
+}
+
+_XMP_nodes_t *_XMPF_coarray_get_image_nodes()
+{
+  return _image_nodes;
+}
+
+// get and clean
+_XMP_nodes_t *_XMPF_coarray_consume_image_nodes()
+{
+  _XMP_nodes_t *ret = _image_nodes;
+  _image_nodes = NULL;
+  return ret;
 }
 
 

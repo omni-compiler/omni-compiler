@@ -104,9 +104,16 @@ extern void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
                                            size_t *offset, char **nameAddr);
 extern MPI_Comm _XMPF_get_communicatorFromDescPtr(void *descPtr);
 
-
+// for COARRAY directive
 extern void _XMPF_coarray_set_nodes(CoarrayInfo_t *cinfo, _XMP_nodes_t *nodes);
 //extern _XMP_nodes_t *_XMPF_coarray_get_nodes(CoarrayInfo_t *cinfo);
+
+// for IMAGE directive
+extern void _XMPF_coarray_clean_image_nodes(void);
+extern void _XMPF_coarray_set_image_nodes(_XMP_nodes_t *nodes);
+extern _XMP_nodes_t *_XMPF_coarray_get_image_nodes(void);
+extern _XMP_nodes_t *_XMPF_coarray_consume_image_nodes(void);
+
 
 /* xmpf_coarray_lib.c */
 extern int xmpf_num_images_(void);

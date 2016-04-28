@@ -28,7 +28,8 @@ public class XMPcoarray {
   final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
   final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
   final static String GET_DESCR_ID_NAME = "xmpf_get_descr_id";
-  final static String SET_NODES_NAME = "xmpf_coarray_set_nodes";
+  final static String SET_NODES_NAME = "xmpf_coarray_set_nodes";    // for COARRAY directive
+  final static String SET_IMAGE_NODES_NAME = "xmpf_coarray_set_image_nodes";  // for IMAGE directive
 
   final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
   final static String ALLOC_STATIC_NAME = "xmpf_coarray_alloc_static";
@@ -103,7 +104,8 @@ public class XMPcoarray {
 
 
   //------------------------------
-  //  parse: COARRAY directive
+  //  semantic analysis:
+  //    COARRAY directive
   //------------------------------
   public static void analyzeCoarrayDirective(Xobject coarrayPragma,
                                              XMPenv env, PragmaBlock pb) {
@@ -144,58 +146,16 @@ public class XMPcoarray {
     return (String)ident.getProp(XMP_COARRAY_NODES_PROP);
   }
 
+  public static String getProp_nodes(Xobject xobj) {
+    return (String)xobj.getProp(XMP_COARRAY_NODES_PROP);
+  }
+
   private static void setProp_nodes(Ident ident, String nodesName) {
     ident.setProp(XMP_COARRAY_NODES_PROP, nodesName);
   }
 
   private static void setProp_nodes(Xobject xobj, String nodesName) {
     xobj.setProp(XMP_COARRAY_NODES_PROP, nodesName);
-  }
-
-
-  //------------------------------
-  //  parse: IMAGE directive
-  //------------------------------
-  public static void analyzeImageDirective(Xobject imagePragma,
-                                           XMPenv env, PragmaBlock pb) {
-
-    String nodesName = imagePragma.getArg(0).getString();
-
-    Block nextBlock = pb.getNext();
-    while (_isSkippableBlockForImageDir(nextBlock))
-      nextBlock = nextBlock.getNext();
-
-    if (nextBlock == null)
-      XMP.errorAt(pb, "Illegal IMAGE directive here");
-
-    Statement nextStmt = nextBlock.getBasicBlock().getHead();
-
-    if (!_isTargetStmtOfImageDir(nextStmt))
-      XMP.errorAt(pb, "Invalid IMAGE directive for the succeeding statement");
-
-    Xobject xobj = nextStmt.getExpr();
-    setProp_nodes(xobj, nodesName);
-  }
-
-  private static Boolean _isSkippableBlockForImageDir(Block block) {
-    // All empty and comment lines seem to be deleted already...
-    return false;
-  }
-
-  private static boolean _isTargetStmtOfImageDir(Statement nextStmt) {
-    Xobject xobj = nextStmt.getExpr();
-    Xcode xcode = xobj.Opcode();
-
-    if (xcode == Xcode.F_ASSIGN_STATEMENT ||
-        xcode == Xcode.EXPR_STATEMENT) {
-      // It may include:
-      //   this_image() or num_images()
-      // Or may be:
-      //   call co_{sum|min|max), syncall, syncimages, or critical
-      return true;
-    }
-
-    return false;
   }
 
 
@@ -515,7 +475,7 @@ public class XMPcoarray {
 
 
   //-----------------------------------------------------
-  //  For XMPtransPragma
+  //  For COARRAY directive in XMPtransPragma
   //  generate and add "CALL xmpf_coarray_set_nodes(descPtr, nodesDesc)"
   //-----------------------------------------------------
   //
@@ -535,6 +495,30 @@ public class XMPcoarray {
     Ident subr = env.findVarIdent(SET_NODES_NAME, null);
     if (subr == null) {
       subr = env.declExternIdent(SET_NODES_NAME,
+                                 BasicType.FexternalSubroutineType);
+    }
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
+
+
+  //-----------------------------------------------------
+  //  For IMAGE directive in XMPtransPragma
+  //  generate and add "CALL xmpf_coarray_set_image_nodes(nodesDesc)"
+  //-----------------------------------------------------
+  //
+  public static Xobject makeStmt_setImageNodes(String nodesName, XMPenv env)
+  {
+    //    Ident imageNodesId = _getNodesDescIdByName(nodesName, env,
+    //                                               env.getCurrentDef().getBlock());
+    FunctionBlock fblock = env.getCurrentDef().getBlock();
+    XMPnodes nodes = env.findXMPnodes(nodesName, fblock);
+    Ident imageNodesId = nodes.getDescId();
+
+    Xobject args = Xcons.List(imageNodesId);
+    Ident subr = env.findVarIdent(SET_IMAGE_NODES_NAME, null);
+    if (subr == null) {
+      subr = env.declExternIdent(SET_IMAGE_NODES_NAME,
                                  BasicType.FexternalSubroutineType);
     }
     Xobject subrCall = subr.callSubroutine(args);
@@ -986,12 +970,20 @@ public class XMPcoarray {
     isAllocatable = ident.Type().isFallocatable();
     isPointer = ident.Type().isFpointer();
     isUseAssociated = (ident.getFdeclaredModule() != null);
-
     nodesName = getProp_nodes(ident);
+    nodesDescId = _getNodesDescIdByName(nodesName);
+  }
+
+  private Ident _getNodesDescIdByName(String nodesName) {
+    return _getNodesDescIdByName(nodesName, env, fblock);
+  }
+  private Ident _getNodesDescIdByName(String nodesName,
+                                      XMPenv env, FunctionBlock fblock) {
     if (nodesName != null) {
       XMPnodes nodes = env.findXMPnodes(nodesName, fblock);
-      nodesDescId = nodes.getDescId();
+      return nodes.getDescId();
     }
+    return null;
   }
 
   public XobjectDef getDef() {

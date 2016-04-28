@@ -148,9 +148,11 @@ void _XMPF_coarray_init(void)
 {
   /*
    *  set who-am-i
+   *  clean static data
    */
   _XMPF_set_this_image_initial();
   _XMPF_set_num_images_initial();
+  _XMPF_coarray_clean_image_nodes();
 
   /*
    * read environment variables

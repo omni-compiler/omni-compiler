@@ -9,7 +9,35 @@ import java.util.*;
  */
 public class XMPtransCoarrayRun
 {
-  // constants
+  /* These lists should match with F-FrontEnd/src/F-intrinsics-table.c.
+   */
+  final static String[] _coarrayIntrinsics = {
+    // functions
+    "num_images",
+    "this_image",
+    "image_index",
+    "lcobound",
+    "ucocound",
+    // subroutines
+    "co_broadcast",
+    "co_sum",
+    "co_max",
+    "co_min",
+  };
+  final static String[] _coarrayStmtKeywords = {
+    "xmpf_critical",
+    "xmpf_end_critical",
+    "xmpf_error_stop",
+    "xmpf_lock",
+    "xmpf_sync_all",
+    "xmpf_sync_images", 
+    "xmpf_sync_memory",
+    "xmpf_unlock",
+  };
+  final static List _coarrayIntrinsicList = Arrays.asList(_coarrayIntrinsics);
+  final static List _coarrayStmtKeywordList = Arrays.asList(_coarrayStmtKeywords);
+
+  // constants -- cf. libxmpf/src/xmpf_coarray_decl.f90 for generic names
   final static String VAR_TAG_NAME = "xmpf_resource_tag";
   final static String TRAV_COUNTCOARRAY_PREFIX = "xmpf_traverse_countcoarray";
   final static String TRAV_INITCOARRAY_PREFIX = "xmpf_traverse_initcoarray";
@@ -17,8 +45,8 @@ public class XMPtransCoarrayRun
   final static String COARRAY_ALLOC_NAME     = "xmpf_coarray_alloc_generic";
   final static String COARRAY_DEALLOC_NAME   = "xmpf_coarray_dealloc_generic";
   final static String NUM_IMAGES_NAME        = "xmpf_num_images";
-  final static String THIS_IMAGE_NAME        = "xmpf_this_image";  // generic
-  final static String COBOUND_NAME           = "xmpf_cobound";  // generic
+  final static String THIS_IMAGE_NAME        = "xmpf_this_image_generic";
+  final static String COBOUND_NAME           = "xmpf_cobound_generic";
   final static String IMAGE_INDEX_NAME       = "xmpf_image_index";
   final static String CO_BROADCAST_NAME      = "xmpf_co_broadcast_generic";
   final static String CO_SUM_NAME            = "xmpf_co_sum_generic";
@@ -27,6 +55,7 @@ public class XMPtransCoarrayRun
   final static String COARRAY_PROLOG_NAME    = "xmpf_coarray_prolog";
   final static String COARRAY_EPILOG_NAME    = "xmpf_coarray_epilog";
   final static String SYNCALL_NAME           = "xmpf_sync_all";
+  final static String SYNCIMAGES_NAME        = "xmpf_sync_images";
   final static String AUTO_SYNCALL_NAME      = "xmpf_sync_all_auto";  // another entry of syncall
   final static String FINALIZE_PROGRAM_NAME  = XMP.finalize_all_f;
 
@@ -498,7 +527,7 @@ public class XMPtransCoarrayRun
     // To avoid trouble of the shallow/deep copies, visibleCoarrays
     // should be made after execution of transDeclPart_*.
     _setVisibleCoarrays();
-    transExecPart_visibleCoarrays();
+    transExecPart();
 
     funcDef.Finalize();
   }
@@ -1072,7 +1101,7 @@ public class XMPtransCoarrayRun
     !! (See XMPcoarrayInitProcedure.)
     --------------------------------------------
   */
-  private void transExecPart_visibleCoarrays() {
+  private void transExecPart() {
 
     // e. convert coindexed objects to function references
     convCoidxObjsToFuncCalls(visibleCoarrays);
@@ -1312,8 +1341,7 @@ public class XMPtransCoarrayRun
   private Boolean _isCallForSyncall(Xobject xobj) {
     
     if (xobj == null || xobj.Opcode() != Xcode.EXPR_STATEMENT)
-      /* EXPR_STATEMENT conatains does not contain call statement */
-      /* F_ASSIGN_STATEMENT does not contain call statement */
+      /* Not F_ASSIGN_STATEMENT but EXPR_STATEMENT contains call statement */
       return false;
 
     Xobject callExpr = xobj.getArg(0);
@@ -2362,14 +2390,23 @@ public class XMPtransCoarrayRun
 
       String fname = xobj.getArg(0).getString();
 
+      /* replace Fortran90 intrinsic
+       */
       if (fname.equalsIgnoreCase("allocated"))
         _replaceAllocatedWithAssociated(xobj, coarrays);
+
+      /* replace Coarray intrinsics
+       */
       else if (fname.equalsIgnoreCase("num_images"))
         _replaceNumImages(xobj, coarrays);
       else if (fname.equalsIgnoreCase("this_image"))
         _replaceThisImage(xobj, coarrays);
       else if (fname.equalsIgnoreCase("image_index"))
         _replaceImageIndex(xobj, coarrays);
+      else if (fname.equalsIgnoreCase("lcobound"))
+        _replaceCobound(xobj, coarrays, 0);
+      else if (fname.equalsIgnoreCase("ucobound"))
+        _replaceCobound(xobj, coarrays, 1);
       else if (fname.equalsIgnoreCase("co_broadcast"))
         _replaceCoReduction(xobj, fname, CO_BROADCAST_NAME);
       else if (fname.equalsIgnoreCase("co_sum"))
@@ -2378,12 +2415,36 @@ public class XMPtransCoarrayRun
         _replaceCoReduction(xobj, fname, CO_MAX_NAME);
       else if (fname.equalsIgnoreCase("co_min"))
         _replaceCoReduction(xobj, fname, CO_MIN_NAME);
-      else if (fname.equalsIgnoreCase("lcobound"))
-        _replaceCobound(xobj, coarrays, 0);
-      else if (fname.equalsIgnoreCase("ucobound"))
-        _replaceCobound(xobj, coarrays, 1);
     }
+
+    /* remove ident of Coarray intrinsics
+     */
+    /////// Sealed. I don't know why this does not work well. //////
+    //XobjArgs idArgs = def.getFuncIdList().getArgs();
+    //_removeCoarrayIntrinsicIdents(null, idArgs);
   }
+
+
+  // not used currently.
+  private void _removeCoarrayIntrinsicIdents(XobjArgs prevArgs, XobjArgs args) {
+    // termination
+    if (args == null)
+      return;
+
+    XobjArgs nextArgs = args.nextArgs();
+
+    Ident ident = (Ident)args.getArg();
+    String name = ident.getName();
+    if (_coarrayIntrinsicList.contains(name)) {
+      // Found me a coarray intrinsic name. Remove me.
+      prevArgs.setNext(nextArgs);
+      args = prevArgs;
+    }
+
+    _removeCoarrayIntrinsicIdents(args, nextArgs);
+  }
+
+
 
   /* replace "co_broadcast/sum/max/min(source, ...)"
    *  with "xmpf_co_broadcast/sum/max/min<dim>d(source, ...)"
@@ -2668,7 +2729,9 @@ public class XMPtransCoarrayRun
    */
   private void _check_ifIncludeXmpLib() {
     
-    if (!_isCoarrayReferred() && !_isCoarrayIntrinsicUsed()) {
+    if (!_isCoarrayReferred() &&
+        !_isCoarrayIntrinsicUsed() &&
+        !_isCoarrayStatementUsed()) {
       /* any coarray features are not used */
       return;
     }
@@ -2689,39 +2752,23 @@ public class XMPtransCoarrayRun
     return true;
   }
 
+
   private boolean _isCoarrayIntrinsicUsed() {
-
-    /* This list should match with F-FrontEnd/src/F-intrinsics-table.c.
-     */
-    final String[] _coarrayIntrinsics = {
-      // functions
-      "num_images",
-      "this_image",
-      "image_index",
-      "lcobound",
-      "ucocound",
-      // subroutines
-      "co_broadcast",
-      "co_max",
-      "co_min",
-      "co_sum",
-      "xmpf_critical",
-      "xmpf_end_critical",
-      "xmpf_error_stop",
-      "xmpf_lock",
-      "xmpf_sync_all",
-      "xmpf_sync_images", 
-      "xmpf_sync_memory",
-      "xmpf_unlock",
-      };
-
-    final List coarrayIntrinsics = 
-      Arrays.asList(_coarrayIntrinsics);
-
     XobjList identList = def.getDef().getIdentList();
     for (Xobject x: identList) {
       Ident id = (Ident)x;
-      if (coarrayIntrinsics.contains(id.getName()))
+      if (_coarrayIntrinsicList.contains(id.getName()))
+        return true;
+    }
+    return false;
+  }
+
+
+  private boolean _isCoarrayStatementUsed() {
+    XobjList identList = def.getDef().getIdentList();
+    for (Xobject x: identList) {
+      Ident id = (Ident)x;
+      if (_coarrayStmtKeywordList.contains(id.getName()))
         return true;
     }
     return false;
@@ -2743,6 +2790,101 @@ public class XMPtransCoarrayRun
   private String getName() {
     return name;
   }
+
+
+  //------------------------------
+  //  semantic analysis:
+  //    IMAGE directive
+  //------------------------------
+  public static void analyzeImageDirective(Xobject imagePragma,
+                                           XMPenv env, PragmaBlock pb) {
+
+    String nodesName = imagePragma.getArg(0).getString();
+
+    /*----
+     *  error check for the corresponding statement
+     */
+    Block nextBlock = pb.getNext();
+    while (_isSkippableBlockForImageDir(nextBlock))
+      nextBlock = nextBlock.getNext();
+
+    if (nextBlock == null)
+      XMP.errorAt(pb, "Illegal use of IMAGE directive");
+
+    if (!_isTargetStmtOfImageDir(nextBlock))
+      XMP.errorAt(pb, "IMAGE directive mismatched with the following statement");
+  }
+
+
+  private static Boolean _isSkippableBlockForImageDir(Block block) {
+    // All empty and comment lines seem to be deleted already...
+    return false;
+  }
+
+
+  /* Expected nextStmt is a call statement made by F-Front from
+   *    - sync all statement, or
+   *    - sync images statement, or
+   *    - call statement for co_broadcast, or
+   *    - call statement for co_sum or co_max or co_min, or
+   *    - critical statement
+   */
+  private static boolean _isTargetStmtOfImageDir(Block nextBlock) {
+    String[] targetNamePrefixes = {
+      "xmpf_sync_all",
+      "xmpf_sync_images",
+      "xmpf_co_",
+      "xmpf_critical"};
+    //    List targetNamePrefixList = Arrays.asList(targetNamePrefixes);
+
+    BasicBlock bblock = nextBlock.getBasicBlock();
+    if (bblock == null)
+      return false;
+
+    Statement nextStmt = bblock.getHead();
+    if (nextStmt == null)
+      return false;
+
+    Xobject xobj1 = nextStmt.getExpr();
+    Xcode xcode1 = xobj1.Opcode();
+    if (xcode1 != Xcode.EXPR_STATEMENT)
+      return false;
+
+    Xobject xobj2 = xobj1.getArg(0);
+    Xcode xcode2 = xobj2.Opcode();
+    if (xcode2 != Xcode.FUNCTION_CALL)
+      return false;
+
+    String fname = xobj2.getArg(0).getName();
+
+    for (String prefix: targetNamePrefixes) {
+      if (fname.startsWith(prefix)) {
+        if (fname.equals(AUTO_SYNCALL_NAME))    // exception
+          return false;
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+
+  //------------------------------
+  //  translation:
+  //    IMAGE directive
+  //------------------------------
+  public static Block translateImageDirective(PragmaBlock pb,
+                                              XMPinfo info) {
+    Block b = Bcons.emptyBlock();
+    BasicBlock bb = b.getBasicBlock();
+
+    String nodesName = pb.getClauses().getArg(0).getName();
+    Xobject stmt = XMPcoarray.makeStmt_setImageNodes(nodesName, info.env);
+
+    bb.add(stmt);
+    return b;
+  }
+
 
   //------------------------------
   //  tool
