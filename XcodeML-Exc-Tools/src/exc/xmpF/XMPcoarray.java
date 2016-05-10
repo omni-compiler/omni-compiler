@@ -21,6 +21,7 @@ public class XMPcoarray {
   public final static String VAR_DESCPOINTER_PREFIX = "xmpf_descptr";
   public final static String VAR_CRAYPOINTER_PREFIX = "xmpf_crayptr";
   public final static String CBLK_COARRAYS_PREFIX   = "xmpf_coarrayvar";
+  public final static String VAR_COARRAYCOMM_PREFIX = "xmpf_coarraynodes";    // for COARRAY directive
   final static String XMPF_LCOBOUND = "xmpf_lcobound";
   final static String XMPF_UCOBOUND = "xmpf_ucobound";
   final static String XMPF_COSIZE = "xmpf_cosize";
@@ -53,6 +54,8 @@ public class XMPcoarray {
   private String _descPtrName = null;
   private Ident descPtrId = null;
   private String homeBlockName = null;
+  private String _coarrayCommName = null;
+  private Ident coarrayCommId = null;
   
   // corresponding nodes by coarray directive
   private String nodesName = null;
@@ -302,11 +305,11 @@ public class XMPcoarray {
     Xobject elem = getElementLengthExpr();
     if (elem==null)
       XMP.fatal("elem must not be null.");
-    // arg5
+    // arg6
     String varName = getName();
     Xobject varNameObj = 
       Xcons.FcharacterConstant(Xtype.FcharacterType, varName, null);
-    // arg6
+    // arg5
     Xobject nameLen = Xcons.IntConstant(varName.length());
 
     // args
@@ -314,8 +317,8 @@ public class XMPcoarray {
                               arg2,
                               count,
                               elem,
-                              varNameObj,
-                              nameLen);
+                              nameLen,
+                              varNameObj);
     if (args.hasNullArg())
       XMP.fatal("INTERNAL: contains null argument");
 
@@ -445,7 +448,7 @@ public class XMPcoarray {
 
   //-----------------------------------------------------
   //  A part of TRANSLATION n.
-  //  generate "CALL set_varname(descPtr, name, namelen)"
+  //  generate "CALL set_varname(descPtr, namelen, name)"
   //-----------------------------------------------------
   //
   public Xobject makeStmt_setVarName() {
@@ -459,7 +462,7 @@ public class XMPcoarray {
     Xobject varNameLen = 
       Xcons.IntConstant(varName.length());
     Xobject args = Xcons.List(getDescPointerId(),
-                              varNameObj, varNameLen);
+                              varNameLen, varNameObj);
     if (args.hasNullArg())
       XMP.fatal("generated null argument " + SET_VARNAME_NAME +
                 "(makeStmt_setVarName)");
@@ -1049,6 +1052,24 @@ public class XMPcoarray {
     }
 
     return descPtrId;
+  }
+
+
+  public String getCoarrayCommName() {
+    if (_coarrayCommName == null) {
+      _coarrayCommName = VAR_COARRAYCOMM_PREFIX + "_" + name;
+    }
+
+    return _coarrayCommName;
+  }
+
+  public Ident getCoarrayCommId() {
+    if (coarrayCommId == null) {
+      XMP.warning("INTERNAL: illegal null coarrayCommId (XMPcoppy.getCoarrayCommId)");
+      return null;
+    }
+
+    return coarrayCommId;
   }
 
 

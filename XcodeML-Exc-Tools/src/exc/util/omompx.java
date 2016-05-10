@@ -363,9 +363,8 @@ public class omompx
     }
 
     if (xmpf && xmpf_skipCafMode) {
-      System.out.println("<SKIP-CAF MODE> File " +
-                         xobjFile.getSourceFileName() +
-                         " will not be translated by XMP/F Coarray translator.");
+      System.out.println("<SKIP-CAF MODE> XMP/F Coarray translator is " +
+                         "bypassed for " + xobjFile.getSourceFileName() + ".");
     }
 
     if (xmpf && !xmpf_skipCafMode) {
@@ -402,9 +401,8 @@ public class omompx
     }
 
     if (xmpf && xmpf_onlyCafMode) {
-      System.out.println("<ONLY-CAF MODE> File " + 
-                         xobjFile.getSourceFileName() +
-                         " will not be translated by XMP/F translator.");
+      System.out.println("<ONLY-CAF MODE> XMP/F gloval-view translator is " +
+                         "bypassed for " + xobjFile.getSourceFileName() + ".");
     }
 
     if (xmpf && !xmpf_onlyCafMode) {

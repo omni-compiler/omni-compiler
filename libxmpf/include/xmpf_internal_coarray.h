@@ -59,7 +59,8 @@ extern void xmpf_copy_errmsg_(char *errmsg, int *msglen);
 
 extern int _XMPF_nowInTask(void);   // for restriction check
 extern void _XMPF_checkIfInTask(char *msgopt);   // restriction check
-extern void _XMPF_coarrayDebugPrint(char *format, ...);
+#define _XMPF_coarrayDebugPrint	if (_XMPF_get_coarrayMsg()) __XMPF_coarrayDebugPrint
+extern void __XMPF_coarrayDebugPrint(char *format, ...);
 extern void xmpf_coarray_fatal_with_len_(char *msg, int *msglen);
 extern void _XMPF_coarrayFatal(char *format, ...);
 
@@ -76,19 +77,20 @@ extern void xmpf_coarray_free_(void **descPtr);
 extern void xmpf_coarray_malloc_pool_(void);
 extern void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                        int *count, int *element,
-                                       char *name, int *namelen);
+                                       int *namelen, char *name);
 extern void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
                                         int *count, int *element,
-                                        char *name, int *namelen);
+                                        int *namelen, char *name);
 extern void xmpf_coarray_count_size_(int *count, int *element);
 
-extern void xmpf_coarray_prolog_(void **tag, char *name, int *namelen);
+extern void xmpf_coarray_prolog_(void **tag, int *namelen, char *name);
 extern void xmpf_coarray_epilog_(void **tag);
 
 extern void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
-                                       void **tag, char *name, int *namelen);
+                                       void **tag, int *isAllocatable,
+                                       int *namelen, char *name);
 extern void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...);
-extern void xmpf_coarray_set_varname_(void **descPtr, char *name, int *namelen);
+extern void xmpf_coarray_set_varname_(void **descPtr, int *namelen, char *name);
 
 extern int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...);
 

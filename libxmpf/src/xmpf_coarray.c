@@ -320,12 +320,12 @@ void _XMPF_coarrayFatal(char *format, ...)
   _XMP_fatal("...fatal error in XMP/F Coarray runtime");
 }
 
-void _XMPF_coarrayDebugPrint(char *format, ...)
+void __XMPF_coarrayDebugPrint(char *format, ...)
 {
   int current, initial;
 
-  if (!_XMPF_coarrayMsg)
-    return;
+  //  if (!_XMPF_coarrayMsg)
+  //    return;
 
   char work[300];
   va_list list;

@@ -800,14 +800,14 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       subroutine EX1
         integer, pointer :: V3(:,:)                                  ! f. f1. h.
-        integer(8) :: descptr_V3                                     ! a.
+        integer(8) :: descptr_V3 = 0_8                               ! a3.
         ...
       end subroutine
     --------------------------------------------
   */
   private void transDeclPart_allocatableLocal() {
-    // a. declare descriptor pointers
-    genDeclOfDescPointer(allocatableLocalCoarrays);
+    // a3. declare descriptor pointers with zero-init
+    genDeclOfDescPointer(allocatableLocalCoarrays, true);
 
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(allocatableLocalCoarrays);
@@ -832,14 +832,14 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       subroutine EX1
         use M1   !! contains new definition of V3
-        integer(8) :: descptr_V3                                     ! a.
+        integer(8) :: descptr_V3 = 0_8                               ! a3.
         ...
       end subroutine
     --------------------------------------------
   */
   private void transDeclPart_allocatableAssociated() {
-    // a. declare descriptor pointers
-    genDeclOfDescPointer(allocatableAssociatedCoarrays);
+    // a3. declare descriptor pointers with zero-init
+    genDeclOfDescPointer(allocatableAssociatedCoarrays, true);
   }
 
 
@@ -897,7 +897,7 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       subroutine EX1(V2)
         complex(8) :: V2                                          ! f.
-        integer(8) :: descptr_V2                                  ! a.
+        integer(8) :: descptr_V2 = 0_8                            ! a3.
 
         !-- initialization for procedure EX1
       ( integer(8) :: tag                                         ! i. )
@@ -918,8 +918,8 @@ public class XMPtransCoarrayRun
   */
   private void transDeclPart_staticDummy() {
 
-    // a. declare descriptor pointers
-    genDeclOfDescPointer(staticDummyCoarrays);
+    // a. declare descriptor pointers with zero-init
+    genDeclOfDescPointer(staticDummyCoarrays, true);
 
     // a2. m. n. generate definition of descriptor pointers (dummy coarrays only)
     genDefinitionOfDescPointer(staticDummyCoarrays);
@@ -941,7 +941,7 @@ public class XMPtransCoarrayRun
     --------------------------------------------
       subroutine EX1(V3)
         integer, pointer :: V3(:,:)                               ! f. h.
-        integer(8) :: descptr_V3                                  ! a.
+        integer(8) :: descptr_V3 = 0_8                            ! a3.
 
         // find descptr_V3 and set attributes
         call xmpf_coarray_get_descptr(descptr_V3, V3, tag)        ! a2.
@@ -956,8 +956,8 @@ public class XMPtransCoarrayRun
     if (allocatableDummyCoarrays.isEmpty())
       return;
 
-    // a. declare descriptor pointers
-    genDeclOfDescPointer(allocatableDummyCoarrays);
+    // a3. declare descriptor pointers with zero-init
+    genDeclOfDescPointer(allocatableDummyCoarrays, true);
 
     // a2. m. n. generate definition of descriptor pointers (dummy coarrays only)
     genDefinitionOfDescPointer(allocatableDummyCoarrays);
@@ -1145,9 +1145,16 @@ public class XMPtransCoarrayRun
   //  declare variables of descriptor pointers
   //-----------------------------------------------------
   //
-  private void genDeclOfDescPointer(ArrayList<XMPcoarray> localCoarrays) {
-    for (XMPcoarray coarray: localCoarrays)
+  private void genDeclOfDescPointer(ArrayList<XMPcoarray> coarrays) {
+    genDeclOfDescPointer(coarrays, false);
+  }
+  private void genDeclOfDescPointer(ArrayList<XMPcoarray> coarrays,
+                                    Boolean withZeroInit) {
+    for (XMPcoarray coarray: coarrays) {
       coarray.genDecl_descPointer();
+      if (withZeroInit)
+        coarray.setZeroToDescPointer();
+    }
   }
 
   //-----------------------------------------------------
@@ -1483,8 +1490,8 @@ public class XMPtransCoarrayRun
     // generate "call coarray_prolog(tag)" and insert to the top
     Xobject args1 = 
       Xcons.List(Xcons.FvarRef(getResourceTagId()),
-                 Xcons.FcharacterConstant(Xtype.FcharacterType, name, null),
-                 Xcons.IntConstant(name.length()));
+                 Xcons.IntConstant(name.length()),
+                 Xcons.FcharacterConstant(Xtype.FcharacterType, name, null));
 
     Ident fname1 = env.declExternIdent(COARRAY_PROLOG_NAME,
                                        BasicType.FexternalSubroutineType);
@@ -1522,9 +1529,10 @@ public class XMPtransCoarrayRun
       String varname = coarray.getName();
       args = Xcons.List(descPtrId, coarray.getIdent(),
                         Xcons.FvarRef(getResourceTagId()),
+                        Xcons.IntConstant(coarray.isAllocatable() ? 1 : 0),
+                        Xcons.IntConstant(varname.length()),
                         Xcons.FcharacterConstant(Xtype.FcharacterType,
-                                                 varname, null),
-                        Xcons.IntConstant(varname.length()));
+                                                 varname, null));
       subr = env.declExternIdent(FIND_DESCPOINTER_NAME,
                                  BasicType.FexternalSubroutineType);
       if (args.hasNullArg())
@@ -2808,11 +2816,13 @@ public class XMPtransCoarrayRun
     while (_isSkippableBlockForImageDir(nextBlock))
       nextBlock = nextBlock.getNext();
 
-    if (nextBlock == null)
+    if (nextBlock == null || !_isTargetStmtOfImageDir(nextBlock)) {
       XMP.errorAt(pb, "Illegal use of IMAGE directive");
+      //XMP.warning("Illegal use of IMAGE directive -- ignored");
+      return;
+    }
 
-    if (!_isTargetStmtOfImageDir(nextBlock))
-      XMP.errorAt(pb, "IMAGE directive mismatched with the following statement");
+    return;
   }
 
 
