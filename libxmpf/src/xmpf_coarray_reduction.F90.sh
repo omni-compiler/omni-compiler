@@ -23,22 +23,23 @@ subroutine xmpf_co_broadcast%dim%d_%tk%(source, source_image)
 
   call xmpf_consume_comm_current(comm);
 
-!!#ifdef _XMP_GASNET
-!!  call mpi_barrier(comm, ierr, source, result)
-!!  if (ierr /= 0) then
-!!     call xmpf_coarray_fatal("CO_BROADCAST failed at mpi_barrier before mpi_bcast")
-!!  end if
-!!#endif
+#ifdef _XMP_GASNET
+!! if MPI-conduit is selected for building, these barriers seem not needed.
+  call mpi_barrier(comm, ierr, source, result)
+  if (ierr /= 0) then
+     call xmpf_coarray_fatal("CO_BROADCAST failed at mpi_barrier before mpi_bcast")
+  end if
+#endif
   call mpi_bcast(source, %size%, %mpitype%, source_image - 1, comm, ierr)
   if (ierr /= 0) then
      call xmpf_coarray_fatal("CO_BROADCAST failed in mpi_bcast")
   end if
-!!#ifdef _XMP_GASNET
-!!  call mpi_barrier(comm, ierr, source, result)
-!!  if (ierr /= 0) then
-!!     call xmpf_coarray_fatal("CO_BROADCAST failed at mpi_barrier after mpi_bcast")
-!!  end if
-!!#endif
+#ifdef _XMP_GASNET
+  call mpi_barrier(comm, ierr, source, result)
+  if (ierr /= 0) then
+     call xmpf_coarray_fatal("CO_BROADCAST failed at mpi_barrier after mpi_bcast")
+  end if
+#endif
 
   return
 end subroutine'
@@ -52,22 +53,23 @@ subroutine xmpf_co_%op%%dim%d_%tk%(source, result)
 
   call xmpf_consume_comm_current(comm);
 
-!!#ifdef _XMP_GASNET
-!!  call mpi_barrier(comm, ierr, source, result)
-!!  if (ierr /= 0) then
-!!     call xmpf_coarray_fatal("CO_%OP% failed at mpi_barrier before mpi_allreduce")
-!!  end if
-!!#endif
+#ifdef _XMP_GASNET
+!! if MPI-conduit is selected for building, these barriers seem not needed.
+  call mpi_barrier(comm, ierr, source, result)
+  if (ierr /= 0) then
+     call xmpf_coarray_fatal("CO_%OP% failed at mpi_barrier before mpi_allreduce")
+  end if
+#endif
   call mpi_allreduce(source, result, %size%, %mpitype%, mpi_%op%, comm, ierr)
   if (ierr /= 0) then
      call xmpf_coarray_fatal("CO_%OP% failed in mpi_allreduce")
   end if
-!!#ifdef _XMP_GASNET
-!!  call mpi_barrier(comm, ierr, source, result)
-!!  if (ierr /= 0) then
-!!     call xmpf_coarray_fatal("CO_%OP% failed at mpi_barrier after mpi_allreduce")
-!!  end if
-!!#endif
+#ifdef _XMP_GASNET
+  call mpi_barrier(comm, ierr, source, result)
+  if (ierr /= 0) then
+     call xmpf_coarray_fatal("CO_%OP% failed at mpi_barrier after mpi_allreduce")
+  end if
+#endif
 
   return
 end subroutine'
