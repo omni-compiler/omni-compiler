@@ -8,7 +8,7 @@ README
  Some features in the language specification are not supported in this release.
   (You can download the specification of XMP from "http://xcalablemp.org")
 
- See "docs/STATUS-XMP.md and docs/STATUS-CAF.md"
+ See docs/STATUS-XMP.md and docs/STATUS-CAF.md
 
 ----- 
 # Quick Reference for XMP

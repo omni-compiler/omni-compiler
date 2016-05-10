@@ -99,5 +99,5 @@
 [2] ISO/IEC TS 18508:2015, Information technology -- Additional Parallel 
     Features in Fortran, Technical Specification, December 1, 2015.
 [3] XcalableMP Language Specification
-    http://www.xcalablemp.org/specification.html or 
-    http://www.xcalablemp.org/ja/specification.html in Japanese
+    http://xcalablemp.org/specification.html or 
+    http://xcalablemp.org/ja/specification.html in Japanese
