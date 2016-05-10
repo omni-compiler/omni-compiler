@@ -353,6 +353,14 @@ static int _sync_all_core()
 }
 
 
+/* entry for pre- and post-syncall of mpi_allreduce and mpi_bcast
+ */
+void xmpf_sync_all_withcomm_(int *commp)
+{
+  MPI_Comm comm = (MPI_Comm)(*commp);
+  (void)_sync_all_withComm(comm);
+}
+
 static int _sync_all_withComm(MPI_Comm comm)
 {
   int state = 0;
