@@ -50,7 +50,10 @@ if FJRDMA
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if MPI3
-   TESTDIRS += "global-view/async/C/" "global-view/async/F/"
+   TESTDIRS += "global-view/async/C/" "global-view/async/F/" \
+               "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
+	       "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
+	       "local-view/coarray/F/CFOLD" 
 endif
 
 .PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests release slurm slurm-check remote-tests clean-local distclean-local testdirs
