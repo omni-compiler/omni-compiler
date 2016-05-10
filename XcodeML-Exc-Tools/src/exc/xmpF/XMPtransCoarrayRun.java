@@ -104,6 +104,7 @@ public class XMPtransCoarrayRun
 
   private int version;
   private Boolean useGASNet;
+  private Boolean onlyCafMode;
 
   private Boolean DEBUG = true;       // change me in debugger
 
@@ -162,20 +163,15 @@ public class XMPtransCoarrayRun
   //------------------------------------------------------------
   public XMPtransCoarrayRun(XobjectDef def, XMPenv env,
                             ArrayList<XMPtransCoarrayRun> pastRuns,
-                            int pass, int version)
-  {
-    this(def, env, pastRuns, pass, version, false);
-  }
-
-  public XMPtransCoarrayRun(XobjectDef def, XMPenv env,
-                            ArrayList<XMPtransCoarrayRun> pastRuns,
-                            int pass, int version, Boolean useGASNet)
+                            int pass, int version,
+                            Boolean useGASNet, Boolean onlyCafMode)
   {
     this.def = def;
     this.env = env;
     name = def.getName();
     this.version = version;
     this.useGASNet = useGASNet;
+    this.onlyCafMode = onlyCafMode;
 
     funcDef = new FuncDefBlock(def);
     env.setCurrentDef(funcDef);
@@ -488,11 +484,6 @@ public class XMPtransCoarrayRun
     _setLocalCoarrays();
     /* visibleCoarrays will be set after run1 */
 
-    /////////////////////////////////////
-    // SKIP 
-    /////////_check_ifIncludeXmpLib();
-    /////////////////////////////////////
-
     if (version > 3)
       disp_version("run1, " + getName());
 
@@ -501,7 +492,7 @@ public class XMPtransCoarrayRun
     } else {
       run1_procedure();
 
-      if ("1".equals(System.getenv("XMP_ONLYCAF"))) {
+      if (onlyCafMode) {
         // SPECIAL HANDLING (TEMPORARY) to work XMPtransCoarray alone without XMPtranslate
         //  convert main program to soubroutine xmpf_main
         if (isMainProgram())
@@ -1121,8 +1112,9 @@ public class XMPtransCoarrayRun
     //    and initialization of descPtr (only Ver.6)
     genCallOfPrologAndEpilog();
 
-    // k. insert finalization call before STOP statements
-    insertFinalizationCall();
+    // k. insert finalization call before STOP statements (onlyCafMode only)
+    if (onlyCafMode)
+      insertFinalizationCall();
 
     // p. add visible coarrays as arguments of sync all statements 
     //     to prohibit code motion

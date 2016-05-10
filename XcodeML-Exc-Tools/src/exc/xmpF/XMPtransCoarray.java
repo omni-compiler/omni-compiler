@@ -20,6 +20,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
   private int pass;
   private int version;
   private Boolean useGASNet;
+  private Boolean onlyCafMode;
 
   private ArrayList<XMPtransCoarrayRun> pastRuns;
   int _nCoarrays = 0;
@@ -30,11 +31,13 @@ public class XMPtransCoarray implements XobjectDefVisitor
   //  constructor
   //-----------------------------------------
 
-  public XMPtransCoarray(XobjectFile env, int pass, String suboption)
+  public XMPtransCoarray(XobjectFile env, int pass, String suboption,
+                         Boolean onlyCafMode)
   {
     this.env = new XMPenv(env);
     this.pass = pass;
     _set_version(suboption);
+    this.onlyCafMode = onlyCafMode;
     pastRuns = new ArrayList<XMPtransCoarrayRun>();
   }
 
@@ -91,7 +94,8 @@ public class XMPtransCoarray implements XobjectDefVisitor
       break;
 
     case 1:               // for both procedures and modules
-      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 1, version, useGASNet);
+      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 1, version,
+                                               useGASNet, onlyCafMode);
       transCoarrayRun.run1();
       // assuming top-down translation along host-association
       pastRuns.add(transCoarrayRun);
@@ -101,7 +105,8 @@ public class XMPtransCoarray implements XobjectDefVisitor
     case 2:               // second pass for modules
       if (!is_module)
         return;
-      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2, version, useGASNet);
+      transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2, version,
+                                               useGASNet, onlyCafMode);
       transCoarrayRun.run2();
       //transCoarrayRun.finalize();
       break;

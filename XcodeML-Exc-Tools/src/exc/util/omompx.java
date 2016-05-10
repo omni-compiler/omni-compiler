@@ -369,18 +369,10 @@ public class omompx
 
     if (xmpf && !xmpf_skipCafMode) {
 
-      // Coarray Fortran pass#0 -- detect if any coarray features are used
-      //      exc.xmpF.XMPtransCoarray
-      //        caf_translator0 = new exc.xmpF.XMPtransCoarray(xobjFile, 0, coarray_suboption);
-      //      xobjFile.iterateDef(caf_translator0);
-      //      if(exc.xmpF.XMP.hasErrors())
-      //        System.exit(1);
-      //      containsCoarray = caf_translator0.containsCoarray();
-      //      caf_translator0.finish();
-
       // Coarray Fortran pass#1
       exc.xmpF.XMPtransCoarray caf_translator1 =
-        new exc.xmpF.XMPtransCoarray(xobjFile, 1, coarray_suboption);
+        new exc.xmpF.XMPtransCoarray(xobjFile, 1, coarray_suboption,
+                                     xmpf_onlyCafMode);
       xobjFile.iterateDef(caf_translator1);
       if(exc.xmpF.XMP.hasErrors())
         System.exit(1);
@@ -388,7 +380,8 @@ public class omompx
 
       // Coarray Fortran pass#2
       exc.xmpF.XMPtransCoarray caf_translator2 =
-        new exc.xmpF.XMPtransCoarray(xobjFile, 2, coarray_suboption);
+        new exc.xmpF.XMPtransCoarray(xobjFile, 2, coarray_suboption,
+                                     xmpf_onlyCafMode);
       xobjFile.iterateDef(caf_translator2);
       if(exc.xmpF.XMP.hasErrors())
         System.exit(1);
