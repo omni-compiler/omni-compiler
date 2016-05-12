@@ -120,9 +120,8 @@ extern _XMP_nodes_t *_XMPF_coarray_consume_image_nodes(void);
 /* xmpf_coarray_lib.c */
 extern int xmpf_num_images_(void);
 extern int xmpf_this_image_noargs_(void);
-//extern int xmpf_num_nodes_(void);
-//extern int xmpf_node_num_(void);
-extern void xmpf_get_comm_current_(int *comm);
+extern void xmpf_get_comm_current_(MPI_Fint *fcomm);
+extern void xmpf_consume_comm_current_(MPI_Fint *fcomm);
 
 extern int XMPF_initial_this_image, XMPF_initial_num_images;
 extern void _XMPF_set_this_image_initial(void);

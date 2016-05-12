@@ -23,9 +23,12 @@ OUT_ALO=alloc_subnodes.x alloc_subnodes2.x autodealloc1.x
 #autodealloc0.x  restriction  cf. ../ALLOC/allo4.f90
 #coarraydir_allocatable.x  buggy.  cf. bug4.f90
 
+#---- dimensions
+OUT_DIM=coindex2d.x nodes2d.x
+
 #coarray_dir_inner.f90  #image_dir.x
 
-OUT= $(OUT_DIR) $(OUT_TASK) $(OUT_IMG) $(OUT_ALO)
+OUT= $(OUT_DIR) $(OUT_TASK) $(OUT_IMG) $(OUT_ALO) $(OUT_DIM)
 
 
 include ../Makefile.common
