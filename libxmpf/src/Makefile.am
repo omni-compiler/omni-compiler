@@ -1,5 +1,3 @@
-include_HEADERS = xmpf_coarray_decl.mod
-
 CC           = @MPI_CC@
 FC           = @MPI_FC@
 FCFLAGS      = @MPI_FCFLAGS@ @OMNI_NTV_FCFLAGS@
@@ -16,12 +14,17 @@ libxmpf_a_SOURCES = $(XMPF_INC_DIR)/xmpf_internal.h $(XMPF_INC_DIR)/xmpf_interna
                     xmpf_gmove.c xmpf_index.c xmpf_lib.c xmpf_loop.c xmpf_misc.c \
                     xmpf_nodes.c xmpf_pack.c xmpf_reflect.c xmpf_sort.c xmpf_task.c \
 		    xmpf_template.c
-libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 \
-	            xmpf_coarray_lib.c \
+libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_lib.c \
                     xmpf_coarray_put.c xmpf_coarray_put_wrap.f90 \
                     xmpf_coarray_get.c xmpf_coarray_get_wrap.f90 \
                     xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
                     xmpf_coarray_reduction.F90 xmpf_coarray_decl.f90
+
+if CRAY
+    include_HEADERS = XMPF_COARRAY_DECL.mod
+else
+    include_HEADERS = xmpf_coarray_decl.mod
+endif
 
 if GASNET
     CFLAGS            += -D_XMP_GASNET

@@ -1364,7 +1364,7 @@ if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sxace-nec-superux" -
   fi
 fi
 
-#AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
+AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
 AM_CONDITIONAL(SUPERUX, test "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux")
 AM_CONDITIONAL(SUPERUX_OR_POWERPC, test "$target" = "powerpc-hitachi-aix" -o "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux")
 

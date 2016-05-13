@@ -697,6 +697,8 @@ SUPERUX_OR_POWERPC_FALSE
 SUPERUX_OR_POWERPC_TRUE
 SUPERUX_FALSE
 SUPERUX_TRUE
+CRAY_FALSE
+CRAY_TRUE
 MPFR_LIB_DIR
 MPFR_INCLUDE_DIR
 GMP_LIB_DIR
@@ -3069,8 +3071,8 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
-# expand $ac_aux_dir to an absolute path
-am_aux_dir=`cd $ac_aux_dir && pwd`
+# Expand $ac_aux_dir to an absolute path.
+am_aux_dir=`cd "$ac_aux_dir" && pwd`
 
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
@@ -3466,6 +3468,7 @@ END
     as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
   fi
 fi
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
 $as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
@@ -9113,7 +9116,14 @@ if test "$target" != "powerpc-hitachi-aix" -a "$target" != "sxace-nec-superux" -
   fi
 fi
 
-#AM_CONDITIONAL(CRAY, test "$target" = "Cray-linux-gnu")
+ if test "$target" = "Cray-linux-gnu"; then
+  CRAY_TRUE=
+  CRAY_FALSE='#'
+else
+  CRAY_TRUE='#'
+  CRAY_FALSE=
+fi
+
  if test "$target" = "sxace-nec-superux" -o "$target" = "sx9-nec-superux"; then
   SUPERUX_TRUE=
   SUPERUX_FALSE='#'
@@ -13141,6 +13151,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MOD2XMOD_TRUE}" && test -z "${MOD2XMOD_FALSE}"; then
   as_fn_error $? "conditional \"MOD2XMOD\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${CRAY_TRUE}" && test -z "${CRAY_FALSE}"; then
+  as_fn_error $? "conditional \"CRAY\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SUPERUX_TRUE}" && test -z "${SUPERUX_FALSE}"; then
