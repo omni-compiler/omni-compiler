@@ -62,6 +62,10 @@ struct ompc_task {
     ABT_thread **child_task_ptrs;
     int child_task_count;
     int child_task_capacity;
+    uint64_t lower;
+    uint64_t upper;
+    int step;
+    ABT_thread *loop_child_task;
 };
 
 struct ompc_ult_pool {

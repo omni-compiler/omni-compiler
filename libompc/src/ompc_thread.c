@@ -593,6 +593,54 @@ static void ompc_xstream_setup(void *arg)
     thread_affinity_setup(es_idx);
 }
 
+static void divide_conquer_wrapper(struct ompc_task *curr_task);
+
+static void loop_divide_conquer_impl(struct ompc_task *curr_task)
+{
+    if (curr_task->upper - curr_task->lower <= 10) {  // FIXME
+        curr_task->func(curr_task->lower, curr_task->upper, curr_task->step, curr_task->args);
+    } else {
+        struct ompc_task *new_task = malloc(sizeof *new_task);
+        new_task->func = curr_task->func;
+        new_task->nargs = curr_task->nargs;
+        void *args_dup = malloc(new_task->nargs * sizeof(void *));
+        memcpy(args_dup, curr_task->args, new_task->nargs * sizeof(void *));
+        new_task->args = args_dup;
+        new_task->lower = curr_task->lower + (curr_task->upper - curr_task->lower) / 2;
+        new_task->upper = curr_task->upper;
+        curr_task->upper = new_task->lower;
+        new_task->step = curr_task->step;
+        ABT_thread *old_loop_child_task = curr_task->loop_child_task;
+        ompc_start_ult(pools[0], 0, divide_conquer_wrapper, new_task, &curr_task->loop_child_task);  // FIXME
+        
+        loop_divide_conquer_impl(curr_task);
+        ABT_thread_join(*curr_task->loop_child_task);
+        ompc_end_ult(curr_task->loop_child_task, 0);
+        curr_task->loop_child_task = old_loop_child_task;
+    }
+}
+
+static void divide_conquer_wrapper(struct ompc_task *curr_task)
+{
+    ABT_key_set(tls_key, curr_task);
+    loop_divide_conquer_impl(curr_task);
+    free(curr_task->args);
+    free(curr_task);
+}
+
+void ompc_loop_divide_conquer(cfunc func, int nargs, void *args,
+                              uint64_t lower, uint64_t upper, int step)
+{
+    struct ompc_task *curr_task = ompc_current_task();
+    curr_task->func = func;
+    curr_task->nargs = nargs;
+    curr_task->args = args;
+    curr_task->lower = lower;
+    curr_task->upper = upper;
+    curr_task->step = step;
+    loop_divide_conquer_impl(curr_task);
+}
+
 static void ompc_thread_wrapper_func(void *arg)
 {
     struct ompc_thread *cthd = (struct ompc_thread *)arg;
