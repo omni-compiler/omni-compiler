@@ -2,7 +2,7 @@
 #include <string.h>
 
 
-#if !defined(OMNI_TARGET_CPU_KCOMPUTER) || !defined(K_RDMA_REFLECT)
+#if !defined(_KCOMPUTER) || !defined(K_RDMA_REFLECT)
 static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
 					   int lwidth, int uwidth, int is_periodic);
 static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
@@ -118,7 +118,7 @@ void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 /* } */
 
 
-#if !defined(OMNI_TARGET_CPU_KCOMPUTER) || !defined(K_RDMA_REFLECT)
+#if !defined(_KCOMPUTER) || !defined(K_RDMA_REFLECT)
 
 //
 // Reflect without RDMA

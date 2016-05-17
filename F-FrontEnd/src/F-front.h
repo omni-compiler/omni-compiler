@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file F-front.h
  */
@@ -14,7 +8,6 @@
 #define _F_FRONT_H_
 
 #define OMNI_FORTRAN_ENTRY_POINT        "__Omni_FortranEntryPoint"
-
 
 #include "config.h"
 #include <assert.h>

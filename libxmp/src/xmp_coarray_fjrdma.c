@@ -154,7 +154,7 @@ static void _XMP_FJMPI_Rdma_get(const int target_rank, uint64_t raddr, uint64_t 
   }
 }
 
-#if defined(OMNI_TARGET_CPU_FX10) || defined(OMNI_TARGET_CPU_FX100)
+#if defined(_FX10) || defined(_FX100)
 /*********************************************************************************/
 /* DESCRIPTION : Execute multiple put operation for FX10                         */
 /* ARGUMENT    : [IN] target_rank    : Target rank                               */
@@ -197,10 +197,10 @@ static void _FX10_Rdma_mput(const int target_rank, uint64_t *raddrs, uint64_t *l
 static void _RDMA_mput(const size_t target_rank, uint64_t* raddrs, uint64_t* laddrs,
 		       size_t* lengths, const int stride, const size_t transfer_elmts)
 {
-#if defined(OMNI_TARGET_CPU_KCOMPUTER)
+#if defined(_KCOMPUTER)
   FJMPI_Rdma_mput(target_rank, _XMP_FJRDMA_TAG, raddrs, laddrs, lengths, stride, transfer_elmts, _XMP_COARRAY_FLAG_NIC);
   _XMP_add_num_of_puts();
-#elif defined(OMNI_TARGET_CPU_FX10) || defined(OMNI_TARGET_CPU_FX100)
+#elif defined(_FX10) || defined(_FX100)
   _FX10_Rdma_mput(target_rank, raddrs, laddrs, lengths, stride, transfer_elmts);
 #endif
 }

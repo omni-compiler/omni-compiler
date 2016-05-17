@@ -1,3 +1,4 @@
+/autom4te.cache/
 /aclocal.m4
 /Makefile
 /config.log
@@ -23,6 +24,7 @@ C-FrontEnd/src/c-lexer.c
 C-FrontEnd/src/c-parser.c
 C-FrontEnd/src/c-parser.h
 C-FrontEnd/src/c-token.c
+C-FrontEnd/src/c-token.h
 Driver/atool/Makefile
 Driver/atool/mk/vars.mk
 Driver/atool/src/cmd/.depend
