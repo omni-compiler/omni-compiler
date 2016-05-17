@@ -133,7 +133,7 @@ release:
 	rm -rf .git .gitignore; \
 	sh autogen.sh; ./configure; \
 	find . -name Makefile.in -exec touch \{\} \;
-	cd /tmp; tar cjf @TOPDIR@/$(PACKAGE_NAME).tar.bz2 $(PACKAGE_NAME); \
+	cd /tmp; tar cjf $(PACKAGE_NAME).tar.bz2 $(PACKAGE_NAME); \
 	echo "Created $(PACKAGE_NAME).tar.bz2"; \
 	rm -rf $(WORKDIR)
 
