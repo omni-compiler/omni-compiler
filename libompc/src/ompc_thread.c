@@ -411,6 +411,9 @@ ompc_init(int argc,char *argv[])
     tp->implicit_task.child_task_ptrs = NULL;
     tp->implicit_task.child_task_count = 0;
     tp->implicit_task.child_task_capacity = 0;
+    tp->implicit_task.depth = 0;
+    tp->implicit_task.es_num = 0;
+    tp->implicit_task.avail_es_count = ompc_max_threads;
     ABT_key_set(tls_key, (void *)&tp->implicit_task);
     current_thread = tp;
 
@@ -597,7 +600,7 @@ static void divide_conquer_wrapper(struct ompc_task *curr_task);
 
 static void loop_divide_conquer_impl(struct ompc_task *curr_task)
 {
-    if (curr_task->upper - curr_task->lower <= 10) {  // FIXME
+    if (curr_task->upper - curr_task->lower <= 10 || curr_task->avail_es_count == 1) {  // FIXME
         curr_task->func(curr_task->lower, curr_task->upper, curr_task->step, curr_task->args);
     } else {
         struct ompc_task *new_task = malloc(sizeof *new_task);
@@ -608,15 +611,27 @@ static void loop_divide_conquer_impl(struct ompc_task *curr_task)
         new_task->args = args_dup;
         new_task->lower = curr_task->lower + (curr_task->upper - curr_task->lower) / 2;
         new_task->upper = curr_task->upper;
-        curr_task->upper = new_task->lower;
         new_task->step = curr_task->step;
-        ABT_thread *old_loop_child_task = curr_task->loop_child_task;
-        ompc_start_ult(pools[0], 0, divide_conquer_wrapper, new_task, &curr_task->loop_child_task);  // FIXME
+        new_task->depth = curr_task->depth + 1;
+        new_task->es_num = curr_task->es_num + (curr_task->avail_es_count / 2);
+        new_task->avail_es_count = curr_task->avail_es_count - (new_task->es_num - curr_task->es_num);
         
+        curr_task->upper = new_task->lower;
+        curr_task->depth++;
+        curr_task->avail_es_count -= new_task->avail_es_count;
+        ABT_thread *old_loop_child_task = curr_task->loop_child_task;
+        
+        ompc_start_ult(pools[new_task->es_num], curr_task->es_num, divide_conquer_wrapper, new_task, &curr_task->loop_child_task);
         loop_divide_conquer_impl(curr_task);
         ABT_thread_join(*curr_task->loop_child_task);
-        ompc_end_ult(curr_task->loop_child_task, 0);
+        ompc_end_ult(curr_task->loop_child_task, curr_task->es_num);
+        
+        curr_task->depth--;
+        curr_task->avail_es_count += new_task->avail_es_count;
         curr_task->loop_child_task = old_loop_child_task;
+        
+        free(new_task->args);
+        free(new_task);
     }
 }
 
@@ -624,8 +639,6 @@ static void divide_conquer_wrapper(struct ompc_task *curr_task)
 {
     ABT_key_set(tls_key, curr_task);
     loop_divide_conquer_impl(curr_task);
-    free(curr_task->args);
-    free(curr_task);
 }
 
 void ompc_loop_divide_conquer(cfunc func, int nargs, void *args,
