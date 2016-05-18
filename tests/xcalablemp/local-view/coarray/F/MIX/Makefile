@@ -16,10 +16,11 @@ OUT_DIR=coarray_dir0.x coarray_dir1.x coarray_dir2.x coarray_dir_ti1.x coarray_d
 OUT_IMG=image_dir0.x image_dir1.x #image_dir_sync1.x #not yet
 
 #---- ALLOC/DEALLOC
-OUT_ALO=alloc_subnodes.x alloc_subnodes2.x autodealloc1.x 
+OUT_ALO=alloc_subnodes.x alloc_subnodes2.x autodealloc1.x
+#coarraydir_allocatable3.x  #restriction coarray dir for allocatable coarray
 #coarraydir_allocatable2-mod.x also freezed on ipv-conduit
 #coarraydir_allocatable2.x freezed on ipv-couduit
-#coarraydir_allocatable3.x  restriction coarray dir for allocatable coarray
+
 #autodealloc0.x  restriction  cf. ../ALLOC/allo4.f90
 #coarraydir_allocatable.x  buggy.  cf. bug4.f90
 
