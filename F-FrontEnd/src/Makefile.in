@@ -32,7 +32,7 @@ endif
 all: $(F_FRONT)
 
 $(F_FRONT): $(OBJECTS) $(HEADERS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(LDFLAGS)
 
 $(OBJECTS): $(HEADERS)
 
