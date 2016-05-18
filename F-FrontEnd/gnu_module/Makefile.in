@@ -17,7 +17,7 @@ BINDIR   = @OMNI_HOME@/bin
 all: $(T_MODULE)
 $(OBJECTS): $(HEADERS)
 $(T_MODULE): $(OBJECTS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 	test -f xmpmod || sed -e "s|@@XMP_PATH@@|$(cur_dir)|g" < utils/xmpmod.bs > xmpmod
 	chmod 755 xmpmod
 
