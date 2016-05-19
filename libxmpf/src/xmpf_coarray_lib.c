@@ -71,6 +71,9 @@ BOOL _XMPF_is_subset_exec()
  */
 MPI_Comm _XMPF_get_comm_current()
 {
+  if (!_XMPF_is_subset_exec())
+    return MPI_COMM_WORLD;
+
   _XMP_nodes_t *imageNodes = _XMPF_coarray_get_image_nodes();
   if (imageNodes != NULL)
     return *(MPI_Comm*)(imageNodes->comm);
@@ -80,6 +83,9 @@ MPI_Comm _XMPF_get_comm_current()
 
 MPI_Comm _XMPF_consume_comm_current()
 {
+  if (!_XMPF_is_subset_exec())
+    return MPI_COMM_WORLD;
+
   _XMP_nodes_t *imageNodes = _XMPF_coarray_consume_image_nodes();
   if (imageNodes != NULL)
     return *(MPI_Comm*)(imageNodes->comm);
