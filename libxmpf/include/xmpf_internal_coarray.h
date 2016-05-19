@@ -131,6 +131,7 @@ extern int _XMPF_num_images_initial(void);
 
 extern BOOL _XMPF_is_subset_exec(void);
 extern MPI_Comm _XMPF_get_comm_current(void);
+extern MPI_Comm _XMPF_consume_comm_current(void);
 extern int _XMPF_this_image_current(void);
 extern int _XMPF_num_images_current(void);
 extern int _XMPF_transImage_current2initial(int image);
