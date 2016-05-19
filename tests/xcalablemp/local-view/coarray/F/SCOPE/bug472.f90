@@ -1,8 +1,8 @@
-module mmm
+module m_m
 !!   include "xmp_coarray.h"
-end module mmm
+end module m_m
 
-use mmm
+use m_m
 real dada(10)[*]
 do i=1,10; dada(i)=this_image()**i; enddo
 syncall

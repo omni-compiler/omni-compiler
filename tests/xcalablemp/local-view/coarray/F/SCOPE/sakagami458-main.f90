@@ -1,4 +1,4 @@
-use data
+use sdata
 do i = 1, lx
    a(i,1)[2] = i
 end do

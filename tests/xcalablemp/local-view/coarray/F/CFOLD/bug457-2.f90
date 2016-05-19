@@ -2,12 +2,12 @@ module param0
 integer, parameter :: nn=333
 end module
 
-module param
+module param1
 use param0
 integer, parameter :: lx=nn/3
 end module
 
-use param
+use param1
 !! include "xmp_coarray.h"
 real*8 :: a(3:lx,nn)[*]
 
