@@ -1679,7 +1679,7 @@ MPI_Comm _get_communicatorFromCoarrayInfo(CoarrayInfo_t *cinfo)
   if (nodes == NULL)
     return MPI_COMM_NULL;
 
-  return *(long*)(nodes->comm);
+  return *(MPI_Comm*)(nodes->comm);
 }
 
 

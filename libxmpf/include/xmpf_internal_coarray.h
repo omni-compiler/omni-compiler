@@ -146,6 +146,7 @@ extern int _XMPF_transImage_withComm(MPI_Comm comm1, int image1, MPI_Comm comm2)
 extern void xmpf_sync_all_(void);
 extern void xmpf_sync_all_auto_(void);
 extern void xmpf_sync_all_stat_core_(int *stat, char *msg, int *msglen);
+extern void xmpf_sync_all_withcomm_(MPI_Fint *fcomm);
 
 extern void xmpf_sync_memory_nostat_(void);
 extern void xmpf_sync_memory_stat_(int *stat, char *msg, int *msglen);

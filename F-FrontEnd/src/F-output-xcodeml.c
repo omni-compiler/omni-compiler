@@ -3152,8 +3152,9 @@ collect_type_desc(expv v)
 void
 add_type_ext_id(EXT_ID ep)
 {
-    TYPE_EXT_ID te = (TYPE_EXT_ID)malloc(sizeof(struct type_ext_id));
-    bzero(te, sizeof(struct type_ext_id));
+    //TYPE_EXT_ID te = (TYPE_EXT_ID)malloc(sizeof(struct type_ext_id));
+    TYPE_EXT_ID te = XMALLOC(TYPE_EXT_ID, sizeof(struct type_ext_id));
+    //bzero(te, sizeof(struct type_ext_id));
     te->ep = ep;
     FUNC_EXT_LINK_ADD(te, type_ext_id_list, type_ext_id_last);
 }
