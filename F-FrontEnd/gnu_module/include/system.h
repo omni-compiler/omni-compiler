@@ -436,7 +436,7 @@ extern int getpagesize (void);
 #endif
 
 #if defined (HAVE_DECL_GETWD) && !HAVE_DECL_GETWD
-extern char *getwd (char *);
+extern char *getcwd (char *);
 #endif
 
 #if defined (HAVE_DECL_SBRK) && !HAVE_DECL_SBRK

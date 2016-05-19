@@ -1,13 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
-/**
- * \file xcodeml-output-F.c
- */
-
 #include <ctype.h>
 #include "xcodeml.h"
 

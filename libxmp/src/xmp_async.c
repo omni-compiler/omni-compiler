@@ -6,7 +6,7 @@ extern void (*_XMP_unpack_comm_set)(void *recvbuf, int recvbuf_size,
 				    _XMP_array_t *a, _XMP_comm_set_t *comm_set[][_XMP_N_MAX_DIM]);
 static _XMP_async_comm_t _XMP_async_comm_tab[_XMP_ASYNC_COMM_SIZE];
 static _XMP_async_comm_t *_tmp_async = NULL;
-#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+#if defined(_KCOMPUTER) && defined(K_RDMA_REFLECT)
 static void _XMP_wait_async_rdma(_XMP_async_comm_t *async);
 #endif
 
@@ -91,7 +91,7 @@ void _XMP_wait_async__(int async_id)
   int nreqs         = async->nreqs;
   MPI_Request *reqs = async->reqs;
 
-#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+#if defined(_KCOMPUTER) && defined(K_RDMA_REFLECT)
   // For RDMA reflects, async->nreqs > 0 and async->reqs == NULL.
   if(nreqs && !reqs){
     _XMP_wait_async_rdma(async);
@@ -135,7 +135,7 @@ int xmp_test_async_(int *async_id)
   int nreqs = async->nreqs;
   MPI_Request *reqs = async->reqs;
 
-#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+#if defined(_KCOMPUTER) && defined(K_RDMA_REFLECT)
   // For RDMA reflects, async->nreqs > 0 and async->reqs == NULL.
   _XMP_fatal("xmp_test_async not supported for RDMA.");
 #endif
@@ -155,7 +155,7 @@ int xmp_test_async_(int *async_id)
   }
 }
 
-#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+#if defined(_KCOMPUTER) && defined(K_RDMA_REFLECT)
 static void _XMP_wait_async_rdma(_XMP_async_comm_t *async)
 {
   int nreqs = async->nreqs;

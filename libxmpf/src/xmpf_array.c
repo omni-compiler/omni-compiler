@@ -78,7 +78,7 @@ void xmpf_array_dealloc__(_XMP_array_t **a_desc)
 {
   _XMP_array_t *a = *a_desc;
 
-#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+#if defined(_KCOMPUTER) && defined(K_RDMA_REFLECT)
   if (a->array_addr_p) FJMPI_Rdma_dereg_mem(a->rdma_memid);
 #endif
 
@@ -92,7 +92,7 @@ void xmpf_array_deallocate__(_XMP_array_t **a_desc)
 
   a->array_addr_p = NULL;
   
-#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+#if defined(_KCOMPUTER) && defined(K_RDMA_REFLECT)
   FJMPI_Rdma_dereg_mem(a->rdma_memid);
 #endif
 
@@ -306,7 +306,7 @@ void xmpf_array_get_local_size_off__(_XMP_array_t **a_desc, int *i_dim,
 
 }
 
-#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+#if defined(_KCOMPUTER) && defined(K_RDMA_REFLECT)
 int _memid = 0;
 extern int _memid;
 #endif
@@ -358,7 +358,7 @@ void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr, int i
   }
 #endif
 
-#if defined(OMNI_TARGET_CPU_KCOMPUTER) && defined(K_RDMA_REFLECT)
+#if defined(_KCOMPUTER) && defined(K_RDMA_REFLECT)
   _memid = _memid % 511;
   a->rdma_memid = _memid;
   a->rdma_addr = FJMPI_Rdma_reg_mem(_memid++, array_addr, total_elmts * a->type_size);

@@ -1,11 +1,4 @@
 %{
-/*
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
- 
 #include "c-expr.h"
 #include "c-lexyacc.h"
 #include "c-option.h"

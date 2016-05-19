@@ -1,11 +1,4 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 #include "F-module-procedure.h"
-
 
 static HashTable genProcTbl;
 static int isInitialized = FALSE;
