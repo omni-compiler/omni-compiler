@@ -65,7 +65,7 @@
     me = thisim()
 
     !! TEST#1
-    call sub1(thisim(),c)
+    call sub1(thisim())
     syncall
 
     if (c(1)[1].ne."one ") then
@@ -98,7 +98,7 @@
        write(*,*) "NG: a[3] should be 60.0 but", a
     endif
 
-    call final_msg(nerr, me)
+    call final_msg(nerr)
 
   end program main1
 
