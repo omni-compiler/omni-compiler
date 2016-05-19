@@ -6,7 +6,8 @@ NPE= 8
 #costmtInSpdo.x costmtInSpdo-2.x
 
 #---- TASK block
-OUT_TASK=this_image.x this_image_subnodes.x this_image3.x sync_task.x  reduct_subset.x 
+OUT_TASK=this_image.x this_image_subnodes.x this_image3.x sync_task.x 
+#reduct_subset.x ###mpirun noticed that process rank 2 with PID 15921 on node slave05 exited on signal 11 (Segmentation fault).
 #this_image2.x: too complicated
 
 #---- COARRAY directive

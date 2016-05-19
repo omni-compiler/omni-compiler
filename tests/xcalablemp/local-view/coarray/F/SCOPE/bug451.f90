@@ -1,10 +1,10 @@
-  module xx
+  module xx451
 !!     include "xmp_coarray.h"
     integer,save:: aaa[*]
-  end module xx
+  end module xx451
 
   subroutine zz(c)
-    use xx
+    use xx451
     integer,save:: bbb[*]
     integer:: c[*]
     aaa[2]=c[1]
@@ -12,7 +12,7 @@
   end subroutine zz
 
   program ma
-    use xx
+    use xx451
     integer :: ccc[*]
  
     aaa=123

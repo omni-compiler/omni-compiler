@@ -1,4 +1,4 @@
-module alloc
+module alloc2
 !! include 'xmp_coarray.h'
 parameter(lx=100,ly=50)
 !!real*8, allocatable :: a(:,:)[:]
@@ -10,7 +10,7 @@ return
 end
 end module
 
-use alloc
+use alloc2
 real :: b[*]
 call allocdata
 

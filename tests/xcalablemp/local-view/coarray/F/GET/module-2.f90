@@ -1,4 +1,4 @@
-  module mmm
+  module module2
 !!     include "xmp_coarray.h"
     real*8 da(10,10)[3,*]
 
@@ -6,12 +6,12 @@
     subroutine abc
       continue
     end subroutine abc
-    subroutine mmm_abc_def
+    subroutine module2_abc_def
       continue
-    end subroutine mmm_abc_def
-  end module mmm
+    end subroutine module2_abc_def
+  end module module2
 
-  use mmm
+  use module2
 
   me = this_image()
 
