@@ -71,26 +71,26 @@ BOOL _XMPF_is_subset_exec()
  */
 MPI_Comm _XMPF_get_comm_current()
 {
-  if (!_XMPF_is_subset_exec())
-    return MPI_COMM_WORLD;
-
   _XMP_nodes_t *imageNodes = _XMPF_coarray_get_image_nodes();
   if (imageNodes != NULL)
     return *(MPI_Comm*)(imageNodes->comm);
 
-  return *(MPI_Comm*)(_XMP_get_execution_nodes()->comm);
+  MPI_Comm *commp = (MPI_Comm*)(_XMP_get_execution_nodes()->comm);
+  if (commp != NULL)
+    return *commp;
+  return MPI_COMM_WORLD;
 }
 
 MPI_Comm _XMPF_consume_comm_current()
 {
-  if (!_XMPF_is_subset_exec())
-    return MPI_COMM_WORLD;
-
   _XMP_nodes_t *imageNodes = _XMPF_coarray_consume_image_nodes();
   if (imageNodes != NULL)
     return *(MPI_Comm*)(imageNodes->comm);
 
-  return *(MPI_Comm*)(_XMP_get_execution_nodes()->comm);
+  MPI_Comm *commp = (MPI_Comm*)(_XMP_get_execution_nodes()->comm);
+  if (commp != NULL)
+    return *commp;
+  return MPI_COMM_WORLD;
 }
 
 int _XMPF_num_images_current()
