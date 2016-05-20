@@ -1,4 +1,4 @@
-module mod0
+module mod0_gmove_test_out
 
   integer, parameter :: N = 64
 
@@ -63,13 +63,13 @@ contains
     x = 0
   end subroutine init_x
 
-end module mod0
+end module mod0_gmove_test_out
 
 
 !--------------------------------------------------------
 program gmove_test_out
 
-  use mod0
+  use mod0_gmove_test_out
 
 #ifdef _MPI3
   call gmove_gs_gs
@@ -102,7 +102,7 @@ subroutine gmove_gs_gs
 
   integer :: result = 0
 
-  use mod0
+  use mod0_gmove_test_out
 
   call init_a
   call init_b
@@ -153,7 +153,7 @@ subroutine gmove_gs_ge
 
   integer :: result = 0
 
-  use mod0
+  use mod0_gmove_test_out
 
   call init_a
   call init_b
@@ -201,7 +201,7 @@ end subroutine gmove_gs_ge
 !--------------------------------------------------------
 subroutine gmove_ge_ge
 
-  use mod0
+  use mod0_gmove_test_out
 
   call init_a
   call init_b
@@ -241,7 +241,7 @@ subroutine gmove_gs_ls
 
   integer :: result = 0
 
-  use mod0
+  use mod0_gmove_test_out
 
   call init_a
   call init_x
@@ -292,7 +292,7 @@ subroutine gmove_gs_le
 
 integer :: result = 0
 
-  use mod0
+  use mod0_gmove_test_out
 
   call init_a
   call init_x
@@ -340,7 +340,7 @@ end subroutine gmove_gs_le
 !--------------------------------------------------------
 subroutine gmove_ge_le
 
-  use mod0
+  use mod0_gmove_test_out
 
   call init_a
   call init_x
@@ -380,7 +380,7 @@ subroutine gmove_gs_s
 
 integer :: result = 0
 
-  use mod0
+  use mod0_gmove_test_out
 
   call init_a
 
@@ -429,7 +429,7 @@ end subroutine gmove_gs_s
 !--------------------------------------------------------
 subroutine gmove_ge_s
 
-  use mod0
+  use mod0_gmove_test_out
 
   call init_a
 

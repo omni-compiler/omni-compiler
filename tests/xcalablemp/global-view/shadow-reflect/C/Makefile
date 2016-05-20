@@ -4,16 +4,16 @@ TESTS = $(wildcard *.c)
 EXES  = $(TESTS:.c=.x)
 OBJS  = $(TESTS:.c=.o)
 
-.PHONY: clean all default run
+.PHONY: clean all run
 
-all default: $(EXES)
+all: $(EXES)
 
-.SUFFIXES: .x
+.SUFFIXES: .x .c
 
 .c.x:
 	$(XCC) -o $@ $<
 
-run: shadow_reflect.x
+run:
 	$(XRUN) -n 4 ./shadow_reflect.x
 	$(XRUN) -n 8 ./ordinal_reflect.x
 	$(XRUN) -n 4 ./full2.x

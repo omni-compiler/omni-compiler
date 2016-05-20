@@ -1,4 +1,4 @@
-module mod0
+module mod0_gmove_inout_3
 
   integer, parameter :: N = 4
 
@@ -21,13 +21,13 @@ module mod0
 !$xmp align b(i,j,k) with t2(i,j,k)
 !$xmp shadow b(0:1,0,0)
 
-end module mod0
+end module mod0_gmove_inout_3
 
 
 !--------------------------------------------------------
 program test
 
-  use mod0
+  use mod0_gmove_inout_3
 
 #ifdef _MPI3
   call gmove_in
@@ -50,7 +50,7 @@ subroutine gmove_in
 
 integer :: result = 0
 
-  use mod0
+  use mod0_gmove_inout_3
 
 !$xmp loop (i,j,k) on t1(i,j,k)
   do k = 1, N
@@ -110,7 +110,7 @@ subroutine gmove_in_async
 
 integer :: result = 0
 
-  use mod0
+  use mod0_gmove_inout_3
 
 !$xmp loop (i,j,k) on t1(i,j,k)
   do k = 1, N
@@ -172,7 +172,7 @@ subroutine gmove_out
 
 integer :: result = 0
 
-  use mod0
+  use mod0_gmove_inout_3
 
 !$xmp loop (i,j,k) on t1(i,j,k)
   do k = 1, N
@@ -232,7 +232,7 @@ subroutine gmove_out_async
 
 integer :: result = 0
 
-  use mod0
+  use mod0_gmove_inout_3
 
 !$xmp loop (i,j,k) on t1(i,j,k)
   do k = 1, N

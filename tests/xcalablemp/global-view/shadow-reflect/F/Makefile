@@ -4,9 +4,9 @@ TESTS = $(wildcard *.f90)
 EXES  = $(TESTS:.f90=.x)
 OBJS  = $(TESTS:.f90=.o)
 
-.PHONY: clean all default run
+.PHONY: clean all run
 
-all default: $(EXES)
+all: $(EXES)
 
 .SUFFIXES: .x .f90
 
