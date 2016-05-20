@@ -1,11 +1,11 @@
-  module decl
+  module declmod
     !$xmp nodes p(8)
     !$xmp nodes q1(3)=p(1:3)
     !$xmp nodes q2(4)=p(4:7)
-  end module decl
+  end module declmod
 
   subroutine sub1(nerr)
-    use decl
+    use declmod
     integer,allocatable:: ad1(:,:)[:]
     !$xmp coarray on q1 :: ad1
                                !! no meaning: q1 matches the context
@@ -31,7 +31,7 @@
   end subroutine sub1
 
   subroutine sub2(nerr)
-    use decl
+    use declmod
     integer,allocatable:: ad2(:,:)[:]
     !$xmp coarray on q2 :: ad2
                                !! no meaning: q2 matches the context
@@ -62,7 +62,7 @@
 
 
   program main
-    use decl
+    use declmod
     real as(10,10)[*]
 
     nerr=0

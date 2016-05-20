@@ -46,15 +46,14 @@ int _XMPF_num_images_initial()
 
 /* entry
  */
-void xmpf_get_comm_current_(int *comm)
+void xmpf_get_comm_current_(MPI_Fint *fcomm)
 {
-  *comm = _XMPF_get_comm_current();
+  *fcomm = MPI_Comm_c2f(_XMPF_get_comm_current());
 }
 
-void xmpf_consume_comm_current_(int *comm)
+void xmpf_consume_comm_current_(MPI_Fint *fcomm)
 {
-  *comm = _XMPF_get_comm_current();
-  _XMPF_coarray_clean_image_nodes();
+  *fcomm = MPI_Comm_c2f(_XMPF_consume_comm_current());
 }
 
 BOOL _XMPF_is_subset_exec()
@@ -73,12 +72,13 @@ BOOL _XMPF_is_subset_exec()
 MPI_Comm _XMPF_get_comm_current()
 {
   _XMP_nodes_t *imageNodes = _XMPF_coarray_get_image_nodes();
-
-  if (imageNodes != NULL) {
+  if (imageNodes != NULL)
     return *(MPI_Comm*)(imageNodes->comm);
-  }
 
-  return *(MPI_Comm*)(_XMP_get_execution_nodes()->comm);
+  MPI_Comm *commp = (MPI_Comm*)(_XMP_get_execution_nodes()->comm);
+  if (commp != NULL)
+    return *commp;
+  return MPI_COMM_WORLD;
 }
 
 MPI_Comm _XMPF_consume_comm_current()
@@ -87,7 +87,10 @@ MPI_Comm _XMPF_consume_comm_current()
   if (imageNodes != NULL)
     return *(MPI_Comm*)(imageNodes->comm);
 
-  return *(MPI_Comm*)(_XMP_get_execution_nodes()->comm);
+  MPI_Comm *commp = (MPI_Comm*)(_XMP_get_execution_nodes()->comm);
+  if (commp != NULL)
+    return *commp;
+  return MPI_COMM_WORLD;
 }
 
 int _XMPF_num_images_current()
@@ -307,10 +310,9 @@ void xmpf_sync_all_(void)
   if (_XMPF_is_subset_exec()) {
     _XMPF_coarrayDebugPrint("SYNCALL, SUBSET(%d nodes) starts\n",
                             _XMPF_num_images_current());
-    stat = _sync_all_withComm(_XMPF_get_comm_current());
+    stat = _sync_all_withComm(_XMPF_consume_comm_current());
     _XMPF_coarrayDebugPrint("SYNCALL, SUBSET(%d nodes) done (stat=%d)\n",
                             _XMPF_num_images_current(), stat);
-    _XMPF_coarray_clean_image_nodes();
     return;
   }
 
@@ -328,10 +330,9 @@ void xmpf_sync_all_auto_(void)
   if (_XMPF_is_subset_exec()) {
     _XMPF_coarrayDebugPrint("SYNCALL AUTO, SUBSET(%d nodes) starts\n",
                             _XMPF_num_images_current());
-    stat = _sync_all_withComm(_XMPF_get_comm_current());
+    stat = _sync_all_withComm(_XMPF_consume_comm_current());
     _XMPF_coarrayDebugPrint("SYNCALL AUTO, SUBSET(%d nodes) done (stat=%d)\n",
                             _XMPF_num_images_current(), stat);
-    _XMPF_coarray_clean_image_nodes();
     return;
   } 
 
@@ -355,9 +356,9 @@ static int _sync_all_core()
 
 /* entry for pre- and post-syncall of mpi_allreduce and mpi_bcast
  */
-void xmpf_sync_all_withcomm_(int *commp)
+void xmpf_sync_all_withcomm_(MPI_Fint *fcomm)
 {
-  MPI_Comm comm = (MPI_Comm)(*commp);
+  MPI_Comm comm = MPI_Comm_f2c(*fcomm);
   (void)_sync_all_withComm(comm);
 }
 

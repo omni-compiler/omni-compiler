@@ -8,14 +8,21 @@
     me = this_image()
 
     do i=1,20
+       sync all
        allocate(a(1000,569)[*],b(1000,800)[*])
+       sync all
        deallocate(b)
+       sync all
        n1=mod(i,5)+1
        n2=n1+mod(i,4)
+       sync all
 !$xmp task on p(n1:n2)
+       sync all
        allocate(c(1300,1000)[*],d(1001,1001)[*])
        deallocate(c,d)
+       sync all
 !$xmp end task
+       sync all
        deallocate(a)
     end do
 

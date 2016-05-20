@@ -1,8 +1,8 @@
 #!/bin/sh
 ##PJM --rsc-list "rscgrp=small"
-#PJM --rsc-list "node=3"
+#PJM --rsc-list "node=8"
 #PJM --rsc-list "elapse=00:02:00"
-#PJM --mpi "shape=3"
+#PJM --mpi "shape=8"
 #PJM --stg-transfiles all
 #PJM --mpi "use-rankdir"
 #PJM --stgin "rank=* ./* %r:./"
@@ -18,7 +18,7 @@ echo "[MIX]"
 
 for f in @OUT@; do
     echo $f
-    mpiexec -n 3 ./$f
+    mpiexec -n 8 ./$f
 done
 
 

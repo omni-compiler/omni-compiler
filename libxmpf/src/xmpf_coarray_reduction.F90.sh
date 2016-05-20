@@ -23,18 +23,10 @@ subroutine xmpf_co_broadcast%dim%d_%tk%(source, source_image)
 
   call xmpf_consume_comm_current(comm);
 
-#ifdef _XMP_GASNET
-!! synchronization for ibv-conduit
-  call xmpf_sync_all_withcomm(comm)
-#endif
   call mpi_bcast(source, %size%, %mpitype%, source_image - 1, comm, ierr)
   if (ierr /= 0) then
      call xmpf_coarray_fatal("CO_BROADCAST failed in mpi_bcast")
   end if
-#ifdef _XMP_GASNET
-!! synchronization for ibv-conduit
-  call xmpf_sync_all_withcomm(comm)
-#endif
 
   return
 end subroutine'
@@ -48,18 +40,10 @@ subroutine xmpf_co_%op%%dim%d_%tk%(source, result)
 
   call xmpf_consume_comm_current(comm);
 
-#ifdef _XMP_GASNET
-!! synchronization for ibv-conduit
-  call xmpf_sync_all_withcomm(comm)
-#endif
   call mpi_allreduce(source, result, %size%, %mpitype%, mpi_%op%, comm, ierr)
   if (ierr /= 0) then
      call xmpf_coarray_fatal("CO_%OP% failed in mpi_allreduce")
   end if
-#ifdef _XMP_GASNET
-!! synchronization for ibv-conduit
-  call xmpf_sync_all_withcomm(comm)
-#endif
 
   return
 end subroutine'

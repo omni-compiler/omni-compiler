@@ -1,11 +1,11 @@
-  module mmm
+  module mod11
 !!     include "xmp_coarray.h"
     integer :: pot(0:99)[2,*]
     integer me
-  end module mmm
+  end module mod11
 
   program mod1
-    use mmm
+    use mod11
     integer :: pom(0:99)[*]
 
 !-------------------------------- init
