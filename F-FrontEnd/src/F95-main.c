@@ -226,6 +226,8 @@ char *argv[];
             OMP_flag = TRUE;   /* enable openmp */
         } else if (strcmp(argv[0],"-fxmp") == 0){
 	    XMP_flag = TRUE;   /* enable XcalableMP */
+        } else if (strcmp(argv[0],"-fopenacc") == 0){
+	    ACC_flag = TRUE;   /* enable OpenACC */
         } else if (strcmp(argv[0],"-Kscope-omp") == 0){
 	    cond_compile_enabled = TRUE;
         } else if (strcmp(argv[0],"-fleave-comment") == 0){

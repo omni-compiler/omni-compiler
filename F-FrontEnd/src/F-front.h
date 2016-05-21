@@ -55,6 +55,7 @@ extern int Addr2Uint(void *x);
 
 #include "C-OMP.h"  /* OpenMP */
 #include "C-XMP.h"  /* XcalableMP */
+#include "C-ACC.h"  /* OpenACC */
 
 extern int lineno;
 extern int need_keyword;
@@ -156,6 +157,7 @@ enum control_type {
     CTL_STRUCT,
     CTL_OMP,
     CTL_XMP,
+    CTL_ACC,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -170,6 +172,7 @@ enum control_type {
     "CTL_STRUCT",\
     "CTL_OMP",\
     "CTL_XMP",\
+    "CTL_ACC",\
 }
 
 /* control */
@@ -210,6 +213,10 @@ typedef struct control
 #define CTL_XMP_ARG(l)	((l)->v2)
 #define CTL_XMP_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
 #define CTL_XMP_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
+
+#define CTL_ACC_ARG(l)	((l)->v2)
+#define CTL_ACC_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
+#define CTL_ACC_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
 
 /* control stack and it pointer */
 #define MAX_CTL 50
@@ -353,6 +360,7 @@ extern expv expv_float_0;
 
 extern int OMP_flag;
 extern int XMP_flag;
+extern int ACC_flag;
 extern int cond_compile_enabled;
 extern int leave_comment_flag;
 
@@ -780,6 +788,11 @@ int OMP_depend_op(expr v);
 
 extern void compile_XMP_directive(expr v);
 int XMP_reduction_op(expr v);
+
+extern void compile_ACC_directive(expr v);
+int ACC_reduction_op(expr v);
+int ACC_num_attr(expr v);
+void ACC_check_num_attr(expr v, enum ACC_pragma attr);
 
 #include "xcodeml-module.h"
 #include "F-module-procedure.h"

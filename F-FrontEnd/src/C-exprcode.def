@@ -246,6 +246,9 @@ L    OMP_PRAGMA
 # XMP
 L    XMP_PRAGMA
 
+# ACC
+L    ACC_PRAGMA
+
 L    TEXT
 
 # EOF
