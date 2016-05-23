@@ -14,7 +14,8 @@ README
 # Quick Reference for XMP
 ## How to install
  $ ./configure --prefix=(INSTALL PATH)
- $ make; make install
+ $ make
+ $ make install
  $ export PATH=(INSTALL PATH)/bin:$PATH
 
 ## Compile
@@ -28,7 +29,8 @@ $ mpirun -np 4 ./test
 # Quick	Reference for OpenACC
 ## How to install
  $ ./configure --prefix=(INSTALL PATH) --enable-openacc --with-cuda=(CUDA PATH) 
- $ make; make install
+ $ make
+ $ make install
  $ export PATH=(INSTALL PATH)/bin:$PATH
 
 ## Compile
