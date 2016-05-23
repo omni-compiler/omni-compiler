@@ -122,7 +122,6 @@ run-large-tests:
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
-
 PACKAGE_NAME = omnicompiler-$(VERSION)
 WORKDIR = /tmp/$(PACKAGE_NAME)
 release:
@@ -136,13 +135,6 @@ release:
 	cd /tmp; tar cjf $(PACKAGE_NAME).tar.bz2 $(PACKAGE_NAME); \
 	echo "Created $(PACKAGE_NAME).tar.bz2"; \
 	rm -rf $(WORKDIR)
-
-slurm:
-	bash ./tests/xcalablemp/scripts/create_sorted_list.sh $(BASE_TESTDIR) $(TESTDIRS) > $(SORTED_LIST); \
-	bash ./tests/xcalablemp/scripts/make_slurm.sh $(XMP_PATH) $(MPI_PATH) $(SORTED_LIST) $(BASE_TESTDIR)
-
-slurm-check:
-	@bash ./tests/xcalablemp/scripts/check_error_code.sh $(BASE_TESTDIR) $(TESTDIRS)
 
 remote-tests:
 	@bash ./tests/xcalablemp/scripts/remote-tests.sh $(USER)
