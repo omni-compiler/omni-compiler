@@ -12917,11 +12917,19 @@ ac_config_files="$ac_config_files F-FrontEnd/gnu_module/Makefile"
 
 ac_config_files="$ac_config_files F-BackEnd/Makefile"
 
+ac_config_files="$ac_config_files F-BackEnd/bin/F_Back"
+
+ac_config_files="$ac_config_files F-BackEnd/bin/F_Decomp"
+
+ac_config_files="$ac_config_files F-BackEnd/bin/F_Trans"
+
 ac_config_files="$ac_config_files XcodeML-Exc-Tools/Makefile"
 
 ac_config_files="$ac_config_files XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java"
 
 ac_config_files="$ac_config_files Driver/src/Makefile"
+
+ac_config_files="$ac_config_files Driver/etc/setup.conf"
 
 ac_config_files="$ac_config_files Driver/etc/ompcc.conf"
 
@@ -13699,9 +13707,13 @@ do
     "F-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/Makefile" ;;
     "F-FrontEnd/gnu_module/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/gnu_module/Makefile" ;;
     "F-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES F-BackEnd/Makefile" ;;
+    "F-BackEnd/bin/F_Back") CONFIG_FILES="$CONFIG_FILES F-BackEnd/bin/F_Back" ;;
+    "F-BackEnd/bin/F_Decomp") CONFIG_FILES="$CONFIG_FILES F-BackEnd/bin/F_Decomp" ;;
+    "F-BackEnd/bin/F_Trans") CONFIG_FILES="$CONFIG_FILES F-BackEnd/bin/F_Trans" ;;
     "XcodeML-Exc-Tools/Makefile") CONFIG_FILES="$CONFIG_FILES XcodeML-Exc-Tools/Makefile" ;;
     "XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java") CONFIG_FILES="$CONFIG_FILES XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java" ;;
     "Driver/src/Makefile") CONFIG_FILES="$CONFIG_FILES Driver/src/Makefile" ;;
+    "Driver/etc/setup.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/setup.conf" ;;
     "Driver/etc/ompcc.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/ompcc.conf" ;;
     "Driver/etc/ompf90.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/ompf90.conf" ;;
     "Driver/etc/xmpcc.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/xmpcc.conf" ;;

@@ -4,7 +4,7 @@ abspath() {
     __cwd=`pwd`
     cd $1 > /dev/null 2>&1
     if test $? -eq 0; then
-	/bin/pwd
+        /bin/pwd
     fi
     cd ${__cwd}
     unset __cwd
@@ -38,13 +38,13 @@ for f in $testdata/*.f $testdata/*.f90; do
     binOut=${b}.o
     fOpts=''
     if test -f ${f}.options; then
-	fOpts=`cat ${f}.options`
+        fOpts=`cat ${f}.options`
     fi
     ${frontend} ${F_FRONT_TEST_OPTS} ${fOpts} -I ${testdata} ${f} \
-	-o ${xmlOut} > ${errOut} 2>&1
+        -o ${xmlOut} > ${errOut} 2>&1
     if test $? -eq 0; then
         ${backend} ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1
-	if test $? -eq 0; then
+        if test $? -eq 0; then
             ${nativecomp} -c ${decompiledSrc} -o ${binOut} >> ${errOut} 2>&1
             if test $? -eq 0; then
                 echo ok: ${b}
