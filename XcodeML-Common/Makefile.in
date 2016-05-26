@@ -3,6 +3,7 @@
 JAVAC     = @JAVAC@
 JAVAC_OPT = @JAVAC_OPT@
 JAR       = @JAR@
+JAR_OPT   = @JAR_OPT@
 JAVADIR   = @OMNI_HOME@/share/xcalablemp
 MKDIR_P   = @MKDIR_P@
 INSTALL   = @INSTALL@
@@ -13,7 +14,7 @@ all: $(OM_COMMON)
 $(OM_COMMON): $(SOURCE)
 	$(JAVAC) $(JAVAC_OPT) src/xcodeml/*.java src/xcodeml/*/*.java -classpath ./src
 	$(MKDIR_P) build
-	cd src;	$(JAR) cf ../$@ ./xcodeml/*.class ./xcodeml/*/*.class
+	cd src;	$(JAR) $(JAR_OPT) cf ../$@ ./xcodeml/*.class ./xcodeml/*/*.class
 
 clean:
 	rm -f $(OM_COMMON) src/xcodeml/*.class src/xcodeml/*/*.class
