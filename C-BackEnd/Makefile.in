@@ -1,6 +1,7 @@
 .PHONY: all clean install
 
 JAVAC     = @JAVAC@
+JAVAC_OPT = @JAVAC_OPT@
 JAR       = @JAR@
 JAVADIR   = @OMNI_HOME@/share/xcalablemp
 MKDIR_P   = @MKDIR_P@
@@ -10,7 +11,7 @@ SOURCE    = $(wildcard src/xcodeml/c/*/*.java)
 
 all: $(OM_C_BACK)
 $(OM_C_BACK): $(SOURCE) ../XcodeML-Common/build/om-common.jar
-	$(JAVAC) -encoding utf8 src/xcodeml/c/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:./src -Xlint:deprecation
+	$(JAVAC) $(JAVAC_OPT) src/xcodeml/c/*/*.java -classpath ../XcodeML-Common/build/om-common.jar:./src
 	$(MKDIR_P) build
 	cd src; $(JAR) cf ../$@ xcodeml/c/*/*.class
 

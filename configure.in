@@ -1526,6 +1526,14 @@ AC_SUBST(JAR)
 JAVA_OPT="-Xmx1600m -Xms800m"
 AC_SUBST(JAVA_OPT)
 
+JAVAC_OPT="-encoding utf8 -Xlint:deprecation "
+# For only the K computer because Java installed on frontend machines of the K computer
+# set a small Heap Memory
+if test "$target" = "Kcomputer-linux-gnu"; then
+  JAVAC_OPT+="-J-Xmx200m"
+fi
+AC_SUBST(JAVAC_OPT)
+
 #--------------------------------------------------------------------
 #    The code below deals with several issues related to gettimeofday:
 #    1. Some systems don't provide a gettimeofday function at all
