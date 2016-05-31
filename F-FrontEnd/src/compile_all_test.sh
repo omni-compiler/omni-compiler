@@ -11,8 +11,8 @@ abspath() {
 }
 
 work=`abspath ../..`
-#OMNI_HOME=${work}
-#export OMNI_HOME
+OMNI_HOME=${work}
+export OMNI_HOME
 frontend=${work}/F-FrontEnd/src/F_Front
 backend=${work}/F-BackEnd/bin/F_Back
 nativecomp=gfortran

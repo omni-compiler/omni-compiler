@@ -54,7 +54,7 @@ genClassPath() {
         done
         unset __i __jarDir
         if test -z "${__cp}"; then
-            __cp=`find "${OMNI_HOME}" -type d -name 'classes' | \
+            __cp=`find "${OMNI_HOME}" -type f -name '*.jar' | \
                 awk '{ printf ":%s", $NF }'`
             if test -z "${__cp}"; then
                 error "can't find any classes."
@@ -234,7 +234,7 @@ omniSetup() {
         _omtranslate="sh ${OMNI_SOURCE_DIR}/Driver/bin/omtranslate"
         _C_Trans="sh ${OMNI_SOURCE_DIR}/C-BackEnd/bin/C_Trans"
         _F_Trans="sh ${OMNI_SOURCE_DIR}/F-BackEnd/bin/F_Trans"
-        _C_Decomp="sh ${OMNI_SOURCE_DIR}/C-BackEnd/bin/C_Decomp"
+        _C_Decomp="sh -x ${OMNI_SOURCE_DIR}/C-BackEnd/bin/C_Decomp"
         _F_Decomp="sh ${OMNI_SOURCE_DIR}/F-BackEnd/bin/F_Decomp"
     else
         _C_Front="${OMNI_HOME}/bin/src/C_Front"
