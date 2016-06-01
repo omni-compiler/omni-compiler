@@ -12939,6 +12939,8 @@ ac_config_files="$ac_config_files Driver/etc/xmpcc.conf"
 
 ac_config_files="$ac_config_files Driver/etc/xmpf90.conf"
 
+ac_config_files="$ac_config_files Driver/bin/omtranslate"
+
 ac_config_files="$ac_config_files Driver/bin/ompcc"
 
 ac_config_files="$ac_config_files Driver/bin/ompf90"
@@ -13718,6 +13720,7 @@ do
     "Driver/etc/ompf90.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/ompf90.conf" ;;
     "Driver/etc/xmpcc.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/xmpcc.conf" ;;
     "Driver/etc/xmpf90.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/xmpf90.conf" ;;
+    "Driver/bin/omtranslate") CONFIG_FILES="$CONFIG_FILES Driver/bin/omtranslate" ;;
     "Driver/bin/ompcc") CONFIG_FILES="$CONFIG_FILES Driver/bin/ompcc" ;;
     "Driver/bin/ompf90") CONFIG_FILES="$CONFIG_FILES Driver/bin/ompf90" ;;
     "Driver/bin/xmpcc") CONFIG_FILES="$CONFIG_FILES Driver/bin/xmpcc" ;;
