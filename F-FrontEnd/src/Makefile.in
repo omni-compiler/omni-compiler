@@ -50,5 +50,5 @@ install: $(F_FRONT)
 	$(INSTALL) $(F_FRONT) $(BINDIR)
 
 clean:
-	rm -f *.o $(CREATE_FILES)
+	rm -f *.o $(CREATE_FILES) $(F_FRONT)
 
