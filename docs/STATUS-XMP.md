@@ -1,4 +1,4 @@
-Implementation Status version 1.0.0
+Implementation Status version 1.0.1
 ---------------------------------------
 # Global-View
 * Not support gmove in/out clause

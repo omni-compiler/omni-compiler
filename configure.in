@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([Omni Compiler], [1.0.0], [omni-compiler@googlegroups.com], [omni])
+AC_INIT([Omni Compiler], [1.0.1], [omni-compiler@googlegroups.com], [omni])
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
 AC_CANONICAL_TARGET
@@ -1520,11 +1520,20 @@ AC_SUBST(JAVA)
 AC_SUBST(JAVAC)
 AC_SUBST(JAR)
 
-# java option
-# Fix: #338
-#JAVA_OPT="-Xmx200m -Xms200m"
-JAVA_OPT="-Xmx1600m -Xms800m"
+JAVA_OPT=
+JAVAC_OPT="-encoding utf8 -Xlint:deprecation "
+JAR_OPT=
+# For only the K computer because Java installed on frontend machines of the K computer
+# set a small Heap Memory
+if test "$target" = "Kcomputer-linux-gnu"; then
+  JAVA_OPT="-Xmx200m -Xms200m" # Fix: #338
+  #JAVA_OPT="-Xmx1600m -Xms800m"
+  JAVAC_OPT+="-J-Xmx200m -J-Xms200m"
+  JAR_OPT="-J-Xmx200m -J-Xms200m"
+fi
 AC_SUBST(JAVA_OPT)
+AC_SUBST(JAVAC_OPT)
+AC_SUBST(JAR_OPT)
 
 #--------------------------------------------------------------------
 #    The code below deals with several issues related to gettimeofday:
