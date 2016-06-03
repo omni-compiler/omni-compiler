@@ -2140,7 +2140,7 @@ unset program_transform_name
 #--------------------------------------------------------------------
 # Set version file
 VERSIONTXT="./Driver/etc/version"
-if test -d .git; then
+if test -f .git; then
     which git 1>/dev/null 2>/dev/null
     if test $? -eq 0; then
         VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
