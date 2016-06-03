@@ -10,6 +10,7 @@ abspath() {
     unset __cwd
 }
 
+
 work=`abspath ../..`
 OMNI_HOME=${work}
 export OMNI_HOME
