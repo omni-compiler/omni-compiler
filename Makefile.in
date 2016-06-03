@@ -130,8 +130,7 @@ release:
 	fi; \
 	cp -a . $(WORKDIR); cd $(WORKDIR); \
 	rm -rf .git .gitignore; \
-	sh autogen.sh; ./configure; \
-	find . -name Makefile.in -exec touch \{\} \;
+	sh autogen.sh; ./configure; make clean; make clean-tests; \
 	cd /tmp; tar cjf $(PACKAGE_NAME).tar.bz2 $(PACKAGE_NAME); \
 	echo "/tmp/Created $(PACKAGE_NAME).tar.bz2"; \
 	rm -rf $(WORKDIR)
