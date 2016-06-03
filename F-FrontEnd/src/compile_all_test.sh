@@ -60,8 +60,7 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' | sort | x
     decompiledSrc=${b}.dec.f90
     binOut=${b}.o
     executableOut=${b}.bin
-    _expectedOut=`echo ${b} | sed -e 's/.f90$/.res/g' -e 's/.f$/.res/g'`
-    expectedOut=`find ${testdata} -type f -a -name ${_expectedOut}`
+    expectedOut=`echo ${f} | sed -e 's_/tp/_/result/_g' -e 's/.f90$/.res/g' -e 's/.f$/.res/g'`
     executeResult=${b}.res
     fOpts=''
     if test -f ${f}.options; then
@@ -78,33 +77,41 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' | sort | x
 
                 if test ! -z ${expectedOut} && test -e ${expectedOut}; then
 
-                    if test `nm ${binOut} | awk '{print $3}' | grep -c main 2>&1` -eq 1; then
-                        ${nativecomp} -o ${executableOut} ${binOut}
-                        ./${executableOut} > ${executeResult} 2> ${errOut}
+                    if test `nm ${binOut} | awk '{print $3}' | grep -c main 2>&1` -gt 0; then
+                        ${nativecomp} -o ${executableOut} ${binOut} 2>> ${errOut}
 
                         if test $? -eq 0; then
-                            diff -w -B -I '^[[:space:]]*#' -I '^[[:space:]]*//' ${executeResult} ${expectedOut} > /dev/null 2>&1
+                            ./${executableOut} > ${executeResult} 2>> ${errOut}
 
                             if test $? -eq 0; then
-                                echo "ok (with expected output): ${b}"
+                                diff -w -B -I '^[[:space:]]*#' -I '^[[:space:]]*//' ${executeResult} ${expectedOut} > /dev/null 2>&1
+
+                                if test $? -eq 0; then
+                                    echo "--- ok (with_expected_output): ${b}"
+                                else
+                                    echo --- failed unexpected_result: ${b} | tee -a errors.txt
+                                fi
                             else
-                                echo --- unexpected result: ${b} | tee -a errors.txt
+                                echo --- failed execution: ${b} | tee -a errors.txt
                             fi
                         else
-                            echo --- failed execution: ${b} | tee -a errors.txt
+                            echo "--- failed link: ${b}" | tee -a errors.txt
                         fi
+                    else
+                        echo "--- ok : ${b}"
+
                     fi
                 else
-                    echo ok: ${b}
+                    echo "--- ok : ${b}"
                 fi
             else
-                echo --- failed native: ${b} | tee -a errors.txt
+                echo "--- failed native: ${b}" | tee -a errors.txt
             fi
         else
-            echo --- failed backend: ${b} | tee -a errors.txt
+            echo "--- failed backend: ${b}" | tee -a errors.txt
         fi
     else
-        echo --- failed frontend: ${b} | tee -a errors.txt
+        echo "--- failed frontend: ${b}" | tee -a errors.txt
     fi
     if test ${verbose} -eq 1; then
         cat ${errOut}
