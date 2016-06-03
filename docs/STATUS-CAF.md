@@ -1,5 +1,5 @@
-                                                                    May 10, 2016
-                                                                    Ver 1.0
+                                                                    June 3, 2016
+                                                                    Ver 1.0.1
 
               Coarray Fortran features and the current restrictions
 
@@ -11,16 +11,18 @@
   defined in Fortran2015 standard were supported, which are CO_BROADCAST, 
   CO_SUM, CO_MAX and CO_MIN described in the technical specification (TS)[2].
 
-1.2  Interoperability with XcalableMP (XMP) global-view features (NEW)
-  Coarray features can be used inside XMP task block. As default, each coarray
-  image is mapped one-to-one to a node of the current executing task. I.e.,
-  num_images() returns the number of nodes of the current executing task and
-  this_image() returns each value of 1 to num_images(). To change the numbering
-  of the image index with the one corresponding to the other nodes, the COARRAY
-  directive can be used with the declaration of the coarray. To change the 
-  context of the executing nodes locally, the IMAGE directive can be used with
-  the SYNC ALL and SYNC IMAGES statements and with the calls of CO_SUM, CO_MAX, 
-  CO_MIN and CO_BROADCAST subroutines. See the language spacifications [3].
+1.2  Interoperability with the global-view features (NEW since V1.0)
+  Coarray features can be used inside the TASK directive blocks. As default,
+  each coarray image is mapped one-to-one to a node of the current executing 
+  task. I.e., num_images() returns the number of nodes of the current executing 
+  task and this_image() returns each image index in the task.
+     There are two directives to change the default rule above. A COARRAY 
+  directive corresponding to a coarray declaration changes the image index set 
+  of the specified coarray with the one of the specified nodes. An IMAGE 
+  directive corresponding to one of a SYNC ALL statement, a SYNC IMAGES 
+  statement, a call statement calling CO_SUM, CO_MAX, CO_MIN or CO_BROADCAST 
+  changes the current image index set with the one of the specified nodes.
+  See the language spacifications [3].
 
 2. Declaration
   Either static or allocatable coarray data objects can be used in the program. 
