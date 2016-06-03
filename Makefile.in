@@ -133,7 +133,7 @@ release:
 	sh autogen.sh; ./configure; \
 	find . -name Makefile.in -exec touch \{\} \;
 	cd /tmp; tar cjf $(PACKAGE_NAME).tar.bz2 $(PACKAGE_NAME); \
-	echo "Created $(PACKAGE_NAME).tar.bz2"; \
+	echo "/tmp/Created $(PACKAGE_NAME).tar.bz2"; \
 	rm -rf $(WORKDIR)
 
 remote-tests:
