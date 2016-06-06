@@ -33,7 +33,7 @@ c-parser.output: c-parser.h
 c-parser.h: c-parser.y c-parser.c
 	/bin/bash ../.././buildutils/ylwrap c-parser.y y.tab.c c-parser.c y.tab.h \
 	`echo c-parser.c | sed -e s/cc$$/hh/ -e s/cpp$$/hpp/ -e s/cxx$$/hxx/ -e s/c++$$/h++/ -e s/c$$/h/` \
-	y.output c-parser.output -- byacc -v -d
+	y.output c-parser.output -- $(YACC) -v -d
 
 .c.o: 
 	$(CC) $(CFLAGS) $< -c
