@@ -32,6 +32,10 @@ abspath() {
 work=`abspath ../..`
 OMNI_HOME=${work}
 export OMNI_HOME
+if test -z "${OMNI_JAVA}"; then
+	OMNI_JAVA=java
+fi
+export OMNI_JAVA
 frontend=${work}/F-FrontEnd/src/F_Front
 backend=${work}/F-BackEnd/bin/F_Back
 nativecomp=gfortran
