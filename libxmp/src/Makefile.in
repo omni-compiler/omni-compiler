@@ -86,7 +86,7 @@ ifeq ($(IS_TCA), $(TRUE))
 #  xmp_coarray_gasnet_utils.o xmp_lock_unlock_gasnet.o xmp_lock_unlock.o
 	OBJECTS += xmp_onesided.o xmp_onesided_tca.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
 		   xmp_coarray_local_utils.o xmp_post_wait.o xmp_post_wait_tca.o \
-		   xmp_coarray_tca.o xmp_reflect_tca.o
+		   xmp_coarray_tca.o xmp_reflect_tca.o xmp_tca_runtime.o
 	CFLAGS  += -D_XMP_TCA
 endif
 

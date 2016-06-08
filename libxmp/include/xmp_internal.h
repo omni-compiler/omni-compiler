@@ -537,6 +537,8 @@ void _XMP_tca_initialize(int argc, char **argv);
 void _XMP_tca_finalize();
 void _XMP_tca_lock();
 void _XMP_tca_unlock();
+// xmp_tca_runtime.c
+void _XMP_init_tca();
 #endif
 
 #ifdef _XMP_MPI3_ONESIDED
@@ -623,24 +625,14 @@ struct _XMPTIMING
 #endif
 
 #ifdef _XMP_TCA
-#define TCA_CHECK(tca_call) do { \
-  int status = tca_call;         \
-  if(status != TCA_SUCCESS) {    \
-  if(status == TCA_ERROR_INVALID_VALUE) {                 \
-  fprintf(stderr,"(TCA) error TCA API, INVALID_VALUE (%s:%d)\n", __FILE__, __LINE__); \
-  exit(-1);                                               \
-  }else if(status == TCA_ERROR_OUT_OF_MEMORY){            \
-  fprintf(stderr,"(TCA) error TCA API, OUT_OF_MEMORY (%s:%d)\n", __FILE__,__LINE__); \
-  exit(-1);                                               \
-  }else if(status == TCA_ERROR_NOT_SUPPORTED){            \
-  fprintf(stderr,"(TCA) error TCA API, NOT_SUPPORTED (%s:%d)\n", __FILE__,__LINE__); \
-  exit(-1);                                               \
-  }else{                                                  \
-  fprintf(stderr,"(TCA) error TCA API, UNKWON (%s:%d)\n", __FILE__,__LINE__);	\
-  exit(-1); \
-  }         \
-  }         \
-  }while (0)
+#define TCA_CHECK(tca_call) do {					\
+    tcaresult result = tca_call;					\
+    if (result != TCA_SUCCESS) {                                        \
+      fprintf(stderr, "TCA error in file '%s' in line %i : %s.\n",	\
+	      __FILE__, __LINE__, tcaGetErrorString(result));		\
+      exit(EXIT_FAILURE);						\
+    }									\
+  } while (0)
 #endif
 
 #if /*defined(_XMP_XACC) && */defined(DEBUG)

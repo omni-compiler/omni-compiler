@@ -18,7 +18,7 @@ void _XMP_create_TCA_handle(void *acc_addr, _XMP_array_t *adesc)
 
   size_t size = (size_t)(adesc->type_size * adesc->total_elmts);
 
-#if 0
+#if 1
   printf("[%d] tcaCreateHandle size = %d addr=%p\n", _XMP_world_rank, size, acc_addr);
 #endif
   tcaHandle tmp_handle;
@@ -275,29 +275,6 @@ void _XMP_create_TCA_desc(_XMP_array_t *adesc)
   char   processor_name[MPI_MAX_PROCESSOR_NAME];
   MPI_Get_processor_name(processor_name,&namelen);
 #endif
-}
-
-void _XMP_init_tca()
-{
-  if(_XMP_world_size > 16)
-    _XMP_fatal("TCA reflect has been not implemented in 16 more than nodes.");
-  tcaInit();
-  tcaDMADescInt_Init(); // Initialize Descriptor (Internal Memory) Mode
-}
-
-void _XMP_alloc_tca(_XMP_array_t *adesc)
-{
-  adesc->set_handle = _XMP_N_INT_FALSE;
-  int array_dim = adesc->dim;
-  for(int i=0;i<array_dim;i++){
-    _XMP_array_info_t *ai = &(adesc->info[i]);
-    if(ai->shadow_type == _XMP_N_SHADOW_NONE)
-      continue;
-    ai->reflect_acc_sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
-  }
-
-  adesc->wait_slot = 0;  // No change ?
-  adesc->wait_tag  = 0x100;  // No change ?
 }
 
 static void _XMP_refect_wait_tca(_XMP_array_t *adesc)

@@ -104,7 +104,7 @@ static int allocDevice(int dev_num)
   if(cudaMalloc((void**)&dummy, sizeof(int)) != cudaSuccess){
 	return 1;
   }
-  _ACC_gpu_free(dummy);
+  cudaFree(dummy);
   return 0;
 }
 
