@@ -45,6 +45,11 @@ public class XmOption
     /** backend compiler vendor */
     private static int _compilerVendor = COMP_VENDOR_GNU;
     
+    /** if supressing generation of USE statement for coarray runtime
+     *  (TEMPORARY)
+     */
+    private static boolean _coarrayNoUseStatement = false;  
+
     private XmOption()
     {
     }
@@ -272,4 +277,18 @@ public class XmOption
     {
         _isAtomicIO = atomicIO;
     }
+
+    /**
+     * Set/get suboption -fcoarray-no-use-statement (boolean)
+     */
+    public static void setCoarrayNoUseStatement(boolean coarrayNoUseStatement)
+    {
+        _coarrayNoUseStatement = coarrayNoUseStatement;
+    }
+
+    public static boolean coarrayNoUseStatement()
+    {
+        return _coarrayNoUseStatement;
+    }
+
 }

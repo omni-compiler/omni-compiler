@@ -58,7 +58,7 @@ public class omompx
   private static void usage()
   {
     final String[] lines = {
-      "arguments: [-xc|-xf] [-l] [-fopenmp] [-f[{no|auto}]coarray] [-dxcode] [-ddecomp] [-dump]",
+      "arguments: [-xc|-xf] [-l] [-fopenmp] [-f[no]coarray] [-dxcode] [-ddecomp] [-dump]",
       "           <input XcodeML file>",
       "           [-o <output reconstructed XcodeML file>]",
       "",
@@ -66,9 +66,11 @@ public class omompx
       "  -xf          process XcodeML/Fortran document.",
       "  -l           suppress line directive in decompiled code.",
       "  -fopenmp     enable OpenMP translation.",
-      "  -fcoarry[=suboption]  enable coarray translation optionally with a suboption.",
+      "  -fcoarry[=suboption]",
+      "               enable coarray translation optionally with a suboption.",
       "  -fnocoarry   pass without coarray translation (default for C).",
-      "  -fautocoarry enable coarray translation only if any coarray features are used (default, only for Fortran).",
+      "  -fcoarry-no-use-statement",
+      "               supress generation of the USE statement for coarray runtime libraries.",
       "  -fatomicio   enable transforming Fortran IO statements to atomic operations.",
       "  -w N         set max columns to N for Fortran source.",
       "  -gnu         decompile for GNU Fortran (default).",
@@ -106,8 +108,6 @@ public class omompx
     boolean openMP = false;
     boolean openACC = false;
     boolean coarray = false;
-    String coarray_suboption = "";
-    boolean autocoarray = true;
     boolean xcalableMP = false;
     boolean xcalableMPthreads = false;
     boolean xcalableMPGPU = false;
@@ -121,12 +121,12 @@ public class omompx
     boolean doScalasca = false;
     boolean doTlog = false;
     int maxColumns = 0;
+    String coarray_suboption = "";            // HIDDEN
+    boolean coarray_noUseStmt = false;     // TEMPORARY
         
     // environment variable analysis
     Boolean xmpf_onlyCafMode = "1".equals(System.getenv("XMP_ONLYCAF"));
     Boolean xmpf_skipCafMode = "1".equals(System.getenv("XMP_SKIPCAF"));
-    //Boolean xmpf_cascadeMode = "1".equals(System.getenv("XMP_CASCADE"));
-    //Boolean xmpf_containsCoarray = false;
 
     for(int i = 0; i < args.length; ++i) {
       String arg = args[i];
@@ -144,14 +144,12 @@ public class omompx
         openMP = true;
       } else if(arg.equals("-fcoarray")) {
         coarray = true;
-        autocoarray = false;
       } else if(arg.equals("-fnocoarray")) {
         coarray = false;
-        autocoarray = false;
-      } else if(arg.equals("-fautocoarray")) {
-        autocoarray = true;
-      } else if(arg.startsWith("-fcoarray=")) {
+      } else if(arg.startsWith("-fcoarray=")) {                  // HIDDEN
         coarray_suboption += arg.substring(arg.indexOf("=")+1);
+      } else if(arg.equals("-fcoarray-no-use-statement")) {       // TEMPORARY
+        coarray_noUseStmt = true;
       } else if(arg.equals("-facc")) {
         openACC = true; 
       } else if(arg.equals("-fxmp")) {
@@ -276,6 +274,7 @@ public class omompx
     XmOption.setIsXcalableMPthreads(xcalableMPthreads);
     XmOption.setIsXcalableMPGPU(xcalableMPGPU);
     XmOption.setTlogMPIisEnable(doTlog);
+    XmOption.setCoarrayNoUseStatement(coarray_noUseStmt);   // TEMPORARY
 
     XobjectFile xobjFile;
     String srcPath = inXmlFile;
