@@ -81,7 +81,7 @@ echo ""
 echo "-----------------------------------"
 echo "  Test omni compiler with GASNet  "
 echo "-----------------------------------"
-CMD="export PATH=${MPI3_PATH}/bin:${REMOTE_GASNET_DIR}/bin:$PATH && \
+CMD="export PATH=${MPI3_PATH}/bin:${XMP_GASNET_PATH}/bin:$PATH && \
      cd ${REMOTE_GASNET_DIR}/${OMNI} && \
      sh autogen.sh && \
      ./configure --prefix=${XMP_GASNET_PATH} --with-gasnet=${GASNET_PATH} && \
@@ -93,7 +93,7 @@ echo ""
 echo "-----------------------------------"
 echo "   Test omni compiler with MPI3   "
 echo "-----------------------------------"
-CMD="export PATH=${MPI3_PATH}/bin:${REMOTE_MPI_DIR}/bin:$PATH && \
+CMD="export PATH=${MPI3_PATH}/bin:${XMP_MPI3_PATH}/bin:$PATH && \
      cd ${REMOTE_MPI3_DIR}/${OMNI} && \
      sh autogen.sh && \
      ./configure --prefix=${XMP_MPI3_PATH} && \
