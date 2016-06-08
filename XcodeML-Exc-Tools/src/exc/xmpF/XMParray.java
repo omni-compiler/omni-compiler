@@ -870,7 +870,8 @@ public class XMParray {
       
     // set
     f = env.declInternIdent(XMP.array_set_local_array_f,Xtype.FsubroutineType);
-    st.add(f.callSubroutine(Xcons.List(descId.Ref(), localId.Ref())));
+    Xobject isCoarray = (sclass == StorageClass.FSAVE) ? Xcons.IntConstant(1) : Xcons.IntConstant(0);
+    st.add(f.callSubroutine(Xcons.List(descId.Ref(), localId.Ref(), isCoarray)));
 
   }
 

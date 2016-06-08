@@ -17,6 +17,7 @@ run: full.x
 	$(XRUN) -n 2 ./full.x
 	$(XRUN) -n 8 ./ordinal_reflect.x
 	$(XRUN) -n 4 ./full2.x
+	$(XRUN) -n 4 ./full3.x
 
 clean:
 	rm -f $(EXES) $(OBJS)

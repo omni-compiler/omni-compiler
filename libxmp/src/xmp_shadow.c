@@ -134,7 +134,8 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
     }
     else {
       pack_lower[i] = 0;
-      pack_upper[i] = array_desc->info[i].ser_upper - array_desc->info[i].ser_lower;
+      //pack_upper[i] = array_desc->info[i].ser_upper - array_desc->info[i].ser_lower;
+      pack_upper[i] = array_desc->info[i].alloc_size - 1;
       stride[i] = 1;
       width = pack_upper[i] - pack_lower[i] + 1;
     }      
@@ -154,8 +155,8 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
     //int bcast_width = 0;
     if (i == rank) {
       // pack data
-      _xmp_pack_array(bcast_buffer, array_addr, array_type, array_type_size,
-		       array_dim, pack_lower, pack_upper, stride, dim_acc);
+      (*_xmp_pack_array)(bcast_buffer, array_addr, array_type, array_type_size,
+			 array_dim, pack_lower, pack_upper, stride, dim_acc);
 
       //bcast_width = _XMP_M_COUNT_TRIPLETi(pack_lower[array_index], pack_upper[array_index], stride[array_index]);
     }
@@ -203,8 +204,8 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
 
     if (i != rank) {
       // unpack data
-      _xmp_unpack_array(array_addr, bcast_buffer, array_type, array_type_size,
-			 array_dim, unpack_lower, unpack_upper, stride, dim_acc);
+      (*_xmp_unpack_array)(array_addr, bcast_buffer, array_type, array_type_size,
+			   array_dim, unpack_lower, unpack_upper, stride, dim_acc);
     }
 
   }
