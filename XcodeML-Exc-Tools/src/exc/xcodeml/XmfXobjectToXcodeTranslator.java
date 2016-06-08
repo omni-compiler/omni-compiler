@@ -824,6 +824,29 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 	}
 	    break;
 
+        case ACC_PRAGMA: {
+            e = createElement(name);
+
+            //add directive-name
+            Element f0 = createElement("string");
+            addChildNode(f0, trans(xobj.getArg(0).getString()));
+            addChildNode(e, f0);
+
+            //add clauses
+            Element f1 = createElement("list");
+            XobjList clauseList = (XobjList)xobj.getArg(1);
+            for(Xobject clause : clauseList){
+                addChildNode(f1, transAccClause(clause));
+            }
+            addChildNode(e, f1);
+
+            //add body
+            Element f2 = createElement("list");
+            Xobject body = xobj.getArg(2);
+            addToBody(f2, body);
+            addChildNode(e, f2);
+        }
+        break;
         default:
             fatal_dump("cannot convert Xcode to XcodeML.", xobj);
         }
@@ -1301,6 +1324,46 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
     private static final String PROP_KEY_IDSET = "DeclComparator.idSet";
     private static final String PROP_KEY_DEPSET = "DeclComparator.depSet";
+
+    private Element transAccClauseArg(Xobject xobj){
+        if(xobj == null) return null;
+
+        if(xobj.Opcode() == Xcode.LIST && xobj.getArg(0).Opcode() == Xcode.STRING){
+            return transAccClause(xobj);
+        }
+
+        return trans(xobj);
+    }
+
+    private Element transAccClause(Xobject xobj) {
+        Element e = createElement("list");
+
+        //clause name
+        String clauseName = xobj.getArg(0).getString();
+        Element f0 = createElement("string");
+        addChildNode(f0, trans(clauseName));
+        addChildNode(e, f0);
+
+        //clause arg
+        Xobject arg = xobj.getArgOrNull(1);
+        if(arg == null){
+            return e;
+        }
+
+        if(arg.Opcode() == Xcode.LIST && arg.getArg(0).Opcode() != Xcode.STRING){
+            //normal list
+            Element f1 = createElement("list");
+            for(Xobject a : (XobjList)arg){
+                addChildNode(f1, transAccClauseArg(a));
+            }
+            addChildNode(e, f1);
+        }else{
+            //accClause or normal element
+            addChildNode(e, transAccClauseArg(arg));
+        }
+
+        return e;
+    }
 
     /**
      * sort declarations by dependency order.

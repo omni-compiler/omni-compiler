@@ -3725,6 +3725,196 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    // ACCPragma
+    class ACCPragmaVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "ACCPragma" element in XcodeML/F.
+         */
+        @Override public void enter(Node n) {
+
+            _writeLineDirective(n);
+
+            NodeList list0 = n.getChildNodes();
+
+            XmfWriter writer = _context.getWriter();
+
+            // set mode
+            XmfWriter.StatementMode prevMode = writer.getStatementMode();
+            writer.setStatementMode(XmfWriter.StatementMode.ACC);
+
+            // directive
+            Node dir = list0.item(0);
+            String dirName = XmDomUtil.getContentText(dir);
+
+            // remove underscore
+            if     (dirName.equals("PARALLEL_LOOP")) dirName = "PARALLEL LOOP";
+            else if(dirName.equals("KERNELS_LOOP")) dirName = "KERNELS LOOP";
+            else if(dirName.equals("ENTER_DATA")) dirName = "ENTER DATA";
+            else if(dirName.equals("EXIT_DATA")) dirName = "EXIT DATA";
+
+            writer.writeToken("!$ACC " + dirName);
+
+            Node clauseListNode = list0.item(1);
+            NodeList clauseList = clauseListNode.getChildNodes();
+
+            int clauseListLength = clauseList.getLength();
+            int directiveArgumentIndex = -1; //dummy
+            if ( dirName.equals("WAIT")
+                    || dirName.equals("CACHE")
+                    || dirName.equals("ROUTINE")){
+                //find directive argument
+                for(int i = 0; i < clauseListLength; i++){
+                    Node clause = clauseList.item(i);
+                    if(getClauseName(clause).equals(dirName)){
+                        enterClause(dirName, clause);
+                        directiveArgumentIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            // output clauses except for the directive argument
+            for (int i = 0; i < clauseListLength; i++){
+                Node clause = clauseList.item(i);
+                if(i == directiveArgumentIndex) continue;
+                enterClause(dirName, clause);
+            }
+
+            // reset mode
+            writer.setStatementMode(prevMode);
+            writer.setupNewLine();
+
+
+            // bodyNode
+            Node bodyNode = list0.item(2); //clauseListNode.getNextSibling();
+            enterBody(bodyNode);
+
+
+            // output end directive
+            if( dirName.equals("PARALLEL")
+                    || dirName.equals("KERNELS")
+                    || dirName.equals("DATA")
+                    || dirName.equals("HOST_DATA")
+                    || dirName.equals("ATOMIC") ){
+                writer.writeToken("!$ACC END " + dirName);
+                writer.setupNewLine();
+            }
+        }
+
+        private void enterClause(String dirName, Node n){
+            XmfWriter writer = _context.getWriter();
+
+            NodeList list = n.getChildNodes();
+            String clauseName = getClauseName(n);
+            Node clauseArgNode = list.item(1);
+
+            // "*"
+            if(clauseName.equals("ASTERISK")){
+                writer.writeToken("*");
+                return;
+            }
+
+            // "/arg/"
+            if(clauseName.equals("COMMONBLOCK")){
+                writer.writeToken("/");
+                enterClauseArg(dirName, clauseArgNode);
+                writer.writeToken("/");
+                return;
+            }
+
+            // "STATIC:arg"
+            if(clauseName.equals("STATIC")){
+                writer.writeToken(clauseName + ":");
+                enterClauseArg(dirName, clauseArgNode);
+                return;
+            }
+
+
+            //rename for reduction clauses
+            String operator = ""; //for reduction clause
+            if      (clauseName.equals("REDUCTION_PLUS"))   {clauseName = "REDUCTION"; operator = "+";}
+            else if (clauseName.equals("REDUCTION_MUL"))    {clauseName = "REDUCTION"; operator = "*";}
+            else if (clauseName.equals("REDUCTION_MAX"))    {clauseName = "REDUCTION"; operator = "MAX";}
+            else if (clauseName.equals("REDUCTION_MIN"))    {clauseName = "REDUCTION"; operator = "MIN";}
+            else if (clauseName.equals("REDUCTION_BITAND")) {clauseName = "REDUCTION"; operator = "IAND";}
+            else if (clauseName.equals("REDUCTION_BITOR"))  {clauseName = "REDUCTION"; operator = "IOR";}
+            else if (clauseName.equals("REDUCTION_BITXOR")) {clauseName = "REDUCTION"; operator = "IEOR";}
+            else if (clauseName.equals("REDUCTION_LOGAND")) {clauseName = "REDUCTION"; operator = ".AND.";}
+            else if (clauseName.equals("REDUCTION_LOGOR"))  {clauseName = "REDUCTION"; operator = ".OR.";}
+            else if (clauseName.equals("REDUCTION_EQV"))    {clauseName = "REDUCTION"; operator = ".EQV.";}
+            else if (clauseName.equals("REDUCTION_NEQV"))   {clauseName = "REDUCTION"; operator = ".NEQV.";}
+
+            //write "clauseName"
+            if(! clauseName.equals(dirName)) {
+                writer.writeToken(clauseName);
+            }
+
+            //if the clause has no argument
+            if(clauseArgNode == null) {
+                return;
+            }
+
+            //write "(arg0, arg1, ...)"
+            writer.writeToken("(");
+            if(clauseName.equals("REDUCTION")){
+                writer.writeToken(operator + ":");
+            }
+            if(clauseArgNode.getNodeName().equals("list") && !isClauseNode(clauseArgNode)){
+                //clause arg is normal list
+                NodeList argList = clauseArgNode.getChildNodes();
+                for (int i = 0; i < argList.getLength(); i++) {
+                    if(i != 0) writer.writeToken(",");
+                    enterClauseArg(dirName, argList.item(i));
+                }
+            }else{
+                //clause arg is normal node or clause
+                enterClauseArg(dirName, clauseArgNode);
+            }
+            writer.writeToken(")");
+        }
+
+        private void enterClauseArg(String dirName, Node n){
+            if(n == null) return;
+
+            if(isClauseNode(n)){
+                enterClause(dirName, n);
+                return;
+            }
+
+            invokeEnter(n);
+        }
+
+        private boolean isClauseNode(Node n)
+        {
+            if(! n.getNodeName().equals("list")) return false;
+            if(! n.getFirstChild().getNodeName().equals("string")) return false;
+            return true;
+        }
+
+        private String getClauseName(Node n){
+            if(! isClauseNode(n)) return null;
+            Node clauseNameNode = n.getFirstChild();
+            return XmDomUtil.getContentText(clauseNameNode);
+        }
+
+        private void enterBody(Node n){
+            XmfWriter writer = _context.getWriter();
+
+            writer.incrementIndentLevel();
+
+            NodeList list = n.getChildNodes();
+            for (int i = 0; i < list.getLength(); i++){
+                Node childNode = list.item(i);
+                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                invokeEnter(childNode);
+            }
+
+            writer.decrementIndentLevel();
+        }
+    }
+
     // FprintStatement
     class FprintStatementVisitor extends XcodeNodeVisitor {
         /**
@@ -5610,6 +5800,7 @@ public class XfDecompileDomVisitor {
         new Pair("FpowerExpr", new FpowerExprVisitor()),
         new Pair("FpragmaStatement", new FpragmaStatementVisitor()),
         new Pair("OMPPragma", new OMPPragmaVisitor()),
+        new Pair("ACCPragma", new ACCPragmaVisitor()),
         new Pair("FprintStatement", new FprintStatementVisitor()),
         new Pair("FreadStatement", new FreadStatementVisitor()),
         new Pair("FrealConstant", new FrealConstantVisitor()),
