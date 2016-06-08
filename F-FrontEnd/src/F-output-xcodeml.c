@@ -2784,40 +2784,6 @@ outx_ACC_clause_string(int l, expv v)
 }
 
 static void
-outx_ACC_subscript_list(int l, expr v)
-{
-  struct list_node *lp;
-  const int l1 = l + 1;
-  expv vv;
-  if(EXPV_CODE(v) != LIST) fatal("outx_ACC_subscript_list: not LIST");
-  outx_tagOfList(l);
-  FOR_ITEMS_IN_LIST(lp, v) {
-    vv = LIST_ITEM(lp);
-    outx_expv_withListTag(l1, vv);
-  }
-  outx_listClose(l);
-}
-
-static void
-outx_ACC_var(int l, expr v)
-{
-  struct list_node *lp;
-  const int l1 = l + 1;
-  expv vv;
-  if(EXPV_CODE(v) != LIST) fatal("outx_ACC_var: not LIST");
-  outx_tagOfList(l);
-  FOR_ITEMS_IN_LIST(lp, v) {
-    vv = LIST_ITEM(lp);
-    if(EXPV_CODE(vv) != LIST){
-      outx_expv(l1, vv);
-    }else{
-      outx_ACC_subscript_list(l1, vv);
-    }
-  }
-  outx_listClose(l);
-}
-
-static void
 outx_ACC_clause_arg(int l, expr v)
 {
   if(v == NULL){

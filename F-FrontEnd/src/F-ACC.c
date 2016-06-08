@@ -309,15 +309,13 @@ expv ACC_pragma_list(enum ACC_pragma pragma,expv arg1,expv arg2)
 
 static void check_for_ACC_pragma_2(expr x, enum ACC_pragma dir)
 {
-  int ret = 1;
-
   if(_ACC_do_required){
     // don't care the order of pragma around ACC LOOP
     if(EXPR_CODE(x) == F_PRAGMA_STATEMENT) return;
     if(EXPR_CODE(x) != F_DO_STATEMENT){
       error("ACC LOOP directives must be followed by do statement");
     }
-    _ACC_do_required = FALSE; //1. ここでまずloopの次にdoがくることを確認
+    _ACC_do_required = FALSE;
     return;
   }
   
@@ -330,13 +328,12 @@ static void check_for_ACC_pragma_2(expr x, enum ACC_pragma dir)
   }
 
 
-  //2. ctlスタックのtopにloop, parallel loop, kernels loopがあればcloseする。endが省略されたとき用
   if(CTL_TYPE(ctl_top) != CTL_ACC) return;
 
   enum ACC_pragma dir_enum = CTL_ACC_ARG_DIR(ctl_top);
 
   if(dir != ACC_END_PARALLEL_LOOP && dir != ACC_END_KERNELS_LOOP){
-  /* close LOOP | PARALLEL_LOOP | KERNELS_LOOP directive if possible */
+    // close LOOP | PARALLEL_LOOP | KERNELS_LOOP directive if possible
     if(dir_enum == ACC_LOOP
        || dir_enum == ACC_PARALLEL_LOOP
        || dir_enum == ACC_KERNELS_LOOP
@@ -346,7 +343,7 @@ static void check_for_ACC_pragma_2(expr x, enum ACC_pragma dir)
   }
 
   if(dir != ACC_END_ATOMIC){
-    /* close ATOMIC directive if possible */
+    // close ATOMIC directive if possible
     if(dir_enum == ACC_ATOMIC){
       expv clauses = CTL_ACC_ARG_CLAUSE(ctl_top);
       int is_clause = is_ACC_pragma(EXPR_ARG1(clauses), ACC_CLAUSE_CAPTURE);
@@ -376,69 +373,6 @@ static int is_ACC_pragma(expr e, enum ACC_pragma p)
 
 static expv compile_clause(expr x);
 
-static expv compile_subscript(expr x)
-{
-  expr xx;
-  list lp;
-  expv vv, ret_list;
-
-  if(x == NULL) return NULL;
-
-  ret_list = EMPTY_LIST;
-
-  if( EXPR_CODE(x) != LIST){
-    //index
-    vv = compile_expression(x);
-  }else{
-    //index-range
-    FOR_ITEMS_IN_LIST(lp,x){
-      xx = LIST_ITEM(lp);
-      vv = compile_expression(xx);
-      ret_list = list_put_last(ret_list, vv);
-    }
-  }
-  return ret_list;  
-}
-
-static expv compile_subscript_list(expr x)
-{
-  expr xx;
-  list lp;
-  expv vv, ret_list;
-
-  if(x == NULL) return NULL;
-
-  if( EXPR_CODE(x) != LIST){
-    error("compile_subscript_list: not list");
-  }
-
-  ret_list = EMPTY_LIST;
-  FOR_ITEMS_IN_LIST(lp,x){
-    xx = LIST_ITEM(lp);
-    vv = compile_subscript(xx);
-    ret_list = list_put_last(ret_list, vv);
-  }
-  return ret_list;  
-}
-
-static expv compile_subarray(expr x)
-{
-  if(x == NULL) return NULL;
-
-  if(EXPR_CODE(x) != LIST){
-    error("compile_subarray: not list");
-  }
-
-  expv var = compile_expression(EXPR_ARG1(x));
-  expv subscripts = compile_subscript_list(EXPR_ARG2(x));
-
-  if(EXPV_CODE(var) != F_VAR){
-    error("variable or arrayname is expected in OpenACC directive");
-  }
-		   
-  return list2(LIST, var, subscripts);
-
-}
 
 static expv compile_clause_arg(expr x)
 {
