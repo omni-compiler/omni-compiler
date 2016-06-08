@@ -2865,12 +2865,10 @@ public class XfDecompileDomVisitor {
             // ========
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            //////////////////////////////
             if (!XmOption.coarrayNoUseStatement()) {
               writer.writeToken("use xmpf_coarray_decl");
               writer.setupNewLine();
             }
-            //////////////////////////////
 
             // ======
             // Inside
@@ -3260,12 +3258,10 @@ public class XfDecompileDomVisitor {
             // ========
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            //////////////////////////////
             if (!XmOption.coarrayNoUseStatement()) {
               writer.writeToken("use xmpf_coarray_decl");
               writer.setupNewLine();
             }
-            //////////////////////////////
 
             // ======
             // Inside
