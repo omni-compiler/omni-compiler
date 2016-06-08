@@ -2530,13 +2530,13 @@ acc_directive:
 	| ACCKW_WAIT acc_wait_clause_list
 	{ $$ = ACC_LIST(ACC_WAIT, $2); }
 	| ACCKW_WAIT '(' acc_expr_list ')' acc_wait_clause_list
-	{ $$ = ACC_LIST(ACC_WAIT, list_cons(ACC_LIST(ACC_WAIT_ARG, $3), $5)); }
+	{ $$ = ACC_LIST(ACC_WAIT, list_cons(ACC_LIST(ACC_CLAUSE_WAIT_ARG, $3), $5)); }
 	| ACCKW_CACHE '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_CACHE, list1(LIST, ACC_LIST(ACC_CACHE_ARG, $3))); }
+	{ $$ = ACC_LIST(ACC_CACHE, list1(LIST, ACC_LIST(ACC_CLAUSE_CACHE_ARG, $3))); }
 	| ACCKW_ROUTINE acc_routine_clause_list
 	{ $$ = ACC_LIST(ACC_ROUTINE, $2); }
 	| ACCKW_ROUTINE '(' IDENTIFIER ')' acc_routine_clause_list
-	{ $$ = ACC_LIST(ACC_ROUTINE, list_cons(ACC_LIST(ACC_ROUTINE_ARG, $3), $5)); }
+	{ $$ = ACC_LIST(ACC_ROUTINE, list_cons(ACC_LIST(ACC_CLAUSE_ROUTINE_ARG, $3), $5)); }
 	| ACCKW_ENTER ACCKW_DATA acc_enter_data_clause_list
 	{ $$ = ACC_LIST(ACC_ENTER_DATA, $3); }
 	| ACCKW_EXIT ACCKW_DATA acc_exit_data_clause_list
@@ -2745,10 +2745,10 @@ acc_set_clause:
 	;
 acc_atomic_clause:
 				{ $$ = NULL; }
-	| KW ACCKW_READ		{ $$ = ACC_LIST(ACC_READ, NULL); }
-	| KW ACCKW_WRITE	{ $$ = ACC_LIST(ACC_WRITE, NULL); }
-	| KW ACCKW_UPDATE	{ $$ = ACC_LIST(ACC_UPDATE, NULL); }
-	| KW ACCKW_CAPTURE	{ $$ = ACC_LIST(ACC_CAPTURE, NULL); }
+	| KW ACCKW_READ		{ $$ = ACC_LIST(ACC_CLAUSE_READ, NULL); }
+	| KW ACCKW_WRITE	{ $$ = ACC_LIST(ACC_CLAUSE_WRITE, NULL); }
+	| KW ACCKW_UPDATE	{ $$ = ACC_LIST(ACC_CLAUSE_UPDATE, NULL); }
+	| KW ACCKW_CAPTURE	{ $$ = ACC_LIST(ACC_CLAUSE_CAPTURE, NULL); }
 	;
 acc_data_clause:
 	  acc_copy_clause
@@ -2791,87 +2791,87 @@ acc_end_clause:
 /*******************/
 acc_async_clause:
 	  ACCKW_ASYNC
-	{ $$ = ACC_LIST(ACC_ASYNC, NULL); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_ASYNC, NULL); }
 	| ACCKW_ASYNC '(' expr ')'
-	{ $$ = ACC_LIST(ACC_ASYNC, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_ASYNC, $3); }
 	;
 acc_wait_clause:
 	  ACCKW_WAIT
-	{ $$ = ACC_LIST(ACC_WAIT_C, NULL); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_WAIT, NULL); }
 	| ACCKW_WAIT '(' acc_expr_list ')'
-	{ $$ = ACC_LIST(ACC_WAIT_C, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_WAIT, $3); }
 	;
 acc_device_type_clause:
 	  ACCKW_DEVICE_TYPE '(' acc_id_list ')'
-	{ $$ = ACC_LIST(ACC_DEVICE_TYPE, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICE_TYPE, $3); }
 	;
 acc_num_gangs_clause:
 	  ACCKW_NUM_GANGS '(' expr ')'
-	{ $$ = ACC_LIST(ACC_NUM_GANGS, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_NUM_GANGS, $3); }
 	;
 acc_num_workers_clause:
 	  ACCKW_NUM_WORKERS '(' expr ')'
-	{ $$ = ACC_LIST(ACC_NUM_WORKERS, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_NUM_WORKERS, $3); }
 	;
 acc_vector_length_clause:
 	  ACCKW_VECTOR_LENGTH '(' expr ')'
-	{ $$ = ACC_LIST(ACC_VECTOR_LENGTH, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_VECTOR_LENGTH, $3); }
 	;
 acc_reduction_clause:
 	  ACCKW_REDUCTION '(' acc_reduction_op ':' acc_id_list ')'
 	{ $$ = ACC_LIST($3, $5); }
 	;
 acc_reduction_op:
-	  '+'		{ $$ = ACC_REDUCTION_PLUS; }
-	| '*'	       	{ $$ = ACC_REDUCTION_MUL; }
-	| AND		{ $$ = ACC_REDUCTION_LOGAND; }
-	| OR		{ $$ = ACC_REDUCTION_LOGOR; }
-	| EQV		{ $$ = ACC_REDUCTION_EQV; }
-	| NEQV		{ $$ = ACC_REDUCTION_NEQV; }
+	  '+'		{ $$ = ACC_CLAUSE_REDUCTION_PLUS; }
+	| '*'	       	{ $$ = ACC_CLAUSE_REDUCTION_MUL; }
+	| AND		{ $$ = ACC_CLAUSE_REDUCTION_LOGAND; }
+	| OR		{ $$ = ACC_CLAUSE_REDUCTION_LOGOR; }
+	| EQV		{ $$ = ACC_CLAUSE_REDUCTION_EQV; }
+	| NEQV		{ $$ = ACC_CLAUSE_REDUCTION_NEQV; }
 	| IDENTIFIER	{ $$ = ACC_reduction_op($1); }  
 	;
 /*
-	| ACCKW_REDUCTION_MAX	  { $$ = ACC_REDUCTION_MAX; }
-	| ACCKW_REDUCTION_MIN	  { $$ = ACC_REDUCTION_MIN; }
-	| ACCKW_REDUCTION_BITAND  { $$ = ACC_REDUCTION_BITAND; }
-	| ACCKW_REDUCTION_BITOR	  { $$ = ACC_REDUCTION_BITOR; }
-	| ACCKW_REDUCTION_BITXOR  { $$ = ACC_REDUCTION_BITXOR; }
+	| ACCKW_REDUCTION_MAX	  { $$ = ACC_CLAUSE_REDUCTION_MAX; }
+	| ACCKW_REDUCTION_MIN	  { $$ = ACC_CLAUSE_REDUCTION_MIN; }
+	| ACCKW_REDUCTION_BITAND  { $$ = ACC_CLAUSE_REDUCTION_BITAND; }
+	| ACCKW_REDUCTION_BITOR	  { $$ = ACC_CLAUSE_REDUCTION_BITOR; }
+	| ACCKW_REDUCTION_BITXOR  { $$ = ACC_CLAUSE_REDUCTION_BITXOR; }
 */
 acc_private_clause:
 	  ACCKW_PRIVATE '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_PRIVATE, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRIVATE, $3); }
 	;
 acc_firstprivate_clause:
 	  ACCKW_FIRSTPRIVATE '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_FIRSTPRIVATE, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_FIRSTPRIVATE, $3); }
 	;
 acc_default_clause:
 	  ACCKW_DEFAULT '(' acc_default_clause_arg ')'
-	{ $$ = ACC_LIST(ACC_DEFAULT, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEFAULT, $3); }
 	;
 acc_default_clause_arg:
-	  KW ACCKW_NONE     { $$ = ACC_LIST(ACC_NONE, NULL); }
-	| KW ACCKW_PRESENT  { $$ = ACC_LIST(ACC_PRESENT, NULL); }
+	  KW ACCKW_NONE     { $$ = ACC_LIST(ACC_CLAUSE_NONE, NULL); }
+	| KW ACCKW_PRESENT  { $$ = ACC_LIST(ACC_CLAUSE_PRESENT, NULL); }
 	;
 acc_bind_clause:
 	  ACCKW_BIND '(' IDENTIFIER ')'
-	{ $$ = ACC_LIST(ACC_BIND, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_BIND, $3); }
 	| ACCKW_BIND '(' CONSTANT ')'
-	{ $$ = ACC_LIST(ACC_BIND, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_BIND, $3); }
 	;
 acc_nohost_clause:
 	  ACCKW_NOHOST
-	{ $$ = ACC_LIST(ACC_NOHOST, NULL); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_NOHOST, NULL); }
 	;
 acc_collapse_clause:
 	  ACCKW_COLLAPSE '(' expr ')'
-	{ $$ = ACC_LIST(ACC_COLLAPSE, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_COLLAPSE, $3); }
 	;
 acc_gang_clause:
 	  ACCKW_GANG
-	{ $$ = ACC_LIST(ACC_GANG, NULL); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_GANG, NULL); }
 	| ACCKW_GANG '(' acc_gang_arg_list ')'
-	{ $$ = ACC_LIST(ACC_GANG, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_GANG, $3); }
 	;
 acc_gang_arg_list:
 	  acc_gang_arg
@@ -2894,7 +2894,7 @@ acc_gang_arg:
 */
 	| IDENTIFIER ':' acc_size_expr
 	{ 
-	  if(ACC_num_attr($1) == ACC_STATIC){
+	  if(ACC_num_attr($1) == ACC_CLAUSE_STATIC){
 	    $$ = ACC_LIST(ACC_num_attr($1), $3);
 	  }else{
 	    $$ = $3;
@@ -2903,125 +2903,125 @@ acc_gang_arg:
 	;
 acc_worker_clause:
 	  ACCKW_WORKER
-	{ $$ = ACC_LIST(ACC_WORKER, NULL); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_WORKER, NULL); }
 	| ACCKW_WORKER '(' acc_num_expr ')'
-	{ $$ = ACC_LIST(ACC_WORKER, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_WORKER, $3); }
 	;
 acc_num_expr:
 	  expr
 	| IDENTIFIER ':' expr
-	{ $$ = $3; ACC_check_num_attr($1, ACC_NUM_WORKERS); }
+	{ $$ = $3; ACC_check_num_attr($1, ACC_CLAUSE_NUM_WORKERS); }
 	;
 acc_vector_clause:
 	  ACCKW_VECTOR
-	{ $$ = ACC_LIST(ACC_VECTOR, NULL); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_VECTOR, NULL); }
 	| ACCKW_VECTOR '(' acc_length_expr ')'
-	{ $$ = ACC_LIST(ACC_VECTOR, $3); } 
+	{ $$ = ACC_LIST(ACC_CLAUSE_VECTOR, $3); } 
 	;
 acc_length_expr: 
 	  expr
 	| IDENTIFIER ':' expr
-	{ $$ = $3; ACC_check_num_attr($1, ACC_VECTOR_LENGTH); }
+	{ $$ = $3; ACC_check_num_attr($1, ACC_CLAUSE_VECTOR_LENGTH); }
 	;
 acc_seq_clause:
 	  ACCKW_SEQ
-	{ $$ = ACC_LIST(ACC_SEQ, NULL); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_SEQ, NULL); }
 	;
 acc_auto_clause:
 	  ACCKW_AUTO
-	{ $$ = ACC_LIST(ACC_AUTO, NULL); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_AUTO, NULL); }
 	;
 acc_tile_clause:
 	  ACCKW_TILE '(' acc_size_expr_list ')'
-	{ $$ = ACC_LIST(ACC_TILE, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_TILE, $3); }
 	;
 acc_independent_clause:
 	  ACCKW_INDEPENDENT
-	{ $$ = ACC_LIST(ACC_INDEPENDENT, NULL); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_INDEPENDENT, NULL); }
 	;
 acc_if_clause:
 	  ACCKW_IF '(' expr ')'
-	{ $$ = ACC_LIST(ACC_IF,$3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_IF,$3); }
 	;
 acc_copy_clause:
 	  ACCKW_COPY '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_COPY, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_COPY, $3); }
 	;
 acc_copyin_clause:
 	  ACCKW_COPYIN '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_COPYIN, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_COPYIN, $3); }
 	;
 acc_copyout_clause:
 	  ACCKW_COPYOUT '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_COPYOUT, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_COPYOUT, $3); }
 	;
 acc_create_clause:
 	  ACCKW_CREATE '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_CREATE, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_CREATE, $3); }
 	;
 acc_present_clause:
 	  ACCKW_PRESENT '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_PRESENT, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT, $3); }
 	;
 acc_present_or_copy_clause:
 	  ACCKW_PRESENT_OR_COPY '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_PRESENT_OR_COPY, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT_OR_COPY, $3); }
 	;
 acc_present_or_copyin_clause:
 	  ACCKW_PRESENT_OR_COPYIN '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_PRESENT_OR_COPYIN, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT_OR_COPYIN, $3); }
 	;
 acc_present_or_copyout_clause:
 	  ACCKW_PRESENT_OR_COPYOUT '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_PRESENT_OR_COPYOUT, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT_OR_COPYOUT, $3); }
 	;
 acc_present_or_create_clause:
 	  ACCKW_PRESENT_OR_CREATE '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_PRESENT_OR_CREATE, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT_OR_CREATE, $3); }
 	;
 acc_deviceptr_clause:
 	  ACCKW_DEVICEPTR '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_DEVICEPTR, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICEPTR, $3); }
 	;
 acc_delete_clause:
 	  ACCKW_DELETE '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_DELETE, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_DELETE, $3); }
 	;
 acc_finalize_clause:
 	  ACCKW_FINALIZE
-	{ $$ = ACC_LIST(ACC_FINALIZE, NULL); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_FINALIZE, NULL); }
 	;
 acc_use_device_clause:
 	  ACCKW_USE_DEVICE '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_USE_DEVICE, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_USE_DEVICE, $3); }
 	;
 acc_device_resident_clause:
 	  ACCKW_DEVICE_RESIDENT '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_DEVICE_RESIDENT, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICE_RESIDENT, $3); }
 	;
 acc_link_clause:
 	  ACCKW_LINK '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_LINK, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_LINK, $3); }
 	;
 acc_host_clause:
 	  ACCKW_HOST '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_HOST, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_HOST, $3); }
 	;
 acc_device_clause:
 	  ACCKW_DEVICE '(' acc_var_list ')'
-	{ $$ = ACC_LIST(ACC_DEVICE, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICE, $3); }
 	;
 acc_if_present_clause:
 	  ACCKW_IF_PRESENT
-	{ $$ = ACC_LIST(ACC_IF_PRESENT, NULL); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_IF_PRESENT, NULL); }
 	;
 acc_device_num_clause:
 	  ACCKW_DEVICE_NUM '(' expr ')'
-	{ $$ = ACC_LIST(ACC_DEVICE_NUM, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICE_NUM, $3); }
 	;
 acc_default_async_clause:
 	  ACCKW_DEFAULT_ASYNC '(' expr ')'
-	{ $$ = ACC_LIST(ACC_DEFAULT_ASYNC, $3); }
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEFAULT_ASYNC, $3); }
 	;
 
 /***********************/

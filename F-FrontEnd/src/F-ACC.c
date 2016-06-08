@@ -44,14 +44,14 @@ int ACC_reduction_op(expr v)
 
     if(EXPR_CODE(v) != IDENT) fatal("ACC_reduction_op: no IDENT");
     s = SYM_NAME(EXPR_SYM(v));
-    if(strcmp("max",s) == 0) return (int)ACC_REDUCTION_MAX;
-    if(strcmp("min",s) == 0) return (int)ACC_REDUCTION_MIN;
-    if(strcmp("iand",s) == 0) return (int)ACC_REDUCTION_BITAND;
-    if(strcmp("ior",s) == 0) return (int)ACC_REDUCTION_BITOR;
-    if(strcmp("ieor",s) == 0) return (int)ACC_REDUCTION_BITXOR;
+    if(strcmp("max",s) == 0) return  (int)ACC_CLAUSE_REDUCTION_MAX;
+    if(strcmp("min",s) == 0) return  (int)ACC_CLAUSE_REDUCTION_MIN;
+    if(strcmp("iand",s) == 0) return (int)ACC_CLAUSE_REDUCTION_BITAND;
+    if(strcmp("ior",s) == 0) return  (int)ACC_CLAUSE_REDUCTION_BITOR;
+    if(strcmp("ieor",s) == 0) return (int)ACC_CLAUSE_REDUCTION_BITXOR;
 
     error("bad intrinsic function in REDUCTION clause of ACC");
-    return ACC_REDUCTION_PLUS;	/* dummy */
+    return ACC_CLAUSE_REDUCTION_PLUS;	/* dummy */
 }
 
 int ACC_num_attr(expr v)
@@ -60,12 +60,12 @@ int ACC_num_attr(expr v)
 
     if(EXPR_CODE(v) != IDENT) fatal("ACC_num_attr: no IDENT");
     s = SYM_NAME(EXPR_SYM(v));
-    if(strcmp("num",s) == 0) return (int)ACC_NUM_GANGS;
+    if(strcmp("num",s) == 0) return (int)ACC_CLAUSE_NUM_GANGS;
     //    if(strcmp("length",s) == 0) return (int)ACC_VECTOR_LENGTH;
-    if(strcmp("static",s) == 0) return (int)ACC_STATIC;
+    if(strcmp("static",s) == 0) return (int)ACC_CLAUSE_STATIC;
 
     error("bad int-expr attribute for ACC pragma");
-    return ACC_VECTOR_LENGTH;	/* dummy */
+    return ACC_CLAUSE_VECTOR_LENGTH;	/* dummy */
 }
 
 void ACC_check_num_attr(expr v, enum ACC_pragma attr)
@@ -75,10 +75,10 @@ void ACC_check_num_attr(expr v, enum ACC_pragma attr)
 
     if(EXPR_CODE(v) != IDENT) fatal("ACC_num_attr: no IDENT");
     s = SYM_NAME(EXPR_SYM(v));
-    a = ACC_DIR_END;
-    if(strcmp("num",s) == 0 )        a = ACC_NUM_WORKERS;
-    else if(strcmp("length",s) == 0) a = ACC_VECTOR_LENGTH;
-    else if(strcmp("static",s) == 0) a = ACC_STATIC;
+    a = ACC_CLAUSE_END;
+    if(strcmp("num",s) == 0 )        a = ACC_CLAUSE_NUM_WORKERS;
+    else if(strcmp("length",s) == 0) a = ACC_CLAUSE_VECTOR_LENGTH;
+    else if(strcmp("static",s) == 0) a = ACC_CLAUSE_STATIC;
 
     if(a != attr){
       error("bad int-expr attribute for ACC pragma");
@@ -265,7 +265,7 @@ void compile_ACC_directive(expr x)
     case ACC_ATOMIC:
       check_INEXEC();
       push_ACC_construct(dir_enum, clauses);
-      if(is_ACC_pragma(EXPR_ARG1(clauses), ACC_CAPTURE)){
+      if(is_ACC_pragma(EXPR_ARG1(clauses), ACC_CLAUSE_CAPTURE)){
 	_ACC_st_required = 2;
       }else{
 	_ACC_st_required = 1;
@@ -349,7 +349,7 @@ static void check_for_ACC_pragma_2(expr x, enum ACC_pragma dir)
     /* close ATOMIC directive if possible */
     if(dir_enum == ACC_ATOMIC){
       expv clauses = CTL_ACC_ARG_CLAUSE(ctl_top);
-      int is_clause = is_ACC_pragma(EXPR_ARG1(clauses), ACC_CAPTURE);
+      int is_clause = is_ACC_pragma(EXPR_ARG1(clauses), ACC_CLAUSE_CAPTURE);
       if(! is_clause){
 	pop_ACC_atomic_construct(dir_enum);
       }
