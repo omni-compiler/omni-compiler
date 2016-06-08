@@ -716,7 +716,8 @@ projectdesc="omni-comipler"
 fi
 
 #recipients=$(git config hooks.mailinglist)
-recipients="xmp-jenkins@hpcs.cs.tsukuba.ac.jp"
+#recipients="xmp-jenkins@hpcs.cs.tsukuba.ac.jp"
+recipients="omni-jenkins@ml.riken.jp"
 #recipients="masahiro.nakao@riken.jp"
 announcerecipients=$(git config hooks.announcelist)
 envelopesender=$(git config hooks.envelopesender)
