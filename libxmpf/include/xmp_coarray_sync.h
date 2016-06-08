@@ -99,61 +99,51 @@
 !-------------------------------
 !  coarray atomic subroutines
 !-------------------------------
+! atomic_int_kind=4 and atomic_logical_kind=4
 ! Exactly, variable atom should be integer(kind=atomc_int_kind) or 
 ! logical(kind=atomic_logical_kind), whose kind is defined in the 
 ! intrinsic module iso_fortran_env [J.Reid, N1824:15.3].
 
-      interface atomic_define
-         subroutine atomic_define_i2(atom, value)
-         integer, intent(out) :: atom
-         integer(2), intent(in) :: value
+      interface xmpf_atomic_define_generic
+         subroutine xmpf_atomic_define_self_i4(atom, value)
+         integer(4), intent(out) :: atom
+         integer(4), intent(in)  :: value
          end subroutine
-         subroutine atomic_define_i4(atom, value)
-         integer, intent(out) :: atom
-         integer(4), intent(in) :: value
+         subroutine xmpf_atomic_define_self_l4(atom, value)
+         logical(4), intent(out) :: atom
+         logical(4), intent(in)  :: value
          end subroutine
-         subroutine atomic_define_i8(atom, value)
-         integer, intent(out) :: atom
-         integer(8), intent(in) :: value
+         subroutine xmpf_atomic_define_remote_i4(mold, coindex, value)
+         integer(4), intent(in)  :: mold
+         integer, intent(in)     :: coindex
+         integer(4), intent(in)  :: value
          end subroutine
-         subroutine atomic_define_l2(atom, value)
-         logical, intent(out) :: atom
-         logical(2), intent(in) :: value
-         end subroutine
-         subroutine atomic_define_l4(atom, value)
-         logical, intent(out) :: atom
-         logical(4), intent(in) :: value
-         end subroutine
-         subroutine atomic_define_l8(atom, value)
-         logical, intent(out) :: atom
-         logical(8), intent(in) :: value
+         subroutine xmpf_atomic_define_remote_l4(mold, coindex, value)
+         logical(4), intent(in)  :: mold
+         integer, intent(in)     :: coindex
+         logical(4), intent(in)  :: value
          end subroutine
       end interface
 
-      interface atomic_ref
-         subroutine atomic_ref_i2(value, atom)
-         integer(2), intent(out) :: value
-         integer, intent(in) :: atom
-         end subroutine
-         subroutine atomic_ref_i4(value, atom)
+      interface xmpf_atomic_ref_generic
+         subroutine xmpf_atomic_ref_self_i4(atom, value)
+         integer(4), intent(in)  :: atom
          integer(4), intent(out) :: value
-         integer, intent(in) :: atom
          end subroutine
-         subroutine atomic_ref_i8(value, atom)
-         integer(8), intent(out) :: value
-         integer, intent(in) :: atom
-         end subroutine
-         subroutine atomic_ref_l2(value, atom)
-         logical(2), intent(out) :: value
-         logical, intent(in) :: atom
-         end subroutine
-         subroutine atomic_ref_l4(value, atom)
+         subroutine xmpf_atomic_ref_self_l4(atom, value)
+         logical(4), intent(in)  :: atom
          logical(4), intent(out) :: value
-         logical, intent(in) :: atom
          end subroutine
-         subroutine atomic_ref_l8(value, atom)
-         logical(8), intent(out) :: value
-         logical, intent(in) :: atom
+         subroutine xmpf_atomic_ref_remote_i4(mold, coindex, value)
+         integer(4), intent(in)  :: mold
+         integer, intent(in)     :: coindex
+         integer(4), intent(out) :: value
+         end subroutine
+         subroutine xmpf_atomic_ref_remote_l4(mold, coindex, value)
+         logical(4), intent(in)  :: mold
+         integer, intent(in)     :: coindex
+         logical(4), intent(out) :: value
          end subroutine
       end interface
+
 

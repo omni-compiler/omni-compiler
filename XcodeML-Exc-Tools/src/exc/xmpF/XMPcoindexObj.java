@@ -236,7 +236,7 @@ public class XMPcoindexObj {
   }
 
   private Xobject toFuncRef_basic() {
-    Xobject mold = getObj().getArg(0).getArg(0);   // coindexed object w/o coindex
+    Xobject mold = getMoldObj();
     return toFuncRef_core(mold);
   }
 
@@ -309,7 +309,7 @@ public class XMPcoindexObj {
       XMP.fatal("Not supported type of coarray: " + getName());
       return null;
     } else {
-      mold = getObj().getArg(0).getArg(0);   // coindexed var. w/o coindex
+      mold = getMoldObj();
     }
 
     switch (PutInterfaceType) {
@@ -545,6 +545,10 @@ public class XMPcoindexObj {
   //------------------------------
   //  inquirement and evaluation
   //------------------------------
+  public Xobject getImageIndex() {
+    return coarray.getImageIndex(getBaseAddr(), cosubscripts);
+  }
+
   public Boolean isScalarIndex(int i) {
     Xobject subscr = subscripts.getArg(i);
     if (subscr.Opcode() != Xcode.F_ARRAY_INDEX)
@@ -793,8 +797,26 @@ public class XMPcoindexObj {
     return obj;
   }
 
+  public String getName() {
+    return name;
+  }
+
+  public Xtype getType() {
+    return coarray.getType();
+  }
+
+  public Ident getIdent() {
+    return coarray.getIdent();
+  }
+
   public XMPcoarray getCoarray() {
     return coarray;
+  }
+
+  // my mold object corresponding to the coindex object
+  //
+  public Xobject getMoldObj() {
+    return obj.getArg(0).getArg(0);
   }
 
   public XMPenv getEnv() {
@@ -811,18 +833,6 @@ public class XMPcoindexObj {
 
   public Xobject getDecls() {
     return getBlockList().getDecls();
-  }
-
-  public String getName() {
-    return getName();
-  }
-
-  public Xtype getType() {
-    return coarray.getType();
-  }
-
-  public Ident getIdent() {
-    return coarray.getIdent();
   }
 
   public String toString() {

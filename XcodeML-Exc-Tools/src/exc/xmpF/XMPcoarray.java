@@ -816,8 +816,74 @@ public class XMPcoarray {
   //  evaluation in Fortran terminology:
   //   image index
   //------------------------------
-
   public Xobject getImageIndex(Xobject baseAddr, Xobject cosubscripts) {
+    Xobject imageIndex;
+
+    // try to get better expression without runtime library call
+    if (!isAllocatable()) {
+      imageIndex = getImageIndex_opt(baseAddr, cosubscripts);
+      if (imageIndex != null)   // success
+        return imageIndex;
+    }
+
+    // default expression calling runtime library
+    imageIndex = getImageIndex_default(baseAddr, cosubscripts);
+    return imageIndex;
+  }
+
+
+  public Xobject getImageIndex_opt(Xobject baseAddr, Xobject cosubscripts) {
+    int ndim = getCorank();
+    Xobject imageIndex = null;
+
+    int k;
+    Xobject cosubscr, lcobound, cosize;
+    Xobject sum;
+
+    /* ndim==1:   cs[0]-lb[0]                                             +1
+     * ndim==2:  (cs[1]-lb[1]) *sz[0]+(cs[0]-lb[0])                       +1
+     * ndim==3: ((cs[2]-lb[2]) *sz[1]+(cs[1]-lb[1])) *sz[0]+(cs[0]-lb[0]) +1
+     * ...
+     */
+    k = ndim - 1;
+    // width[k] = cosubscr[k] - lcobound[k]
+    cosubscr = cosubscripts.getArg(k).getArg(0);
+    lcobound = getLcoboundStatic(k);
+    sum = _calcMinusExprExpr(cosubscr, lcobound);
+    if (sum == null)
+      return null;
+
+    for (k = ndim - 2; k >= 0; k -= 1) {
+      // tmp1[k] = sum[k+1] * cosize[k]
+      cosize = getCosizeStatic(k);
+      Xobject tmp1 = _calcTimesExprExpr(sum, cosize);
+      if (tmp1 == null)
+        return null;
+
+      // tmp2[k] = cosubscr[k] - lcobound[k]
+      cosubscr = cosubscripts.getArg(k).getArg(0);
+      lcobound = getLcoboundStatic(k);
+      Xobject tmp2 = _calcMinusExprExpr(cosubscr, lcobound);
+      if (tmp2 == null)
+        return null;
+
+      // sum[k] = tmp1[k] + tmp2[k]
+      sum = _calcPlusExprExpr(tmp1, tmp2);
+      if (sum == null)
+        return null;
+    }
+
+    Xobject image = _calcIncExpr(sum); 
+
+    //////////////////////////////
+    System.out.println("image="+image);
+
+    return image;
+    //return null;
+    //////////////////////////////
+  }
+
+  public Xobject getImageIndex_default(Xobject baseAddr, Xobject cosubscripts) {
     String fname = GET_IMAGE_INDEX_NAME;
     Ident fnameId = getEnv().findVarIdent(fname, null);
     if (fnameId == null)
@@ -835,6 +901,179 @@ public class XMPcoarray {
   }
 
 
+
+
+  //------------------------------
+  //  arithmetic routine
+  //------------------------------
+
+  /*  returns (a2-a1+1).cfold()
+   */
+  Xobject _calcIntDiffExprExpr(Xobject a1, Xobject a2) {
+    Xobject b1, b2;
+
+    if (a1 == null || a2 == null)
+      return null;
+    b1 = a1.cfold(fblock);
+    b2 = a2.cfold(fblock);
+
+    // short cut
+    if (b2.equals(b1))
+      return Xcons.IntConstant(1);
+
+    Xobject result;
+    if (b1.isIntConstant()) {
+      if (b2.isIntConstant()) {
+        // int(b2)-int(b1)+1
+        int extent = b2.getInt() - b1.getInt() + 1;
+        return Xcons.IntConstant(extent);
+      } else {
+        // b2-(int(b1)-1)
+        Xobject tmp = Xcons.IntConstant(b1.getInt() - 1);
+        ////////////////////////////////
+        System.out.println("sss b2="+b2+" b1="+b1+" tmp="+tmp);
+        System.out.println("    b1.getInt()="+b1.getInt());
+        ////////////////////////////////
+        result = Xcons.binaryOp(Xcode.MINUS_EXPR, b2, tmp);
+      }
+    } else {
+      if (b2.isIntConstant()) {
+        // (int(b2)+1)-b1
+        Xobject tmp = Xcons.IntConstant(b2.getInt() + 1);
+        result = Xcons.binaryOp(Xcode.MINUS_EXPR, tmp, b1);
+      } else {
+        // (b2-b1)+1
+        Xobject tmp = Xcons.binaryOp(Xcode.MINUS_EXPR, b2, b1);
+        result = Xcons.binaryOp(Xcode.PLUS_EXPR, tmp, Xcons.IntConstant(1));
+      }
+    }
+    return result.cfold(fblock);
+  }
+
+
+  /*  returns (a1*a2).cfold()
+   */
+  Xobject _calcTimesExprExpr(Xobject a1, Xobject a2) {
+    Xobject b1, b2;
+
+    if (a1 == null || a2 == null)
+      return null;
+    b1 = a1.cfold(fblock);
+    b2 = a2.cfold(fblock);
+
+    Xobject result;
+    int n;
+    if (b1.isIntConstant()) {
+      if (b2.isIntConstant()) {
+        // int(b1)*int(b2)
+        n = b1.getInt() * b2.getInt();
+        return Xcons.IntConstant(n);
+      } else {
+        // int(b1)*b2
+        if ((n = b1.getInt()) == 1)
+          return b2;
+        else if (n == 0)
+          return b1;
+      }
+    } else {
+      if (b2.isIntConstant()) {
+        // b1*int(b2)
+        if ((n = b2.getInt()) == 1)
+          return b1;
+        else if (n == 0)
+          return b2;
+      }
+    }
+
+    result = Xcons.binaryOp(Xcode.MUL_EXPR, b1, b2);
+    return result.cfold(fblock);
+  }
+
+
+  /*  returns (a1+a2).cfold()
+   */
+  Xobject _calcPlusExprExpr(Xobject a1, Xobject a2) {
+    Xobject b1, b2;
+
+    if (a1 == null || a2 == null)
+      return null;
+    b1 = a1.cfold(fblock);
+    b2 = a2.cfold(fblock);
+
+    Xobject result;
+    int n;
+    if (b1.isIntConstant()) {
+      if (b2.isIntConstant()) {
+        // int(b1)+int(b2)
+        n = b1.getInt() + b2.getInt();
+        return Xcons.IntConstant(n);
+      } else {
+        // int(b1)+b2
+        if ((n = b1.getInt()) == 0)
+          return b2;
+      }
+    } else {
+      if (b2.isIntConstant()) {
+        // b1+int(b2)
+        if ((n = b2.getInt()) == 0)
+          return b1;
+      }
+    }
+
+    result = Xcons.binaryOp(Xcode.PLUS_EXPR, b1, b2);
+    return result.cfold(fblock);
+  }
+
+
+  /*  returns (a1-a2).cfold()
+   */
+  Xobject _calcMinusExprExpr(Xobject a1, Xobject a2) {
+    Xobject b1, b2;
+
+    if (a1 == null || a2 == null)
+      return null;
+    b1 = a1.cfold(fblock);
+    b2 = a2.cfold(fblock);
+
+    int n;
+    if (b1.isIntConstant()) {
+      if (b2.isIntConstant()) {
+        // int(b1)-int(b2)
+        n = b1.getInt() - b2.getInt();
+        return Xcons.IntConstant(n);
+      }
+    } else {
+      if (b2.isIntConstant()) {
+        // b1-int(b2)
+        if (b2.getInt() == 0)
+          return b1;
+      }
+    }
+
+    Xobject result = Xcons.binaryOp(Xcode.MINUS_EXPR, b1, b2);
+    return result.cfold(fblock);
+  }
+
+
+  /*  returns (a1+1).cfold()
+   */
+  Xobject _calcIncExpr(Xobject a1) {
+    Xobject b1;
+
+    if (a1 == null)
+      return null;
+    b1 = a1.cfold(fblock);
+
+    int n;
+    if (b1.isIntConstant()) {
+      // int(b1)+1
+      n = b1.getInt() + 1;
+      return Xcons.IntConstant(n);
+    }
+
+    Xobject result = Xcons.binaryOp(Xcode.PLUS_EXPR, b1, Xcons.IntConstant(1));
+    return result.cfold(fblock);
+  }
 
 
   //------------------------------

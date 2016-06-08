@@ -8,13 +8,15 @@ package xcodeml.f.decompile;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Arrays;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.io.PrintStream;
-import java.io.StringWriter;
+import java.io.*;
+//import java.io.PrintStream;
+//import java.io.StringWriter;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -5525,25 +5527,100 @@ public class XfDecompileDomVisitor {
     }
 
 
+  /* Check if the name is declared in the runtime library declaration file xmpf_coarray_decl.
+   * To avoid double-declaration of the name at the compile time in the native compiler, the 
+   * declaration of the name should be suppressed if the result of this method is true.
+   * See bug report #493 for the future modification.
+   */
     private Boolean _isNameDefinedWithUseStmt(String name) {
-      final String[] libNames = {
-        "xmpf_cobound", "xmpf_this_image",
-        "xmpf_coarray_get_generic", "xmpf_coarray_put_generic",
-        "xmpf_coarray_alloc_generic", "xmpf_coarray_dealloc_generic",
-        "xmpf_co_broadcast_generic", 
-        "xmpf_co_sum_generic", "xmpf_co_max_generic", "xmpf_co_min_generic", 
-        //        "num_images", "this_image", "image_index",
-        "xmpf_sync_memory", "xmpf_symc_images",
-        "xmpf_sync_all", "xmpf_lock", "xmpf_unlock",
-        "xmpf_critical", "xmpf_end_critical", "xmpf_error_stop" };
 
-      // find if the name is declared in module xmpf_coarray_decl
+      ArrayList<String> libNames = _get_coarrayRuntimeLibNames__OLD__();
+      //ArrayList<String> libNames = _get_coarrayRuntimeLibNames__NEW__();
+
+      // check if the name is declared in module xmpf_coarray_decl
       for (String libName: libNames)
         if (libName.equals(name))
           return true;
 
       return false;
     }
+
+
+    ArrayList<String> _get_coarrayRuntimeLibNames__OLD__() {
+
+      final String[] libNameArray = {
+        "xmpf_image_index",
+        "xmpf_cobound_generic",
+        "xmpf_cobound_nodim",
+        "xmpf_cobound_dim",
+        "xmpf_num_images",
+        "xmpf_this_image_generic",
+        "xmpf_coarray_hello",
+        "xmpf_sync_all_stat",
+        "xmpf_sync_memory",
+        "xmpf_sync_memory_nostat",
+        "xmpf_sync_memory_stat_wrap",
+        "xmpf_sync_images",
+        "xmpf_sync_image_nostat",
+        "xmpf_sync_images_nostat_wrap",
+        "xmpf_sync_allimages_nostat_wrap",
+        "xmpf_sync_image_stat_wrap",
+        "xmpf_sync_images_stat_wrap",
+        "xmpf_sync_allimages_stat_wrap",
+        "xmpf_critical",
+        "xmpf_end_critical",
+        "xmpf_error_stop",
+        "xmpf_atomic_define_generic",
+        "xmpf_atomic_ref_generic",
+        "xmpf_coarray_get_generic",
+        "xmpf_coarray_put_generic",
+        "xmpf_coarray_alloc_generic",
+        "xmpf_coarray_dealloc_generic",
+        "xmpf_co_broadcast_generic",
+        "xmpf_co_sum_generic",
+        "xmpf_co_max_generic",
+        "xmpf_co_min_generic"
+      };
+
+      final ArrayList<String> libNames =
+        new ArrayList(Arrays.asList(libNameArray));
+
+      return libNames;
+    }
+
+
+    ArrayList<String> _get_coarrayRuntimeLibNames__NEW__() {
+      ///////////////////////////////////////////
+      //      final String inFile = "../../../../../libxmpf/src/coarray_entry_names.txt";
+      final String inFile = "coarray_entry_names.txt";
+      ///////////////////////////////////////////
+
+      final ArrayList<String> libNames = new ArrayList();
+
+      if (libNames.isEmpty()) {
+        try {
+          FileReader in = new FileReader(inFile);
+          BufferedReader reader = new BufferedReader(in);
+
+          String line;
+          while ((line = reader.readLine()) != null) {
+            if ("".equals(line))
+              continue;
+
+            char c = line.charAt(0);
+            if ('a' <= c && c <= 'z' || 'A' <= c && c <= 'Z')
+              libNames.add(line);
+          }
+        } catch (FileNotFoundException e) {
+          System.out.println(e);
+        } catch (IOException e) {
+          System.out.println(e);
+        }
+      }
+
+      return libNames;
+    }
+
 
 
     @SuppressWarnings("unchecked")
