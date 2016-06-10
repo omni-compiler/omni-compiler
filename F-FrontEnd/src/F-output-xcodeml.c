@@ -186,6 +186,10 @@ xtag(enum expr_code code)
 
     case F95_USER_DEFINED_BINARY_EXPR:          return "userBinaryExpr";
     case F95_USER_DEFINED_UNARY_EXPR:           return "userUnaryExpr";
+
+
+    case F2008_SYNCALL_STATEMENT:   return "syncAllStatement";
+
                                 
     /*                          
      * misc.                    
@@ -2738,7 +2742,33 @@ outx_useOnlyDecl(int l, expv v)
     outx_expvClose(l, v);
 }
 
+
+
+/**
+ * output FfunctionDefinition
+ */
 static void
+outx_SYNCALL_statement(int l, expv v)
+{
+    list lp;
+    expv x;
+
+    outx_tagOfStatement(l, v);
+    FOR_ITEMS_IN_LIST(lp, v) {
+        x = LIST_ITEM(lp);
+        outx_printi(l + 1, "<syncStat kind=\"%s\">\n",
+                    EXPV_KWOPT_NAME(x)
+                    );
+        outx_varOrFunc(l + 2, x);
+        outx_close(l + 1, "syncStat");
+    }
+    outx_expvClose(l, v);
+}
+
+
+
+//static void
+void
 outx_expv(int l, expv v)
 {
     enum expr_code code;
@@ -3032,6 +3062,10 @@ outx_expv(int l, expv v)
 
     case XMP_PRAGMA:
       outx_XMP_pragma(l, v);
+      break;
+
+    case F2008_SYNCALL_STATEMENT:
+      outx_SYNCALL_statement(l, v);
       break;
 
     default:
@@ -4246,6 +4280,9 @@ outx_blockDataDefinition(int l, EXT_ID ep)
 }
 
 
+
+
+
 static const char*
 getTimestamp()
 {
@@ -4744,3 +4781,4 @@ final_fixup() {
         }
     }
 }
+

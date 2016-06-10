@@ -102,6 +102,7 @@ static void fix_array_dimensions_recursive(ID ip);
 static void fix_pointer_pointee_recursive(TYPE_DESC tp);
 static void compile_data_style_decl(expr x);
 
+static void compile_SYNCALL_statement(expr x);
 
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
@@ -1165,6 +1166,11 @@ compile_exec_statement(expr x)
     case F95_POINTER_SET_STATEMENT:
         compile_POINTER_SET_statement(x);
         break;
+
+    case F2008_SYNCALL_STATEMENT:
+        compile_SYNCALL_statement(x);
+        break;
+
 
     default:
         fatal("unknown statement");
@@ -5088,3 +5094,39 @@ compile_data_style_decl(expr decl_list)
     }
 }
 
+
+static void
+compile_SYNCALL_statement(expr x) {
+    expv st;
+    list lp;
+    st = list0(F2008_SYNCALL_STATEMENT);
+
+    FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
+        expr v, arg;
+
+        v = LIST_ITEM(lp);
+
+        if (EXPR_CODE(v) != F_SET_EXPR) {
+            fprintf(stderr, "EXPR_CODE(x) is %d\n", EXPR_CODE(v));
+            fatal("%s: not F_SET_EXPR.", __func__);
+        }
+
+        arg = compile_expression(EXPR_ARG2(v));
+        if (EXPV_CODE(arg) != F_VAR) {
+            fprintf(stderr, "EXPR_CODE(v) is %d\n", EXPR_CODE(arg));
+            fatal("%s: not an ident.", __func__);
+            return;
+        }
+
+        char *keyword = SYM_NAME(EXPR_SYM(EXPR_ARG1(v)));
+        if (keyword == NULL || *keyword == '\0') {
+            fatal("%s: invalid F_SET_EXPR.", __func__);
+        }
+
+        EXPV_KWOPT_NAME(arg) = (const char *)strdup(keyword);
+
+        list_put_last(st, arg);
+
+    }
+    output_statement(st);
+}
