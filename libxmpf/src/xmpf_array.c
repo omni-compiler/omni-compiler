@@ -311,7 +311,7 @@ int _memid = 0;
 extern int _memid;
 #endif
 
-void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr, int is_coarray)
+void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr, int *is_coarray)
 {
   _XMP_array_t *a = *a_desc;
 
@@ -332,7 +332,7 @@ void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr, int i
   // for gmove in/out
 
 #ifdef _XMP_MPI3_ONESIDED
-  if (is_coarray){
+  if (*is_coarray){
     _XMP_coarray_t *c = (_XMP_coarray_t *)_XMP_alloc(sizeof(_XMP_coarray_t));
 
     long asize[dim];

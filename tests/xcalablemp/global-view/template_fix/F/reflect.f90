@@ -38,8 +38,8 @@ program tfix
      if (a(i+1) /= mod(im1+1+N, N)+1) then
         write(*,*) "ERROR: Upper in", i, a(i+1), mod(im1+1+N, N)+1
         call exit(1)
-   end if
-end do
+     end if
+  end do
 
 !$xmp task on p(1)
   write(*,*) "PASS"

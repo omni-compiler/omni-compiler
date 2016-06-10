@@ -29,6 +29,7 @@ import xcodeml.f.util.XmfWriter;
 import xcodeml.f.util.XmfNodeVisitorMap.Pair;
 import xcodeml.util.XmDomUtil;
 import xcodeml.util.XmTranslationException;
+import xcodeml.util.XmOption;
 
 /**
  * Decompiler of XcodeML/F DOM nodes.
@@ -2864,12 +2865,10 @@ public class XfDecompileDomVisitor {
             // ========
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            //////////////////////////////
-            if (true) {
+            if (!XmOption.coarrayNoUseStatement()) {
               writer.writeToken("use xmpf_coarray_decl");
               writer.setupNewLine();
             }
-            //////////////////////////////
 
             // ======
             // Inside
@@ -3259,12 +3258,10 @@ public class XfDecompileDomVisitor {
             // ========
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            //////////////////////////////
-            if (true) {
+            if (!XmOption.coarrayNoUseStatement()) {
               writer.writeToken("use xmpf_coarray_decl");
               writer.setupNewLine();
             }
-            //////////////////////////////
 
             // ======
             // Inside
