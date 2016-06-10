@@ -537,8 +537,12 @@ void _XMP_tca_initialize(int argc, char **argv);
 void _XMP_tca_finalize();
 void _XMP_tca_lock();
 void _XMP_tca_unlock();
-// xmp_tca_runtime.c
+//xmp_tca_runtime.c
 void _XMP_init_tca();
+void _XMP_alloc_tca(_XMP_array_t *adesc);
+//xmp_reflect_tca.c
+void _XMP_reflect_init_tca(void *acc_addr, _XMP_array_t *adesc);
+void _XMP_reflect_do_tca(_XMP_array_t *adesc);
 #endif
 
 #ifdef _XMP_MPI3_ONESIDED
