@@ -15,9 +15,6 @@ import org.w3c.dom.NodeList;
 
 import java.io.PrintStream;
 import java.io.StringWriter;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
@@ -5525,6 +5522,49 @@ public class XfDecompileDomVisitor {
     }
 
 
+    /**
+     * Decompile 'syncAllStatement' element in XcodeML/F.
+     */
+    class SyncAllStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("SYNC");
+            writer.writeToken("ALL");
+            writer.writeToken("(");
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'syncStat' element in XcodeML/F.
+     */
+    class SyncStatVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            XmfWriter writer = _context.getWriter();
+
+            String kind = XmDomUtil.getAttr(n, "kind");
+            if (XfUtilForDom.isNullOrEmpty(kind) == false) {
+                writer.writeToken(kind);
+                Node var = XmDomUtil.getElement(n, "Var");
+                if (var != null) {
+                    writer.writeToken("=");
+                    invokeEnter(var);
+                }
+            }
+        }
+    }
+
+
     private Boolean _isNameDefinedWithUseStmt(String name) {
       final String[] libNames = {
         "xmpf_cobound", "xmpf_this_image",
@@ -5665,5 +5705,7 @@ public class XfDecompileDomVisitor {
         new Pair("varDecl", new VarDeclVisitor()),
         new Pair("varList", new VarListVisitor()),
         new Pair("varRef", new VarRefVisitor()),
+        new Pair("syncAllStatement", new SyncAllStatementVisitor()),
+        new Pair("syncStat", new SyncStatVisitor()),
     };
 }
