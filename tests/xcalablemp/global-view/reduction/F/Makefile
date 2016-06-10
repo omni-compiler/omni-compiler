@@ -19,6 +19,7 @@ run: $(EXES)
 	$(XRUN) -n 4 ./max.x
 	$(XRUN) -n 4 ./min.x
 	$(XRUN) -n 4 ./raise.x
+	$(XRUN) -n 4 ./func.x
 	$(XRUN) -n 4 ./reduction_iand.x
 	$(XRUN) -n 4 ./reduction_ior.x
 	$(XRUN) -n 4 ./reduction_ieor.x
