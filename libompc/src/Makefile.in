@@ -18,6 +18,8 @@ OMPFRTOBJ_SRC    = ompf_main.F90
 DEFAULT_LIB_NAME = libompc.a
 lib_LIBRARIES    = $(LIB_TARGET)
 LIBDIR           = @OMNI_HOME@/lib
+INCDIR           = @OMNI_HOME@/include
+OMP_HEADER       = ../../include/omp.h
 
 all:    $(OMPCRTOBJ) $(OMPFRTOBJ) doAllLib
 include ./target.tmpl
@@ -27,9 +29,10 @@ $(OMPCRTOBJ): $(OMPCRTOBJ_SRC)
 $(OMPFRTOBJ): $(OMPFRTOBJ_SRC)
 	$(FC) $(FCFLAGS) -c $<
 
-install: $(OMPCRTOBJ) $(OMPFRTOBJ) libompc_mutex_pthread.a
+install: $(OMPCRTOBJ) $(OMPFRTOBJ) libompc_mutex_pthread.a $(OMP_HEADER)
 	$(MKDIR_P) $(LIBDIR)
-	$(INSTALL) $^ $(LIBDIR)
+	$(INSTALL) $(OMPCRTOBJ) $(OMPFRTOBJ) libompc_mutex_pthread.a $(LIBDIR)
+	$(INSTALL) $(OMP_HEADER) $(INCDIR)
 
 clean:
 	rm -f *.o $(LIB_TARGET) *._*_o
