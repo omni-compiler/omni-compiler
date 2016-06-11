@@ -78,7 +78,7 @@ omni_exec scp ${LOCAL_TMP_DIR}/${ARCHIVE} ${REMOTE_HOST}:${REMOTE_TMP_DIR}
 
 ## Expand omni-compiler
 echo "Expand archive ..."
-CMD="mkdir -p ${GASNET_OPENMPI_BASE_DIR} ${GASNET_MPICH_BASE_DIR} ${OPENMPI_BASE_DIR} ${MPICH_BASE_DIR}; \
+CMD="mkdir -p ${GASNET_OPENMPI_BASE_DIR}; \
      tar xfj ${REMOTE_TMP_DIR}/${ARCHIVE} -C ${GASNET_OPENMPI_BASE_DIR};\
      cp -a ${GASNET_OPENMPI_BASE_DIR} ${GASNET_MPICH_BASE_DIR}; \
      cp -a ${GASNET_OPENMPI_BASE_DIR} ${OPENMPI_BASE_DIR}; \
@@ -91,8 +91,8 @@ echo "------------------------"
 echo "  Summury of compilers  "
 echo "------------------------"
 CMD="LANG=C; gcc -v 2>&1 > /dev/null | tail -1 && \
-     ls -l1 /opt/ | grep GASNet-mpich | awk '{print $10}' && \
-     ls -l1 /opt/ | grep GASNet-openmpi | awk '{print $10}'"
+     ls -l1 /opt/GASNet-openmpi | awk '{print \$11}' && \
+     ls -l1 /opt/GASNet-mpich   | awk '{print \$11}'"
 omni_exec ssh ${REMOTE_HOST} ${CMD}
 
 ## GASNet and openmpi
@@ -125,7 +125,7 @@ echo "-----------------------------------"
 echo "  Test omni compiler with OpenMPI  "
 echo "-----------------------------------"
 CMD="export PATH=${OPENMPI_PATH}/bin:${OPENMPI_INSTALL_DIR}/bin:$PATH && \
-     cd ${GASNET_OPENMPI_BASE_DIR}/${OMNI} && \
+     cd ${OPENMPI_BASE_DIR}/${OMNI} && \
      sh autogen.sh && \
      ./configure --prefix=${OPENMPI_INSTALL_DIR} && \
      make -j && make install && make tests -j && make run-tests"
@@ -137,7 +137,7 @@ echo "---------------------------------"
 echo "  Test omni compiler with MPICH  "
 echo "---------------------------------"
 CMD="export PATH=${MPICH_PATH}/bin:${MPICH_INSTALL_DIR}/bin:$PATH && \
-     cd ${GASNET_MPICH_BASE_DIR}/${OMNI} && \
+     cd ${MPICH_BASE_DIR}/${OMNI} && \
      sh autogen.sh && \
      ./configure --prefix=${MPICH_INSTALL_DIR} && \
      make -j && make install && make tests -j && make run-tests"
