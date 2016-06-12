@@ -19,6 +19,7 @@ extern expv CURRENT_STATEMENTS_saved;
 /* 			  expv *pc,expv *dc); */
 expv ACC_pragma_list(enum ACC_pragma pragma,expv arg1,expv arg2);
 /* void check_for_OMP_pragma(expr x); */
+int check_for_XMP_pragma(int st_no, expr x);
 
 void init_for_ACC_pragma();
 void check_for_ACC_pragma(expr x);
@@ -210,7 +211,6 @@ void compile_ACC_directive(expr x)
     }
 
     //check_for_OMP_pragma(x);
-    //check_for_XMP_pragma(-1, x);
 
     //loop, parallel loop, or kernels loop
     /* if(_ACC_do_required){ */
@@ -229,6 +229,7 @@ void compile_ACC_directive(expr x)
     enum ACC_pragma dir_enum = EXPR_INT(directive);
 
     check_for_ACC_pragma_2(x, dir_enum);
+    check_for_XMP_pragma(-1, x);
 
     switch(dir_enum){
       //Constructs with end pragma

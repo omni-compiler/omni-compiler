@@ -5,6 +5,7 @@ expv XMP_pragma_list(enum XMP_pragma pragma,expv arg1,expv arg2);
 static int close_XMP_IO_closure(int st_no, expr x);
 int check_for_XMP_pragma(int st_no, expr x);
 void check_for_OMP_pragma(expr x);
+void check_for_ACC_pragma(expr x);
 
 // void compile_XMP_name_list(expr x);
 
@@ -94,6 +95,7 @@ void compile_XMP_directive(expr x)
     }
 
     check_for_OMP_pragma(x);
+    check_for_ACC_pragma(x);
     check_for_XMP_pragma(-1, x);
 
     if(XMP_do_required){
@@ -404,6 +406,7 @@ int check_for_XMP_pragma(int st_no, expr x)
       // don't care the order of pragma around XMP LOOP
       if(EXPR_CODE(x) == F_PRAGMA_STATEMENT) goto done;
       if(EXPR_CODE(x) == LIST && EXPR_INT(EXPR_ARG1(x)) == OMP_F_PARALLEL_DO) goto done;
+      if(EXPR_CODE(x) == ACC_PRAGMA && (EXPR_INT(EXPR_ARG1(x)) == ACC_PARALLEL_LOOP || EXPR_INT(EXPR_ARG1(x)) == ACC_KERNELS_LOOP)) goto done;
       if(EXPR_CODE(x) != F_DO_STATEMENT)
 	  error("XMP LOOP directives must be followed by do statement");
       XMP_do_required = FALSE;
@@ -442,7 +445,8 @@ int check_for_XMP_pragma(int st_no, expr x)
 	}
     }
     if(EXPR_CODE(statements) != F_DO_STATEMENT &&
-       EXPR_CODE(statements) != OMP_PRAGMA){
+       EXPR_CODE(statements) != OMP_PRAGMA && 
+       EXPR_CODE(statements) != ACC_PRAGMA ){
       // not fully checked ? only PARALLEL DO should be accepted.
 	fatal("XMP LOOP directive must be followed by do statements");
     }
