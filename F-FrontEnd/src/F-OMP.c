@@ -20,6 +20,8 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 
 void check_for_OMP_pragma(expr x);
 int check_for_XMP_pragma(int st_no, expr x);
+void check_for_ACC_pragma(expr x);
+int is_ACC_loop_pragma(expv x);
 
 static int OMP_do_required;
 
@@ -67,6 +69,7 @@ void check_for_OMP_pragma(expr x)
 {
     if(OMP_do_required){
         if (EXPR_CODE(x) == XMP_PRAGMA && EXPR_INT(EXPR_ARG1(x)) == XMP_LOOP) return;
+        if (is_ACC_loop_pragma(x)) return;
 	if(EXPR_CODE(x) != F_DO_STATEMENT)
 	    error("OpenMP DO directives must be followed by do statement");
 	OMP_do_required = FALSE;
@@ -138,8 +141,10 @@ expv OMP_FOR_pragma_list(expv clause,expv statements)
     if(EXPR_CODE(statements) != LIST) 
 	fatal("OMP_FOR_pragma_list: unknown list");
     FOR_ITEMS_IN_LIST(lp,statements){
-	if(EXPR_CODE(LIST_ITEM(lp)) == F_DO_STATEMENT){
-	    LIST_ITEM(lp) = OMP_pragma_list(OMP_FOR,clause,LIST_ITEM(lp));
+        expv xx = LIST_ITEM(lp);
+	if(EXPR_CODE(xx) == F_DO_STATEMENT || 
+	   is_ACC_loop_pragma(xx)){
+	    LIST_ITEM(lp) = OMP_pragma_list(OMP_FOR,clause,xx);
 	    break;
 	}
     }
@@ -161,6 +166,7 @@ void compile_OMP_directive(expr x)
 	fprintf(stderr, "\n");
     }
 
+    check_for_ACC_pragma(x);
     check_for_OMP_pragma(x);
     check_for_XMP_pragma(-1, x);
 

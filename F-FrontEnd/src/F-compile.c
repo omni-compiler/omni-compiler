@@ -249,8 +249,8 @@ compile_statement(st_no,x)
         expr_print(x,debug_fp);
     }
 
-    check_for_OMP_pragma(x);
     check_for_ACC_pragma(x);
+    check_for_OMP_pragma(x);
     doCont = check_for_XMP_pragma(st_no, x);
 
     if (st_no != 0 && doCont == 1) {

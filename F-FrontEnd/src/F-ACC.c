@@ -18,7 +18,7 @@ extern expv CURRENT_STATEMENTS_saved;
 /* void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel, */
 /* 			  expv *pc,expv *dc); */
 expv ACC_pragma_list(enum ACC_pragma pragma,expv arg1,expv arg2);
-/* void check_for_OMP_pragma(expr x); */
+void check_for_OMP_pragma(expr x);
 int check_for_XMP_pragma(int st_no, expr x);
 
 void init_for_ACC_pragma();
@@ -229,6 +229,7 @@ void compile_ACC_directive(expr x)
     enum ACC_pragma dir_enum = EXPR_INT(directive);
 
     check_for_ACC_pragma_2(x, dir_enum);
+    check_for_OMP_pragma(x);
     check_for_XMP_pragma(-1, x);
 
     switch(dir_enum){
@@ -453,4 +454,18 @@ static expv compile_clause_list(expr x)
     ret_list = list_put_last(ret_list, vv);
   }
   return ret_list;
+}
+
+int is_ACC_loop_pragma(expv x)
+{
+  if(EXPR_CODE(x) != ACC_PRAGMA) return FALSE;
+
+  enum ACC_pragma code = EXPR_INT(EXPR_ARG1(x));
+  if(code == ACC_LOOP ||
+     code == ACC_PARALLEL_LOOP || 
+     code == ACC_KERNELS_LOOP ){
+    return TRUE;
+  }
+
+  return FALSE;
 }
