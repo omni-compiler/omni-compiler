@@ -332,26 +332,22 @@ static void check_for_ACC_pragma_2(expr x, enum ACC_pragma dir)
 
   if(CTL_TYPE(ctl_top) != CTL_ACC) return;
 
-  enum ACC_pragma dir_enum = CTL_ACC_ARG_DIR(ctl_top);
+  enum ACC_pragma ctl_top_dir = CTL_ACC_ARG_DIR(ctl_top);
 
-  if(dir != ACC_END_PARALLEL_LOOP && dir != ACC_END_KERNELS_LOOP){
-    // close LOOP | PARALLEL_LOOP | KERNELS_LOOP directive if possible
-    if(dir_enum == ACC_LOOP
-       || dir_enum == ACC_PARALLEL_LOOP
-       || dir_enum == ACC_KERNELS_LOOP
-       ){
-      pop_ACC_loop_construct(dir_enum);
-    }
+  // close LOOP | PARALLEL_LOOP | KERNELS_LOOP directive if possible
+  if(ctl_top_dir == ACC_LOOP
+     || (ctl_top_dir == ACC_PARALLEL_LOOP && dir != ACC_END_PARALLEL_LOOP)
+     || (ctl_top_dir == ACC_KERNELS_LOOP && dir != ACC_END_KERNELS_LOOP)
+     ){
+    pop_ACC_loop_construct(ctl_top_dir);
   }
 
-  if(dir != ACC_END_ATOMIC){
-    // close ATOMIC directive if possible
-    if(dir_enum == ACC_ATOMIC){
-      expv clauses = CTL_ACC_ARG_CLAUSE(ctl_top);
-      int is_clause = is_ACC_pragma(EXPR_ARG1(clauses), ACC_CLAUSE_CAPTURE);
-      if(! is_clause){
-	pop_ACC_atomic_construct(dir_enum);
-      }
+  // close ATOMIC directive if possible
+  if(ctl_top_dir == ACC_ATOMIC && dir != ACC_END_ATOMIC){
+    expv clauses = CTL_ACC_ARG_CLAUSE(ctl_top);
+    int is_clause = is_ACC_pragma(EXPR_ARG1(clauses), ACC_CLAUSE_CAPTURE);
+    if(! is_clause){
+      pop_ACC_atomic_construct(ctl_top_dir);
     }
   }
 }
