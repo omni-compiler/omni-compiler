@@ -1,4 +1,4 @@
-#define NAMELEN 25
+#define NAMELEN 35
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
