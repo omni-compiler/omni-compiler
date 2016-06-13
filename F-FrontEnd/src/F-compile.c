@@ -102,6 +102,7 @@ static void fix_array_dimensions_recursive(ID ip);
 static void fix_pointer_pointee_recursive(TYPE_DESC tp);
 static void compile_data_style_decl(expr x);
 
+static void compile_SYNCALL_statement(expr x);
 
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
@@ -1165,6 +1166,11 @@ compile_exec_statement(expr x)
     case F95_POINTER_SET_STATEMENT:
         compile_POINTER_SET_statement(x);
         break;
+
+    case F2008_SYNCALL_STATEMENT:
+        compile_SYNCALL_statement(x);
+        break;
+
 
     default:
         fatal("unknown statement");
@@ -2559,7 +2565,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
 
         if (do_var == NULL || do_init == NULL || 
             do_limit == NULL || do_incr == NULL) return;
-        
+
         var_tp = EXPV_TYPE(do_var);
         if (!IS_INT(var_tp) && !IS_REAL(var_tp)) {
             error("bad type on do variable");
@@ -5088,3 +5094,76 @@ compile_data_style_decl(expr decl_list)
     }
 }
 
+
+static
+void
+compile_sync_stat_args(expv st, expr x) {
+    list lp;
+    int has_keyword_stat = FALSE;
+    int has_keyword_errmsg = FALSE;
+
+    FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
+        expr v, arg;
+
+        v = LIST_ITEM(lp);
+
+        if (EXPR_CODE(v) != F_SET_EXPR) {
+            fprintf(stderr, "EXPR_CODE(x) is %d\n", EXPR_CODE(v));
+            fatal("%s: not F_SET_EXPR.", __func__);
+        }
+
+        arg = compile_expression(EXPR_ARG2(v));
+        if (EXPV_CODE(arg) != F_VAR) {
+            error("not a variable.");
+            return;
+        }
+
+        char *keyword = SYM_NAME(EXPR_SYM(EXPR_ARG1(v)));
+        if (keyword == NULL || *keyword == '\0') {
+            fatal("%s: invalid F_SET_EXPR.", __func__);
+        }
+
+        if (strcmp("stat", keyword) == 0) {
+            if (has_keyword_stat == TRUE) {
+                error("no specifier shall appear more than once");
+                return;
+            }
+            has_keyword_stat = TRUE;
+
+            if (!IS_INT(EXPV_TYPE(arg))) {
+                error("stat variable should be interger");
+                return;
+            }
+
+        } else if (strcmp("errmsg", keyword) == 0) {
+            if (has_keyword_errmsg == TRUE) {
+                error("no specifier shall appear more than once");
+                return;
+            }
+            has_keyword_errmsg = TRUE;
+
+            if (!IS_CHAR(EXPV_TYPE(arg))) {
+                error("errmsg variable should be character");
+                return;
+            }
+
+        } else {
+            error("unexpected specifier '%s'", keyword);
+            return;
+        }
+
+        EXPV_KWOPT_NAME(arg) = (const char *)strdup(keyword);
+
+        list_put_last(st, arg);
+    }
+}
+
+
+
+static void
+compile_SYNCALL_statement(expr x) {
+    expv st;
+    st = list0(F2008_SYNCALL_STATEMENT);
+    compile_sync_stat_args(st, x);
+    output_statement(st);
+}
