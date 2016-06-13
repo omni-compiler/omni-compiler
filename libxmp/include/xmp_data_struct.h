@@ -136,6 +136,8 @@ typedef struct _XMP_reflect_sched_type {
 #if defined(_XMP_TCA)
   off_t lo_src_offset, lo_dst_offset;
   off_t hi_src_offset, hi_dst_offset;
+  void *lo_send_handle, *lo_recv_handle;
+  void *hi_send_handle, *hi_recv_handle;
 #endif
 } _XMP_reflect_sched_t;
 
