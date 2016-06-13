@@ -2565,7 +2565,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
 
         if (do_var == NULL || do_init == NULL || 
             do_limit == NULL || do_incr == NULL) return;
-        
+
         var_tp = EXPV_TYPE(do_var);
         if (!IS_INT(var_tp) && !IS_REAL(var_tp)) {
             error("bad type on do variable");
@@ -5095,11 +5095,12 @@ compile_data_style_decl(expr decl_list)
 }
 
 
-static void
-compile_SYNCALL_statement(expr x) {
-    expv st;
+static
+void
+compile_sync_stat_args(expv st, expr x) {
     list lp;
-    st = list0(F2008_SYNCALL_STATEMENT);
+    int has_keyword_stat = FALSE;
+    int has_keyword_errmsg = FALSE;
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
         expr v, arg;
@@ -5113,8 +5114,7 @@ compile_SYNCALL_statement(expr x) {
 
         arg = compile_expression(EXPR_ARG2(v));
         if (EXPV_CODE(arg) != F_VAR) {
-            fprintf(stderr, "EXPR_CODE(v) is %d\n", EXPR_CODE(arg));
-            fatal("%s: not an ident.", __func__);
+            error("not a variable.");
             return;
         }
 
@@ -5123,10 +5123,47 @@ compile_SYNCALL_statement(expr x) {
             fatal("%s: invalid F_SET_EXPR.", __func__);
         }
 
+        if (strcmp("stat", keyword) == 0) {
+            if (has_keyword_stat == TRUE) {
+                error("no specifier shall appear more than once");
+                return;
+            }
+            has_keyword_stat = TRUE;
+
+            if (!IS_INT(EXPV_TYPE(arg))) {
+                error("stat variable should be interger");
+                return;
+            }
+
+        } else if (strcmp("errmsg", keyword) == 0) {
+            if (has_keyword_errmsg == TRUE) {
+                error("no specifier shall appear more than once");
+                return;
+            }
+            has_keyword_errmsg = TRUE;
+
+            if (!IS_CHAR(EXPV_TYPE(arg))) {
+                error("errmsg variable should be character");
+                return;
+            }
+
+        } else {
+            error("unexpected specifier '%s'", keyword);
+            return;
+        }
+
         EXPV_KWOPT_NAME(arg) = (const char *)strdup(keyword);
 
         list_put_last(st, arg);
-
     }
+}
+
+
+
+static void
+compile_SYNCALL_statement(expr x) {
+    expv st;
+    st = list0(F2008_SYNCALL_STATEMENT);
+    compile_sync_stat_args(st, x);
     output_statement(st);
 }
