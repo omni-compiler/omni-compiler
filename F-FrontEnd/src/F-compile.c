@@ -104,6 +104,7 @@ static void compile_data_style_decl(expr x);
 
 static void compile_SYNCALL_statement(expr x);
 static void compile_SYNCIMAGES_statement(expr x);
+static void compile_SYNCMEMORY_statement(expr x);
 
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
@@ -1175,6 +1176,11 @@ compile_exec_statement(expr x)
     case F2008_SYNCIMAGES_STATEMENT:
         compile_SYNCIMAGES_statement(x);
         break;
+
+    case F2008_SYNCMEMORY_STATEMENT:
+        compile_SYNCMEMORY_statement(x);
+        break;
+
 
     default:
         fatal("unknown statement");
@@ -5197,3 +5203,14 @@ compile_SYNCIMAGES_statement(expr x) {
 
     output_statement(st);
 }
+
+
+static void
+compile_SYNCMEMORY_statement(expr x) {
+    expv st;
+    st = list0(F2008_SYNCMEMORY_STATEMENT);
+    compile_sync_stat_args(st, EXPR_ARG1(x));
+    output_statement(st);
+}
+
+

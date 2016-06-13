@@ -1340,6 +1340,12 @@ action_coarray_statement:
         { $$ = list1(F2008_SYNCALL_STATEMENT,$3); }
         | SYNCIMAGES '(' syncimages_arg_list ')'
         { $$ = list1(F2008_SYNCIMAGES_STATEMENT,$3); }
+        | SYNCMEMORY
+        { $$ = list1(F2008_SYNCMEMORY_STATEMENT,NULL); }
+        | SYNCMEMORY '(' ')'
+        { $$ = list1(F2008_SYNCMEMORY_STATEMENT,NULL); }
+        | SYNCMEMORY '(' sync_stat_arg_list ')'
+        { $$ = list1(F2008_SYNCMEMORY_STATEMENT,$3); }
         | other_coarray_keyword parenthesis_arg_list_or_null
         { $$ = list2(F_CALL_STATEMENT,$1,$2); }
         ;
@@ -1372,9 +1378,7 @@ image_set:
         ;
 
 other_coarray_keyword:
-          SYNCMEMORY
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_memory")); }
-        | LOCK
+          LOCK
         { $$ = GEN_NODE(IDENT, find_symbol("xmpf_lock")); }
         | UNLOCK
         { $$ = GEN_NODE(IDENT, find_symbol("xmpf_unlock")); }

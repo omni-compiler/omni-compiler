@@ -188,8 +188,9 @@ xtag(enum expr_code code)
     case F95_USER_DEFINED_UNARY_EXPR:           return "userUnaryExpr";
 
 
-    case F2008_SYNCALL_STATEMENT:      return "syncAllStatement";
-    case F2008_SYNCIMAGES_STATEMENT:   return "syncImagesStatement";
+    case F2008_SYNCALL_STATEMENT:    return "syncAllStatement";
+    case F2008_SYNCIMAGES_STATEMENT: return "syncImagesStatement";
+    case F2008_SYNCMEMORY_STATEMENT: return "syncMemoryStatement";
 
                                 
     /*                          
@@ -2787,7 +2788,16 @@ outx_SYNCIMAGES_statement(int l, expv v)
     outx_expvClose(l, v);
 }
 
-
+/**
+ * output syncmemoryStatement
+ */
+static void
+outx_SYNCMEMORY_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    outx_syncstat_list(l + 1, v);
+    outx_expvClose(l, v);
+}
 
 //static void
 void
@@ -3092,6 +3102,10 @@ outx_expv(int l, expv v)
 
     case F2008_SYNCIMAGES_STATEMENT:
       outx_SYNCIMAGES_statement(l, v);
+      break;
+
+    case F2008_SYNCMEMORY_STATEMENT:
+      outx_SYNCMEMORY_statement(l, v);
       break;
 
 
