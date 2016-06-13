@@ -103,6 +103,7 @@ static void fix_pointer_pointee_recursive(TYPE_DESC tp);
 static void compile_data_style_decl(expr x);
 
 static void compile_SYNCALL_statement(expr x);
+static void compile_SYNCIMAGES_statement(expr x);
 
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
@@ -1171,6 +1172,9 @@ compile_exec_statement(expr x)
         compile_SYNCALL_statement(x);
         break;
 
+    case F2008_SYNCIMAGES_STATEMENT:
+        compile_SYNCIMAGES_statement(x);
+        break;
 
     default:
         fatal("unknown statement");
@@ -5102,7 +5106,10 @@ compile_sync_stat_args(expv st, expr x) {
     int has_keyword_stat = FALSE;
     int has_keyword_errmsg = FALSE;
 
-    FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
+    if (x == NULL)
+        return;
+
+    FOR_ITEMS_IN_LIST(lp, x) {
         expr v, arg;
 
         v = LIST_ITEM(lp);
@@ -5164,6 +5171,29 @@ static void
 compile_SYNCALL_statement(expr x) {
     expv st;
     st = list0(F2008_SYNCALL_STATEMENT);
-    compile_sync_stat_args(st, x);
+    compile_sync_stat_args(st, EXPR_ARG1(x));
+    output_statement(st);
+}
+
+
+static void
+compile_SYNCIMAGES_statement(expr x) {
+    expv st;
+    expv sync_stat;
+
+    st = list0(F2008_SYNCIMAGES_STATEMENT);
+
+    expv image_set = NULL;
+    if (EXPR_ARG1(EXPR_ARG1(x))) {
+        image_set = compile_expression(EXPR_ARG1(EXPR_ARG1(x)));
+    }
+    list_put_last(st, image_set);
+
+    sync_stat = list0(LIST);
+    if (EXPR_ARG2(EXPR_ARG1(x))) {
+        compile_sync_stat_args(sync_stat, EXPR_ARG2(EXPR_ARG1(x)));
+    }
+    list_put_last(st, sync_stat);
+
     output_statement(st);
 }

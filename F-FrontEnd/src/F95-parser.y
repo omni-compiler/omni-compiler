@@ -385,8 +385,8 @@ gen_default_real_kind(void) {
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
 %type <val> result_opt type_keyword
 %type <val> action_statement95
-%type <val> action_coarray_statement coarray_syncall_keyword sync_stat_arg_list sync_stat_arg coarray_syncimages_keyword other_coarray_keyword
-%type <val> syncimages_arg_list
+%type <val> action_coarray_statement sync_stat_arg_list sync_stat_arg other_coarray_keyword
+%type <val> syncimages_arg_list image_set
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
@@ -1332,22 +1332,18 @@ allocation:
         ;
 
 action_coarray_statement:
-          coarray_syncall_keyword 
+          SYNCALL
         { $$ = list1(F2008_SYNCALL_STATEMENT,NULL); }
-        | coarray_syncall_keyword '(' ')'
+        | SYNCALL '(' ')'
         { $$ = list1(F2008_SYNCALL_STATEMENT,NULL); }
-        | coarray_syncall_keyword '(' sync_stat_arg_list ')'
+        | SYNCALL '(' sync_stat_arg_list ')'
         { $$ = list1(F2008_SYNCALL_STATEMENT,$3); }
-        | coarray_syncimages_keyword '(' syncimages_arg_list ')'
-        { $$ = list2(F_CALL_STATEMENT,$1,$3); }
+        | SYNCIMAGES '(' syncimages_arg_list ')'
+        { $$ = list1(F2008_SYNCIMAGES_STATEMENT,$3); }
         | other_coarray_keyword parenthesis_arg_list_or_null
         { $$ = list2(F_CALL_STATEMENT,$1,$2); }
         ;
 
-coarray_syncall_keyword:
-        SYNCALL
-        { $$ = list0(F2008_SYNCALL_STATEMENT); }
-        ;
 
 sync_stat_arg_list:
         sync_stat_arg
@@ -1361,9 +1357,18 @@ sync_stat_arg:
         { $$ = list2(F_SET_EXPR,$1,$3); }
         ;
 
-coarray_syncimages_keyword:
-          SYNCIMAGES 
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_images")); }
+syncimages_arg_list:
+          image_set
+        { $$ = list2(LIST,$1,NULL); }
+        | image_set ',' sync_stat_arg_list
+        { $$ = list2(LIST,$1,$3); }
+        ;
+
+image_set:
+          expr
+        { $$ = $1; }
+        | '*'
+        { $$ = NULL; }
         ;
 
 other_coarray_keyword:
@@ -1418,14 +1423,6 @@ arg:
          { $$ = list3(F95_TRIPLET_EXPR,$1,NULL,$3); }
         ;
 
-syncimages_arg_list:
-          expr
-        { $$ = list1(LIST,$1); }
-        | '*'
-        { $$ = list1(LIST,GEN_NODE(STRING_CONSTANT,strdup("*"))); }
-        | syncimages_arg_list ',' arg
-        { $$ = list_put_last($1,$3); }
-        ;
 
 image_selector:
           '[' cosubscript_list ']'
