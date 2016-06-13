@@ -1,4 +1,3 @@
       PROGRAM main
-        SYNC ALL
-        SYNC ALL ()
+        SYNC ALL (STAT=1, ERRMSG='a')
       END PROGRAM main
