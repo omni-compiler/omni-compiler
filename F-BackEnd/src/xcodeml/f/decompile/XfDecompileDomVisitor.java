@@ -2865,7 +2865,7 @@ public class XfDecompileDomVisitor {
             writer.incrementIndentLevel();
             typeManager.enterScope();
             //////////////////////////////
-            if (false) {
+            if (true) {
               writer.writeToken("use xmpf_coarray_decl");
               writer.setupNewLine();
             }
@@ -3260,7 +3260,7 @@ public class XfDecompileDomVisitor {
             writer.incrementIndentLevel();
             typeManager.enterScope();
             //////////////////////////////
-            if (false) {
+            if (true) {
               writer.writeToken("use xmpf_coarray_decl");
               writer.setupNewLine();
             }
