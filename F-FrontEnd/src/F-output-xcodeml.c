@@ -188,7 +188,8 @@ xtag(enum expr_code code)
     case F95_USER_DEFINED_UNARY_EXPR:           return "userUnaryExpr";
 
 
-    case F2008_SYNCALL_STATEMENT:   return "syncAllStatement";
+    case F2008_SYNCALL_STATEMENT:      return "syncAllStatement";
+    case F2008_SYNCIMAGES_STATEMENT:   return "syncImagesStatement";
 
                                 
     /*                          
@@ -2744,24 +2745,45 @@ outx_useOnlyDecl(int l, expv v)
 
 
 
+static void
+outx_syncstat_list(int l, expv v)
+{
+    list lp;
+    expv x;
+    FOR_ITEMS_IN_LIST(lp, v) {
+        x = LIST_ITEM(lp);
+        outx_printi(l, "<syncStat kind=\"%s\">\n",
+                    EXPV_KWOPT_NAME(x)
+                    );
+        outx_varOrFunc(l + 1, x);
+        outx_close(l, "syncStat");
+    }
+}
+
+
 /**
- * output FfunctionDefinition
+ * output syncAllStatement
  */
 static void
 outx_SYNCALL_statement(int l, expv v)
 {
-    list lp;
-    expv x;
-
     outx_tagOfStatement(l, v);
-    FOR_ITEMS_IN_LIST(lp, v) {
-        x = LIST_ITEM(lp);
-        outx_printi(l + 1, "<syncStat kind=\"%s\">\n",
-                    EXPV_KWOPT_NAME(x)
-                    );
-        outx_varOrFunc(l + 2, x);
-        outx_close(l + 1, "syncStat");
+    outx_syncstat_list(l + 1, v);
+    outx_expvClose(l, v);
+}
+
+
+/**
+ * output syncImagesStatement
+ */
+static void
+outx_SYNCIMAGES_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    if (EXPR_ARG1(v)) {
+        outx_expv(l + 1, EXPR_ARG1(v));
     }
+    outx_syncstat_list(l + 1, EXPR_ARG2(v));
     outx_expvClose(l, v);
 }
 
@@ -3067,6 +3089,11 @@ outx_expv(int l, expv v)
     case F2008_SYNCALL_STATEMENT:
       outx_SYNCALL_statement(l, v);
       break;
+
+    case F2008_SYNCIMAGES_STATEMENT:
+      outx_SYNCIMAGES_statement(l, v);
+      break;
+
 
     default:
         fatal("unkown exprcode : %d", code);

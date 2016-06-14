@@ -5,9 +5,7 @@
  *  $
  */
 package xcodeml.f.decompile;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -5544,6 +5542,44 @@ public class XfDecompileDomVisitor {
 
 
     /**
+     * Decompile 'syncAllStatement' element in XcodeML/F.
+     */
+    class SyncImagesStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+            Node exprModel = null;
+            XmfWriter writer = _context.getWriter();
+
+            NodeList children = n.getChildNodes();
+            int numOfChildren = children.getLength();
+            for (int index = 0; index < numOfChildren; index++) {
+                Node child = children.item(index);
+                if (exprModelSet.contains(child.getNodeName())) {
+                    exprModel = child;
+                }
+            }
+
+            writer.writeToken("SYNC");
+
+            writer.writeToken("IMAGES");
+            writer.writeToken("(");
+            if (exprModel == null) {
+                writer.writeToken("*");
+                if (numOfChildren > 1) {
+                    writer.writeToken(",");
+                }
+            }
+            // Expects the exprModel element comes first.
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
      * Decompile 'syncStat' element in XcodeML/F.
      */
     class SyncStatVisitor extends  XcodeNodeVisitor {
@@ -5554,9 +5590,9 @@ public class XfDecompileDomVisitor {
 
             String kind = XmDomUtil.getAttr(n, "kind");
             if (XfUtilForDom.isNullOrEmpty(kind) == false) {
-                writer.writeToken(kind);
                 Node var = XmDomUtil.getElement(n, "Var");
                 if (var != null) {
+                    writer.writeToken(kind);
                     writer.writeToken("=");
                     invokeEnter(var);
                 }
@@ -5585,6 +5621,48 @@ public class XfDecompileDomVisitor {
       return false;
     }
 
+    final private static Set<String> exprModelSet;
+
+    static {
+        String[] exprModelsList = new String[]{
+                "FintConstant",
+                "FrealConstant",
+                "FcomplexConstant",
+                "FcharacterConstant",
+                "FlogicalConstant",
+                "FarrayConstructor",
+                "FstructConstructor",
+                "Var",
+                "FarrayRef",
+                "FcharacterRef",
+                "FmemberRef",
+                "FcoArrayRef",
+                "varRef",
+                "functionCall",
+                "plusExpr",
+                "minusExpr",
+                "mulExpr",
+                "divExpr",
+                "FpowerExpr",
+                "FconcatExpr",
+                "logEQExpr",
+                "logNEQExpr",
+                "logGEExpr",
+                "logGTExpr",
+                "logLEExpr",
+                "logLTExpr",
+                "logAndExpr",
+                "logOrExpr",
+                "logEQVExpr",
+                "logNEQVExpr",
+                "unaryMinusExpr",
+                "logNotExpr",
+                "userBinaryExpr",
+                "userUnaryExpr",
+                "FdoLoop"
+        };
+        exprModelSet = new HashSet<String>(Arrays.asList(exprModelsList));
+    }
 
     @SuppressWarnings("unchecked")
     private Pair[] pairs = {
@@ -5706,6 +5784,7 @@ public class XfDecompileDomVisitor {
         new Pair("varList", new VarListVisitor()),
         new Pair("varRef", new VarRefVisitor()),
         new Pair("syncAllStatement", new SyncAllStatementVisitor()),
+        new Pair("syncImagesStatement", new SyncImagesStatementVisitor()),
         new Pair("syncStat", new SyncStatVisitor()),
     };
 }
