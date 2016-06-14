@@ -5580,6 +5580,26 @@ public class XfDecompileDomVisitor {
 
 
     /**
+     * Decompile 'syncMemoryStatement' element in XcodeML/F.
+     */
+    class SyncMemoryStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("SYNC");
+            writer.writeToken("MEMORY");
+            writer.writeToken("(");
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+    /**
      * Decompile 'syncStat' element in XcodeML/F.
      */
     class SyncStatVisitor extends  XcodeNodeVisitor {
@@ -5785,6 +5805,7 @@ public class XfDecompileDomVisitor {
         new Pair("varRef", new VarRefVisitor()),
         new Pair("syncAllStatement", new SyncAllStatementVisitor()),
         new Pair("syncImagesStatement", new SyncImagesStatementVisitor()),
+        new Pair("syncMemoryStatement", new SyncMemoryStatementVisitor()),
         new Pair("syncStat", new SyncStatVisitor()),
     };
 }
