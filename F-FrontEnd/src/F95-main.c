@@ -125,6 +125,7 @@ usage()
         "-M [dirpath]              specify module include directory path.",
         "-fopenmp                  enable openmp translation.",
         "-fxmp                     enable XcalableMP translation.",
+        "-fno-xmp-coarray          disable translation coarray statements to XcalableMP subroutin calls.",
         "-Kscope-omp               enable conditional compilation.",
         "-force-fixed-format       read file as fixed format.",
         "-force-free-format        read file as free format.",
@@ -226,6 +227,8 @@ char *argv[];
             OMP_flag = TRUE;   /* enable openmp */
         } else if (strcmp(argv[0],"-fxmp") == 0){
 	    XMP_flag = TRUE;   /* enable XcalableMP */
+        } else if (strcmp(argv[0],"-fno-xmp-coarray") == 0){
+            XMP_coarray_flag = FALSE;   /* disable XcalableMP coarray subroutine*/
         } else if (strcmp(argv[0],"-Kscope-omp") == 0){
 	    cond_compile_enabled = TRUE;
         } else if (strcmp(argv[0],"-fleave-comment") == 0){

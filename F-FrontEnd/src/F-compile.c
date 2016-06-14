@@ -5104,19 +5104,21 @@ compile_data_style_decl(expr decl_list)
     }
 }
 
-
-static
-void
-compile_sync_stat_args(expv st, expr x) {
+static void
+compile_sync_stat_args_skip_first(expv st, expr x, size_t skip) {
     list lp;
     int has_keyword_stat = FALSE;
     int has_keyword_errmsg = FALSE;
+    size_t idx = 0;
 
     if (x == NULL)
         return;
 
     FOR_ITEMS_IN_LIST(lp, x) {
         expr v, arg;
+        idx++;
+        if (idx <= skip)
+            continue;
 
         v = LIST_ITEM(lp);
 
@@ -5171,6 +5173,10 @@ compile_sync_stat_args(expv st, expr x) {
     }
 }
 
+static void
+compile_sync_stat_args(expv st, expr x) {
+    compile_sync_stat_args_skip_first(st, x, 0);
+}
 
 
 static void
@@ -5186,19 +5192,24 @@ static void
 compile_SYNCIMAGES_statement(expr x) {
     expv st;
     expv sync_stat;
+    expv image_set = NULL;
+    expr arg;
 
     st = list0(F2008_SYNCIMAGES_STATEMENT);
 
-    expv image_set = NULL;
-    if (EXPR_ARG1(EXPR_ARG1(x))) {
-        image_set = compile_expression(EXPR_ARG1(EXPR_ARG1(x)));
+    if (!EXPR_HAS_ARG1(x) || !EXPR_HAS_ARG1(EXPR_ARG1(x))) {
+      fatal("SYNC IMAGES must have one argument at least");
     }
+    arg = EXPR_ARG1(x);
+
+    if (EXPR_ARG1(arg)) {
+        image_set = compile_expression(EXPR_ARG1(arg));
+    }
+    // if NULL, the argment is '*'
     list_put_last(st, image_set);
 
     sync_stat = list0(LIST);
-    if (EXPR_ARG2(EXPR_ARG1(x))) {
-        compile_sync_stat_args(sync_stat, EXPR_ARG2(EXPR_ARG1(x)));
-    }
+    compile_sync_stat_args_skip_first(sync_stat, arg, 1);
     list_put_last(st, sync_stat);
 
     output_statement(st);

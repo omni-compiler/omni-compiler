@@ -36,7 +36,7 @@ if test -z "${OMNI_JAVA}"; then
 	OMNI_JAVA=java
 fi
 export OMNI_JAVA
-frontend=${work}/F-FrontEnd/src/F_Front
+frontend=${work}/F-FrontEnd/src/F_Front -fno-xmp-coarray
 backend=${work}/F-BackEnd/bin/F_Back
 nativecomp=gfortran
 tmpdir=${work}/compile

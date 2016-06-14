@@ -351,6 +351,9 @@ static void append_pragma_str _ANSI_ARGS_((char *p));
 /* statement name */
 expr st_name;
 
+/* */
+int XMP_coarray_flag = TRUE;
+
 /************************* NOT USED
 static expr
 gen_default_real_kind(void) {
@@ -385,8 +388,8 @@ gen_default_real_kind(void) {
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
 %type <val> result_opt type_keyword
 %type <val> action_statement95
-%type <val> action_coarray_statement sync_stat_arg_list sync_stat_arg other_coarray_keyword
-%type <val> syncimages_arg_list image_set
+%type <val> action_coarray_statement coarray_syncall_keyword coarray_syncimages_keyword coarray_syncmemory_keyword other_coarray_keyword
+%type <val> sync_stat_arg_list sync_stat_arg syncimages_arg_list image_set
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
@@ -1332,49 +1335,66 @@ allocation:
         ;
 
 action_coarray_statement:
-          SYNCALL
-        { $$ = list1(F2008_SYNCALL_STATEMENT,NULL); }
-        | SYNCALL '(' ')'
-        { $$ = list1(F2008_SYNCALL_STATEMENT,NULL); }
-        | SYNCALL '(' sync_stat_arg_list ')'
-        { $$ = list1(F2008_SYNCALL_STATEMENT,$3); }
-        | SYNCIMAGES '(' syncimages_arg_list ')'
-        { $$ = list1(F2008_SYNCIMAGES_STATEMENT,$3); }
-        | SYNCMEMORY
-        { $$ = list1(F2008_SYNCMEMORY_STATEMENT,NULL); }
-        | SYNCMEMORY '(' ')'
-        { $$ = list1(F2008_SYNCMEMORY_STATEMENT,NULL); }
-        | SYNCMEMORY '(' sync_stat_arg_list ')'
-        { $$ = list1(F2008_SYNCMEMORY_STATEMENT,$3); }
+          coarray_syncall_keyword
+        { $$ = XMP_coarray_flag ? list2(F_CALL_STATEMENT,$1,NULL) : list1(F2008_SYNCALL_STATEMENT,NULL); }
+        | coarray_syncall_keyword '(' ')'
+        { $$ = XMP_coarray_flag ? list2(F_CALL_STATEMENT,$1,NULL) : list1(F2008_SYNCALL_STATEMENT,NULL); }
+        | coarray_syncall_keyword '(' sync_stat_arg_list ')'
+        { $$ = XMP_coarray_flag ? list2(F_CALL_STATEMENT,$1,$3)   : list1(F2008_SYNCALL_STATEMENT,$3); }
+        | coarray_syncimages_keyword '(' syncimages_arg_list ')'
+        { $$ = XMP_coarray_flag ? list2(F_CALL_STATEMENT,$1,$3)   : list1(F2008_SYNCIMAGES_STATEMENT,$3); }
+        | coarray_syncmemory_keyword
+        { $$ = XMP_coarray_flag ? list2(F_CALL_STATEMENT,$1,NULL) : list1(F2008_SYNCMEMORY_STATEMENT,NULL); }
+        | coarray_syncmemory_keyword '(' ')'
+        { $$ = XMP_coarray_flag ? list2(F_CALL_STATEMENT,$1,NULL) : list1(F2008_SYNCMEMORY_STATEMENT,NULL); }
+        | coarray_syncmemory_keyword '(' sync_stat_arg_list ')'
+        { $$ = XMP_coarray_flag ? list2(F_CALL_STATEMENT,$1,$3)   : list1(F2008_SYNCMEMORY_STATEMENT,$3); }
         | other_coarray_keyword parenthesis_arg_list_or_null
         { $$ = list2(F_CALL_STATEMENT,$1,$2); }
         ;
 
 
+coarray_syncall_keyword:
+          SYNCALL
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_all")); }
+        ;
+
+
+coarray_syncimages_keyword:
+          SYNCIMAGES
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_images")); }
+        ;
+
+
+coarray_syncmemory_keyword:
+          SYNCMEMORY
+        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_memory")); }
+        ;
+
 sync_stat_arg_list:
-        sync_stat_arg
+          sync_stat_arg
         { $$ = list1(LIST, $1); }
         | sync_stat_arg_list ',' sync_stat_arg
         { $$ = list_put_last($1,$3); }
         ;
 
 sync_stat_arg:
-        IDENTIFIER '=' IDENTIFIER
+          IDENTIFIER '=' IDENTIFIER
         { $$ = list2(F_SET_EXPR,$1,$3); }
         ;
 
 syncimages_arg_list:
           image_set
-        { $$ = list2(LIST,$1,NULL); }
-        | image_set ',' sync_stat_arg_list
-        { $$ = list2(LIST,$1,$3); }
+        { $$ = list1(LIST,$1); }
+        | syncimages_arg_list ',' sync_stat_arg
+        { $$ = list_put_last($1,$3); }
         ;
 
 image_set:
           expr
         { $$ = $1; }
         | '*'
-        { $$ = NULL; }
+        { $$ = XMP_coarray_flag ? GEN_NODE(STRING_CONSTANT,strdup("*")) : NULL; }
         ;
 
 other_coarray_keyword:

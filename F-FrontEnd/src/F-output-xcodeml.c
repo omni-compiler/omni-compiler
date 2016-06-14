@@ -2781,10 +2781,12 @@ static void
 outx_SYNCIMAGES_statement(int l, expv v)
 {
     outx_tagOfStatement(l, v);
-    if (EXPR_ARG1(v)) {
+    if (EXPR_HAS_ARG1(v)) {
         outx_expv(l + 1, EXPR_ARG1(v));
     }
-    outx_syncstat_list(l + 1, EXPR_ARG2(v));
+    if (EXPR_HAS_ARG2(v)) {
+        outx_syncstat_list(l + 1, EXPR_ARG2(v));
+    }
     outx_expvClose(l, v);
 }
 
