@@ -492,7 +492,12 @@ public class XMPtransPragma
 	type = type.getRef();
       }
       if(!type.isBasic()){
-	XMP.fatal("reduction for non-basic type ="+type);
+        if(type.isFunction() && type.getRef().isBasic()){
+          type = type.getRef();
+        }
+        else {
+	  XMP.fatal("reduction for non-basic type ="+type);
+        }
       }
 
       Xobject args = Xcons.List(id.Ref(),size_expr,

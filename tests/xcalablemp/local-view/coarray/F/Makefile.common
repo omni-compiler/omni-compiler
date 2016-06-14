@@ -22,21 +22,21 @@ RESULT6=$(RESULT:.result=.result6)
 	xmpf90 $(OPT) --Wx-fcoarray=6 -o $@ $<
 
 %.result: %.x
-	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $<
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
 
 %.result4: %.x4
-	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $<
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
 
 %.result6: %.x6
-	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $<
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
 
 %.result: %.f90
 	xmpf90 $(OPT) -o $*.x $<
-	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $*.x
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$*.x
 
 %.result: %.c
 	xmpcc $(OPT) -o $*.x $<
-	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) $*.x
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$*.x
 	cat $@
 
 RUN/%.x:: %.x
