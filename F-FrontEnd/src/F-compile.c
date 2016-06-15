@@ -40,6 +40,10 @@ extern int fixed_line_len_kind;
 extern int auto_save_attr_kb;
 
 
+/* Translate image control statements to xmp subroutine call statements */
+int XMP_coarray_flag = TRUE;
+
+
 /* control stack */
 CTL ctls[MAX_CTL];
 CTL *ctl_top;
@@ -5182,6 +5186,14 @@ compile_sync_stat_args(expv st, expr x) {
 static void
 compile_SYNCALL_statement(expr x) {
     expv st;
+    if (XMP_coarray_flag) {
+        expr y = list2(
+            F_CALL_STATEMENT,
+            make_enode(IDENT, (void *)find_symbol("xmpf_sync_all")),
+            EXPR_ARG1(x));
+        compile_CALL_statement(y);
+        return;
+    }
     st = list0(F2008_SYNCALL_STATEMENT);
     compile_sync_stat_args(st, EXPR_ARG1(x));
     output_statement(st);
@@ -5195,11 +5207,25 @@ compile_SYNCIMAGES_statement(expr x) {
     expv image_set = NULL;
     expr arg;
 
-    st = list0(F2008_SYNCIMAGES_STATEMENT);
-
     if (!EXPR_HAS_ARG1(x) || !EXPR_HAS_ARG1(EXPR_ARG1(x))) {
       fatal("SYNC IMAGES must have one argument at least");
     }
+
+    if (XMP_coarray_flag) {
+        if (EXPR_ARG1(EXPR_ARG1(x)) == NULL) {
+            EXPR_ARG1(EXPR_ARG1(x)) = make_enode(STRING_CONSTANT,  (void *)strdup("*"));
+        }
+
+        expr y = list2(
+            F_CALL_STATEMENT,
+            make_enode(IDENT, (void *)find_symbol("xmpf_sync_images")),
+            EXPR_ARG1(x));
+        compile_CALL_statement(y);
+        return;
+    }
+
+    st = list0(F2008_SYNCIMAGES_STATEMENT);
+
     arg = EXPR_ARG1(x);
 
     if (EXPR_ARG1(arg)) {
@@ -5219,6 +5245,16 @@ compile_SYNCIMAGES_statement(expr x) {
 static void
 compile_SYNCMEMORY_statement(expr x) {
     expv st;
+
+    if (XMP_coarray_flag) {
+        expr y = list2(
+            F_CALL_STATEMENT,
+            make_enode(IDENT, (void *)find_symbol("xmpf_sync_memory")),
+            EXPR_ARG1(x));
+        compile_CALL_statement(y);
+        return;
+    }
+
     st = list0(F2008_SYNCMEMORY_STATEMENT);
     compile_sync_stat_args(st, EXPR_ARG1(x));
     output_statement(st);
