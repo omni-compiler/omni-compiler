@@ -149,6 +149,7 @@ enum control_type {
     CTL_STRUCT,
     CTL_OMP,
     CTL_XMP,
+    CTL_CRITICAL,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -187,6 +188,10 @@ typedef struct control
 #define CTL_DO_LABEL(l)         ((l)->dolabel)
 #define CTL_DO_VAR(l)           ((l)->dovar)
 #define CTL_STRUCT_TYPEDESC(l)  (EXPV_TYPE((l)->v1))
+
+#define CTL_CRIT_STATEMENT(l)   ((l)->v2)
+#define CTL_CRIT_BODY(l)        (EXPR_ARG1((l)->v2))
+#define CTL_CRIT_CONST_NAME(l)  (EXPR_ARG2((l)->v2))
 
 #define CTL_WHERE_STATEMENT(l)     ((l)->v2)
 #define CTL_WHERE_THEN(l)          (EXPR_ARG2((l)->v2))

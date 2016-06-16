@@ -5599,6 +5599,7 @@ public class XfDecompileDomVisitor {
         }
     }
 
+
     /**
      * Decompile 'syncStat' element in XcodeML/F.
      */
@@ -5617,6 +5618,36 @@ public class XfDecompileDomVisitor {
                     invokeEnter(var);
                 }
             }
+        }
+    }
+
+
+    /**
+     * Decompile 'CriticalStatement' element in XcodeML/F.
+     */
+    class CriticalStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            String constructName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+                writer.writeToken(":");
+            }
+            writer.writeToken("CRITICAL");
+            writer.setupNewLine();
+
+            invokeEnter(XmDomUtil.getElement(n, "body"));
+
+            writer.writeToken("END CRITICAL");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+            }
+            writer.setupNewLine();
         }
     }
 
@@ -5806,6 +5837,7 @@ public class XfDecompileDomVisitor {
         new Pair("syncAllStatement", new SyncAllStatementVisitor()),
         new Pair("syncImagesStatement", new SyncImagesStatementVisitor()),
         new Pair("syncMemoryStatement", new SyncMemoryStatementVisitor()),
+        new Pair("criticalStatement", new CriticalStatementVisitor()),
         new Pair("syncStat", new SyncStatVisitor()),
     };
 }
