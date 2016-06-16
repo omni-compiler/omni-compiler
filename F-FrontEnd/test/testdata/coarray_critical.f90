@@ -1,0 +1,6 @@
+      PROGRAM main
+        INTEGER, CODIMENSION[*] :: GLOBAL_COUNTER
+        CRITICAL
+          GLOBAL_COUNTER[1] = GLOBAL_COUNTER[1] + 1
+        END CRITICAL
+      END PROGRAM main
