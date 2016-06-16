@@ -1950,11 +1950,11 @@ define_external_function_id(ID id) {
     }
 
     /* inherits the public or private attribute from the parent */
-    if (!tp){
-      tp = new_type_desc();
-      TYPE_BASIC_TYPE(tp) = TYPE_GNUMERIC_ALL;
-      ID_TYPE(id) = tp;
-    }
+    /* if (!tp){ */
+    /*   tp = new_type_desc(); */
+    /*   TYPE_BASIC_TYPE(tp) = TYPE_GNUMERIC_ALL; */
+    /*   ID_TYPE(id) = tp; */
+    /* } */
     ID pid;
     if (tp && (pid = find_ident_parent(ID_SYM(id)))){
       if (TYPE_IS_PUBLIC(pid)) TYPE_SET_PUBLIC(tp);
@@ -2285,6 +2285,10 @@ end_procedure()
 	EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
     }
 
+    if (CURRENT_PROC_CLASS != CL_MAIN && EXT_PROC_TYPE(CURRENT_EXT_ID) == NULL){
+      error("Function resutl %s has no IMPLICIT type.", ID_NAME(CURRENT_EXT_ID));
+    }
+    
     if(NOT_INDATA_YET) end_declaration();
 
     /*
@@ -2370,7 +2374,7 @@ end_procedure()
                         }
                         tp = TYPE_REF(tp);
                     }
-                } else {
+                } else if (ID_TYPE(id) != NULL){
                     if (current_module_state == M_PUBLIC) {
                         TYPE_SET_PUBLIC(ID_TYPE(id));
                     }
