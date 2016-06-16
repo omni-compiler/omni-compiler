@@ -31,7 +31,11 @@ void _XMP_reduce_acc_NODES_ENTIRE(_XMP_nodes_t *nodes, void *data_addr, int coun
   if(comm_mode >= 1){
     _XMP_reduce_NODES_ENTIRE(nodes, data_addr, count, datatype, op);
   }else{
+#ifdef _XMP_TCA
+    _XMP_reduce_tca_NODES_ENTIRE(nodes, data_addr, count, datatype, op);
+#else
     _XMP_reduce_gpu_NODES_ENTIRE(nodes, data_addr, count, datatype, op);
+#endif
   }
 }
 
@@ -47,7 +51,12 @@ void _XMP_reduce_acc_CLAUSE(void *data_addr, int count, int datatype, int op)
   if(comm_mode >= 1){
     _XMP_reduce_CLAUSE(data_addr, count, datatype, op);
   }else{
+#ifdef _XMP_TCA
+    //
+#else
     _XMP_reduce_gpu_CLAUSE(data_addr, count, datatype, op);
+#endif
+
   }
 }
 
