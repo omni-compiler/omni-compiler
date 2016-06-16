@@ -5601,6 +5601,46 @@ public class XfDecompileDomVisitor {
 
 
     /**
+     * Decompile 'lockStatement' element in XcodeML/F.
+     */
+    class LockStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("LOCK");
+            writer.writeToken("(");
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'unlockStatement' element in XcodeML/F.
+     */
+    class UnlockStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("UNLOCK");
+            writer.writeToken("(");
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
      * Decompile 'syncStat' element in XcodeML/F.
      */
     class SyncStatVisitor extends  XcodeNodeVisitor {
@@ -5838,6 +5878,8 @@ public class XfDecompileDomVisitor {
         new Pair("syncImagesStatement", new SyncImagesStatementVisitor()),
         new Pair("syncMemoryStatement", new SyncMemoryStatementVisitor()),
         new Pair("criticalStatement", new CriticalStatementVisitor()),
+        new Pair("lockStatement", new LockStatementVisitor()),
+        new Pair("unlockStatement", new UnlockStatementVisitor()),
         new Pair("syncStat", new SyncStatVisitor()),
     };
 }
