@@ -957,6 +957,82 @@ void compile_statement1(int st_no, expr x)
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsPrivate);
         break;
 
+    case F2008_CRITICAL_STATEMENT:
+        check_INEXEC();
+
+        push_ctl(CTL_CRITICAL);
+
+        st = list2(F2008_CRITICAL_STATEMENT, NULL, NULL);
+        output_statement(st);
+        CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+        CTL_CRIT_STATEMENT(ctl_top) = st;
+
+        /* save construct name */
+        if (EXPR_HAS_ARG1(x)) {
+            CTL_CRIT_CONST_NAME(ctl_top) = EXPR_ARG1(x);
+        }
+
+        CURRENT_STATEMENTS = NULL;
+
+        if (XMP_coarray_flag) {
+            compile_CALL_statement(list2(
+                F_CALL_STATEMENT,
+                make_enode(IDENT, (void *)find_symbol("xmpf_critical")),
+                NULL));
+        }
+
+        if (endlineno_flag){
+            if (current_line->end_ln_no) {
+                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->end_ln_no;
+            } else {
+                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            }
+        }
+
+        break;
+
+    case F2008_ENDCRITICAL_STATEMENT:
+        check_INEXEC();
+
+        if (XMP_coarray_flag) {
+            compile_CALL_statement(list2(
+                F_CALL_STATEMENT,
+                make_enode(IDENT, (void *)find_symbol("xmpf_end_critical")),
+                NULL));
+        }
+
+        if (CTL_TYPE(ctl_top) != CTL_CRITICAL) {
+            error("'endcritical', out of place");
+            break;
+        }
+
+        /* check construct name */
+        if (CTL_CRIT_CONST_NAME(ctl_top) != NULL && EXPR_ARG1(x) == NULL) {
+            error("expect construnct name");
+            break;
+        } else if (CTL_CRIT_CONST_NAME(ctl_top) == NULL && EXPR_ARG1(x) != NULL) {
+            error("unexpected construnct name");
+            break;
+        } else if ((CTL_CRIT_CONST_NAME(ctl_top) != NULL) && EXPR_ARG1(x) != NULL) {
+            if (EXPR_SYM(CTL_CRIT_CONST_NAME(ctl_top))
+                != EXPR_SYM(EXPR_ARG1(x))) {
+                error("unmatched construct name");
+                break;
+            }
+        }
+
+
+        CTL_CRIT_BODY(ctl_top) = CURRENT_STATEMENTS;
+
+        if (endlineno_flag) {
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+        }
+
+        pop_ctl();
+
+        break;
+
+
     default:
         compile_exec_statement(x);
         break;
@@ -5259,5 +5335,3 @@ compile_SYNCMEMORY_statement(expr x) {
     compile_sync_stat_args(st, EXPR_ARG1(x));
     output_statement(st);
 }
-
-
