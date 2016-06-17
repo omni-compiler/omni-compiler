@@ -1,6 +1,6 @@
 XFC     = xmpf90
 XRUN    = mpiexec
-EXES    = module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x 397.x 412.x
+EXES    = module_test.x module_test0.x arg.x dnodes.x refobj.x 103.x 228.x 358_result.x 383.x 377.x 392.x 397.x
 
 all: module_test.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
      103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o    schedule_default.o task001.o 152.x 397.x double_option.x nargs.o result.o
@@ -12,6 +12,7 @@ all: module_test.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.
 ###MPIR_Comm_split_impl(249)............: 
 ###MPIR_Get_contextid_sparse_group(1193): Too many communicators (0/2048 free on this process; ignore_id=0)
 
+.PHONY: clean submit showlog cleanlog
 
 .SUFFIXES: .x .o .f90
 
@@ -128,19 +129,36 @@ run:
 	$(XRUN) -np 2 ./module_test.x
 	$(XRUN) -np 2 ./module_test0.x
 	$(XRUN) -np 4 ./arg.x
-	export XMP_NODE_SIZE0=2; \
-	export XMP_NODE_SIZE1=2; \
-	$(XRUN) -np 8 ./dnodes.x
+	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -np 8 ./dnodes.x
 	$(XRUN) -np 4 ./refobj.x
-	$(XRUN) -np 2 ./103.x
-	$(XRUN) -np 1 ./228.x
-	$(XRUN) -np 1 ./358_result.x
-	$(XRUN) -np 2 ./383.x
-	$(XRUN) -np 1 ./392.x
-	$(XRUN) -np 1 ./397.x
-	$(XRUN) -np 1 ./278\ spacefile.x
-#	$(XRUN) -np 4 ./save_desc.x
+	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -np 2 ./103.x
+	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -np 1 ./228.x
+	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -np 1 ./358_result.x
+	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -np 2 ./383.x
+	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -np 1 ./392.x
+	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -np 1 ./397.x
+	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -np 1 ./278\ spacefile.x
+#	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -np 4 ./save_desc.x
 
-clean:
-	rm -f *.x *.o *.*mod *.s
+RUN:
+	mkdir RUN
+
+RUN/%.x:: %.x
+	cp $< $@
+
+RUN/go.sh: go.template Makefile
+	cp $< $@ && grep XRUN Makefile | sed -e 's/(XRUN)/{XRUN}/' -e 's/ *= */=/' | grep -v Makefile >>$@
+
+submit: all RUN RUN/go.sh $(EXES:%=RUN/%)
+	cp 278\ spacefile.x RUN
+	cd RUN; pjsub go.sh
+
+showlog:
+	cat RUN/go.sh.e* RUN/go.sh.o*
+
+cleanlog:
+	rm -rf RUN
+
+clean: cleanlog
+	rm -f $(EXES) *.o *.*mod *.s 278\ spacefile.x 412.x
 	rm -rf mod __omni_tmp__ 278\ module
