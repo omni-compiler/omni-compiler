@@ -27,7 +27,7 @@ IS_FJRDMA        = @FJRDMA@
 IS_KCOMPUTER     = @KCOMPUTER@
 IS_FX10          = @FX10@
 IS_FX100         = @FX100@
-IS_MPI3          = @MPI3@
+IS_MPI3_ASYNC    = @MPI3_ASYNC@
 IS_LIBBLAS       = @LIBBLAS@
 IS_SSL2BLAMP     = @SSL2BLAMP@
 IS_INTELMKL      = @INTELMKL@
@@ -66,7 +66,7 @@ ifeq ($(IS_FJRDMA), $(TRUE))
 	CFLAGS  += -D_XMP_FJRDMA
 endif
 
-ifeq ($(IS_MPI3), $(TRUE))
+ifeq ($(IS_MPI3_ASYNC), $(TRUE))
 	CFLAGS += -D_XMP_MPI3
 endif
 
