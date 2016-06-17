@@ -500,7 +500,7 @@ public class XMPanalyzePragma
       }
       else if (b.Opcode() == Xcode.COMPOUND_STATEMENT)
     	  return getOutermostLoopBlock(b.getBody());
-      else if (b.Opcode() == Xcode.OMP_PRAGMA)
+      else if (b.Opcode() == Xcode.OMP_PRAGMA || b.Opcode() == Xcode.ACC_PRAGMA)
     	  return getOutermostLoopBlock(b.getBody());
 //       else if(b.Opcode() == Xcode.F_STATEMENT_LIST &&
 // 	      b.getBasicBlock().getHead().getExpr().Opcode() 
