@@ -76,8 +76,8 @@ link_parent_defined_by(SYMBOL sym)
     }
 }
 
-/* 
- * define main program or block data, subroutine, functions 
+/*
+ * define main program or block data, subroutine, functions
  */
 void
 declare_procedure(enum name_class class,
@@ -496,7 +496,7 @@ copy_parent_type(ID id)
     TYPE_SET_OVERRIDDEN(id);
 }
 
-/* 
+/*
  * identifier management
  */
 
@@ -725,7 +725,7 @@ declare_function(ID id)
 
     if (ID_ADDR(id) == NULL) {
         /* fix stoarge */
-        /* NOTE that function address's type is ignored. 
+        /* NOTE that function address's type is ignored.
          * don't need keep track of function type in Fortran.
          */
         expv v;
@@ -761,7 +761,7 @@ declare_statement_function(id,args,body)
     list lp;
     expr x;
 
-    if(ID_CLASS(id) != CL_UNKNOWN) 
+    if(ID_CLASS(id) != CL_UNKNOWN)
       fatal("declare_statement_function: not CL_UNKNOWN");
 
     ID_CLASS(id) = CL_PROC;
@@ -823,7 +823,7 @@ declare_label(int st_no,LABEL_TYPE type,int def_flag)
         if(LAB_IS_DEFINED(ip)){
             error("label %d already defined", st_no);
             return ip;
-        } 
+        }
         if(type == LAB_EXEC){
             if(LAB_IS_USED(ip) && LAB_TYPE(ip) != LAB_FORMAT
                && LAB_BLK_LEVEL(ip) < CURRENT_BLK_LEVEL)
@@ -906,7 +906,7 @@ declare_external_id_for_highorder(ID id, int isCall)
 }
 
 /* 'intern' external symbol with tag.
- *  if def_flag, mark it as defined 
+ *  if def_flag, mark it as defined
  */
 EXT_ID
 declare_external_id(SYMBOL s, enum storage_class tag, int def_flag)
@@ -976,12 +976,12 @@ declare_ident(SYMBOL s, enum name_class class)
      * FIXME:
      *	SUPER BOGUS FLAG ALERT !
      */
-    if (is_in_struct_member_initializer_compilation_flag_for_declare_ident == 
+    if (is_in_struct_member_initializer_compilation_flag_for_declare_ident ==
         FALSE) {
         if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
             if (class == CL_TAGNAME) {
                 isPreDecl = TRUE;
-            } else 
+            } else
                 /*
                  * FIXME:
                  *	SUPER BOGUS FLAG ALERT !
@@ -1450,7 +1450,7 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
         case F95_ALLOCATABLE_SPEC:
             TYPE_SET_ALLOCATABLE(tp);
             break;
-        case F95_DIMENSION_SPEC: 
+        case F95_DIMENSION_SPEC:
             /* see compile_dimensions() */
             if (ignoreDims == FALSE) {
                 tp = compile_dimensions(tp, EXPR_ARG1(v));
@@ -1464,7 +1464,7 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
 	    return NULL;
 	  }
 
-	  codims_desc *codesc = compile_codimensions(EXPR_ARG1(v), 
+	  codims_desc *codesc = compile_codimensions(EXPR_ARG1(v),
 						     TYPE_IS_ALLOCATABLE(tp));
 	  if (codesc)
 	    tp->codims = codesc;
@@ -1532,6 +1532,9 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                 TYPE_SET_INTERNAL_PRIVATE(struct_tp);
             }
             break;
+        case F03_PROTECTED_SPEC:
+            // TODO PROTECTED
+            break;
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }
@@ -1548,7 +1551,7 @@ void
 declare_id_type(ID id, TYPE_DESC tp)
 {
     TYPE_DESC tq,tpp;
-    int isInUseDecl = checkInsideUse();    
+    int isInUseDecl = checkInsideUse();
 
     if (tp == NULL || ID_TYPE(id) == tp) {
         return; /* nothing for TYPE_UNKNOWN */
@@ -1602,7 +1605,7 @@ declare_id_type(ID id, TYPE_DESC tp)
 #endif
                 }
                 return;
-            } 
+            }
             /* declared as scalar type, then array declaration come later. */
             tpp = tp;
             while(TYPE_REF(tpp) != NULL && IS_ARRAY_TYPE(TYPE_REF(tpp)))
@@ -1615,7 +1618,7 @@ declare_id_type(ID id, TYPE_DESC tp)
         }
         ID_TYPE(id) = tp;
         return;
-    } 
+    }
 
     /* tp is not ARRAY_TYPE */
     if(tq != NULL && IS_ARRAY_TYPE(tq)){
@@ -1667,7 +1670,7 @@ declare_id_type(ID id, TYPE_DESC tp)
 
 /* create TYPE_DESC from type expression x. */
 /* x := (LIST basic_type leng_spec)
- * leng_spec = NULL | expr | (LIST) 
+ * leng_spec = NULL | expr | (LIST)
  */
 TYPE_DESC
 compile_type(expr x)
@@ -1907,7 +1910,7 @@ compile_type(expr x)
     return tp;
 }
 
-void 
+void
 compile_IMPLICIT_decl(expr type,expr l)
 {
     TYPE_DESC tp = NULL;
@@ -1991,10 +1994,10 @@ set_implicit_type_uc(UNIT_CTL uc, TYPE_DESC tp, int c1, int c2,
                      int ignore_declared_flag)
 {
     int i;
-    
+
     if (c1 == 0 || c2 == 0)
         return;
-    
+
     if (c1 > c2) {
         error("characters out of order in IMPLICIT:%c-%c", c1, c2);
         return;
@@ -2027,10 +2030,10 @@ void
 set_implicit_storage_uc(UNIT_CTL uc, enum storage_class stg,int c1,int c2)
 {
     int i;
-    
+
     if (c1 == 0 || c2 == 0)
         return;
-    
+
     if (c1 > c2) {
         error("characters out of order in implicit:%c-%c", c1, c2);
     } else {
@@ -2489,7 +2492,7 @@ combine_array_specs(expv l, expv r) {
  *	@param idASpec   An array-spec of the variable definition
  *	                  (accept NULL).
  *	@param whichSPtr  If not NULL, a used array-spec is returned.
- *	
+ *
  *	@return -1 if the size can't be determined statically.
  *	@return A size of the shape.
  */
@@ -2652,10 +2655,10 @@ ret:
 }
 
 
-/* type = (LIST basic_type length) 
+/* type = (LIST basic_type length)
  * decl_list = (LIST (LIST ident dims length codims) ...)
  * dims = (LIST dim ...)
- * dim = expr | (LIST expr expr) 
+ * dim = expr | (LIST expr expr)
  * attributes = (LIST attribute ...)
  */
 void
@@ -2695,7 +2698,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         /* not reached. */
         return;
     }
-    
+
     if (typeExpr != NULL) {
         if (EXPR_CODE(typeExpr) == IDENT) {
             ID id = find_ident_local(EXPR_SYM(typeExpr));
@@ -2895,7 +2898,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 	    return;
 	  }
 
-	  codims_desc *codesc = compile_codimensions(codims, 
+	  codims_desc *codesc = compile_codimensions(codims,
 						     TYPE_IS_ALLOCATABLE(tp));
 	  if (codesc)
 	    tp->codims = codesc;
@@ -3022,6 +3025,9 @@ compile_struct_decl(expr ident, expr type)
             TYPE_SET_PRIVATE(tp);
             TYPE_UNSET_PUBLIC(tp);
             break;
+        case F03_PROTECTED_SPEC:
+            // TODO PROTECTED
+            break;
         default:
             break;
         }
@@ -3124,7 +3130,7 @@ compile_dimensions(TYPE_DESC tp, expr dims)
         reduce_subscript(&step);
         TYPE_DIM_STEP(tq) = step;
 
-        TYPE_N_DIM(tq) = n; 
+        TYPE_N_DIM(tq) = n;
         TYPE_DIM_FIXED(tq) = 0; /* immature */
 
         TYPE_REF(tq) = tp;
@@ -3365,7 +3371,7 @@ copy_dimension(TYPE_DESC array, TYPE_DESC base)
     return tp;
 }
 
-void 
+void
 compile_PARAM_decl(expr const_list)
 {
     expr x,ident;
@@ -3415,7 +3421,7 @@ compile_PARAM_decl(expr const_list)
     }
 }
 
-void 
+void
 postproc_PARAM_decl(expr ident, expr e)
 {
     expv v;
@@ -3524,7 +3530,7 @@ compile_COMMON_decl(expr com_list)
 
 
 /* declare external function */
-void 
+void
 compile_EXTERNAL_decl(expr id_list)
 {
     list lp;
@@ -3560,7 +3566,7 @@ compile_EXTERNAL_decl(expr id_list)
 }
 
 /* declare intrinsic function */
-void 
+void
 compile_INTRINSIC_decl(id_list)
     expr id_list;
 {
@@ -3611,7 +3617,7 @@ markAsSave(id)
 
 
 /* declare save variable */
-void 
+void
 compile_SAVE_decl(id_list)
     expr id_list;
 {
@@ -3718,4 +3724,3 @@ compile_pragma_statement(expr x)
     }
   output_statement(list1(F_PRAGMA_STATEMENT, v));
 }
-
