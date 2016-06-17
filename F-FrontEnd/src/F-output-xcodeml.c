@@ -93,10 +93,10 @@ xtag(enum expr_code code)
     case INT_CONSTANT:              return "FintConstant";
     case FLOAT_CONSTANT:            return "FrealConstant";
     case COMPLEX_CONSTANT:          return "FcomplexConstant";
-                                   
-    /*                             
-     * declarations                
-     */                            
+
+    /*
+     * declarations
+     */
     case F_DATA_DECL:               return "FdataDecl";
     case F_EQUIV_DECL:              return "FequivalenceDecl";
     case F_COMMON_DECL:             return "FcommonDecl";
@@ -186,16 +186,16 @@ xtag(enum expr_code code)
 
     case F95_USER_DEFINED_BINARY_EXPR:          return "userBinaryExpr";
     case F95_USER_DEFINED_UNARY_EXPR:           return "userUnaryExpr";
-                                
-    /*                          
-     * misc.                    
-     */                         
+
+    /*
+     * misc.
+     */
     case F_IMPLIED_DO:              return "FdoLoop";
     case F_INDEX_RANGE:             return "indexRange";
 
-    /*                          
-     * module.                    
-     */                         
+    /*
+     * module.
+     */
     case F95_USE_STATEMENT:         return "FuseDecl";
     case F95_USE_ONLY_STATEMENT:    return "FuseOnlyDecl";
 
@@ -280,6 +280,7 @@ xtag(enum expr_code code)
     case F95_TYPEDECL_STATEMENT:
     case F95_ENDTYPEDECL_STATEMENT:
     case F95_PRIVATE_STATEMENT:
+    case F03_PROTECTED_STATEMENT:
     case F95_SEQUENCE_STATEMENT:
     case F95_PARAMETER_SPEC:
     case F95_ALLOCATABLE_SPEC:
@@ -293,6 +294,7 @@ xtag(enum expr_code code)
     case F95_TARGET_SPEC:
     case F95_PUBLIC_SPEC:
     case F95_PRIVATE_SPEC:
+    case F03_PROTECTED_SPEC:
     case F95_IN_EXTENT:
     case F95_OUT_EXTENT:
     case F95_INOUT_EXTENT:
@@ -936,7 +938,7 @@ outx_tagOfDecl(int l, const char *tag, ID id)
  * output tag which has only text symbol value
  */
 static void
-outx_tagText(int l, const char *tag, const char *s) 
+outx_tagText(int l, const char *tag, const char *s)
 {
     outx_printi(l, "<%s>%s</%s>\n", tag, s, tag);
 }
@@ -1165,7 +1167,7 @@ outx_id(int l, ID id)
     const char *sclass = get_sclass(id);
     outx_print(" sclass=\"%s\"", sclass);
     if(ID_IS_OFMODULE(id))
-	outx_print(" declared_in=\"%s\"", 
+	outx_print(" declared_in=\"%s\"",
 		   ID_USEASSOC_INFO(id)->module_name->s_name);
     outx_print(">\n");
     outx_symbolName(l + 1, ID_SYM(id));
@@ -2114,7 +2116,7 @@ outx_alloc(int l, expv v)
 	abort();
       }
 
-      outx_printi(l1, "<coShape>\n"); 
+      outx_printi(l1, "<coShape>\n");
       FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)){
 	expr cobound = LIST_ITEM(lp);
 /* 	expr upper = EXPR_ARG2(cobound); */
@@ -2331,7 +2333,7 @@ outx_expv_withListTag(int l,expv v)
     FOR_ITEMS_IN_LIST(lp, v)
       outx_expv_withListTag(l+1, LIST_ITEM(lp));
     outx_close(l, "list");
-  } else 
+  } else
     outx_expv(l,v);
 }
 
@@ -2380,7 +2382,7 @@ outx_OMP_dir_string(int l,expv v)
 {
   char *s;
   s = NULL;
-  if(EXPV_CODE(v) != INT_CONSTANT) 
+  if(EXPV_CODE(v) != INT_CONSTANT)
     fatal("outx_OMP_dir_string: not INT_CONSTANT");
   switch(EXPV_INT_VALUE(v)){
   case OMP_PARALLEL: s = "PARALLEL"; break;
@@ -2432,8 +2434,8 @@ static void outx_OMP_sched_kind(int l,char *s,expv v)
   expr vv = EXPR_ARG2(v);
   outx_printi(l+2, "<string>%s</string>\n", s);
   //printf("EXPV_INT_VALUE(%d)\n",EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v))));
-//  printf("vv=%d\n",EXPV_INT_VALUE(expr_list_get_n(vv,0)));	  
-  outx_printi(l+3,"<list>\n");                                                                                                                                                                                 
+//  printf("vv=%d\n",EXPV_INT_VALUE(expr_list_get_n(vv,0)));
+  outx_printi(l+3,"<list>\n");
 
   switch(EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v))))
     {
@@ -2459,9 +2461,9 @@ static void outx_OMP_sched_kind(int l,char *s,expv v)
       fatal("OMP Sched error");
     }
 	//printf("ARG2=%d\n",EXPV_INT_VALUE(expr_list_get_n(vv,1)));
-	if(expr_list_get_n(vv,1)!=NULL) 
+	if(expr_list_get_n(vv,1)!=NULL)
  	outx_expv(l+4,expr_list_get_n(vv,1));
-    outx_printi(l+3,"</list>\n");                                                                                                                                                                                
+    outx_printi(l+3,"</list>\n");
   outx_printi(l+1,"</list>\n");
 }
 
@@ -2474,20 +2476,20 @@ outx_OMP_dir_clause_list(int l,expv v)
   expv vv,dir;
   char *s = NULL;
 
-  if(EXPV_CODE(v) != LIST) 
+  if(EXPV_CODE(v) != LIST)
     fatal("outx_OMP_dir_clause_list: not LIST");
   outx_printi(l,"<list>\n");
-  
+
   FOR_ITEMS_IN_LIST(lp, v) {
     vv = LIST_ITEM(lp);
 
-    if(EXPV_CODE(vv) != LIST) 
+    if(EXPV_CODE(vv) != LIST)
       fatal("outx_OMP_dir_clause_list: not LIST2");
 
     outx_printi(l1,"<list>\n");
 
     dir = EXPR_ARG1(vv);
-    if(EXPV_CODE(dir) != INT_CONSTANT) 
+    if(EXPV_CODE(dir) != INT_CONSTANT)
       fatal("outx_OMP_dir_clause_list: clause not INT_CONSTANT");
     switch(EXPV_INT_VALUE(dir)){
     case OMP_DATA_DEFAULT: s = "DATA_DEFAULT"; outx_OMP_DATA_DEFAULT_kind(l,s,EXPR_ARG2(vv)); continue;
@@ -2556,7 +2558,7 @@ outx_XMP_dir_string(int l,expv v)
 {
   char *s = NULL;
 
-  if(EXPV_CODE(v) != INT_CONSTANT) 
+  if(EXPV_CODE(v) != INT_CONSTANT)
     fatal("outx_XMP_dir_string: not INT_CONSTANT");
   switch(EXPV_INT_VALUE(v)){
   case XMP_NODES: s = "NODES"; break;
@@ -2595,12 +2597,12 @@ outx_XMP_dir_clause_list(int l,expv v)
   const int l1 = l + 1;
   expv vv;
 
-  if(EXPV_CODE(v) != LIST) 
+  if(EXPV_CODE(v) != LIST)
     fatal("outx_XMP_dir_clause_list: not LIST");
   outx_printi(l,"<list>\n");
   FOR_ITEMS_IN_LIST(lp, v) {
       vv = LIST_ITEM(lp);
-      if(vv == NULL) 
+      if(vv == NULL)
 	  outx_printi(l1,"<list/>\n");
       else if(EXPR_CODE(vv) == LIST)
 	  outx_XMP_dir_clause_list(l1,vv);
@@ -2881,7 +2883,7 @@ outx_expv(int l, expv v)
     /*
      * child elements
      */
-    case LIST: 
+    case LIST:
 	{
             list lp;
             FOR_ITEMS_IN_LIST(lp, v)
@@ -2966,6 +2968,7 @@ outx_expv(int l, expv v)
     case F95_DIMENSION_DECL:
     case F95_ENDTYPEDECL_STATEMENT:
     case F95_PRIVATE_STATEMENT:
+    case F03_PROTECTED_STATEMENT:
     case F95_SEQUENCE_STATEMENT:
     case F95_PARAMETER_SPEC:
     case F95_ALLOCATABLE_SPEC:
@@ -2979,6 +2982,7 @@ outx_expv(int l, expv v)
     case F95_TARGET_SPEC:
     case F95_PUBLIC_SPEC:
     case F95_PRIVATE_SPEC:
+    case F03_PROTECTED_SPEC:
     case F95_IN_EXTENT:
     case F95_OUT_EXTENT:
     case F95_INOUT_EXTENT:
@@ -3239,7 +3243,7 @@ outx_kind(int l, TYPE_DESC tp)
 {
     static expv doubledKind = NULL;
     expv vkind;
-    
+
     if(doubledKind == NULL)
         doubledKind = expv_int_term(INT_CONSTANT, type_INT, KIND_PARAM_DOUBLE);
 
@@ -3263,7 +3267,7 @@ outx_coShape(int l, TYPE_DESC tp)
   list lp;
   codims_desc *codims = tp->codims;
 
-  outx_printi(l, "<coShape>\n"); 
+  outx_printi(l, "<coShape>\n");
 
   FOR_ITEMS_IN_LIST(lp, codims->cobound_list){
     expr cobound = LIST_ITEM(lp);
@@ -3341,7 +3345,7 @@ outx_basicTypeNoCharNoAry(int l, TYPE_DESC tp)
       outx_coShape(l+1, tp);
       outx_close(l ,"FbasicType");
     }
-    else 
+    else
       outx_print(" ref=\"%s\"/>\n", getTypeID(rtp));
 }
 
@@ -3934,7 +3938,7 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
         }
     }
 
-    /* 
+    /*
      * FcommonDecl
      */
     FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(parent_ep)) {
@@ -4460,7 +4464,7 @@ output_XcodeML_file()
     outx_close(l, "XcodeProgram");
 }
 
-/*        
+/*
  * functions defined below is those related to xmod(modules).
  */
 

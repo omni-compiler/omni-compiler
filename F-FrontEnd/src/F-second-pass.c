@@ -69,7 +69,7 @@ void sp_link_id(ID id, int err_no, lineno_info *line)
 {
   SP_LIST *list;
   int i;
-  
+
   FOREACH_SP_LIST(list){
     if(list->info.id == id) return;
   }
@@ -92,7 +92,7 @@ void sp_link_expr(expr ep, int err_no, lineno_info *line)
 {
   SP_LIST *list;
   int i;
-  
+
   FOREACH_SP_LIST(list){
     if(list->info.ep == ep) return;
   }
@@ -158,7 +158,7 @@ static void second_pass_expv_scan(expv v)
 {
   enum expr_code code;
   int i;
-  
+
   if(v == NULL)
     return;
   code = EXPV_CODE(v);
@@ -169,7 +169,7 @@ static void second_pass_expv_scan(expv v)
   /*
    * child elements
    */
-  case LIST: 
+  case LIST:
     {
       list lp;
       slen++;
@@ -200,7 +200,7 @@ static void second_pass_expv_scan(expv v)
    */
   case F_FORMAT_DECL:
     break;
-    
+
   /*
    * general statements
    */
@@ -432,6 +432,7 @@ static void second_pass_expv_scan(expv v)
   case F95_DIMENSION_DECL:
   case F95_ENDTYPEDECL_STATEMENT:
   case F95_PRIVATE_STATEMENT:
+  case F03_PROTECTED_STATEMENT:
   case F95_SEQUENCE_STATEMENT:
   case F95_PARAMETER_SPEC:
   case F95_ALLOCATABLE_SPEC:
@@ -445,6 +446,7 @@ static void second_pass_expv_scan(expv v)
   case F95_TARGET_SPEC:
   case F95_PUBLIC_SPEC:
   case F95_PRIVATE_SPEC:
+  case F03_PROTECTED_SPEC:
   case F95_IN_EXTENT:
   case F95_OUT_EXTENT:
   case F95_INOUT_EXTENT:
@@ -557,7 +559,7 @@ int second_pass()
             slen++;
             FOREACH_EXT_ID(contains_2_ep, contains_2){
               second_pass_expv_scan(EXT_PROC_BODY(contains_2_ep));
-              
+
             }
             slen--;
           }
@@ -588,7 +590,7 @@ int second_pass()
     }
     printf(")\n");
 #endif
-    
+
     /* fix ID & expr */
     if(sp_list->type == TYPE_ID){ /* ID */
       int is_exist = 0;
@@ -630,7 +632,7 @@ int second_pass()
           prev = id;
         }
       }
-      
+
     } else {                    /* expr */
       if(EXPR_CODE(sp_list->info.ep) == IDENT || EXPR_CODE(sp_list->info.ep) == F_VAR){
         int is_exist = 0;
@@ -651,4 +653,3 @@ int second_pass()
 
   return second_pass_clean();
 }
-

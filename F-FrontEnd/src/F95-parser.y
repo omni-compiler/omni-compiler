@@ -678,6 +678,10 @@ declaration_statement95:
         { $$ = list1(F95_PRIVATE_STATEMENT,NULL); }
         | PRIVATE COL2_or_null access_ident_list
         { $$ = list1(F95_PRIVATE_STATEMENT, $3); }
+        | PROTECTED
+        { $$ = list1(F03_PROTECTED_STATEMENT,NULL); }
+        | PROTECTED COL2_or_null access_ident_list
+        { $$ = list1(F03_PROTECTED_STATEMENT, $3); }
         | SEQUENCE
         { $$ = list0(F95_SEQUENCE_STATEMENT); }
         | KW_USE IDENTIFIER
@@ -787,6 +791,8 @@ access_spec:
         { $$ = list0(F95_PUBLIC_SPEC); }
         | PRIVATE
         { $$ = list0(F95_PRIVATE_SPEC); }
+        | PROTECTED
+        { $$ = list0(F03_PROTECTED_SPEC); }
         ;
 
 intent_spec:
