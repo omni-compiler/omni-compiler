@@ -1,0 +1,20 @@
+<OmniFortranModule version="1.0">
+  <name>iso_fortran_env</name>
+  <depends>
+  </depends>
+  <typeTable>
+    <FstructType type="S12cb910">
+      <symbols>
+      </symbols>
+    </FstructType>
+  </typeTable>
+  <identifiers>
+    <id type="S12cb910" sclass="ftype_name" original_name="lock_type" declared_in="iso_fortran_env">
+      <name>lock_type</name>
+    </id>
+  </identifiers>
+  <interfaceDecls>
+  </interfaceDecls>
+  <aux_info>
+  </aux_info>
+</OmniFortranModule>
