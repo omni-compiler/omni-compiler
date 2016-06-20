@@ -27,6 +27,9 @@ public class XmOption
 
     private static boolean _tlog = false;
 
+    /** if compiling XcalableACC is enabled */
+    private static boolean _xcalableACC = false;
+
     /** if compiling OpenMP is enabled */
     private static boolean _openMP = false;
 
@@ -135,6 +138,21 @@ public class XmOption
     public static boolean isAsync()
     {
         return _xcalableMPasync;
+    }
+
+    public static void setIsXcalableACC(boolean enable)
+    {
+        _xcalableACC = enable;
+    }
+
+    /**
+     * Checks does compiler translate XcalableMP directive.
+     *
+     * @return true if compiler translate XcalableMP directive.
+     */
+    public static boolean isXcalableACC()
+    {
+        return _xcalableACC;
     }
 
     /**

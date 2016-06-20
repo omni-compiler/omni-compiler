@@ -3,6 +3,7 @@ package exc.xmpF;
 import exc.object.*;
 import exc.util.MachineDep;
 import exc.block.*;
+import xcodeml.util.XmOption;
 
 import java.io.File;
 import java.util.*;
@@ -293,13 +294,17 @@ public class XMPtransPragma
       
       if(isVarUsed(for_block.getBody(),org_loop_ind_var)){
 	// if global variable is used in this block, convert local to global
-	Ident l2g_f = 
-	  env.declInternIdent(XMP.l2g_f,Xtype.FsubroutineType);
-	args = Xcons.List(org_loop_ind_var,
-			  local_loop_var.Ref(),
-			  Xcons.IntConstant(k),
-			  on_ref.getDescId().Ref());
-	for_block.getBody().insert(l2g_f.callSubroutine(args));
+        if(XmOption.isXcalableACC()) {
+          for_block.getBody().insert(Xcons.Set(org_loop_ind_var, calcLtoG(t, t_idx, local_loop_var.Ref())));
+        }else {
+          Ident l2g_f =
+                  env.declInternIdent(XMP.l2g_f, Xtype.FsubroutineType);
+          args = Xcons.List(org_loop_ind_var,
+                  local_loop_var.Ref(),
+                  Xcons.IntConstant(k),
+                  on_ref.getDescId().Ref());
+          for_block.getBody().insert(l2g_f.callSubroutine(args));
+        }
       }
     }
 
@@ -325,6 +330,69 @@ public class XMPtransPragma
     }
 
     return Bcons.COMPOUND(ret_body);
+  }
+
+  private Xobject calcLtoG(XMPtemplate t, int tIdx, Xobject expr) {
+    if (!t.isDistributed() || t.getDistMannerAt(tIdx) == XMPtemplate.DUPLICATION) {
+      return expr;
+    }
+
+    //t.getOntoNodesIndexAt(ti).getInt(); //obtains node idx which corresponds to template idx
+    int nIdx = 0;
+    for(int i = 0; i < tIdx; i++){
+      if(t.getDistMannerAt(i) != XMPtemplate.DUPLICATION){
+        nIdx++;
+      }
+    }
+
+    XMPnodes n = t.getOntoNodes();
+
+    Xobject nodeNum = n.getInfoAt(nIdx).getNodeRankVar().Ref(); //Xcons.IntConstant(3);
+    Xobject nodeSize = n.getInfoAt(nIdx).getSize();
+    if(nodeSize == null){
+      nodeSize = n.getInfoAt(nIdx).getNodeSizeVar().Ref();
+    }
+
+    Xobject newExpr = null;
+    switch (t.getDistMannerAt(tIdx)) {
+    //case XMPtemplate.DUPLICATION: unreachable
+    case XMPtemplate.BLOCK:
+      // _XMP_M_LTOG_TEMPLATE_BLOCK(_l, _m, _N, _P, _p) =  (((_p) * _XMP_M_CEILi(_N, _P)) + (_m) + (_l))
+      Xobject ceili = Xcons.binaryOp(
+              Xcode.PLUS_EXPR,
+              Xcons.binaryOp(
+                      Xcode.DIV_EXPR,
+                      Xcons.binaryOp(
+                              Xcode.MINUS_EXPR,
+                              t.getSizeAt(tIdx), /* _N */
+                              Xcons.IntConstant(1)
+                      ),
+                      nodeSize /* _P */
+              ),
+              Xcons.IntConstant(1)
+      );
+      newExpr = Xcons.binaryOp(
+              Xcode.PLUS_EXPR,
+              Xcons.binaryOp(
+                      Xcode.PLUS_EXPR,
+                      Xcons.binaryOp(
+                              Xcode.MUL_EXPR,
+                              ceili, /* _XMP_M_CEILi(n,nodeNum) */
+                              nodeNum /* _p */
+                      ),
+                      t.getLowerAt(tIdx) /* _m */
+              ),
+              expr /* _l */);
+      break;
+    case XMPtemplate.CYCLIC:
+    case XMPtemplate.BLOCK_CYCLIC:
+    case XMPtemplate.GBLOCK:
+      XMP.fatal("not implemented distribute manner");
+    default:
+      XMP.fatal("unknown distribute manner");
+    }
+
+    return newExpr;
   }
 
   boolean isVarUsed(BlockList body,Xobject v){

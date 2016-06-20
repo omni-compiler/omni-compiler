@@ -67,6 +67,7 @@ public class XMP {
   public final static String nodes_init_EXEC_f   = "xmpf_nodes_init_EXEC_";
   public final static String nodes_init_NODES_f  = "xmpf_nodes_init_NODES_";
   public final static String nodes_dealloc_f     = "xmpf_nodes_dealloc_";
+  public final static String nodes_get_dim_info_f = "xmpf_nodes_get_dim_info_";
 
   public final static String template_alloc_f    = "xmpf_template_alloc_";
   public final static String template_dim_info_f = "xmpf_template_dim_info_";

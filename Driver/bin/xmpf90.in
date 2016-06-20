@@ -133,6 +133,8 @@ done
 [ $ENABLE_SCALASCA_ALL = true ] && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -scalasca-all"
 [ $ENABLE_SCALASCA = true ]     && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -scalasca"
 [ $ENABLE_OPENACC = true ]      && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -facc"
+[ $ENABLE_XACC = true ]         && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -fxacc"
+
 for file in "${f_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a

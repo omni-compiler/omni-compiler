@@ -113,6 +113,7 @@ public class omompx
     boolean xcalableMPGPU = false;
     boolean xmpf = false;
     boolean async = false;
+    boolean xcalableACC = false;
     boolean outputXcode = false;
     boolean outputDecomp = false;
     boolean dump = false;
@@ -165,6 +166,8 @@ public class omompx
         xmpf = true;
       } else if(arg.equals("-fasync")) {
         async = true;
+      } else if(arg.equals("-fxacc")) {
+        xcalableACC = true;
       } else if(arg.equals("-w")) {
         if(narg == null)
           error("needs argument after -w");
@@ -276,6 +279,7 @@ public class omompx
     XmOption.setIsXcalableMPthreads(xcalableMPthreads);
     XmOption.setIsXcalableMPGPU(xcalableMPGPU);
     XmOption.setTlogMPIisEnable(doTlog);
+    XmOption.setIsXcalableACC(xcalableACC);
 
     XobjectFile xobjFile;
     String srcPath = inXmlFile;

@@ -123,3 +123,10 @@ void xmpf_nodes_free__(_XMP_nodes_t **n_desc)
 {
   _XMP_finalize_nodes(*n_desc);
 }
+
+void xmpf_nodes_get_dim_info__(_XMP_nodes_t **n_desc, int *dim, int *size, int *rank)
+{
+  _XMP_nodes_t *n = *n_desc;
+  *size = n->info[*dim].size;
+  *rank = n->info[*dim].rank;
+}
