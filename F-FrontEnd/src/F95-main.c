@@ -342,6 +342,7 @@ char *argv[];
                 if (--argc <= 0)
                     cmd_error_exit("no arg for -fintrinsic-xmodules-path.");
                 argv++;
+                path = argv[0];
             } else {
                 /* -M<intrinsic xmodule dir> */
                 path = argv[0] + 25;

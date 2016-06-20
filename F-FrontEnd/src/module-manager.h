@@ -40,6 +40,7 @@ struct module {
     SYMBOL name;              /* name of this module. */
     ID head;                  /* public elements of this module. */
     ID last;
+    int is_intrinsic;         /* TRUE if this module is an intrinsic module. */
 };
 
 /**
