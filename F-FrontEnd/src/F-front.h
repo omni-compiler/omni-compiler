@@ -133,7 +133,7 @@ extern enum procedure_state current_proc_state;
 #define INDCL_OVER      ((int)CURRENT_STATE >= (int)INDATA)
 
 /* module visible state */
-enum module_state { M_DEFAULT, M_PUBLIC, M_PRIVATE };
+enum module_state { M_DEFAULT, M_PUBLIC, M_PRIVATE, M_PROTECTED };
 extern enum module_state current_module_state;
 
 /* control stack codes */
@@ -395,8 +395,8 @@ extern int leave_comment_flag;
  */
 extern int is_in_kind_compilation_flag_for_declare_ident;
 
-/* 
- * prototype 
+/*
+ * prototype
  */
 extern char *   xmalloc _ANSI_ARGS_((int size));
 #define XMALLOC(type, size) ((type)xmalloc(size))
@@ -475,7 +475,7 @@ extern expv     compile_expression _ANSI_ARGS_((expr x));
 extern expv     expv_assignment _ANSI_ARGS_((expv v1, expv v2));
 extern expv     compile_function_call _ANSI_ARGS_((ID f_id, expr args));
 extern expv     compile_highorder_function_call _ANSI_ARGS_((ID f_id,
-                                                             expr args, 
+                                                             expr args,
                                                              int isCall));
 
 extern expv     compile_struct_constructor _ANSI_ARGS_((ID struct_id, expr args));

@@ -93,6 +93,7 @@ static void compile_INTERFACE_statement(expr x);
 static void compile_MODULEPROCEDURE_statement(expr x);
 static int  markAsPublic(ID id);
 static int  markAsPrivate(ID id);
+static int  markAsProtected(ID id);
 static void compile_POINTER_SET_statement(expr x);
 static void compile_USE_decl(expr x, expr x_args);
 static void compile_USE_ONLY_decl(expr x, expr x_args);
@@ -951,7 +952,8 @@ void compile_statement1(int st_no, expr x)
         break;
 
     case F03_PROTECTED_STATEMENT:
-        // TODO PROTECTED
+        check_INDCL();
+        compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsProtected);
         break;
 
     default:
@@ -1400,10 +1402,10 @@ static int isAlreadyMarked(ID id)
     TYPE_DESC tp = ID_TYPE(id);
 
     if (tp == NULL)
-        return (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id));
+        return (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id)) || TYPE_IS_PROTECTED(id);
     else
-        return (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id) ||
-                TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp));
+        return (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id) || TYPE_IS_PROTECTED(id) ||
+                TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp) || TYPE_IS_PROTECTED(tp));
 }
 
 
@@ -1631,6 +1633,9 @@ end_declaration()
                 }
                 if (current_module_state == M_PRIVATE) {
                     TYPE_SET_PRIVATE(ip);
+                }
+                if (current_module_state == M_PROTECTED) {
+                    TYPE_SET_PROTECTED(ip);
                 }
             }
         }
@@ -1963,6 +1968,7 @@ define_external_function_id(ID id) {
     if (tp && (pid = find_ident_parent(ID_SYM(id)))){
       if (TYPE_IS_PUBLIC(pid)) TYPE_SET_PUBLIC(tp);
       else if (TYPE_IS_PRIVATE(pid)) TYPE_SET_PRIVATE(tp);
+      else if (TYPE_IS_PROTECTED(pid)) TYPE_SET_PROTECTED(tp);
     }
 
     args = EMPTY_LIST;
@@ -2370,6 +2376,9 @@ end_procedure()
                             if (TYPE_IS_PRIVATE(tp)) {
                                 TYPE_SET_PRIVATE(ID_TYPE(id));
                             }
+                            if (TYPE_IS_PROTECTED(tp)) {
+                                TYPE_SET_PROTECTED(ID_TYPE(id));
+                            }
                             break;
                         }
                         tp = TYPE_REF(tp);
@@ -2380,6 +2389,9 @@ end_procedure()
                     }
                     if (current_module_state == M_PRIVATE) {
                         TYPE_SET_PRIVATE(ID_TYPE(id));
+                    }
+                    if (current_module_state == M_PROTECTED) {
+                        TYPE_SET_PROTECTED(ID_TYPE(id));
                     }
                 }
                 ID_DEFINED_BY(id_in_parent) = id;
@@ -4426,6 +4438,10 @@ static int markAsPublic(ID id)
         error("'%s' is already specified as private.", ID_NAME(id));
         return FALSE;
     }
+    if (TYPE_IS_PROTECTED(id) || (tp != NULL && TYPE_IS_PROTECTED(tp))) {
+        error("'%s' is already specified as protected.", ID_NAME(id));
+        return FALSE;
+    }
     TYPE_SET_PUBLIC(id);
     TYPE_UNSET_PRIVATE(id);
 
@@ -4439,8 +4455,29 @@ static int markAsPrivate(ID id)
         error("'%s' is already specified as public.", ID_NAME(id));
         return FALSE;
     }
+    if (TYPE_IS_PROTECTED(id) || (tp != NULL && TYPE_IS_PROTECTED(tp))) {
+        error("'%s' is already specified as protected.", ID_NAME(id));
+        return FALSE;
+    }
     TYPE_UNSET_PUBLIC(id);
     TYPE_SET_PRIVATE(id);
+
+    return TRUE;
+}
+
+static int markAsProtected(ID id)
+{
+    TYPE_DESC tp = ID_TYPE(id);
+    if (TYPE_IS_PRIVATE(id) || (tp != NULL && TYPE_IS_PRIVATE(tp))) {
+        error("'%s' is already specified as private.", ID_NAME(id));
+        return FALSE;
+    }
+    if (TYPE_IS_PUBLIC(id) || (tp != NULL && TYPE_IS_PUBLIC(tp))) {
+        error("'%s' is already specified as public.", ID_NAME(id));
+        return FALSE;
+    }
+    TYPE_UNSET_PUBLIC(id);
+    TYPE_SET_PROTECTED(id);
 
     return TRUE;
 }
@@ -4471,6 +4508,8 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
             current_module_state = M_PUBLIC;
         } else if (markAs == markAsPrivate)  {
             current_module_state = M_PRIVATE;
+        } else if (markAs == markAsProtected) {
+            current_module_state == M_PROTECTED;
         }
 
         /* private/public is set to ids, later in end_declaration */

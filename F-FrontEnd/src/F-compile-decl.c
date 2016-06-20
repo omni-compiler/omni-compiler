@@ -1516,7 +1516,13 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                               "private.", ID_NAME(id));
                 return NULL;
             }
+            if (TYPE_IS_PROTECTED(tp)) {
+                error_at_node(attributes, "'%s' is already specified as "
+                              "protected.", ID_NAME(id));
+                return NULL;
+            }
             TYPE_SET_PUBLIC(tp);
+            TYPE_UNSET_PROTECTED(tp);
             TYPE_UNSET_PRIVATE(tp);
             break;
         case F95_PRIVATE_SPEC:
@@ -1525,7 +1531,13 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                               "public.", ID_NAME(id));
                 return NULL;
             }
+            if (TYPE_IS_PROTECTED(tp)) {
+                error_at_node(attributes, "'%s' is already specified as "
+                              "protected.", ID_NAME(id));
+                return NULL;
+            }
             TYPE_UNSET_PUBLIC(tp);
+            TYPE_UNSET_PROTECTED(tp);
             TYPE_SET_PRIVATE(tp);
             if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
                 TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
@@ -1533,7 +1545,24 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             }
             break;
         case F03_PROTECTED_SPEC:
-            // TODO PROTECTED
+            if (TYPE_IS_PUBLIC(tp)) {
+                error_at_node(attributes, "'%s' is already specified as "
+                              "public.", ID_NAME(id));
+                return NULL;
+            }
+            if (TYPE_IS_PRIVATE(tp)) {
+                error_at_node(attributes, "'%s' is already specified as "
+                              "private.", ID_NAME(id));
+                return NULL;
+            }
+            TYPE_UNSET_PUBLIC(tp);
+            TYPE_UNSET_PRIVATE(tp);
+            TYPE_SET_PROTECTED(tp);
+            if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
+                TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
+                //TYPE_SET_INTERNAL_PRIVATE(struct_tp);
+                // TODO PROTECTED
+            }
             break;
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
@@ -3020,13 +3049,17 @@ compile_struct_decl(expr ident, expr type)
         case F95_PUBLIC_SPEC:
             TYPE_SET_PUBLIC(tp);
             TYPE_UNSET_PRIVATE(tp);
+            TYPE_UNSET_PROTECTED(tp);
             break;
         case F95_PRIVATE_SPEC:
             TYPE_SET_PRIVATE(tp);
             TYPE_UNSET_PUBLIC(tp);
+            TYPE_UNSET_PROTECTED(tp);
             break;
         case F03_PROTECTED_SPEC:
-            // TODO PROTECTED
+            TYPE_SET_PROTECTED(tp);
+            TYPE_UNSET_PRIVATE(tp);
+            TYPE_UNSET_PUBLIC(tp);
             break;
         default:
             break;
