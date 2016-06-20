@@ -757,7 +757,7 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
 
         outx_true(TYPE_IS_PUBLIC(tp),           "is_public");
         outx_true(TYPE_IS_PRIVATE(tp),          "is_private");
-        outx_true(TYPE_IS_PROTECTED(tp),       "is_protected");
+        outx_true(TYPE_IS_PROTECTED(tp),        "is_protected");
         outx_true(TYPE_IS_POINTER(tp),          "is_pointer");
         outx_true(TYPE_IS_TARGET(tp),           "is_target");
         outx_true(TYPE_IS_OPTIONAL(tp),         "is_optional");
