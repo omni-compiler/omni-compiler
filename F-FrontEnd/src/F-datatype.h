@@ -1,4 +1,4 @@
-/* 
+/*
  * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
  * $TSUKUBA_Copyright:
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
@@ -27,7 +27,7 @@ typedef enum datatype {
     TYPE_ARRAY,         /* 9 extended */
     TYPE_FUNCTION,      /* 10 function */
     TYPE_STRUCT,        /* 11 derived type */
-    TYPE_GNUMERIC,      /* 12 general numeric (integer or real) */ 
+    TYPE_GNUMERIC,      /* 12 general numeric (integer or real) */
     TYPE_GNUMERIC_ALL,  /* 13 general all numeric (integer or real or
                          * complex) */
     TYPE_MODULE,        /* 14 module */
@@ -115,6 +115,7 @@ typedef struct type_descriptor
 #define TYPE_ATTR_RECURSIVE         0x00008000
 #define TYPE_ATTR_PURE              0x00010000
 #define TYPE_ATTR_ELEMENTAL         0x00020000
+#define TYPE_ATTR_PROTECTED         0x00040000
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -206,6 +207,9 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_PRIVATE(tp)         ((tp)->attr.type_attr_flags &   TYPE_ATTR_PRIVATE)
 #define TYPE_SET_PRIVATE(tp)        ((tp)->attr.type_attr_flags |=  TYPE_ATTR_PRIVATE)
 #define TYPE_UNSET_PRIVATE(tp)      ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_PRIVATE)
+#define TYPE_IS_PROTECTED(tp)       ((tp)->attr.type_attr_flags &   TYPE_ATTR_PROTECTED)
+#define TYPE_SET_PROTECTED(tp)      ((tp)->attr.type_attr_flags |=  TYPE_ATTR_PROTECTED)
+#define TYPE_UNSET_PROTECTED(tp)    ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_PROTECTED)
 #define TYPE_IS_SEQUENCE(tp)        ((tp)->attr.type_attr_flags &   TYPE_ATTR_SEQUENCE)
 #define TYPE_SET_SEQUENCE(tp)       ((tp)->attr.type_attr_flags |=  TYPE_ATTR_SEQUENCE)
 #define TYPE_UNSET_SEQUENCE(tp)     ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_SEQUENCE)
@@ -252,6 +256,7 @@ extern TYPE_DESC basic_type_desc[];
 
 #define TYPE_HAS_INTENT(tp)      (TYPE_IS_INTENT_IN(tp) || \
                 TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp))
+// TODO PROTECTED 
 #define IS_TYPE_PUBLICORPRIVATE(tp)  \
                 ((TYPE_IS_PUBLIC(tp)) || (TYPE_IS_PRIVATE(tp)))
 
@@ -333,11 +338,11 @@ extern TYPE_DESC basic_type_desc[];
                 ((IS_INT_CONST_V(v)) || (IS_REAL_CONST_V(v)) || \
                 (IS_COMPLEX_CONST_V(v)))
 #define IS_GNUMERIC(tp) \
-                ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_GNUMERIC)) 
+                ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_GNUMERIC))
 #define IS_GNUMERIC_ALL(tp) \
-                ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_GNUMERIC_ALL)) 
+                ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_GNUMERIC_ALL))
 #define IS_GENERIC_TYPE(tp) \
-                ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_GENERIC)) 
+                ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_GENERIC))
 #define IS_DOUBLED_TYPE(tp) \
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_DREAL || \
                 TYPE_BASIC_TYPE(tp) == TYPE_DCOMPLEX))
@@ -365,4 +370,3 @@ typedef enum {
 #endif
 
 #endif /* _F_DATATYPE_H_ */
-

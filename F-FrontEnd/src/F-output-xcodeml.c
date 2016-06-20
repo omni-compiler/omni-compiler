@@ -589,6 +589,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_TARGET(tp) ||
         TYPE_IS_PUBLIC(tp) ||
         TYPE_IS_PRIVATE(tp) ||
+        TYPE_IS_PROTECTED(tp) ||
         TYPE_IS_SEQUENCE(tp) ||
         TYPE_IS_INTERNAL_PRIVATE(tp) ||
         TYPE_IS_INTENT_IN(tp) ||
@@ -616,13 +617,17 @@ has_attribute_except_private_public(TYPE_DESC tp)
     int ret;
     int is_public = TYPE_IS_PUBLIC(tp);
     int is_private = TYPE_IS_PRIVATE(tp);
+    int is_protected = TYPE_IS_PROTECTED(tp);
     TYPE_UNSET_PUBLIC(tp);
     TYPE_UNSET_PRIVATE(tp);
+    TYPE_UNSET_PROTECTED(tp);
     ret = has_attribute(tp);
     if(is_private)
         TYPE_SET_PRIVATE(tp);
     if(is_public)
         TYPE_SET_PUBLIC(tp);
+    if(is_protected)
+        TYPE_SET_PROTECTED(tp);
     return ret;
 }
 
@@ -752,6 +757,7 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
 
         outx_true(TYPE_IS_PUBLIC(tp),           "is_public");
         outx_true(TYPE_IS_PRIVATE(tp),          "is_private");
+        outx_true(TYPE_IS_PROTECTED(tp),       "is_protected");
         outx_true(TYPE_IS_POINTER(tp),          "is_pointer");
         outx_true(TYPE_IS_TARGET(tp),           "is_target");
         outx_true(TYPE_IS_OPTIONAL(tp),         "is_optional");
@@ -3457,6 +3463,7 @@ outx_functionType_EXT(int l, EXT_ID ep)
 
         outx_true(TYPE_IS_PUBLIC(tp), "is_public");
         outx_true(TYPE_IS_PRIVATE(tp), "is_private");
+        outx_true(TYPE_IS_PROTECTED(tp), "is_protected");
     }
 
     if(EXT_PROC_ARGS(ep) == NULL) {
@@ -3554,7 +3561,7 @@ id_is_visibleVar(ID id)
             return FALSE;
         }
         if ((is_outputed_module && CRT_FUNCEP == NULL)
-            && (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) {
+            && (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) { // TODO PROTECTED
             return TRUE;
         }
         return FALSE;
