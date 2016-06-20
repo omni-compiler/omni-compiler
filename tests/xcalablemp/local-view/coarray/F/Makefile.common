@@ -93,8 +93,14 @@ RUN/go4.sh: go.template Makefile
 RUN/go6.sh: go.template Makefile
 	sed "s/@OUT@/$(OUT6)/" $< >$@
 
+showlog:
+	cat RUN/go.sh.e* RUN/go.sh.o*
+
 ### clean
-clean:
+cleanlog:
+	rm -rf RUN
+
+clean: cleanlog
 	rm -f *~ *.o *.x *.result a.out
 	rm -rf __omni_tmp__/
 	rm -f omni_traverse*.o

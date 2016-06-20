@@ -6,7 +6,7 @@ TESTS = $(wildcard *.f90)
 EXES  = $(TESTS:.f90=.x)
 OBJS  = $(TESTS:.f90=.o)
 
-.PHONY: clean all default run
+.PHONY: clean all default run submit showlog cleanlog
 
 all default: $(EXES)
 
@@ -52,5 +52,24 @@ run: $(EXES)
 	$(XRUN) -n 8 ./gmove_test_in.x
 	$(XRUN) -n 8 ./gmove_test_out.x
 
-clean:
+RUN:
+	mkdir RUN
+
+RUN/%.x:: %.x
+	cp $< $@
+
+RUN/go.sh: go.template Makefile
+	cp $< $@ && grep XRUN Makefile | sed -e 's/(XRUN)/{XRUN}/' -e 's/ *= */=/' | grep -v Makefile >>$@
+
+submit: all RUN RUN/go.sh $(EXES:%=RUN/%)
+	cd RUN; pjsub go.sh
+
+showlog:
+	cat RUN/go.sh.e* RUN/go.sh.o*
+
+cleanlog:
+	rm -rf RUN
+
+clean: cleanlog
 	rm -f $(EXES) $(OBJS) _xmpf_module_INIT.o chk.o
+

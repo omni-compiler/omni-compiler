@@ -687,7 +687,7 @@ ONESIDED_CPPFLAGS
 MPI_SUBVERSION
 MPI_VERSION
 MPI3_ONESIDED
-MPI3
+MPI3_ASYNC
 MPFR_LIB_DIR
 MPFR_INCLUDE_DIR
 GMP_LIB_DIR
@@ -10868,36 +10868,36 @@ EOF
 MPI_VERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -2 | head -1`
 MPI_SUBVERSION=`${MPI_CPP} ${MPI_CPPFLAGS} $tmpmpi3 | tail -1`
 if test $MPI_VERSION -ge 3; then
-    doMPI3=yes
+    doMPI3_ASYNC=yes
 else
-    doMPI3=no
+    doMPI3_ASYNC=no
 fi
 rm -f $tmpmpi3
 
 if test "x${target}" = "xKcomputer-linux-gnu"; then
-    doMPI3=yes
+    doMPI3_ASYNC=yes
 fi
 
-if test "x${doMPI3}" = "xyes"; then
+if test "x${doMPI3_ASYNC}" = "xyes"; then
     OMNI_X2X_FLAGS="${OMNI_X2X_FLAGS} -fasync"
 fi
 
 if test x${use_tca} = xyes; then
-    if test x${doMPI3} = xno -a x${use_gasnet} = xno; then
+    if test x${doMPI3_ASYNC} = xno -a x${use_gasnet} = xno; then
 	echo "Error!! TCA must use MPI version 3 or GASNet"
 	exit 1
     fi
 fi
 
 use_mpi3_onesided=no
-if test "x${doMPI3}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu"; then
+if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu"; then
     use_mpi3_onesided=yes
 fi
 
-MPI3=$FALSE
+MPI3_ASYNC=$FALSE
 MPI3_ONESIDED=$FALSE
-if test "x${doMPI3}" = "xyes"; then
-    MPI3=$TRUE
+if test "x${doMPI3_ASYNC}" = "xyes"; then
+    MPI3_ASYNC=$TRUE
 fi
 if test "x${use_mpi3_onesided}" = "xyes"; then
     MPI3_ONESIDED=$TRUE
@@ -12875,6 +12875,9 @@ unset program_transform_name
 #--------------------------------------------------------------------
 # Set version file
 VERSIONTXT="./Driver/etc/version"
+echo -n Version:1.0.1 > ${VERSIONTXT}
+
+# If possible, set more information
 if test -d .git || test -f .git; then
     which git 1>/dev/null 2>/dev/null
     if test $? -eq 0; then

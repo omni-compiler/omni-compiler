@@ -45,13 +45,17 @@ clean:
 	done
 
 BASE_TESTDIR = "tests/xcalablemp/"
-TESTDIRS = "global-view/array/C/" "global-view/array/F/" "global-view/bcast/C/" "global-view/bcast/F/" \
-	   "global-view/loop/C" "global-view/loop/F" "global-view/reduction/C" "global-view/reduction/F" \
-	   "global-view/shadow-reflect/C/" "global-view/shadow-reflect/F/" "global-view/task/C"  "global-view/task/F" \
-	   "global-view/template_fix/C/" "global-view/template_fix/F/" "global-view/gmove/C/" "global-view/gmove/F/" \
-	   "global-view/inquiry/C/" "global-view/inquiry/F/" "global-view/gblock/C/" "global-view/gblock/F/" \
-	   "global-view/align/C/" "global-view/align/F/" "global-view/intrinsic/F/" \
-	   "global-view/util/C/" "global-view/util/F/" "others/F" "others/C"
+TESTDIRS1 = "global-view/array/C/" "global-view/array/F/" "global-view/bcast/C/" "global-view/bcast/F/" \
+	    "global-view/loop/C" "global-view/loop/F" "global-view/reduction/C" "global-view/reduction/F" \
+	    "global-view/shadow-reflect/C/" "global-view/shadow-reflect/F/" "global-view/task/C"  "global-view/task/F"
+TESTDIRS2 = "global-view/template_fix/C/" "global-view/template_fix/F/" "global-view/gmove/C/" "global-view/gmove/F/" \
+	    "global-view/inquiry/C/" "global-view/inquiry/F/" "global-view/gblock/C/" "global-view/gblock/F/"
+TESTDIRS3 = "global-view/align/C/" "global-view/align/F/" "global-view/intrinsic/F/" \
+	    "global-view/util/C/" "global-view/util/F/" "others/F" "others/C"
+IS_MPI3_ASYNC=@MPI3_ASYNC@
+ifeq ($(IS_MPI3_ASYNC), $(TRUE))
+   TESTDIRS3 += "global-view/async/C/" "global-view/async/F/"
+endif
 BASE_LARGE_TESTDIR = "tests/xcalablemp/LARGE-SIZE-TESTS/"
 LARGE_TESTDIRS = "others/C"
 
@@ -59,33 +63,45 @@ LARGE_TESTDIRS = "others/C"
 # But SUPERUX and POWERPC cannot deal with imaginary numbers.
 IS_SUPERUX_OR_POWERPC=@SUPERUX_OR_POWERPC@
 ifeq ($(IS_SUPERUX_OR_POWERPC), $(FALSE))
-  TESTDIRS += "global-view/intrinsic/C/"
+   TESTDIRS3 += "global-view/intrinsic/C/"
 endif
+
+TESTDIRS  = $(TESTDIRS1) $(TESTDIRS2) $(TESTDIRS3)
 
 IS_GASNET=@GASNET@
 ifeq ($(IS_GASNET), $(TRUE))
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
-	       "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
-	       "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
-	       "local-view/coarray/F/CFOLD" "local-view/lock-unlock/C" "local-view/intrinsic/C"
+   TESTDIRS_GAS = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
+	          "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
+	          "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
+	          "local-view/coarray/F/CFOLD" "local-view/lock-unlock/C" "local-view/intrinsic/C"
+   TESTDIRS += $(TESTDIRS_GAS)
    LARGE_TESTDIRS += "local-view/coarray/C/"
+else
+   TESTDIRS_GAS = 
 endif
 
 IS_FJRDMA=@FJRDMA@
 ifeq ($(IS_FJRDMA), $(TRUE))
-   TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
-               "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
-	       "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
-	       "local-view/coarray/F/CFOLD" 
+   TESTDIRS_FJR = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
+                  "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
+	          "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
+	          "local-view/coarray/F/CFOLD" 
+   TESTDIRS += $(TESTDIRS_FJR)
    LARGE_TESTDIRS += "local-view/coarray/C/"
+else
+   TESTDIRS_FJR = 
 endif
 
-IS_MPI3=@MPI3@
-ifeq ($(IS_MPI3), $(TRUE))
-   TESTDIRS += "global-view/async/C/" "global-view/async/F/" \
-               "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
-	       "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
-	       "local-view/coarray/F/CFOLD" 
+IS_MPI3_ONESIDED=@MPI3_ONESIDED@
+ifeq ($(IS_MPI3_ONESIDED), $(TRUE))
+   TESTDIRS_MP3 = "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
+                  "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
+	          "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
+	          "local-view/coarray/F/CFOLD"
+   TESTDIRS += $(TESTDIRS_MP3)
+   LARGE_TESTDIRS += "local-view/coarray/C/"
+else
+   TESTDIRS_MP3 = 
 endif
 
 tests: 
@@ -105,6 +121,60 @@ run-tests:
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
+submit-tests:
+	@for subdir in $(TESTDIRS); do \
+	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
+	  if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+submit1-tests:
+	@for subdir in $(TESTDIRS1); do \
+	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
+	  if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+submit2-tests:
+	@for subdir in $(TESTDIRS2); do \
+	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
+	  if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+submit3-tests:
+	@for subdir in $(TESTDIRS3); do \
+	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
+	  if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+submit4-tests:
+	@for subdir in $(TESTDIRS_GAS); do \
+	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
+	  if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+submit5-tests:
+	@for subdir in $(TESTDIRS_FJR); do \
+	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
+	  if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+submit6-tests:
+	@for subdir in $(TESTDIRS_MP3); do \
+	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
+	  if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+showlog-tests:
+	@for subdir in $(TESTDIRS); do \
+	  $(MAKE) showlog -C $(BASE_TESTDIR)$$subdir; \
+	  if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+cleanlog-tests:
+	@for subdir in $(TESTDIRS); do \
+	  $(MAKE) cleanlog -C $(BASE_TESTDIR)$$subdir; \
+	  if test $$? -ne 0; then exit 1; fi ;\
+	done
+
 large-tests:
 	@for subdir in $(LARGE_TESTDIRS) ; do \
 	  $(MAKE) -C $(BASE_LARGE_TESTDIR)/$$subdir ; \
@@ -119,6 +189,24 @@ clean-large-tests:
 run-large-tests:
 	@for subdir in $(LARGE_TESTDIRS); do \
 	  $(MAKE) run -C $(BASE_LARGE_TESTDIR)$$subdir; \
+	  if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+submit-large-tests:
+	@for subdir in $(LARGE_TESTDIRS); do \
+	  $(MAKE) submit -C $(BASE_LARGE_TESTDIR)$$subdir; \
+	  if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+showlog-large-tests:
+	@for subdir in $(LARGE_TESTDIRS); do \
+	  $(MAKE) showlog -C $(BASE_LARGE_TESTDIR)$$subdir; \
+	  if test $$? -ne 0; then exit 1; fi ;\
+	done
+
+cleanlog-large-tests:
+	@for subdir in $(LARGE_TESTDIRS); do \
+	  $(MAKE) cleanlog -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 

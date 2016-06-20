@@ -6,7 +6,7 @@ TESTS = $(wildcard *.c)
 EXES  = $(TESTS:.c=.x)
 OBJS  = $(TESTS:.c=.o)
 
-.PHONY: clean all default run
+.PHONY: clean all default run submit showlog cleanlog
 
 all default: $(EXES)
 
@@ -17,9 +17,9 @@ chk.o: ./chk/chk.c
 
 CFLAG =
 ifeq ($(ONESIDED_LIB),MPI3)
-	CFLAG = -cpp -D_MPI3
+	CFLAG = -D_MPI3
 else
-	CFLAG = -cpp
+	CFLAG = 
 endif
 
 %.x: %.c chk.o
@@ -52,5 +52,24 @@ run: $(EXES)
 	$(XRUN) -n 8 ./gmove_test_in.x
 	$(XRUN) -n 8 ./gmove_test_out.x
 
-clean:
+RUN:
+	mkdir RUN
+
+RUN/%.x:: %.x
+	cp $< $@
+
+RUN/go.sh: go.template Makefile
+	cp $< $@ && grep XRUN Makefile | sed -e 's/(XRUN)/{XRUN}/' -e 's/ *= */=/' | grep -v Makefile >>$@
+
+submit: all RUN RUN/go.sh $(EXES:%=RUN/%)
+	cd RUN; pjsub go.sh
+
+showlog:
+	cat RUN/go.sh.e* RUN/go.sh.o*
+
+cleanlog:
+	rm -rf RUN
+
+clean: cleanlog
 	rm -f $(EXES) $(OBJS) chk.o
+
