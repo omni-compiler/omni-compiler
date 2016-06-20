@@ -244,9 +244,9 @@ public class XMPcoindexObj {
   Xobject toFuncRef_core(Xobject mold) {
     switch (GetInterfaceType) {
     case 6:
-      return toFuncRef_core_type6(mold);  
+      return toFuncRef_core_type6(mold, COARRAYGET_PREFIX);
     case 8:
-      return toFuncRef_core_type8(mold);  
+      return toFuncRef_core_type8(mold, COARRAYGET_GENERIC_NAME);
     default:
       XMP.fatal("INTERNAL: obsoleted Get Interface Type: " +
                 GetInterfaceType);
@@ -255,11 +255,10 @@ public class XMPcoindexObj {
     return null;
   }
 
-  private Xobject toFuncRef_core_type8(Xobject mold) {
+  private Xobject toFuncRef_core_type8(Xobject mold, String funcName) {
     // type8 used
     Xobject actualArgs = _makeActualArgs_type8(mold);
 
-    String funcName = COARRAYGET_GENERIC_NAME;
     Ident funcIdent = getEnv().findVarIdent(funcName, null);
     if (funcIdent == null) {
       Xtype baseType = new BasicType(BasicType.F_NUMERIC_ALL);
@@ -272,14 +271,14 @@ public class XMPcoindexObj {
     return funcRef;
   }
 
-  private Xobject toFuncRef_core_type6(Xobject mold) {
+  private Xobject toFuncRef_core_type6(Xobject mold, String funcPrefix) {
     // type6 used
     Xobject actualArgs = _makeActualArgs_type6(mold);
 
     Xtype xtype = getType().copy();
     xtype.removeCodimensions();
 
-    String funcName = COARRAYGET_PREFIX + exprRank + "d";
+    String funcName = funcPrefix + exprRank + "d";
     Ident funcIdent = getEnv().findVarIdent(funcName, null);
     if (funcIdent == null) {
       // bug460: funcIdent could not find because the module declaring the
@@ -314,9 +313,9 @@ public class XMPcoindexObj {
 
     switch (PutInterfaceType) {
     case 8:
-      return toCallStmt_type8(mold, rhs);
+      return toCallStmt_type8(mold, rhs, COARRAYPUT_GENERIC_NAME);
     case 7:
-      return toCallStmt_type7(rhs, condition);
+      return toCallStmt_type7(rhs, condition, COARRAYPUT_PREFIX);
     default:
       XMP.fatal("INTERNAL: obsoleted Get Interface Type: " +
                 PutInterfaceType);
@@ -325,11 +324,10 @@ public class XMPcoindexObj {
     return null;
   }
 
-  public Xobject toCallStmt_type8(Xobject mold, Xobject rhs) {
+  public Xobject toCallStmt_type8(Xobject mold, Xobject rhs, String subrName) {
     // type8 used
     Xobject actualArgs = _makeActualArgs_type8(mold, rhs);
 
-    String subrName = COARRAYPUT_GENERIC_NAME;
     Ident subrIdent = getEnv().findVarIdent(subrName, null);
     if (subrIdent == null) {
       subrIdent = getEnv().declExternIdent(subrName,
@@ -339,7 +337,7 @@ public class XMPcoindexObj {
     return subrCall;
   }
 
-  public Xobject toCallStmt_type7(Xobject rhs, Xobject condition) {
+  public Xobject toCallStmt_type7(Xobject rhs, Xobject condition, String subrPrefix) {
     // type7 used
     Xobject actualArgs =
       _makeActualArgs_type7(_convRhsType(rhs), condition);
@@ -347,7 +345,7 @@ public class XMPcoindexObj {
     // "scalar" or "array" or "spread" will be selected.
     String pattern = _selectCoarrayPutPattern(rhs);
 
-    String subrName = COARRAYPUT_PREFIX + "_" + pattern;
+    String subrName = subrPrefix + "_" + pattern;
     //// I'm not clear why this is OK and the case xmpf_coarray_proc_init is 
     //// not OK with the similar interface blocks.
     Ident subrIdent = getEnv().findVarIdent(subrName, null);
@@ -403,6 +401,12 @@ public class XMPcoindexObj {
    *        void* nextAddrN, int countN )
    *   where N is rank of the reference (0<=N<=15 in Fortran 2008).
    */
+
+  // for subroutine atrimc_define
+  public Xobject makeActualArgs(Xobject src) {
+    return _makeActualArgs_type8(getMoldObj(), src);
+  }
+
   private Xobject _makeActualArgs_type8(Xobject mold, Xobject src) {
     Xobject actualArgs = _makeActualArgs_type8();
     actualArgs.add(mold);

@@ -67,22 +67,14 @@ module xmpf_coarray_decl
       include "xmp_coarray_sync.h"
 !!!      include "xmp_coarray_sync_sxace.h"
 
-!!! This is not useful definition because it could not be found by 
-!!! XMPenv.findVarIdent(...) and therefore would be double-defined.
-!!      interface
-!!        integer function xmpf_coarray_get_image_index                   &
-!!     &    (descptr, corank, i1, i2, i3, i4, i5, i6, i7)
-!!        integer(8), intent(in) :: descptr
-!!        integer, intent(in) :: corank, i1
-!!        integer, intent(in), optional :: i2, i3, i4, i5, i6, i7
-!!        end function
-!!      end interface
-
 !! reference of coindexed objects
       include "xmp_coarray_get.h"
 
 !! assignment statements to coindex variables
       include "xmp_coarray_put.h"
+
+!! intrinsic subroutines atomic define/ref 
+      include "xmp_coarray_atomic.h"
 
 !! allocate statement
       include "xmp_coarray_alloc.h"

@@ -2385,7 +2385,7 @@ public class XMPtransCoarrayRun
   //  - replace lcobound(V, ...) with COBOUND_NAME(descptr_V, ..., 0, corank)
   //  - replace ucobound(V, ...) with COBOUND_NAME(descptr_V, ..., 1, corank)
   //  - replace atomic_define(atom, value) with ATOMIC_DEFINE_NAME(address[, coindex], value)
-  //  - replace atomic_ref(value, atom) with ATOMIC_REF_NAME(address[, coindex], value)
+  //  - replace atomic_ref(value, atom) with ATOMIC_REF_NAME(value, atom)
   //-----------------------------------------------------
   //
   private void replaceIntrinsicCalls1(ArrayList<XMPcoarray> coarrays) {
@@ -2509,10 +2509,90 @@ public class XMPtransCoarrayRun
   }
 
 
+  /* replace incrinsic subroutine atomic_ref(value, atom)
+   *   with ATOMIC_REF_NAME(value, atom), where atom can be converted
+   *   later as a usual reference of a coindexed object.
+   */
+  private void _replaceAtomicRef(Xobject xobj, ArrayList<XMPcoarray> coarrays) {
+    _replaceAtomicRef(xobj);
+  }
+  private void _replaceAtomicRef(Xobject xobj) {
+    final String fname = "atomic_ref";
+
+    XobjList actualArgs = (XobjList)xobj.getArg(1);
+    int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
+
+    if (nargs != 2) {
+      XMP.error("Too few or too many arguments found in the call of " + fname);
+      return;
+    }
+
+    // get the first argument 'value'
+    Xobject arg1 = actualArgs.getArgWithKeyword("value", 0);
+    if (arg1 == null) {
+      XMP.error("Argument \'value\' not found in " + fname);
+      return;
+    }
+
+    // get the second argument 'atomic'
+    Xobject arg2 = actualArgs.getArgWithKeyword("atomic", 1);
+    if (arg2 == null) {
+      XMP.error("Argument \'atomic\' not found in " + fname);
+      return;
+    }
+
+    // replace function name atomic_ref with ATOMIC_REF_NAME
+    XobjString newFname = Xcons.Symbol(Xcode.IDENT, ATOMIC_REF_NAME);
+    xobj.setArg(0, newFname);
+  }
+
+
   /* replace incrinsic subroutine atomic_define(atom, value)
-   *   with ATOMIC_DEFINE_NAME(address, corank, cosubscr, value)
+   *   with ATOMIC_DEFINE_NAME(atom, value)
+   *     if atom is not a coindexed obj
+   *   with ATOMIC_DEFINE_NAME(descPtr, coindex, mold, src)
+   *     if atom is a coindexed obj
    */
   private void _replaceAtomicDefine(Xobject xobj, ArrayList<XMPcoarray> coarrays) {
+    final String fname = "atomic_define";
+
+    XobjList actualArgs = (XobjList)xobj.getArg(1);
+    int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
+
+    if (nargs != 2) {
+      XMP.error("Too few or too many arguments found in the call of " + fname);
+      return;
+    }
+
+    // get the first argument 'atomic'
+    Xobject arg1 = actualArgs.getArgWithKeyword("atomic", 0);
+    if (arg1 == null) {
+      XMP.error("Argument \'atomic\' not found in " + fname);
+      return;
+    }
+
+    // get the second argument 'value'
+    Xobject arg2 = actualArgs.getArgWithKeyword("value", 1);
+    if (arg2 == null) {
+      XMP.error("Argument \'value\' not found in " + fname);
+      return;
+    }
+
+    // replace function name atomic_ref with ATOMIC_DEFINE_NAME
+    XobjString newFname = Xcons.Symbol(Xcode.IDENT, ATOMIC_DEFINE_NAME);
+    xobj.setArg(0, newFname);
+
+    // If argument atomic is a coindexed object, replace arguments
+    if (arg1.Opcode() == Xcode.CO_ARRAY_REF) {
+      XMPcoindexObj coindexObj = new XMPcoindexObj(arg1, coarrays);
+      Xobject args = coindexObj.makeActualArgs(arg2);
+      xobj.setArg(1, args);
+    }
+  }
+
+  /****************************************
+  private void _replaceAtomicDefine(Xobject xobj, ArrayList<XMPcoarray> coarrays) {
+
     final String fname = "atomic_define";
     final String genericName = ATOMIC_DEFINE_NAME;
 
@@ -2524,23 +2604,10 @@ public class XMPtransCoarrayRun
       return;
     }
 
-    // get the first argument 'atomic'
-    Xobject argAtom = actualArgs.getArgWithKeyword("atomic", 0);
-    if (argAtom == null) {
-      XMP.error("Argument \'atomic\' not found in " + fname);
-      return;
-    }
-
-    // get the second argument 'value'
-    Xobject argValue = actualArgs.getArgWithKeyword("value", 1);
-    if (argValue == null) {
-      XMP.error("Argument \'value\' not found in " + fname);
-      return;
-    }
-
     _replaceAtomic_core(xobj, argAtom, argValue,
                         fname, genericName, coarrays);
   }
+  ******************************************/
 
   /***************************************
     // replace function name 'atomic_define' with ATOMIC_DEFINE_NAME
@@ -2555,41 +2622,7 @@ public class XMPtransCoarrayRun
     xobj.setArg(1, newActualArgs);
   **********************************************/
 
-
-  /* replace incrinsic subroutine atomic_ref(value, atom)
-   *   with ATOMIC_REF_NAME(address, corank, cosubscr, value)
-   */
-  private void _replaceAtomicRef(Xobject xobj, ArrayList<XMPcoarray> coarrays) {
-    final String fname = "atomic_ref";
-    final String genericName = ATOMIC_REF_NAME;
-
-    XobjList actualArgs = (XobjList)xobj.getArg(1);
-    int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
-
-    if (nargs != 2) {
-      XMP.error("Too few or too many arguments found in the call of " + fname);
-      return;
-    }
-
-    // get the first argument 'value'
-    Xobject argValue = actualArgs.getArgWithKeyword("value", 0);
-    if (argValue == null) {
-      XMP.error("Argument \'value\' not found in " + fname);
-      return;
-    }
-
-    // get the second argument 'atomic'
-    Xobject argAtom = actualArgs.getArgWithKeyword("atomic", 1);
-    if (argAtom == null) {
-      XMP.error("Argument \'atomic\' not found in " + fname);
-      return;
-    }
-
-    _replaceAtomic_core(xobj, argAtom, argValue,
-                        fname, genericName, coarrays);
-  }
-
-
+  /***************************
   private void _replaceAtomic_core(Xobject xobj, Xobject arg1, Xobject arg2,
                                    String fname, String genericName,
                                    ArrayList<XMPcoarray> coarrays) {
@@ -2612,6 +2645,7 @@ public class XMPtransCoarrayRun
     // replace actualArgs with newArgs
     xobj.setArg(1, newArgs);
   }
+  **********************************/
 
 
   /* replace "allocated(coarray)" with "associated(coarray)"

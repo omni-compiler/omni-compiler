@@ -166,22 +166,25 @@ extern void xmpf_end_critical_(void);
 /* xmpf_coarray_put.c */
 #if PUT_INTERFACE_TYPE==8
 extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *element,
-                                     int *coindex, char *rhs);
+                                     int *coindex, char *rhs, BOOL *synchronouns);
 extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char **rhsAddr, int *rank,
-                                    int skip[], int skip_rhs[], int count[]);
+                                    int skip[], int skip_rhs[], int count[],
+                                    BOOL *synchronous);
 extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, int *rank,
-                                     int skip[], int count[]);
+                                     int skip[], int count[],
+                                     BOOL *synchronous);
 #else
 extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *element,
-                                     int *coindex, char *rhs, int *condition);
+                                     int *coindex, char *rhs, int *condition,
+                                     BOOL *synchronous);
 extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *element,
                                     int *coindex, char *rhs, int *condition,
-                                    int *rank, ...);
+                                    BOOL *synchronous, int *rank, ...);
 extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *element,
                                      int *coindex, char *rhs, int *condition,
-                                     int *rank, ...);
+                                     BOOL *synchronous, int *rank, ...);
 #endif
 extern void _XMPF_coarrayInit_put(void);
 

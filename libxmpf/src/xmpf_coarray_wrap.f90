@@ -1,5 +1,6 @@
 !-----------------------------------------------------------------------
 !   array function this_image(coarray)
+!     declared in ./xmpf_coarray_decl.f90:xmpf_this_image_generic
 !-----------------------------------------------------------------------
       function xmpf_this_image_coarray_wrap(descptr, corank) result(image)
         integer(8), intent(in) :: descptr
@@ -13,6 +14,7 @@
 
 !-----------------------------------------------------------------------
 !   array function lcobound/ucobound(coarray, kind)
+!     declared in ./xmpf_coarray_decl.f90:xmpf_cobound_generic
 !-----------------------------------------------------------------------
       function xmpf_cobound_nodim(descptr, kind, lu, corank)            &
      & result(bounds)
@@ -27,6 +29,7 @@
 
 !-----------------------------------------------------------------------
 !   sync all
+!     declared in ../include/xmp_coarray_sync.h
 !-----------------------------------------------------------------------
       subroutine xmpf_sync_all_stat(stat, errmsg)
         integer, intent(out) :: stat
@@ -42,6 +45,7 @@
 
 !-----------------------------------------------------------------------
 !   sync memory
+!     declared in ../include/xmp_coarray_sync.h:xmpf_sync_memory
 !-----------------------------------------------------------------------
       subroutine xmpf_sync_memory_stat_wrap(stat, errmsg)
         integer, intent(out) :: stat
@@ -57,6 +61,7 @@
 
 !-----------------------------------------------------------------------
 !   sync images
+!     declared in ../include/xmp_coarray_sync.h:xmpf_sync_images
 !-----------------------------------------------------------------------
 
 !!    no xmpf_sync_image_nostat_wrap(image)
@@ -113,48 +118,6 @@
         endif
       end subroutine xmpf_sync_allimages_stat_wrap
 
-
-!-----------------------------------------------------------------------
-!   atomic_define
-!-----------------------------------------------------------------------
-      subroutine xmpf_atomic_define_self_i4(atom, value)
-        integer(4), intent(out) :: atom
-        integer(4), intent(in)  :: value
-        atom = value
-      end subroutine xmpf_atomic_define_self_i4
-
-      subroutine xmpf_atomic_define_self_l4(atom, value)
-        logical(4), intent(out) :: atom
-        logical(4), intent(in)  :: value
-        atom = value
-      end subroutine xmpf_atomic_define_self_l4
-
-      !! subroutine xmpf_atomic_define_remote_i4(mold, coindex, value)
-      !!  defined in xmpf_coarray_lib.c
-
-      !! subroutine xmpf_atomic_define_remote_l4(mold, coindex, value)
-      !!  defined in xmpf_coarray_lib.c
-
-!-----------------------------------------------------------------------
-!   atomic_ref
-!-----------------------------------------------------------------------
-      subroutine xmpf_atomic_ref_self_i4(atom, value)
-        integer(4), intent(out) :: atom
-        integer(4), intent(in)  :: value
-        value = atom
-      end subroutine xmpf_atomic_ref_self_i4
-
-      subroutine xmpf_atomic_ref_self_l4(atom, value)
-        logical(4), intent(out) :: atom
-        logical(4), intent(in)  :: value
-        value = atom
-      end subroutine xmpf_atomic_ref_self_l4
-
-      !! subroutine xmpf_atomic_ref_remote_i4(mold, coindex, value)
-      !!  defined in xmpf_coarray_lib.c
-
-      !! subroutine xmpf_atomic_ref_remote_l4(mold, coindex, value)
-      !!  defined in xmpf_coarray_lib.c
 
 !-----------------------------------------------------------------------
 !   fatal error

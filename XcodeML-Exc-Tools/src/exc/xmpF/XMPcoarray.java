@@ -874,14 +874,9 @@ public class XMPcoarray {
     }
 
     Xobject image = _calcIncExpr(sum); 
-
-    //////////////////////////////
-    System.out.println("image="+image);
-
     return image;
-    //return null;
-    //////////////////////////////
   }
+
 
   public Xobject getImageIndex_default(Xobject baseAddr, Xobject cosubscripts) {
     String fname = GET_IMAGE_INDEX_NAME;
