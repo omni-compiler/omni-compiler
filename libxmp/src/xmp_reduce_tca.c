@@ -274,7 +274,7 @@ static int get_coll_id(void *dev_addr, int count, int datatype, int op, MPI_Comm
   return coll_info.tail_id++;
 }
 
-static void _XMP_reduce_tca_init(void *sendbuf, void *recvbuf, int count, int datatype, int op, MPI_Comm mpi_comm, int id)
+static void _XMP_reduce_tca_init(void *dev_addr, int count, int datatype, int op, MPI_Comm mpi_comm, int id)
 {
   int rank = _XMP_world_rank;
   int num_proc = _XMP_world_size;
@@ -306,8 +306,6 @@ static void _XMP_reduce_tca_init(void *sendbuf, void *recvbuf, int count, int da
 
   *(unsigned long *)((unsigned long)cpu_sendbuf + datasize) = _XMP_TCA_PIO_SYNC_MARK;
   TCA_CHECK(tcaCreateHandle(&h[0], cpu_recvbuf, recvsize, tcaMemoryCPU));
-  memcpy(cpu_sendbuf, sendbuf, datasize);
-  memset(cpu_recvbuf, 0, recvsize);
 
   int i, distance;
   for (distance = 1, i = 0; distance < num_proc; distance <<= 1, i++) {
@@ -326,7 +324,7 @@ static void _XMP_reduce_tca_init(void *sendbuf, void *recvbuf, int count, int da
   coll_info.tca_datatype[id] = tca_datatype;
 }
 
-static void _XMP_reduce_tca_do(void *sendbuf, void *recvbuf, int count, int datatype, int op, MPI_Comm mpi_comm, int id)
+static void _XMP_reduce_tca_do(void *dev_addr, int count, int datatype, int op, MPI_Comm mpi_comm, int id)
 {
   void *cpu_sendbuf = coll_info.cpu_sendbuf[id];
   void *cpu_recvbuf = coll_info.cpu_recvbuf[id];
@@ -343,6 +341,10 @@ static void _XMP_reduce_tca_do(void *sendbuf, void *recvbuf, int count, int data
   const size_t recv_next_aligned_stride = coll_info.recv_next_aligned_stride[id];
   const size_t sendsize = datasize + _XMP_TCA_SYNC_MARK_SIZE;
 
+  // copy device to host
+  CUDA_CHECK(cudaMemcpy(cpu_sendbuf, dev_addr, datasize, cudaMemcpyDeviceToHost));
+
+  // allreduce on CPU memory
   for (i = 0; i < num_comms; i++) {
     volatile unsigned long *pio_wait = (volatile unsigned long *)((unsigned long)cpu_recvbuf + datasize);
     TCA_CHECK(tcaSendPIO(&pio_h[i], recv_offset, (void *)cpu_sendbuf, sendsize));
@@ -362,12 +364,13 @@ static void _XMP_reduce_tca_do(void *sendbuf, void *recvbuf, int count, int data
       recv_offset += recv_next_aligned_stride;
       cpu_recvbuf = (void *)((unsigned long)cpu_recvbuf + recv_next_aligned_stride);
     } else {
-      tca_op_func_3op[tca_op][get_func_type_by_data_size(tca_datatype)](recvbuf, cpu_sendbuf, cpu_recvbuf, count);
+      tca_op_func_3op[tca_op][get_func_type_by_data_size(tca_datatype)](cpu_sendbuf, cpu_sendbuf, cpu_recvbuf, count);
     }
   }
-
-  /* memcpy(recvbuf, cpu_sendbuf, datasize); */
   cpu_recvbuf = (void *)init_ptr_recv;
+
+  // copy host to device
+  CUDA_CHECK(cudaMemcpy(dev_addr, cpu_sendbuf, datasize, cudaMemcpyHostToDevice));
 }
 
 void _XMP_reduce_tca_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count, int datatype, int op)
@@ -382,26 +385,14 @@ void _XMP_reduce_tca_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count
     init_coll_info();
   }
   
-  size_t size = count * datatype;
-  void *sendbuf = _XMP_alloc(size);
-  void *recvbuf = _XMP_alloc(size);
   MPI_Comm mpi_comm = *((MPI_Comm *)nodes->comm);
-
-  // copy dev to host
-  CUDA_CHECK(cudaMemcpy(sendbuf, dev_addr, size, cudaMemcpyDeviceToHost));
 
   int id = get_coll_id(dev_addr, count, datatype, op, mpi_comm);
   if (!coll_info.flag[id]) {
-    _XMP_reduce_tca_init(sendbuf, recvbuf, count, datatype, op, mpi_comm, id);
+    _XMP_reduce_tca_init(dev_addr, count, datatype, op, mpi_comm, id);
   }
 
-  _XMP_reduce_tca_do(sendbuf, recvbuf, count, datatype, op, mpi_comm, id);
-
-  // copy host to dev
-  CUDA_CHECK(cudaMemcpy(dev_addr, recvbuf, size, cudaMemcpyHostToDevice));
-
-  _XMP_free(sendbuf);
-  _XMP_free(recvbuf);
+  _XMP_reduce_tca_do(dev_addr, count, datatype, op, mpi_comm, id);
 }
   
 void _XMP_reduce_tca_CLAUSE(void *dev_addr, int count, int datatype, int op)
