@@ -26,11 +26,13 @@ void _XMP_reflect_do_acc(_XMP_array_t *array_desc)
 #endif
 }
 
-void _XMP_reflect_acc(void *addr)
+void _XMP_reflect_acc__(void *acc_addr, _XMP_array_t *array_desc)
 {
   if(_XMP_world_size == 1) return;
 
 #ifdef _XMP_TCA
+#else
+  _XMP_reflect_gpu(acc_addr, array_desc);
 #endif
 }
 

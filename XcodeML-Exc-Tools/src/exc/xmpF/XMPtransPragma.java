@@ -419,8 +419,9 @@ public class XMPtransPragma
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
     Ident f, g, h;
+    boolean isAcc = info.isAcc();
 
-    f = env.declInternIdent(XMP.reflect_f,Xtype.FsubroutineType);
+    f = env.declInternIdent(isAcc? XMP.reflect_acc_f : XMP.reflect_f,Xtype.FsubroutineType);
     
     if (info.getAsyncId() != null){
       Xobject arg = Xcons.List(info.getAsyncId());
@@ -431,7 +432,7 @@ public class XMPtransPragma
     Vector<XMParray> reflectArrays = info.getReflectArrays();
     for(XMParray a: reflectArrays){
       for (int i = 0; i < info.widthList.size(); i++){
-	  g = env.declInternIdent(XMP.set_reflect_f,Xtype.FsubroutineType);
+	  g = env.declInternIdent(isAcc? XMP.set_reflect_acc_f : XMP.set_reflect_f,Xtype.FsubroutineType);
 	  XMPdimInfo w = info.widthList.get(i);
 
 	  // Here the stride means the periodic flag.
@@ -446,11 +447,14 @@ public class XMPtransPragma
       }
 
       if (info.getAsyncId() != null){
-	  h = env.declInternIdent(XMP.reflect_async_f,Xtype.FsubroutineType);
+	  h = env.declInternIdent(isAcc? XMP.reflect_async_acc_f : XMP.reflect_async_f,Xtype.FsubroutineType);
 	  bb.add(h.callSubroutine(Xcons.List(a.getDescId().Ref(), info.getAsyncId())));
       }
       else {
-	  bb.add(f.callSubroutine(Xcons.List(a.getDescId().Ref())));
+        Xobject arg = Xcons.List();
+        if(isAcc) arg.add(a.getLocalId().Ref());
+        arg.add(a.getDescId().Ref());
+        bb.add(f.callSubroutine(arg));
       }
     }
 
@@ -458,6 +462,14 @@ public class XMPtransPragma
       Xobject arg = Xcons.List();
       g = env.declInternIdent(XMP.start_async_f, Xtype.FsubroutineType);
       bb.add(g.callSubroutine(arg));
+    }
+
+    if(isAcc) {
+      XobjList vars = Xcons.List();
+      for(XMParray a : reflectArrays){
+        vars.add(a.getLocalId().Ref());
+      }
+      b = buildAccHostData(vars, Bcons.blockList(b));
     }
 
     return b;
@@ -540,8 +552,9 @@ public class XMPtransPragma
     //   reduce_minus = true;
     // }
 
-    Ident f = env.declInternIdent(XMP.reduction_f, Xtype.FsubroutineType);
-    Ident f2 = env.declInternIdent(XMP.reduction_loc_f, Xtype.FsubroutineType);
+    boolean isAcc = info.isAcc();
+    Ident f = env.declInternIdent(isAcc? XMP.reduction_acc_f : XMP.reduction_f, Xtype.FsubroutineType);
+    Ident f2 = env.declInternIdent(isAcc? XMP.reduction_loc_acc_f : XMP.reduction_loc_f, Xtype.FsubroutineType);
 
     //for(Ident id: info.getReductionVars()){
     for (int i = 0; i < info.getReductionVars().size(); i++){
@@ -596,6 +609,13 @@ public class XMPtransPragma
       ret_body.add(g.callSubroutine(Xcons.List(on_ref.getDescId())));
     }
 
+    if(isAcc){
+      XobjList vars = Xcons.List();
+      for(Ident id : info.getReductionVars()){
+        vars.add(id.Ref());
+      }
+      ret_body = Bcons.blockList(buildAccHostData(vars, ret_body));
+    }
     return Bcons.COMPOUND(ret_body);
   }
 
@@ -605,6 +625,7 @@ public class XMPtransPragma
     //BasicBlock bb = b.getBasicBlock();
 
     BlockList ret_body = Bcons.emptyBody();
+    boolean isAcc = info.isAcc();
 
     Ident xmp_null = env.findVarIdent("XMP_NULL", pb);
     if (xmp_null == null){
@@ -634,7 +655,7 @@ public class XMPtransPragma
     }
     else on_ref_arg = xmp_null;
 
-    Ident f = env.declInternIdent(XMP.bcast_f, Xtype.FsubroutineType);
+    Ident f = env.declInternIdent(isAcc? XMP.bcast_acc_f : XMP.bcast_f, Xtype.FsubroutineType);
 
     for(Ident id: info.getInfoVarIdents()){
       Xtype type = id.Type();
@@ -701,6 +722,14 @@ public class XMPtransPragma
     if (from_ref != null){
       Ident g = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
       ret_body.add(g.callSubroutine(Xcons.List(from_ref.getDescId())));
+    }
+
+    if(isAcc) {
+      XobjList vars = Xcons.List();
+      for (Ident id : info.getInfoVarIdents()) {
+        vars.add(id.Ref());
+      }
+      ret_body = Bcons.blockList(buildAccHostData(vars, ret_body));
     }
 
     return Bcons.COMPOUND(ret_body);
@@ -1097,4 +1126,10 @@ public class XMPtransPragma
     return b;
   }
 
+  private Block buildAccHostData(Xobject useDeviceArg, BlockList body){
+    return Bcons.PRAGMA(Xcode.ACC_PRAGMA,
+            "HOST_DATA",
+            Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), useDeviceArg)),
+            body);
+  }
 }

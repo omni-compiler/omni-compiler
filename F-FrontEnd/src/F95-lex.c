@@ -4072,6 +4072,8 @@ struct keyword_token XMP_keywords[ ] =
     { "atomic",		XMPKW_ATOMIC },
     { "direct",		XMPKW_DIRECT },
 
+    { "acc",    XMPKW_ACC },
+
     { 0, 0 }
 };
 

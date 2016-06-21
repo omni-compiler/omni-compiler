@@ -20,6 +20,11 @@ libxmpf_a_SOURCES += xmpf_coarray.c xmpf_coarray_wrap.f90 xmpf_coarray_lib.c \
                     xmpf_coarray_alloc.c xmpf_coarray_alloc_wrap.f90 \
                     xmpf_coarray_reduction.F90 xmpf_coarray_decl.f90
 
+if XACC
+libxmpf_a_SOURCES += xaccf_gcomm.c xaccf_reflect.c
+CFLAGS += -D_XMP_XACC
+endif
+
 if CRAY
     include_HEADERS = XMPF_COARRAY_DECL.mod
 else

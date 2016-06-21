@@ -64,6 +64,9 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
     ai->shadow_size_hi  = 0;
 
     ai->reflect_sched = NULL;
+#ifdef _XMP_XACC
+    ai->reflect_acc_sched = NULL;
+#endif
 
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;

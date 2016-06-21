@@ -123,6 +123,13 @@ public class XMP {
 
   public final static String arrayProp = "XMParrayProp";
 
+  public final static String set_reflect_acc_f    = "xaccf_set_reflect_";
+  public final static String reflect_acc_f        = "xaccf_reflect_";
+  public final static String reflect_async_acc_f  = "xaccf_reflect_async_";
+  public final static String reduction_acc_f      = "xaccf_reduction_";
+  public final static String reduction_loc_acc_f  = "xaccf_reduction_loc_";
+  public final static String bcast_acc_f          = "xaccf_bcast_";
+
   private static boolean errorFlag			= false;
   private static boolean errorFlags			= false;
 

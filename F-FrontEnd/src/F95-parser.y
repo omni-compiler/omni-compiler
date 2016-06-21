@@ -312,11 +312,13 @@
 %token XMPKW_ATOMIC
 %token XMPKW_DIRECT
 
+%token XMPKW_ACC
+
 %type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_template_fix_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause xmp_save_desc_clause xmp_wait_async_clause xmp_end_clause
 
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_width_opt xmp_width_opt1 xmp_async_opt xmp_async_opt1 xmp_width_list xmp_width
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width
-%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width xmp_coarray_clause xmp_image_clause
+%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width xmp_coarray_clause xmp_image_clause xmp_acc_opt
 
 %type <code> xmp_reduction_op
 
@@ -2189,10 +2191,10 @@ xmp_loop_clause:
 /* 	   ; */
 
 xmp_reflect_clause:
-	   '(' xmp_expr_list ')' KW xmp_async_opt
-           { $$= list3(LIST,$2,NULL,$5); }
-	  |'(' xmp_expr_list ')' KW XMPKW_WIDTH '(' xmp_width_list ')' KW xmp_async_opt
-           { $$= list3(LIST,$2,$7,$10); }
+	   '(' xmp_expr_list ')' KW xmp_async_opt KW xmp_acc_opt
+           { $$= list4(LIST,$2,NULL,$5,$7); }
+	  |'(' xmp_expr_list ')' KW XMPKW_WIDTH '(' xmp_width_list ')' KW xmp_async_opt KW xmp_acc_opt
+           { $$= list4(LIST,$2,$7,$10,$12); }
 	   ;
 
 /* xmp_gmove_clause: */
@@ -2204,12 +2206,12 @@ xmp_reflect_clause:
 /* 	     { $$ = list2(LIST,$1,$3); } */
 /* 	   ; */
 xmp_gmove_clause:
-	    xmp_async_opt
-	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_NORMAL), $1); }
-	  | XMPKW_IN KW xmp_async_opt
-	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN), $3); }
-          | XMPKW_OUT KW xmp_async_opt
-	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_OUT), $3); }
+	    xmp_async_opt KW xmp_acc_opt
+	    { $$ = list3(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_NORMAL), $1, $3); }
+	  | XMPKW_IN KW xmp_async_opt KW xmp_acc_opt
+	    { $$ = list3(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN), $3, $5); }
+          | XMPKW_OUT KW xmp_async_opt KW xmp_acc_opt
+	    { $$ = list3(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_OUT), $3, $5); }
           ;
 
 xmp_barrier_clause:
@@ -2232,14 +2234,14 @@ xmp_barrier_clause:
 /*             ; */
 
 xmp_bcast_clause:
-   	     '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW xmp_async_opt
-	      { $$ = list4(LIST,$2,$6,NULL,$8); }
-	   | '(' xmp_expr_list ')' KW XMPKW_ON xmp_obj_ref KW xmp_async_opt
-	      { $$ = list4(LIST,$2,NULL,$6,$8); }
-   	   | '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW XMPKW_ON xmp_obj_ref KW xmp_async_opt
-	      { $$ = list4(LIST,$2,$6,$9,$11); }
-	   | '(' xmp_expr_list ')' KW xmp_async_opt
-	      { $$ = list4(LIST,$2,NULL,NULL,$5); }
+   	     '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW xmp_async_opt KW xmp_acc_opt
+	      { $$ = list5(LIST,$2,$6,NULL,$8,$10); }
+	   | '(' xmp_expr_list ')' KW XMPKW_ON xmp_obj_ref KW xmp_async_opt KW xmp_acc_opt
+	      { $$ = list5(LIST,$2,NULL,$6,$8,$10); }
+   	   | '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW XMPKW_ON xmp_obj_ref KW xmp_async_opt KW xmp_acc_opt
+	      { $$ = list5(LIST,$2,$6,$9,$11,$13); }
+	   | '(' xmp_expr_list ')' KW xmp_async_opt KW xmp_acc_opt
+	      { $$ = list5(LIST,$2,NULL,NULL,$5,$7); }
             ;
 
 /* xmp_reduction_clause: */
@@ -2250,10 +2252,10 @@ xmp_bcast_clause:
 /* 	     ; */
 
 xmp_reduction_clause:
-	       xmp_reduction_spec KW xmp_async_opt
-	        { $$ = list3(LIST,$1,NULL,$3); }
-	     | xmp_reduction_spec KW xmp_ON xmp_obj_ref KW xmp_async_opt
-                { $$ = list3(LIST,$1,$4,$6); }
+	       xmp_reduction_spec KW xmp_async_opt KW xmp_acc_opt
+	        { $$ = list4(LIST,$1,NULL,$3, $5); }
+	     | xmp_reduction_spec KW xmp_ON xmp_obj_ref KW xmp_async_opt KW xmp_acc_opt
+                { $$ = list4(LIST,$1,$4,$6,$8); }
 	     ;
 
 xmp_array_clause:
@@ -2508,6 +2510,13 @@ xmp_coarray_clause:
 xmp_image_clause:
 	    '(' IDENTIFIER ')' 
 	     { $$ = list1(LIST,$2); }
+
+xmp_acc_opt:
+	/*null*/
+	{ $$ = GEN_NODE(INT_CONSTANT, 0); }
+	| XMPKW_ACC
+	{ $$ = GEN_NODE(INT_CONSTANT, 1); }
+	;
 
 /*
  * OpenACC directives
