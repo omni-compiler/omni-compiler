@@ -7,6 +7,10 @@
 #define _XMP_TCA_CACHE_ALIGNED_STRIDE 64
 #define _XMP_TCA_PIO_SYNC_MARK 255
 #define _XMP_TCA_COLL_MAX 64
+#define _XMP_TCA_ALLREDUCE_TAG 0x100
+#define _XMP_TCA_DEVICE_TO_HOST_WAIT_SLOT 0
+#define _XMP_TCA_HOST_TO_DEVICE_WAIT_SLOT 1
+#define _XMP_TCA_ALLREDUCE_TCACOPY_LIMIT 8
 
 typedef struct _XMP_tca_coll_info_type {
   int tail_id;
@@ -17,8 +21,12 @@ typedef struct _XMP_tca_coll_info_type {
   MPI_Comm mpi_comm[_XMP_TCA_COLL_MAX];
   void *cpu_sendbuf[_XMP_TCA_COLL_MAX];
   void *cpu_recvbuf[_XMP_TCA_COLL_MAX];
-  tcaHandle *handles[_XMP_TCA_COLL_MAX];
+  tcaHandle *recv_handles[_XMP_TCA_COLL_MAX];
+  tcaHandle send_handles[_XMP_TCA_COLL_MAX];
+  tcaHandle device_handles[_XMP_TCA_COLL_MAX];
   tcaPIOHandle *pio_handles[_XMP_TCA_COLL_MAX];
+  tcaDesc *d2h_desc[_XMP_TCA_COLL_MAX];
+  tcaDesc *h2d_desc[_XMP_TCA_COLL_MAX];
   _Bool flag[_XMP_TCA_COLL_MAX];
   size_t datasize[_XMP_TCA_COLL_MAX];
   int num_comms[_XMP_TCA_COLL_MAX];
@@ -296,24 +304,39 @@ static void _XMP_reduce_tca_init(void *dev_addr, int count, int datatype, int op
   
   TCA_CHECK(tcaMalloc(&coll_info.cpu_sendbuf[id], sendsize, tcaMemoryCPU));
   TCA_CHECK(tcaMalloc(&coll_info.cpu_recvbuf[id], recvsize, tcaMemoryCPU));
-  coll_info.handles[id] = (tcaHandle *)_XMP_alloc(sizeof(tcaHandle) * (num_comms + 1));
+  coll_info.recv_handles[id] = (tcaHandle *)_XMP_alloc(sizeof(tcaHandle) * (num_comms + 1));
   coll_info.pio_handles[id] = (tcaPIOHandle *)_XMP_alloc(sizeof(tcaPIOHandle) * num_comms);
 
   void *cpu_sendbuf = coll_info.cpu_sendbuf[id];
   void *cpu_recvbuf = coll_info.cpu_recvbuf[id];
-  tcaHandle *h = (tcaHandle *)coll_info.handles[id];
+  tcaHandle *recv_h = (tcaHandle *)coll_info.recv_handles[id];
+  tcaHandle *send_h = &coll_info.send_handles[id];
+  tcaHandle *device_h = &coll_info.device_handles[id];
   tcaPIOHandle *pio_h = (tcaPIOHandle *)coll_info.pio_handles[id];
 
   *(unsigned long *)((unsigned long)cpu_sendbuf + datasize) = _XMP_TCA_PIO_SYNC_MARK;
-  TCA_CHECK(tcaCreateHandle(&h[0], cpu_recvbuf, recvsize, tcaMemoryCPU));
+  TCA_CHECK(tcaCreateHandle(&recv_h[0], cpu_recvbuf, recvsize, tcaMemoryCPU));
+  TCA_CHECK(tcaCreateHandle(send_h, cpu_sendbuf, datasize, tcaMemoryCPU));
+  TCA_CHECK(tcaCreateHandle(device_h, dev_addr, datasize, tcaMemoryGPU));
 
+  // CPU to CPU
   int i, distance;
   for (distance = 1, i = 0; distance < num_proc; distance <<= 1, i++) {
     const int dest = (rank + distance) % num_proc;
     const int src = (rank + num_proc - distance) % num_proc;
-    MPI_Sendrecv(&h[0], sizeof(tcaHandle), MPI_BYTE, src, 0, &h[i+1], sizeof(tcaHandle), MPI_BYTE, dest, 0, mpi_comm, MPI_STATUS_IGNORE);
-    TCA_CHECK(tcaSetPIORegion(&pio_h[i], &h[i+1], 0, recv_next_aligned_stride));
+    MPI_Sendrecv(&recv_h[0], sizeof(tcaHandle), MPI_BYTE, src, 0, &recv_h[i+1], sizeof(tcaHandle), MPI_BYTE, dest, 0, mpi_comm, MPI_STATUS_IGNORE);
+    TCA_CHECK(tcaSetPIORegion(&pio_h[i], &recv_h[i+1], 0, recv_next_aligned_stride));
   }
+
+  coll_info.d2h_desc[id] = tcaDescNew();
+  coll_info.h2d_desc[id] = tcaDescNew();
+  const int dma_flag = tcaDMAUseInternal|tcaDMAUseNotifyInternal|tcaDMANotify;
+  // Device to Host
+  TCA_CHECK(tcaDescSetMemcpy(coll_info.d2h_desc[id], send_h, 0, device_h, 0, datasize, dma_flag, _XMP_TCA_DEVICE_TO_HOST_WAIT_SLOT, _XMP_TCA_ALLREDUCE_TAG));
+
+  // Host to Device
+  TCA_CHECK(tcaDescSetMemcpy(coll_info.h2d_desc[id], device_h, 0, send_h, 0, datasize, dma_flag, _XMP_TCA_HOST_TO_DEVICE_WAIT_SLOT, _XMP_TCA_ALLREDUCE_TAG));
+
   MPI_Barrier(mpi_comm);
 
   coll_info.flag[id] = _XMP_N_INT_TRUE;
@@ -331,6 +354,10 @@ static void _XMP_reduce_tca_do(void *dev_addr, int count, int datatype, int op, 
   tcaPIOHandle *pio_h = (tcaPIOHandle *)coll_info.pio_handles[id];
   tcaOp tca_op = coll_info.tca_op[id];
   tcaDataType tca_datatype = coll_info.tca_datatype[id];
+  tcaHandle *h = (tcaHandle *)coll_info.recv_handles[id];
+  tcaHandle *device_h = &coll_info.device_handles[id];
+  tcaDesc *d2h_desc = coll_info.d2h_desc[id];
+  tcaDesc *h2d_desc = coll_info.h2d_desc[id];
 
   tcaSendPIOCommit();
   volatile void *init_ptr_recv = (volatile void *)cpu_recvbuf;
@@ -342,7 +369,14 @@ static void _XMP_reduce_tca_do(void *dev_addr, int count, int datatype, int op, 
   const size_t sendsize = datasize + _XMP_TCA_SYNC_MARK_SIZE;
 
   // copy device to host
-  CUDA_CHECK(cudaMemcpy(cpu_sendbuf, dev_addr, datasize, cudaMemcpyDeviceToHost));
+  if (count <= _XMP_TCA_ALLREDUCE_TCACOPY_LIMIT) {
+    TCA_CHECK(tcaDescSet(d2h_desc, 0));
+    TCA_CHECK(tcaStartDMADesc(0));
+    /* TCA_CHECK(tcaWaitDMAC(0)); */
+    TCA_CHECK(tcaWaitDMARecvDesc(h, _XMP_TCA_DEVICE_TO_HOST_WAIT_SLOT, _XMP_TCA_ALLREDUCE_TAG));
+  } else {
+    CUDA_CHECK(cudaMemcpy(cpu_sendbuf, dev_addr, datasize, cudaMemcpyDeviceToHost));
+  }
 
   // allreduce on CPU memory
   for (i = 0; i < num_comms; i++) {
@@ -370,7 +404,14 @@ static void _XMP_reduce_tca_do(void *dev_addr, int count, int datatype, int op, 
   cpu_recvbuf = (void *)init_ptr_recv;
 
   // copy host to device
-  CUDA_CHECK(cudaMemcpy(dev_addr, cpu_sendbuf, datasize, cudaMemcpyHostToDevice));
+  if (count <= _XMP_TCA_ALLREDUCE_TCACOPY_LIMIT) {
+    TCA_CHECK(tcaDescSet(h2d_desc, 0));
+    TCA_CHECK(tcaStartDMADesc(0));
+    /* TCA_CHECK(tcaWaitDMAC(0)); */
+    TCA_CHECK(tcaWaitDMARecvDesc(device_h, _XMP_TCA_HOST_TO_DEVICE_WAIT_SLOT, _XMP_TCA_ALLREDUCE_TAG));
+  } else {
+    CUDA_CHECK(cudaMemcpy(dev_addr, cpu_sendbuf, datasize, cudaMemcpyHostToDevice));
+  }
 }
 
 void _XMP_reduce_tca_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count, int datatype, int op)
