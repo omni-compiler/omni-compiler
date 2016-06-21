@@ -27,7 +27,6 @@ typedef struct _XMP_tca_coll_info_type {
   tcaDataType tca_datatype[_XMP_TCA_COLL_MAX];
 } _XMP_tca_coll_info_t;
 
-
 _XMP_tca_coll_info_t coll_info;
 int _XMP_tca_coll_info_flag = 0;
 
@@ -145,42 +144,43 @@ static void _XMP_setup_tca_reduce_op(tcaOp *tca_op, int op) {
   }
 }
 
-typedef void (*tca_op_func_2op_handler_t)(void *, void *, int);
-typedef tca_op_func_2op_handler_t tca_op_fn_2op_t;
+typedef void (*tca_op_func_3op_handler_t)(void *, void *, void *, int);
+typedef tca_op_func_3op_handler_t tca_op_fn_3op_t;
 
-#define OP_FUNC_2OP(name, op, type_name, type)				\
-  static inline void tca_op_func_2op_##name##_##type_name(void *dst, void *src, int count) { \
+#define OP_FUNC_3OP(name, op, type_name, type)				\
+  static inline void tca_op_func_3op_##name##_##type_name(void *dst, void *src0, void *src1, int count) { \
     int i;								\
-    type *s = (type *)src;						\
+    type *s0 = (type *)src0;						\
+    type *s1 = (type *)src1;						\
     type *d = (type *)dst;						\
     for(i = 0; i < count; i++) {					\
-      *(d++) op *(s++);							\
+      *(d++) = *(s0++) op *(s1++);					\
     }									\
   }
 
-OP_FUNC_2OP(sum, +=, int8, int8_t)
-OP_FUNC_2OP(sum, +=, uint8, uint8_t)
-OP_FUNC_2OP(sum, +=, int16, int16_t)
-OP_FUNC_2OP(sum, +=, uint16, uint16_t)
-OP_FUNC_2OP(sum, +=, int32, int32_t)
-OP_FUNC_2OP(sum, +=, uint32, uint32_t)
-OP_FUNC_2OP(sum, +=, int64, int64_t)
-OP_FUNC_2OP(sum, +=, uint64, uint64_t)
-OP_FUNC_2OP(sum, +=, float, float)
-OP_FUNC_2OP(sum, +=, double, double)
-OP_FUNC_2OP(sum, +=, long_double, long double)
+OP_FUNC_3OP(sum, +, int8, int8_t)
+OP_FUNC_3OP(sum, +, uint8, uint8_t)
+OP_FUNC_3OP(sum, +, int16, int16_t)
+OP_FUNC_3OP(sum, +, uint16, uint16_t)
+OP_FUNC_3OP(sum, +, int32, int32_t)
+OP_FUNC_3OP(sum, +, uint32, uint32_t)
+OP_FUNC_3OP(sum, +, int64, int64_t)
+OP_FUNC_3OP(sum, +, uint64, uint64_t)
+OP_FUNC_3OP(sum, +, float, float)
+OP_FUNC_3OP(sum, +, double, double)
+OP_FUNC_3OP(sum, +, long_double, long double)
 
-OP_FUNC_2OP(prod, *=, int8, int8_t)
-OP_FUNC_2OP(prod, *=, uint8, uint8_t)
-OP_FUNC_2OP(prod, *=, int16, int16_t)
-OP_FUNC_2OP(prod, *=, uint16, uint16_t)
-OP_FUNC_2OP(prod, *=, int32, int32_t)
-OP_FUNC_2OP(prod, *=, uint32, uint32_t)
-OP_FUNC_2OP(prod, *=, int64, int64_t)
-OP_FUNC_2OP(prod, *=, uint64, uint64_t)
-OP_FUNC_2OP(prod, *=, float, float)
-OP_FUNC_2OP(prod, *=, double, double)
-OP_FUNC_2OP(prod, *=, long_double, long double)
+OP_FUNC_3OP(prod, *, int8, int8_t)
+OP_FUNC_3OP(prod, *, uint8, uint8_t)
+OP_FUNC_3OP(prod, *, int16, int16_t)
+OP_FUNC_3OP(prod, *, uint16, uint16_t)
+OP_FUNC_3OP(prod, *, int32, int32_t)
+OP_FUNC_3OP(prod, *, uint32, uint32_t)
+OP_FUNC_3OP(prod, *, int64, int64_t)
+OP_FUNC_3OP(prod, *, uint64, uint64_t)
+OP_FUNC_3OP(prod, *, float, float)
+OP_FUNC_3OP(prod, *, double, double)
+OP_FUNC_3OP(prod, *, long_double, long double)
 
 enum {
   TCA_OP_INT8,
@@ -210,13 +210,13 @@ enum {
     [TCA_OP_DOUBLE]      = tca_op_func_##type##_##name##_double,	\
     [TCA_OP_LONG_DOUBLE] = tca_op_func_##type##_##name##_long_double	\
 
-tca_op_fn_2op_t tca_op_func_2op[TCA_OP_NOOP+1][TCA_OP_TYPE_MAX] =
+tca_op_fn_3op_t tca_op_func_3op[TCA_OP_NOOP+1][TCA_OP_TYPE_MAX] =
   {
     [TCA_OP_SUM] = {
-      TCA_TYPE_FUNCTIONS(sum, 2op),
+      TCA_TYPE_FUNCTIONS(sum, 3op),
     },
     [TCA_OP_PROD] = {
-      TCA_TYPE_FUNCTIONS(prod, 2op),
+      TCA_TYPE_FUNCTIONS(prod, 3op),
     },
   };
 
@@ -358,15 +358,15 @@ static void _XMP_reduce_tca_do(void *sendbuf, void *recvbuf, int count, int data
 
     *pio_wait = 0;
     if (i < num_comms - 1) {
-      tca_op_func_2op[tca_op][get_func_type_by_data_size(tca_datatype)](cpu_sendbuf, cpu_recvbuf, count);
+      tca_op_func_3op[tca_op][get_func_type_by_data_size(tca_datatype)](cpu_sendbuf, cpu_sendbuf, cpu_recvbuf, count);
       recv_offset += recv_next_aligned_stride;
       cpu_recvbuf = (void *)((unsigned long)cpu_recvbuf + recv_next_aligned_stride);
     } else {
-      tca_op_func_2op[tca_op][get_func_type_by_data_size(tca_datatype)](cpu_sendbuf, cpu_recvbuf, count);
+      tca_op_func_3op[tca_op][get_func_type_by_data_size(tca_datatype)](recvbuf, cpu_sendbuf, cpu_recvbuf, count);
     }
   }
 
-  memcpy(recvbuf, cpu_sendbuf, datasize);
+  /* memcpy(recvbuf, cpu_sendbuf, datasize); */
   cpu_recvbuf = (void *)init_ptr_recv;
 }
 
