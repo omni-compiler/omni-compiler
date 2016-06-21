@@ -1,4 +1,4 @@
-.PHONY: all install clean tests clean-tests run-tests large-tests clean-large-tests run-large-tests release remote-tests distclean
+.PHONY: all install clean tests clean-tests run-tests large-tests clean-large-tests run-large-tests release remote-tests distclean submit-tests submit1-tests submit2-tests submit3-tests submit4-tests showlog-tests cleanlog-tests submit-large-tests showlog-large-tests cleanlog-large-tests
 
 SUBDIRS=libxmp/include libxmp/src libxmpf/include libxmpf/src libxmp/src_threads \
 	C-FrontEnd/src F-FrontEnd/src Driver/src libtlog/src_threads libtlog/src_mpi \
@@ -146,19 +146,7 @@ submit3-tests:
 	done
 
 submit4-tests:
-	@for subdir in $(TESTDIRS_GAS); do \
-	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
-	  if test $$? -ne 0; then exit 1; fi ;\
-	done
-
-submit5-tests:
-	@for subdir in $(TESTDIRS_FJR); do \
-	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
-	  if test $$? -ne 0; then exit 1; fi ;\
-	done
-
-submit6-tests:
-	@for subdir in $(TESTDIRS_MP3); do \
+	@for subdir in $(TESTDIRS_GAS) $(TESTDIRS_FJR) $(TESTDIRS_MP3) ; do \
 	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
@@ -176,13 +164,13 @@ cleanlog-tests:
 	done
 
 large-tests:
-	@for subdir in $(LARGE_TESTDIRS) ; do \
+	@for subdir in $(LARGE_TESTDIRS) "global-view/gmove/C" "global-view/gmove/F"; do \
 	  $(MAKE) -C $(BASE_LARGE_TESTDIR)/$$subdir ; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 clean-large-tests:
-	@for subdir in $(LARGE_TESTDIRS) ; do \
+	@for subdir in $(LARGE_TESTDIRS) "global-view/gmove/C" "global-view/gmove/F"; do \
 	  (cd $(BASE_LARGE_TESTDIR)/$$subdir && $(MAKE) clean ) ;\
 	done
 
@@ -193,19 +181,19 @@ run-large-tests:
 	done
 
 submit-large-tests:
-	@for subdir in $(LARGE_TESTDIRS); do \
+	@for subdir in $(LARGE_TESTDIRS) "global-view/gmove/C" "global-view/gmove/F"; do \
 	  $(MAKE) submit -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 showlog-large-tests:
-	@for subdir in $(LARGE_TESTDIRS); do \
+	@for subdir in $(LARGE_TESTDIRS) "global-view/gmove/C" "global-view/gmove/F"; do \
 	  $(MAKE) showlog -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 cleanlog-large-tests:
-	@for subdir in $(LARGE_TESTDIRS); do \
+	@for subdir in $(LARGE_TESTDIRS) "global-view/gmove/C" "global-view/gmove/F"; do \
 	  $(MAKE) cleanlog -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done

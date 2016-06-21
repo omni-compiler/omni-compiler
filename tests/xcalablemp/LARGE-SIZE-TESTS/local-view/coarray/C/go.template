@@ -1,6 +1,6 @@
 #!/bin/sh -x
-#PJM --rsc-list "node=32"
-#PJM --rsc-list "elapse=00:05:00"
+#PJM --rsc-list "node=2"
+#PJM --rsc-list "elapse=02:00:00"
 #PJM --stg-transfiles all
 #PJM --mpi "use-rankdir"
 #PJM --stgin "rank=* ./* %r:./"
@@ -8,6 +8,6 @@
 . /work/system/Env_base
 
 echo
-echo "[test_LARGE_others_c]"
+echo "[test_LARGE_local_coarray_c]"
 echo
 
