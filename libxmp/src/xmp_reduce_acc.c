@@ -24,6 +24,22 @@ static void set_comm_mode()
   }
 }
 
+#ifdef _XMP_TCA
+static char enable_hybrid = -1;
+
+static void set_hybrid_comm()
+{
+  if (enable_hybrid < 0) {
+    char *flag = getenv("XACC_ENABLE_HYBRID");
+    if (flag != NULL) {
+      enable_hybrid = atoi(flag);
+    } else {
+      enable_hybrid = 0;
+    }
+  }
+}
+#endif
+
 void _XMP_reduce_acc_NODES_ENTIRE(_XMP_nodes_t *nodes, void *data_addr, int count, int datatype, int op)
 {
   set_comm_mode();
@@ -32,7 +48,12 @@ void _XMP_reduce_acc_NODES_ENTIRE(_XMP_nodes_t *nodes, void *data_addr, int coun
     _XMP_reduce_NODES_ENTIRE(nodes, data_addr, count, datatype, op);
   }else{
 #ifdef _XMP_TCA
-    _XMP_reduce_tca_NODES_ENTIRE(nodes, data_addr, count, datatype, op);
+    set_hybrid_comm();
+    if (enable_hybrid) {
+      _XMP_reduce_hybrid_NODES_ENTIRE(nodes, data_addr, count, datatype, op);
+    } else {
+      _XMP_reduce_tca_NODES_ENTIRE(nodes, data_addr, count, datatype, op);
+    }
 #else
     _XMP_reduce_gpu_NODES_ENTIRE(nodes, data_addr, count, datatype, op);
 #endif

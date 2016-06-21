@@ -33,13 +33,14 @@ typedef struct _XMP_tca_coll_info_type {
   size_t recv_next_aligned_stride[_XMP_TCA_COLL_MAX];
   tcaOp tca_op[_XMP_TCA_COLL_MAX];
   tcaDataType tca_datatype[_XMP_TCA_COLL_MAX];
+  MPI_Request *req[_XMP_TCA_COLL_MAX];
 } _XMP_tca_coll_info_t;
 
 _XMP_tca_coll_info_t coll_info;
-int _XMP_tca_coll_info_flag = 0;
+extern int _XMP_tca_coll_info_flag;
 
-void _XMP_reduce_tca_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
-void _XMP_reduce_tca_CLAUSE(void *data_addr, int count, int datatype, int op);
+void _XMP_reduce_hybrid_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
+void _XMP_reduce_hybrid_CLAUSE(void *data_addr, int count, int datatype, int op);
 
 #define CUDA_CHECK(cuda_call) do {                                      \
     cudaError_t status = cuda_call;                                     \
@@ -50,50 +51,50 @@ void _XMP_reduce_tca_CLAUSE(void *data_addr, int count, int datatype, int op);
     }                                                                   \
   } while (0)
 
-static void _XMP_setup_tca_reduce_type(tcaDataType *tca_datatype, size_t *datatype_size, int datatype) {
+static void _XMP_setup_hybrid_reduce_type(tcaDataType *tca_datatype, MPI_Datatype *mpi_datatype, size_t *datatype_size, int datatype) {
   switch (datatype) {
-    //  case _XMP_N_TYPE_BOOL:
-    //    { *tca_datatype = TCA_C_BOOL;                 *datatype_size = sizeof(_Bool);                         break; }
+    /* case _XMP_N_TYPE_BOOL: */
+    /*   { *tca_datatype = TCA_C_BOOL;                       *mpi_datatype = MPI_C_BOOL;                             *datatype_size = sizeof(_Bool);                         break; } */
   case _XMP_N_TYPE_CHAR:
-    { *tca_datatype = TCA_SIGNED_CHAR;                  *datatype_size = sizeof(char);                          break; }
+    { *tca_datatype = TCA_SIGNED_CHAR;                  *mpi_datatype = MPI_SIGNED_CHAR;                        *datatype_size = sizeof(char);                          break; }
   case _XMP_N_TYPE_UNSIGNED_CHAR:
-    { *tca_datatype = TCA_UNSIGNED_CHAR;                *datatype_size = sizeof(unsigned char);                 break; }
+    { *tca_datatype = TCA_UNSIGNED_CHAR;                *mpi_datatype = MPI_SIGNED_CHAR;                        *datatype_size = sizeof(unsigned char);                 break; }
   case _XMP_N_TYPE_SHORT:
-    { *tca_datatype = TCA_SHORT;                        *datatype_size = sizeof(short);                         break; }
+    { *tca_datatype = TCA_SHORT;                        *mpi_datatype = MPI_SHORT;                              *datatype_size = sizeof(short);                         break; }
   case _XMP_N_TYPE_UNSIGNED_SHORT:
-    { *tca_datatype = TCA_UNSIGNED_SHORT;               *datatype_size = sizeof(unsigned short);                break; }
+    { *tca_datatype = TCA_UNSIGNED_SHORT;               *mpi_datatype = MPI_UNSIGNED_SHORT;                     *datatype_size = sizeof(unsigned short);                break; }
   case _XMP_N_TYPE_INT:
-    { *tca_datatype = TCA_INT;                          *datatype_size = sizeof(int);                           break; }
+    { *tca_datatype = TCA_INT;                          *mpi_datatype = MPI_INT;                                *datatype_size = sizeof(int);                           break; }
   case _XMP_N_TYPE_UNSIGNED_INT:
-    { *tca_datatype = TCA_UNSIGNED;                     *datatype_size = sizeof(unsigned int);                  break; }
+    { *tca_datatype = TCA_UNSIGNED;                     *mpi_datatype = MPI_UNSIGNED;                           *datatype_size = sizeof(unsigned int);                  break; }
   case _XMP_N_TYPE_LONG:
-    { *tca_datatype = TCA_LONG;                         *datatype_size = sizeof(long);                          break; }
+    { *tca_datatype = TCA_LONG;                         *mpi_datatype = MPI_LONG;                               *datatype_size = sizeof(long);                          break; }
   case _XMP_N_TYPE_UNSIGNED_LONG:
-    { *tca_datatype = TCA_UNSIGNED_LONG;                *datatype_size = sizeof(unsigned long);                 break; }
+    { *tca_datatype = TCA_UNSIGNED_LONG;                *mpi_datatype = MPI_UNSIGNED_LONG;                      *datatype_size = sizeof(unsigned long);                 break; }
   case _XMP_N_TYPE_LONGLONG:
-    { *tca_datatype = TCA_LONG_LONG;                    *datatype_size = sizeof(long long);                     break; }
+    { *tca_datatype = TCA_LONG_LONG;                    *mpi_datatype = MPI_LONG_LONG;                          *datatype_size = sizeof(long long);                     break; }
   case _XMP_N_TYPE_UNSIGNED_LONGLONG:
-    { *tca_datatype = TCA_UNSIGNED_LONG_LONG;           *datatype_size = sizeof(unsigned long long);            break; }
+    { *tca_datatype = TCA_UNSIGNED_LONG_LONG;           *mpi_datatype = MPI_UNSIGNED_LONG;                      *datatype_size = sizeof(unsigned long long);            break; }
   case _XMP_N_TYPE_FLOAT:
-    { *tca_datatype = TCA_FLOAT;                        *datatype_size = sizeof(float);                         break; }
+    { *tca_datatype = TCA_FLOAT;                        *mpi_datatype = MPI_FLOAT;                              *datatype_size = sizeof(float);                         break; }
   case _XMP_N_TYPE_DOUBLE:
-    { *tca_datatype = TCA_DOUBLE;                       *datatype_size = sizeof(double);                        break; }
+    { *tca_datatype = TCA_DOUBLE;                       *mpi_datatype = MPI_DOUBLE;                             *datatype_size = sizeof(double);                        break; }
   case _XMP_N_TYPE_LONG_DOUBLE:
-    { *tca_datatype = TCA_LONG_DOUBLE;                  *datatype_size = sizeof(long double);                   break; }
+    { *tca_datatype = TCA_LONG_DOUBLE;                  *mpi_datatype = MPI_LONG_DOUBLE;                        *datatype_size = sizeof(long double);                   break; }
 #ifdef __STD_IEC_559_COMPLEX__
   case _XMP_N_TYPE_FLOAT_IMAGINARY:
-    { *tca_datatype = TCA_FLOAT;                        *datatype_size = sizeof(float _Imaginary);              break; }
+    { *tca_datatype = TCA_FLOAT;                        *mpi_datatype = MPI_FLOAT;                              *datatype_size = sizeof(float _Imaginary);              break; }
   case _XMP_N_TYPE_DOUBLE_IMAGINARY:
-    { *tca_datatype = TCA_DOUBLE;                       *datatype_size = sizeof(double _Imaginary);             break; }
+    { *tca_datatype = TCA_DOUBLE;                       *mpi_datatype = MPI_DOUBLE;                             *datatype_size = sizeof(double _Imaginary);             break; }
   case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
-    { *tca_datatype = TCA_LONG_DOUBLE;                  *datatype_size = sizeof(long double _Imaginary);        break; }
+    { *tca_datatype = TCA_LONG_DOUBLE;                  *mpi_datatype = MPI_LONG_DOUBLE;                        *datatype_size = sizeof(long double _Imaginary);        break; }
 #endif
     /* case _XMP_N_TYPE_FLOAT_COMPLEX: */
-    /*   { *tca_datatype = TCA_C_FLOAT_COMPLEX;         *datatype_size = sizeof(float _Complex);                break; } */
+    /*   { *tca_datatype = TCA_C_FLOAT_COMPLEX;              *mpi_datatype = MPI_C_FLOAT_COMPLEX;                    *datatype_size = sizeof(float _Complex);                break; } */
     /* case _XMP_N_TYPE_DOUBLE_COMPLEX: */
-    /*   { *tca_datatype = TCA_C_DOUBLE_COMPLEX;                *datatype_size = sizeof(double _Complex);               break; } */
+    /*   { *tca_datatype = TCA_C_DOUBLE_COMPLEX;             *mpi_datatype = MPI_C_DOUBLE_COMPLEX;                   *datatype_size = sizeof(double _Complex);               break; } */
     /* case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX: */
-    /*   { *tca_datatype = TCA_C_LONG_DOUBLE_COMPLEX;   *datatype_size = sizeof(long double _Complex);          break; } */
+    /*   { *tca_datatype = TCA_C_LONG_DOUBLE_COMPLEX;        *mpi_datatype = MPI_C_LONG_DOUBLE_COMPLEX;              *datatype_size = sizeof(long double _Complex);          break; } */
   default:
     _XMP_fatal("unknown data type for reduction");
   }
@@ -282,18 +283,19 @@ static int get_coll_id(void *dev_addr, int count, int datatype, int op, MPI_Comm
   return coll_info.tail_id++;
 }
 
-static void _XMP_reduce_tca_init(void *dev_addr, int count, int datatype, int op, MPI_Comm mpi_comm, int id)
+static void _XMP_reduce_hybrid_init(void *dev_addr, int count, int datatype, int op, MPI_Comm mpi_comm, int id)
 {
   int rank = _XMP_world_rank;
   int num_proc = _XMP_world_size;
   tcaDataType tca_datatype;
+  MPI_Datatype mpi_datatype = MPI_DATATYPE_NULL;
   tcaOp tca_op;
   size_t datatype_size;
 
   memset(&tca_datatype, 0x00, sizeof(tca_datatype));
   memset(&tca_op, 0x00, sizeof(tca_op));
 
-  _XMP_setup_tca_reduce_type(&tca_datatype, &datatype_size, datatype);
+  _XMP_setup_hybrid_reduce_type(&tca_datatype, &mpi_datatype, &datatype_size, datatype);
   _XMP_setup_tca_reduce_op(&tca_op, op);
 
   const size_t datasize = count * datatype_size;
@@ -306,6 +308,7 @@ static void _XMP_reduce_tca_init(void *dev_addr, int count, int datatype, int op
   TCA_CHECK(tcaMalloc(&coll_info.cpu_recvbuf[id], recvsize, tcaMemoryCPU));
   coll_info.recv_handles[id] = (tcaHandle *)_XMP_alloc(sizeof(tcaHandle) * (num_comms + 1));
   coll_info.pio_handles[id] = (tcaPIOHandle *)_XMP_alloc(sizeof(tcaPIOHandle) * num_comms);
+  coll_info.req[id] = (MPI_Request *)_XMP_alloc(sizeof(MPI_Request) * 2);
 
   void *cpu_sendbuf = coll_info.cpu_sendbuf[id];
   void *cpu_recvbuf = coll_info.cpu_recvbuf[id];
@@ -313,6 +316,7 @@ static void _XMP_reduce_tca_init(void *dev_addr, int count, int datatype, int op
   tcaHandle *send_h = &coll_info.send_handles[id];
   tcaHandle *device_h = &coll_info.device_handles[id];
   tcaPIOHandle *pio_h = (tcaPIOHandle *)coll_info.pio_handles[id];
+  MPI_Request *req = (MPI_Request *)coll_info.req[id];
 
   *(unsigned long *)((unsigned long)cpu_sendbuf + datasize) = _XMP_TCA_PIO_SYNC_MARK;
   TCA_CHECK(tcaCreateHandle(&recv_h[0], cpu_recvbuf, recvsize, tcaMemoryCPU));
@@ -321,11 +325,18 @@ static void _XMP_reduce_tca_init(void *dev_addr, int count, int datatype, int op
 
   // CPU to CPU
   int i, distance;
+  size_t recv_offset = 0;
   for (distance = 1, i = 0; distance < num_proc; distance <<= 1, i++) {
     const int dest = (rank + distance) % num_proc;
     const int src = (rank + num_proc - distance) % num_proc;
-    MPI_Sendrecv(&recv_h[0], sizeof(tcaHandle), MPI_BYTE, src, 0, &recv_h[i+1], sizeof(tcaHandle), MPI_BYTE, dest, 0, mpi_comm, MPI_STATUS_IGNORE);
-    TCA_CHECK(tcaSetPIORegion(&pio_h[i], &recv_h[i+1], 0, recv_next_aligned_stride));
+    if (i < num_comms - 1) { // Fix me
+      MPI_Sendrecv(&recv_h[0], sizeof(tcaHandle), MPI_BYTE, src, 0, &recv_h[i+1], sizeof(tcaHandle), MPI_BYTE, dest, 0, mpi_comm, MPI_STATUS_IGNORE);
+      TCA_CHECK(tcaSetPIORegion(&pio_h[i], &recv_h[i+1], 0, recv_next_aligned_stride));
+    } else {
+      MPI_Send_init(cpu_sendbuf, count, mpi_datatype, dest, 0, mpi_comm, &req[0]);
+      MPI_Recv_init((void *)((unsigned long)cpu_recvbuf + recv_offset), count, mpi_datatype, src, 0, mpi_comm, &req[1]);
+    }
+    recv_offset += recv_next_aligned_stride;
   }
 
   coll_info.d2h_desc[id] = tcaDescNew();
@@ -347,7 +358,7 @@ static void _XMP_reduce_tca_init(void *dev_addr, int count, int datatype, int op
   coll_info.tca_datatype[id] = tca_datatype;
 }
 
-static void _XMP_reduce_tca_do(void *dev_addr, int count, int datatype, int op, MPI_Comm mpi_comm, int id)
+static void _XMP_reduce_hybrid_do(void *dev_addr, int count, int datatype, int op, MPI_Comm mpi_comm, int id)
 {
   void *cpu_sendbuf = coll_info.cpu_sendbuf[id];
   void *cpu_recvbuf = coll_info.cpu_recvbuf[id];
@@ -358,6 +369,7 @@ static void _XMP_reduce_tca_do(void *dev_addr, int count, int datatype, int op, 
   tcaHandle *device_h = &coll_info.device_handles[id];
   tcaDesc *d2h_desc = coll_info.d2h_desc[id];
   tcaDesc *h2d_desc = coll_info.h2d_desc[id];
+  MPI_Request *req = coll_info.req[id];
 
   tcaSendPIOCommit();
   volatile void *init_ptr_recv = (volatile void *)cpu_recvbuf;
@@ -380,19 +392,25 @@ static void _XMP_reduce_tca_do(void *dev_addr, int count, int datatype, int op, 
 
   // allreduce on CPU memory
   for (i = 0; i < num_comms; i++) {
-    volatile unsigned long *pio_wait = (volatile unsigned long *)((unsigned long)cpu_recvbuf + datasize);
-    TCA_CHECK(tcaSendPIO(&pio_h[i], recv_offset, (void *)cpu_sendbuf, sendsize));
-    tcaSendPIOCommit();
+    if (i < num_comms - 1) { // Fix me
+      volatile unsigned long *pio_wait = (volatile unsigned long *)((unsigned long)cpu_recvbuf + datasize);
+      TCA_CHECK(tcaSendPIO(&pio_h[i], recv_offset, (void *)cpu_sendbuf, sendsize));
+      tcaSendPIOCommit();
 
-    unsigned long j = 2147483647UL;
-    while(*pio_wait != _XMP_TCA_PIO_SYNC_MARK && --j) {
-      _mm_pause();
-    }
-    if (!j) {
-      _XMP_fatal("pio_wait time out.");
+      unsigned long j = 2147483647UL;
+      while(*pio_wait != _XMP_TCA_PIO_SYNC_MARK && --j) {
+	_mm_pause();
+      }
+      if (!j) {
+	_XMP_fatal("pio_wait time out.");
+      }
+
+      *pio_wait = 0;
+    } else {
+      MPI_Startall(2, req);
+      MPI_Waitall(2, req, MPI_STATUS_IGNORE);
     }
 
-    *pio_wait = 0;
     if (i < num_comms - 1) {
       tca_op_func_3op[tca_op][get_func_type_by_data_size(tca_datatype)](cpu_sendbuf, cpu_sendbuf, cpu_recvbuf, count);
       recv_offset += recv_next_aligned_stride;
@@ -401,6 +419,8 @@ static void _XMP_reduce_tca_do(void *dev_addr, int count, int datatype, int op, 
       tca_op_func_3op[tca_op][get_func_type_by_data_size(tca_datatype)](cpu_sendbuf, cpu_sendbuf, cpu_recvbuf, count);
     }
   }
+
+  /* memcpy(recvbuf, cpu_sendbuf, datasize); */
   cpu_recvbuf = (void *)init_ptr_recv;
 
   // copy host to device
@@ -414,7 +434,7 @@ static void _XMP_reduce_tca_do(void *dev_addr, int count, int datatype, int op, 
   }
 }
 
-void _XMP_reduce_tca_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count, int datatype, int op)
+void _XMP_reduce_hybrid_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count, int datatype, int op)
 {
   if (count == 0) {
     return; // FIXME not good implementation
@@ -425,19 +445,19 @@ void _XMP_reduce_tca_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count
   if (_XMP_tca_coll_info_flag) {
     init_coll_info();
   }
-  printf("_XMP_reduce_tca_NODES_ENTIRE\n");
+  printf("_XMP_reduce_hybrid_NODES_ENTIRE\n");  
   MPI_Comm mpi_comm = *((MPI_Comm *)nodes->comm);
 
   int id = get_coll_id(dev_addr, count, datatype, op, mpi_comm);
   if (!coll_info.flag[id]) {
-    _XMP_reduce_tca_init(dev_addr, count, datatype, op, mpi_comm, id);
+    _XMP_reduce_hybrid_init(dev_addr, count, datatype, op, mpi_comm, id);
   }
 
-  _XMP_reduce_tca_do(dev_addr, count, datatype, op, mpi_comm, id);
+  _XMP_reduce_hybrid_do(dev_addr, count, datatype, op, mpi_comm, id);
 }
   
-void _XMP_reduce_tca_CLAUSE(void *dev_addr, int count, int datatype, int op)
+void _XMP_reduce_hybrid_CLAUSE(void *dev_addr, int count, int datatype, int op)
 {
   // Not implemented
-  _XMP_fatal("_XMP_reduce_tca_CLAUSE is not implemented.");
+  _XMP_fatal("_XMP_reduce_hybrid_CLAUSE is not implemented.");
 }
