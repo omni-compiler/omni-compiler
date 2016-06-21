@@ -33,7 +33,7 @@ IS_CRAY          = @CRAY@
 IS_GASNET        = @GASNET@
 IS_MPI3_ONESIDED = @MPI3_ONESIDED@
 IS_FJRDMA        = @FJRDMA@
-IS_MPI3          = @MPI3@
+IS_MPI3_ASYNC    = @MPI3_ASYNC@
 IS_POWERPC       = @POWERPC@
 IS_SUPERUX       = @SUPERUX@
 IS_KCOMPUTER     = @KCOMPUTER@
@@ -70,7 +70,7 @@ ifeq ($(IS_MPI3_ONESIDED), $(TRUE))
     FCFLAGS += -D_XMP_MPI3_ONESIDED
 endif
 
-ifeq ($(IS_MPI3), $(TRUE))
+ifeq ($(IS_MPI3_ASYNC), $(TRUE))
     CFLAGS += -D_XMP_MPI3
 endif
 

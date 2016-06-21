@@ -1,0 +1,13 @@
+#!/bin/sh -x
+#PJM --rsc-list "node=4"
+#PJM --rsc-list "elapse=00:03:00"
+#PJM --stg-transfiles all
+#PJM --mpi "use-rankdir"
+#PJM --stgin "rank=* ./* %r:./"
+
+. /work/system/Env_base
+
+echo
+echo "[test_util_f]"
+echo
+
