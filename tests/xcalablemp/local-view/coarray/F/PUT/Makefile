@@ -11,8 +11,9 @@ OUT_NGB   = a2d2-2NGB.x
 #OUT_type  = a1d1-typeNG
 #OUT_err  = l0-2NG
 OUT_BUG   = bug462.x
+#OUT_ATOMIC = atomic.x atomic2.x
 
 #OUT=$(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_type) $(OUT_NGB)
-OUT=$(OUT_BUG) $(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_NGB)
+OUT=$(OUT_BUG) $(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_NGB) $(OUT_ATOMIC)
 
 include ../Makefile.common

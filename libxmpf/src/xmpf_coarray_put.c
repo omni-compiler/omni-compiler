@@ -684,7 +684,7 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                           "  local : \'%s\', offset=%zd\n"
                           "  remote: \'%s\', offset=%zd\n",
                           coindex, bytes,
-                          (synchronous == 1) ? "SYNC" :
+                          (synchronous == 1) ? "SYNC!" :
                           (synchronous == 0) ? "async" : "Dirty!",
                           nameDMA, offsetDMA,
                           _XMPF_get_coarrayName(descPtr), offset);

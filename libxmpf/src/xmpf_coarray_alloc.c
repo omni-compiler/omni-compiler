@@ -179,6 +179,8 @@ static CoarrayInfo_t *_regmemStaticCoarray(void *baseAddr, size_t thisSize,
 
 static MPI_Comm _get_communicatorFromCoarrayInfo(CoarrayInfo_t *cinfo);
 
+// CoarrayInfo for control data area
+static CoarrayInfo_t *_cinfo_ctrlData;
 // CoarrayInfo for the static communication buffer
 static CoarrayInfo_t *_cinfo_localBuf;  
 
@@ -237,9 +239,9 @@ int xmpf_coarray_allocated_bytes_()
     size = size1;
   }
 
-  // subtract the size of the localBuf CoarrayInfo
+  // subtract the size of the localBuf and ctrlData CoarrayInfos
   // because this is not allocated by the user
-  size -= _cinfo_localBuf->nbytes;
+  size -= _cinfo_ctrlData->nbytes + _cinfo_localBuf->nbytes;
 
   return size;
 }
@@ -441,14 +443,16 @@ void xmpf_coarray_malloc_pool_(void)
 {
   int one = 1;
 
+  size_t ctrlDataSize = sizeof(int) * 8;
   size_t localBufSize = XMPF_get_localBufSize();
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC_POOL_ contains:\n"
                           "  system-defined local buffer :%10u bytes\n"
+                          "  system-defined control data :%10u bytes\n"
                           "  user-defined coarays        :%10u bytes\n",
-                          localBufSize, pool_totalSize);
+                          localBufSize, ctrlDataSize, pool_totalSize);
 
-  pool_totalSize += localBufSize;
+  pool_totalSize += localBufSize + ctrlDataSize;
 
   // init malloc/free history (STRUCTURE-II)
   _initMallocHistory();
@@ -461,12 +465,16 @@ void xmpf_coarray_malloc_pool_(void)
   pool_currentAddr = pool_chunk->orgAddr;
 
   // share communication buffer in the pool
-  //-- instead of xmpf_coarray_alloc_static_
   _cinfo_localBuf = _getShareOfStaticCoarray(localBufSize,  // nbytes
                                              localBufSize); // elementRU
   _cinfo_localBuf->name = "(localBuf)";
-  //-- call of xmpf_coarray_set_coshape_
   xmpf_coarray_set_coshape_((void **)(&_cinfo_localBuf), &one, &one);
+
+  // share control data area in the pool
+  _cinfo_ctrlData = _getShareOfStaticCoarray(ctrlDataSize,  // nbytes
+                                             ctrlDataSize); // elementRU
+  _cinfo_ctrlData->name = "(ctrlData)";
+  xmpf_coarray_set_coshape_((void **)(&_cinfo_ctrlData), &one, &one);
 
   // init library internal
   _XMPF_coarrayInit_get();
@@ -627,7 +635,7 @@ void xmpf_coarray_count_size_(int *count, int *element)
   size_t mallocSize = ROUND_UP_UNIT(thisSize);
 
   if (mallocSize > XMPF_get_poolThreshold()) {
-    _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE_: no count because of the size\n"
+    _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE_: no count because of the large size\n"
                             "  pooling threshold :%10u bytes\n"
                             "  data size         :%10u bytes\n",
                             XMPF_get_poolThreshold(), mallocSize);
@@ -1629,6 +1637,18 @@ size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr)
   size_t offset = baseAddr - orgAddr;
   
   return offset;
+}
+
+void *_XMPF_get_ctrlDataCoarrayDesc(char **baseAddr, size_t *offset,
+                                    char **name)
+{
+  MemoryChunk_t *chunk = _cinfo_ctrlData->parent;
+  char *orgAddr = chunk->orgAddr;                    // origin address of the memory pool
+
+  *baseAddr = _cinfo_ctrlData->baseAddr;             // base address of the control data
+  *offset = orgAddr - *baseAddr;                     // offset of the control data in the memory pool
+  *name = _cinfo_ctrlData->name;                     // name of the control data
+  return chunk->desc;                                // descriptor of the memory pool
 }
 
 void *_XMPF_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,

@@ -40,4 +40,19 @@
         logical(4), intent(in)  :: atom
       end subroutine
 
+!! no need
+!!      subroutine xmpf_atomic_ref_remote_i4(descptr, coindex, mold,      &
+!!     &  dst)
+!!        integer(8), intent(in) :: descptr
+!!        integer, intent(in) :: coindex
+!!        integer(4), intent(in) :: mold, dst
+!!      end subroutine
+!!
+!!      subroutine xmpf_atomic_ref_remote_l4(descptr, coindex, mold,      &
+!!     &  dst)
+!!        integer(8), intent(in) :: descptr
+!!        integer, intent(in) :: coindex
+!!        logical(4), intent(in) :: mold, dst
+!!      end subroutine
+
       end interface

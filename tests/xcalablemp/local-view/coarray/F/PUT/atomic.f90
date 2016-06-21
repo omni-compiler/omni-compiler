@@ -4,6 +4,7 @@
     logical la(3,2)[*], laok
 
     ii=3
+    nn=0
     la=.false.
     me=this_image()
     sync all
@@ -18,7 +19,7 @@
     nn = 0
     if (me==1) then
        do while (nn == 0) 
-          call atomic_ref(nn, ii[1])
+          call atomic_ref(nn, ii)
        enddo
     end if
 

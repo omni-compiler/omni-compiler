@@ -100,6 +100,8 @@ extern int xmpf_coarray_garbage_bytes_(void);
 extern char *_XMPF_get_coarrayName(void *descPtr);
 extern void *_XMPF_get_coarrayDesc(void *descPtr);
 extern size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr);
+extern void *_XMPF_get_cntlDataCoarrayDesc(char **baseAddr, size_t *offset,
+                                           char **name);
 extern void *_XMPF_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
                                            char **name);
 extern void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
