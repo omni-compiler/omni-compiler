@@ -9,7 +9,6 @@ void _XMP_reflect_init_acc(void *acc_addr, _XMP_array_t *array_desc)
 
 #ifdef _XMP_TCA
   _XMP_reflect_init_tca(acc_addr, array_desc);
-  _XMP_reflect_do_tca(array_desc);
 #else
   _XMP_reflect_init_gpu(acc_addr, array_desc);
 #endif
