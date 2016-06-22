@@ -9,6 +9,8 @@ MKDIR_P = @MKDIR_P@
 INSTALL = @INSTALL@
 BINDIR  = @OMNI_HOME@/bin
 AWK     = @AWK@
+XMODDIR = @OMNI_HOME@/fincludes
+INTRMOD = fincludes/iso_fortran_env.xmod
 
 OBJECTS = F95-main.o C-expr-mem.o C-exprcode.o F-datatype.o F-ident.o \
 	  F95-parser.o F-mem.o F-compile.o F-compile-decl.o F-compile-expr.o \
@@ -48,6 +50,8 @@ C-exprcode.c: C-exprcode.def C-exprcode.c.awk
 install: $(F_FRONT)
 	$(MKDIR_P) $(BINDIR)
 	$(INSTALL) $(F_FRONT) $(BINDIR)
+	$(MKDIR_P) $(XMODDIR)
+	$(INSTALL) $(INTRMOD) $(XMODDIR)
 
 clean:
 	rm -f *.o $(CREATE_FILES)

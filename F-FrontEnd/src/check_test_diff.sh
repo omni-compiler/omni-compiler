@@ -23,7 +23,7 @@ do_compile() {
 	    opts=`cat ${testfile}.options`
 	fi
 
-	./F_Front -fno-xmp-coarray ${F_FRONT_TEST_OPTS} ${opts} ${testfile} \
+	./F_Front -fintrinsic-xmodules-path ./fincludes -fno-xmp-coarray ${F_FRONT_TEST_OPTS} ${opts} ${testfile} \
 	    > ${TMPFILE} 2>/dev/null
 	local exitcode=$?
 	python replace_type.py ${TMPFILE} > ${filename}

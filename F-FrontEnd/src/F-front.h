@@ -108,6 +108,8 @@ extern const char * search_include_path(const char *);
 /* max number of include search path.  */
 #define MAXMODINCLUDEDIRV 256
 
+extern char * xmoduleIncludeDirv;
+
 #include <libgen.h>
 
 /* parser states */

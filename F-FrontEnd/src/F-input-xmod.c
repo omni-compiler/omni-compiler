@@ -1923,6 +1923,7 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
     ID_SYM(id) = name;
     id->use_assoc = XMALLOC(struct use_assoc_info *, sizeof(*id->use_assoc));
     id->use_assoc->original_name = find_symbol(original_name);
+    id->use_assoc->module = mod;
     id->use_assoc->module_name = find_symbol(declared_in);
     if (is_ambiguous != NULL && strcmp("true", is_ambiguous) == 0) {
         ID_IS_AMBIGUOUS(id) = TRUE;
@@ -2441,7 +2442,7 @@ input_interfaceDecls(xmlTextReaderPtr reader, HashTable * ht,
  * input <OmniFortranModule> node
  */
 static int
-input_module(xmlTextReaderPtr reader, struct module * mod)
+input_module(xmlTextReaderPtr reader, struct module * mod, int is_intrinsic)
 {
     char * version;
     SYMBOL mod_name;
@@ -2505,12 +2506,35 @@ input_module(xmlTextReaderPtr reader, struct module * mod)
         "OmniFortranModule"))
         return FALSE;
 
+    mod->is_intrinsic = is_intrinsic;
+
     free(version);
     return TRUE;
 }
 
 #include <stdlib.h>
 #define _XMPMOD_NAME "T_Module"
+
+
+const char *
+search_intrinsic_include_path(const char * filename)
+{
+    static char path[MAX_PATH_LEN];
+    FILE * fp;
+
+    if (xmoduleIncludeDirv) {
+        strcpy(path, xmoduleIncludeDirv);
+        strcat(path, "/");
+        strcat(path, filename);
+
+        if ((fp = fopen(path, "r")) != NULL) {
+            fclose(fp);
+            return path;
+        }
+    }
+
+    return NULL;
+}
 
 /**
  * input module from .xmod file
@@ -2522,6 +2546,7 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
     char filename[FILE_NAME_LEN];
     const char * filepath;
     xmlTextReaderPtr reader;
+    int is_intrinsic = FALSE;
 
     // search for "xxx.xmod"
     bzero(filename, sizeof(filename));
@@ -2556,13 +2581,19 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
     }
 #endif
 
+    if (reader == NULL) {
+        filepath = search_intrinsic_include_path(filename);
+        reader = xmlNewTextReaderFilename(filepath);
+        is_intrinsic = TRUE;
+    }
+
     if (reader == NULL)
         return FALSE;
 
     *pmod = XMALLOC(struct module *, sizeof(struct module));
     (*pmod)->name = mod_name;
 
-    ret = input_module(reader, *pmod);
+    ret = input_module(reader, *pmod, is_intrinsic);
 
     xmlTextReaderClose(reader);
 

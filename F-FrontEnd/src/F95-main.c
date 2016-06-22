@@ -111,6 +111,8 @@ int flag_module_compile = FALSE;
 
 int flag_do_module_cache = TRUE;
 
+char *xmoduleIncludeDirv;
+
 static void
 usage()
 {
@@ -126,6 +128,7 @@ usage()
         "-fopenmp                  enable openmp translation.",
         "-fxmp                     enable XcalableMP translation.",
         "-fno-xmp-coarray          disable translation coarray statements to XcalableMP subroutin calls.",
+        "-fintrinsic-xmodules-path specify a xmod path for the intrinsic modules.",
         "-Kscope-omp               enable conditional compilation.",
         "-force-fixed-format       read file as fixed format.",
         "-force-free-format        read file as free format.",
@@ -332,6 +335,19 @@ char *argv[];
             /*         MAXMODINCLUDEDIRV); */
             /* } */
         
+        } else if (strcmp(argv[0], "-fintrinsic-xmodules-path") == 0) {
+            char *path;
+            if (strlen(argv[0]) == 25) {
+                /* -fintrinsic-xmodules-path <intrinsic xmodule dir> */
+                if (--argc <= 0)
+                    cmd_error_exit("no arg for -fintrinsic-xmodules-path.");
+                argv++;
+                path = argv[0];
+            } else {
+                /* -M<intrinsic xmodule dir> */
+                path = argv[0] + 25;
+            }
+            xmoduleIncludeDirv = path;
         } else if (strcmp(argv[0], "-f77") == 0) {
             langSpecSet = LANGSPEC_F77_SET;
         } else if (strcmp(argv[0], "-f90") == 0) {
