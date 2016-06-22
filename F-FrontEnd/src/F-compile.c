@@ -109,6 +109,8 @@ static void compile_data_style_decl(expr x);
 static void compile_SYNCALL_statement(expr x);
 static void compile_SYNCIMAGES_statement(expr x);
 static void compile_SYNCMEMORY_statement(expr x);
+static void compile_LOCK_statement(expr x);
+static void compile_UNLOCK_statement(expr x);
 
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
@@ -1261,6 +1263,13 @@ compile_exec_statement(expr x)
         compile_SYNCMEMORY_statement(x);
         break;
 
+    case F2008_LOCK_STATEMENT:
+        compile_LOCK_statement(x);
+        break;
+
+    case F2008_UNLOCK_STATEMENT:
+        compile_UNLOCK_statement(x);
+        break;
 
     default:
         fatal("unknown statement");
@@ -5333,5 +5342,98 @@ compile_SYNCMEMORY_statement(expr x) {
 
     st = list0(F2008_SYNCMEMORY_STATEMENT);
     compile_sync_stat_args(st, EXPR_ARG1(x));
+    output_statement(st);
+}
+
+/*
+ * Check a type is LOCK_TYPE of the intrinsic module ISO_FORTRAN_ENV
+ */
+static int
+type_is_lock_type(TYPE_DESC tp) {
+    ID tagname;
+
+    if (!IS_STRUCT_TYPE(tp))
+        return FALSE;
+
+    tagname = TYPE_REF(tp) ? TYPE_TAGNAME(TYPE_REF(tp)) : TYPE_TAGNAME(tp) ;
+
+    if (tagname != NULL &&
+        ID_USEASSOC_INFO(tagname) != NULL &&
+        strcmp("lock_type", SYM_NAME(ID_USEASSOC_INFO(tagname)->original_name)) == 0 &&
+        strcmp("iso_fortran_env", SYM_NAME(ID_USEASSOC_INFO(tagname)->module_name)) == 0 &&
+        ID_USEASSOC_INFO(tagname)->module->is_intrinsic) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+
+static void
+compile_LOCK_statement(expr x) {
+    expv st;
+    expv lock_variable;
+    expv sync_stat_list;
+
+    if (XMP_coarray_flag) {
+        expr args;
+        if (!EXPR_HAS_ARG2(x) || (EXPR_ARG2(x) == NULL)) {
+            args = list1(LIST, EXPR_ARG1(x));
+        } else {
+            args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
+        }
+        compile_CALL_statement(list2(
+            F_CALL_STATEMENT,
+            make_enode(IDENT, (void *)find_symbol("xmpf_lock")),
+            args));
+        return;
+    }
+
+    lock_variable = compile_expression(EXPR_ARG1(x));
+    /* CHECK lock_variable */
+    if (!type_is_lock_type(EXPV_TYPE(lock_variable))) {
+        error("The first argument of lock statement must be LOCK_TYPE");
+        return;
+    }
+
+    sync_stat_list = list0(LIST);
+
+    st = list2(F2008_UNLOCK_STATEMENT, lock_variable, sync_stat_list);
+    compile_sync_stat_args(sync_stat_list, EXPR_ARG2(x));
+    output_statement(st);
+}
+
+
+static void
+compile_UNLOCK_statement(expr x) {
+    expv st;
+    expv lock_variable;
+    expv sync_stat_list;
+
+    if (XMP_coarray_flag) {
+        expr args;
+        if (!EXPR_HAS_ARG2(x) || (EXPR_ARG2(x) == NULL)) {
+            args = list1(LIST, EXPR_ARG1(x));
+        } else {
+            args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
+        }
+        compile_CALL_statement(list2(
+            F_CALL_STATEMENT,
+            make_enode(IDENT, (void *)find_symbol("xmpf_unlock")),
+            args));
+        return;
+    }
+
+    lock_variable = compile_expression(EXPR_ARG1(x));
+    /* CHECK lock_variable */
+    if (!type_is_lock_type(EXPV_TYPE(lock_variable))) {
+        error("The first argument of unlock statement must be LOCK_TYPE");
+        return;
+    }
+
+    sync_stat_list = list0(LIST);
+
+    st = list2(F2008_UNLOCK_STATEMENT, lock_variable, sync_stat_list);
+    compile_sync_stat_args(sync_stat_list, EXPR_ARG2(x));
     output_statement(st);
 }

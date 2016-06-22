@@ -16,6 +16,7 @@
  * use association information about ID.
  */
 struct use_assoc_info {
+    struct module * module;   /* module. */
     SYMBOL module_name;       /* name of module which the ID declared. */
     SYMBOL original_name;     /* original name of the ID. */
 };

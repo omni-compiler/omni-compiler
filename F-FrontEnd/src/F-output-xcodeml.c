@@ -192,6 +192,8 @@ xtag(enum expr_code code)
     case F2008_SYNCIMAGES_STATEMENT: return "syncImagesStatement";
     case F2008_SYNCMEMORY_STATEMENT: return "syncMemoryStatement";
     case F2008_CRITICAL_STATEMENT:   return "criticalStatement";
+    case F2008_LOCK_STATEMENT:       return "lockStatement";
+    case F2008_UNLOCK_STATEMENT:     return "unlockStatement";
 
                                 
     /*                          
@@ -2827,6 +2829,41 @@ outx_CRITICAL_statement(int l, expv v)
     }
 }
 
+
+/**
+ * output syncmemoryStatement
+ */
+static void
+outx_LOCK_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    if (EXPR_HAS_ARG1(v)) {
+        outx_expv(l + 1, EXPR_ARG1(v));
+    }
+    if (EXPR_HAS_ARG2(v)) {
+        outx_syncstat_list(l + 1, EXPR_ARG2(v));
+    }
+    outx_expvClose(l, v);
+}
+
+
+/**
+ * output syncmemoryStatement
+ */
+static void
+outx_UNLOCK_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    if (EXPR_HAS_ARG1(v)) {
+        outx_expv(l + 1, EXPR_ARG1(v));
+    }
+    if (EXPR_HAS_ARG2(v)) {
+        outx_syncstat_list(l + 1, EXPR_ARG2(v));
+    }
+    outx_expvClose(l, v);
+}
+
+
 //static void
 void
 outx_expv(int l, expv v)
@@ -3139,6 +3176,14 @@ outx_expv(int l, expv v)
 
     case F2008_CRITICAL_STATEMENT:
       outx_CRITICAL_statement(l, v);
+      break;
+
+    case F2008_LOCK_STATEMENT:
+      outx_LOCK_statement(l, v);
+      break;
+
+    case F2008_UNLOCK_STATEMENT:
+      outx_UNLOCK_statement(l, v);
       break;
 
     default:

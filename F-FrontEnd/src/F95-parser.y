@@ -1352,6 +1352,14 @@ action_coarray_statement:
         { $$ = list1(F2008_ENDCRITICAL_STATEMENT,NULL); }
         | ENDCRITICAL IDENTIFIER
         { $$ = list1(F2008_ENDCRITICAL_STATEMENT,$2); }
+        | LOCK '(' IDENTIFIER ')'
+        { $$ = list2(F2008_LOCK_STATEMENT,$3, NULL); }
+        | LOCK '(' IDENTIFIER ',' sync_stat_arg_list ')'
+        { $$ = list2(F2008_LOCK_STATEMENT,$3, $5); }
+        | UNLOCK '(' IDENTIFIER ')'
+        { $$ = list2(F2008_UNLOCK_STATEMENT,$3, NULL); }
+        | UNLOCK '(' IDENTIFIER ',' sync_stat_arg_list ')'
+        { $$ = list2(F2008_UNLOCK_STATEMENT,$3, $5); }
         | other_coarray_keyword parenthesis_arg_list_or_null
         { $$ = list2(F_CALL_STATEMENT,$1,$2); }
         ;
@@ -1384,11 +1392,7 @@ image_set:
         ;
 
 other_coarray_keyword:
-          LOCK
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_lock")); }
-        | UNLOCK
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_unlock")); }
-        | ERRORSTOP
+          ERRORSTOP
         { $$ = GEN_NODE(IDENT, find_symbol("xmpf_error_stop")); }
         ;
 

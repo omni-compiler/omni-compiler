@@ -40,6 +40,7 @@ add_module_id(struct module * mod, ID id)
 
     if(mid->use_assoc == NULL) {
         mid->use_assoc = XMALLOC(struct use_assoc_info *, sizeof(*(id->use_assoc)));
+        mid->use_assoc->module = mod;
         mid->use_assoc->module_name = mod->name;
         mid->use_assoc->original_name = id->name;
     }

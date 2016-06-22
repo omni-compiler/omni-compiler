@@ -128,7 +128,7 @@ usage()
         "-fopenmp                  enable openmp translation.",
         "-fxmp                     enable XcalableMP translation.",
         "-fno-xmp-coarray          disable translation coarray statements to XcalableMP subroutin calls.",
-        "-fintrinsc-xmodule-path   specify a xmod path for the intrinsic modules.",
+        "-fintrinsic-xmodules-path specify a xmod path for the intrinsic modules.",
         "-Kscope-omp               enable conditional compilation.",
         "-force-fixed-format       read file as fixed format.",
         "-force-free-format        read file as free format.",
