@@ -6,7 +6,6 @@
         TYPE(LOCK_TYPE) :: a[*]
         LOGICAL :: ACQUIRED_LOCK = .TRUE.
 
-        !LOCK (a, ACQUIRED_LOCK=ACQUIRED_LOCK, STAT=v, ERRMSG=c)
-        LOCK (a, STAT=v, ERRMSG=c)
+        LOCK (a, ACQUIRED_LOCK=ACQUIRED_LOCK, STAT=v, ERRMSG=c)
         UNLOCK (a, STAT=v, ERRMSG=c)
       END PROGRAM main

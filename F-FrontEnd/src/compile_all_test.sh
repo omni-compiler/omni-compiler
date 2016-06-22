@@ -38,7 +38,7 @@ fi
 export OMNI_JAVA
 frontend=${work}/F-FrontEnd/src/F_Front -fno-xmp-coarray -fintrinsic-xmodules-path ${OMNI_HOME}/fincludes
 backend=${work}/F-BackEnd/bin/F_Back
-nativecomp=gfortran
+nativecomp=gfortran -fcoarray=single
 tmpdir=${work}/compile
 if test -z "${testdata}"; then
     testdata=$work/F-FrontEnd/test/testdata
