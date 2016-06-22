@@ -425,7 +425,7 @@ void _XMP_reduce_tca_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count
   if (_XMP_tca_coll_info_flag) {
     init_coll_info();
   }
-  printf("_XMP_reduce_tca_NODES_ENTIRE\n");
+
   MPI_Comm mpi_comm = *((MPI_Comm *)nodes->comm);
 
   int id = get_coll_id(dev_addr, count, datatype, op, mpi_comm);
