@@ -282,7 +282,7 @@ static int get_coll_id(void *dev_addr, int count, int datatype, int op, MPI_Comm
   return coll_info.tail_id++;
 }
 
-static void _XMP_reduce_tca_init(void *dev_addr, int count, int datatype, int op, MPI_Comm mpi_comm, int id)
+static void _XMP_reduce_init_tca(void *dev_addr, int count, int datatype, int op, MPI_Comm mpi_comm, int id)
 {
   int rank = _XMP_world_rank;
   int num_proc = _XMP_world_size;
@@ -347,7 +347,7 @@ static void _XMP_reduce_tca_init(void *dev_addr, int count, int datatype, int op
   coll_info.tca_datatype[id] = tca_datatype;
 }
 
-static void _XMP_reduce_tca_do(void *dev_addr, int count, int datatype, int op, MPI_Comm mpi_comm, int id)
+static void _XMP_reduce_do_tca(void *dev_addr, int count, int datatype, int op, MPI_Comm mpi_comm, int id)
 {
   void *cpu_sendbuf = coll_info.cpu_sendbuf[id];
   void *cpu_recvbuf = coll_info.cpu_recvbuf[id];
@@ -430,10 +430,10 @@ void _XMP_reduce_tca_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count
 
   int id = get_coll_id(dev_addr, count, datatype, op, mpi_comm);
   if (!coll_info.flag[id]) {
-    _XMP_reduce_tca_init(dev_addr, count, datatype, op, mpi_comm, id);
+    _XMP_reduce_init_tca(dev_addr, count, datatype, op, mpi_comm, id);
   }
 
-  _XMP_reduce_tca_do(dev_addr, count, datatype, op, mpi_comm, id);
+  _XMP_reduce_do_tca(dev_addr, count, datatype, op, mpi_comm, id);
 }
   
 void _XMP_reduce_tca_CLAUSE(void *dev_addr, int count, int datatype, int op)
