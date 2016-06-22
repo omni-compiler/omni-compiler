@@ -5194,8 +5194,9 @@ compile_data_style_decl(expr decl_list)
 }
 
 static void
-compile_sync_stat_args_skip_first(expv st, expr x, size_t skip) {
+compile_stat_args_skip_first(expv st, expr x, int expect_acquired_lock, size_t skip) {
     list lp;
+    int has_keyword_acquired_lock = FALSE;
     int has_keyword_stat = FALSE;
     int has_keyword_errmsg = FALSE;
     size_t idx = 0;
@@ -5251,6 +5252,20 @@ compile_sync_stat_args_skip_first(expv st, expr x, size_t skip) {
                 return;
             }
 
+        } else if (expect_acquired_lock &&
+                   strcmp("acquired_lock", keyword) == 0) {
+            if (has_keyword_acquired_lock == TRUE) {
+                error("no specifier shall appear more than once");
+                return;
+            }
+            has_keyword_acquired_lock = TRUE;
+
+            if (!IS_LOGICAL(EXPV_TYPE(arg))) {
+                error("errmsg variable should be character");
+                return;
+            }
+
+
         } else {
             error("unexpected specifier '%s'", keyword);
             return;
@@ -5264,7 +5279,19 @@ compile_sync_stat_args_skip_first(expv st, expr x, size_t skip) {
 
 static void
 compile_sync_stat_args(expv st, expr x) {
-    compile_sync_stat_args_skip_first(st, x, 0);
+    compile_stat_args_skip_first(st, x, FALSE, 0);
+}
+
+
+static void
+compile_sync_stat_args_skip_first(expv st, expr x, int skip) {
+    compile_stat_args_skip_first(st, x, FALSE, skip);
+}
+
+
+static void
+compile_lock_stat_args(expv st, expr x) {
+    compile_stat_args_skip_first(st, x, TRUE, 0);
 }
 
 
@@ -5359,8 +5386,10 @@ type_is_lock_type(TYPE_DESC tp) {
 
     if (tagname != NULL &&
         ID_USEASSOC_INFO(tagname) != NULL &&
-        strcmp("lock_type", SYM_NAME(ID_USEASSOC_INFO(tagname)->original_name)) == 0 &&
-        strcmp("iso_fortran_env", SYM_NAME(ID_USEASSOC_INFO(tagname)->module_name)) == 0 &&
+        strcmp("lock_type",
+               SYM_NAME(ID_USEASSOC_INFO(tagname)->original_name)) == 0 &&
+        strcmp("iso_fortran_env",
+               SYM_NAME(ID_USEASSOC_INFO(tagname)->module_name)) == 0 &&
         ID_USEASSOC_INFO(tagname)->module->is_intrinsic) {
         return TRUE;
     }
@@ -5399,7 +5428,7 @@ compile_LOCK_statement(expr x) {
     sync_stat_list = list0(LIST);
 
     st = list2(F2008_UNLOCK_STATEMENT, lock_variable, sync_stat_list);
-    compile_sync_stat_args(sync_stat_list, EXPR_ARG2(x));
+    compile_lock_stat_args(sync_stat_list, EXPR_ARG2(x));
     output_statement(st);
 }
 
