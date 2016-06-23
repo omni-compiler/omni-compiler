@@ -720,9 +720,9 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_NUM_IMAGES,    INTR_NAME_GENERIC,   "num_images",        0,      {},                               INTR_TYPE_INT,  0, -6, LANGSPEC_F2008 },
 
     { INTR_THIS_IMAGE,    INTR_NAME_GENERIC,   "this_image",        0,      {},                               INTR_TYPE_INT,  0, -6, LANGSPEC_F2008 },
-    { INTR_THIS_IMAGE,    INTR_NAME_GENERIC,   "",                  0,      {INTR_TYPE_COARRAY_ANY},          INTR_TYPE_INT_ARRAY,  1, -9, LANGSPEC_F2008 },
+    { INTR_THIS_IMAGE,    INTR_NAME_GENERIC,   "",                  0,      {INTR_TYPE_COARRAY_ANY},          INTR_TYPE_INT_DYNAMIC_ARRAY,  1, -1, LANGSPEC_F2008 },
     { INTR_THIS_IMAGE,    INTR_NAME_GENERIC,   "",                  0,      {INTR_TYPE_COARRAY_ANY,INTR_TYPE_INT},
-                                                                                                              INTR_TYPE_INT_ARRAY,  2, -9, LANGSPEC_F2008 },
+                                                                                                              INTR_TYPE_INT,  2, -6, LANGSPEC_F2008 },
     { INTR_IMAGE_INDEX,   INTR_NAME_GENERIC,   "image_index",       0,      {INTR_TYPE_COARRAY_ANY,INTR_TYPE_INT_ARRAY},
                                                                                                               INTR_TYPE_INT,  2, -6, LANGSPEC_F2008 },
 

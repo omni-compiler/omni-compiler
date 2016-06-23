@@ -152,11 +152,12 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_LINK(tp)           ((tp)->link)
 #define TYPE_SLINK(tp)          ((tp)->struct_link)
 #define TYPE_IS_DECLARED(tp)    ((tp)->is_declared)
-#define TYPE_IS_COINDEXED(tp)   ((tp)->codims)
+#define TYPE_IS_COINDEXED(tp)   (tp != NULL && (tp)->codims)
 #define TYPE_BASIC_TYPE(tp)     ((tp)->basic_type)
 #define TYPE_REF(tp)            ((tp)->ref)
 #define TYPE_TAGNAME(tp)        ((tp)->tagname)
 #define TYPE_IS_REFERENCED(tp)  ((tp)->is_referenced)
+#define TYPE_CODIMENSION(tp)    ((tp)->codims)
 #if 0
 #define TYPE_LINK_ADD(tp, tlist, ttail) \
     { if((tlist) == NULL) (tlist) = (tp); \
@@ -349,10 +350,6 @@ extern TYPE_DESC basic_type_desc[];
 
 #define IS_REFFERENCE(tp) \
                 ((tp) != NULL && TYPE_N_DIM(tp) == 0 && TYPE_REF(tp) != NULL)
-
-#define IS_COARRAY_TYPE(tp) \
-                ((tp) != NULL && (tp)->codims != NULL)
-
 
 #define FOREACH_MEMBER(/* ID */ mp, /* TYPE_DESC */ tp) \
     if ((tp) != NULL && TYPE_MEMBER_LIST(tp) != NULL) \

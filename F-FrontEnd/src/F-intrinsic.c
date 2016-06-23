@@ -284,7 +284,7 @@ compare_intrinsic_arg_type(expv arg,
     if(IS_GNUMERIC_ALL(tp))
         return 0;
 
-    if (IS_COARRAY_TYPE(tp)) {
+    if (TYPE_IS_COINDEXED(tp)) {
         isCoarray = 1;
     }
 
@@ -528,13 +528,8 @@ compare_intrinsic_arg_type(expv arg,
             case INTR_TYPE_SCALAR_COARRAY_INT:
             case INTR_TYPE_SCALAR_COARRAY_REAL:
             case INTR_TYPE_SCALAR_COARRAY_LOGICAL: {
-                fprintf(stderr, "HERE\n");
-
                 if (!isCoarray)
                     break;
-
-                fprintf(stderr, "HERE\n");
-
                 return compare_intrinsic_arg_type(
                     arg, tp, CONVERT_COARRAY_TO_BASIC(iType));
             }
@@ -800,7 +795,7 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
     TYPE_DESC bTypeDsc = NULL;
     TYPE_DESC ret = NULL;
     expv a = NULL;
-    
+
     if (INTR_RETURN_TYPE(ep) == INTR_TYPE_NONE) {
         return NULL;
     }
@@ -1140,6 +1135,34 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
 			return ret;
 		    }
 		    break;
+
+
+                    case INTR_THIS_IMAGE:
+                    {
+                        /* `THIS_IMAGE(COARRAY)` returns an 1-rank array.
+                           Its length is euquals to the corank of COARRAY */
+                        int corank;
+                        expv dims;
+                        a = expr_list_get_n(args, 0);
+                        if (!(isValidTypedExpv(a))) {
+                            return NULL;
+                        }
+
+                        corank = TYPE_CODIMENSION(EXPV_TYPE(a))->corank;
+
+                        dims = list1(LIST,
+                                     list2(LIST,
+                                           make_int_enode(1),
+                                           make_int_enode(corank)));
+
+                        ret = compile_dimensions(type_INT, dims);
+                        fix_array_dimensions(ret);
+                        return ret;
+                    }
+                    break;
+
+
+
 
                     default:
                     {
