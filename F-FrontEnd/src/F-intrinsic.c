@@ -1138,6 +1138,8 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
 
 
                     case INTR_THIS_IMAGE:
+                    case INTR_UCOBOUND:
+                    case INTR_LCOBOUND:
                     {
                         /* `THIS_IMAGE(COARRAY)` returns an 1-rank array.
                            Its length is euquals to the corank of COARRAY */
