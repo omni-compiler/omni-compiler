@@ -22,6 +22,20 @@ static TYPE_DESC        get_intrinsic_return_type(intrinsic_entry *ep,
                                                   expv kindV);
 static BASIC_DATA_TYPE	intr_type_to_basic_type(INTR_DATA_TYPE iType);
 
+static INTR_DATA_TYPE COARRAY_TO_BASIC_MAP[] = {
+    /* INTR_TYPE_COARRAY_ANY            -> */ INTR_TYPE_ANY,
+    /* INTR_TYPE_COARRAY_INT            -> */ INTR_TYPE_INT,
+    /* INTR_TYPE_COARRAY_REAL           -> */ INTR_TYPE_REAL,
+    /* INTR_TYPE_COARRAY_LOGICAL        -> */ INTR_TYPE_LOGICAL,
+    /* INTR_TYPE_SCALAR_COARRAY_ANY     -> */ INTR_TYPE_ANY,
+    /* INTR_TYPE_SCALAR_COARRAY_INT     -> */ INTR_TYPE_INT,
+    /* INTR_TYPE_SCALAR_COARRAY_REAL    -> */ INTR_TYPE_REAL,
+    /* INTR_TYPE_SCALAR_COARRAY_LOGICAL -> */ INTR_TYPE_LOGICAL
+};
+
+#define CONVERT_COARRAY_TO_BASIC(x) \
+    (COARRAY_TO_BASIC_MAP[(x) - INTR_TYPE_COARRAY_ANY])
+
 
 void
 initialize_intrinsic() {
@@ -265,9 +279,14 @@ compare_intrinsic_arg_type(expv arg,
     BASIC_DATA_TYPE bType;
     int ret = 1;
     int isArray = 0;
+    int isCoarray = 0;
 
     if(IS_GNUMERIC_ALL(tp))
         return 0;
+
+    if (IS_COARRAY_TYPE(tp)) {
+        isCoarray = 1;
+    }
 
     if (IS_ARRAY_TYPE(tp)) {
         while (IS_ARRAY_TYPE(tp)) {
@@ -498,6 +517,26 @@ compare_intrinsic_arg_type(expv arg,
                 }
                 ret = 0;
                 break;
+            }
+
+
+            case INTR_TYPE_COARRAY_ANY:
+            case INTR_TYPE_COARRAY_INT:
+            case INTR_TYPE_COARRAY_REAL:
+            case INTR_TYPE_COARRAY_LOGICAL:
+            case INTR_TYPE_SCALAR_COARRAY_ANY:
+            case INTR_TYPE_SCALAR_COARRAY_INT:
+            case INTR_TYPE_SCALAR_COARRAY_REAL:
+            case INTR_TYPE_SCALAR_COARRAY_LOGICAL: {
+                fprintf(stderr, "HERE\n");
+
+                if (!isCoarray)
+                    break;
+
+                fprintf(stderr, "HERE\n");
+
+                return compare_intrinsic_arg_type(
+                    arg, tp, CONVERT_COARRAY_TO_BASIC(iType));
             }
 
             default: {

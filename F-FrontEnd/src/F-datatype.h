@@ -350,6 +350,10 @@ extern TYPE_DESC basic_type_desc[];
 #define IS_REFFERENCE(tp) \
                 ((tp) != NULL && TYPE_N_DIM(tp) == 0 && TYPE_REF(tp) != NULL)
 
+#define IS_COARRAY_TYPE(tp) \
+                ((tp) != NULL && (tp)->codims != NULL)
+
+
 #define FOREACH_MEMBER(/* ID */ mp, /* TYPE_DESC */ tp) \
     if ((tp) != NULL && TYPE_MEMBER_LIST(tp) != NULL) \
         FOREACH_ID(mp, TYPE_MEMBER_LIST(tp))
