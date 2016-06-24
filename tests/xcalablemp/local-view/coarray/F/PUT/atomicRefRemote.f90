@@ -3,13 +3,13 @@
     logical la(3,2)[*], laok, lb
 
     la=.false.
+    lb=.false.
     me=this_image()
     sync all
 
     nerr=0
 
     !!------------------- TRY LOCAL-REMOTE
-    lb=.false.
     if (me==3) then
        do while (.not.lb)
           call atomic_ref(lb, la(1,2)[2])
@@ -19,14 +19,10 @@
 
     if (me==2) then
        sync memory
-!!       call atomic_define(la(1,2), .true.)
-       call atomic_define(la(1,2)[2], .true.)
+       call atomic_define(la(1,2), .true.)
+!!       call atomic_define(la(1,2)[2], .true.)
     endif
     
-    !!!!!!!!!!!!!!!!!
-!!    sync all
-    !!!!!!!!!!!!!!!!!
-
     !!------------------- CHECK
     if (me==3) then
        if (.not.lb) then
@@ -47,7 +43,7 @@
 
           if (la(i,j).neqv.laok) then
              nerr=nerr+1
-             write(*,101) me, "la", laok, la(i,j)
+             write(*,102) me, "la", i, j, laok, la(i,j)
           endif
        enddo
     enddo
@@ -62,6 +58,7 @@
 
 100 format("[",i0,"] ",a," should be ",i0," but ",i0,".")
 101 format("[",i0,"] ",a," should be ",l2," but ",l2,".")
+102 format("[",i0,"] ",a,"(",i0,",",i0,") should be ",l2," but ",l2,".")
 
   end program main
 

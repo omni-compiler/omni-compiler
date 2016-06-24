@@ -12,11 +12,9 @@
 
     if (me==3) then
        nval=4
-       write(*,101) me, "wait for changing ia(2,1)"
-       do while (nval==4)
+       do while (nval<100)
           call atomic_ref(nval,ia(2,1))
        enddo
-       write(*,101) me, "wait completed"
        if (nval.ne.444) then
           nerr=nerr+1
           write(*,100) me,"nval",444,nval
@@ -25,11 +23,9 @@
 
     if (me==1) then
        nval = 3
-       write(*,101) me, "wait for changing ii[2]"
-       do while (nval==3)
+       do while (nval<100)
           call atomic_ref(nval, ii[2])
        enddo
-       write(*,101) me, "wait completed"
        if (nval.ne.333) then
           nerr=nerr+1
           write(*,100) me,"nval",333,nval
@@ -38,12 +34,10 @@
 
     if (me==2) then
        call atomic_define(ii, 333)
-       write(*,101) me, "set ii[2]=333"
        call atomic_define(ia(2,1)[3], 444)
-       write(*,101) me, "set ia(2,1)[3]=444"
     endif
 
-    write(*,101) me, "goal"
+    write(*,101) me, "OK completed."
 
 100 format("[",i0,"] ",a," should be ",i0," but ",i0)
 101 format("[",i0,"] ",a)
