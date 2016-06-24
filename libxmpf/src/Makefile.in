@@ -30,9 +30,6 @@ OBJECTS   = xmpf_array.o xmpf_async.o xmpf_gcomm.o xmpf_gmove.o xmpf_index.o xmp
 	    xmpf_coarray_alloc_wrap.o xmpf_coarray_reduction.o \
             xmpf_coarray_decl.o $(F_MAIN_O)
 
-DATA_FOR_BACKEND = coarray_entry_names.txt
-SCRIPT_FOR_BACKEND = $(DATA_FOR_BACKEND).sh
-
 FALSE            = 1
 TRUE             = 0
 IS_CRAY          = @CRAY@
@@ -97,7 +94,7 @@ endif
 %.F90: %.F90.sh
 	bash $< $(TARGET) > $@
 
-all: $(LIBXMPF) $(DATA_FOR_BACKEND)
+all: $(LIBXMPF)
 
 $(LIBXMPF): $(F_MAIN_O) $(OBJECTS)
 	rm -f $@

@@ -14,9 +14,11 @@
        do while (.not.lb)
           call atomic_ref(lb, la(1,2)[2])
        enddo
+       sync memory
     endif
 
     if (me==2) then
+       sync memory
 !!       call atomic_define(la(1,2), .true.)
        call atomic_define(la(1,2)[2], .true.)
     endif
