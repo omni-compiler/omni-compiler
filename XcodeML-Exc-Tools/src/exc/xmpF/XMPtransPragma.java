@@ -332,9 +332,9 @@ public class XMPtransPragma
     return Bcons.COMPOUND(ret_body);
   }
 
-  private Xobject calcLtoG(XMPtemplate t, int tIdx, Xobject expr) {
+  private Xobject calcLtoG(XMPtemplate t, int tIdx, Xobject local) {
     if (!t.isDistributed() || t.getDistMannerAt(tIdx) == XMPtemplate.DUPLICATION) {
-      return expr;
+      return local;
     }
 
     //t.getOntoNodesIndexAt(ti).getInt(); //obtains node idx which corresponds to template idx
@@ -347,47 +347,73 @@ public class XMPtransPragma
 
     XMPnodes n = t.getOntoNodes();
 
-    Xobject nodeNum = n.getInfoAt(nIdx).getNodeRankVar().Ref(); //Xcons.IntConstant(3);
-    Xobject nodeSize = n.getInfoAt(nIdx).getSize();
+    Xobject nodeRank = n.getInfoAt(nIdx).getNodeRankVar().Ref(); /* _p */
+    Xobject nodeSize = n.getInfoAt(nIdx).getSize(); /* _P */
     if(nodeSize == null){
       nodeSize = n.getInfoAt(nIdx).getNodeSizeVar().Ref();
     }
-
+    Xobject total = t.getSizeAt(tIdx); /* _N */
+    Xobject base = t.getLowerAt(tIdx); /* _m */
     Xobject newExpr = null;
+
     switch (t.getDistMannerAt(tIdx)) {
     //case XMPtemplate.DUPLICATION: unreachable
     case XMPtemplate.BLOCK:
-      // _XMP_M_LTOG_TEMPLATE_BLOCK(_l, _m, _N, _P, _p) =  (((_p) * _XMP_M_CEILi(_N, _P)) + (_m) + (_l))
-      Xobject ceili = Xcons.binaryOp(
-              Xcode.PLUS_EXPR,
-              Xcons.binaryOp(
-                      Xcode.DIV_EXPR,
-                      Xcons.binaryOp(
-                              Xcode.MINUS_EXPR,
-                              t.getSizeAt(tIdx), /* _N */
-                              Xcons.IntConstant(1)
-                      ),
-                      nodeSize /* _P */
-              ),
+      // _XMP_M_LTOG_TEMPLATE_BLOCK(_l, _m, total, _P, _p)  (((_p) * _XMP_M_CEILi(total, _P)) + (_m) + (_l))
+      Xobject ceili = Xcons.binaryOp(Xcode.PLUS_EXPR,
+              Xcons.binaryOp(Xcode.DIV_EXPR,
+                      Xcons.binaryOp(Xcode.MINUS_EXPR,
+                              total,
+                              Xcons.IntConstant(1)),
+                      nodeSize),
               Xcons.IntConstant(1)
       );
-      newExpr = Xcons.binaryOp(
-              Xcode.PLUS_EXPR,
-              Xcons.binaryOp(
-                      Xcode.PLUS_EXPR,
-                      Xcons.binaryOp(
-                              Xcode.MUL_EXPR,
-                              ceili, /* _XMP_M_CEILi(n,nodeNum) */
-                              nodeNum /* _p */
-                      ),
-                      t.getLowerAt(tIdx) /* _m */
-              ),
-              expr /* _l */);
+      newExpr = Xcons.binaryOp(Xcode.PLUS_EXPR,
+              Xcons.binaryOp(Xcode.PLUS_EXPR,
+                      Xcons.binaryOp(Xcode.MUL_EXPR,
+                              ceili,
+                              nodeRank),
+                      base),
+              local);
       break;
     case XMPtemplate.CYCLIC:
-    case XMPtemplate.BLOCK_CYCLIC:
+      //case XMPtemplate.BLOCK_CYCLIC: block-cyclic is not used. it is same as cyclic
+      Xobject distArg = t.getDistArgAt(tIdx);
+      if(distArg == null) {
+        //cyclic distribution
+        // #define _XMP_M_LTOG_TEMPLATE_CYCLIC(_l, _m, _P, _p)  (((_l) * (_P)) + (_p) + (_m))
+        newExpr = Xcons.binaryOp(Xcode.PLUS_EXPR,
+                Xcons.binaryOp(Xcode.PLUS_EXPR,
+                        Xcons.binaryOp(Xcode.MUL_EXPR,
+                                local,
+                                nodeSize),
+                        nodeRank),
+                base);
+      }else {
+        //block-cyclic distribution
+        Xobject _b = distArg; //FIXME if distArg is variable and changed, the global index is not correct.
+        Ident modFuncId = env.declIntrinsicIdent("mod", Xtype.FintFunctionType);
+        //#define _XMP_M_LTOG_TEMPLATE_BLOCK_CYCLIC(_l, _b, _m, _P, _p) \
+        //((((_l) / (_b)) * (_b) * (_P)) + ((_b) * (_p)) + ((_l) % (_b)) + (_m))
+        newExpr = Xcons.binaryOp(Xcode.PLUS_EXPR,
+                Xcons.binaryOp(Xcode.PLUS_EXPR,
+                        Xcons.binaryOp(Xcode.PLUS_EXPR,
+                                Xcons.binaryOp(Xcode.MUL_EXPR,
+                                        Xcons.binaryOp(Xcode.MUL_EXPR,
+                                                Xcons.binaryOp(Xcode.DIV_EXPR,
+                                                        local,
+                                                        _b),
+                                                _b),
+                                        nodeSize),
+                                Xcons.binaryOp(Xcode.MUL_EXPR,
+                                        _b,
+                                        nodeRank)),
+                        modFuncId.Call(Xcons.List(local,_b))),
+                base);
+      }
+      break;
     case XMPtemplate.GBLOCK:
-      XMP.fatal("not implemented distribute manner");
+      XMP.fatal("gblock is not implemented");
     default:
       XMP.fatal("unknown distribute manner");
     }
