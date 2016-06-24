@@ -24,10 +24,11 @@ HEADERS   = $(XMPF_INC_DIR)/xmpf_internal.h $(XMPF_INC_DIR)/xmpf_internal_coarra
 OBJECTS   = xmpf_array.o xmpf_async.o xmpf_gcomm.o xmpf_gmove.o xmpf_index.o xmpf_lib.o \
 	    xmpf_loop.o xmpf_misc.o xmpf_nodes.o xmpf_pack.o xmpf_reflect.o xmpf_sort.o \
 	    xmpf_task.o xmpf_template.o \
-            xmpf_coarray.o xmpf_coarray_lib.o xmpf_coarray_alloc.o \
+            xmpf_coarray.o xmpf_coarray_alloc.o \
+	    xmpf_coarray_wrap.o xmpf_coarray_alloc_wrap.o \
             xmpf_coarray_put.o xmpf_coarray_get.o xmpf_coarray_atomic.o \
-	    xmpf_coarray_wrap.o xmpf_coarray_put_wrap.o xmpf_coarray_get_wrap.o \
-	    xmpf_coarray_alloc_wrap.o xmpf_coarray_reduction.o \
+	    xmpf_coarray_put_wrap.o xmpf_coarray_get_wrap.o xmpf_coarray_atomic_wrap.o \
+	    xmpf_coarray_lib.o xmpf_coarray_reduction.o \
             xmpf_coarray_decl.o $(F_MAIN_O)
 
 FALSE            = 1
