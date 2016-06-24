@@ -691,8 +691,12 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
 
   // ACTION (case synchronous: atomic_define)
   if (synchronous) {
-    _XMP_atomic_define_1(desc, offset, coindex, 0,
-                         descDMA, offsetDMA, bytes);
+    if (offset % 4 != 0) {
+      _XMPF_coarrayFatal("RESTRICSION: boundary error: "
+                         "the 1-st argument of atomic_define");
+    }
+    _XMP_atomic_define_1(desc, offset / 4, coindex, 0,
+                         descDMA, offsetDMA, 4);
     return;
   }
 

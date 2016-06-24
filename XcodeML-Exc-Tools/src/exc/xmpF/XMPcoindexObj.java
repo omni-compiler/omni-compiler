@@ -51,7 +51,7 @@ public class XMPcoindexObj {
   public XMPcoindexObj(Xobject obj, ArrayList<XMPcoarray> coarrays) {
     this.obj = obj;
     name = _getName(obj);
-    coarray = _findCoarrayInCoarrays(name, coarrays);
+    coarray = XMPcoarray.findCoarrayInCoarrays(name, coarrays);
     _initOthers();
   }
 
@@ -192,19 +192,6 @@ public class XMPcoindexObj {
       if (isTripletIndex(i))
         ++count;
     return count;
-  }
-
-  private XMPcoarray _findCoarrayInCoarrays(String name,
-                                            ArrayList<XMPcoarray> coarrays) {
-    for (XMPcoarray coarray: coarrays) {
-      if (coarray.getName() == name) {
-        return coarray;
-      }
-    }
-
-    if (coarray == null)
-      XMP.fatal("INTERNAL: could not find coarray in coarrays. name=" + name);
-    return null;
   }
 
 

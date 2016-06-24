@@ -1355,9 +1355,17 @@ public class XMPcoarray {
   }
 
 
-  //public Xtype getOriginalType() {
-  //return originalType;
-  //}
+  public static XMPcoarray findCoarrayInCoarrays(String name,
+                                                 ArrayList<XMPcoarray> coarrays) {
+    for (XMPcoarray coarray: coarrays) {
+      if (coarray.getName() == name) {
+        return coarray;
+      }
+    }
+
+    return null;
+  }
+
 
   public String toString() {
     String s = 

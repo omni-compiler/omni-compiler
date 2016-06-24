@@ -187,7 +187,7 @@ static int _transImage_current2initial(int image)
   int num = _XMPF_num_images_current();
 
   if (image <= 0 || num < image)
-    _XMPF_coarrayFatal("ERROR: image index (%d) specified out of range (1 to %d)\n",
+    _XMPF_coarrayFatal("ERROR: image index (%d) not specified within the range (1 to %d)\n",
                        image, num);
 
   if (!_XMPF_is_subset_exec())
@@ -279,7 +279,7 @@ static void _get_initial_allimages(int size, int images2[])
 
 /*  MPI_Comm_size() of the current communicator
  */
-int xmpf_num_images_(void)
+int xmpf_num_images_current_(void)
 {
   return _XMPF_num_images_current();
 }
@@ -287,7 +287,7 @@ int xmpf_num_images_(void)
 
 /*  (MPI_Comm_rank() + 1) in the current communicator
  */
-int xmpf_this_image_noargs_(void)
+int xmpf_this_image_current_(void)
 {
   return _XMPF_this_image_current();
 }

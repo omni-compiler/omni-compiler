@@ -378,6 +378,18 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
     }
     
     @Override
+    public String getName()
+    {
+      switch (Opcode()) {
+      case F_VAR_REF:
+      case F_ARRAY_REF:
+      case CO_ARRAY_REF:
+        return getArg(0).getName();
+      }
+      throw new UnsupportedOperationException(toString());
+    }
+
+    @Override
     public int getFrank(Block block)
     {
       switch (Opcode()) {
