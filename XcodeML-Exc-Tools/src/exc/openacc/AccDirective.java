@@ -6,14 +6,22 @@ import exc.object.*;
 abstract class AccDirective {
   public static final String prop = "_ACC_DIRECTIVE";
   final AccInformation _info;
+  final XobjectDef _xobjDef;
   final PragmaBlock _pb;
   final ACCglobalDecl _decl;
   AccDirective(ACCglobalDecl decl, AccInformation info){
-    this(decl, info, null);
+    this(decl, info, null, null);
+  }
+  AccDirective(ACCglobalDecl decl, AccInformation info, XobjectDef xobjDef){
+    this(decl, info, xobjDef, null);
   }
   AccDirective(ACCglobalDecl decl, AccInformation info, PragmaBlock pb){
+    this(decl, info, null, pb);
+  }
+  AccDirective(ACCglobalDecl decl, AccInformation info, XobjectDef xobjDef, PragmaBlock pb){
     _decl = decl;
     _info = info;
+    _xobjDef = xobjDef;
     _pb = pb;
     ACC.debug(info.toString());
   }
@@ -96,6 +104,13 @@ abstract class AccDirective {
 
     //FIXME check complex expression
     return true;
+  }
+
+  boolean isSymbol(String sym) throws ACCexception{
+    if(sym == null) return false;
+
+    Ident id = findVarIdent(sym);
+    return (id != null);
   }
 //  private void fixXobject(Xobject x, Block b) throws ACCexception {
 //    topdownXobjectIterator xIter = new topdownXobjectIterator(x);

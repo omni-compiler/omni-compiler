@@ -3,8 +3,20 @@
 MKDIR_P     = @MKDIR_P@
 INSTALL     = @INSTALL@
 INSTALL_DIR = @OMNI_HOME@/include/
-HEADERS = acc.h acc_gpu.h acc_gpu_constant.h acc_gpu_func.hpp \
-	  acc_gpu_reduction.hpp acc_gpu_atomic.hpp openacc.h
+HEADERS = acc.h openacc.h
+
+FALSE           = 1
+TRUE            = 0
+IS_CUDA		= @CUDA@
+IS_OPENCL	= @OPENCL@
+
+ifeq ($(IS_CUDA), $(TRUE)) #if CUDA
+HEADERS += acc_gpu_func.hpp acc_gpu_reduction.hpp acc_gpu_atomic.hpp
+endif
+
+ifeq ($(IS_OPENCL), $(TRUE)) #if OPENCL
+HEADERS += acc_cl.h
+endif
 
 all:
 install: $(HEADERS)

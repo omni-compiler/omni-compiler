@@ -3,6 +3,8 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 
 import xcodeml.util.XmOption;
 
@@ -11,7 +13,8 @@ import exc.object.*;
 
 class ACCgpuDecompiler {
   private static final int BUFFER_SIZE = 4096;
-  private static final String GPU_SRC_EXTENSION = ".cu";
+  private final String CUDA_SRC_EXTENSION = ".cu";
+  private final String OPENCL_SRC_EXTENSION = ".cl";
   public static final String GPU_FUNC_CONF = "OEPNACC_GPU_FUNC_CONF_PROP";
   public static final String GPU_FUNC_CONF_ASYNC = "OEPNACC_GPU_FUNC_CONF_ASYNC_PROP";
   public static final String GPU_FUNC_CONF_SHAREDMEMORY = "OEPNACC_GPU_FUNC_CONF_SHAREDMEMORY_PROP";
@@ -40,15 +43,44 @@ class ACCgpuDecompiler {
     }
 
     try{
-      Writer w = new BufferedWriter(new FileWriter(ACCutil.removeExtension(env.getSourceFileName()) + GPU_SRC_EXTENSION), BUFFER_SIZE);
-      ACCgpuDecompileWriter writer = new ACCgpuDecompileWriter(w, envDevice);
-      
-      writer.println("#include \"acc.h\"");
-      writer.println("#include \"acc_gpu.h\"");
-      writer.println("#include \"acc_gpu_func.hpp\"");
-      if(XmOption.isXcalableMP()){
-        writer.println("#include \"xmp_index_macro.h\"");
+      String filename = ACCutil.removeExtension(env.getSourceFileName());
+      switch(ACC.platform){
+        case CUDA:
+          filename += CUDA_SRC_EXTENSION;
+          break;
+        case OpenCL:
+          filename += OPENCL_SRC_EXTENSION;
+          break;
+        default:
+          ACC.fatal("unknown platform");
       }
+      envDevice.setProgramAttributes(filename, "CUDA", "", "", "");
+      Writer w = new BufferedWriter(new FileWriter(filename), BUFFER_SIZE);
+      ACCgpuDecompileWriter writer = new ACCgpuDecompileWriter(w, envDevice);
+
+      List<String> includeLines = new ArrayList<String>();
+
+      switch(ACC.platform){
+        case CUDA:
+          includeLines.add("#include \"acc.h\"");
+          includeLines.add("#include \"acc_gpu_func.hpp\"");
+          break;
+        case OpenCL:
+	    //          includeLines.add("#include \"acc.h\"");
+          includeLines.add("#include \"acc_cl.h\"");
+          break;
+        default:
+          ACC.fatal("unknown platform");
+      }
+
+      if(XmOption.isXcalableMP()){
+        includeLines.add("#include \"xmp_index_macro.h\"");
+      }
+
+      for(String includeLine : includeLines){
+        writer.println(includeLine);
+      }
+
       writer.println();
 
       writer.printAll();

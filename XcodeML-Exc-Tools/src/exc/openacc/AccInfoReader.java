@@ -9,17 +9,27 @@ class AccInfoReader extends AccProcessor{
   }
 
   void doGlobalAccPragma(Xobject def) throws ACCexception {
-    String pragmaName = def.getArg(0).getString();
-    ACCpragma pragma = ACCpragma.valueOf(pragmaName);
+    String directiveName = def.getArg(0).getString();
+    ACCpragma directive = ACCpragma.valueOf(directiveName);
 
-    if(! pragma.isGlobalDirective()){
-      throw new ACCexception(pragma.getName() + " is not global directive");
+    if(! directive.isGlobalDirective()){
+      throw new ACCexception(directive.getName() + " is not global directive");
     }
 
     Xobject clauseList = def.getArg(1);
-    AccInformation info = new AccInformation(pragma, clauseList);
+    AccInformation info = new AccInformation(directive, clauseList);
 
-    def.setProp(AccDirective.prop, new AccDeclare(_globalDecl, info));
+    switch (directive){
+      case DECLARE:
+        def.setProp(AccDirective.prop, new AccDeclare(_globalDecl, info));
+        break;
+      case ROUTINE:
+        def.setProp(AccDirective.prop, new AccRoutine(_globalDecl, info, (XobjectDef)(def.getParent())));
+        break;
+      default:
+        ACC.fatal("unknown directive: " + directive.getName());
+    }
+
   }
 
   void doLocalAccPragma(PragmaBlock pb) throws ACCexception {
@@ -70,6 +80,7 @@ class AccInfoReader extends AccProcessor{
       pb.setProp(AccDirective.prop, new AccAtomic(_globalDecl, info, pb));
       break;
     default:
+      ACC.fatal("unknown directive: " + directive.getName());
     }
   }
 }

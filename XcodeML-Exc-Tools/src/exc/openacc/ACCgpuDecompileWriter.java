@@ -118,12 +118,20 @@ class ACCgpuDecompileWriter extends PrintWriter {
               func_args += ")";
             }
             if (isDeviceFunc) {
-              println("__global__ static");
+              switch (ACC.platform){
+                case CUDA:
+                  println("__global__ static");
+                  break;
+                case OpenCL:
+                  println("__kernel");
+                  break;
+              }
             } else {
               println("extern \"C\"");
             }
             printDeclType(id.Type().getRef(), funcName + func_args);
           } else {
+            //FIXME what is this part?
             func_args = "(";
             if (v.getArg(1) != null) {
               for (XobjArgs a = v.getArg(1).getArgs(); a != null; a = a.nextArgs()) {
@@ -423,8 +431,20 @@ class ACCgpuDecompileWriter extends PrintWriter {
       if (prop != null) {
         println();
         println("{");
-        println("dim3 _ACC_GPU_DIM3_block(" + prop.getArg(0).getName() + ", " + prop.getArg(1).getName() + ", " + prop.getArg(2).getName() + ");");
-        println("dim3 _ACC_GPU_DIM3_thread(" + prop.getArg(3).getName() + ", " + prop.getArg(4).getName() + ", " + prop.getArg(5).getName() + ");");
+        print("dim3 _ACC_GPU_DIM3_block(");
+        print(prop.getArg(0));
+        print(",");
+        print(prop.getArg(1));
+        print(",");
+        print(prop.getArg(2));
+        println(");");
+        print("dim3 _ACC_GPU_DIM3_thread(");
+        print(prop.getArg(3));
+        print(",");
+        print(prop.getArg(4));
+        print(",");
+        print(prop.getArg(5));
+        println(");");
       }
 
       print(funcName);
@@ -942,7 +962,14 @@ class ACCgpuDecompileWriter extends PrintWriter {
   private void printIdentDecl(Ident id) {
     Object isShared = id.getProp(ACCgpuDecompiler.GPU_STRAGE_SHARED);
     if(isShared != null){
-      print("__shared__ ");
+      switch(ACC.platform){
+        case CUDA:
+          print("__shared__ ");
+          break;
+        case OpenCL:
+          print("__local ");
+          break;
+      }
     }
     switch (id.getStorageClass()) {
       case AUTO:
