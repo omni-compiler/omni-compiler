@@ -13,6 +13,7 @@ import java.util.List;
 import exc.object.XobjectFile;
 
 import exc.openacc.ACC;
+import exc.openacc.AccDevice;
 import exc.openacc.AccTranslator;
 import exc.openmp.OMP;
 import exc.openmp.OMPtranslate;
@@ -118,6 +119,8 @@ public class omompx
     boolean doScalasca = false;
     boolean doTlog = false;
     int maxColumns = 0;
+    int accDefaultVectorLength = 0;
+    boolean accDisableReadOnlyDataCache = false;
         
     for(int i = 0; i < args.length; ++i) {
       String arg = args[i];
@@ -206,10 +209,16 @@ public class omompx
 	  String n = arg.substring(19);
 	  exc.xmpF.XMP.MAX_ASSUMED_SHAPE = Integer.parseInt(n);
       } else if (arg.equals("-no-ldg")) {
-        exc.openacc.ACC.useReadOnlyDataCache = false;
-      } else if (arg.startsWith("-default-veclen=")){
+        accDisableReadOnlyDataCache = true;
+      } else if (arg.startsWith("-default-veclen=")) {
         String n = arg.substring("-default-veclen=".length());
-        ACC.defaultVectorLength = Integer.parseInt(n);
+        accDefaultVectorLength = Integer.parseInt(n);
+      } else if (arg.startsWith("-platform=")){
+        String n = arg.substring("-platform=".length());
+        ACC.platform = ACC.Platform.valueOf(n);
+      } else if (arg.startsWith("-device=")){
+        String n = arg.substring("-device=".length());
+        ACC.device = AccDevice.valueOf(n);
       } else if(arg.startsWith("-")){
         error("unknown option " + arg);
       } else if(inXmlFile == null) {
@@ -411,6 +420,23 @@ public class omompx
     }
     
     if(openACC){
+      if(ACC.device == AccDevice.NONE){
+        switch(ACC.platform){
+          case CUDA:
+          case OpenCL:
+            ACC.device = AccDevice.Fermi;
+            break;
+        }
+      }
+
+      if(accDefaultVectorLength > 0) {
+        ACC.device.setDefaultVectorLength(accDefaultVectorLength);
+      }
+
+      if(accDisableReadOnlyDataCache == true){
+        ACC.device.setUseReadOnlyDataCache(false);
+      }
+
       //XmOption.setDebugOutput(true);
       AccTranslator accTranslator = new AccTranslator(xobjFile, false);
       xobjFile.iterateDef(accTranslator);

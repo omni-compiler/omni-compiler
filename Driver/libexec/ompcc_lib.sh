@@ -35,7 +35,9 @@ Omni OpenACC Options
 
   -acc, --openacc         : Enable OpenACC.
   --no-ldg                : Disable use of read-only data cache.
-  --default-veclen=LENGTH : Specify default vector length (default: 256)
+  --default-veclen=LENGTH : Specify default vector length
+  --platform=PLATFORM     : Specify platform (CUDA | OpenCL) (default: $OPENACC_PLATFORM)
+  --device=DEVICE         : Specify device (Fermi | Kepler) (default: $OPENACC_DEVICE)
 EOF
 }
 
@@ -111,6 +113,10 @@ function ompcc_set_parameters()
 		DISABLE_LDG=true;;
 	    --default-veclen=*)
 		DEFAULT_VECLEN="${1#--default-veclen=}";;
+	    --platform=*)
+		OPENACC_PLATFORM="${1#--platform=}";;
+	    --device=*)
+		OPENACC_DEVICE="${1#--device=}";;
             *)
 		other_args+=("$1");;
 	esac

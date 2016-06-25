@@ -947,9 +947,30 @@ AC_SUBST(GPU_CFLAGS)
 
 AC_ARG_WITH(cuda,
     [  --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)],
-    [GPGPU_PREFIX="${withval}"], [GPGPU_PREFIX="/usr/local/cuda"])
+    [GPGPU_PREFIX="${withval}"; use_cuda=yes; use_opencl=yes], [use_cuda=no])
+
+if test "x${GPGPU_PREFIX}" = "xyes"; then
+  GPGPU_PREFIX=/usr/local/cuda
+fi
 
 AC_SUBST(GPGPU_PREFIX)
+
+
+AM_CONDITIONAL(CUDA, test x${use_cuda} = xyes)
+AM_CONDITIONAL(OPENCL, test x${use_opencl} = xyes)
+
+if test "x${use_cuda}" = "xyes"; then
+    ACC_DEFAULT_PLATFORM=CUDA
+    ACC_DEFAULT_DEVICE=Fermi
+elif test "x${use_opencl}" = "xyes"; then
+    ACC_DEFAULT_PLATFORM=OpenCL
+    ACC_DEFAULT_DEVICE=Fermi
+elif test "x${doOpenAcc}" = "xyes"; then
+    AC_MSG_ERROR([CUDA or OpenCL not found. Please attach --with-cuda.])
+fi
+
+AC_SUBST(ACC_DEFAULT_PLATFORM)
+AC_SUBST(ACC_DEFAULT_DEVICE)
 
 # --------------------------------------------------------------------
 # specify libxmp path

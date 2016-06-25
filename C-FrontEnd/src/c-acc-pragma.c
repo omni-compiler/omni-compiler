@@ -223,6 +223,22 @@ int parse_ACC_pragma()
 	    }
 	}
     }
+
+    if(PG_IS_IDENT("routine")){
+	pg_ACC_pragma = ACC_ROUTINE;
+	pg_get_token();
+	if(pg_tok == '('){
+	    CExpr *x;
+	    if((x = parse_ACC_namelist()) == NULL) 
+		goto syntax_err;
+	    if((pg_ACC_list = parse_ACC_clauses()) == NULL)  goto syntax_err;
+	    pg_ACC_list = exprListCons(ACC_PG_LIST(ACC_ROUTINE_ARG,x), pg_ACC_list);
+	} else {
+	  if((pg_ACC_list = parse_ACC_clauses()) == NULL)  goto syntax_err;
+	}
+	ret= PRAGMA_EXEC;
+	goto chk_end;
+    }
     
     if(PG_IS_IDENT("atomic")){
       pg_ACC_pragma = ACC_ATOMIC;
@@ -320,6 +336,10 @@ static CExpr* parse_ACC_clauses()
 	  pg_get_token();
 	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
 	  c = ACC_PG_LIST(ACC_DEV_RESIDENT,v);
+      } else if(PG_IS_IDENT("bind")){
+	  pg_get_token();
+	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
+	  c = ACC_PG_LIST(ACC_BIND,v);
       } else if(PG_IS_IDENT("reduction")){
 	  pg_get_token();
 	  if((v = parse_ACC_reduction_namelist(&r)) == NULL) goto syntax_err;
@@ -382,6 +402,9 @@ static CExpr* parse_ACC_clauses()
 	} else if(PG_IS_IDENT("capture")){
 	    pg_get_token();
 	    c = ACC_PG_LIST(ACC_CAPTURE,NULL);
+	} else if(PG_IS_IDENT("nohost")){
+	    pg_get_token();
+	    c = ACC_PG_LIST(ACC_NOHOST,NULL);
 	} else {
 	  addError(NULL,"unknown ACC directive clause '%s'",pg_tok_buf);
 	    goto syntax_err;
