@@ -60,6 +60,7 @@ public class XMPtransCoarrayRun
   final static String COARRAY_EPILOG_NAME    = "xmpf_coarray_epilog";
   final static String SYNCALL_NAME           = "xmpf_sync_all";
   final static String SYNCIMAGES_NAME        = "xmpf_sync_images";
+  final static String SYNCMEMORY_NAME        = "xmpf_sync_memory";
   final static String AUTO_SYNCALL_NAME      = "xmpf_sync_all_auto";  // another entry of syncall
   final static String FINALIZE_PROGRAM_NAME  = XMP.finalize_all_f;
 
@@ -1124,8 +1125,8 @@ public class XMPtransCoarrayRun
       insertFinalizationCall();
 
     // p. add visible coarrays as arguments of sync all statements 
-    //     to prohibit code motion
-    addVisibleCoarraysToSyncall(visibleCoarrays);
+    //     to prohibit code motion (syncall, syncimages and syncmemory)
+    addVisibleCoarraysToSyncEtc(visibleCoarrays);
 
     // o. remove declarations for use-associated allocatable coarrays
     for (XMPcoarray coarray: useAssociatedCoarrays) {
@@ -1327,25 +1328,41 @@ public class XMPtransCoarrayRun
   //  add coarrays as actual arguments to syncall library call
   //-----------------------------------------------------
   //
-  private void addVisibleCoarraysToSyncall(ArrayList<XMPcoarray> coarrays) {
+  private void addVisibleCoarraysToSyncEtc(ArrayList<XMPcoarray> coarrays) {
     BlockIterator bi = new topdownBlockIterator(getFblock());
     for (bi.init(); !bi.end(); bi.next()) {
       BasicBlock bb = bi.getBlock().getBasicBlock();
       if (bb == null) continue;
       for (Statement s = bb.getHead(); s != null; s = s.getNext()) {
         Xobject xobj = s.getExpr();
-        if (_isCallForSyncall(xobj)) {
+        if (_isCallStmtForSyncEtc(xobj)) {
           // found
-          Xobject args = _getCoarrayNamesIntoArgs(coarrays);
+          Xobject extraArgs = _getCoarrayNamesIntoArgs(coarrays);
           Xobject callExpr = xobj.getArg(0);
-          callExpr.setArg(1, args);
+          Xobject actualArgs = callExpr.getArg(1);
+          if (actualArgs == null) {
+            // set extraArgs into callExpr
+            callExpr.setArg(1, extraArgs);
+          } else {
+            // add extraArgs to actualArgs
+            for (Xobject a: (XobjList)extraArgs) {
+              Xobject arg = a.getArg(0);
+              actualArgs.add(arg);
+            }
+          }
         }
       }
     }
   }
 
-  private Boolean _isCallForSyncall(Xobject xobj) {
+  private Boolean _isCallStmtForSyncEtc(Xobject xobj) {
     
+    final String[] _syncEtcNames = { SYNCALL_NAME, AUTO_SYNCALL_NAME,
+                                     SYNCIMAGES_NAME,
+                                     SYNCMEMORY_NAME };
+    final List<String> syncEtcNameList =
+      Arrays.asList(_syncEtcNames);
+
     if (xobj == null || xobj.Opcode() != Xcode.EXPR_STATEMENT)
       /* Not F_ASSIGN_STATEMENT but EXPR_STATEMENT contains call statement */
       return false;
@@ -1355,10 +1372,8 @@ public class XMPtransCoarrayRun
       return false;
 
     String fname = callExpr.getArg(0).getName();
-    if (fname == SYNCALL_NAME || fname == AUTO_SYNCALL_NAME)
-      return true;
-
-    return false;
+    
+    return syncEtcNameList.contains(fname);
   }
 
 
