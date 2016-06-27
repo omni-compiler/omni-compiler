@@ -15,9 +15,11 @@
 !-------------------------------
 !  sync memory
 !-------------------------------
-      interface xmpf_sync_memory
-         subroutine xmpf_sync_memory_nostat()
-         end subroutine xmpf_sync_memory_nostat
+      interface
+  !!         subroutine xmpf_sync_memory(arg1, ...)
+  !!           class(*) :: arg1
+  !!         end subroutine xmpf_sync_memory
+
          subroutine xmpf_sync_memory_stat_wrap(stat, errmsg)
            integer, intent(out) :: stat
            character(len=*), intent(out), optional :: errmsg

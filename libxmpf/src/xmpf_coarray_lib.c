@@ -401,7 +401,7 @@ void xmpf_sync_all_stat_core_(int *stat, char *msg, int *msglen)
   sync memory
 \*****************************************/
 
-void xmpf_sync_memory_nostat_(void)
+void xmpf_sync_memory_(void)
 {
   int state;
   xmp_sync_memory(&state);
