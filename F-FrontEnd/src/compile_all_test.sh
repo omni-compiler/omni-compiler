@@ -36,9 +36,9 @@ if test -z "${OMNI_JAVA}"; then
 	OMNI_JAVA=java
 fi
 export OMNI_JAVA
-frontend=${work}/F-FrontEnd/src/F_Front -fno-xmp-coarray -fintrinsic-xmodules-path ${OMNI_HOME}/fincludes
-backend=${work}/F-BackEnd/bin/F_Back
-nativecomp=gfortran -fcoarray=single
+frontend="${work}/F-FrontEnd/src/F_Front -fno-xmp-coarray -fintrinsic-xmodules-path ${OMNI_HOME}/fincludes"
+backend="${work}/F-BackEnd/bin/F_Back"
+nativecomp="gfortran -fcoarray=single"
 tmpdir=${work}/compile
 if test -z "${testdata}"; then
     testdata=$work/F-FrontEnd/test/testdata
