@@ -4013,10 +4013,13 @@ compile_member_ref(expr x)
     // TODO:
     //	merge type override all cases (array/substr/plain scalar).
     if (TYPE_IS_POINTER(stVTyp) ||
-        TYPE_IS_TARGET(stVTyp)) {
+        TYPE_IS_TARGET(stVTyp) ||
+        TYPE_IS_COINDEXED(stVTyp)) {
         /*
          * If type of struct_v has pointer/pointee flags on, members
          * should have those flags on too.
+         *
+         * And if type of struct_v is coarray, members are coarray.
          */
         TYPE_DESC mVTyp = ID_TYPE(member_id);
         TYPE_DESC retTyp = NULL;
@@ -4029,6 +4032,8 @@ compile_member_ref(expr x)
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_POINTER(mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_TARGET(mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_ALLOCATABLE(mVTyp);
+
+        TYPE_CODIMENSION(retTyp) = TYPE_CODIMENSION(stVTyp);
 
         /*
          * To avoid overwrite, check original flags before copy.

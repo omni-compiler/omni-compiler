@@ -152,11 +152,12 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_LINK(tp)           ((tp)->link)
 #define TYPE_SLINK(tp)          ((tp)->struct_link)
 #define TYPE_IS_DECLARED(tp)    ((tp)->is_declared)
-#define TYPE_IS_COINDEXED(tp)   ((tp)->codims)
+#define TYPE_IS_COINDEXED(tp)   (tp != NULL && (tp)->codims)
 #define TYPE_BASIC_TYPE(tp)     ((tp)->basic_type)
 #define TYPE_REF(tp)            ((tp)->ref)
 #define TYPE_TAGNAME(tp)        ((tp)->tagname)
 #define TYPE_IS_REFERENCED(tp)  ((tp)->is_referenced)
+#define TYPE_CODIMENSION(tp)    ((tp)->codims)
 #if 0
 #define TYPE_LINK_ADD(tp, tlist, ttail) \
     { if((tlist) == NULL) (tlist) = (tp); \

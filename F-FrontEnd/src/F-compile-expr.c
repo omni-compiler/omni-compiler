@@ -1761,6 +1761,13 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
     }
 
     /*
+     * copy coShape from original type
+     */
+    if (TYPE_IS_COINDEXED(tp)) {
+        TYPE_CODIMENSION(tq) = TYPE_CODIMENSION(tp);
+    }
+
+    /*
      * copy type attributes from original type
      */
     if (id != NULL) {
@@ -2967,6 +2974,14 @@ compile_member_array_ref(expr x, expv v)
     }
 
     tp = EXPV_TYPE(v);
+
+    /*
+     * copy coShape from original type
+     */
+    if (TYPE_IS_COINDEXED(tq)) {
+        TYPE_CODIMENSION(tp) = TYPE_CODIMENSION(tq);
+    }
+
     if (IS_ARRAY_TYPE(tp)) {
         TYPE_DESC new_tp;
         expv new_v = compile_array_ref(NULL, v, indices, TRUE);
