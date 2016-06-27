@@ -245,6 +245,7 @@ typedef struct _XMP_array_type {
   void* tca_handle;
   void* tca_reflect_desc;
   _Bool set_handle;  // If tca_handle has been set, set_handle = true
+  _Bool set_tca_desc;
   int   dma_slot;
   int   wait_slot;
   int   wait_tag;

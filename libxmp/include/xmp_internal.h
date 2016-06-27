@@ -543,6 +543,9 @@ void _XMP_alloc_tca(_XMP_array_t *adesc);
 //xmp_reflect_tca.c
 void _XMP_reflect_init_tca(void *acc_addr, _XMP_array_t *adesc);
 void _XMP_reflect_do_tca(_XMP_array_t *adesc);
+//xmp_reflect_hybrid.c
+void _XMP_reflect_init_hybrid(void *acc_addr, _XMP_array_t *adesc);
+void _XMP_reflect_do_hybrid(_XMP_array_t *adesc);
 //xmp_reduce_tca.c
 void _XMP_reduce_tca_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count, int datatype, int op);
 //xmp_reduce_hybrid.c
