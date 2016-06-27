@@ -27,10 +27,6 @@ static INTR_DATA_TYPE COARRAY_TO_BASIC_MAP[] = {
     /* INTR_TYPE_COARRAY_INT            -> */ INTR_TYPE_INT,
     /* INTR_TYPE_COARRAY_REAL           -> */ INTR_TYPE_REAL,
     /* INTR_TYPE_COARRAY_LOGICAL        -> */ INTR_TYPE_LOGICAL,
-    /* INTR_TYPE_SCALAR_COARRAY_ANY     -> */ INTR_TYPE_ANY,
-    /* INTR_TYPE_SCALAR_COARRAY_INT     -> */ INTR_TYPE_INT,
-    /* INTR_TYPE_SCALAR_COARRAY_REAL    -> */ INTR_TYPE_REAL,
-    /* INTR_TYPE_SCALAR_COARRAY_LOGICAL -> */ INTR_TYPE_LOGICAL
 };
 
 #define CONVERT_COARRAY_TO_BASIC(x) \
@@ -524,10 +520,7 @@ compare_intrinsic_arg_type(expv arg,
             case INTR_TYPE_COARRAY_INT:
             case INTR_TYPE_COARRAY_REAL:
             case INTR_TYPE_COARRAY_LOGICAL:
-            case INTR_TYPE_SCALAR_COARRAY_ANY:
-            case INTR_TYPE_SCALAR_COARRAY_INT:
-            case INTR_TYPE_SCALAR_COARRAY_REAL:
-            case INTR_TYPE_SCALAR_COARRAY_LOGICAL: {
+            {
                 if (!isCoarray)
                     break;
                 return compare_intrinsic_arg_type(

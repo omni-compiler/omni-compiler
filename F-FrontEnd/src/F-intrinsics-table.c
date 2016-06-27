@@ -738,11 +738,11 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_UCOBOUND,      INTR_NAME_GENERIC,   "",                  0,      {INTR_TYPE_COARRAY_ANY,INTR_TYPE_INT,INTR_TYPE_INT},
                                                                                                               INTR_TYPE_INT,  3, -6, LANGSPEC_F2008 },
 
-    { INTR_ATOMIC_DEFINE, INTR_NAME_GENERIC,   "atmic_define",      0,      {INTR_TYPE_SCALAR_COARRAY_INT,INTR_TYPE_INT},                              INTR_TYPE_NONE, 2,  0, LANGSPEC_F2008 },
-    { INTR_ATOMIC_DEFINE, INTR_NAME_GENERIC,   "atmic_define",      0,      {INTR_TYPE_SCALAR_COARRAY_LOGICAL,INTR_TYPE_LOGICAL},                              INTR_TYPE_NONE, 2,  0, LANGSPEC_F2008 },
+    { INTR_ATOMIC_DEFINE, INTR_NAME_GENERIC,   "atomic_define",     0,      {INTR_TYPE_COARRAY_INT,INTR_TYPE_INT},                              INTR_TYPE_NONE, 2,  0, LANGSPEC_F2008 },
+    { INTR_ATOMIC_DEFINE, INTR_NAME_GENERIC,   "",                  0,      {INTR_TYPE_COARRAY_LOGICAL,INTR_TYPE_LOGICAL},                              INTR_TYPE_NONE, 2,  0, LANGSPEC_F2008 },
 
-    { INTR_ATOMIC_DEFINE, INTR_NAME_GENERIC,   "atmic_ref",         0,      {INTR_TYPE_INT, INTR_TYPE_SCALAR_COARRAY_INT},                              INTR_TYPE_NONE, 2,  0, LANGSPEC_F2008 },
-    { INTR_ATOMIC_DEFINE, INTR_NAME_GENERIC,   "atmic_ref",         0,      {INTR_TYPE_LOGICAL, INTR_TYPE_SCALAR_COARRAY_LOGICAL},                              INTR_TYPE_NONE, 2,  0, LANGSPEC_F2008 },
+    { INTR_ATOMIC_DEFINE, INTR_NAME_GENERIC,   "atomic_ref",        0,      {INTR_TYPE_INT, INTR_TYPE_COARRAY_INT},                              INTR_TYPE_NONE, 2,  0, LANGSPEC_F2008 },
+    { INTR_ATOMIC_DEFINE, INTR_NAME_GENERIC,   "",                  0,      {INTR_TYPE_LOGICAL, INTR_TYPE_COARRAY_LOGICAL},                              INTR_TYPE_NONE, 2,  0, LANGSPEC_F2008 },
 
     /* hidden interfaces for debugging */
     { INTR_COARRAY_ALLOCATED_BYTES,   INTR_NAME_GENERIC,   "xmpf_coarray_allocated_bytes",     0,   {},   INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
