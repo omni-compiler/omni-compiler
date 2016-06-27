@@ -217,7 +217,7 @@ void acc_init( acc_device_t acc_device )
     return;
 
   case acc_device_nvidia:
-    _ACC_init_api();
+    _ACC_init_type(acc_device);
     return;
 
   default:

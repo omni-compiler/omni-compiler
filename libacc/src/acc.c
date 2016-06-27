@@ -7,6 +7,7 @@ const static char NVIDIA[] = "NVIDIA";
 const static char HOST[] = "HOST";
 const static char NONE[] = "NONE";
 static bool _ACC_runtime_working = false;
+static bool _ACC_device_working = false;
 
 const static acc_device_t default_device = acc_device_nvidia;
 const static acc_device_t default_not_host_device = acc_device_nvidia;
@@ -125,6 +126,14 @@ void _ACC_init_type(acc_device_t device_type)
     _ACC_fatal("unknown device_type\n");
   }
 
+  if(_ACC_device_working){
+    if(acc_get_device_type() == device_type){
+      return;
+    }else{
+      _ACC_fatal("try to init device although another type device is running");
+    }
+  }
+
   _ACC_DEBUG("begin _ACC_init_type\n")
 
   _num_devices = _ACC_platform_get_num_devices();
@@ -136,7 +145,10 @@ void _ACC_init_type(acc_device_t device_type)
     contexts[i].isInitialized = false;
   }
 
+  acc_set_device_type(device_type);
   _ACC_set_device_num(-10); //set device to default
+
+  _ACC_device_working = true;
 
   _ACC_DEBUG("end _ACC_init_type\n")
 }
@@ -150,8 +162,7 @@ void _ACC_finalize_type(acc_device_t device_type)
 {
   switch(device_type){
   case acc_device_none:
-    _ACC_fatal("device_type = none is unsupported");
-    break;
+    return;
   case acc_device_host:
     _ACC_fatal("device_type = host is unsupported");
     break;
@@ -161,9 +172,17 @@ void _ACC_finalize_type(acc_device_t device_type)
     _ACC_fatal("unknown device type");
   }
 
+  if(! _ACC_device_working){
+    _ACC_fatal("device is not initialized\n");
+  }
+
+  if(acc_get_device_type() != device_type){
+    _ACC_fatal("device type is not matched");
+  }
+
   //finalize each device
   for(int device_num = 0; device_num < _num_devices; device_num++){
-    if(contexts[device_num].isInitialized == false) continue;
+    if(! contexts[device_num].isInitialized) continue;
 
     _ACC_set_device_num(device_num); //0-based
 
@@ -174,7 +193,10 @@ void _ACC_finalize_type(acc_device_t device_type)
     //XXX add _ACC_platform_free_device()
   }
 
+  acc_set_device_type(acc_device_none);
   _ACC_free(contexts);
+  contexts = NULL;
+  _ACC_device_working = false;
 }
 
 void _ACC_set_device_num(int device_num)
@@ -260,10 +282,13 @@ void acc_finalize_()
 //internal functions
 static void _ACC_init_device_if_not_inited(int num)
 {
-  if(_ACC_runtime_working == false){
+  if(! _ACC_runtime_working){
     _ACC_init(0, NULL);
   }
-  if(contexts[_ACC_normalize_device_num(num)].isInitialized == false){
+  if(! _ACC_device_working){
+    _ACC_fatal("current device type is not initialized");
+  }
+  if(! contexts[_ACC_normalize_device_num(num)].isInitialized){
     init_device(num);
   }
 }
@@ -283,7 +308,7 @@ static void init_device(int dev_num){ //0-based, notnormalized
       _ACC_fatal("failed to alloc GPU device");
     }
   }else{
-    if( _ACC_platform_allocate_device(dev_num) == false){
+    if(! _ACC_platform_allocate_device(dev_num)){
       _ACC_fatal("failed to alloc GPU device");
     }
   }
