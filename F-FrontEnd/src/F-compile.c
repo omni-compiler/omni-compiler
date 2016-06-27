@@ -4286,7 +4286,12 @@ compile_CALL_statement(expr x)
         if (ID_CLASS(id) == CL_UNKNOWN) {
             ID_CLASS(id) = CL_PROC;
         }
-        if (PROC_CLASS(id) == P_UNKNOWN) {
+        if (is_intrinsic_function(id)) {
+            PROC_CLASS(id) = P_INTRINSIC;
+            TYPE_SET_INTRINSIC(id);
+            ID_STORAGE(id) = STG_NONE;
+            ID_IS_DECLARED(id) = TRUE;
+        } else if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_EXTERNAL;
             TYPE_SET_EXTERNAL(id);
         }
@@ -4345,6 +4350,7 @@ compile_CALL_statement(expr x)
     } else {
         v = compile_function_call(id, EXPR_ARG2(x));
     }
+
     EXPV_TYPE(v) = type_basic(TYPE_SUBR);
     output_statement(v);
 }
