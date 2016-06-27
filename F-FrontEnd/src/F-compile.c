@@ -106,6 +106,9 @@ static void fix_array_dimensions_recursive(ID ip);
 static void fix_pointer_pointee_recursive(TYPE_DESC tp);
 static void compile_data_style_decl(expr x);
 
+static int check_image_controll_statement_available();
+static int check_inside_CRITICAL_construct();
+
 static void compile_SYNCALL_statement(expr x);
 static void compile_SYNCIMAGES_statement(expr x);
 static void compile_SYNCMEMORY_statement(expr x);
@@ -416,6 +419,7 @@ void compile_statement1(int st_no, expr x)
     case F95_ENDSUBROUTINE_STATEMENT:  /* (F95_END_SUBROUTINE_STATEMENT) */
     case F95_ENDBLOCKDATA_STATEMENT:
         check_INEXEC();
+        if (!check_image_controll_statement_available()) return;
 	// move into end_procedure()
 	//if (endlineno_flag)
 	//ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
@@ -424,6 +428,9 @@ void compile_statement1(int st_no, expr x)
 
     case F95_ENDPROGRAM_STATEMENT:  /* (F95_END_PROGRAM_STATEMENT) */
         check_INEXEC();
+
+        if (!check_image_controll_statement_available()) return;
+
 	// move into end_procedure()
 	//if (endlineno_flag)
 	//if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
@@ -431,6 +438,9 @@ void compile_statement1(int st_no, expr x)
         end_procedure();
         break;
     case F_END_STATEMENT:       /* (F_END_STATEMENT) */
+
+        if (!check_image_controll_statement_available()) return;
+
         if((CURRENT_PROC_NAME == NULL ||
             (CURRENT_PROC_CLASS == CL_MODULE)) &&
             current_module_name != NULL) {
@@ -1186,6 +1196,7 @@ compile_exec_statement(expr x)
         break;
 
     case F_STOP_STATEMENT:
+        if (!check_image_controll_statement_available()) return;
     case F_PAUSE_STATEMENT:
         compile_STOP_PAUSE_statement(x);
         break;
@@ -4141,6 +4152,8 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
     enum expr_code code = EXPR_CODE(x);
     expv tmpAssignV = NULL;
 
+    int isImageControllStatement = FALSE;
+
     args = list0(LIST);
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
         r = LIST_ITEM(lp);
@@ -4178,6 +4191,10 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
             if (ev == NULL)
                 continue;
 
+            if (TYPE_IS_COINDEXED(EXPV_TYPE(ev))) {
+                isImageControllStatement = TRUE;
+            }
+
             switch(EXPV_CODE(ev)) {
             case F95_MEMBER_REF:
             case F_VAR:
@@ -4198,6 +4215,9 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
             }
         }
     }
+
+    if (isImageControllStatement && !check_image_controll_statement_available())
+        return;
 
     v = expv_cons(code, NULL, args, vstat);
     EXPV_LINE(v) = EXPR_LINE(x);
@@ -4332,6 +4352,11 @@ static void
 compile_RETURN_statement(expr x)
 {
     /* (F_RETURN_STATMENT arg) */
+    if (check_inside_CRITICAL_construct()) {
+        error("RETURN statement in CRITICAL block");
+        return;
+    }
+
     if(EXPR_ARG1(x) != NULL){
         error("alternative return is not supported");
         return;
@@ -5303,6 +5328,9 @@ compile_lock_stat_args(expv st, expr x) {
 static void
 compile_SYNCALL_statement(expr x) {
     expv st;
+
+    if (!check_image_controll_statement_available()) return;
+
     if (XMP_coarray_flag) {
         expr y = list2(
             F_CALL_STATEMENT,
@@ -5323,6 +5351,8 @@ compile_SYNCIMAGES_statement(expr x) {
     expv sync_stat;
     expv image_set = NULL;
     expr arg;
+
+    if (!check_image_controll_statement_available()) return;
 
     if (!EXPR_HAS_ARG1(x) || !EXPR_HAS_ARG1(EXPR_ARG1(x))) {
       fatal("SYNC IMAGES must have one argument at least");
@@ -5362,6 +5392,8 @@ compile_SYNCIMAGES_statement(expr x) {
 static void
 compile_SYNCMEMORY_statement(expr x) {
     expv st;
+
+    if (!check_image_controll_statement_available()) return;
 
     if (XMP_coarray_flag) {
         expr y = list2(
@@ -5409,6 +5441,8 @@ compile_LOCK_statement(expr x) {
     expv lock_variable;
     expv sync_stat_list;
 
+    if (!check_image_controll_statement_available()) return;
+
     if (XMP_coarray_flag) {
         expr args;
         if (!EXPR_HAS_ARG2(x) || (EXPR_ARG2(x) == NULL)) {
@@ -5444,6 +5478,8 @@ compile_UNLOCK_statement(expr x) {
     expv lock_variable;
     expv sync_stat_list;
 
+    if (!check_image_controll_statement_available()) return;
+
     if (XMP_coarray_flag) {
         expr args;
         if (!EXPR_HAS_ARG2(x) || (EXPR_ARG2(x) == NULL)) {
@@ -5470,4 +5506,31 @@ compile_UNLOCK_statement(expr x) {
     st = list2(F2008_UNLOCK_STATEMENT, lock_variable, sync_stat_list);
     compile_sync_stat_args(sync_stat_list, EXPR_ARG2(x));
     output_statement(st);
+}
+
+/*
+ * Check if the statemenet exists inside CRITICAL construct
+ */
+static int
+check_inside_CRITICAL_construct() {
+    CTL * cp;
+    for(cp = ctl_top; cp >= ctls; cp--){
+        if (CTL_TYPE(cp) == CTL_CRITICAL) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/*
+ * Check if image controll statement can exist
+ */
+static int
+check_image_controll_statement_available() {
+    if (check_inside_CRITICAL_construct()) {
+        error("Image controll statement in CRITICAL block");
+        return FALSE;
+    }
+
+    return TRUE;
 }
