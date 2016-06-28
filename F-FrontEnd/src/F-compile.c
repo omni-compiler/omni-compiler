@@ -972,6 +972,8 @@ void compile_statement1(int st_no, expr x)
     case F2008_CRITICAL_STATEMENT:
         check_INEXEC();
 
+        if (!check_image_controll_statement_available()) return;
+
         push_ctl(CTL_CRITICAL);
 
         st = list2(F2008_CRITICAL_STATEMENT, NULL, NULL);
