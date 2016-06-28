@@ -5419,7 +5419,10 @@ type_is_lock_type(TYPE_DESC tp) {
     if (!IS_STRUCT_TYPE(tp))
         return FALSE;
 
-    tagname = TYPE_REF(tp) ? TYPE_TAGNAME(TYPE_REF(tp)) : TYPE_TAGNAME(tp) ;
+    while (TYPE_REF(tp) && IS_STRUCT_TYPE(tp)) {
+        tp = TYPE_REF(tp);
+    }
+    tagname = TYPE_TAGNAME(tp);
 
     if (tagname != NULL &&
         ID_USEASSOC_INFO(tagname) != NULL &&
