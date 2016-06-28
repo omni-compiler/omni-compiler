@@ -5466,7 +5466,7 @@ compile_LOCK_statement(expr x) {
 
     sync_stat_list = list0(LIST);
 
-    st = list2(F2008_UNLOCK_STATEMENT, lock_variable, sync_stat_list);
+    st = list2(F2008_LOCK_STATEMENT, lock_variable, sync_stat_list);
     compile_lock_stat_args(sync_stat_list, EXPR_ARG2(x));
     output_statement(st);
 }
