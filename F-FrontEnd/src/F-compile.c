@@ -5326,22 +5326,31 @@ compile_lock_stat_args(expv st, expr x) {
 
 
 static void
+replace_CALL_statement(const char * subroutine_name, expv args)
+{
+    expr callStaement = list2(
+        F_CALL_STATEMENT,
+        make_enode(IDENT, (void *)find_symbol(subroutine_name)),
+        args);
+    compile_CALL_statement(callStaement);
+}
+
+
+
+static void
 compile_SYNCALL_statement(expr x) {
     expv st;
 
     if (!check_image_controll_statement_available()) return;
 
-    if (XMP_coarray_flag) {
-        expr y = list2(
-            F_CALL_STATEMENT,
-            make_enode(IDENT, (void *)find_symbol("xmpf_sync_all")),
-            EXPR_ARG1(x));
-        compile_CALL_statement(y);
-        return;
-    }
     st = list0(F2008_SYNCALL_STATEMENT);
     compile_sync_stat_args(st, EXPR_ARG1(x));
-    output_statement(st);
+
+    if (XMP_coarray_flag) {
+        replace_CALL_statement("xmpf_sync_all", EXPR_ARG1(x));
+    } else {
+        output_statement(st);
+    }
 }
 
 
@@ -5363,29 +5372,26 @@ compile_SYNCIMAGES_statement(expr x) {
             EXPR_ARG1(EXPR_ARG1(x)) = make_enode(STRING_CONSTANT,  (void *)strdup("*"));
         }
 
-        expr y = list2(
-            F_CALL_STATEMENT,
-            make_enode(IDENT, (void *)find_symbol("xmpf_sync_images")),
-            EXPR_ARG1(x));
-        compile_CALL_statement(y);
-        return;
+        replace_CALL_statement("xmpf_sync_images", EXPR_ARG1(x));
+
+    } else {
+
+        st = list0(F2008_SYNCIMAGES_STATEMENT);
+
+        arg = EXPR_ARG1(x);
+
+        if (EXPR_ARG1(arg)) {
+            image_set = compile_expression(EXPR_ARG1(arg));
+        }
+        // if NULL, the argment is '*'
+        list_put_last(st, image_set);
+
+        sync_stat = list0(LIST);
+        compile_sync_stat_args_skip_first(sync_stat, arg, 1);
+        list_put_last(st, sync_stat);
+
+        output_statement(st);
     }
-
-    st = list0(F2008_SYNCIMAGES_STATEMENT);
-
-    arg = EXPR_ARG1(x);
-
-    if (EXPR_ARG1(arg)) {
-        image_set = compile_expression(EXPR_ARG1(arg));
-    }
-    // if NULL, the argment is '*'
-    list_put_last(st, image_set);
-
-    sync_stat = list0(LIST);
-    compile_sync_stat_args_skip_first(sync_stat, arg, 1);
-    list_put_last(st, sync_stat);
-
-    output_statement(st);
 }
 
 
@@ -5395,18 +5401,14 @@ compile_SYNCMEMORY_statement(expr x) {
 
     if (!check_image_controll_statement_available()) return;
 
-    if (XMP_coarray_flag) {
-        expr y = list2(
-            F_CALL_STATEMENT,
-            make_enode(IDENT, (void *)find_symbol("xmpf_sync_memory")),
-            EXPR_ARG1(x));
-        compile_CALL_statement(y);
-        return;
-    }
-
     st = list0(F2008_SYNCMEMORY_STATEMENT);
     compile_sync_stat_args(st, EXPR_ARG1(x));
-    output_statement(st);
+
+    if (XMP_coarray_flag) {
+        replace_CALL_statement("xmpf_sync_memory", EXPR_ARG1(x));
+    } else {
+        output_statement(st);
+    }
 }
 
 /*
@@ -5446,20 +5448,6 @@ compile_LOCK_statement(expr x) {
 
     if (!check_image_controll_statement_available()) return;
 
-    if (XMP_coarray_flag) {
-        expr args;
-        if (!EXPR_HAS_ARG2(x) || (EXPR_ARG2(x) == NULL)) {
-            args = list1(LIST, EXPR_ARG1(x));
-        } else {
-            args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
-        }
-        compile_CALL_statement(list2(
-            F_CALL_STATEMENT,
-            make_enode(IDENT, (void *)find_symbol("xmpf_lock")),
-            args));
-        return;
-    }
-
     lock_variable = compile_expression(EXPR_ARG1(x));
     /* CHECK lock_variable */
     if (!type_is_lock_type(EXPV_TYPE(lock_variable))) {
@@ -5467,11 +5455,23 @@ compile_LOCK_statement(expr x) {
         return;
     }
 
-    sync_stat_list = list0(LIST);
+    if (XMP_coarray_flag) {
+        expr args;
+        if (!EXPR_HAS_ARG2(x) || (EXPR_ARG2(x) == NULL)) {
+            args = list1(LIST, EXPR_ARG1(x));
+        } else {
+            args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
+        }
 
-    st = list2(F2008_LOCK_STATEMENT, lock_variable, sync_stat_list);
-    compile_lock_stat_args(sync_stat_list, EXPR_ARG2(x));
-    output_statement(st);
+        replace_CALL_statement("xmpf_lock", args);
+    } else {
+
+        sync_stat_list = list0(LIST);
+
+        st = list2(F2008_LOCK_STATEMENT, lock_variable, sync_stat_list);
+        compile_lock_stat_args(sync_stat_list, EXPR_ARG2(x));
+        output_statement(st);
+    }
 }
 
 
@@ -5483,20 +5483,6 @@ compile_UNLOCK_statement(expr x) {
 
     if (!check_image_controll_statement_available()) return;
 
-    if (XMP_coarray_flag) {
-        expr args;
-        if (!EXPR_HAS_ARG2(x) || (EXPR_ARG2(x) == NULL)) {
-            args = list1(LIST, EXPR_ARG1(x));
-        } else {
-            args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
-        }
-        compile_CALL_statement(list2(
-            F_CALL_STATEMENT,
-            make_enode(IDENT, (void *)find_symbol("xmpf_unlock")),
-            args));
-        return;
-    }
-
     lock_variable = compile_expression(EXPR_ARG1(x));
     /* CHECK lock_variable */
     if (!type_is_lock_type(EXPV_TYPE(lock_variable))) {
@@ -5504,11 +5490,23 @@ compile_UNLOCK_statement(expr x) {
         return;
     }
 
-    sync_stat_list = list0(LIST);
+    if (XMP_coarray_flag) {
+        expr args;
+        if (!EXPR_HAS_ARG2(x) || (EXPR_ARG2(x) == NULL)) {
+            args = list1(LIST, EXPR_ARG1(x));
+        } else {
+            args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
+        }
 
-    st = list2(F2008_UNLOCK_STATEMENT, lock_variable, sync_stat_list);
-    compile_sync_stat_args(sync_stat_list, EXPR_ARG2(x));
-    output_statement(st);
+        replace_CALL_statement("xmpf_unlock", args);
+
+    } else {
+        sync_stat_list = list0(LIST);
+
+        st = list2(F2008_UNLOCK_STATEMENT, lock_variable, sync_stat_list);
+        compile_sync_stat_args(sync_stat_list, EXPR_ARG2(x));
+        output_statement(st);
+    }
 }
 
 /*
