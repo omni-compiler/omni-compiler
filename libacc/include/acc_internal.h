@@ -3,17 +3,21 @@
 
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdbool.h>
 
-//#include "acc_data_struct.h"
 typedef struct _ACC_array_type _ACC_array_t;
 typedef struct _ACC_memory_type _ACC_memory_t;
 typedef struct _ACC_data_type _ACC_data_t;
+typedef struct _ACC_queue_map_type _ACC_queue_map_t;
+typedef struct _ACC_queue_type _ACC_queue_t;
+typedef struct _ACC_mpool_type _ACC_mpool_t;
 
 //debug flag
 //#define DEBUG
 
 #define ACC_ASYNC_SYNC (-1)
 #define ACC_ASYNC_NOVAL (-2)
+#define ACC_ASYNC_NULL (-3)
 
 //device type
 #ifndef OMNI_TARGET_CPU_CRAY
@@ -98,6 +102,66 @@ extern "C" {
   void _ACC_memory_table_add(void *host_addr, size_t size, _ACC_memory_t* memory);
   _ACC_memory_t* _ACC_memory_table_remove(void *addr, size_t size);
   _ACC_memory_t* _ACC_memory_table_find(void *addr, size_t size);
+
+  //acc_queue_*.c
+  _ACC_queue_t* _ACC_queue_create(int async_num);
+  void _ACC_queue_destroy(_ACC_queue_t *queue);
+  void _ACC_queue_wait(_ACC_queue_t *queue);
+  int _ACC_queue_test(_ACC_queue_t *queue);
+  void* _ACC_queue_get_mpool(_ACC_queue_t *queue);
+  unsigned* _ACC_queue_get_block_count(_ACC_queue_t *queue);
+
+  //acc_queue_map.c
+  _ACC_queue_map_t* _ACC_gpu_init_stream_map(int hashtable_size);
+  void _ACC_gpu_finalize_stream_map(_ACC_queue_map_t*);
+  void _ACC_gpu_wait(int async_num);
+  void _ACC_gpu_wait_all();
+  int _ACC_gpu_test(int async_num);
+  int _ACC_gpu_test_all();
+  void _ACC_mpool_get(void **ptr);
+  void _ACC_mpool_get_async(void **ptr, int async_num);
+  void _ACC_gpu_get_block_count(unsigned **count);
+  void _ACC_gpu_get_block_count_async(unsigned **count, int async_num);
+  _ACC_queue_t* _ACC_queue_map_get_queue(int async_num);
+  void _ACC_queue_map_set_queue(int async_num, _ACC_queue_t* queue);
+
+  //acc_platform?
+  void _ACC_platform_set_device_num(int device_num);
+  bool _ACC_platform_allocate_device(int dev_num);
+  void _ACC_platform_init_device(int device_num);
+  int _ACC_platform_get_num_devices();
+  void _ACC_platform_init();
+  void _ACC_platform_finalize();
+
+  //acc.c
+  void _ACC_init(int argc, char** argv);
+  void _ACC_finalize(void);
+  void _ACC_init_type(acc_device_t device_type);
+  void _ACC_init_api(void);
+  void _ACC_finalize_type(acc_device_t device_type);
+  void _ACC_set_device_num(int num);//num is 0-based
+  int _ACC_get_device_num(); //return value is 0-based
+  int _ACC_normalize_device_num(int device_num);
+  acc_device_t _ACC_normalize_device_type(acc_device_t device_t);
+  void _ACC_init_current_device_if_not_inited();
+  _ACC_queue_map_t* _ACC_get_queue_map();
+  _ACC_mpool_t* _ACC_get_mpool();
+  void acc_init_(int *argc, char** argv); //for Fortran
+  void acc_finalize_(); //for Fortran
+
+  //acc_mpool_*.c
+  _ACC_mpool_t* _ACC_mpool_create();
+  void _ACC_mpool_destroy(_ACC_mpool_t *);
+  void _ACC_mpool_alloc_block(void **);
+  void _ACC_mpool_free_block(void *);
+  void _ACC_mpool_alloc(void **ptr, long long size, void *mpool, long long *pos);
+  void _ACC_mpool_free(void *ptr, void *mpool);
+
+  void _ACC_gpu_alloc(void **addr, size_t size);
+  void _ACC_gpu_free(void *addr);
+
+  void _ACC_copy(void *host_addr, void *device_addr, size_t size, int direction);
+  void _ACC_copy_async(void *host_addr, void *device_addr, size_t size, int direction, int async);
 
 #ifdef __cplusplus
 }

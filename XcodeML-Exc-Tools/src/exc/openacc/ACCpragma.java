@@ -18,6 +18,7 @@ public enum ACCpragma {
   UPDATE,
   WAIT,
   ATOMIC,
+  ROUTINE,
 
   
   //general
@@ -78,6 +79,16 @@ public enum ACCpragma {
   CAPTURE,
   //UPDATE,
 
+  //device type from 2.0
+  DEVICE_TYPE,
+
+  //routine clause
+  BIND,
+  NOHOST,
+
+  //argument of directive (ex. wait, cache, routine)
+  ROUTINE_ARG,
+
   //internal
   ;
   
@@ -126,6 +137,7 @@ public enum ACCpragma {
     case CACHE:
     case DECLARE:
     case WAIT:
+    case ROUTINE:
       return true;
     default:
       return false;
@@ -173,7 +185,7 @@ public enum ACCpragma {
   }
 
   public boolean isGlobalDirective(){
-    return this == DECLARE;
+    return this == DECLARE || this == ROUTINE;
   }
 
   public boolean isLocalDirective(){

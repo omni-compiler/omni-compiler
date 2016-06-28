@@ -36,27 +36,27 @@ module xmpf_coarray_decl
          end function xmpf_cobound_dim
       end interface
 
-      interface
-         integer function xmpf_num_images()
-         end function xmpf_num_images
+      interface xmpf_num_images
+         integer function xmpf_num_images_current()
+         end function
       end interface
 
       interface xmpf_this_image_generic
-         function xmpf_this_image_noargs() result(image)
+         function xmpf_this_image_current() result(image)
            integer image
-         end function xmpf_this_image_noargs
+         end function
          function xmpf_this_image_coarray_wrap(descptr, corank)         &
      &    result(image)
            integer(8), intent(in) :: descptr
            integer, intent(in) :: corank
            integer image(corank)
-         end function xmpf_this_image_coarray_wrap
+         end function
          function xmpf_this_image_coarray_dim(descptr, corank, dim)     &
      &    result(coindex)
            integer(8), intent(in) :: descptr
            integer, intent(in) :: corank, dim
            integer coindex
-         end function xmpf_this_image_coarray_dim
+         end function
       end interface
 
 
@@ -67,22 +67,14 @@ module xmpf_coarray_decl
       include "xmp_coarray_sync.h"
 !!!      include "xmp_coarray_sync_sxace.h"
 
-!!! This is not useful definition because it could not be found by 
-!!! XMPenv.findVarIdent(...) and therefore would be double-defined.
-!!      interface
-!!        integer function xmpf_coarray_get_image_index                   &
-!!     &    (descptr, corank, i1, i2, i3, i4, i5, i6, i7)
-!!        integer(8), intent(in) :: descptr
-!!        integer, intent(in) :: corank, i1
-!!        integer, intent(in), optional :: i2, i3, i4, i5, i6, i7
-!!        end function
-!!      end interface
-
 !! reference of coindexed objects
       include "xmp_coarray_get.h"
 
 !! assignment statements to coindex variables
       include "xmp_coarray_put.h"
+
+!! intrinsic subroutines atomic define/ref 
+      include "xmp_coarray_atomic.h"
 
 !! allocate statement
       include "xmp_coarray_alloc.h"

@@ -1,8 +1,6 @@
-  real, allocatable :: c1(:,:),c2(:)
-  allocate (c1(2,3),c2(8))
-  write(*,*) "allocated(c1)=",allocated(c1)
-  write(*,*) "allocated(c2)=",allocated(c2)
-  deallocate (c1,c2)
-  write(*,*) "allocated(c1)=",allocated(c1)
-  write(*,*) "allocated(c2)=",allocated(c2)
+  program main
+    integer :: aaa(20)[*]
+    aaa(2)[1]=1
   end
+
+

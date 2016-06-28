@@ -274,8 +274,6 @@ static unsigned _envStringToBytes(char *str, char *envVarName)
 }
 
 
-/* NOT USED
- */
 void _XMPF_coarray_finalize(void)
 {
   xmpf_sync_all_auto_();

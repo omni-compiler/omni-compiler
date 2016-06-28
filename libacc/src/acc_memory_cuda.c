@@ -40,8 +40,8 @@ void _ACC_memory_copy_vector(_ACC_memory_t *data, size_t memory_offset, int dire
   void *mpool;
   long long mpool_pos = 0;
   void *dev_buf;
-  _ACC_gpu_mpool_get(&mpool);
-  _ACC_gpu_mpool_alloc((void**)&dev_buf, buf_size, mpool, &mpool_pos);
+  _ACC_mpool_get(&mpool);
+  _ACC_mpool_alloc((void**)&dev_buf, buf_size, mpool, &mpool_pos);
 
   ////
   void *dev_data = (char*)data->device_addr + memory_offset + offset_size;
@@ -64,7 +64,7 @@ void _ACC_memory_copy_vector(_ACC_memory_t *data, size_t memory_offset, int dire
   }
 
   //free buffer
-  _ACC_gpu_mpool_free(dev_buf, mpool);
+  _ACC_mpool_free(dev_buf, mpool);
 
   _ACC_free(host_buf);
 }
@@ -91,8 +91,8 @@ void _ACC_memory_copy_sub(_ACC_memory_t* memory, ptrdiff_t memory_offset, int di
 
   void *mpool;
   long long mpool_pos = 0;
-  _ACC_gpu_mpool_get(&mpool);
-  _ACC_gpu_mpool_alloc((void**)&dev_buf, buf_size, mpool, &mpool_pos);
+  _ACC_mpool_get(&mpool);
+  _ACC_mpool_alloc((void**)&dev_buf, buf_size, mpool, &mpool_pos);
   //alloc and copy of trans_info
   unsigned long long *dev_trans_info;
   unsigned long long host_trans_info[dim * 3];
@@ -102,7 +102,7 @@ void _ACC_memory_copy_sub(_ACC_memory_t* memory, ptrdiff_t memory_offset, int di
     host_trans_info[i + dim * 2] = distance[i];
   }
   size_t trans_info_size = dim * 3 * sizeof(unsigned long long);
-  _ACC_gpu_mpool_alloc((void**)&dev_trans_info, trans_info_size, mpool, &mpool_pos);
+  _ACC_mpool_alloc((void**)&dev_trans_info, trans_info_size, mpool, &mpool_pos);
   _ACC_gpu_copy(host_trans_info, dev_trans_info, trans_info_size, _ACC_GPU_COPY_HOST_TO_DEVICE);
 
 
@@ -124,8 +124,8 @@ void _ACC_memory_copy_sub(_ACC_memory_t* memory, ptrdiff_t memory_offset, int di
   }
 
   //free buffer
-  _ACC_gpu_mpool_free(dev_buf, mpool);
-  _ACC_gpu_mpool_free(dev_trans_info, mpool);
+  _ACC_mpool_free(dev_buf, mpool);
+  _ACC_mpool_free(dev_trans_info, mpool);
 
   if(usePinnedHostBuffer){
     _ACC_free_pinned(host_buf);

@@ -280,7 +280,7 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
      */
     public String getName()
     {
-        throw new UnsupportedOperationException(toString());
+      throw new UnsupportedOperationException(toString());
     }
 
     /**

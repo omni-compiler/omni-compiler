@@ -3,6 +3,9 @@
 CC          = @MPI_CC@
 GPUCC       = @GPU_CMD@
 GPUCFLAGS   = @GPU_CFLAGS@
+CUDA_DIR    = @CUDA_PREFIX@
+OPENCL_DIR  = @OPENCL_PREFIX@
+OMNI_DIR    = @OMNI_HOME@
 RANLIB      = @RANLIB@
 AR          = @AR@
 ARFLAGS     = @ARFLAGS@
@@ -14,23 +17,53 @@ LIBDIR      = @OMNI_HOME@/lib/
 LIBACC      = libacc.a
 HEADERS     = $(ACC_INC_DIR)/acc_internal.h $(ACC_INC_DIR)/acc_gpu_internal.h \
 	      $(ACC_INC_DIR)/acc_gpu_constant.h $(ACC_INC_DIR)/acc_gpu_data_struct.h
-OBJECTS     = acc_runtime.o acc_memory_table.o acc_util.o acc_data.o acc_memory_gpu.o \
-	      acc_gpu_runtime.o acc_gpu_stream.o acc_gpu_util.o acc_gpu_mpool.o acc_gpu_pack.o
+OBJECTS     = acc.o acc_memory_table.o acc_runtime.o acc_util.o acc_data.o acc_queue_map.o
+LIBS        = $(LIBACC)
 
-all: $(LIBACC)
+FALSE           = 1
+TRUE            = 0
+IS_CUDA		= @CUDA@
+IS_OPENCL	= @OPENCL@
+
+ifeq ($(IS_CUDA), $(TRUE))
+LIBACC_CUDA = libacc_cuda.a
+HEADERS_CUDA= 
+OBJECTS_CUDA= acc_cuda.o acc_memory_cuda.o acc_queue_cuda.o acc_mpool_cuda.o acc_cuda_util.o acc_cuda_pack.o
+CFLAGS      += -I$(CUDA_DIR)/include
+LIBS        += $(LIBACC_CUDA) 
+endif
+
+ifeq ($(IS_OPENCL), $(TRUE))
+LIBACC_CL   = libacc_cl.a
+HEADERS_CL  = acc_internal_cl.h
+OBJECTS_CL  = acc_cl.o acc_memory_cl.o acc_queue_cl.o acc_kernel_cl.o acc_mpool_cl.o
+CFLAGS      += -I$(OPENCL_DIR)/include -DOMNI_INCLUDE_DIR="$(OMNI_DIR)/include"
+LIBS        += $(LIBACC_CL)
+endif
+
+all: $(LIBS)
 $(OBJECTS): $(HEADERS)
 $(LIBACC): $(OBJECTS)
 	rm -f $@
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
+$(LIBACC_CUDA): $(OBJECTS_CUDA)
+		rm -f $@
+		$(AR) $(ARFLAGS) $@ $^
+		$(RANLIB) $@
+$(LIBACC_CL): $(OBJECTS_CL)
+		rm -f $@
+		$(AR) $(ARFLAGS) $@ $^
+		$(RANLIB) $@
 
 .SUFFIXES : .o .cu
 .cu.o:
 	$(GPUCC) $(GPUCFLAGS) -I$(ACC_INC_DIR) -c -o $@ $<
 
-install: $(LIBACC)
+install: $(LIBS)
 	$(MKDIR_P) $(LIBDIR)
 	$(INSTALL) $^ $(LIBDIR)
 
 clean:
-	rm -f *~ *.core core core.* *.o $(LIBACC)
+	rm -f *~ *.core core core.* *.o $(LIBS)
+

@@ -1938,6 +1938,7 @@ public class XmcXcodeToXcTranslator {
 
 		if (clauseName.equals("dev_resident"))          clauseName = "device_resident";	  
 		else if (clauseName.equals("vect_len"))         clauseName = "vector_length";
+        else if (clauseName.equals("routine_arg"))      clauseName = "";
 		else if (clauseName.equals("reduction_plus"))  {clauseName = "reduction"; operator = "+";}
 		else if (clauseName.equals("reduction_mul"))   {clauseName = "reduction"; operator = "*";}
 		else if (clauseName.equals("reduction_bitand")){clauseName = "reduction"; operator = "&";}

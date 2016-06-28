@@ -1,7 +1,10 @@
-program reduct
-  integer a(7)
+  program main
 
-  if (4.ne.maxval(a)) then
-     nerr=nerr+1
-  endif
-  end
+    integer ii[*]
+    integer ii2
+
+    call atomic_define(ii[2], ii2)
+    ii[2]  = ii2
+
+  end program main
+

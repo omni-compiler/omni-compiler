@@ -19,13 +19,17 @@ WORKDIR      = ./include_work
 LIBXMPF      = libxmpf.a
 F_MAIN_O     = xmpf_main.o
 HEADERS   = $(XMPF_INC_DIR)/xmpf_internal.h $(XMPF_INC_DIR)/xmpf_internal_coarray.h \
-	    $(XMP_INC_DIR)/xmp.h $(XMP_INC_DIR)/xmp_internal.h ../../include/config.h
+	    $(XMP_INC_DIR)/xmp.h $(XMP_INC_DIR)/xmp_internal.h $(XMP_INC_DIR)/xmp_func_decl.h \
+	    ../../include/config.h
 OBJECTS   = xmpf_array.o xmpf_async.o xmpf_gcomm.o xmpf_gmove.o xmpf_index.o xmpf_lib.o \
 	    xmpf_loop.o xmpf_misc.o xmpf_nodes.o xmpf_pack.o xmpf_reflect.o xmpf_sort.o \
-	    xmpf_task.o xmpf_template.o xmpf_coarray.o xmpf_coarray_lib.o xmpf_coarray_put.o \
-	    xmpf_coarray_get.o xmpf_coarray_alloc.o xmpf_coarray_wrap.o xmpf_coarray_put_wrap.o \
-	    xmpf_coarray_get_wrap.o xmpf_coarray_alloc_wrap.o xmpf_coarray_reduction.o xmpf_coarray_decl.o \
-	    $(F_MAIN_O)
+	    xmpf_task.o xmpf_template.o \
+            xmpf_coarray.o xmpf_coarray_alloc.o \
+	    xmpf_coarray_wrap.o xmpf_coarray_alloc_wrap.o \
+            xmpf_coarray_put.o xmpf_coarray_get.o xmpf_coarray_atomic.o \
+	    xmpf_coarray_put_wrap.o xmpf_coarray_get_wrap.o xmpf_coarray_atomic_wrap.o \
+	    xmpf_coarray_lib.o xmpf_coarray_reduction.o \
+            xmpf_coarray_decl.o $(F_MAIN_O)
 
 FALSE            = 1
 TRUE             = 0
@@ -92,6 +96,7 @@ endif
 	bash $< $(TARGET) > $@
 
 all: $(LIBXMPF)
+
 $(LIBXMPF): $(F_MAIN_O) $(OBJECTS)
 	rm -f $@
 	$(AR) $(ARFLAGS) $@ $^
@@ -126,3 +131,4 @@ clean:
 	rm -f xmpf_coarray_put_wrap.f90 xmpf_coarray_get_wrap.f90 \
 	      xmpf_coarray_alloc_wrap.f90 xmpf_coarray_reduction.F90
 	rm -rf $(WORKDIR) *~ *.o $(LIBXMPF) *.mod
+

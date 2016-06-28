@@ -9,11 +9,11 @@ XRUN    = mpiexec
 ### PMPI_Comm_split(477).................: 
 ### MPIR_Comm_split_impl(249)............: 
 ### MPIR_Get_contextid_sparse_group(1193): Too many communicators (0/2048 free on this process; ignore_id=0)
-EXES    = 117.x 119.x 278\ spacefile.x 293-hyphen.x 343_dynamicnode.x 344_include.x 355.x 377.x dnodes.x macro_in_pragma.x openmp.x  419.x ident.x tlog.x
+EXES    = 117.x 119.x 293-hyphen.x 343_dynamicnode.x 344_include.x 355.x 377.x dnodes.x macro_in_pragma.x openmp.x  419.x ident.x tlog.x
 
-.PHONY: clean all default run
+.PHONY: clean all default run submit showlog cleanlog
 
-all default: $(EXES)
+all default: $(EXES) 278\ spacefile.x
 
 .SUFFIXES: .x .c
 
@@ -46,11 +46,9 @@ openmp.x: openmp.c
 
 run:
 	$(XRUN) -n 4 ./macro_in_pragma.x
-	export XMP_NODE_SIZE0=2; \
-	export XMP_NODE_SIZE1=2; \
-	$(XRUN) -n 8 ./dnodes.x
-	$(XRUN) -n 1 ./openmp.x
-	$(XRUN) -n 1 ./119.x
+	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -n 8 ./dnodes.x
+	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -n 1 ./openmp.x
+	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -n 1 ./119.x
 	XMP_NODE_SIZE0=1 XMP_NODE_SIZE1=1 $(XRUN) -n 1 ./343_dynamicnode.x
 	XMP_NODE_SIZE0=1 XMP_NODE_SIZE1=2 $(XRUN) -n 2 ./343_dynamicnode.x
 	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=1 $(XRUN) -n 2 ./343_dynamicnode.x
@@ -67,7 +65,28 @@ run:
 	$(XRUN) -n 4 ./tlog.x; if [ ! -f trace.log ]; then exit 1; fi
 #	$(XRUN) -n 4 ./static_desc.x
 
+RUN:
+	mkdir RUN
+
+RUN/278\ spacefile.x :: 278\ spacefile.x
+	cp 278\ spacefile.x RUN/278\ spacefile.x
+
+RUN/%.x:: %.x
+	cp $< $@
+
+RUN/go.sh: go.template Makefile
+	cp $< $@ && grep XRUN Makefile | sed -e 's/(XRUN)/{XRUN}/' -e 's/ *= */=/' | grep -v Makefile >>$@
+
+submit: all RUN RUN/go.sh $(EXES:%=RUN/%) RUN/278\ spacefile.x
+	cd RUN; pjsub go.sh
+
+showlog:
+	cat RUN/go.sh.e* RUN/go.sh.o*
+
+cleanlog:
+	rm -rf RUN
+
 #-- cleaning
-clean:
-	rm -f $(EXES) *.o trace.log
+clean: cleanlog
+	rm -f $(EXES) *.o trace.log 278\ spacefile.x
 	rm -rf __omni_tmp__

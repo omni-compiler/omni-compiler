@@ -48,7 +48,7 @@ print_subroutine_scalar() {
 
 # EXECUTION
     echo72 "      call xmpf_coarray_put_scalar(descptr, loc(mold), ${element},"
-    echo   '     &   coindex, src)'
+    echo   '     &   coindex, src, 0)   !! 0: asynchronous'
     echo   '      return'
     echo   '      end subroutine'
     echo   ''
@@ -156,7 +156,8 @@ print_subroutine_array() {
 
     echo   ''
     echo72 "      call xmpf_coarray_put_array(descptr, base, ${element},"
-    echo   "     &   coindex, base_s, ${DIM}, skip, skip_s, extent)"
+    echo72 "     &   coindex, base_s, ${DIM}, skip, skip_s, extent,"
+    echo   '     &   0)     !! 0: asynchronous'
     echo   '      return'
     echo   '      end subroutine'
     echo   ''
@@ -227,7 +228,7 @@ print_subroutine_spread() {
 
     echo   ''
     echo72 "      call xmpf_coarray_put_spread(descptr, base, ${element},"
-    echo   "     &   coindex, src, ${DIM}, skip, extent)"
+    echo   "     &   coindex, src, ${DIM}, skip, extent, 0)  !! 0: asynchronous"  
     echo   '      return'
     echo   '      end subroutine'
     echo   ''

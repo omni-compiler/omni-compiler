@@ -76,6 +76,7 @@ outx_ACC_Clause(FILE *fp, int indent, CExprOfList* clause)
   case ACC_WRITE:
   case ACC_UPDATE_CLAUSE:
   case ACC_CAPTURE:
+  case ACC_NOHOST:
       break;
 
   case ACC_IF:
@@ -181,6 +182,7 @@ char *accDirectiveName(int c)
   case ACC_ENTER_DATA: return "ENTER_DATA";
   case ACC_EXIT_DATA: return "EXIT_DATA";
   case ACC_ATOMIC: return "ATOMIC";
+  case ACC_ROUTINE: return "ROUTINE";
   default: return "??ACC??";
   }
 }
@@ -237,6 +239,10 @@ char *accClauseName(int c)
   case ACC_WRITE: return "WRITE";
   case ACC_UPDATE_CLAUSE: return "UPDATE";
   case ACC_CAPTURE: return "CAPTURE";
+
+  case ACC_BIND: return "BIND";
+  case ACC_NOHOST: return "NOHOST";
+  case ACC_ROUTINE_ARG: return "ROUTINE_ARG";
 
   default:  return "???ACC clause???";
   }
