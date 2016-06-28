@@ -37,6 +37,13 @@ XcalableMP Options
   -xacc,--xcalableacc                 : enable XcalableACC function.
   --profile [scalasca|tlog]           : output results in scalasca or tlog format for all directives.
   --selective-profile [scalasca|tlog] : output results in scalasca or tlog format for selected directives.
+
+Omni OpenACC Options
+
+  --no-ldg                : disable use of read-only data cache.
+  --default-veclen=LENGTH : specify default vector length (default: 256)
+  --platform=PLATFORM     : Specify platform (CUDA | OpenCL) (default: $OPENACC_PLATFORM)
+  --device=DEVICE         : Specify device (Fermi | Kepler) (default: $OPENACC_DEVICE)
 EOF
 }
 
@@ -145,6 +152,14 @@ function xmpcc_set_parameters()
 		ENABLE_OPENMP=true;;
 	    --xcalableacc|-xacc)
 		ENABLE_XACC=true;;
+	    --no-ldg)
+		DISABLE_LDG=true;;
+	    --default-veclen=*)
+		DEFAULT_VECLEN="${1#--default-veclen=}";;
+	    --platform=*)
+		OPENACC_PLATFORM="${1#--platform=}";;
+	    --device=*)
+		OPENACC_DEVICE="${1#--device=}";;
 	    --profile)
 		shift;
 		if [ "scalasca" = "$1" ]; then
