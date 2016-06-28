@@ -5223,22 +5223,21 @@ compile_data_style_decl(expr decl_list)
     }
 }
 
-static void
-compile_stat_args_skip_first(expv st, expr x, int expect_acquired_lock, size_t skip) {
+/*
+ * Common function for compile_sync_stat_args and compile_lock_stat_args
+ */
+static int
+compile_stat_args(expv st, expr x, int expect_acquired_lock) {
     list lp;
     int has_keyword_acquired_lock = FALSE;
     int has_keyword_stat = FALSE;
     int has_keyword_errmsg = FALSE;
-    size_t idx = 0;
 
     if (x == NULL)
-        return;
+        return TRUE;
 
     FOR_ITEMS_IN_LIST(lp, x) {
         expr v, arg;
-        idx++;
-        if (idx <= skip)
-            continue;
 
         v = LIST_ITEM(lp);
 
@@ -5250,7 +5249,7 @@ compile_stat_args_skip_first(expv st, expr x, int expect_acquired_lock, size_t s
         arg = compile_expression(EXPR_ARG2(v));
         if (EXPV_CODE(arg) != F_VAR) {
             error("not a variable.");
-            return;
+            return FALSE;
         }
 
         char *keyword = SYM_NAME(EXPR_SYM(EXPR_ARG1(v)));
@@ -5261,67 +5260,63 @@ compile_stat_args_skip_first(expv st, expr x, int expect_acquired_lock, size_t s
         if (strcmp("stat", keyword) == 0) {
             if (has_keyword_stat == TRUE) {
                 error("no specifier shall appear more than once");
-                return;
+                return FALSE;
             }
             has_keyword_stat = TRUE;
 
             if (!IS_INT(EXPV_TYPE(arg))) {
                 error("stat variable should be interger");
-                return;
+                return FALSE;
             }
 
         } else if (strcmp("errmsg", keyword) == 0) {
             if (has_keyword_errmsg == TRUE) {
                 error("no specifier shall appear more than once");
-                return;
+                return FALSE;
             }
             has_keyword_errmsg = TRUE;
 
             if (!IS_CHAR(EXPV_TYPE(arg))) {
                 error("errmsg variable should be character");
-                return;
+                return FALSE;
             }
 
         } else if (expect_acquired_lock &&
                    strcmp("acquired_lock", keyword) == 0) {
             if (has_keyword_acquired_lock == TRUE) {
                 error("no specifier shall appear more than once");
-                return;
+                return FALSE;
             }
             has_keyword_acquired_lock = TRUE;
 
             if (!IS_LOGICAL(EXPV_TYPE(arg))) {
                 error("errmsg variable should be character");
-                return;
+                return FALSE;
             }
 
 
         } else {
             error("unexpected specifier '%s'", keyword);
-            return;
+            return FALSE;
         }
 
         EXPV_KWOPT_NAME(arg) = (const char *)strdup(keyword);
 
         list_put_last(st, arg);
     }
+    return TRUE;
 }
 
-static void
+
+static int
 compile_sync_stat_args(expv st, expr x) {
-    compile_stat_args_skip_first(st, x, FALSE, 0);
+    return compile_stat_args(st, x, FALSE);
 }
 
 
-static void
-compile_sync_stat_args_skip_first(expv st, expr x, int skip) {
-    compile_stat_args_skip_first(st, x, FALSE, skip);
-}
-
-
-static void
+static int
 compile_lock_stat_args(expv st, expr x) {
-    compile_stat_args_skip_first(st, x, TRUE, 0);
+    return compile_stat_args(st, x, TRUE);
 }
 
 
@@ -5336,6 +5331,18 @@ replace_CALL_statement(const char * subroutine_name, expv args)
 }
 
 
+/*
+ * like list_cons, but tail can be NULL
+ */
+static expr
+list_cons_nullable(expr head, expr tail) {
+    if (tail == NULL) {
+        return list1(LIST, head);
+    } else {
+        return list_cons(head, tail);
+    }
+}
+
 
 static void
 compile_SYNCALL_statement(expr x) {
@@ -5344,7 +5351,8 @@ compile_SYNCALL_statement(expr x) {
     if (!check_image_controll_statement_available()) return;
 
     st = list0(F2008_SYNCALL_STATEMENT);
-    compile_sync_stat_args(st, EXPR_ARG1(x));
+    /* Check and compile sync stat args */
+    if (!compile_sync_stat_args(st, EXPR_ARG1(x))) return;
 
     if (XMP_coarray_flag) {
         replace_CALL_statement("xmpf_sync_all", EXPR_ARG1(x));
@@ -5356,41 +5364,37 @@ compile_SYNCALL_statement(expr x) {
 
 static void
 compile_SYNCIMAGES_statement(expr x) {
-    expv st;
     expv sync_stat;
     expv image_set = NULL;
-    expr arg;
+
+    if (EXPR_ARG1(x)) {
+        image_set = compile_expression(EXPR_ARG1(x));
+
+        if (!IS_INT(EXPV_TYPE(image_set))) {
+            error("The first argument of SYNC IMAGES statement must be INTEGER");
+            return;
+        }
+    }
 
     if (!check_image_controll_statement_available()) return;
 
-    if (!EXPR_HAS_ARG1(x) || !EXPR_HAS_ARG1(EXPR_ARG1(x))) {
-      fatal("SYNC IMAGES must have one argument at least");
-    }
+    sync_stat = list0(LIST);
+    /* Check and compile sync stat args */
+    if (!compile_sync_stat_args(sync_stat, EXPR_ARG2(x))) return;
 
     if (XMP_coarray_flag) {
-        if (EXPR_ARG1(EXPR_ARG1(x)) == NULL) {
-            EXPR_ARG1(EXPR_ARG1(x)) = make_enode(STRING_CONSTANT,  (void *)strdup("*"));
+        expr args;
+        if (EXPR_ARG1(x) == NULL) {
+            // if NULL, the argment is '*' for xmpf_sync_images
+            EXPR_ARG1(x) = make_enode(STRING_CONSTANT,  (void *)strdup("*"));
         }
+        args = list_cons_nullable(
+            EXPR_ARG1(x), EXPR_HAS_ARG2(x) ? EXPR_ARG2(x) : NULL);
 
-        replace_CALL_statement("xmpf_sync_images", EXPR_ARG1(x));
+        replace_CALL_statement("xmpf_sync_images", args);
 
     } else {
-
-        st = list0(F2008_SYNCIMAGES_STATEMENT);
-
-        arg = EXPR_ARG1(x);
-
-        if (EXPR_ARG1(arg)) {
-            image_set = compile_expression(EXPR_ARG1(arg));
-        }
-        // if NULL, the argment is '*'
-        list_put_last(st, image_set);
-
-        sync_stat = list0(LIST);
-        compile_sync_stat_args_skip_first(sync_stat, arg, 1);
-        list_put_last(st, sync_stat);
-
-        output_statement(st);
+        output_statement(list2(F2008_SYNCIMAGES_STATEMENT, image_set, sync_stat));
     }
 }
 
@@ -5402,7 +5406,8 @@ compile_SYNCMEMORY_statement(expr x) {
     if (!check_image_controll_statement_available()) return;
 
     st = list0(F2008_SYNCMEMORY_STATEMENT);
-    compile_sync_stat_args(st, EXPR_ARG1(x));
+    /* Check and compile sync stat args */
+    if (!compile_sync_stat_args(st, EXPR_ARG1(x))) return;
 
     if (XMP_coarray_flag) {
         replace_CALL_statement("xmpf_sync_memory", EXPR_ARG1(x));
@@ -5415,7 +5420,7 @@ compile_SYNCMEMORY_statement(expr x) {
  * Check a type is LOCK_TYPE of the intrinsic module ISO_FORTRAN_ENV
  */
 static int
-type_is_lock_type(TYPE_DESC tp) {
+type_is_LOCK_TYPE(TYPE_DESC tp) {
     ID tagname;
 
     if (!IS_STRUCT_TYPE(tp))
@@ -5450,26 +5455,23 @@ compile_LOCK_statement(expr x) {
 
     lock_variable = compile_expression(EXPR_ARG1(x));
     /* CHECK lock_variable */
-    if (!type_is_lock_type(EXPV_TYPE(lock_variable))) {
+    if (!type_is_LOCK_TYPE(EXPV_TYPE(lock_variable))) {
         error("The first argument of lock statement must be LOCK_TYPE");
         return;
     }
 
+    sync_stat_list = list0(LIST);
+    /* Check and compile lock stat args */
+    if (!compile_lock_stat_args(sync_stat_list, EXPR_ARG2(x))) return;
+
     if (XMP_coarray_flag) {
-        expr args;
-        if (!EXPR_HAS_ARG2(x) || (EXPR_ARG2(x) == NULL)) {
-            args = list1(LIST, EXPR_ARG1(x));
-        } else {
-            args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
-        }
+        expr args = list_cons_nullable(
+            EXPR_ARG1(x), EXPR_HAS_ARG2(x) ? EXPR_ARG2(x) : NULL);
 
         replace_CALL_statement("xmpf_lock", args);
+
     } else {
-
-        sync_stat_list = list0(LIST);
-
         st = list2(F2008_LOCK_STATEMENT, lock_variable, sync_stat_list);
-        compile_lock_stat_args(sync_stat_list, EXPR_ARG2(x));
         output_statement(st);
     }
 }
@@ -5485,26 +5487,25 @@ compile_UNLOCK_statement(expr x) {
 
     lock_variable = compile_expression(EXPR_ARG1(x));
     /* CHECK lock_variable */
-    if (!type_is_lock_type(EXPV_TYPE(lock_variable))) {
+    if (!type_is_LOCK_TYPE(EXPV_TYPE(lock_variable))) {
         error("The first argument of unlock statement must be LOCK_TYPE");
         return;
     }
 
+    sync_stat_list = list0(LIST);
+    /* Check and compile sync stat args */
+    if (!compile_sync_stat_args(sync_stat_list, EXPR_ARG2(x))) return;
+
     if (XMP_coarray_flag) {
         expr args;
-        if (!EXPR_HAS_ARG2(x) || (EXPR_ARG2(x) == NULL)) {
-            args = list1(LIST, EXPR_ARG1(x));
-        } else {
-            args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
-        }
+        args = list_cons_nullable(
+            EXPR_ARG1(x), EXPR_HAS_ARG2(x) ? EXPR_ARG2(x) : NULL);
 
         replace_CALL_statement("xmpf_unlock", args);
 
     } else {
-        sync_stat_list = list0(LIST);
 
         st = list2(F2008_UNLOCK_STATEMENT, lock_variable, sync_stat_list);
-        compile_sync_stat_args(sync_stat_list, EXPR_ARG2(x));
         output_statement(st);
     }
 }

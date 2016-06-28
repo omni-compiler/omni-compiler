@@ -386,7 +386,7 @@ gen_default_real_kind(void) {
 %type <val> result_opt type_keyword
 %type <val> action_statement95
 %type <val> action_coarray_statement other_coarray_keyword
-%type <val> sync_stat_arg_list sync_stat_arg syncimages_arg_list image_set
+%type <val> sync_stat_arg_list sync_stat_arg image_set
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
@@ -1338,8 +1338,10 @@ action_coarray_statement:
         { $$ = list1(F2008_SYNCALL_STATEMENT,NULL); }
         | SYNCALL '(' sync_stat_arg_list ')'
         { $$ = list1(F2008_SYNCALL_STATEMENT,$3); }
-        | SYNCIMAGES '(' syncimages_arg_list ')'
-        { $$ = list1(F2008_SYNCIMAGES_STATEMENT,$3); }
+        | SYNCIMAGES '(' image_set ')'
+        { $$ = list2(F2008_SYNCIMAGES_STATEMENT,$3, NULL); }
+        | SYNCIMAGES '(' image_set ',' sync_stat_arg_list ')'
+        { $$ = list2(F2008_SYNCIMAGES_STATEMENT,$3, $5); }
         | SYNCMEMORY
         { $$ = list1(F2008_SYNCMEMORY_STATEMENT,NULL); }
         | SYNCMEMORY '(' ')'
@@ -1375,13 +1377,6 @@ sync_stat_arg_list:
 sync_stat_arg:
           IDENTIFIER '=' IDENTIFIER
         { $$ = list2(F_SET_EXPR,$1,$3); }
-        ;
-
-syncimages_arg_list:
-          image_set
-        { $$ = list1(LIST,$1); }
-        | syncimages_arg_list ',' sync_stat_arg
-        { $$ = list_put_last($1,$3); }
         ;
 
 image_set:
