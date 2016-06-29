@@ -151,6 +151,7 @@ public class XmfWriter
             setupNewLine();
             _writeIndent();
 	    if (_mode == StatementMode.OMP) _out.print("!$OMP");
+	    else if (_mode == StatementMode.ACC) _out.print("!$ACC");
         }
     }
 
