@@ -23,6 +23,8 @@ public class XMPtransCoarrayRun
     "co_sum",
     "co_max",
     "co_min",
+    "atomic_define",
+    "atomic_ref",
   };
   final static String[] _coarrayStmtKeywords = {
     "xmpf_critical",
@@ -52,10 +54,13 @@ public class XMPtransCoarrayRun
   final static String CO_SUM_NAME            = "xmpf_co_sum_generic";
   final static String CO_MAX_NAME            = "xmpf_co_max_generic";
   final static String CO_MIN_NAME            = "xmpf_co_min_generic";
+  final static String ATOMIC_DEFINE_NAME     = "xmpf_atomic_define_generic";
+  final static String ATOMIC_REF_NAME        = "xmpf_atomic_ref_generic";
   final static String COARRAY_PROLOG_NAME    = "xmpf_coarray_prolog";
   final static String COARRAY_EPILOG_NAME    = "xmpf_coarray_epilog";
   final static String SYNCALL_NAME           = "xmpf_sync_all";
   final static String SYNCIMAGES_NAME        = "xmpf_sync_images";
+  final static String SYNCMEMORY_NAME        = "xmpf_sync_memory";
   final static String AUTO_SYNCALL_NAME      = "xmpf_sync_all_auto";  // another entry of syncall
   final static String FINALIZE_PROGRAM_NAME  = XMP.finalize_all_f;
 
@@ -65,7 +70,8 @@ public class XMPtransCoarrayRun
                    "lcobound", "ucobound",
                    "image_index",
                    "co_broadcast",
-                   "co_sum", "co_max", "co_min" );
+                   "co_sum", "co_max", "co_min",
+                   "atomic_define", "atomic_ref");
 
 
   /** Available Versions currently:
@@ -1073,10 +1079,10 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_set_varname(descptr_V3, "V3", 2)           ! n.
         call xmpf_coarray_dealloc(descptr_V3)                        ! j.
         call xmpf_syncall(V1,V4,V2,V3)                               ! p.
-        if (associated(V3)) write(*,*) "yes"                         ! l.
-        n1 = xmpf_this_image(descptr_V1,1)                           ! l.
-        n2(:) = this_image(descptr_V3)                               ! l.
-        n3 = xmpf_image_index(descptr_V1,(/1,2/))                    ! l.
+        if (associated(V3)) write(*,*) "yes"                         ! l2.
+        n1 = xmpf_this_image(descptr_V1,1)                           ! l1.
+        n2(:) = this_image(descptr_V3)                               ! l1.
+        n3 = xmpf_image_index(descptr_V1,(/1,2/))                    ! l1.
         ...
         call xmpf_syncall(V1,V4,V2,V3)                               ! i. p.
         call xmpf_coarray_epilog(tag)                                ! i.
@@ -1094,6 +1100,9 @@ public class XMPtransCoarrayRun
   */
   private void transExecPart() {
 
+    // l1. replace intrinsic procedure calls
+    replaceIntrinsicCalls1(visibleCoarrays);
+
     // e. convert coindexed objects to function references
     convCoidxObjsToFuncCalls(visibleCoarrays);
 
@@ -1104,9 +1113,8 @@ public class XMPtransCoarrayRun
     convAllocateStmts(visibleCoarrays);
     convDellocateStmts(visibleCoarrays);
 
-    // l. fake intrinsic 'allocatable' (allocatable coarrays only)
-    //    replace V of coarray intrinsic calls with descptr_V
-    replaceFunctionCalls(visibleCoarrays);
+    // l2. fake intrinsic 'allocatable' (allocatable coarrays only)
+    replaceIntrinsicCalls2(visibleCoarrays);
 
     // i. initialization/finalization for auto-syncall and auto-deallocate
     //    and initialization of descPtr (only Ver.6)
@@ -1117,8 +1125,8 @@ public class XMPtransCoarrayRun
       insertFinalizationCall();
 
     // p. add visible coarrays as arguments of sync all statements 
-    //     to prohibit code motion
-    addVisibleCoarraysToSyncall(visibleCoarrays);
+    //     to prohibit code motion (syncall, syncimages and syncmemory)
+    addVisibleCoarraysToSyncEtc(visibleCoarrays);
 
     // o. remove declarations for use-associated allocatable coarrays
     for (XMPcoarray coarray: useAssociatedCoarrays) {
@@ -1320,25 +1328,41 @@ public class XMPtransCoarrayRun
   //  add coarrays as actual arguments to syncall library call
   //-----------------------------------------------------
   //
-  private void addVisibleCoarraysToSyncall(ArrayList<XMPcoarray> coarrays) {
+  private void addVisibleCoarraysToSyncEtc(ArrayList<XMPcoarray> coarrays) {
     BlockIterator bi = new topdownBlockIterator(getFblock());
     for (bi.init(); !bi.end(); bi.next()) {
       BasicBlock bb = bi.getBlock().getBasicBlock();
       if (bb == null) continue;
       for (Statement s = bb.getHead(); s != null; s = s.getNext()) {
         Xobject xobj = s.getExpr();
-        if (_isCallForSyncall(xobj)) {
+        if (_isCallStmtForSyncEtc(xobj)) {
           // found
-          Xobject args = _getCoarrayNamesIntoArgs(coarrays);
+          Xobject extraArgs = _getCoarrayNamesIntoArgs(coarrays);
           Xobject callExpr = xobj.getArg(0);
-          callExpr.setArg(1, args);
+          Xobject actualArgs = callExpr.getArg(1);
+          if (actualArgs == null) {
+            // set extraArgs into callExpr
+            callExpr.setArg(1, extraArgs);
+          } else {
+            // add extraArgs to actualArgs
+            for (Xobject a: (XobjList)extraArgs) {
+              Xobject arg = a.getArg(0);
+              actualArgs.add(arg);
+            }
+          }
         }
       }
     }
   }
 
-  private Boolean _isCallForSyncall(Xobject xobj) {
+  private Boolean _isCallStmtForSyncEtc(Xobject xobj) {
     
+    final String[] _syncEtcNames = { SYNCALL_NAME, AUTO_SYNCALL_NAME,
+                                     SYNCIMAGES_NAME,
+                                     SYNCMEMORY_NAME };
+    final List<String> syncEtcNameList =
+      Arrays.asList(_syncEtcNames);
+
     if (xobj == null || xobj.Opcode() != Xcode.EXPR_STATEMENT)
       /* Not F_ASSIGN_STATEMENT but EXPR_STATEMENT contains call statement */
       return false;
@@ -1348,10 +1372,8 @@ public class XMPtransCoarrayRun
       return false;
 
     String fname = callExpr.getArg(0).getName();
-    if (fname == SYNCALL_NAME || fname == AUTO_SYNCALL_NAME)
-      return true;
-
-    return false;
+    
+    return syncEtcNameList.contains(fname);
   }
 
 
@@ -2366,9 +2388,9 @@ public class XMPtransCoarrayRun
     }
   }
 
+
   //-----------------------------------------------------
-  //  TRANSLATION l.
-  //  - fake intrinsic function 'allocated' with 'associated'
+  //  TRANSLATION l1.
   //  - replace num_images() with NUM_IMAGES_NAME()
   //  - replace this_image() with THIS_IMAGE_NAME()
   //  - replace this_image(V, ...) with THIS_IMAGE_NAME(descptr_V, ...)
@@ -2377,9 +2399,13 @@ public class XMPtransCoarrayRun
   //  - replace co_sum/min/max(V, ...) with CO_SUM/MIN/MAX_NAME(V, ...)
   //  - replace lcobound(V, ...) with COBOUND_NAME(descptr_V, ..., 0, corank)
   //  - replace ucobound(V, ...) with COBOUND_NAME(descptr_V, ..., 1, corank)
+  //  - replace atomic_define(atom, value) with
+  //       ATOMIC_DEFINE_NAME(descptr_V, [coindex,] mold, src)
+  //  - replace atomic_ref(value, atom) with
+  //       ATOMIC_REF_NAME(descptr_V, [coindex,] mold, dst)
   //-----------------------------------------------------
   //
-  private void replaceFunctionCalls(ArrayList<XMPcoarray> coarrays) {
+  private void replaceIntrinsicCalls1(ArrayList<XMPcoarray> coarrays) {
     XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
     for (xi.init(); !xi.end(); xi.next()) {
       Xobject xobj = xi.getXobject();
@@ -2390,14 +2416,9 @@ public class XMPtransCoarrayRun
 
       String fname = xobj.getArg(0).getString();
 
-      /* replace Fortran90 intrinsic
-       */
-      if (fname.equalsIgnoreCase("allocated"))
-        _replaceAllocatedWithAssociated(xobj, coarrays);
-
       /* replace Coarray intrinsics
        */
-      else if (fname.equalsIgnoreCase("num_images"))
+      if (fname.equalsIgnoreCase("num_images"))
         _replaceNumImages(xobj, coarrays);
       else if (fname.equalsIgnoreCase("this_image"))
         _replaceThisImage(xobj, coarrays);
@@ -2415,6 +2436,10 @@ public class XMPtransCoarrayRun
         _replaceCoReduction(xobj, fname, CO_MAX_NAME);
       else if (fname.equalsIgnoreCase("co_min"))
         _replaceCoReduction(xobj, fname, CO_MIN_NAME);
+      else if (fname.equalsIgnoreCase("atomic_define"))
+        _replaceAtomicDefine(xobj, coarrays);
+      else if (fname.equalsIgnoreCase("atomic_ref"))
+        _replaceAtomicRef(xobj, coarrays);
     }
 
     /* remove ident of Coarray intrinsics
@@ -2422,6 +2447,30 @@ public class XMPtransCoarrayRun
     /////// Sealed. I don't know why this does not work well. //////
     //XobjArgs idArgs = def.getFuncIdList().getArgs();
     //_removeCoarrayIntrinsicIdents(null, idArgs);
+  }
+
+
+  //-----------------------------------------------------
+  //  TRANSLATION l2.
+  //  - fake intrinsic function 'allocated' with 'associated'
+  //-----------------------------------------------------
+  //
+  private void replaceIntrinsicCalls2(ArrayList<XMPcoarray> coarrays) {
+    XobjectIterator xi = new topdownXobjectIterator(def.getFuncBody());
+    for (xi.init(); !xi.end(); xi.next()) {
+      Xobject xobj = xi.getXobject();
+      if (xobj == null)
+        continue;
+      if (xobj.Opcode() != Xcode.FUNCTION_CALL)
+        continue;
+
+      String fname = xobj.getArg(0).getString();
+
+      /* replace Fortran90 intrinsic
+       */
+      if (fname.equalsIgnoreCase("allocated"))
+        _replaceAllocatedWithAssociated(xobj, coarrays);
+    }
   }
 
 
@@ -2455,7 +2504,7 @@ public class XMPtransCoarrayRun
    *  the compiler into co_xxx<dim>d_<typekind>.
    *  --> challenge!
    */
-  private void _replaceCoReduction(Xobject xobj, String fname, String genelicName) {
+  private void _replaceCoReduction(Xobject xobj, String fname, String genericName) {
     XobjList actualArgs = (XobjList)xobj.getArg(1);
     int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
 
@@ -2471,19 +2520,181 @@ public class XMPtransCoarrayRun
       return;
     }
 
-    int rank = arg1.getFrank(getFblock());
-    XobjString newFname = Xcons.Symbol(Xcode.IDENT, genelicName);
+    //int rank = arg1.getFrank(getFblock());
+    XobjString newFname = Xcons.Symbol(Xcode.IDENT, genericName);
     xobj.setArg(0, newFname);
+  }
+
+
+
+  /* replace incrinsic subroutine atomic_ref(value, atom) with:
+   * - ATOMIC_REF_NAME(descPtr, atomic, dst)
+   *     if atom is a scalar coarray,
+   * - ATOMIC_REF_NAME(descPtr, coindex, mold, dst)
+   *     if atom is a scalar coindexed obj,
+   * - error otherwise
+   */
+  private void _replaceAtomicRef(Xobject xobj, ArrayList<XMPcoarray> candidates) {
+    final String fname = "atomic_ref";
+
+    XobjList actualArgs = (XobjList)xobj.getArg(1);
+    int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
+
+    if (nargs != 2) {
+      XMP.error("Too few or too many arguments found in the call of " + fname);
+      return;
+    }
+
+    // get the first argument 'value'
+    Xobject arg1 = actualArgs.getArgWithKeyword("value", 0);
+    if (arg1 == null) {
+      XMP.error("Argument \'value\' not found in " + fname);
+      return;
+    }
+
+    // get the second argument 'atomic'
+    Xobject arg2 = actualArgs.getArgWithKeyword("atomic", 1);
+    if (arg2 == null) {
+      XMP.error("Argument \'atomic\' not found in " + fname);
+      return;
+    }
+
+    // replace function name atomic_ref with ATOMIC_REF_NAME
+    XobjString newFname = Xcons.Symbol(Xcode.IDENT, ATOMIC_REF_NAME);
+    xobj.setArg(0, newFname);
+
+    // replace arguments
+    //   (descPtr, [coindex,] mold, dst)
+    String name;
+    try {
+      name = arg2.getName();
+    }
+    catch (UnsupportedOperationException e) {
+      XMP.error("Illegal argument #2 in the call of atomic_ref");
+      return;
+    }
+
+    XMPcoarray coarray = XMPcoarray.findCoarrayInCoarrays(name, candidates);
+    if (coarray == null) {
+      XMP.error("Argument #2 of atomic_ref must be a coarray or a coindexed object.");
+      return;
+    }
+      
+    switch (arg2.Opcode()) {
+    case VAR:
+    case F_ARRAY_REF:
+      {
+        Xobject descPtr = coarray.getDescPointerIdExpr(arg2);
+        Xobject mold = arg2;
+        Xobject dst = arg1;
+        xobj.setArg(1, Xcons.List(descPtr, mold, dst));
+      }
+      break;
+    case CO_ARRAY_REF:
+      {
+        XMPcoindexObj coindexObj = new XMPcoindexObj(arg2, coarray);
+        Xobject baseAddr = coindexObj.getBaseAddr();
+        Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
+        Xobject coindex = coarray.getImageIndex(baseAddr,
+                                                coindexObj.cosubscripts);
+        Xobject mold = coindexObj.getMoldObj();
+        Xobject dst = arg1;
+        xobj.setArg(1, Xcons.List(descPtr, coindex, mold, dst));
+      }
+      break;
+    }
+
+  }
+
+
+  /* replace incrinsic subroutine atomic_define(atom, value) with:
+   * - ATOMIC_DEFINE_NAME(descPtr, atomic, src)
+   *     if atom is a scalar coarray,
+   * - ATOMIC_DEFINE_NAME(descPtr, coindex, mold, src)
+   *     if atom is a scalar coindexed obj,
+   * - error otherwise
+   */
+  private void _replaceAtomicDefine(Xobject xobj,
+                                    ArrayList<XMPcoarray> candidates) {
+    final String fname = "atomic_define";
+
+    XobjList actualArgs = (XobjList)xobj.getArg(1);
+    int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
+
+    if (nargs != 2) {
+      XMP.error("Too few or too many arguments found in the call of " + fname);
+      return;
+    }
+
+    // get the first argument 'atomic'
+    Xobject arg1 = actualArgs.getArgWithKeyword("atomic", 0);
+    if (arg1 == null) {
+      XMP.error("Argument \'atomic\' not found in " + fname);
+      return;
+    }
+
+    // get the second argument 'value'
+    Xobject arg2 = actualArgs.getArgWithKeyword("value", 1);
+    if (arg2 == null) {
+      XMP.error("Argument \'value\' not found in " + fname);
+      return;
+    }
+
+    // replace function name atomic_ref with ATOMIC_DEFINE_NAME
+    XobjString newFname = Xcons.Symbol(Xcode.IDENT, ATOMIC_DEFINE_NAME);
+    xobj.setArg(0, newFname);
+
+    // replace arguments
+    //   (descPtr, [coindex,] mold, src)
+    String name;
+    try {
+      name = arg1.getName();
+    }
+    catch (UnsupportedOperationException e) {
+      XMP.error("Illegal argument #1 in the call of atomic_define");
+      return;
+    }
+
+    XMPcoarray coarray = XMPcoarray.findCoarrayInCoarrays(name, candidates);
+    if (coarray == null) {
+      XMP.error("Argument #1 of atomic_define must be a coarray or a coindexed object.");
+      return;
+    }
+      
+    switch (arg1.Opcode()) {
+    case VAR:
+    case F_ARRAY_REF:
+      {
+        Xobject descPtr = coarray.getDescPointerIdExpr(arg1);
+        Xobject mold = arg1;
+        Xobject src = arg2;
+        xobj.setArg(1, Xcons.List(descPtr, mold, src));
+      }
+      break;
+    case CO_ARRAY_REF:
+      {
+        XMPcoindexObj coindexObj = new XMPcoindexObj(arg1, coarray);
+        Xobject baseAddr = coindexObj.getBaseAddr();
+        Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
+        Xobject coindex = coarray.getImageIndex(baseAddr,
+                                                coindexObj.cosubscripts);
+        Xobject mold = coindexObj.getMoldObj();
+        Xobject src = arg2;
+        xobj.setArg(1, Xcons.List(descPtr, coindex, mold, src));
+      }
+      break;
+    }
+
   }
 
 
   /* replace "allocated(coarray)" with "associated(coarray)"
    */
-  private void _replaceAllocatedWithAssociated(Xobject xobj, ArrayList<XMPcoarray> coarrays) {
+  private void _replaceAllocatedWithAssociated(Xobject xobj, ArrayList<XMPcoarray> candidates) {
     Xobject fname = xobj.getArg(0);
     XobjList actualArgs = (XobjList)xobj.getArg(1);
     Xobject arg1 = actualArgs.getArg(0);
-    if (_isIntrinsic(fname) && _isCoarrayInCoarrays(arg1, coarrays)) {
+    if (_isIntrinsic(fname) && _isCoarrayInCoarrays(arg1, candidates)) {
       XobjString associated = Xcons.Symbol(Xcode.IDENT, "associated");
       xobj.setArg(0, associated);
     }
@@ -2491,7 +2702,7 @@ public class XMPtransCoarrayRun
 
   /* replace intrinsic this_image
    */
-  private void _replaceNumImages(Xobject xobj, ArrayList<XMPcoarray> coarrays) {
+  private void _replaceNumImages(Xobject xobj, ArrayList<XMPcoarray> candidates) {
     Xobject fname = xobj.getArg(0);
     XobjList actualArgs = (XobjList)xobj.getArg(1);
     int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
@@ -2501,14 +2712,14 @@ public class XMPtransCoarrayRun
       return;
     }
 
-    // replace function name 'this_image'
+    // replace function name 'num_images'
     XobjString newFname = Xcons.Symbol(Xcode.IDENT, NUM_IMAGES_NAME);
     xobj.setArg(0, newFname);
   }
 
   /* replace intrinsic this_image
    */
-  private void _replaceThisImage(Xobject xobj, ArrayList<XMPcoarray> coarrays) {
+  private void _replaceThisImage(Xobject xobj, ArrayList<XMPcoarray> candidates) {
     Xobject fname = xobj.getArg(0);
     XobjList actualArgs = (XobjList)xobj.getArg(1);
     int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
@@ -2530,7 +2741,7 @@ public class XMPtransCoarrayRun
       XMP.error("Argument coarray was not found in this_image().");
       return;
     }
-    XMPcoarray coarray = _findCoarrayInCoarrays(arg1, coarrays);
+    XMPcoarray coarray = _findCoarrayInCoarrays(arg1, candidates);
     if (coarray == null) {
       XMP.error("The argument must be a coarray in this_image().");
       return;
@@ -2558,7 +2769,7 @@ public class XMPtransCoarrayRun
 
   /* replace intrinsic lcobound/ucobound
    */
-  private void _replaceCobound(Xobject xobj, ArrayList<XMPcoarray> coarrays,
+  private void _replaceCobound(Xobject xobj, ArrayList<XMPcoarray> candidates,
                                int lu) {
     Xobject fname = xobj.getArg(0);
     XobjList actualArgs = (XobjList)xobj.getArg(1);
@@ -2579,7 +2790,7 @@ public class XMPtransCoarrayRun
       XMP.error("Argument coarray was not found in lcobound/ucobound.");
       return;
     }
-    XMPcoarray coarray = _findCoarrayInCoarrays(arg1, coarrays);
+    XMPcoarray coarray = _findCoarrayInCoarrays(arg1, candidates);
     if (coarray == null) {
       XMP.error("The first argument must be a coarray in this_.");
       return;
@@ -2620,7 +2831,7 @@ public class XMPtransCoarrayRun
   /* replace intrinsic image_index
    */
   private void _replaceImageIndex(Xobject xobj,
-                                  ArrayList<XMPcoarray> coarrays) {
+                                  ArrayList<XMPcoarray> candidates) {
     Xobject fname = xobj.getArg(0);
     XobjList actualArgs = (XobjList)xobj.getArg(1);
     int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
@@ -2637,7 +2848,7 @@ public class XMPtransCoarrayRun
       XMP.error("Argument 'coarray' was not found in the reference of 'image_index'.");
       return;
     }
-    XMPcoarray coarray = _findCoarrayInCoarrays(arg1, coarrays);
+    XMPcoarray coarray = _findCoarrayInCoarrays(arg1, candidates);
     if (coarray == null) {
       XMP.error("The argument of 'image_index' must be a coarray.");
       return;
@@ -2668,8 +2879,8 @@ public class XMPtransCoarrayRun
   //  remove declarations of coarray variables
   //-----------------------------------------------------
   //
-  private void removeDeclOfCoarrays(ArrayList<XMPcoarray> coarrays) {
-    for (XMPcoarray coarray: coarrays)
+  private void removeDeclOfCoarrays(ArrayList<XMPcoarray> candidates) {
+    for (XMPcoarray coarray: candidates)
       removeDeclOfCoarray(coarray);
   }
 

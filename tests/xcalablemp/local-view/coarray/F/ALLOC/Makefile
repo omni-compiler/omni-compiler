@@ -14,7 +14,7 @@ OUT_allo= allo1.x allo3.x
 #allo4.x restriction: excessive auto-dealloc of allocatable-dummy-coarray
 
 OUT_epi= allodeallo.x #epi2 #epi1
-OUT_etc=allo_pipo3.x allo_loop2.x allo_hiloop.x #allo_hicall #char12  host_assoc
+OUT_etc=allo_pipo3.x allo_loop2.x #allo_hiloop.x #allo_hicall #char12  host_assoc
 OUT_debug=bug418.x bug418-2.x bug468.x
 
 #OUT_err= init1ERR.x recursiveERR.x

@@ -45,6 +45,7 @@ class AccInformation {
     Xobject getIntExpr(){
       return null;
     }
+    String getSymbol() { return null; }
     boolean isSingle(){
       return true;
     }
@@ -76,6 +77,36 @@ class AccInformation {
     @Override
     Xobject getIntExpr(){
       return arg;
+    }
+  }
+
+  class SymbolClause extends Clause {
+    private final Xobject arg;
+    SymbolClause(ACCpragma clauseKind, Xobject arg) throws ACCexception{
+      super(clauseKind);
+      if(arg == null) throw new ACCexception("null symbol");
+      this.arg = arg;
+    }
+    @Override
+    public String toString(){
+      return super.toString() + '(' + arg + ')';
+    }
+    @Override
+    Xobject toXobject(){
+      Xobject clauseXobj = super.toXobject();
+      clauseXobj.add(arg);
+      return clauseXobj;
+    }
+    void validate(AccDirective directive) throws ACCexception {
+      super.validate(directive);
+      boolean isSymbol = directive.isSymbol(arg.getSym());
+      if(isSymbol == false) {
+        throw new ACCexception("'" + arg + "' is not found");
+      }
+    }
+    @Override
+    String getSymbol(){
+      return arg.getSym();
     }
   }
 
@@ -176,6 +207,7 @@ class AccInformation {
     switch (clauseKind) {
     case INDEPENDENT:
     case SEQ:
+    case NOHOST:
       return new Clause(clauseKind);
     case IF:
     case NUM_GANGS:
@@ -193,6 +225,9 @@ class AccInformation {
       }else {
         return new IntExprClause(clauseKind, arg);
       }
+    case BIND:
+    case ROUTINE_ARG:
+      return new SymbolClause(clauseKind, arg.getArg(0));
     default:
       return new VarListClause(clauseKind, (XobjList)arg);
     }

@@ -9,7 +9,7 @@
     real, allocatable :: d(:,:)[:]
     me = this_image()
 
-    do i=1,10000
+    do i=1,100
 
        allocate(a(1000,569)[*],b(1000,800)[*])
        deallocate(a)

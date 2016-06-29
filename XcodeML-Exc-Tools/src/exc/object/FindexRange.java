@@ -55,6 +55,13 @@ public class FindexRange
    *  get lower and upper bounds of subscripts
    */
   public Xobject getLbound(int i) {
+    Xobject lbound = getLboundOrNull(i);
+    if (lbound == null)
+      lbound = Xcons.IntConstant(1);
+    return lbound;
+  }
+
+  public Xobject getLboundOrNull(int i) {
     Xobject lbound;
     if (subscripts.length <= i || subscripts[i] == null)
       return Xcons.IntConstant(1);
@@ -64,7 +71,7 @@ public class FindexRange
       return Xcons.IntConstant(1);
 
     if (lbound == null)
-      return Xcons.IntConstant(1);
+      return null;
     return lbound.cfold(block);
   }
 

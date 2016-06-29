@@ -24,6 +24,7 @@ enum ACC_pragma {
     ACC_ENTER_DATA  = 211,
     ACC_EXIT_DATA   = 212,
     ACC_ATOMIC          = 213, 
+    ACC_ROUTINE         = 214,
 
     ACC_DIR_END
 };
@@ -80,6 +81,10 @@ enum ACC_pragma_clause {
     ACC_WRITE,
     ACC_UPDATE_CLAUSE,
     ACC_CAPTURE,
+
+    ACC_BIND,
+    ACC_NOHOST,
+    ACC_ROUTINE_ARG,
 };
 
 void out_ACC_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr);
