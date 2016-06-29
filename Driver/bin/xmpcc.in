@@ -125,10 +125,12 @@ done
 [ $ENABLE_SCALASCA_ALL       = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -scalasca-all"
 [ $ENABLE_SCALASCA_SELECTIVE = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -scalasca-selective"
 [ $ENABLE_XACC = true ]         && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -facc"
-[ $DISABLE_LDG = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -no-ldg"
-[ "$DEFAULT_VECLEN" != "" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -default-veclen=${DEFAULT_VECLEN}"
-OMNI_CX2X_OPT="$OMNI_CX2X_OPT -platform=$OPENACC_PLATFORM"
-OMNI_CX2X_OPT="$OMNI_CX2X_OPT -device=$OPENACC_DEVICE"
+if [ $ENABLE_XACC = true ]; then
+    [ $DISABLE_LDG = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -no-ldg"
+    [ "$DEFAULT_VECLEN" != "" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -default-veclen=${DEFAULT_VECLEN}"
+    OMNI_CX2X_OPT="$OMNI_CX2X_OPT -platform=$OPENACC_PLATFORM"
+    OMNI_CX2X_OPT="$OMNI_CX2X_OPT -device=$OPENACC_DEVICE"
+fi
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
     FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
