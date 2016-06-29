@@ -488,6 +488,7 @@ extern expv     compile_terminal_node _ANSI_ARGS_((expr x));
 extern expv     compile_expression _ANSI_ARGS_((expr x));
 extern expv     expv_assignment _ANSI_ARGS_((expv v1, expv v2));
 extern expv     compile_function_call _ANSI_ARGS_((ID f_id, expr args));
+extern expv     compile_function_call0 _ANSI_ARGS_((ID f_id, expr args, int ignoreTypeMismatch));
 extern expv     compile_highorder_function_call _ANSI_ARGS_((ID f_id,
                                                              expr args, 
                                                              int isCall));
@@ -535,6 +536,7 @@ extern TYPE_DESC  find_struct_decl_sibling _ANSI_ARGS_((SYMBOL s));
 extern void     initialize_intrinsic _ANSI_ARGS_((void));
 extern int      is_intrinsic_function _ANSI_ARGS_((ID id));
 extern expv     compile_intrinsic_call _ANSI_ARGS_((ID id,expv args));
+extern expv     compile_intrinsic_call0 _ANSI_ARGS_((ID, expv, int));
 extern void     generate_shape_expr _ANSI_ARGS_((TYPE_DESC tp, expv dimSpec));
 
 extern EXT_ID   declare_external_proc_id _ANSI_ARGS_((SYMBOL s, TYPE_DESC tp,

@@ -4348,7 +4348,25 @@ compile_CALL_statement(expr x)
     if (ID_IS_DUMMY_ARG(id)) {
         v = compile_highorder_function_call(id, EXPR_ARG2(x), TRUE);
     } else {
-        v = compile_function_call(id, EXPR_ARG2(x));
+       v = compile_function_call0(id, EXPR_ARG2(x), TRUE);
+       if (v == NULL && PROC_CLASS(id) == P_INTRINSIC) {
+           TYPE_DESC tp = type_basic(TYPE_SUBR);
+           /* Retry to compile as 'CALL external_subroutine(..)' . */
+
+           id = declare_ident(EXPR_SYM(x1), CL_PROC);
+           ID_TYPE(id) = tp;
+
+           TYPE_SET_EXTERNAL(id);
+           ID_IS_DECLARED(id) = FALSE;
+           ID_STORAGE(id) = STG_EXT;
+           PROC_CLASS(id) = P_EXTERNAL;
+
+           TYPE_UNSET_IMPLICIT(tp);
+           TYPE_SET_USED_EXPLICIT(tp);
+
+           v = compile_function_call(id, EXPR_ARG2(x));
+
+        }
     }
 
     EXPV_TYPE(v) = type_basic(TYPE_SUBR);

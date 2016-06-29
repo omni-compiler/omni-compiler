@@ -67,8 +67,13 @@ is_intrinsic_function(ID id) {
 }
 
 
-expv 
+expv
 compile_intrinsic_call(ID id, expv args) {
+    return compile_intrinsic_call0(id, args, FALSE);
+}
+
+expv
+compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
     intrinsic_entry *ep = NULL;
     int found = 0;
     int nArgs = 0;
@@ -255,7 +260,7 @@ compile_intrinsic_call(ID id, expv args) {
         ret = expv_cons(FUNCTION_CALL, tp, symV, args);
     }
 
-    if (ret == NULL) {
+    if (ret == NULL && !ignoreTypeMismatch) {
         error_at_node((expr)args,
                       "argument(s) mismatch for an intrinsic '%s()'.",
                       iName);
