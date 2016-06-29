@@ -1,0 +1,3 @@
+      PROGRAM MAIN
+        END BLOCK
+      END PROGRAM MAIN
