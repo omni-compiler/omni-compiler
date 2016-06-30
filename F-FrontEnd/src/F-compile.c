@@ -132,6 +132,12 @@ void check_for_ACC_pragma(expr x);
 
 void set_parent_implicit_decls(void);
 
+int
+current_proc_is_block() {
+    return CURRENT_PROC_CLASS == CL_BLOCK;
+}
+
+
 void
 initialize_compile()
 {
@@ -986,6 +992,12 @@ void compile_statement1(int st_no, expr x)
         check_INDCL();
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsProtected);
         break;
+
+    case F2008_BLOCK_STATEMENT:
+    case F2008_ENDBLOCK_STATEMENT:
+        /* DO NOTHING */
+        break;
+
 
     default:
         compile_exec_statement(x);

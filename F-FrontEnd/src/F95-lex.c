@@ -68,6 +68,8 @@ extern int cdir_flag;
 extern int max_name_len; //  maximum identifier name length
 extern int dollar_ok;    // accept '$' in identifier or not.
 
+extern int current_proc_is_block();
+
 int exposed_comma,exposed_eql;
 int paren_level;
 char *bufptr = NULL;            /* pointer running in st_buffer */
@@ -1428,7 +1430,7 @@ classify_statement()
     case INTENT:
     case INTERFACE:
     case INTRINSIC:
-    case KW_BLOCK:
+    case BLOCK:
     case KW_GO:
     case KW_IN:
     case KW_KIND:
@@ -1731,23 +1733,39 @@ get_keyword_optional_blank(int class)
 
     switch(class){
     case END:
-        if((cl = get_keyword(end_keywords)) != UNKNOWN){
-            if(cl == KW_BLOCK){
-	        while(isspace(*bufptr)) bufptr++;   /* skip space */
-                if(get_keyword(keywords) == DATA) return ENDBLOCKDATA;
+        if ((cl = get_keyword(end_keywords)) != UNKNOWN){
+            if (cl == BLOCK){
+                if (!current_proc_is_block())
+                    return ENDBLOCK;
+
+                while(isspace(*bufptr)) bufptr++;   /* skip space */
+                if (get_keyword(keywords) == DATA) {
+                    return ENDBLOCKDATA;
+                } else {
+                    return ENDBLOCK;
+                }
                 break;
+            } else if (cl == BLOCKDATA){
+                return ENDBLOCKDATA;
+            } else {
+                return cl;
             }
-	    else if (cl == BLOCKDATA){
-	      return ENDBLOCKDATA;
-	    }
-            return cl;
         }
         break;
-    case KW_BLOCK: /* BLOCK DATA*/
-        if(get_keyword(keywords) == DATA) return BLOCKDATA;
+    case BLOCK: /* BLOCK or BLOCK DATA*/
+        if (get_keyword(keywords) == DATA) {
+            return BLOCKDATA;
+        } else {
+            return BLOCK;
+        }
         break;
-    case KW_ENDBLOCK: /* BLOCK DATA*/
-        if(get_keyword(keywords) == DATA) return ENDBLOCKDATA;
+    case ENDBLOCK: /* BLOCK or BLOCK DATA*/
+        if (get_keyword(keywords) == DATA) {
+            return ENDBLOCKDATA;
+        } else {
+            return ENDBLOCK;
+        }
+
         break;
 
     case KW_DBL: { /* DOBULE PRECISION */
@@ -3753,7 +3771,7 @@ struct keyword_token keywords[ ] =
     { "all",            KW_ALL },       /* #060 coarray */
     { "backspace",      BACKSPACE },
     { "blockdata",      BLOCKDATA },
-    { "block",          KW_BLOCK},      /* optional */
+    { "block",          BLOCK},      /* optional */
     { "call",           CALL },
     { "case",           CASE},
     { "character",      KW_CHARACTER, },
@@ -3778,7 +3796,7 @@ struct keyword_token keywords[ ] =
     { "elsewhere",      ELSEWHERE },
     { "else",           ELSE },
     { "exit",           EXIT },
-    { "endblock",       KW_ENDBLOCK },
+    { "endblock",       ENDBLOCK },
     { "endcritical",    ENDCRITICAL },     /* #060 coarray */
     { "enddo",          ENDDO },
     { "endfile",        ENDFILE  },
@@ -3791,6 +3809,7 @@ struct keyword_token keywords[ ] =
     { "endselect",      ENDSELECT },
     { "endsubroutine",  ENDSUBROUTINE },
     { "endblockdata",   ENDBLOCKDATA },
+    { "endblock",       ENDBLOCK },
     { "endtype",        ENDTYPE },
     { "endwhere",       ENDWHERE },
     { "end",            END  },
@@ -3873,7 +3892,7 @@ struct keyword_token keywords[ ] =
 
 struct keyword_token end_keywords[ ] =
 {
-    { "block",          KW_BLOCK },
+    { "block",          BLOCK },
     { "blockdata",      BLOCKDATA },
     { "critical",       ENDCRITICAL },     /* #060 coarray */
     { "do",             ENDDO },

@@ -154,6 +154,9 @@
 %token KW_MEMORY
 %token KW_ERROR
 
+/* Fortran 2008 keywords*/
+%token BLOCK
+%token ENDBLOCK
 
 %token REF_OP
 
@@ -169,8 +172,6 @@
 
 %token KW_DBL
 %token KW_SELECT
-%token KW_BLOCK
-%token KW_ENDBLOCK
 %token KW_GO
 %token KW_PRECISION
 %token OPERATOR
@@ -1333,6 +1334,10 @@ executable_statement:
         { $$ = list2(F_CASELABEL_STATEMENT, NULL, $2); }
         | ENDSELECT name_or_null
         { $$ = list1(F_ENDSELECT_STATEMENT,$2); }
+        | BLOCK
+        { $$ = list1(F2008_BLOCK_STATEMENT,st_name); }
+        | ENDBLOCK name_or_null
+        { $$ = list1(F2008_ENDBLOCK_STATEMENT,$2); }
         ;
 
 assign_statement_or_null:
