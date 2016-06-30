@@ -114,6 +114,8 @@ static void compile_SYNCIMAGES_statement(expr x);
 static void compile_SYNCMEMORY_statement(expr x);
 static void compile_LOCK_statement(expr x);
 static void compile_UNLOCK_statement(expr x);
+static void compile_CRITICAL_statement(expr x);
+static void compile_ENDCRITICAL_statement(expr x);
 
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
@@ -971,79 +973,12 @@ void compile_statement1(int st_no, expr x)
 
     case F2008_CRITICAL_STATEMENT:
         check_INEXEC();
-
-        if (!check_image_controll_statement_available()) return;
-
-        push_ctl(CTL_CRITICAL);
-
-        st = list2(F2008_CRITICAL_STATEMENT, NULL, NULL);
-        output_statement(st);
-        CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
-        CTL_CRIT_STATEMENT(ctl_top) = st;
-
-        /* save construct name */
-        if (EXPR_HAS_ARG1(x)) {
-            CTL_CRIT_CONST_NAME(ctl_top) = EXPR_ARG1(x);
-        }
-
-        CURRENT_STATEMENTS = NULL;
-
-        if (XMP_coarray_flag) {
-            compile_CALL_statement(list2(
-                F_CALL_STATEMENT,
-                make_enode(IDENT, (void *)find_symbol("xmpf_critical")),
-                NULL));
-        }
-
-        if (endlineno_flag){
-            if (current_line->end_ln_no) {
-                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->end_ln_no;
-            } else {
-                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
-            }
-        }
-
+        compile_CRITICAL_statement(x);
         break;
 
     case F2008_ENDCRITICAL_STATEMENT:
         check_INEXEC();
-
-        if (XMP_coarray_flag) {
-            compile_CALL_statement(list2(
-                F_CALL_STATEMENT,
-                make_enode(IDENT, (void *)find_symbol("xmpf_end_critical")),
-                NULL));
-        }
-
-        if (CTL_TYPE(ctl_top) != CTL_CRITICAL) {
-            error("'endcritical', out of place");
-            break;
-        }
-
-        /* check construct name */
-        if (CTL_CRIT_CONST_NAME(ctl_top) != NULL && EXPR_ARG1(x) == NULL) {
-            error("expect construnct name");
-            break;
-        } else if (CTL_CRIT_CONST_NAME(ctl_top) == NULL && EXPR_ARG1(x) != NULL) {
-            error("unexpected construnct name");
-            break;
-        } else if ((CTL_CRIT_CONST_NAME(ctl_top) != NULL) && EXPR_ARG1(x) != NULL) {
-            if (EXPR_SYM(CTL_CRIT_CONST_NAME(ctl_top))
-                != EXPR_SYM(EXPR_ARG1(x))) {
-                error("unmatched construct name");
-                break;
-            }
-        }
-
-
-        CTL_CRIT_BODY(ctl_top) = CURRENT_STATEMENTS;
-
-        if (endlineno_flag) {
-            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
-        }
-
-        pop_ctl();
-
+        compile_ENDCRITICAL_statement(x);
         break;
 
 
@@ -5349,7 +5284,7 @@ compile_lock_stat_args(expv st, expr x) {
 static void
 replace_CALL_statement(const char * subroutine_name, expv args)
 {
-    expr callStaement = list2(
+    expr callStaement= list2(
         F_CALL_STATEMENT,
         make_enode(IDENT, (void *)find_symbol(subroutine_name)),
         args);
@@ -5535,6 +5470,81 @@ compile_UNLOCK_statement(expr x) {
         output_statement(st);
     }
 }
+
+
+static void
+compile_CRITICAL_statement(expr x) {
+    expv st;
+
+    if (!check_image_controll_statement_available()) return;
+
+    push_ctl(CTL_CRITICAL);
+
+    st = list2(F2008_CRITICAL_STATEMENT, NULL, NULL);
+    output_statement(st);
+    CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+    CTL_CRIT_STATEMENT(ctl_top) = st;
+
+    /* save construct name */
+    if (EXPR_HAS_ARG1(x)) {
+        CTL_CRIT_CONST_NAME(ctl_top) = EXPR_ARG1(x);
+    }
+
+    CURRENT_STATEMENTS = NULL;
+
+    if (XMP_coarray_flag) {
+        replace_CALL_statement("xmpf_critical", NULL);
+        /* No need to return. */
+    }
+
+    if (endlineno_flag){
+        if (current_line->end_ln_no) {
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->end_ln_no;
+        } else {
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+        }
+    }
+}
+
+
+static void
+compile_ENDCRITICAL_statement(expr x) {
+    expv st;
+
+    if (CTL_TYPE(ctl_top) != CTL_CRITICAL) {
+        error("'endcritical', out of place");
+        return;
+    }
+
+    /* check construct name */
+    if (CTL_CRIT_CONST_NAME(ctl_top) != NULL && EXPR_ARG1(x) == NULL) {
+        error("expect construnct name");
+        return;
+    } else if (CTL_CRIT_CONST_NAME(ctl_top) == NULL && EXPR_ARG1(x) != NULL) {
+        error("unexpected construnct name");
+        return;
+    } else if ((CTL_CRIT_CONST_NAME(ctl_top) != NULL) && EXPR_ARG1(x) != NULL) {
+        if (EXPR_SYM(CTL_CRIT_CONST_NAME(ctl_top))
+            != EXPR_SYM(EXPR_ARG1(x))) {
+            error("unmatched construct name");
+            return;
+        }
+    }
+
+    if (XMP_coarray_flag) {
+        replace_CALL_statement("xmpf_end_critical", NULL);
+    }
+
+    CTL_CRIT_BODY(ctl_top) = CURRENT_STATEMENTS;
+
+    if (endlineno_flag) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    }
+
+    pop_ctl();
+
+}
+
 
 /*
  * Check if the statemenet exists inside CRITICAL construct
