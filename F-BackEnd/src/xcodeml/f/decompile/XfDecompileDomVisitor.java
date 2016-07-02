@@ -895,6 +895,10 @@ public class XfDecompileDomVisitor {
         if (valueNode != null)
             invokeEnter(valueNode);
         writer.writeToken(")");
+        ////// restriction: SAVE statement for cray-pointer variable
+        ////// named 'symbol' should be generated here if it has the
+        ////// save attribute and it does not have explicit type.
+        ////// It is necessary to complete Ver.7 coarray optimization.
     }
 
     /**

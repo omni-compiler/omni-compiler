@@ -1,4 +1,4 @@
-#OPT= --debug
+OPT= -g --debug
 #OPT= -g --debug --verbose
 NPE=3
 
@@ -19,16 +19,22 @@ BUG472= bug472.x bug472G1.x bug472G2.x bb472.x bb472G1.x bb472G2.x
 
 SPECIALS= # bug460get.x bug460put.x
 
-#VER7=iproc_ss.x iproc_mss.x
+OUT_MFILE=mf_use2.x
 
+#VER7=iproc_ss.x iproc_mss.x
 
 #OUT_err=entry1ERR
 
 #host3 host2-1 ... problem in gfortran?
 
-OUT= $(OUT_bug) $(OUT_host) $(OUT_module) $(OUT_epi) $(OUT_darg) 
+OUT= $(OUT_bug) $(OUT_host) $(OUT_module) $(OUT_epi) $(OUT_darg) #$(OUT_MFILE)
 
 include ../Makefile.common
+
+mf_use2.x:: mf_mod2.xmod
+
+mf_mod2.xmod mf_mod2.o: mf_mod2.f90
+	xmpf90 -c $(OPT) $<
 
 bug460-mod.o: bug460-mod.f90
 	xmpf90 -c $(OPT) $<

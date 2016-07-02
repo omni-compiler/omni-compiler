@@ -76,40 +76,55 @@ public class XMPtransCoarrayRun
 
   /** Available Versions currently:
    *
-   *  3 Static coarray variables are allocated inside the comunincation library 
-   *    and registered with the communication library by the initializer, which
-   *    is automatically generated at compile time corresponding to the program
-   *    and executed just before the execution of the program.
-   *    The initializer informs the program of the address of the coarrays via
-   *    common-associated cray ponters.
+   *  3 Static coarray variables are allocated inside the comunincation library and
+   *    registered with the communication library by the initializer, which is 
+   *    automatically generated at compile time corresponding to the program and 
+   *    executed just before the execution of the program. The initializer informs 
+   *    the program of the address of the coarrays via common-associated Cray ponters.
+   *                                           
+   *     comm. lib. <--call-- initializer  <--common--> user program
+   *       malloc             cray pointer              cray pointer --> data object 
    *
    *  4 (Supported only for FJ-RDMA and MPI3.) Static coarray variables are allocated
-   *    allocated statically by the Fortran system as usual. The initializer accepts 
-   *    the addresses of the coarrays from the user program by common-association,
-   *    and registers the addresses with the commmunication library. Cray pointers 
-   *    are not used.
+   *    statically by the native Fortran system. The initializer accepts the address
+   *    of the coarrays from the user program by common-association, and registers 
+   *    the address values with the commmunication library. Cray pointers are not 
+   *    used in this version.
+   *
+   *            user program <--common--> initializer --call--> comm. lib.
+   *            data object               data object           register
    *
    *  6 (Supported only For FJ-RDMA and MPI3 with some restriction.) Procedure-local
-   *    static coarrays are allocated statically by the Fortran system as usual.
-   *    Instead of using the initializer for the procedure-local coarrays, the 
-   *    registration of coarrays with the communication library is coused at the
-   *    entry point of the first call of the procedure. Cray pointers are not used.
+   *    static coarrays are allocated statically by the native Fortran system.
+   *    Instead of the initializer, the user program calls the commonication library
+   *    to register the address of the procedure-local coarrays once at the entry 
+   *    point of the first call. Cray pointers are not used.
+   *
+   *                  user program  --call only once-->  comm. lib.
+   *                  data object                        register
    *
    *  7 The initializer is generated as a part of the corresponding procedure 
-   *    starting with the ENTRY statement. So, coarrays declared in the procedure are 
-   *    commonly visible to the procedure and to the initializer as procedure-local 
-   *    variables. 
-   *    For FJ-RDMA and MPI3, procedure-local static coarrays are allocated by the
+   *    starting with the ENTRY statement. Therefore, the procedure-local coarrays 
+   *    are visible also to the initializer.
+   *      For FJ-RDMA and MPI3, procedure-local static coarrays are allocated by the
    *    Fortran system as usual and registered with the communication library by
    *    the initializer. Cray pointers or common accociation are not used.
-   *    For GASNet, procedure-local static coarrays are allocated in GASnet and 
-   *    and registered with GASNet by the initializer. The initializer informs the 
-   *    program of the address of a coarray via a Cray pointer. Common association
-   *    is not used.
+   *
+   *           user program <--share--> initializer --call--> comm. lib.
+   *                        data object                       register
+   *
+   *      For GASNet (Verion 7g), procedure-local static coarrays are allocated in
+   *    GASnet and registered with GASNet by the initializer. The initializer informs
+   *    the program of the address of a coarray via a Cray pointer. Common 
+   *    association is not used.
+   *
+   *      comm. lib. <--call-- initializer  <--share--> user program
+   *        malloc                          cray pointer       --> data object 
+   *
    */
 
   private int version;
-  private Boolean useGASNet;
+  private Boolean useMalloc;
   private Boolean onlyCafMode;
 
   private Boolean DEBUG = true;       // change me in debugger
@@ -170,13 +185,13 @@ public class XMPtransCoarrayRun
   public XMPtransCoarrayRun(XobjectDef def, XMPenv env,
                             ArrayList<XMPtransCoarrayRun> pastRuns,
                             int pass, int version,
-                            Boolean useGASNet, Boolean onlyCafMode)
+                            Boolean useMalloc, Boolean onlyCafMode)
   {
     this.def = def;
     this.env = env;
     name = def.getName();
     this.version = version;
-    this.useGASNet = useGASNet;
+    this.useMalloc = useMalloc;
     this.onlyCafMode = onlyCafMode;
 
     funcDef = new FuncDefBlock(def);
@@ -205,8 +220,8 @@ public class XMPtransCoarrayRun
       XMP.warning("Coarray Fortran Version 6 (another trial version): " + opt);
       break;
     case 7:
-      if (useGASNet)
-        XMP.warning("Coarray Fortran Version 7 (latest version) over GASNet: " + opt);
+      if (useMalloc)
+        XMP.warning("Coarray Fortran Version 7g (latest version 7 over GASNet): " + opt);
       else
         XMP.warning("Coarray Fortran Version 7 (latest version): " + opt);
       break;
@@ -679,20 +694,20 @@ public class XMPtransCoarrayRun
     }
 
     /*--- c. Cray pointer ---*/
-    if (version == 7 && useGASNet) {
+    if (version == 7 && useMalloc) {
       // c7. generate Cray-POINTER with SAVE attributes
       genDeclOfCrayPointer_withSave(staticLocalCoarrays);
     } else if (version <= 3) {
       // c. generate Cray-POINTER and COMMON statements
       genDeclOfCrayPointer(staticLocalCoarrays);
       genCommonStmtForCrayPointer(staticLocalCoarrays);
-    } else { //version 4 or 6 or 7 and !useGASNet
+    } else { //version 4 or 6 or 7 and !useMalloc
       // nothing
     }
 
     /*--- b. Execution statements for Initialization ---*/
     if (version == 7) {
-      if (useGASNet)
+      if (useMalloc)
         // b7g. generate ENTRY-block incl. count and alloc call
         readyBlockForStaticCoarrays_alloc(staticLocalCoarrays);
       else
@@ -731,7 +746,7 @@ public class XMPtransCoarrayRun
         ...
       end subroutine
     --------------------------------------------
-    output (ver.3):
+    case useMalloc (ver.3 and 7g):
     --------------------------------------------
       subroutine EX1
         use M1
@@ -745,7 +760,7 @@ public class XMPtransCoarrayRun
 
     !! Do not generate initializer here for crayptr_V1 and descptr_V1.
     --------------------------------------------
-    output (ver.4 and 6):
+    case useRegMem (ver.4, 6 and 7):
     --------------------------------------------
       subroutine EX1
         use M1
@@ -765,7 +780,7 @@ public class XMPtransCoarrayRun
     // a1. make common association of descriptors
     genCommonStmt(staticAssociatedCoarrays);
 
-    if (version >= 4) {
+    if (!useMalloc) {
       // c4. generate common block for data
       genCommonBlockForStaticCoarrays(staticAssociatedCoarrays);
     } else {
@@ -975,7 +990,7 @@ public class XMPtransCoarrayRun
         ...
       end module
     --------------------------------------------
-    output (ver.3, 7g)
+    case useMalloc (ver.3, 7g)
     (Pass1 is similar to transDeclPart_staticLocal ver.3)
     --------------------------------------------
       module EX1                                     ! pass1    ! pass2
@@ -989,7 +1004,7 @@ public class XMPtransCoarrayRun
     !! into the same file to allocate crayptr_V1 and set descptr_V1
     !! (See XMPcoarrayInitProcedure).
     --------------------------------------------
-    output (ver.4, 6, 7)
+    case useRegMem (ver.4, 6, 7)
     (Pass1 is similar to transDeclPart_staticLocal ver.4)
     --------------------------------------------
       module EX1                                     ! pass1    ! pass2
@@ -1007,7 +1022,7 @@ public class XMPtransCoarrayRun
     /*--- a. DESCRIPTOR corresponding to the coarray ---*/
     genDeclOfDescPointer(staticLocalCoarrays);
 
-    if (version == 3 || version == 7 && useGASNet) {
+    if (useMalloc) {
       // c. generate Cray-POINTER
       genDeclOfCrayPointer(staticLocalCoarrays);
     }
@@ -1212,13 +1227,12 @@ public class XMPtransCoarrayRun
       return;
     }
 
-    /* This is not necessary because these variables have implicit SAVE
-     * attributes bue to the initialization value defined later.
+    /* SAVE attribute is necessary even if this procedure is the main
+     * program because the main program will be converted later to the 
+     * subroutine called xmpf_main.
      */
-    if (!isMainProgram()) {
-      for (XMPcoarray coarray: coarrays) {
-        coarray.setSaveAttrToDescPointer();   // add SAVE attr.
-      }
+    for (XMPcoarray coarray: coarrays) {
+      coarray.setSaveAttrToDescPointer();   // add SAVE attr.
     }
 
     if (initialized) {
@@ -1492,10 +1506,8 @@ public class XMPtransCoarrayRun
   private void genCallOfPrologAndEpilog_syncall() {
     // generate "call xmpf_sync_all()" and add to the tail
     Xobject args = Xcons.List();
-    Ident fname = /*env.findVarIdent(AUTO_SYNCALL_NAME, null);      // to avoid error of tool
-    if (fname == null)
-    fname = */env.declExternIdent(AUTO_SYNCALL_NAME,
-                                  BasicType.FexternalSubroutineType);
+    Ident fname = env.declExternIdent(AUTO_SYNCALL_NAME,
+                                      BasicType.FexternalSubroutineType);
     Xobject call = fname.callSubroutine(args);
     addEpilogStmt(call);
   }
@@ -1510,7 +1522,7 @@ public class XMPtransCoarrayRun
     Ident fname1 = env.declExternIdent(COARRAY_PROLOG_NAME,
                                        BasicType.FexternalSubroutineType);
     if (args1.hasNullArg())
-      XMP.fatal("generated null argument " + fname1 +
+      XMP.fatal("INTERNAL: generated null argument " + fname1 +
                 "(genCallofPrologAndEpilog args1)");
     Xobject call1 = fname1.callSubroutine(args1);
     insertPrologStmt(call1);
@@ -1520,7 +1532,7 @@ public class XMPtransCoarrayRun
     Ident fname2 = env.declExternIdent(COARRAY_EPILOG_NAME,
                                        BasicType.FexternalSubroutineType);
     if (args2.hasNullArg())
-      XMP.fatal("generated null argument " + fname2 +
+      XMP.fatal("INTERNAL: generated null argument " + fname2 +
                 "(genCallofPrologAndEpilog args2)");
 
     Xobject call2 = fname2.callSubroutine(args2);
@@ -1719,7 +1731,7 @@ public class XMPtransCoarrayRun
       new XMPcoarrayInitProcedure(coarrays,
                                   traverseCountName,
                                   traverseInitName,
-                                  env, version);
+                                  env, version, useMalloc);
     coarrayInit.run();
   }
 
@@ -2441,12 +2453,6 @@ public class XMPtransCoarrayRun
       else if (fname.equalsIgnoreCase("atomic_ref"))
         _replaceAtomicRef(xobj, coarrays);
     }
-
-    /* remove ident of Coarray intrinsics
-     */
-    /////// Sealed. I don't know why this does not work well. //////
-    //XobjArgs idArgs = def.getFuncIdList().getArgs();
-    //_removeCoarrayIntrinsicIdents(null, idArgs);
   }
 
 
