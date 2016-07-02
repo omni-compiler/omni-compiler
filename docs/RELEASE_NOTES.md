@@ -1,5 +1,8 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 1.0.2      2016/07/05
+* Fixed lots of bugs.
+
 # ver. 1.0.1      2016/06/03
 * Remove automake from build system
 * Fixed lots of bugs.

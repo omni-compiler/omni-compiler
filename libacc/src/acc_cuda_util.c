@@ -2,12 +2,17 @@
 #include "acc_gpu_internal.h"
 #include <stdio.h>
 #include <stdbool.h>
+#include "cuda_runtime.h"
+
+#define _ACC_M_CEILi(a_, b_) (((a_) % (b_)) == 0 ? ((a_) / (b_)) : ((a_) / (b_)) + 1)
+#define _ACC_M_MAX(a_, b_) ((a_) > (b_) ? (a_) : (b_))
+#define _ACC_M_MIN(a_, b_) ((a_) > (b_) ? (b_) : (a_))
 
 void _ACC_gpu_alloc(void **addr, size_t size)
 {
   //printf("_ACC_gpu_alloc\n");
   _ACC_DEBUG("alloc addr=%p, size=%zd\n", addr, size)
-  _ACC_gpu_init_current_device_if_not_inited();
+  _ACC_init_current_device_if_not_inited(); //XXX
   cudaError_t cuda_err = cudaMalloc(addr, size);
   if (cuda_err != cudaSuccess) {
     printf("failed to allocate data on GPU\n");
@@ -44,7 +49,7 @@ void _ACC_gpu_calloc(void **addr, size_t size)
 }
 
 void _ACC_gpu_copy(void *host_addr, void *device_addr, size_t size, int direction){
-  cudaError_t cuda_err;
+  cudaError_t cuda_err = cudaSuccess;
   if(direction == _ACC_GPU_COPY_HOST_TO_DEVICE){
 	_ACC_DEBUG("copy host(%p) to dev(%p), size(%zd)\n", host_addr, device_addr, size)
     cuda_err = cudaMemcpy(device_addr, host_addr, size, cudaMemcpyHostToDevice);
@@ -61,9 +66,13 @@ void _ACC_gpu_copy(void *host_addr, void *device_addr, size_t size, int directio
   }
 }
 
+void _ACC_copy(void *host_addr, void *device_addr, size_t size, int direction){
+  _ACC_gpu_copy(host_addr, device_addr, size, direction);
+}
+
 void _ACC_gpu_copy_async(void *host_addr, void *device_addr, size_t size, int direction, int id){
   //printf("_ACC_gpu_copy_async\n");
-  cudaError_t cuda_err;
+  cudaError_t cuda_err = cudaSuccess;
   cudaStream_t stream = _ACC_gpu_get_stream(id);
 
   switch(direction){
@@ -80,6 +89,10 @@ void _ACC_gpu_copy_async(void *host_addr, void *device_addr, size_t size, int di
   if(cuda_err != cudaSuccess){
     _ACC_gpu_fatal(cuda_err);
   }
+}
+
+void _ACC_copy_async(void *host_addr, void *device_addr, size_t size, int direction, int async){
+  _ACC_gpu_copy_async(host_addr, device_addr, size, direction, async);
 }
 
 void _ACC_gpu_register_memory(void *host_addr, size_t size){
@@ -144,5 +157,22 @@ void _ACC_free_pinned(void *p)
   cudaError_t err = cudaFreeHost(p);
   if(err != cudaSuccess){
     _ACC_gpu_fatal(err);
+  }
+}
+
+void _ACC_gpu_adjust_grid(int *gridX,int *gridY, int *gridZ, int limit){
+  int total = *gridX * *gridY * *gridZ;
+  if(total > limit){
+    *gridZ = _ACC_M_MAX(1, *gridZ/_ACC_M_CEILi(total,limit));
+    total = *gridX * *gridY * *gridZ;
+
+    if(total > limit){
+      *gridY = _ACC_M_MAX(1, *gridY/_ACC_M_CEILi(total,limit));
+      total = *gridX * *gridY;
+      
+      if(total > limit){
+	*gridX = _ACC_M_CEILi(*gridX, _ACC_M_CEILi(total,limit));
+      }
+    }
   }
 }

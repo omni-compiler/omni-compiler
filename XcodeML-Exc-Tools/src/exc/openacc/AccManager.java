@@ -13,7 +13,6 @@ class AccManager {
   private Xobject vectorLength = null;
   private final Map<CforBlock, LoopExecInfo> execMethodMap = new HashMap<CforBlock, LoopExecInfo>();
 
-  private final int DEFAULT_THREAD_NUM = ACC.defaultVectorLength;
 
   //private final boolean useWorker = false;
 
@@ -119,7 +118,7 @@ class AccManager {
 
       if (execMethods.contains(ACCpragma.VECTOR)) {
         if (tsx == null) {
-          tsx = Xcons.IntConstant(DEFAULT_THREAD_NUM);
+          tsx = Xcons.IntConstant(ACC.device.getDefaultVectorLength());
         }
       }
     }

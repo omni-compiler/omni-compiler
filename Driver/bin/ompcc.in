@@ -121,6 +121,8 @@ else
 fi
 [ "$DISABLE_LDG" = true ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -no-ldg"
 [ "$DEFAULT_VECLEN" != "" ] && OMNI_CX2X_OPT="$OMNI_CX2X_OPT -default-veclen=${DEFAULT_VECLEN}"
+OMNI_CX2X_OPT="$OMNI_CX2X_OPT -platform=$OPENACC_PLATFORM"
+OMNI_CX2X_OPT="$OMNI_CX2X_OPT -device=$OPENACC_DEVICE"
 for c_file in "${c_files[@]}"; do
     C_FILE=("${c_file}")
     FILE_NAME=`omni_c_norm_file_name "${C_FILE}"`     # ./hoge/fuga.c -> hoge_2f_fuga_2f_a
@@ -163,14 +165,22 @@ for c_file in "${c_files[@]}"; do
     omni_exec $OMNI_CC_CMD $OMNI_CC_OPT "${native_add_opt[@]}" "${other_args[@]}" "${FILE_C}" -o "${FILE_O}"
 
     ### GPU Compiler ###
-    FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
-    FILE_GPUO=${TEMP_DIR}/"${FILE_NAME}".gpu.o
-    if [ -e "${FILE_CU}" ]; then
-	omni_exec $OMNI_GPUCC_CMD $OMNI_GPUCC_OPT "${FILE_CU}" -o "${FILE_GPUO}"
-	FILE_O_TMP=${TEMP_DIR}/"${FILE_NAME}".cpu.o
-        omni_exec mv "${FILE_O}" "${FILE_O_TMP}"
-        omni_exec ld -r "${FILE_O_TMP}" "${FILE_GPUO}" -o "${FILE_O}"
-        omni_exec rm -f "${FILE_O_TMP}"
+    if [ $OPENACC_PLATFORM = "CUDA" ]; then
+	FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
+	FILE_GPUO=${TEMP_DIR}/"${FILE_NAME}".gpu.o
+	if [ -e "${FILE_CU}" ]; then
+	    omni_exec $OMNI_GPUCC_CMD $OMNI_GPUCC_OPT "${FILE_CU}" -o "${FILE_GPUO}"
+	    FILE_O_TMP=${TEMP_DIR}/"${FILE_NAME}".cpu.o
+            omni_exec mv "${FILE_O}" "${FILE_O_TMP}"
+            omni_exec ld -r "${FILE_O_TMP}" "${FILE_GPUO}" -o "${FILE_O}"
+            omni_exec rm -f "${FILE_O_TMP}"
+	fi
+    elif [ $OPENACC_PLATFORM = "OpenCL" ]; then
+	FILE_CL=${TEMP_DIR}/"${FILE_NAME}"_pp.cl
+	FILE_USER_CL=`basename "${C_FILE}" .c`_pp.cl
+	if [ -e "${FILE_CL}" ]; then
+	    omni_exec cp "${FILE_CL}" "${FILE_USER_CL}"
+	fi
     fi
 
     if [ $ENABLE_LINKER = false -a "${output_file}" != "" ]; then
@@ -202,7 +212,11 @@ fi
 
 # link
 if [ $ENABLE_ACC = true ]; then
-    OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_GPUCC_LIB"
+    if [ $OPENACC_PLATFORM = "CUDA" ]; then
+	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
+    elif [ $OPENACC_PLATFORM = "OpenCL" ]; then
+	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
+    fi
     obj_files+=("$TRAVERSE_FILE_O")
 else
     obj_files+=("$OMPC_MAIN_O")
