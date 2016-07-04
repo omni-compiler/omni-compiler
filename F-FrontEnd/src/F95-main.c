@@ -111,7 +111,7 @@ int flag_module_compile = FALSE;
 
 int flag_do_module_cache = TRUE;
 
-char *xmoduleIncludeDirv;
+char *xmoduleIncludeDirv = NULL;
 
 static void
 usage()

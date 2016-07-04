@@ -2524,13 +2524,16 @@ search_intrinsic_include_path(const char * filename)
 
     if (xmoduleIncludeDirv) {
         strcpy(path, xmoduleIncludeDirv);
-        strcat(path, "/");
-        strcat(path, filename);
+    } else {
+        strcpy(path, DEFAULT_INSTRINSIC_XMODULES_PATH);
+    }
 
-        if ((fp = fopen(path, "r")) != NULL) {
-            fclose(fp);
-            return path;
-        }
+    strcat(path, "/");
+    strcat(path, filename);
+
+    if ((fp = fopen(path, "r")) != NULL) {
+        fclose(fp);
+        return path;
     }
 
     return NULL;
