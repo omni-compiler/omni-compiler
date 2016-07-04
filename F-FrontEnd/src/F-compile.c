@@ -5292,19 +5292,6 @@ replace_CALL_statement(const char * subroutine_name, expv args)
 }
 
 
-/*
- * like list_cons, but tail can be NULL
- */
-static expr
-list_cons_nullable(expr head, expr tail) {
-    if (tail == NULL) {
-        return list1(LIST, head);
-    } else {
-        return list_cons(head, tail);
-    }
-}
-
-
 static void
 compile_SYNCALL_statement(expr x) {
     expv st;
@@ -5323,12 +5310,17 @@ compile_SYNCALL_statement(expr x) {
 }
 
 
+/*
+ *  (F2008_SYNCALL_STATEMENT
+ *     expr
+ *     (LIST expr*))
+ */
 static void
 compile_SYNCIMAGES_statement(expr x) {
     expv sync_stat;
     expv image_set = NULL;
 
-    if (EXPR_ARG1(x)) {
+    if (EXPR_ARG1(x) != NULL) {
         image_set = compile_expression(EXPR_ARG1(x));
 
         if (!IS_INT(EXPV_TYPE(image_set))) {
@@ -5346,11 +5338,14 @@ compile_SYNCIMAGES_statement(expr x) {
     if (XMP_coarray_flag) {
         expr args;
         if (EXPR_ARG1(x) == NULL) {
-            // if NULL, the argment is '*' for xmpf_sync_images
+            /* if NULL, change the argment to '*' for xmpf_sync_images */
             EXPR_ARG1(x) = make_enode(STRING_CONSTANT,  (void *)strdup("*"));
         }
-        args = list_cons_nullable(
-            EXPR_ARG1(x), EXPR_HAS_ARG2(x) ? EXPR_ARG2(x) : NULL);
+        if (EXPR_HAS_ARG2(x) && EXPR_ARG2(x) != NULL) {
+            args = list2(LIST, EXPR_ARG1(x), EXPR_ARG2(x));
+        } else {
+            args = list1(LIST, EXPR_ARG1(x));
+        }
 
         replace_CALL_statement("xmpf_sync_images", args);
 
@@ -5360,6 +5355,10 @@ compile_SYNCIMAGES_statement(expr x) {
 }
 
 
+/*
+ *  (F2008_SYNCMEMORY_STATEMENT
+ *     (LIST expr*))
+ */
 static void
 compile_SYNCMEMORY_statement(expr x) {
     expv st;
@@ -5406,9 +5405,13 @@ type_is_LOCK_TYPE(TYPE_DESC tp) {
 }
 
 
+/*
+ *  (F2008_LOCK_STATEMENT
+ *     expr
+ *     (LIST expr*))
+ */
 static void
 compile_LOCK_statement(expr x) {
-    expv st;
     expv lock_variable;
     expv sync_stat_list;
 
@@ -5426,21 +5429,29 @@ compile_LOCK_statement(expr x) {
     if (!compile_lock_stat_args(sync_stat_list, EXPR_ARG2(x))) return;
 
     if (XMP_coarray_flag) {
-        expr args = list_cons_nullable(
-            EXPR_ARG1(x), EXPR_HAS_ARG2(x) ? EXPR_ARG2(x) : NULL);
+        expr args;
+        if (EXPR_HAS_ARG2(x) && EXPR_ARG2(x) != NULL) {
+            args = list2(LIST, EXPR_ARG1(x), EXPR_ARG2(x));
+        } else {
+            args = list1(LIST, EXPR_ARG1(x));
+        }
 
         replace_CALL_statement("xmpf_lock", args);
 
     } else {
-        st = list2(F2008_LOCK_STATEMENT, lock_variable, sync_stat_list);
-        output_statement(st);
+        output_statement(
+            list2(F2008_LOCK_STATEMENT, lock_variable, sync_stat_list));
     }
 }
 
 
+/*
+ *  (F2008_UNLOCK_STATEMENT
+ *     expr
+ *     (LIST expr*))
+ */
 static void
 compile_UNLOCK_statement(expr x) {
-    expv st;
     expv lock_variable;
     expv sync_stat_list;
 
@@ -5459,19 +5470,24 @@ compile_UNLOCK_statement(expr x) {
 
     if (XMP_coarray_flag) {
         expr args;
-        args = list_cons_nullable(
-            EXPR_ARG1(x), EXPR_HAS_ARG2(x) ? EXPR_ARG2(x) : NULL);
+        if (EXPR_HAS_ARG2(x) && EXPR_ARG2(x) != NULL) {
+            args = list2(LIST, EXPR_ARG1(x), EXPR_ARG2(x));
+        } else {
+            args = list1(LIST, EXPR_ARG1(x));
+        }
 
         replace_CALL_statement("xmpf_unlock", args);
 
     } else {
-
-        st = list2(F2008_UNLOCK_STATEMENT, lock_variable, sync_stat_list);
-        output_statement(st);
+        output_statement(
+            list2(F2008_UNLOCK_STATEMENT, lock_variable, sync_stat_list));
     }
 }
 
 
+/*
+ *  (F2008_CRITICAL_STATEMENT expr)
+ */
 static void
 compile_CRITICAL_statement(expr x) {
     expv st;
@@ -5507,10 +5523,11 @@ compile_CRITICAL_statement(expr x) {
 }
 
 
+/*
+ *  (F2008_ENDCRITICAL_STATEMENT expr)
+ */
 static void
 compile_ENDCRITICAL_statement(expr x) {
-    expv st;
-
     if (CTL_TYPE(ctl_top) != CTL_CRITICAL) {
         error("'endcritical', out of place");
         return;
