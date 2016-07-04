@@ -5346,7 +5346,7 @@ compile_SYNCIMAGES_statement(expr x) {
             EXPR_ARG1(x) = make_enode(STRING_CONSTANT,  (void *)strdup("*"));
         }
         if (EXPR_HAS_ARG2(x) && EXPR_ARG2(x) != NULL) {
-            args = list2(LIST, EXPR_ARG1(x), EXPR_ARG2(x));
+            args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
         } else {
             args = list1(LIST, EXPR_ARG1(x));
         }
@@ -5435,7 +5435,7 @@ compile_LOCK_statement(expr x) {
     if (XMP_coarray_flag) {
         expr args;
         if (EXPR_HAS_ARG2(x) && EXPR_ARG2(x) != NULL) {
-            args = list2(LIST, EXPR_ARG1(x), EXPR_ARG2(x));
+            args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
         } else {
             args = list1(LIST, EXPR_ARG1(x));
         }
@@ -5475,7 +5475,7 @@ compile_UNLOCK_statement(expr x) {
     if (XMP_coarray_flag) {
         expr args;
         if (EXPR_HAS_ARG2(x) && EXPR_ARG2(x) != NULL) {
-            args = list2(LIST, EXPR_ARG1(x), EXPR_ARG2(x));
+            args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
         } else {
             args = list1(LIST, EXPR_ARG1(x));
         }
