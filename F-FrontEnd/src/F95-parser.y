@@ -385,8 +385,8 @@ gen_default_real_kind(void) {
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
 %type <val> result_opt type_keyword
 %type <val> action_statement95
-%type <val> action_coarray_statement coarray_syncall_keyword coarray_syncall_stat_keyword coarray_syncimages_keyword other_coarray_keyword
-%type <val> syncimages_arg_list
+%type <val> action_coarray_statement other_coarray_keyword
+%type <val> sync_stat_arg_list sync_stat_arg image_set
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
@@ -1332,43 +1332,62 @@ allocation:
         ;
 
 action_coarray_statement:
-          coarray_syncall_keyword 
-        { $$ = list2(F_CALL_STATEMENT,$1,NULL); }
-        | coarray_syncall_stat_keyword '(' syncimages_arg_list ')'
-        { $$ = list2(F_CALL_STATEMENT,$1,$3); }
-        | coarray_syncimages_keyword '(' syncimages_arg_list ')'
-        { $$ = list2(F_CALL_STATEMENT,$1,$3); }
+          SYNCALL
+        { $$ = list1(F2008_SYNCALL_STATEMENT,NULL); }
+        | SYNCALL '(' ')'
+        { $$ = list1(F2008_SYNCALL_STATEMENT,NULL); }
+        | SYNCALL '(' sync_stat_arg_list ')'
+        { $$ = list1(F2008_SYNCALL_STATEMENT,$3); }
+        | SYNCIMAGES '(' image_set ')'
+        { $$ = list2(F2008_SYNCIMAGES_STATEMENT,$3, NULL); }
+        | SYNCIMAGES '(' image_set ',' sync_stat_arg_list ')'
+        { $$ = list2(F2008_SYNCIMAGES_STATEMENT,$3, $5); }
+        | SYNCMEMORY
+        { $$ = list1(F2008_SYNCMEMORY_STATEMENT,NULL); }
+        | SYNCMEMORY '(' ')'
+        { $$ = list1(F2008_SYNCMEMORY_STATEMENT,NULL); }
+        | SYNCMEMORY '(' sync_stat_arg_list ')'
+        { $$ = list1(F2008_SYNCMEMORY_STATEMENT,$3); }
+        | CRITICAL
+        { $$ = list1(F2008_CRITICAL_STATEMENT,st_name); }
+        | ENDCRITICAL
+        { $$ = list1(F2008_ENDCRITICAL_STATEMENT,NULL); }
+        | ENDCRITICAL IDENTIFIER
+        { $$ = list1(F2008_ENDCRITICAL_STATEMENT,$2); }
+        | LOCK '(' expr ')'
+        { $$ = list2(F2008_LOCK_STATEMENT,$3, NULL); }
+        | LOCK '(' expr ',' sync_stat_arg_list ')'
+        { $$ = list2(F2008_LOCK_STATEMENT,$3, $5); }
+        | UNLOCK '(' expr ')'
+        { $$ = list2(F2008_UNLOCK_STATEMENT,$3, NULL); }
+        | UNLOCK '(' expr ',' sync_stat_arg_list ')'
+        { $$ = list2(F2008_UNLOCK_STATEMENT,$3, $5); }
         | other_coarray_keyword parenthesis_arg_list_or_null
         { $$ = list2(F_CALL_STATEMENT,$1,$2); }
         ;
 
-coarray_syncall_keyword:
-          SYNCALL
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_all")); }
+
+sync_stat_arg_list:
+          sync_stat_arg
+        { $$ = list1(LIST, $1); }
+        | sync_stat_arg_list ',' sync_stat_arg
+        { $$ = list_put_last($1,$3); }
         ;
 
-coarray_syncall_stat_keyword:
-          SYNCALL
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_all_stat")); }
+sync_stat_arg:
+          IDENTIFIER '=' IDENTIFIER
+        { $$ = list2(F_SET_EXPR,$1,$3); }
         ;
 
-coarray_syncimages_keyword:
-          SYNCIMAGES 
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_images")); }
+image_set:
+          expr
+        { $$ = $1; }
+        | '*'
+        { $$ = NULL; }
         ;
 
 other_coarray_keyword:
-          SYNCMEMORY
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_memory")); }
-        | LOCK
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_lock")); }
-        | UNLOCK
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_unlock")); }
-        | CRITICAL
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_critical")); }
-        | ENDCRITICAL
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_end_critical")); }
-        | ERRORSTOP
+          ERRORSTOP
         { $$ = GEN_NODE(IDENT, find_symbol("xmpf_error_stop")); }
         ;
 
@@ -1409,14 +1428,6 @@ arg:
          { $$ = list3(F95_TRIPLET_EXPR,$1,NULL,$3); }
         ;
 
-syncimages_arg_list:
-          expr
-        { $$ = list1(LIST,$1); }
-        | '*'
-        { $$ = list1(LIST,GEN_NODE(STRING_CONSTANT,strdup("*"))); }
-        | syncimages_arg_list ',' arg
-        { $$ = list_put_last($1,$3); }
-        ;
 
 image_selector:
           '[' cosubscript_list ']'

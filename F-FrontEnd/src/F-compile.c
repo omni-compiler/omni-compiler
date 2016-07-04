@@ -40,6 +40,10 @@ extern int fixed_line_len_kind;
 extern int auto_save_attr_kb;
 
 
+/* Translate image control statements to xmp subroutine call statements */
+int XMP_coarray_flag = TRUE;
+
+
 /* control stack */
 CTL ctls[MAX_CTL];
 CTL *ctl_top;
@@ -102,6 +106,16 @@ static void fix_array_dimensions_recursive(ID ip);
 static void fix_pointer_pointee_recursive(TYPE_DESC tp);
 static void compile_data_style_decl(expr x);
 
+static int check_image_controll_statement_available();
+static int check_inside_CRITICAL_construct();
+
+static void compile_SYNCALL_statement(expr x);
+static void compile_SYNCIMAGES_statement(expr x);
+static void compile_SYNCMEMORY_statement(expr x);
+static void compile_LOCK_statement(expr x);
+static void compile_UNLOCK_statement(expr x);
+static void compile_CRITICAL_statement(expr x);
+static void compile_ENDCRITICAL_statement(expr x);
 
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
@@ -407,6 +421,7 @@ void compile_statement1(int st_no, expr x)
     case F95_ENDSUBROUTINE_STATEMENT:  /* (F95_END_SUBROUTINE_STATEMENT) */
     case F95_ENDBLOCKDATA_STATEMENT:
         check_INEXEC();
+        if (!check_image_controll_statement_available()) return;
 	// move into end_procedure()
 	//if (endlineno_flag)
 	//ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
@@ -415,6 +430,9 @@ void compile_statement1(int st_no, expr x)
 
     case F95_ENDPROGRAM_STATEMENT:  /* (F95_END_PROGRAM_STATEMENT) */
         check_INEXEC();
+
+        if (!check_image_controll_statement_available()) return;
+
 	// move into end_procedure()
 	//if (endlineno_flag)
 	//if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
@@ -422,6 +440,9 @@ void compile_statement1(int st_no, expr x)
         end_procedure();
         break;
     case F_END_STATEMENT:       /* (F_END_STATEMENT) */
+
+        if (!check_image_controll_statement_available()) return;
+
         if((CURRENT_PROC_NAME == NULL ||
             (CURRENT_PROC_CLASS == CL_MODULE)) &&
             current_module_name != NULL) {
@@ -950,6 +971,17 @@ void compile_statement1(int st_no, expr x)
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsPrivate);
         break;
 
+    case F2008_CRITICAL_STATEMENT:
+        check_INEXEC();
+        compile_CRITICAL_statement(x);
+        break;
+
+    case F2008_ENDCRITICAL_STATEMENT:
+        check_INEXEC();
+        compile_ENDCRITICAL_statement(x);
+        break;
+
+
     default:
         compile_exec_statement(x);
         break;
@@ -1101,6 +1133,7 @@ compile_exec_statement(expr x)
         break;
 
     case F_STOP_STATEMENT:
+        if (!check_image_controll_statement_available()) return;
     case F_PAUSE_STATEMENT:
         compile_STOP_PAUSE_statement(x);
         break;
@@ -1164,6 +1197,26 @@ compile_exec_statement(expr x)
 
     case F95_POINTER_SET_STATEMENT:
         compile_POINTER_SET_statement(x);
+        break;
+
+    case F2008_SYNCALL_STATEMENT:
+        compile_SYNCALL_statement(x);
+        break;
+
+    case F2008_SYNCIMAGES_STATEMENT:
+        compile_SYNCIMAGES_statement(x);
+        break;
+
+    case F2008_SYNCMEMORY_STATEMENT:
+        compile_SYNCMEMORY_statement(x);
+        break;
+
+    case F2008_LOCK_STATEMENT:
+        compile_LOCK_statement(x);
+        break;
+
+    case F2008_UNLOCK_STATEMENT:
+        compile_UNLOCK_statement(x);
         break;
 
     default:
@@ -2563,7 +2616,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
 
         if (do_var == NULL || do_init == NULL || 
             do_limit == NULL || do_incr == NULL) return;
-        
+
         var_tp = EXPV_TYPE(do_var);
         if (!IS_INT(var_tp) && !IS_REAL(var_tp)) {
             error("bad type on do variable");
@@ -3912,10 +3965,13 @@ compile_member_ref(expr x)
     // TODO:
     //	merge type override all cases (array/substr/plain scalar).
     if (TYPE_IS_POINTER(stVTyp) ||
-        TYPE_IS_TARGET(stVTyp)) {
+        TYPE_IS_TARGET(stVTyp) ||
+        TYPE_IS_COINDEXED(stVTyp)) {
         /*
          * If type of struct_v has pointer/pointee flags on, members
          * should have those flags on too.
+         *
+         * And if type of struct_v is coarray, members are coarray.
          */
         TYPE_DESC mVTyp = ID_TYPE(member_id);
         TYPE_DESC retTyp = NULL;
@@ -3928,6 +3984,8 @@ compile_member_ref(expr x)
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_POINTER(mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_TARGET(mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_ALLOCATABLE(mVTyp);
+
+        TYPE_CODIMENSION(retTyp) = TYPE_CODIMENSION(stVTyp);
 
         /*
          * To avoid overwrite, check original flags before copy.
@@ -4035,6 +4093,8 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
     enum expr_code code = EXPR_CODE(x);
     expv tmpAssignV = NULL;
 
+    int isImageControllStatement = FALSE;
+
     args = list0(LIST);
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
         r = LIST_ITEM(lp);
@@ -4072,6 +4132,10 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
             if (ev == NULL)
                 continue;
 
+            if (TYPE_IS_COINDEXED(EXPV_TYPE(ev))) {
+                isImageControllStatement = TRUE;
+            }
+
             switch(EXPV_CODE(ev)) {
             case F95_MEMBER_REF:
             case F_VAR:
@@ -4092,6 +4156,9 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
             }
         }
     }
+
+    if (isImageControllStatement && !check_image_controll_statement_available())
+        return;
 
     v = expv_cons(code, NULL, args, vstat);
     EXPV_LINE(v) = EXPR_LINE(x);
@@ -4158,7 +4225,12 @@ compile_CALL_statement(expr x)
         if (ID_CLASS(id) == CL_UNKNOWN) {
             ID_CLASS(id) = CL_PROC;
         }
-        if (PROC_CLASS(id) == P_UNKNOWN) {
+        if (is_intrinsic_function(id)) {
+            PROC_CLASS(id) = P_INTRINSIC;
+            TYPE_SET_INTRINSIC(id);
+            ID_STORAGE(id) = STG_NONE;
+            ID_IS_DECLARED(id) = TRUE;
+        } else if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_EXTERNAL;
             TYPE_SET_EXTERNAL(id);
         }
@@ -4215,8 +4287,27 @@ compile_CALL_statement(expr x)
     if (ID_IS_DUMMY_ARG(id)) {
         v = compile_highorder_function_call(id, EXPR_ARG2(x), TRUE);
     } else {
-        v = compile_function_call(id, EXPR_ARG2(x));
+       v = compile_function_call0(id, EXPR_ARG2(x), TRUE);
+       if (v == NULL && PROC_CLASS(id) == P_INTRINSIC) {
+           TYPE_DESC tp = type_basic(TYPE_SUBR);
+           /* Retry to compile as 'CALL external_subroutine(..)' . */
+
+           id = declare_ident(EXPR_SYM(x1), CL_PROC);
+           ID_TYPE(id) = tp;
+
+           TYPE_SET_EXTERNAL(id);
+           ID_IS_DECLARED(id) = FALSE;
+           ID_STORAGE(id) = STG_EXT;
+           PROC_CLASS(id) = P_EXTERNAL;
+
+           TYPE_UNSET_IMPLICIT(tp);
+           TYPE_SET_USED_EXPLICIT(tp);
+
+           v = compile_function_call(id, EXPR_ARG2(x));
+
+        }
     }
+
     EXPV_TYPE(v) = type_basic(TYPE_SUBR);
     output_statement(v);
 }
@@ -4226,6 +4317,11 @@ static void
 compile_RETURN_statement(expr x)
 {
     /* (F_RETURN_STATMENT arg) */
+    if (check_inside_CRITICAL_construct()) {
+        error("RETURN statement in CRITICAL block");
+        return;
+    }
+
     if(EXPR_ARG1(x) != NULL){
         error("alternative return is not supported");
         return;
@@ -5092,3 +5188,408 @@ compile_data_style_decl(expr decl_list)
     }
 }
 
+/*
+ * Common function for compile_sync_stat_args and compile_lock_stat_args
+ */
+static int
+compile_stat_args(expv st, expr x, int expect_acquired_lock) {
+    list lp;
+    int has_keyword_acquired_lock = FALSE;
+    int has_keyword_stat = FALSE;
+    int has_keyword_errmsg = FALSE;
+
+    if (x == NULL)
+        return TRUE;
+
+    FOR_ITEMS_IN_LIST(lp, x) {
+        expr v, arg;
+
+        v = LIST_ITEM(lp);
+
+        if (EXPR_CODE(v) != F_SET_EXPR) {
+            fprintf(stderr, "EXPR_CODE(x) is %d\n", EXPR_CODE(v));
+            fatal("%s: not F_SET_EXPR.", __func__);
+        }
+
+        arg = compile_expression(EXPR_ARG2(v));
+        if (EXPV_CODE(arg) != F_VAR) {
+            error("not a variable.");
+            return FALSE;
+        }
+
+        char *keyword = SYM_NAME(EXPR_SYM(EXPR_ARG1(v)));
+        if (keyword == NULL || *keyword == '\0') {
+            fatal("%s: invalid F_SET_EXPR.", __func__);
+        }
+
+        if (strcmp("stat", keyword) == 0) {
+            if (has_keyword_stat == TRUE) {
+                error("no specifier shall appear more than once");
+                return FALSE;
+            }
+            has_keyword_stat = TRUE;
+
+            if (!IS_INT(EXPV_TYPE(arg))) {
+                error("stat variable should be interger");
+                return FALSE;
+            }
+
+        } else if (strcmp("errmsg", keyword) == 0) {
+            if (has_keyword_errmsg == TRUE) {
+                error("no specifier shall appear more than once");
+                return FALSE;
+            }
+            has_keyword_errmsg = TRUE;
+
+            if (!IS_CHAR(EXPV_TYPE(arg))) {
+                error("errmsg variable should be character");
+                return FALSE;
+            }
+
+        } else if (expect_acquired_lock &&
+                   strcmp("acquired_lock", keyword) == 0) {
+            if (has_keyword_acquired_lock == TRUE) {
+                error("no specifier shall appear more than once");
+                return FALSE;
+            }
+            has_keyword_acquired_lock = TRUE;
+
+            if (!IS_LOGICAL(EXPV_TYPE(arg))) {
+                error("errmsg variable should be character");
+                return FALSE;
+            }
+
+
+        } else {
+            error("unexpected specifier '%s'", keyword);
+            return FALSE;
+        }
+
+        EXPV_KWOPT_NAME(arg) = (const char *)strdup(keyword);
+
+        list_put_last(st, arg);
+    }
+    return TRUE;
+}
+
+
+static int
+compile_sync_stat_args(expv st, expr x) {
+    return compile_stat_args(st, x, FALSE);
+}
+
+
+static int
+compile_lock_stat_args(expv st, expr x) {
+    return compile_stat_args(st, x, TRUE);
+}
+
+
+static void
+replace_CALL_statement(const char * subroutine_name, expv args)
+{
+    expr callStaement= list2(
+        F_CALL_STATEMENT,
+        make_enode(IDENT, (void *)find_symbol(subroutine_name)),
+        args);
+    compile_CALL_statement(callStaement);
+}
+
+
+static void
+compile_SYNCALL_statement(expr x) {
+    expv st;
+
+    if (!check_image_controll_statement_available()) return;
+
+    st = list0(F2008_SYNCALL_STATEMENT);
+    /* Check and compile sync stat args */
+    if (!compile_sync_stat_args(st, EXPR_ARG1(x))) return;
+
+    if (XMP_coarray_flag) {
+        replace_CALL_statement("xmpf_sync_all", EXPR_ARG1(x));
+    } else {
+        output_statement(st);
+    }
+}
+
+
+/*
+ *  (F2008_SYNCALL_STATEMENT
+ *     expr
+ *     (LIST expr*))
+ */
+static void
+compile_SYNCIMAGES_statement(expr x) {
+    expv sync_stat;
+    expv image_set = NULL;
+
+    if (EXPR_ARG1(x) != NULL) {
+        image_set = compile_expression(EXPR_ARG1(x));
+
+        if (!IS_INT(EXPV_TYPE(image_set))) {
+            error("The first argument of SYNC IMAGES statement must be INTEGER");
+            return;
+        }
+    }
+
+    if (!check_image_controll_statement_available()) return;
+
+    sync_stat = list0(LIST);
+    /* Check and compile sync stat args */
+    if (!compile_sync_stat_args(sync_stat, EXPR_ARG2(x))) return;
+
+    if (XMP_coarray_flag) {
+        expr args;
+        if (EXPR_ARG1(x) == NULL) {
+            /* if NULL, change the argment to '*' for xmpf_sync_images */
+            EXPR_ARG1(x) = make_enode(STRING_CONSTANT,  (void *)strdup("*"));
+        }
+        if (EXPR_HAS_ARG2(x) && EXPR_ARG2(x) != NULL) {
+            args = list2(LIST, EXPR_ARG1(x), EXPR_ARG2(x));
+        } else {
+            args = list1(LIST, EXPR_ARG1(x));
+        }
+
+        replace_CALL_statement("xmpf_sync_images", args);
+
+    } else {
+        output_statement(list2(F2008_SYNCIMAGES_STATEMENT, image_set, sync_stat));
+    }
+}
+
+
+/*
+ *  (F2008_SYNCMEMORY_STATEMENT
+ *     (LIST expr*))
+ */
+static void
+compile_SYNCMEMORY_statement(expr x) {
+    expv st;
+
+    if (!check_image_controll_statement_available()) return;
+
+    st = list0(F2008_SYNCMEMORY_STATEMENT);
+    /* Check and compile sync stat args */
+    if (!compile_sync_stat_args(st, EXPR_ARG1(x))) return;
+
+    if (XMP_coarray_flag) {
+        replace_CALL_statement("xmpf_sync_memory", EXPR_ARG1(x));
+    } else {
+        output_statement(st);
+    }
+}
+
+/*
+ * Check a type is LOCK_TYPE of the intrinsic module ISO_FORTRAN_ENV
+ */
+static int
+type_is_LOCK_TYPE(TYPE_DESC tp) {
+    ID tagname;
+
+    if (!IS_STRUCT_TYPE(tp))
+        return FALSE;
+
+    while (TYPE_REF(tp) && IS_STRUCT_TYPE(tp)) {
+        tp = TYPE_REF(tp);
+    }
+    tagname = TYPE_TAGNAME(tp);
+
+    if (tagname != NULL &&
+        ID_USEASSOC_INFO(tagname) != NULL &&
+        strcmp("lock_type",
+               SYM_NAME(ID_USEASSOC_INFO(tagname)->original_name)) == 0 &&
+        strcmp("iso_fortran_env",
+               SYM_NAME(ID_USEASSOC_INFO(tagname)->module_name)) == 0 &&
+        ID_USEASSOC_INFO(tagname)->module->is_intrinsic) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+
+/*
+ *  (F2008_LOCK_STATEMENT
+ *     expr
+ *     (LIST expr*))
+ */
+static void
+compile_LOCK_statement(expr x) {
+    expv lock_variable;
+    expv sync_stat_list;
+
+    if (!check_image_controll_statement_available()) return;
+
+    lock_variable = compile_expression(EXPR_ARG1(x));
+    /* CHECK lock_variable */
+    if (!type_is_LOCK_TYPE(EXPV_TYPE(lock_variable))) {
+        error("The first argument of lock statement must be LOCK_TYPE");
+        return;
+    }
+
+    sync_stat_list = list0(LIST);
+    /* Check and compile lock stat args */
+    if (!compile_lock_stat_args(sync_stat_list, EXPR_ARG2(x))) return;
+
+    if (XMP_coarray_flag) {
+        expr args;
+        if (EXPR_HAS_ARG2(x) && EXPR_ARG2(x) != NULL) {
+            args = list2(LIST, EXPR_ARG1(x), EXPR_ARG2(x));
+        } else {
+            args = list1(LIST, EXPR_ARG1(x));
+        }
+
+        replace_CALL_statement("xmpf_lock", args);
+
+    } else {
+        output_statement(
+            list2(F2008_LOCK_STATEMENT, lock_variable, sync_stat_list));
+    }
+}
+
+
+/*
+ *  (F2008_UNLOCK_STATEMENT
+ *     expr
+ *     (LIST expr*))
+ */
+static void
+compile_UNLOCK_statement(expr x) {
+    expv lock_variable;
+    expv sync_stat_list;
+
+    if (!check_image_controll_statement_available()) return;
+
+    lock_variable = compile_expression(EXPR_ARG1(x));
+    /* CHECK lock_variable */
+    if (!type_is_LOCK_TYPE(EXPV_TYPE(lock_variable))) {
+        error("The first argument of unlock statement must be LOCK_TYPE");
+        return;
+    }
+
+    sync_stat_list = list0(LIST);
+    /* Check and compile sync stat args */
+    if (!compile_sync_stat_args(sync_stat_list, EXPR_ARG2(x))) return;
+
+    if (XMP_coarray_flag) {
+        expr args;
+        if (EXPR_HAS_ARG2(x) && EXPR_ARG2(x) != NULL) {
+            args = list2(LIST, EXPR_ARG1(x), EXPR_ARG2(x));
+        } else {
+            args = list1(LIST, EXPR_ARG1(x));
+        }
+
+        replace_CALL_statement("xmpf_unlock", args);
+
+    } else {
+        output_statement(
+            list2(F2008_UNLOCK_STATEMENT, lock_variable, sync_stat_list));
+    }
+}
+
+
+/*
+ *  (F2008_CRITICAL_STATEMENT expr)
+ */
+static void
+compile_CRITICAL_statement(expr x) {
+    expv st;
+
+    if (!check_image_controll_statement_available()) return;
+
+    push_ctl(CTL_CRITICAL);
+
+    st = list2(F2008_CRITICAL_STATEMENT, NULL, NULL);
+    output_statement(st);
+    CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+    CTL_CRIT_STATEMENT(ctl_top) = st;
+
+    /* save construct name */
+    if (EXPR_HAS_ARG1(x)) {
+        CTL_CRIT_CONST_NAME(ctl_top) = EXPR_ARG1(x);
+    }
+
+    CURRENT_STATEMENTS = NULL;
+
+    if (XMP_coarray_flag) {
+        replace_CALL_statement("xmpf_critical", NULL);
+        /* No need to return. */
+    }
+
+    if (endlineno_flag){
+        if (current_line->end_ln_no) {
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->end_ln_no;
+        } else {
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+        }
+    }
+}
+
+
+/*
+ *  (F2008_ENDCRITICAL_STATEMENT expr)
+ */
+static void
+compile_ENDCRITICAL_statement(expr x) {
+    if (CTL_TYPE(ctl_top) != CTL_CRITICAL) {
+        error("'endcritical', out of place");
+        return;
+    }
+
+    /* check construct name */
+    if (CTL_CRIT_CONST_NAME(ctl_top) != NULL && EXPR_ARG1(x) == NULL) {
+        error("expect construnct name");
+        return;
+    } else if (CTL_CRIT_CONST_NAME(ctl_top) == NULL && EXPR_ARG1(x) != NULL) {
+        error("unexpected construnct name");
+        return;
+    } else if ((CTL_CRIT_CONST_NAME(ctl_top) != NULL) && EXPR_ARG1(x) != NULL) {
+        if (EXPR_SYM(CTL_CRIT_CONST_NAME(ctl_top))
+            != EXPR_SYM(EXPR_ARG1(x))) {
+            error("unmatched construct name");
+            return;
+        }
+    }
+
+    if (XMP_coarray_flag) {
+        replace_CALL_statement("xmpf_end_critical", NULL);
+    }
+
+    CTL_CRIT_BODY(ctl_top) = CURRENT_STATEMENTS;
+
+    if (endlineno_flag) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    }
+
+    pop_ctl();
+
+}
+
+
+/*
+ * Check if the statemenet exists inside CRITICAL construct
+ */
+static int
+check_inside_CRITICAL_construct() {
+    CTL * cp;
+    for(cp = ctl_top; cp >= ctls; cp--){
+        if (CTL_TYPE(cp) == CTL_CRITICAL) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/*
+ * Check if image controll statement can exist
+ */
+static int
+check_image_controll_statement_available() {
+    if (check_inside_CRITICAL_construct()) {
+        error("Image controll statement in CRITICAL block");
+        return FALSE;
+    }
+
+    return TRUE;
+}

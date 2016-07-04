@@ -1761,6 +1761,13 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
     }
 
     /*
+     * copy coShape from original type
+     */
+    if (TYPE_IS_COINDEXED(tp)) {
+        TYPE_CODIMENSION(tq) = TYPE_CODIMENSION(tp);
+    }
+
+    /*
      * copy type attributes from original type
      */
     if (id != NULL) {
@@ -2373,6 +2380,11 @@ chose_module_procedure_by_args(EXT_ID modProcIDs, expv args) {
 
 expv
 compile_function_call(ID f_id, expr args) {
+    return compile_function_call0(f_id, args, FALSE);
+}
+
+expv
+compile_function_call0(ID f_id, expr args, int ignoreTypeMismatch) {
     expv a, v = NULL;
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
@@ -2475,7 +2487,7 @@ compile_function_call(ID f_id, expr args) {
         }
 
         case P_INTRINSIC:
-            v = compile_intrinsic_call(f_id, compile_data_args(args));
+            v = compile_intrinsic_call0(f_id, compile_data_args(args), ignoreTypeMismatch);
             break;
 
         case P_STFUNCT:
@@ -2967,6 +2979,14 @@ compile_member_array_ref(expr x, expv v)
     }
 
     tp = EXPV_TYPE(v);
+
+    /*
+     * copy coShape from original type
+     */
+    if (TYPE_IS_COINDEXED(tq)) {
+        TYPE_CODIMENSION(tp) = TYPE_CODIMENSION(tq);
+    }
+
     if (IS_ARRAY_TYPE(tp)) {
         TYPE_DESC new_tp;
         expv new_v = compile_array_ref(NULL, v, indices, TRUE);
