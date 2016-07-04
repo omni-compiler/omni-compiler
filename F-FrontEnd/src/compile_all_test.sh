@@ -38,6 +38,7 @@ fi
 export OMNI_JAVA
 frontend="${work}/F-FrontEnd/src/F_Front -fno-xmp-coarray -fintrinsic-xmodules-path ${OMNI_HOME}/F-FrontEnd/src/fincludes"
 backend="${work}/F-BackEnd/bin/F_Back"
+backendOpt="-fcoarray-no-use-statement"
 nativecomp="gfortran -fcoarray=single"
 tmpdir=${work}/compile
 if test -z "${testdata}"; then
@@ -73,7 +74,7 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' | sort | x
     ${frontend} ${F_FRONT_TEST_OPTS} ${fOpts} -I ${testdata} ${f} \
         -o ${xmlOut} > ${errOut} 2>&1
     if test $? -eq 0; then
-        ${backend} ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1
+        ${backend} ${backendOpt} ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1
         if test $? -eq 0; then
             ${nativecomp} -c ${decompiledSrc} -o ${binOut} >> ${errOut} 2>&1
 
