@@ -226,6 +226,9 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   _XMP_nodes_info_t *ni = adesc->align_template->chunk[target_tdim].onto_nodes_info;
 
   int ndims = adesc->dim;
+  if(adesc->array_addr_p == dev_array_addr){
+    _XMP_fatal("device addr is the same as host addr for reflect.");
+  }
 
   // 0-origin
   int my_pos = ni->rank;
@@ -275,7 +278,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   //  int count_offset = 0;
 
   if (_XMPF_running && !_XMPC_running){ /* for XMP/F */
-
+    /*
     count = 1;
     blocklength = type_size;
     stride = ainfo[0].alloc_size * type_size;
@@ -288,6 +291,31 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
       blocklength *= ainfo[i-1].alloc_size;
       stride *= ainfo[i].alloc_size;
     }
+    */
+    count = 1;
+    blocklength = 1;
+    stride = 1;
+
+    for(int i = ndims-1; i >= 0; i--){
+      int fact = (i == target_dim)? 1 : (ainfo[i].par_size + lwidths[i] + uwidths[i]);
+      int alloc_size = ainfo[i].alloc_size;
+
+      if(blocklength == 1 || fact == alloc_size){
+	blocklength *= fact;
+	stride *= alloc_size;
+      }else if(count == 1 && target_dim != ndims-1){ //to be contiguous if target_dim==ndims-1
+	count = blocklength;
+	blocklength = fact;
+	stride = alloc_size;
+      }else{
+	blocklength *= alloc_size;
+	stride *= alloc_size;
+      }
+      //printf("tar=%d, i=%d, fact=%d, allocsize=%d, (%d,%d,%lld)\n", target_dim, i, fact, alloc_size, count , blocklength, stride);
+    }
+
+    blocklength *= type_size;
+    stride *= type_size;
 
   }
   else if (!_XMPF_running && _XMPC_running){ /* for XMP/C */
@@ -634,7 +662,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   reflect->lo_async_id = _XMP_alloc(sizeof(cudaStream_t));
   CUDA_SAFE_CALL(cudaStreamCreate(reflect->lo_async_id));
 
-  if(target_dim != 0 &&
+  int top_dim = _XMPC_running? 0 : ndims-1;
+  if(target_dim != top_dim &&
      (!useHostBuffer || (lo_rank != MPI_PROC_NULL && hi_rank != MPI_PROC_NULL && (lo_buf_size / type_size) <= useSingleStreamLimit)) ){
     reflect->hi_async_id = NULL;
   }else{
