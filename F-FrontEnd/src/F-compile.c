@@ -5307,7 +5307,11 @@ compile_SYNCALL_statement(expr x) {
     if (!compile_sync_stat_args(st, EXPR_ARG1(x))) return;
 
     if (XMP_coarray_flag) {
-        replace_CALL_statement("xmpf_sync_all", EXPR_ARG1(x));
+        if (EXPR_ARG1(x) == NULL) {
+            replace_CALL_statement("xmpf_sync_all", NULL);
+        } else {
+            replace_CALL_statement("xmpf_sync_all_stat", EXPR_ARG1(x));
+        }
     } else {
         output_statement(st);
     }
