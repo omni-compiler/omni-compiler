@@ -46,8 +46,8 @@ public class XMPtransCoarrayRun
   final static String FIND_DESCPOINTER_NAME   = "xmpf_coarray_find_descptr";
   final static String COARRAY_ALLOC_NAME     = "xmpf_coarray_alloc_generic";
   final static String COARRAY_DEALLOC_NAME   = "xmpf_coarray_dealloc_generic";
-  final static String NUM_IMAGES_NAME        = "xmpf_num_images";
-  final static String THIS_IMAGE_NAME        = "xmpf_this_image_generic";
+  final static String NUM_IMAGES_NAME        = "num_images";
+  final static String THIS_IMAGE_NAME        = "this_image";
   final static String COBOUND_NAME           = "xmpf_cobound_generic";
   final static String IMAGE_INDEX_NAME       = "xmpf_image_index";
   final static String CO_BROADCAST_NAME      = "xmpf_co_broadcast_generic";
@@ -2719,8 +2719,10 @@ public class XMPtransCoarrayRun
     }
 
     // replace function name 'num_images'
-    XobjString newFname = Xcons.Symbol(Xcode.IDENT, NUM_IMAGES_NAME);
-    xobj.setArg(0, newFname);
+    if (!"num_images".equals("NUM_IMAGES_NAME")) {
+      XobjString newFname = Xcons.Symbol(Xcode.IDENT, NUM_IMAGES_NAME);
+      xobj.setArg(0, newFname);
+    }
   }
 
   /* replace intrinsic this_image
@@ -2736,8 +2738,10 @@ public class XMPtransCoarrayRun
     }
 
     // replace function name 'this_image'
-    XobjString newFname = Xcons.Symbol(Xcode.IDENT, THIS_IMAGE_NAME);
-    xobj.setArg(0, newFname);
+    if (!"this_image".equals("THIS_IMAGE_NAME")) {
+      XobjString newFname = Xcons.Symbol(Xcode.IDENT, THIS_IMAGE_NAME);
+      xobj.setArg(0, newFname);
+    }
 
     if (nargs == 0)
       return;
