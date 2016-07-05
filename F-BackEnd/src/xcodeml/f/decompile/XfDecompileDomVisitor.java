@@ -5535,8 +5535,8 @@ public class XfDecompileDomVisitor {
    */
     private Boolean _isNameDefinedWithUseStmt(String name) {
 
-      ArrayList<String> libNames = _get_coarrayRuntimeLibNames__OLD__();
-      //ArrayList<String> libNames = _get_coarrayRuntimeLibNames__NEW__();
+      //ArrayList<String> libNames = _get_coarrayRuntimeLibNames__OLD__();
+      ArrayList<String> libNames = _get_coarrayRuntimeLibNames__NEW__();
 
       // check if the name is declared in module xmpf_coarray_decl
       for (String libName: libNames)
@@ -5584,17 +5584,20 @@ public class XfDecompileDomVisitor {
       };
 
       final ArrayList<String> libNames =
-        new ArrayList(Arrays.asList(libNameArray));
+        new ArrayList<String>(Arrays.asList(libNameArray));
 
       return libNames;
     }
 
 
     ArrayList<String> _get_coarrayRuntimeLibNames__NEW__() {
-      ///////////////////////////////////////////
-      //      final String inFile = "../../../../../libxmpf/src/coarray_entry_names.txt";
-      final String inFile = "coarray_entry_names.txt";
-      ///////////////////////////////////////////
+
+      String[] nameArray = XfDecompileDomVisitor_coarrayLibs.EntryNameArray;
+      ArrayList<String> libNames = 
+        new ArrayList<String>(Arrays.asList(nameArray));
+
+      /********************************
+      final String inFile = "./coarray_entry_names.txt";
 
       final ArrayList<String> libNames = new ArrayList();
 
@@ -5618,6 +5621,7 @@ public class XfDecompileDomVisitor {
           System.out.println(e);
         }
       }
+      *******************************/
 
       return libNames;
     }

@@ -2,9 +2,9 @@
 !  sync all
 !-------------------------------
       interface
-!!         subroutine xmpf_sync_all(arg1, ...)
-!!           class(*) :: arg1
-!!         end subroutine xmpf_sync_all
+!!       subroutine xmpf_sync_all(arg1, ...)
+!!         class(*) :: arg1
+!!       end subroutine xmpf_sync_all
 
          subroutine xmpf_sync_all_stat(stat, errmsg)
            integer, intent(out) :: stat
@@ -16,9 +16,9 @@
 !  sync memory
 !-------------------------------
       interface
-  !!         subroutine xmpf_sync_memory(arg1, ...)
-  !!           class(*) :: arg1
-  !!         end subroutine xmpf_sync_memory
+!!       subroutine xmpf_sync_memory(arg1, ...)
+!!         class(*) :: arg1
+!!       end subroutine xmpf_sync_memory
 
          subroutine xmpf_sync_memory_stat_wrap(stat, errmsg)
            integer, intent(out) :: stat
@@ -29,16 +29,10 @@
 !-------------------------------
 !  sync images
 !-------------------------------
-      interface xmpf_sync_images
-         subroutine xmpf_sync_image_nostat(image)  ! no wrapper
-           integer, intent(in) :: image
-         end subroutine xmpf_sync_image_nostat
-         subroutine xmpf_sync_images_nostat_wrap(images)
-           integer, intent(in) :: images(:)
-         end subroutine xmpf_sync_images_nostat_wrap
-         subroutine xmpf_sync_allimages_nostat_wrap(aster)
-           character(len=1), intent(in) :: aster
-         end subroutine xmpf_sync_allimages_nostat_wrap
+      interface
+!!       subroutine xmpf_sync_images(nimages, images, ...)
+!!         integer, intent(in) :: nimages, images(*)
+!!       end subroutine xmpf_sync_images
 
          subroutine xmpf_sync_image_stat_wrap(image, stat, errmsg)
            integer, intent(in) :: image

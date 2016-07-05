@@ -437,7 +437,7 @@ void xmpf_touch_(void)
 
 
 /*****************************************\
-  sync images
+  sync images -- 3-type interface
 \*****************************************/
 
 void xmpf_sync_image_nostat_(int *image)
@@ -532,6 +532,26 @@ void xmpf_sync_allimages_stat_(int *stat, char *msg, int *msglen)
 
   _XMPF_checkIfInTask("syncimage with stat");
   xmpf_sync_allimages_nostat_();
+}
+
+
+/*****************************************\
+  sync images -- alternative interface
+\*****************************************/
+
+void xmpf_sync_images_(int *nimages, int *images)
+{
+  switch (*nimages) {
+  case 1:
+    xmpf_sync_image_nostat_(images);
+    break;
+  case 0:
+    xmpf_sync_allimages_nostat_();
+    break;
+  default:
+    xmpf_sync_images_nostat_(images, nimages);
+    break;
+  }
 }
 
 

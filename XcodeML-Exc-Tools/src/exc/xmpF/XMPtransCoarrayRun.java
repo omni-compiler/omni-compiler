@@ -1141,6 +1141,7 @@ public class XMPtransCoarrayRun
 
     // p. add visible coarrays as arguments of sync all statements 
     //     to prohibit code motion (syncall, syncimages and syncmemory)
+    // p1. add an argument as the number of images (for syncimages)
     addVisibleCoarraysToSyncEtc(visibleCoarrays);
 
     // o. remove declarations for use-associated allocatable coarrays
@@ -1340,6 +1341,8 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //  TRANSLATION p.
   //  add coarrays as actual arguments to syncall library call
+  //  TRANSLATION p1.
+  //  add an argument as the number of images (for syncimages)
   //-----------------------------------------------------
   //
   private void addVisibleCoarraysToSyncEtc(ArrayList<XMPcoarray> coarrays) {
@@ -1349,8 +1352,38 @@ public class XMPtransCoarrayRun
       if (bb == null) continue;
       for (Statement s = bb.getHead(); s != null; s = s.getNext()) {
         Xobject xobj = s.getExpr();
+        if (_isCallStmtForSyncimages(xobj)) {
+          // p1. found SYNC IMAGES
+          Xobject callExpr = xobj.getArg(0);
+          Xobject actualArgs = callExpr.getArg(1);
+          if (actualArgs == null || actualArgs.Nargs() == 0) {
+            XMP.error("lack of arguments in SYNC IMAGES");
+            continue;
+          }
+          Xobject arg1 = ((XobjList)actualArgs).getArg(0);
+          Xtype type1 = arg1.Type();
+          Xobject arg0 = null;
+          switch (type1.getKind()) {
+          case Xtype.BASIC:
+            switch (type1.getBasicType()) {
+            case BasicType.INT:             // case SYNC IMAGES(image)
+              arg0 = Xcons.IntConstant(1);
+              break;
+            case BasicType.F_CHARACTER:     // case SYNC IMAGES(*)
+              arg0 = Xcons.IntConstant(0);
+              break;
+            }
+            break;
+          case Xtype.F_ARRAY:     // case SYNC IMAGES( array_of_images )
+            Ident sizeId = declIntIntrinsicIdent("size");
+            arg0 = sizeId.Call(Xcons.List(arg1));
+            break;
+          }
+          actualArgs.insert(arg0);
+        }
+
         if (_isCallStmtForSyncEtc(xobj)) {
-          // found
+          // p. found SYNC ALL/IMAGES/MEMORY
           Xobject extraArgs = _getCoarrayNamesIntoArgs(coarrays);
           Xobject callExpr = xobj.getArg(0);
           Xobject actualArgs = callExpr.getArg(1);
@@ -1369,14 +1402,25 @@ public class XMPtransCoarrayRun
     }
   }
 
-  private Boolean _isCallStmtForSyncEtc(Xobject xobj) {
-    
-    final String[] _syncEtcNames = { SYNCALL_NAME, AUTO_SYNCALL_NAME,
-                                     SYNCIMAGES_NAME,
-                                     SYNCMEMORY_NAME };
-    final List<String> syncEtcNameList =
-      Arrays.asList(_syncEtcNames);
 
+  private Boolean _isCallStmtForSyncimages(Xobject xobj) {
+    final String[] syncEtcNames = { SYNCIMAGES_NAME };
+    return _isCallStmtForSubroutines(xobj, syncEtcNames);
+  }
+
+  private Boolean _isCallStmtForSyncEtc(Xobject xobj) {
+    final String[] syncEtcNames = { SYNCALL_NAME, AUTO_SYNCALL_NAME,
+                                    SYNCIMAGES_NAME,
+                                    SYNCMEMORY_NAME };
+    return _isCallStmtForSubroutines(xobj, syncEtcNames);
+  }
+
+  private Boolean _isCallStmtForSubroutines(Xobject xobj, String[] names) {
+    List<String> nameList = Arrays.asList(names);
+    return _isCallStmtForSubroutines(xobj, nameList);
+  }
+  private Boolean _isCallStmtForSubroutines(Xobject xobj, List<String> nameList) {
+    
     if (xobj == null || xobj.Opcode() != Xcode.EXPR_STATEMENT)
       /* Not F_ASSIGN_STATEMENT but EXPR_STATEMENT contains call statement */
       return false;
@@ -1387,7 +1431,7 @@ public class XMPtransCoarrayRun
 
     String fname = callExpr.getArg(0).getName();
     
-    return syncEtcNameList.contains(fname);
+    return nameList.contains(fname);
   }
 
 
