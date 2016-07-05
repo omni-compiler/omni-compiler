@@ -5212,10 +5212,6 @@ compile_stat_args(expv st, expr x, int expect_acquired_lock) {
         }
 
         arg = compile_expression(EXPR_ARG2(v));
-        if (EXPV_CODE(arg) != F_VAR) {
-            error("not a variable.");
-            return FALSE;
-        }
 
         char *keyword = SYM_NAME(EXPR_SYM(EXPR_ARG1(v)));
         if (keyword == NULL || *keyword == '\0') {
@@ -5255,7 +5251,7 @@ compile_stat_args(expv st, expr x, int expect_acquired_lock) {
             has_keyword_acquired_lock = TRUE;
 
             if (!IS_LOGICAL(EXPV_TYPE(arg))) {
-                error("errmsg variable should be character");
+                error("acquired_lock variable should be logical");
                 return FALSE;
             }
 
