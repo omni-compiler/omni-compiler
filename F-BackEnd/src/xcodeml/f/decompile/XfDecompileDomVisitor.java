@@ -4210,6 +4210,10 @@ public class XfDecompileDomVisitor {
             // not be declared here.
             if (XmDomUtil.getAttrBool(n, "is_intrinsic") == false &&
                 !_isNameDefinedWithUseStmt(functionName)) {
+              ///////////////////////////////
+              if (functionName.equals("this_image"))
+                System.out.println("Found IT HERE");
+              ///////////////////////////////
                 XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
                 Node typeChoice = typeManager.findType(functionNameNode);
                 if (typeChoice == null) {
@@ -5535,6 +5539,11 @@ public class XfDecompileDomVisitor {
    */
     private Boolean _isNameDefinedWithUseStmt(String name) {
 
+      /////////////////////////
+      if (name.equals("this_image")) {
+        System.out.println("GACCHA this_image");
+      }
+      /////////////////////////
       //ArrayList<String> libNames = _get_coarrayRuntimeLibNames__OLD__();
       ArrayList<String> libNames = _get_coarrayRuntimeLibNames__NEW__();
 

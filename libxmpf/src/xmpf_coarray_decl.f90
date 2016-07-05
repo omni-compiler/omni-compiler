@@ -36,12 +36,12 @@ module xmpf_coarray_decl
          end function xmpf_cobound_dim
       end interface
 
-      interface num_images
+      interface xmpf_num_images_generic
          integer function xmpf_num_images_current()
          end function
       end interface
 
-      interface this_image
+      interface xmpf_this_image_generic
          function xmpf_this_image_current() result(image)
            integer image
          end function
