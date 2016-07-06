@@ -45,9 +45,10 @@ int XMP_coarray_flag = TRUE;
 
 
 /* control stack */
-CTL ctls[MAX_CTL];
-CTL *ctl_top;
-CTL *ctl_top_saved = NULL;
+static struct control _ctl_base = (struct control){0};
+CTL ctl_base = &_ctl_base;
+CTL ctl_top;
+CTL ctl_top_saved = NULL;
 
 expv CURRENT_STATEMENTS_saved = NULL;
 
@@ -199,7 +200,7 @@ initialize_compile_procedure()
     need_keyword = 0;
 
     /* control stack */
-    ctl_top = ctls;
+    ctl_top = ctl_base;
     CTL_TYPE(ctl_top) = CTL_NONE;
 
     init_for_OMP_pragma();
@@ -230,8 +231,15 @@ void
 push_ctl(ctl)
      enum control_type ctl;
 {
-    if(++ctl_top >= &ctls[MAX_CTL])
-      fatal("too many nested loop or if-then-else");
+    if (CTL_NEXT(ctl_top) == NULL) {
+        CTL_NEXT(ctl_top) = new_ctl();
+        CTL_PREV(CTL_NEXT(ctl_top)) = ctl_top;
+    } else {
+        cleanup_ctl(CTL_NEXT(ctl_top));
+        CTL_TYPE(CTL_NEXT(ctl_top)) = CTL_NONE;
+    }
+    ctl_top = CTL_NEXT(ctl_top);
+
     CTL_TYPE(ctl_top) = ctl;
     CTL_SAVE(ctl_top) = CURRENT_STATEMENTS;
     CURRENT_STATEMENTS = NULL;
@@ -247,7 +255,8 @@ pop_ctl()
     output_statement(CTL_BLOCK(ctl_top));
 
     /* pop */
-    if(ctl_top-- <= ctls) fatal("control stack empty");
+    if(CTL_PREV(ctl_top) == NULL) fatal("control stack empty");
+    ctl_top = CTL_PREV(ctl_top);
     CURRENT_BLK_LEVEL--;
 }
 
@@ -2580,7 +2589,7 @@ end_procedure()
     }
 
     /* check control nesting */
-    if(ctl_top > ctls) error("DO loop or BLOCK IF not closed");
+    if (ctl_top != ctl_base) error("DO loop or BLOCK IF not closed");
 
 #ifdef not
     donmlist();
@@ -2605,7 +2614,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
     TYPE_DESC var_tp = NULL;
     SYMBOL do_var_sym = NULL;
     int incsign = 0;
-    CTL *cp;
+    CTL cp;
 
     if (range_st_no > 0) {
         do_label = declare_label(range_st_no, LAB_EXEC, FALSE);
@@ -2625,7 +2634,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
         do_var_sym = EXPR_SYM(var);
 
         /* check nested loop with the same variable */
-        for (cp = ctls; cp < ctl_top; cp++) {
+        FOR_CTLS(cp) {
             if(CTL_TYPE(cp) == CTL_DO && CTL_DO_VAR(cp) == do_var_sym) {
                 error("nested loops with variable '%s'", SYM_NAME(do_var_sym));
                 break;
@@ -2753,7 +2762,7 @@ static void  compile_DOWHILE_statement(range_st_no, cond, construct_name)
 static void
 check_DO_end(ID label)
 {
-    CTL *cp;
+    CTL cp;
 
     if (label == NULL) {
         /*
@@ -2836,7 +2845,7 @@ check_DO_end(ID label)
     }
 
     /* check DO loop which is not propery closed. */
-    for (cp = ctl_top; cp >= ctls; cp--) {
+    FOR_CTLS(cp) {
         if (CTL_TYPE(cp) == CTL_DO && CTL_DO_LABEL(cp) == label) {
             error("DO loop or IF-block not closed");
             ctl_top = cp;
@@ -5219,6 +5228,24 @@ pop_unit_ctl()
         unit_ctl_contains_level --;
 }
 
+void
+cleanup_ctl(CTL ctl) {
+    CTL_TYPE(ctl) = CTL_NONE;
+}
+
+
+CTL
+new_ctl() {
+    CTL ctl;
+    ctl = XMALLOC(CTL, sizeof(*ctl));
+    if (ctl == NULL)
+        fatal("memory allocation failed");
+    cleanup_ctl(ctl);
+    CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(ctl) = NULL;
+    return ctl;
+}
+
+
 /**
  * for type declaration with data style initializer
  * compile 'data .../... /' after compiling type declarations
@@ -5626,8 +5653,8 @@ compile_ENDCRITICAL_statement(expr x) {
  */
 static int
 check_inside_CRITICAL_construct() {
-    CTL * cp;
-    for(cp = ctl_top; cp >= ctls; cp--){
+    CTL cp;
+    FOR_CTLS_BACKWARD(cp) {
         if (CTL_TYPE(cp) == CTL_CRITICAL) {
             return TRUE;
         }

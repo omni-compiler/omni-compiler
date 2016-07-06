@@ -2823,7 +2823,7 @@ compile_implied_do_expression(expr x)
     expv do_var, do_init, do_limit, do_incr, retv;
     expr var, init, limit, incr;
     SYMBOL do_var_sym;
-    CTL *cp;
+    CTL cp;
 
     expr loopSpec = EXPR_ARG1(x);
 
@@ -2838,7 +2838,7 @@ compile_implied_do_expression(expr x)
     do_var_sym = EXPR_SYM(var);
     
     /* check nested loop with the same variable */
-    for (cp = ctls; cp < ctl_top; cp++) {
+    FOR_CTLS(cp) {
         if(CTL_TYPE(cp) == CTL_DO && CTL_DO_VAR(cp) == do_var_sym) {
             error("nested loops with variable '%s'", SYM_NAME(do_var_sym));
             break;

@@ -154,6 +154,7 @@ enum control_type {
     CTL_XMP,
     CTL_ACC,
     CTL_CRITICAL,
+    CTL_BLOCK,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -169,6 +170,8 @@ enum control_type {
     "CTL_OMP",\
     "CTL_XMP",\
     "CTL_ACC",\
+    "CTL_CRITICAL",\
+    "CTL_BLOCK",\
 }
 
 /* control */
@@ -179,7 +182,17 @@ typedef struct control
     expv v1,v2;
     ID dolabel;
     SYMBOL dovar;
-} CTL;
+
+    /* FOR BLOCK STATEMENT */
+    ID                  local_symbols;
+    TYPE_DESC           local_struct_decls;
+    ID                  local_common_symbols;
+    ID                  local_labels;
+    EXT_ID              local_external_symbols;
+
+    struct control * next;
+    struct control * prev;
+} * CTL;
 
 #define CTL_TYPE(l)             ((l)->ctltype)
 #define CTL_SAVE(l)             ((l)->save)
@@ -218,10 +231,30 @@ typedef struct control
 #define CTL_ACC_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
 #define CTL_ACC_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
 
+#define CTL_BLOCK_LOCAL_SYMBOLS(u)               ((u)->local_symbols)
+#define CTL_BLOCK_LOCAL_STRUCT_DECLS(u)          ((u)->local_struct_decls)
+#define CTL_BLOCK_LOCAL_COMMON_SYMBOLS(u)        ((u)->local_common_symbols)
+#define CTL_BLOCK_LOCAL_LABELS(u)                ((u)->local_labels)
+#define CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(u)      ((u)->local_external_symbols)
+
+#define CTL_NEXT(u)               ((u)->next)
+#define CTL_PREV(u)               ((u)->prev)
+
 /* control stack and it pointer */
 #define MAX_CTL 50
-extern CTL ctls[];
-extern CTL *ctl_top;
+extern CTL ctl_base;
+extern CTL ctl_top;
+extern CTL current_ctp;
+
+#define FOR_CTLS(cp) \
+    for (cp = ctl_base; \
+         cp != ctl_top && \
+                 (CTL_NEXT(cp) != NULL && CTL_TYPE(CTL_NEXT(cp)) != CTL_NONE); \
+         cp = CTL_NEXT(cp))
+
+#define FOR_CTLS_BACKWARD(cp) \
+    for (cp = ctl_top; CTL_PREV(cp) != NULL; cp = CTL_PREV(cp))
+
 
 #define MAX_REPLACE_ITEMS       100
 
@@ -447,6 +480,8 @@ extern void     print_type _ANSI_ARGS_((TYPE_DESC tp, FILE *fp,
 extern void     compile_statement _ANSI_ARGS_((int st_no, expr x));
 extern void     compile_statement1 _ANSI_ARGS_((int st_no, expr x));
 extern void     output_statement _ANSI_ARGS_((expr v));
+extern CTL      new_ctl _ANSI_ARGS_((void));
+extern void     cleanup_ctl _ANSI_ARGS_((CTL));
 extern void     push_ctl _ANSI_ARGS_((enum control_type ctl));
 extern void     pop_ctl _ANSI_ARGS_((void));
 extern void     check_INDATA _ANSI_ARGS_((void));
