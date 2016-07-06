@@ -19,7 +19,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
   XMPenv env;
   private int pass;
   private int version;
-  private Boolean useGASNet;
+  private Boolean useMalloc;
   private Boolean onlyCafMode;
 
   private ArrayList<XMPtransCoarrayRun> pastRuns;
@@ -53,23 +53,27 @@ public class XMPtransCoarray implements XobjectDefVisitor
 
   private void _set_version(String suboption)
   {
-    // default
-    version = 3;
-    useGASNet = false;
-
-    if ("".equals(suboption)) {
+    if (suboption == null || "".equals(suboption)) {
       // default
+      version = 3;
+      useMalloc = true;
+    } else if ("3".equals(suboption)) {
+      version = 3;
+      useMalloc = true;
     } else if ("4".equals(suboption)) {
       version = 4;
+      useMalloc = false;
     } else if ("6".equals(suboption)) {
       version = 6;
+      useMalloc = false;
     } else if ("7".equals(suboption)) {
       version = 7;
+      useMalloc = false;
     } else if ("7g".equals(suboption)) {
       version = 7;
-      useGASNet = true;
+      useMalloc = true;
     } else {
-      XMP.fatal("suboption usage: -fcoarray[={4|6|7|7g}]");
+      XMP.fatal("suboption usage: -fcoarray[={3|4|6|7|7g}]");
     }
   }
 
@@ -95,7 +99,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
 
     case 1:               // for both procedures and modules
       transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 1, version,
-                                               useGASNet, onlyCafMode);
+                                               useMalloc, onlyCafMode);
       transCoarrayRun.run1();
       // assuming top-down translation along host-association
       pastRuns.add(transCoarrayRun);
@@ -106,7 +110,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
       if (!is_module)
         return;
       transCoarrayRun = new XMPtransCoarrayRun(d, env, pastRuns, 2, version,
-                                               useGASNet, onlyCafMode);
+                                               useMalloc, onlyCafMode);
       transCoarrayRun.run2();
       //transCoarrayRun.finalize();
       break;

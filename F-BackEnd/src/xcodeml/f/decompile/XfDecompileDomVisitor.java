@@ -895,6 +895,10 @@ public class XfDecompileDomVisitor {
         if (valueNode != null)
             invokeEnter(valueNode);
         writer.writeToken(")");
+        ////// restriction: SAVE statement for cray-pointer variable
+        ////// named 'symbol' should be generated here if it has the
+        ////// save attribute and it does not have explicit type.
+        ////// It is necessary to complete Ver.7 coarray optimization.
     }
 
     /**
@@ -4206,6 +4210,10 @@ public class XfDecompileDomVisitor {
             // not be declared here.
             if (XmDomUtil.getAttrBool(n, "is_intrinsic") == false &&
                 !_isNameDefinedWithUseStmt(functionName)) {
+              ///////////////////////////////
+              if (functionName.equals("this_image"))
+                System.out.println("Found IT HERE");
+              ///////////////////////////////
                 XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
                 Node typeChoice = typeManager.findType(functionNameNode);
                 if (typeChoice == null) {
@@ -5531,8 +5539,13 @@ public class XfDecompileDomVisitor {
    */
     private Boolean _isNameDefinedWithUseStmt(String name) {
 
-      ArrayList<String> libNames = _get_coarrayRuntimeLibNames__OLD__();
-      //ArrayList<String> libNames = _get_coarrayRuntimeLibNames__NEW__();
+      /////////////////////////
+      if (name.equals("this_image")) {
+        System.out.println("GACCHA this_image");
+      }
+      /////////////////////////
+      //ArrayList<String> libNames = _get_coarrayRuntimeLibNames__OLD__();
+      ArrayList<String> libNames = _get_coarrayRuntimeLibNames__NEW__();
 
       // check if the name is declared in module xmpf_coarray_decl
       for (String libName: libNames)
@@ -5580,17 +5593,20 @@ public class XfDecompileDomVisitor {
       };
 
       final ArrayList<String> libNames =
-        new ArrayList(Arrays.asList(libNameArray));
+        new ArrayList<String>(Arrays.asList(libNameArray));
 
       return libNames;
     }
 
 
     ArrayList<String> _get_coarrayRuntimeLibNames__NEW__() {
-      ///////////////////////////////////////////
-      //      final String inFile = "../../../../../libxmpf/src/coarray_entry_names.txt";
-      final String inFile = "coarray_entry_names.txt";
-      ///////////////////////////////////////////
+
+      String[] nameArray = XfDecompileDomVisitor_coarrayLibs.EntryNameArray;
+      ArrayList<String> libNames = 
+        new ArrayList<String>(Arrays.asList(nameArray));
+
+      /********************************
+      final String inFile = "./coarray_entry_names.txt";
 
       final ArrayList<String> libNames = new ArrayList();
 
@@ -5614,6 +5630,7 @@ public class XfDecompileDomVisitor {
           System.out.println(e);
         }
       }
+      *******************************/
 
       return libNames;
     }

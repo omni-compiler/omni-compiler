@@ -6,8 +6,12 @@ RESULT=$(SRC:.f90=.result)
 
 OUT4= $(OUT:%.x=%.x4)
 OUT6= $(OUT:%.x=%.x6)
+OUT7= $(OUT:%.x=%.x7)
+OUT7g= $(OUT:%.x=%.x7g)
 RESULT4=$(RESULT:.result=.result4)
 RESULT6=$(RESULT:.result=.result6)
+RESULT7=$(RESULT:.result=.result7)
+RESULT7g=$(RESULT:.result=.result7g)
 
 .f90.x:
 	xmpf90 $(OPT) -o $@ $<
@@ -21,6 +25,12 @@ RESULT6=$(RESULT:.result=.result6)
 %.x6:  %.f90
 	xmpf90 $(OPT) --Wx-fcoarray=6 -o $@ $<
 
+%.x7:  %.f90
+	xmpf90 $(OPT) --Wx-fcoarray=7 -o $@ $<
+
+%.x7g:  %.f90
+	xmpf90 $(OPT) --Wx-fcoarray=7g -o $@ $<
+
 %.result: %.x
 	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
 
@@ -28,6 +38,12 @@ RESULT6=$(RESULT:.result=.result6)
 	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
 
 %.result6: %.x6
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
+
+%.result7: %.x7
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
+
+%.result7g: %.x7g
 	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
 
 %.result: %.f90
@@ -48,6 +64,12 @@ RUN/%.x4:: %.x4
 RUN/%.x6:: %.x6
 	cp $< $@
 
+RUN/%.x7:: %.x7
+	cp $< $@
+
+RUN/%.x7g:: %.x7g
+	cp $< $@
+
 RUN/%.x:: 
 	touch $@
 
@@ -57,6 +79,12 @@ RUN/%.x4::
 RUN/%.x6:: 
 	touch $@
 
+RUN/%.x7:: 
+	touch $@
+
+RUN/%.x7g:: 
+	touch $@
+
 ### compile test programs
 all:     $(OUT)
 
@@ -64,12 +92,21 @@ all4:     $(OUT4)
 
 all6:     $(OUT6)
 
+all7:     $(OUT7)
+
+all7g:     $(OUT7g)
+
 ### execute on local environment
 run:	$(RESULT)
 
 run4:	$(RESULT4)
 
 run6:	$(RESULT6)
+
+run7:
+	@echo '*** use run7g for GASNet environment ***'
+
+run7g:	$(RESULT7g)
 
 ### prepare to execute on K/FX10
 submit: all RUN RUN/go.sh $(OUT:%=RUN/%)
@@ -80,6 +117,9 @@ submit4: all4 RUN RUN/go4.sh $(OUT4:%=RUN/%)
 
 submit6: all6 RUN RUN/go6.sh $(OUT6:%=RUN/%)
 	cd RUN; pjsub go6.sh
+
+submit7: all7 RUN RUN/go7.sh $(OUT7:%=RUN/%)
+	cd RUN; pjsub go7.sh
 
 RUN:
 	mkdir RUN
@@ -92,6 +132,9 @@ RUN/go4.sh: go.template Makefile
 
 RUN/go6.sh: go.template Makefile
 	sed "s/@OUT@/$(OUT6)/" $< >$@
+
+RUN/go7.sh: go.template Makefile
+	sed "s/@OUT@/$(OUT7)/" $< >$@
 
 showlog:
 	cat RUN/go.sh.e* RUN/go.sh.o*
@@ -106,8 +149,7 @@ clean: cleanlog
 	rm -f omni_traverse*.o
 	rm -f $(OUT:%=RUN/%)
 	rm -f *.mod *.xmod
-
-clean-all: clean
 	rm -f *.x4 *.result4
 	rm -f *.x6 *.result6
-
+	rm -f *.x7 *.result7
+	rm -f *.x7g *.result7g

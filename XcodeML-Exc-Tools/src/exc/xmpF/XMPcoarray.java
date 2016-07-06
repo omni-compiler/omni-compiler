@@ -176,10 +176,12 @@ public class XMPcoarray {
     String crayPtrName = getCrayPointerName();
 
     StorageClass sclass;
-    if (saved)
+    if (saved) {
       sclass = StorageClass.FSAVE;
-    else
+      _setSaveAttrInType(ident.Type());
+    } else {
       sclass = StorageClass.FLOCAL;
+    }
 
     // generate declaration of crayPtrId
     Xtype crayPtrType = Xtype.Farray(BasicType.Fint8Type);
@@ -925,10 +927,6 @@ public class XMPcoarray {
       } else {
         // b2-(int(b1)-1)
         Xobject tmp = Xcons.IntConstant(b1.getInt() - 1);
-        ////////////////////////////////
-        System.out.println("sss b2="+b2+" b1="+b1+" tmp="+tmp);
-        System.out.println("    b1.getInt()="+b1.getInt());
-        ////////////////////////////////
         result = Xcons.binaryOp(Xcode.MINUS_EXPR, b2, tmp);
       }
     } else {
@@ -1119,16 +1117,12 @@ public class XMPcoarray {
   }
 
   public void setSaveAttr() {
-    // This seems not correct because it might cause serious side effects on other
-    // idents having the same subtree of Xtype.
-    //_setSaveAttrInType(ident.Type());
+    _setSaveAttrInType(ident.Type());
     ident.setStorageClass(StorageClass.FSAVE);
   }
 
   public void setSaveAttrToDescPointer() {
-    // This seems not correct because it might cause serious side effects on other
-    // idents having the same subtree of Xtype.
-    //_setSaveAttrInType(getDescPointerId().Type());
+    _setSaveAttrInType(getDescPointerId().Type());
     getDescPointerId().setStorageClass(StorageClass.FSAVE);
   }
 
@@ -1280,12 +1274,8 @@ public class XMPcoarray {
   }
 
   public Ident getDescPointerId() {
-    if (descPtrId == null) {
-      XMP.warning("INTERNAL: illegal null descPtrId (XMPcoppy.getDescPointerId)");
-      return null;
-    }
-
-    return descPtrId;
+    Ident ident = env.findVarIdent(_descPtrName, fblock);
+    return ident;
   }
 
 

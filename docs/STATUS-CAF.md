@@ -1,5 +1,5 @@
-                                                                    June 3, 2016
-                                                                    Ver 1.0.1
+                                                                    July 5, 2016
+                                                                    Ver 1.0.2
 
               Coarray Fortran features and the current restrictions
 
@@ -46,8 +46,8 @@
   SAVE attribute.
   Current restrictions against Fortran2008 coarray features:
     * Each lower/upper bound of the shape must be such a simple expression that 
-      is an integer constant literal, a simple integer constant expression, or a 
-      reference of an integer named constant defined with a simple integer 
+      is an integer constant literal, a simple integer constant expression, or
+      a reference of an integer named constant defined with a simple integer 
       constant expression.
     * A coarray cannot be initialized with initialization or with a DATA 
       statement.

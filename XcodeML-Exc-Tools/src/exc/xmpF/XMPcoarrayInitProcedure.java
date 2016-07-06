@@ -19,7 +19,6 @@ public class XMPcoarrayInitProcedure {
 
   private Boolean DEBUG = false;          // switch the value on gdb !!
 
-
   /* for all procedures */
   private ArrayList<String> procTexts;
   private ArrayList<XMPcoarray> staticCoarrays;
@@ -32,7 +31,8 @@ public class XMPcoarrayInitProcedure {
    *    6: For static coarrays on FJ-RDMA and MPI3,
    *       static allocation/first time registration w/o cray pointer w/o common
    */
-  private int version;    // defined by the constructor
+  private int version;         // defined by the constructor
+  private Boolean useMalloc;   // defined by the constructor
 
   /* for each procedure */
   private String sizeProcName, initProcName;  // names of procedures to generate
@@ -49,7 +49,7 @@ public class XMPcoarrayInitProcedure {
   //------------------------------
   public XMPcoarrayInitProcedure(ArrayList<XMPcoarray> staticCoarrays,
                                  String sizeProcName, String initProcName,
-                                 XMPenv env, int version) {
+                                 XMPenv env, int version, Boolean useMalloc) {
     _init_forFile();
 
     this.staticCoarrays = staticCoarrays;
@@ -57,6 +57,20 @@ public class XMPcoarrayInitProcedure {
     this.initProcName = initProcName;
     this.env = env;
     this.version = version;
+    this.useMalloc = useMalloc;
+
+    // assertion
+    if (version != 3 && version != 4 && version != 6 && version != 7) {
+      XMP.fatal("INTERNAL: extinct or unsupported version (" + version +
+                ") found in XMPcoarrayInitProcedure constructor");
+    }
+    else if (useMalloc && version != 3 && version != 7 ||
+             !useMalloc && version != 4 && version != 6 && version != 7) {
+      XMP.fatal("INTERNAL; Wrong combination of version (" + version +
+                ") and useMalloc (" + useMalloc +
+                ") found in XMPcoarrayInitProcedure constructor");
+    }
+
     varNames1 = new ArrayList<String>();
     varNames2 = new ArrayList<String>();
     callInitStmts = new ArrayList<String>();
@@ -82,7 +96,7 @@ public class XMPcoarrayInitProcedure {
     --------------------------------------------
 
     converted program and generated subroutines
-    Ver.3:
+    Case: useMalloc (Ver.3 and 7g):
     --------------------------------------------
       subroutine xmpf_traverse_countcoarrays_EX1
         call xmpf_coarray_count_size(1, 16)
@@ -103,7 +117,7 @@ public class XMPcoarrayInitProcedure {
       xmpf_CP_EX1 : name of a common block for procedure EX1
       CP_V2       : cray poiter to coarray V2
 
-    Ver.4 for FJRDMA and MPI3:
+      Case: useRegMem (Ver.4, 6 and 7 for FJRDMA and MPI3):
     --------------------------------------------
       // no subroutine xmpf_traverse_countcoarrays_EX1
 
@@ -116,16 +130,18 @@ public class XMPcoarrayInitProcedure {
       end subroutine
     --------------------------------------------
 
-    Ver.6 for FJRDMA and MPI3, only for modules EX1:
-    --------------------------------------------
-      // no subroutine xmpf_traverse_countcoarrays_EX1
-
-      subroutine xmpf_traverse_initcoarrays_EX1
-        use EX1
-
-        call xmpf_coarray_regmem_static(DP_V2, LOC(V2), 1, 16, "V2", 2)
-        call xmpf_coarray_set_coshape(DP_V2, 1, 0)
-      end subroutine
+    Ver.6 shoud be the same as Ver.4.  The following description should 
+    be wrong.
+    //Ver.6 for FJRDMA and MPI3, only for modules EX1:
+    //--------------------------------------------
+    //// no subroutine xmpf_traverse_countcoarrays_EX1
+    //
+    // subroutine xmpf_traverse_initcoarrays_EX1
+    //  use EX1
+    //
+    //  call xmpf_coarray_regmem_static(DP_V2, LOC(V2), 1, 16, "V2", 2)
+    //  call xmpf_coarray_set_coshape(DP_V2, 1, 0)
+    // end subroutine
     --------------------------------------------
   */
 
@@ -133,72 +149,21 @@ public class XMPcoarrayInitProcedure {
 
     /* generate the two subroutines in the same file
      */
-    switch(version) {
-    case 1:   // generate as Fortran program text
-      XMP.fatal("INTERNAL: extinct version #" + version +
-                "specified in XMPcoarrayInitProcedure");
-      /*------
-      fillinSizeProcText();
-      fillinInitProcText();
-
-      for (String text: procTexts)
-        env.addTailText(text);
-      -------*/
-      break;
-
-    case 2:   // build and link it at the tail of XMPenv
-      XMP.fatal("INTERNAL: extinct version #" + version +
-                "specified in XMPcoarrayInitProcedure");
-      /*--------
+    if (useMalloc) {    // Ver.3 or 7g
       buildSubroutine_countcoarrays();
       buildSubroutine_initcoarrays();
-      --------*/
-      break;
-
-    case 3:   // similar to case 2, with changing descr-ID of serno to pointer
-      buildSubroutine_countcoarrays();
+    } else {           // Ver.4 or 6 or 7
       buildSubroutine_initcoarrays();
-      break;
-
-    case 4:   // temporary version for FJ-RDMA and MPI3
-      //buildSubroutine_countcoarrays();   // unnecessary?
-      buildSubroutine_initcoarrays();
-      break;
-
-    case 6:   // temporary version for FJ-RDMA and MPI3
-      // case: module
-      buildSubroutine_initcoarrays();
-      break;
-
-    default:
-      XMP.fatal("INTERNAL: unexpected version number (" + version +
-                ") specified in XMPcoarrayInitProcedure");
-      break;
     }
   }
 
 
-  /*
-   *  Version 3:
-   *    buildSubroutine_countcoarrays()
-   *    buildSubroutine_initcoarrays()
-   *  Version 4:
-   *    buildSubroutine_initcoarrays()
-   *  Version 6 (module):
-   *    buildSubroutine_initcoarrays()
-   *
-   *   build subroutines as Xobject and
+  /*   build subroutines as Xobject and
    *   link them at the tail of XMPenv
    */
 
   private void buildSubroutine_countcoarrays() {
     BlockList body = Bcons.emptyBody();         // new body of the building procedure
-
-    if (version != 3) {
-      XMP.fatal("unexpected version " + version + 
-                " in buildSubroutine_countcoarrays");
-      return;
-    }
 
     for (XMPcoarray coarray: staticCoarrays) {
       // "CALL coarray_count_size(count, elem)"
@@ -292,30 +257,26 @@ public class XMPcoarrayInitProcedure {
     //   "common /xmpf_descptr_foo/ descPtr_var"
     String descPtrName = coarray.getDescPointerName();
     Ident descPtrId = null;
-    if (version >= 3) {
-      set_commonName1(coarray);
-      descPtrId = body.declLocalIdent(descPtrName,
-                                      Xtype.Farray(BasicType.Fint8Type),
-                                      StorageClass.FCOMMON,
-                                      null);
-      Xobject commonStmt1 =
-        Xcons.List(Xcode.F_COMMON_DECL,
-                   Xcons.List(Xcode.F_VAR_LIST,
-                              Xcons.Symbol(Xcode.IDENT, commonName1),
-                              Xcons.List(Xcons.FvarRef(descPtrId))));
-      decls.add(commonStmt1);
-    } else {
-      XMP.fatal("unexpected version");
-    }
+    set_commonName1(coarray);
+    descPtrId = body.declLocalIdent(descPtrName,
+                                    Xtype.Farray(BasicType.Fint8Type),
+                                    StorageClass.FCOMMON,
+                                    null);
+    Xobject commonStmt1 =
+      Xcons.List(Xcode.F_COMMON_DECL,
+                 Xcons.List(Xcode.F_VAR_LIST,
+                            Xcons.Symbol(Xcode.IDENT, commonName1),
+                            Xcons.List(Xcons.FvarRef(descPtrId))));
+    decls.add(commonStmt1);
 
-    // version 3
+    // case useMalloc
     //    "common /xmpf_crayptr_foo/ crayPtr_var"   
-    // versions 4 & 6
+    // case useRegMem
     //    "TYPE var(N)"  !! without SAVE attr.
     //    "common /xmpf_coarray_foo/ var"           
     set_commonName2(coarray);
     Ident ident2;
-    if (version >= 4) {
+    if (!useMalloc) {
       // Version 4 & 6: generate common block for coarrays themselves
       //coarray.resetSaveAttr();   // This seems not correct due to the side effect.
       Xtype type1 = coarray.getIdent().Type();
@@ -342,7 +303,7 @@ public class XMPcoarrayInitProcedure {
       ident2 = body.declLocalIdent(coarray.getName(), type2);
       ident2.setStorageClass(StorageClass.FCOMMON);   // reset SAVE attribute again
 
-    } else {  
+    } else {  // useMalloc
       // Version 3: generate common block for cray-pointers
       String crayPtrName = coarray.getCrayPointerName();
       ident2 = body.declLocalIdent(crayPtrName,
@@ -361,18 +322,16 @@ public class XMPcoarrayInitProcedure {
     /*-------------------------------*\
      * execution part
     \*-------------------------------*/
-    // versions 4 & 6
+    // case useRegMem
     //   "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"
-    // version 3
+    // case useMalloc
     //   "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"
-    if (version == 4 || version == 6) {
+    if (!useMalloc) {
       Xobject subrCall = coarray.makeStmt_regmemStatic(body);
       body.add(subrCall);
-    } else if (version == 3) {
+    } else {
       Xobject subrCall = coarray.makeStmt_allocStatic(body);
       body.add(subrCall);
-    } else {
-      XMP.fatal("INTERNAL: unexpected version number");
     }
   }
 
