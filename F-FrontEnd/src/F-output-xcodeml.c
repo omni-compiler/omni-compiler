@@ -194,6 +194,8 @@ xtag(enum expr_code code)
     case F2008_LOCK_STATEMENT:       return "lockStatement";
     case F2008_UNLOCK_STATEMENT:     return "unlockStatement";
 
+    case F2008_BLOCK_STATEMENT:      return "blockStatement";
+
     /*                          
      * misc.                    
      */                         
@@ -344,6 +346,7 @@ xtag(enum expr_code code)
     case XMP_CODIMENSION_SPEC:
     case EXPR_CODE_END:
     case F2008_ENDCRITICAL_STATEMENT:
+    case F2008_ENDBLOCK_STATEMENT:
 
         fatal("invalid exprcode : %s", EXPR_CODE_NAME(code));
 
@@ -3110,6 +3113,26 @@ outx_UNLOCK_statement(int l, expv v)
 }
 
 
+/*
+ * output blockStatement
+ */
+static void
+outx_BLOCK_statement(int l, expv v)
+{
+    char buf[128];
+
+    if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
+        sprintf(buf, " construct_name=\"%s\"",
+                SYM_NAME(EXPR_SYM(EXPR_ARG2(v))));
+        outx_tagOfStatement1(l, v, buf);
+    } else {
+        outx_tagOfStatement(l, v);
+    }
+    outx_body(l + 1, EXPR_ARG1(v));
+    outx_expvClose(l, v);
+}
+
+
 //static void
 void
 outx_expv(int l, expv v)
@@ -3436,6 +3459,10 @@ outx_expv(int l, expv v)
 
     case ACC_PRAGMA:
       outx_ACC_pragma(l, v);
+      break;
+
+    case F2008_BLOCK_STATEMENT:
+      outx_BLOCK_statement(l, v);
       break;
 
     default:

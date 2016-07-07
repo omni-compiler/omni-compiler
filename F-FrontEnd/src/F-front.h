@@ -231,6 +231,9 @@ typedef struct control
 #define CTL_ACC_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
 #define CTL_ACC_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
 
+#define CTL_BLOCK_STATEMENT(l)   ((l)->v2)
+#define CTL_BLOCK_BODY(l)        (EXPR_ARG1((l)->v2))
+#define CTL_BLOCK_CONST_NAME(l)  (EXPR_ARG2((l)->v2))
 #define CTL_BLOCK_LOCAL_SYMBOLS(u)               ((u)->local_symbols)
 #define CTL_BLOCK_LOCAL_STRUCT_DECLS(u)          ((u)->local_struct_decls)
 #define CTL_BLOCK_LOCAL_COMMON_SYMBOLS(u)        ((u)->local_common_symbols)

@@ -119,6 +119,9 @@ static void compile_UNLOCK_statement(expr x);
 static void compile_CRITICAL_statement(expr x);
 static void compile_ENDCRITICAL_statement(expr x);
 
+static void compile_BLOCK_statement(expr x);
+static void compile_ENDBLOCK_statement(expr x);
+
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
 
@@ -1003,8 +1006,14 @@ void compile_statement1(int st_no, expr x)
         break;
 
     case F2008_BLOCK_STATEMENT:
+        check_INEXEC();
+        compile_BLOCK_statement(x);
+        break;
+
+
     case F2008_ENDBLOCK_STATEMENT:
-        /* DO NOTHING */
+        check_INEXEC();
+        compile_ENDBLOCK_statement(x);
         break;
 
 
@@ -5673,4 +5682,67 @@ check_image_control_statement_available() {
     }
 
     return TRUE;
+}
+
+
+static void
+compile_BLOCK_statement(expr x) {
+    expv st;
+
+    push_ctl(CTL_BLOCK);
+
+    st = list2(F2008_BLOCK_STATEMENT, NULL, NULL);
+    output_statement(st);
+    CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+    CTL_BLOCK_STATEMENT(ctl_top) = st;
+
+    /* save construct name */
+    if (EXPR_HAS_ARG1(x)) {
+        CTL_BLOCK_CONST_NAME(ctl_top) = EXPR_ARG1(x);
+    }
+
+    CURRENT_STATE = INDCL;
+    CURRENT_STATEMENTS = NULL;
+
+    if (endlineno_flag){
+        if (current_line->end_ln_no) {
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->end_ln_no;
+        } else {
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+        }
+    }
+}
+
+
+static void
+compile_ENDBLOCK_statement(expr x) {
+    if (CTL_TYPE(ctl_top) != CTL_BLOCK) {
+        error("'endblock', out of place");
+        return;
+    }
+
+    /* check construct name */
+    if (CTL_BLOCK_CONST_NAME(ctl_top) != NULL && EXPR_ARG1(x) == NULL) {
+        error("expect construnct name");
+        return;
+    } else if (CTL_BLOCK_CONST_NAME(ctl_top) == NULL && EXPR_ARG1(x) != NULL) {
+        error("unexpected construnct name");
+        return;
+    } else if ((CTL_BLOCK_CONST_NAME(ctl_top) != NULL) && EXPR_ARG1(x) != NULL) {
+        if (EXPR_SYM(CTL_BLOCK_CONST_NAME(ctl_top))
+            != EXPR_SYM(EXPR_ARG1(x))) {
+            error("unmatched construct name");
+            return;
+        }
+    }
+
+    CTL_BLOCK_BODY(ctl_top) = CURRENT_STATEMENTS;
+
+    if (endlineno_flag) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    }
+
+    pop_ctl();
+
+    CURRENT_STATE = INEXEC;
 }
