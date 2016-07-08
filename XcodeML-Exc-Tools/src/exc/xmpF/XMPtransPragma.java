@@ -3,6 +3,7 @@ package exc.xmpF;
 import exc.object.*;
 import exc.util.MachineDep;
 import exc.block.*;
+import xcodeml.util.XmOption;
 
 import java.io.File;
 import java.util.*;
@@ -293,13 +294,17 @@ public class XMPtransPragma
       
       if(isVarUsed(for_block.getBody(),org_loop_ind_var)){
 	// if global variable is used in this block, convert local to global
-	Ident l2g_f = 
-	  env.declInternIdent(XMP.l2g_f,Xtype.FsubroutineType);
-	args = Xcons.List(org_loop_ind_var,
-			  local_loop_var.Ref(),
-			  Xcons.IntConstant(k),
-			  on_ref.getDescId().Ref());
-	for_block.getBody().insert(l2g_f.callSubroutine(args));
+        if(XmOption.isXcalableACC()) {
+          for_block.getBody().insert(Xcons.Set(org_loop_ind_var, calcLtoG(t, t_idx, local_loop_var.Ref())));
+        }else {
+          Ident l2g_f =
+                  env.declInternIdent(XMP.l2g_f, Xtype.FsubroutineType);
+          args = Xcons.List(org_loop_ind_var,
+                  local_loop_var.Ref(),
+                  Xcons.IntConstant(k),
+                  on_ref.getDescId().Ref());
+          for_block.getBody().insert(l2g_f.callSubroutine(args));
+        }
       }
     }
 
@@ -327,6 +332,95 @@ public class XMPtransPragma
     return Bcons.COMPOUND(ret_body);
   }
 
+  private Xobject calcLtoG(XMPtemplate t, int tIdx, Xobject local) {
+    if (!t.isDistributed() || t.getDistMannerAt(tIdx) == XMPtemplate.DUPLICATION) {
+      return local;
+    }
+
+    //t.getOntoNodesIndexAt(ti).getInt(); //obtains node idx which corresponds to template idx
+    int nIdx = 0;
+    for(int i = 0; i < tIdx; i++){
+      if(t.getDistMannerAt(i) != XMPtemplate.DUPLICATION){
+        nIdx++;
+      }
+    }
+
+    XMPnodes n = t.getOntoNodes();
+
+    Xobject nodeRank = n.getInfoAt(nIdx).getNodeRankVar().Ref(); /* _p */
+    Xobject nodeSize = n.getInfoAt(nIdx).getSize(); /* _P */
+    if(nodeSize == null){
+      nodeSize = n.getInfoAt(nIdx).getNodeSizeVar().Ref();
+    }
+    Xobject total = t.getSizeAt(tIdx); /* _N */
+    Xobject base = t.getLowerAt(tIdx); /* _m */
+    Xobject newExpr = null;
+
+    switch (t.getDistMannerAt(tIdx)) {
+    //case XMPtemplate.DUPLICATION: unreachable
+    case XMPtemplate.BLOCK:
+      // _XMP_M_LTOG_TEMPLATE_BLOCK(_l, _m, total, _P, _p)  (((_p) * _XMP_M_CEILi(total, _P)) + (_m) + (_l))
+      Xobject ceili = Xcons.binaryOp(Xcode.PLUS_EXPR,
+              Xcons.binaryOp(Xcode.DIV_EXPR,
+                      Xcons.binaryOp(Xcode.MINUS_EXPR,
+                              total,
+                              Xcons.IntConstant(1)),
+                      nodeSize),
+              Xcons.IntConstant(1)
+      );
+      newExpr = Xcons.binaryOp(Xcode.PLUS_EXPR,
+              Xcons.binaryOp(Xcode.PLUS_EXPR,
+                      Xcons.binaryOp(Xcode.MUL_EXPR,
+                              ceili,
+                              nodeRank),
+                      base),
+              local);
+      break;
+    case XMPtemplate.CYCLIC:
+      //case XMPtemplate.BLOCK_CYCLIC: block-cyclic is not used. it is same as cyclic
+      Xobject distArg = t.getDistArgAt(tIdx);
+      if(distArg == null) {
+        //cyclic distribution
+        // #define _XMP_M_LTOG_TEMPLATE_CYCLIC(_l, _m, _P, _p)  (((_l) * (_P)) + (_p) + (_m))
+        newExpr = Xcons.binaryOp(Xcode.PLUS_EXPR,
+                Xcons.binaryOp(Xcode.PLUS_EXPR,
+                        Xcons.binaryOp(Xcode.MUL_EXPR,
+                                local,
+                                nodeSize),
+                        nodeRank),
+                base);
+      }else {
+        //block-cyclic distribution
+        Xobject _b = distArg; //FIXME if distArg is variable and changed, the global index is not correct.
+        Ident modFuncId = env.declIntrinsicIdent("mod", Xtype.FintFunctionType);
+        //#define _XMP_M_LTOG_TEMPLATE_BLOCK_CYCLIC(_l, _b, _m, _P, _p) \
+        //((((_l) / (_b)) * (_b) * (_P)) + ((_b) * (_p)) + ((_l) % (_b)) + (_m))
+        newExpr = Xcons.binaryOp(Xcode.PLUS_EXPR,
+                Xcons.binaryOp(Xcode.PLUS_EXPR,
+                        Xcons.binaryOp(Xcode.PLUS_EXPR,
+                                Xcons.binaryOp(Xcode.MUL_EXPR,
+                                        Xcons.binaryOp(Xcode.MUL_EXPR,
+                                                Xcons.binaryOp(Xcode.DIV_EXPR,
+                                                        local,
+                                                        _b),
+                                                _b),
+                                        nodeSize),
+                                Xcons.binaryOp(Xcode.MUL_EXPR,
+                                        _b,
+                                        nodeRank)),
+                        modFuncId.Call(Xcons.List(local,_b))),
+                base);
+      }
+      break;
+    case XMPtemplate.GBLOCK:
+      XMP.fatal("gblock is not implemented");
+    default:
+      XMP.fatal("unknown distribute manner");
+    }
+
+    return newExpr;
+  }
+
   boolean isVarUsed(BlockList body,Xobject v){
     BasicBlockExprIterator iter = new BasicBlockExprIterator(body);
     for (iter.init(); !iter.end(); iter.next()) {
@@ -351,8 +445,9 @@ public class XMPtransPragma
     Block b = Bcons.emptyBlock();
     BasicBlock bb = b.getBasicBlock();
     Ident f, g, h;
+    boolean isAcc = info.isAcc();
 
-    f = env.declInternIdent(XMP.reflect_f,Xtype.FsubroutineType);
+    f = env.declInternIdent(isAcc? XMP.reflect_acc_f : XMP.reflect_f,Xtype.FsubroutineType);
     
     if (info.getAsyncId() != null){
       Xobject arg = Xcons.List(info.getAsyncId());
@@ -363,7 +458,7 @@ public class XMPtransPragma
     Vector<XMParray> reflectArrays = info.getReflectArrays();
     for(XMParray a: reflectArrays){
       for (int i = 0; i < info.widthList.size(); i++){
-	  g = env.declInternIdent(XMP.set_reflect_f,Xtype.FsubroutineType);
+	  g = env.declInternIdent(isAcc? XMP.set_reflect_acc_f : XMP.set_reflect_f,Xtype.FsubroutineType);
 	  XMPdimInfo w = info.widthList.get(i);
 
 	  // Here the stride means the periodic flag.
@@ -378,11 +473,14 @@ public class XMPtransPragma
       }
 
       if (info.getAsyncId() != null){
-	  h = env.declInternIdent(XMP.reflect_async_f,Xtype.FsubroutineType);
+	  h = env.declInternIdent(isAcc? XMP.reflect_async_acc_f : XMP.reflect_async_f,Xtype.FsubroutineType);
 	  bb.add(h.callSubroutine(Xcons.List(a.getDescId().Ref(), info.getAsyncId())));
       }
       else {
-	  bb.add(f.callSubroutine(Xcons.List(a.getDescId().Ref())));
+        Xobject arg = Xcons.List();
+        if(isAcc) arg.add(a.getLocalId().Ref());
+        arg.add(a.getDescId().Ref());
+        bb.add(f.callSubroutine(arg));
       }
     }
 
@@ -390,6 +488,14 @@ public class XMPtransPragma
       Xobject arg = Xcons.List();
       g = env.declInternIdent(XMP.start_async_f, Xtype.FsubroutineType);
       bb.add(g.callSubroutine(arg));
+    }
+
+    if(isAcc) {
+      XobjList vars = Xcons.List();
+      for(XMParray a : reflectArrays){
+        vars.add(a.getLocalId().Ref());
+      }
+      b = buildAccHostData(vars, Bcons.blockList(b));
     }
 
     return b;
@@ -472,8 +578,9 @@ public class XMPtransPragma
     //   reduce_minus = true;
     // }
 
-    Ident f = env.declInternIdent(XMP.reduction_f, Xtype.FsubroutineType);
-    Ident f2 = env.declInternIdent(XMP.reduction_loc_f, Xtype.FsubroutineType);
+    boolean isAcc = info.isAcc();
+    Ident f = env.declInternIdent(isAcc? XMP.reduction_acc_f : XMP.reduction_f, Xtype.FsubroutineType);
+    Ident f2 = env.declInternIdent(isAcc? XMP.reduction_loc_acc_f : XMP.reduction_loc_f, Xtype.FsubroutineType);
 
     //for(Ident id: info.getReductionVars()){
     for (int i = 0; i < info.getReductionVars().size(); i++){
@@ -531,6 +638,13 @@ public class XMPtransPragma
       ret_body.add(g.callSubroutine(Xcons.List(on_ref.getDescId())));
     }
 
+    if(isAcc){
+      XobjList vars = Xcons.List();
+      for(Ident id : info.getReductionVars()){
+        vars.add(id.Ref());
+      }
+      ret_body = Bcons.blockList(buildAccHostData(vars, ret_body));
+    }
     return Bcons.COMPOUND(ret_body);
   }
 
@@ -540,6 +654,7 @@ public class XMPtransPragma
     //BasicBlock bb = b.getBasicBlock();
 
     BlockList ret_body = Bcons.emptyBody();
+    boolean isAcc = info.isAcc();
 
     Ident xmp_null = env.findVarIdent("XMP_NULL", pb);
     if (xmp_null == null){
@@ -569,7 +684,7 @@ public class XMPtransPragma
     }
     else on_ref_arg = xmp_null;
 
-    Ident f = env.declInternIdent(XMP.bcast_f, Xtype.FsubroutineType);
+    Ident f = env.declInternIdent(isAcc? XMP.bcast_acc_f : XMP.bcast_f, Xtype.FsubroutineType);
 
     for(Ident id: info.getInfoVarIdents()){
       Xtype type = id.Type();
@@ -636,6 +751,14 @@ public class XMPtransPragma
     if (from_ref != null){
       Ident g = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
       ret_body.add(g.callSubroutine(Xcons.List(from_ref.getDescId())));
+    }
+
+    if(isAcc) {
+      XobjList vars = Xcons.List();
+      for (Ident id : info.getInfoVarIdents()) {
+        vars.add(id.Ref());
+      }
+      ret_body = Bcons.blockList(buildAccHostData(vars, ret_body));
     }
 
     return Bcons.COMPOUND(ret_body);
@@ -1032,4 +1155,10 @@ public class XMPtransPragma
     return b;
   }
 
+  private Block buildAccHostData(Xobject useDeviceArg, BlockList body){
+    return Bcons.PRAGMA(Xcode.ACC_PRAGMA,
+            "HOST_DATA",
+            Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), useDeviceArg)),
+            body);
+  }
 }

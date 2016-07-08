@@ -8,6 +8,8 @@ package exc.xmpF;
 
 import exc.object.*;
 import exc.block.*;
+import exc.xcalablemp.*;
+
 import java.util.*;
 import static xcodeml.util.XmLog.fatal;
 
@@ -119,6 +121,14 @@ public class XMPrewriteExpr
       if (block.Opcode() == Xcode.OMP_PRAGMA){
 	Xobject clauses = ((PragmaBlock)block).getClauses();
 	rewriteOmpClauses(clauses, (PragmaBlock)block, fb);
+      }
+    }
+
+    // rewrite ACC pragma
+    for (iter2.init(); !iter2.end(); iter2.next()){
+      Block block = iter2.getBlock();
+      if (block.Opcode() == Xcode.ACC_PRAGMA){
+        rewriteAccClauses((PragmaBlock)block, fb);
       }
     }
 
@@ -402,6 +412,86 @@ public class XMPrewriteExpr
 
     }
 
+  }
+
+  private void rewriteAccClauses(PragmaBlock pragmaBlock, Block block) {
+    Xobject clauses = pragmaBlock.getClauses();
+
+    XobjectIterator iter = new bottomupXobjectIterator(clauses);
+    for (iter.init(); !iter.end();iter.next()){
+      Xobject x = iter.getXobject();
+      if(x == null) continue;
+
+      switch(x.Opcode()) {
+      case VAR: {
+        if (x.getProp(XMP.RWprotected) != null) break;
+
+        Ident id = env.findVarIdent(x.getName(), block);
+        if (id == null) break;
+
+        XMParray array = XMParray.getArray(id);
+
+        if (array == null) break;
+
+        // replace with local decl
+        Xobject var = Xcons.Symbol(Xcode.VAR, array.getLocalType(), array.getLocalName());
+        var.setProp(XMP.arrayProp, array);
+        iter.setXobject(var);
+      }
+      break;
+      case F_ARRAY_REF: {
+        Xobject a = x.getArg(0);
+        if(a.Opcode() != Xcode.F_VAR_REF)
+          XMP.fatal("not F_VAR_REF for F_ARRAY_REF");
+        a = a.getArg(0);
+        XMParray array = (XMParray) a.getProp(XMP.arrayProp);
+        if(array == null) break;
+
+        Xobject indexRanges = x.getArg(1);
+        Fshape arrayShape = new Fshape((FarrayType)array.getType(), block);
+
+        int dim = array.getDim();
+        Xobject subscripts[] = new Xobject[dim];
+        for(int i = 0; i < dim; i++) subscripts[i] = indexRanges.getArg(i);
+        Fshape refShape = new Fshape(new FindexRange(subscripts, block));
+        FarrayType farrayType = (FarrayType)array.getType();
+        Xobject[] arraySizes = farrayType.getFarraySizeExpr();
+
+        for(int i = 0; i < dim; i++){
+          Xobject refIndexRange = indexRanges.getArg(i);
+          Xobject refIndexRangeAssumedShape = refIndexRange.getArgOrNull(3);
+
+          if((refIndexRangeAssumedShape != null) && (refIndexRangeAssumedShape.getInt() != 0)) continue; //refIndexRange is assumed shape
+
+          Xobject arraySizeAssumedShape = arraySizes[i].getArgOrNull(3);
+          if((arraySizeAssumedShape != null) && (arraySizeAssumedShape.getInt() != 0)){
+            XMP.fatal("subarray shape must be assumed shape for distributed assumed shape array in OpenACC pragma");
+          }
+
+          Xobject refLbound = refShape.lbound(i);
+          Xobject refUbound = refShape.ubound(i);
+          if(! arrayShape.lbound(i).equals(refLbound)
+                  || ! arrayShape.ubound(i).equals(refUbound)){
+            XMP.fatal("subarray shape must be same to the distributed array shape in OpenACC pragma");
+          }
+
+          //set is assumed shape
+          refIndexRange.setArg(0, null);
+          refIndexRange.setArg(1, null);
+          refIndexRange.setArg(3, Xcons.IntConstant(1)); //set to assumed shape
+        }
+      } break;
+      case LIST: {
+        if (x.left() == null || x.left().Opcode() != Xcode.STRING) continue;
+
+        String clauseName = x.left().getString();
+        if(clauseName.equals("PRIVATE")){
+          //need to rename induction variable
+        }
+      } break;
+      }
+
+    }
   }
 
   Xobject localIndexOffset;

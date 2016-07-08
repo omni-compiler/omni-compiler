@@ -717,15 +717,15 @@ intrinsic_entry intrinsic_table[] = {
      * This list should match with XcodeML-Exc-Tools/src/exc/xmpF/XMPtransCoarrayRun.java
      */
 
-    { INTR_NUM_IMAGES,    INTR_NAME_GENERIC,   "num_images",        0,      {},                               INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+    { INTR_NUM_IMAGES,    INTR_NAME_GENERIC,   "num_images",        0,      {INTR_TYPE_NONE},                 INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
     { INTR_THIS_IMAGE,    INTR_NAME_GENERIC,   "this_image",        0,      {INTR_TYPE_ANY},                  INTR_TYPE_INT, -1, -8, LANGSPEC_NONSTD },
     { INTR_IMAGE_INDEX,   INTR_NAME_GENERIC,   "image_index",       0,      {INTR_TYPE_ANY},                  INTR_TYPE_INT, -1, -8, LANGSPEC_NONSTD },
     { INTR_LCOBOUND,      INTR_NAME_GENERIC,   "lcobound",          0,      {INTR_TYPE_ANY},                  INTR_TYPE_INT, -1, -8, LANGSPEC_NONSTD },
     { INTR_UCOBOUND,      INTR_NAME_GENERIC,   "ucobound",          0,      {INTR_TYPE_ANY},                  INTR_TYPE_INT, -1, -8, LANGSPEC_NONSTD },
 
     /* hidden interfaces for debugging */
-    { INTR_COARRAY_ALLOCATED_BYTES,   INTR_NAME_GENERIC,   "xmpf_coarray_allocated_bytes",     0,   {},   INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
-    { INTR_COARRAY_GARBAGE_BYTES,     INTR_NAME_GENERIC,   "xmpf_coarray_garbage_bytes",       0,   {},   INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+    { INTR_COARRAY_ALLOCATED_BYTES,   INTR_NAME_GENERIC,   "xmpf_coarray_allocated_bytes",     0,   {INTR_TYPE_NONE},   INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+    { INTR_COARRAY_GARBAGE_BYTES,     INTR_NAME_GENERIC,   "xmpf_coarray_garbage_bytes",       0,   {INTR_TYPE_NONE},   INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
 
 
     /* XMP/F */

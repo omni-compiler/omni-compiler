@@ -19,6 +19,10 @@ public class XMPdimInfo {
   int distManner;
   Xobject distArg;
 
+  // for nodes
+  Ident node_size_var;
+  Ident node_rank_var;
+
   // align for array
   int align_status;
   int align_subscript_index;
@@ -131,6 +135,16 @@ public class XMPdimInfo {
   public int getDistManner() { return distManner; }
   
   public Xobject getDistArg() { return distArg; }
+
+  /*
+   * for nodes
+   */
+  void setNodeInfoVar(Ident size_var, Ident rank_var){
+    node_size_var = size_var;
+    node_rank_var = rank_var;
+  }
+  Ident getNodeSizeVar() { return node_size_var; }
+  Ident getNodeRankVar() { return node_rank_var; }
 
   /*
    *  align for array

@@ -67,6 +67,7 @@ public class XMP {
   public final static String nodes_init_EXEC_f   = "xmpf_nodes_init_EXEC_";
   public final static String nodes_init_NODES_f  = "xmpf_nodes_init_NODES_";
   public final static String nodes_dealloc_f     = "xmpf_nodes_dealloc_";
+  public final static String nodes_get_dim_info_f = "xmpf_nodes_get_dim_info_";
 
   public final static String template_alloc_f    = "xmpf_template_alloc_";
   public final static String template_dim_info_f = "xmpf_template_dim_info_";
@@ -121,6 +122,13 @@ public class XMP {
   public final static String finalize_all_f = "xmpf_finalize_all_";
 
   public final static String arrayProp = "XMParrayProp";
+
+  public final static String set_reflect_acc_f    = "xaccf_set_reflect_";
+  public final static String reflect_acc_f        = "xaccf_reflect_";
+  public final static String reflect_async_acc_f  = "xaccf_reflect_async_";
+  public final static String reduction_acc_f      = "xaccf_reduction_";
+  public final static String reduction_loc_acc_f  = "xaccf_reduction_loc_";
+  public final static String bcast_acc_f          = "xaccf_bcast_";
 
   private static boolean errorFlag			= false;
   private static boolean errorFlags			= false;

@@ -14,6 +14,7 @@
 /* lexical analyzer, enable open mp.  */
 int OMP_flag = FALSE;
 int XMP_flag = FALSE;
+int ACC_flag = FALSE;
 
 /* lexical analyzer, enable conditional compilation.  */
 int cond_compile_enabled = FALSE;
@@ -115,6 +116,7 @@ enum lex_state
     LEX_PRAGMA_TOKEN,
     LEX_OMP_TOKEN,
     LEX_XMP_TOKEN,
+    LEX_ACC_TOKEN,
     LEX_RET_EOS
 };
 
@@ -122,6 +124,7 @@ int st_CONDCOMPL_flag;
 int st_PRAGMA_flag;
 int st_OMP_flag;
 int st_XMP_flag;
+int st_ACC_flag;
 
 enum lex_state lexstate;
 
@@ -136,6 +139,7 @@ sentinel_list sentinels;
 
 #define OMP_SENTINEL "!$omp"
 #define XMP_SENTINEL "!$xmp"
+#define ACC_SENTINEL "!$acc"
 #define OCL_SENTINEL "!ocl"
 #define CDIR_SENTINEL "!cdir"
 
@@ -151,6 +155,7 @@ static char *pragmaBuf = NULL;
 
 extern struct keyword_token OMP_keywords[];
 extern struct keyword_token XMP_keywords[];
+extern struct keyword_token ACC_keywords[];
 
 /* read_line return value */
 #define ST_EOF  0
@@ -203,6 +208,7 @@ static int      is_OCL_sentinel _ANSI_ARGS_((char **));
 static int      is_PRAGMA_sentinel _ANSI_ARGS_((char **));
 static int	is_OMP_sentinel _ANSI_ARGS_((char **));
 static int	is_XMP_sentinel _ANSI_ARGS_((char **));
+static int	is_ACC_sentinel _ANSI_ARGS_((char **));
 #endif
 static int      is_pragma_sentinel _ANSI_ARGS_((sentinel_list* plist,
                                                 char* line, int* index));
@@ -214,6 +220,7 @@ static void     save_format_str _ANSI_ARGS_((void));
 
 static int OMP_lex_token();
 static int XMP_lex_token();
+static int ACC_lex_token();
 
 /* for free format.  */
 /* pragma string setter. */
@@ -297,6 +304,7 @@ initialize_lex()
     
     add_sentinel( &sentinels, OMP_SENTINEL );
     add_sentinel( &sentinels, XMP_SENTINEL );
+    add_sentinel( &sentinels, ACC_SENTINEL );
     if (ocl_flag) add_sentinel( &sentinels, OCL_SENTINEL );
     if (cdir_flag) add_sentinel( &sentinels, CDIR_SENTINEL );
 }
@@ -451,7 +459,12 @@ yylex0()
 	    for (p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
             return XMPKW_LINE;
         }
-        if (st_OMP_flag || st_XMP_flag || st_PRAGMA_flag ||
+        if (st_ACC_flag && ACC_flag) {
+            lexstate = LEX_ACC_TOKEN;
+	    for (p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
+            return ACCKW_LINE;
+        }
+        if (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
             (st_CONDCOMPL_flag && !OMP_flag && !cond_compile_enabled)) {
             lexstate = LEX_PRAGMA_TOKEN;
             return PRAGMA_HEAD;
@@ -516,6 +529,11 @@ yylex0()
 
     case LEX_XMP_TOKEN:
         t = XMP_lex_token();
+        if (t == EOS) lexstate = LEX_NEW_STATEMENT;
+        return t;
+
+    case LEX_ACC_TOKEN:
+        t = ACC_lex_token();
         if (t == EOS) lexstate = LEX_NEW_STATEMENT;
         return t;
 
@@ -713,7 +731,7 @@ token()
 		}
 	      }
 	    }
-	    else if (st_OMP_flag){
+	    else if (st_OMP_flag || st_ACC_flag){
 	      bufptr = save - 1;
 	      return '(';
 	    }
@@ -785,7 +803,7 @@ token()
                     bufptr = save - 1;
                     return '/';
                 }
-		if (st_XMP_flag || st_OMP_flag){
+		if (st_XMP_flag || st_OMP_flag || st_ACC_flag){
 		  bufptr = save - 1;
 		  return '/';
 		}
@@ -2100,6 +2118,7 @@ again:
     st_no = 0;
     st_OMP_flag = FALSE;       /* flag for "!$OMP" */
     st_XMP_flag = FALSE;       /* flag for "!$XMP" */
+    st_ACC_flag = FALSE;       /* flag for "!$ACC" */
     st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
 
@@ -2125,6 +2144,9 @@ again:
             }else if( strcasecmp( sentinel_name( &sentinels, index ), XMP_SENTINEL )== 0 ){
                 set_pragma_str( "XMP" );
                 st_XMP_flag = TRUE;
+            }else if( strcasecmp( sentinel_name( &sentinels, index ), ACC_SENTINEL )== 0 ){
+                set_pragma_str( "ACC" );
+                st_ACC_flag = TRUE;
             }else if( strcasecmp( sentinel_name( &sentinels, index ), OCL_SENTINEL )== 0 ){
 	        char buff[256] = "ocl";
 		strcat(buff, p);
@@ -2168,7 +2190,7 @@ again:
 
     q = st_buffer;
     if ((!OMP_flag && !cond_compile_enabled)
-        &&(st_OMP_flag||st_XMP_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
+        &&(st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
         /* dumb copy */
         st_len = strlen( p );
         strcpy( q, p );
@@ -2213,6 +2235,13 @@ again:
                 }
                 p += strlen( XMP_SENTINEL );
             }
+            else if( st_ACC_flag ){
+                if( index != sentinel_index( &sentinels, ACC_SENTINEL ) ){
+                    error("bad ACC sentinel continuation line");
+                    goto Done;
+                }
+                p += strlen( ACC_SENTINEL );
+            }
         } else {
             if (is_cond_compilation(&sentinels, p)) {
                 if( st_CONDCOMPL_flag ){
@@ -2254,7 +2283,7 @@ again:
 
         /* oBuf => st_buffer */
         if (!OMP_flag && !cond_compile_enabled &&
-            (st_OMP_flag||st_XMP_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
+            (st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
             /* dumb copy */
             strcpy( st_buffer, oBuf );
             st_len = strlen( st_buffer );
@@ -2283,7 +2312,7 @@ Done:
       if (current_line->ln_no != read_lineno.ln_no)
 	current_line->end_ln_no = read_lineno.ln_no;
 
-    if (st_OMP_flag || st_XMP_flag || st_CONDCOMPL_flag) {
+    if (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_CONDCOMPL_flag) {
         append_pragma_str(st_buffer); /* append the rest of line.  */     
         goto Last;
     }
@@ -2468,6 +2497,7 @@ read_fixed_format()
 
     st_OMP_flag = FALSE;       /* flag for "!$OMP" */
     st_XMP_flag = FALSE;       /* flag for "!$XMP" */
+    st_ACC_flag = FALSE;       /* flag for "!$ACC" */
     st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
 
@@ -2497,6 +2527,13 @@ top:
                               XMP_SENTINEL )== 0 ){
             st_XMP_flag = TRUE;
             set_pragma_str( "XMP" ); 
+            append_pragma_str (" ");
+            append_pragma_str (line_buffer);
+	    goto copy_body;
+        }else if( strcasecmp( sentinel_name( &sentinels, index ),
+                              ACC_SENTINEL )== 0 ){
+            st_ACC_flag = TRUE;
+            set_pragma_str( "ACC" ); 
             append_pragma_str (" ");
             append_pragma_str (line_buffer);
 	    goto copy_body;
@@ -2552,7 +2589,7 @@ copy_body:
     p = line_buffer;
     q = st_buffer;
     if (!OMP_flag && !cond_compile_enabled &&
-        (st_OMP_flag||st_XMP_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
+        (st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
         /* dumb copy */
         newLen = strlen( p );
         strcpy( q, p );
@@ -2598,6 +2635,15 @@ copy_body:
                 }
                 error("XMP sentinels missing initial line, ignored");
                 break;
+            }else if( strcasecmp( sentinel_name( &sentinels, index ),
+                                  ACC_SENTINEL )== 0 ){
+                if( st_ACC_flag ){
+                    append_pragma_str (" ");
+                    append_pragma_str (line_buffer);
+                    goto copy_body_cont;
+                }
+                error("ACC sentinels missing initial line, ignored");
+                break;
             }
         }else if (is_cond_compilation( &sentinels, stn_cols )) {
             if( st_CONDCOMPL_flag ){
@@ -2637,7 +2683,7 @@ copy_body:
 	}
 
         if ((!OMP_flag && !cond_compile_enabled)
-            &&(st_OMP_flag||st_XMP_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
+            &&(st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
             /* dumb copy */
             if ( p-oBuf + strlen(line_buffer) >= ST_BUF_SIZE) {
                 goto Done;
@@ -2723,6 +2769,7 @@ readline_fixed_format()
     int body_offset = 0;
     int local_OMP_flag = FALSE;
     int local_XMP_flag = FALSE;
+    int local_ACC_flag = FALSE;
     int local_CONDCOMPL_flag = FALSE;
     int local_SENTINEL_flag = FALSE;
 
@@ -2826,6 +2873,9 @@ next_line0:
         }else if( strcasecmp( sentinel_name( &sentinels, index ),
                               XMP_SENTINEL )== 0 ){
             local_XMP_flag = TRUE;
+        }else if( strcasecmp( sentinel_name( &sentinels, index ),
+                              ACC_SENTINEL )== 0 ){
+            local_ACC_flag = TRUE;
         }
     }else if (is_cond_compilation( &sentinels, line_buffer )) {
         local_CONDCOMPL_flag = TRUE;
@@ -2840,7 +2890,7 @@ next_line0:
     }
 
     /* if there is a line begins with "!$", local_SENTINEL_flag is set TRUE. */
-    local_SENTINEL_flag = local_OMP_flag||local_XMP_flag||local_CONDCOMPL_flag;
+    local_SENTINEL_flag = local_OMP_flag||local_XMP_flag||local_ACC_flag||local_CONDCOMPL_flag;
 
     // comment line begins with '!' leaded by whitespaces.
     if( !local_SENTINEL_flag ){
@@ -3078,6 +3128,11 @@ KeepOnGoin:
         if ((st_XMP_flag && !local_XMP_flag)
             || (!st_XMP_flag && local_XMP_flag)) {
             error("bad XMP sentinel continuation line");
+            return (ST_INIT);
+        }
+        if ((st_ACC_flag && !local_ACC_flag)
+            || (!st_ACC_flag && local_ACC_flag)) {
+            error("bad ACC sentinel continuation line");
             return (ST_INIT);
         }
         if ((st_CONDCOMPL_flag && !local_CONDCOMPL_flag)
@@ -4017,8 +4072,106 @@ struct keyword_token XMP_keywords[ ] =
     { "atomic",		XMPKW_ATOMIC },
     { "direct",		XMPKW_DIRECT },
 
+    { "acc",    XMPKW_ACC },
+
     { 0, 0 }
 };
+
+
+/*
+ * lex for OpenACC part
+ */
+static int
+ACC_lex_token()
+{
+  int t;
+    while(isspace(*bufptr)) bufptr++;  /* skip white space */
+    
+    if(isalpha(*bufptr)){
+	  if(need_keyword == TRUE || paren_level == 0) {  /* require keyword */
+	    need_keyword = FALSE;
+	    t = get_keyword(ACC_keywords);
+	    if(t != UNKNOWN) return t;
+	  }
+    } 
+    return token();
+}
+
+struct keyword_token ACC_keywords[ ] = 
+{
+    {"end",			ACCKW_END},
+    {"parallel",		ACCKW_PARALLEL},
+    {"data",			ACCKW_DATA},
+    {"loop",			ACCKW_LOOP},
+    {"kernels",			ACCKW_KERNELS},
+    {"atomic",			ACCKW_ATOMIC},
+    {"wait",			ACCKW_WAIT},
+    {"cache",			ACCKW_CACHE},
+    {"routine",			ACCKW_ROUTINE},
+    {"enter",			ACCKW_ENTER},
+    {"exit",			ACCKW_EXIT},
+    {"host_data",		ACCKW_HOST_DATA},
+    {"declare",			ACCKW_DECLARE},
+    {"init",			ACCKW_INIT},
+    {"shutdown",		ACCKW_SHUTDOWN},
+    {"set",			ACCKW_SET},
+
+    {"if",			ACCKW_IF},
+    {"copy",			ACCKW_COPY},
+    {"copyin",			ACCKW_COPYIN},
+    {"copyout",			ACCKW_COPYOUT},
+    {"create",			ACCKW_CREATE},
+    {"present",			ACCKW_PRESENT},
+    {"present_or_copy",		ACCKW_PRESENT_OR_COPY},
+    {"pcopy",			ACCKW_PRESENT_OR_COPY},
+    {"present_or_copyin",	ACCKW_PRESENT_OR_COPYIN},
+    {"pcopyin",			ACCKW_PRESENT_OR_COPYIN},
+    {"present_or_copyout",	ACCKW_PRESENT_OR_COPYOUT},
+    {"pcopyout",		ACCKW_PRESENT_OR_COPYOUT},
+    {"present_or_create",	ACCKW_PRESENT_OR_CREATE},
+    {"pcreate",			ACCKW_PRESENT_OR_CREATE},
+    {"deviceptr",		ACCKW_DEVICEPTR},
+    {"async",			ACCKW_ASYNC},
+    {"device_type",		ACCKW_DEVICE_TYPE},
+    {"num_gangs",		ACCKW_NUM_GANGS},
+    {"num_workers",		ACCKW_NUM_WORKERS},
+    {"vector_length",		ACCKW_VECTOR_LENGTH},
+    {"reduction",		ACCKW_REDUCTION},
+    {"private",			ACCKW_PRIVATE},
+    {"firstprivate",		ACCKW_FIRSTPRIVATE},
+    {"default",			ACCKW_DEFAULT},
+    {"none",			ACCKW_NONE},
+    {"collapse",		ACCKW_COLLAPSE},
+    {"gang",			ACCKW_GANG},
+    {"worker",			ACCKW_WORKER},
+    {"vector",			ACCKW_VECTOR},
+    {"seq",			ACCKW_SEQ},
+    {"auto",			ACCKW_AUTO},
+    {"tile",			ACCKW_TILE},
+    {"independent",		ACCKW_INDEPENDENT},
+    {"bind",			ACCKW_BIND},
+    {"nohost",			ACCKW_NOHOST},
+    {"read",			ACCKW_READ},
+    {"write",			ACCKW_WRITE},
+    {"update",			ACCKW_UPDATE},
+    {"capture",			ACCKW_CAPTURE},
+    {"delete",			ACCKW_DELETE},
+    {"finalize",		ACCKW_FINALIZE},
+    {"use_device",		ACCKW_USE_DEVICE},
+    {"device_resident",		ACCKW_DEVICE_RESIDENT},
+    {"link",			ACCKW_LINK},
+    {"host",			ACCKW_HOST},
+    {"self",			ACCKW_HOST},
+    {"device",			ACCKW_DEVICE},
+    {"if_present",		ACCKW_IF_PRESENT},
+    {"device_num",		ACCKW_DEVICE_NUM},
+    {"default_async",		ACCKW_DEFAULT_ASYNC},
+
+    { 0, 0 }
+};
+/*
+ * lex for OpenACC part end
+ */
 
 /* EOF */
 
