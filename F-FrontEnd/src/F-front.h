@@ -174,6 +174,17 @@ enum control_type {
     "CTL_BLOCK",\
 }
 
+typedef struct local_environment {
+    ID                  local_symbols;
+    TYPE_DESC           local_struct_decls;
+    ID                  local_common_symbols;
+    ID                  local_labels;
+    EXT_ID              local_external_symbols;
+} *LOCAL_ENV;
+
+extern LOCAL_ENV current_local_env;
+extern LOCAL_ENV parent_local_env;
+
 /* control */
 typedef struct control
 {
@@ -184,11 +195,7 @@ typedef struct control
     SYMBOL dovar;
 
     /* FOR BLOCK STATEMENT */
-    ID                  local_symbols;
-    TYPE_DESC           local_struct_decls;
-    ID                  local_common_symbols;
-    ID                  local_labels;
-    EXT_ID              local_external_symbols;
+    struct local_environment local_env;
 
     struct control * next;
     struct control * prev;
@@ -231,14 +238,16 @@ typedef struct control
 #define CTL_ACC_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
 #define CTL_ACC_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
 
-#define CTL_BLOCK_STATEMENT(l)   ((l)->v2)
-#define CTL_BLOCK_BODY(l)        (EXPR_ARG1((l)->v2))
-#define CTL_BLOCK_CONST_NAME(l)  (EXPR_ARG2((l)->v2))
-#define CTL_BLOCK_LOCAL_SYMBOLS(u)               ((u)->local_symbols)
-#define CTL_BLOCK_LOCAL_STRUCT_DECLS(u)          ((u)->local_struct_decls)
-#define CTL_BLOCK_LOCAL_COMMON_SYMBOLS(u)        ((u)->local_common_symbols)
-#define CTL_BLOCK_LOCAL_LABELS(u)                ((u)->local_labels)
-#define CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(u)      ((u)->local_external_symbols)
+#define CTL_BLOCK_STATEMENT(l)                   ((l)->v2)
+#define CTL_BLOCK_BODY(l)                        (EXPR_ARG1((l)->v2))
+#define CTL_BLOCK_CONST_NAME(l)                  (EXPR_ARG2((l)->v2))
+#define CTL_BLOCK_LOCAL_ENV(l)                   (&((l)->local_env))
+#define CTL_BLOCK_LOCAL_SYMBOLS(l)               ((CTL_BLOCK_LOCAL_ENV(l))->local_symbols)
+#define CTL_BLOCK_LOCAL_STRUCT_DECLS(l)          ((CTL_BLOCK_LOCAL_ENV(l))->local_struct_decls)
+#define CTL_BLOCK_LOCAL_COMMON_SYMBOLS(l)        ((CTL_BLOCK_LOCAL_ENV(l))->local_common_symbols)
+#define CTL_BLOCK_LOCAL_LABELS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->local_labels)
+#define CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_BLOCK_LOCAL_ENV(l))->local_external_symbols)
+
 
 #define CTL_NEXT(u)               ((u)->next)
 #define CTL_PREV(u)               ((u)->prev)
@@ -280,18 +289,6 @@ struct eqv_set {
 #define EQV_HIGH(ep)    ((ep)->high)
 #define EQV_LOW(ep)     ((ep)->low)
 #define EQV_OFFSET(ep)  ((ep)->offset)
-
-typedef struct local_environment {
-    ID                  local_symbols;
-    TYPE_DESC           local_struct_decls;
-    ID                  local_common_symbols;
-    ID                  local_labels;
-    EXT_ID              local_external_symbols;
-} *LOCAL_ENV;
-
-
-extern LOCAL_ENV current_local_env;
-extern LOCAL_ENV parent_local_env;
 
 #define IMPLICIT_ALPHA_NUM      26
 /* program unit control stack struct */

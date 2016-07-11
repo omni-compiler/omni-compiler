@@ -251,12 +251,24 @@ push_ctl(ctl)
     CTL_SAVE(ctl_top) = CURRENT_STATEMENTS;
     CURRENT_STATEMENTS = NULL;
     CURRENT_BLK_LEVEL++;
+
+    if (ctl == CTL_BLOCK) {
+        parent_local_env = current_local_env;
+        current_local_env = CTL_BLOCK_LOCAL_ENV(ctl_top);
+        CTL_BLOCK_LOCAL_SYMBOLS(ctl_top) = NULL;
+        CTL_BLOCK_LOCAL_STRUCT_DECLS(ctl_top) = NULL;
+        CTL_BLOCK_LOCAL_COMMON_SYMBOLS(ctl_top) = NULL;
+        CTL_BLOCK_LOCAL_LABELS(ctl_top) = NULL;
+        CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(ctl_top) = NULL;
+    }
 }
 
 /* pop control block and output statement block */
 void
 pop_ctl()
 {
+    enum control_type old_ctl_type = CTL_TYPE(ctl_top);
+    
     /* restore previous statements */
     CURRENT_STATEMENTS = CTL_SAVE(ctl_top);
     output_statement(CTL_BLOCK(ctl_top));
@@ -265,7 +277,35 @@ pop_ctl()
     if(CTL_PREV(ctl_top) == NULL) fatal("control stack empty");
     ctl_top = CTL_PREV(ctl_top);
     CURRENT_BLK_LEVEL--;
+
+    if (old_ctl_type == CTL_BLOCK) {
+        CTL cp;
+        current_local_env = parent_local_env;
+        parent_local_env = NULL;
+        FOR_CTLS_BACKWARD(cp) {
+            if (CTL_BLOCK_LOCAL_ENV(cp) == current_local_env)
+                continue;
+            if (CTL_TYPE(cp) == CTL_BLOCK) {
+                parent_local_env = CTL_BLOCK_LOCAL_ENV(cp);
+                break;
+            }
+        }
+
+        if (parent_local_env == NULL) {
+            if (current_local_env != UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL)) {
+                parent_local_env = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
+            } else {
+                if (unit_ctl_level > 0) {
+                    parent_local_env = UNIT_CTL_LOCAL_ENV(PARENT_UNIT_CTL);
+                } else {
+                    parent_local_env = NULL;
+                }
+            }
+        }
+    }
 }
+
+
 
 void
 compile_statement(st_no,x)
@@ -1519,7 +1559,7 @@ end_declaration()
         print_types(LOCAL_STRUCT_DECLS, debug_fp);
     }
 
-    if (CURRENT_PROCEDURE != NULL) {
+    if (CURRENT_PROCEDURE != NULL && CTL_TYPE(ctl_top) != CTL_BLOCK) {
 
         myId = CURRENT_PROCEDURE;
 

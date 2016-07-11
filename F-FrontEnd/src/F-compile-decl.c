@@ -1097,6 +1097,23 @@ find_ident_local(SYMBOL s)
 }
 
 ID
+find_ident_block_parent(SYMBOL s)
+{
+    CTL cp;
+    ID ip;
+
+    FOR_CTLS_BACKWARD(cp) {
+        if (CTL_TYPE(cp) == CTL_BLOCK) {
+            ip = find_ident_head(s, CTL_BLOCK_LOCAL_SYMBOLS(cp));
+            if (ip != NULL) {
+                return ip;
+            }
+        }
+    }
+    return NULL;
+}
+
+ID
 find_ident_parent(SYMBOL s)
 {
     ID ip;
@@ -1198,6 +1215,10 @@ find_ident(SYMBOL s)
     ID ip;
 
     ip = find_ident_local(s);
+    if (ip != NULL) {
+        return ip;
+    }
+    ip = find_ident_block_parent(s);
     if (ip != NULL) {
         return ip;
     }
