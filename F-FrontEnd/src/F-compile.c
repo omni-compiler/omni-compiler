@@ -13,6 +13,10 @@ UNIT_CTL unit_ctls[MAX_UNIT_CTL];
 int unit_ctl_level;
 int unit_ctl_contains_level;
 
+LOCAL_ENV current_local_env;
+LOCAL_ENV parent_local_env = NULL;
+
+
 /* flags and defaults */
 int save_all = FALSE;
 int sub_stars = FALSE;
@@ -5138,6 +5142,9 @@ initialize_unit_ctl()
     unit_ctls[0] = new_unit_ctl();
     unit_ctl_level = 0;
     unit_ctl_contains_level = 0;
+
+    current_local_env = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
+    parent_local_env = NULL;
 }
 
 /**
@@ -5172,6 +5179,7 @@ push_unit_ctl(enum prog_state state)
 
     CURRENT_STATE = state;
     unit_ctl_level ++;
+
     if(state == INCONT)
         unit_ctl_contains_level ++;
 
@@ -5180,6 +5188,9 @@ push_unit_ctl(enum prog_state state)
     if (check_inside_INTERFACE_body() == FALSE) {
         set_parent_implicit_decls();
     }
+
+    parent_local_env = current_local_env;
+    current_local_env = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
 }
 
 
@@ -5233,6 +5244,13 @@ pop_unit_ctl()
     }
     unit_ctls[unit_ctl_level] = NULL;
     unit_ctl_level --;
+    current_local_env = parent_local_env;
+    if (unit_ctl_level > 0) {
+        parent_local_env = UNIT_CTL_LOCAL_ENV(PARENT_UNIT_CTL);
+    } else {
+        parent_local_env = NULL;
+    }
+
     if(CURRENT_STATE == INCONT)
         unit_ctl_contains_level --;
 }
