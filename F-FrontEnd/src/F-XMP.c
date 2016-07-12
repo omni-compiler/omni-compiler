@@ -5,6 +5,8 @@ expv XMP_pragma_list(enum XMP_pragma pragma,expv arg1,expv arg2);
 static int close_XMP_IO_closure(int st_no, expr x);
 int check_for_XMP_pragma(int st_no, expr x);
 void check_for_OMP_pragma(expr x);
+void check_for_ACC_pragma(expr x);
+int is_ACC_loop_pragma(expv x);
 
 // void compile_XMP_name_list(expr x);
 
@@ -18,7 +20,7 @@ enum XMP_st_pragma {
 };
 
 static enum XMP_st_pragma XMP_st_required, XMP_st_flag;
-expv XMP_gmove_directive;
+expv XMP_gmove_clause;
 expv XMP_array_directive;
 
 int XMP_io_desired_statements = 0;
@@ -39,6 +41,7 @@ expv XMP_compile_subscript_list(expr list,xmp_list_context context);
 expv XMP_compile_ON_ref(expr x);
 expv XMP_compile_clause_opt(expr x);
 expv XMP_compile_list(expr l);
+static expv XMP_compile_acc_clause(expr x);
 
 int XMP_reduction_op(expr v)
 {
@@ -83,7 +86,7 @@ void init_for_XMP_pragma()
 void compile_XMP_directive(expr x)
 {
     expr dir;
-    expr c, x1,x2,x3,x4;
+    expr c, x1,x2,x3,x4,x5;
 
     if(x == NULL) return;	/* error */
 
@@ -94,6 +97,7 @@ void compile_XMP_directive(expr x)
     }
 
     check_for_OMP_pragma(x);
+    check_for_ACC_pragma(x);
     check_for_XMP_pragma(-1, x);
 
     if(XMP_do_required){
@@ -246,7 +250,11 @@ void compile_XMP_directive(expr x)
     case XMP_GMOVE:
       check_INEXEC();
       XMP_st_required = XMP_ST_GMOVE;
-      XMP_gmove_directive = x;
+      x1 = EXPR_ARG1(c);
+      x2 = compile_expression(EXPR_ARG2(c)); //async
+      x3 = XMP_compile_acc_clause(EXPR_ARG3(c)); //acc
+      c = list3(LIST,x1,x2,x3);
+      XMP_gmove_clause = c;
       break;
 
     case XMP_ARRAY:
@@ -266,7 +274,8 @@ void compile_XMP_directive(expr x)
       x1 = EXPR_ARG1(c);
       x2 = XMP_compile_subscript_list(EXPR_ARG2(c),XMP_LIST_WIDTH);
       x3 = compile_expression(EXPR_ARG3(c));
-      c = list3(LIST,x1,x2,x3);
+      x4 = XMP_compile_acc_clause(EXPR_ARG4(c));
+      c = list4(LIST,x1,x2,x3,x4);
       output_statement(XMP_pragma_list(XMP_REFLECT,c,NULL));
       break;
 
@@ -282,7 +291,8 @@ void compile_XMP_directive(expr x)
       x1 = list2(LIST, o, l); // (operator variables...)
       x2 = XMP_compile_ON_ref(EXPR_ARG2(c)); // on
       x3 = compile_expression(EXPR_ARG3(c)); // async
-      c = list3(LIST, x1, x2, x3);
+      x4 = XMP_compile_acc_clause(EXPR_ARG4(c)); // acc
+      c = list4(LIST, x1, x2, x3, x4);
       output_statement(XMP_pragma_list(XMP_REDUCTION, c, NULL));
       break;
     }
@@ -293,7 +303,8 @@ void compile_XMP_directive(expr x)
       x2 = XMP_compile_ON_ref(EXPR_ARG2(c)); // on
       x3 = XMP_compile_ON_ref(EXPR_ARG3(c)); // from
       x4 = compile_expression(EXPR_ARG4(c)); // async
-      c = list4(LIST, x1, x2, x3, x4);
+      x5 = XMP_compile_acc_clause(EXPR_ARG5(c));
+      c = list5(LIST, x1, x2, x3, x4, x5);
       output_statement(XMP_pragma_list(XMP_BCAST, c, NULL));
       break;
 
@@ -404,6 +415,7 @@ int check_for_XMP_pragma(int st_no, expr x)
       // don't care the order of pragma around XMP LOOP
       if(EXPR_CODE(x) == F_PRAGMA_STATEMENT) goto done;
       if(EXPR_CODE(x) == LIST && EXPR_INT(EXPR_ARG1(x)) == OMP_F_PARALLEL_DO) goto done;
+      if(is_ACC_loop_pragma(x)) goto done;
       if(EXPR_CODE(x) != F_DO_STATEMENT)
 	  error("XMP LOOP directives must be followed by do statement");
       XMP_do_required = FALSE;
@@ -442,7 +454,8 @@ int check_for_XMP_pragma(int st_no, expr x)
 	}
     }
     if(EXPR_CODE(statements) != F_DO_STATEMENT &&
-       EXPR_CODE(statements) != OMP_PRAGMA){
+       EXPR_CODE(statements) != OMP_PRAGMA && 
+       (! is_ACC_loop_pragma(statements)) ){
       // not fully checked ? only PARALLEL DO should be accepted.
 	fatal("XMP LOOP directive must be followed by do statements");
     }
@@ -473,7 +486,7 @@ int XMP_output_st_pragma(expv v)
     switch(XMP_st_flag){
     case XMP_ST_GMOVE:
 	output_statement(XMP_pragma_list(XMP_GMOVE,
-					 EXPR_ARG2(XMP_gmove_directive),v));
+					 XMP_gmove_clause,v));
 	return TRUE;
     case XMP_ST_ARRAY:
 	output_statement(XMP_pragma_list(XMP_ARRAY,
@@ -885,4 +898,9 @@ expv XMP_compile_list(expr l)
 
   return ret_list;
 
+}
+
+static expv XMP_compile_acc_clause(expr x)
+{
+  return compile_expression(x);
 }

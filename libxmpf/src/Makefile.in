@@ -43,6 +43,7 @@ IS_SUPERUX       = @SUPERUX@
 IS_KCOMPUTER     = @KCOMPUTER@
 IS_FX10          = @FX10@
 IS_FX100         = @FX100@
+IS_XACC          = @XACC@
 
 ifeq ($(IS_KCOMPUTER), $(TRUE))
         CFLAGS += -D_KCOMPUTER
@@ -52,6 +53,11 @@ ifeq ($(IS_FX10), $(TRUE))
 endif
 ifeq ($(IS_FX100), $(TRUE))
         CFLAGS += -D_FX100
+endif
+
+ifeq ($(IS_XACC), $(TRUE))
+    OBJECTS += xaccf_gcomm.o xaccf_reflect.o
+    CFLAGS  += -D_XMP_XACC
 endif
 
 ifeq ($(IS_CRAY), $(TRUE))

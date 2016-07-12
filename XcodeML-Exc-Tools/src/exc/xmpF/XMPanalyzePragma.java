@@ -500,7 +500,7 @@ public class XMPanalyzePragma
       }
       else if (b.Opcode() == Xcode.COMPOUND_STATEMENT)
     	  return getOutermostLoopBlock(b.getBody());
-      else if (b.Opcode() == Xcode.OMP_PRAGMA)
+      else if (b.Opcode() == Xcode.OMP_PRAGMA || b.Opcode() == Xcode.ACC_PRAGMA)
     	  return getOutermostLoopBlock(b.getBody());
 //       else if(b.Opcode() == Xcode.F_STATEMENT_LIST &&
 // 	      b.getBasicBlock().getHead().getExpr().Opcode() 
@@ -555,6 +555,7 @@ public class XMPanalyzePragma
     XobjList reflectNameList = (XobjList) reflectDecl.getArg(0);
     XobjList widthOpt = (XobjList) reflectDecl.getArg(1);
     Xobject asyncOpt = reflectDecl.getArg(2);
+    Xobject accOpt = reflectDecl.getArg(3);
 
 //     if(reflectOpt != null){
 //       XMP.fatal("reflect opt is not supported yet, sorry!");
@@ -597,6 +598,10 @@ public class XMPanalyzePragma
     info.setReflectArrays(reflectArrays, widthList);
     info.setAsyncId(asyncOpt);
 
+    info.setAcc(accOpt);
+    if (info.isAcc() && !XmOption.isXcalableACC()){
+      XMP.errorAt(pb, "Enable XcalableACC to use the acc clause");
+    }
   }
 
   void analyzeBarrier(Xobject barrierDecl, 
@@ -618,6 +623,7 @@ public class XMPanalyzePragma
     Xobject reductionSpec = reductionDecl.getArg(0);
     Xobject reductionOnRef = reductionDecl.getArg(1);
     Xobject asyncOpt = reductionDecl.getArg(2);
+    Xobject accOpt = reductionDecl.getArg(3);
 
     // if(reductionOpt != null){
     //   XMP.fatal("redution opt is not supported yet, sorry!");
@@ -632,6 +638,11 @@ public class XMPanalyzePragma
     }
 
     info.setAsyncId(asyncOpt);
+
+    info.setAcc(accOpt);
+    if (info.isAcc() && !XmOption.isXcalableACC()){
+      XMP.errorAt(pb, "Enable XcalableACC to use the acc clause");
+    }
   }
 
   private void analyzeReductionSpec(XMPinfo info, Xobject reductionSpec,
@@ -677,6 +688,7 @@ public class XMPanalyzePragma
     Xobject fromRef = bcastDecl.getArg(1);
     Xobject onRef = bcastDecl.getArg(2);
     Xobject asyncOpt = bcastDecl.getArg(3);
+    Xobject accOpt = bcastDecl.getArg(4);
 
     // if(bcastOpt != null){
     //   XMP.fatal("bcast opt is not supported yet, sorry!");
@@ -704,6 +716,10 @@ public class XMPanalyzePragma
     }
 
     info.setAsyncId(asyncOpt);
+    info.setAcc(accOpt);
+    if (info.isAcc() && !XmOption.isXcalableACC()){
+      XMP.errorAt(pb, "Enable XcalableACC to use the acc clause");
+    }
   }
 
   private void analyzeWaitAsync(Xobject waitAsyncDecl, 
@@ -748,6 +764,7 @@ public class XMPanalyzePragma
 			    XMPinfo info, PragmaBlock pb) {
     Xobject gmoveOpt = gmoveDecl.getArg(0); // NORMAL | IN | OUT
     Xobject asyncOpt = gmoveDecl.getArg(1);
+    Xobject accOpt   = gmoveDecl.getArg(2);
     //Xobject Opt = gmoveDecl.getArg(2);
 
     // check body is single statement.
@@ -814,6 +831,11 @@ public class XMPanalyzePragma
     }
 
     info.setAsyncId(asyncOpt);
+
+    info.setAcc(accOpt);
+    if (info.isAcc() && !XmOption.isXcalableACC()){
+      XMP.errorAt(pb, "Enable XcalableACC to use the acc clause");
+    }
   }
 
   private boolean checkGmoveOperand(Xobject x, boolean remotely_accessed, PragmaBlock pb){

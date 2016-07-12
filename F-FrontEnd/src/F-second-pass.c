@@ -489,6 +489,7 @@ static void second_pass_expv_scan(expv v)
   case OMP_PRAGMA:
 
   case XMP_PRAGMA:
+  case ACC_PRAGMA:
     break;
 
   default:

@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([Omni Compiler], [1.0.1], [omni-compiler@googlegroups.com], [omni])
+AC_INIT([Omni Compiler], [1.0.2], [omni-compiler@googlegroups.com], [omni])
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
 AC_CANONICAL_TARGET

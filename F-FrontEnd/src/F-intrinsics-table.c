@@ -745,8 +745,8 @@ intrinsic_entry intrinsic_table[] = {
     { INTR_ATOMIC_DEFINE, INTR_NAME_GENERIC,   "",                  0,      {INTR_TYPE_LOGICAL, INTR_TYPE_COARRAY_LOGICAL},                              INTR_TYPE_NONE, 2,  0, LANGSPEC_F2008 },
 
     /* hidden interfaces for debugging */
-    { INTR_COARRAY_ALLOCATED_BYTES,   INTR_NAME_GENERIC,   "xmpf_coarray_allocated_bytes",     0,   {},   INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
-    { INTR_COARRAY_GARBAGE_BYTES,     INTR_NAME_GENERIC,   "xmpf_coarray_garbage_bytes",       0,   {},   INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+    { INTR_COARRAY_ALLOCATED_BYTES,   INTR_NAME_GENERIC,   "xmpf_coarray_allocated_bytes",     0,   {INTR_TYPE_NONE},   INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
+    { INTR_COARRAY_GARBAGE_BYTES,     INTR_NAME_GENERIC,   "xmpf_coarray_garbage_bytes",       0,   {INTR_TYPE_NONE},   INTR_TYPE_INT,  0, -8, LANGSPEC_NONSTD },
 
 
     /* XMP/F */

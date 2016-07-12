@@ -25,6 +25,7 @@ STOP_TRANSLATOR=false
 STOP_BACKEND=false
 STOP_COMPILE=false
 ENABLE_OPENMP=false
+ENABLE_OPENACC=false
 ENABLE_XACC=false
 ENABLE_SCALASCA_ALL=false
 ENABLE_SCALASCA=false
@@ -108,7 +109,7 @@ done
 [ $ONLY_PP = true ] && { omni_exec rm -rf $TEMP_DIR; exit 0; }  # xmpf90 -E hoge.c
 
 ### Frontend ###
-[ $ENABLE_XACC = true ]   && frontend_add_opt+=("-facc")
+[ $ENABLE_OPENACC = true -o $ENABLE_XACC = true ]   && frontend_add_opt+=("-facc")
 [ $ENABLE_OPENMP = true ] && frontend_add_opt+=("-fopenmp")
 for file in "${f_files[@]}"; do
     FILE=("${file}")
@@ -131,7 +132,9 @@ done
 [ $ENABLE_TLOG = true ]         && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -tlog"
 [ $ENABLE_SCALASCA_ALL = true ] && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -scalasca-all"
 [ $ENABLE_SCALASCA = true ]     && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -scalasca"
-[ $ENABLE_XACC = true ]         && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -facc"
+[ $ENABLE_OPENACC = true ]      && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -facc"
+[ $ENABLE_XACC = true ]         && OMNI_FX2X_OPT="$OMNI_FX2X_OPT -fxacc"
+
 for file in "${f_files[@]}"; do
     FILE=("${file}")
     FILE_NAME=`omni_f_norm_file_name "${FILE}"`     # ./hoge/fuga.f90 -> hoge_2f_fuga_2f_a
@@ -190,7 +193,7 @@ for file in "${f_files[@]}"; do
     ### GPU Compiler ###
     FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
     FILE_GPUO=${TEMP_DIR}/"${FILE_NAME}".gpu.o
-    if [ $ENABLE_XACC = true ] && [ -e $FILE_CU ]; then
+    if [ $ENABLE_OPENACC = true ] && [ -e $FILE_CU ]; then
 	omni_exec $OMNI_GPUCC_CMD $OMNI_GPUCC_OPT "${FILE_CU}" -o "${FILE_GPUO}"
 	FILE_O_TMP=${TEMP_DIR}/"${FILE_NAME}".cpu.o
 	omni_exec mv "${FILE_O}" "${FILE_O_TMP}"
@@ -227,7 +230,8 @@ omni_exec $OMNI_TRAVERSE $OMNI_TRAVERSE_OPT -o $TRAVERSE_FILE "${obj_files[@]}" 
 
 # link
 [ $ENABLE_TLOG_ALL = true -o $ENABLE_TLOG = true ] && OMNI_LINKER_OPT="-ltlog_mpi $OMNI_LINKER_OPT"
-[ $ENABLE_XACC = true ] && OMNI_LINKER_OPT="-lacc -L@CUDA_PREFIX@/lib64 -lcudart $OMNI_LINKER_OPT"
+[ $ENABLE_OPENACC = true -o $ENABLE_XACC = true ] && OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_LINKER_CUDA_OPT"
+[ $ENABLE_OPENACC = true ] && OMNI_LINKER_OPT="-lacc $OMNI_LINKER_OPT"
 TRAVERSE_FILE_O=${TEMP_DIR}/omni_traverse_${PID}.o
 omni_exec $OMNI_MPIFC_CMD $OMNI_MPIFC_OPT -c $TRAVERSE_FILE -o $TRAVERSE_FILE_O 
 obj_files+=("$TRAVERSE_FILE_O")

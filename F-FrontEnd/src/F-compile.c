@@ -126,6 +126,9 @@ expv OMP_FOR_pragma_list(expv clause,expv statements);
 void init_for_XMP_pragma();
 int check_for_XMP_pragma(int st_no, expr x);
 
+void init_for_ACC_pragma();
+void check_for_ACC_pragma(expr x);
+
 void set_parent_implicit_decls(void);
 
 void
@@ -254,6 +257,7 @@ compile_statement(st_no,x)
         expr_print(x,debug_fp);
     }
 
+    check_for_ACC_pragma(x);
     check_for_OMP_pragma(x);
     doCont = check_for_XMP_pragma(st_no, x);
 
@@ -452,6 +456,7 @@ void compile_statement1(int st_no, expr x)
 	    //EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
 	    //}
 	    check_for_OMP_pragma(x); /* close DO directives if any */
+	    check_for_ACC_pragma(x); /* close LOOP directives if any */
 	    check_for_XMP_pragma(st_no, x); /* close LOOP directives if any */
             end_procedure();
         }

@@ -126,6 +126,7 @@ usage()
         "-I [dirpath]              specify include directory path.",
         "-M [dirpath]              specify module include directory path.",
         "-fopenmp                  enable openmp translation.",
+        "-facc                     enable OpenACC translation.",
         "-fxmp                     enable XcalableMP translation.",
         "-fno-xmp-coarray          disable translation coarray statements to XcalableMP subroutin calls.",
         "-fintrinsic-xmodules-path specify a xmod path for the intrinsic modules.",
@@ -232,6 +233,8 @@ char *argv[];
 	    XMP_flag = TRUE;   /* enable XcalableMP */
         } else if (strcmp(argv[0],"-fno-xmp-coarray") == 0){
             XMP_coarray_flag = FALSE;   /* disable XcalableMP coarray subroutine*/
+        } else if (strcmp(argv[0],"-facc") == 0){
+	    ACC_flag = TRUE;   /* enable OpenACC */
         } else if (strcmp(argv[0],"-Kscope-omp") == 0){
 	    cond_compile_enabled = TRUE;
         } else if (strcmp(argv[0],"-fleave-comment") == 0){

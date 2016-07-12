@@ -36,6 +36,7 @@ Process Options
 XcalableMP Options
 
   -omp,--openmp        : enable OpenMP function.
+  -xacc,--xcalableacc  : enable XcalableACC function.
   -max_assumed_shape=N : specifies the maximum number of assumed-shape array arguments (default: 16)
 EOF
 }
@@ -190,8 +191,17 @@ function xmpf90_set_parameters()
 		done;;
 	    --openmp|-omp)
 		ENABLE_OPENMP=true;;
+	    -acc|--openacc)
+		omni_error_exit "OpenACC for xmpf90 has been not implemented yet."
+		if [ ${ENABLE_ACC} = "0" ]; then
+		    omni_error_exit "warning: $arg option is unavailable, rebuild the compiler with ./configure --enable-openacc"
+		fi
+		ENABLE_OPENACC=true
+		;;
 	    --xcalableacc|-xacc)
 		ENABLE_XACC=true;;
+	    --noopenacc|-noacc)
+		ENABLE_OPENACC=false;;
 	    --scalasca-all)
 		ENABLE_SCALASCA_ALL=true;;
 	    --scalasca)

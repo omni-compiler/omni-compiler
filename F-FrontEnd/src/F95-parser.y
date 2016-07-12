@@ -312,13 +312,95 @@
 %token XMPKW_ATOMIC
 %token XMPKW_DIRECT
 
+%token XMPKW_ACC
+
 %type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_template_fix_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause xmp_save_desc_clause xmp_wait_async_clause xmp_end_clause
 
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_width_opt xmp_width_opt1 xmp_async_opt xmp_async_opt1 xmp_width_list xmp_width
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width
-%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width xmp_coarray_clause xmp_image_clause
+%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width xmp_coarray_clause xmp_image_clause xmp_acc_opt
 
 %type <code> xmp_reduction_op
+
+/* OpenACC directives */
+%token ACCKW_LINE
+%token ACCKW_END
+%token ACCKW_PARALLEL
+%token ACCKW_DATA
+%token ACCKW_LOOP
+%token ACCKW_KERNELS
+%token ACCKW_ATOMIC
+%token ACCKW_WAIT
+%token ACCKW_CACHE
+%token ACCKW_ROUTINE
+%token ACCKW_ENTER
+%token ACCKW_EXIT
+%token ACCKW_HOST_DATA
+%token ACCKW_DECLARE
+%token ACCKW_INIT
+%token ACCKW_SHUTDOWN
+%token ACCKW_SET
+
+/* OpenACC clauses */
+%token ACCKW_IF
+%token ACCKW_ASYNC
+%token ACCKW_DEVICE_TYPE
+%token ACCKW_COPY
+%token ACCKW_COPYIN
+%token ACCKW_COPYOUT
+%token ACCKW_CREATE
+%token ACCKW_PRESENT
+%token ACCKW_PRESENT_OR_COPY
+%token ACCKW_PRESENT_OR_COPYIN
+%token ACCKW_PRESENT_OR_COPYOUT
+%token ACCKW_PRESENT_OR_CREATE
+%token ACCKW_DEVICEPTR
+%token ACCKW_NUM_GANGS
+%token ACCKW_NUM_WORKERS
+%token ACCKW_VECTOR_LENGTH
+%token ACCKW_REDUCTION
+%token ACCKW_PRIVATE
+%token ACCKW_FIRSTPRIVATE
+%token ACCKW_DEFAULT
+%token ACCKW_NONE
+%token ACCKW_COLLAPSE
+%token ACCKW_GANG
+%token ACCKW_WORKER
+%token ACCKW_VECTOR
+%token ACCKW_SEQ
+%token ACCKW_AUTO
+%token ACCKW_TILE
+%token ACCKW_INDEPENDENT
+%token ACCKW_BIND
+%token ACCKW_NOHOST
+%token ACCKW_READ
+%token ACCKW_WRITE
+%token ACCKW_UPDATE
+%token ACCKW_CAPTURE
+%token ACCKW_DELETE
+%token ACCKW_FINALIZE
+%token ACCKW_USE_DEVICE
+%token ACCKW_DEVICE_RESIDENT
+%token ACCKW_LINK
+%token ACCKW_HOST
+%token ACCKW_DEVICE
+%token ACCKW_IF_PRESENT
+%token ACCKW_DEVICE_NUM
+%token ACCKW_DEFAULT_ASYNC
+
+%type <code> acc_reduction_op
+%type <code> acc_end_clause
+
+%type <val> acc_directive acc_if_clause acc_parallel_clause_list acc_data_clause_list acc_loop_clause_list acc_parallel_loop_clause_list acc_kernels_loop_clause_list acc_wait_clause_list acc_expr_list acc_data_clause acc_var acc_var_list acc_subscript acc_subscript_list acc_csep acc_parallel_clause acc_kernels_clause_list acc_kernels_clause acc_routine_clause_list acc_enter_data_clause_list acc_exit_data_clause_list acc_host_data_clause_list acc_declare_clause_list acc_update_clause_list acc_init_clause_list acc_shutdown_clause_list acc_set_clause_list
+
+/* abstract clause */
+%type <val> acc_loop_clause acc_atomic_clause acc_enter_data_clause acc_exit_data_clause acc_declare_clause acc_update_clause acc_set_clause acc_compute_clause acc_parallel_loop_clause acc_kernels_loop_clause acc_routine_clause acc_init_clause acc_shutdown_clause acc_host_data_clause
+
+/* clause */
+%type <val> acc_async_clause acc_wait_clause acc_device_type_clause acc_num_gangs_clause acc_num_workers_clause acc_vector_length_clause acc_reduction_clause acc_private_clause acc_firstprivate_clause acc_default_clause acc_default_clause_arg acc_collapse_clause acc_gang_clause acc_worker_clause acc_vector_clause acc_seq_clause acc_auto_clause acc_tile_clause acc_independent_clause acc_bind_clause acc_nohost_clause acc_delete_clause acc_finalize_clause acc_copy_clause acc_copyin_clause acc_copyout_clause acc_create_clause acc_present_clause acc_present_or_copy_clause acc_present_or_copyin_clause acc_present_or_copyout_clause acc_present_or_create_clause acc_use_device_clause acc_device_resident_clause acc_link_clause acc_host_clause acc_device_clause acc_if_present_clause acc_device_num_clause acc_default_async_clause acc_deviceptr_clause
+
+/* others */
+%type <val> acc_id_list acc_gang_arg_list acc_num_expr acc_length_expr acc_size_expr acc_size_expr_list acc_gang_arg
 
 %{
 #include "F-front.h"
@@ -347,6 +429,7 @@ static void append_pragma_str _ANSI_ARGS_((char *p));
 #define GEN_NODE(TYPE, VALUE) make_enode((TYPE), ((void *)((_omAddrInt_t)(VALUE))))
 #define OMP_LIST(op, args) list2(LIST, GEN_NODE(INT_CONSTANT, op), args)
 #define XMP_LIST(op, args) list2(XMP_PRAGMA, GEN_NODE(INT_CONSTANT, op), args)
+#define ACC_LIST(op, args) list2(ACC_PRAGMA, GEN_NODE(INT_CONSTANT, op), args)
 
 /* statement name */
 expr st_name;
@@ -411,6 +494,8 @@ one_statement:
 	{ compile_OMP_directive($2); }
 	| XMPKW_LINE { need_keyword = TRUE; } xmp_directive
 	{ compile_XMP_directive($3); }
+	| ACCKW_LINE { need_keyword = TRUE; } acc_directive
+	{ compile_ACC_directive($3); }
         | PRAGMA_HEAD  PRAGMA_SLINE /* like !$ ... */
 	{ 
 	    if (pragmaString != NULL)
@@ -2117,10 +2202,10 @@ xmp_loop_clause:
 /* 	   ; */
 
 xmp_reflect_clause:
-	   '(' xmp_expr_list ')' KW xmp_async_opt
-           { $$= list3(LIST,$2,NULL,$5); }
-	  |'(' xmp_expr_list ')' KW XMPKW_WIDTH '(' xmp_width_list ')' KW xmp_async_opt
-           { $$= list3(LIST,$2,$7,$10); }
+	   '(' xmp_expr_list ')' KW xmp_async_opt xmp_acc_opt
+           { $$= list4(LIST,$2,NULL,$5,$6); }
+	  |'(' xmp_expr_list ')' KW XMPKW_WIDTH '(' xmp_width_list ')' KW xmp_async_opt xmp_acc_opt
+           { $$= list4(LIST,$2,$7,$10,$11); }
 	   ;
 
 /* xmp_gmove_clause: */
@@ -2132,12 +2217,12 @@ xmp_reflect_clause:
 /* 	     { $$ = list2(LIST,$1,$3); } */
 /* 	   ; */
 xmp_gmove_clause:
-	    xmp_async_opt
-	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_NORMAL), $1); }
-	  | XMPKW_IN KW xmp_async_opt
-	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN), $3); }
-          | XMPKW_OUT KW xmp_async_opt
-	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_OUT), $3); }
+	    xmp_async_opt xmp_acc_opt
+	    { $$ = list3(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_NORMAL), $1, $2); }
+	  | XMPKW_IN KW xmp_async_opt xmp_acc_opt
+	    { $$ = list3(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN), $3, $4); }
+          | XMPKW_OUT KW xmp_async_opt xmp_acc_opt
+	    { $$ = list3(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_OUT), $3, $4); }
           ;
 
 xmp_barrier_clause:
@@ -2160,14 +2245,14 @@ xmp_barrier_clause:
 /*             ; */
 
 xmp_bcast_clause:
-   	     '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW xmp_async_opt
-	      { $$ = list4(LIST,$2,$6,NULL,$8); }
-	   | '(' xmp_expr_list ')' KW XMPKW_ON xmp_obj_ref KW xmp_async_opt
-	      { $$ = list4(LIST,$2,NULL,$6,$8); }
-   	   | '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW XMPKW_ON xmp_obj_ref KW xmp_async_opt
-	      { $$ = list4(LIST,$2,$6,$9,$11); }
-	   | '(' xmp_expr_list ')' KW xmp_async_opt
-	      { $$ = list4(LIST,$2,NULL,NULL,$5); }
+   	     '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW xmp_async_opt xmp_acc_opt
+	      { $$ = list5(LIST,$2,$6,NULL,$8,$9); }
+	   | '(' xmp_expr_list ')' KW XMPKW_ON xmp_obj_ref KW xmp_async_opt xmp_acc_opt
+	      { $$ = list5(LIST,$2,NULL,$6,$8,$9); }
+   	   | '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW XMPKW_ON xmp_obj_ref KW xmp_async_opt xmp_acc_opt
+	      { $$ = list5(LIST,$2,$6,$9,$11,$12); }
+	   | '(' xmp_expr_list ')' KW xmp_async_opt xmp_acc_opt
+	      { $$ = list5(LIST,$2,NULL,NULL,$5,$6); }
             ;
 
 /* xmp_reduction_clause: */
@@ -2178,10 +2263,10 @@ xmp_bcast_clause:
 /* 	     ; */
 
 xmp_reduction_clause:
-	       xmp_reduction_spec KW xmp_async_opt
-	        { $$ = list3(LIST,$1,NULL,$3); }
-	     | xmp_reduction_spec KW xmp_ON xmp_obj_ref KW xmp_async_opt
-                { $$ = list3(LIST,$1,$4,$6); }
+	       xmp_reduction_spec KW xmp_async_opt xmp_acc_opt
+	        { $$ = list4(LIST,$1,NULL,$3, $4); }
+	     | xmp_reduction_spec KW xmp_ON xmp_obj_ref KW xmp_async_opt xmp_acc_opt
+                { $$ = list4(LIST,$1,$4,$6,$7); }
 	     ;
 
 xmp_array_clause:
@@ -2437,6 +2522,583 @@ xmp_image_clause:
 	    '(' IDENTIFIER ')' 
 	     { $$ = list1(LIST,$2); }
 
+xmp_acc_opt:
+	/*null*/
+	{ $$ = GEN_NODE(INT_CONSTANT, 0); }
+	| KW XMPKW_ACC
+	{ $$ = GEN_NODE(INT_CONSTANT, 1); }
+	;
+
+/*
+ * OpenACC directives
+ */
+acc_directive:
+	  ACCKW_PARALLEL acc_parallel_clause_list
+	{ $$ = ACC_LIST(ACC_PARALLEL, $2); }
+	| ACCKW_DATA acc_data_clause_list
+	{ $$ = ACC_LIST(ACC_DATA, $2); }
+	| ACCKW_LOOP acc_loop_clause_list
+	{ $$ = ACC_LIST(ACC_LOOP, $2); }
+	| ACCKW_KERNELS acc_kernels_clause_list
+	{ $$ = ACC_LIST(ACC_KERNELS, $2); }
+	| ACCKW_PARALLEL ACCKW_LOOP acc_parallel_loop_clause_list
+	{ $$ = ACC_LIST(ACC_PARALLEL_LOOP, $3); }
+        | ACCKW_KERNELS ACCKW_LOOP acc_kernels_loop_clause_list
+	{ $$ = ACC_LIST(ACC_KERNELS_LOOP, $3); }
+	| ACCKW_ATOMIC acc_atomic_clause
+	{ $$ = ACC_LIST(ACC_ATOMIC, list1(LIST,$2)); }
+	| ACCKW_WAIT acc_wait_clause_list
+	{ $$ = ACC_LIST(ACC_WAIT, $2); }
+	| ACCKW_WAIT '(' acc_expr_list ')' acc_wait_clause_list
+	{ $$ = ACC_LIST(ACC_WAIT, list_cons(ACC_LIST(ACC_CLAUSE_WAIT_ARG, $3), $5)); }
+	| ACCKW_CACHE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CACHE, list1(LIST, ACC_LIST(ACC_CLAUSE_CACHE_ARG, $3))); }
+	| ACCKW_ROUTINE acc_routine_clause_list
+	{ $$ = ACC_LIST(ACC_ROUTINE, $2); }
+	| ACCKW_ROUTINE '(' IDENTIFIER ')' acc_routine_clause_list
+	{ $$ = ACC_LIST(ACC_ROUTINE, list_cons(ACC_LIST(ACC_CLAUSE_ROUTINE_ARG, $3), $5)); }
+	| ACCKW_ENTER ACCKW_DATA acc_enter_data_clause_list
+	{ $$ = ACC_LIST(ACC_ENTER_DATA, $3); }
+	| ACCKW_EXIT ACCKW_DATA acc_exit_data_clause_list
+	{ $$ = ACC_LIST(ACC_EXIT_DATA, $3); }
+	| ACCKW_HOST_DATA acc_host_data_clause_list
+	{ $$ = ACC_LIST(ACC_HOST_DATA, $2); }
+	| ACCKW_DECLARE acc_declare_clause_list
+	{ $$ = ACC_LIST(ACC_DECLARE, $2); }
+	| ACCKW_UPDATE acc_update_clause_list
+	{ $$ = ACC_LIST(ACC_UPDATE_D, $2); }
+	| ACCKW_INIT acc_init_clause_list
+	{ $$ = ACC_LIST(ACC_INIT, $2); }
+	| ACCKW_SHUTDOWN acc_shutdown_clause_list
+	{ $$ = ACC_LIST(ACC_SHUTDOWN, $2); }
+	| ACCKW_SET acc_set_clause_list
+	{ $$ = ACC_LIST(ACC_SET, $2); }
+	| ACCKW_END acc_end_clause
+	{ $$ = ACC_LIST($2, NULL); }
+	;
+
+/* clause separator */
+acc_csep:
+	      { $$ = NULL; }
+	| ',' { $$ = NULL; }
+	;
+
+/* clause_lists */
+/* ok */
+acc_parallel_clause_list:
+	{ $$ = list0(LIST); }
+	| acc_parallel_clause_list acc_csep acc_parallel_clause
+	{ $$ = list_put_last($1, $3); }
+        ;
+acc_kernels_clause_list:
+	{ $$ = list0(LIST); }
+	| acc_kernels_clause_list acc_csep acc_kernels_clause
+	{ $$ = list_put_last($1, $3); } 
+        ;
+acc_parallel_loop_clause_list:
+        { $$ = list0(LIST); }
+	| acc_parallel_loop_clause_list acc_csep acc_parallel_loop_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_kernels_loop_clause_list:
+        { $$ = list0(LIST); }
+        | acc_kernels_loop_clause_list acc_csep acc_kernels_loop_clause
+	{ $$ = list_put_last($1, $3); }
+        ;
+acc_loop_clause_list:
+	{ $$ = list0(LIST); }
+	| acc_loop_clause_list acc_csep acc_loop_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_routine_clause_list:
+	  acc_routine_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_routine_clause_list acc_csep acc_routine_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+/* need to rename */
+acc_data_clause_list:
+	{ $$ = list0(LIST); }
+	| acc_data_clause_list acc_csep acc_if_clause
+	{ $$ = list_put_last($1, $3); }
+	| acc_data_clause_list acc_csep acc_data_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_enter_data_clause_list:
+	  acc_enter_data_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_enter_data_clause_list acc_csep acc_enter_data_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_exit_data_clause_list:
+	  acc_exit_data_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_exit_data_clause_list acc_csep acc_exit_data_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_host_data_clause_list:
+	  acc_host_data_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_host_data_clause_list acc_csep acc_host_data_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_declare_clause_list:
+	  acc_declare_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_declare_clause_list acc_csep acc_declare_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_update_clause_list:
+	  acc_update_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_update_clause_list acc_csep acc_update_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_wait_clause_list:	
+        { $$ = list0(LIST); }
+	| acc_wait_clause_list acc_csep acc_async_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_init_clause_list:
+	{ $$ = list0(LIST); }
+	| acc_init_clause_list acc_csep acc_init_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_shutdown_clause_list:
+	{ $$ = list0(LIST); }
+	| acc_shutdown_clause_list acc_csep acc_shutdown_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_set_clause_list:
+	  acc_set_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_set_clause_list acc_csep acc_set_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+
+/*****************************/
+/* OpenACC directive clauses */
+/*****************************/
+acc_compute_clause:
+	  acc_async_clause
+	| acc_wait_clause
+	| acc_num_gangs_clause
+	| acc_num_workers_clause
+	| acc_vector_length_clause
+	| acc_if_clause
+	| acc_data_clause
+	| acc_default_clause
+	;
+acc_parallel_clause:
+	  acc_compute_clause
+	| acc_reduction_clause
+	| acc_private_clause
+	| acc_firstprivate_clause
+	| acc_device_type_clause
+	;
+acc_kernels_clause:
+	  acc_compute_clause
+	| acc_device_type_clause
+	;
+acc_loop_clause:
+	  acc_collapse_clause
+	| acc_gang_clause
+	| acc_worker_clause
+	| acc_vector_clause
+	| acc_seq_clause
+	| acc_auto_clause
+	| acc_tile_clause
+	| acc_device_type_clause
+	| acc_independent_clause
+	| acc_private_clause
+	| acc_reduction_clause
+	;
+acc_host_data_clause:
+	  acc_use_device_clause
+	;
+acc_init_clause:
+	  acc_device_type_clause
+	| acc_device_num_clause
+	;
+acc_shutdown_clause:
+	  acc_init_clause
+	;
+acc_parallel_loop_clause:
+	  acc_compute_clause
+	| acc_loop_clause
+	| acc_firstprivate_clause
+	;
+acc_kernels_loop_clause:
+	  acc_compute_clause
+	| acc_loop_clause
+	;
+acc_routine_clause:
+	  acc_gang_clause
+	| acc_worker_clause
+	| acc_vector_clause
+	| acc_seq_clause
+	| acc_bind_clause
+	| acc_device_type_clause
+	| acc_nohost_clause
+	;
+acc_enter_data_clause:
+	  acc_if_clause
+	| acc_async_clause
+	| acc_wait_clause
+	| acc_copyin_clause
+	| acc_create_clause
+	| acc_present_or_copyin_clause
+	| acc_present_or_create_clause
+	;
+acc_exit_data_clause:
+	  acc_if_clause
+	| acc_async_clause
+	| acc_wait_clause
+	| acc_copyout_clause
+	| acc_delete_clause
+	| acc_finalize_clause
+	;
+acc_set_clause:
+	  acc_default_async_clause
+	| acc_device_type_clause
+	| acc_device_num_clause
+	;
+acc_atomic_clause:
+				{ $$ = NULL; }
+	| KW ACCKW_READ		{ $$ = ACC_LIST(ACC_CLAUSE_READ, NULL); }
+	| KW ACCKW_WRITE	{ $$ = ACC_LIST(ACC_CLAUSE_WRITE, NULL); }
+	| KW ACCKW_UPDATE	{ $$ = ACC_LIST(ACC_CLAUSE_UPDATE, NULL); }
+	| KW ACCKW_CAPTURE	{ $$ = ACC_LIST(ACC_CLAUSE_CAPTURE, NULL); }
+	;
+acc_data_clause:
+	  acc_copy_clause
+	| acc_copyin_clause
+	| acc_copyout_clause
+	| acc_create_clause
+	| acc_present_clause
+	| acc_present_or_copy_clause
+	| acc_present_or_copyin_clause
+	| acc_present_or_copyout_clause
+	| acc_present_or_create_clause
+	| acc_deviceptr_clause
+	;
+acc_update_clause:
+	  acc_async_clause
+	| acc_wait_clause
+	| acc_device_type_clause
+	| acc_if_clause
+	| acc_host_clause
+	| acc_device_clause
+	| acc_if_present_clause
+	;
+acc_declare_clause:
+	  acc_data_clause
+	| acc_device_resident_clause
+	| acc_link_clause
+	;
+acc_end_clause:
+	  ACCKW_PARALLEL		{ $$ = ACC_END_PARALLEL; }
+	| ACCKW_KERNELS			{ $$ = ACC_END_KERNELS; }
+	| ACCKW_DATA			{ $$ = ACC_END_DATA; }
+	| ACCKW_HOST_DATA		{ $$ = ACC_END_HOST_DATA; }
+	| ACCKW_ATOMIC			{ $$ = ACC_END_ATOMIC; }
+	| ACCKW_PARALLEL ACCKW_LOOP	{ $$ = ACC_END_PARALLEL_LOOP; }
+	| ACCKW_KERNELS  ACCKW_LOOP	{ $$ = ACC_END_KERNELS_LOOP; }
+	;
+
+/*******************/
+/* OpenACC clauses */
+/*******************/
+acc_async_clause:
+	  ACCKW_ASYNC
+	{ $$ = ACC_LIST(ACC_CLAUSE_ASYNC, NULL); }
+	| ACCKW_ASYNC '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_ASYNC, $3); }
+	;
+acc_wait_clause:
+	  ACCKW_WAIT
+	{ $$ = ACC_LIST(ACC_CLAUSE_WAIT, NULL); }
+	| ACCKW_WAIT '(' acc_expr_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_WAIT, $3); }
+	;
+acc_device_type_clause:
+	  ACCKW_DEVICE_TYPE '(' acc_id_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICE_TYPE, $3); }
+	;
+acc_num_gangs_clause:
+	  ACCKW_NUM_GANGS '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_NUM_GANGS, $3); }
+	;
+acc_num_workers_clause:
+	  ACCKW_NUM_WORKERS '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_NUM_WORKERS, $3); }
+	;
+acc_vector_length_clause:
+	  ACCKW_VECTOR_LENGTH '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_VECTOR_LENGTH, $3); }
+	;
+acc_reduction_clause:
+	  ACCKW_REDUCTION '(' acc_reduction_op ':' acc_id_list ')'
+	{ $$ = ACC_LIST($3, $5); }
+	;
+acc_reduction_op:
+	  '+'		{ $$ = ACC_CLAUSE_REDUCTION_PLUS; }
+	| '*'	       	{ $$ = ACC_CLAUSE_REDUCTION_MUL; }
+	| AND		{ $$ = ACC_CLAUSE_REDUCTION_LOGAND; }
+	| OR		{ $$ = ACC_CLAUSE_REDUCTION_LOGOR; }
+	| EQV		{ $$ = ACC_CLAUSE_REDUCTION_EQV; }
+	| NEQV		{ $$ = ACC_CLAUSE_REDUCTION_NEQV; }
+	| IDENTIFIER	{ $$ = ACC_reduction_op($1); }  
+	;
+/*
+	| ACCKW_REDUCTION_MAX	  { $$ = ACC_CLAUSE_REDUCTION_MAX; }
+	| ACCKW_REDUCTION_MIN	  { $$ = ACC_CLAUSE_REDUCTION_MIN; }
+	| ACCKW_REDUCTION_BITAND  { $$ = ACC_CLAUSE_REDUCTION_BITAND; }
+	| ACCKW_REDUCTION_BITOR	  { $$ = ACC_CLAUSE_REDUCTION_BITOR; }
+	| ACCKW_REDUCTION_BITXOR  { $$ = ACC_CLAUSE_REDUCTION_BITXOR; }
+*/
+acc_private_clause:
+	  ACCKW_PRIVATE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRIVATE, $3); }
+	;
+acc_firstprivate_clause:
+	  ACCKW_FIRSTPRIVATE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_FIRSTPRIVATE, $3); }
+	;
+acc_default_clause:
+	  ACCKW_DEFAULT '(' acc_default_clause_arg ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEFAULT, $3); }
+	;
+acc_default_clause_arg:
+	  KW ACCKW_NONE     { $$ = ACC_LIST(ACC_CLAUSE_NONE, NULL); }
+	| KW ACCKW_PRESENT  { $$ = ACC_LIST(ACC_CLAUSE_PRESENT, NULL); }
+	;
+acc_bind_clause:
+	  ACCKW_BIND '(' IDENTIFIER ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_BIND, $3); }
+	| ACCKW_BIND '(' CONSTANT ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_BIND, $3); }
+	;
+acc_nohost_clause:
+	  ACCKW_NOHOST
+	{ $$ = ACC_LIST(ACC_CLAUSE_NOHOST, NULL); }
+	;
+acc_collapse_clause:
+	  ACCKW_COLLAPSE '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_COLLAPSE, $3); }
+	;
+acc_gang_clause:
+	  ACCKW_GANG
+	{ $$ = ACC_LIST(ACC_CLAUSE_GANG, NULL); }
+	| ACCKW_GANG '(' acc_gang_arg_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_GANG, $3); }
+	;
+acc_gang_arg_list:
+	  acc_gang_arg
+	{ $$ = list1(LIST, $1); }
+	| acc_gang_arg ',' acc_gang_arg
+	{ $$ = list2(LIST, $1, $3); 
+	  if((EXPR_CODE($1) != ACC_PRAGMA && EXPR_CODE($3) != ACC_PRAGMA)
+	  || (EXPR_CODE($1) == ACC_PRAGMA && EXPR_CODE($3) == ACC_PRAGMA)){
+	    error("gang has over one num or one static argument");
+	  }
+	}
+	;
+
+acc_gang_arg:
+	  expr
+	{ $$ = $1; }
+/*
+	| IDENTIFIER ':' '*'
+	{ $$ = ACC_LIST(ACC_num_attr($1), NULL); ACC_check_num_attr($1, ACC_STATIC); }
+*/
+	| IDENTIFIER ':' acc_size_expr
+	{ 
+	  if(ACC_num_attr($1) == ACC_CLAUSE_STATIC){
+	    $$ = ACC_LIST(ACC_num_attr($1), $3);
+	  }else{
+	    $$ = $3;
+	  }
+        }
+	;
+acc_worker_clause:
+	  ACCKW_WORKER
+	{ $$ = ACC_LIST(ACC_CLAUSE_WORKER, NULL); }
+	| ACCKW_WORKER '(' acc_num_expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_WORKER, $3); }
+	;
+acc_num_expr:
+	  expr
+	| IDENTIFIER ':' expr
+	{ $$ = $3; ACC_check_num_attr($1, ACC_CLAUSE_NUM_WORKERS); }
+	;
+acc_vector_clause:
+	  ACCKW_VECTOR
+	{ $$ = ACC_LIST(ACC_CLAUSE_VECTOR, NULL); }
+	| ACCKW_VECTOR '(' acc_length_expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_VECTOR, $3); } 
+	;
+acc_length_expr: 
+	  expr
+	| IDENTIFIER ':' expr
+	{ $$ = $3; ACC_check_num_attr($1, ACC_CLAUSE_VECTOR_LENGTH); }
+	;
+acc_seq_clause:
+	  ACCKW_SEQ
+	{ $$ = ACC_LIST(ACC_CLAUSE_SEQ, NULL); }
+	;
+acc_auto_clause:
+	  ACCKW_AUTO
+	{ $$ = ACC_LIST(ACC_CLAUSE_AUTO, NULL); }
+	;
+acc_tile_clause:
+	  ACCKW_TILE '(' acc_size_expr_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_TILE, $3); }
+	;
+acc_independent_clause:
+	  ACCKW_INDEPENDENT
+	{ $$ = ACC_LIST(ACC_CLAUSE_INDEPENDENT, NULL); }
+	;
+acc_if_clause:
+	  ACCKW_IF '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_IF,$3); }
+	;
+acc_copy_clause:
+	  ACCKW_COPY '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_COPY, $3); }
+	;
+acc_copyin_clause:
+	  ACCKW_COPYIN '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_COPYIN, $3); }
+	;
+acc_copyout_clause:
+	  ACCKW_COPYOUT '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_COPYOUT, $3); }
+	;
+acc_create_clause:
+	  ACCKW_CREATE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_CREATE, $3); }
+	;
+acc_present_clause:
+	  ACCKW_PRESENT '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT, $3); }
+	;
+acc_present_or_copy_clause:
+	  ACCKW_PRESENT_OR_COPY '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT_OR_COPY, $3); }
+	;
+acc_present_or_copyin_clause:
+	  ACCKW_PRESENT_OR_COPYIN '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT_OR_COPYIN, $3); }
+	;
+acc_present_or_copyout_clause:
+	  ACCKW_PRESENT_OR_COPYOUT '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT_OR_COPYOUT, $3); }
+	;
+acc_present_or_create_clause:
+	  ACCKW_PRESENT_OR_CREATE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT_OR_CREATE, $3); }
+	;
+acc_deviceptr_clause:
+	  ACCKW_DEVICEPTR '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICEPTR, $3); }
+	;
+acc_delete_clause:
+	  ACCKW_DELETE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DELETE, $3); }
+	;
+acc_finalize_clause:
+	  ACCKW_FINALIZE
+	{ $$ = ACC_LIST(ACC_CLAUSE_FINALIZE, NULL); }
+	;
+acc_use_device_clause:
+	  ACCKW_USE_DEVICE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_USE_DEVICE, $3); }
+	;
+acc_device_resident_clause:
+	  ACCKW_DEVICE_RESIDENT '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICE_RESIDENT, $3); }
+	;
+acc_link_clause:
+	  ACCKW_LINK '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_LINK, $3); }
+	;
+acc_host_clause:
+	  ACCKW_HOST '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_HOST, $3); }
+	;
+acc_device_clause:
+	  ACCKW_DEVICE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICE, $3); }
+	;
+acc_if_present_clause:
+	  ACCKW_IF_PRESENT
+	{ $$ = ACC_LIST(ACC_CLAUSE_IF_PRESENT, NULL); }
+	;
+acc_device_num_clause:
+	  ACCKW_DEVICE_NUM '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICE_NUM, $3); }
+	;
+acc_default_async_clause:
+	  ACCKW_DEFAULT_ASYNC '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEFAULT_ASYNC, $3); }
+	;
+
+/***********************/
+/* OpenACC other rules */
+/***********************/
+/* var-name, array-name, subarray, or common-block-name */
+acc_var:
+	  IDENTIFIER
+	| '/' IDENTIFIER '/'
+	{ $$ = ACC_LIST(ACC_COMMONBLOCK, $2); }
+	| IDENTIFIER '(' acc_subscript_list ')'
+	{ $$ = list2(F_ARRAY_REF, $1, $3); }
+	;
+acc_subscript_list:
+	  acc_subscript
+	{ $$ = list1(LIST, $1); }
+	| acc_subscript_list ',' acc_subscript
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_subscript:
+	  expr
+	| expr_or_null ':' expr_or_null
+	{ $$ = list3(F95_TRIPLET_EXPR,$1,$3,NULL); }
+	;
+/* list of var-name, array-name, subarray, or common-block-name */
+acc_var_list:
+	  acc_var
+	{ $$ = list1(LIST, $1); }
+	| acc_var_list ',' acc_var
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_id_list:
+	  IDENTIFIER
+	{ $$ = list1(LIST, $1); }
+	| acc_id_list ',' IDENTIFIER
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_expr_list:
+	  expr
+	{ $$ = list1(LIST, $1); }
+	| acc_expr_list ',' expr
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_size_expr:
+	  expr
+	{ $$ = $1; }
+	| '*'
+	{ $$ = ACC_LIST(ACC_ASTERISK, NULL); }
+	;
+acc_size_expr_list:
+	  acc_size_expr
+	{ $$ = list1(LIST, $1); }
+	| acc_size_expr_list ',' acc_size_expr
+	{ $$ = list_put_last($1, $3); }
+	;
+
+  
 %%
 #include "F95-lex.c"
 

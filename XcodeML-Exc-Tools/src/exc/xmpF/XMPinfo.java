@@ -54,6 +54,10 @@ public class XMPinfo
   // for task
   boolean nocomm_flag;
 
+  // for acc
+  //Xobject accOpt;
+  boolean acc_flag;
+
   public XMPinfo(XMPpragma pragma, XMPinfo parent, Block b, XMPenv env) {
     this.pragma = pragma;
     this.parent = parent;
@@ -166,4 +170,10 @@ public class XMPinfo
   }
 
   public boolean isNocomm() { return nocomm_flag; }
+
+  public void setAcc(Xobject acc) {
+    acc_flag = ! acc.isZeroConstant();
+  }
+
+  public boolean isAcc() { return acc_flag; }
 }
