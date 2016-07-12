@@ -363,12 +363,15 @@ extern int _XMP_split_world_by_color(int color);
 extern _Bool xmp_is_async();
   
 #ifdef _XMP_XACC
+extern void _XMP_reflect_gpu(void *dev_addr, _XMP_array_t *a);
 extern void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
 extern void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
 extern int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);
 extern void _XMP_reduce_gpu_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
 extern void _XMP_reduce_gpu_CLAUSE(void *data_addr, int count, int datatype, int op);
 extern void _XMP_set_reflect_gpu(_XMP_array_t *a, int dim, int lwidth, int uwidth, int is_periodic);
+extern void _XMP_reflect_acc__(void *acc_addr, _XMP_array_t *array_desc);
+extern void _XMP_set_reflect_acc__(_XMP_array_t *a, int dim, int lwidth, int uwidth, int is_periodic);
 #endif
 
 // ----- libxmp_threads ----------------------------------------------

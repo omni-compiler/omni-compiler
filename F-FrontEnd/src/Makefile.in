@@ -13,11 +13,11 @@ AWK     = @AWK@
 OBJECTS = F95-main.o C-expr-mem.o C-exprcode.o F-datatype.o F-ident.o \
 	  F95-parser.o F-mem.o F-compile.o F-compile-decl.o F-compile-expr.o \
 	  F-opt-expv.o F-output-xcodeml.o F-io-xcodeml.o F-data.o F-datasub.o \
-	  F-equiv.o F-varutil.o F-intrinsic.o F-intrinsics-table.o F-OMP.o F-XMP.o \
+	  F-equiv.o F-varutil.o F-intrinsic.o F-intrinsics-table.o F-OMP.o F-ACC.o F-XMP.o \
 	  xcodeml-node.o xcodeml-parse.o xcodeml-util.o xcodeml-type.o \
 	  xcodeml-traverse.o xcodeml-output-F.o F-dump.o F-type-attr-tbl.o \
 	  module-manager.o hash.o F-input-xmod.o F-module-procedure.o F-second-pass.o
-HEADERS = C-OMP.h C-XMP.h C-expr.h C-exprcode.h F-datatype.h F-front.h F-ident.h \
+HEADERS = C-OMP.h C-ACC.h C-XMP.h C-expr.h C-exprcode.h F-datatype.h F-front.h F-ident.h \
 	  F-input-xmod.h F-intrinsics-types.h F-module-procedure.h F-output-xcodeml.h \
 	  F-second-pass.h hash.h module-manager.h xcodeml-module.h xcodeml-node.h xcodeml.h
 CREATE_FILES = C-exprcode.h C-exprcode.c

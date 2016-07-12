@@ -15,6 +15,7 @@ all default: $(EXES)
 
 run: $(EXES)
 	$(XRUN) -n 2 ./offset.x
+	$(XRUN) -n 2 ./scope.x
 
 RUN:
 	mkdir RUN

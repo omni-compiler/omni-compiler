@@ -83,6 +83,8 @@ enum XMP_pragma_clause {
   XMP_GLOBAL_IO_DIRECT		= 800,
   XMP_GLOBAL_IO_ATOMIC		= 801,
   XMP_GLOBAL_IO_COLLECTIVE	= 802,
+
+  XMP_ACC = 900,
 };
 
 #endif

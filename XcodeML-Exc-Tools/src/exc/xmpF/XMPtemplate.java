@@ -111,6 +111,8 @@ package exc.xmpF;
      return scripts.elementAt(index).getLower();
    }
 
+   public Xobject getSizeAt(int index) { return scripts.elementAt(index).getSize(); }
+
    public static String getDistMannerString(int manner) {
      switch (manner) {
        case DUPLICATION:
