@@ -1,6 +1,6 @@
 XFC     = xmpf90
 XRUN    = mpiexec
-EXES    = module_test.x module_test0.x arg.x dnodes.x refobj.x 103.x 228.x 358_result.x 383.x 377.x 392.x 397.x
+EXES    = module_test.x module_test0.x arg.x dnodes.x refobj.x 103.x 228.x 358_result.x 383.x 377.x 392.x 397.x 152.x 018.x
 
 all: module_test.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
      103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o    schedule_default.o task001.o 152.x 397.x double_option.x nargs.o result.o 018.x
