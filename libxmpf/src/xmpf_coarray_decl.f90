@@ -83,11 +83,12 @@ module xmpf_coarray_decl
       include "xmp_coarray_reduction.h"
 
 contains
-  !! test
-  subroutine xmpf_coarray_hello
-    write(*,*) "Hello Coarray"
-  end subroutine xmpf_coarray_hello
+      !-------------------------------
+      ! test routine
+      !-------------------------------
+      subroutine xmpf_coarray_hello
+        write(*,*) "Hello Coarray"
+      end subroutine xmpf_coarray_hello
 
 end module xmpf_coarray_decl
-
 

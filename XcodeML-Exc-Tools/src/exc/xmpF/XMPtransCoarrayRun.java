@@ -9,7 +9,7 @@ import java.util.*;
  */
 public class XMPtransCoarrayRun
 {
-  /* These lists should match with F-FrontEnd/src/F-intrinsics-table.c.
+  /* This list should match with F-FrontEnd/src/F-intrinsics-table.c.
    */
   final static String[] _coarrayIntrinsics = {
     // functions
@@ -26,6 +26,10 @@ public class XMPtransCoarrayRun
     "atomic_define",
     "atomic_ref",
   };
+  final static List _coarrayIntrinsicList = Arrays.asList(_coarrayIntrinsics);
+
+  /* This list should match with F-FrontEnd/src/F-intrinsics-table.c.
+   */
   final static String[] _coarrayStmtKeywords = {
     "xmpf_critical",
     "xmpf_end_critical",
@@ -36,7 +40,6 @@ public class XMPtransCoarrayRun
     "xmpf_sync_memory",
     "xmpf_unlock",
   };
-  final static List _coarrayIntrinsicList = Arrays.asList(_coarrayIntrinsics);
   final static List _coarrayStmtKeywordList = Arrays.asList(_coarrayStmtKeywords);
 
   // constants -- cf. libxmpf/src/xmpf_coarray_decl.f90 for generic names
@@ -66,7 +69,7 @@ public class XMPtransCoarrayRun
 
   // generic intrinsic names that will be renamed in pass1 and pass2
   final static List<String> intrinsicProcedureNames = 
-    Arrays.asList( "this_image",
+    Arrays.asList( "num_images", "this_image",
                    "lcobound", "ucobound",
                    "image_index",
                    "co_broadcast",
@@ -579,19 +582,31 @@ public class XMPtransCoarrayRun
    */
   public void run2() {
 
-    if (!isModule())
-      return;                 // do nothing
-
     _setLocalCoarrays();
     /* visibleCoarrays will be set after run1 */
 
     if (version > 3)
       disp_version("run2, " + getName());
 
-    // convert specification and declaration part
-    transModule_staticLocal2();
+    if (isModule()) {
+      run2_module();
+    } else {
+      run2_procedure();
+    }
   }
 
+  private void run2_module() {
+    // convert specification and declaration part
+    transModule_staticLocal2();
+
+    // o2. remove declarations of coarray intrinsic names
+    removeDeclOfIntrinsicNames();
+  }
+
+  private void run2_procedure() {
+    // o2. remove declarations of coarray intrinsic names
+    removeDeclOfIntrinsicNames();
+  }
 
 
   /**
@@ -1067,8 +1082,8 @@ public class XMPtransCoarrayRun
         ...
         V1(1:3,j)[k1,k2] = (/1.0,2.0,3.0/)              ! put 1D
         z = V2[k]**2                                    ! get 0D
-        allocate (V3(1:10,20)[k1:k12,0:*],V4(10)[*])    ! allocate
-        deallocate (V4)                                 ! deallocate
+        allocate (V3(1:10,20)[k1:k12,0:*])              ! allocate
+        deallocate (V3)                                 ! deallocate
         sync all                                        ! stop code motion beyond this line
         if (allocated(V3)) write(*,*) "yes"             ! Fortran intrinsic
         n1 = this_image(V1,1)                           ! coarray intrinsic
@@ -1089,7 +1104,8 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_put(descptr_V1, V1(1,j), 4, &              ! d.
           k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
         z = xmpf_coarray_get0d(descptr_V2, V2, 16, k, 0) ** 2        ! e.
-        call xmpf_coarray_alloc2d(descptr_V3, V3, tag, 4, 2, 10, 20) ! j.
+        call xmpf_coarray_alloc_generic(descptr_V3, V3, 200, 4, tag, &
+                                        2, 1, 10, 1, 20)             ! j.
         call xmpf_coarray_set_coshape(descptr_V3, 2, k1, k2, 0)      ! m.
         call xmpf_coarray_set_varname(descptr_V3, "V3", 2)           ! n.
         call xmpf_coarray_dealloc(descptr_V3)                        ! j.
@@ -2534,7 +2550,7 @@ public class XMPtransCoarrayRun
 
     Ident ident = (Ident)args.getArg();
     String name = ident.getName();
-    if (_coarrayIntrinsicList.contains(name)) {
+    if (isCoarrayIntrinsicName(name)) {
       // Found me a coarray intrinsic name. Remove me.
       prevArgs.setNext(nextArgs);
       args = prevArgs;
@@ -2944,6 +2960,15 @@ public class XMPtransCoarrayRun
     env.removeIdent(coarray.getName(), null);
   }
 
+  //-----------------------------------------------------
+  //  TRANSLATION o2.
+  //  remove declarations of coarray intrinsic names
+  //-----------------------------------------------------
+  //
+  private void removeDeclOfIntrinsicNames() {
+    for (String name: intrinsicProcedureNames)
+      env.removeIdent(name, null);
+  }
 
 
   //-----------------------------------------------------
@@ -3018,11 +3043,15 @@ public class XMPtransCoarrayRun
   }
 
 
+  static public Boolean isCoarrayIntrinsicName(String name) {
+    return _coarrayIntrinsicList.contains(name);
+  }
+
   private boolean _isCoarrayIntrinsicUsed() {
     XobjList identList = def.getDef().getIdentList();
     for (Xobject x: identList) {
       Ident id = (Ident)x;
-      if (_coarrayIntrinsicList.contains(id.getName()))
+      if (isCoarrayIntrinsicName(id.getName()))
         return true;
     }
     return false;
