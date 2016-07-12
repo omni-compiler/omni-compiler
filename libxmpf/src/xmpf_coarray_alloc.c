@@ -276,12 +276,9 @@ int xmpf_coarray_garbage_bytes_()
 void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                           int *count, int *element, void **tag)
 {
-  ////////////////////////////////////////
-  //_XMPF_checkIfInTask("allocatable coarray allocation");
-  ////////////////////////////////////////
   ResourceSet_t *rset;
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC\n");
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC entry\n");
 
   // malloc
   MemoryChunk_t *chunk = _mallocMemoryChunk(*count, (size_t)(*element));
@@ -297,25 +294,39 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
   }
 
   // make coarrayInfo and linkage
-  /////////////////////////////////////////////////////
-  //  CoarrayInfo_t *cinfo;
-  //  if (*descPtr == NULL) {
-  //    cinfo = _newCoarrayInfo(chunk->orgAddr,
-  //                            (*count) * (size_t)(*element));
-  //  } else {
-  //    cinfo = (CoarrayInfo_t*)descPtr;
-  //    cinfo->baseAddr = chunk->orgAddr;
-  //    cinfo->nbytes = (*count) * (size_t)(*element);
-  //  }
-  /////////////////////////////////////////////////////
   CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr,
                                          (*count) * (size_t)(*element));
 
   _addCoarrayInfo(chunk, cinfo);
 
-  // output #1, #2
+  // output #1
   *descPtr = (void*)cinfo;
+  // output #2
   *crayPtr = cinfo->baseAddr;   // == chunk->orgAddr
+
+  // SYNCALL_AUTO
+  xmpf_sync_all_auto_();
+}
+
+
+void xmpf_coarray_regmem_(void **descPtr, void *var,
+                          int *count, int *element, void **tag)
+{
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_REGMEM entry\n");
+
+  // regmem
+  MemoryChunk_t *chunk = _regmemMemoryChunk_core(var, *count, (size_t)(*element));
+  _XMPF_coarrayDebugPrint("*** new MemoryChunk for RegMem variable %s\n",
+                          _dispMemoryChunk(chunk));
+
+  // make coarrayInfo and linkage
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr,
+                                         (*count) * (size_t)(*element));
+
+  _addCoarrayInfo(chunk, cinfo);
+
+  // output #1
+  *descPtr = (void*)cinfo;
 
   // SYNCALL_AUTO
   xmpf_sync_all_auto_();
