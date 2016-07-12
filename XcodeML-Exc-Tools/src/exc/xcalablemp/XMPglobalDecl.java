@@ -244,22 +244,23 @@ public class XMPglobalDecl {
 
   public XMPalignedArray getXMPalignedArray(String name, Block block) {
     XMPalignedArray a = null;
+    Ident id = (block != null)? block.findVarIdent(name) : findVarIdent(name);
 
     // local
     for (Block b = block; b != null; b = b.getParentBlock()){
       XMPsymbolTable symTab = XMPlocalDecl.declXMPsymbolTable2(b);
       if (symTab != null) a = symTab.getXMPalignedArray(name);
-      if (a != null) return a;
+      if(a != null && (id == null || a.getArrayId() == id)) return a; // (id == null) is ok because original local aligned-array ids may have been removed.
     }
 
     // parameter
     XMPsymbolTable symTab = XMPlocalDecl.getXMPsymbolTable(block);
     if (symTab != null) a = symTab.getXMPalignedArray(name);
-    if (a != null) return a;
+    if (a != null && a.getArrayId() == id) return a;
 
     // global
     a = getXMPalignedArray(name);
-    if (a != null) return a;
+    if (a != null && a.getArrayId() == id) return a;
 
     return null;
   }
