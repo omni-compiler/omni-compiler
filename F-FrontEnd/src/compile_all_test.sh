@@ -1,14 +1,17 @@
 #!/bin/sh
 
 verbose=0
+trans=0
 while [ ! -z "$1" ]; do
     case $1 in
         "-v" ) verbose=1 ;;
         "-d" ) shift; testdata=$1 ;;
+        "-t" ) trans=1 ;;
         "--help" | "-?" | "-h") cat<<EOF
 ${0}:
 	-v		run verbosely.
 	-d		specify test data directory (default: ../../F-FrontEnd/test/testdata).
+	-t		transform coarray statement to xmp subroutine call statement
 	--help|-?	show this help.
 EOF
         exit 1;;
@@ -36,9 +39,21 @@ if test -z "${OMNI_JAVA}"; then
 	OMNI_JAVA=java
 fi
 export OMNI_JAVA
-frontend=${work}/F-FrontEnd/src/F_Front
-backend=${work}/F-BackEnd/bin/F_Back
-nativecomp=gfortran
+frontend="${work}/F-FrontEnd/src/F_Front"
+frontendOpt="-fintrinsic-xmodules-path ${OMNI_HOME}/F-FrontEnd/src/fincludes"
+backend="${work}/F-BackEnd/bin/F_Back"
+backendOpt=""
+nativecomp="gfortran -fcoarray=single"
+nativicompOpt=""
+
+if test ${trans} -eq 1; then
+    frontendOpt="${frontendOpt} -M${OMNI_HOME}/libxmpf/src/"
+    nativicompOpt="${nativicompOpt} -I${OMNI_HOME}/libxmpf/src/"
+else
+    frontendOpt="${frontendOpt} -fno-xmp-coarray"
+    backendOpt="${backendOpt} -fcoarray-no-use-statement"
+fi
+
 tmpdir=${work}/compile
 if test -z "${testdata}"; then
     testdata=$work/F-FrontEnd/test/testdata
@@ -70,12 +85,12 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' | sort | x
     if test -f ${f}.options; then
         fOpts=`cat ${f}.options`
     fi
-    ${frontend} ${F_FRONT_TEST_OPTS} ${fOpts} -I ${testdata} ${f} \
+    ${frontend} ${frontendOpt} ${F_FRONT_TEST_OPTS} ${fOpts} -I ${testdata} ${f} \
         -o ${xmlOut} > ${errOut} 2>&1
     if test $? -eq 0; then
-        ${backend} ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1
+        ${backend} ${backendOpt} ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1
         if test $? -eq 0; then
-            ${nativecomp} -c ${decompiledSrc} -o ${binOut} >> ${errOut} 2>&1
+            ${nativecomp} ${nativicompOpt} -c ${decompiledSrc} -o ${binOut} >> ${errOut} 2>&1
 
             if test $? -eq 0; then
 

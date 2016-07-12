@@ -9,17 +9,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.io.*;
-//import java.io.PrintStream;
-//import java.io.StringWriter;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
+import java.io.PrintStream;
+import java.io.StringWriter;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
@@ -5528,11 +5526,183 @@ public class XfDecompileDomVisitor {
     }
 
 
-  /* Check if the name is declared in the runtime library declaration file xmpf_coarray_decl.
-   * To avoid double-declaration of the name at the compile time in the native compiler, the 
-   * declaration of the name should be suppressed if the result of this method is true.
-   * See bug report #493 for the future modification.
-   */
+    /**
+     * Decompile 'syncAllStatement' element in XcodeML/F.
+     */
+    class SyncAllStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("SYNC");
+            writer.writeToken("ALL");
+            writer.writeToken("(");
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'syncAllStatement' element in XcodeML/F.
+     */
+    class SyncImagesStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+            Node exprModel = null;
+            XmfWriter writer = _context.getWriter();
+
+            NodeList children = n.getChildNodes();
+            int numOfChildren = children.getLength();
+            for (int index = 0; index < numOfChildren; index++) {
+                Node child = children.item(index);
+                if (exprModelSet.contains(child.getNodeName())) {
+                    exprModel = child;
+                }
+            }
+
+            writer.writeToken("SYNC");
+
+            writer.writeToken("IMAGES");
+            writer.writeToken("(");
+            if (exprModel == null) {
+                writer.writeToken("*");
+                if (numOfChildren > 1) {
+                    writer.writeToken(",");
+                }
+            }
+            // Expects the exprModel element comes first.
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'syncMemoryStatement' element in XcodeML/F.
+     */
+    class SyncMemoryStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("SYNC");
+            writer.writeToken("MEMORY");
+            writer.writeToken("(");
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'lockStatement' element in XcodeML/F.
+     */
+    class LockStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("LOCK");
+            writer.writeToken("(");
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'unlockStatement' element in XcodeML/F.
+     */
+    class UnlockStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("UNLOCK");
+            writer.writeToken("(");
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'syncStat' element in XcodeML/F.
+     */
+    class SyncStatVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            XmfWriter writer = _context.getWriter();
+
+            String kind = XmDomUtil.getAttr(n, "kind");
+            if (XfUtilForDom.isNullOrEmpty(kind) == false) {
+                Node var = XmDomUtil.getElement(n, "Var");
+                if (var != null) {
+                    writer.writeToken(kind);
+                    writer.writeToken("=");
+                    invokeEnter(var);
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Decompile 'CriticalStatement' element in XcodeML/F.
+     */
+    class CriticalStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            String constructName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+                writer.writeToken(":");
+            }
+            writer.writeToken("CRITICAL");
+            writer.setupNewLine();
+
+            invokeEnter(XmDomUtil.getElement(n, "body"));
+
+            writer.writeToken("END CRITICAL");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+            }
+            writer.setupNewLine();
+        }
+    }
+
+
+    /* Check if the name is declared in the runtime library declaration file xmpf_coarray_decl.
+     * To avoid double-declaration of the name at the compile time in the native compiler, the
+     * declaration of the name should be suppressed if the result of this method is true.
+     * See bug report #493 for the future modification.
+     */
     private Boolean _isNameDefinedWithUseStmt(String name) {
 
       //ArrayList<String> libNames = _get_coarrayRuntimeLibNames__OLD__();
@@ -5546,6 +5716,48 @@ public class XfDecompileDomVisitor {
       return false;
     }
 
+    final private static Set<String> exprModelSet;
+
+    static {
+        String[] exprModelsList = new String[]{
+                "FintConstant",
+                "FrealConstant",
+                "FcomplexConstant",
+                "FcharacterConstant",
+                "FlogicalConstant",
+                "FarrayConstructor",
+                "FstructConstructor",
+                "Var",
+                "FarrayRef",
+                "FcharacterRef",
+                "FmemberRef",
+                "FcoArrayRef",
+                "varRef",
+                "functionCall",
+                "plusExpr",
+                "minusExpr",
+                "mulExpr",
+                "divExpr",
+                "FpowerExpr",
+                "FconcatExpr",
+                "logEQExpr",
+                "logNEQExpr",
+                "logGEExpr",
+                "logGTExpr",
+                "logLEExpr",
+                "logLTExpr",
+                "logAndExpr",
+                "logOrExpr",
+                "logEQVExpr",
+                "logNEQVExpr",
+                "unaryMinusExpr",
+                "logNotExpr",
+                "userBinaryExpr",
+                "userUnaryExpr",
+                "FdoLoop"
+        };
+        exprModelSet = new HashSet<String>(Arrays.asList(exprModelsList));
+    }
 
     ArrayList<String> _get_coarrayRuntimeLibNames__OLD__() {
 
@@ -5747,5 +5959,12 @@ public class XfDecompileDomVisitor {
         new Pair("varDecl", new VarDeclVisitor()),
         new Pair("varList", new VarListVisitor()),
         new Pair("varRef", new VarRefVisitor()),
+        new Pair("syncAllStatement", new SyncAllStatementVisitor()),
+        new Pair("syncImagesStatement", new SyncImagesStatementVisitor()),
+        new Pair("syncMemoryStatement", new SyncMemoryStatementVisitor()),
+        new Pair("criticalStatement", new CriticalStatementVisitor()),
+        new Pair("lockStatement", new LockStatementVisitor()),
+        new Pair("unlockStatement", new UnlockStatementVisitor()),
+        new Pair("syncStat", new SyncStatVisitor()),
     };
 }
