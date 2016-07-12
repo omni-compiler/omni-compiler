@@ -151,9 +151,15 @@ public class Bcons
     }
     
     /** create Fortran 'do' statement block */
-    public static Block Fdo(Xobject var, Xobject idx_range, BlockList body, String construct_name)
+    public static Block Fdo(                  Xobject var, Xobject idx_range, BlockList body, String construct_name)
     {
-        return new FdoBlock(var, idx_range, body, construct_name);
+        return new FdoBlock(    null, var, idx_range, body, construct_name);
+    }
+
+    /** create Fortran 'do' statement block from Xobject */
+    public static Block Fdo(Xobject fdo_stmt)
+    {
+        return new FdoBlock(fdo_stmt, fdo_stmt.getArg(1), fdo_stmt.getArg(2), buildList(fdo_stmt.getArg(3)), getArg0Name(fdo_stmt));
     }
 
     /** create 'while' statement block */
@@ -474,7 +480,7 @@ public class Bcons
 			  buildList(v.getArg(2)), buildList(v.getArg(3)));
             
         case F_DO_STATEMENT: /* (F_DO_STATEMENT construct_name var index_range body) */
-            return Fdo(v.getArg(1), v.getArg(2), buildList(v.getArg(3)), getArg0Name(v));
+            return Fdo(v);
             
         case F_DO_WHILE_STATEMENT: /* (F_DO_WHILE_STATEMENT construct_name cond */
             return WHILE(code, BasicBlock.Cond(v.getArg(1)),

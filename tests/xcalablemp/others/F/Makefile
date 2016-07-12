@@ -3,7 +3,7 @@ XRUN    = mpiexec
 EXES    = module_test.x module_test0.x arg.x dnodes.x refobj.x 103.x 228.x 358_result.x 383.x 377.x 392.x 397.x
 
 all: module_test.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
-     103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o    schedule_default.o task001.o 152.x 397.x double_option.x nargs.o result.o
+     103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o    schedule_default.o task001.o 152.x 397.x double_option.x nargs.o result.o 018.x
 ###     103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o save_desc.x schedule_default.o task001.o 152.x 397.x double_option.x nargs.o
 ###mpiexec -n 4 ./static_desc.x
 ###Fatal error in PMPI_Comm_split: Other MPI error, error stack:
@@ -124,6 +124,11 @@ refobj.x: refobj.f90
 412.x: 412.f90
 	$(XFC) -c $< ;\
 	if [ ! -f m412.xmod ]; then exit 1; fi
+
+018.x: 018.f90
+	$(XFC) -o 018.x $< --debug ; \
+	grep -q "# 9" __omni_tmp__/018_f90_in.F90 || exit 1; \
+	echo "PASS"
 
 run:
 	$(XRUN) -np 2 ./module_test.x

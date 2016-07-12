@@ -15,13 +15,15 @@ import exc.object.Xobject;
  */
 public class FdoBlock extends Block implements ForBlock
 {
+    private Xobject fdo_stmt;
     private BasicBlock ind_var_part, lower_part, upper_part, step_part;
     private BlockList body;
     private boolean is_canonical;
     
-    public FdoBlock(Xobject ind_var, Xobject idx_range, BlockList body, String construct_name)
+    public FdoBlock(Xobject head, Xobject ind_var, Xobject idx_range, BlockList body, String construct_name)
     {
         super(Xcode.F_DO_STATEMENT, null, construct_name);
+        this.fdo_stmt = head;
         this.body = body;
         this.is_canonical = false;
         body.parent = this;
@@ -138,12 +140,15 @@ public class FdoBlock extends Block implements ForBlock
     @Override
     public Xobject toXobject()
     {
-        return Xcons.List(Opcode(),
+        Xobject tmp = Xcons.List(Opcode(),
             getConstructNameObj(),
             (ind_var_part != null ? ind_var_part.getExpr() : null),
             (lower_part != null ? Xcons.List(Xcode.F_INDEX_RANGE,
                 getLowerBound(), getUpperBound(), getStep()) : null),
             body.toXobject());
+        if(fdo_stmt!=null)
+            tmp.setLineNo(fdo_stmt.getLineNo());
+        return tmp;
     }
 
     @Override
