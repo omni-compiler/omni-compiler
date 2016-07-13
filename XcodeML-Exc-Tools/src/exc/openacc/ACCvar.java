@@ -388,7 +388,7 @@ public class ACCvar {
         this.elementType = type;
         return rangeList;
       case Xtype.POINTER:
-        ACC.warning("pointer reference was treated as array reference in '" + getName() +"'");
+        ACC.warning("pointer '" + getName() + "' is treated as \"" + getName() + "[0:1]\"");
         rangeList.add(Xcons.List(Xcons.IntConstant(0), Xcons.IntConstant(1)));
         type = type.getRef();
         break;
