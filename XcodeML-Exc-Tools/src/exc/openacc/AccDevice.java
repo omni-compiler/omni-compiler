@@ -57,11 +57,12 @@ public enum AccDevice {
 
     public void setUseReadOnlyDataCache(boolean useReadOnlyDataCache)
     {
-        if(readOnlyDataCacheAvailable){
-            this.useReadOnlyDataCache = useReadOnlyDataCache;
-        }else{
+
+        if(!readOnlyDataCacheAvailable && useReadOnlyDataCache){
             ACC.warning("Read-only data cache is unavailable");
+            return;
         }
+        this.useReadOnlyDataCache = useReadOnlyDataCache;
     }
     boolean getUseReadOnlyDataCache()
     {
