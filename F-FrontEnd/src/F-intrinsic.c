@@ -22,6 +22,16 @@ static TYPE_DESC        get_intrinsic_return_type(intrinsic_entry *ep,
                                                   expv kindV);
 static BASIC_DATA_TYPE	intr_type_to_basic_type(INTR_DATA_TYPE iType);
 
+static INTR_DATA_TYPE COARRAY_TO_BASIC_MAP[] = {
+    /* INTR_TYPE_COARRAY_ANY            -> */ INTR_TYPE_ANY,
+    /* INTR_TYPE_COARRAY_INT            -> */ INTR_TYPE_INT,
+    /* INTR_TYPE_COARRAY_REAL           -> */ INTR_TYPE_REAL,
+    /* INTR_TYPE_COARRAY_LOGICAL        -> */ INTR_TYPE_LOGICAL,
+};
+
+#define CONVERT_COARRAY_TO_BASIC(x) \
+    (COARRAY_TO_BASIC_MAP[(x) - INTR_TYPE_COARRAY_ANY])
+
 
 void
 initialize_intrinsic() {
@@ -57,8 +67,13 @@ is_intrinsic_function(ID id) {
 }
 
 
-expv 
+expv
 compile_intrinsic_call(ID id, expv args) {
+    return compile_intrinsic_call0(id, args, FALSE);
+}
+
+expv
+compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
     intrinsic_entry *ep = NULL;
     int found = 0;
     int nArgs = 0;
@@ -245,7 +260,7 @@ compile_intrinsic_call(ID id, expv args) {
         ret = expv_cons(FUNCTION_CALL, tp, symV, args);
     }
 
-    if (ret == NULL) {
+    if (ret == NULL && !ignoreTypeMismatch) {
         error_at_node((expr)args,
                       "argument(s) mismatch for an intrinsic '%s()'.",
                       iName);
@@ -265,9 +280,14 @@ compare_intrinsic_arg_type(expv arg,
     BASIC_DATA_TYPE bType;
     int ret = 1;
     int isArray = 0;
+    int isCoarray = 0;
 
     if(IS_GNUMERIC_ALL(tp))
         return 0;
+
+    if (TYPE_IS_COINDEXED(tp)) {
+        isCoarray = 1;
+    }
 
     if (IS_ARRAY_TYPE(tp)) {
         while (IS_ARRAY_TYPE(tp)) {
@@ -498,6 +518,18 @@ compare_intrinsic_arg_type(expv arg,
                 }
                 ret = 0;
                 break;
+            }
+
+
+            case INTR_TYPE_COARRAY_ANY:
+            case INTR_TYPE_COARRAY_INT:
+            case INTR_TYPE_COARRAY_REAL:
+            case INTR_TYPE_COARRAY_LOGICAL:
+            {
+                if (!isCoarray)
+                    break;
+                return compare_intrinsic_arg_type(
+                    arg, tp, CONVERT_COARRAY_TO_BASIC(iType));
             }
 
             default: {
@@ -761,7 +793,7 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
     TYPE_DESC bTypeDsc = NULL;
     TYPE_DESC ret = NULL;
     expv a = NULL;
-    
+
     if (INTR_RETURN_TYPE(ep) == INTR_TYPE_NONE) {
         return NULL;
     }
@@ -1101,6 +1133,36 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
 			return ret;
 		    }
 		    break;
+
+
+                    case INTR_THIS_IMAGE:
+                    case INTR_UCOBOUND:
+                    case INTR_LCOBOUND:
+                    {
+                        /* `THIS_IMAGE(COARRAY)` returns an 1-rank array.
+                           Its length is euquals to the corank of COARRAY */
+                        int corank;
+                        expv dims;
+                        a = expr_list_get_n(args, 0);
+                        if (!(isValidTypedExpv(a))) {
+                            return NULL;
+                        }
+
+                        corank = TYPE_CODIMENSION(EXPV_TYPE(a))->corank;
+
+                        dims = list1(LIST,
+                                     list2(LIST,
+                                           make_int_enode(1),
+                                           make_int_enode(corank)));
+
+                        ret = compile_dimensions(type_INT, dims);
+                        fix_array_dimensions(ret);
+                        return ret;
+                    }
+                    break;
+
+
+
 
                     default:
                     {

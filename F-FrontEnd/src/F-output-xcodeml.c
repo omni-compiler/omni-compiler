@@ -186,6 +186,15 @@ xtag(enum expr_code code)
 
     case F95_USER_DEFINED_BINARY_EXPR:          return "userBinaryExpr";
     case F95_USER_DEFINED_UNARY_EXPR:           return "userUnaryExpr";
+
+
+    case F2008_SYNCALL_STATEMENT:    return "syncAllStatement";
+    case F2008_SYNCIMAGES_STATEMENT: return "syncImagesStatement";
+    case F2008_SYNCMEMORY_STATEMENT: return "syncMemoryStatement";
+    case F2008_CRITICAL_STATEMENT:   return "criticalStatement";
+    case F2008_LOCK_STATEMENT:       return "lockStatement";
+    case F2008_UNLOCK_STATEMENT:     return "unlockStatement";
+
                                 
     /*                          
      * misc.                    
@@ -334,6 +343,7 @@ xtag(enum expr_code code)
     case F95_USER_DEFINED:
     case XMP_CODIMENSION_SPEC:
     case EXPR_CODE_END:
+    case F2008_ENDCRITICAL_STATEMENT:
 
         fatal("invalid exprcode : %s", EXPR_CODE_NAME(code));
 
@@ -2978,7 +2988,124 @@ outx_useOnlyDecl(int l, expv v)
     outx_expvClose(l, v);
 }
 
+
+
 static void
+outx_syncstat_list(int l, expv v)
+{
+    list lp;
+    expv x;
+    FOR_ITEMS_IN_LIST(lp, v) {
+        x = LIST_ITEM(lp);
+        outx_printi(l, "<syncStat kind=\"%s\">\n",
+                    EXPV_KWOPT_NAME(x)
+                    );
+        outx_varOrFunc(l + 1, x);
+        outx_close(l, "syncStat");
+    }
+}
+
+
+/**
+ * output syncAllStatement
+ */
+static void
+outx_SYNCALL_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    outx_syncstat_list(l + 1, v);
+    outx_expvClose(l, v);
+}
+
+
+/**
+ * output syncImagesStatement
+ */
+static void
+outx_SYNCIMAGES_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    if (EXPR_HAS_ARG1(v)) {
+        outx_expv(l + 1, EXPR_ARG1(v));
+    }
+    if (EXPR_HAS_ARG2(v)) {
+        outx_syncstat_list(l + 1, EXPR_ARG2(v));
+    }
+    outx_expvClose(l, v);
+}
+
+/**
+ * output syncmemoryStatement
+ */
+static void
+outx_SYNCMEMORY_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    outx_syncstat_list(l + 1, v);
+    outx_expvClose(l, v);
+}
+
+/*
+ * output criticalStatement
+ */
+static void
+outx_CRITICAL_statement(int l, expv v)
+{
+    char buf[128];
+
+    if (XMP_coarray_flag) {
+        outx_expv(l, EXPR_ARG1(v));
+
+    } else {
+        if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
+            sprintf(buf, " construct_name=\"%s\"",
+                    SYM_NAME(EXPR_SYM(EXPR_ARG2(v))));
+            outx_tagOfStatement1(l, v, buf);
+        } else {
+            outx_tagOfStatement(l, v);
+        }
+        outx_body(l + 1, EXPR_ARG1(v));
+        outx_expvClose(l, v);
+    }
+}
+
+
+/**
+ * output syncmemoryStatement
+ */
+static void
+outx_LOCK_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    if (EXPR_HAS_ARG1(v)) {
+        outx_expv(l + 1, EXPR_ARG1(v));
+    }
+    if (EXPR_HAS_ARG2(v)) {
+        outx_syncstat_list(l + 1, EXPR_ARG2(v));
+    }
+    outx_expvClose(l, v);
+}
+
+
+/**
+ * output syncmemoryStatement
+ */
+static void
+outx_UNLOCK_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    if (EXPR_HAS_ARG1(v)) {
+        outx_expv(l + 1, EXPR_ARG1(v));
+    }
+    if (EXPR_HAS_ARG2(v)) {
+        outx_syncstat_list(l + 1, EXPR_ARG2(v));
+    }
+    outx_expvClose(l, v);
+}
+
+
+//static void
+void
 outx_expv(int l, expv v)
 {
     enum expr_code code;
@@ -3260,6 +3387,7 @@ outx_expv(int l, expv v)
     case F95_GENERIC_SPEC:
     case XMP_CODIMENSION_SPEC:
     case EXPR_CODE_END:
+    case F2008_ENDCRITICAL_STATEMENT:
 
         if(debug_flag)
             expv_output(v, stderr);
@@ -3272,6 +3400,30 @@ outx_expv(int l, expv v)
 
     case XMP_PRAGMA:
       outx_XMP_pragma(l, v);
+      break;
+
+    case F2008_SYNCALL_STATEMENT:
+      outx_SYNCALL_statement(l, v);
+      break;
+
+    case F2008_SYNCIMAGES_STATEMENT:
+      outx_SYNCIMAGES_statement(l, v);
+      break;
+
+    case F2008_SYNCMEMORY_STATEMENT:
+      outx_SYNCMEMORY_statement(l, v);
+      break;
+
+    case F2008_CRITICAL_STATEMENT:
+      outx_CRITICAL_statement(l, v);
+      break;
+
+    case F2008_LOCK_STATEMENT:
+      outx_LOCK_statement(l, v);
+      break;
+
+    case F2008_UNLOCK_STATEMENT:
+      outx_UNLOCK_statement(l, v);
       break;
 
     case ACC_PRAGMA:
@@ -4493,6 +4645,9 @@ outx_blockDataDefinition(int l, EXT_ID ep)
 }
 
 
+
+
+
 static const char*
 getTimestamp()
 {
@@ -4991,3 +5146,4 @@ final_fixup() {
         }
     }
 }
+

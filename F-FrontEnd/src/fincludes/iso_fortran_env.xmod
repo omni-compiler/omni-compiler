@@ -1,0 +1,28 @@
+<OmniFortranModule version="1.0">
+  <name>iso_fortran_env</name>
+  <depends>
+  </depends>
+  <typeTable>
+    <FstructType type="S1a9b9a0">
+      <symbols>
+      </symbols>
+    </FstructType>
+    <FbasicType type="I1a9c3b0" is_parameter="true" ref="Fint"/>
+    <FbasicType type="I1a9cf00" is_parameter="true" ref="Fint"/>
+  </typeTable>
+  <identifiers>
+    <id type="S1a9b9a0" sclass="ftype_name" original_name="lock_type" declared_in="iso_fortran_env">
+      <name>lock_type</name>
+    </id>
+    <id type="I1a9c3b0" sclass="flocal" original_name="atomic_int_kind" declared_in="iso_fortran_env">
+      <name>atomic_int_kind</name>
+    </id>
+    <id type="I1a9cf00" sclass="flocal" original_name="atomic_logical_kind" declared_in="iso_fortran_env">
+      <name>atomic_logical_kind</name>
+    </id>
+  </identifiers>
+  <interfaceDecls>
+  </interfaceDecls>
+  <aux_info>
+  </aux_info>
+</OmniFortranModule>

@@ -13,6 +13,9 @@
 
 #include "module-manager.h"
 
+#define DEFAULT_INSTRINSIC_XMODULES_PATH \
+    "@OMNI_HOME@/fincludes"
+
 extern int input_module_file(const SYMBOL, struct module **);
 
 #endif /* _F_INPUT_XMOD_H_ */

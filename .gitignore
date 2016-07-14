@@ -102,3 +102,4 @@ libxmpf/src/include_work/
 # Other
 __omni_tmp__/
 *~
+.idea
