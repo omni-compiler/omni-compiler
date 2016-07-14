@@ -154,6 +154,14 @@ public class XfDecompileDomVisitor {
                     break;
                 }
             }
+
+            for (Node basicTypeNode : basicTypeNodeArray) {
+                if (XmDomUtil.getAttrBool(basicTypeNode, "is_protected")) {
+                    writer.writeToken(", ");
+                    writer.writeToken("PROTECTED");
+                    break;
+                }
+            }
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
@@ -238,6 +246,7 @@ public class XfDecompileDomVisitor {
         boolean isFirstToken = true;
         boolean isPrivateEmit = false;
         boolean isPublicEmit = false;
+        boolean isProtectedEmit = false;
 
         /* - always type declaration for SUBROUTINE must not be output.
          * - type declaration for FUNCTION under MODULE must not be output.
@@ -260,12 +269,14 @@ public class XfDecompileDomVisitor {
                 if ("FbasicType".equals(lowType.getNodeName())) {
                     isPublicEmit = XmDomUtil.getAttrBool(lowType, "is_public");
                     isPrivateEmit = XmDomUtil.getAttrBool(lowType, "is_private");
+                    isProtectedEmit = XmDomUtil.getAttrBool(lowType, "is_protected");
                 }
 
                 String topTypeName = topType.getNodeName();
                 if ("FbasicType".equals(topTypeName)) {
                     isPublicEmit |= XmDomUtil.getAttrBool(topType, "is_public");
                     isPrivateEmit |= XmDomUtil.getAttrBool(topType, "is_private");
+                    isProtectedEmit |= XmDomUtil.getAttrBool(lowType, "is_protected");
                     _writeBasicType(topType, typeList);
                 } else if ("FstructType".equals(topTypeName)) {
                     String aliasStructTypeName =
@@ -289,6 +300,9 @@ public class XfDecompileDomVisitor {
                 isFirstToken = false;
             } else if (XmDomUtil.getAttrBool(funcTypeNode, "is_private") && isPrivateEmit == false) {
                 writer.writeToken((isFirstToken ? "" : ", ") + "PRIVATE");
+                isFirstToken = false;
+            } else if (XmDomUtil.getAttrBool(funcTypeNode, "is_protected") && isProtectedEmit == false) {
+                writer.writeToken((isFirstToken ? "" : ", ") + "PROTECTED");
                 isFirstToken = false;
             }
         }
@@ -4329,6 +4343,8 @@ public class XfDecompileDomVisitor {
                     writer.writeToken(", PRIVATE");
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_public")) {
                     writer.writeToken(", PUBLIC");
+                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")) {
+                    writer.writeToken(", PROTECTED");
                 }
             }
 

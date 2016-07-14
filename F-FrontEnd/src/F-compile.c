@@ -97,6 +97,7 @@ static void compile_INTERFACE_statement(expr x);
 static void compile_MODULEPROCEDURE_statement(expr x);
 static int  markAsPublic(ID id);
 static int  markAsPrivate(ID id);
+static int  markAsProtected(ID id);
 static void compile_POINTER_SET_statement(expr x);
 static void compile_USE_decl(expr x, expr x_args);
 static void compile_USE_ONLY_decl(expr x, expr x_args);
@@ -190,7 +191,7 @@ initialize_compile_procedure()
 
     this_label = NULL;
     need_keyword = 0;
-    
+
     /* control stack */
     ctl_top = ctls;
     CTL_TYPE(ctl_top) = CTL_NONE;
@@ -236,7 +237,7 @@ void
 pop_ctl()
 {
     /* restore previous statements */
-    CURRENT_STATEMENTS = CTL_SAVE(ctl_top); 
+    CURRENT_STATEMENTS = CTL_SAVE(ctl_top);
     output_statement(CTL_BLOCK(ctl_top));
 
     /* pop */
@@ -334,7 +335,7 @@ void compile_statement1(int st_no, expr x)
         begin_module(EXPR_ARG1 (x));
         break;
 
-    case F95_ENDMODULE_STATEMENT: /* (F95_ENDMODULE_STATEMENT) */      
+    case F95_ENDMODULE_STATEMENT: /* (F95_ENDMODULE_STATEMENT) */
     do_end_module:
         check_INDCL();
 	// move into end_procedure()
@@ -466,7 +467,7 @@ void compile_statement1(int st_no, expr x)
         push_unit_ctl(INCONT);
         break;
 
-        /* 
+        /*
          * declaration statement
          */
     case F_TYPE_DECL: /* (F_TYPE_DECL type (LIST data ....) (LIST attr ...)) */
@@ -723,7 +724,7 @@ void compile_statement1(int st_no, expr x)
 
 	if (CTL_TYPE(ctl_top) == CTL_OMP){
 	  if (CTL_OMP_ARG_DIR(ctl_top) == OMP_F_PARALLEL_DO){
-	    CTL_BLOCK(ctl_top) = 
+	    CTL_BLOCK(ctl_top) =
 		OMP_pragma_list(OMP_PARALLEL, CTL_OMP_ARG_PCLAUSE(ctl_top),
 				OMP_FOR_pragma_list(
 				    CTL_OMP_ARG_DCLAUSE(ctl_top),
@@ -734,7 +735,7 @@ void compile_statement1(int st_no, expr x)
 	  else if (CTL_OMP_ARG_DIR(ctl_top) == OMP_F_DO){
 	    expv dclause = CTL_OMP_ARG_DCLAUSE(ctl_top);
 	    //if (EXPR_ARG2(x) != NULL) list_put_last(dclause, EXPR_ARG2(x));
-	    CTL_BLOCK(ctl_top) = 
+	    CTL_BLOCK(ctl_top) =
 		OMP_FOR_pragma_list(dclause, CURRENT_STATEMENTS);
 	    EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
 	    ctl_top_saved = ctl_top;
@@ -807,7 +808,7 @@ void compile_statement1(int st_no, expr x)
 
                 /* change to CTL_ELSE_WHERE */
                 CTL_TYPE(ctl_top) = CTL_ELSE_WHERE;
-                
+
                 if (endlineno_flag){
                     st = list0(F_ELSEWHERE_STATEMENT);
                     output_statement(st);
@@ -817,16 +818,16 @@ void compile_statement1(int st_no, expr x)
             }else{ /*  has condition  */
                 CTL_WHERE_THEN(ctl_top) = CURRENT_STATEMENTS;
                 CURRENT_STATEMENTS = NULL;
-                
+
                 /* evaluate condition and make WHERE_STATEMENT clause */
                 v = compile_logical_expression_with_array(EXPR_ARG1(x));
-                
+
                 st = list5(F_WHERE_STATEMENT,v,NULL,NULL,NULL,NULL);
                 output_statement(st);
-                
+
                 CTL_WHERE_ELSE(ctl_top) = CURRENT_STATEMENTS;
                 CURRENT_STATEMENTS = NULL;
-                
+
                 /* set current WHERE_STATEMENT */
                 CTL_WHERE_STATEMENT(ctl_top) = st;
 
@@ -835,7 +836,7 @@ void compile_statement1(int st_no, expr x)
                     /* TODO x must be array assignment expression,
                      * and shape of array is equal to v
                      */
-                
+
                     CTL_WHERE_THEN(ctl_top) = CURRENT_STATEMENTS;
                     pop_ctl();  /* pop and output */
                     break;
@@ -981,6 +982,10 @@ void compile_statement1(int st_no, expr x)
         compile_ENDCRITICAL_statement(x);
         break;
 
+    case F03_PROTECTED_STATEMENT:
+        check_INDCL();
+        compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsProtected);
+        break;
 
     default:
         compile_exec_statement(x);
@@ -1015,8 +1020,8 @@ allocate_temp(TYPE_DESC tp)
     return ID_ADDR(id);
 }
 
-/* 
- * executable statement 
+/*
+ * executable statement
  */
 static void
 compile_exec_statement(expr x)
@@ -1077,7 +1082,7 @@ compile_exec_statement(expr x)
 	  }
 	}
 	/* fall through */
-	
+
       case IDENT:
       case F_SUBSTR_REF:
       case F95_MEMBER_REF:
@@ -1110,21 +1115,21 @@ compile_exec_statement(expr x)
 
     case F_CONTINUE_STATEMENT:
         output_statement(list0(F_CONTINUE_STATEMENT));
-        break; 
+        break;
 
     case F_GOTO_STATEMENT:
-        compile_GOTO_statement(x);        
+        compile_GOTO_statement(x);
         break;
 
     case F_CALL_STATEMENT:
         compile_CALL_statement(x);
         break;
-        
+
     case F_RETURN_STATEMENT:
         compile_RETURN_statement(x);
         break;
 
-        /* 
+        /*
          * action statement 95
          */
     case F95_CYCLE_STATEMENT:
@@ -1151,7 +1156,7 @@ compile_exec_statement(expr x)
         compile_NULLIFY_statement(x);
         break;
 
-        /* 
+        /*
          * I/O statements
          */
     case F_WRITE_STATEMENT:
@@ -1182,7 +1187,7 @@ compile_exec_statement(expr x)
     case F_ASSIGN_LABEL_STATEMENT:
         compile_ASSIGN_LABEL_statement(x);
         break;
-        
+
     case F_ASGOTO_STATEMENT:
         compile_ASGOTO_statement(x);
         break;
@@ -1239,7 +1244,7 @@ check_inside_INTERFACE_body() {
     return FALSE;
 }
 
-/* 
+/*
  * context control. keep track of context
  */
 /* add the in module state virtually.  */
@@ -1293,15 +1298,15 @@ void
 check_INDCL()
 {
     switch (CURRENT_STATE) {
-    case OUTSIDE:       
+    case OUTSIDE:
         begin_procedure();
         if (unit_ctl_level == 0)
 	  //declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
 	  declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
 			    NULL, NULL, NULL, NULL);
-    case INSIDE:        
+    case INSIDE:
         CURRENT_STATE = INDCL;
-    case INDCL: 
+    case INDCL:
         break;
     default:
         error("declaration among executables");
@@ -1449,10 +1454,10 @@ static int isAlreadyMarked(ID id)
     TYPE_DESC tp = ID_TYPE(id);
 
     if (tp == NULL)
-        return (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id));
+        return (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id)) || TYPE_IS_PROTECTED(id);
     else
-        return (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id) ||
-                TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp));
+        return (TYPE_IS_PUBLIC(id) || TYPE_IS_PRIVATE(id) || TYPE_IS_PROTECTED(id) ||
+                TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp) || TYPE_IS_PROTECTED(tp));
 }
 
 
@@ -1483,7 +1488,7 @@ end_declaration()
     if (CURRENT_PROCEDURE != NULL) {
 
         myId = CURRENT_PROCEDURE;
-        
+
         myEId = declare_current_procedure_ext_id();
         assert(myEId != NULL && EXT_PROC_TYPE(myEId) != NULL);
 
@@ -1656,7 +1661,7 @@ end_declaration()
         }
 
         /* fix external identifier whose type is not fixed */
-        if (tp == NULL && 
+        if (tp == NULL &&
             ID_CLASS(ip) == CL_PROC &&
             PROC_CLASS(ip) == P_EXTERNAL) {
             ep = find_ext_id(ID_SYM(ip));
@@ -1680,6 +1685,9 @@ end_declaration()
                 }
                 if (current_module_state == M_PRIVATE) {
                     TYPE_SET_PRIVATE(ip);
+                }
+                if (current_module_state == M_PROTECTED) {
+                    TYPE_SET_PROTECTED(ip);
                 }
             }
         }
@@ -1741,7 +1749,7 @@ end_declaration()
             /* multiple type attribute check */
             for (check = type_attr_checker; check->flag; check++) {
                 if (TYPE_ATTR_FLAGS(tp) & check->flag) {
-                    uint32_t a = TYPE_ATTR_FLAGS(tp) & 
+                    uint32_t a = TYPE_ATTR_FLAGS(tp) &
                         ~check->acceptable_flags;
                     if (debug_flag) {
                         fprintf(stderr,
@@ -1825,7 +1833,7 @@ end_declaration()
             }
             if (ep != NULL) {
                 unset_save_attr_in_dummy_args(ep);
-            }                
+            }
         }
     }
 
@@ -1842,7 +1850,7 @@ end_declaration()
         FOR_ITEMS_IN_LIST (lp, EXT_PROC_ARGS(ep)) {
             expv varg, vid;
             ID idarg;
-            
+
             varg = LIST_ITEM(lp);
             vid = EXPR_ARG1(varg);
             idarg = find_ident(EXPR_SYM(vid));
@@ -1860,7 +1868,7 @@ end_declaration()
      * Check errors
      */
     FOREACH_ID (ip, LOCAL_SYMBOLS) {
-        
+
         tp = ID_TYPE(ip);
 
         if (tp) {
@@ -1885,7 +1893,7 @@ end_declaration()
     if (myId != NULL &&
         ID_CLASS(myId) == CL_PROC) {
         /*
-         * One more, fix 
+         * One more, fix
          */
         if (myEId != NULL) {
             expv idAddrV;
@@ -2012,6 +2020,7 @@ define_external_function_id(ID id) {
     if (tp && (pid = find_ident_parent(ID_SYM(id)))){
       if (TYPE_IS_PUBLIC(pid)) TYPE_SET_PUBLIC(tp);
       else if (TYPE_IS_PRIVATE(pid)) TYPE_SET_PRIVATE(tp);
+      else if (TYPE_IS_PROTECTED(pid)) TYPE_SET_PROTECTED(tp);
     }
 
     args = EMPTY_LIST;
@@ -2423,6 +2432,9 @@ end_procedure()
                             if (TYPE_IS_PRIVATE(tp)) {
                                 TYPE_SET_PRIVATE(ID_TYPE(id));
                             }
+                            if (TYPE_IS_PROTECTED(tp)) {
+                                TYPE_SET_PROTECTED(ID_TYPE(id));
+                            }
                             break;
                         }
                         tp = TYPE_REF(tp);
@@ -2433,6 +2445,9 @@ end_procedure()
                     }
                     if (current_module_state == M_PRIVATE) {
                         TYPE_SET_PRIVATE(ID_TYPE(id));
+                    }
+                    if (current_module_state == M_PROTECTED) {
+                        TYPE_SET_PROTECTED(ID_TYPE(id));
                     }
                 }
                 ID_DEFINED_BY(id_in_parent) = id;
@@ -2451,13 +2466,13 @@ end_procedure()
 
     /* check undefined label */
     FOREACH_ID(id, LOCAL_LABELS) {
-        if (LAB_TYPE(id) != LAB_UNKNOWN && 
+        if (LAB_TYPE(id) != LAB_UNKNOWN &&
             LAB_IS_USED(id) && !LAB_IS_DEFINED(id)) {
             error("missing statement number %d", LAB_ST_NO(id));
         }
         checkTypeRef(id);
     }
-    
+
     /*
      * Special case.
      */
@@ -2565,7 +2580,7 @@ end_procedure()
     cleanup_unit_ctl(CURRENT_UNIT_CTL);
 }
 
-/* 
+/*
  * DO loop
  */
 static void
@@ -2596,7 +2611,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
             fatal("compile_DO_statement: DO var is not IDENT");
         }
         do_var_sym = EXPR_SYM(var);
-        
+
         /* check nested loop with the same variable */
         for (cp = ctls; cp < ctl_top; cp++) {
             if(CTL_TYPE(cp) == CTL_DO && CTL_DO_VAR(cp) == do_var_sym) {
@@ -2614,7 +2629,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
                                                 FALSE);
         else do_incr = expv_constant_1;
 
-        if (do_var == NULL || do_init == NULL || 
+        if (do_var == NULL || do_init == NULL ||
             do_limit == NULL || do_incr == NULL) return;
 
         var_tp = EXPV_TYPE(do_var);
@@ -2657,7 +2672,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
             /* cannot check if do_incr is FLOAT_CONSTANT
              * because FLOAT_CONSTANT cannot be reduced */
         }
-        
+
         if (!expr_has_param(do_limit) && expr_is_constant(do_limit)) {
             do_limit = expv_reduce_conv_const(var_tp, do_limit);
         }
@@ -2669,12 +2684,12 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
         if (!expr_has_param(do_limit) && !expr_has_param(do_init) &&
 	    expr_is_constant(do_limit) && expr_is_constant(do_init)) {
             if (incsign > 0) {              /* increment */
-                if ((IS_INT(var_tp) && 
+                if ((IS_INT(var_tp) &&
                      EXPV_INT_VALUE(do_limit) < EXPV_INT_VALUE(do_init))) {
                     warning("DO range never executed");
                 }
             } else if (incsign < 0) {       /* decrement */
-                if ((IS_INT(var_tp) && 
+                if ((IS_INT(var_tp) &&
                      EXPV_INT_VALUE(do_limit) > EXPV_INT_VALUE(do_init))) {
                     warning("DO range never executed");
                 }
@@ -2686,7 +2701,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
     CTL_DO_VAR(ctl_top) = do_var_sym;
     CTL_DO_LABEL(ctl_top) = do_label;
 
-    /* 
+    /*
      * output DO loop in Fortran90
      */
     CTL_BLOCK(ctl_top) = list2(F_DO_STATEMENT,
@@ -2755,7 +2770,7 @@ check_DO_end(ID label)
             } else {
                 /*
                  * else DO_STATEMENT
-                 */  
+                 */
                 if (CTL_DO_LABEL(ctl_top) != NULL) {
                     /*
                      * An obsolete/unexpected syntax like:
@@ -2785,7 +2800,7 @@ check_DO_end(ID label)
 
     // do - continue case
 
-    while (CTL_TYPE(ctl_top) == CTL_DO && 
+    while (CTL_TYPE(ctl_top) == CTL_DO &&
            CTL_DO_LABEL(ctl_top) == label) {
 
       /* close DO block */
@@ -2798,7 +2813,7 @@ check_DO_end(ID label)
       else {
 	/*
 	 * else DO
-	 */  
+	 */
         CTL_DO_BODY(ctl_top) = CURRENT_STATEMENTS;
       }
 
@@ -4182,7 +4197,7 @@ compile_ASSIGN_LABEL_statement(expr x)
     if (v1 == NULL) {
         error("illegal label");
         return;
-    } 
+    }
 
     if(EXPV_CODE(v1) != INT_CONSTANT)
         fatal("label is not integer constant");
@@ -4263,7 +4278,7 @@ compile_CALL_statement(expr x)
       TYPE_SET_USED_EXPLICIT(tp);
       ID_TYPE(id) = tp;
       if (PROC_EXT_ID(id)) EXT_PROC_TYPE(PROC_EXT_ID(id)) = tp;
-    }      
+    }
 
 #if 0
     /*
@@ -4405,7 +4420,7 @@ compile_ASGOTO_statement(expr x)
         error("line number list must be specified in assigned GOTO");
         return;
     }
-    
+
     if(EXPR_CODE(EXPR_ARG1(x)) != IDENT)
         fatal("F_ASGOTO_STATEMENT: not ident");
     v1 = compile_lhs_expression(EXPR_ARG1(x));
@@ -4469,7 +4484,7 @@ compile_ARITHIF_statement(expr x)
     if(cond == NULL) return;
 
     if (EXPR_CODE(EXPR_ARG2(x)) != INT_CONSTANT ||
-        EXPR_CODE(EXPR_ARG3(x)) != INT_CONSTANT ||   
+        EXPR_CODE(EXPR_ARG3(x)) != INT_CONSTANT ||
         EXPR_CODE(EXPR_ARG4(x)) != INT_CONSTANT) {
         error("illegal label in arithmetic IF");
         return;
@@ -4522,6 +4537,10 @@ static int markAsPublic(ID id)
         error("'%s' is already specified as private.", ID_NAME(id));
         return FALSE;
     }
+    if (TYPE_IS_PROTECTED(id) || (tp != NULL && TYPE_IS_PROTECTED(tp))) {
+        error("'%s' is already specified as protected.", ID_NAME(id));
+        return FALSE;
+    }
     TYPE_SET_PUBLIC(id);
     TYPE_UNSET_PRIVATE(id);
 
@@ -4535,8 +4554,29 @@ static int markAsPrivate(ID id)
         error("'%s' is already specified as public.", ID_NAME(id));
         return FALSE;
     }
+    if (TYPE_IS_PROTECTED(id) || (tp != NULL && TYPE_IS_PROTECTED(tp))) {
+        error("'%s' is already specified as protected.", ID_NAME(id));
+        return FALSE;
+    }
     TYPE_UNSET_PUBLIC(id);
     TYPE_SET_PRIVATE(id);
+
+    return TRUE;
+}
+
+static int markAsProtected(ID id)
+{
+    TYPE_DESC tp = ID_TYPE(id);
+    if (TYPE_IS_PRIVATE(id) || (tp != NULL && TYPE_IS_PRIVATE(tp))) {
+        error("'%s' is already specified as private.", ID_NAME(id));
+        return FALSE;
+    }
+    if (TYPE_IS_PUBLIC(id) || (tp != NULL && TYPE_IS_PUBLIC(tp))) {
+        error("'%s' is already specified as public.", ID_NAME(id));
+        return FALSE;
+    }
+    TYPE_UNSET_PUBLIC(id);
+    TYPE_SET_PROTECTED(id);
 
     return TRUE;
 }
@@ -4547,7 +4587,7 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
     list lp;
     expr ident;
     ID id;
-    
+
     if (!INMODULE()) {
         error("not in module.");
         return;
@@ -4567,13 +4607,15 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
             current_module_state = M_PUBLIC;
         } else if (markAs == markAsPrivate)  {
             current_module_state = M_PRIVATE;
+        } else if (markAs == markAsProtected) {
+            current_module_state == M_PROTECTED;
         }
 
         /* private/public is set to ids, later in end_declaration */
 
         return;
     }
-    
+
     FOR_ITEMS_IN_LIST(lp, id_list) {
         ident = LIST_ITEM(lp);
         switch (EXPR_CODE(ident)) {
