@@ -126,8 +126,8 @@ refobj.x: refobj.f90
 	if [ ! -f m412.xmod ]; then exit 1; fi
 
 018.x: 018.f90
-	$(XFC) -o 018.x $< --debug ; \
-	grep -q "# 9" __omni_tmp__/018_f90_in.F90 || exit 1; \
+	$(XFC) -o 018.x $< --tmp ; \
+	grep -q "# 9" __omni_tmp__018.f90 || exit 1; \
 	echo "PASS"
 
 run:
@@ -167,3 +167,4 @@ cleanlog:
 clean: cleanlog
 	rm -f $(EXES) *.o *.*mod *.s 278\ spacefile.x 412.x
 	rm -rf mod __omni_tmp__ 278\ module
+	rm -f __omni_tmp__*
