@@ -161,7 +161,16 @@ void _ACC_free_pinned(void *p)
 }
 
 void _ACC_gpu_adjust_grid(int *gridX,int *gridY, int *gridZ, int limit){
+  if(_ACC_num_gangs_limit == 0){   
+    return; //no limit
+  }
+
+  if(_ACC_num_gangs_limit > 0){
+    limit = _ACC_num_gangs_limit; //change limit
+  }
+
   int total = *gridX * *gridY * *gridZ;
+
   if(total > limit){
     *gridZ = _ACC_M_MAX(1, *gridZ/_ACC_M_CEILi(total,limit));
     total = *gridX * *gridY * *gridZ;

@@ -37,6 +37,8 @@ typedef long acc_device_t;
 #define acc_device_nvidia 2
 #endif
 
+extern int _ACC_num_gangs_limit;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
