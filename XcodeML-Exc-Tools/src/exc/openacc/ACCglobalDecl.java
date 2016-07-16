@@ -118,6 +118,10 @@ class ACCglobalDecl{
   public Ident declExternIdent(String name, Xtype t) {
     return _env.declExternIdent(name, t);
   }
+  public Ident declGlobalIdent(String name, Xtype t) {
+    return _env.declGlobalIdent(name, t);
+  }
+
   public void finish() {
     _env.collectAllTypes();
     _env.fixupTypeRef();
