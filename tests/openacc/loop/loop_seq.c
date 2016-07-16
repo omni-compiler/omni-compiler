@@ -10,7 +10,7 @@ int main()
   a[0] = 1;
   for(i = 1; i < N; i++) a[i] = 0;
 #pragma acc parallel
-#pragma acc loop seq //private(i)
+#pragma acc loop seq
   for(i = 1; i < N; i++){
     a[i] += a[i-1] + 2;
   }
@@ -20,7 +20,6 @@ int main()
   }
 
 
-#if 0 //bug
   a[0] = 1;
   for(i = 1; i < N; i++) a[i] = 0;
 #pragma acc parallel
@@ -32,7 +31,6 @@ int main()
   for(i = 0; i < N; i++){
     if(a[i] != 3 * i + 1) return 2;
   }
-#endif
   
   printf("PASS\n");
   return 0;
