@@ -70,7 +70,6 @@ int main()
   }
 
 
-#if 0 //
   for(i = 0; i < N; i++) a[i] = 0;
 #pragma acc data copy(a)
 #pragma acc host_data use_device(a)
@@ -79,7 +78,6 @@ int main()
   for(i = 0; i < N; i++){
     if(a[i] != i * 3) return 7;
   }
-#endif
 
   printf("PASS\n");
   return 0;

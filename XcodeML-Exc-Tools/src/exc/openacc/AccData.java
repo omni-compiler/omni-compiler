@@ -144,6 +144,8 @@ class AccData extends AccDirective {
       initFuncName = ACC.FIND_DATA_FUNC_NAME;
     } else if (var.isPresentOr()) {
       initFuncName = ACC.PRESENT_OR_INIT_DATA_FUNC_NAME;
+    } else if (var.isDeviceptr()) {
+      initFuncName = ACC.DEVICEPTR_INIT_DATA_FUNC_NAME;
     } else {
       initFuncName = ACC.INIT_DATA_FUNC_NAME;
     }

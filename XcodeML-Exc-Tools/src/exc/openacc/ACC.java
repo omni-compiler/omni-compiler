@@ -18,6 +18,7 @@ public class ACC {
 
   public static final String INIT_DATA_FUNC_NAME = "_ACC_init_data";
   public static final String PRESENT_OR_INIT_DATA_FUNC_NAME = "_ACC_pinit_data";
+  public static final String DEVICEPTR_INIT_DATA_FUNC_NAME = "_ACC_devptr_init_data";
   public static final String FINALIZE_DATA_FUNC_NAME = "_ACC_finalize_data";
   public static final String COPY_DATA_FUNC_NAME = "_ACC_copy_data";
   public static final String COPY_SUBDATA_FUNC_NAME = "_ACC_copy_subdata";
