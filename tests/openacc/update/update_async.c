@@ -32,15 +32,10 @@ int main()
 #pragma acc wait
   }
 
+  //check
   for(i=0;i<10;i++){
     if(array_1d[i] != i) return 1;
   }
-  /*
-  for(i=0;i<10;i++){
-    printf("%d,", array_1d[i]);
-  }
-  printf("\n\n");
-  */
 
   for(i=0;i<10;i++){
     for(j=0;j<20;j++){
@@ -48,14 +43,6 @@ int main()
     }
   }
 
-  /*
-  for(i=0;i<10;i++){
-    for(j=0;j<10;j++){
-      printf("%2d,", array_2d[i][j]);
-    }
-    printf("\n");
-  }
-  */
-  
+  printf("PASS\n");
   return 0;
 }
