@@ -25,6 +25,6 @@ clean:
 	rm -f *.o $(T_MODULE) xmpmod
 
 install: $(T_MODULE)
-	$(MKDIR_P) $(BINDIR)
-	$(INSTALL) $(T_MODULE) $(BINDIR)
+	$(MKDIR_P) $(DESTDIR)$(BINDIR)
+	$(INSTALL) $(T_MODULE) $(DESTDIR)$(BINDIR)
 

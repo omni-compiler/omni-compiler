@@ -20,6 +20,6 @@ clean:
 	rm -f $(OM_EXC_TOOLS) src/exc/*/*.class
 
 install: $(OM_EXC_TOOLS)
-	$(MKDIR_P) $(JAVADIR)
-	$(INSTALL) $^ $(JAVADIR)
+	$(MKDIR_P) $(DESTDIR)$(JAVADIR)
+	$(INSTALL) $^ $(DESTDIR)$(JAVADIR)
 

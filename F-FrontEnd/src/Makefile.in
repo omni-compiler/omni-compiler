@@ -48,8 +48,8 @@ C-exprcode.c: C-exprcode.def C-exprcode.c.awk
 	$(AWK) -f C-exprcode.c.awk < C-exprcode.def > C-exprcode.c
 
 install: $(F_FRONT)
-	$(MKDIR_P) $(BINDIR)
-	$(INSTALL) $(F_FRONT) $(BINDIR)
+	$(MKDIR_P) $(DESTDIR)$(BINDIR)
+	$(INSTALL) $(F_FRONT) $(DESTDIR)$(BINDIR)
 	$(MKDIR_P) $(XMODDIR)
 	$(INSTALL) $(INTRMOD) $(XMODDIR)
 

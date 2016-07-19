@@ -20,6 +20,6 @@ clean:
 	rm -f $(OM_C_BACK) src/xcodeml/c/*/*.class
 
 install: $(OM_C_BACK)
-	$(MKDIR_P) $(JAVADIR)
-	$(INSTALL) $^ $(JAVADIR)
+	$(MKDIR_P) $(DESTDIR)$(JAVADIR)
+	$(INSTALL) $^ $(DESTDIR)$(JAVADIR)
 
