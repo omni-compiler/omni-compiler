@@ -816,7 +816,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -922,7 +921,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1175,15 +1173,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1321,7 +1310,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1474,7 +1463,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1543,8 +1531,6 @@ Optional Packages:
   --with-TCA=DIR              TCA installation path
   --with-gasnet=DIR           GASNet installation path
   --with-gasnet-conduit=NAME  GASNet conduit
-  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support
-  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support
   --with-precision=NUM        the default precision of real*16 in bits (128)
 
 Some influential environment variables:
@@ -8282,6 +8268,9 @@ else
 fi
 
 
+if ! test -d "$GMP_LIB_DIR"; then
+  GMP_LIB_DIR=${GMP_PREFIX}/lib
+fi
 
 #--------------------------------------------------------------------
 # For OpenMP
@@ -10848,10 +10837,7 @@ if test "$IS_MOD2XMOD" = "yes"; then
     fi
 
     if ! test -d "$GMP_LIB_DIR"; then
-	GMP_LIB_DIR=${GMP_PREFIX}/lib
-	if ! test -d "$GMP_LIB_DIR"; then
-	    as_fn_error $? "$GMP_LIB_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
-	fi
+      as_fn_error $? "$GMP_LIB_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
     fi
 
     # check gmp.h
@@ -12092,8 +12078,6 @@ rm -f ./hasqd.* ./hasqd
 #--------------------------------------------------------------------
 # quad real support
 
-gmpInclude=/usr/include
-gmpLib=/usr/lib
 gmpIncOpt=""
 gmpDirOpt=""
 qRealPrecBits=128
@@ -12106,36 +12090,23 @@ else
 fi
 
 
-
-# Check whether --with-gmp-lib was given.
-if test "${with_gmp_lib+set}" = set; then :
-  withval=$with_gmp_lib; gmpLib=$withval
-else
-  true
-fi
-
-
-
-# Check whether --with-gmp-include was given.
-if test "${with_gmp_include+set}" = set; then :
-  withval=$with_gmp_include; gmpInclude=$withval
-else
-  true
-fi
-
-
 if test "x${doQReal}" = "xyes"; then
-    if test -f ${gmpInclude}/gmp.h; then
+    if test -f ${GMP_INCLUDE_DIR}/gmp.h; then
         true
     else
-        as_fn_error $? "can't find ${gmpInclude}/gmp.h." "$LINENO" 5
+        as_fn_error $? "can't find ${GMP_INCLUDE_DIR}/gmp.h. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
     fi
-    gmpLibs=`ls ${gmpLib}/libgmp.* 2> /dev/null`
+
+    if ! test -d "$GMP_LIB_DIR"; then
+      as_fn_error $? "$GMP_LIB_DIR not found. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
+    fi
+
+    gmpLibs=`ls ${GMP_LIB_DIR}/libgmp.* 2> /dev/null`
     if test "x${gmpLibs}" = "x"; then
-        as_fn_error $? "can't find ${gmpLib}/libgmp.*." "$LINENO" 5
+        as_fn_error $? "can't find ${GMP_LIB_DIR}/libgmp.*. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
     fi
-    gmpIncOpt="-I${gmpInclude}"
-    gmpLibOpt="-L${gmpLib} -lgmp"
+    gmpIncOpt="-I${GMP_INCLUDE_DIR}"
+    gmpLibOpt="-L${GMP_LIB_DIR} -lgmp"
 fi
 
 
