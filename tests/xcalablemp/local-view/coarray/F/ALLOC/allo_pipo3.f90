@@ -36,7 +36,6 @@
 
   subroutine check(alloc, garbage, msg, nerr)
     implicit none
-!!     include "xmp_coarray.h"
     integer alloc, garbage, nerr
     character(*) msg
     integer nerr1, alloc1, garbage1, me

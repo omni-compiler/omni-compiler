@@ -151,10 +151,12 @@ static void _freeResourceSet(ResourceSet_t *rset);
 
 // access functions for memory chunk
 static MemoryChunk_t *_newMemoryChunk(void *desc, char *orgAddr, size_t nbytes);
+static MemoryChunk_t *_newMemoryChunk_empty(void);
 static void _addMemoryChunkInResourceSet(ResourceSet_t *rset, MemoryChunk_t *chunk);
 static void _unlinkMemoryChunk(MemoryChunk_t *chunk);
 static void _unlinkMemoryChunkInResourceSet(MemoryChunk_t *chunk);
 static void _freeMemoryChunk(MemoryChunk_t *chunk);
+static void _freeMemoryChunk_empty(MemoryChunk_t *chunk);
 static char *_dispMemoryChunk(MemoryChunk_t *chunk);
 static MemoryChunk_t *_getMemoryChunkFromLocalAddress(char *addr);
 
@@ -164,6 +166,7 @@ static char *pool_currentAddr;
 
 // access functions for coarray info
 static CoarrayInfo_t *_newCoarrayInfo_empty(void);
+static void _freeCoarrayInfo_empty(CoarrayInfo_t *cinfo);
 static CoarrayInfo_t *_newCoarrayInfo(char *baseAddr, size_t nbytes);
 static void _addCoarrayInfo(MemoryChunk_t *chunk, CoarrayInfo_t *cinfo2);
 static void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2);
@@ -218,9 +221,75 @@ static void _delMemoryChunkInSortedChunkTable(MemoryChunk_t *chunk);
 static MemoryChunk_t *_findMemoryChunkInSortedChunkTable(char *addr);
 static int _searchSortedChunkTable(unsigned long addrKey, BOOL *found);
 
+
+/***********************************************\
+  malloc/free wrapper
+\***********************************************/
+static size_t _mallocSize = (size_t)0;
+
+void *MALLOC(size_t size)
+{
+  _mallocSize += size;
+  return malloc(size);
+}
+
+void *CALLOC(size_t nmemb, size_t size)
+{
+  _mallocSize += nmemb * size;
+  return calloc(nmemb, size);
+}
+
+void _FREE(void *ptr)
+{
+  free(ptr);
+}
+
+void FREE_ResourceSet_t(ResourceSet_t *rset)
+{
+  _mallocSize -= sizeof(ResourceSet_t);
+  _FREE(rset);
+}
+
+void FREE_MemoryChunkOrder_t(MemoryChunkOrder_t *chunkp)
+{
+  _mallocSize -= sizeof(MemoryChunkOrder_t);
+  _FREE(chunkp);
+}
+
+void FREE_MemoryChunk_t(MemoryChunk_t *chunk)
+{
+  _mallocSize -= sizeof(MemoryChunk_t);
+  _FREE(chunk);
+}
+
+void FREE_CoarrayInfo_t(CoarrayInfo_t *cinfo)
+{
+  _mallocSize -= sizeof(CoarrayInfo_t);
+  _FREE(cinfo);
+}
+
+
+void FREE_string(char *name)
+{
+  _mallocSize -= strlen(name) + 1;
+  _FREE(name);
+}
+
+void FREE_int_n(int *intp, int n)
+{
+  _mallocSize -= sizeof(*intp) * n;
+  _FREE(intp);
+}
+
+
 /***********************************************\
   hidden utility functions
 \***********************************************/
+
+int xmpf_coarray_malloc_bytes_()
+{
+  return _mallocSize;
+}
 
 int xmpf_coarray_allocated_bytes_()
 {
@@ -499,7 +568,7 @@ void xmpf_coarray_malloc_pool_(void)
  */
 static char* _xmp_strndup(char *name, const int namelen)
 {
-  char *buf = (char *)malloc(namelen + 1);
+  char *buf = (char *)MALLOC(namelen + 1);
   memcpy(buf, name, namelen);
   buf[namelen] = '\0';
   return buf;
@@ -749,7 +818,7 @@ void _initSortedChunkTable(void)
   _sortedChunkTableMallocSize = _SortedChunkTableInitSize;
 
   _sortedChunkTable = (SortedChunkTable_t*)
-    malloc(sizeof(SortedChunkTable_t) * _sortedChunkTableMallocSize);
+    MALLOC(sizeof(SortedChunkTable_t) * _sortedChunkTableMallocSize);
 
   _sortedChunkTableSize = 2;
   _sortedChunkTable[0].orgAddr = 0L;
@@ -926,7 +995,7 @@ void _addMemoryChunkToMallocHistory(MemoryChunk_t *chunk)
 MemoryChunkOrder_t *_newMemoryChunkOrder(MemoryChunk_t *chunk)
 {
   MemoryChunkOrder_t *chunkP =
-    (MemoryChunkOrder_t*)calloc(1, sizeof(MemoryChunkOrder_t));
+    (MemoryChunkOrder_t*)CALLOC(1, sizeof(MemoryChunkOrder_t));
   chunkP->chunk = chunk;
 
   return chunkP;
@@ -968,7 +1037,7 @@ void _freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP)
   // including freeing coarray data object
   _freeMemoryChunk(chunkP->chunk);
 
-  free(chunkP);
+  FREE_MemoryChunkOrder_t(chunkP);
 }
 
 
@@ -990,9 +1059,9 @@ void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...)
   va_start(args, corank);
 
   cp->corank = n = *corank;
-  cp->lcobound = (int*)malloc(sizeof(int) * n);
-  cp->ucobound = (int*)malloc(sizeof(int) * n);
-  cp->cosize = (int*)malloc(sizeof(int) * n);
+  cp->lcobound = (int*)MALLOC(sizeof(int) * n);
+  cp->ucobound = (int*)MALLOC(sizeof(int) * n);
+  cp->cosize = (int*)MALLOC(sizeof(int) * n);
 
   // axis other than the last
   for (count = 1, i = 0; i < n - 1; i++) {
@@ -1039,10 +1108,10 @@ void xmpf_coarray_set_varname_(void **descPtr, int *namelen, char *name)
 ResourceSet_t *_newResourceSet(char *name, int namelen)
 {
   ResourceSet_t *rset =
-    (ResourceSet_t*)malloc(sizeof(ResourceSet_t));
+    (ResourceSet_t*)MALLOC(sizeof(ResourceSet_t));
 
-  rset->headChunk = _newMemoryChunk(NULL, NULL, 0);
-  rset->tailChunk = _newMemoryChunk(NULL, NULL, 0);
+  rset->headChunk = _newMemoryChunk_empty();
+  rset->tailChunk = _newMemoryChunk_empty();
   rset->headChunk->next = rset->tailChunk;
   rset->tailChunk->prev = rset->headChunk;
   rset->headChunk->parent = rset;
@@ -1073,7 +1142,12 @@ void _freeResourceSet(ResourceSet_t *rset)
     _garbageCollectMallocHistory();
   }
 
-  free(rset);
+  /////////////
+  _freeMemoryChunk_empty(rset->headChunk);
+  _freeMemoryChunk_empty(rset->tailChunk);
+  /////////////
+  FREE_string(rset->name);
+  FREE_ResourceSet_t(rset);
 }
 
 
@@ -1081,10 +1155,10 @@ void _freeResourceSet(ResourceSet_t *rset)
   access functions for MemoryChunk_t
 \*****************************************/
 
-MemoryChunk_t *_newMemoryChunk(void *desc, char *orgAddr, size_t nbytes)
+MemoryChunk_t *_newMemoryChunk_empty(void)
 {
   MemoryChunk_t *chunk =
-    (MemoryChunk_t*)malloc(sizeof(MemoryChunk_t));
+    (MemoryChunk_t*)MALLOC(sizeof(MemoryChunk_t));
 
   chunk->prev = NULL;
   chunk->next = NULL;
@@ -1095,6 +1169,14 @@ MemoryChunk_t *_newMemoryChunk(void *desc, char *orgAddr, size_t nbytes)
   chunk->headCoarray->parent = chunk;
   chunk->tailCoarray->parent = chunk;
   chunk->isGarbage = FALSE;
+
+  return chunk;
+}
+
+
+MemoryChunk_t *_newMemoryChunk(void *desc, char *orgAddr, size_t nbytes)
+{
+  MemoryChunk_t *chunk = _newMemoryChunk_empty();
 
   chunk->desc = desc;
   chunk->orgAddr = orgAddr;
@@ -1153,6 +1235,14 @@ void _unlinkMemoryChunkInResourceSet(MemoryChunk_t *chunk2)
 }
 
 
+void _freeMemoryChunk_empty(MemoryChunk_t *chunk)
+{
+  _freeCoarrayInfo_empty(chunk->headCoarray);
+  _freeCoarrayInfo_empty(chunk->tailCoarray);
+  FREE_MemoryChunk_t(chunk);
+}
+
+
 void _freeMemoryChunk(MemoryChunk_t *chunk)
 {
   CoarrayInfo_t *cinfo;
@@ -1168,7 +1258,7 @@ void _freeMemoryChunk(MemoryChunk_t *chunk)
   // free the last memory chunk object
   _XMP_coarray_lastly_deallocate();
 
-  free(chunk);
+  _freeMemoryChunk_empty(chunk);
 }
 
 
@@ -1201,35 +1291,11 @@ char *_dispMemoryChunk(MemoryChunk_t *chunk)
 }
 
 
-/*   NEW VERSION for Ver.6-conversion
- */
 MemoryChunk_t *_getMemoryChunkFromLocalAddress(char *addr)
 {
   return _findMemoryChunkInSortedChunkTable(addr);
 }
 
-/***************************************
- *    OLD VERSION
- */
-/**************************
-MemoryChunk_t *_getMemoryChunkFromLocalAddress(char *addr)
-{
-  MemoryChunkOrder_t *chunkP;
-  MemoryChunk_t *chunk;
-
-  ** current implementation:
-     look for my memory chunk into all MemoryChunkOrder
-  /
-  forallMemoryChunkOrder(chunkP) {
-    chunk = chunkP->chunk;
-    if (chunk->orgAddr <= addr && addr < chunk->orgAddr + chunk->nbytes) {
-      // found the memory chunk
-      return chunk;
-    }
-  }
-  return NULL;
-}
-*************************/
 
 /*****************************************\
   access functions for CoarrayInfo_t
@@ -1238,8 +1304,13 @@ MemoryChunk_t *_getMemoryChunkFromLocalAddress(char *addr)
 static CoarrayInfo_t *_newCoarrayInfo_empty(void)
 {
   CoarrayInfo_t *cinfo =
-    (CoarrayInfo_t*)calloc(1, sizeof(CoarrayInfo_t));
+    (CoarrayInfo_t*)CALLOC(1, sizeof(CoarrayInfo_t));
   return cinfo;
+}
+
+static void _freeCoarrayInfo_empty(CoarrayInfo_t *cinfo)
+{
+  FREE_CoarrayInfo_t(cinfo);
 }
 
 
@@ -1288,11 +1359,12 @@ void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2)
 
 void _freeCoarrayInfo(CoarrayInfo_t *cinfo)
 {
-  free(cinfo->name);
-  free(cinfo->lcobound);
-  free(cinfo->ucobound);
-  free(cinfo->cosize);
-  free(cinfo);
+  FREE_string(cinfo->name);
+  int n = cinfo->corank;
+  FREE_int_n(cinfo->lcobound, n);
+  FREE_int_n(cinfo->ucobound, n);
+  FREE_int_n(cinfo->cosize, n);
+  FREE_CoarrayInfo_t(cinfo);
 }
 
 

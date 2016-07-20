@@ -280,6 +280,7 @@ typedef enum {
     INTR_ATOMIC_DEFINE,
     INTR_ATOMIC_REF,
 
+    INTR_COARRAY_MALLOC_BYTES,       // hidden interface
     INTR_COARRAY_ALLOCATED_BYTES,    // hidden interface
     INTR_COARRAY_GARBAGE_BYTES,      // hidden interface
 

@@ -94,6 +94,7 @@ extern void xmpf_coarray_set_varname_(void **descPtr, int *namelen, char *name);
 
 extern int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...);
 
+extern int xmpf_coarray_malloc_bytes_(void);
 extern int xmpf_coarray_allocated_bytes_(void);
 extern int xmpf_coarray_garbage_bytes_(void);
 
