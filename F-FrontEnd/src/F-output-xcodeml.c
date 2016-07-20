@@ -32,7 +32,11 @@ extern int      flag_module_compile;
 static void     outx_expv(int l, expv v);
 static void     outx_functionDefinition(int l, EXT_ID ep);
 static void     outx_interfaceDecl(int l, EXT_ID ep);
+static void     outx_definition_symbols(int l, EXT_ID ep);
+static void     outx_declarations(int l, EXT_ID parent_ep);
+static void     outx_id_declarations(int l, ID id_list, int expectResultVar, const char *functionName);
 static void     collect_type_desc(expv v);
+
 
 char s_timestamp[CEXPR_OPTVAL_CHARLEN] = { 0 };
 char s_xmlIndent[CEXPR_OPTVAL_CHARLEN] = "  ";
@@ -3120,6 +3124,8 @@ static void
 outx_BLOCK_statement(int l, expv v)
 {
     char buf[128];
+    struct external_symbol es = {0};
+    ID ids;
 
     if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
         sprintf(buf, " construct_name=\"%s\"",
@@ -3128,6 +3134,12 @@ outx_BLOCK_statement(int l, expv v)
     } else {
         outx_tagOfStatement(l, v);
     }
+    ids = (ID) EXPR_BLOCK_ID_LIST(v);
+    EXT_PROC_ID_LIST(&es) = ids;
+    outx_definition_symbols(l + 1, &es);
+    outx_tag(l + 1, "declarations");
+    outx_id_declarations(l + 2, ids, FALSE, NULL);
+    outx_close(l + 1, "declarations");
     outx_body(l + 1, EXPR_ARG1(v));
     outx_expvClose(l, v);
 }
@@ -4255,43 +4267,14 @@ emit_decl(int l, ID id)
     }
 }
 
-
-/**
- * output declarations with pragmas
- */
 static void
-outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
+outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionName)
 {
-    const int l1 = l + 1;
-    list lp;
-    ID id, *ids;
-    EXT_ID ep;
-    expv v;
-    int i, nIDs;
-    int hasResultVar = (EXT_PROC_RESULTVAR(parent_ep) != NULL) ? TRUE : FALSE;
-    const char *myName = SYM_NAME(EXT_SYM(parent_ep));
     TYPE_DESC tp;
+    ID id, *ids;
+    int i, nIDs;
 
-    outx_tag(l, "declarations");
-
-    /*
-     * FuseDecl
-     */
-    FOR_ITEMS_IN_LIST(lp, EXT_PROC_BODY(parent_ep)) {
-        v = LIST_ITEM(lp);
-        switch(EXPV_CODE(v)) {
-        case F95_USE_STATEMENT:
-            outx_useDecl(l1, v);
-            break;
-        case F95_USE_ONLY_STATEMENT:
-            outx_useOnlyDecl(l1, v);
-            break;
-        default:
-            break;
-        }
-    }
-
-    ids = genSortedIDs(EXT_PROC_ID_LIST(parent_ep), &nIDs);
+    ids = genSortedIDs(id_list, &nIDs);
 
     if (ids) {
         /*
@@ -4321,12 +4304,12 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
                             continue;
                         }
                         if (is_id_used_in_struct_member(ids[j], tp) == TRUE) {
-                            emit_decl(l1, ids[j]);
+                            emit_decl(l, ids[j]);
                             ID_IS_EMITTED(ids[j]) = TRUE;
                         }
                     }
                 }
-                outx_structDecl(l1, id);
+                outx_structDecl(l, id);
                 ID_IS_EMITTED(id) = TRUE;
             }
         }
@@ -4337,17 +4320,54 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
         for (i = 0; i < nIDs; ++i) {
             id = ids[i];
 
-            if (hasResultVar == TRUE &&
-                strcasecmp(myName, SYM_NAME(ID_SYM(id))) == 0) {
+            if (hasResultVar == TRUE && functionName != NULL &&
+                strcasecmp(functionName, SYM_NAME(ID_SYM(id))) == 0) {
                 continue;
             }
 
-            emit_decl(l1, id);
+            emit_decl(l, id);
             ID_IS_EMITTED(id) = TRUE;
         }
         free(ids);
     }
+}
 
+
+
+/**
+ * output declarations with pragmas
+ */
+static void
+outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
+{
+    const int l1 = l + 1;
+    list lp;
+    ID id;
+    EXT_ID ep;
+    expv v;
+    int hasResultVar = (EXT_PROC_RESULTVAR(parent_ep) != NULL) ? TRUE : FALSE;
+    const char *myName = SYM_NAME(EXT_SYM(parent_ep));
+
+    outx_tag(l, "declarations");
+
+    /*
+     * FuseDecl
+     */
+    FOR_ITEMS_IN_LIST(lp, EXT_PROC_BODY(parent_ep)) {
+        v = LIST_ITEM(lp);
+        switch(EXPV_CODE(v)) {
+        case F95_USE_STATEMENT:
+            outx_useDecl(l1, v);
+            break;
+        case F95_USE_ONLY_STATEMENT:
+            outx_useOnlyDecl(l1, v);
+            break;
+        default:
+            break;
+        }
+    }
+
+    outx_id_declarations(l1, EXT_PROC_ID_LIST(parent_ep), hasResultVar, myName);
 
     /*
      * FdataDecl / FequivalenceDecl
@@ -4694,6 +4714,27 @@ getTimestamp()
 }
 
 
+
+
+/**
+ * recursively collect TYPE_DESC from block constructs
+ */
+static void
+collect_types_from_block(BLOCK_ENV block)
+{
+    BLOCK_ENV bp;
+
+    if (block == NULL) {
+        return;
+    }
+
+    FOREACH_BLOCKS(bp, block) {
+        mark_type_desc_in_id_list(BLOCK_LOCAL_SYMBOLS(bp));
+        collect_types_from_block(BLOCK_CHILDREN(bp));
+    }
+}
+
+
 /**
  * recursively collect TYPE_DESC to type_list
  */
@@ -4736,6 +4777,9 @@ collect_types1(EXT_ID extid)
         collect_types1(EXT_PROC_INTERFACES(ep));
         /* symbols in INTERFACE */
         collect_types1(EXT_PROC_INTR_DEF_EXT_IDS(ep));
+
+        /* symbols in BLOCK */
+        collect_types_from_block(EXT_PROC_BLOCKS(ep));
 
         sTp = reduce_type(EXT_PROC_TYPE(ep));
         mark_type_desc(sTp);

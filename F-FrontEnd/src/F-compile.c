@@ -2149,9 +2149,11 @@ define_external_function_id(ID id) {
 static void
 setLocalInfoToCurrentExtId(int asModule)
 {
+
     EXT_PROC_BODY(CURRENT_EXT_ID) = CURRENT_STATEMENTS;
     EXT_PROC_ID_LIST(CURRENT_EXT_ID) = LOCAL_SYMBOLS;
     EXT_PROC_STRUCT_DECLS(CURRENT_EXT_ID) = LOCAL_STRUCT_DECLS;
+    EXT_PROC_BLOCKS(CURRENT_EXT_ID) = LOCAL_BLOCKS;
 
     if(asModule) {
         EXT_PROC_COMMON_ID_LIST(CURRENT_EXT_ID) = NULL;
@@ -2557,6 +2559,11 @@ end_procedure()
          */
         CURRENT_STATEMENTS = NULL;
     }
+
+    if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
+        return;
+    }
+
 
     /*
      * set self in parent to procedure.
@@ -5355,7 +5362,6 @@ compile_stat_args(expv st, expr x, int expect_acquired_lock) {
         v = LIST_ITEM(lp);
 
         if (EXPR_CODE(v) != F_SET_EXPR) {
-            fprintf(stderr, "EXPR_CODE(x) is %d\n", EXPR_CODE(v));
             fatal("%s: not F_SET_EXPR.", __func__);
         }
 
@@ -5744,7 +5750,8 @@ check_image_control_statement_available() {
 
 
 static void
-compile_BLOCK_statement(expr x) {
+compile_BLOCK_statement(expr x)
+{
     expv st;
 
     push_ctl(CTL_BLOCK);
@@ -5773,26 +5780,38 @@ compile_BLOCK_statement(expr x) {
 
 
 static void
-compile_ENDBLOCK_statement(expr x) {
+compile_ENDBLOCK_statement(expr x)
+{
+    BLOCK_ENV current_block;
+    BLOCK_ENV bp, tail;
+
     if (CTL_TYPE(ctl_top) != CTL_BLOCK) {
         error("'endblock', out of place");
         return;
     }
 
     /* check construct name */
-    if (CTL_BLOCK_CONST_NAME(ctl_top) != NULL && EXPR_ARG1(x) == NULL) {
-        error("expect construnct name");
-        return;
-    } else if (CTL_BLOCK_CONST_NAME(ctl_top) == NULL && EXPR_ARG1(x) != NULL) {
-        error("unexpected construnct name");
-        return;
-    } else if ((CTL_BLOCK_CONST_NAME(ctl_top) != NULL) && EXPR_ARG1(x) != NULL) {
-        if (EXPR_SYM(CTL_BLOCK_CONST_NAME(ctl_top))
-            != EXPR_SYM(EXPR_ARG1(x))) {
+    if (CTL_BLOCK_CONST_NAME(ctl_top) != NULL) {
+        if (EXPR_ARG1(x) == NULL) {
+            error("expects construnct name");
+            return;
+        } else if (EXPR_SYM(CTL_BLOCK_CONST_NAME(ctl_top)) !=
+                   EXPR_SYM(EXPR_ARG1(x))) {
             error("unmatched construct name");
             return;
         }
+    } else if (EXPR_ARG1(x) != NULL) {
+        error("unexpected construnct name");
+        return;
     }
+
+    if(debug_flag){
+        fprintf(debug_fp,"\n*** IN BLOCK:\n");
+        print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
+        print_types(LOCAL_STRUCT_DECLS, debug_fp);
+        expv_output(CURRENT_STATEMENTS, debug_fp);
+    }
+
 
     CTL_BLOCK_BODY(ctl_top) = CURRENT_STATEMENTS;
 
@@ -5800,7 +5819,20 @@ compile_ENDBLOCK_statement(expr x) {
         EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
     }
 
+    current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
+    BLOCK_LOCAL_SYMBOLS(current_block) = LOCAL_SYMBOLS;
+
+    /* FIX: cast abuse */
+    EXPR_BLOCK_ID_LIST(CTL_BLOCK_STATEMENT(ctl_top)) =
+            (void*) BLOCK_LOCAL_SYMBOLS(current_block);
+
+    end_procedure();
     pop_ctl();
+
+    FOREACH_BLOCKS(bp, LOCAL_BLOCKS) {
+        tail = bp;
+    }
+    BLOCK_LINK_ADD(current_block, LOCAL_BLOCKS, tail);
 
     CURRENT_STATE = INEXEC;
 }

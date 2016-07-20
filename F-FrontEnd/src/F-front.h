@@ -180,6 +180,7 @@ typedef struct local_environment {
     ID                  local_common_symbols;
     ID                  local_labels;
     EXT_ID              local_external_symbols;
+    BLOCK_ENV           local_blocks;
 } *LOCAL_ENV;
 
 extern LOCAL_ENV current_local_env;
@@ -247,7 +248,7 @@ typedef struct control
 #define CTL_BLOCK_LOCAL_COMMON_SYMBOLS(l)        ((CTL_BLOCK_LOCAL_ENV(l))->local_common_symbols)
 #define CTL_BLOCK_LOCAL_LABELS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->local_labels)
 #define CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_BLOCK_LOCAL_ENV(l))->local_external_symbols)
-
+#define CTL_BLOCK_LOCAL_BLOCKS(l)               ((CTL_BLOCK_LOCAL_ENV(l))->local_blocks)
 
 #define CTL_NEXT(u)               ((u)->next)
 #define CTL_PREV(u)               ((u)->prev)
@@ -329,6 +330,7 @@ typedef struct {
 #define UNIT_CTL_LOCAL_COMMON_SYMBOLS(u)        ((UNIT_CTL_LOCAL_ENV(u))->local_common_symbols)
 #define UNIT_CTL_LOCAL_LABELS(u)                ((UNIT_CTL_LOCAL_ENV(u))->local_labels)
 #define UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(u)      ((UNIT_CTL_LOCAL_ENV(u))->local_external_symbols)
+#define UNIT_CTL_LOCAL_BLOCKS(u)                ((UNIT_CTL_LOCAL_ENV(u))->local_blocks)
 
 #define UNIT_CTL_IMPLICIT_NONE(u)               ((u)->implicit_none)
 #define UNIT_CTL_IMPLICIT_TYPES(u)              ((u)->implicit_types)
@@ -362,6 +364,7 @@ extern int unit_ctl_level;
 #define LOCAL_COMMON_SYMBOLS        (current_local_env->local_common_symbols)
 #define LOCAL_LABELS                (current_local_env->local_labels)
 #define LOCAL_EXTERNAL_SYMBOLS      (current_local_env->local_external_symbols)
+#define LOCAL_BLOCKS                (current_local_env->local_blocks)
 
 #define EXTERNAL_SYMBOLS            LOCAL_EXTERNAL_SYMBOLS
 #define IMPLICIT_TYPES              UNIT_CTL_IMPLICIT_TYPES(CURRENT_UNIT_CTL)
