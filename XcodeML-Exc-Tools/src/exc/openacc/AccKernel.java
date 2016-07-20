@@ -803,13 +803,25 @@ public class AccKernel {
     BlockList body = Bcons.blockList(makeCoreBlock(forBlock.getBody(), deviceKernelBuildInfo));
     loopStack.pop();
 
+    forBlock.Canonicalize();
+    Ident originalInductionVarId = null;
+    Xobject originalInductionVar = null;
+    if(forBlock.isCanonical()) {
+      originalInductionVar = forBlock.getInductionVar();
+      originalInductionVarId = forBlock.findVarIdent(originalInductionVar.getName());
+    }else{
+      ACC.fatal("non canonical loop");
+    }
+
     //FIXME this is not good for nothing parallelism kernel
     Set<ACCpragma> outerParallelisms = AccLoop.getOuterParallelism(forBlock);
     BlockList resultBody = Bcons.emptyBody();
     if(info != null){
       for(ACCvar var : info.getACCvarList()){
         if(var.isPrivate()){
-          resultBody.declLocalIdent(var.getName(), var.getId().Type());
+          if(var.getId() != originalInductionVarId) {
+            resultBody.declLocalIdent(var.getName(), var.getId().Type());
+          }
         }
       }
     }
@@ -818,37 +830,33 @@ public class AccKernel {
       resultBody.add(Bcons.FOR(forBlock.getInitBBlock(), forBlock.getCondBBlock(), forBlock.getIterBBlock(), body));
       return Bcons.COMPOUND(resultBody);
     }
-    forBlock.Canonicalize();
-    if (forBlock.isCanonical()) {
-      Xobject originalInductionVar = forBlock.getInductionVar();
-      Ident originalInductionVarId = forBlock.findVarIdent(originalInductionVar.getName());
 
-      XobjList identList = resultBody.getIdentList();
-      if(identList != null){
-	for(Xobject xobj : identList){
-	  Ident id = (Ident)xobj;
-	  id.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
-	}
+    XobjList identList = resultBody.getIdentList();
+    if(identList != null){
+      for(Xobject xobj : identList){
+        Ident id = (Ident)xobj;
+        id.setProp(ACCgpuDecompiler.GPU_STRAGE_SHARED, true);
       }
+    }
 
-      Ident inductionVarId = resultBody.declLocalIdent("_ACC_loop_iter_" + originalInductionVar.getName(),
-              originalInductionVar.Type());
-      Block mainLoop = Bcons.FOR(Xcons.Set(inductionVarId.Ref(), forBlock.getLowerBound()),
-              Xcons.binaryOp(Xcode.LOG_LT_EXPR, inductionVarId.Ref(), forBlock.getUpperBound()),
-              Xcons.asgOp(Xcode.ASG_PLUS_EXPR, inductionVarId.Ref(), forBlock.getStep()),
-              Bcons.COMPOUND(body));
+    Ident inductionVarId = resultBody.declLocalIdent("_ACC_loop_iter_" + originalInductionVar.getName(),
+            originalInductionVar.Type());
+    Block mainLoop = Bcons.FOR(Xcons.Set(inductionVarId.Ref(), forBlock.getLowerBound()),
+            Xcons.binaryOp(Xcode.LOG_LT_EXPR, inductionVarId.Ref(), forBlock.getUpperBound()),
+            Xcons.asgOp(Xcode.ASG_PLUS_EXPR, inductionVarId.Ref(), forBlock.getStep()),
+            Bcons.COMPOUND(body));
+    resultBody.add(mainLoop);
+
+    ACCvar var = (info != null)? info.findACCvar(originalInductionVar.getName()) : null;
+    if(var == null || !(var.isPrivate() || var.isFirstprivate())) {
       Block endIf = Bcons.IF(Xcons.binaryOp(Xcode.LOG_EQ_EXPR, _accThreadIndex, Xcons.IntConstant(0)),
               Bcons.Statement(Xcons.Set(originalInductionVar, inductionVarId.Ref())), null);
-      resultBody.add(mainLoop);
       resultBody.add(endIf);
-      resultBody.add(_accSyncThreads);
-
-      replaceVar(mainLoop, originalInductionVarId, inductionVarId);
-      return Bcons.COMPOUND(resultBody);
-    } else {
-      ACC.fatal("non canonical loop");
     }
-    return null;
+    resultBody.add(_accSyncThreads);
+
+    replaceVar(mainLoop, originalInductionVarId, inductionVarId);
+    return Bcons.COMPOUND(resultBody);
   }
 
 

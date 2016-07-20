@@ -28,5 +28,5 @@ clean:
 	rm -f $(SOURCE_AUTO)
 
 install: $(OM_F_BACK)
-	$(MKDIR_P) $(JAVADIR)
-	$(INSTALL) $^ $(JAVADIR)
+	$(MKDIR_P) $(DESTDIR)$(JAVADIR)
+	$(INSTALL) $^ $(DESTDIR)$(JAVADIR)

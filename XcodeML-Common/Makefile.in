@@ -20,5 +20,5 @@ clean:
 	rm -f $(OM_COMMON) src/xcodeml/*.class src/xcodeml/*/*.class
 
 install: $(OM_COMMON)
-	$(MKDIR_P) $(JAVADIR)
-	$(INSTALL) $^ $(JAVADIR)
+	$(MKDIR_P) $(DESTDIR)$(JAVADIR)
+	$(INSTALL) $^ $(DESTDIR)$(JAVADIR)

@@ -1,6 +1,7 @@
 package exc.openacc;
 
 import exc.block.*;
+import exc.object.StorageClass;
 
 class AccEnterData extends AccData{
 
@@ -16,8 +17,9 @@ class AccEnterData extends AccData{
       if(var.getParent() != null) continue;
 
       String varName = var.getName();
-      var.setHostDesc(declHostDesc(varName));
-      var.setDevicePtr(declDevicePtr(varName));
+      StorageClass storageClass = var.getId().getStorageClass();
+      var.setHostDesc(declHostDesc(varName, storageClass));
+      var.setDevicePtr(declDevicePtr(varName, storageClass));
 
       initBlockList.add(makeInitFuncCallBlock(var));
 

@@ -41,7 +41,8 @@ public class ACCvar {
     isPrivate,
     isCache,
     isUseDevice,
-    isReduction
+    isReduction,
+    isDeviceptr,
   }
   
   ACCvar(Ident id, ACCpragma atr, ACCvar parent) throws ACCexception{
@@ -163,6 +164,7 @@ public class ACCvar {
       break;
     case DEVICEPTR:
       deviceptr = id;
+      atrEnumSet.add(Attribute.isDeviceptr);
       break;
     case PRIVATE:
       atrEnumSet.add(Attribute.isPrivate);
@@ -240,6 +242,7 @@ public class ACCvar {
   public boolean isCache(){
     return atrEnumSet.contains(Attribute.isCache);
   }
+  public boolean isDeviceptr() { return atrEnumSet.contains(Attribute.isDeviceptr); }
 
   public boolean is(Attribute attr)
   {

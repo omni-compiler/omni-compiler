@@ -65,8 +65,13 @@ class AccData extends AccDirective {
       }
 
       String varName = var.getName();
-      var.setHostDesc(declHostDesc(varName));
-      var.setDevicePtr(declDevicePtr(varName));
+      StorageClass storageClass = var.getId().getStorageClass();
+      var.setHostDesc(declHostDesc(varName, storageClass));
+      var.setDevicePtr(declDevicePtr(varName, storageClass));
+
+      if(storageClass == StorageClass.EXTERN){
+        continue;
+      }
 
       initBlockList.add(makeInitFuncCallBlock(var));
 
@@ -78,19 +83,31 @@ class AccData extends AccDirective {
     }
   }
 
-  Ident declDevicePtr(String varSymbol){
-    return declVar(DEVICE_PTR_PREFIX + varSymbol);
+  Ident declDevicePtr(String varSymbol, StorageClass storageClass){
+    return declVar(DEVICE_PTR_PREFIX + varSymbol, storageClass);
   }
 
-  Ident declHostDesc(String varSymbol) {
-    return declVar(HOST_DESC_PREFIX + varSymbol);
+  Ident declHostDesc(String varSymbol, StorageClass storageClass) {
+    return declVar(HOST_DESC_PREFIX + varSymbol, storageClass);
   }
 
-  private Ident declVar(String varSymbol){
+  private Ident declVar(String varSymbol, StorageClass storageClass){
     boolean isGlobal = _pb == null;
     VarScope varScope = isGlobal? VarScope.GLOBAL : VarScope.LOCAL;
-    Ident id = Ident.Var(varSymbol, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
-    idList.add(id);
+
+    Ident id = null;
+    if(isGlobal) {
+      if(storageClass == StorageClass.EXTERN) {
+        id = _decl.declExternIdent(varSymbol, Xtype.voidPtrType);
+      }else {
+        //id = Ident.Var(varSymbol, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
+        id = _decl.declGlobalIdent(varSymbol, Xtype.voidPtrType);
+      }
+    }else{
+      id = Ident.Var(varSymbol, Xtype.voidPtrType, Xtype.Pointer(Xtype.voidPtrType), varScope);
+      idList.add(id);
+    }
+
     return id;
   }
 
@@ -144,6 +161,8 @@ class AccData extends AccDirective {
       initFuncName = ACC.FIND_DATA_FUNC_NAME;
     } else if (var.isPresentOr()) {
       initFuncName = ACC.PRESENT_OR_INIT_DATA_FUNC_NAME;
+    } else if (var.isDeviceptr()) {
+      initFuncName = ACC.DEVICEPTR_INIT_DATA_FUNC_NAME;
     } else {
       initFuncName = ACC.INIT_DATA_FUNC_NAME;
     }

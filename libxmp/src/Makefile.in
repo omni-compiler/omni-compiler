@@ -113,8 +113,8 @@ $(LIBXMP): $(OBJECTS)
 	$(CC) $(CFLAGS) -o $@ $< -c
 
 install: $(LIBXMP)
-	$(MKDIR_P) $(LIBDIR)
-	$(INSTALL) $^ $(LIBDIR)
+	$(MKDIR_P) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) $^ $(DESTDIR)$(LIBDIR)
 
 clean:
 	rm -f *~ *.core core core.* *.o $(LIBXMP)

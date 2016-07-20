@@ -61,8 +61,8 @@ $(LIBACC_CL): $(OBJECTS_CL)
 	$(GPUCC) $(GPUCFLAGS) -I$(ACC_INC_DIR) -c -o $@ $<
 
 install: $(LIBS)
-	$(MKDIR_P) $(LIBDIR)
-	$(INSTALL) $^ $(LIBDIR)
+	$(MKDIR_P) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) $^ $(DESTDIR)$(LIBDIR)
 
 clean:
 	rm -f *~ *.core core core.* *.o $(LIBS)

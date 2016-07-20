@@ -17,8 +17,8 @@ omp_lib.xmod: omp_lib.f90 omp_lib_kinds.xmod $(HEADERS)
 	$(FC) $< > /dev/null
 
 install: $(HEADERS) $(OBJECTS)
-	$(MKDIR_P) $(INCDIR)
-	$(INSTALL) $^ $(INCDIR)
+	$(MKDIR_P) $(DESTDIR)$(INCDIR)
+	$(INSTALL) $^ $(DESTDIR)$(INCDIR)
 
 clean:
 	rm -f *.xmod

@@ -26,6 +26,8 @@ typedef struct acc_context{
 acc_context *contexts;
 static void _ACC_init_device_if_not_inited(int num/*0-based*/);
 
+int _ACC_num_gangs_limit = -1; //negative num means not-set, and 0 means no limit
+
 void _ACC_init(int argc, char** argv)
 {
   _ACC_DEBUG("begin _ACC_init\n")
@@ -77,6 +79,15 @@ void _ACC_init(int argc, char** argv)
   }
 
   acc_set_device_num(device_num, device_t);
+
+  //get num_gangs limit
+  char *omni_acc_num_gangs_limit = getenv("OMNI_ACC_NUM_GANGS_LIMIT");
+  if(omni_acc_num_gangs_limit != NULL){
+    _ACC_num_gangs_limit = atoi(omni_acc_num_gangs_limit);
+    if(_ACC_num_gangs_limit < 0){
+      _ACC_fatal("invalid value for OMNI_ACC_NUM_GANGS_LIMIT");
+    }
+  }
 
   _ACC_DEBUG("end _ACC_init\n")
 }

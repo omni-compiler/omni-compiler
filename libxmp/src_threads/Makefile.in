@@ -20,7 +20,8 @@ xmp_threads_runtime.o: xmp_threads_runtime.c
 	$(CC) $(CFLAGS) $^ -c
 
 install: $(LIBTHREAD)
-	$(INSTALL) $^ $(LIBDIR)
+	$(MKDIR_P) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) $^ $(DESTDIR)$(LIBDIR)
 
 clean:
 	rm -f $(LIBTHREAD) *.o
