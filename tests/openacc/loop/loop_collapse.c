@@ -77,5 +77,29 @@ int main()
     }
   }
 
+
+  int array3d[L][M][N];
+  //gang and vector collapse with loop initial declarations
+#pragma acc parallel
+#pragma acc loop collapse(3)
+  for(int s = 0; s < L; s++){
+    for(int t = 0; t < M; t++){
+      for(int u = 0; u < N; u++){
+	array3d[s][t][u] = s*3 + t*5 + u*11;
+      }
+    }
+  }
+
+  //verify
+  for(int s = 0; s < L; s++){
+    for(int t = 0; t < M; t++){
+      for(int u = 0; u < N; u++){
+	if(array3d[s][t][u] != s*3 + t*5 + u*11){
+	  return 4;
+	}
+      }
+    }
+  }
+
   return 0;
 }
