@@ -13,7 +13,7 @@
 #define PUT_INTERFACE_TYPE 8
 
 #if defined(_XMP_FJRDMA)
-#  define ONESIDED_BOUNDARY ((size_t)4)
+#  define ONESIDED_BOUNDARY ((size_t)8)
 #  define ONESIDED_COMM_LAYER "FJRDMA"
 #elif defined(_XMP_GASNET)
 #  define ONESIDED_BOUNDARY ((size_t)1)
