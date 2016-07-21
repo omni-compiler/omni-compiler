@@ -364,6 +364,7 @@ class ACCgpuDecompileWriter extends PrintWriter {
 //      break;
 
     case MEMBER_REF:      /* (MEMBER_REF v member), v.member */
+    case MEMBER_ARRAY_REF:
       print("((");
       print(v.left());
       print(")->");
