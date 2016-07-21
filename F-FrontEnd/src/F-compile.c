@@ -2423,10 +2423,11 @@ end_procedure()
 	EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
     }
 
-    if (CURRENT_PROC_CLASS != CL_MAIN && EXT_PROC_TYPE(CURRENT_EXT_ID) == NULL){
-      error("Function result %s has no IMPLICIT type.", ID_NAME(CURRENT_EXT_ID));
+    if (CURRENT_PROC_CLASS != CL_MAIN && CURRENT_PROC_CLASS != CL_BLOCK &&
+        EXT_PROC_TYPE(CURRENT_EXT_ID) == NULL) {
+      error("Function resutl %s has no IMPLICIT type.", ID_NAME(CURRENT_EXT_ID));
     }
-    
+
     if(NOT_INDATA_YET) end_declaration();
 
     /*
