@@ -3444,7 +3444,7 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
     }
 
     // deep-copy types now!
-    first_mid = ID_NEXT(prev_mid);
+    first_mid = prev_mid ? ID_NEXT(prev_mid) : NULL;
     FOREACH_ID(mid, first_mid) {
         // deep copy of types!
         deep_ref_copy_for_module_id_type(ID_TYPE(mid));
