@@ -31,12 +31,13 @@ class ACCgpuDecompiler {
     envDevice.collectAllTypes();
     
     //collect ids corresponds to used types
-    XobjList globalIdList = (XobjList)envDevice.getGlobalIdentList();
+    XobjList hostGlobalIdentList = (XobjList)env.getGlobalIdentList();
+    XobjList deviceGlobalIdList = (XobjList)envDevice.getGlobalIdentList();
     for(Xtype type : envDevice.getTypeList()){
       if(type.isStruct() || type.isEnum() || type.isUnion()){
-	Ident id = findIdent((XobjList)env.getGlobalIdentList(), type);
+        Ident id = findIdent(hostGlobalIdentList, type);
 	if(id != null){
-	  globalIdList.cons(id);
+	  deviceGlobalIdList.cons(id);
 	  type.setTagIdent(id);
 	}
       }
