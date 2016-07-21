@@ -407,11 +407,11 @@ size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
   size_t elementRU;
 
   // boundary check and recovery
-  if (element % ONESIDED_BOUNDARY == 0) {
+  if (element % COMM_UNIT == 0) {
     elementRU = element;
   } else if (count == 1) {              // scalar or one-element array
     /* round up */
-    elementRU = ROUND_UP_BOUNDARY(element);
+    elementRU = ROUND_UP_COMM(element);
     _XMPF_coarrayDebugPrint("round-up element size %d to %u (name=\"%*s\")\n",
                             element, elementRU, namelen, name);
   } else {
@@ -629,8 +629,8 @@ void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
   CoarrayInfo_t *cinfo;
 
   // boundary check
-  if ((size_t)(*baseAddr) % ONESIDED_BOUNDARY != 0 ||
-      *element % ONESIDED_BOUNDARY != 0) {
+  if ((size_t)(*baseAddr) % MALLOC_UNIT != 0 ||
+      *element % MALLOC_UNIT != 0) {
     /* restriction */
     _XMPF_coarrayFatal("boundary violation detected for coarray \'%s\'\n"
                        "  element size %d\n",
@@ -712,7 +712,7 @@ CoarrayInfo_t *_getShareOfStaticCoarray(size_t nbytes, size_t elementRU)
 void xmpf_coarray_count_size_(int *count, int *element)
 {
   size_t thisSize = (size_t)(*count) * (size_t)(*element);
-  size_t mallocSize = ROUND_UP_UNIT(thisSize);
+  size_t mallocSize = ROUND_UP_MALLOC(thisSize);
 
   if (mallocSize > XMPF_get_poolThreshold()) {
     _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE_: no count because of the large size\n"

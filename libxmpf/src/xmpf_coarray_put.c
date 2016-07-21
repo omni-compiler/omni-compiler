@@ -160,7 +160,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     break;
     
   case SCHEME_ExtraDirectPut:
-    elementRU = ROUND_UP_BOUNDARY(*element);
+    elementRU = ROUND_UP_COMM(*element);
     _XMPF_coarrayDebugPrint("SCHEME_ExtraDirectPut/scalar selected. elementRU=%ud\n",
                             elementRU);
     assert(avail_DMA);
@@ -177,7 +177,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     break;
 
   case SCHEME_ExtraBufferPut:
-    elementRU = ROUND_UP_BOUNDARY(*element);
+    elementRU = ROUND_UP_COMM(*element);
     _XMPF_coarrayDebugPrint("SCHEME_ExtraBufferPut/scalar selected. elementRU=%ud\n",
                             elementRU);
 
@@ -204,7 +204,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
 {
   int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
-  if (*element % ONESIDED_BOUNDARY != 0) {
+  if (*element % COMM_UNIT != 0) {
     _XMP_fatal("violation of boundary writing to a coindexed variable\n"
                "  xmpf_coarray_put_array_, " __FILE__);
     return;
@@ -287,7 +287,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
 {
   int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
-  if (*element % ONESIDED_BOUNDARY != 0) {
+  if (*element % COMM_UNIT != 0) {
     _XMP_fatal("violation of boundary writing a scalar to a coindexed variable\n"
                "   xmpf_coarray_put_spread_, " __FILE__);
     return;
@@ -365,20 +365,20 @@ void xmpf_coarray_put_err_size_(void **descPtr, int *dim,
 /* REMARKING CONDITIONS:
  *  - The result variable may be invisible to FJ-RDMA.
  *  - The length of put/get communication must be divisible by
- *    ONESIDED_BOUNDARY. Else, SCHEME_Extra... should be selected.
- *  - Array element of coarray is divisible by ONESIDED_BOUNDARY
+ *    COMM_UNIT. Else, SCHEME_Extra... should be selected.
+ *  - Array element of coarray is divisible by COMM_UNIT
  *    due to a restriction.
  */
 
 int _select_putscheme_scalar(int element, int avail_DMA)
 {
   if (avail_DMA)
-    if (element % ONESIDED_BOUNDARY == 0)
+    if (element % COMM_UNIT == 0)
       return SCHEME_DirectPut;
     else
       return SCHEME_ExtraDirectPut;
   else
-    if (element % ONESIDED_BOUNDARY == 0)
+    if (element % COMM_UNIT == 0)
       return SCHEME_BufferPut;
     else
       return SCHEME_ExtraBufferPut;

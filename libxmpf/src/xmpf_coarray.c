@@ -86,7 +86,7 @@ static void _set_poolThreshold(unsigned size)
 
 static void _set_localBufSize(unsigned size)
 {
-  unsigned sizeRU = ROUND_UP_BOUNDARY(ROUND_UP_UNIT(size));
+  unsigned sizeRU = ROUND_UP_MALLOC(size);
 
   _XMPF_localBufSize = sizeRU;
 
@@ -195,12 +195,14 @@ void _XMPF_coarray_init(void)
     _XMPF_set_coarrayMsg(TRUE);
 
     _XMPF_coarrayDebugPrint("Execution time environment\n"
-                            "   communication layer  :  %s (%u-byte boundary)\n"
+                            "   communication layer  :  %s\n"
+                            "    - memory allocation boundary : %u byte(s)\n"
+                            "    - communication boundary     : %u byte(s)\n"
                             "   environment vars     :  XMPF_COARRAY_MSG=%s\n"
                             "                           XMPF_COARRAY_POOL=%s\n"
                             "                           XMPF_COARRAY_BUF=%s\n"
                             "                           XMPF_COARRAY_SAFE=%s\n",
-                            ONESIDED_COMM_LAYER, ONESIDED_BOUNDARY,
+                            ONESIDED_COMM_LAYER, MALLOC_UNIT, COMM_UNIT, 
                             env1 ? env1 : "",
                             env2 ? env2 : "",
                             env3 ? env3 : "",
