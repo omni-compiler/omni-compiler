@@ -1,11 +1,11 @@
 !! test for allocation alignment
 !! Coarray a should be aligned with 8-byte boundary. see issues #6
 
-module alloc2
+module z006
 real*8, save :: a(100,50)[*]
 end module
 
-use alloc2
+use z006
 
 real :: b[*]
 

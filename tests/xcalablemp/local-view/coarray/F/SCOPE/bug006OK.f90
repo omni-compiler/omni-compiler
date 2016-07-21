@@ -1,11 +1,11 @@
 !! test for allocation alignment
 !! for comparison with bug006.f90
 
-module alloc2
+module z006OK
 real*8, save :: a(100,50)[*]
 end module
 
-use alloc2
+use z006OK
 
 real :: b[*], dummy[*]
 
