@@ -1104,6 +1104,9 @@ find_ident_block_parent(SYMBOL s)
 
     FOR_CTLS_BACKWARD(cp) {
         if (CTL_TYPE(cp) == CTL_BLOCK) {
+            if (CTL_BLOCK_LOCAL_SYMBOLS(cp) == LOCAL_SYMBOLS) {
+                continue;
+            }
             ip = find_ident_head(s, CTL_BLOCK_LOCAL_SYMBOLS(cp));
             if (ip != NULL) {
                 return ip;
