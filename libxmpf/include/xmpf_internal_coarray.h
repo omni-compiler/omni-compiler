@@ -19,7 +19,10 @@
 #  define ONESIDED_COMM_LAYER "FJRDMA"
 #elif defined(_XMP_GASNET)
 #  define COMM_UNIT      ((size_t)1)
-#  define MALLOC_UNIT    ((size_t)4)
+/////////////////////////
+//#  define MALLOC_UNIT    ((size_t)4)
+#  define MALLOC_UNIT    ((size_t)8)
+/////////////////////////
 #  define ONESIDED_COMM_LAYER "GASNET"
 #elif defined(_XMP_MPI3_ONESIDED)
 #  define COMM_UNIT      ((size_t)1)

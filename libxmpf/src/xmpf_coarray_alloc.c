@@ -407,12 +407,13 @@ size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
   size_t elementRU;
 
   // boundary check and recovery
-  if (element % COMM_UNIT == 0) {
+  if (element % MALLOC_UNIT == 0) {
     elementRU = element;
   } else if (count == 1) {              // scalar or one-element array
     /* round up */
-    elementRU = ROUND_UP_COMM(element);
-    _XMPF_coarrayDebugPrint("round-up element size %d to %u (name=\"%*s\")\n",
+    elementRU = ROUND_UP_MALLOC(element);
+    _XMPF_coarrayDebugPrint("round-up size of scalar variable "
+                            "%d to %u (name=\"%*s\")\n",
                             element, elementRU, namelen, name);
   } else {
     /* restriction */
