@@ -13,7 +13,7 @@ etc_DATA     = ../etc/version ../etc/xmpcc.conf ../etc/xmpf90.conf \
 	       ../etc/ompcc.conf ../etc/ompf90.conf
 libexec_SCRIPTS = ../libexec/omni_common_lib.sh ../libexec/xmpf90_lib.sh \
 	          ../libexec/xmpcc_lib.sh ../libexec/ompcc_lib.sh ../libexec/ompf90_lib.sh \
-	          ../libexec/omni_traverse.sh om_replace_pragma
+	          ../libexec/omni_traverse.sh ../libexec/omni_acc_lib.sh om_replace_pragma
 
 all: om_replace_pragma
 om_replace_pragma: om_replace_pragma.c

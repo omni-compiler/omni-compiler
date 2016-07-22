@@ -5,6 +5,7 @@ OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
 . ${OM_DRIVER_CONF_DIR}/xmpcc.conf
 . ${OMNI_HOME}/libexec/omni_common_lib.sh
 . ${OMNI_HOME}/libexec/xmpcc_lib.sh
+. ${OMNI_HOME}/libexec/omni_acc_lib.sh
 
 ### Directory for saving intermediate files ###
 PID=$$
@@ -170,30 +171,17 @@ for c_file in "${c_files[@]}"; do
     omni_exec $OMNI_MPICC_CMD $OMNI_MPICC_OPT "${native_add_opt[@]}" "${other_args[@]}" "${FILE_C}" -o "${FILE_O}"
 
     ### GPU Compiler ###
-    FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
-    FILE_GPUO=${TEMP_DIR}/"${FILE_NAME}".gpu.o
-    # if [ $ENABLE_XACC = true ] && [ -e "${FILE_CU}" ]; then
-    # 	omni_exec $OMNI_GPUCC_CMD $OMNI_GPUCC_OPT "${FILE_CU}" -o "${FILE_GPUO}"
-    # 	FILE_O_TMP=${TEMP_DIR}/"${FILE_NAME}".cpu.o
-    # 	omni_exec mv "${FILE_O}" "${FILE_O_TMP}"
-    # 	omni_exec ld -r "${FILE_O_TMP}" "${FILE_GPUO}" -o "${FILE_O}"
-    # 	omni_exec rm -f "${FILE_O_TMP}"
-    # fi
     if [ $ENABLE_XACC = true ]; then
 	if [ $OPENACC_PLATFORM = "CUDA" ]; then
 	    FILE_CU=${TEMP_DIR}/"${FILE_NAME}"_pp.cu
-	    FILE_GPUO=${TEMP_DIR}/"${FILE_NAME}".gpu.o
 	    if [ -e "${FILE_CU}" ]; then
-		omni_exec $OMNI_GPUCC_CMD $OMNI_GPUCC_OPT "${FILE_CU}" -o "${FILE_GPUO}"
-		FILE_O_TMP=${TEMP_DIR}/"${FILE_NAME}".cpu.o
-		omni_exec mv "${FILE_O}" "${FILE_O_TMP}"
-		omni_exec ld -r "${FILE_O_TMP}" "${FILE_GPUO}" -o "${FILE_O}"
-		omni_exec rm -f "${FILE_O_TMP}"
+		GPUCC_ADD_ARGS=(`omni_acc_cuda_get_args ${other_args[@]}`)
+		omni_acc_cuda_compile ${FILE_CU} ${FILE_O} ${GPUCC_ADD_ARGS[@]}
 	    fi
 	elif [ $OPENACC_PLATFORM = "OpenCL" ]; then
 	    FILE_CL=${TEMP_DIR}/"${FILE_NAME}"_pp.cl
-	    FILE_USER_CL=`basename "${C_FILE}" .c`_pp.cl
 	    if [ -e "${FILE_CL}" ]; then
+		FILE_USER_CL=`basename "${C_FILE}" .c`_pp.cl
 		omni_exec cp "${FILE_CL}" "${FILE_USER_CL}"
 	    fi
 	fi
