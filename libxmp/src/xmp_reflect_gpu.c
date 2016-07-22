@@ -72,6 +72,12 @@ static void gpu_wait_async(void *async_id)
   CUDA_SAFE_CALL(cudaStreamSynchronize(st));
 }
 
+void _XMP_reflect_gpu(void *dev_addr, _XMP_array_t *a)
+{
+  _XMP_reflect_init_gpu(dev_addr, a);
+  _XMP_reflect_do_gpu(a);
+}
+
 void _XMP_reflect_init_gpu(void *dev_addr,_XMP_array_t *a)
 {
   _XMP_RETURN_IF_SINGLE;
@@ -209,7 +215,6 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   _XMP_array_info_t *ai = &(adesc->info[target_dim]);
   _XMP_array_info_t *ainfo = adesc->info;
   _XMP_ASSERT(ai->align_manner == _XMP_N_ALIGN_BLOCK);
-  _XMP_ASSERT(ai->is_shadow_comm_member);
 
   if (lwidth > ai->shadow_size_lo || uwidth > ai->shadow_size_hi){
     _XMP_fatal("reflect width is larger than shadow width.");
@@ -221,6 +226,9 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   _XMP_nodes_info_t *ni = adesc->align_template->chunk[target_tdim].onto_nodes_info;
 
   int ndims = adesc->dim;
+  if(adesc->array_addr_p == dev_array_addr){
+    _XMP_fatal("device addr is the same as host addr for reflect.");
+  }
 
   // 0-origin
   int my_pos = ni->rank;
@@ -270,7 +278,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   //  int count_offset = 0;
 
   if (_XMPF_running && !_XMPC_running){ /* for XMP/F */
-
+    /*
     count = 1;
     blocklength = type_size;
     stride = ainfo[0].alloc_size * type_size;
@@ -283,6 +291,31 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
       blocklength *= ainfo[i-1].alloc_size;
       stride *= ainfo[i].alloc_size;
     }
+    */
+    count = 1;
+    blocklength = 1;
+    stride = 1;
+
+    for(int i = ndims-1; i >= 0; i--){
+      int fact = (i == target_dim)? 1 : (ainfo[i].par_size + lwidths[i] + uwidths[i]);
+      int alloc_size = ainfo[i].alloc_size;
+
+      if(blocklength == 1 || fact == alloc_size){
+	blocklength *= fact;
+	stride *= alloc_size;
+      }else if(count == 1 && target_dim != ndims-1){ //to be contiguous if target_dim==ndims-1
+	count = blocklength;
+	blocklength = fact;
+	stride = alloc_size;
+      }else{
+	blocklength *= alloc_size;
+	stride *= alloc_size;
+      }
+      //printf("tar=%d, i=%d, fact=%d, allocsize=%d, (%d,%d,%lld)\n", target_dim, i, fact, alloc_size, count , blocklength, stride);
+    }
+
+    blocklength *= type_size;
+    stride *= type_size;
 
   }
   else if (!_XMPF_running && _XMPC_running){ /* for XMP/C */
@@ -629,7 +662,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   reflect->lo_async_id = _XMP_alloc(sizeof(cudaStream_t));
   CUDA_SAFE_CALL(cudaStreamCreate(reflect->lo_async_id));
 
-  if(target_dim != 0 &&
+  int top_dim = _XMPC_running? 0 : ndims-1;
+  if(target_dim != top_dim &&
      (!useHostBuffer || (lo_rank != MPI_PROC_NULL && hi_rank != MPI_PROC_NULL && (lo_buf_size / type_size) <= useSingleStreamLimit)) ){
     reflect->hi_async_id = NULL;
   }else{
@@ -811,7 +845,6 @@ static void _XMP_reflect_start(_XMP_array_t *a, int dummy)
   TLOG_LOG(TLOG_EVENT_3_IN);
   for (int i = 0; i < a->dim; i++){
     _XMP_array_info_t *ai = &(a->info[i]);
-    if(! ai->is_shadow_comm_member) continue;
     _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
 
     if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
@@ -829,7 +862,6 @@ static void _XMP_reflect_start(_XMP_array_t *a, int dummy)
   TLOG_LOG(TLOG_EVENT_4_IN);
   for (int i = 0; i < a->dim; i++){
     _XMP_array_info_t *ai = &(a->info[i]);
-    if(! ai->is_shadow_comm_member) continue;
     _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
@@ -862,7 +894,6 @@ static void _XMP_reflect_wait(_XMP_array_t *a)
   for (int i = 0; i < a->dim; i++){
     //  for (int i = a->dim - 1; i >= 0; i--){
     _XMP_array_info_t *ai = &(a->info[i]);
-    if(! ai->is_shadow_comm_member) continue;
     _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
@@ -887,7 +918,6 @@ static void _XMP_reflect_wait(_XMP_array_t *a)
   for(int i = 0; i < a->dim; i++){
     //  for (int i = a->dim - 1; i >= 0; i--){
     _XMP_array_info_t *ai = &(a->info[i]);
-    if(! ai->is_shadow_comm_member) continue;
     _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;
@@ -916,7 +946,6 @@ static void _XMP_reflect_(_XMP_array_t *a, int dummy)
 
   for (int i = 0; i < a->dim; i++){
     _XMP_array_info_t *ai = &(a->info[i]);
-    if(! ai->is_shadow_comm_member) continue;
     _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
     int lo_width = reflect->lo_width;
     int hi_width = reflect->hi_width;

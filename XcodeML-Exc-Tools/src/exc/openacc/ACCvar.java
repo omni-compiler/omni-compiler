@@ -41,7 +41,8 @@ public class ACCvar {
     isPrivate,
     isCache,
     isUseDevice,
-    isReduction
+    isReduction,
+    isDeviceptr,
   }
   
   ACCvar(Ident id, ACCpragma atr, ACCvar parent) throws ACCexception{
@@ -163,6 +164,7 @@ public class ACCvar {
       break;
     case DEVICEPTR:
       deviceptr = id;
+      atrEnumSet.add(Attribute.isDeviceptr);
       break;
     case PRIVATE:
       atrEnumSet.add(Attribute.isPrivate);
@@ -240,6 +242,7 @@ public class ACCvar {
   public boolean isCache(){
     return atrEnumSet.contains(Attribute.isCache);
   }
+  public boolean isDeviceptr() { return atrEnumSet.contains(Attribute.isDeviceptr); }
 
   public boolean is(Attribute attr)
   {
@@ -388,7 +391,7 @@ public class ACCvar {
         this.elementType = type;
         return rangeList;
       case Xtype.POINTER:
-        ACC.warning("pointer reference was treated as array reference in '" + getName() +"'");
+        ACC.warning("pointer '" + getName() + "' is treated as \"" + getName() + "[0:1]\"");
         rangeList.add(Xcons.List(Xcons.IntConstant(0), Xcons.IntConstant(1)));
         type = type.getRef();
         break;

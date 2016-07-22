@@ -7,7 +7,7 @@ HEADERS     = xmp.h xmp_index_macro.h xmp_comm_macro.h xmp_func_decl.h xmp_tlog.
 
 all:
 install: $(HEADERS)
-	$(MKDIR_P) $(INSTALL_DIR)
-	$(INSTALL) $^ $(INSTALL_DIR)
+	$(MKDIR_P) $(DESTDIR)$(INSTALL_DIR)
+	$(INSTALL) $^ $(DESTDIR)$(INSTALL_DIR)
 
 clean:

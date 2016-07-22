@@ -16,6 +16,7 @@
  * use association information about ID.
  */
 struct use_assoc_info {
+    struct module * module;   /* module. */
     SYMBOL module_name;       /* name of module which the ID declared. */
     SYMBOL original_name;     /* original name of the ID. */
 };
@@ -40,6 +41,7 @@ struct module {
     SYMBOL name;              /* name of this module. */
     ID head;                  /* public elements of this module. */
     ID last;
+    int is_intrinsic;         /* TRUE if this module is an intrinsic module. */
 };
 
 /**

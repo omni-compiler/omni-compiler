@@ -9,7 +9,7 @@ import java.util.*;
  */
 public class XMPtransCoarrayRun
 {
-  /* These lists should match with F-FrontEnd/src/F-intrinsics-table.c.
+  /* This list should match with F-FrontEnd/src/F-intrinsics-table.c.
    */
   final static String[] _coarrayIntrinsics = {
     // functions
@@ -26,6 +26,10 @@ public class XMPtransCoarrayRun
     "atomic_define",
     "atomic_ref",
   };
+  final static List _coarrayIntrinsicList = Arrays.asList(_coarrayIntrinsics);
+
+  /* This list should match with F-FrontEnd/src/F-intrinsics-table.c.
+   */
   final static String[] _coarrayStmtKeywords = {
     "xmpf_critical",
     "xmpf_end_critical",
@@ -36,7 +40,6 @@ public class XMPtransCoarrayRun
     "xmpf_sync_memory",
     "xmpf_unlock",
   };
-  final static List _coarrayIntrinsicList = Arrays.asList(_coarrayIntrinsics);
   final static List _coarrayStmtKeywordList = Arrays.asList(_coarrayStmtKeywords);
 
   // constants -- cf. libxmpf/src/xmpf_coarray_decl.f90 for generic names
@@ -44,7 +47,8 @@ public class XMPtransCoarrayRun
   final static String TRAV_COUNTCOARRAY_PREFIX = "xmpf_traverse_countcoarray";
   final static String TRAV_INITCOARRAY_PREFIX = "xmpf_traverse_initcoarray";
   final static String FIND_DESCPOINTER_NAME   = "xmpf_coarray_find_descptr";
-  final static String COARRAY_ALLOC_NAME     = "xmpf_coarray_alloc_generic";
+  final static String COARRAY_MALLOC_NAME    = "xmpf_coarray_malloc_generic";
+  final static String COARRAY_REGMEM_NAME    = "xmpf_coarray_regmem_generic";
   final static String COARRAY_DEALLOC_NAME   = "xmpf_coarray_dealloc_generic";
   final static String NUM_IMAGES_NAME        = "xmpf_num_images_generic";
   final static String THIS_IMAGE_NAME        = "xmpf_this_image_generic";
@@ -66,7 +70,7 @@ public class XMPtransCoarrayRun
 
   // generic intrinsic names that will be renamed in pass1 and pass2
   final static List<String> intrinsicProcedureNames = 
-    Arrays.asList( "this_image",
+    Arrays.asList( "num_images", "this_image",
                    "lcobound", "ucobound",
                    "image_index",
                    "co_broadcast",
@@ -579,19 +583,31 @@ public class XMPtransCoarrayRun
    */
   public void run2() {
 
-    if (!isModule())
-      return;                 // do nothing
-
     _setLocalCoarrays();
     /* visibleCoarrays will be set after run1 */
 
     if (version > 3)
       disp_version("run2, " + getName());
 
-    // convert specification and declaration part
-    transModule_staticLocal2();
+    if (isModule()) {
+      run2_module();
+    } else {
+      run2_procedure();
+    }
   }
 
+  private void run2_module() {
+    // convert specification and declaration part
+    transModule_staticLocal2();
+
+    // o2. remove declarations of coarray intrinsic names
+    removeDeclOfIntrinsicNames();
+  }
+
+  private void run2_procedure() {
+    // o2. remove declarations of coarray intrinsic names
+    removeDeclOfIntrinsicNames();
+  }
 
 
   /**
@@ -808,10 +824,18 @@ public class XMPtransCoarrayRun
         ...
       end subroutine
     --------------------------------------------
-    output:
+    use Malloc:
     --------------------------------------------
       subroutine EX1
         integer, pointer :: V3(:,:)                                  ! f. f1. h.
+        integer(8) :: descptr_V3 = 0_8                               ! a3.
+        ...
+      end subroutine
+    --------------------------------------------
+    use RegMem:
+    --------------------------------------------
+      subroutine EX1
+        integer, allocatable [, save] :: V3(:,:)                     ! f.
         integer(8) :: descptr_V3 = 0_8                               ! a3.
         ...
       end subroutine
@@ -824,11 +848,13 @@ public class XMPtransCoarrayRun
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(allocatableLocalCoarrays);
 
-    // f1. remove SAVE attributes from declarations of coarrays
-    removeSaveAttr(allocatableLocalCoarrays);
+    if (useMalloc) {
+      // f1. remove SAVE attributes from declarations of coarrays
+      removeSaveAttr(allocatableLocalCoarrays);
 
-    // h. replace allocatable attributes with pointer attributes
-    replaceAllocatableWithPointer(allocatableLocalCoarrays);
+      // h. replace allocatable attributes with pointer attributes
+      replaceAllocatableWithPointer(allocatableLocalCoarrays);
+    }
   }
 
 
@@ -863,10 +889,18 @@ public class XMPtransCoarrayRun
         ...
       end module
     --------------------------------------------
-    output:
+    case useMalloc:
     --------------------------------------------
       module EX1
         integer, pointer :: V3(:,:)                                  ! f. h.
+        integer(8) :: descptr_V3                                     ! a.
+        ...
+      end module
+    --------------------------------------------
+    case useRegMem:
+    --------------------------------------------
+      module EX1
+        integer, allocatable :: V3(:,:)                              ! f.
         integer(8) :: descptr_V3                                     ! a.
         ...
       end module
@@ -879,8 +913,10 @@ public class XMPtransCoarrayRun
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(allocatableLocalCoarrays);
 
-    // h. replace allocatable attributes with pointer attributes
-    replaceAllocatableWithPointer(allocatableLocalCoarrays);
+    if (useMalloc) {
+      // h. replace allocatable attributes with pointer attributes
+      replaceAllocatableWithPointer(allocatableLocalCoarrays);
+    }
   }
 
   private void transModule_allocatableAssociated() {
@@ -890,8 +926,10 @@ public class XMPtransCoarrayRun
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(allocatableAssociatedCoarrays);
 
-    // h. replace allocatable attributes with pointer attributes
-    replaceAllocatableWithPointer(allocatableAssociatedCoarrays);
+    if (useMalloc) {
+      // h. replace allocatable attributes with pointer attributes
+      replaceAllocatableWithPointer(allocatableAssociatedCoarrays);
+    }
   }
 
 
@@ -949,7 +987,7 @@ public class XMPtransCoarrayRun
         ...
       end subroutine
     --------------------------------------------
-    output:
+    case useMalloc:
     --------------------------------------------
       subroutine EX1(V3)
         integer, pointer :: V3(:,:)                               ! f. h.
@@ -961,6 +999,11 @@ public class XMPtransCoarrayRun
 
         ...
       end subroutine
+    --------------------------------------------
+    case useRegMem
+      same as useMalloc except:
+    --------------------------------------------
+        integer, allocatable :: V3(:,:)                           ! f.
     --------------------------------------------
   */
   private void transDeclPart_allocatableDummy() {
@@ -977,8 +1020,10 @@ public class XMPtransCoarrayRun
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(allocatableDummyCoarrays);
 
-    // h. replace allocatable attributes with pointer attributes
-    replaceAllocatableWithPointer(allocatableDummyCoarrays);
+    if (useMalloc) {
+      // h. replace allocatable attributes with pointer attributes
+      replaceAllocatableWithPointer(allocatableDummyCoarrays);
+    }
   }
 
 
@@ -1067,8 +1112,8 @@ public class XMPtransCoarrayRun
         ...
         V1(1:3,j)[k1,k2] = (/1.0,2.0,3.0/)              ! put 1D
         z = V2[k]**2                                    ! get 0D
-        allocate (V3(1:10,20)[k1:k12,0:*],V4(10)[*])    ! allocate
-        deallocate (V4)                                 ! deallocate
+        allocate (V3(1:10,20)[k1:k12,0:*])              ! allocate
+        deallocate (V3)                                 ! deallocate
         sync all                                        ! stop code motion beyond this line
         if (allocated(V3)) write(*,*) "yes"             ! Fortran intrinsic
         n1 = this_image(V1,1)                           ! coarray intrinsic
@@ -1080,7 +1125,7 @@ public class XMPtransCoarrayRun
         stop                                            ! finalize program
       end subroutine
     --------------------------------------------
-    output:
+    case useMalloc:
     --------------------------------------------
       subroutine EX1
         ...
@@ -1089,7 +1134,8 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_put(descptr_V1, V1(1,j), 4, &              ! d.
           k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
         z = xmpf_coarray_get0d(descptr_V2, V2, 16, k, 0) ** 2        ! e.
-        call xmpf_coarray_alloc2d(descptr_V3, V3, tag, 4, 2, 10, 20) ! j.
+        call xmpf_coarray_malloc_generic(descptr_V3, V3, 200, 4, tag, &
+                                        2, 1, 10, 1, 20)             ! j.
         call xmpf_coarray_set_coshape(descptr_V3, 2, k1, k2, 0)      ! m.
         call xmpf_coarray_set_varname(descptr_V3, "V3", 2)           ! n.
         call xmpf_coarray_dealloc(descptr_V3)                        ! j.
@@ -1112,6 +1158,19 @@ public class XMPtransCoarrayRun
     !! initialize descptr_V2 and crayptr_V2.
     !! (See XMPcoarrayInitProcedure.)
     --------------------------------------------
+    case useRegMem
+      same as the case above except:
+    --------------------------------------------
+        allocate (V3(1:10,20))                    ! delete coindex   ! j4.
+        call xmpf_coarray_regmem_generic(descptr_V3, V3, 200, 4, tag, &
+                                         2, 1, 10, 1, 20)            ! j4.
+        call xmpf_coarray_set_coshape(descptr_V3, 2, k1, k2, 0)      ! m.
+        call xmpf_coarray_set_varname(descptr_V3, "V3", 2)           ! n.
+        deallocate (V3)                           ! keep original    ! j4.*
+        call xmpf_coarray_dealloc(descptr_V3)                        ! j4.*
+
+        if (allocated(V3)) write(*,*) "yes"       ! keep 'allocated' ! l4.
+    --------------------------------------------
   */
   private void transExecPart() {
 
@@ -1124,7 +1183,7 @@ public class XMPtransCoarrayRun
     // d. convert coindexed variable assignment stmts to call stmts
     convCoidxStmtsToSubrCalls(visibleCoarrays);
 
-    // j. convert allocate/deallocate stmts (allocatable coarrays only)
+    // j. or j4. convert allocate/deallocate stmts (allocatable coarrays only)
     convAllocateStmts(visibleCoarrays);
     convDellocateStmts(visibleCoarrays);
 
@@ -2006,7 +2065,7 @@ public class XMPtransCoarrayRun
 
 
   //-----------------------------------------------------
-  //  TRANSLATION j, m, n
+  //  TRANSLATION j or j4, m, n
   //  convert allocate/deallocate stmts for allocated coarrays
   //-----------------------------------------------------
   //
@@ -2027,15 +2086,21 @@ public class XMPtransCoarrayRun
           // xobj.getArg(0): 'stat=' identifier (not supported)
           // xobj.getArg(1): list of variables to be allocated
           // 'errmsg=' identifier is not supported.
-          if (_doesListHaveCoarray(xobj.getArg(1), coarrays)) {
+          if (_listHasCoarray(xobj.getArg(1), coarrays)) {
             ArrayList<Xobject> fstmts =
               genAllocateStmt(xobj, coarrays);
 
+            // keep the ALLOCATE stmtatement if useRegMem
+            if (!useMalloc)
+              st.insert(st.getExpr());
+
+            // insert generated stmts. before the ALLOCATE stmt.
             LineNo lineno = xobj.getLineNo();
             for (Xobject fstmt: fstmts) {
               fstmt.setLineNo(lineno);
               st.insert(fstmt);
             }
+            // delete the ALLOCATE stmtatement
             st.remove();
           }
           break;
@@ -2059,15 +2124,24 @@ public class XMPtransCoarrayRun
 
 	switch (xobj.Opcode()) {
         case F_DEALLOCATE_STATEMENT:
-          if (_doesListHaveCoarray(xobj.getArg(1), coarrays)) {
+          if (_listHasCoarray(xobj.getArg(1), coarrays)) {
+            if (!useMalloc) {
+              XMP.fatal("Not supported DEALLOCATE statement in the case of useRegMem");
+            }
             ArrayList<Xobject> fstmts =
               genDeallocateStmt(xobj, coarrays);
 
+            // keep the DEALLOCATE stmtatement if useRegMem
+            if (!useMalloc)
+              st.insert(st.getExpr());
+
+            // insert generated stmts. before the DEALLOCATE stmt.
             LineNo lineno = xobj.getLineNo();
             for (Xobject fstmt: fstmts) {
               fstmt.setLineNo(lineno);
               st.insert(fstmt);
             }
+            // delete the DEALLOCATE statement
             st.remove();
           }
           break;
@@ -2077,8 +2151,8 @@ public class XMPtransCoarrayRun
   }
 
 
-  private Boolean _doesListHaveCoarray(Xobject args,
-                                       ArrayList<XMPcoarray> coarrays) {
+  private Boolean _listHasCoarray(Xobject args,
+                                  ArrayList<XMPcoarray> coarrays) {
     Boolean allCoarray = true;
     Boolean allNoncoarray = true;
     for (Xobject arg: (XobjList)args) {
@@ -2121,6 +2195,7 @@ public class XMPtransCoarrayRun
 
     return allCoarray;
   }
+
 
   private Xobject _getFirstArgOfCall(Xobject fcall) {
     Xobject args = fcall.getArg(1);
@@ -2190,7 +2265,12 @@ public class XMPtransCoarrayRun
       for (int i = 0; i < rank; i++)
         shape.add(arg.getArg(1).getArg(i));
 
-      // TRANSLATION j.
+      // TRANSLATION j4.
+      if (!useMalloc) {
+        arg.getArg(1).removeLastArgs();
+      }
+
+      // TRANSLATION j. and j4.
       newStmts.add(makeStmt_coarrayAlloc(coarray, shape));
       // TRANSLATION m.
       newStmts.add(coarray.makeStmt_setCoshape(coshape));
@@ -2230,9 +2310,9 @@ public class XMPtransCoarrayRun
     }
 
     Xobject tag;
-    if (coarray.wasMovedFromModule() || coarray.def != def) {
+    if (coarray.wasMovedFromModule() || coarray.def != def || !useMalloc) {
       // coarray is originally defined in a use-associated module or
-      // in a different procedure
+      // in a different procedure, or using RegMem stragegy
       // ... do not deallocate automatically at the exit of the procedure
       tag = Xcons.IntConstant(0, Xtype.Fint8Type, "8");
     } else {
@@ -2253,9 +2333,14 @@ public class XMPtransCoarrayRun
       args.add(_getLboundInIndexRange(shape.getArg(i)));
       args.add(_getUboundInIndexRange(shape.getArg(i)));
     }
-    String subrName = COARRAY_ALLOC_NAME;
+
+    String subrName;
+    if (useMalloc) 
+      subrName = COARRAY_MALLOC_NAME;
+    else
+      subrName = COARRAY_REGMEM_NAME;
     if (args.hasNullArg())
-      XMP.fatal("generated null argument for " + subrName +
+      XMP.fatal("INTERNAL: generated null argument for " + subrName +
                 "(makeStmt_coarrayAlloc)");
 
     Ident subr = env.findVarIdent(subrName, null);
@@ -2534,7 +2619,7 @@ public class XMPtransCoarrayRun
 
     Ident ident = (Ident)args.getArg();
     String name = ident.getName();
-    if (_coarrayIntrinsicList.contains(name)) {
+    if (isCoarrayIntrinsicName(name)) {
       // Found me a coarray intrinsic name. Remove me.
       prevArgs.setNext(nextArgs);
       args = prevArgs;
@@ -2944,6 +3029,15 @@ public class XMPtransCoarrayRun
     env.removeIdent(coarray.getName(), null);
   }
 
+  //-----------------------------------------------------
+  //  TRANSLATION o2.
+  //  remove declarations of coarray intrinsic names
+  //-----------------------------------------------------
+  //
+  private void removeDeclOfIntrinsicNames() {
+    for (String name: intrinsicProcedureNames)
+      env.removeIdent(name, null);
+  }
 
 
   //-----------------------------------------------------
@@ -3018,11 +3112,15 @@ public class XMPtransCoarrayRun
   }
 
 
+  static public Boolean isCoarrayIntrinsicName(String name) {
+    return _coarrayIntrinsicList.contains(name);
+  }
+
   private boolean _isCoarrayIntrinsicUsed() {
     XobjList identList = def.getDef().getIdentList();
     for (Xobject x: identList) {
       Ident id = (Ident)x;
-      if (_coarrayIntrinsicList.contains(id.getName()))
+      if (isCoarrayIntrinsicName(id.getName()))
         return true;
     }
     return false;

@@ -177,7 +177,7 @@ public class XMPtransCoarray implements XobjectDefVisitor
         break;
 
       case IDENT:
-        if (isCoarrayLibraryName(xobj.getName()))
+        if (isCoarrayIntrinsicName(xobj.getName()))
           _nCoarrayLibs += 1;
         break;
       }
@@ -214,13 +214,10 @@ public class XMPtransCoarray implements XobjectDefVisitor
   }
 
 
-  private boolean isCoarrayLibraryName(String name)
+  private boolean isCoarrayIntrinsicName(String name)
   {
-    // True if it is a name of coarray intrinsic procedures or
-    // a library and it should be converted in run1 or run2.
-    // Else, false even if it is a name of itrinsic procedure.
-
-    return XMPtransCoarrayRun.intrinsicProcedureNames.contains(name);
+    // True if it is a name of coarray intrinsic procedures
+    return XMPtransCoarrayRun.isCoarrayIntrinsicName(name);
   }
 
 

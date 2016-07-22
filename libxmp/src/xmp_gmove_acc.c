@@ -710,7 +710,7 @@ static void sendrecv_ARRAY(int type, int type_size, /*MPI_Datatype *mpi_datatype
       }else{
 	send_alloc = _XMP_alloc(total_elmts * type_size);
 	send_buffer = send_alloc;
-	_XMP_pack_array(send_buffer, src_addr, type, type_size, src_dim, src_lower, src_upper, src_stride, src_dim_acc);
+	(*_xmp_pack_array)(send_buffer, src_addr, type, type_size, src_dim, src_lower, src_upper, src_stride, src_dim_acc);
       }
       if ((dst_shrink_nodes_size == src_shrink_nodes_size) ||
           (dst_shrink_nodes_size <  src_shrink_nodes_size)) {
@@ -764,7 +764,7 @@ static void sendrecv_ARRAY(int type, int type_size, /*MPI_Datatype *mpi_datatype
   if (wait_recv) {
     MPI_Wait(&gmove_request, MPI_STATUS_IGNORE);
     if(! is_dst_contiguous){
-      _XMP_unpack_array(dst_addr, recv_buffer, type, type_size, dst_dim, dst_lower, dst_upper, dst_stride, dst_dim_acc);
+      (*_xmp_unpack_array)(dst_addr, recv_buffer, type, type_size, dst_dim, dst_lower, dst_upper, dst_stride, dst_dim_acc);
     }
     _XMP_free(recv_alloc);
   }

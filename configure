@@ -1531,8 +1531,6 @@ Optional Packages:
   --with-TCA=DIR              TCA installation path
   --with-gasnet=DIR           GASNet installation path
   --with-gasnet-conduit=NAME  GASNet conduit
-  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support
-  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support
   --with-precision=NUM        the default precision of real*16 in bits (128)
 
 Some influential environment variables:
@@ -8270,6 +8268,9 @@ else
 fi
 
 
+if ! test -d "$GMP_LIB_DIR"; then
+  GMP_LIB_DIR=${GMP_PREFIX}/lib
+fi
 
 #--------------------------------------------------------------------
 # For OpenMP
@@ -10465,7 +10466,7 @@ fi
 	*)
 	    chk2=`$MPI_FC --version 2> /dev/null | head -n2 | tail -n1`
 	    case $chk2 in
-		pgfortran*)
+		pgfortran*|pgf90*)
 		    # OpenMP
 		    OPENMP_OPT_F="-mp"
 
@@ -10836,10 +10837,7 @@ if test "$IS_MOD2XMOD" = "yes"; then
     fi
 
     if ! test -d "$GMP_LIB_DIR"; then
-	GMP_LIB_DIR=${GMP_PREFIX}/lib
-	if ! test -d "$GMP_LIB_DIR"; then
-	    as_fn_error $? "$GMP_LIB_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
-	fi
+      as_fn_error $? "$GMP_LIB_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
     fi
 
     # check gmp.h
@@ -12080,8 +12078,6 @@ rm -f ./hasqd.* ./hasqd
 #--------------------------------------------------------------------
 # quad real support
 
-gmpInclude=/usr/include
-gmpLib=/usr/lib
 gmpIncOpt=""
 gmpDirOpt=""
 qRealPrecBits=128
@@ -12094,36 +12090,23 @@ else
 fi
 
 
-
-# Check whether --with-gmp-lib was given.
-if test "${with_gmp_lib+set}" = set; then :
-  withval=$with_gmp_lib; gmpLib=$withval
-else
-  true
-fi
-
-
-
-# Check whether --with-gmp-include was given.
-if test "${with_gmp_include+set}" = set; then :
-  withval=$with_gmp_include; gmpInclude=$withval
-else
-  true
-fi
-
-
 if test "x${doQReal}" = "xyes"; then
-    if test -f ${gmpInclude}/gmp.h; then
+    if test -f ${GMP_INCLUDE_DIR}/gmp.h; then
         true
     else
-        as_fn_error $? "can't find ${gmpInclude}/gmp.h." "$LINENO" 5
+        as_fn_error $? "can't find ${GMP_INCLUDE_DIR}/gmp.h. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
     fi
-    gmpLibs=`ls ${gmpLib}/libgmp.* 2> /dev/null`
+
+    if ! test -d "$GMP_LIB_DIR"; then
+      as_fn_error $? "$GMP_LIB_DIR not found. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
+    fi
+
+    gmpLibs=`ls ${GMP_LIB_DIR}/libgmp.* 2> /dev/null`
     if test "x${gmpLibs}" = "x"; then
-        as_fn_error $? "can't find ${gmpLib}/libgmp.*." "$LINENO" 5
+        as_fn_error $? "can't find ${GMP_LIB_DIR}/libgmp.*. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>." "$LINENO" 5
     fi
-    gmpIncOpt="-I${gmpInclude}"
-    gmpLibOpt="-L${gmpLib} -lgmp"
+    gmpIncOpt="-I${GMP_INCLUDE_DIR}"
+    gmpLibOpt="-L${GMP_LIB_DIR} -lgmp"
 fi
 
 
@@ -12982,6 +12965,8 @@ ac_config_files="$ac_config_files C-BackEnd/Makefile"
 
 ac_config_files="$ac_config_files F-FrontEnd/src/Makefile"
 
+ac_config_files="$ac_config_files F-FrontEnd/src/F-input-xmod.h"
+
 ac_config_files="$ac_config_files F-FrontEnd/gnu_module/Makefile"
 
 ac_config_files="$ac_config_files F-BackEnd/Makefile"
@@ -13776,6 +13761,7 @@ do
     "C-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES C-FrontEnd/src/Makefile" ;;
     "C-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES C-BackEnd/Makefile" ;;
     "F-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/Makefile" ;;
+    "F-FrontEnd/src/F-input-xmod.h") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/F-input-xmod.h" ;;
     "F-FrontEnd/gnu_module/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/gnu_module/Makefile" ;;
     "F-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES F-BackEnd/Makefile" ;;
     "F-BackEnd/bin/F_Back") CONFIG_FILES="$CONFIG_FILES F-BackEnd/bin/F_Back" ;;

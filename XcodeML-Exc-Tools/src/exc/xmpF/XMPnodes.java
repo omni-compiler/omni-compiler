@@ -8,6 +8,7 @@ package exc.xmpF;
 
 import exc.block.*;
 import exc.object.*;
+import xcodeml.util.XmOption;
 
 import java.util.Vector;
 
@@ -83,7 +84,13 @@ public class XMPnodes extends XMPobject {
     // declare nodes object, count the numer of Dimension, demension = arg(2)
     _dim = 0;
     for (XobjArgs i = decl.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
-      _sizeVector.add(XMPdimInfo.parseDecl(i.getArg()));
+      XMPdimInfo dimInfo = XMPdimInfo.parseDecl(i.getArg());
+      if(XmOption.isXcalableACC()) {
+        Ident size_var = env.declIdent(XMP.DESC_PREFIX_ + _name + "_size_" + _dim, Xtype.FintType);
+        Ident rank_var = env.declIdent(XMP.DESC_PREFIX_ + _name + "_rank_" + _dim, Xtype.FintType);
+        dimInfo.setNodeInfoVar(size_var, rank_var);
+      }
+      _sizeVector.add(dimInfo);
       _dim++;
     }
     if (_dim > XMP.MAX_DIM){
@@ -185,6 +192,20 @@ public class XMPnodes extends XMPobject {
       break;
     default:
       XMP.fatal("bulidConstrutor: unknown inheritType="+inheritType);
+    }
+
+    if(XmOption.isXcalableACC()) {
+      f = env.declInternIdent(XMP.nodes_get_dim_info_f, Xtype.FsubroutineType);
+      for (int i = 0; i < _dim; i++) {
+        Ident sizeVar = _sizeVector.elementAt(i).getNodeSizeVar();
+        Ident rankVar = _sizeVector.elementAt(i).getNodeRankVar();
+        b.add(f.callSubroutine(Xcons.List(
+                _descId.Ref(),
+                Xcons.IntConstant(i),
+                sizeVar.Ref(),
+                rankVar.Ref()
+        )));
+      }
     }
 
     if (_is_saveDesc && !env.currentDefIsModule()){

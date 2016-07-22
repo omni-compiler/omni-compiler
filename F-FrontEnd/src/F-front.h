@@ -48,6 +48,7 @@ extern int Addr2Uint(void *x);
 
 #include "C-OMP.h"  /* OpenMP */
 #include "C-XMP.h"  /* XcalableMP */
+#include "C-ACC.h"  /* OpenACC */
 
 extern int lineno;
 extern int need_keyword;
@@ -108,6 +109,8 @@ extern const char * search_include_path(const char *);
 /* max number of include search path.  */
 #define MAXMODINCLUDEDIRV 256
 
+extern char * xmoduleIncludeDirv;
+
 #include <libgen.h>
 
 /* parser states */
@@ -133,7 +136,7 @@ extern enum procedure_state current_proc_state;
 #define INDCL_OVER      ((int)CURRENT_STATE >= (int)INDATA)
 
 /* module visible state */
-enum module_state { M_DEFAULT, M_PUBLIC, M_PRIVATE };
+enum module_state { M_DEFAULT, M_PUBLIC, M_PRIVATE, M_PROTECTED };
 extern enum module_state current_module_state;
 
 /* control stack codes */
@@ -149,6 +152,8 @@ enum control_type {
     CTL_STRUCT,
     CTL_OMP,
     CTL_XMP,
+    CTL_ACC,
+    CTL_CRITICAL,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -163,6 +168,7 @@ enum control_type {
     "CTL_STRUCT",\
     "CTL_OMP",\
     "CTL_XMP",\
+    "CTL_ACC",\
 }
 
 /* control */
@@ -188,6 +194,10 @@ typedef struct control
 #define CTL_DO_VAR(l)           ((l)->dovar)
 #define CTL_STRUCT_TYPEDESC(l)  (EXPV_TYPE((l)->v1))
 
+#define CTL_CRIT_STATEMENT(l)   ((l)->v2)
+#define CTL_CRIT_BODY(l)        (EXPR_ARG1((l)->v2))
+#define CTL_CRIT_CONST_NAME(l)  (EXPR_ARG2((l)->v2))
+
 #define CTL_WHERE_STATEMENT(l)     ((l)->v2)
 #define CTL_WHERE_THEN(l)          (EXPR_ARG2((l)->v2))
 #define CTL_WHERE_ELSE(l)          (EXPR_ARG3((l)->v2))
@@ -203,6 +213,10 @@ typedef struct control
 #define CTL_XMP_ARG(l)	((l)->v2)
 #define CTL_XMP_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
 #define CTL_XMP_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
+
+#define CTL_ACC_ARG(l)	((l)->v2)
+#define CTL_ACC_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
+#define CTL_ACC_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
 
 /* control stack and it pointer */
 #define MAX_CTL 50
@@ -324,15 +338,21 @@ extern int unit_ctl_level;
 #define LANGSPEC_F77                0x1
 #define LANGSPEC_F90                0x2
 #define LANGSPEC_F95                0x4
-#define LANGSPEC_NONSTD             0x8
+#define LANGSPEC_F2003              0x8
+#define LANGSPEC_F2008              0x10
+#define LANGSPEC_NONSTD             0x20
 
 #define LANGSPEC_F77_STRICT_SET     LANGSPEC_F77
 #define LANGSPEC_F90_STRICT_SET     (LANGSPEC_F77_STRICT_SET | LANGSPEC_F90)
 #define LANGSPEC_F95_STRICT_SET     (LANGSPEC_F90_STRICT_SET | LANGSPEC_F95)
+#define LANGSPEC_F2003_STRICT_SET   (LANGSPEC_F95_STRICT_SET | LANGSPEC_F2003)
+#define LANGSPEC_F2008_STRICT_SET   (LANGSPEC_F2003_STRICT_SET | LANGSPEC_F2008)
 #define LANGSPEC_F77_SET            (LANGSPEC_F77_STRICT_SET | LANGSPEC_NONSTD)
 #define LANGSPEC_F90_SET            (LANGSPEC_F90_STRICT_SET | LANGSPEC_NONSTD)
 #define LANGSPEC_F95_SET            (LANGSPEC_F95_STRICT_SET | LANGSPEC_NONSTD)
-#define LANGSPEC_DEFAULT_SET        LANGSPEC_F95_SET
+#define LANGSPEC_F2003_SET          (LANGSPEC_F2003_STRICT_SET | LANGSPEC_NONSTD)
+#define LANGSPEC_F2008_SET          (LANGSPEC_F2008_STRICT_SET | LANGSPEC_NONSTD)
+#define LANGSPEC_DEFAULT_SET        LANGSPEC_F2008_SET
 extern int langSpecSet;
 
 extern ID this_label;
@@ -346,6 +366,8 @@ extern expv expv_float_0;
 
 extern int OMP_flag;
 extern int XMP_flag;
+extern int XMP_coarray_flag;
+extern int ACC_flag;
 extern int cond_compile_enabled;
 extern int leave_comment_flag;
 
@@ -395,8 +417,8 @@ extern int leave_comment_flag;
  */
 extern int is_in_kind_compilation_flag_for_declare_ident;
 
-/* 
- * prototype 
+/*
+ * prototype
  */
 extern char *   xmalloc _ANSI_ARGS_((int size));
 #define XMALLOC(type, size) ((type)xmalloc(size))
@@ -474,8 +496,9 @@ extern expv     compile_terminal_node _ANSI_ARGS_((expr x));
 extern expv     compile_expression _ANSI_ARGS_((expr x));
 extern expv     expv_assignment _ANSI_ARGS_((expv v1, expv v2));
 extern expv     compile_function_call _ANSI_ARGS_((ID f_id, expr args));
+extern expv     compile_function_call0 _ANSI_ARGS_((ID f_id, expr args, int ignoreTypeMismatch));
 extern expv     compile_highorder_function_call _ANSI_ARGS_((ID f_id,
-                                                             expr args, 
+                                                             expr args,
                                                              int isCall));
 
 extern expv     compile_struct_constructor _ANSI_ARGS_((ID struct_id, expr args));
@@ -521,6 +544,7 @@ extern TYPE_DESC  find_struct_decl_sibling _ANSI_ARGS_((SYMBOL s));
 extern void     initialize_intrinsic _ANSI_ARGS_((void));
 extern int      is_intrinsic_function _ANSI_ARGS_((ID id));
 extern expv     compile_intrinsic_call _ANSI_ARGS_((ID id,expv args));
+extern expv     compile_intrinsic_call0 _ANSI_ARGS_((ID, expv, int));
 extern void     generate_shape_expr _ANSI_ARGS_((TYPE_DESC tp, expv dimSpec));
 
 extern EXT_ID   declare_external_proc_id _ANSI_ARGS_((SYMBOL s, TYPE_DESC tp,
@@ -773,6 +797,11 @@ int OMP_depend_op(expr v);
 
 extern void compile_XMP_directive(expr v);
 int XMP_reduction_op(expr v);
+
+extern void compile_ACC_directive(expr v);
+int ACC_reduction_op(expr v);
+int ACC_num_attr(expr v);
+void ACC_check_num_attr(expr v, enum ACC_pragma attr);
 
 #include "xcodeml-module.h"
 #include "F-module-procedure.h"

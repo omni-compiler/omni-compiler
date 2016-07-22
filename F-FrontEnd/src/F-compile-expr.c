@@ -1704,9 +1704,22 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
             idASpec = expr_list_get_n(idShape, i);
 
             expv lower = expr_list_get_n(argASpec, 0);
-            if (lower == NULL) expr_list_set_n(argASpec, 0, expr_list_get_n(idASpec, 0), FALSE);
+            //if (lower == NULL) expr_list_set_n(argASpec, 0, expr_list_get_n(idASpec, 0), FALSE);
+	    if (lower == NULL){
+	      expv lower0 = expr_list_get_n(idASpec, 0);
+	      if (EXPR_CODE_IS_CONSTANT(lower0) || TYPE_IS_PARAMETER(EXPV_TYPE(lower0))){
+		expr_list_set_n(argASpec, 0, lower0, FALSE);
+	      }
+	    }
+
 	    expv upper = expr_list_get_n(argASpec, 1);
-            if (upper == NULL) expr_list_set_n(argASpec, 1, expr_list_get_n(idASpec, 1), FALSE);
+            //if (upper == NULL) expr_list_set_n(argASpec, 1, expr_list_get_n(idASpec, 1), FALSE);
+	    if (upper == NULL){
+	      expv upper0 = expr_list_get_n(idASpec, 1);
+	      if (EXPR_CODE_IS_CONSTANT(upper0) || TYPE_IS_PARAMETER(EXPV_TYPE(upper0))){
+		expr_list_set_n(argASpec, 1, upper0, FALSE);
+	      }
+	    }
 
             /*
              * Now we have two array-spec. Determine which one to be used.
@@ -1758,6 +1771,13 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
          * Otherwise the type should be basic type of the array.
          */
         tq = bottom_type(tp);
+    }
+
+    /*
+     * copy coShape from original type
+     */
+    if (TYPE_IS_COINDEXED(tp)) {
+        TYPE_CODIMENSION(tq) = TYPE_CODIMENSION(tp);
     }
 
     /*
@@ -2373,6 +2393,11 @@ chose_module_procedure_by_args(EXT_ID modProcIDs, expv args) {
 
 expv
 compile_function_call(ID f_id, expr args) {
+    return compile_function_call0(f_id, args, FALSE);
+}
+
+expv
+compile_function_call0(ID f_id, expr args, int ignoreTypeMismatch) {
     expv a, v = NULL;
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
@@ -2475,7 +2500,7 @@ compile_function_call(ID f_id, expr args) {
         }
 
         case P_INTRINSIC:
-            v = compile_intrinsic_call(f_id, compile_data_args(args));
+            v = compile_intrinsic_call0(f_id, compile_data_args(args), ignoreTypeMismatch);
             break;
 
         case P_STFUNCT:
@@ -2967,6 +2992,14 @@ compile_member_array_ref(expr x, expv v)
     }
 
     tp = EXPV_TYPE(v);
+
+    /*
+     * copy coShape from original type
+     */
+    if (TYPE_IS_COINDEXED(tq)) {
+        TYPE_CODIMENSION(tp) = TYPE_CODIMENSION(tq);
+    }
+
     if (IS_ARRAY_TYPE(tp)) {
         TYPE_DESC new_tp;
         expv new_v = compile_array_ref(NULL, v, indices, TRUE);

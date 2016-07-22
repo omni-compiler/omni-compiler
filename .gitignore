@@ -1,5 +1,5 @@
 # Extension
-*.[oax]
+*.[oaxs]
 *.class
 *.mod
 *.xmod
@@ -34,10 +34,12 @@ Driver/atool/src/include/nata/nata_platform.h
 Driver/atool/src/lib/Makefile
 Driver/bin/ompcc
 Driver/bin/ompf90
+Driver/bin/omtranslate
 Driver/bin/xmpcc
 Driver/bin/xmpf90
 Driver/etc/ompcc.conf
 Driver/etc/ompf90.conf
+Driver/etc/setup.conf
 Driver/etc/version
 Driver/etc/xmpcc.conf
 Driver/etc/xmpf90.conf
@@ -45,7 +47,11 @@ Driver/src/Makefile
 Driver/src/om_replace_pragma
 
 F-BackEnd/Makefile
+F-BackEnd/bin/F_Back
+F-BackEnd/bin/F_Decomp
+F-BackEnd/bin/F_Trans
 F-BackEnd/build/
+F-BackEnd/src/xcodeml/f/decompile/XfDecompileDomVisitor_coarrayLibs.java
 
 F-FrontEnd/gnu_module/Makefile
 F-FrontEnd/src/C-exprcode.c
@@ -96,3 +102,4 @@ libxmpf/src/include_work/
 # Other
 __omni_tmp__/
 *~
+.idea

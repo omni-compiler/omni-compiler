@@ -43,15 +43,24 @@ class AccLoop extends AccDirective{
     if(collapseNumExpr != null){
       collapseNum = collapseNumExpr.getInt();
     }
-    XobjList inductionVarList = checkCollapsedLoop(_pb.getBody().getHead(), collapseNum);
-    //Set<Ident> inductionVariableSet = new HashSet<Ident>();
-    Set<String> inductionVariableSymbolSet = new HashSet<String>();
+    XobjList inductionVarIdList = checkCollapsedLoop(_pb.getBody().getHead(), collapseNum);
+    Set<Ident> inductionVariableIdSet = new HashSet<Ident>();
+
+
     CforBlock mainforBlock = findOutermostTightlyNestedForBlock(_pb.getBody().getHead());
-    for(Xobject xobj : inductionVarList){
-      inductionVariableSymbolSet.add(xobj.getSym());
+    for(Xobject xobj : inductionVarIdList){
+      Ident id = (Ident)xobj;
+      String name = id.getName();
+      if(mainforBlock.findVarIdent(name) == id) {
+        inductionVariableIdSet.add(id);
+      }
     }
 
     //add loop inductionvariable which is not collapsed
+    //for like this case
+    //  #pragma acc kernels loop copyout(a[0:n*n])
+    //  for(i=0;i<n;i++){
+    //    for(j=0;j<n;j++){
     BlockIterator blockIterator = new topdownBlockIterator(mainforBlock.getBody());
     for(blockIterator.init(); !blockIterator.end(); blockIterator.next()){
       Block b = blockIterator.getBlock();
@@ -67,12 +76,12 @@ class AccLoop extends AccDirective{
       String indVarName = indVarXobj.getName();
       Ident id = cforBlock.findVarIdent(indVarName);
       if(id !=null && id == mainforBlock.findVarIdent(indVarName)){
-        //inductionVariableSet.add(id);
-        inductionVariableSymbolSet.add(indVarName);
+        inductionVariableIdSet.add(id);
       }
     }
 
-    for(String symbol : inductionVariableSymbolSet){
+    for(Ident id : inductionVariableIdSet){
+      String symbol = id.getName();
       ACCvar var = _info.findACCvar(symbol);
       if(var == null){
         _info.addVar(ACCpragma.PRIVATE, Xcons.Symbol(Xcode.VAR, symbol));
@@ -222,7 +231,7 @@ class AccLoop extends AccDirective{
     if(block.Opcode() == Xcode.COMPOUND_STATEMENT){
       BlockList body = block.getBody();
       XobjList idList = body.getIdentList();
-      if(body.isSingle() && (idList == null || idList.isEmptyList())){ //is compound-block non-meaningful
+      if(body.isSingle()){ //is compound-block non-meaningful
         return findOutermostTightlyNestedForBlock(body.getHead());
       }
     }   
@@ -236,7 +245,11 @@ class AccLoop extends AccDirective{
     if(block == null){
       throw new ACCexception("lack of nested loops");
     }
-    
+
+    if(forBlock == null){
+      throw new ACCexception("loop is not found");
+    }
+
     if(! forBlock.isCanonical()){
       forBlock.Canonicalize();
       if(! forBlock.isCanonical()){
@@ -244,8 +257,11 @@ class AccLoop extends AccDirective{
       }
     }
 
+    Xobject indVar = forBlock.getInductionVar();
+    Ident indVarId = forBlock.findVarIdent(indVar.getName());
+
     if(num_collapse < 2){
-      return Xcons.List(forBlock.getInductionVar());
+      return Xcons.List(indVarId);
     }
 
     BlockList forBody = forBlock.getBody();
@@ -255,9 +271,9 @@ class AccLoop extends AccDirective{
     if(forBody.getIdentList() != null && ! forBody.getIdentList().isEmpty()){
       throw new ACCexception("no var declaration is allowed between nested loops");
     }
-    XobjList inductionVarList = checkCollapsedLoop(forBody.getHead(), num_collapse - 1);
-    inductionVarList.cons(forBlock.getInductionVar());
-    return inductionVarList;
+    XobjList inductionVarIdList = checkCollapsedLoop(forBody.getHead(), num_collapse - 1);
+    inductionVarIdList.cons(indVarId);
+    return inductionVarIdList;
   }
 
   boolean isAcceptableClause(ACCpragma clauseKind){

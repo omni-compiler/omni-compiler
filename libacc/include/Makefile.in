@@ -20,7 +20,7 @@ endif
 
 all:
 install: $(HEADERS)
-	$(MKDIR_P) $(INSTALL_DIR)
-	$(INSTALL) $^ $(INSTALL_DIR)
+	$(MKDIR_P) $(DESTDIR)$(INSTALL_DIR)
+	$(INSTALL) $^ $(DESTDIR)$(INSTALL_DIR)
 
 clean:

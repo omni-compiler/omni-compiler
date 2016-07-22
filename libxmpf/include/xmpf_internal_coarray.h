@@ -12,25 +12,28 @@
 //#define PUT_INTERFACE_TYPE 7           // varid last implementation
 #define PUT_INTERFACE_TYPE 8
 
+// MALLOC_UNIT must be divisible by COMM_UNIT
 #if defined(_XMP_FJRDMA)
-#  define ONESIDED_BOUNDARY ((size_t)4)
+#  define COMM_UNIT      ((size_t)4)
+#  define MALLOC_UNIT    ((size_t)8)
 #  define ONESIDED_COMM_LAYER "FJRDMA"
 #elif defined(_XMP_GASNET)
-#  define ONESIDED_BOUNDARY ((size_t)1)
+#  define COMM_UNIT      ((size_t)1)
+#  define MALLOC_UNIT    ((size_t)4)
 #  define ONESIDED_COMM_LAYER "GASNET"
 #elif defined(_XMP_MPI3_ONESIDED)
-#  define ONESIDED_BOUNDARY ((size_t)1)
-#  define ONESIDED_COMM_LAYER "MPI3_ONESIDED"
+#  define COMM_UNIT      ((size_t)1)
+#  define MALLOC_UNIT    ((size_t)4)
+#  define ONESIDED_COMM_LAYER "MPI3"
 #else
-#  define ONESIDED_BOUNDARY ((size_t)1)
-#  define ONESIDED_COMM_LAYER "(something unknown)"
+#  define COMM_UNIT      ((size_t)1)
+#  define MALLOC_UNIT    ((size_t)4)
+#  define ONESIDED_COMM_LAYER "unknown"
 #endif
 
-#define ROUND_UP(n,p)         (((((size_t)(n))-1)/(p)+1)*(p))
-#define ROUND_UP_BOUNDARY(n)  ROUND_UP((n),ONESIDED_BOUNDARY)
-
-#define MALLOC_UNIT  ((size_t)4)
-#define ROUND_UP_UNIT(n)      ROUND_UP((n),MALLOC_UNIT)
+#define _ROUND_UP(n,p)        (((((size_t)(n))-1)/(p)+1)*(p))
+#define ROUND_UP_COMM(n)      _ROUND_UP((n),COMM_UNIT)
+#define ROUND_UP_MALLOC(n)    _ROUND_UP((n),MALLOC_UNIT)
 
 /*-- parameters --*/
 #define DESCR_ID_MAX   250
@@ -52,6 +55,7 @@ extern unsigned XMPF_get_poolThreshold(void);
 extern size_t XMPF_get_localBufSize(void);
 extern BOOL XMPF_isSafeBufferMode(void);
 
+/* hidden API */
 extern void xmpf_coarray_msg_(int *sw);
 
 extern char *_XMPF_errmsg;   // to answer ERRMSG argument in Fortran
@@ -94,6 +98,7 @@ extern void xmpf_coarray_set_varname_(void **descPtr, int *namelen, char *name);
 
 extern int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...);
 
+extern int xmpf_coarray_malloc_bytes_(void);
 extern int xmpf_coarray_allocated_bytes_(void);
 extern int xmpf_coarray_garbage_bytes_(void);
 

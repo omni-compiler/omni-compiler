@@ -9,17 +9,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.io.*;
-//import java.io.PrintStream;
-//import java.io.StringWriter;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
+import java.io.PrintStream;
+import java.io.StringWriter;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.dom.DOMSource;
@@ -156,6 +154,14 @@ public class XfDecompileDomVisitor {
                     break;
                 }
             }
+
+            for (Node basicTypeNode : basicTypeNodeArray) {
+                if (XmDomUtil.getAttrBool(basicTypeNode, "is_protected")) {
+                    writer.writeToken(", ");
+                    writer.writeToken("PROTECTED");
+                    break;
+                }
+            }
         }
 
         for (Node basicTypeNode : basicTypeNodeArray) {
@@ -206,7 +212,7 @@ public class XfDecompileDomVisitor {
             }
         }
 
-        for (Node basicTypeNode : basicTypeNodeArray) {  // #060c
+        for (Node basicTypeNode : basicTypeNodeArray) {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_cray_pointer")) {
                 writer.writeToken(", ");
                 writer.writeToken("$$Error (Cray Pointer #2)$$");
@@ -240,6 +246,7 @@ public class XfDecompileDomVisitor {
         boolean isFirstToken = true;
         boolean isPrivateEmit = false;
         boolean isPublicEmit = false;
+        boolean isProtectedEmit = false;
 
         /* - always type declaration for SUBROUTINE must not be output.
          * - type declaration for FUNCTION under MODULE must not be output.
@@ -262,12 +269,14 @@ public class XfDecompileDomVisitor {
                 if ("FbasicType".equals(lowType.getNodeName())) {
                     isPublicEmit = XmDomUtil.getAttrBool(lowType, "is_public");
                     isPrivateEmit = XmDomUtil.getAttrBool(lowType, "is_private");
+                    isProtectedEmit = XmDomUtil.getAttrBool(lowType, "is_protected");
                 }
 
                 String topTypeName = topType.getNodeName();
                 if ("FbasicType".equals(topTypeName)) {
                     isPublicEmit |= XmDomUtil.getAttrBool(topType, "is_public");
                     isPrivateEmit |= XmDomUtil.getAttrBool(topType, "is_private");
+                    isProtectedEmit |= XmDomUtil.getAttrBool(lowType, "is_protected");
                     _writeBasicType(topType, typeList);
                 } else if ("FstructType".equals(topTypeName)) {
                     String aliasStructTypeName =
@@ -291,6 +300,9 @@ public class XfDecompileDomVisitor {
                 isFirstToken = false;
             } else if (XmDomUtil.getAttrBool(funcTypeNode, "is_private") && isPrivateEmit == false) {
                 writer.writeToken((isFirstToken ? "" : ", ") + "PRIVATE");
+                isFirstToken = false;
+            } else if (XmDomUtil.getAttrBool(funcTypeNode, "is_protected") && isProtectedEmit == false) {
+                writer.writeToken((isFirstToken ? "" : ", ") + "PROTECTED");
                 isFirstToken = false;
             }
         }
@@ -3728,6 +3740,196 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    // ACCPragma
+    class ACCPragmaVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "ACCPragma" element in XcodeML/F.
+         */
+        @Override public void enter(Node n) {
+
+            _writeLineDirective(n);
+
+            NodeList list0 = n.getChildNodes();
+
+            XmfWriter writer = _context.getWriter();
+
+            // set mode
+            XmfWriter.StatementMode prevMode = writer.getStatementMode();
+            writer.setStatementMode(XmfWriter.StatementMode.ACC);
+
+            // directive
+            Node dir = list0.item(0);
+            String dirName = XmDomUtil.getContentText(dir);
+
+            // remove underscore
+            if     (dirName.equals("PARALLEL_LOOP")) dirName = "PARALLEL LOOP";
+            else if(dirName.equals("KERNELS_LOOP")) dirName = "KERNELS LOOP";
+            else if(dirName.equals("ENTER_DATA")) dirName = "ENTER DATA";
+            else if(dirName.equals("EXIT_DATA")) dirName = "EXIT DATA";
+
+            writer.writeToken("!$ACC " + dirName);
+
+            Node clauseListNode = list0.item(1);
+            NodeList clauseList = clauseListNode.getChildNodes();
+
+            int clauseListLength = clauseList.getLength();
+            int directiveArgumentIndex = -1; //dummy
+            if ( dirName.equals("WAIT")
+                    || dirName.equals("CACHE")
+                    || dirName.equals("ROUTINE")){
+                //find directive argument
+                for(int i = 0; i < clauseListLength; i++){
+                    Node clause = clauseList.item(i);
+                    if(getClauseName(clause).equals(dirName)){
+                        enterClause(dirName, clause);
+                        directiveArgumentIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            // output clauses except for the directive argument
+            for (int i = 0; i < clauseListLength; i++){
+                Node clause = clauseList.item(i);
+                if(i == directiveArgumentIndex) continue;
+                enterClause(dirName, clause);
+            }
+
+            // reset mode
+            writer.setStatementMode(prevMode);
+            writer.setupNewLine();
+
+
+            // bodyNode
+            Node bodyNode = list0.item(2); //clauseListNode.getNextSibling();
+            enterBody(bodyNode);
+
+
+            // output end directive
+            if( dirName.equals("PARALLEL")
+                    || dirName.equals("KERNELS")
+                    || dirName.equals("DATA")
+                    || dirName.equals("HOST_DATA")
+                    || dirName.equals("ATOMIC") ){
+                writer.writeToken("!$ACC END " + dirName);
+                writer.setupNewLine();
+            }
+        }
+
+        private void enterClause(String dirName, Node n){
+            XmfWriter writer = _context.getWriter();
+
+            NodeList list = n.getChildNodes();
+            String clauseName = getClauseName(n);
+            Node clauseArgNode = list.item(1);
+
+            // "*"
+            if(clauseName.equals("ASTERISK")){
+                writer.writeToken("*");
+                return;
+            }
+
+            // "/arg/"
+            if(clauseName.equals("COMMONBLOCK")){
+                writer.writeToken("/");
+                enterClauseArg(dirName, clauseArgNode);
+                writer.writeToken("/");
+                return;
+            }
+
+            // "STATIC:arg"
+            if(clauseName.equals("STATIC")){
+                writer.writeToken(clauseName + ":");
+                enterClauseArg(dirName, clauseArgNode);
+                return;
+            }
+
+
+            //rename for reduction clauses
+            String operator = ""; //for reduction clause
+            if      (clauseName.equals("REDUCTION_PLUS"))   {clauseName = "REDUCTION"; operator = "+";}
+            else if (clauseName.equals("REDUCTION_MUL"))    {clauseName = "REDUCTION"; operator = "*";}
+            else if (clauseName.equals("REDUCTION_MAX"))    {clauseName = "REDUCTION"; operator = "MAX";}
+            else if (clauseName.equals("REDUCTION_MIN"))    {clauseName = "REDUCTION"; operator = "MIN";}
+            else if (clauseName.equals("REDUCTION_BITAND")) {clauseName = "REDUCTION"; operator = "IAND";}
+            else if (clauseName.equals("REDUCTION_BITOR"))  {clauseName = "REDUCTION"; operator = "IOR";}
+            else if (clauseName.equals("REDUCTION_BITXOR")) {clauseName = "REDUCTION"; operator = "IEOR";}
+            else if (clauseName.equals("REDUCTION_LOGAND")) {clauseName = "REDUCTION"; operator = ".AND.";}
+            else if (clauseName.equals("REDUCTION_LOGOR"))  {clauseName = "REDUCTION"; operator = ".OR.";}
+            else if (clauseName.equals("REDUCTION_EQV"))    {clauseName = "REDUCTION"; operator = ".EQV.";}
+            else if (clauseName.equals("REDUCTION_NEQV"))   {clauseName = "REDUCTION"; operator = ".NEQV.";}
+
+            //write "clauseName"
+            if(! clauseName.equals(dirName)) {
+                writer.writeToken(clauseName);
+            }
+
+            //if the clause has no argument
+            if(clauseArgNode == null) {
+                return;
+            }
+
+            //write "(arg0, arg1, ...)"
+            writer.writeToken("(");
+            if(clauseName.equals("REDUCTION")){
+                writer.writeToken(operator + ":");
+            }
+            if(clauseArgNode.getNodeName().equals("list") && !isClauseNode(clauseArgNode)){
+                //clause arg is normal list
+                NodeList argList = clauseArgNode.getChildNodes();
+                for (int i = 0; i < argList.getLength(); i++) {
+                    if(i != 0) writer.writeToken(",");
+                    enterClauseArg(dirName, argList.item(i));
+                }
+            }else{
+                //clause arg is normal node or clause
+                enterClauseArg(dirName, clauseArgNode);
+            }
+            writer.writeToken(")");
+        }
+
+        private void enterClauseArg(String dirName, Node n){
+            if(n == null) return;
+
+            if(isClauseNode(n)){
+                enterClause(dirName, n);
+                return;
+            }
+
+            invokeEnter(n);
+        }
+
+        private boolean isClauseNode(Node n)
+        {
+            if(! n.getNodeName().equals("list")) return false;
+            if(! n.getFirstChild().getNodeName().equals("string")) return false;
+            return true;
+        }
+
+        private String getClauseName(Node n){
+            if(! isClauseNode(n)) return null;
+            Node clauseNameNode = n.getFirstChild();
+            return XmDomUtil.getContentText(clauseNameNode);
+        }
+
+        private void enterBody(Node n){
+            XmfWriter writer = _context.getWriter();
+
+            writer.incrementIndentLevel();
+
+            NodeList list = n.getChildNodes();
+            for (int i = 0; i < list.getLength(); i++){
+                Node childNode = list.item(i);
+                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                invokeEnter(childNode);
+            }
+
+            writer.decrementIndentLevel();
+        }
+    }
+
     // FprintStatement
     class FprintStatementVisitor extends XcodeNodeVisitor {
         /**
@@ -4141,6 +4343,8 @@ public class XfDecompileDomVisitor {
                     writer.writeToken(", PRIVATE");
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_public")) {
                     writer.writeToken(", PUBLIC");
+                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")) {
+                    writer.writeToken(", PROTECTED");
                 }
             }
 
@@ -4210,10 +4414,6 @@ public class XfDecompileDomVisitor {
             // not be declared here.
             if (XmDomUtil.getAttrBool(n, "is_intrinsic") == false &&
                 !_isNameDefinedWithUseStmt(functionName)) {
-              ///////////////////////////////
-              if (functionName.equals("this_image"))
-                System.out.println("Found IT HERE");
-              ///////////////////////////////
                 XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
                 Node typeChoice = typeManager.findType(functionNameNode);
                 if (typeChoice == null) {
@@ -5177,10 +5377,12 @@ public class XfDecompileDomVisitor {
                         fail(n);
                     }
 
-                    Boolean writeValue = _writeSymbolDecl(symbol, n);       // #060c
+                    Boolean writeValue = false;
+                    if (!_isNameDefinedWithUseStmt(symbol.getSymbolName()))
+                      writeValue = _writeSymbolDecl(symbol, n);
 
                     Node valueNode = XmDomUtil.getElement(idNode, "value");
-                    if (writeValue && valueNode != null) {                  // #060c
+                    if (writeValue && valueNode != null) {
                         XmfWriter writer = _context.getWriter();
                         Node tn = typeManager.findType(typeName);
 
@@ -5455,10 +5657,12 @@ public class XfDecompileDomVisitor {
                 fail(nameNode);
             }
 
-            Boolean writeValue = _writeSymbolDecl(symbol, n);       // #060c
+            Boolean writeValue = false;
+            if (!_isNameDefinedWithUseStmt(symbol.getSymbolName()))
+              writeValue = _writeSymbolDecl(symbol, n);
 
             Node valueNode = XmDomUtil.getElement(n, "value");
-            if (writeValue && valueNode != null) {       // #060c
+            if (writeValue && valueNode != null) {
                 XmfWriter writer = _context.getWriter();
                 writer.writeToken(" = ");
                 invokeEnter(valueNode);
@@ -5532,18 +5736,185 @@ public class XfDecompileDomVisitor {
     }
 
 
-  /* Check if the name is declared in the runtime library declaration file xmpf_coarray_decl.
-   * To avoid double-declaration of the name at the compile time in the native compiler, the 
-   * declaration of the name should be suppressed if the result of this method is true.
-   * See bug report #493 for the future modification.
-   */
+    /**
+     * Decompile 'syncAllStatement' element in XcodeML/F.
+     */
+    class SyncAllStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("SYNC");
+            writer.writeToken("ALL");
+            writer.writeToken("(");
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'syncAllStatement' element in XcodeML/F.
+     */
+    class SyncImagesStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+            Node exprModel = null;
+            XmfWriter writer = _context.getWriter();
+
+            NodeList children = n.getChildNodes();
+            int numOfChildren = children.getLength();
+            for (int index = 0; index < numOfChildren; index++) {
+                Node child = children.item(index);
+                if (exprModelSet.contains(child.getNodeName())) {
+                    exprModel = child;
+                }
+            }
+
+            writer.writeToken("SYNC");
+
+            writer.writeToken("IMAGES");
+            writer.writeToken("(");
+            if (exprModel == null) {
+                writer.writeToken("*");
+                if (numOfChildren > 1) {
+                    writer.writeToken(",");
+                }
+            }
+            // Expects the exprModel element comes first.
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'syncMemoryStatement' element in XcodeML/F.
+     */
+    class SyncMemoryStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("SYNC");
+            writer.writeToken("MEMORY");
+            writer.writeToken("(");
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'lockStatement' element in XcodeML/F.
+     */
+    class LockStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("LOCK");
+            writer.writeToken("(");
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'unlockStatement' element in XcodeML/F.
+     */
+    class UnlockStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("UNLOCK");
+            writer.writeToken("(");
+            _invokeChildEnterAndWriteDelim(n, ",");
+            writer.writeToken(")");
+            writer.setupNewLine();
+        }
+    }
+
+
+    /**
+     * Decompile 'syncStat' element in XcodeML/F.
+     */
+    class SyncStatVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            XmfWriter writer = _context.getWriter();
+
+            String kind = XmDomUtil.getAttr(n, "kind");
+            if (XfUtilForDom.isNullOrEmpty(kind) == false) {
+                Node var = XmDomUtil.getElement(n, "Var");
+                if (var != null) {
+                    writer.writeToken(kind);
+                    writer.writeToken("=");
+                    invokeEnter(var);
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Decompile 'CriticalStatement' element in XcodeML/F.
+     */
+    class CriticalStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+
+            String constructName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+                writer.writeToken(":");
+            }
+            writer.writeToken("CRITICAL");
+            writer.setupNewLine();
+
+            invokeEnter(XmDomUtil.getElement(n, "body"));
+
+            writer.writeToken("END CRITICAL");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+            }
+            writer.setupNewLine();
+        }
+    }
+
+
+    /* Check if the name is declared in the runtime library declaration file xmpf_coarray_decl.
+     * To avoid double-declaration of the name at the compile time in the native compiler, the
+     * declaration of the name should be suppressed if the result of this method is true.
+     * See bug report #493 for the future modification.
+     */
     private Boolean _isNameDefinedWithUseStmt(String name) {
 
-      /////////////////////////
-      if (name.equals("this_image")) {
-        System.out.println("GACCHA this_image");
-      }
-      /////////////////////////
       //ArrayList<String> libNames = _get_coarrayRuntimeLibNames__OLD__();
       ArrayList<String> libNames = _get_coarrayRuntimeLibNames__NEW__();
 
@@ -5555,6 +5926,48 @@ public class XfDecompileDomVisitor {
       return false;
     }
 
+    final private static Set<String> exprModelSet;
+
+    static {
+        String[] exprModelsList = new String[]{
+                "FintConstant",
+                "FrealConstant",
+                "FcomplexConstant",
+                "FcharacterConstant",
+                "FlogicalConstant",
+                "FarrayConstructor",
+                "FstructConstructor",
+                "Var",
+                "FarrayRef",
+                "FcharacterRef",
+                "FmemberRef",
+                "FcoArrayRef",
+                "varRef",
+                "functionCall",
+                "plusExpr",
+                "minusExpr",
+                "mulExpr",
+                "divExpr",
+                "FpowerExpr",
+                "FconcatExpr",
+                "logEQExpr",
+                "logNEQExpr",
+                "logGEExpr",
+                "logGTExpr",
+                "logLEExpr",
+                "logLTExpr",
+                "logAndExpr",
+                "logOrExpr",
+                "logEQVExpr",
+                "logNEQVExpr",
+                "unaryMinusExpr",
+                "logNotExpr",
+                "userBinaryExpr",
+                "userUnaryExpr",
+                "FdoLoop"
+        };
+        exprModelSet = new HashSet<String>(Arrays.asList(exprModelsList));
+    }
 
     ArrayList<String> _get_coarrayRuntimeLibNames__OLD__() {
 
@@ -5701,6 +6114,7 @@ public class XfDecompileDomVisitor {
         new Pair("FpowerExpr", new FpowerExprVisitor()),
         new Pair("FpragmaStatement", new FpragmaStatementVisitor()),
         new Pair("OMPPragma", new OMPPragmaVisitor()),
+        new Pair("ACCPragma", new ACCPragmaVisitor()),
         new Pair("FprintStatement", new FprintStatementVisitor()),
         new Pair("FreadStatement", new FreadStatementVisitor()),
         new Pair("FrealConstant", new FrealConstantVisitor()),
@@ -5756,5 +6170,12 @@ public class XfDecompileDomVisitor {
         new Pair("varDecl", new VarDeclVisitor()),
         new Pair("varList", new VarListVisitor()),
         new Pair("varRef", new VarRefVisitor()),
+        new Pair("syncAllStatement", new SyncAllStatementVisitor()),
+        new Pair("syncImagesStatement", new SyncImagesStatementVisitor()),
+        new Pair("syncMemoryStatement", new SyncMemoryStatementVisitor()),
+        new Pair("criticalStatement", new CriticalStatementVisitor()),
+        new Pair("lockStatement", new LockStatementVisitor()),
+        new Pair("unlockStatement", new UnlockStatementVisitor()),
+        new Pair("syncStat", new SyncStatVisitor()),
     };
 }

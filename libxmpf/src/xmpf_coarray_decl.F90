@@ -1,9 +1,11 @@
 !! XMP/F Coarray Declarations 
 !!
-!! XMP/F translator automatically insert a USE statement:
-!!      use 'xmpf_coarray_decl'
-!! into the output code if any coarray features are used in
-!! the input program.
+!! This file is use-associated to the user program via the USE
+!! statement inserted automatically.
+!!
+!! Besides this file is referred from a shellscript in backend:
+!!   F-BackEnd/src/xcodeml/f/decompile/
+!!     XfDecompileDomVisitor_coarrayLibs.java.sh
 !!
 
 module xmpf_coarray_decl
@@ -82,12 +84,43 @@ module xmpf_coarray_decl
 !! reduction subroutines
       include "xmp_coarray_reduction.h"
 
+!! to reduce verbose messages from the native Fortran compiler
+   external xmpf_coarray_prolog     !! F-BackEnd 
+   external xmpf_coarray_epilog     !! F-BackEnd 
+
 contains
-  !! test
-  subroutine xmpf_coarray_hello
-    write(*,*) "Hello Coarray"
-  end subroutine xmpf_coarray_hello
+      !-----------------------------------------------------------------
+      !   inquery functions
+      !-----------------------------------------------------------------
+      function xmpf_coarray_uses_gasnet() result(answer)
+        logical answer
+#if _XMP_GASNET == 1
+        answer = .true.
+#else
+        answer = .false.
+#endif
+        return
+      end function
+
+      function xmpf_coarray_uses_mpi3_onesided() result(answer)
+        logical answer
+#if _XMP_MPI3_ONESIDED == 1
+        answer = .true.
+#else
+        answer = .false.
+#endif
+        return
+      end function
+
+      function xmpf_coarray_uses_fjrdma() result(answer)
+        logical answer
+#if _XMP_FJRDMA == 1
+        answer = .true.
+#else
+        answer = .false.
+#endif
+        return
+      end function
 
 end module xmpf_coarray_decl
-
 

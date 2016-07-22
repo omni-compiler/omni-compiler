@@ -43,6 +43,7 @@ IS_SUPERUX       = @SUPERUX@
 IS_KCOMPUTER     = @KCOMPUTER@
 IS_FX10          = @FX10@
 IS_FX100         = @FX100@
+IS_XACC          = @XACC@
 
 ifeq ($(IS_KCOMPUTER), $(TRUE))
         CFLAGS += -D_KCOMPUTER
@@ -52,6 +53,11 @@ ifeq ($(IS_FX10), $(TRUE))
 endif
 ifeq ($(IS_FX100), $(TRUE))
         CFLAGS += -D_FX100
+endif
+
+ifeq ($(IS_XACC), $(TRUE))
+    OBJECTS += xaccf_gcomm.o xaccf_reflect.o
+    CFLAGS  += -D_XMP_XACC
 endif
 
 ifeq ($(IS_CRAY), $(TRUE))
@@ -115,7 +121,7 @@ $(OBJECTS): $(HEADERS)
 .F90.o:
 	$(FC) $(FCFLAGS) $< -c
 
-$(XMPF_COARRAY_DECL) xmpf_coarray_decl.o: xmpf_coarray_decl.f90
+$(XMPF_COARRAY_DECL) xmpf_coarray_decl.o: xmpf_coarray_decl.F90
 	rm -rf $(WORKDIR)
 	$(MKDIR_P) $(WORKDIR)
 	$(INSTALL) ../include/*.h $(WORKDIR)
@@ -123,9 +129,9 @@ $(XMPF_COARRAY_DECL) xmpf_coarray_decl.o: xmpf_coarray_decl.f90
 	$(FC) $(FCFLAGS) -c -I $(WORKDIR) $<
 
 install: $(F_MAIN_O) $(LIBXMPF) $(XMPF_COARRAY_DECL)
-	$(MKDIR_P) $(LIBDIR) $(INCDIR)
-	$(INSTALL) $(F_MAIN_O) $(LIBXMPF) $(LIBDIR)
-	$(INSTALL) $(XMPF_COARRAY_DECL) $(INCDIR)
+	$(MKDIR_P) $(DESTDIR)$(LIBDIR) $(DESTDIR)$(INCDIR)
+	$(INSTALL) $(F_MAIN_O) $(LIBXMPF) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) $(XMPF_COARRAY_DECL) $(DESTDIR)$(INCDIR)
 
 clean:
 	rm -f xmpf_coarray_put_wrap.f90 xmpf_coarray_get_wrap.f90 \

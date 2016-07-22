@@ -1,8 +1,6 @@
-  program test_bug2
-    integer v(10)[4,*]
-
-    v(1)[1,1] = 9
+  program test_bug1
+    character(kind=1,len=4):: a
+    character(kind=1,len=4):: b(30)
 
   end program
-
 

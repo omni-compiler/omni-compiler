@@ -111,6 +111,8 @@ int flag_module_compile = FALSE;
 
 int flag_do_module_cache = TRUE;
 
+char *xmoduleIncludeDirv = NULL;
+
 static void
 usage()
 {
@@ -124,7 +126,10 @@ usage()
         "-I [dirpath]              specify include directory path.",
         "-M [dirpath]              specify module include directory path.",
         "-fopenmp                  enable openmp translation.",
+        "-facc                     enable OpenACC translation.",
         "-fxmp                     enable XcalableMP translation.",
+        "-fno-xmp-coarray          disable translation coarray statements to XcalableMP subroutin calls.",
+        "-fintrinsic-xmodules-path specify a xmod path for the intrinsic modules.",
         "-Kscope-omp               enable conditional compilation.",
         "-force-fixed-format       read file as fixed format.",
         "-force-free-format        read file as free format.",
@@ -226,6 +231,10 @@ char *argv[];
             OMP_flag = TRUE;   /* enable openmp */
         } else if (strcmp(argv[0],"-fxmp") == 0){
 	    XMP_flag = TRUE;   /* enable XcalableMP */
+        } else if (strcmp(argv[0],"-fno-xmp-coarray") == 0){
+            XMP_coarray_flag = FALSE;   /* disable XcalableMP coarray subroutine*/
+        } else if (strcmp(argv[0],"-facc") == 0){
+	    ACC_flag = TRUE;   /* enable OpenACC */
         } else if (strcmp(argv[0],"-Kscope-omp") == 0){
 	    cond_compile_enabled = TRUE;
         } else if (strcmp(argv[0],"-fleave-comment") == 0){
@@ -329,6 +338,19 @@ char *argv[];
             /*         MAXMODINCLUDEDIRV); */
             /* } */
         
+        } else if (strcmp(argv[0], "-fintrinsic-xmodules-path") == 0) {
+            char *path;
+            if (strlen(argv[0]) == 25) {
+                /* -fintrinsic-xmodules-path <intrinsic xmodule dir> */
+                if (--argc <= 0)
+                    cmd_error_exit("no arg for -fintrinsic-xmodules-path.");
+                argv++;
+                path = argv[0];
+            } else {
+                /* -M<intrinsic xmodule dir> */
+                path = argv[0] + 25;
+            }
+            xmoduleIncludeDirv = path;
         } else if (strcmp(argv[0], "-f77") == 0) {
             langSpecSet = LANGSPEC_F77_SET;
         } else if (strcmp(argv[0], "-f90") == 0) {

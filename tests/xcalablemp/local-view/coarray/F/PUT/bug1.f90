@@ -1,8 +1,8 @@
   program test_bug1
-    integer a2(0:9)
-
-    a2(:2)=a2(2:4)
+    integer(kind=4)  :: m[*]
+    integer(kind=4)  :: n(1)[*]
+    character(kind=1,len=4):: a[*]
+    character(kind=1,len=4):: b(1)[*]
 
   end program
 
-!! report #353

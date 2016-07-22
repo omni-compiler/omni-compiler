@@ -1,5 +1,5 @@
-                                                                    July 5, 2016
-                                                                    Ver 1.0.2
+                                                             July 19, 2016
+                                                             Ver 1.0.2 or later
 
               Coarray Fortran features and the current restrictions
 
@@ -71,6 +71,9 @@
   assignment statements and array expressions of coindexed objects as follows:
       a(:) = b(i,:)[k1] * c(:,j)[k2]    !! getting data from images k1 and k2
       if (this_image(1))  d[k3] = e     !! putting data d on k3 from e
+  Current restrictions on the K computer and Fujitsu PRIMEHPC FX10:
+    * The coindexed object/variable must be aligned with the 4-byte boundary 
+      and the size of the array elements of them must be a multiple of 4 bytes.
   
 4. Image control statements
   SYNC ALL, SYNC MEMORY and SYNC IMAGES statements are available.

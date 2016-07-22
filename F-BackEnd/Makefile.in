@@ -11,7 +11,7 @@ OM_F_BACK = build/om-f-back.jar
 SOURCE    = $(wildcard src/xcodeml/f/*/*.java)
 SOURCE_AUTO = src/xcodeml/f/decompile/XfDecompileDomVisitor_coarrayLibs.java
 SCRIPT      = $(SOURCE_AUTO).sh
-SCRIPT_SRC  = ../libxmpf/src/xmpf_coarray_decl.f90
+SCRIPT_SRC  = ../libxmpf/src/xmpf_coarray_decl.F90
 SCRIPT_INC  = ../libxmpf/include
 
 all: $(OM_F_BACK)
@@ -28,5 +28,5 @@ clean:
 	rm -f $(SOURCE_AUTO)
 
 install: $(OM_F_BACK)
-	$(MKDIR_P) $(JAVADIR)
-	$(INSTALL) $^ $(JAVADIR)
+	$(MKDIR_P) $(DESTDIR)$(JAVADIR)
+	$(INSTALL) $^ $(DESTDIR)$(JAVADIR)

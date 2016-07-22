@@ -1,6 +1,7 @@
 package exc.openacc;
 
 import exc.block.*;
+import exc.object.StorageClass;
 
 class AccExitData extends AccData{
   AccExitData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
@@ -15,8 +16,9 @@ class AccExitData extends AccData{
       if(var.getParent() != null) continue;
 
       String varName = var.getName();
-      var.setHostDesc(declHostDesc(varName));
-      var.setDevicePtr(declDevicePtr(varName));
+      StorageClass storageClass = var.getId().getStorageClass();
+      var.setHostDesc(declHostDesc(varName, storageClass));
+      var.setDevicePtr(declDevicePtr(varName, storageClass));
 
       initBlockList.add(makeInitFuncCallBlock(var));
 

@@ -24,12 +24,12 @@
 /* keyword */
 %token PARAMETER
 /* %token PUNCH */
-%token INCLUDE 
+%token INCLUDE
 %token LET              /* dummy */
 %token ARITHIF
 %token LOGIF
 %token IFTHEN
-%token ASSIGN 
+%token ASSIGN
 %token ASSIGNMENT
 %token BLOCKDATA
 %token CALL
@@ -136,6 +136,9 @@
 %token NULLIFY
 %token KW_STAT
 
+/* F03 keywords */
+%token PROTECTED
+
 /* Coarray keywords #060 */
 %token SYNCALL
 %token SYNCIMAGES
@@ -208,7 +211,7 @@
 
 %token PRAGMA_SLINE /* do not parse omp token.  */
 %token PRAGMA_HEAD /*  pragma leading char like !$ etc.  */
- 
+
 /* OpenMP directives */
 %token OMPKW_LINE
 %token OMPKW_PARALLEL
@@ -312,13 +315,95 @@
 %token XMPKW_ATOMIC
 %token XMPKW_DIRECT
 
+%token XMPKW_ACC
+
 %type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_template_fix_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause xmp_save_desc_clause xmp_wait_async_clause xmp_end_clause
 
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_width_opt xmp_width_opt1 xmp_async_opt xmp_async_opt1 xmp_width_list xmp_width
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width
-%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width xmp_coarray_clause xmp_image_clause
+%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width xmp_coarray_clause xmp_image_clause xmp_acc_opt
 
 %type <code> xmp_reduction_op
+
+/* OpenACC directives */
+%token ACCKW_LINE
+%token ACCKW_END
+%token ACCKW_PARALLEL
+%token ACCKW_DATA
+%token ACCKW_LOOP
+%token ACCKW_KERNELS
+%token ACCKW_ATOMIC
+%token ACCKW_WAIT
+%token ACCKW_CACHE
+%token ACCKW_ROUTINE
+%token ACCKW_ENTER
+%token ACCKW_EXIT
+%token ACCKW_HOST_DATA
+%token ACCKW_DECLARE
+%token ACCKW_INIT
+%token ACCKW_SHUTDOWN
+%token ACCKW_SET
+
+/* OpenACC clauses */
+%token ACCKW_IF
+%token ACCKW_ASYNC
+%token ACCKW_DEVICE_TYPE
+%token ACCKW_COPY
+%token ACCKW_COPYIN
+%token ACCKW_COPYOUT
+%token ACCKW_CREATE
+%token ACCKW_PRESENT
+%token ACCKW_PRESENT_OR_COPY
+%token ACCKW_PRESENT_OR_COPYIN
+%token ACCKW_PRESENT_OR_COPYOUT
+%token ACCKW_PRESENT_OR_CREATE
+%token ACCKW_DEVICEPTR
+%token ACCKW_NUM_GANGS
+%token ACCKW_NUM_WORKERS
+%token ACCKW_VECTOR_LENGTH
+%token ACCKW_REDUCTION
+%token ACCKW_PRIVATE
+%token ACCKW_FIRSTPRIVATE
+%token ACCKW_DEFAULT
+%token ACCKW_NONE
+%token ACCKW_COLLAPSE
+%token ACCKW_GANG
+%token ACCKW_WORKER
+%token ACCKW_VECTOR
+%token ACCKW_SEQ
+%token ACCKW_AUTO
+%token ACCKW_TILE
+%token ACCKW_INDEPENDENT
+%token ACCKW_BIND
+%token ACCKW_NOHOST
+%token ACCKW_READ
+%token ACCKW_WRITE
+%token ACCKW_UPDATE
+%token ACCKW_CAPTURE
+%token ACCKW_DELETE
+%token ACCKW_FINALIZE
+%token ACCKW_USE_DEVICE
+%token ACCKW_DEVICE_RESIDENT
+%token ACCKW_LINK
+%token ACCKW_HOST
+%token ACCKW_DEVICE
+%token ACCKW_IF_PRESENT
+%token ACCKW_DEVICE_NUM
+%token ACCKW_DEFAULT_ASYNC
+
+%type <code> acc_reduction_op
+%type <code> acc_end_clause
+
+%type <val> acc_directive acc_if_clause acc_parallel_clause_list acc_data_clause_list acc_loop_clause_list acc_parallel_loop_clause_list acc_kernels_loop_clause_list acc_wait_clause_list acc_expr_list acc_data_clause acc_var acc_var_list acc_subscript acc_subscript_list acc_csep acc_parallel_clause acc_kernels_clause_list acc_kernels_clause acc_routine_clause_list acc_enter_data_clause_list acc_exit_data_clause_list acc_host_data_clause_list acc_declare_clause_list acc_update_clause_list acc_init_clause_list acc_shutdown_clause_list acc_set_clause_list
+
+/* abstract clause */
+%type <val> acc_loop_clause acc_atomic_clause acc_enter_data_clause acc_exit_data_clause acc_declare_clause acc_update_clause acc_set_clause acc_compute_clause acc_parallel_loop_clause acc_kernels_loop_clause acc_routine_clause acc_init_clause acc_shutdown_clause acc_host_data_clause
+
+/* clause */
+%type <val> acc_async_clause acc_wait_clause acc_device_type_clause acc_num_gangs_clause acc_num_workers_clause acc_vector_length_clause acc_reduction_clause acc_private_clause acc_firstprivate_clause acc_default_clause acc_default_clause_arg acc_collapse_clause acc_gang_clause acc_worker_clause acc_vector_clause acc_seq_clause acc_auto_clause acc_tile_clause acc_independent_clause acc_bind_clause acc_nohost_clause acc_delete_clause acc_finalize_clause acc_copy_clause acc_copyin_clause acc_copyout_clause acc_create_clause acc_present_clause acc_present_or_copy_clause acc_present_or_copyin_clause acc_present_or_copyout_clause acc_present_or_create_clause acc_use_device_clause acc_device_resident_clause acc_link_clause acc_host_clause acc_device_clause acc_if_present_clause acc_device_num_clause acc_default_async_clause acc_deviceptr_clause
+
+/* others */
+%type <val> acc_id_list acc_gang_arg_list acc_num_expr acc_length_expr acc_size_expr acc_size_expr_list acc_gang_arg
 
 %{
 #include "F-front.h"
@@ -347,6 +432,7 @@ static void append_pragma_str _ANSI_ARGS_((char *p));
 #define GEN_NODE(TYPE, VALUE) make_enode((TYPE), ((void *)((_omAddrInt_t)(VALUE))))
 #define OMP_LIST(op, args) list2(LIST, GEN_NODE(INT_CONSTANT, op), args)
 #define XMP_LIST(op, args) list2(XMP_PRAGMA, GEN_NODE(INT_CONSTANT, op), args)
+#define ACC_LIST(op, args) list2(ACC_PRAGMA, GEN_NODE(INT_CONSTANT, op), args)
 
 /* statement name */
 expr st_name;
@@ -356,16 +442,16 @@ static expr
 gen_default_real_kind(void) {
     return list2(F_ARRAY_REF,
                  GEN_NODE(IDENT, find_symbol("kind")),
-                 list1(LIST, 
+                 list1(LIST,
                        make_float_enode(F_DOUBLE_CONSTANT,
                                         0.0,
                                         strdup("0.0D0"))));
 }
 **********************************/
-    
+
 %}
 
-%type <val> statement label 
+%type <val> statement label
 %type <val> expr /*expr1*/ lhs member_ref lhs_alloc member_ref_alloc substring expr_or_null complex_const array_constructor_list
 %type <val> program_name dummy_arg_list dummy_args dummy_arg file_name
 %type <val> declaration_statement executable_statement action_statement action_statement_let action_statement_key assign_statement_or_null assign_statement
@@ -385,8 +471,8 @@ gen_default_real_kind(void) {
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
 %type <val> result_opt type_keyword
 %type <val> action_statement95
-%type <val> action_coarray_statement coarray_syncall_keyword coarray_syncall_stat_keyword coarray_syncimages_keyword other_coarray_keyword
-%type <val> syncimages_arg_list
+%type <val> action_coarray_statement other_coarray_keyword
+%type <val> sync_stat_arg_list sync_stat_arg image_set
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
@@ -411,8 +497,10 @@ one_statement:
 	{ compile_OMP_directive($2); }
 	| XMPKW_LINE { need_keyword = TRUE; } xmp_directive
 	{ compile_XMP_directive($3); }
+	| ACCKW_LINE { need_keyword = TRUE; } acc_directive
+	{ compile_ACC_directive($3); }
         | PRAGMA_HEAD  PRAGMA_SLINE /* like !$ ... */
-	{ 
+	{
 	    if (pragmaString != NULL)
 		compile_statement(
 		    st_no,
@@ -470,7 +558,7 @@ statement:      /* entry */
           { $$ = list3(F_SUBROUTINE_STATEMENT,$2,$3,NULL); }
         | func_prefix SUBROUTINE IDENTIFIER dummy_arg_list
           { $$ = list3(F_SUBROUTINE_STATEMENT,$3,$4,$1); }
-        | ENDSUBROUTINE name_or_null 
+        | ENDSUBROUTINE name_or_null
           { $$ = list1(F95_ENDSUBROUTINE_STATEMENT,$2); }
         | FUNCTION IDENTIFIER dummy_arg_list KW result_opt
           { $$ = list5(F_FUNCTION_STATEMENT,$2,$3,NULL,NULL, $5); }
@@ -484,7 +572,7 @@ statement:      /* entry */
         | func_prefix type_spec FUNCTION IDENTIFIER dummy_arg_list
           KW result_opt
           { $$ = list5(F_FUNCTION_STATEMENT,$4,$5,$2,$1, $7); }
-        | ENDFUNCTION name_or_null 
+        | ENDFUNCTION name_or_null
           { $$ = list1(F95_ENDFUNCTION_STATEMENT,$2); }
         | type_spec COL2_or_null declaration_list
           { $$ = list3(F_TYPE_DECL,$1,$3,NULL); }
@@ -583,7 +671,7 @@ prefix_spec:
 
 name:  IDENTIFIER;
 
-name_or_null: 
+name_or_null:
         { $$ = NULL; }
         | IDENTIFIER
         ;
@@ -596,20 +684,20 @@ dummy_arg_list:
         { $$ = $2; }
         ;
 
-dummy_args:       
+dummy_args:
         dummy_arg
-        { $$ = list1(LIST,$1); }  
+        { $$ = list1(LIST,$1); }
         | dummy_args ',' dummy_arg
         { $$ = list_put_last($1,$3); }
         ;
 
-dummy_arg:        
+dummy_arg:
          IDENTIFIER
         | '*'
         { $$ = NULL; }
         ;
 
-file_name:   
+file_name:
          CONSTANT       /* must be hollerith? */
         ;
 
@@ -637,7 +725,7 @@ declaration_statement:
         | SAVE COL2_or_null save_list
         { $$ = list1(F_SAVE_DECL,$3); }
         | PARAMETER  '(' const_list ')'
-        { $$ = list1(F_PARAM_DECL,$3); }        
+        { $$ = list1(F_PARAM_DECL,$3); }
         | POINTER cray_pointer_list
         { $$ = list1(F_CRAY_POINTER_DECL, $2); }
         | FORMAT
@@ -655,7 +743,7 @@ declaration_statement95:
         { $$ = list2(F95_TYPEDECL_STATEMENT,$3,NULL); }
         | KW_TYPE ',' KW access_spec COL2 IDENTIFIER
         { $$ = list2(F95_TYPEDECL_STATEMENT,$6,$4); }
-        | ENDTYPE 
+        | ENDTYPE
         { $$ = list1(F95_ENDTYPEDECL_STATEMENT,NULL); }
         | ENDTYPE IDENTIFIER
         { $$ = list1(F95_ENDTYPEDECL_STATEMENT,$2); }
@@ -675,9 +763,13 @@ declaration_statement95:
         { $$ = list1(F95_PRIVATE_STATEMENT,NULL); }
         | PRIVATE COL2_or_null access_ident_list
         { $$ = list1(F95_PRIVATE_STATEMENT, $3); }
+        | PROTECTED
+        { $$ = list1(F03_PROTECTED_STATEMENT,NULL); }
+        | PROTECTED COL2_or_null access_ident_list
+        { $$ = list1(F03_PROTECTED_STATEMENT, $3); }
         | SEQUENCE
         { $$ = list0(F95_SEQUENCE_STATEMENT); }
-        | KW_USE IDENTIFIER 
+        | KW_USE IDENTIFIER
         { $$ = list2(F95_USE_STATEMENT,$2,NULL); }
         | KW_USE IDENTIFIER ',' KW use_rename_list
         { $$ = list2(F95_USE_STATEMENT,$2,$5); }
@@ -742,60 +834,62 @@ use_only:
         | IDENTIFIER
         ;
 
-COL2_or_null: 
+COL2_or_null:
         | COL2
         ;
 
-attr_spec_list: 
+attr_spec_list:
           ',' KW attr_spec
         { $$ = list1(LIST,$3); }
         | attr_spec_list ',' KW attr_spec
         { $$ = list_put_last($1,$4); }
         ;
 
-attr_spec: 
+attr_spec:
           PARAMETER
-        { $$ = list0(F95_PARAMETER_SPEC); } 
+        { $$ = list0(F95_PARAMETER_SPEC); }
         | access_spec
         | ALLOCATABLE
-        { $$ = list0(F95_ALLOCATABLE_SPEC); } 
+        { $$ = list0(F95_ALLOCATABLE_SPEC); }
         | DIMENSION '(' dim_list ')'
-        { $$ = list1(F95_DIMENSION_SPEC,$3); } 
+        { $$ = list1(F95_DIMENSION_SPEC,$3); }
         | CODIMENSION '[' image_dim_list ']'
-        { $$ = list1(XMP_CODIMENSION_SPEC,$3); } 
+        { $$ = list1(XMP_CODIMENSION_SPEC,$3); }
         | EXTERNAL
-        { $$ = list0(F95_EXTERNAL_SPEC); } 
+        { $$ = list0(F95_EXTERNAL_SPEC); }
         | INTENT '(' KW intent_spec ')'
-        { $$ = list1(F95_INTENT_SPEC,$4); } 
+        { $$ = list1(F95_INTENT_SPEC,$4); }
         | INTRINSIC
-        { $$ = list0(F95_INTRINSIC_SPEC); } 
+        { $$ = list0(F95_INTRINSIC_SPEC); }
         | OPTIONAL
-        { $$ = list0(F95_OPTIONAL_SPEC); } 
+        { $$ = list0(F95_OPTIONAL_SPEC); }
         | POINTER
-        { $$ = list0(F95_POINTER_SPEC); } 
+        { $$ = list0(F95_POINTER_SPEC); }
         | SAVE
-        { $$ = list0(F95_SAVE_SPEC); } 
+        { $$ = list0(F95_SAVE_SPEC); }
         | TARGET
-        { $$ = list0(F95_TARGET_SPEC); } 
+        { $$ = list0(F95_TARGET_SPEC); }
         ;
 
-access_spec: 
+access_spec:
           PUBLIC
-        { $$ = list0(F95_PUBLIC_SPEC); } 
+        { $$ = list0(F95_PUBLIC_SPEC); }
         | PRIVATE
-        { $$ = list0(F95_PRIVATE_SPEC); } 
+        { $$ = list0(F95_PRIVATE_SPEC); }
+        | PROTECTED
+        { $$ = list0(F03_PROTECTED_SPEC); }
         ;
 
 intent_spec:
           KW_IN
-        { $$ = list0(F95_IN_EXTENT); } 
+        { $$ = list0(F95_IN_EXTENT); }
         | KW_OUT
-        { $$ = list0(F95_OUT_EXTENT); } 
+        { $$ = list0(F95_OUT_EXTENT); }
         | KW_INOUT
-        { $$ = list0(F95_INOUT_EXTENT); } 
+        { $$ = list0(F95_INOUT_EXTENT); }
         ;
 
-declaration_list:        
+declaration_list:
          entity_decl
         { $$ = list1(LIST,$1); }
         | declaration_list ',' entity_decl
@@ -822,9 +916,9 @@ entity_decl:
 type_spec: type_spec0 { $$ = $1; /* need_keyword = TRUE; */ };
 
 type_spec0:
-          KW_TYPE '(' IDENTIFIER ')'  
+          KW_TYPE '(' IDENTIFIER ')'
         { $$ = $3; }
-        | type_keyword kind_selector 
+        | type_keyword kind_selector
         { $$ = list2(LIST,$1,$2); }
         | type_keyword length_spec  /* compatibility */
         { $$ = list2(LIST, $1, $2);}
@@ -834,7 +928,7 @@ type_spec0:
         { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_REAL),
 		      GEN_NODE(INT_CONSTANT, 8)); }
 		      //                      gen_default_real_kind()); }
-        | KW_DCOMPLEX   
+        | KW_DCOMPLEX
         { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_COMPLEX),
 		      GEN_NODE(INT_CONSTANT, 8)); }
 		      //                      gen_default_real_kind()); }
@@ -868,7 +962,7 @@ char_selector: /* empty */
         { $$ = list2(LIST, $5, $2); }
         | length_spec_mark  expr
         { $$ = $2; }
-        | length_spec_mark '(' '*' ')' 
+        | length_spec_mark '(' '*' ')'
         { $$ = list0(LIST); }
         ;
 
@@ -882,7 +976,7 @@ len_spec: '*'
         { $$ = list1(F95_LEN_SELECTOR_SPEC, $1); }
         ;
 
-kind_key_spec: KW_KIND '=' expr 
+kind_key_spec: KW_KIND '=' expr
         { $$ = list1(F95_KIND_SELECTOR_SPEC, $3); }
         ;
 kind_or_len_selector:
@@ -900,7 +994,7 @@ length_spec:    /* nothing */
         { $$ = NULL; }
         | length_spec_mark  expr
         { $$ = list1(F95_LEN_SELECTOR_SPEC,$2); }
-        | length_spec_mark '(' '*' ')' 
+        | length_spec_mark '(' '*' ')'
         { $$ = list1(F95_LEN_SELECTOR_SPEC, NULL); }
         ;
 
@@ -908,11 +1002,11 @@ length_spec_mark:
         '*' { need_type_len = TRUE; }
         ;
 
-common_decl:      
+common_decl:
           common_var
-        { $$ = list2(LIST, NULL, $1); } 
+        { $$ = list2(LIST, NULL, $1); }
         | common_block common_var
-        { $$ = list2(LIST,$1,$2); } 
+        { $$ = list2(LIST,$1,$2); }
         | common_decl comma_or_null common_block comma_or_null common_var
         { $$ = list_put_last(list_put_last($1,$3),$5); }
         | common_decl ',' common_var
@@ -941,14 +1035,14 @@ intrinsic_decl:  IDENTIFIER
         { $$ = list_put_last($1,$3); }
         ;
 
-equivalence_decl:    
+equivalence_decl:
           '(' equiv_list ')'
         { $$ = list1(LIST,$2); }
         | equivalence_decl ',' '(' equiv_list ')'
         { $$ = list_put_last($1,$4); }
         ;
 
-equiv_list:  
+equiv_list:
           lhs
         { $$ = list1(LIST,$1); }
         | equiv_list ',' lhs
@@ -1005,7 +1099,7 @@ value: simple_value
         { $$ = list1(F_UNARY_MINUS_EXPR,$2); }
         ;
 
-simple_value: 
+simple_value:
         IDENTIFIER
         | const
         | complex_const
@@ -1043,7 +1137,7 @@ access_ident: KW OPERATOR_P defined_operator ')'
 
 ident_list: IDENTIFIER
         { $$ = list1(LIST,$1); }
-        | ident_list ',' IDENTIFIER 
+        | ident_list ',' IDENTIFIER
         { $$ = list_put_last($1,$3); }
         ;
 
@@ -1120,7 +1214,7 @@ dim_list:  dim
 dim:      ubound
         | expr ':' ubound
         { $$ = list2(LIST,$1,$3); }
-        | expr ':' 
+        | expr ':'
         { $$ = list2(LIST,$1,NULL); }
         | ':'
         { $$ = list2(LIST,NULL,NULL); }
@@ -1210,17 +1304,17 @@ executable_statement:
 	WHERE, ELSEWHERE and ENDWHERE implimanetation is not appropriate now.
 	it should be:
 
-	 | WHERE '(' expr ')' 
+	 | WHERE '(' expr ')'
 	 {...}
 	 | ELSEWHERE '(' expr ')'
 	 {...}
-	 | ELSEWHERE 
+	 | ELSEWHERE
 	 {...}
          | ENDWHERE
          {...}
 
-	 then on compiling procedure switch cotrol-type 
-	 CTL_WHERE/CTL_ELSE_WHERE and treat coming statement 
+	 then on compiling procedure switch cotrol-type
+	 CTL_WHERE/CTL_ELSE_WHERE and treat coming statement
 	 appropriately.
 	 ***/
         | WHERE '(' expr ')' assign_statement_or_null
@@ -1259,7 +1353,7 @@ do_spec:
         ;
 
 /* 'ifable' statement */
-action_statement: action_statement_let 
+action_statement: action_statement_let
         | action_statement_key
         ;
 
@@ -1271,10 +1365,10 @@ action_statement_let:
         ;
 action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
         { $$ = list2(F_ASSIGN_LABEL_STATEMENT, $2, $5); }
-        | CONTINUE 
+        | CONTINUE
         { $$ = list0(F_CONTINUE_STATEMENT); }
         | GOTO  label
-        { $$ = list1(F_GOTO_STATEMENT,$2); } 
+        { $$ = list1(F_GOTO_STATEMENT,$2); }
         | GOTO  IDENTIFIER
         { $$ = list2(F_ASGOTO_STATEMENT,$2,NULL); }
         | GOTO  IDENTIFIER comma_or_null '(' label_list ')'
@@ -1301,7 +1395,7 @@ action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
         | PRAGMA_SLINE
         {
           $$ = list1(F_PRAGMA_STATEMENT,
-                     GEN_NODE(STRING_CONSTANT, pragmaString)); 
+                     GEN_NODE(STRING_CONSTANT, pragmaString));
          pragmaString = NULL;
         }
         ;
@@ -1332,43 +1426,62 @@ allocation:
         ;
 
 action_coarray_statement:
-          coarray_syncall_keyword 
-        { $$ = list2(F_CALL_STATEMENT,$1,NULL); }
-        | coarray_syncall_stat_keyword '(' syncimages_arg_list ')'
-        { $$ = list2(F_CALL_STATEMENT,$1,$3); }
-        | coarray_syncimages_keyword '(' syncimages_arg_list ')'
-        { $$ = list2(F_CALL_STATEMENT,$1,$3); }
+          SYNCALL
+        { $$ = list1(F2008_SYNCALL_STATEMENT,NULL); }
+        | SYNCALL '(' ')'
+        { $$ = list1(F2008_SYNCALL_STATEMENT,NULL); }
+        | SYNCALL '(' sync_stat_arg_list ')'
+        { $$ = list1(F2008_SYNCALL_STATEMENT,$3); }
+        | SYNCIMAGES '(' image_set ')'
+        { $$ = list2(F2008_SYNCIMAGES_STATEMENT,$3, NULL); }
+        | SYNCIMAGES '(' image_set ',' sync_stat_arg_list ')'
+        { $$ = list2(F2008_SYNCIMAGES_STATEMENT,$3, $5); }
+        | SYNCMEMORY
+        { $$ = list1(F2008_SYNCMEMORY_STATEMENT,NULL); }
+        | SYNCMEMORY '(' ')'
+        { $$ = list1(F2008_SYNCMEMORY_STATEMENT,NULL); }
+        | SYNCMEMORY '(' sync_stat_arg_list ')'
+        { $$ = list1(F2008_SYNCMEMORY_STATEMENT,$3); }
+        | CRITICAL
+        { $$ = list1(F2008_CRITICAL_STATEMENT,st_name); }
+        | ENDCRITICAL
+        { $$ = list1(F2008_ENDCRITICAL_STATEMENT,NULL); }
+        | ENDCRITICAL IDENTIFIER
+        { $$ = list1(F2008_ENDCRITICAL_STATEMENT,$2); }
+        | LOCK '(' expr ')'
+        { $$ = list2(F2008_LOCK_STATEMENT,$3, NULL); }
+        | LOCK '(' expr ',' sync_stat_arg_list ')'
+        { $$ = list2(F2008_LOCK_STATEMENT,$3, $5); }
+        | UNLOCK '(' expr ')'
+        { $$ = list2(F2008_UNLOCK_STATEMENT,$3, NULL); }
+        | UNLOCK '(' expr ',' sync_stat_arg_list ')'
+        { $$ = list2(F2008_UNLOCK_STATEMENT,$3, $5); }
         | other_coarray_keyword parenthesis_arg_list_or_null
         { $$ = list2(F_CALL_STATEMENT,$1,$2); }
         ;
 
-coarray_syncall_keyword:
-          SYNCALL
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_all")); }
+
+sync_stat_arg_list:
+          sync_stat_arg
+        { $$ = list1(LIST, $1); }
+        | sync_stat_arg_list ',' sync_stat_arg
+        { $$ = list_put_last($1,$3); }
         ;
 
-coarray_syncall_stat_keyword:
-          SYNCALL
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_all_stat")); }
+sync_stat_arg:
+          IDENTIFIER '=' IDENTIFIER
+        { $$ = list2(F_SET_EXPR,$1,$3); }
         ;
 
-coarray_syncimages_keyword:
-          SYNCIMAGES 
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_images")); }
+image_set:
+          expr
+        { $$ = $1; }
+        | '*'
+        { $$ = NULL; }
         ;
 
 other_coarray_keyword:
-          SYNCMEMORY
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_sync_memory")); }
-        | LOCK
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_lock")); }
-        | UNLOCK
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_unlock")); }
-        | CRITICAL
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_critical")); }
-        | ENDCRITICAL
-        { $$ = GEN_NODE(IDENT, find_symbol("xmpf_end_critical")); }
-        | ERRORSTOP
+          ERRORSTOP
         { $$ = GEN_NODE(IDENT, find_symbol("xmpf_error_stop")); }
         ;
 
@@ -1377,7 +1490,7 @@ comma_or_null:
         ;
 
 parenthesis_arg_list_or_null:
-        { $$ = NULL; } 
+        { $$ = NULL; }
         | parenthesis_arg_list
         { $$ = $1; }
         ;
@@ -1388,8 +1501,8 @@ parenthesis_arg_list:
         ;
 
 /* actual argument */
-arg_list:  
-        { $$ = NULL; } 
+arg_list:
+        { $$ = NULL; }
         | arg
         { $$ = list1(LIST,$1); }
         | arg_list ',' arg
@@ -1409,28 +1522,20 @@ arg:
          { $$ = list3(F95_TRIPLET_EXPR,$1,NULL,$3); }
         ;
 
-syncimages_arg_list:
-          expr
-        { $$ = list1(LIST,$1); }
-        | '*'
-        { $$ = list1(LIST,GEN_NODE(STRING_CONSTANT,strdup("*"))); }
-        | syncimages_arg_list ',' arg
-        { $$ = list_put_last($1,$3); }
-        ;
 
 image_selector:
           '[' cosubscript_list ']'
         { $$ = $2; }
         ;
 
-cosubscript_list:  
+cosubscript_list:
           expr
         { $$ = list1(LIST,$1); }
         | cosubscript_list ',' expr
         { $$ = list_put_last($1,$3); }
         ;
 /*
- * Input/Output Statements 
+ * Input/Output Statements
  */
 io_statement:
           PRINT format_spec
@@ -1471,11 +1576,11 @@ io_statement:
 
 ctl_list: io_clause
         { $$ = list1(LIST,$1); }
-        | ctl_list ',' io_clause 
+        | ctl_list ',' io_clause
         { $$ = list_put_last($1,$3); }
         ;
 
-io_clause: 
+io_clause:
          expr
         |  '*'
         { $$ = NULL; }
@@ -1523,7 +1628,7 @@ io_list: io_item
         { $$ = list_put_last($1,$3); }
         ;
 
-io_item:  
+io_item:
           expr
         | '(' expr ',' io_list ')'
         { $$ = list_cons($2,$4); }
@@ -1540,7 +1645,7 @@ expr:     lhs
         { $$ = list1(F95_ARRAY_CONSTRUCTOR, $2); }
         | '[' array_constructor_list ']'
         { $$ = list1(F95_ARRAY_CONSTRUCTOR, $2); }
-        | '(' expr ')'  
+        | '(' expr ')'
         { $$ = $2; }
         | complex_const
         | const
@@ -1590,7 +1695,7 @@ expr:     lhs
         { $$ = $1; }
         ;
 
-lhs:     
+lhs:
           IDENTIFIER
         { $$ = $1; }
         | IDENTIFIER image_selector /* coarray */
@@ -1682,7 +1787,7 @@ array_constructor_list:
         ;
 
 /* reduce/reduce conflict between with complex const,  like (1.2, 3.4).
-  
+
 array_constructor: expr
         | '(' data_var_list ',' do_spec ')'
         { $$ = list2(F_IMPLIED_DO, $4, $2); }
@@ -1745,8 +1850,8 @@ scene_range: expr
         { $$ = list3(F_SCENE_RANGE_EXPR,NULL,$1,$3); }
         ;
 
-/* 
- * OpenMP directives 
+/*
+ * OpenMP directives
  */
 omp_directive:
 	  OMPKW_PARALLEL omp_clause_option
@@ -1771,12 +1876,12 @@ omp_directive:
 	{ $$ = OMP_LIST(OMP_F_END_DO_SIMD,$4); }
         | OMPKW_DECLARE OMPKW_SIMD omp_clause_option
 	{ $$ = OMP_LIST(OMP_F_DECLARE_SIMD,$3); }
-        | OMPKW_END OMPKW_DECLARE OMPKW_SIMD 
+        | OMPKW_END OMPKW_DECLARE OMPKW_SIMD
 	{ $$ = OMP_LIST(OMP_F_END_DECLARE_SIMD,NULL); }
         | OMPKW_PARALLEL OMPKW_DO OMPKW_SIMD omp_clause_option
-	{ $$ = OMP_LIST(OMP_F_PARALLEL_DO_SIMD,$4); }	
+	{ $$ = OMP_LIST(OMP_F_PARALLEL_DO_SIMD,$4); }
         | OMPKW_END OMPKW_PARALLEL OMPKW_DO OMPKW_SIMD
-	{ $$ = OMP_LIST(OMP_F_END_PARALLEL_DO_SIMD,NULL); }	
+	{ $$ = OMP_LIST(OMP_F_END_PARALLEL_DO_SIMD,NULL); }
 	| OMPKW_SECTIONS omp_clause_option
 	  { $$ = OMP_LIST(OMP_F_SECTIONS,$2); }
 	| OMPKW_END OMPKW_SECTIONS omp_nowait_option
@@ -1872,7 +1977,7 @@ omp_clause_list:
 	 { $$ = list_put_last($1,$2); }
 	;
 
-omp_clause: 
+omp_clause:
 	  OMPKW_PRIVATE '(' omp_list ')'
 	  { $$ = OMP_LIST(OMP_DATA_PRIVATE,$3); }
 	| OMPKW_SHARED '(' omp_list ')'
@@ -1894,7 +1999,7 @@ omp_clause:
 	| OMPKW_ORDERED
 	  { $$ = OMP_LIST(OMP_DIR_ORDERED,NULL); }
         | OMPKW_NUM_THREADS '(' expr ')'
-	{ $$ = OMP_LIST(OMP_DIR_NUM_THREADS,$3); } 
+	{ $$ = OMP_LIST(OMP_DIR_NUM_THREADS,$3); }
 	| OMPKW_DEPEND '(' omp_depend_op ':' omp_list ')'
 	{ $$ = OMP_LIST($3,$5); }
         | OMPKW_FINAL '(' expr ')'
@@ -1950,9 +2055,9 @@ omp_copyin_list:
 	;
 
 omp_schedule_arg:
-	  omp_schedule_attr 
+	  omp_schedule_attr
 	  { $$ = OMP_LIST(OMP_DIR_SCHEDULE,OMP_LIST($1,NULL)); }
-	| omp_schedule_attr ',' expr 
+	| omp_schedule_attr ',' expr
 	  { $$ = OMP_LIST(OMP_DIR_SCHEDULE,OMP_LIST($1,$3)); }
 	;
 
@@ -1969,8 +2074,8 @@ omp_default_attr:
 	| OMPKW_NONE { $$ = OMP_LIST(OMP_DEFAULT_NONE,NULL); }
 	;
 
-/* 
- * XcalableMP directives 
+/*
+ * XcalableMP directives
  */
 xmp_directive:
 	    XMPKW_NODES xmp_nodes_clause
@@ -2058,16 +2163,16 @@ xmp_distribute_clause:
 	  ;
 
 xmp_align_clause:
-	    IDENTIFIER '(' xmp_subscript_list ')' xmp_WITH 
-  	      IDENTIFIER '(' xmp_subscript_list ')' 
+	    IDENTIFIER '(' xmp_subscript_list ')' xmp_WITH
+  	      IDENTIFIER '(' xmp_subscript_list ')'
 	    { $$ = list4(LIST,list1(LIST,$1),$3,$6,$8); }
-	  | '(' xmp_subscript_list ')' xmp_WITH 
+	  | '(' xmp_subscript_list ')' xmp_WITH
   	    IDENTIFIER '(' xmp_subscript_list ')' COL2 xmp_name_list
             { $$ = list4(LIST,$10,$2,$5,$7); }
 	  ;
 
 xmp_shadow_clause:
-	    IDENTIFIER '(' xmp_subscript_list ')' 
+	    IDENTIFIER '(' xmp_subscript_list ')'
 	    { $$ = list2(LIST,list1(LIST,$1),$3); }
 	  |  '(' xmp_subscript_list ')' COL2 xmp_name_list
             { $$ = list2(LIST,$5,$2); }
@@ -2106,10 +2211,10 @@ xmp_loop_clause:
 /* 	   ; */
 
 xmp_reflect_clause:
-	   '(' xmp_expr_list ')' KW xmp_async_opt
-           { $$= list3(LIST,$2,NULL,$5); }
-	  |'(' xmp_expr_list ')' KW XMPKW_WIDTH '(' xmp_width_list ')' KW xmp_async_opt
-           { $$= list3(LIST,$2,$7,$10); }
+	   '(' xmp_expr_list ')' KW xmp_async_opt xmp_acc_opt
+           { $$= list4(LIST,$2,NULL,$5,$6); }
+	  |'(' xmp_expr_list ')' KW XMPKW_WIDTH '(' xmp_width_list ')' KW xmp_async_opt xmp_acc_opt
+           { $$= list4(LIST,$2,$7,$10,$11); }
 	   ;
 
 /* xmp_gmove_clause: */
@@ -2121,12 +2226,12 @@ xmp_reflect_clause:
 /* 	     { $$ = list2(LIST,$1,$3); } */
 /* 	   ; */
 xmp_gmove_clause:
-	    xmp_async_opt
-	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_NORMAL), $1); }
-	  | XMPKW_IN KW xmp_async_opt
-	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN), $3); }
-          | XMPKW_OUT KW xmp_async_opt
-	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_OUT), $3); }
+	    xmp_async_opt xmp_acc_opt
+	    { $$ = list3(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_NORMAL), $1, $2); }
+	  | XMPKW_IN KW xmp_async_opt xmp_acc_opt
+	    { $$ = list3(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_IN), $3, $4); }
+          | XMPKW_OUT KW xmp_async_opt xmp_acc_opt
+	    { $$ = list3(LIST, GEN_NODE(INT_CONSTANT, XMP_GMOVE_OUT), $3, $4); }
           ;
 
 xmp_barrier_clause:
@@ -2149,14 +2254,14 @@ xmp_barrier_clause:
 /*             ; */
 
 xmp_bcast_clause:
-   	     '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW xmp_async_opt
-	      { $$ = list4(LIST,$2,$6,NULL,$8); }
-	   | '(' xmp_expr_list ')' KW XMPKW_ON xmp_obj_ref KW xmp_async_opt
-	      { $$ = list4(LIST,$2,NULL,$6,$8); }
-   	   | '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW XMPKW_ON xmp_obj_ref KW xmp_async_opt
-	      { $$ = list4(LIST,$2,$6,$9,$11); }
-	   | '(' xmp_expr_list ')' KW xmp_async_opt
-	      { $$ = list4(LIST,$2,NULL,NULL,$5); }
+   	     '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW xmp_async_opt xmp_acc_opt
+	      { $$ = list5(LIST,$2,$6,NULL,$8,$9); }
+	   | '(' xmp_expr_list ')' KW XMPKW_ON xmp_obj_ref KW xmp_async_opt xmp_acc_opt
+	      { $$ = list5(LIST,$2,NULL,$6,$8,$9); }
+   	   | '(' xmp_expr_list ')' KW XMPKW_FROM xmp_obj_ref KW XMPKW_ON xmp_obj_ref KW xmp_async_opt xmp_acc_opt
+	      { $$ = list5(LIST,$2,$6,$9,$11,$12); }
+	   | '(' xmp_expr_list ')' KW xmp_async_opt xmp_acc_opt
+	      { $$ = list5(LIST,$2,NULL,NULL,$5,$6); }
             ;
 
 /* xmp_reduction_clause: */
@@ -2167,10 +2272,10 @@ xmp_bcast_clause:
 /* 	     ; */
 
 xmp_reduction_clause:
-	       xmp_reduction_spec KW xmp_async_opt
-	        { $$ = list3(LIST,$1,NULL,$3); }
-	     | xmp_reduction_spec KW xmp_ON xmp_obj_ref KW xmp_async_opt
-                { $$ = list3(LIST,$1,$4,$6); }
+	       xmp_reduction_spec KW xmp_async_opt xmp_acc_opt
+	        { $$ = list4(LIST,$1,NULL,$3, $4); }
+	     | xmp_reduction_spec KW xmp_ON xmp_obj_ref KW xmp_async_opt xmp_acc_opt
+                { $$ = list4(LIST,$1,$4,$6,$7); }
 	     ;
 
 xmp_array_clause:
@@ -2200,7 +2305,7 @@ xmp_end_clause:
           ;
 
 xmp_obj_ref:
-	  '(' xmp_subscript ')' 
+	  '(' xmp_subscript ')'
 	   { $$ = list2(LIST,NULL,$2); }
 	  | IDENTIFIER '(' xmp_subscript_list ')'
 	   { $$ = list2(LIST,$1,$3); }
@@ -2210,7 +2315,7 @@ xmp_obj_ref:
 	   { $$ = NULL; }
 	  ;
 
-xmp_subscript_list: 
+xmp_subscript_list:
             xmp_subscript
 	  { $$ = list1(LIST,$1); }
 	  | xmp_subscript_list ',' xmp_subscript
@@ -2245,9 +2350,9 @@ xmp_dist_fmt:
 	    { $$ = list2(LIST,$1,NULL); }
 	  ;
 
-xmp_reduction_opt: 
+xmp_reduction_opt:
 	 { need_keyword=TRUE; } xmp_reduction_opt1 { $$ = $2; }
-    
+
 xmp_reduction_opt1:
 	     /* empty */ { $$ = NULL; }
         | XMPKW_REDUCTION xmp_reduction_spec { $$=$2; }
@@ -2398,7 +2503,7 @@ xmp_master_io_options:
 	  ;
 
 xmp_global_io_options:
-	  /* NULL */ 
+	  /* NULL */
 	    { $$ = list2(LIST, GEN_NODE(INT_CONSTANT, 1),
 			 GEN_NODE(INT_CONSTANT, XMP_GLOBAL_IO_COLLECTIVE)); }
 	  | XMPKW_BEGIN
@@ -2423,9 +2528,586 @@ xmp_coarray_clause:
 	     { $$ = list2(LIST,$2,$4); }
 
 xmp_image_clause:
-	    '(' IDENTIFIER ')' 
+	    '(' IDENTIFIER ')'
 	     { $$ = list1(LIST,$2); }
 
+xmp_acc_opt:
+	/*null*/
+	{ $$ = GEN_NODE(INT_CONSTANT, 0); }
+	| KW XMPKW_ACC
+	{ $$ = GEN_NODE(INT_CONSTANT, 1); }
+	;
+
+/*
+ * OpenACC directives
+ */
+acc_directive:
+	  ACCKW_PARALLEL acc_parallel_clause_list
+	{ $$ = ACC_LIST(ACC_PARALLEL, $2); }
+	| ACCKW_DATA acc_data_clause_list
+	{ $$ = ACC_LIST(ACC_DATA, $2); }
+	| ACCKW_LOOP acc_loop_clause_list
+	{ $$ = ACC_LIST(ACC_LOOP, $2); }
+	| ACCKW_KERNELS acc_kernels_clause_list
+	{ $$ = ACC_LIST(ACC_KERNELS, $2); }
+	| ACCKW_PARALLEL ACCKW_LOOP acc_parallel_loop_clause_list
+	{ $$ = ACC_LIST(ACC_PARALLEL_LOOP, $3); }
+        | ACCKW_KERNELS ACCKW_LOOP acc_kernels_loop_clause_list
+	{ $$ = ACC_LIST(ACC_KERNELS_LOOP, $3); }
+	| ACCKW_ATOMIC acc_atomic_clause
+	{ $$ = ACC_LIST(ACC_ATOMIC, list1(LIST,$2)); }
+	| ACCKW_WAIT acc_wait_clause_list
+	{ $$ = ACC_LIST(ACC_WAIT, $2); }
+	| ACCKW_WAIT '(' acc_expr_list ')' acc_wait_clause_list
+	{ $$ = ACC_LIST(ACC_WAIT, list_cons(ACC_LIST(ACC_CLAUSE_WAIT_ARG, $3), $5)); }
+	| ACCKW_CACHE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CACHE, list1(LIST, ACC_LIST(ACC_CLAUSE_CACHE_ARG, $3))); }
+	| ACCKW_ROUTINE acc_routine_clause_list
+	{ $$ = ACC_LIST(ACC_ROUTINE, $2); }
+	| ACCKW_ROUTINE '(' IDENTIFIER ')' acc_routine_clause_list
+	{ $$ = ACC_LIST(ACC_ROUTINE, list_cons(ACC_LIST(ACC_CLAUSE_ROUTINE_ARG, $3), $5)); }
+	| ACCKW_ENTER ACCKW_DATA acc_enter_data_clause_list
+	{ $$ = ACC_LIST(ACC_ENTER_DATA, $3); }
+	| ACCKW_EXIT ACCKW_DATA acc_exit_data_clause_list
+	{ $$ = ACC_LIST(ACC_EXIT_DATA, $3); }
+	| ACCKW_HOST_DATA acc_host_data_clause_list
+	{ $$ = ACC_LIST(ACC_HOST_DATA, $2); }
+	| ACCKW_DECLARE acc_declare_clause_list
+	{ $$ = ACC_LIST(ACC_DECLARE, $2); }
+	| ACCKW_UPDATE acc_update_clause_list
+	{ $$ = ACC_LIST(ACC_UPDATE_D, $2); }
+	| ACCKW_INIT acc_init_clause_list
+	{ $$ = ACC_LIST(ACC_INIT, $2); }
+	| ACCKW_SHUTDOWN acc_shutdown_clause_list
+	{ $$ = ACC_LIST(ACC_SHUTDOWN, $2); }
+	| ACCKW_SET acc_set_clause_list
+	{ $$ = ACC_LIST(ACC_SET, $2); }
+	| ACCKW_END acc_end_clause
+	{ $$ = ACC_LIST($2, NULL); }
+	;
+
+/* clause separator */
+acc_csep:
+	      { $$ = NULL; }
+	| ',' { $$ = NULL; }
+	;
+
+/* clause_lists */
+/* ok */
+acc_parallel_clause_list:
+	{ $$ = list0(LIST); }
+	| acc_parallel_clause_list acc_csep acc_parallel_clause
+	{ $$ = list_put_last($1, $3); }
+        ;
+acc_kernels_clause_list:
+	{ $$ = list0(LIST); }
+	| acc_kernels_clause_list acc_csep acc_kernels_clause
+	{ $$ = list_put_last($1, $3); } 
+        ;
+acc_parallel_loop_clause_list:
+        { $$ = list0(LIST); }
+	| acc_parallel_loop_clause_list acc_csep acc_parallel_loop_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_kernels_loop_clause_list:
+        { $$ = list0(LIST); }
+        | acc_kernels_loop_clause_list acc_csep acc_kernels_loop_clause
+	{ $$ = list_put_last($1, $3); }
+        ;
+acc_loop_clause_list:
+	{ $$ = list0(LIST); }
+	| acc_loop_clause_list acc_csep acc_loop_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_routine_clause_list:
+	  acc_routine_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_routine_clause_list acc_csep acc_routine_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+/* need to rename */
+acc_data_clause_list:
+	{ $$ = list0(LIST); }
+	| acc_data_clause_list acc_csep acc_if_clause
+	{ $$ = list_put_last($1, $3); }
+	| acc_data_clause_list acc_csep acc_data_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_enter_data_clause_list:
+	  acc_enter_data_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_enter_data_clause_list acc_csep acc_enter_data_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_exit_data_clause_list:
+	  acc_exit_data_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_exit_data_clause_list acc_csep acc_exit_data_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_host_data_clause_list:
+	  acc_host_data_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_host_data_clause_list acc_csep acc_host_data_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_declare_clause_list:
+	  acc_declare_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_declare_clause_list acc_csep acc_declare_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_update_clause_list:
+	  acc_update_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_update_clause_list acc_csep acc_update_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_wait_clause_list:	
+        { $$ = list0(LIST); }
+	| acc_wait_clause_list acc_csep acc_async_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_init_clause_list:
+	{ $$ = list0(LIST); }
+	| acc_init_clause_list acc_csep acc_init_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_shutdown_clause_list:
+	{ $$ = list0(LIST); }
+	| acc_shutdown_clause_list acc_csep acc_shutdown_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_set_clause_list:
+	  acc_set_clause
+	{ $$ = list1(LIST, $1); }
+	| acc_set_clause_list acc_csep acc_set_clause
+	{ $$ = list_put_last($1, $3); }
+	;
+
+/*****************************/
+/* OpenACC directive clauses */
+/*****************************/
+acc_compute_clause:
+	  acc_async_clause
+	| acc_wait_clause
+	| acc_num_gangs_clause
+	| acc_num_workers_clause
+	| acc_vector_length_clause
+	| acc_if_clause
+	| acc_data_clause
+	| acc_default_clause
+	;
+acc_parallel_clause:
+	  acc_compute_clause
+	| acc_reduction_clause
+	| acc_private_clause
+	| acc_firstprivate_clause
+	| acc_device_type_clause
+	;
+acc_kernels_clause:
+	  acc_compute_clause
+	| acc_device_type_clause
+	;
+acc_loop_clause:
+	  acc_collapse_clause
+	| acc_gang_clause
+	| acc_worker_clause
+	| acc_vector_clause
+	| acc_seq_clause
+	| acc_auto_clause
+	| acc_tile_clause
+	| acc_device_type_clause
+	| acc_independent_clause
+	| acc_private_clause
+	| acc_reduction_clause
+	;
+acc_host_data_clause:
+	  acc_use_device_clause
+	;
+acc_init_clause:
+	  acc_device_type_clause
+	| acc_device_num_clause
+	;
+acc_shutdown_clause:
+	  acc_init_clause
+	;
+acc_parallel_loop_clause:
+	  acc_compute_clause
+	| acc_loop_clause
+	| acc_firstprivate_clause
+	;
+acc_kernels_loop_clause:
+	  acc_compute_clause
+	| acc_loop_clause
+	;
+acc_routine_clause:
+	  acc_gang_clause
+	| acc_worker_clause
+	| acc_vector_clause
+	| acc_seq_clause
+	| acc_bind_clause
+	| acc_device_type_clause
+	| acc_nohost_clause
+	;
+acc_enter_data_clause:
+	  acc_if_clause
+	| acc_async_clause
+	| acc_wait_clause
+	| acc_copyin_clause
+	| acc_create_clause
+	| acc_present_or_copyin_clause
+	| acc_present_or_create_clause
+	;
+acc_exit_data_clause:
+	  acc_if_clause
+	| acc_async_clause
+	| acc_wait_clause
+	| acc_copyout_clause
+	| acc_delete_clause
+	| acc_finalize_clause
+	;
+acc_set_clause:
+	  acc_default_async_clause
+	| acc_device_type_clause
+	| acc_device_num_clause
+	;
+acc_atomic_clause:
+				{ $$ = NULL; }
+	| KW ACCKW_READ		{ $$ = ACC_LIST(ACC_CLAUSE_READ, NULL); }
+	| KW ACCKW_WRITE	{ $$ = ACC_LIST(ACC_CLAUSE_WRITE, NULL); }
+	| KW ACCKW_UPDATE	{ $$ = ACC_LIST(ACC_CLAUSE_UPDATE, NULL); }
+	| KW ACCKW_CAPTURE	{ $$ = ACC_LIST(ACC_CLAUSE_CAPTURE, NULL); }
+	;
+acc_data_clause:
+	  acc_copy_clause
+	| acc_copyin_clause
+	| acc_copyout_clause
+	| acc_create_clause
+	| acc_present_clause
+	| acc_present_or_copy_clause
+	| acc_present_or_copyin_clause
+	| acc_present_or_copyout_clause
+	| acc_present_or_create_clause
+	| acc_deviceptr_clause
+	;
+acc_update_clause:
+	  acc_async_clause
+	| acc_wait_clause
+	| acc_device_type_clause
+	| acc_if_clause
+	| acc_host_clause
+	| acc_device_clause
+	| acc_if_present_clause
+	;
+acc_declare_clause:
+	  acc_data_clause
+	| acc_device_resident_clause
+	| acc_link_clause
+	;
+acc_end_clause:
+	  ACCKW_PARALLEL		{ $$ = ACC_END_PARALLEL; }
+	| ACCKW_KERNELS			{ $$ = ACC_END_KERNELS; }
+	| ACCKW_DATA			{ $$ = ACC_END_DATA; }
+	| ACCKW_HOST_DATA		{ $$ = ACC_END_HOST_DATA; }
+	| ACCKW_ATOMIC			{ $$ = ACC_END_ATOMIC; }
+	| ACCKW_PARALLEL ACCKW_LOOP	{ $$ = ACC_END_PARALLEL_LOOP; }
+	| ACCKW_KERNELS  ACCKW_LOOP	{ $$ = ACC_END_KERNELS_LOOP; }
+	;
+
+/*******************/
+/* OpenACC clauses */
+/*******************/
+acc_async_clause:
+	  ACCKW_ASYNC
+	{ $$ = ACC_LIST(ACC_CLAUSE_ASYNC, NULL); }
+	| ACCKW_ASYNC '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_ASYNC, $3); }
+	;
+acc_wait_clause:
+	  ACCKW_WAIT
+	{ $$ = ACC_LIST(ACC_CLAUSE_WAIT, NULL); }
+	| ACCKW_WAIT '(' acc_expr_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_WAIT, $3); }
+	;
+acc_device_type_clause:
+	  ACCKW_DEVICE_TYPE '(' acc_id_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICE_TYPE, $3); }
+	;
+acc_num_gangs_clause:
+	  ACCKW_NUM_GANGS '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_NUM_GANGS, $3); }
+	;
+acc_num_workers_clause:
+	  ACCKW_NUM_WORKERS '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_NUM_WORKERS, $3); }
+	;
+acc_vector_length_clause:
+	  ACCKW_VECTOR_LENGTH '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_VECTOR_LENGTH, $3); }
+	;
+acc_reduction_clause:
+	  ACCKW_REDUCTION '(' acc_reduction_op ':' acc_id_list ')'
+	{ $$ = ACC_LIST($3, $5); }
+	;
+acc_reduction_op:
+	  '+'		{ $$ = ACC_CLAUSE_REDUCTION_PLUS; }
+	| '*'	       	{ $$ = ACC_CLAUSE_REDUCTION_MUL; }
+	| AND		{ $$ = ACC_CLAUSE_REDUCTION_LOGAND; }
+	| OR		{ $$ = ACC_CLAUSE_REDUCTION_LOGOR; }
+	| EQV		{ $$ = ACC_CLAUSE_REDUCTION_EQV; }
+	| NEQV		{ $$ = ACC_CLAUSE_REDUCTION_NEQV; }
+	| IDENTIFIER	{ $$ = ACC_reduction_op($1); }  
+	;
+/*
+	| ACCKW_REDUCTION_MAX	  { $$ = ACC_CLAUSE_REDUCTION_MAX; }
+	| ACCKW_REDUCTION_MIN	  { $$ = ACC_CLAUSE_REDUCTION_MIN; }
+	| ACCKW_REDUCTION_BITAND  { $$ = ACC_CLAUSE_REDUCTION_BITAND; }
+	| ACCKW_REDUCTION_BITOR	  { $$ = ACC_CLAUSE_REDUCTION_BITOR; }
+	| ACCKW_REDUCTION_BITXOR  { $$ = ACC_CLAUSE_REDUCTION_BITXOR; }
+*/
+acc_private_clause:
+	  ACCKW_PRIVATE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRIVATE, $3); }
+	;
+acc_firstprivate_clause:
+	  ACCKW_FIRSTPRIVATE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_FIRSTPRIVATE, $3); }
+	;
+acc_default_clause:
+	  ACCKW_DEFAULT '(' acc_default_clause_arg ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEFAULT, $3); }
+	;
+acc_default_clause_arg:
+	  KW ACCKW_NONE     { $$ = ACC_LIST(ACC_CLAUSE_NONE, NULL); }
+	| KW ACCKW_PRESENT  { $$ = ACC_LIST(ACC_CLAUSE_PRESENT, NULL); }
+	;
+acc_bind_clause:
+	  ACCKW_BIND '(' IDENTIFIER ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_BIND, $3); }
+	| ACCKW_BIND '(' CONSTANT ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_BIND, $3); }
+	;
+acc_nohost_clause:
+	  ACCKW_NOHOST
+	{ $$ = ACC_LIST(ACC_CLAUSE_NOHOST, NULL); }
+	;
+acc_collapse_clause:
+	  ACCKW_COLLAPSE '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_COLLAPSE, $3); }
+	;
+acc_gang_clause:
+	  ACCKW_GANG
+	{ $$ = ACC_LIST(ACC_CLAUSE_GANG, NULL); }
+	| ACCKW_GANG '(' acc_gang_arg_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_GANG, $3); }
+	;
+acc_gang_arg_list:
+	  acc_gang_arg
+	{ $$ = list1(LIST, $1); }
+	| acc_gang_arg ',' acc_gang_arg
+	{ $$ = list2(LIST, $1, $3); 
+	  if((EXPR_CODE($1) != ACC_PRAGMA && EXPR_CODE($3) != ACC_PRAGMA)
+	  || (EXPR_CODE($1) == ACC_PRAGMA && EXPR_CODE($3) == ACC_PRAGMA)){
+	    error("gang has over one num or one static argument");
+	  }
+	}
+	;
+
+acc_gang_arg:
+	  expr
+	{ $$ = $1; }
+/*
+	| IDENTIFIER ':' '*'
+	{ $$ = ACC_LIST(ACC_num_attr($1), NULL); ACC_check_num_attr($1, ACC_STATIC); }
+*/
+	| IDENTIFIER ':' acc_size_expr
+	{ 
+	  if(ACC_num_attr($1) == ACC_CLAUSE_STATIC){
+	    $$ = ACC_LIST(ACC_num_attr($1), $3);
+	  }else{
+	    $$ = $3;
+	  }
+        }
+	;
+acc_worker_clause:
+	  ACCKW_WORKER
+	{ $$ = ACC_LIST(ACC_CLAUSE_WORKER, NULL); }
+	| ACCKW_WORKER '(' acc_num_expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_WORKER, $3); }
+	;
+acc_num_expr:
+	  expr
+	| IDENTIFIER ':' expr
+	{ $$ = $3; ACC_check_num_attr($1, ACC_CLAUSE_NUM_WORKERS); }
+	;
+acc_vector_clause:
+	  ACCKW_VECTOR
+	{ $$ = ACC_LIST(ACC_CLAUSE_VECTOR, NULL); }
+	| ACCKW_VECTOR '(' acc_length_expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_VECTOR, $3); } 
+	;
+acc_length_expr: 
+	  expr
+	| IDENTIFIER ':' expr
+	{ $$ = $3; ACC_check_num_attr($1, ACC_CLAUSE_VECTOR_LENGTH); }
+	;
+acc_seq_clause:
+	  ACCKW_SEQ
+	{ $$ = ACC_LIST(ACC_CLAUSE_SEQ, NULL); }
+	;
+acc_auto_clause:
+	  ACCKW_AUTO
+	{ $$ = ACC_LIST(ACC_CLAUSE_AUTO, NULL); }
+	;
+acc_tile_clause:
+	  ACCKW_TILE '(' acc_size_expr_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_TILE, $3); }
+	;
+acc_independent_clause:
+	  ACCKW_INDEPENDENT
+	{ $$ = ACC_LIST(ACC_CLAUSE_INDEPENDENT, NULL); }
+	;
+acc_if_clause:
+	  ACCKW_IF '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_IF,$3); }
+	;
+acc_copy_clause:
+	  ACCKW_COPY '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_COPY, $3); }
+	;
+acc_copyin_clause:
+	  ACCKW_COPYIN '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_COPYIN, $3); }
+	;
+acc_copyout_clause:
+	  ACCKW_COPYOUT '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_COPYOUT, $3); }
+	;
+acc_create_clause:
+	  ACCKW_CREATE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_CREATE, $3); }
+	;
+acc_present_clause:
+	  ACCKW_PRESENT '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT, $3); }
+	;
+acc_present_or_copy_clause:
+	  ACCKW_PRESENT_OR_COPY '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT_OR_COPY, $3); }
+	;
+acc_present_or_copyin_clause:
+	  ACCKW_PRESENT_OR_COPYIN '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT_OR_COPYIN, $3); }
+	;
+acc_present_or_copyout_clause:
+	  ACCKW_PRESENT_OR_COPYOUT '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT_OR_COPYOUT, $3); }
+	;
+acc_present_or_create_clause:
+	  ACCKW_PRESENT_OR_CREATE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_PRESENT_OR_CREATE, $3); }
+	;
+acc_deviceptr_clause:
+	  ACCKW_DEVICEPTR '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICEPTR, $3); }
+	;
+acc_delete_clause:
+	  ACCKW_DELETE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DELETE, $3); }
+	;
+acc_finalize_clause:
+	  ACCKW_FINALIZE
+	{ $$ = ACC_LIST(ACC_CLAUSE_FINALIZE, NULL); }
+	;
+acc_use_device_clause:
+	  ACCKW_USE_DEVICE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_USE_DEVICE, $3); }
+	;
+acc_device_resident_clause:
+	  ACCKW_DEVICE_RESIDENT '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICE_RESIDENT, $3); }
+	;
+acc_link_clause:
+	  ACCKW_LINK '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_LINK, $3); }
+	;
+acc_host_clause:
+	  ACCKW_HOST '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_HOST, $3); }
+	;
+acc_device_clause:
+	  ACCKW_DEVICE '(' acc_var_list ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICE, $3); }
+	;
+acc_if_present_clause:
+	  ACCKW_IF_PRESENT
+	{ $$ = ACC_LIST(ACC_CLAUSE_IF_PRESENT, NULL); }
+	;
+acc_device_num_clause:
+	  ACCKW_DEVICE_NUM '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEVICE_NUM, $3); }
+	;
+acc_default_async_clause:
+	  ACCKW_DEFAULT_ASYNC '(' expr ')'
+	{ $$ = ACC_LIST(ACC_CLAUSE_DEFAULT_ASYNC, $3); }
+	;
+
+/***********************/
+/* OpenACC other rules */
+/***********************/
+/* var-name, array-name, subarray, or common-block-name */
+acc_var:
+	  IDENTIFIER
+	| '/' IDENTIFIER '/'
+	{ $$ = ACC_LIST(ACC_COMMONBLOCK, $2); }
+	| IDENTIFIER '(' acc_subscript_list ')'
+	{ $$ = list2(F_ARRAY_REF, $1, $3); }
+	;
+acc_subscript_list:
+	  acc_subscript
+	{ $$ = list1(LIST, $1); }
+	| acc_subscript_list ',' acc_subscript
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_subscript:
+	  expr
+	| expr_or_null ':' expr_or_null
+	{ $$ = list3(F95_TRIPLET_EXPR,$1,$3,NULL); }
+	;
+/* list of var-name, array-name, subarray, or common-block-name */
+acc_var_list:
+	  acc_var
+	{ $$ = list1(LIST, $1); }
+	| acc_var_list ',' acc_var
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_id_list:
+	  IDENTIFIER
+	{ $$ = list1(LIST, $1); }
+	| acc_id_list ',' IDENTIFIER
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_expr_list:
+	  expr
+	{ $$ = list1(LIST, $1); }
+	| acc_expr_list ',' expr
+	{ $$ = list_put_last($1, $3); }
+	;
+acc_size_expr:
+	  expr
+	{ $$ = $1; }
+	| '*'
+	{ $$ = ACC_LIST(ACC_ASTERISK, NULL); }
+	;
+acc_size_expr_list:
+	  acc_size_expr
+	{ $$ = list1(LIST, $1); }
+	| acc_size_expr_list ',' acc_size_expr
+	{ $$ = list_put_last($1, $3); }
+	;
+
+  
 %%
 #include "F95-lex.c"
 

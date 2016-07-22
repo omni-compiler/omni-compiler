@@ -235,6 +235,9 @@ AC_ARG_WITH(gmp-lib,
 	    [  --with-gmp-lib=DIR          specify directory for installed gmp library],
 	    [GMP_LIB_DIR="${withval}"], [GMP_LIB_DIR="${GMP_PREFIX}/lib64"])
 
+if ! test -d "$GMP_LIB_DIR"; then
+  GMP_LIB_DIR=${GMP_PREFIX}/lib
+fi
 
 #--------------------------------------------------------------------
 # For OpenMP
@@ -1034,7 +1037,7 @@ else
 	*)
 	    chk2=`$MPI_FC --version 2> /dev/null | head -n2 | tail -n1`
 	    case $chk2 in
-		pgfortran*)
+		pgfortran*|pgf90*)
 		    # OpenMP
 		    OPENMP_OPT_F="-mp"
 
@@ -1377,10 +1380,7 @@ if test "$IS_MOD2XMOD" = "yes"; then
     fi
 
     if ! test -d "$GMP_LIB_DIR"; then
-	GMP_LIB_DIR=${GMP_PREFIX}/lib
-	if ! test -d "$GMP_LIB_DIR"; then
-	    AC_MSG_ERROR([$GMP_LIB_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
-	fi
+      AC_MSG_ERROR([$GMP_LIB_DIR not found.  Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
     fi
 
     # check gmp.h
@@ -1764,8 +1764,6 @@ rm -f ./hasqd.* ./hasqd
 #--------------------------------------------------------------------
 # quad real support
 
-gmpInclude=/usr/include
-gmpLib=/usr/lib
 gmpIncOpt=""
 gmpDirOpt=""
 qRealPrecBits=128
@@ -1774,26 +1772,23 @@ AC_ARG_ENABLE(mreal,
     [  --enable-mreal          enable multiple precision real (and real*16) support of Fortran 77 (false default)],
         [doQReal=yes], [doQReal=no])
 
-AC_ARG_WITH(gmp-lib,
-    [  --with-gmp-lib=DIR          where the GNU-MP library is for quad-real support],
-        [gmpLib=$withval], [true])
-
-AC_ARG_WITH(gmp-include,
-    [  --with-gmp-include=DIR      where the GNU-MP include headers are for quad-real support],
-        [gmpInclude=$withval], [true])
-
 if test "x${doQReal}" = "xyes"; then
-    if test -f ${gmpInclude}/gmp.h; then
+    if test -f ${GMP_INCLUDE_DIR}/gmp.h; then
         true
     else
-        AC_MSG_ERROR([can't find ${gmpInclude}/gmp.h.])
+        AC_MSG_ERROR([can't find ${GMP_INCLUDE_DIR}/gmp.h. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
     fi
-    gmpLibs=`ls ${gmpLib}/libgmp.* 2> /dev/null`
+    
+    if ! test -d "$GMP_LIB_DIR"; then
+      AC_MSG_ERROR([$GMP_LIB_DIR not found. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
+    fi
+    
+    gmpLibs=`ls ${GMP_LIB_DIR}/libgmp.* 2> /dev/null`
     if test "x${gmpLibs}" = "x"; then
-        AC_MSG_ERROR([can't find ${gmpLib}/libgmp.*.])
+        AC_MSG_ERROR([can't find ${GMP_LIB_DIR}/libgmp.*. Please attach --with-gmp=<DIR> or --with-gmp-lib=<DIR>.])
     fi
-    gmpIncOpt="-I${gmpInclude}"
-    gmpLibOpt="-L${gmpLib} -lgmp"
+    gmpIncOpt="-I${GMP_INCLUDE_DIR}"
+    gmpLibOpt="-L${GMP_LIB_DIR} -lgmp"
 fi
 
 AC_ARG_WITH(precision,
@@ -2231,6 +2226,7 @@ AC_CONFIG_FILES(XcodeML-Common/Makefile)
 AC_CONFIG_FILES(C-FrontEnd/src/Makefile)
 AC_CONFIG_FILES(C-BackEnd/Makefile)
 AC_CONFIG_FILES(F-FrontEnd/src/Makefile)
+AC_CONFIG_FILES(F-FrontEnd/src/F-input-xmod.h)
 AC_CONFIG_FILES(F-FrontEnd/gnu_module/Makefile)
 AC_CONFIG_FILES(F-BackEnd/Makefile)
 AC_CONFIG_FILES(F-BackEnd/bin/F_Back)

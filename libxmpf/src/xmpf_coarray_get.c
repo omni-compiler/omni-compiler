@@ -98,7 +98,7 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
 
   case SCHEME_ExtraBufferGet:
     {
-      size_t elementRU = ROUND_UP_BOUNDARY(*element);
+      size_t elementRU = ROUND_UP_COMM(*element);
 
       _XMPF_coarrayDebugPrint("select SCHEME_ExtraBufferGet/scalar. elementRU=%ud\n",
                               elementRU);
@@ -125,7 +125,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
 {
   int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
-  if (*element % ONESIDED_BOUNDARY != 0) {
+  if (*element % COMM_UNIT != 0) {
     _XMP_fatal("violation of boundary in reference of a coindexed object\n"
               "  xmpf_coarray_get_array_, " __FILE__);
     return;
@@ -199,16 +199,16 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
 /* REMARKING CONDITIONS:
  *  - The result variable may be invisible to FJ-RDMA.
  *  - The length of put/get communication must be divisible by
- *    ONESIDED_BOUNDARY. Else, SCHEME_Extra... should be selected.
+ *    COMM_UNIT. Else, SCHEME_Extra... should be selected.
  *  - SCHEME_ExtraDirectGet should not be used because the extra
  *    copy to local destination might overwrite neighboring data.
- *  - Array element of coarray is divisible by ONESIDED_BOUNDARY
+ *  - Array element of coarray is divisible by COMM_UNIT
  *    due to a restriction.
  */
 
 int _select_getscheme_scalar(int element, BOOL avail_DMA)
 {
-  if (element % ONESIDED_BOUNDARY > 0)
+  if (element % COMM_UNIT > 0)
     return SCHEME_ExtraBufferGet;
 
   if (avail_DMA)

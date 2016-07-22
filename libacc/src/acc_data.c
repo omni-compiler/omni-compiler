@@ -5,6 +5,7 @@
 #define INIT_DEFAULT 0
 #define INIT_PRESENT 1
 #define INIT_PRESENTOR 2
+#define INIT_DEVPTR 3
 
 static void init_data(int mode, _ACC_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
 void _ACC_init_data(_ACC_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]){
@@ -15,6 +16,9 @@ void _ACC_pinit_data(_ACC_data_t **host_data_desc, void **device_addr, void *add
 }
 void _ACC_find_data(_ACC_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]){
   init_data(INIT_PRESENT, host_data_desc, device_addr, addr, type_size, dim, lower, length);
+}
+void _ACC_devptr_init_data(_ACC_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]){
+  init_data(INIT_DEVPTR, host_data_desc, device_addr, addr, type_size, dim, lower, length);
 }
 
 static void init_data(int mode, _ACC_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]){
@@ -53,7 +57,7 @@ static void init_data(int mode, _ACC_data_t **host_data_desc, void **device_addr
 
   // alloc & init host descriptor
   host_data_d = (_ACC_data_t *)_ACC_alloc(sizeof(_ACC_data_t));
-  host_data_d->host_addr = addr;
+  host_data_d->host_addr = (mode == INIT_DEVPTR)? NULL : addr;
   host_data_d->offset = offset;
   host_data_d->size = size;
   host_data_d->type_size = type_size;
@@ -61,11 +65,11 @@ static void init_data(int mode, _ACC_data_t **host_data_desc, void **device_addr
   host_data_d->array_info = array_info;
 
   if(present_data == NULL){
-    _ACC_memory_t *memory = _ACC_memory_alloc((char*)addr + offset, size, NULL);
+    _ACC_memory_t *memory = _ACC_memory_alloc((char*)(host_data_d->host_addr) + offset, size, (mode == INIT_DEVPTR)? addr: NULL);
     if(memory == NULL){
       _ACC_fatal("failed to alloc memory");
     }
-    _ACC_memory_table_add((char*)addr + offset, size, memory);
+    _ACC_memory_table_add((char*)(host_data_d->host_addr) + offset, size, memory);
     host_data_d->memory = memory;
     host_data_d->memory_offset = offset;
   }else{

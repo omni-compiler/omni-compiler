@@ -3,11 +3,15 @@
     return 
   end function pepe
 
-!!   include "xmp_coarray.h"
   integer aa(10)[*]
   integer pepe
 
   me = xmp_node_num()
+
+  if (xmpf_coarray_uses_fjrdma()) then
+     write(*,'(a)') "Using FJRDMA ... stop"
+     stop
+  endif
 
 !--------------------- init
   do i=1,10

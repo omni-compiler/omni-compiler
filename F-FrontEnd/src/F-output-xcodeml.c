@@ -93,10 +93,10 @@ xtag(enum expr_code code)
     case INT_CONSTANT:              return "FintConstant";
     case FLOAT_CONSTANT:            return "FrealConstant";
     case COMPLEX_CONSTANT:          return "FcomplexConstant";
-                                   
-    /*                             
-     * declarations                
-     */                            
+
+    /*
+     * declarations
+     */
     case F_DATA_DECL:               return "FdataDecl";
     case F_EQUIV_DECL:              return "FequivalenceDecl";
     case F_COMMON_DECL:             return "FcommonDecl";
@@ -186,16 +186,23 @@ xtag(enum expr_code code)
 
     case F95_USER_DEFINED_BINARY_EXPR:          return "userBinaryExpr";
     case F95_USER_DEFINED_UNARY_EXPR:           return "userUnaryExpr";
-                                
+
+    case F2008_SYNCALL_STATEMENT:    return "syncAllStatement";
+    case F2008_SYNCIMAGES_STATEMENT: return "syncImagesStatement";
+    case F2008_SYNCMEMORY_STATEMENT: return "syncMemoryStatement";
+    case F2008_CRITICAL_STATEMENT:   return "criticalStatement";
+    case F2008_LOCK_STATEMENT:       return "lockStatement";
+    case F2008_UNLOCK_STATEMENT:     return "unlockStatement";
+
     /*                          
      * misc.                    
      */                         
     case F_IMPLIED_DO:              return "FdoLoop";
     case F_INDEX_RANGE:             return "indexRange";
 
-    /*                          
-     * module.                    
-     */                         
+    /*
+     * module.
+     */
     case F95_USE_STATEMENT:         return "FuseDecl";
     case F95_USE_ONLY_STATEMENT:    return "FuseOnlyDecl";
 
@@ -280,6 +287,7 @@ xtag(enum expr_code code)
     case F95_TYPEDECL_STATEMENT:
     case F95_ENDTYPEDECL_STATEMENT:
     case F95_PRIVATE_STATEMENT:
+    case F03_PROTECTED_STATEMENT:
     case F95_SEQUENCE_STATEMENT:
     case F95_PARAMETER_SPEC:
     case F95_ALLOCATABLE_SPEC:
@@ -293,6 +301,7 @@ xtag(enum expr_code code)
     case F95_TARGET_SPEC:
     case F95_PUBLIC_SPEC:
     case F95_PRIVATE_SPEC:
+    case F03_PROTECTED_SPEC:
     case F95_IN_EXTENT:
     case F95_OUT_EXTENT:
     case F95_INOUT_EXTENT:
@@ -334,6 +343,7 @@ xtag(enum expr_code code)
     case F95_USER_DEFINED:
     case XMP_CODIMENSION_SPEC:
     case EXPR_CODE_END:
+    case F2008_ENDCRITICAL_STATEMENT:
 
         fatal("invalid exprcode : %s", EXPR_CODE_NAME(code));
 
@@ -342,6 +352,9 @@ xtag(enum expr_code code)
 
     case XMP_PRAGMA:
       return "XMPPragma";
+
+    case ACC_PRAGMA:
+      return "ACCPragma";
 
     default:
       fatal("unknown exprcode : %d", code);
@@ -587,6 +600,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_TARGET(tp) ||
         TYPE_IS_PUBLIC(tp) ||
         TYPE_IS_PRIVATE(tp) ||
+        TYPE_IS_PROTECTED(tp) ||
         TYPE_IS_SEQUENCE(tp) ||
         TYPE_IS_INTERNAL_PRIVATE(tp) ||
         TYPE_IS_INTENT_IN(tp) ||
@@ -614,13 +628,17 @@ has_attribute_except_private_public(TYPE_DESC tp)
     int ret;
     int is_public = TYPE_IS_PUBLIC(tp);
     int is_private = TYPE_IS_PRIVATE(tp);
+    int is_protected = TYPE_IS_PROTECTED(tp);
     TYPE_UNSET_PUBLIC(tp);
     TYPE_UNSET_PRIVATE(tp);
+    TYPE_UNSET_PROTECTED(tp);
     ret = has_attribute(tp);
     if(is_private)
         TYPE_SET_PRIVATE(tp);
     if(is_public)
         TYPE_SET_PUBLIC(tp);
+    if(is_protected)
+        TYPE_SET_PROTECTED(tp);
     return ret;
 }
 
@@ -750,6 +768,7 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
 
         outx_true(TYPE_IS_PUBLIC(tp),           "is_public");
         outx_true(TYPE_IS_PRIVATE(tp),          "is_private");
+        outx_true(TYPE_IS_PROTECTED(tp),        "is_protected");
         outx_true(TYPE_IS_POINTER(tp),          "is_pointer");
         outx_true(TYPE_IS_TARGET(tp),           "is_target");
         outx_true(TYPE_IS_OPTIONAL(tp),         "is_optional");
@@ -936,7 +955,7 @@ outx_tagOfDecl(int l, const char *tag, ID id)
  * output tag which has only text symbol value
  */
 static void
-outx_tagText(int l, const char *tag, const char *s) 
+outx_tagText(int l, const char *tag, const char *s)
 {
     outx_printi(l, "<%s>%s</%s>\n", tag, s, tag);
 }
@@ -1165,7 +1184,7 @@ outx_id(int l, ID id)
     const char *sclass = get_sclass(id);
     outx_print(" sclass=\"%s\"", sclass);
     if(ID_IS_OFMODULE(id))
-	outx_print(" declared_in=\"%s\"", 
+	outx_print(" declared_in=\"%s\"",
 		   ID_USEASSOC_INFO(id)->module_name->s_name);
     outx_print(">\n");
     outx_symbolName(l + 1, ID_SYM(id));
@@ -2114,7 +2133,7 @@ outx_alloc(int l, expv v)
 	abort();
       }
 
-      outx_printi(l1, "<coShape>\n"); 
+      outx_printi(l1, "<coShape>\n");
       FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)){
 	expr cobound = LIST_ITEM(lp);
 /* 	expr upper = EXPR_ARG2(cobound); */
@@ -2331,7 +2350,7 @@ outx_expv_withListTag(int l,expv v)
     FOR_ITEMS_IN_LIST(lp, v)
       outx_expv_withListTag(l+1, LIST_ITEM(lp));
     outx_close(l, "list");
-  } else 
+  } else
     outx_expv(l,v);
 }
 
@@ -2380,7 +2399,7 @@ outx_OMP_dir_string(int l,expv v)
 {
   char *s;
   s = NULL;
-  if(EXPV_CODE(v) != INT_CONSTANT) 
+  if(EXPV_CODE(v) != INT_CONSTANT)
     fatal("outx_OMP_dir_string: not INT_CONSTANT");
   switch(EXPV_INT_VALUE(v)){
   case OMP_PARALLEL: s = "PARALLEL"; break;
@@ -2432,8 +2451,8 @@ static void outx_OMP_sched_kind(int l,char *s,expv v)
   expr vv = EXPR_ARG2(v);
   outx_printi(l+2, "<string>%s</string>\n", s);
   //printf("EXPV_INT_VALUE(%d)\n",EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v))));
-//  printf("vv=%d\n",EXPV_INT_VALUE(expr_list_get_n(vv,0)));	  
-  outx_printi(l+3,"<list>\n");                                                                                                                                                                                 
+//  printf("vv=%d\n",EXPV_INT_VALUE(expr_list_get_n(vv,0)));
+  outx_printi(l+3,"<list>\n");
 
   switch(EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v))))
     {
@@ -2459,9 +2478,9 @@ static void outx_OMP_sched_kind(int l,char *s,expv v)
       fatal("OMP Sched error");
     }
 	//printf("ARG2=%d\n",EXPV_INT_VALUE(expr_list_get_n(vv,1)));
-	if(expr_list_get_n(vv,1)!=NULL) 
+	if(expr_list_get_n(vv,1)!=NULL)
  	outx_expv(l+4,expr_list_get_n(vv,1));
-    outx_printi(l+3,"</list>\n");                                                                                                                                                                                
+    outx_printi(l+3,"</list>\n");
   outx_printi(l+1,"</list>\n");
 }
 
@@ -2474,20 +2493,20 @@ outx_OMP_dir_clause_list(int l,expv v)
   expv vv,dir;
   char *s = NULL;
 
-  if(EXPV_CODE(v) != LIST) 
+  if(EXPV_CODE(v) != LIST)
     fatal("outx_OMP_dir_clause_list: not LIST");
   outx_printi(l,"<list>\n");
-  
+
   FOR_ITEMS_IN_LIST(lp, v) {
     vv = LIST_ITEM(lp);
 
-    if(EXPV_CODE(vv) != LIST) 
+    if(EXPV_CODE(vv) != LIST)
       fatal("outx_OMP_dir_clause_list: not LIST2");
 
     outx_printi(l1,"<list>\n");
 
     dir = EXPR_ARG1(vv);
-    if(EXPV_CODE(dir) != INT_CONSTANT) 
+    if(EXPV_CODE(dir) != INT_CONSTANT)
       fatal("outx_OMP_dir_clause_list: clause not INT_CONSTANT");
     switch(EXPV_INT_VALUE(dir)){
     case OMP_DATA_DEFAULT: s = "DATA_DEFAULT"; outx_OMP_DATA_DEFAULT_kind(l,s,EXPR_ARG2(vv)); continue;
@@ -2556,7 +2575,7 @@ outx_XMP_dir_string(int l,expv v)
 {
   char *s = NULL;
 
-  if(EXPV_CODE(v) != INT_CONSTANT) 
+  if(EXPV_CODE(v) != INT_CONSTANT)
     fatal("outx_XMP_dir_string: not INT_CONSTANT");
   switch(EXPV_INT_VALUE(v)){
   case XMP_NODES: s = "NODES"; break;
@@ -2595,12 +2614,12 @@ outx_XMP_dir_clause_list(int l,expv v)
   const int l1 = l + 1;
   expv vv;
 
-  if(EXPV_CODE(v) != LIST) 
+  if(EXPV_CODE(v) != LIST)
     fatal("outx_XMP_dir_clause_list: not LIST");
   outx_printi(l,"<list>\n");
   FOR_ITEMS_IN_LIST(lp, v) {
       vv = LIST_ITEM(lp);
-      if(vv == NULL) 
+      if(vv == NULL)
 	  outx_printi(l1,"<list/>\n");
       else if(EXPR_CODE(vv) == LIST)
 	  outx_XMP_dir_clause_list(l1,vv);
@@ -2608,6 +2627,243 @@ outx_XMP_dir_clause_list(int l,expv v)
 	  outx_expv(l1,vv);
   }
   outx_printi(l,"</list>\n");
+}
+
+
+/**
+ * output ACC pragma statement
+ */
+static void outx_ACC_dir_string(int l,expv v);
+static void outx_ACC_dir_clause_list(int l,expv v);
+static void outx_ACC_clause_string(int l, expv v);
+static void outx_ACC_clause(int l, expv v);
+#define outx_listClose(l) outx_close((l), "list")
+#define outx_tagOfList(l) outx_printi((l),"<list>\n")
+static void
+outx_ACC_pragma(int l, expv v)
+{
+    const int l1 = l + 1;
+    outx_tagOfStatement(l, v);
+    outx_ACC_dir_string(l1,EXPR_ARG1(v));
+
+    if (EXPR_ARG2(v)) {
+      outx_ACC_dir_clause_list(l1,EXPR_ARG2(v));
+    }else{
+      outx_printi(l1,"<list></list>\n");
+    }
+
+    /* output body */
+    if(EXPR_HAS_ARG3(v)){
+      outx_expv_withListTag(l1, EXPR_ARG3(v));
+    }
+    outx_expvClose(l, v);
+}
+
+static void
+outx_ACC_dir_string(int l,expv v)
+{
+  char *s = NULL;
+
+  if(EXPV_CODE(v) != INT_CONSTANT) fatal("outx_ACC_dir_string: not INT_CONSTANT");
+
+  switch(EXPV_INT_VALUE(v)){
+  case ACC_PARALLEL:		s = "PARALLEL"; break;
+  case ACC_KERNELS:		s = "KERNELS"; break;
+  case ACC_DATA:		s = "DATA"; break;
+  case ACC_LOOP:		s = "LOOP"; break;
+  case ACC_PARALLEL_LOOP:	s = "PARALLEL_LOOP"; break;
+  case ACC_KERNELS_LOOP:	s = "KERNELS_LOOP"; break;
+  case ACC_ATOMIC:		s = "ATOMIC"; break;
+  case ACC_WAIT:		s = "WAIT"; break;
+  case ACC_CACHE:		s = "CACHE"; break;
+  case ACC_ROUTINE:		s = "ROUTINE"; break;
+  case ACC_ENTER_DATA:		s = "ENTER_DATA"; break;
+  case ACC_EXIT_DATA:		s = "EXIT_DATA"; break;
+  case ACC_HOST_DATA:		s = "HOST_DATA"; break;
+  case ACC_DECLARE:		s = "DECLARE"; break;
+  case ACC_UPDATE_D:		s = "UPDATE"; break;
+  case ACC_INIT:		s = "INIT"; break;
+  case ACC_SHUTDOWN:		s = "SHUTDOWN"; break;
+  case ACC_SET:			s = "SET"; break;
+
+  case ACC_END_PARALLEL:
+  case ACC_END_KERNELS:
+  case ACC_END_DATA:
+  case ACC_END_ATOMIC:
+  case ACC_END_HOST_DATA:
+  case ACC_END_PARALLEL_LOOP:
+  case ACC_END_KERNELS_LOOP:
+    fatal("out_ACC_dir_string: illegal end directive=%d\n", EXPV_INT_VALUE(v));
+    break;
+  default:
+    fatal("out_ACC_dir_string: unknown value=%d\n",EXPV_INT_VALUE(v));
+  }
+  outx_tagText(l, "string", s);
+}
+
+static void
+outx_ACC_clause_string(int l, expv v)
+{
+  char *s = NULL;
+
+  if(EXPV_CODE(v) != INT_CONSTANT) fatal("outx_ACC_dir_string: not INT_CONSTANT");
+
+  switch(EXPV_INT_VALUE(v)){
+  case ACC_CLAUSE_IF:			s = "IF"; break;
+  case ACC_CLAUSE_WAIT:			s = "WAIT"; break;
+  case ACC_CLAUSE_ASYNC:		s = "ASYNC"; break;
+  case ACC_CLAUSE_DEVICE_TYPE:		s = "DEVICE_TYPE"; break;
+  case ACC_CLAUSE_WAIT_ARG:		s = "WAIT"; break;
+  case ACC_CLAUSE_CACHE_ARG:		s = "CACHE"; break;
+  case ACC_CLAUSE_ROUTINE_ARG:		s = "ROUTINE"; break;
+
+    //data clause
+  case ACC_CLAUSE_COPY:			s = "COPY"; break;
+  case ACC_CLAUSE_COPYIN:		s = "COPYIN"; break;
+  case ACC_CLAUSE_COPYOUT:		s = "COPYOUT"; break;
+  case ACC_CLAUSE_CREATE:		s = "CREATE"; break;
+  case ACC_CLAUSE_PRESENT:		s = "PRESENT"; break;
+  case ACC_CLAUSE_PRESENT_OR_COPY:	s = "PRESENT_OR_COPY"; break;
+  case ACC_CLAUSE_PRESENT_OR_COPYIN:	s = "PRESENT_OR_COPYIN"; break;
+  case ACC_CLAUSE_PRESENT_OR_COPYOUT:	s = "PRESENT_OR_COPYOUT"; break;
+  case ACC_CLAUSE_PRESENT_OR_CREATE:	s = "PRESENT_OR_CREATE"; break;
+  case ACC_CLAUSE_DEVICEPTR:		s = "DEVICEPTR"; break;
+
+  case ACC_CLAUSE_NUM_GANGS:		s = "NUM_GANGS"; break;
+  case ACC_CLAUSE_NUM_WORKERS:		s = "NUM_WORKERS"; break;
+  case ACC_CLAUSE_VECTOR_LENGTH:	s = "VECTOR_LENGTH"; break;
+
+  case ACC_CLAUSE_REDUCTION_PLUS:	s = "REDUCTION_PLUS"; break;
+  case ACC_CLAUSE_REDUCTION_MUL:	s = "REDUCTION_MUL"; break;
+  case ACC_CLAUSE_REDUCTION_MAX:	s = "REDUCTION_MAX"; break;
+  case ACC_CLAUSE_REDUCTION_MIN:	s = "REDUCTION_MIN"; break;
+  case ACC_CLAUSE_REDUCTION_BITAND:	s = "REDUCTION_BITAND"; break;
+  case ACC_CLAUSE_REDUCTION_BITOR:	s = "REDUCTION_BITOR"; break;
+  case ACC_CLAUSE_REDUCTION_BITXOR:	s = "REDUCTION_BITXOR"; break;
+  case ACC_CLAUSE_REDUCTION_LOGAND:	s = "REDUCTION_LOGAND"; break;
+  case ACC_CLAUSE_REDUCTION_LOGOR:	s = "REDUCTION_LOGOR"; break;
+  case ACC_CLAUSE_REDUCTION_EQV:	s = "REDUCTION_EQV"; break;
+  case ACC_CLAUSE_REDUCTION_NEQV:	s = "REDUCTION_NEQV"; break;
+
+  case ACC_CLAUSE_PRIVATE:		s = "PRIVATE"; break;
+  case ACC_CLAUSE_FIRSTPRIVATE:		s = "FIRSTPRIVATE"; break;
+  case ACC_CLAUSE_DEFAULT:		s = "DEFAULT"; break;
+  case ACC_CLAUSE_NONE:			s = "NONE"; break;
+
+  case ACC_CLAUSE_COLLAPSE:		s = "COLLAPSE"; break;
+  case ACC_CLAUSE_GANG:			s = "GANG"; break;
+  case ACC_CLAUSE_WORKER:		s = "WORKER"; break;
+  case ACC_CLAUSE_VECTOR:		s = "VECTOR"; break;
+  case ACC_CLAUSE_SEQ:			s = "SEQ"; break;
+  case ACC_CLAUSE_AUTO:			s = "AUTO"; break;
+  case ACC_CLAUSE_TILE:			s = "TILE"; break;
+  case ACC_CLAUSE_INDEPENDENT:		s = "INDEPENDENT"; break;
+
+  case ACC_CLAUSE_BIND:			s = "BIND"; break;
+  case ACC_CLAUSE_NOHOST:		s = "NOHOST"; break;
+
+  case ACC_CLAUSE_STATIC:		s = "STATIC"; break;
+  case ACC_CLAUSE_READ:			s = "READ"; break;
+  case ACC_CLAUSE_WRITE:		s = "WRITE"; break;
+  case ACC_CLAUSE_UPDATE:		s = "UPDATE"; break;
+  case ACC_CLAUSE_CAPTURE:		s = "CAPTURE"; break;
+  case ACC_CLAUSE_DELETE:		s = "DELETE"; break;
+  case ACC_CLAUSE_FINALIZE:		s = "FINALIZE"; break;
+
+  case ACC_CLAUSE_USE_DEVICE:		s = "USE_DEVICE"; break;
+
+  case ACC_CLAUSE_DEVICE_RESIDENT:	s = "DEVICE_RESIDENT"; break;
+  case ACC_CLAUSE_LINK:			s = "LINK"; break;
+
+  case ACC_CLAUSE_HOST:			s = "HOST"; break;
+  case ACC_CLAUSE_DEVICE:		s = "DEVICE"; break;
+  case ACC_CLAUSE_IF_PRESENT:		s = "IF_PRESENT"; break;
+
+  case ACC_CLAUSE_DEVICE_NUM:		s = "DEVICE_NUM"; break;
+  case ACC_CLAUSE_DEFAULT_ASYNC:	s = "DEFAULT_ASYNC"; break;
+
+
+    //others 
+  case ACC_ASTERISK:			s = "ASTERISK"; break;
+  case ACC_COMMONBLOCK:			s = "COMMONBLOCK"; break;
+
+  default:
+    fatal("out_ACC_clause_string: unknown value=%d\n",EXPV_INT_VALUE(v));
+  }
+  outx_tagText(l, "string", s);
+}
+
+static void
+outx_ACC_clause_arg(int l, expr v)
+{
+  if(v == NULL){
+    outx_printi(l, "<list/>\n");
+  }else if(EXPV_CODE(v) == ACC_PRAGMA){
+    outx_ACC_clause(l, v);
+  }else if(EXPV_CODE(v) == LIST){
+    //F_ARRAY_REF
+    outx_expv(l, v);
+  }else{
+    outx_expv(l, v);
+  }
+}
+
+static void
+outx_ACC_clause_arg_list(int l, expr v)
+{
+  struct list_node *lp;
+  const int l1 = l + 1;
+  expv vv;
+
+  if(EXPV_CODE(v) != LIST) fatal("outx_ACC_clause_arg_list: not LIST");
+
+  outx_tagOfList(l);
+  FOR_ITEMS_IN_LIST(lp, v) {
+    vv = LIST_ITEM(lp);
+    outx_ACC_clause_arg(l1, vv);
+  }
+  outx_listClose(l);
+}
+
+static void
+outx_ACC_clause(int l, expv v)
+{
+    const int l1 = l + 1;
+    outx_tagOfList(l);
+    outx_ACC_clause_string(l1,EXPR_ARG1(v));
+
+    if(EXPR_HAS_ARG2(v)){
+      expv arg = EXPR_ARG2(v);
+      if(EXPV_CODE(arg) != LIST){
+	outx_ACC_clause_arg(l1, arg);
+      }else{
+	outx_ACC_clause_arg_list(l1, arg);
+      }
+    }
+    outx_listClose(l);
+}
+
+static void
+outx_ACC_dir_clause_list(int l,expv v)
+{
+  struct list_node *lp;
+  const int l1 = l + 1;
+  expv vv;
+
+  if(EXPV_CODE(v) != LIST) fatal("outx_ACC_dir_clause_list: not LIST");
+
+  outx_tagOfList(l);
+  FOR_ITEMS_IN_LIST(lp, v) {
+    vv = LIST_ITEM(lp);
+    if(vv == NULL) {
+      outx_printi(l1,"<list/>\n");
+    }else if(EXPV_CODE(vv) == ACC_PRAGMA){
+      outx_ACC_clause(l1, vv);
+    }else{
+      fatal("outx_ACC_dir_clause_list: unknown list element");
+    }
+  }
+  outx_listClose(l);
 }
 
 
@@ -2738,7 +2994,124 @@ outx_useOnlyDecl(int l, expv v)
     outx_expvClose(l, v);
 }
 
+
+
 static void
+outx_syncstat_list(int l, expv v)
+{
+    list lp;
+    expv x;
+    FOR_ITEMS_IN_LIST(lp, v) {
+        x = LIST_ITEM(lp);
+        outx_printi(l, "<syncStat kind=\"%s\">\n",
+                    EXPV_KWOPT_NAME(x)
+                    );
+        outx_varOrFunc(l + 1, x);
+        outx_close(l, "syncStat");
+    }
+}
+
+
+/**
+ * output syncAllStatement
+ */
+static void
+outx_SYNCALL_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    outx_syncstat_list(l + 1, v);
+    outx_expvClose(l, v);
+}
+
+
+/**
+ * output syncImagesStatement
+ */
+static void
+outx_SYNCIMAGES_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    if (EXPR_HAS_ARG1(v)) {
+        outx_expv(l + 1, EXPR_ARG1(v));
+    }
+    if (EXPR_HAS_ARG2(v)) {
+        outx_syncstat_list(l + 1, EXPR_ARG2(v));
+    }
+    outx_expvClose(l, v);
+}
+
+/**
+ * output syncmemoryStatement
+ */
+static void
+outx_SYNCMEMORY_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    outx_syncstat_list(l + 1, v);
+    outx_expvClose(l, v);
+}
+
+/*
+ * output criticalStatement
+ */
+static void
+outx_CRITICAL_statement(int l, expv v)
+{
+    char buf[128];
+
+    if (XMP_coarray_flag) {
+        outx_expv(l, EXPR_ARG1(v));
+
+    } else {
+        if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
+            sprintf(buf, " construct_name=\"%s\"",
+                    SYM_NAME(EXPR_SYM(EXPR_ARG2(v))));
+            outx_tagOfStatement1(l, v, buf);
+        } else {
+            outx_tagOfStatement(l, v);
+        }
+        outx_body(l + 1, EXPR_ARG1(v));
+        outx_expvClose(l, v);
+    }
+}
+
+
+/**
+ * output syncmemoryStatement
+ */
+static void
+outx_LOCK_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    if (EXPR_HAS_ARG1(v)) {
+        outx_expv(l + 1, EXPR_ARG1(v));
+    }
+    if (EXPR_HAS_ARG2(v)) {
+        outx_syncstat_list(l + 1, EXPR_ARG2(v));
+    }
+    outx_expvClose(l, v);
+}
+
+
+/**
+ * output syncmemoryStatement
+ */
+static void
+outx_UNLOCK_statement(int l, expv v)
+{
+    outx_tagOfStatement(l, v);
+    if (EXPR_HAS_ARG1(v)) {
+        outx_expv(l + 1, EXPR_ARG1(v));
+    }
+    if (EXPR_HAS_ARG2(v)) {
+        outx_syncstat_list(l + 1, EXPR_ARG2(v));
+    }
+    outx_expvClose(l, v);
+}
+
+
+//static void
+void
 outx_expv(int l, expv v)
 {
     enum expr_code code;
@@ -2881,7 +3254,7 @@ outx_expv(int l, expv v)
     /*
      * child elements
      */
-    case LIST: 
+    case LIST:
 	{
             list lp;
             FOR_ITEMS_IN_LIST(lp, v)
@@ -2966,6 +3339,7 @@ outx_expv(int l, expv v)
     case F95_DIMENSION_DECL:
     case F95_ENDTYPEDECL_STATEMENT:
     case F95_PRIVATE_STATEMENT:
+    case F03_PROTECTED_STATEMENT:
     case F95_SEQUENCE_STATEMENT:
     case F95_PARAMETER_SPEC:
     case F95_ALLOCATABLE_SPEC:
@@ -2979,6 +3353,7 @@ outx_expv(int l, expv v)
     case F95_TARGET_SPEC:
     case F95_PUBLIC_SPEC:
     case F95_PRIVATE_SPEC:
+    case F03_PROTECTED_SPEC:
     case F95_IN_EXTENT:
     case F95_OUT_EXTENT:
     case F95_INOUT_EXTENT:
@@ -3020,6 +3395,7 @@ outx_expv(int l, expv v)
     case F95_GENERIC_SPEC:
     case XMP_CODIMENSION_SPEC:
     case EXPR_CODE_END:
+    case F2008_ENDCRITICAL_STATEMENT:
 
         if(debug_flag)
             expv_output(v, stderr);
@@ -3032,6 +3408,34 @@ outx_expv(int l, expv v)
 
     case XMP_PRAGMA:
       outx_XMP_pragma(l, v);
+      break;
+
+    case F2008_SYNCALL_STATEMENT:
+      outx_SYNCALL_statement(l, v);
+      break;
+
+    case F2008_SYNCIMAGES_STATEMENT:
+      outx_SYNCIMAGES_statement(l, v);
+      break;
+
+    case F2008_SYNCMEMORY_STATEMENT:
+      outx_SYNCMEMORY_statement(l, v);
+      break;
+
+    case F2008_CRITICAL_STATEMENT:
+      outx_CRITICAL_statement(l, v);
+      break;
+
+    case F2008_LOCK_STATEMENT:
+      outx_LOCK_statement(l, v);
+      break;
+
+    case F2008_UNLOCK_STATEMENT:
+      outx_UNLOCK_statement(l, v);
+      break;
+
+    case ACC_PRAGMA:
+      outx_ACC_pragma(l, v);
       break;
 
     default:
@@ -3239,7 +3643,7 @@ outx_kind(int l, TYPE_DESC tp)
 {
     static expv doubledKind = NULL;
     expv vkind;
-    
+
     if(doubledKind == NULL)
         doubledKind = expv_int_term(INT_CONSTANT, type_INT, KIND_PARAM_DOUBLE);
 
@@ -3263,7 +3667,7 @@ outx_coShape(int l, TYPE_DESC tp)
   list lp;
   codims_desc *codims = tp->codims;
 
-  outx_printi(l, "<coShape>\n"); 
+  outx_printi(l, "<coShape>\n");
 
   FOR_ITEMS_IN_LIST(lp, codims->cobound_list){
     expr cobound = LIST_ITEM(lp);
@@ -3341,7 +3745,7 @@ outx_basicTypeNoCharNoAry(int l, TYPE_DESC tp)
       outx_coShape(l+1, tp);
       outx_close(l ,"FbasicType");
     }
-    else 
+    else
       outx_print(" ref=\"%s\"/>\n", getTypeID(rtp));
 }
 
@@ -3453,6 +3857,7 @@ outx_functionType_EXT(int l, EXT_ID ep)
 
         outx_true(TYPE_IS_PUBLIC(tp), "is_public");
         outx_true(TYPE_IS_PRIVATE(tp), "is_private");
+        outx_true(TYPE_IS_PROTECTED(tp), "is_protected");
     }
 
     if(EXT_PROC_ARGS(ep) == NULL) {
@@ -3550,7 +3955,7 @@ id_is_visibleVar(ID id)
             return FALSE;
         }
         if ((is_outputed_module && CRT_FUNCEP == NULL)
-            && (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) {
+            && (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) { // TODO PROTECTED
             return TRUE;
         }
         return FALSE;
@@ -3934,7 +4339,7 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
         }
     }
 
-    /* 
+    /*
      * FcommonDecl
      */
     FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(parent_ep)) {
@@ -3961,6 +4366,9 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
                 break;
 	    case XMP_PRAGMA:
 		outx_XMP_pragma(l1, v);
+		break;
+	    case ACC_PRAGMA:
+		outx_ACC_pragma(l1, v);
 		break;
             default:
                 break;
@@ -4246,6 +4654,9 @@ outx_blockDataDefinition(int l, EXT_ID ep)
 }
 
 
+
+
+
 static const char*
 getTimestamp()
 {
@@ -4460,7 +4871,7 @@ output_XcodeML_file()
     outx_close(l, "XcodeProgram");
 }
 
-/*        
+/*
  * functions defined below is those related to xmod(modules).
  */
 
@@ -4744,3 +5155,4 @@ final_fixup() {
         }
     }
 }
+

@@ -1,4 +1,4 @@
-/* 
+/*
  * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
  * $TSUKUBA_Copyright:
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
@@ -14,6 +14,7 @@
 /* lexical analyzer, enable open mp.  */
 int OMP_flag = FALSE;
 int XMP_flag = FALSE;
+int ACC_flag = FALSE;
 
 /* lexical analyzer, enable conditional compilation.  */
 int cond_compile_enabled = FALSE;
@@ -42,7 +43,7 @@ int need_check_user_defined = TRUE; /* check the user defined dot id */
 
 int may_generic_spec = FALSE;
 
-int fixed_format_flag = FALSE; 
+int fixed_format_flag = FALSE;
 
 int max_line_len = -1; /* -1 when value is not set yet. */
 int max_cont_line = 255;
@@ -65,7 +66,7 @@ extern struct keyword_token end_keywords[];
 extern int ocl_flag;
 extern int cdir_flag;
 extern int max_name_len; //  maximum identifier name length
-extern int dollar_ok;    // accept '$' in identifier or not. 
+extern int dollar_ok;    // accept '$' in identifier or not.
 
 int exposed_comma,exposed_eql;
 int paren_level;
@@ -107,14 +108,15 @@ int n_nested_file = 0;
 int     n_files = 0;
 char    *file_names[MAX_N_FILES];
 
-enum lex_state 
+enum lex_state
 {
     LEX_NEW_STATEMENT = 0,
-    LEX_FIRST_TOKEN,    
-    LEX_OTHER_TOKEN,    
+    LEX_FIRST_TOKEN,
+    LEX_OTHER_TOKEN,
     LEX_PRAGMA_TOKEN,
     LEX_OMP_TOKEN,
     LEX_XMP_TOKEN,
+    LEX_ACC_TOKEN,
     LEX_RET_EOS
 };
 
@@ -122,6 +124,7 @@ int st_CONDCOMPL_flag;
 int st_PRAGMA_flag;
 int st_OMP_flag;
 int st_XMP_flag;
+int st_ACC_flag;
 
 enum lex_state lexstate;
 
@@ -136,6 +139,7 @@ sentinel_list sentinels;
 
 #define OMP_SENTINEL "!$omp"
 #define XMP_SENTINEL "!$xmp"
+#define ACC_SENTINEL "!$acc"
 #define OCL_SENTINEL "!ocl"
 #define CDIR_SENTINEL "!cdir"
 
@@ -151,6 +155,7 @@ static char *pragmaBuf = NULL;
 
 extern struct keyword_token OMP_keywords[];
 extern struct keyword_token XMP_keywords[];
+extern struct keyword_token ACC_keywords[];
 
 /* read_line return value */
 #define ST_EOF  0
@@ -203,6 +208,7 @@ static int      is_OCL_sentinel _ANSI_ARGS_((char **));
 static int      is_PRAGMA_sentinel _ANSI_ARGS_((char **));
 static int	is_OMP_sentinel _ANSI_ARGS_((char **));
 static int	is_XMP_sentinel _ANSI_ARGS_((char **));
+static int	is_ACC_sentinel _ANSI_ARGS_((char **));
 #endif
 static int      is_pragma_sentinel _ANSI_ARGS_((sentinel_list* plist,
                                                 char* line, int* index));
@@ -214,6 +220,7 @@ static void     save_format_str _ANSI_ARGS_((void));
 
 static int OMP_lex_token();
 static int XMP_lex_token();
+static int ACC_lex_token();
 
 /* for free format.  */
 /* pragma string setter. */
@@ -225,7 +232,7 @@ static void     restore_file(void);
 static int      ScanFortranLine _ANSI_ARGS_((char *src, char *srcHead,
                                              char *dst, char *dstHead, char *dstMax,
                                              int *inQuotePtr, int *quoteCharPtr,
-                                             int *inHollerithPtr, int *hollerithLenPtr, 
+                                             int *inHollerithPtr, int *hollerithLenPtr,
                                              char **newCurPtr, char **newDstPtr));
 static void
 debugOutStatement()
@@ -245,7 +252,7 @@ debugOutStatement()
                 read_lineno.ln_no,
                 stn_cols,
                 trimBuf);
-    } else { 
+    } else {
         fprintf(debug_fp, "%6d:\"%s\"\n",
                 read_lineno.ln_no,
                 trimBuf);
@@ -270,7 +277,7 @@ initialize_lex()
   st_buffer_org = XMALLOC(char *, st_buf_size);
   buffio = XMALLOC(char *, st_buf_size);
   pragmaBuf = XMALLOC(char *, st_buf_size);
-  
+
   memset(last_ln_nos, 0, sizeof(last_ln_nos));
 
     /* set lineno info as default */
@@ -286,17 +293,18 @@ initialize_lex()
     if(source_file_name != NULL)
         read_lineno.file_id = get_file_id(source_file_name);
     else
-        read_lineno.file_id = get_file_id("<stdin>"); 
+        read_lineno.file_id = get_file_id("<stdin>");
 
     lexstate = LEX_NEW_STATEMENT;
     exposed_comma = FALSE;
     exposed_eql = FALSE;
     paren_level = 0;
-    
+
     init_sentinel_list( &sentinels );
-    
+
     add_sentinel( &sentinels, OMP_SENTINEL );
     add_sentinel( &sentinels, XMP_SENTINEL );
+    add_sentinel( &sentinels, ACC_SENTINEL );
     if (ocl_flag) add_sentinel( &sentinels, OCL_SENTINEL );
     if (cdir_flag) add_sentinel( &sentinels, CDIR_SENTINEL );
 }
@@ -411,7 +419,7 @@ yylex()
 
     Done:
 #ifdef LEX_DEBUG
-    fprintf(stderr, "%c[%d]", 
+    fprintf(stderr, "%c[%d]",
             (curToken < ' ' || curToken >= 0xFF) ?
             ' ' : curToken, curToken);
 #endif
@@ -422,7 +430,7 @@ static int
 yylex0()
 {
     int t;
-    static int tkn_cnt; 
+    static int tkn_cnt;
     char *p;
 
     switch(lexstate){
@@ -438,7 +446,7 @@ yylex0()
         }
 
         bufptr = st_buffer;
-        
+
         /* set bufptr st_buffer */
         bufptr = st_buffer;
         if (st_OMP_flag && OMP_flag) {
@@ -451,7 +459,12 @@ yylex0()
 	    for (p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
             return XMPKW_LINE;
         }
-        if (st_OMP_flag || st_XMP_flag || st_PRAGMA_flag ||
+        if (st_ACC_flag && ACC_flag) {
+            lexstate = LEX_ACC_TOKEN;
+	    for (p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
+            return ACCKW_LINE;
+        }
+        if (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
             (st_CONDCOMPL_flag && !OMP_flag && !cond_compile_enabled)) {
             lexstate = LEX_PRAGMA_TOKEN;
             return PRAGMA_HEAD;
@@ -516,6 +529,11 @@ yylex0()
 
     case LEX_XMP_TOKEN:
         t = XMP_lex_token();
+        if (t == EOS) lexstate = LEX_NEW_STATEMENT;
+        return t;
+
+    case LEX_ACC_TOKEN:
+        t = ACC_lex_token();
         if (t == EOS) lexstate = LEX_NEW_STATEMENT;
         return t;
 
@@ -613,9 +631,9 @@ char *lex_get_line()
 
 
 void
-yyerror(s) 
+yyerror(s)
      char *s;
-{ 
+{
     error("%s",s);
 }
 
@@ -632,9 +650,9 @@ token()
 {
     register char ch, *p;
     int t;
-    
+
     while(isspace(*bufptr)) bufptr++;  /* skip white space */
-    
+
     if (need_keyword == TRUE || expect_next_token_is_keyword == TRUE) {
         /*
          * require keyword
@@ -669,19 +687,19 @@ token()
         yylval.val = GEN_NODE(STRING_CONSTANT,strdup(buffio));
         return(CONSTANT);       /* hollerith */
     case '=':
-        if(*bufptr == '=') {    
+        if(*bufptr == '=') {
             /* "==" */
             bufptr++;
-            return (EQ);        
-        } 
+            return (EQ);
+        }
         if(*bufptr == '>') {
             /* "=>" */
             bufptr++;
-            return (REF_OP);    
-        } 
+            return (REF_OP);
+        }
         return('=');
-    case '(': 
-        paren_level++; 
+    case '(':
+        paren_level++;
 	/* or interface operator (/), (/=), or (//) */
 	if (*bufptr == '/') {
 	    char *save = ++bufptr; /* check 'interface operator (/)' ? */
@@ -713,11 +731,11 @@ token()
 		}
 	      }
 	    }
-	    else if (st_OMP_flag){
+	    else if (st_OMP_flag || st_ACC_flag){
 	      bufptr = save - 1;
 	      return '(';
 	    }
-	    bufptr = save;		
+	    bufptr = save;
 	    return L_ARRAY_CONSTRUCTOR;
 	} else {
 	    char *save = bufptr; /* check  '(LEN=' or '(KIND=' */
@@ -740,19 +758,19 @@ token()
 	    paren_level = save_p;
 	}
         return('(');
-    case ')': 
-        paren_level--; 
+    case ')':
+        paren_level--;
         return(')');
-    case '+': 
-    case '-': 
-    case ',': 
-    case '$': 
-    case '|': 
+    case '+':
+    case '-':
+    case ',':
+    case '$':
+    case '|':
     case '%':
     case '_': /* id should not has '_' in top.  */
         return(ch);
 
-    case ':': 
+    case ':':
         if(*bufptr == ':'){
             bufptr++;
             return(COL2);
@@ -769,14 +787,14 @@ token()
         if(*bufptr == '/') {
             bufptr++;
             return(CONCAT);
-        } 
+        }
         if(*bufptr == '=') {
             bufptr++;
             return(NE);
-        } 
+        }
         if (*bufptr == ')') {
             bufptr++;
-            paren_level--; 
+            paren_level--;
             { /* check 'interface operator (/)' ? */
                 char *save = bufptr;
                 bufptr -= 3;
@@ -785,7 +803,7 @@ token()
                     bufptr = save - 1;
                     return '/';
                 }
-		if (st_XMP_flag || st_OMP_flag){
+		if (st_XMP_flag || st_OMP_flag || st_ACC_flag){
 		  bufptr = save - 1;
 		  return '/';
 		}
@@ -824,7 +842,7 @@ token()
             for (i = 1; i < 32; i++) {
                 if (*bufptr == '\0')
                     break;
-            
+
                 else if (*bufptr == '.') {
                     user_defined[i++] = *bufptr++;
                     user_defined[i] = '\0';
@@ -858,13 +876,13 @@ token()
         if(*bufptr == '='){
             bufptr++;
             return GE;
-        } 
+        }
         return(GT);
     case '<':
         if(*bufptr == '='){
             bufptr++;
             return(LE);
-        } 
+        }
         return(LT);
 
 #ifdef not  /* ! is used for comment line */
@@ -872,16 +890,16 @@ token()
         if(*bufptr == '='){
             bufptr++;
             return(NE);
-        } 
+        }
         return(NOT);
-#endif    
+#endif
 
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9':
     number:             /* reading number */
         bufptr--;               /* back */
         return read_number();
-            
+
     case '[':
     case ']':
 	return ch;
@@ -895,24 +913,24 @@ token()
         return UNKNOWN;
     }
 }
-static int 
+static int
 is_identifier_letter( char c, int pos )
 {
     if( dollar_ok ){
         /* '_' and '$' are never placed on beginning */
-        return ( isalnum((int)c)||((pos >= 1)&&((c=='_')||(c=='$'))) ); 
+        return ( isalnum((int)c)||((pos >= 1)&&((c=='_')||(c=='$'))) );
     }else{
         /* '_' and '$' are never placed on beginning */
         return ( isalnum((int)c)||((pos >= 1)&&(c == '_')) );
     }
 }
-              
-static int 
+
+static int
 read_identifier()
 {
     int tkn_len;
     char *p,ch;
-    int excess_name_length = 0; 
+    int excess_name_length = 0;
 
     p = buffio;
     for(tkn_len = 0 ;
@@ -920,7 +938,7 @@ read_identifier()
             ; p++, bufptr++){
         *p = *bufptr;
 	tkn_len++;
-        if(tkn_len > max_name_len && is_using_module == FALSE){ 
+        if(tkn_len > max_name_len && is_using_module == FALSE){
             excess_name_length++;
         }
     }
@@ -928,7 +946,7 @@ read_identifier()
       error( "name is too long. " );
     }
     *p = 0;             /* termination */
-    
+
 #ifdef not
     if (strncmp(buffio,"function",8) == 0 && isalpha((int)buffio[8]) &&
         bufptr[0] == '(' && (bufptr[1] == ')' || isalpha((int)bufptr[1]))) {
@@ -943,14 +961,14 @@ read_identifier()
         int radix = 0;
         /* x'hhhhh' constant */
         switch(buffio[0]) {
-        case 'z': 
+        case 'z':
         case 'x':  radix = 16; break;
         case 'o':  radix = 8; break;
         case 'b': radix = 2; break;
         default: error("bad bit id");
         }
         tkn_len = 0;
-        for (p = buffio, bufptr++; 
+        for (p = buffio, bufptr++;
              UNDER_LINE_BUF_SIZE(buffio,p)&&((ch = *bufptr++) != QUOTE);
              *p++ = ch) {
             if (tkn_len++ > 32) {
@@ -965,7 +983,7 @@ read_identifier()
         string_to_integer(&v, buffio, radix);
         yylval.val = make_int_enode(v);
         return(CONSTANT);
-    } 
+    }
 #ifdef YYDEBUG
     if (yydebug)
         fprintf (stderr, "read_identifier/(%s)\n", buffio);
@@ -1035,7 +1053,7 @@ returnId:
     yylval.val = GEN_NODE(IDENT, find_symbol(buffio));
     return(IDENTIFIER);
 }
-        
+
 static int
 read_number()
 {
@@ -1055,8 +1073,8 @@ read_number()
     while((ch = *bufptr) != '\0'){
         if(ch == '.'){
             if (have_dot) {
-                break; 
-            } else if (isalpha((int)bufptr[1]) && 
+                break;
+            } else if (isalpha((int)bufptr[1]) &&
                        isalpha((int)bufptr[2])) {
                 break;
             }
@@ -1188,7 +1206,7 @@ static int
 classify_statement()
 {
     register char *p,*save;
-    
+
     while(isspace(*bufptr)) bufptr++;
     save = bufptr;
     if(bufptr[0] == '\0') return(EOS);
@@ -1437,6 +1455,7 @@ classify_statement()
 
     case PUBLIC:
     case PRIVATE:
+    case PROTECTED:
 	may_generic_spec = TRUE;
 	break;
 
@@ -1491,7 +1510,7 @@ ret_LET:
    so we chagne the paren in letter group from (/) to </>(LT/GT).
 */
 static
-void replace_paren() 
+void replace_paren()
 {
     char *lastRpar, *lastLpar;
     int plevel;
@@ -1638,18 +1657,18 @@ get_keyword(ks)
         /*  'keyword_save' will be a point of buffer after read fortran keyword.
          * If token is fortran keyword then return this.
          */
-	int excess_name_length = 0; 
+	int excess_name_length = 0;
 
         p = buffio;
         for(tkn_len = 0;
-            isalpha((int)*bufptr) || isdigit((int)*bufptr) || 
-                *bufptr == '_' || *bufptr == '.'; 
+            isalpha((int)*bufptr) || isdigit((int)*bufptr) ||
+                *bufptr == '_' || *bufptr == '.';
             p++, bufptr++){
 	    tkn_len++;
 	    if(tkn_len > max_name_len && is_using_module == FALSE) {
 	        excess_name_length++;
             }
-	    
+
             if(tkn_len > 1 && *(p-1) == '.') break;  /* dot_keyword */
             *p = *bufptr;
         }
@@ -1881,7 +1900,7 @@ static void restore_file()
     pre_read = p->save_pre_read;
     read_lineno = p->save_lineno;
     /* anyway restore, it may change in use.  */
-    fixed_format_flag = p->save_fixed_format_flag; 
+    fixed_format_flag = p->save_fixed_format_flag;
     /* restore the no conputup var. for no need line number count up.  */
     no_countup = p->save_no_countup;
     bcopy(p->save_buffer,line_buffer,LINE_BUF_SIZE);
@@ -1910,10 +1929,10 @@ int get_file_id(char *file)
 }
 
 
-/* 
+/*
  * line reader
  */
-static int 
+static int
 read_initial_line()
 {
     int ret;
@@ -1927,7 +1946,7 @@ read_initial_line()
         ret = read_free_format();
         prelast_initial_line_pos = last_initial_line_pos;
         last_initial_line_pos = ftell(source_file);
-    } 
+    }
     return ret;
 }
 
@@ -1946,7 +1965,7 @@ find_last_ampersand(char *buf,int *len)
 }
 
 #ifdef not
-static int 
+static int
 is_OCL_sentinel(char **pp)
 {
   int i;
@@ -1973,7 +1992,7 @@ is_OCL_sentinel(char **pp)
   return FALSE;
 }
 
-static int 
+static int
 is_PRAGMA_sentinel(char **pp)
 {
     int i;
@@ -2000,7 +2019,7 @@ is_PRAGMA_sentinel(char **pp)
     return FALSE;
 }
 
-static int 
+static int
 is_OMP_sentinel(char **pp)
 {
     int i;
@@ -2038,8 +2057,8 @@ is_pragma_sentinel( sentinel_list* slist, char* line, int* index )
     unsigned int i, pos;
     for( i = 0 ; i < sentinel_count(slist) ; i++ ){
         for( pos = 1 ; pos < strlen(sentinel_name(slist,i)) ; pos++ ){
-            if( !( line[pos] && sentinel_name(slist,i)[pos] 
-                   && toupper(line[pos]) == 
+            if( !( line[pos] && sentinel_name(slist,i)[pos]
+                   && toupper(line[pos]) ==
                    toupper(sentinel_name(slist,i)[pos]) ) )break;
         }
         if( pos == strlen(sentinel_name(slist,i)) ){
@@ -2100,6 +2119,7 @@ again:
     st_no = 0;
     st_OMP_flag = FALSE;       /* flag for "!$OMP" */
     st_XMP_flag = FALSE;       /* flag for "!$XMP" */
+    st_ACC_flag = FALSE;       /* flag for "!$ACC" */
     st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
 
@@ -2120,11 +2140,14 @@ again:
         if( is_pragma_sentinel( &sentinels, p, &index ) ){
             p += strlen( sentinel_name(&sentinels,index) );
             if( strcasecmp( sentinel_name( &sentinels, index ), OMP_SENTINEL )== 0 ){
-                set_pragma_str( "OMP" ); 
+                set_pragma_str( "OMP" );
                 st_OMP_flag = TRUE;
             }else if( strcasecmp( sentinel_name( &sentinels, index ), XMP_SENTINEL )== 0 ){
                 set_pragma_str( "XMP" );
                 st_XMP_flag = TRUE;
+            }else if( strcasecmp( sentinel_name( &sentinels, index ), ACC_SENTINEL )== 0 ){
+                set_pragma_str( "ACC" );
+                st_ACC_flag = TRUE;
             }else if( strcasecmp( sentinel_name( &sentinels, index ), OCL_SENTINEL )== 0 ){
 	        char buff[256] = "ocl";
 		strcat(buff, p);
@@ -2142,7 +2165,7 @@ again:
         }else if (is_cond_compilation( &sentinels, p )) {
             p += 2; /* length of "!$" */
             st_CONDCOMPL_flag = TRUE;
-            set_pragma_str( "" ); 
+            set_pragma_str( "" );
             if (OMP_flag || cond_compile_enabled) {
                 /* get statement label */
                 while(isspace(*p)) p++;     /* skip space */
@@ -2162,13 +2185,13 @@ again:
     if (debug_flag) {
         debugOutStatement();
     }
-    
+
     /* first line number is set */
     current_line = new_line_info(read_lineno.file_id,read_lineno.ln_no);
 
     q = st_buffer;
     if ((!OMP_flag && !cond_compile_enabled)
-        &&(st_OMP_flag||st_XMP_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
+        &&(st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
         /* dumb copy */
         st_len = strlen( p );
         strcpy( q, p );
@@ -2213,6 +2236,13 @@ again:
                 }
                 p += strlen( XMP_SENTINEL );
             }
+            else if( st_ACC_flag ){
+                if( index != sentinel_index( &sentinels, ACC_SENTINEL ) ){
+                    error("bad ACC sentinel continuation line");
+                    goto Done;
+                }
+                p += strlen( ACC_SENTINEL );
+            }
         } else {
             if (is_cond_compilation(&sentinels, p)) {
                 if( st_CONDCOMPL_flag ){
@@ -2254,7 +2284,7 @@ again:
 
         /* oBuf => st_buffer */
         if (!OMP_flag && !cond_compile_enabled &&
-            (st_OMP_flag||st_XMP_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
+            (st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
             /* dumb copy */
             strcpy( st_buffer, oBuf );
             st_len = strlen( st_buffer );
@@ -2283,7 +2313,7 @@ Done:
       if (current_line->ln_no != read_lineno.ln_no)
 	current_line->end_ln_no = read_lineno.ln_no;
 
-    if (st_OMP_flag || st_XMP_flag || st_CONDCOMPL_flag) {
+    if (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_CONDCOMPL_flag) {
         append_pragma_str(st_buffer); /* append the rest of line.  */     
         goto Last;
     }
@@ -2468,6 +2498,7 @@ read_fixed_format()
 
     st_OMP_flag = FALSE;       /* flag for "!$OMP" */
     st_XMP_flag = FALSE;       /* flag for "!$XMP" */
+    st_ACC_flag = FALSE;       /* flag for "!$ACC" */
     st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
 
@@ -2489,33 +2520,40 @@ top:
         if( strcasecmp( sentinel_name( &sentinels, index ),
                         OMP_SENTINEL )== 0 ){
             st_OMP_flag = TRUE;
-            set_pragma_str( "OMP" ); 
+            set_pragma_str( "OMP" );
             append_pragma_str (" ");
             append_pragma_str (line_buffer);
 	    goto copy_body;
         }else if( strcasecmp( sentinel_name( &sentinels, index ),
                               XMP_SENTINEL )== 0 ){
             st_XMP_flag = TRUE;
-            set_pragma_str( "XMP" ); 
+            set_pragma_str( "XMP" );
+            append_pragma_str (" ");
+            append_pragma_str (line_buffer);
+	    goto copy_body;
+        }else if( strcasecmp( sentinel_name( &sentinels, index ),
+                              ACC_SENTINEL )== 0 ){
+            st_ACC_flag = TRUE;
+            set_pragma_str( "ACC" ); 
             append_pragma_str (" ");
             append_pragma_str (line_buffer);
 	    goto copy_body;
         }else{
             st_PRAGMA_flag = TRUE;
-            set_pragma_str( &(sentinel_name( &sentinels, index )[2]) ); 
+            set_pragma_str( &(sentinel_name( &sentinels, index )[2]) );
             append_pragma_str (" ");
             append_pragma_str (line_buffer);
         }
     }else if (is_cond_compilation(&sentinels, stn_cols)) {
         st_CONDCOMPL_flag = TRUE;
-        set_pragma_str( &(stn_cols[2]) ); 
+        set_pragma_str( &(stn_cols[2]) );
         append_pragma_str (line_buffer);
         if (OMP_flag || cond_compile_enabled) {
             memset(stn_cols, ' ', 2);
             /* need check statement label below */
         }else goto copy_body;
     }else{
-        if( stn_cols[0]=='!' ){ 
+        if( stn_cols[0]=='!' ){
             pre_read = 0;
             goto top;
         }
@@ -2544,7 +2582,7 @@ copy_body:
     if (debug_flag) {
         debugOutStatement();
     }
-    
+
     /* first line number is set */
     current_line = new_line_info(read_lineno.file_id,read_lineno.ln_no);
 
@@ -2552,7 +2590,7 @@ copy_body:
     p = line_buffer;
     q = st_buffer;
     if (!OMP_flag && !cond_compile_enabled &&
-        (st_OMP_flag||st_XMP_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
+        (st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
         /* dumb copy */
         newLen = strlen( p );
         strcpy( q, p );
@@ -2598,6 +2636,15 @@ copy_body:
                 }
                 error("XMP sentinels missing initial line, ignored");
                 break;
+            }else if( strcasecmp( sentinel_name( &sentinels, index ),
+                                  ACC_SENTINEL )== 0 ){
+                if( st_ACC_flag ){
+                    append_pragma_str (" ");
+                    append_pragma_str (line_buffer);
+                    goto copy_body_cont;
+                }
+                error("ACC sentinels missing initial line, ignored");
+                break;
             }
         }else if (is_cond_compilation( &sentinels, stn_cols )) {
             if( st_CONDCOMPL_flag ){
@@ -2613,7 +2660,7 @@ copy_body:
                 }
             }
         }
-        
+
         if (debug_flag) {
             debugOutStatement();
         }
@@ -2637,7 +2684,7 @@ copy_body:
 	}
 
         if ((!OMP_flag && !cond_compile_enabled)
-            &&(st_OMP_flag||st_XMP_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
+            &&(st_OMP_flag||st_XMP_flag||st_ACC_flag||st_PRAGMA_flag||st_CONDCOMPL_flag)) {
             /* dumb copy */
             if ( p-oBuf + strlen(line_buffer) >= ST_BUF_SIZE) {
                 goto Done;
@@ -2646,7 +2693,7 @@ copy_body:
             st_len += strlen( line_buffer );
         }else{
         /* oBuf => st_buffer */
-            newLen = ScanFortranLine(p, oBuf, q, st_buffer, bufMax, 
+            newLen = ScanFortranLine(p, oBuf, q, st_buffer, bufMax,
                                  &inQuote, &qChar, &inH, &hLen, &p, &q);
             st_len += newLen;
         }
@@ -2660,7 +2707,7 @@ copy_body:
         if (endlineno_flag)
             if (current_line->ln_no != read_lineno.ln_no)
                 current_line->end_ln_no = read_lineno.ln_no;
-        
+
     }
 
     if (last_char_in_quote_is_quote){
@@ -2723,6 +2770,7 @@ readline_fixed_format()
     int body_offset = 0;
     int local_OMP_flag = FALSE;
     int local_XMP_flag = FALSE;
+    int local_ACC_flag = FALSE;
     int local_CONDCOMPL_flag = FALSE;
     int local_SENTINEL_flag = FALSE;
 
@@ -2741,7 +2789,7 @@ next_line:
 	fprintf (debug_fp, "readline_fixed_format(): %d/%ld\n",
             last_ln_nos[0], last_offset[0]);
     }
-    
+
     /* total # of line for read.  */
 next_line0:
     if (!no_countup)
@@ -2754,13 +2802,13 @@ next_line0:
     memset(stn_cols, ' ', 6);
     stn_cols[6] = '\0';
 
-    /* before read, check '!' comment line leaded by " \t\b" 
+    /* before read, check '!' comment line leaded by " \t\b"
        and pragma sentinel. */
     starting_pos = ftell( source_file );
     if (starting_pos == -1) {
         error( "ftell error" );
     }
-    
+
     if( fgets( line_buffer, LINE_BUF_SIZE, source_file ) == NULL ){
         /* read error or eof */
         return ST_EOF;
@@ -2768,10 +2816,10 @@ next_line0:
     /* check end of line and fix to unix style */
     linelen = strlen( line_buffer );
     if (linelen > 2) {
-        if (line_buffer[linelen-2] == 0x0d 
+        if (line_buffer[linelen-2] == 0x0d
             && line_buffer[linelen-1] == 0x0a) { /* CR+LF DOS style */
-            line_buffer[linelen-2] = 0x0a; 
-            line_buffer[linelen-1] = 0x0; 
+            line_buffer[linelen-2] = 0x0a;
+            line_buffer[linelen-1] = 0x0;
             linelen -= 2;
         } else if (line_buffer[linelen-1] == 0x0a) {
             linelen--;
@@ -2807,7 +2855,7 @@ next_line0:
 	}
       }
     }
-    
+
     /*  replace coment letter to '!' */
     if( line_buffer[0]=='C'||line_buffer[0]=='c'||line_buffer[0]=='*' ){
         line_buffer[0]='!';  /* replace for pragma sentinel */
@@ -2826,11 +2874,14 @@ next_line0:
         }else if( strcasecmp( sentinel_name( &sentinels, index ),
                               XMP_SENTINEL )== 0 ){
             local_XMP_flag = TRUE;
+        }else if( strcasecmp( sentinel_name( &sentinels, index ),
+                              ACC_SENTINEL )== 0 ){
+            local_ACC_flag = TRUE;
         }
     }else if (is_cond_compilation( &sentinels, line_buffer )) {
         local_CONDCOMPL_flag = TRUE;
     }else{
-        if( line_buffer[0]=='!' ){ 
+        if( line_buffer[0]=='!' ){
 	  /* now '!' on 1st place always means comment line. */
 	  // skip succeeding characters
 	  if (linelen == max_line_len+1) fseek(source_file,-1,1);
@@ -2840,13 +2891,13 @@ next_line0:
     }
 
     /* if there is a line begins with "!$", local_SENTINEL_flag is set TRUE. */
-    local_SENTINEL_flag = local_OMP_flag||local_XMP_flag||local_CONDCOMPL_flag;
+    local_SENTINEL_flag = local_OMP_flag||local_XMP_flag||local_ACC_flag||local_CONDCOMPL_flag;
 
     // comment line begins with '!' leaded by whitespaces.
     if( !local_SENTINEL_flag ){
         for( i=0 ; line_buffer[i] != '\0' ; i++ ){
-            if( line_buffer[i]==' ' 
-                || line_buffer[i]=='\t' 
+            if( line_buffer[i]==' '
+                || line_buffer[i]=='\t'
                 || line_buffer[i]=='\b' )continue;
             /* i==5 : continuation line */
             if( line_buffer[i]=='!' && i != 0 && i != 5 ){
@@ -2856,7 +2907,7 @@ next_line0:
     }
 
     // read statement label number
-    
+
     c = line_buffer[0];
     /* reach the end in MC.  */
     if (anotherEOF()) return ST_EOF;
@@ -2878,7 +2929,7 @@ next_line0:
                 int bpos = 0;
                 pos++;
                 p = buffio;       /* rewrite buffer file name */
-                while(line_buffer[pos] != '"' && line_buffer[pos] != 0) 
+                while(line_buffer[pos] != '"' && line_buffer[pos] != 0)
                     buffio[bpos++] = line_buffer[pos++];
                 buffio[bpos++] = '\0';
                 read_lineno.file_id = get_file_id(buffio);
@@ -2892,7 +2943,7 @@ next_line0:
             goto next_line;
         }
         goto next_line0;
-        
+
     case '!':
     case 'c':
     case 'C':
@@ -2931,7 +2982,7 @@ next_line0:
         } else if( line_buffer[i] == '\t' ){
             i++;
             c = line_buffer[i];
-            
+
             if (c >= '1' && c <= '9'){
 		/* TAB + digit indicates a continuation line */
                 stn_cols[5] = '1';
@@ -2941,7 +2992,7 @@ next_line0:
                 stn_cols[5] = ' ';
                 i--;
             }
-            
+
             /* TAB in col 1-6 skips to column 7 */
             //while (i < 6) stn_cols[i++] = ' ';
 
@@ -2960,7 +3011,7 @@ next_line0:
 
 KeepOnGoin:
     stn_cols[6] = '\0';         /* terminate */
-    /* 
+    /*
      * read body of line
      */
     bp = line_buffer;
@@ -2975,8 +3026,8 @@ KeepOnGoin:
         /* handle ';' */
         //char c;
         //int i;
-        
-        for( i = 0 ; i < sizeof(scanBuf) 
+
+        for( i = 0 ; i < sizeof(scanBuf)
                  && (i+body_offset)<LINE_BUF_SIZE; i++ ){
             c = line_buffer[i+body_offset];
             if( c == '&' && !inComment && !inQuote) {
@@ -3048,7 +3099,7 @@ KeepOnGoin:
         line_buffer[scanLen] = '\0';
         bp = line_buffer + scanLen;
     }
-    
+
     /* skip null line */
     for (bp = line_buffer; *bp != 0; bp++) {
         if (!isspace((int)*bp)) break;
@@ -3064,13 +3115,13 @@ KeepOnGoin:
         }
         goto next_line;
     }
-    if (is_cond_compilation(&sentinels, stn_cols) && 
+    if (is_cond_compilation(&sentinels, stn_cols) &&
         !is_fixed_cond_statement_label(stn_cols)) {
         return (ST_INIT);
     }
-    
+
     if (IS_CONT_LINE(stn_cols)) {
-        if ((st_OMP_flag && !local_OMP_flag) 
+        if ((st_OMP_flag && !local_OMP_flag)
             || (!st_OMP_flag && local_OMP_flag)) {
             error("bad OMP sentinel continuation line");
             return (ST_INIT);
@@ -3078,6 +3129,11 @@ KeepOnGoin:
         if ((st_XMP_flag && !local_XMP_flag)
             || (!st_XMP_flag && local_XMP_flag)) {
             error("bad XMP sentinel continuation line");
+            return (ST_INIT);
+        }
+        if ((st_ACC_flag && !local_ACC_flag)
+            || (!st_ACC_flag && local_ACC_flag)) {
+            error("bad ACC sentinel continuation line");
             return (ST_INIT);
         }
         if ((st_CONDCOMPL_flag && !local_CONDCOMPL_flag)
@@ -3093,14 +3149,14 @@ KeepOnGoin:
     else
         return(ST_INIT);
 }
-/* 
+/*
    check whether label is conditional compilation statement label
  */
 static int
 is_fixed_cond_statement_label( char *  label )
 {
     if (strlen(label)<6) return FALSE;
-    if (label[0]!='!' && label[0]!='*' 
+    if (label[0]!='!' && label[0]!='*'
         && label[0]!='c' && label[0]!='C' )return FALSE;
     if (label[1]!='$') return FALSE;
     if (isdigit(label[2])&&isdigit(label[3])&&isdigit(label[4])) return TRUE;
@@ -3134,7 +3190,7 @@ static void _warning_if_doubtfulLongLine(char *buf, int maxLen)
       return;
 
   // Otherwise, it seems a user's bug.
-  warning_lineno( &read_lineno, 
+  warning_lineno( &read_lineno,
                   "line contains more than %d characters",
                   maxLen);
 }
@@ -3274,7 +3330,7 @@ getHollerithLength(head, cur, inQuote)
         }
         *rbp = '\0';
         rbp--;
-        
+
         while (rbp >= rbuf) {
             *bp++ = *rbp--;
         }
@@ -3361,14 +3417,14 @@ getEscapeValue(cur, valPtr, newPtr)
             break;
         }
     }
-    
+
     if (newPtr != NULL) {
         *newPtr = cur;
     }
     if (valPtr != NULL) {
         *valPtr = val;
     }
-    
+
     return TRUE;
 }
 
@@ -3550,7 +3606,7 @@ ScanFortranLine(src, srcHead, dst, dstHead, dstMax, inQuotePtr, quoteCharPtr,
 
     while (*src != '\0' && dst <= dstMax) {
         if (isspace((int)*src)) {
-            if (fixed_format_flag && 
+            if (fixed_format_flag &&
                 *inQuotePtr == FALSE && *inHollerithPtr == FALSE ){
                 src++;
             } else {
@@ -3570,7 +3626,7 @@ ScanFortranLine(src, srcHead, dst, dstHead, dstMax, inQuotePtr, quoteCharPtr,
             }
         } else if (*src == 'h' || *src == 'H') {
             if (*inHollerithPtr == FALSE && *inQuotePtr == FALSE) {
-                unHollerith(src, srcHead, dst, dstHead, dstMax, 
+                unHollerith(src, srcHead, dst, dstHead, dstMax,
                             inQuotePtr, *quoteCharPtr,
                             inHollerithPtr, hollerithLenPtr, &src, &dst);
             } else {
@@ -3640,24 +3696,24 @@ ScanFortranLine(src, srcHead, dst, dstHead, dstMax, inQuotePtr, quoteCharPtr,
 /* TOKEN DATA */
 struct keyword_token dot_keywords[] =
 {
-    {"and.", AND}, 
-    {"or.", OR}, 
-    {"not.", NOT}, 
+    {"and.", AND},
+    {"or.", OR},
+    {"not.", NOT},
     {"true.", TRUE_CONSTANT},
-    {"false.", FALSE_CONSTANT}, 
-    {"eq.", EQ}, 
-    {"ne.", NE}, 
-    {"lt.", LT}, 
-    {"le.", LE}, 
-    {"gt.", GT}, 
-    {"ge.", GE}, 
-    {"neqv.", NEQV}, 
-    {"eqv.", EQV}, 
+    {"false.", FALSE_CONSTANT},
+    {"eq.", EQ},
+    {"ne.", NE},
+    {"lt.", LT},
+    {"le.", LE},
+    {"gt.", GT},
+    {"ge.", GE},
+    {"neqv.", NEQV},
+    {"eqv.", EQV},
     {NULL, 0}
 };
 
 /* caution!: longger word should be first than short one.  */
-struct keyword_token keywords[ ] = 
+struct keyword_token keywords[ ] =
 {
     { "assignment",     ASSIGNMENT  },
     { "assign",         ASSIGN  },
@@ -3682,7 +3738,7 @@ struct keyword_token keywords[ ] =
     { "deallocate",     DEALLOCATE},
     { "default",        KW_DEFAULT},
     { "dimension",      DIMENSION  },
-    { "doublecomplex",  KW_DCOMPLEX },  
+    { "doublecomplex",  KW_DCOMPLEX },
     { "doubleprecision",  KW_DOUBLE  },
     { "double",         KW_DBL },     /* optional */
     /* { "dowhile",     DOWHILE }, *//* blanks mandatory */
@@ -3748,6 +3804,7 @@ struct keyword_token keywords[ ] =
     { "pointer",        POINTER },
     { "precision",      KW_PRECISION},
     { "print",          PRINT  },
+    { "protected",      PROTECTED },
     { "procedure",      PROCEDURE },
     { "program",        PROGRAM },
     { "private",        PRIVATE},
@@ -3783,7 +3840,7 @@ struct keyword_token keywords[ ] =
     { "write",          WRITE },
     { 0, 0 }};
 
-struct keyword_token end_keywords[ ] = 
+struct keyword_token end_keywords[ ] =
 {
     { "block",          KW_BLOCK },
     { "blockdata",      BLOCKDATA },
@@ -3810,19 +3867,19 @@ OMP_lex_token()
 {
   int t;
     while(isspace(*bufptr)) bufptr++;  /* skip white space */
-    
+
     if(isalpha(*bufptr)){
 	  if(need_keyword == TRUE || paren_level == 0) {  /* require keyword */
 	    need_keyword = FALSE;
 	    t = get_keyword(OMP_keywords);
 	    if(t != UNKNOWN) return t;
 	  }
-    } 
+    }
     return token();
 }
 
 
-struct keyword_token OMP_keywords[ ] = 
+struct keyword_token OMP_keywords[ ] =
 {
     {"parallel",	OMPKW_PARALLEL },
     {"end",		OMPKW_END },
@@ -3881,19 +3938,19 @@ XMP_lex_token()
 {
   int t;
     while(isspace(*bufptr)) bufptr++;  /* skip white space */
-    
+
     if(isalpha(*bufptr)){
 	  if(need_keyword == TRUE && paren_level == 0) {  /* require keyword */
 	    need_keyword = FALSE;
 	    t = get_keyword(XMP_keywords);
 	    if(t != UNKNOWN) return t;
 	  }
-    } 
+    }
     return token();
 }
 
 #ifdef not
-static int 
+static int
 is_XMP_sentinel(char **pp)
 {
     int i;
@@ -3967,7 +4024,7 @@ static int sentinel_index( sentinel_list * p, char * name )
     return -1;
 }
 
-struct keyword_token XMP_keywords[ ] = 
+struct keyword_token XMP_keywords[ ] =
 {
     {"end",	XMPKW_END },
     {"nodes",	XMPKW_NODES },
@@ -4017,8 +4074,105 @@ struct keyword_token XMP_keywords[ ] =
     { "atomic",		XMPKW_ATOMIC },
     { "direct",		XMPKW_DIRECT },
 
+    { "acc",    XMPKW_ACC },
+
     { 0, 0 }
 };
 
-/* EOF */
 
+/*
+ * lex for OpenACC part
+ */
+static int
+ACC_lex_token()
+{
+  int t;
+    while(isspace(*bufptr)) bufptr++;  /* skip white space */
+    
+    if(isalpha(*bufptr)){
+	  if(need_keyword == TRUE || paren_level == 0) {  /* require keyword */
+	    need_keyword = FALSE;
+	    t = get_keyword(ACC_keywords);
+	    if(t != UNKNOWN) return t;
+	  }
+    } 
+    return token();
+}
+
+struct keyword_token ACC_keywords[ ] = 
+{
+    {"end",			ACCKW_END},
+    {"parallel",		ACCKW_PARALLEL},
+    {"data",			ACCKW_DATA},
+    {"loop",			ACCKW_LOOP},
+    {"kernels",			ACCKW_KERNELS},
+    {"atomic",			ACCKW_ATOMIC},
+    {"wait",			ACCKW_WAIT},
+    {"cache",			ACCKW_CACHE},
+    {"routine",			ACCKW_ROUTINE},
+    {"enter",			ACCKW_ENTER},
+    {"exit",			ACCKW_EXIT},
+    {"host_data",		ACCKW_HOST_DATA},
+    {"declare",			ACCKW_DECLARE},
+    {"init",			ACCKW_INIT},
+    {"shutdown",		ACCKW_SHUTDOWN},
+    {"set",			ACCKW_SET},
+
+    {"if",			ACCKW_IF},
+    {"copy",			ACCKW_COPY},
+    {"copyin",			ACCKW_COPYIN},
+    {"copyout",			ACCKW_COPYOUT},
+    {"create",			ACCKW_CREATE},
+    {"present",			ACCKW_PRESENT},
+    {"present_or_copy",		ACCKW_PRESENT_OR_COPY},
+    {"pcopy",			ACCKW_PRESENT_OR_COPY},
+    {"present_or_copyin",	ACCKW_PRESENT_OR_COPYIN},
+    {"pcopyin",			ACCKW_PRESENT_OR_COPYIN},
+    {"present_or_copyout",	ACCKW_PRESENT_OR_COPYOUT},
+    {"pcopyout",		ACCKW_PRESENT_OR_COPYOUT},
+    {"present_or_create",	ACCKW_PRESENT_OR_CREATE},
+    {"pcreate",			ACCKW_PRESENT_OR_CREATE},
+    {"deviceptr",		ACCKW_DEVICEPTR},
+    {"async",			ACCKW_ASYNC},
+    {"device_type",		ACCKW_DEVICE_TYPE},
+    {"num_gangs",		ACCKW_NUM_GANGS},
+    {"num_workers",		ACCKW_NUM_WORKERS},
+    {"vector_length",		ACCKW_VECTOR_LENGTH},
+    {"reduction",		ACCKW_REDUCTION},
+    {"private",			ACCKW_PRIVATE},
+    {"firstprivate",		ACCKW_FIRSTPRIVATE},
+    {"default",			ACCKW_DEFAULT},
+    {"none",			ACCKW_NONE},
+    {"collapse",		ACCKW_COLLAPSE},
+    {"gang",			ACCKW_GANG},
+    {"worker",			ACCKW_WORKER},
+    {"vector",			ACCKW_VECTOR},
+    {"seq",			ACCKW_SEQ},
+    {"auto",			ACCKW_AUTO},
+    {"tile",			ACCKW_TILE},
+    {"independent",		ACCKW_INDEPENDENT},
+    {"bind",			ACCKW_BIND},
+    {"nohost",			ACCKW_NOHOST},
+    {"read",			ACCKW_READ},
+    {"write",			ACCKW_WRITE},
+    {"update",			ACCKW_UPDATE},
+    {"capture",			ACCKW_CAPTURE},
+    {"delete",			ACCKW_DELETE},
+    {"finalize",		ACCKW_FINALIZE},
+    {"use_device",		ACCKW_USE_DEVICE},
+    {"device_resident",		ACCKW_DEVICE_RESIDENT},
+    {"link",			ACCKW_LINK},
+    {"host",			ACCKW_HOST},
+    {"self",			ACCKW_HOST},
+    {"device",			ACCKW_DEVICE},
+    {"if_present",		ACCKW_IF_PRESENT},
+    {"device_num",		ACCKW_DEVICE_NUM},
+    {"default_async",		ACCKW_DEFAULT_ASYNC},
+
+    { 0, 0 }
+};
+/*
+ * lex for OpenACC part end
+ */
+
+/* EOF */
