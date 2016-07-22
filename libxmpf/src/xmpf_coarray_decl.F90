@@ -1,9 +1,11 @@
 !! XMP/F Coarray Declarations 
 !!
-!! XMP/F translator automatically insert a USE statement:
-!!      use 'xmpf_coarray_decl'
-!! into the output code if any coarray features are used in
-!! the input program.
+!! This file is use-associated to the user program via the USE
+!! statement inserted automatically.
+!!
+!! Besides this file is referred from a shellscript in backend:
+!!   F-BackEnd/src/xcodeml/f/decompile/
+!!     XfDecompileDomVisitor_coarrayLibs.java.sh
 !!
 
 module xmpf_coarray_decl
@@ -81,6 +83,11 @@ module xmpf_coarray_decl
 
 !! reduction subroutines
       include "xmp_coarray_reduction.h"
+
+!! to reduce verbose messages from the native Fortran compiler
+   integer(8) :: xmpf_resource_tag     !! F-BackEnd 
+   external xmpf_coarray_prolog     !! F-BackEnd 
+   external xmpf_coarray_epilog     !! F-BackEnd 
 
 contains
       !-----------------------------------------------------------------

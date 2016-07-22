@@ -22,17 +22,27 @@ fi
 
 function output_entry_names {
     awk '
+        ### {interface|function|subroutine} NAME
         $1 ~ /^interface|function|subroutine$/ &&
         $2 ~ /^[a-z][a-z0-9_][a-z0-9_][a-z0-9_]/ {
             split($2, token, "(")
             printf "        \"%s\",\n", token[1]
         }
+
+        ### Attribute {interface|function|subroutine} NAME
         $1 != "end" && $1 !~ /^!/ &&
         $2 ~ /^interface|function|subroutine$/ &&
         $3 ~ /^[a-z][a-z0-9_][a-z0-9_][a-z0-9_]/ {
             split($3, token, "(")
             printf "        \"%s\",\n", token[1]
         }
+
+        ### ... NAME !! F-BackEnd
+        NF >= 4 && $(NF-1) == "!!" && $NF == "F-BackEnd" {
+            split($(NF-2), token, "(")
+            printf "        \"%s\",\n", token[1]
+        }
+
     ' $1
 }
 
