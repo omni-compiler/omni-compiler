@@ -1042,7 +1042,8 @@ public class AccKernel {
     XobjectDef launcherFuncDef = makeLauncherFuncDefCUDA(launchFuncName, deviceKernelDef, deviceKernelCallArgs);
     XobjectFile devEnv = _decl.getEnvDevice();
     devEnv.add(launcherFuncDef);
-    Ident launcherFuncId = _decl.declExternIdent(launcherFuncDef.getName(), Xtype.Function(Xtype.voidType));
+
+    Ident launcherFuncId = _decl.declExternIdent(launcherFuncDef.getName(), launcherFuncDef.getFuncType());
     XobjList callArgs = Xcons.List();
     for(Xobject arg : deviceKernelCallArgs){
       if(arg.Opcode() == Xcode.CAST_EXPR && arg.Type().isArray()){
