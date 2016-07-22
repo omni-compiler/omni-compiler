@@ -10466,7 +10466,7 @@ fi
 	*)
 	    chk2=`$MPI_FC --version 2> /dev/null | head -n2 | tail -n1`
 	    case $chk2 in
-		pgfortran*)
+		pgfortran*|pgf90*)
 		    # OpenMP
 		    OPENMP_OPT_F="-mp"
 

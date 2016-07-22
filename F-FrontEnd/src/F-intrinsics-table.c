@@ -717,9 +717,9 @@ intrinsic_entry intrinsic_table[] = {
      * This list should match with XcodeML-Exc-Tools/src/exc/xmpF/XMPtransCoarrayRun.java
      */
 
-    { INTR_NUM_IMAGES,    INTR_NAME_GENERIC,   "num_images",        0,      {},                               INTR_TYPE_INT,  0, -6, LANGSPEC_F2008 },
+    { INTR_NUM_IMAGES,    INTR_NAME_GENERIC,   "num_images",        0,      {INTR_TYPE_NONE},                 INTR_TYPE_INT,  0, -6, LANGSPEC_F2008 },
 
-    { INTR_THIS_IMAGE,    INTR_NAME_GENERIC,   "this_image",        0,      {},                               INTR_TYPE_INT,  0, -6, LANGSPEC_F2008 },
+    { INTR_THIS_IMAGE,    INTR_NAME_GENERIC,   "this_image",        0,      {INTR_TYPE_COARRAY_ANY},          INTR_TYPE_INT,  0, -6, LANGSPEC_F2008 },
     { INTR_THIS_IMAGE,    INTR_NAME_GENERIC,   "",                  0,      {INTR_TYPE_COARRAY_ANY},          INTR_TYPE_INT_DYNAMIC_ARRAY,  1, -1, LANGSPEC_F2008 },
     { INTR_THIS_IMAGE,    INTR_NAME_GENERIC,   "",                  0,      {INTR_TYPE_COARRAY_ANY,INTR_TYPE_INT},
                                                                                                               INTR_TYPE_INT,  2, -6, LANGSPEC_F2008 },
