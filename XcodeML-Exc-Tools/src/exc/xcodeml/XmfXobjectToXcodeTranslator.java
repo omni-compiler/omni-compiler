@@ -572,6 +572,27 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         }
             break;
 
+        case F_CRITICAL_STATEMENT:
+            e = createElement(name, "construct_name", getArg0Name(xobj));
+            addChildNode(e, transBody((XobjList)xobj.getArg(1)));
+            break;
+
+        case F_SYNCALL_STATEMENT:                    
+        case F_SYNCIMAGE_STATEMENT:
+        case F_SYNCMEMORY_STATEMENT:
+        case F_LOCK_STATEMENT:
+        case F_UNLOCK_STATEMENT:
+            e = createElement(name);
+            for (Xobject a : (XobjList)xobj) {
+                addChildNode(e, trans(a));
+            }
+            break;
+
+        case F_SYNC_STAT:
+            e = createElement(name, "kind", getArg0Name(xobj));
+            addChildNode(e, trans(xobj.getArg(1)));
+            break;
+
         case VAR:
             e = addChildNodes(createElement(name,
                                             "scope", xobj.getScope() != null ? xobj.getScope().toXcodeString() : null),

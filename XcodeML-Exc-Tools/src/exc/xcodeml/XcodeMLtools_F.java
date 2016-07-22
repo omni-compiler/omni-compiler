@@ -614,6 +614,27 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	return getChildList(n, xx);
       }
 
+    case F_CRITICAL_STATEMENT:
+      {
+        attr = getSymbol(n, "construct_name");
+        return setCommonAttributes(n, Xcons.List(code, type, attr,
+						 toXobject(getElement(n, "body"))
+						 ));
+      }
+
+    case F_SYNC_STAT:
+      {
+        attr = getSymbol(n, "kind");
+        return setCommonAttributes(n, Xcons.List(code, type, attr,
+                                                 toXobject(getContent(n))
+                                                 ));
+      }
+
+    case F_SYNCALL_STATEMENT:
+    case F_SYNCIMAGE_STATEMENT:
+    case F_SYNCMEMORY_STATEMENT:
+    case F_LOCK_STATEMENT:
+    case F_UNLOCK_STATEMENT:
     default: // default action, make list
       NodeList list = n.getChildNodes();
       if(code == Xcode.LIST && list.getLength() == 0)
