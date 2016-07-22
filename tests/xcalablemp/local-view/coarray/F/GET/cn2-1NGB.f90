@@ -1,9 +1,12 @@
   program gettest_char_n
-!!     include "xmp_coarray.h"
     character(len=5) c5(4,3)[*]
     character(len=9) c3(10,3)
 
     me=xmp_node_num()
+    if (xmpf_coarray_uses_fjrdma()) then
+       write(*,'(a)') "Using FJRDMA ... stop"
+       stop
+    endif
 
     !---------------------------- switch on message
 !!    call xmpf_coarray_msg(1)

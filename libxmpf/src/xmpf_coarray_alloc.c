@@ -173,12 +173,9 @@ static void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2);
 static void _freeCoarrayInfo(CoarrayInfo_t *cinfo);
 static char *_dispCoarrayInfo(CoarrayInfo_t *cinfo);
 
-static CoarrayInfo_t *_getShareOfStaticCoarray(size_t thisSize,
-                                               size_t elementRU);
-static CoarrayInfo_t *_allocLargeStaticCoarray(size_t thisSize,
-                                               size_t elementRU);
-static CoarrayInfo_t *_regmemStaticCoarray(void *baseAddr, size_t thisSize,
-                                           size_t elementRU);
+static CoarrayInfo_t *_getShareOfStaticCoarray(size_t thisSize);
+static CoarrayInfo_t *_allocLargeStaticCoarray(size_t nbytesRU);
+static CoarrayInfo_t *_regmemStaticCoarray(void *baseAddr, size_t nbytesRU);
 
 static MPI_Comm _get_communicatorFromCoarrayInfo(CoarrayInfo_t *cinfo);
 
@@ -189,12 +186,9 @@ static CoarrayInfo_t *_cinfo_localBuf;
 
 // allocation and deallocation
 static MemoryChunk_t *_mallocMemoryChunk(int count, size_t element);
-static MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes,
-                                              size_t elementRU);
-static MemoryChunk_t *_regmemMemoryChunk_core(void *baseAddr, unsigned nbytes,
-                                              size_t elementRU);
-static MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes,
-                                            size_t elementRU);
+static MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes);
+static MemoryChunk_t *_regmemMemoryChunk_core(void *baseAddr, unsigned nbytes);
+static MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes);
 
 // malloc/free history (STRUCTURE-II)
 static MemoryChunkStack_t _mallocStack;
@@ -384,7 +378,7 @@ void xmpf_coarray_regmem_(void **descPtr, void *var,
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_REGMEM entry\n");
 
   // regmem
-  MemoryChunk_t *chunk = _regmemMemoryChunk_core(var, *count, (size_t)(*element));
+  MemoryChunk_t *chunk = _regmemMemoryChunk_core(var, *count);
   _XMPF_coarrayDebugPrint("*** new MemoryChunk for RegMem variable %s\n",
                           _dispMemoryChunk(chunk));
 
@@ -402,16 +396,19 @@ void xmpf_coarray_regmem_(void **descPtr, void *var,
 }
 
 
+/*  The size of the scalar variable will be rounded up to the size
+ *  that the communication library can handle.
+ */
 size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
 {
   size_t elementRU;
 
   // boundary check and recovery
-  if (element % MALLOC_UNIT == 0) {
+  if (element % COMM_UNIT == 0) {
     elementRU = element;
   } else if (count == 1) {              // scalar or one-element array
     /* round up */
-    elementRU = ROUND_UP_MALLOC(element);
+    elementRU = ROUND_UP_COMM(element);
     _XMPF_coarrayDebugPrint("round-up size of scalar variable "
                             "%d to %u (name=\"%*s\")\n",
                             element, elementRU, namelen, name);
@@ -429,31 +426,29 @@ size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
 MemoryChunk_t *_mallocMemoryChunk(int count, size_t element)
 {
   MemoryChunk_t *chunk;
-  static char *name = "(unk)";
-  static const int namelen = 5;
+  //static char *name = "(unk)";
+  //static const int namelen = 5;
 
-  size_t elementRU = _roundUpElementSize(count, element, name, namelen);
-  unsigned nbytes = (unsigned)count * elementRU;
+  unsigned nbytes = (unsigned)count * element;
+  unsigned nbytesRU = ROUND_UP_MALLOC(nbytes);
 
   // make memory-chunk even if size nbyte=0
-  chunk = _mallocMemoryChunk_core(nbytes, elementRU);
+  chunk = _mallocMemoryChunk_core(nbytesRU);
 
   return chunk;
 }
 
-MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytes, size_t elementRU)
+MemoryChunk_t *_mallocMemoryChunk_core(unsigned nbytesRU)
 {
-  return _constructMemoryChunk(NULL, nbytes, elementRU);
+  return _constructMemoryChunk(NULL, nbytesRU);
 }
 
-MemoryChunk_t *_regmemMemoryChunk_core(void *baseAddr, unsigned nbytes,
-                                       size_t elementRU)
+MemoryChunk_t *_regmemMemoryChunk_core(void *baseAddr, unsigned nbytesRU)
 {
-  return _constructMemoryChunk(baseAddr, nbytes, elementRU);
+  return _constructMemoryChunk(baseAddr, nbytesRU);
 }
 
-MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes,
-                                     size_t elementRU)
+MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes)
 {
   void *desc;
   char *orgAddr;
@@ -470,9 +465,8 @@ MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes,
     chunk = _newMemoryChunk(desc, baseAddr, nbytes);
   }
 
-  _XMPF_coarrayDebugPrint("*** MemoryChunk %s was made.\n"
-                          "  (%u bytes, elementRU=%u)\n",
-                          _dispMemoryChunk(chunk), nbytes, elementRU);
+  _XMPF_coarrayDebugPrint("*** MemoryChunk %s was made. (%u bytes)\n",
+                          _dispMemoryChunk(chunk), nbytes);
 
   // stack to mallocHistory (STRUCTURE-II)
   _addMemoryChunkToMallocHistory(chunk);
@@ -546,14 +540,12 @@ void xmpf_coarray_malloc_pool_(void)
   pool_currentAddr = pool_chunk->orgAddr;
 
   // share communication buffer in the pool
-  _cinfo_localBuf = _getShareOfStaticCoarray(localBufSize,  // nbytes
-                                             localBufSize); // elementRU
+  _cinfo_localBuf = _getShareOfStaticCoarray(localBufSize);
   _cinfo_localBuf->name = "(localBuf)";
   xmpf_coarray_set_coshape_((void **)(&_cinfo_localBuf), &one, &one);
 
   // share control data area in the pool
-  _cinfo_ctrlData = _getShareOfStaticCoarray(ctrlDataSize,  // nbytes
-                                             ctrlDataSize); // elementRU
+  _cinfo_ctrlData = _getShareOfStaticCoarray(ctrlDataSize);
   _cinfo_ctrlData->name = "(ctrlData)";
   xmpf_coarray_set_coshape_((void **)(&_cinfo_ctrlData), &one, &one);
 
@@ -589,22 +581,21 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                 int *count, int *element,
                                 int *namelen, char *name)
 {
-  size_t elementRU = _roundUpElementSize(*count, (size_t)(*element),
-                                         name, *namelen);
-  size_t nbytes = (size_t)(*count) * elementRU;
+  size_t nbytes = (size_t)(*count) * (size_t)(*element);
+  size_t nbytesRU = ROUND_UP_MALLOC(nbytes);
 
   CoarrayInfo_t *cinfo;
 
   _XMPF_coarrayDebugPrint("COARRAY_ALLOC_STATIC_ varname=\'%*s\'\n"
-                          "  *count=%d, *element=%d, nbytes=%u, elementRU=%u\n",
-                          *namelen, name, *count, *element, nbytes, elementRU);
+                          "  *count=%d, *element=%d, nbytes=%u, nbytesRU=%u\n",
+                          *namelen, name, *count, *element, nbytes, nbytesRU);
 
-  if (nbytes > XMPF_get_poolThreshold()) {
-    _XMPF_coarrayDebugPrint("*** LARGER case: (%u bytes) > _XMPF_poolThreshold\n", nbytes);
-    cinfo = _allocLargeStaticCoarray(nbytes, elementRU);
+  if (nbytesRU > XMPF_get_poolThreshold()) {
+    _XMPF_coarrayDebugPrint("*** LARGER case: (%u bytes) > _XMPF_poolThreshold\n", nbytesRU);
+    cinfo = _allocLargeStaticCoarray(nbytesRU);
   } else {
-    _XMPF_coarrayDebugPrint("*** SMALLER case: (%u bytes) <= _XMPF_poolThreshold\n", nbytes);
-    cinfo = _getShareOfStaticCoarray(nbytes, elementRU);
+    _XMPF_coarrayDebugPrint("*** SMALLER case: (%u bytes) <= _XMPF_poolThreshold\n", nbytesRU);
+    cinfo = _getShareOfStaticCoarray(nbytesRU);
   }
   cinfo->name = _xmp_strndup(name, *namelen);
 
@@ -638,73 +629,72 @@ void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
                        namelen, name, element);
   }
 
-  size_t elementRU = (size_t)(*element);
-  size_t nbytes = (size_t)(*count) * elementRU;
+  size_t nbytes = (size_t)(*count) * (size_t)(*element);
+  size_t nbytesRU = ROUND_UP_MALLOC(nbytes);
 
   _XMPF_coarrayDebugPrint("COARRAY_REGMEM_STATIC_ varname=\'%*s\'\n",
                           *namelen, name);
 
-  cinfo = _regmemStaticCoarray(*baseAddr, nbytes, elementRU);
+  cinfo = _regmemStaticCoarray(*baseAddr, nbytesRU);
   cinfo->name = _xmp_strndup(name, *namelen);
 
   *descPtr = (void*)cinfo;
 }
 
 
-CoarrayInfo_t *_regmemStaticCoarray(void *baseAddr, size_t nbytes,
-                                    size_t elementRU)
+CoarrayInfo_t *_regmemStaticCoarray(void *baseAddr, size_t nbytesRU)
 {
   _XMPF_checkIfInTask("allocation of static coarray");
 
-  _XMPF_coarrayDebugPrint("*** REG-MEM (%u bytes)\n", nbytes);
+  _XMPF_coarrayDebugPrint("*** _regmemStaticCoarray (%u bytes)\n", nbytesRU);
 
   // get memory-chunk and set baseAddr
-  MemoryChunk_t *chunk = _regmemMemoryChunk_core(baseAddr, nbytes, elementRU);
+  MemoryChunk_t *chunk = _regmemMemoryChunk_core(baseAddr, nbytesRU);
 
   // make coarrayInfo and linkage
-  CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr, nbytes);
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr, nbytesRU);
   _addCoarrayInfo(chunk, cinfo);
 
   return cinfo;
 }
 
 
-CoarrayInfo_t *_allocLargeStaticCoarray(size_t nbytes, size_t elementRU)
+CoarrayInfo_t *_allocLargeStaticCoarray(size_t nbytesRU)
 {
   _XMPF_checkIfInTask("allocation of static coarray");
 
   // malloc memory-chunk
-  MemoryChunk_t *chunk = _mallocMemoryChunk_core(nbytes, elementRU);
+  MemoryChunk_t *chunk = _mallocMemoryChunk_core(nbytesRU);
   _XMPF_coarrayDebugPrint("*** MemoryChunk %s malloc-ed\n",
                           _dispMemoryChunk(chunk));
 
   // make coarrayInfo and linkage
-  CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr, nbytes);
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr, nbytesRU);
   _addCoarrayInfo(chunk, cinfo);
 
   return cinfo;
 }
 
 
-CoarrayInfo_t *_getShareOfStaticCoarray(size_t nbytes, size_t elementRU)
+CoarrayInfo_t *_getShareOfStaticCoarray(size_t nbytesRU)
 {
   _XMPF_checkIfInTask("share of static coarray");
 
   // allocate and set _coarrayInfo
-  CoarrayInfo_t *cinfo = _newCoarrayInfo(pool_currentAddr, nbytes);
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(pool_currentAddr, nbytesRU);
   _addCoarrayInfo(pool_chunk, cinfo);
 
   // check: lack of memory pool
-  if (pool_currentAddr + nbytes > pool_chunk->orgAddr + pool_totalSize) {
+  if (pool_currentAddr + nbytesRU > pool_chunk->orgAddr + pool_totalSize) {
     _XMPF_coarrayFatal("INTERNAL ERROR: "
                        "insufficient memory pool for static coarrays: "
                        "xmpf_coarray_share_pool_() in %s", __FILE__);
   }
 
   _XMPF_coarrayDebugPrint("*** memory share %u bytes from the pool <%p>\n",
-                          nbytes, pool_currentAddr);
+                          nbytesRU, pool_currentAddr);
 
-  pool_currentAddr += nbytes;
+  pool_currentAddr += nbytesRU;
 
   return cinfo;
 }

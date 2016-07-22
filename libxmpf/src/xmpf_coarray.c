@@ -118,12 +118,13 @@ BOOL XMPF_isSafeBufferMode(void)
 
 
 /*****************************************\
-  hidden API
+  hidden API,
+   which can be used in the program
 \*****************************************/
 
 /*
- *  hidden subroutine interface,
- *   which can be used in the user program
+ *  verbose message from CAF runtime
+ *    sw == 1(on) or 0(off) for each node
  */
 void xmpf_coarray_msg_(int *sw)
 {

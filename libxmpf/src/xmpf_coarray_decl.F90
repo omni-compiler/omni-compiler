@@ -83,12 +83,38 @@ module xmpf_coarray_decl
       include "xmp_coarray_reduction.h"
 
 contains
-      !-------------------------------
-      ! test routine
-      !-------------------------------
-      subroutine xmpf_coarray_hello
-        write(*,*) "Hello Coarray"
-      end subroutine xmpf_coarray_hello
+      !-----------------------------------------------------------------
+      !   inquery functions
+      !-----------------------------------------------------------------
+      function xmpf_coarray_uses_gasnet() result(answer)
+        logical answer
+#if _XMP_GASNET == 1
+        answer = .true.
+#else
+        answer = .false.
+#endif
+        return
+      end function
+
+      function xmpf_coarray_uses_mpi3_onesided() result(answer)
+        logical answer
+#if _XMP_MPI3_ONESIDED == 1
+        answer = .true.
+#else
+        answer = .false.
+#endif
+        return
+      end function
+
+      function xmpf_coarray_uses_fjrdma() result(answer)
+        logical answer
+#if _XMP_FJRDMA == 1
+        answer = .true.
+#else
+        answer = .false.
+#endif
+        return
+      end function
 
 end module xmpf_coarray_decl
 

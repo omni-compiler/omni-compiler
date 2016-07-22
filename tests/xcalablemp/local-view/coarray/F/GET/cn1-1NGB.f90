@@ -4,6 +4,10 @@
     character(len=9) c3(10)
 
     me=xmp_node_num()
+    if (xmpf_coarray_uses_fjrdma()) then
+       write(*,'(a)') "Using FJRDMA ... stop"
+       stop
+    endif
 
     !---------------------------- switch on message
 !!    call xmpf_coarray_msg(1)

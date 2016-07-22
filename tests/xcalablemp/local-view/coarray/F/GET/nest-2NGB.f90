@@ -1,6 +1,9 @@
-!!   include "xmp_coarray.h"
   integer*2 a1d1(10)[*], tmp(10)
-!!  intrinsic max
+
+  if (xmpf_coarray_uses_fjrdma()) then
+     write(*,'(a)') "Using FJRDMA ... stop"
+     stop
+  endif
 
 !--------- init
   me = xmp_node_num()

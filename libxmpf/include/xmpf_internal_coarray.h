@@ -24,11 +24,11 @@
 #elif defined(_XMP_MPI3_ONESIDED)
 #  define COMM_UNIT      ((size_t)1)
 #  define MALLOC_UNIT    ((size_t)4)
-#  define ONESIDED_COMM_LAYER "MPI3_ONESIDED"
+#  define ONESIDED_COMM_LAYER "MPI3"
 #else
 #  define COMM_UNIT      ((size_t)1)
 #  define MALLOC_UNIT    ((size_t)4)
-#  define ONESIDED_COMM_LAYER "(something unknown)"
+#  define ONESIDED_COMM_LAYER "unknown"
 #endif
 
 #define _ROUND_UP(n,p)        (((((size_t)(n))-1)/(p)+1)*(p))
@@ -55,6 +55,7 @@ extern unsigned XMPF_get_poolThreshold(void);
 extern size_t XMPF_get_localBufSize(void);
 extern BOOL XMPF_isSafeBufferMode(void);
 
+/* hidden API */
 extern void xmpf_coarray_msg_(int *sw);
 
 extern char *_XMPF_errmsg;   // to answer ERRMSG argument in Fortran

@@ -1,13 +1,13 @@
   program putgettest
-!!     include "xmp_coarray.h"
     integer*2 a2d2(10,8)[*]
     integer xmp_node_num
     integer nerr
 
-    me = xmp_node_num()   ! == this_image()
-
-    !---------------------------- switch on message
-!!    call xmpf_coarray_msg(1)
+    me = this_image()
+    if (xmpf_coarray_uses_fjrdma()) then
+       write(*,'(a)') "Using FJRDMA ... stop"
+       stop
+    endif
 
     !---------------------------- initialization
     if (me==3) then

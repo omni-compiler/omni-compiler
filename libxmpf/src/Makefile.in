@@ -121,7 +121,7 @@ $(OBJECTS): $(HEADERS)
 .F90.o:
 	$(FC) $(FCFLAGS) $< -c
 
-$(XMPF_COARRAY_DECL) xmpf_coarray_decl.o: xmpf_coarray_decl.f90
+$(XMPF_COARRAY_DECL) xmpf_coarray_decl.o: xmpf_coarray_decl.F90
 	rm -rf $(WORKDIR)
 	$(MKDIR_P) $(WORKDIR)
 	$(INSTALL) ../include/*.h $(WORKDIR)

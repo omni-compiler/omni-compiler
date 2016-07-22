@@ -1,13 +1,19 @@
   program putgettest
-!!     include "xmp_coarray.h"
     integer*2 a2d2(10,8)[*]
-!!    integer xmp_node_num
     integer nerr
 
     me = this_image()
 
-    !---------------------------- switch on message
-!!    call xmpf_coarray_msg(1)
+    if (xmpf_coarray_uses_gasnet()) then
+       write(*,'(a)') "Using GASNET"
+    endif
+    if (xmpf_coarray_uses_mpi3_onesided()) then
+       write(*,'(a)') "Using MPI3_ONESIDED"
+    endif
+    if (xmpf_coarray_uses_fjrdma()) then
+       write(*,'(a)') "Using FJRDMA ... stop"
+       stop
+    endif
 
     !---------------------------- initialization
     a2d2=0
