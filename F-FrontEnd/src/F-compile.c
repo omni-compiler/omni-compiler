@@ -9,9 +9,12 @@
 #include <sys/wait.h>
 
 /* program unit control stack */
-UNIT_CTL unit_ctls[MAX_UNIT_CTL];
 int unit_ctl_level;
 int unit_ctl_contains_level;
+
+UNIT_CTL unit_ctl_base;
+UNIT_CTL current_unit_ctl;
+UNIT_CTL parent_unit_ctl;
 
 LOCAL_ENV current_local_env;
 LOCAL_ENV parent_local_env = NULL;
@@ -1309,9 +1312,9 @@ compile_exec_statement(expr x)
  */
 static int
 check_inside_INTERFACE_body() {
-    int i;
-    for (i = 0; i <= unit_ctl_level; i++) {
-        if (UNIT_CTL_CURRENT_STATE(unit_ctls[i]) == ININTR) {
+    UNIT_CTL uc;
+    FOR_UNIT_CTL(uc) {
+        if (UNIT_CTL_CURRENT_STATE(uc) == ININTR) {
             return TRUE;
         }
     }
@@ -5094,12 +5097,15 @@ create_implicit_decl_expv(TYPE_DESC tp, char * first, char * second)
 void
 set_parent_implicit_decls()
 {
-    int i;
     expv v;
     list lp;
+    UNIT_CTL uc;
 
-    for (i = 0; i < unit_ctl_level; i++) {
-        FOR_ITEMS_IN_LIST(lp, UNIT_CTL_IMPLICIT_DECLS(unit_ctls[i])) {
+    FOR_UNIT_CTL(uc) {
+        if (uc == CURRENT_UNIT_CTL) {
+            continue;
+        }
+        FOR_ITEMS_IN_LIST(lp, UNIT_CTL_IMPLICIT_DECLS(uc)) {
             v = LIST_ITEM(lp);
             if(EXPR_CODE(v) == IDENT)
                 set_implicit_type_uc(CURRENT_UNIT_CTL,
@@ -5182,14 +5188,12 @@ new_unit_ctl()
 static void
 initialize_unit_ctl()
 {
-    int i;
-
-    for (i = 0; i < MAX_UNIT_CTL; ++i) {
-        unit_ctls[i] = NULL;
-    }
-    unit_ctls[0] = new_unit_ctl();
+    unit_ctl_base = new_unit_ctl();
     unit_ctl_level = 0;
     unit_ctl_contains_level = 0;
+
+    CURRENT_UNIT_CTL = unit_ctl_base;
+    PARENT_UNIT_CTL = NULL;
 
     current_local_env = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
     parent_local_env = NULL;
@@ -5209,7 +5213,7 @@ push_unit_ctl(enum prog_state state)
         fatal("push_unit_ctl() bug");
         return;
     }
-    top_proc = UNIT_CTL_CURRENT_PROCEDURE(unit_ctls[0]);
+    top_proc = UNIT_CTL_CURRENT_PROCEDURE(unit_ctl_base);
     if (top_proc != NULL && ID_CLASS(top_proc) != CL_MODULE) {
         /* if top procedure is not module, stack len restriction become -1 */
         max_unit_ctl_contains --;
@@ -5231,8 +5235,11 @@ push_unit_ctl(enum prog_state state)
     if(state == INCONT)
         unit_ctl_contains_level ++;
 
-    assert(unit_ctls[unit_ctl_level] == NULL);
-    unit_ctls[unit_ctl_level] = new_unit_ctl();
+    assert(current_unit_ctl->next == NULL);
+    current_unit_ctl->next = new_unit_ctl();
+    parent_unit_ctl = current_unit_ctl;
+    current_unit_ctl = current_unit_ctl->next;
+    current_unit_ctl->prev = parent_unit_ctl;
     if (check_inside_INTERFACE_body() == FALSE) {
         set_parent_implicit_decls();
     }
@@ -5290,8 +5297,11 @@ pop_unit_ctl()
         error("Too many end procedure");
         return;
     }
-    unit_ctls[unit_ctl_level] = NULL;
     unit_ctl_level --;
+    current_unit_ctl = parent_unit_ctl;
+    parent_unit_ctl = current_unit_ctl->prev;
+    current_unit_ctl->next = NULL;
+
     current_local_env = parent_local_env;
     if (unit_ctl_level > 0) {
         parent_local_env = UNIT_CTL_LOCAL_ENV(PARENT_UNIT_CTL);

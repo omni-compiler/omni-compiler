@@ -1120,10 +1120,13 @@ ID
 find_ident_parent(SYMBOL s)
 {
     ID ip;
-    int lev_idx;
+    UNIT_CTL uc;
 
-    for (lev_idx = unit_ctl_level - 1; lev_idx >= 0; --lev_idx) {
-        ip = find_ident_head(s, UNIT_CTL_LOCAL_SYMBOLS(unit_ctls[lev_idx]));
+    FOR_UNIT_CTL_BACKWARD(uc) {
+        if (uc == CURRENT_UNIT_CTL) {
+            continue;
+        }
+        ip = find_ident_head(s, UNIT_CTL_LOCAL_SYMBOLS(uc));
         if (ip != NULL) {
             return ip;
         }
@@ -1154,12 +1157,11 @@ ID
 find_external_ident_head(SYMBOL s)
 {
     EXT_ID ep;
-    int parent = !unit_ctl_level?unit_ctl_level:unit_ctl_level-1;
-    if(parent == 0) {
+    if(PARENT_UNIT_CTL == NULL) {
         /* global function can be called.*/
         return NULL;
     }
-    FOREACH_EXT_ID(ep, UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(unit_ctls[parent])) {
+    FOREACH_EXT_ID(ep, UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(PARENT_UNIT_CTL)) {
         if (EXT_SYM(ep) == s)
         switch(EXT_TAG(ep)) {
         case STG_EXT:
@@ -1187,8 +1189,9 @@ ID
 find_external_cont_ident_head(SYMBOL s)
 {
     EXT_ID ep;
-    int parent = !unit_ctl_level?unit_ctl_level:unit_ctl_level-1;
-    FOREACH_EXT_ID(ep, UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(unit_ctls[parent])) {
+    UNIT_CTL uc;
+    uc = PARENT_UNIT_CTL ?: CURRENT_UNIT_CTL;
+    FOREACH_EXT_ID(ep, UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(uc)) {
         if (EXT_SYM(ep) == s)
         switch(EXT_TAG(ep)) {
         case STG_EXT:
@@ -1242,20 +1245,22 @@ find_ext_id_parent(SYMBOL s)
 {
     EXT_ID ep;
 #if 0
-    int lev_idx;
-    for (lev_idx = unit_ctl_level - 1; lev_idx >= 0; --lev_idx) {
-        ep = find_ext_id_head(s,
-                UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(unit_ctls[lev_idx]));
+    UNIT_CTL uc;
+    FOR_UNIT_CTL_BACKWARD(uc) {
+        if (uc == CURRENT_UNIT_CTL) {
+            continue;
+        }
+        ep = find_ext_id_head(s, UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(uc));
         if (ep != NULL) {
             return ep;
         }
     }
     return NULL;
 #endif
-    if (unit_ctl_level == 0)
+    if (PARENT_UNIT_CTL == NULL)
         return NULL;
     ep = find_ext_id_head(s,
-         UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(unit_ctls[unit_ctl_level - 1]));
+         UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(PARENT_UNIT_CTL));
     return ep;
 
 }
@@ -1298,11 +1303,13 @@ ID
 find_common_ident_parent(SYMBOL s)
 {
     ID ip;
-    int lev_idx;
+    UNIT_CTL uc;
 
-    for (lev_idx = unit_ctl_level - 1; lev_idx >= 0; --lev_idx) {
-        ip = find_ident_head(s,
-                UNIT_CTL_LOCAL_COMMON_SYMBOLS(unit_ctls[lev_idx]));
+    FOR_UNIT_CTL_BACKWARD(uc) {
+        if (uc == CURRENT_UNIT_CTL) {
+            continue;
+        }
+        ip = find_ident_head(s, UNIT_CTL_LOCAL_COMMON_SYMBOLS(uc));
         if (ip != NULL) {
             return ip;
         }
@@ -3004,12 +3011,14 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 TYPE_DESC
 find_struct_decl_parent(SYMBOL s)
 {
-    int lev_idx;
     TYPE_DESC tp;
+    UNIT_CTL uc;
 
-    for (lev_idx = unit_ctl_level - 1; lev_idx >= 0; --lev_idx) {
-        tp = find_struct_decl_head(s,
-                UNIT_CTL_LOCAL_STRUCT_DECLS(unit_ctls[lev_idx]));
+    FOR_UNIT_CTL_BACKWARD(uc) {
+        if (uc == CURRENT_UNIT_CTL) {
+            continue;
+        }
+        tp = find_struct_decl_head(s, UNIT_CTL_LOCAL_STRUCT_DECLS(uc));
         if (tp != NULL) {
             return tp;
         }
