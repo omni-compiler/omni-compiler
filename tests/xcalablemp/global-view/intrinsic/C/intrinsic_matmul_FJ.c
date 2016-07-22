@@ -1874,7 +1874,7 @@ int m3[2]={24,30};
 int m4[2]={20,25};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,2,2)
-#pragma xmp nodes pb(2,4)
+#pragma xmp nodes pb(4,2)
 #pragma xmp nodes px(2,2,2)
 #pragma xmp template ta(0:M-1,0:L-1,100)
 #pragma xmp template tb(0:N-1,0:L-1)
@@ -1949,7 +1949,7 @@ int m3[2]={24,30};
 int m4[2]={20,25};
 #pragma xmp nodes p(8)
 #pragma xmp nodes pa(2,4)
-#pragma xmp nodes pb(2,4)
+#pragma xmp nodes pb(4,2)
 #pragma xmp nodes px(2,2,2)
 #pragma xmp template ta(100,0:L-1)
 #pragma xmp template tb(0:N-1,0:L-1)
