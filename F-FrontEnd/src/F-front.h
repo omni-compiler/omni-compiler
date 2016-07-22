@@ -305,7 +305,7 @@ typedef struct {
 
     struct local_environment local_env;
 
-    int			implicit_none;
+    int                 implicit_none;
     int                 implicit_type_declared;
     TYPE_DESC           implicit_types[IMPLICIT_ALPHA_NUM];
     enum storage_class  implicit_stg[IMPLICIT_ALPHA_NUM];
