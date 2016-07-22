@@ -269,6 +269,15 @@ public enum Xcode
      // -----------------
      // added for coarray
     F_CO_SHAPE                      ( 197, 'L', null, null),         // ID=060
+     // -----------------
+     // Fortran2008: Statement, etc.
+    F_SYNCALL_STATEMENT             ( 198, 'S', null, null),
+    F_SYNCIMAGE_STATEMENT           ( 199, 'S', null, null),
+    F_SYNCMEMORY_STATEMENT          ( 200, 'S', null, null),
+    F_CRITICAL_STATEMENT            ( 201, 'S', null, null),
+    F_LOCK_STATEMENT                ( 202, 'S', null, null),
+    F_UNLOCK_STATEMENT              ( 203, 'S', null, null),
+    F_SYNC_STAT                     ( 204, 'L', null, null),
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),
@@ -479,6 +488,9 @@ public enum Xcode
         case F_ENTRY_DECL:                  case F_FORMAT_DECL:
         case F_DATA_DECL:
         case PRAGMA_LINE:                   case TEXT:
+        case F_SYNCALL_STATEMENT:           case F_SYNCIMAGE_STATEMENT:
+        case F_SYNCMEMORY_STATEMENT:        case F_CRITICAL_STATEMENT:
+        case F_LOCK_STATEMENT:              case F_UNLOCK_STATEMENT:
             return true;
         }
         return false;
