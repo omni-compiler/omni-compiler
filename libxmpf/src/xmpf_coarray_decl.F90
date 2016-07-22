@@ -85,7 +85,6 @@ module xmpf_coarray_decl
       include "xmp_coarray_reduction.h"
 
 !! to reduce verbose messages from the native Fortran compiler
-   integer(8) :: xmpf_resource_tag     !! F-BackEnd 
    external xmpf_coarray_prolog     !! F-BackEnd 
    external xmpf_coarray_epilog     !! F-BackEnd 
 
