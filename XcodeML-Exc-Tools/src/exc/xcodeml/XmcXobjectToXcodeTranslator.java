@@ -494,6 +494,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         case FUNCTION_DECL:
             e = addChildNodes(createElement(name),
                               transName(xobj.getArg(0)),
+                              trans(xobj.getArgOrNull(1)),
                               trans(xobj.getArgOrNull(2)));
             break;
 
