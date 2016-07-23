@@ -64,6 +64,8 @@ class AccData extends AccDirective {
         continue;
       }
 
+      if(var.isDeviceptr()) continue;
+
       String varName = var.getName();
       StorageClass storageClass = var.getId().getStorageClass();
       var.setHostDesc(declHostDesc(varName, storageClass));
