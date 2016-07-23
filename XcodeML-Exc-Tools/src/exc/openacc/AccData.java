@@ -16,8 +16,8 @@ class AccData extends AccDirective {
   AccData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
-  AccData(ACCglobalDecl decl, AccInformation info) {
-    super(decl, info);
+  AccData(ACCglobalDecl decl, AccInformation info, XobjectDef def) {
+    super(decl, info, def);
   }
 
   boolean isAcceptableClause(ACCpragma clauseKind) {

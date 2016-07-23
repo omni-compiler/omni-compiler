@@ -18,12 +18,9 @@ int main()
     a[i] = i;
   }
 
-#pragma acc data
-  {
 #pragma acc parallel loop
-    for(i=0;i<N;i++){
-      b[i] = i + 1.0;
-    }
+  for(i=0;i<N;i++){
+    b[i] = i + 1.0;
   }
 
 #pragma acc parallel

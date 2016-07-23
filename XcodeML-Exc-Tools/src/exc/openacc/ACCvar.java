@@ -5,6 +5,7 @@ import java.util.*;
 
 
 public class ACCvar {
+  public static final String prop = "_ACC_VAR";
   private final String symbol;
   private Ident id;
 

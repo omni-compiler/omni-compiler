@@ -37,9 +37,11 @@ class AccParallel extends AccData{
       ACCvar parentVar = findParentVar(id);
       ACCvar var = _info.findACCvar(varName);
 
+
       boolean isReductionVariableInKernel = isReductionVariableInKernel(id);
 
-      if (!id.Type().isPointer() && (ACC.version >= 20 || readOnlyOuterIdSet.contains(id))
+      if (!id.Type().isPointer()
+              && (ACC.version >= 20 || readOnlyOuterIdSet.contains(id))
               && parentVar == null/* not appeared in outer data clause*/
               && (var == null || !var.isReduction()) /* not reduction variable in the directive */
               && !isReductionVariableInKernel /* not reduction variable in the kernel*/ ) {
