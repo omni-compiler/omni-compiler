@@ -159,7 +159,7 @@ public class Bcons
     /** create Fortran 'do' statement block from Xobject */
     public static Block Fdo(Xobject fdo_stmt)
     {
-        return new FdoBlock(fdo_stmt, fdo_stmt.getArg(1), fdo_stmt.getArg(2), buildList(fdo_stmt.getArg(3)), getArg0Name(fdo_stmt));
+        return new FdoBlock(fdo_stmt.getLineNo(), fdo_stmt.getArg(1), fdo_stmt.getArg(2), buildList(fdo_stmt.getArg(3)), getArg0Name(fdo_stmt));
     }
 
     /** create 'while' statement block */
