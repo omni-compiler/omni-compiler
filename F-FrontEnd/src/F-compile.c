@@ -17,8 +17,6 @@ UNIT_CTL current_unit_ctl;
 UNIT_CTL parent_unit_ctl;
 
 LOCAL_ENV current_local_env;
-LOCAL_ENV parent_local_env = NULL;
-
 
 /* flags and defaults */
 int save_all = FALSE;
@@ -256,6 +254,7 @@ push_ctl(ctl)
     CURRENT_BLK_LEVEL++;
 
     if (ctl == CTL_BLOCK) {
+        LOCAL_ENV parent_local_env;
         parent_local_env = current_local_env;
         current_local_env = CTL_BLOCK_LOCAL_ENV(ctl_top);
         CTL_BLOCK_LOCAL_SYMBOLS(ctl_top) = NULL;
@@ -263,6 +262,7 @@ push_ctl(ctl)
         CTL_BLOCK_LOCAL_COMMON_SYMBOLS(ctl_top) = NULL;
         CTL_BLOCK_LOCAL_LABELS(ctl_top) = NULL;
         CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(ctl_top) = NULL;
+        current_local_env->parent = parent_local_env;
     }
 }
 
@@ -282,29 +282,7 @@ pop_ctl()
     CURRENT_BLK_LEVEL--;
 
     if (old_ctl_type == CTL_BLOCK) {
-        CTL cp;
-        current_local_env = parent_local_env;
-        parent_local_env = NULL;
-        FOR_CTLS_BACKWARD(cp) {
-            if (CTL_BLOCK_LOCAL_ENV(cp) == current_local_env)
-                continue;
-            if (CTL_TYPE(cp) == CTL_BLOCK) {
-                parent_local_env = CTL_BLOCK_LOCAL_ENV(cp);
-                break;
-            }
-        }
-
-        if (parent_local_env == NULL) {
-            if (current_local_env != UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL)) {
-                parent_local_env = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
-            } else {
-                if (unit_ctl_level > 0) {
-                    parent_local_env = UNIT_CTL_LOCAL_ENV(PARENT_UNIT_CTL);
-                } else {
-                    parent_local_env = NULL;
-                }
-            }
-        }
+        current_local_env = current_local_env->parent;
     }
 }
 
@@ -5196,7 +5174,7 @@ initialize_unit_ctl()
     PARENT_UNIT_CTL = NULL;
 
     current_local_env = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
-    parent_local_env = NULL;
+    current_local_env->parent = NULL;
 }
 
 /**
@@ -5208,6 +5186,7 @@ push_unit_ctl(enum prog_state state)
 {
     ID top_proc;
     int max_unit_ctl_contains = MAX_UNIT_CTL_CONTAINS;
+    LOCAL_ENV parent_local_env;
 
     if (unit_ctl_level < 0) {
         fatal("push_unit_ctl() bug");
@@ -5246,6 +5225,7 @@ push_unit_ctl(enum prog_state state)
 
     parent_local_env = current_local_env;
     current_local_env = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
+    current_local_env->parent = parent_local_env;
 }
 
 
@@ -5302,12 +5282,7 @@ pop_unit_ctl()
     parent_unit_ctl = current_unit_ctl->prev;
     current_unit_ctl->next = NULL;
 
-    current_local_env = parent_local_env;
-    if (unit_ctl_level > 0) {
-        parent_local_env = UNIT_CTL_LOCAL_ENV(PARENT_UNIT_CTL);
-    } else {
-        parent_local_env = NULL;
-    }
+    current_local_env = current_local_env->parent;
 
     if(CURRENT_STATE == INCONT)
         unit_ctl_contains_level --;

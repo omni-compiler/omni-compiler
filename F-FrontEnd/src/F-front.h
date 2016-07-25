@@ -181,10 +181,11 @@ typedef struct local_environment {
     ID                  local_labels;
     EXT_ID              local_external_symbols;
     BLOCK_ENV           local_blocks;
+
+    struct local_environment * parent;
 } *LOCAL_ENV;
 
 extern LOCAL_ENV current_local_env;
-extern LOCAL_ENV parent_local_env;
 
 /* control */
 typedef struct control
@@ -388,10 +389,10 @@ extern int unit_ctl_level;
 #define PARENT_CONTAINS             EXT_PROC_CONT_EXT_SYMS(PARENT_EXT_ID)
 #define PARENT_INTERFACE            UNIT_CTL_CURRENT_INTERFACE(PARENT_UNIT_CTL)
 
-#define PARENT_LOCAL_SYMBOLS        (parent_local_env->local_symbols)
-#define PARENT_LOCAL_STRUCT_DECLS   (parent_local_env->local_struct_decls)
-#define PARENT_LOCAL_COMMON_SYMBOLS (parent_local_env->local_common_symbols)
-#define PARENT_EXTERNAL_SYMBOLS     (parent_local_env->local_external_symbols)
+#define PARENT_LOCAL_SYMBOLS        (current_local_env->parent->local_symbols)
+#define PARENT_LOCAL_STRUCT_DECLS   (current_local_env->parent->local_struct_decls)
+#define PARENT_LOCAL_COMMON_SYMBOLS (current_local_env->parent->local_common_symbols)
+#define PARENT_EXTERNAL_SYMBOLS     (current_local_env->parent->local_external_symbols)
 
 /*
  * Language specification level. Mainly used for intrinsic table
