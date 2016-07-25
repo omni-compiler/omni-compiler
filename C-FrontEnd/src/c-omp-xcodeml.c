@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 #include <stdlib.h>
 #include <stdarg.h> 
 #include <wchar.h>
@@ -68,6 +62,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
 
   case OMP_DIR_IF:
   case OMP_DIR_NUM_THREADS:
+  case OMP_COLLAPSE:
       outxContext(fp,indent1+1,arg);
       break;
 
@@ -153,6 +148,7 @@ char *ompClauseName(int c)
   case OMP_DIR_NOWAIT: return "DIR_NOWAIT";
   case OMP_DIR_SCHEDULE: return "DIR_SCHEDULE";
   case OMP_DIR_NUM_THREADS: return "DIR_NUM_THREADS";
+  case OMP_COLLAPSE: return "COLLAPSE";
   default:  return "???OMP???";
   }
 }

@@ -21,7 +21,7 @@ LIBDIR           = @OMNI_HOME@/lib
 INCDIR           = @OMNI_HOME@/include
 OMP_HEADER       = ../../include/omp.h
 
-all:    $(OMPCRTOBJ) $(OMPFRTOBJ) doAllLib
+all:    $(OMPCRTOBJ) $(OMPFRTOBJ) 
 include ./target.tmpl
 $(OMPCRTOBJ): $(OMPCRTOBJ_SRC)
 	$(CC) $(CFLAGS) -c $<
