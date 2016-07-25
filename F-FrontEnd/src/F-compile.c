@@ -142,10 +142,45 @@ void check_for_ACC_pragma(expr x);
 void set_parent_implicit_decls(void);
 
 int
-current_proc_is_block() {
+current_proc_is_block()
+{
     return CURRENT_PROC_CLASS == CL_BLOCK;
 }
 
+void
+push_env(LOCAL_ENV env)
+{
+    LOCAL_ENV parent_local_env;
+    parent_local_env = current_local_env;
+    current_local_env = env;
+    current_local_env->parent = parent_local_env;
+}
+
+
+void
+clean_env(LOCAL_ENV env)
+{
+    env->local_symbols = NULL;
+    env->local_struct_decls = NULL;
+    env->local_common_symbols = NULL;
+    env->local_labels = NULL;
+    env->local_external_symbols = NULL;
+    env->local_interfaces = NULL;
+    env->local_blocks = NULL;
+    env->local_use_decls = list0(LIST);
+}
+
+void
+pop_env()
+{
+    LOCAL_ENV old = current_local_env;
+    if (current_local_env->parent == NULL) {
+        error("no more parent environments");
+        return;
+    }
+    current_local_env = current_local_env->parent;
+    clean_env(old);
+}
 
 void
 initialize_compile()
@@ -254,15 +289,7 @@ push_ctl(ctl)
     CURRENT_BLK_LEVEL++;
 
     if (ctl == CTL_BLOCK) {
-        LOCAL_ENV parent_local_env;
-        parent_local_env = current_local_env;
-        current_local_env = CTL_BLOCK_LOCAL_ENV(ctl_top);
-        CTL_BLOCK_LOCAL_SYMBOLS(ctl_top) = NULL;
-        CTL_BLOCK_LOCAL_STRUCT_DECLS(ctl_top) = NULL;
-        CTL_BLOCK_LOCAL_COMMON_SYMBOLS(ctl_top) = NULL;
-        CTL_BLOCK_LOCAL_LABELS(ctl_top) = NULL;
-        CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(ctl_top) = NULL;
-        current_local_env->parent = parent_local_env;
+        push_env(CTL_BLOCK_LOCAL_ENV(ctl_top));
     }
 }
 
@@ -282,7 +309,7 @@ pop_ctl()
     CURRENT_BLK_LEVEL--;
 
     if (old_ctl_type == CTL_BLOCK) {
-        current_local_env = current_local_env->parent;
+        pop_env();
     }
 }
 
@@ -2135,6 +2162,7 @@ setLocalInfoToCurrentExtId(int asModule)
     EXT_PROC_ID_LIST(CURRENT_EXT_ID) = LOCAL_SYMBOLS;
     EXT_PROC_STRUCT_DECLS(CURRENT_EXT_ID) = LOCAL_STRUCT_DECLS;
     EXT_PROC_BLOCKS(CURRENT_EXT_ID) = LOCAL_BLOCKS;
+    EXT_PROC_INTERFACES(CURRENT_EXT_ID) = LOCAL_INTERFACES;
 
     if(asModule) {
         EXT_PROC_COMMON_ID_LIST(CURRENT_EXT_ID) = NULL;
@@ -2339,10 +2367,11 @@ end_procedure()
         if (CURRENT_EXT_ID == NULL) {
             /* Any other errors already occured, let compilation carry on. */
             return;
-        }
+         }
+        /* TODO: CHECK for INTERFACES in BLOCK construct*/
         /* check if module procedures are defined in contains block */
         EXT_ID intr, intrDef, ep;
-        FOREACH_EXT_ID(intr, EXT_PROC_INTERFACES(CURRENT_EXT_ID)) {
+        FOREACH_EXT_ID(intr, LOCAL_INTERFACES) {
             int hasSub = FALSE, hasFunc = FALSE;
 
             if(EXT_IS_BLANK_NAME(intr))
@@ -2624,7 +2653,7 @@ end_procedure()
     if(CURRENT_PROC_CLASS == CL_MODULE) {
         SYMBOL sym = find_symbol(current_module_name);
         if(!export_module(sym, LOCAL_SYMBOLS,
-                          UNIT_CTL_USE_DECLS(CURRENT_UNIT_CTL))) {
+                          LOCAL_USE_DECLS)) {
             error("internal error, fail to export module.");
             exit(1);
         }
@@ -3535,7 +3564,7 @@ compile_USE_decl (expr x, expr x_args)
 
     use_assoc_rename(EXPR_SYM(x), use_args);
 
-    list_put_last(UNIT_CTL_USE_DECLS(CURRENT_UNIT_CTL), x);
+    list_put_last(LOCAL_USE_DECLS, x);
 }
 
 /*
@@ -3589,7 +3618,7 @@ compile_USE_ONLY_decl (expr x, expr x_args)
 
     use_assoc_only(EXPR_SYM(x), use_args);
 
-    list_put_last(UNIT_CTL_USE_DECLS(CURRENT_UNIT_CTL), x);
+    list_put_last(LOCAL_USE_DECLS, x);
 }
 
 static char*
@@ -3712,7 +3741,15 @@ compile_INTERFACE_statement(expr x)
     if(use_associated_ep)
         EXT_PROC_INTR_DEF_EXT_IDS(ep) = EXT_PROC_INTR_DEF_EXT_IDS(use_associated_ep);
 
+    push_ctl(CTL_INTERFACE);
     push_unit_ctl(ININTR);
+
+    /* replace the current contol list */
+    UNIT_CTL_INTERFACE_SAVE_CTL(CURRENT_UNIT_CTL) = ctl_top;
+    UNIT_CTL_INTERFACE_SAVE_CTL_BASE(CURRENT_UNIT_CTL) = ctl_base;
+    ctl_base = new_ctl();
+    ctl_top = ctl_base;
+
     CURRENT_INTERFACE = ep;
 }
 
@@ -3737,7 +3774,6 @@ end_interface()
     localExtSyms = LOCAL_EXTERNAL_SYMBOLS;
     intr = CURRENT_INTERFACE;
 
-
     /* add symbols in INTERFACE to INTERFACE symbol */
     if (EXT_PROC_INTR_DEF_EXT_IDS(intr) == NULL) {
         EXT_PROC_INTR_DEF_EXT_IDS(intr) = localExtSyms;
@@ -3746,19 +3782,25 @@ end_interface()
             EXT_PROC_INTR_DEF_EXT_IDS(intr), localExtSyms);
     }
 
-    /* add INTERFACE symbol to parent */
-    if (EXT_PROC_INTERFACES(PARENT_EXT_ID) == NULL) {
-        EXT_PROC_INTERFACES(PARENT_EXT_ID) = intr;
-    } else {
-        extid_put_last(EXT_PROC_INTERFACES(PARENT_EXT_ID), intr);
-    }
 
     if (endlineno_flag) {
         if (CURRENT_INTERFACE && EXT_LINE(CURRENT_INTERFACE))
             EXT_END_LINE_NO(CURRENT_INTERFACE) = current_line->ln_no;
     }
 
+    ctl_top = UNIT_CTL_INTERFACE_SAVE_CTL(CURRENT_UNIT_CTL);
+    ctl_base = UNIT_CTL_INTERFACE_SAVE_CTL_BASE(CURRENT_UNIT_CTL);
     pop_unit_ctl();
+    pop_ctl();
+
+    /* add INTERFACE symbol to parent */
+    if (LOCAL_INTERFACES == NULL) {
+        LOCAL_INTERFACES = intr;
+    } else {
+        /* extid_put_last(EXT_PROC_INTERFACES(PARENT_EXT_ID), intr); */
+        extid_put_last(LOCAL_INTERFACES, intr);
+    }
+
     CURRENT_STATE = INDCL;
 
     /* add function symbol to parent local symbols */
@@ -5119,9 +5161,10 @@ cleanup_unit_ctl(UNIT_CTL uc)
     UNIT_CTL_LOCAL_STRUCT_DECLS(uc) = NULL;
     UNIT_CTL_LOCAL_COMMON_SYMBOLS(uc) = NULL;
     UNIT_CTL_LOCAL_LABELS(uc) = NULL;
+    UNIT_CTL_LOCAL_INTERFACES(uc) = NULL;
     UNIT_CTL_IMPLICIT_DECLS(uc) = list0(LIST);
     UNIT_CTL_EQUIV_DECLS(uc) = list0(LIST);
-    UNIT_CTL_USE_DECLS(uc) = list0(LIST);
+    UNIT_CTL_LOCAL_USE_DECLS(uc) = list0(LIST);
 
     /* UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(uc) is not cleared */
     //if (unit_ctl_level == 0) { /* for main */
@@ -5186,7 +5229,6 @@ push_unit_ctl(enum prog_state state)
 {
     ID top_proc;
     int max_unit_ctl_contains = MAX_UNIT_CTL_CONTAINS;
-    LOCAL_ENV parent_local_env;
 
     if (unit_ctl_level < 0) {
         fatal("push_unit_ctl() bug");
@@ -5223,9 +5265,7 @@ push_unit_ctl(enum prog_state state)
         set_parent_implicit_decls();
     }
 
-    parent_local_env = current_local_env;
-    current_local_env = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
-    current_local_env->parent = parent_local_env;
+    push_env(UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL));
 }
 
 
@@ -5282,7 +5322,7 @@ pop_unit_ctl()
     parent_unit_ctl = current_unit_ctl->prev;
     current_unit_ctl->next = NULL;
 
-    current_local_env = current_local_env->parent;
+    pop_env();
 
     if(CURRENT_STATE == INCONT)
         unit_ctl_contains_level --;
@@ -5807,10 +5847,11 @@ compile_ENDBLOCK_statement(expr x)
 
     current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
     BLOCK_LOCAL_SYMBOLS(current_block) = LOCAL_SYMBOLS;
+    BLOCK_LOCAL_INTERFACES(current_block) = LOCAL_INTERFACES;
 
     /* FIX: cast abuse */
-    EXPR_BLOCK_ID_LIST(CTL_BLOCK_STATEMENT(ctl_top)) =
-            (void*) BLOCK_LOCAL_SYMBOLS(current_block);
+    EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) =
+            (void*) current_block;
 
     end_procedure();
     pop_ctl();

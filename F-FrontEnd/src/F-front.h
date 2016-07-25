@@ -155,6 +155,7 @@ enum control_type {
     CTL_ACC,
     CTL_CRITICAL,
     CTL_BLOCK,
+    CTL_INTERFACE,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -172,6 +173,7 @@ enum control_type {
     "CTL_ACC",\
     "CTL_CRITICAL",\
     "CTL_BLOCK",\
+    "CTL_INTERFACE",\
 }
 
 typedef struct local_environment {
@@ -180,12 +182,17 @@ typedef struct local_environment {
     ID                  local_common_symbols;
     ID                  local_labels;
     EXT_ID              local_external_symbols;
+    EXT_ID              local_interfaces;
     BLOCK_ENV           local_blocks;
+    expv                local_use_decls;
 
     struct local_environment * parent;
 } *LOCAL_ENV;
 
 extern LOCAL_ENV current_local_env;
+
+extern void push_env(LOCAL_ENV);
+extern void pop_env(void);
 
 /* control */
 typedef struct control
@@ -249,7 +256,8 @@ typedef struct control
 #define CTL_BLOCK_LOCAL_COMMON_SYMBOLS(l)        ((CTL_BLOCK_LOCAL_ENV(l))->local_common_symbols)
 #define CTL_BLOCK_LOCAL_LABELS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->local_labels)
 #define CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_BLOCK_LOCAL_ENV(l))->local_external_symbols)
-#define CTL_BLOCK_LOCAL_BLOCKS(l)               ((CTL_BLOCK_LOCAL_ENV(l))->local_blocks)
+#define CTL_BLOCK_LOCAL_BLOCKS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->local_blocks)
+
 
 #define CTL_NEXT(u)               ((u)->next)
 #define CTL_PREV(u)               ((u)->prev)
@@ -313,10 +321,13 @@ typedef struct unit_ctl {
     expv                implicit_decls;
     expv                initialize_decls;
     expv                equiv_decls;
-    expv                use_decls;
 
     struct unit_ctl*    prev;
     struct unit_ctl*    next;
+
+    /* FOR INTERFACE */
+    struct control * save_ctl;
+    struct control * save_ctl_base;
 
 } *UNIT_CTL;
 
@@ -336,6 +347,8 @@ typedef struct unit_ctl {
 #define UNIT_CTL_LOCAL_LABELS(u)                ((UNIT_CTL_LOCAL_ENV(u))->local_labels)
 #define UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(u)      ((UNIT_CTL_LOCAL_ENV(u))->local_external_symbols)
 #define UNIT_CTL_LOCAL_BLOCKS(u)                ((UNIT_CTL_LOCAL_ENV(u))->local_blocks)
+#define UNIT_CTL_LOCAL_INTERFACES(u)            ((UNIT_CTL_LOCAL_ENV(u))->local_interfaces)
+#define UNIT_CTL_LOCAL_USE_DECLS(u)             ((UNIT_CTL_LOCAL_ENV(u))->local_use_decls)
 
 #define UNIT_CTL_IMPLICIT_NONE(u)               ((u)->implicit_none)
 #define UNIT_CTL_IMPLICIT_TYPES(u)              ((u)->implicit_types)
@@ -344,7 +357,9 @@ typedef struct unit_ctl {
 #define UNIT_CTL_IMPLICIT_DECLS(u)              ((u)->implicit_decls)
 #define UNIT_CTL_INITIALIZE_DECLS(u)            ((u)->initialize_decls)
 #define UNIT_CTL_EQUIV_DECLS(u)                 ((u)->equiv_decls)
-#define UNIT_CTL_USE_DECLS(u)                   ((u)->use_decls)
+
+#define UNIT_CTL_INTERFACE_SAVE_CTL(u)          ((u)->save_ctl)
+#define UNIT_CTL_INTERFACE_SAVE_CTL_BASE(u)     ((u)->save_ctl_base)
 
 #define FOR_UNIT_CTL(uc) \
     for((uc) = unit_ctl_base; (uc) != NULL; (uc) = (uc)->next)
@@ -379,6 +394,8 @@ extern int unit_ctl_level;
 #define LOCAL_LABELS                (current_local_env->local_labels)
 #define LOCAL_EXTERNAL_SYMBOLS      (current_local_env->local_external_symbols)
 #define LOCAL_BLOCKS                (current_local_env->local_blocks)
+#define LOCAL_INTERFACES            (current_local_env->local_interfaces)
+#define LOCAL_USE_DECLS             (current_local_env->local_use_decls)
 
 #define EXTERNAL_SYMBOLS            LOCAL_EXTERNAL_SYMBOLS
 #define IMPLICIT_TYPES              UNIT_CTL_IMPLICIT_TYPES(CURRENT_UNIT_CTL)

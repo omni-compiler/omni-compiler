@@ -445,12 +445,13 @@ typedef struct block_env
     struct block_env *blocks;
     ID id_list;
     TYPE_DESC struct_decls; /* derived types in Fortran90 */
-    struct external_symbol *interface_external_symbols;
+    struct external_symbol *interfaces;
 } *BLOCK_ENV;
 
 #define BLOCK_NEXT(bp) ((bp)->next)
 #define BLOCK_CHILDREN(bp) ((bp)->blocks)
 #define BLOCK_LOCAL_SYMBOLS(bp) ((bp)->id_list)
+#define BLOCK_LOCAL_INTERFACES(bp) ((bp)->interfaces)
 
 #define FOREACH_BLOCKS(bp, headp) \
     for ((bp) = (headp); (bp) != NULL ; (bp) = BLOCK_NEXT(bp))

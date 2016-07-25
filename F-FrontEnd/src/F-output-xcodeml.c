@@ -3124,8 +3124,8 @@ static void
 outx_BLOCK_statement(int l, expv v)
 {
     char buf[128];
-    struct external_symbol es = {0};
-    ID ids;
+    struct external_symbol es = {0}, *ep;
+    BLOCK_ENV block;
 
     if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
         sprintf(buf, " construct_name=\"%s\"",
@@ -3134,11 +3134,14 @@ outx_BLOCK_statement(int l, expv v)
     } else {
         outx_tagOfStatement(l, v);
     }
-    ids = (ID) EXPR_BLOCK_ID_LIST(v);
-    EXT_PROC_ID_LIST(&es) = ids;
+    block = (BLOCK_ENV) EXPR_BLOCK(v);
+    EXT_PROC_ID_LIST(&es) = BLOCK_LOCAL_SYMBOLS(block);
     outx_definition_symbols(l + 1, &es);
     outx_tag(l + 1, "declarations");
-    outx_id_declarations(l + 2, ids, FALSE, NULL);
+    outx_id_declarations(l + 2, BLOCK_LOCAL_SYMBOLS(block), FALSE, NULL);
+    FOREACH_EXT_ID(ep, BLOCK_LOCAL_INTERFACES(block)) {
+        outx_interfaceDecl(l + 2, ep);
+    }
     outx_close(l + 1, "declarations");
     outx_body(l + 1, EXPR_ARG1(v));
     outx_expvClose(l, v);
