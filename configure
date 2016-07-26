@@ -733,6 +733,7 @@ AR
 RANLIB
 MPI_FC
 MPI_CC
+SHARED
 ATOOL
 XACC
 ACC
@@ -858,6 +859,7 @@ enable_openacc
 enable_atool
 enable_xacc
 enable_mod2xmod
+enable_shared
 with_libblas
 enable_SSL2BLAMP
 enable_intelmkl
@@ -1502,6 +1504,7 @@ Optional Features:
   --enable-atool          enable atool (false default)
   --enable-xacc           enable XcalableACC (false default)
   --enable-mod2xmod       enable to translate .mod to .xmod on only gfortran (false default)
+  --enable-shared         enable to generate shared library (only OpenACC now) (false default)
   --enable-SSL2BLAMP      enable Fujitsu Math Library (true on only the K computer, false on Fx10)
   --enable-intelmkl       enable Intel Math Kernel Library (false default)
   --enable-mreal          enable multiple precision real (and real*16) support of Fortran 77 (false default)
@@ -8479,6 +8482,14 @@ else
 fi
 
 
+# Check whether --enable-shared was given.
+if test "${enable_shared+set}" = set; then :
+  enableval=$enable_shared; doshared=yes
+else
+  doshared=no
+fi
+
+
 #--------------------------------------------------------------------
 # set defulat platform and device for OpenACC
 if test "x${use_cuda}" = "xyes"; then
@@ -8590,6 +8601,14 @@ fi
 ATOOL=$FALSE
 if test "x${doatool}" = "xyes"; then
     ATOOL=$TRUE
+fi
+
+
+#--------------------------------------------------------------------
+# set SHARED
+SHARED=$FALSE
+if test "x${doshared}" = "xyes"; then
+   SHARED=$TRUE
 fi
 
 

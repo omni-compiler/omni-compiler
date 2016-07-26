@@ -32,6 +32,9 @@ typedef struct _XMP_nodes_info_type {
 } _XMP_nodes_info_t;
 
 typedef struct _XMP_nodes_type {
+
+  int desc_kind;
+  
   unsigned long long on_ref_id;
 
   int is_member;
@@ -87,6 +90,9 @@ typedef struct _XMP_template_chunk_type {
 } _XMP_template_chunk_t;
 
 typedef struct _XMP_template_type {
+
+  int desc_kind;
+  
   unsigned long long on_ref_id;
 
   _Bool is_fixed;
@@ -225,6 +231,9 @@ typedef struct _XMP_array_info_type {
 } _XMP_array_info_t;
 
 typedef struct _XMP_array_type {
+
+  int desc_kind;
+  
   _Bool is_allocated;
   _Bool is_align_comm_member;
   int dim;

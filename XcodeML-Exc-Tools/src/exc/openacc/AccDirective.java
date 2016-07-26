@@ -36,12 +36,15 @@ abstract class AccDirective {
     if(id == null){
       throw new ACCexception("symbol '" + symbol + "' is not exist");
     }
-    //var.setIdent(id);
+
     ACCvar parentVar = findParentVar(id);
-    if(parentVar != null){
+    if(parentVar != null && var != parentVar){
       var.setParent(parentVar);
     }else{
       var.setIdent(id);
+      if(_info.getPragma() == ACCpragma.DECLARE) {
+        setPropVar(id, var);
+      }
     }
   }
 
@@ -57,10 +60,17 @@ abstract class AccDirective {
   }
 
   ACCvar findParentVar(Ident varId){
+    {
+      ACCvar var = getPropVar(varId);
+      if(var != null) return var;
+    }
+
     if(_pb != null) {
       for (Block b = _pb.getParentBlock(); b != null; b = b.getParentBlock()) {
-        if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
-        AccInformation info = ((AccDirective)b.getProp(prop)).getInfo();
+        AccDirective directive = getPropDirective(b);
+        if(directive == null) continue;
+        //if(b.Opcode() != Xcode.ACC_PRAGMA) continue;
+        AccInformation info = directive.getInfo();
         ACCvar var = info.findACCvar(varId.getSym());
         if(var != null && var.getId() == varId){
           return var;
@@ -124,4 +134,21 @@ abstract class AccDirective {
 //      }
 //    }
 //  }
+  private void setPropVar(Ident id, ACCvar var){
+    id.setProp(ACCvar.prop, var);
+  }
+  private ACCvar getPropVar(Ident id){
+    Object var = id.getProp(ACCvar.prop);
+    if(var != null){
+      return (ACCvar)var;
+    }
+    return null;
+  }
+  private AccDirective getPropDirective(Block b){
+    Object dir = b.getProp(prop);
+    if(dir != null){
+      return (AccDirective)dir;
+    }
+    return null;
+  }
 }

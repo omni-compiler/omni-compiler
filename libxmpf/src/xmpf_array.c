@@ -14,6 +14,8 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
   // moved to xmpf_align_info
   //a->is_allocated = (*t_desc)->is_owner;
 
+  a->desc_kind = _XMP_DESC_ARRAY;
+  
   a->is_align_comm_member = false;
   a->dim = *n_dim;
   a->type = *type;

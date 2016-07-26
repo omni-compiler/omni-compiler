@@ -16,8 +16,8 @@ class AccData extends AccDirective {
   AccData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
-  AccData(ACCglobalDecl decl, AccInformation info) {
-    super(decl, info);
+  AccData(ACCglobalDecl decl, AccInformation info, XobjectDef def) {
+    super(decl, info, def);
   }
 
   boolean isAcceptableClause(ACCpragma clauseKind) {
@@ -63,6 +63,8 @@ class AccData extends AccDirective {
       if(var.isPrivate() || var.isFirstprivate()){
         continue;
       }
+
+      if(var.isDeviceptr()) continue;
 
       String varName = var.getName();
       StorageClass storageClass = var.getId().getStorageClass();
