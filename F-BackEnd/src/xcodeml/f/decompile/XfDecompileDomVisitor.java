@@ -5758,7 +5758,7 @@ public class XfDecompileDomVisitor {
 
 
     /**
-     * Decompile 'syncAllStatement' element in XcodeML/F.
+     * Decompile 'syncImagesStatement' element in XcodeML/F.
      */
     class SyncImagesStatementVisitor extends  XcodeNodeVisitor {
 
