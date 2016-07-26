@@ -2774,7 +2774,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         dims   = EXPR_ARG2(x);
         leng   = EXPR_ARG3(x);
         value  = EXPR_ARG4(x);
-	codims = EXPR_ARG5(x);
+        codims = EXPR_ARG5(x);
 
         if (ident == NULL) {
             continue; /* error in parser ? */
@@ -2819,7 +2819,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                     VAR_IS_UNCOMPILED_ARRAY(id) = TRUE;
                 }
                 ID_CLASS(id) = CL_VAR;
-		ID_LINE(id) = EXPR_LINE(decl_list);
+                ID_LINE(id) = EXPR_LINE(decl_list);
                 ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
                 continue;
             }
@@ -2889,20 +2889,20 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             }
 
             if (codims){
-	      if (hasCodimsInAttr){
-		warning_at_node(decl_list,
-				"Both the attributes and '%s' have "
-				"a codimension spec.",
-				SYM_NAME(EXPR_SYM(ident)));
-	      }
-	      ignoreCodimsInAttr = TRUE;
+                if (hasCodimsInAttr){
+                    warning_at_node(decl_list,
+                                    "Both the attributes and '%s' have "
+                                    "a codimension spec.",
+                                    SYM_NAME(EXPR_SYM(ident)));
+                }
+                ignoreCodimsInAttr = TRUE;
             }
 
             tp = declare_type_attributes(id, tp, attributes,
                                          ignoreDimsInAttr,
-					 ignoreCodimsInAttr);
+                                         ignoreCodimsInAttr);
 
-	    if (!tp) return;
+            if (!tp) return;
 
         }
 
@@ -2915,27 +2915,27 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             ID_ORDER(id) = order_sequence++;
         }
 
-	if (codims){
+        if (codims){
 
-	  if (CTL_TYPE(ctl_top) == CTL_STRUCT && !TYPE_IS_ALLOCATABLE(tp)){
-	    error_at_node(codims, "A coarray component must be allocatable.");
-	    return;
-	  }
+            if (CTL_TYPE(ctl_top) == CTL_STRUCT && !TYPE_IS_ALLOCATABLE(tp)){
+                error_at_node(codims, "A coarray component must be allocatable.");
+                return;
+            }
 
-	  if (is_descendant_coindexed(tp)){
-	    error_at_node(codims, "The codimension attribute cannnot be nested.");
-	    return;
-	  }
+            if (is_descendant_coindexed(tp)){
+                error_at_node(codims, "The codimension attribute cannnot be nested.");
+                return;
+            }
 
-	  codims_desc *codesc = compile_codimensions(codims,
-						     TYPE_IS_ALLOCATABLE(tp));
-	  if (codesc)
-	    tp->codims = codesc;
-	  else {
-	    error_at_node(codims, "Wrong codimension declaration.");
-	    return;
-	  }
-	}
+            codims_desc *codesc = compile_codimensions(codims,
+                                                       TYPE_IS_ALLOCATABLE(tp));
+            if (codesc)
+                tp->codims = codesc;
+            else {
+                error_at_node(codims, "Wrong codimension declaration.");
+                return;
+            }
+        }
 
         if (id != NULL) {
              declare_id_type(id, tp);
@@ -2943,10 +2943,10 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
              if (TYPE_IS_PARAMETER(tp)) {
                  ID_CLASS(id) = CL_PARAM;
              }
-	     else if (TYPE_IS_INTRINSIC(tp)){
-	       ID_CLASS(id) = CL_PROC;
-	       PROC_CLASS(id) = P_INTRINSIC;
-	     }
+             else if (TYPE_IS_INTRINSIC(tp)){
+                 ID_CLASS(id) = CL_PROC;
+                 PROC_CLASS(id) = P_INTRINSIC;
+             }
         }
 
         if (value != NULL && EXPR_CODE(value) != F_DATA_DECL) {
