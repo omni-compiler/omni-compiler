@@ -3126,6 +3126,7 @@ outx_BLOCK_statement(int l, expv v)
     char buf[128];
     struct external_symbol es = {0}, *ep;
     BLOCK_ENV block;
+    list lp;
 
     if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
         sprintf(buf, " construct_name=\"%s\"",
@@ -3138,10 +3139,35 @@ outx_BLOCK_statement(int l, expv v)
     EXT_PROC_ID_LIST(&es) = BLOCK_LOCAL_SYMBOLS(block);
     outx_definition_symbols(l + 1, &es);
     outx_tag(l + 1, "declarations");
+
+
+    // TODO: refactoring
+    /*
+     * FuseDecl
+     */
+    FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(v)) {
+        expv u = LIST_ITEM(lp);
+        switch(EXPV_CODE(u)) {
+        case F95_USE_STATEMENT:
+            outx_useDecl(l + 2, u);
+            break;
+        case F95_USE_ONLY_STATEMENT:
+            outx_useOnlyDecl(l + 2, u);
+            break;
+        default:
+            break;
+        }
+    }
+
     outx_id_declarations(l + 2, BLOCK_LOCAL_SYMBOLS(block), FALSE, NULL);
+
+    /*
+     * FinterfaceDecl
+     */
     FOREACH_EXT_ID(ep, BLOCK_LOCAL_INTERFACES(block)) {
         outx_interfaceDecl(l + 2, ep);
     }
+
     outx_close(l + 1, "declarations");
     outx_body(l + 1, EXPR_ARG1(v));
     outx_expvClose(l, v);
