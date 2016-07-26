@@ -1543,7 +1543,9 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //
   private void genCallOfPrologAndEpilog() {
-    if (get_autoDealloc())
+    /////////////////////////////
+    //if (get_autoDealloc())
+    /////////////////////////////
       genCallOfPrologAndEpilog_dealloc();
 
     // perform prolog/epilog code generations
