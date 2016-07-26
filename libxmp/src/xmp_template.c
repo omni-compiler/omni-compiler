@@ -14,6 +14,8 @@ _XMP_template_t *_XMP_create_template_desc(int dim, _Bool is_fixed)
                                   sizeof(_XMP_template_info_t) * (dim - 1));
 
   // calc members
+  t->desc_kind      = _XMP_DESC_TEMPLATE;
+
   t->on_ref_id      = _XMP_get_on_ref_id();
   t->is_fixed       = is_fixed;
   t->is_distributed = false;

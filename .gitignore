@@ -59,6 +59,7 @@ F-FrontEnd/src/C-exprcode.c
 F-FrontEnd/src/C-exprcode.h
 F-FrontEnd/src/F_Front
 F-FrontEnd/src/Makefile
+F-FrontEnd/src/F-input-xmod.h
 
 XcodeML-Common/Makefile
 XcodeML-Common/build/

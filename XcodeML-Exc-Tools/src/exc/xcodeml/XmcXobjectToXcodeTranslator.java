@@ -13,6 +13,7 @@ import exc.object.StorageClass;
 import exc.object.Xcode;
 import exc.object.Xcons;
 import exc.object.XobjList;
+import exc.object.XobjInt;
 import exc.object.XobjString;
 import exc.object.Xobject;
 import exc.object.XobjectDef;
@@ -494,7 +495,6 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         case FUNCTION_DECL:
             e = addChildNodes(createElement(name),
                               transName(xobj.getArg(0)),
-                              trans(xobj.getArgOrNull(1)),
                               trans(xobj.getArgOrNull(2)));
             break;
 
@@ -988,7 +988,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 			  Xobject vars = a.getArg(1);
 			  if (vars != null){
 
-			    if (vars instanceof XobjString){
+			    if (vars instanceof XobjString || vars instanceof XobjInt){
 			      addChildNode(g, trans(vars));
 			    }
 			    else {

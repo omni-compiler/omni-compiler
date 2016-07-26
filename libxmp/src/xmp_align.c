@@ -36,6 +36,8 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
 {
   _XMP_array_t *a = _XMP_alloc(sizeof(_XMP_array_t) + sizeof(_XMP_array_info_t) * (dim - 1));
 
+  a->desc_kind            = _XMP_DESC_ARRAY;
+  
   a->is_allocated         = template->is_owner;
   a->is_align_comm_member = false;
   a->dim                  = dim;
@@ -43,7 +45,8 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
   a->type_size            = type_size;
   
   size_t dummy;
-  _XMP_setup_reduce_type(&a->mpi_type, &dummy, type);
+  if(type != _XMP_N_TYPE_NONBASIC)
+    _XMP_setup_reduce_type(&a->mpi_type, &dummy, type);
   
   a->order           = MPI_ORDER_C;
   a->array_addr_p    = NULL;
@@ -107,6 +110,8 @@ void _XMP_init_array_desc_NOT_ALIGNED(_XMP_array_t **adesc, _XMP_template_t *tem
 				      int type, size_t type_size, unsigned long long *dim_acc, void *ap){
 
   _XMP_array_t *a = _XMP_alloc(sizeof(_XMP_array_t) + sizeof(_XMP_array_info_t) * (ndims - 1));
+
+  a->desc_kind    = _XMP_DESC_ARRAY;
 
   a->is_allocated = template->is_owner;
   a->is_align_comm_member = false;
