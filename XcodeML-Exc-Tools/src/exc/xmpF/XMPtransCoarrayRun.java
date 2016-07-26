@@ -1543,22 +1543,18 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //
   private void genCallOfPrologAndEpilog() {
-    if (get_autoDealloc())
+    if (get_autoDealloc()) {
       genCallOfPrologAndEpilog_dealloc();
 
-    // perform prolog/epilog code generations
-    genPrologStmts();          // stmts on the top of body
-    genEpilogStmts();          // stmts before RETURN- and END-stmts
+      // perform prolog/epilog code generations
+      genPrologStmts();          // stmts on the top of body
+      genEpilogStmts();          // stmts before RETURN- and END-stmts
+    }
   }
 
   private void genPrologStmts() {
     // for the begining of the procedure
-    BlockList blist1 = getFblock().getBody();
-    if (blist1 == null)
-      return;
-    BlockList blist = blist1.getHead().getBody();
-    if (blist == null)
-      return;
+    BlockList blist = getFblock().getBody().getHead().getBody();
     int nlines = _prologStmts.size();
 
     for (int i = nlines - 1; i >= 0; i--)
@@ -1600,12 +1596,7 @@ public class XMPtransCoarrayRun
     }
 
     // for the end of the procedure
-    BlockList blist1 = getFblock().getBody();
-    if (blist1 == null)
-      return;
-    BlockList blist = blist1.getHead().getBody();
-    if (blist == null)
-      return;
+    BlockList blist = getFblock().getBody().getHead().getBody();
 
     if (blist.getTail().Opcode() == Xcode.RETURN_STATEMENT)
       return;     // to avoid generating unreachable statements
