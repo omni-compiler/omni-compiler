@@ -18,6 +18,10 @@
 #define XMP_CYCLIC					2102
 #define XMP_GBLOCK					2103
 
+#define XMP_DESC_NODES                                  2200
+#define XMP_DESC_TEMPLATE                               2201
+#define XMP_DESC_ARRAY                                  2202
+
 #include <stddef.h>
 #include <mpi.h>
 
@@ -34,6 +38,7 @@ extern void	xmp_finalize_mpi(void);
 extern void	xmp_init(int *argc, char ***argv);
 extern void	xmp_finalize(void);
 extern int	xmp_num_nodes(void);
+extern int      xmp_desc_kind(xmp_desc_t d, int *kind);
 extern int	xmp_node_num(void);
 extern void	xmp_barrier(void);
 extern int	xmp_all_num_nodes(void);
