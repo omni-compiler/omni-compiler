@@ -3,6 +3,7 @@
 *.class
 *.mod
 *.xmod
+*.so
 
 # Top directory
 autom4te.cache
