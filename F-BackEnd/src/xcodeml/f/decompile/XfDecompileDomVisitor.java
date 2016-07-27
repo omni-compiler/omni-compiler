@@ -228,6 +228,14 @@ public class XfDecompileDomVisitor {
                 break;
             }
         }
+
+        for (Node basicTypeNode : basicTypeNodeArray) {
+            if (XmDomUtil.getAttrBool(basicTypeNode, "is_volatile")) {
+                writer.writeToken(", ");
+                writer.writeToken("VOLATILE");
+                break;
+            }
+        }
     }
 
     private void _writeFunctionSymbol(XfSymbol symbol,
