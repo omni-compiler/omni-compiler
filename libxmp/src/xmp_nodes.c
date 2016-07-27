@@ -16,6 +16,8 @@ static _XMP_nodes_t *_XMP_create_new_nodes(int is_member, int dim, int comm_size
 {
   _XMP_nodes_t *n = _XMP_alloc(sizeof(_XMP_nodes_t) + sizeof(_XMP_nodes_info_t) * (dim - 1));
 
+  n->desc_kind = _XMP_DESC_NODES;
+  
   n->on_ref_id = _XMP_get_on_ref_id();
   n->is_member = is_member;
   n->dim       = dim;

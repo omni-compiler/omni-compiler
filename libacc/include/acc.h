@@ -31,6 +31,8 @@ extern "C" {
   void _ACC_launch(void *program, int kernel_num, int *_ACC_conf, int async_num, int num_args, unsigned long long/*instead of size_t*/ *arg_sizes, void **args);
   void _ACC_program_finalize(void *program);
 
+  int _ACC_adjust_num_gangs(long long num_gangs, int limit);
+
   // will be renamed
   void _ACC_gpu_wait(int id);
   void _ACC_gpu_wait_all(void);
@@ -38,7 +40,6 @@ extern "C" {
 
   //will be removed
   void _ACC_gpu_get_block_count(unsigned **count);
-  void _ACC_gpu_adjust_grid(int *gridX,int *gridY, int *gridZ, int limit);
 
 #ifdef __CUDACC__
   cudaStream_t _ACC_gpu_get_stream(int id);

@@ -2,8 +2,6 @@
 
 int a[N];
 double b[N];
-float c;
-long long d[N];
 
 int main()
 {

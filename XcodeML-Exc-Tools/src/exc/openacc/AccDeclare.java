@@ -7,8 +7,8 @@ class AccDeclare extends AccData{
   AccDeclare(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
-  AccDeclare(ACCglobalDecl decl, AccInformation info) {
-    super(decl, info);
+  AccDeclare(ACCglobalDecl decl, AccInformation info, XobjectDef def) {
+    super(decl, info, def);
   }
 
   @Override
@@ -40,12 +40,14 @@ class AccDeclare extends AccData{
       //_decl.getEnv().setIdentList(id_list);
       _decl.addGlobalConstructor(beginBlock.toXobject());
       _decl.addGlobalDestructor(endBlock.toXobject());
+
+      _xobjDef.setDef(Xcons.List(Xcode.TEXT, Xcons.String("/* acc declare directive is translated */")));
     }else{
-      BlockList resultBody = Bcons.emptyBody(idList, null);
-      resultBody.add(beginBlock);
-      resultBody.add(Bcons.COMPOUND(_pb.getBody()));
-      resultBody.add(endBlock);
-      _pb.replace(Bcons.COMPOUND(resultBody));
+      BlockList parentBody = _pb.getParent();
+      for(Xobject x : idList) parentBody.addIdent((Ident)x);
+      parentBody.insert(beginBlock);
+      parentBody.add(endBlock);
+      _pb.remove();
     }
   }
 

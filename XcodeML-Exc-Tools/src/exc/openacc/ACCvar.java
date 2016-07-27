@@ -5,6 +5,7 @@ import java.util.*;
 
 
 public class ACCvar {
+  public static final String prop = "_ACC_VAR";
   private final String symbol;
   private Ident id;
 
@@ -163,7 +164,6 @@ public class ACCvar {
       atrEnumSet.add(Attribute.create);
       break;
     case DEVICEPTR:
-      deviceptr = id;
       atrEnumSet.add(Attribute.isDeviceptr);
       break;
     case PRIVATE:
@@ -263,6 +263,9 @@ public class ACCvar {
   public Ident getDevicePtr(){
     if(_parent != null){
       return _parent.getDevicePtr();
+    }
+    if(isDeviceptr()){
+      return id;
     }
     return deviceptr;
   }
@@ -372,6 +375,11 @@ public class ACCvar {
   
   private XobjList makeRange(Xtype type) throws ACCexception{
     XobjList rangeList = Xcons.List();
+
+    if(isDeviceptr()){
+	rangeList.add(Xcons.List(Xcons.IntConstant(0)));
+	return rangeList;
+    }
     
     while(true){
       switch(type.getKind()){

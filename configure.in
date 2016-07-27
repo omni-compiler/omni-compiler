@@ -423,6 +423,10 @@ AC_ARG_ENABLE(mod2xmod,
   [  --enable-mod2xmod       enable to translate .mod to .xmod on only gfortran (false default)],
   [domod2xmod=yes], [domod2xmod=no])
 
+AC_ARG_ENABLE(shared,
+  [  --enable-shared         enable to generate shared library (only OpenACC now) (false default)],
+  [doshared=yes], [doshared=no])
+
 #--------------------------------------------------------------------
 # set defulat platform and device for OpenACC
 if test "x${use_cuda}" = "xyes"; then
@@ -536,6 +540,14 @@ if test "x${doatool}" = "xyes"; then
     ATOOL=$TRUE
 fi
 AC_SUBST(ATOOL)
+
+#--------------------------------------------------------------------
+# set SHARED
+SHARED=$FALSE
+if test "x${doshared}" = "xyes"; then
+   SHARED=$TRUE
+fi
+AC_SUBST(SHARED)
 
 # --------------------------------------------------------------------
 # Set compilers and their options:
