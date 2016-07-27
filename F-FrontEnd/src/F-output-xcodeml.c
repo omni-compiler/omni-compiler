@@ -36,7 +36,7 @@ static void     outx_definition_symbols(int l, EXT_ID ep);
 static void     outx_declarations(int l, EXT_ID parent_ep);
 static void     outx_id_declarations(int l, ID id_list, int expectResultVar, const char *functionName);
 static void     collect_type_desc(expv v);
-
+static int      id_is_visibleVar(ID id);
 
 char s_timestamp[CEXPR_OPTVAL_CHARLEN] = { 0 };
 char s_xmlIndent[CEXPR_OPTVAL_CHARLEN] = "  ";
@@ -3124,9 +3124,12 @@ static void
 outx_BLOCK_statement(int l, expv v)
 {
     char buf[128];
-    struct external_symbol es = {0}, *ep;
+    EXT_ID ep;
     BLOCK_ENV block;
     list lp;
+    ID id;
+    int l1 = l + 1;
+    int l2 = l + 2;
 
     if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
         sprintf(buf, " construct_name=\"%s\"",
@@ -3136,12 +3139,17 @@ outx_BLOCK_statement(int l, expv v)
         outx_tagOfStatement(l, v);
     }
     block = (BLOCK_ENV) EXPR_BLOCK(v);
-    EXT_PROC_ID_LIST(&es) = BLOCK_LOCAL_SYMBOLS(block);
-    outx_definition_symbols(l + 1, &es);
-    outx_tag(l + 1, "declarations");
 
+    outx_tag(l1, "symbols");
+    FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
+        if (id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE)
+            outx_id(l2, id);
+    }
+    outx_close(l1, "symbols");
 
+    outx_tag(l1, "declarations");
     // TODO: refactoring
+
     /*
      * FuseDecl
      */
@@ -3149,27 +3157,27 @@ outx_BLOCK_statement(int l, expv v)
         expv u = LIST_ITEM(lp);
         switch(EXPV_CODE(u)) {
         case F95_USE_STATEMENT:
-            outx_useDecl(l + 2, u);
+            outx_useDecl(l2, u);
             break;
         case F95_USE_ONLY_STATEMENT:
-            outx_useOnlyDecl(l + 2, u);
+            outx_useOnlyDecl(l2, u);
             break;
         default:
             break;
         }
     }
 
-    outx_id_declarations(l + 2, BLOCK_LOCAL_SYMBOLS(block), FALSE, NULL);
+    outx_id_declarations(l2, BLOCK_LOCAL_SYMBOLS(block), FALSE, NULL);
 
     /*
      * FinterfaceDecl
      */
     FOREACH_EXT_ID(ep, BLOCK_LOCAL_INTERFACES(block)) {
-        outx_interfaceDecl(l + 2, ep);
+        outx_interfaceDecl(l2, ep);
     }
 
-    outx_close(l + 1, "declarations");
-    outx_body(l + 1, EXPR_ARG1(v));
+    outx_close(l1, "declarations");
+    outx_body(l1, EXPR_ARG1(v));
     outx_expvClose(l, v);
 }
 
