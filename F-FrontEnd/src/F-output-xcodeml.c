@@ -3148,7 +3148,6 @@ outx_BLOCK_statement(int l, expv v)
     outx_close(l1, "symbols");
 
     outx_tag(l1, "declarations");
-    // TODO: refactoring
 
     /*
      * FuseDecl
