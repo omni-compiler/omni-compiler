@@ -2375,7 +2375,14 @@ end_procedure()
     ID id;
     EXT_ID ext;
 
-    if (unit_ctl_level > 0 && CURRENT_PROC_NAME == NULL) {
+    /* Check if a block construct is closed */
+    if (CTL_TYPE(ctl_top) == CTL_BLOCK &&
+        EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) == NULL) {
+        error("expecting END BLOCK statement");
+    }
+
+    if (unit_ctl_level > 0 && CURRENT_PROC_NAME == NULL &&\
+        CTL_TYPE(ctl_top) != CTL_BLOCK) {
         /* if CURRENT_PROC_NAME == NULL, then this is the end of CONTAINS */
         end_contains();
     }
@@ -5802,6 +5809,7 @@ compile_BLOCK_statement(expr x)
     output_statement(st);
     CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
     CTL_BLOCK_STATEMENT(ctl_top) = st;
+    EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) = NULL;
 
     /* save construct name */
     if (EXPR_HAS_ARG1(x)) {
@@ -5847,13 +5855,12 @@ compile_ENDBLOCK_statement(expr x)
         return;
     }
 
-    if(debug_flag){
+    if (debug_flag) {
         fprintf(debug_fp,"\n*** IN BLOCK:\n");
         print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
         print_types(LOCAL_STRUCT_DECLS, debug_fp);
         expv_output(CURRENT_STATEMENTS, debug_fp);
     }
-
 
     CTL_BLOCK_BODY(ctl_top) = CURRENT_STATEMENTS;
 
