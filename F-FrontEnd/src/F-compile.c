@@ -4759,7 +4759,7 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
         } else if (markAs == markAsPrivate)  {
             current_module_state = M_PRIVATE;
         } else if (markAs == markAsProtected) {
-            current_module_state = M_PROTECTED;
+            current_module_state == M_PROTECTED;
         }
 
         /* private/public is set to ids, later in end_declaration */
