@@ -69,7 +69,6 @@ void sp_link_id(ID id, int err_no, lineno_info *line)
 {
   SP_LIST *list;
   int i;
-  UNIT_CTL uc;
 
   FOREACH_SP_LIST(list){
     if(list->info.id == id) return;
@@ -83,10 +82,8 @@ void sp_link_id(ID id, int err_no, lineno_info *line)
   list->nest_level = unit_ctl_level;
   list->err_no = err_no;
   list->line = line;
-  i = 0;
-  FOR_UNIT_CTL(uc) {
-    list->nest_ext_id[i] = UNIT_CTL_CURRENT_EXT_ID(uc);
-    i++;
+  for(i=0; i<=unit_ctl_level; i++){
+    list->nest_ext_id[i] = UNIT_CTL_CURRENT_EXT_ID(unit_ctls[i]);
   }
   link_sp_list(list);
 }
@@ -94,7 +91,6 @@ void sp_link_id(ID id, int err_no, lineno_info *line)
 void sp_link_expr(expr ep, int err_no, lineno_info *line)
 {
   SP_LIST *list;
-  UNIT_CTL uc;
   int i;
 
   FOREACH_SP_LIST(list){
@@ -108,10 +104,8 @@ void sp_link_expr(expr ep, int err_no, lineno_info *line)
   list->nest_level = unit_ctl_level;
   list->err_no = err_no;
   list->line = line;
-  i = 0;
-  FOR_UNIT_CTL(uc) {
-    list->nest_ext_id[i] = UNIT_CTL_CURRENT_EXT_ID(uc);
-    i++;
+  for(i=0; i<=unit_ctl_level; i++){
+    list->nest_ext_id[i] = UNIT_CTL_CURRENT_EXT_ID(unit_ctls[i]);
   }
   link_sp_list(list);
 }

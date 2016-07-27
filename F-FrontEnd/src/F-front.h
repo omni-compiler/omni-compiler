@@ -302,7 +302,7 @@ struct eqv_set {
 
 #define IMPLICIT_ALPHA_NUM      26
 /* program unit control stack struct */
-typedef struct unit_ctl {
+typedef struct {
     SYMBOL              current_proc_name;
     enum name_class     current_proc_class;
     ID                  current_procedure;
@@ -321,14 +321,9 @@ typedef struct unit_ctl {
     expv                implicit_decls;
     expv                initialize_decls;
     expv                equiv_decls;
-
-    struct unit_ctl*    prev;
-    struct unit_ctl*    next;
-
     /* FOR INTERFACE */
     struct control * save_ctl;
     struct control * save_ctl_base;
-
 } *UNIT_CTL;
 
 #define UNIT_CTL_CURRENT_PROC_NAME(u)           ((u)->current_proc_name)
@@ -361,22 +356,13 @@ typedef struct unit_ctl {
 #define UNIT_CTL_INTERFACE_SAVE_CTL(u)          ((u)->save_ctl)
 #define UNIT_CTL_INTERFACE_SAVE_CTL_BASE(u)     ((u)->save_ctl_base)
 
-#define FOR_UNIT_CTL(uc) \
-    for((uc) = unit_ctl_base; (uc) != NULL; (uc) = (uc)->next)
-
-#define FOR_UNIT_CTL_BACKWARD(uc) \
-    for((uc) = CURRENT_UNIT_CTL; (uc) != NULL; (uc) = (uc)->prev)
-
-extern UNIT_CTL unit_ctl_base;
-extern UNIT_CTL current_unit_ctl;
-extern UNIT_CTL parent_unit_ctl;
-
 #define MAX_UNIT_CTL            16
 #define MAX_UNIT_CTL_CONTAINS   3
+extern UNIT_CTL unit_ctls[];
 extern int unit_ctl_level;
 
-#define CURRENT_UNIT_CTL            current_unit_ctl
-#define PARENT_UNIT_CTL             parent_unit_ctl
+#define CURRENT_UNIT_CTL            unit_ctls[unit_ctl_level]
+#define PARENT_UNIT_CTL             unit_ctls[unit_ctl_level-1]
 
 #define CURRENT_PROC_NAME           UNIT_CTL_CURRENT_PROC_NAME(CURRENT_UNIT_CTL)
 #define CURRENT_PROC_CLASS          UNIT_CTL_CURRENT_PROC_CLASS(CURRENT_UNIT_CTL)
