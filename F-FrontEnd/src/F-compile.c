@@ -1061,12 +1061,14 @@ void compile_statement1(int st_no, expr x)
         compile_BLOCK_statement(x);
         break;
 
-
     case F2008_ENDBLOCK_STATEMENT:
         check_INEXEC();
         compile_ENDBLOCK_statement(x);
         break;
 
+    case F03_VOLATILE_STATEMENT:
+        // TODO
+        break;
 
     default:
         compile_exec_statement(x);

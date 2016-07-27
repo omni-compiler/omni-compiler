@@ -1666,6 +1666,9 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                 // TODO PROTECTED
             }
             break;
+        case F03_VOLATILE_SPEC:
+            TYPE_SET_VOLATILE(tp);
+            break;
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }

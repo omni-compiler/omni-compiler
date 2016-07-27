@@ -88,6 +88,7 @@
 %token REWIND
 %token REWIND_P
 %token POINTER
+%token VOLATILE
 
 /* F95 keywords */
 %token ENDPROGRAM
@@ -788,6 +789,8 @@ declaration_statement95:
         { $$ = list2(F95_INTENT_STATEMENT, $4, $7); }
         | ALLOCATABLE COL2_or_null array_allocation_list
         { $$ = list1(F95_ALLOCATABLE_STATEMENT,$3); }
+        | VOLATILE COL2 access_ident_list
+        { $$ = list1(F03_VOLATILE_STATEMENT, $3); }
         ;
 
 array_allocation_list:
@@ -876,6 +879,8 @@ attr_spec:
         { $$ = list0(F95_SAVE_SPEC); }
         | TARGET
         { $$ = list0(F95_TARGET_SPEC); }
+        | VOLATILE
+        { $$ = list0(F03_VOLATILE_SPEC); }
         ;
 
 access_spec:

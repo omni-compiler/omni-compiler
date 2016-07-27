@@ -1443,6 +1443,7 @@ classify_statement()
     case OPTIONAL:
     case PARAMETER:
     case POINTER:
+    case VOLATILE:
     case SAVE:
     case SELECT:
     case SEQUENCE:
@@ -3847,6 +3848,7 @@ struct keyword_token keywords[ ] =
     { "parameter",      PARAMETER },
     { "pause",          PAUSE  },
     { "pointer",        POINTER },
+    { "volatile",       VOLATILE },
     { "precision",      KW_PRECISION},
     { "print",          PRINT  },
     { "protected",      PROTECTED },

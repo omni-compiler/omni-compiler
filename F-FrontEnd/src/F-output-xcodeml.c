@@ -614,6 +614,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_INTENT_IN(tp) ||
         TYPE_IS_INTENT_OUT(tp) ||
         TYPE_IS_INTENT_INOUT(tp) ||
+        TYPE_IS_VOLATILE(tp) ||
         tp->codims;
 }
 
@@ -785,6 +786,7 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_ALLOCATABLE(tp),      "is_allocatable");
         outx_true(TYPE_IS_SEQUENCE(tp),         "is_sequence");
         outx_true(TYPE_IS_INTERNAL_PRIVATE(tp), "is_internal_private");
+        outx_true(TYPE_IS_VOLATILE(tp),          "is_volatile");
     }
 
     if((options & TOPT_INTRINSIC) > 0)
