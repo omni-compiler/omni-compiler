@@ -20,7 +20,9 @@ static bool _is_coarray_win_acc_flushed = true;
 static bool _is_distarray_win_flushed = true;
 static bool _is_distarray_win_acc_flushed = true;
 static unsigned int *_sync_images_table;
+#ifndef _SYNCIMAGE_SENDRECV
 static unsigned int *_sync_images_table_disp;
+#endif
 
 static void _mpi_continuous(const int op,
 			    const int target_rank, 
@@ -797,11 +799,14 @@ void _XMP_mpi_coarray_detach(_XMP_coarray_t *coarray_desc, const bool is_acc)
  */
 void _XMP_mpi_build_sync_images_table()
 {
+  size_t table_size = sizeof(unsigned int) * _XMP_world_size;
+#ifdef _SYNCIMAGE_SENDRECV
+  _sync_images_table = _XMP_alloc(table_size);
+#else
   struct _shift_queue_t *shift_queue = &_shift_queue;
   _sync_images_table = (unsigned int*)(_xmp_mpi_onesided_buf + shift_queue->total_shift);
   _sync_images_table_disp = (unsigned int*)(shift_queue->total_shift);
 
-  size_t table_size = sizeof(unsigned int) * _XMP_world_size;
   size_t shift;
   if(table_size % _XMP_MPI_ALIGNMENT == 0)
     shift = table_size;
@@ -809,6 +814,7 @@ void _XMP_mpi_build_sync_images_table()
     shift = ((table_size / _XMP_MPI_ALIGNMENT) + 1) * _XMP_MPI_ALIGNMENT;
   }
   _push_shift_queue(shift_queue, shift);
+#endif
 
   for(int i=0;i<_XMP_world_size;i++)
     _sync_images_table[i] = 0;
