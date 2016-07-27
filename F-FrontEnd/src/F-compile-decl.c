@@ -3895,3 +3895,34 @@ compile_pragma_statement(expr x)
     }
   output_statement(list1(F_PRAGMA_STATEMENT, v));
 }
+
+
+/*
+ * declare volatile variable
+ *   OR
+ * add volatile attribute (in block scope)
+ */
+void
+compile_VOLATILE_statement(expr id_list)
+{
+    list lp;
+    expr ident;
+    ID id = NULL;
+
+    FOR_ITEMS_IN_LIST(lp, id_list) {
+        ident = LIST_ITEM(lp);
+
+        id = declare_ident(EXPR_SYM(ident), CL_VAR);
+        if(id == NULL)
+            return;
+        if(ID_IS_OFMODULE(id)) {
+            error("can't change attributes of USE-assoicated symbol '%s'", ID_NAME(id));
+            return;
+        } else if (ID_IS_AMBIGUOUS(id)) {
+            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+            return;
+        }
+
+        TYPE_SET_VOLATILE(id);
+    }
+}

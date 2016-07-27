@@ -1067,7 +1067,8 @@ void compile_statement1(int st_no, expr x)
         break;
 
     case F03_VOLATILE_STATEMENT:
-        // TODO
+        check_INDCL();
+        compile_VOLATILE_statement(EXPR_ARG1(x));
         break;
 
     default:
