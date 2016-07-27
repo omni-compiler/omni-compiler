@@ -13,7 +13,7 @@ UNIT_CTL unit_ctls[MAX_UNIT_CTL];
 int unit_ctl_level;
 int unit_ctl_contains_level;
 
-LOCAL_ENV current_local_env;
+ENV current_local_env;
 
 /* flags and defaults */
 int save_all = FALSE;
@@ -145,9 +145,9 @@ current_proc_is_block()
 }
 
 void
-push_env(LOCAL_ENV env)
+push_env(ENV env)
 {
-    LOCAL_ENV parent_local_env;
+    ENV parent_local_env;
     parent_local_env = current_local_env;
     current_local_env = env;
     current_local_env->parent = parent_local_env;
@@ -155,22 +155,22 @@ push_env(LOCAL_ENV env)
 
 
 void
-clean_env(LOCAL_ENV env)
+clean_env(ENV env)
 {
-    env->local_symbols = NULL;
-    env->local_struct_decls = NULL;
-    env->local_common_symbols = NULL;
-    env->local_labels = NULL;
-    env->local_external_symbols = NULL;
-    env->local_interfaces = NULL;
-    env->local_blocks = NULL;
-    env->local_use_decls = list0(LIST);
+    env->symbols = NULL;
+    env->struct_decls = NULL;
+    env->common_symbols = NULL;
+    env->labels = NULL;
+    env->external_symbols = NULL;
+    env->interfaces = NULL;
+    env->blocks = NULL;
+    env->use_decls = list0(LIST);
 }
 
 void
 pop_env()
 {
-    LOCAL_ENV old = current_local_env;
+    ENV old = current_local_env;
     if (current_local_env->parent == NULL) {
         error("no more parent environments");
         return;
