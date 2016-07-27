@@ -555,12 +555,15 @@ void compile_statement1(int st_no, expr x)
 
     case F_COMMON_DECL: /* (F_COMMON_DECL common_decl) */
         check_INDCL();
+        check_NOT_INBLOCK();
         /* common_decl = (LIST common_name (LIST var dims) ...) */
         compile_COMMON_decl(EXPR_ARG1(x));
         break;
 
     case F_EQUIV_DECL: /* (F_EQUIVE_DECL (LIST lhs ...) ...) */
         check_INDCL();
+        check_NOT_INBLOCK();
+
         if (UNIT_CTL_EQUIV_DECLS(CURRENT_UNIT_CTL) == NULL) {
             UNIT_CTL_EQUIV_DECLS(CURRENT_UNIT_CTL) = list0(LIST);
         }
@@ -569,6 +572,7 @@ void compile_statement1(int st_no, expr x)
 
     case F_IMPLICIT_DECL:
         check_INDCL();
+        check_NOT_INBLOCK();
 	if (EXPR_ARG1(x)){
 	  FOR_ITEMS_IN_LIST(lp,EXPR_ARG1(x)){
             v = LIST_ITEM(lp);
@@ -644,16 +648,19 @@ void compile_statement1(int st_no, expr x)
 
     case F95_OPTIONAL_STATEMENT:
         check_INDCL();
+        check_NOT_INBLOCK();
         compile_OPTIONAL_statement(x);
         break;
 
     case F95_INTENT_STATEMENT:
         check_INDCL();
+        check_NOT_INBLOCK();
         compile_INTENT_statement(x);
         break;
 
     case F_NAMELIST_DECL:
         check_INDCL();
+        check_NOT_INBLOCK();
         compile_NAMELIST_decl(EXPR_ARG1(x));
         break;
 
@@ -1404,6 +1411,25 @@ check_INEXEC()
             declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
     }
     if(NOT_INDATA_YET) end_declaration();
+}
+
+
+void
+check_NOT_INBLOCK()
+{
+    CTL cp;
+    FOR_CTLS_BACKWARD(cp) {
+        switch (CTL_TYPE(cp)) {
+            case CTL_BLOCK:
+                error("unexpected statement in the block construct");
+                break;
+            case CTL_INTERFACE:
+                return;
+            default:
+                continue;
+                break;
+        }
+    }
 }
 
 

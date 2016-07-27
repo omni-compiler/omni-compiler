@@ -764,6 +764,8 @@ declare_statement_function(id,args,body)
     if(ID_CLASS(id) != CL_UNKNOWN)
       fatal("declare_statement_function: not CL_UNKNOWN");
 
+    check_NOT_INBLOCK();
+
     ID_CLASS(id) = CL_PROC;
     PROC_CLASS(id) = P_STFUNCT;
     ID_STORAGE(id) = STG_NONE;
