@@ -2888,7 +2888,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 ignoreDimsInAttr = TRUE;
             }
 
-            if (codims){
+            if (codims) {
                 if (hasCodimsInAttr){
                     warning_at_node(decl_list,
                                     "Both the attributes and '%s' have "
@@ -2915,7 +2915,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             ID_ORDER(id) = order_sequence++;
         }
 
-        if (codims){
+        if (codims) {
 
             if (CTL_TYPE(ctl_top) == CTL_STRUCT && !TYPE_IS_ALLOCATABLE(tp)){
                 error_at_node(codims, "A coarray component must be allocatable.");
@@ -2929,9 +2929,9 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
             codims_desc *codesc = compile_codimensions(codims,
                                                        TYPE_IS_ALLOCATABLE(tp));
-            if (codesc)
+            if (codesc) {
                 tp->codims = codesc;
-            else {
+            } else {
                 error_at_node(codims, "Wrong codimension declaration.");
                 return;
             }
