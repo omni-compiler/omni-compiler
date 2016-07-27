@@ -5864,10 +5864,7 @@ compile_ENDBLOCK_statement(expr x)
     current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
     BLOCK_LOCAL_SYMBOLS(current_block) = LOCAL_SYMBOLS;
     BLOCK_LOCAL_INTERFACES(current_block) = LOCAL_INTERFACES;
-
-    /* FIX: cast abuse */
-    EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) =
-            (void*) current_block;
+    EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) = current_block;
 
     end_procedure();
     pop_ctl();

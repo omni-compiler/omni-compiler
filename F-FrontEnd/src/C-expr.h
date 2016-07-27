@@ -74,7 +74,7 @@ typedef struct expression_node
     struct external_symbol *entry_ext_id;
                                         /* EXT_ID for entry. Used for expv. */
 
-    void        *block; /* e_code == F2008_BLOCK_STATEMENT */
+    struct block_env *block; /* e_code == F2008_BLOCK_STATEMENT */
 
     union {
         void        *e_gen;

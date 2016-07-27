@@ -3138,7 +3138,7 @@ outx_BLOCK_statement(int l, expv v)
     } else {
         outx_tagOfStatement(l, v);
     }
-    block = (BLOCK_ENV) EXPR_BLOCK(v);
+    block = EXPR_BLOCK(v);
 
     outx_tag(l1, "symbols");
     FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
