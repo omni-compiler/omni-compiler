@@ -545,7 +545,7 @@ void _XMP_tca_unlock();
 #ifdef _XMP_MPI3_ONESIDED
 #define _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INITIAL_SIZE _XMP_COARRAY_QUEUE_INITIAL_SIZE        /** The same vaule may be good. */
 #define _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO  /** The same vaule may be good. */
-#define _XMP_MPI_ALIGNMENT                  8
+#define _XMP_MPI_ALIGNMENT                  64
 #define _XMP_MPI_POSTREQ_TAG                500
 extern size_t _xmp_mpi_onesided_heap_size;
 extern char *_xmp_mpi_onesided_buf;
