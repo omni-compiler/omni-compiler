@@ -911,7 +911,7 @@ void check_OMP_loop_var(SYMBOL do_var_sym)
 	      list1(LIST,expv_sym_term(IDENT,NULL,do_var_sym)));
 
     /* find any data attribute clauses on do_var_sym */
-    FOR_CTLS(cp) {
+    FOR_CTLS_BACKWARD(cp) {
 	if(CTL_TYPE(cp) != CTL_OMP) continue;
 	if(CTL_OMP_ARG_DCLAUSE(cp) != NULL){
 	    FOR_ITEMS_IN_LIST(lp,CTL_OMP_ARG_DCLAUSE(cp)){
