@@ -235,8 +235,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_MODULE_PROCEDURE_DECL:
-            e = createElement(name);
-            for (Xobject a : (XobjList)xobj) {
+            e = createElement(name, "is_module_specified", intFlagToBoolStr(xobj.getArg(0)));
+            for (Xobject a : (XobjList)xobj.getArg(1)) {
                 addChildNode(e, transName(a));
             }
             break;
