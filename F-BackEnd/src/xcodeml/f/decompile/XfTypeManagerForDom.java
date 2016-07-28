@@ -48,7 +48,7 @@ class XfTypeManagerForDom {
 
     /** This map contains the node "id". */
     @SuppressWarnings("serial")
-    private class SymbolMap extends HashMap<String, Node>
+    public class SymbolMap extends HashMap<String, Node>
     {
         @Override
         public String toString()
@@ -143,7 +143,7 @@ class XfTypeManagerForDom {
         _reverseBasicRefMap = new AliasMap();
     }
 
-    private SymbolMap _getCurrentSymbolMap()
+    public SymbolMap getCurrentSymbolMap()
     {
         return _symbolMapStack.peekFirst();
     }
@@ -201,7 +201,7 @@ class XfTypeManagerForDom {
             aliasMap.put(typeName, symbolName);
         } else if (!XfStorageClass.FCOMMON_NAME.toXcodeString().equalsIgnoreCase(sclass) &&
                    !XfStorageClass.FNAMELIST_NAME.toXcodeString().equalsIgnoreCase(sclass)) {
-            SymbolMap symbolMap = _getCurrentSymbolMap();
+            SymbolMap symbolMap = getCurrentSymbolMap();
             assert (symbolMap != null);
             symbolMap.put(symbolName, idNode);
         }

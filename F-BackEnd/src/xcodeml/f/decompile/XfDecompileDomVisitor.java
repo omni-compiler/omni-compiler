@@ -2719,6 +2719,8 @@ public class XfDecompileDomVisitor {
             // ======
             invokeEnter(XmDomUtil.getElement(n, "declarations"));
 
+            writeModifiedSymbols();
+
             // ========
             // Prologue
             // ========
@@ -2783,7 +2785,6 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeLineDirective(n);
-
             XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
             XmfWriter writer = _context.getWriter();
 
@@ -2901,6 +2902,8 @@ public class XfDecompileDomVisitor {
             // ======
             invokeEnter(XmDomUtil.getElement(n, "symbols"));
             invokeEnter(XmDomUtil.getElement(n, "declarations"));
+
+            writeModifiedSymbols();
 
             writer.setupNewLine();
 
@@ -5946,6 +5949,8 @@ public class XfDecompileDomVisitor {
 
             writer.setupNewLine();
 
+            writeModifiedSymbols();
+
             invokeEnter(XmDomUtil.getElement(n, "body"));
 
             writer.decrementIndentLevel();
@@ -6101,6 +6106,26 @@ public class XfDecompileDomVisitor {
       return libNames;
     }
 
+
+    private void writeModifiedSymbols() {
+        XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+        XmfWriter writer = _context.getWriter();
+        writer.setupNewLine();
+        XfTypeManagerForDom.SymbolMap smap = typeManager.getCurrentSymbolMap();
+        for (String name: smap.keySet()) {
+            Node node = smap.get(name);
+            String typeName = XmDomUtil.getAttr(node, "type");
+            if (typeName == null) {
+                continue;
+            }
+            Node tn = typeManager.findType(typeName);
+            if (XmDomUtil.getAttrBool(tn, "is_volatile")) {
+                writer.writeToken("VOLATILE");
+                writer.writeToken(name);
+                writer.setupNewLine();
+            }
+        }
+    }
 
 
     @SuppressWarnings("unchecked")
