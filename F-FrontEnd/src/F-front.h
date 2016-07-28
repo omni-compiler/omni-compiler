@@ -632,6 +632,8 @@ extern TYPE_DESC        compile_type _ANSI_ARGS_((expr x));
 
 extern expv     compile_int_constant _ANSI_ARGS_((expr x));
 extern void     compile_pragma_statement _ANSI_ARGS_((expr x));
+extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
+
 
 extern int      type_is_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
 extern int      type_is_compatible_for_assignment

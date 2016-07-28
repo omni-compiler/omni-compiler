@@ -4032,6 +4032,9 @@ id_is_visibleVar(ID id)
             CRT_FUNCEP != PROC_EXT_ID(id)) {
             return FALSE;
         }
+        if (IS_MODIFIED(tp)) {
+            return TRUE;
+        }
         if ((is_outputed_module && CRT_FUNCEP == NULL)
             && (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) { // TODO PROTECTED
             return TRUE;
@@ -4041,6 +4044,8 @@ id_is_visibleVar(ID id)
 
     switch(ID_CLASS(id)) {
     case CL_VAR:
+        if(IS_MODIFIED(ID_TYPE(id)))
+            return TRUE;
         if(VAR_IS_IMPLIED_DO_DUMMY(id))
             return FALSE;
 #if 0
@@ -4064,6 +4069,8 @@ id_is_visibleVar(ID id)
             /* this id is of function.
                Checkes if this id is of the current function or not. */
             if(CRT_FUNCEP == PROC_EXT_ID(id)) {
+                return TRUE;
+            } else if (IS_MODIFIED(ID_TYPE(id))) {
                 return TRUE;
             } else {
                 return FALSE;
@@ -4334,6 +4341,10 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                 continue;
             }
 
+            if (IS_MODIFIED(ID_TYPE(id)) == TRUE) {
+                continue;
+            }
+
             tp = ID_TYPE(id);
             if (IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
                 int j;
@@ -4361,6 +4372,10 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
 
             if (hasResultVar == TRUE && functionName != NULL &&
                 strcasecmp(functionName, SYM_NAME(ID_SYM(id))) == 0) {
+                continue;
+            }
+
+            if (IS_MODIFIED(ID_TYPE(id)) == TRUE) {
                 continue;
             }
 

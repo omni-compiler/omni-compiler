@@ -1412,21 +1412,32 @@ check_INEXEC()
 }
 
 
-void
-check_NOT_INBLOCK()
+int
+inblock()
 {
     CTL cp;
     FOR_CTLS_BACKWARD(cp) {
         switch (CTL_TYPE(cp)) {
             case CTL_BLOCK:
-                error("unexpected statement in the block construct");
+                return TRUE;
                 break;
             case CTL_INTERFACE:
-                return;
+                /* INTERFACE has its own scoping unit which differs from BLOCK's one */
+                return FALSE;;
             default:
                 continue;
                 break;
         }
+    }
+    return FALSE;
+}
+
+
+void
+check_NOT_INBLOCK()
+{
+    if (inblock()) {
+        error("unexpected statement in the block construct");
     }
 }
 

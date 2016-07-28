@@ -2,4 +2,5 @@
         VOLATILE :: a
         INTEGER, POINTER, VOLATILE :: b
         INTEGER, VOLATILE :: c
+        VOLATILE d
       END PROGRAM MAIN
