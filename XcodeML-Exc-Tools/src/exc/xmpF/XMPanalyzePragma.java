@@ -1078,7 +1078,7 @@ public class XMPanalyzePragma
 	  if (!left_var.Type().isFallocatable()){
 	    lb = sizeExprs[i].getArg(0);
 	  }
-	  else {
+	  if (lb == null){
 	    lb = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType).
 	      Call(Xcons.List(left_var, Xcons.IntConstant(i+1)));
 	  }
@@ -1086,10 +1086,10 @@ public class XMPanalyzePragma
 
 	ub = ((XobjList)sub).getArg(1);
 	if (ub == null){
-	  if(!left_var.Type().isFallocatable()){
+	  if (!left_var.Type().isFallocatable()){
 	    ub = sizeExprs[i].getArg(1);
 	  }
-	  else {
+	  if (ub == null){
 	    ub = env.declIntrinsicIdent("ubound", Xtype.FintFunctionType).
 	      Call(Xcons.List(left_var, Xcons.IntConstant(i+1)));
 	  }
@@ -1144,7 +1144,7 @@ public class XMPanalyzePragma
 	      if (!x_var.Type().isFallocatable()){
 		lb = sizeExprs1[i].getArg(0);
 	      }
-	      else {
+	      if (lb == null){
 		lb = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType).
 		  Call(Xcons.List(x_var, Xcons.IntConstant(i+1)));
 	      }
