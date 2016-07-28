@@ -5818,6 +5818,7 @@ compile_BLOCK_statement(expr x)
 
     CURRENT_STATE = INDCL;
     CURRENT_STATEMENTS = NULL;
+    current_proc_state = P_DEFAULT;
 
     if (endlineno_flag){
         if (current_line->end_ln_no) {
