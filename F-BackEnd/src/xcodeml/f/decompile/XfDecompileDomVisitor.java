@@ -2719,7 +2719,7 @@ public class XfDecompileDomVisitor {
             // ======
             invokeEnter(XmDomUtil.getElement(n, "declarations"));
 
-            writeModifiedSymbols();
+            writeVolatileOrAsynchronousStatements();
 
             // ========
             // Prologue
@@ -2903,7 +2903,7 @@ public class XfDecompileDomVisitor {
             invokeEnter(XmDomUtil.getElement(n, "symbols"));
             invokeEnter(XmDomUtil.getElement(n, "declarations"));
 
-            writeModifiedSymbols();
+            writeVolatileOrAsynchronousStatements();
 
             writer.setupNewLine();
 
@@ -5949,7 +5949,7 @@ public class XfDecompileDomVisitor {
 
             writer.setupNewLine();
 
-            writeModifiedSymbols();
+            writeVolatileOrAsynchronousStatements();
 
             invokeEnter(XmDomUtil.getElement(n, "body"));
 
@@ -6107,7 +6107,13 @@ public class XfDecompileDomVisitor {
     }
 
 
-    private void writeModifiedSymbols() {
+    /*
+     * NOTE: This method writes VOLATILE/ASYNCHRONOUS statements even if those are not required.
+     */
+    /**
+     * Write VOLATILE/ASYNCHRONOUS statements for symbols those have is_volatile/is_asynchronous attribute.
+     */
+    private void writeVolatileOrAsynchronousStatements() {
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
         XmfWriter writer = _context.getWriter();
         writer.setupNewLine();
@@ -6121,6 +6127,11 @@ public class XfDecompileDomVisitor {
             Node tn = typeManager.findType(typeName);
             if (XmDomUtil.getAttrBool(tn, "is_volatile")) {
                 writer.writeToken("VOLATILE");
+                writer.writeToken(name);
+                writer.setupNewLine();
+            }
+            if (XmDomUtil.getAttrBool(tn, "is_asynchronous")) {
+                writer.writeToken("ASYNCHRONOUS");
                 writer.writeToken(name);
                 writer.setupNewLine();
             }
