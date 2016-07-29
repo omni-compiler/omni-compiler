@@ -2208,6 +2208,9 @@ public class XMPtransCoarrayRun
 
   private Boolean _isCoarrayInCoarrays(Xobject var,
                                        ArrayList<XMPcoarray> coarrays) {
+    // FIXME : "A coarray cannot be of a derived type nor be a structure component."
+    if (var.Opcode() == Xcode.MEMBER_REF)
+      return false;
     return _findCoarrayInCoarrays(var, coarrays) != null;
   }
 
