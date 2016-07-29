@@ -2924,7 +2924,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                     VAR_IS_UNCOMPILED_ARRAY(id) = TRUE;
                 }
                 ID_CLASS(id) = CL_VAR;
-		ID_LINE(id) = EXPR_LINE(decl_list);
+                ID_LINE(id) = EXPR_LINE(decl_list);
                 ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
                 continue;
             }
