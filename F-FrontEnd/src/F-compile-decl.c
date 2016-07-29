@@ -3912,31 +3912,29 @@ compile_VOLATILE_statement(expr id_list)
     FOR_ITEMS_IN_LIST(lp, id_list) {
         ident = LIST_ITEM(lp);
 
-        if (find_ident_local(EXPR_SYM(ident)) == NULL &&
-            (id = find_ident(EXPR_SYM(ident))) != NULL &&
+        if ((id = find_ident_local(EXPR_SYM(ident))) == NULL ||
             (!(IS_STRUCT_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) == NULL))) {
-            /* id is use associated or host assoicated or out of the current BLOCK */
-            TYPE_DESC tp = ID_TYPE(id);
-            if (ID_IS_AMBIGUOUS(id)) {
-                error("an ambiguous reference to symbol '%s'", ID_NAME(id));
-                return;
+            if ((id = find_ident(EXPR_SYM(ident))) == NULL) {
+                id = declare_ident(EXPR_SYM(ident), CL_VAR);
+                if(id == NULL) {
+                    continue; /* error */
+                }
+            } else {
+                /* id is use-/host-associated or out of the current BLOCK */
+                TYPE_DESC tp = ID_TYPE(id);
+                if (TYPE_IS_COINDEXED(tp)) {
+                    error("the VOLATILE attribute shall not be specified for a coarray that is not local variable");
+                    return;
+                }
+                id = declare_ident(EXPR_SYM(ident), CL_VAR);
+                tp = wrap_type(tp);
+                ID_TYPE(id) = tp;
+                SET_MODIFIED(tp);
             }
-            if (TYPE_IS_COINDEXED(tp)) {
-                error("the VOLATILE attribute shall not be specified for a coarray that is not local variable");
-                return;
-            }
-            id = declare_ident(EXPR_SYM(ident), CL_VAR);
-            tp = wrap_type(tp);
-            ID_TYPE(id) = tp;
-            SET_MODIFIED(tp);
-        } else {
-            id = declare_ident(EXPR_SYM(ident), CL_VAR);
-            if(id == NULL) {
-                return;
-            } else if (ID_IS_AMBIGUOUS(id)) {
-                error("an ambiguous reference to symbol '%s'", ID_NAME(id));
-                return;
-            }
+        }
+        if (ID_IS_AMBIGUOUS(id)) {
+            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+            return;
         }
         TYPE_SET_VOLATILE(id);
     }
