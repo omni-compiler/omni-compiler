@@ -2905,6 +2905,10 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 /* update order from one set in declare_dummy_args */
                 ID_ORDER(id) = order_sequence++;
             }
+            if (ID_TYPE(id) != NULL && IS_MODIFIED(ID_TYPE(id))) {
+                /* If VOLATILE or ASYNCHRONOUS statements occurred */
+                ID_TYPE(id) = NULL;
+            }
             TYPE_DESC t = tp0 ? tp0 : ID_TYPE(id);
             if (t && TYPE_LENG(t) && IS_INT_CONST_V(TYPE_LENG(t)) == FALSE)
                 ID_ORDER(id) = order_sequence++;
