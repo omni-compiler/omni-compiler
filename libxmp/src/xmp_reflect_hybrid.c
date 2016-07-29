@@ -313,40 +313,58 @@ static void _XMP_create_TCA_reflect_desc(_XMP_array_t *adesc, void *acc_addr)
     else if (count > 1) { // Blockstride or Stride access
       if (width <= _XMP_TCA_USE_PACK_SIZE) { // Stride access. Use Pack-Unpack
 	const size_t pack_width = width * count;
-	if ((dim_index % 2) == 0) {
+	if (pack_width <= _XMP_TCA_USE_GPUDIRECT_SIZE) { // Stride comm. with TCA/PEACH2
+	  if ((dim_index % 2) == 0) {
+	    if (lo_rank != MPI_PROC_NULL) {
+	      tcaHandle *lo_send_handle = (tcaHandle*)reflect->lo_send_handle;
+	      tcaHandle *hi_recv_handle = (tcaHandle*)reflect->hi_recv_handle;
+	      TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &hi_recv_handle[lo_rank], 0,
+					 &lo_send_handle[_XMP_world_rank], 0, pack_width,
+					 dma_flag, wait_slot, wait_tag));
+	      adesc->set_tca_desc = _XMP_N_INT_TRUE;
+	    }
+	    if (hi_rank != MPI_PROC_NULL) {
+	      tcaHandle *hi_send_handle = (tcaHandle*)reflect->hi_send_handle;
+	      tcaHandle *lo_recv_handle = (tcaHandle*)reflect->lo_recv_handle;
+	      TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &lo_recv_handle[hi_rank], 0,
+					 &hi_send_handle[_XMP_world_rank], 0, pack_width,
+					 dma_flag, wait_slot, wait_tag));
+	      adesc->set_tca_desc = _XMP_N_INT_TRUE;
+	    }
+	  } else {
+	    if (hi_rank != MPI_PROC_NULL) {
+	      tcaHandle *hi_send_handle = (tcaHandle*)reflect->hi_send_handle;
+	      tcaHandle *lo_recv_handle = (tcaHandle*)reflect->lo_recv_handle;
+	      TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &lo_recv_handle[hi_rank], 0,
+					 &hi_send_handle[_XMP_world_rank], 0, pack_width,
+					 dma_flag, wait_slot, wait_tag));
+	      adesc->set_tca_desc = _XMP_N_INT_TRUE;
+	    }
+	    if (lo_rank != MPI_PROC_NULL) {
+	      tcaHandle *lo_send_handle = (tcaHandle*)reflect->lo_send_handle;
+	      tcaHandle *hi_recv_handle = (tcaHandle*)reflect->hi_recv_handle;
+	      TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &hi_recv_handle[lo_rank], 0,
+					 &lo_send_handle[_XMP_world_rank], 0, pack_width,
+					 dma_flag, wait_slot, wait_tag));
+	      adesc->set_tca_desc = _XMP_N_INT_TRUE;
+	    }
+	  }
+	} else { // Stride comm. with MV2GDR
 	  if (lo_rank != MPI_PROC_NULL) {
-	    tcaHandle *lo_send_handle = (tcaHandle*)reflect->lo_send_handle;
-	    tcaHandle *hi_recv_handle = (tcaHandle*)reflect->hi_recv_handle;
-	    TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &hi_recv_handle[lo_rank], 0,
-				       &lo_send_handle[_XMP_world_rank], 0, pack_width,
-				       dma_flag, wait_slot, wait_tag));
-	    adesc->set_tca_desc = _XMP_N_INT_TRUE;
+	    target_rank = lo_rank;
+	  } else {
+	    target_rank = MPI_PROC_NULL;
 	  }
+	  MPI_Send_init(reflect->lo_send_buf, width, MPI_BYTE, target_rank, 0, MPI_COMM_WORLD, &(reflect->req[0]));
+	  MPI_Recv_init(reflect->lo_recv_buf, width, MPI_BYTE, target_rank, 0, MPI_COMM_WORLD, &(reflect->req[1]));
+
 	  if (hi_rank != MPI_PROC_NULL) {
-	    tcaHandle *hi_send_handle = (tcaHandle*)reflect->hi_send_handle;
-	    tcaHandle *lo_recv_handle = (tcaHandle*)reflect->lo_recv_handle;
-	    TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &lo_recv_handle[hi_rank], 0,
-				       &hi_send_handle[_XMP_world_rank], 0, pack_width,
-				       dma_flag, wait_slot, wait_tag));
-	    adesc->set_tca_desc = _XMP_N_INT_TRUE;
+	    target_rank = hi_rank;
+	  } else {
+	    target_rank = MPI_PROC_NULL;
 	  }
-	} else {
-	  if (hi_rank != MPI_PROC_NULL) {
-	    tcaHandle *hi_send_handle = (tcaHandle*)reflect->hi_send_handle;
-	    tcaHandle *lo_recv_handle = (tcaHandle*)reflect->lo_recv_handle;
-	    TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &lo_recv_handle[hi_rank], 0,
-				       &hi_send_handle[_XMP_world_rank], 0, pack_width,
-				       dma_flag, wait_slot, wait_tag));
-	    adesc->set_tca_desc = _XMP_N_INT_TRUE;
-	  }
-	  if (lo_rank != MPI_PROC_NULL) {
-	    tcaHandle *lo_send_handle = (tcaHandle*)reflect->lo_send_handle;
-	    tcaHandle *hi_recv_handle = (tcaHandle*)reflect->hi_recv_handle;
-	    TCA_CHECK(tcaDescSetMemcpy(tca_reflect_desc, &hi_recv_handle[lo_rank], 0,
-				       &lo_send_handle[_XMP_world_rank], 0, pack_width,
-				       dma_flag, wait_slot, wait_tag));
-	    adesc->set_tca_desc = _XMP_N_INT_TRUE;
-	  }
+	  MPI_Send_init(reflect->hi_send_buf, width, MPI_BYTE, target_rank, 0, MPI_COMM_WORLD, &(reflect->req[2]));
+	  MPI_Recv_init(reflect->hi_recv_buf, width, MPI_BYTE, target_rank, 0, MPI_COMM_WORLD, &(reflect->req[3]));
 	}
       } else { // Blockstride access. Use TCA/PEACH2 Blockstride
 	const size_t pitch  = reflect->stride;
