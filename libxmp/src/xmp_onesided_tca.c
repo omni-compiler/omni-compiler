@@ -29,7 +29,7 @@ void _XMP_tca_initialize(int argc, char **argv)
     _XMP_fatal("TCA reflect has been not implemented in 16 more than nodes.");
 
   _XMP_tca_lock();
-  TCA_CHECK(tcaInit());
+  /* TCA_CHECK(tcaInit()); */
 
   //this is probably unnecessary
   TCA_CHECK(tcaDMADescInt_Init()); // Initialize Descriptor (Internal Memory) Mode

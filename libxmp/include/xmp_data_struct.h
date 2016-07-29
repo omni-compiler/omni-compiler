@@ -142,6 +142,8 @@ typedef struct _XMP_reflect_sched_type {
 #if defined(_XMP_TCA)
   off_t lo_src_offset, lo_dst_offset;
   off_t hi_src_offset, hi_dst_offset;
+  void *lo_send_handle, *lo_recv_handle;
+  void *hi_send_handle, *hi_recv_handle;
 #endif
 } _XMP_reflect_sched_t;
 
@@ -250,7 +252,9 @@ typedef struct _XMP_array_type {
 #endif
 #if defined(_XMP_TCA)
   void* tca_handle;
+  void* tca_reflect_desc;
   _Bool set_handle;  // If tca_handle has been set, set_handle = true
+  _Bool set_tca_desc;
   int   dma_slot;
   int   wait_slot;
   int   wait_tag;

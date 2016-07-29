@@ -540,6 +540,19 @@ void _XMP_tca_initialize(int argc, char **argv);
 void _XMP_tca_finalize();
 void _XMP_tca_lock();
 void _XMP_tca_unlock();
+//xmp_tca_runtime.c
+void _XMP_init_tca();
+void _XMP_alloc_tca(_XMP_array_t *adesc);
+//xmp_reflect_tca.c
+void _XMP_reflect_init_tca(void *acc_addr, _XMP_array_t *adesc);
+void _XMP_reflect_do_tca(_XMP_array_t *adesc);
+//xmp_reflect_hybrid.c
+void _XMP_reflect_init_hybrid(void *acc_addr, _XMP_array_t *adesc);
+void _XMP_reflect_do_hybrid(_XMP_array_t *adesc);
+//xmp_reduce_tca.c
+void _XMP_reduce_tca_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count, int datatype, int op);
+//xmp_reduce_hybrid.c
+void _XMP_reduce_hybrid_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int count, int datatype, int op);
 #endif
 
 #ifdef _XMP_MPI3_ONESIDED
@@ -626,24 +639,14 @@ struct _XMPTIMING
 #endif
 
 #ifdef _XMP_TCA
-#define TCA_CHECK(tca_call) do { \
-  int status = tca_call;         \
-  if(status != TCA_SUCCESS) {    \
-  if(status == TCA_ERROR_INVALID_VALUE) {                 \
-  fprintf(stderr,"(TCA) error TCA API, INVALID_VALUE (%s:%d)\n", __FILE__, __LINE__); \
-  exit(-1);                                               \
-  }else if(status == TCA_ERROR_OUT_OF_MEMORY){            \
-  fprintf(stderr,"(TCA) error TCA API, OUT_OF_MEMORY (%s:%d)\n", __FILE__,__LINE__); \
-  exit(-1);                                               \
-  }else if(status == TCA_ERROR_NOT_SUPPORTED){            \
-  fprintf(stderr,"(TCA) error TCA API, NOT_SUPPORTED (%s:%d)\n", __FILE__,__LINE__); \
-  exit(-1);                                               \
-  }else{                                                  \
-  fprintf(stderr,"(TCA) error TCA API, UNKWON (%s:%d)\n", __FILE__,__LINE__);	\
-  exit(-1); \
-  }         \
-  }         \
-  }while (0)
+#define TCA_CHECK(tca_call) do {					\
+    tcaresult result = tca_call;					\
+    if (result != TCA_SUCCESS) {                                        \
+      fprintf(stderr, "TCA error in file '%s' in line %i : %s.\n",	\
+	      __FILE__, __LINE__, tcaGetErrorString(result));		\
+      exit(EXIT_FAILURE);						\
+    }									\
+  } while (0)
 #endif
 
 #if /*defined(_XMP_XACC) && */defined(DEBUG)
