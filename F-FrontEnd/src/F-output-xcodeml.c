@@ -4032,7 +4032,7 @@ id_is_visibleVar(ID id)
             CRT_FUNCEP != PROC_EXT_ID(id)) {
             return FALSE;
         }
-        if (IS_MODIFIED(tp)) {
+        if (TYPE_IS_MODIFIED(tp)) {
             return TRUE;
         }
         if ((is_outputed_module && CRT_FUNCEP == NULL)
@@ -4044,7 +4044,7 @@ id_is_visibleVar(ID id)
 
     switch(ID_CLASS(id)) {
     case CL_VAR:
-        if(IS_MODIFIED(ID_TYPE(id)))
+        if(TYPE_IS_MODIFIED(ID_TYPE(id)))
             return TRUE;
         if(VAR_IS_IMPLIED_DO_DUMMY(id))
             return FALSE;
@@ -4070,7 +4070,7 @@ id_is_visibleVar(ID id)
                Checkes if this id is of the current function or not. */
             if(CRT_FUNCEP == PROC_EXT_ID(id)) {
                 return TRUE;
-            } else if (IS_MODIFIED(ID_TYPE(id))) {
+            } else if (TYPE_IS_MODIFIED(ID_TYPE(id))) {
                 return TRUE;
             } else {
                 return FALSE;
@@ -4341,7 +4341,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                 continue;
             }
 
-            if (IS_MODIFIED(ID_TYPE(id)) == TRUE) {
+            if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
                 continue;
             }
 
@@ -4375,7 +4375,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                 continue;
             }
 
-            if (IS_MODIFIED(ID_TYPE(id)) == TRUE) {
+            if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
                 continue;
             }
 

@@ -362,7 +362,7 @@ extern TYPE_DESC basic_type_desc[];
 #define IS_REFFERENCE(tp) \
                 ((tp) != NULL && TYPE_N_DIM(tp) == 0 && TYPE_REF(tp) != NULL)
 
-#define IS_MODIFIED(tp) \
+#define TYPE_IS_MODIFIED(tp) \
                 ((tp) != NULL && (tp)->is_modified)
 
 #define SET_MODIFIED(tp) \
