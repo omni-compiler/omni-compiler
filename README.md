@@ -8,7 +8,7 @@ See http://omni-compiler.org/manual.html
 Some features in the language specification are not supported in this release.
  (You can download the specification of XMP from "http://xcalablemp.org")
 
-See docs/STATUS-XMP.md and docs/STATUS-CAF.md
+See docs/STATUS-XMP.md, docs/STATUS-CAF.md, and docs/STATUS-ACC.md
 
 ----- 
 # Quick Reference for XMP
