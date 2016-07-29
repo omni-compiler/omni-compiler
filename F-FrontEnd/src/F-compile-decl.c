@@ -1102,10 +1102,12 @@ ID
 find_ident_block_parent(SYMBOL s)
 {
     CTL cp;
-    ID ip;
+    ID ip = NULL;
+    int in_block = FALSE;
 
     FOR_CTLS_BACKWARD(cp) {
         if (CTL_TYPE(cp) == CTL_BLOCK) {
+            in_block = TRUE;
             if (CTL_BLOCK_LOCAL_SYMBOLS(cp) == LOCAL_SYMBOLS) {
                 continue;
             }
@@ -1115,7 +1117,12 @@ find_ident_block_parent(SYMBOL s)
             }
         }
     }
-    return NULL;
+
+    if (in_block) {
+        ip = find_ident_head(s, UNIT_CTL_LOCAL_SYMBOLS(CURRENT_UNIT_CTL));
+    }
+
+    return ip;
 }
 
 ID
