@@ -582,18 +582,18 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                 int *namelen, char *name)
 {
   size_t nbytes = (size_t)(*count) * (size_t)(*element);
-  size_t nbytesRU = ROUND_UP_MALLOC(nbytes);
 
   CoarrayInfo_t *cinfo;
 
   _XMPF_coarrayDebugPrint("COARRAY_ALLOC_STATIC_ varname=\'%*s\'\n"
-                          "  *count=%d, *element=%d, nbytes=%u, nbytesRU=%u\n",
-                          *namelen, name, *count, *element, nbytes, nbytesRU);
+                          "  *count=%d, *element=%d, nbytes=%u\n",
+                          *namelen, name, *count, *element, nbytes);
 
-  if (nbytesRU > XMPF_get_poolThreshold()) {
-    _XMPF_coarrayDebugPrint("*** LARGER case: (%u bytes) > _XMPF_poolThreshold\n", nbytesRU);
-    cinfo = _allocLargeStaticCoarray(nbytesRU);
+  if (nbytes > XMPF_get_poolThreshold()) {
+    _XMPF_coarrayDebugPrint("*** LARGER case: (%u bytes) > _XMPF_poolThreshold\n", nbytes);
+    cinfo = _allocLargeStaticCoarray(nbytes);
   } else {
+    size_t nbytesRU = ROUND_UP_MALLOC(nbytes);
     _XMPF_coarrayDebugPrint("*** SMALLER case: (%u bytes) <= _XMPF_poolThreshold\n", nbytesRU);
     cinfo = _getShareOfStaticCoarray(nbytesRU);
   }
@@ -615,44 +615,44 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
  *         namelen : character length of name (for debugging)
  */
 void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
-                                int *count, int *element,
+                                 int *count, int *element,
                                  int *namelen, char *name)
 {
   CoarrayInfo_t *cinfo;
 
   // boundary check
-  if ((size_t)(*baseAddr) % MALLOC_UNIT != 0 ||
-      *element % MALLOC_UNIT != 0) {
+  if ((size_t)(*baseAddr) % MALLOC_UNIT != 0) {  // check base address
     /* restriction */
-    _XMPF_coarrayFatal("boundary violation detected for coarray \'%s\'\n"
-                       "  element size %d\n",
-                       namelen, name, element);
+    _XMPF_coarrayFatal("boundary violation detected for coarray \'%*s\'\n"
+                       "  baseAddr=%p\n",
+                       *namelen, name, *baseAddr);
   }
 
   size_t nbytes = (size_t)(*count) * (size_t)(*element);
-  size_t nbytesRU = ROUND_UP_MALLOC(nbytes);
+  //size_t nbytesRU = ROUND_UP_MALLOC(nbytes);
 
   _XMPF_coarrayDebugPrint("COARRAY_REGMEM_STATIC_ varname=\'%*s\'\n",
                           *namelen, name);
 
-  cinfo = _regmemStaticCoarray(*baseAddr, nbytesRU);
+  //cinfo = _regmemStaticCoarray(*baseAddr, nbytesRU);
+  cinfo = _regmemStaticCoarray(*baseAddr, nbytes);
   cinfo->name = _xmp_strndup(name, *namelen);
 
   *descPtr = (void*)cinfo;
 }
 
 
-CoarrayInfo_t *_regmemStaticCoarray(void *baseAddr, size_t nbytesRU)
+CoarrayInfo_t *_regmemStaticCoarray(void *baseAddr, size_t nbytes)
 {
-  _XMPF_checkIfInTask("allocation of static coarray");
+  _XMPF_checkIfInTask("memory registration of static coarray");
 
-  _XMPF_coarrayDebugPrint("*** _regmemStaticCoarray (%u bytes)\n", nbytesRU);
+  _XMPF_coarrayDebugPrint("*** _regmemStaticCoarray (%u bytes)\n", nbytes);
 
   // get memory-chunk and set baseAddr
-  MemoryChunk_t *chunk = _regmemMemoryChunk_core(baseAddr, nbytesRU);
+  MemoryChunk_t *chunk = _regmemMemoryChunk_core(baseAddr, nbytes);
 
   // make coarrayInfo and linkage
-  CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr, nbytesRU);
+  CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr, nbytes);
   _addCoarrayInfo(chunk, cinfo);
 
   return cinfo;
