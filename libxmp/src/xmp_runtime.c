@@ -24,6 +24,10 @@ void _XMP_init(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &_XMP_world_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &_XMP_world_size);
 
+#ifdef _XMP_TCA
+    _XMP_init_tca();
+#endif
+
 #if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
     _XMP_onesided_initialize(argc, argv);
 #endif

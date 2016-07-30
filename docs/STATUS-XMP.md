@@ -1,4 +1,4 @@
-Implementation Status version 1.0.2
+Implementation Status version 1.0.3
 ---------------------------------------
 # Global-View
 * Mot support block(n) distribution in distribute directive in XMP/C
@@ -15,11 +15,11 @@ Implementation Status version 1.0.2
 
 # Intrinsic and Library Procedures
 * Not support the following functions
-* xmp_get_primary_image_index()
-* xmp_get_image_index()
-* xmp_sync_image()
-* xmp_sync_images_all()
-* xmp_nodes_attr()
+    * xmp_get_primary_image_index()
+    * xmp_get_image_index()
+    * xmp_sync_image()
+    * xmp_sync_images_all()
+    * xmp_nodes_attr()
 
 # Known issues
 ## XMP/C
