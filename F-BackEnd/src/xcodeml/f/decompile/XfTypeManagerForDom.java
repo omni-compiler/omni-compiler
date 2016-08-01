@@ -178,7 +178,7 @@ class XfTypeManagerForDom {
 
         // Trim key word string.
         symbolName = symbolName.trim();
-        if (symbolName.isEmpty() != false) {
+        if (symbolName.isEmpty()) {
             // Ignore invalid symbol name.
             return;
         }
@@ -189,7 +189,7 @@ class XfTypeManagerForDom {
 
         if (XfStorageClass.FTYPE_NAME.toXcodeString().equalsIgnoreCase(sclass)) {
             String typeName = XmDomUtil.getAttr(idNode, "type");
-            if (XfUtilForDom.isNullOrEmpty(typeName) != false) {
+            if (XfUtilForDom.isNullOrEmpty(typeName)) {
                 // Ignore invalid type name.
                 return;
             }
@@ -341,6 +341,31 @@ class XfTypeManagerForDom {
 
         throw new IllegalStateException("not found type name of '" + typeName + "'");
     }
+
+    /**
+     * Get the original type name of the alias typename.
+     * @param typeName
+     * @return When alias not found, return argument type name.
+     */
+    public String getOriginalTypeName(String aliasTypeName)
+    {
+        if (XfUtilForDom.isNullOrEmpty(aliasTypeName)) {
+            return null;
+        }
+
+        // Trim key word string.
+        aliasTypeName = aliasTypeName.trim();
+        for (AliasMap aliasMap : _aliasMapStack) {
+            for (Map.Entry<String, String> entry : aliasMap.entrySet()) {
+                if (aliasTypeName.compareToIgnoreCase(entry.getKey()) == 0) {
+                    return entry.getValue();
+                }
+            }
+        }
+
+        throw new IllegalStateException("not found original type name of '" + aliasTypeName + "'");
+    }
+
 
     /**
      * Get type reference list.
