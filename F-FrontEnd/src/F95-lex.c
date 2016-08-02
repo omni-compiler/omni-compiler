@@ -2907,7 +2907,8 @@ next_line0:
             local_OCL_flag = TRUE;
       }
     }else if (is_cond_compilation( &sentinels, line_buffer )) {
-        local_CONDCOMPL_flag = TRUE;
+      local_SENTINEL_flag = TRUE;
+      local_CONDCOMPL_flag = TRUE;
     }else{
         if( line_buffer[0]=='!' ){
 	  /* now '!' on 1st place always means comment line. */
