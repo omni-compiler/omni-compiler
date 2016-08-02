@@ -789,7 +789,7 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_VOLATILE(tp),          "is_volatile");
 
         if (TYPE_PARENT(tp)) {
-            outx_print(" extends=\"%s\"", SYM_NAME(ID_SYM(TYPE_PARENT(tp))));
+            outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
         }
     }
 

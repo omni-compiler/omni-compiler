@@ -159,7 +159,7 @@ getTypeDesc(HashTable * ht, const char * typeId) {
     TYPE_ENTRY tep = NULL;
 
     tep = getTypeEntry(ht, typeId);
-    
+
     return tep->tp;
 }
 
@@ -374,6 +374,14 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** typeId,
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_volatile");
     if (str != NULL) {
         TYPE_SET_VOLATILE(*tp);
+        free(str);
+    }
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "extends");
+    if (str != NULL) {
+        TYPE_DESC parent_type = getTypeDesc(ht, str);
+        TYPE_PARENT(*tp) = new_ident_desc(ID_SYM(TYPE_TAGNAME(parent_type)));
+        TYPE_PARENT_TYPE(*tp) = getTypeDesc(ht, str);
         free(str);
     }
 
