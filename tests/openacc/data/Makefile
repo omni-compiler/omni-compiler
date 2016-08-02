@@ -31,10 +31,13 @@ else
 
 all:
 	@for type in $(TYPES); do ($(MAKE) TYPE=$$type); done
+	@$(MAKE) -C extern
 run:
 	@for type in $(TYPES); do ($(MAKE) run TYPE=$$type); done
+	@$(MAKE) -C extern run
 clean:
 	@for type in $(TYPES); do ($(MAKE) clean TYPE=$$type); done
+	@$(MAKE) -C extern clean
 endif
 
 
