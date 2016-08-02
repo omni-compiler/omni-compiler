@@ -3601,15 +3601,20 @@ mark_type_desc_in_structure(TYPE_DESC tp)
     ID id;
     TYPE_DESC itp, siTp;
 
+    if (TYPE_PARENT(tp)) {
+        mark_type_desc(TYPE_PARENT_TYPE(tp));
+    }
+
     FOREACH_MEMBER(id, tp) {
         itp = ID_TYPE(id);
         siTp = reduce_type(itp);
         mark_type_desc(siTp);
         ID_TYPE(id) = siTp;
-        if(IS_STRUCT_TYPE(itp))
+        if (IS_STRUCT_TYPE(itp))
             mark_type_desc_in_structure(itp);
         if (VAR_INIT_VALUE(id) != NULL)
             collect_type_desc(VAR_INIT_VALUE(id));
+
     }
 }
 

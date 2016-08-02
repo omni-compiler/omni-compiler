@@ -407,15 +407,30 @@ find_struct_decl_head(SYMBOL s, TYPE_DESC head)
     return NULL;
 }
 
+
 ID
 find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
 {
-    ID member;
+    ID member = NULL;
 
     if (!IS_STRUCT_TYPE(struct_td)) {
         return NULL;
     }
     struct_td = getBaseStructType(struct_td);
+
+    if (TYPE_PARENT(struct_td)) {
+        ID parent = TYPE_PARENT(struct_td);
+        if (strcmp(ID_NAME(parent), SYM_NAME(sym)) == 0) {
+            member = TYPE_PARENT(struct_td);
+        }
+        if (member == NULL) {
+            member = find_struct_member(ID_TYPE(parent), sym);
+        }
+    }
+    if (member) {
+        return member;
+    }
+
     FOREACH_MEMBER(member, struct_td) {
         if (strcmp(ID_NAME(member), SYM_NAME(sym)) == 0) {
             return member;

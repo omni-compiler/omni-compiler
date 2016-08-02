@@ -1660,11 +1660,13 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             TYPE_UNSET_PUBLIC(tp);
             TYPE_UNSET_PRIVATE(tp);
             TYPE_SET_PROTECTED(tp);
+#if 0
             if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
                 TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
                 //TYPE_SET_INTERNAL_PRIVATE(struct_tp);
                 // TODO PROTECTED
             }
+#endif
             break;
         case F03_VOLATILE_SPEC:
             TYPE_SET_VOLATILE(tp);
@@ -3176,6 +3178,8 @@ compile_struct_decl(expr ident, expr type)
 {
     TYPE_DESC tp;
     expv v;
+    list lp;
+    int has_access_spec = FALSE;
 
     if(ident == NULL)
         fatal("compile_struct_decl: F95 derived type name is NULL");
@@ -3186,25 +3190,50 @@ compile_struct_decl(expr ident, expr type)
     v = list0(F95_TYPEDECL_STATEMENT);
     EXPV_TYPE(v) = tp;
 
-    if (type != NULL) {
-        switch(EXPR_CODE(type)) {
-        case F95_PUBLIC_SPEC:
-            TYPE_SET_PUBLIC(tp);
-            TYPE_UNSET_PRIVATE(tp);
-            TYPE_UNSET_PROTECTED(tp);
-            break;
-        case F95_PRIVATE_SPEC:
-            TYPE_SET_PRIVATE(tp);
-            TYPE_UNSET_PUBLIC(tp);
-            TYPE_UNSET_PROTECTED(tp);
-            break;
-        case F03_PROTECTED_SPEC:
-            TYPE_SET_PROTECTED(tp);
-            TYPE_UNSET_PRIVATE(tp);
-            TYPE_UNSET_PUBLIC(tp);
-            break;
-        default:
-            break;
+    FOR_ITEMS_IN_LIST(lp, type) {
+        expr x = LIST_ITEM(lp);
+        if (x == NULL) {
+            continue;
+        }
+
+        switch(EXPR_CODE(x)) {
+            case F95_PUBLIC_SPEC:
+            case F95_PRIVATE_SPEC:
+            case F03_PROTECTED_SPEC:
+                if (has_access_spec) {
+                    error("unexpected access spec");
+                } else {
+                    has_access_spec = TRUE;
+                }
+                break;
+            default:
+                break;
+        }
+
+        switch(EXPR_CODE(x)) {
+            case F95_PUBLIC_SPEC:
+                TYPE_SET_PUBLIC(tp);
+                TYPE_UNSET_PRIVATE(tp);
+                TYPE_UNSET_PROTECTED(tp);
+                break;
+            case F95_PRIVATE_SPEC:
+                TYPE_SET_PRIVATE(tp);
+                TYPE_UNSET_PUBLIC(tp);
+                TYPE_UNSET_PROTECTED(tp);
+                break;
+            case F03_PROTECTED_SPEC:
+                TYPE_SET_PROTECTED(tp);
+                TYPE_UNSET_PRIVATE(tp);
+                TYPE_UNSET_PUBLIC(tp);
+                break;
+            case F03_EXTENDS_SPEC: {
+                TYPE_DESC parent_type;
+                parent_type = find_struct_decl(EXPR_SYM(EXPR_ARG1(x)));
+                TYPE_PARENT(tp) = new_ident_desc(EXPR_SYM(EXPR_ARG1(x)));
+                TYPE_PARENT_TYPE(tp) = parent_type;
+            }; break;
+            default:
+                break;
         }
     }
     push_ctl(CTL_STRUCT);
