@@ -787,6 +787,10 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_SEQUENCE(tp),         "is_sequence");
         outx_true(TYPE_IS_INTERNAL_PRIVATE(tp), "is_internal_private");
         outx_true(TYPE_IS_VOLATILE(tp),          "is_volatile");
+
+        if (TYPE_PARENT(tp)) {
+            outx_print(" extends=\"%s\"", SYM_NAME(ID_SYM(TYPE_PARENT(tp))));
+        }
     }
 
     if((options & TOPT_INTRINSIC) > 0)
