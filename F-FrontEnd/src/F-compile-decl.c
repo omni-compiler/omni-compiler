@@ -3011,6 +3011,35 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 }
 
 TYPE_DESC
+find_struct_decl_block_parent(SYMBOL s)
+{
+    CTL cp;
+    TYPE_DESC tp = NULL;
+    int in_block = FALSE;
+
+    FOR_CTLS_BACKWARD(cp) {
+        if (CTL_TYPE(cp) == CTL_BLOCK) {
+            in_block = TRUE;
+            if (CTL_BLOCK_LOCAL_STRUCT_DECLS(cp) == LOCAL_STRUCT_DECLS) {
+                continue;
+            }
+            tp = find_struct_decl_head(s, CTL_BLOCK_LOCAL_STRUCT_DECLS(cp));
+            if (tp != NULL) {
+                return tp;
+            }
+        }
+    }
+
+    if (in_block) {
+        tp = find_struct_decl_head(s,
+            UNIT_CTL_LOCAL_STRUCT_DECLS(CURRENT_UNIT_CTL));
+    }
+
+    return tp;
+}
+
+
+TYPE_DESC
 find_struct_decl_parent(SYMBOL s)
 {
     int lev_idx;
@@ -3050,6 +3079,10 @@ find_struct_decl(SYMBOL s)
     TYPE_DESC tp;
 
     tp = find_struct_decl_head(s, LOCAL_STRUCT_DECLS);
+    if (tp != NULL) {
+        return tp;
+    }
+    tp = find_struct_decl_block_parent(s);
     if (tp != NULL) {
         return tp;
     }
