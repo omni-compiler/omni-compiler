@@ -420,7 +420,7 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
 
     if (TYPE_PARENT(struct_td)) {
         ID parent = TYPE_PARENT(struct_td);
-        if (strcmp(ID_NAME(parent), SYM_NAME(sym)) == 0) {
+        if (ID_SYM(parent) != NULL && (strcmp(ID_NAME(parent), SYM_NAME(sym)) == 0)) {
             member = TYPE_PARENT(struct_td);
         }
         if (member == NULL) {
