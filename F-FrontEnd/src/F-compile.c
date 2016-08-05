@@ -4900,6 +4900,11 @@ compile_POINTER_SET_statement(expr x) {
         return;
     }
 
+    if (TYPE_IS_VOLATILE(vPtrTyp) != TYPE_IS_VOLATILE(vPteTyp)) {
+        error_at_node(x, "VOLATILE attribute mismatch.");
+        return;
+    }
+
 accept:
 
     EXPV_LINE(vPointer) = EXPR_LINE(x);
