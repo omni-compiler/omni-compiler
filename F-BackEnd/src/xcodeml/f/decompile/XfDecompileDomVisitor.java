@@ -1339,9 +1339,58 @@ public class XfDecompileDomVisitor {
                 typeManager.addType(n);
             } else {
                 invokeEnter(XmDomUtil.getElement(n, "symbols"));
+                invokeEnter(XmDomUtil.getElement(n, "typeParams"));
             }
         }
     }
+
+    class TypeParamsVisitor extends XcodeNodeVisitor {
+        @Override public void enter(Node n) {
+            _invokeChildEnter(n);
+        }
+    }
+
+    class TypeParamVisitor extends XcodeNodeVisitor {
+        @Override public void enter(Node n) {
+            XmfWriter writer = _context.getWriter();
+
+            String symbolName = XmDomUtil.getContentText(XmDomUtil.getContent(n));
+            String typeName = XmDomUtil.getAttr(n, "type");
+            String attrName = XmDomUtil.getAttr(n, "attr");
+
+            String attr = "";
+            if (attrName.compareToIgnoreCase("len") == 0) {
+                attr = "LEN";
+            } else if (attrName.compareToIgnoreCase("kind") == 0) {
+                attr = "KIND;";
+            }
+
+            XfType typeId = XfType.getTypeIdFromXcodemlTypeName(typeName);
+            if (typeId.isPrimitive()) {
+                writer.writeToken(typeId.fortranName());
+                writer.writeToken(",");
+                writer.writeToken(attr);
+                writer.writeToken(" :: ");
+                writer.writeToken(symbolName);
+            } else {
+                XfTypeManagerForDom.TypeList typeList = getTypeList(typeName);
+                Node topTypeChoice = typeList.getFirst();
+                Node lowTypeChoice = typeList.getLast();
+
+                String topTypeName = topTypeChoice.getNodeName();
+                assert ("FbasicType".equals(topTypeName));
+                _writeSymbolTopType(typeList);
+
+                writer.writeToken(",");
+                writer.writeToken(attr);
+                writer.writeToken(" :: ");
+                writer.writeToken(symbolName);
+                _writeSymbolBaseType(lowTypeChoice);
+            }
+            writer.setupNewLine();
+        }
+    }
+
 
     // globalSymbols
     class GlobalSymbolsVisitor extends XcodeNodeVisitor {
@@ -6171,6 +6220,8 @@ public class XfDecompileDomVisitor {
         new Pair("coShape", new CoShapeVisitor()),
         new Pair("FfunctionType", new FfunctionTypeVisitor()),
         new Pair("FstructType", new FstructTypeVisitor()),
+        new Pair("typeParams", new TypeParamsVisitor()),
+        new Pair("typeParam", new TypeParamVisitor()),
         new Pair("globalSymbols", new GlobalSymbolsVisitor()),
         new Pair("globalDeclarations", new GlobalDeclarationsVisitor()),
         new Pair("alloc", new AllocVisitor()),
