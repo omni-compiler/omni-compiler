@@ -3557,7 +3557,8 @@ public class XfDecompileDomVisitor {
             _writeLineDirective(n);
 
             String content = XmDomUtil.getContentText(n);
-	    if (content.startsWith("cdir") == true){
+	    if (content.startsWith("cdir") == true ||
+		content.startsWith("ocl") == true ){
 	      content = "!" + content;
 	    }
             else if (content.startsWith("!$") == false) {

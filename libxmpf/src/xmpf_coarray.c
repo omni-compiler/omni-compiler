@@ -316,8 +316,6 @@ void _XMPF_coarrayFatal(char *format, ...)
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   fprintf(stderr, "CAF[%d] %s\n", rank, work);
 
-  //xmpf_finalize_each__();   This causes deadlock sometimes.
-
   _XMP_fatal("...fatal error in XMP/F Coarray runtime");
 }
 

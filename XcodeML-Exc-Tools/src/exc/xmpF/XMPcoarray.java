@@ -1239,14 +1239,21 @@ public class XMPcoarray {
     return VAR_DESCPOINTER_PREFIX + "_" + homeBlockName;
   }
 
+  // for case useMalloc
   public String getCrayCommonName()
   {
     return VAR_CRAYPOINTER_PREFIX + "_" + homeBlockName;
   }
 
+  // for case !useMalloc
   public String getCoarrayCommonName()
   {
-    return CBLK_COARRAYS_PREFIX + "_" + homeBlockName;
+    // unique name both for the var name and for homeBlockName
+    String homeBlockPart = getHomeBlockName().replaceAll("_", "__");
+    String varPart = getName().replaceAll("_", "__");
+    String coarrayCommonName =
+      CBLK_COARRAYS_PREFIX + "_" + homeBlockPart + "_" + varPart;
+    return coarrayCommonName;
   }
 
   public String getCrayPointerName() {

@@ -28,6 +28,7 @@ FALSE           = 1
 TRUE            = 0
 IS_CUDA		= @CUDA@
 IS_OPENCL	= @OPENCL@
+IS_TCA          = @TCA@
 ENABLE_SHARED   = @SHARED@
 
 ifeq ($(IS_CUDA), $(TRUE))
@@ -50,7 +51,12 @@ ifeq ($(ENABLE_SHARED), $(TRUE))
 LIBS        := $(LIBS) $(LIBS:.a=.so)
 endif
 
+ifeq ($(IS_TCA), $(TRUE))
+CFLAGS += -D_XMP_TCA -I@TCA_PREFIX@/include
+endif
+
 all: $(LIBS)
+
 $(OBJECTS): $(HEADERS)
 
 $(LIBACC): $(OBJECTS)

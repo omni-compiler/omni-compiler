@@ -2135,12 +2135,7 @@ public class XMPrewriteExpr {
                                                   String loopIndexName, Xobject arrayRef) throws XMPexception
   {
     if (arrayRef.Opcode() == Xcode.VAR) {
-      if (loopIndexName.equals(arrayRef.getString())) {
-        return calcShadow(t, ti, a, ai, arrayRef);
-      }
-      else {
-        return arrayRef;
-      }
+      return calcShadow(t, ti, a, ai, arrayRef);
     }
 
     topdownXobjectIterator iter = new topdownXobjectIterator(arrayRef);
@@ -2170,7 +2165,7 @@ public class XMPrewriteExpr {
     expr.setIsRewrittedByXmp(true);
     if(a.getAlignSubscriptIndexAt(ai) != null){  // null is an asterisk
       if (ti != a.getAlignSubscriptIndexAt(ai).intValue()) {
-	throw new XMPexception("array ref is not consistent with array alignment");
+        return expr;
       }
     }
 

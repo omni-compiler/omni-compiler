@@ -19,6 +19,7 @@ run:
 	$(XRUN) -n 4 ./full2.x
 	$(XRUN) -n 4 ./full3.x
 	$(XRUN) -n 4 ./loop.x
+	$(XRUN) -n 2 ./basic.x
 
 RUN:
 	mkdir RUN

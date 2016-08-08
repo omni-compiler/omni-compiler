@@ -71,7 +71,7 @@ class AccData extends AccDirective {
       var.setHostDesc(declHostDesc(varName, storageClass));
       var.setDevicePtr(declDevicePtr(varName, storageClass));
 
-      if(storageClass == StorageClass.EXTERN){
+      if(_info.getPragma() == ACCpragma.DECLARE && storageClass == StorageClass.EXTERN){
         continue;
       }
 

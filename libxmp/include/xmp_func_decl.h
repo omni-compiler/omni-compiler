@@ -187,9 +187,6 @@ extern void _XMP_set_reflect_acc__(void *a, int dim, int lwidth, int uwidth, int
 // xmp_tca.c
 extern void _XMP_init_tca();
 extern void _XMP_alloc_tca(void *);
-extern void _XMP_create_TCA_handle(void *, void *);
-extern void _XMP_create_TCA_desc(void *);
-extern void _XMP_reflect_do_tca(_XMP_array_t *);
 #endif
 
 // xmp_gmove.c
