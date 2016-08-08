@@ -4948,8 +4948,12 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             Node contentNode = XmDomUtil.getContent(n);
-            if (contentNode == null) {
-                XmfWriter writer = _context.getWriter();
+            XmfWriter writer = _context.getWriter();
+            if (XmDomUtil.getAttrBool(n, "is_assumed_shape")) {
+                writer.writeToken(":");
+            } else if (XmDomUtil.getAttrBool(n, "is_assumed_size")) {
+                writer.writeToken("*");
+            } else if (contentNode == null) {
                 writer.writeToken("*");
             } else {
                 invokeEnter(contentNode);
