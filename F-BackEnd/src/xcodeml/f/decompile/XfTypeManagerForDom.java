@@ -130,6 +130,17 @@ class XfTypeManagerForDom {
             }
             return sb.toString();
         }
+
+        public Node findChildNode(String nodeName) {
+            Node n;
+            for (Node typeChoice : this) {
+                n = XmDomUtil.getElement(typeChoice, nodeName);
+                if (n != null) {
+                    return n;
+                }
+            }
+            return null;
+        }
     }
 
     public XfTypeManagerForDom()

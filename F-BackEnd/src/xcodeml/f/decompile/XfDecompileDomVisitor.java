@@ -420,10 +420,19 @@ public class XfDecompileDomVisitor {
         if ("FbasicType".equals(topTypeName)) {
             _writeBasicType(topTypeChoice, typeList);
         } else if ("FstructType".equals(topTypeName)) {
+            Node typeParamValues = typeList.findChildNode("typeParamValues");
             String aliasStructTypeName =
                     typeManager.getAliasTypeName(XmDomUtil.getAttr(topTypeChoice,
                             "type"));
-            writer.writeToken("TYPE(" + aliasStructTypeName + ")");
+            writer.writeToken("TYPE");
+            if (typeParamValues != null) {
+                writer.writeToken("(");
+                _invokeChildEnterAndWriteDelim(typeParamValues, ",");
+                writer.writeToken(")");
+            }
+            writer.writeToken("(");
+            writer.writeToken(aliasStructTypeName);
+            writer.writeToken(")");
         }
     }
 
