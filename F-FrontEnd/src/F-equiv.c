@@ -23,6 +23,9 @@ compile_EQUIVALENCE_decl(expr x)
     }
 
     FOR_ITEMS_IN_LIST(lp, x) {
+        int has_volatile = FALSE;
+        int has_not_volatile = FALSE;
+
         spec = LIST_ITEM(lp);
         if (EXPR_CODE(spec) != LIST) {
             fatal("paser error in equivalence??");
@@ -93,6 +96,18 @@ compile_EQUIVALENCE_decl(expr x)
                     error_at_node(vX, "'%s' is not a variable.", SYM_NAME(vS));
                     return;
                 }
+            }
+
+            if (TYPE_IS_VOLATILE(ID_TYPE(id))) {
+                has_volatile = TRUE;
+            } else {
+                has_not_volatile = TRUE;
+            }
+
+            if (has_volatile == TRUE && has_not_volatile == TRUE) {
+                error_at_node(x,
+                              "VOLATILE objects and non-VOLATILE objects "
+                              "in EQUIVALENCE.");
             }
 
             if (refVarV == NULL) {
