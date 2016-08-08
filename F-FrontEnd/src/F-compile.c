@@ -4119,7 +4119,7 @@ compile_member_ref(expr x)
     if (EXPV_CODE(struct_v) != F95_MEMBER_REF
         && EXPV_CODE(struct_v) != F_VAR
         && EXPV_CODE(struct_v) != ARRAY_REF
-	&& EXPV_CODE(struct_v) != XMP_COARRAY_REF) {
+        && EXPV_CODE(struct_v) != XMP_COARRAY_REF) {
         error("invalid left operand of '\%%'", EXPV_CODE(struct_v));
         return NULL;
     }
