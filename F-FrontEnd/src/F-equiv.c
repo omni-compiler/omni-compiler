@@ -54,11 +54,11 @@ compile_EQUIVALENCE_decl(expr x)
 
             id = find_ident(vS);
             if (id == NULL) {
-	      // vS should be treated as being implicitly declared. (Hitoshi Murai)
-	      id = declare_ident(vS, CL_VAR);
-	      implicit_declaration(id);
-	      //                error_at_node(vX, "'%s' is not declared.", SYM_NAME(vS));
-	      //                return;
+                // vS should be treated as being implicitly declared. (Hitoshi Murai)
+                id = declare_ident(vS, CL_VAR);
+                implicit_declaration(id);
+                // error_at_node(vX, "'%s' is not declared.", SYM_NAME(vS));
+                // return;
             }
 
             v = compile_lhs_expression(vX);
