@@ -4343,10 +4343,19 @@ public class XfDecompileDomVisitor {
 
             XmfWriter writer = _context.getWriter();
             writer.writeToken(aliasStructTypeName);
+
+            Node typeParamValues = XmDomUtil.getElement(n, "typeParamValues");
+            if (typeParamValues != null) {
+                writer.writeToken("(");
+                _invokeChildEnterAndWriteDelim(typeParamValues, ", ");
+                writer.writeToken(")");
+            }
+
+
+            ArrayList<Node> initializeValues = XmDomUtil.collectElementsExclude(n, "typeParamValues");
+
             writer.writeToken("(");
-
-            _invokeChildEnterAndWriteDelim(n, ", ");
-
+            _invokeEnterAndWriteDelim(initializeValues, ", ");
             writer.writeToken(")");
         }
     }
