@@ -411,6 +411,46 @@ public class XfDecompileDomVisitor {
         return typeList;
     }
 
+    private void _writeSymbolTopType(XfTypeManagerForDom.TypeList typeList) {
+        XmfWriter writer = _context.getWriter();
+        XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+        Node topTypeChoice = typeList.getFirst();
+
+        String topTypeName = topTypeChoice.getNodeName();
+        if ("FbasicType".equals(topTypeName)) {
+            _writeBasicType(topTypeChoice, typeList);
+        } else if ("FstructType".equals(topTypeName)) {
+            String aliasStructTypeName =
+                    typeManager.getAliasTypeName(XmDomUtil.getAttr(topTypeChoice,
+                            "type"));
+            writer.writeToken("TYPE(" + aliasStructTypeName + ")");
+        }
+    }
+
+    private void _writeSymbolBaseType(Node basicTypeNode) {
+        if (!"FbasicType".equals(basicTypeNode.getNodeName())) {
+            return;
+        }
+
+        String refName = XmDomUtil.getAttr(basicTypeNode, "ref");
+        XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
+        assert refTypeId != null;
+
+        ArrayList<Node> contentNodes =
+                XmDomUtil.collectElementsExclude(basicTypeNode,
+                        "kind", "len", "coShape");
+        if (!contentNodes.isEmpty()) {
+            _writeIndexRangeArray(contentNodes);
+        }
+
+        Node coShapeNode = XmDomUtil.getElement(basicTypeNode, "coShape");
+        if (coShapeNode != null){
+            invokeEnter(coShapeNode);
+        }
+
+
+    }
+
     /**
      * Write variable declaration.
      *
@@ -432,9 +472,16 @@ public class XfDecompileDomVisitor {
             return true;
         }
 
-        XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
         XfTypeManagerForDom.TypeList typeList = getTypeList(symbol.getDerivedName());
         assert typeList != null;
+
+        /*
+         * added for cray pointer (#060c)
+         */
+        if (_isCrayPointer(typeList)) {
+            _writeCrayPointerDecl(symbol, node);
+            return false;
+        }
 
         /*
          * The assumption that typeList.size() <= 2 is not valid for now.
@@ -453,59 +500,25 @@ public class XfDecompileDomVisitor {
 
         XmfWriter writer = _context.getWriter();
 
-        /*
-         * added for cray pointer (#060c)
-         */
-        if (_isCrayPointer(topTypeChoice, lowTypeChoice)) {
-            _writeCrayPointerDecl(symbol, node);
-            return false;
-        }
-
         // ================
         // Top type element
         // ================
         String topTypeName = topTypeChoice.getNodeName();
-        if ("FbasicType".equals(topTypeName)) {
-            _writeBasicType(topTypeChoice, typeList);
-        } else if ("FstructType".equals(topTypeName)) {
-            String aliasStructTypeName =
-                typeManager.getAliasTypeName(XmDomUtil.getAttr(topTypeChoice,
-                                                               "type"));
-            writer.writeToken("TYPE(" + aliasStructTypeName + ")");
-        } else if ("FfunctionType".equals(topTypeName)) {
+        if ("FfunctionType".equals(topTypeName)) {
             _writeFunctionSymbol(symbol, topTypeChoice, node);
+            _writeDeclAttr(topTypeChoice, lowTypeChoice);
+        } else if ("FbasicType".equals(topTypeName) || "FstructType".equals(topTypeName)) {
+            _writeSymbolTopType(typeList);
         }
-
-        _writeDeclAttr(topTypeChoice, lowTypeChoice);
 
         // ================
         // Low type element
         // ================
         String lowTypeName = lowTypeChoice.getNodeName();
-        if ("FbasicType".equals(lowTypeName)) {
-            Node basicTypeNode = lowTypeChoice;
-            String refName = XmDomUtil.getAttr(basicTypeNode, "ref");
-            XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
-            assert refTypeId != null;
-
+        if ("FbasicType".equals(lowTypeName) || "FstructType".equals(lowTypeName)) {
             writer.writeToken(" :: ");
             writer.writeToken(symbol.getSymbolName());
-
-            ArrayList<Node> contentNodes =
-                XmDomUtil.collectElementsExclude(basicTypeNode,
-                                                 "kind", "len", "coShape");
-            if (!contentNodes.isEmpty()) {
-                _writeIndexRangeArray(contentNodes);
-            }
-
-            Node coShapeNode = XmDomUtil.getElement(basicTypeNode, "coShape");
-            if (coShapeNode != null){
-                invokeEnter(coShapeNode);
-            }
-
-        } else if ("FstructType".equals(lowTypeName)) {
-            writer.writeToken(" :: ");
-            writer.writeToken(symbol.getSymbolName());
+            _writeSymbolBaseType(lowTypeChoice);
         }
 
         return true;
@@ -924,18 +937,19 @@ public class XfDecompileDomVisitor {
     /**
      * Check if the symbol is a cray pointer. (#060c)
      *
-     * @param  top, low
+     * @param  typeList
      * @return true/false
      *
      * Should be modified if the better programming would be found.
      */
-    private boolean _isCrayPointer(Node top, Node low) {
+    private boolean _isCrayPointer(XfTypeManagerForDom.TypeList typeList) {
+        Node top = typeList.getFirst();
         String topName = top.getNodeName();
         if ("FbasicType".equals(topName) &&
             XmDomUtil.getAttrBool(top, "is_cray_pointer")) {
             return true;
         }
-            
+        Node low = typeList.getLast();
         String lowName = low.getNodeName();
         if ("FbasicType".equals(lowName) &&
             XmDomUtil.getAttrBool(low, "is_cray_pointer")) {
