@@ -4146,6 +4146,7 @@ compile_member_ref(expr x)
     //	merge type override all cases (array/substr/plain scalar).
     if (TYPE_IS_POINTER(stVTyp) ||
         TYPE_IS_TARGET(stVTyp) ||
+        TYPE_IS_VOLATILE(stVTyp) ||
         TYPE_IS_COINDEXED(stVTyp)) {
         /*
          * If type of struct_v has pointer/pointee flags on, members
@@ -4163,6 +4164,7 @@ compile_member_ref(expr x)
 
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_POINTER(mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_TARGET(mVTyp);
+        TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_VOLATILE(mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_ALLOCATABLE(mVTyp);
 
         TYPE_CODIMENSION(retTyp) = TYPE_CODIMENSION(stVTyp);
@@ -4175,6 +4177,9 @@ compile_member_ref(expr x)
         }
         if (!TYPE_IS_TARGET(retTyp)) {
             TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_TARGET(stVTyp);
+        }
+        if (!TYPE_IS_VOLATILE(retTyp)) {
+            TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_VOLATILE(stVTyp);
         }
 
         tp = retTyp;
