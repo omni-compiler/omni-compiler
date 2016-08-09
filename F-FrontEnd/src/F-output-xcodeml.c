@@ -35,6 +35,7 @@ static void     outx_interfaceDecl(int l, EXT_ID ep);
 static void     outx_definition_symbols(int l, EXT_ID ep);
 static void     outx_declarations(int l, EXT_ID parent_ep);
 static void     outx_id_declarations(int l, ID id_list, int expectResultVar, const char *functionName);
+static void     collect_types(EXT_ID extid);
 static void     collect_type_desc(expv v);
 static int      id_is_visibleVar(ID id);
 
@@ -4766,6 +4767,7 @@ collect_types_from_block(BLOCK_ENV block)
 
     FOREACH_BLOCKS(bp, block) {
         mark_type_desc_in_id_list(BLOCK_LOCAL_SYMBOLS(bp));
+        collect_types(BLOCK_LOCAL_EXTERNAL_SYMBOLS(bp));
         collect_types_from_block(BLOCK_CHILDREN(bp));
     }
 }
