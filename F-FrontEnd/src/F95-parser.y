@@ -471,6 +471,7 @@ gen_default_real_kind(void) {
 
 %type <val> name name_or_null generic_name defined_operator intrinsic_operator func_prefix prefix_spec
 %type <val> declaration_statement95 attr_spec_list attr_spec access_spec type_attr_spec_list type_attr_spec
+%type <val> declaration_statement2003 type_param_list
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
 %type <val> result_opt type_keyword
 %type <val> action_statement95
@@ -594,6 +595,7 @@ statement:      /* entry */
         | declaration_statement
         | executable_statement
         | declaration_statement95
+        | declaration_statement2003
         | INCLUDE file_name
           { $$ = list1(F_INCLUDE_STATEMENT,$2); }
         | END
@@ -749,9 +751,9 @@ declaration_statement:
 
 declaration_statement95:
           KW_TYPE COL2_or_null IDENTIFIER
-        { $$ = list2(F95_TYPEDECL_STATEMENT,$3,NULL); }
+        { $$ = list3(F95_TYPEDECL_STATEMENT,$3,NULL,NULL); }
         | KW_TYPE ',' KW type_attr_spec_list COL2 IDENTIFIER
-        { $$ = list2(F95_TYPEDECL_STATEMENT,$6,$4); }
+        { $$ = list3(F95_TYPEDECL_STATEMENT,$6,$4,NULL); }
         | ENDTYPE
         { $$ = list1(F95_ENDTYPEDECL_STATEMENT,NULL); }
         | ENDTYPE IDENTIFIER
@@ -793,6 +795,8 @@ declaration_statement95:
         | VOLATILE COL2_or_null access_ident_list
         { $$ = list1(F03_VOLATILE_STATEMENT, $3); }
         ;
+
+
 
 array_allocation_list:
           array_allocation
@@ -847,6 +851,20 @@ use_only:
 
 COL2_or_null:
         | COL2
+        ;
+
+declaration_statement2003:
+          KW_TYPE COL2_or_null IDENTIFIER '(' type_param_list ')'
+        { $$ = list3(F95_TYPEDECL_STATEMENT,$3,NULL,$5); }
+        | KW_TYPE ',' KW access_spec COL2 IDENTIFIER '(' type_param_list ')'
+        { $$ = list3(F95_TYPEDECL_STATEMENT,$6,$4,$8); }
+        ;
+
+type_param_list:
+          IDENTIFIER
+        { $$ = list1(LIST, $1); }
+        | type_param_list ',' IDENTIFIER
+        { $$ = list_put_last($1, $3); }
         ;
 
 attr_spec_list:
