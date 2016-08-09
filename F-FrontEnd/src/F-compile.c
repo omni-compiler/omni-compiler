@@ -2368,12 +2368,32 @@ get_rough_type_size(TYPE_DESC t)
     return 0;
 }
 
+static void
+check_labels_in_block(BLOCK_ENV block) {
+    ID id;
+    BLOCK_ENV bp;
+
+    FOREACH_ID(id, BLOCK_LOCAL_LABELS(block)) {
+        if (LAB_TYPE(id) != LAB_UNKNOWN &&
+            LAB_IS_USED(id) && !LAB_IS_DEFINED(id)) {
+            error("missing statement number %d", LAB_ST_NO(id));
+        }
+        checkTypeRef(id);
+    }
+
+    FOREACH_BLOCKS(bp, BLOCK_CHILDREN(block)) {
+        check_labels_in_block(bp);
+    }
+}
+
+
 /* end of procedure. generate variables, epilogs, and prologs */
 static void
 end_procedure()
 {
     ID id;
     EXT_ID ext;
+    BLOCK_ENV bp;
 
     /* Check if a block construct is closed */
     if (CTL_TYPE(ctl_top) == CTL_BLOCK &&
@@ -2581,6 +2601,10 @@ end_procedure()
         }
     }
 
+    if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
+        return;
+    }
+
     /* check undefined label */
     FOREACH_ID(id, LOCAL_LABELS) {
         if (LAB_TYPE(id) != LAB_UNKNOWN &&
@@ -2588,6 +2612,9 @@ end_procedure()
             error("missing statement number %d", LAB_ST_NO(id));
         }
         checkTypeRef(id);
+    }
+    FOREACH_BLOCKS(bp, LOCAL_BLOCKS) {
+        check_labels_in_block(bp);
     }
 
     /*
@@ -2600,11 +2627,6 @@ end_procedure()
          */
         CURRENT_STATEMENTS = NULL;
     }
-
-    if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
-        return;
-    }
-
 
     /*
      * set self in parent to procedure.
@@ -5871,6 +5893,7 @@ compile_ENDBLOCK_statement(expr x)
 
     current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
     BLOCK_LOCAL_SYMBOLS(current_block) = LOCAL_SYMBOLS;
+    BLOCK_LOCAL_LABELS(current_block) = LOCAL_LABELS;
     BLOCK_LOCAL_INTERFACES(current_block) = LOCAL_INTERFACES;
     EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) = current_block;
 

@@ -775,6 +775,8 @@ extern ID       find_common_ident _ANSI_ARGS_((SYMBOL sym));
 extern ID       find_common_ident_parent _ANSI_ARGS_((SYMBOL sym));
 extern ID       find_common_ident_sibling _ANSI_ARGS_((SYMBOL sym));
 
+extern ID       find_label_from_block _ANSI_ARGS_((int st_no, BLOCK_ENV block));
+
 extern TYPE_DESC declare_struct_type_wo_component(expr ident);
 
 extern int      expr_is_param _ANSI_ARGS_((expr x));

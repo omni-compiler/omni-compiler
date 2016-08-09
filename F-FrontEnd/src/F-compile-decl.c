@@ -794,11 +794,42 @@ declare_statement_function(id,args,body)
     PROC_ARGS(id) = args;
 }
 
+
+ID
+find_label_from_block(int st_no, BLOCK_ENV block)
+{
+    ID label = NULL;
+    BLOCK_ENV bp;
+
+    if (block == NULL) {
+        return NULL;
+    }
+
+    FOREACH_ID(label, BLOCK_LOCAL_LABELS(block)) {
+        if (LAB_ST_NO(label) == st_no) {
+            return label;
+        }
+    }
+
+    FOREACH_BLOCKS(bp, BLOCK_CHILDREN(block)) {
+        label = find_label_from_block(st_no, bp);
+        if (label != NULL) {
+            return label;
+        }
+    }
+
+    return NULL;
+}
+
+
 ID
 declare_label(int st_no,LABEL_TYPE type,int def_flag)
 {
     ID ip,last_ip;
     char name[10];
+    CTL cp;
+    int in_block = FALSE;
+    int not_same_block = FALSE;
 
     if(st_no <= 0){
         error("illegal label %d", st_no);
@@ -809,6 +840,36 @@ declare_label(int st_no,LABEL_TYPE type,int def_flag)
     FOREACH_ID(ip, LOCAL_LABELS) {
         if(LAB_ST_NO(ip) == st_no) goto found;
         last_ip = ip;
+    }
+
+    FOR_CTLS_BACKWARD(cp) {
+        if (CTL_TYPE(cp) == CTL_BLOCK) {
+            in_block = TRUE;
+            if (CTL_BLOCK_LOCAL_LABELS(cp) == LOCAL_LABELS) {
+                continue;
+            }
+            FOREACH_ID(ip, CTL_BLOCK_LOCAL_LABELS(cp)) {
+                if(LAB_ST_NO(ip) == st_no) {
+                    goto found;
+                }
+            }
+        }
+    }
+    if (in_block) {
+        FOREACH_ID(ip, UNIT_CTL_LOCAL_LABELS(CURRENT_UNIT_CTL)) {
+            if(LAB_ST_NO(ip) == st_no) {
+                goto found;
+            }
+        }
+    }
+    if ((ip = find_label_from_block(st_no, LOCAL_BLOCKS)) != NULL) {
+        not_same_block = TRUE;
+        goto found;
+    }
+    if ((ip = find_label_from_block(st_no,
+                                    UNIT_CTL_LOCAL_BLOCKS(CURRENT_UNIT_CTL))) != NULL) {
+        not_same_block = TRUE;
+        goto found;
     }
 
     /* if not found, make label entry */
@@ -822,11 +883,15 @@ declare_label(int st_no,LABEL_TYPE type,int def_flag)
 
  found:
     if(def_flag){
+
         if(LAB_IS_DEFINED(ip)){
             error("label %d already defined", st_no);
             return ip;
         }
         if(type == LAB_EXEC){
+            if(not_same_block == TRUE) {
+                error("label %d is not in the same block",st_no);
+            }
             if(LAB_IS_USED(ip) && LAB_TYPE(ip) != LAB_FORMAT
                && LAB_BLK_LEVEL(ip) < CURRENT_BLK_LEVEL)
                 warning("there is a branch to label %d from outside block",
@@ -842,6 +907,10 @@ declare_label(int st_no,LABEL_TYPE type,int def_flag)
         LAB_TYPE(ip) = type;
         LAB_IS_DEFINED(ip) = TRUE;
     } else {
+        if(not_same_block == TRUE) {
+            error("label %d is not in the same block",st_no);
+        }
+
         LAB_IS_USED(ip) = TRUE;         /* referenced */
         if(LAB_TYPE(ip) == LAB_UNKNOWN) LAB_TYPE(ip) = type;
 
