@@ -6117,25 +6117,29 @@ public class XfDecompileDomVisitor {
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
         XmfWriter writer = _context.getWriter();
         writer.setupNewLine();
-        XfTypeManagerForDom.SymbolMap smap = typeManager.getCurrentSymbolMap();
-        for (String name: smap.keySet()) {
-            Node node = smap.get(name);
-            String typeName = XmDomUtil.getAttr(node, "type");
-            if (typeName == null) {
-                continue;
+        Set<String> volatiles = typeManager.findSymbolFromCurrentScope(new XfTypeManagerForDom.SymbolMatcher() {
+            @Override
+            public boolean match(Node symbol, Node type) {
+                return XmDomUtil.getAttrBool(type, "is_volatile");
             }
-            Node tn = typeManager.findType(typeName);
-            if (XmDomUtil.getAttrBool(tn, "is_volatile")) {
-                writer.writeToken("VOLATILE");
-                writer.writeToken(name);
-                writer.setupNewLine();
-            }
-            if (XmDomUtil.getAttrBool(tn, "is_asynchronous")) {
-                writer.writeToken("ASYNCHRONOUS");
-                writer.writeToken(name);
-                writer.setupNewLine();
-            }
+        });
+        for (String volatileSymbol : volatiles) {
+            writer.writeToken("VOLATILE");
+            writer.writeToken(volatileSymbol);
+            writer.setupNewLine();
         }
+        Set<String> asynchs = typeManager.findSymbolFromCurrentScope(new XfTypeManagerForDom.SymbolMatcher() {
+            @Override
+            public boolean match(Node symbol, Node type) {
+                return XmDomUtil.getAttrBool(type, "is_asynchronous");
+            }
+        });
+        for (String asynchronousSymbol : asynchs) {
+            writer.writeToken("asynchronous");
+            writer.writeToken(asynchronousSymbol);
+            writer.setupNewLine();
+        }
+
     }
 
 
