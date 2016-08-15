@@ -459,6 +459,7 @@ gen_default_real_kind(void) {
 %type <val> program_name dummy_arg_list dummy_args dummy_arg file_name
 %type <val> declaration_statement executable_statement action_statement action_statement_let action_statement_key assign_statement_or_null assign_statement
 %type <val> declaration_list entity_decl type_spec type_spec0 length_spec common_decl
+%type <val> type_param_value_list type_param_value
 %type <val> common_block external_decl intrinsic_decl equivalence_decl
 %type <val> cray_pointer_list cray_pointer_pair cray_pointer_var
 %type <val> equiv_list data data_list data_val_list data_val value simple_value save_list save_item const_list const_item common_var data_var data_var_list image_dims image_dim_list image_dim image_dims_alloc image_dim_list_alloc image_dim_alloc dims dim_list dim ubound label_list implicit_decl imp_list letter_group letter_groups namelist_decl namelist_list ident_list access_ident_list access_ident
@@ -967,6 +968,8 @@ type_spec: type_spec0 { $$ = $1; /* need_keyword = TRUE; */ };
 type_spec0:
           KW_TYPE '(' IDENTIFIER ')'
         { $$ = $3; }
+        | KW_TYPE '(' IDENTIFIER '(' type_param_value_list ')' ')'
+        { $$ = list2(F03_PARAMETERIZED_TYPE,$3,$5); }
         | type_keyword kind_selector
         { $$ = list2(LIST,$1,$2); }
         | type_keyword length_spec  /* compatibility */
@@ -975,12 +978,26 @@ type_spec0:
         { $$ = list2(LIST,GEN_NODE(F_TYPE_NODE,TYPE_CHAR),$2); }
         | KW_DOUBLE
         { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_REAL),
-		      GEN_NODE(INT_CONSTANT, 8)); }
-		      //                      gen_default_real_kind()); }
+                            GEN_NODE(INT_CONSTANT, 8)); }
+        //                    gen_default_real_kind()); }
         | KW_DCOMPLEX
         { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_COMPLEX),
-		      GEN_NODE(INT_CONSTANT, 8)); }
-		      //                      gen_default_real_kind()); }
+                            GEN_NODE(INT_CONSTANT, 8)); }
+        //                    gen_default_real_kind()); }
+        ;
+
+type_param_value_list:
+          type_param_value
+        { $$ = list1(LIST, $1); }
+        | type_param_value_list ',' type_param_value
+        { $$ = list_put_last($1, $3); }
+        ;
+
+type_param_value:
+          expr
+        { $$ = $1; }
+        | set_expr
+        { $$ = $1; }
         ;
 
 type_keyword:

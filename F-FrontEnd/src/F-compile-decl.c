@@ -2877,7 +2877,8 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
                 return;
             }
-            tp0 = find_struct_decl(EXPR_SYM(typeExpr));
+
+            tp0 = find_struct_decl(sym);
             if (tp0 == NULL) {
                 if(hasPointerAttr) {
                     tp0 = declare_struct_type_wo_component(typeExpr);
@@ -2886,7 +2887,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                     }
                 } else {
                     error_at_node(typeExpr, "type %s not found",
-                                  SYM_NAME(EXPR_SYM(typeExpr)));
+                                  SYM_NAME(sym));
                     return;
                 }
             }
