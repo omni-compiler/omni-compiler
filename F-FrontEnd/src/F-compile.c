@@ -2413,7 +2413,6 @@ end_procedure()
             /* Any other errors already occured, let compilation carry on. */
             return;
          }
-        /* TODO: CHECK for INTERFACES in BLOCK construct*/
         /* check if module procedures are defined in contains block */
         EXT_ID intr, intrDef, ep;
         FOREACH_EXT_ID(intr, LOCAL_INTERFACES) {
