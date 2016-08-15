@@ -68,8 +68,6 @@ extern int cdir_flag;
 extern int max_name_len; //  maximum identifier name length
 extern int dollar_ok;    // accept '$' in identifier or not.
 
-extern int current_proc_is_block();
-
 int exposed_comma,exposed_eql;
 int paren_level;
 char *bufptr = NULL;            /* pointer running in st_buffer */
@@ -1735,9 +1733,6 @@ get_keyword_optional_blank(int class)
     case END:
         if ((cl = get_keyword(end_keywords)) != UNKNOWN){
             if (cl == BLOCK){
-                if (!current_proc_is_block())
-                    return ENDBLOCK;
-
                 while(isspace(*bufptr)) bufptr++;   /* skip space */
                 if (get_keyword(keywords) == DATA) {
                     return ENDBLOCKDATA;

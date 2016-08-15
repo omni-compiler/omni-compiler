@@ -554,7 +554,13 @@ statement:      /* entry */
         | BLOCKDATA program_name
           { $$ = list1(F_BLOCK_STATEMENT,$2); }
         | ENDBLOCKDATA name_or_null
-          { $$ = list1(F95_ENDBLOCKDATA_STATEMENT,$2); }
+          { if ($2 == NULL && CTL_TYPE(ctl_top) == CTL_BLOCK) {
+              $$ = list1(F2008_ENDBLOCK_STATEMENT,
+                         GEN_NODE(IDENT, find_symbol("data")));
+            } else {
+              $$ = list1(F95_ENDBLOCKDATA_STATEMENT,$2);
+            }
+          }
         | SUBROUTINE IDENTIFIER dummy_arg_list
           { $$ = list3(F_SUBROUTINE_STATEMENT,$2,$3,NULL); }
         | func_prefix SUBROUTINE IDENTIFIER dummy_arg_list

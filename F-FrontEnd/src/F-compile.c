@@ -138,12 +138,6 @@ void check_for_ACC_pragma(expr x);
 
 void set_parent_implicit_decls(void);
 
-int
-current_proc_is_block()
-{
-    return CURRENT_PROC_CLASS == CL_BLOCK;
-}
-
 void
 push_env(ENV env)
 {
