@@ -1423,7 +1423,7 @@ inblock()
                 break;
             case CTL_INTERFACE:
                 /* INTERFACE has its own scoping unit which differs from BLOCK's one */
-                return FALSE;;
+                return FALSE;
             default:
                 continue;
                 break;
