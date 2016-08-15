@@ -19,6 +19,7 @@ import exc.object.Xobject;
 import exc.object.XobjectDef;
 import exc.object.XobjectDefEnv;
 import exc.object.Xtype;
+import exc.object.CompositeType;
 
 public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     private XcodeMLNameTable_C nameTable = new XcodeMLNameTable_C();
@@ -35,6 +36,12 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         }
         addChildNodes(e, trans(xobj.getString()));
 
+        return e;
+    }
+
+    private Element transName(XobjList xobjlst) {
+        Element e = transName(xobjlst.getArg(0));
+        addAttributes(e, "fullName", ((XobjString)xobjlst.getArg(1)).getString());
         return e;
     }
 
@@ -78,9 +85,15 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         }
 
         // name
-        addChildNodes(e,
-                      addChildNodes(createElement("name"),
-                                    trans(ident.getName())));
+        Element en = createElement("name");
+        String full_name = ident.getFullName();
+        if (full_name != null) {
+            addAttributes(en, "fullName", full_name);
+        }
+        addChildNodes(e, addChildNodes(en, trans(ident.getName())));
+
+        // public, protected or private
+        addAttributes(e, "access", ident.getAccessStr());
 
         // sclass
         if (ident.getStorageClass() != null) {
@@ -279,8 +292,13 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                                   transSymbols(type.getMemberList()));
                 break;
             case Xtype.STRUCT:
-                e = addChildNodes(createTypeElement("structType", type),
-                                  transSymbols(type.getMemberList()));
+                e = createTypeElement("structType", type);
+                XobjList tagNames = ((CompositeType)type).getTagNames();
+                if (tagNames != null) {
+                  Element e_tagnames = transName(tagNames);
+                  e = addChildNodes(e, e_tagnames);
+                }
+                e = addChildNodes(e, transSymbols(type.getMemberList()));
                 break;
             case Xtype.UNION:
                 e = addChildNodes(createTypeElement("unionType", type),
@@ -1120,6 +1138,10 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         //     e = addChildNodes(createElement(name),
         //                       transExpr(xobj.getArg(0)));
         //     break;
+        case CPP_CLASS_DECL:
+        case CPP_CONSTRUCT_EXPR_CLASS_STATEMENT:
+            e = createElement(name);
+            break;
         default:
             fatal_dump("cannot convert Xcode to XcodeML.", xobj);
         }

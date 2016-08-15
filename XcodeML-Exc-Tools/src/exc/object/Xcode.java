@@ -278,6 +278,11 @@ public enum Xcode
     F_LOCK_STATEMENT                ( 202, 'S', null, null),
     F_UNLOCK_STATEMENT              ( 203, 'S', null, null),
     F_SYNC_STAT                     ( 204, 'L', null, null),
+     // C++11
+    CPP_DECL_NAMESPACE              ( 205, 'L', null, null),
+    CPP_CLASS_DECL                  ( 206, 'L', null, null),
+    CPP_CONSTRUCT_EXPR_CLASS_STATEMENT
+                                    ( 207, 'L', null, null),
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),

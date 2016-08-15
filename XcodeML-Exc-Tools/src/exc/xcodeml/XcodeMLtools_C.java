@@ -88,6 +88,8 @@ public class XcodeMLtools_C extends XcodeMLtools {
       declUnionType(n);
     } else if (name.equals("enumType")) {
       declEnumType(n);
+    } else if (name.equals("classType")) {
+    //declClassType(n);
     } else if (name.equals("coArrayType")) {
       declCoArrayType(n);
     } else {
@@ -120,6 +122,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
     case TEXT:
     case ACC_PRAGMA:
     case XMP_PRAGMA:
+    case CPP_CLASS_DECL:
       xobjFile.add(xobj);
       break;
     default:
@@ -474,6 +477,9 @@ public class XcodeMLtools_C extends XcodeMLtools {
     case COMPOUND_VALUE_ADDR:
       return enterAsXobjList(n, code, type, getContent(getElement(n, "value")));
 
+    case CPP_CLASS_DECL:
+      return enterAsXobjList(n, code, type, getContent(getElement(n, "type")));
+
     default: // default action, make list
       XobjList xobjs = new XobjList(code, type);
       //if(code == Xcode.LIST && list.getLength() == 0)
@@ -485,6 +491,10 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
   Ident toIdent(Node n) {
     String name = getContentText(getElement(n, "name"));
+    String full_name = getAttr(getElement(n, "name"), "fullName");
+
+    // public, protected or private.
+    int access = Ident.as_num(getAttr(n, "access"));
 
     // get type
     String tid = getAttr(n, "type");
@@ -557,7 +567,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
     // create ident
     // for coarray, set codiemnsions (#284)
-    Ident ident = new Ident(name, sclass, type, addr,
+    Ident ident = new Ident(name, full_name, access, sclass, type, addr,
 			    optionalFlags, gccAttrs,
 			    bitField, bitFieldExpr, enumValue, null, codims);
     //if (codims != null)
@@ -907,9 +917,16 @@ public class XcodeMLtools_C extends XcodeMLtools {
   }
 
   private void declStructType(Node n) {
+    Node nameNode = getElement(n, "name");
+    XobjList tagNames = null;
+    if (nameNode != null) {
+      tagNames = Xcons.List(toXobject(nameNode));
+      tagNames.add(new XobjString(Xcode.STRING, getAttr(nameNode, "fullName")));
+    }
     XobjList identList = (XobjList)toXobject(getElement(n, "symbols"));
     Xobject gccAttrs = getGccAttributes(n);
     Xtype type = new StructType(getAttr(n, "type"),
+				tagNames,
 				identList,
 				getTypeQualFlags(n, false),
 				gccAttrs);

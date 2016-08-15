@@ -664,7 +664,8 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 	case OMP_DATA_FIRSTPRIVATE:
 	    /* all pragma can have these */
 	    compile_OMP_name_list(EXPR_ARG2(c));
-	    if(pragma == OMP_PARALLEL)
+	    //if(pragma == OMP_PARALLEL)
+	    if(is_parallel)
 	      pclause = list_put_last(pclause,c);
 	    else     
 	      dclause = list_put_last(dclause,c);

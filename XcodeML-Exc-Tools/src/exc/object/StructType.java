@@ -17,6 +17,11 @@ public class StructType extends CompositeType
         this(id, id_list, typeQualFlags, gccAttrs, null);
     }
 
+    public StructType(String id, XobjList tag_names, XobjList id_list, int typeQualFlags, Xobject gccAttrs)
+    {
+        super(Xtype.STRUCT, id, tag_names, id_list, typeQualFlags, gccAttrs, null);
+    }
+
     @Override
     public Xobject getTotalArraySizeExpr(Block block)
     {
