@@ -5,18 +5,26 @@ package exc.object;
  */
 public abstract class CompositeType extends Xtype
 {
+    private XobjList tagNames;
     /** member id list */
     private XobjList id_list;
     /** original type (to suppress output same type) */
     protected CompositeType original;
 
-    protected CompositeType(int type_kind, String id, XobjList id_list, int typeQualFlags,
+    protected CompositeType(int type_kind, String id, XobjList tag_names, XobjList id_list, int typeQualFlags,
                             Xobject gccAttrs, Xobject[] codimensions)
     {
         super(type_kind, id, typeQualFlags, gccAttrs, codimensions);
         if(id_list == null)
             id_list = Xcons.List();
         this.id_list = id_list;
+        this.tagNames = tag_names;
+    }
+
+    protected CompositeType(int type_kind, String id, XobjList id_list, int typeQualFlags,
+                            Xobject gccAttrs, Xobject[] codimensions)
+    {
+        this(type_kind, id, null, id_list, typeQualFlags, gccAttrs, codimensions);
     }
 
     protected CompositeType(int type_kind, String id, XobjList id_list, int typeQualFlags,
@@ -25,6 +33,10 @@ public abstract class CompositeType extends Xtype
         this(type_kind, id, id_list, typeQualFlags, gccAttrs, null);
     }
 
+    public XobjList getTagNames()
+    {
+        return tagNames;
+    }
 
     @Override
     public final XobjList getMemberList()

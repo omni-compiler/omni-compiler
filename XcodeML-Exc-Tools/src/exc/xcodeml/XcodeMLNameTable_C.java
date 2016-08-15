@@ -134,6 +134,10 @@ public class XcodeMLNameTable_C extends XcodeMLNameTable {
 		new XcodeMLName(Xcode.OMP_PRAGMA, "OMPPragma"),
 		new XcodeMLName(Xcode.XMP_PRAGMA, "XMPPragma"),
 		new XcodeMLName(Xcode.ACC_PRAGMA, "ACCPragma"),
+
+		new XcodeMLName(Xcode.CPP_DECL_NAMESPACE, "Decl_Namespace"),
+		new XcodeMLName(Xcode.CPP_CLASS_DECL, "classDecl"),
+		new XcodeMLName(Xcode.CPP_CONSTRUCT_EXPR_CLASS_STATEMENT, "Stmt_CXXConstructExprClass"),
 	};
 
 	// constructor
