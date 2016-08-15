@@ -11,6 +11,6 @@
 
         TYPE(st):: b
 
-        b = st(dim=2,len=5)
+        b = st(dim=2,len=5)(array=(/1,2/), ch="hoge")
 
       END PROGRAM MAIN
