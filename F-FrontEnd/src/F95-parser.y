@@ -900,6 +900,10 @@ attr_spec:
         { $$ = list0(F95_TARGET_SPEC); }
         | VOLATILE
         { $$ = list0(F03_VOLATILE_SPEC); }
+        | KW_KIND
+        { $$ = list0(F03_KIND_SPEC); }
+        | KW_LEN
+        { $$ = list0(F03_LEN_SPEC); }
         ;
 
 access_spec:

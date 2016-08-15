@@ -1681,6 +1681,12 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
         case F03_VOLATILE_SPEC:
             TYPE_SET_VOLATILE(tp);
             break;
+        case F03_KIND_SPEC:
+            // TODO: implement
+            break;
+        case F03_LEN_SPEC:
+            // TODO: implement
+            break;
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }
