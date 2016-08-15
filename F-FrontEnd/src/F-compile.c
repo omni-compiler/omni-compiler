@@ -303,6 +303,7 @@ pop_ctl()
     /* pop */
     if(CTL_PREV(ctl_top) == NULL) fatal("control stack empty");
     ctl_top = CTL_PREV(ctl_top);
+    CTL_NEXT(ctl_top) = NULL;
     CURRENT_BLK_LEVEL--;
 
     if (old_ctl_type == CTL_BLOCK) {
