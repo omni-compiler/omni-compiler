@@ -122,7 +122,8 @@ enum prog_state {
     INEXEC,
     INSTRUCT,
     INCONT,     /* contains */
-    ININTR      /* interface */
+    ININTR,      /* interface */
+    IN_TYPE_PARAM_DECL /**/
 };
 
 extern enum prog_state current_state;
@@ -544,7 +545,7 @@ extern EXT_ID   declare_current_procedure_ext_id(void);
 
 extern void     compile_type_decl _ANSI_ARGS_((expr typExpre, TYPE_DESC baseTp,
                                                expr decl_list, expr attributes));
-extern void     compile_struct_decl _ANSI_ARGS_((expr ident, expr type));
+extern void     compile_struct_decl _ANSI_ARGS_((expr ident, expr type, expr type_params));
 extern void     compile_struct_decl_end _ANSI_ARGS_((void));
 extern void     compile_SEQUENCE_statement _ANSI_ARGS_((void));
 extern void     compile_COMMON_decl _ANSI_ARGS_((expr com_list));

@@ -533,7 +533,9 @@ void compile_statement1(int st_no, expr x)
          * declaration statement
          */
     case F_TYPE_DECL: /* (F_TYPE_DECL type (LIST data ....) (LIST attr ...)) */
-        check_INDCL();
+        if (CURRENT_STATE != IN_TYPE_PARAM_DECL)
+            check_INDCL();
+
         compile_type_decl(EXPR_ARG1(x), NULL, EXPR_ARG2(x),EXPR_ARG3(x));
         /* in case of data-style initializer like "INTEGER A / 10 /",
          * F_TYPE_DECL has data structure like, (LIST, IDENTIFIER,
@@ -1012,11 +1014,17 @@ void compile_statement1(int st_no, expr x)
 
     case F95_TYPEDECL_STATEMENT:
         check_INDCL();
-        /* (F95_TYPEDECL_STATEMENT (LIST <I> <NULL>) <NULL>) */
-        compile_struct_decl(EXPR_ARG1(x), EXPR_ARG2(x));
+        /* (F95_TYPEDECL_STATEMENT (LIST <I> <NULL> <NULL> <NULL>) */
+        CURRENT_STATE = IN_TYPE_PARAM_DECL;
+        compile_struct_decl(EXPR_ARG1(x), EXPR_ARG2(x), EXPR_ARG3(x));
         break;
 
     case F95_ENDTYPEDECL_STATEMENT:
+        if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
+            // TODO: check all type parameters are declared
+            CURRENT_STATE = INDCL;
+        }
+
         check_INDCL();
         /* (F95_ENDTYPEDECL_STATEMENT <NULL>) */
         compile_struct_decl_end();
@@ -1391,6 +1399,9 @@ check_INDCL()
     case INSIDE:
         CURRENT_STATE = INDCL;
     case INDCL:
+        break;
+    case IN_TYPE_PARAM_DECL:
+        error("declaration in TYPE PARAMETER DECLARATION part");
         break;
     default:
         error("declaration among executables");

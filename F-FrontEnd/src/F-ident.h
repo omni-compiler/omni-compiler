@@ -28,7 +28,8 @@ enum name_class {
     CL_NAMELIST, /* name list name (not implmented) */
     CL_COMMON,  /* common block */
     CL_ELEMENT,  /* structure element name  */
-    CL_GENERICS /* generics name */
+    CL_GENERICS, /* generics name */
+    CL_TYPE_PARAM /* type parameter name */
 };
 
 extern char *name_class_names[];
@@ -49,7 +50,8 @@ extern char *name_class_names[];
   "CL_NAMELIST", \
   "CL_COMMON",  \
   "CL_ELEMENT", \
-  "CL_GENERICS" \
+  "CL_GENERICS", \
+  "CL_TYPE_PARAM", \
 }
 
 /* for CL_PROC  */
@@ -91,7 +93,9 @@ enum storage_class {
     STG_EQUIV,  /* allocated in equive */
     STG_COMEQ,  /* allocated in common and equive */
     STG_TAGNAME, /* derived type name  */
-    STG_NONE    /* for intrinsic, stfunction */
+    STG_NONE,    /* for intrinsic, stfunction */
+    STG_TYPE_PARAM, /* type parameter */
+
 };
 
 extern char *storage_class_names[];
@@ -106,7 +110,8 @@ extern char *storage_class_names[];
  "STG_EQUIV",   \
  "STG_COMEQ",   \
  "STG_TAGNAME", \
- "STG_NONE"     \
+ "STG_NONE",    \
+ "STG_TYPE_PARAM", \
 }
 
 /* statement label for CL_LABEL */
@@ -283,6 +288,9 @@ typedef struct ident_descriptor
 #define ID_IS_DUMMY_ARG(id) \
     ((ID_STORAGE((id)) == STG_ARG) || \
      (ID_CLASS((id)) == CL_PROC && PROC_IS_DUMMY_ARG((id)) == TRUE))
+
+#define ID_IS_TYPE_PARAM(id) \
+    ((ID_CLASS((id)) == CL_TYPE_PARAM))
 
 /* for CL_VAR */
 #define VAR_COM_ID(id)          ((id)->info.var_info.common_id)

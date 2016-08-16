@@ -286,6 +286,8 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_DIM_STEP(tp)       ((tp)->array_info.dim_step)
 #define TYPE_IS_SCALAR(tp)      (((tp)->array_info.n_dim == 0))
 #define TYPE_MEMBER_LIST(tp)    ((tp)->members)
+#define TYPE_TYPE_PARAMS(tp)    ((tp)->type_parameters)
+#define TYPE_HAS_TYPE_PARAMS(tp) (((tp)->type_parameters) != NULL)
 
 #define TYPE_CHAR_LEN(tp)       ((tp)->size)
 #define TYPE_KIND(tp)           ((tp)->kind)

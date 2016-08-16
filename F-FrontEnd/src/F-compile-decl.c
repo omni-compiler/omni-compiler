@@ -583,7 +583,8 @@ declare_variable(ID id)
                ID_CLASS(id) != CL_PROC &&
                ID_CLASS(id) != CL_ENTRY &&
                ID_CLASS(id) != CL_PARAM &&
-               ID_CLASS(id) != CL_ELEMENT) {
+               ID_CLASS(id) != CL_ELEMENT &&
+               ID_CLASS(id) != CL_TYPE_PARAM) {
         error("used as variable, %s", ID_NAME(id));
         return NULL;
     }
@@ -642,6 +643,7 @@ declare_variable(ID id)
     case STG_EQUIV:
     case STG_COMEQ:
     case STG_COMMON:
+    case STG_TYPE_PARAM:
         v = expv_sym_term(F_VAR, ID_TYPE(id),ID_SYM(id));
         EXPV_TYPE(v) = ID_TYPE(id);
         ID_ADDR(id) = v;
@@ -1069,8 +1071,13 @@ declare_ident(SYMBOL s, enum name_class class)
                  */
             if (is_in_kind_compilation_flag_for_declare_ident == FALSE) {
                 TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
-                symbols = &TYPE_MEMBER_LIST(struct_tp);
-                class = CL_ELEMENT;
+                if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
+                    symbols = &TYPE_TYPE_PARAMS(struct_tp);
+                    class = CL_TYPE_PARAM;
+                } else {
+                    symbols = &TYPE_MEMBER_LIST(struct_tp);
+                    class = CL_ELEMENT;
+                }
             }
         }
     }
@@ -1078,6 +1085,14 @@ declare_ident(SYMBOL s, enum name_class class)
     last_ip = NULL;
     FOREACH_ID(ip, *symbols) {
         if (ID_SYM(ip) == s) {
+            if (class == CL_TYPE_PARAM) {
+                // type parameters are defined in one sentence.
+                // i.e. its class is NEVER CL_UNKNOWN
+                snprintf(msg, 2048, fmt, "type parameter", SYM_NAME(s));
+                error(msg);
+                return NULL;
+            }
+
             /* if argument 'class' is CL_UNKNOWN, find id */
             if (ID_CLASS(ip) == class) {
                 if (class == CL_TAGNAME) {
@@ -1145,8 +1160,18 @@ declare_ident(SYMBOL s, enum name_class class)
             ID_ORDER(ip) = order_sequence++;
     }
 
-    if (class == CL_TAGNAME) ID_STORAGE(ip) = STG_TAGNAME;
-    else ID_STORAGE(ip) = STG_UNKNOWN;
+    switch (class) {
+        case CL_TAGNAME:
+            ID_STORAGE(ip) = STG_TAGNAME;
+            break;
+        case CL_TYPE_PARAM:
+            ID_STORAGE(ip) = STG_TYPE_PARAM;
+            break;
+        default:
+            ID_STORAGE(ip) = STG_UNKNOWN;
+            break;
+    }
+
     return ip;
 }
 
@@ -1174,6 +1199,13 @@ declare_common_ident(SYMBOL s)
 ID
 find_ident_local(SYMBOL s)
 {
+    if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
+        ID ip;
+        TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
+        ip = find_ident_head(s, TYPE_TYPE_PARAMS(struct_tp));
+        if (ip != NULL) return ip;
+    }
+
     return find_ident_head(s, LOCAL_SYMBOLS);
 }
 
@@ -1710,6 +1742,7 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                               ID_NAME(id));
                 return NULL;
             }
+
             TYPE_SET_LEN(tp);
             break;
         default:
@@ -2852,22 +2885,51 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
     int hasDimsInAttr = FALSE;
     int hasPointerAttr = FALSE;
     int hasCodimsInAttr = FALSE;
+    int hasTypeParamAttr = FALSE;
+    int hasNonTypeParamAttr = FALSE;
 
     /* Check dimension spec in attribute. */
     if (attributes != NULL) {
         FOR_ITEMS_IN_LIST(lp, attributes) {
             x = LIST_ITEM(lp);
-            if (EXPR_CODE(x) == F95_DIMENSION_SPEC) {
-                hasDimsInAttr = TRUE;
+            switch (EXPR_CODE(x)) {
+                case  F95_DIMENSION_SPEC:
+                    hasDimsInAttr = TRUE;
+                    hasNonTypeParamAttr = TRUE;
+                    break;
+                case F95_POINTER_SPEC:
+                    hasPointerAttr = TRUE;
+                    hasNonTypeParamAttr = TRUE;
+                    break;
+                case XMP_CODIMENSION_SPEC:
+                    hasCodimsInAttr = TRUE;
+                    hasNonTypeParamAttr = TRUE;
+                    break;
+                case F03_KIND_SPEC:
+                case F03_LEN_SPEC:
+                    hasTypeParamAttr = TRUE;
+                    break;
+                default:
+                    hasNonTypeParamAttr = TRUE;
+                    break;
             }
-	    else if (EXPR_CODE(x) == F95_POINTER_SPEC) {
-                hasPointerAttr = TRUE;
-            }
-	    else if (EXPR_CODE(x) == XMP_CODIMENSION_SPEC) {
-	      hasCodimsInAttr = TRUE;
-	    }
         }
     }
+
+    if (hasTypeParamAttr) {
+        if (hasNonTypeParamAttr) {
+            error_at_node(decl_list, "Invalid type attributes");
+            return;
+        }
+    }
+
+    if (hasNonTypeParamAttr &&
+        CTL_TYPE(ctl_top) == CTL_STRUCT &&
+        CURRENT_STATE == IN_TYPE_PARAM_DECL ) {
+        // TODO: check all type parameters are declared
+        CURRENT_STATE = INDCL;
+    }
+
 
     if (typeExpr != NULL &&
         baseTp != NULL) {
@@ -2952,7 +3014,24 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                               "component %s already exists in the parent type.",
                               SYM_NAME(EXPR_SYM(ident)));
             }
+
+            // TODO check state is TYPE PRAMETER DECLARATIONS or MEMBER DECLARATION
+            id = find_ident_head(EXPR_SYM(ident), TYPE_TYPE_PARAMS(struct_tp));
+            if (id != NULL && CURRENT_STATE != IN_TYPE_PARAM_DECL) {
+                error_at_node(decl_list, "'%s' is already used as a type parameter.", ID_NAME(id));
+                continue;
+            }
+
             id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
+            if (id == NULL) {
+                id = find_ident_head(EXPR_SYM(ident), TYPE_MEMBER_LIST(stp));
+            }
+
+            if (id == NULL) {
+                CURRENT_STATE = INDCL;
+                // TODO: check all type parameters are declared.
+                id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
+            }
         } else {
             id = find_ident_local(EXPR_SYM(ident));
             if(id != NULL && ID_IS_OFMODULE(id)) {
@@ -3234,13 +3313,14 @@ find_struct_decl(SYMBOL s)
 
 /* compile type statement */
 void
-compile_struct_decl(expr ident, expr type)
+compile_struct_decl(expr ident, expr type, expr type_params)
 {
     TYPE_DESC tp;
     expv v;
-    list lp;
+    list lp = NULL;
     int has_access_spec = FALSE;
     int has_extends_spec = FALSE;
+    ID last = NULL;
 
     if(ident == NULL)
         fatal("compile_struct_decl: F95 derived type name is NULL");
@@ -3314,6 +3394,12 @@ compile_struct_decl(expr ident, expr type)
                 break;
         }
     }
+
+    FOR_ITEMS_IN_LIST(lp, type_params) {
+        ID id = declare_ident(EXPR_SYM(LIST_ITEM(lp)), CL_TYPE_PARAM);
+        ID_LINK_ADD(id, TYPE_TYPE_PARAMS(tp), last);
+    }
+
     push_ctl(CTL_STRUCT);
     CTL_BLOCK(ctl_top) = v;
 }
