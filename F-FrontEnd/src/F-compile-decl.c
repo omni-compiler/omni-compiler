@@ -1687,7 +1687,15 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                               "KIND attribute outside of TYPE declaration");
                 return NULL;
             }
-            // TODO: implement
+            if (TYPE_BASIC_TYPE(tp) != TYPE_INT) {
+                /* kind arg must be integer type. */
+                error_at_node(attributes,
+                              "KIND to a no-integer type parameter '%s'",
+                              ID_NAME(id));
+                return NULL;
+            }
+
+            TYPE_SET_KIND(tp);
             break;
         case F03_LEN_SPEC:
             if (CTL_TYPE(ctl_top) != CTL_STRUCT) {
@@ -1695,7 +1703,14 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                               "LEN attribute outside of TYPE declaration");
                 return NULL;
             }
-            // TODO: implement
+            if (TYPE_BASIC_TYPE(tp) != TYPE_INT) {
+                /* len arg must be integer type. */
+                error_at_node(attributes,
+                              "LEN to a no-integer type parameter '%s'",
+                              ID_NAME(id));
+                return NULL;
+            }
+            TYPE_SET_LEN(tp);
             break;
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));

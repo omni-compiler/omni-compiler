@@ -85,6 +85,16 @@ struct type_attr_check type_attr_checker[] = {
          TYPE_ATTR_PURE|TYPE_ATTR_ELEMENTAL|TYPE_ATTR_PROTECTED),
         "volatile",
     },
+    {
+        TYPE_ATTR_KIND,
+        (TYPE_ATTR_KIND),
+        "KIND",
+    },
+    {
+        TYPE_ATTR_LEN,
+        (TYPE_ATTR_LEN),
+        "LEN",
+    },
     {  /* terminater, DO NOT remove */
         0,0,NULL
     }
