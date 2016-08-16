@@ -137,6 +137,7 @@ typedef struct type_descriptor
         expv dim_upper, dim_lower, dim_step; /* dimension subscripts */
     } array_info; /* FOR FbasicType for Array */
     struct ident_descriptor *parent;  /* represents super-class of this derived type.  */
+    struct ident_descriptor *type_parameters; /* type parameters for derived type */
     struct ident_descriptor *members; /* all members for derived type */
     codims_desc *codims;
     int is_reshaped_type;       /* A bool flag to specify this type is
