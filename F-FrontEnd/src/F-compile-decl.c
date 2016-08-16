@@ -1682,9 +1682,19 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             TYPE_SET_VOLATILE(tp);
             break;
         case F03_KIND_SPEC:
+            if (CTL_TYPE(ctl_top) != CTL_STRUCT) {
+                error_at_node(attributes,
+                              "KIND attribute outside of TYPE declaration");
+                return NULL;
+            }
             // TODO: implement
             break;
         case F03_LEN_SPEC:
+            if (CTL_TYPE(ctl_top) != CTL_STRUCT) {
+                error_at_node(attributes,
+                              "LEN attribute outside of TYPE declaration");
+                return NULL;
+            }
             // TODO: implement
             break;
         default:
