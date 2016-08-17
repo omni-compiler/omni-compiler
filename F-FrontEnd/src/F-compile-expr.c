@@ -1030,6 +1030,10 @@ compile_expression(expr x)
             return compile_expression(accessX);
         }
 
+        case F03_STRUCT_CONSTRUCT: {
+            return NULL;
+        }
+
         default: {
             fatal("compile_expression: unknown code '%s'",
                   EXPR_CODE_NAME(EXPR_CODE(x)));

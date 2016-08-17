@@ -1154,6 +1154,8 @@ data_val: value
         { $$ = $1; }
         | IDENTIFIER parenthesis_arg_list
         { $$ = list2(F_ARRAY_REF,$1,$2); /* struct constructor */ }
+        | IDENTIFIER parenthesis_arg_list parenthesis_arg_list
+        { $$ = list3(F03_STRUCT_CONSTRUCT,$1,$2,$3); /* struct constructor with type parameter */ }
         | simple_value '*' value
         { $$ = list2(F_DUP_DECL,$1,$3); }
         ;
@@ -1772,6 +1774,8 @@ lhs:
         { $$ = list2(XMP_COARRAY_REF,$1,$2); }
         | IDENTIFIER parenthesis_arg_list
         { $$ = list2(F_ARRAY_REF,$1,$2); }
+        | IDENTIFIER parenthesis_arg_list parenthesis_arg_list
+        { $$ = list3(F03_STRUCT_CONSTRUCT,$1,$2,$3); /* struct constructor with type parameter */ }
         | IDENTIFIER parenthesis_arg_list image_selector /* coarray */
         { $$ = list2(XMP_COARRAY_REF, list2(F_ARRAY_REF,$1,$2), $3); }
         | IDENTIFIER parenthesis_arg_list substring
