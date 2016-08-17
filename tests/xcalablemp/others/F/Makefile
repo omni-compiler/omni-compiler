@@ -169,6 +169,6 @@ cleanlog:
 	rm -rf RUN
 
 clean: cleanlog
-	rm -f $(EXES) *.o *.*mod *.s 278\ spacefile.x 412.x
+	rm -f $(EXES) *.o *.*mod *.s 278\ spacefile.x *.x
 	rm -rf mod __omni_tmp__ 278\ module
 	rm -f __omni_tmp__*
