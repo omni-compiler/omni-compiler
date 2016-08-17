@@ -3707,9 +3707,15 @@ outx_characterType(int l, TYPE_DESC tp)
     }
 
     if (tRef) {
-        outx_print(" ref=\"C" ADDRX_PRINT_FMT "\"/>\n", Addr2Uint(tRef));
+        if (tp->codims && !(tRef->codims)) {
+            outx_print(" ref=\"C" ADDRX_PRINT_FMT "\">\n", Addr2Uint(tRef));
+            outx_coShape(l+1, tp);
+            outx_close(l, "FbasicType");
+        } else {
+            outx_print(" ref=\"C" ADDRX_PRINT_FMT "\"/>\n", Addr2Uint(tRef));
+        }
     }
-    else if (TYPE_KIND(tp) || charLen != 1 || vcharLen != NULL || tp->codims){
+    else if (TYPE_KIND(tp) || charLen != 1 || vcharLen != NULL || tp->codims) {
         outx_print(" ref=\"%s\">\n", tid);
         outx_kind(l1, tp);
 
@@ -3723,7 +3729,7 @@ outx_characterType(int l, TYPE_DESC tp)
             }
             outx_close(l1, "len");
         }
-	if (tp->codims) outx_coShape(l+1, tp);
+        if (tp->codims) outx_coShape(l+1, tp);
         outx_close(l, "FbasicType");
     } else {
         outx_print(" ref=\"%s\"/>\n", tid);
