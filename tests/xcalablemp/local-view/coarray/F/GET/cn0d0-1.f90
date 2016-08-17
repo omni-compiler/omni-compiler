@@ -1,5 +1,4 @@
   program gettest_cn0d0
-!!     include "xmp_coarray.h"
 
     character(200) wbuf1,wbuf2[*],tmp
 
@@ -18,6 +17,7 @@
     sync all
 
     !---------------------------- check and output
+    nerr=0
     if (me==1) then
        if (wbuf2.ne.tmp) then
           write(*,*) "[1] tmp should be the same as my wbuf2."

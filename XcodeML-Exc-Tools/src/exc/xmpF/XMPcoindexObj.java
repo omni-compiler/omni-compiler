@@ -52,6 +52,8 @@ public class XMPcoindexObj {
     this.obj = obj;
     name = _getName(obj);
     coarray = XMPcoarray.findCoarrayInCoarrays(name, coarrays);
+    if (coarray == null)
+      XMP.fatal("INTERNAL: cannot find the coarray by name in ArrayList");
     _initOthers();
   }
 
