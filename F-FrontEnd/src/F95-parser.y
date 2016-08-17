@@ -88,7 +88,6 @@
 %token REWIND
 %token REWIND_P
 %token POINTER
-%token VOLATILE
 
 /* F95 keywords */
 %token ENDPROGRAM
@@ -155,9 +154,6 @@
 %token KW_MEMORY
 %token KW_ERROR
 
-/* Fortran 2008 keywords*/
-%token BLOCK
-%token ENDBLOCK
 
 %token REF_OP
 
@@ -173,6 +169,8 @@
 
 %token KW_DBL
 %token KW_SELECT
+%token KW_BLOCK
+%token KW_ENDBLOCK
 %token KW_GO
 %token KW_PRECISION
 %token OPERATOR
@@ -555,13 +553,7 @@ statement:      /* entry */
         | BLOCKDATA program_name
           { $$ = list1(F_BLOCK_STATEMENT,$2); }
         | ENDBLOCKDATA name_or_null
-          { if ($2 == NULL && CTL_TYPE(ctl_top) == CTL_BLOCK) {
-              $$ = list1(F2008_ENDBLOCK_STATEMENT,
-                         GEN_NODE(IDENT, find_symbol("data")));
-            } else {
-              $$ = list1(F95_ENDBLOCKDATA_STATEMENT,$2);
-            }
-          }
+          { $$ = list1(F95_ENDBLOCKDATA_STATEMENT,$2); }
         | SUBROUTINE IDENTIFIER dummy_arg_list
           { $$ = list3(F_SUBROUTINE_STATEMENT,$2,$3,NULL); }
         | func_prefix SUBROUTINE IDENTIFIER dummy_arg_list
@@ -789,8 +781,6 @@ declaration_statement95:
         { $$ = list2(F95_INTENT_STATEMENT, $4, $7); }
         | ALLOCATABLE COL2_or_null array_allocation_list
         { $$ = list1(F95_ALLOCATABLE_STATEMENT,$3); }
-        | VOLATILE COL2_or_null access_ident_list
-        { $$ = list1(F03_VOLATILE_STATEMENT, $3); }
         ;
 
 array_allocation_list:
@@ -879,8 +869,6 @@ attr_spec:
         { $$ = list0(F95_SAVE_SPEC); }
         | TARGET
         { $$ = list0(F95_TARGET_SPEC); }
-        | VOLATILE
-        { $$ = list0(F03_VOLATILE_SPEC); }
         ;
 
 access_spec:
@@ -1345,10 +1333,6 @@ executable_statement:
         { $$ = list2(F_CASELABEL_STATEMENT, NULL, $2); }
         | ENDSELECT name_or_null
         { $$ = list1(F_ENDSELECT_STATEMENT,$2); }
-        | BLOCK
-        { $$ = list1(F2008_BLOCK_STATEMENT,st_name); }
-        | ENDBLOCK name_or_null
-        { $$ = list1(F2008_ENDBLOCK_STATEMENT,$2); }
         ;
 
 assign_statement_or_null:

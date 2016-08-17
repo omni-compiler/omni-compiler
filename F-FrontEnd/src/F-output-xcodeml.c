@@ -32,12 +32,7 @@ extern int      flag_module_compile;
 static void     outx_expv(int l, expv v);
 static void     outx_functionDefinition(int l, EXT_ID ep);
 static void     outx_interfaceDecl(int l, EXT_ID ep);
-static void     outx_definition_symbols(int l, EXT_ID ep);
-static void     outx_declarations(int l, EXT_ID parent_ep);
-static void     outx_id_declarations(int l, ID id_list, int expectResultVar, const char *functionName);
-static void     collect_types(EXT_ID extid);
 static void     collect_type_desc(expv v);
-static int      id_is_visibleVar(ID id);
 
 char s_timestamp[CEXPR_OPTVAL_CHARLEN] = { 0 };
 char s_xmlIndent[CEXPR_OPTVAL_CHARLEN] = "  ";
@@ -199,8 +194,6 @@ xtag(enum expr_code code)
     case F2008_LOCK_STATEMENT:       return "lockStatement";
     case F2008_UNLOCK_STATEMENT:     return "unlockStatement";
 
-    case F2008_BLOCK_STATEMENT:      return "blockStatement";
-
     /*                          
      * misc.                    
      */                         
@@ -351,7 +344,6 @@ xtag(enum expr_code code)
     case XMP_CODIMENSION_SPEC:
     case EXPR_CODE_END:
     case F2008_ENDCRITICAL_STATEMENT:
-    case F2008_ENDBLOCK_STATEMENT:
 
         fatal("invalid exprcode : %s", EXPR_CODE_NAME(code));
 
@@ -614,7 +606,6 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_INTENT_IN(tp) ||
         TYPE_IS_INTENT_OUT(tp) ||
         TYPE_IS_INTENT_INOUT(tp) ||
-        TYPE_IS_VOLATILE(tp) ||
         tp->codims;
 }
 
@@ -786,7 +777,6 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_ALLOCATABLE(tp),      "is_allocatable");
         outx_true(TYPE_IS_SEQUENCE(tp),         "is_sequence");
         outx_true(TYPE_IS_INTERNAL_PRIVATE(tp), "is_internal_private");
-        outx_true(TYPE_IS_VOLATILE(tp),          "is_volatile");
     }
 
     if((options & TOPT_INTRINSIC) > 0)
@@ -3120,70 +3110,6 @@ outx_UNLOCK_statement(int l, expv v)
 }
 
 
-/*
- * output blockStatement
- */
-static void
-outx_BLOCK_statement(int l, expv v)
-{
-    char buf[128];
-    EXT_ID ep;
-    BLOCK_ENV block;
-    list lp;
-    ID id;
-    int l1 = l + 1;
-    int l2 = l + 2;
-
-    if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
-        sprintf(buf, " construct_name=\"%s\"",
-                SYM_NAME(EXPR_SYM(EXPR_ARG2(v))));
-        outx_tagOfStatement1(l, v, buf);
-    } else {
-        outx_tagOfStatement(l, v);
-    }
-    block = EXPR_BLOCK(v);
-
-    outx_tag(l1, "symbols");
-    FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
-        if (id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE)
-            outx_id(l2, id);
-    }
-    outx_close(l1, "symbols");
-
-    outx_tag(l1, "declarations");
-
-    /*
-     * FuseDecl
-     */
-    FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(v)) {
-        expv u = LIST_ITEM(lp);
-        switch(EXPV_CODE(u)) {
-        case F95_USE_STATEMENT:
-            outx_useDecl(l2, u);
-            break;
-        case F95_USE_ONLY_STATEMENT:
-            outx_useOnlyDecl(l2, u);
-            break;
-        default:
-            break;
-        }
-    }
-
-    outx_id_declarations(l2, BLOCK_LOCAL_SYMBOLS(block), FALSE, NULL);
-
-    /*
-     * FinterfaceDecl
-     */
-    FOREACH_EXT_ID(ep, BLOCK_LOCAL_INTERFACES(block)) {
-        outx_interfaceDecl(l2, ep);
-    }
-
-    outx_close(l1, "declarations");
-    outx_body(l1, EXPR_ARG1(v));
-    outx_expvClose(l, v);
-}
-
-
 //static void
 void
 outx_expv(int l, expv v)
@@ -3510,10 +3436,6 @@ outx_expv(int l, expv v)
 
     case ACC_PRAGMA:
       outx_ACC_pragma(l, v);
-      break;
-
-    case F2008_BLOCK_STATEMENT:
-      outx_BLOCK_statement(l, v);
       break;
 
     default:
@@ -4032,9 +3954,6 @@ id_is_visibleVar(ID id)
             CRT_FUNCEP != PROC_EXT_ID(id)) {
             return FALSE;
         }
-        if (TYPE_IS_MODIFIED(tp)) {
-            return TRUE;
-        }
         if ((is_outputed_module && CRT_FUNCEP == NULL)
             && (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) { // TODO PROTECTED
             return TRUE;
@@ -4044,8 +3963,6 @@ id_is_visibleVar(ID id)
 
     switch(ID_CLASS(id)) {
     case CL_VAR:
-        if(TYPE_IS_MODIFIED(ID_TYPE(id)))
-            return TRUE;
         if(VAR_IS_IMPLIED_DO_DUMMY(id))
             return FALSE;
 #if 0
@@ -4069,8 +3986,6 @@ id_is_visibleVar(ID id)
             /* this id is of function.
                Checkes if this id is of the current function or not. */
             if(CRT_FUNCEP == PROC_EXT_ID(id)) {
-                return TRUE;
-            } else if (TYPE_IS_MODIFIED(ID_TYPE(id))) {
                 return TRUE;
             } else {
                 return FALSE;
@@ -4313,80 +4228,6 @@ emit_decl(int l, ID id)
     }
 }
 
-static void
-outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionName)
-{
-    TYPE_DESC tp;
-    ID id, *ids;
-    int i, nIDs;
-
-    ids = genSortedIDs(id_list, &nIDs);
-
-    if (ids) {
-        /*
-         * Firstly emit struct base type (TYPE_REF(tp) == NULL).
-         * ex) type(x)::p = x(1)
-         */
-        for (i = 0; i < nIDs; i++) {
-            id = ids[i];
-
-            if (ID_CLASS(id) != CL_TAGNAME) {
-                continue;
-            }
-            if (ID_IS_EMITTED(id) == TRUE) {
-                continue;
-            }
-
-            if (ID_IS_OFMODULE(id) == TRUE) {
-                continue;
-            }
-
-            if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
-                continue;
-            }
-
-            tp = ID_TYPE(id);
-            if (IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
-                int j;
-                for (j = 0; j < nIDs; j++) {
-                    if (i != j) {
-                        if (ID_IS_EMITTED(ids[j]) == TRUE) {
-                            continue;
-                        }
-                        if (is_id_used_in_struct_member(ids[j], tp) == TRUE) {
-                            emit_decl(l, ids[j]);
-                            ID_IS_EMITTED(ids[j]) = TRUE;
-                        }
-                    }
-                }
-                outx_structDecl(l, id);
-                ID_IS_EMITTED(id) = TRUE;
-            }
-        }
-
-        /*
-         * varDecl except structDecl, namelistDecl
-         */
-        for (i = 0; i < nIDs; ++i) {
-            id = ids[i];
-
-            if (hasResultVar == TRUE && functionName != NULL &&
-                strcasecmp(functionName, SYM_NAME(ID_SYM(id))) == 0) {
-                continue;
-            }
-
-            if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
-                continue;
-            }
-
-            emit_decl(l, id);
-            ID_IS_EMITTED(id) = TRUE;
-        }
-        free(ids);
-    }
-}
-
-
 
 /**
  * output declarations with pragmas
@@ -4396,11 +4237,13 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
 {
     const int l1 = l + 1;
     list lp;
-    ID id;
+    ID id, *ids;
     EXT_ID ep;
     expv v;
+    int i, nIDs;
     int hasResultVar = (EXT_PROC_RESULTVAR(parent_ep) != NULL) ? TRUE : FALSE;
     const char *myName = SYM_NAME(EXT_SYM(parent_ep));
+    TYPE_DESC tp;
 
     outx_tag(l, "declarations");
 
@@ -4421,7 +4264,63 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
         }
     }
 
-    outx_id_declarations(l1, EXT_PROC_ID_LIST(parent_ep), hasResultVar, myName);
+    ids = genSortedIDs(EXT_PROC_ID_LIST(parent_ep), &nIDs);
+
+    if (ids) {
+        /*
+         * Firstly emit struct base type (TYPE_REF(tp) == NULL).
+         * ex) type(x)::p = x(1)
+         */
+        for (i = 0; i < nIDs; i++) {
+            id = ids[i];
+
+            if (ID_CLASS(id) != CL_TAGNAME) {
+                continue;
+            }
+            if (ID_IS_EMITTED(id) == TRUE) {
+                continue;
+            }
+
+            if (ID_IS_OFMODULE(id) == TRUE) {
+                continue;
+            }
+
+            tp = ID_TYPE(id);
+            if (IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
+                int j;
+                for (j = 0; j < nIDs; j++) {
+                    if (i != j) {
+                        if (ID_IS_EMITTED(ids[j]) == TRUE) {
+                            continue;
+                        }
+                        if (is_id_used_in_struct_member(ids[j], tp) == TRUE) {
+                            emit_decl(l1, ids[j]);
+                            ID_IS_EMITTED(ids[j]) = TRUE;
+                        }
+                    }
+                }
+                outx_structDecl(l1, id);
+                ID_IS_EMITTED(id) = TRUE;
+            }
+        }
+
+        /*
+         * varDecl except structDecl, namelistDecl
+         */
+        for (i = 0; i < nIDs; ++i) {
+            id = ids[i];
+
+            if (hasResultVar == TRUE &&
+                strcasecmp(myName, SYM_NAME(ID_SYM(id))) == 0) {
+                continue;
+            }
+
+            emit_decl(l1, id);
+            ID_IS_EMITTED(id) = TRUE;
+        }
+        free(ids);
+    }
+
 
     /*
      * FdataDecl / FequivalenceDecl
@@ -4768,28 +4667,6 @@ getTimestamp()
 }
 
 
-
-
-/**
- * recursively collect TYPE_DESC from block constructs
- */
-static void
-collect_types_from_block(BLOCK_ENV block)
-{
-    BLOCK_ENV bp;
-
-    if (block == NULL) {
-        return;
-    }
-
-    FOREACH_BLOCKS(bp, block) {
-        mark_type_desc_in_id_list(BLOCK_LOCAL_SYMBOLS(bp));
-        collect_types(BLOCK_LOCAL_EXTERNAL_SYMBOLS(bp));
-        collect_types_from_block(BLOCK_CHILDREN(bp));
-    }
-}
-
-
 /**
  * recursively collect TYPE_DESC to type_list
  */
@@ -4832,9 +4709,6 @@ collect_types1(EXT_ID extid)
         collect_types1(EXT_PROC_INTERFACES(ep));
         /* symbols in INTERFACE */
         collect_types1(EXT_PROC_INTR_DEF_EXT_IDS(ep));
-
-        /* symbols in BLOCK */
-        collect_types_from_block(EXT_PROC_BLOCKS(ep));
 
         sTp = reduce_type(EXT_PROC_TYPE(ep));
         mark_type_desc(sTp);

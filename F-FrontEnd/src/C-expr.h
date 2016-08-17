@@ -73,9 +73,6 @@ typedef struct expression_node
                                          * number constant */
     struct external_symbol *entry_ext_id;
                                         /* EXT_ID for entry. Used for expv. */
-
-    struct block_env *block; /* e_code == F2008_BLOCK_STATEMENT */
-
     union {
         void        *e_gen;
         struct list_node *e_lp;
@@ -101,8 +98,6 @@ typedef struct expression_node
 #define EXPR_LINE_FILE_ID(x)    ((x)->e_line->file_id)
 #define EXPR_LINE(x)    ((x)->e_line)
 #define EXPR_ORIGINAL_TOKEN(x)  ((x)->e_original_token)
-
-#define EXPR_BLOCK(x)     ((x)->block)
 
 /* list data structure, which is ended with NULL */
 typedef struct list_node

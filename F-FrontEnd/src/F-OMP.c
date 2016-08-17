@@ -1,6 +1,6 @@
 #include "F-front.h"
 
-extern CTL ctl_top_saved;
+extern CTL *ctl_top_saved;
 extern expv CURRENT_STATEMENTS_saved;
 
 expv OMP_check_SECTION(expr x);
@@ -901,7 +901,7 @@ void check_OMP_runtime_function(ID id)
 /* called from F-compile.c, force loop variable to be private. */
 void check_OMP_loop_var(SYMBOL do_var_sym)
 {
-    CTL cp;
+    CTL *cp;
     expr x,c;
     list lp,lq;
     enum OMP_pragma_clause cdir;
@@ -911,7 +911,7 @@ void check_OMP_loop_var(SYMBOL do_var_sym)
 	      list1(LIST,expv_sym_term(IDENT,NULL,do_var_sym)));
 
     /* find any data attribute clauses on do_var_sym */
-    FOR_CTLS_BACKWARD(cp) {
+    for(cp = ctl_top; cp >= ctls; cp--){
 	if(CTL_TYPE(cp) != CTL_OMP) continue;
 	if(CTL_OMP_ARG_DCLAUSE(cp) != NULL){
 	    FOR_ITEMS_IN_LIST(lp,CTL_OMP_ARG_DCLAUSE(cp)){
