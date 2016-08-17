@@ -369,15 +369,13 @@ print_controls(fp)
     FILE *fp;
 {
     int i;
-    CTL ctl;
     fprintf(fp, "#ctls: levels=%d\n", CURRENT_BLK_LEVEL);
 
-    ctl = ctl_base;
     for(i = 0; i < CURRENT_BLK_LEVEL; ++i) {
+        CTL *ctl = &ctls[i];
         fprintf(fp, "  [%d] : %s\n",
             i,
             control_type_name(ctl->ctltype));
-        ctl = CTL_NEXT(ctl);
     }
 }
 

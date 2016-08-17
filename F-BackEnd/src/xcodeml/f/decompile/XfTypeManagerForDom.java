@@ -6,7 +6,10 @@
  */
 package xcodeml.f.decompile;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 import org.w3c.dom.Node;
 
@@ -45,7 +48,7 @@ class XfTypeManagerForDom {
 
     /** This map contains the node "id". */
     @SuppressWarnings("serial")
-    public class SymbolMap extends HashMap<String, Node>
+    private class SymbolMap extends HashMap<String, Node>
     {
         @Override
         public String toString()
@@ -467,25 +470,5 @@ class XfTypeManagerForDom {
         sb.append(_aliasMapStack.toString());
         sb.append(_symbolMapStack.toString());
         return sb.toString();
-    }
-
-    interface SymbolMatcher {
-        boolean match(Node symbol, Node type);
-    }
-
-    public Set<String> findSymbolFromCurrentScope(SymbolMatcher matcher) {
-        Set<String> set = new HashSet<String>();
-        SymbolMap symbolMap = _getCurrentSymbolMap();
-        for (String name: symbolMap.keySet()) {
-            Node node = symbolMap.get(name);
-            String typeName = XmDomUtil.getAttr(node, "type");
-            if (typeName == null) {
-                continue;
-            }
-            if (matcher.match(node, findType(typeName))) {
-                set.add(name);
-            }
-        }
-        return Collections.unmodifiableSet(set);
     }
 }

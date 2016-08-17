@@ -60,7 +60,6 @@ F-FrontEnd/src/C-exprcode.h
 F-FrontEnd/src/F_Front
 F-FrontEnd/src/Makefile
 F-FrontEnd/src/F-input-xmod.h
-F-FrontEnd/src/F95-parser.c
 
 XcodeML-Common/Makefile
 XcodeML-Common/build/
@@ -70,7 +69,6 @@ XcodeML-Exc-Tools/build/
 XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java
 
 include/config.h
-include/stamp-h1
 
 libacc/include/Makefile
 libacc/src/Makefile
@@ -107,4 +105,3 @@ libxmpf/src/include_work/
 __omni_tmp__/
 *~
 .idea
-.gdbinit

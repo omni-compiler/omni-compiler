@@ -373,7 +373,6 @@ typedef struct external_symbol
             ID common_id_list;  /* common block ids */
             TYPE_DESC struct_decls; /* derived types in Fortran90 */
             lineno_info *contains_line;
-            struct block_env * blocks; /* block constructs */
             struct external_symbol *contains_external_symbols;
             struct external_symbol *interface_external_symbols;
             struct interface_info * interface_info;
@@ -405,7 +404,6 @@ typedef struct external_symbol
 #define EXT_PROC_ID_LIST(ep)    ((ep)->info.proc_info.id_list)
 #define EXT_PROC_LABEL_LIST(ep) ((ep)->info.proc_info.label_list)
 #define EXT_PROC_STRUCT_DECLS(ep) ((ep)->info.proc_info.struct_decls)
-#define EXT_PROC_BLOCKS(ep)    ((ep)->info.proc_info.blocks)
 #define EXT_PROC_CONT_EXT_SYMS(ep) ((ep)->info.proc_info.contains_external_symbols)
 #define EXT_PROC_CONT_EXT_LINE(ep) ((ep)->info.proc_info.contains_line)
 #define EXT_PROC_INTERFACES(ep) ((ep)->info.proc_info.interface_external_symbols)
@@ -438,33 +436,6 @@ typedef struct external_symbol
       (tail) = (ep); }
 
 #define BLANK_COMMON_NAME       "_____BLANK_COMMON_____"
-
-typedef struct block_env
-{
-    struct block_env *next;
-    struct block_env *blocks;
-    ID id_list;
-    ID label_list;
-    TYPE_DESC struct_decls; /* derived types in Fortran90 */
-    struct external_symbol *interfaces;
-    struct external_symbol *external_symbols;
-} *BLOCK_ENV;
-
-#define BLOCK_NEXT(bp) ((bp)->next)
-#define BLOCK_CHILDREN(bp) ((bp)->blocks)
-#define BLOCK_LOCAL_LABELS(bp) ((bp)->label_list)
-#define BLOCK_LOCAL_SYMBOLS(bp) ((bp)->id_list)
-#define BLOCK_LOCAL_INTERFACES(bp) ((bp)->interfaces)
-#define BLOCK_LOCAL_EXTERNAL_SYMBOLS(bp) ((bp)->external_symbols)
-
-#define FOREACH_BLOCKS(bp, headp) \
-    for ((bp) = (headp); (bp) != NULL ; (bp) = BLOCK_NEXT(bp))
-
-#define BLOCK_LINK_ADD(bp, list, tail) \
-    { if((list) == NULL || (tail) == NULL) (list) = (bp); \
-      else BLOCK_NEXT(tail) = (bp); \
-      (tail) = (bp); }
-
 
 #endif /* _F_IDENT_H_ */
 

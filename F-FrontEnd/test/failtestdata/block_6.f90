@@ -1,5 +1,0 @@
-      PROGRAM MAIN
-      CONTAINS
-        BLOCK
-        END BLOCK
-      END PROGRAM MAIN

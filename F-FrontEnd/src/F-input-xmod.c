@@ -371,12 +371,6 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** typeId,
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_volatile");
-    if (str != NULL) {
-        TYPE_SET_VOLATILE(*tp);
-        free(str);
-    }
-
     return TRUE;
 }
 

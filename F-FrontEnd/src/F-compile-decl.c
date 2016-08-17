@@ -764,8 +764,6 @@ declare_statement_function(id,args,body)
     if(ID_CLASS(id) != CL_UNKNOWN)
       fatal("declare_statement_function: not CL_UNKNOWN");
 
-    check_NOT_INBLOCK();
-
     ID_CLASS(id) = CL_PROC;
     PROC_CLASS(id) = P_STFUNCT;
     ID_STORAGE(id) = STG_NONE;
@@ -794,42 +792,11 @@ declare_statement_function(id,args,body)
     PROC_ARGS(id) = args;
 }
 
-
-ID
-find_label_from_block(int st_no, BLOCK_ENV block)
-{
-    ID label = NULL;
-    BLOCK_ENV bp;
-
-    if (block == NULL) {
-        return NULL;
-    }
-
-    FOREACH_ID(label, BLOCK_LOCAL_LABELS(block)) {
-        if (LAB_ST_NO(label) == st_no) {
-            return label;
-        }
-    }
-
-    FOREACH_BLOCKS(bp, BLOCK_CHILDREN(block)) {
-        label = find_label_from_block(st_no, bp);
-        if (label != NULL) {
-            return label;
-        }
-    }
-
-    return NULL;
-}
-
-
 ID
 declare_label(int st_no,LABEL_TYPE type,int def_flag)
 {
     ID ip,last_ip;
     char name[10];
-    CTL cp;
-    int in_block = FALSE;
-    int not_same_block = FALSE;
 
     if(st_no <= 0){
         error("illegal label %d", st_no);
@@ -840,36 +807,6 @@ declare_label(int st_no,LABEL_TYPE type,int def_flag)
     FOREACH_ID(ip, LOCAL_LABELS) {
         if(LAB_ST_NO(ip) == st_no) goto found;
         last_ip = ip;
-    }
-
-    FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK) {
-            in_block = TRUE;
-            if (CTL_BLOCK_LOCAL_LABELS(cp) == LOCAL_LABELS) {
-                continue;
-            }
-            FOREACH_ID(ip, CTL_BLOCK_LOCAL_LABELS(cp)) {
-                if(LAB_ST_NO(ip) == st_no) {
-                    goto found;
-                }
-            }
-        }
-    }
-    if (in_block) {
-        FOREACH_ID(ip, UNIT_CTL_LOCAL_LABELS(CURRENT_UNIT_CTL)) {
-            if(LAB_ST_NO(ip) == st_no) {
-                goto found;
-            }
-        }
-    }
-    if ((ip = find_label_from_block(st_no, LOCAL_BLOCKS)) != NULL) {
-        not_same_block = TRUE;
-        goto found;
-    }
-    if ((ip = find_label_from_block(st_no,
-                                    UNIT_CTL_LOCAL_BLOCKS(CURRENT_UNIT_CTL))) != NULL) {
-        not_same_block = TRUE;
-        goto found;
     }
 
     /* if not found, make label entry */
@@ -883,15 +820,11 @@ declare_label(int st_no,LABEL_TYPE type,int def_flag)
 
  found:
     if(def_flag){
-
         if(LAB_IS_DEFINED(ip)){
             error("label %d already defined", st_no);
             return ip;
         }
         if(type == LAB_EXEC){
-            if(not_same_block == TRUE) {
-                error("label %d is not in the same block",st_no);
-            }
             if(LAB_IS_USED(ip) && LAB_TYPE(ip) != LAB_FORMAT
                && LAB_BLK_LEVEL(ip) < CURRENT_BLK_LEVEL)
                 warning("there is a branch to label %d from outside block",
@@ -907,10 +840,6 @@ declare_label(int st_no,LABEL_TYPE type,int def_flag)
         LAB_TYPE(ip) = type;
         LAB_IS_DEFINED(ip) = TRUE;
     } else {
-        if(not_same_block == TRUE) {
-            error("label %d is not in the same block",st_no);
-        }
-
         LAB_IS_USED(ip) = TRUE;         /* referenced */
         if(LAB_TYPE(ip) == LAB_UNKNOWN) LAB_TYPE(ip) = type;
 
@@ -1168,33 +1097,6 @@ find_ident_local(SYMBOL s)
 }
 
 ID
-find_ident_block_parent(SYMBOL s)
-{
-    CTL cp;
-    ID ip = NULL;
-    int in_block = FALSE;
-
-    FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK) {
-            in_block = TRUE;
-            if (CTL_BLOCK_LOCAL_SYMBOLS(cp) == LOCAL_SYMBOLS) {
-                continue;
-            }
-            ip = find_ident_head(s, CTL_BLOCK_LOCAL_SYMBOLS(cp));
-            if (ip != NULL) {
-                return ip;
-            }
-        }
-    }
-
-    if (in_block) {
-        ip = find_ident_head(s, UNIT_CTL_LOCAL_SYMBOLS(CURRENT_UNIT_CTL));
-    }
-
-    return ip;
-}
-
-ID
 find_ident_parent(SYMBOL s)
 {
     ID ip;
@@ -1296,10 +1198,6 @@ find_ident(SYMBOL s)
     ID ip;
 
     ip = find_ident_local(s);
-    if (ip != NULL) {
-        return ip;
-    }
-    ip = find_ident_block_parent(s);
     if (ip != NULL) {
         return ip;
     }
@@ -1665,9 +1563,6 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                 //TYPE_SET_INTERNAL_PRIVATE(struct_tp);
                 // TODO PROTECTED
             }
-            break;
-        case F03_VOLATILE_SPEC:
-            TYPE_SET_VOLATILE(tp);
             break;
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
@@ -2905,10 +2800,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 /* update order from one set in declare_dummy_args */
                 ID_ORDER(id) = order_sequence++;
             }
-            if (ID_TYPE(id) != NULL && TYPE_IS_MODIFIED(ID_TYPE(id))) {
-                /* If VOLATILE or ASYNCHRONOUS statements occurred */
-                ID_TYPE(id) = NULL;
-            }
             TYPE_DESC t = tp0 ? tp0 : ID_TYPE(id);
             if (t && TYPE_LENG(t) && IS_INT_CONST_V(TYPE_LENG(t)) == FALSE)
                 ID_ORDER(id) = order_sequence++;
@@ -2928,7 +2819,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                     VAR_IS_UNCOMPILED_ARRAY(id) = TRUE;
                 }
                 ID_CLASS(id) = CL_VAR;
-                ID_LINE(id) = EXPR_LINE(decl_list);
+		ID_LINE(id) = EXPR_LINE(decl_list);
                 ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
                 continue;
             }
@@ -3087,35 +2978,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 }
 
 TYPE_DESC
-find_struct_decl_block_parent(SYMBOL s)
-{
-    CTL cp;
-    TYPE_DESC tp = NULL;
-    int in_block = FALSE;
-
-    FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK) {
-            in_block = TRUE;
-            if (CTL_BLOCK_LOCAL_STRUCT_DECLS(cp) == LOCAL_STRUCT_DECLS) {
-                continue;
-            }
-            tp = find_struct_decl_head(s, CTL_BLOCK_LOCAL_STRUCT_DECLS(cp));
-            if (tp != NULL) {
-                return tp;
-            }
-        }
-    }
-
-    if (in_block) {
-        tp = find_struct_decl_head(s,
-            UNIT_CTL_LOCAL_STRUCT_DECLS(CURRENT_UNIT_CTL));
-    }
-
-    return tp;
-}
-
-
-TYPE_DESC
 find_struct_decl_parent(SYMBOL s)
 {
     int lev_idx;
@@ -3155,10 +3017,6 @@ find_struct_decl(SYMBOL s)
     TYPE_DESC tp;
 
     tp = find_struct_decl_head(s, LOCAL_STRUCT_DECLS);
-    if (tp != NULL) {
-        return tp;
-    }
-    tp = find_struct_decl_block_parent(s);
     if (tp != NULL) {
         return tp;
     }
@@ -3898,48 +3756,4 @@ compile_pragma_statement(expr x)
       }
     }
   output_statement(list1(F_PRAGMA_STATEMENT, v));
-}
-
-
-/*
- * declare volatile variable
- *   OR
- * add volatile attribute (in block scope)
- */
-void
-compile_VOLATILE_statement(expr id_list)
-{
-    list lp;
-    expr ident;
-    ID id = NULL;
-
-    FOR_ITEMS_IN_LIST(lp, id_list) {
-        ident = LIST_ITEM(lp);
-
-        if ((id = find_ident_local(EXPR_SYM(ident))) == NULL ||
-            (!(IS_STRUCT_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) == NULL))) {
-            if ((id = find_ident(EXPR_SYM(ident))) == NULL) {
-                id = declare_ident(EXPR_SYM(ident), CL_VAR);
-                if(id == NULL) {
-                    continue; /* error */
-                }
-            } else {
-                /* id is use-/host-associated or out of the current BLOCK */
-                TYPE_DESC tp = ID_TYPE(id);
-                if (TYPE_IS_COINDEXED(tp)) {
-                    error("the VOLATILE attribute shall not be specified for a coarray that is not local variable");
-                    return;
-                }
-                id = declare_ident(EXPR_SYM(ident), CL_VAR);
-                tp = wrap_type(tp);
-                ID_TYPE(id) = tp;
-                SET_MODIFIED(tp);
-            }
-        }
-        if (ID_IS_AMBIGUOUS(id)) {
-            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
-            return;
-        }
-        TYPE_SET_VOLATILE(id);
-    }
 }
