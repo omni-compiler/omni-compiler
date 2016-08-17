@@ -47,7 +47,7 @@ int XMP_coarray_flag = TRUE;
 
 
 /* control stack */
-static struct control _ctl_base = (struct control){0};
+static struct control _ctl_base = {0};
 CTL ctl_base = &_ctl_base;
 CTL ctl_top;
 CTL ctl_top_saved = NULL;
