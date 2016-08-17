@@ -17,9 +17,9 @@ OUT_atomic = atomic_ref-i4.x atomic_ref-l4.x
 #OUT_struct = struct0d
 #OUT=bug3
 
-#bug #354        cnd0-1 cn0d0-write (see bug2.f90)
+OUT_bug354 = cn0d0-1.x cn0d0-write.x # see bug354.f90
 
 #OUT=nest nest-2
-OUT = $(OUT_basic) $(OUT_struct) $(OUT_io) $(OUT_arg) $(OUT_nest) $(OUT_lib) $(OUT_mod) $(OUT_entire) $(OUT_bound) $(OUT_atomic)
+OUT = $(OUT_basic) $(OUT_struct) $(OUT_io) $(OUT_arg) $(OUT_nest) $(OUT_lib) $(OUT_mod) $(OUT_entire) $(OUT_bound) $(OUT_atomic) $(OUT_bug354)
 
 include ../Makefile.common
