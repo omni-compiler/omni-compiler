@@ -96,6 +96,8 @@ typedef struct type_descriptor
     int size;                  /* for TYPE_CHAR char length */
     int is_declared;           /* boolean for type has declared.
                                   (only used by struct type) */
+    int is_modified;           /* modified with VOLATILE or ASYNCHRONOUS */
+
     struct type_attr {
 #define TYPE_ATTR_PARAMETER         0x00000001
 #define TYPE_ATTR_ALLOCATABLE       0x00000002
@@ -116,6 +118,7 @@ typedef struct type_descriptor
 #define TYPE_ATTR_PURE              0x00010000
 #define TYPE_ATTR_ELEMENTAL         0x00020000
 #define TYPE_ATTR_PROTECTED         0x00040000
+#define TYPE_ATTR_VOLATILE          0x00080000
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -235,6 +238,9 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_INTENT_INOUT(tp)    ((tp)->attr.type_attr_flags &   TYPE_ATTR_INTENT_INOUT)
 #define TYPE_SET_INTENT_INOUT(tp)   ((tp)->attr.type_attr_flags |=  TYPE_ATTR_INTENT_INOUT)
 #define TYPE_UNSET_INTENT_INOUT(tp) ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_INTENT_INOUT)
+#define TYPE_IS_VOLATILE(tp)        ((tp)->attr.type_attr_flags &   TYPE_ATTR_VOLATILE)
+#define TYPE_SET_VOLATILE(tp)       ((tp)->attr.type_attr_flags |=  TYPE_ATTR_VOLATILE)
+#define TYPE_UNSET_VOLATILE(tp)     ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_VOLATILE)
 
 #define TYPE_EXTATTR_FLAGS(tp)      ((tp)->attr.exflags)
 #define TYPE_IS_IMPLICIT(tp)        ((tp)->attr.exflags &   TYPE_EXFLAGS_IMPLICIT)
@@ -355,6 +361,16 @@ extern TYPE_DESC basic_type_desc[];
 
 #define IS_REFFERENCE(tp) \
                 ((tp) != NULL && TYPE_N_DIM(tp) == 0 && TYPE_REF(tp) != NULL)
+
+#define TYPE_IS_MODIFIED(tp) \
+                ((tp) != NULL && (tp)->is_modified)
+
+#define SET_MODIFIED(tp) \
+    ((tp != NULL) && ((tp)->is_modified = TRUE))
+
+#define UNSET_MODIFIED(tp) \
+    ((tp != NULL) && ((tp)->is_modified = FALSE))
+
 
 #define FOREACH_MEMBER(/* ID */ mp, /* TYPE_DESC */ tp) \
     if ((tp) != NULL && TYPE_MEMBER_LIST(tp) != NULL) \
