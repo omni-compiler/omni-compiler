@@ -2563,11 +2563,11 @@ id_link_remove(ID * head, ID tobeRemoved)
 }
 
 ID
-get_type_params(ID struct_id)
+get_type_params(TYPE_DESC struct_tp)
 {
     ID id, ip, head = NULL, tail = NULL;
 
-    FOREACH_ID(ip, TYPE_TYPE_PARAMS(ID_TYPE(struct_id))) {
+    FOREACH_ID(ip, TYPE_TYPE_PARAMS(struct_tp)) {
         id = XMALLOC(ID,sizeof(*id));
         *id = *ip;
         ID_LINK_ADD(id, head, tail);
@@ -2577,14 +2577,14 @@ get_type_params(ID struct_id)
 
 
 int
-check_type_param_values(ID struct_id, expr type_param_args, expv type_param_values)
+compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_param_values)
 {
     int has_Keyword = FALSE;
     list lp;
     ID ip, param, type_params, configured = NULL, configured_last = NULL;
     expv v;
 
-    type_params = get_type_params(struct_id);
+    type_params = get_type_params(struct_tp);
     param = type_params;
 
     FOR_ITEMS_IN_LIST(lp, type_param_args) {
@@ -2678,10 +2678,13 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
     if(args == NULL)
         return result;
 
-    if (type_param_args &&
-        !check_type_param_values(struct_id, type_param_args, type_param_values)) {
+    if (type_param_args) {
+        if (!compile_type_param_values(ID_TYPE(struct_id), type_param_args, type_param_values)) {
             return NULL;
+        }
+        TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
     }
+
 
     EXPV_LINE(result) = EXPR_LINE(args);
     lp = EXPR_LIST(args);

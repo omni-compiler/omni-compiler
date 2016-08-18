@@ -2978,6 +2978,27 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                     return;
                 }
             }
+
+            if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
+                /*
+                 * member of SEQUENCE struct must be SEQUENCE.
+                 */
+                if(TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
+                   TYPE_IS_SEQUENCE(tp0) == FALSE) {
+                    error_at_node(typeExpr, "type %s does not have SEQUENCE attribute.",
+                                  SYM_NAME(EXPR_SYM(typeExpr)));
+                }
+            }
+
+            if (EXPR_CODE(typeExpr) == F03_PARAMETERIZED_TYPE) {
+                expv type_param_values = list0(LIST);
+                if (!compile_type_param_values(tp0, EXPR_ARG2(typeExpr), type_param_values)) {
+                    return;
+                }
+                tp0 = wrap_type(tp0);
+                TYPE_TYPE_PARAM_VALUES(tp0) = type_param_values;
+            }
+
         } else {
             tp0 = compile_type(typeExpr);
             if (tp0 == NULL)

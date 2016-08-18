@@ -547,6 +547,7 @@ extern void     compile_type_decl _ANSI_ARGS_((expr typExpre, TYPE_DESC baseTp,
                                                expr decl_list, expr attributes));
 extern void     compile_struct_decl _ANSI_ARGS_((expr ident, expr type, expr type_params));
 extern void     compile_struct_decl_end _ANSI_ARGS_((void));
+extern int      compile_type_param_values _ANSI_ARGS_((TYPE_DESC struct_tp, expr type_param_args, expv type_param_values));
 extern void     compile_SEQUENCE_statement _ANSI_ARGS_((void));
 extern void     compile_COMMON_decl _ANSI_ARGS_((expr com_list));
 extern void     compile_IMPLICIT_decl _ANSI_ARGS_((expr v1,expr v2));
