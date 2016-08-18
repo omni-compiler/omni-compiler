@@ -3880,17 +3880,15 @@ static void
 outx_basicTypeNoCharNoAryNoRef(int l, TYPE_DESC tp)
 {
 
-  /* TYPE_FUNCTION comes here in the following case (maybe for the reference
-     in the argument list). This is only an ad-hoc fix.
+    /* TYPE_FUNCTION comes here in the following case (maybe for the reference
+       in the argument list). This is only an ad-hoc fix.
 
-      subroutine sub(subsub)
-      implicit none
-      external subsub
-      end
-
-  */
-  if (IS_FUNCTION_TYPE(tp)) return;
-
+       subroutine sub(subsub)
+       implicit none
+       external subsub
+       end
+    */
+    if (IS_FUNCTION_TYPE(tp)) return;
 
     outx_typeAttrs(l, tp, "FbasicType", 0);
 
