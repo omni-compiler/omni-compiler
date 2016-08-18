@@ -1681,6 +1681,7 @@ set_expr:
                 $$ = list2(F_SET_EXPR, $1, $3);
             }
         }
+        ;
 
 format_spec:
           '*'
@@ -1763,8 +1764,10 @@ expr:     lhs
         { $$ = list3(F95_USER_DEFINED_BINARY_EXPR, $2, $1, $3); }
         | USER_DEFINED_OP expr
         { $$ = list2(F95_USER_DEFINED_UNARY_EXPR, $1, $2); }
-	| string_const_substr
+        | string_const_substr
         { $$ = $1; }
+        | IDENTIFIER parenthesis_arg_list parenthesis_arg_list
+        { $$ = list3(F03_STRUCT_CONSTRUCT,$1,$2,$3); /* struct constructor with type parameter */ }
         ;
 
 lhs:
@@ -1774,8 +1777,6 @@ lhs:
         { $$ = list2(XMP_COARRAY_REF,$1,$2); }
         | IDENTIFIER parenthesis_arg_list
         { $$ = list2(F_ARRAY_REF,$1,$2); }
-        | IDENTIFIER parenthesis_arg_list parenthesis_arg_list
-        { $$ = list3(F03_STRUCT_CONSTRUCT,$1,$2,$3); /* struct constructor with type parameter */ }
         | IDENTIFIER parenthesis_arg_list image_selector /* coarray */
         { $$ = list2(XMP_COARRAY_REF, list2(F_ARRAY_REF,$1,$2), $3); }
         | IDENTIFIER parenthesis_arg_list substring
