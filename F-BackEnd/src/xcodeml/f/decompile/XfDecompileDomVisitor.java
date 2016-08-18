@@ -228,6 +228,14 @@ public class XfDecompileDomVisitor {
                 break;
             }
         }
+
+        for (Node basicTypeNode : basicTypeNodeArray) {
+            if (XmDomUtil.getAttrBool(basicTypeNode, "is_volatile")) {
+                writer.writeToken(", ");
+                writer.writeToken("VOLATILE");
+                break;
+            }
+        }
     }
 
     private void _writeFunctionSymbol(XfSymbol symbol,
@@ -2711,6 +2719,8 @@ public class XfDecompileDomVisitor {
             // ======
             invokeEnter(XmDomUtil.getElement(n, "declarations"));
 
+            writeVolatileOrAsynchronousStatements();
+
             // ========
             // Prologue
             // ========
@@ -2775,7 +2785,6 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             _writeLineDirective(n);
-
             XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
             XmfWriter writer = _context.getWriter();
 
@@ -2893,6 +2902,8 @@ public class XfDecompileDomVisitor {
             // ======
             invokeEnter(XmDomUtil.getElement(n, "symbols"));
             invokeEnter(XmDomUtil.getElement(n, "declarations"));
+
+            writeVolatileOrAsynchronousStatements();
 
             writer.setupNewLine();
 
@@ -5909,6 +5920,52 @@ public class XfDecompileDomVisitor {
     }
 
 
+    /**
+     * Decompile 'blockStatement' element in XcodeML/F.
+     */
+    class BlockStatementVisitor extends  XcodeNodeVisitor {
+
+        @Override
+        public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+            XmfWriter writer = _context.getWriter();
+
+            String constructName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+                writer.writeToken(":");
+            }
+
+            writer.writeToken("BLOCK");
+            writer.setupNewLine();
+
+            writer.incrementIndentLevel();
+            typeManager.enterScope();
+
+            invokeEnter(XmDomUtil.getElement(n, "symbols"));
+            invokeEnter(XmDomUtil.getElement(n, "declarations"));
+
+            writer.setupNewLine();
+
+            writeVolatileOrAsynchronousStatements();
+
+            invokeEnter(XmDomUtil.getElement(n, "body"));
+
+            writer.decrementIndentLevel();
+            typeManager.leaveScope();
+
+            writer.writeToken("END");
+            writer.writeToken("BLOCK");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+            }
+            writer.setupNewLine();
+        }
+    }
+
+
     /* Check if the name is declared in the runtime library declaration file xmpf_coarray_decl.
      * To avoid double-declaration of the name at the compile time in the native compiler, the
      * declaration of the name should be suppressed if the result of this method is true.
@@ -6050,6 +6107,41 @@ public class XfDecompileDomVisitor {
     }
 
 
+    /*
+     * NOTE: This method writes VOLATILE/ASYNCHRONOUS statements even if those are not required.
+     */
+    /**
+     * Write VOLATILE/ASYNCHRONOUS statements for symbols those have is_volatile/is_asynchronous attribute.
+     */
+    private void writeVolatileOrAsynchronousStatements() {
+        XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+        XmfWriter writer = _context.getWriter();
+        writer.setupNewLine();
+        Set<String> volatiles = typeManager.findSymbolFromCurrentScope(new XfTypeManagerForDom.SymbolMatcher() {
+            @Override
+            public boolean match(Node symbol, Node type) {
+                return XmDomUtil.getAttrBool(type, "is_volatile");
+            }
+        });
+        for (String volatileSymbol : volatiles) {
+            writer.writeToken("VOLATILE");
+            writer.writeToken(volatileSymbol);
+            writer.setupNewLine();
+        }
+        Set<String> asynchs = typeManager.findSymbolFromCurrentScope(new XfTypeManagerForDom.SymbolMatcher() {
+            @Override
+            public boolean match(Node symbol, Node type) {
+                return XmDomUtil.getAttrBool(type, "is_asynchronous");
+            }
+        });
+        for (String asynchronousSymbol : asynchs) {
+            writer.writeToken("asynchronous");
+            writer.writeToken(asynchronousSymbol);
+            writer.setupNewLine();
+        }
+
+    }
+
 
     @SuppressWarnings("unchecked")
     private Pair[] pairs = {
@@ -6178,5 +6270,6 @@ public class XfDecompileDomVisitor {
         new Pair("lockStatement", new LockStatementVisitor()),
         new Pair("unlockStatement", new UnlockStatementVisitor()),
         new Pair("syncStat", new SyncStatVisitor()),
+        new Pair("blockStatement", new BlockStatementVisitor()),
     };
 }
