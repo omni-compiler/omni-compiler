@@ -2662,29 +2662,29 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 {
     ID member;
     list lp;
-    expv v, result, type_param_values, component;
+    expv v, result, component;
     TYPE_DESC tp, base_stp;
 
     assert(ID_TYPE(struct_id) != NULL);
 
     component = list0(LIST);
-    type_param_values = list0(LIST);
     result = list2(F95_STRUCT_CONSTRUCTOR, NULL, component);
 
     base_stp = find_struct_decl(ID_SYM(struct_id));
     assert(EXPV_TYPE(result) != NULL);
     tp = wrap_type(base_stp);
 
-    if(args == NULL)
-        return result;
-
     if (type_param_args) {
+        expv type_param_values = list0(LIST);
         if (!compile_type_param_values(ID_TYPE(struct_id), type_param_args, type_param_values)) {
             return NULL;
         }
         TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
+        EXPR_ARG1(result) = type_param_values;
     }
 
+    if(args == NULL)
+        return result;
 
     EXPV_LINE(result) = EXPR_LINE(args);
     lp = EXPR_LIST(args);

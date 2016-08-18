@@ -1671,11 +1671,41 @@ outx_arrayConstructor(int l, expv v)
 }
 
 static void
+outx_typeParamValues(int l, expv type_param_values)
+{
+  list lp;
+
+  if (type_param_values == NULL) {
+      return;
+  }
+
+  outx_printi(l, "<typeParamValues>\n");
+
+  FOR_ITEMS_IN_LIST(lp, type_param_values){
+      expv item = LIST_ITEM(lp);
+      expv val;
+      const char *name = NULL;
+
+      if(EXPV_CODE(item) == F_SET_EXPR) {
+          name = SYM_NAME(EXPV_NAME(EXPR_ARG1(item)));
+          val = EXPR_ARG2(item);
+          outx_namedValue(l+1, name, val, NULL);
+      } else {
+        outx_expv(l + 1, item);
+      }
+  }
+  outx_close(l, "typeParamValues");
+}
+
+static void
 outx_structConstructor(int l, expv v)
 {
     const int l1 = l + 1;
     outx_tagOfExpression(l, v);
-    outx_expv(l1, EXPR_ARG1(v));
+    if (EXPR_ARG1(v)) {
+        outx_typeParamValues(l1, EXPR_ARG1(v));
+    }
+    outx_expv(l1, EXPR_ARG2(v));
     outx_expvClose(l, v);
 }
 
@@ -3746,33 +3776,6 @@ outx_kind(int l, TYPE_DESC tp)
 }
 
 
-static void
-outx_typeParamValues(int l, TYPE_DESC tp)
-{
-  list lp;
-
-  expv type_param_values = TYPE_TYPE_PARAM_VALUES(tp);
-
-  outx_printi(l, "<typeParamValues>\n");
-
-  FOR_ITEMS_IN_LIST(lp, type_param_values){
-      expv item = LIST_ITEM(lp);
-      expv val;
-      const char *name = NULL;
-
-      if(EXPV_CODE(item) == F_SET_EXPR) {
-          name = SYM_NAME(EXPV_NAME(EXPR_ARG1(item)));
-          val = EXPR_ARG2(item);
-          outx_namedValue(l+1, name, val, NULL);
-      } else {
-        outx_expv(l + 1, item);
-      }
-  }
-
-  outx_close(l, "typeParamValues");
-
-}
-
 /**
  * output basicType of coarray
  */
@@ -3864,7 +3867,7 @@ outx_basicTypeNoCharNoAry(int l, TYPE_DESC tp)
     if (TYPE_TYPE_PARAM_VALUES(tp) || tp->codims){
         outx_print(" ref=\"%s\">\n", getTypeID(rtp));
         if (TYPE_TYPE_PARAM_VALUES(tp)) {
-            outx_typeParamValues(l+1, tp);
+            outx_typeParamValues(l+1, TYPE_TYPE_PARAM_VALUES(tp));
         }
         if (tp->codims) outx_coShape(l+1, tp);
         outx_close(l ,"FbasicType");
