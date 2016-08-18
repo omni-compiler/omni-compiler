@@ -998,6 +998,14 @@ type_param_value:
         { $$ = $1; }
         | set_expr
         { $$ = $1; }
+        | IDENTIFIER '=' '*'
+        { $$ = list2(F_SET_EXPR,
+                     $1,
+                     list1(F95_LEN_SELECTOR_SPEC, GEN_NODE(INT_CONSTANT,'*')));}
+        | IDENTIFIER '=' ':'
+        { $$ = list2(F_SET_EXPR,
+                     $1,
+                     list1(F95_LEN_SELECTOR_SPEC, GEN_NODE(INT_CONSTANT,':')));}
         ;
 
 type_keyword:
