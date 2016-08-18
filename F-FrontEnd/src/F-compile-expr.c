@@ -490,7 +490,7 @@ compile_expression(expr x)
                 return vRet;
             }
             if (ID_CLASS(id) == CL_TAGNAME) {
-                return compile_struct_constructor(id, EXPR_ARG2(x));
+                return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
             }
             return compile_array_ref(id, NULL, EXPR_ARG2(x), FALSE);
         }
@@ -1031,7 +1031,12 @@ compile_expression(expr x)
         }
 
         case F03_STRUCT_CONSTRUCT: {
-            return NULL;
+            x1 = EXPR_ARG1(x);
+            assert (EXPR_CODE(x1) == IDENT);
+            id = find_ident(EXPR_SYM(x1));
+            assert (id);
+            assert (ID_CLASS(id) == CL_TAGNAME);
+            return compile_struct_constructor(id, EXPR_ARG2(x), EXPR_ARG3(x));
         }
 
         default: {
@@ -2535,22 +2540,148 @@ err:
     return NULL;
 }
 
+
+int
+id_link_remove(ID * head, ID tobeRemoved)
+{
+    ID ip, pre = NULL;
+    if (head == NULL) return FALSE;
+
+
+    FOREACH_ID(ip, *head) {
+        if (ID_SYM(ip) == ID_SYM(tobeRemoved)) {
+            if (pre == NULL) {
+                *head = ID_NEXT(ip);
+            } else {
+                ID_NEXT(pre) = ID_NEXT(ip);
+            }
+            return TRUE;
+        }
+        pre = ip;
+    }
+    return FALSE;
+}
+
+ID
+get_type_params(ID struct_id)
+{
+    ID id, ip, head = NULL, tail = NULL;
+
+    FOREACH_ID(ip, TYPE_TYPE_PARAMS(ID_TYPE(struct_id))) {
+        id = XMALLOC(ID,sizeof(*id));
+        *id = *ip;
+        ID_LINK_ADD(id, head, tail);
+    }
+    return head;
+}
+
+
+int
+check_type_param_values(ID struct_id, expr type_param_args, expv type_param_values)
+{
+    int has_Keyword = FALSE;
+    list lp;
+    ID ip, param, type_params, configured = NULL, configured_last = NULL;
+    expv v;
+
+    type_params = get_type_params(struct_id);
+    param = type_params;
+
+    FOR_ITEMS_IN_LIST(lp, type_param_args) {
+        expr arg = LIST_ITEM(lp);
+
+        if (EXPV_CODE(arg) == F_SET_EXPR) {
+            ID match;
+            SYMBOL sym= EXPR_SYM(EXPR_ARG1(arg));
+
+            if (has_Keyword == FALSE) {
+                type_params = param;
+                has_Keyword = TRUE;
+            }
+
+            // check duplicate
+            if (find_ident_head(sym, configured) != NULL) {
+                error("type parameter '%s' is already specified", SYM_NAME(sym));
+                return FALSE;
+            }
+
+            if ((match = find_ident_head(sym, type_params)) == NULL) {
+                error("'%s' is not type value keyword", SYM_NAME(sym));
+                return FALSE;
+            }
+
+            // TODO: check if arg is `KEYWORD=:`, or `KEYWORD=*`
+            v = compile_expression(arg);
+            if (!type_is_compatible_for_assignment(ID_TYPE(match),
+                                                   EXPV_TYPE(v))) {
+                error("type is not applicable in derived-type specifier");
+                return FALSE;
+            }
+
+            id_link_remove(&type_params, match);
+            ID_LINK_ADD(match, configured, configured_last);
+            list_put_last(type_param_values, list2(F_SET_EXPR, make_enode(IDENT, param), v));
+
+        } else {
+            if (has_Keyword) {
+                // KEYWORD connot be ommit after KEYWORD-ed arg
+                error("KEYWORD connot be ommited after the type parameter value with a keyword");
+                return FALSE;
+            }
+
+            if (param == NULL) {
+                error("unexpected type value");
+                return FALSE;
+            }
+
+            // TODO: check if arg is `:`, or `*`
+            v = compile_expression(arg);
+            if (!type_is_compatible_for_assignment(ID_TYPE(param),
+                                                   EXPV_TYPE(v))) {
+                error("type is not applicable in derived-type specifier");
+                return FALSE;
+            }
+
+            ID_LINK_ADD(param, configured, configured_last);
+            param = ID_NEXT(param);
+            list_put_last(type_param_values, v);
+        }
+    }
+    // check not initialized type parameters
+    FOREACH_ID(ip, type_params) {
+        if (VAR_INIT_VALUE(ip)) {
+            error("type parameter %s is not initialized", ID_NAME(ip));
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 expv
-compile_struct_constructor(ID struct_id, expr args)
+compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 {
     ID member;
     list lp;
-    expv v, result, l;
+    expv v, result, type_param_values, component;
+    TYPE_DESC tp, base_stp;
 
     assert(ID_TYPE(struct_id) != NULL);
-    l = list0(LIST);
-    result = list1(F95_STRUCT_CONSTRUCTOR, l);
 
-    EXPV_TYPE(result) = find_struct_decl(ID_SYM(struct_id));
+    component = list0(LIST);
+    type_param_values = list0(LIST);
+    result = list2(F95_STRUCT_CONSTRUCTOR, NULL, component);
+
+    base_stp = find_struct_decl(ID_SYM(struct_id));
     assert(EXPV_TYPE(result) != NULL);
+    tp = wrap_type(base_stp);
 
     if(args == NULL)
         return result;
+
+    if (type_param_args &&
+        !check_type_param_values(struct_id, type_param_args, type_param_values)) {
+            return NULL;
+    }
 
     EXPV_LINE(result) = EXPR_LINE(args);
     lp = EXPR_LIST(args);
@@ -2567,7 +2698,7 @@ compile_struct_constructor(ID struct_id, expr args)
             error("type is not applicable in struct constructor");
             return NULL;
         }
-        list_put_last(l, v);
+        list_put_last(component, v);
         lp = LIST_NEXT(lp);
     }
 
@@ -2575,6 +2706,8 @@ compile_struct_constructor(ID struct_id, expr args)
         error("Too much elements in struct constructor");
         return NULL;
     }
+
+    EXPV_TYPE(result) = tp;
     return result;
 }
 
