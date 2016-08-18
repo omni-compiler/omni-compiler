@@ -1148,6 +1148,7 @@ get_sclass(ID id)
 
         switch(ID_STORAGE(id)) {
         case STG_ARG:
+        case STG_TYPE_PARAM:
             return "fparam";
         case STG_EXT:
             /*
@@ -4327,6 +4328,7 @@ emit_decl(int l, ID id)
     default:
         switch (ID_STORAGE(id)) {
             case STG_ARG:
+            case STG_TYPE_PARAM:
             case STG_SAVE:
             case STG_AUTO:
             case STG_EQUIV:
