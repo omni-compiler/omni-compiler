@@ -2620,7 +2620,7 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
 
             id_link_remove(&type_params, match);
             ID_LINK_ADD(match, configured, configured_last);
-            list_put_last(type_param_values, list2(F_SET_EXPR, make_enode(IDENT, param), v));
+            list_put_last(type_param_values, list2(F_SET_EXPR, make_enode(IDENT, sym), v));
 
         } else {
             if (has_Keyword) {

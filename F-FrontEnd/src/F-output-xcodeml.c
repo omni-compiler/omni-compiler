@@ -3745,6 +3745,33 @@ outx_kind(int l, TYPE_DESC tp)
 }
 
 
+static void
+outx_typeParamValues(int l, TYPE_DESC tp)
+{
+  list lp;
+
+  expv type_param_values = TYPE_TYPE_PARAM_VALUES(tp);
+
+  outx_printi(l, "<typeParamValues>\n");
+
+  FOR_ITEMS_IN_LIST(lp, type_param_values){
+      expv item = LIST_ITEM(lp);
+      expv val;
+      const char *name = NULL;
+
+      if(EXPV_CODE(item) == F_SET_EXPR) {
+          name = SYM_NAME(EXPV_NAME(EXPR_ARG1(item)));
+          val = EXPR_ARG2(item);
+          outx_namedValue(l+1, name, val, NULL);
+      } else {
+        outx_expv(l + 1, item);
+      }
+  }
+
+  outx_close(l, "typeParamValues");
+
+}
+
 /**
  * output basicType of coarray
  */
@@ -3833,13 +3860,16 @@ outx_basicTypeNoCharNoAry(int l, TYPE_DESC tp)
     TYPE_DESC rtp = TYPE_REF(tp);
     assert(rtp);
     outx_typeAttrs(l, tp, "FbasicType", 0);
-    if (tp->codims){
-      outx_print(" ref=\"%s\">\n", getTypeID(rtp));
-      outx_coShape(l+1, tp);
-      outx_close(l ,"FbasicType");
+    if (TYPE_TYPE_PARAM_VALUES(tp) || tp->codims){
+        outx_print(" ref=\"%s\">\n", getTypeID(rtp));
+        if (TYPE_TYPE_PARAM_VALUES(tp)) {
+            outx_typeParamValues(l+1, tp);
+        }
+        if (tp->codims) outx_coShape(l+1, tp);
+        outx_close(l ,"FbasicType");
     }
     else
-      outx_print(" ref=\"%s\"/>\n", getTypeID(rtp));
+        outx_print(" ref=\"%s\"/>\n", getTypeID(rtp));
 }
 
 
@@ -3875,7 +3905,7 @@ outx_basicTypeNoCharNoAryNoRef(int l, TYPE_DESC tp)
     if (TYPE_KIND(tp) || IS_DOUBLED_TYPE(tp) || tp->codims){
         outx_print(">\n");
         outx_kind(l + 1, tp);
-	if (tp->codims) outx_coShape(l+1, tp);
+        if (tp->codims) outx_coShape(l+1, tp);
         outx_close(l, "FbasicType");
     } else {
         outx_print("/>\n");
