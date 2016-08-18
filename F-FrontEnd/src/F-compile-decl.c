@@ -3166,7 +3166,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         }
 
         if (codims) {
-
             if (CTL_TYPE(ctl_top) == CTL_STRUCT && !TYPE_IS_ALLOCATABLE(tp)){
                 error_at_node(codims, "A coarray component must be allocatable.");
                 return;
