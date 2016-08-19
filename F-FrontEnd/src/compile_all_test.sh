@@ -81,7 +81,7 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' | sort | x
     executableOut=${b}.bin
     expectedOut=`echo ${f} | sed -e 's_/enabled/_/result/_g' -e 's_/tp/_/result/_g' -e 's/.f90$/.res/g' -e 's/.f$/.res/g'`
     executeResult=${b}.res
-    skipNative=${b}.skip.native
+    skipNative=${f}.skip.native
     fOpts=''
     if test -f ${f}.options; then
         fOpts=`cat ${f}.options`
@@ -91,7 +91,7 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' | sort | x
     if test $? -eq 0; then
         ${backend} ${backendOpt} ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1
         if test $? -eq 0; then
-            if test ! -e "$skipNative"; then
+            if test ! -e "${skipNative}" ; then
                 ${nativecomp} ${nativicompOpt} -c ${decompiledSrc} -o ${binOut} >> ${errOut} 2>&1
                 if test $? -eq 0; then
                     if test ! -z ${expectedOut} && test -e ${expectedOut}; then
