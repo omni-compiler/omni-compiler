@@ -4008,8 +4008,29 @@ outx_structType(int l, TYPE_DESC tp)
     int l1 = l + 1, l2 = l1 + 1, l3 = l2 + 1;
 
     outx_typeAttrs(l, tp ,"FstructType", TOPT_NEXTLINE);
-    outx_tag(l1, "symbols");
+    if (TYPE_TYPE_PARAMS(tp)) {
+        outx_tag(l1, "typeParams");
+        FOREACH_TYPE_PARAMS(id, tp) {
+            if (!TYPE_IS_KIND(ID_TYPE(id)) && !TYPE_IS_LEN(ID_TYPE(id))) {
+                error("'%s' is neither KIND nor LEN", ID_NAME(id));
+                continue;
+            }
+            outx_printi(l2, "<typeParam ");
+            if (TYPE_IS_KIND(ID_TYPE(id))) {
+                outx_print("attr=\"kind\">\n");
+            } else if (TYPE_IS_LEN(ID_TYPE(id))) {
+                outx_print("attr=\"len\">\n");
+            } else {
 
+            }
+            outx_symbolName(l3, ID_SYM(id));
+            outx_close(l2, "typeParam");
+        }
+        outx_close(l1, "typeParams");
+    }
+
+
+    outx_tag(l1, "symbols");
     FOREACH_MEMBER(id, tp) {
         outx_printi(l2, "<id type=\"%s\">\n", getTypeID(ID_TYPE(id)));
         outx_symbolName(l3, ID_SYM(id));
