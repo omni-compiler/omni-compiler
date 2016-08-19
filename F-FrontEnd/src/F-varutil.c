@@ -89,6 +89,25 @@ expr_is_param_typeof(expr x, BASIC_DATA_TYPE bt)
 }
 
 
+static int
+expr_is_type_param_typeof(expr x, BASIC_DATA_TYPE bt)
+{
+    if (EXPR_CODE(x) == IDENT || EXPR_CODE(x) == F_VAR) {
+        ID id = find_ident(EXPR_SYM(x));
+        if (id == NULL) {
+            return FALSE;
+        }
+        if (ID_TYPE(id) != NULL) {
+            if (ID_CLASS(id) == CL_TYPE_PARAM &&
+                (bt == TYPE_UNKNOWN || bt == TYPE_BASIC_TYPE(ID_TYPE(id)))) {
+                return TRUE;
+            }
+        }
+    }
+    return FALSE;
+}
+
+
 int
 expr_is_param(x)
      expr x;
@@ -150,7 +169,7 @@ expr_is_constant_typeof(x, bt)
         return expr_is_constant_typeof(EXPR_ARG1(x), bt);
     case IDENT:
     case F_VAR:
-        return expr_is_param_typeof(x, bt);
+        return expr_is_param_typeof(x, bt) || expr_is_type_param_typeof(x, bt);
 
     case F_UNARY_MINUS_EXPR:
     case UNARY_MINUS_EXPR:
