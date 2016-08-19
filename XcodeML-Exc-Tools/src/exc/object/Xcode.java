@@ -283,6 +283,9 @@ public enum Xcode
     CPP_CLASS_DECL                  ( 206, 'L', null, null),
     CPP_CONSTRUCT_EXPR_CLASS_STATEMENT
                                     ( 207, 'L', null, null),
+    CPP_THIS_EXPR                   ( 208, 'L', null, null),
+    ID                              ( 209, 'T', null, null),
+    CPP_NESTEDNAMESPECIFIER_TYPESPEC( 210, 'L', null, null),
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),

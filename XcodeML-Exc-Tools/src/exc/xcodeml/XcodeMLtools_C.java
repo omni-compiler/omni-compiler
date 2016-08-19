@@ -16,6 +16,7 @@ import static xcodeml.util.XmDomUtil.getAttrBool;
 import static xcodeml.util.XmDomUtil.getContent;
 import static xcodeml.util.XmDomUtil.getContentText;
 import static xcodeml.util.XmDomUtil.getElement;
+import org.w3c.dom.*;
 
 import java.io.Reader;
 import java.util.ArrayList;
@@ -89,7 +90,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
     } else if (name.equals("enumType")) {
       declEnumType(n);
     } else if (name.equals("classType")) {
-    //declClassType(n);
+      declStructType(n);
     } else if (name.equals("coArrayType")) {
       declCoArrayType(n);
     } else {
@@ -123,6 +124,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
     case ACC_PRAGMA:
     case XMP_PRAGMA:
     case CPP_CLASS_DECL:
+    case CPP_DECL_NAMESPACE:
       xobjFile.add(xobj);
       break;
     default:
@@ -152,13 +154,23 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
       _pScopeStack.push(PragmaScope.Nestedfunc);
 
+      boolean is_op;
+      Node n_name = getElement(n, "name"); // symbolName
+      if (n_name != null)
+        is_op = false;
+      else {
+        is_op = true ;
+        n_name = getElement(n, "operator"); // symbolAlias
+      }
       XobjList xlist = enterAsXobjList(n,
 				       code,
 				       type,
 				       Xcode.IDENT,
 				       null, // symbolTypeName
-				       getContentText(getElement(n, "name")), // symbolName
+				       getContentText(n_name), // symbolName
 				       null, // symbolScope
+				       getAttr(n_name, "fullName"), // symbolAlias
+				       is_op,
 				       getElement(n, "symbols"),
 				       null, // params, process later.
 				       getElement(n, "body"),
@@ -191,26 +203,44 @@ public class XcodeMLtools_C extends XcodeMLtools {
       return xlist;
     }
 
-    case VAR_DECL:
+    case VAR_DECL: {
+      Node n_name = getElement(n, "name"); // symbolName
       return enterAsXobjList(n,
 			     code,
 			     type,
 			     Xcode.IDENT,
 			     null, // symbolTypeName
-			     getContentText(getElement(n, "name")), // symbolName
+			     getContentText(n_name), // symbolName
 			     null, // symbolScope
-			     getContent(getElement(n, "value")),
+			     getAttr(n_name, "fullName"), // symbolAlias
+			     false, // is_op
+			     getElement(n, "value"),
 			     getElement(n, "gccAsm"));
+    }
 
-    case FUNCTION_DECL:
+    case FUNCTION_DECL: {
+      boolean is_op;
+      Node n_name = getElement(n, "name"); // symbolName
+      if (n_name != null)
+        is_op = false;
+      else {
+        is_op = true ;
+        n_name = getElement(n, "operator"); // symbolAlias
+      }
       return enterAsXobjList(n,
 			     code,
 			     type,
 			     Xcode.IDENT,
 			     null, // symbolTypeName
-			     getContentText(getElement(n, "name")), // symbolName
+			     getContentText(n_name), // symbolName
 			     null, // symbolScope
+			     getAttr(n_name, "fullName"), // symbolAlias
+			     is_op,
 			     getElement(n, "gccAsm"));
+    }
+
+    case ID: // id
+      return toIdent(n);
 
     case ID_LIST: // symbols
       return toIdentList(n);
@@ -478,7 +508,15 @@ public class XcodeMLtools_C extends XcodeMLtools {
       return enterAsXobjList(n, code, type, getContent(getElement(n, "value")));
 
     case CPP_CLASS_DECL:
-      return enterAsXobjList(n, code, type, getContent(getElement(n, "type")));
+      XobjList classObj = enterAsXobjList(n, code, type);
+      NodeList list = n.getChildNodes();
+      for (int i = 0; i < list.getLength(); i++) {
+        Node nn = list.item(i);
+        if (nn.getNodeType() != Node.ELEMENT_NODE)
+          continue;
+        classObj.add(toXobject(nn));
+      }
+      return classObj;
 
     default: // default action, make list
       XobjList xobjs = new XobjList(code, type);
@@ -490,8 +528,16 @@ public class XcodeMLtools_C extends XcodeMLtools {
   }
 
   Ident toIdent(Node n) {
-    String name = getContentText(getElement(n, "name"));
-    String full_name = getAttr(getElement(n, "name"), "fullName");
+    boolean isOperator;
+    Node n_name = getElement(n, "name");
+    if (n_name != null)
+      isOperator = false;
+    else {
+      isOperator = true ;
+      n_name = getElement(n, "operator");
+    }
+    String name = getContentText(n_name);
+    String full_name = getAttr(n_name, "fullName");
 
     // public, protected or private.
     int access = Ident.as_num(getAttr(n, "access"));
@@ -567,7 +613,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
     // create ident
     // for coarray, set codiemnsions (#284)
-    Ident ident = new Ident(name, full_name, access, sclass, type, addr,
+    Ident ident = new Ident(name, full_name, access, isOperator, sclass, type, addr,
 			    optionalFlags, gccAttrs,
 			    bitField, bitFieldExpr, enumValue, null, codims);
     //if (codims != null)
@@ -597,6 +643,8 @@ public class XcodeMLtools_C extends XcodeMLtools {
 				   String symbolTypeName,
 				   String symbolName,
 				   String symbolScope,
+				   String symbolAlias,
+				   boolean is_op,
 				   Node ... nodes) {
     Xtype symbolType = null;
     if (symbolTypeName != null) {
@@ -609,7 +657,9 @@ public class XcodeMLtools_C extends XcodeMLtools {
     Xobject symbolObj = Xcons.Symbol(symbolCode,
 				     symbolType,
 				     symbolName,
-				     scope);
+				     scope,
+				     symbolAlias,
+				     is_op);
     XobjList objList = Xcons.List(code, type);
     objList.add(symbolObj);
     return toXobjList(baseNode, objList, nodes);
@@ -926,6 +976,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
     XobjList identList = (XobjList)toXobject(getElement(n, "symbols"));
     Xobject gccAttrs = getGccAttributes(n);
     Xtype type = new StructType(getAttr(n, "type"),
+				n.getNodeName().equals("classType"),
 				tagNames,
 				identList,
 				getTypeQualFlags(n, false),

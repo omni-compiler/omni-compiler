@@ -20,6 +20,7 @@ import exc.object.XobjectDef;
 import exc.object.XobjectDefEnv;
 import exc.object.Xtype;
 import exc.object.CompositeType;
+import exc.object.StructType;
 
 public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     private XcodeMLNameTable_C nameTable = new XcodeMLNameTable_C();
@@ -28,11 +29,15 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (xobj == null) {
             return null;
         }
-
-        Element e = createElement("name");
+        Element e = (xobj instanceof XobjString && ((XobjString)xobj).isOp()) ?
+                    createElement("operator") : createElement("name");
         if (xobj.Type() != null) {
             addAttributes(e,
                           "type", xobj.Type().getXcodeCId());
+        }
+        if (xobj instanceof XobjString) {
+            addAttributes(e,
+                          "fullName", ((XobjString)xobj).getAlias());
         }
         addChildNodes(e, trans(xobj.getString()));
 
@@ -85,7 +90,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         }
 
         // name
-        Element en = createElement("name");
+        Element en = ident.isOp() ? createElement("operator") : createElement("name");
         String full_name = ident.getFullName();
         if (full_name != null) {
             addAttributes(en, "fullName", full_name);
@@ -144,9 +149,11 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (xobj == null) {
             return null;
         }
-
-        return addChildNodes(createElement("value"),
-                             transValueChild(xobj));
+        Node v_node = transValueChild(xobj);
+        if (xobj.Opcode() != Xcode.LIST) {
+          v_node = addChildNodes(createElement("value"), v_node);
+        }
+        return v_node;
     }
 
     private Node transValueChild(Xobject xobj) {
@@ -292,7 +299,8 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                                   transSymbols(type.getMemberList()));
                 break;
             case Xtype.STRUCT:
-                e = createTypeElement("structType", type);
+                e = ((StructType)type).isClass() ? createTypeElement("classType", type) :
+                                                   createTypeElement("structType", type);
                 XobjList tagNames = ((CompositeType)type).getTagNames();
                 if (tagNames != null) {
                   Element e_tagnames = transName(tagNames);
@@ -975,9 +983,6 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         // directive
         case PRAGMA_LINE:
-            e = addChildNodes(createElement(name),
-                              trans(xobj.getArg(0).getString()));
-            break;
         case TEXT:
             e = addChildNodes(createElement(name),
                               trans(xobj.getArg(0).getString()));
@@ -1134,12 +1139,25 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNodes(createElement(name),
                               trans(xobj.getArg(0)));
             break;
+        case CPP_DECL_NAMESPACE:
+        case CPP_CLASS_DECL:
+            e = createElement(name);
+            for (Xobject a : (XobjList)xobj) {
+                Element b;
+                if (a instanceof Ident)
+                   b = transIdent((Ident)a);
+                else
+                   b = trans(a);
+                addChildNode(e, b);
+            }
+            break;
         // case ADDR_OF_EXPR:
         //     e = addChildNodes(createElement(name),
         //                       transExpr(xobj.getArg(0)));
         //     break;
-        case CPP_CLASS_DECL:
         case CPP_CONSTRUCT_EXPR_CLASS_STATEMENT:
+        case CPP_THIS_EXPR:
+        case CPP_NESTEDNAMESPECIFIER_TYPESPEC:
             e = createElement(name);
             break;
         default:

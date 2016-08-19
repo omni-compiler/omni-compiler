@@ -6,6 +6,7 @@ public class XcodeMLNameTable_C extends XcodeMLNameTable {
 	XcodeMLName table[] = {
 		new XcodeMLName(Xcode.IDENT, "name"),
 		new XcodeMLName(Xcode.ID_LIST, "symbols"),
+		new XcodeMLName(Xcode.ID, "id"),
 		new XcodeMLName(Xcode.LIST, "params"),
 		new XcodeMLName(Xcode.LIST, "declarations"),
 		new XcodeMLName(Xcode.LIST, "arguments"),
@@ -138,6 +139,8 @@ public class XcodeMLNameTable_C extends XcodeMLNameTable {
 		new XcodeMLName(Xcode.CPP_DECL_NAMESPACE, "Decl_Namespace"),
 		new XcodeMLName(Xcode.CPP_CLASS_DECL, "classDecl"),
 		new XcodeMLName(Xcode.CPP_CONSTRUCT_EXPR_CLASS_STATEMENT, "Stmt_CXXConstructExprClass"),
+		new XcodeMLName(Xcode.CPP_THIS_EXPR, "thisExpr"),
+		new XcodeMLName(Xcode.CPP_NESTEDNAMESPECIFIER_TYPESPEC, "NestedNameSpecifier_TypeSpec"),
 	};
 
 	// constructor

@@ -10,6 +10,8 @@ import exc.block.Block;
 public class XobjString extends XobjConst
 {
     String value;
+    String alias = null;
+    boolean is_op = false;
 
     public XobjString(Xcode code, Xtype type, String value, String fkind)
     {
@@ -54,6 +56,26 @@ public class XobjString extends XobjConst
     public void setName(String newValue)
     {
         value = newValue;
+    }
+
+    public String getAlias()
+    {
+        return alias;
+    }
+    
+    public void setAlias(String newAlias)
+    {
+        alias = newAlias;
+    }
+
+    public boolean isOp()
+    {
+        return is_op;
+    }
+    
+    public void setOp(boolean newOp)
+    {
+        is_op = newOp;
     }
 
     @Override

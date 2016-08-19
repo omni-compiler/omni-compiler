@@ -2,10 +2,12 @@ package exc.object;
 import exc.block.Block;
 
 /**
- * Represents C-struct / Fortran-type type.
+ * Represents C-struct / Fortran-type / C++-class type.
  */
 public class StructType extends CompositeType
 {
+    private boolean is_class = false;
+
     public StructType(String id, XobjList id_list, int typeQualFlags, Xobject gccAttrs,
                       Xobject[] codimensions)
     {
@@ -17,9 +19,16 @@ public class StructType extends CompositeType
         this(id, id_list, typeQualFlags, gccAttrs, null);
     }
 
-    public StructType(String id, XobjList tag_names, XobjList id_list, int typeQualFlags, Xobject gccAttrs)
+    public StructType(String id, boolean is_class, XobjList tag_names, 
+                                 XobjList id_list, int typeQualFlags, Xobject gccAttrs)
     {
         super(Xtype.STRUCT, id, tag_names, id_list, typeQualFlags, gccAttrs, null);
+        this.is_class = is_class;
+    }
+
+    public boolean isClass()
+    {
+        return is_class;
     }
 
     @Override

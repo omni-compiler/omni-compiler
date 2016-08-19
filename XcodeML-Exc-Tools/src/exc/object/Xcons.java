@@ -27,6 +27,15 @@ public class Xcons
         return x;
     }
 
+    public static XobjString Symbol(Xcode code, Xtype type, String value, VarScope scope, String alias, boolean is_op)
+    {
+        XobjString x = new XobjString(code, type, value);
+        x.setScope(scope);
+        x.setAlias(alias);
+        x.setOp(is_op);
+        return x;
+    }
+
     public static XobjString StringConstant(String value)
     {
         return StringConstant(Xtype.stringType, value);

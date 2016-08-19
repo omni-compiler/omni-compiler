@@ -13,10 +13,10 @@ import xcodeml.util.XmOption;
  */
 public class Ident extends Xobject
 {
-    public static final int AS_NONE      =      0;
-    public static final int AS_PUBLIC    = 1 << 0;
-    public static final int AS_PROTECTED = 1 << 1;
-    public static final int AS_PRIVATE   = 1 << 2;
+    public static final int AS_NONE      = 0;
+    public static final int AS_PUBLIC    = 1;
+    public static final int AS_PROTECTED = 2;
+    public static final int AS_PRIVATE   = 3;
     public static final int as_num(String access)
     {
         if (access == null || access.equals("")) return AS_NONE;
@@ -32,6 +32,7 @@ public class Ident extends Xobject
     /** for C++ */
     private String fullName;
     private int access = AS_NONE;
+    private boolean is_op = false;
     /** base address expression value */
     private Xobject value;
     /** declared in (VAR_DECL ) */
@@ -78,11 +79,11 @@ public class Ident extends Xobject
                  int bit_field, Xobject bit_field_expr, Xobject enum_value,
                  Xobject fparam_value, Xobject codimensions)
     {
-        this(name, null, AS_NONE, stg_class, type, v, optionalFlags, gccAttrs, bit_field, bit_field_expr, 
+        this(name, null, AS_NONE, false, stg_class, type, v, optionalFlags, gccAttrs, bit_field, bit_field_expr, 
         enum_value, fparam_value, codimensions);
     }
 
-    public Ident(String name, String full_name, int access, StorageClass stg_class, Xtype type, Xobject v,
+    public Ident(String name, String full_name, int access, boolean is_op, StorageClass stg_class, Xtype type, Xobject v,
                  int optionalFlags, Xobject gccAttrs,
                  int bit_field, Xobject bit_field_expr, Xobject enum_value,
                  Xobject fparam_value, Xobject codimensions)
@@ -92,6 +93,7 @@ public class Ident extends Xobject
             this.name = name.intern();
         this.fullName = full_name;
         this.access = access;
+        this.is_op = is_op;
         this.stg_class = stg_class;
         this.value = v;
         this.declared = false;
@@ -184,6 +186,11 @@ public class Ident extends Xobject
         return access == AS_PUBLIC    ? "public"    :
               (access == AS_PROTECTED ? "protected" :
               (access == AS_PRIVATE   ? "private"   : null));
+    }
+
+    public boolean isOp()
+    {
+        return is_op;
     }
 
     public int getFrank()
