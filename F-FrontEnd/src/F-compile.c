@@ -1045,6 +1045,12 @@ void compile_statement1(int st_no, expr x)
         break;
 
     case F95_PRIVATE_STATEMENT:
+        if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
+            // Expects inside the derived-type declaration
+            /* NOTE: PRIVATE and PROTECTED can be written in the derived-type declaration */
+            // TODO: check all type parameters are declared
+            CURRENT_STATE = INDCL;
+        }
         check_INDCL();
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsPrivate);
         break;
