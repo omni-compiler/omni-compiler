@@ -1346,8 +1346,8 @@ public class XfDecompileDomVisitor {
                 XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
                 typeManager.addType(n);
             } else {
-                invokeEnter(XmDomUtil.getElement(n, "symbols"));
                 invokeEnter(XmDomUtil.getElement(n, "typeParams"));
+                invokeEnter(XmDomUtil.getElement(n, "symbols"));
             }
         }
     }
@@ -1363,38 +1363,20 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
 
             String symbolName = XmDomUtil.getContentText(XmDomUtil.getContent(n));
-            String typeName = XmDomUtil.getAttr(n, "type");
             String attrName = XmDomUtil.getAttr(n, "attr");
 
-            String attr = "";
+            writer.writeToken("INTEGER");
+            writer.writeToken(",");
             if (attrName.compareToIgnoreCase("len") == 0) {
-                attr = "LEN";
+                writer.writeToken("LEN");
             } else if (attrName.compareToIgnoreCase("kind") == 0) {
-                attr = "KIND;";
+                writer.writeToken("KIND");
             }
+            writer.writeToken("::");
+            writer.writeToken(symbolName);
 
-            XfType typeId = XfType.getTypeIdFromXcodemlTypeName(typeName);
-            if (typeId.isPrimitive()) {
-                writer.writeToken(typeId.fortranName());
-                writer.writeToken(",");
-                writer.writeToken(attr);
-                writer.writeToken(" :: ");
-                writer.writeToken(symbolName);
-            } else {
-                XfTypeManagerForDom.TypeList typeList = getTypeList(typeName);
-                Node topTypeChoice = typeList.getFirst();
-                Node lowTypeChoice = typeList.getLast();
+            // TODO: print value
 
-                String topTypeName = topTypeChoice.getNodeName();
-                assert ("FbasicType".equals(topTypeName));
-                _writeSymbolTopType(typeList);
-
-                writer.writeToken(",");
-                writer.writeToken(attr);
-                writer.writeToken(" :: ");
-                writer.writeToken(symbolName);
-                _writeSymbolBaseType(lowTypeChoice);
-            }
             writer.setupNewLine();
         }
     }
@@ -4462,6 +4444,20 @@ public class XfDecompileDomVisitor {
 
             writer.writeToken(" :: ");
             writer.writeToken(structTypeName);
+
+            Node typeParams = XmDomUtil.getElement(structTypeNode, "typeParams");
+            if (typeParams != null) {
+                writer.writeToken("(");
+                ArrayList<Node> typeParamList = XmDomUtil.collectChildNodes(typeParams);
+                for (Node typeParam : typeParamList) {
+                    if (typeParam != typeParamList.get(0)) {
+                        writer.writeToken(",");
+                    }
+                    writer.writeToken(XmDomUtil.getContentText(XmDomUtil.getElement(typeParam, "name")));
+                }
+                writer.writeToken(")");
+            }
+
             writer.setupNewLine();
             writer.incrementIndentLevel();
 
