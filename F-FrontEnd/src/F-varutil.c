@@ -781,7 +781,7 @@ expv_is_restricted(expv x)
 
     /* x is struct constructor with all elements is restricted expression. */
     if(EXPV_CODE(x) == F95_STRUCT_CONSTRUCTOR) {
-        if (expv_list_is_restricted(EXPV_LEFT(x)))
+        if (expv_list_is_restricted(EXPV_RIGHT(x)))
             return TRUE;
     }
 
