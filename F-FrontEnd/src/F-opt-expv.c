@@ -238,6 +238,11 @@ expv_reduce(expv v, int doParamReduce)
         return v;
     }
 
+    if(code == F95_STRUCT_CONSTRUCTOR) {
+        return v;
+    }
+
+
     /* internal node */
     left = expv_reduce(EXPV_LEFT(v), doParamReduce);
     lcode = EXPV_CODE(left);
