@@ -64,6 +64,7 @@ struct_type(ID id)
     tp = new_type_desc();
     TYPE_BASIC_TYPE(tp) = TYPE_STRUCT;
     TYPE_TAGNAME(tp) = id;
+    TYPE_TYPE_PARAMS(tp) = NULL;
     TYPE_MEMBER_LIST(tp) = NULL;
     TYPE_REF(tp) = NULL;
     TYPE_IS_DECLARED(tp) = FALSE;

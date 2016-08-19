@@ -3415,13 +3415,13 @@ compile_struct_decl(expr ident, expr type, expr type_params)
         }
     }
 
+
+    push_ctl(CTL_STRUCT);
+    CTL_BLOCK(ctl_top) = v;
     FOR_ITEMS_IN_LIST(lp, type_params) {
         ID id = declare_ident(EXPR_SYM(LIST_ITEM(lp)), CL_TYPE_PARAM);
         ID_LINK_ADD(id, TYPE_TYPE_PARAMS(tp), last);
     }
-
-    push_ctl(CTL_STRUCT);
-    CTL_BLOCK(ctl_top) = v;
 }
 
 
