@@ -425,13 +425,13 @@ public class XfDecompileDomVisitor {
                     typeManager.getAliasTypeName(XmDomUtil.getAttr(topTypeChoice,
                             "type"));
             writer.writeToken("TYPE");
+            writer.writeToken("(");
+            writer.writeToken(aliasStructTypeName);
             if (typeParamValues != null) {
                 writer.writeToken("(");
                 _invokeChildEnterAndWriteDelim(typeParamValues, ",");
                 writer.writeToken(")");
             }
-            writer.writeToken("(");
-            writer.writeToken(aliasStructTypeName);
             writer.writeToken(")");
         }
     }
@@ -456,8 +456,6 @@ public class XfDecompileDomVisitor {
         if (coShapeNode != null){
             invokeEnter(coShapeNode);
         }
-
-
     }
 
     /**
@@ -515,10 +513,11 @@ public class XfDecompileDomVisitor {
         String topTypeName = topTypeChoice.getNodeName();
         if ("FfunctionType".equals(topTypeName)) {
             _writeFunctionSymbol(symbol, topTypeChoice, node);
-            _writeDeclAttr(topTypeChoice, lowTypeChoice);
         } else if ("FbasicType".equals(topTypeName) || "FstructType".equals(topTypeName)) {
             _writeSymbolTopType(typeList);
         }
+
+        _writeDeclAttr(topTypeChoice, lowTypeChoice);
 
         // ================
         // Low type element
@@ -4326,16 +4325,27 @@ public class XfDecompileDomVisitor {
          *      XbfFstructConstructor)
          */
         @Override public void enter(Node n) {
+            Node structTypeNode;
             XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
 
-            Node typeChoice = typeManager.findType(XmDomUtil.getAttr(n, "type"));
-            if (typeChoice == null) {
+            XfTypeManagerForDom.TypeList typeList = getTypeList(XmDomUtil.getAttr(n, "type"));
+            if (typeList == null) {
                 _context.setLastErrorMessage(
-                    XfUtilForDom.formatError(n,
-                                             XfError.XCODEML_TYPE_NOT_FOUND,
-                                             XmDomUtil.getAttr(n, "type")));
+                        XfUtilForDom.formatError(n,
+                                XfError.XCODEML_TYPE_NOT_FOUND,
+                                XmDomUtil.getAttr(n, "type")));
                 fail(n);
-            } else if (!"FstructType".equals(typeChoice.getNodeName())) {
+            }
+
+            Node topType = typeList.getFirst();
+
+            if ("FbasicType".equals(topType.getNodeName())) {
+                structTypeNode = typeManager.findType(XmDomUtil.getAttr(n, "ref"));
+            } else {
+                structTypeNode = topType;
+            }
+
+            if (!"FstructType".equals(structTypeNode.getNodeName())) {
                 _context.setLastErrorMessage(
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_TYPE_MISMATCH,
@@ -4345,7 +4355,6 @@ public class XfDecompileDomVisitor {
                 fail(n);
             }
 
-            Node structTypeNode = typeChoice;
             String aliasStructTypeName =
                 typeManager.getAliasTypeName(XmDomUtil.getAttr(structTypeNode,
                                                                "type"));
