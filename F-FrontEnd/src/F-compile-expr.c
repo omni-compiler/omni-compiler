@@ -2541,12 +2541,11 @@ err:
 }
 
 
-int
+static int
 id_link_remove(ID * head, ID tobeRemoved)
 {
     ID ip, pre = NULL;
     if (head == NULL) return FALSE;
-
 
     FOREACH_ID(ip, *head) {
         if (ID_SYM(ip) == ID_SYM(tobeRemoved)) {
@@ -2562,7 +2561,7 @@ id_link_remove(ID * head, ID tobeRemoved)
     return FALSE;
 }
 
-ID
+static ID
 get_type_params(TYPE_DESC struct_tp)
 {
     ID id, ip, head = NULL, tail = NULL;
@@ -2581,26 +2580,28 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
 {
     int has_Keyword = FALSE;
     list lp;
-    ID ip, param, type_params, configured = NULL, configured_last = NULL;
+    ID ip, cur, type_params, used = NULL, used_last = NULL;
+    ID match = NULL;
+    SYMBOL sym;
+    enum expr_code e_code;
     expv v;
 
     type_params = get_type_params(struct_tp);
-    param = type_params;
+    cur = type_params;
 
     FOR_ITEMS_IN_LIST(lp, type_param_args) {
         expr arg = LIST_ITEM(lp);
 
         if (EXPV_CODE(arg) == F_SET_EXPR) {
-            ID match;
-            SYMBOL sym= EXPR_SYM(EXPR_ARG1(arg));
+            sym = EXPR_SYM(EXPR_ARG1(arg));
 
             if (has_Keyword == FALSE) {
-                type_params = param;
+                type_params = cur;
                 has_Keyword = TRUE;
             }
 
-            // check duplicate
-            if (find_ident_head(sym, configured) != NULL) {
+            // check keyword is duplicate
+            if (find_ident_head(sym, used) != NULL) {
                 error("type parameter '%s' is already specified", SYM_NAME(sym));
                 return FALSE;
             }
@@ -2610,42 +2611,73 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
                 return FALSE;
             }
 
-            // TODO: check if arg is `KEYWORD=:`, or `KEYWORD=*`
-            v = compile_expression(arg);
-            if (!type_is_compatible_for_assignment(ID_TYPE(match),
-                                                   EXPV_TYPE(v))) {
-                error("type is not applicable in derived-type specifier");
-                return FALSE;
-            }
-
-            id_link_remove(&type_params, match);
-            ID_LINK_ADD(match, configured, configured_last);
-            list_put_last(type_param_values, list2(F_SET_EXPR, make_enode(IDENT, sym), v));
-
+            e_code = EXPR_CODE(EXPR_ARG2(arg));
         } else {
-            if (has_Keyword) {
+            sym = NULL;
+
+            if (has_Keyword == TRUE) {
                 // KEYWORD connot be ommit after KEYWORD-ed arg
                 error("KEYWORD connot be ommited after the type parameter value with a keyword");
                 return FALSE;
             }
 
-            if (param == NULL) {
+            if (cur == NULL) {
                 error("unexpected type value");
                 return FALSE;
             }
 
-            // TODO: check if arg is `:`, or `*`
-            v = compile_expression(arg);
-            if (!type_is_compatible_for_assignment(ID_TYPE(param),
-                                                   EXPV_TYPE(v))) {
-                error("type is not applicable in derived-type specifier");
-                return FALSE;
-            }
-
-            ID_LINK_ADD(param, configured, configured_last);
-            param = ID_NEXT(param);
-            list_put_last(type_param_values, v);
+            match = cur;
+            e_code = EXPR_CODE(arg);
         }
+
+        switch (e_code) {
+            case LEN_SPEC_ASTERISC:
+            case F08_LEN_SPEC_COLON:
+                if (!TYPE_IS_LEN(ID_TYPE(match))) {
+                    error("length spec for no-length parameter");
+                    return FALSE;
+                }
+                v = make_enode(e_code, NULL);
+                if (sym) {
+                    EXPV_KWOPT_NAME(v) = (const char *)strdup(SYM_NAME(sym));
+                }
+                break;
+            case F95_TRIPLET_EXPR:
+                if (!TYPE_IS_LEN(ID_TYPE(match))) {
+                    error("length spec for no-length parameter");
+                    return FALSE;
+                }
+                if (sym) {
+                    arg = EXPR_ARG2(arg);
+                }
+                if (EXPR_ARG1(arg) != NULL || EXPR_ARG2(arg) != NULL) {
+                    error("Invalid length specifier");
+                    return FALSE;
+                }
+                v = make_enode(F08_LEN_SPEC_COLON, NULL);
+                if (sym) {
+                    EXPV_KWOPT_NAME(v) = (const char *)strdup(SYM_NAME(sym));
+                }
+                break;
+            default:
+                v = compile_expression(arg);
+                if (!type_is_compatible_for_assignment(ID_TYPE(match),
+                                                       EXPV_TYPE(v))) {
+                    error("type is not applicable in derived-type specifier");
+                    return FALSE;
+                }
+                break;
+        }
+
+
+        if (has_Keyword = TRUE) {
+            id_link_remove(&type_params, match);
+        } else {
+            cur = ID_NEXT(cur);
+        }
+
+        ID_LINK_ADD(match, used, used_last);
+        list_put_last(type_param_values, v);
     }
     // check not initialized type parameters
     FOREACH_ID(ip, type_params) {

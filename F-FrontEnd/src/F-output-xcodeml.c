@@ -1674,6 +1674,7 @@ static void
 outx_typeParamValues(int l, expv type_param_values)
 {
   list lp;
+  int l1 = l + 1;
 
   if (type_param_values == NULL) {
       return;
@@ -1686,12 +1687,10 @@ outx_typeParamValues(int l, expv type_param_values)
       expv val;
       const char *name = NULL;
 
-      if(EXPV_CODE(item) == F_SET_EXPR) {
-          name = SYM_NAME(EXPV_NAME(EXPR_ARG1(item)));
-          val = EXPR_ARG2(item);
-          outx_namedValue(l+1, name, val, NULL);
+      if(EXPV_KWOPT_NAME(item)) {
+          outx_namedValue(l1, EXPV_KWOPT_NAME(item), item, NULL);
       } else {
-        outx_expv(l + 1, item);
+          outx_expv(l1, item);
       }
   }
   outx_close(l, "typeParamValues");
@@ -3218,6 +3217,23 @@ outx_BLOCK_statement(int l, expv v)
     outx_expvClose(l, v);
 }
 
+static void
+outx_lenspec(int l, expv v)
+{
+    switch (EXPR_CODE(v)) {
+        case LEN_SPEC_ASTERISC:
+            outx_tag(l, "len");
+            outx_close(l, "len");
+            break;
+        case F08_LEN_SPEC_COLON:
+            outx_tag(l, "len");
+            outx_close(l, "len");
+            break;
+        default:
+            // never reach
+            break;
+    }
+}
 
 //static void
 void
@@ -3348,6 +3364,14 @@ outx_expv(int l, expv v)
         outx_intAsConst(l, -INT_MAX);
         break;
 
+
+    /*
+     * type parameter values.
+     */
+    case LEN_SPEC_ASTERISC:
+    case F08_LEN_SPEC_COLON:
+        outx_lenspec(l, v);
+        break;
     /*
      * elements to skip
      */
