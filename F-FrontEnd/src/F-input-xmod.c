@@ -1690,6 +1690,115 @@ input_symbol(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC parent, ID * tai
     return TRUE;
 }
 
+
+/**
+ * input <typeParam> node
+ */
+static int
+input_typeParam(xmlTextReaderPtr reader, HashTable * ht, ID * id)
+{
+    TYPE_DESC tp;
+    SYMBOL s;
+    char * str = NULL;
+    char * name = NULL;
+    *id = NULL;
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    if (str == NULL)
+        return FALSE;
+
+    tp = getTypeDesc(ht, str);
+    free(str);
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "attr");
+    if (str == NULL)
+        return FALSE;
+
+    if (strcmp(str, "kind") == 0)
+        TYPE_SET_KIND(tp);
+    else if (strcmp(str, "length") == 0)
+        TYPE_SET_LEN(tp);
+    free(str);
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "name")) {
+        return FALSE;
+    }
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    name = (char *)xmlTextReaderConstValue(reader);
+    if (name != NULL) {
+        name = strdup(name);
+    }
+
+    s = find_symbol(name);
+    SYM_TYPE(s) = S_IDENT;
+    *id = new_ident_desc(s);
+    ID_TYPE(*id) = tp;
+    free(name);
+
+    if (!xmlSkipWhiteSpace(reader)) {
+        free(id);
+        *id = NULL;
+        return FALSE;
+    }
+
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "value")) {
+        expv v;
+        if (!input_value(reader, ht, &v)) {
+            free(*id);
+            *id = NULL;
+            return FALSE;
+        }
+        VAR_INIT_VALUE(*id) = v;
+    }
+
+    if (!xmlSkipWhiteSpace(reader)) {
+        free(*id);
+        *id = NULL;
+        return FALSE;
+    }
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "typeParam")) {
+        free(*id);
+        *id = NULL;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/**
+ * input <typeParams> node
+ */
+static int
+input_typeParams(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC struct_tp)
+{
+    ID id, last = NULL;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "typeParams"))
+        return FALSE;
+
+    TYPE_TYPE_PARAMS(struct_tp) = NULL;
+
+    while (TRUE) {
+        if (xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT))
+            /* must be </typeParams> */
+            break;
+
+        if (!input_typeParam(reader, ht, &id))
+            return FALSE;
+
+        ID_LINK_ADD(id, TYPE_TYPE_PARAMS(struct_tp), last);
+    }
+
+    return TRUE;
+}
+
 /**
  * input <FstructType> node
  */
@@ -1707,7 +1816,15 @@ input_FstructType(xmlTextReaderPtr reader, HashTable * ht)
 
     TYPE_BASIC_TYPE(tp) = TYPE_STRUCT;
 
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "typeParams")) {
+        if (!input_typeParams(reader, ht, tp))
+            return FALSE;
+    }
+
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "symbols"))

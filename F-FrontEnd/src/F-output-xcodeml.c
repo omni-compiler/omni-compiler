@@ -1684,9 +1684,6 @@ outx_typeParamValues(int l, expv type_param_values)
 
   FOR_ITEMS_IN_LIST(lp, type_param_values){
       expv item = LIST_ITEM(lp);
-      expv val;
-      const char *name = NULL;
-
       if(EXPV_KWOPT_NAME(item)) {
           outx_namedValue(l1, EXPV_KWOPT_NAME(item), item, NULL);
       } else {
@@ -4040,10 +4037,11 @@ outx_structType(int l, TYPE_DESC tp)
                 continue;
             }
             outx_printi(l2, "<typeParam ");
+            outx_print("type=\"%s\" ", getTypeID(ID_TYPE(id)));
             if (TYPE_IS_KIND(ID_TYPE(id))) {
                 outx_print("attr=\"kind\">\n");
             } else if (TYPE_IS_LEN(ID_TYPE(id))) {
-                outx_print("attr=\"len\">\n");
+                outx_print("attr=\"length\">\n");
             } else {
 
             }
@@ -4052,7 +4050,6 @@ outx_structType(int l, TYPE_DESC tp)
         }
         outx_close(l1, "typeParams");
     }
-
 
     outx_tag(l1, "symbols");
     FOREACH_MEMBER(id, tp) {
