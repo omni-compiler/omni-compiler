@@ -1002,7 +1002,7 @@ type_param_value:
         { $$ = list2(F_SET_EXPR,
                      $1,
                      list1(F95_LEN_SELECTOR_SPEC, GEN_NODE(INT_CONSTANT,'*')));}
-        | IDENTIFIER '=' ':'
+        | IDENTIFIER '=' ':' // F2008 spec
         { $$ = list2(F_SET_EXPR,
                      $1,
                      list1(F95_LEN_SELECTOR_SPEC, GEN_NODE(INT_CONSTANT,':')));}
