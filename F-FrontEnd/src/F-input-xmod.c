@@ -801,6 +801,100 @@ input_multipleExpr(xmlTextReaderPtr reader, HashTable * ht, enum expr_code c,
     return TRUE;
 }
 
+static int
+input_typeParamValues(xmlTextReaderPtr reader, HashTable * ht, expv * typeParamValues)
+{
+    expv value;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "typeParamValues"))
+        return FALSE;
+
+    *typeParamValues = list0(LIST);
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    while (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "typeParamValues")) {
+        if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "namedValue")) {
+            char * name = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "name");
+            if (name == NULL)
+                return FALSE;
+
+            if (!xmlSkipWhiteSpace(reader))
+                return FALSE;
+
+            if (!input_expv(reader, ht, &value))
+                return FALSE;
+
+            EXPV_KWOPT_NAME(value) = strdup(name);
+            free(name);
+
+            if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "namedValue"))
+                return FALSE;
+
+            if (!xmlSkipWhiteSpace(reader))
+                return FALSE;
+
+        } else {
+
+            if (!input_expv(reader, ht, &value))
+                return FALSE;
+
+            if (!xmlSkipWhiteSpace(reader))
+                return FALSE;
+        }
+        list_put_last(*typeParamValues, value);
+    }
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    return TRUE;
+}
+
+
+/**
+ * input multiple(zero or more) expression node
+ */
+static int
+input_FstructConstructor(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+{
+    expv operand;
+    expv typeParamValues = NULL;
+    expv components;
+    TYPE_DESC tp = NULL;
+    char * typeId = NULL;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FstructConstructor"))
+        return FALSE;
+
+    if (!input_type_and_attr(reader, ht, &typeId, &tp))
+        return FALSE;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "typeParamValues")) {
+        if (!input_typeParamValues(reader, ht, &typeParamValues))
+            return FALSE;
+    }
+
+    components = list0(LIST);
+
+    while (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "FstructConstructor")) {
+        if (!input_expv(reader, ht, &operand))
+            return FALSE;
+        list_put_last(components, operand);
+    }
+
+    *v = expv_cons(F95_STRUCT_CONSTRUCTOR, tp, typeParamValues, components);
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FstructConstructor"))
+        return FALSE;
+
+    return TRUE;
+}
+
 /**
  * input user binary expression node
  */
@@ -1519,6 +1613,15 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
         if (!input_coShape(reader, ht, tp))
             return FALSE;
 
+    /* <typeParamValues> */
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "typeParamValues")) {
+        expv typeParamValues;
+        if (!input_typeParamValues(reader, ht, &typeParamValues))
+            return FALSE;
+
+        TYPE_TYPE_PARAM_VALUES(tp) = typeParamValues;
+    }
+
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FbasicType"))
         return FALSE;
 
@@ -1742,7 +1845,7 @@ input_typeParam(xmlTextReaderPtr reader, HashTable * ht, ID * id)
     free(name);
 
     if (!xmlSkipWhiteSpace(reader)) {
-        free(id);
+        free(*id);
         *id = NULL;
         return FALSE;
     }
@@ -1796,6 +1899,9 @@ input_typeParams(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC struct_tp)
         ID_LINK_ADD(id, TYPE_TYPE_PARAMS(struct_tp), last);
     }
 
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "typeParams"))
+        return FALSE;
+
     return TRUE;
 }
 
@@ -1807,6 +1913,7 @@ input_FstructType(xmlTextReaderPtr reader, HashTable * ht)
 {
     TYPE_DESC tp;
     ID tail = NULL;
+
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FstructType"))
         return FALSE;
@@ -1823,9 +1930,6 @@ input_FstructType(xmlTextReaderPtr reader, HashTable * ht)
         if (!input_typeParams(reader, ht, tp))
             return FALSE;
     }
-
-    if (!xmlSkipWhiteSpace(reader))
-        return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "symbols"))
         return FALSE;
@@ -1888,7 +1992,7 @@ input_expv(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     if (strcmp(name, "FarrayConstructor") == 0)
         return input_multipleExpr(reader, ht, F95_ARRAY_CONSTRUCTOR, v);
     if (strcmp(name, "FstructConstructor") == 0)
-        return input_multipleExpr(reader, ht, F95_STRUCT_CONSTRUCTOR, v);
+        return input_FstructConstructor(reader, ht, v);
     if (strcmp(name, "Var") == 0)
         return input_Var(reader, ht, v);
     if (strcmp(name, "FarrayRef") == 0)

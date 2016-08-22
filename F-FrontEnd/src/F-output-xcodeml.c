@@ -3887,10 +3887,10 @@ outx_basicTypeNoCharNoAry(int l, TYPE_DESC tp)
     outx_typeAttrs(l, tp, "FbasicType", 0);
     if (TYPE_TYPE_PARAM_VALUES(tp) || tp->codims){
         outx_print(" ref=\"%s\">\n", getTypeID(rtp));
+        if (tp->codims) outx_coShape(l+1, tp);
         if (TYPE_TYPE_PARAM_VALUES(tp)) {
             outx_typeParamValues(l+1, TYPE_TYPE_PARAM_VALUES(tp));
         }
-        if (tp->codims) outx_coShape(l+1, tp);
         outx_close(l ,"FbasicType");
     }
     else
