@@ -1001,11 +1001,15 @@ type_param_value:
         | IDENTIFIER '=' '*'
         { $$ = list2(F_SET_EXPR,
                      $1,
-                     list1(F95_LEN_SELECTOR_SPEC, GEN_NODE(INT_CONSTANT,'*')));}
-        | IDENTIFIER '=' ':' // F2008 spec
+                     list0(LEN_SPEC_ASTERISC));}
+        | IDENTIFIER '=' ':'
         { $$ = list2(F_SET_EXPR,
                      $1,
-                     list1(F95_LEN_SELECTOR_SPEC, GEN_NODE(INT_CONSTANT,':')));}
+                     list0(F08_LEN_SPEC_COLON));}
+        | '*'
+        { $$ = list0(LEN_SPEC_ASTERISC);}
+        | ':'
+        { $$ = list0(F08_LEN_SPEC_COLON);}
         ;
 
 type_keyword:
@@ -1600,6 +1604,16 @@ arg:
          { $$ = list3(F95_TRIPLET_EXPR,$1,$3,$5); }
         | expr_or_null COL2 expr
          { $$ = list3(F95_TRIPLET_EXPR,$1,NULL,$3); }
+        | IDENTIFIER '=' '*'
+        { $$ = list2(F_SET_EXPR,
+                     $1,
+                     list0(LEN_SPEC_ASTERISC));}
+        | IDENTIFIER '=' ':'
+        { $$ = list2(F_SET_EXPR,
+                     $1,
+                     list0(F08_LEN_SPEC_COLON));}
+        | '*'
+        { $$ = list0(LEN_SPEC_ASTERISC);}
         ;
 
 
