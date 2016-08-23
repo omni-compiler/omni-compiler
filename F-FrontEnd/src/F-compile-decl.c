@@ -1197,12 +1197,25 @@ declare_common_ident(SYMBOL s)
 }
 
 ID
+find_ident_from_type_parameter(SYMBOL s, TYPE_DESC tp)
+{
+    ID ip;
+    if (tp == NULL || TYPE_TYPE_PARAMS(tp) == NULL)
+        return NULL;
+
+    ip = find_ident_head(s, TYPE_TYPE_PARAMS(tp));
+    if (ip != NULL) return ip;
+    return find_ident_from_type_parameter(s, TYPE_PARENT(tp));
+}
+
+ID
 find_ident_local(SYMBOL s)
 {
     if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
         ID ip;
         TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
-        ip = find_ident_head(s, TYPE_TYPE_PARAMS(struct_tp));
+
+        ip = find_ident_from_type_parameter(s, struct_tp);
         if (ip != NULL) return ip;
     }
 
@@ -3037,7 +3050,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             }
 
             // TODO check state is TYPE PRAMETER DECLARATIONS or MEMBER DECLARATION
-            id = find_ident_head(EXPR_SYM(ident), TYPE_TYPE_PARAMS(struct_tp));
+            id = find_ident_from_type_parameter(EXPR_SYM(ident), stp);
             if (id != NULL && CURRENT_STATE != IN_TYPE_PARAM_DECL) {
                 error_at_node(decl_list, "'%s' is already used as a type parameter.", ID_NAME(id));
                 continue;

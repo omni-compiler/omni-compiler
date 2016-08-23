@@ -2561,16 +2561,29 @@ id_link_remove(ID * head, ID tobeRemoved)
     return FALSE;
 }
 
-static ID
-get_type_params(TYPE_DESC struct_tp)
+
+static void
+get_type_params0(TYPE_DESC struct_tp, ID * head, ID * tail)
 {
-    ID id, ip, head = NULL, tail = NULL;
+    ID id, ip;
+
+    if (TYPE_PARENT(struct_tp))
+        get_type_params0(TYPE_PARENT_TYPE(struct_tp), head, tail);
 
     FOREACH_ID(ip, TYPE_TYPE_PARAMS(struct_tp)) {
         id = XMALLOC(ID,sizeof(*id));
         *id = *ip;
-        ID_LINK_ADD(id, head, tail);
+        ID_LINK_ADD(id, *head, *tail);
     }
+}
+
+static ID
+get_type_params(TYPE_DESC struct_tp)
+{
+    ID head = NULL, tail = NULL;
+
+    get_type_params0(struct_tp, &head, &tail);
+
     return head;
 }
 
@@ -2578,7 +2591,7 @@ get_type_params(TYPE_DESC struct_tp)
 int
 compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_param_values)
 {
-    int has_Keyword = FALSE;
+    int has_keyword = FALSE;
     list lp;
     ID ip, cur, type_params, used = NULL, used_last = NULL;
     ID match = NULL;
@@ -2595,9 +2608,9 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
         if (EXPV_CODE(arg) == F_SET_EXPR) {
             sym = EXPR_SYM(EXPR_ARG1(arg));
 
-            if (has_Keyword == FALSE) {
+            if (has_keyword == FALSE) {
                 type_params = cur;
-                has_Keyword = TRUE;
+                has_keyword = TRUE;
             }
 
             // check keyword is duplicate
@@ -2615,7 +2628,7 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
         } else {
             sym = NULL;
 
-            if (has_Keyword == TRUE) {
+            if (has_keyword == TRUE) {
                 // KEYWORD connot be ommit after KEYWORD-ed arg
                 error("KEYWORD connot be ommited after the type parameter value with a keyword");
                 return FALSE;
@@ -2670,7 +2683,7 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
         }
 
 
-        if (has_Keyword == TRUE) {
+        if (has_keyword == TRUE) {
             id_link_remove(&type_params, match);
         } else {
             cur = ID_NEXT(cur);
