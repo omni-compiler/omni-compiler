@@ -3217,19 +3217,19 @@ outx_BLOCK_statement(int l, expv v)
 static void
 outx_lenspec(int l, expv v)
 {
+    outx_printi(l, "<len ");
     switch (EXPR_CODE(v)) {
         case LEN_SPEC_ASTERISC:
-            outx_tag(l, "len");
-            outx_close(l, "len");
+            outx_print(" is_assumed_size=\"true\">");
             break;
         case F08_LEN_SPEC_COLON:
-            outx_tag(l, "len");
-            outx_close(l, "len");
+            outx_print(" is_assumed_shape=\"true\">");
             break;
         default:
             // never reach
             break;
     }
+            outx_close(l, "len");
 }
 
 //static void
