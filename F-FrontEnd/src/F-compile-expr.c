@@ -2670,7 +2670,7 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
         }
 
 
-        if (has_Keyword = TRUE) {
+        if (has_Keyword == TRUE) {
             id_link_remove(&type_params, match);
         } else {
             cur = ID_NEXT(cur);
