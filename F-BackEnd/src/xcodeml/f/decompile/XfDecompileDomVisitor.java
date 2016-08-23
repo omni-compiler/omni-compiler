@@ -470,12 +470,22 @@ public class XfDecompileDomVisitor {
             return false;
         }
 
+        boolean isClass = XmDomUtil.getAttrBool(topTypeChoice, "is_class");
         // ================
         // Top type element
         // ================
         String topTypeName = topTypeChoice.getNodeName();
-        if ("FbasicType".equals(topTypeName)) {
+        if ("FbasicType".equals(topTypeName) && !isClass) {
             _writeBasicType(topTypeChoice, typeList);
+        } else if ("FbasicType".equals(topTypeName) && isClass) {
+            String refTypeId = XmDomUtil.getAttr(topTypeChoice, "ref");
+            String aliasStructTypeName;
+            if (refTypeId != null) {
+                aliasStructTypeName = typeManager.getAliasTypeName(refTypeId);
+            } else {
+                aliasStructTypeName = "*";
+            }
+            writer.writeToken("CLASS(" + aliasStructTypeName + ")");
         } else if ("FstructType".equals(topTypeName)) {
             Node typeParamValues = typeList.findChildNode("typeParamValues");
             String aliasStructTypeName =
@@ -500,7 +510,7 @@ public class XfDecompileDomVisitor {
         // Low type element
         // ================
         String lowTypeName = lowTypeChoice.getNodeName();
-        if ("FbasicType".equals(lowTypeName)) {
+        if ("FbasicType".equals(lowTypeName) && !isClass) {
             Node basicTypeNode = lowTypeChoice;
             String refName = XmDomUtil.getAttr(basicTypeNode, "ref");
             XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
@@ -521,7 +531,7 @@ public class XfDecompileDomVisitor {
                 invokeEnter(coShapeNode);
             }
 
-        } else if ("FstructType".equals(lowTypeName)) {
+        } else if ("FstructType".equals(lowTypeName) || isClass) {
             writer.writeToken(" :: ");
             writer.writeToken(symbol.getSymbolName());
         }
