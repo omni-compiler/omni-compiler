@@ -109,6 +109,7 @@
 %token CONTAINS
 %token KW_TYPE
 %token ENDTYPE
+%token CLASS
 %token ALLOCATABLE
 %token INTENT
 %token EXIT
@@ -970,6 +971,12 @@ type_spec0:
         { $$ = $3; }
         | KW_TYPE '(' IDENTIFIER '(' type_param_value_list ')' ')'
         { $$ = list2(F03_PARAMETERIZED_TYPE,$3,$5); }
+        | CLASS '(' IDENTIFIER ')'
+        { $$ = list1(F03_CLASS, $3); }
+        | CLASS '(' IDENTIFIER '(' type_param_value_list ')' ')'
+        { $$ = list1(F03_CLASS, list2(F03_PARAMETERIZED_TYPE,$3,$5)); }
+        | CLASS '(' '*' ')'
+        { $$ = list1(F03_CLASS, NULL);; }
         | type_keyword kind_selector
         { $$ = list2(LIST,$1,$2); }
         | type_keyword length_spec  /* compatibility */
