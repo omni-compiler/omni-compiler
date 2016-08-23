@@ -2575,7 +2575,7 @@ public class XMPtransCoarrayRun
       else if (fname.equalsIgnoreCase("ucobound"))
         _replaceCobound(xobj, coarrays, 1);
       else if (fname.equalsIgnoreCase("co_broadcast"))
-        _replaceCoReduction(xobj, fname, CO_BROADCAST_NAME);
+        _replaceCoBroadcast(xobj, fname, CO_BROADCAST_NAME);
       else if (fname.equalsIgnoreCase("co_sum"))
         _replaceCoReduction(xobj, fname, CO_SUM_NAME);
       else if (fname.equalsIgnoreCase("co_max"))
@@ -2635,16 +2635,46 @@ public class XMPtransCoarrayRun
 
 
 
-  /* replace "co_broadcast/sum/max/min(source, ...)"
-   *  with "xmpf_co_broadcast/sum/max/min<dim>d(source, ...)"
-   *  where <dim> is the rank of argument source
-   *
-   *  To avoid bug478, subroutine name co_xxx is converted into the 
-   *  intermedeate name co_xxx<dim>d before the final conversion by 
-   *  the compiler into co_xxx<dim>d_<typekind>.
-   *  --> challenge!
+  /* replace "co_sum/max/min(source, result)"
+   *  with "xmpf_co_sum/max/min_generic(source, result)"
    */
   private void _replaceCoReduction(Xobject xobj, String fname, String genericName) {
+    XobjList actualArgs = (XobjList)xobj.getArg(1);
+    int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
+
+    if (nargs < 1 || nargs > 3) {
+      XMP.error("Too few or too many arguments are found in " + fname);
+      return;
+    }
+
+    // get three arguments source, result (opt) and result_image (opt)
+    Xobject arg1 = actualArgs.getArgWithKeyword("source", 0);
+    Xobject arg2 = actualArgs.getArgWithKeyword("result", 1);
+    Xobject arg3 = actualArgs.getArgWithKeyword("result_image", 2);
+
+    if (arg1 == null) {
+      XMP.error("The first argument \'source\' was not found in " + fname);
+      return;
+    }
+
+    // set arguments
+    Xobject newActualArgs = Xcons.List(arg1);
+    if (arg2 != null)
+      newActualArgs.add(arg2);
+    if (arg3 != null)
+      newActualArgs.add(_buildKeywordArg("result_image", _convInt4(arg3)));
+    xobj.setArg(1, newActualArgs);
+
+    // replace with new procedure name
+    XobjString newFname = Xcons.Symbol(Xcode.IDENT, genericName);
+    xobj.setArg(0, newFname);
+  }
+
+
+  /* replace "co_broadcast(source, source_image)"
+   *  with "xmpf_co_broadcast_generic(source, int(source_image, 4))"
+   */
+  private void _replaceCoBroadcast(Xobject xobj, String fname, String genericName) {
     XobjList actualArgs = (XobjList)xobj.getArg(1);
     int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
 
@@ -2656,11 +2686,24 @@ public class XMPtransCoarrayRun
     // get the first argument 'source'
     Xobject arg1 = actualArgs.getArgWithKeyword("source", 0);
     if (arg1 == null) {
-      XMP.error("Argument \'source\' was not found in " + fname);
+      XMP.error("The first argument \'source\' was not found in " + fname);
       return;
     }
 
-    //int rank = arg1.getFrank(getFblock());
+    // get the second argument 'source_image'
+    Xobject arg2 = actualArgs.getArgWithKeyword("source_image", 1);
+    if (arg2 == null) {
+      XMP.error("The second argument \'source_image\' was not found in " + fname);
+      return;
+    }
+
+    // set new actual args
+    Xobject newActualArgs = Xcons.List(arg1,              // source
+                                       _convInt4(arg2)    // source_image
+                                       );
+    xobj.setArg(1, newActualArgs);
+
+    // replace with new procedure name
     XobjString newFname = Xcons.Symbol(Xcode.IDENT, genericName);
     xobj.setArg(0, newFname);
   }
@@ -3257,8 +3300,49 @@ public class XMPtransCoarrayRun
 
 
   //------------------------------
-  //  tool
+  //  tools
   //------------------------------
+
+  /*
+   *  convert expr to int(expr,4) if expr is not surely int*4.
+   */
+  private Xobject _convInt4(Xobject expr) {
+    if (expr.Type().isBasic() &&
+        expr.Type().getBasicType() == BasicType.INT) {
+      if (expr.isIntConstant()) {
+        if ("4".equals(((XobjConst)expr).getFkind()))
+          // found it seems a 4-byte integer literal constant
+          return expr;
+      }
+      try {
+        Xobject fkind = expr.Type().getFkind();
+        if (fkind != null && fkind.getInt() == 4) {
+          // found it is a 4-byte integer expression
+          return expr;
+        }
+      }
+      catch (UnsupportedOperationException e) {
+      }
+    }
+
+    // all other cases:  expr --> int(expr,4)
+    Ident intId = declIntIntrinsicIdent("int");
+    Xobject args = Xcons.List(expr, Xcons.IntConstant(4));
+    return intId.Call(args);
+  }    
+
+
+  /*
+   *  build an argument expression with a keyward
+   */
+  private Xobject _buildKeywordArg(String keyword, Xobject expr) {
+    Xobject arg = Xcons.List(Xcode.F_NAMED_VALUE,
+                             Xcons.String(keyword),
+                             expr);
+    return arg;
+  }    
+
+
   public String toString() {
     String s = 
       "\n  int version = " +  version +

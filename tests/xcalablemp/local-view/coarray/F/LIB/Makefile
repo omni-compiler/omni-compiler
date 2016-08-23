@@ -3,8 +3,8 @@
 NPE=3
 
 OUT_inq=this_image.x cobound.x image_index0.x image_index1.x #image_index.x
-OUT_bcast = bcast0.x bcast1.x bcast2.x bcast3.x
-OUT_reduct = reduct.x #reduct7.x
+OUT_bcast = bcast0.x bcast1.x bcast2.x bcast3.x bcast_arg2i8.x
+OUT_reduct = reduct.x reductArg12.x reductArg123.x reductArg13.x reductArg1.x
 #OUT_lock = lock.x  not supported yet: 
 #                     type(lock_type) must be defined in iso_fortran_env...
 #OUT_critical = critical.x  not supported yet

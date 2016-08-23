@@ -102,28 +102,6 @@ public class XMPcoindexObj {
   }
 
 
-  /*
-   *  convert expr to int(expr) if expr is not surely int*4.
-   */
-  private Xobject _convInt4(Xobject expr) {
-    if (expr.Type().isBasic() &&
-        expr.Type().getBasicType() == BasicType.INT) {
-      if (expr.isIntConstant()) {
-        if ("4".equals(((XobjConst)expr).getFkind()))
-          // found it seems a 4-byte integer literal constant
-          return expr;
-      }
-      Xobject fkind = expr.Type().getFkind();
-      if (fkind != null && fkind.getInt() == 4)
-        // found it is a 4-byte integer expression
-        return expr;
-    }
-
-    Ident intId = declIntIntrinsicIdent("int");
-    return intId.Call(Xcons.List(expr));
-  }    
-
-
   /*  Implicit type conversion if necessary
    *  ex.  RHS -> int(RHS)
    *  ex.  RHS -> real(RHS,8)
