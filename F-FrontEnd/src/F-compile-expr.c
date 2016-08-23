@@ -2683,18 +2683,17 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
         }
 
 
-        if (has_keyword == TRUE) {
-            id_link_remove(&type_params, match);
-        } else {
+        if (!has_keyword) {
             cur = ID_NEXT(cur);
         }
+        id_link_remove(&type_params, match);
 
         ID_LINK_ADD(match, used, used_last);
         list_put_last(type_param_values, v);
     }
     // check not initialized type parameters
     FOREACH_ID(ip, type_params) {
-        if (VAR_INIT_VALUE(ip)) {
+        if (!VAR_INIT_VALUE(ip)) {
             error("type parameter %s is not initialized", ID_NAME(ip));
             return FALSE;
         }
@@ -2702,12 +2701,115 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
     return TRUE;
 }
 
+
+static void
+get_struct_members0(TYPE_DESC struct_tp, ID * head, ID * tail)
+{
+    ID id, ip;
+
+    if (TYPE_PARENT(struct_tp))
+        get_struct_members0(TYPE_PARENT_TYPE(struct_tp), head, tail);
+
+    FOREACH_ID(ip, TYPE_MEMBER_LIST(struct_tp)) {
+        id = XMALLOC(ID,sizeof(*id));
+        *id = *ip;
+        ID_LINK_ADD(id, *head, *tail);
+    }
+}
+
+static ID
+get_struct_members(TYPE_DESC struct_tp)
+{
+    ID head = NULL, tail = NULL;
+
+    get_struct_members0(struct_tp, &head, &tail);
+
+    return head;
+}
+
+
+static int
+compile_struct_constructor_components(TYPE_DESC struct_tp, expr args, expv components)
+{
+    int has_keyword = FALSE;
+    list lp;
+    ID ip, cur, members, used = NULL, used_last = NULL;
+    ID match = NULL;
+    SYMBOL sym;
+    expv v;
+
+    members = get_struct_members(struct_tp);
+    cur = members;
+
+    FOR_ITEMS_IN_LIST(lp, args) {
+        expr arg = LIST_ITEM(lp);
+
+        if (EXPV_CODE(arg) == F_SET_EXPR) {
+            sym = EXPR_SYM(EXPR_ARG1(arg));
+
+            if (has_keyword == FALSE) {
+                members = cur;
+                has_keyword = TRUE;
+            }
+
+            // check keyword is duplicate
+            if (find_ident_head(sym, used) != NULL) {
+                error("member'%s' is already specified", SYM_NAME(sym));
+                return FALSE;
+            }
+
+            if ((match = find_ident_head(sym, members)) == NULL) {
+                error("'%s' is not member", SYM_NAME(sym));
+                return FALSE;
+            }
+        } else {
+            sym = NULL;
+
+            if (has_keyword == TRUE) {
+                // KEYWORD connot be ommit after KEYWORD-ed arg
+                error("KEYWORD connot be ommited after the component with a keyword");
+                return FALSE;
+            }
+
+            if (cur == NULL) {
+                error("unexpected member");
+                return FALSE;
+            }
+
+            match = cur;
+        }
+
+        v = compile_expression(arg);
+        assert(EXPV_TYPE(v) != NULL);
+        if (!type_is_compatible_for_assignment(ID_TYPE(match),
+                                               EXPV_TYPE(v))) {
+            error("type is not applicable in struct constructor");
+            return FALSE;
+        }
+
+        if (!has_keyword) {
+            cur = ID_NEXT(cur);
+        }
+        id_link_remove(&members, match);
+
+        ID_LINK_ADD(match, used, used_last);
+        list_put_last(components, v);
+    }
+    // check not initialized type parameters
+    FOREACH_ID(ip, members) {
+        if (!VAR_INIT_VALUE(ip)) {
+            error("member %s is not initialized", ID_NAME(ip));
+            return FALSE;
+        }
+    }
+    return TRUE;
+
+}
+
 expv
 compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 {
-    ID member;
-    list lp;
-    expv v, result, component;
+    expv result, component;
     TYPE_DESC tp, base_stp;
 
     assert(ID_TYPE(struct_id) != NULL);
@@ -2732,26 +2834,8 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
         return result;
 
     EXPV_LINE(result) = EXPR_LINE(args);
-    lp = EXPR_LIST(args);
-    FOREACH_MEMBER(member, ID_TYPE(struct_id)) {
-        assert(ID_TYPE(member) != NULL);
-        if (lp == NULL || LIST_ITEM(lp) == NULL) {
-            error("not all member are specified.");
-            return NULL;
-        }
-        v = compile_expression(LIST_ITEM(lp));
-        assert(EXPV_TYPE(v) != NULL);
-        if (!type_is_compatible_for_assignment(ID_TYPE(member),
-                                               EXPV_TYPE(v))) {
-            error("type is not applicable in struct constructor");
-            return NULL;
-        }
-        list_put_last(component, v);
-        lp = LIST_NEXT(lp);
-    }
 
-    if (lp != NULL) {
-        error("Too much elements in struct constructor");
+    if (!compile_struct_constructor_components(ID_TYPE(struct_id), args, component)) {
         return NULL;
     }
 
