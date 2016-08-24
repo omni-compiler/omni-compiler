@@ -5772,7 +5772,14 @@ public class XfDecompileDomVisitor {
             Node valueNode = XmDomUtil.getElement(n, "value");
             if (writeValue && valueNode != null) {
                 XmfWriter writer = _context.getWriter();
-                writer.writeToken(" = ");
+                XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+                String typeName = XmDomUtil.getAttr(nameNode, "type");
+                Node typeNode = typeManager.findType(typeName);
+                if (typeNode != null && XmDomUtil.getAttrBool(typeNode, "is_pointer")) {
+                    writer.writeToken(" => ");
+                } else {
+                    writer.writeToken(" = ");
+                }
                 invokeEnter(valueNode);
             }
 
