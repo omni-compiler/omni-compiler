@@ -514,7 +514,9 @@ public class XMPtransCoarrayRun
 
     if (isModule()) {
       run1_module();
-    } else {
+    } else if (isBlockData()) {
+      run1_procedure();
+    } else if (isFunction()) {
       run1_procedure();
 
       if (onlyCafMode) {
@@ -523,6 +525,8 @@ public class XMPtransCoarrayRun
         if (isMainProgram())
           _convMainProgramToSubroutine("xmpf_main");
       }
+    } else {
+      XMP.fatal("XMPtransCoarrayRun.run1(), def kind unkown : " + def);
     }
 
   }
@@ -3068,7 +3072,9 @@ public class XMPtransCoarrayRun
 
   private String[] _getHostNames() {
     ArrayList<String> list = new ArrayList<String>();
-    list.add(def.getName());
+    String def_name = def.getName();
+    if (def_name != null) // null if block data statement only.
+      list.add(def_name);
     XobjectDef parentDef = def.getParent();
     while (parentDef != null) {
       list.add(parentDef.getName());
@@ -3153,6 +3159,14 @@ public class XMPtransCoarrayRun
 
   private boolean isModule() {
     return  def.isFmoduleDef();
+  }
+
+  private boolean isFunction() {
+    return  def.isFuncDef();
+  }
+
+  private boolean isBlockData() {
+    return  def.isBlockData();
   }
 
   private String getName() {

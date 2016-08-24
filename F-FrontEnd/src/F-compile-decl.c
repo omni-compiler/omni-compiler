@@ -174,11 +174,13 @@ declare_procedure(enum name_class class,
             fprintf(diag_file,"  BLOCK DATA %s:\n",name ? SYM_NAME(s): "");
         CURRENT_EXT_ID = declare_external_id(find_symbol(
             name ? SYM_NAME(s): "no__name__blkdata__"), STG_COMMON, TRUE);
-        EXT_IS_BLANK_NAME(CURRENT_EXT_ID) = (name ? TRUE : FALSE);
-        if(name) {
-            id = declare_ident(s,CL_BLOCK);
-            ID_LINE(id) = EXPR_LINE(name); /* set line_no */
-            EXT_LINE(CURRENT_EXT_ID) = EXPR_LINE(name); /* set line_no */
+        if (CURRENT_EXT_ID) {
+            EXT_IS_BLANK_NAME(CURRENT_EXT_ID) = (name ? FALSE : TRUE);
+            if(name) {
+                id = declare_ident(s,CL_BLOCK);
+                ID_LINE(id) = EXPR_LINE(name); /* set line_no */
+                EXT_LINE(CURRENT_EXT_ID) = EXPR_LINE(name); /* set line_no */
+            }
         }
         break;
 
@@ -990,6 +992,14 @@ declare_external_id(SYMBOL s, enum storage_class tag, int def_flag)
     last_ep = NULL;
     for (ep = EXTERNAL_SYMBOLS; ep != NULL; ep = EXT_NEXT(ep)){
         if (EXT_SYM(ep) == s) {
+            if (tag == STG_COMMON && EXT_TAG(ep) == tag){
+                if (strcmp(SYM_NAME(s), "no__name__blkdata__")) {
+                    error("block data '%s' is already defined.",SYM_NAME(s));
+                } else {
+                    error("unnamed block data is already defined.");
+                }
+                return NULL;
+            }
             break; /* found */
         }
         last_ep = ep;
@@ -1661,7 +1671,7 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             TYPE_UNSET_PRIVATE(tp);
             TYPE_SET_PROTECTED(tp);
             if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
-                TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
+              //TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
                 //TYPE_SET_INTERNAL_PRIVATE(struct_tp);
                 // TODO PROTECTED
             }

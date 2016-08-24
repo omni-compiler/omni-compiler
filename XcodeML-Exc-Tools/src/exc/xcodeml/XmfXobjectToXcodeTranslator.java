@@ -576,6 +576,12 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = createElement(name, "construct_name", getArg0Name(xobj));
             addChildNode(e, transBody((XobjList)xobj.getArg(1)));
             break;
+        case F_BLOCK_STATEMENT:
+            e = createElement(name, "construct_name", getArg0Name(xobj));
+            addChildNode(e, transSymbols     ((XobjList)xobj.getArg(1)));
+            addChildNode(e, transDeclarations((XobjList)xobj.getArg(2)));
+            addChildNode(e, transBody        ((XobjList)xobj.getArg(3)));
+            break;
 
         case F_SYNCALL_STATEMENT:                    
         case F_SYNCIMAGE_STATEMENT:
@@ -902,16 +908,16 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
              */
             switch (xcode) {
             // IXbfIOStatement
-            case F_OPEN_STATEMENT:
-            case F_CLOSE_STATEMENT:
-            case F_END_FILE_STATEMENT:
-            case F_REWIND_STATEMENT:
-            case F_BACKSPACE_STATEMENT:
+//          case F_OPEN_STATEMENT:
+//          case F_CLOSE_STATEMENT:
+//          case F_END_FILE_STATEMENT:
+//          case F_REWIND_STATEMENT:
+//          case F_BACKSPACE_STATEMENT:
             // IXbfRWStatement
-            case F_READ_STATEMENT:
-            case F_WRITE_STATEMENT:
-            case F_INQUIRE_STATEMENT:
-                break;
+//          case F_READ_STATEMENT:
+//          case F_WRITE_STATEMENT:
+//          case F_INQUIRE_STATEMENT:
+//              break;
             default:
                 ILineNo lineNo = xobj.getLineNo();
                 addAttributes(e,
@@ -1107,6 +1113,12 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (val != null && val.Opcode() == Xcode.F_VALUE) {
             Element ve = trans(val);
             addChildNode(e, ve);
+        }
+
+        // module declared in
+        String mod_name = ident.getFdeclaredModule();
+        if (mod_name != null) {
+            addAttributes(e, "declared_in", mod_name);
         }
 
         return e;

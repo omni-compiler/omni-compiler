@@ -560,10 +560,10 @@ public class XcodeMLtools_F extends XcodeMLtools {
 		
     case F_READ_STATEMENT:
     case F_WRITE_STATEMENT:
-      return Xcons.List(code, type,
-			toXobject(getElement(n, "namedValueList")),
-			toXobject(getElement(n, "valueList"))
-			);
+      return setCommonAttributes(n, Xcons.List(code, type,
+					       toXobject(getElement(n, "namedValueList")),
+					       toXobject(getElement(n, "valueList"))
+					       ));
 
     case F_PRINT_STATEMENT:
       t = getAttr(n, "format");
@@ -623,6 +623,15 @@ public class XcodeMLtools_F extends XcodeMLtools {
       {
         attr = getSymbol(n, "construct_name");
         return setCommonAttributes(n, Xcons.List(code, type, attr,
+						 toXobject(getElement(n, "body"))
+						 ));
+      }
+    case F_BLOCK_STATEMENT:
+      {
+        attr = getSymbol(n, "construct_name");
+        return setCommonAttributes(n, Xcons.List(code, type, attr,
+						 toXobject(getElement(n, "symbols")),
+						 toXobject(getElement(n, "declarations")),
 						 toXobject(getElement(n, "body"))
 						 ));
       }

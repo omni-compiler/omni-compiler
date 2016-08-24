@@ -309,7 +309,7 @@ public class Bcons
     /** create FuctionBlock for XobjectDef */
     public static FunctionBlock buildFunctionBlock(XobjectDef d)
     {
-	return new FunctionBlock(d.getDef().Opcode(),d.getNameObj(),
+	return new FunctionBlock(d.getDef().getLineNo(),d.getDef().Opcode(),d.getNameObj(),
 				 d.getFuncIdList(), d.getFuncDecls(),
 				 buildBlock(d.getFuncBody()), 
 				 d.getFuncGccAttributes(), d.getParentEnv());
