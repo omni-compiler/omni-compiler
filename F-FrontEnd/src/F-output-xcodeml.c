@@ -4868,6 +4868,7 @@ static void
 collect_types_from_block(BLOCK_ENV block)
 {
     BLOCK_ENV bp;
+    TYPE_DESC tp;
 
     if (block == NULL) {
         return;
@@ -4876,6 +4877,13 @@ collect_types_from_block(BLOCK_ENV block)
     FOREACH_BLOCKS(bp, block) {
         mark_type_desc_in_id_list(BLOCK_LOCAL_SYMBOLS(bp));
         collect_types(BLOCK_LOCAL_EXTERNAL_SYMBOLS(bp));
+        collect_types(BLOCK_LOCAL_INTERFACES(bp));
+        for(tp = BLOCK_LOCAL_STRUCT_DECLS(bp); tp != NULL; tp = TYPE_SLINK(tp)) {
+            if(TYPE_IS_DECLARED(tp)) {
+                mark_type_desc(tp);
+                mark_type_desc_in_structure(tp);
+            }
+        }
         collect_types_from_block(BLOCK_CHILDREN(bp));
     }
 }

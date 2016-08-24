@@ -462,6 +462,7 @@ typedef struct block_env
 #define BLOCK_CHILDREN(bp) ((bp)->blocks)
 #define BLOCK_LOCAL_LABELS(bp) ((bp)->label_list)
 #define BLOCK_LOCAL_SYMBOLS(bp) ((bp)->id_list)
+#define BLOCK_LOCAL_STRUCT_DECLS(bp) ((bp)->struct_decls)
 #define BLOCK_LOCAL_INTERFACES(bp) ((bp)->interfaces)
 #define BLOCK_LOCAL_EXTERNAL_SYMBOLS(bp) ((bp)->external_symbols)
 

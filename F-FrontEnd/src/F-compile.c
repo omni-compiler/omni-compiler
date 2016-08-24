@@ -5931,6 +5931,7 @@ compile_ENDBLOCK_statement(expr x)
     BLOCK_LOCAL_LABELS(current_block) = LOCAL_LABELS;
     BLOCK_LOCAL_INTERFACES(current_block) = LOCAL_INTERFACES;
     BLOCK_LOCAL_EXTERNAL_SYMBOLS(current_block) = LOCAL_EXTERNAL_SYMBOLS;
+    BLOCK_CHILDREN(current_block) = LOCAL_BLOCKS;
     EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) = current_block;
 
     end_procedure();
