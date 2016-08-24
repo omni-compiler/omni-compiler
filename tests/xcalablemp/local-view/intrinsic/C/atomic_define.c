@@ -19,25 +19,27 @@ void check()
   else
     if(xmp_node_num() == 1)
       printf("PASS\n");
+  xmp_sync_all(NULL);
 }
 
 void test1(int value)
 {
   atom0 = -1;
   flag = TRUE;
-  
+
   xmp_sync_all(NULL);
   if(xmp_node_num() == 2){
     xmp_atomic_define(atom0:[1], value);
   }
   xmp_sync_all(NULL);
-
+  
   if(xmp_node_num() == 1)
     if(atom0 != 2)
       flag = FALSE;
 
   atom0 = -1;
   xmp_atomic_define(atom0, value);
+  xmp_sync_all(NULL);
   if(value != atom0)
     flag = FALSE;
 }
@@ -60,6 +62,7 @@ void test1_c(int value)
 
   atom0 = -1;
   xmp_atomic_define(atom0, value0);
+  xmp_sync_all(NULL);
   if(value0 != atom0)
     flag = FALSE;
 }

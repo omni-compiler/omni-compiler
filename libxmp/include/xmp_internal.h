@@ -423,6 +423,9 @@ extern size_t _XMP_calc_max_copy_chunk(const int, const int, const _XMP_array_se
 #define _XMP_GASNET_STRIDE_INCREMENT_RATIO  (1.5) /**< This value is trial */
 #define _XMP_GASNET_ALIGNMENT               8
 
+#define _XMP_GASNET_ATOMIC_INIT_SIZE        32    /**< This value is trial */
+#define _XMP_GASNET_ATOMIC_INCREMENT_RATIO  (1.5) /**< This value is trial */
+
 #define GASNET_BARRIER() do {  \
 	gasnet_barrier_notify(0,GASNET_BARRIERFLAG_ANONYMOUS); \
 	gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);   \
@@ -457,6 +460,7 @@ extern void _xmp_gasnet_add_notify(gasnet_token_t t, const int);
 extern void _xmp_gasnet_notiy_reply(gasnet_token_t t);
 extern void _XMP_gasnet_atomic_define(int, _XMP_coarray_t*, size_t, int, _XMP_coarray_t*, size_t, size_t);
 extern void _XMP_gasnet_atomic_ref(int, _XMP_coarray_t*, size_t, int*, size_t);
+extern void XMP_gasnet_atomic_sync_memory();
 #endif
 
 #ifdef _XMP_FJRDMA
@@ -683,14 +687,12 @@ extern void _xmp_gasnet_pack(gasnet_token_t, const char*, const size_t,
 extern void _xmp_gasnet_unpack_get_reply(gasnet_token_t, char *, size_t, const int, const int);
 extern void _XMP_pack_coarray(char*, const char*, const int, const _XMP_array_section_t*);
 extern void _XMP_unpack_coarray(char*, const int, const char*, const _XMP_array_section_t*, const int);
-extern void _xmp_gasnet_atomic_define_do(gasnet_token_t, const char*, const size_t, gasnet_handlerarg_t,
-					 gasnet_handlerarg_t, gasnet_handlerarg_t, gasnet_handlerarg_t);
-extern void _xmp_gasnet_atomic_define_reply_do(gasnet_token_t, gasnet_handlerarg_t, gasnet_handlerarg_t);
+extern void _xmp_gasnet_atomic_define_do(gasnet_token_t, const char*, const size_t, gasnet_handlerarg_t, gasnet_handlerarg_t, gasnet_handlerarg_t);
+extern void _xmp_gasnet_atomic_define_reply_do(gasnet_token_t, gasnet_handlerarg_t);
 extern void _xmp_gasnet_atomic_ref_do(gasnet_token_t, const size_t, gasnet_handlerarg_t, gasnet_handlerarg_t,
-				      gasnet_handlerarg_t, gasnet_handlerarg_t, gasnet_handlerarg_t,
-				      gasnet_handlerarg_t);
+				      gasnet_handlerarg_t, gasnet_handlerarg_t, gasnet_handlerarg_t);
 extern void _xmp_gasnet_atomic_ref_reply_do(gasnet_token_t, int *, size_t, gasnet_handlerarg_t,
-					    gasnet_handlerarg_t, gasnet_handlerarg_t, gasnet_handlerarg_t);
+					    gasnet_handlerarg_t, gasnet_handlerarg_t);
 
 /* Every handler function needs a uniqe number between 200-255.   
  * The Active Message library reserves ID's 1-199 for itself: client libs must

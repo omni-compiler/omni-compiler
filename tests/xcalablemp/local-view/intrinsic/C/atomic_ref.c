@@ -29,16 +29,19 @@ void test1(int value)
   xmp_sync_all(NULL);
   if(xmp_node_num() == 2){
     xmp_atomic_ref(&value, atom0:[1]);
-    if(value != -1)
-      flag = FALSE;
   }
   xmp_sync_all(NULL);
   
+  if(xmp_node_num() == 2)
+    if(value != -1)
+      flag = FALSE;
+
   atom0 = -1;
   xmp_atomic_ref(&value, atom0);
+  xmp_sync_all(NULL);
   if(value != atom0)
     flag = FALSE;
-  
+
   xmp_sync_all(NULL);
 }
 
@@ -49,12 +52,14 @@ void test1_c(int value)
   value0 = value;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
+  if(xmp_node_num() == 2)
     xmp_atomic_ref(&value0, atom0:[1]);
+
+  xmp_sync_all(NULL);
+  if(xmp_node_num() == 2){
     if(value0 != -1)
       flag = FALSE;
   }
-  xmp_sync_all(NULL);
 
   atom0 = -1;
   xmp_atomic_ref(&value0, atom0);
@@ -70,12 +75,13 @@ void test2(int value)
   flag = TRUE;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
+  if(xmp_node_num() == 2)
     xmp_atomic_ref(&value, atom1[2]:[1]);
+
+  xmp_sync_all(NULL);
+  if(xmp_node_num() == 2)
     if(value != -1)
       flag = FALSE;
-  }
-  xmp_sync_all(NULL);
   
   atom1[1] = -1;
   xmp_atomic_ref(&value, atom1[1]);
@@ -94,10 +100,12 @@ void test2_c(int value)
   xmp_sync_all(NULL);
   if(xmp_node_num() == 2){
     xmp_atomic_ref(&value1[2], atom1[2]:[1]);
+  }
+
+  xmp_sync_all(NULL);
+  if(xmp_node_num() == 2)
     if(value1[2] != -1)
       flag = FALSE;
-  }
-  xmp_sync_all(NULL);
 
   atom1[1] = -1;
   xmp_atomic_ref(&value1[2], atom1[1]);
@@ -113,13 +121,15 @@ void test3(int value)
   flag = TRUE;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
+  if(xmp_node_num() == 2)
     xmp_atomic_ref(&value, atom2[2][1]:[1]);
+  
+  xmp_sync_all(NULL);
+
+  if(xmp_node_num() == 2)
     if(value != -1)
       flag = FALSE;
-  }
-  xmp_sync_all(NULL);
-  
+
   atom2[2][2] = -1;
   xmp_atomic_ref(&value, atom2[2][2]);
   if(value != atom2[2][2])
@@ -135,12 +145,14 @@ void test3_c(int value)
   value2[2][2] = value;
 
   xmp_sync_all(NULL);
-  if(xmp_node_num() == 2){
+  if(xmp_node_num() == 2)
     xmp_atomic_ref(&value2[2][2], atom2[2][1]:[1]);
+
+  xmp_sync_all(NULL);
+
+  if(xmp_node_num() == 2)
     if(value2[2][2] != -1)
       flag = FALSE;
-  }
-  xmp_sync_all(NULL);
 
   atom2[2][2] = -1;
   xmp_atomic_ref(&value2[2][2], atom2[2][2]);
