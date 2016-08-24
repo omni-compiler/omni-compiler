@@ -4043,9 +4043,10 @@ outx_structType(int l, TYPE_DESC tp)
             } else if (TYPE_IS_LEN(ID_TYPE(id))) {
                 outx_print("attr=\"length\">\n");
             } else {
-
+                fatal("%s: NEVER REACH.", __func__);
             }
             outx_symbolName(l3, ID_SYM(id));
+            outx_value(l3, VAR_INIT_VALUE(id));
             outx_close(l2, "typeParam");
         }
         outx_close(l1, "typeParams");

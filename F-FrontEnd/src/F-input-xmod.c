@@ -1850,6 +1850,12 @@ input_typeParam(xmlTextReaderPtr reader, HashTable * ht, ID * id)
         return FALSE;
     }
 
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name")) {
+        free(*id);
+        *id = NULL;
+        return FALSE;
+    }
+
     if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "value")) {
         expv v;
         if (!input_value(reader, ht, &v)) {
@@ -1858,12 +1864,6 @@ input_typeParam(xmlTextReaderPtr reader, HashTable * ht, ID * id)
             return FALSE;
         }
         VAR_INIT_VALUE(*id) = v;
-    }
-
-    if (!xmlSkipWhiteSpace(reader)) {
-        free(*id);
-        *id = NULL;
-        return FALSE;
     }
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "typeParam")) {
