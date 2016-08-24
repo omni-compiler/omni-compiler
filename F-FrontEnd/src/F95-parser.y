@@ -857,7 +857,7 @@ COL2_or_null:
 declaration_statement2003:
           KW_TYPE COL2_or_null IDENTIFIER '(' type_param_list ')'
         { $$ = list3(F95_TYPEDECL_STATEMENT,$3,NULL,$5); }
-        | KW_TYPE ',' KW access_spec COL2 IDENTIFIER '(' type_param_list ')'
+        | KW_TYPE ',' KW type_attr_spec_list COL2 IDENTIFIER '(' type_param_list ')'
         { $$ = list3(F95_TYPEDECL_STATEMENT,$6,$4,$8); }
         ;
 
