@@ -4,7 +4,7 @@
  */
 
 #include <assert.h>
-#include "xmpf_internal.h"
+#include "xmpf_internal_coarray.h"
 
 // communication schemes
 #define SCHEME_DirectGet       20   // RDMA expected

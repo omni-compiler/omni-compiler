@@ -3,7 +3,7 @@
  *
  */
 
-#include "xmpf_internal.h"
+#include "xmpf_internal_coarray.h"
 
 /* cannot be included because of many conflicts with xmp_internal.h
  */
