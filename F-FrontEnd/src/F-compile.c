@@ -1021,7 +1021,6 @@ void compile_statement1(int st_no, expr x)
 
     case F95_ENDTYPEDECL_STATEMENT:
         if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
-            // TODO: check all type parameters are declared
             CURRENT_STATE = INDCL;
         }
 
@@ -1048,7 +1047,6 @@ void compile_statement1(int st_no, expr x)
         if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
             // Expects inside the derived-type declaration
             /* NOTE: PRIVATE and PROTECTED can be written in the derived-type declaration */
-            // TODO: check all type parameters are declared
             CURRENT_STATE = INDCL;
         }
         check_INDCL();

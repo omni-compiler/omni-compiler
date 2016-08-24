@@ -2936,13 +2936,11 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         }
     }
 
-    if (hasNonTypeParamAttr &&
+    if (!hasTypeParamAttr &&
         CTL_TYPE(ctl_top) == CTL_STRUCT &&
         CURRENT_STATE == IN_TYPE_PARAM_DECL ) {
-        // TODO: check all type parameters are declared
         CURRENT_STATE = INDCL;
     }
-
 
     if (typeExpr != NULL &&
         baseTp != NULL) {
@@ -3049,8 +3047,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                               SYM_NAME(EXPR_SYM(ident)));
             }
 
-            // TODO check state is TYPE PRAMETER DECLARATIONS or MEMBER DECLARATION
-            id = find_ident_from_type_parameter(EXPR_SYM(ident), stp);
+            id = find_ident_from_type_parameter(EXPR_SYM(ident), struct_tp);
             if (id != NULL && CURRENT_STATE != IN_TYPE_PARAM_DECL) {
                 error_at_node(decl_list, "'%s' is already used as a type parameter.", ID_NAME(id));
                 continue;
@@ -3063,7 +3060,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
             if (id == NULL) {
                 CURRENT_STATE = INDCL;
-                // TODO: check all type parameters are declared.
                 id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
             }
         } else {
@@ -3438,6 +3434,22 @@ compile_struct_decl(expr ident, expr type, expr type_params)
 }
 
 
+static void
+check_type_parameters_declared(CTL ctl)
+{
+    ID ip;
+    if (CTL_TYPE(ctl_top) != CTL_STRUCT)
+        return;
+
+    FOREACH_ID(ip, TYPE_TYPE_PARAMS(CTL_STRUCT_TYPEDESC(ctl))) {
+        if (ID_TYPE(ip) == NULL ||
+            !(TYPE_IS_KIND(ID_TYPE(ip)) || TYPE_IS_LEN(ID_TYPE(ip)))) {
+            error("Type parameter '%s' is not declared", ID_NAME(ip));
+        }
+    }
+}
+
+
 /* compile end type statement */
 void
 compile_struct_decl_end()
@@ -3446,6 +3458,8 @@ compile_struct_decl_end()
         error("illegal derived type declaration end");
         return;
     }
+
+    check_type_parameters_declared(ctl_top);
 
     if (endlineno_flag)
       EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
