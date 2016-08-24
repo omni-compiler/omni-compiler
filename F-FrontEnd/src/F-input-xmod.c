@@ -399,6 +399,12 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
         free(typeId);
 
 
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_class");
+    if (str != NULL) {
+        TYPE_SET_CLASS(*tp);
+        free(str);
+    }
+
     return TRUE;
 }
 

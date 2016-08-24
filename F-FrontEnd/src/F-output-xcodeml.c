@@ -615,6 +615,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_INTENT_OUT(tp) ||
         TYPE_IS_INTENT_INOUT(tp) ||
         TYPE_IS_VOLATILE(tp) ||
+        TYPE_IS_CLASS(tp) ||
         tp->codims;
 }
 
@@ -787,10 +788,10 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_SEQUENCE(tp),         "is_sequence");
         outx_true(TYPE_IS_INTERNAL_PRIVATE(tp), "is_internal_private");
         outx_true(TYPE_IS_VOLATILE(tp),          "is_volatile");
-
         if (TYPE_PARENT(tp)) {
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
         }
+        outx_true(TYPE_IS_CLASS(tp),            "is_class");
     }
 
     if((options & TOPT_INTRINSIC) > 0)
