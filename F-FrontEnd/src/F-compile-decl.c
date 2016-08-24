@@ -2189,6 +2189,20 @@ compile_IMPLICIT_decl(expr type,expr l)
                 SYM_NAME(EXPR_SYM(type)));
         }
         tp = type_apply_type_parameter(tp, EXPR_ARG2(EXPR_ARG1(type)));
+    } else if (EXPR_CODE (type) == F03_CLASS) {
+        if (EXPR_ARG1(type) != NULL) {
+            id = find_ident(EXPR_SYM(EXPR_ARG1(type)));
+            if (id != NULL) {
+                tp = ID_TYPE(id);
+            } else {
+                error_at_node(type, "struct type '%s' is not declared",
+                              SYM_NAME(EXPR_SYM(type)));
+            }
+            tp = wrap_type(tp);
+        } else {
+            tp = new_type_desc();
+        }
+        TYPE_SET_CLASS(tp);
     } else {
         ty = EXPR_ARG1 (type);
         if (EXPR_CODE (ty) != F_TYPE_NODE) {
@@ -3030,6 +3044,33 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                                   SYM_NAME(EXPR_SYM(typeExpr)));
                 }
             }
+
+        } else if (EXPR_CODE(typeExpr) == F03_CLASS) {
+            if (EXPR_ARG1(typeExpr)) {
+                ID id = find_ident_local(EXPR_SYM(EXPR_ARG1(typeExpr)));
+                if(id != NULL && ID_IS_AMBIGUOUS(id)) {
+                    error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
+                    return;
+                }
+                tp0 = find_struct_decl(EXPR_SYM(EXPR_ARG1(typeExpr)));
+                if (tp0 == NULL) {
+                    if(hasPointerAttr) {
+                        tp0 = declare_struct_type_wo_component(typeExpr);
+                        if (tp0 == NULL) {
+                            return;
+                        }
+                    } else {
+                        error_at_node(typeExpr, "type %s not found",
+                                      SYM_NAME(EXPR_SYM(typeExpr)));
+                        return;
+                    }
+                }
+                tp0 = wrap_type(tp0);
+            } else {
+                tp0 = new_type_desc();
+            }
+            TYPE_SET_CLASS(tp0);
+
         } else {
             tp0 = compile_type(typeExpr);
             if (tp0 == NULL)
@@ -3172,7 +3213,9 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
          * Create new TYPE_DESC, ALWAYS.  Since we need it. Otherwise
          * identifier-origin attribute are corrupted.
          */
-        tp = wrap_type(tp);
+        if (!TYPE_IS_CLASS(tp)) {
+            tp = wrap_type(tp);
+        }
 #endif
 
         if (attributes != NULL) {

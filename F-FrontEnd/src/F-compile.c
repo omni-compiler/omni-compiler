@@ -479,6 +479,19 @@ void compile_statement1(int st_no, expr x)
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               tp,
                               EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
+        } else if (EXPR_ARG3(x) && EXPR_CODE(EXPR_ARG3(x)) == F03_CLASS) {
+            /* in case of class */
+            TYPE_DESC tp;
+            if (EXPR_ARG2(EXPR_ARG3(x))) {
+                tp = declare_struct_type_wo_component(EXPR_ARG1(EXPR_ARG3(x)));
+            } else {
+                tp = new_type_desc();
+            }
+            tp = wrap_type(tp);
+            TYPE_SET_CLASS(tp);
+            declare_procedure(CL_PROC, EXPR_ARG1(x),
+                              tp,
+                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
         } else {
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               compile_type(EXPR_ARG3(x)),
@@ -1923,8 +1936,9 @@ end_declaration()
                         struct type_attr_check *e;
                         for (e = type_attr_checker; e->flag; e++) {
                             if (TYPE_ATTR_FLAGS(tp) & e->flag) {
-                                fprintf(stderr, "%s has %s\n", ID_NAME(ip),
-                                        e->flag_name);
+                                warning_at_id(ip, "%s has %s\n",
+                                              ID_NAME(ip), e->flag_name);
+
                             }
                         }
                         fatal("type attr error: "
@@ -2054,9 +2068,11 @@ end_declaration()
         tp = ID_TYPE(ip);
 
         if (tp) {
-            if (TYPE_IS_ALLOCATABLE(tp) && IS_ARRAY_TYPE(tp) == FALSE &&
-		!tp->codims) {
-                error_at_id(ip, "ALLOCATABLE is applied only to array");
+            if (TYPE_IS_ALLOCATABLE(tp) &&
+                !(IS_ARRAY_TYPE(tp) ||
+                  TYPE_IS_COINDEXED(tp) ||
+                  TYPE_IS_CLASS(tp))) {
+                error_at_id(ip, "ALLOCATABLE is applied only to array/coarray/class");
             } else if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "OPTIONAL is applied only "
                               "to dummy argument");

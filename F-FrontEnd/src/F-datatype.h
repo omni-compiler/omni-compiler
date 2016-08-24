@@ -121,6 +121,7 @@ typedef struct type_descriptor
 #define TYPE_ATTR_VOLATILE          0x00080000
 #define TYPE_ATTR_KIND              0x00100000
 #define TYPE_ATTR_LEN               0x00200000
+#define TYPE_ATTR_CLASS             0x00400000
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -255,6 +256,9 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_LEN(tp)             ((tp)->attr.type_attr_flags &   TYPE_ATTR_LEN)
 #define TYPE_SET_LEN(tp)            ((tp)->attr.type_attr_flags |=  TYPE_ATTR_LEN)
 #define TYPE_UNSET_LEN(tp)          ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_LEN)
+#define TYPE_IS_CLASS(tp)           ((tp)->attr.type_attr_flags &   TYPE_ATTR_CLASS)
+#define TYPE_SET_CLASS(tp)          ((tp)->attr.type_attr_flags |=  TYPE_ATTR_CLASS)
+#define TYPE_UNSET_CLASS(tp)        ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_CLASS)
 
 #define TYPE_EXTATTR_FLAGS(tp)      ((tp)->attr.exflags)
 #define TYPE_IS_IMPLICIT(tp)        ((tp)->attr.exflags &   TYPE_EXFLAGS_IMPLICIT)
