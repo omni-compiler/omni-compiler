@@ -2589,7 +2589,7 @@ get_type_params(TYPE_DESC struct_tp)
 
 
 int
-compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_param_values)
+compile_type_param_values(ID struct_id, expr type_param_args, expv type_param_values)
 {
     int has_keyword = FALSE;
     list lp;
@@ -2598,6 +2598,9 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
     SYMBOL sym;
     enum expr_code e_code;
     expv v;
+    TYPE_DESC struct_tp;
+
+    struct_tp = ID_TYPE(struct_id);
 
     type_params = get_type_params(struct_tp);
     cur = type_params;
@@ -2729,7 +2732,7 @@ get_struct_members(TYPE_DESC struct_tp)
 
 
 static int
-compile_struct_constructor_components(TYPE_DESC struct_tp, expr args, expv components)
+compile_struct_constructor_components(ID struct_id, expr args, expv components)
 {
     int has_keyword = FALSE;
     list lp;
@@ -2737,6 +2740,13 @@ compile_struct_constructor_components(TYPE_DESC struct_tp, expr args, expv compo
     ID match = NULL;
     SYMBOL sym;
     expv v;
+    TYPE_DESC struct_tp;
+
+    // Check PRIVATE components
+    // (PRIVATE works if the derived type is use-associated)
+    int is_use_associated = ID_USEASSOC_INFO(struct_id) != NULL;
+
+    struct_tp = ID_TYPE(struct_id);
 
     members = get_struct_members(struct_tp);
     cur = members;
@@ -2777,6 +2787,13 @@ compile_struct_constructor_components(TYPE_DESC struct_tp, expr args, expv compo
             }
 
             match = cur;
+        }
+
+        if (is_use_associated && ID_TYPE(match) != NULL &&
+            TYPE_IS_INTERNAL_PRIVATE(match) ||
+            TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match))) {
+            error("accessing a private component");
+            return FALSE;
         }
 
         v = compile_expression(arg);
@@ -2823,7 +2840,7 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 
     if (type_param_args) {
         expv type_param_values = list0(LIST);
-        if (!compile_type_param_values(ID_TYPE(struct_id), type_param_args, type_param_values)) {
+        if (!compile_type_param_values(struct_id, type_param_args, type_param_values)) {
             return NULL;
         }
         TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
@@ -2835,7 +2852,7 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 
     EXPV_LINE(result) = EXPR_LINE(args);
 
-    if (!compile_struct_constructor_components(ID_TYPE(struct_id), args, component)) {
+    if (!compile_struct_constructor_components(struct_id, args, component)) {
         return NULL;
     }
 

@@ -1050,6 +1050,7 @@ declare_ident(SYMBOL s, enum name_class class)
     ID* symbols;
     int isInUseDecl = checkInsideUse();
     int isPreDecl = FALSE;
+    int isInternalPrivate = FALSE; // For struct type
     char msg[2048];
     const char *fmt = "%s '%s' is already declared.";
 
@@ -1071,6 +1072,7 @@ declare_ident(SYMBOL s, enum name_class class)
                  */
             if (is_in_kind_compilation_flag_for_declare_ident == FALSE) {
                 TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
+                isInternalPrivate = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
                 if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
                     symbols = &TYPE_TYPE_PARAMS(struct_tp);
                     class = CL_TYPE_PARAM;
@@ -1158,6 +1160,9 @@ declare_ident(SYMBOL s, enum name_class class)
         ID_CLASS(ip) = class;
         if(isPreDecl == FALSE)
             ID_ORDER(ip) = order_sequence++;
+        if(isInternalPrivate) {
+            TYPE_SET_INTERNAL_PRIVATE(ip);
+        }
     }
 
     switch (class) {
