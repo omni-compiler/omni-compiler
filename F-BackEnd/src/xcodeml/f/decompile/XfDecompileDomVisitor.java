@@ -4352,7 +4352,7 @@ public class XfDecompileDomVisitor {
 
             String parentTypeId = XmDomUtil.getAttr(structTypeNode, "extends");
             if (parentTypeId != null) {
-                String typeName = typeManager.getOriginalTypeName(parentTypeId);
+                String typeName = typeManager.getAliasTypeName(parentTypeId);
                 writer.writeToken(",");
                 writer.writeToken("EXTENDS");
                 writer.writeToken("(");

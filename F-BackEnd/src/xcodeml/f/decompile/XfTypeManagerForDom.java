@@ -316,56 +316,31 @@ class XfTypeManagerForDom {
 
     /**
      * Get alias of type name.
-     * @param typeName
+     * @param typeId
      * @return When alias not found, return argument type name.
      */
-    public String getAliasTypeName(String typeName)
+    public String getAliasTypeName(String typeId)
     {
-        if (XfUtilForDom.isNullOrEmpty(typeName) != false) {
+        if (XfUtilForDom.isNullOrEmpty(typeId) != false) {
             return null;
         }
 
         // Trim key word string.
-        typeName = typeName.trim();
+        typeId = typeId.trim();
         for (AliasMap aliasMap : _aliasMapStack) {
-            String aliasName = aliasMap.get(typeName);
+            String aliasName = aliasMap.get(typeId);
             if (aliasName != null) {
                 return aliasName;
             }
         }
 
-        String inheritName = _reverseBasicRefMap.get(typeName);
+        String inheritName = _reverseBasicRefMap.get(typeId);
         if (inheritName != null) {
             return getAliasTypeName(inheritName);
         }
 
-        throw new IllegalStateException("not found type name of '" + typeName + "'");
+        throw new IllegalStateException("not found type name of '" + typeId + "'");
     }
-
-    /**
-     * Get the original type name of the alias typename.
-     * @param typeName
-     * @return When alias not found, return argument type name.
-     */
-    public String getOriginalTypeName(String aliasTypeName)
-    {
-        if (XfUtilForDom.isNullOrEmpty(aliasTypeName)) {
-            return null;
-        }
-
-        // Trim key word string.
-        aliasTypeName = aliasTypeName.trim();
-        for (AliasMap aliasMap : _aliasMapStack) {
-            for (Map.Entry<String, String> entry : aliasMap.entrySet()) {
-                if (aliasTypeName.compareToIgnoreCase(entry.getKey()) == 0) {
-                    return entry.getValue();
-                }
-            }
-        }
-
-        throw new IllegalStateException("not found original type name of '" + aliasTypeName + "'");
-    }
-
 
     /**
      * Get type reference list.
