@@ -1196,17 +1196,31 @@ declare_common_ident(SYMBOL s)
     return ip;
 }
 
+
 ID
 find_ident_from_type_parameter(SYMBOL s, TYPE_DESC tp)
 {
     ID ip;
-    if (tp == NULL || TYPE_TYPE_PARAMS(tp) == NULL)
+
+    if (s == NULL || tp == NULL || TYPE_TYPE_PARAMS(tp) == NULL)
         return NULL;
 
+
     ip = find_ident_head(s, TYPE_TYPE_PARAMS(tp));
-    if (ip != NULL) return ip;
-    return find_ident_from_type_parameter(s, TYPE_PARENT(tp));
+    if (ip != NULL) {
+        return ip;
+    }
+
+    if (TYPE_PARENT(tp) && TYPE_PARENT_TYPE(tp)) {
+        ip = find_ident_from_type_parameter(s, TYPE_PARENT_TYPE(tp));
+        if (ip != NULL) {
+            return ip;
+        }
+    }
+
+    return NULL;
 }
+
 
 ID
 find_ident_local(SYMBOL s)
