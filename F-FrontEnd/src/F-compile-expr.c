@@ -2589,7 +2589,7 @@ get_type_params(TYPE_DESC struct_tp)
 
 
 int
-compile_type_param_values(ID struct_id, expr type_param_args, expv type_param_values)
+compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_param_values)
 {
     int has_keyword = FALSE;
     list lp;
@@ -2598,9 +2598,6 @@ compile_type_param_values(ID struct_id, expr type_param_args, expv type_param_va
     SYMBOL sym;
     enum expr_code e_code;
     expv v;
-    TYPE_DESC struct_tp;
-
-    struct_tp = ID_TYPE(struct_id);
 
     type_params = get_type_params(struct_tp);
     cur = type_params;
@@ -2790,8 +2787,8 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
         }
 
         if (is_use_associated && ID_TYPE(match) != NULL &&
-            TYPE_IS_INTERNAL_PRIVATE(match) ||
-            TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match))) {
+            (TYPE_IS_INTERNAL_PRIVATE(match) ||
+             TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match)))) {
             error("accessing a private component");
             return FALSE;
         }
@@ -2840,7 +2837,7 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 
     if (type_param_args) {
         expv type_param_values = list0(LIST);
-        if (!compile_type_param_values(struct_id, type_param_args, type_param_values)) {
+        if (!compile_type_param_values(ID_TYPE(struct_id), type_param_args, type_param_values)) {
             return NULL;
         }
         TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
