@@ -5368,10 +5368,6 @@ public class XfDecompileDomVisitor {
             } else {
                 _context.debugPrintLine("Write symbol.");
                 for (Node idNode : idNodes) {
-                    typeManager.addSymbol(idNode);
-
-                    //printNode(System.err, idNode);
-
                     String typeName = XmDomUtil.getAttr(idNode, "type");
 
                     Node nameNode = XmDomUtil.getElement(idNode, "name");
