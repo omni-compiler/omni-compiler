@@ -1975,7 +1975,7 @@ compile_type(expr x)
          *	SUPER BOGUS FLAG ALERT !
          */
         is_in_kind_compilation_flag_for_declare_ident = TRUE;
-	org_vkind = vkind = compile_expression(rkind);
+        org_vkind = vkind = compile_expression(rkind);
         is_in_kind_compilation_flag_for_declare_ident = FALSE;
         if(vkind == NULL)
             return NULL;

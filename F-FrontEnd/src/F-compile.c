@@ -451,11 +451,35 @@ void compile_statement1(int st_no, expr x)
         begin_procedure();
         if (EXPR_ARG3(x) && EXPR_CODE(EXPR_ARG3(x)) == IDENT) {
             /* in case of struct */
-            TYPE_DESC tp = declare_struct_type_wo_component(EXPR_ARG3(x));
+            TYPE_DESC tp = find_struct_decl(EXPR_SYM(EXPR_ARG3(x)));
+            if (tp == NULL) {
+                tp = declare_struct_type_wo_component(EXPR_ARG3(x));
+            }
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               tp,
                               EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
-        }else{
+        } else if (EXPR_ARG3(x) &&
+                   EXPR_CODE(EXPR_ARG3(x)) == F03_PARAMETERIZED_TYPE) {
+            /* in case of parameterized struct */
+            TYPE_DESC tp;
+            expv type_param_values = list0(LIST);
+            expr typeExpr = EXPR_ARG3(x);
+            tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(typeExpr)));
+            if (tp == NULL) {
+                tp = declare_struct_type_wo_component(EXPR_ARG1(typeExpr));
+                tp = wrap_type(tp);
+                if (!compile_type_param_values_dummy(tp, EXPR_ARG2(typeExpr), type_param_values)) {
+                    return;
+                }
+            } else {
+                if (!compile_type_param_values(tp, EXPR_ARG2(typeExpr), type_param_values)) {
+                    return;
+                }
+            }
+            declare_procedure(CL_PROC, EXPR_ARG1(x),
+                              tp,
+                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
+        } else {
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               compile_type(EXPR_ARG3(x)),
                               EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));

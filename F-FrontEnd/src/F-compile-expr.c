@@ -2594,6 +2594,22 @@ get_type_params(TYPE_DESC struct_tp)
 }
 
 
+// Expects to use for the dummy derived type
+// (genereted by declare_struct_type_wo_component)
+int
+compile_type_param_values_dummy(TYPE_DESC struct_tp, expr type_param_args, expv type_param_values) {
+    list lp;
+    FOR_ITEMS_IN_LIST(lp, type_param_args) {
+        expv v = compile_expression(LIST_ITEM(lp));
+        if (v == NULL) {
+            return FALSE;
+        }
+        list_put_last(type_param_values, v);
+    }
+    return TRUE;
+}
+
+
 int
 compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_param_values)
 {
@@ -2686,10 +2702,6 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
                     return FALSE;
                 }
                 break;
-        }
-
-        if (sym) {
-            EXPV_KWOPT_NAME(v) = (const char *)strdup(SYM_NAME(sym));
         }
 
         if (!has_keyword) {
@@ -2808,10 +2820,6 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
                                                EXPV_TYPE(v))) {
             error("type is not applicable in struct constructor");
             return FALSE;
-        }
-
-        if (sym) {
-            EXPV_KWOPT_NAME(v) = (const char *)strdup(SYM_NAME(sym));
         }
 
         if (!has_keyword) {
