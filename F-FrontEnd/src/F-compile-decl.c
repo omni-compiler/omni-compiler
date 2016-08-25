@@ -1072,11 +1072,11 @@ declare_ident(SYMBOL s, enum name_class class)
                  */
             if (is_in_kind_compilation_flag_for_declare_ident == FALSE) {
                 TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
-                isInternalPrivate = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
                 if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
                     symbols = &TYPE_TYPE_PARAMS(struct_tp);
                     class = CL_TYPE_PARAM;
                 } else {
+                    isInternalPrivate = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
                     symbols = &TYPE_MEMBER_LIST(struct_tp);
                     class = CL_ELEMENT;
                 }
