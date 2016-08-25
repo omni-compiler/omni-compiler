@@ -2846,8 +2846,17 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
     }
 
     if (typeExpr != NULL) {
-        if (EXPR_CODE(typeExpr) == IDENT) {
-            ID id = find_ident_local(EXPR_SYM(typeExpr));
+        if (EXPR_CODE(typeExpr) == IDENT ||
+            EXPR_CODE(typeExpr) == F03_PARAMETERIZED_TYPE) {
+            SYMBOL sym = NULL;
+            ID id;
+            if (EXPR_CODE(typeExpr) == IDENT) {
+                sym = EXPR_SYM(typeExpr);
+            } else {
+                sym = EXPR_SYM(EXPR_ARG1(typeExpr));
+            }
+
+            id = find_ident_local(sym);
             if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
                 /*
                  * member of SEQUENCE struct must be SEQUENCE.
@@ -2858,8 +2867,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                                   SYM_NAME(EXPR_SYM(typeExpr)));
                 }
             }
-            id = find_ident_local(EXPR_SYM(typeExpr));
-            if (id != NULL && ID_IS_AMBIGUOUS(id)) {
+            if(id != NULL && ID_IS_AMBIGUOUS(id)) {
                 error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
                 return;
             }
