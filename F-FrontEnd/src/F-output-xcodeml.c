@@ -1694,6 +1694,25 @@ outx_typeParamValues(int l, expv type_param_values)
 }
 
 static void
+outx_structConstructorComponents(int l, expv components)
+{
+  list lp;
+
+  if (components == NULL) {
+      return;
+  }
+
+  FOR_ITEMS_IN_LIST(lp, components){
+      expv item = LIST_ITEM(lp);
+      if(EXPV_KWOPT_NAME(item)) {
+          outx_namedValue(l, EXPV_KWOPT_NAME(item), item, NULL);
+      } else {
+          outx_expv(l, item);
+      }
+  }
+}
+
+static void
 outx_structConstructor(int l, expv v)
 {
     const int l1 = l + 1;
@@ -1701,7 +1720,7 @@ outx_structConstructor(int l, expv v)
     if (EXPR_ARG1(v)) {
         outx_typeParamValues(l1, EXPR_ARG1(v));
     }
-    outx_expv(l1, EXPR_ARG2(v));
+    outx_structConstructorComponents(l1, EXPR_ARG2(v));
     outx_expvClose(l, v);
 }
 

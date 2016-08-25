@@ -2688,6 +2688,9 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
                 break;
         }
 
+        if (sym) {
+            EXPV_KWOPT_NAME(v) = (const char *)strdup(SYM_NAME(sym));
+        }
 
         if (!has_keyword) {
             cur = ID_NEXT(cur);
@@ -2805,6 +2808,10 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
                                                EXPV_TYPE(v))) {
             error("type is not applicable in struct constructor");
             return FALSE;
+        }
+
+        if (sym) {
+            EXPV_KWOPT_NAME(v) = (const char *)strdup(SYM_NAME(sym));
         }
 
         if (!has_keyword) {
