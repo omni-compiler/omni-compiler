@@ -1039,6 +1039,12 @@ compile_expression(expr x)
             return compile_struct_constructor(id, EXPR_ARG2(x), EXPR_ARG3(x));
         }
 
+        case F08_LEN_SPEC_COLON:
+        case LEN_SPEC_ASTERISC: {
+            error_msg = "bad expression";
+            goto err;
+        }
+
         default: {
             fatal("compile_expression: unknown code '%s'",
                   EXPR_CODE_NAME(EXPR_CODE(x)));
