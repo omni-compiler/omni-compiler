@@ -594,18 +594,20 @@ void compile_statement1(int st_no, expr x)
     case F_IMPLICIT_DECL:
         check_INDCL();
         check_NOT_INBLOCK();
-	if (EXPR_ARG1(x)){
-	  FOR_ITEMS_IN_LIST(lp,EXPR_ARG1(x)){
-            v = LIST_ITEM(lp);
-            /* implicit none?  result in peek the data structture.  */
-            if (EXPR_CODE (EXPR_ARG1 (EXPR_ARG1(v)))== F_TYPE_NODE)
-                compile_IMPLICIT_decl(EXPR_ARG1(v),EXPR_ARG2(v));
-            else {
-                v = EXPR_ARG1(v);
-                compile_IMPLICIT_decl(EXPR_ARG1(v),EXPR_ARG2(v));
+        if (EXPR_ARG1(x)){
+            FOR_ITEMS_IN_LIST(lp,EXPR_ARG1(x)){
+                v = LIST_ITEM(lp);
+                /* implicit none?  result in peek the data structture.  */
+                if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F_TYPE_NODE) {
+                    compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
+                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_PARAMETERIZED_TYPE) {
+                    compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
+                } else {
+                    v = EXPR_ARG1(v);
+                    compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
+                }
             }
-	  }
-	} else { /* implicit none */
+        } else { /* implicit none */
             if (UNIT_CTL_IMPLICIT_TYPE_DECLARED(CURRENT_UNIT_CTL))
                 error("IMPLICIT NONE and IMPLICIT type declaration "
                       "cannot co-exist");
@@ -613,7 +615,7 @@ void compile_statement1(int st_no, expr x)
             set_implicit_type_uc(CURRENT_UNIT_CTL, NULL, 'a', 'z', TRUE);
             list_put_last(UNIT_CTL_IMPLICIT_DECLS(CURRENT_UNIT_CTL),
                           create_implicit_decl_expv(NULL, "a", "z"));
-	}
+        }
 
         break;
 

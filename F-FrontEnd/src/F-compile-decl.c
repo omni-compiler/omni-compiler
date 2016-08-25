@@ -2156,7 +2156,6 @@ void
 compile_IMPLICIT_decl(expr type,expr l)
 {
     TYPE_DESC tp = NULL;
-    ID id;
     list lp;
     expr v, ty;
 
@@ -2170,13 +2169,23 @@ compile_IMPLICIT_decl(expr type,expr l)
         return;
     }
     if (EXPR_CODE (type) == IDENT) {
-        id = find_ident(EXPR_SYM(type));
-        if (id != NULL) {
-            tp = ID_TYPE(id);
-        } else {
+        tp = find_struct_decl(EXPR_SYM(type));
+        if (tp == NULL) {
             error_at_node(type, "struct type '%s' is not declared",
                 SYM_NAME(EXPR_SYM(type)));
         }
+    } else if (EXPR_CODE(EXPR_ARG1(type)) == F03_PARAMETERIZED_TYPE) {
+        expv type_param_values = list0(LIST);
+        tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(EXPR_ARG1(type))));
+        if (tp == NULL) {
+            error_at_node(type, "struct type '%s' is not declared",
+                SYM_NAME(EXPR_SYM(type)));
+        }
+        if (!compile_type_param_values(tp, EXPR_ARG2(EXPR_ARG1(type)), type_param_values)) {
+            return;
+        }
+        tp = wrap_type(tp);
+        TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
     } else {
         ty = EXPR_ARG1 (type);
         if (EXPR_CODE (ty) != F_TYPE_NODE) {
