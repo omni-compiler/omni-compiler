@@ -2838,7 +2838,18 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
     if (typeExpr != NULL) {
         if (EXPR_CODE(typeExpr) == IDENT) {
             ID id = find_ident_local(EXPR_SYM(typeExpr));
-            if(id != NULL && ID_IS_AMBIGUOUS(id)) {
+            if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
+                /*
+                 * member of SEQUENCE struct must be SEQUENCE.
+                 */
+                if (TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
+                   TYPE_IS_SEQUENCE(tp0) == FALSE) {
+                    error_at_node(typeExpr, "type %s does not have SEQUENCE attribute.",
+                                  SYM_NAME(EXPR_SYM(typeExpr)));
+                }
+            }
+            id = find_ident_local(EXPR_SYM(typeExpr));
+            if (id != NULL && ID_IS_AMBIGUOUS(id)) {
                 error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
                 return;
             }
@@ -2853,16 +2864,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                     error_at_node(typeExpr, "type %s not found",
                                   SYM_NAME(EXPR_SYM(typeExpr)));
                     return;
-                }
-            }
-            if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
-                /*
-                 * member of SEQUENCE struct must be SEQUENCE.
-                 */
-                if(TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
-                   TYPE_IS_SEQUENCE(tp0) == FALSE) {
-                    error_at_node(typeExpr, "type %s does not have SEQUENCE attribute.",
-                                  SYM_NAME(EXPR_SYM(typeExpr)));
                 }
             }
         } else {
@@ -2892,6 +2893,15 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         }
 
         if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
+            TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
+            if (TYPE_PARENT(struct_tp) &&
+                (ID_SYM(TYPE_PARENT(struct_tp)) == EXPR_SYM(ident) ||
+                 find_struct_member(TYPE_PARENT_TYPE(struct_tp),
+                                    EXPR_SYM(ident)))) {
+                error_at_node(typeExpr,
+                              "component %s already exists in the parent type.",
+                              SYM_NAME(EXPR_SYM(ident)));
+            }
             id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
         } else {
             id = find_ident_local(EXPR_SYM(ident));

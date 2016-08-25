@@ -288,17 +288,17 @@ input_name(xmlTextReaderPtr reader, SYMBOL * s)
  * input type and attribute at node
  */
 static int
-input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** typeId,
+input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
                     TYPE_DESC * tp)
 {
     char * str;
-    char * _typeId;
+    char * typeId;
 
-    _typeId = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "type");
-    if (_typeId == NULL)
+    typeId = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    if (typeId == NULL)
         return FALSE;
 
-    *tp = getTypeDesc(ht, _typeId);
+    *tp = getTypeDesc(ht, typeId);
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "intent");
     if (str != NULL) {
@@ -384,7 +384,7 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** typeId,
             // TO BE FIXED lately
             TYPE_PARENT(*tp) = new_ident_desc(NULL);
             TYPE_PARENT_TYPE(*tp) = parent_type;
-            e = FindHashEntry(ht, _typeId);
+            e = FindHashEntry(ht, typeId);
             tep = GetHashValue(e);
             tep->parent_type_id = str;
         } else {
@@ -393,10 +393,10 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** typeId,
         }
     }
 
-    if (typeId != NULL)
-        *typeId = _typeId;    /* return typeId */
+    if (retTypeId != NULL)
+        *retTypeId = typeId;    /* return typeId */
     else
-        free(_typeId);
+        free(typeId);
 
 
     return TRUE;
