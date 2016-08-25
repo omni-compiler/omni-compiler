@@ -9,7 +9,9 @@ OUT_reduct = reduct.x reductArg12.x reductArg123.x reductArg13.x reductArg1.x
 #                     type(lock_type) must be defined in iso_fortran_env...
 #OUT_critical = critical.x  not supported yet
 
-OUT=$(OUT_inq) $(OUT_bcast) $(OUT_reduct)
+OUT_atom=adef.x adef2.x 
+
+OUT=$(OUT_atom) $(OUT_inq) $(OUT_bcast) $(OUT_reduct)
 
 
 include ../Makefile.common

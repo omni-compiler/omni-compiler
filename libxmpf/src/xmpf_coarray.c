@@ -1,4 +1,4 @@
-#include "xmpf_internal.h"
+#include "xmpf_internal_coarray.h"
 
 #define DIV_CEILING(m,n)  (((m)-1)/(n)+1)
 

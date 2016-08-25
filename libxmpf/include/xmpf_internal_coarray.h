@@ -1,6 +1,12 @@
 /******************************************\
     internal header for COARRAY Fortran
 \******************************************/
+
+#ifndef XMPF_INTERNAL_COARRAY_H
+#define XMPF_INTERNAL_COARRAY_H
+
+#include "xmpf_internal.h"
+
 #define BOOL   int
 #define TRUE   1
 #define FALSE  0
@@ -215,3 +221,4 @@ extern void _XMPF_coarrayInit_get(void);
 extern _Bool xmp_is_async();
 #endif
 
+#endif /* !XMPF_INTERNAL_COARRAY_H */

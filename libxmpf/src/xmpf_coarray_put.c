@@ -4,7 +4,7 @@
  */
 
 #include <assert.h>
-#include "xmpf_internal.h"
+#include "xmpf_internal_coarray.h"
 
 // TEMPORARY
 // declared in ../../libxmp/include/xmp_func_decl.h
