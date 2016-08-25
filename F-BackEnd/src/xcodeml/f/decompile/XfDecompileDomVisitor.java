@@ -1361,7 +1361,11 @@ public class XfDecompileDomVisitor {
             writer.writeToken("::");
             writer.writeToken(symbolName);
 
-            // TODO: print value
+            Node value = XmDomUtil.getElement(n, "value");
+            if (value != null) {
+                writer.writeToken("=");
+                invokeEnter(value);
+            }
 
             writer.setupNewLine();
         }
