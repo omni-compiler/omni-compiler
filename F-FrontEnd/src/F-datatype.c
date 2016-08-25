@@ -443,26 +443,29 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
 int
 is_descendant_coindexed(TYPE_DESC tp){
 
-  ID id;
+    ID id;
 
-  if (!tp) return FALSE;
+    if (!tp) return FALSE;
 
-  if (TYPE_IS_COINDEXED(tp)) return TRUE;
+    if (TYPE_IS_COINDEXED(tp)) return TRUE;
 
-  if (IS_STRUCT_TYPE(tp)){
+    if (IS_STRUCT_TYPE(tp)){
 
-    FOREACH_MEMBER(id, tp){
-      if (is_descendant_coindexed(ID_TYPE(id))) return TRUE;
+        FOREACH_MEMBER(id, tp){
+            if (is_descendant_coindexed(ID_TYPE(id))) return TRUE;
+        }
+
+        if (TYPE_PARENT(tp) && TYPE_PARENT_TYPE(tp)) {
+            if (is_descendant_coindexed(TYPE_PARENT_TYPE(tp))) return TRUE;
+        }
+
+        if (TYPE_REF(tp)) return is_descendant_coindexed(TYPE_REF(tp));
+
     }
-
-    if (TYPE_REF(tp)) return is_descendant_coindexed(TYPE_REF(tp));
-
-  }
-  else if (IS_ARRAY_TYPE(tp)){
-    return is_descendant_coindexed(bottom_type(tp));
-  }
-
-  return FALSE;
+    else if (IS_ARRAY_TYPE(tp)){
+        return is_descendant_coindexed(bottom_type(tp));
+    }
+    return FALSE;
 }
 
 /* check type compatiblity of element types */

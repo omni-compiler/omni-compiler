@@ -5213,6 +5213,23 @@ outx_module(struct module * mod)
     outx_close(l, "OmniFortranModule");
 }
 
+static void
+unmark_ids_in_struct(TYPE_DESC tp) {
+    if (tp == NULL) {
+        return;
+    }
+
+    if (IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
+        ID member;
+        FOREACH_MEMBER(member, tp) {
+            ID_IS_EMITTED(member) = FALSE;
+        }
+        if (TYPE_PARENT(tp)) {
+            unmark_ids_in_struct(TYPE_PARENT_TYPE(tp));
+        }
+    }
+}
+
 /**
  * unmark id in proc
  */
@@ -5228,10 +5245,7 @@ unmark_ids(EXT_ID ep)
 
         tp = ID_TYPE(id);
         if (IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
-            ID member;
-            FOREACH_MEMBER(member, tp) {
-                ID_IS_EMITTED(member) = FALSE;
-            }
+            unmark_ids_in_struct(tp);
         }
         ID_IS_EMITTED(id) = FALSE;
     }

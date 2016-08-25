@@ -3238,6 +3238,10 @@ deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
     }
 
     if(IS_STRUCT_TYPE(cur)) {
+        if(TYPE_PARENT(cur) && TYPE_PARENT_TYPE(cur)) {
+            deep_copy_and_overwrite_for_module_id_type(&(TYPE_PARENT_TYPE(cur)));
+        }
+
         FOREACH_MEMBER(id, cur) {
             deep_copy_and_overwrite_for_module_id_type(&(ID_TYPE(id)));
         }
