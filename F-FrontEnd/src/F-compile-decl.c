@@ -3180,6 +3180,7 @@ compile_struct_decl(expr ident, expr type)
     expv v;
     list lp;
     int has_access_spec = FALSE;
+    int has_extends_spec = FALSE;
 
     if(ident == NULL)
         fatal("compile_struct_decl: F95 derived type name is NULL");
@@ -3204,6 +3205,13 @@ compile_struct_decl(expr ident, expr type)
                     error("unexpected access spec");
                 } else {
                     has_access_spec = TRUE;
+                }
+                break;
+            case F03_EXTENDS_SPEC:
+                if (has_extends_spec) {
+                    error("Dupulicate EXTENDS spec");
+                } else {
+                    has_extends_spec = TRUE;
                 }
                 break;
             default:
