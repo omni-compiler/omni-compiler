@@ -1087,14 +1087,6 @@ declare_ident(SYMBOL s, enum name_class class)
     last_ip = NULL;
     FOREACH_ID(ip, *symbols) {
         if (ID_SYM(ip) == s) {
-            if (class == CL_TYPE_PARAM) {
-                // type parameters are defined in one sentence.
-                // i.e. its class is NEVER CL_UNKNOWN
-                snprintf(msg, 2048, fmt, "type parameter", SYM_NAME(s));
-                error(msg);
-                return NULL;
-            }
-
             /* if argument 'class' is CL_UNKNOWN, find id */
             if (ID_CLASS(ip) == class) {
                 if (class == CL_TAGNAME) {
