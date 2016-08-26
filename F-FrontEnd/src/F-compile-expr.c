@@ -2657,7 +2657,8 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
     FOR_ITEMS_IN_LIST(lp, type_param_args) {
         expr arg = LIST_ITEM(lp);
 
-        if (EXPV_CODE(arg) == F_SET_EXPR) {
+        // TOOD: write comments
+        if (EXPR_CODE(arg) == F_SET_EXPR) {
             sym = EXPR_SYM(EXPR_ARG1(arg));
 
             if (has_keyword == FALSE) {
@@ -2708,6 +2709,7 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
                 }
                 break;
             case F95_TRIPLET_EXPR:
+                // TODO: write sorry comments
                 if (!TYPE_IS_LEN(ID_TYPE(match))) {
                     error("length spec for no-length parameter");
                     return FALSE;
