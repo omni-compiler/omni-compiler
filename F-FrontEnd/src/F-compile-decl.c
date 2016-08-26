@@ -2174,6 +2174,10 @@ compile_IMPLICIT_decl(expr type,expr l)
             error_at_node(type, "struct type '%s' is not declared",
                 SYM_NAME(EXPR_SYM(type)));
         }
+        if (type_param_values_required(tp)) {
+            error_at_node(type, "struct type '%s' requires type parameter values",
+                SYM_NAME(EXPR_SYM(type)));
+        }
     } else if (EXPR_CODE(EXPR_ARG1(type)) == F03_PARAMETERIZED_TYPE) {
         expv type_param_values = list0(LIST);
         tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(EXPR_ARG1(type))));
@@ -3016,7 +3020,13 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                                   SYM_NAME(sym));
                     return;
                 }
+            } else if (EXPR_CODE(typeExpr) == IDENT &&
+                       type_param_values_required(tp0)) {
+                error_at_node(typeExpr, "struct type '%s' requires type parameter values",
+                              SYM_NAME(sym));
+                return;
             }
+
 
             if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
                 /*
@@ -3083,7 +3093,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
             id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
             if (id == NULL) {
-                id = find_ident_head(EXPR_SYM(ident), TYPE_MEMBER_LIST(stp));
+                id = find_ident_head(EXPR_SYM(ident), TYPE_MEMBER_LIST(struct_tp));
             }
 
             if (id == NULL) {

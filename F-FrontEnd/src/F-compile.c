@@ -454,6 +454,9 @@ void compile_statement1(int st_no, expr x)
             TYPE_DESC tp = find_struct_decl(EXPR_SYM(EXPR_ARG3(x)));
             if (tp == NULL) {
                 tp = declare_struct_type_wo_component(EXPR_ARG3(x));
+            } else if (type_param_values_required(tp)) {
+                error("type param values are required");
+                return;
             }
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               tp,

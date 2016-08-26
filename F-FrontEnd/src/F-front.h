@@ -574,6 +574,7 @@ extern expv     compile_highorder_function_call _ANSI_ARGS_((ID f_id,
                                                              expr args,
                                                              int isCall));
 
+extern int      type_param_values_required _ANSI_ARGS_((TYPE_DESC struct_type));
 extern expv     compile_struct_constructor _ANSI_ARGS_((ID struct_id, expr type_param_argss, expr args));
 
 extern expv     statement_function_call _ANSI_ARGS_((ID f_id, expv arglist));

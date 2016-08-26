@@ -2568,6 +2568,36 @@ id_link_remove(ID * head, ID tobeRemoved)
 }
 
 
+
+static int
+type_param_values_required0(TYPE_DESC struct_tp, ID * head, ID * tail)
+{
+    ID id, ip;
+
+    if (TYPE_PARENT(struct_tp) &&
+        type_param_values_required0(TYPE_PARENT_TYPE(struct_tp), head, tail)) {
+        return TRUE;
+    }
+
+    FOREACH_ID(ip, TYPE_TYPE_PARAMS(struct_tp)) {
+        if (!VAR_INIT_VALUE(ip)) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+
+int
+type_param_values_required(TYPE_DESC tp)
+{
+    ID head = NULL, tail = NULL;
+    return type_param_values_required0(tp, &head, &tail);
+}
+
+
+
 static void
 get_type_params0(TYPE_DESC struct_tp, ID * head, ID * tail)
 {
@@ -2863,6 +2893,10 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
         }
         TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
         EXPR_ARG1(result) = type_param_values;
+    } else if (type_param_values_required(tp)) {
+        error("struct type '%s' requires type parameter values",
+              SYM_NAME(ID_SYM(struct_id)));
+        return NULL;
     }
 
     if(args == NULL)
