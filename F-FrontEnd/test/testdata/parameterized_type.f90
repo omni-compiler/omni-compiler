@@ -9,7 +9,7 @@
 
         TYPE(st(k=2,lg=4)) :: a
 
-        TYPE(st):: b
+        TYPE(st(k=2,lg=5)):: b
 
         b = st(k=2,lg=5)(r=1.0, ch="hoge")
 
