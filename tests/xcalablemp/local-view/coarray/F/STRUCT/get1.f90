@@ -5,8 +5,8 @@
        real*8    r(10)
     end type g1
 
-    type(g1), static :: ns1, cs1[*]
-    type(g1), static :: na1(3), ns1(3)[*]
+    type(g1), save :: ns1, cs1[*]
+    type(g1), save :: na1(3), ns1(3)[*]
     real*8 zz, eps
     integer*8 nval
     real*8    dcal
