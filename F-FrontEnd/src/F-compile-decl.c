@@ -3247,6 +3247,16 @@ compile_struct_decl(expr ident, expr type)
             case F03_EXTENDS_SPEC: {
                 TYPE_DESC parent_type;
                 parent_type = find_struct_decl(EXPR_SYM(EXPR_ARG1(x)));
+                if (parent_type == NULL) {
+                    error("derived-type %s does not exist",
+                          SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+                    break;
+                }
+                if (TYPE_IS_SEQUENCE(parent_type)) {
+                    error("derived-type %s is not an extensible type",
+                          SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+                    break;
+                }
                 TYPE_PARENT(tp) = new_ident_desc(EXPR_SYM(EXPR_ARG1(x)));
                 TYPE_PARENT_TYPE(tp) = parent_type;
             }; break;
