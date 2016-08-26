@@ -1199,13 +1199,15 @@ find_ident_from_type_parameter(SYMBOL s, TYPE_DESC tp)
 {
     ID ip;
 
-    if (s == NULL || tp == NULL || TYPE_TYPE_PARAMS(tp) == NULL)
+    if (s == NULL || tp == NULL)
         return NULL;
 
 
-    ip = find_ident_head(s, TYPE_TYPE_PARAMS(tp));
-    if (ip != NULL) {
-        return ip;
+    if (TYPE_TYPE_PARAMS(tp) != NULL) {
+        ip = find_ident_head(s, TYPE_TYPE_PARAMS(tp));
+        if (ip != NULL) {
+            return ip;
+        }
     }
 
     if (TYPE_PARENT(tp) && TYPE_PARENT_TYPE(tp)) {
