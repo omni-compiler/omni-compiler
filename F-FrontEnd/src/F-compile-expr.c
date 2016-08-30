@@ -2572,7 +2572,7 @@ id_link_remove(ID * head, ID tobeRemoved)
 static int
 type_param_values_required0(TYPE_DESC struct_tp, ID * head, ID * tail)
 {
-    ID id, ip;
+    ID ip;
 
     if (TYPE_PARENT(struct_tp) &&
         type_param_values_required0(TYPE_PARENT_TYPE(struct_tp), head, tail)) {
