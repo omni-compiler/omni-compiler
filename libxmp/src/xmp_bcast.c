@@ -14,6 +14,11 @@ void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int 
 
   if(!bcast_nodes->is_member) return;
 
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_begin])
+    (*(xmpt_bcast_begin_callback_t)xmpt_callback[xmpt_event_bcast_begin])(3);
+#endif
+
 #ifdef _XMP_MPI3
   if(xmp_is_async()){
     _XMP_async_comm_t *async = _XMP_get_current_async();
@@ -25,6 +30,12 @@ void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int 
 #endif
     MPI_Bcast(addr, count*datatype_size, MPI_BYTE, _XMP_N_DEFAULT_ROOT_RANK,
 	      *((MPI_Comm *)bcast_nodes->comm));
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_end])
+    (*(xmpt_bcast_end_callback_t)xmpt_callback[xmpt_event_bcast_end])(4);
+#endif
+  
 }
 
 //

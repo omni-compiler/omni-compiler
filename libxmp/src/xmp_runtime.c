@@ -17,6 +17,11 @@ void (*_xmp_pack_array)(void *buffer, void *src, int array_type, size_t array_ty
 void (*_xmp_unpack_array)(void *dst, void *buffer, int array_type, size_t array_type_size,
 			  int array_dim, int *l, int *u, int *s, unsigned long long *d) = _XMPC_unpack_array;
 
+#ifdef _XMPT
+int xmpt_initialize();
+int xmpt_enabled = 0;
+#endif
+
 void _XMP_init(int argc, char** argv)
 {
   if (!_XMP_runtime_working) {
@@ -39,6 +44,11 @@ void _XMP_init(int argc, char** argv)
   _XMP_init_world(NULL, NULL);
   _XMP_runtime_working = _XMP_N_INT_TRUE;
   _XMP_check_reflect_type();
+
+#ifdef _XMPT
+  xmpt_enabled = xmpt_initialize();
+#endif
+
 }
 
 void _XMP_finalize(int return_val)

@@ -33,6 +33,7 @@ IS_SSL2BLAMP     = @SSL2BLAMP@
 IS_INTELMKL      = @INTELMKL@
 IS_TCA           = @TCA@
 IS_XACC          = @XACC@
+IS_XMPT          = @XMPT@
 
 ifeq ($(IS_KCOMPUTER), $(TRUE))
 	CFLAGS += -D_KCOMPUTER
@@ -100,6 +101,12 @@ ifeq ($(IS_XACC), $(TRUE))
 .SUFFIXES : .o .cu
 .cu.o:
 	$(GPUCC) $(GPUCFLAGS) -I../include -c $@ $<
+endif
+
+ifeq ($(IS_XMPT), $(TRUE))
+	HEADERS += ../include/xmpt.h
+	OBJECTS += xmpt_lib.o
+	CFLAGS += -D_XMPT
 endif
 
 all: $(LIBXMP)

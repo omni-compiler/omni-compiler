@@ -47,6 +47,11 @@ extern int _XMPF_running;
 // --------------- structures ----------------------------------------
 #include "xmp_data_struct.h"
 
+// --------------- xmpt I/F ------------------------------------------
+#ifdef _XMPT
+#include "xmpt.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #define restrict __restrict__

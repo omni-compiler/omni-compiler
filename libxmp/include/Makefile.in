@@ -5,6 +5,14 @@ INSTALL     = @INSTALL@
 INSTALL_DIR = @OMNI_HOME@/include/
 HEADERS     = xmp.h xmp_index_macro.h xmp_comm_macro.h xmp_func_decl.h xmp_tlog.h xmp_scalasca.h xmp_gpu_func.hpp xmp_data_struct.h xmp_constant.h xmp_io.h xmp_lock.h
 
+FALSE            = 1
+TRUE             = 0
+IS_XMPT          = @XMPT@
+
+ifeq ($(IS_XMPT), $(TRUE))
+	HEADERS += xmpt.h
+endif
+
 all:
 install: $(HEADERS)
 	$(MKDIR_P) $(DESTDIR)$(INSTALL_DIR)

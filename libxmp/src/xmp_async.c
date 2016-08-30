@@ -86,6 +86,11 @@ void _XMP_wait_async__(int async_id)
 {
   _XMP_async_comm_t *async;
 
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_wait_async])
+    (*(xmpt_wait_async_callback_t)xmpt_callback[xmpt_event_wait_async])(async_id);
+#endif
+  
   if(!(async = _XMP_get_async(async_id))) return;
 
   int nreqs         = async->nreqs;
