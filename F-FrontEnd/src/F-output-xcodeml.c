@@ -787,6 +787,10 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_SEQUENCE(tp),         "is_sequence");
         outx_true(TYPE_IS_INTERNAL_PRIVATE(tp), "is_internal_private");
         outx_true(TYPE_IS_VOLATILE(tp),          "is_volatile");
+
+        if (TYPE_PARENT(tp)) {
+            outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
+        }
     }
 
     if((options & TOPT_INTRINSIC) > 0)
@@ -3601,15 +3605,20 @@ mark_type_desc_in_structure(TYPE_DESC tp)
     ID id;
     TYPE_DESC itp, siTp;
 
+    if (TYPE_PARENT(tp)) {
+        mark_type_desc(TYPE_PARENT_TYPE(tp));
+    }
+
     FOREACH_MEMBER(id, tp) {
         itp = ID_TYPE(id);
         siTp = reduce_type(itp);
         mark_type_desc(siTp);
         ID_TYPE(id) = siTp;
-        if(IS_STRUCT_TYPE(itp))
+        if (IS_STRUCT_TYPE(itp))
             mark_type_desc_in_structure(itp);
         if (VAR_INIT_VALUE(id) != NULL)
             collect_type_desc(VAR_INIT_VALUE(id));
+
     }
 }
 

@@ -11,6 +11,7 @@ typedef struct type_entry {
     int hasExtID;
     EXT_ID ep;
     TYPE_DESC tp;
+    char * parent_type_id;
 } * TYPE_ENTRY;
 
 static int input_FfunctionDecl(xmlTextReaderPtr, HashTable *, EXT_ID, ID);
@@ -159,7 +160,7 @@ getTypeDesc(HashTable * ht, const char * typeId) {
     TYPE_ENTRY tep = NULL;
 
     tep = getTypeEntry(ht, typeId);
-    
+
     return tep->tp;
 }
 
@@ -287,21 +288,17 @@ input_name(xmlTextReaderPtr reader, SYMBOL * s)
  * input type and attribute at node
  */
 static int
-input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** typeId,
+input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
                     TYPE_DESC * tp)
 {
     char * str;
+    char * typeId;
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "type");
-    if (str == NULL)
+    typeId = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    if (typeId == NULL)
         return FALSE;
 
-    *tp = getTypeDesc(ht, str);
-
-    if (typeId != NULL)
-        *typeId = str;    /* return typeId */
-    else
-        free(str);
+    *tp = getTypeDesc(ht, typeId);
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "intent");
     if (str != NULL) {
@@ -376,6 +373,31 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** typeId,
         TYPE_SET_VOLATILE(*tp);
         free(str);
     }
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "extends");
+    if (str != NULL) {
+        TYPE_DESC parent_type = getTypeDesc(ht, str);
+        if (parent_type != NULL) {
+            TYPE_ENTRY tep = NULL;
+            HashEntry * e;
+
+            // TO BE FIXED lately
+            TYPE_PARENT(*tp) = new_ident_desc(NULL);
+            TYPE_PARENT_TYPE(*tp) = parent_type;
+            e = FindHashEntry(ht, typeId);
+            tep = GetHashValue(e);
+            tep->parent_type_id = str;
+        } else {
+            // Error, but skip
+            free(str);
+        }
+    }
+
+    if (retTypeId != NULL)
+        *retTypeId = typeId;    /* return typeId */
+    else
+        free(typeId);
+
 
     return TRUE;
 }
@@ -1968,6 +1990,11 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
             if (EXT_PROC_IS_ENTRY(tep->ep))
                 ID_CLASS(id) = CL_ENTRY;
         }
+
+        // if type of id st the deribed type, set tagname
+        if (IS_STRUCT_TYPE(ID_TYPE(id))) {
+            TYPE_TAGNAME(ID_TYPE(id)) = id;
+        }
     }
 
     set_sclass(id, sclass);
@@ -1993,6 +2020,32 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
 }
 
 /**
+ * Update the parent of types.
+ */
+static void
+update_parent_type(HashTable * ht)
+{
+    HashEntry * e;
+    HashSearch s;
+    TYPE_ENTRY tep;
+    TYPE_DESC tp;
+
+    for (e = FirstHashEntry(ht, &s); e != NULL; e = NextHashEntry(&s)) {
+        tep = GetHashValue(e);
+        tp = tep->tp;
+        if (TYPE_PARENT(tp) && tep->parent_type_id != NULL) {
+            TYPE_ENTRY parent_tep = getTypeEntry(ht, tep->parent_type_id);
+            if (parent_tep && TYPE_TAGNAME(parent_tep->tp) != NULL) {
+                ID_SYM(TYPE_PARENT(tp)) = ID_SYM(TYPE_TAGNAME(parent_tep->tp));
+            }
+            free(tep->parent_type_id);
+            tep->parent_type_id = NULL;
+        }
+    }
+}
+
+
+/**
  * input <identifiers> node
  */
 static int
@@ -2012,6 +2065,8 @@ input_identifiers(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "identifiers"))
         return FALSE;
+
+    update_parent_type(ht);
 
     return TRUE;
 }
