@@ -576,7 +576,7 @@ extern expv     compile_highorder_function_call _ANSI_ARGS_((ID f_id,
 
 extern int      type_param_values_required _ANSI_ARGS_((TYPE_DESC struct_type));
 extern expv     compile_struct_constructor _ANSI_ARGS_((ID struct_id, expr type_param_argss, expr args));
-extern TYPE_DESC type_apply_type_parameter _ANSI_ARGS_((TYPE_DESC tp, ID type_params));
+extern TYPE_DESC type_apply_type_parameter _ANSI_ARGS_((TYPE_DESC tp, ID type_params, expv type_param_values));
 
 extern expv     statement_function_call _ANSI_ARGS_((ID f_id, expv arglist));
 extern TYPE_DESC        compile_dimensions _ANSI_ARGS_((TYPE_DESC tp, expr dims));

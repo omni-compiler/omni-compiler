@@ -479,8 +479,7 @@ void compile_statement1(int st_no, expr x)
                 if (!compile_type_param_values(tp, EXPR_ARG2(typeExpr), type_param_values, &used_type_param)) {
                     return;
                 }
-                tp = type_apply_type_parameter(tp, used_type_param);
-
+                tp = type_apply_type_parameter(tp, used_type_param, type_param_values);
             }
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               tp,

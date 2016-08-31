@@ -2193,8 +2193,7 @@ compile_IMPLICIT_decl(expr type,expr l)
         if (!compile_type_param_values(tp, EXPR_ARG2(EXPR_ARG1(type)), type_param_values, &used)) {
             return;
         }
-        tp = type_apply_type_parameter(tp, used);
-        TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
+        tp = type_apply_type_parameter(tp, used, type_param_values);
     } else {
         ty = EXPR_ARG1 (type);
         if (EXPR_CODE (ty) != F_TYPE_NODE) {
@@ -3050,8 +3049,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 if (!compile_type_param_values(tp0, EXPR_ARG2(typeExpr), type_param_values, &used)) {
                     return;
                 }
-                tp0 = type_apply_type_parameter(tp0, used);
-                TYPE_TYPE_PARAM_VALUES(tp0) = type_param_values;
+                tp0 = type_apply_type_parameter(tp0, used, type_param_values);
             }
 
         } else {
@@ -4236,9 +4234,6 @@ expv_apply_type_parameter(expv v, ID type_params)
     ID ip;
     int expv_is_replaced = FALSE;
 
-
-    //EXPR_CODE_IS_TERMINAL_OR_CONST
-
     if (EXPV_CODE(v) == F_VAR) {
         TYPE_DESC tp = EXPV_TYPE(v);
         if (TYPE_IS_KIND(tp)) {
@@ -4283,7 +4278,7 @@ expv_apply_type_parameter(expv v, ID type_params)
 
 
 static TYPE_DESC
-type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
+type_apply_type_parameter0(TYPE_DESC tp, ID type_params, expv type_param_values)
 {
     int type_is_replaced = FALSE;
     expv v;
@@ -4291,7 +4286,7 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
     ID ip, ip2;
 
     if (TYPE_REF(tp)) {
-        tq = type_apply_type_parameter0(TYPE_REF(tp), type_params);
+        tq = type_apply_type_parameter0(TYPE_REF(tp), type_params, type_param_values);
         if (TYPE_REF(tp) != tq) {
             tp = copy_type_shallow(tp); type_is_replaced = TRUE;
         }
@@ -4319,7 +4314,7 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
         ID new_member = NULL, last = NULL;
         tp = wrap_type(tp);
         FOREACH_ID(ip, TYPE_MEMBER_LIST(tp)) {
-            tq = type_apply_type_parameter0(tp, type_params);
+            tq = type_apply_type_parameter0(tp, type_params, type_param_values);
             if (tq != ID_TYPE(ip)) {
                 ID new_id;
                 if (!type_is_replaced) {
@@ -4343,7 +4338,9 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
 
         if (type_is_replaced && new_member != NULL) {
             TYPE_MEMBER_LIST(tp) = new_member;
-            TYPE_TYPE_PARAMS(tp) = type_params;
+            if (TYPE_TYPE_PARAMS(tp)) {
+                TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
+            }
         }
     }
 
@@ -4352,10 +4349,10 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
 
 
 /**
- * Apply type parameter values to wrapped STRUCT_TYPE
+ * Applies type parameter values to the parameterised derived-type and generate a new type
  */
 TYPE_DESC
-type_apply_type_parameter(const TYPE_DESC tp, ID type_params)
+type_apply_type_parameter(TYPE_DESC tp, ID type_params, expv type_param_values)
 {
     ID ip;
     ID last = NULL;
@@ -4367,13 +4364,14 @@ type_apply_type_parameter(const TYPE_DESC tp, ID type_params)
 
     tq = copy_type_shallow(tp);
     FOREACH_ID(ip, TYPE_MEMBER_LIST(tq)) {
-        TYPE_DESC member_tp = type_apply_type_parameter0(ID_TYPE(ip), type_params);
+        TYPE_DESC member_tp = type_apply_type_parameter0(ID_TYPE(ip), type_params, type_param_values);
         ID new_id = new_ident_desc(ID_SYM(ip));
         *new_id = *ip;
         ID_TYPE(new_id) = member_tp;
         ID_LINK_ADD(new_id, TYPE_MEMBER_LIST(tq), last);
     }
     TYPE_REF(tq) = tp;
+    TYPE_TYPE_PARAM_VALUES(tq) = type_param_values;
 
     return tq;
 }
