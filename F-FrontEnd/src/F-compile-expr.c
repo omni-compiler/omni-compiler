@@ -2640,40 +2640,52 @@ compile_type_param_values_dummy(TYPE_DESC struct_tp, expr type_param_args, expv 
 }
 
 
+/**
+ * Compile type parameter values for the parameterized derived-type
+ *
+ * Check `type_param_args` as the type parameter values for the parameter derived-type,
+ * and compile them into `type_param_values`.
+ * `used` will store type parameter identifiers and its values even if they don't exist in `type_param_values`
+ * (and will be passed to type_apply_type_parameter())
+ */
 int
 compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_param_values, ID * used)
 {
     int has_keyword = FALSE;
     list lp;
-    ID ip, cur, type_params, used_last = NULL;
-    ID match = NULL;
+    ID ip;
+    ID used_last = NULL;
+    ID match = NULL; // ID specified by a type parameter argument
+    ID cur;
+    ID rest_type_params;
     SYMBOL sym;
     enum expr_code e_code;
     expv v;
     *used = NULL;
 
-    type_params = get_type_params(struct_tp);
-    cur = type_params;
+    /* collect type parameters recursively */
+    rest_type_params = get_type_params(struct_tp);
+    cur = rest_type_params;
 
     FOR_ITEMS_IN_LIST(lp, type_param_args) {
         expr arg = LIST_ITEM(lp);
 
-        // TOOD: write comments
         if (EXPR_CODE(arg) == F_SET_EXPR) {
+            /* A type parameter value has a KEYWORD */
             sym = EXPR_SYM(EXPR_ARG1(arg));
 
             if (has_keyword == FALSE) {
-                type_params = cur;
+                rest_type_params = cur;
                 has_keyword = TRUE;
             }
 
-            // check keyword is duplicate
+            /* check keyword is not duplicate */
             if (find_ident_head(sym, *used) != NULL) {
                 error("type parameter '%s' is already specified", SYM_NAME(sym));
                 return FALSE;
             }
 
-            if ((match = find_ident_head(sym, type_params)) == NULL) {
+            if ((match = find_ident_head(sym, rest_type_params)) == NULL) {
                 error("'%s' is not type value keyword", SYM_NAME(sym));
                 return FALSE;
             }
@@ -2683,12 +2695,13 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
             sym = NULL;
 
             if (has_keyword == TRUE) {
-                // KEYWORD connot be ommit after KEYWORD-ed arg
+                /* KEYWORD connot be omitted after an argument which has a KEYWORD */
                 error("KEYWORD connot be ommited after the type parameter value with a keyword");
                 return FALSE;
             }
 
             if (cur == NULL) {
+                /* There no more type parameters */
                 error("unexpected type value");
                 return FALSE;
             }
@@ -2710,7 +2723,8 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
                 }
                 break;
             case F95_TRIPLET_EXPR:
-                // TODO: write sorry comments
+                // NOTE: sorry but the current parser cannot differs the length
+                // spec and triplet with no values
                 if (!TYPE_IS_LEN(ID_TYPE(match))) {
                     error("length spec for no-length parameter");
                     return FALSE;
@@ -2728,38 +2742,38 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
                 }
                 break;
             default:
-                v = compile_expression(arg);
-                if (!type_is_compatible_for_assignment(ID_TYPE(match),
-                                                       EXPV_TYPE(v))) {
-                    error("type is not applicable in derived-type specifier");
+                /* A type parameter valeus should be a constatnt integer */
+                if (!expr_is_constant_typeof(arg, TYPE_INT)) {
+                    error("type parameter value should be "
+                          "a constant integer expression");
                     return FALSE;
                 }
+                v = compile_expression(arg);
                 break;
         }
 
         if (!has_keyword) {
             cur = ID_NEXT(cur);
         }
-        id_link_remove(&type_params, match);
+
+        id_link_remove(&rest_type_params, match);
         VAR_INIT_VALUE(match) = v;
         ID_LINK_ADD(match, *used, used_last);
         list_put_last(type_param_values, v);
     }
-    // check not initialized type parameters
-    FOREACH_ID(ip, type_params) {
+    /* Check if not-initialized type parameters don't exist */
+    FOREACH_ID(ip, rest_type_params) {
         if (!VAR_INIT_VALUE(ip)) {
             error("type parameter %s is not initialized", ID_NAME(ip));
             return FALSE;
-        } else {
-
         }
     }
     if (used_last != NULL) {
         // The rest type parameters are used with its initial values
-        ID_NEXT(used_last) = type_params;
+        ID_NEXT(used_last) = rest_type_params;
     } else {
         // All type parameters are used with its initial values
-        *used = type_params;
+        *used = rest_type_params;
     }
     return TRUE;
 }
@@ -2917,10 +2931,8 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
                                        &used)) {
             return NULL;
         }
-        TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
         EXPR_ARG1(result) = type_param_values;
-
-        // TODO: apply_type_parameter(tp, used);
+        tp = type_apply_type_parameter(tp, used, type_param_values);
     } else if (type_param_values_required(tp)) {
         error("struct type '%s' requires type parameter values",
               SYM_NAME(ID_SYM(struct_id)));

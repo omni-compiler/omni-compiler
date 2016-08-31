@@ -1944,6 +1944,33 @@ end_declaration()
     }
 
     /*
+     * Check type parameter values like '*' or ':'
+     */
+    FOREACH_ID (ip, LOCAL_SYMBOLS) {
+        if (ID_TYPE(ip) && IS_STRUCT_TYPE(ID_TYPE(ip))) {
+            TYPE_DESC struct_tp = ID_TYPE(ip);
+            if (!TYPE_TYPE_PARAM_VALUES(struct_tp))
+                continue;
+
+            FOR_ITEMS_IN_LIST(lp, TYPE_TYPE_PARAM_VALUES(struct_tp)) {
+                if (EXPV_CODE(LIST_ITEM(lp)) == F08_LEN_SPEC_COLON) {
+                    if (!TYPE_IS_POINTER(struct_tp) && !TYPE_IS_ALLOCATABLE(struct_tp)) {
+                        error_at_id(ip,
+                                    "type parameter value ':' shall be used "
+                                    "with a POINTER or ALLOCATABLE object");
+                    }
+                } else if (EXPV_CODE(LIST_ITEM(lp)) == LEN_SPEC_ASTERISC) {
+                    if (!ID_IS_DUMMY_ARG(ip)) {
+                        error_at_id(ip,
+                                    "type parameter value '*' shall be used "
+                                    "with a dummy argument");
+                    }
+                }
+            }
+        }
+    }
+
+    /*
      * Generate PROC_EXT_ID and function_type() for externals.
      */
     FOREACH_ID (ip, LOCAL_SYMBOLS) {

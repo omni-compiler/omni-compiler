@@ -2190,7 +2190,8 @@ compile_IMPLICIT_decl(expr type,expr l)
             error_at_node(type, "struct type '%s' is not declared",
                 SYM_NAME(EXPR_SYM(type)));
         }
-        if (!compile_type_param_values(tp, EXPR_ARG2(EXPR_ARG1(type)), type_param_values, &used)) {
+        if (!compile_type_param_values(tp, EXPR_ARG2(EXPR_ARG1(type)),
+                                       type_param_values, &used)) {
             return;
         }
         tp = type_apply_type_parameter(tp, used, type_param_values);
@@ -4350,6 +4351,8 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params, expv type_param_values)
 
 /**
  * Applies type parameter values to the parameterised derived-type and generate a new type
+ *
+ * A new type is also STRUCT_TYPE and its members have a type that is applied type parameters.
  */
 TYPE_DESC
 type_apply_type_parameter(TYPE_DESC tp, ID type_params, expv type_param_values)
