@@ -3239,16 +3239,16 @@ outx_lenspec(int l, expv v)
     outx_printi(l, "<len ");
     switch (EXPR_CODE(v)) {
         case LEN_SPEC_ASTERISC:
-            outx_print(" is_assumed_size=\"true\">");
+            outx_print(" is_assumed_size=\"true\">\n");
             break;
         case F08_LEN_SPEC_COLON:
-            outx_print(" is_assumed_shape=\"true\">");
+            outx_print(" is_assumed_shape=\"true\">\n");
             break;
         default:
             // never reach
             break;
     }
-            outx_close(l, "len");
+    outx_close(l, "len");
 }
 
 //static void
