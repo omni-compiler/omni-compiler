@@ -137,7 +137,12 @@ void _XMP_coarray_shortcut_get_acc(const int target_image, _XMP_coarray_t *dst_d
   }
 
   if(target_rank == _XMP_world_rank){
+#ifdef _XMP_MPI3_ONESIDED
+    _XMP_mpi_shortcut_get(target_rank, dst_desc, src_desc, dst_offset, src_offset,
+			  dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
+#else
     _XMP_fatal("local_continuous_copy is unimplemented");
+#endif
     /* _XMP_local_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src_desc->real_addr+src_offset, */
     /* 			       dst_elmts, src_elmts, elmt_size); */
   }
