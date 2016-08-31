@@ -137,8 +137,8 @@ getBaseStructType(TYPE_DESC td)
 {
     if (td == NULL)
         return NULL;
-    while ((TYPE_REF(td) && IS_STRUCT_TYPE(TYPE_REF(td))) ||
-           (TYPE_TYPE_PARAM_VALUES(td) != NULL)) {
+    while ((TYPE_REF(td) && IS_STRUCT_TYPE(TYPE_REF(td))) &&
+           (TYPE_TYPE_PARAM_VALUES(td) == NULL)) {
         td = TYPE_REF(td);
     }
     return td;

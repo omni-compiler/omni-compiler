@@ -477,6 +477,16 @@ declare_dummy_args(expr l, enum name_class class)
     }
 }
 
+
+TYPE_DESC
+copy_type_shallow(TYPE_DESC tp)
+{
+    TYPE_DESC ret = new_type_desc();
+    *ret = *tp;
+    return ret;
+}
+
+
 static void
 copy_parent_type(ID id)
 {
@@ -2184,7 +2194,6 @@ compile_IMPLICIT_decl(expr type,expr l)
             return;
         }
         tp = type_apply_type_parameter(tp, used);
-        tp = wrap_type(tp);
         TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
     } else {
         ty = EXPR_ARG1 (type);
@@ -3042,7 +3051,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                     return;
                 }
                 tp0 = type_apply_type_parameter(tp0, used);
-                tp0 = wrap_type(tp0);
                 TYPE_TYPE_PARAM_VALUES(tp0) = type_param_values;
             }
 
@@ -4274,15 +4282,6 @@ expv_apply_type_parameter(expv v, ID type_params)
 }
 
 
-TYPE_DESC
-type_copy(TYPE_DESC tp)
-{
-    TYPE_DESC ret = new_type_desc();
-    *ret = *tp;
-    return ret;
-}
-
-
 static TYPE_DESC
 type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
 {
@@ -4294,7 +4293,7 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
     if (TYPE_REF(tp)) {
         tq = type_apply_type_parameter0(TYPE_REF(tp), type_params);
         if (TYPE_REF(tp) != tq) {
-            tp = type_copy(tp); type_is_replaced = TRUE;
+            tp = copy_type_shallow(tp); type_is_replaced = TRUE;
         }
         TYPE_REF(tp) = tq;
     }
@@ -4303,7 +4302,7 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
     if (TYPE_KIND(tp)) {
         v = expv_apply_type_parameter(TYPE_KIND(tp), type_params);
         if (!type_is_replaced && v != TYPE_KIND(tp)) {
-            tp = type_copy(tp); type_is_replaced = TRUE;
+            tp = copy_type_shallow(tp); type_is_replaced = TRUE;
         }
         TYPE_KIND(tp) = v;
     }
@@ -4311,7 +4310,7 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
     if (TYPE_LENG(tp)) {
         v = expv_apply_type_parameter(TYPE_LENG(tp), type_params);
         if (!type_is_replaced && v != TYPE_LENG(tp)) {
-            tp = type_copy(tp); type_is_replaced = TRUE;
+            tp = copy_type_shallow(tp); type_is_replaced = TRUE;
         }
         TYPE_LENG(tp) = v;
     }
@@ -4356,7 +4355,7 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
  * Apply type parameter values to wrapped STRUCT_TYPE
  */
 TYPE_DESC
-type_apply_type_parameter(TYPE_DESC tp, ID type_params)
+type_apply_type_parameter(const TYPE_DESC tp, ID type_params)
 {
     ID ip;
     ID last = NULL;
@@ -4366,7 +4365,7 @@ type_apply_type_parameter(TYPE_DESC tp, ID type_params)
         return tp;
     }
 
-    tq = type_copy(tp);
+    tq = copy_type_shallow(tp);
     FOREACH_ID(ip, TYPE_MEMBER_LIST(tq)) {
         TYPE_DESC member_tp = type_apply_type_parameter0(ID_TYPE(ip), type_params);
         ID new_id = new_ident_desc(ID_SYM(ip));
@@ -4374,6 +4373,7 @@ type_apply_type_parameter(TYPE_DESC tp, ID type_params)
         ID_TYPE(new_id) = member_tp;
         ID_LINK_ADD(new_id, TYPE_MEMBER_LIST(tq), last);
     }
+    TYPE_REF(tq) = tp;
 
     return tq;
 }
