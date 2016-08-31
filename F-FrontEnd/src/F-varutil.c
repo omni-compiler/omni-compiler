@@ -138,6 +138,35 @@ expr_has_param(x)
 }
 
 int
+expr_is_type_param(x)
+     expr x;
+{
+    return expr_is_type_param_typeof(x, TYPE_UNKNOWN);
+}
+
+
+int
+expr_has_type_param(x)
+     expr x;
+{
+    if(x == NULL)
+        return FALSE;
+
+    if(expr_is_type_param(x))
+        return TRUE;
+
+    if(EXPR_CODE_IS_TERMINAL_OR_CONST(EXPR_CODE(x)) == FALSE) {
+        list lp;
+        FOR_ITEMS_IN_LIST(lp, x) {
+            if(lp && expr_has_type_param(LIST_ITEM(lp)))
+                return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+int
 expr_is_constant(x)
      expr x;
 {

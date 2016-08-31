@@ -548,7 +548,7 @@ extern void     compile_type_decl _ANSI_ARGS_((expr typExpre, TYPE_DESC baseTp,
 extern void     compile_struct_decl _ANSI_ARGS_((expr ident, expr type, expr type_params));
 extern void     compile_struct_decl_end _ANSI_ARGS_((void));
 extern int      compile_type_param_values_dummy _ANSI_ARGS_((TYPE_DESC struct_type, expr type_param_args, expv type_param_values));
-extern int      compile_type_param_values _ANSI_ARGS_((TYPE_DESC struct_type, expr type_param_args, expv type_param_values));
+extern int      compile_type_param_values _ANSI_ARGS_((TYPE_DESC struct_type, expr type_param_args, expv type_param_values, ID * used));
 extern void     compile_SEQUENCE_statement _ANSI_ARGS_((void));
 extern void     compile_COMMON_decl _ANSI_ARGS_((expr com_list));
 extern void     compile_IMPLICIT_decl _ANSI_ARGS_((expr v1,expr v2));
@@ -576,6 +576,7 @@ extern expv     compile_highorder_function_call _ANSI_ARGS_((ID f_id,
 
 extern int      type_param_values_required _ANSI_ARGS_((TYPE_DESC struct_type));
 extern expv     compile_struct_constructor _ANSI_ARGS_((ID struct_id, expr type_param_argss, expr args));
+extern TYPE_DESC type_apply_type_parameter _ANSI_ARGS_((TYPE_DESC tp, ID type_params));
 
 extern expv     statement_function_call _ANSI_ARGS_((ID f_id, expv arglist));
 extern TYPE_DESC        compile_dimensions _ANSI_ARGS_((TYPE_DESC tp, expr dims));
@@ -787,6 +788,8 @@ extern TYPE_DESC declare_struct_type_wo_component(expr ident);
 
 extern int      expr_is_param _ANSI_ARGS_((expr x));
 extern int      expr_has_param _ANSI_ARGS_((expr x));
+extern int      expr_is_type_param _ANSI_ARGS_((expr x));
+extern int      expr_has_type_param _ANSI_ARGS_((expr x));
 extern int      expr_is_constant _ANSI_ARGS_((expr v));
 extern int      expr_is_constant_typeof _ANSI_ARGS_((expr x, BASIC_DATA_TYPE bt));
 extern expv     expr_constant_value _ANSI_ARGS_((expr x));

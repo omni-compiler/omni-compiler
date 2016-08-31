@@ -2641,15 +2641,16 @@ compile_type_param_values_dummy(TYPE_DESC struct_tp, expr type_param_args, expv 
 
 
 int
-compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_param_values)
+compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_param_values, ID * used)
 {
     int has_keyword = FALSE;
     list lp;
-    ID ip, cur, type_params, used = NULL, used_last = NULL;
+    ID ip, cur, type_params, used_last = NULL;
     ID match = NULL;
     SYMBOL sym;
     enum expr_code e_code;
     expv v;
+    *used = NULL;
 
     type_params = get_type_params(struct_tp);
     cur = type_params;
@@ -2667,7 +2668,7 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
             }
 
             // check keyword is duplicate
-            if (find_ident_head(sym, used) != NULL) {
+            if (find_ident_head(sym, *used) != NULL) {
                 error("type parameter '%s' is already specified", SYM_NAME(sym));
                 return FALSE;
             }
@@ -2740,8 +2741,8 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
             cur = ID_NEXT(cur);
         }
         id_link_remove(&type_params, match);
-
-        ID_LINK_ADD(match, used, used_last);
+        VAR_INIT_VALUE(match) = v;
+        ID_LINK_ADD(match, *used, used_last);
         list_put_last(type_param_values, v);
     }
     // check not initialized type parameters
@@ -2749,7 +2750,16 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
         if (!VAR_INIT_VALUE(ip)) {
             error("type parameter %s is not initialized", ID_NAME(ip));
             return FALSE;
+        } else {
+
         }
+    }
+    if (used_last != NULL) {
+        // The rest type parameters are used with its initial values
+        ID_NEXT(used_last) = type_params;
+    } else {
+        // All type parameters are used with its initial values
+        *used = type_params;
     }
     return TRUE;
 }
@@ -2873,11 +2883,13 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
 
 }
 
+
 expv
 compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 {
     expv result, component;
     TYPE_DESC tp, base_stp;
+    ID used = NULL;
 
     assert(ID_TYPE(struct_id) != NULL);
 
@@ -2888,25 +2900,30 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
     assert(EXPV_TYPE(result) != NULL);
     tp = wrap_type(base_stp);
 
+    if(args) {
+        EXPV_LINE(result) = EXPR_LINE(args);
+
+        if (!compile_struct_constructor_components(struct_id,
+                                                   args, component)) {
+            return NULL;
+        }
+    }
+
     if (type_param_args) {
         expv type_param_values = list0(LIST);
-        if (!compile_type_param_values(ID_TYPE(struct_id), type_param_args, type_param_values)) {
+        if (!compile_type_param_values(ID_TYPE(struct_id),
+                                       type_param_args,
+                                       type_param_values,
+                                       &used)) {
             return NULL;
         }
         TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
         EXPR_ARG1(result) = type_param_values;
+
+        // TODO: apply_type_parameter(tp, used);
     } else if (type_param_values_required(tp)) {
         error("struct type '%s' requires type parameter values",
               SYM_NAME(ID_SYM(struct_id)));
-        return NULL;
-    }
-
-    if(args == NULL)
-        return result;
-
-    EXPV_LINE(result) = EXPR_LINE(args);
-
-    if (!compile_struct_constructor_components(struct_id, args, component)) {
         return NULL;
     }
 

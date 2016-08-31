@@ -467,6 +467,7 @@ void compile_statement1(int st_no, expr x)
             TYPE_DESC tp;
             expv type_param_values = list0(LIST);
             expr typeExpr = EXPR_ARG3(x);
+            ID used_type_param = NULL;
             tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(typeExpr)));
             if (tp == NULL) {
                 tp = declare_struct_type_wo_component(EXPR_ARG1(typeExpr));
@@ -475,9 +476,11 @@ void compile_statement1(int st_no, expr x)
                     return;
                 }
             } else {
-                if (!compile_type_param_values(tp, EXPR_ARG2(typeExpr), type_param_values)) {
+                if (!compile_type_param_values(tp, EXPR_ARG2(typeExpr), type_param_values, &used_type_param)) {
                     return;
                 }
+                tp = type_apply_type_parameter(tp, used_type_param);
+
             }
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               tp,

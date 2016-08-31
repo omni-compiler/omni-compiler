@@ -2173,15 +2173,17 @@ compile_IMPLICIT_decl(expr type,expr l)
                 SYM_NAME(EXPR_SYM(type)));
         }
     } else if (EXPR_CODE(EXPR_ARG1(type)) == F03_PARAMETERIZED_TYPE) {
+        ID used = NULL;
         expv type_param_values = list0(LIST);
         tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(EXPR_ARG1(type))));
         if (tp == NULL) {
             error_at_node(type, "struct type '%s' is not declared",
                 SYM_NAME(EXPR_SYM(type)));
         }
-        if (!compile_type_param_values(tp, EXPR_ARG2(EXPR_ARG1(type)), type_param_values)) {
+        if (!compile_type_param_values(tp, EXPR_ARG2(EXPR_ARG1(type)), type_param_values, &used)) {
             return;
         }
+        tp = type_apply_type_parameter(tp, used);
         tp = wrap_type(tp);
         TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
     } else {
@@ -3034,10 +3036,12 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             }
 
             if (EXPR_CODE(typeExpr) == F03_PARAMETERIZED_TYPE) {
+                ID used = NULL;
                 expv type_param_values = list0(LIST);
-                if (!compile_type_param_values(tp0, EXPR_ARG2(typeExpr), type_param_values)) {
+                if (!compile_type_param_values(tp0, EXPR_ARG2(typeExpr), type_param_values, &used)) {
                     return;
                 }
+                tp0 = type_apply_type_parameter(tp0, used);
                 tp0 = wrap_type(tp0);
                 TYPE_TYPE_PARAM_VALUES(tp0) = type_param_values;
             }
@@ -4214,4 +4218,162 @@ compile_VOLATILE_statement(expr id_list)
         }
         TYPE_SET_VOLATILE(id);
     }
+}
+
+
+
+static expv
+expv_apply_type_parameter(expv v, ID type_params)
+{
+    ID ip;
+    int expv_is_replaced = FALSE;
+
+
+    //EXPR_CODE_IS_TERMINAL_OR_CONST
+
+    if (EXPV_CODE(v) == F_VAR) {
+        TYPE_DESC tp = EXPV_TYPE(v);
+        if (TYPE_IS_KIND(tp)) {
+            ip = find_ident_head(EXPR_SYM(v), type_params);
+            if (ip)
+                return VAR_INIT_VALUE(ip);
+        } else if (TYPE_IS_LEN(tp)) {
+            ip = find_ident_head(EXPR_SYM(v), type_params);
+            if (ip)
+                return VAR_INIT_VALUE(ip);
+        } else {
+            return v;
+        }
+    } else if (!EXPR_CODE_IS_TERMINAL_OR_CONST(EXPR_CODE(v))) {
+        list lp1, lp2;
+        expv new_v = v;
+        FOR_ITEMS_IN_LIST(lp1, v) {
+            expv original, applied;
+            original = LIST_ITEM(lp1);
+            applied = expv_apply_type_parameter(original, type_params);
+            if (original != applied) {
+                if (!expv_is_replaced) {
+                    new_v = list0(EXPV_CODE(v));
+                    *new_v = *v;
+                    EXPR_LIST(new_v) = NULL;
+                    FOR_ITEMS_IN_LIST(lp2, v) {
+                        if (lp1 == lp2) break;
+                        list_put_last(new_v, LIST_ITEM(lp2));
+                    }
+                    expv_is_replaced = TRUE;
+                }
+            }
+            if (expv_is_replaced) {
+                list_put_last(new_v, applied);
+            }
+        }
+        new_v = expv_reduce(new_v, TRUE) ?: new_v;
+        return new_v;
+    }
+    return v;
+}
+
+
+TYPE_DESC
+type_copy(TYPE_DESC tp)
+{
+    TYPE_DESC ret = new_type_desc();
+    *ret = *tp;
+    return ret;
+}
+
+
+static TYPE_DESC
+type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
+{
+    int type_is_replaced = FALSE;
+    expv v;
+    TYPE_DESC tq;
+    ID ip, ip2;
+
+    if (TYPE_REF(tp)) {
+        tq = type_apply_type_parameter0(TYPE_REF(tp), type_params);
+        if (TYPE_REF(tp) != tq) {
+            tp = type_copy(tp); type_is_replaced = TRUE;
+        }
+        TYPE_REF(tp) = tq;
+    }
+
+
+    if (TYPE_KIND(tp)) {
+        v = expv_apply_type_parameter(TYPE_KIND(tp), type_params);
+        if (!type_is_replaced && v != TYPE_KIND(tp)) {
+            tp = type_copy(tp); type_is_replaced = TRUE;
+        }
+        TYPE_KIND(tp) = v;
+    }
+
+    if (TYPE_LENG(tp)) {
+        v = expv_apply_type_parameter(TYPE_LENG(tp), type_params);
+        if (!type_is_replaced && v != TYPE_LENG(tp)) {
+            tp = type_copy(tp); type_is_replaced = TRUE;
+        }
+        TYPE_LENG(tp) = v;
+    }
+
+    if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
+        ID new_member = NULL, last = NULL;
+        tp = wrap_type(tp);
+        FOREACH_ID(ip, TYPE_MEMBER_LIST(tp)) {
+            tq = type_apply_type_parameter0(tp, type_params);
+            if (tq != ID_TYPE(ip)) {
+                ID new_id;
+                if (!type_is_replaced) {
+                    type_is_replaced = TRUE;
+                    FOREACH_ID(ip2, TYPE_MEMBER_LIST(tp)) {
+                        ID new_id = new_ident_desc(ID_SYM(ip2));
+                        *new_id = *ip2;
+                        ID_LINK_ADD(new_id, new_member, last);
+                        if (ID_SYM(ip) == ID_SYM(ip2)) {
+                            break;
+                        }
+                    }
+                }
+                new_id = new_ident_desc(ID_SYM(ip));
+                *new_id = *ip;
+                ID_TYPE(new_id) = tq;
+                ID_LINK_ADD(new_id, new_member, last);
+            }
+
+        }
+
+        if (type_is_replaced && new_member != NULL) {
+            TYPE_MEMBER_LIST(tp) = new_member;
+            TYPE_TYPE_PARAMS(tp) = type_params;
+        }
+    }
+
+    return tp;
+}
+
+
+/**
+ * Apply type parameter values to wrapped STRUCT_TYPE
+ */
+TYPE_DESC
+type_apply_type_parameter(TYPE_DESC tp, ID type_params)
+{
+    ID ip;
+    ID last = NULL;
+    TYPE_DESC tq;
+
+    if (!IS_STRUCT_TYPE(tp)) {
+        return tp;
+    }
+
+    tq = type_copy(tp);
+    FOREACH_ID(ip, TYPE_MEMBER_LIST(tq)) {
+        TYPE_DESC member_tp = type_apply_type_parameter0(ID_TYPE(ip), type_params);
+        ID new_id = new_ident_desc(ID_SYM(ip));
+        *new_id = *ip;
+        ID_TYPE(new_id) = member_tp;
+        ID_LINK_ADD(new_id, TYPE_MEMBER_LIST(tq), last);
+    }
+
+    return tq;
 }
