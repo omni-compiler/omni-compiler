@@ -1914,6 +1914,96 @@ declare_id_type(ID id, TYPE_DESC tp)
     error("incompatible type declarations, %s", ID_NAME(id));
 }
 
+/**
+ * create derived-type TYPE_DESC from type expression x.
+ */
+TYPE_DESC
+compile_derived_type(expr x, int allow_predecl)
+{
+    SYMBOL sym = NULL;
+    ID id;
+    TYPE_DESC tp = NULL;
+
+    int is_class = FALSE;
+    int is_parameterized_type = FALSE;
+
+    if (EXPR_CODE(x) == F03_CLASS) {
+        x = EXPR_ARG1(x);
+
+        if (x == NULL) {
+            /*
+             * for `CLASS(*)`
+             */
+            tp = new_type_desc();
+            TYPE_REF(tp) = NULL;
+            TYPE_SET_CLASS(tp);
+            return tp;
+        }
+
+        is_class = TRUE;
+    }
+
+    if (EXPR_CODE(x) == IDENT) {
+        sym = EXPR_SYM(x);
+    } else if (EXPR_CODE(x) == F03_PARAMETERIZED_TYPE) {
+        is_parameterized_type = TRUE;
+        sym = EXPR_SYM(EXPR_ARG1(x));
+    } else {
+        error_at_node(x, "type %s is not a derivede-type.",
+                      SYM_NAME(EXPR_SYM(x)));
+    }
+
+    id = find_ident_local(sym);
+
+    if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
+        /*
+         * member of SEQUENCE struct must be SEQUENCE.
+         */
+        if (TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
+            TYPE_IS_SEQUENCE(ID_TYPE(id)) == FALSE) {
+            error_at_node(x, "type %s does not have SEQUENCE attribute.",
+                          SYM_NAME(sym));
+            return NULL;
+        }
+    }
+
+
+    if(id != NULL && ID_IS_AMBIGUOUS(id)) {
+        error_at_node(x, "an ambiguous reference to symbol '%s'", ID_NAME(id));
+        return NULL;
+    }
+
+    tp = find_struct_decl(sym);
+    if (tp == NULL) {
+        if(allow_predecl && !is_parameterized_type) {
+            tp = declare_struct_type_wo_component(x);
+            if (tp == NULL) {
+                return NULL;
+            }
+        } else {
+            error_at_node(x, "type %s not found",
+                          SYM_NAME(sym));
+            return NULL;
+        }
+    } else if (EXPR_CODE(x) == IDENT &&
+               type_param_values_required(tp)) {
+        error_at_node(x, "struct type '%s' requires type parameter values",
+                      SYM_NAME(sym));
+        return NULL;
+    }
+
+    if (is_parameterized_type) {
+        tp = type_apply_type_parameter(tp, EXPR_ARG2(x));
+    }
+
+    if (is_class) {
+        TYPE_SET_CLASS(tp);
+    }
+
+    return tp;
+}
+
+
 /* create TYPE_DESC from type expression x. */
 /* x := (LIST basic_type leng_spec)
  * leng_spec = NULL | expr | (LIST)
@@ -2173,44 +2263,10 @@ compile_IMPLICIT_decl(expr type,expr l)
         return;
     }
     if (EXPR_CODE (type) == IDENT ||
-        ((EXPR_CODE (type) == F03_CLASS) && (EXPR_CODE(EXPR_ARG1(type)) == IDENT))) {
-        SYMBOL sym;
-        if (EXPR_CODE (type) == F03_CLASS) {
-            sym = EXPR_SYM(EXPR_ARG1(type));
-        } else {
-            sym = EXPR_SYM(type);
-        }
-        tp = find_struct_decl(sym);
-        if (tp == NULL) {
-            error_at_node(type, "struct type '%s' is not declared",
-                SYM_NAME(sym));
-        }
-        if (type_param_values_required(tp)) {
-            error_at_node(type, "struct type '%s' requires type parameter values",
-                SYM_NAME(sym));
-        }
-        if (EXPR_CODE (type) == F03_CLASS) {
-            tp = wrap_type(tp);
-            TYPE_SET_CLASS(tp);
-        }
-    } else if (EXPR_CODE(EXPR_ARG1(type)) == F03_PARAMETERIZED_TYPE ||
-        ((EXPR_CODE (type) == F03_CLASS) &&
-         (EXPR_CODE(EXPR_ARG1(type)) == F03_PARAMETERIZED_TYPE))) {
-        SYMBOL sym;
-        expr type_param_args = NULL;
-        if (EXPR_CODE (type) == F03_CLASS) {
-            sym = EXPR_SYM(EXPR_ARG1(EXPR_ARG1(EXPR_ARG1(type))));
-            type_param_args = EXPR_ARG2(EXPR_ARG1(EXPR_ARG1(type)));
-        } else {
-            sym = EXPR_SYM(EXPR_ARG1(EXPR_ARG1(type)));
-            type_param_args = EXPR_ARG2(EXPR_ARG1(type));
-        }
-        tp = find_struct_decl(sym);
-        tp = type_apply_type_parameter(tp, type_param_args);
-        if (EXPR_CODE (type) == F03_CLASS) {
-            tp = wrap_type(tp);
-            TYPE_SET_CLASS(tp);
-        }
+        EXPR_CODE (type) == F03_PARAMETERIZED_TYPE ||
+        EXPR_CODE (type) == F03_CLASS) {
+        tp = compile_derived_type(type, FALSE);
+
     } else {
         ty = EXPR_ARG1 (type);
         if (EXPR_CODE (ty) != F_TYPE_NODE) {
@@ -3004,80 +3060,9 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
     if (typeExpr != NULL) {
         if (EXPR_CODE(typeExpr) == IDENT ||
-            EXPR_CODE(typeExpr) == F03_PARAMETERIZED_TYPE) {
-            SYMBOL sym = NULL;
-            ID id;
-            if (EXPR_CODE(typeExpr) == IDENT) {
-                sym = EXPR_SYM(typeExpr);
-            } else {
-                sym = EXPR_SYM(EXPR_ARG1(typeExpr));
-            }
-
-            id = find_ident_local(sym);
-            if(id != NULL && ID_IS_AMBIGUOUS(id)) {
-                error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
-                return;
-            }
-
-            tp0 = find_struct_decl(sym);
-            if (tp0 == NULL) {
-                if(hasPointerAttr) {
-                    tp0 = declare_struct_type_wo_component(typeExpr);
-                    if (tp0 == NULL) {
-                        return;
-                    }
-                } else {
-                    error_at_node(typeExpr, "type %s not found",
-                                  SYM_NAME(sym));
-                    return;
-                }
-            } else if (EXPR_CODE(typeExpr) == IDENT &&
-                       type_param_values_required(tp0)) {
-                error_at_node(typeExpr, "struct type '%s' requires type parameter values",
-                              SYM_NAME(sym));
-                return;
-            }
-
-            if (EXPR_CODE(typeExpr) == F03_PARAMETERIZED_TYPE) {
-                tp0 = type_apply_type_parameter(tp0, EXPR_ARG2(typeExpr));
-            }
-
-            if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
-                /*
-                 * member of SEQUENCE struct must be SEQUENCE.
-                 */
-                if (TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
-                   TYPE_IS_SEQUENCE(tp0) == FALSE) {
-                    error_at_node(typeExpr, "type %s does not have SEQUENCE attribute.",
-                                  SYM_NAME(EXPR_SYM(typeExpr)));
-                }
-            }
-
-        } else if (EXPR_CODE(typeExpr) == F03_CLASS) {
-            if (EXPR_ARG1(typeExpr)) {
-                ID id = find_ident_local(EXPR_SYM(EXPR_ARG1(typeExpr)));
-                if(id != NULL && ID_IS_AMBIGUOUS(id)) {
-                    error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
-                    return;
-                }
-                tp0 = find_struct_decl(EXPR_SYM(EXPR_ARG1(typeExpr)));
-                if (tp0 == NULL) {
-                    if(hasPointerAttr) {
-                        tp0 = declare_struct_type_wo_component(typeExpr);
-                        if (tp0 == NULL) {
-                            return;
-                        }
-                    } else {
-                        error_at_node(typeExpr, "type %s not found",
-                                      SYM_NAME(EXPR_SYM(typeExpr)));
-                        return;
-                    }
-                }
-                tp0 = wrap_type(tp0);
-            } else {
-                tp0 = new_type_desc();
-            }
-            TYPE_SET_CLASS(tp0);
+            EXPR_CODE(typeExpr) == F03_PARAMETERIZED_TYPE ||
+            EXPR_CODE(typeExpr) == F03_CLASS) {
+            tp0 = compile_derived_type(typeExpr, hasPointerAttr);
 
         } else {
             tp0 = compile_type(typeExpr);

@@ -449,46 +449,14 @@ void compile_statement1(int st_no, expr x)
     case F_FUNCTION_STATEMENT:
         /* (F_FUNCTION_STATEMENT name dummy_arg_list type) */
         begin_procedure();
-        if (EXPR_ARG3(x) && EXPR_CODE(EXPR_ARG3(x)) == IDENT) {
-            /* in case of struct */
-            TYPE_DESC tp = find_struct_decl(EXPR_SYM(EXPR_ARG3(x)));
-            if (tp == NULL) {
-                tp = declare_struct_type_wo_component(EXPR_ARG3(x));
-            } else if (type_param_values_required(tp)) {
-                error("type param values are required");
+        if (EXPR_ARG3(x) &&
+            (EXPR_CODE(EXPR_ARG3(x)) == IDENT ||
+             EXPR_CODE(EXPR_ARG3(x)) == F03_PARAMETERIZED_TYPE ||
+             EXPR_CODE(EXPR_ARG3(x)) == F03_CLASS)) {
+            TYPE_DESC tp = compile_derived_type(EXPR_ARG3(x), TRUE);
+            if (tp == NULL) { /* something wrong */
                 return;
             }
-            declare_procedure(CL_PROC, EXPR_ARG1(x),
-                              tp,
-                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
-        } else if (EXPR_ARG3(x) &&
-                   EXPR_CODE(EXPR_ARG3(x)) == F03_PARAMETERIZED_TYPE) {
-            /* in case of parameterized struct */
-            TYPE_DESC tp;
-            expr typeExpr = EXPR_ARG3(x);
-            tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(typeExpr)));
-            if (tp == NULL) {
-                tp = declare_struct_type_wo_component(EXPR_ARG1(typeExpr));
-                tp = wrap_type(tp);
-                if (!compile_type_param_values_dummy(tp, EXPR_ARG2(typeExpr))) {
-                    return;
-                }
-            } else {
-                tp = type_apply_type_parameter(tp, EXPR_ARG2(typeExpr));
-            }
-            declare_procedure(CL_PROC, EXPR_ARG1(x),
-                              tp,
-                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
-        } else if (EXPR_ARG3(x) && EXPR_CODE(EXPR_ARG3(x)) == F03_CLASS) {
-            /* in case of class */
-            TYPE_DESC tp;
-            if (EXPR_ARG2(EXPR_ARG3(x))) {
-                tp = declare_struct_type_wo_component(EXPR_ARG1(EXPR_ARG3(x)));
-            } else {
-                tp = new_type_desc();
-            }
-            tp = wrap_type(tp);
-            TYPE_SET_CLASS(tp);
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               tp,
                               EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
@@ -614,7 +582,7 @@ void compile_statement1(int st_no, expr x)
                 if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F_TYPE_NODE) {
                     compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
                 } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_PARAMETERIZED_TYPE) {
-                    compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
+                    compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
                 } else {
                     v = EXPR_ARG1(v);
                     compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
@@ -1965,15 +1933,28 @@ end_declaration()
                 if (EXPV_CODE(LIST_ITEM(lp)) == F08_LEN_SPEC_COLON) {
                     if (!TYPE_IS_POINTER(struct_tp) && !TYPE_IS_ALLOCATABLE(struct_tp)) {
                         error_at_id(ip,
-                                    "type parameter value ':' shall be used "
+                                    "type parameter value ':' should be used "
                                     "with a POINTER or ALLOCATABLE object");
                     }
                 } else if (EXPV_CODE(LIST_ITEM(lp)) == LEN_SPEC_ASTERISC) {
                     if (!ID_IS_DUMMY_ARG(ip)) {
                         error_at_id(ip,
-                                    "type parameter value '*' shall be used "
+                                    "type parameter value '*' should be used "
                                     "with a dummy argument");
                     }
+                }
+            }
+
+            if (TYPE_IS_CLASS(struct_tp)) {
+                /*
+                 * CLASS() shoule be a POINTER object, an ALLOCATABLE object, or a dummy argument
+                 */
+                if (!TYPE_IS_POINTER(struct_tp) &&
+                    !TYPE_IS_ALLOCATABLE(struct_tp) &&
+                    !ID_IS_DUMMY_ARG(ip)) {
+                    error_at_id(ip,
+                                "CLASS should be used "
+                                "to a POINTER object, an ALLOCATABLE object, or a dummy argument");
                 }
             }
         }
