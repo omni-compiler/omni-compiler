@@ -578,9 +578,24 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
         case F_BLOCK_STATEMENT:
             e = createElement(name, "construct_name", getArg0Name(xobj));
-            addChildNode(e, transSymbols     ((XobjList)xobj.getArg(1)));
-            addChildNode(e, transDeclarations((XobjList)xobj.getArg(2)));
-            addChildNode(e, transBody        ((XobjList)xobj.getArg(3)));
+            XobjList identList = (XobjList)xobj.getArg(1);
+            XobjList declList = (XobjList)xobj.getArg(2);
+            XobjList addDeclList = XmcXobjectToXcodeTranslator.getDeclForNotDeclared(identList);
+
+            if (addDeclList != null) {
+                if (declList == null) {
+                    declList = Xcons.List();
+                }
+                addDeclList.reverse();
+                for (Xobject a : addDeclList) {
+                    declList.insert(a);
+                }
+            }
+
+            e = addChildNodes(e,
+                              transSymbols(identList),
+                              transDeclarations(declList),
+                              transBody(xobj.getArg(3)));
             break;
 
         case F_SYNCALL_STATEMENT:                    

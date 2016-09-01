@@ -1201,7 +1201,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     }
 
     /* Copied from XmcXobjectToXmObjTranslator.java */
-    private XobjList getDeclForNotDeclared(XobjList identList) {
+    public static XobjList getDeclForNotDeclared(XobjList identList) {
         if (identList == null) {
             return null;
         }
