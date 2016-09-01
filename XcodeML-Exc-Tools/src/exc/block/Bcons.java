@@ -421,7 +421,9 @@ public class Bcons
         case F_STATEMENT_LIST:
         case COMPOUND_STATEMENT:
         case F_BLOCK_STATEMENT:
-            return COMPOUND(buildList(v), code);
+            CompoundBlock cb = (CompoundBlock)COMPOUND(buildList(v), code);
+            cb.setLineNo(v.getLineNo());
+            return cb;
             
         case OMP_PRAGMA:
             return PRAGMA(Xcode.OMP_PRAGMA, v.getArg(0).getString(), v.getArgOrNull(1),
