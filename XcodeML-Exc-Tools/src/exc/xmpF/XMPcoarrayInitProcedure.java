@@ -250,7 +250,7 @@ public class XMPcoarrayInitProcedure {
                                      BlockList body, Xobject decls) {
     Xobject elem = coarray.getElementLengthExpr();
     if (elem==null)
-      XMP.fatal("elem must not be null.");
+      XMP.fatal("INTERNAL: elem must not be null.");
     int count = coarray.getTotalArraySize();
 
     /*-------------------------------*\

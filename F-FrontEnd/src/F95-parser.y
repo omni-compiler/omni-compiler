@@ -139,6 +139,7 @@
 
 /* F03 keywords */
 %token PROTECTED
+%token EXTENDS
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -469,7 +470,7 @@ gen_default_real_kind(void) {
 %type <val> string_const_substr
 
 %type <val> name name_or_null generic_name defined_operator intrinsic_operator func_prefix prefix_spec
-%type <val> declaration_statement95 attr_spec_list attr_spec access_spec
+%type <val> declaration_statement95 attr_spec_list attr_spec access_spec type_attr_spec_list type_attr_spec
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
 %type <val> result_opt type_keyword
 %type <val> action_statement95
@@ -749,7 +750,7 @@ declaration_statement:
 declaration_statement95:
           KW_TYPE COL2_or_null IDENTIFIER
         { $$ = list2(F95_TYPEDECL_STATEMENT,$3,NULL); }
-        | KW_TYPE ',' KW access_spec COL2 IDENTIFIER
+        | KW_TYPE ',' KW type_attr_spec_list COL2 IDENTIFIER
         { $$ = list2(F95_TYPEDECL_STATEMENT,$6,$4); }
         | ENDTYPE
         { $$ = list1(F95_ENDTYPEDECL_STATEMENT,NULL); }
@@ -890,6 +891,20 @@ access_spec:
         { $$ = list0(F95_PRIVATE_SPEC); }
         | PROTECTED
         { $$ = list0(F03_PROTECTED_SPEC); }
+        ;
+
+type_attr_spec_list:
+          type_attr_spec
+        { $$ = list1(LIST, $1); }
+        | type_attr_spec ',' type_attr_spec_list
+        { $$ = list_cons($1, $3); }
+        ;
+
+type_attr_spec:
+          EXTENDS '(' IDENTIFIER ')'
+        { $$ = list1(F03_EXTENDS_SPEC, $3); }
+        | access_spec
+        { $$ = $1; }
         ;
 
 intent_spec:

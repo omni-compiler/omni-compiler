@@ -10,10 +10,14 @@ import exc.object.*;
 import exc.block.*;
 import java.util.*;
 
+
 /*
  * Madiator for each coarray
  */
 public class XMPcoarray {
+  // debugging 
+  private final static Boolean _DBGPRINT_ALIGN_ON = false;    // true or false
+
   // name of property 
   private final static String XMP_COARRAY_NODES_PROP = "XMP_COARRAY_NODES_PROP";
 
@@ -35,7 +39,6 @@ public class XMPcoarray {
   final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
   final static String ALLOC_STATIC_NAME = "xmpf_coarray_alloc_static";
   final static String REGMEM_STATIC_NAME = "xmpf_coarray_regmem_static";
-
 
   // original attributes
   private Ident ident;
@@ -66,8 +69,15 @@ public class XMPcoarray {
   protected XobjectDef def;
   protected FunctionBlock fblock;
 
-  // for debug
-  private Boolean DEBUG = false;        // switch me on debugger
+
+  /**************************
+      debugging tools
+   ***************************/
+  private void _DBGPRINT_ALIGN(String str) {
+    if (_DBGPRINT_ALIGN_ON)
+      System.out.println(str);
+  }
+
 
   //------------------------------
   //  CONSTRUCTOR
@@ -618,36 +628,177 @@ public class XMPcoarray {
     return getElementLengthExpr(fblock);
   }
   public Xobject getElementLengthExpr(Block block) {
-    Xobject elem = ident.Type().getElementLengthExpr(block);    // see BasicType.java
-    if (elem != null)
-      return elem;
+    ////// SELECTIVE
+    //Xobject lengthExpr = _getElementLengthExpr_runtime(block);
+    Xobject lengthExpr = _getElementLengthExpr_atmost(block);
+    return lengthExpr;
+  }
 
-    // The element length was not detected from the Ident.
 
-    if (getRank() == 0) {    // scalar coarray
-      // copy type
-      // size(transfer(ident, (/" "/))
-      Ident sizeId = declIntIntrinsicIdent("size");
-      Ident transferId = declIntIntrinsicIdent("transfer");
-      Xobject arg1 = Xcons.FvarRef(ident);
-      Xobject arg21 = Xcons.FcharacterConstant(Xtype.FcharacterType, " ", null);
-      Xobject arg2 = Xcons.List(Xcode.F_ARRAY_CONSTRUCTOR,
-                                _getCharFarrayType(1),
-                                arg21);
-      Xobject transfer = transferId.Call(Xcons.List(arg1, arg2));
-      Xobject size = sizeId.Call(Xcons.List(transfer));
-      return size;
-    } else {                 // array coarray
+  /* static evaluation of the size of derived-type data element
+   *  This result will be equal to or greater than the size that 
+   *  the backend compiler will deside.
+   */
+  private Xobject _getElementLengthExpr_atmost(Block block) {
+    int length = _getElementLength_atmost(ident.Type(), block);
+    return Xcons.IntConstant(length);
+  }
+
+  private int _getElementLength_atmost(Xtype type, Block block) {
+    int length = 0;
+
+    switch (type.getKind()) {
+    case Xtype.BASIC:
+      length = type.getElementLength(block);    // see BasicType.java
+      break;
+
+    case Xtype.F_ARRAY:
+      Xtype baseType = type.getBaseRefType();       // type of the array element
+      length = _getElementLength_atmost(baseType, block);
+      break;
+
+    case Xtype.STRUCT:
+      _DBGPRINT_ALIGN("Into DerivedType " + type);
+      length = _getDerivedTypeLength_atmost(type, block);
+      _DBGPRINT_ALIGN("Out of DerivedType " + type);
+      break;
+
+    case Xtype.UNION:
+    case Xtype.FUNCTION:
+    case Xtype.F_COARRAY:
+    default:
+      XMP.fatal("INTERNAL: unexpected Xtype kind (" + type.getKind() + ")");
+      break;
     }
 
-    return null;
+    return length;
   }
+
+  private int _getNumElements(Xtype type, Block block) {
+    int size;
+    if (type.getKind() == Xtype.F_ARRAY) {
+      Xobject sizeExpr = type.getTotalArraySizeExpr(block);
+      if (sizeExpr == null || !sizeExpr.isIntConstant()) {
+        XMP.error("current restriction: " +
+                  "cannot evaluate numerically the number of array elements");
+        return 0;
+      }
+      size = sizeExpr.getInt();
+    } else {
+      size = 1;
+    }
+
+    return size;
+  }
+    
+
+  private int _getDerivedTypeLength_atmost(Xtype type, Block block) {
+    int currentPos = 0;
+    int largestBoundary = 1;
+    for (Xobject member: type.getMemberList()) {
+      Xtype type1 = member.Type();
+      int elemLen1 = _getElementLength_atmost(type1, block);
+      int numElems1 = _getNumElements(type1, block);
+      _DBGPRINT_ALIGN("  member:" + member + ", element length="+elemLen1+", num elements="+numElems1);
+
+      // get boundary length for the member
+      int boundary1;
+      if (type1.getKind() == Xtype.STRUCT)
+        boundary1 = 8;      // at most
+      else
+        boundary1 = elemLen1;
+
+      // alignment for the member (round up)
+      if (currentPos % boundary1 != 0) {
+        currentPos = (currentPos/boundary1 + 1) * boundary1;
+        _DBGPRINT_ALIGN("  skip for alignment upto "+ currentPos);
+      }
+
+      // proceeds current position
+      currentPos += elemLen1 * numElems1;
+      _DBGPRINT_ALIGN("  proceeds upto "+ currentPos);
+
+      if (largestBoundary < boundary1)
+        largestBoundary = boundary1;
+    }
+
+    // alignment for the structure (round up)
+    if (currentPos % largestBoundary != 0) {
+      currentPos = (currentPos/largestBoundary + 1) * largestBoundary;
+    }
+    _DBGPRINT_ALIGN("  finally proceeds upto "+ currentPos);
+
+    return currentPos;
+  }
+
+
+  /* build an expression for the size of the data element that
+   * can be evaluated at runtime
+   */
+  private Xobject _getElementLengthExpr_runtime(Block block) {
+    Xobject lengthExpr = ident.Type().getElementLengthExpr(block);    // see BasicType.java
+    if (lengthExpr != null)
+      return lengthExpr;
+
+    // for derived type objects
+    lengthExpr = _getDerivedTypeLengthExpr_runtime();
+    return lengthExpr;
+  }
+
+  private Xobject _getDerivedTypeLengthExpr_runtime() {
+    int rank = getRank();
+
+    // build reference of the object
+    Xobject elemRef;
+    if (rank == 0) {          // scalar
+      elemRef = Xcons.FvarRef(ident);
+    } else {                  // array element eg. a(lb1,lb2,...)
+      elemRef = Xcons.FarrayRef(ident.Ref());
+      for (int i = 0; i < rank; i++) {
+        Xobject lb = getLbound(i);
+        Xobject subscr = Xcons.FarrayIndex(lb);
+        elemRef.getArg(1).setArg(i, subscr);
+      }
+    }
+
+    // build an expression to get sizeof elemRef
+    Xobject lengthExpr = _buildSizeofExpr(elemRef);
+    return lengthExpr;
+  }
+
+
+  /* build expression sizeof(data)
+   * PROBLEM in BACKEND: extended intrinsic function sizeof is declared
+   * with the attribute EXTERNAL anyway.
+   */
+  private Xobject _buildSizeofExpr(Xobject data) {
+    Ident sizeofId = declIntExtendIntrinsicIdent("sizeof");
+    Xobject size = sizeofId.Call(Xcons.List(data));
+    return size;
+  }
+
+  /* NOT USED
+   * tricky and low-performance but standard version
+   *    size(transfer(data, (/" "/))
+   */
+  private Xobject _buildSizeofExpr__OLD__(Xobject data) {
+    Ident sizeId = declIntIntrinsicIdent("size");
+    Ident transferId = declIntIntrinsicIdent("transfer");
+    Xobject arg21 = Xcons.FcharacterConstant(Xtype.FcharacterType, " ", null);
+    Xobject arg2 = Xcons.List(Xcode.F_ARRAY_CONSTRUCTOR,
+                              _getCharFarrayType(1),
+                              arg21);
+    Xobject transfer = transferId.Call(Xcons.List(data, arg2));
+    Xobject size = sizeId.Call(Xcons.List(transfer));
+    return size;
+  }
+
 
   public int getTotalArraySize() {
     Xobject size = getTotalArraySizeExpr();
     if (!size.isIntConstant()) {
       XMP.error("current restriction: " +
-                "could not numerically evaluate the total size of: "+name);
+                "cannot numerically evaluate the total size of: "+name);
       return 0;
     }
     return size.getInt();
@@ -657,7 +808,7 @@ public class XMPcoarray {
     Xobject size = getIndexRange().getTotalArraySizeExpr();
     if (size == null)
       XMP.error("current restriction: " +
-                "could not find the total size of: "+name);
+                "cannot find the total size of: "+name);
     return size;
   }
 
@@ -1073,6 +1224,12 @@ public class XMPcoarray {
   //  tool
   //------------------------------
   private Ident declIntIntrinsicIdent(String name) { 
+    FunctionType ftype = new FunctionType(Xtype.FintType, Xtype.TQ_FINTRINSIC);
+    Ident ident = getEnv().declIntrinsicIdent(name, ftype);
+    return ident;
+  }
+
+  private Ident declIntExtendIntrinsicIdent(String name) { 
     FunctionType ftype = new FunctionType(Xtype.FintType, Xtype.TQ_FINTRINSIC);
     Ident ident = getEnv().declIntrinsicIdent(name, ftype);
     return ident;

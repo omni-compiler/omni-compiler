@@ -66,14 +66,17 @@ ifeq ($(IS_SUPERUX_OR_POWERPC), $(FALSE))
    TESTDIRS3 += "global-view/intrinsic/C/"
 endif
 
-TESTDIRS  = $(TESTDIRS1) $(TESTDIRS2) $(TESTDIRS3)
+TESTDIRS4 = "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
+	    "local-view/coarray/F/STRUCT" \
+	    "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
+	    "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
+	    "local-view/coarray/F/CFOLD"
+
+TESTDIRS  = $(TESTDIRS1) $(TESTDIRS2) $(TESTDIRS3) $(TESTDIRS4)
 
 IS_GASNET=@GASNET@
 ifeq ($(IS_GASNET), $(TRUE))
-   TESTDIRS_GAS = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
-	          "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
-	          "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
-	          "local-view/coarray/F/CFOLD" "local-view/lock-unlock/C" "local-view/intrinsic/C"
+   TESTDIRS_GAS = "local-view/post-wait/C" "local-view/lock-unlock/C" "local-view/intrinsic/C"
    TESTDIRS += $(TESTDIRS_GAS)
    LARGE_TESTDIRS += "local-view/coarray/C/"
 else
@@ -82,10 +85,7 @@ endif
 
 IS_FJRDMA=@FJRDMA@
 ifeq ($(IS_FJRDMA), $(TRUE))
-   TESTDIRS_FJR = "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
-                  "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
-	          "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
-	          "local-view/coarray/F/CFOLD" 
+   TESTDIRS_FJR = "local-view/post-wait/C" 
    TESTDIRS += $(TESTDIRS_FJR)
    LARGE_TESTDIRS += "local-view/coarray/C/"
 else
@@ -94,10 +94,7 @@ endif
 
 IS_MPI3_ONESIDED=@MPI3_ONESIDED@
 ifeq ($(IS_MPI3_ONESIDED), $(TRUE))
-   TESTDIRS_MP3 = "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
-                  "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
-	          "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
-	          "local-view/coarray/F/CFOLD"
+   TESTDIRS_MP3 = 
    TESTDIRS += $(TESTDIRS_MP3)
    LARGE_TESTDIRS += "local-view/coarray/C/"
 else

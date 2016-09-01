@@ -113,6 +113,8 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size
  */
 void _XMP_gasnet_sync_memory()
 {
+  XMP_gasnet_atomic_sync_memory();
+  
   for(int i=0;i<_xmp_gasnet_stride_wait_size;i++)
     GASNET_BLOCKUNTIL(_xmp_gasnet_stride_queue[i] == _XMP_STRIDE_DONE);
 

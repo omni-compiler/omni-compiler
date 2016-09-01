@@ -178,7 +178,7 @@ class XfTypeManagerForDom {
 
         // Trim key word string.
         symbolName = symbolName.trim();
-        if (symbolName.isEmpty() != false) {
+        if (symbolName.isEmpty()) {
             // Ignore invalid symbol name.
             return;
         }
@@ -189,7 +189,7 @@ class XfTypeManagerForDom {
 
         if (XfStorageClass.FTYPE_NAME.toXcodeString().equalsIgnoreCase(sclass)) {
             String typeName = XmDomUtil.getAttr(idNode, "type");
-            if (XfUtilForDom.isNullOrEmpty(typeName) != false) {
+            if (XfUtilForDom.isNullOrEmpty(typeName)) {
                 // Ignore invalid type name.
                 return;
             }
@@ -316,30 +316,30 @@ class XfTypeManagerForDom {
 
     /**
      * Get alias of type name.
-     * @param typeName
+     * @param typeId
      * @return When alias not found, return argument type name.
      */
-    public String getAliasTypeName(String typeName)
+    public String getAliasTypeName(String typeId)
     {
-        if (XfUtilForDom.isNullOrEmpty(typeName) != false) {
+        if (XfUtilForDom.isNullOrEmpty(typeId) != false) {
             return null;
         }
 
         // Trim key word string.
-        typeName = typeName.trim();
+        typeId = typeId.trim();
         for (AliasMap aliasMap : _aliasMapStack) {
-            String aliasName = aliasMap.get(typeName);
+            String aliasName = aliasMap.get(typeId);
             if (aliasName != null) {
                 return aliasName;
             }
         }
 
-        String inheritName = _reverseBasicRefMap.get(typeName);
+        String inheritName = _reverseBasicRefMap.get(typeId);
         if (inheritName != null) {
             return getAliasTypeName(inheritName);
         }
 
-        throw new IllegalStateException("not found type name of '" + typeName + "'");
+        throw new IllegalStateException("not found type name of '" + typeId + "'");
     }
 
     /**
