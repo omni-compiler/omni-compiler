@@ -2172,37 +2172,45 @@ compile_IMPLICIT_decl(expr type,expr l)
         error("bad IMPLICIT declaration");
         return;
     }
-    if (EXPR_CODE (type) == IDENT) {
-        tp = find_struct_decl(EXPR_SYM(type));
+    if (EXPR_CODE (type) == IDENT ||
+        ((EXPR_CODE (type) == F03_CLASS) && (EXPR_CODE(EXPR_ARG1(type)) == IDENT))) {
+        SYMBOL sym;
+        if (EXPR_CODE (type) == F03_CLASS) {
+            sym = EXPR_SYM(EXPR_ARG1(type));
+        } else {
+            sym = EXPR_SYM(type);
+        }
+        tp = find_struct_decl(sym);
         if (tp == NULL) {
             error_at_node(type, "struct type '%s' is not declared",
-                SYM_NAME(EXPR_SYM(type)));
+                SYM_NAME(sym));
         }
         if (type_param_values_required(tp)) {
             error_at_node(type, "struct type '%s' requires type parameter values",
-                SYM_NAME(EXPR_SYM(type)));
+                SYM_NAME(sym));
         }
-    } else if (EXPR_CODE(EXPR_ARG1(type)) == F03_PARAMETERIZED_TYPE) {
-        tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(EXPR_ARG1(type))));
-        if (tp == NULL) {
-            error_at_node(type, "struct type '%s' is not declared",
-                SYM_NAME(EXPR_SYM(type)));
-        }
-        tp = type_apply_type_parameter(tp, EXPR_ARG2(EXPR_ARG1(type)));
-    } else if (EXPR_CODE (type) == F03_CLASS) {
-        if (EXPR_ARG1(type) != NULL) {
-            id = find_ident(EXPR_SYM(EXPR_ARG1(type)));
-            if (id != NULL) {
-                tp = ID_TYPE(id);
-            } else {
-                error_at_node(type, "struct type '%s' is not declared",
-                              SYM_NAME(EXPR_SYM(type)));
-            }
+        if (EXPR_CODE (type) == F03_CLASS) {
             tp = wrap_type(tp);
-        } else {
-            tp = new_type_desc();
+            TYPE_SET_CLASS(tp);
         }
-        TYPE_SET_CLASS(tp);
+    } else if (EXPR_CODE(EXPR_ARG1(type)) == F03_PARAMETERIZED_TYPE ||
+        ((EXPR_CODE (type) == F03_CLASS) &&
+         (EXPR_CODE(EXPR_ARG1(type)) == F03_PARAMETERIZED_TYPE))) {
+        SYMBOL sym;
+        expr type_param_args = NULL;
+        if (EXPR_CODE (type) == F03_CLASS) {
+            sym = EXPR_SYM(EXPR_ARG1(EXPR_ARG1(EXPR_ARG1(type))));
+            type_param_args = EXPR_ARG2(EXPR_ARG1(EXPR_ARG1(type)));
+        } else {
+            sym = EXPR_SYM(EXPR_ARG1(EXPR_ARG1(type)));
+            type_param_args = EXPR_ARG2(EXPR_ARG1(type));
+        }
+        tp = find_struct_decl(sym);
+        tp = type_apply_type_parameter(tp, type_param_args);
+        if (EXPR_CODE (type) == F03_CLASS) {
+            tp = wrap_type(tp);
+            TYPE_SET_CLASS(tp);
+        }
     } else {
         ty = EXPR_ARG1 (type);
         if (EXPR_CODE (ty) != F_TYPE_NODE) {
