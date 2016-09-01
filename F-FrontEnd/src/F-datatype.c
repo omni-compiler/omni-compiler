@@ -439,26 +439,51 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
     return NULL;
 }
 
+/* int */
+/* is_descendant_coindexed(TYPE_DESC tp){ */
+
+/*   ID id; */
+
+/*   if (!tp) return FALSE; */
+
+/*   if (TYPE_IS_COINDEXED(tp)) return TRUE; */
+
+/*   if (IS_STRUCT_TYPE(tp)){ */
+
+/*     FOREACH_MEMBER(id, tp){ */
+/*       if (is_descendant_coindexed(ID_TYPE(id))) return TRUE; */
+/*     } */
+
+/*     if (TYPE_REF(tp)) return is_descendant_coindexed(TYPE_REF(tp)); */
+
+/*   } */
+/*   else if (IS_ARRAY_TYPE(tp)){ */
+/*     return is_descendant_coindexed(bottom_type(tp)); */
+/*   } */
+
+/*   return FALSE; */
+/* } */
+
+
 int
-is_descendant_coindexed(TYPE_DESC tp){
+has_coarray_component(TYPE_DESC tp){
 
   ID id;
 
   if (!tp) return FALSE;
 
-  if (TYPE_IS_COINDEXED(tp)) return TRUE;
-
   if (IS_STRUCT_TYPE(tp)){
 
     FOREACH_MEMBER(id, tp){
-      if (is_descendant_coindexed(ID_TYPE(id))) return TRUE;
+      if (TYPE_IS_COINDEXED(ID_TYPE(id))) return TRUE;
+      if (IS_STRUCT_TYPE(ID_TYPE(id)) &&
+	  !TYPE_IS_ALLOCATABLE(ID_TYPE(id)) && !TYPE_IS_POINTER(ID_TYPE(id))){
+	return has_coarray_component(ID_TYPE(id));
+      }
     }
 
-    if (TYPE_REF(tp)) return is_descendant_coindexed(TYPE_REF(tp));
+    if (TYPE_REF(tp)) return has_coarray_component(TYPE_REF(tp));
 
-  }
-  else if (IS_ARRAY_TYPE(tp)){
-    return is_descendant_coindexed(bottom_type(tp));
   }
 
   return FALSE;
