@@ -143,7 +143,7 @@ submit3-tests:
 	done
 
 submit4-tests:
-	@for subdir in $(TESTDIRS_GAS) $(TESTDIRS_FJR) $(TESTDIRS_MP3) ; do \
+	@for subdir in $(TESTDIRS4) $(TESTDIRS_GAS) $(TESTDIRS_FJR) $(TESTDIRS_MP3) ; do \
 	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
