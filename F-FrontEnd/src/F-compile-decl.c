@@ -4292,8 +4292,54 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params, expv type_param_values)
             tp = copy_type_shallow(tp); type_is_replaced = TRUE;
         }
         TYPE_REF(tp) = tq;
-    }
 
+    } else if (TYPE_REF(tp) == NULL && TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
+        ID new_member = NULL, last = NULL;
+        TYPE_DESC parent = NULL;
+
+        if (TYPE_PARENT(tp)) {
+            parent = type_apply_type_parameter0(TYPE_PARENT_TYPE(tp), type_params, type_param_values);
+        }
+
+        FOREACH_ID(ip, TYPE_MEMBER_LIST(tp)) {
+            tq = type_apply_type_parameter0(tp, type_params, type_param_values);
+            if (tq != ID_TYPE(ip)) {
+                ID new_id;
+                if (!type_is_replaced) {
+                    type_is_replaced = TRUE;
+                    FOREACH_ID(ip2, TYPE_MEMBER_LIST(tp)) {
+                        ID new_id = new_ident_desc(ID_SYM(ip2));
+                        *new_id = *ip2;
+                        ID_LINK_ADD(new_id, new_member, last);
+                        if (ID_SYM(ip) == ID_SYM(ip2)) {
+                            break;
+                        }
+                    }
+                    tp = wrap_type(tp);
+                }
+                new_id = new_ident_desc(ID_SYM(ip));
+                *new_id = *ip;
+                ID_TYPE(new_id) = tq;
+                ID_LINK_ADD(new_id, new_member, last);
+            }
+
+        }
+
+        if (type_is_replaced) {
+            tp = wrap_type(tp);
+
+            if (parent != NULL) {
+                TYPE_PARENT_TYPE(tp) = parent;
+            }
+
+            if (new_member != NULL) {
+                TYPE_MEMBER_LIST(tp) = new_member;
+                if (TYPE_TYPE_PARAMS(tp)) {
+                    TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
+                }
+            }
+        }
+    }
 
     if (TYPE_KIND(tp)) {
         v = expv_apply_type_parameter(TYPE_KIND(tp), type_params);
@@ -4311,39 +4357,6 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params, expv type_param_values)
         TYPE_LENG(tp) = v;
     }
 
-    if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
-        ID new_member = NULL, last = NULL;
-        tp = wrap_type(tp);
-        FOREACH_ID(ip, TYPE_MEMBER_LIST(tp)) {
-            tq = type_apply_type_parameter0(tp, type_params, type_param_values);
-            if (tq != ID_TYPE(ip)) {
-                ID new_id;
-                if (!type_is_replaced) {
-                    type_is_replaced = TRUE;
-                    FOREACH_ID(ip2, TYPE_MEMBER_LIST(tp)) {
-                        ID new_id = new_ident_desc(ID_SYM(ip2));
-                        *new_id = *ip2;
-                        ID_LINK_ADD(new_id, new_member, last);
-                        if (ID_SYM(ip) == ID_SYM(ip2)) {
-                            break;
-                        }
-                    }
-                }
-                new_id = new_ident_desc(ID_SYM(ip));
-                *new_id = *ip;
-                ID_TYPE(new_id) = tq;
-                ID_LINK_ADD(new_id, new_member, last);
-            }
-
-        }
-
-        if (type_is_replaced && new_member != NULL) {
-            TYPE_MEMBER_LIST(tp) = new_member;
-            if (TYPE_TYPE_PARAMS(tp)) {
-                TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
-            }
-        }
-    }
 
     return tp;
 }
@@ -4360,12 +4373,19 @@ type_apply_type_parameter(TYPE_DESC tp, ID type_params, expv type_param_values)
     ID ip;
     ID last = NULL;
     TYPE_DESC tq;
+    TYPE_DESC parent;
 
     if (!IS_STRUCT_TYPE(tp)) {
         return tp;
     }
 
     tq = copy_type_shallow(tp);
+
+    if (TYPE_PARENT(tq)) {
+        parent = type_apply_type_parameter0(TYPE_PARENT_TYPE(tq), type_params, type_param_values);
+        TYPE_PARENT_TYPE(tq) = parent;
+    }
+
     FOREACH_ID(ip, TYPE_MEMBER_LIST(tq)) {
         TYPE_DESC member_tp = type_apply_type_parameter0(ID_TYPE(ip), type_params, type_param_values);
         ID new_id = new_ident_desc(ID_SYM(ip));
