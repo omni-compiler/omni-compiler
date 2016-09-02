@@ -149,11 +149,9 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (xobj == null) {
             return null;
         }
-        Node v_node = transValueChild(xobj);
-        if (xobj.Opcode() != Xcode.LIST) {
-          v_node = addChildNodes(createElement("value"), v_node);
-        }
-        return v_node;
+
+        return addChildNodes(createElement("value"),
+                             transValueChild(xobj));
     }
 
     private Node transValueChild(Xobject xobj) {
