@@ -131,8 +131,6 @@ public class XMPtransCoarrayRun
   private Boolean useMalloc;
   private Boolean onlyCafMode;
 
-  private Boolean DEBUG = true;       // change me in debugger
-
   private XMPenv env;
   private String name;
   private XobjectDef def;
@@ -1818,15 +1816,35 @@ public class XMPtransCoarrayRun
     if (xobj.Opcode() == null)
       return false;
 
+    Xobject xobj1, xobj2, xobj3, xobj4;
     switch (xobj.Opcode()) {
-    case CO_ARRAY_REF:          // ex. a(i,j)[k], assuming top-down search
+    case CO_ARRAY_REF:          // ex. v[k], assuming top-down search
       return true;
-    case MEMBER_REF:            // ex. a(i,j)[k]%b%c
-      if (xobj.getArg(0).Opcode() != Xcode.F_VAR_REF)
-        XMP.fatal("INTERNAL: unexpected Opcode arg(0) of MEMBER_REF xobject");
-      if (_isCoindexObj(xobj.getArg(0).getArg(0)))
-        return true;
-      break;
+
+    case MEMBER_REF:            // guess v[k]%b..%c
+      xobj1 = xobj.getArg(0);
+      if (xobj1.Opcode() != Xcode.F_VAR_REF)
+        break;
+      xobj2 = xobj1.getArg(0);
+      if (xobj2.Opcode() != Xcode.CO_ARRAY_REF)
+        break;
+      return true;
+
+    case F_ARRAY_REF:           // guess v[k]%b..%c(i,..,j)
+      xobj1 = xobj.getArg(0);
+      if (xobj1.Opcode() != Xcode.F_VAR_REF)
+        break;
+      xobj2 = xobj1.getArg(0);
+      if (xobj2.Opcode() != Xcode.MEMBER_REF)
+        break;
+      xobj3 = xobj2.getArg(0);
+      if (xobj3.Opcode() != Xcode.F_VAR_REF)
+        break;
+      xobj4 = xobj3.getArg(0);
+      if (xobj4.Opcode() != Xcode.CO_ARRAY_REF)
+        break;
+      return true;
+
     default:
       break;
     }
@@ -2802,7 +2820,7 @@ public class XMPtransCoarrayRun
         Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
         Xobject coindex = coarray.getImageIndex(baseAddr,
                                                 coindexObj.cosubscripts);
-        Xobject mold = coindexObj.getMoldObj();
+        Xobject mold = coindexObj.removeCoindex();
         Xobject dst = arg1;
         xobj.setArg(1, Xcons.List(descPtr, coindex, mold, dst));
       }
@@ -2883,7 +2901,7 @@ public class XMPtransCoarrayRun
         Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
         Xobject coindex = coarray.getImageIndex(baseAddr,
                                                 coindexObj.cosubscripts);
-        Xobject mold = coindexObj.getMoldObj();
+        Xobject mold = coindexObj.removeCoindex();
         Xobject src = arg2;
         xobj.setArg(1, Xcons.List(descPtr, coindex, mold, src));
       }
@@ -3378,7 +3396,6 @@ public class XMPtransCoarrayRun
   public String toString() {
     String s = 
       "\n  int version = " +  version +
-      "\n  Boolean DEBUG = " +  DEBUG +
       "\n  XMPenv env = " +  env +
       "\n  String name = " +  name +
       "\n  XobjectDef def = " +  def +

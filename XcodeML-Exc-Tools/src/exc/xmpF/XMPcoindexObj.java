@@ -30,7 +30,8 @@ public class XMPcoindexObj {
 
   // attributes
   String name;
-  Xobject obj;               // Xcode.CO_ARRAY_REF
+  Xobject obj;               // Xcode.CO_ARRAY_REF or MEMBER_REF (derived-type scalar)
+                             // or F_ARRAY_REF (derived-type array)
   Xobject subscripts;
   Xobject cosubscripts;
   int exprRank;                  // rank of the reference
@@ -67,9 +68,11 @@ public class XMPcoindexObj {
 
   private String _getName(Xobject obj) {
     switch(obj.Opcode()) {
-    case CO_ARRAY_REF:
+    case CO_ARRAY_REF:      // v[k]
       return _getName_coarray(obj);
-    case MEMBER_REF:
+    case MEMBER_REF:        // v[k]%b..%c
+      return _getName(obj.getArg(0).getArg(0));
+    case F_ARRAY_REF:       // v[k]%b..%c(i,..,j)
       return _getName(obj.getArg(0).getArg(0));
     default:
       break;
@@ -93,15 +96,44 @@ public class XMPcoindexObj {
     return null;
   }
 
-  private Xobject _getSubscripts(Xobject obj) {
-    return obj.getSubscripts();
+  private Xobject _getSubscripts(Xobject xobj) {
+    return xobj.getSubscripts();    // see XobjList
   }
 
-  private Xobject _getCosubscripts(Xobject obj) {
-    Xobject list = obj.getArg(1);
-    if (list.Opcode() != Xcode.LIST)
-      XMP.fatal("broken Xcode to describe a coindexed object");
-    return list;
+  private Xobject _getCosubscripts(Xobject xobj) {
+    Xobject xobj1, xobj2, xobj3, xobj4;
+    switch (xobj.Opcode()) {
+    case CO_ARRAY_REF:           // v[k]
+      return xobj.getArg(1);
+
+    case MEMBER_REF:             // guess v[k]%b..%c
+      xobj1 = xobj.getArg(0);
+      if (xobj1.Opcode() != Xcode.F_VAR_REF)
+        break;
+      xobj2 = xobj1.getArg(0);
+      if (xobj2.Opcode() != Xcode.CO_ARRAY_REF)
+        break;
+      return xobj2.getArg(1);
+
+    case F_ARRAY_REF:            // guess v[k]%b..%c(i,..,j)
+      xobj1 = xobj.getArg(0);
+      if (xobj1.Opcode() != Xcode.F_VAR_REF)
+        break;
+      xobj2 = xobj1.getArg(0);
+      if (xobj2.Opcode() != Xcode.MEMBER_REF)
+        break;
+      xobj3 = xobj2.getArg(0);
+      if (xobj3.Opcode() != Xcode.F_VAR_REF)
+        break;
+      xobj4 = xobj3.getArg(0);
+      if (xobj4.Opcode() != Xcode.CO_ARRAY_REF)
+        break;
+      return xobj4.getArg(1);
+
+    default:
+      break;
+    }
+    return null;
   }
 
 
@@ -196,15 +228,23 @@ public class XMPcoindexObj {
   //------------------------------
   public Xobject toFuncRef() {
     Xtype type = getType();
-    Xobject funcRef;
-    if (type.isStruct())
-      funcRef = toFuncRef_struct();
-    else
-      funcRef = toFuncRef_basic();
-    return funcRef;
+
+    switch (getType().getKind()) {
+    case Xtype.BASIC:
+    case Xtype.STRUCT:                      // scalar struct
+    case Xtype.F_ARRAY:                     // array struct
+      Xobject mold = removeCoindex();
+      return toFuncRef_core(mold);
+
+    default:
+      XMP.fatal("INTERNAL: unexpected type kind (XMPcoindexObj:toFuncRef)");
+    }
+
+    return obj;
   }
 
-  private Xobject toFuncRef_struct() {
+
+  private Xobject toFuncRef_struct___radical____() {
     // "character(len=1) :: xmpf_moldchar(0)"
     // coindexed obj a[k] -->
     //    transfer(
@@ -223,11 +263,6 @@ public class XMPcoindexObj {
     Xobject castExpr = transferId.Call(Xcons.List(funcRef, getIdent()));
 
     return castExpr;
-  }
-
-  private Xobject toFuncRef_basic() {
-    Xobject mold = getMoldObj();
-    return toFuncRef_core(mold);
   }
 
 
@@ -300,7 +335,7 @@ public class XMPcoindexObj {
       return null;
     } else {
     *************************/
-    mold = getMoldObj();
+    mold = removeCoindex();
     /**************************
     }
     *************************/
@@ -398,7 +433,7 @@ public class XMPcoindexObj {
 
   // for subroutine atrimc_define
   public Xobject makeActualArgs(Xobject src) {
-    return _makeActualArgs_type8(getMoldObj(), src);
+    return _makeActualArgs_type8(removeCoindex(), src);
   }
 
   private Xobject _makeActualArgs_type8(Xobject mold, Xobject src) {
@@ -813,9 +848,47 @@ public class XMPcoindexObj {
 
   // my mold object corresponding to the coindex object
   //
-  public Xobject getMoldObj() {
-    return obj.getArg(0).getArg(0);
+  public Xobject removeCoindex() {
+    this.obj = _removeCoindex(obj);
+    return this.obj;
   }
+
+  private Xobject _removeCoindex(Xobject obj) {
+    Xobject obj1, obj2, obj_out;
+
+    switch (obj.Opcode()) {
+    case CO_ARRAY_REF:             // v[k..] --> v
+      obj_out = obj.getArg(0).getArg(0);
+      return obj_out;
+
+    case MEMBER_REF:               // v[k..]%b..%d --> v%b..%d
+      obj1 = obj.getArg(0);
+      obj2 = obj1.getArg(0);
+      if (obj2.Opcode() != Xcode.CO_ARRAY_REF)
+        XMP.fatal("INTERNAL: unexpected Opcode " + obj2.Opcode() +
+                  " (XMPcoindexObj:removeCoindex #1)");
+      obj_out = _removeCoindex(obj2);
+      obj1.setArg(0, obj_out);
+      return obj;
+
+    case F_ARRAY_REF:             // v[k,,]%b..%d(i..) --> v%b..%d(i..)
+      obj1 = obj.getArg(0);
+      obj2 = obj1.getArg(0);
+      if (obj2.Opcode() != Xcode.MEMBER_REF)
+        XMP.fatal("INTERNAL: unexpected Opcode " + obj2.Opcode() +
+                  " (XMPcoindexObj:removeCoindex #2)");
+      obj_out = _removeCoindex(obj2);
+      obj1.setArg(0, obj_out);
+      return obj;
+
+    default:
+      break;
+    }
+
+    XMP.fatal("INTERNAL: unexpected Opcode (XMPcoindexObj:removeCoindex #3)");
+    return obj;
+  }
+
 
   public XMPenv getEnv() {
     return coarray.getEnv();

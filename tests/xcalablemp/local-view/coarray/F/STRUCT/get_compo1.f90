@@ -9,12 +9,13 @@
        integer*8 a(10)
        real*8    r(10)
        type(g0) :: s(2)
-       type(g0),pointer :: p(2)
+       type(g0),pointer :: p(:)
     end type g1
 
+    real, save :: cr1[*]
     type(g1), save :: ns1, cs1[*]
     type(g1), save :: na1(3), ca1(3)[*]
-    real*8 zz, eps
+    real*8 zz, eps, zz10(10)
     integer*8 nval
     real*8    dcal
 
@@ -22,8 +23,9 @@
 !!       zz = ns1(2)%p(1)%a(1)
 !!       zz = ns1(2)%s(1)%a(1)
 !!       zz = na1(2)%a(1)
-!!       zz = ca1(2)[3]%a(1:10)   ! segment falt
-       zz = cs1[3]%a(1:10)
+!!       zz = ca1(2)[3]%a(1:10)
+!!       zz10 = cs1[3]%a(1:10)
+!!       zz = cr1[3]
 !!!!!!!!!!!!
     me = this_image()
 

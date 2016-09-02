@@ -7,4 +7,7 @@
 
     type(g1), save ::  cs1[*]
 
+    write(*,*) xmpf_coarray_allocated_bytes()
+    write(*,*) sizeof(cs1)
+
   end program

@@ -10,13 +10,12 @@ import exc.object.*;
 import exc.block.*;
 import java.util.*;
 
-
 /*
  * Madiator for each coarray
  */
 public class XMPcoarray {
-  // debugging 
-  private final static Boolean _DBGPRINT_ALIGN_ON = false;    // true or false
+  // DEBUG
+  private final static Boolean _DEBUG_ALIGN_ON = false;    // true or false
 
   // name of property 
   private final static String XMP_COARRAY_NODES_PROP = "XMP_COARRAY_NODES_PROP";
@@ -73,8 +72,8 @@ public class XMPcoarray {
   /**************************
       debugging tools
    ***************************/
-  private void _DBGPRINT_ALIGN(String str) {
-    if (_DBGPRINT_ALIGN_ON)
+  private void _DEBUG_ALIGN(String str) {
+    if (_DEBUG_ALIGN_ON)
       System.out.println(str);
   }
 
@@ -676,11 +675,13 @@ public class XMPcoarray {
    *    ----------------------------------
    */
   private int _getPointerComponentLength_atmost(Xtype type) {
-    int rank;
+    int rank, length;
     rank = getRank(type);
     if (rank == 0)
-      return 8;
-    return 24 * rank + 24;
+      length = 8;
+    else
+      length = 24 * rank + 24;
+    return length;
   }
 
   /* These values are desided to match gfortran. If they do not match other
@@ -702,9 +703,9 @@ public class XMPcoarray {
       return size * elemLen;
 
     case Xtype.STRUCT:
-      _DBGPRINT_ALIGN("Into DerivedType " + type);
+      _DEBUG_ALIGN("Into DerivedType " + type);
       int length = _getStructLength_atmost(type);
-      _DBGPRINT_ALIGN("Out of DerivedType " + type);
+      _DEBUG_ALIGN("Out of DerivedType " + type);
       return length;
 
     case Xtype.UNION:
@@ -739,14 +740,20 @@ public class XMPcoarray {
       if (type1.isFpointer()) {
         elemLen1 = _getPointerComponentLength_atmost(type1);
         numElems1 = 1;
+        _DEBUG_ALIGN("  pointer member:" + member +
+                     ", length=" + elemLen1);
       } else if (type1.isFallocatable()) {
         elemLen1 = _getAllocatableComponentLength_atmost(type1);
         numElems1 = 1;
+        _DEBUG_ALIGN("  allocatable member:" + member +
+                     ", length=" + elemLen1);
       } else {
         elemLen1 = _getElementLength_atmost(type1);
         numElems1 = _getNumElements(type1, getFblock());
+        _DEBUG_ALIGN("  static member:" + member +
+                     ", element length=" + elemLen1 +
+                     ", num elements=" + numElems1);
       }
-      _DBGPRINT_ALIGN("  member:" + member + ", element length="+elemLen1+", num elements="+numElems1);
 
       // get boundary length for the member
       int boundary1;
@@ -762,12 +769,12 @@ public class XMPcoarray {
       // alignment for the member (round up)
       if (currentPos % boundary1 != 0) {
         currentPos = (currentPos/boundary1 + 1) * boundary1;
-        _DBGPRINT_ALIGN("  skip for alignment upto "+ currentPos);
+        _DEBUG_ALIGN("  skip for alignment upto "+ currentPos);
       }
 
-      // proceeds current position
+      // proceed current position
       currentPos += elemLen1 * numElems1;
-      _DBGPRINT_ALIGN("  proceeds upto "+ currentPos);
+      _DEBUG_ALIGN("  proceed upto "+ currentPos);
 
       if (largestBoundary < boundary1)
         largestBoundary = boundary1;
@@ -777,7 +784,7 @@ public class XMPcoarray {
     if (currentPos % largestBoundary != 0) {
       currentPos = (currentPos/largestBoundary + 1) * largestBoundary;
     }
-    _DBGPRINT_ALIGN("  finally proceeds upto "+ currentPos);
+    _DEBUG_ALIGN("  finally proceed upto "+ currentPos);
 
     return currentPos;
   }
@@ -901,7 +908,7 @@ public class XMPcoarray {
   private int getRank(Xtype ftype) {
     if (ftype.getKind() == Xtype.F_ARRAY)
       return ftype.getNumDimensions();
-    return 1;
+    return 0;
   }
 
   public Xobject[] getShape() {
