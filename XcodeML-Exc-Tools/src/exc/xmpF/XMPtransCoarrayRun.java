@@ -1715,7 +1715,7 @@ public class XMPtransCoarrayRun
   private Boolean _isCoindexVarStmt(Xobject xobj) {
     if (xobj.Opcode() == Xcode.F_ASSIGN_STATEMENT) {
       Xobject lhs = xobj.getArg(0);
-      if (lhs.Opcode() == Xcode.CO_ARRAY_REF)
+      if (_isCoindexObj(lhs))
         return true;
     }
     return false;
@@ -1779,9 +1779,8 @@ public class XMPtransCoarrayRun
       if (xobj == null)
         continue;
 
-      if (xobj.Opcode() == Xcode.CO_ARRAY_REF) {
+      if (_isCoindexObj(xobj)) {
         Xobject parent = (Xobject)xobj.getParent();
-
         if (parent.Opcode() == Xcode.F_ASSIGN_STATEMENT &&
             parent.getArg(0) == xobj)
           // found a coindexed variable, which is LHS of an assignment stmt.
@@ -1810,6 +1809,25 @@ public class XMPtransCoarrayRun
     return coindexObj.toFuncRef();
   }
 
+
+  private Boolean _isCoindexObj(Xobject xobj) {
+    if (xobj.Opcode() == null)
+      return false;
+
+    switch (xobj.Opcode()) {
+    case CO_ARRAY_REF:          // ex. a(i,j)[k], assuming top-down search
+      return true;
+    case MEMBER_REF:            // ex. a(i,j)[k]%b%c
+      if (xobj.getArg(0).Opcode() != Xcode.F_VAR_REF)
+        XMP.fatal("INTERNAL: unexpected Opcode arg(0) of MEMBER_REF xobject");
+      if (_isCoindexObj(xobj.getArg(0).getArg(0)))
+        return true;
+      break;
+    default:
+      break;
+    }
+    return false;
+  }
 
   //-----------------------------------------------------
   //  TRANSLATION b.

@@ -625,13 +625,14 @@ public class XMPcoarray {
   }
 
   public Xobject getElementLengthExpr() {
-    return getElementLengthExpr(fblock);
-  }
-  public Xobject getElementLengthExpr(Block block) {
     ////// SELECTIVE
-    //Xobject lengthExpr = _getElementLengthExpr_runtime(block);
-    Xobject lengthExpr = _getElementLengthExpr_atmost(block);
-    return lengthExpr;
+    return getElementLengthExpr(true);   // statically
+  }
+  public Xobject getElementLengthExpr(Boolean staticEvaluation) {
+    if (staticEvaluation)
+      return _getElementLengthExpr_atmost();
+    else
+      return _getElementLengthExpr_runtime();
   }
 
 
@@ -639,29 +640,72 @@ public class XMPcoarray {
    *  This result will be equal to or greater than the size that 
    *  the backend compiler will deside.
    */
-  private Xobject _getElementLengthExpr_atmost(Block block) {
-    int length = _getElementLength_atmost(ident.Type(), block);
+  private Xobject _getElementLengthExpr_atmost() {
+    int length = _getElementLength_atmost(ident.Type());
     return Xcons.IntConstant(length);
   }
 
-  private int _getElementLength_atmost(Xtype type, Block block) {
-    int length = 0;
+  private int _getElementLength_atmost(Xtype type) {
+    switch (type.getKind()) {
+    case Xtype.F_ARRAY:
+      Xtype baseType = type.getBaseRefType();        // type BASIC or STRUCT
+      return _getLength_atmost(baseType);
 
+    default:
+      break;
+    }
+    return _getLength_atmost(type);
+  }
+
+  private int _getLength_atmost(Xtype type) {
+    if (type.isFpointer())
+      return _getPointerComponentLength_atmost(type);
+    else if (type.isFallocatable())
+      return _getAllocatableComponentLength_atmost(type);
+
+    // otherwize
+    return _getStaticDataLength_atmost(type);
+  }
+
+
+  /* These values are desided to match gfortran. If they do not match other
+   * Fortran compilers, it should be modified.
+   *    ----------------------------------
+   *       p  p(:) p(:,:) p(:,:,:) ...
+   *       8   48    72      96    ...
+   *    ----------------------------------
+   */
+  private int _getPointerComponentLength_atmost(Xtype type) {
+    int rank;
+    rank = getRank(type);
+    if (rank == 0)
+      return 8;
+    return 24 * rank + 24;
+  }
+
+  /* These values are desided to match gfortran. If they do not match other
+   * Fortran compilers, it should be modified.
+   */
+  private int _getAllocatableComponentLength_atmost(Xtype type) {
+    return _getPointerComponentLength_atmost(type);
+  }
+
+  private int _getStaticDataLength_atmost(Xtype type) {
     switch (type.getKind()) {
     case Xtype.BASIC:
-      length = type.getElementLength(block);    // see BasicType.java
-      break;
+      return type.getElementLength(getFblock());    // see BasicType.java
 
     case Xtype.F_ARRAY:
-      Xtype baseType = type.getBaseRefType();       // type of the array element
-      length = _getElementLength_atmost(baseType, block);
-      break;
+      Xtype baseType = type.getBaseRefType();       // type BASIC or STRUCT
+      int elemLen = _getElementLength_atmost(baseType);
+      int size = getTotalArraySize(type);
+      return size * elemLen;
 
     case Xtype.STRUCT:
       _DBGPRINT_ALIGN("Into DerivedType " + type);
-      length = _getDerivedTypeLength_atmost(type, block);
+      int length = _getStructLength_atmost(type);
       _DBGPRINT_ALIGN("Out of DerivedType " + type);
-      break;
+      return length;
 
     case Xtype.UNION:
     case Xtype.FUNCTION:
@@ -671,42 +715,49 @@ public class XMPcoarray {
       break;
     }
 
-    return length;
+    return 0;   // illegal
   }
+
 
   private int _getNumElements(Xtype type, Block block) {
     int size;
-    if (type.getKind() == Xtype.F_ARRAY) {
-      Xobject sizeExpr = type.getTotalArraySizeExpr(block);
-      if (sizeExpr == null || !sizeExpr.isIntConstant()) {
-        XMP.error("current restriction: " +
-                  "cannot evaluate numerically the number of array elements");
-        return 0;
-      }
-      size = sizeExpr.getInt();
-    } else {
+    if (type.getKind() == Xtype.F_ARRAY)
+      size = getTotalArraySize(type);
+    else
       size = 1;
-    }
 
     return size;
   }
     
 
-  private int _getDerivedTypeLength_atmost(Xtype type, Block block) {
+  private int _getStructLength_atmost(Xtype type) {
     int currentPos = 0;
     int largestBoundary = 1;
     for (Xobject member: type.getMemberList()) {
       Xtype type1 = member.Type();
-      int elemLen1 = _getElementLength_atmost(type1, block);
-      int numElems1 = _getNumElements(type1, block);
+      int elemLen1, numElems1;
+      if (type1.isFpointer()) {
+        elemLen1 = _getPointerComponentLength_atmost(type1);
+        numElems1 = 1;
+      } else if (type1.isFallocatable()) {
+        elemLen1 = _getAllocatableComponentLength_atmost(type1);
+        numElems1 = 1;
+      } else {
+        elemLen1 = _getElementLength_atmost(type1);
+        numElems1 = _getNumElements(type1, getFblock());
+      }
       _DBGPRINT_ALIGN("  member:" + member + ", element length="+elemLen1+", num elements="+numElems1);
 
       // get boundary length for the member
       int boundary1;
-      if (type1.getKind() == Xtype.STRUCT)
-        boundary1 = 8;      // at most
+      if (elemLen1 > 4)
+        boundary1 = 8;
+      else if (elemLen1 > 2)
+        boundary1 = 4;
+      else if (elemLen1 > 1)
+        boundary1 = 2;
       else
-        boundary1 = elemLen1;
+        boundary1 = 1;
 
       // alignment for the member (round up)
       if (currentPos % boundary1 != 0) {
@@ -735,8 +786,8 @@ public class XMPcoarray {
   /* build an expression for the size of the data element that
    * can be evaluated at runtime
    */
-  private Xobject _getElementLengthExpr_runtime(Block block) {
-    Xobject lengthExpr = ident.Type().getElementLengthExpr(block);    // see BasicType.java
+  private Xobject _getElementLengthExpr_runtime() {
+    Xobject lengthExpr = ident.Type().getElementLengthExpr(getFblock());    // see BasicType.java
     if (lengthExpr != null)
       return lengthExpr;
 
@@ -795,21 +846,46 @@ public class XMPcoarray {
 
 
   public int getTotalArraySize() {
-    Xobject size = getTotalArraySizeExpr();
-    if (!size.isIntConstant()) {
+    return getTotalArraySize(getIndexRange());
+  }
+
+  public int getTotalArraySize(Xtype type) {
+    if (type.getKind() != Xtype.F_ARRAY)
+      XMP.fatal("INTERNAL ERROR: FarrayType expected here");
+    Xobject[] shape = getShape((FarrayType)type);
+    FindexRange findexRange = new FindexRange(shape, getFblock(), getEnv());
+    return getTotalArraySize(findexRange);
+  }
+
+  public int getTotalArraySize(FindexRange findexRange) {
+    Xobject sizeExpr = getTotalArraySizeExpr(findexRange);
+    if (!sizeExpr.isIntConstant()) {
       XMP.error("current restriction: " +
                 "cannot numerically evaluate the total size of: "+name);
       return 0;
     }
-    return size.getInt();
+    return sizeExpr.getInt();
   }
 
   public Xobject getTotalArraySizeExpr() {
-    Xobject size = getIndexRange().getTotalArraySizeExpr();
-    if (size == null)
+    FindexRange findexRange = getIndexRange();
+    return getTotalArraySizeExpr(findexRange);
+  }
+
+  public Xobject getTotalArraySizeExpr(Xtype type) {
+    if (type.getKind() != Xtype.F_ARRAY)
+      XMP.fatal("INTERNAL ERROR: FarrayType expected here");
+    Xobject[] shape = getShape((FarrayType)type);
+    FindexRange findexRange = new FindexRange(shape, getFblock(), getEnv());
+    return getTotalArraySizeExpr(findexRange);
+  }
+
+  public Xobject getTotalArraySizeExpr(FindexRange findexRange) {
+    Xobject sizeExpr = findexRange.getTotalArraySizeExpr();
+    if (sizeExpr == null)
       XMP.error("current restriction: " +
                 "cannot find the total size of: "+name);
-    return size;
+    return sizeExpr;
   }
 
 
@@ -822,6 +898,12 @@ public class XMPcoarray {
     return ident.Type().getNumDimensions();
   }
 
+  private int getRank(Xtype ftype) {
+    if (ftype.getKind() == Xtype.F_ARRAY)
+      return ftype.getNumDimensions();
+    return 1;
+  }
+
   public Xobject[] getShape() {
     if (getRank() == 0)
       return new Xobject[0];
@@ -830,6 +912,10 @@ public class XMPcoarray {
     return ftype.getFarraySizeExpr();
   }
 
+  private Xobject[] getShape(FarrayType ftype) {
+    return ftype.getFarraySizeExpr();
+  }
+    
 
   public Xobject getLboundStatic(int i) {
     if (isExplicitShape()) {
@@ -1252,14 +1338,23 @@ public class XMPcoarray {
   }
 
   public void resetAllocatable() {
+    /**
+     * Since TypeQualFlag TQ_FALLOCATABLE may duplicately be set
+     * in a type and its children, e.g., in type (of F_ARRAY) and
+     * in type.getRef() (of STRUCT).  In order to reset such a 
+     * flag, recursive operation is necessary.
+     */
     for (Xtype type = ident.Type(); type != null; ) {
       type.setIsFallocatable(false);
-      if (type.copied != null)
+      if (type.copied != null) {
         type = type.copied;
-      else if (type.isBasic())
+        continue;
+      }
+      if (type.isBasic())
         break;
-      else
-        type = type.getRef();
+      else if (type.isStruct())
+        break;
+      type = type.getRef();
     }
   }
 

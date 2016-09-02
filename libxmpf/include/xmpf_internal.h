@@ -292,3 +292,7 @@ extern void _XMP_coarray_shortcut_get(const int, void*, const void*, const long,
 //extern void _XMP_coarray_shortcut_get_f(const int*, void*, const void*, const long*, const long*, const long*, const long*);
 
 
+/* xmpf_coarray.c */
+extern void _XMPF_coarray_init(void); 
+extern void _XMPF_coarray_finalize(void); 
+

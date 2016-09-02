@@ -66,15 +66,31 @@ public class XMPcoindexObj {
   }
 
   private String _getName(Xobject obj) {
-    assert (obj.Opcode() == Xcode.CO_ARRAY_REF);
+    switch(obj.Opcode()) {
+    case CO_ARRAY_REF:
+      return _getName_coarray(obj);
+    case MEMBER_REF:
+      return _getName(obj.getArg(0).getArg(0));
+    default:
+      break;
+    }
+    XMP.fatal("INTERNAL: unexpected form of coindexed object: " +
+              obj);
+    return null;
+  }
+
+  private String _getName_coarray(Xobject obj) {
     Xobject varRef = obj.getArg(0).getArg(0);
-    if (varRef.Opcode() == Xcode.F_ARRAY_REF)        // subarray
-      name = varRef.getArg(0).getArg(0).getName();
-    else if (varRef.Opcode() == Xcode.VAR)    // scalar or whole array
-      name = varRef.getName();
-    else
-      XMP.fatal("broken Xcode to describe a coindexed object");
-    return name;
+    switch (varRef.Opcode()) {
+    case F_ARRAY_REF:                     // subarray
+      return varRef.getArg(0).getArg(0).getName();
+    case VAR:                      // scalar or whole array
+      return varRef.getName();
+    default:
+      break;
+    }
+    XMP.fatal("broken Xcode to describe a coindexed object");
+    return null;
   }
 
   private Xobject _getSubscripts(Xobject obj) {
@@ -189,6 +205,13 @@ public class XMPcoindexObj {
   }
 
   private Xobject toFuncRef_struct() {
+    // "character(len=1) :: xmpf_moldchar(0)"
+    // coindexed obj a[k] -->
+    //    transfer(
+    //      xmpf_coarray_get0d_any(
+    //        DP_a, k, transfer(a, xmpf_moldchar))
+    //      
+
     // transfer(get_as_string, obj)
 
     // call runtime as character(len=1), dimension(sizeof(obj))
@@ -271,12 +294,16 @@ public class XMPcoindexObj {
     Xobject subrStmt;
     Xobject mold;
 
+    /*************************
     if (type.isStruct()) {
       XMP.fatal("Not supported type of coarray: " + getName());
       return null;
     } else {
-      mold = getMoldObj();
+    *************************/
+    mold = getMoldObj();
+    /**************************
     }
+    *************************/
 
     switch (PutInterfaceType) {
     case 8:
@@ -723,9 +750,9 @@ public class XMPcoindexObj {
     return coarray.getElementLengthExpr();
   }
 
-  public Xobject getElementLengthExpr(Block block) {
-    return coarray.getElementLengthExpr(block);
-  }
+  //  public Xobject getElementLengthExpr(Block block) {
+  //    return coarray.getElementLengthExpr(block);
+  //  }
 
   public int getTotalArraySize() {
     return getTotalArraySize(getBlock());
