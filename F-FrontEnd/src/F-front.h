@@ -727,6 +727,9 @@ extern int      expr_list_length _ANSI_ARGS_((expr x));
 extern expr     list_cons _ANSI_ARGS_((expr v, expr w));
 extern expr     list_put_last _ANSI_ARGS_((expr lx, expr x));
 extern expr     list_delete_item _ANSI_ARGS_((expr lx, expr x));
+extern expr     list_concat _ANSI_ARGS_((expr lx, expr ly));
+extern expr     list_last _ANSI_ARGS_((expr lx));
+extern expr     list_replace_last _ANSI_ARGS_((expr lx, expr x));
 
 extern void     delete_list _ANSI_ARGS_((expr lx));
 

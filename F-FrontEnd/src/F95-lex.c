@@ -3799,6 +3799,7 @@ struct keyword_token keywords[ ] =
     { "data",           DATA },
     { "deallocate",     DEALLOCATE},
     { "default",        KW_DEFAULT},
+    { "deferred",       DEFERRED},       /* F2003 spec */
     { "dimension",      DIMENSION  },
     { "doublecomplex",  KW_DCOMPLEX },
     { "doubleprecision",  KW_DOUBLE  },
@@ -3836,6 +3837,7 @@ struct keyword_token keywords[ ] =
     { "format",         FORMAT  },
     { "function",       FUNCTION  },
     { "forall",         FORALL },
+    { "generic",        GENERIC },       /* F2003 spec */
     { "goto",           GOTO  },
     { "go",             KW_GO  },
     { "if",             LOGIF },
@@ -3859,7 +3861,9 @@ struct keyword_token keywords[ ] =
     { "module",         MODULE},
     { "namelist",       NAMELIST },
     { "name",           KW_NAME },
+    { "non_overridable",NON_OVERRIDABLE }, /* F2003 spec */
     { "none",           KW_NONE},
+    { "nopass",         NOPASS  },       /* F2003 spec */
     { "nullify",        NULLIFY},
     { "open",           OPEN },
     { "operator",       OPERATOR },
@@ -3868,6 +3872,7 @@ struct keyword_token keywords[ ] =
     { "only",           KW_ONLY},
     { "parameter",      PARAMETER },
     { "pause",          PAUSE  },
+    { "pass",           PASS  },         /* F2003 spec */
     { "pointer",        POINTER },
     { "volatile",       VOLATILE },
     { "precision",      KW_PRECISION},
