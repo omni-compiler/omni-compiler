@@ -85,6 +85,9 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' | sort | x
     if test -f ${f}.options; then
         fOpts=`cat ${f}.options`
     fi
+    if test -f ${f}.native.options; then
+        additionalNativeOpts=`cat ${f}.native.options`
+    fi
     ${frontend} ${frontendOpt} ${F_FRONT_TEST_OPTS} ${fOpts} -I ${testdata} ${f} \
         -o ${xmlOut} > ${errOut} 2>&1
     if test $? -eq 0; then
@@ -97,7 +100,7 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' | sort | x
                 if test ! -z ${expectedOut} && test -e ${expectedOut}; then
 
                     if test `nm ${binOut} | awk '{print $3}' | grep -c main 2>&1` -gt 0; then
-                        ${nativecomp} -o ${executableOut} ${binOut} 2>> ${errOut}
+                        ${nativecomp} ${additionalNativeOpts} -o ${executableOut} ${binOut} 2>> ${errOut}
 
                         if test $? -eq 0; then
                             ./${executableOut} > ${executeResult} 2>> ${errOut}
