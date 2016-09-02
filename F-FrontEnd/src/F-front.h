@@ -848,7 +848,8 @@ extern void                    shrink_type(TYPE_DESC tp);
 extern TYPE_DESC               reduce_type(TYPE_DESC tp);
 
 extern int is_array_shape_assumed(TYPE_DESC tp);
-extern int is_descendant_coindexed(TYPE_DESC tp);
+//extern int is_descendant_coindexed(TYPE_DESC tp);
+extern int has_coarray_component(TYPE_DESC tp);
 
 extern void     checkTypeRef(ID id);
 

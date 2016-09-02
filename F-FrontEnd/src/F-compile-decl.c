@@ -1570,11 +1570,11 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             break;
 	case XMP_CODIMENSION_SPEC:
 	  if (ignoreDims) break;
-	  if (is_descendant_coindexed(tp)){
-	    error_at_node(EXPR_ARG1(v), "The derived-type of the coindexed "
-                          "object cannot have a coindexed member.");
-	    return NULL;
-	  }
+	  /* if (is_descendant_coindexed(tp)){ */
+	  /*   error_at_node(EXPR_ARG1(v), "The derived-type of the coindexed " */
+          /*                 "object cannot have a coindexed member."); */
+	  /*   return NULL; */
+	  /* } */
 
 	  codims_desc *codesc = compile_codimensions(EXPR_ARG1(v),
 						     TYPE_IS_ALLOCATABLE(tp));
@@ -2864,12 +2864,12 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 return;
             }
             tp0 = find_struct_decl(EXPR_SYM(typeExpr));
-            if (tp0 == NULL) {
+            if (tp0 == NULL || !TYPE_IS_DECLARED(tp0)) {
                 if(hasPointerAttr) {
-                    tp0 = declare_struct_type_wo_component(typeExpr);
-                    if (tp0 == NULL) {
-                        return;
-                    }
+		  if (!tp0) tp0 = declare_struct_type_wo_component(typeExpr);
+		  if (tp0 == NULL) {
+		    return;
+		  }
                 } else {
                     error_at_node(typeExpr, "type %s not found",
                                   SYM_NAME(EXPR_SYM(typeExpr)));
@@ -3053,10 +3053,10 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                 return;
             }
 
-            if (is_descendant_coindexed(tp)){
-                error_at_node(codims, "The codimension attribute cannnot be nested.");
-                return;
-            }
+            /* if (is_descendant_coindexed(tp)){ */
+            /*     error_at_node(codims, "The codimension attribute cannnot be nested."); */
+            /*     return; */
+            /* } */
 
             codims_desc *codesc = compile_codimensions(codims,
                                                        TYPE_IS_ALLOCATABLE(tp));
@@ -3068,6 +3068,17 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             }
         }
 
+	TYPE_DESC tp1 = IS_ARRAY_TYPE(tp) ? bottom_type(tp) : tp;
+	if (has_coarray_component(tp1)){
+	  if (TYPE_IS_POINTER(tp1) || TYPE_IS_ALLOCATABLE(tp1) || IS_ARRAY_TYPE(tp) ||
+	      TYPE_IS_COINDEXED(tp1)){
+	    error_at_node(decl_list, "An entity or data component whose type has a coarray"
+			  " ultimate component shall be a nonpointer nonallocatable scalar"
+			  " and shall not be a coarray.");
+	    return;
+	  }
+	}
+	
         if (id != NULL) {
              declare_id_type(id, tp);
              if (!ID_LINE(id)) ID_LINE(id) = EXPR_LINE(decl_list);
@@ -3207,7 +3218,7 @@ compile_struct_decl(expr ident, expr type)
     if(EXPR_CODE(ident) != IDENT)
         fatal("compile_struct_decl: not IDENT");
     tp = declare_struct_type(ident);
-    TYPE_IS_DECLARED(tp) = TRUE;
+    //TYPE_IS_DECLARED(tp) = TRUE;
     v = list0(F95_TYPEDECL_STATEMENT);
     EXPV_TYPE(v) = tp;
 
@@ -3291,6 +3302,8 @@ compile_struct_decl_end()
     if (endlineno_flag)
       EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
+    TYPE_IS_DECLARED(EXPV_TYPE(CTL_BLOCK(ctl_top))) = TRUE;
+    
     pop_ctl();
 }
 
