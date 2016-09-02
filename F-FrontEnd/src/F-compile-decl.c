@@ -2848,16 +2848,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
     if (typeExpr != NULL) {
         if (EXPR_CODE(typeExpr) == IDENT) {
             ID id = find_ident_local(EXPR_SYM(typeExpr));
-            if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
-                /*
-                 * member of SEQUENCE struct must be SEQUENCE.
-                 */
-                if (TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
-                   TYPE_IS_SEQUENCE(tp0) == FALSE) {
-                    error_at_node(typeExpr, "type %s does not have SEQUENCE attribute.",
-                                  SYM_NAME(EXPR_SYM(typeExpr)));
-                }
-            }
             id = find_ident_local(EXPR_SYM(typeExpr));
             if (id != NULL && ID_IS_AMBIGUOUS(id)) {
                 error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
@@ -2874,6 +2864,16 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                     error_at_node(typeExpr, "type %s not found",
                                   SYM_NAME(EXPR_SYM(typeExpr)));
                     return;
+                }
+            }
+            if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
+                /*
+                 * member of SEQUENCE struct must be SEQUENCE.
+                 */
+                if (TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
+                   TYPE_IS_SEQUENCE(tp0) == FALSE) {
+                    error_at_node(typeExpr, "type %s does not have SEQUENCE attribute.",
+                                  SYM_NAME(EXPR_SYM(typeExpr)));
                 }
             }
         } else {
