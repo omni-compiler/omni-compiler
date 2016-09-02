@@ -4350,6 +4350,16 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
             writer.writeToken("TYPE");
 
+            String parentTypeId = XmDomUtil.getAttr(structTypeNode, "extends");
+            if (parentTypeId != null) {
+                String typeName = typeManager.getAliasTypeName(parentTypeId);
+                writer.writeToken(",");
+                writer.writeToken("EXTENDS");
+                writer.writeToken("(");
+                writer.writeToken(typeName);
+                writer.writeToken(")");
+            }
+
             if (_isUnderModuleDef()) {
                 if (XmDomUtil.getAttrBool(structTypeNode, "is_private")) {
                     writer.writeToken(", PRIVATE");
@@ -5358,11 +5368,7 @@ public class XfDecompileDomVisitor {
             } else {
                 _context.debugPrintLine("Write symbol.");
                 for (Node idNode : idNodes) {
-                    String typeName;
-
-                    //printNode(System.err, idNode);
-
-                    typeName = XmDomUtil.getAttr(idNode, "type");
+                    String typeName = XmDomUtil.getAttr(idNode, "type");
 
                     Node nameNode = XmDomUtil.getElement(idNode, "name");
                     if (typeName == null) {

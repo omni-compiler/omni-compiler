@@ -74,6 +74,12 @@ public class Bcons
             return new CompoundBlock(Xcode.F_STATEMENT_LIST, b_list);
     }
 
+    /** create compound statement (or statement list, block statement) block */
+    public static Block COMPOUND(BlockList b_list, Xcode code)
+    {
+        return new CompoundBlock(code, b_list);
+    }
+
     /** create 'pragma' statement block */
     public static Block PRAGMA(Xcode code, String pragma, Xobject args, BlockList body)
     {
@@ -309,7 +315,7 @@ public class Bcons
     /** create FuctionBlock for XobjectDef */
     public static FunctionBlock buildFunctionBlock(XobjectDef d)
     {
-	return new FunctionBlock(d.getDef().Opcode(),d.getNameObj(),
+	return new FunctionBlock(d.getDef().getLineNo(),d.getDef().Opcode(),d.getNameObj(),
 				 d.getFuncIdList(), d.getFuncDecls(),
 				 buildBlock(d.getFuncBody()), 
 				 d.getFuncGccAttributes(), d.getParentEnv());
@@ -322,10 +328,18 @@ public class Bcons
         BlockList b_list = new BlockList();
         if(v == null)
             return b_list;
+        b_list.code = v.Opcode();
         
         switch(v.Opcode()) {
         case LIST: /* (LIST statement ....) */
         case F_STATEMENT_LIST: /* (F_STATEMENT_LIST statement ....) */
+            break;
+        case F_BLOCK_STATEMENT:
+            /* (F_BLOCK_STATEMENT id-list decl statement-list) */
+            b_list.block_name = (XobjString)v.getArg(0);
+            b_list.id_list = v.getArg(1);
+            b_list.decls = v.getArg(2);
+            v = v.getArg(3);
             break;
         case COMPOUND_STATEMENT:
             /* (COMPOUND_STATEMENT id-list decl statement-list) */
@@ -406,7 +420,10 @@ public class Bcons
 
         case F_STATEMENT_LIST:
         case COMPOUND_STATEMENT:
-            return COMPOUND(buildList(v));
+        case F_BLOCK_STATEMENT:
+            CompoundBlock cb = (CompoundBlock)COMPOUND(buildList(v), code);
+            cb.setLineNo(v.getLineNo());
+            return cb;
             
         case OMP_PRAGMA:
             return PRAGMA(Xcode.OMP_PRAGMA, v.getArg(0).getString(), v.getArgOrNull(1),

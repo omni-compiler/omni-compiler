@@ -270,7 +270,7 @@ public enum Xcode
      // added for coarray
     F_CO_SHAPE                      ( 197, 'L', null, null),         // ID=060
      // -----------------
-     // Fortran2008: Statement, etc.
+     // Fortran2008: SYNCXX, CRITICAL, LOCK.
     F_SYNCALL_STATEMENT             ( 198, 'S', null, null),
     F_SYNCIMAGE_STATEMENT           ( 199, 'S', null, null),
     F_SYNCMEMORY_STATEMENT          ( 200, 'S', null, null),
@@ -286,6 +286,8 @@ public enum Xcode
     CPP_THIS_EXPR                   ( 208, 'L', null, null),
     ID                              ( 209, 'T', null, null),
     CPP_NESTEDNAMESPECIFIER_TYPESPEC( 210, 'L', null, null),
+     // Fortran2008: BLOCK, VOLATILE.
+    F_BLOCK_STATEMENT               ( 211, 'L', null, null),
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),
@@ -499,6 +501,7 @@ public enum Xcode
         case F_SYNCALL_STATEMENT:           case F_SYNCIMAGE_STATEMENT:
         case F_SYNCMEMORY_STATEMENT:        case F_CRITICAL_STATEMENT:
         case F_LOCK_STATEMENT:              case F_UNLOCK_STATEMENT:
+        case F_BLOCK_STATEMENT:
             return true;
         }
         return false;

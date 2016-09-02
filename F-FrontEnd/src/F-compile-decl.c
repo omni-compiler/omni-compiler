@@ -174,11 +174,13 @@ declare_procedure(enum name_class class,
             fprintf(diag_file,"  BLOCK DATA %s:\n",name ? SYM_NAME(s): "");
         CURRENT_EXT_ID = declare_external_id(find_symbol(
             name ? SYM_NAME(s): "no__name__blkdata__"), STG_COMMON, TRUE);
-        EXT_IS_BLANK_NAME(CURRENT_EXT_ID) = (name ? TRUE : FALSE);
-        if(name) {
-            id = declare_ident(s,CL_BLOCK);
-            ID_LINE(id) = EXPR_LINE(name); /* set line_no */
-            EXT_LINE(CURRENT_EXT_ID) = EXPR_LINE(name); /* set line_no */
+        if (CURRENT_EXT_ID) {
+            EXT_IS_BLANK_NAME(CURRENT_EXT_ID) = (name ? FALSE : TRUE);
+            if(name) {
+                id = declare_ident(s,CL_BLOCK);
+                ID_LINE(id) = EXPR_LINE(name); /* set line_no */
+                EXT_LINE(CURRENT_EXT_ID) = EXPR_LINE(name); /* set line_no */
+            }
         }
         break;
 
@@ -990,6 +992,14 @@ declare_external_id(SYMBOL s, enum storage_class tag, int def_flag)
     last_ep = NULL;
     for (ep = EXTERNAL_SYMBOLS; ep != NULL; ep = EXT_NEXT(ep)){
         if (EXT_SYM(ep) == s) {
+            if (tag == STG_COMMON && EXT_TAG(ep) == tag){
+                if (strcmp(SYM_NAME(s), "no__name__blkdata__")) {
+                    error("block data '%s' is already defined.",SYM_NAME(s));
+                } else {
+                    error("unnamed block data is already defined.");
+                }
+                return NULL;
+            }
             break; /* found */
         }
         last_ep = ep;
@@ -1660,11 +1670,13 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             TYPE_UNSET_PUBLIC(tp);
             TYPE_UNSET_PRIVATE(tp);
             TYPE_SET_PROTECTED(tp);
+#if 0
             if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
-                TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
+              //TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
                 //TYPE_SET_INTERNAL_PRIVATE(struct_tp);
                 // TODO PROTECTED
             }
+#endif
             break;
         case F03_VOLATILE_SPEC:
             TYPE_SET_VOLATILE(tp);
@@ -2836,7 +2848,18 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
     if (typeExpr != NULL) {
         if (EXPR_CODE(typeExpr) == IDENT) {
             ID id = find_ident_local(EXPR_SYM(typeExpr));
-            if(id != NULL && ID_IS_AMBIGUOUS(id)) {
+            if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
+                /*
+                 * member of SEQUENCE struct must be SEQUENCE.
+                 */
+                if (TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
+                   TYPE_IS_SEQUENCE(tp0) == FALSE) {
+                    error_at_node(typeExpr, "type %s does not have SEQUENCE attribute.",
+                                  SYM_NAME(EXPR_SYM(typeExpr)));
+                }
+            }
+            id = find_ident_local(EXPR_SYM(typeExpr));
+            if (id != NULL && ID_IS_AMBIGUOUS(id)) {
                 error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
                 return;
             }
@@ -2851,16 +2874,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                     error_at_node(typeExpr, "type %s not found",
                                   SYM_NAME(EXPR_SYM(typeExpr)));
                     return;
-                }
-            }
-            if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
-                /*
-                 * member of SEQUENCE struct must be SEQUENCE.
-                 */
-                if(TYPE_IS_SEQUENCE(CTL_STRUCT_TYPEDESC(ctl_top)) &&
-                   TYPE_IS_SEQUENCE(tp0) == FALSE) {
-                    error_at_node(typeExpr, "type %s does not have SEQUENCE attribute.",
-                                  SYM_NAME(EXPR_SYM(typeExpr)));
                 }
             }
         } else {
@@ -2890,6 +2903,15 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         }
 
         if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
+            TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
+            if (TYPE_PARENT(struct_tp) &&
+                (ID_SYM(TYPE_PARENT(struct_tp)) == EXPR_SYM(ident) ||
+                 find_struct_member(TYPE_PARENT_TYPE(struct_tp),
+                                    EXPR_SYM(ident)))) {
+                error_at_node(typeExpr,
+                              "component %s already exists in the parent type.",
+                              SYM_NAME(EXPR_SYM(ident)));
+            }
             id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
         } else {
             id = find_ident_local(EXPR_SYM(ident));
@@ -3176,6 +3198,9 @@ compile_struct_decl(expr ident, expr type)
 {
     TYPE_DESC tp;
     expv v;
+    list lp;
+    int has_access_spec = FALSE;
+    int has_extends_spec = FALSE;
 
     if(ident == NULL)
         fatal("compile_struct_decl: F95 derived type name is NULL");
@@ -3186,25 +3211,67 @@ compile_struct_decl(expr ident, expr type)
     v = list0(F95_TYPEDECL_STATEMENT);
     EXPV_TYPE(v) = tp;
 
-    if (type != NULL) {
-        switch(EXPR_CODE(type)) {
-        case F95_PUBLIC_SPEC:
-            TYPE_SET_PUBLIC(tp);
-            TYPE_UNSET_PRIVATE(tp);
-            TYPE_UNSET_PROTECTED(tp);
-            break;
-        case F95_PRIVATE_SPEC:
-            TYPE_SET_PRIVATE(tp);
-            TYPE_UNSET_PUBLIC(tp);
-            TYPE_UNSET_PROTECTED(tp);
-            break;
-        case F03_PROTECTED_SPEC:
-            TYPE_SET_PROTECTED(tp);
-            TYPE_UNSET_PRIVATE(tp);
-            TYPE_UNSET_PUBLIC(tp);
-            break;
-        default:
-            break;
+    FOR_ITEMS_IN_LIST(lp, type) {
+        expr x = LIST_ITEM(lp);
+        if (x == NULL) {
+            continue;
+        }
+
+        switch(EXPR_CODE(x)) {
+            case F95_PUBLIC_SPEC:
+            case F95_PRIVATE_SPEC:
+            case F03_PROTECTED_SPEC:
+                if (has_access_spec) {
+                    error("unexpected access spec");
+                } else {
+                    has_access_spec = TRUE;
+                }
+                break;
+            case F03_EXTENDS_SPEC:
+                if (has_extends_spec) {
+                    error("Dupulicate EXTENDS spec");
+                } else {
+                    has_extends_spec = TRUE;
+                }
+                break;
+            default:
+                break;
+        }
+
+        switch(EXPR_CODE(x)) {
+            case F95_PUBLIC_SPEC:
+                TYPE_SET_PUBLIC(tp);
+                TYPE_UNSET_PRIVATE(tp);
+                TYPE_UNSET_PROTECTED(tp);
+                break;
+            case F95_PRIVATE_SPEC:
+                TYPE_SET_PRIVATE(tp);
+                TYPE_UNSET_PUBLIC(tp);
+                TYPE_UNSET_PROTECTED(tp);
+                break;
+            case F03_PROTECTED_SPEC:
+                TYPE_SET_PROTECTED(tp);
+                TYPE_UNSET_PRIVATE(tp);
+                TYPE_UNSET_PUBLIC(tp);
+                break;
+            case F03_EXTENDS_SPEC: {
+                TYPE_DESC parent_type;
+                parent_type = find_struct_decl(EXPR_SYM(EXPR_ARG1(x)));
+                if (parent_type == NULL) {
+                    error("derived-type %s does not exist",
+                          SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+                    break;
+                }
+                if (TYPE_IS_SEQUENCE(parent_type)) {
+                    error("derived-type %s is not an extensible type",
+                          SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+                    break;
+                }
+                TYPE_PARENT(tp) = new_ident_desc(EXPR_SYM(EXPR_ARG1(x)));
+                TYPE_PARENT_TYPE(tp) = parent_type;
+            }; break;
+            default:
+                break;
         }
     }
     push_ctl(CTL_STRUCT);
