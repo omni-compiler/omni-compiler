@@ -109,7 +109,6 @@
 %token CONTAINS
 %token KW_TYPE
 %token ENDTYPE
-%token CLASS
 %token ALLOCATABLE
 %token INTENT
 %token EXIT
@@ -141,6 +140,7 @@
 /* F03 keywords */
 %token PROTECTED
 %token EXTENDS
+%token CLASS
 
 /* Coarray keywords #060 */
 %token SYNCALL
