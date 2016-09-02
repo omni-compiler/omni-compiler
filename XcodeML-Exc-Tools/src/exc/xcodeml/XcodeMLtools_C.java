@@ -214,7 +214,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
 			     null, // symbolScope
 			     getAttr(n_name, "fullName"), // symbolAlias
 			     false, // is_op
-			     getElement(n, "value"),
+			     getContent(getElement(n, "value")),
 			     getElement(n, "gccAsm"));
     }
 
