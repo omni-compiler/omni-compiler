@@ -89,7 +89,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
       | (getAttrBool(n, "is_save") ? Xtype.TQ_FSAVE : 0)
       | (getAttrBool(n, "is_target") ? Xtype.TQ_FTARGET : 0)
-      | (getAttrBool(n, "is_cray_pointer") ? Xtype.TQ_FCRAY_POINTER : 0); //#060c
+      | (getAttrBool(n, "is_cray_pointer") ? Xtype.TQ_FCRAY_POINTER : 0) //#060c
+      | (getAttrBool(n, "is_volatile") ? Xtype.TQ_FVOLATILE : 0);
 
     String intent = getAttr(n, "intent");
 
