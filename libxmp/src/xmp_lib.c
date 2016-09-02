@@ -34,6 +34,10 @@ int xmp_desc_kind(xmp_desc_t d, int *kind)
   return 0;
 }
 
+xmp_desc_t xmp_get_nodes(void)
+{
+  return _XMP_get_execution_nodes();
+}
 
 int xmp_num_nodes(void)
 {

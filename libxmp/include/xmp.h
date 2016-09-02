@@ -39,6 +39,8 @@ extern void	xmp_init(int *argc, char ***argv);
 extern void	xmp_finalize(void);
 extern int	xmp_num_nodes(void);
 extern int      xmp_desc_kind(xmp_desc_t d, int *kind);
+extern xmp_desc_t xmp_get_nodes(void);
+extern int	xmp_num_nodes(void);
 extern int	xmp_node_num(void);
 extern void	xmp_barrier(void);
 extern int	xmp_all_num_nodes(void);

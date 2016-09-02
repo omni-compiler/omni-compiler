@@ -1508,7 +1508,7 @@ Optional Features:
   --enable-xacc           enable XcalableACC (false default)
   --enable-mod2xmod       enable to translate .mod to .xmod on only gfortran (false default)
   --enable-shared         enable to generate shared library (only OpenACC now) (false default)
-  --enable-xmpt           enable XMPT I/F (false default)
+  --enable-xmpt           enable XMPT I/F (experimental) (false default)
   --enable-SSL2BLAMP      enable Fujitsu Math Library (true on only the K computer, false on Fx10)
   --enable-intelmkl       enable Intel Math Kernel Library (false default)
   --enable-mreal          enable multiple precision real (and real*16) support of Fortran 77 (false default)

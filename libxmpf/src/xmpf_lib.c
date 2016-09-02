@@ -36,6 +36,10 @@ int xmpf_desc_kind_(xmp_desc_t **d, int *kind) {
   return xmp_desc_kind(*d, kind);
 }
 
+xmp_desc_t xmp_get_nodes_(void)
+{
+  return _XMP_get_execution_nodes();
+}
 
 int xmp_num_nodes_(void) {
   return _XMP_get_execution_nodes()->comm_size;

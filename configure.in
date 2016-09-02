@@ -428,7 +428,7 @@ AC_ARG_ENABLE(shared,
   [doshared=yes], [doshared=no])
 
 AC_ARG_ENABLE(xmpt,
-  [  --enable-xmpt           enable XMPT I/F (false default)],
+  [  --enable-xmpt           enable XMPT I/F (experimental) (false default)],
   [doxmpt=yes], [doxmpt=no])
 
 #--------------------------------------------------------------------

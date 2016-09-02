@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include "xmp_internal.h"
 
 /* xmpt_bcast_begin_callback_t xmpt_bcast_begin_callback = NULL; */

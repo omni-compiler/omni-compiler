@@ -127,6 +127,12 @@ void _XMP_set_reflect__(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 void _XMP_reflect__(_XMP_array_t *a)
 {
 
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_reflect_begin])
+    (*(xmpt_reflect_begin_callback_t)xmpt_callback[xmpt_event_reflect_begin])(
+     a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, XMP_ASYNC_NONE);
+#endif
+  
   int is_ordinal = 1;
 
   _XMP_RETURN_IF_SINGLE;
@@ -220,6 +226,12 @@ void _XMP_reflect__(_XMP_array_t *a)
     _xmp_uwidth[i] = 0;
     _xmp_is_periodic[i] = 0;
   }
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_reflect_end])
+    (*(xmpt_reflect_end_callback_t)xmpt_callback[xmpt_event_reflect_end])(
+     a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, XMP_ASYNC_NONE);
+#endif
 
 }
 
@@ -859,6 +871,12 @@ static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is
 
 void _XMP_reflect_async__(_XMP_array_t *a, int async_id){
 
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_reflect_begin])
+    (*(xmpt_reflect_begin_callback_t)xmpt_callback[xmpt_event_reflect_begin])(
+     a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, async_id);
+#endif
+
   int is_ordinal = 1;
 
   _XMP_RETURN_IF_SINGLE;
@@ -902,6 +920,12 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id){
     _xmp_uwidth[i] = 0;
     _xmp_is_periodic[i] = 0;
   }
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_reflect_end])
+    (*(xmpt_reflect_end_callback_t)xmpt_callback[xmpt_event_reflect_end])(
+     a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, async_id);
+#endif
 
 }
 
@@ -1218,6 +1242,12 @@ static void _XMP_reflect_sched_dir(_XMP_array_t *adesc, int ishadow[],
 void _XMP_reflect__(_XMP_array_t *a)
 {
 
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_reflect_begin])
+    (*(xmpt_reflect_begin_callback_t)xmpt_callback[xmpt_event_reflect_begin])(
+     a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, XMP_ASYNC_NONE);
+#endif
+
   int is_ordinal = 1;
 
   _XMP_RETURN_IF_SINGLE;
@@ -1284,6 +1314,12 @@ void _XMP_reflect__(_XMP_array_t *a)
     _xmp_uwidth[i] = 0;
     _xmp_is_periodic[i] = 0;
   }
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_reflect_end])
+    (*(xmpt_reflect_end_callback_t)xmpt_callback[xmpt_event_reflect_end])(
+     a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, XMP_ASYNC_NONE);
+#endif
 
 }
 
@@ -1545,6 +1581,12 @@ static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is
 void _XMP_reflect_async__(_XMP_array_t *a, int async_id)
 {
 
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_reflect_begin])
+    (*(xmpt_reflect_begin_callback_t)xmpt_callback[xmpt_event_reflect_begin])(
+     a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, async_id);
+#endif
+
   if (!a->is_allocated){
     _xmpf_set_reflect_flag = 0;
     return;
@@ -1577,6 +1619,12 @@ void _XMP_reflect_async__(_XMP_array_t *a, int async_id)
     _xmp_uwidth[i] = 0;
     _xmp_is_periodic[i] = 0;
   }
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_reflect_end])
+    (*(xmpt_reflect_end_callback_t)xmpt_callback[xmpt_event_reflect_end])(
+     a, _xmp_lwidth, _xmp_uwidth, _xmp_is_periodic, async_id);
+#endif
 
 }
 
