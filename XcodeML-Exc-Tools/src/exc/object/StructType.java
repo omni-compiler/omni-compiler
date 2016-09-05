@@ -8,21 +8,21 @@ public class StructType extends CompositeType
 {
     private boolean is_class = false;
 
-    public StructType(String id, XobjList id_list, int typeQualFlags, Xobject gccAttrs,
+    public StructType(String id, String parent_id, XobjList id_list, int typeQualFlags, Xobject gccAttrs,
                       Xobject[] codimensions)
     {
-        super(Xtype.STRUCT, id, id_list, typeQualFlags, gccAttrs, codimensions);
+        super(Xtype.STRUCT, id, parent_id, id_list, typeQualFlags, gccAttrs, codimensions);
     }
 
-    public StructType(String id, XobjList id_list, int typeQualFlags, Xobject gccAttrs)
+    public StructType(String id, String parent_id, XobjList id_list, int typeQualFlags, Xobject gccAttrs)
     {
-        this(id, id_list, typeQualFlags, gccAttrs, null);
+        this(id, parent_id, id_list, typeQualFlags, gccAttrs, null);
     }
 
     public StructType(String id, boolean is_class, XobjList tag_names, 
                                  XobjList id_list, int typeQualFlags, Xobject gccAttrs)
     {
-        super(Xtype.STRUCT, id, tag_names, id_list, typeQualFlags, gccAttrs, null);
+        super(Xtype.STRUCT, id, null, tag_names, id_list, typeQualFlags, gccAttrs, null);
         this.is_class = is_class;
     }
 
@@ -55,7 +55,7 @@ public class StructType extends CompositeType
     @Override
     public Xtype copy(String id)
     {
-        StructType t = new StructType(id, getMemberList(), getTypeQualFlags(),
+        StructType t = new StructType(id, null, getMemberList(), getTypeQualFlags(),
                                       getGccAttributes(), copyCodimensions());
         t.original = (original != null) ? original : this;
         t.tag = (tag != null) ? tag : ((original != null) ? original.tag : null);

@@ -214,6 +214,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
    */
   private void declFstructType(Node n) {
     String tid = getAttr(n, "type");
+    String parent_tid = getAttr(n, "extends");
     int tq = (getAttrBool(n, "is_internal_private") ? Xtype.TQ_FINTERNAL_PRIVATE
 	      : 0)
       | (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
@@ -221,7 +222,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_sequence") ? Xtype.TQ_FSEQUENCE : 0);
 
     XobjList id_list = (XobjList) toXobject(getElement(n, "symbols"));
-    StructType type = new StructType(tid, id_list, tq, null);
+    StructType type = new StructType(tid, parent_tid, id_list, tq, null);
     xobjFile.addType(type);
   }
 
