@@ -977,6 +977,12 @@ public class Xtype
         return false;
     }
 
+    /** Fortran: return if the type extends parent type */
+    public boolean isExtended()
+    {
+        return false;
+    }
+
     /** return is equals specified type */
     public final boolean equals(Xtype t)
     {

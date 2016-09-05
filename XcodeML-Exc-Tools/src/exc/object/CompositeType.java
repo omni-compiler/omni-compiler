@@ -82,4 +82,12 @@ public abstract class CompositeType extends Xtype
     {
     	return original;
     }
+
+    @Override
+    /** Fortran: return if the type extends parent type */
+    public boolean isExtended()
+    {
+        return parent_type_id != null;
+    }
+
 }
