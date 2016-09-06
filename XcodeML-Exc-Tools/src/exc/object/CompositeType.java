@@ -5,7 +5,7 @@ package exc.object;
  */
 public abstract class CompositeType extends Xtype
 {
-    private XobjList tagNames;
+    private XobjString tagNames;
     /** member id list */
     private XobjList id_list;
     /** original type (to suppress output same type) */
@@ -13,7 +13,7 @@ public abstract class CompositeType extends Xtype
     /** Fortran2003 : type extension. */
     protected String parent_type_id;
 
-    protected CompositeType(int type_kind, String id, String parent_id, XobjList tag_names, XobjList id_list, 
+    protected CompositeType(int type_kind, String id, String parent_id, XobjString tag_names, XobjList id_list, 
                             int typeQualFlags, Xobject gccAttrs, Xobject[] codimensions)
     {
         super(type_kind, id, typeQualFlags, gccAttrs, codimensions);
@@ -43,7 +43,7 @@ public abstract class CompositeType extends Xtype
         return  parent_type_id;
     }
 
-    public XobjList getTagNames()
+    public XobjString getTagNames()
     {
         return tagNames;
     }

@@ -377,8 +377,13 @@ public class Ident extends Xobject
         StringBuilder b = new StringBuilder(256);
         b.append("[");
         b.append(name == null ? "*" : name);
+        b.append(fullName == null ? "" : "(\"" + getFullName() + "\")");
         b.append(" ");
         b.append(stg_class == null ? "*" : stg_class.toXcodeString());
+        b.append(" ");
+        b.append(access == AS_NONE ? "*" : getAccessStr());
+        b.append(" ");
+        b.append(is_op ? "Operator" : "*");
         b.append(" ");
         b.append(type == null ? "*" : type.toString());
         b.append(" ");

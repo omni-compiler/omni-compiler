@@ -44,12 +44,6 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         return e;
     }
 
-    private Element transName(XobjList xobjlst) {
-        Element e = transName(xobjlst.getArg(0));
-        addAttributes(e, "fullName", ((XobjString)xobjlst.getArg(1)).getString());
-        return e;
-    }
-
     private Element transBody(Xobject xobj) {
         Element e = createElement("body");
         if (xobj != null) {
@@ -299,7 +293,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case Xtype.STRUCT:
                 e = ((StructType)type).isClass() ? createTypeElement("classType", type) :
                                                    createTypeElement("structType", type);
-                XobjList tagNames = ((CompositeType)type).getTagNames();
+                XobjString tagNames = ((CompositeType)type).getTagNames();
                 if (tagNames != null) {
                   Element e_tagnames = transName(tagNames);
                   e = addChildNodes(e, e_tagnames);

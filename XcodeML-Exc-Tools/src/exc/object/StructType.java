@@ -19,7 +19,7 @@ public class StructType extends CompositeType
         this(id, parent_id, id_list, typeQualFlags, gccAttrs, null);
     }
 
-    public StructType(String id, boolean is_class, XobjList tag_names, 
+    public StructType(String id, boolean is_class, XobjString tag_names, 
                                  XobjList id_list, int typeQualFlags, Xobject gccAttrs)
     {
         super(Xtype.STRUCT, id, null, tag_names, id_list, typeQualFlags, gccAttrs, null);

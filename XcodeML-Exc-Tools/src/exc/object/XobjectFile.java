@@ -310,6 +310,11 @@ public class XobjectFile extends XobjectDefEnv
         out.print("{");
         out.print(Xtype.getKindName(type.getKind()));
         out.print(" ");
+        if (type instanceof CompositeType) {
+            XobjString tagNames = ((CompositeType)type).getTagNames();
+            out.print(tagNames.getName() + "(\"" + tagNames.getAlias() + "\")");
+            out.print(" ");
+        }
         out.printType(type);
         
         out.print(" (");
