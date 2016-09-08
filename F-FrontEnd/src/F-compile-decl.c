@@ -1593,18 +1593,18 @@ declare_struct_type_wo_component(expr ident)
 /* check compatibility if id's type is already declared. */
 static TYPE_DESC
 declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
-			int ignoreDims, int ignoreCodims)
+                        int ignoreDims, int ignoreCodims)
 {
     expr v;
     list lp;
 
     // The ALLOCATABLE attribute must be checked in advance.
-    FOR_ITEMS_IN_LIST(lp,attributes){
+    FOR_ITEMS_IN_LIST(lp, attributes){
         v = LIST_ITEM(lp);
         if (EXPR_CODE(v) == F95_ALLOCATABLE_SPEC){
-	  TYPE_SET_ALLOCATABLE(tp);
-	  break;
-	}
+            TYPE_SET_ALLOCATABLE(tp);
+            break;
+        }
     }
 
     FOR_ITEMS_IN_LIST(lp, attributes) {
@@ -1636,23 +1636,23 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                 tp = compile_dimensions(tp, EXPR_ARG1(v));
             }
             break;
-	case XMP_CODIMENSION_SPEC:
-	  if (ignoreDims) break;
-	  if (is_descendant_coindexed(tp)){
-	    error_at_node(EXPR_ARG1(v), "The derived-type of the coindexed "
-                          "object cannot have a coindexed member.");
-	    return NULL;
-	  }
+        case XMP_CODIMENSION_SPEC:
+            if (ignoreDims) break;
+            if (is_descendant_coindexed(tp)){
+                error_at_node(EXPR_ARG1(v), "The derived-type of the coindexed "
+                              "object cannot have a coindexed member.");
+                return NULL;
+            }
 
-	  codims_desc *codesc = compile_codimensions(EXPR_ARG1(v),
-						     TYPE_IS_ALLOCATABLE(tp));
-	  if (codesc)
-	    tp->codims = codesc;
-	  else {
-	    error_at_node(EXPR_ARG1(v), "Wrong codimension declaration.");
-	    return NULL;
-	  }
-	  break;
+            codims_desc *codesc = compile_codimensions(EXPR_ARG1(v),
+                                                       TYPE_IS_ALLOCATABLE(tp));
+            if (codesc)
+                tp->codims = codesc;
+            else {
+                error_at_node(EXPR_ARG1(v), "Wrong codimension declaration.");
+                return NULL;
+            }
+            break;
         case F95_EXTERNAL_SPEC:
             /* see compile_EXTERNAL_decl() */
             TYPE_SET_EXTERNAL(tp);
@@ -1934,10 +1934,9 @@ compile_derived_type(expr x, int allow_predecl)
             /*
              * for `CLASS(*)`
              */
-            tp = new_type_desc();
-            TYPE_REF(tp) = NULL;
+            tp = struct_type(NULL);
             TYPE_SET_CLASS(tp);
-            return tp;
+            return wrap_type(tp);
         }
 
         is_class = TRUE;
@@ -1995,6 +1994,8 @@ compile_derived_type(expr x, int allow_predecl)
     if (is_parameterized_type) {
         tp = type_apply_type_parameter(tp, EXPR_ARG2(x));
     }
+
+    tp = wrap_type(tp);
 
     if (is_class) {
         TYPE_SET_CLASS(tp);
