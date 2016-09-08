@@ -592,7 +592,7 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     btp1 = getBaseType(tp1);
     btp2 = getBaseType(tp2);
 
-    if (btp1 != btp2) {
+    if (tp1 != tp2 && btp1 != btp2) {
         /*
          * If base types are different, try compare by name
          */
@@ -602,7 +602,7 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
 
         if (name1) {
             if (ID_USEASSOC_INFO(name1)) {
-                sym1 = ID_ORIGINAL_NAME(name1);
+                sym1 = ID_ORIGINAL_NAME(name1) ?: ID_SYM(name1);
                 module1 = ID_MODULE_NAME(name1);
             } else {
                 sym1 = ID_SYM(name1);
@@ -612,7 +612,7 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
 
         if (name2) {
             if (ID_USEASSOC_INFO(name2)) {
-                sym2 = ID_ORIGINAL_NAME(name2);
+                sym2 = ID_ORIGINAL_NAME(name2) ?: ID_SYM(name2);
                 module2 = ID_MODULE_NAME(name2);
             } else {
                 sym2 = ID_SYM(name2);
