@@ -141,6 +141,7 @@ typedef struct type_descriptor
     struct ident_descriptor *parent;  /* represents super-class of this derived type.  */
     struct ident_descriptor *type_parameters; /* type parameters for derived type */
     expv type_param_values; /* type parameter values */
+    /* struct ident_descriptor *type_parameters_used; /\* TODO: write nice comment *\/ */
     struct ident_descriptor *members; /* all members for derived type */
     codims_desc *codims;
     int is_reshaped_type;       /* A bool flag to specify this type is
@@ -288,6 +289,8 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_SCALAR(tp)      (((tp)->array_info.n_dim == 0))
 #define TYPE_MEMBER_LIST(tp)    ((tp)->members)
 #define TYPE_TYPE_PARAMS(tp)    ((tp)->type_parameters)
+#define TYPE_TYPE_DUMMY_PARAMS(tp)    ((tp)->type_parameters)
+#define TYPE_TYPE_ACTUAL_PARAMS(tp)    ((tp)->type_parameters)
 #define TYPE_TYPE_PARAM_VALUES(tp)    ((tp)->type_param_values)
 #define TYPE_HAS_TYPE_PARAMS(tp) (((tp)->type_parameters) != NULL)
 

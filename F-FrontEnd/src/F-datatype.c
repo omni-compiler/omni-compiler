@@ -499,6 +499,131 @@ type_is_compatible(TYPE_DESC tp,TYPE_DESC tq)
     return TRUE;
 }
 
+
+/*
+ * check 2 expvs have the same value
+ *
+ * expects 2 expv appears as type parameter value and are already reduced
+ */
+static int
+type_parameter_expv_equals(expv v1, expv v2)
+{
+    uint32_t i1, i2;
+
+    if (v1 == NULL || v2 == NULL) {
+        return FALSE;
+    }
+
+    if (EXPR_CODE(v1) == LEN_SPEC_ASTERISC ||
+        EXPR_CODE(v1) == F08_LEN_SPEC_COLON) {
+        if (EXPR_CODE(v1) == EXPR_CODE(v2)) {
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    } else if (EXPR_CODE(v2) == LEN_SPEC_ASTERISC ||
+               EXPR_CODE(v2) == F08_LEN_SPEC_COLON) {
+        return FALSE;
+    } else {
+        if (EXPR_CODE(v1) == INT_CONSTANT) {
+            i1 = EXPV_INT_VALUE(v1);
+        } else {
+            return FALSE;
+        }
+
+        if (EXPR_CODE(v2) == INT_CONSTANT) {
+            i2 = EXPV_INT_VALUE(v2);
+        } else {
+            return FALSE;
+        }
+
+        if (i1 == i2) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+
+static int
+type_parameter_values_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
+{
+    ID type_params1, type_params2;
+    ID id1, id2;
+
+    assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
+    assert(tp2 != NULL && TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
+
+    type_params1 = TYPE_TYPE_ACTUAL_PARAMS(tp1);
+    type_params2 = TYPE_TYPE_ACTUAL_PARAMS(tp2);
+
+    FOREACH_ID(id1, type_params1) {
+        id2 = find_ident_head(ID_SYM(id1), type_params2);
+        if (id2 == NULL) {
+            return FALSE;
+        }
+
+        if (!type_parameter_expv_equals(VAR_INIT_VALUE(id1),
+                                        VAR_INIT_VALUE(id1))) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+/*
+ * Check type compatibility of derived-types
+ */
+static int
+struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
+{
+    TYPE_DESC btp1, btp2;
+    ID name1, name2;
+    SYMBOL sym1, sym2, module1, module2;
+
+    assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
+    assert(tp2 != NULL && TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
+
+    btp1 = getBaseType(tp1);
+    btp2 = getBaseType(tp2);
+
+    name1 = TYPE_TAGNAME(btp1);
+    name2 = TYPE_TAGNAME(btp2);
+
+
+    if (ID_USEASSOC_INFO(name1)) {
+        sym1 = ID_ORIGINAL_NAME(name1);
+        module1 = ID_MODULE_NAME(name1);
+    } else {
+        sym1 = ID_SYM(name1);
+        module1 = NULL;
+    }
+
+    if (ID_USEASSOC_INFO(name2)) {
+        sym2 = ID_ORIGINAL_NAME(name2);
+        module2 = ID_MODULE_NAME(name2);
+    } else {
+        sym2 = ID_SYM(name2);
+        module2 = NULL;
+    }
+
+    if (!((sym1 == sym2) && (module1 == module2))) {
+        return FALSE;
+    }
+
+    btp1 = getBaseStructType(tp1);
+    btp2 = getBaseStructType(tp2);
+
+    if (TYPE_TYPE_PARAM_VALUES(btp1) == NULL &&
+        TYPE_TYPE_PARAM_VALUES(btp2) == NULL) {
+        return TRUE;
+    } else {
+        return type_parameter_values_is_compatible_for_assignment(tp1, tp2);
+    }
+}
+
 /* check type compatiblity of element types */
 int
 type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
@@ -536,8 +661,10 @@ type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
             return TRUE;
         break;
     case TYPE_STRUCT:
-        if (b2 == TYPE_STRUCT || b2 == TYPE_GENERIC)
+        if (b2 == TYPE_GENERIC)
             return TRUE;
+        else if (b2 == TYPE_STRUCT)
+            return struct_type_is_compatible_for_assignment(tp1, tp2);
         break;
     case TYPE_GENERIC:
         return TRUE;

@@ -4266,89 +4266,135 @@ expv_apply_type_parameter(expv v, ID type_params)
 }
 
 
+/*
+ * Update type with type parameter values
+ *
+ * tp -- this funciton updates this TYPE_DESC
+ * type_params -- type parameters and its values, values are stored in VAR_INIT_VALUE(id)
+ */
 static TYPE_DESC
-type_apply_type_parameter0(TYPE_DESC tp, ID type_params, expv type_param_values)
+type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
 {
     int type_is_replaced = FALSE;
     expv v;
     TYPE_DESC tq;
-    ID ip, ip2;
+    ID ip;
 
-    if (TYPE_REF(tp)) {
-        tq = type_apply_type_parameter0(TYPE_REF(tp), type_params, type_param_values);
-        if (TYPE_REF(tp) != tq) {
-            tp = copy_type_shallow(tp); type_is_replaced = TRUE;
-        }
-        TYPE_REF(tp) = tq;
-
-    } else if (TYPE_REF(tp) == NULL && TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
-        ID new_member = NULL, last = NULL;
+    if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT && TYPE_TYPE_PARAM_VALUES(tp) != NULL) {
+        /*
+         * Update type parameter values of the instance of the parameterized derived-type
+         *
+         * ex)
+         *   1  TYPE :: t(k)
+         *   2    INTEGER, KIND :: k
+         *   3    TYPE(d(k, kind2=k+4)) :: u
+         *   4  END TYPE t
+         *   5  TYPE(t(4)) :: v
+         *
+         * At line 3, member `u` is instanciated with type parameter value `k + 4`.
+         * At line 5, variable v is instanciated with type parameter value `4`,
+         * this instaciation also updates type parameter values of member `u`.
+         */
+        ID new_member = NULL;
+        ID last = NULL;
         TYPE_DESC parent = NULL;
+        ID new_type_params = NULL;
+        ID id, new_id;
+        list lp;
+        expv new_type_param_values;
+
+        if (TYPE_TYPE_ACTUAL_PARAMS(tp) == NULL) {
+            return tp;
+        }
+
+        last = NULL;
+        FOREACH_ID(id, TYPE_TYPE_ACTUAL_PARAMS(tp)) {
+            new_id = new_ident_desc(ID_SYM(id));
+            *new_id = *id;
+            ID_LINK_ADD(new_id, new_type_params, last);
+        }
+
+        FOREACH_ID(id, new_type_params) {
+            expv v = VAR_INIT_VALUE(id);
+            v = expv_apply_type_parameter(v, type_params);
+            if (v != VAR_INIT_VALUE(id)) {
+                type_is_replaced = TRUE;
+                VAR_INIT_VALUE(id) = v;
+            }
+        }
+
+        if (!type_is_replaced) {
+            /*
+             * No type parameter values are updated
+             */
+            return tp;
+        }
+
+
+        tp = wrap_type(tp);
+        TYPE_TYPE_ACTUAL_PARAMS(tp) = new_type_params;
+
+        new_type_param_values = list0(LIST);
+        FOR_ITEMS_IN_LIST(lp, TYPE_TYPE_PARAM_VALUES(TYPE_REF(tp))) {
+            expv v = expv_apply_type_parameter(LIST_ITEM(lp), type_params);
+            list_put_last(new_type_param_values, v);
+        }
+        TYPE_TYPE_PARAM_VALUES(tp) = new_type_param_values;
 
         if (TYPE_PARENT(tp)) {
-            parent = type_apply_type_parameter0(TYPE_PARENT_TYPE(tp), type_params, type_param_values);
+            parent = type_apply_type_parameter0(TYPE_PARENT_TYPE(tp), type_params);
         }
 
-        FOREACH_ID(ip, TYPE_MEMBER_LIST(tp)) {
-            tq = type_apply_type_parameter0(tp, type_params, type_param_values);
-            if (tq != ID_TYPE(ip)) {
-                ID new_id;
-                if (!type_is_replaced) {
-                    type_is_replaced = TRUE;
-                    FOREACH_ID(ip2, TYPE_MEMBER_LIST(tp)) {
-                        ID new_id = new_ident_desc(ID_SYM(ip2));
-                        *new_id = *ip2;
-                        ID_LINK_ADD(new_id, new_member, last);
-                        if (ID_SYM(ip) == ID_SYM(ip2)) {
-                            break;
-                        }
-                    }
-                    tp = wrap_type(tp);
-                }
-                new_id = new_ident_desc(ID_SYM(ip));
-                *new_id = *ip;
-                ID_TYPE(new_id) = tq;
-                ID_LINK_ADD(new_id, new_member, last);
-            }
-
+        last = NULL;
+        FOREACH_ID(ip, TYPE_MEMBER_LIST(TYPE_REF(tp))) {
+            tq = type_apply_type_parameter0(ID_TYPE(ip), type_params);
+            new_id = new_ident_desc(ID_SYM(ip));
+            *new_id = *ip;
+            ID_TYPE(new_id) = tq;
+            ID_LINK_ADD(new_id, new_member, last);
         }
 
-        if (type_is_replaced) {
-            tp = wrap_type(tp);
-
-            if (parent != NULL) {
-                TYPE_PARENT_TYPE(tp) = parent;
-            }
-
-            if (new_member != NULL) {
-                TYPE_MEMBER_LIST(tp) = new_member;
-                if (TYPE_TYPE_PARAMS(tp)) {
-                    TYPE_TYPE_PARAM_VALUES(tp) = type_param_values;
-                }
-            }
+        if (parent != NULL) {
+            TYPE_PARENT_TYPE(tp) = parent;
         }
-    }
 
-    if (TYPE_KIND(tp)) {
+        if (new_member != NULL) {
+            TYPE_MEMBER_LIST(tp) = new_member;
+        }
+
+        TYPE_REF(tp) = TYPE_REF(TYPE_REF(tp));
+
+    } else if (TYPE_KIND(tp)) {
         v = expv_apply_type_parameter(TYPE_KIND(tp), type_params);
-        if (!type_is_replaced && v != TYPE_KIND(tp)) {
-            tp = copy_type_shallow(tp); type_is_replaced = TRUE;
+        if (v != TYPE_KIND(tp)) {
+            tp = copy_type_shallow(tp);
+            TYPE_KIND(tp) = v;
+            while (TYPE_REF(tp) && TYPE_KIND(TYPE_REF(tp))) {
+                TYPE_REF(tp) = TYPE_REF(TYPE_REF(tp));
+            }
         }
-        TYPE_KIND(tp) = v;
-    }
 
-    if (TYPE_LENG(tp)) {
+    } else if (TYPE_LENG(tp)) {
         v = expv_apply_type_parameter(TYPE_LENG(tp), type_params);
-        if (!type_is_replaced && v != TYPE_LENG(tp)) {
-            tp = copy_type_shallow(tp); type_is_replaced = TRUE;
+        if (v != TYPE_LENG(tp)) {
+            tp = copy_type_shallow(tp);
+            TYPE_LENG(tp) = v;
+            while (TYPE_REF(tp) && TYPE_KIND(TYPE_REF(tp))) {
+                TYPE_REF(tp) = TYPE_REF(TYPE_REF(tp));
+            }
         }
-        TYPE_LENG(tp) = v;
-    }
 
+    } else if (TYPE_REF(tp)) {
+        tq = type_apply_type_parameter0(TYPE_REF(tp), type_params);
+        if (tq != TYPE_REF(tp)) {
+            tp = copy_type_shallow(tp);
+            TYPE_REF(tp) = tq;
+
+        }
+    }
 
     return tp;
 }
-
 
 /**
  * Applies type parameter values to the parameterised derived-type and generate a new type
@@ -4358,10 +4404,11 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params, expv type_param_values)
 TYPE_DESC
 type_apply_type_parameter(TYPE_DESC tp, ID type_params, expv type_param_values)
 {
-    ID ip;
+    ID ip, iq;
     ID last = NULL;
     TYPE_DESC tq;
-    TYPE_DESC parent;
+    list lp;
+    ID cur;
 
     if (!IS_STRUCT_TYPE(tp)) {
         return tp;
@@ -4370,12 +4417,40 @@ type_apply_type_parameter(TYPE_DESC tp, ID type_params, expv type_param_values)
     tq = copy_type_shallow(tp);
 
     if (TYPE_PARENT(tq)) {
-        parent = type_apply_type_parameter0(TYPE_PARENT_TYPE(tq), type_params, type_param_values);
+        TYPE_DESC parent;
+        expv parent_type_param_values = list0(LIST);
+        ID new_type_params = get_type_params(TYPE_PARENT_TYPE(tq));
+
+        FOREACH_ID(ip, new_type_params) {
+            iq = find_ident_head(ID_SYM(ip), type_params);
+            VAR_INIT_VALUE(ip) = VAR_INIT_VALUE(iq);
+        }
+
+        cur = new_type_params;
+        FOR_ITEMS_IN_LIST(lp, type_param_values) {
+            expv v = LIST_ITEM(lp);
+            SYMBOL sym;
+            if (EXPV_KWOPT_NAME(v)) {
+                sym = find_symbol(EXPV_KWOPT_NAME(v));
+                if (find_ident_head(sym, new_type_params)) {
+                    list_put_last( parent_type_param_values, v);
+                }
+            } else {
+                if (cur != NULL) {
+                    list_put_last(parent_type_param_values, v);
+                    cur = ID_NEXT(cur);
+                }
+            }
+        }
+
+        parent = type_apply_type_parameter(TYPE_PARENT_TYPE(tq),
+                                           new_type_params,
+                                           parent_type_param_values);
         TYPE_PARENT_TYPE(tq) = parent;
     }
 
     FOREACH_ID(ip, TYPE_MEMBER_LIST(tq)) {
-        TYPE_DESC member_tp = type_apply_type_parameter0(ID_TYPE(ip), type_params, type_param_values);
+        TYPE_DESC member_tp = type_apply_type_parameter0(ID_TYPE(ip), type_params);
         ID new_id = new_ident_desc(ID_SYM(ip));
         *new_id = *ip;
         ID_TYPE(new_id) = member_tp;
@@ -4383,6 +4458,7 @@ type_apply_type_parameter(TYPE_DESC tp, ID type_params, expv type_param_values)
     }
     TYPE_REF(tq) = tp;
     TYPE_TYPE_PARAM_VALUES(tq) = type_param_values;
+    TYPE_TYPE_ACTUAL_PARAMS(tq) = type_params; /* Store as actual parameters */
 
     return tq;
 }

@@ -2613,7 +2613,7 @@ get_type_params0(TYPE_DESC struct_tp, ID * head, ID * tail)
     }
 }
 
-static ID
+ID
 get_type_params(TYPE_DESC struct_tp)
 {
     ID head = NULL, tail = NULL;

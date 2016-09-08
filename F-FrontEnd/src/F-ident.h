@@ -248,9 +248,22 @@ typedef struct ident_descriptor
 
 #define ID_INTF(id)     ((id)->interfaceId)
 
+/**
+ * use association information about ID.
+ */
+struct use_assoc_info {
+    struct module * module;   /* module. */
+    SYMBOL module_name;       /* name of module which the ID declared. */
+    SYMBOL original_name;     /* original name of the ID. */
+};
+
 #define ID_USEASSOC_INFO(id) ((id)->use_assoc)
+#define ID_MODULE(id) ((ID_USEASSOC_INFO(id))->module)
+#define ID_MODULE_NAME(id) ((ID_USEASSOC_INFO(id))->module_name)
+#define ID_ORIGINAL_NAME(id) ((ID_USEASSOC_INFO(id))->original_name)
 #define ID_IS_OFMODULE(id)  ((id)->use_assoc != NULL)
 #define ID_IS_AMBIGUOUS(id) ((id)->use_assoc_conflicted)
+
 #define ID_IS_EMITTED(id)   ((id)->is_varDeclEmitted)
 #define ID_EQUIV_ID(id)     ((id)->equivID)
 
