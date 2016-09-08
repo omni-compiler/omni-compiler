@@ -644,6 +644,8 @@ extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
 extern int      type_is_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern int      struct_type_is_compatible_for_assignment
+                    _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern TYPE_DESC

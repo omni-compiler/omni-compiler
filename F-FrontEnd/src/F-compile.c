@@ -4987,6 +4987,11 @@ compile_POINTER_SET_statement(expr x) {
         return;
     }
 
+    if (IS_STRUCT_TYPE(vPtrTyp) &&
+        !struct_type_is_compatible_for_assignment(vPtrTyp, vPteTyp, TRUE)) {
+        error_at_node(x, "Type mismatch.");
+    }
+
 accept:
 
     EXPV_LINE(vPointer) = EXPR_LINE(x);

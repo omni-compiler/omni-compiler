@@ -506,7 +506,7 @@ type_is_compatible(TYPE_DESC tp,TYPE_DESC tq)
  * expects 2 expv appears as type parameter value and are already reduced
  */
 static int
-type_parameter_expv_equals(expv v1, expv v2)
+type_parameter_expv_equals(expv v1, expv v2, int is_pointer_set)
 {
     uint32_t i1, i2;
 
@@ -516,7 +516,9 @@ type_parameter_expv_equals(expv v1, expv v2)
 
     if (EXPR_CODE(v1) == LEN_SPEC_ASTERISC ||
         EXPR_CODE(v1) == F08_LEN_SPEC_COLON) {
-        if (EXPR_CODE(v1) == EXPR_CODE(v2)) {
+        if (is_pointer_set && EXPR_CODE(v1) == F08_LEN_SPEC_COLON) {
+            return TRUE;
+        } else if (EXPR_CODE(v1) == EXPR_CODE(v2)) {
             return TRUE;
         } else {
             return FALSE;
@@ -547,7 +549,7 @@ type_parameter_expv_equals(expv v1, expv v2)
 
 
 static int
-type_parameter_values_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
+type_parameter_values_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set)
 {
     ID type_params1, type_params2;
     ID id1, id2;
@@ -565,7 +567,8 @@ type_parameter_values_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
         }
 
         if (!type_parameter_expv_equals(VAR_INIT_VALUE(id1),
-                                        VAR_INIT_VALUE(id1))) {
+                                        VAR_INIT_VALUE(id2),
+                                        is_pointer_set)) {
             return FALSE;
         }
     }
@@ -576,8 +579,8 @@ type_parameter_values_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
 /*
  * Check type compatibility of derived-types
  */
-static int
-struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
+int
+struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set)
 {
     TYPE_DESC btp1, btp2;
     ID name1, name2;
@@ -591,7 +594,6 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
 
     name1 = TYPE_TAGNAME(btp1);
     name2 = TYPE_TAGNAME(btp2);
-
 
     if (ID_USEASSOC_INFO(name1)) {
         sym1 = ID_ORIGINAL_NAME(name1);
@@ -620,9 +622,10 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
         TYPE_TYPE_PARAM_VALUES(btp2) == NULL) {
         return TRUE;
     } else {
-        return type_parameter_values_is_compatible_for_assignment(tp1, tp2);
+        return type_parameter_values_is_compatible_for_assignment(btp1, btp2, is_pointer_set);
     }
 }
+
 
 /* check type compatiblity of element types */
 int
@@ -664,7 +667,7 @@ type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
         if (b2 == TYPE_GENERIC)
             return TRUE;
         else if (b2 == TYPE_STRUCT)
-            return struct_type_is_compatible_for_assignment(tp1, tp2);
+            return struct_type_is_compatible_for_assignment(tp1, tp2, FALSE);
         break;
     case TYPE_GENERIC:
         return TRUE;
