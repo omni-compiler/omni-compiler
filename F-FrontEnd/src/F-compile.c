@@ -583,6 +583,8 @@ void compile_statement1(int st_no, expr x)
                     compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
                 } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_PARAMETERIZED_TYPE) {
                     compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
+                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_CLASS) {
+                    compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
                 } else {
                     v = EXPR_ARG1(v);
                     compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
