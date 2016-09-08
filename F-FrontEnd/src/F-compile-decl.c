@@ -1949,7 +1949,7 @@ compile_derived_type(expr x, int allow_predecl)
         is_parameterized_type = TRUE;
         sym = EXPR_SYM(EXPR_ARG1(x));
     } else {
-        error_at_node(x, "type %s is not a derivede-type.",
+        error_at_node(x, "type %s is not a derived-type.",
                       SYM_NAME(EXPR_SYM(x)));
     }
 
