@@ -584,7 +584,7 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
 {
     TYPE_DESC btp1, btp2;
     ID name1, name2;
-    SYMBOL sym1, sym2, module1, module2;
+    SYMBOL sym1 = NULL, sym2 = NULL, module1 = NULL, module2 = NULL;
 
     assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
     assert(tp2 != NULL && TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
@@ -592,27 +592,37 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     btp1 = getBaseType(tp1);
     btp2 = getBaseType(tp2);
 
-    name1 = TYPE_TAGNAME(btp1);
-    name2 = TYPE_TAGNAME(btp2);
+    if (btp1 != btp2) {
+        /*
+         * If base types are different, try compare by name
+         */
 
-    if (ID_USEASSOC_INFO(name1)) {
-        sym1 = ID_ORIGINAL_NAME(name1);
-        module1 = ID_MODULE_NAME(name1);
-    } else {
-        sym1 = ID_SYM(name1);
-        module1 = NULL;
-    }
+        name1 = TYPE_TAGNAME(btp1);
+        name2 = TYPE_TAGNAME(btp2);
 
-    if (ID_USEASSOC_INFO(name2)) {
-        sym2 = ID_ORIGINAL_NAME(name2);
-        module2 = ID_MODULE_NAME(name2);
-    } else {
-        sym2 = ID_SYM(name2);
-        module2 = NULL;
-    }
+        if (name1) {
+            if (ID_USEASSOC_INFO(name1)) {
+                sym1 = ID_ORIGINAL_NAME(name1);
+                module1 = ID_MODULE_NAME(name1);
+            } else {
+                sym1 = ID_SYM(name1);
+                module1 = NULL;
+            }
+        }
 
-    if (!((sym1 == sym2) && (module1 == module2))) {
-        return FALSE;
+        if (name2) {
+            if (ID_USEASSOC_INFO(name2)) {
+                sym2 = ID_ORIGINAL_NAME(name2);
+                module2 = ID_MODULE_NAME(name2);
+            } else {
+                sym2 = ID_SYM(name2);
+                module2 = NULL;
+            }
+        }
+
+        if (!((sym1 == sym2) && (module1 == module2))) {
+            return FALSE;
+        }
     }
 
     btp1 = getBaseStructType(tp1);
