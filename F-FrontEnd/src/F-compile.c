@@ -4983,7 +4983,7 @@ compile_POINTER_SET_statement(expr x) {
 
     if (IS_STRUCT_TYPE(vPtrTyp) &&
         !struct_type_is_compatible_for_assignment(vPtrTyp, vPteTyp, TRUE)) {
-        error_at_node(x, "Type mismatch.");
+        error_at_node(x, "Derived-type mismatch.");
     }
 
 accept:

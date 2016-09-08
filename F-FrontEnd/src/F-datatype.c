@@ -592,6 +592,13 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     btp1 = getBaseType(tp1);
     btp2 = getBaseType(tp2);
 
+    if (!TYPE_TAGNAME(btp1) && TYPE_IS_CLASS(btp1)) {
+        /*
+         * lhs is CLASS(*)
+         */
+        return TRUE;
+    }
+
     if (tp1 != tp2 && btp1 != btp2) {
         /*
          * If base types are different, try compare by name
