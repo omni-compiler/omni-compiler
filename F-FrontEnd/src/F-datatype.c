@@ -576,6 +576,57 @@ type_parameter_values_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2,
     return TRUE;
 }
 
+
+static int
+compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
+{
+    ID name1, name2;
+    SYMBOL sym1 = NULL, sym2 = NULL, module1 = NULL, module2 = NULL;
+    TYPE_DESC btp1, btp2;
+
+
+    if (tp1 == tp2) {
+        return TRUE;
+    }
+    if (tp2 == NULL) {
+        return FALSE;
+    }
+
+
+    btp1 = getBaseType(tp1);
+    btp2 = getBaseType(tp2);
+
+    name1 = TYPE_TAGNAME(btp1);
+    name2 = TYPE_TAGNAME(btp2);
+
+    if (name1) {
+        if (ID_USEASSOC_INFO(name1)) {
+            sym1 = ID_ORIGINAL_NAME(name1) ?: ID_SYM(name1);
+            module1 = ID_MODULE_NAME(name1);
+        } else {
+            sym1 = ID_SYM(name1);
+            module1 = NULL;
+        }
+    }
+
+    if (name2) {
+        if (ID_USEASSOC_INFO(name2)) {
+            sym2 = ID_ORIGINAL_NAME(name2) ?: ID_SYM(name2);
+            module2 = ID_MODULE_NAME(name2);
+        } else {
+            sym2 = ID_SYM(name2);
+            module2 = NULL;
+        }
+    }
+
+    if ((sym1 == sym2) && (module1 == module2)) {
+        return FALSE;
+    } else {
+        return FALSE;
+    }
+}
+
+
 /*
  * Check type compatibility of derived-types
  */
@@ -583,64 +634,67 @@ int
 struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set)
 {
     TYPE_DESC btp1, btp2;
-    ID name1, name2;
-    SYMBOL sym1 = NULL, sym2 = NULL, module1 = NULL, module2 = NULL;
 
     assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
-    assert(tp2 != NULL && TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
+    assert(tp2 == NULL || TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
 
-    btp1 = getBaseType(tp1);
-    btp2 = getBaseType(tp2);
+    if (debug_flag) {
+        fprintf(debug_fp,"\ncomparing derived-type %p and %p\n", tp1, tp2);
+    }
 
-    if (!TYPE_TAGNAME(btp1) && TYPE_IS_CLASS(btp1)) {
-        /*
-         * lhs is CLASS(*)
-         */
+    if (tp2 == NULL) {
+        debug_flag && fprintf(debug_fp,"* right side type is null, return false\n");
+        return FALSE;
+    }
+
+    debug_flag && fprintf(debug_fp,"* compare addresses                   ... ");
+
+    if (tp1 == tp2) {
+        debug_flag && fprintf(debug_fp," match\n");
         return TRUE;
     }
+    debug_flag && fprintf(debug_fp," not match\n");
 
-    if (tp1 != tp2 && btp1 != btp2) {
+    debug_flag && fprintf(debug_fp,"* check if left side type is CLASS(*) ... ");
+
+    if (!TYPE_TAGNAME(getBaseType(tp1)) && TYPE_IS_CLASS(getBaseType(tp2))) {
         /*
-         * If base types are different, try compare by name
+         * tp1 is CLASS(*)
          */
-
-        name1 = TYPE_TAGNAME(btp1);
-        name2 = TYPE_TAGNAME(btp2);
-
-        if (name1) {
-            if (ID_USEASSOC_INFO(name1)) {
-                sym1 = ID_ORIGINAL_NAME(name1) ?: ID_SYM(name1);
-                module1 = ID_MODULE_NAME(name1);
-            } else {
-                sym1 = ID_SYM(name1);
-                module1 = NULL;
-            }
-        }
-
-        if (name2) {
-            if (ID_USEASSOC_INFO(name2)) {
-                sym2 = ID_ORIGINAL_NAME(name2) ?: ID_SYM(name2);
-                module2 = ID_MODULE_NAME(name2);
-            } else {
-                sym2 = ID_SYM(name2);
-                module2 = NULL;
-            }
-        }
-
-        if (!((sym1 == sym2) && (module1 == module2))) {
-            return FALSE;
-        }
+        debug_flag && fprintf(debug_fp," match\n");
+        return TRUE;
     }
+    debug_flag && fprintf(debug_fp," not match\n");
 
     btp1 = getBaseStructType(tp1);
     btp2 = getBaseStructType(tp2);
 
-    if (TYPE_TYPE_PARAM_VALUES(btp1) == NULL &&
-        TYPE_TYPE_PARAM_VALUES(btp2) == NULL) {
+    debug_flag && fprintf(debug_fp,"* compare type names                  ... ");
+    if (!compare_derived_type_name(btp1, btp2)) {
+        debug_flag && fprintf(debug_fp," not match\n");
+
+        if (TYPE_IS_CLASS(tp1) && TYPE_PARENT(btp2) && is_pointer_set) {
+            debug_flag && fprintf(debug_fp,"* compare PARENT type\n");
+            return struct_type_is_compatible_for_assignment(tp1, TYPE_PARENT_TYPE(btp2), is_pointer_set);
+        } else {
+            return FALSE;
+        }
+    }
+    debug_flag && fprintf(debug_fp," match\n");
+
+    if (TYPE_TYPE_PARAM_VALUES(tp1) == NULL &&
+        TYPE_TYPE_PARAM_VALUES(tp2) == NULL) {
         return TRUE;
     } else {
-        return type_parameter_values_is_compatible_for_assignment(btp1, btp2, is_pointer_set);
+        debug_flag && fprintf(debug_fp,"* compare type parameters         ... ");
+        if (type_parameter_values_is_compatible_for_assignment(tp1, tp2, is_pointer_set)) {
+            debug_flag && fprintf(debug_fp," match\n");
+            return TRUE;
+        }
+        debug_flag && fprintf(debug_fp," not match\n");
     }
+
+    return FALSE;
 }
 
 
