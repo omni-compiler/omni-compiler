@@ -618,16 +618,14 @@ compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
         }
     }
 
-#if 0
     if (debug_flag) {
-        fprintf(debug_fp, "left is %s, right is %s\n",
-                sym1?SYM_NAME(sym1):"null",
-                sym2?SYM_NAME(sym2):"null");
-        fprintf(debug_fp, "left module is %s, right module is %s\n",
-                module1?SYM_NAME(module1):"null",
-                module2?SYM_NAME(module2):"null");
+        fprintf(debug_fp, "   left is '%s', right is '%s'\n",
+                sym1?SYM_NAME(sym1):"(null)",
+                sym2?SYM_NAME(sym2):"(null)");
+        fprintf(debug_fp, "   left module is '%s', right module is '%s'\n",
+                module1?SYM_NAME(module1):"(null)",
+                module2?SYM_NAME(module2):"(null)");
     }
-#endif
 
     if ((sym1 == sym2) && (module1 == module2)) {
         return TRUE;
@@ -657,55 +655,55 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
         return FALSE;
     }
 
-    debug_flag && fprintf(debug_fp,"* compare addresses                   ... ");
+    if (debug_flag) fprintf(debug_fp,"* compare addresses                   ... ");
 
     if (tp1 == tp2) {
-        debug_flag && fprintf(debug_fp," match\n");
+        if (debug_flag) fprintf(debug_fp," match\n");
         return TRUE;
     }
-    debug_flag && fprintf(debug_fp," not match\n");
+    if (debug_flag) fprintf(debug_fp," not match\n");
 
-    debug_flag && fprintf(debug_fp,"* check if left side type is CLASS(*) ... ");
+    if (debug_flag) fprintf(debug_fp,"* check if left side type is CLASS(*) ... ");
 
     if (TYPE_TAGNAME(getBaseType(tp1)) == NULL && TYPE_IS_CLASS(getBaseType(tp1))) {
         /*
          * tp1 is CLASS(*)
          */
-        debug_flag && fprintf(debug_fp," match\n");
+        if (debug_flag) fprintf(debug_fp," match\n");
         return TRUE;
     }
-    debug_flag && fprintf(debug_fp," not match\n");
+    if (debug_flag) fprintf(debug_fp," not match\n");
 
     btp1 = getBaseStructType(tp1);
     btp2 = getBaseStructType(tp2);
 
-    debug_flag && fprintf(debug_fp,"* compare type names                  ... ");
+    if (debug_flag) fprintf(debug_fp,"* compare type names\n");
     if (!compare_derived_type_name(tp1, tp2)) {
-        debug_flag && fprintf(debug_fp," not match\n");
+        if (debug_flag) fprintf(debug_fp,"                                      ... not match\n");
 
         if (TYPE_IS_CLASS(tp1) && TYPE_PARENT(btp2) && is_pointer_set) {
-            debug_flag && fprintf(debug_fp,"* compare PARENT type\n");
+            if (debug_flag) fprintf(debug_fp,"* compare PARENT type\n");
             return struct_type_is_compatible_for_assignment(tp1, TYPE_PARENT_TYPE(btp2), is_pointer_set);
         } else {
-            debug_flag && fprintf(debug_fp,"seems not compatible\n");
+            if (debug_flag) fprintf(debug_fp,"seems not compatible\n");
             return FALSE;
         }
     }
-    debug_flag && fprintf(debug_fp," match\n");
+    if (debug_flag) fprintf(debug_fp,"                                      ... match\n");
 
     if (TYPE_TYPE_PARAM_VALUES(tp1) == NULL &&
         TYPE_TYPE_PARAM_VALUES(tp2) == NULL) {
         return TRUE;
     } else {
-        debug_flag && fprintf(debug_fp,"* compare type parameters         ... ");
+        if (debug_flag) fprintf(debug_fp,"* compare type parameters");
         if (type_parameter_values_is_compatible_for_assignment(tp1, tp2, is_pointer_set)) {
-            debug_flag && fprintf(debug_fp," match\n");
+            if (debug_flag) fprintf(debug_fp," match\n");
             return TRUE;
         }
-        debug_flag && fprintf(debug_fp," not match\n");
+        if (debug_flag) fprintf(debug_fp," not match\n");
     }
 
-    debug_flag && fprintf(debug_fp,"seems not compatible\n");
+    if (debug_flag) fprintf(debug_fp,"seems not compatible\n");
 
     return FALSE;
 }
