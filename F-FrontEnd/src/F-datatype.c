@@ -592,7 +592,6 @@ compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
         return FALSE;
     }
 
-
     btp1 = getBaseType(tp1);
     btp2 = getBaseType(tp2);
 
@@ -619,8 +618,19 @@ compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
         }
     }
 
+#if 0
+    if (debug_flag) {
+        fprintf(debug_fp, "left is %s, right is %s\n",
+                sym1?SYM_NAME(sym1):"null",
+                sym2?SYM_NAME(sym2):"null");
+        fprintf(debug_fp, "left module is %s, right module is %s\n",
+                module1?SYM_NAME(module1):"null",
+                module2?SYM_NAME(module2):"null");
+    }
+#endif
+
     if ((sym1 == sym2) && (module1 == module2)) {
-        return FALSE;
+        return TRUE;
     } else {
         return FALSE;
     }
@@ -657,7 +667,7 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
 
     debug_flag && fprintf(debug_fp,"* check if left side type is CLASS(*) ... ");
 
-    if (!TYPE_TAGNAME(getBaseType(tp1)) && TYPE_IS_CLASS(getBaseType(tp2))) {
+    if (TYPE_TAGNAME(getBaseType(tp1)) == NULL && TYPE_IS_CLASS(getBaseType(tp1))) {
         /*
          * tp1 is CLASS(*)
          */
@@ -670,13 +680,14 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     btp2 = getBaseStructType(tp2);
 
     debug_flag && fprintf(debug_fp,"* compare type names                  ... ");
-    if (!compare_derived_type_name(btp1, btp2)) {
+    if (!compare_derived_type_name(tp1, tp2)) {
         debug_flag && fprintf(debug_fp," not match\n");
 
         if (TYPE_IS_CLASS(tp1) && TYPE_PARENT(btp2) && is_pointer_set) {
             debug_flag && fprintf(debug_fp,"* compare PARENT type\n");
             return struct_type_is_compatible_for_assignment(tp1, TYPE_PARENT_TYPE(btp2), is_pointer_set);
         } else {
+            debug_flag && fprintf(debug_fp,"seems not compatible\n");
             return FALSE;
         }
     }
@@ -693,6 +704,8 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
         }
         debug_flag && fprintf(debug_fp," not match\n");
     }
+
+    debug_flag && fprintf(debug_fp,"seems not compatible\n");
 
     return FALSE;
 }
