@@ -29,7 +29,8 @@ enum name_class {
     CL_COMMON,  /* common block */
     CL_ELEMENT,  /* structure element name  */
     CL_GENERICS, /* generics name */
-    CL_TYPE_PARAM /* type parameter name */
+    CL_TYPE_PARAM, /* type parameter name */
+    CL_TYPE_BOUND_PROCS, /* type bound procedure */
 };
 
 extern char *name_class_names[];
@@ -52,6 +53,7 @@ extern char *name_class_names[];
   "CL_ELEMENT", \
   "CL_GENERICS", \
   "CL_TYPE_PARAM", \
+  "CL_TYPE_BOUND_PROCS", \
 }
 
 /* for CL_PROC  */
@@ -231,6 +233,16 @@ typedef struct ident_descriptor
             char is_save;           /* save attribute */
             char is_blank_name;     /* blank name */
         } common_info;
+        struct {
+            /* for CL_TYPE_BOUND_PROCS */
+            struct ident_descriptor * binding; /* binding */
+            struct ident_descriptor * pass_arg; /* pass argument */
+            int type_bound_attrs;
+#define TYPE_BOUND_PROCEDURE_PASS                  0x01
+#define TYPE_BOUND_PROCEDURE_NOPASS                0x02
+#define TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE       0x04
+#define TYPE_BOUND_PROCEDURE_DEFERRED              0x08
+        } tbp_info;
     } info;
 } *ID;
 
@@ -349,6 +361,12 @@ struct use_assoc_info {
 #define COM_VARS(id)            ((id)->info.common_info.vars)
 #define COM_IS_SAVE(id)         ((id)->info.common_info.is_save)
 #define COM_IS_BLANK_NAME(id)   ((id)->info.common_info.is_blank_name)
+
+/* for CL_TYPE_BOUND_PROCS */
+#define TBP_BINDING(id)         ((id)->info.tbp_info.binding)
+#define TBP_BINDING_ATTRS(id)   ((id)->info.tbp_info.type_bound_attrs)
+#define TBP_PASS_ARG(id)        ((id)->info.tbp_info.pass_arg)
+
 
 struct interface_info {
     enum {

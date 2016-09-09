@@ -534,8 +534,13 @@ void compile_statement1(int st_no, expr x)
         }
         break;
     case F95_CONTAINS_STATEMENT:
-        check_INEXEC();
-        push_unit_ctl(INCONT);
+        if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
+            /* For type bound procedure */
+            CURRENT_STATE = IN_TYPE_BOUND_PROCS;
+        } else {
+            check_INEXEC();
+            push_unit_ctl(INCONT);
+        }
         break;
 
         /*
@@ -1090,6 +1095,8 @@ void compile_statement1(int st_no, expr x)
     case F95_ENDTYPEDECL_STATEMENT:
         if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
             CURRENT_STATE = INDCL;
+        } else if (CURRENT_STATE == IN_TYPE_BOUND_PROCS) {
+            CURRENT_STATE = INDCL;
         }
 
         check_INDCL();
@@ -1155,6 +1162,21 @@ void compile_statement1(int st_no, expr x)
         check_INDCL();
         compile_VOLATILE_statement(EXPR_ARG1(x));
         break;
+
+    case F03_TYPE_BOUND_PROCEDURE_STATEMENT:
+        if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
+            error("TYPE BOUDNED PROCEDURE out of the derived-type declaration");
+        }
+        compile_type_bound_procedure(x);
+        break;
+
+    case F03_TYPE_BOUND_GENERIC_STATEMENT:
+        if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
+            error("TYPE GENERIC BOUND PROCEDURE out of the derived-type declaration");
+        }
+        compile_type_generic_procedure(x);
+        break;
+
 
     default:
         compile_exec_statement(x);
@@ -1479,6 +1501,9 @@ check_INDCL()
         break;
     case IN_TYPE_PARAM_DECL:
         error("declaration in TYPE PARAMETER DECLARATION part");
+        break;
+    case IN_TYPE_BOUND_PROCS:
+        error("declaration in TYPE BOUND PROCEDURE DECLARATION part");
         break;
     default:
         error("declaration among executables");

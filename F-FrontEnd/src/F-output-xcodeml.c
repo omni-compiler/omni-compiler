@@ -3788,9 +3788,12 @@ mark_type_desc_in_structure(TYPE_DESC tp)
         ID_TYPE(id) = siTp;
         if (IS_STRUCT_TYPE(itp))
             mark_type_desc_in_structure(itp);
-        if (VAR_INIT_VALUE(id) != NULL)
-            collect_type_desc(VAR_INIT_VALUE(id));
-
+        if (ID_CLASS(id) == CL_TYPE_BOUND_PROCS) {
+            // skip
+        } else {
+            if (VAR_INIT_VALUE(id) != NULL)
+                collect_type_desc(VAR_INIT_VALUE(id));
+        }
     }
 }
 
@@ -4173,6 +4176,7 @@ outx_structType(int l, TYPE_DESC tp)
 {
     ID id;
     int l1 = l + 1, l2 = l1 + 1, l3 = l2 + 1;
+    int has_type_bound_procedure = FALSE;
 
     outx_typeAttrs(l, tp ,"FstructType", TOPT_NEXTLINE);
     if (TYPE_TYPE_PARAMS(tp)) {
@@ -4200,6 +4204,10 @@ outx_structType(int l, TYPE_DESC tp)
 
     outx_tag(l1, "symbols");
     FOREACH_MEMBER(id, tp) {
+        if (ID_CLASS(id) == CL_TYPE_BOUND_PROCS) {
+            has_type_bound_procedure = TRUE;
+            continue;
+        }
         outx_printi(l2, "<id type=\"%s\">\n", getTypeID(ID_TYPE(id)));
         outx_symbolName(l3, ID_SYM(id));
         if (VAR_INIT_VALUE(id) != NULL) {
@@ -4207,8 +4215,36 @@ outx_structType(int l, TYPE_DESC tp)
         }
         outx_close(l2, "id");
     }
-
     outx_close(l1,"symbols");
+
+    if (has_type_bound_procedure) {
+        outx_tag(l1, "typeBoundProcedures");
+        FOREACH_MEMBER(id, tp) {
+            if (ID_CLASS(id) != CL_TYPE_BOUND_PROCS) {
+                continue;
+            }
+            outx_printi(l2, "<typeBoundProcedure");
+            if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_PASS)
+                outx_printi(0, " pass=\"pass\"");
+            if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_NOPASS)
+                outx_printi(0, " pass=\"nopass\"");
+            if (TBP_PASS_ARG(id))
+                outx_printi(0, " pass_arg_name=\"%s\"",
+                            SYM_NAME(ID_SYM(TBP_PASS_ARG(id))));
+            if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_DEFERRED)
+                outx_true(TRUE, "is_deferred");
+            if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE)
+                outx_true(TRUE, "is_non_overridable");
+            outx_printi(0,">\n");
+            outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
+            if (TBP_BINDING(id)) {
+                outx_tagText(l3, "binding", SYM_NAME(ID_SYM(TBP_BINDING(id))));
+            }
+            outx_close(l2, "typeBoundProcedure");
+        }
+        outx_close(l1, "typeBoundProcedures");
+    }
+
     outx_close(l,"FstructType");
 }
 

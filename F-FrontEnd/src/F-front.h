@@ -123,7 +123,8 @@ enum prog_state {
     INSTRUCT,
     INCONT,     /* contains */
     ININTR,      /* interface */
-    IN_TYPE_PARAM_DECL /**/
+    IN_TYPE_PARAM_DECL, /* type parameter declarations */
+    IN_TYPE_BOUND_PROCS, /* type bound procedure declarations */
 };
 
 extern enum prog_state current_state;
@@ -640,6 +641,9 @@ extern TYPE_DESC        compile_derived_type _ANSI_ARGS_((expr x, int allow_pred
 extern expv     compile_int_constant _ANSI_ARGS_((expr x));
 extern void     compile_pragma_statement _ANSI_ARGS_((expr x));
 extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
+
+extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
+extern void     compile_type_generic_procedure _ANSI_ARGS_((expr x));
 
 
 extern int      type_is_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
