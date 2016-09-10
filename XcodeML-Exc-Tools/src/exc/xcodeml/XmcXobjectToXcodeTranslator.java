@@ -44,12 +44,6 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         return e;
     }
 
-    private Element transName(XobjList xobjlst) {
-        Element e = transName(xobjlst.getArg(0));
-        addAttributes(e, "fullName", ((XobjString)xobjlst.getArg(1)).getString());
-        return e;
-    }
-
     private Element transBody(Xobject xobj) {
         Element e = createElement("body");
         if (xobj != null) {
@@ -149,11 +143,9 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (xobj == null) {
             return null;
         }
-        Node v_node = transValueChild(xobj);
-        if (xobj.Opcode() != Xcode.LIST) {
-          v_node = addChildNodes(createElement("value"), v_node);
-        }
-        return v_node;
+
+        return addChildNodes(createElement("value"),
+                             transValueChild(xobj));
     }
 
     private Node transValueChild(Xobject xobj) {
@@ -301,7 +293,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case Xtype.STRUCT:
                 e = ((StructType)type).isClass() ? createTypeElement("classType", type) :
                                                    createTypeElement("structType", type);
-                XobjList tagNames = ((CompositeType)type).getTagNames();
+                XobjString tagNames = ((CompositeType)type).getTagNames();
                 if (tagNames != null) {
                   Element e_tagnames = transName(tagNames);
                   e = addChildNodes(e, e_tagnames);
@@ -1201,7 +1193,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     }
 
     /* Copied from XmcXobjectToXmObjTranslator.java */
-    private XobjList getDeclForNotDeclared(XobjList identList) {
+    public static XobjList getDeclForNotDeclared(XobjList identList) {
         if (identList == null) {
             return null;
         }

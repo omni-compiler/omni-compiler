@@ -136,6 +136,7 @@ typedef struct type_descriptor
         expv dim_size;
         expv dim_upper, dim_lower, dim_step; /* dimension subscripts */
     } array_info; /* FOR FbasicType for Array */
+    struct ident_descriptor *parent;  /* represents super-class of this derived type.  */
     struct ident_descriptor *members; /* all members for derived type */
     codims_desc *codims;
     int is_reshaped_type;       /* A bool flag to specify this type is
@@ -279,7 +280,9 @@ extern TYPE_DESC basic_type_desc[];
 
 #define TYPE_CHAR_LEN(tp)       ((tp)->size)
 #define TYPE_KIND(tp)           ((tp)->kind)
-#define TYPE_LENG(tp)            ((tp)->leng)
+#define TYPE_LENG(tp)           ((tp)->leng)
+#define TYPE_PARENT(tp)         ((tp)->parent)
+#define TYPE_PARENT_TYPE(tp)    (TYPE_PARENT(tp)->type)
 
 #define TYPE_ARRAY_ASSUME_KIND(tp) ((tp)->array_info.assume_kind)
 

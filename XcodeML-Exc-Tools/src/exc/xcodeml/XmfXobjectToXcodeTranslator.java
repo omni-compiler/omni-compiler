@@ -41,6 +41,7 @@ import exc.object.XobjectDefEnv;
 import exc.object.XobjectFile;
 import exc.object.XobjectIterator;
 import exc.object.Xtype;
+import exc.object.CompositeType;
 import exc.object.topdownXobjectIterator;
 import exc.openmp.OMPpragma;
 
@@ -576,6 +577,27 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = createElement(name, "construct_name", getArg0Name(xobj));
             addChildNode(e, transBody((XobjList)xobj.getArg(1)));
             break;
+        case F_BLOCK_STATEMENT:
+            e = createElement(name, "construct_name", getArg0Name(xobj));
+            XobjList identList = (XobjList)xobj.getArg(1);
+            XobjList declList = (XobjList)xobj.getArg(2);
+            XobjList addDeclList = XmcXobjectToXcodeTranslator.getDeclForNotDeclared(identList);
+
+            if (addDeclList != null) {
+                if (declList == null) {
+                    declList = Xcons.List();
+                }
+                addDeclList.reverse();
+                for (Xobject a : addDeclList) {
+                    declList.insert(a);
+                }
+            }
+
+            e = addChildNodes(e,
+                              transSymbols(identList),
+                              transDeclarations(declList),
+                              transBody(xobj.getArg(3)));
+            break;
 
         case F_SYNCALL_STATEMENT:                    
         case F_SYNCIMAGE_STATEMENT:
@@ -902,16 +924,16 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
              */
             switch (xcode) {
             // IXbfIOStatement
-            case F_OPEN_STATEMENT:
-            case F_CLOSE_STATEMENT:
-            case F_END_FILE_STATEMENT:
-            case F_REWIND_STATEMENT:
-            case F_BACKSPACE_STATEMENT:
+//          case F_OPEN_STATEMENT:
+//          case F_CLOSE_STATEMENT:
+//          case F_END_FILE_STATEMENT:
+//          case F_REWIND_STATEMENT:
+//          case F_BACKSPACE_STATEMENT:
             // IXbfRWStatement
-            case F_READ_STATEMENT:
-            case F_WRITE_STATEMENT:
-            case F_INQUIRE_STATEMENT:
-                break;
+//          case F_READ_STATEMENT:
+//          case F_WRITE_STATEMENT:
+//          case F_INQUIRE_STATEMENT:
+//              break;
             default:
                 ILineNo lineNo = xobj.getLineNo();
                 addAttributes(e,
@@ -938,7 +960,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                       "is_save", toBoolStr(type.isFsave()),
                       "is_parameter", toBoolStr(type.isFparameter()),
                       "is_allocatable", toBoolStr(type.isFallocatable()),
-                      "is_cray_pointer", toBoolStr(type.isFcrayPointer()));
+                      "is_cray_pointer", toBoolStr(type.isFcrayPointer()),
+                      "is_volatile", toBoolStr(type.isFvolatile()));
 
         if (type.isFintentIN()) {
             addAttributes(basicTypeElem, "intent", "in");
@@ -987,7 +1010,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     "is_public", toBoolStr(type.isFpublic()),
                     "is_private", toBoolStr(type.isFprivate()),
                     "is_sequence", toBoolStr(type.isFsequence()),
-                    "is_internal_private", toBoolStr(type.isFinternalPrivate()));
+                    "is_internal_private", toBoolStr(type.isFinternalPrivate()),
+                    "extends", ((CompositeType)type).parentId());
                 addChildNode(typeElem, transSymbols(type.getMemberList()));
                 break;
 
@@ -1107,6 +1131,12 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (val != null && val.Opcode() == Xcode.F_VALUE) {
             Element ve = trans(val);
             addChildNode(e, ve);
+        }
+
+        // module declared in
+        String mod_name = ident.getFdeclaredModule();
+        if (mod_name != null) {
+            addAttributes(e, "declared_in", mod_name);
         }
 
         return e;

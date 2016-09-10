@@ -214,7 +214,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
 			     null, // symbolScope
 			     getAttr(n_name, "fullName"), // symbolAlias
 			     false, // is_op
-			     getElement(n, "value"),
+			     getContent(getElement(n, "value")),
 			     getElement(n, "gccAsm"));
     }
 
@@ -968,10 +968,10 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
   private void declStructType(Node n) {
     Node nameNode = getElement(n, "name");
-    XobjList tagNames = null;
+    XobjString tagNames = null;
     if (nameNode != null) {
-      tagNames = Xcons.List(toXobject(nameNode));
-      tagNames.add(new XobjString(Xcode.STRING, getAttr(nameNode, "fullName")));
+      tagNames = new XobjString(Xcode.IDENT, getContentText(nameNode));
+      tagNames.setAlias(getAttr(nameNode, "fullName"));
     }
     XobjList identList = (XobjList)toXobject(getElement(n, "symbols"));
     Xobject gccAttrs = getGccAttributes(n);
