@@ -69,6 +69,7 @@ public class XMPanalyzePragma
     }
   }
 
+  // check use and import if use of module is found.
   private void checkUseDecl(Xobject decls){
     if(decls == null) return;
     for(Xobject decl: (XobjList)decls){
