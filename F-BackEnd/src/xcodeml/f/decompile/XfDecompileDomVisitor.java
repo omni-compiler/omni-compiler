@@ -1353,8 +1353,10 @@ public class XfDecompileDomVisitor {
 
             writer.writeToken("INTEGER");
             writer.writeToken(",");
-            if (attrName.compareToIgnoreCase("len") == 0) {
+            if (attrName.compareToIgnoreCase("length") == 0) {
                 writer.writeToken("LEN");
+            } else if (attrName.compareToIgnoreCase("len") == 0) {
+                    writer.writeToken("LEN");
             } else if (attrName.compareToIgnoreCase("kind") == 0) {
                 writer.writeToken("KIND");
             }
