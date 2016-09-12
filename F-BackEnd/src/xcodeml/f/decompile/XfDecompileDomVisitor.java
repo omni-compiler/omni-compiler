@@ -287,10 +287,19 @@ public class XfDecompileDomVisitor {
                     isProtectedEmit |= XmDomUtil.getAttrBool(lowType, "is_protected");
                     _writeBasicType(topType, typeList);
                 } else if ("FstructType".equals(topTypeName)) {
+                    Node typeParamValues = typeList.findChildNode("typeParamValues");
                     String aliasStructTypeName =
                         typeManager.getAliasTypeName(XmDomUtil.getAttr(topType,
                                                                        "type"));
-                    writer.writeToken("TYPE(" + aliasStructTypeName + ")");
+                    writer.writeToken("TYPE");
+                    writer.writeToken("(");
+                    writer.writeToken(aliasStructTypeName);
+                    if (typeParamValues != null) {
+                        writer.writeToken("(");
+                        _invokeChildEnterAndWriteDelim(typeParamValues, ",");
+                        writer.writeToken(")");
+                    }
+                    writer.writeToken(")");
                 } else {
                     /* topType is FfunctionType. */
                     throw new XmTranslationException(node,
@@ -323,7 +332,7 @@ public class XfDecompileDomVisitor {
                 ("FbasicType".equals(lowType.getNodeName()))) {
                 ArrayList<Node> contentNodes =
                     XmDomUtil.collectElementsExclude(lowType,
-                                                     "kind", "len", "coShape");
+                                                     "kind", "len", "coShape", "typeParamValues");
                 if (!contentNodes.isEmpty()) {
                     _writeIndexRangeArray(contentNodes);
                 }
