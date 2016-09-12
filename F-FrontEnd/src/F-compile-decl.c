@@ -1936,7 +1936,7 @@ compile_derived_type(expr x, int allow_predecl)
              */
             tp = struct_type(NULL);
             TYPE_SET_CLASS(tp);
-            return wrap_type(tp);
+            return tp;
         }
 
         is_class = TRUE;

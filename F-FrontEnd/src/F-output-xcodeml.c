@@ -4040,6 +4040,15 @@ outx_functionType_EXT(int l, EXT_ID ep)
 
 
 /**
+ * output the type of CLASS(*)
+ */
+static void
+outx_unlimitedClass(int l, TYPE_DESC tp)
+{
+    outx_typeAttrs(l, tp ,"FbasicType", TOPT_CLOSE);
+}
+
+/**
  * output FstructType
  */
 static void
@@ -4103,7 +4112,11 @@ outx_type(int l, TYPE_DESC tp)
     } else if(IS_ARRAY_TYPE(tp)) {
         outx_arrayType(l, tp);
     } else if(IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
-        outx_structType(l, tp);
+        if (TYPE_IS_CLASS(tp)) {
+            outx_unlimitedClass(l, tp);
+        } else {
+            outx_structType(l, tp);
+        }
     } else if (tRef != NULL) {
         if (has_attribute_except_func_attrs(tp) ||
             TYPE_KIND(tRef) ||

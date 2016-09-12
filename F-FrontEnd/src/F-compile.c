@@ -5231,10 +5231,10 @@ fix_pointer_pointee_recursive(TYPE_DESC tp)
             }
             fix_pointer_pointee_recursive(refT);
         } else {
-            if (IS_STRUCT_TYPE(tp)) {
+            if (IS_STRUCT_TYPE(tp) && !TYPE_IS_CLASS(tp)) {
                 /*
                  * TYPE_STRUCT base. Don't mark this node as
-                 * pointer/pointee.
+                 * pointer/pointee, EXCEPT 'CLASS(*)'.
                  */
                 TYPE_UNSET_POINTER(tp);
                 TYPE_UNSET_TARGET(tp);

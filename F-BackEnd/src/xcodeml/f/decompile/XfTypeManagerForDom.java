@@ -375,7 +375,11 @@ class XfTypeManagerForDom {
             String name = typeChoice.getNodeName();
             if ("FbasicType".equals(name)) {
                 Node basicType = typeChoice;
+
                 String refType = XmDomUtil.getAttr(basicType, "ref");
+
+                if (XmDomUtil.getAttrBool(basicType, "is_class") && XfUtilForDom.isNullOrEmpty(refType))
+                    break;
 
                 if (XfType.DERIVED != XfType.getTypeIdFromXcodemlTypeName(refType))
                     break;

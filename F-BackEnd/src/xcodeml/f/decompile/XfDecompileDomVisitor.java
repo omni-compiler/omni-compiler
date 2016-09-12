@@ -527,8 +527,11 @@ public class XfDecompileDomVisitor {
         if ("FbasicType".equals(lowTypeName)) {
             Node basicTypeNode = lowTypeChoice;
             String refName = XmDomUtil.getAttr(basicTypeNode, "ref");
-            XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
-            assert refTypeId != null;
+
+            if (!isClass && XfUtilForDom.isNullOrEmpty(refName)) {
+                XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
+                assert refTypeId != null;
+            }
 
             writer.writeToken(" :: ");
             writer.writeToken(symbol.getSymbolName());
