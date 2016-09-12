@@ -4650,8 +4650,6 @@ compile_type_bound_procedure(expr x)
                 if (EXPR_ARG1(v)) {
                     pass_arg = new_ident_desc(EXPR_SYM(EXPR_ARG1(v)));
                 }
-
-                warning("NOT IMPLEMENTED YET, SKIP");
                 break;
             case F03_NO_PASS_SPEC:
                 if (binding_attr_flags & TYPE_BOUND_PROCEDURE_NOPASS) {
@@ -4663,8 +4661,6 @@ compile_type_bound_procedure(expr x)
                     return;
                 }
                 binding_attr_flags |= TYPE_BOUND_PROCEDURE_NOPASS;
-
-                warning("NOT IMPLEMENTED YET, SKIP");
                 break;
             case F03_NON_OVERRIDEABLE_SPEC:
                 if (binding_attr_flags & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE) {
@@ -4672,7 +4668,6 @@ compile_type_bound_procedure(expr x)
                     return;
                 }
                 binding_attr_flags |= TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE;
-                warning("NOT IMPLEMENTED YET, SKIP");
                 break;
             case F03_DEFERRED_SPEC:
                 if (interface_name == NULL) {
@@ -4684,7 +4679,6 @@ compile_type_bound_procedure(expr x)
                     return;
                 }
                 binding_attr_flags |= TYPE_BOUND_PROCEDURE_DEFERRED;
-                warning("NOT IMPLEMENTED YET, SKIP");
                 break;
 
             /*
