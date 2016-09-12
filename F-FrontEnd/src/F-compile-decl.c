@@ -4454,7 +4454,9 @@ type_apply_type_parameter(TYPE_DESC tp, expv type_param_values)
     tq = copy_type_shallow(tp);
 
     if (TYPE_PARENT(tq)) {
-        TYPE_DESC parent;
+        TYPE_DESC new_parent_type;
+        ID new_parent;
+
         expv parent_type_param_values = list0(LIST);
         ID new_type_params = get_type_params(TYPE_PARENT_TYPE(tq));
 
@@ -4479,9 +4481,12 @@ type_apply_type_parameter(TYPE_DESC tp, expv type_param_values)
             }
         }
 
-        parent = type_apply_type_parameter(TYPE_PARENT_TYPE(tq),
-                                           parent_type_param_values);
-        TYPE_PARENT_TYPE(tq) = parent;
+        new_parent = new_ident_desc(ID_SYM(TYPE_PARENT(tq)));
+        *new_parent = *(TYPE_PARENT(tq));
+        new_parent_type = type_apply_type_parameter(TYPE_PARENT_TYPE(tq),
+                                                    parent_type_param_values);
+        TYPE_PARENT(tq) = new_parent;
+        TYPE_PARENT_TYPE(tq) = new_parent_type;
     }
 
     FOREACH_ID(ip, TYPE_MEMBER_LIST(tq)) {

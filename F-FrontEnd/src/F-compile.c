@@ -3291,6 +3291,9 @@ deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
 
     if(IS_STRUCT_TYPE(cur)) {
         if(TYPE_PARENT(cur) && TYPE_PARENT_TYPE(cur)) {
+            id = new_ident_desc(ID_SYM(TYPE_PARENT(cur)));
+            *id = *TYPE_PARENT(cur);
+            TYPE_PARENT(cur) = id;
             deep_copy_and_overwrite_for_module_id_type(&(TYPE_PARENT_TYPE(cur)));
         }
 
