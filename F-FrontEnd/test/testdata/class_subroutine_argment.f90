@@ -4,7 +4,7 @@
           INTEGER(KIND=k) :: v
         END TYPE t
 
-        TYPE, EXTENDS(t) :: tt(l)!, k2)
+        TYPE, EXTENDS(t) :: tt(l)
           INTEGER, LEN :: l
           CHARACTER(LEN=l) :: u
         END TYPE tt
