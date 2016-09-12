@@ -2627,8 +2627,9 @@ get_type_params(TYPE_DESC struct_tp)
 // Expects to use for the dummy derived type
 // (genereted by declare_struct_type_wo_component)
 int
-compile_type_param_values_dummy(TYPE_DESC struct_tp, expr type_param_args, expv type_param_values) {
+compile_type_param_values_dummy(TYPE_DESC struct_tp, expr type_param_args) {
     list lp;
+    expv type_param_values = list0(LIST);
     FOR_ITEMS_IN_LIST(lp, type_param_args) {
         expv v = compile_expression(LIST_ITEM(lp));
         if (v == NULL) {
@@ -2636,6 +2637,7 @@ compile_type_param_values_dummy(TYPE_DESC struct_tp, expr type_param_args, expv 
         }
         list_put_last(type_param_values, v);
     }
+    TYPE_TYPE_PARAM_VALUES(struct_tp) = type_param_values;
     return TRUE;
 }
 
@@ -2905,7 +2907,6 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 {
     expv result, component;
     TYPE_DESC tp, base_stp;
-    ID used = NULL;
 
     assert(ID_TYPE(struct_id) != NULL);
 
@@ -2914,7 +2915,6 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 
     base_stp = find_struct_decl(ID_SYM(struct_id));
     assert(EXPV_TYPE(result) != NULL);
-    tp = wrap_type(base_stp);
 
     if(args) {
         EXPV_LINE(result) = EXPR_LINE(args);
@@ -2926,19 +2926,14 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
     }
 
     if (type_param_args) {
-        expv type_param_values = list0(LIST);
-        if (!compile_type_param_values(ID_TYPE(struct_id),
-                                       type_param_args,
-                                       type_param_values,
-                                       &used)) {
-            return NULL;
-        }
-        EXPR_ARG1(result) = type_param_values;
-        tp = type_apply_type_parameter(tp, used, type_param_values);
-    } else if (type_param_values_required(tp)) {
+        tp = type_apply_type_parameter(base_stp, type_param_args);
+        EXPR_ARG1(result) = TYPE_TYPE_PARAM_VALUES(tp);
+    } else if (type_param_values_required(base_stp)) {
         error("struct type '%s' requires type parameter values",
               SYM_NAME(ID_SYM(struct_id)));
         return NULL;
+    } else {
+        tp = wrap_type(base_stp);
     }
 
     EXPV_TYPE(result) = tp;

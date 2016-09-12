@@ -2183,18 +2183,12 @@ compile_IMPLICIT_decl(expr type,expr l)
                 SYM_NAME(EXPR_SYM(type)));
         }
     } else if (EXPR_CODE(EXPR_ARG1(type)) == F03_PARAMETERIZED_TYPE) {
-        ID used = NULL;
-        expv type_param_values = list0(LIST);
         tp = find_struct_decl(EXPR_SYM(EXPR_ARG1(EXPR_ARG1(type))));
         if (tp == NULL) {
             error_at_node(type, "struct type '%s' is not declared",
                 SYM_NAME(EXPR_SYM(type)));
         }
-        if (!compile_type_param_values(tp, EXPR_ARG2(EXPR_ARG1(type)),
-                                       type_param_values, &used)) {
-            return;
-        }
-        tp = type_apply_type_parameter(tp, used, type_param_values);
+        tp = type_apply_type_parameter(tp, EXPR_ARG2(EXPR_ARG1(type)));
     } else {
         ty = EXPR_ARG1 (type);
         if (EXPR_CODE (ty) != F_TYPE_NODE) {
@@ -3023,12 +3017,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             }
 
             if (EXPR_CODE(typeExpr) == F03_PARAMETERIZED_TYPE) {
-                ID used = NULL;
-                expv type_param_values = list0(LIST);
-                if (!compile_type_param_values(tp0, EXPR_ARG2(typeExpr), type_param_values, &used)) {
-                    return;
-                }
-                tp0 = type_apply_type_parameter(tp0, used, type_param_values);
+                tp0 = type_apply_type_parameter(tp0, EXPR_ARG2(typeExpr));
             }
 
             if(CTL_TYPE(ctl_top) == CTL_STRUCT) {
@@ -4402,17 +4391,28 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
  * A new type is also STRUCT_TYPE and its members have a type that is applied type parameters.
  */
 TYPE_DESC
-type_apply_type_parameter(TYPE_DESC tp, ID type_params, expv type_param_values)
+type_apply_type_parameter(TYPE_DESC tp, expv type_param_values)
 {
     ID ip, iq;
     ID last = NULL;
     TYPE_DESC tq;
     list lp;
     ID cur;
+    expv compiled_type_param_values = list0(LIST);
+    ID used;
+
 
     if (!IS_STRUCT_TYPE(tp)) {
         return tp;
     }
+
+    if (!compile_type_param_values(tp,
+                                   type_param_values, compiled_type_param_values,
+                                   &used)) {
+        return NULL;
+    }
+
+    type_param_values = compiled_type_param_values;
 
     tq = copy_type_shallow(tp);
 
@@ -4422,18 +4422,17 @@ type_apply_type_parameter(TYPE_DESC tp, ID type_params, expv type_param_values)
         ID new_type_params = get_type_params(TYPE_PARENT_TYPE(tq));
 
         FOREACH_ID(ip, new_type_params) {
-            iq = find_ident_head(ID_SYM(ip), type_params);
+            iq = find_ident_head(ID_SYM(ip), used);
             VAR_INIT_VALUE(ip) = VAR_INIT_VALUE(iq);
         }
 
         cur = new_type_params;
         FOR_ITEMS_IN_LIST(lp, type_param_values) {
             expv v = LIST_ITEM(lp);
-            SYMBOL sym;
             if (EXPV_KWOPT_NAME(v)) {
-                sym = find_symbol(EXPV_KWOPT_NAME(v));
-                if (find_ident_head(sym, new_type_params)) {
-                    list_put_last( parent_type_param_values, v);
+                if (find_ident_head(find_symbol(EXPV_KWOPT_NAME(v)),
+                                    cur)) {
+                    list_put_last(parent_type_param_values, v);
                 }
             } else {
                 if (cur != NULL) {
@@ -4444,13 +4443,12 @@ type_apply_type_parameter(TYPE_DESC tp, ID type_params, expv type_param_values)
         }
 
         parent = type_apply_type_parameter(TYPE_PARENT_TYPE(tq),
-                                           new_type_params,
                                            parent_type_param_values);
         TYPE_PARENT_TYPE(tq) = parent;
     }
 
     FOREACH_ID(ip, TYPE_MEMBER_LIST(tq)) {
-        TYPE_DESC member_tp = type_apply_type_parameter0(ID_TYPE(ip), type_params);
+        TYPE_DESC member_tp = type_apply_type_parameter0(ID_TYPE(ip), used);
         ID new_id = new_ident_desc(ID_SYM(ip));
         *new_id = *ip;
         ID_TYPE(new_id) = member_tp;
@@ -4458,7 +4456,7 @@ type_apply_type_parameter(TYPE_DESC tp, ID type_params, expv type_param_values)
     }
     TYPE_REF(tq) = tp;
     TYPE_TYPE_PARAM_VALUES(tq) = type_param_values;
-    TYPE_TYPE_ACTUAL_PARAMS(tq) = type_params; /* Store as actual parameters */
+    TYPE_TYPE_ACTUAL_PARAMS(tq) = used;
 
     return tq;
 }
