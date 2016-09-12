@@ -336,6 +336,16 @@ class XfTypeManagerForDom {
             return null;
         }
 
+        Node typeChoice = findType(typeId);
+        String name = typeChoice.getNodeName();
+        if ("FbasicType".equals(name)) {
+            String refType = XmDomUtil.getAttr(typeChoice, "ref");
+            if (XfUtilForDom.isNullOrEmpty(refType)) {
+                throw new IllegalStateException("not found type name of '" + typeId + "'");
+            }
+            return getAliasTypeName(refType);
+        }
+
         // Trim key word string.
         typeId = typeId.trim();
         for (AliasMap aliasMap : _aliasMapStack) {
