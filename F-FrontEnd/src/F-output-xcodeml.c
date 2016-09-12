@@ -4429,6 +4429,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
     TYPE_DESC tp;
     ID id, *ids;
     int i, nIDs;
+    SYMBOL modname = NULL;
 
     ids = genSortedIDs(id_list, &nIDs);
 
@@ -4440,6 +4441,10 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
         for (i = 0; i < nIDs; i++) {
             id = ids[i];
 
+            if (ID_CLASS(id) == CL_MODULE) {
+                modname = ID_SYM(id);
+            }
+
             if (ID_CLASS(id) != CL_TAGNAME) {
                 continue;
             }
@@ -4447,7 +4452,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
                 continue;
             }
 
-            if (ID_IS_OFMODULE(id) == TRUE) {
+            if (ID_IS_OFMODULE(id) == TRUE && ID_MODULE_NAME(id) != modname) {
                 continue;
             }
 
