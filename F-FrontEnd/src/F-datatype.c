@@ -641,7 +641,7 @@ compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
 int
 struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set)
 {
-    TYPE_DESC btp1, btp2;
+    TYPE_DESC btp2;
 
     assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
     assert(tp2 == NULL || TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
@@ -651,7 +651,7 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     }
 
     if (tp2 == NULL) {
-        debug_flag && fprintf(debug_fp,"* right side type is null, return false\n");
+        if (debug_flag) fprintf(debug_fp,"* right side type is null, return false\n");
         return FALSE;
     }
 
@@ -674,7 +674,6 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     }
     if (debug_flag) fprintf(debug_fp," not match\n");
 
-    btp1 = getBaseStructType(tp1);
     btp2 = getBaseStructType(tp2);
 
     if (debug_flag) fprintf(debug_fp,"* compare type names\n");
