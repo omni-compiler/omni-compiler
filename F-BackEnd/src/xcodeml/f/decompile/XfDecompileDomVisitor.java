@@ -280,18 +280,32 @@ public class XfDecompileDomVisitor {
                     isProtectedEmit = XmDomUtil.getAttrBool(lowType, "is_protected");
                 }
 
+                boolean isClass = XmDomUtil.getAttrBool(lowType, "is_class");
+
                 String topTypeName = topType.getNodeName();
                 if ("FbasicType".equals(topTypeName)) {
                     isPublicEmit |= XmDomUtil.getAttrBool(topType, "is_public");
                     isPrivateEmit |= XmDomUtil.getAttrBool(topType, "is_private");
                     isProtectedEmit |= XmDomUtil.getAttrBool(lowType, "is_protected");
-                    _writeBasicType(topType, typeList);
+                    if (!isClass) {
+                        _writeBasicType(topType, typeList);
+                    } else {
+                        writer.writeToken("CLASS");
+                        writer.writeToken("(");
+                        writer.writeToken("*");
+                        writer.writeToken(")");
+                    }
+
                 } else if ("FstructType".equals(topTypeName)) {
                     Node typeParamValues = typeList.findChildNode("typeParamValues");
                     String aliasStructTypeName =
                         typeManager.getAliasTypeName(XmDomUtil.getAttr(topType,
                                                                        "type"));
-                    writer.writeToken("TYPE");
+                    if (isClass) {
+                        writer.writeToken("CLASS");
+                    } else {
+                        writer.writeToken("TYPE");
+                    }
                     writer.writeToken("(");
                     writer.writeToken(aliasStructTypeName);
                     if (typeParamValues != null) {
@@ -470,7 +484,7 @@ public class XfDecompileDomVisitor {
             return false;
         }
 
-        boolean isClass = XmDomUtil.getAttrBool(topTypeChoice, "is_class");
+        boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
         // ================
         // Top type element
         // ================
@@ -478,20 +492,20 @@ public class XfDecompileDomVisitor {
         if ("FbasicType".equals(topTypeName) && !isClass) {
             _writeBasicType(topTypeChoice, typeList);
         } else if ("FbasicType".equals(topTypeName) && isClass) {
-            String refTypeId = XmDomUtil.getAttr(topTypeChoice, "ref");
-            String aliasStructTypeName;
-            if (refTypeId != null) {
-                aliasStructTypeName = typeManager.getAliasTypeName(refTypeId);
-            } else {
-                aliasStructTypeName = "*";
-            }
-            writer.writeToken("CLASS(" + aliasStructTypeName + ")");
+            writer.writeToken("CLASS");
+            writer.writeToken("(");
+            writer.writeToken("*");
+            writer.writeToken(")");
         } else if ("FstructType".equals(topTypeName)) {
             Node typeParamValues = typeList.findChildNode("typeParamValues");
             String aliasStructTypeName =
                     typeManager.getAliasTypeName(XmDomUtil.getAttr(topTypeChoice,
                             "type"));
-            writer.writeToken("TYPE");
+            if (isClass) {
+                writer.writeToken("CLASS");
+            } else {
+                writer.writeToken("TYPE");
+            }
             writer.writeToken("(");
             writer.writeToken(aliasStructTypeName);
             if (typeParamValues != null) {
@@ -510,7 +524,7 @@ public class XfDecompileDomVisitor {
         // Low type element
         // ================
         String lowTypeName = lowTypeChoice.getNodeName();
-        if ("FbasicType".equals(lowTypeName) && !isClass) {
+        if ("FbasicType".equals(lowTypeName)) {
             Node basicTypeNode = lowTypeChoice;
             String refName = XmDomUtil.getAttr(basicTypeNode, "ref");
             XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
@@ -531,7 +545,7 @@ public class XfDecompileDomVisitor {
                 invokeEnter(coShapeNode);
             }
 
-        } else if ("FstructType".equals(lowTypeName) || isClass) {
+        } else if ("FstructType".equals(lowTypeName)) {
             writer.writeToken(" :: ");
             writer.writeToken(symbol.getSymbolName());
         }
