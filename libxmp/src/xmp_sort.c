@@ -549,6 +549,11 @@ static void kway_inplace_merge_sort(void *a, int *start, int k){
 //
 //
 
+void xmpc_gmv_g_alloc(_XMP_gmv_desc_t **gmv_desc, _XMP_array_t *ap);
+void xmpc_gmv_g_dim_info(_XMP_gmv_desc_t *gp, int i, int kind, int lb, int len, int st);
+void xmpc_gmv_dealloc(_XMP_gmv_desc_t *gp);
+void xmpc_gmv_do(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
+
 static void do_gmove(void *buf, int *bufStart, _XMP_array_t *b_desc){
 
   //_XMP_nodes_t *n_desc = b_desc->array_nodes;
@@ -580,9 +585,19 @@ static void do_gmove(void *buf, int *bufStart, _XMP_array_t *b_desc){
   buf_desc->total_elmts = buf_desc->info[0].alloc_size;
   buf_desc->array_addr_p = buf;
 
-  _XMP_gmove_SENDRECV_ARRAY(b_desc, buf_desc, type, datasize,
-  			    b_desc->info[0].ser_lower, n, 1, (unsigned long long)1,
-  			    0, n, 1, (unsigned long long)1, _XMP_N_GMOVE_NORMAL);
+  _XMP_gmv_desc_t *b_gmv_desc;
+  _XMP_gmv_desc_t *buf_gmv_desc;
+  xmpc_gmv_g_alloc(&b_gmv_desc, b_desc);
+  xmpc_gmv_g_dim_info(b_gmv_desc, 0, XMP_N_GMOVE_RANGE, b_desc->info[0].ser_lower, n, 1);
+  xmpc_gmv_g_alloc(&buf_gmv_desc, buf_desc);
+  xmpc_gmv_g_dim_info(buf_gmv_desc, 0, XMP_N_GMOVE_RANGE, 0, n, 1);
+  xmpc_gmv_do(b_gmv_desc, buf_gmv_desc, _XMP_N_GMOVE_NORMAL);
+  xmpc_gmv_dealloc(b_gmv_desc);
+  xmpc_gmv_dealloc(buf_gmv_desc);
+    
+  /* _XMP_gmove_SENDRECV_ARRAY(b_desc, buf_desc, type, datasize, */
+  /* 			    b_desc->info[0].ser_lower, n, 1, (unsigned long long)1, */
+  /* 			    0, n, 1, (unsigned long long)1, _XMP_N_GMOVE_NORMAL); */
 
   _XMP_finalize_array_desc(buf_desc);
   _XMP_finalize_template(t_desc);
