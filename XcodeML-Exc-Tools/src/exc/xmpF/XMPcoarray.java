@@ -230,7 +230,7 @@ public class XMPcoarray {
 
   public Xobject makeStmt_countCoarrays(BlockList blist)
   {
-    Xobject elem = getElementLengthExpr();
+    Xobject elem = getElementLengthExpr_atmost();
 
     if (elem == null) {
       XMP.error("current restriction: " + 
@@ -313,7 +313,7 @@ public class XMPcoarray {
     // arg3
     Xobject count = getTotalArraySizeExpr();
     // arg4
-    Xobject elem = getElementLengthExpr();
+    Xobject elem = getElementLengthExpr_atmost();
     if (elem==null)
       XMP.fatal("elem must not be null.");
     // arg6
@@ -608,7 +608,7 @@ public class XMPcoarray {
   //  evaluate index
   //------------------------------
   public int getElementLengthOrNot() {
-    Xobject elem = getElementLengthExpr(); 
+    Xobject elem = getElementLengthExpr_runtime(); 
     if (elem == null || !elem.isIntConstant())
       return -1;
     return elem.getInt();
@@ -623,28 +623,29 @@ public class XMPcoarray {
     return elem;
   }
 
+  /******************************************************
   public Xobject getElementLengthExpr() {
     ////// SELECTIVE
     return getElementLengthExpr(true);   // statically
   }
   public Xobject getElementLengthExpr(Boolean staticEvaluation) {
     if (staticEvaluation)
-      return _getElementLengthExpr_atmost();
+      return getElementLengthExpr_atmost();
     else
-      return _getElementLengthExpr_runtime();
+      return getElementLengthExpr_runtime();
   }
-
+  *********************************************************/
 
   /* static evaluation of the size of derived-type data element
    *  This result will be equal to or greater than the size that 
    *  the backend compiler will deside.
    */
-  private Xobject _getElementLengthExpr_atmost() {
-    int length = _getElementLength_atmost(ident.Type());
+  public Xobject getElementLengthExpr_atmost() {
+    int length = getElementLength_atmost(ident.Type());
     return Xcons.IntConstant(length);
   }
 
-  private int _getElementLength_atmost(Xtype type) {
+  public int getElementLength_atmost(Xtype type) {
     switch (type.getKind()) {
     case Xtype.F_ARRAY:
       Xtype baseType = type.getBaseRefType();        // type BASIC or STRUCT
@@ -698,7 +699,7 @@ public class XMPcoarray {
 
     case Xtype.F_ARRAY:
       Xtype baseType = type.getBaseRefType();       // type BASIC or STRUCT
-      int elemLen = _getElementLength_atmost(baseType);
+      int elemLen = getElementLength_atmost(baseType);
       int size = getTotalArraySize(type);
       return size * elemLen;
 
@@ -748,7 +749,7 @@ public class XMPcoarray {
         _DEBUG_ALIGN("  allocatable member:" + member +
                      ", length=" + elemLen1);
       } else {
-        elemLen1 = _getElementLength_atmost(type1);
+        elemLen1 = getElementLength_atmost(type1);
         numElems1 = _getNumElements(type1, getFblock());
         _DEBUG_ALIGN("  static member:" + member +
                      ", element length=" + elemLen1 +
@@ -793,7 +794,7 @@ public class XMPcoarray {
   /* build an expression for the size of the data element that
    * can be evaluated at runtime
    */
-  private Xobject _getElementLengthExpr_runtime() {
+  public Xobject getElementLengthExpr_runtime() {
     Xobject lengthExpr = ident.Type().getElementLengthExpr(getFblock());    // see BasicType.java
     if (lengthExpr != null)
       return lengthExpr;
@@ -1713,10 +1714,11 @@ public class XMPcoarray {
    * return a name of Fortran intrinsic function
    */
   public String getFtypeString() {
-    return _getTypeIntrinName_1(getFtypeNumber());
+    return getFtypeString(_getXtype());
   }
-  public String getFtypeString(int typeNumber) {
-    return _getTypeIntrinName_1(typeNumber);
+  public String getFtypeString(Xtype xtype) {
+    Ftype ftype = new Ftype(xtype, fblock);
+    return ftype.getNameOfConvFunction();
   }
 
 
@@ -1724,56 +1726,6 @@ public class XMPcoarray {
     Xtype ref = Xtype.FcharacterType;
     Xtype type = Xtype.Farray(ref, Xcons.IntConstant(size));
     return type;
-  }
-
-  /// see also BasicType.getElementLength
-  private String _getTypeIntrinName_1(int typeNumber) {
-    String tname = null;
-
-    switch(typeNumber) {
-    case BasicType.BOOL:
-      tname = "logical";
-      break;
-
-    case BasicType.SHORT:
-    case BasicType.UNSIGNED_SHORT:
-    case BasicType.INT:
-    case BasicType.UNSIGNED_INT:
-    case BasicType.LONG:
-    case BasicType.UNSIGNED_LONG:
-    case BasicType.LONGLONG:
-    case BasicType.UNSIGNED_LONGLONG:
-      tname = "int";
-      break;
-
-    case BasicType.FLOAT:
-    case BasicType.DOUBLE:
-    case BasicType.LONG_DOUBLE:
-      tname = "real";
-      break;
-
-    case BasicType.FLOAT_COMPLEX:
-    case BasicType.DOUBLE_COMPLEX:
-    case BasicType.LONG_DOUBLE_COMPLEX:
-      tname = "cmplx";
-      break;
-
-    case BasicType.CHAR:
-    case BasicType.UNSIGNED_CHAR:
-    case BasicType.F_CHARACTER:
-      tname = "char";
-      break;
-
-    case BasicType.F_NUMERIC_ALL:
-      tname = null;
-      break;
-
-    default:
-      XMP.fatal("found illegal type number in BasicType: " + typeNumber);
-      break;
-    }
-
-    return tname;
   }
 
 }

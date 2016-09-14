@@ -1,4 +1,7 @@
   program get1
+    implicit none
+    integer i,j,k,nerr,me,nval
+    real eps,dval
 
     type g0
        integer*8 a(10)
@@ -19,14 +22,6 @@
     integer*8 nval
     real*8    dcal
 
-!!!!!!!!!!!!
-!!       zz = ns1(2)%p(1)%a(1)
-!!       zz = ns1(2)%s(1)%a(1)
-!!       zz = na1(2)%a(1)
-!!       zz = ca1(2)[3]%a(1:10)
-!!       zz10 = cs1[3]%a(1:10)
-!!       zz = cr1[3]
-!!!!!!!!!!!!
     me = this_image()
 
     !---------------------------- initialization
@@ -61,10 +56,10 @@
        write(*,103) me,"zz",5.0d0,zz
     endif
 
-    do i=1,100
+    do i=1,10
        if (me==1) then
           nval = i*6
-          dcal = real(6*i,8)
+          dval = real(6*i,8)
        else
           nval = i*me
           dval = 1.0d0 / real(me*i,8)
@@ -80,9 +75,9 @@
        end if
     end do
 
-103 format ("[",i0,"] ",a," should be ",d12.8," but ",d12.8)
-104 format ("[",i0,"] cs1%r(",i0,") should be ",d12.8," but ",d12.8)
+103 format ("[",i0,"] ",a," should be ",d12.4," but ",d12.4)
 105 format ("[",i0,"] cs1%a(",i0,") should be ",i0," but ",i0)
+104 format ("[",i0,"] cs1%r(",i0,") should be ",d12.4," but ",d12.4)
 
     if (nerr==0) then 
        print '("result[",i0,"] OK")', me

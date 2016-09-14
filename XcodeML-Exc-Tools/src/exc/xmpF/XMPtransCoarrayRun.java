@@ -1128,14 +1128,18 @@ public class XMPtransCoarrayRun
       end subroutine
     --------------------------------------------
     case useMalloc:
+      For more infomation about Type6,7&8, see XMPcoindexObj.java.
     --------------------------------------------
       subroutine EX1
         ...
         integer(8) :: tag                                            ! i.
         call xmpf_coarray_prolog(tag, "EX1", 3)                      ! i.
-        call xmpf_coarray_put(descptr_V1, V1(1,j), 4, &              ! d.
-          k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
-        z = xmpf_coarray_get0d(descptr_V2, V2, 16, k, 0) ** 2        ! e.
+!!      call xmpf_coarray_put(descptr_V1, V1(1,j), 4, &              ! d. Type7
+!!        k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
+        call xmpf_coarray_put_generic(descptr_V1, k1+4*(k2-1), &     ! d. Type8
+          V1(1:3,j), (/1.0,2.0,3.0/))
+!!      z = xmpf_coarray_get0d(descptr_V2, V2, 16, k, 0) ** 2        ! e. Type6
+        z = xmpf_coarray_get_generic(descptr_V2, k, V2) ** 2         ! e. Type8
         call xmpf_coarray_malloc_generic(descptr_V3, V3, 200, 4, tag, &
                                         2, 1, 10, 1, 20)             ! j.
         call xmpf_coarray_set_coshape(descptr_V3, 2, k1, k2, 0)      ! m.
@@ -1180,6 +1184,8 @@ public class XMPtransCoarrayRun
     replaceIntrinsicCalls1(visibleCoarrays);
 
     // e. convert coindexed objects to function references
+    // CAUTION: This function e. must be called before function d. because
+    // topdownXobjectIterator is used indide.
     convCoidxObjsToFuncCalls(visibleCoarrays);
 
     // d. convert coindexed variable assignment stmts to call stmts
@@ -1743,7 +1749,7 @@ public class XMPtransCoarrayRun
   }
 
   /*
-   * condition 1: Expression rts may be addressed in read-only region or
+   * condition 1: The address of rts may be located in read-only region or
    *    in temporary area allocated by the compiler. 
    *    (In such cases, Fujitsu-RDMA cannot work without buffer.)
    * condition 0: Otherwise.
@@ -1782,16 +1788,12 @@ public class XMPtransCoarrayRun
         continue;
 
       if (_isCoindexObj(xobj)) {
-        Xobject parent = (Xobject)xobj.getParent();
-        if (parent.Opcode() == Xcode.F_ASSIGN_STATEMENT &&
-            parent.getArg(0) == xobj)
-          // found a coindexed variable, which is LHS of an assignment stmt.
-          continue;  // do nothing 
-
-        // found target to convert
-        Xobject funcCall = coindexObjToFuncRef(xobj, coarrays);
-        xi.setXobject(funcCall);
-        done = true;
+        if (_isTargetCoindexObj(xobj)) {
+          // found target to convert
+          Xobject funcCall = coindexObjToFuncRef(xobj, coarrays);
+          xi.setXobject(funcCall);
+          done = true;
+        }
       }
     }
 
@@ -1812,6 +1814,8 @@ public class XMPtransCoarrayRun
   }
 
 
+  /** check if it is formally a coindexed object
+   */
   private Boolean _isCoindexObj(Xobject xobj) {
     if (xobj.Opcode() == null)
       return false;
@@ -1821,16 +1825,16 @@ public class XMPtransCoarrayRun
     case CO_ARRAY_REF:          // ex. v[k], assuming top-down search
       return true;
 
-    case MEMBER_REF:            // guess v[k]%b..%c
+    case MEMBER_REF:            // true if v[k]%b..%c
       xobj1 = xobj.getArg(0);
       if (xobj1.Opcode() != Xcode.F_VAR_REF)
         break;
       xobj2 = xobj1.getArg(0);
-      if (xobj2.Opcode() != Xcode.CO_ARRAY_REF)
-        break;
-      return true;
+      if (_isCoindexObj(xobj2))
+        return true;
+      break;
 
-    case F_ARRAY_REF:           // guess v[k]%b..%c(i,..,j)
+    case F_ARRAY_REF:           // true if v[k]%b..%c(i,..,j)
       xobj1 = xobj.getArg(0);
       if (xobj1.Opcode() != Xcode.F_VAR_REF)
         break;
@@ -1841,15 +1845,73 @@ public class XMPtransCoarrayRun
       if (xobj3.Opcode() != Xcode.F_VAR_REF)
         break;
       xobj4 = xobj3.getArg(0);
-      if (xobj4.Opcode() != Xcode.CO_ARRAY_REF)
-        break;
-      return true;
+      if (_isCoindexObj(xobj4))
+        return true;
+      break;
 
     default:
       break;
     }
     return false;
   }
+
+
+  /** check if the coindexed object is a target of GET communication
+   */
+  private Boolean _isTargetCoindexObj(Xobject coidxObj) {
+    Xobject parent = (Xobject)coidxObj.getParent();
+    switch (parent.Opcode()) {
+    case F_ASSIGN_STATEMENT:
+      if (parent.getArg(0) == coidxObj) {
+        // found coidxObj is a coindexed variable, an LHS of an assignment stmt.
+        return false;
+      }
+      // found coidxObj is a target coindexed object, a RHS of an assignment stmt.
+      return true;
+
+    case F_VAR_REF:
+      break;             // more check needed
+
+    case CO_ARRAY_REF:
+    case MEMBER_REF:
+    case F_ARRAY_REF:
+      // illegal cases
+      XMP.fatal("found illegal internal form.");
+
+    default:
+      return true;
+    }
+
+    // Here the parent of coidxObj is F_VAR_LEF.
+
+    Xobject gparent = (Xobject)parent.getParent();
+    if (gparent.Nargs() != 2 || gparent.getArg(0) != parent)
+      return true;
+
+    // Here, coidxObj == gparent.getArg(0).getArg(0)
+
+    switch (gparent.Opcode()) {
+    case CO_ARRAY_REF:
+      // found coidxObj is a host variable of another coindexed object.
+      XMP.error("found duplicated sets of cosubscript(s)");
+      return false;
+
+    case MEMBER_REF:
+      // found coidxObj is the host of a coindexed structure component.
+      return false;
+
+    case F_ARRAY_REF:
+      // found coidxObj is the host variable of a coindexed array element.
+      return false;
+
+    default:
+      break;
+    }
+
+    // passed all checks
+    return true;
+  }
+
 
   //-----------------------------------------------------
   //  TRANSLATION b.
@@ -2081,7 +2143,7 @@ public class XMPtransCoarrayRun
     // arg3
     Xobject count = coarray.getTotalArraySizeExpr();
     // arg4
-    Xobject elem = coarray.getElementLengthExpr();
+    Xobject elem = coarray.getElementLengthExpr_runtime();
     if (elem==null)
       XMP.fatal("elem must not be null.");
     // arg5
@@ -2361,16 +2423,19 @@ public class XMPtransCoarrayRun
       // ... do not deallocate automatically at the exit of the procedure
       tag = Xcons.IntConstant(0, Xtype.Fint8Type, "8");
     } else {
+      // For each procedure, resourceTag is corresponding to the link of
+      // all allocatable coarrays which are allocated in the procedure. 
       tag = Xcons.FvarRef(getResourceTagId());
     }
 
     Xobject descId = coarray.getDescPointerId();
     if (descId == null)
+      // descId will be found at runtime.
       descId = Xcons.IntConstant(0, Xtype.Fint8Type, "8");    // descId = 0_8
     Xobject args = Xcons.List(descId,
                               Xcons.FvarRef(coarray.getIdent()),
                               _buildCountExpr(shape, rank),
-                              coarray.getElementLengthExpr(),
+                              coarray.getElementLengthExpr_runtime(),
                               tag,
                               Xcons.IntConstant(rank));
 
