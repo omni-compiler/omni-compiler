@@ -5,35 +5,45 @@ package exc.object;
  */
 public abstract class CompositeType extends Xtype
 {
-    private XobjList tagNames;
+    private XobjString tagNames;
     /** member id list */
     private XobjList id_list;
     /** original type (to suppress output same type) */
     protected CompositeType original;
+    /** Fortran2003 : type extension. */
+    protected String parent_type_id;
 
-    protected CompositeType(int type_kind, String id, XobjList tag_names, XobjList id_list, int typeQualFlags,
-                            Xobject gccAttrs, Xobject[] codimensions)
+    protected CompositeType(int type_kind, String id, String parent_id, XobjString tag_names, XobjList id_list, 
+                            int typeQualFlags, Xobject gccAttrs, Xobject[] codimensions)
     {
         super(type_kind, id, typeQualFlags, gccAttrs, codimensions);
         if(id_list == null)
             id_list = Xcons.List();
         this.id_list = id_list;
         this.tagNames = tag_names;
+        this.parent_type_id = parent_id;
     }
 
-    protected CompositeType(int type_kind, String id, XobjList id_list, int typeQualFlags,
+    protected CompositeType(int type_kind, String id, String parent_id, XobjList id_list, int typeQualFlags,
                             Xobject gccAttrs, Xobject[] codimensions)
     {
-        this(type_kind, id, null, id_list, typeQualFlags, gccAttrs, codimensions);
+        this(type_kind, id, parent_id, null, id_list, typeQualFlags, gccAttrs, codimensions);
     }
 
     protected CompositeType(int type_kind, String id, XobjList id_list, int typeQualFlags,
                             Xobject gccAttrs)
     {
-        this(type_kind, id, id_list, typeQualFlags, gccAttrs, null);
+        this(type_kind, id, null, id_list, typeQualFlags, gccAttrs, null);
     }
 
-    public XobjList getTagNames()
+
+    /** return parent type id */
+    public final String parentId()
+    {
+        return  parent_type_id;
+    }
+
+    public XobjString getTagNames()
     {
         return tagNames;
     }
@@ -72,4 +82,12 @@ public abstract class CompositeType extends Xtype
     {
     	return original;
     }
+
+    @Override
+    /** Fortran: return if the type extends parent type */
+    public boolean isExtended()
+    {
+        return parent_type_id != null;
+    }
+
 }

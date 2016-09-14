@@ -41,6 +41,7 @@ import exc.object.XobjectDefEnv;
 import exc.object.XobjectFile;
 import exc.object.XobjectIterator;
 import exc.object.Xtype;
+import exc.object.CompositeType;
 import exc.object.topdownXobjectIterator;
 import exc.openmp.OMPpragma;
 
@@ -959,7 +960,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                       "is_save", toBoolStr(type.isFsave()),
                       "is_parameter", toBoolStr(type.isFparameter()),
                       "is_allocatable", toBoolStr(type.isFallocatable()),
-                      "is_cray_pointer", toBoolStr(type.isFcrayPointer()));
+                      "is_cray_pointer", toBoolStr(type.isFcrayPointer()),
+                      "is_volatile", toBoolStr(type.isFvolatile()));
 
         if (type.isFintentIN()) {
             addAttributes(basicTypeElem, "intent", "in");
@@ -1008,7 +1010,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     "is_public", toBoolStr(type.isFpublic()),
                     "is_private", toBoolStr(type.isFprivate()),
                     "is_sequence", toBoolStr(type.isFsequence()),
-                    "is_internal_private", toBoolStr(type.isFinternalPrivate()));
+                    "is_internal_private", toBoolStr(type.isFinternalPrivate()),
+                    "extends", ((CompositeType)type).parentId());
                 addChildNode(typeElem, transSymbols(type.getMemberList()));
                 break;
 

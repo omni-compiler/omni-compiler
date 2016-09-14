@@ -16,24 +16,45 @@ import exc.xcodeml.*;
 import xcodeml.util.XmOption;
 
 /**
- * module structure 
+ * Object to represent external used modules
+ *   This is subclass of XMPenv.
+ *   An empty XMPmodle object are created with the parent environment.
+ *   And, then, call inputFile method is called to read the .xmod file
+ *   to construct the internal data structure such as symbol tables.
+ *
+ *   XMP symbols are analyzed separately and stored into XMPsybmolTable.
+ *   Other variables are stored in XMPenv super-object.
  */
 public class XMPmodule extends XMPenv {
   XMPenv parent;
   private String module_name;
-  private Vector<Xobject> aux_info;
 
   private XMPsymbolTable table;
 
+  /**
+   * Contructor of XMPmodel with parent XMPenv.
+   *   this constructor creates the empty XMPmodule,
+   *   which is stored by inputFile method.
+   */
   public XMPmodule(XMPenv parent){ 
     this.parent = parent;
     is_module = true; 
     table = new XMPsymbolTable();
   }
 
+  /**
+   * return the module name.
+   */
   public String getModuleName() { return module_name; }
 
+  /**
+   * Read from the given module .xmod file.
+   *   stores symbol tables and type info by XcodeMLtools_Fmod.
+   *   analyze XMP directives in the module and make XMPsymboltable.
+   */
   public void inputFile(String module_name){
+    Vector<Xobject> aux_info;
+
     if(XMP.debugFlag) System.out.println("module read begin: "+module_name);
     String mod_file_name = module_name+".xmod";
     Reader reader = null;
@@ -162,28 +183,48 @@ public class XMPmodule extends XMPenv {
     }
   }
 
+  /**
+   * Indicate this module uses the module give by the module name.
+   */
   public void useModule(String module_name){
     table.addUseModule(module_name);
   }
 
+  /**
+   * Return XMP sybmol table in this module.
+   */
   public XMPsymbolTable getXMPsymbolTable() {
     return table;
   }
 
+  /**
+   * Declare XMPobject in this module. 
+   * (block is not used in Fortran)
+   */
   public void declXMPobject(XMPobject obj, Block block) {
     // in case of fortran, block is ingored
     declXMPobject(obj);
   }
 
+  /**
+   * Declare XMPobject in this module. 
+   */
   public void declXMPobject(XMPobject obj) {
     table.putXMPobject(obj);
   }
 
+  /**
+   * Find the XMPobject by the given name.
+   * (block is not used in Fortran)
+   */
   public XMPobject findXMPobject(String name, Block block){
     // in case of fortran, block is ingored
     return findXMPobject(name);
   }
 
+  /**
+   * Find the XMPobject by the given name.
+   */
   public XMPobject findXMPobject(String name) {
     XMPobject o;
 
@@ -199,6 +240,12 @@ public class XMPmodule extends XMPenv {
     return null;
   }
 
+  /**
+   * Declare the identifier by the give name and type.
+   *  if block is null and is_external is true, then the identifier 
+   *  created in the Envornment. Otherwise, the identifier is not 
+   *  external one.
+   */
   public Ident declIdent(String name, Xtype type, 
 			 boolean is_external, Block block) {
     Xobject id_list = env.getGlobalIdentList();
@@ -221,6 +268,10 @@ public class XMPmodule extends XMPenv {
     return id;
   }
 
+  /**
+   * Remove the declareation of the identifier of the give name.
+   * (block is not used in Fortran)
+   */
   public void removeIdent(String name, Block block){
 
     Xobject id_list = env.getGlobalIdentList();
@@ -244,6 +295,10 @@ public class XMPmodule extends XMPenv {
 
   }    
 
+  /**
+   * Find and return the identifier object of Ident by the given name
+   * (block is not used in Fortran)
+   */
   public Ident findVarIdent(String name, Block b){
     Xobject id_list = env.getGlobalIdentList();
     for(Xobject id: (XobjList)id_list){

@@ -310,12 +310,20 @@ public class XobjectFile extends XobjectDefEnv
         out.print("{");
         out.print(Xtype.getKindName(type.getKind()));
         out.print(" ");
+        if (type instanceof CompositeType) {
+            XobjString tagNames = ((CompositeType)type).getTagNames();
+            if (tagNames != null) {
+              out.print(tagNames.getName() + "(\"" + tagNames.getAlias() + "\")");
+            }
+            out.print(" ");
+        }
         out.printType(type);
         
         out.print(" (");
         
         if(type.isConst())          out.print(" const");
         if(type.isVolatile())       out.print(" volatile");
+        if(type.isFvolatile())      out.print(" volatile");
         if(type.isRestrict())       out.print(" restrict");
         if(type.isInline())         out.print(" inline");
         if(type.isArrayStatic())    out.print(" array_static");
@@ -339,6 +347,7 @@ public class XobjectFile extends XobjectDefEnv
         if(type.isFexternal())      out.print(" fexternal");
         if(type.isFsequence())      out.print(" fsequence");
         if(type.isFinternalPrivate()) out.print(" finternal_private");
+        if(type.isExtended())       out.print(" extends[" + ((CompositeType)type).parentId() + "]");
         
         out.print(") ");
 
