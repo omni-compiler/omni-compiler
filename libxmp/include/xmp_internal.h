@@ -195,12 +195,16 @@ extern int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_
 extern int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s,
 					_XMP_array_t *src_array, int *src_array_nodes_ref,
 					int *src_l, int *src_u, int *src_s);
-extern void _XMP_gmove_SENDRECV_ARRAY(_XMP_array_t *dst_array, _XMP_array_t *src_array,
-				      int type, size_t type_size, ...);
-extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d, int mode);
+extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
+					  int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d,
+					  int *src_l, int *src_u, int *src_s, unsigned long long *src_d, int mode);
 extern void _XMP_gmove_inout_scalar(void *scalar, _XMP_gmv_desc_t *gmv_desc, int rdma_type);
 extern unsigned long long _XMP_gtol_calc_offset(_XMP_array_t *a, int g_idx[]);
-  //extern void _XMP_gmove_1to1(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp);
+extern void _XMP_gmove_scalar_garray(void *scalar, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
+extern void _XMP_gmove_garray_scalar(_XMP_gmv_desc_t *gmv_desc_leftp, void *scalar, int mode);
+extern void _XMP_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
+extern void _XMP_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
+extern void _XMP_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
 
 // xmp_loop.c
 extern int _XMP_sched_loop_template_width_1(int ser_init, int ser_cond, int ser_step,
@@ -292,6 +296,7 @@ extern void _XMP_reflect_async__(_XMP_array_t *a, int async_id);
 // xmp_runtime.c
 extern void _XMP_init(int argc, char** argv);
 extern void _XMP_finalize(int return_val);
+extern size_t _XMP_get_datatype_size(int datatype);
 
 // xmp_section_desc.c
 extern void print_rsd(_XMP_rsd_t *rsd);
