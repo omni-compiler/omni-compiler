@@ -2760,6 +2760,7 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
             cur = ID_NEXT(cur);
         }
 
+        v = expv_reduce(v, TRUE);
         id_link_remove(&rest_type_params, match);
         VAR_INIT_VALUE(match) = v;
         ID_LINK_ADD(match, *used, used_last);
