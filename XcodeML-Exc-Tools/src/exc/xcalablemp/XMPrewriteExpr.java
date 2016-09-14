@@ -73,8 +73,10 @@ public class XMPrewriteExpr {
         if (decls != null) {
           try {
             for (Xobject x : decls) {
-              Xobject declInitExpr = x.getArg(1);
-	      x.setArg(1, rewriteExpr(declInitExpr, b));
+              if (Xcode.VAR_DECL == x.Opcode()) {
+                Xobject declInitExpr = x.getArg(1);
+                x.setArg(1, rewriteExpr(declInitExpr, b));
+              }
             }
           } catch (XMPexception e) {
             XMP.error(b.getLineNo(), e.getMessage());

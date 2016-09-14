@@ -173,7 +173,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
 				       is_op,
 				       getElement(n, "symbols"),
 				       null, // params, process later.
-				       getElement(n, "body"),
+				       getContent(getElement(n, "body")),
 				       getElement(n, "gccAttributes"));
       _pScopeStack.pop();
 
@@ -187,13 +187,14 @@ public class XcodeMLtools_C extends XcodeMLtools {
       XobjArgs arg = xlist.getArgs();
       XobjArgs argBody = arg.nextArgs().nextArgs().nextArgs();
       Xobject stmts = argBody.getArg();
+
       if (stmts != null) {
         switch (stmts.Opcode()) {
-        case LIST:
-          stmts = Xcons.CompoundStatement(
-					  Xcons.IDList(), Xcons.List(), stmts);
-          argBody.setArg(stmts);
-          break;
+//      case LIST:
+//        stmts = Xcons.CompoundStatement(
+//			  Xcons.IDList(), Xcons.List(), stmts);
+//        argBody.setArg(stmts);
+//        break;
         case COMPOUND_STATEMENT:
           break;
         default:
@@ -382,11 +383,21 @@ public class XcodeMLtools_C extends XcodeMLtools {
     }
 
     case FUNCTION_CALL:
-      return enterAsXobjList(n,
-			     code,
-			     type,
-			     getContent(getElement(n, "function")),
-			     getElement(n, "arguments"));
+      Node n_addr;
+      Node n_func = getElement(n, "function");
+      if (n_func != null) {
+        n_addr = getContent(n_func);
+      } else {
+        n_addr = getElement(n, "memberRef");
+        if (n_addr == null) {
+          n_addr = getElement(n, "operator");
+        }
+      }
+      if (n_addr == null) {
+        fatal("unknown functionCall function.");
+      }
+      Node n_args = getElement(n, "arguments");
+      return enterAsXobjList(n, code, type, n_addr, n_args);
 
     case SIZE_OF_EXPR:
       return enterSizeOrAlignExpr(code, type, getContent(n));
@@ -403,6 +414,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
       return enterArrayRef(code, type, n);
 
     case FUNC_ADDR:
+    case CPP_OPERATOR_ADDR:
       return Xcons.Symbol(code,
 			  type,
 			  getContentText(n));
