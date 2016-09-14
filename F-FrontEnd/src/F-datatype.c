@@ -520,31 +520,27 @@ type_parameter_expv_equals(expv v1, expv v2, int is_pointer_set)
             return TRUE;
         } else if (EXPR_CODE(v1) == EXPR_CODE(v2)) {
             return TRUE;
-        } else {
-            return FALSE;
         }
+        return FALSE;
+
     } else if (EXPR_CODE(v2) == LEN_SPEC_ASTERISC ||
                EXPR_CODE(v2) == F08_LEN_SPEC_COLON) {
         return FALSE;
+
     } else {
-        if (EXPR_CODE(v1) == INT_CONSTANT) {
+        if (EXPR_CODE(v1) == INT_CONSTANT &&
+            EXPR_CODE(v2) == INT_CONSTANT) {
             i1 = EXPV_INT_VALUE(v1);
-        } else {
-            return FALSE;
-        }
-
-        if (EXPR_CODE(v2) == INT_CONSTANT) {
             i2 = EXPV_INT_VALUE(v2);
-        } else {
-            return FALSE;
+            if (i1 == i2) {
+                return TRUE;
+            } else {
+                return FALSE;
+            }
         }
-
-        if (i1 == i2) {
-            return TRUE;
-        }
+        /* CANNOT RECOGNIZE THE VALUE OF EXPV, pass */
+        return TRUE;
     }
-
-    return FALSE;
 }
 
 

@@ -231,6 +231,22 @@ expr_is_constant_typeof(x, bt)
         }
         return TRUE;
 
+    case FUNCTION_CALL:
+        /*
+         * The intrinsic call with constant values is also constant value.
+         */
+        if (SYM_TYPE(EXPV_NAME(EXPR_ARG1(x))) == S_INTR) {
+            list lp;
+            FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(x)) {
+                if (!expr_is_constant_typeof(LIST_ITEM(lp), TYPE_UNKNOWN)) {
+                    return FALSE;
+                }
+            }
+            if (bt == TYPE_UNKNOWN || bt == get_basic_type(EXPV_TYPE(x))) {
+                return TRUE;
+            }
+        }
+        break;
     default:
         break;
     }
