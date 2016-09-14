@@ -2798,9 +2798,10 @@ public class XfDecompileDomVisitor {
             // ======
             // Inside
             // ======
-            invokeEnter(XmDomUtil.getElement(n, "declarations"));
+            Node declarations = XmDomUtil.getElement(n, "declarations");
+            invokeEnter(declarations);
 
-            writeVolatileOrAsynchronousStatements();
+            writeVolatileOrAsynchronousStatements(declarations);
 
             // ========
             // Prologue
@@ -2982,9 +2983,10 @@ public class XfDecompileDomVisitor {
             // Inside
             // ======
             invokeEnter(XmDomUtil.getElement(n, "symbols"));
-            invokeEnter(XmDomUtil.getElement(n, "declarations"));
+            Node declarations = XmDomUtil.getElement(n, "declarations");
+            invokeEnter(declarations);
 
-            writeVolatileOrAsynchronousStatements();
+            writeVolatileOrAsynchronousStatements(declarations);
 
             writer.setupNewLine();
 
@@ -6076,11 +6078,12 @@ public class XfDecompileDomVisitor {
             typeManager.enterScope();
 
             invokeEnter(XmDomUtil.getElement(n, "symbols"));
-            invokeEnter(XmDomUtil.getElement(n, "declarations"));
+            Node declarations = XmDomUtil.getElement(n, "declarations");
+            invokeEnter(declarations);
 
             writer.setupNewLine();
 
-            writeVolatileOrAsynchronousStatements();
+            writeVolatileOrAsynchronousStatements(declarations);
 
             invokeEnter(XmDomUtil.getElement(n, "body"));
 
@@ -6238,15 +6241,47 @@ public class XfDecompileDomVisitor {
     }
 
 
+    class CollectDeclaredNameVistor {
+        private Set<String> _names;
+
+        public Set<String> collect(Node n) {
+            _names = new HashSet<String>();
+            this.enter(n);
+            return _names;
+        }
+
+        private void enter(Node n) {
+            String nodeName = n.getNodeName();
+            if ("name".equals(nodeName)) {
+                Node parent = n.getParentNode();
+                if (parent != null && "varDecl".equals(parent.getNodeName())) {
+                    String name = n.getTextContent();
+                    if (name == null) return;
+                    _names.add(name);
+                }
+                return;
+            }
+
+            NodeList list = n.getChildNodes();
+            for (int i = 0; i < list.getLength(); i++) {
+                this.enter(list.item(i));
+            }
+        }
+    }
+
     /*
      * NOTE: This method writes VOLATILE/ASYNCHRONOUS statements even if those are not required.
      */
     /**
      * Write VOLATILE/ASYNCHRONOUS statements for symbols those have is_volatile/is_asynchronous attribute.
      */
-    private void writeVolatileOrAsynchronousStatements() {
+    private void writeVolatileOrAsynchronousStatements(Node declarationsNode) {
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
         XmfWriter writer = _context.getWriter();
+
+        CollectDeclaredNameVistor vistor = new CollectDeclaredNameVistor();
+        Set<String> declaredSymbols = vistor.collect(declarationsNode);
+
         writer.setupNewLine();
         Set<String> volatiles = typeManager.findSymbolFromCurrentScope(new XfTypeManagerForDom.SymbolMatcher() {
             @Override
@@ -6255,6 +6290,8 @@ public class XfDecompileDomVisitor {
             }
         });
         for (String volatileSymbol : volatiles) {
+            if (declaredSymbols.contains(volatileSymbol))
+                continue;
             writer.writeToken("VOLATILE");
             writer.writeToken(volatileSymbol);
             writer.setupNewLine();
@@ -6266,6 +6303,8 @@ public class XfDecompileDomVisitor {
             }
         });
         for (String asynchronousSymbol : asynchs) {
+            if (declaredSymbols.contains(asynchronousSymbol))
+                continue;
             writer.writeToken("asynchronous");
             writer.writeToken(asynchronousSymbol);
             writer.setupNewLine();

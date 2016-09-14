@@ -4213,9 +4213,9 @@ compile_VOLATILE_statement(expr id_list)
     FOR_ITEMS_IN_LIST(lp, id_list) {
         ident = LIST_ITEM(lp);
 
-        if ((id = find_ident_local(EXPR_SYM(ident))) == NULL ||
-            (!(IS_STRUCT_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) == NULL))) {
-            if ((id = find_ident(EXPR_SYM(ident))) == NULL) {
+        if ((id = find_ident_local(EXPR_SYM(ident))) == NULL) {
+            if ((id = find_ident(EXPR_SYM(ident))) == NULL ||
+                (ID_CLASS(id) != CL_VAR && ID_CLASS(id) != CL_UNKNOWN)) {
                 id = declare_ident(EXPR_SYM(ident), CL_VAR);
                 if(id == NULL) {
                     continue; /* error */
