@@ -3033,6 +3033,9 @@ public class XMPtranslateLocalPragma {
       if(!XmOption.isAsync()){
 	XMP.error(pb.getLineNo(), "MPI-3 is required to use the async clause on a bcast directive");
       }
+      //BlockList bl = gmoveFuncCallBlock.getBody();
+      gmoveFuncCallBlock.insert(_globalDecl.declExternFunc("xmpc_init_async").Call(Xcons.List(async)));
+      gmoveFuncCallBlock.add(_globalDecl.declExternFunc("xmpc_start_async").Call(Xcons.List()));
     }
 
     Block gmoveBlock = Bcons.COMPOUND(Bcons.blockList(gmoveFuncCallBlock));

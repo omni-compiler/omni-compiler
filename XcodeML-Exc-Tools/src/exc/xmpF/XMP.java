@@ -11,8 +11,10 @@ import exc.block.*;
 import xcodeml.util.XmLog;
 
 /**
- * all static members are defined here
+ * Class to define several constants related to XMP compiler.
+ *    all static members are defined here
  */
+
 public class XMP {
   public static boolean debugFlag = false;
 

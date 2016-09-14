@@ -978,20 +978,19 @@ public class XMPtransPragma
 			  Xcons.IntConstant(type.getNumDimensions()));
 	bb.add(f.callSubroutine(args));
 
-	Xobject lower_b = 
-	  env.declIntrinsicIdent("lbound",Xtype.FintFunctionType).
-	  Call(Xcons.List(a));
-	Xobject upper_b = 
-	  env.declIntrinsicIdent("ubound",Xtype.FintFunctionType).
-	  Call(Xcons.List(a));
+	Ident lower_f = env.declIntrinsicIdent("lbound", Xtype.FintFunctionType);
+	Ident upper_f = env.declIntrinsicIdent("ubound", Xtype.FintFunctionType);
 	
 	f = env.declInternIdent(XMP.gmove_l_dim_info_f, Xtype.FsubroutineType);
  	int idx = 0;
  	for(Xobject e: (XobjList) x.getArg(1)){
- 	  switch(e.Opcode()){
+
+	  Xobject dim = Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.IntConstant(idx), Xcons.IntConstant(1));
+	  
+	  switch(e.Opcode()){
 	  case F_ARRAY_INDEX:
-	    args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
-			      lower_b, upper_b,
+	    args = Xcons.List(descId.Ref(), Xcons.IntConstant(idx),
+			      lower_f.Call(Xcons.List(a, dim)), upper_f.Call(Xcons.List(a, dim)),
 			      Xcons.IntConstant(GMOVE_INDEX),
 			      e.getArg(0),
 			      Xcons.IntConstant(0),Xcons.IntConstant(0));
@@ -999,7 +998,7 @@ public class XMPtransPragma
 	  case F_INDEX_RANGE:
 	    if(e.getArg(0) == null && e.getArg(1) == null){
 	      args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
-				lower_b,upper_b, 
+				lower_f.Call(Xcons.List(a, dim)), upper_f.Call(Xcons.List(a, dim)),
 				Xcons.IntConstant(GMOVE_ALL),
 				Xcons.IntConstant(0),
 				Xcons.IntConstant(0),Xcons.IntConstant(0));
@@ -1007,7 +1006,7 @@ public class XMPtransPragma
 	      Xobject stride = e.getArg(2);
 	      if(stride == null) stride = Xcons.IntConstant(1);
 	      args = Xcons.List(descId.Ref(),Xcons.IntConstant(idx),
-				lower_b,upper_b,
+				lower_f.Call(Xcons.List(a, dim)), upper_f.Call(Xcons.List(a, dim)),
 				Xcons.IntConstant(GMOVE_RANGE),
 				e.getArg(0),e.getArg(1),stride);
 	    }

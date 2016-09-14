@@ -11,7 +11,13 @@ import exc.object.*;
 import exc.block.*;
 
 /**
- * XcalableMP AST translator
+ * XcalableMP AST translator:
+ *  it implements XobjectDefVisitor, which applied to each XobjectDef 
+ *  by the doDef method, using "visitor pattern".
+ *  It contains the follwoing algorithm to comprise three phases.
+ *   - XMPanalyzePragma: analysis XMP pragma and accumlate the information.
+ *   - XMPrewriteExpr: rewrite expression according to the analysis.
+ *   - XMPtransPragma: do the transformation for each XMP pragram.
  */
 public class XMPtranslate implements XobjectDefVisitor
 {
@@ -27,18 +33,31 @@ public class XMPtranslate implements XobjectDefVisitor
     
   static final String XMPmainFunc = "xmpf_main";
 
+  /**
+   * constructor without initial env.
+   *   After the contruction, the object is to be initialized by "init"
+   */
   public XMPtranslate() {  }
     
+  /**
+   * Constructor with initalized env.
+   */
   public XMPtranslate(XobjectFile env) {
     init(env);
   }
 
+  /**
+   * Initialize the object with env.
+   */
   public void init(XobjectFile env){
     this.env = new XMPenv(env);
     if(XMP.debugFlag)
       debug_out = new BlockPrintWriter(System.out);
   }
     
+  /**
+   * Finialize the env, that is, reflect all changes on block to Xobject.
+   */
   public void finish() {
     env.finalize();
   }
