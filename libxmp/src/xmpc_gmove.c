@@ -12,6 +12,14 @@ static void _XMPC_unpack_comm_set(void *recvbuf, int recvbuf_size,
 				  _XMP_array_t *a, _XMP_comm_set_t *comm_set[][_XMP_N_MAX_DIM]);
 
 
+#define XMP_DBG 0
+#define DBG_RANK 0
+
+
+extern _XMP_nodes_t *gmv_nodes;
+extern int n_gmv_nodes;
+
+
 void
 xmpc_gmv_g_alloc(_XMP_gmv_desc_t **gmv_desc, _XMP_array_t *ap)
 {
@@ -183,9 +191,6 @@ xmpc_gmv_do(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
   }
 
 }
-
-
-extern int n_gmv_nodes;
 
 
 static void

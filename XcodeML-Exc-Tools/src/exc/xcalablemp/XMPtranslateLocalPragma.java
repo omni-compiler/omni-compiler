@@ -2788,6 +2788,11 @@ public class XMPtranslateLocalPragma {
     if (rightExprInfo != null) rightAlignedArray = rightExprInfo.getFirst();
 
     // check LHS and RHS
+
+    if (rightAlignedArray == null && leftAlignedArray == null){
+      pb.replace(pb.getBody().getHead()); // ignore the gmove directive
+      return;
+    }
     
     if (rightAlignedArray != null){
       StorageClass sclass = rightAlignedArray.getArrayId().getStorageClass();
@@ -2813,7 +2818,7 @@ public class XMPtranslateLocalPragma {
 
     // convert gmove to array
 
-    if (leftExpr.Opcode() == Xcode.SUB_ARRAY_REF && rightExpr.Opcode() != Xcode.SUB_ARRAY_REF &&
+    if (leftExpr.Opcode() == Xcode.SUB_ARRAY_REF &&
 	leftAlignedArray != null && rightAlignedArray == null &&
 	gmoveClause.getInt() == XMPcollective.GMOVE_NORMAL){
       Block arrayBlock = convertGmoveToArray(pb, leftAlignedArray, leftExpr, rightExpr);
