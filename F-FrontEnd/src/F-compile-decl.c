@@ -4243,6 +4243,9 @@ compile_VOLATILE_statement(expr id_list)
 
 
 
+/*
+ * Apply type parameters to expv
+ */
 static expv
 expv_apply_type_parameter(expv v, ID type_params)
 {
@@ -4250,6 +4253,10 @@ expv_apply_type_parameter(expv v, ID type_params)
     int expv_is_replaced = FALSE;
 
     if (EXPV_CODE(v) == F_VAR) {
+        /*
+         * If expv is the variabalbe reference and refers to the type parameter,
+         * replace it with the type parameter value.
+         */
         TYPE_DESC tp = EXPV_TYPE(v);
         if (TYPE_IS_KIND(tp)) {
             ip = find_ident_head(EXPR_SYM(v), type_params);
@@ -4263,6 +4270,10 @@ expv_apply_type_parameter(expv v, ID type_params)
             return v;
         }
     } else if (!EXPR_CODE_IS_TERMINAL_OR_CONST(EXPR_CODE(v))) {
+        /*
+         * Apply recursively.
+         * If the child expv is replaced, replace the current expv.
+         */
         list lp1, lp2;
         expv new_v = v;
         FOR_ITEMS_IN_LIST(lp1, v) {
@@ -4318,8 +4329,9 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
          *   5  TYPE(t(4)) :: v
          *
          * At line 3, member `u` is instanciated with type parameter value `k + 4`.
+         *
          * At line 5, variable v is instanciated with type parameter value `4`,
-         * this instaciation also updates type parameter values of member `u`.
+         * this instaciation shallw updats type parameter values of member `u`.
          */
         ID new_member = NULL;
         ID last = NULL;
@@ -4330,6 +4342,9 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
         expv new_type_param_values;
 
         if (TYPE_TYPE_ACTUAL_PARAMS(tp) == NULL) {
+            /*
+             * Never reached and maybe error. Ignore.
+             */
             return tp;
         }
 
@@ -4340,6 +4355,9 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
             ID_LINK_ADD(new_id, new_type_params, last);
         }
 
+        /*
+         * Update old type parameter values.
+         */
         FOREACH_ID(id, new_type_params) {
             expv v = VAR_INIT_VALUE(id);
             v = expv_apply_type_parameter(v, type_params);
@@ -4356,10 +4374,12 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
             return tp;
         }
 
-
         tp = wrap_type(tp);
         TYPE_TYPE_ACTUAL_PARAMS(tp) = new_type_params;
 
+        /*
+         * Also update TYPE_TYPE_PARAM_VALUES. (maybe not required)
+         */
         new_type_param_values = list0(LIST);
         FOR_ITEMS_IN_LIST(lp, TYPE_TYPE_PARAM_VALUES(TYPE_REF(tp))) {
             expv v = expv_apply_type_parameter(LIST_ITEM(lp), type_params);
@@ -4367,10 +4387,16 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
         }
         TYPE_TYPE_PARAM_VALUES(tp) = new_type_param_values;
 
+        /*
+         * Update the parent type
+         */
         if (TYPE_PARENT(tp)) {
             parent = type_apply_type_parameter0(TYPE_PARENT_TYPE(tp), type_params);
         }
 
+        /*
+         * Update the type of each members
+         */
         last = NULL;
         FOREACH_ID(ip, TYPE_MEMBER_LIST(TYPE_REF(tp))) {
             tq = type_apply_type_parameter0(ID_TYPE(ip), type_params);
@@ -4422,10 +4448,26 @@ type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
     return tp;
 }
 
-/**
+/*
  * Applies type parameter values to the parameterised derived-type and generate a new type
  *
  * A new type is also STRUCT_TYPE and its members have a type that is applied type parameters.
+ *
+ * Consider the input type is the following declaration:
+ *
+ *    TYPE t(k)
+ *      INTEGER, KIND :: k
+ *      INTEGER(KIND=k) :: i
+ *      TYPE(u(l=k)) :: j
+ *    END TYPE t
+ *
+ * If the type is passed k=8 at the type instansiation, the new type works like:
+ *
+ *    TYPE t
+ *      INTEGER(KIND=8) :: i
+ *      TYPE(u(l=8)) :: j
+ *    END TYPE t
+ *
  */
 TYPE_DESC
 type_apply_type_parameter(TYPE_DESC tp, expv type_param_values)
@@ -4440,7 +4482,7 @@ type_apply_type_parameter(TYPE_DESC tp, expv type_param_values)
 
 
     if (!IS_STRUCT_TYPE(tp)) {
-        return tp;
+        return NULL;
     }
 
     if (!compile_type_param_values(tp,
@@ -4454,17 +4496,22 @@ type_apply_type_parameter(TYPE_DESC tp, expv type_param_values)
     tq = copy_type_shallow(tp);
 
     if (TYPE_PARENT(tq)) {
+        /*
+         * Apply type parameter values to its parent type.
+         */
         TYPE_DESC new_parent_type;
         ID new_parent;
 
         expv parent_type_param_values = list0(LIST);
         ID new_type_params = get_type_params(TYPE_PARENT_TYPE(tq));
 
+        /*
+         * Fix type parameter values so that the parent type can accept.
+         */
         FOREACH_ID(ip, new_type_params) {
             iq = find_ident_head(ID_SYM(ip), used);
             VAR_INIT_VALUE(ip) = VAR_INIT_VALUE(iq);
         }
-
         cur = new_type_params;
         FOR_ITEMS_IN_LIST(lp, type_param_values) {
             expv v = LIST_ITEM(lp);
@@ -4490,14 +4537,24 @@ type_apply_type_parameter(TYPE_DESC tp, expv type_param_values)
     }
 
     FOREACH_ID(ip, TYPE_MEMBER_LIST(tq)) {
+        /*
+         * Apply type parameter values to each members.
+         */
         TYPE_DESC member_tp = type_apply_type_parameter0(ID_TYPE(ip), used);
         ID new_id = new_ident_desc(ID_SYM(ip));
         *new_id = *ip;
         ID_TYPE(new_id) = member_tp;
         ID_LINK_ADD(new_id, TYPE_MEMBER_LIST(tq), last);
     }
+
     TYPE_REF(tq) = tp;
     TYPE_TYPE_PARAM_VALUES(tq) = type_param_values;
+
+    /*
+     * Save the type parameter values, including type parameters with initial
+     * values , as key-value pair (ID_SYM(id) and VAR_INIT_VALUE(id)).
+     * These pairs are used in the type comparison for the parameterized derived-type.
+     */
     TYPE_TYPE_ACTUAL_PARAMS(tq) = used;
 
     return tq;
