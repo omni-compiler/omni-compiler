@@ -207,10 +207,7 @@ public class XMParray {
     // get array information
     name = a.getString();
 
-    if (env.currentDefIsModule())
-      arrayId = env.findVarIdent(name, pb);  // find ident, in this block(func)
-    else
-      arrayId =  pb.findVarIdent(name    );  // find ident, in this block(pb) and above
+    arrayId = env.findVarIdent(name, pb); // find ident, in this block(func)
     if (arrayId == null) {
       XMP.errorAt(pb,"array '" + name + "' is not declared");
       return;
