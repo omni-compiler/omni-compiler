@@ -676,12 +676,20 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case VAR:
             case VAR_ADDR:
                 nSymAddr = createElement("varAddr");
+                if (operand.getScope() != null) {
+                    addAttributes(nSymAddr,
+                                  "scope", operand.getScope().toXcodeString());
+                }
                 break;
             case ARRAY_REF:
               isArrayRef = true;
               break;
             case ARRAY_ADDR: /* illegal but convert */
                 nSymAddr = createElement("arrayAddr");
+                if (operand.getScope() != null) {
+                    addAttributes(nSymAddr,
+                                  "scope", operand.getScope().toXcodeString());
+                }
                 break;
             case FUNC_ADDR:
                 nSymAddr = createElement("funcAddr");
