@@ -190,17 +190,25 @@ extern void _XMP_alloc_tca(void *);
 #endif
 
 // xmp_gmove.c
-extern void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);
-extern int _XMP_gmove_HOMECOPY_SCALAR(void *array, ...);
-extern void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, void *dst_array, void *src_array, ...);
-extern void _XMP_gmove_LOCALCOPY_ARRAY(int type, size_t type_size, ...);
-extern void _XMP_gmove_BCAST_ARRAY(void *src_array, int type, size_t type_size, ...);
-extern void _XMP_gmove_HOMECOPY_ARRAY(void *dst_array, int type, size_t type_size, ...);
-extern void _XMP_gmove_SENDRECV_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
-extern void _XMP_gmove_BCAST_TO_NOTALIGNED_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...);
-extern void _XMP_gmove_GSECTION_GSCALAR(void *dst_array, void *src_array, int type, size_t type_size, ...);
-extern void _XMP_gmove_LSECTION_GSCALAR(void *src_array, int type, size_t type_size, void *dst, int dst_dim, ...);
-extern void _XMP_gmove_INOUT_SCALAR(void *dst_array, void *scalar, ...);
+/* extern void _XMP_gmove_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...); */
+/* extern int _XMP_gmove_HOMECOPY_SCALAR(void *array, ...); */
+/* extern void _XMP_gmove_SENDRECV_SCALAR(void *dst_addr, void *src_addr, void *dst_array, void *src_array, ...); */
+/* extern void _XMP_gmove_LOCALCOPY_ARRAY(int type, size_t type_size, ...); */
+/* extern void _XMP_gmove_BCAST_ARRAY(void *src_array, int type, size_t type_size, ...); */
+/* extern void _XMP_gmove_HOMECOPY_ARRAY(void *dst_array, int type, size_t type_size, ...); */
+/* extern void _XMP_gmove_SENDRECV_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...); */
+/* extern void _XMP_gmove_BCAST_TO_NOTALIGNED_ARRAY(void *dst_array, void *src_array, int type, size_t type_size, ...); */
+/* extern void _XMP_gmove_GSECTION_GSCALAR(void *dst_array, void *src_array, int type, size_t type_size, ...); */
+/* extern void _XMP_gmove_LSECTION_GSCALAR(void *src_array, int type, size_t type_size, void *dst, int dst_dim, ...); */
+/* extern void _XMP_gmove_INOUT_SCALAR(void *dst_array, void *scalar, ...); */
+
+extern void xmpc_gmv_g_alloc(void **gmv_desc, void *ap);
+extern void xmpc_gmv_g_dim_info(void *gp, int i, int kind, int lb, int len, int st);
+extern void xmpc_gmv_l_alloc(void **gmv_desc, void *local_data, int n);
+extern void xmpc_gmv_l_dim_info(void *gp, int i, int a_lb, int a_len, int kind, int lb, int len, int st);
+extern void xmpc_gmv_dealloc(void *gp);
+extern void xmpc_gmv_do(void *gmv_desc_leftp, void *gmv_desc_rightp, int mode);
+
 
 // xmp_gmove_acc.c
 extern void _XMP_gmove_acc_BCAST_SCALAR(void *dst_addr, void *src_addr, void *array, ...);

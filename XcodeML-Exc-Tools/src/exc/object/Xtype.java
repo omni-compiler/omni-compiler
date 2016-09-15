@@ -67,6 +67,7 @@ public class Xtype
     public static final int TQ_FSEQUENCE            = 1 << 22;  // sequence
     public static final int TQ_FINTERNAL_PRIVATE    = 1 << 23;  // private in structure decl
     public static final int TQ_FCRAY_POINTER        = 1 << 24;  // cray pointer (ID=060c)
+    public static final int TQ_FVOLATILE            = 1 << 25;  // volatile
     
     private String type_id;
     private int type_kind;
@@ -496,6 +497,12 @@ public class Xtype
     public final boolean isFcrayPointer()
     {
         return getTypeQualFlag(TQ_FCRAY_POINTER);
+    }
+
+    /** Fortran : return if it is volatile */
+    public final boolean isFvolatile()
+    {
+        return getTypeQualFlag(TQ_FVOLATILE);
     }
     
     /** Fortran : set qualifier 'cray pointer' (ID=060c) */
@@ -966,6 +973,12 @@ public class Xtype
     
     /** Fortran: return if len parameter is variable value */
     public boolean isFlenVariable()
+    {
+        return false;
+    }
+
+    /** Fortran: return if the type extends parent type */
+    public boolean isExtended()
     {
         return false;
     }

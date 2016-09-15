@@ -4183,12 +4183,13 @@ compile_member_ref(expr x)
         }
 
         tp = retTyp;
+	tp = compile_dimensions(tp, shape);
     } else {
         tp = ID_TYPE(member_id);
 
     }
 
-    tp = compile_dimensions(tp, shape);
+    //tp = compile_dimensions(tp, shape);
     fix_array_dimensions(tp);
 
     new_v = expv_cons(F95_MEMBER_REF, tp, struct_v, mX);
