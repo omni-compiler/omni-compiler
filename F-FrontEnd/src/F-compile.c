@@ -4183,6 +4183,7 @@ compile_member_ref(expr x)
         }
 
         tp = retTyp;
+	tp = compile_dimensions(tp, shape);
     } else {
         tp = ID_TYPE(member_id);
 
