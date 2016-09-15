@@ -14,8 +14,6 @@
     type(g1), save :: ns1, cs1[*]
 !!    type(g1), save :: na1(3), ca1(3)[*]
     real*8 zz, eps, r(10)
-    integer*8 nval
-    real*8    dcal
 
     me = this_image()
 
@@ -73,7 +71,7 @@
        end if
     end do
 
-104 format ("[",i0,"] cs1%r(",i0,") should be ",d12.6," but ",d12.6)
+104 format ("[",i0,"] cs1%r(",i0,") should be ",d12.5," but ",d12.5)
 
     if (nerr==0) then 
        print '("result[",i0,"] OK")', me

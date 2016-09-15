@@ -21,7 +21,7 @@
     type(ss2) :: a1[*]
     type(ss2) :: a2(10)[*]
 
-    integer x1(3), x2(3), x3(3), x4(3)
+!!    integer x1(3), x2(3), x3(3), x4(3)
 
     me=this_image()
     nerr=0

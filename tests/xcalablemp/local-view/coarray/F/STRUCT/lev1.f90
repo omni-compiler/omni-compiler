@@ -6,7 +6,6 @@
 !!  3. A derived-type coarray cannot be defined as allocatable.
 
   program main
-    integer nsize, xsize, nerr, nwarn, xsize1
 
     type z
        integer              :: n(2,3)
