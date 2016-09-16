@@ -122,6 +122,7 @@ extern void *_XMPF_get_cntlDataCoarrayDesc(char **baseAddr, size_t *offset,
 extern void *_XMPF_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
                                            char **name);
 extern BOOL _XMPF_isAddrInRangeOfCoarray(char *localAddr, void *descPtr);
+extern BOOL _XMPF_isAddrInCoarrayChunk(char *localAddr, void *descPtr);
 extern void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
                                            size_t *offset, char **nameAddr);
 extern MPI_Comm _XMPF_get_communicatorFromDescPtr(void *descPtr);
