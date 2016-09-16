@@ -936,7 +936,7 @@ else
 	    ;;
 	*ICC*)
 	    # OpenMP
-	    OPENMP_OPT_C="-openmp"
+	    OPENMP_OPT_C="-fopenmp"
 
 	    # XcalableMP
 	    XMPC_DEF="-D_XCALABLEMP"
@@ -1029,7 +1029,7 @@ else
 	    ;;
 	*IFORT*)
 	    # OpenMP
-	    OPENMP_OPT_F="-openmp"
+	    OPENMP_OPT_F="-fopenmp"
 
 	    # XcalableMP
 	    XMPF_DEF="-D_XCALABLEMP"
