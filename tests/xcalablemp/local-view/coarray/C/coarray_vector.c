@@ -7,6 +7,7 @@ int a[10]:[*], a_test[10];
 float b[3][5]:[*], b_test[3][5];
 double c[2][3][4]:[*], c_test[2][3][4];
 long d[3][4][3][2]:[*], d_test[3][4][3][2];
+int e[5][7]:[*], e_test[5][7];
 int status, return_val = 0;
 #pragma xmp nodes p(2)
 
@@ -43,6 +44,13 @@ void initialize(int me){
 	  d_test[i][j][m][n] = d[i][j][m][n];
 	}
       }
+    }
+  }
+
+  for(i=0;i<5;i++){
+    for(j=0;j<7;j++){
+      e[i][j] = 9*i + j + t;
+      e_test[i][j] = e[i][j];
     }
   }
 }
@@ -206,6 +214,43 @@ void check_4(int me){
   else return_val = 1;
 }
 
+void communicate_5(int me){
+  xmp_sync_all(&status);
+  const int e1 = 1, e2 = 2;
+  const int e3 = 2, e4 = 3;
+
+  if(me == 1){
+    e[e1+1][e2+1:2]:[2] = e[e3+1][e4+1:2];
+    e_test[3][5] = 132;
+    e_test[4][5] = 141;
+  }
+
+  if(me == 2){
+    e[3:2][e4+2]:[1] = e[3:2][e4+2];
+    e_test[2][3] = 31;
+    e_test[2][4] = 32;
+  }
+  xmp_sync_all(&status);
+}
+
+void check_5(int me){
+  xmp_sync_all(&status);
+  int i, j, flag = TRUE;
+
+  for(i=0;i<5;i++){
+    for(j=0;j<7;j++){
+      if( e[i][j] != e_test[i][j] ){
+	flag = FALSE;
+	printf("[%d] b[%d][%d] check_5 : fall\tb[%d][%d] = %d (True value is %d)\n",
+	       me, i, j, i, j, e[i][j], e_test[i][j]);
+      }
+    }
+  }
+  xmp_sync_all(&status);
+  if(flag == TRUE)   printf("[%d] check_5 : PASS\n", me);
+  else return_val = 1;
+}
+
 void bug_107()
 {
   
@@ -228,6 +273,9 @@ int main(){
   
   communicate_4(me);
   check_4(me);
+
+  communicate_5(me);
+  check_5(me);
 
   bug_107();
   

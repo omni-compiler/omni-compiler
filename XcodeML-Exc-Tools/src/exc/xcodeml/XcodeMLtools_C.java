@@ -806,7 +806,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
     XobjList subList = Xcons.List();
     for (Node childNode : childNodes){
       Xobject indexRange = toXobject(childNode);
-      if (indexRange instanceof XobjList){
+      if (indexRange.Opcode() == Xcode.INDEX_RANGE){
 	subList.add(indexRange.getArg(0));
       }
       else {

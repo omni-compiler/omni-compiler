@@ -439,7 +439,7 @@ public class XMPrewriteExpr {
       for(int i=0;i<dstDim;i++){
         Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(i);
         Xobject tmp_position;
-        if(tripletList.isConstant() || tripletList.isVariable()){
+        if(tripletList.Opcode() != Xcode.LIST){
           tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, tripletList, Xcons.IntConstant(dstCoarrayDistance[i]));
         }
         else{
@@ -482,7 +482,7 @@ public class XMPrewriteExpr {
       for(int i=0;i<srcDim;i++){
         Xobject tripletList = srcCoarrayExpr.getArg(1).getArg(i);
         Xobject tmp_position;
-        if(tripletList.isConstant() || tripletList.isVariable()){
+        if(tripletList.Opcode() != Xcode.LIST){
           tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, tripletList, Xcons.IntConstant(srcCoarrayDistance[i]));
         }
         else{
@@ -526,7 +526,7 @@ public class XMPrewriteExpr {
       }
       else{
         Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(dstCoarrayDepthContinuous-1);
-        if(tripletList.isConstant() || tripletList.isVariable()){
+        if(tripletList.Opcode() != Xcode.LIST){
           dst_length = Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]);
         }
         else{
@@ -551,7 +551,7 @@ public class XMPrewriteExpr {
       }
       else{
         Xobject tripletList = srcCoarrayExpr.getArg(1).getArg(srcCoarrayDepthContinuous-1);
-        if(tripletList.isConstant() || tripletList.isVariable()){
+        if(tripletList.Opcode() != Xcode.LIST){
           src_length = Xcons.IntConstant(srcCoarrayDistance[srcCoarrayDepthContinuous-1]);
         }
         else{
@@ -666,7 +666,7 @@ public class XMPrewriteExpr {
       XobjList tripletList = (XobjList)(coarrayExpr.getArg(0)).getArg(1);
       funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_coarray_set_" + Integer.toString(tripletList.Nargs()));
       for(int i=0;i<tripletList.Nargs();i++){
-        if(tripletList.getArg(i).isConstant() || tripletList.getArg(i).isVariable()){
+        if(tripletList.getArg(i).Opcode() != Xcode.LIST){
           funcArgs.add(tripletList.getArg(i)); // start
           funcArgs.add(Xcons.IntConstant(1));  // length
           funcArgs.add(Xcons.IntConstant(1));  // stride
@@ -732,7 +732,7 @@ public class XMPrewriteExpr {
 
       XobjList tripletList = (XobjList)localExpr.getArg(1);
       for(int i=0;i<tripletList.Nargs();i++){
-        if(tripletList.getArg(i).isVariable() || tripletList.getArg(i).isIntConstant() ){
+        if(tripletList.getArg(i).Opcode() != Xcode.LIST){
           funcArgs.add(tripletList.getArg(i));           // start
           funcArgs.add(Xcons.IntConstant(1));            // length
           funcArgs.add(Xcons.IntConstant(1));            // stride
@@ -850,7 +850,7 @@ public class XMPrewriteExpr {
 
   private boolean is_stride_1(int dim, XobjList tripletList)
   {
-    if(tripletList.getArg(dim).isConstant() || tripletList.getArg(dim).isVariable()){
+    if(tripletList.getArg(dim).Opcode() != Xcode.LIST){
         return true;
     } 
     else{
@@ -877,7 +877,7 @@ public class XMPrewriteExpr {
       else{
         return false;
       }
-    else{
+    else if(tripletList.getArg(dim).Opcode() == Xcode.LIST){
       Xobject start = tripletList.getArg(dim).getArg(0);
       if(start.isConstant()){
         if(start.getInt() == 0){
@@ -889,7 +889,8 @@ public class XMPrewriteExpr {
   }
 
   private boolean is_length_all(int dim, XobjList tripletList, Ident varId){
-    if(tripletList.getArg(dim).isConstant() || tripletList.getArg(dim).isVariable()){
+    if(tripletList.getArg(dim).Opcode() != Xcode.LIST){
+      //FIXME if dimSize equals 1, this case must return true
       return false;
     }
 
@@ -928,7 +929,7 @@ public class XMPrewriteExpr {
 
   private boolean is_length_1(int dim, XobjList tripletList)
   {
-    if(tripletList.getArg(dim).isVariable() || tripletList.getArg(dim).isConstant()){
+    if(tripletList.getArg(dim).Opcode() != Xcode.LIST){
       return true;
     }
     else{
