@@ -1578,7 +1578,6 @@ public class XMPtranslateLocalPragma {
 
     // rewrite loop index in loop
     BasicBlockExprIterator iter = new BasicBlockExprIterator(getLoopBody(forBlock));
-
     for (iter.init(); !iter.end(); iter.next()) {
       XMPrewriteExpr.rewriteLoopIndexInLoop(iter.getExpr(), loopIndexName,
                                             templateObj, templateIndexArg.getInt(),
@@ -1587,20 +1586,26 @@ public class XMPtranslateLocalPragma {
 
     // rewrite loop index in initializer in loop
     BlockList body = getLoopBody(forBlock);
-    for (Block b = body.getHead(); b != null; b = b.getNext()){
-      if (b.getBody() == null) continue;
-      topdownXobjectIterator iter_decl = new topdownXobjectIterator(b.getBody().getDecls());
-      for (iter_decl.init(); !iter_decl.end(); iter_decl.next()) {
-        int num = 0;
-        for (XobjArgs i = templateSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
-          String indexName = i.getArg().getString();
-          XMPrewriteExpr.rewriteLoopIndexInLoop(iter_decl.getXobject(), indexName,
-                                                templateObj, num, _globalDecl, forBlock);
-          num++;
+    while(true){
+      for (Block b = body.getHead(); b != null; b = b.getNext()){
+        if (b.getBody() == null) continue;
+        topdownXobjectIterator iter_decl = new topdownXobjectIterator(b.getBody().getDecls());
+
+        for (iter_decl.init(); !iter_decl.end(); iter_decl.next()) {
+          int num = 0;
+          for (XobjArgs i = templateSubscriptList.getArgs(); i != null; i = i.nextArgs()) {
+            String indexName = i.getArg().getString();
+            XMPrewriteExpr.rewriteLoopIndexInLoop(iter_decl.getXobject(), indexName,
+                                                  templateObj, num, _globalDecl, forBlock);
+            num++;
+          }
         }
       }
+      
+      body = body.getHead().getBody();
+      if(body == null) break;
+      if(body.getHead() == null) break;
     }
-
   }
 
   private void callLoopSchedFuncNodes(XMPnodes nodesObj, XobjList nodesSubscriptList,
