@@ -1667,7 +1667,7 @@ public class XMPrewriteExpr {
     }
   }
   
-  private Xobject rewritePointerRef(Xobject myExpr, Block block) throws XMPexception
+  private  Xobject rewritePointerRef(Xobject myExpr, Block block) throws XMPexception
   {
     Xobject addr_expr = myExpr.getArg(0);
     if (addr_expr.Opcode() == Xcode.PLUS_EXPR){
@@ -1796,20 +1796,6 @@ public class XMPrewriteExpr {
     }
   }
 
-  private Xobject rewriteAlignedArrayExpr(XobjList refExprList,
-                                          XMPalignedArray alignedArray) throws XMPexception {
-    int arrayDimCount = 0;
-    XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
-    if (refExprList != null) {
-      for (Xobject x : refExprList) {
-	args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, x));
-        arrayDimCount++;
-      }
-    }
-
-    return createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
-  }
-
   public static Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount,
                                                       XobjList getAddrFuncArgs) throws XMPexception {
     int arrayDim = alignedArray.getDim();
@@ -1835,7 +1821,7 @@ public class XMPrewriteExpr {
     }
   }
 
-  private Xobject getCalcIndexFuncRef(XMPalignedArray alignedArray, int index, Xobject indexRef) throws XMPexception {
+  private static Xobject getCalcIndexFuncRef(XMPalignedArray alignedArray, int index, Xobject indexRef) throws XMPexception {
     switch (alignedArray.getAlignMannerAt(index)) {
       case XMPalignedArray.NOT_ALIGNED:
       case XMPalignedArray.DUPLICATION:
@@ -1941,7 +1927,8 @@ public class XMPrewriteExpr {
     }
   }
 
-  public static void rewriteArrayRefInLoop(Xobject expr, XMPglobalDecl globalDecl, Block block) throws XMPexception {
+  public static void rewriteArrayRefInLoop(Xobject expr, XMPglobalDecl globalDecl, Block block,
+                                           XobjList loopIterList) throws XMPexception {
 
     if (expr == null) return;
 
@@ -1962,10 +1949,31 @@ public class XMPrewriteExpr {
 
             if (alignedArray != null) {
               Xobject newExpr = null;
-              XobjList arrayRefList = XMPrewriteExpr.normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
+              XobjList arrayRefList = normArrayRefList((XobjList)myExpr.getArg(1), alignedArray);
+              System.out.println(arrayRefList);
               if (alignedArray.checkRealloc() || (alignedArray.isLocal() && !alignedArray.isParameter()) ||
 		  alignedArray.isParameter()){
-                newExpr = XMPrewriteExpr.rewriteAlignedArrayExprInLoop(arrayRefList, alignedArray);
+                /*
+                boolean flag = true;
+                topdownXobjectIterator xiter = new topdownXobjectIterator(arrayRefList);
+                for (xiter.init(); !xiter.end(); xiter.next()) {
+                  Xobject x = xiter.getXobject();
+                  if(x.Opcode() == Xcode.VAR){
+                    for(Xobject index : loopIterList){
+                      if(x.getName() == index.getName()){
+                        flag = false;
+                      }
+                    }
+                  }
+                }
+
+                if(flag){
+                  newExpr = rewriteAlignedArrayExpr(arrayRefList, alignedArray);
+                }
+                else{
+                  newExpr = rewriteAlignedArrayExprInLoop(arrayRefList, alignedArray);
+                  }*/
+                newExpr = rewriteAlignedArrayExprInLoop2(arrayRefList, loopIterList, alignedArray);
               } else {
                 newExpr = Xcons.arrayRef(myExpr.Type(), arrayAddr, arrayRefList);
               }
@@ -2006,13 +2014,41 @@ public class XMPrewriteExpr {
     }
   }
 
+  private static Xobject rewriteAlignedArrayExprInLoop2(XobjList refExprList, XobjList loopIterList,
+                                                       XMPalignedArray alignedArray) throws XMPexception {
+    int arrayDimCount = 0;
+    XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
+    if (refExprList != null) {
+      for (Xobject x : refExprList) {
+        boolean flag = false;
+        topdownXobjectIterator iter = new topdownXobjectIterator(x);
+        for (iter.init(); !iter.end(); iter.next()) {
+          Xobject x2 = iter.getXobject();
+          if(x2.Opcode() == Xcode.VAR){
+            for (Xobject i : loopIterList) {
+              if(x2.getName() == i.getName()){
+                flag = true;
+              }
+            }
+          }
+        }
+
+        if(flag)
+          args.add(x);
+        else
+          args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, x));
+
+        arrayDimCount++;
+      }
+    }
+    
+    return createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
+  }
+  
   private static Xobject rewriteAlignedArrayExprInLoop(XobjList refExprList,
                                                        XMPalignedArray alignedArray) throws XMPexception {
     int arrayDimCount = 0;
-    XobjList args;
-
-    args = Xcons.List(alignedArray.getAddrId().Ref());
-
+    XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
     if (refExprList != null) {
       for (Xobject x : refExprList) {
         args.add(x);
@@ -2020,8 +2056,23 @@ public class XMPrewriteExpr {
       }
     }
 
-    return XMPrewriteExpr.createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
+    return createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
   }
+
+  private static Xobject rewriteAlignedArrayExpr(XobjList refExprList,
+                                                 XMPalignedArray alignedArray) throws XMPexception {
+    int arrayDimCount = 0;
+    XobjList args = Xcons.List(alignedArray.getAddrId().Ref());
+    if (refExprList != null) {
+      for (Xobject x : refExprList) {
+        args.add(getCalcIndexFuncRef(alignedArray, arrayDimCount, x));
+        arrayDimCount++;
+      }
+    }
+    
+    return createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
+  }
+  
 
   public static void rewriteLoopIndexInLoop(Xobject expr, String loopIndexName, XMPtemplate templateObj,
                                             int templateIndex, XMPglobalDecl globalDecl, Block block) throws XMPexception {
