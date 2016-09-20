@@ -238,10 +238,13 @@ typedef struct ident_descriptor
             struct ident_descriptor * binding; /* binding */
             struct ident_descriptor * pass_arg; /* pass argument */
             int type_bound_attrs;
-#define TYPE_BOUND_PROCEDURE_PASS                  0x01
-#define TYPE_BOUND_PROCEDURE_NOPASS                0x02
-#define TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE       0x04
-#define TYPE_BOUND_PROCEDURE_DEFERRED              0x08
+#define TYPE_BOUND_PROCEDURE_IS_GENERIC            0x01
+#define TYPE_BOUND_PROCEDURE_PASS                  0x02
+#define TYPE_BOUND_PROCEDURE_NOPASS                0x04
+#define TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE       0x08
+#define TYPE_BOUND_PROCEDURE_DEFERRED              0x10
+#define TYPE_BOUND_PROCEDURE_IS_OPERATOR           0x20
+#define TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT         0x40
         } tbp_info;
     } info;
 } *ID;

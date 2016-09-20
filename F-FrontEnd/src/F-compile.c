@@ -4567,17 +4567,20 @@ compile_ASSIGN_LABEL_statement(expr x)
 
 
 static void
-compile_CALL_statement(expr x)
+compile_CALL_type_bound_procedure_statement(expr x)
+{
+
+}
+
+
+static void
+compile_CALL_subroutine_statement(expr x)
 {
     expr x1;
     ID id;
     expv v;
 
-    /* (F_CALL_STATEMENT identifier args)*/
     x1 = EXPR_ARG1(x);
-    if (EXPR_CODE(x1) != IDENT) {
-        fatal("compile_exec_statement: bad id in call");
-    }
     id = find_external_ident_head(EXPR_SYM(x1));
     if(id == NULL) {
         id = declare_ident(EXPR_SYM(x1), CL_UNKNOWN);
@@ -4669,6 +4672,19 @@ compile_CALL_statement(expr x)
 
     EXPV_TYPE(v) = type_basic(TYPE_SUBR);
     output_statement(v);
+}
+
+static void
+compile_CALL_statement(expr x)
+{
+    expr x1;
+    /* (F_CALL_STATEMENT identifier args)*/
+    x1 = EXPR_ARG1(x);
+    if (EXPR_CODE(x1) == IDENT) {
+        compile_CALL_subroutine_statement(x);
+    } else {
+        fatal("compile_exec_statement: bad id in call");
+    }
 }
 
 

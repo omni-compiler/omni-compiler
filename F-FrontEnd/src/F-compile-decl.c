@@ -4761,5 +4761,27 @@ compile_type_bound_procedure(expr x)
 void
 compile_type_generic_procedure(expr x)
 {
+#if 0
+    expr generis_spec = EXPR_ARG1(x);
+    expr id_list = EXPR_ARG2(x);
+    expr access_attr = EXPR_ARG3(x);
 
+
+    switch (EXPR_CODE(generis_spec)) {
+        case IDENT:
+            if ((id = find_ident_local(EXPR_SYM(generis_spec))) != NULL) {
+                error("already declared");
+                return;
+            }
+
+            break;
+        case F95_GENERIC_SPEC:
+            break;
+        case F95_USER_DEFINED:
+            break;
+        default:
+            error_at_node(x, "unexpected expression");
+            break;
+    }
+#endif
 }

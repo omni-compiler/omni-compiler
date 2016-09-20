@@ -1574,9 +1574,11 @@ action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
         { $$ = list4(F_ARITHIF_STATEMENT,$3,$5,$7,$9); }
         | CALL IDENTIFIER
         { $$ = list2(F_CALL_STATEMENT,$2,NULL); }
-        | CALL IDENTIFIER '(' ')'
-        { $$ = list2(F_CALL_STATEMENT,$2,NULL); }
         | CALL IDENTIFIER '(' arg_list ')'
+        { $$ = list2(F_CALL_STATEMENT,$2,$4); }
+        | CALL member_ref
+        { $$ = list2(F_CALL_STATEMENT,$2,NULL); }
+        | CALL member_ref '(' arg_list ')'
         { $$ = list2(F_CALL_STATEMENT,$2,$4); }
         | RETURN  expr_or_null
         { $$ = list1(F_RETURN_STATEMENT,$2); }

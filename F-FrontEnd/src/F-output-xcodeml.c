@@ -4231,10 +4231,15 @@ outx_structType(int l, TYPE_DESC tp)
             if (TBP_PASS_ARG(id))
                 outx_printi(0, " pass_arg_name=\"%s\"",
                             SYM_NAME(ID_SYM(TBP_PASS_ARG(id))));
-            if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_DEFERRED)
-                outx_true(TRUE, "is_deferred");
-            if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE)
-                outx_true(TRUE, "is_non_overridable");
+
+            outx_true(TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_DEFERRED,
+                      "is_deferred");
+            outx_true(TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE,
+                      "is_non_overridable");
+            outx_true(TYPE_IS_PUBLIC(id), "is_public");
+            outx_true(TYPE_IS_PRIVATE(id), "is_private");
+            outx_true(TYPE_IS_PROTECTED(id), "is_protected");
+
             outx_printi(0,">\n");
             outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
             if (TBP_BINDING(id)) {
