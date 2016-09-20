@@ -805,13 +805,7 @@ public class XcodeMLtools_C extends XcodeMLtools {
 
     XobjList subList = Xcons.List();
     for (Node childNode : childNodes){
-      Xobject indexRange = toXobject(childNode);
-      if (indexRange.Opcode() == Xcode.INDEX_RANGE){
-	subList.add(indexRange.getArg(0));
-      }
-      else {
-	subList.add(indexRange);
-      }
+      subList.add(toXobject(childNode));
     }
     objList.add(subList);
 
@@ -836,13 +830,11 @@ public class XcodeMLtools_C extends XcodeMLtools {
       objList.add(toXobject(childNodes.get(0)));
     }
     else {
-      XobjList subList = Xcons.List();
       for (Node childNode : childNodes){
 	Xobject arg = toXobject(childNode);
-	if (arg != null && arg.Nargs() != 0) subList.add(arg.getArg(0));
-	else subList.add(null);
+	if (arg != null && arg.Nargs() != 0) objList.add(arg.getArg(0));
+        else objList.add(null);
       }
-      objList.add(subList);
     }
 
     return objList;
