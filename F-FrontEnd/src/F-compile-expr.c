@@ -2745,12 +2745,13 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
                 break;
             default:
                 /* A type parameter valeus should be a constatnt integer */
-                v = compile_expression(arg);
-                if (!expr_is_constant_typeof(v, TYPE_INT)) {
+                if (!expr_is_constant_typeof(EXPR_CODE(arg) == F_SET_EXPR ?
+                                             EXPR_ARG2(arg) : arg, TYPE_INT)) {
                     error("type parameter value should be "
                           "a constant integer expression");
                     return FALSE;
                 }
+                v = compile_expression(arg);
                 break;
         }
 

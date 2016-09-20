@@ -737,3 +737,19 @@ expv_complex_const_reduce(v, tp)
 
     return expv_cons(COMPLEX_CONSTANT, tp, vR, vI);
 }
+
+
+int
+expv_is_constant_typeof(expv x, BASIC_DATA_TYPE bt)
+{
+    return expr_is_constant_typeof(x, bt);
+}
+
+
+int
+expv_is_constant(expv x)
+{
+    return expv_is_constant_typeof(x, TYPE_UNKNOWN);
+}
+
+

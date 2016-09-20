@@ -231,22 +231,70 @@ expr_is_constant_typeof(x, bt)
         }
         return TRUE;
 
-    case FUNCTION_CALL:
-        /*
-         * The intrinsic call with constant values is also constant value.
-         */
-        if (SYM_TYPE(EXPV_NAME(EXPR_ARG1(x))) == S_INTR) {
-            list lp;
-            FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(x)) {
-                if (!expr_is_constant_typeof(LIST_ITEM(lp), TYPE_UNKNOWN)) {
+    case F_ARRAY_REF: {
+        list lp;
+        expr x1 = EXPR_ARG1(x);
+        expv v;
+        TYPE_DESC tp;
+        ID id;
+        if (EXPR_CODE(x1) == IDENT) {
+            /*
+             * expr may be array ref or character ref or intrinsic call
+             */
+
+            if (((id = find_ident(EXPR_SYM(x1))) == NULL && SYM_TYPE(EXPR_SYM(x1)) == S_INTR) ||
+                (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_INTRINSIC)) {
+                if (id == NULL) {
+                    id = declare_ident(EXPR_SYM(x1), CL_UNKNOWN);
+                    ID_CLASS(id) = CL_PROC;
+                    PROC_CLASS(id) = P_INTRINSIC;
+                    TYPE_SET_INTRINSIC(id);
+                    ID_STORAGE(id) = STG_NONE;
+                    ID_IS_DECLARED(id) = TRUE;
+                }
+                if ((v = compile_function_call0(id, EXPR_ARG2(x), TRUE)) == NULL) {
                     return FALSE;
                 }
-            }
-            if (bt == TYPE_UNKNOWN || bt == get_basic_type(EXPV_TYPE(x))) {
-                return TRUE;
+                if (bt != TYPE_UNKNOWN) {
+                    tp = EXPV_TYPE(v);
+                    if (getBasicType(tp) != bt) {
+                        return FALSE;
+                    }
+                }
+            } else if (id != NULL) {
+                if (bt != TYPE_UNKNOWN) {
+                    if (ID_TYPE(id) != NULL) {
+                        if (ID_CLASS(id) != CL_PARAM ||
+                            (!TYPE_IS_PARAMETER(ID_TYPE(id))) ||
+                            (bt != TYPE_BASIC_TYPE(ID_TYPE(id)))) {
+                            return FALSE;
+                        }
+                    } else {
+                        return FALSE;
+                    }
+                } else {
+                    if (ID_CLASS(id) != CL_PARAM && !TYPE_IS_PARAMETER(id)) {
+                        return FALSE;
+                    }
+                }
+            } else {
+                return FALSE;
             }
         }
-        break;
+        /*
+         * Check array indices or instinsic function arguments are constant values
+         */
+        FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(x)) {
+            if (EXPR_CODE(x1) == IDENT && LIST_ITEM(lp) == x1) {
+                continue;
+            }
+            if (!expr_is_constant(LIST_ITEM(lp))) {
+                return FALSE;
+            }
+        }
+        return TRUE;
+    } break;
+
     default:
         break;
     }
