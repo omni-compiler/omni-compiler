@@ -2911,7 +2911,7 @@ public class XMPtranslateLocalPragma {
 
 	  Xobject sub = subscripts.getArg(i);
 
-	  if (sub.Opcode() != Xcode.LIST){ // index
+	  if (! sub.isIndexRange()){ // index
 	    args = Xcons.List(descId.Ref(), Xcons.IntConstant(i),
 			      Xcons.IntConstant(GMOVE_INDEX),
 			      sub,
@@ -2975,7 +2975,7 @@ public class XMPtranslateLocalPragma {
 
 	  Xobject sub = subscripts.getArg(i);
 
-	  if (sub.Opcode() != Xcode.LIST){ // index
+	  if (! sub.isIndexRange()){ // index
 	    args = Xcons.List(descId.Ref(), Xcons.IntConstant(i),
 			      a_lb, a_len,
 			      Xcons.IntConstant(GMOVE_INDEX),
@@ -3381,7 +3381,7 @@ public class XMPtranslateLocalPragma {
 
       Xobject sub = arrayRefs.getArg(i);
       Xobject triplet;
-      if (sub.Opcode() == Xcode.LIST){
+      if (sub.isIndexRange()){
 	Xobject lb = sub.getArg(0);
 	if (alignSubscriptOffset != null) lb = Xcons.binaryOp(Xcode.PLUS_EXPR, lb, alignSubscriptOffset);
 	Xobject ub = sub.getArg(1);
@@ -3473,7 +3473,7 @@ public class XMPtranslateLocalPragma {
     int dim = 0;
     if (arrayRefs != null) {
       for (Xobject x : arrayRefs) {
-        if (x.Opcode() == Xcode.LIST) {
+        if (x.isIndexRange()) {
           castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(0)));
           castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(1)));
           castedArrayRefs.add(Xcons.Cast(Xtype.intType, x.getArg(2)));
@@ -3960,7 +3960,7 @@ public class XMPtranslateLocalPragma {
       Ident var;
       Xobject lb, len, st;
 
-      if (sub.Opcode() != Xcode.LIST) continue;
+      if (! sub.isIndexRange()) continue;
 
       var = declIdentWithBlock(pb, "_XMP_loop_i" + Integer.toString(i), Xtype.intType);
       varList.add(var);
@@ -4036,7 +4036,7 @@ public class XMPtranslateLocalPragma {
 	Ident var;
 	Xobject lb, st;
 
-	if (sub.Opcode() != Xcode.LIST) continue;
+	if (! sub.isIndexRange()) continue;
 	//if (array1.getAlignMannerAt(i) == XMPalignedArray.NOT_ALIGNED) continue;
 
 	lb = ((XobjList)sub).getArg(0);

@@ -240,7 +240,7 @@ public class XMPtranslate implements XobjectDefVisitor {
               Xobject sub = subscripts.getArg(i);
               Xobject lb, len, st;
               
-              if (sub.Opcode() != Xcode.LIST) continue;
+              if (! sub.isIndexRange()) continue;
               
               lb = ((XobjList)sub).getArg(0);
               if (lb == null) lb = Xcons.IntConstant(0);
@@ -249,7 +249,7 @@ public class XMPtranslate implements XobjectDefVisitor {
               st = ((XobjList)sub).getArg(2);
               if (st == null) st = Xcons.IntConstant(1);
               
-              subscripts.setArg(i, Xcons.List(lb, len, st));
+              subscripts.setArg(i, Xcons.List(Xcode.INDEX_RANGE, lb, len, st));
             }
           }
 	}
