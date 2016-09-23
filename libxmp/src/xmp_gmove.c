@@ -44,6 +44,73 @@ int (*_alloc_size)[_XMP_N_MAX_DIM];
 int _dim_alloc_size;
 
 
+void *_XMP_get_array_addr(_XMP_array_t *a, int *gidx)
+{
+  int ndims = a->dim;
+  void *ret = a->array_addr_p;
+
+  _XMP_ASSERT(a->is_allocated);
+
+  for (int i = 0; i < ndims; i++){
+
+    _XMP_array_info_t *ai = &(a->info[i]);
+    _XMP_template_info_t *ti = &(a->align_template->info[ai->align_template_index]);
+    _XMP_template_chunk_t *tc = &(a->align_template->chunk[ai->align_template_index]);
+    int lidx = 0;
+    int offset;
+    int glb, t_lb, np, w;
+    int l_shadow;
+    size_t type_size = a->type_size;
+
+    switch (ai->align_manner){
+
+      case _XMP_N_ALIGN_NOT_ALIGNED:
+	lidx = gidx[i] - ai->ser_lower;
+	break;
+
+      case _XMP_N_ALIGN_DUPLICATION:
+	lidx = gidx[i] - ai->ser_lower;
+	break;
+
+      case _XMP_N_ALIGN_BLOCK:
+	// par_lower is the index of the lower bound of the local section.
+	glb = ai->par_lower;
+	l_shadow = ai->shadow_size_lo;
+	lidx = gidx[i] - glb + l_shadow;
+	break;
+
+      case _XMP_N_ALIGN_CYCLIC:
+	// assumed that even a cyclic array is distributed equally
+	offset = ai->align_subscript;
+	t_lb = ti->ser_lower;
+	np = ai->par_stride;
+	lidx = (gidx[i] + offset - t_lb) / np;
+	break;
+
+      case _XMP_N_ALIGN_BLOCK_CYCLIC:
+	// assumed that even a cyclic array is distributed equally
+	offset = ai->align_subscript;
+	t_lb = ti->ser_lower;
+	np = ai->par_stride;
+	w = tc->par_stride;
+	lidx = w * ((gidx[i] + offset - t_lb) / (np * w))
+	     + ((gidx[i] + offset - t_lb) % w);
+	break;
+
+      default:
+	_XMP_fatal("_XMP_get_array_addr: unknown align_manner");
+    }
+
+    //xmpf_dbg_printf("a->array_addr_p = %p\n", a->array_addr_p);
+    //xmpf_dbg_printf("ret = %p, lidx = %d, ai->dim_acc = %d\n", ret, lidx, ai->dim_acc);
+    ret = (char *)ret + lidx * ai->dim_acc * type_size;
+  }
+
+  return ret;
+
+}
+
+
 void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
                                  int dim_index, int *lower, int *upper, int *stride) {
   _XMP_array_info_t *array_info = &(array->info[dim_index]);
@@ -179,16 +246,16 @@ static void _XMP_gmove_bcast(void *buffer, size_t type_size, unsigned long long 
   MPI_Type_free(&mpi_datatype);
 }
 
-void _XMP_gmove_bcast_SCALAR(void *dst_addr, void *src_addr, size_t type_size, int root_rank) {
-  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
-  _XMP_ASSERT(exec_nodes->is_member);
+/* void _XMP_gmove_bcast_SCALAR(void *dst_addr, void *src_addr, size_t type_size, int root_rank) { */
+/*   _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes(); */
+/*   _XMP_ASSERT(exec_nodes->is_member); */
 
-  if (root_rank == (exec_nodes->comm_rank)) {
-    memcpy(dst_addr, src_addr, type_size);
-  }
+/*   if (root_rank == (exec_nodes->comm_rank)) { */
+/*     memcpy(dst_addr, src_addr, type_size); */
+/*   } */
 
-  _XMP_gmove_bcast(dst_addr, type_size, 1, root_rank);
-}
+/*   _XMP_gmove_bcast(dst_addr, type_size, 1, root_rank); */
+/* } */
 
 unsigned long long _XMP_gmove_bcast_ARRAY(void *dst_addr, int dst_dim,
 					  int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
@@ -591,7 +658,25 @@ void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
 
 /* } */
 
-void _XMP_gmove_BCAST_GSCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array, int ref_index[]){
+/* void _XMP_gmove_BCAST_GSCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array, int ref_index[]){ */
+/*   int type_size = array->type_size; */
+
+/*   if(_XMP_IS_SINGLE) { */
+/*     memcpy(dst_addr, src_addr, type_size); */
+/*     return; */
+/*   } */
+
+/*   int root_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ref_index); */
+
+/*   // broadcast */
+/*   _XMP_gmove_bcast_SCALAR(dst_addr, src_addr, type_size, root_rank); */
+/* } */
+void _XMP_gmove_BCAST_GSCALAR(void *dst_addr, _XMP_array_t *array, int ref_index[]){
+
+  _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
+  _XMP_ASSERT(exec_nodes->is_member);
+
+  void *src_addr = NULL;
   int type_size = array->type_size;
 
   if(_XMP_IS_SINGLE) {
@@ -601,8 +686,13 @@ void _XMP_gmove_BCAST_GSCALAR(void *dst_addr, void *src_addr, _XMP_array_t *arra
 
   int root_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ref_index);
 
-  // broadcast
-  _XMP_gmove_bcast_SCALAR(dst_addr, src_addr, type_size, root_rank);
+  if (root_rank == exec_nodes->comm_rank){
+    // I am the root.
+    src_addr = _XMP_get_array_addr(array, ref_index);
+    memcpy(dst_addr, src_addr, type_size);
+  }
+
+  _XMP_gmove_bcast(dst_addr, type_size, 1, root_rank);
 }
 
 /* int _XMP_gmove_HOMECOPY_SCALAR(_XMP_array_t *array, ...) { */
@@ -3882,7 +3972,8 @@ void _XMP_copy_scalar_array(char *scalar, _XMP_array_t *a, _XMP_comm_set_t *comm
 }
 
 
-void _XMP_gmove_gsection_scalar(_XMP_array_t *lhs_array, int *lhs_lb, int *lhs_ub, int *lhs_st, char *scalar){
+static void
+_XMP_gmove_gsection_scalar(_XMP_array_t *lhs_array, int *lhs_lb, int *lhs_ub, int *lhs_st, char *scalar){
 
   int n_lhs_dims = lhs_array->dim;;
 
@@ -4018,8 +4109,9 @@ void _XMP_gmove_gsection_scalar(_XMP_array_t *lhs_array, int *lhs_lb, int *lhs_u
 /* } */
 
 
-void _XMP_gmove_lsection_scalar(char *dst, int ndims, int *lb, int *ub, int *st, unsigned long long *d,
-				char *scalar, size_t type_size){
+static void
+_XMP_gmove_lsection_scalar(char *dst, int ndims, int *lb, int *ub, int *st, unsigned long long *d,
+			   char *scalar, size_t type_size){
 
   unsigned long long i[ndims];
 
@@ -4243,73 +4335,6 @@ void _XMP_gmove_INOUT_SCALAR(_XMP_array_t *dst_array, void *scalar, ...){
 }
 
 
-void *_XMP_get_array_addr(_XMP_array_t *a, int *gidx)
-{
-  int ndims = a->dim;
-  void *ret = a->array_addr_p;
-
-  _XMP_ASSERT(a->is_allocated);
-
-  for (int i = 0; i < ndims; i++){
-
-    _XMP_array_info_t *ai = &(a->info[i]);
-    _XMP_template_info_t *ti = &(a->align_template->info[ai->align_template_index]);
-    _XMP_template_chunk_t *tc = &(a->align_template->chunk[ai->align_template_index]);
-    int lidx = 0;
-    int offset;
-    int glb, t_lb, np, w;
-    int l_shadow;
-    size_t type_size = a->type_size;
-
-    switch (ai->align_manner){
-
-      case _XMP_N_ALIGN_NOT_ALIGNED:
-	lidx = gidx[i] - ai->ser_lower;
-	break;
-
-      case _XMP_N_ALIGN_DUPLICATION:
-	lidx = gidx[i] - ai->ser_lower;
-	break;
-
-      case _XMP_N_ALIGN_BLOCK:
-	// par_lower is the index of the lower bound of the local section.
-	glb = ai->par_lower;
-	l_shadow = ai->shadow_size_lo;
-	lidx = gidx[i] - glb + l_shadow;
-	break;
-
-      case _XMP_N_ALIGN_CYCLIC:
-	// assumed that even a cyclic array is distributed equally
-	offset = ai->align_subscript;
-	t_lb = ti->ser_lower;
-	np = ai->par_stride;
-	lidx = (gidx[i] + offset - t_lb) / np;
-	break;
-
-      case _XMP_N_ALIGN_BLOCK_CYCLIC:
-	// assumed that even a cyclic array is distributed equally
-	offset = ai->align_subscript;
-	t_lb = ti->ser_lower;
-	np = ai->par_stride;
-	w = tc->par_stride;
-	lidx = w * ((gidx[i] + offset - t_lb) / (np * w))
-	     + ((gidx[i] + offset - t_lb) % w);
-	break;
-
-      default:
-	_XMP_fatal("_XMP_get_array_addr: unknown align_manner");
-    }
-
-    //xmpf_dbg_printf("a->array_addr_p = %p\n", a->array_addr_p);
-    //xmpf_dbg_printf("ret = %p, lidx = %d, ai->dim_acc = %d\n", ret, lidx, ai->dim_acc);
-    ret = (char *)ret + lidx * ai->dim_acc * type_size;
-  }
-
-  return ret;
-
-}
-
-
 //
 // s = ga(i)
 //
@@ -4319,9 +4344,9 @@ _XMP_gmove_scalar_garray(void *scalar, _XMP_gmv_desc_t *gmv_desc_rightp, int mod
   if (mode == _XMP_N_GMOVE_NORMAL){
 
     _XMP_array_t *array = gmv_desc_rightp->a_desc;
-    int type_size = array->type_size;
-    void *src_addr = NULL;
-    _XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
+    //int type_size = array->type_size;
+    //void *src_addr = NULL;
+    //_XMP_nodes_t *exec_nodes = _XMP_get_execution_nodes();
 
     int ndims = gmv_desc_rightp->ndims;
     int ridx[ndims];
@@ -4336,15 +4361,16 @@ _XMP_gmove_scalar_garray(void *scalar, _XMP_gmv_desc_t *gmv_desc_rightp, int mod
 /*     return; */
 /*   } */
 
-    int root_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ridx);
+    _XMP_gmove_BCAST_GSCALAR(scalar, array, ridx);
+    /* int root_rank = _XMP_calc_gmove_array_owner_linear_rank_SCALAR(array, ridx); */
 
-    if (root_rank == exec_nodes->comm_rank){
-      // I am the root.
-      src_addr = _XMP_get_array_addr(array, ridx);
-    }
+    /* if (root_rank == exec_nodes->comm_rank){ */
+    /*   // I am the root. */
+    /*   src_addr = _XMP_get_array_addr(array, ridx); */
+    /* } */
 
-    // broadcast
-    _XMP_gmove_bcast_SCALAR(scalar, src_addr, type_size, root_rank);
+    /* // broadcast */
+    /* _XMP_gmove_bcast_SCALAR(scalar, src_addr, type_size, root_rank); */
 
   }
   else if (mode == _XMP_N_GMOVE_IN){
@@ -4470,8 +4496,9 @@ _XMP_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
     }
     else if (!dst_scalar_flag && src_scalar_flag){
       char *tmp = _XMP_alloc(src_array->type_size);
-      char *src_addr = (char *)src_array->array_addr_p + _XMP_gtol_calc_offset(src_array, src_l);
-      _XMP_gmove_BCAST_GSCALAR(tmp, src_addr, src_array, src_l);
+      //char *src_addr = (char *)src_array->array_addr_p + _XMP_gtol_calc_offset(src_array, src_l);
+      //_XMP_gmove_BCAST_GSCALAR(tmp, src_addr, src_array, src_l);
+      _XMP_gmove_BCAST_GSCALAR(tmp, src_array, src_l);
       _XMP_gmove_gsection_scalar(dst_array, dst_l, dst_u, dst_s, tmp);
       _XMP_free(tmp);
       return;
@@ -4703,14 +4730,16 @@ _XMP_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp,
     if (dst_scalar_flag && src_scalar_flag){
       char *dst_addr = (char *)gmv_desc_leftp->local_data;
       for (int i = 0; i < dst_dim; i++) dst_addr += ((dst_l[i] - 1)* dst_d[i]) * type_size;
-      char *src_addr = (char *)src_array->array_addr_p + _XMP_gtol_calc_offset(src_array, src_l);
-      _XMP_gmove_BCAST_GSCALAR(dst_addr, src_addr, src_array, src_l);
+      //char *src_addr = (char *)src_array->array_addr_p + _XMP_gtol_calc_offset(src_array, src_l);
+      //_XMP_gmove_BCAST_GSCALAR(dst_addr, src_addr, src_array, src_l);
+      _XMP_gmove_BCAST_GSCALAR(dst_addr, src_array, src_l);
       return;
     }
     else if (!dst_scalar_flag && src_scalar_flag){
       char *tmp = _XMP_alloc(src_array->type_size);
-      char *src_addr = (char *)src_array->array_addr_p + _XMP_gtol_calc_offset(src_array, src_l);
-      _XMP_gmove_BCAST_GSCALAR(tmp, src_addr, src_array, src_l);
+      //char *src_addr = (char *)src_array->array_addr_p + _XMP_gtol_calc_offset(src_array, src_l);
+      //_XMP_gmove_BCAST_GSCALAR(tmp, src_addr, src_array, src_l);
+      _XMP_gmove_BCAST_GSCALAR(tmp, src_array, src_l);
       char *dst_addr = (char *)gmv_desc_leftp->local_data;
 
       // to 0-based

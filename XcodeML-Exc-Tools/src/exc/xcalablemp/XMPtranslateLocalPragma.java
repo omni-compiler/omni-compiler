@@ -1967,10 +1967,20 @@ public class XMPtranslateLocalPragma {
     for (XobjArgs i = reductionSpecList.getArgs(); i != null; i = i.nextArgs()) {
       XobjList reductionSpec = (XobjList)i.getArg();
       String specName = reductionSpec.getArg(0).getString();
-
-      XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(specName, pb);
-      Ident specId = typedSpec.getFirst();
-      Xtype specType = typedSpec.getSecond();
+      Ident specId;
+      Xtype specType;
+      
+      XMPalignedArray specAlignedArray = _globalDecl.getXMPalignedArray(specName, pb);
+      if (specAlignedArray != null){
+	// specName is an aligned array and its original entry of the symbol table may have been removed.
+	specId = specAlignedArray.getAddrId();
+	specType = specAlignedArray.getArrayType();
+      }
+      else {
+	XMPpair<Ident, Xtype> typedSpec = XMPutil.findTypedVar(specName, pb);
+	specId = typedSpec.getFirst();
+	specType = typedSpec.getSecond();
+      }
 
       boolean isArray = false;
       boolean isPointer = false;
@@ -2000,7 +2010,7 @@ public class XMPtranslateLocalPragma {
 	  
 	  // FIXME not good implementation
 	  XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
-	  XMPalignedArray specAlignedArray   = _globalDecl.getXMPalignedArray(specName, pb);
+	  //XMPalignedArray specAlignedArray   = _globalDecl.getXMPalignedArray(specName, pb);
 	  if(specAlignedArray == null){
 	    specRef = specId.Ref();
 	    count = Xcons.LongLongConstant(0, XMPutil.getArrayElmtCount(arraySpecType));
