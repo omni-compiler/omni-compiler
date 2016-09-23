@@ -132,6 +132,8 @@ void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
 void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
 
 /* From xmp_shadow.c */
+void _XMP_init_reflect_sched(_XMP_reflect_sched_t *sched);
+void _XMP_finalize_reflect_sched(_XMP_reflect_sched_t *sched, _Bool free_buf);
 void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);
 void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
                              _XMP_array_t *array_desc, int array_index);
