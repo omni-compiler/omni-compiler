@@ -41,16 +41,16 @@ run: $(EXES)
 	$(XRUN) -n 8 ./gmove_cp_8.x
 	$(XRUN) -n 16 ./gmove_cp_16.x
 	$(XRUN) -n 2 ./gmove_G2L_2.x
-	$(XRUN) -n 4 ./gmove_G2L_4.x
-	$(XRUN) -n 8 ./gmove_G2L_8.x
-	$(XRUN) -n 16 ./gmove_G2L_16.x
+#	$(XRUN) -n 4 ./gmove_G2L_4.x
+#	$(XRUN) -n 8 ./gmove_G2L_8.x
+#	$(XRUN) -n 16 ./gmove_G2L_16.x
 	$(XRUN) -n 4 ./337_gmove.x
 	$(XRUN) -n 2 ./417_gmove.x
 	$(XRUN) -n 2 ./gmove_inout_1.x
 	$(XRUN) -n 8 ./gmove_inout_3.x
-	$(XRUN) -n 4 ./gmove_test_normal.x
-	$(XRUN) -n 8 ./gmove_test_in.x
-	$(XRUN) -n 8 ./gmove_test_out.x
+#	$(XRUN) -n 4 ./gmove_test_normal.x
+#	$(XRUN) -n 8 ./gmove_test_in.x
+#	$(XRUN) -n 8 ./gmove_test_out.x
 
 RUN:
 	mkdir RUN

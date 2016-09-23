@@ -248,7 +248,7 @@ public class XMPcoarrayInitProcedure {
 
   private void build_initEachCoarray(XMPcoarray coarray,
                                      BlockList body, Xobject decls) {
-    Xobject elem = coarray.getElementLengthExpr();
+    Xobject elem = coarray.getElementLengthExpr_atmost();
     if (elem==null)
       XMP.fatal("INTERNAL: elem must not be null.");
     int count = coarray.getTotalArraySize();
