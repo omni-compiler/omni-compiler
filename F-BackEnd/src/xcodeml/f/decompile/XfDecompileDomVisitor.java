@@ -280,17 +280,40 @@ public class XfDecompileDomVisitor {
                     isProtectedEmit = XmDomUtil.getAttrBool(lowType, "is_protected");
                 }
 
+                boolean isClass = XmDomUtil.getAttrBool(lowType, "is_class");
+
                 String topTypeName = topType.getNodeName();
                 if ("FbasicType".equals(topTypeName)) {
                     isPublicEmit |= XmDomUtil.getAttrBool(topType, "is_public");
                     isPrivateEmit |= XmDomUtil.getAttrBool(topType, "is_private");
                     isProtectedEmit |= XmDomUtil.getAttrBool(lowType, "is_protected");
-                    _writeBasicType(topType, typeList);
+                    if (!isClass) {
+                        _writeBasicType(topType, typeList);
+                    } else {
+                        writer.writeToken("CLASS");
+                        writer.writeToken("(");
+                        writer.writeToken("*");
+                        writer.writeToken(")");
+                    }
+
                 } else if ("FstructType".equals(topTypeName)) {
+                    Node typeParamValues = typeList.findChildNode("typeParamValues");
                     String aliasStructTypeName =
                         typeManager.getAliasTypeName(XmDomUtil.getAttr(topType,
                                                                        "type"));
-                    writer.writeToken("TYPE(" + aliasStructTypeName + ")");
+                    if (isClass) {
+                        writer.writeToken("CLASS");
+                    } else {
+                        writer.writeToken("TYPE");
+                    }
+                    writer.writeToken("(");
+                    writer.writeToken(aliasStructTypeName);
+                    if (typeParamValues != null) {
+                        writer.writeToken("(");
+                        _invokeChildEnterAndWriteDelim(typeParamValues, ",");
+                        writer.writeToken(")");
+                    }
+                    writer.writeToken(")");
                 } else {
                     /* topType is FfunctionType. */
                     throw new XmTranslationException(node,
@@ -323,7 +346,7 @@ public class XfDecompileDomVisitor {
                 ("FbasicType".equals(lowType.getNodeName()))) {
                 ArrayList<Node> contentNodes =
                     XmDomUtil.collectElementsExclude(lowType,
-                                                     "kind", "len", "coShape");
+                                                     "kind", "len", "coShape", "typeParamValues");
                 if (!contentNodes.isEmpty()) {
                     _writeIndexRangeArray(contentNodes);
                 }
@@ -461,17 +484,36 @@ public class XfDecompileDomVisitor {
             return false;
         }
 
+        boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
         // ================
         // Top type element
         // ================
         String topTypeName = topTypeChoice.getNodeName();
-        if ("FbasicType".equals(topTypeName)) {
+        if ("FbasicType".equals(topTypeName) && !isClass) {
             _writeBasicType(topTypeChoice, typeList);
+        } else if ("FbasicType".equals(topTypeName) && isClass) {
+            writer.writeToken("CLASS");
+            writer.writeToken("(");
+            writer.writeToken("*");
+            writer.writeToken(")");
         } else if ("FstructType".equals(topTypeName)) {
+            Node typeParamValues = typeList.findChildNode("typeParamValues");
             String aliasStructTypeName =
-                typeManager.getAliasTypeName(XmDomUtil.getAttr(topTypeChoice,
-                                                               "type"));
-            writer.writeToken("TYPE(" + aliasStructTypeName + ")");
+                    typeManager.getAliasTypeName(XmDomUtil.getAttr(topTypeChoice,
+                            "type"));
+            if (isClass) {
+                writer.writeToken("CLASS");
+            } else {
+                writer.writeToken("TYPE");
+            }
+            writer.writeToken("(");
+            writer.writeToken(aliasStructTypeName);
+            if (typeParamValues != null) {
+                writer.writeToken("(");
+                _invokeChildEnterAndWriteDelim(typeParamValues, ",");
+                writer.writeToken(")");
+            }
+            writer.writeToken(")");
         } else if ("FfunctionType".equals(topTypeName)) {
             _writeFunctionSymbol(symbol, topTypeChoice, node);
         }
@@ -485,8 +527,11 @@ public class XfDecompileDomVisitor {
         if ("FbasicType".equals(lowTypeName)) {
             Node basicTypeNode = lowTypeChoice;
             String refName = XmDomUtil.getAttr(basicTypeNode, "ref");
-            XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
-            assert refTypeId != null;
+
+            if (!isClass && XfUtilForDom.isNullOrEmpty(refName)) {
+                XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
+                assert refTypeId != null;
+            }
 
             writer.writeToken(" :: ");
             writer.writeToken(symbol.getSymbolName());
@@ -935,7 +980,6 @@ public class XfDecompileDomVisitor {
             XmDomUtil.getAttrBool(top, "is_cray_pointer")) {
             return true;
         }
-            
         String lowName = low.getNodeName();
         if ("FbasicType".equals(lowName) &&
             XmDomUtil.getAttrBool(low, "is_cray_pointer")) {
@@ -1324,10 +1368,47 @@ public class XfDecompileDomVisitor {
                 XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
                 typeManager.addType(n);
             } else {
+                invokeEnter(XmDomUtil.getElement(n, "typeParams"));
                 invokeEnter(XmDomUtil.getElement(n, "symbols"));
             }
         }
     }
+
+    class TypeParamsVisitor extends XcodeNodeVisitor {
+        @Override public void enter(Node n) {
+            _invokeChildEnter(n);
+        }
+    }
+
+    class TypeParamVisitor extends XcodeNodeVisitor {
+        @Override public void enter(Node n) {
+            XmfWriter writer = _context.getWriter();
+
+            String symbolName = XmDomUtil.getContentText(XmDomUtil.getContent(n));
+            String attrName = XmDomUtil.getAttr(n, "attr");
+
+            writer.writeToken("INTEGER");
+            writer.writeToken(",");
+            if (attrName.compareToIgnoreCase("length") == 0) {
+                writer.writeToken("LEN");
+            } else if (attrName.compareToIgnoreCase("len") == 0) {
+                    writer.writeToken("LEN");
+            } else if (attrName.compareToIgnoreCase("kind") == 0) {
+                writer.writeToken("KIND");
+            }
+            writer.writeToken("::");
+            writer.writeToken(symbolName);
+
+            Node value = XmDomUtil.getElement(n, "value");
+            if (value != null) {
+                writer.writeToken("=");
+                invokeEnter(value);
+            }
+
+            writer.setupNewLine();
+        }
+    }
+
 
     // globalSymbols
     class GlobalSymbolsVisitor extends XcodeNodeVisitor {
@@ -2717,9 +2798,10 @@ public class XfDecompileDomVisitor {
             // ======
             // Inside
             // ======
-            invokeEnter(XmDomUtil.getElement(n, "declarations"));
+            Node declarations = XmDomUtil.getElement(n, "declarations");
+            invokeEnter(declarations);
 
-            writeVolatileOrAsynchronousStatements();
+            writeVolatileOrAsynchronousStatements(declarations);
 
             // ========
             // Prologue
@@ -2901,9 +2983,10 @@ public class XfDecompileDomVisitor {
             // Inside
             // ======
             invokeEnter(XmDomUtil.getElement(n, "symbols"));
-            invokeEnter(XmDomUtil.getElement(n, "declarations"));
+            Node declarations = XmDomUtil.getElement(n, "declarations");
+            invokeEnter(declarations);
 
-            writeVolatileOrAsynchronousStatements();
+            writeVolatileOrAsynchronousStatements(declarations);
 
             writer.setupNewLine();
 
@@ -4254,16 +4337,27 @@ public class XfDecompileDomVisitor {
          *      XbfFstructConstructor)
          */
         @Override public void enter(Node n) {
+            Node structTypeNode;
             XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
 
-            Node typeChoice = typeManager.findType(XmDomUtil.getAttr(n, "type"));
-            if (typeChoice == null) {
+            XfTypeManagerForDom.TypeList typeList = getTypeList(XmDomUtil.getAttr(n, "type"));
+            if (typeList == null) {
                 _context.setLastErrorMessage(
-                    XfUtilForDom.formatError(n,
-                                             XfError.XCODEML_TYPE_NOT_FOUND,
-                                             XmDomUtil.getAttr(n, "type")));
+                        XfUtilForDom.formatError(n,
+                                XfError.XCODEML_TYPE_NOT_FOUND,
+                                XmDomUtil.getAttr(n, "type")));
                 fail(n);
-            } else if (!"FstructType".equals(typeChoice.getNodeName())) {
+            }
+
+            Node topType = typeList.getFirst();
+
+            if ("FbasicType".equals(topType.getNodeName())) {
+                structTypeNode = typeManager.findType(XmDomUtil.getAttr(n, "ref"));
+            } else {
+                structTypeNode = topType;
+            }
+
+            if (!"FstructType".equals(structTypeNode.getNodeName())) {
                 _context.setLastErrorMessage(
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_TYPE_MISMATCH,
@@ -4273,17 +4367,25 @@ public class XfDecompileDomVisitor {
                 fail(n);
             }
 
-            Node structTypeNode = typeChoice;
             String aliasStructTypeName =
                 typeManager.getAliasTypeName(XmDomUtil.getAttr(structTypeNode,
                                                                "type"));
 
             XmfWriter writer = _context.getWriter();
             writer.writeToken(aliasStructTypeName);
+
+            Node typeParamValues = XmDomUtil.getElement(n, "typeParamValues");
+            if (typeParamValues != null) {
+                writer.writeToken("(");
+                _invokeChildEnterAndWriteDelim(typeParamValues, ", ");
+                writer.writeToken(")");
+            }
+
+
+            ArrayList<Node> initializeValues = XmDomUtil.collectElementsExclude(n, "typeParamValues");
+
             writer.writeToken("(");
-
-            _invokeChildEnterAndWriteDelim(n, ", ");
-
+            _invokeEnterAndWriteDelim(initializeValues, ", ");
             writer.writeToken(")");
         }
     }
@@ -4372,6 +4474,20 @@ public class XfDecompileDomVisitor {
 
             writer.writeToken(" :: ");
             writer.writeToken(structTypeName);
+
+            Node typeParams = XmDomUtil.getElement(structTypeNode, "typeParams");
+            if (typeParams != null) {
+                writer.writeToken("(");
+                ArrayList<Node> typeParamList = XmDomUtil.collectChildNodes(typeParams);
+                for (Node typeParam : typeParamList) {
+                    if (typeParam != typeParamList.get(0)) {
+                        writer.writeToken(",");
+                    }
+                    writer.writeToken(XmDomUtil.getContentText(XmDomUtil.getElement(typeParam, "name")));
+                }
+                writer.writeToken(")");
+            }
+
             writer.setupNewLine();
             writer.incrementIndentLevel();
 
@@ -4867,8 +4983,12 @@ public class XfDecompileDomVisitor {
          */
         @Override public void enter(Node n) {
             Node contentNode = XmDomUtil.getContent(n);
-            if (contentNode == null) {
-                XmfWriter writer = _context.getWriter();
+            XmfWriter writer = _context.getWriter();
+            if (XmDomUtil.getAttrBool(n, "is_assumed_shape")) {
+                writer.writeToken(":");
+            } else if (XmDomUtil.getAttrBool(n, "is_assumed_size")) {
+                writer.writeToken("*");
+            } else if (contentNode == null) {
                 writer.writeToken("*");
             } else {
                 invokeEnter(contentNode);
@@ -5682,7 +5802,14 @@ public class XfDecompileDomVisitor {
             Node valueNode = XmDomUtil.getElement(n, "value");
             if (writeValue && valueNode != null) {
                 XmfWriter writer = _context.getWriter();
-                writer.writeToken(" = ");
+                XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+                String typeName = XmDomUtil.getAttr(nameNode, "type");
+                Node typeNode = typeManager.findType(typeName);
+                if (typeNode != null && XmDomUtil.getAttrBool(typeNode, "is_pointer")) {
+                    writer.writeToken(" => ");
+                } else {
+                    writer.writeToken(" = ");
+                }
                 invokeEnter(valueNode);
             }
 
@@ -5951,11 +6078,12 @@ public class XfDecompileDomVisitor {
             typeManager.enterScope();
 
             invokeEnter(XmDomUtil.getElement(n, "symbols"));
-            invokeEnter(XmDomUtil.getElement(n, "declarations"));
+            Node declarations = XmDomUtil.getElement(n, "declarations");
+            invokeEnter(declarations);
 
             writer.setupNewLine();
 
-            writeVolatileOrAsynchronousStatements();
+            writeVolatileOrAsynchronousStatements(declarations);
 
             invokeEnter(XmDomUtil.getElement(n, "body"));
 
@@ -6113,15 +6241,47 @@ public class XfDecompileDomVisitor {
     }
 
 
+    class CollectDeclaredNameVistor {
+        private Set<String> _names;
+
+        public Set<String> collect(Node n) {
+            _names = new HashSet<String>();
+            this.enter(n);
+            return _names;
+        }
+
+        private void enter(Node n) {
+            String nodeName = n.getNodeName();
+            if ("name".equals(nodeName)) {
+                Node parent = n.getParentNode();
+                if (parent != null && "varDecl".equals(parent.getNodeName())) {
+                    String name = n.getTextContent();
+                    if (name == null) return;
+                    _names.add(name);
+                }
+                return;
+            }
+
+            NodeList list = n.getChildNodes();
+            for (int i = 0; i < list.getLength(); i++) {
+                this.enter(list.item(i));
+            }
+        }
+    }
+
     /*
      * NOTE: This method writes VOLATILE/ASYNCHRONOUS statements even if those are not required.
      */
     /**
      * Write VOLATILE/ASYNCHRONOUS statements for symbols those have is_volatile/is_asynchronous attribute.
      */
-    private void writeVolatileOrAsynchronousStatements() {
+    private void writeVolatileOrAsynchronousStatements(Node declarationsNode) {
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
         XmfWriter writer = _context.getWriter();
+
+        CollectDeclaredNameVistor vistor = new CollectDeclaredNameVistor();
+        Set<String> declaredSymbols = vistor.collect(declarationsNode);
+
         writer.setupNewLine();
         Set<String> volatiles = typeManager.findSymbolFromCurrentScope(new XfTypeManagerForDom.SymbolMatcher() {
             @Override
@@ -6130,6 +6290,8 @@ public class XfDecompileDomVisitor {
             }
         });
         for (String volatileSymbol : volatiles) {
+            if (declaredSymbols.contains(volatileSymbol))
+                continue;
             writer.writeToken("VOLATILE");
             writer.writeToken(volatileSymbol);
             writer.setupNewLine();
@@ -6141,6 +6303,8 @@ public class XfDecompileDomVisitor {
             }
         });
         for (String asynchronousSymbol : asynchs) {
+            if (declaredSymbols.contains(asynchronousSymbol))
+                continue;
             writer.writeToken("asynchronous");
             writer.writeToken(asynchronousSymbol);
             writer.setupNewLine();
@@ -6157,6 +6321,8 @@ public class XfDecompileDomVisitor {
         new Pair("coShape", new CoShapeVisitor()),
         new Pair("FfunctionType", new FfunctionTypeVisitor()),
         new Pair("FstructType", new FstructTypeVisitor()),
+        new Pair("typeParams", new TypeParamsVisitor()),
+        new Pair("typeParam", new TypeParamVisitor()),
         new Pair("globalSymbols", new GlobalSymbolsVisitor()),
         new Pair("globalDeclarations", new GlobalDeclarationsVisitor()),
         new Pair("alloc", new AllocVisitor()),

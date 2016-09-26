@@ -449,13 +449,18 @@ void compile_statement1(int st_no, expr x)
     case F_FUNCTION_STATEMENT:
         /* (F_FUNCTION_STATEMENT name dummy_arg_list type) */
         begin_procedure();
-        if (EXPR_ARG3(x) && EXPR_CODE(EXPR_ARG3(x)) == IDENT) {
-            /* in case of struct */
-            TYPE_DESC tp = declare_struct_type_wo_component(EXPR_ARG3(x));
+        if (EXPR_ARG3(x) &&
+            (EXPR_CODE(EXPR_ARG3(x)) == IDENT ||
+             EXPR_CODE(EXPR_ARG3(x)) == F03_PARAMETERIZED_TYPE ||
+             EXPR_CODE(EXPR_ARG3(x)) == F03_CLASS)) {
+            TYPE_DESC tp = compile_derived_type(EXPR_ARG3(x), TRUE);
+            if (tp == NULL) { /* something wrong */
+                return;
+            }
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               tp,
                               EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
-        }else{
+        } else {
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               compile_type(EXPR_ARG3(x)),
                               EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
@@ -533,7 +538,9 @@ void compile_statement1(int st_no, expr x)
          * declaration statement
          */
     case F_TYPE_DECL: /* (F_TYPE_DECL type (LIST data ....) (LIST attr ...)) */
-        check_INDCL();
+        if (CURRENT_STATE != IN_TYPE_PARAM_DECL)
+            check_INDCL();
+
         compile_type_decl(EXPR_ARG1(x), NULL, EXPR_ARG2(x),EXPR_ARG3(x));
         /* in case of data-style initializer like "INTEGER A / 10 /",
          * F_TYPE_DECL has data structure like, (LIST, IDENTIFIER,
@@ -568,18 +575,22 @@ void compile_statement1(int st_no, expr x)
     case F_IMPLICIT_DECL:
         check_INDCL();
         check_NOT_INBLOCK();
-	if (EXPR_ARG1(x)){
-	  FOR_ITEMS_IN_LIST(lp,EXPR_ARG1(x)){
-            v = LIST_ITEM(lp);
-            /* implicit none?  result in peek the data structture.  */
-            if (EXPR_CODE (EXPR_ARG1 (EXPR_ARG1(v)))== F_TYPE_NODE)
-                compile_IMPLICIT_decl(EXPR_ARG1(v),EXPR_ARG2(v));
-            else {
-                v = EXPR_ARG1(v);
-                compile_IMPLICIT_decl(EXPR_ARG1(v),EXPR_ARG2(v));
+        if (EXPR_ARG1(x)){
+            FOR_ITEMS_IN_LIST(lp,EXPR_ARG1(x)){
+                v = LIST_ITEM(lp);
+                /* implicit none?  result in peek the data structture.  */
+                if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F_TYPE_NODE) {
+                    compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
+                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_PARAMETERIZED_TYPE) {
+                    compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
+                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_CLASS) {
+                    compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
+                } else {
+                    v = EXPR_ARG1(v);
+                    compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
+                }
             }
-	  }
-	} else { /* implicit none */
+        } else { /* implicit none */
             if (UNIT_CTL_IMPLICIT_TYPE_DECLARED(CURRENT_UNIT_CTL))
                 error("IMPLICIT NONE and IMPLICIT type declaration "
                       "cannot co-exist");
@@ -587,7 +598,7 @@ void compile_statement1(int st_no, expr x)
             set_implicit_type_uc(CURRENT_UNIT_CTL, NULL, 'a', 'z', TRUE);
             list_put_last(UNIT_CTL_IMPLICIT_DECLS(CURRENT_UNIT_CTL),
                           create_implicit_decl_expv(NULL, "a", "z"));
-	}
+        }
 
         break;
 
@@ -1012,11 +1023,16 @@ void compile_statement1(int st_no, expr x)
 
     case F95_TYPEDECL_STATEMENT:
         check_INDCL();
-        /* (F95_TYPEDECL_STATEMENT (LIST <I> <NULL>) <NULL>) */
-        compile_struct_decl(EXPR_ARG1(x), EXPR_ARG2(x));
+        /* (F95_TYPEDECL_STATEMENT (LIST <I> <NULL> <NULL> <NULL>) */
+        CURRENT_STATE = IN_TYPE_PARAM_DECL;
+        compile_struct_decl(EXPR_ARG1(x), EXPR_ARG2(x), EXPR_ARG3(x));
         break;
 
     case F95_ENDTYPEDECL_STATEMENT:
+        if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
+            CURRENT_STATE = INDCL;
+        }
+
         check_INDCL();
         /* (F95_ENDTYPEDECL_STATEMENT <NULL>) */
         compile_struct_decl_end();
@@ -1037,6 +1053,11 @@ void compile_statement1(int st_no, expr x)
         break;
 
     case F95_PRIVATE_STATEMENT:
+        if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
+            // Expects inside the derived-type declaration
+            /* NOTE: PRIVATE and PROTECTED can be written in the derived-type declaration */
+            CURRENT_STATE = INDCL;
+        }
         check_INDCL();
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsPrivate);
         break;
@@ -1391,6 +1412,9 @@ check_INDCL()
     case INSIDE:
         CURRENT_STATE = INDCL;
     case INDCL:
+        break;
+    case IN_TYPE_PARAM_DECL:
+        error("declaration in TYPE PARAMETER DECLARATION part");
         break;
     default:
         error("declaration among executables");
@@ -1882,8 +1906,9 @@ end_declaration()
                         struct type_attr_check *e;
                         for (e = type_attr_checker; e->flag; e++) {
                             if (TYPE_ATTR_FLAGS(tp) & e->flag) {
-                                fprintf(stderr, "%s has %s\n", ID_NAME(ip),
-                                        e->flag_name);
+                                warning_at_id(ip, "%s has %s\n",
+                                              ID_NAME(ip), e->flag_name);
+
                             }
                         }
                         fatal("type attr error: "
@@ -1892,6 +1917,46 @@ end_declaration()
                               check->flag_name,
                               TYPE_ATTR_FLAGS(tp));
                     }
+                }
+            }
+        }
+    }
+
+    /*
+     * Check type parameter values like '*' or ':'
+     */
+    FOREACH_ID (ip, LOCAL_SYMBOLS) {
+        if (ID_TYPE(ip) && IS_STRUCT_TYPE(ID_TYPE(ip))) {
+            TYPE_DESC struct_tp = ID_TYPE(ip);
+            if (!TYPE_TYPE_PARAM_VALUES(struct_tp))
+                continue;
+
+            FOR_ITEMS_IN_LIST(lp, TYPE_TYPE_PARAM_VALUES(struct_tp)) {
+                if (EXPV_CODE(LIST_ITEM(lp)) == F08_LEN_SPEC_COLON) {
+                    if (!TYPE_IS_POINTER(struct_tp) && !TYPE_IS_ALLOCATABLE(struct_tp)) {
+                        error_at_id(ip,
+                                    "type parameter value ':' should be used "
+                                    "with a POINTER or ALLOCATABLE object");
+                    }
+                } else if (EXPV_CODE(LIST_ITEM(lp)) == LEN_SPEC_ASTERISC) {
+                    if (!ID_IS_DUMMY_ARG(ip)) {
+                        error_at_id(ip,
+                                    "type parameter value '*' should be used "
+                                    "with a dummy argument");
+                    }
+                }
+            }
+
+            if (TYPE_IS_CLASS(struct_tp)) {
+                /*
+                 * CLASS() shoule be a POINTER object, an ALLOCATABLE object, or a dummy argument
+                 */
+                if (!TYPE_IS_POINTER(struct_tp) &&
+                    !TYPE_IS_ALLOCATABLE(struct_tp) &&
+                    !ID_IS_DUMMY_ARG(ip)) {
+                    error_at_id(ip,
+                                "CLASS should be used "
+                                "to a POINTER object, an ALLOCATABLE object, or a dummy argument");
                 }
             }
         }
@@ -1986,9 +2051,11 @@ end_declaration()
         tp = ID_TYPE(ip);
 
         if (tp) {
-            if (TYPE_IS_ALLOCATABLE(tp) && IS_ARRAY_TYPE(tp) == FALSE &&
-		!tp->codims) {
-                error_at_id(ip, "ALLOCATABLE is applied only to array");
+            if (TYPE_IS_ALLOCATABLE(tp) &&
+                !(IS_ARRAY_TYPE(tp) ||
+                  TYPE_IS_COINDEXED(tp) ||
+                  TYPE_IS_CLASS(tp))) {
+                error_at_id(ip, "ALLOCATABLE is applied only to array/coarray/class");
             } else if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "OPTIONAL is applied only "
                               "to dummy argument");
@@ -3223,6 +3290,13 @@ deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
     }
 
     if(IS_STRUCT_TYPE(cur)) {
+        if(TYPE_PARENT(cur) && TYPE_PARENT_TYPE(cur)) {
+            id = new_ident_desc(ID_SYM(TYPE_PARENT(cur)));
+            *id = *TYPE_PARENT(cur);
+            TYPE_PARENT(cur) = id;
+            deep_copy_and_overwrite_for_module_id_type(&(TYPE_PARENT_TYPE(cur)));
+        }
+
         FOREACH_MEMBER(id, cur) {
             deep_copy_and_overwrite_for_module_id_type(&(ID_TYPE(id)));
         }
@@ -4911,6 +4985,11 @@ compile_POINTER_SET_statement(expr x) {
         return;
     }
 
+    if (IS_STRUCT_TYPE(vPtrTyp) &&
+        !struct_type_is_compatible_for_assignment(vPtrTyp, vPteTyp, TRUE)) {
+        error_at_node(x, "Derived-type mismatch.");
+    }
+
 accept:
 
     EXPV_LINE(vPointer) = EXPR_LINE(x);
@@ -5153,10 +5232,10 @@ fix_pointer_pointee_recursive(TYPE_DESC tp)
             }
             fix_pointer_pointee_recursive(refT);
         } else {
-            if (IS_STRUCT_TYPE(tp)) {
+            if (IS_STRUCT_TYPE(tp) && !TYPE_IS_CLASS(tp)) {
                 /*
                  * TYPE_STRUCT base. Don't mark this node as
-                 * pointer/pointee.
+                 * pointer/pointee, EXCEPT 'CLASS(*)'.
                  */
                 TYPE_UNSET_POINTER(tp);
                 TYPE_UNSET_TARGET(tp);
@@ -5915,6 +5994,7 @@ compile_ENDBLOCK_statement(expr x)
     BLOCK_LOCAL_LABELS(current_block) = LOCAL_LABELS;
     BLOCK_LOCAL_INTERFACES(current_block) = LOCAL_INTERFACES;
     BLOCK_LOCAL_EXTERNAL_SYMBOLS(current_block) = LOCAL_EXTERNAL_SYMBOLS;
+    BLOCK_CHILDREN(current_block) = LOCAL_BLOCKS;
     EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) = current_block;
 
     end_procedure();
