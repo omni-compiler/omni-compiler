@@ -134,6 +134,10 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_UNLOCK_STATEMENT, "unlockStatement"),
 			new XcodeMLName(Xcode.F_SYNC_STAT, "syncStat"),
 			new XcodeMLName(Xcode.F_BLOCK_STATEMENT, "blockStatement"),
+			new XcodeMLName(Xcode.F_TYPE_PARAM, "typeParam"),
+			new XcodeMLName(Xcode.F_TYPE_PARAMS, "typeParams"),
+			new XcodeMLName(Xcode.F_TYPE_PARAM_VALUES, "typeParamValues"),
+			new XcodeMLName(Xcode.F_LEN, "len"),
 	};
 
 	// constructor

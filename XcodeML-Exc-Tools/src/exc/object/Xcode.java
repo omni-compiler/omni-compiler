@@ -297,6 +297,11 @@ public enum Xcode
     CPP_TRY_STATEMENT               ( 217, 'L', null, null),
     CPP_THROW_STATEMENT             ( 218, 'L', null, null),
     CPP_CATCH_STATEMENT             ( 219, 'L', null, null),
+     // Fortran2008: PARAMETERIZED DERIVED TYPE.
+    F_TYPE_PARAM                    ( 220, 'L', null, null),
+    F_TYPE_PARAMS                   ( 221, 'L', null, null),
+    F_TYPE_PARAM_VALUES             ( 222, 'L', null, null),
+    F_LEN                           ( 223, 'L', null, null),
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),

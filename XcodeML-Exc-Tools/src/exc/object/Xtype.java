@@ -93,6 +93,9 @@ public class Xtype
     /** coshape infos. incl. corank and codimensions (ID=060) */
     protected boolean is_coarray = false;
     protected Coshape coshape = new Coshape();
+    
+    /** parameterized derived type infos. */
+    protected XobjList fTypeParamValues;
 
     /*
      * for pre-defined basic type
@@ -802,6 +805,14 @@ public class Xtype
     {
         coshape.setCodimensions(codimensions);
         is_coarray  = (getCorank() > 0);
+    }
+    public void setFTypeParamValues(XobjList params)
+    {
+        fTypeParamValues = params;
+    }
+    public XobjList getFTypeParamValues()
+    {
+        return fTypeParamValues;
     }
     public void removeCodimensions()
     {

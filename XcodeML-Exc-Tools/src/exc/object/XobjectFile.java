@@ -389,8 +389,14 @@ public class XobjectFile extends XobjectDefEnv
             else
                 out.print("*");
             break;
-        case Xtype.ENUM:
         case Xtype.STRUCT:
+            XobjList fTypeParams = ((StructType)type).getFTypeParams();
+            if (fTypeParams != null)
+              out.print("\n  " + fTypeParams);
+            XobjList fTypeParamValues = type.getFTypeParamValues();
+            if (fTypeParamValues != null)
+              out.print("\n  " + fTypeParamValues);
+        case Xtype.ENUM:
         case Xtype.UNION:
             out.printIdentList(type.getMemberList(), 1);
             break;
