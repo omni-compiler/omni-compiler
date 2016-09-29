@@ -331,12 +331,9 @@ public class ACCvar {
         type = arrayType.getRef();
         break;
       case Xtype.POINTER:
-        if(range.Opcode() == Xcode.LIST){
-          addRange(rangeList, range, null);
-          type = type.getRef();
-          break;
-        }
-        throw new ACCexception("unshaped pointer");
+        addRange(rangeList, range, null);
+        type = type.getRef();
+        break;
       default:
         throw new ACCexception("too many subscripts");   
       }

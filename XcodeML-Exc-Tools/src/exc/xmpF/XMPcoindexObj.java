@@ -30,7 +30,8 @@ public class XMPcoindexObj {
 
   // attributes
   String name;
-  Xobject obj;               // Xcode.CO_ARRAY_REF
+  Xobject obj;               // Xcode.CO_ARRAY_REF or MEMBER_REF (derived-type scalar)
+                             // or F_ARRAY_REF (derived-type array)
   Xobject subscripts;
   Xobject cosubscripts;
   int exprRank;                  // rank of the reference
@@ -66,26 +67,75 @@ public class XMPcoindexObj {
   }
 
   private String _getName(Xobject obj) {
-    assert (obj.Opcode() == Xcode.CO_ARRAY_REF);
+    switch(obj.Opcode()) {
+    case CO_ARRAY_REF:      // v[k]
+      return _getName_coarray(obj);
+    case MEMBER_REF:        // v[k]%b..%c
+      return _getName(obj.getArg(0).getArg(0));
+    case F_ARRAY_REF:       // v[k]%b..%c(i,..,j)
+      return _getName(obj.getArg(0).getArg(0));
+    default:
+      break;
+    }
+    XMP.fatal("INTERNAL: unexpected form of coindexed object: " +
+              obj);
+    return null;
+  }
+
+  private String _getName_coarray(Xobject obj) {
     Xobject varRef = obj.getArg(0).getArg(0);
-    if (varRef.Opcode() == Xcode.F_ARRAY_REF)        // subarray
-      name = varRef.getArg(0).getArg(0).getName();
-    else if (varRef.Opcode() == Xcode.VAR)    // scalar or whole array
-      name = varRef.getName();
-    else
-      XMP.fatal("broken Xcode to describe a coindexed object");
-    return name;
+    switch (varRef.Opcode()) {
+    case F_ARRAY_REF:                     // subarray
+      return varRef.getArg(0).getArg(0).getName();
+    case VAR:                      // scalar or whole array
+      return varRef.getName();
+    default:
+      break;
+    }
+    XMP.fatal("broken Xcode to describe a coindexed object");
+    return null;
   }
 
-  private Xobject _getSubscripts(Xobject obj) {
-    return obj.getSubscripts();
+  private Xobject _getSubscripts(Xobject xobj) {
+    return xobj.getSubscripts();    // see XobjList
   }
 
-  private Xobject _getCosubscripts(Xobject obj) {
-    Xobject list = obj.getArg(1);
-    if (list.Opcode() != Xcode.LIST)
-      XMP.fatal("broken Xcode to describe a coindexed object");
-    return list;
+  private Xobject _getCosubscripts(Xobject xobj) {
+    Xobject xobj1, xobj2;
+    switch (xobj.Opcode()) {
+    case CO_ARRAY_REF:           // v[k]
+      return xobj.getArg(1);
+
+    case MEMBER_REF:             // guess (v[k]%b..)%c
+      xobj1 = xobj.getArg(0);
+      if (xobj1.Opcode() != Xcode.F_VAR_REF)
+        break;
+      xobj2 = xobj1.getArg(0);
+      return _getCosubscripts(xobj2);
+
+    case F_ARRAY_REF:            // guess v[k]%b..%c(i,..,j)
+      xobj1 = xobj.getArg(0);
+      if (xobj1.Opcode() != Xcode.F_VAR_REF)
+        break;
+      xobj2 = xobj1.getArg(0);
+      return _getCosubscripts(xobj2);
+
+      /*************************
+      if (xobj2.Opcode() != Xcode.MEMBER_REF)
+        break;
+      xobj3 = xobj2.getArg(0);
+      if (xobj3.Opcode() != Xcode.F_VAR_REF)
+        break;
+      xobj4 = xobj3.getArg(0);
+      if (xobj4.Opcode() != Xcode.CO_ARRAY_REF)
+        break;
+      return xobj4.getArg(1);
+      *********************************/
+
+    default:
+      break;
+    }
+    return null;
   }
 
 
@@ -108,6 +158,47 @@ public class XMPcoindexObj {
    */
   private Xobject _convRhsType(Xobject rhs)
   {
+    return _typeConv(rhs, obj);
+  }
+
+
+  /*  convert xobj to int(xobj,4), real(xobj,8), etc. if necessary
+   */
+  private Xobject _typeConv(Xobject xobj, Xobject mold)
+  {
+    Ftype newType = new Ftype(mold, getBlock());
+    return _typeConv(xobj, newType);
+  }
+
+  private Xobject _typeConv(Xobject xobj, int type, int kind)
+  {
+    Ftype newType = new Ftype(type, kind, getBlock());
+    return _typeConv(xobj, newType);
+  }
+
+  private Xobject _typeConv(Xobject xobj, Ftype newType)
+  {
+    //Block fblock = getEnv().getCurrentDef().getBlock();
+    Block fblock = getBlock();
+
+    if (newType.sameTypeAndKind(xobj))
+      // no need to convert
+      return xobj;
+
+    // build cast function
+    FunctionType funcType =
+      new FunctionType(newType.getXtype(), Xtype.TQ_FINTRINSIC);
+    String castName = newType.getNameOfConvFunction();
+    Xobject kind = newType.getKindExpr();
+    Ident castFunc = getEnv().declIntrinsicIdent(castName, funcType);
+    Xobject callExpr = castFunc.Call(Xcons.List(xobj, kind));
+    return callExpr;
+  }
+
+
+  /***********************************************************************
+  private Xobject _convRhsType___OLD___(Xobject rhs)
+  {
     String lhsTypeStr = coarray.getFtypeString();
     Xobject lhsKind = coarray.getFkind();
 
@@ -120,7 +211,7 @@ public class XMPcoindexObj {
     Xtype rhsType = rhs.Type();
     if (rhsType.getKind() == Xtype.F_ARRAY)
       rhsType = rhsType.getRef();
-    String rhsTypeStr = coarray.getFtypeString(rhsType.getBasicType());
+    String rhsTypeStr = coarray.getFtypeString(rhsType);
     Xobject rhsKind = rhsType.getFkind();
 
     if (lhsKind == null) {      // case default kind
@@ -159,7 +250,7 @@ public class XMPcoindexObj {
     Ident fident = getEnv().declIntrinsicIdent(fname, ftype);
     return fident.Call(Xcons.List(expr, kind));
   }
-
+  **********************************************************************/
 
   private int _getExprRank() {
     int hostRank = coarray.getRank();
@@ -180,15 +271,30 @@ public class XMPcoindexObj {
   //------------------------------
   public Xobject toFuncRef() {
     Xtype type = getType();
-    Xobject funcRef;
-    if (type.isStruct())
-      funcRef = toFuncRef_struct();
-    else
-      funcRef = toFuncRef_basic();
-    return funcRef;
+
+    switch (getType().getKind()) {
+    case Xtype.BASIC:
+    case Xtype.STRUCT:                      // scalar struct
+    case Xtype.F_ARRAY:                     // array struct
+      Xobject mold = removeCoindex();
+      return toFuncRef_core(mold);
+
+    default:
+      XMP.fatal("INTERNAL: unexpected type kind (XMPcoindexObj:toFuncRef)");
+    }
+
+    return obj;
   }
 
-  private Xobject toFuncRef_struct() {
+
+  private Xobject toFuncRef_struct___radical____() {
+    // "character(len=1) :: xmpf_moldchar(0)"
+    // coindexed obj a[k] -->
+    //    transfer(
+    //      xmpf_coarray_get0d_any(
+    //        DP_a, k, transfer(a, xmpf_moldchar))
+    //      
+
     // transfer(get_as_string, obj)
 
     // call runtime as character(len=1), dimension(sizeof(obj))
@@ -196,15 +302,10 @@ public class XMPcoindexObj {
     Xobject funcRef = toFuncRef_core(mold);  
 
     // cast operation
-    Ident transferId = declIntIntrinsicIdent("transfer");
+    Ident transferId = _declIntIntrinsicIdent("transfer");
     Xobject castExpr = transferId.Call(Xcons.List(funcRef, getIdent()));
 
     return castExpr;
-  }
-
-  private Xobject toFuncRef_basic() {
-    Xobject mold = getMoldObj();
-    return toFuncRef_core(mold);
   }
 
 
@@ -271,12 +372,16 @@ public class XMPcoindexObj {
     Xobject subrStmt;
     Xobject mold;
 
+    /*************************
     if (type.isStruct()) {
       XMP.fatal("Not supported type of coarray: " + getName());
       return null;
     } else {
-      mold = getMoldObj();
+    *************************/
+    mold = removeCoindex();
+    /**************************
     }
+    *************************/
 
     switch (PutInterfaceType) {
     case 8:
@@ -293,7 +398,7 @@ public class XMPcoindexObj {
 
   public Xobject toCallStmt_type8(Xobject mold, Xobject rhs, String subrName) {
     // type8 used
-    Xobject actualArgs = _makeActualArgs_type8(mold, rhs);
+    Xobject actualArgs = _makeActualArgs_type8(mold, _convRhsType(rhs));
 
     Ident subrIdent = getEnv().findVarIdent(subrName, null);
     if (subrIdent == null) {
@@ -371,7 +476,7 @@ public class XMPcoindexObj {
 
   // for subroutine atrimc_define
   public Xobject makeActualArgs(Xobject src) {
-    return _makeActualArgs_type8(getMoldObj(), src);
+    return _makeActualArgs_type8(removeCoindex(), src);
   }
 
   private Xobject _makeActualArgs_type8(Xobject mold, Xobject src) {
@@ -417,7 +522,7 @@ public class XMPcoindexObj {
     Xobject baseAddr = getBaseAddr();
     Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
     Xobject locBaseAddr = getBaseAddr_type6();
-    Xobject element = coarray.getElementLengthExpr();
+    Xobject element = coarray.getElementLengthExpr_runtime();
     Xobject image = coarray.getImageIndex(baseAddr, cosubscripts);
     Xobject actualArgs =
       Xcons.List(descPtr, locBaseAddr, element, image);
@@ -487,7 +592,7 @@ public class XMPcoindexObj {
 
     Xobject baseAddr = getBaseAddr();
     Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
-    Xobject element = coarray.getElementLengthExpr();
+    Xobject element = coarray.getElementLengthExpr_runtime();
     Xobject image = coarray.getImageIndex(baseAddr, cosubscripts);
     Xobject actualArgs = Xcons.List(descPtr, baseAddr, element, image);
 
@@ -584,7 +689,7 @@ public class XMPcoindexObj {
   public Xobject getNeighboringAddr_type6(int axis) {
     Xobject arrElem = getNeighboringAddr(axis);
 
-    Ident locId = declInt8IntrinsicIdent("loc");
+    Ident locId = _declInt8IntrinsicIdent("loc");
     return locId.Call(Xcons.List(arrElem));
   }
 
@@ -666,12 +771,9 @@ public class XMPcoindexObj {
       size = coarray.getSizeFromTriplet(i, i1, i2, i3);
 
       if (size != null) {            // success
-        // cast function for safe
-        if (!size.Type().isBasic() &&
-            size.Type().getBasicType() != BasicType.INT) {
-          Ident intId = declIntIntrinsicIdent("int");
-          size = intId.Call(Xcons.List(size));
-        }
+        // call type conversion function for safe
+        Ftype int4 = new Ftype(BasicType.INT, 4, getBlock());
+        size = _typeConv(size, int4);
         break;
       }
 
@@ -684,7 +786,7 @@ public class XMPcoindexObj {
       if (i1 == null && i2 == null && i3 == null) {
         Xobject arg1 = Xcons.Symbol(Xcode.VAR, name);
         Xobject arg2 = Xcons.IntConstant(i + 1);
-        Ident sizeId = declIntIntrinsicIdent("size");
+        Ident sizeId = _declIntIntrinsicIdent("size");
         size = sizeId.Call(Xcons.List(arg1, arg2));
         break;
       }
@@ -700,7 +802,7 @@ public class XMPcoindexObj {
         // cast function for safe
         if (!size.Type().isBasic() &&
             size.Type().getBasicType() != BasicType.INT) {
-          Ident intId = declIntIntrinsicIdent("int");
+          Ident intId = _declIntIntrinsicIdent("int");
           size = intId.Call(Xcons.List(size));
         }
       }
@@ -714,18 +816,6 @@ public class XMPcoindexObj {
     }
     return size;
   }    
-
-  public int getElementLength() {
-    return coarray.getElementLength();
-  }
-
-  public Xobject getElementLengthExpr() {
-    return coarray.getElementLengthExpr();
-  }
-
-  public Xobject getElementLengthExpr(Block block) {
-    return coarray.getElementLengthExpr(block);
-  }
 
   public int getTotalArraySize() {
     return getTotalArraySize(getBlock());
@@ -748,13 +838,13 @@ public class XMPcoindexObj {
   //------------------------------
   //  tool
   //------------------------------
-  private Ident declIntIntrinsicIdent(String name) { 
+  private Ident _declIntIntrinsicIdent(String name) { 
     FunctionType ftype = new FunctionType(Xtype.FintType, Xtype.TQ_FINTRINSIC);
     Ident ident = getEnv().declIntrinsicIdent(name, ftype);
     return ident;
   }
 
-  private Ident declInt8IntrinsicIdent(String name) { 
+  private Ident _declInt8IntrinsicIdent(String name) { 
     FunctionType ftype = new FunctionType(Xtype.Fint8Type, Xtype.TQ_FINTRINSIC);
     Ident ident = getEnv().declIntrinsicIdent(name, ftype);
     return ident;
@@ -786,9 +876,35 @@ public class XMPcoindexObj {
 
   // my mold object corresponding to the coindex object
   //
-  public Xobject getMoldObj() {
-    return obj.getArg(0).getArg(0);
+  public Xobject removeCoindex() {
+    this.obj = _removeCoindex(obj);
+    return this.obj;
   }
+
+  private Xobject _removeCoindex(Xobject obj) {
+    Xobject obj1, obj2, obj_out;
+
+    switch (obj.Opcode()) {
+    case CO_ARRAY_REF:              // v[k..] --> v
+      obj_out = obj.getArg(0).getArg(0);
+      return obj_out;
+
+    case MEMBER_REF:              // remove(..%b%c)    --> remove(..%b)%c
+    case F_ARRAY_REF:             // remove(..%b(i..)) --> remove(..%b)(i..)
+      obj1 = obj.getArg(0);
+      obj2 = obj1.getArg(0);
+      obj2 = _removeCoindex(obj2);
+      obj1.setArg(0, obj2);
+      return obj;
+
+    default:
+      break;
+    }
+
+    XMP.fatal("INTERNAL: unexpected Opcode (XMPcoindexObj:removeCoindex #3)");
+    return obj;
+  }
+
 
   public XMPenv getEnv() {
     return coarray.getEnv();

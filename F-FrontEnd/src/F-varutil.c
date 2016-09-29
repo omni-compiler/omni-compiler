@@ -89,6 +89,25 @@ expr_is_param_typeof(expr x, BASIC_DATA_TYPE bt)
 }
 
 
+static int
+expr_is_type_param_typeof(expr x, BASIC_DATA_TYPE bt)
+{
+    if (EXPR_CODE(x) == IDENT || EXPR_CODE(x) == F_VAR) {
+        ID id = find_ident(EXPR_SYM(x));
+        if (id == NULL) {
+            return FALSE;
+        }
+        if (ID_TYPE(id) != NULL) {
+            if (ID_CLASS(id) == CL_TYPE_PARAM &&
+                (bt == TYPE_UNKNOWN || bt == TYPE_BASIC_TYPE(ID_TYPE(id)))) {
+                return TRUE;
+            }
+        }
+    }
+    return FALSE;
+}
+
+
 int
 expr_is_param(x)
      expr x;
@@ -111,6 +130,35 @@ expr_has_param(x)
         list lp;
         FOR_ITEMS_IN_LIST(lp, x) {
             if(lp && expr_has_param(LIST_ITEM(lp)))
+                return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+int
+expr_is_type_param(x)
+     expr x;
+{
+    return expr_is_type_param_typeof(x, TYPE_UNKNOWN);
+}
+
+
+int
+expr_has_type_param(x)
+     expr x;
+{
+    if(x == NULL)
+        return FALSE;
+
+    if(expr_is_type_param(x))
+        return TRUE;
+
+    if(EXPR_CODE_IS_TERMINAL_OR_CONST(EXPR_CODE(x)) == FALSE) {
+        list lp;
+        FOR_ITEMS_IN_LIST(lp, x) {
+            if(lp && expr_has_type_param(LIST_ITEM(lp)))
                 return TRUE;
         }
     }
@@ -150,7 +198,7 @@ expr_is_constant_typeof(x, bt)
         return expr_is_constant_typeof(EXPR_ARG1(x), bt);
     case IDENT:
     case F_VAR:
-        return expr_is_param_typeof(x, bt);
+        return expr_is_param_typeof(x, bt) || expr_is_type_param_typeof(x, bt);
 
     case F_UNARY_MINUS_EXPR:
     case UNARY_MINUS_EXPR:
@@ -182,6 +230,70 @@ expr_is_constant_typeof(x, bt)
             return FALSE;
         }
         return TRUE;
+
+    case F_ARRAY_REF: {
+        list lp;
+        expr x1 = EXPR_ARG1(x);
+        expv v;
+        TYPE_DESC tp;
+        ID id;
+        if (EXPR_CODE(x1) == IDENT) {
+            /*
+             * expr may be array ref or character ref or intrinsic call
+             */
+
+            if (((id = find_ident(EXPR_SYM(x1))) == NULL && SYM_TYPE(EXPR_SYM(x1)) == S_INTR) ||
+                (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_INTRINSIC)) {
+                if (id == NULL) {
+                    id = declare_ident(EXPR_SYM(x1), CL_UNKNOWN);
+                    ID_CLASS(id) = CL_PROC;
+                    PROC_CLASS(id) = P_INTRINSIC;
+                    TYPE_SET_INTRINSIC(id);
+                    ID_STORAGE(id) = STG_NONE;
+                    ID_IS_DECLARED(id) = TRUE;
+                }
+                if ((v = compile_function_call0(id, EXPR_ARG2(x), TRUE)) == NULL) {
+                    return FALSE;
+                }
+                if (bt != TYPE_UNKNOWN) {
+                    tp = EXPV_TYPE(v);
+                    if (getBasicType(tp) != bt) {
+                        return FALSE;
+                    }
+                }
+            } else if (id != NULL) {
+                if (bt != TYPE_UNKNOWN) {
+                    if (ID_TYPE(id) != NULL) {
+                        if (ID_CLASS(id) != CL_PARAM ||
+                            (!TYPE_IS_PARAMETER(ID_TYPE(id))) ||
+                            (bt != TYPE_BASIC_TYPE(ID_TYPE(id)))) {
+                            return FALSE;
+                        }
+                    } else {
+                        return FALSE;
+                    }
+                } else {
+                    if (ID_CLASS(id) != CL_PARAM && !TYPE_IS_PARAMETER(id)) {
+                        return FALSE;
+                    }
+                }
+            } else {
+                return FALSE;
+            }
+        }
+        /*
+         * Check array indices or instinsic function arguments are constant values
+         */
+        FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(x)) {
+            if (EXPR_CODE(x1) == IDENT && LIST_ITEM(lp) == x1) {
+                continue;
+            }
+            if (!expr_is_constant(LIST_ITEM(lp))) {
+                return FALSE;
+            }
+        }
+        return TRUE;
+    } break;
 
     default:
         break;
@@ -781,7 +893,7 @@ expv_is_restricted(expv x)
 
     /* x is struct constructor with all elements is restricted expression. */
     if(EXPV_CODE(x) == F95_STRUCT_CONSTRUCTOR) {
-        if (expv_list_is_restricted(EXPV_LEFT(x)))
+        if (expv_list_is_restricted(EXPV_RIGHT(x)))
             return TRUE;
     }
 
