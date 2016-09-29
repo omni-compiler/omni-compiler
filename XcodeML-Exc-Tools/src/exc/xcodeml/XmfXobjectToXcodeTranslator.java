@@ -981,7 +981,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                       "is_parameter", toBoolStr(type.isFparameter()),
                       "is_allocatable", toBoolStr(type.isFallocatable()),
                       "is_cray_pointer", toBoolStr(type.isFcrayPointer()),
-                      "is_volatile", toBoolStr(type.isFvolatile()));
+                      "is_volatile", toBoolStr(type.isFvolatile()),
+                      "is_class", toBoolStr(type.isFclass()));
 
         if (type.isFintentIN()) {
             addAttributes(basicTypeElem, "intent", "in");
@@ -999,8 +1000,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         Element typeElem = null;
 
         if (type.copied != null) {
-            typeElem = createElement("FbasicType",
-                                     "ref", type.copied.getXcodeFId());
+            typeElem = createElement("FbasicType", "ref", 
+                                     type.isFclass() && /*type.isBasic() &&*/ (type.getBasicType() == BasicType.VOID) ? 
+                                       null : type.copied.getXcodeFId());
             setBasicTypeFlags(typeElem, type);
             XobjList typeParams = type.getFTypeParamValues();
             if (typeParams != null) {
@@ -1012,7 +1014,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case Xtype.BASIC:
                 typeElem = createElement("FbasicType");
                 addAttributes(typeElem,
-                              "ref", BasicType.getTypeInfo(type.getBasicType()).fname);
+                              "ref", type.isFclass() && /*type.isBasic() &&*/ (type.getBasicType() == BasicType.VOID) ? 
+                                       null : BasicType.getTypeInfo(type.getBasicType()).fname);
                 addChildNodes(typeElem,
                               transKind(type.getFkind()),
                               transLen(type));

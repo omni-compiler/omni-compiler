@@ -80,7 +80,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
   private void declFbasicType(Node n) {
     String tid = getAttr(n, "type");
-    BasicType.TypeInfo ti = BasicType.getTypeInfoByFName(getAttr(n, "ref"));
+    BasicType.TypeInfo ti = BasicType.getTypeInfoByFName(
+                             getAttrBool(n, "is_class") && (getAttr(n, "ref") == null) ? 
+                               "Fvoid" : getAttr(n, "ref"));
     int tq = (getAttrBool(n, "is_allocatable") ? Xtype.TQ_FALLOCATABLE : 0)
       | (getAttrBool(n, "is_optional") ? Xtype.TQ_FOPTIONAL : 0)
       | (getAttrBool(n, "is_parameter") ? Xtype.TQ_FPARAMETER : 0)
@@ -90,7 +92,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_save") ? Xtype.TQ_FSAVE : 0)
       | (getAttrBool(n, "is_target") ? Xtype.TQ_FTARGET : 0)
       | (getAttrBool(n, "is_cray_pointer") ? Xtype.TQ_FCRAY_POINTER : 0) //#060c
-      | (getAttrBool(n, "is_volatile") ? Xtype.TQ_FVOLATILE : 0);
+      | (getAttrBool(n, "is_volatile") ? Xtype.TQ_FVOLATILE : 0)
+      | (getAttrBool(n, "is_class") ? Xtype.TQ_FCLASS: 0);
 
     String intent = getAttr(n, "intent");
 
