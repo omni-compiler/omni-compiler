@@ -353,6 +353,9 @@ public class XobjectFile extends XobjectDefEnv
 
         if(type.copied != null) {
             out.printType(type.copied);
+            XobjList fTypeParamValues = type.getFTypeParamValues();
+            if (fTypeParamValues != null)
+              out.print("\n  " + fTypeParamValues);
             out.println("}");
             return;
         }
@@ -393,9 +396,6 @@ public class XobjectFile extends XobjectDefEnv
             XobjList fTypeParams = ((StructType)type).getFTypeParams();
             if (fTypeParams != null)
               out.print("\n  " + fTypeParams);
-            XobjList fTypeParamValues = type.getFTypeParamValues();
-            if (fTypeParamValues != null)
-              out.print("\n  " + fTypeParamValues);
         case Xtype.ENUM:
         case Xtype.UNION:
             out.printIdentList(type.getMemberList(), 1);

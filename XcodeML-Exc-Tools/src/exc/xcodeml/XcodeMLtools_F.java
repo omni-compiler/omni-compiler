@@ -109,7 +109,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     Xobject fkind = toXobject(getContent(getElement(n, "kind")));
     Xobject flen = null, sizeExprs[] = null, cosizeExprs[] = null;
-    XobjList typeParams = null;
+    XobjList typeParamValues = null;
     Node nn, nnn;
 
     if ((nn = getElement(n, "len")) != null) {
@@ -117,7 +117,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       if (flen == null)
 	flen = Xcons.IntConstant(-1); // means variable length
     } else if ((nn = getElement(n, "typeParamValues")) != null) {
-      typeParams = (XobjList)toXobject(nn);
+      typeParamValues = (XobjList)toXobject(nn);
     } else {
       NodeList list = n.getChildNodes();
       if (list.getLength() > 0) {
@@ -170,7 +170,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 	type = ref.inherit(tid);
 	type.setTypeQualFlags(tq);
         type.setCodimensions(cosizeExprs);                           // #060
-        type.setFTypeParamValues(typeParams);
+        type.setFTypeParamValues(typeParamValues);
       } else {
 	type = new BasicType(ti.type.getBasicType(), tid, tq, null,
 			     fkind, flen, cosizeExprs);             // #060

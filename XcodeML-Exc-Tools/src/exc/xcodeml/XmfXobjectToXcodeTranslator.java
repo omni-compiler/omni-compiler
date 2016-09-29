@@ -1001,7 +1001,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         if (type.copied != null) {
             typeElem = createElement("FbasicType", "ref", 
-                                     type.isFclass() && /*type.isBasic() &&*/ (type.getBasicType() == BasicType.VOID) ? 
+                                     type.isFclass() && type.isBasic() && (type.getBasicType() == BasicType.VOID) ? 
                                        null : type.copied.getXcodeFId());
             setBasicTypeFlags(typeElem, type);
             XobjList typeParams = type.getFTypeParamValues();
@@ -1014,7 +1014,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case Xtype.BASIC:
                 typeElem = createElement("FbasicType");
                 addAttributes(typeElem,
-                              "ref", type.isFclass() && /*type.isBasic() &&*/ (type.getBasicType() == BasicType.VOID) ? 
+                              "ref", type.isFclass() && type.isBasic() && (type.getBasicType() == BasicType.VOID) ? 
                                        null : BasicType.getTypeInfo(type.getBasicType()).fname);
                 addChildNodes(typeElem,
                               transKind(type.getFkind()),
