@@ -676,12 +676,20 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case VAR:
             case VAR_ADDR:
                 nSymAddr = createElement("varAddr");
+                if (operand.getScope() != null) {
+                    addAttributes(nSymAddr,
+                                  "scope", operand.getScope().toXcodeString());
+                }
                 break;
             case ARRAY_REF:
               isArrayRef = true;
               break;
             case ARRAY_ADDR: /* illegal but convert */
                 nSymAddr = createElement("arrayAddr");
+                if (operand.getScope() != null) {
+                    addAttributes(nSymAddr,
+                                  "scope", operand.getScope().toXcodeString());
+                }
                 break;
             case FUNC_ADDR:
                 nSymAddr = createElement("funcAddr");
@@ -718,19 +726,18 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
         case FUNCTION_CALL: {
             e = createElement(name);
-            Element nFunc = null;
+            Element nFunc;
             switch (xobj.getArg(0).Opcode()) {
-            case FUNC_ADDR:
-              nFunc = createElement("function");
-              addChildNodes(nFunc,
-                            transExprOrError(xobj.getArg(0)));
-              break;
             case MEMBER_REF:
             case CPP_OPERATOR_ADDR:
               nFunc = transExprOrError(xobj.getArg(0));
               break;
+            case FUNC_ADDR:
+            case POINTER_REF:
             default:
-              fatal_dump("cannot convert Xcode to XcodeML.", xobj);
+              nFunc = createElement("function");
+              addChildNodes(nFunc,
+                            transExprOrError(xobj.getArg(0)));
             }
             Element nArgs = createElement("arguments");
             XobjList params = (XobjList)xobj.getArg(1);
