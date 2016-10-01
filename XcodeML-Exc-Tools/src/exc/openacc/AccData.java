@@ -119,13 +119,14 @@ class AccData extends AccDirective {
     Ident devicePtrId = var.getDevicePtr();
     Xtype elementType = var.getElementType();
     int dim = var.getDim();
+    int pointerDimBit = var.getPointerDimBit();
     XobjList lowerList = Xcons.List();
     XobjList lengthList = Xcons.List();
     for(Xobject x : var.getSubscripts()){
       lowerList.add(x.left());
       lengthList.add(x.right());
     }
-    XobjList initArgs = Xcons.List(hostDescId.getAddr(), devicePtrId.getAddr(), addrObj, Xcons.SizeOf(elementType), Xcons.IntConstant(dim));
+    XobjList initArgs = Xcons.List(hostDescId.getAddr(), devicePtrId.getAddr(), addrObj, Xcons.SizeOf(elementType), Xcons.IntConstant(dim), Xcons.IntConstant(pointerDimBit));
     String initFuncName = getInitFuncName(var);
 
     return ACCutil.createFuncCallBlockWithArrayRange(initFuncName, initArgs, Xcons.List(lowerList, lengthList));
