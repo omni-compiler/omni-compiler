@@ -1575,6 +1575,35 @@ outx_varDecl(int l, ID id)
 
 
 static void
+outx_type_bound_procedure_call0(int l, expv v)
+{
+    const int l1 = l + 1, l2 = l1 + 1;
+    list lp;
+    expv arg, v2;
+
+    assert (EXPV_CODE(EXPR_ARG1(v)) == F95_MEMBER_REF);
+
+    outx_tagOfExpression1(l, v, 0);
+    outx_expv(l1, EXPR_ARG1(v));
+
+    assert(EXPR_HAS_ARG2(v)); /* make sure ARG2 exists */
+    v2 = EXPR_ARG2(v);
+    if(EXPR_LIST(v2)) {
+        outx_tag(l1, "arguments");
+        FOR_ITEMS_IN_LIST(lp, v2) {
+            arg = LIST_ITEM(lp);
+            if(EXPV_KWOPT_NAME(arg))
+                outx_namedValue(l2, EXPV_KWOPT_NAME(arg), arg, NULL);
+            else
+                outx_expv(l2, arg);
+        }
+        outx_close(l1, "arguments");
+    }
+    outx_expvClose(l, v);
+}
+
+
+static void
 outx_functionCall0(int l, expv v)
 {
     const int l1 = l + 1, l2 = l1 + 1;
@@ -1582,7 +1611,14 @@ outx_functionCall0(int l, expv v)
     expv arg, v2;
     int opt = 0;
     TYPE_DESC tp;
-    int isIntrinsic = (SYM_TYPE(EXPV_NAME(EXPR_ARG1(v))) == S_INTR);
+    int isIntrinsic;
+
+    if (EXPV_CODE(EXPR_ARG1(v)) == F95_MEMBER_REF) {
+        outx_type_bound_procedure_call0(l, v);
+        return;
+    }
+
+    isIntrinsic = (SYM_TYPE(EXPV_NAME(EXPR_ARG1(v))) == S_INTR);
 
     if (isIntrinsic && (tp = EXPV_TYPE(EXPR_ARG1(v)))){
       isIntrinsic = !TYPE_IS_EXTERNAL(tp);

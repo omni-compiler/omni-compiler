@@ -570,6 +570,7 @@ extern int      expv_is_str_lvalue _ANSI_ARGS_((expv v));
 extern expv     compile_terminal_node _ANSI_ARGS_((expr x));
 extern expv     compile_expression _ANSI_ARGS_((expr x));
 extern expv     expv_assignment _ANSI_ARGS_((expv v1, expv v2));
+extern expv     compile_args _ANSI_ARGS_((expr args));
 extern expv     compile_function_call _ANSI_ARGS_((ID f_id, expr args));
 extern expv     compile_function_call0 _ANSI_ARGS_((ID f_id, expr args, int ignoreTypeMismatch));
 extern expv     compile_highorder_function_call _ANSI_ARGS_((ID f_id,
@@ -607,6 +608,8 @@ extern ID       find_ident_local _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_parent _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_sibling _ANSI_ARGS_((SYMBOL s));
 extern ID       find_struct_member _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
+extern ID       find_type_bound_procedure _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
+extern ID       find_type _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
 extern ID       find_external_ident_head _ANSI_ARGS_((SYMBOL s));
 extern EXT_ID   find_ext_id_head _ANSI_ARGS_((SYMBOL s, EXT_ID head));
 extern EXT_ID   find_ext_id _ANSI_ARGS_((SYMBOL s));

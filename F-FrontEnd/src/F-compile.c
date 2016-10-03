@@ -4569,7 +4569,48 @@ compile_ASSIGN_LABEL_statement(expr x)
 static void
 compile_CALL_type_bound_procedure_statement(expr x)
 {
+    ID tpd;
+    expv structRef;
+    expr x1, x2, args;
+    TYPE_DESC tp;
+    expv v = NULL;
 
+    x1 = EXPR_ARG1(EXPR_ARG1(x));
+    x2 = EXPR_ARG2(EXPR_ARG1(x));
+    args = EXPR_ARG2(x);
+
+    structRef = compile_lhs_expression(x1);
+
+    if (!IS_STRUCT_TYPE(EXPV_TYPE(structRef))) {
+        error("invalid type bound procedure call to non derived-type");
+        return;
+    }
+
+    tpd = find_type_bound_procedure(EXPV_TYPE(structRef), EXPR_SYM(x2));
+    if (tpd == NULL) {
+        error("'%s' is not type bound procedure", SYM_NAME(EXPR_SYM(x2)));
+        return;
+    }
+
+    if ((tp = ID_TYPE(tpd)) == NULL) {
+        /*
+         * If type bound procedure is bound to module procedure, its type does
+         * not yet exists.  So create it in this timing.
+         */
+        tp = new_type_desc();
+        TYPE_SET_USED_EXPLICIT(tp);
+        TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+
+    }
+
+    v = list2(FUNCTION_CALL,
+              expv_cons(F95_MEMBER_REF, ID_TYPE(tpd), structRef, x2),
+              compile_args(args));
+
+    EXPV_TYPE(v) = type_basic(TYPE_SUBR);
+    output_statement(v);
+
+    return;
 }
 
 
@@ -4682,6 +4723,8 @@ compile_CALL_statement(expr x)
     x1 = EXPR_ARG1(x);
     if (EXPR_CODE(x1) == IDENT) {
         compile_CALL_subroutine_statement(x);
+    } else if (EXPR_CODE(x1) == F95_MEMBER_REF) {
+        compile_CALL_type_bound_procedure_statement(x);
     } else {
         fatal("compile_exec_statement: bad id in call");
     }

@@ -409,9 +409,8 @@ find_struct_decl_head(SYMBOL s, TYPE_DESC head)
     return NULL;
 }
 
-
-ID
-find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
+static ID
+find_struct_id(TYPE_DESC struct_td, SYMBOL sym, enum name_class class)
 {
     ID member = NULL;
 
@@ -426,7 +425,7 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
             member = TYPE_PARENT(struct_td);
         }
         if (member == NULL) {
-            member = find_struct_member(ID_TYPE(parent), sym);
+            member = find_struct_id(ID_TYPE(parent), sym, class);
         }
     }
     if (member) {
@@ -434,12 +433,27 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
     }
 
     FOREACH_MEMBER(member, struct_td) {
-        if (strcmp(ID_NAME(member), SYM_NAME(sym)) == 0) {
+        if (strcmp(ID_NAME(member), SYM_NAME(sym)) == 0 && ID_CLASS(member) == class) {
             return member;
         }
     }
     return NULL;
 }
+
+
+ID
+find_type_bound_procedure(TYPE_DESC struct_td, SYMBOL sym)
+{
+    return find_struct_id(struct_td, sym, CL_TYPE_BOUND_PROCS);
+}
+
+
+ID
+find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
+{
+    return find_struct_id(struct_td, sym, CL_ELEMENT);
+}
+
 
 /* int */
 /* is_descendant_coindexed(TYPE_DESC tp){ */

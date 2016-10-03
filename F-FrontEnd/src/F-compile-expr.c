@@ -6,7 +6,6 @@
 #include "F-second-pass.h"
 #include <math.h>
 
-static expv compile_args _ANSI_ARGS_((expr args));
 static expv compile_data_args _ANSI_ARGS_((expr args));
 
 static expv compile_implied_do_expression _ANSI_ARGS_((expr x));
@@ -2947,7 +2946,7 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 }
 
 
-static expv
+expv
 compile_args(expr args)
 {
     list lp;
