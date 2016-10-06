@@ -281,7 +281,7 @@ integer :: result = 0
 
 !$xmp task on p0(1)
   if (result /= 0) then
-     write(*,*) "ERROR in gmove_in"
+     write(*,*) "ERROR in gmove_out_async"
      call exit(1)
   endif
 !$xmp end task

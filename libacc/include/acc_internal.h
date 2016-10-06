@@ -71,9 +71,9 @@ extern "C" {
   void acc_unmap_data( void* );
 
   //acc_data.c
-  void _ACC_init_data(_ACC_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
-  void _ACC_pinit_data(_ACC_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
-  void _ACC_find_data(_ACC_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
+  void _ACC_init_data(_ACC_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, int pointer_dim_bit, unsigned long long lower[], unsigned long long length[]);
+  void _ACC_pinit_data(_ACC_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, int pointer_dim_bit, unsigned long long lower[], unsigned long long length[]);
+  void _ACC_find_data(_ACC_data_t **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, int pointer_dim_bit, unsigned long long lower[], unsigned long long length[]);
   void _ACC_finalize_data(_ACC_data_t *desc, int type);
   void _ACC_pcopy_data(_ACC_data_t *desc, int direction, int asyncId);
   void _ACC_copy_data(_ACC_data_t *desc, int direction, int asyncId);
@@ -85,7 +85,12 @@ extern "C" {
   _ACC_memory_t* _ACC_memory_alloc(void *host_addr, size_t size, void *device_addr);
   void _ACC_memory_free(_ACC_memory_t* memory);
   void _ACC_memory_copy(_ACC_memory_t *data, ptrdiff_t offset, size_t size, int direction, int asyncId);
-  void _ACC_memory_copy_sub(_ACC_memory_t* memory, ptrdiff_t memory_offset, int direction, int asyncId, size_t type_size, int dim, unsigned long long lowers[], unsigned long long lengths[], unsigned long long distance[]);
+  void _ACC_memory_copy_sub(_ACC_memory_t* memory, ptrdiff_t memory_offset, int direction, int isAsync,
+			    size_t type_size, int dim, int pointer_dim_bit,
+			    unsigned long long offsets[],
+			    unsigned long long lowers[],
+			    unsigned long long lengths[],
+			    unsigned long long distance[]);
   void _ACC_memory_copy_vector(_ACC_memory_t *data, size_t memory_offset, int direction, int asyncId, size_t type_size, unsigned long long offset, unsigned long long count, unsigned long long blocklength, unsigned long long stride);
 
   void _ACC_memory_increment_refcount(_ACC_memory_t *memory);
@@ -96,6 +101,10 @@ extern "C" {
   size_t _ACC_memory_get_size(_ACC_memory_t* memory);
   ptrdiff_t _ACC_memory_get_host_offset(_ACC_memory_t* data, void *host_addr);
   void* _ACC_memory_get_device_addr(_ACC_memory_t* data, ptrdiff_t offset);
+  void _ACC_memory_set_pointees(_ACC_memory_t* memory, int num_pointers, _ACC_memory_t** pointees, ptrdiff_t* pointee_offsets, void *device_pointee_pointers);
+  bool _ACC_memory_is_pointer(_ACC_memory_t* memory);
+  _ACC_memory_t** _ACC_memory_get_pointees(_ACC_memory_t* memory);
+  unsigned int _ACC_memory_get_num_pointees(_ACC_memory_t* memory);
 
 
   //acc_memory_table.c

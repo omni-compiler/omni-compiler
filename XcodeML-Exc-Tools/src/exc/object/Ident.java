@@ -13,10 +13,26 @@ import xcodeml.util.XmOption;
  */
 public class Ident extends Xobject
 {
+    public static final int AS_NONE      = 0;
+    public static final int AS_PUBLIC    = 1;
+    public static final int AS_PROTECTED = 2;
+    public static final int AS_PRIVATE   = 3;
+    public static final int as_num(String access)
+    {
+        if (access == null || access.equals("")) return AS_NONE;
+        return access.equals("public"   ) ? AS_PUBLIC    :
+              (access.equals("protected") ? AS_PROTECTED :
+              (access.equals("private"  ) ? AS_PRIVATE   : AS_NONE));
+    }
+
     /** stroage class */
     private StorageClass stg_class;
     /** key */
     private String name;
+    /** for C++ */
+    private String fullName;
+    private int access = AS_NONE;
+    private boolean is_op = false;
     /** base address expression value */
     private Xobject value;
     /** declared in (VAR_DECL ) */
@@ -63,9 +79,21 @@ public class Ident extends Xobject
                  int bit_field, Xobject bit_field_expr, Xobject enum_value,
                  Xobject fparam_value, Xobject codimensions)
     {
+        this(name, null, AS_NONE, false, stg_class, type, v, optionalFlags, gccAttrs, bit_field, bit_field_expr, 
+        enum_value, fparam_value, codimensions);
+    }
+
+    public Ident(String name, String full_name, int access, boolean is_op, StorageClass stg_class, Xtype type, Xobject v,
+                 int optionalFlags, Xobject gccAttrs,
+                 int bit_field, Xobject bit_field_expr, Xobject enum_value,
+                 Xobject fparam_value, Xobject codimensions)
+    {
         super(null, type, optionalFlags);
         if(name != null)
             this.name = name.intern();
+        this.fullName = full_name;
+        this.access = access;
+        this.is_op = is_op;
         this.stg_class = stg_class;
         this.value = v;
         this.declared = false;
@@ -146,6 +174,23 @@ public class Ident extends Xobject
             return "r_" + Integer.toHexString(num);
         else
             return name;
+    }
+
+    public String getFullName()
+    {
+        return fullName;
+    }
+
+    public String getAccessStr()
+    {
+        return access == AS_PUBLIC    ? "public"    :
+              (access == AS_PROTECTED ? "protected" :
+              (access == AS_PRIVATE   ? "private"   : null));
+    }
+
+    public boolean isOp()
+    {
+        return is_op;
     }
 
     public int getFrank()
@@ -332,8 +377,13 @@ public class Ident extends Xobject
         StringBuilder b = new StringBuilder(256);
         b.append("[");
         b.append(name == null ? "*" : name);
+        b.append(fullName == null ? "" : "(\"" + getFullName() + "\")");
         b.append(" ");
         b.append(stg_class == null ? "*" : stg_class.toXcodeString());
+        b.append(" ");
+        b.append(access == AS_NONE ? "*" : getAccessStr());
+        b.append(" ");
+        b.append(is_op ? "Operator" : "*");
         b.append(" ");
         b.append(type == null ? "*" : type.toString());
         b.append(" ");

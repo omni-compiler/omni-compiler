@@ -4,7 +4,7 @@
  */
 
 #include <assert.h>
-#include "xmpf_internal.h"
+#include "xmpf_internal_coarray.h"
 
 // communication schemes
 #define SCHEME_DirectGet       20   // RDMA expected
@@ -60,6 +60,21 @@ extern void xmpf_coarray_get_scalar_(void **descPtr, char **baseAddr, int *eleme
                                      int *coindex, char *result)
 {
   int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
+
+  /*--------------------------------------*\
+   * Confirm that *baseAddr is located in *
+   * the memory chunk corresponding to    *
+   * descptr.                             *
+  \*--------------------------------------*/
+  BOOL pass = _XMPF_isAddrInCoarrayChunk(*baseAddr, *descPtr);
+  if (!pass) {
+    _XMPF_coarrayFatal("INTERNAL: illegal baseAddr of mold coarray (in xmpf_coarray_get_scalar_)\n"
+                       "  possibly because of unexpected copy-in interface\n"
+                       "  coarray_name=\"%s\", chunk_size=%ud; offset_in_chunk=%ud",
+                       _XMPF_get_coarrayName(*descPtr),
+                       (unsigned)_XMPF_get_coarrayChunkSize(*descPtr),
+                       (unsigned)_XMPF_get_coarrayChunkOffset(*descPtr, *baseAddr));
+  }
 
   /*--------------------------------------*\
    * Check whether the local address      *
@@ -148,6 +163,21 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
     count[i] = *(va_arg(argList, int*));
   }
 #endif
+
+  /*--------------------------------------*\
+   * Confirm that *baseAddr is located in *
+   * the memory chunk corresponding to    *
+   * descptr.                             *
+  \*--------------------------------------*/
+  BOOL pass = _XMPF_isAddrInCoarrayChunk(*baseAddr, *descPtr);
+  if (!pass) {
+    _XMPF_coarrayFatal("INTERNAL : illegal baseAddr of mold coarray (in xmpf_coarray_get_array_)\n"
+                       "  possibly because of unexpected copy-in interface\n"
+                       "  coarray_name=\"%s\", chunk_size=%ud; offset_in_chunk=%ud",
+                       _XMPF_get_coarrayName(*descPtr),
+                       (unsigned)_XMPF_get_coarrayChunkSize(*descPtr),
+                       (unsigned)_XMPF_get_coarrayChunkOffset(*descPtr, *baseAddr));
+  }
 
   /*--------------------------------------*\
    * Check whether the local address      *
@@ -313,8 +343,8 @@ char *_getVectorIter(void *descPtr, char *baseAddr, int bytes, int coindex,
 void _getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                     void *descDMA, size_t offsetDMA, char *nameDMA)
 {
-  char* desc = _XMPF_get_coarrayDesc(descPtr);
-  size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
+  char* desc = _XMPF_get_coarrayChunkDesc(descPtr);
+  size_t offset = _XMPF_get_coarrayChunkOffset(descPtr, baseAddr);
 
   _XMPF_coarrayDebugPrint("from [%d] GET_VECTOR, RDMA-DMA, %d bytes\n"
                           "  src (RDMA): \'%s\', offset=%zd\n"
@@ -378,7 +408,7 @@ void _getVector(void *descPtr, char *baseAddr, int bytes, int coindex,
                 char *dst)
 {
   char* desc = _XMPF_get_coarrayDesc(descPtr);
-  size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
+  size_t offset = _XMPF_get_coarrayChunkOffset(descPtr, baseAddr);
 
   if ((size_t)bytes <= XMPF_get_localBufSize()) {
     _XMPF_coarrayDebugPrint("to [%d] GET_VECTOR, RDMA-DMA-memcpy, %d bytes\n"

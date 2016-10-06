@@ -6,6 +6,7 @@ public class XcodeMLNameTable_C extends XcodeMLNameTable {
 	XcodeMLName table[] = {
 		new XcodeMLName(Xcode.IDENT, "name"),
 		new XcodeMLName(Xcode.ID_LIST, "symbols"),
+		new XcodeMLName(Xcode.ID, "id"),
 		new XcodeMLName(Xcode.LIST, "params"),
 		new XcodeMLName(Xcode.LIST, "declarations"),
 		new XcodeMLName(Xcode.LIST, "arguments"),
@@ -97,6 +98,7 @@ public class XcodeMLNameTable_C extends XcodeMLNameTable {
 		new XcodeMLName(Xcode.ARRAY_REF, "arrayRef"),
 		new XcodeMLName(Xcode.ARRAY_ADDR, "arrayAddr"),
 		new XcodeMLName(Xcode.FUNC_ADDR, "funcAddr"),
+		new XcodeMLName(Xcode.CPP_OPERATOR_ADDR, "operator"),
 		new XcodeMLName(Xcode.MEMBER_REF, "memberRef"),
 		new XcodeMLName(Xcode.MEMBER_ARRAY_REF, "memberArrayRef"),
 		new XcodeMLName(Xcode.MEMBER_ADDR, "memberAddr"),
@@ -134,6 +136,19 @@ public class XcodeMLNameTable_C extends XcodeMLNameTable {
 		new XcodeMLName(Xcode.OMP_PRAGMA, "OMPPragma"),
 		new XcodeMLName(Xcode.XMP_PRAGMA, "XMPPragma"),
 		new XcodeMLName(Xcode.ACC_PRAGMA, "ACCPragma"),
+
+		new XcodeMLName(Xcode.CPP_DECL_NAMESPACE, "Decl_Namespace"),
+		new XcodeMLName(Xcode.CPP_CLASS_DECL, "classDecl"),
+		new XcodeMLName(Xcode.CPP_CONSTRUCT_EXPR_CLASS_STATEMENT, "Stmt_CXXConstructExprClass"),
+		new XcodeMLName(Xcode.CPP_THIS_EXPR, "thisExpr"),
+		new XcodeMLName(Xcode.CPP_NESTEDNAMESPECIFIER_TYPESPEC, "NestedNameSpecifier_TypeSpec"),
+		new XcodeMLName(Xcode.CPP_CONST_CAST_EXPR      , "constCast"),
+		new XcodeMLName(Xcode.CPP_STATIC_CAST_EXPR     , "staticCast"),
+		new XcodeMLName(Xcode.CPP_REINTERPRET_CAST_EXPR, "reinterpretCast"),
+		new XcodeMLName(Xcode.CPP_DYNAMIC_CAST_EXPR    , "dynamicCast"),
+		new XcodeMLName(Xcode.CPP_TRY_STATEMENT, "tryStatement"),
+		new XcodeMLName(Xcode.CPP_THROW_STATEMENT, "throwStatement"),
+		new XcodeMLName(Xcode.CPP_CATCH_STATEMENT, "catchStatement"),
 	};
 
 	// constructor

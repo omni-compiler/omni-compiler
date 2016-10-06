@@ -96,6 +96,8 @@ typedef struct type_descriptor
     int size;                  /* for TYPE_CHAR char length */
     int is_declared;           /* boolean for type has declared.
                                   (only used by struct type) */
+    int is_modified;           /* modified with VOLATILE or ASYNCHRONOUS */
+
     struct type_attr {
 #define TYPE_ATTR_PARAMETER         0x00000001
 #define TYPE_ATTR_ALLOCATABLE       0x00000002
@@ -116,6 +118,10 @@ typedef struct type_descriptor
 #define TYPE_ATTR_PURE              0x00010000
 #define TYPE_ATTR_ELEMENTAL         0x00020000
 #define TYPE_ATTR_PROTECTED         0x00040000
+#define TYPE_ATTR_VOLATILE          0x00080000
+#define TYPE_ATTR_KIND              0x00100000
+#define TYPE_ATTR_LEN               0x00200000
+#define TYPE_ATTR_CLASS             0x00400000
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -133,6 +139,12 @@ typedef struct type_descriptor
         expv dim_size;
         expv dim_upper, dim_lower, dim_step; /* dimension subscripts */
     } array_info; /* FOR FbasicType for Array */
+    struct ident_descriptor *parent;  /* represents super-class of this derived type.  */
+    struct ident_descriptor *type_parameters; /* type parameters for derived type */
+                                              /* For the parameterized derived-type, it works as dummy arguments */
+                                              /* For the instance of the parameterized derived-type, it works as actual arguments */
+    expv type_param_values; /* type parameter values */
+    /* struct ident_descriptor *type_parameters_used; /\* TODO: write nice comment *\/ */
     struct ident_descriptor *members; /* all members for derived type */
     codims_desc *codims;
     int is_reshaped_type;       /* A bool flag to specify this type is
@@ -235,6 +247,18 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_INTENT_INOUT(tp)    ((tp)->attr.type_attr_flags &   TYPE_ATTR_INTENT_INOUT)
 #define TYPE_SET_INTENT_INOUT(tp)   ((tp)->attr.type_attr_flags |=  TYPE_ATTR_INTENT_INOUT)
 #define TYPE_UNSET_INTENT_INOUT(tp) ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_INTENT_INOUT)
+#define TYPE_IS_VOLATILE(tp)        ((tp)->attr.type_attr_flags &   TYPE_ATTR_VOLATILE)
+#define TYPE_SET_VOLATILE(tp)       ((tp)->attr.type_attr_flags |=  TYPE_ATTR_VOLATILE)
+#define TYPE_UNSET_VOLATILE(tp)     ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_VOLATILE)
+#define TYPE_IS_KIND(tp)            ((tp)->attr.type_attr_flags &   TYPE_ATTR_KIND)
+#define TYPE_SET_KIND(tp)           ((tp)->attr.type_attr_flags |=  TYPE_ATTR_KIND)
+#define TYPE_UNSET_KIND(tp)         ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_KIND)
+#define TYPE_IS_LEN(tp)             ((tp)->attr.type_attr_flags &   TYPE_ATTR_LEN)
+#define TYPE_SET_LEN(tp)            ((tp)->attr.type_attr_flags |=  TYPE_ATTR_LEN)
+#define TYPE_UNSET_LEN(tp)          ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_LEN)
+#define TYPE_IS_CLASS(tp)           ((tp)->attr.type_attr_flags &   TYPE_ATTR_CLASS)
+#define TYPE_SET_CLASS(tp)          ((tp)->attr.type_attr_flags |=  TYPE_ATTR_CLASS)
+#define TYPE_UNSET_CLASS(tp)        ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_CLASS)
 
 #define TYPE_EXTATTR_FLAGS(tp)      ((tp)->attr.exflags)
 #define TYPE_IS_IMPLICIT(tp)        ((tp)->attr.exflags &   TYPE_EXFLAGS_IMPLICIT)
@@ -270,10 +294,16 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_DIM_STEP(tp)       ((tp)->array_info.dim_step)
 #define TYPE_IS_SCALAR(tp)      (((tp)->array_info.n_dim == 0))
 #define TYPE_MEMBER_LIST(tp)    ((tp)->members)
+#define TYPE_TYPE_PARAMS(tp)    ((tp)->type_parameters)
+#define TYPE_TYPE_ACTUAL_PARAMS(tp)    ((tp)->type_parameters)
+#define TYPE_TYPE_PARAM_VALUES(tp)    ((tp)->type_param_values)
+#define TYPE_HAS_TYPE_PARAMS(tp) (((tp)->type_parameters) != NULL)
 
 #define TYPE_CHAR_LEN(tp)       ((tp)->size)
 #define TYPE_KIND(tp)           ((tp)->kind)
-#define TYPE_LENG(tp)            ((tp)->leng)
+#define TYPE_LENG(tp)           ((tp)->leng)
+#define TYPE_PARENT(tp)         ((tp)->parent)
+#define TYPE_PARENT_TYPE(tp)    (TYPE_PARENT(tp)->type)
 
 #define TYPE_ARRAY_ASSUME_KIND(tp) ((tp)->array_info.assume_kind)
 
@@ -356,9 +386,23 @@ extern TYPE_DESC basic_type_desc[];
 #define IS_REFFERENCE(tp) \
                 ((tp) != NULL && TYPE_N_DIM(tp) == 0 && TYPE_REF(tp) != NULL)
 
+#define TYPE_IS_MODIFIED(tp) \
+                ((tp) != NULL && (tp)->is_modified)
+
+#define SET_MODIFIED(tp) \
+    ((tp != NULL) && ((tp)->is_modified = TRUE))
+
+#define UNSET_MODIFIED(tp) \
+    ((tp != NULL) && ((tp)->is_modified = FALSE))
+
+
 #define FOREACH_MEMBER(/* ID */ mp, /* TYPE_DESC */ tp) \
     if ((tp) != NULL && TYPE_MEMBER_LIST(tp) != NULL) \
         FOREACH_ID(mp, TYPE_MEMBER_LIST(tp))
+
+#define FOREACH_TYPE_PARAMS(/* ID */ mp, /* TYPE_DESC */ tp) \
+    if ((tp) != NULL && TYPE_TYPE_PARAMS(tp) != NULL) \
+        FOREACH_ID(mp, TYPE_TYPE_PARAMS(tp))
 
 #if 0
 typedef enum {

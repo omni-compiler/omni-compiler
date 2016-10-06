@@ -14,6 +14,9 @@ import java.util.*;
  * Madiator for each coarray
  */
 public class XMPcoarray {
+  // DEBUG
+  private final static Boolean _DEBUG_ALIGN_ON = false;    // true or false
+
   // name of property 
   private final static String XMP_COARRAY_NODES_PROP = "XMP_COARRAY_NODES_PROP";
 
@@ -35,7 +38,6 @@ public class XMPcoarray {
   final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
   final static String ALLOC_STATIC_NAME = "xmpf_coarray_alloc_static";
   final static String REGMEM_STATIC_NAME = "xmpf_coarray_regmem_static";
-
 
   // original attributes
   private Ident ident;
@@ -66,8 +68,15 @@ public class XMPcoarray {
   protected XobjectDef def;
   protected FunctionBlock fblock;
 
-  // for debug
-  private Boolean DEBUG = false;        // switch me on debugger
+
+  /**************************
+      debugging tools
+   ***************************/
+  private void _DEBUG_ALIGN(String str) {
+    if (_DEBUG_ALIGN_ON)
+      System.out.println(str);
+  }
+
 
   //------------------------------
   //  CONSTRUCTOR
@@ -221,7 +230,7 @@ public class XMPcoarray {
 
   public Xobject makeStmt_countCoarrays(BlockList blist)
   {
-    Xobject elem = getElementLengthExpr();
+    Xobject elem = getElementLengthExpr_atmost();
 
     if (elem == null) {
       XMP.error("current restriction: " + 
@@ -304,7 +313,7 @@ public class XMPcoarray {
     // arg3
     Xobject count = getTotalArraySizeExpr();
     // arg4
-    Xobject elem = getElementLengthExpr();
+    Xobject elem = getElementLengthExpr_atmost();
     if (elem==null)
       XMP.fatal("elem must not be null.");
     // arg6
@@ -599,7 +608,7 @@ public class XMPcoarray {
   //  evaluate index
   //------------------------------
   public int getElementLengthOrNot() {
-    Xobject elem = getElementLengthExpr(); 
+    Xobject elem = getElementLengthExpr_runtime(); 
     if (elem == null || !elem.isIntConstant())
       return -1;
     return elem.getInt();
@@ -614,51 +623,277 @@ public class XMPcoarray {
     return elem;
   }
 
+  /******************************************************
   public Xobject getElementLengthExpr() {
-    return getElementLengthExpr(fblock);
+    ////// SELECTIVE
+    return getElementLengthExpr(true);   // statically
   }
-  public Xobject getElementLengthExpr(Block block) {
-    Xobject elem = ident.Type().getElementLengthExpr(block);    // see BasicType.java
-    if (elem != null)
-      return elem;
+  public Xobject getElementLengthExpr(Boolean staticEvaluation) {
+    if (staticEvaluation)
+      return getElementLengthExpr_atmost();
+    else
+      return getElementLengthExpr_runtime();
+  }
+  *********************************************************/
 
-    // The element length was not detected from the Ident.
+  /* static evaluation of the size of derived-type data element
+   *  This result will be equal to or greater than the size that 
+   *  the backend compiler will deside.
+   */
+  public Xobject getElementLengthExpr_atmost() {
+    int length = getElementLength_atmost(ident.Type());
+    return Xcons.IntConstant(length);
+  }
 
-    if (getRank() == 0) {    // scalar coarray
-      // copy type
-      // size(transfer(ident, (/" "/))
-      Ident sizeId = declIntIntrinsicIdent("size");
-      Ident transferId = declIntIntrinsicIdent("transfer");
-      Xobject arg1 = Xcons.FvarRef(ident);
-      Xobject arg21 = Xcons.FcharacterConstant(Xtype.FcharacterType, " ", null);
-      Xobject arg2 = Xcons.List(Xcode.F_ARRAY_CONSTRUCTOR,
-                                _getCharFarrayType(1),
-                                arg21);
-      Xobject transfer = transferId.Call(Xcons.List(arg1, arg2));
-      Xobject size = sizeId.Call(Xcons.List(transfer));
-      return size;
-    } else {                 // array coarray
+  public int getElementLength_atmost(Xtype type) {
+    switch (type.getKind()) {
+    case Xtype.F_ARRAY:
+      Xtype baseType = type.getBaseRefType();        // type BASIC or STRUCT
+      return _getLength_atmost(baseType);
+
+    default:
+      break;
+    }
+    return _getLength_atmost(type);
+  }
+
+  private int _getLength_atmost(Xtype type) {
+    if (type.isFpointer())
+      return _getPointerComponentLength_atmost(type);
+    else if (type.isFallocatable())
+      return _getAllocatableComponentLength_atmost(type);
+
+    // otherwize
+    return _getStaticDataLength_atmost(type);
+  }
+
+
+  /* These values are desided to match gfortran. If they do not match other
+   * Fortran compilers, it should be modified.
+   *    ----------------------------------
+   *       p  p(:) p(:,:) p(:,:,:) ...
+   *       8   48    72      96    ...
+   *    ----------------------------------
+   */
+  private int _getPointerComponentLength_atmost(Xtype type) {
+    int rank, length;
+    rank = getRank(type);
+    if (rank == 0)
+      length = 8;
+    else
+      length = 24 * rank + 24;
+    return length;
+  }
+
+  /* These values are desided to match gfortran. If they do not match other
+   * Fortran compilers, it should be modified.
+   */
+  private int _getAllocatableComponentLength_atmost(Xtype type) {
+    return _getPointerComponentLength_atmost(type);
+  }
+
+  private int _getStaticDataLength_atmost(Xtype type) {
+    switch (type.getKind()) {
+    case Xtype.BASIC:
+      return type.getElementLength(getFblock());    // see BasicType.java
+
+    case Xtype.F_ARRAY:
+      Xtype baseType = type.getBaseRefType();       // type BASIC or STRUCT
+      int elemLen = getElementLength_atmost(baseType);
+      int size = getTotalArraySize(type);
+      return size * elemLen;
+
+    case Xtype.STRUCT:
+      _DEBUG_ALIGN("Into DerivedType " + type);
+      int length = _getStructLength_atmost(type);
+      _DEBUG_ALIGN("Out of DerivedType " + type);
+      return length;
+
+    case Xtype.UNION:
+    case Xtype.FUNCTION:
+    case Xtype.F_COARRAY:
+    default:
+      XMP.fatal("INTERNAL: unexpected Xtype kind (" + type.getKind() + ")");
+      break;
     }
 
-    return null;
+    return 0;   // illegal
   }
+
+
+  private int _getNumElements(Xtype type, Block block) {
+    int size;
+    if (type.getKind() == Xtype.F_ARRAY)
+      size = getTotalArraySize(type);
+    else
+      size = 1;
+
+    return size;
+  }
+    
+
+  private int _getStructLength_atmost(Xtype type) {
+    int currentPos = 0;
+    int largestBoundary = 1;
+    for (Xobject member: type.getMemberList()) {
+      Xtype type1 = member.Type();
+      int elemLen1, numElems1;
+      if (type1.isFpointer()) {
+        elemLen1 = _getPointerComponentLength_atmost(type1);
+        numElems1 = 1;
+        _DEBUG_ALIGN("  pointer member:" + member +
+                     ", length=" + elemLen1);
+      } else if (type1.isFallocatable()) {
+        elemLen1 = _getAllocatableComponentLength_atmost(type1);
+        numElems1 = 1;
+        _DEBUG_ALIGN("  allocatable member:" + member +
+                     ", length=" + elemLen1);
+      } else {
+        elemLen1 = getElementLength_atmost(type1);
+        numElems1 = _getNumElements(type1, getFblock());
+        _DEBUG_ALIGN("  static member:" + member +
+                     ", element length=" + elemLen1 +
+                     ", num elements=" + numElems1);
+      }
+
+      // get boundary length for the member
+      int boundary1;
+      if (elemLen1 > 4)
+        boundary1 = 8;
+      else if (elemLen1 > 2)
+        boundary1 = 4;
+      else if (elemLen1 > 1)
+        boundary1 = 2;
+      else
+        boundary1 = 1;
+
+      // alignment for the member (round up)
+      if (currentPos % boundary1 != 0) {
+        currentPos = (currentPos/boundary1 + 1) * boundary1;
+        _DEBUG_ALIGN("  skip for alignment upto "+ currentPos);
+      }
+
+      // proceed current position
+      currentPos += elemLen1 * numElems1;
+      _DEBUG_ALIGN("  proceed upto "+ currentPos);
+
+      if (largestBoundary < boundary1)
+        largestBoundary = boundary1;
+    }
+
+    // alignment for the structure (round up)
+    if (currentPos % largestBoundary != 0) {
+      currentPos = (currentPos/largestBoundary + 1) * largestBoundary;
+    }
+    _DEBUG_ALIGN("  finally proceed upto "+ currentPos);
+
+    return currentPos;
+  }
+
+
+  /* build an expression for the size of the data element that
+   * can be evaluated at runtime
+   */
+  public Xobject getElementLengthExpr_runtime() {
+    Xobject lengthExpr = ident.Type().getElementLengthExpr(getFblock());    // see BasicType.java
+    if (lengthExpr != null)
+      return lengthExpr;
+
+    // for derived type objects
+    lengthExpr = _getDerivedTypeLengthExpr_runtime();
+    return lengthExpr;
+  }
+
+  private Xobject _getDerivedTypeLengthExpr_runtime() {
+    int rank = getRank();
+
+    // build reference of the object
+    Xobject elemRef;
+    if (rank == 0) {          // scalar
+      elemRef = Xcons.FvarRef(ident);
+    } else {                  // array element eg. a(lb1,lb2,...)
+      elemRef = Xcons.FarrayRef(ident.Ref());
+      for (int i = 0; i < rank; i++) {
+        Xobject lb = getLbound(i);
+        Xobject subscr = Xcons.FarrayIndex(lb);
+        elemRef.getArg(1).setArg(i, subscr);
+      }
+    }
+
+    // build an expression to get sizeof elemRef
+    Xobject lengthExpr = _buildSizeofExpr(elemRef);
+    return lengthExpr;
+  }
+
+
+  /* build expression sizeof(data)
+   * PROBLEM in BACKEND: extended intrinsic function sizeof is declared
+   * with the attribute EXTERNAL anyway.
+   */
+  private Xobject _buildSizeofExpr(Xobject data) {
+    Ident sizeofId = declIntExtendIntrinsicIdent("sizeof");
+    Xobject size = sizeofId.Call(Xcons.List(data));
+    return size;
+  }
+
+  /* NOT USED
+   * tricky and low-performance but standard version
+   *    size(transfer(data, (/" "/))
+   */
+  private Xobject _buildSizeofExpr__OLD__(Xobject data) {
+    Ident sizeId = declIntIntrinsicIdent("size");
+    Ident transferId = declIntIntrinsicIdent("transfer");
+    Xobject arg21 = Xcons.FcharacterConstant(Xtype.FcharacterType, " ", null);
+    Xobject arg2 = Xcons.List(Xcode.F_ARRAY_CONSTRUCTOR,
+                              _getCharFarrayType(1),
+                              arg21);
+    Xobject transfer = transferId.Call(Xcons.List(data, arg2));
+    Xobject size = sizeId.Call(Xcons.List(transfer));
+    return size;
+  }
+
 
   public int getTotalArraySize() {
-    Xobject size = getTotalArraySizeExpr();
-    if (!size.isIntConstant()) {
+    return getTotalArraySize(getIndexRange());
+  }
+
+  public int getTotalArraySize(Xtype type) {
+    if (type.getKind() != Xtype.F_ARRAY)
+      XMP.fatal("INTERNAL ERROR: FarrayType expected here");
+    Xobject[] shape = getShape((FarrayType)type);
+    FindexRange findexRange = new FindexRange(shape, getFblock(), getEnv());
+    return getTotalArraySize(findexRange);
+  }
+
+  public int getTotalArraySize(FindexRange findexRange) {
+    Xobject sizeExpr = getTotalArraySizeExpr(findexRange);
+    if (!sizeExpr.isIntConstant()) {
       XMP.error("current restriction: " +
-                "could not numerically evaluate the total size of: "+name);
+                "cannot numerically evaluate the total size of: "+name);
       return 0;
     }
-    return size.getInt();
+    return sizeExpr.getInt();
   }
 
   public Xobject getTotalArraySizeExpr() {
-    Xobject size = getIndexRange().getTotalArraySizeExpr();
-    if (size == null)
+    FindexRange findexRange = getIndexRange();
+    return getTotalArraySizeExpr(findexRange);
+  }
+
+  public Xobject getTotalArraySizeExpr(Xtype type) {
+    if (type.getKind() != Xtype.F_ARRAY)
+      XMP.fatal("INTERNAL ERROR: FarrayType expected here");
+    Xobject[] shape = getShape((FarrayType)type);
+    FindexRange findexRange = new FindexRange(shape, getFblock(), getEnv());
+    return getTotalArraySizeExpr(findexRange);
+  }
+
+  public Xobject getTotalArraySizeExpr(FindexRange findexRange) {
+    Xobject sizeExpr = findexRange.getTotalArraySizeExpr();
+    if (sizeExpr == null)
       XMP.error("current restriction: " +
-                "could not find the total size of: "+name);
-    return size;
+                "cannot find the total size of: "+name);
+    return sizeExpr;
   }
 
 
@@ -671,6 +906,12 @@ public class XMPcoarray {
     return ident.Type().getNumDimensions();
   }
 
+  private int getRank(Xtype ftype) {
+    if (ftype.getKind() == Xtype.F_ARRAY)
+      return ftype.getNumDimensions();
+    return 0;
+  }
+
   public Xobject[] getShape() {
     if (getRank() == 0)
       return new Xobject[0];
@@ -679,6 +920,10 @@ public class XMPcoarray {
     return ftype.getFarraySizeExpr();
   }
 
+  private Xobject[] getShape(FarrayType ftype) {
+    return ftype.getFarraySizeExpr();
+  }
+    
 
   public Xobject getLboundStatic(int i) {
     if (isExplicitShape()) {
@@ -1078,6 +1323,12 @@ public class XMPcoarray {
     return ident;
   }
 
+  private Ident declIntExtendIntrinsicIdent(String name) { 
+    FunctionType ftype = new FunctionType(Xtype.FintType, Xtype.TQ_FINTRINSIC);
+    Ident ident = getEnv().declIntrinsicIdent(name, ftype);
+    return ident;
+  }
+
 
   //------------------------------
   //  get/set Xtype object
@@ -1095,14 +1346,23 @@ public class XMPcoarray {
   }
 
   public void resetAllocatable() {
+    /**
+     * Since TypeQualFlag TQ_FALLOCATABLE may duplicately be set
+     * in a type and its children, e.g., in type (of F_ARRAY) and
+     * in type.getRef() (of STRUCT).  In order to reset such a 
+     * flag, recursive operation is necessary.
+     */
     for (Xtype type = ident.Type(); type != null; ) {
       type.setIsFallocatable(false);
-      if (type.copied != null)
+      if (type.copied != null) {
         type = type.copied;
-      else if (type.isBasic())
+        continue;
+      }
+      if (type.isBasic())
         break;
-      else
-        type = type.getRef();
+      else if (type.isStruct())
+        break;
+      type = type.getRef();
     }
   }
 
@@ -1454,10 +1714,11 @@ public class XMPcoarray {
    * return a name of Fortran intrinsic function
    */
   public String getFtypeString() {
-    return _getTypeIntrinName_1(getFtypeNumber());
+    return getFtypeString(_getXtype());
   }
-  public String getFtypeString(int typeNumber) {
-    return _getTypeIntrinName_1(typeNumber);
+  public String getFtypeString(Xtype xtype) {
+    Ftype ftype = new Ftype(xtype, fblock);
+    return ftype.getNameOfConvFunction();
   }
 
 
@@ -1465,56 +1726,6 @@ public class XMPcoarray {
     Xtype ref = Xtype.FcharacterType;
     Xtype type = Xtype.Farray(ref, Xcons.IntConstant(size));
     return type;
-  }
-
-  /// see also BasicType.getElementLength
-  private String _getTypeIntrinName_1(int typeNumber) {
-    String tname = null;
-
-    switch(typeNumber) {
-    case BasicType.BOOL:
-      tname = "logical";
-      break;
-
-    case BasicType.SHORT:
-    case BasicType.UNSIGNED_SHORT:
-    case BasicType.INT:
-    case BasicType.UNSIGNED_INT:
-    case BasicType.LONG:
-    case BasicType.UNSIGNED_LONG:
-    case BasicType.LONGLONG:
-    case BasicType.UNSIGNED_LONGLONG:
-      tname = "int";
-      break;
-
-    case BasicType.FLOAT:
-    case BasicType.DOUBLE:
-    case BasicType.LONG_DOUBLE:
-      tname = "real";
-      break;
-
-    case BasicType.FLOAT_COMPLEX:
-    case BasicType.DOUBLE_COMPLEX:
-    case BasicType.LONG_DOUBLE_COMPLEX:
-      tname = "cmplx";
-      break;
-
-    case BasicType.CHAR:
-    case BasicType.UNSIGNED_CHAR:
-    case BasicType.F_CHARACTER:
-      tname = "char";
-      break;
-
-    case BasicType.F_NUMERIC_ALL:
-      tname = null;
-      break;
-
-    default:
-      XMP.fatal("found illegal type number in BasicType: " + typeNumber);
-      break;
-    }
-
-    return tname;
   }
 
 }

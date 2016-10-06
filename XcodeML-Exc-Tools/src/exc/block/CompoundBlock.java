@@ -85,7 +85,6 @@ public class CompoundBlock extends Block
     {
         StringBuilder s = new StringBuilder(256);
         s.append("(CompoundBlock:"+ Opcode().toString()+" ");
-        s.append(Opcode());
         s.append(" body=");
         s.append(body);
         // s.append(" bb=");

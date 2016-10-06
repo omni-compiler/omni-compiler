@@ -70,7 +70,6 @@ void _XMP_G2L(long long int global_idx,int *local_idx,
 
 /* From xmpf_misc.c */
 void xmpf_dbg_printf(char *fmt, ...);
-size_t _XMP_get_datatype_size(int datatype);
 void xmpf_finalize_all__(void);
 void xmpf_finalize_each__(void);
 
@@ -133,6 +132,8 @@ void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
 void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
 
 /* From xmp_shadow.c */
+void _XMP_init_reflect_sched(_XMP_reflect_sched_t *sched);
+void _XMP_finalize_reflect_sched(_XMP_reflect_sched_t *sched, _Bool free_buf);
 void _XMP_create_shadow_comm(_XMP_array_t *array, int array_index);
 void _XMP_pack_shadow_NORMAL(void **lo_buffer, void **hi_buffer, void *array_addr,
                              _XMP_array_t *array_desc, int array_index);
@@ -182,9 +183,18 @@ void _XMP_gmove_SENDRECV_GSCALAR(void *dst_addr, void *src_addr,
 extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d, int mode);
 extern void _XMP_gmove_inout_scalar(void *scalar, _XMP_gmv_desc_t *gmv_desc, int rdma_type);
 
+void _XMP_gmove_scalar_garray(void *scalar, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
+void _XMP_gmove_garray_scalar(_XMP_gmv_desc_t *gmv_desc_leftp, void *scalar, int mode);
+void _XMP_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
+void _XMP_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
+void _XMP_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
+
+
+
 /* From xmp_runtime.c */
 void _XMP_init(int argc, char** argv);
 void _XMP_finalize(int);
+size_t _XMP_get_datatype_size(int datatype);
 
 /* From xmp_reflect.c */
 extern void _XMP_set_reflect__(_XMP_array_t *a_desc, int dim, int lwidth, int uwidth, int is_periodic);
@@ -292,7 +302,7 @@ extern void _XMP_coarray_shortcut_get(const int, void*, const void*, const long,
 //extern void _XMP_coarray_shortcut_get_f(const int*, void*, const void*, const long*, const long*, const long*, const long*);
 
 
-/******************************************\
-    COARRAY
-\******************************************/
-#include "xmpf_internal_coarray.h"
+/* xmpf_coarray.c */
+extern void _XMPF_coarray_init(void); 
+extern void _XMPF_coarray_finalize(void); 
+

@@ -1,0 +1,8 @@
+      PROGRAM MAIN
+      INTEGER i
+      CONTAINS
+      SUBROUTINE TEST
+      REAL :: i
+      END SUBROUTINE TEST
+      END PROGRAM MAIN
+      

@@ -10,6 +10,11 @@ import exc.block.*;
 import exc.object.*;
 import java.util.Vector;
 
+/**
+ * Class to describe the information of dimension of XMP objects: 
+ *  templates, nodes, (global) arrray, loops.
+ */
+
 public class XMPdimInfo {
 
   Xobject lower, upper, stride;
@@ -50,6 +55,9 @@ public class XMPdimInfo {
   int on_ref_loop_index;
   Xobject on_ref_offset;
 
+    /** 
+     * Constructor of XMPdiminfo
+     */
   // null constructor
   public XMPdimInfo() { 
     distManner = 0;

@@ -11,7 +11,13 @@ import exc.object.*;
 import exc.block.*;
 
 /**
- * XcalableMP AST translator
+ * XcalableMP AST translator:
+ *  it implements XobjectDefVisitor, which applied to each XobjectDef 
+ *  by the doDef method, using "visitor pattern".
+ *  It contains the follwoing algorithm to comprise three phases.
+ *   - XMPanalyzePragma: analysis XMP pragma and accumlate the information.
+ *   - XMPrewriteExpr: rewrite expression according to the analysis.
+ *   - XMPtransPragma: do the transformation for each XMP pragram.
  */
 public class XMPtranslate implements XobjectDefVisitor
 {
@@ -27,18 +33,31 @@ public class XMPtranslate implements XobjectDefVisitor
     
   static final String XMPmainFunc = "xmpf_main";
 
+  /**
+   * constructor without initial env.
+   *   After the contruction, the object is to be initialized by "init"
+   */
   public XMPtranslate() {  }
     
+  /**
+   * Constructor with initalized env.
+   */
   public XMPtranslate(XobjectFile env) {
     init(env);
   }
 
+  /**
+   * Initialize the object with env.
+   */
   public void init(XobjectFile env){
     this.env = new XMPenv(env);
     if(XMP.debugFlag)
       debug_out = new BlockPrintWriter(System.out);
   }
     
+  /**
+   * Finialize the env, that is, reflect all changes on block to Xobject.
+   */
   public void finish() {
     env.finalize();
   }
@@ -59,19 +78,40 @@ public class XMPtranslate implements XobjectDefVisitor
     //funcType.setFuncResultName(null);
     //Ident funcId = Ident.FidentNotExternal("xmpf_" + name, funcType);
     Ident funcId = Ident.FidentNotExternal("xmpf_" + name, Xtype.FsubroutineType);
-    ((FunctionType)funcId.Type()).setFuncParam(funcType.getFuncParam());
+    
+    //((FunctionType)funcId.Type()).setFuncParam(funcType.getFuncParam());
+    Xobject childParamList = Xcons.List(Xcode.ID_LIST);
+    for (Xobject k: (XobjList)funcType.getFuncParam()){
+
+      Xtype type  = ((XobjString)k).Type();
+      if (type.getKind() == Xtype.F_ARRAY &&
+	  !type.isFassumedShape() /*&&
+				    XMParray.getArray(id) != null*/){
+	childParamList.add(((XobjString)k).copy());
+      }
+    }
+    ((FunctionType)funcId.Type()).setFuncParam(childParamList);
+
     funcId.setProp(XMP_GENERATED_CHILD, true);
 
     // generate child's ID list
 
     Xobject idList = d.getFuncIdList();
     Xobject childIdList = Xcons.List(Xcode.ID_LIST);
+    int numAssumedId = 0;
 
     for (Xobject k: (XobjList)idList){
       Ident id = (Ident)k;
-      if (id.getStorageClass() == StorageClass.FPARAM ||
-	  (id.getStorageClass() == StorageClass.FFUNC &&
-	   !id.getName().equals(name))){
+      Xtype type  = id.Type();
+      if ((id.getStorageClass() == StorageClass.FPARAM &&
+	   type.getKind() == Xtype.F_ARRAY &&
+	   !type.isFassumedShape() /*&&
+				     XMParray.getArray(id) != null*/)){
+	childIdList.add(id.copy());
+	numAssumedId++;
+      }
+      else if (id.getStorageClass() == StorageClass.FFUNC &&
+	       !id.getName().equals(name)){
     	childIdList.add(id.copy());
       }
     }
@@ -80,6 +120,7 @@ public class XMPtranslate implements XobjectDefVisitor
 
     Xobject decls = d.getFuncDecls();
     Xobject childDecls = Xcons.List();
+    int numAssumedDecl = 0;
 
     for (Xobject kk: (XobjList)decls){
       if (kk.getArg(0) == null) continue;
@@ -87,13 +128,24 @@ public class XMPtranslate implements XobjectDefVisitor
 	  kk.Opcode() == Xcode.F_DATA_DECL ||
 	  kk.Opcode() == Xcode.F_NAMELIST_DECL) continue;
       Ident id = d.findIdent(kk.getArg(0).getName());
-      if (id != null && (id.getStorageClass() == StorageClass.FPARAM ||
-			 (id.getStorageClass() == StorageClass.FFUNC &&
-			  !id.getName().equals(name)))){
+      if (id == null) continue;
+      Xtype type  = id.Type();
+
+      if ((id.getStorageClass() == StorageClass.FPARAM &&
+	   type.getKind() == Xtype.F_ARRAY &&
+	   !type.isFassumedShape() /*&&
+				     XMParray.getArray(id) != null*/)){
+	childDecls.add(kk.copy());
+	numAssumedDecl++;
+      }
+      else if (id.getStorageClass() == StorageClass.FFUNC &&
+	       !id.getName().equals(name)){
 	childDecls.add(kk.copy());
       }
     }
 
+    if (numAssumedId == 0 && numAssumedDecl == 0) return null;
+    
     // generate new body
 
     Xobject funcBody = d.getFuncBody();
@@ -128,6 +180,10 @@ public class XMPtranslate implements XobjectDefVisitor
     Xobject args = Xcons.List();
     for (Xobject j: (XobjList)funcType.getFuncParam()){
       Ident id = d.findIdent(j.getName());
+      Xtype type  = id.Type();
+      if (type.getKind() != Xtype.F_ARRAY ||
+	  type.isFassumedShape() /*||
+				   XMParray.getArray(id) == null*/) continue;
       args.add(id.Ref());
     }
 

@@ -270,7 +270,7 @@ public enum Xcode
      // added for coarray
     F_CO_SHAPE                      ( 197, 'L', null, null),         // ID=060
      // -----------------
-     // Fortran2008: Statement, etc.
+     // Fortran2008: SYNCXX, CRITICAL, LOCK.
     F_SYNCALL_STATEMENT             ( 198, 'S', null, null),
     F_SYNCIMAGE_STATEMENT           ( 199, 'S', null, null),
     F_SYNCMEMORY_STATEMENT          ( 200, 'S', null, null),
@@ -278,6 +278,30 @@ public enum Xcode
     F_LOCK_STATEMENT                ( 202, 'S', null, null),
     F_UNLOCK_STATEMENT              ( 203, 'S', null, null),
     F_SYNC_STAT                     ( 204, 'L', null, null),
+     // C++11
+    CPP_DECL_NAMESPACE              ( 205, 'L', null, null),
+    CPP_CLASS_DECL                  ( 206, 'L', null, null),
+    CPP_CONSTRUCT_EXPR_CLASS_STATEMENT
+                                    ( 207, 'L', null, null),
+    CPP_THIS_EXPR                   ( 208, 'L', null, null),
+    ID                              ( 209, 'T', null, null),
+    CPP_NESTEDNAMESPECIFIER_TYPESPEC( 210, 'L', null, null),
+     // Fortran2008: BLOCK, VOLATILE.
+    F_BLOCK_STATEMENT               ( 211, 'L', null, null),
+     // C++11
+    CPP_CONST_CAST_EXPR             ( 212, 'L', null, null),
+    CPP_STATIC_CAST_EXPR            ( 213, 'L', null, null),
+    CPP_REINTERPRET_CAST_EXPR       ( 214, 'L', null, null),
+    CPP_DYNAMIC_CAST_EXPR           ( 215, 'L', null, null),
+    CPP_OPERATOR_ADDR               ( 216, 'T', null, null),
+    CPP_TRY_STATEMENT               ( 217, 'L', null, null),
+    CPP_THROW_STATEMENT             ( 218, 'L', null, null),
+    CPP_CATCH_STATEMENT             ( 219, 'L', null, null),
+     // Fortran2008: PARAMETERIZED DERIVED TYPE.
+    F_TYPE_PARAM                    ( 220, 'L', null, null),
+    F_TYPE_PARAMS                   ( 221, 'L', null, null),
+    F_TYPE_PARAM_VALUES             ( 222, 'L', null, null),
+    F_LEN                           ( 223, 'L', null, null),
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),
@@ -491,6 +515,7 @@ public enum Xcode
         case F_SYNCALL_STATEMENT:           case F_SYNCIMAGE_STATEMENT:
         case F_SYNCMEMORY_STATEMENT:        case F_CRITICAL_STATEMENT:
         case F_LOCK_STATEMENT:              case F_UNLOCK_STATEMENT:
+        case F_BLOCK_STATEMENT:
             return true;
         }
         return false;

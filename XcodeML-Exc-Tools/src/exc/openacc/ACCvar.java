@@ -27,10 +27,11 @@ public class ACCvar {
   private XobjList rangeList = Xcons.List();
   private boolean isSubarray = false;
   private XobjList _subscripts;
+  private int pointerDimBit;
 
   //parent
   private ACCvar _parent;
-  
+
   public static enum Attribute{
     isPresent,
     isPresentOr,
@@ -322,6 +323,8 @@ public class ACCvar {
     XobjList rangeList = Xcons.List();
     Xtype type = id.Type();
     XobjArgs args = subscript.getArgs();
+    pointerDimBit = 0;
+    int i = 0;
     while(args != null){
       Xobject range = args.getArg();
       switch(type.getKind()){
@@ -331,16 +334,15 @@ public class ACCvar {
         type = arrayType.getRef();
         break;
       case Xtype.POINTER:
-        if(range.Opcode() == Xcode.LIST){
-          addRange(rangeList, range, null);
-          type = type.getRef();
-          break;
-        }
-        throw new ACCexception("unshaped pointer");
+        addRange(rangeList, range, null);
+        type = type.getRef();
+        pointerDimBit += 1 << i;
+        break;
       default:
         throw new ACCexception("too many subscripts");   
       }
       if(args != null) args = args.nextArgs();
+      i++;
     }
     if(type.isArray()){
       throw new ACCexception("too few subscripts");
@@ -375,12 +377,14 @@ public class ACCvar {
   
   private XobjList makeRange(Xtype type) throws ACCexception{
     XobjList rangeList = Xcons.List();
+    pointerDimBit = 0;
 
     if(isDeviceptr()){
 	rangeList.add(Xcons.List(Xcons.IntConstant(0)));
 	return rangeList;
     }
-    
+
+    int i = 0;
     while(true){
       switch(type.getKind()){
       case Xtype.ARRAY:
@@ -402,10 +406,12 @@ public class ACCvar {
         ACC.warning("pointer '" + getName() + "' is treated as \"" + getName() + "[0:1]\"");
         rangeList.add(Xcons.List(Xcons.IntConstant(0), Xcons.IntConstant(1)));
         type = type.getRef();
+        pointerDimBit += 1 << i;
         break;
       default:
         ACC.fatal("unsupposed type");
       }
+      i++;
     }
   }
   
@@ -438,11 +444,13 @@ public class ACCvar {
       //}
     case Xtype.ARRAY:
     {
+      //XXX is this type check need?
       ArrayType arrayVarType = (ArrayType)varType;
       switch (arrayVarType.getArrayElementType().getKind()) {
       case Xtype.BASIC:
       case Xtype.STRUCT:
       case Xtype.UNION:
+      case Xtype.POINTER:
         return id.Ref();
       default:
         throw new ACCexception("array '" + getName() + "' has a wrong data type for acc data");
@@ -576,6 +584,10 @@ public class ACCvar {
 
   ACCvar getParent(){
     return _parent;
+  }
+
+  int getPointerDimBit(){
+    return pointerDimBit;
   }
 }
 

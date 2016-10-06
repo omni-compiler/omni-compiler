@@ -37,11 +37,19 @@ public class FunctionBlock extends CompoundBlock
 		       Xobject decls, Block body_block,
 		       Xobject gcc_attrs, XobjectDefEnv env)
     {
+        this((LineNo)null, opcode, name, id_list, decls, body_block, gcc_attrs, env);
+    }
+
+  public FunctionBlock(LineNo line_no, Xcode opcode, Xobject name, Xobject id_list, 
+		       Xobject decls, Block body_block,
+		       Xobject gcc_attrs, XobjectDefEnv env)
+    {
         super(opcode, new BlockList(id_list, decls));
         this.env = env;
         this.name = name;
         this.gcc_attrs = gcc_attrs;
         body.add(body_block);
+        this.setLineNo(line_no);
     }
 
     /** returns Function name */

@@ -7,7 +7,7 @@ PROGRAM zzz
   integer n3[3,*]
   integer nn31, nn32
   integer nn31ok, nn32ok
-  integer i, nerr, me
+  integer nerr, me
 
   !$xmp coarray on p3 :: n3
 

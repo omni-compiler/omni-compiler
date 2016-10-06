@@ -18,7 +18,7 @@
       contains
         real function func2(arg)
           real :: arg
-          func1 = arg
+          func2 = arg
         end function func2
       end module m2
 
@@ -40,7 +40,7 @@
       contains
         complex function func4(arg)
           complex :: arg
-          func1 = arg
+          func4 = arg
         end function func4
         subroutine sub()
           i = ger(i)

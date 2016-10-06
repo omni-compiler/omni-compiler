@@ -310,12 +310,20 @@ public class XobjectFile extends XobjectDefEnv
         out.print("{");
         out.print(Xtype.getKindName(type.getKind()));
         out.print(" ");
+        if (type instanceof CompositeType) {
+            XobjString tagNames = ((CompositeType)type).getTagNames();
+            if (tagNames != null) {
+              out.print(tagNames.getName() + "(\"" + tagNames.getAlias() + "\")");
+            }
+            out.print(" ");
+        }
         out.printType(type);
         
         out.print(" (");
         
         if(type.isConst())          out.print(" const");
         if(type.isVolatile())       out.print(" volatile");
+        if(type.isFvolatile())      out.print(" volatile");
         if(type.isRestrict())       out.print(" restrict");
         if(type.isInline())         out.print(" inline");
         if(type.isArrayStatic())    out.print(" array_static");
@@ -339,11 +347,15 @@ public class XobjectFile extends XobjectDefEnv
         if(type.isFexternal())      out.print(" fexternal");
         if(type.isFsequence())      out.print(" fsequence");
         if(type.isFinternalPrivate()) out.print(" finternal_private");
+        if(type.isExtended())       out.print(" extends[" + ((CompositeType)type).parentId() + "]");
         
         out.print(") ");
 
         if(type.copied != null) {
             out.printType(type.copied);
+            XobjList fTypeParamValues = type.getFTypeParamValues();
+            if (fTypeParamValues != null)
+              out.print("\n  " + fTypeParamValues);
             out.println("}");
             return;
         }
@@ -380,8 +392,11 @@ public class XobjectFile extends XobjectDefEnv
             else
                 out.print("*");
             break;
-        case Xtype.ENUM:
         case Xtype.STRUCT:
+            XobjList fTypeParams = ((StructType)type).getFTypeParams();
+            if (fTypeParams != null)
+              out.print("\n  " + fTypeParams);
+        case Xtype.ENUM:
         case Xtype.UNION:
             out.printIdentList(type.getMemberList(), 1);
             break;

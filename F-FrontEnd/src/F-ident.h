@@ -28,7 +28,8 @@ enum name_class {
     CL_NAMELIST, /* name list name (not implmented) */
     CL_COMMON,  /* common block */
     CL_ELEMENT,  /* structure element name  */
-    CL_GENERICS /* generics name */
+    CL_GENERICS, /* generics name */
+    CL_TYPE_PARAM /* type parameter name */
 };
 
 extern char *name_class_names[];
@@ -49,7 +50,8 @@ extern char *name_class_names[];
   "CL_NAMELIST", \
   "CL_COMMON",  \
   "CL_ELEMENT", \
-  "CL_GENERICS" \
+  "CL_GENERICS", \
+  "CL_TYPE_PARAM", \
 }
 
 /* for CL_PROC  */
@@ -91,7 +93,9 @@ enum storage_class {
     STG_EQUIV,  /* allocated in equive */
     STG_COMEQ,  /* allocated in common and equive */
     STG_TAGNAME, /* derived type name  */
-    STG_NONE    /* for intrinsic, stfunction */
+    STG_NONE,    /* for intrinsic, stfunction */
+    STG_TYPE_PARAM, /* type parameter */
+
 };
 
 extern char *storage_class_names[];
@@ -106,7 +110,8 @@ extern char *storage_class_names[];
  "STG_EQUIV",   \
  "STG_COMEQ",   \
  "STG_TAGNAME", \
- "STG_NONE"     \
+ "STG_NONE",    \
+ "STG_TYPE_PARAM", \
 }
 
 /* statement label for CL_LABEL */
@@ -243,9 +248,22 @@ typedef struct ident_descriptor
 
 #define ID_INTF(id)     ((id)->interfaceId)
 
+/**
+ * use association information about ID.
+ */
+struct use_assoc_info {
+    struct module * module;   /* module. */
+    SYMBOL module_name;       /* name of module which the ID declared. */
+    SYMBOL original_name;     /* original name of the ID. */
+};
+
 #define ID_USEASSOC_INFO(id) ((id)->use_assoc)
+#define ID_MODULE(id) ((ID_USEASSOC_INFO(id))->module)
+#define ID_MODULE_NAME(id) ((ID_USEASSOC_INFO(id))->module_name)
+#define ID_ORIGINAL_NAME(id) ((ID_USEASSOC_INFO(id))->original_name)
 #define ID_IS_OFMODULE(id)  ((id)->use_assoc != NULL)
 #define ID_IS_AMBIGUOUS(id) ((id)->use_assoc_conflicted)
+
 #define ID_IS_EMITTED(id)   ((id)->is_varDeclEmitted)
 #define ID_EQUIV_ID(id)     ((id)->equivID)
 
@@ -283,6 +301,9 @@ typedef struct ident_descriptor
 #define ID_IS_DUMMY_ARG(id) \
     ((ID_STORAGE((id)) == STG_ARG) || \
      (ID_CLASS((id)) == CL_PROC && PROC_IS_DUMMY_ARG((id)) == TRUE))
+
+#define ID_IS_TYPE_PARAM(id) \
+    ((ID_CLASS((id)) == CL_TYPE_PARAM))
 
 /* for CL_VAR */
 #define VAR_COM_ID(id)          ((id)->info.var_info.common_id)
@@ -373,6 +394,7 @@ typedef struct external_symbol
             ID common_id_list;  /* common block ids */
             TYPE_DESC struct_decls; /* derived types in Fortran90 */
             lineno_info *contains_line;
+            struct block_env * blocks; /* block constructs */
             struct external_symbol *contains_external_symbols;
             struct external_symbol *interface_external_symbols;
             struct interface_info * interface_info;
@@ -404,6 +426,7 @@ typedef struct external_symbol
 #define EXT_PROC_ID_LIST(ep)    ((ep)->info.proc_info.id_list)
 #define EXT_PROC_LABEL_LIST(ep) ((ep)->info.proc_info.label_list)
 #define EXT_PROC_STRUCT_DECLS(ep) ((ep)->info.proc_info.struct_decls)
+#define EXT_PROC_BLOCKS(ep)    ((ep)->info.proc_info.blocks)
 #define EXT_PROC_CONT_EXT_SYMS(ep) ((ep)->info.proc_info.contains_external_symbols)
 #define EXT_PROC_CONT_EXT_LINE(ep) ((ep)->info.proc_info.contains_line)
 #define EXT_PROC_INTERFACES(ep) ((ep)->info.proc_info.interface_external_symbols)
@@ -436,6 +459,34 @@ typedef struct external_symbol
       (tail) = (ep); }
 
 #define BLANK_COMMON_NAME       "_____BLANK_COMMON_____"
+
+typedef struct block_env
+{
+    struct block_env *next;
+    struct block_env *blocks;
+    ID id_list;
+    ID label_list;
+    TYPE_DESC struct_decls; /* derived types in Fortran90 */
+    struct external_symbol *interfaces;
+    struct external_symbol *external_symbols;
+} *BLOCK_ENV;
+
+#define BLOCK_NEXT(bp) ((bp)->next)
+#define BLOCK_CHILDREN(bp) ((bp)->blocks)
+#define BLOCK_LOCAL_LABELS(bp) ((bp)->label_list)
+#define BLOCK_LOCAL_SYMBOLS(bp) ((bp)->id_list)
+#define BLOCK_LOCAL_STRUCT_DECLS(bp) ((bp)->struct_decls)
+#define BLOCK_LOCAL_INTERFACES(bp) ((bp)->interfaces)
+#define BLOCK_LOCAL_EXTERNAL_SYMBOLS(bp) ((bp)->external_symbols)
+
+#define FOREACH_BLOCKS(bp, headp) \
+    for ((bp) = (headp); (bp) != NULL ; (bp) = BLOCK_NEXT(bp))
+
+#define BLOCK_LINK_ADD(bp, list, tail) \
+    { if((list) == NULL || (tail) == NULL) (list) = (bp); \
+      else BLOCK_NEXT(tail) = (bp); \
+      (tail) = (bp); }
+
 
 #endif /* _F_IDENT_H_ */
 
