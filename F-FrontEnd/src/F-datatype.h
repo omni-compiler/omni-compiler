@@ -152,6 +152,9 @@ typedef struct type_descriptor
     codims_desc *codims;
     int is_reshaped_type;       /* A bool flag to specify this type is
                                  * genereted by reshape() intrinsic. */
+
+    struct external_symbol *extID;      /* for function_type, external symbol  */
+
 } *TYPE_DESC;
 
 struct type_attr_check {
@@ -314,6 +317,8 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_PARENT(tp)         ((tp)->parent)
 #define TYPE_PARENT_TYPE(tp)    (TYPE_PARENT(tp)->type)
 #define TYPE_BIND_NAME(tp)      ((tp)->bind_name)
+
+#define TYPE_EXT_ID(tp)         ((tp)->extID)
 
 #define TYPE_ARRAY_ASSUME_KIND(tp) ((tp)->array_info.assume_kind)
 

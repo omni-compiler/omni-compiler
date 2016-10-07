@@ -252,13 +252,28 @@ declare_procedure(enum name_class class,
         ID_STORAGE(id) = STG_EXT;
         declare_dummy_args(args, CL_PROC);
         CURRENT_PROCEDURE = id;
+
         /* make link before declare_current_procedure_ext_id() */
         link_parent_defined_by(CURRENT_PROC_NAME);
         (void)declare_current_procedure_ext_id();
 
-
-
-
+        /*
+         * Check type bound procedure
+         */
+        if (unit_ctl_level > 0) {
+            TYPE_DESC tp;
+            for (tp = PARENT_LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
+                ID mem;
+                FOREACH_MEMBER(mem, tp) {
+                    if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC &&
+                        ID_SYM(TBP_BINDING(mem)) == s) {
+                        PROC_EXT_ID(TBP_BINDING(mem)) = CURRENT_EXT_ID;
+                        TYPE_EXT_ID(ID_TYPE(mem)) = CURRENT_EXT_ID;
+                        // TODO add type to PASS argument
+                    }
+                }
+            }
+        }
         break;
     }
 
@@ -1107,7 +1122,7 @@ declare_ident(SYMBOL s, enum name_class class)
                 } else if (CURRENT_STATE == IN_TYPE_BOUND_PROCS) {
                     isInternalPrivate = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
                     symbols = &TYPE_MEMBER_LIST(struct_tp);
-                    class = CL_TYPE_BOUND_PROCS;
+                    class = CL_TYPE_BOUND_PROC;
                 } else {
                     isInternalPrivate = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
                     symbols = &TYPE_MEMBER_LIST(struct_tp);
@@ -4731,19 +4746,20 @@ compile_type_bound_procedure(expr x)
                 error_at_node(x, "unexpected expression");
                 continue;
             }
-            id = declare_ident(EXPR_SYM(LIST_ITEM(lp)), CL_TYPE_BOUND_PROCS);
+            id = declare_ident(EXPR_SYM(LIST_ITEM(lp)), CL_TYPE_BOUND_PROC);
             TBP_BINDING(id) = interface;
             TBP_BINDING_ATTRS(id) = binding_attr_flags;
             TBP_PASS_ARG(id) = pass_arg;
             TYPE_ATTR_FLAGS(id) = access_attr_flags;
+            ID_TYPE(id) = function_type(NULL);
         }
     } else {
         FOR_ITEMS_IN_LIST(lp, bindings) {
             if (EXPR_CODE(LIST_ITEM(lp)) == IDENT) {
-                id = declare_ident(EXPR_SYM(LIST_ITEM(lp)), CL_TYPE_BOUND_PROCS);
+                id = declare_ident(EXPR_SYM(LIST_ITEM(lp)), CL_TYPE_BOUND_PROC);
                 procedure = new_ident_desc(EXPR_SYM(LIST_ITEM(lp)));
             } else if (EXPR_CODE(LIST_ITEM(lp)) == F03_BIND_PROCEDURE) {
-                id = declare_ident(EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))), CL_TYPE_BOUND_PROCS);
+                id = declare_ident(EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))), CL_TYPE_BOUND_PROC);
                 procedure = new_ident_desc(EXPR_SYM(EXPR_ARG2(LIST_ITEM(lp))));
             } else {
                 error_at_node(x, "unexpected expression");
@@ -4754,6 +4770,7 @@ compile_type_bound_procedure(expr x)
             TBP_BINDING_ATTRS(id) = binding_attr_flags;
             TBP_PASS_ARG(id) = pass_arg;
             TYPE_ATTR_FLAGS(id) = access_attr_flags;
+            ID_TYPE(id) = function_type(NULL);
         }
     }
 }

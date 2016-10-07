@@ -3824,7 +3824,7 @@ mark_type_desc_in_structure(TYPE_DESC tp)
         ID_TYPE(id) = siTp;
         if (IS_STRUCT_TYPE(itp))
             mark_type_desc_in_structure(itp);
-        if (ID_CLASS(id) == CL_TYPE_BOUND_PROCS) {
+        if (ID_CLASS(id) == CL_TYPE_BOUND_PROC) {
             // skip
         } else {
             if (VAR_INIT_VALUE(id) != NULL)
@@ -4240,7 +4240,7 @@ outx_structType(int l, TYPE_DESC tp)
 
     outx_tag(l1, "symbols");
     FOREACH_MEMBER(id, tp) {
-        if (ID_CLASS(id) == CL_TYPE_BOUND_PROCS) {
+        if (ID_CLASS(id) == CL_TYPE_BOUND_PROC) {
             has_type_bound_procedure = TRUE;
             continue;
         }
@@ -4256,7 +4256,7 @@ outx_structType(int l, TYPE_DESC tp)
     if (has_type_bound_procedure) {
         outx_tag(l1, "typeBoundProcedures");
         FOREACH_MEMBER(id, tp) {
-            if (ID_CLASS(id) != CL_TYPE_BOUND_PROCS) {
+            if (ID_CLASS(id) != CL_TYPE_BOUND_PROC) {
                 continue;
             }
             outx_printi(l2, "<typeBoundProcedure");

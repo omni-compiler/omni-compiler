@@ -1829,6 +1829,7 @@ end_declaration()
             TYPE_SET_ELEMENTAL(ID_TYPE(myId));
             TYPE_SET_ELEMENTAL(EXT_PROC_TYPE(myEId));
         }
+
         /* for bind feature */
         if(TYPE_HAS_BIND(myId) || PROC_HAS_BIND(myId)) {
             TYPE_SET_BIND(ID_TYPE(myId));
@@ -1838,6 +1839,26 @@ end_declaration()
                 TYPE_BIND_NAME(EXT_PROC_TYPE(myEId)) = PROC_BIND(myId);
             }
         }
+
+        /* /\* */
+        /*  * Update type bound procedure */
+        /*  *\/ */
+        /* if (unit_ctl_level > 0 && CTL_TYPE(ctl_top) != CTL_INTERFACE) { */
+        /*     TYPE_DESC tp; */
+        /*     for (tp = PARENT_LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) { */
+        /*         ID mem; */
+        /*         FOREACH_MEMBER(mem, tp) { */
+        /*             if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC) { */
+        /*                 if (ID_SYM(TBP_BINDING(mem)) == ID_SYM(myId)) { */
+        /*                     // TODO: check `bound` is explicit external interface */
+        /*                     *TBP_BINDING(mem) = *myId; */
+        /*                     ID_NEXT(TBP_BINDING(mem)) = NULL; */
+        /*                     ID_TYPE(mem) = ID_TYPE(myId); */
+        /*                 } */
+        /*             } */
+        /*         } */
+        /*     } */
+        /* } */
     }
 
     /*
@@ -4586,7 +4607,7 @@ compile_CALL_type_bound_procedure_statement(expr x)
         return;
     }
 
-    tpd = find_type_bound_procedure(EXPV_TYPE(structRef), EXPR_SYM(x2));
+    tpd = find_struct_member(EXPV_TYPE(structRef), EXPR_SYM(x2));
     if (tpd == NULL) {
         error("'%s' is not type bound procedure", SYM_NAME(EXPR_SYM(x2)));
         return;
@@ -4600,7 +4621,6 @@ compile_CALL_type_bound_procedure_statement(expr x)
         tp = new_type_desc();
         TYPE_SET_USED_EXPLICIT(tp);
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
-
     }
 
     v = list2(FUNCTION_CALL,

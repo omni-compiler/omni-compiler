@@ -30,7 +30,7 @@ enum name_class {
     CL_ELEMENT,  /* structure element name  */
     CL_GENERICS, /* generics name */
     CL_TYPE_PARAM, /* type parameter name */
-    CL_TYPE_BOUND_PROCS, /* type bound procedure */
+    CL_TYPE_BOUND_PROC, /* type bound procedure */
 };
 
 extern char *name_class_names[];

@@ -608,7 +608,7 @@ extern ID       find_ident_local _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_parent _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_sibling _ANSI_ARGS_((SYMBOL s));
 extern ID       find_struct_member _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
-extern ID       find_type_bound_procedure _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
+
 extern ID       find_type _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
 extern ID       find_external_ident_head _ANSI_ARGS_((SYMBOL s));
 extern EXT_ID   find_ext_id_head _ANSI_ARGS_((SYMBOL s, EXT_ID head));

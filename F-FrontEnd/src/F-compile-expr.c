@@ -2551,7 +2551,6 @@ err:
     return NULL;
 }
 
-
 static int
 id_link_remove(ID * head, ID tobeRemoved)
 {
@@ -3338,6 +3337,49 @@ compile_array_constructor(expr x)
 
 
 expv
+compile_type_bound_procedure_call(TYPE_DESC tp, expv memberRef, expr args) {
+    expv v;
+    expv a;
+    TYPE_DESC ret_type;
+    /* EXT_ID ep; */
+
+    /* TYPE_SET_USED_EXPLICIT(tp); */
+    /* if (TYPE_BASIC_TYPE(tp) == TYPE_UNKNOWN) { */
+    /*     TYPE_SET_NOT_FIXED(tp); */
+    /* } */
+    a = compile_args(args);
+
+    /* ep = TYPE_EXT_ID(tp); */
+    ret_type = TYPE_REF(tp);
+
+
+    // TODO for generic TBP
+    /* if (ep != NULL && EXT_PROC_CLASS(ep) == EP_INTERFACE && */
+    /*     (modProcs = EXT_PROC_INTR_DEF_EXT_IDS(ep)) != NULL) { */
+    /*     modProcType = chose_module_procedure_by_args(modProcs, a); */
+    /*     if (modProcType != NULL) { */
+    /*         tp = modProcType; */
+    /*     } else { */
+    /*         warning_at_id(f_id, "can't determine a function to " */
+    /*                       "be actually called for a generic " */
+    /*                       "interface function call of '%s', " */
+    /*                       "this is a current limitation.", */
+    /*                       SYM_NAME(EXT_SYM(ep))); */
+    /*     } */
+    /* } else if (ep == NULL) { */
+    /*     ep = new_external_id_for_external_decl(ID_SYM(f_id), */
+    /*                                            ID_TYPE(f_id)); */
+    /*     PROC_EXT_ID(f_id) = ep; */
+    /* } */
+
+    v = list2(FUNCTION_CALL, memberRef, a);
+    EXPV_TYPE(v) = IS_GENERIC_TYPE(ret_type)?type_GNUMERIC_ALL:ret_type;
+
+    return v;
+}
+
+
+expv
 compile_member_array_ref(expr x, expv v)
 {
     expr indices = EXPR_ARG2(x);
@@ -3364,6 +3406,14 @@ compile_member_array_ref(expr x, expv v)
         return NULL;
     }
 #endif
+
+    if (IS_FUNCTION_TYPE(EXPV_TYPE(v))) {
+        /*
+         * type bound procedure coall
+         */
+        return compile_type_bound_procedure_call(tq, v, indices);
+    }
+
     if(EXPR_LIST(shape) == NULL) {
         generate_shape_expr(tq, shape);
     }
