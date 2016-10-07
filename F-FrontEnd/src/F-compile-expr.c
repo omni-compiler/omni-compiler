@@ -3337,9 +3337,10 @@ compile_array_constructor(expr x)
 
 
 expv
-compile_type_bound_procedure_call(TYPE_DESC tp, expv memberRef, expr args) {
+compile_type_bound_procedure_call(expv memberRef, expr args) {
     expv v;
     expv a;
+    TYPE_DESC ftp;
     TYPE_DESC ret_type;
     /* EXT_ID ep; */
 
@@ -3350,8 +3351,8 @@ compile_type_bound_procedure_call(TYPE_DESC tp, expv memberRef, expr args) {
     a = compile_args(args);
 
     /* ep = TYPE_EXT_ID(tp); */
-    ret_type = TYPE_REF(tp);
-
+    ftp = TYPE_REF(EXPV_TYPE(memberRef));
+    ret_type = TYPE_REF(ftp);
 
     // TODO for generic TBP
     /* if (ep != NULL && EXT_PROC_CLASS(ep) == EP_INTERFACE && */
@@ -3411,7 +3412,7 @@ compile_member_array_ref(expr x, expv v)
         /*
          * type bound procedure coall
          */
-        return compile_type_bound_procedure_call(tq, v, indices);
+        return compile_type_bound_procedure_call(v, indices);
     }
 
     if(EXPR_LIST(shape) == NULL) {

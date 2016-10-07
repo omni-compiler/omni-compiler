@@ -1840,25 +1840,25 @@ end_declaration()
             }
         }
 
-        /* /\* */
-        /*  * Update type bound procedure */
-        /*  *\/ */
-        /* if (unit_ctl_level > 0 && CTL_TYPE(ctl_top) != CTL_INTERFACE) { */
-        /*     TYPE_DESC tp; */
-        /*     for (tp = PARENT_LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) { */
-        /*         ID mem; */
-        /*         FOREACH_MEMBER(mem, tp) { */
-        /*             if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC) { */
-        /*                 if (ID_SYM(TBP_BINDING(mem)) == ID_SYM(myId)) { */
-        /*                     // TODO: check `bound` is explicit external interface */
-        /*                     *TBP_BINDING(mem) = *myId; */
-        /*                     ID_NEXT(TBP_BINDING(mem)) = NULL; */
-        /*                     ID_TYPE(mem) = ID_TYPE(myId); */
-        /*                 } */
-        /*             } */
-        /*         } */
-        /*     } */
-        /* } */
+        /*
+         * Update type bound procedure
+         */
+        if (unit_ctl_level > 0 && CTL_TYPE(ctl_top) != CTL_INTERFACE) {
+            TYPE_DESC tp;
+            for (tp = PARENT_LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
+                ID mem;
+                FOREACH_MEMBER(mem, tp) {
+                    if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC) {
+                        if (ID_SYM(TBP_BINDING(mem)) == ID_SYM(myId)) {
+                            /* fprintf(stderr, "Update type of TBP\n"); */
+                            PROC_EXT_ID(mem) = CURRENT_EXT_ID;
+                            TYPE_EXT_ID(ID_TYPE(mem)) = CURRENT_EXT_ID;
+                            TYPE_REF(ID_TYPE(mem)) = EXT_PROC_TYPE(CURRENT_EXT_ID);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /*
@@ -2185,6 +2185,26 @@ end_declaration()
                        !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "INTENT is applied only "
                               "to dummy argument");
+            }
+        }
+    }
+
+
+    /*
+     * Update type bound procedure against exteranl functions
+     */
+
+    for (tp = LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
+        ID mem;
+        FOREACH_MEMBER(mem, tp) {
+            if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC) {
+                EXT_ID ep = find_ext_id(ID_SYM(TBP_BINDING(mem)));
+                if (ep != NULL) {
+                    // TODO check, type is explicit
+                    PROC_EXT_ID(mem) = ep;
+                    TYPE_EXT_ID(ID_TYPE(mem)) = ep;
+                    TYPE_REF(ID_TYPE(mem)) = EXT_PROC_TYPE(ep);
+                }
             }
         }
     }
@@ -2830,6 +2850,7 @@ end_procedure()
        && (id = find_ident_parent(CURRENT_PROC_NAME)) != NULL) {
         ID_CLASS(id) = CL_PROC;
     }
+
 
     /* output */
     switch (CURRENT_PROC_CLASS) {
@@ -4338,10 +4359,11 @@ compile_member_ref(expr x)
 
     // TODO:
     //	merge type override all cases (array/substr/plain scalar).
-    if (TYPE_IS_POINTER(stVTyp) ||
-        TYPE_IS_TARGET(stVTyp) ||
-        TYPE_IS_VOLATILE(stVTyp) ||
-        TYPE_IS_COINDEXED(stVTyp)) {
+    if (!IS_FUNCTION_TYPE(tp) && (
+            TYPE_IS_POINTER(stVTyp) ||
+            TYPE_IS_TARGET(stVTyp) ||
+            TYPE_IS_VOLATILE(stVTyp) ||
+            TYPE_IS_COINDEXED(stVTyp))) {
         /*
          * If type of struct_v has pointer/pointee flags on, members
          * should have those flags on too.
@@ -4624,7 +4646,7 @@ compile_CALL_type_bound_procedure_statement(expr x)
     }
 
     v = list2(FUNCTION_CALL,
-              expv_cons(F95_MEMBER_REF, ID_TYPE(tpd), structRef, x2),
+              expv_cons(F95_MEMBER_REF, tp, structRef, x2),
               compile_args(args));
 
     EXPV_TYPE(v) = type_basic(TYPE_SUBR);

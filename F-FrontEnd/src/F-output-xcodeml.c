@@ -3824,9 +3824,7 @@ mark_type_desc_in_structure(TYPE_DESC tp)
         ID_TYPE(id) = siTp;
         if (IS_STRUCT_TYPE(itp))
             mark_type_desc_in_structure(itp);
-        if (ID_CLASS(id) == CL_TYPE_BOUND_PROC) {
-            // skip
-        } else {
+        if (ID_CLASS(id) != CL_TYPE_BOUND_PROC) {
             if (VAR_INIT_VALUE(id) != NULL)
                 collect_type_desc(VAR_INIT_VALUE(id));
         }
@@ -4204,6 +4202,19 @@ outx_unlimitedClass(int l, TYPE_DESC tp)
     outx_typeAttrs(l, tp ,"FbasicType", TOPT_CLOSE);
 }
 
+
+/**
+ * output functionType of type bound procedure
+ */
+static void
+outx_functionType_typeBoundProcedure(int l, TYPE_DESC tp)
+{
+    char * tid;
+    outx_typeAttrs(l, tp, "FbasicType", 0);
+    outx_print(" ref=\"%s\"/>\n", genFunctionTypeID(TYPE_EXT_ID(tp)));
+}
+
+
 /**
  * output FstructType
  */
@@ -4260,6 +4271,8 @@ outx_structType(int l, TYPE_DESC tp)
                 continue;
             }
             outx_printi(l2, "<typeBoundProcedure");
+            outx_printi(0, " type=\"%s\"", getTypeID(ID_TYPE(id)));
+
             if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_PASS)
                 outx_printi(0, " pass=\"pass\"");
             if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_NOPASS)
@@ -4311,6 +4324,9 @@ outx_type(int l, TYPE_DESC tp)
         } else {
             outx_structType(l, tp);
         }
+    } else if(IS_FUNCTION_TYPE(tp) && TYPE_REF(tp) != NULL) {
+        /* type bound procedure */
+        outx_functionType_typeBoundProcedure(l, tp);
     } else if (tRef != NULL) {
         if (has_attribute_except_func_attrs(tp) ||
             TYPE_KIND(tRef) ||
