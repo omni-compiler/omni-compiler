@@ -17,7 +17,7 @@ _ACC_queue_t* _ACC_queue_create(int async_num)
   _ACC_DEBUG("queue create\n")
   _ACC_queue_t *queue = (_ACC_queue_t *)_ACC_alloc(sizeof(_ACC_queue_t));
   if(async_num != ACC_ASYNC_SYNC){
-    cudaError_t error = cudaStreamCreate(&(queue->stream));
+    cudaError_t error = cudaStreamCreateWithFlags(&(queue->stream), cudaStreamNonBlocking);
     if(error != cudaSuccess){
       _ACC_gpu_fatal(error);
     }
