@@ -2198,12 +2198,34 @@ end_declaration()
         ID mem;
         FOREACH_MEMBER(mem, tp) {
             if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC) {
-                EXT_ID ep = find_ext_id(ID_SYM(TBP_BINDING(mem)));
-                if (ep != NULL) {
-                    // TODO check, type is explicit
-                    PROC_EXT_ID(mem) = ep;
-                    TYPE_EXT_ID(ID_TYPE(mem)) = ep;
-                    TYPE_REF(ID_TYPE(mem)) = EXT_PROC_TYPE(ep);
+                if (!(TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_GENERIC)) {
+                    EXT_ID ep = find_ext_id(ID_SYM(TBP_BINDING(mem)));
+                    if (ep != NULL) {
+                        // TODO check, type is explicit
+                        PROC_EXT_ID(mem) = ep;
+                        TYPE_EXT_ID(ID_TYPE(mem)) = ep;
+                        TYPE_REF(ID_TYPE(mem)) = EXT_PROC_TYPE(ep);
+                    }
+                }
+            }
+        }
+        FOREACH_MEMBER(mem, tp) {
+            if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC) {
+                if (TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
+                    /*
+                     * generic type bound procedure
+                     */
+                    ID binding;
+                    ID bindto;
+                    FOREACH_ID(binding, TBP_BINDING(mem)) {
+                        bindto = find_struct_member(tp, ID_SYM(binding));
+                        if (bindto == NULL ||
+                            ID_CLASS(bindto) != CL_TYPE_BOUND_PROC ||
+                            TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
+                            error_at_id(ip, "GENERIC TYPE BOUND PROCEDURE should bind to type bound procedure");
+                        }
+                        ID_TYPE(binding) = ID_TYPE(bindto);
+                    }
                 }
             }
         }

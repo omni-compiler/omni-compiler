@@ -2894,9 +2894,10 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
         ID_LINK_ADD(match, used, used_last);
         list_put_last(components, v);
     }
+
     // check not initialized type parameters
     FOREACH_ID(ip, members) {
-        if (!VAR_INIT_VALUE(ip)) {
+        if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC && !VAR_INIT_VALUE(ip)) {
             error("member %s is not initialized", ID_NAME(ip));
             return FALSE;
         }

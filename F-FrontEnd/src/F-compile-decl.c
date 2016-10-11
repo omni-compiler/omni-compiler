@@ -4778,27 +4778,115 @@ compile_type_bound_procedure(expr x)
 void
 compile_type_generic_procedure(expr x)
 {
-#if 0
     expr generis_spec = EXPR_ARG1(x);
     expr id_list = EXPR_ARG2(x);
     expr access_attr = EXPR_ARG3(x);
 
+    uint32_t access_attr_flags = 0;
+    uint32_t binding_attr_flags = 0;
+
+    ID id = NULL;
+    ID last_ip = NULL;
+
+    list lp;
+
+    TYPE_DESC struct_tp;
+
+    assert(CTL_TYPE(ctl_top) == CTL_STRUCT);
+    struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
 
     switch (EXPR_CODE(generis_spec)) {
         case IDENT:
-            if ((id = find_ident_local(EXPR_SYM(generis_spec))) != NULL) {
+            if ((find_struct_member(struct_tp, EXPR_SYM(generis_spec))) != NULL) {
                 error("already declared");
                 return;
             }
-
+            id = declare_ident(EXPR_SYM(generis_spec), CL_TYPE_BOUND_PROC);
             break;
-        case F95_GENERIC_SPEC:
-            break;
-        case F95_USER_DEFINED:
-            break;
+        case F95_GENERIC_SPEC:{
+            expr arg;
+            arg = EXPR_ARG1(generis_spec);
+            SYMBOL sym = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(arg)));
+            if ((id = find_struct_member(struct_tp, sym)) != NULL) {
+                error("already declared");
+                return;
+            }
+            id = declare_ident(sym, CL_TYPE_BOUND_PROC);
+            // TODO set as operator
+        } break;
+        case F95_USER_DEFINED:{
+            expr arg;
+            arg = EXPR_ARG1(generis_spec);
+            if ((id = find_struct_member(struct_tp, EXPR_SYM(arg))) != NULL) {
+                error("already declared");
+                return;
+            }
+            id = declare_ident(EXPR_SYM(arg), CL_TYPE_BOUND_PROC);
+            // TODO set as operator
+        } break;
         default:
             error_at_node(x, "unexpected expression");
             break;
     }
-#endif
+
+    if (access_attr) {
+        FOR_ITEMS_IN_LIST(lp, access_attr) {
+            expr v = LIST_ITEM(lp);
+            switch (EXPR_CODE(v)) {
+
+                /*
+                 * Accesss specs
+                 */
+                case F95_PUBLIC_SPEC:
+                    if (access_attr_flags & TYPE_ATTR_PUBLIC) {
+                        error_at_node(x, "PUBLIC is already specified.");
+                        return;
+                    }
+                    if (access_attr_flags & (TYPE_ATTR_PRIVATE | TYPE_ATTR_PROTECTED)) {
+                        error_at_node(x, "access specs are conflicted.");
+                        return;
+                    }
+                    access_attr_flags |= TYPE_ATTR_PUBLIC;
+                    break;
+                case F95_PRIVATE_SPEC:
+                    if (access_attr_flags & TYPE_ATTR_PRIVATE) {
+                        error_at_node(x, "PRIVATE is already specified.");
+                        return;
+                    }
+                    if (access_attr_flags & (TYPE_ATTR_PUBLIC | TYPE_ATTR_PROTECTED)) {
+                        error_at_node(x, "access specs are conflicted.");
+                        return;
+                    }
+                    access_attr_flags |= TYPE_ATTR_PRIVATE;
+                    break;
+                case F03_PROTECTED_SPEC:
+                    if (access_attr_flags & TYPE_ATTR_PROTECTED) {
+                        error_at_node(x, "PROTECTED is already specified.");
+                        return;
+                    }
+                    if (access_attr_flags & (TYPE_ATTR_PUBLIC | TYPE_ATTR_PRIVATE)) {
+                        error_at_node(x, "access specs are conflicted.");
+                        return;
+                    }
+                    access_attr_flags |= TYPE_ATTR_PROTECTED;
+                    break;
+                default:
+                    error_at_node(x, "unexpected expression");
+                    break;
+            }
+        }
+    }
+
+    FOR_ITEMS_IN_LIST(lp, id_list) {
+        ID binding;
+        if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
+            error_at_node(x, "unexpected expression");
+        }
+        binding = new_ident_desc(EXPR_SYM(LIST_ITEM(lp)));
+        ID_LINK_ADD(binding, TBP_BINDING(id), last_ip);
+    }
+
+    TBP_BINDING_ATTRS(id) = binding_attr_flags | TYPE_BOUND_PROCEDURE_IS_GENERIC;
+    TYPE_ATTR_FLAGS(id) = access_attr_flags;
+    ID_TYPE(id) = function_type(NULL);
 }
