@@ -210,7 +210,7 @@ public class XMPshadow {
 	      throw new XMPexception("Periodic reflect cannot be specified for a dimension with full shadow.");
 	    }
 
-	    Ident funcId = globalDecl.declExternFunc("_XMP_set_reflect__");
+	    Ident funcId = globalDecl.declExternFunc(isAcc? "_XMP_set_reflect_acc__" : "_XMP_set_reflect__");
 	    XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref(), Xcons.IntConstant(i),
 					   width.getArg(0), width.getArg(1), width.getArg(2));
 	    reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
