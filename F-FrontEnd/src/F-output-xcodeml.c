@@ -4222,7 +4222,7 @@ static void
 outx_structType(int l, TYPE_DESC tp)
 {
     ID id;
-    int l1 = l + 1, l2 = l1 + 1, l3 = l2 + 1;
+    int l1 = l + 1, l2 = l1 + 1, l3 = l2 + 1, l4 = l3 + 1;
     int has_type_bound_procedure = FALSE;
 
     outx_typeAttrs(l, tp ,"FstructType", TOPT_NEXTLINE);
@@ -4270,31 +4270,45 @@ outx_structType(int l, TYPE_DESC tp)
             if (ID_CLASS(id) != CL_TYPE_BOUND_PROC) {
                 continue;
             }
-            outx_printi(l2, "<typeBoundProcedure");
-            outx_printi(0, " type=\"%s\"", getTypeID(ID_TYPE(id)));
+            if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
+                ID binding;
+                outx_tag(l2, "typeBoundGenericProcedure");
+                outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
+                outx_tag(l3, "binding");
+                FOREACH_ID(binding, TBP_BINDING(id)) {
+                    outx_tagText(l4, "name", SYM_NAME(ID_SYM(binding)));
+                }
+                outx_close(l3, "binding");
+                outx_close(l2, "typeBoundGenericProcedure");
+            } else {
+                outx_printi(l2, "<typeBoundProcedure");
+                outx_printi(0, " type=\"%s\"", getTypeID(ID_TYPE(id)));
 
-            if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_PASS)
-                outx_printi(0, " pass=\"pass\"");
-            if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_NOPASS)
-                outx_printi(0, " pass=\"nopass\"");
-            if (TBP_PASS_ARG(id))
-                outx_printi(0, " pass_arg_name=\"%s\"",
-                            SYM_NAME(ID_SYM(TBP_PASS_ARG(id))));
+                if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_PASS)
+                    outx_printi(0, " pass=\"pass\"");
+                if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_NOPASS)
+                    outx_printi(0, " pass=\"nopass\"");
+                if (TBP_PASS_ARG(id))
+                    outx_printi(0, " pass_arg_name=\"%s\"",
+                                SYM_NAME(ID_SYM(TBP_PASS_ARG(id))));
 
-            outx_true(TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_DEFERRED,
-                      "is_deferred");
-            outx_true(TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE,
-                      "is_non_overridable");
-            outx_true(TYPE_IS_PUBLIC(id), "is_public");
-            outx_true(TYPE_IS_PRIVATE(id), "is_private");
-            outx_true(TYPE_IS_PROTECTED(id), "is_protected");
+                outx_true(TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_DEFERRED,
+                          "is_deferred");
+                outx_true(TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE,
+                          "is_non_overridable");
+                outx_true(TYPE_IS_PUBLIC(id), "is_public");
+                outx_true(TYPE_IS_PRIVATE(id), "is_private");
+                outx_true(TYPE_IS_PROTECTED(id), "is_protected");
 
-            outx_printi(0,">\n");
-            outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
-            if (TBP_BINDING(id)) {
-                outx_tagText(l3, "binding", SYM_NAME(ID_SYM(TBP_BINDING(id))));
+                outx_printi(0,">\n");
+
+                outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
+                outx_tag(l3, "binding");
+                outx_tagText(l4, "name", SYM_NAME(ID_SYM(TBP_BINDING(id))));
+                outx_close(l3, "binding");
+
+                outx_close(l2, "typeBoundProcedure");
             }
-            outx_close(l2, "typeBoundProcedure");
         }
         outx_close(l1, "typeBoundProcedures");
     }
