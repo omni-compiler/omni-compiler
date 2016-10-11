@@ -551,19 +551,23 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateReflect(PragmaBlock pb) throws XMPexception {
-    Block reflectFuncCallBlock = XMPshadow.translateReflect(pb, _globalDecl);
     XobjList accOrHost = (XobjList)pb.getClauses().getArg(3);
     boolean isACC = accOrHost.hasIdent("acc");
-    boolean isHost = accOrHost.hasIdent("host");
-    if(!isACC && !isHost){
-      isHost = true;
-    }
-    if(isACC){
-      throw new XMPexception(pb.getLineNo(), "reflect for acc is not implemented");
-    }
-    
+    Block reflectFuncCallBlock = XMPshadow.translateReflect(pb, _globalDecl, isACC);
+
     Xobject profileClause = pb.getClauses().getArg(4);
     addProfileFunctions(profileClause, reflectFuncCallBlock, "reflect", pb);
+  }
+
+  static Block encloseWithAccHostDataDirective(Block block, XobjList useDeviceClauseArgs) throws XMPexception {
+    if(useDeviceClauseArgs == null || useDeviceClauseArgs.isEmpty()){
+      throw new XMPexception("empty argument for use_device clause");
+    }
+    return Bcons.PRAGMA(
+            Xcode.ACC_PRAGMA,
+            "HOST_DATA",
+            Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), useDeviceClauseArgs)),
+            Bcons.blockList(block));
   }
 
   private void translateGpuData(PragmaBlock pb) throws XMPexception {

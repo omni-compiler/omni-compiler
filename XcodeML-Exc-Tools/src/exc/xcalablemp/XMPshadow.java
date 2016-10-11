@@ -156,11 +156,12 @@ public class XMPshadow {
     alignedArray.setHasShadow();
   }
 
-  public static Block translateReflect(PragmaBlock pb, XMPglobalDecl globalDecl) throws XMPexception {
+  public static Block translateReflect(PragmaBlock pb, XMPglobalDecl globalDecl, boolean isAcc) throws XMPexception {
     // start translation
     XobjList reflectDecl = (XobjList)pb.getClauses();
     XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
     BlockList reflectFuncBody = Bcons.emptyBody();
+    XobjList accUseDeviceClauseArgs = Xcons.List();
 
     XobjList arrayList = (XobjList)reflectDecl.getArg(0);
     for (XobjArgs iter = arrayList.getArgs(); iter != null; iter = iter.nextArgs()) {
@@ -238,14 +239,23 @@ public class XMPshadow {
         reflectFuncBody.add(Bcons.Statement(funcId3.Call(funcArgs3)));
       }
       else {
-	Ident funcId = globalDecl.declExternFunc("_XMP_reflect__");
+	Ident funcId = globalDecl.declExternFunc(isAcc? "_XMP_reflect_acc__" : "_XMP_reflect__");
 	XobjList funcArgs = Xcons.List(alignedArray.getDescId().Ref());
+        if(isAcc){
+          Xobject addrRef = alignedArray.getAddrId().Ref();
+          funcArgs.cons(addrRef);
+          accUseDeviceClauseArgs.add(addrRef);
+        }
 	reflectFuncBody.add(Bcons.Statement(funcId.Call(funcArgs)));
       }
 
     }
 
     Block reflectFuncCallBlock = Bcons.COMPOUND(reflectFuncBody);
+    if(isAcc && !accUseDeviceClauseArgs.isEmpty()) {
+      reflectFuncCallBlock = XMPtranslateLocalPragma.encloseWithAccHostDataDirective(reflectFuncCallBlock, accUseDeviceClauseArgs);
+    }
+
     pb.replace(reflectFuncCallBlock);
 
     return reflectFuncCallBlock;
