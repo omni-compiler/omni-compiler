@@ -1,6 +1,6 @@
   module modalloc
     implicit none
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real, allocatable, dimension(:,:), codimension[:] :: moda
   end module modalloc
 

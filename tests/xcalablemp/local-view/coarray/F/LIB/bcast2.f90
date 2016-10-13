@@ -1,5 +1,5 @@
 program bcast
-  include 'xmp_coarray.h'
+!!   include 'xmp_coarray.h'
   integer a(11,20)
 
   !----------------------- init

@@ -1,5 +1,5 @@
 program allo3
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   real, allocatable :: a1(:,:)[:],a2(:)[:,:]
 !!  real              :: b1(2,3)[*]
   real              :: b2(8)[4,*]

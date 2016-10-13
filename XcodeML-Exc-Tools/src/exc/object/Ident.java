@@ -217,6 +217,7 @@ public class Ident extends Xobject
         return (Type() == null) ? false : Type().wasCoarray();
     }
 
+
     public boolean isDeclared()
     {
         return declared;

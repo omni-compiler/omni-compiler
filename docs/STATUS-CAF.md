@@ -1,38 +1,39 @@
-                                                                      2016.01.26
-                                                                      Ver 0.9.3
+                                                                    May 10, 2016
+                                                                    Ver 1.0
 
               Coarray Fortran features and the current restrictions
 
 1. General
+1.1  Coarray Fortran features
   Coarray features included in Fortran2008 standard were partially implemented
   implemented in the XcalableMP/Fortran compiler. The specifications are major
   part of description of the article[1]. In addition, some intrinsic procedures
-  defined in Fortran2015 standard were supported, which are co_broadcast, 
-  co_sum, co_max and co_min described in the technical specification (TS)[2].
+  defined in Fortran2015 standard were supported, which are CO_BROADCAST, 
+  CO_SUM, CO_MAX and CO_MIN described in the technical specification (TS)[2].
 
-  Currlentry, there are a few restrictions in XcalableMP/Fortran compiler to use
-  the coarray features:
-    * To use any coarray features, built-in header file 'xmp_coarray.h' must be 
-      included at the top of each program unit.
-    * Coarray features cannot be used together with XcalableMP directives.
-
-  [1] John Reid, JKR Associates, UK. Coarrays in the next Fortran Standard.
-      ISO/IEC JTC1/SC22/WG5 N1824, April 21, 2010.
-  [2] ISO/IEC TS 18508:2015, Information technology -- Additional Parallel 
-      Features in Fortran, Technical Specification, December 1, 2015.
+1.2  Interoperability with XcalableMP (XMP) global-view features (NEW)
+  Coarray features can be used inside XMP task block. As default, each coarray
+  image is mapped one-to-one to a node of the current executing task. I.e.,
+  num_images() returns the number of nodes of the current executing task and
+  this_image() returns each value of 1 to num_images(). To change the numbering
+  of the image index with the one corresponding to the other nodes, the COARRAY
+  directive can be used with the declaration of the coarray. To change the 
+  context of the executing nodes locally, the IMAGE directive can be used with
+  the SYNC ALL and SYNC IMAGES statements and with the calls of CO_SUM, CO_MAX, 
+  CO_MIN and CO_BROADCAST subroutines. See the language spacifications [3].
 
 2. Declaration
   Either static or allocatable coarray data objects can be used in the program. 
   Use- and host-associations are available but common- or equivalence-
-  association are not allowed.
+  association are not allowed in conformity with the Fortran2008 standard.
   Current restrictions against Fortran2008 coarray features:
     * Rank (number of dimensions) of an array may not be more than 7.
     * A coarray cannot be of a derived type nor be a structure component.
     * A coarray cannot be of quadruple precision, i.e., 16-byte real or 32-byte 
       complex.
     * Interface block cannot contains any specification of coarrays. To describe
-      explicit interface, host-assocication (using internal procedure) can be 
-      used instead.
+      explicit interface, host-assocication (with internal procedure) and use-
+      association (with module) can be used instead.
       
 2.1  Static Coarray
   E.g.
@@ -61,9 +62,9 @@
   Current restrictions against fortran2008 coarray features:
     * A scalar coarray cannot be allocatable.
     * An allocatable coarray as a dummy argument cannot be allocated or 
-      deallocated.
+      deallocated inside the procedure.
     
-3. Inter-image communication
+3. Reference and definition of the remote coarrays
   For the performance of communication, it is recommended to use array 
   assignment statements and array expressions of coindexed objects as follows:
       a(:) = b(i,:)[k1] * c(:,j)[k2]    !! getting data from images k1 and k2
@@ -84,10 +85,19 @@
     * ATOMIC_DEFINE and ATOMIC_REF subroutines are not supported.
 
 6. Intrinsic Procedures in Fortran2015
+  Argument SOURCE can be a coarray or a non-coarray.
   Intrinsic subroutines CO_BROADCAST, CO_SUM, CO_MAX and CO_MIN can be used 
   only in the following form:
     * CO_BROADCAST with two arguments SOURCE and SOURCE_IMAGE
       E.g.,  call co_broadcast(a(:), image)
     * CO_SUM, CO_MAX and CO_MIN with two arguments SOURCE and RESULT
       E.g.,  call co_max(a, amax)
-  Argument SOURCE can be a coarray or a non-coarray.
+
+
+[1] John Reid, JKR Associates, UK. Coarrays in the next Fortran Standard.
+    ISO/IEC JTC1/SC22/WG5 N1824, April 21, 2010.
+[2] ISO/IEC TS 18508:2015, Information technology -- Additional Parallel 
+    Features in Fortran, Technical Specification, December 1, 2015.
+[3] XcalableMP Language Specification
+    http://xcalablemp.org/specification.html or 
+    http://xcalablemp.org/ja/specification.html in Japanese

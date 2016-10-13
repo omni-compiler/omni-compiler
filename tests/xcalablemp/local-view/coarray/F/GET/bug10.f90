@@ -1,4 +1,4 @@
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   integer a(20)[*]
 
   me = xmp_node_num()

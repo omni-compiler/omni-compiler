@@ -1,5 +1,5 @@
 program test_inquiry
-include 'xmp_coarray.h'
+!! include 'xmp_coarray.h'
 integer ierr, irank, error
 type(xmp_desc) dt, dt1, dn, dn1, dn2
 integer lb(3),ub(3), st(3)

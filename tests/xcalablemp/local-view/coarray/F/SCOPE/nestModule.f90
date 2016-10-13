@@ -1,5 +1,5 @@
   module mod1
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real a[*]
     integer nerr
   end module mod1
@@ -104,7 +104,7 @@
 
 
   subroutine final_msg(nerr)
-    include 'xmp_coarray.h'
+!!     include 'xmp_coarray.h'
     if (nerr==0) then 
        print '("[",i0,"] OK")', this_image()
     else

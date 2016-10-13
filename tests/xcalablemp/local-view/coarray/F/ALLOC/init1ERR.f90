@@ -1,4 +1,4 @@
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   integer zz(3)[*] = (/1111,2222,3333/)
   integer yy(3)
 

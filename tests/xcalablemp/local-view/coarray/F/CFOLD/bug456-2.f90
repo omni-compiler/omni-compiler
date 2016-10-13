@@ -1,6 +1,6 @@
 parameter(lx=100,ly=lx/2)
 ! parameter(lx=100,ly=50)
-include 'xmp_coarray.h'
+!! include 'xmp_coarray.h'
 real*8 :: a(lx/10,-ly*(-2))[ly,*]
 
 if (this_image() == 1) then

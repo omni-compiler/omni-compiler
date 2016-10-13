@@ -1,5 +1,5 @@
 subroutine autosyncall1
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   integer, allocatable :: pap(:,:)[:]
   integer :: mam(19)[2,*]
 

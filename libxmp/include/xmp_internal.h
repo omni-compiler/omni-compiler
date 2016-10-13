@@ -21,6 +21,7 @@ extern int _XMPF_running;
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <string.h>
 // --------------- macro functions -----------------------------------
 #ifdef DEBUG
 #define _XMP_ASSERT(_flag) \
@@ -424,8 +425,10 @@ extern size_t _XMP_calc_max_copy_chunk(const int, const int, const _XMP_array_se
 	gasnet_barrier_wait(0,GASNET_BARRIERFLAG_ANONYMOUS);   \
   } while (0)
 
+
 extern void _XMP_gasnet_malloc_do(_XMP_coarray_t *, void **, const size_t);
 extern void _XMP_gasnet_initialize(int, char**, const size_t, const size_t);
+extern void _XMP_gasnet_intrinsic_initialize();
 extern void _XMP_gasnet_finalize(const int);
 extern void _XMP_gasnet_put(const int, const int, const int, const int, const int, const _XMP_array_section_t*, 
 			    const _XMP_array_section_t*, const _XMP_coarray_t*, const void*, const size_t, const size_t);
@@ -449,6 +452,8 @@ extern void _xmp_gasnet_post_sync_images(const int, const int*);
 extern void _xmp_gasnet_wait_sync_images(const int, const int*);
 extern void _xmp_gasnet_add_notify(gasnet_token_t t, const int);
 extern void _xmp_gasnet_notiy_reply(gasnet_token_t t);
+extern void _XMP_gasnet_atomic_define(int, _XMP_coarray_t*, size_t, int, _XMP_coarray_t*, size_t, size_t);
+extern void _XMP_gasnet_atomic_ref(int, _XMP_coarray_t*, size_t, int*, size_t);
 #endif
 
 #ifdef _XMP_FJRDMA
@@ -461,11 +466,14 @@ extern void _xmp_gasnet_notiy_reply(gasnet_token_t t);
 #define _XMP_POSTREQ_NIC_FLAG (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_REMOTE_NOTICE)
 #define _XMP_POSTREQ_SEND_NIC  FJMPI_RDMA_LOCAL_NIC2
 #define _XMP_POSTREQ_RECV_NIC  FJMPI_RDMA_LOCAL_NIC3
-#define _XMP_TEMP_MEMID     0
-#define _XMP_POSTREQ_ID     1
-#define _XMP_SYNC_IMAGES_ID 2
+#define _XMP_TEMP_MEMID         0
+#define _XMP_POSTREQ_ID         1
+#define _XMP_SYNC_IMAGES_ID     2
+#define _XMP_FJRDMA_START_MEMID 3
 #define _XMP_INIT_RDMA_INTERVAL      8192
 #define _XMP_ONESIDED_MAX_PROCS     82944
+#define _XMP_FJRDMA_TAG         0
+#define _XMP_SYNC_IMAGES_TAG    1
 
 #include <mpi-ext.h>
 extern void _XMP_fjrdma_initialize(int, char**);
@@ -500,6 +508,12 @@ extern void _XMP_set_coarray_addresses_with_chunk(uint64_t*, const uint64_t, con
 extern int _XMP_is_the_same_constant_stride(const _XMP_array_section_t *, const _XMP_array_section_t *, 
 					    const int, const int);
 extern size_t _XMP_calc_stride(const _XMP_array_section_t *, const int, const size_t);
+extern void _XMP_add_num_of_puts();
+extern void _XMP_add_num_of_gets();
+extern void _XMP_fjrdma_sync_memory_put();
+extern void _XMP_fjrdma_sync_memory_get();
+extern void _XMP_fjrdma_atomic_define(int, _XMP_coarray_t*, size_t, int, _XMP_coarray_t*, size_t, size_t);
+extern void _XMP_fjrdma_atomic_ref(int, _XMP_coarray_t*, size_t, int*, _XMP_coarray_t*, size_t, size_t);
 #endif
 
 #ifdef _XMP_TCA
@@ -577,6 +591,8 @@ void _XMP_sync_images_COMM(MPI_Comm *comm, int* status);
 void _XMP_mpi_build_sync_images_table();
 
 MPI_Win _XMP_mpi_coarray_get_window(const _XMP_coarray_t *desc, bool is_acc);
+void _XMP_mpi_atomic_define(int, _XMP_coarray_t*, size_t, int, size_t);
+void _XMP_mpi_atomic_ref(int, _XMP_coarray_t*, size_t, int*, size_t);
 #endif
 
 #ifdef _XMP_TIMING
@@ -661,6 +677,14 @@ extern void _xmp_gasnet_pack(gasnet_token_t, const char*, const size_t,
 extern void _xmp_gasnet_unpack_get_reply(gasnet_token_t, char *, size_t, const int, const int);
 extern void _XMP_pack_coarray(char*, const char*, const int, const _XMP_array_section_t*);
 extern void _XMP_unpack_coarray(char*, const int, const char*, const _XMP_array_section_t*, const int);
+extern void _xmp_gasnet_atomic_define_do(gasnet_token_t, const char*, const size_t, gasnet_handlerarg_t,
+					 gasnet_handlerarg_t, gasnet_handlerarg_t, gasnet_handlerarg_t);
+extern void _xmp_gasnet_atomic_define_reply_do(gasnet_token_t, gasnet_handlerarg_t, gasnet_handlerarg_t);
+extern void _xmp_gasnet_atomic_ref_do(gasnet_token_t, const size_t, gasnet_handlerarg_t, gasnet_handlerarg_t,
+				      gasnet_handlerarg_t, gasnet_handlerarg_t, gasnet_handlerarg_t,
+				      gasnet_handlerarg_t);
+extern void _xmp_gasnet_atomic_ref_reply_do(gasnet_token_t, int *, size_t, gasnet_handlerarg_t,
+					    gasnet_handlerarg_t, gasnet_handlerarg_t, gasnet_handlerarg_t);
 
 /* Every handler function needs a uniqe number between 200-255.   
  * The Active Message library reserves ID's 1-199 for itself: client libs must
@@ -681,6 +705,11 @@ extern void _XMP_unpack_coarray(char*, const int, const char*, const _XMP_array_
 #define _XMP_GASNET_PACK_GET_HANDLER           212
 #define _XMP_GASNET_UNPACK_GET_REPLY_NONC      213
 #define _XMP_GASNET_ADD_NOTIFY                 214
+#define _XMP_GASNET_ATOMIC_DEFINE_DO           215
+#define _XMP_GASNET_ATOMIC_DEFINE_REPLY_DO     216
+#define _XMP_GASNET_ATOMIC_REF_DO              217
+#define _XMP_GASNET_ATOMIC_REF_REPLY_DO        218
+
 extern void _xmp_gasnet_lock_request(gasnet_token_t, int, uint32_t, uint32_t);
 extern void _xmp_gasnet_setlockstate(gasnet_token_t, int);
 extern void _xmp_gasnet_do_setlockstate(int);

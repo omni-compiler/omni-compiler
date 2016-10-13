@@ -1,5 +1,5 @@
 program bug462
-  include 'xmp_coarray.h'
+!!   include 'xmp_coarray.h'
   parameter (n1=17,n2=1000,n3=1000)
   integer a(n1,n2,n3)[*]   !! 4*17*1000*1000 > 16M
   integer b(n1,n2,n3)

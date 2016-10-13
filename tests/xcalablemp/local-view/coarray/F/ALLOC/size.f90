@@ -1,4 +1,4 @@
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   integer n(10)
 !  integer, allocatable :: V3(:)[:,:]      !! bug #390
   integer, allocatable :: V3(:)[4,*]

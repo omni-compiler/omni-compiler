@@ -411,6 +411,7 @@ void compile_statement1(int st_no, expr x)
 
     case F95_ENDFUNCTION_STATEMENT:  /* (F95_END_FUNCTION_STATEMENT) */
     case F95_ENDSUBROUTINE_STATEMENT:  /* (F95_END_SUBROUTINE_STATEMENT) */
+    case F95_ENDBLOCKDATA_STATEMENT:
         check_INEXEC();
 	// move into end_procedure()
 	//if (endlineno_flag)

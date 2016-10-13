@@ -1,5 +1,5 @@
   program decl
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real, allocatable :: a(:)[:]
     integer nerr = 0
     integer me,my

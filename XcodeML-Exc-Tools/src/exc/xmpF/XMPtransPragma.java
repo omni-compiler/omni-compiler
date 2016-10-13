@@ -138,6 +138,15 @@ public class XMPtransPragma
 	a.buildConstructor(prolog,env);
 	a.buildDestructor(epilog,env);
       }
+      XobjectDef def = env.getCurrentDef().getDef();
+      Xobject id_list = def.getDef().getArg(1);
+      for(Xobject id: (XobjList)id_list){
+        Ident ident = (Ident)id;
+        if (ident.isCoarray()) {
+          XMPcoarray coarray = new XMPcoarray(ident, env);
+          coarray.build_setMappingNodes(prolog);
+        }
+      }
     }
   }
 
@@ -180,6 +189,9 @@ public class XMPtransPragma
       return translateGmove(pb,info);
     case TEMPLATE_FIX:
       return translateTemplateFix(pb, info);
+    case IMAGE:
+      return XMPtransCoarrayRun.translateImageDirective(pb, info);
+
     case ARRAY:
       // should not reaach here.
 

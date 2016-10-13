@@ -1,5 +1,5 @@
 program reduct
-  include 'xmp_coarray.h'
+!!   include 'xmp_coarray.h'
   integer,parameter:: N=3
   integer a(N,N)[*]
   integer*8 q(N),qsum(N),qmaxmin(0:1,N)

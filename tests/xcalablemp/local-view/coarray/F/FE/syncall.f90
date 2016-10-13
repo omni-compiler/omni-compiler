@@ -1,3 +1,3 @@
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   syncall
   end

@@ -122,6 +122,12 @@ public class omompx
     boolean doTlog = false;
     int maxColumns = 0;
         
+    // environment variable analysis
+    Boolean xmpf_onlyCafMode = "1".equals(System.getenv("XMP_ONLYCAF"));
+    Boolean xmpf_skipCafMode = "1".equals(System.getenv("XMP_SKIPCAF"));
+    //Boolean xmpf_cascadeMode = "1".equals(System.getenv("XMP_CASCADE"));
+    //Boolean xmpf_containsCoarray = false;
+
     for(int i = 0; i < args.length; ++i) {
       String arg = args[i];
       String narg = (i < args.length - 1) ? args[i + 1] : null;
@@ -356,64 +362,54 @@ public class omompx
       }
     }
 
-    if(xmpf) {  // XcalableMP xmpF translation
+    if (xmpf && xmpf_skipCafMode) {
+      System.out.println("<SKIP-CAF MODE> XMP/F Coarray translator is " +
+                         "bypassed for " + xobjFile.getSourceFileName() + ".");
+    }
 
-      Boolean containsCoarray = false;
+    if (xmpf && !xmpf_skipCafMode) {
 
-      // environment variable analysis
-      Boolean onlyCafMode = "1".equals(System.getenv("XMP_ONLYCAF"));
-      Boolean cascadeMode = "1".equals(System.getenv("XMP_CASCADE"));
+      // Coarray Fortran pass#1
+      exc.xmpF.XMPtransCoarray caf_translator1 =
+        new exc.xmpF.XMPtransCoarray(xobjFile, 1, coarray_suboption,
+                                     xmpf_onlyCafMode);
+      xobjFile.iterateDef(caf_translator1);
+      if(exc.xmpF.XMP.hasErrors())
+        System.exit(1);
+      caf_translator1.finish();
 
-      if (coarray == true || autocoarray == true) {
-        // Coarray Fortran pass#0 -- detect if any coarray features are used
-        exc.xmpF.XMPtransCoarray
-          caf_translator0 = new exc.xmpF.XMPtransCoarray(xobjFile, 0, coarray_suboption);
-        xobjFile.iterateDef(caf_translator0);
-        if(exc.xmpF.XMP.hasErrors())
-          System.exit(1);
-        containsCoarray = caf_translator0.containsCoarray();
-        caf_translator0.finish();
-      }
-
-      if (containsCoarray || cascadeMode || onlyCafMode) {
-        if (cascadeMode || onlyCafMode) {
-          System.out.println("File " + xobjFile.getSourceFileName() +
-                             " is being translated as a CAF Program.");
-        }
-        // Coarray Fortran pass#1
-        exc.xmpF.XMPtransCoarray
-          caf_translator1 = new exc.xmpF.XMPtransCoarray(xobjFile, 1, coarray_suboption);
-        xobjFile.iterateDef(caf_translator1);
-        if(exc.xmpF.XMP.hasErrors())
-          System.exit(1);
-        caf_translator1.finish();
-
-        // Coarray Fortran pass#2
-        exc.xmpF.XMPtransCoarray
-          caf_translator2 = new exc.xmpF.XMPtransCoarray(xobjFile, 2, coarray_suboption);
-        xobjFile.iterateDef(caf_translator2);
-        if(exc.xmpF.XMP.hasErrors())
-          System.exit(1);
-        caf_translator2.finish();
-      }
-
-      if ((!containsCoarray || cascadeMode) && !onlyCafMode) {
-        if (cascadeMode) {
-          System.out.println("File " +  xobjFile.getSourceFileName() +
-                             " is being translated as an XMP/F Program.");
-        }
-        // XMP Fortran
-        exc.xmpF.XMPtranslate
-          xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
-        xobjFile.iterateDef(xmp_translator);
-        if(exc.xmpF.XMP.hasErrors())
-          System.exit(1);
-        xmp_translator.finish();
-      }
+      // Coarray Fortran pass#2
+      exc.xmpF.XMPtransCoarray caf_translator2 =
+        new exc.xmpF.XMPtransCoarray(xobjFile, 2, coarray_suboption,
+                                     xmpf_onlyCafMode);
+      xobjFile.iterateDef(caf_translator2);
+      if(exc.xmpF.XMP.hasErrors())
+        System.exit(1);
+      caf_translator2.finish();
 
       if(xcodeWriter != null) {
-          xobjFile.Output(xcodeWriter);
-          xcodeWriter.flush();
+        xobjFile.Output(xcodeWriter);
+        xcodeWriter.flush();
+      }
+    }
+
+    if (xmpf && xmpf_onlyCafMode) {
+      System.out.println("<ONLY-CAF MODE> XMP/F gloval-view translator is " +
+                         "bypassed for " + xobjFile.getSourceFileName() + ".");
+    }
+
+    if (xmpf && !xmpf_onlyCafMode) {
+      // XMP Fortran
+      exc.xmpF.XMPtranslate
+        xmp_translator = new exc.xmpF.XMPtranslate(xobjFile);
+      xobjFile.iterateDef(xmp_translator);
+      if(exc.xmpF.XMP.hasErrors())
+        System.exit(1);
+      xmp_translator.finish();
+
+      if(xcodeWriter != null) {
+        xobjFile.Output(xcodeWriter);
+        xcodeWriter.flush();
       }
     }
 

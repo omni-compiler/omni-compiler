@@ -80,6 +80,7 @@ void _XMP_onesided_initialize(int argc, char **argv)
   _xmp_stride_size = _get_size("XMP_ONESIDED_STRIDE_SIZE");
   _xmp_heap_size  += _xmp_stride_size;
   _XMP_gasnet_initialize(argc, argv, _xmp_heap_size, _xmp_stride_size);
+  _XMP_gasnet_intrinsic_initialize();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_initialize(argc, argv);
 #elif _XMP_MPI3_ONESIDED

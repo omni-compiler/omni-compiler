@@ -1,5 +1,5 @@
   program implicit_type_conv
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real*8 a(5)
     real*4 b(5)[*]
     integer nerr

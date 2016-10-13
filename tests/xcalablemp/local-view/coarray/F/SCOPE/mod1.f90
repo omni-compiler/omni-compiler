@@ -1,5 +1,5 @@
   module mmm
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     integer :: pot(0:99)[2,*]
     integer me
   end module mmm

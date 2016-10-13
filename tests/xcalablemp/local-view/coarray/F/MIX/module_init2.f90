@@ -1,5 +1,5 @@
   module mom
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     !$xmp nodes p(4)
     !$xmp template t(10)
     !$xmp distribute t(block) onto p

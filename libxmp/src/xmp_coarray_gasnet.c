@@ -876,11 +876,10 @@ void _XMP_gasnet_shortcut_get(const int target_rank, _XMP_coarray_t *dst_desc, v
 void _XMP_gasnet_build_sync_images_table()
 {
   _sync_images_table = malloc(sizeof(unsigned int) * _XMP_world_size);
-
-  gasnet_hsl_lock(&_hsl);
   for(int i=0;i<_XMP_world_size;i++)
     _sync_images_table[i] = 0;
-  gasnet_hsl_unlock(&_hsl);
+  
+  gasnet_hsl_init(&_hsl);
 }
 
 static void _add_notify(const int rank)

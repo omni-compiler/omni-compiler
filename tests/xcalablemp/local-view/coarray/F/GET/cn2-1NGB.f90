@@ -1,5 +1,5 @@
   program gettest_char_n
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     character(len=5) c5(4,3)[*]
     character(len=9) c3(10,3)
 

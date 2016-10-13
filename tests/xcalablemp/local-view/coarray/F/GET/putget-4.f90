@@ -1,4 +1,4 @@
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   integer aa(10)[*]
 
   me = this_image()
