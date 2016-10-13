@@ -1847,16 +1847,33 @@ end_declaration()
             TYPE_DESC tp;
             for (tp = PARENT_LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
                 ID mem;
+                ID mem2;
                 FOREACH_MEMBER(mem, tp) {
-                    if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC) {
+                    if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC &&
+                        !(TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_GENERIC)) {
                         if (ID_SYM(TBP_BINDING(mem)) == ID_SYM(myId)) {
                             /* fprintf(stderr, "Update type of TBP\n"); */
                             PROC_EXT_ID(mem) = CURRENT_EXT_ID;
                             TYPE_EXT_ID(ID_TYPE(mem)) = CURRENT_EXT_ID;
                             TYPE_REF(ID_TYPE(mem)) = EXT_PROC_TYPE(CURRENT_EXT_ID);
+
+                            FOREACH_MEMBER(mem2, tp) {
+                                ID id;
+                                if (ID_CLASS(mem2) == CL_TYPE_BOUND_PROC &&
+                                    (TBP_BINDING_ATTRS(mem2) & TYPE_BOUND_PROCEDURE_IS_GENERIC)) {
+                                    FOREACH_ID(id, TBP_BINDING(mem2)) {
+                                        if (ID_SYM(id) == ID_SYM(mem)) {
+                                            PROC_EXT_ID(id) = PROC_EXT_ID(mem);
+                                            TYPE_EXT_ID(ID_TYPE(id)) = TYPE_EXT_ID(ID_TYPE(mem));
+                                            TYPE_REF(ID_TYPE(id)) = TYPE_REF(ID_TYPE(mem));
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
+
             }
         }
     }
@@ -2217,6 +2234,8 @@ end_declaration()
                      */
                     ID binding;
                     ID bindto;
+                    EXT_ID ep;
+                    EXT_ID last_ep = NULL;
                     FOREACH_ID(binding, TBP_BINDING(mem)) {
                         bindto = find_struct_member(tp, ID_SYM(binding));
                         if (bindto == NULL ||
@@ -2225,6 +2244,18 @@ end_declaration()
                             error_at_id(ip, "GENERIC TYPE BOUND PROCEDURE should bind to type bound procedure");
                         }
                         ID_TYPE(binding) = ID_TYPE(bindto);
+
+                        /* function type may no be defined yet (i.e. module procedure) */
+                        if (TYPE_EXT_ID(ID_TYPE(bindto))) {
+                            ep = new_external_id(NULL);
+                            *ep = *TYPE_EXT_ID(ID_TYPE(bindto));
+                            if (EXT_PROC_INTR_DEF_EXT_IDS(TYPE_EXT_ID(ID_TYPE(mem)))) {
+                                EXT_LINK_ADD(ep, EXT_PROC_INTR_DEF_EXT_IDS(TYPE_EXT_ID(ID_TYPE(mem))), last_ep);
+                            } else {
+                                EXT_PROC_INTR_DEF_EXT_IDS(TYPE_EXT_ID(ID_TYPE(mem))) = ep;
+                                last_ep = ep;
+                            }
+                        }
                     }
                 }
             }

@@ -3342,40 +3342,27 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
     expv v;
     expv a;
     TYPE_DESC ftp;
-    TYPE_DESC ret_type;
-    /* EXT_ID ep; */
+    TYPE_DESC ret_type = NULL;
+    EXT_ID ep;
+    EXT_ID tbp_procs = NULL;
+    TYPE_DESC tbp_proc_type = NULL;
 
-    /* TYPE_SET_USED_EXPLICIT(tp); */
-    /* if (TYPE_BASIC_TYPE(tp) == TYPE_UNKNOWN) { */
-    /*     TYPE_SET_NOT_FIXED(tp); */
-    /* } */
     a = compile_args(args);
 
-    /* ep = TYPE_EXT_ID(tp); */
     ftp = TYPE_REF(EXPV_TYPE(memberRef));
-    ret_type = TYPE_REF(ftp);
-
-    // TODO for generic TBP
-    /* if (ep != NULL && EXT_PROC_CLASS(ep) == EP_INTERFACE && */
-    /*     (modProcs = EXT_PROC_INTR_DEF_EXT_IDS(ep)) != NULL) { */
-    /*     modProcType = chose_module_procedure_by_args(modProcs, a); */
-    /*     if (modProcType != NULL) { */
-    /*         tp = modProcType; */
-    /*     } else { */
-    /*         warning_at_id(f_id, "can't determine a function to " */
-    /*                       "be actually called for a generic " */
-    /*                       "interface function call of '%s', " */
-    /*                       "this is a current limitation.", */
-    /*                       SYM_NAME(EXT_SYM(ep))); */
-    /*     } */
-    /* } else if (ep == NULL) { */
-    /*     ep = new_external_id_for_external_decl(ID_SYM(f_id), */
-    /*                                            ID_TYPE(f_id)); */
-    /*     PROC_EXT_ID(f_id) = ep; */
-    /* } */
+    ep = TYPE_EXT_ID(ftp);
+    if (EXT_PROC_CLASS(ep) == EP_INTERFACE) {
+        tbp_proc_type = chose_module_procedure_by_args(EXT_PROC_INTR_DEF_EXT_IDS(ep), a);
+        if (tbp_proc_type != NULL) {
+            ret_type = tbp_proc_type;
+        }
+    } else {
+        ret_type = TYPE_REF(ftp);
+    }
 
     v = list2(FUNCTION_CALL, memberRef, a);
-    EXPV_TYPE(v) = IS_GENERIC_TYPE(ret_type)?type_GNUMERIC_ALL:ret_type;
+
+    EXPV_TYPE(v) = ret_type?(IS_GENERIC_TYPE(ret_type)?type_GNUMERIC_ALL:ret_type):type_GNUMERIC_ALL;
 
     return v;
 }

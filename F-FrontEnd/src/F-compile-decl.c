@@ -4889,4 +4889,6 @@ compile_type_generic_procedure(expr x)
     TBP_BINDING_ATTRS(id) = binding_attr_flags | TYPE_BOUND_PROCEDURE_IS_GENERIC;
     TYPE_ATTR_FLAGS(id) = access_attr_flags;
     ID_TYPE(id) = function_type(NULL);
+    TYPE_EXT_ID(ID_TYPE(id)) = new_external_id(NULL);
+    EXT_PROC_CLASS(TYPE_EXT_ID(ID_TYPE(id))) = EP_INTERFACE; // dirty code
 }
