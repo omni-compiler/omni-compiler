@@ -1,5 +1,5 @@
 program allo_stat
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   real, allocatable :: a1(:,:)[:],a2(:)[:,:]
   real, allocatable :: b(:)
 

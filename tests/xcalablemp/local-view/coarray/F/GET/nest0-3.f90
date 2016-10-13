@@ -1,4 +1,4 @@
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   integer a1d1(10)[*], tmp(10)
   intrinsic max
 

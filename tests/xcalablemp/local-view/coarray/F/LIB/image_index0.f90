@@ -1,4 +1,4 @@
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   real, allocatable :: a(:,:)[:,:,:]
   allocate (a(1:2,3:5)[6:7,8:10,-3:*])      !! 2x3xn nodes expected
   nerr=0
@@ -25,7 +25,7 @@
 
 
   subroutine final_msg(nerr)
-    include 'xmp_coarray.h'
+!!     include 'xmp_coarray.h'
     if (nerr==0) then 
        print '("[",i0,"] OK")', this_image()
     else

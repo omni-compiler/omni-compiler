@@ -19,7 +19,11 @@ gasnet_handlerentry_t htable[] = {
   { _XMP_GASNET_UNPACK_GET_REPLY_USING_BUF, _xmp_gasnet_unpack_get_reply_using_buf},
   { _XMP_GASNET_PACK_GET_HANDLER,           _xmp_gasnet_pack_get },
   { _XMP_GASNET_UNPACK_GET_REPLY_NONC,      _xmp_gasnet_unpack_get_reply_nonc },
-  { _XMP_GASNET_ADD_NOTIFY,                 _xmp_gasnet_add_notify }
+  { _XMP_GASNET_ADD_NOTIFY,                 _xmp_gasnet_add_notify },
+  { _XMP_GASNET_ATOMIC_DEFINE_DO,           _xmp_gasnet_atomic_define_do },
+  { _XMP_GASNET_ATOMIC_DEFINE_REPLY_DO,     _xmp_gasnet_atomic_define_reply_do },
+  { _XMP_GASNET_ATOMIC_REF_DO,              _xmp_gasnet_atomic_ref_do },
+  { _XMP_GASNET_ATOMIC_REF_REPLY_DO,        _xmp_gasnet_atomic_ref_reply_do }
 };
 
 /**

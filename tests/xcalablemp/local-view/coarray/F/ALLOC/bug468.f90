@@ -1,5 +1,5 @@
 program bug468
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   real,allocatable :: hoge(:)[:]
   real :: tmp, pon(10)[*], eps=0.00001
   tmp=100.0

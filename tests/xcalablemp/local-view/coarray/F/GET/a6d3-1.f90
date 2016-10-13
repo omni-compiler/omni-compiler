@@ -1,5 +1,5 @@
   program gettest_a6d3
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     integer a2(10,1,20,0:9,21,2)[*]
     integer xmp_node_num
     integer nerr

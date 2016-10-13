@@ -1,5 +1,5 @@
   program gettest_cn0d0
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
 
     character(200) wbuf1,wbuf2[*],tmp
 

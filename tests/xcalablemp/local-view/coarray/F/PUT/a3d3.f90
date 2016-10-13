@@ -1,5 +1,5 @@
   program test_a3_d3
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     integer a3(10,1,8)[*]
     integer xmp_node_num
     integer nerr

@@ -5,7 +5,7 @@
   end program main
 
   subroutine foo
-    include 'xmp_coarray.h'
+!!     include 'xmp_coarray.h'
 !!    save
     integer, save :: sss[*]
     integer :: ttt[*]

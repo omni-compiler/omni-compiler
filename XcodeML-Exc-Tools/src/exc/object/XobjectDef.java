@@ -157,9 +157,15 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
     return def != null && def.Opcode() == Xcode.FUNCTION_DECL;
   }
 
+  public boolean isBlockData()
+  {
+    return def != null && def.Opcode() == Xcode.F_BLOCK_DATA_DEFINITION;
+  }
+
   public String getName()
   {
-    return getNameObj().getSym();
+    Xobject nameObj = def.getArg(0);
+    return nameObj != null ? nameObj.getSym() : null;
   }
 
   public Xobject getNameObj()
@@ -194,7 +200,7 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
 
   public Xobject getFuncBody()
   {
-    return def.getArg(3);
+    return def.getArgOrNull(3);
   }
 
   public Xobject getFuncGccAttributes()

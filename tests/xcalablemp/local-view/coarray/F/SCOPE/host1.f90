@@ -1,5 +1,5 @@
   program host
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     integer, allocatable :: pap(:,:)[:]
     integer :: mam(19)[2,*]
 
@@ -42,7 +42,7 @@
     end program host
 
     subroutine final_msg(nerr)
-      include 'xmp_coarray.h'
+!!       include 'xmp_coarray.h'
       if (nerr==0) then 
          print '("[",i0,"] OK")', this_image()
       else

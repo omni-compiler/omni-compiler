@@ -258,6 +258,16 @@ typedef enum {
     /* F95 intrinsic subroutines. */
     INTR_CPU_TIME,
 
+    /* CAF1.0 (F2008) intrinsic functions */
+    INTR_NUM_IMAGES,
+    INTR_THIS_IMAGE,
+    INTR_IMAGE_INDEX,
+    INTR_LCOBOUND,
+    INTR_UCOBOUND,
+    INTR_COARRAY_ALLOCATED_BYTES,    // hidden interface
+    INTR_COARRAY_GARBAGE_BYTES,      // hidden interface
+
+    /* XMP/F */
     INTR_DESC_OF,
     INTR_GET_MPI_COMM,
     INTR_NUM_NODES,

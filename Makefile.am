@@ -37,18 +37,23 @@ endif
 
 if GASNET
    TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
-	       "local-view/coarray/F/LIB" "local-view/coarray/F/ALLOC" "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
-	       "local-view/coarray/F/CFOLD" "local-view/lock-unlock/C"
+	       "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
+	       "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
+	       "local-view/coarray/F/CFOLD" "local-view/lock-unlock/C" "local-view/intrinsic/C"
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if FJRDMA
    TESTDIRS += "local-view/post-wait/C" "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
-               "local-view/coarray/F/LIB" "local-view/coarray/F/ALLOC" "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
+               "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
+	       "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
 	       "local-view/coarray/F/CFOLD" 
    LARGE_TESTDIRS += "local-view/coarray/C/"
 endif
 if MPI3
-   TESTDIRS += "global-view/async/C/" "global-view/async/F/"
+   TESTDIRS += "global-view/async/C/" "global-view/async/F/" \
+               "local-view/coarray/F/MIX" "local-view/coarray/F/ALLOC" "local-view/coarray/F/LIB" \
+	       "local-view/coarray/F/GET" "local-view/coarray/F/PUT" "local-view/coarray/F/SCOPE" \
+	       "local-view/coarray/F/CFOLD" 
 endif
 
 .PHONY: tests clean-tests run-tests large-tests clean-large-tests run-large-tests release slurm slurm-check remote-tests clean-local distclean-local testdirs

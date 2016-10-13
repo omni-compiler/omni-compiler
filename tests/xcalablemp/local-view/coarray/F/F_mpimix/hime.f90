@@ -32,7 +32,7 @@ module comm
   integer :: ndx,ndy,ndz
   integer :: iop(3)
   integer :: npe,id
-  include 'xmp_coarray.h'
+!!  include 'xmp_coarray.h'
   real, allocatable, dimension(:,:), codimension[:,:,:] :: &
        buf1l, buf1u,  buf2l, buf2u,  buf3l, buf3u
 end module comm

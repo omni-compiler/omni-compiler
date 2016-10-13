@@ -1,5 +1,5 @@
 subroutine EX1
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   real :: V1(10,20)[4,*]
   complex(8) :: V2[*], z
   integer n(5)

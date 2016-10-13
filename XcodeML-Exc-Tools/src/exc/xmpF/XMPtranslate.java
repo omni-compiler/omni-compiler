@@ -218,6 +218,8 @@ public class XMPtranslate implements XobjectDefVisitor
       	newChild = wrap_external(d);
       }
       fd = new FuncDefBlock(d);
+    } else if (d.isBlockData()){
+      return;
     } else 
       XMP.fatal("Fotran: unknown decls");
 
@@ -284,7 +286,7 @@ public class XMPtranslate implements XobjectDefVisitor
 
   private boolean isGeneratedProcedure(XobjectDef d) {
     String name = d.getName();
-    if (name.startsWith("xmpf_traverse_"))
+    if (name != null && name.startsWith("xmpf_traverse_"))
       return true;
 
     return false;

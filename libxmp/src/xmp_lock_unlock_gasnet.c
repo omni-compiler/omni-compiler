@@ -9,7 +9,8 @@
 void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t* lock, const unsigned int number_of_elements)
 {
   for(int i=0;i<number_of_elements;i++){
-    gasnet_hsl_init(&((lock + i)->hsl));
+    (lock + i)->hsl = malloc(sizeof(gasnet_hsl_t));
+    gasnet_hsl_init((gasnet_hsl_t *)((lock + i)->hsl));
     (lock + i)->islocked = _XMP_N_INT_FALSE;
     (lock + i)->wait_size = MIN(_XMP_LOCK_CHUNK, _XMP_world_size);
     (lock + i)->wait_list = malloc((lock + i)->wait_size * sizeof(int));
@@ -20,7 +21,7 @@ void _xmp_gasnet_lock_initialize(xmp_gasnet_lock_t* lock, const unsigned int num
 
 void _xmp_gasnet_do_lock(int target_rank, xmp_gasnet_lock_t* lock, int *replystate)
 {
-  gasnet_hsl_lock(&(lock->hsl));
+  gasnet_hsl_lock((gasnet_hsl_t *)(lock->hsl));
   if(lock->islocked == _XMP_N_INT_TRUE){
     /* add waiter to end of queue */
     lock->wait_list[lock->wait_tail++] = target_rank;
@@ -48,7 +49,7 @@ void _xmp_gasnet_do_lock(int target_rank, xmp_gasnet_lock_t* lock, int *replysta
     lock->islocked = _XMP_N_INT_TRUE;
     *replystate = _XMP_LOCKSTATE_GRANTED;
   }
-  gasnet_hsl_unlock(&(lock->hsl));
+  gasnet_hsl_unlock((gasnet_hsl_t *)(lock->hsl));
 }
 
 volatile static int local_lockstate;
@@ -77,7 +78,7 @@ void _xmp_gasnet_lock(_XMP_coarray_t* c, const unsigned int offset, const unsign
 
 void _xmp_gasnet_do_unlock(int target_rank, xmp_gasnet_lock_t *lock, int *replystate, int *replyarg)
 {
-  gasnet_hsl_lock(&(lock->hsl));
+  gasnet_hsl_lock((gasnet_hsl_t *)(lock->hsl));
   if(lock->wait_head != lock->wait_tail) {   /* someone waiting - handoff ownership */
     *replyarg = lock->wait_list[lock->wait_head++];
     if(lock->wait_head == lock->wait_size)
@@ -88,10 +89,10 @@ void _xmp_gasnet_do_unlock(int target_rank, xmp_gasnet_lock_t *lock, int *replys
   else{  /* nobody waiting - unlock */
     lock->islocked = _XMP_N_INT_FALSE;
 
-    gasnet_hsl_unlock(&(lock->hsl));
+    gasnet_hsl_unlock((gasnet_hsl_t *)(lock->hsl));
     *replystate = _XMP_LOCKSTATE_DONE;
   }
-  gasnet_hsl_unlock(&(lock->hsl));
+  gasnet_hsl_unlock((gasnet_hsl_t *)(lock->hsl));
 }
 
 void _xmp_gasnet_unlock(_XMP_coarray_t* c, const unsigned int offset, const unsigned int target_rank)

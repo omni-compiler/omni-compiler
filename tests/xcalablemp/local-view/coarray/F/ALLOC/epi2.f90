@@ -1,5 +1,5 @@
 program epi2
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   real, allocatable :: a(:)[:] 
 
   write(*,*) "1) F ? ", allocated(a)
@@ -11,7 +11,7 @@ program epi2
   !! a should be dealloc here.
 contains
   subroutine allo
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     
     write(*,*) "4) F-T ? ", allocated(a)
     allocate (a(10)[*])

@@ -2,7 +2,7 @@
 !! It works in ten seconds on my local environment.
 
   program times2
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real, allocatable :: a(:,:)[:]
     real, allocatable :: b(:,:)[:]
     real, allocatable :: c(:,:)[:]
@@ -35,7 +35,7 @@
 
 
   subroutine final_msg(nerr)
-    include 'xmp_coarray.h'
+!!     include 'xmp_coarray.h'
     if (nerr==0) then 
        print '("[",i0,"] OK")', this_image()
     else

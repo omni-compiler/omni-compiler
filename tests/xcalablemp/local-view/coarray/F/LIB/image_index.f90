@@ -1,4 +1,4 @@
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   real :: ss(1:2,3:5)[6:*]
   integer sub(1)
   real, allocatable :: a(:,:)[:,:,:]

@@ -1,4 +1,4 @@
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   integer,save :: itmp(3)[*]
 
   itmp(1)=3

@@ -1,5 +1,5 @@
   program char_boundary
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     character(len=8) c5(3)[*]
     character(len=45) c3,val
 
