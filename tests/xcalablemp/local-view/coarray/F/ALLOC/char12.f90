@@ -3,7 +3,7 @@
   end program allo4
 
   subroutine sub
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
 !!    character(55), allocatable :: s55[:]  !! restriction of OMNI
     character(12), allocatable :: a12(:,:)[:]
 

@@ -1,5 +1,5 @@
 program thisimage
-  include "xmp_coarray.h"
+!! !!  include "xmp_coarray.h"
 
   integer, parameter :: ndx=2, ndy=3, ndz=2
   integer me1,mez1,mey1,mex1,tmp,nerr

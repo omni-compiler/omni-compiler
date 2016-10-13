@@ -1,5 +1,5 @@
 program zz
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   real, allocatable :: a(:,:)[:,:,:]
 
   allocate (a(1:2,3:5)[6:9,8:10,-3:*])
@@ -9,7 +9,7 @@ program zz
 end program
 
 subroutine foo(a)
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   real, allocatable :: a(:,:)[:,:,:]
   write(*,*) "hi!"
   return

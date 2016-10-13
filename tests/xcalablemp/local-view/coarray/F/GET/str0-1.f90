@@ -1,5 +1,5 @@
   program gettest_strct_d0
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     type str
        integer(4) nn
        real(4) rr

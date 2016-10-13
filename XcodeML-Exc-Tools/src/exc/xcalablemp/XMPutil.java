@@ -35,13 +35,13 @@ public class XMPutil {
 
   public static String getXobjSymbolName(Xobject x) throws XMPexception {
     switch (x.Opcode()) {
-      case VAR:
-        return x.getSym();
-      case ARRAY_REF:
-      case SUB_ARRAY_REF:
-        return x.getArg(0).getSym();
-      default:
-        throw new XMPexception("cannot get the symbol name of " + x.toString());
+    case VAR:
+      return x.getSym();
+    case ARRAY_REF:
+    case SUB_ARRAY_REF:
+      return x.getArg(0).getSym();
+    default:
+      throw new XMPexception("cannot get the symbol name of " + x.toString());
     }
   }
 

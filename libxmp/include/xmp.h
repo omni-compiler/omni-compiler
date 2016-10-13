@@ -96,7 +96,7 @@ extern void    *xmp_malloc(xmp_desc_t d, ...);
 extern void     xmp_free(xmp_desc_t d);
 extern void     xmp_exit(int status);
 extern void     xmp_atomic_define(int, int);
-extern void     xmp_atomic_ref(int, int);
+extern void     xmp_atomic_ref(int*, int);
 
 // ----- libxmp_gpu
 #ifdef _XMP_ENABLE_GPU

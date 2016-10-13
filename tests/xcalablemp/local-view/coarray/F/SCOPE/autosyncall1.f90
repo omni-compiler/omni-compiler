@@ -1,5 +1,5 @@
 subroutine autosyncall(n1,n2)
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   integer, allocatable :: pap(:,:)[:]
   integer :: mam(19)[2,*]
 
@@ -11,7 +11,7 @@ subroutine autosyncall(n1,n2)
 end subroutine autosyncall
 
 program main
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   call autosyncall(1,1)
   call autosyncall(13,15)
   call autosyncall(5,2)

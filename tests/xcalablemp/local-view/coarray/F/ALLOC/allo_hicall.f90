@@ -1,5 +1,5 @@
   program allo_loop
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real :: base(100,100)[*]
 
     nerr = 0
@@ -25,7 +25,7 @@
 
 
   subroutine alloallo
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     real, allocatable :: abc(:,:)[:]
 
     allocate(abc(1000,1000)[*])
@@ -35,7 +35,7 @@
 
 
   subroutine final_msg(nerr)
-    include 'xmp_coarray.h'
+!!     include 'xmp_coarray.h'
     if (nerr==0) then 
        print '("[",i0,"] OK")', this_image()
     else

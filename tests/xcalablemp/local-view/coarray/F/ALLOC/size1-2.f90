@@ -1,5 +1,5 @@
 program main
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   
 !!!!!! not supported !!!!!
 !!  interface 
@@ -14,7 +14,7 @@ program main
 end program main
 
 subroutine sub(v2, k1, k2)
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   integer :: v2(10)[2,*], k1, k2
 
   integer n(10)

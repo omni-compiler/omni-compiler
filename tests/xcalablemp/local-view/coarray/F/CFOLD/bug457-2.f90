@@ -8,7 +8,7 @@ integer, parameter :: lx=nn/3
 end module
 
 use param
-include "xmp_coarray.h"
+!! include "xmp_coarray.h"
 real*8 :: a(3:lx,nn)[*]
 
 !!write(*,*) ubound(a,1)," should be 111."

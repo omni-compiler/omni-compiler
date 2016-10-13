@@ -1,5 +1,5 @@
   module xx
-    include "xmp_coarray.h"
+!!     include "xmp_coarray.h"
     integer,save:: aaa[*]
   end module xx
 

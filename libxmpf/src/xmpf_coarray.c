@@ -148,9 +148,11 @@ void _XMPF_coarray_init(void)
 {
   /*
    *  set who-am-i
+   *  clean static data
    */
-  _XMPF_set_initial_this_image();
-  _XMPF_set_initial_num_images();
+  _XMPF_set_this_image_initial();
+  _XMPF_set_num_images_initial();
+  _XMPF_coarray_clean_image_nodes();
 
   /*
    * read environment variables
@@ -165,7 +167,7 @@ void _XMPF_coarray_init(void)
     work = strdup(env1);
     tok = strtok(work, delim);
     for (i = 1; tok != NULL; i++, tok = strtok(NULL, delim)) {
-      if (_XMPF_get_current_this_image() == i)
+      if (_XMPF_this_image_current() == i)
         _set_coarrayMsg(atoi(tok));
     }
   }
@@ -189,7 +191,7 @@ void _XMPF_coarray_init(void)
     _set_isSafeBufferMode(atoi(env4));
   }
     
-  if (env1&&*env1 || env2&&*env2 || env3&&*env3 || env4&&*env4) {
+  if (_XMPF_coarrayMsg || (env2&&*env2) || (env3&&*env3) || (env4&&*env4)) {
     _XMPF_set_coarrayMsg(TRUE);
 
     _XMPF_coarrayDebugPrint("Execution time environment\n"
@@ -304,28 +306,38 @@ void xmpf_coarray_fatal_with_len_(char *msg, int *msglen)
 
 void _XMPF_coarrayFatal(char *format, ...)
 {
+  int rank;
   char work[300];
   va_list list;
   va_start(list, format);
   vsprintf(work, format, list);
-  fprintf(stderr, "CAF[%d] %s", _XMPF_get_current_this_image(), work);
   va_end(list);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  fprintf(stderr, "CAF[%d] %s\n", rank, work);
 
   //xmpf_finalize_each__();   This causes deadlock sometimes.
 
-  _XMP_fatal("fatal error in XMP Coarray/F runtime.");
+  _XMP_fatal("...fatal error in XMP/F Coarray runtime");
 }
 
-void _XMPF_coarrayDebugPrint(char *format, ...)
+void __XMPF_coarrayDebugPrint(char *format, ...)
 {
-  if (!_XMPF_coarrayMsg)
-    return;
+  int current, initial;
+
+  //  if (!_XMPF_coarrayMsg)
+  //    return;
 
   char work[300];
   va_list list;
   va_start(list, format);
   vsprintf(work, format, list);
-  fprintf(stderr, "CAF[%d] %s", _XMPF_get_current_this_image(), work);
   va_end(list);
+
+  current = _XMPF_this_image_current();
+  initial = _XMPF_this_image_initial();
+  if (current == initial)
+    fprintf(stderr, "CAF[%d] %s", initial, work);
+  else
+    fprintf(stderr, "CAF[%d(now %d)] %s", initial, current, work);
 }
 

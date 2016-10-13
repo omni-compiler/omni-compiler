@@ -3,7 +3,15 @@ XRUN    = mpiexec
 EXES    = module_test.x module_test0.x arg.x dnodes.x refobj.x 228.x 358_result.x 383.x 377.x 392.x 397.x 412.x
 
 all: module_test.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
-     103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o save_desc.x schedule_default.o task001.o 152.x 397.x double_option.x nargs.o
+     103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o    schedule_default.o task001.o 152.x 397.x double_option.x nargs.o
+###     103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o save_desc.x schedule_default.o task001.o 152.x 397.x double_option.x nargs.o
+###mpiexec -n 4 ./static_desc.x
+###Fatal error in PMPI_Comm_split: Other MPI error, error stack:
+###PMPI_Comm_split(495).................: MPI_Comm_split(comm=0xc4000000, color=1, key=1, new_comm=0xa990c0) failed
+###PMPI_Comm_split(477).................: 
+###MPIR_Comm_split_impl(249)............: 
+###MPIR_Get_contextid_sparse_group(1193): Too many communicators (0/2048 free on this process; ignore_id=0)
+
 
 .SUFFIXES: .x .o .f90
 
@@ -131,7 +139,7 @@ run:
 	$(XRUN) -np 1 ./392.x
 	$(XRUN) -np 1 ./397.x
 	$(XRUN) -np 1 ./278\ spacefile.x
-	$(XRUN) -np 4 ./save_desc.x
+#	$(XRUN) -np 4 ./save_desc.x
 
 clean:
 	rm -f *.x *.o *.*mod *.s

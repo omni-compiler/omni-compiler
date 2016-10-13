@@ -1,5 +1,5 @@
 subroutine autosyncall
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   integer :: mam(19)[2,*]
 
   mam(9)[2,1] = 1
@@ -11,7 +11,7 @@ subroutine autosyncall
 end subroutine autosyncall
 
 program main
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
   call autosyncall
   print '("[",i0,"] NG")', this_image()
 end

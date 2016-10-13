@@ -55,7 +55,7 @@
 // MEMORY MANAGEMENT STRUCTURE-I (for automatic deallocation)
 typedef struct _resourceSet_t  ResourceSet_t;
 typedef struct _memoryChunk_t  MemoryChunk_t;
-typedef struct _coarrayInfo_t  CoarrayInfo_t;
+//typedef struct _coarrayInfo_t  CoarrayInfo_t;   moved into xmpf_internal_coarray.h
 
 // MEMORY MANAGEMENT STRUCTURE-II (for dynamic ALLOCATE/DEALLOCATE stmts.)
 typedef struct _memoryChunkStack_t  MemoryChunkStack_t;
@@ -112,6 +112,7 @@ struct _coarrayInfo_t {
   int            *lcobound;  // array of lower cobounds [0..(corank-1)]
   int            *ucobound;  // array of upper cobounds [0..(corank-1)]
   int            *cosize;    // cosize[k] = max(ucobound[k]-lcobound[k]+1, 0)
+  _XMP_nodes_t   *nodes;     // XMP descriptor for the mapping nodes (if any)
 };
 
 
@@ -176,6 +177,8 @@ static CoarrayInfo_t *_allocLargeStaticCoarray(size_t thisSize,
 static CoarrayInfo_t *_regmemStaticCoarray(void *baseAddr, size_t thisSize,
                                            size_t elementRU);
 
+static MPI_Comm _get_communicatorFromCoarrayInfo(CoarrayInfo_t *cinfo);
+
 // CoarrayInfo for the static communication buffer
 static CoarrayInfo_t *_cinfo_localBuf;  
 
@@ -200,7 +203,7 @@ static MemoryChunkOrder_t *_newMemoryChunkOrder(MemoryChunk_t *chunk);
 static void _unlinkMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
 static void _freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP);
 
-static char* _toOrdinalNumberString(int n);
+static char* _to_Nth(int n);
 
 // sorted chunk table (STRUCTURE-III)
 static SortedChunkTable_t *_sortedChunkTable;
@@ -266,10 +269,14 @@ int xmpf_coarray_garbage_bytes_()
     2. make a MemoryChunk having a CoarrayInfo
 \***********************************************/
 
+/* construct descPtr only if needed
+ */
 void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                           int *count, int *element, void **tag)
 {
-  _XMPF_checkIfInTask("allocatable coarray allocation");
+  ////////////////////////////////////////
+  //_XMPF_checkIfInTask("allocatable coarray allocation");
+  ////////////////////////////////////////
   ResourceSet_t *rset;
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC\n");
@@ -288,8 +295,20 @@ void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
   }
 
   // make coarrayInfo and linkage
+  /////////////////////////////////////////////////////
+  //  CoarrayInfo_t *cinfo;
+  //  if (*descPtr == NULL) {
+  //    cinfo = _newCoarrayInfo(chunk->orgAddr,
+  //                            (*count) * (size_t)(*element));
+  //  } else {
+  //    cinfo = (CoarrayInfo_t*)descPtr;
+  //    cinfo->baseAddr = chunk->orgAddr;
+  //    cinfo->nbytes = (*count) * (size_t)(*element);
+  //  }
+  /////////////////////////////////////////////////////
   CoarrayInfo_t *cinfo = _newCoarrayInfo(chunk->orgAddr,
                                          (*count) * (size_t)(*element));
+
   _addCoarrayInfo(chunk, cinfo);
 
   // output #1, #2
@@ -386,7 +405,7 @@ MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes,
   DEALLOCATE statement
   Type-1: alloc/free by the low-level library
   Type-1a: to keep the reverse order of allocation,
-     actual deallocation is delayed until garbage collection.
+     freeing memory is delayed until garbage collection.
 \***********************************************/
 
 void xmpf_coarray_free_(void **descPtr)
@@ -397,7 +416,7 @@ void xmpf_coarray_free_(void **descPtr)
   // SYNCALL_AUTO
   xmpf_sync_all_auto_();
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_FREE for MemoryChunk %s\n",
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_FREE_ for MemoryChunk %s\n",
                           _dispMemoryChunk(chunk));
 
   // unlink and free CoarrayInfo keeping MemoryChunk
@@ -424,7 +443,7 @@ void xmpf_coarray_malloc_pool_(void)
 
   size_t localBufSize = XMPF_get_localBufSize();
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC_POOL contains:\n"
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_MALLOC_POOL_ contains:\n"
                           "  system-defined local buffer :%10u bytes\n"
                           "  user-defined coarays        :%10u bytes\n",
                           localBufSize, pool_totalSize);
@@ -474,12 +493,12 @@ static char* _xmp_strndup(char *name, const int namelen)
  *         crayPtr: cray pointer to the coarray object
  *    in:  count  : count of elements
  *         element: element size
- *         name   : name of the coarray (for debugging)
  *         namelen: character length of name (for debugging)
+ *         name   : name of the coarray (for debugging)
  */
 void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
                                 int *count, int *element,
-                                char *name, int *namelen)
+                                int *namelen, char *name)
 {
   size_t elementRU = _roundUpElementSize(*count, (size_t)(*element),
                                          name, *namelen);
@@ -487,15 +506,15 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
 
   CoarrayInfo_t *cinfo;
 
-  _XMPF_coarrayDebugPrint("COARRAY_ALLOC_STATIC varname=\'%*s\'\n"
+  _XMPF_coarrayDebugPrint("COARRAY_ALLOC_STATIC_ varname=\'%*s\'\n"
                           "  *count=%d, *element=%d, nbytes=%u, elementRU=%u\n",
                           *namelen, name, *count, *element, nbytes, elementRU);
 
   if (nbytes > XMPF_get_poolThreshold()) {
-    _XMPF_coarrayDebugPrint("*** LARGER (%u bytes) than _XMPF_poolThreshold\n", nbytes);
+    _XMPF_coarrayDebugPrint("*** LARGER case: (%u bytes) > _XMPF_poolThreshold\n", nbytes);
     cinfo = _allocLargeStaticCoarray(nbytes, elementRU);
   } else {
-    _XMPF_coarrayDebugPrint("*** SMALLER (%u bytes) than or eq to _XMPF_poolThreshold\n", nbytes);
+    _XMPF_coarrayDebugPrint("*** SMALLER case: (%u bytes) <= _XMPF_poolThreshold\n", nbytes);
     cinfo = _getShareOfStaticCoarray(nbytes, elementRU);
   }
   cinfo->name = _xmp_strndup(name, *namelen);
@@ -517,7 +536,7 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
  */
 void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
                                 int *count, int *element,
-                                 char *name, int *namelen)
+                                 int *namelen, char *name)
 {
   CoarrayInfo_t *cinfo;
 
@@ -533,7 +552,7 @@ void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
   size_t elementRU = (size_t)(*element);
   size_t nbytes = (size_t)(*count) * elementRU;
 
-  _XMPF_coarrayDebugPrint("COARRAY_REGMEM_STATIC varname=\'%*s\'\n",
+  _XMPF_coarrayDebugPrint("COARRAY_REGMEM_STATIC_ varname=\'%*s\'\n",
                           *namelen, name);
 
   cinfo = _regmemStaticCoarray(*baseAddr, nbytes, elementRU);
@@ -608,7 +627,7 @@ void xmpf_coarray_count_size_(int *count, int *element)
   size_t mallocSize = ROUND_UP_UNIT(thisSize);
 
   if (mallocSize > XMPF_get_poolThreshold()) {
-    _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE: no count because of the size\n"
+    _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE_: no count because of the size\n"
                             "  pooling threshold :%10u bytes\n"
                             "  data size         :%10u bytes\n",
                             XMPF_get_poolThreshold(), mallocSize);
@@ -616,17 +635,17 @@ void xmpf_coarray_count_size_(int *count, int *element)
   }
 
   pool_totalSize += mallocSize;
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE: count up\n"
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_COUNT_SIZE_: count up\n"
                           "  %u bytes, totally %u bytes\n",
                           mallocSize, pool_totalSize);
 }
 
 
-void xmpf_coarray_prolog_(void **tag, char *name, int *namelen)
+void xmpf_coarray_prolog_(void **tag, int *namelen, char *name)
 {
   ResourceSet_t *rset = _newResourceSet(name, *namelen);
 
-  _XMPF_coarrayDebugPrint("PROLOG CODE. name=\'%s\', rset=%p\n", rset->name, rset);
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_PROLOG_ (name=\'%s\', rset=%p)\n", rset->name, rset);
 
   *tag = (void*)rset;
 }
@@ -639,7 +658,7 @@ void xmpf_coarray_epilog_(void **tag)
 
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
 
-  _XMPF_coarrayDebugPrint("EPILOG CODE. name=\'%s\', rset=%p\n", rset->name, rset);
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_EPILOG_ (name=\'%s\', rset=%p)\n", rset->name, rset);
 
   _freeResourceSet(rset);     // with or without automatic SYNCALL
 
@@ -658,13 +677,16 @@ void xmpf_coarray_epilog_(void **tag)
  *   3. return coarrayInfo as descPtr
  */
 void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
-                                void **tag, char *name, int *namelen)
+                                void **tag, int *isAllocatable,
+                                int *namelen, char *name)
 {
   ResourceSet_t *rset = (ResourceSet_t*)(*tag);
   MemoryChunk_t *myChunk;
 
-  _XMPF_coarrayDebugPrint("XMPF_COARRAY_FIND_DESCPTR varname=\'%*s\'\n",
-                          *namelen, name);
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_FIND_DESCPTR_ "
+                          "(varname=\'%*s\', isAllocatable=%s)\n",
+                          *namelen, name,
+                          *isAllocatable ? "yes" : "no");
 
   if (rset == NULL)
     rset = _newResourceSet("(POOL)", strlen("(POOL)"));
@@ -675,21 +697,26 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
   // search my MemoryChunk only from baseAddr
   myChunk = _getMemoryChunkFromLocalAddress(baseAddr);
 
-  if (myChunk == NULL) {
-    _XMPF_coarrayDebugPrint("*** ILLEGAL: home MemoryChunk was not found. "
-                            "baseAddr=%p\n", baseAddr);
-    _XMPF_coarrayFatal("The actual argument corresponding to \'%*s\' "
-                       "should be a coarray.\n", *namelen, name);
+  if (myChunk != NULL) {
+    _XMPF_coarrayDebugPrint("*** found my home MemoryChunk %s\n",
+                            _dispMemoryChunk(myChunk));
+    // return coarrayInfo as descPtr
+    _addCoarrayInfo(myChunk, cinfo);
+    *descPtr = (void*)cinfo;
+    return;
   }
 
+  else if (*isAllocatable) {
+    _XMPF_coarrayDebugPrint("*** found the coarray is not allocated\n");
+    // return none
+    return;
+  }
 
-  _XMPF_coarrayDebugPrint("*** found my home MemoryChunk %s\n",
-                          _dispMemoryChunk(myChunk));
+  _XMPF_coarrayDebugPrint("*** ILLEGAL: home MemoryChunk was not found. "
+                          "baseAddr=%p\n", baseAddr);
 
-  _addCoarrayInfo(myChunk, cinfo);
-
-  // return coarrayInfo as descPtr
-  *descPtr = (void*)cinfo;
+  _XMPF_coarrayFatal("The actual argument corresponding to \'%*s\' "
+                     "should be a coarray.\n", *namelen, name);
 }
 
 
@@ -723,7 +750,7 @@ void _addMemoryChunkInSortedChunkTable(MemoryChunk_t *chunk)
   if (chunk == NULL || chunk->nbytes == 0)
     return;      // empty memory-chunk structure
 
-  // adjust malloc size
+  // adjust table size
   if (_sortedChunkTableSize == _sortedChunkTableMallocSize) {
     _sortedChunkTableMallocSize *= 2;
     _sortedChunkTable = (SortedChunkTable_t*)
@@ -760,6 +787,10 @@ void _delMemoryChunkInSortedChunkTable(MemoryChunk_t *chunk)
   int idx;
   BOOL found;
   unsigned long addrKey;
+
+  // condition check
+  if (chunk == NULL || chunk->nbytes == 0)
+    return;      // empty memory-chunk structure
 
   // adjust malloc size
   if (_sortedChunkTableSize*4 <= _sortedChunkTableMallocSize &&
@@ -890,7 +921,7 @@ void _garbageCollectMallocHistory()
 {
   MemoryChunkOrder_t *chunkP;
 
-  _XMPF_coarrayDebugPrint("GARBAGE COLLECTION starts\n");
+  _XMPF_coarrayDebugPrint("[[[GARBAGE COLLECTION]]] starts\n");
 
   forallMemoryChunkOrderRev(chunkP) {
     if (!chunkP->chunk->isGarbage)
@@ -955,7 +986,7 @@ void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...)
   }
 
   // the last axis specified as lcobound:*
-  n_images = num_images_();
+  n_images = _XMPF_num_images_current();
   cp->lcobound[n-1] = *va_arg(args, int*);
   cp->cosize[n-1] = DIV_CEILING(n_images, count);
   cp->ucobound[n-1] = cp->lcobound[n-1] + cp->cosize[n-1] - 1;
@@ -970,7 +1001,7 @@ void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...)
 /* translate n.
  * set the name of coarray object
  */
-void xmpf_coarray_set_varname_(void **descPtr, char *name, int *namelen)
+void xmpf_coarray_set_varname_(void **descPtr, int *namelen, char *name)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
 
@@ -1195,8 +1226,7 @@ static CoarrayInfo_t *_newCoarrayInfo_empty(void)
 
 static CoarrayInfo_t *_newCoarrayInfo(char *baseAddr, size_t nbytes)
 {
-  CoarrayInfo_t *cinfo =
-    (CoarrayInfo_t*)calloc(1, sizeof(CoarrayInfo_t));
+  CoarrayInfo_t *cinfo = _newCoarrayInfo_empty();
   cinfo->baseAddr = baseAddr;
   cinfo->nbytes = nbytes;
 
@@ -1265,21 +1295,152 @@ char *_dispCoarrayInfo(CoarrayInfo_t *cinfo)
 
 
 /***********************************************\
+  ENTRY: for COARRAY directive
+   set XMP descriptor of the corresponding nodes
+\***********************************************/
+
+/* construct descPtr if needed
+ */
+void xmpf_coarray_set_nodes_(void **descPtr, void **nodesDesc)
+{
+  CoarrayInfo_t *cinfo;
+  _XMP_nodes_t *nodes = (_XMP_nodes_t*)(*nodesDesc);
+
+  if (*descPtr != NULL) {
+    cinfo = (CoarrayInfo_t*)(*descPtr);
+    _XMPF_coarray_set_nodes(cinfo, nodes);
+  } else {
+    cinfo = _newCoarrayInfo_empty();
+    _XMPF_coarray_set_nodes(cinfo, nodes);
+    *descPtr = (void*)cinfo;
+  }
+}
+
+
+void _XMPF_coarray_set_nodes(CoarrayInfo_t *cinfo, _XMP_nodes_t *nodes)
+{
+  cinfo->nodes = nodes;
+}
+
+
+_XMP_nodes_t *_XMPF_coarray_get_nodes(CoarrayInfo_t *cinfo)
+{
+  return cinfo->nodes;
+}
+
+
+/***********************************************\
+  ENTRY: for IMAGE directive
+   set the nodes specified with IMAGE directive
+\***********************************************/
+
+static _XMP_nodes_t *_image_nodes;
+
+void xmpf_coarray_set_image_nodes_(void **nodesDesc)
+{
+  _XMP_nodes_t *nodes = (_XMP_nodes_t*)(*nodesDesc);
+  _XMPF_coarray_set_image_nodes(nodes);
+}
+
+
+void _XMPF_coarray_clean_image_nodes()
+{
+  _image_nodes = NULL;
+}
+
+void _XMPF_coarray_set_image_nodes(_XMP_nodes_t *nodes)
+{
+  if (_image_nodes != NULL)
+    _XMP_fatal("INTERNAL: _image_nodes was not consumed but is defined.");
+  _image_nodes = nodes;
+}
+
+_XMP_nodes_t *_XMPF_coarray_get_image_nodes()
+{
+  return _image_nodes;
+}
+
+// get and clean
+_XMP_nodes_t *_XMPF_coarray_consume_image_nodes()
+{
+  _XMP_nodes_t *ret = _image_nodes;
+  _image_nodes = NULL;
+  return ret;
+}
+
+
+/***********************************************\
+  ENTRY
    inquire function this_image(coarray)
    inquire function this_image(coarray, dim)
 \***********************************************/
 
+static int xmpf_this_image_coarray_dim(CoarrayInfo_t *cinfo, int corank, int dim);
+static void xmpf_this_image_coarray(CoarrayInfo_t *cinfo, int corank, int image[]);
+
 int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim)
 {
-  int size, index, magic;
-  int k = *dim - 1;
+  return xmpf_this_image_coarray_dim((CoarrayInfo_t*)(*descPtr), *corank, *dim);
+}
 
-  if (k < 0 || *corank <= k)
-    _XMP_fatal("Argument 'dim' of this_image is out of range");
+void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[])
+{
+  xmpf_this_image_coarray((CoarrayInfo_t*)(*descPtr), *corank, image);
+}
 
-  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
 
-  magic = _XMPF_get_current_this_image() - 1;
+void xmpf_this_image_coarray(CoarrayInfo_t *cinfo, int corank, int image[])
+{
+  int size, index, image_coarray, magic;
+  _XMP_nodes_t *nodes;
+
+  nodes = _XMPF_coarray_get_nodes(cinfo);
+  if (nodes != NULL) {
+    image_coarray = _XMPF_this_image_onNodes(nodes);
+  } else {
+    image_coarray = _XMPF_this_image_current();
+  }
+
+  if (image_coarray == 0) {    // This image is out of the nodes.
+    for (int i = 0; i < corank; i++)
+      image[i] = 0;
+    return;
+  }
+
+  magic = image_coarray - 1;
+  for (int i = 0; i < corank; i++) {
+    size = cinfo->cosize[i];
+    index = magic % size;
+    image[i] = index + cinfo->lcobound[i];
+    magic /= size;
+  }
+}
+
+
+int xmpf_this_image_coarray_dim(CoarrayInfo_t *cinfo, int corank, int dim)
+{
+  int size, index, image_coarray, magic;
+  //int image_init;
+  int k;
+  _XMP_nodes_t *nodes;
+  //MPI_Comm comm_coarray;
+
+  if (dim <= 0 || corank < dim)
+    _XMPF_coarrayFatal("Too large or non-positive argument 'dim' of this_image:"
+                      "%d\n", dim);
+
+  nodes = _XMPF_coarray_get_nodes(cinfo);
+  if (nodes != NULL) {
+    image_coarray = _XMPF_this_image_onNodes(nodes);
+  } else {
+    image_coarray = _XMPF_this_image_current();
+  }
+
+  if (image_coarray == 0)    // This image is out of the nodes.
+    return 0;
+
+  magic = image_coarray - 1;
+  k = dim - 1;
   for (int i = 0; i < k; i++) {
     size = cinfo->cosize[i];
     magic /= size;
@@ -1289,23 +1450,8 @@ int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim)
   return index + cinfo->lcobound[k];
 }
 
-void xmpf_this_image_coarray_(void **descPtr, int *corank, int image[])
-{
-  int size, index, magic;
-
-  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
-
-  magic = _XMPF_get_current_this_image() - 1;
-  for (int i = 0; i < *corank; i++) {
-    size = cinfo->cosize[i];
-    index = magic % size;
-    image[i] = index + cinfo->lcobound[i];
-    magic /= size;
-  }
-}
-
-
 /***********************************************\
+  ENTRY
    inquire function lcobound/ucobound(coarray)
    inquire function lcobound/ucobound(coarray ,dim)
 \***********************************************/
@@ -1375,6 +1521,7 @@ int xmpf_ucobound_(void **descPtr, int *dim)
 
 
 /***********************************************\
+  ENTRY
    inquire function image_index(coarray, sub)
 \***********************************************/
 
@@ -1397,17 +1544,15 @@ int xmpf_image_index_(void **descPtr, int coindexes[])
     lb = cp->lcobound[i];
     ub = cp->ucobound[i];
     if (idx < lb) {
-      _XMPF_coarrayDebugPrint
-        ("The %s cosubscript of coarray \'%s\' is too small.\n"
-         "  value=%d, range=[%d,%d]\n",
-         _toOrdinalNumberString(i+1), cp->name, idx, lb, ub);
+      _XMPF_coarrayFatal("The %s cosubscript of coarray \'%s\' is too small.\n"
+                         "  value=%d, range=[%d,%d]\n",
+                         _to_Nth(i+1), cp->name, idx, lb, ub);
       return 0;
     }
     if (ub < idx && i < cp->corank - 1) {
-      _XMPF_coarrayDebugPrint
-        ("The %s cosubscript of coarray \'%s\' is too large.\n"
-         "  value=%d, range=[%d,%d]\n",
-         _toOrdinalNumberString(i+1), cp->name, idx, lb, ub);
+      _XMPF_coarrayFatal("The %s cosubscript of coarray \'%s\' is too large.\n"
+                         "  value=%d, range=[%d,%d]\n",
+                         _to_Nth(i+1), cp->name, idx, lb, ub);
       return 0;
     }
     count += (idx - lb) * factor;
@@ -1415,7 +1560,7 @@ int xmpf_image_index_(void **descPtr, int coindexes[])
   }
 
   image = count + 1;
-  if (image > num_images_())
+  if (image > _XMPF_num_images_current())
     image = 0;
 
   return image;
@@ -1445,9 +1590,9 @@ int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...)
     lb = cp->lcobound[i];
     ub = cp->ucobound[i];
     if (idx < lb || ub < idx) {
-      _XMPF_coarrayFatal("%d-th cosubscript of \'%s\', %d, "
+      _XMPF_coarrayFatal("%s cosubscript of \'%s\', %d, "
                          "is out of range %d to %d.\n",
-                         i+1, cp->name, idx, lb, ub);
+                         _to_Nth(i+1), cp->name, idx, lb, ub);
     }
     count += (idx - lb) * factor;
     factor *= cp->cosize[i];
@@ -1517,11 +1662,32 @@ void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
 }
 
 
+/*  return MPI_COMM_NULL if communicatior is not specified for descPtr
+ */
+MPI_Comm _XMPF_get_communicatorFromDescPtr(void *descPtr)
+{
+  return _get_communicatorFromCoarrayInfo((CoarrayInfo_t *)descPtr);
+}
+
+MPI_Comm _get_communicatorFromCoarrayInfo(CoarrayInfo_t *cinfo)
+{
+  if (cinfo == NULL)
+    return MPI_COMM_NULL;
+
+  _XMP_nodes_t *nodes = cinfo->nodes;
+
+  if (nodes == NULL)
+    return MPI_COMM_NULL;
+
+  return *(long*)(nodes->comm);
+}
+
+
 /***********************************************\
    local
 \***********************************************/
 
-char* _toOrdinalNumberString(int n)
+char* _to_Nth(int n)
 {
   static char work[6];
 
@@ -1532,6 +1698,12 @@ char* _toOrdinalNumberString(int n)
     return "2nd";
   case 3:
     return "3rd";
+  case 21:
+    return "21st";
+  case 22:
+    return "22nd";
+  case 23:
+    return "23rd";
   default:
     break;
   }

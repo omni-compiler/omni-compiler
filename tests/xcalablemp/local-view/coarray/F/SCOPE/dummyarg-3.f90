@@ -1,5 +1,5 @@
 real function foo(n0,a2,m0)
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
 !!  use xmp_lib
   integer m0
   integer n0[*]
@@ -12,7 +12,7 @@ real function foo(n0,a2,m0)
 end function foo
 
 program dummyarg
-  include "xmp_coarray.h"
+!!   include "xmp_coarray.h"
 
   integer n[*]
   real,allocatable:: a1(:)[:]

@@ -1,4 +1,4 @@
-Implementation Status version 0.9.3
+Implementation Status version 1.0.0
 ---------------------------------------
 # Global-View
 * Not support gmove in/out clause
@@ -12,7 +12,7 @@ Implementation Status version 0.9.3
 * Not support "coarray" and "image" directives in the XMP Specification v1.2.1
 * Not support "post/wait" and "lock/unlock" directives in XMP/Fortran
 * Not support "post/wait" and "lock/unlock" directives on the K computer/FX10/FX100
-* Not support "post/wait" and "lock/unlock" directives when using MPI3
+* Not support "lock/unlock" directives when using MPI3
 * Implementation status on Coarray Fortran is shown in STATUS-CAF.md
 
 # Intrinsic and Library Procedures
