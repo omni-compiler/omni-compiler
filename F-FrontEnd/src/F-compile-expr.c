@@ -3349,9 +3349,9 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
 
     a = compile_args(args);
 
-    ftp = TYPE_REF(EXPV_TYPE(memberRef));
+    ftp = EXPV_TYPE(memberRef);
     ep = TYPE_EXT_ID(ftp);
-    if (EXT_PROC_CLASS(ep) == EP_INTERFACE) {
+    if (ep != NULL && EXT_PROC_CLASS(ep) == EP_INTERFACE) {
         tbp_proc_type = chose_module_procedure_by_args(EXT_PROC_INTR_DEF_EXT_IDS(ep), a);
         if (tbp_proc_type != NULL) {
             ret_type = tbp_proc_type;

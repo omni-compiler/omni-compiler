@@ -2126,7 +2126,7 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
 static int
 input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC struct_tp)
 {
-    ID mem;
+    ID mem = NULL;
     ID last_ip = NULL;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "typeBoundProcedures"))

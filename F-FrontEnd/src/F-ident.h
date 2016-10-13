@@ -136,7 +136,6 @@ typedef struct ident_descriptor
     enum storage_class stg;
     SYMBOL name;                        /* key */
     struct type_descriptor *type;       /* its type */
-    char * type_id;                     /* its type ID (for input XcodeML) */
     expv addr;
     lineno_info *line;                  /* line number this node created */
     struct type_attr attr;              /* type attribute for ID */
@@ -159,6 +158,8 @@ typedef struct ident_descriptor
     struct use_assoc_info *use_assoc;   /* use association infomation
                                            of this ID, otherwise
                                            NULL */
+
+    char * type_id;                     /* its type ID (for input XcodeML) */
 
     union {
         struct {

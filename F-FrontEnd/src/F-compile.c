@@ -4412,7 +4412,7 @@ compile_member_ref(expr x)
 
     // TODO:
     //	merge type override all cases (array/substr/plain scalar).
-    if (!IS_FUNCTION_TYPE(tp) && (
+    if (!IS_FUNCTION_TYPE(ID_TYPE(member_id)) && (
             TYPE_IS_POINTER(stVTyp) ||
             TYPE_IS_TARGET(stVTyp) ||
             TYPE_IS_VOLATILE(stVTyp) ||
