@@ -4801,7 +4801,11 @@ compile_type_generic_procedure(expr x)
                 return;
             }
             id = declare_ident(sym, CL_TYPE_BOUND_PROC);
-            // TODO set as operator
+            if (strcmp("=", SYM_NAME(sym)) == 0) {
+                binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT;
+            } else {
+                binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+            }
         } break;
         case F95_USER_DEFINED:{
             expr arg;
@@ -4811,7 +4815,7 @@ compile_type_generic_procedure(expr x)
                 return;
             }
             id = declare_ident(EXPR_SYM(arg), CL_TYPE_BOUND_PROC);
-            // TODO set as operator
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
         } break;
         default:
             error_at_node(x, "unexpected expression");

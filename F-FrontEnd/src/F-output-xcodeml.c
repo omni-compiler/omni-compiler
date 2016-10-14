@@ -4272,7 +4272,14 @@ outx_structType(int l, TYPE_DESC tp)
             }
             if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
                 ID binding;
-                outx_tag(l2, "typeBoundGenericProcedure");
+                outx_printi(l2, "<typeBoundGenericProcedure");
+                if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_OPERATOR) {
+                    outx_true(TRUE, "is_operator");
+                }
+                if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT) {
+                    outx_true(TRUE, "is_assignment");
+                }
+                outx_printi(0,">\n");
                 outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
                 outx_tag(l3, "binding");
                 FOREACH_ID(binding, TBP_BINDING(id)) {

@@ -1512,6 +1512,7 @@ public class XfDecompileDomVisitor {
             Node nameNode = XmDomUtil.getElement(n, "name");
             String name = XmDomUtil.getContentText(nameNode);
             if (XmDomUtil.getAttrBool(n, "is_operator")) {
+                writer.writeToken("OPERATOR");
                 writer.writeToken("(");
                 writer.writeToken(name);
                 writer.writeToken(")");
