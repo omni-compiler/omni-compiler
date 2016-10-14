@@ -1496,6 +1496,10 @@ classify_statement()
             return BACKSPACE_P;
         }
         break;
+
+    case GENERIC:
+        may_generic_spec = TRUE;
+        break;
     }
     return(st_class);
 
