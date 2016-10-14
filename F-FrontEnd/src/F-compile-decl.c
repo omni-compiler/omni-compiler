@@ -4704,7 +4704,7 @@ compile_type_bound_procedure(expr x)
                     error_at_node(x, "PUBLIC is already specified.");
                     return;
                 }
-                if (access_attr_flags & (TYPE_ATTR_PRIVATE | TYPE_ATTR_PROTECTED)) {
+                if (access_attr_flags & (TYPE_ATTR_PRIVATE)) {
                     error_at_node(x, "access specs are conflicted.");
                     return;
                 }
@@ -4715,22 +4715,11 @@ compile_type_bound_procedure(expr x)
                     error_at_node(x, "PRIVATE is already specified.");
                     return;
                 }
-                if (access_attr_flags & (TYPE_ATTR_PUBLIC | TYPE_ATTR_PROTECTED)) {
+                if (access_attr_flags & (TYPE_ATTR_PUBLIC)) {
                     error_at_node(x, "access specs are conflicted.");
                     return;
                 }
                 access_attr_flags |= TYPE_ATTR_PRIVATE;
-                break;
-            case F03_PROTECTED_SPEC:
-                if (access_attr_flags & TYPE_ATTR_PROTECTED) {
-                    error_at_node(x, "PROTECTED is already specified.");
-                    return;
-                }
-                if (access_attr_flags & (TYPE_ATTR_PUBLIC | TYPE_ATTR_PRIVATE)) {
-                    error_at_node(x, "access specs are conflicted.");
-                    return;
-                }
-                access_attr_flags |= TYPE_ATTR_PROTECTED;
                 break;
             default:
                 error_at_node(x, "unexpected expression");
@@ -4842,7 +4831,7 @@ compile_type_generic_procedure(expr x)
                         error_at_node(x, "PUBLIC is already specified.");
                         return;
                     }
-                    if (access_attr_flags & (TYPE_ATTR_PRIVATE | TYPE_ATTR_PROTECTED)) {
+                    if (access_attr_flags & (TYPE_ATTR_PRIVATE)) {
                         error_at_node(x, "access specs are conflicted.");
                         return;
                     }
@@ -4853,22 +4842,11 @@ compile_type_generic_procedure(expr x)
                         error_at_node(x, "PRIVATE is already specified.");
                         return;
                     }
-                    if (access_attr_flags & (TYPE_ATTR_PUBLIC | TYPE_ATTR_PROTECTED)) {
+                    if (access_attr_flags & (TYPE_ATTR_PUBLIC)) {
                         error_at_node(x, "access specs are conflicted.");
                         return;
                     }
                     access_attr_flags |= TYPE_ATTR_PRIVATE;
-                    break;
-                case F03_PROTECTED_SPEC:
-                    if (access_attr_flags & TYPE_ATTR_PROTECTED) {
-                        error_at_node(x, "PROTECTED is already specified.");
-                        return;
-                    }
-                    if (access_attr_flags & (TYPE_ATTR_PUBLIC | TYPE_ATTR_PRIVATE)) {
-                        error_at_node(x, "access specs are conflicted.");
-                        return;
-                    }
-                    access_attr_flags |= TYPE_ATTR_PROTECTED;
                     break;
                 default:
                     error_at_node(x, "unexpected expression");
