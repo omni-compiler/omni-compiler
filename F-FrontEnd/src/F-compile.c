@@ -537,6 +537,7 @@ void compile_statement1(int st_no, expr x)
         if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
             /* For type bound procedure */
             CURRENT_STATE = IN_TYPE_BOUND_PROCS;
+            TYPE_UNSET_INTERNAL_PRIVATE(CTL_STRUCT_TYPEDESC(ctl_top));
         } else {
             check_INEXEC();
             push_unit_ctl(INCONT);
@@ -1123,8 +1124,11 @@ void compile_statement1(int st_no, expr x)
             // Expects inside the derived-type declaration
             /* NOTE: PRIVATE and PROTECTED can be written in the derived-type declaration */
             CURRENT_STATE = INDCL;
+        } else if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
+            /* PRIVATE statement in type bound proce allowed*/
+            // TODO check no type bound procedure before this statement
+            check_INDCL();
         }
-        check_INDCL();
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsPrivate);
         break;
 

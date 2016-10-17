@@ -4773,6 +4773,7 @@ compile_type_generic_procedure(expr x)
 
     uint32_t access_attr_flags = 0;
     uint32_t binding_attr_flags = 0;
+    int is_internal_private = FALSE;
 
     ID id = NULL;
     ID last_ip = NULL;
@@ -4783,6 +4784,7 @@ compile_type_generic_procedure(expr x)
 
     assert(CTL_TYPE(ctl_top) == CTL_STRUCT);
     struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
+    is_internal_private = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
 
     switch (EXPR_CODE(generis_spec)) {
         case IDENT:
@@ -4857,6 +4859,8 @@ compile_type_generic_procedure(expr x)
                     break;
             }
         }
+    } else if (is_internal_private) {
+        access_attr_flags |= TYPE_ATTR_PRIVATE;
     }
 
     FOR_ITEMS_IN_LIST(lp, id_list) {
