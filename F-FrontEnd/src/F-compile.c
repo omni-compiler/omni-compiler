@@ -2002,8 +2002,9 @@ end_declaration()
         /*
          * Update type bound procedure
          */
-        update_type_bound_procedures(PARENT_LOCAL_STRUCT_DECLS, CURRENT_EXT_ID,
-                                     FALSE);
+        if (unit_ctl_level > 0)
+            update_type_bound_procedures(PARENT_LOCAL_STRUCT_DECLS, CURRENT_EXT_ID,
+                                         FALSE);
     }
 
     /*
