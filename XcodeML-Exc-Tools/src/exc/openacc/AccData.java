@@ -80,8 +80,8 @@ class AccData extends AccDirective {
       int finalizeKind = 0;
       finalizeBlockList.add(makeFinalizeFuncCallBlock(var, finalizeKind));
 
-      copyinBlockList.add(makeCopyBlock(var, true));
-      copyoutBlockList.add(makeCopyBlock(var, false));
+      copyinBlockList.add(makeCopyBlock(var, true, getAsyncExpr()));
+      copyoutBlockList.add(makeCopyBlock(var, false, getAsyncExpr()));
     }
   }
 
@@ -137,14 +137,14 @@ class AccData extends AccDirective {
     return ACCutil.createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDescId.Ref(), Xcons.IntConstant(finalizeKind)));
   }
 
-  Block makeCopyBlock(ACCvar var, boolean isHostToDevice){
+  Block makeCopyBlock(ACCvar var, boolean isHostToDevice, Xobject async_num){
     boolean doCopy = (isHostToDevice)? var.copiesHtoD() : var.copiesDtoH();
     if(doCopy){
       String copyFuncName = getCopyFuncName(var);
       Ident hostDescId = var.getHostDesc();
       int direction = (isHostToDevice)? ACC.HOST_TO_DEVICE : ACC.DEVICE_TO_HOST;
       return ACCutil.createFuncCallBlock(copyFuncName,
-              Xcons.List(hostDescId.Ref(), Xcons.IntConstant(direction), Xcons.IntConstant(ACC.ACC_ASYNC_SYNC)));
+              Xcons.List(hostDescId.Ref(), Xcons.IntConstant(direction), async_num));
     }else{
       return Bcons.emptyBlock();
     }
