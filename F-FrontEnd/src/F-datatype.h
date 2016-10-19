@@ -153,8 +153,22 @@ typedef struct type_descriptor
     int is_reshaped_type;       /* A bool flag to specify this type is
                                  * genereted by reshape() intrinsic. */
 
-    struct external_symbol *extID;      /* for function_type, external symbol  */
-
+    struct external_symbol *extID;      /* for function_type, external symbol */
+    struct ident_descriptor * generics; /* for generic type */
+#if 0
+    union {
+        struct {
+            struct type_descriptor * return_type;
+            struct type_descriptor_array * args;
+            struct type_descriptor_array * bind_from;
+        } procedure;
+        struct {
+            int is_operator;
+            int is_assingnment;
+            struct type_descriptor_array * procedures;
+        } generic;
+    } function_info;
+#endif
 } *TYPE_DESC;
 
 struct type_attr_check {
@@ -428,5 +442,26 @@ typedef enum {
                                  * closed. */
 } pragma_status_t;
 #endif
+
+#define GENERIC_TYPE_GENERICS(tp) ((tp)->generics)
+
+
+#if 0
+#define PROCEDURE_TYPE_ARGS(tp)   (tp)
+#define PROCEDURE_TYPE_RET(tp)    (tp)
+#define GENERIC_TYPE_TYPES(tp)    (tp)
+
+#define GENERIC_IS_OPERATOR(tp)   (((tp)->function_info.generic).is_operator)
+#define GENERIC_IS_ASSIGNMENT(tp) (((tp)->function_info.generic).is_assingnment)
+
+struct type_descriptor_array {
+    struct type_descriptor_array * next;
+    SYMBOL name;
+    TYPE_DESC elm;
+};
+
+extern int type_descriptor_array_add(struct type_descriptor_array **, TYPE_DESC);
+#endif
+
 
 #endif /* _F_DATATYPE_H_ */

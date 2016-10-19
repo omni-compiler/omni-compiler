@@ -3337,6 +3337,12 @@ compile_array_constructor(expr x)
 }
 
 
+static TYPE_DESC
+chose_procedure_by_args(ID procs, expv args) {
+    return NULL;
+}
+
+
 expv
 compile_type_bound_procedure_call(expv memberRef, expr args) {
     expv v;
@@ -3350,19 +3356,28 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
     a = compile_args(args);
 
     ftp = EXPV_TYPE(memberRef);
-    ep = TYPE_EXT_ID(ftp);
-    if (ep != NULL && EXT_PROC_CLASS(ep) == EP_INTERFACE) {
-        tbp_proc_type = chose_module_procedure_by_args(EXT_PROC_INTR_DEF_EXT_IDS(ep), a);
+    if (GENERIC_TYPE_GENERICS(ftp)) {
+        // for type-bound generic
+        tbp_proc_type = chose_procedure_by_args(GENERIC_TYPE_GENERICS(ftp), a);
         if (tbp_proc_type != NULL) {
             ret_type = tbp_proc_type;
         }
     } else {
-        ret_type = TYPE_REF(ftp);
+        // for type-bound procedure
+        if ((ep = TYPE_EXT_ID(ftp)) != NULL) {
+            ret_type = EXT_PROC_TYPE(ep);
+        }
     }
 
     v = list2(FUNCTION_CALL, memberRef, a);
 
-    EXPV_TYPE(v) = ret_type?(IS_GENERIC_TYPE(ret_type)?type_GNUMERIC_ALL:ret_type):type_GNUMERIC_ALL;
+    if (ret_type == NULL) {
+        ret_type = type_GNUMERIC_ALL;
+    } else if (IS_GENERIC_TYPE(ret_type)) {
+        ret_type = type_GNUMERIC_ALL;
+    }
+
+    EXPV_TYPE(v) = ret_type;
 
     return v;
 }

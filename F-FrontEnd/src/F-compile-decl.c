@@ -3565,11 +3565,74 @@ check_type_parameters_declared(CTL ctl)
     }
 }
 
+static int
+is_operator_proc(EXT_ID ep)
+{
+    TYPE_DESC ret_type = EXT_PROC_TYPE(ep);
+    expv args = EXT_PROC_ARGS(ep);
+    TYPE_DESC tp;
+
+    if (IS_SUBR(ret_type)) {
+        return FALSE;
+    }
+
+    if (!EXPR_HAS_ARG1(args) || !EXPR_HAS_ARG2(args) || EXPR_HAS_ARG3(args)) {
+        return FALSE;
+    }
+
+    tp = EXPV_TYPE(EXPR_ARG1(args));
+    if (TYPE_IS_INTENT_IN(tp)) {
+        return FALSE;
+    }
+
+    tp = EXPV_TYPE(EXPR_ARG2(args));
+    if (TYPE_IS_INTENT_IN(tp)) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+static int
+is_assignment_proc(EXT_ID ep)
+{
+    TYPE_DESC ret_type = EXT_PROC_TYPE(ep);
+    expv args = EXT_PROC_ARGS(ep);
+    TYPE_DESC tp;
+
+    if (!IS_SUBR(ret_type)) {
+        return FALSE;
+    }
+
+    if (!EXPR_HAS_ARG1(args) || !EXPR_HAS_ARG2(args) || EXPR_HAS_ARG3(args)) {
+        return FALSE;
+    }
+
+    tp = EXPV_TYPE(EXPR_ARG1(args));
+    if (TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp)) {
+        return FALSE;
+    }
+
+    tp = EXPV_TYPE(EXPR_ARG2(args));
+    if (TYPE_IS_INTENT_IN(tp)) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 
 /* compile end type statement */
 void
 compile_struct_decl_end()
 {
+    ID mem;
+    ID binding;
+    ID bindto;
+    TYPE_DESC stp;
+    EXT_ID ep;
+
     if(CTL_TYPE(ctl_top) != CTL_STRUCT) {
         error("illegal derived type declaration end");
         return;
@@ -3580,8 +3643,52 @@ compile_struct_decl_end()
     if (endlineno_flag)
       EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
 
-    TYPE_IS_DECLARED(EXPV_TYPE(CTL_BLOCK(ctl_top))) = TRUE;
-    
+    stp = EXPV_TYPE(CTL_BLOCK(ctl_top));
+
+    TYPE_IS_DECLARED(stp) = TRUE;
+
+    /* check for type bound procedure */
+
+    FOREACH_MEMBER(mem, stp) {
+        if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC &&
+            TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
+            FOREACH_ID(binding, TBP_BINDING(mem)) {
+                bindto = find_struct_member(stp, ID_SYM(binding));
+                if (bindto == NULL ||
+                    (ID_CLASS(mem) == CL_TYPE_BOUND_PROC &&
+                     !(TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_GENERIC))) {
+                    error("generic should bound to type-bound procedures");
+                } else {
+                    TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) &
+                            (TYPE_BOUND_PROCEDURE_IS_OPERATOR |
+                             TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT);
+
+                    if (TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_OPERATOR &&
+                        TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT) {
+                        // TODO fix message
+                        error("operator and assingnment shouldn't co-exist");
+                    }
+                    if ((ep = TYPE_EXT_ID(ID_TYPE(bindto))) != NULL) {
+                        // already bounded, so check type
+                        if (TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_OPERATOR) {
+                            if (!is_operator_proc(ep)) {
+                                error("not operator");
+                                return;
+                            }
+                        }
+                        if (TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT) {
+                            if (!is_assignment_proc(ep)) {
+                                error("not assiginment");
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
     pop_ctl();
 }
 
@@ -4875,6 +4982,8 @@ compile_type_generic_procedure(expr x)
     TBP_BINDING_ATTRS(id) = binding_attr_flags | TYPE_BOUND_PROCEDURE_IS_GENERIC;
     TYPE_ATTR_FLAGS(id) = access_attr_flags;
     ID_TYPE(id) = function_type(NULL);
-    TYPE_EXT_ID(ID_TYPE(id)) = new_external_id(NULL);
+    GENERIC_TYPE_GENERICS(ID_TYPE(id)) = TBP_BINDING(id); // dirty code
     EXT_PROC_CLASS(TYPE_EXT_ID(ID_TYPE(id))) = EP_INTERFACE; // dirty code
+
+
 }
