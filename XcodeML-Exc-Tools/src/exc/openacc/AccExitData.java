@@ -25,7 +25,7 @@ class AccExitData extends AccData{
       int finalizeKind = 2;
       finalizeBlockList.add(makeFinalizeFuncCallBlock(var, finalizeKind));
 
-      copyoutBlockList.add(makeCopyBlock(var, false));
+      copyoutBlockList.add(makeCopyBlock(var, false, getAsyncExpr()));
     }
   }
 
