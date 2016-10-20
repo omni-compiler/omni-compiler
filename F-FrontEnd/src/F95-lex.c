@@ -1422,6 +1422,7 @@ classify_statement()
     case EXTERNAL:
     case FUNCTION:
     case GOTO:
+    case IMPORT:
     case IMPLICIT:
     case INCLUDE:
     case INTENT:
@@ -3775,6 +3776,7 @@ struct keyword_token keywords[ ] =
     { "goto",           GOTO  },
     { "go",             KW_GO  },
     { "if",             LOGIF },
+    { "import",         IMPORT },
     { "images",         KW_IMAGES },    /* #060 coarray */
     { "implicit",       IMPLICIT },
     { "include",        INCLUDE },
