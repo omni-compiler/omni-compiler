@@ -50,39 +50,43 @@ class AccData extends AccDirective {
     if(isDisabled()) return;
 
     for(ACCvar var : _info.getDeclarativeACCvarList()){
-      //FIXME
-      {
-        ACCvar redVar = _info.findReductionACCvar(var.getSymbol());
-        if (redVar != null) {
-          continue;
-        }
-      }
-
-      if(var.getParent() != null) continue;
-
-      if(var.isPrivate() || var.isFirstprivate()){
-        continue;
-      }
-
-      if(var.isDeviceptr()) continue;
-
-      String varName = var.getName();
-      StorageClass storageClass = var.getId().getStorageClass();
-      var.setHostDesc(declHostDesc(varName, storageClass));
-      var.setDevicePtr(declDevicePtr(varName, storageClass));
-
-      if(_info.getPragma() == ACCpragma.DECLARE && storageClass == StorageClass.EXTERN){
-        continue;
-      }
-
-      initBlockList.add(makeInitFuncCallBlock(var));
-
-      int finalizeKind = 0;
-      finalizeBlockList.add(makeFinalizeFuncCallBlock(var, finalizeKind));
-
-      copyinBlockList.add(makeCopyBlock(var, true, getAsyncExpr()));
-      copyoutBlockList.add(makeCopyBlock(var, false, getAsyncExpr()));
+      generate(var);
     }
+  }
+
+  void generate(ACCvar var) throws ACCexception{
+    //FIXME
+    {
+      ACCvar redVar = _info.findReductionACCvar(var.getSymbol());
+      if (redVar != null) {
+        return;
+      }
+    }
+
+    if(var.getParent() != null) return;
+
+    if(var.isPrivate() || var.isFirstprivate()){
+      return;
+    }
+
+    if(var.isDeviceptr()) return;
+
+    String varName = var.getName();
+    StorageClass storageClass = var.getId().getStorageClass();
+    var.setHostDesc(declHostDesc(varName, storageClass));
+    var.setDevicePtr(declDevicePtr(varName, storageClass));
+
+    if(_info.getPragma() == ACCpragma.DECLARE && storageClass == StorageClass.EXTERN){
+      return;
+    }
+
+    initBlockList.add(makeInitFuncCallBlock(var));
+
+    int finalizeKind = 0;
+    finalizeBlockList.add(makeFinalizeFuncCallBlock(var, finalizeKind));
+
+    copyinBlockList.add(makeCopyBlock(var, true, getAsyncExpr()));
+    copyoutBlockList.add(makeCopyBlock(var, false, getAsyncExpr()));
   }
 
   Ident declDevicePtr(String varSymbol, StorageClass storageClass){
