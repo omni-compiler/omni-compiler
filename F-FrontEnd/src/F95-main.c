@@ -102,10 +102,10 @@ char *myName;
 char *includeDirv[MAXINCLUDEDIRV + 1];
 int includeDirvI = 0;
 
-/* has termination element.  */
-//char *modincludeDirv[MAXMODINCLUDEDIRV + 1];
-char *modincludeDirv = NULL;
-//int modincludeDirvI = 0;
+/* user module search path */
+char *modincludeDirv[MAXMODINCLUDEDIRV + 1];
+int modincludeDirvI = 0;
+
 /* -MC?  */
 int flag_module_compile = FALSE;
 
@@ -329,15 +329,13 @@ char *argv[];
                 /* -M<anotherDir> */
                 path = argv[0] + 2;
             }
-	    modincludeDirv = path;
-            /* if (modincludeDirvI < 256) { */
-            /*     modincludeDirv[modincludeDirvI++] = path; */
-            /* } else { */
-            /*     cmd_error_exit( */
-            /*         "over the maximum module include search dir. vector, %d", */
-            /*         MAXMODINCLUDEDIRV); */
-            /* } */
-        
+            if(modincludeDirvI < MAXMODINCLUDEDIRV){
+                modincludeDirv[modincludeDirvI++] = path;
+            } else {
+                cmd_error_exit(
+                     "over the maximum module include search dir. vector, %d",
+                     MAXMODINCLUDEDIRV);
+            }
         } else if (strcmp(argv[0], "-fintrinsic-xmodules-path") == 0) {
             char *path;
             if (strlen(argv[0]) == 25) {
@@ -540,14 +538,16 @@ search_include_path(const char * filename)
         return filename;
     }
 
-    if (modincludeDirv){
-        strcpy(path, modincludeDirv);
-        strcat(path, "/");
-        strcat(path, filename);
-
-        if ((fp = fopen(path, "r")) != NULL) {
-            fclose(fp);
-            return path;
+    if (modincludeDirvI > 0){
+        // Iterate over available module search path
+        for(i = 0; i < modincludeDirvI; i++){
+            strcpy(path, modincludeDirv[i]);
+            strcat(path, "/");
+            strcat(path, filename);
+            if ((fp = fopen(path, "r")) != NULL) {
+                fclose(fp);
+                return path;
+            }
         }
     }
 
