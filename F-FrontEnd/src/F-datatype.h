@@ -433,6 +433,16 @@ extern TYPE_DESC basic_type_desc[];
     if ((tp) != NULL && TYPE_TYPE_PARAMS(tp) != NULL) \
         FOREACH_ID(mp, TYPE_TYPE_PARAMS(tp))
 
+#define FOREACH_TYPE_BOUND_PROCEDURE(/* ID */ mp, /* TYPE_DESC */ tp) \
+    FOREACH_MEMBER(mp, tp) \
+    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC && \
+        !(TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_GENERIC))
+
+#define FOREACH_TYPE_BOUND_GENERIC(/* ID */ mp, /* TYPE_DESC */ tp) \
+    FOREACH_MEMBER(mp, tp) \
+    if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC && \
+        (TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_GENERIC))
+
 #if 0
 typedef enum {
     PRAGMA_NOT_IN_SCOPE = 0,	/* The sentinel is not appeared, yet. */

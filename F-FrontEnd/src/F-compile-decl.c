@@ -4843,6 +4843,7 @@ compile_type_bound_procedure(expr x)
                 continue;
             }
             id = declare_ident(EXPR_SYM(LIST_ITEM(lp)), CL_TYPE_BOUND_PROC);
+            ID_LINE(id) = EXPR_LINE(x);
             TBP_BINDING(id) = interface;
             TBP_BINDING_ATTRS(id) = binding_attr_flags;
             TBP_PASS_ARG(id) = pass_arg;
@@ -4861,6 +4862,7 @@ compile_type_bound_procedure(expr x)
                 error_at_node(x, "unexpected expression");
                 continue;
             }
+            ID_LINE(id) = EXPR_LINE(x);
 
             TBP_BINDING(id) = procedure;
             TBP_BINDING_ATTRS(id) = binding_attr_flags;

@@ -2734,6 +2734,28 @@ check_labels_in_block(BLOCK_ENV block) {
 }
 
 
+
+void
+check_type_bound_procedure()
+{
+    ID mem;
+    TYPE_DESC tp;
+    for (tp = LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
+        /*
+         * First, update type-bound procedure
+         */
+        FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
+            if (TYPE_EXT_ID(ID_TYPE(mem)) == NULL) {
+                SYMBOL bindto = ID_SYM(TBP_BINDING(mem)?:mem);
+                error_at_id(mem,
+                            "\"%s\" must be a module procedure or "
+                            "an external procedure with an explicit interface",
+                            SYM_NAME(bindto));
+            }
+        }
+    }
+}
+
 /* end of procedure. generate variables, epilogs, and prologs */
 static void
 end_procedure()
@@ -3056,6 +3078,8 @@ end_procedure()
             error("internal error, fail to export module.");
             exit(1);
         }
+
+        check_type_bound_procedure();
     }
 
     /* check control nesting */
