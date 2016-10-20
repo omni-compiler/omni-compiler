@@ -1,3 +1,8 @@
-do i=1,10
-  f(data(i))=1.0
-enddo
+
+  real v[*],u[*]
+
+  v[1]=u[2]
+  end
+
+
+  

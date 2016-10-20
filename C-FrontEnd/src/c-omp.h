@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 #ifndef _C_OMP_H
 #define _C_OMP_H
 
@@ -51,7 +45,9 @@ enum OMP_pragma_clause {
     OMP_DIR_IF=21,
     OMP_DIR_NOWAIT=22,
     OMP_DIR_SCHEDULE=23,
-    OMP_DIR_NUM_THREADS=24
+    OMP_DIR_NUM_THREADS=24,
+    
+    OMP_COLLAPSE=25
 };
 
 enum OMP_sched_clause {

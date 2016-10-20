@@ -40,13 +40,13 @@ expv_numeric_const_reduce(left, right, code, v)
     }
 
     if (IS_NUMERIC_CONST_V(left)) {
-        if(expr_has_param(left))
+        if(expr_has_param(left) || expr_has_type_param(left))
             goto NonReducedReturn;
         nL = expv_reduce_conv_const(tp, left);
     }
     if (right != NULL) {
         if (IS_NUMERIC_CONST_V(right)) {
-            if(expr_has_param(right))
+            if(expr_has_param(right) || expr_has_type_param(right))
                 goto NonReducedReturn;
             nR = expv_reduce_conv_const(tp, right);
         }
@@ -237,6 +237,11 @@ expv_reduce(expv v, int doParamReduce)
             LIST_ITEM(lp) = expv_reduce(LIST_ITEM(lp), doParamReduce);
         return v;
     }
+
+    if(code == F95_STRUCT_CONSTRUCTOR) {
+        return v;
+    }
+
 
     /* internal node */
     left = expv_reduce(EXPV_LEFT(v), doParamReduce);
@@ -732,4 +737,19 @@ expv_complex_const_reduce(v, tp)
 
     return expv_cons(COMPLEX_CONSTANT, tp, vR, vI);
 }
+
+
+int
+expv_is_constant_typeof(expv x, BASIC_DATA_TYPE bt)
+{
+    return expr_is_constant_typeof(x, bt);
+}
+
+
+int
+expv_is_constant(expv x)
+{
+    return expv_is_constant_typeof(x, TYPE_UNKNOWN);
+}
+
 

@@ -107,15 +107,19 @@ static void _ACC_gpu_calc_thread_params(unsigned long long *total_iter,
 }
 
 
-__device__
-static void _ACC_calc_niter(int *niter, int init, int cond, int step){
-  *niter = _ACC_M_COUNT_TRIPLETi(init, cond - 1, step);
-}
-
 template<typename T, typename T0, typename T1, typename T2>
 __device__
-static void _ACC_calc_niter(T *niter, T0 init, T1 cond, T2 step){
-  *niter = _ACC_M_COUNT_TRIPLETi(init, cond - 1, step);
+static inline
+void _ACC_calc_niter(T *niter, const T0 init, const T1 cond, const T2 step)
+{
+  *niter = (cond - init + (step > 0? -1 : 1)) / step + 1;
+  /*
+  if(step > 0){
+    *niter = _ACC_M_COUNT_TRIPLETi(init, cond - 1, step);
+  }else{
+    *niter = _ACC_M_COUNT_TRIPLETi(cond + 1, init, -step);
+  }
+  */
 }
 
 __device__
@@ -129,12 +133,6 @@ __device__
 static int _ACC_calc_vidx(T *idx, T0 niter, T1 total_idx){
   *idx = total_idx % niter;
   return total_idx / niter;
-}
-
-template<typename T, typename T0, typename T1, typename T2>
-__device__
-static void _ACC_gpu_init_iter_cnt(T *cnt, T0 init, T1 cond, T2 step){
-  *cnt = _ACC_M_COUNT_TRIPLETi(init, cond - 1, step);
 }
 
 __device__

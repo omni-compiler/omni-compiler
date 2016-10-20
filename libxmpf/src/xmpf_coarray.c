@@ -1,4 +1,4 @@
-#include "xmpf_internal.h"
+#include "xmpf_internal_coarray.h"
 
 #define DIV_CEILING(m,n)  (((m)-1)/(n)+1)
 
@@ -315,8 +315,6 @@ void _XMPF_coarrayFatal(char *format, ...)
   va_end(list);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   fprintf(stderr, "CAF[%d] %s\n", rank, work);
-
-  //xmpf_finalize_each__();   This causes deadlock sometimes.
 
   _XMP_fatal("...fatal error in XMP/F Coarray runtime");
 }

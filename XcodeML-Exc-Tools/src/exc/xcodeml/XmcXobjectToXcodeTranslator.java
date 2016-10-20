@@ -13,11 +13,14 @@ import exc.object.StorageClass;
 import exc.object.Xcode;
 import exc.object.Xcons;
 import exc.object.XobjList;
+import exc.object.XobjInt;
 import exc.object.XobjString;
 import exc.object.Xobject;
 import exc.object.XobjectDef;
 import exc.object.XobjectDefEnv;
 import exc.object.Xtype;
+import exc.object.CompositeType;
+import exc.object.StructType;
 
 public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     private XcodeMLNameTable_C nameTable = new XcodeMLNameTable_C();
@@ -26,11 +29,15 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (xobj == null) {
             return null;
         }
-
-        Element e = createElement("name");
+        Element e = (xobj instanceof XobjString && ((XobjString)xobj).isOp()) ?
+                    createElement("operator") : createElement("name");
         if (xobj.Type() != null) {
             addAttributes(e,
                           "type", xobj.Type().getXcodeCId());
+        }
+        if (xobj instanceof XobjString) {
+            addAttributes(e,
+                          "fullName", ((XobjString)xobj).getAlias());
         }
         addChildNodes(e, trans(xobj.getString()));
 
@@ -77,9 +84,15 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         }
 
         // name
-        addChildNodes(e,
-                      addChildNodes(createElement("name"),
-                                    trans(ident.getName())));
+        Element en = ident.isOp() ? createElement("operator") : createElement("name");
+        String full_name = ident.getFullName();
+        if (full_name != null) {
+            addAttributes(en, "fullName", full_name);
+        }
+        addChildNodes(e, addChildNodes(en, trans(ident.getName())));
+
+        // public, protected or private
+        addAttributes(e, "access", ident.getAccessStr());
 
         // sclass
         if (ident.getStorageClass() != null) {
@@ -278,8 +291,14 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                                   transSymbols(type.getMemberList()));
                 break;
             case Xtype.STRUCT:
-                e = addChildNodes(createTypeElement("structType", type),
-                                  transSymbols(type.getMemberList()));
+                e = ((StructType)type).isClass() ? createTypeElement("classType", type) :
+                                                   createTypeElement("structType", type);
+                XobjString tagNames = ((CompositeType)type).getTagNames();
+                if (tagNames != null) {
+                  Element e_tagnames = transName(tagNames);
+                  e = addChildNodes(e, e_tagnames);
+                }
+                e = addChildNodes(e, transSymbols(type.getMemberList()));
                 break;
             case Xtype.UNION:
                 e = addChildNodes(createTypeElement("unionType", type),
@@ -494,6 +513,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         case FUNCTION_DECL:
             e = addChildNodes(createElement(name),
                               transName(xobj.getArg(0)),
+                              trans(xobj.getArgOrNull(1)),
                               trans(xobj.getArgOrNull(2)));
             break;
 
@@ -656,12 +676,20 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case VAR:
             case VAR_ADDR:
                 nSymAddr = createElement("varAddr");
+                if (operand.getScope() != null) {
+                    addAttributes(nSymAddr,
+                                  "scope", operand.getScope().toXcodeString());
+                }
                 break;
             case ARRAY_REF:
               isArrayRef = true;
               break;
             case ARRAY_ADDR: /* illegal but convert */
                 nSymAddr = createElement("arrayAddr");
+                if (operand.getScope() != null) {
+                    addAttributes(nSymAddr,
+                                  "scope", operand.getScope().toXcodeString());
+                }
                 break;
             case FUNC_ADDR:
                 nSymAddr = createElement("funcAddr");
@@ -698,26 +726,37 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
         case FUNCTION_CALL: {
             e = createElement(name);
-            Element nFunc = createElement("function");
+            Element nFunc;
+            switch (xobj.getArg(0).Opcode()) {
+            case MEMBER_REF:
+            case CPP_OPERATOR_ADDR:
+              nFunc = transExprOrError(xobj.getArg(0));
+              break;
+            case FUNC_ADDR:
+            case POINTER_REF:
+            default:
+              nFunc = createElement("function");
+              addChildNodes(nFunc,
+                            transExprOrError(xobj.getArg(0)));
+            }
             Element nArgs = createElement("arguments");
-            addChildNodes(nFunc,
-                          transExprOrError(xobj.getArg(0)));
             XobjList params = (XobjList)xobj.getArg(1);
             if (params != null) {
                 for (Xobject a : params) {
                     addChildNodes(nArgs, transExprOrError(a));
                 }
             }
-
-            addChildNodes(e,
-                          nFunc,
-                          nArgs);
+            addChildNodes(e, nFunc, nArgs);
         }
             break;
         case SIZE_OF_EXPR:
             e = transSizeOrAlignOf(xobj);
             break;
         case CAST_EXPR:
+        case CPP_CONST_CAST_EXPR:
+        case CPP_STATIC_CAST_EXPR:
+        case CPP_REINTERPRET_CAST_EXPR:
+        case CPP_DYNAMIC_CAST_EXPR:
             e = addChildNodes(createElement(name),
                               transOrError(xobj.getArg(0)));
             break;
@@ -807,6 +846,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             }
             break;
         case FUNC_ADDR:
+        case CPP_OPERATOR_ADDR:
             e = addChildNodes(createElement(name),
                               trans(xobj.getName()));
             break;
@@ -955,9 +995,6 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         // directive
         case PRAGMA_LINE:
-            e = addChildNodes(createElement(name),
-                              trans(xobj.getArg(0).getString()));
-            break;
         case TEXT:
             e = addChildNodes(createElement(name),
                               trans(xobj.getArg(0).getString()));
@@ -987,7 +1024,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 			  Xobject vars = a.getArg(1);
 			  if (vars != null){
 
-			    if (vars instanceof XobjString){
+			    if (vars instanceof XobjString || vars instanceof XobjInt){
 			      addChildNode(g, trans(vars));
 			    }
 			    else {
@@ -1114,10 +1151,27 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNodes(createElement(name),
                               trans(xobj.getArg(0)));
             break;
+        case CPP_DECL_NAMESPACE:
+        case CPP_CLASS_DECL:
+            e = createElement(name);
+            for (Xobject a : (XobjList)xobj) {
+                Element b;
+                if (a instanceof Ident)
+                   b = transIdent((Ident)a);
+                else
+                   b = trans(a);
+                addChildNode(e, b);
+            }
+            break;
         // case ADDR_OF_EXPR:
         //     e = addChildNodes(createElement(name),
         //                       transExpr(xobj.getArg(0)));
         //     break;
+        case CPP_CONSTRUCT_EXPR_CLASS_STATEMENT:
+        case CPP_THIS_EXPR:
+        case CPP_NESTEDNAMESPECIFIER_TYPESPEC:
+            e = createElement(name);
+            break;
         default:
             fatal_dump("cannot convert Xcode to XcodeML.", xobj);
         }
@@ -1159,7 +1213,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
     }
 
     /* Copied from XmcXobjectToXmObjTranslator.java */
-    private XobjList getDeclForNotDeclared(XobjList identList) {
+    public static XobjList getDeclForNotDeclared(XobjList identList) {
         if (identList == null) {
             return null;
         }

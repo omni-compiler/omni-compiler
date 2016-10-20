@@ -345,7 +345,7 @@ char *argv[];
                 argv++;
                 path = argv[0];
             } else {
-                /* -M<intrinsic xmodule dir> */
+                /* -fintrinsic-xmodules-path<intrinsic xmodule dir> */
                 path = argv[0] + 25;
             }
             xmoduleIncludeDirv = path;

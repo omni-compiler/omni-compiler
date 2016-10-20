@@ -1,6 +1,5 @@
-###DIRS=MIX FE ALLOC LIB GET PUT SCOPE CFOLD
-DIRS=MIX  ALLOC LIB GET PUT SCOPE CFOLD
-DIRS_SUBMIT=MIX ALLOC LIB GET PUT SCOPE CFOLD
+DIRS=MIX ALLOC LIB GET PUT SCOPE CFOLD STRUCT
+DIRS_SUBMIT=MIX ALLOC LIB GET PUT SCOPE CFOLD STRUCT
 
 # To make all executable files, type:
 #   make [OPT=--debug] [all|all4|all6|all7|all7g]
@@ -16,100 +15,101 @@ DIRS_SUBMIT=MIX ALLOC LIB GET PUT SCOPE CFOLD
 #   execution of the program.
 # For more infos., see the blue note and comment in XMPtransCoarrayRun.java
 
+MAKEDEF = "ONESIDED_LAYER=`find_layer.sh`"
 
 .PHONY: clean all run rerun submit showlog cleanlog
 
 all:
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d all || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d all || exit 1; \
 	done
 
 all4:
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d all4 || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d all4 || exit 1; \
 	done
 
 all6:
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d all6 || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d all6 || exit 1; \
 	done
 
 all7:
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d all7 || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d all7 || exit 1; \
 	done
 
 all7g:
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d all7g || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d all7g || exit 1; \
 	done
 
 run:
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d -j1 run || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d -j1 run || exit 1; \
 	done
 
 run4:
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d -j1 run4 || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d -j1 run4 || exit 1; \
 	done
 
 run6:
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d -j1 run6 || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d -j1 run6 || exit 1; \
 	done
 
 run7:
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d -j1 run7 || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d -j1 run7 || exit 1; \
 	done
 
 run7g:
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d -j1 run7g || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d -j1 run7g || exit 1; \
 	done
 
 rerun:
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d -j1 rerun || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d -j1 rerun || exit 1; \
 	done
 
 submit:
 	for d in $(DIRS_SUBMIT); do \
-	  $(MAKE) -C $$d submit || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d submit || exit 1; \
 	done
 
 submit4:
 	for d in $(DIRS_SUBMIT); do \
-	  $(MAKE) -C $$d submit4 || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d submit4 || exit 1; \
 	done
 
 submit6:
 	for d in $(DIRS_SUBMIT); do \
-	  $(MAKE) -C $$d submit6 || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d submit6 || exit 1; \
 	done
 
 submit7:
 	for d in $(DIRS_SUBMIT); do \
-	  $(MAKE) -C $$d submit7 || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d submit7 || exit 1; \
 	done
 
 submit7g:
 	for d in $(DIRS_SUBMIT); do \
-	  $(MAKE) -C $$d submit7g || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d submit7g || exit 1; \
 	done
 
 showlog:
 	for d in $(DIRS_SUBMIT); do \
-	  $(MAKE) -C $$d showlog || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d showlog || exit 1; \
 	done
 
 cleanlog:
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d cleanlog || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d cleanlog || exit 1; \
 	done
 
 clean: cleanlog
 	for d in $(DIRS); do \
-	  $(MAKE) -C $$d clean || exit 1; \
+	  $(MAKE) $(MAKEDEF) -C $$d clean || exit 1; \
 	done

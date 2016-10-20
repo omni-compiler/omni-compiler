@@ -81,6 +81,12 @@ extern "C" {
 
   /* unmaps device data from the specified host data*/
   void acc_unmap_data( void* );
+
+  /* returns the NVIDIA CUDA stream handle in use for the current device for the specified async value */
+  void* acc_get_cuda_stream( int async );
+
+  /* sets the NVIDIA CUDA stream handle the current device for the specified async value */
+  void acc_set_cuda_stream ( int async, void* stream );
   
 #ifdef __cplusplus
 }

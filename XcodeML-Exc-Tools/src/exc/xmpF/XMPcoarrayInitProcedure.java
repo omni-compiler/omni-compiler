@@ -228,25 +228,29 @@ public class XMPcoarrayInitProcedure {
   }
 
   private void set_commonName2(XMPcoarray coarray) {
-    String name;
-    if (version >= 4)
-      name = coarray.getCoarrayCommonName();
-    else
-      name = coarray.getCrayCommonName();
-    
-    if (commonName2 == null)
+    if (useMalloc) {
+      String name = coarray.getCrayCommonName();
+
+      // set commonName2 if it is not set
+      if (commonName2 == null)
+        commonName2 = name;
+      else if (!commonName2.equals(name)) 
+        XMP.fatal("INTERNAL: inconsistent second common block names " +
+                  commonName2 + " and " + name);
+    } else {
+      String name = coarray.getCoarrayCommonName();
+
+      // always overwrite commonName2
       commonName2 = name;
-    else if (!commonName2.equals(name)) 
-      XMP.fatal("INTERNAL: inconsistent second common block names " +
-                commonName2 + " and " + name);
+    }
   }
 
 
   private void build_initEachCoarray(XMPcoarray coarray,
                                      BlockList body, Xobject decls) {
-    Xobject elem = coarray.getElementLengthExpr();
+    Xobject elem = coarray.getElementLengthExpr_atmost();
     if (elem==null)
-      XMP.fatal("elem must not be null.");
+      XMP.fatal("INTERNAL: elem must not be null.");
     int count = coarray.getTotalArraySize();
 
     /*-------------------------------*\

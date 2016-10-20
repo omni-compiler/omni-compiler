@@ -1,4 +1,4 @@
-SUBDIRS = parallel kernels loop data declare update host_data etc atomic runtime no_acc_main
+SUBDIRS = parallel kernels loop data declare update host_data etc atomic runtime no_acc_main app
 
 .PHONY: clean all run $(SUBDIRS)
 

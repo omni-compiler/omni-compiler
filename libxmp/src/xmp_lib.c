@@ -27,6 +27,14 @@ void xmp_finalize(void)
   _XMP_finalize(0);
 }
 
+
+int xmp_desc_kind(xmp_desc_t d, int *kind) 
+{
+  *kind = *(int*)d;
+  return 0;
+}
+
+
 int xmp_num_nodes(void)
 {
   return _XMP_get_execution_nodes()->comm_size;

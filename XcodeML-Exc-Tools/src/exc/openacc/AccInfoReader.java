@@ -19,12 +19,13 @@ class AccInfoReader extends AccProcessor{
     Xobject clauseList = def.getArg(1);
     AccInformation info = new AccInformation(directive, clauseList);
 
+    XobjectDef xobjDef = (XobjectDef)def.getParent();
     switch (directive){
       case DECLARE:
-        def.setProp(AccDirective.prop, new AccDeclare(_globalDecl, info));
+        def.setProp(AccDirective.prop, new AccDeclare(_globalDecl, info, xobjDef));
         break;
       case ROUTINE:
-        def.setProp(AccDirective.prop, new AccRoutine(_globalDecl, info, (XobjectDef)(def.getParent())));
+        def.setProp(AccDirective.prop, new AccRoutine(_globalDecl, info, xobjDef));
         break;
       default:
         ACC.fatal("unknown directive: " + directive.getName());
@@ -78,6 +79,9 @@ class AccInfoReader extends AccProcessor{
       break;
     case ATOMIC:
       pb.setProp(AccDirective.prop, new AccAtomic(_globalDecl, info, pb));
+      break;
+    case DECLARE:
+      pb.setProp(AccDirective.prop, new AccDeclare(_globalDecl, info, pb));
       break;
     default:
       ACC.fatal("unknown directive: " + directive.getName());

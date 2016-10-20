@@ -10,10 +10,10 @@ extern "C" {
   void _ACC_init(int argc, char** argv);
   void _ACC_finalize(void);
 
-  void _ACC_init_data		(void **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);  
-  void _ACC_pinit_data		(void **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
-  void _ACC_find_data		(void **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
-  void _ACC_devptr_init_data	(void **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, unsigned long long lower[], unsigned long long length[]);
+  void _ACC_init_data		(void **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, int pointer_dim_bit, unsigned long long lower[], unsigned long long length[]);  
+  void _ACC_pinit_data		(void **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, int pointer_dim_bit, unsigned long long lower[], unsigned long long length[]);
+  void _ACC_find_data		(void **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, int pointer_dim_bit, unsigned long long lower[], unsigned long long length[]);
+  void _ACC_devptr_init_data	(void **host_data_desc, void **device_addr, void *addr, size_t type_size, int dim, int pointer_dim_bit, unsigned long long lower[], unsigned long long length[]);
   void _ACC_finalize_data(void *desc, int type);
   void _ACC_pcopy_data(void *desc, int direction, int asyncId);
   void _ACC_copy_data(void *desc, int direction, int asyncId);
@@ -31,6 +31,8 @@ extern "C" {
   void _ACC_launch(void *program, int kernel_num, int *_ACC_conf, int async_num, int num_args, unsigned long long/*instead of size_t*/ *arg_sizes, void **args);
   void _ACC_program_finalize(void *program);
 
+  int _ACC_adjust_num_gangs(long long num_gangs, int limit);
+
   // will be renamed
   void _ACC_gpu_wait(int id);
   void _ACC_gpu_wait_all(void);
@@ -38,7 +40,6 @@ extern "C" {
 
   //will be removed
   void _ACC_gpu_get_block_count(unsigned **count);
-  void _ACC_gpu_adjust_grid(int *gridX,int *gridY, int *gridZ, int limit);
 
 #ifdef __CUDACC__
   cudaStream_t _ACC_gpu_get_stream(int id);

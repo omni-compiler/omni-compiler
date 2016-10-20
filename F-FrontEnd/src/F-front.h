@@ -122,7 +122,8 @@ enum prog_state {
     INEXEC,
     INSTRUCT,
     INCONT,     /* contains */
-    ININTR      /* interface */
+    ININTR,      /* interface */
+    IN_TYPE_PARAM_DECL /**/
 };
 
 extern enum prog_state current_state;
@@ -154,6 +155,8 @@ enum control_type {
     CTL_XMP,
     CTL_ACC,
     CTL_CRITICAL,
+    CTL_BLOCK,
+    CTL_INTERFACE,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -169,7 +172,28 @@ enum control_type {
     "CTL_OMP",\
     "CTL_XMP",\
     "CTL_ACC",\
+    "CTL_CRITICAL",\
+    "CTL_BLOCK",\
+    "CTL_INTERFACE",\
 }
+
+typedef struct environment {
+    ID                  symbols;
+    TYPE_DESC           struct_decls;
+    ID                  common_symbols;
+    ID                  labels;
+    EXT_ID              external_symbols;
+    EXT_ID              interfaces;
+    BLOCK_ENV           blocks;
+    expv                use_decls;
+
+    struct environment * parent;
+} *ENV;
+
+extern ENV current_local_env;
+
+extern void push_env(ENV);
+extern void pop_env(void);
 
 /* control */
 typedef struct control
@@ -179,7 +203,13 @@ typedef struct control
     expv v1,v2;
     ID dolabel;
     SYMBOL dovar;
-} CTL;
+
+    /* FOR BLOCK STATEMENT */
+    struct environment local_env;
+
+    struct control * next;
+    struct control * prev;
+} * CTL;
 
 #define CTL_TYPE(l)             ((l)->ctltype)
 #define CTL_SAVE(l)             ((l)->save)
@@ -218,10 +248,36 @@ typedef struct control
 #define CTL_ACC_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
 #define CTL_ACC_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
 
+#define CTL_BLOCK_STATEMENT(l)                   ((l)->v2)
+#define CTL_BLOCK_BODY(l)                        (EXPR_ARG1((l)->v2))
+#define CTL_BLOCK_CONST_NAME(l)                  (EXPR_ARG2((l)->v2))
+#define CTL_BLOCK_LOCAL_ENV(l)                   (&((l)->local_env))
+#define CTL_BLOCK_LOCAL_SYMBOLS(l)               ((CTL_BLOCK_LOCAL_ENV(l))->symbols)
+#define CTL_BLOCK_LOCAL_STRUCT_DECLS(l)          ((CTL_BLOCK_LOCAL_ENV(l))->struct_decls)
+#define CTL_BLOCK_LOCAL_COMMON_SYMBOLS(l)        ((CTL_BLOCK_LOCAL_ENV(l))->common_symbols)
+#define CTL_BLOCK_LOCAL_LABELS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->labels)
+#define CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_BLOCK_LOCAL_ENV(l))->external_symbols)
+#define CTL_BLOCK_LOCAL_BLOCKS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->blocks)
+
+
+#define CTL_NEXT(u)               ((u)->next)
+#define CTL_PREV(u)               ((u)->prev)
+
 /* control stack and it pointer */
 #define MAX_CTL 50
-extern CTL ctls[];
-extern CTL *ctl_top;
+extern CTL ctl_base;
+extern CTL ctl_top;
+extern CTL current_ctp;
+
+#define FOR_CTLS(cp) \
+    for (cp = ctl_base; \
+         cp != ctl_top && \
+                 (CTL_NEXT(cp) != NULL && CTL_TYPE(CTL_NEXT(cp)) != CTL_NONE); \
+         cp = CTL_NEXT(cp))
+
+#define FOR_CTLS_BACKWARD(cp) \
+    for (cp = ctl_top; CTL_PREV(cp) != NULL; cp = CTL_PREV(cp))
+
 
 #define MAX_REPLACE_ITEMS       100
 
@@ -257,20 +313,18 @@ typedef struct {
     enum prog_state     current_state;
     EXT_ID              current_interface;
 
-    ID                  local_symbols;
-    TYPE_DESC           local_struct_decls;
-    ID                  local_common_symbols;
-    ID                  local_labels;
-    EXT_ID              local_external_symbols;
+    struct environment  local_env;
 
-    int			implicit_none;
+    int                 implicit_none;
     int                 implicit_type_declared;
     TYPE_DESC           implicit_types[IMPLICIT_ALPHA_NUM];
     enum storage_class  implicit_stg[IMPLICIT_ALPHA_NUM];
     expv                implicit_decls;
     expv                initialize_decls;
     expv                equiv_decls;
-    expv                use_decls;
+    /* FOR INTERFACE */
+    struct control * save_ctl;
+    struct control * save_ctl_base;
 } *UNIT_CTL;
 
 #define UNIT_CTL_CURRENT_PROC_NAME(u)           ((u)->current_proc_name)
@@ -281,11 +335,17 @@ typedef struct {
 #define UNIT_CTL_CURRENT_EXT_ID(u)              ((u)->current_ext_id)
 #define UNIT_CTL_CURRENT_STATE(u)               ((u)->current_state)
 #define UNIT_CTL_CURRENT_INTERFACE(u)           ((u)->current_interface)
-#define UNIT_CTL_LOCAL_SYMBOLS(u)               ((u)->local_symbols)
-#define UNIT_CTL_LOCAL_STRUCT_DECLS(u)          ((u)->local_struct_decls)
-#define UNIT_CTL_LOCAL_COMMON_SYMBOLS(u)        ((u)->local_common_symbols)
-#define UNIT_CTL_LOCAL_LABELS(u)                ((u)->local_labels)
-#define UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(u)      ((u)->local_external_symbols)
+
+#define UNIT_CTL_LOCAL_ENV(u)                   (&((u)->local_env))
+#define UNIT_CTL_LOCAL_SYMBOLS(u)               ((UNIT_CTL_LOCAL_ENV(u))->symbols)
+#define UNIT_CTL_LOCAL_STRUCT_DECLS(u)          ((UNIT_CTL_LOCAL_ENV(u))->struct_decls)
+#define UNIT_CTL_LOCAL_COMMON_SYMBOLS(u)        ((UNIT_CTL_LOCAL_ENV(u))->common_symbols)
+#define UNIT_CTL_LOCAL_LABELS(u)                ((UNIT_CTL_LOCAL_ENV(u))->labels)
+#define UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(u)      ((UNIT_CTL_LOCAL_ENV(u))->external_symbols)
+#define UNIT_CTL_LOCAL_BLOCKS(u)                ((UNIT_CTL_LOCAL_ENV(u))->blocks)
+#define UNIT_CTL_LOCAL_INTERFACES(u)            ((UNIT_CTL_LOCAL_ENV(u))->interfaces)
+#define UNIT_CTL_LOCAL_USE_DECLS(u)             ((UNIT_CTL_LOCAL_ENV(u))->use_decls)
+
 #define UNIT_CTL_IMPLICIT_NONE(u)               ((u)->implicit_none)
 #define UNIT_CTL_IMPLICIT_TYPES(u)              ((u)->implicit_types)
 #define UNIT_CTL_IMPLICIT_TYPE_DECLARED(u)      ((u)->implicit_type_declared)
@@ -293,7 +353,9 @@ typedef struct {
 #define UNIT_CTL_IMPLICIT_DECLS(u)              ((u)->implicit_decls)
 #define UNIT_CTL_INITIALIZE_DECLS(u)            ((u)->initialize_decls)
 #define UNIT_CTL_EQUIV_DECLS(u)                 ((u)->equiv_decls)
-#define UNIT_CTL_USE_DECLS(u)                   ((u)->use_decls)
+
+#define UNIT_CTL_INTERFACE_SAVE_CTL(u)          ((u)->save_ctl)
+#define UNIT_CTL_INTERFACE_SAVE_CTL_BASE(u)     ((u)->save_ctl_base)
 
 #define MAX_UNIT_CTL            16
 #define MAX_UNIT_CTL_CONTAINS   3
@@ -312,11 +374,16 @@ extern int unit_ctl_level;
 #define CURRENT_STATE               UNIT_CTL_CURRENT_STATE(CURRENT_UNIT_CTL)
 #define CURRENT_INTERFACE           UNIT_CTL_CURRENT_INTERFACE(CURRENT_UNIT_CTL)
 #define CURRENT_INITIALIZE_DECLS    UNIT_CTL_INITIALIZE_DECLS(CURRENT_UNIT_CTL)
-#define LOCAL_SYMBOLS               UNIT_CTL_LOCAL_SYMBOLS(CURRENT_UNIT_CTL)
-#define LOCAL_STRUCT_DECLS          UNIT_CTL_LOCAL_STRUCT_DECLS(CURRENT_UNIT_CTL)
-#define LOCAL_COMMON_SYMBOLS        UNIT_CTL_LOCAL_COMMON_SYMBOLS(CURRENT_UNIT_CTL)
-#define LOCAL_LABELS                UNIT_CTL_LOCAL_LABELS(CURRENT_UNIT_CTL)
-#define LOCAL_EXTERNAL_SYMBOLS      UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(CURRENT_UNIT_CTL)
+
+#define LOCAL_SYMBOLS               (current_local_env->symbols)
+#define LOCAL_STRUCT_DECLS          (current_local_env->struct_decls)
+#define LOCAL_COMMON_SYMBOLS        (current_local_env->common_symbols)
+#define LOCAL_LABELS                (current_local_env->labels)
+#define LOCAL_EXTERNAL_SYMBOLS      (current_local_env->external_symbols)
+#define LOCAL_BLOCKS                (current_local_env->blocks)
+#define LOCAL_INTERFACES            (current_local_env->interfaces)
+#define LOCAL_USE_DECLS             (current_local_env->use_decls)
+
 #define EXTERNAL_SYMBOLS            LOCAL_EXTERNAL_SYMBOLS
 #define IMPLICIT_TYPES              UNIT_CTL_IMPLICIT_TYPES(CURRENT_UNIT_CTL)
 #define IMPLICIT_STG                UNIT_CTL_IMPLICIT_STG(CURRENT_UNIT_CTL)
@@ -325,10 +392,11 @@ extern int unit_ctl_level;
 #define PARENT_STATE                UNIT_CTL_CURRENT_STATE(PARENT_UNIT_CTL)
 #define PARENT_CONTAINS             EXT_PROC_CONT_EXT_SYMS(PARENT_EXT_ID)
 #define PARENT_INTERFACE            UNIT_CTL_CURRENT_INTERFACE(PARENT_UNIT_CTL)
-#define PARENT_EXTERNAL_SYMBOLS     UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(PARENT_UNIT_CTL)
-#define PARENT_LOCAL_SYMBOLS        UNIT_CTL_LOCAL_SYMBOLS(PARENT_UNIT_CTL)
-#define PARENT_LOCAL_STRUCT_DECLS   UNIT_CTL_LOCAL_STRUCT_DECLS(PARENT_UNIT_CTL)
-#define PARENT_LOCAL_COMMON_SYMBOLS UNIT_CTL_LOCAL_COMMON_SYMBOLS(PARENT_UNIT_CTL)
+
+#define PARENT_LOCAL_SYMBOLS        (current_local_env->parent->symbols)
+#define PARENT_LOCAL_STRUCT_DECLS   (current_local_env->parent->struct_decls)
+#define PARENT_LOCAL_COMMON_SYMBOLS (current_local_env->parent->common_symbols)
+#define PARENT_EXTERNAL_SYMBOLS     (current_local_env->parent->external_symbols)
 
 /*
  * Language specification level. Mainly used for intrinsic table
@@ -447,11 +515,14 @@ extern void     print_type _ANSI_ARGS_((TYPE_DESC tp, FILE *fp,
 extern void     compile_statement _ANSI_ARGS_((int st_no, expr x));
 extern void     compile_statement1 _ANSI_ARGS_((int st_no, expr x));
 extern void     output_statement _ANSI_ARGS_((expr v));
+extern CTL      new_ctl _ANSI_ARGS_((void));
+extern void     cleanup_ctl _ANSI_ARGS_((CTL));
 extern void     push_ctl _ANSI_ARGS_((enum control_type ctl));
 extern void     pop_ctl _ANSI_ARGS_((void));
 extern void     check_INDATA _ANSI_ARGS_((void));
 extern void     check_INDCL _ANSI_ARGS_((void));
 extern void     check_INEXEC _ANSI_ARGS_((void));
+extern void     check_NOT_INBLOCK _ANSI_ARGS_((void));
 extern void     include_file(char *name, int inside_use);
 extern void     push_unit_ctl _ANSI_ARGS_((enum prog_state));
 extern void     pop_unit_ctl _ANSI_ARGS_((void));
@@ -474,8 +545,11 @@ extern EXT_ID   declare_current_procedure_ext_id(void);
 
 extern void     compile_type_decl _ANSI_ARGS_((expr typExpre, TYPE_DESC baseTp,
                                                expr decl_list, expr attributes));
-extern void     compile_struct_decl _ANSI_ARGS_((expr ident, expr type));
+extern void     compile_struct_decl _ANSI_ARGS_((expr ident, expr type, expr type_params));
 extern void     compile_struct_decl_end _ANSI_ARGS_((void));
+extern int      compile_type_param_values_dummy _ANSI_ARGS_((TYPE_DESC struct_type, expr type_param_args));
+extern int      compile_type_param_values _ANSI_ARGS_((TYPE_DESC struct_type, expr type_param_args, expv type_param_values, ID * used));
+extern ID       get_type_params _ANSI_ARGS_((TYPE_DESC struct_type));
 extern void     compile_SEQUENCE_statement _ANSI_ARGS_((void));
 extern void     compile_COMMON_decl _ANSI_ARGS_((expr com_list));
 extern void     compile_IMPLICIT_decl _ANSI_ARGS_((expr v1,expr v2));
@@ -501,7 +575,9 @@ extern expv     compile_highorder_function_call _ANSI_ARGS_((ID f_id,
                                                              expr args,
                                                              int isCall));
 
-extern expv     compile_struct_constructor _ANSI_ARGS_((ID struct_id, expr args));
+extern int      type_param_values_required _ANSI_ARGS_((TYPE_DESC struct_type));
+extern expv     compile_struct_constructor _ANSI_ARGS_((ID struct_id, expr type_param_argss, expr args));
+extern TYPE_DESC type_apply_type_parameter _ANSI_ARGS_((TYPE_DESC tp, expv type_param_values));
 
 extern expv     statement_function_call _ANSI_ARGS_((ID f_id, expv arglist));
 extern TYPE_DESC        compile_dimensions _ANSI_ARGS_((TYPE_DESC tp, expr dims));
@@ -559,13 +635,18 @@ extern void     unset_save_attr_in_dummy_args(EXT_ID ep);
 extern void     declare_storage _ANSI_ARGS_((ID id, enum storage_class stg));
 
 extern TYPE_DESC        compile_type _ANSI_ARGS_((expr x));
+extern TYPE_DESC        compile_derived_type _ANSI_ARGS_((expr x, int allow_predecl));
 
 extern expv     compile_int_constant _ANSI_ARGS_((expr x));
 extern void     compile_pragma_statement _ANSI_ARGS_((expr x));
+extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
+
 
 extern int      type_is_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern int      struct_type_is_compatible_for_assignment
+                    _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern TYPE_DESC
@@ -705,10 +786,14 @@ extern ID       find_common_ident _ANSI_ARGS_((SYMBOL sym));
 extern ID       find_common_ident_parent _ANSI_ARGS_((SYMBOL sym));
 extern ID       find_common_ident_sibling _ANSI_ARGS_((SYMBOL sym));
 
+extern ID       find_label_from_block _ANSI_ARGS_((int st_no, BLOCK_ENV block));
+
 extern TYPE_DESC declare_struct_type_wo_component(expr ident);
 
 extern int      expr_is_param _ANSI_ARGS_((expr x));
 extern int      expr_has_param _ANSI_ARGS_((expr x));
+extern int      expr_is_type_param _ANSI_ARGS_((expr x));
+extern int      expr_has_type_param _ANSI_ARGS_((expr x));
 extern int      expr_is_constant _ANSI_ARGS_((expr v));
 extern int      expr_is_constant_typeof _ANSI_ARGS_((expr x, BASIC_DATA_TYPE bt));
 extern expv     expr_constant_value _ANSI_ARGS_((expr x));
@@ -774,7 +859,8 @@ extern void                    shrink_type(TYPE_DESC tp);
 extern TYPE_DESC               reduce_type(TYPE_DESC tp);
 
 extern int is_array_shape_assumed(TYPE_DESC tp);
-extern int is_descendant_coindexed(TYPE_DESC tp);
+//extern int is_descendant_coindexed(TYPE_DESC tp);
+extern int has_coarray_component(TYPE_DESC tp);
 
 extern void     checkTypeRef(ID id);
 

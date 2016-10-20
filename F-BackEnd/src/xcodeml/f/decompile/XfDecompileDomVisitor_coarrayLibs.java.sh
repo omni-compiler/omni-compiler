@@ -4,6 +4,9 @@ CallingClassName="XfDecompileDomVisitor"
 CallingFile=${CallingClassName}.java
 ClassName=${CallingClassName}_coarrayLibs
 
+AdditionalFunctionNames="sizeof "
+
+
 ifile="$1"
 INCDIR="$2"
 #ifile=${OMNI_HOME}/omni-compiler/libxmpf/src/xmpf_coarray_decl.f90
@@ -83,8 +86,7 @@ public class '$2'
 }
 
 function output_tailer {
-    echo '
-        ""
+    echo '        ""
     };
 }
 ' # end of echo
@@ -103,6 +105,11 @@ incfiles=`get_include_files $ifile`
 ## output interface/subroutine/function names in all include files
 for f in ${incfiles}; do
     output_entry_names ${INCDIR}/$f
+done
+
+## output additional procedure names 
+for n in ${AdditionalFunctionNames}; do
+    echo "        \"$n\","
 done
 
 ## output tailer lines

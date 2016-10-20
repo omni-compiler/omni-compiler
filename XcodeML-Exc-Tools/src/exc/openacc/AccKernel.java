@@ -885,9 +885,15 @@ public class AccKernel {
     XobjList confDecl = gpuManager.getBlockThreadSize();
 
     //# of block and thread
-    Ident num_gangs = blockListBuilder.declLocalIdent("_ACC_num_gangs", Xtype.intType, confDecl.getArg(0));
+    Ident funcId = ACCutil.getMacroFuncId("_ACC_adjust_num_gangs", Xtype.voidType);
+    Xobject num_gangs_decl = funcId.Call(Xcons.List(
+            confDecl.getArg(0),
+            Xcons.IntConstant(ACC.device.getMaxNumGangs())));
+    Ident num_gangs = blockListBuilder.declLocalIdent("_ACC_num_gangs", Xtype.intType, num_gangs_decl);
     Ident num_workers = blockListBuilder.declLocalIdent("_ACC_num_workers", Xtype.intType, confDecl.getArg(1));
     Ident vec_len = blockListBuilder.declLocalIdent("_ACC_vec_len", Xtype.intType, confDecl.getArg(2));
+
+
 
     Ident mpool = Ident.Local("_ACC_mpool", Xtype.voidPtrType);
     Ident mpoolPos = Ident.Local("_ACC_mpool_pos", Xtype.longlongType);
@@ -1036,7 +1042,8 @@ public class AccKernel {
     XobjectDef launcherFuncDef = makeLauncherFuncDefCUDA(launchFuncName, deviceKernelDef, deviceKernelCallArgs);
     XobjectFile devEnv = _decl.getEnvDevice();
     devEnv.add(launcherFuncDef);
-    Ident launcherFuncId = _decl.declExternIdent(launcherFuncDef.getName(), Xtype.Function(Xtype.voidType));
+
+    Ident launcherFuncId = _decl.declExternIdent(launcherFuncDef.getName(), launcherFuncDef.getFuncType());
     XobjList callArgs = Xcons.List();
     for(Xobject arg : deviceKernelCallArgs){
       if(arg.Opcode() == Xcode.CAST_EXPR && arg.Type().isArray()){
@@ -1047,13 +1054,6 @@ public class AccKernel {
     callArgs.add(confId.Ref());
     callArgs.add(asyncExpr);
 
-    Xobject max_num_grid = Xcons.IntConstant(ACC.device.getMaxNumGangs());
-    Block adjustGridFuncCall = ACCutil.createFuncCallBlock("_ACC_gpu_adjust_grid", Xcons.List(
-            Xcons.AddrOf(Xcons.arrayRef(Xtype.intType, confId.getAddr(), Xcons.List(Xcons.IntConstant(0)))),
-            Xcons.AddrOf(Xcons.arrayRef(Xtype.intType, confId.getAddr(), Xcons.List(Xcons.IntConstant(1)))),
-            Xcons.AddrOf(Xcons.arrayRef(Xtype.intType, confId.getAddr(), Xcons.List(Xcons.IntConstant(2)))),
-            max_num_grid));
-    body.add(adjustGridFuncCall);
     body.add(Bcons.Statement(launcherFuncId.Call(callArgs)));
 
     return Bcons.COMPOUND(body);

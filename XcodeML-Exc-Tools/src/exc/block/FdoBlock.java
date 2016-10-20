@@ -9,21 +9,21 @@ package exc.block;
 import exc.object.Xcode;
 import exc.object.Xcons;
 import exc.object.Xobject;
+import exc.object.LineNo;
 
 /**
  * Represents Fortran do statement block.
  */
 public class FdoBlock extends Block implements ForBlock
 {
-    private Xobject fdo_stmt;
     private BasicBlock ind_var_part, lower_part, upper_part, step_part;
     private BlockList body;
     private boolean is_canonical;
     
-    public FdoBlock(Xobject head, Xobject ind_var, Xobject idx_range, BlockList body, String construct_name)
+    public FdoBlock(LineNo head, Xobject ind_var, Xobject idx_range, BlockList body, String construct_name)
     {
         super(Xcode.F_DO_STATEMENT, null, construct_name);
-        this.fdo_stmt = head;
+        this.setLineNo(head);
         this.body = body;
         this.is_canonical = false;
         body.parent = this;
@@ -146,8 +146,7 @@ public class FdoBlock extends Block implements ForBlock
             (lower_part != null ? Xcons.List(Xcode.F_INDEX_RANGE,
                 getLowerBound(), getUpperBound(), getStep()) : null),
             body.toXobject());
-        if(fdo_stmt!=null)
-            tmp.setLineNo(fdo_stmt.getLineNo());
+        tmp.setLineNo(this.getLineNo());
         return tmp;
     }
 

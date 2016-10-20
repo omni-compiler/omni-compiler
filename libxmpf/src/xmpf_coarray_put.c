@@ -4,7 +4,7 @@
  */
 
 #include <assert.h>
-#include "xmpf_internal.h"
+#include "xmpf_internal_coarray.h"
 
 // TEMPORARY
 // declared in ../../libxmp/include/xmp_func_decl.h
@@ -677,8 +677,8 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                     void *descDMA, size_t offsetDMA, char *nameDMA,
                     BOOL synchronous)
 {
-  char* desc = _XMPF_get_coarrayDesc(descPtr);
-  size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
+  char* desc = _XMPF_get_coarrayChunkDesc(descPtr);
+  size_t offset = _XMPF_get_coarrayChunkOffset(descPtr, baseAddr);
 
   _XMPF_coarrayDebugPrint("===PUT_VECTOR DMA-RDMA to[%d], %d bytes, %s\n"
                           "  local : \'%s\', offset=%zd\n"
@@ -731,8 +731,8 @@ void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU,
 void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
                             int coindex, char *rhs, int bytes)
 {
-  char *desc = _XMPF_get_coarrayDesc(descPtr);
-  size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
+  char *desc = _XMPF_get_coarrayChunkDesc(descPtr);
+  size_t offset = _XMPF_get_coarrayChunkOffset(descPtr, baseAddr);
 
   // MALLOC & MEMCPY
   char *buf = (char*)_XMP_alloc(sizeof(char) * bytesRU);

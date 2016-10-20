@@ -1,0 +1,13 @@
+      SUBROUTINE sub(a)
+        INTEGER, DIMENSION(3,3), CODIMENSION[2,*], VOLATILE :: a
+      END SUBROUTINE sub
+
+      PROGRAM MAIN
+        INTERFACE
+          SUBROUTINE sub(a)
+            INTEGER, DIMENSION(3,3), CODIMENSION[2,*], VOLATILE :: a
+          END SUBROUTINE sub
+        END INTERFACE
+        INTEGER, DIMENSION(3,3), CODIMENSION[2,*], VOLATILE :: a
+        CALL sub(a)
+      END PROGRAM MAIN

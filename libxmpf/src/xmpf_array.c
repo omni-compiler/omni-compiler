@@ -14,6 +14,8 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
   // moved to xmpf_align_info
   //a->is_allocated = (*t_desc)->is_owner;
 
+  a->desc_kind = _XMP_DESC_ARRAY;
+  
   a->is_align_comm_member = false;
   a->dim = *n_dim;
   a->type = *type;
@@ -21,6 +23,7 @@ void xmpf_array_alloc__(_XMP_array_t **a_desc, int *n_dim, int *type,
   size_t dummy;
   _XMP_setup_reduce_type(&a->mpi_type, &dummy, *type);
   a->order = MPI_ORDER_FORTRAN;
+  a->array_addr_p = NULL;
   a->total_elmts = 0;
 
   a->async_reflect = NULL;
@@ -198,14 +201,7 @@ void xmpf_array_init_shadow__(_XMP_array_t **a_desc, int *i_dim,
 
     if (!ai->reflect_sched){
       _XMP_reflect_sched_t *sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
-      sched->is_periodic = -1; /* not used yet */
-      sched->datatype_lo = MPI_DATATYPE_NULL;
-      sched->datatype_hi = MPI_DATATYPE_NULL;
-      for (int j = 0; j < 4; j++) sched->req[j] = MPI_REQUEST_NULL;
-      sched->lo_send_buf = NULL;
-      sched->lo_recv_buf = NULL;
-      sched->hi_send_buf = NULL;
-      sched->hi_recv_buf = NULL;
+      _XMP_init_reflect_sched(sched);
       ai->reflect_sched = sched;
     }
 
@@ -329,6 +325,17 @@ void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr, int *
     _XMP_calc_array_dim_elmts(a, i);
   }
   a->total_elmts = total_elmts;
+
+  // clear reflect schedule
+  if (a->array_addr_p && a->array_addr_p != array_addr){
+    for (int i = 0; i < dim; i++) {
+      _XMP_reflect_sched_t *sched = a->info[i].reflect_sched;
+      if (sched){
+	_XMP_finalize_reflect_sched(sched, (i != dim -1));
+	_XMP_init_reflect_sched(sched);
+      }
+    }
+  }
 
   a->array_addr_p = array_addr;
 

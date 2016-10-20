@@ -11,6 +11,15 @@ void _ACC_memory_copy(_ACC_memory_t *data, ptrdiff_t offset, size_t size, int di
   void *host_addr = ((char*)(data->host_addr) + offset);
   void *device_addr = ((char*)(data->device_addr) + offset);
 
+  if(data->is_pointer){
+    int p_offset = offset / sizeof(void*);
+    for(int i = p_offset; i < data->num_pointers; i++){
+      size_t pointee_size = data->pointees[i]->size;
+      ptrdiff_t pointee_offset = 0; //data->memory_offsets[i] - ((char*)(data->pointees[i]->host_addr) - *((char**)(data->host_addr) + i));
+      _ACC_memory_copy(data->pointees[i], pointee_offset, pointee_size, direction, asyncId);
+    }
+  }else{
+
   switch(asyncId){
   case ACC_ASYNC_SYNC:
     _ACC_gpu_copy(host_addr, device_addr, size, direction);
@@ -24,14 +33,12 @@ void _ACC_memory_copy(_ACC_memory_t *data, ptrdiff_t offset, size_t size, int di
       _ACC_gpu_copy_async(host_addr, device_addr, size, direction, asyncId);
     }
   }
+  }
 }
 
 
 void _ACC_memory_copy_vector(_ACC_memory_t *data, size_t memory_offset, int direction, int asyncId, size_t type_size, unsigned long long offset, unsigned long long count, unsigned long long blocklength, unsigned long long stride)
 {
-  //this function will be the below.
-  //void _ACC_memory_copy_vector(_ACC_gpu_data_t *desc, int direction, int asyncId, unsigned long long offset, unsigned long long count, unsigned long long blocklength, unsigned long long stride);
-
   size_t buf_size = count * blocklength * type_size;
   size_t offset_size = offset * type_size;
 
@@ -69,13 +76,51 @@ void _ACC_memory_copy_vector(_ACC_memory_t *data, size_t memory_offset, int dire
   _ACC_free(host_buf);
 }
 
-void _ACC_memory_copy_sub(_ACC_memory_t* memory, ptrdiff_t memory_offset, int direction, int isAsync, size_t type_size, int dim, unsigned long long lowers[], unsigned long long lengths[], unsigned long long distance[]){
+void _ACC_memory_copy_sub(_ACC_memory_t* memory, ptrdiff_t memory_offset, int direction, int isAsync,
+			  size_t type_size, int dim, int pointer_dim_bit,
+			  unsigned long long offsets[],
+			  unsigned long long lowers[],
+			  unsigned long long lengths[],
+			  unsigned long long distance[])
+{
   int i;
   void *dev_buf;
   void *host_buf = NULL;
   const char usePinnedHostBuffer = 1;
   void *host_addr = (char*)memory->host_addr - memory_offset;
 
+  int num_top_array_dims = 0;
+  //  printf("pointer_dim_bit=%d\n", pointer_dim_bit);
+  for(int i = 0; i < dim; i++){
+    if(i != 0 && pointer_dim_bit & (1 << i)){
+      break;
+    }else{
+      num_top_array_dims++;
+    }
+  }
+  //  printf("num_ldng_dims=%d\n", num_top_array_dims);
+
+  if(num_top_array_dims != dim){
+    if(num_top_array_dims != 1){
+      _ACC_fatal("not supported pattern\n");
+    }
+    //    printf("offset=%lld, lower=%lld, length=%lld\n", offsets[0], lowers[0], lengths[0]);
+    for(int i = lowers[0]-offsets[0]; i < lowers[0]-offsets[0]+lengths[0]; i++){
+      _ACC_memory_copy_sub(memory->pointees[i],
+			   memory->pointee_offsets[i],
+			   direction,
+			   isAsync,
+			   type_size,
+			   dim - num_top_array_dims,
+			   pointer_dim_bit >> num_top_array_dims,
+			   &offsets[num_top_array_dims],
+			   &lowers[num_top_array_dims],
+			   &lengths[num_top_array_dims],
+			   &distance[num_top_array_dims]);
+    }
+    return;
+  }
+  //  printf("lower=%lld, length=%lld\n", lowers[0], lengths[0]);
   unsigned long long total_elmnts = 1;
   for(i=0;i<dim;i++){
     total_elmnts *= lengths[i];
@@ -105,8 +150,12 @@ void _ACC_memory_copy_sub(_ACC_memory_t* memory, ptrdiff_t memory_offset, int di
   _ACC_mpool_alloc((void**)&dev_trans_info, trans_info_size, mpool, &mpool_pos);
   _ACC_gpu_copy(host_trans_info, dev_trans_info, trans_info_size, _ACC_GPU_COPY_HOST_TO_DEVICE);
 
+  unsigned long long offset_acc = 0;
+  for(i=0;i<dim;i++){
+    offset_acc += offsets[i] * distance[i];
+  }
 
-  void *dev_data = _ACC_memory_get_device_addr(memory, memory_offset);
+  void *dev_data = _ACC_memory_get_device_addr(memory, offset_acc * type_size);
   if(direction == _ACC_GPU_COPY_HOST_TO_DEVICE){
     //host to device
     _ACC_gpu_pack_data_host(host_buf, host_addr, dim, total_elmnts, type_size, host_trans_info);
@@ -165,6 +214,8 @@ _ACC_memory_t* _ACC_memory_alloc(void *host_addr, size_t size, void *device_addr
   memory->is_pagelocked = _ACC_gpu_is_pagelocked(memory->host_addr);
   memory->is_registered = false;
 
+  memory->is_pointer = false;
+
   return memory;
 }
 
@@ -210,3 +261,29 @@ unsigned int _ACC_memory_get_refcount(_ACC_memory_t* memory)
 {
   return memory->ref_count;
 }
+
+void _ACC_memory_set_pointees(_ACC_memory_t* memory, int num_pointers, _ACC_memory_t** pointees, ptrdiff_t* pointee_offsets, void *device_pointee_pointers)
+{
+  memory->is_pointer = true;
+  memory->num_pointers = (unsigned int)num_pointers;
+  memory->pointees = pointees;
+  memory->pointee_offsets = pointee_offsets;
+
+  _ACC_gpu_copy(device_pointee_pointers, memory->device_addr, sizeof(void*) * num_pointers, _ACC_GPU_COPY_HOST_TO_DEVICE);
+}
+
+bool _ACC_memory_is_pointer(_ACC_memory_t* memory)
+{
+  return memory->is_pointer;
+}
+
+_ACC_memory_t** _ACC_memory_get_pointees(_ACC_memory_t* memory)
+{
+  return memory->pointees;
+}
+
+unsigned int _ACC_memory_get_num_pointees(_ACC_memory_t* memory)
+{
+  return memory->num_pointers;
+}
+

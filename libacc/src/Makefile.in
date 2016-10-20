@@ -11,6 +11,7 @@ AR          = @AR@
 ARFLAGS     = @ARFLAGS@
 ACC_INC_DIR = ../include
 CFLAGS      = -I$(ACC_INC_DIR) @MPI_CFLAGS@
+GPUCFLAGS   += -I$(ACC_INC_DIR)
 MKDIR_P     = @MKDIR_P@
 INSTALL     = @INSTALL@
 LIBDIR      = @OMNI_HOME@/lib/
@@ -19,11 +20,16 @@ HEADERS     = $(ACC_INC_DIR)/acc_internal.h $(ACC_INC_DIR)/acc_gpu_internal.h \
 	      $(ACC_INC_DIR)/acc_gpu_constant.h $(ACC_INC_DIR)/acc_gpu_data_struct.h
 OBJECTS     = acc.o acc_memory_table.o acc_runtime.o acc_util.o acc_data.o acc_queue_map.o
 LIBS        = $(LIBACC)
+TMP_DIR     = .libs
+SOFLAGS     = -shared
+PICFLAGS    = -fPIC -DPIC
 
 FALSE           = 1
 TRUE            = 0
 IS_CUDA		= @CUDA@
 IS_OPENCL	= @OPENCL@
+IS_TCA          = @TCA@
+ENABLE_SHARED   = @SHARED@
 
 ifeq ($(IS_CUDA), $(TRUE))
 LIBACC_CUDA = libacc_cuda.a
@@ -41,29 +47,56 @@ CFLAGS      += -I$(OPENCL_DIR)/include -DOMNI_INCLUDE_DIR="$(OMNI_DIR)/include"
 LIBS        += $(LIBACC_CL)
 endif
 
+ifeq ($(ENABLE_SHARED), $(TRUE))
+LIBS        := $(LIBS) $(LIBS:.a=.so)
+endif
+
+ifeq ($(IS_TCA), $(TRUE))
+CFLAGS += -D_XMP_TCA -I@TCA_PREFIX@/include
+endif
+
 all: $(LIBS)
+
 $(OBJECTS): $(HEADERS)
+
 $(LIBACC): $(OBJECTS)
 	rm -f $@
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
 $(LIBACC_CUDA): $(OBJECTS_CUDA)
-		rm -f $@
-		$(AR) $(ARFLAGS) $@ $^
-		$(RANLIB) $@
+	rm -f $@
+	$(AR) $(ARFLAGS) $@ $^
+	$(RANLIB) $@
 $(LIBACC_CL): $(OBJECTS_CL)
-		rm -f $@
-		$(AR) $(ARFLAGS) $@ $^
-		$(RANLIB) $@
+	rm -f $@
+	$(AR) $(ARFLAGS) $@ $^
+	$(RANLIB) $@
+
+$(LIBACC:.a=.so): $(addprefix $(TMP_DIR)/, $(OBJECTS))
+	rm -f $@
+	$(CC) $(SOFLAGS) $(PICFLAGS) $^ -o $@
+$(LIBACC_CUDA:.a=.so): $(addprefix $(TMP_DIR)/, $(OBJECTS_CUDA))
+	rm -f $@
+	$(CC) $(SOFLAGS) $(PICFLAGS) $^ -o $@
+$(LIBACC_CL:.a=.so): $(addprefix $(TMP_DIR)/, $(OBJECTS_CL))
+	rm -f $@
+	$(CC) $(SOFLAGS) $(PICFLAGS) $^ -o $@
 
 .SUFFIXES : .o .cu
 .cu.o:
-	$(GPUCC) $(GPUCFLAGS) -I$(ACC_INC_DIR) -c -o $@ $<
+	$(GPUCC) $(GPUCFLAGS) -c -o $@ $<
+
+$(TMP_DIR)/%.o : %.c
+	@$(MKDIR_P) $(TMP_DIR)
+	$(CC) $(CFLAGS) -c $< $(PICFLAGS) -o $@
+$(TMP_DIR)/%.o : %.cu
+	@$(MKDIR_P) $(TMP_DIR)
+	$(GPUCC) $(GPUCFLAGS) -c $< -Xcompiler "$(PICFLAGS)" -o $@
 
 install: $(LIBS)
 	$(MKDIR_P) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) $^ $(DESTDIR)$(LIBDIR)
 
 clean:
-	rm -f *~ *.core core core.* *.o $(LIBS)
+	rm -rf *~ *.core core core.* *.o $(LIBS) $(TMP_DIR)
 

@@ -131,8 +131,6 @@ public class XMPtransCoarrayRun
   private Boolean useMalloc;
   private Boolean onlyCafMode;
 
-  private Boolean DEBUG = true;       // change me in debugger
-
   private XMPenv env;
   private String name;
   private XobjectDef def;
@@ -514,7 +512,9 @@ public class XMPtransCoarrayRun
 
     if (isModule()) {
       run1_module();
-    } else {
+    } else if (isBlockData()) {
+      run1_procedure();
+    } else if (isFunction()) {
       run1_procedure();
 
       if (onlyCafMode) {
@@ -523,6 +523,8 @@ public class XMPtransCoarrayRun
         if (isMainProgram())
           _convMainProgramToSubroutine("xmpf_main");
       }
+    } else {
+      XMP.fatal("XMPtransCoarrayRun.run1(), def kind unkown : " + def);
     }
 
   }
@@ -1126,14 +1128,18 @@ public class XMPtransCoarrayRun
       end subroutine
     --------------------------------------------
     case useMalloc:
+      For more infomation about Type6,7&8, see XMPcoindexObj.java.
     --------------------------------------------
       subroutine EX1
         ...
         integer(8) :: tag                                            ! i.
         call xmpf_coarray_prolog(tag, "EX1", 3)                      ! i.
-        call xmpf_coarray_put(descptr_V1, V1(1,j), 4, &              ! d.
-          k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
-        z = xmpf_coarray_get0d(descptr_V2, V2, 16, k, 0) ** 2        ! e.
+!!      call xmpf_coarray_put(descptr_V1, V1(1,j), 4, &              ! d. Type7
+!!        k1+4*(k2-1), (/1.0,2.0,3.0/), ...)      
+        call xmpf_coarray_put_generic(descptr_V1, k1+4*(k2-1), &     ! d. Type8
+          V1(1:3,j), (/1.0,2.0,3.0/))
+!!      z = xmpf_coarray_get0d(descptr_V2, V2, 16, k, 0) ** 2        ! e. Type6
+        z = xmpf_coarray_get_generic(descptr_V2, k, V2) ** 2         ! e. Type8
         call xmpf_coarray_malloc_generic(descptr_V3, V3, 200, 4, tag, &
                                         2, 1, 10, 1, 20)             ! j.
         call xmpf_coarray_set_coshape(descptr_V3, 2, k1, k2, 0)      ! m.
@@ -1178,6 +1184,8 @@ public class XMPtransCoarrayRun
     replaceIntrinsicCalls1(visibleCoarrays);
 
     // e. convert coindexed objects to function references
+    // CAUTION: This function e. must be called before function d. because
+    // topdownXobjectIterator is used indide.
     convCoidxObjsToFuncCalls(visibleCoarrays);
 
     // d. convert coindexed variable assignment stmts to call stmts
@@ -1543,11 +1551,13 @@ public class XMPtransCoarrayRun
   //-----------------------------------------------------
   //
   private void genCallOfPrologAndEpilog() {
-    genCallOfPrologAndEpilog_dealloc();
+    if (get_autoDealloc()) {
+      genCallOfPrologAndEpilog_dealloc();
 
-    // perform prolog/epilog code generations
-    genPrologStmts();          // stmts on the top of body
-    genEpilogStmts();          // stmts before RETURN- and END-stmts
+      // perform prolog/epilog code generations
+      genPrologStmts();          // stmts on the top of body
+      genEpilogStmts();          // stmts before RETURN- and END-stmts
+    }
   }
 
   private void genPrologStmts() {
@@ -1713,7 +1723,7 @@ public class XMPtransCoarrayRun
   private Boolean _isCoindexVarStmt(Xobject xobj) {
     if (xobj.Opcode() == Xcode.F_ASSIGN_STATEMENT) {
       Xobject lhs = xobj.getArg(0);
-      if (lhs.Opcode() == Xcode.CO_ARRAY_REF)
+      if (_isCoindexObj(lhs))
         return true;
     }
     return false;
@@ -1739,7 +1749,7 @@ public class XMPtransCoarrayRun
   }
 
   /*
-   * condition 1: Expression rts may be addressed in read-only region or
+   * condition 1: The address of rts may be located in read-only region or
    *    in temporary area allocated by the compiler. 
    *    (In such cases, Fujitsu-RDMA cannot work without buffer.)
    * condition 0: Otherwise.
@@ -1777,18 +1787,13 @@ public class XMPtransCoarrayRun
       if (xobj == null)
         continue;
 
-      if (xobj.Opcode() == Xcode.CO_ARRAY_REF) {
-        Xobject parent = (Xobject)xobj.getParent();
-
-        if (parent.Opcode() == Xcode.F_ASSIGN_STATEMENT &&
-            parent.getArg(0) == xobj)
-          // found a coindexed variable, which is LHS of an assignment stmt.
-          continue;  // do nothing 
-
-        // found target to convert
-        Xobject funcCall = coindexObjToFuncRef(xobj, coarrays);
-        xi.setXobject(funcCall);
-        done = true;
+      if (_isCoindexObj(xobj)) {
+        if (_isTargetCoindexObj(xobj)) {
+          // found target to convert
+          Xobject funcCall = coindexObjToFuncRef(xobj, coarrays);
+          xi.setXobject(funcCall);
+          done = true;
+        }
       }
     }
 
@@ -1806,6 +1811,105 @@ public class XMPtransCoarrayRun
                                       ArrayList<XMPcoarray> coarrays) {
     XMPcoindexObj coindexObj = new XMPcoindexObj(funcRef, coarrays);
     return coindexObj.toFuncRef();
+  }
+
+
+  /** check if it is formally a coindexed object
+   */
+  private Boolean _isCoindexObj(Xobject xobj) {
+    if (xobj.Opcode() == null)
+      return false;
+
+    Xobject xobj1, xobj2, xobj3, xobj4;
+    switch (xobj.Opcode()) {
+    case CO_ARRAY_REF:          // ex. v[k], assuming top-down search
+      return true;
+
+    case MEMBER_REF:            // true if v[k]%b..%c
+      xobj1 = xobj.getArg(0);
+      if (xobj1.Opcode() != Xcode.F_VAR_REF)
+        break;
+      xobj2 = xobj1.getArg(0);
+      if (_isCoindexObj(xobj2))
+        return true;
+      break;
+
+    case F_ARRAY_REF:           // true if v[k]%b..%c(i,..,j)
+      xobj1 = xobj.getArg(0);
+      if (xobj1.Opcode() != Xcode.F_VAR_REF)
+        break;
+      xobj2 = xobj1.getArg(0);
+      if (xobj2.Opcode() != Xcode.MEMBER_REF)
+        break;
+      xobj3 = xobj2.getArg(0);
+      if (xobj3.Opcode() != Xcode.F_VAR_REF)
+        break;
+      xobj4 = xobj3.getArg(0);
+      if (_isCoindexObj(xobj4))
+        return true;
+      break;
+
+    default:
+      break;
+    }
+    return false;
+  }
+
+
+  /** check if the coindexed object is a target of GET communication
+   */
+  private Boolean _isTargetCoindexObj(Xobject coidxObj) {
+    Xobject parent = (Xobject)coidxObj.getParent();
+    switch (parent.Opcode()) {
+    case F_ASSIGN_STATEMENT:
+      if (parent.getArg(0) == coidxObj) {
+        // found coidxObj is a coindexed variable, an LHS of an assignment stmt.
+        return false;
+      }
+      // found coidxObj is a target coindexed object, a RHS of an assignment stmt.
+      return true;
+
+    case F_VAR_REF:
+      break;             // more check needed
+
+    case CO_ARRAY_REF:
+    case MEMBER_REF:
+    case F_ARRAY_REF:
+      // illegal cases
+      XMP.fatal("found illegal internal form.");
+
+    default:
+      return true;
+    }
+
+    // Here the parent of coidxObj is F_VAR_LEF.
+
+    Xobject gparent = (Xobject)parent.getParent();
+    if (gparent.Nargs() != 2 || gparent.getArg(0) != parent)
+      return true;
+
+    // Here, coidxObj == gparent.getArg(0).getArg(0)
+
+    switch (gparent.Opcode()) {
+    case CO_ARRAY_REF:
+      // found coidxObj is a host variable of another coindexed object.
+      XMP.error("found duplicated sets of cosubscript(s)");
+      return false;
+
+    case MEMBER_REF:
+      // found coidxObj is the host of a coindexed structure component.
+      return false;
+
+    case F_ARRAY_REF:
+      // found coidxObj is the host variable of a coindexed array element.
+      return false;
+
+    default:
+      break;
+    }
+
+    // passed all checks
+    return true;
   }
 
 
@@ -2039,7 +2143,7 @@ public class XMPtransCoarrayRun
     // arg3
     Xobject count = coarray.getTotalArraySizeExpr();
     // arg4
-    Xobject elem = coarray.getElementLengthExpr();
+    Xobject elem = coarray.getElementLengthExpr_runtime();
     if (elem==null)
       XMP.fatal("elem must not be null.");
     // arg5
@@ -2206,6 +2310,9 @@ public class XMPtransCoarrayRun
 
   private Boolean _isCoarrayInCoarrays(Xobject var,
                                        ArrayList<XMPcoarray> coarrays) {
+    // FIXME : "A coarray cannot be of a derived type nor be a structure component."
+    if (var.Opcode() == Xcode.MEMBER_REF)
+      return false;
     return _findCoarrayInCoarrays(var, coarrays) != null;
   }
 
@@ -2316,16 +2423,19 @@ public class XMPtransCoarrayRun
       // ... do not deallocate automatically at the exit of the procedure
       tag = Xcons.IntConstant(0, Xtype.Fint8Type, "8");
     } else {
+      // For each procedure, resourceTag is corresponding to the link of
+      // all allocatable coarrays which are allocated in the procedure. 
       tag = Xcons.FvarRef(getResourceTagId());
     }
 
     Xobject descId = coarray.getDescPointerId();
     if (descId == null)
+      // descId will be found at runtime.
       descId = Xcons.IntConstant(0, Xtype.Fint8Type, "8");    // descId = 0_8
     Xobject args = Xcons.List(descId,
                               Xcons.FvarRef(coarray.getIdent()),
                               _buildCountExpr(shape, rank),
-                              coarray.getElementLengthExpr(),
+                              coarray.getElementLengthExpr_runtime(),
                               tag,
                               Xcons.IntConstant(rank));
 
@@ -2570,7 +2680,7 @@ public class XMPtransCoarrayRun
       else if (fname.equalsIgnoreCase("ucobound"))
         _replaceCobound(xobj, coarrays, 1);
       else if (fname.equalsIgnoreCase("co_broadcast"))
-        _replaceCoReduction(xobj, fname, CO_BROADCAST_NAME);
+        _replaceCoBroadcast(xobj, fname, CO_BROADCAST_NAME);
       else if (fname.equalsIgnoreCase("co_sum"))
         _replaceCoReduction(xobj, fname, CO_SUM_NAME);
       else if (fname.equalsIgnoreCase("co_max"))
@@ -2630,16 +2740,46 @@ public class XMPtransCoarrayRun
 
 
 
-  /* replace "co_broadcast/sum/max/min(source, ...)"
-   *  with "xmpf_co_broadcast/sum/max/min<dim>d(source, ...)"
-   *  where <dim> is the rank of argument source
-   *
-   *  To avoid bug478, subroutine name co_xxx is converted into the 
-   *  intermedeate name co_xxx<dim>d before the final conversion by 
-   *  the compiler into co_xxx<dim>d_<typekind>.
-   *  --> challenge!
+  /* replace "co_sum/max/min(source, result)"
+   *  with "xmpf_co_sum/max/min_generic(source, result)"
    */
   private void _replaceCoReduction(Xobject xobj, String fname, String genericName) {
+    XobjList actualArgs = (XobjList)xobj.getArg(1);
+    int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
+
+    if (nargs < 1 || nargs > 3) {
+      XMP.error("Too few or too many arguments are found in " + fname);
+      return;
+    }
+
+    // get three arguments source, result (opt) and result_image (opt)
+    Xobject arg1 = actualArgs.getArgWithKeyword("source", 0);
+    Xobject arg2 = actualArgs.getArgWithKeyword("result", 1);
+    Xobject arg3 = actualArgs.getArgWithKeyword("result_image", 2);
+
+    if (arg1 == null) {
+      XMP.error("The first argument \'source\' was not found in " + fname);
+      return;
+    }
+
+    // set arguments
+    Xobject newActualArgs = Xcons.List(arg1);
+    if (arg2 != null)
+      newActualArgs.add(arg2);
+    if (arg3 != null)
+      newActualArgs.add(_buildKeywordArg("result_image", _convInt4(arg3)));
+    xobj.setArg(1, newActualArgs);
+
+    // replace with new procedure name
+    XobjString newFname = Xcons.Symbol(Xcode.IDENT, genericName);
+    xobj.setArg(0, newFname);
+  }
+
+
+  /* replace "co_broadcast(source, source_image)"
+   *  with "xmpf_co_broadcast_generic(source, int(source_image, 4))"
+   */
+  private void _replaceCoBroadcast(Xobject xobj, String fname, String genericName) {
     XobjList actualArgs = (XobjList)xobj.getArg(1);
     int nargs = (actualArgs == null) ? 0 : actualArgs.Nargs();
 
@@ -2651,11 +2791,24 @@ public class XMPtransCoarrayRun
     // get the first argument 'source'
     Xobject arg1 = actualArgs.getArgWithKeyword("source", 0);
     if (arg1 == null) {
-      XMP.error("Argument \'source\' was not found in " + fname);
+      XMP.error("The first argument \'source\' was not found in " + fname);
       return;
     }
 
-    //int rank = arg1.getFrank(getFblock());
+    // get the second argument 'source_image'
+    Xobject arg2 = actualArgs.getArgWithKeyword("source_image", 1);
+    if (arg2 == null) {
+      XMP.error("The second argument \'source_image\' was not found in " + fname);
+      return;
+    }
+
+    // set new actual args
+    Xobject newActualArgs = Xcons.List(arg1,              // source
+                                       _convInt4(arg2)    // source_image
+                                       );
+    xobj.setArg(1, newActualArgs);
+
+    // replace with new procedure name
     XobjString newFname = Xcons.Symbol(Xcode.IDENT, genericName);
     xobj.setArg(0, newFname);
   }
@@ -2732,7 +2885,7 @@ public class XMPtransCoarrayRun
         Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
         Xobject coindex = coarray.getImageIndex(baseAddr,
                                                 coindexObj.cosubscripts);
-        Xobject mold = coindexObj.getMoldObj();
+        Xobject mold = coindexObj.removeCoindex();
         Xobject dst = arg1;
         xobj.setArg(1, Xcons.List(descPtr, coindex, mold, dst));
       }
@@ -2813,7 +2966,7 @@ public class XMPtransCoarrayRun
         Xobject descPtr = coarray.getDescPointerIdExpr(baseAddr);
         Xobject coindex = coarray.getImageIndex(baseAddr,
                                                 coindexObj.cosubscripts);
-        Xobject mold = coindexObj.getMoldObj();
+        Xobject mold = coindexObj.removeCoindex();
         Xobject src = arg2;
         xobj.setArg(1, Xcons.List(descPtr, coindex, mold, src));
       }
@@ -3063,7 +3216,9 @@ public class XMPtransCoarrayRun
 
   private String[] _getHostNames() {
     ArrayList<String> list = new ArrayList<String>();
-    list.add(def.getName());
+    String def_name = def.getName();
+    if (def_name != null) // null if block data statement only.
+      list.add(def_name);
     XobjectDef parentDef = def.getParent();
     while (parentDef != null) {
       list.add(parentDef.getName());
@@ -3148,6 +3303,14 @@ public class XMPtransCoarrayRun
 
   private boolean isModule() {
     return  def.isFmoduleDef();
+  }
+
+  private boolean isFunction() {
+    return  def.isFuncDef();
+  }
+
+  private boolean isBlockData() {
+    return  def.isBlockData();
   }
 
   private String getName() {
@@ -3252,12 +3415,52 @@ public class XMPtransCoarrayRun
 
 
   //------------------------------
-  //  tool
+  //  tools
   //------------------------------
+
+  /*
+   *  convert expr to int(expr,4) if expr is not surely int*4.
+   */
+  private Xobject _convInt4(Xobject expr) {
+    if (expr.Type().isBasic() &&
+        expr.Type().getBasicType() == BasicType.INT) {
+      if (expr.isIntConstant()) {
+        if ("4".equals(((XobjConst)expr).getFkind()))
+          // found it seems a 4-byte integer literal constant
+          return expr;
+      }
+      try {
+        Xobject fkind = expr.Type().getFkind();
+        if (fkind != null && fkind.getInt() == 4) {
+          // found it is a 4-byte integer expression
+          return expr;
+        }
+      }
+      catch (UnsupportedOperationException e) {
+      }
+    }
+
+    // all other cases:  expr --> int(expr,4)
+    Ident intId = declIntIntrinsicIdent("int");
+    Xobject args = Xcons.List(expr, Xcons.IntConstant(4));
+    return intId.Call(args);
+  }    
+
+
+  /*
+   *  build an argument expression with a keyward
+   */
+  private Xobject _buildKeywordArg(String keyword, Xobject expr) {
+    Xobject arg = Xcons.List(Xcode.F_NAMED_VALUE,
+                             Xcons.String(keyword),
+                             expr);
+    return arg;
+  }    
+
+
   public String toString() {
     String s = 
       "\n  int version = " +  version +
-      "\n  Boolean DEBUG = " +  DEBUG +
       "\n  XMPenv env = " +  env +
       "\n  String name = " +  name +
       "\n  XobjectDef def = " +  def +

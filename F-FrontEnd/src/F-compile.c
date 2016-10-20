@@ -13,6 +13,8 @@ UNIT_CTL unit_ctls[MAX_UNIT_CTL];
 int unit_ctl_level;
 int unit_ctl_contains_level;
 
+ENV current_local_env;
+
 /* flags and defaults */
 int save_all = FALSE;
 int sub_stars = FALSE;
@@ -45,9 +47,10 @@ int XMP_coarray_flag = TRUE;
 
 
 /* control stack */
-CTL ctls[MAX_CTL];
-CTL *ctl_top;
-CTL *ctl_top_saved = NULL;
+static struct control _ctl_base = {0};
+CTL ctl_base = &_ctl_base;
+CTL ctl_top;
+CTL ctl_top_saved = NULL;
 
 expv CURRENT_STATEMENTS_saved = NULL;
 
@@ -118,6 +121,9 @@ static void compile_UNLOCK_statement(expr x);
 static void compile_CRITICAL_statement(expr x);
 static void compile_ENDCRITICAL_statement(expr x);
 
+static void compile_BLOCK_statement(expr x);
+static void compile_ENDBLOCK_statement(expr x);
+
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
 
@@ -131,6 +137,41 @@ void init_for_ACC_pragma();
 void check_for_ACC_pragma(expr x);
 
 void set_parent_implicit_decls(void);
+
+void
+push_env(ENV env)
+{
+    ENV parent_local_env;
+    parent_local_env = current_local_env;
+    current_local_env = env;
+    current_local_env->parent = parent_local_env;
+}
+
+
+void
+clean_env(ENV env)
+{
+    env->symbols = NULL;
+    env->struct_decls = NULL;
+    env->common_symbols = NULL;
+    env->labels = NULL;
+    env->external_symbols = NULL;
+    env->interfaces = NULL;
+    env->blocks = NULL;
+    env->use_decls = list0(LIST);
+}
+
+void
+pop_env()
+{
+    ENV old = current_local_env;
+    if (current_local_env->parent == NULL) {
+        error("no more parent environments");
+        return;
+    }
+    current_local_env = current_local_env->parent;
+    clean_env(old);
+}
 
 void
 initialize_compile()
@@ -193,7 +234,7 @@ initialize_compile_procedure()
     need_keyword = 0;
 
     /* control stack */
-    ctl_top = ctls;
+    ctl_top = ctl_base;
     CTL_TYPE(ctl_top) = CTL_NONE;
 
     init_for_OMP_pragma();
@@ -224,26 +265,47 @@ void
 push_ctl(ctl)
      enum control_type ctl;
 {
-    if(++ctl_top >= &ctls[MAX_CTL])
-      fatal("too many nested loop or if-then-else");
+    if (CTL_NEXT(ctl_top) == NULL) {
+        CTL_NEXT(ctl_top) = new_ctl();
+        CTL_PREV(CTL_NEXT(ctl_top)) = ctl_top;
+    } else {
+        cleanup_ctl(CTL_NEXT(ctl_top));
+        CTL_TYPE(CTL_NEXT(ctl_top)) = CTL_NONE;
+    }
+    ctl_top = CTL_NEXT(ctl_top);
+
     CTL_TYPE(ctl_top) = ctl;
     CTL_SAVE(ctl_top) = CURRENT_STATEMENTS;
     CURRENT_STATEMENTS = NULL;
     CURRENT_BLK_LEVEL++;
+
+    if (ctl == CTL_BLOCK) {
+        push_env(CTL_BLOCK_LOCAL_ENV(ctl_top));
+    }
 }
 
 /* pop control block and output statement block */
 void
 pop_ctl()
 {
+    enum control_type old_ctl_type = CTL_TYPE(ctl_top);
+    
     /* restore previous statements */
     CURRENT_STATEMENTS = CTL_SAVE(ctl_top);
     output_statement(CTL_BLOCK(ctl_top));
 
     /* pop */
-    if(ctl_top-- <= ctls) fatal("control stack empty");
+    if(CTL_PREV(ctl_top) == NULL) fatal("control stack empty");
+    ctl_top = CTL_PREV(ctl_top);
+    CTL_NEXT(ctl_top) = NULL;
     CURRENT_BLK_LEVEL--;
+
+    if (old_ctl_type == CTL_BLOCK) {
+        pop_env();
+    }
 }
+
+
 
 void
 compile_statement(st_no,x)
@@ -387,13 +449,18 @@ void compile_statement1(int st_no, expr x)
     case F_FUNCTION_STATEMENT:
         /* (F_FUNCTION_STATEMENT name dummy_arg_list type) */
         begin_procedure();
-        if (EXPR_ARG3(x) && EXPR_CODE(EXPR_ARG3(x)) == IDENT) {
-            /* in case of struct */
-            TYPE_DESC tp = declare_struct_type_wo_component(EXPR_ARG3(x));
+        if (EXPR_ARG3(x) &&
+            (EXPR_CODE(EXPR_ARG3(x)) == IDENT ||
+             EXPR_CODE(EXPR_ARG3(x)) == F03_PARAMETERIZED_TYPE ||
+             EXPR_CODE(EXPR_ARG3(x)) == F03_CLASS)) {
+            TYPE_DESC tp = compile_derived_type(EXPR_ARG3(x), TRUE);
+            if (tp == NULL) { /* something wrong */
+                return;
+            }
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               tp,
                               EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
-        }else{
+        } else {
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               compile_type(EXPR_ARG3(x)),
                               EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
@@ -471,7 +538,9 @@ void compile_statement1(int st_no, expr x)
          * declaration statement
          */
     case F_TYPE_DECL: /* (F_TYPE_DECL type (LIST data ....) (LIST attr ...)) */
-        check_INDCL();
+        if (CURRENT_STATE != IN_TYPE_PARAM_DECL)
+            check_INDCL();
+
         compile_type_decl(EXPR_ARG1(x), NULL, EXPR_ARG2(x),EXPR_ARG3(x));
         /* in case of data-style initializer like "INTEGER A / 10 /",
          * F_TYPE_DECL has data structure like, (LIST, IDENTIFIER,
@@ -488,12 +557,15 @@ void compile_statement1(int st_no, expr x)
 
     case F_COMMON_DECL: /* (F_COMMON_DECL common_decl) */
         check_INDCL();
+        check_NOT_INBLOCK();
         /* common_decl = (LIST common_name (LIST var dims) ...) */
         compile_COMMON_decl(EXPR_ARG1(x));
         break;
 
     case F_EQUIV_DECL: /* (F_EQUIVE_DECL (LIST lhs ...) ...) */
         check_INDCL();
+        check_NOT_INBLOCK();
+
         if (UNIT_CTL_EQUIV_DECLS(CURRENT_UNIT_CTL) == NULL) {
             UNIT_CTL_EQUIV_DECLS(CURRENT_UNIT_CTL) = list0(LIST);
         }
@@ -502,18 +574,23 @@ void compile_statement1(int st_no, expr x)
 
     case F_IMPLICIT_DECL:
         check_INDCL();
-	if (EXPR_ARG1(x)){
-	  FOR_ITEMS_IN_LIST(lp,EXPR_ARG1(x)){
-            v = LIST_ITEM(lp);
-            /* implicit none?  result in peek the data structture.  */
-            if (EXPR_CODE (EXPR_ARG1 (EXPR_ARG1(v)))== F_TYPE_NODE)
-                compile_IMPLICIT_decl(EXPR_ARG1(v),EXPR_ARG2(v));
-            else {
-                v = EXPR_ARG1(v);
-                compile_IMPLICIT_decl(EXPR_ARG1(v),EXPR_ARG2(v));
+        check_NOT_INBLOCK();
+        if (EXPR_ARG1(x)){
+            FOR_ITEMS_IN_LIST(lp,EXPR_ARG1(x)){
+                v = LIST_ITEM(lp);
+                /* implicit none?  result in peek the data structture.  */
+                if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F_TYPE_NODE) {
+                    compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
+                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_PARAMETERIZED_TYPE) {
+                    compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
+                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_CLASS) {
+                    compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
+                } else {
+                    v = EXPR_ARG1(v);
+                    compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
+                }
             }
-	  }
-	} else { /* implicit none */
+        } else { /* implicit none */
             if (UNIT_CTL_IMPLICIT_TYPE_DECLARED(CURRENT_UNIT_CTL))
                 error("IMPLICIT NONE and IMPLICIT type declaration "
                       "cannot co-exist");
@@ -521,7 +598,7 @@ void compile_statement1(int st_no, expr x)
             set_implicit_type_uc(CURRENT_UNIT_CTL, NULL, 'a', 'z', TRUE);
             list_put_last(UNIT_CTL_IMPLICIT_DECLS(CURRENT_UNIT_CTL),
                           create_implicit_decl_expv(NULL, "a", "z"));
-	}
+        }
 
         break;
 
@@ -577,16 +654,19 @@ void compile_statement1(int st_no, expr x)
 
     case F95_OPTIONAL_STATEMENT:
         check_INDCL();
+        check_NOT_INBLOCK();
         compile_OPTIONAL_statement(x);
         break;
 
     case F95_INTENT_STATEMENT:
         check_INDCL();
+        check_NOT_INBLOCK();
         compile_INTENT_statement(x);
         break;
 
     case F_NAMELIST_DECL:
         check_INDCL();
+        check_NOT_INBLOCK();
         compile_NAMELIST_decl(EXPR_ARG1(x));
         break;
 
@@ -943,11 +1023,16 @@ void compile_statement1(int st_no, expr x)
 
     case F95_TYPEDECL_STATEMENT:
         check_INDCL();
-        /* (F95_TYPEDECL_STATEMENT (LIST <I> <NULL>) <NULL>) */
-        compile_struct_decl(EXPR_ARG1(x), EXPR_ARG2(x));
+        /* (F95_TYPEDECL_STATEMENT (LIST <I> <NULL> <NULL> <NULL>) */
+        CURRENT_STATE = IN_TYPE_PARAM_DECL;
+        compile_struct_decl(EXPR_ARG1(x), EXPR_ARG2(x), EXPR_ARG3(x));
         break;
 
     case F95_ENDTYPEDECL_STATEMENT:
+        if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
+            CURRENT_STATE = INDCL;
+        }
+
         check_INDCL();
         /* (F95_ENDTYPEDECL_STATEMENT <NULL>) */
         compile_struct_decl_end();
@@ -968,6 +1053,11 @@ void compile_statement1(int st_no, expr x)
         break;
 
     case F95_PRIVATE_STATEMENT:
+        if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
+            // Expects inside the derived-type declaration
+            /* NOTE: PRIVATE and PROTECTED can be written in the derived-type declaration */
+            CURRENT_STATE = INDCL;
+        }
         check_INDCL();
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsPrivate);
         break;
@@ -985,6 +1075,21 @@ void compile_statement1(int st_no, expr x)
     case F03_PROTECTED_STATEMENT:
         check_INDCL();
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsProtected);
+        break;
+
+    case F2008_BLOCK_STATEMENT:
+        check_INEXEC();
+        compile_BLOCK_statement(x);
+        break;
+
+    case F2008_ENDBLOCK_STATEMENT:
+        check_INEXEC();
+        compile_ENDBLOCK_statement(x);
+        break;
+
+    case F03_VOLATILE_STATEMENT:
+        check_INDCL();
+        compile_VOLATILE_statement(EXPR_ARG1(x));
         break;
 
     default:
@@ -1308,6 +1413,9 @@ check_INDCL()
         CURRENT_STATE = INDCL;
     case INDCL:
         break;
+    case IN_TYPE_PARAM_DECL:
+        error("declaration in TYPE PARAMETER DECLARATION part");
+        break;
     default:
         error("declaration among executables");
     }
@@ -1325,6 +1433,36 @@ check_INEXEC()
             declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
     }
     if(NOT_INDATA_YET) end_declaration();
+}
+
+
+int
+inblock()
+{
+    CTL cp;
+    FOR_CTLS_BACKWARD(cp) {
+        switch (CTL_TYPE(cp)) {
+            case CTL_BLOCK:
+                return TRUE;
+                break;
+            case CTL_INTERFACE:
+                /* INTERFACE has its own scoping unit which differs from BLOCK's one */
+                return FALSE;
+            default:
+                continue;
+                break;
+        }
+    }
+    return FALSE;
+}
+
+
+void
+check_NOT_INBLOCK()
+{
+    if (inblock()) {
+        error("unexpected statement in the block construct");
+    }
 }
 
 
@@ -1485,7 +1623,7 @@ end_declaration()
         print_types(LOCAL_STRUCT_DECLS, debug_fp);
     }
 
-    if (CURRENT_PROCEDURE != NULL) {
+    if (CURRENT_PROCEDURE != NULL && CTL_TYPE(ctl_top) != CTL_BLOCK) {
 
         myId = CURRENT_PROCEDURE;
 
@@ -1768,8 +1906,9 @@ end_declaration()
                         struct type_attr_check *e;
                         for (e = type_attr_checker; e->flag; e++) {
                             if (TYPE_ATTR_FLAGS(tp) & e->flag) {
-                                fprintf(stderr, "%s has %s\n", ID_NAME(ip),
-                                        e->flag_name);
+                                warning_at_id(ip, "%s has %s\n",
+                                              ID_NAME(ip), e->flag_name);
+
                             }
                         }
                         fatal("type attr error: "
@@ -1778,6 +1917,46 @@ end_declaration()
                               check->flag_name,
                               TYPE_ATTR_FLAGS(tp));
                     }
+                }
+            }
+        }
+    }
+
+    /*
+     * Check type parameter values like '*' or ':'
+     */
+    FOREACH_ID (ip, LOCAL_SYMBOLS) {
+        if (ID_TYPE(ip) && IS_STRUCT_TYPE(ID_TYPE(ip))) {
+            TYPE_DESC struct_tp = ID_TYPE(ip);
+            if (!TYPE_TYPE_PARAM_VALUES(struct_tp))
+                continue;
+
+            FOR_ITEMS_IN_LIST(lp, TYPE_TYPE_PARAM_VALUES(struct_tp)) {
+                if (EXPV_CODE(LIST_ITEM(lp)) == F08_LEN_SPEC_COLON) {
+                    if (!TYPE_IS_POINTER(struct_tp) && !TYPE_IS_ALLOCATABLE(struct_tp)) {
+                        error_at_id(ip,
+                                    "type parameter value ':' should be used "
+                                    "with a POINTER or ALLOCATABLE object");
+                    }
+                } else if (EXPV_CODE(LIST_ITEM(lp)) == LEN_SPEC_ASTERISC) {
+                    if (!ID_IS_DUMMY_ARG(ip)) {
+                        error_at_id(ip,
+                                    "type parameter value '*' should be used "
+                                    "with a dummy argument");
+                    }
+                }
+            }
+
+            if (TYPE_IS_CLASS(struct_tp)) {
+                /*
+                 * CLASS() shoule be a POINTER object, an ALLOCATABLE object, or a dummy argument
+                 */
+                if (!TYPE_IS_POINTER(struct_tp) &&
+                    !TYPE_IS_ALLOCATABLE(struct_tp) &&
+                    !ID_IS_DUMMY_ARG(ip)) {
+                    error_at_id(ip,
+                                "CLASS should be used "
+                                "to a POINTER object, an ALLOCATABLE object, or a dummy argument");
                 }
             }
         }
@@ -1872,9 +2051,11 @@ end_declaration()
         tp = ID_TYPE(ip);
 
         if (tp) {
-            if (TYPE_IS_ALLOCATABLE(tp) && IS_ARRAY_TYPE(tp) == FALSE &&
-		!tp->codims) {
-                error_at_id(ip, "ALLOCATABLE is applied only to array");
+            if (TYPE_IS_ALLOCATABLE(tp) &&
+                !(IS_ARRAY_TYPE(tp) ||
+                  TYPE_IS_COINDEXED(tp) ||
+                  TYPE_IS_CLASS(tp))) {
+                error_at_id(ip, "ALLOCATABLE is applied only to array/coarray/class");
             } else if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "OPTIONAL is applied only "
                               "to dummy argument");
@@ -2075,9 +2256,12 @@ define_external_function_id(ID id) {
 static void
 setLocalInfoToCurrentExtId(int asModule)
 {
+
     EXT_PROC_BODY(CURRENT_EXT_ID) = CURRENT_STATEMENTS;
     EXT_PROC_ID_LIST(CURRENT_EXT_ID) = LOCAL_SYMBOLS;
     EXT_PROC_STRUCT_DECLS(CURRENT_EXT_ID) = LOCAL_STRUCT_DECLS;
+    EXT_PROC_BLOCKS(CURRENT_EXT_ID) = LOCAL_BLOCKS;
+    EXT_PROC_INTERFACES(CURRENT_EXT_ID) = LOCAL_INTERFACES;
 
     if(asModule) {
         EXT_PROC_COMMON_ID_LIST(CURRENT_EXT_ID) = NULL;
@@ -2260,14 +2444,41 @@ get_rough_type_size(TYPE_DESC t)
     return 0;
 }
 
+static void
+check_labels_in_block(BLOCK_ENV block) {
+    ID id;
+    BLOCK_ENV bp;
+
+    FOREACH_ID(id, BLOCK_LOCAL_LABELS(block)) {
+        if (LAB_TYPE(id) != LAB_UNKNOWN &&
+            LAB_IS_USED(id) && !LAB_IS_DEFINED(id)) {
+            error("missing statement number %d", LAB_ST_NO(id));
+        }
+        checkTypeRef(id);
+    }
+
+    FOREACH_BLOCKS(bp, BLOCK_CHILDREN(block)) {
+        check_labels_in_block(bp);
+    }
+}
+
+
 /* end of procedure. generate variables, epilogs, and prologs */
 static void
 end_procedure()
 {
     ID id;
     EXT_ID ext;
+    BLOCK_ENV bp;
 
-    if (unit_ctl_level > 0 && CURRENT_PROC_NAME == NULL) {
+    /* Check if a block construct is closed */
+    if (CTL_TYPE(ctl_top) == CTL_BLOCK &&
+        EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) == NULL) {
+        error("expecting END BLOCK statement");
+    }
+
+    if (unit_ctl_level > 0 && CURRENT_PROC_NAME == NULL &&\
+        CTL_TYPE(ctl_top) != CTL_BLOCK) {
         /* if CURRENT_PROC_NAME == NULL, then this is the end of CONTAINS */
         end_contains();
     }
@@ -2282,10 +2493,10 @@ end_procedure()
         if (CURRENT_EXT_ID == NULL) {
             /* Any other errors already occured, let compilation carry on. */
             return;
-        }
+         }
         /* check if module procedures are defined in contains block */
         EXT_ID intr, intrDef, ep;
-        FOREACH_EXT_ID(intr, EXT_PROC_INTERFACES(CURRENT_EXT_ID)) {
+        FOREACH_EXT_ID(intr, LOCAL_INTERFACES) {
             int hasSub = FALSE, hasFunc = FALSE;
 
             if(EXT_IS_BLANK_NAME(intr))
@@ -2347,10 +2558,11 @@ end_procedure()
 	EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
     }
 
-    if (CURRENT_PROC_CLASS != CL_MAIN && EXT_PROC_TYPE(CURRENT_EXT_ID) == NULL){
+    if (CURRENT_PROC_CLASS != CL_MAIN && CURRENT_PROC_CLASS != CL_BLOCK &&
+        EXT_PROC_TYPE(CURRENT_EXT_ID) == NULL) {
       error("Function resutl %s has no IMPLICIT type.", ID_NAME(CURRENT_EXT_ID));
     }
-    
+
     if(NOT_INDATA_YET) end_declaration();
 
     /*
@@ -2464,6 +2676,10 @@ end_procedure()
         }
     }
 
+    if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
+        return;
+    }
+
     /* check undefined label */
     FOREACH_ID(id, LOCAL_LABELS) {
         if (LAB_TYPE(id) != LAB_UNKNOWN &&
@@ -2471,6 +2687,9 @@ end_procedure()
             error("missing statement number %d", LAB_ST_NO(id));
         }
         checkTypeRef(id);
+    }
+    FOREACH_BLOCKS(bp, LOCAL_BLOCKS) {
+        check_labels_in_block(bp);
     }
 
     /*
@@ -2561,14 +2780,14 @@ end_procedure()
     if(CURRENT_PROC_CLASS == CL_MODULE) {
         SYMBOL sym = find_symbol(current_module_name);
         if(!export_module(sym, LOCAL_SYMBOLS,
-                          UNIT_CTL_USE_DECLS(CURRENT_UNIT_CTL))) {
+                          LOCAL_USE_DECLS)) {
             error("internal error, fail to export module.");
             exit(1);
         }
     }
 
     /* check control nesting */
-    if(ctl_top > ctls) error("DO loop or BLOCK IF not closed");
+    if (ctl_top != ctl_base) error("DO loop or BLOCK IF not closed");
 
 #ifdef not
     donmlist();
@@ -2593,7 +2812,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
     TYPE_DESC var_tp = NULL;
     SYMBOL do_var_sym = NULL;
     int incsign = 0;
-    CTL *cp;
+    CTL cp;
 
     if (range_st_no > 0) {
         do_label = declare_label(range_st_no, LAB_EXEC, FALSE);
@@ -2613,7 +2832,7 @@ compile_DO_statement(range_st_no, construct_name, var, init, limit, incr)
         do_var_sym = EXPR_SYM(var);
 
         /* check nested loop with the same variable */
-        for (cp = ctls; cp < ctl_top; cp++) {
+        FOR_CTLS(cp) {
             if(CTL_TYPE(cp) == CTL_DO && CTL_DO_VAR(cp) == do_var_sym) {
                 error("nested loops with variable '%s'", SYM_NAME(do_var_sym));
                 break;
@@ -2741,7 +2960,7 @@ static void  compile_DOWHILE_statement(range_st_no, cond, construct_name)
 static void
 check_DO_end(ID label)
 {
-    CTL *cp;
+    CTL cp;
 
     if (label == NULL) {
         /*
@@ -2824,7 +3043,7 @@ check_DO_end(ID label)
     }
 
     /* check DO loop which is not propery closed. */
-    for (cp = ctl_top; cp >= ctls; cp--) {
+    FOR_CTLS(cp) {
         if (CTL_TYPE(cp) == CTL_DO && CTL_DO_LABEL(cp) == label) {
             error("DO loop or IF-block not closed");
             ctl_top = cp;
@@ -3071,6 +3290,13 @@ deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
     }
 
     if(IS_STRUCT_TYPE(cur)) {
+        if(TYPE_PARENT(cur) && TYPE_PARENT_TYPE(cur)) {
+            id = new_ident_desc(ID_SYM(TYPE_PARENT(cur)));
+            *id = *TYPE_PARENT(cur);
+            TYPE_PARENT(cur) = id;
+            deep_copy_and_overwrite_for_module_id_type(&(TYPE_PARENT_TYPE(cur)));
+        }
+
         FOREACH_MEMBER(id, cur) {
             deep_copy_and_overwrite_for_module_id_type(&(ID_TYPE(id)));
         }
@@ -3362,7 +3588,7 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
     }
 
     // deep-copy types now!
-    first_mid = ID_NEXT(prev_mid);
+    first_mid = prev_mid ? ID_NEXT(prev_mid) : NULL;
     FOREACH_ID(mid, first_mid) {
         // deep copy of types!
         deep_ref_copy_for_module_id_type(ID_TYPE(mid));
@@ -3472,7 +3698,7 @@ compile_USE_decl (expr x, expr x_args)
 
     use_assoc_rename(EXPR_SYM(x), use_args);
 
-    list_put_last(UNIT_CTL_USE_DECLS(CURRENT_UNIT_CTL), x);
+    list_put_last(LOCAL_USE_DECLS, x);
 }
 
 /*
@@ -3526,7 +3752,7 @@ compile_USE_ONLY_decl (expr x, expr x_args)
 
     use_assoc_only(EXPR_SYM(x), use_args);
 
-    list_put_last(UNIT_CTL_USE_DECLS(CURRENT_UNIT_CTL), x);
+    list_put_last(LOCAL_USE_DECLS, x);
 }
 
 static char*
@@ -3649,7 +3875,15 @@ compile_INTERFACE_statement(expr x)
     if(use_associated_ep)
         EXT_PROC_INTR_DEF_EXT_IDS(ep) = EXT_PROC_INTR_DEF_EXT_IDS(use_associated_ep);
 
+    push_ctl(CTL_INTERFACE);
     push_unit_ctl(ININTR);
+
+    /* replace the current contol list */
+    UNIT_CTL_INTERFACE_SAVE_CTL(CURRENT_UNIT_CTL) = ctl_top;
+    UNIT_CTL_INTERFACE_SAVE_CTL_BASE(CURRENT_UNIT_CTL) = ctl_base;
+    ctl_base = new_ctl();
+    ctl_top = ctl_base;
+
     CURRENT_INTERFACE = ep;
 }
 
@@ -3674,7 +3908,6 @@ end_interface()
     localExtSyms = LOCAL_EXTERNAL_SYMBOLS;
     intr = CURRENT_INTERFACE;
 
-
     /* add symbols in INTERFACE to INTERFACE symbol */
     if (EXT_PROC_INTR_DEF_EXT_IDS(intr) == NULL) {
         EXT_PROC_INTR_DEF_EXT_IDS(intr) = localExtSyms;
@@ -3683,19 +3916,25 @@ end_interface()
             EXT_PROC_INTR_DEF_EXT_IDS(intr), localExtSyms);
     }
 
-    /* add INTERFACE symbol to parent */
-    if (EXT_PROC_INTERFACES(PARENT_EXT_ID) == NULL) {
-        EXT_PROC_INTERFACES(PARENT_EXT_ID) = intr;
-    } else {
-        extid_put_last(EXT_PROC_INTERFACES(PARENT_EXT_ID), intr);
-    }
 
     if (endlineno_flag) {
         if (CURRENT_INTERFACE && EXT_LINE(CURRENT_INTERFACE))
             EXT_END_LINE_NO(CURRENT_INTERFACE) = current_line->ln_no;
     }
 
+    ctl_top = UNIT_CTL_INTERFACE_SAVE_CTL(CURRENT_UNIT_CTL);
+    ctl_base = UNIT_CTL_INTERFACE_SAVE_CTL_BASE(CURRENT_UNIT_CTL);
     pop_unit_ctl();
+    pop_ctl();
+
+    /* add INTERFACE symbol to parent */
+    if (LOCAL_INTERFACES == NULL) {
+        LOCAL_INTERFACES = intr;
+    } else {
+        /* extid_put_last(EXT_PROC_INTERFACES(PARENT_EXT_ID), intr); */
+        extid_put_last(LOCAL_INTERFACES, intr);
+    }
+
     CURRENT_STATE = INDCL;
 
     /* add function symbol to parent local symbols */
@@ -3954,7 +4193,7 @@ compile_member_ref(expr x)
     if (EXPV_CODE(struct_v) != F95_MEMBER_REF
         && EXPV_CODE(struct_v) != F_VAR
         && EXPV_CODE(struct_v) != ARRAY_REF
-	&& EXPV_CODE(struct_v) != XMP_COARRAY_REF) {
+        && EXPV_CODE(struct_v) != XMP_COARRAY_REF) {
         error("invalid left operand of '\%%'", EXPV_CODE(struct_v));
         return NULL;
     }
@@ -3981,6 +4220,7 @@ compile_member_ref(expr x)
     //	merge type override all cases (array/substr/plain scalar).
     if (TYPE_IS_POINTER(stVTyp) ||
         TYPE_IS_TARGET(stVTyp) ||
+        TYPE_IS_VOLATILE(stVTyp) ||
         TYPE_IS_COINDEXED(stVTyp)) {
         /*
          * If type of struct_v has pointer/pointee flags on, members
@@ -3998,6 +4238,7 @@ compile_member_ref(expr x)
 
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_POINTER(mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_TARGET(mVTyp);
+        TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_VOLATILE(mVTyp);
         TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_ALLOCATABLE(mVTyp);
 
         TYPE_CODIMENSION(retTyp) = TYPE_CODIMENSION(stVTyp);
@@ -4011,14 +4252,18 @@ compile_member_ref(expr x)
         if (!TYPE_IS_TARGET(retTyp)) {
             TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_TARGET(stVTyp);
         }
+        if (!TYPE_IS_VOLATILE(retTyp)) {
+            TYPE_ATTR_FLAGS(retTyp) |= TYPE_IS_VOLATILE(stVTyp);
+        }
 
         tp = retTyp;
+	tp = compile_dimensions(tp, shape);
     } else {
         tp = ID_TYPE(member_id);
 
     }
 
-    tp = compile_dimensions(tp, shape);
+    //tp = compile_dimensions(tp, shape);
     fix_array_dimensions(tp);
 
     new_v = expv_cons(F95_MEMBER_REF, tp, struct_v, mX);
@@ -4608,7 +4853,7 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
         } else if (markAs == markAsPrivate)  {
             current_module_state = M_PRIVATE;
         } else if (markAs == markAsProtected) {
-            current_module_state == M_PROTECTED;
+            current_module_state = M_PROTECTED;
         }
 
         /* private/public is set to ids, later in end_declaration */
@@ -4733,6 +4978,16 @@ compile_POINTER_SET_statement(expr x) {
     if (get_basic_type(vPtrTyp) != get_basic_type(vPteTyp)) {
         error_at_node(x, "Type mismatch.");
         return;
+    }
+
+    if (TYPE_IS_VOLATILE(vPtrTyp) != TYPE_IS_VOLATILE(vPteTyp)) {
+        error_at_node(x, "VOLATILE attribute mismatch.");
+        return;
+    }
+
+    if (IS_STRUCT_TYPE(vPtrTyp) &&
+        !struct_type_is_compatible_for_assignment(vPtrTyp, vPteTyp, TRUE)) {
+        error_at_node(x, "Derived-type mismatch.");
     }
 
 accept:
@@ -4977,10 +5232,10 @@ fix_pointer_pointee_recursive(TYPE_DESC tp)
             }
             fix_pointer_pointee_recursive(refT);
         } else {
-            if (IS_STRUCT_TYPE(tp)) {
+            if (IS_STRUCT_TYPE(tp) && !TYPE_IS_CLASS(tp)) {
                 /*
                  * TYPE_STRUCT base. Don't mark this node as
-                 * pointer/pointee.
+                 * pointer/pointee, EXCEPT 'CLASS(*)'.
                  */
                 TYPE_UNSET_POINTER(tp);
                 TYPE_UNSET_TARGET(tp);
@@ -5053,9 +5308,10 @@ cleanup_unit_ctl(UNIT_CTL uc)
     UNIT_CTL_LOCAL_STRUCT_DECLS(uc) = NULL;
     UNIT_CTL_LOCAL_COMMON_SYMBOLS(uc) = NULL;
     UNIT_CTL_LOCAL_LABELS(uc) = NULL;
+    UNIT_CTL_LOCAL_INTERFACES(uc) = NULL;
     UNIT_CTL_IMPLICIT_DECLS(uc) = list0(LIST);
     UNIT_CTL_EQUIV_DECLS(uc) = list0(LIST);
-    UNIT_CTL_USE_DECLS(uc) = list0(LIST);
+    UNIT_CTL_LOCAL_USE_DECLS(uc) = list0(LIST);
 
     /* UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(uc) is not cleared */
     //if (unit_ctl_level == 0) { /* for main */
@@ -5108,6 +5364,9 @@ initialize_unit_ctl()
     unit_ctls[0] = new_unit_ctl();
     unit_ctl_level = 0;
     unit_ctl_contains_level = 0;
+
+    current_local_env = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
+    current_local_env->parent = NULL;
 }
 
 /**
@@ -5142,6 +5401,7 @@ push_unit_ctl(enum prog_state state)
 
     CURRENT_STATE = state;
     unit_ctl_level ++;
+
     if(state == INCONT)
         unit_ctl_contains_level ++;
 
@@ -5150,6 +5410,8 @@ push_unit_ctl(enum prog_state state)
     if (check_inside_INTERFACE_body() == FALSE) {
         set_parent_implicit_decls();
     }
+
+    push_env(UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL));
 }
 
 
@@ -5203,9 +5465,29 @@ pop_unit_ctl()
     }
     unit_ctls[unit_ctl_level] = NULL;
     unit_ctl_level --;
+    pop_env();
+
     if(CURRENT_STATE == INCONT)
         unit_ctl_contains_level --;
 }
+
+void
+cleanup_ctl(CTL ctl) {
+    CTL_TYPE(ctl) = CTL_NONE;
+}
+
+
+CTL
+new_ctl() {
+    CTL ctl;
+    ctl = XMALLOC(CTL, sizeof(*ctl));
+    if (ctl == NULL)
+        fatal("memory allocation failed");
+    cleanup_ctl(ctl);
+    CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(ctl) = NULL;
+    return ctl;
+}
+
 
 /**
  * for type declaration with data style initializer
@@ -5249,7 +5531,6 @@ compile_stat_args(expv st, expr x, int expect_acquired_lock) {
         v = LIST_ITEM(lp);
 
         if (EXPR_CODE(v) != F_SET_EXPR) {
-            fprintf(stderr, "EXPR_CODE(x) is %d\n", EXPR_CODE(v));
             fatal("%s: not F_SET_EXPR.", __func__);
         }
 
@@ -5614,8 +5895,8 @@ compile_ENDCRITICAL_statement(expr x) {
  */
 static int
 check_inside_CRITICAL_construct() {
-    CTL * cp;
-    for(cp = ctl_top; cp >= ctls; cp--){
+    CTL cp;
+    FOR_CTLS_BACKWARD(cp) {
         if (CTL_TYPE(cp) == CTL_CRITICAL) {
             return TRUE;
         }
@@ -5634,4 +5915,95 @@ check_image_control_statement_available() {
     }
 
     return TRUE;
+}
+
+
+static void
+compile_BLOCK_statement(expr x)
+{
+    expv st;
+
+    push_ctl(CTL_BLOCK);
+
+    st = list2(F2008_BLOCK_STATEMENT, NULL, NULL);
+    output_statement(st);
+    CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+    CTL_BLOCK_STATEMENT(ctl_top) = st;
+    EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) = NULL;
+
+    /* save construct name */
+    if (EXPR_HAS_ARG1(x)) {
+        CTL_BLOCK_CONST_NAME(ctl_top) = EXPR_ARG1(x);
+    }
+
+    CURRENT_STATE = INDCL;
+    CURRENT_STATEMENTS = NULL;
+    current_proc_state = P_DEFAULT;
+
+    if (endlineno_flag){
+        if (current_line->end_ln_no) {
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->end_ln_no;
+        } else {
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+        }
+    }
+}
+
+
+static void
+compile_ENDBLOCK_statement(expr x)
+{
+    BLOCK_ENV current_block;
+    BLOCK_ENV bp, tail;
+
+    if (CTL_TYPE(ctl_top) != CTL_BLOCK) {
+        error("'endblock', out of place");
+        return;
+    }
+
+    /* check construct name */
+    if (CTL_BLOCK_CONST_NAME(ctl_top) != NULL) {
+        if (EXPR_ARG1(x) == NULL) {
+            error("expects construnct name");
+            return;
+        } else if (EXPR_SYM(CTL_BLOCK_CONST_NAME(ctl_top)) !=
+                   EXPR_SYM(EXPR_ARG1(x))) {
+            error("unmatched construct name");
+            return;
+        }
+    } else if (EXPR_ARG1(x) != NULL) {
+        error("unexpected construnct name");
+        return;
+    }
+
+    if (debug_flag) {
+        fprintf(debug_fp,"\n*** IN BLOCK:\n");
+        print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
+        print_types(LOCAL_STRUCT_DECLS, debug_fp);
+        expv_output(CURRENT_STATEMENTS, debug_fp);
+    }
+
+    CTL_BLOCK_BODY(ctl_top) = CURRENT_STATEMENTS;
+
+    if (endlineno_flag) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    }
+
+    current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
+    BLOCK_LOCAL_SYMBOLS(current_block) = LOCAL_SYMBOLS;
+    BLOCK_LOCAL_LABELS(current_block) = LOCAL_LABELS;
+    BLOCK_LOCAL_INTERFACES(current_block) = LOCAL_INTERFACES;
+    BLOCK_LOCAL_EXTERNAL_SYMBOLS(current_block) = LOCAL_EXTERNAL_SYMBOLS;
+    BLOCK_CHILDREN(current_block) = LOCAL_BLOCKS;
+    EXPR_BLOCK(CTL_BLOCK_STATEMENT(ctl_top)) = current_block;
+
+    end_procedure();
+    pop_ctl();
+
+    FOREACH_BLOCKS(bp, LOCAL_BLOCKS) {
+        tail = bp;
+    }
+    BLOCK_LINK_ADD(current_block, LOCAL_BLOCKS, tail);
+
+    CURRENT_STATE = INEXEC;
 }

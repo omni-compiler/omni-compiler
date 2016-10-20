@@ -73,8 +73,10 @@ public class XMPrewriteExpr {
         if (decls != null) {
           try {
             for (Xobject x : decls) {
-              Xobject declInitExpr = x.getArg(1);
-	      x.setArg(1, rewriteExpr(declInitExpr, b));
+              if (Xcode.VAR_DECL == x.Opcode()) {
+                Xobject declInitExpr = x.getArg(1);
+                x.setArg(1, rewriteExpr(declInitExpr, b));
+              }
             }
           } catch (XMPexception e) {
             XMP.error(b.getLineNo(), e.getMessage());
@@ -437,7 +439,7 @@ public class XMPrewriteExpr {
       for(int i=0;i<dstDim;i++){
         Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(i);
         Xobject tmp_position;
-        if(tripletList.isConstant() || tripletList.isVariable()){
+        if(! tripletList.isIndexRange()){
           tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, tripletList, Xcons.IntConstant(dstCoarrayDistance[i]));
         }
         else{
@@ -480,7 +482,7 @@ public class XMPrewriteExpr {
       for(int i=0;i<srcDim;i++){
         Xobject tripletList = srcCoarrayExpr.getArg(1).getArg(i);
         Xobject tmp_position;
-        if(tripletList.isConstant() || tripletList.isVariable()){
+        if(! tripletList.isIndexRange()){
           tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, tripletList, Xcons.IntConstant(srcCoarrayDistance[i]));
         }
         else{
@@ -524,7 +526,7 @@ public class XMPrewriteExpr {
       }
       else{
         Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(dstCoarrayDepthContinuous-1);
-        if(tripletList.isConstant() || tripletList.isVariable()){
+        if(! tripletList.isIndexRange()){
           dst_length = Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]);
         }
         else{
@@ -549,7 +551,7 @@ public class XMPrewriteExpr {
       }
       else{
         Xobject tripletList = srcCoarrayExpr.getArg(1).getArg(srcCoarrayDepthContinuous-1);
-        if(tripletList.isConstant() || tripletList.isVariable()){
+        if(! tripletList.isIndexRange()){
           src_length = Xcons.IntConstant(srcCoarrayDistance[srcCoarrayDepthContinuous-1]);
         }
         else{
@@ -664,7 +666,7 @@ public class XMPrewriteExpr {
       XobjList tripletList = (XobjList)(coarrayExpr.getArg(0)).getArg(1);
       funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_coarray_set_" + Integer.toString(tripletList.Nargs()));
       for(int i=0;i<tripletList.Nargs();i++){
-        if(tripletList.getArg(i).isConstant() || tripletList.getArg(i).isVariable()){
+        if(! tripletList.getArg(i).isIndexRange()){
           funcArgs.add(tripletList.getArg(i)); // start
           funcArgs.add(Xcons.IntConstant(1));  // length
           funcArgs.add(Xcons.IntConstant(1));  // stride
@@ -730,7 +732,7 @@ public class XMPrewriteExpr {
 
       XobjList tripletList = (XobjList)localExpr.getArg(1);
       for(int i=0;i<tripletList.Nargs();i++){
-        if(tripletList.getArg(i).isVariable() || tripletList.getArg(i).isIntConstant() ){
+        if(! tripletList.getArg(i).isIndexRange()){
           funcArgs.add(tripletList.getArg(i));           // start
           funcArgs.add(Xcons.IntConstant(1));            // length
           funcArgs.add(Xcons.IntConstant(1));            // stride
@@ -848,7 +850,7 @@ public class XMPrewriteExpr {
 
   private boolean is_stride_1(int dim, XobjList tripletList)
   {
-    if(tripletList.getArg(dim).isConstant() || tripletList.getArg(dim).isVariable()){
+    if(! tripletList.getArg(dim).isIndexRange()){
         return true;
     } 
     else{
@@ -875,7 +877,7 @@ public class XMPrewriteExpr {
       else{
         return false;
       }
-    else{
+    else if(tripletList.getArg(dim).isIndexRange()){
       Xobject start = tripletList.getArg(dim).getArg(0);
       if(start.isConstant()){
         if(start.getInt() == 0){
@@ -887,7 +889,8 @@ public class XMPrewriteExpr {
   }
 
   private boolean is_length_all(int dim, XobjList tripletList, Ident varId){
-    if(tripletList.getArg(dim).isConstant() || tripletList.getArg(dim).isVariable()){
+    if(! tripletList.getArg(dim).isIndexRange()){
+      //FIXME if dimSize equals 1, this case must return true
       return false;
     }
 
@@ -926,7 +929,7 @@ public class XMPrewriteExpr {
 
   private boolean is_length_1(int dim, XobjList tripletList)
   {
-    if(tripletList.getArg(dim).isVariable() || tripletList.getArg(dim).isConstant()){
+    if(! tripletList.getArg(dim).isIndexRange()){
       return true;
     }
     else{
@@ -1210,7 +1213,7 @@ public class XMPrewriteExpr {
       Ident var;
       Xobject lb, len, st;
 
-      if (sub.Opcode() != Xcode.LIST) continue;
+      if (! sub.isIndexRange()) continue;
 
       var = body0.declLocalIdent("_XMP_loop_i" + Integer.toString(i), Xtype.intType);
       varList.add(var);
@@ -1271,7 +1274,7 @@ public class XMPrewriteExpr {
 
 	Xobject lb, st;
 
-	if (sub.Opcode() != Xcode.LIST) continue;
+	if (! sub.isIndexRange()) continue;
 
 	lb = ((XobjList)sub).getArg(0);
 	if (lb == null) lb = Xcons.IntConstant(0);
@@ -2135,12 +2138,7 @@ public class XMPrewriteExpr {
                                                   String loopIndexName, Xobject arrayRef) throws XMPexception
   {
     if (arrayRef.Opcode() == Xcode.VAR) {
-      if (loopIndexName.equals(arrayRef.getString())) {
-        return calcShadow(t, ti, a, ai, arrayRef);
-      }
-      else {
-        return arrayRef;
-      }
+      return calcShadow(t, ti, a, ai, arrayRef);
     }
 
     topdownXobjectIterator iter = new topdownXobjectIterator(arrayRef);
@@ -2170,7 +2168,7 @@ public class XMPrewriteExpr {
     expr.setIsRewrittedByXmp(true);
     if(a.getAlignSubscriptIndexAt(ai) != null){  // null is an asterisk
       if (ti != a.getAlignSubscriptIndexAt(ai).intValue()) {
-	throw new XMPexception("array ref is not consistent with array alignment");
+        return expr;
       }
     }
 

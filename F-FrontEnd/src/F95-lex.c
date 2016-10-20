@@ -122,6 +122,7 @@ enum lex_state
 
 int st_CONDCOMPL_flag;
 int st_PRAGMA_flag;
+int st_OCL_flag;
 int st_OMP_flag;
 int st_XMP_flag;
 int st_ACC_flag;
@@ -1427,7 +1428,7 @@ classify_statement()
     case INTENT:
     case INTERFACE:
     case INTRINSIC:
-    case KW_BLOCK:
+    case BLOCK:
     case KW_GO:
     case KW_IN:
     case KW_KIND:
@@ -1442,6 +1443,7 @@ classify_statement()
     case OPTIONAL:
     case PARAMETER:
     case POINTER:
+    case VOLATILE:
     case SAVE:
     case SELECT:
     case SEQUENCE:
@@ -1730,23 +1732,36 @@ get_keyword_optional_blank(int class)
 
     switch(class){
     case END:
-        if((cl = get_keyword(end_keywords)) != UNKNOWN){
-            if(cl == KW_BLOCK){
-	        while(isspace(*bufptr)) bufptr++;   /* skip space */
-                if(get_keyword(keywords) == DATA) return ENDBLOCKDATA;
+        if ((cl = get_keyword(end_keywords)) != UNKNOWN){
+            if (cl == BLOCK){
+                while(isspace(*bufptr)) bufptr++;   /* skip space */
+                if (get_keyword(keywords) == DATA) {
+                    return ENDBLOCKDATA;
+                } else {
+                    return ENDBLOCK;
+                }
                 break;
+            } else if (cl == BLOCKDATA){
+                return ENDBLOCKDATA;
+            } else {
+                return cl;
             }
-	    else if (cl == BLOCKDATA){
-	      return ENDBLOCKDATA;
-	    }
-            return cl;
         }
         break;
-    case KW_BLOCK: /* BLOCK DATA*/
-        if(get_keyword(keywords) == DATA) return BLOCKDATA;
+    case BLOCK: /* BLOCK or BLOCK DATA*/
+        if (get_keyword(keywords) == DATA) {
+            return BLOCKDATA;
+        } else {
+            return BLOCK;
+        }
         break;
-    case KW_ENDBLOCK: /* BLOCK DATA*/
-        if(get_keyword(keywords) == DATA) return ENDBLOCKDATA;
+    case ENDBLOCK: /* BLOCK or BLOCK DATA*/
+        if (get_keyword(keywords) == DATA) {
+            return ENDBLOCKDATA;
+        } else {
+            return ENDBLOCK;
+        }
+
         break;
 
     case KW_DBL: { /* DOBULE PRECISION */
@@ -2121,6 +2136,7 @@ again:
     st_XMP_flag = FALSE;       /* flag for "!$XMP" */
     st_ACC_flag = FALSE;       /* flag for "!$ACC" */
     st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
+    st_OCL_flag = FALSE;       /* flag for "!OCL" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
 
     if (flag_force_c_comment) {
@@ -2538,11 +2554,20 @@ top:
             append_pragma_str (" ");
             append_pragma_str (line_buffer);
 	    goto copy_body;
+        }else if( strcasecmp( sentinel_name( &sentinels, index ),
+                              OCL_SENTINEL )== 0 ){
+            st_PRAGMA_flag = TRUE;
+	    st_OCL_flag = TRUE;
+            set_pragma_str( &(sentinel_name( &sentinels, index )[1]) );
+            append_pragma_str (" ");
+            append_pragma_str (line_buffer);
+	    goto copy_body;
         }else{
             st_PRAGMA_flag = TRUE;
             set_pragma_str( &(sentinel_name( &sentinels, index )[2]) );
             append_pragma_str (" ");
             append_pragma_str (line_buffer);
+	    goto copy_body;
         }
     }else if (is_cond_compilation(&sentinels, stn_cols)) {
         st_CONDCOMPL_flag = TRUE;
@@ -2645,7 +2670,19 @@ copy_body:
                 }
                 error("ACC sentinels missing initial line, ignored");
                 break;
-            }
+            }else if( strcasecmp( sentinel_name( &sentinels, index ),
+                                  OCL_SENTINEL )== 0 ){
+	      // no continutation line for ocl
+	      break;
+            }else {
+                if( st_PRAGMA_flag ){
+                    append_pragma_str (" ");
+                    append_pragma_str (line_buffer);
+                    goto copy_body_cont;
+                }
+                error("PRAGMA sentinels missing initial line, ignored");
+                break;
+	    }
         }else if (is_cond_compilation( &sentinels, stn_cols )) {
             if( st_CONDCOMPL_flag ){
                 append_pragma_str (" ");
@@ -2771,6 +2808,7 @@ readline_fixed_format()
     int local_OMP_flag = FALSE;
     int local_XMP_flag = FALSE;
     int local_ACC_flag = FALSE;
+    int local_OCL_flag = FALSE;
     int local_CONDCOMPL_flag = FALSE;
     int local_SENTINEL_flag = FALSE;
 
@@ -2868,7 +2906,8 @@ next_line0:
     }
 
     if (is_pragma_sentinel( &sentinels, line_buffer, &index )) {
-        if( strcasecmp( sentinel_name( &sentinels, index ),
+      local_SENTINEL_flag = TRUE;
+      if( strcasecmp( sentinel_name( &sentinels, index ),
                         OMP_SENTINEL )== 0 ){
             local_OMP_flag = TRUE;
         }else if( strcasecmp( sentinel_name( &sentinels, index ),
@@ -2877,9 +2916,13 @@ next_line0:
         }else if( strcasecmp( sentinel_name( &sentinels, index ),
                               ACC_SENTINEL )== 0 ){
             local_ACC_flag = TRUE;
-        }
+        }else if( strcasecmp( sentinel_name( &sentinels, index ),
+                              OCL_SENTINEL )== 0 ){
+            local_OCL_flag = TRUE;
+      }
     }else if (is_cond_compilation( &sentinels, line_buffer )) {
-        local_CONDCOMPL_flag = TRUE;
+      local_SENTINEL_flag = TRUE;
+      local_CONDCOMPL_flag = TRUE;
     }else{
         if( line_buffer[0]=='!' ){
 	  /* now '!' on 1st place always means comment line. */
@@ -2891,7 +2934,7 @@ next_line0:
     }
 
     /* if there is a line begins with "!$", local_SENTINEL_flag is set TRUE. */
-    local_SENTINEL_flag = local_OMP_flag||local_XMP_flag||local_ACC_flag||local_CONDCOMPL_flag;
+    //local_SENTINEL_flag = local_OMP_flag||local_XMP_flag||local_ACC_flag||local_CONDCOMPL_flag;
 
     // comment line begins with '!' leaded by whitespaces.
     if( !local_SENTINEL_flag ){
@@ -2969,7 +3012,8 @@ next_line0:
  read_num_column:
     strcpy( stn_cols, "      " );
     /*                 123456   */
-    for(i = 0; i < 6  ;i++) {
+    int iend = local_OCL_flag ? 5 : 6;
+    for(i = 0; i < iend  ;i++) {
         if (line_buffer[i]=='\0') {
             //warning_lineno( &read_lineno, "unexpected eof");
             //return(ST_EOF);
@@ -3141,6 +3185,7 @@ KeepOnGoin:
             error("bad CONDCOMPL sentinel continuation line");
             return (ST_INIT);
         }
+	if (st_OCL_flag || local_OCL_flag) return (ST_INIT); // no continuation line for ocl
     }
 
     if (check_cont && IS_CONT_LINE(stn_cols)){
@@ -3722,7 +3767,7 @@ struct keyword_token keywords[ ] =
     { "all",            KW_ALL },       /* #060 coarray */
     { "backspace",      BACKSPACE },
     { "blockdata",      BLOCKDATA },
-    { "block",          KW_BLOCK},      /* optional */
+    { "block",          BLOCK},      /* optional */
     { "call",           CALL },
     { "case",           CASE},
     { "character",      KW_CHARACTER, },
@@ -3747,7 +3792,7 @@ struct keyword_token keywords[ ] =
     { "elsewhere",      ELSEWHERE },
     { "else",           ELSE },
     { "exit",           EXIT },
-    { "endblock",       KW_ENDBLOCK },
+    { "endblock",       ENDBLOCK },
     { "endcritical",    ENDCRITICAL },     /* #060 coarray */
     { "enddo",          ENDDO },
     { "endfile",        ENDFILE  },
@@ -3760,6 +3805,7 @@ struct keyword_token keywords[ ] =
     { "endselect",      ENDSELECT },
     { "endsubroutine",  ENDSUBROUTINE },
     { "endblockdata",   ENDBLOCKDATA },
+    { "endblock",       ENDBLOCK },
     { "endtype",        ENDTYPE },
     { "endwhere",       ENDWHERE },
     { "end",            END  },
@@ -3768,6 +3814,7 @@ struct keyword_token keywords[ ] =
     { "errorstop",      ERRORSTOP },     /* #060 coarray */
     { "error",          KW_ERROR },      /* #060 coarray */
     { "external",       EXTERNAL  },
+    { "extends",        EXTENDS  },      /* F2003 spec */
     { "elemental",      ELEMENTAL },
     { "format",         FORMAT  },
     { "function",       FUNCTION  },
@@ -3802,6 +3849,7 @@ struct keyword_token keywords[ ] =
     { "parameter",      PARAMETER },
     { "pause",          PAUSE  },
     { "pointer",        POINTER },
+    { "volatile",       VOLATILE },
     { "precision",      KW_PRECISION},
     { "print",          PRINT  },
     { "protected",      PROTECTED },
@@ -3832,6 +3880,7 @@ struct keyword_token keywords[ ] =
     { "then",           THEN },
     { "to",             KW_TO},
     { "type",           KW_TYPE},
+    { "class",          CLASS},
     { "undefined",      KW_UNDEFINED },
     { "unlock",         UNLOCK },        /* #060 coarray */
     { "use",            KW_USE },
@@ -3842,7 +3891,7 @@ struct keyword_token keywords[ ] =
 
 struct keyword_token end_keywords[ ] =
 {
-    { "block",          KW_BLOCK },
+    { "block",          BLOCK },
     { "blockdata",      BLOCKDATA },
     { "critical",       ENDCRITICAL },     /* #060 coarray */
     { "do",             ENDDO },
