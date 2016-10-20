@@ -4740,12 +4740,14 @@ compile_ASSIGN_LABEL_statement(expr x)
 }
 
 
+
 static void
 compile_CALL_type_bound_procedure_statement(expr x)
 {
     ID tpd;
     expv structRef;
     expr x1, x2, args;
+    TYPE_DESC stp;
     TYPE_DESC tp;
     expv v = NULL;
 
@@ -4760,7 +4762,9 @@ compile_CALL_type_bound_procedure_statement(expr x)
         return;
     }
 
-    tpd = find_struct_member(EXPV_TYPE(structRef), EXPR_SYM(x2));
+    stp = EXPV_TYPE(structRef);
+
+    tpd = find_struct_member(stp, EXPR_SYM(x2));
     if (tpd == NULL) {
         error("'%s' is not type bound procedure", SYM_NAME(EXPR_SYM(x2)));
         return;

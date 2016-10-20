@@ -434,6 +434,20 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
 
     FOREACH_MEMBER(member, struct_td) {
         if (strcmp(ID_NAME(member), SYM_NAME(sym)) == 0) {
+
+            if (ID_CLASS(member) == CL_TYPE_BOUND_PROC &&
+                TYPE_TAGNAME(struct_td) != NULL &&
+                ID_USEASSOC_INFO(TYPE_TAGNAME(struct_td)) == NULL) {
+                /*
+                 * If the struct type is defined in the other module,
+                 * check accesssibility of the type bound procedure.
+                 */
+                if (TYPE_IS_PRIVATE(member)) {
+                    error("'%s' is private type bound procedure", SYM_NAME(sym));
+                    return NULL;
+                }
+            }
+
             return member;
         }
     }
