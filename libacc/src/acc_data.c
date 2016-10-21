@@ -218,13 +218,7 @@ void _ACC_copy_subdata(_ACC_data_t *desc, int direction, int asyncId, unsigned l
   int dim = desc->dim;
   _ACC_array_t *array_info = desc->array_info;
 
-  bool const is_subarray = _ACC_is_subarray(dim, array_info, lowers, lengths);
   bool const is_pointer  = _ACC_memory_is_pointer(desc->memory);
-
-  if( !is_subarray && !is_pointer ){
-    _ACC_copy_data(desc, direction, asyncId);
-    return;
-  }
 
   if(is_pointer){
     unsigned long long distances[8];
