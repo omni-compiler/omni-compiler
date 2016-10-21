@@ -3337,17 +3337,198 @@ compile_array_constructor(expr x)
 }
 
 
-static TYPE_DESC
-chose_procedure_by_args(ID procs, expv args) {
+static int
+type_parameter_expv_equals_for_argument(expv v1, expv v2)
+{
+    uint32_t i1, i2;
+
+    if (v1 == NULL || v2 == NULL) {
+        return FALSE;
+    }
+
+    if (EXPR_CODE(v1) == LEN_SPEC_ASTERISC) {
+        return TRUE;
+
+    } else if (EXPR_CODE(v1) == F08_LEN_SPEC_COLON ||
+               EXPR_CODE(v2) == LEN_SPEC_ASTERISC ||
+               EXPR_CODE(v2) == F08_LEN_SPEC_COLON) {
+        return FALSE;
+
+    } else {
+        if (EXPR_CODE(v1) == INT_CONSTANT &&
+            EXPR_CODE(v2) == INT_CONSTANT) {
+            i1 = EXPV_INT_VALUE(v1);
+            i2 = EXPV_INT_VALUE(v2);
+            if (i1 == i2) {
+                return TRUE;
+            } else {
+                return FALSE;
+            }
+        }
+        /* CANNOT RECOGNIZE THE VALUE OF EXPV, pass */
+        return TRUE;
+    }
+}
 
 
+static int
+type_parameter_values_is_compatible_for_argument(TYPE_DESC tp1, TYPE_DESC tp2)
+{
+    ID type_params1, type_params2;
+    ID id1, id2;
+
+    assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
+    assert(tp2 != NULL && TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
+
+    type_params1 = TYPE_TYPE_ACTUAL_PARAMS(tp1);
+    type_params2 = TYPE_TYPE_ACTUAL_PARAMS(tp2);
+
+    FOREACH_ID(id1, type_params1) {
+        id2 = find_ident_head(ID_SYM(id1), type_params2);
+        if (id2 == NULL) {
+            return FALSE;
+        }
+
+        if (EXPR_CODE(VAR_INIT_VALUE(id1)) == LEN_SPEC_ASTERISC) {
+            continue;
+        }
+
+        if (!type_parameter_expv_equals_for_argument(VAR_INIT_VALUE(id1),
+                                        VAR_INIT_VALUE(id2))) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
 
 
+int
+match_arg_derived_type(TYPE_DESC dummy, TYPE_DESC actual)
+{
+
+    if (!compare_derived_type_name(dummy, actual)) {
+        if (TYPE_IS_CLASS(dummy) && TYPE_PARENT(actual)) {
+            return match_arg_derived_type(dummy, actual);
+        }
+
+        if (TYPE_TYPE_PARAM_VALUES(dummy) == NULL &&
+            TYPE_TYPE_PARAM_VALUES(actual) == NULL) {
+            return TRUE;
+        } else {
+            if (type_parameter_values_is_compatible_for_argument(dummy, actual)) {
+                if (debug_flag) fprintf(debug_fp," match\n");
+                return TRUE;
+            }
+            if (debug_flag) fprintf(debug_fp," not match\n");
+        }
+    }
+    return FALSE;
+}
+
+int
+match_arg_type(TYPE_DESC dummy, TYPE_DESC actual, expv actual_args)
+{
+    BASIC_DATA_TYPE dummy_base = get_basic_type(dummy);
+    BASIC_DATA_TYPE actual_base = get_basic_type(actual);
+
+    if (debug_flag) {
+        fprintf(stderr, "dummy(base): %s\n",
+                basic_type_name(dummy_base));
+        fprintf(stderr, "actual(base): %s\n",
+                basic_type_name(actual_base));
+    }
+
+    if (IS_STRUCT_TYPE(dummy) && IS_STRUCT_TYPE(actual)) {
+        if (match_arg_derived_type(dummy, actual)) {
+            goto basic_type_match;
+        }
+    }
+
+    if (dummy_base == actual_base) {
+        goto basic_type_match;
+    }
+
+    return FALSE;
+
+basic_type_match:
+
+    if ((TYPE_N_DIM(dummy) == 0 && TYPE_N_DIM(actual) == 0) ||
+        (TYPE_N_DIM(dummy) > 0 && TYPE_N_DIM(actual) > 0 &&
+         are_dimension_and_shape_conformant_by_type(actual_args,
+                                                    dummy,
+                                                    actual,
+                                                    NULL) ==
+         TRUE)) {
+        goto dimension_match;
+    }
+
+    return FALSE;
+
+dimension_match:
+    return TRUE;
+
+}
+
+int
+procedure_acceptable(EXT_ID proc, expv actual_args)
+{
+    ID id;
+    ID proc_id_list;
+    expv actual_arg = NULL;
+    expv dummy_args;
+    list lp;
+
+    dummy_args = EXT_PROC_ARGS(proc);
+    proc_id_list = EXT_PROC_ID_LIST(proc);
+
+    if (EXPR_HAS_ARG1(actual_args)) {
+        actual_args = EXPR_ARG1(actual_args);
+    }
+
+    FOR_ITEMS_IN_LIST(lp, dummy_args) {
+        expv dummy_arg = LIST_ITEM(lp);
+
+        if (actual_arg == NULL) {
+            /* argument number mismatch */
+            return FALSE;
+        }
+
+        id = find_ident_head(EXPR_SYM(actual_args), proc_id_list);
+
+        if (!match_arg_type(EXPV_TYPE(dummy_arg), ID_TYPE(id), actual_args)) {
+            return FALSE;
+        }
+
+        if (EXPR_LIST(actual_arg) != NULL &&
+            LIST_ITEM(EXPR_LIST(actual_arg))) {
+            actual_arg = LIST_ITEM(EXPR_LIST(actual_arg));
+        } else {
+            actual_arg = NULL;
+        }
+    }
+
+    if (actual_arg != NULL) {
+        id = find_ident_head(EXPR_SYM(actual_args), proc_id_list);
+        if (!TYPE_IS_OPTIONAL(ID_TYPE(id))) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
 
 
+EXT_ID
+chose_procedure_by_args(ID procs, expv args)
+{
+    ID proc;
 
-
-
+    FOREACH_ID(proc, procs) {
+        if (procedure_acceptable(PROC_EXT_ID(proc), args)) {
+            return PROC_EXT_ID(proc);
+        }
+    }
 
     return NULL;
 }

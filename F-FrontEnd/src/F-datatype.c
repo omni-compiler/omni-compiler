@@ -152,6 +152,35 @@ TYPE_DESC array_element_type(TYPE_DESC tp)
     return tp;
 }
 
+int
+type_is_unlimited_class(TYPE_DESC tp)
+{
+    return (TYPE_IS_CLASS(tp) && TYPE_REF(tp) == NULL);
+}
+
+int
+type_is_class_of(TYPE_DESC class, TYPE_DESC derived_type)
+{
+    TYPE_DESC class_base;
+    TYPE_DESC derived_type_base;
+
+    if (!TYPE_IS_CLASS(class)) {
+        return FALSE;
+    }
+
+    class_base = getBaseType(class);
+    derived_type_base = getBaseType(derived_type);
+
+    if (class_base == derived_type_base ||
+        TYPE_TAGNAME(class_base) == TYPE_TAGNAME(derived_type_base) ||
+        ID_SYM(TYPE_TAGNAME(class_base)) == ID_SYM(TYPE_TAGNAME(class_base))) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+
 /**
  * check type is omissible, such that
  * no attributes, no memebers, no indexRanage and so on.
@@ -463,7 +492,7 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
                  */
                 if (TYPE_IS_PRIVATE(member)) {
                     if ((stp = current_struct()) != NULL &&
-                        !is_parent_type(stp, struct_td)) {
+                        !type_is_parent_type(stp, struct_td)) {
                         error("'%s' is private type bound procedure", SYM_NAME(sym));
                     }
                     return NULL;
@@ -631,7 +660,7 @@ type_parameter_values_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2,
 }
 
 
-static int
+int
 compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
 {
     ID name1, name2;
@@ -694,7 +723,7 @@ compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
  * `parent` is the parent type of `child`
  */
 int
-is_parent_type(TYPE_DESC parent, TYPE_DESC child)
+type_is_parent_type(TYPE_DESC parent, TYPE_DESC child)
 {
     if (parent == NULL || child == NULL) {
         return FALSE;
@@ -706,7 +735,7 @@ is_parent_type(TYPE_DESC parent, TYPE_DESC child)
     if (compare_derived_type_name(parent, child)) {
         return TRUE;
     } else if (TYPE_PARENT(child)) {
-        return is_parent_type(parent, TYPE_PARENT_TYPE(child));
+        return type_is_parent_type(parent, TYPE_PARENT_TYPE(child));
     }
 
     return FALSE;

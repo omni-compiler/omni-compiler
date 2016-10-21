@@ -608,7 +608,10 @@ extern ID       find_ident_local _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_parent _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_sibling _ANSI_ARGS_((SYMBOL s));
 extern ID       find_struct_member _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
-extern int      is_parent_type _ANSI_ARGS_((TYPE_DESC parent, TYPE_DESC child));
+extern int      type_is_parent_type _ANSI_ARGS_((TYPE_DESC parent, TYPE_DESC child));
+extern int      type_is_unlimited_class _ANSI_ARGS_((TYPE_DESC tp));
+extern int      type_is_class_of _ANSI_ARGS_((TYPE_DESC class, TYPE_DESC derived_type));
+extern int      compare_derived_type_name _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 
 extern ID       find_type _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
 extern ID       find_external_ident_head _ANSI_ARGS_((SYMBOL s));

@@ -1692,23 +1692,6 @@ static int isAlreadyMarked(ID id)
                 TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp) || TYPE_IS_PROTECTED(tp));
 }
 
-static int
-is_class_of(TYPE_DESC x, TYPE_DESC y)
-{
-    TYPE_DESC x_base;
-    TYPE_DESC y_base;
-
-    x_base = getBaseType(x);
-    y_base = getBaseType(y);
-
-    if (x_base == y_base ||
-        TYPE_TAGNAME(x_base) == TYPE_TAGNAME(y_base) ||
-        ID_SYM(TYPE_TAGNAME(x_base)) == ID_SYM(TYPE_TAGNAME(x_base))) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-}
 
 static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, EXT_ID ep)
 {
@@ -1727,8 +1710,12 @@ static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, EXT_ID ep)
     FOR_ITEMS_IN_LIST(lp, args) {
         arg = LIST_ITEM(lp);
         if (pass_arg == NULL || EXPR_SYM(arg) == ID_SYM(pass_arg)) {
-            if (is_class_of(stp, EXPV_TYPE(arg))) {
+            if (type_is_unlimited_class(stp)) {
                 return TRUE;
+
+            } else if (type_is_class_of(stp, EXPV_TYPE(arg))) {
+                return TRUE;
+
             } else {
                 return FALSE;
             }
