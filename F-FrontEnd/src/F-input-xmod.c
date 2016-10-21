@@ -2074,12 +2074,12 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
         TYPE_SET_PUBLIC(*id);
         free(str);
     }
+
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_private");
     if (str != NULL) {
         TYPE_SET_PRIVATE(*id);
         free(str);
     }
-
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_operator");
     if (str != NULL) {

@@ -1704,7 +1704,6 @@ is_class_of(TYPE_DESC x, TYPE_DESC y)
     if (x_base == y_base ||
         TYPE_TAGNAME(x_base) == TYPE_TAGNAME(y_base) ||
         ID_SYM(TYPE_TAGNAME(x_base)) == ID_SYM(TYPE_TAGNAME(x_base))) {
-        // TODO check type parameter
         return TRUE;
     } else {
         return FALSE;
@@ -1750,13 +1749,8 @@ static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, EXT_ID ep)
 static void update_type_bound_procedures(TYPE_DESC struct_decls, EXT_ID external_ids, int just_one)
 {
     TYPE_DESC tp;
-    TYPE_DESC generic_type;
-    ID ip;
     ID mem;
-    ID binding;
-    ID bindto;
     EXT_ID ep;
-    EXT_ID last_ep = NULL;
 
     if (struct_decls == NULL) {
         return;
@@ -1765,84 +1759,28 @@ static void update_type_bound_procedures(TYPE_DESC struct_decls, EXT_ID external
         return;
     }
 
-    for (tp = struct_decls; tp != NULL; tp = TYPE_SLINK(tp)) {
+    FOREACH_STRUCTDECLS(tp, struct_decls) {
         /*
          * First, update type-bound procedure
          */
-        FOREACH_MEMBER(mem, tp) {
-            if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC &&
-                !(TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_GENERIC)) {
-                if (just_one) {
-                    ep = external_ids;
-                    if (ID_SYM(TBP_BINDING(mem)) != EXT_SYM(ep)) {
-                        continue;
-                    }
-                } else {
-                    ep = find_ext_id_head(ID_SYM(TBP_BINDING(mem)), external_ids);
+        FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
+            if (just_one) {
+                ep = external_ids;
+                if (ID_SYM(TBP_BINDING(mem)) != EXT_SYM(ep)) {
+                    continue;
                 }
-                if (ep != NULL) {
-                    if (!check_tbp_pass_arg(tp, mem, ep)) {
-                        return;
-                    }
-                    // update function type
-                    TYPE_EXT_ID(ID_TYPE(mem)) = ep;
-                    TYPE_REF(ID_TYPE(mem)) = EXT_PROC_TYPE(ep);
+            } else {
+                ep = find_ext_id_head(ID_SYM(TBP_BINDING(mem)), external_ids);
+            }
+            if (ep != NULL) {
+                if (!check_tbp_pass_arg(tp, mem, ep)) {
+                    return;
                 }
+                // update function type
+                TYPE_EXT_ID(ID_TYPE(mem)) = ep;
+                TYPE_REF(ID_TYPE(mem)) = EXT_PROC_TYPE(ep);
             }
         }
-
-#if 0
-        /*
-         * Secondly, update type-bound generic
-         */
-        FOREACH_MEMBER(mem, tp) {
-            if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC &&
-                TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
-                /*
-                 * generic type bound procedure
-                 */
-                last_ep = NULL;
-                FOREACH_ID(binding, TBP_BINDING(mem)) {
-                    bindto = find_struct_member(tp, ID_SYM(binding));
-                    if (bindto == NULL ||
-                        ID_CLASS(bindto) != CL_TYPE_BOUND_PROC ||
-                        TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
-                        error("GENERIC TYPE BOUND PROCEDURE should bind to type bound procedure");
-                    }
-
-                    if (just_one) {
-                        if (ID_SYM(TBP_BINDING(bindto)) != EXT_SYM(external_ids)) {
-                            continue;
-                        }
-                    }
-
-                    ID_TYPE(binding) = ID_TYPE(bindto);
-
-                    /* function type may no be defined yet (i.e. module procedure) */
-                    if (TYPE_EXT_ID(ID_TYPE(bindto))) {
-                        generic_type = ID_TYPE(mem);
-                        if (find_ext_id_head(EXT_PROC_INTR_DEF_EXT_IDS(TYPE_EXT_ID(generic_type)), ID_SYM(binding))) {
-
-                        }
-
-                        if (!TYPE_EXT_ID(ID_TYPE(mem))) {
-                            ep = new_external_id(NULL);
-                            *ep = *TYPE_EXT_ID(ID_TYPE(bindto));
-                        } else {
-
-                        }
-
-                        if (EXT_PROC_INTR_DEF_EXT_IDS(TYPE_EXT_ID(ID_TYPE(mem)))) {
-                            EXT_LINK_ADD(ep, EXT_PROC_INTR_DEF_EXT_IDS(TYPE_EXT_ID(ID_TYPE(mem))), last_ep);
-                        } else {
-                            EXT_PROC_INTR_DEF_EXT_IDS(TYPE_EXT_ID(ID_TYPE(mem))) = ep;
-                            last_ep = ep;
-                        }
-                    }
-                }
-            }
-        }
-#endif
     }
 }
 

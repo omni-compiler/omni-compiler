@@ -36,6 +36,7 @@ type_char(int len)
     return tp;
 }
 
+
 TYPE_DESC
 function_type(TYPE_DESC tp)
 {
@@ -409,10 +410,24 @@ find_struct_decl_head(SYMBOL s, TYPE_DESC head)
     return NULL;
 }
 
+TYPE_DESC
+current_struct()
+{
+    CTL cp;
+    FOR_CTLS_BACKWARD(cp) {
+        if (CTL_TYPE(cp) == CTL_STRUCT) {
+            return CTL_STRUCT_TYPEDESC(cp);
+        }
+    }
+    return NULL;
+}
+
+
 ID
 find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
 {
     ID member = NULL;
+    TYPE_DESC stp;
 
     if (!IS_STRUCT_TYPE(struct_td)) {
         return NULL;
@@ -441,9 +456,16 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
                 /*
                  * If the struct type is defined in the other module,
                  * check accesssibility of the type bound procedure.
+                 *
+                 * The PRIVATE type-bound procedure can be accessed by:
+                 * - the module in which it is defined
+                 * - the derived-type extends the derived-type in which the type-bound procedure is declared
                  */
                 if (TYPE_IS_PRIVATE(member)) {
-                    error("'%s' is private type bound procedure", SYM_NAME(sym));
+                    if ((stp = current_struct()) != NULL &&
+                        !is_parent_type(stp, struct_td)) {
+                        error("'%s' is private type bound procedure", SYM_NAME(sym));
+                    }
                     return NULL;
                 }
             }
@@ -664,6 +686,30 @@ compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
     } else {
         return FALSE;
     }
+}
+
+
+/*
+ * Check `parent` and `child` is the same derived-type or
+ * `parent` is the parent type of `child`
+ */
+int
+is_parent_type(TYPE_DESC parent, TYPE_DESC child)
+{
+    if (parent == NULL || child == NULL) {
+        return FALSE;
+    }
+
+    parent = getBaseStructType(parent);
+    child = getBaseStructType(child);
+
+    if (compare_derived_type_name(parent, child)) {
+        return TRUE;
+    } else if (TYPE_PARENT(child)) {
+        return is_parent_type(parent, TYPE_PARENT_TYPE(child));
+    }
+
+    return FALSE;
 }
 
 

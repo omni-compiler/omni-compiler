@@ -372,6 +372,14 @@ struct use_assoc_info {
 #define TBP_BINDING_ATTRS(id)   ((id)->info.tbp_info.type_bound_attrs)
 #define TBP_PASS_ARG(id)        ((id)->info.tbp_info.pass_arg)
 
+#define TBP_IS_OPERATOR(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
+     TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_OPERATOR)
+
+#define TBP_IS_ASSIGNMENT(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
+     TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT)
+
 
 struct interface_info {
     enum {

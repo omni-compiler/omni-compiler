@@ -262,14 +262,16 @@ declare_procedure(enum name_class class,
          */
         if (unit_ctl_level > 0) {
             TYPE_DESC tp;
-            for (tp = PARENT_LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
+            FOREACH_STRUCTDECLS(tp, PARENT_LOCAL_STRUCT_DECLS) {
                 ID mem;
-                FOREACH_MEMBER(mem, tp) {
-                    if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC &&
-                        ID_SYM(TBP_BINDING(mem)) == s) {
-                        PROC_EXT_ID(TBP_BINDING(mem)) = CURRENT_EXT_ID;
+                FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
+                    if (ID_SYM(TBP_BINDING(mem)) == s) {
+                        /*
+                         * Set EXT_ID of this procedure to the type-bound procedure and its type,
+                         * To use EXT_ID as a function type.
+                         */
+                        PROC_EXT_ID(mem) = CURRENT_EXT_ID;
                         TYPE_EXT_ID(ID_TYPE(mem)) = CURRENT_EXT_ID;
-                        // TODO add type to PASS argument
                     }
                 }
             }
@@ -3622,16 +3624,64 @@ is_assignment_proc(EXT_ID ep)
     return TRUE;
 }
 
+/*
+ * Check the bindings of the type-bound generic appear before END TYPE statement.
+ */
+static void
+check_type_bound_generics(TYPE_DESC stp)
+{
+    ID mem;
+    ID binding;
+    ID bindto;
+    EXT_ID ep;
+
+    FOREACH_TYPE_BOUND_GENERIC(mem, stp) {
+        FOREACH_ID(binding, TBP_BINDING(mem)) {
+            bindto = find_struct_member(stp, ID_SYM(binding));
+            if (bindto == NULL ||
+                (ID_CLASS(mem) == CL_TYPE_BOUND_PROC &&
+                 !(TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_GENERIC))) {
+                error("generic should bound to type-bound procedures");
+
+            } else {
+                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) &
+                        (TYPE_BOUND_PROCEDURE_IS_OPERATOR |
+                         TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT);
+
+                if (TBP_IS_OPERATOR(bindto) && TBP_IS_ASSIGNMENT(bindto)) {
+                    /*
+                     * If a procedure is bound from a operator generics and a assignment generics,
+                     * raise an error.
+                     */
+                    error("operator and assingnment shouldn't co-exist");
+                }
+
+                if ((ep = TYPE_EXT_ID(ID_TYPE(bindto))) != NULL) {
+                    /* already bounded, so check type */
+                    if (TBP_IS_OPERATOR(bindto)) {
+                        if (!is_operator_proc(ep)) {
+                            error_at_id(bindto, "should be a function");
+                            return;
+                        }
+                    }
+                    if (TBP_IS_ASSIGNMENT(bindto)) {
+                        if (!is_assignment_proc(ep)) {
+                            error("not assiginment");
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 /* compile end type statement */
 void
 compile_struct_decl_end()
 {
-    ID mem;
-    ID binding;
-    ID bindto;
     TYPE_DESC stp;
-    EXT_ID ep;
 
     if(CTL_TYPE(ctl_top) != CTL_STRUCT) {
         error("illegal derived type declaration end");
@@ -3647,47 +3697,8 @@ compile_struct_decl_end()
 
     TYPE_IS_DECLARED(stp) = TRUE;
 
-    /* check for type bound procedure */
-
-    FOREACH_MEMBER(mem, stp) {
-        if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC &&
-            TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
-            FOREACH_ID(binding, TBP_BINDING(mem)) {
-                bindto = find_struct_member(stp, ID_SYM(binding));
-                if (bindto == NULL ||
-                    (ID_CLASS(mem) == CL_TYPE_BOUND_PROC &&
-                     !(TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_GENERIC))) {
-                    error("generic should bound to type-bound procedures");
-                } else {
-                    TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) &
-                            (TYPE_BOUND_PROCEDURE_IS_OPERATOR |
-                             TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT);
-
-                    if (TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_OPERATOR &&
-                        TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT) {
-                        // TODO fix message
-                        error("operator and assingnment shouldn't co-exist");
-                    }
-                    if ((ep = TYPE_EXT_ID(ID_TYPE(bindto))) != NULL) {
-                        // already bounded, so check type
-                        if (TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_OPERATOR) {
-                            if (!is_operator_proc(ep)) {
-                                error("not operator");
-                                return;
-                            }
-                        }
-                        if (TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT) {
-                            if (!is_assignment_proc(ep)) {
-                                error("not assiginment");
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-    }
+    /* check for type bound generic */
+    check_type_bound_generics(stp);
 
     pop_ctl();
 }

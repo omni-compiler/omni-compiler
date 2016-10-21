@@ -425,6 +425,10 @@ extern TYPE_DESC basic_type_desc[];
     ((tp != NULL) && ((tp)->is_modified = FALSE))
 
 
+#define FOREACH_STRUCTDECLS(/* TYPE_DESC */ tp, /* TYPE_DESC */stp) \
+    if ((stp) !=NULL) \
+        for ((tp) = (stp); (tp) != NULL; (tp) = TYPE_SLINK(tp))
+
 #define FOREACH_MEMBER(/* ID */ mp, /* TYPE_DESC */ tp) \
     if ((tp) != NULL && TYPE_MEMBER_LIST(tp) != NULL) \
         FOREACH_ID(mp, TYPE_MEMBER_LIST(tp))
