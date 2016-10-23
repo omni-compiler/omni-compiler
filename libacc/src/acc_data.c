@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "acc_internal.h"
 #include "acc_data_struct.h"
-#include "acc_gpu_internal.h"
 
 #define INIT_DEFAULT 0
 #define INIT_PRESENT 1

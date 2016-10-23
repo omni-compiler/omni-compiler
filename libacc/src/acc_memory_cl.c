@@ -159,7 +159,7 @@ bool _ACC_memory_is_pointer(_ACC_memory_t* memory)
   return false;
 }
 
-_ACC_memory_t** _ACC_memory_get_pointers(_ACC_memory_t* memory)
+_ACC_memory_t** _ACC_memory_get_pointees(_ACC_memory_t* memory)
 {
   _ACC_fatal("pointer data is not supported");
   return NULL;
