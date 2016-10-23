@@ -17,7 +17,7 @@ _ACC_queue_t* _ACC_queue_create(int async_num)
   _ACC_DEBUG("queue create\n")
   _ACC_queue_t *queue = (_ACC_queue_t *)_ACC_alloc(sizeof(_ACC_queue_t));
   if(async_num != ACC_ASYNC_SYNC){
-    cudaError_t error = cudaStreamCreate(&(queue->stream));
+    cudaError_t error = cudaStreamCreateWithFlags(&(queue->stream), cudaStreamNonBlocking);
     if(error != cudaSuccess){
       _ACC_gpu_fatal(error);
     }
@@ -78,4 +78,21 @@ cudaStream_t _ACC_gpu_get_stream(int async_num)
 {
   _ACC_queue_t *queue = _ACC_queue_map_get_queue(async_num);
   return queue->stream;
+}
+
+void* acc_get_cuda_stream( int async )
+{
+  return (void*)_ACC_gpu_get_stream(async);
+}
+
+void acc_set_cuda_stream ( int async, void* stream )
+{
+  _ACC_queue_t *queue = _ACC_queue_map_get_queue(async);
+  if(queue->stream != NULL){
+    cudaError_t error = cudaStreamDestroy(queue->stream);
+    if(error != cudaSuccess){
+      _ACC_gpu_fatal(error);
+    }
+  }
+  queue->stream = (cudaStream_t)stream;
 }

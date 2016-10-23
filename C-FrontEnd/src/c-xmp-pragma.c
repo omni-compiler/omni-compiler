@@ -2028,9 +2028,17 @@ static void parse_ASYNC_ACC_or_HOST_PROFILE(CExpr** async, CExpr** acc_or_host, 
   *async = *acc_or_host = *profile = NULL;
 
   while(pg_tok != 0){ // Check until the end of clause
-    if(*async == NULL)       *async       = parse_ASYNC_clause();
-    if(*acc_or_host == NULL) *acc_or_host = parse_ACC_or_HOST_clause();
-    if(*profile == NULL)     *profile     = parse_PROFILE_clause();
+    if(*async       == NULL){
+      if((*async       = parse_ASYNC_clause())       != NULL) continue;
+    }
+    if(*acc_or_host == NULL){
+      if((*acc_or_host = parse_ACC_or_HOST_clause()) != NULL) continue;
+    }
+    if(*profile     == NULL){
+      if((*profile     = parse_PROFILE_clause())     != NULL) continue;
+    }
+
+    break;
   }
 
   if(*async == NULL)       *async       = (CExpr *)allocExprOfNull();

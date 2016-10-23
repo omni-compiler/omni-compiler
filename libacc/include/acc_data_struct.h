@@ -23,6 +23,7 @@ struct _ACC_data_type {
   int dim; //the number of dimension
   _ACC_array_t *array_info;
   size_t type_size; //the size of an element
+  int pointer_dim_bit;
 };
 
 #endif //_ACC_DATA_STRUCT

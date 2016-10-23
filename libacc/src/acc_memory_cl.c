@@ -95,7 +95,12 @@ void _ACC_memory_copy(_ACC_memory_t *data, ptrdiff_t offset, size_t size, int di
   _ACC_cl_copy(host_addr, memory_object, offset, size, direction, asyncId);
 }
 
-void _ACC_memory_copy_sub(_ACC_memory_t* memory, ptrdiff_t memory_offset, int direction, int asyncId, size_t type_size, int dim, unsigned long long lowers[], unsigned long long lengths[], unsigned long long distance[])
+void _ACC_memory_copy_sub(_ACC_memory_t* memory, ptrdiff_t memory_offset, int direction, int isAsync,
+			  size_t type_size, int dim, int pointer_dim_bit,
+			  unsigned long long offsets[],
+			  unsigned long long lowers[],
+			  unsigned long long lengths[],
+			  unsigned long long distance[])
 {
   _ACC_fatal("_ACC_memory_copy_sub is unimplemented for OpenCL");
 }
@@ -143,4 +148,26 @@ void* _ACC_memory_get_device_addr(_ACC_memory_t* data, ptrdiff_t offset)
   return data->memory_object;
 }
 
+
+void _ACC_memory_set_pointees(_ACC_memory_t* memory, int num_pointers, _ACC_memory_t** pointees, ptrdiff_t* pointee_offsets, void *device_pointee_pointers)
+{
+  _ACC_fatal("pointer data is not supported");
+}
+
+bool _ACC_memory_is_pointer(_ACC_memory_t* memory)
+{
+  return false;
+}
+
+_ACC_memory_t** _ACC_memory_get_pointers(_ACC_memory_t* memory)
+{
+  _ACC_fatal("pointer data is not supported");
+  return NULL;
+}
+
+unsigned int _ACC_memory_get_num_pointees(_ACC_memory_t* memory)
+{
+  _ACC_fatal("pointer data is not supported");
+  return 0;
+}
 

@@ -151,4 +151,20 @@ abstract class AccDirective {
     }
     return null;
   }
+
+  Xobject getAsyncExpr(){
+    boolean isAsync = _info.hasClause(ACCpragma.ASYNC);
+
+    if(! isAsync){
+      return Xcons.IntConstant(ACC.ACC_ASYNC_SYNC);
+    }
+
+    Xobject expr = _info.getIntExpr(ACCpragma.ASYNC);
+
+    if(expr == null){
+      return Xcons.IntConstant(ACC.ACC_ASYNC_NOVAL);
+    }
+
+    return expr;
+  }
 }
