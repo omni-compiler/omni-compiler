@@ -1688,7 +1688,7 @@ static void gmove_garray_garray_broadcast_block_cyclic(int type_size,
 
   if(root == src_array->array_nodes->info[1].rank)
     memcpy(dst_addr, src_addr, local_length * type_size);
-  fprintf(stderr, "A\n");
+
   MPI_Comm *comm = src_template->onto_nodes->subcomm;
   MPI_Bcast(dst_addr, local_length * type_size, MPI_BYTE, root, comm[1]);
 }
