@@ -3545,7 +3545,8 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
 
     a = compile_args(args);
 
-    if (GENERIC_TYPE_GENERICS(EXPV_TYPE(memberRef))) {
+    ftp = EXPV_TYPE(memberRef);
+    if (GENERIC_TYPE_GENERICS(ftp)) {
         // for type-bound GENERIC
         ep = chose_procedure_by_args(GENERIC_TYPE_GENERICS(ftp), a);
         if (ep) {
