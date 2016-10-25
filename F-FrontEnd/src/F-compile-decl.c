@@ -257,21 +257,25 @@ declare_procedure(enum name_class class,
         link_parent_defined_by(CURRENT_PROC_NAME);
         (void)declare_current_procedure_ext_id();
 
+
         /*
-         * Check type bound procedure
+         * If the current procedure is under module,
+         * bind type bound procedures to this procedure.
          */
-        if (unit_ctl_level > 0) {
-            TYPE_DESC tp;
-            FOREACH_STRUCTDECLS(tp, PARENT_LOCAL_STRUCT_DECLS) {
-                ID mem;
-                FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
-                    if (ID_SYM(TBP_BINDING(mem)) == s) {
-                        /*
-                         * Set EXT_ID of this procedure to the type-bound procedure and its type,
-                         * To use EXT_ID as a function type.
-                         */
-                        PROC_EXT_ID(mem) = CURRENT_EXT_ID;
-                        TYPE_EXT_ID(ID_TYPE(mem)) = CURRENT_EXT_ID;
+        if (is_in_module()) {
+            if (unit_ctl_level > 0) {
+                TYPE_DESC tp;
+                FOREACH_STRUCTDECLS(tp, PARENT_LOCAL_STRUCT_DECLS) {
+                    ID mem;
+                    FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
+                        if (ID_SYM(TBP_BINDING(mem)) == s) {
+                            /*
+                             * Set EXT_ID of this procedure to the type-bound procedure and its type,
+                             * To use EXT_ID as a function type.
+                             */
+                            PROC_EXT_ID(mem) = CURRENT_EXT_ID;
+                            TYPE_EXT_ID(ID_TYPE(mem)) = CURRENT_EXT_ID;
+                        }
                     }
                 }
             }
