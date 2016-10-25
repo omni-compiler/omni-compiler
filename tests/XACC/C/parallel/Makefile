@@ -1,10 +1,16 @@
 XCC     = xmpcc -xacc -O2
-XRUN    = mpiexec
-TESTS = $(wildcard *.c)
-EXES  = $(TESTS:.c=.x)
-OBJS  = $(TESTS:.c=.o)
+TESTS   = $(wildcard *.c)
+EXES    = $(TESTS:.c=.x)
+OBJS    = $(TESTS:.c=.o)
 
-.PHONY: clean all default run
+ifeq ($(JOBSCHED), PBS)
+XRUN    = mpirun_rsh -hostfile $$PBS_NODEFILE
+XSCRIPT = run_pbs.sh
+XSUBMIT = qsub
+endif
+XRUN    ?= mpiexec
+
+.PHONY: clean all default run submit
 
 all default: $(EXES)
 
@@ -14,7 +20,10 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: $(EXES)
-	qsub ./parallel_1.sh
+	$(XRUN) -n 2 ./parallel_1.x
+
+submit: $(EXES) $(XSCRIPT)
+	$(XSUBMIT) $(XSCRIPT)
 
 clean:
 	rm -f $(EXES) $(OBJS)
