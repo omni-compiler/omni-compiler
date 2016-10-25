@@ -88,11 +88,13 @@ public class BlockList
       if(b == null) return;  // if b is null, do nothing
         if(head == null) {
             head = tail = b;
+            b.prev = null;
         } else {
             tail.next = b;
             b.prev = tail;
             tail = b;
         }
+        b.next = null;
         b.setParent(this);
     }
 
@@ -111,6 +113,7 @@ public class BlockList
         if(head == null)
             return;
         head = head.next;
+        head.prev = null;
     }
 
     // insert block before head
@@ -118,11 +121,13 @@ public class BlockList
     {
         if(head == null) {
             head = tail = b;
+            b.next = null;
         } else {
             head.prev = b;
             b.next = head;
             head = b;
         }
+        b.prev = null;
         b.setParent(this);
     }
 

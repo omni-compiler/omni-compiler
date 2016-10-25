@@ -304,6 +304,10 @@ public class Block extends PropObject implements IVarContainer
             next.prev = b;
         else
             parent.tail = b;
+
+        parent = null;
+        prev = null;
+        next = null;
     }
 
     // remove block from list
