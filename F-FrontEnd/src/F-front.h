@@ -651,6 +651,7 @@ extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
 
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
 extern void     compile_type_generic_procedure _ANSI_ARGS_((expr x));
+extern void     update_type_bound_procedures _ANSI_ARGS_((TYPE_DESC struct_decls, EXT_ID external_ids, int just_one));
 
 
 extern int      type_is_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));

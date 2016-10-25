@@ -1733,7 +1733,7 @@ static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, EXT_ID ep)
  * external_ids OR  
  * just_one TRUE if external_ids is list of external ids
  */
-static void update_type_bound_procedures(TYPE_DESC struct_decls, EXT_ID external_ids, int just_one)
+void update_type_bound_procedures(TYPE_DESC struct_decls, EXT_ID external_ids, int just_one)
 {
     TYPE_DESC tp;
     ID mem;
@@ -1764,6 +1764,12 @@ static void update_type_bound_procedures(TYPE_DESC struct_decls, EXT_ID external
                     return;
                 }
                 // update function type
+                if (debug_flag) {
+                    fprintf(debug_fp, "bind %s to %s%%%s\n",
+                            SYM_NAME(EXT_SYM(ep)),
+                            SYM_NAME(ID_SYM(TYPE_TAGNAME(tp))),
+                            SYM_NAME(ID_SYM(mem)));
+                }
                 TYPE_EXT_ID(ID_TYPE(mem)) = ep;
                 TYPE_REF(ID_TYPE(mem)) = EXT_PROC_TYPE(ep);
             }
@@ -1927,9 +1933,10 @@ end_declaration()
         /*
          * Update type bound procedure
          */
-        if (unit_ctl_level > 0)
+        if (unit_ctl_level > 0 && is_in_module()) {
             update_type_bound_procedures(PARENT_LOCAL_STRUCT_DECLS, CURRENT_EXT_ID,
-                                         FALSE);
+                                         TRUE);
+        }
     }
 
     /*
@@ -2264,7 +2271,7 @@ end_declaration()
     /*
      * Update type bound procedure against exteranl functions
      */
-    update_type_bound_procedures(LOCAL_STRUCT_DECLS, EXTERNAL_SYMBOLS, TRUE);
+    update_type_bound_procedures(LOCAL_STRUCT_DECLS, EXTERNAL_SYMBOLS, FALSE);
 
 #if 0
     if (myId != NULL &&
@@ -2547,12 +2554,21 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
 
     if(debug_flag) {
         for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
-        fprintf(debug_fp,"redefine '%s'\n", SYM_NAME(EXT_SYM(proc)));
+        if (EXT_SYM(proc)) {
+            fprintf(debug_fp,"redefine '%s'\n", SYM_NAME(EXT_SYM(proc)));
+        } else {
+            fprintf(debug_fp,"redefine (anonymous)\n");
+        }
+
         for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
         fprintf(debug_fp,"contain procedure : {\n");
         FOREACH_EXT_ID(ep, unit_ctl_procs[redefine_unit_ctl_level]){
             for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
-            fprintf(debug_fp,"  %s\n", SYM_NAME(EXT_SYM(ep)));
+            if (EXT_SYM(ep)) {
+                fprintf(debug_fp,"  %s\n", SYM_NAME(EXT_SYM(ep)));
+            } else {
+                fprintf(debug_fp,"  (anonymous)\n");
+            }
         }
         for(i = redefine_unit_ctl_level; i >= 0; i--) fprintf(debug_fp,"  ");
         fprintf(debug_fp,"}\n");
@@ -2658,17 +2674,17 @@ check_labels_in_block(BLOCK_ENV block) {
     }
 }
 
-
-
-void
+static void
 check_type_bound_procedure()
 {
     ID mem;
     TYPE_DESC tp;
-    for (tp = LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
-        /*
-         * First, update type-bound procedure
-         */
+
+    FOREACH_STRUCTDECLS(tp, LOCAL_STRUCT_DECLS) {
+        if (TYPE_TAGNAME(tp) && ID_USEASSOC_INFO(TYPE_TAGNAME(tp))) {
+            continue;
+        }
+
         FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
             if (TYPE_EXT_ID(ID_TYPE(mem)) == NULL) {
                 SYMBOL bindto = ID_SYM(TBP_BINDING(mem)?:mem);
@@ -2996,7 +3012,7 @@ end_procedure()
         dump_all_module_procedures(stderr);
     }
 
-    if(CURRENT_PROC_CLASS == CL_MODULE) {
+    if (CURRENT_PROC_CLASS == CL_MODULE) {
         SYMBOL sym = find_symbol(current_module_name);
         if(!export_module(sym, LOCAL_SYMBOLS,
                           LOCAL_USE_DECLS)) {
@@ -3004,8 +3020,12 @@ end_procedure()
             exit(1);
         }
 
-        check_type_bound_procedure();
     }
+
+    check_type_bound_procedure();
+
+    /* if (CURRENT_PROC_CLASS != CL_MODULE) { */
+    /* } */
 
     /* check control nesting */
     if (ctl_top != ctl_base) error("DO loop or BLOCK IF not closed");
