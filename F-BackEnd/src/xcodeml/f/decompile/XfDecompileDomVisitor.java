@@ -1433,8 +1433,8 @@ public class XfDecompileDomVisitor {
             writer.decrementIndentLevel();
             writer.writeToken("CONTAINS");
             writer.setupNewLine();
-            _invokeChildEnter(n);
             writer.incrementIndentLevel();
+            _invokeChildEnter(n);
         }
     }
 
