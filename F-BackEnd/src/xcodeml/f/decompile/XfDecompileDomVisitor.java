@@ -1429,7 +1429,12 @@ public class XfDecompileDomVisitor {
 
     class TypeBoundProceduresVisitor extends XcodeNodeVisitor {
         @Override public void enter(Node n) {
+            XmfWriter writer = _context.getWriter();
+            writer.decrementIndentLevel();
+            writer.writeToken("CONTAINS");
+            writer.setupNewLine();
             _invokeChildEnter(n);
+            writer.incrementIndentLevel();
         }
     }
 
