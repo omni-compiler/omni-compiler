@@ -7,6 +7,7 @@ import exc.block.Block;
 public class StructType extends CompositeType
 {
     private boolean is_class = false;
+    protected XobjList fTypeParams;
 
     public StructType(String id, String parent_id, XobjList id_list, int typeQualFlags, Xobject gccAttrs,
                       Xobject[] codimensions)
@@ -14,9 +15,10 @@ public class StructType extends CompositeType
         super(Xtype.STRUCT, id, parent_id, id_list, typeQualFlags, gccAttrs, codimensions);
     }
 
-    public StructType(String id, String parent_id, XobjList id_list, int typeQualFlags, Xobject gccAttrs)
+    public StructType(String id, String parent_id, XobjList id_list, int typeQualFlags, Xobject gccAttrs, XobjList typeParams)
     {
-        this(id, parent_id, id_list, typeQualFlags, gccAttrs, null);
+        this(id, parent_id, id_list, typeQualFlags, gccAttrs, (Xobject[])null);
+        this.fTypeParams = typeParams;
     }
 
     public StructType(String id, boolean is_class, XobjString tag_names, 
@@ -29,6 +31,11 @@ public class StructType extends CompositeType
     public boolean isClass()
     {
         return is_class;
+    }
+
+    public XobjList getFTypeParams()
+    {
+        return fTypeParams;
     }
 
     @Override

@@ -422,21 +422,40 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
     @Override
     public Xobject getSubscripts()
     {
+      Xobject xobj1, xobj2, xobj3, xobj4;
+
       switch (Opcode()) {
       case F_ARRAY_REF:
-        return getArg(1);
-      case F_VAR_REF:
-        return getArg(0).getSubscripts();
+        xobj1 = getArg(0);
+        if (xobj1.Opcode() != Xcode.F_VAR_REF)
+          break;
+        xobj2 = xobj1.getArg(0);
+        switch (xobj2.Opcode()) {
+        case VAR:                             // case: v(i,j)
+          return getArg(1);                   // return (i,j)
+        case MEMBER_REF:                      // case: v%b..%c(i,j)
+          return getArg(1);                   // return (i,j)
+        default:
+          break;
+        }
+
       case CO_ARRAY_REF:
         return getArg(0).getSubscripts();
+
       case F_ARRAY_INDEX:
         // a scalar or vector subscript
         return null;
+
+      case F_VAR_REF:
+        return getArg(0).getSubscripts();
+
       case F_INDEX_RANGE:
       default:
-        throw new UnsupportedOperationException
-          ("unexpected Opcode in XobjList.getSubscripts(): " + Opcode());
+        break;
       }
+
+      throw new UnsupportedOperationException
+        ("unexpected Opcode in XobjList.getSubscripts(): " + Opcode());
     }
 
 

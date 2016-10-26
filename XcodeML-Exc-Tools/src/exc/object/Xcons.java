@@ -207,9 +207,9 @@ public class Xcons
             type = type.getRef();
         switch(x.Opcode()) {
         case ARRAY_ADDR:
-            return Xcons.Symbol(Xcode.ARRAY_ADDR, type, x.getSym());
+            return Xcons.Symbol(Xcode.ARRAY_ADDR, type, x.getSym(), x.getScope());
         case VAR_ADDR:
-            return Xcons.Symbol(Xcode.VAR, type, x.getSym());
+            return Xcons.Symbol(Xcode.VAR, type, x.getSym(), x.getScope());
         case FUNC_ADDR:
             fatal("PointerRef(): FUNC_ADDR");
             break;

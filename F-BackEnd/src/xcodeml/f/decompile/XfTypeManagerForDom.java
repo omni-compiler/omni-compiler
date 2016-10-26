@@ -130,6 +130,17 @@ class XfTypeManagerForDom {
             }
             return sb.toString();
         }
+
+        public Node findChildNode(String nodeName) {
+            Node n;
+            for (Node typeChoice : this) {
+                n = XmDomUtil.getElement(typeChoice, nodeName);
+                if (n != null) {
+                    return n;
+                }
+            }
+            return null;
+        }
     }
 
     public XfTypeManagerForDom()
@@ -365,7 +376,11 @@ class XfTypeManagerForDom {
             String name = typeChoice.getNodeName();
             if ("FbasicType".equals(name)) {
                 Node basicType = typeChoice;
+
                 String refType = XmDomUtil.getAttr(basicType, "ref");
+
+                if (XmDomUtil.getAttrBool(basicType, "is_class") && XfUtilForDom.isNullOrEmpty(refType))
+                    break;
 
                 if (XfType.DERIVED != XfType.getTypeIdFromXcodemlTypeName(refType))
                     break;

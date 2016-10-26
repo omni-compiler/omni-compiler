@@ -2,7 +2,7 @@
   !$xmp nodes q(5)=p(3:7)
 
   integer me, n1, n2, n3[*]
-  integer n2sum, n2max, n2min
+!!  integer n2sum, n2max, n2min
 
   me = this_image()
   n1 = me+10

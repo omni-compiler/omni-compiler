@@ -7,11 +7,14 @@ OUT_OK    = a1d1-3.x a1d1-2.x a1d1-1.x a6d3.x a6d3-1.x a6d3-2.x a3d3.x a2d2.x a2
 
 OUT_NG    = a2d0.x a2d1.x a2d1-2.x a2d1-3.x
 OUT_bound = #l0-3okB.x cannot run on SX
-OUT_NGB   = a2d2-2NGB.x
 #OUT_type  = a1d1-typeNG
 #OUT_err  = l0-2NG
 OUT_BUG   = bug462.x
 OUT_ATOMIC = atomic0.x atomic.x atomic2.x #atomicRefRemote.x
+
+#ifneq ($(ONESIDED_LAYER),FJRDMA)
+OUT_NGB  = a2d2-2NGB.x
+#endif
 
 #OUT=$(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_type) $(OUT_NGB)
 OUT= $(OUT_ATOMIC) $(OUT_BUG) $(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_NGB)

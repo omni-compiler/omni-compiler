@@ -56,12 +56,12 @@ public class XMPobject {
     _is_saveDesc = flag;
   }
 
-  public void buildConstructor(BlockList body, XMPenv def){
+  public void buildConstructor(BlockList body, XMPenv def, Block block){
     // abstract method
     XMP.fatal("buildConstrutor");
   }
 
-  public void buildDestructor(BlockList body, XMPenv def){
+  public void buildDestructor(BlockList body, XMPenv def, Block block){
     // abstract method
     XMP.fatal("buildDestrutor");
   }  

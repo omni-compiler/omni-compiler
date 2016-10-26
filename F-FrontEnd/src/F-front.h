@@ -122,7 +122,8 @@ enum prog_state {
     INEXEC,
     INSTRUCT,
     INCONT,     /* contains */
-    ININTR      /* interface */
+    ININTR,      /* interface */
+    IN_TYPE_PARAM_DECL /**/
 };
 
 extern enum prog_state current_state;
@@ -544,8 +545,11 @@ extern EXT_ID   declare_current_procedure_ext_id(void);
 
 extern void     compile_type_decl _ANSI_ARGS_((expr typExpre, TYPE_DESC baseTp,
                                                expr decl_list, expr attributes));
-extern void     compile_struct_decl _ANSI_ARGS_((expr ident, expr type));
+extern void     compile_struct_decl _ANSI_ARGS_((expr ident, expr type, expr type_params));
 extern void     compile_struct_decl_end _ANSI_ARGS_((void));
+extern int      compile_type_param_values_dummy _ANSI_ARGS_((TYPE_DESC struct_type, expr type_param_args));
+extern int      compile_type_param_values _ANSI_ARGS_((TYPE_DESC struct_type, expr type_param_args, expv type_param_values, ID * used));
+extern ID       get_type_params _ANSI_ARGS_((TYPE_DESC struct_type));
 extern void     compile_SEQUENCE_statement _ANSI_ARGS_((void));
 extern void     compile_COMMON_decl _ANSI_ARGS_((expr com_list));
 extern void     compile_IMPLICIT_decl _ANSI_ARGS_((expr v1,expr v2));
@@ -571,7 +575,9 @@ extern expv     compile_highorder_function_call _ANSI_ARGS_((ID f_id,
                                                              expr args,
                                                              int isCall));
 
-extern expv     compile_struct_constructor _ANSI_ARGS_((ID struct_id, expr args));
+extern int      type_param_values_required _ANSI_ARGS_((TYPE_DESC struct_type));
+extern expv     compile_struct_constructor _ANSI_ARGS_((ID struct_id, expr type_param_argss, expr args));
+extern TYPE_DESC type_apply_type_parameter _ANSI_ARGS_((TYPE_DESC tp, expv type_param_values));
 
 extern expv     statement_function_call _ANSI_ARGS_((ID f_id, expv arglist));
 extern TYPE_DESC        compile_dimensions _ANSI_ARGS_((TYPE_DESC tp, expr dims));
@@ -629,6 +635,7 @@ extern void     unset_save_attr_in_dummy_args(EXT_ID ep);
 extern void     declare_storage _ANSI_ARGS_((ID id, enum storage_class stg));
 
 extern TYPE_DESC        compile_type _ANSI_ARGS_((expr x));
+extern TYPE_DESC        compile_derived_type _ANSI_ARGS_((expr x, int allow_predecl));
 
 extern expv     compile_int_constant _ANSI_ARGS_((expr x));
 extern void     compile_pragma_statement _ANSI_ARGS_((expr x));
@@ -638,6 +645,8 @@ extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
 extern int      type_is_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern int      struct_type_is_compatible_for_assignment
+                    _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern TYPE_DESC
@@ -783,6 +792,8 @@ extern TYPE_DESC declare_struct_type_wo_component(expr ident);
 
 extern int      expr_is_param _ANSI_ARGS_((expr x));
 extern int      expr_has_param _ANSI_ARGS_((expr x));
+extern int      expr_is_type_param _ANSI_ARGS_((expr x));
+extern int      expr_has_type_param _ANSI_ARGS_((expr x));
 extern int      expr_is_constant _ANSI_ARGS_((expr v));
 extern int      expr_is_constant_typeof _ANSI_ARGS_((expr x, BASIC_DATA_TYPE bt));
 extern expv     expr_constant_value _ANSI_ARGS_((expr x));
@@ -848,7 +859,8 @@ extern void                    shrink_type(TYPE_DESC tp);
 extern TYPE_DESC               reduce_type(TYPE_DESC tp);
 
 extern int is_array_shape_assumed(TYPE_DESC tp);
-extern int is_descendant_coindexed(TYPE_DESC tp);
+//extern int is_descendant_coindexed(TYPE_DESC tp);
+extern int has_coarray_component(TYPE_DESC tp);
 
 extern void     checkTypeRef(ID id);
 

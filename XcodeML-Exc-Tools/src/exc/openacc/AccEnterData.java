@@ -26,7 +26,7 @@ class AccEnterData extends AccData{
       int finalizeKind = 1;
       finalizeBlockList.add(makeFinalizeFuncCallBlock(var, finalizeKind));
 
-      copyinBlockList.add(makeCopyBlock(var, true));
+      copyinBlockList.add(makeCopyBlock(var, true, getAsyncExpr()));
     }
   }
 

@@ -17,7 +17,7 @@
               TYPE(type1) :: a
               TYPE(type2) :: b
               TYPE(type3) :: c
-              TYPE(type4) :: c
+              TYPE(type4) :: d
             END BLOCK
           END BLOCK
         END BLOCK

@@ -970,4 +970,9 @@ public class Xobject extends PropObject implements IXobject, XobjectVisitable, I
         return ((XobjList)this).hasNullArg();
       return false;
     }
+
+    public boolean isIndexRange()
+    {
+      return code == Xcode.INDEX_RANGE;
+    }
 }

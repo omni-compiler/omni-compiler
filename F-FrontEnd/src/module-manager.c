@@ -31,19 +31,39 @@ static void
 add_module_id(struct module * mod, ID id)
 {
     // NOTE: 'mid' stand for module id.
+    TYPE_DESC tp;
     ID mid = XMALLOC(ID, sizeof(*mid));
     *mid = *id;
 
     // HACK: it seems too dirty
-    if(ID_CLASS(mid) == CL_PARAM && ID_STORAGE(mid) == STG_UNKNOWN)
+    if (ID_CLASS(mid) == CL_PARAM && ID_STORAGE(mid) == STG_UNKNOWN)
         ID_STORAGE(mid) = STG_SAVE;
 
-    if(mid->use_assoc == NULL) {
+    if (mid->use_assoc == NULL) {
         mid->use_assoc = XMALLOC(struct use_assoc_info *, sizeof(*(id->use_assoc)));
         mid->use_assoc->module = mod;
         mid->use_assoc->module_name = mod->name;
         mid->use_assoc->original_name = id->name;
     }
+
+    /* NOTE: dirty code, but
+     *       tagname of type may differs from one in LOCAL_SYMBOLS.
+     *       So this code rescues the derived-type comparison.
+     */
+    tp = ID_TYPE(id);
+    while (tp != NULL) {
+        if (TYPE_TAGNAME(tp)) {
+            ID tagname = TYPE_TAGNAME(tp);
+            if (tagname->use_assoc == NULL) {
+                tagname->use_assoc = XMALLOC(struct use_assoc_info *, sizeof(*(id->use_assoc)));
+                tagname->use_assoc->module = mod;
+                tagname->use_assoc->module_name = mod->name;
+                tagname->use_assoc->original_name = tagname->name;
+            }
+        }
+        tp = TYPE_REF(tp);
+    }
+
     ID_LINK_ADD(mid, mod->head, mod->last);
 }
 

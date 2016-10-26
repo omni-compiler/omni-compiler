@@ -18,7 +18,7 @@ public class Fshape
 {
   private Block block = null;
 
-  private int _rank;
+  private int _n_subs;
   private Xobject[] _lbound;
   private Xobject[] _ubound;
   private Xobject[] _extent;
@@ -28,7 +28,7 @@ public class Fshape
   //
   public Fshape(FindexRange findexRange)
   {
-    _rank = findexRange.getFrank();
+    _n_subs = findexRange.getNumSubs();
     _lbound = findexRange.getLbounds();
     _ubound = findexRange.getUbounds();
     _extent = findexRange.getExtents();
@@ -42,9 +42,9 @@ public class Fshape
 
   public Fshape(Ident ident)
   {
-    _rank = ident.getFrank();
+    _n_subs = ident.getFrank();
 
-    if (_rank == 0) {
+    if (_n_subs == 0) {
       _lbound = null;
       _ubound = null;
       _extent = null;

@@ -676,12 +676,20 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case VAR:
             case VAR_ADDR:
                 nSymAddr = createElement("varAddr");
+                if (operand.getScope() != null) {
+                    addAttributes(nSymAddr,
+                                  "scope", operand.getScope().toXcodeString());
+                }
                 break;
             case ARRAY_REF:
               isArrayRef = true;
               break;
             case ARRAY_ADDR: /* illegal but convert */
                 nSymAddr = createElement("arrayAddr");
+                if (operand.getScope() != null) {
+                    addAttributes(nSymAddr,
+                                  "scope", operand.getScope().toXcodeString());
+                }
                 break;
             case FUNC_ADDR:
                 nSymAddr = createElement("funcAddr");
@@ -718,26 +726,37 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
         case FUNCTION_CALL: {
             e = createElement(name);
-            Element nFunc = createElement("function");
+            Element nFunc;
+            switch (xobj.getArg(0).Opcode()) {
+            case MEMBER_REF:
+            case CPP_OPERATOR_ADDR:
+              nFunc = transExprOrError(xobj.getArg(0));
+              break;
+            case FUNC_ADDR:
+            case POINTER_REF:
+            default:
+              nFunc = createElement("function");
+              addChildNodes(nFunc,
+                            transExprOrError(xobj.getArg(0)));
+            }
             Element nArgs = createElement("arguments");
-            addChildNodes(nFunc,
-                          transExprOrError(xobj.getArg(0)));
             XobjList params = (XobjList)xobj.getArg(1);
             if (params != null) {
                 for (Xobject a : params) {
                     addChildNodes(nArgs, transExprOrError(a));
                 }
             }
-
-            addChildNodes(e,
-                          nFunc,
-                          nArgs);
+            addChildNodes(e, nFunc, nArgs);
         }
             break;
         case SIZE_OF_EXPR:
             e = transSizeOrAlignOf(xobj);
             break;
         case CAST_EXPR:
+        case CPP_CONST_CAST_EXPR:
+        case CPP_STATIC_CAST_EXPR:
+        case CPP_REINTERPRET_CAST_EXPR:
+        case CPP_DYNAMIC_CAST_EXPR:
             e = addChildNodes(createElement(name),
                               transOrError(xobj.getArg(0)));
             break;
@@ -827,6 +846,7 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             }
             break;
         case FUNC_ADDR:
+        case CPP_OPERATOR_ADDR:
             e = addChildNodes(createElement(name),
                               trans(xobj.getName()));
             break;

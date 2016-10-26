@@ -5,7 +5,7 @@
 
      integer s1[*]
      integer t1[*],t2[2,*]
-     integer s1ok, t1ok, t21ok, t22ok
+     integer t1ok, t21ok, t22ok
 
 !$xmp coarray on p :: s1
 !$xmp coarray on q :: t1,t2

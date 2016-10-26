@@ -3880,6 +3880,7 @@ struct keyword_token keywords[ ] =
     { "then",           THEN },
     { "to",             KW_TO},
     { "type",           KW_TYPE},
+    { "class",          CLASS},
     { "undefined",      KW_UNDEFINED },
     { "unlock",         UNLOCK },        /* #060 coarray */
     { "use",            KW_USE },

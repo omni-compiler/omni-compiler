@@ -67,3 +67,71 @@ void xmpc_finalize_all(int return_val)
   _XMP_finalize(return_val);
 }
 
+#include "config.h"
+
+size_t _XMP_get_datatype_size(int datatype)
+{
+  size_t size;
+
+  // size of each type is obtained from config.h.
+  // Note: need to fix when building a cross compiler.
+  switch (datatype){
+
+  case _XMP_N_TYPE_BOOL:
+    size = _XMPF_running ? SIZEOF_UNSIGNED_INT : SIZEOF__BOOL;
+    break;
+
+  case _XMP_N_TYPE_CHAR:
+  case _XMP_N_TYPE_UNSIGNED_CHAR:
+    size = SIZEOF_UNSIGNED_CHAR; break;
+
+  case _XMP_N_TYPE_SHORT:
+  case _XMP_N_TYPE_UNSIGNED_SHORT:
+    size = SIZEOF_UNSIGNED_SHORT; break;
+
+  case _XMP_N_TYPE_INT:
+  case _XMP_N_TYPE_UNSIGNED_INT:
+    size = SIZEOF_UNSIGNED_INT; break;
+
+  case _XMP_N_TYPE_LONG:
+  case _XMP_N_TYPE_UNSIGNED_LONG:
+    size = SIZEOF_UNSIGNED_LONG; break;
+
+  case _XMP_N_TYPE_LONGLONG:
+  case _XMP_N_TYPE_UNSIGNED_LONGLONG:
+    size = SIZEOF_UNSIGNED_LONG_LONG; break;
+
+  case _XMP_N_TYPE_FLOAT:
+#ifdef __STD_IEC_559_COMPLEX__
+  case _XMP_N_TYPE_FLOAT_IMAGINARY:
+#endif
+    size = SIZEOF_FLOAT; break;
+
+  case _XMP_N_TYPE_DOUBLE:
+#ifdef __STD_IEC_559_COMPLEX__
+  case _XMP_N_TYPE_DOUBLE_IMAGINARY:
+#endif
+    size = SIZEOF_DOUBLE; break;
+
+  case _XMP_N_TYPE_LONG_DOUBLE:
+#ifdef __STD_IEC_559_COMPLEX__
+  case _XMP_N_TYPE_LONG_DOUBLE_IMAGINARY:
+#endif
+    size = SIZEOF_LONG_DOUBLE; break;
+
+  case _XMP_N_TYPE_FLOAT_COMPLEX:
+    size = SIZEOF_FLOAT * 2; break;
+
+  case _XMP_N_TYPE_DOUBLE_COMPLEX:
+    size = SIZEOF_DOUBLE * 2; break;
+
+  case _XMP_N_TYPE_LONG_DOUBLE_COMPLEX:
+    size = SIZEOF_LONG_DOUBLE * 2; break;
+
+  case _XMP_N_TYPE_NONBASIC: // should be fixed for structures.
+  default:
+    size = 0; break;
+  }
+
+  return size;
+}

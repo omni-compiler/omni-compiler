@@ -20,7 +20,7 @@ public class XmDomUtil {
             Node thisNode = list.item(i);
             if (thisNode.getNodeType() != Node.ELEMENT_NODE)
                 continue;
-            if (thisNode.getNodeName() == name)
+            if (thisNode.getNodeName().equals(name))
                 return thisNode;
         }
         return null;

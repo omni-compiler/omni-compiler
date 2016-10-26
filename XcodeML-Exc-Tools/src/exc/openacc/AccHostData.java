@@ -4,6 +4,8 @@ import exc.block.*;
 import exc.object.*;
 
 class AccHostData extends AccDirective {
+  final AccData accData = new AccData(null, _info, _pb);
+
   AccHostData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
@@ -17,6 +19,11 @@ class AccHostData extends AccDirective {
 
   @Override
   void generate() throws ACCexception {
+    for(ACCvar var : _info.getACCvarList()){
+      if(var.getParent() != null) continue;
+
+      accData.generate(var);
+    }
   }
 
   @Override
@@ -25,7 +32,7 @@ class AccHostData extends AccDirective {
       rewriteVar(var);
     }
 
-    _pb.replace(Bcons.COMPOUND(_pb.getBody()));
+    accData.rewrite();
   }
 
   //FIXME

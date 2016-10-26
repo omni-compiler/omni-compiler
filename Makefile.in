@@ -79,6 +79,7 @@ ifeq ($(IS_GASNET), $(TRUE))
    TESTDIRS_GAS = "local-view/post-wait/C" "local-view/lock-unlock/C" "local-view/intrinsic/C"
    TESTDIRS += $(TESTDIRS_GAS)
    LARGE_TESTDIRS += "local-view/coarray/C/"
+   TEST_DEFS = "ONESIDED_LAYER=GASNET"
 else
    TESTDIRS_GAS = 
 endif
@@ -88,6 +89,7 @@ ifeq ($(IS_FJRDMA), $(TRUE))
    TESTDIRS_FJR = "local-view/post-wait/C" 
    TESTDIRS += $(TESTDIRS_FJR)
    LARGE_TESTDIRS += "local-view/coarray/C/"
+   TEST_DEFS = "ONESIDED_LAYER=FJRDMA"
 else
    TESTDIRS_FJR = 
 endif
@@ -97,101 +99,102 @@ ifeq ($(IS_MPI3_ONESIDED), $(TRUE))
    TESTDIRS_MP3 = 
    TESTDIRS += $(TESTDIRS_MP3)
    LARGE_TESTDIRS += "local-view/coarray/C/"
+   TEST_DEFS = "ONESIDED_LAYER=MPI3"
 else
    TESTDIRS_MP3 = 
 endif
 
 tests: 
 	@for subdir in $(TESTDIRS) ; do \
-	  $(MAKE) -C $(BASE_TESTDIR)/$$subdir ; \
+	  $(MAKE) $(TEST_DEFS) -C $(BASE_TESTDIR)/$$subdir ; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 clean-tests:
 	@for subdir in $(TESTDIRS) ; do \
-	  (cd $(BASE_TESTDIR)/$$subdir && $(MAKE) clean ) ;\
+	  (cd $(BASE_TESTDIR)/$$subdir && $(MAKE) $(TEST_DEFS) clean ) ;\
 	done
 
 run-tests:
 	@for subdir in $(TESTDIRS); do \
-	  $(MAKE) run -C $(BASE_TESTDIR)$$subdir; \
+	  $(MAKE) $(TEST_DEFS) run -C $(BASE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 submit-tests:
 	@for subdir in $(TESTDIRS); do \
-	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
+	  $(MAKE) $(TEST_DEFS) submit -C $(BASE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 submit1-tests:
 	@for subdir in $(TESTDIRS1); do \
-	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
+	  $(MAKE) $(TEST_DEFS) submit -C $(BASE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 submit2-tests:
 	@for subdir in $(TESTDIRS2); do \
-	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
+	  $(MAKE) $(TEST_DEFS) submit -C $(BASE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 submit3-tests:
 	@for subdir in $(TESTDIRS3); do \
-	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
+	  $(MAKE) $(TEST_DEFS) submit -C $(BASE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 submit4-tests:
 	@for subdir in $(TESTDIRS4) $(TESTDIRS_GAS) $(TESTDIRS_FJR) $(TESTDIRS_MP3) ; do \
-	  $(MAKE) submit -C $(BASE_TESTDIR)$$subdir; \
+	  $(MAKE) $(TEST_DEFS) submit -C $(BASE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 showlog-tests:
 	@for subdir in $(TESTDIRS); do \
-	  $(MAKE) showlog -C $(BASE_TESTDIR)$$subdir; \
+	  $(MAKE) $(TEST_DEFS) showlog -C $(BASE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 cleanlog-tests:
 	@for subdir in $(TESTDIRS); do \
-	  $(MAKE) cleanlog -C $(BASE_TESTDIR)$$subdir; \
+	  $(MAKE) $(TEST_DEFS) cleanlog -C $(BASE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 large-tests:
 	@for subdir in $(LARGE_TESTDIRS) "global-view/gmove/C" "global-view/gmove/F"; do \
-	  $(MAKE) -C $(BASE_LARGE_TESTDIR)/$$subdir ; \
+	  $(MAKE) $(TEST_DEFS) -C $(BASE_LARGE_TESTDIR)/$$subdir ; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 clean-large-tests:
 	@for subdir in $(LARGE_TESTDIRS) "global-view/gmove/C" "global-view/gmove/F"; do \
-	  (cd $(BASE_LARGE_TESTDIR)/$$subdir && $(MAKE) clean ) ;\
+	  (cd $(BASE_LARGE_TESTDIR)/$$subdir && $(MAKE) $(TEST_DEFS) clean ) ;\
 	done
 
 run-large-tests:
 	@for subdir in $(LARGE_TESTDIRS); do \
-	  $(MAKE) run -C $(BASE_LARGE_TESTDIR)$$subdir; \
+	  $(MAKE) $(TEST_DEFS) run -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 submit-large-tests:
 	@for subdir in $(LARGE_TESTDIRS) "global-view/gmove/C" "global-view/gmove/F"; do \
-	  $(MAKE) submit -C $(BASE_LARGE_TESTDIR)$$subdir; \
+	  $(MAKE) $(TEST_DEFS) submit -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 showlog-large-tests:
 	@for subdir in $(LARGE_TESTDIRS) "global-view/gmove/C" "global-view/gmove/F"; do \
-	  $(MAKE) showlog -C $(BASE_LARGE_TESTDIR)$$subdir; \
+	  $(MAKE) $(TEST_DEFS) showlog -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 
 cleanlog-large-tests:
 	@for subdir in $(LARGE_TESTDIRS) "global-view/gmove/C" "global-view/gmove/F"; do \
-	  $(MAKE) cleanlog -C $(BASE_LARGE_TESTDIR)$$subdir; \
+	  $(MAKE) $(TEST_DEFS) cleanlog -C $(BASE_LARGE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
 

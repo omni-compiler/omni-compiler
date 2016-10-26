@@ -176,6 +176,6 @@ public class XobjString extends XobjConst
     @Override
     public String toString()
     {
-        return "(" + OpcodeName() + " " + value + ")";
+        return "(" + OpcodeName() + " " + value + ", " + getScope() + ")";
     }
 }

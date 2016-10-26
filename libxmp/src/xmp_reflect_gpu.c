@@ -946,14 +946,18 @@ static void _XMP_reflect_(_XMP_array_t *a, int dummy)
 
   for (int i = 0; i < a->dim; i++){
     _XMP_array_info_t *ai = &(a->info[i]);
-    _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
-    int lo_width = reflect->lo_width;
-    int hi_width = reflect->hi_width;
-    if (!lo_width && !hi_width) continue;
 
-    //pack etc...
-    TLOG_LOG(TLOG_EVENT_5_IN);
-    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+    if (ai->shadow_type == _XMP_N_SHADOW_NONE){
+      continue;
+    }else if(ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+      _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
+
+      int lo_width = reflect->lo_width;
+      int hi_width = reflect->hi_width;
+      if (!lo_width && !hi_width) continue;
+
+      //pack etc...
+      TLOG_LOG(TLOG_EVENT_5_IN);
       if(packVector && (i != packSkipDim)){
 	gpu_pack_vector2(reflect, a->type_size);
       }
@@ -965,27 +969,22 @@ static void _XMP_reflect_(_XMP_array_t *a, int dummy)
 	gpu_pack_wait(reflect);
 	TLOG_LOG(TLOG_EVENT_2);
       }
-    }
-    TLOG_LOG(TLOG_EVENT_5_OUT);
+      TLOG_LOG(TLOG_EVENT_5_OUT);
 
-    //start
-    TLOG_LOG(TLOG_EVENT_6_IN);
+      //start
+      TLOG_LOG(TLOG_EVENT_6_IN);
 
-    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
       MPI_Startall(4, reflect->req);
-    }
-    TLOG_LOG(TLOG_EVENT_6_OUT);
+      TLOG_LOG(TLOG_EVENT_6_OUT);
 
-    //wait
-    TLOG_LOG(TLOG_EVENT_7_IN);
-    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+      //wait
+      TLOG_LOG(TLOG_EVENT_7_IN);
       MPI_Waitall(4, reflect->req, MPI_STATUSES_IGNORE);
-    }
-    TLOG_LOG(TLOG_EVENT_7_OUT);
+      TLOG_LOG(TLOG_EVENT_7_OUT);
 
-    //unpack etc...
-    TLOG_LOG(TLOG_EVENT_8_IN);
-    if (ai->shadow_type == _XMP_N_SHADOW_NORMAL){
+      //unpack etc...
+      TLOG_LOG(TLOG_EVENT_8_IN);
+
       if(useHostBuffer){
 	gpu_update_device(reflect);
       }
@@ -996,7 +995,9 @@ static void _XMP_reflect_(_XMP_array_t *a, int dummy)
       if((packVector && i != packSkipDim) || useHostBuffer){
 	gpu_unpack_wait(reflect);
       }
+      TLOG_LOG(TLOG_EVENT_8_OUT);
+    }else{ /* _XMP_N_SHADOW_FULL */
+      ;
     }
-    TLOG_LOG(TLOG_EVENT_8_OUT);
   }
 }

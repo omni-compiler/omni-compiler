@@ -1,10 +1,16 @@
 XCC     = xmpcc -xacc -O2
-XRUN    = mpiexec
-TESTS = $(wildcard *.c)
-EXES  = $(TESTS:.c=.x)
-OBJS  = $(TESTS:.c=.o)
+TESTS   = $(wildcard *.c)
+EXES    = $(TESTS:.c=.x)
+OBJS    = $(TESTS:.c=.o)
 
-.PHONY: clean all default run
+ifeq ($(JOBSCHED), PBS)
+XRUN    = mpirun_rsh -hostfile $$PBS_NODEFILE
+XSCRIPT = run_pbs.sh
+XSUBMIT = qsub
+endif
+XRUN    ?= mpiexec
+
+.PHONY: clean all default run submit
 
 all default: $(EXES)
 
@@ -14,13 +20,18 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: $(EXES)
-	qsub ./reflect_acc_1.sh
-	qsub ./reflect_acc_2.sh
-	qsub ./reflect_acc_1_massive.sh
-	qsub ./reflect_acc_2_massive.sh
-	qsub ./reflect_acc_2_dup_1.sh
-	qsub ./reflect_acc_2_dup_2.sh
-	qsub ./shadow_reflect.sh
+	$(XRUN) -n 2 ./reflect_acc_1.x
+	$(XRUN) -n 8 ./reflect_acc_2.x
+	$(XRUN) -n 2 ./reflect_acc_3.x
+	$(XRUN) -n 8 ./reflect_acc_1_massive.x
+	$(XRUN) -n 8 ./reflect_acc_2_massive.x
+	$(XRUN) -n 4 ./reflect_acc_2_dup_1.x
+	$(XRUN) -n 8 ./reflect_acc_2_dup_2.x
+	$(XRUN) -n 4 ./shadow_reflect.x
+	$(XRUN) -n 2 ./reflect_acc_2_dup_1-2.x
+
+submit: $(EXES) $(XSCRIPT)
+	$(XSUBMIT) $(XSCRIPT)
 
 clean:
 	rm -f $(EXES) $(OBJS)

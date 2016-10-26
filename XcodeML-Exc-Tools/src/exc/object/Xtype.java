@@ -68,6 +68,7 @@ public class Xtype
     public static final int TQ_FINTERNAL_PRIVATE    = 1 << 23;  // private in structure decl
     public static final int TQ_FCRAY_POINTER        = 1 << 24;  // cray pointer (ID=060c)
     public static final int TQ_FVOLATILE            = 1 << 25;  // volatile
+    public static final int TQ_FCLASS               = 1 << 26;  // class
     
     private String type_id;
     private int type_kind;
@@ -93,6 +94,9 @@ public class Xtype
     /** coshape infos. incl. corank and codimensions (ID=060) */
     protected boolean is_coarray = false;
     protected Coshape coshape = new Coshape();
+    
+    /** parameterized derived type infos. */
+    protected XobjList fTypeParamValues;
 
     /*
      * for pre-defined basic type
@@ -631,6 +635,18 @@ public class Xtype
         setTypeQualFlag(TQ_FINTERNAL_PRIVATE, enabled);
     }
 
+    /** Fortran : return if is qualified by 'class' in pointer decl */
+    public final boolean isFclass()
+    {
+        return getTypeQualFlag(TQ_FCLASS);
+    }
+    
+    /** Fortran : set qualifier 'class' in pointer decl */
+    public final void setIsFclass(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FCLASS, enabled);
+    }
+
     /** get basic type kind (BasicType.*) */
     public int getBasicType()
     {
@@ -802,6 +818,14 @@ public class Xtype
     {
         coshape.setCodimensions(codimensions);
         is_coarray  = (getCorank() > 0);
+    }
+    public void setFTypeParamValues(XobjList params)
+    {
+        fTypeParamValues = params;
+    }
+    public XobjList getFTypeParamValues()
+    {
+        return fTypeParamValues;
     }
     public void removeCodimensions()
     {

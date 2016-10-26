@@ -91,7 +91,7 @@ struct _memoryChunk_t {
   ResourceSet_t   *parent;
   BOOL             isGarbage;    // true if already encountered DEALLOCATE stmt
   char            *orgAddr;      // local address of the allocated memory
-  unsigned         nbytes;       // allocated size of memory [bytes]
+  size_t           nbytes;       // allocated size of memory [bytes]
   void            *desc;         // address of the lower layer's descriptor 
   CoarrayInfo_t   *headCoarray;
   CoarrayInfo_t   *tailCoarray;
@@ -107,7 +107,7 @@ struct _coarrayInfo_t {
   MemoryChunk_t  *parent;
   char           *name;      // name of the variable (for debug message)
   char           *baseAddr;  // local address of the coarray (cray pointer)
-  size_t          nbytes;    // size of the coarray [bytes]
+  size_t          size;      // size of the coarray [bytes]
   int             corank;    // number of codimensions
   int            *lcobound;  // array of lower cobounds [0..(corank-1)]
   int            *ucobound;  // array of upper cobounds [0..(corank-1)]
@@ -304,7 +304,7 @@ int xmpf_coarray_allocated_bytes_()
 
   // subtract the size of the localBuf and ctrlData CoarrayInfos
   // because this is not allocated by the user
-  size -= _cinfo_ctrlData->nbytes + _cinfo_localBuf->nbytes;
+  size -= _cinfo_ctrlData->size + _cinfo_localBuf->size;
 
   return size;
 }
@@ -1133,10 +1133,6 @@ void _freeResourceSet(ResourceSet_t *rset)
     _garbageCollectMallocHistory();
   }
 
-  /////////////
-  _freeMemoryChunk_empty(rset->headChunk);
-  _freeMemoryChunk_empty(rset->tailChunk);
-  /////////////
   FREE_string(rset->name);
   FREE_ResourceSet_t(rset);
 }
@@ -1259,7 +1255,7 @@ char *_dispMemoryChunk(MemoryChunk_t *chunk)
   CoarrayInfo_t *cinfo;
   int count;
 
-  (void)sprintf(work, "<%p %u bytes ", chunk, chunk->nbytes);
+  (void)sprintf(work, "<%p %ud bytes ", chunk, (unsigned)chunk->nbytes);
 
   count = 0;
   forallCoarrayInfo(cinfo, chunk) {
@@ -1305,11 +1301,11 @@ static void _freeCoarrayInfo_empty(CoarrayInfo_t *cinfo)
 }
 
 
-static CoarrayInfo_t *_newCoarrayInfo(char *baseAddr, size_t nbytes)
+static CoarrayInfo_t *_newCoarrayInfo(char *baseAddr, size_t size)
 {
   CoarrayInfo_t *cinfo = _newCoarrayInfo_empty();
   cinfo->baseAddr = baseAddr;
-  cinfo->nbytes = nbytes;
+  cinfo->size = size;
 
   _XMPF_coarrayDebugPrint("*** new CoarrayInfo %s\n",
                           _dispCoarrayInfo(cinfo));
@@ -1697,21 +1693,52 @@ char *_XMPF_get_coarrayName(void *descPtr)
   return cinfo->name;
 }
 
-void *_XMPF_get_coarrayDesc(void *descPtr)
+char *_XMPF_get_coarrayBaseAddr(void *descPtr)
+{
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
+  return cinfo->baseAddr;
+}
+
+size_t _XMPF_get_coarraySize(void *descPtr)
+{
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
+  return cinfo->size;
+}
+
+size_t _XMPF_get_coarrayOffset(void *descPtr, char *addr)
+{
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
+  size_t offset = addr - cinfo->baseAddr;
+  return offset;
+}
+
+
+void *_XMPF_get_coarrayChunkDesc(void *descPtr)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   return cinfo->parent->desc;
 }
 
-size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr)
+char *_XMPF_get_coarrayChunkOrgAddr(void *descPtr)
+{
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
+  return cinfo->parent->orgAddr;
+}
+
+size_t _XMPF_get_coarrayChunkSize(void *descPtr)
+{
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
+  return cinfo->parent->nbytes;
+}
+
+size_t _XMPF_get_coarrayChunkOffset(void *descPtr, char *addr)
 {
   CoarrayInfo_t *cinfo = (CoarrayInfo_t*)descPtr;
   char* orgAddr = cinfo->parent->orgAddr;
-  //int offset = ((size_t)baseAddr - (size_t)orgAddr);
-  size_t offset = baseAddr - orgAddr;
-  
+  size_t offset = addr - orgAddr;
   return offset;
 }
+
 
 void *_XMPF_get_ctrlDataCoarrayDesc(char **baseAddr, size_t *offset,
                                     char **name)
@@ -1737,6 +1764,14 @@ void *_XMPF_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
   return chunk->desc;                                // descriptor of the memory pool
 }
 
+BOOL _XMPF_isAddrInCoarrayChunk(char *localAddr, void *descPtr)
+{
+  char *orgAddr = _XMPF_get_coarrayChunkOrgAddr(descPtr);
+  size_t size = _XMPF_get_coarrayChunkSize(descPtr);
+  size_t offset = localAddr - orgAddr;
+  BOOL result = (offset < size);
+  return result;
+}
 
 void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
                                     size_t *offset, char **name)

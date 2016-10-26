@@ -492,7 +492,7 @@ compile_expression(expr x)
                 return vRet;
             }
             if (ID_CLASS(id) == CL_TAGNAME) {
-                return compile_struct_constructor(id, EXPR_ARG2(x));
+                return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
             }
             return compile_array_ref(id, NULL, EXPR_ARG2(x), FALSE);
         }
@@ -1030,6 +1030,21 @@ compile_expression(expr x)
                             paramNameX,
                             indexX);
             return compile_expression(accessX);
+        }
+
+        case F03_STRUCT_CONSTRUCT: {
+            x1 = EXPR_ARG1(x);
+            assert (EXPR_CODE(x1) == IDENT);
+            id = find_ident(EXPR_SYM(x1));
+            assert (id);
+            assert (ID_CLASS(id) == CL_TAGNAME);
+            return compile_struct_constructor(id, EXPR_ARG2(x), EXPR_ARG3(x));
+        }
+
+        case F08_LEN_SPEC_COLON:
+        case LEN_SPEC_ASTERISC: {
+            error_msg = "bad expression";
+            goto err;
         }
 
         default: {
@@ -2532,46 +2547,397 @@ err:
     return NULL;
 }
 
-expv
-compile_struct_constructor(ID struct_id, expr args)
+
+static int
+id_link_remove(ID * head, ID tobeRemoved)
 {
-    ID member;
-    list lp;
-    expv v, result, l;
+    ID ip, pre = NULL;
+    if (head == NULL) return FALSE;
 
-    assert(ID_TYPE(struct_id) != NULL);
-    l = list0(LIST);
-    result = list1(F95_STRUCT_CONSTRUCTOR, l);
-
-    EXPV_TYPE(result) = find_struct_decl(ID_SYM(struct_id));
-    assert(EXPV_TYPE(result) != NULL);
-
-    if(args == NULL)
-        return result;
-
-    EXPV_LINE(result) = EXPR_LINE(args);
-    lp = EXPR_LIST(args);
-    FOREACH_MEMBER(member, ID_TYPE(struct_id)) {
-        assert(ID_TYPE(member) != NULL);
-        if (lp == NULL || LIST_ITEM(lp) == NULL) {
-            error("not all member are specified.");
-            return NULL;
+    FOREACH_ID(ip, *head) {
+        if (ID_SYM(ip) == ID_SYM(tobeRemoved)) {
+            if (pre == NULL) {
+                *head = ID_NEXT(ip);
+            } else {
+                ID_NEXT(pre) = ID_NEXT(ip);
+            }
+            return TRUE;
         }
-        v = compile_expression(LIST_ITEM(lp));
+        pre = ip;
+    }
+    return FALSE;
+}
+
+
+
+static int
+type_param_values_required0(TYPE_DESC struct_tp, ID * head, ID * tail)
+{
+    ID ip;
+
+    if (TYPE_PARENT(struct_tp) &&
+        type_param_values_required0(TYPE_PARENT_TYPE(struct_tp), head, tail)) {
+        return TRUE;
+    }
+
+    FOREACH_ID(ip, TYPE_TYPE_PARAMS(struct_tp)) {
+        if (!VAR_INIT_VALUE(ip)) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+
+int
+type_param_values_required(TYPE_DESC tp)
+{
+    ID head = NULL, tail = NULL;
+    return type_param_values_required0(tp, &head, &tail);
+}
+
+
+
+static void
+get_type_params0(TYPE_DESC struct_tp, ID * head, ID * tail)
+{
+    ID id, ip;
+
+    if (TYPE_PARENT(struct_tp))
+        get_type_params0(TYPE_PARENT_TYPE(struct_tp), head, tail);
+
+    FOREACH_ID(ip, TYPE_TYPE_PARAMS(struct_tp)) {
+        id = XMALLOC(ID,sizeof(*id));
+        *id = *ip;
+        ID_LINK_ADD(id, *head, *tail);
+    }
+}
+
+ID
+get_type_params(TYPE_DESC struct_tp)
+{
+    ID head = NULL, tail = NULL;
+
+    get_type_params0(struct_tp, &head, &tail);
+
+    return head;
+}
+
+
+// Expects to use for the dummy derived type
+// (genereted by declare_struct_type_wo_component)
+int
+compile_type_param_values_dummy(TYPE_DESC struct_tp, expr type_param_args) {
+    list lp;
+    expv type_param_values = list0(LIST);
+    FOR_ITEMS_IN_LIST(lp, type_param_args) {
+        expv v = compile_expression(LIST_ITEM(lp));
+        if (v == NULL) {
+            return FALSE;
+        }
+        list_put_last(type_param_values, v);
+    }
+    TYPE_TYPE_PARAM_VALUES(struct_tp) = type_param_values;
+    return TRUE;
+}
+
+
+/**
+ * Compile type parameter values for the parameterized derived-type
+ *
+ * Check `type_param_args` as the type parameter values for the parameter derived-type,
+ * and compile them into `type_param_values`.
+ * `used` will store type parameter identifiers and its values even if they don't exist in `type_param_values`
+ * (and will be passed to type_apply_type_parameter())
+ */
+int
+compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_param_values, ID * used)
+{
+    int has_keyword = FALSE;
+    list lp;
+    ID ip;
+    ID used_last = NULL;
+    ID match = NULL; // ID specified by a type parameter argument
+    ID cur;
+    ID rest_type_params;
+    SYMBOL sym;
+    enum expr_code e_code;
+    expv v;
+    *used = NULL;
+
+    /* collect type parameters recursively */
+    rest_type_params = get_type_params(struct_tp);
+    cur = rest_type_params;
+
+    FOR_ITEMS_IN_LIST(lp, type_param_args) {
+        expr arg = LIST_ITEM(lp);
+
+        if (EXPR_CODE(arg) == F_SET_EXPR) {
+            /* A type parameter value has a KEYWORD */
+            sym = EXPR_SYM(EXPR_ARG1(arg));
+
+            if (has_keyword == FALSE) {
+                rest_type_params = cur;
+                has_keyword = TRUE;
+            }
+
+            /* check keyword is not duplicate */
+            if (find_ident_head(sym, *used) != NULL) {
+                error("type parameter '%s' is already specified", SYM_NAME(sym));
+                return FALSE;
+            }
+
+            if ((match = find_ident_head(sym, rest_type_params)) == NULL) {
+                error("'%s' is not type value keyword", SYM_NAME(sym));
+                return FALSE;
+            }
+
+            e_code = EXPR_CODE(EXPR_ARG2(arg));
+        } else {
+            sym = NULL;
+
+            if (has_keyword == TRUE) {
+                /* KEYWORD connot be omitted after an argument which has a KEYWORD */
+                error("KEYWORD connot be ommited after the type parameter value with a keyword");
+                return FALSE;
+            }
+
+            if (cur == NULL) {
+                /* There no more type parameters */
+                error("unexpected type value");
+                return FALSE;
+            }
+
+            match = cur;
+            e_code = EXPR_CODE(arg);
+        }
+
+        switch (e_code) {
+            case LEN_SPEC_ASTERISC:
+            case F08_LEN_SPEC_COLON:
+                if (!TYPE_IS_LEN(ID_TYPE(match))) {
+                    error("length spec for no-length parameter");
+                    return FALSE;
+                }
+                v = make_enode(e_code, NULL);
+                if (sym) {
+                    EXPV_KWOPT_NAME(v) = (const char *)strdup(SYM_NAME(sym));
+                }
+                break;
+            case F95_TRIPLET_EXPR:
+                // NOTE: sorry but the current parser cannot differs the length
+                // spec and triplet with no values
+                if (!TYPE_IS_LEN(ID_TYPE(match))) {
+                    error("length spec for no-length parameter");
+                    return FALSE;
+                }
+                if (sym) {
+                    arg = EXPR_ARG2(arg);
+                }
+                if (EXPR_ARG1(arg) != NULL || EXPR_ARG2(arg) != NULL) {
+                    error("Invalid length specifier");
+                    return FALSE;
+                }
+                v = make_enode(F08_LEN_SPEC_COLON, NULL);
+                if (sym) {
+                    EXPV_KWOPT_NAME(v) = (const char *)strdup(SYM_NAME(sym));
+                }
+                break;
+            default:
+                /* A type parameter valeus should be a constatnt integer */
+                if (!expr_is_constant_typeof(EXPR_CODE(arg) == F_SET_EXPR ?
+                                             EXPR_ARG2(arg) : arg, TYPE_INT)) {
+                    error("type parameter value should be "
+                          "a constant integer expression");
+                    return FALSE;
+                }
+                v = compile_expression(arg);
+                break;
+        }
+
+        if (!has_keyword) {
+            cur = ID_NEXT(cur);
+        }
+
+        v = expv_reduce(v, TRUE);
+        id_link_remove(&rest_type_params, match);
+        VAR_INIT_VALUE(match) = v;
+        ID_LINK_ADD(match, *used, used_last);
+        list_put_last(type_param_values, v);
+    }
+    /* Check if not-initialized type parameters don't exist */
+    FOREACH_ID(ip, rest_type_params) {
+        if (!VAR_INIT_VALUE(ip)) {
+            error("type parameter %s is not initialized", ID_NAME(ip));
+            return FALSE;
+        }
+    }
+    if (used_last != NULL) {
+        // The rest type parameters are used with its initial values
+        ID_NEXT(used_last) = rest_type_params;
+    } else {
+        // All type parameters are used with its initial values
+        *used = rest_type_params;
+    }
+    return TRUE;
+}
+
+
+static void
+get_struct_members0(TYPE_DESC struct_tp, ID * head, ID * tail)
+{
+    ID id, ip;
+
+    if (TYPE_PARENT(struct_tp))
+        get_struct_members0(TYPE_PARENT_TYPE(struct_tp), head, tail);
+
+    FOREACH_ID(ip, TYPE_MEMBER_LIST(struct_tp)) {
+        id = XMALLOC(ID,sizeof(*id));
+        *id = *ip;
+        ID_LINK_ADD(id, *head, *tail);
+    }
+}
+
+static ID
+get_struct_members(TYPE_DESC struct_tp)
+{
+    ID head = NULL, tail = NULL;
+
+    get_struct_members0(struct_tp, &head, &tail);
+
+    return head;
+}
+
+
+static int
+compile_struct_constructor_components(ID struct_id, expr args, expv components)
+{
+    int has_keyword = FALSE;
+    list lp;
+    ID ip, cur, members, used = NULL, used_last = NULL;
+    ID match = NULL;
+    SYMBOL sym;
+    expv v;
+    TYPE_DESC struct_tp;
+
+    // Check PRIVATE components
+    // (PRIVATE works if the derived type is use-associated)
+    int is_use_associated = ID_USEASSOC_INFO(struct_id) != NULL;
+
+    struct_tp = ID_TYPE(struct_id);
+
+    members = get_struct_members(struct_tp);
+    cur = members;
+
+    FOR_ITEMS_IN_LIST(lp, args) {
+        expr arg = LIST_ITEM(lp);
+
+        if (EXPV_CODE(arg) == F_SET_EXPR) {
+            sym = EXPR_SYM(EXPR_ARG1(arg));
+
+            if (has_keyword == FALSE) {
+                members = cur;
+                has_keyword = TRUE;
+            }
+
+            // check keyword is duplicate
+            if (find_ident_head(sym, used) != NULL) {
+                error("member'%s' is already specified", SYM_NAME(sym));
+                return FALSE;
+            }
+
+            if ((match = find_ident_head(sym, members)) == NULL) {
+                error("'%s' is not member", SYM_NAME(sym));
+                return FALSE;
+            }
+        } else {
+            sym = NULL;
+
+            if (has_keyword == TRUE) {
+                // KEYWORD connot be ommit after KEYWORD-ed arg
+                error("KEYWORD connot be ommited after the component with a keyword");
+                return FALSE;
+            }
+
+            if (cur == NULL) {
+                error("unexpected member");
+                return FALSE;
+            }
+
+            match = cur;
+        }
+
+        if (is_use_associated && ID_TYPE(match) != NULL &&
+            (TYPE_IS_INTERNAL_PRIVATE(match) ||
+             TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match)))) {
+            error("accessing a private component");
+            return FALSE;
+        }
+
+        v = compile_expression(arg);
         assert(EXPV_TYPE(v) != NULL);
-        if (!type_is_compatible_for_assignment(ID_TYPE(member),
+        if (!type_is_compatible_for_assignment(ID_TYPE(match),
                                                EXPV_TYPE(v))) {
             error("type is not applicable in struct constructor");
+            return FALSE;
+        }
+
+        if (!has_keyword) {
+            cur = ID_NEXT(cur);
+        }
+        id_link_remove(&members, match);
+
+        ID_LINK_ADD(match, used, used_last);
+        list_put_last(components, v);
+    }
+    // check not initialized type parameters
+    FOREACH_ID(ip, members) {
+        if (!VAR_INIT_VALUE(ip)) {
+            error("member %s is not initialized", ID_NAME(ip));
+            return FALSE;
+        }
+    }
+    return TRUE;
+
+}
+
+
+expv
+compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
+{
+    expv result, component;
+    TYPE_DESC tp, base_stp;
+
+    assert(ID_TYPE(struct_id) != NULL);
+
+    component = list0(LIST);
+    result = list2(F95_STRUCT_CONSTRUCTOR, NULL, component);
+
+    base_stp = find_struct_decl(ID_SYM(struct_id));
+    assert(EXPV_TYPE(result) != NULL);
+
+    if(args) {
+        EXPV_LINE(result) = EXPR_LINE(args);
+
+        if (!compile_struct_constructor_components(struct_id,
+                                                   args, component)) {
             return NULL;
         }
-        list_put_last(l, v);
-        lp = LIST_NEXT(lp);
     }
 
-    if (lp != NULL) {
-        error("Too much elements in struct constructor");
+    if (type_param_args) {
+        tp = type_apply_type_parameter(base_stp, type_param_args);
+        EXPR_ARG1(result) = TYPE_TYPE_PARAM_VALUES(tp);
+    } else if (type_param_values_required(base_stp)) {
+        error("struct type '%s' requires type parameter values",
+              SYM_NAME(ID_SYM(struct_id)));
         return NULL;
+    } else {
+        tp = wrap_type(base_stp);
     }
+
+    EXPV_TYPE(result) = tp;
     return result;
 }
 
