@@ -82,6 +82,9 @@ public abstract class XcodeMLtools {
 
   abstract Xobject toXobject(Node n);
 
+  /**
+   * read XcodeML file to convert to XobjectFile object.
+   */
   public XobjectFile read(Reader reader) {
     Document doc = readDocument(reader);
     Node rootNode = doc.getDocumentElement();

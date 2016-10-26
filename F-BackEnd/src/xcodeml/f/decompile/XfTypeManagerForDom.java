@@ -164,6 +164,7 @@ class XfTypeManagerForDom {
 
     public void addSymbol(Node idNode)
     {
+      // get name Node
         Node nameNode = XmDomUtil.getElement(idNode, "name");
         if (nameNode == null) {
             // Ignore invalid symbol name.

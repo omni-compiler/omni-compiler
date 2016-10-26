@@ -1467,7 +1467,8 @@ checkTypeRef(ID id) {
 
 
 void
-fix_type(ID id) {
+fix_type(ID id) 
+{
     if (classNeedFix(id)) {
         implicit_declaration(id);
     }
