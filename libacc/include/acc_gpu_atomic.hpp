@@ -42,6 +42,7 @@ __device__ static float atomicMin(float* address, float val)
 
 //double atomic func
 /* this code was taken from CUDA C programming guide */
+#if __CUDACC_VER_MAJOR__ < 8
 __device__ static double atomicAdd(double* address, double val)
 {
   unsigned long long int* address_as_ull = (unsigned long long int*)address;
@@ -52,6 +53,7 @@ __device__ static double atomicAdd(double* address, double val)
   } while (assumed != old);
   return __longlong_as_double(old);
 }
+#endif
 
 __device__ static double atomicMul(double* address, double val)
 {
