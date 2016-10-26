@@ -1,5 +1,5 @@
 #PBS -S /bin/bash
-#PBS -N xacc_shadow_reflect_test
+#PBS -N xacc_test
 #PBS -A XMPTCA
 #PBS -q tcaq
 #PBS -l select=1:ncpus=1:host=tcag-0001+1:ncpus=1:host=tcag-0002+1:ncpus=1:host=tcag-0003+1:ncpus=1:host=tcag-0004+1:ncpus=1:host=tcag-0005+1:ncpus=1:host=tcag-0006+1:ncpus=1:host=tcag-0007+1:ncpus=1:host=tcag-0008

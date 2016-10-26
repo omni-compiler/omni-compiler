@@ -1,11 +1,11 @@
 #PBS -S /bin/bash
-#PBS -N xacc_parallel_test
+#PBS -N xacc_test
 #PBS -A XMPTCA
 #PBS -q tcaq
 #PBS -l select=1:ncpus=1:host=tcag-0001+1:ncpus=1:host=tcag-0002
 #PBS -l walltime=00:10:00
-#PBS -o o_parallel
-#PBS -e e_parallel
+#PBS -o o_gmove
+#PBS -e e_gmove
 #---------------
 # select=NODES:ncpus=CORES:mpiprocs=PROCS:ompthreads=THREADS:mem=MEMORY
 # NODES   : num of nodes
