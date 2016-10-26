@@ -42,11 +42,11 @@ int main()
 #pragma xmp reduction(min:flag)
 #pragma xmp task on p(1,1)
   if(flag == false){
-    printf("ERROR in gmove_opt_block_cyclic\n");
+    printf("ERROR in gmove_opt_54\n");
     exit(1);
   }
   else
-    printf("PASS gmove_opt_block_cyclic\n");
+    printf("PASS gmove_opt_54\n");
   
   return 0;
 }
