@@ -109,7 +109,7 @@ public class ACCvar {
     id = null;
   }
   
-  void setAttribute(ACCpragma atr) throws ACCexception{
+  private void setAttribute(ACCpragma atr) throws ACCexception{
     boolean isSpecifiedDataAttribute = false;
     if(atr.isDataClause() && isSpecifiedDataAttribute){
       ACC.fatal("ACCvar: " + id.getName() + " is already specified data attribute");
@@ -184,6 +184,7 @@ public class ACCvar {
       break;
     case USE_DEVICE:
       atrEnumSet.add(Attribute.isUseDevice);
+      atrEnumSet.add(Attribute.isPresent);
       break;
     default:
       throw new ACCexception("var:"+id.getName()+", attribute:" + atr +" is not valid");

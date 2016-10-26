@@ -51,6 +51,7 @@ run: $(EXES)
 #	$(XRUN) -n 4 ./gmove_test_normal.x
 #	$(XRUN) -n 8 ./gmove_test_in.x
 #	$(XRUN) -n 8 ./gmove_test_out.x
+	$(XRUN) -n 4 ./gmove_opt_block_cyclic.x
 
 RUN:
 	mkdir RUN
