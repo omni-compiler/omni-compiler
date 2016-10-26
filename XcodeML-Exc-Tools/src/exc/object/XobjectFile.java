@@ -282,7 +282,6 @@ public class XobjectFile extends XobjectDefEnv {
     return tailerLines;
   }
     
-<<<<<<< HEAD
   private void outputType(Xtype type, XobjectPrintWriter out) {
     out.print("{");
     out.print(Xtype.getKindName(type.getKind()));
@@ -293,22 +292,7 @@ public class XobjectFile extends XobjectDefEnv {
       out.print(" ");
     }
     out.printType(type);
-=======
-    private void outputType(Xtype type, XobjectPrintWriter out)
-    {
-        out.print("{");
-        out.print(Xtype.getKindName(type.getKind()));
-        out.print(" ");
-        if (type instanceof CompositeType) {
-            XobjString tagNames = ((CompositeType)type).getTagNames();
-            if (tagNames != null) {
-              out.print(tagNames.getName() + "(\"" + tagNames.getAlias() + "\")");
-            }
-            out.print(" ");
-        }
-        out.printType(type);
->>>>>>> 6f21e35122037e0a6d4bc5a5ce9a7068185447e9
-        
+
     out.print(" (");
         
     if(type.isConst())          out.print(" const");
@@ -341,9 +325,11 @@ public class XobjectFile extends XobjectDefEnv {
         
     out.print(") ");
 
-<<<<<<< HEAD
     if(type.copied != null) {
       out.printType(type.copied);
+      XobjList fTypeParamValues = type.getFTypeParamValues();
+      if (fTypeParamValues != null)
+        out.print("\n  " + fTypeParamValues);
       out.println("}");
       return;
     }
@@ -380,8 +366,11 @@ public class XobjectFile extends XobjectDefEnv {
       else
         out.print("*");
       break;
-    case Xtype.ENUM:
     case Xtype.STRUCT:
+             XobjList fTypeParams = ((StructType)type).getFTypeParams();
+            if (fTypeParams != null)
+              out.print("\n  " + fTypeParams);
+    case Xtype.ENUM:
     case Xtype.UNION:
       out.printIdentList(type.getMemberList(), 1);
       break;
@@ -393,77 +382,6 @@ public class XobjectFile extends XobjectDefEnv {
         for(Xobject sizeExpr : sizeExprs) {
           out.print(" ");
           out.printObject(sizeExpr);
-=======
-        if(type.copied != null) {
-            out.printType(type.copied);
-            XobjList fTypeParamValues = type.getFTypeParamValues();
-            if (fTypeParamValues != null)
-              out.print("\n  " + fTypeParamValues);
-            out.println("}");
-            return;
-        }
-
-        switch(type.getKind()) {
-        case Xtype.BASIC: {
-            BasicType.TypeInfo ti = BasicType.getTypeInfo(type.getBasicType());
-            if(language.equalsIgnoreCase("f") || language.equalsIgnoreCase("fortran"))
-                out.print(ti.fname);
-            else
-                out.print(ti.cname);
-            break;
-        }
-        case Xtype.POINTER:
-            out.printType(type.getRef());
-            break;
-        case Xtype.FUNCTION:
-            out.printType(type.getRef());
-            out.print(" ");
-            out.printBool(type.isFuncProto());
-            out.print(" ");
-            out.printObjectNoIndent(type.getFuncParam());
-            break;
-        case Xtype.ARRAY:
-            out.printType(type.getRef());
-            out.print(" ");
-            if(type.getArraySize() >= 0)
-                out.printInt(type.getArraySize());
-            else
-                out.print("*");
-            out.print(" ");
-            if(type.getArraySizeExpr() != null)
-                out.printObjectNoIndent(type.getArraySizeExpr());
-            else
-                out.print("*");
-            break;
-        case Xtype.STRUCT:
-            XobjList fTypeParams = ((StructType)type).getFTypeParams();
-            if (fTypeParams != null)
-              out.print("\n  " + fTypeParams);
-        case Xtype.ENUM:
-        case Xtype.UNION:
-            out.printIdentList(type.getMemberList(), 1);
-            break;
-        case Xtype.F_ARRAY:
-            out.printType(type.getRef());
-            if(type.getFarraySizeExpr() != null) {
-                Xobject[] sizeExprs = type.getFarraySizeExpr();
-                out.print(" (");
-                for(Xobject sizeExpr : sizeExprs) {
-                    out.print(" ");
-                    out.printObject(sizeExpr);
-                }
-                out.print(")");
-            }
-            break;
-        case Xtype.UNDEF:
-            break;
-        default:
-            fatal("Output, bad type : " + type);
-        }
-        
-        if(type.getGccAttributes() != null) {
-            out.print(type.getGccAttributes());
->>>>>>> 6f21e35122037e0a6d4bc5a5ce9a7068185447e9
         }
         out.print(")");
       }
@@ -474,6 +392,10 @@ public class XobjectFile extends XobjectDefEnv {
       fatal("Output, bad type : " + type);
     }
         
+    if(type.getGccAttributes() != null) {
+      out.print(type.getGccAttributes());
+    }
+    
     if(type.getGccAttributes() != null) {
       out.print(type.getGccAttributes());
     }

@@ -621,8 +621,6 @@ public class XMPtransPragma
 	XMP.fatal("reduction for non-basic type ="+type);
       }
       
-      System.out.println("reduction type="+type+", Fkind="+type.getFkind());
-
       Xobject args = Xcons.List(id.Ref(),size_expr,
 				XMP.typeIntConstant(type),
 				Xcons.IntConstant(op),

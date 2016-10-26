@@ -919,6 +919,7 @@ compile_expression(expr x)
 
         case F95_KIND_SELECTOR_SPEC: {
             expv v = NULL;
+#if 0
             if (expr_is_constant(EXPR_ARG1(x))) {
                 v = compile_int_constant(EXPR_ARG1(x));
             } else {
@@ -928,6 +929,10 @@ compile_expression(expr x)
                  */
                 v = compile_expression(EXPR_ARG1(x));
             }
+#else
+            v = compile_expression(EXPR_ARG1(x));
+            if(v != NULL) v = expv_reduce_kind(v);
+#endif            
             if (v != NULL) {
                 EXPV_KWOPT_NAME(v) = (const char *)strdup("kind");
             }

@@ -2383,8 +2383,8 @@ set_implicit_storage(enum storage_class stg,int c1,int c2)
 }
 
 
-static expv
-reduce_kind(expv v)
+expv
+expv_reduce_kind(expv v)
 {
     expv ret = expv_reduce(v, TRUE); /* reduce parameter. */
 
@@ -2451,10 +2451,10 @@ max_kind(expv v0, TYPE_DESC t0, expv v1, TYPE_DESC t1)
     double d1 = 0;
 
     if (v0 != NULL) {
-        kv0 = reduce_kind(v0);
+        kv0 = expv_reduce_kind(v0);
     }
     if (v1 != NULL) {
-        kv1 = reduce_kind(v1);
+        kv1 = expv_reduce_kind(v1);
     }
 
     if (kv0 == NULL || kv1 == NULL) {
