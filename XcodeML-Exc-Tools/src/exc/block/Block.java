@@ -7,6 +7,7 @@
 package exc.block;
 
 import exc.object.*;
+import exc.xmpF.*;
 
 /**
  * abstract class of a statement block
@@ -338,20 +339,41 @@ public class Block extends PropObject implements IVarContainer
         }
         return null; // not found
     }
+    // find Block Id found
+    public Block findVarIdentBlock(String name)
+    {
+        BlockList b_list;
+        Ident id;
+        for(b_list = parent; b_list != null; b_list = b_list.getParentList()) {
+            if((id = b_list.findLocalIdent(name)) != null){
+                return b_list.getParent();}
+        }
+        return null; // not found
+    }
+    // find Id parent Block
+    public Block findParentBlockStmt()
+    {
+        Block parent = this;
+        while(parent.Opcode() != Xcode.F_BLOCK_STATEMENT && parent.Opcode() != Xcode.FUNCTION_DEFINITION)
+        {
+            parent = parent.getParentBlock();
+            if(parent == null)
+                return null;
+        }
+        return (parent.Opcode() == Xcode.F_BLOCK_STATEMENT) ? parent : null;
+    }
     @Override
     public Ident findCommonIdent(String name)
     {
 	return null;
     }
     public Boolean removeVarIdent(String name){
-
-      BlockList b_list;
-      Ident id;
-      for (b_list = parent; b_list != null; b_list = b_list.getParentList()){
-	if (b_list.removeIdent(name)) return true;
-      }
-      return false;
-
+        BlockList b_list;
+        Ident id;
+        for (b_list = parent; b_list != null; b_list = b_list.getParentList()){
+            if (b_list.removeIdent(name)) return true;
+        }
+        return false;
     }
 
     public static final int numberOfBlock()
@@ -362,5 +384,26 @@ public class Block extends PropObject implements IVarContainer
     public static final int numberOfBasicBlock()
     {
         return BasicBlock.BasicBlockCounter;
+    }
+
+    public XMPsymbolTable getXMPsymbolTable() {
+        return null;
+    }
+
+    public XMPobject findXMPobject(String name) {
+        XMPsymbolTable table; 
+        Block block = this;//.findParentBlockStmt();
+        while (block != null) {
+            table = block.getXMPsymbolTable();
+            if (table != null) {
+                XMPobject o = table.getXMPobject(name);
+                if(o != null)
+                    return o;
+            }
+            if (block instanceof FunctionBlock)
+                break;
+            block = block.getParentBlock();
+        }
+        return null;
     }
 }

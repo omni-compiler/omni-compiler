@@ -593,22 +593,12 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = createElement(name, "construct_name", getArg0Name(xobj));
             XobjList identList = (XobjList)xobj.getArg(1);
             XobjList declList = (XobjList)xobj.getArg(2);
-            XobjList addDeclList = XmcXobjectToXcodeTranslator.getDeclForNotDeclared(identList);
-
-            if (addDeclList != null) {
-                if (declList == null) {
-                    declList = Xcons.List();
-                }
-                addDeclList.reverse();
-                for (Xobject a : addDeclList) {
-                    declList.insert(a);
-                }
-            }
-
+            Xobject  body = (XobjList)xobj.getArg(3);
+            XobjList addDeclList = (XobjList)addDeclForNotDeclared(declList, identList, body);
             e = addChildNodes(e,
                               transSymbols(identList),
                               transDeclarations(declList),
-                              transBody(xobj.getArg(3)));
+                              transBody(body));
             break;
 
         case F_SYNCALL_STATEMENT:                    
@@ -851,7 +841,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 	    addChildNode(e, f1);
         	
 	    Element f2 = createElement("list");
-	    Xobject body = xobj.getArg(2);
+	    body = xobj.getArg(2);
 	    if (body != null){
 		if (body.Opcode() == Xcode.F_STATEMENT_LIST){
 		    for (Xobject a : (XobjList)body){
@@ -912,7 +902,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
             //add body
             Element f2 = createElement("list");
-            Xobject body = xobj.getArg(2);
+            body = xobj.getArg(2);
             addToBody(f2, body);
             addChildNode(e, f2);
         }
