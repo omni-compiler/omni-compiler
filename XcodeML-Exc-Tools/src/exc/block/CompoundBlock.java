@@ -7,6 +7,7 @@
 package exc.block;
 
 import exc.object.*;
+import exc.xmpF.*;
 
 /**
  * Compound block with code COMPOUND_STATEMENT.
@@ -91,5 +92,16 @@ public class CompoundBlock extends Block
         // s.append(getBasicBlock());
         s.append(")");
         return s.toString();
+    }
+
+    private final static String SYMBOL_TABLE = "XMP_PROP_XMP_SYMBOL_TABLE";
+
+    public XMPsymbolTable getXMPsymbolTable() {
+        XMPsymbolTable table = (XMPsymbolTable)getProp(SYMBOL_TABLE);
+        if(table == null){
+            table = new XMPsymbolTable();
+            setProp(SYMBOL_TABLE, table);
+        }
+        return table;
     }
 }

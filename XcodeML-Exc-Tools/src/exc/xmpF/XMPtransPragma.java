@@ -31,36 +31,48 @@ public class XMPtransPragma
     // scan by bottom-up iterator
     BlockIterator i = new bottomupBlockIterator(fblock.getBody().getHead());
     for(i.init(); !i.end(); i.next()) {
-      b = i.getBlock();
-      if(b.Opcode() == Xcode.XMP_PRAGMA) {
-	b = transPragma((PragmaBlock)b);
-	if(b != null) i.setBlock(b);
+      Block bc = i.getBlock();
+      if(bc.Opcode() == Xcode.XMP_PRAGMA) {
+	bc = transPragma((PragmaBlock)bc);
+	if(bc != null) i.setBlock(bc);
       }
     }
     
-    Xobject f_name = fblock.getNameObj();
+    run_block(def, env, null);
+  }
+
+  public Vector<Block> run_block(FuncDefBlock def, XMPenv env, Block b) {
+    FunctionBlock fblock = def.getBlock();
     BlockList prolog = Bcons.emptyBody();
     BlockList epilog = Bcons.emptyBody();
-    buildXMPobjectBlock(prolog, epilog);
+    buildXMPobjectBlock(prolog, epilog, b);
 
-    if (def.getDef().getName().equals(XMPtranslate.XMPmainFunc)){
-      Ident f = env.declIdent("xmp_barrier", Xtype.FsubroutineType);
-      epilog.add(f.callSubroutine(Xcons.List()));
-    }
-    
-    // move OMP_THREADPRIVATE to the head of prolog
-    // NOTE: Hereafter any addition of statements to prolog must be done
-    //       at its tail.
-    BlockIterator j = new bottomupBlockIterator(fblock.getBody().getHead());
-    for(j.init(); !j.end(); j.next()){
-      b = j.getBlock();
-      if (b.Opcode() == Xcode.OMP_PRAGMA &&
-	  ((PragmaBlock)b).getPragma().equals("THREADPRIVATE")){
-	b.remove();
-	prolog.insert(b);
+    if (b == null){
+      b = fblock.getBody().getHead();
+      if (def.getDef().getName().equals(XMPtranslate.XMPmainFunc)){
+        Ident f = env.declIdent("xmp_barrier", Xtype.FsubroutineType);
+        epilog.add(f.callSubroutine(Xcons.List()));
       }
     }
 
+    BlockIterator i = new topdownBlockIterator(b);
+    for(i.init(); !i.end(); i.next()){
+      Block bc = i.getBlock();
+      // move OMP_THREADPRIVATE to the head of prolog
+      // NOTE: Hereafter any addition of statements to prolog must be done
+      //       at its tail.
+      if (bc.Opcode() == Xcode.OMP_PRAGMA &&
+	  ((PragmaBlock)bc).getPragma().equals("THREADPRIVATE")){
+	bc.remove();
+	prolog.insert(bc);
+      } else if (bc.Opcode() == Xcode.F_BLOCK_STATEMENT){
+        if (b==bc)
+          i.setAside(bc);
+        else
+          i.setAside(run_block(def, env, bc));
+      }
+    }
+    
     if(env.currentDefIsModule()){
 
       Xtype save_logical = Xtype.FlogicalType.copy();
@@ -105,7 +117,7 @@ public class XMPtransPragma
     } else {
       // fblock = (FunckBlock ident <param_env> [BlockList 
       //   (CompoundBlock <local_env> [BlockList statment ...]))
-      BlockList f_body = fblock.getBody().getHead().getBody();
+      BlockList f_body = b.getBody();
       
       // not need to call init_module__
 //       XobjectDef parent = env.getCurrentDef().getDef().getParent();
@@ -124,20 +136,23 @@ public class XMPtransPragma
       f_body.add(Bcons.COMPOUND(epilog));
     }
 
+    return i.getContainer();
   }
 
-  void buildXMPobjectBlock(BlockList prolog, BlockList epilog){
-    XMPsymbolTable table = env.getXMPsymbolTable();
-    epilog.add(Xcons.StatementLabel(XMP.epilog_label_f));
-    epilog.add(Xcons.List(Xcode.F_CONTINUE_STATEMENT));
+  void buildXMPobjectBlock(BlockList prolog, BlockList epilog, Block block){
+    XMPsymbolTable table = (block != null) ? block.getXMPsymbolTable() : env.getXMPsymbolTable();
+    if (block == null) {
+      epilog.add(Xcons.StatementLabel(XMP.epilog_label_f));
+      epilog.add(Xcons.List(Xcode.F_CONTINUE_STATEMENT));
+    }
     if(table != null){
       for(XMPobject o: table.getXMPobjects()){
-	o.buildConstructor(prolog,env);
-	o.buildDestructor(epilog,env);
+	o.buildConstructor(prolog,env,block);
+	o.buildDestructor(epilog,env,block);
       }
       for(XMParray a: table.getXMParrays()){
-	a.buildConstructor(prolog,env);
-	a.buildDestructor(epilog,env);
+	a.buildConstructor(prolog,env,block);
+	a.buildDestructor(epilog,env,block);
       }
       XobjectDef def = env.getCurrentDef().getDef();
       Xobject id_list = def.getDef().getArg(1);
@@ -808,12 +823,12 @@ public class XMPtransPragma
 
     Ident f;
     if (!info.isNocomm()){
-      f = env.declInternIdent(XMP.create_task_nodes_f, Xtype.FsubroutineType);
+      f = env.declInternIdent(XMP.create_task_nodes_f, Xtype.FsubroutineType, pb);
       bb.add(f.callSubroutine(Xcons.List(taskNodesDescId, on_ref.getDescId().Ref())));
     }
 
-    Ident g1 = env.declInternIdent(XMP.nodes_dealloc_f, Xtype.FsubroutineType);
-    Ident g2 = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+    Ident g1 = env.declInternIdent(XMP.nodes_dealloc_f, Xtype.FsubroutineType, pb);
+    Ident g2 = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType, pb);
 
     if (tasksFlag){
       //parentBlock.insert(on_ref.buildConstructor(env));
