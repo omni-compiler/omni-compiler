@@ -2050,6 +2050,7 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
     ID pass_arg = NULL;
     ID last_ip = NULL;
     uint32_t binding_attr_flags = TYPE_BOUND_PROCEDURE_IS_GENERIC;
+    TYPE_DESC tp;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
                        "typeBoundProcedure"))
@@ -2097,7 +2098,7 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
 #endif
 
     TBP_PASS_ARG(*id) = pass_arg;
-    TBP_BINDING(*id) = binding;
+    TBP_BINDING(*id) = NULL;
     TBP_BINDING_ATTRS(*id) = binding_attr_flags;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "binding"))
@@ -3080,36 +3081,30 @@ update_struct_type(HashTable * ht)
         tep = GetHashValue(e);
         tp = tep->tp;
         if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
-            FOREACH_MEMBER(mem, tp) {
-                if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC &&
-                    !(TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_GENERIC)) {
-                    TYPE_ENTRY tep;
-                    tep = getTypeEntry(ht, mem->type_id);
-                    ID_TYPE(mem) = function_type(tep->tp);
-                    TYPE_EXT_ID(ID_TYPE(mem)) = TYPE_EXT_ID(TYPE_REF(TYPE_REF(ID_TYPE(mem))));
-                    TYPE_REF(ID_TYPE(mem)) = EXT_PROC_TYPE(TYPE_EXT_ID(ID_TYPE(mem)));
-                }
+            FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
+                TYPE_ENTRY tep;
+                tep = getTypeEntry(ht, mem->type_id);
+                ID_TYPE(mem) = function_type(tep->tp);
+                TYPE_EXT_ID(ID_TYPE(mem)) = TYPE_EXT_ID(TYPE_REF(TYPE_REF(ID_TYPE(mem))));
+                TYPE_REF(ID_TYPE(mem)) = EXT_PROC_TYPE(TYPE_EXT_ID(ID_TYPE(mem)));
             }
 
-            FOREACH_MEMBER(mem, tp) {
-                if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC) {
-                    if (TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
-                        /*
-                         * generic type bound procedure
-                         */
-                        ID binding;
-                        ID bindto;
-                        FOREACH_ID(binding, TBP_BINDING(mem)) {
-                            bindto = find_struct_member(tp, ID_SYM(binding));
-                            if (bindto == NULL ||
-                                ID_CLASS(bindto) != CL_TYPE_BOUND_PROC ||
-                                TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
-                                return FALSE;
-                            }
-                            ID_TYPE(binding) = ID_TYPE(bindto);
-                        }
+            FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
+                /*
+                 * generic type bound procedure
+                 */
+                ID binding;
+                ID bindto;
+                FOREACH_ID(binding, TBP_BINDING(mem)) {
+                    bindto = find_struct_member(tp, ID_SYM(binding));
+                    if (bindto == NULL ||
+                        ID_CLASS(bindto) != CL_TYPE_BOUND_PROC ||
+                        TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
+                        return FALSE;
                     }
+                    ID_TYPE(binding) = ID_TYPE(bindto);
                 }
+                GENERIC_TYPE_GENERICS(ID_TYPE(mem)) = TBP_BINDING(mem);
             }
         }
     }

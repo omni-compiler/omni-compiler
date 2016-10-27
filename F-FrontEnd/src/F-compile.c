@@ -2674,16 +2674,24 @@ check_labels_in_block(BLOCK_ENV block) {
     }
 }
 
+
 static void
 check_type_bound_procedure()
 {
     ID mem;
     TYPE_DESC tp;
+    TYPE_DESC parent;
 
     FOREACH_STRUCTDECLS(tp, LOCAL_STRUCT_DECLS) {
         if (TYPE_TAGNAME(tp) && ID_USEASSOC_INFO(TYPE_TAGNAME(tp))) {
+            /*
+             * This derived-type is defined in the other module,
+             * skip check.
+             */
             continue;
         }
+
+        parent = TYPE_PARENT(tp)? TYPE_PARENT_TYPE(tp) : NULL;
 
         FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
             if (TYPE_EXT_ID(ID_TYPE(mem)) == NULL) {
@@ -2692,6 +2700,21 @@ check_type_bound_procedure()
                             "\"%s\" must be a module procedure or "
                             "an external procedure with an explicit interface",
                             SYM_NAME(bindto));
+            }
+            if (parent) {
+                ID tbp = find_struct_member(tp, ID_SYM(mem));
+                if (ID_CLASS(tbp) != CL_TYPE_BOUND_PROC) {
+                    // never reached
+                    error("should not override member");
+                }
+
+                if (!type_bound_procedure_type_match(
+                        TYPE_EXT_ID(ID_TYPE(tbp)),
+                        TYPE_EXT_ID(ID_TYPE(mem)),
+                        TBP_PASS_ARG(mem) != NULL)) {
+                    error("type mismatch to override");
+                }
+
             }
         }
     }
@@ -4714,15 +4737,19 @@ static void
 compile_CALL_type_bound_procedure_statement(expr x)
 {
     ID tpd;
+    EXT_ID ep = NULL;
     expv structRef;
     expr x1, x2, args;
     TYPE_DESC stp;
     TYPE_DESC tp;
     expv v = NULL;
+    expv a;
 
     x1 = EXPR_ARG1(EXPR_ARG1(x));
     x2 = EXPR_ARG2(EXPR_ARG1(x));
     args = EXPR_ARG2(x);
+
+    a = compile_args(args);
 
     structRef = compile_lhs_expression(x1);
 
@@ -4734,7 +4761,8 @@ compile_CALL_type_bound_procedure_statement(expr x)
     stp = EXPV_TYPE(structRef);
 
     tpd = find_struct_member(stp, EXPR_SYM(x2));
-    if (tpd == NULL) {
+
+    if (tpd == NULL || ID_CLASS(tpd) != CL_TYPE_BOUND_PROC) {
         error("'%s' is not type bound procedure", SYM_NAME(EXPR_SYM(x2)));
         return;
     }
@@ -4749,9 +4777,27 @@ compile_CALL_type_bound_procedure_statement(expr x)
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
     }
 
+    tp = ID_TYPE(tpd);
+    if (GENERIC_TYPE_GENERICS(tp)) {
+        // for type-bound GENERIC
+        ID bind;
+        ID bindto;
+        FOREACH_ID(bind, TBP_BINDING(tpd)) {
+            bindto = find_struct_member(stp, ID_SYM(bind));
+            if (bindto && is_procedure_acceptable(TYPE_EXT_ID(ID_TYPE(bindto)), a)) {
+                ep = TYPE_EXT_ID(ID_TYPE(bindto));
+                tp = ID_TYPE(bindto);
+            }
+        }
+        if (ep == NULL) {
+            // if not found, select first one
+            tp = ID_TYPE(TBP_BINDING(tpd));
+        }
+    }
+
     v = list2(FUNCTION_CALL,
               expv_cons(F95_MEMBER_REF, tp, structRef, x2),
-              compile_args(args));
+              a);
 
     EXPV_TYPE(v) = type_basic(TYPE_SUBR);
     output_statement(v);

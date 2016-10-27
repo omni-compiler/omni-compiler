@@ -385,7 +385,7 @@ compile_expression(expr x)
 
     if(EXPR_CODE_SYMBOL(EXPR_CODE(x)) != NULL) {
         if (find_symbol_without_allocate(EXPR_CODE_SYMBOL(EXPR_CODE(x))) != NULL)
-        is_userdefined = TRUE;
+            is_userdefined = TRUE;
     }
 
     switch (EXPR_CODE(x)) {
@@ -3404,12 +3404,12 @@ type_parameter_values_is_compatible_for_argument(TYPE_DESC tp1, TYPE_DESC tp2)
 
 
 int
-match_arg_derived_type(TYPE_DESC dummy, TYPE_DESC actual)
+match_derived_type(TYPE_DESC dummy, TYPE_DESC actual)
 {
 
     if (!compare_derived_type_name(dummy, actual)) {
         if (TYPE_IS_CLASS(dummy) && TYPE_PARENT(actual)) {
-            return match_arg_derived_type(dummy, actual);
+            return match_derived_type(dummy, actual);
         }
 
         if (TYPE_TYPE_PARAM_VALUES(dummy) == NULL &&
@@ -3426,111 +3426,184 @@ match_arg_derived_type(TYPE_DESC dummy, TYPE_DESC actual)
     return FALSE;
 }
 
+
 int
-match_arg_type(TYPE_DESC dummy, TYPE_DESC actual, expv actual_args)
+match_type(TYPE_DESC left, TYPE_DESC right, int strict)
 {
-    BASIC_DATA_TYPE dummy_base = get_basic_type(dummy);
-    BASIC_DATA_TYPE actual_base = get_basic_type(actual);
+    expv v1;
+    expv v2;
+
+    BASIC_DATA_TYPE left_base = get_basic_type(left);
+    BASIC_DATA_TYPE right_base = get_basic_type(right);
 
     if (debug_flag) {
-        fprintf(stderr, "dummy(base): %s\n",
-                basic_type_name(dummy_base));
-        fprintf(stderr, "actual(base): %s\n",
-                basic_type_name(actual_base));
+        fprintf(stderr, "left(base): %s\n",
+                basic_type_name(left_base));
+        fprintf(stderr, "right(base): %s\n",
+                basic_type_name(right_base));
     }
 
-    if (IS_STRUCT_TYPE(dummy) && IS_STRUCT_TYPE(actual)) {
-        if (match_arg_derived_type(dummy, actual)) {
-            goto basic_type_match;
+    if (IS_STRUCT_TYPE(left) && IS_STRUCT_TYPE(right)) {
+        if (!match_derived_type(left, right)) {
+            return FALSE;
+        }
+    } else {
+        if (left_base != right_base) {
+            return FALSE;
+        }
+
+        if (strict) {
+            if (TYPE_KIND(left) && TYPE_KIND(right)) {
+                v1 = TYPE_KIND(left);
+                v2 = TYPE_KIND(right);
+                if (EXPR_CODE(v1) != INT_CONSTANT &&
+                    EXPR_CODE(v1) != EXPR_CODE(v2)) {
+                    return FALSE;
+                }
+                if (EXPR_CODE(v1) == INT_CONSTANT &&
+                    EXPR_CODE(v2) == INT_CONSTANT) {
+                    if (EXPV_INT_VALUE(v1) != EXPV_INT_VALUE(v2)) {
+                        return FALSE;
+                    }
+                }
+                /* CANNOT RECOGNIZE THE VALUE OF EXPV, through it */
+            }
+
+            if (TYPE_LENG(left) && TYPE_LENG(right)) {
+                v1 = TYPE_LENG(left);
+                v2 = TYPE_LENG(right);
+                if (EXPR_CODE(v1) != INT_CONSTANT &&
+                    EXPR_CODE(v1) != EXPR_CODE(v2)) {
+                    return FALSE;
+                }
+                if (EXPR_CODE(v1) == INT_CONSTANT &&
+                    EXPR_CODE(v2) == INT_CONSTANT) {
+                    if (EXPV_INT_VALUE(v1) != EXPV_INT_VALUE(v2)) {
+                        return FALSE;
+                    }
+                }
+                /* CANNOT RECOGNIZE THE VALUE OF EXPV, through it */
+            }
         }
     }
 
-    if (dummy_base == actual_base) {
-        goto basic_type_match;
+    if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
+        return TRUE;
+
+    } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
+         are_dimension_and_shape_conformant_by_type(NULL,
+                                                    left,
+                                                    right,
+                                                    NULL)) {
+        return TRUE;
+
     }
 
     return FALSE;
-
-basic_type_match:
-
-    if ((TYPE_N_DIM(dummy) == 0 && TYPE_N_DIM(actual) == 0) ||
-        (TYPE_N_DIM(dummy) > 0 && TYPE_N_DIM(actual) > 0 &&
-         are_dimension_and_shape_conformant_by_type(actual_args,
-                                                    dummy,
-                                                    actual,
-                                                    NULL) ==
-         TRUE)) {
-        goto dimension_match;
-    }
-
-    return FALSE;
-
-dimension_match:
-    return TRUE;
-
 }
 
 int
-procedure_acceptable(EXT_ID proc, expv actual_args)
+type_bound_procedure_type_match(EXT_ID f1, EXT_ID f2, int has_pass_arg)
+{
+    int i;
+    int len;
+    expv args1;
+    expv args2;
+    expv arg1;
+    expv arg2;
+    ID id1;
+    ID id2;
+
+    args1 = EXT_PROC_ARGS(f1);
+    args2 = EXT_PROC_ARGS(f2);
+
+    len = expr_list_length(args1);
+
+    if (!match_type(EXT_PROC_TYPE(f1), EXT_PROC_TYPE(f2), TRUE)) {
+        return FALSE;
+    }
+
+
+    if (expr_list_length(args1) != expr_list_length(args2)) {
+        return FALSE;
+    }
+
+
+    for (i = 0; i < len; i++) {
+        if (has_pass_arg && i == 0) {
+            continue;
+        }
+
+        arg1 = expr_list_get_n(args1, i);
+        arg2 = expr_list_get_n(args2, i);
+
+        id1 = find_ident_head(EXPR_SYM(arg1), EXT_PROC_ID_LIST(f1));
+        id2 = find_ident_head(EXPR_SYM(arg2), EXT_PROC_ID_LIST(f2));
+
+        if (!match_type(ID_TYPE(id1), ID_TYPE(id2), TRUE)) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+int
+is_procedure_acceptable(EXT_ID proc, expv actual_args)
 {
     ID id;
     ID proc_id_list;
     expv actual_arg = NULL;
     expv dummy_args;
     list lp;
+    list actual_lp;
 
     dummy_args = EXT_PROC_ARGS(proc);
     proc_id_list = EXT_PROC_ID_LIST(proc);
 
-    if (EXPR_HAS_ARG1(actual_args)) {
-        actual_args = EXPR_ARG1(actual_args);
-    }
+    actual_lp = EXPR_LIST(actual_args);
+    actual_arg = LIST_ITEM(actual_lp);
 
     FOR_ITEMS_IN_LIST(lp, dummy_args) {
-        expv dummy_arg = LIST_ITEM(lp);
+        expv dummy_arg = EXPR_ARG1(LIST_ITEM(lp));
+
+        if (debug_flag)
+            fprintf(debug_fp, "dummy args is '%s'\n", SYM_NAME(EXPR_SYM(dummy_arg)));
 
         if (actual_arg == NULL) {
             /* argument number mismatch */
             return FALSE;
         }
 
-        id = find_ident_head(EXPR_SYM(actual_args), proc_id_list);
-
-        if (!match_arg_type(EXPV_TYPE(dummy_arg), ID_TYPE(id), actual_args)) {
+        id = find_ident_head(EXPR_SYM(dummy_arg), proc_id_list);
+        if (!match_type(EXPV_TYPE(actual_arg), ID_TYPE(id), TRUE)) {
             return FALSE;
         }
 
-        if (EXPR_LIST(actual_arg) != NULL &&
-            LIST_ITEM(EXPR_LIST(actual_arg))) {
-            actual_arg = LIST_ITEM(EXPR_LIST(actual_arg));
+        if (LIST_NEXT(actual_lp) != NULL) {
+            actual_lp = LIST_NEXT(actual_lp);
+            actual_arg = LIST_ITEM(actual_lp);
         } else {
+            actual_lp = NULL;
             actual_arg = NULL;
         }
     }
 
-    if (actual_arg != NULL) {
-        id = find_ident_head(EXPR_SYM(actual_args), proc_id_list);
+    while (actual_lp != NULL) {
+        id = find_ident_head(EXPR_SYM(actual_arg), proc_id_list);
         if (!TYPE_IS_OPTIONAL(ID_TYPE(id))) {
             return FALSE;
+        }
+        if (LIST_NEXT(actual_lp) != NULL) {
+            actual_lp = LIST_NEXT(actual_lp);
+            actual_arg = LIST_ITEM(actual_lp);
+        } else {
+            actual_lp = NULL;
+            actual_arg = NULL;
         }
     }
 
     return TRUE;
-}
-
-
-EXT_ID
-chose_procedure_by_args(ID procs, expv args)
-{
-    ID proc;
-
-    FOREACH_ID(proc, procs) {
-        if (procedure_acceptable(PROC_EXT_ID(proc), args)) {
-            return PROC_EXT_ID(proc);
-        }
-    }
-
-    return NULL;
 }
 
 
@@ -3543,18 +3616,29 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
     TYPE_DESC ret_type = type_GNUMERIC_ALL;
     EXT_ID ep = NULL;
 
-    a = compile_args(args);
+    a = list_cons(EXPR_ARG1(memberRef), compile_args(args));
 
     ftp = EXPV_TYPE(memberRef);
     if (GENERIC_TYPE_GENERICS(ftp)) {
         // for type-bound GENERIC
-        ep = chose_procedure_by_args(GENERIC_TYPE_GENERICS(ftp), a);
+        ID bind;
+        FOREACH_ID(bind, GENERIC_TYPE_GENERICS(ftp)) {
+            if (is_procedure_acceptable(TYPE_EXT_ID(ID_TYPE(bind)), a)) {
+                ep = TYPE_EXT_ID(ID_TYPE(bind));
+                EXPV_TYPE(memberRef) = ID_TYPE(bind);
+            }
+        }
         if (ep) {
             ret_type = EXT_PROC_TYPE(ep);
         }
     } else {
         // for type-bound PROCEDURE
         if ((ep = TYPE_EXT_ID(ftp)) != NULL) {
+#if 0
+            if (is_procedure_acceptable(ep, a)) {
+                error("argument type mismatch");
+            }
+#endif
             ret_type = EXT_PROC_TYPE(ep);
         }
     }

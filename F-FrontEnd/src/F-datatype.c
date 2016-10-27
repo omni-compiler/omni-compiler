@@ -456,7 +456,6 @@ ID
 find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
 {
     ID member = NULL;
-    TYPE_DESC stp;
 
     if (!IS_STRUCT_TYPE(struct_td)) {
         return NULL;
