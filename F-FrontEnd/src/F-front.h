@@ -691,6 +691,7 @@ extern expv     expv_complex_node_to_variable _ANSI_ARGS_((expv v, TYPE_DESC tp)
 extern expv     expv_complex_const_reduce _ANSI_ARGS_((expv v, TYPE_DESC tp));
 
 extern expv     expv_reduce _ANSI_ARGS_((expv v, int doParamReduce));
+extern expv     expv_reduce_kind _ANSI_ARGS_((expv v));
 extern expv     expv_float_reduce _ANSI_ARGS_((expv v));
 extern expv     expv_reduce_conv_const _ANSI_ARGS_((TYPE_DESC tp, expv v));
 extern expv     expv_inline_function _ANSI_ARGS_((expv left, expv right));

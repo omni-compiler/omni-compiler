@@ -605,6 +605,7 @@ public class XMPtransPragma
 
       Xtype type = id.Type();
       Xobject size_expr = Xcons.IntConstant(1);
+
       if(type.isFarray()){
 	for(Xobject s: type.getFarraySizeExpr()){
           Xobject length = Xcons.binaryOp(Xcode.PLUS_EXPR, Xcons.IntConstant(1),
@@ -619,7 +620,7 @@ public class XMPtransPragma
       if(!type.isBasic()){
 	XMP.fatal("reduction for non-basic type ="+type);
       }
-
+      
       Xobject args = Xcons.List(id.Ref(),size_expr,
 				XMP.typeIntConstant(type),
 				Xcons.IntConstant(op),

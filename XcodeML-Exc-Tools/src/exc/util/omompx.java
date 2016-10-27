@@ -481,6 +481,7 @@ public class omompx
     Document xcodeDoc = null;
     XmXobjectToXcodeTranslator xc2xcodeTranslator = null;
     
+    // create transformer from Xobject to XcodeML DOM.
     if (lang.equals("F")) {
       xc2xcodeTranslator = new XmfXobjectToXcodeTranslator();
     } else {
@@ -489,6 +490,7 @@ public class omompx
 
     xcodeDoc = xc2xcodeTranslator.write(xobjFile);
 
+    // transformation from DOM to the file. It means to output DOM to the file.
     Transformer transformer = null;
     try {
       transformer = TransformerFactory.newInstance().newTransformer();
@@ -500,6 +502,7 @@ public class omompx
 
     try {
       transformer.transform(new DOMSource(xcodeDoc), new StreamResult(xmlWriter));
+      // transformer.transform(new DOMSource(xcodeDoc), new StreamResult(new OutputStreamWriter(System.out)));
     } catch(TransformerException e) {
       throw new XmException(e);
     }
@@ -544,7 +547,8 @@ public class omompx
       XmDecompiler decompiler = toolFactory.createDecompiler();
 
       if (xcodeDoc == null) {
-        javax.xml.parsers.DocumentBuilderFactory docFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        javax.xml.parsers.DocumentBuilderFactory docFactory = 
+          javax.xml.parsers.DocumentBuilderFactory.newInstance();
         javax.xml.parsers.DocumentBuilder builder = docFactory.newDocumentBuilder();
         xcodeDoc = builder.parse(outXmlFile);
       }

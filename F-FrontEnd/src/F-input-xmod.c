@@ -1205,6 +1205,7 @@ input_indexRange(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
         return FALSE;
 
     bottom = tp;
+#if 0  /* bug */
     while(TYPE_BASIC_TYPE(bottom) == TYPE_ARRAY) {
         TYPE_N_DIM(bottom)++;
         bottom = TYPE_REF(bottom);
@@ -1215,7 +1216,14 @@ input_indexRange(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
     TYPE_BASIC_TYPE(bottom) = TYPE_ARRAY;
     TYPE_REF(bottom) = base;
     TYPE_N_DIM(bottom)++;
-
+#else
+    base = new_type_desc();
+    *base = *bottom;
+    TYPE_BASIC_TYPE(bottom) = TYPE_ARRAY;
+    TYPE_REF(bottom) = base;
+    TYPE_N_DIM(bottom) = TYPE_N_DIM(base)+1;
+#endif
+    
     /* fix allocatable attribute set in input_FbasicType() */
     if (TYPE_IS_ALLOCATABLE(bottom)) {
         TYPE_SET_ALLOCATABLE(base);
@@ -1612,6 +1620,14 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
     while (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "indexRange")) {
         if (!input_indexRange(reader, ht, tp))
             return FALSE;
+#if 0
+        // debug
+        {
+            fprintf(stdout,"input_xmod indexRange:"); 
+            print_type(tp,stdout,FALSE);
+            fprintf(stdout,"\n");
+        }
+#endif
     }
 
     /* <coShape> */
@@ -2706,6 +2722,52 @@ input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable * ht, ID id_list)
 }
 
 /**
+ * input <declarations> node in .xmod
+ */
+static int
+input_module_declarations(xmlTextReaderPtr reader, HashTable * ht,
+			  struct module * mod)
+{
+    SYMBOL s;
+    TYPE_DESC tp;
+    ID id;
+    expv v;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "declarations"))
+        return FALSE;
+
+    /* move to next node */
+    xmlSkipWhiteSpace(reader);
+
+    while (!xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT)) {
+      if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "varDecl"))
+        return FALSE;
+
+      if (!input_name_with_type(reader, ht, FALSE, &s, &tp))
+        return FALSE;
+
+      // search paramter symbol
+      FOREACH_ID(id,mod->head){
+	if(ID_SYM(id) == s) break;
+      }
+      if(id == NULL)  return FALSE;
+      
+      if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "value")) {
+        if (!input_value(reader, ht, &v))
+	  return FALSE;
+        VAR_INIT_VALUE(id) = v;
+      }
+      if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "varDecl"))
+        return FALSE;
+    }
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "declarations"))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
  * input <interfaceDecls> node
  */
 static int
@@ -2775,6 +2837,9 @@ input_module(xmlTextReaderPtr reader, struct module * mod, int is_intrinsic)
     /* <identifiers> node */
     if (!input_identifiers(reader, &ht, mod))
         return FALSE;
+
+    /* <declarations> node */
+    input_module_declarations(reader,&ht,mod); /* optional */
 
     /* <interfaceDecls> node */
     if (!input_interfaceDecls(reader, &ht, mod))

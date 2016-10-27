@@ -5783,10 +5783,9 @@ public class XfDecompileDomVisitor {
          *      )
          */
         @Override public void enter(Node n) {
-            _writeLineDirective(n);
-
             Node nameNode = XmDomUtil.getElement(n, "name");
             XfSymbol symbol = _makeSymbol(nameNode);
+
             if (symbol == null) {
                 _context.setLastErrorMessage(
                     XfUtilForDom.formatError(nameNode,
@@ -5794,6 +5793,15 @@ public class XfDecompileDomVisitor {
                                              XmDomUtil.getContentText(nameNode)));
                 fail(nameNode);
             }
+
+            String moduleName = null;
+            Node idNode = _context.getTypeManagerForDom().findSymbol(symbol.getSymbolName());
+            if(idNode != null) moduleName = XmDomUtil.getAttr(idNode, "declared_in");
+
+            // System.out.println("varDecl enter: symbol="+symbol+" module="+moduleName);
+            if(moduleName != null) return; // declared in other module
+
+            _writeLineDirective(n);
 
             Boolean writeValue = false;
             if (!_isNameDefinedWithUseStmt(symbol.getSymbolName()))

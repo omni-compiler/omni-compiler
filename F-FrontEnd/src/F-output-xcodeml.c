@@ -3728,6 +3728,7 @@ mark_type_desc_in_id_list(ID ids)
 {
     ID id;
     TYPE_DESC sTp;
+
     FOREACH_ID(id, ids) {
         sTp = reduce_type(ID_TYPE(id));
         mark_type_desc(sTp);
@@ -3966,6 +3967,14 @@ outx_arrayType(int l, TYPE_DESC tp)
 
       outx_typeAttrs(l, tp, "FbasicType", 0);
       outx_print(" ref=\"%s\">\n", getTypeID(array_element_type(tp)));
+
+#if 0
+      { //debug
+          fprintf(stdout,"outx_arrayType indexRange:"); 
+          print_type(tp,stdout,FALSE);
+          fprintf(stdout,"\n");
+      }
+#endif
 
       outx_indexRangeOfType(l1, tp);
 
@@ -4387,7 +4396,7 @@ emit_decl(int l, ID id)
     if (ID_IS_EMITTED(id) == TRUE) {
         return;
     }
-    if (ID_IS_OFMODULE(id) == TRUE) {
+    if (ID_IS_OFMODULE(id) == TRUE && ID_CLASS(id) != CL_PARAM) {
         return;
     }
 
@@ -4514,7 +4523,6 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
         free(ids);
     }
 }
-
 
 
 /**
@@ -5186,6 +5194,32 @@ outx_identifiers(int l, ID ids)
 }
 
 /**
+ * output declaraions for .xmod file
+ */
+static void
+outx_module_declarations(int l, ID ids)
+{
+    const int l1 = l + 1;
+    ID id;
+
+    outx_tag(l, "declarations");
+
+    FOREACH_ID(id, ids) {
+      switch(ID_CLASS(id)) {
+	/* only value PARAM value is exported from module ??? */
+      case CL_PARAM:
+        if (id_is_visibleVar(id))
+	  outx_varDecl(l1, id);
+        break;
+      default:
+	break;
+      }
+    }
+
+    outx_close(l, "declarations");
+}
+
+/**
  * output <interfaceDecls> node
  */
 static void
@@ -5233,6 +5267,8 @@ outx_module(struct module * mod)
     outx_typeTable(l1);
 
     outx_identifiers(l1, mod->head);
+
+    outx_module_declarations(l1,mod->head);
 
     outx_interfaceDecls(l1, mod->head);
 
@@ -5342,10 +5378,15 @@ output_module_file(struct module * mod)
     type_ext_id_list = NULL;
     type_ext_id_last = NULL;
 
+    /*
+     * collect types used in this module
+     */
+    // mark types of each ids
     mark_type_desc_in_id_list(mod->head);
     FOREACH_ID(id, mod->head) {
         ep = PROC_EXT_ID(id);
-        if (ep != NULL) {
+	// if id is external,  ...
+        if (ep != NULL) { 
             collect_types1(ep);
             FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
                 TYPE_DESC tp = EXT_PROC_TYPE(te->ep);
@@ -5373,7 +5414,8 @@ output_module_file(struct module * mod)
     }
 
     outx_module(mod);
-    unmark_type_table();
+
+    unmark_type_table(); // unmark types collected
     unmark_ids(UNIT_CTL_CURRENT_EXT_ID(CURRENT_UNIT_CTL));
 
     set_module_emission_mode(oEmitMode);
