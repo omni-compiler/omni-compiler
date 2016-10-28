@@ -5907,6 +5907,29 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    /**
+     * Decompile 'FimportDecl' element in XcodeML/F.
+     */
+    class FimportDeclVisitor extends XcodeNodeVisitor {
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+            writer.writeToken("IMPORT :: ");
+
+            int nameCount = 0;
+            ArrayList<Node> nameNodes = XmDomUtil.collectElements(n, "name");
+            for (Node name : nameNodes) {
+                if (nameCount > 0) {
+                    writer.writeToken(", ");
+                }
+                writer.writeToken(XmDomUtil.getContentText(name));
+                ++nameCount;
+            }
+            writer.setupNewLine();
+        }
+    }
+
 
     /* Check if the name is declared in the runtime library declaration file xmpf_coarray_decl.
      * To avoid double-declaration of the name at the compile time in the native compiler, the
@@ -6099,6 +6122,7 @@ public class XfDecompileDomVisitor {
         new Pair("FfunctionDecl", new FfunctionDeclVisitor()),
         new Pair("FfunctionDefinition", new FfunctionDefinitionVisitor()),
         new Pair("FifStatement", new FifStatementVisitor()),
+        new Pair("FimportDecl", new FimportDeclVisitor()),
         new Pair("FinquireStatement", new FinquireStatementVisitor()),
         new Pair("FintConstant", new FintConstantVisitor()),
         new Pair("FinterfaceDecl", new FinterfaceDeclVisitor()),
