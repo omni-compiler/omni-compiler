@@ -1709,6 +1709,7 @@ static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, EXT_ID ep)
     args = EXT_PROC_ARGS(ep);
     FOR_ITEMS_IN_LIST(lp, args) {
         arg = LIST_ITEM(lp);
+
         if (pass_arg == NULL || EXPR_SYM(arg) == ID_SYM(pass_arg)) {
             if (type_is_unlimited_class(stp)) {
                 return TRUE;
@@ -1717,6 +1718,7 @@ static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, EXT_ID ep)
                 return TRUE;
 
             } else {
+                error("PASS object should be CLASS");
                 return FALSE;
             }
         }

@@ -4835,6 +4835,11 @@ compile_type_bound_procedure(expr x)
     }
 
 
+    if (!(binding_attr_flags & TYPE_BOUND_PROCEDURE_NOPASS)) {
+        /* set a default attribute */
+        binding_attr_flags |= TYPE_BOUND_PROCEDURE_PASS;
+    }
+
     if (interface_name) {
         interface = new_ident_desc(EXPR_SYM(interface_name));
         FOR_ITEMS_IN_LIST(lp, bindings) {
