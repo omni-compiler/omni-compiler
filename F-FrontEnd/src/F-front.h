@@ -836,7 +836,6 @@ extern void     compile_OMN_directive _ANSI_ARGS_((expr x));
 extern void     begin_module _ANSI_ARGS_((expr name));
 extern void     end_module _ANSI_ARGS_((void));
 extern int	is_in_module(void);
-extern const char *	get_current_module_name(void);
 
 extern omllint_t getExprValue(expv v);
 

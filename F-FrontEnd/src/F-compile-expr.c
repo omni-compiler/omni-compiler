@@ -3514,6 +3514,11 @@ type_bound_procedure_type_match(EXT_ID f1, EXT_ID f2, int has_pass_arg)
     ID id1;
     ID id2;
 
+    if (f1 == NULL || f2 == NULL) {
+        // may never reach
+        return FALSE;
+    }
+
     args1 = EXT_PROC_ARGS(f1);
     args2 = EXT_PROC_ARGS(f2);
 
@@ -3536,6 +3541,9 @@ type_bound_procedure_type_match(EXT_ID f1, EXT_ID f2, int has_pass_arg)
 
         arg1 = expr_list_get_n(args1, i);
         arg2 = expr_list_get_n(args2, i);
+
+        arg1 = EXPR_ARG1(arg1);
+        arg2 = EXPR_ARG1(arg2);
 
         id1 = find_ident_head(EXPR_SYM(arg1), EXT_PROC_ID_LIST(f1));
         id2 = find_ident_head(EXPR_SYM(arg2), EXT_PROC_ID_LIST(f2));

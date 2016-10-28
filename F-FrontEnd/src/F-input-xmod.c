@@ -2050,7 +2050,6 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
     ID pass_arg = NULL;
     ID last_ip = NULL;
     uint32_t binding_attr_flags = TYPE_BOUND_PROCEDURE_IS_GENERIC;
-    TYPE_DESC tp;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
                        "typeBoundProcedure"))

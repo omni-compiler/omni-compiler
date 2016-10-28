@@ -26,7 +26,7 @@ enum procedure_state current_proc_state;
 /* module context */
 enum module_state current_module_state = M_DEFAULT;
 
-char *current_module_name = (char *) NULL;
+SYMBOL current_module_name = NULL;
 #define INMODULE()    (current_module_name != NULL)
 
 /* for partial module compile with fork.  */
@@ -2683,7 +2683,10 @@ check_type_bound_procedure()
     TYPE_DESC parent;
 
     FOREACH_STRUCTDECLS(tp, LOCAL_STRUCT_DECLS) {
-        if (TYPE_TAGNAME(tp) && ID_USEASSOC_INFO(TYPE_TAGNAME(tp))) {
+
+        if (TYPE_TAGNAME(tp) &&
+            ID_USEASSOC_INFO(TYPE_TAGNAME(tp)) &&
+            current_module_name != ID_MODULE_NAME(TYPE_TAGNAME(tp))) {
             /*
              * This derived-type is defined in the other module,
              * skip check.
@@ -3036,8 +3039,7 @@ end_procedure()
     }
 
     if (CURRENT_PROC_CLASS == CL_MODULE) {
-        SYMBOL sym = find_symbol(current_module_name);
-        if(!export_module(sym, LOCAL_SYMBOLS,
+        if(!export_module(current_module_name, LOCAL_SYMBOLS,
                           LOCAL_USE_DECLS)) {
             error("internal error, fail to export module.");
             exit(1);
@@ -3334,7 +3336,7 @@ begin_module(expr name)
              * after the current_module_name != NULL.
              */
             module_procedure_manager_init();
-            current_module_name = SYM_NAME(s);
+            current_module_name = s;
             module_start_ln_no = last_ln_no;
             module_start_offset = prelast_initial_line_pos;
         } else {
@@ -3362,11 +3364,6 @@ end_module() {
 int
 is_in_module(void) {
     return (INMODULE()) ? TRUE : FALSE;
-}
-
-const char *
-get_current_module_name(void) {
-    return current_module_name;
 }
 
 struct use_argument {

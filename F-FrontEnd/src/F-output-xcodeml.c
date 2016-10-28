@@ -4209,7 +4209,6 @@ outx_unlimitedClass(int l, TYPE_DESC tp)
 static void
 outx_functionType_typeBoundProcedure(int l, TYPE_DESC tp)
 {
-    char * tid;
     outx_typeAttrs(l, tp, "FbasicType", 0);
     outx_print(" ref=\"%s\"/>\n", genFunctionTypeID(TYPE_EXT_ID(tp)));
 }
