@@ -93,6 +93,7 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
     ai->shadow_size_hi  = 0;
 
     ai->reflect_sched = NULL;
+    ai->reflect_acc_sched = NULL;
 
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;
@@ -194,12 +195,18 @@ void _XMP_finalize_array_desc(_XMP_array_t *array)
     if(ai->is_shadow_comm_member)
       _XMP_finalize_comm(ai->shadow_comm);
 
-    _XMP_reflect_sched_t *reflect_sched;
+    _Bool free_buf = (_XMPF_running && i != dim -1) || (_XMPC_running && i != 0);
 
+    _XMP_reflect_sched_t *reflect_sched;
     if((reflect_sched = ai->reflect_sched)){
-      _Bool free_buf = (_XMPF_running && i != dim -1) || (_XMPC_running && i != 0);
       _XMP_finalize_reflect_sched(reflect_sched, free_buf);
       _XMP_free(reflect_sched);
+    }
+
+    _XMP_reflect_sched_t *reflect_acc_sched;
+    if((reflect_acc_sched = ai->reflect_acc_sched)){
+      _XMP_finalize_reflect_sched_acc(reflect_acc_sched, free_buf);
+      _XMP_free(reflect_acc_sched);
     }
   }
 
@@ -803,6 +810,11 @@ void _XMP_init_array_addr(void **array_addr, void *init_addr,
       if (sched){
 	_XMP_finalize_reflect_sched(sched, (i != 0));
 	_XMP_init_reflect_sched(sched);
+      }
+      _XMP_reflect_sched_t *sched_acc = array_desc->info[i].reflect_acc_sched;
+      if (sched_acc){
+	_XMP_finalize_reflect_sched_acc(sched_acc, (i != 0));
+	_XMP_init_reflect_sched_acc(sched_acc);
       }
     }
   }

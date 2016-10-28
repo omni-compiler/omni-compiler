@@ -136,7 +136,6 @@ typedef struct _XMP_reflect_sched_type {
   void *hi_send_host_buf, *hi_recv_host_buf;
   void *lo_async_id;
   void *hi_async_id;
-  void *event;
 #endif
   
 #if defined(_XMP_TCA)
