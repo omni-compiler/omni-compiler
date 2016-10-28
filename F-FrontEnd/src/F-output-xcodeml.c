@@ -207,6 +207,11 @@ xtag(enum expr_code code)
     case F95_USE_ONLY_STATEMENT:    return "FuseOnlyDecl";
 
     /*
+     * F2003 statement
+     */
+    case F03_IMPORT_STATEMENT:      return "FimportDecl";
+
+    /*
      * invalid or no corresponding tag
      */
     case ERROR_NODE:
@@ -1752,6 +1757,25 @@ static void
 outx_returnStatement(int l, expv v)
 {
     outx_tagOfStatementNoChild(l, v, NULL);
+}
+
+/**
+ * output FimportStatement
+ */
+static void
+outx_importStatement(int l, expv v) {
+    const int l1 = l + 1;
+    expv ident_list, arg;
+    list lp;
+    outx_tagOfStatement(l, v);
+    ident_list = EXPR_ARG1(v);
+    if(EXPR_LIST(ident_list)) {
+        FOR_ITEMS_IN_LIST(lp, ident_list) {
+            arg = LIST_ITEM(lp);
+            outx_printi(l1, "<name>%s</name>\n", getRawString(arg));
+        }
+    }
+    outx_expvClose(l, v);
 }
 
 
@@ -4259,6 +4283,8 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
         case F95_USE_ONLY_STATEMENT:
             outx_useOnlyDecl(l1, v);
             break;
+        case F03_IMPORT_STATEMENT:
+            outx_importStatement(l1, v);
         default:
             break;
         }
