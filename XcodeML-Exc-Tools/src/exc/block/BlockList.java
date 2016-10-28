@@ -13,6 +13,8 @@ public class BlockList
     Block head, tail;
     Block parent;
 
+    Xcode code;
+    XobjString block_name;
     Xobject id_list;
     Xobject decls;
 
@@ -419,8 +421,8 @@ public class BlockList
     {
         Xobject v;
         if(head == null)
-            return Xcons.statementList();
-        if(head == tail && head.Opcode() != Xcode.LIST)
+            v = Xcons.statementList();
+        else if(head == tail && head.Opcode() != Xcode.LIST)
             v = head.toXobject();
         else {
             v = Xcons.statementList();
@@ -456,6 +458,8 @@ public class BlockList
             return v;
           return Xcons.CompoundStatement(id_list, decls, v);
         }
+        else if (code==Xcode.F_BLOCK_STATEMENT)
+          return Xcons.List(code, (Xtype)null, block_name, id_list, decls, v);
         else
           return Xcons.FstatementList(v);
     }
@@ -464,7 +468,7 @@ public class BlockList
     public String toString()
     {
         StringBuilder s = new StringBuilder(256);
-        s.append("[BlockList id_list="+id_list);
+        s.append("[BlockList code=" + code + " name=" + block_name + " id_list=" + id_list + " decls=" + decls + " ");
         int i = 0;
         for(Block b = head; b != null; b = b.getNext()) {
             if(i++ > 0)

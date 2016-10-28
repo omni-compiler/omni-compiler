@@ -1,5 +1,8 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 1.0.3      2016/08/01
+* Fixed lots of bugs.
+
 # ver. 1.0.2      2016/07/05
 * Fixed lots of bugs.
 

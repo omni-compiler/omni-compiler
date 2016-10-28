@@ -338,7 +338,7 @@ char *argv[];
             /*         MAXMODINCLUDEDIRV); */
             /* } */
         
-        } else if (strcmp(argv[0], "-fintrinsic-xmodules-path") == 0) {
+        } else if (strncmp(argv[0], "-fintrinsic-xmodules-path", 25) == 0) {
             char *path;
             if (strlen(argv[0]) == 25) {
                 /* -fintrinsic-xmodules-path <intrinsic xmodule dir> */
@@ -347,7 +347,7 @@ char *argv[];
                 argv++;
                 path = argv[0];
             } else {
-                /* -M<intrinsic xmodule dir> */
+                /* -fintrinsic-xmodules-path<intrinsic xmodule dir> */
                 path = argv[0] + 25;
             }
             xmoduleIncludeDirv = path;

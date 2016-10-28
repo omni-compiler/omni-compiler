@@ -16,11 +16,12 @@ all default: $(EXES)
 run: $(EXES)
 	qsub ./reflect_acc_1.sh
 	qsub ./reflect_acc_2.sh
+	qsub ./reflect_acc_3.sh
 	qsub ./reflect_acc_1_massive.sh
 	qsub ./reflect_acc_2_massive.sh
 	qsub ./reflect_acc_2_dup_1.sh
 	qsub ./reflect_acc_2_dup_2.sh
-	qsub ./shadow-reflect.sh
+	qsub ./shadow_reflect.sh
 
 clean:
 	rm -f $(EXES) $(OBJS)

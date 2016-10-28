@@ -16,8 +16,8 @@ class AccData extends AccDirective {
   AccData(ACCglobalDecl decl, AccInformation info, PragmaBlock pb) {
     super(decl, info, pb);
   }
-  AccData(ACCglobalDecl decl, AccInformation info) {
-    super(decl, info);
+  AccData(ACCglobalDecl decl, AccInformation info, XobjectDef def) {
+    super(decl, info, def);
   }
 
   boolean isAcceptableClause(ACCpragma clauseKind) {
@@ -64,12 +64,14 @@ class AccData extends AccDirective {
         continue;
       }
 
+      if(var.isDeviceptr()) continue;
+
       String varName = var.getName();
       StorageClass storageClass = var.getId().getStorageClass();
       var.setHostDesc(declHostDesc(varName, storageClass));
       var.setDevicePtr(declDevicePtr(varName, storageClass));
 
-      if(storageClass == StorageClass.EXTERN){
+      if(_info.getPragma() == ACCpragma.DECLARE && storageClass == StorageClass.EXTERN){
         continue;
       }
 
@@ -78,8 +80,8 @@ class AccData extends AccDirective {
       int finalizeKind = 0;
       finalizeBlockList.add(makeFinalizeFuncCallBlock(var, finalizeKind));
 
-      copyinBlockList.add(makeCopyBlock(var, true));
-      copyoutBlockList.add(makeCopyBlock(var, false));
+      copyinBlockList.add(makeCopyBlock(var, true, getAsyncExpr()));
+      copyoutBlockList.add(makeCopyBlock(var, false, getAsyncExpr()));
     }
   }
 
@@ -117,13 +119,14 @@ class AccData extends AccDirective {
     Ident devicePtrId = var.getDevicePtr();
     Xtype elementType = var.getElementType();
     int dim = var.getDim();
+    int pointerDimBit = var.getPointerDimBit();
     XobjList lowerList = Xcons.List();
     XobjList lengthList = Xcons.List();
     for(Xobject x : var.getSubscripts()){
       lowerList.add(x.left());
       lengthList.add(x.right());
     }
-    XobjList initArgs = Xcons.List(hostDescId.getAddr(), devicePtrId.getAddr(), addrObj, Xcons.SizeOf(elementType), Xcons.IntConstant(dim));
+    XobjList initArgs = Xcons.List(hostDescId.getAddr(), devicePtrId.getAddr(), addrObj, Xcons.SizeOf(elementType), Xcons.IntConstant(dim), Xcons.IntConstant(pointerDimBit));
     String initFuncName = getInitFuncName(var);
 
     return ACCutil.createFuncCallBlockWithArrayRange(initFuncName, initArgs, Xcons.List(lowerList, lengthList));
@@ -134,14 +137,14 @@ class AccData extends AccDirective {
     return ACCutil.createFuncCallBlock(ACC.FINALIZE_DATA_FUNC_NAME, Xcons.List(hostDescId.Ref(), Xcons.IntConstant(finalizeKind)));
   }
 
-  Block makeCopyBlock(ACCvar var, boolean isHostToDevice){
+  Block makeCopyBlock(ACCvar var, boolean isHostToDevice, Xobject async_num){
     boolean doCopy = (isHostToDevice)? var.copiesHtoD() : var.copiesDtoH();
     if(doCopy){
       String copyFuncName = getCopyFuncName(var);
       Ident hostDescId = var.getHostDesc();
       int direction = (isHostToDevice)? ACC.HOST_TO_DEVICE : ACC.DEVICE_TO_HOST;
       return ACCutil.createFuncCallBlock(copyFuncName,
-              Xcons.List(hostDescId.Ref(), Xcons.IntConstant(direction), Xcons.IntConstant(ACC.ACC_ASYNC_SYNC)));
+              Xcons.List(hostDescId.Ref(), Xcons.IntConstant(direction), async_num));
     }else{
       return Bcons.emptyBlock();
     }

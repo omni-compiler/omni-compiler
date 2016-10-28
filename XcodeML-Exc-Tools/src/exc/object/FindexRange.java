@@ -15,7 +15,9 @@ import exc.xmpF.XMPenv;
  */
 public class FindexRange
 {
-  private int rank;
+  ///////////////////////
+  private int n_subs;       // rank;
+  ///////////////////////
   private Xobject[] subscripts;
   private Block block = null;
   private XMPenv env = null;
@@ -24,7 +26,7 @@ public class FindexRange
    *  constructor
    */
   public FindexRange(Xobject[] subscripts) {
-    rank = subscripts.length;
+    n_subs = subscripts.length;
     this.subscripts = subscripts;
   }
   public FindexRange(Xobject[] subscripts, Block block) {
@@ -37,7 +39,7 @@ public class FindexRange
   }
 
   public FindexRange(Xobject subscript) {
-    rank = 1;
+    n_subs = 1;
     subscripts = new Xobject[1];
     subscripts[0] = subscript;
   }
@@ -90,15 +92,15 @@ public class FindexRange
   }
 
   public Xobject[] getLbounds() {
-    Xobject[] lbounds = new Xobject[rank];
-    for (int i = 0; i < rank; i++)
+    Xobject[] lbounds = new Xobject[n_subs];
+    for (int i = 0; i < n_subs; i++)
       lbounds[i] = getLbound(i);
     return lbounds;
   }
 
   public Xobject[] getUbounds() {
-    Xobject[] ubounds = new Xobject[rank];
-    for (int i = 0; i < rank; i++)
+    Xobject[] ubounds = new Xobject[n_subs];
+    for (int i = 0; i < n_subs; i++)
       ubounds[i] = getUbound(i);
     return ubounds;
   }
@@ -118,8 +120,8 @@ public class FindexRange
   }
 
   public Xobject[] getExtents() {
-    Xobject[] extents = new Xobject[rank];
-    for (int i = 0; i < rank; i++)
+    Xobject[] extents = new Xobject[n_subs];
+    for (int i = 0; i < n_subs; i++)
       extents[i] = getExtent(i);
     return extents;
   }
@@ -127,7 +129,7 @@ public class FindexRange
 
   public Xobject getTotalArraySizeExpr() {
     Xobject totalSize = Xcons.IntConstant(1);
-    for (int i = 0; i < rank; i++) {
+    for (int i = 0; i < n_subs; i++) {
       Xobject extent = getExtent(i);
       if (extent.isZeroConstant())
         return Xcons.IntConstant(0);
@@ -266,8 +268,9 @@ public class FindexRange
   }
 
 
-  public int getFrank()
+  public int getNumSubs()
   {
-    return rank;
+    return n_subs;
   }
+
 }

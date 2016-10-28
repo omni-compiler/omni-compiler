@@ -66,4 +66,14 @@ public class PragmaBlock extends CompoundBlock
         x.setLineNo(getLineNo());
         return x;
     }
+
+    @Override
+    public String toString()
+    {
+        StringBuilder s = new StringBuilder(256);
+        s.append("(PragmaBlock:"+ Opcode().toString()+" super[");
+        s.append(super.toString());
+        s.append("])");
+        return s.toString();
+    }
 }

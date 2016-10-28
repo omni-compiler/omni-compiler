@@ -9,7 +9,7 @@ XRUN    = mpiexec
 ### PMPI_Comm_split(477).................: 
 ### MPIR_Comm_split_impl(249)............: 
 ### MPIR_Get_contextid_sparse_group(1193): Too many communicators (0/2048 free on this process; ignore_id=0)
-EXES    = 117.x 119.x 293-hyphen.x 343_dynamicnode.x 344_include.x 355.x 377.x dnodes.x macro_in_pragma.x openmp.x  419.x ident.x tlog.x
+EXES    = 117.x 119.x 293-hyphen.x 343_dynamicnode.x 344_include.x 355.x 377.x dnodes.x macro_in_pragma.x openmp.x  419.x ident.x tlog.x issue_034-1.x issue_034-2.x 38.x
 
 .PHONY: clean all default run submit showlog cleanlog
 
@@ -46,6 +46,7 @@ openmp.x: openmp.c
 
 run:
 	$(XRUN) -n 4 ./macro_in_pragma.x
+	$(XRUN) -n 2 ./38.x
 	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -n 8 ./dnodes.x
 	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -n 1 ./openmp.x
 	XMP_NODE_SIZE0=2 XMP_NODE_SIZE1=2 $(XRUN) -n 1 ./119.x
@@ -63,6 +64,8 @@ run:
 	$(XRUN) -n 1 ./278\ spacefile.x
 	$(XRUN) -n 4 ./419.x
 	$(XRUN) -n 4 ./tlog.x; if [ ! -f trace.log ]; then exit 1; fi
+	$(XRUN) -n 1 ./issue_034-1.x
+	$(XRUN) -n 1 ./issue_034-2.x
 #	$(XRUN) -n 4 ./static_desc.x
 
 RUN:

@@ -128,6 +128,7 @@ public class XobjectPrintWriter extends PrintWriter
             case VAR:
             case ARRAY_ADDR:
             case FUNC_ADDR:
+            case CPP_OPERATOR_ADDR:
             case MOE_CONSTANT:
                 print(" " + v.getSym() + ")");
                 return;

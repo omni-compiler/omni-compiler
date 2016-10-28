@@ -1,5 +1,8 @@
 #include "declare_extern.h"
 
+float c;
+long long d[N];
+
 void func()
 {
   int i;

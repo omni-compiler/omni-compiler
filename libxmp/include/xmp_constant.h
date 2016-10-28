@@ -122,4 +122,8 @@
 #define XMP_N_GMOVE_INDEX			1
 #define XMP_N_GMOVE_RANGE			2
 
+#define _XMP_DESC_NODES                         2200
+#define _XMP_DESC_TEMPLATE                      2201
+#define _XMP_DESC_ARRAY                         2202
+
 #endif // _XMP_CONSTANT

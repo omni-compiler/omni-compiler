@@ -32,7 +32,12 @@ extern int      flag_module_compile;
 static void     outx_expv(int l, expv v);
 static void     outx_functionDefinition(int l, EXT_ID ep);
 static void     outx_interfaceDecl(int l, EXT_ID ep);
+static void     outx_definition_symbols(int l, EXT_ID ep);
+static void     outx_declarations(int l, EXT_ID parent_ep);
+static void     outx_id_declarations(int l, ID id_list, int expectResultVar, const char *functionName);
+static void     collect_types(EXT_ID extid);
 static void     collect_type_desc(expv v);
+static int      id_is_visibleVar(ID id);
 
 char s_timestamp[CEXPR_OPTVAL_CHARLEN] = { 0 };
 char s_xmlIndent[CEXPR_OPTVAL_CHARLEN] = "  ";
@@ -194,6 +199,8 @@ xtag(enum expr_code code)
     case F2008_LOCK_STATEMENT:       return "lockStatement";
     case F2008_UNLOCK_STATEMENT:     return "unlockStatement";
 
+    case F2008_BLOCK_STATEMENT:      return "blockStatement";
+
     /*                          
      * misc.                    
      */                         
@@ -349,6 +356,7 @@ xtag(enum expr_code code)
     case XMP_CODIMENSION_SPEC:
     case EXPR_CODE_END:
     case F2008_ENDCRITICAL_STATEMENT:
+    case F2008_ENDBLOCK_STATEMENT:
 
         fatal("invalid exprcode : %s", EXPR_CODE_NAME(code));
 
@@ -611,6 +619,8 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_INTENT_IN(tp) ||
         TYPE_IS_INTENT_OUT(tp) ||
         TYPE_IS_INTENT_INOUT(tp) ||
+        TYPE_IS_VOLATILE(tp) ||
+        TYPE_IS_CLASS(tp) ||
         tp->codims;
 }
 
@@ -782,6 +792,11 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_ALLOCATABLE(tp),      "is_allocatable");
         outx_true(TYPE_IS_SEQUENCE(tp),         "is_sequence");
         outx_true(TYPE_IS_INTERNAL_PRIVATE(tp), "is_internal_private");
+        outx_true(TYPE_IS_VOLATILE(tp),          "is_volatile");
+        if (TYPE_PARENT(tp)) {
+            outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
+        }
+        outx_true(TYPE_IS_CLASS(tp),            "is_class");
     }
 
     if((options & TOPT_INTRINSIC) > 0)
@@ -1139,6 +1154,7 @@ get_sclass(ID id)
 
         switch(ID_STORAGE(id)) {
         case STG_ARG:
+        case STG_TYPE_PARAM:
             return "fparam";
         case STG_EXT:
             /*
@@ -1661,11 +1677,56 @@ outx_arrayConstructor(int l, expv v)
 }
 
 static void
+outx_typeParamValues(int l, expv type_param_values)
+{
+  list lp;
+  int l1 = l + 1;
+
+  if (type_param_values == NULL) {
+      return;
+  }
+
+  outx_printi(l, "<typeParamValues>\n");
+
+  FOR_ITEMS_IN_LIST(lp, type_param_values){
+      expv item = LIST_ITEM(lp);
+      if(EXPV_KWOPT_NAME(item)) {
+          outx_namedValue(l1, EXPV_KWOPT_NAME(item), item, NULL);
+      } else {
+          outx_expv(l1, item);
+      }
+  }
+  outx_close(l, "typeParamValues");
+}
+
+static void
+outx_structConstructorComponents(int l, expv components)
+{
+  list lp;
+
+  if (components == NULL) {
+      return;
+  }
+
+  FOR_ITEMS_IN_LIST(lp, components){
+      expv item = LIST_ITEM(lp);
+      if(EXPV_KWOPT_NAME(item)) {
+          outx_namedValue(l, EXPV_KWOPT_NAME(item), item, NULL);
+      } else {
+          outx_expv(l, item);
+      }
+  }
+}
+
+static void
 outx_structConstructor(int l, expv v)
 {
     const int l1 = l + 1;
     outx_tagOfExpression(l, v);
-    outx_expv(l1, EXPR_ARG1(v));
+    if (EXPR_ARG1(v)) {
+        outx_typeParamValues(l1, EXPR_ARG1(v));
+    }
+    outx_structConstructorComponents(l1, EXPR_ARG2(v));
     outx_expvClose(l, v);
 }
 
@@ -3136,6 +3197,87 @@ outx_UNLOCK_statement(int l, expv v)
 }
 
 
+/*
+ * output blockStatement
+ */
+static void
+outx_BLOCK_statement(int l, expv v)
+{
+    char buf[128];
+    EXT_ID ep;
+    BLOCK_ENV block;
+    list lp;
+    ID id;
+    int l1 = l + 1;
+    int l2 = l + 2;
+
+    if (EXPR_HAS_ARG2(v) && EXPR_ARG2(v) != NULL) {
+        sprintf(buf, " construct_name=\"%s\"",
+                SYM_NAME(EXPR_SYM(EXPR_ARG2(v))));
+        outx_tagOfStatement1(l, v, buf);
+    } else {
+        outx_tagOfStatement(l, v);
+    }
+    block = EXPR_BLOCK(v);
+
+    outx_tag(l1, "symbols");
+    FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
+        if (id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE)
+            outx_id(l2, id);
+    }
+    outx_close(l1, "symbols");
+
+    outx_tag(l1, "declarations");
+
+    /*
+     * FuseDecl
+     */
+    FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(v)) {
+        expv u = LIST_ITEM(lp);
+        switch(EXPV_CODE(u)) {
+        case F95_USE_STATEMENT:
+            outx_useDecl(l2, u);
+            break;
+        case F95_USE_ONLY_STATEMENT:
+            outx_useOnlyDecl(l2, u);
+            break;
+        default:
+            break;
+        }
+    }
+
+    outx_id_declarations(l2, BLOCK_LOCAL_SYMBOLS(block), FALSE, NULL);
+
+    /*
+     * FinterfaceDecl
+     */
+    FOREACH_EXT_ID(ep, BLOCK_LOCAL_INTERFACES(block)) {
+        outx_interfaceDecl(l2, ep);
+    }
+
+    outx_close(l1, "declarations");
+    outx_body(l1, EXPR_ARG1(v));
+    outx_expvClose(l, v);
+}
+
+static void
+outx_lenspec(int l, expv v)
+{
+    outx_printi(l, "<len ");
+    switch (EXPR_CODE(v)) {
+        case LEN_SPEC_ASTERISC:
+            outx_print(" is_assumed_size=\"true\">\n");
+            break;
+        case F08_LEN_SPEC_COLON:
+            outx_print(" is_assumed_shape=\"true\">\n");
+            break;
+        default:
+            // never reach
+            break;
+    }
+    outx_close(l, "len");
+}
+
 //static void
 void
 outx_expv(int l, expv v)
@@ -3265,6 +3407,14 @@ outx_expv(int l, expv v)
         outx_intAsConst(l, -INT_MAX);
         break;
 
+
+    /*
+     * type parameter values.
+     */
+    case LEN_SPEC_ASTERISC:
+    case F08_LEN_SPEC_COLON:
+        outx_lenspec(l, v);
+        break;
     /*
      * elements to skip
      */
@@ -3464,6 +3614,10 @@ outx_expv(int l, expv v)
       outx_ACC_pragma(l, v);
       break;
 
+    case F2008_BLOCK_STATEMENT:
+      outx_BLOCK_statement(l, v);
+      break;
+
     default:
         fatal("unkown exprcode : %d", code);
         abort();
@@ -3549,15 +3703,20 @@ mark_type_desc_in_structure(TYPE_DESC tp)
     ID id;
     TYPE_DESC itp, siTp;
 
+    if (TYPE_PARENT(tp)) {
+        mark_type_desc(TYPE_PARENT_TYPE(tp));
+    }
+
     FOREACH_MEMBER(id, tp) {
         itp = ID_TYPE(id);
         siTp = reduce_type(itp);
         mark_type_desc(siTp);
         ID_TYPE(id) = siTp;
-        if(IS_STRUCT_TYPE(itp))
+        if (IS_STRUCT_TYPE(itp))
             mark_type_desc_in_structure(itp);
         if (VAR_INIT_VALUE(id) != NULL)
             collect_type_desc(VAR_INIT_VALUE(id));
+
     }
 }
 
@@ -3733,9 +3892,15 @@ outx_characterType(int l, TYPE_DESC tp)
     }
 
     if (tRef) {
-        outx_print(" ref=\"C" ADDRX_PRINT_FMT "\"/>\n", Addr2Uint(tRef));
+        if (tp->codims && !(tRef->codims)) {
+            outx_print(" ref=\"C" ADDRX_PRINT_FMT "\">\n", Addr2Uint(tRef));
+            outx_coShape(l+1, tp);
+            outx_close(l, "FbasicType");
+        } else {
+            outx_print(" ref=\"C" ADDRX_PRINT_FMT "\"/>\n", Addr2Uint(tRef));
+        }
     }
-    else if (TYPE_KIND(tp) || charLen != 1 || vcharLen != NULL || tp->codims){
+    else if (TYPE_KIND(tp) || charLen != 1 || vcharLen != NULL || tp->codims) {
         outx_print(" ref=\"%s\">\n", tid);
         outx_kind(l1, tp);
 
@@ -3749,7 +3914,7 @@ outx_characterType(int l, TYPE_DESC tp)
             }
             outx_close(l1, "len");
         }
-	if (tp->codims) outx_coShape(l+1, tp);
+        if (tp->codims) outx_coShape(l+1, tp);
         outx_close(l, "FbasicType");
     } else {
         outx_print(" ref=\"%s\"/>\n", tid);
@@ -3766,13 +3931,16 @@ outx_basicTypeNoCharNoAry(int l, TYPE_DESC tp)
     TYPE_DESC rtp = TYPE_REF(tp);
     assert(rtp);
     outx_typeAttrs(l, tp, "FbasicType", 0);
-    if (tp->codims){
-      outx_print(" ref=\"%s\">\n", getTypeID(rtp));
-      outx_coShape(l+1, tp);
-      outx_close(l ,"FbasicType");
+    if (TYPE_TYPE_PARAM_VALUES(tp) || tp->codims){
+        outx_print(" ref=\"%s\">\n", getTypeID(rtp));
+        if (tp->codims) outx_coShape(l+1, tp);
+        if (TYPE_TYPE_PARAM_VALUES(tp)) {
+            outx_typeParamValues(l+1, TYPE_TYPE_PARAM_VALUES(tp));
+        }
+        outx_close(l ,"FbasicType");
     }
     else
-      outx_print(" ref=\"%s\"/>\n", getTypeID(rtp));
+        outx_print(" ref=\"%s\"/>\n", getTypeID(rtp));
 }
 
 
@@ -3783,17 +3951,15 @@ static void
 outx_basicTypeNoCharNoAryNoRef(int l, TYPE_DESC tp)
 {
 
-  /* TYPE_FUNCTION comes here in the following case (maybe for the reference
-     in the argument list). This is only an ad-hoc fix.
+    /* TYPE_FUNCTION comes here in the following case (maybe for the reference
+       in the argument list). This is only an ad-hoc fix.
 
-      subroutine sub(subsub)
-      implicit none
-      external subsub
-      end
-
-  */
-  if (IS_FUNCTION_TYPE(tp)) return;
-
+       subroutine sub(subsub)
+       implicit none
+       external subsub
+       end
+    */
+    if (IS_FUNCTION_TYPE(tp)) return;
 
     outx_typeAttrs(l, tp, "FbasicType", 0);
 
@@ -3808,7 +3974,7 @@ outx_basicTypeNoCharNoAryNoRef(int l, TYPE_DESC tp)
     if (TYPE_KIND(tp) || IS_DOUBLED_TYPE(tp) || tp->codims){
         outx_print(">\n");
         outx_kind(l + 1, tp);
-	if (tp->codims) outx_coShape(l+1, tp);
+        if (tp->codims) outx_coShape(l+1, tp);
         outx_close(l, "FbasicType");
     } else {
         outx_print("/>\n");
@@ -3900,6 +4066,15 @@ outx_functionType_EXT(int l, EXT_ID ep)
 
 
 /**
+ * output the type of CLASS(*)
+ */
+static void
+outx_unlimitedClass(int l, TYPE_DESC tp)
+{
+    outx_typeAttrs(l, tp ,"FbasicType", TOPT_CLOSE);
+}
+
+/**
  * output FstructType
  */
 static void
@@ -3909,8 +4084,30 @@ outx_structType(int l, TYPE_DESC tp)
     int l1 = l + 1, l2 = l1 + 1, l3 = l2 + 1;
 
     outx_typeAttrs(l, tp ,"FstructType", TOPT_NEXTLINE);
-    outx_tag(l1, "symbols");
+    if (TYPE_TYPE_PARAMS(tp)) {
+        outx_tag(l1, "typeParams");
+        FOREACH_TYPE_PARAMS(id, tp) {
+            if (!TYPE_IS_KIND(ID_TYPE(id)) && !TYPE_IS_LEN(ID_TYPE(id))) {
+                error("'%s' is neither KIND nor LEN", ID_NAME(id));
+                continue;
+            }
+            outx_printi(l2, "<typeParam ");
+            outx_print("type=\"%s\" ", getTypeID(ID_TYPE(id)));
+            if (TYPE_IS_KIND(ID_TYPE(id))) {
+                outx_print("attr=\"kind\">\n");
+            } else if (TYPE_IS_LEN(ID_TYPE(id))) {
+                outx_print("attr=\"length\">\n");
+            } else {
+                fatal("%s: NEVER REACH.", __func__);
+            }
+            outx_symbolName(l3, ID_SYM(id));
+            outx_value(l3, VAR_INIT_VALUE(id));
+            outx_close(l2, "typeParam");
+        }
+        outx_close(l1, "typeParams");
+    }
 
+    outx_tag(l1, "symbols");
     FOREACH_MEMBER(id, tp) {
         outx_printi(l2, "<id type=\"%s\">\n", getTypeID(ID_TYPE(id)));
         outx_symbolName(l3, ID_SYM(id));
@@ -3941,7 +4138,11 @@ outx_type(int l, TYPE_DESC tp)
     } else if(IS_ARRAY_TYPE(tp)) {
         outx_arrayType(l, tp);
     } else if(IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
-        outx_structType(l, tp);
+        if (TYPE_IS_CLASS(tp)) {
+            outx_unlimitedClass(l, tp);
+        } else {
+            outx_structType(l, tp);
+        }
     } else if (tRef != NULL) {
         if (has_attribute_except_func_attrs(tp) ||
             TYPE_KIND(tRef) ||
@@ -3980,6 +4181,9 @@ id_is_visibleVar(ID id)
             CRT_FUNCEP != PROC_EXT_ID(id)) {
             return FALSE;
         }
+        if (TYPE_IS_MODIFIED(tp)) {
+            return TRUE;
+        }
         if ((is_outputed_module && CRT_FUNCEP == NULL)
             && (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) { // TODO PROTECTED
             return TRUE;
@@ -3989,6 +4193,8 @@ id_is_visibleVar(ID id)
 
     switch(ID_CLASS(id)) {
     case CL_VAR:
+        if(TYPE_IS_MODIFIED(ID_TYPE(id)))
+            return TRUE;
         if(VAR_IS_IMPLIED_DO_DUMMY(id))
             return FALSE;
 #if 0
@@ -4012,6 +4218,8 @@ id_is_visibleVar(ID id)
             /* this id is of function.
                Checkes if this id is of the current function or not. */
             if(CRT_FUNCEP == PROC_EXT_ID(id)) {
+                return TRUE;
+            } else if (TYPE_IS_MODIFIED(ID_TYPE(id))) {
                 return TRUE;
             } else {
                 return FALSE;
@@ -4225,6 +4433,7 @@ emit_decl(int l, ID id)
     default:
         switch (ID_STORAGE(id)) {
             case STG_ARG:
+            case STG_TYPE_PARAM:
             case STG_SAVE:
             case STG_AUTO:
             case STG_EQUIV:
@@ -4254,45 +4463,15 @@ emit_decl(int l, ID id)
     }
 }
 
-
-/**
- * output declarations with pragmas
- */
 static void
-outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
+outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionName)
 {
-    const int l1 = l + 1;
-    list lp;
-    ID id, *ids;
-    EXT_ID ep;
-    expv v;
-    int i, nIDs;
-    int hasResultVar = (EXT_PROC_RESULTVAR(parent_ep) != NULL) ? TRUE : FALSE;
-    const char *myName = SYM_NAME(EXT_SYM(parent_ep));
     TYPE_DESC tp;
+    ID id, *ids;
+    int i, nIDs;
+    SYMBOL modname = NULL;
 
-    outx_tag(l, "declarations");
-
-    /*
-     * FuseDecl
-     */
-    FOR_ITEMS_IN_LIST(lp, EXT_PROC_BODY(parent_ep)) {
-        v = LIST_ITEM(lp);
-        switch(EXPV_CODE(v)) {
-        case F95_USE_STATEMENT:
-            outx_useDecl(l1, v);
-            break;
-        case F95_USE_ONLY_STATEMENT:
-            outx_useOnlyDecl(l1, v);
-            break;
-        case F03_IMPORT_STATEMENT:
-            outx_importStatement(l1, v);
-        default:
-            break;
-        }
-    }
-
-    ids = genSortedIDs(EXT_PROC_ID_LIST(parent_ep), &nIDs);
+    ids = genSortedIDs(id_list, &nIDs);
 
     if (ids) {
         /*
@@ -4302,6 +4481,10 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
         for (i = 0; i < nIDs; i++) {
             id = ids[i];
 
+            if (ID_CLASS(id) == CL_MODULE) {
+                modname = ID_SYM(id);
+            }
+
             if (ID_CLASS(id) != CL_TAGNAME) {
                 continue;
             }
@@ -4309,7 +4492,11 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
                 continue;
             }
 
-            if (ID_IS_OFMODULE(id) == TRUE) {
+            if (ID_IS_OFMODULE(id) == TRUE && ID_MODULE_NAME(id) != modname) {
+                continue;
+            }
+
+            if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
                 continue;
             }
 
@@ -4322,12 +4509,12 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
                             continue;
                         }
                         if (is_id_used_in_struct_member(ids[j], tp) == TRUE) {
-                            emit_decl(l1, ids[j]);
+                            emit_decl(l, ids[j]);
                             ID_IS_EMITTED(ids[j]) = TRUE;
                         }
                     }
                 }
-                outx_structDecl(l1, id);
+                outx_structDecl(l, id);
                 ID_IS_EMITTED(id) = TRUE;
             }
         }
@@ -4338,17 +4525,61 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
         for (i = 0; i < nIDs; ++i) {
             id = ids[i];
 
-            if (hasResultVar == TRUE &&
-                strcasecmp(myName, SYM_NAME(ID_SYM(id))) == 0) {
+            if (hasResultVar == TRUE && functionName != NULL &&
+                strcasecmp(functionName, SYM_NAME(ID_SYM(id))) == 0) {
                 continue;
             }
 
-            emit_decl(l1, id);
+            if (TYPE_IS_MODIFIED(ID_TYPE(id)) == TRUE) {
+                continue;
+            }
+
+            emit_decl(l, id);
             ID_IS_EMITTED(id) = TRUE;
         }
         free(ids);
     }
+}
 
+
+
+/**
+ * output declarations with pragmas
+ */
+static void
+outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
+{
+    const int l1 = l + 1;
+    list lp;
+    ID id;
+    EXT_ID ep;
+    expv v;
+    int hasResultVar = (EXT_PROC_RESULTVAR(parent_ep) != NULL) ? TRUE : FALSE;
+    const char *myName = SYM_NAME(EXT_SYM(parent_ep));
+
+    outx_tag(l, "declarations");
+
+    /*
+     * FuseDecl and FimportDecl
+     */
+    FOR_ITEMS_IN_LIST(lp, EXT_PROC_BODY(parent_ep)) {
+        v = LIST_ITEM(lp);
+        switch(EXPV_CODE(v)) {
+        case F95_USE_STATEMENT:
+            outx_useDecl(l1, v);
+            break;
+        case F95_USE_ONLY_STATEMENT:
+            outx_useOnlyDecl(l1, v);
+            break;
+        case F03_IMPORT_STATEMENT:
+            outx_importStatement(l1, v);
+            break;
+        default:
+            break;
+        }
+    }
+
+    outx_id_declarations(l1, EXT_PROC_ID_LIST(parent_ep), hasResultVar, myName);
 
     /*
      * FdataDecl / FequivalenceDecl
@@ -4695,6 +4926,36 @@ getTimestamp()
 }
 
 
+
+
+/**
+ * recursively collect TYPE_DESC from block constructs
+ */
+static void
+collect_types_from_block(BLOCK_ENV block)
+{
+    BLOCK_ENV bp;
+    TYPE_DESC tp;
+
+    if (block == NULL) {
+        return;
+    }
+
+    FOREACH_BLOCKS(bp, block) {
+        mark_type_desc_in_id_list(BLOCK_LOCAL_SYMBOLS(bp));
+        collect_types(BLOCK_LOCAL_EXTERNAL_SYMBOLS(bp));
+        collect_types(BLOCK_LOCAL_INTERFACES(bp));
+        for(tp = BLOCK_LOCAL_STRUCT_DECLS(bp); tp != NULL; tp = TYPE_SLINK(tp)) {
+            if(TYPE_IS_DECLARED(tp)) {
+                mark_type_desc(tp);
+                mark_type_desc_in_structure(tp);
+            }
+        }
+        collect_types_from_block(BLOCK_CHILDREN(bp));
+    }
+}
+
+
 /**
  * recursively collect TYPE_DESC to type_list
  */
@@ -4737,6 +4998,9 @@ collect_types1(EXT_ID extid)
         collect_types1(EXT_PROC_INTERFACES(ep));
         /* symbols in INTERFACE */
         collect_types1(EXT_PROC_INTR_DEF_EXT_IDS(ep));
+
+        /* symbols in BLOCK */
+        collect_types_from_block(EXT_PROC_BLOCKS(ep));
 
         sTp = reduce_type(EXT_PROC_TYPE(ep));
         mark_type_desc(sTp);
@@ -5016,6 +5280,23 @@ outx_module(struct module * mod)
     outx_close(l, "OmniFortranModule");
 }
 
+static void
+unmark_ids_in_struct(TYPE_DESC tp) {
+    if (tp == NULL) {
+        return;
+    }
+
+    if (IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
+        ID member;
+        FOREACH_MEMBER(member, tp) {
+            ID_IS_EMITTED(member) = FALSE;
+        }
+        if (TYPE_PARENT(tp)) {
+            unmark_ids_in_struct(TYPE_PARENT_TYPE(tp));
+        }
+    }
+}
+
 /**
  * unmark id in proc
  */
@@ -5031,10 +5312,7 @@ unmark_ids(EXT_ID ep)
 
         tp = ID_TYPE(id);
         if (IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
-            ID member;
-            FOREACH_MEMBER(member, tp) {
-                ID_IS_EMITTED(member) = FALSE;
-            }
+            unmark_ids_in_struct(tp);
         }
         ID_IS_EMITTED(id) = FALSE;
     }

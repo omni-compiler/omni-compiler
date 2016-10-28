@@ -1,6 +1,6 @@
 #include "F-front.h"
 
-extern CTL *ctl_top_saved;
+extern CTL ctl_top_saved;
 extern expv CURRENT_STATEMENTS_saved;
 
 expv OMP_check_SECTION(expr x);
@@ -664,7 +664,8 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 	case OMP_DATA_FIRSTPRIVATE:
 	    /* all pragma can have these */
 	    compile_OMP_name_list(EXPR_ARG2(c));
-	    if(pragma == OMP_PARALLEL)
+	    //if(pragma == OMP_PARALLEL)
+	    if(is_parallel)
 	      pclause = list_put_last(pclause,c);
 	    else     
 	      dclause = list_put_last(dclause,c);
@@ -900,7 +901,7 @@ void check_OMP_runtime_function(ID id)
 /* called from F-compile.c, force loop variable to be private. */
 void check_OMP_loop_var(SYMBOL do_var_sym)
 {
-    CTL *cp;
+    CTL cp;
     expr x,c;
     list lp,lq;
     enum OMP_pragma_clause cdir;
@@ -910,7 +911,7 @@ void check_OMP_loop_var(SYMBOL do_var_sym)
 	      list1(LIST,expv_sym_term(IDENT,NULL,do_var_sym)));
 
     /* find any data attribute clauses on do_var_sym */
-    for(cp = ctl_top; cp >= ctls; cp--){
+    FOR_CTLS_BACKWARD(cp) {
 	if(CTL_TYPE(cp) != CTL_OMP) continue;
 	if(CTL_OMP_ARG_DCLAUSE(cp) != NULL){
 	    FOR_ITEMS_IN_LIST(lp,CTL_OMP_ARG_DCLAUSE(cp)){

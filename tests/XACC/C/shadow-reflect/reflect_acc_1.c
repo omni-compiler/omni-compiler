@@ -26,8 +26,7 @@ int main()
 #pragma xmp barrier
 #pragma acc data copy(a)
   {
-#pragma xmp reflect_init (a) acc
-#pragma xmp reflect_do (a) acc
+#pragma xmp reflect (a) acc
     }
   
   // Check 

@@ -651,6 +651,13 @@ public class XmcXcodeToXcTranslator {
 
             XcDeclObj obj = new XcDeclObj(ident);
             setSourcePos(obj, n);
+
+            Node gccAsmNode = getElement(n, "gccAsm");
+            if (gccAsmNode != null) {
+                String gccAsmStr = getContentText(getElement(gccAsmNode, "stringConstant"));
+                obj.setGccAsmCode(gccAsmStr);
+            }
+
             addChild(parent, obj);
         }
     }

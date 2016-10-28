@@ -36,7 +36,8 @@
        call atomic_define(ii, 333)
        call atomic_define(ia(2,1)[3], 444)
     endif
-
+    sync all
+    
     write(*,101) me, "OK completed."
 
 100 format("[",i0,"] ",a," should be ",i0," but ",i0)

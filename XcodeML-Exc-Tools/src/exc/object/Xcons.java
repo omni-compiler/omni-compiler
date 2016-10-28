@@ -27,6 +27,15 @@ public class Xcons
         return x;
     }
 
+    public static XobjString Symbol(Xcode code, Xtype type, String value, VarScope scope, String alias, boolean is_op)
+    {
+        XobjString x = new XobjString(code, type, value);
+        x.setScope(scope);
+        x.setAlias(alias);
+        x.setOp(is_op);
+        return x;
+    }
+
     public static XobjString StringConstant(String value)
     {
         return StringConstant(Xtype.stringType, value);
@@ -198,9 +207,9 @@ public class Xcons
             type = type.getRef();
         switch(x.Opcode()) {
         case ARRAY_ADDR:
-            return Xcons.Symbol(Xcode.ARRAY_ADDR, type, x.getSym());
+            return Xcons.Symbol(Xcode.ARRAY_ADDR, type, x.getSym(), x.getScope());
         case VAR_ADDR:
-            return Xcons.Symbol(Xcode.VAR, type, x.getSym());
+            return Xcons.Symbol(Xcode.VAR, type, x.getSym(), x.getScope());
         case FUNC_ADDR:
             fatal("PointerRef(): FUNC_ADDR");
             break;
