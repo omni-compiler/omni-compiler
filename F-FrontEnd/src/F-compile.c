@@ -999,6 +999,27 @@ void compile_statement1(int st_no, expr x)
 
         } else error("'case label', out of place");
         break;
+        case F03_TYPEIS_STATEMENT:
+        case F03_CLASSIS_STATEMENT:
+            if(CTL_TYPE(ctl_top) == CTL_SELECT
+                || CTL_TYPE(ctl_top) == CTL_CASE)
+            {
+                if (CTL_TYPE(ctl_top) == CTL_CASE) {
+                    CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+                    CURRENT_STATEMENTS = NULL;
+                    
+                    if (endlineno_flag)
+                         EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                    pop_ctl();
+                }
+                    
+                    push_ctl(CTL_CASE);
+                    st = list2(EXPR_CODE(x), EXPR_ARG1(x), NULL);
+                    CTL_BLOCK(ctl_top) = st;
+            } else {
+                error("'class is/type is label', out of place");
+            }
+            break;
     case F_ENDSELECT_STATEMENT:
         if(CTL_TYPE(ctl_top) == CTL_SELECT) {
             CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;

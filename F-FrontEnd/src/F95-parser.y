@@ -141,6 +141,10 @@
 %token PROTECTED
 %token EXTENDS
 %token CLASS
+%token KW_IS
+%token CLASSIS
+%token TYPEIS
+%token CLASSDEFAULT
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -1426,6 +1430,12 @@ executable_statement:
         { $$ = list1(F2008_BLOCK_STATEMENT,st_name); }
         | ENDBLOCK name_or_null
         { $$ = list1(F2008_ENDBLOCK_STATEMENT,$2); }
+        | CLASSIS '(' IDENTIFIER ')'
+        { $$ = list1(F03_CLASSIS_STATEMENT, $3); }
+        | TYPEIS '(' IDENTIFIER ')'
+        { $$ = list1(F03_TYPEIS_STATEMENT, $3); }  
+        | CLASSDEFAULT
+        { $$ = list1(F03_CLASSIS_STATEMENT, NULL); }
         ;
 
 assign_statement_or_null:
