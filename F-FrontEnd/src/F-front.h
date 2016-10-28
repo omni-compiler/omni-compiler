@@ -652,7 +652,7 @@ extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
 
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
 extern void     compile_type_generic_procedure _ANSI_ARGS_((expr x));
-extern void     update_type_bound_procedures _ANSI_ARGS_((TYPE_DESC struct_decls, EXT_ID external_ids, int just_one));
+extern void     update_type_bound_procedures _ANSI_ARGS_((TYPE_DESC struct_decls, EXT_ID external_ids, int just_one, ID local_symbols));
 extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f2, int has_pass_arg));
 extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));
 

@@ -258,13 +258,15 @@ declare_procedure(enum name_class class,
         (void)declare_current_procedure_ext_id();
 
 
+#if 0
         /*
          * If the current procedure is under module,
          * bind type bound procedures to this procedure.
          */
         if (unit_ctl_level > 0 && is_in_module()) {
-            update_type_bound_procedures(PARENT_LOCAL_STRUCT_DECLS, CURRENT_EXT_ID, TRUE);
+            update_type_bound_procedures(PARENT_LOCAL_STRUCT_DECLS, CURRENT_EXT_ID, TRUE, LOCAL_SYMBOLS);
         }
+#endif
         break;
     }
 

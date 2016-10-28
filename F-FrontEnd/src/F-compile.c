@@ -1693,12 +1693,16 @@ static int isAlreadyMarked(ID id)
 }
 
 
-static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, EXT_ID ep)
+static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, EXT_ID ep, ID id_list)
 {
     ID pass_arg;
+    ID id;
+    TYPE_DESC tp;
     list lp;
-    expv args;
     expv arg;
+
+    expv args = EXT_PROC_ARGS(ep);
+    ID proc_id_list = EXT_PROC_ID_LIST(ep) ?: id_list;
 
     if (!(TBP_BINDING_ATTRS(tbp) & TYPE_BOUND_PROCEDURE_PASS)) {
         return TRUE;
@@ -1706,15 +1710,16 @@ static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, EXT_ID ep)
 
     pass_arg = TBP_PASS_ARG(tbp);
 
-    args = EXT_PROC_ARGS(ep);
     FOR_ITEMS_IN_LIST(lp, args) {
-        arg = LIST_ITEM(lp);
+        arg = EXPR_ARG1(LIST_ITEM(lp));
+        id = find_ident_head(EXPR_SYM(arg), proc_id_list);
+        tp = ID_TYPE(id);
 
         if (pass_arg == NULL || EXPR_SYM(arg) == ID_SYM(pass_arg)) {
-            if (type_is_unlimited_class(stp)) {
+            if (type_is_unlimited_class(tp)) {
                 return TRUE;
 
-            } else if (type_is_class_of(stp, EXPV_TYPE(arg))) {
+            } else if (type_is_class_of(stp, tp)) {
                 return TRUE;
 
             } else {
@@ -1735,7 +1740,7 @@ static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, EXT_ID ep)
  * external_ids OR  
  * just_one TRUE if external_ids is list of external ids
  */
-void update_type_bound_procedures(TYPE_DESC struct_decls, EXT_ID external_ids, int just_one)
+void update_type_bound_procedures(TYPE_DESC struct_decls, EXT_ID external_ids, int just_one, ID id_list)
 {
     TYPE_DESC tp;
     ID mem;
@@ -1762,7 +1767,7 @@ void update_type_bound_procedures(TYPE_DESC struct_decls, EXT_ID external_ids, i
                 ep = find_ext_id_head(ID_SYM(TBP_BINDING(mem)), external_ids);
             }
             if (ep != NULL) {
-                if (!check_tbp_pass_arg(tp, mem, ep)) {
+                if (!check_tbp_pass_arg(tp, mem, ep, id_list)) {
                     return;
                 }
                 // update function type
@@ -1937,7 +1942,7 @@ end_declaration()
          */
         if (unit_ctl_level > 0 && is_in_module()) {
             update_type_bound_procedures(PARENT_LOCAL_STRUCT_DECLS, CURRENT_EXT_ID,
-                                         TRUE);
+                                         TRUE, LOCAL_SYMBOLS);
         }
     }
 
@@ -2273,7 +2278,7 @@ end_declaration()
     /*
      * Update type bound procedure against exteranl functions
      */
-    update_type_bound_procedures(LOCAL_STRUCT_DECLS, EXTERNAL_SYMBOLS, FALSE);
+    update_type_bound_procedures(LOCAL_STRUCT_DECLS, EXTERNAL_SYMBOLS, FALSE, NULL);
 
 #if 0
     if (myId != NULL &&

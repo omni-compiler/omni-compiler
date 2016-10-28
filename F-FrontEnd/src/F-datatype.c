@@ -159,7 +159,7 @@ type_is_unlimited_class(TYPE_DESC tp)
 }
 
 int
-type_is_class_of(TYPE_DESC class, TYPE_DESC derived_type)
+type_is_class_of(TYPE_DESC derived_type, TYPE_DESC class)
 {
     TYPE_DESC class_base;
     TYPE_DESC derived_type_base;
