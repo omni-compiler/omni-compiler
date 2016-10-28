@@ -455,6 +455,12 @@ current_struct()
 ID
 find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
 {
+    return find_struct_member0(struct_td, sym, FALSE);
+}
+
+ID
+find_struct_member0(TYPE_DESC struct_td, SYMBOL sym, int allow_private_member)
+{
     ID member = NULL;
 
     if (!IS_STRUCT_TYPE(struct_td)) {
@@ -468,7 +474,7 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
             member = TYPE_PARENT(struct_td);
         }
         if (member == NULL) {
-            member = find_struct_member(ID_TYPE(parent), sym);
+            member = find_struct_member0(ID_TYPE(parent), sym, allow_private_member);
         }
     }
     if (member) {
@@ -479,7 +485,7 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
         if (strcmp(ID_NAME(member), SYM_NAME(sym)) == 0) {
 
             if (ID_CLASS(member) == CL_TYPE_BOUND_PROC) {
-                if (TYPE_IS_PRIVATE(member)) {
+                if (!allow_private_member && TYPE_IS_PRIVATE(member)) {
                     /*
                      * If the struct type is defined in the other module,
                      * check accesssibility of the type bound procedure.

@@ -3613,19 +3613,23 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
     expv a;
 
     TYPE_DESC ftp;
+    TYPE_DESC stp;
     TYPE_DESC ret_type = type_GNUMERIC_ALL;
     EXT_ID ep = NULL;
 
     a = list_cons(EXPR_ARG1(memberRef), compile_args(args));
 
     ftp = EXPV_TYPE(memberRef);
+    stp = EXPV_TYPE(EXPR_ARG1(memberRef));
     if (GENERIC_TYPE_GENERICS(ftp)) {
         // for type-bound GENERIC
         ID bind;
+        ID bindto;
         FOREACH_ID(bind, GENERIC_TYPE_GENERICS(ftp)) {
-            if (is_procedure_acceptable(TYPE_EXT_ID(ID_TYPE(bind)), a)) {
-                ep = TYPE_EXT_ID(ID_TYPE(bind));
-                EXPV_TYPE(memberRef) = ID_TYPE(bind);
+            bindto = find_struct_member0(stp, ID_SYM(bind), TRUE);
+            if (is_procedure_acceptable(TYPE_EXT_ID(ID_TYPE(bindto)), a)) {
+                ep = TYPE_EXT_ID(ID_TYPE(bindto));
+                EXPV_TYPE(memberRef) = ID_TYPE(bindto);
             }
         }
         if (ep) {

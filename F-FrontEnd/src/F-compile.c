@@ -2702,7 +2702,7 @@ check_type_bound_procedure()
                             SYM_NAME(bindto));
             }
             if (parent) {
-                ID tbp = find_struct_member(tp, ID_SYM(mem));
+                ID tbp = find_struct_member0(tp, ID_SYM(mem), TRUE);
                 if (ID_CLASS(tbp) != CL_TYPE_BOUND_PROC) {
                     // never reached
                     error("should not override member");
@@ -4783,7 +4783,7 @@ compile_CALL_type_bound_procedure_statement(expr x)
         ID bind;
         ID bindto;
         FOREACH_ID(bind, TBP_BINDING(tpd)) {
-            bindto = find_struct_member(stp, ID_SYM(bind));
+            bindto = find_struct_member0(stp, ID_SYM(bind), TRUE);
             if (bindto && is_procedure_acceptable(TYPE_EXT_ID(ID_TYPE(bindto)), a)) {
                 ep = TYPE_EXT_ID(ID_TYPE(bindto));
                 tp = ID_TYPE(bindto);
