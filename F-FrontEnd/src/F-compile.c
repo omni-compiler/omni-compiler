@@ -958,6 +958,18 @@ void compile_statement1(int st_no, expr x)
         CTL_BLOCK(ctl_top) = st;
 
         break;
+
+    case F03_SELECTTYPE_STATEMENT:
+          check_INEXEC();
+          push_ctl(CTL_SELECT); // TODO special select type ctl
+          v = compile_expression(EXPR_ARG1(x));
+          printf("%s\n", SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
+
+          ID ident = find_ident(EXPR_SYM(EXPR_ARG2(x)));
+
+          st = list3(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x));
+          CTL_BLOCK(ctl_top) = st;
+          break;
     case F_CASELABEL_STATEMENT:
         if(CTL_TYPE(ctl_top) == CTL_SELECT  ||
            CTL_TYPE(ctl_top) == CTL_CASE) {

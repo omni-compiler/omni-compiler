@@ -232,6 +232,7 @@ static void second_pass_expv_scan(expv v)
       second_pass_expv_scan(v2);
     }
     break;
+  case F03_SELECTTYPE_STATEMENT:
   case F_SELECTCASE_STATEMENT:
     {
       expv v3;
