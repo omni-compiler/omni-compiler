@@ -1772,7 +1772,9 @@ outx_importStatement(int l, expv v) {
     if(EXPR_LIST(ident_list)) {
         FOR_ITEMS_IN_LIST(lp, ident_list) {
             arg = LIST_ITEM(lp);
-            outx_printi(l1, "<name>%s</name>\n", getRawString(arg));
+            if(EXPR_CODE(arg) == IDENT){
+                outx_printi(l1, "<name>%s</name>\n", getRawString(arg));
+            }            
         }
     }
     outx_expvClose(l, v);
