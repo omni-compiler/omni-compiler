@@ -121,6 +121,7 @@ static void compile_UNLOCK_statement(expr x);
 static void compile_CRITICAL_statement(expr x);
 static void compile_ENDCRITICAL_statement(expr x);
 
+static void compile_IMPORT_statement(expr x); // IMPORT statement
 static void compile_BLOCK_statement(expr x);
 static void compile_ENDBLOCK_statement(expr x);
 
@@ -1075,6 +1076,11 @@ void compile_statement1(int st_no, expr x)
     case F03_PROTECTED_STATEMENT:
         check_INDCL();
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsProtected);
+        break;
+
+    case F03_IMPORT_STATEMENT: // IMPORT statement
+        check_INDCL();
+        compile_IMPORT_statement(x);
         break;
 
     case F2008_BLOCK_STATEMENT:
@@ -5917,6 +5923,14 @@ check_image_control_statement_available() {
     return TRUE;
 }
 
+/*
+ * IMPORT statement
+ */
+static void
+compile_IMPORT_statement(expr x)
+{
+    output_statement(list1(F03_IMPORT_STATEMENT, EXPR_ARG1(x)));
+}
 
 static void
 compile_BLOCK_statement(expr x)
