@@ -5929,6 +5929,9 @@ check_image_control_statement_available() {
 static void
 compile_IMPORT_statement(expr x)
 {
+    if(check_inside_INTERFACE_body() == FALSE){
+        error("IMPORT statement allowed only in interface body");
+    }
     output_statement(list1(F03_IMPORT_STATEMENT, EXPR_ARG1(x)));
 }
 
