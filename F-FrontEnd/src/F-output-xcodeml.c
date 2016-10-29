@@ -1746,14 +1746,22 @@ outx_caseLabel(int l, expv v)
  * output typeGuard
  */
 static void
-outx_typeGuard(int l, expv v)
+outx_typeGuard(int l, expv v, int is_class)
 {
     const int l1 = l + 1;
+    outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
+    if(is_class){
+        // TODO set type value correctly
+        outx_print(" kind=\"CLASS_IS\" type=\"%s\">\n", "");
+        // TODO if class is null, no type attribute and kind="CLASS_DEFAULT"
+    } else {
+        // TODO set type value correctly
+        outx_print(" kind=\"TYPE_ID\" type=\"%s\">\n", "");
+    }
 
-    // TODO output <typeGuard kind="TYPE_IS" type="TYPE_ID_OF_T1">
+    // TODO print <id
+    //outx_expv(l1, EXPR_ARG1(v));
 
-    outx_tagOfStatementWithConstructName(l, v, NULL, 1);
-    outx_expv(l1, EXPR_ARG1(v));
     outx_body(l1, EXPR_ARG2(v));
     outx_expvClose(l, v);
 }
@@ -3338,8 +3346,8 @@ outx_expv(int l, expv v)
     case F_COMPGOTO_STATEMENT:      outx_compgotoStatement(l, v); break;
     case STATEMENT_LABEL:           outx_labeledStatement(l, v); break;
     case F_CASELABEL_STATEMENT:     outx_caseLabel(l, v); break;
-    case F03_CLASSIS_STATEMENT:     outx_typeGuard(l, v); break;
-    case F03_TYPEIS_STATEMENT:      outx_typeGuard(l, v); break;
+    case F03_CLASSIS_STATEMENT:     outx_typeGuard(l, v, 1); break;
+    case F03_TYPEIS_STATEMENT:      outx_typeGuard(l, v, 0); break;
     case F_STOP_STATEMENT:
     case F_PAUSE_STATEMENT:         outx_STOPPAUSE_statement(l, v); break;
     case F_LET_STATEMENT:           outx_assignStatement(l, v); break;
