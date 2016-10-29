@@ -1752,6 +1752,7 @@ outx_typeGuard(int l, expv v, int is_class)
     outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
     if(is_class){
         // TODO set type value correctly
+        //TYPE_DESC tp = EXPV_TYPE(EXPR_ARG1(v));
         outx_print(" kind=\"CLASS_IS\" type=\"%s\">\n", "");
         // TODO if class is null, no type attribute and kind="CLASS_DEFAULT"
     } else {
@@ -1796,9 +1797,10 @@ outx_selectTypeStatement(int l, expv v)
     const int l1 = l + 1;
     list lp = EXPR_LIST(v);
  
-    outx_tagOfStatement(l, v);
+    // TODO construct_name is wrong at the moment
+    outx_tagOfStatementWithConstructName(l, v, EXPR_ARG3(v), 1);
     // TODO output the select class as an id
-    //outx_id(l1, EXPR_ARG3(v));
+    outx_value(l1, LIST_ITEM(lp));
  
     if(LIST_NEXT(lp) && LIST_ITEM(LIST_NEXT(lp))) {
         FOR_ITEMS_IN_LIST(lp, LIST_ITEM(LIST_NEXT(lp)))
