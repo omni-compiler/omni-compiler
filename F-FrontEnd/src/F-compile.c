@@ -1013,9 +1013,9 @@ void compile_statement1(int st_no, expr x)
                     pop_ctl();
                 }
                     
-                    push_ctl(CTL_CASE);
-                    st = list2(EXPR_CODE(x), EXPR_ARG1(x), NULL);
-                    CTL_BLOCK(ctl_top) = st;
+                push_ctl(CTL_CASE);
+                st = list2(EXPR_CODE(x), EXPR_ARG1(x), NULL);
+                CTL_BLOCK(ctl_top) = st;
             } else {
                 error("'class is/type is label', out of place");
             }

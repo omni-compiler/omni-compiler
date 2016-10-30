@@ -1753,12 +1753,16 @@ outx_typeGuard(int l, expv v, int is_class)
     if(is_class){
         // TODO set type value correctly
         //TYPE_DESC tp = EXPV_TYPE(EXPR_ARG1(v));
-        outx_print(" kind=\"CLASS_IS\" type=\"%s\">\n", "");
-        // TODO if class is null, no type attribute and kind="CLASS_DEFAULT"
+        if(EXPR_ARG1(v) == NULL){
+            outx_print(" kind=\"CLASS_DEFAULT\">\n");
+        } else {
+            outx_print(" kind=\"CLASS_IS\" type=\"%s\">\n", "");
+        }
     } else {
         // TODO set type value correctly
-        outx_print(" kind=\"TYPE_ID\" type=\"%s\">\n", "");
+        outx_print(" kind=\"TYPE_IS\" type=\"%s\">\n", "");
     }
+
 
     // TODO print <id
     //outx_expv(l1, EXPR_ARG1(v));
