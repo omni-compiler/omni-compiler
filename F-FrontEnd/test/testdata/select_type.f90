@@ -13,12 +13,12 @@ contains
     class(point) :: p 
 
     select type (p)
-      CLASS IS (shape)
-        PRINT*,'SHAPE'
-    CLASS IS (square)
-        PRINT*,'SQUARE'
-    CLASS DEFAULT
-        PRINT*,'DEFAULT'
+      class is(point)
+        PRINT*,'class is point'
+      type is(color_point)
+        PRINT*,'class is color_point'
+      class default
+        PRINT*,'class default'
     end select
   end subroutine sub1
 end module
