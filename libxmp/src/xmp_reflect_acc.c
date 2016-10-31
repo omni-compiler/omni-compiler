@@ -70,3 +70,21 @@ void _XMP_set_reflect_acc__(_XMP_array_t *a, int dim, int lwidth, int uwidth, in
 #endif
 
 }
+
+void _XMP_init_reflect_sched_acc(_XMP_reflect_sched_t *sched)
+{
+#ifdef _XMP_TCA
+  //
+#else
+  _XMP_init_reflect_sched_gpu(sched);
+#endif
+}
+
+void _XMP_finalize_reflect_sched_acc(_XMP_reflect_sched_t *sched, _Bool free_buf)
+{
+#ifdef _XMP_TCA
+  //
+#else
+  _XMP_finalize_reflect_sched_gpu(sched, free_buf);
+#endif
+}

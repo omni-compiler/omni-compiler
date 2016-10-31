@@ -26,6 +26,9 @@ import exc.object.XobjectFile;
 import exc.object.Xtype;
 
 
+/**
+ * abstract class of transformer from Xobject to XcodeML DOM.
+ */
 public abstract class XmXobjectToXcodeTranslator {
 
     protected static final String TRUE_STR = "1";

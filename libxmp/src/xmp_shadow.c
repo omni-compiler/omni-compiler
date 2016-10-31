@@ -296,7 +296,13 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
 	      _XMP_init_reflect_sched(sched);
 	      ai->reflect_sched = sched;
 	    }
-	    ai->reflect_acc_sched = NULL;
+#ifdef _XMP_XACC
+	    if (!ai->reflect_acc_sched){
+	      _XMP_reflect_sched_t *sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
+	      _XMP_init_reflect_sched_acc(sched);
+	      ai->reflect_acc_sched = sched;
+	    }
+#endif
 
             _XMP_create_shadow_comm(array, i);
           }

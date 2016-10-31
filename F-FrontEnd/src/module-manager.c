@@ -98,11 +98,13 @@ export_module(SYMBOL sym, ID ids, expv use_decls)
     *mod = (struct module){0};
     mod->name = sym;
 
+    // add public id
     FOREACH_ID(id, ids) {
         if(AVAILABLE_ID(id))
             add_module_id(mod, id);
     }
 
+    // make the list of module name which this module uses.
     FOR_ITEMS_IN_LIST(lp, use_decls) {
         dep = XMALLOC(struct depend_module *, sizeof(struct depend_module));
         dep->module_name = EXPR_SYM(LIST_ITEM(lp));

@@ -61,7 +61,7 @@ public class XMPenv {
   }
 
   /**
-   *
+   * add the given name of the module to 
    */
   public void useModule(String module_name){
     XMPsymbolTable table = getXMPsymbolTable();

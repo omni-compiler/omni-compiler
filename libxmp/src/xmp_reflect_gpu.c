@@ -155,25 +155,6 @@ static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth,
 
       _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
 
-      if(reflect == NULL){
-	reflect = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
-	reflect->is_periodic = -1; /* not used yet */
-	reflect->datatype_lo = MPI_DATATYPE_NULL;
-	reflect->datatype_hi = MPI_DATATYPE_NULL;
-	for (int j = 0; j < 4; j++) reflect->req[j] = MPI_REQUEST_NULL;
-	reflect->lo_send_buf = NULL;
-	reflect->lo_recv_buf = NULL;
-	reflect->hi_send_buf = NULL;
-	reflect->hi_recv_buf = NULL;
-	reflect->lo_send_host_buf = NULL;
-	reflect->lo_recv_host_buf = NULL;
-	reflect->hi_send_host_buf = NULL;
-	reflect->hi_recv_host_buf = NULL;
-	ai->reflect_acc_sched = reflect;
-      }else{
-	//
-      }
-
       if (1/*lwidth[i] || uwidth[i]*/){
 
 	_XMP_ASSERT(reflect);
@@ -220,8 +201,6 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     _XMP_fatal("reflect width is larger than shadow width.");
   }
 
-  _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
-
   int target_tdim = ai->align_template_index;
   _XMP_nodes_info_t *ni = adesc->align_template->chunk[target_tdim].onto_nodes_info;
 
@@ -229,6 +208,10 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   if(adesc->array_addr_p == dev_array_addr){
     _XMP_fatal("device addr is the same as host addr for reflect.");
   }
+
+  _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
+  bool free_buf = (_XMPF_running && target_dim != ndims - 1) || (_XMPC_running && target_dim != 0);
+  _XMP_finalize_reflect_sched_gpu(reflect, free_buf);
 
   // 0-origin
   int my_pos = ni->rank;
@@ -467,13 +450,10 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   }
 
   // for lower reflect
-  if (reflect->datatype_lo != MPI_DATATYPE_NULL){
-    MPI_Type_free(&reflect->datatype_lo);
-  }
   if(packVector || count == 1){
     MPI_Type_contiguous(blocklength * lwidth * count, MPI_BYTE, &reflect->datatype_lo);
     //    MPI_Type_contiguous(blocklength * lwidth * count / type_size, MPI_FLOAT, &reflect->datatype_lo);
-    fprintf(stderr, "dim=%d, send elements lo = %d\n", target_dim, blocklength * lwidth * count / type_size);
+    //fprintf(stderr, "dim=%d, send elements lo = %d\n", target_dim, blocklength * lwidth * count / type_size);
     //fprintf(stderr, "useHostBuf=%c , packVector=%c\n", useHostBuffer, packVector);
     //    if(useHostBuffer){ fprintf(stderr,"using host buffer\n"); }
     //    if(packVector){ fprintf(stderr, "using pack vector\n"); }
@@ -483,39 +463,15 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   MPI_Type_commit(&reflect->datatype_lo);
 
   // for upper reflect
-  if (reflect->datatype_hi != MPI_DATATYPE_NULL){
-    MPI_Type_free(&reflect->datatype_hi);
-  }
   if(packVector || count == 1){
     MPI_Type_contiguous(blocklength * uwidth * count, MPI_BYTE, &reflect->datatype_hi);
     //    MPI_Type_contiguous(blocklength * uwidth * count / type_size, MPI_FLOAT, &reflect->datatype_hi);
-    fprintf(stderr, "dim=%d, send elements hi = %d\n", target_dim, blocklength * uwidth * count / type_size);    
+    //fprintf(stderr, "dim=%d, send elements hi = %d\n", target_dim, blocklength * uwidth * count / type_size);    
   }else{
     MPI_Type_vector(count, blocklength * uwidth, stride, MPI_BYTE, &reflect->datatype_hi);
   }
   MPI_Type_commit(&reflect->datatype_hi);
 
-
-  //
-  // Allocate buffers
-  //
-  if(useHostBuffer){
-    CUDA_SAFE_CALL(cudaFreeHost(reflect->lo_send_host_buf));
-    CUDA_SAFE_CALL(cudaFreeHost(reflect->lo_recv_host_buf));
-  }    
-
-  if ((_XMPF_running && target_dim != ndims - 1) ||
-      (_XMPC_running && target_dim != 0)){
-    if(packVector){
-      CUDA_SAFE_CALL(cudaFree(reflect->lo_send_buf));
-      CUDA_SAFE_CALL(cudaFree(reflect->lo_recv_buf));
-    }
-  }
-  if ((_XMPF_running && target_dim == ndims - 1) ||
-      (_XMPC_running && target_dim == 0)){
-    //
-  }
-  
 
   // for lower reflect
 
@@ -671,9 +627,6 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     CUDA_SAFE_CALL(cudaStreamCreate(hi_stream));
     reflect->hi_async_id = (void*)hi_stream;
   }
-
-  reflect->event = _XMP_alloc(sizeof(cudaEvent_t));
-  CUDA_SAFE_CALL(cudaEventCreateWithFlags(reflect->event, cudaEventDisableTiming));
 }
 
 static void gpu_update_host(_XMP_reflect_sched_t *reflect)
@@ -999,5 +952,59 @@ static void _XMP_reflect_(_XMP_array_t *a, int dummy)
     }else{ /* _XMP_N_SHADOW_FULL */
       ;
     }
+  }
+}
+
+void _XMP_init_reflect_sched_gpu(_XMP_reflect_sched_t *sched)
+{
+  if(sched == NULL) return;
+
+  sched->is_periodic = -1; /* not used yet */
+  sched->datatype_lo = MPI_DATATYPE_NULL;
+  sched->datatype_hi = MPI_DATATYPE_NULL;
+  for (int j = 0; j < 4; j++) sched->req[j] = MPI_REQUEST_NULL;
+  sched->lo_send_buf = NULL;
+  sched->lo_recv_buf = NULL;
+  sched->hi_send_buf = NULL;
+  sched->hi_recv_buf = NULL;
+  sched->lo_send_host_buf = NULL;
+  sched->lo_recv_host_buf = NULL;
+  sched->hi_send_host_buf = NULL;
+  sched->hi_recv_host_buf = NULL;
+
+  sched->lo_async_id = NULL;
+  sched->hi_async_id = NULL;
+}
+
+void _XMP_finalize_reflect_sched_gpu(_XMP_reflect_sched_t *sched, _Bool free_buf)
+{
+  if(sched == NULL) return;
+
+  if (sched->datatype_lo != MPI_DATATYPE_NULL) MPI_Type_free(&sched->datatype_lo);
+  if (sched->datatype_hi != MPI_DATATYPE_NULL) MPI_Type_free(&sched->datatype_hi);
+
+  for (int j = 0; j < 4; j++){
+    if (sched->req[j] != MPI_REQUEST_NULL) MPI_Request_free(&sched->req[j]);
+  }
+
+  if(useHostBuffer){
+    CUDA_SAFE_CALL(cudaFreeHost(sched->lo_send_host_buf));
+    CUDA_SAFE_CALL(cudaFreeHost(sched->lo_recv_host_buf));
+  }
+
+  if (free_buf && packVector){
+    CUDA_SAFE_CALL(cudaFree(sched->lo_send_buf));
+    CUDA_SAFE_CALL(cudaFree(sched->lo_recv_buf));
+  }
+
+  if(sched->lo_async_id){
+    CUDA_SAFE_CALL(cudaStreamDestroy(*(cudaStream_t*)sched->lo_async_id));
+    _XMP_free(sched->lo_async_id);
+    sched->lo_async_id = NULL;
+  }
+  if(sched->hi_async_id){
+    CUDA_SAFE_CALL(cudaStreamDestroy(*(cudaStream_t*)sched->hi_async_id));
+    _XMP_free(sched->hi_async_id);
+    sched->hi_async_id = NULL;
   }
 }

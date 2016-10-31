@@ -11,40 +11,39 @@ package xcodeml.f.decompile;
  */
 class XfSymbol
 {
-    private String _symbolName;
-    private XfType _typeId;
-    private String _derivedName;
+  private String _symbolName;
+  private XfType _typeId;
+  private String _derivedName;
 
-    public XfSymbol(String symbolName)
-    {
-        this(symbolName, XfType.VOID, null);
-    }
+  public XfSymbol(String symbolName){
+    this(symbolName, XfType.VOID, null);
+  }
 
-    public XfSymbol(String symbolName, XfType typeId)
-    {
-        this(symbolName, typeId, null);
-    }
+  public XfSymbol(String symbolName, XfType typeId){
+    this(symbolName, typeId, null);
+  }
 
-    public XfSymbol(String symbolName, XfType typeId, String derivedName)
-    {
-        _symbolName = symbolName;
-        _typeId = typeId;
-        _derivedName = derivedName;
-    }
+  public XfSymbol(String symbolName, XfType typeId, String derivedName){
+    _symbolName = symbolName;
+    _typeId = typeId;
+    _derivedName = derivedName;
+  }
 
-    public XfType getTypeId()
-    {
-        return _typeId;
-    }
+  public XfType getTypeId(){
+    return _typeId;
+  }
 
-    public String getSymbolName()
-    {
-        return _symbolName;
-    }
+  public String getSymbolName(){
+    return _symbolName;
+  }
 
-    public String getDerivedName()
-    {
-        return _derivedName;
-    }
+  public String getDerivedName(){
+    return _derivedName;
+  }
+
+  public String toString(){
+    return "[XfSymbol name:'"+_symbolName+"' derive:'"+_derivedName+"' id:"+_typeId;
+  }
 }
+
 

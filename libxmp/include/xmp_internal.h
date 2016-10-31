@@ -379,6 +379,10 @@ extern void _XMP_reduce_gpu_CLAUSE(void *data_addr, int count, int datatype, int
 extern void _XMP_set_reflect_gpu(_XMP_array_t *a, int dim, int lwidth, int uwidth, int is_periodic);
 extern void _XMP_reflect_acc__(void *acc_addr, _XMP_array_t *array_desc);
 extern void _XMP_set_reflect_acc__(_XMP_array_t *a, int dim, int lwidth, int uwidth, int is_periodic);
+extern void _XMP_init_reflect_sched_acc(_XMP_reflect_sched_t *sched);
+extern void _XMP_init_reflect_sched_gpu(_XMP_reflect_sched_t *sched);
+extern void _XMP_finalize_reflect_sched_acc(_XMP_reflect_sched_t *reflect, _Bool free_buf);
+extern void _XMP_finalize_reflect_sched_gpu(_XMP_reflect_sched_t *reflect, _Bool free_buf);
 #endif
 
 // ----- libxmp_threads ----------------------------------------------

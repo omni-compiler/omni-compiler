@@ -441,6 +441,8 @@ compile_expression(expr x)
                 }
             }
 
+	    ID_LINE(id) = EXPR_LINE(x); // set line number
+
             if (ID_CLASS(id) == CL_PROC ||
                 ID_CLASS(id) == CL_ENTRY ||
                 ID_CLASS(id) == CL_UNKNOWN) {
@@ -917,6 +919,7 @@ compile_expression(expr x)
 
         case F95_KIND_SELECTOR_SPEC: {
             expv v = NULL;
+#if 0
             if (expr_is_constant(EXPR_ARG1(x))) {
                 v = compile_int_constant(EXPR_ARG1(x));
             } else {
@@ -926,6 +929,10 @@ compile_expression(expr x)
                  */
                 v = compile_expression(EXPR_ARG1(x));
             }
+#else
+            v = compile_expression(EXPR_ARG1(x));
+            if(v != NULL) v = expv_reduce_kind(v);
+#endif            
             if (v != NULL) {
                 EXPV_KWOPT_NAME(v) = (const char *)strdup("kind");
             }
@@ -1112,25 +1119,25 @@ compile_ident_expression(expr x)
         goto done;
     }
 
-    if (ID_IS_DUMMY_ARG(id) &&
-        ID_TYPE(id) == NULL) {
+    if (ID_IS_DUMMY_ARG(id) && ID_TYPE(id) == NULL) {
         /*
          * Don't declare (means not determine the type) this variable
          * at this moment, since the id is a dummy arg and it is not
          * declared yet.
          */
-        EXPV_CODE(x) = F_VAR;
-        EXPV_NAME(x) = ID_SYM(id);
-        ret = (expv)x;
+        ret = expv_sym_term(F_VAR,NULL,ID_SYM(id));
         goto done;
     }
 
+    if(ID_CLASS(id) == CL_PARAM){
+        if(VAR_INIT_VALUE(id) != NULL) 
+            return VAR_INIT_VALUE(id);
+    }
+
+
     if ((id = declare_variable(id)) != NULL) {
         TYPE_ATTR_FLAGS(ID_TYPE(id)) |= TYPE_ATTR_FLAGS(id);
-        EXPV_CODE(x) = F_VAR;
-        EXPV_TYPE(x) = ID_TYPE(id);
-        EXPV_NAME(x) = ID_SYM(id);
-        ret = (expv)x;
+        ret = expv_sym_term(F_VAR,ID_TYPE(id),ID_SYM(id));
         goto done;
     }
 
@@ -1138,9 +1145,8 @@ compile_ident_expression(expr x)
     if (ret == NULL) {
 /* FEAST change start */
         /* fatal("%s: invalid code", __func__); */
-      EXPV_TYPE(x) = NULL;
-      ret = (expv)x;
-      sp_link_expr((expr)x, 3, current_line);
+        ret = expv_sym_term(EXPR_CODE(x),NULL,EXPR_SYM(x));
+        sp_link_expr((expr)ret, 3, current_line);
 /* FEAST change  end  */
     }
 
@@ -1657,7 +1663,7 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
     nDims = TYPE_N_DIM(tp);
 
     if (!IS_ARRAY_TYPE(tp)){ //fatal("%s: not ARRAY_TYPE", __func__);
-      error_at_id(id, "%s: not ARRAY_TYPE", ID_NAME(id));
+      error_at_id(id, "identifier '%s' is not of array type", ID_NAME(id));
       return NULL;
     }
     if (!TYPE_DIM_FIXED(tp)) fix_array_dimensions(tp);
