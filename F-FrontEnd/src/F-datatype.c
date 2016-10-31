@@ -116,6 +116,9 @@ getBaseType(TYPE_DESC tp)
 BASIC_DATA_TYPE
 getBasicType(TYPE_DESC tp)
 {
+    return get_basic_type(tp);
+#if 0
+    /* Refactoring */
     BASIC_DATA_TYPE typ;
     if (tp == NULL) {
         return TYPE_UNKNOWN;
@@ -131,10 +134,11 @@ getBasicType(TYPE_DESC tp)
     } else {
         return typ;
     }
+#endif
 }
 
 TYPE_DESC
-getBaseStructType(TYPE_DESC td)
+getBaseParameterizedType(TYPE_DESC td)
 {
     if (td == NULL)
         return NULL;
@@ -455,18 +459,18 @@ current_struct()
 ID
 find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
 {
-    return find_struct_member0(struct_td, sym, FALSE);
+    return find_struct_member_allow_private(struct_td, sym, FALSE);
 }
 
 ID
-find_struct_member0(TYPE_DESC struct_td, SYMBOL sym, int allow_private_member)
+find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, int allow_private_member)
 {
     ID member = NULL;
 
     if (!IS_STRUCT_TYPE(struct_td)) {
         return NULL;
     }
-    struct_td = getBaseStructType(struct_td);
+    struct_td = getBaseParameterizedType(struct_td);
 
     if (TYPE_PARENT(struct_td)) {
         ID parent = TYPE_PARENT(struct_td);
@@ -474,7 +478,7 @@ find_struct_member0(TYPE_DESC struct_td, SYMBOL sym, int allow_private_member)
             member = TYPE_PARENT(struct_td);
         }
         if (member == NULL) {
-            member = find_struct_member0(ID_TYPE(parent), sym, allow_private_member);
+            member = find_struct_member_allow_private(ID_TYPE(parent), sym, allow_private_member);
         }
     }
     if (member) {
@@ -560,19 +564,24 @@ has_coarray_component(TYPE_DESC tp){
   return FALSE;
 }
 
-/* check type compatiblity of element types */
+/*
+ * Check type compatiblity of element types,
+ * ignoring type parameters like KIND, LENGTH 
+ */
 int
-type_is_compatible(TYPE_DESC tp,TYPE_DESC tq)
+element_type_is_compatible(TYPE_DESC tp, TYPE_DESC tq)
 {
-    if(tp == NULL || tq == NULL ||
+    if (tp == NULL || tq == NULL ||
        IS_ARRAY_TYPE(tp) || IS_ARRAY_TYPE(tq)) return FALSE;
-    if(TYPE_BASIC_TYPE(tp) != TYPE_BASIC_TYPE(tq)) {
-      if (TYPE_BASIC_TYPE(tp) == TYPE_GENERIC || TYPE_BASIC_TYPE(tq) == TYPE_GENERIC ||
+    if (TYPE_BASIC_TYPE(tp) != TYPE_BASIC_TYPE(tq)) {
+      if (TYPE_BASIC_TYPE(tp) == TYPE_GENERIC ||
+          TYPE_BASIC_TYPE(tq) == TYPE_GENERIC ||
           TYPE_BASIC_TYPE(tp) == TYPE_GNUMERIC_ALL ||
           TYPE_BASIC_TYPE(tq) == TYPE_GNUMERIC_ALL){
           return TRUE;
       }
-      else if(TYPE_BASIC_TYPE(tp) == TYPE_DREAL || TYPE_BASIC_TYPE(tq) == TYPE_DREAL) {
+      else if(TYPE_BASIC_TYPE(tp) == TYPE_DREAL ||
+              TYPE_BASIC_TYPE(tq) == TYPE_DREAL) {
             TYPE_DESC tt;
             tt = (TYPE_BASIC_TYPE(tp) == TYPE_DREAL)?tq:tp;
             if(TYPE_BASIC_TYPE(tt) == TYPE_REAL &&
@@ -590,6 +599,83 @@ type_is_compatible(TYPE_DESC tp,TYPE_DESC tq)
     return TRUE;
 }
 
+static int
+type_is_double(TYPE_DESC tp)
+{
+    return TYPE_BASIC_TYPE(tp) == TYPE_DREAL ||
+            (TYPE_BASIC_TYPE(tp) == TYPE_REAL &&
+             EXPR_CODE(TYPE_KIND(tp)) == INT_CONSTANT &&
+             EXPV_INT_VALUE(TYPE_KIND(tp)) == KIND_PARAM_DOUBLE);
+}
+
+
+static int
+type_parameter_expv_equals(expv v1, expv v2, int is_strict, int for_argunemt, int for_assignment, int is_pointer_assignment)
+{
+    uint32_t i1, i2;
+
+    if (v1 == NULL && v2 == NULL) {
+        return TRUE;
+    }
+
+    if (is_strict == TRUE) {
+        /*
+         * v1 and v2 should be the same expression
+         */
+
+        if (v1 == NULL || v2 == NULL) {
+            return FALSE;
+        }
+
+        if (EXPR_CODE(v1) != INT_CONSTANT) {
+            if (EXPR_CODE(v1) == F08_LEN_SPEC_COLON ||
+                EXPR_CODE(v1) == LEN_SPEC_ASTERISC ||
+                EXPR_CODE(v1) == F_ASTERISK) {
+                if (EXPR_CODE(v1) != EXPR_CODE(v2)) {
+                    return FALSE;
+                }
+            }
+        } else {
+            if (EXPR_CODE(v2) == F08_LEN_SPEC_COLON ||
+                EXPR_CODE(v2) == LEN_SPEC_ASTERISC ||
+                EXPR_CODE(v2) == F_ASTERISK) {
+                return FALSE;
+            }
+        }
+    }
+
+
+    if (for_argunemt == TRUE) {
+        if (v1 != NULL && (EXPR_CODE(v1) == LEN_SPEC_ASTERISC || EXPR_CODE(v1) == F_ASTERISK)) {
+            return TRUE;
+        }
+    }
+
+    if (for_assignment) {
+#if 0
+        if (EXPR_CODE(v1) == LEN_SPEC_ASTERISC ||
+            EXPR_CODE(v1) == F08_LEN_SPEC_COLON) {
+            if (is_pointer_assignment && EXPR_CODE(v1) == F08_LEN_SPEC_COLON) {
+                return TRUE;
+            }
+        }
+#endif
+    }
+
+    if (EXPR_CODE(v1) == INT_CONSTANT &&
+        EXPR_CODE(v2) == INT_CONSTANT) {
+        i1 = EXPV_INT_VALUE(v1);
+        i2 = EXPV_INT_VALUE(v2);
+        if (i1 == i2) {
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    }
+    /* CANNOT RECOGNIZE THE VALUE OF EXPV, pass */
+    return TRUE;
+}
+
 
 /*
  * check 2 expvs have the same value
@@ -597,8 +683,10 @@ type_is_compatible(TYPE_DESC tp,TYPE_DESC tq)
  * expects 2 expv appears as type parameter value and are already reduced
  */
 static int
-type_parameter_expv_equals(expv v1, expv v2, int is_pointer_set)
+type_parameter_expv_equals_for_assignment(expv v1, expv v2, int is_pointer_set)
 {
+    return type_parameter_expv_equals(v1, v2, FALSE, FALSE, TRUE, is_pointer_set);
+#if 0
     uint32_t i1, i2;
 
     if (v1 == NULL || v2 == NULL) {
@@ -632,38 +720,203 @@ type_parameter_expv_equals(expv v1, expv v2, int is_pointer_set)
         /* CANNOT RECOGNIZE THE VALUE OF EXPV, pass */
         return TRUE;
     }
+#endif
 }
 
 
 static int
-type_parameter_values_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set)
+type_parameter_expv_equals_for_argument(expv v1, expv v2)
 {
-    ID type_params1, type_params2;
-    ID id1, id2;
+    return type_parameter_expv_equals(v1, v2, FALSE, TRUE, FALSE, FALSE);
+}
 
-    assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
-    assert(tp2 != NULL && TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
 
-    type_params1 = TYPE_TYPE_ACTUAL_PARAMS(tp1);
-    type_params2 = TYPE_TYPE_ACTUAL_PARAMS(tp2);
+int derived_type_is_compatible(TYPE_DESC left, TYPE_DESC right, int for_argunemt);
 
-    FOREACH_ID(id1, type_params1) {
-        id2 = find_ident_head(ID_SYM(id1), type_params2);
-        if (id2 == NULL) {
-            return FALSE;
-        }
+/*
+ * Check types are TKR(type, kind, rank) compatible
+ *
+ * If for_argunemt is TRUE, `left` is the type of dummy argument, and `right` is the type of arcutal argument
+ */
+int
+type_is_compatible(TYPE_DESC left, TYPE_DESC right, int is_strict, int for_argunemt, int for_assignment, int is_pointer_assignment)
+{
+    TYPE_DESC left_basic, right_basic;
 
-        if (!type_parameter_expv_equals(VAR_INIT_VALUE(id1),
-                                        VAR_INIT_VALUE(id2),
-                                        is_pointer_set)) {
-            return FALSE;
+    if (left == NULL || right == NULL) {
+        return FALSE;
+    }
+
+    left_basic = getBaseParameterizedType(left);
+    right_basic = getBaseParameterizedType(right);
+
+    /* type_comparison: */
+
+    if (TYPE_BASIC_TYPE(left_basic) == TYPE_BASIC_TYPE(right_basic)) {
+        goto kind_compatibility;
+    }
+
+    if (IS_STRUCT_TYPE(left_basic) && IS_STRUCT_TYPE(right_basic)) {
+        if (derived_type_is_compatible(left_basic, right_basic, for_argunemt)) {
+            /*
+             * derived_type_is_compatible include kind_compatibility
+             */
+            goto rank_compatibility;
         }
     }
 
+    if (TYPE_BASIC_TYPE(left_basic) == TYPE_GENERIC ||
+        TYPE_BASIC_TYPE(right_basic) == TYPE_GENERIC ||
+        TYPE_BASIC_TYPE(left_basic) == TYPE_GNUMERIC_ALL ||
+        TYPE_BASIC_TYPE(right_basic) == TYPE_GNUMERIC_ALL){
+        goto kind_compatibility;
+    }
+
+    if ((TYPE_BASIC_TYPE(left_basic) == TYPE_DREAL &&
+         TYPE_BASIC_TYPE(right_basic) == TYPE_REAL) ||
+        (TYPE_BASIC_TYPE(left_basic) == TYPE_REAL &&
+         TYPE_BASIC_TYPE(right_basic) == TYPE_DREAL)) {
+        goto kind_compatibility;
+    }
+
+    goto incompatible;
+    
+kind_compatibility:
+    
+    if (TYPE_BASIC_TYPE(left_basic) == TYPE_DREAL) {
+        if (type_is_double(right_basic)) {
+            goto length_compatiblity;
+        }
+    } else if (TYPE_BASIC_TYPE(right_basic) == TYPE_DREAL) {
+        if (type_is_double(left_basic)) {
+            goto length_compatiblity;
+        }
+    } else {
+        if (TYPE_KIND(left_basic) || TYPE_KIND(right_basic)) {
+            if (!type_parameter_expv_equals(TYPE_KIND(left_basic), TYPE_KIND(right_basic), is_strict,
+                                            for_argunemt, for_assignment, is_pointer_assignment))
+                goto incompatible;
+        }
+    }
+    
+length_compatiblity:
+
+    if (TYPE_LENG(left_basic) || TYPE_LENG(right_basic)) {
+        if (TYPE_KIND(left_basic) && TYPE_KIND(right_basic)) {
+            if (!type_parameter_expv_equals(TYPE_LENG(left_basic), TYPE_LENG(right_basic), is_strict,
+                                            for_argunemt, for_assignment, is_pointer_assignment))
+                goto incompatible;
+        }
+    }
+
+rank_compatibility:
+
+    if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
+        goto compatible;
+
+    } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
+         are_dimension_and_shape_conformant_by_type(NULL,
+                                                    left,
+                                                    right,
+                                                    NULL)) {
+        goto compatible;
+    }
+
+incompatible:
+    return FALSE;
+
+compatible:
     return TRUE;
 }
 
 
+int
+type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right)
+{
+    return type_is_compatible(left, right, TRUE, FALSE, FALSE, FALSE);
+}
+
+#if 0
+int
+type_is_same(TYPE_DESC left, TYPE_DESC right, int strict)
+{
+    expv v1;
+    expv v2;
+
+    BASIC_DATA_TYPE left_base = get_basic_type(left);
+    BASIC_DATA_TYPE right_base = get_basic_type(right);
+
+    if (debug_flag) {
+        fprintf(stderr, "left(base): %s\n",
+                basic_type_name(left_base));
+        fprintf(stderr, "right(base): %s\n",
+                basic_type_name(right_base));
+    }
+
+    if (IS_STRUCT_TYPE(left) && IS_STRUCT_TYPE(right)) {
+        if (!derived_type_is_compatible(left, right)) {
+            return FALSE;
+        }
+    } else {
+        if (left_base != right_base) {
+            return FALSE;
+        }
+
+        if (strict) {
+            if (TYPE_KIND(left) && TYPE_KIND(right)) {
+                v1 = TYPE_KIND(left);
+                v2 = TYPE_KIND(right);
+                if (EXPR_CODE(v1) != INT_CONSTANT &&
+                    EXPR_CODE(v1) != EXPR_CODE(v2)) {
+                    return FALSE;
+                }
+                if (EXPR_CODE(v1) == INT_CONSTANT &&
+                    EXPR_CODE(v2) == INT_CONSTANT) {
+                    if (EXPV_INT_VALUE(v1) != EXPV_INT_VALUE(v2)) {
+                        return FALSE;
+                    }
+                }
+                /* CANNOT RECOGNIZE THE VALUE OF EXPV, through it */
+            }
+
+            if (TYPE_LENG(left) && TYPE_LENG(right)) {
+                v1 = TYPE_LENG(left);
+                v2 = TYPE_LENG(right);
+                if (EXPR_CODE(v1) != INT_CONSTANT &&
+                    EXPR_CODE(v1) != EXPR_CODE(v2)) {
+                    return FALSE;
+                }
+                if (EXPR_CODE(v1) == INT_CONSTANT &&
+                    EXPR_CODE(v2) == INT_CONSTANT) {
+                    if (EXPV_INT_VALUE(v1) != EXPV_INT_VALUE(v2)) {
+                        return FALSE;
+                    }
+                }
+                /* CANNOT RECOGNIZE THE VALUE OF EXPV, through it */
+            }
+        }
+    }
+
+
+    if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
+        return TRUE;
+
+    } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
+         are_dimension_and_shape_conformant_by_type(NULL,
+                                                    left,
+                                                    right,
+                                                    NULL)) {
+        return TRUE;
+
+    }
+
+    return FALSE;
+}
+#endif
+
+/*
+ * Compare derived-type by their tagnames
+ */
 int
 compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
 {
@@ -733,8 +986,8 @@ type_is_parent_type(TYPE_DESC parent, TYPE_DESC child)
         return FALSE;
     }
 
-    parent = getBaseStructType(parent);
-    child = getBaseStructType(child);
+    parent = getBaseParameterizedType(parent);
+    child = getBaseParameterizedType(child);
 
     if (compare_derived_type_name(parent, child)) {
         return TRUE;
@@ -743,6 +996,270 @@ type_is_parent_type(TYPE_DESC parent, TYPE_DESC child)
     }
 
     return FALSE;
+}
+
+
+static int
+derived_type_parameter_values_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set)
+{
+    ID type_params1, type_params2;
+    ID id1, id2;
+
+    assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
+    assert(tp2 != NULL && TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
+
+    type_params1 = TYPE_TYPE_ACTUAL_PARAMS(tp1);
+    type_params2 = TYPE_TYPE_ACTUAL_PARAMS(tp2);
+
+    FOREACH_ID(id1, type_params1) {
+        id2 = find_ident_head(ID_SYM(id1), type_params2);
+        if (id2 == NULL) {
+            return FALSE;
+        }
+
+        if (!type_parameter_expv_equals_for_assignment(VAR_INIT_VALUE(id1),
+                                        VAR_INIT_VALUE(id2),
+                                        is_pointer_set)) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+
+static int
+derived_type_parameter_values_is_compatible(TYPE_DESC tp1, TYPE_DESC tp2, int for_argunemt)
+{
+    ID type_params1, type_params2;
+    ID id1, id2;
+
+    assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
+    assert(tp2 != NULL && TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
+
+    type_params1 = TYPE_TYPE_ACTUAL_PARAMS(tp1);
+    type_params2 = TYPE_TYPE_ACTUAL_PARAMS(tp2);
+
+    FOREACH_ID(id1, type_params1) {
+        id2 = find_ident_head(ID_SYM(id1), type_params2);
+        if (id2 == NULL) {
+            return FALSE;
+        }
+
+        if (EXPR_CODE(VAR_INIT_VALUE(id1)) == LEN_SPEC_ASTERISC) {
+            continue;
+        }
+
+        if (!type_parameter_expv_equals_for_argument(VAR_INIT_VALUE(id1),
+                                        VAR_INIT_VALUE(id2))) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+
+/*
+ * Check compatiblity of types with type parameters
+ */
+int
+derived_type_is_compatible(TYPE_DESC left, TYPE_DESC right, int for_argunemt)
+{
+    if (!compare_derived_type_name(left, right)) {
+        if (TYPE_IS_CLASS(left) && TYPE_PARENT(right)) {
+            /*
+             * compare the parent
+             */
+            return derived_type_is_compatible(left, TYPE_PARENT_TYPE(right), for_argunemt);
+        }
+    } else {
+        if (TYPE_TYPE_PARAM_VALUES(left) == NULL &&
+            TYPE_TYPE_PARAM_VALUES(right) == NULL) {
+            return TRUE;
+        } else {
+            if (derived_type_parameter_values_is_compatible(left, right, for_argunemt)) {
+                if (debug_flag) { fprintf(debug_fp," compatible\n"); }
+                return TRUE;
+            }
+            if (debug_flag) { fprintf(debug_fp," not compatible\n"); }
+        }
+    }
+    return FALSE;
+}
+
+
+/*
+ * Check type-bound procedures have the same type except pass arguments.
+ */
+int
+type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
+{
+    int i;
+    int i1;
+    int i2;
+    int len;
+    int has_pass1;
+    int has_pass2;
+    int skip_this_loop;
+    SYMBOL pass_arg1;
+    SYMBOL pass_arg2;
+    EXT_ID f1;
+    EXT_ID f2;
+    expv args1;
+    expv args2;
+    expv arg1;
+    expv arg2;
+    ID id1;
+    ID id2;
+
+    if (f1 == NULL || f2 == NULL) {
+        // may never reach
+        return FALSE;
+    }
+
+    f1 = TYPE_EXT_ID(ID_TYPE(tbp1));
+    f2 = TYPE_EXT_ID(ID_TYPE(tbp2));
+
+    args1 = EXT_PROC_ARGS(f1);
+    args2 = EXT_PROC_ARGS(f2);
+
+    len = expr_list_length(args1);
+
+    /*
+     * compare return types
+     */
+    if (!type_is_strict_compatible(EXT_PROC_TYPE(f1), EXT_PROC_TYPE(f2))) {
+        return FALSE;
+    }
+
+    /*
+     * compare their argument length
+     */
+    if (expr_list_length(args1) != expr_list_length(args2)) {
+        return FALSE;
+    }
+
+    if (TYPE_BOUND_PROCEDURE_PASS & TBP_BINDING_ATTRS(tbp1)) {
+        has_pass1 = TRUE;
+        if (TBP_BINDING(tbp1)) {
+            pass_arg1 = ID_SYM(TBP_BINDING(tbp1));
+        } else {
+            pass_arg1 = NULL;
+        }
+    }
+
+    if (TYPE_BOUND_PROCEDURE_PASS & TBP_BINDING_ATTRS(tbp2)) {
+        has_pass2 = TRUE;
+        if (TBP_BINDING(tbp2)) {
+            pass_arg2 = ID_SYM(TBP_BINDING(tbp2));
+        } else {
+            pass_arg2 = NULL;
+        }
+    }
+
+    for (i1 = 0, i2 =0; i1 < len && i2 < len; skip_this_loop = FALSE) {
+        arg1 = expr_list_get_n(args1, i1);
+        arg2 = expr_list_get_n(args2, i2);
+
+        if (has_pass1) {
+            if (pass_arg1 == NULL && i1 == 0) {
+                skip_this_loop = TRUE;
+                i1++;
+            } else if (pass_arg1 != NULL && pass_arg1 == EXPR_SYM(arg1)) {
+                skip_this_loop = TRUE;
+                i1++;
+            }
+        }
+        if (has_pass2) {
+            if (pass_arg2 == NULL && i2 == 0) {
+                skip_this_loop = TRUE;
+                i2++;
+            } else if (pass_arg2 != NULL && pass_arg2 == EXPR_SYM(arg2)) {
+                skip_this_loop = TRUE;
+                i2++;
+            }
+        }
+
+        if (skip_this_loop) {
+            continue;
+        }
+
+        arg1 = EXPR_ARG1(arg1);
+        arg2 = EXPR_ARG1(arg2);
+
+        id1 = find_ident_head(EXPR_SYM(arg1), EXT_PROC_ID_LIST(f1));
+        id2 = find_ident_head(EXPR_SYM(arg2), EXT_PROC_ID_LIST(f2));
+
+        if (!type_is_strict_compatible(ID_TYPE(id1), ID_TYPE(id2))) {
+            return FALSE;
+        }
+
+        i1++;
+        i2++;
+    }
+
+    return TRUE;
+}
+
+
+int
+function_type_is_appliable(EXT_ID proc, expv actual_args)
+{
+    ID id;
+    ID proc_id_list;
+    expv actual_arg = NULL;
+    expv dummy_args;
+    list lp;
+    list actual_lp;
+
+    dummy_args = EXT_PROC_ARGS(proc);
+    proc_id_list = EXT_PROC_ID_LIST(proc);
+
+    actual_lp = EXPR_LIST(actual_args);
+    actual_arg = LIST_ITEM(actual_lp);
+
+    FOR_ITEMS_IN_LIST(lp, dummy_args) {
+        expv dummy_arg = EXPR_ARG1(LIST_ITEM(lp));
+
+        if (debug_flag)
+            fprintf(debug_fp, "dummy args is '%s'\n", SYM_NAME(EXPR_SYM(dummy_arg)));
+
+        if (actual_arg == NULL) {
+            /* argument number mismatch */
+            return FALSE;
+        }
+
+        id = find_ident_head(EXPR_SYM(dummy_arg), proc_id_list);
+
+        if (!type_is_strict_compatible(EXPV_TYPE(actual_arg), ID_TYPE(id))) {
+            return FALSE;
+        }
+
+        if (LIST_NEXT(actual_lp) != NULL) {
+            actual_lp = LIST_NEXT(actual_lp);
+            actual_arg = LIST_ITEM(actual_lp);
+        } else {
+            actual_lp = NULL;
+            actual_arg = NULL;
+        }
+    }
+
+    while (actual_lp != NULL) {
+        id = find_ident_head(EXPR_SYM(actual_arg), proc_id_list);
+        if (!TYPE_IS_OPTIONAL(ID_TYPE(id))) {
+            return FALSE;
+        }
+        if (LIST_NEXT(actual_lp) != NULL) {
+            actual_lp = LIST_NEXT(actual_lp);
+            actual_arg = LIST_ITEM(actual_lp);
+        } else {
+            actual_lp = NULL;
+            actual_arg = NULL;
+        }
+    }
+
+    return TRUE;
 }
 
 
@@ -785,7 +1302,7 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     }
     if (debug_flag) fprintf(debug_fp," not match\n");
 
-    btp2 = getBaseStructType(tp2);
+    btp2 = getBaseParameterizedType(tp2);
 
     if (debug_flag) fprintf(debug_fp,"* compare type names\n");
     if (!compare_derived_type_name(tp1, tp2)) {
@@ -806,7 +1323,7 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
         return TRUE;
     } else {
         if (debug_flag) fprintf(debug_fp,"* compare type parameters");
-        if (type_parameter_values_is_compatible_for_assignment(tp1, tp2, is_pointer_set)) {
+        if (derived_type_parameter_values_is_compatible_for_assignment(tp1, tp2, is_pointer_set)) {
             if (debug_flag) fprintf(debug_fp," match\n");
             return TRUE;
         }

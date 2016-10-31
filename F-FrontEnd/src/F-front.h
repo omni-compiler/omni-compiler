@@ -608,7 +608,7 @@ extern ID       find_ident_local _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_parent _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_sibling _ANSI_ARGS_((SYMBOL s));
 extern ID       find_struct_member _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
-extern ID       find_struct_member0 _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym, int allow_private));
+extern ID       find_struct_member_allow_private _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym, int allow_private));
 extern int      type_is_parent_type _ANSI_ARGS_((TYPE_DESC parent, TYPE_DESC child));
 extern int      type_is_unlimited_class _ANSI_ARGS_((TYPE_DESC tp));
 extern int      type_is_class_of _ANSI_ARGS_((TYPE_DESC class, TYPE_DESC derived_type));
@@ -656,13 +656,17 @@ extern void     update_type_bound_procedures _ANSI_ARGS_((TYPE_DESC struct_decls
 extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f2, int has_pass_arg));
 extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));
 
-extern int      type_is_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
+extern int      element_type_is_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern int      struct_type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+
+extern int      are_dimension_and_shape_conformant_by_type _ANSI_ARGS_((
+    expr x, TYPE_DESC lt, TYPE_DESC rt, expv *shapePtr));
+
 extern TYPE_DESC
 	get_binary_numeric_intrinsic_operation_type(TYPE_DESC t0,
                                                     TYPE_DESC t1);

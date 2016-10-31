@@ -178,7 +178,7 @@ force_to_logical_type(expv v)
 }
 
 
-static int
+int
 are_dimension_and_shape_conformant_by_type(expr x,
                                            TYPE_DESC lt, TYPE_DESC rt,
                                            expv *shapePtr) {
@@ -3337,284 +3337,6 @@ compile_array_constructor(expr x)
 }
 
 
-static int
-type_parameter_expv_equals_for_argument(expv v1, expv v2)
-{
-    uint32_t i1, i2;
-
-    if (v1 == NULL || v2 == NULL) {
-        return FALSE;
-    }
-
-    if (EXPR_CODE(v1) == LEN_SPEC_ASTERISC) {
-        return TRUE;
-
-    } else if (EXPR_CODE(v1) == F08_LEN_SPEC_COLON ||
-               EXPR_CODE(v2) == LEN_SPEC_ASTERISC ||
-               EXPR_CODE(v2) == F08_LEN_SPEC_COLON) {
-        return FALSE;
-
-    } else {
-        if (EXPR_CODE(v1) == INT_CONSTANT &&
-            EXPR_CODE(v2) == INT_CONSTANT) {
-            i1 = EXPV_INT_VALUE(v1);
-            i2 = EXPV_INT_VALUE(v2);
-            if (i1 == i2) {
-                return TRUE;
-            } else {
-                return FALSE;
-            }
-        }
-        /* CANNOT RECOGNIZE THE VALUE OF EXPV, pass */
-        return TRUE;
-    }
-}
-
-
-static int
-type_parameter_values_is_compatible_for_argument(TYPE_DESC tp1, TYPE_DESC tp2)
-{
-    ID type_params1, type_params2;
-    ID id1, id2;
-
-    assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
-    assert(tp2 != NULL && TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
-
-    type_params1 = TYPE_TYPE_ACTUAL_PARAMS(tp1);
-    type_params2 = TYPE_TYPE_ACTUAL_PARAMS(tp2);
-
-    FOREACH_ID(id1, type_params1) {
-        id2 = find_ident_head(ID_SYM(id1), type_params2);
-        if (id2 == NULL) {
-            return FALSE;
-        }
-
-        if (EXPR_CODE(VAR_INIT_VALUE(id1)) == LEN_SPEC_ASTERISC) {
-            continue;
-        }
-
-        if (!type_parameter_expv_equals_for_argument(VAR_INIT_VALUE(id1),
-                                        VAR_INIT_VALUE(id2))) {
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-
-int
-match_derived_type(TYPE_DESC dummy, TYPE_DESC actual)
-{
-
-    if (!compare_derived_type_name(dummy, actual)) {
-        if (TYPE_IS_CLASS(dummy) && TYPE_PARENT(actual)) {
-            return match_derived_type(dummy, actual);
-        }
-
-        if (TYPE_TYPE_PARAM_VALUES(dummy) == NULL &&
-            TYPE_TYPE_PARAM_VALUES(actual) == NULL) {
-            return TRUE;
-        } else {
-            if (type_parameter_values_is_compatible_for_argument(dummy, actual)) {
-                if (debug_flag) fprintf(debug_fp," match\n");
-                return TRUE;
-            }
-            if (debug_flag) fprintf(debug_fp," not match\n");
-        }
-    }
-    return FALSE;
-}
-
-
-int
-match_type(TYPE_DESC left, TYPE_DESC right, int strict)
-{
-    expv v1;
-    expv v2;
-
-    BASIC_DATA_TYPE left_base = get_basic_type(left);
-    BASIC_DATA_TYPE right_base = get_basic_type(right);
-
-    if (debug_flag) {
-        fprintf(stderr, "left(base): %s\n",
-                basic_type_name(left_base));
-        fprintf(stderr, "right(base): %s\n",
-                basic_type_name(right_base));
-    }
-
-    if (IS_STRUCT_TYPE(left) && IS_STRUCT_TYPE(right)) {
-        if (!match_derived_type(left, right)) {
-            return FALSE;
-        }
-    } else {
-        if (left_base != right_base) {
-            return FALSE;
-        }
-
-        if (strict) {
-            if (TYPE_KIND(left) && TYPE_KIND(right)) {
-                v1 = TYPE_KIND(left);
-                v2 = TYPE_KIND(right);
-                if (EXPR_CODE(v1) != INT_CONSTANT &&
-                    EXPR_CODE(v1) != EXPR_CODE(v2)) {
-                    return FALSE;
-                }
-                if (EXPR_CODE(v1) == INT_CONSTANT &&
-                    EXPR_CODE(v2) == INT_CONSTANT) {
-                    if (EXPV_INT_VALUE(v1) != EXPV_INT_VALUE(v2)) {
-                        return FALSE;
-                    }
-                }
-                /* CANNOT RECOGNIZE THE VALUE OF EXPV, through it */
-            }
-
-            if (TYPE_LENG(left) && TYPE_LENG(right)) {
-                v1 = TYPE_LENG(left);
-                v2 = TYPE_LENG(right);
-                if (EXPR_CODE(v1) != INT_CONSTANT &&
-                    EXPR_CODE(v1) != EXPR_CODE(v2)) {
-                    return FALSE;
-                }
-                if (EXPR_CODE(v1) == INT_CONSTANT &&
-                    EXPR_CODE(v2) == INT_CONSTANT) {
-                    if (EXPV_INT_VALUE(v1) != EXPV_INT_VALUE(v2)) {
-                        return FALSE;
-                    }
-                }
-                /* CANNOT RECOGNIZE THE VALUE OF EXPV, through it */
-            }
-        }
-    }
-
-    if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
-        return TRUE;
-
-    } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
-         are_dimension_and_shape_conformant_by_type(NULL,
-                                                    left,
-                                                    right,
-                                                    NULL)) {
-        return TRUE;
-
-    }
-
-    return FALSE;
-}
-
-int
-type_bound_procedure_type_match(EXT_ID f1, EXT_ID f2, int has_pass_arg)
-{
-    int i;
-    int len;
-    expv args1;
-    expv args2;
-    expv arg1;
-    expv arg2;
-    ID id1;
-    ID id2;
-
-    if (f1 == NULL || f2 == NULL) {
-        // may never reach
-        return FALSE;
-    }
-
-    args1 = EXT_PROC_ARGS(f1);
-    args2 = EXT_PROC_ARGS(f2);
-
-    len = expr_list_length(args1);
-
-    if (!match_type(EXT_PROC_TYPE(f1), EXT_PROC_TYPE(f2), TRUE)) {
-        return FALSE;
-    }
-
-
-    if (expr_list_length(args1) != expr_list_length(args2)) {
-        return FALSE;
-    }
-
-
-    for (i = 0; i < len; i++) {
-        if (has_pass_arg && i == 0) {
-            continue;
-        }
-
-        arg1 = expr_list_get_n(args1, i);
-        arg2 = expr_list_get_n(args2, i);
-
-        arg1 = EXPR_ARG1(arg1);
-        arg2 = EXPR_ARG1(arg2);
-
-        id1 = find_ident_head(EXPR_SYM(arg1), EXT_PROC_ID_LIST(f1));
-        id2 = find_ident_head(EXPR_SYM(arg2), EXT_PROC_ID_LIST(f2));
-
-        if (!match_type(ID_TYPE(id1), ID_TYPE(id2), TRUE)) {
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-int
-is_procedure_acceptable(EXT_ID proc, expv actual_args)
-{
-    ID id;
-    ID proc_id_list;
-    expv actual_arg = NULL;
-    expv dummy_args;
-    list lp;
-    list actual_lp;
-
-    dummy_args = EXT_PROC_ARGS(proc);
-    proc_id_list = EXT_PROC_ID_LIST(proc);
-
-    actual_lp = EXPR_LIST(actual_args);
-    actual_arg = LIST_ITEM(actual_lp);
-
-    FOR_ITEMS_IN_LIST(lp, dummy_args) {
-        expv dummy_arg = EXPR_ARG1(LIST_ITEM(lp));
-
-        if (debug_flag)
-            fprintf(debug_fp, "dummy args is '%s'\n", SYM_NAME(EXPR_SYM(dummy_arg)));
-
-        if (actual_arg == NULL) {
-            /* argument number mismatch */
-            return FALSE;
-        }
-
-        id = find_ident_head(EXPR_SYM(dummy_arg), proc_id_list);
-        if (!match_type(EXPV_TYPE(actual_arg), ID_TYPE(id), TRUE)) {
-            return FALSE;
-        }
-
-        if (LIST_NEXT(actual_lp) != NULL) {
-            actual_lp = LIST_NEXT(actual_lp);
-            actual_arg = LIST_ITEM(actual_lp);
-        } else {
-            actual_lp = NULL;
-            actual_arg = NULL;
-        }
-    }
-
-    while (actual_lp != NULL) {
-        id = find_ident_head(EXPR_SYM(actual_arg), proc_id_list);
-        if (!TYPE_IS_OPTIONAL(ID_TYPE(id))) {
-            return FALSE;
-        }
-        if (LIST_NEXT(actual_lp) != NULL) {
-            actual_lp = LIST_NEXT(actual_lp);
-            actual_arg = LIST_ITEM(actual_lp);
-        } else {
-            actual_lp = NULL;
-            actual_arg = NULL;
-        }
-    }
-
-    return TRUE;
-}
-
-
 expv
 compile_type_bound_procedure_call(expv memberRef, expr args) {
     expv v;
@@ -3634,20 +3356,24 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
         ID bind;
         ID bindto;
         FOREACH_ID(bind, GENERIC_TYPE_GENERICS(ftp)) {
-            bindto = find_struct_member0(stp, ID_SYM(bind), TRUE);
-            if (is_procedure_acceptable(TYPE_EXT_ID(ID_TYPE(bindto)), a)) {
+            bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
+            if (function_type_is_appliable(TYPE_EXT_ID(ID_TYPE(bindto)), a)) {
                 ep = TYPE_EXT_ID(ID_TYPE(bindto));
                 EXPV_TYPE(memberRef) = ID_TYPE(bindto);
             }
         }
-        if (ep) {
+
+        if (ep)
             ret_type = EXT_PROC_TYPE(ep);
-        }
+#if 0
+        else 
+            error("There is no appliable type-bound procedure");
+#endif
     } else {
         // for type-bound PROCEDURE
         if ((ep = TYPE_EXT_ID(ftp)) != NULL) {
 #if 0
-            if (is_procedure_acceptable(ep, a)) {
+            if (function_type_is_appliable(ep, a)) {
                 error("argument type mismatch");
             }
 #endif

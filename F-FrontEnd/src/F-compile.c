@@ -1094,13 +1094,18 @@ void compile_statement1(int st_no, expr x)
         break;
 
     case F95_ENDTYPEDECL_STATEMENT:
-        if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
+        /* if the current state is in:
+         * - the type-parameter declaration part
+         * - the type-bound procedure dclaration part
+         * turn the state into the declaration part
+         */
+        if (CURRENT_STATE == IN_TYPE_PARAM_DECL ||
+            CURRENT_STATE == IN_TYPE_BOUND_PROCS) {
             CURRENT_STATE = INDCL;
-        } else if (CURRENT_STATE == IN_TYPE_BOUND_PROCS) {
-            CURRENT_STATE = INDCL;
+        } else {
+            check_INDCL();
         }
 
-        check_INDCL();
         /* (F95_ENDTYPEDECL_STATEMENT <NULL>) */
         compile_struct_decl_end();
         break;
@@ -2682,12 +2687,74 @@ check_labels_in_block(BLOCK_ENV block) {
 }
 
 
+static int
+is_operator_proc(EXT_ID ep)
+{
+    TYPE_DESC ret_type = EXT_PROC_TYPE(ep);
+    expv args = EXT_PROC_ARGS(ep);
+    TYPE_DESC tp;
+
+    if (IS_SUBR(ret_type)) {
+        return FALSE;
+    }
+
+    if (!EXPR_HAS_ARG1(args) || !EXPR_HAS_ARG2(args) || EXPR_HAS_ARG3(args)) {
+        return FALSE;
+    }
+
+    tp = EXPV_TYPE(EXPR_ARG1(args));
+    if (TYPE_IS_INTENT_IN(tp)) {
+        return FALSE;
+    }
+
+    tp = EXPV_TYPE(EXPR_ARG2(args));
+    if (TYPE_IS_INTENT_IN(tp)) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+static int
+is_assignment_proc(EXT_ID ep)
+{
+    TYPE_DESC ret_type = EXT_PROC_TYPE(ep);
+    expv args = EXT_PROC_ARGS(ep);
+    TYPE_DESC tp;
+
+    if (!IS_SUBR(ret_type)) {
+        return FALSE;
+    }
+
+    if (!EXPR_HAS_ARG1(args) || !EXPR_HAS_ARG2(args) || EXPR_HAS_ARG3(args)) {
+        return FALSE;
+    }
+
+    tp = EXPV_TYPE(EXPR_ARG1(args));
+    if (TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp)) {
+        return FALSE;
+    }
+
+    tp = EXPV_TYPE(EXPR_ARG2(args));
+    if (TYPE_IS_INTENT_IN(tp)) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
 static void
-check_type_bound_procedure()
+check_type_bound_procedures()
 {
     ID mem;
+    ID tbp;
+    ID binding;
+    ID bindto;
     TYPE_DESC tp;
     TYPE_DESC parent;
+    EXT_ID ep;
 
     FOREACH_STRUCTDECLS(tp, LOCAL_STRUCT_DECLS) {
 
@@ -2703,30 +2770,73 @@ check_type_bound_procedure()
 
         parent = TYPE_PARENT(tp)? TYPE_PARENT_TYPE(tp) : NULL;
 
-        FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
-            if (TYPE_EXT_ID(ID_TYPE(mem)) == NULL) {
-                SYMBOL bindto = ID_SYM(TBP_BINDING(mem)?:mem);
-                error_at_id(mem,
+        /*
+         * Marks each type-bound procedure if it is used as operator/assignment
+         */
+        FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
+            FOREACH_ID(binding, TBP_BINDING(mem)) {
+                bindto = find_struct_member(tp, ID_SYM(binding));
+                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT;
+            }
+        }
+
+
+        FOREACH_TYPE_BOUND_PROCEDURE(tbp, tp) {
+            /*
+             * Check a type-bound procedure is bound
+             */
+            if (TYPE_EXT_ID(ID_TYPE(tbp)) == NULL) {
+                bindto = TBP_BINDING(tbp)?:tbp;
+                error_at_id(tbp,
                             "\"%s\" must be a module procedure or "
                             "an external procedure with an explicit interface",
-                            SYM_NAME(bindto));
+                            SYM_NAME(ID_SYM(bindto)));
             }
+
+            /*
+             * Check a type-bound procedure works as operator or assginment
+             */
+            if (TBP_IS_OPERATOR(tbp) && TBP_IS_ASSIGNMENT(tbp)) {
+                /*
+                 * If a procedure is bound from a operator generics and a assignment generics,
+                 * raise an error.
+                 */
+                error("operator and assingnment shouldn't co-exist");
+            }
+            if ((ep = TYPE_EXT_ID(ID_TYPE(bindto))) != NULL) {
+                /* already bounded, so check type */
+                if (TBP_IS_OPERATOR(bindto)) {
+                    if (!is_operator_proc(ep)) {
+                        error_at_id(bindto, "should be a function");
+                        return;
+                    }
+                }
+                if (TBP_IS_ASSIGNMENT(bindto)) {
+                    if (!is_assignment_proc(ep)) {
+                        error("not assiginment");
+                        return;
+                    }
+                }
+            }
+
+            /*
+             * If the parent type exists, check override.
+             */
             if (parent) {
-                ID tbp = find_struct_member0(tp, ID_SYM(mem), TRUE);
+                ID parent_tbp = find_struct_member_allow_private(tp, ID_SYM(tbp), TRUE);
                 if (ID_CLASS(tbp) != CL_TYPE_BOUND_PROC) {
-                    // never reached
+                    /* never reached */
                     error("should not override member");
                 }
 
-                if (!type_bound_procedure_type_match(
-                        TYPE_EXT_ID(ID_TYPE(tbp)),
-                        TYPE_EXT_ID(ID_TYPE(mem)),
-                        TBP_PASS_ARG(mem) != NULL)) {
-                    error("type mismatch to override");
-                }
+                /* if (!type_bound_procedure_types_are_compatible(tbp, parent_tbp) { */
+                /*     error("type mismatch to override"); */
+                /* } */
 
             }
         }
+
     }
 }
 
@@ -3054,7 +3164,7 @@ end_procedure()
 
     }
 
-    check_type_bound_procedure();
+    check_type_bound_procedures();
 
     /* if (CURRENT_PROC_CLASS != CL_MODULE) { */
     /* } */
@@ -4783,18 +4893,21 @@ compile_CALL_type_bound_procedure_statement(expr x)
 
     tp = ID_TYPE(tpd);
     if (GENERIC_TYPE_GENERICS(tp)) {
-        // for type-bound GENERIC
+        /* for type-bound GENERIC */
         ID bind;
         ID bindto;
         FOREACH_ID(bind, TBP_BINDING(tpd)) {
-            bindto = find_struct_member0(stp, ID_SYM(bind), TRUE);
-            if (bindto && is_procedure_acceptable(TYPE_EXT_ID(ID_TYPE(bindto)), a)) {
+            bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
+            if (bindto && function_type_is_appliable(TYPE_EXT_ID(ID_TYPE(bindto)), a)) {
                 ep = TYPE_EXT_ID(ID_TYPE(bindto));
                 tp = ID_TYPE(bindto);
             }
         }
         if (ep == NULL) {
-            // if not found, select first one
+            /*
+             * if not found, raise error
+             */
+            error("invalid argument for type-bound generic");
             tp = ID_TYPE(TBP_BINDING(tpd));
         }
     }
