@@ -17,6 +17,12 @@ OUT_DIR=coarray_dir0.x coarray_dir1.x coarray_dir2.x coarray_dir_ti1.x coarray_d
 OUT_IMG=image_dir0.x image_dir1.x #image_dir_sync1.x #not yet
 
 #---- ALLOC/DEALLOC
+OUT_ALO= autodealloc1.x
+#ifneq ($(ONESICED_LAYER),FJRDMA)
+OUT_ALO+=alloc_subnodes2.x
+#endif
+
+#---- ALLOC/DEALLOC
 OUT_ALO=alloc_subnodes2.x autodealloc1.x
 #alloc_subnodes.x ###Operating system error: Cannot allocate memory
 #coarraydir_allocatable3.x  #restriction coarray dir for allocatable coarray
