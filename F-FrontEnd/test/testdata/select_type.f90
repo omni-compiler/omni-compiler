@@ -19,14 +19,14 @@ contains
         print*,'class is color_point'
       class default
         print*,'class default'
-    end select dummy
+    end select
 
     cname: select type (p)
-      class is(point)
+      class is(point) cname
         print*,'class is point'
-      type is(color_point)
+      type is(color_point) cname
         print*,'class is color_point'
-      class default
+      class default cname
         print*,'class default'
     end select cname
 
