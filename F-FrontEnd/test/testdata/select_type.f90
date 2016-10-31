@@ -1,4 +1,4 @@
-module shape_mod
+module select_type
   type point
     real :: x, y
   end type point
@@ -19,21 +19,26 @@ contains
         print*,'class is color_point'
       class default
         print*,'class default'
+    end select dummy
+
+    cname: select type (p)
+      class is(point)
+        print*,'class is point'
+      type is(color_point)
+        print*,'class is color_point'
+      class default
+        print*,'class default'
+    end select cname
+
+
+    select type (assoc_name=>p)
+      class is(point)
+        print*,'class is point',assoc_name%x
+      !class is(color_point)
+      !  print*,'class is color_point',assoc_name%color
+      class default
+        print*,'default'
     end select
+
   end subroutine sub1
-
-
-  subroutine sub2(p)
-    class(point) :: p
-
-    select type (a=>p)
-       class is(point)
-        PRINT*,'class is point',a%x
-       class is(color_point)
-         print*,'class is color_point',a%color
-       class default
-         print*,'default'
-    end select
-
-  end subroutine sub2
-end module
+end module select_type

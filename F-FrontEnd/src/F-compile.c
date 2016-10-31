@@ -971,6 +971,7 @@ void compile_statement1(int st_no, expr x)
                 associate_name = declare_ident(EXPR_SYM(EXPR_ARG3(x)),CL_VAR);
                 ID_TYPE(associate_name) = ID_TYPE(selector);
             }
+            declare_variable(associate_name);
             st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), 
                 ID_ADDR(associate_name));
           } else {

@@ -1803,9 +1803,15 @@ outx_selectTypeStatement(int l, expv v)
  
     // TODO construct_name is wrong at the moment
     outx_tagOfStatementWithConstructName(l, v, EXPR_ARG3(v), 1);
-    // TODO output the select class as an id
-    outx_value(l1, LIST_ITEM(lp));
- 
+    // TODO type or sclass ? XcodeML/F doesn't specify it
+    outx_printi(l1, "<id>\n"); 
+    if(EXPR_ARG4(v) != NULL){
+        outx_printi(l1+1, "<name>%s</name>\n", SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
+    } else {
+        outx_printi(l1+1, "<name></name>\n");
+    }
+    outx_value(l1+1, LIST_ITEM(lp));
+    outx_printi(l1, "</id>\n");
     if(LIST_NEXT(lp) && LIST_ITEM(LIST_NEXT(lp))) {
         FOR_ITEMS_IN_LIST(lp, LIST_ITEM(LIST_NEXT(lp)))
             outx_expv(l1, LIST_ITEM(lp));
