@@ -963,10 +963,8 @@ void compile_statement1(int st_no, expr x)
           check_INEXEC();
           push_ctl(CTL_SELECT); // TODO special select type ctl
           v = compile_expression(EXPR_ARG1(x));
-          printf("%s\n", SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
-
+          // TODO id/value
           ID ident = find_ident(EXPR_SYM(EXPR_ARG2(x)));
-
           st = list3(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x));
           CTL_BLOCK(ctl_top) = st;
           break;
@@ -1014,6 +1012,13 @@ void compile_statement1(int st_no, expr x)
                 }
                     
                 push_ctl(CTL_CASE);
+                if(EXPR_ARG1(x) != NULL){
+                    printf("CASE: %s\n", SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+                    ID id = find_ident(EXPR_SYM(EXPR_ARG1(x)));
+                    if(ID_TYPE(id) != NULL){
+                        printf("TYPE of ID found\n");
+                    }
+                }
                 st = list2(EXPR_CODE(x), EXPR_ARG1(x), NULL);
                 CTL_BLOCK(ctl_top) = st;
             } else {
