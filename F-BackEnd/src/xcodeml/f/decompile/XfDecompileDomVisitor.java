@@ -1955,6 +1955,51 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    // typeGuard
+    class TypeGuardVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "typeGuard" element in XcodeML/F.
+         *
+         */
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+            XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+
+            String kind = XmDomUtil.getAttr(n, "kind");
+            String type = XmDomUtil.getAttr(n, "type");
+            if(kind.equals("CLASS_DEFAULT")){
+                writer.writeToken("CLASS DEFAULT");
+            } else {
+                String typeName = typeManager.getAliasTypeName(type);
+                if(kind.equals("CLASS_IS")){
+                    writer.writeToken("CLASS IS");
+                } else if(kind.equals("TYPE_IS")){
+                    writer.writeToken("TYPE IS");
+                }
+                writer.writeToken(" ( ");
+                writer.writeToken(typeName);
+                writer.writeToken(" ) ");
+            } 
+
+            String constructName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(" ");
+                writer.writeToken(constructName);
+            }
+
+            writer.setupNewLine();
+            writer.incrementIndentLevel();
+
+            invokeEnter(XmDomUtil.getElement(n, "body"));
+
+            writer.decrementIndentLevel();
+        }
+    }
+
+
+
     // FcharacterConstant
     class FcharacterConstant extends XcodeNodeVisitor {
         /**
@@ -4311,9 +4356,9 @@ public class XfDecompileDomVisitor {
             writer.writeToken(")");
             writer.setupNewLine();
 
-  /*          ArrayList<Node> caseLabelNodes =
-                XmDomUtil.collectElements(n, "FcaseLabel");
-            _invokeEnter(caseLabelNodes);*/
+            ArrayList<Node> typeGuardNodes =
+                XmDomUtil.collectElements(n, "typeGuard");
+            _invokeEnter(typeGuardNodes);
 
             writer.writeToken("END SELECT");
             if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
@@ -6406,6 +6451,7 @@ public class XfDecompileDomVisitor {
         new Pair("FcoArrayRef", new FcoArrayRefVisitor()),
         new Pair("FbackspaceStatement", new FbackspaceStatement()),
         new Pair("FcaseLabel", new FcaseLabelVisitor()),
+        new Pair("typeGuard", new TypeGuardVisitor()),
         new Pair("FcharacterConstant", new FcharacterConstant()),
         new Pair("FcharacterRef", new FcharacterRef()),
         new Pair("FcloseStatement", new FcloseStatementVisitor()),
