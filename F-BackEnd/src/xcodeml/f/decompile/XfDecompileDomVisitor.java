@@ -4300,7 +4300,13 @@ public class XfDecompileDomVisitor {
             }
 
             writer.writeToken("SELECT TYPE (");
-//            invokeEnter(XmDomUtil.getElement(n, "value"));
+            Node id = XmDomUtil.getElement(n, "id");
+            Node name = XmDomUtil.getElement(id, "name");
+            if(!name.getTextContent().equals("")){
+              writer.writeToken(name.getTextContent());
+              writer.writeToken("=>");
+            } 
+            invokeEnter(XmDomUtil.getElement(id, "value"));
 
             writer.writeToken(")");
             writer.setupNewLine();
