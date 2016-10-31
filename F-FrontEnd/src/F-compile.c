@@ -5932,6 +5932,18 @@ compile_IMPORT_statement(expr x)
     if(check_inside_INTERFACE_body() == FALSE){
         error("IMPORT statement allowed only in interface body");
     }
+    expv ident_list, arg;
+    list lp;
+    ident_list = EXPR_ARG1(x);
+    if(EXPR_LIST(ident_list)) {
+        FOR_ITEMS_IN_LIST(lp, ident_list) {
+            arg = LIST_ITEM(lp);
+            ID ident = find_ident(EXPR_SYM(arg));
+            if(ident == NULL){
+                error("%s part of the IMPORT statement has not been declared yet.", SYM_NAME(EXPR_SYM(arg)));
+            }
+        }
+    }
     output_statement(list1(F03_IMPORT_STATEMENT, EXPR_ARG1(x)));
 }
 
