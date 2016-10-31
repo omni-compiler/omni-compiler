@@ -1539,6 +1539,9 @@ outx_varDecl(int l, ID id)
     assert(id);
     const int l1 = l + 1;
 
+    if(ID_IS_ASSOCIATIVE(id))
+        return;
+
     outx_tagOfDecl(l, "varDecl", id);
 
     if(PROC_EXT_ID(id)) {

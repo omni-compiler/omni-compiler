@@ -968,12 +968,9 @@ void compile_statement1(int st_no, expr x)
             ID associate_name = find_ident(EXPR_SYM(EXPR_ARG3(x)));
             if(associate_name == NULL){
                 // Define the associate variable
-                associate_name = declare_ident(EXPR_SYM(EXPR_ARG3(x)),CL_VAR);
+                associate_name = declare_ident(EXPR_SYM(EXPR_ARG3(x)), CL_VAR);
+                ID_IS_ASSOCIATIVE(associate_name) = TRUE;
                 ID_TYPE(associate_name) = ID_TYPE(selector);
-            }
-            declare_variable(associate_name);
-            if(EXPR_ARG2(x) != NULL){
-                printf("CONTRUCT_NAME is HERE\n");
             }
             st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), 
                 ID_ADDR(associate_name));
