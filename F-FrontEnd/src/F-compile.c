@@ -963,9 +963,20 @@ void compile_statement1(int st_no, expr x)
           check_INEXEC();
           push_ctl(CTL_SELECT); // TODO special select type ctl
           v = compile_expression(EXPR_ARG1(x));
-          // TODO id/value
-          ID ident = find_ident(EXPR_SYM(EXPR_ARG2(x)));
-          st = list3(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x));
+          ID selector = find_ident(EXPR_SYM(EXPR_ARG1(x)));
+          if(EXPR_HAS_ARG3(x)){
+            ID associate_name = find_ident(EXPR_SYM(EXPR_ARG3(x)));
+            if(associate_name == NULL){
+                // Define the associate variable
+                associate_name = declare_ident(EXPR_SYM(EXPR_ARG3(x)),CL_VAR);
+                ID_TYPE(associate_name) = ID_TYPE(selector);
+            }
+            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), 
+                ID_ADDR(associate_name));
+          } else {
+            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), NULL);
+          }
+          
           CTL_BLOCK(ctl_top) = st;
           break;
     case F_CASELABEL_STATEMENT:
