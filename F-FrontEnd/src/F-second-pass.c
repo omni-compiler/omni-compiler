@@ -232,6 +232,7 @@ static void second_pass_expv_scan(expv v)
       second_pass_expv_scan(v2);
     }
     break;
+  case F03_SELECTTYPE_STATEMENT:
   case F_SELECTCASE_STATEMENT:
     {
       expv v3;
@@ -253,6 +254,8 @@ static void second_pass_expv_scan(expv v)
   case F_COMPGOTO_STATEMENT:
   case STATEMENT_LABEL:
     break;
+  case F03_TYPEIS_STATEMENT:
+  case F03_CLASSIS_STATEMENT:
   case F_CASELABEL_STATEMENT:
     {
       expv v1, v2, v3;
