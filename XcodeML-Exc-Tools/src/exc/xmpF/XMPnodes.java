@@ -73,7 +73,11 @@ public class XMPnodes extends XMPobject {
 
     // check name collision, name = arg(1)
     _name = decl.getArg(0).getString();
-    if(env.findXMPobject(_name,pb) != null){
+    Block blockStmt = (pb != null) ? pb.findParentBlockStmt() : null;
+    if(blockStmt != null &&
+       blockStmt.getXMPobject(_name) != null ||
+       blockStmt == null &&
+       env.findXMPobject(_name,null) != null    ){
       XMP.errorAt(pb,"XMP object '"+_name+"' is already declared");
       return;
     }

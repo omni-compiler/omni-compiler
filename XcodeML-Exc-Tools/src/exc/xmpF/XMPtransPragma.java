@@ -844,7 +844,7 @@ public class XMPtransPragma
     Xobject cond = null;
     if (!info.isNocomm()){
       f = env.declInternIdent(XMP.test_task_on_f,
-			      Xtype.FlogicalFunctionType);
+			      Xtype.FlogicalFunctionType, pb);
       //Xobject cond = f.Call(Xcons.List(on_ref.getDescId().Ref()));
       cond = f.Call(Xcons.List(taskNodesDescId.Ref()));
     }

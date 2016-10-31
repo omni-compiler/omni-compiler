@@ -1,4 +1,5 @@
 program main
+  integer :: k
 !$xmp nodes p(4)
 block
   integer, save :: k
