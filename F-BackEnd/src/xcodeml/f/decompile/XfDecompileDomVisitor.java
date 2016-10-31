@@ -4261,6 +4261,63 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    // SelectCaseStatement
+    class SelectTypeStatementVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "selectTypeStatement" element in XcodeML/F.
+         *
+         * @example <code><div class="Example">
+         * <div class="Strong">
+         * SELECT TYPE ( associate-name => selector)<br/>
+         * </div>
+         * CLASS IS (type1)<br/>
+         * <div class="Indent1">
+         *      (any statement...)<br/>
+         * </div>
+         * TYPE IS (type 2)<br/>
+         * <div class="Indent1">
+         *      (any statement...)<br/>
+         * </div>
+         * CLASS DEFAULT<br/>
+         * <div class="Indent1">
+         *      (any statement...)<br/>
+         * </div>
+         * <div class="Strong">
+         * END SELECT<br/>
+         * </div>
+         * </div></code>
+         * @see xcodeml.f.binding.gen.RVisitorBase#enter(xcodeml.f.binding.gen.
+         *      XbfFselectCaseStatement)
+         */
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XmfWriter writer = _context.getWriter();
+            String constuctName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
+                writer.writeToken(constuctName);
+                writer.writeToken(": ");
+            }
+
+            writer.writeToken("SELECT TYPE (");
+//            invokeEnter(XmDomUtil.getElement(n, "value"));
+
+            writer.writeToken(")");
+            writer.setupNewLine();
+
+  /*          ArrayList<Node> caseLabelNodes =
+                XmDomUtil.collectElements(n, "FcaseLabel");
+            _invokeEnter(caseLabelNodes);*/
+
+            writer.writeToken("END SELECT");
+            if (XfUtilForDom.isNullOrEmpty(constuctName) == false) {
+                writer.writeToken(" ");
+                writer.writeToken(constuctName);
+            }
+            writer.setupNewLine();
+        }
+    }
+
     // FstopStatement
     class FstopStatementVisitor extends XcodeNodeVisitor {
         /**
@@ -6386,6 +6443,7 @@ public class XfDecompileDomVisitor {
         new Pair("FreturnStatement", new FreturnStatementVisitor()),
         new Pair("FrewindStatement", new FrewindStatementVisitor()),
         new Pair("FselectCaseStatement", new FselectCaseStatementVisitor()),
+        new Pair("selectTypeStatement", new SelectTypeStatementVisitor()),
         new Pair("FstopStatement", new FstopStatementVisitor()),
         new Pair("FpauseStatement", new FpauseStatementVisitor()),
         new Pair("FstructConstructor", new FstructConstructorVisitor()),
