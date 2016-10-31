@@ -256,14 +256,6 @@ static void second_pass_expv_scan(expv v)
     break;
   case F03_TYPEIS_STATEMENT:
   case F03_CLASSIS_STATEMENT:
-    {
-      expv v1, v2;
-      v1 = EXPR_ARG1(v); /* condition */
-      v2 = EXPR_ARG2(v); /* body */
-      slen++;
-      second_pass_expv_scan(v2);
-      slen--;
-    }
   case F_CASELABEL_STATEMENT:
     {
       expv v1, v2, v3;

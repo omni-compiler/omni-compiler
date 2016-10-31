@@ -972,6 +972,9 @@ void compile_statement1(int st_no, expr x)
                 ID_TYPE(associate_name) = ID_TYPE(selector);
             }
             declare_variable(associate_name);
+            if(EXPR_ARG2(x) != NULL){
+                printf("CONTRUCT_NAME is HERE\n");
+            }
             st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), 
                 ID_ADDR(associate_name));
           } else {
@@ -1024,14 +1027,17 @@ void compile_statement1(int st_no, expr x)
                 }
                     
                 push_ctl(CTL_CASE);
-                if(EXPR_ARG1(x) != NULL){
-                    printf("CASE: %s\n", SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
-                    ID id = find_ident(EXPR_SYM(EXPR_ARG1(x)));
-                    if(ID_TYPE(id) != NULL){
-                        printf("TYPE of ID found\n");
+
+                if(EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
+                    TYPE_DESC tp = find_struct_decl_parent(EXPR_SYM(EXPR_ARG1(x)));
+                    if(tp == NULL){
+                        error("%s has not been declared.", SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
                     }
+                    expv tmp = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
+                    st = list3(EXPR_CODE(x), tmp, NULL, EXPR_ARG2(x));
+                } else {
+                    st = list3(EXPR_CODE(x), NULL, NULL, EXPR_ARG2(x));
                 }
-                st = list2(EXPR_CODE(x), EXPR_ARG1(x), NULL);
                 CTL_BLOCK(ctl_top) = st;
             } else {
                 error("'class is/type is label', out of place");

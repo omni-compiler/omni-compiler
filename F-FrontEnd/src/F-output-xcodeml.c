@@ -1750,22 +1750,18 @@ outx_typeGuard(int l, expv v, int is_class)
 {
     const int l1 = l + 1;
     outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
-    if(is_class){
-        // TODO set type value correctly
-        //TYPE_DESC tp = EXPV_TYPE(EXPR_ARG1(v));
-        if(EXPR_ARG1(v) == NULL){
+    if(EXPR_ARG3(v) != NULL) { // construct name
+        outx_print(" construct_name=\"%s\"", SYM_NAME(EXPV_NAME(EXPR_ARG3(v))));
+    }
+    if(is_class){ // CLASS IS and CLASS DEFAULT
+        if(EXPR_ARG1(v) == NULL){ // 
             outx_print(" kind=\"CLASS_DEFAULT\">\n");
         } else {
-            outx_print(" kind=\"CLASS_IS\" type=\"%s\">\n", "");
+            outx_print(" kind=\"CLASS_IS\" type=\"%s\">\n", getTypeID(EXPV_TYPE(EXPR_ARG1(v))));
         }
-    } else {
-        // TODO set type value correctly
-        outx_print(" kind=\"TYPE_IS\" type=\"%s\">\n", "");
+    } else { // TYPE IS
+        outx_print(" kind=\"TYPE_IS\" type=\"%s\">\n", getTypeID(EXPV_TYPE(EXPR_ARG1(v))));
     }
-
-
-    // TODO print <id
-    //outx_expv(l1, EXPR_ARG1(v));
 
     outx_body(l1, EXPR_ARG2(v));
     outx_expvClose(l, v);
@@ -1800,9 +1796,8 @@ outx_selectTypeStatement(int l, expv v)
 {
     const int l1 = l + 1;
     list lp = EXPR_LIST(v);
- 
-    // TODO construct_name is wrong at the moment
     outx_tagOfStatementWithConstructName(l, v, EXPR_ARG3(v), 1);
+
     // TODO type or sclass ? XcodeML/F doesn't specify it
     outx_printi(l1, "<id>\n"); 
     if(EXPR_ARG4(v) != NULL){
