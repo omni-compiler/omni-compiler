@@ -233,9 +233,22 @@ static void second_pass_expv_scan(expv v)
     }
     break;
   case F03_SELECTTYPE_STATEMENT:
+    {
+      expv v3, v4;
+      list lp = EXPR_LIST(v);   /* condition & body */
+      v3 = EXPR_ARG3(v);        /* ConstructName */
+      v4 = EXPR_ARG4(v);        /* associate name */
+
+      /* LIST_ITEM(lp) : select(var) ?*/
+      if(LIST_NEXT(lp) && LIST_ITEM(LIST_NEXT(lp))) {
+        FOR_ITEMS_IN_LIST(lp, LIST_ITEM(LIST_NEXT(lp)))
+          second_pass_expv_scan(LIST_ITEM(lp));
+      }
+    }
+    break;
   case F_SELECTCASE_STATEMENT:
     {
-      expv v3;
+      expv v3, v4;
       list lp = EXPR_LIST(v);   /* condition & body */
       v3 = EXPR_ARG3(v);        /* ConstructName */
 

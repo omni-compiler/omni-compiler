@@ -972,8 +972,10 @@ void compile_statement1(int st_no, expr x)
                 ID_IS_ASSOCIATIVE(associate_name) = TRUE;
                 ID_TYPE(associate_name) = ID_TYPE(selector);
             }
+            expv tmp = expv_sym_term(IDENT, ID_TYPE(associate_name), 
+                ID_SYM(associate_name));
             st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), 
-                ID_ADDR(associate_name));
+                tmp);          
           } else {
             st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), NULL);
           }
