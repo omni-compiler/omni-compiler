@@ -18,12 +18,9 @@ OUT_IMG=image_dir0.x image_dir1.x #image_dir_sync1.x #not yet
 
 #---- ALLOC/DEALLOC
 OUT_ALO= autodealloc1.x
-#ifneq ($(ONESICED_LAYER),FJRDMA)
+#ifneq ($(ONESIDED_LAYER),FJRDMA)
 OUT_ALO+=alloc_subnodes2.x
 #endif
-
-#---- ALLOC/DEALLOC
-OUT_ALO=alloc_subnodes2.x autodealloc1.x
 #alloc_subnodes.x ###Operating system error: Cannot allocate memory
 #coarraydir_allocatable3.x  #restriction coarray dir for allocatable coarray
 #coarraydir_allocatable2-mod.x also freezed on ipv-conduit
