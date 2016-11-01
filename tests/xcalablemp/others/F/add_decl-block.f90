@@ -1,5 +1,8 @@
 !$xmp nodes p(2)
 
+#if defined(__GNUC__) && (4 < __GNUC__ || 4 == __GNUC__ && 7 < __GNUC_MINOR__) \
+ || defined(__INTEL_COMPILER) && (1600 < __INTEL_COMPILER)
+
 integer :: ary1(6) = (/1,2,3,4,5,6/)
 integer :: ary2(10) = (/1,2,3,4,5,6,7,8,9,10/)
 !print *, 'line 01 : ', ary1
@@ -143,6 +146,12 @@ else
   call exit(1)
 end if
 !$xmp end task
+
+#else
+!$xmp task on p(1)
+  print *, 'SKIPPED'
+!$xmp end task
+#endif
 
 end
 
