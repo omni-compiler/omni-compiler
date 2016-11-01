@@ -1406,6 +1406,7 @@ classify_statement()
 
     case ALLOCATABLE:
     case ALLOCATE:
+    case BIND:
     case CASE:
     case COMMON:
     case CONTAINS:
@@ -1433,6 +1434,7 @@ classify_statement()
     case KW_IN:
     case KW_KIND:
     case KW_LEN:
+    case KW_NAME:
     case KW_OUT:
     case KW_TO:
     case KW_TYPE:
@@ -3766,6 +3768,7 @@ struct keyword_token keywords[ ] =
     { "allocate",       ALLOCATE },
     { "all",            KW_ALL },       /* #060 coarray */
     { "backspace",      BACKSPACE },
+    { "bind",           BIND },
     { "blockdata",      BLOCKDATA },
     { "block",          BLOCK},      /* optional */
     { "call",           CALL },
@@ -3839,6 +3842,7 @@ struct keyword_token keywords[ ] =
     { "memory",         KW_MEMORY },     /* #060 coarray */
     { "module",         MODULE},
     { "namelist",       NAMELIST },
+    { "name",           KW_NAME },
     { "none",           KW_NONE},
     { "nullify",        NULLIFY},
     { "open",           OPEN },
