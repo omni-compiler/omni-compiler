@@ -1,7 +1,7 @@
 #!/bin/sh
 ##PJM --rsc-list "rscgrp=small"
 #PJM --rsc-list "node=8"
-#PJM --rsc-list "elapse=00:02:00"
+#PJM --rsc-list "elapse=00:01:00"
 #PJM --mpi "shape=8"
 #PJM --stg-transfiles all
 #PJM --mpi "use-rankdir"
@@ -17,8 +17,12 @@ echo
 echo "[MIX]"
 
 for f in @OUT@; do
+    date
     echo $f
     mpiexec -n 8 ./$f
 done
+
+date
+echo completed
 
 
