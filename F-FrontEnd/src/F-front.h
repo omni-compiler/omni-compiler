@@ -718,6 +718,7 @@ extern expr     list2 _ANSI_ARGS_((enum expr_code code, expr x1, expr x2));
 extern expr     list3 _ANSI_ARGS_((enum expr_code code, expr x1, expr x2, expr x3));
 extern expr     list4 _ANSI_ARGS_((enum expr_code code, expr x1, expr x2, expr x3, expr x4));
 extern expr     list5 _ANSI_ARGS_((enum expr_code code, expr x1, expr x2, expr x3, expr x4, expr x5));
+extern expr     list6 _ANSI_ARGS_((enum expr_code code, expr x1, expr x2, expr x3, expr x4, expr x5, expr x6));
 
 extern expr     expr_list_get_n _ANSI_ARGS_((expr x, int n));
 extern int      expr_list_set_n _ANSI_ARGS_((expr x, int n, expr val, int doOverride));
