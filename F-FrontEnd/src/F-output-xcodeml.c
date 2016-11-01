@@ -1801,7 +1801,6 @@ outx_selectTypeStatement(int l, expv v)
     list lp = EXPR_LIST(v);
     outx_tagOfStatementWithConstructName(l, v, EXPR_ARG3(v), 1);
 
-    // TODO type or sclass ? XcodeML/F doesn't specify it
     outx_printi(l1, "<id>\n"); 
     if(EXPR_ARG4(v) != NULL){
         outx_printi(l1+1, "<name>%s</name>\n", SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
