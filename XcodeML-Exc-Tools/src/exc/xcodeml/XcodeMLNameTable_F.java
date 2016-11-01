@@ -12,7 +12,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.LIST, "declarations"),
 			new XcodeMLName(Xcode.LIST, "arguments"),
 			new XcodeMLName(Xcode.LIST, "kind"),
-			
+
 			new XcodeMLName(Xcode.LIST, "list"),
 			new XcodeMLName(Xcode.STRING, "string"),
 
@@ -138,6 +138,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_TYPE_PARAMS, "typeParams"),
 			new XcodeMLName(Xcode.F_TYPE_PARAM_VALUES, "typeParamValues"),
 			new XcodeMLName(Xcode.F_LEN, "len"),
+      new XcodeMLName(Xcode.F_IMPORT_STATEMENT, "FimportDecl"),
 	};
 
 	// constructor
