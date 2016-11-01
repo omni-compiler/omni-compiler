@@ -792,6 +792,15 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
         }
         outx_true(TYPE_IS_CLASS(tp),            "is_class");
+
+        if(TYPE_HAS_BIND(tp)){
+            outx_print(" bind=\"%s\"", "C"); // Only C for the moment
+            if(TYPE_BIND_NAME(tp)){
+                outx_print(" bind_name=\"%s\"", EXPR_STR(TYPE_BIND_NAME(tp)));
+            }
+        }
+
+
     }
 
     if((options & TOPT_INTRINSIC) > 0)
@@ -3504,6 +3513,7 @@ outx_expv(int l, expv v)
     case F95_PUBLIC_SPEC:
     case F95_PRIVATE_SPEC:
     case F03_PROTECTED_SPEC:
+    case F03_BIND_SPEC:
     case F95_IN_EXTENT:
     case F95_OUT_EXTENT:
     case F95_INOUT_EXTENT:
@@ -4033,6 +4043,14 @@ outx_functionType_EXT(int l, EXT_ID ep)
         outx_true(TYPE_IS_PUBLIC(tp), "is_public");
         outx_true(TYPE_IS_PRIVATE(tp), "is_private");
         outx_true(TYPE_IS_PROTECTED(tp), "is_protected");
+
+        if(TYPE_HAS_BIND(tp)){
+            outx_print(" bind=\"%s\"", "C"); 
+            if(TYPE_BIND_NAME(tp)){
+                outx_print(" bind_name=\"%s\"", EXPR_STR(TYPE_BIND_NAME(tp)));
+            }
+        }
+
     }
 
     if(EXT_PROC_ARGS(ep) == NULL) {

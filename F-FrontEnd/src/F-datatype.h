@@ -97,6 +97,7 @@ typedef struct type_descriptor
     int is_declared;           /* boolean for type has declared.
                                   (only used by struct type) */
     int is_modified;           /* modified with VOLATILE or ASYNCHRONOUS */
+    expv bind_name;            /* ISO BIND C name attribute */
 
     struct type_attr {
 #define TYPE_ATTR_PARAMETER         0x00000001
@@ -122,6 +123,7 @@ typedef struct type_descriptor
 #define TYPE_ATTR_KIND              0x00100000
 #define TYPE_ATTR_LEN               0x00200000
 #define TYPE_ATTR_CLASS             0x00400000
+#define TYPE_ATTR_BIND              0x00800000
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -259,6 +261,9 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_CLASS(tp)           ((tp)->attr.type_attr_flags &   TYPE_ATTR_CLASS)
 #define TYPE_SET_CLASS(tp)          ((tp)->attr.type_attr_flags |=  TYPE_ATTR_CLASS)
 #define TYPE_UNSET_CLASS(tp)        ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_CLASS)
+#define TYPE_HAS_BIND(tp)           ((tp)->attr.type_attr_flags &   TYPE_ATTR_BIND)
+#define TYPE_SET_BIND(tp)           ((tp)->attr.type_attr_flags |=  TYPE_ATTR_BIND)
+#define TYPE_UNSET_BIND(tp)         ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_BIND)
 
 #define TYPE_EXTATTR_FLAGS(tp)      ((tp)->attr.exflags)
 #define TYPE_IS_IMPLICIT(tp)        ((tp)->attr.exflags &   TYPE_EXFLAGS_IMPLICIT)
@@ -304,6 +309,7 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_LENG(tp)           ((tp)->leng)
 #define TYPE_PARENT(tp)         ((tp)->parent)
 #define TYPE_PARENT_TYPE(tp)    (TYPE_PARENT(tp)->type)
+#define TYPE_BIND_NAME(tp)      ((tp)->bind_name)
 
 #define TYPE_ARRAY_ASSUME_KIND(tp) ((tp)->array_info.assume_kind)
 

@@ -540,7 +540,7 @@ extern void     declare_procedure
                 _ANSI_ARGS_((enum name_class class,
                              expr name,
                              TYPE_DESC type, expr args, expr prefix_spec,
-                             expr result_opt));
+                             expr result_opt, expr bind_opt));
 extern EXT_ID   declare_current_procedure_ext_id(void);
 
 extern void     compile_type_decl _ANSI_ARGS_((expr typExpre, TYPE_DESC baseTp,

@@ -180,6 +180,9 @@ typedef struct ident_descriptor
                                        * ambiguous function or
                                        * subroutine when pclass ==
                                        * P_EXTERNAL. */
+            int has_bind;             /* if TRUE, proc uses BIND feature */
+            expr bind;                /* temporary storage for bind
+180                                    * information */
         } proc_info;
         struct {
 
@@ -297,6 +300,8 @@ struct use_assoc_info {
 #define PROC_IS_DUMMY_ARG(id) ((id)->info.proc_info.is_dummy)
 #define PROC_IS_FUNC_SUBR_AMBIGUOUS(id) \
     ((id)->info.proc_info.is_func_subr_ambiguous)
+#define PROC_HAS_BIND(id) ((id)->info.proc_info.has_bind)
+#define PROC_BIND(id)   ((id)->info.proc_info.bind)
 
 #define ID_IS_DUMMY_ARG(id) \
     ((ID_STORAGE((id)) == STG_ARG) || \
