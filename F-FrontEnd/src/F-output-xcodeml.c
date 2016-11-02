@@ -114,7 +114,10 @@ xtag(enum expr_code code)
     case F_DO_STATEMENT:            return "FdoStatement";
     case F_DOWHILE_STATEMENT:       return "FdoWhileStatement";
     case F_SELECTCASE_STATEMENT:    return "FselectCaseStatement";
+    case F03_SELECTTYPE_STATEMENT:  return "selectTypeStatement";
     case F_CASELABEL_STATEMENT:     return "FcaseLabel";
+    case F03_CLASSIS_STATEMENT:     return "typeGuard";
+    case F03_TYPEIS_STATEMENT:      return "typeGuard";
     case F_WHERE_STATEMENT:         return "FwhereStatement";
     case F_RETURN_STATEMENT:        return "FreturnStatement";
     case F_CONTINUE_STATEMENT:      return "continueStatement";
@@ -212,6 +215,11 @@ xtag(enum expr_code code)
      */
     case F95_USE_STATEMENT:         return "FuseDecl";
     case F95_USE_ONLY_STATEMENT:    return "FuseOnlyDecl";
+
+    /*
+     * F2003 statement
+     */
+    case F03_IMPORT_STATEMENT:      return "FimportDecl";
 
     /*
      * invalid or no corresponding tag
@@ -1536,6 +1544,9 @@ outx_varDecl(int l, ID id)
     assert(id);
     const int l1 = l + 1;
 
+    if(ID_IS_ASSOCIATIVE(id))
+        return;
+
     outx_tagOfDecl(l, "varDecl", id);
 
     if(PROC_EXT_ID(id)) {
@@ -1739,6 +1750,31 @@ outx_caseLabel(int l, expv v)
     outx_expvClose(l, v);
 }
 
+/**
+ * output typeGuard
+ */
+static void
+outx_typeGuard(int l, expv v, int is_class)
+{
+    const int l1 = l + 1;
+    outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
+    if(EXPR_ARG3(v) != NULL) { // construct name
+        outx_print(" construct_name=\"%s\"", SYM_NAME(EXPV_NAME(EXPR_ARG3(v))));
+    }
+    if(is_class){ // CLASS IS and CLASS DEFAULT
+        if(EXPR_ARG1(v) == NULL){ // 
+            outx_print(" kind=\"CLASS_DEFAULT\">\n");
+        } else {
+            outx_print(" kind=\"CLASS_IS\" type=\"%s\">\n", getTypeID(EXPV_TYPE(EXPR_ARG1(v))));
+        }
+    } else { // TYPE IS
+        outx_print(" kind=\"TYPE_IS\" type=\"%s\">\n", getTypeID(EXPV_TYPE(EXPR_ARG1(v))));
+    }
+
+    outx_body(l1, EXPR_ARG2(v));
+    outx_expvClose(l, v);
+}
+
 
 /**
  * output FselectStatement
@@ -1757,6 +1793,31 @@ outx_selectStatement(int l, expv v)
             outx_expv(l1, LIST_ITEM(lp));
     }
 
+    outx_expvClose(l, v);
+}
+
+/**
+ * output selectTypeStatement for SELECT TYPE statement
+ */
+static void
+outx_selectTypeStatement(int l, expv v)
+{
+    const int l1 = l + 1;
+    list lp = EXPR_LIST(v);
+    outx_tagOfStatementWithConstructName(l, v, EXPR_ARG3(v), 1);
+
+    outx_printi(l1, "<id>\n"); 
+    if(EXPR_ARG4(v) != NULL){
+        outx_printi(l1+1, "<name>%s</name>\n", SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
+    } else {
+        outx_printi(l1+1, "<name></name>\n");
+    }
+    outx_value(l1+1, LIST_ITEM(lp));
+    outx_printi(l1, "</id>\n");
+    if(LIST_NEXT(lp) && LIST_ITEM(LIST_NEXT(lp))) {
+        FOR_ITEMS_IN_LIST(lp, LIST_ITEM(LIST_NEXT(lp)))
+            outx_expv(l1, LIST_ITEM(lp));
+    }
     outx_expvClose(l, v);
 }
 
@@ -1813,6 +1874,27 @@ static void
 outx_returnStatement(int l, expv v)
 {
     outx_tagOfStatementNoChild(l, v, NULL);
+}
+
+/**
+ * output FimportStatement
+ */
+static void
+outx_importStatement(int l, expv v) {
+    const int l1 = l + 1;
+    expv ident_list, arg;
+    list lp;
+    outx_tagOfStatement(l, v);
+    ident_list = EXPR_ARG1(v);
+    if(EXPR_LIST(ident_list)) {
+        FOR_ITEMS_IN_LIST(lp, ident_list) {
+            arg = LIST_ITEM(lp);
+            if(EXPR_CODE(arg) == IDENT){
+                outx_printi(l1, "<name>%s</name>\n", getRawString(arg));
+            }            
+        }
+    }
+    outx_expvClose(l, v);
 }
 
 
@@ -3290,6 +3372,7 @@ outx_expv(int l, expv v)
     case F_DO_STATEMENT:            outx_doStatement(l, v); break;
     case F_DOWHILE_STATEMENT:       outx_doWhileStatement(l, v); break;
     case F_SELECTCASE_STATEMENT:    outx_selectStatement(l, v); break;
+    case F03_SELECTTYPE_STATEMENT:  outx_selectTypeStatement(l, v); break;
     case IF_STATEMENT:
     case F_WHERE_STATEMENT:         outx_IFWHERE_Statement(l, v); break;
     case F_RETURN_STATEMENT:        outx_returnStatement(l, v); break;
@@ -3298,6 +3381,8 @@ outx_expv(int l, expv v)
     case F_COMPGOTO_STATEMENT:      outx_compgotoStatement(l, v); break;
     case STATEMENT_LABEL:           outx_labeledStatement(l, v); break;
     case F_CASELABEL_STATEMENT:     outx_caseLabel(l, v); break;
+    case F03_CLASSIS_STATEMENT:     outx_typeGuard(l, v, 1); break;
+    case F03_TYPEIS_STATEMENT:      outx_typeGuard(l, v, 0); break;
     case F_STOP_STATEMENT:
     case F_PAUSE_STATEMENT:         outx_STOPPAUSE_statement(l, v); break;
     case F_LET_STATEMENT:           outx_assignStatement(l, v); break;
@@ -4542,7 +4627,7 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
     outx_tag(l, "declarations");
 
     /*
-     * FuseDecl
+     * FuseDecl and FimportDecl
      */
     FOR_ITEMS_IN_LIST(lp, EXT_PROC_BODY(parent_ep)) {
         v = LIST_ITEM(lp);
@@ -4552,6 +4637,9 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
             break;
         case F95_USE_ONLY_STATEMENT:
             outx_useOnlyDecl(l1, v);
+            break;
+        case F03_IMPORT_STATEMENT:
+            outx_importStatement(l1, v);
             break;
         default:
             break;

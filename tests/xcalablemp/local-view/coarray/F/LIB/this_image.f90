@@ -1,4 +1,3 @@
-!!   include "xmp_coarray.h"
   real a(1:2,3:5)[6:7,8:10,-3:*]
   n1 = this_image(a, 1)
   n2 = this_image(a, 2)

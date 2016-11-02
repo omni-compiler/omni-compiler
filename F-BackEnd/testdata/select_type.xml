@@ -1,0 +1,238 @@
+<XcodeProgram source="../test/testdata/select_type.f90"
+              language="Fortran"
+              time="2016-10-31 15:36:04"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FstructType type="S7fd8d6c06b00">
+      <symbols>
+        <id type="Freal">
+          <name>x</name>
+        </id>
+        <id type="Freal">
+          <name>y</name>
+        </id>
+      </symbols>
+    </FstructType>
+    <FbasicType type="S7fd8d6c09880" is_class="true" ref="S7fd8d6c06b00"/>
+    <FbasicType type="C7fd8d6c0a470" ref="Fcharacter">
+      <len>
+        <FintConstant type="Fint">14</FintConstant>
+      </len>
+    </FbasicType>
+    <FstructType type="S7fd8d6c07bb0" extends="S7fd8d6c06b00">
+      <symbols>
+        <id type="Fint">
+          <name>color</name>
+        </id>
+      </symbols>
+    </FstructType>
+    <FbasicType type="C7fd8d6c0ad00" ref="Fcharacter">
+      <len>
+        <FintConstant type="Fint">20</FintConstant>
+      </len>
+    </FbasicType>
+    <FbasicType type="C7fd8d6c0b450" ref="Fcharacter">
+      <len>
+        <FintConstant type="Fint">13</FintConstant>
+      </len>
+    </FbasicType>
+    <FbasicType type="C7fd8d6c0c120" ref="Fcharacter">
+      <len>
+        <FintConstant type="Fint">14</FintConstant>
+      </len>
+    </FbasicType>
+    <FbasicType type="C7fd8d6c0ca00" ref="Fcharacter">
+      <len>
+        <FintConstant type="Fint">20</FintConstant>
+      </len>
+    </FbasicType>
+    <FbasicType type="C7fd8d6c0d1a0" ref="Fcharacter">
+      <len>
+        <FintConstant type="Fint">13</FintConstant>
+      </len>
+    </FbasicType>
+    <FbasicType type="C7fd8d6c0e150" ref="Fcharacter">
+      <len>
+        <FintConstant type="Fint">14</FintConstant>
+      </len>
+    </FbasicType>
+    <FbasicType type="C7fd8d6c0ea10" ref="Fcharacter">
+      <len>
+        <FintConstant type="Fint">7</FintConstant>
+      </len>
+    </FbasicType>
+    <FfunctionType type="F7fd8d6c09290" return_type="Fvoid">
+      <params>
+        <name type="S7fd8d6c09880">p</name>
+      </params>
+    </FfunctionType>
+  </typeTable>
+  <globalSymbols>
+    <id sclass="ffunc">
+      <name>select_type</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FmoduleDefinition name="select_type" lineno="1" file="../test/testdata/select_type.f90">
+      <symbols>
+        <id type="S7fd8d6c06b00" sclass="ftype_name" declared_in="select_type">
+          <name>point</name>
+        </id>
+        <id type="S7fd8d6c07bb0" sclass="ftype_name" declared_in="select_type">
+          <name>color_point</name>
+        </id>
+      </symbols>
+      <declarations>
+        <FstructDecl lineno="2" file="../test/testdata/select_type.f90">
+          <name type="S7fd8d6c06b00">point</name>
+        </FstructDecl>
+        <FstructDecl lineno="6" file="../test/testdata/select_type.f90">
+          <name type="S7fd8d6c07bb0">color_point</name>
+        </FstructDecl>
+      </declarations>
+      <FcontainsStatement lineno="10" file="../test/testdata/select_type.f90">
+        <FfunctionDefinition lineno="12" file="../test/testdata/select_type.f90">
+          <name type="F7fd8d6c09290">sub1</name>
+          <symbols>
+            <id type="F7fd8d6c09290" sclass="ffunc">
+              <name>sub1</name>
+            </id>
+            <id type="S7fd8d6c09880" sclass="fparam">
+              <name>p</name>
+            </id>
+            <id type="S7fd8d6c09880" sclass="flocal">
+              <name>assoc_name</name>
+            </id>
+          </symbols>
+          <declarations>
+            <varDecl lineno="13" file="../test/testdata/select_type.f90">
+              <name type="S7fd8d6c09880">p</name>
+            </varDecl>
+          </declarations>
+          <body>
+            <selectTypeStatement lineno="15" file="../test/testdata/select_type.f90">
+              <id>
+                <name></name>
+                <value>
+                  <Var type="S7fd8d6c09880" scope="local">p</Var>
+                </value>
+              </id>
+              <typeGuard lineno="16" file="../test/testdata/select_type.f90" kind="CLASS_IS" type="S7fd8d6c06b00">
+                <body>
+                  <FprintStatement format="*" lineno="17" file="../test/testdata/select_type.f90">
+                    <valueList>
+                      <value>
+                        <FcharacterConstant type="C7fd8d6c0a470">class is point</FcharacterConstant>
+                      </value>
+                    </valueList>
+                  </FprintStatement>
+                </body>
+              </typeGuard>
+              <typeGuard lineno="18" file="../test/testdata/select_type.f90" kind="TYPE_IS" type="S7fd8d6c07bb0">
+                <body>
+                  <FprintStatement format="*" lineno="19" file="../test/testdata/select_type.f90">
+                    <valueList>
+                      <value>
+                        <FcharacterConstant type="C7fd8d6c0ad00">class is color_point</FcharacterConstant>
+                      </value>
+                    </valueList>
+                  </FprintStatement>
+                </body>
+              </typeGuard>
+              <typeGuard lineno="20" file="../test/testdata/select_type.f90" kind="CLASS_DEFAULT">
+                <body>
+                  <FprintStatement format="*" lineno="21" file="../test/testdata/select_type.f90">
+                    <valueList>
+                      <value>
+                        <FcharacterConstant type="C7fd8d6c0b450">class default</FcharacterConstant>
+                      </value>
+                    </valueList>
+                  </FprintStatement>
+                </body>
+              </typeGuard>
+            </selectTypeStatement>
+            <selectTypeStatement construct_name="cname" lineno="24" file="../test/testdata/select_type.f90">
+              <id>
+                <name></name>
+                <value>
+                  <Var type="S7fd8d6c09880" scope="local">p</Var>
+                </value>
+              </id>
+              <typeGuard lineno="25" file="../test/testdata/select_type.f90" construct_name="cname" kind="CLASS_IS" type="S7fd8d6c06b00">
+                <body>
+                  <FprintStatement format="*" lineno="26" file="../test/testdata/select_type.f90">
+                    <valueList>
+                      <value>
+                        <FcharacterConstant type="C7fd8d6c0c120">class is point</FcharacterConstant>
+                      </value>
+                    </valueList>
+                  </FprintStatement>
+                </body>
+              </typeGuard>
+              <typeGuard lineno="27" file="../test/testdata/select_type.f90" construct_name="cname" kind="TYPE_IS" type="S7fd8d6c07bb0">
+                <body>
+                  <FprintStatement format="*" lineno="28" file="../test/testdata/select_type.f90">
+                    <valueList>
+                      <value>
+                        <FcharacterConstant type="C7fd8d6c0ca00">class is color_point</FcharacterConstant>
+                      </value>
+                    </valueList>
+                  </FprintStatement>
+                </body>
+              </typeGuard>
+              <typeGuard lineno="29" file="../test/testdata/select_type.f90" construct_name="cname" kind="CLASS_DEFAULT">
+                <body>
+                  <FprintStatement format="*" lineno="30" file="../test/testdata/select_type.f90">
+                    <valueList>
+                      <value>
+                        <FcharacterConstant type="C7fd8d6c0d1a0">class default</FcharacterConstant>
+                      </value>
+                    </valueList>
+                  </FprintStatement>
+                </body>
+              </typeGuard>
+            </selectTypeStatement>
+            <selectTypeStatement lineno="34" file="../test/testdata/select_type.f90">
+              <id>
+                <name>assoc_name</name>
+                <value>
+                  <Var type="S7fd8d6c09880" scope="local">p</Var>
+                </value>
+              </id>
+              <typeGuard lineno="35" file="../test/testdata/select_type.f90" kind="CLASS_IS" type="S7fd8d6c06b00">
+                <body>
+                  <FprintStatement format="*" lineno="36" file="../test/testdata/select_type.f90">
+                    <valueList>
+                      <value>
+                        <FcharacterConstant type="C7fd8d6c0e150">class is point</FcharacterConstant>
+                      </value>
+                      <value>
+                        <FmemberRef type="Freal" member="x">
+                          <varRef type="S7fd8d6c09880">
+                            <Var type="S7fd8d6c09880" scope="local">assoc_name</Var>
+                          </varRef>
+                        </FmemberRef>
+                      </value>
+                    </valueList>
+                  </FprintStatement>
+                </body>
+              </typeGuard>
+              <typeGuard lineno="39" file="../test/testdata/select_type.f90" kind="CLASS_DEFAULT">
+                <body>
+                  <FprintStatement format="*" lineno="40" file="../test/testdata/select_type.f90">
+                    <valueList>
+                      <value>
+                        <FcharacterConstant type="C7fd8d6c0ea10">default</FcharacterConstant>
+                      </value>
+                    </valueList>
+                  </FprintStatement>
+                </body>
+              </typeGuard>
+            </selectTypeStatement>
+          </body>
+        </FfunctionDefinition>
+      </FcontainsStatement>
+    </FmoduleDefinition>
+  </globalDeclarations>
+</XcodeProgram>

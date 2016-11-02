@@ -12,9 +12,7 @@ OUT_bound = #l0-3okB.x cannot run on SX
 OUT_BUG   = bug462.x
 OUT_ATOMIC = atomic0.x atomic.x atomic2.x #atomicRefRemote.x
 
-#ifneq ($(ONESIDED_LAYER),FJRDMA)
 OUT_NGB  = a2d2-2NGB.x
-#endif
 
 #OUT=$(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_type) $(OUT_NGB)
 OUT= $(OUT_ATOMIC) $(OUT_BUG) $(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_NGB)

@@ -5,6 +5,14 @@
   real as(10,10)[*]
   real,allocatable:: ad0(:,:)[:],ad1(:,:)[:]
 
+  if (xmpf_coarray_uses_fjrdma()) then
+     if (this_image()==1) then
+        write(*,*) "skip autodealloc1.f90 because FJRDMA causes SIGSEGV"
+        write(*,*) "  SEGV_MAPERR, address not mapped to object"
+     endif
+     stop
+  endif
+
   allocate(ad0(1:0,1:10)[*])   !! size zero
   allocate(ad1(1:1,1:10)[*])
   call nfoo(as,ad0,ad1)

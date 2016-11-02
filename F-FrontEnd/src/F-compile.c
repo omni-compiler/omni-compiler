@@ -121,6 +121,7 @@ static void compile_UNLOCK_statement(expr x);
 static void compile_CRITICAL_statement(expr x);
 static void compile_ENDCRITICAL_statement(expr x);
 
+static void compile_IMPORT_statement(expr x); // IMPORT statement
 static void compile_BLOCK_statement(expr x);
 static void compile_ENDBLOCK_statement(expr x);
 
@@ -958,6 +959,30 @@ void compile_statement1(int st_no, expr x)
         CTL_BLOCK(ctl_top) = st;
 
         break;
+
+    case F03_SELECTTYPE_STATEMENT:
+          check_INEXEC();
+          push_ctl(CTL_SELECT); // TODO special select type ctl
+          v = compile_expression(EXPR_ARG1(x));
+          ID selector = find_ident(EXPR_SYM(EXPR_ARG1(x)));
+          if(EXPR_HAS_ARG3(x)){
+            ID associate_name = find_ident(EXPR_SYM(EXPR_ARG3(x)));
+            if(associate_name == NULL){
+                // Define the associate variable
+                associate_name = declare_ident(EXPR_SYM(EXPR_ARG3(x)), CL_VAR);
+                ID_IS_ASSOCIATIVE(associate_name) = TRUE;
+                ID_TYPE(associate_name) = ID_TYPE(selector);
+            }
+            expv tmp = expv_sym_term(IDENT, ID_TYPE(associate_name), 
+                ID_SYM(associate_name));
+            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), 
+                tmp);          
+          } else {
+            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), NULL);
+          }
+          
+          CTL_BLOCK(ctl_top) = st;
+          break;
     case F_CASELABEL_STATEMENT:
         if(CTL_TYPE(ctl_top) == CTL_SELECT  ||
            CTL_TYPE(ctl_top) == CTL_CASE) {
@@ -987,6 +1012,37 @@ void compile_statement1(int st_no, expr x)
 
         } else error("'case label', out of place");
         break;
+        case F03_TYPEIS_STATEMENT:
+        case F03_CLASSIS_STATEMENT:
+            if(CTL_TYPE(ctl_top) == CTL_SELECT
+                || CTL_TYPE(ctl_top) == CTL_CASE)
+            {
+                if (CTL_TYPE(ctl_top) == CTL_CASE) {
+                    CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+                    CURRENT_STATEMENTS = NULL;
+                    
+                    if (endlineno_flag)
+                         EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                    pop_ctl();
+                }
+                    
+                push_ctl(CTL_CASE);
+
+                if(EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
+                    TYPE_DESC tp = find_struct_decl_parent(EXPR_SYM(EXPR_ARG1(x)));
+                    if(tp == NULL){
+                        error("%s has not been declared.", SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+                    }
+                    expv tmp = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
+                    st = list3(EXPR_CODE(x), tmp, NULL, EXPR_ARG2(x));
+                } else {
+                    st = list3(EXPR_CODE(x), NULL, NULL, EXPR_ARG2(x));
+                }
+                CTL_BLOCK(ctl_top) = st;
+            } else {
+                error("'class is/type is label', out of place");
+            }
+            break;
     case F_ENDSELECT_STATEMENT:
         if(CTL_TYPE(ctl_top) == CTL_SELECT) {
             CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;
@@ -1075,6 +1131,11 @@ void compile_statement1(int st_no, expr x)
     case F03_PROTECTED_STATEMENT:
         check_INDCL();
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsProtected);
+        break;
+
+    case F03_IMPORT_STATEMENT: // IMPORT statement
+        check_INDCL();
+        compile_IMPORT_statement(x);
         break;
 
     case F2008_BLOCK_STATEMENT:
@@ -5918,6 +5979,29 @@ check_image_control_statement_available() {
     return TRUE;
 }
 
+/*
+ * IMPORT statement
+ */
+static void
+compile_IMPORT_statement(expr x)
+{
+    if(check_inside_INTERFACE_body() == FALSE){
+        error("IMPORT statement allowed only in interface body");
+    }
+    expv ident_list, arg;
+    list lp;
+    ident_list = EXPR_ARG1(x);
+    if(EXPR_LIST(ident_list)) {
+        FOR_ITEMS_IN_LIST(lp, ident_list) {
+            arg = LIST_ITEM(lp);
+            ID ident = find_ident(EXPR_SYM(arg));
+            if(ident == NULL){
+                error("%s part of the IMPORT statement has not been declared yet.", SYM_NAME(EXPR_SYM(arg)));
+            }
+        }
+    }
+    output_statement(list1(F03_IMPORT_STATEMENT, EXPR_ARG1(x)));
+}
 
 static void
 compile_BLOCK_statement(expr x)
