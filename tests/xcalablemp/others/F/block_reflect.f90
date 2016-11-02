@@ -54,6 +54,7 @@ block
 end block
 
 #else
+!$xmp nodes p(4)
 !$xmp task on p(1)
   print *, 'SKIPPED'
 !$xmp end task
