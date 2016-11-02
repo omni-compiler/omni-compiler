@@ -14,15 +14,15 @@
 
         SUBROUTINE assign_t_from_int (me, i)
           IMPLICIT NONE
-          TYPE(t), INTENT(OUT) :: me
+          CLASS(t), INTENT(OUT) :: me
           INTEGER, INTENT(IN) :: i
-          me = t (i)
+          me%i = i
         END SUBROUTINE assign_t_from_int
 
         LOGICAL FUNCTION equals_t_int (me, i)
           IMPLICIT NONE
-          TYPE(t) :: me
-          INTEGER :: i
+          CLASS(t), INTENT(IN) :: me
+          INTEGER, INTENT(IN) :: i
           equals_t_int = (me%i == i)
         END FUNCTION equals_t_int
 

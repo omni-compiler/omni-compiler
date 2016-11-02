@@ -2693,6 +2693,14 @@ is_operator_proc(EXT_ID ep)
     TYPE_DESC ret_type = EXT_PROC_TYPE(ep);
     expv args = EXT_PROC_ARGS(ep);
     TYPE_DESC tp;
+    ID proc_id_list;
+    ID id;
+
+    if (ep == NULL) {
+        return FALSE;
+    }
+
+    proc_id_list = EXT_PROC_ID_LIST(ep);
 
     if (IS_SUBR(ret_type)) {
         return FALSE;
@@ -2702,13 +2710,13 @@ is_operator_proc(EXT_ID ep)
         return FALSE;
     }
 
-    tp = EXPV_TYPE(EXPR_ARG1(args));
-    if (TYPE_IS_INTENT_IN(tp)) {
+    id = find_ident_head(EXPR_SYM(EXPR_ARG1(EXPR_ARG1(args))), proc_id_list);
+    if (id == NULL || ID_TYPE(id) == NULL || !(TYPE_IS_INTENT_IN(ID_TYPE(id)))) {
         return FALSE;
     }
 
-    tp = EXPV_TYPE(EXPR_ARG2(args));
-    if (TYPE_IS_INTENT_IN(tp)) {
+    id = find_ident_head(EXPR_SYM(EXPR_ARG1(EXPR_ARG2(args))), proc_id_list);
+    if (id == NULL || ID_TYPE(id) == NULL || !(TYPE_IS_INTENT_IN(ID_TYPE(id)))) {
         return FALSE;
     }
 
@@ -2722,6 +2730,14 @@ is_assignment_proc(EXT_ID ep)
     TYPE_DESC ret_type = EXT_PROC_TYPE(ep);
     expv args = EXT_PROC_ARGS(ep);
     TYPE_DESC tp;
+    ID proc_id_list;
+    ID id;
+
+    if (ep == NULL) {
+        return FALSE;
+    }
+
+    proc_id_list = EXT_PROC_ID_LIST(ep);
 
     if (!IS_SUBR(ret_type)) {
         return FALSE;
@@ -2731,13 +2747,13 @@ is_assignment_proc(EXT_ID ep)
         return FALSE;
     }
 
-    tp = EXPV_TYPE(EXPR_ARG1(args));
-    if (TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp)) {
+    id = find_ident_head(EXPR_SYM(EXPR_ARG1(EXPR_ARG1(args))), proc_id_list);
+    if (id == NULL || ID_TYPE(id) == NULL || !(TYPE_IS_INTENT_OUT(ID_TYPE(id)) || TYPE_IS_INTENT_INOUT(ID_TYPE(id)))) {
         return FALSE;
     }
 
-    tp = EXPV_TYPE(EXPR_ARG2(args));
-    if (TYPE_IS_INTENT_IN(tp)) {
+    id = find_ident_head(EXPR_SYM(EXPR_ARG1(EXPR_ARG2(args))), proc_id_list);
+    if (id == NULL || ID_TYPE(id) == NULL || !(TYPE_IS_INTENT_IN(ID_TYPE(id)))) {
         return FALSE;
     }
 
@@ -2802,17 +2818,18 @@ check_type_bound_procedures()
                  * If a procedure is bound from a operator generics and a assignment generics,
                  * raise an error.
                  */
-                error("operator and assingnment shouldn't co-exist");
+                error("type-bound procedure that is bound to an operator cannot be bound to an assignment");
             }
-            if ((ep = TYPE_EXT_ID(ID_TYPE(bindto))) != NULL) {
+
+            if ((ep = TYPE_EXT_ID(ID_TYPE(tbp))) != NULL) {
                 /* already bounded, so check type */
-                if (TBP_IS_OPERATOR(bindto)) {
+                if (TBP_IS_OPERATOR(tbp)) {
                     if (!is_operator_proc(ep)) {
                         error_at_id(bindto, "should be a function");
                         return;
                     }
                 }
-                if (TBP_IS_ASSIGNMENT(bindto)) {
+                if (TBP_IS_ASSIGNMENT(tbp)) {
                     if (!is_assignment_proc(ep)) {
                         error("not assiginment");
                         return;
