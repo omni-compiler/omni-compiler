@@ -1,4 +1,4 @@
-/* 
+/*
  * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
  * $TSUKUBA_Copyright:
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
@@ -60,7 +60,7 @@ public class XfDecompileDomVisitor {
         if (n != null) {
             try {
                 StringWriter w = new StringWriter();
-                Transformer t = 
+                Transformer t =
                     TransformerFactory.newInstance().newTransformer();
                 t.transform(new DOMSource(n),
                             new StreamResult(w));
@@ -233,6 +233,23 @@ public class XfDecompileDomVisitor {
             if (XmDomUtil.getAttrBool(basicTypeNode, "is_volatile")) {
                 writer.writeToken(", ");
                 writer.writeToken("VOLATILE");
+                break;
+            }
+        }
+
+        for (Node basicTypeNode : basicTypeNodeArray) {
+            String bind = XmDomUtil.getAttr(basicTypeNode, "bind");
+            if (XfUtilForDom.isNullOrEmpty(bind) == false) {
+                writer.writeToken(", ");
+                writer.writeToken("BIND(" + bind.toUpperCase() + ")");
+                break;
+            }
+        }
+
+        for (Node basicTypeNode : basicTypeNodeArray) {
+            if (XmDomUtil.getAttrBool(basicTypeNode, "is_value")) {
+                writer.writeToken(", ");
+                writer.writeToken("VALUE");
                 break;
             }
         }
@@ -1981,7 +1998,7 @@ public class XfDecompileDomVisitor {
                 writer.writeToken(" ( ");
                 writer.writeToken(typeName);
                 writer.writeToken(" ) ");
-            } 
+            }
 
             String constructName = XmDomUtil.getAttr(n, "construct_name");
             if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
@@ -2800,6 +2817,19 @@ public class XfDecompileDomVisitor {
                 invokeEnter(XmDomUtil.getElement(functionTypeNode, "params"));
 
                 writer.writeToken(")");
+
+                // ISO C BINDING feature
+                String bind = XmDomUtil.getAttr(functionTypeNode, "bind");
+                if(XfUtilForDom.isNullOrEmpty(bind) == false) {
+                    writer.writeToken(" ");
+                    writer.writeToken(" BIND(" + bind.toUpperCase());
+                    String bindName = XmDomUtil.getAttr(functionTypeNode, "bind_name");
+                    if(XfUtilForDom.isNullOrEmpty(bindName) == false){
+                        writer.writeToken(", NAME=\"" + bindName + "\"");
+                    }
+                    writer.writeToken(")");
+                }
+
             } else {
                 // ========
                 // FUNCTION
@@ -2830,6 +2860,18 @@ public class XfDecompileDomVisitor {
                     XmDomUtil.getAttr(functionTypeNode, "result_name");
                 if (XfUtilForDom.isNullOrEmpty(functionResultName) == false) {
                     writer.writeToken(" RESULT(" + functionResultName + ")");
+                }
+
+                // ISO C BINDING feature
+                String bind = XmDomUtil.getAttr(functionTypeNode, "bind");
+                if(XfUtilForDom.isNullOrEmpty(bind) == false) {
+                    writer.writeToken(" ");
+                    writer.writeToken(" BIND(" + bind.toUpperCase());
+                    String bindName = XmDomUtil.getAttr(functionTypeNode, "bind_name");
+                    if(XfUtilForDom.isNullOrEmpty(bindName) == false){
+                        writer.writeToken(", NAME=\"" + bindName + "\"");
+                    }
+                    writer.writeToken(")");
                 }
             }
 
@@ -2971,6 +3013,18 @@ public class XfDecompileDomVisitor {
 
                 writer.writeToken(")");
 
+                // ISO C BINDING feature
+                String bind = XmDomUtil.getAttr(functionTypeNode, "bind");
+                if(XfUtilForDom.isNullOrEmpty(bind) == false) {
+                    writer.writeToken(" ");
+                    writer.writeToken(" BIND(" + bind.toUpperCase());
+                    String bindName = XmDomUtil.getAttr(functionTypeNode, "bind_name");
+                    if(XfUtilForDom.isNullOrEmpty(bindName) == false){
+                        writer.writeToken(", NAME=\"" + bindName + "\"");
+                    }
+                    writer.writeToken(")");
+                }
+
             } else {
                 // ========
                 // FUNCTION
@@ -3009,6 +3063,18 @@ public class XfDecompileDomVisitor {
                     XmDomUtil.getAttr(functionTypeNode, "result_name");
                 if (XfUtilForDom.isNullOrEmpty(functionResultName) == false) {
                     writer.writeToken(" RESULT(" + functionResultName + ")");
+                }
+
+                // ISO C BINDING feature
+                String bind = XmDomUtil.getAttr(functionTypeNode, "bind");
+                if(XfUtilForDom.isNullOrEmpty(bind) == false) {
+                    writer.writeToken(" ");
+                    writer.writeToken(" BIND(" + bind.toUpperCase());
+                    String bindName = XmDomUtil.getAttr(functionTypeNode, "bind_name");
+                    if(XfUtilForDom.isNullOrEmpty(bindName) == false){
+                        writer.writeToken(", NAME=\"" + bindName + "\"");
+                    }
+                    writer.writeToken(")");
                 }
             }
 
@@ -3708,7 +3774,7 @@ public class XfDecompileDomVisitor {
             writer.writeIsolatedLine(content);
         }
     }
-    
+
     // OMPPragma
     class OMPPragmaVisitor extends XcodeNodeVisitor {
         /**
@@ -3717,10 +3783,10 @@ public class XfDecompileDomVisitor {
         @Override public void enter(Node n) {
 
             _writeLineDirective(n);
-            
+
             boolean nowaitFlag = false;
             boolean copyprivateFlag = false;
-            
+
             XmfWriter writer = _context.getWriter();
 
 	    XmfWriter.StatementMode prevMode = writer.getStatementMode();
@@ -3729,7 +3795,7 @@ public class XfDecompileDomVisitor {
             // directive
             Node dir = n.getFirstChild();
             String dirName = XmDomUtil.getContentText(dir);
-            
+
             if (dirName.equals("FOR")) dirName = "DO";
             writer.writeToken("!$OMP " + dirName);
 
@@ -3737,7 +3803,7 @@ public class XfDecompileDomVisitor {
 		dirName.equals("FLUSH")){
 
             	writer.writeToken("(");
-            	
+
             	NodeList varList = dir.getNextSibling().getChildNodes();
         		invokeEnter(varList.item(0));
         		for (int j = 1; j < varList.getLength(); j++){
@@ -3745,11 +3811,11 @@ public class XfDecompileDomVisitor {
         			writer.writeToken(",");
         			invokeEnter(var);
         		}
-        
+
         		writer.writeToken(")");
 			writer.setStatementMode(prevMode);
         		writer.setupNewLine();
-        		
+
         		return;
             }
             else if (dirName.equals("BARRIER")){
@@ -3763,12 +3829,12 @@ public class XfDecompileDomVisitor {
 	    Node copyprivate_arg = null;
 
             NodeList list0 = clause.getChildNodes();
-            for (int i = 0; i < list0.getLength(); i++){          
+            for (int i = 0; i < list0.getLength(); i++){
             	Node childNode = list0.item(i);
                 if (childNode.getNodeType() != Node.ELEMENT_NODE) {
                     continue;
                 }
-                
+
                 String clauseName = XmDomUtil.getContentText(childNode);
                 String operator = "";
                 if (clauseName.equals("DATA_DEFAULT"))               clauseName = "DEFAULT";
@@ -3795,15 +3861,15 @@ public class XfDecompileDomVisitor {
                 else if (clauseName.equals("DIR_IF"))                clauseName = "IF";
                 else if (clauseName.equals("DIR_NOWAIT"))           {clauseName = "NOWAIT";    nowaitFlag = true;}
                 else if (clauseName.equals("DIR_SCHEDULE"))          clauseName = "SCHEDULE";
-            
+
                 if (!clauseName.equals("NOWAIT") && !clauseName.equals("COPYPRIVATE")){
 		  writer.writeToken(clauseName);
-                
+
 		  Node arg = childNode.getFirstChild().getNextSibling();
 		  if (arg != null){
 		    writer.writeToken("(");
 		    if (operator != "") writer.writeToken(operator + " :");
-                    
+
 		    NodeList varList = arg.getChildNodes();
 
 		    if (clauseName.equals("SCHEDULE")){
@@ -3832,15 +3898,15 @@ public class XfDecompileDomVisitor {
 		      writer.writeToken(",");
 		      invokeEnter(var);
 		    }
-                
+
 		    writer.writeToken(")");
 		  }
                 }
-                
+
             }
 
 	    writer.setStatementMode(prevMode);
-            
+
             writer.setupNewLine();
 
             // body
@@ -4350,7 +4416,7 @@ public class XfDecompileDomVisitor {
             if(!name.getTextContent().equals("")){
               writer.writeToken(name.getTextContent());
               writer.writeToken("=>");
-            } 
+            }
             invokeEnter(XmDomUtil.getElement(id, "value"));
 
             writer.writeToken(")");
@@ -6346,7 +6412,7 @@ public class XfDecompileDomVisitor {
     ArrayList<String> _get_coarrayRuntimeLibNames__NEW__() {
 
       String[] nameArray = XfDecompileDomVisitor_coarrayLibs.EntryNameArray;
-      ArrayList<String> libNames = 
+      ArrayList<String> libNames =
         new ArrayList<String>(Arrays.asList(nameArray));
 
       /********************************

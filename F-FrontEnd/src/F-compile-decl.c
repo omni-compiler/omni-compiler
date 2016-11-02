@@ -82,7 +82,7 @@ link_parent_defined_by(SYMBOL sym)
 void
 declare_procedure(enum name_class class,
                   expr name, TYPE_DESC type, expr args,
-                  expr prefix_spec, expr result_opt)
+                  expr prefix_spec, expr result_opt, expr bind_opt)
 {
     SYMBOL s = NULL;
     ID id;
@@ -233,12 +233,31 @@ declare_procedure(enum name_class class,
                 TYPE_SET_ELEMENTAL(type);
             }
         }
+
+        if (bind_opt) {
+            PROC_HAS_BIND(id) = TRUE;
+            TYPE_SET_BIND(id);
+            if (type != NULL) {
+               TYPE_SET_BIND(type);
+            }
+            expr bind_name = EXPR_ARG1(bind_opt);
+            if(bind_name){
+                PROC_BIND(id) = bind_name;
+                if(type != NULL) {
+                    TYPE_BIND_NAME(type) = bind_name;
+                }
+            }
+        }
+
         ID_STORAGE(id) = STG_EXT;
         declare_dummy_args(args, CL_PROC);
         CURRENT_PROCEDURE = id;
         /* make link before declare_current_procedure_ext_id() */
         link_parent_defined_by(CURRENT_PROC_NAME);
         (void)declare_current_procedure_ext_id();
+
+
+
 
         break;
     }
@@ -1781,6 +1800,12 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
 
             TYPE_SET_LEN(tp);
             break;
+        case F03_BIND_SPEC:
+            TYPE_SET_BIND(tp);
+            break;
+        case F03_VALUE_SPEC:
+            TYPE_SET_VALUE(tp);
+            break;            
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }
@@ -3488,6 +3513,9 @@ compile_struct_decl(expr ident, expr type, expr type_params)
                 TYPE_PARENT(tp) = new_ident_desc(EXPR_SYM(EXPR_ARG1(x)));
                 TYPE_PARENT_TYPE(tp) = parent_type;
             }; break;
+            case F03_BIND_SPEC:
+                TYPE_SET_BIND(tp);
+                break;
             default:
                 break;
         }
