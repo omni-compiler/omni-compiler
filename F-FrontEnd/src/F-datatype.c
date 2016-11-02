@@ -1113,7 +1113,7 @@ type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
     ID id1;
     ID id2;
 
-    if (f1 == NULL || f2 == NULL) {
+    if (tbp1 == NULL || tbp2 == NULL) {
         // may never reach
         return FALSE;
     }

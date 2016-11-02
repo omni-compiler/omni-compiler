@@ -2847,10 +2847,9 @@ check_type_bound_procedures()
                     error("should not override member");
                 }
 
-                /* if (!type_bound_procedure_types_are_compatible(tbp, parent_tbp) { */
-                /*     error("type mismatch to override"); */
-                /* } */
-
+                if (!type_bound_procedure_types_are_compatible(tbp, parent_tbp)) {
+                    error_at_id(tbp, "type mismatch to override");
+                }
             }
         }
 
