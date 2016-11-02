@@ -302,6 +302,8 @@ public enum Xcode
     F_TYPE_PARAMS                   ( 221, 'L', null, null),
     F_TYPE_PARAM_VALUES             ( 222, 'L', null, null),
     F_LEN                           ( 223, 'L', null, null),
+     // Fortran2003: IMPORT Statement
+    F_IMPORT_STATEMENT              ( 224, 'L', null, null ),
      // Fortran2003: SELECT TYPE
     SELECT_TYPE_STATEMENT           ( 225, 'L', null, null),
     TYPE_GUARD                      ( 226, 'L', null, null),

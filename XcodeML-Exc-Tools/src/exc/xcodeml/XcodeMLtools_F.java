@@ -311,6 +311,10 @@ public class XcodeMLtools_F extends XcodeMLtools {
       return setCommonAttributes(n,
 				 Xcons.List(code, type, x, getChildList(n)));
 
+    case F_IMPORT_STATEMENT:
+      return setCommonAttributes(n,
+         Xcons.List(code, type, getChildList(n)));
+
     case F_MODULE_PROCEDURE_DECL:
       boolean isModuleSpecified = getAttrBool(n, "is_module_specified");
       return setCommonAttributes(n,

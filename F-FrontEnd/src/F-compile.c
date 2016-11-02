@@ -121,6 +121,7 @@ static void compile_UNLOCK_statement(expr x);
 static void compile_CRITICAL_statement(expr x);
 static void compile_ENDCRITICAL_statement(expr x);
 
+static void compile_IMPORT_statement(expr x); // IMPORT statement
 static void compile_BLOCK_statement(expr x);
 static void compile_ENDBLOCK_statement(expr x);
 
@@ -1130,6 +1131,11 @@ void compile_statement1(int st_no, expr x)
     case F03_PROTECTED_STATEMENT:
         check_INDCL();
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsProtected);
+        break;
+
+    case F03_IMPORT_STATEMENT: // IMPORT statement
+        check_INDCL();
+        compile_IMPORT_statement(x);
         break;
 
     case F2008_BLOCK_STATEMENT:
@@ -5973,6 +5979,29 @@ check_image_control_statement_available() {
     return TRUE;
 }
 
+/*
+ * IMPORT statement
+ */
+static void
+compile_IMPORT_statement(expr x)
+{
+    if(check_inside_INTERFACE_body() == FALSE){
+        error("IMPORT statement allowed only in interface body");
+    }
+    expv ident_list, arg;
+    list lp;
+    ident_list = EXPR_ARG1(x);
+    if(EXPR_LIST(ident_list)) {
+        FOR_ITEMS_IN_LIST(lp, ident_list) {
+            arg = LIST_ITEM(lp);
+            ID ident = find_ident(EXPR_SYM(arg));
+            if(ident == NULL){
+                error("%s part of the IMPORT statement has not been declared yet.", SYM_NAME(EXPR_SYM(arg)));
+            }
+        }
+    }
+    output_statement(list1(F03_IMPORT_STATEMENT, EXPR_ARG1(x)));
+}
 
 static void
 compile_BLOCK_statement(expr x)
