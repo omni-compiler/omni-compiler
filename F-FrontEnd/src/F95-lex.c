@@ -1453,6 +1453,7 @@ classify_statement()
     case SEQUENCE:
     case STOP:
     case SUBROUTINE:
+    case VALUE:
     case TARGET:
         if(fixed_format_flag && exposed_eql) {
           goto ret_LET;
@@ -3903,6 +3904,7 @@ struct keyword_token keywords[ ] =
     { "undefined",      KW_UNDEFINED },
     { "unlock",         UNLOCK },        /* #060 coarray */
     { "use",            KW_USE },
+    { "value",          VALUE },
     { "where",          WHERE },
     { "while",          KW_WHILE},
     { "write",          WRITE },

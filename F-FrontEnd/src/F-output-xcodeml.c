@@ -317,6 +317,8 @@ xtag(enum expr_code code)
     case F95_PUBLIC_SPEC:
     case F95_PRIVATE_SPEC:
     case F03_PROTECTED_SPEC:
+    case F03_BIND_SPEC:
+    case F03_VALUE_SPEC:
     case F95_IN_EXTENT:
     case F95_OUT_EXTENT:
     case F95_INOUT_EXTENT:
@@ -795,7 +797,9 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_ALLOCATABLE(tp),      "is_allocatable");
         outx_true(TYPE_IS_SEQUENCE(tp),         "is_sequence");
         outx_true(TYPE_IS_INTERNAL_PRIVATE(tp), "is_internal_private");
-        outx_true(TYPE_IS_VOLATILE(tp),          "is_volatile");
+        outx_true(TYPE_IS_VOLATILE(tp),         "is_volatile");
+        outx_true(TYPE_IS_VALUE(tp),            "is_value");
+
         if (TYPE_PARENT(tp)) {
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
         }
@@ -3599,6 +3603,7 @@ outx_expv(int l, expv v)
     case F95_PRIVATE_SPEC:
     case F03_PROTECTED_SPEC:
     case F03_BIND_SPEC:
+    case F03_VALUE_SPEC:
     case F95_IN_EXTENT:
     case F95_OUT_EXTENT:
     case F95_INOUT_EXTENT:

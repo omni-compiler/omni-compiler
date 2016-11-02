@@ -1800,6 +1800,12 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
 
             TYPE_SET_LEN(tp);
             break;
+        case F03_BIND_SPEC:
+            TYPE_SET_BIND(tp);
+            break;
+        case F03_VALUE_SPEC:
+            TYPE_SET_VALUE(tp);
+            break;            
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }

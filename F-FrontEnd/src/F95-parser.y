@@ -148,6 +148,7 @@
 %token CLASSIS
 %token TYPEIS
 %token CLASSDEFAULT
+%token VALUE
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -799,6 +800,8 @@ declaration_statement95:
         { $$ = list1(F03_PROTECTED_STATEMENT, $3); }
         | SEQUENCE
         { $$ = list0(F95_SEQUENCE_STATEMENT); }
+        | KW_USE ',' KW INTRINSIC COL2 IDENTIFIER
+        { $$ = list2(F95_USE_STATEMENT,$6,NULL); }        
         | KW_USE IDENTIFIER
         { $$ = list2(F95_USE_STATEMENT,$2,NULL); }
         | KW_USE IDENTIFIER ',' KW use_rename_list
@@ -807,6 +810,10 @@ declaration_statement95:
         { $$ = list2(F95_USE_ONLY_STATEMENT,$2, NULL); }
         | KW_USE IDENTIFIER ',' KW KW_ONLY ':' use_only_list
         { $$ = list2(F95_USE_ONLY_STATEMENT,$2,$7); }
+        | KW_USE ',' KW INTRINSIC COL2 IDENTIFIER ',' KW KW_ONLY ':' /* empty */
+        { $$ = list2(F95_USE_ONLY_STATEMENT,$6, NULL); }
+        | KW_USE ',' KW INTRINSIC COL2 IDENTIFIER ',' KW KW_ONLY ':' use_only_list
+        { $$ = list2(F95_USE_ONLY_STATEMENT,$6,$11); }
         | INTENT '(' KW intent_spec ')' COL2_or_null ident_list
         { $$ = list2(F95_INTENT_STATEMENT, $4, $7); }
         | ALLOCATABLE COL2_or_null array_allocation_list
@@ -927,6 +934,8 @@ attr_spec:
         { $$ = list0(F03_LEN_SPEC); }
         | BIND '(' IDENTIFIER /* C */ ')'
         { $$ = list0(F03_BIND_SPEC); }
+        | VALUE
+        { $$ = list0(F03_VALUE_SPEC); } 
         ;
 
 access_spec:
