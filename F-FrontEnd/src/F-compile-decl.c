@@ -1800,6 +1800,12 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
 
             TYPE_SET_LEN(tp);
             break;
+        case F03_BIND_SPEC:
+            TYPE_SET_BIND(tp);
+            break;
+        case F03_VALUE_SPEC:
+            TYPE_SET_VALUE(tp);
+            break;            
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }
@@ -3507,6 +3513,9 @@ compile_struct_decl(expr ident, expr type, expr type_params)
                 TYPE_PARENT(tp) = new_ident_desc(EXPR_SYM(EXPR_ARG1(x)));
                 TYPE_PARENT_TYPE(tp) = parent_type;
             }; break;
+            case F03_BIND_SPEC:
+                TYPE_SET_BIND(tp);
+                break;
             default:
                 break;
         }

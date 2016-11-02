@@ -139,10 +139,16 @@
 
 /* F03 keywords */
 %token PROTECTED
+%token IMPORT
 %token EXTENDS
 %token CLASS
 %token BIND
 %token KW_NAME
+%token KW_IS
+%token CLASSIS
+%token TYPEIS
+%token CLASSDEFAULT
+%token VALUE
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -794,6 +800,8 @@ declaration_statement95:
         { $$ = list1(F03_PROTECTED_STATEMENT, $3); }
         | SEQUENCE
         { $$ = list0(F95_SEQUENCE_STATEMENT); }
+        | KW_USE ',' KW INTRINSIC COL2 IDENTIFIER
+        { $$ = list2(F95_USE_STATEMENT,$6,NULL); }        
         | KW_USE IDENTIFIER
         { $$ = list2(F95_USE_STATEMENT,$2,NULL); }
         | KW_USE IDENTIFIER ',' KW use_rename_list
@@ -802,10 +810,16 @@ declaration_statement95:
         { $$ = list2(F95_USE_ONLY_STATEMENT,$2, NULL); }
         | KW_USE IDENTIFIER ',' KW KW_ONLY ':' use_only_list
         { $$ = list2(F95_USE_ONLY_STATEMENT,$2,$7); }
+        | KW_USE ',' KW INTRINSIC COL2 IDENTIFIER ',' KW KW_ONLY ':' /* empty */
+        { $$ = list2(F95_USE_ONLY_STATEMENT,$6, NULL); }
+        | KW_USE ',' KW INTRINSIC COL2 IDENTIFIER ',' KW KW_ONLY ':' use_only_list
+        { $$ = list2(F95_USE_ONLY_STATEMENT,$6,$11); }
         | INTENT '(' KW intent_spec ')' COL2_or_null ident_list
         { $$ = list2(F95_INTENT_STATEMENT, $4, $7); }
         | ALLOCATABLE COL2_or_null array_allocation_list
         { $$ = list1(F95_ALLOCATABLE_STATEMENT,$3); }
+        | IMPORT COL2_or_null ident_list
+        { $$ = list1(F03_IMPORT_STATEMENT, $3); }
         | VOLATILE COL2_or_null access_ident_list
         { $$ = list1(F03_VOLATILE_STATEMENT, $3); }
         ;
@@ -920,6 +934,8 @@ attr_spec:
         { $$ = list0(F03_LEN_SPEC); }
         | BIND '(' IDENTIFIER /* C */ ')'
         { $$ = list0(F03_BIND_SPEC); }
+        | VALUE
+        { $$ = list0(F03_VALUE_SPEC); } 
         ;
 
 access_spec:
@@ -941,6 +957,8 @@ type_attr_spec_list:
 type_attr_spec:
           EXTENDS '(' IDENTIFIER ')'
         { $$ = list1(F03_EXTENDS_SPEC, $3); }
+        | BIND '(' IDENTIFIER /* C */ ')'
+        { $$ = list0(F03_BIND_SPEC); }        
         | access_spec
         { $$ = $1; }
         ;
@@ -1428,6 +1446,10 @@ executable_statement:
         { $$ = list0(F_ENDWHERE_STATEMENT); }
         | SELECT '(' expr ')'
         { $$ = list2(F_SELECTCASE_STATEMENT, $3, st_name); }
+        | KW_SELECT KW KW_TYPE '(' expr ')'
+        { $$ = list2(F03_SELECTTYPE_STATEMENT, $5, st_name); }
+        | KW_SELECT KW KW_TYPE '(' IDENTIFIER REF_OP expr ')'
+        { $$ = list3(F03_SELECTTYPE_STATEMENT, $7, st_name, $5); }
         | CASE '(' scene_list ')' name_or_null
         { $$ = list2(F_CASELABEL_STATEMENT, $3, $5); }
         | CASEDEFAULT name_or_null
@@ -1438,6 +1460,12 @@ executable_statement:
         { $$ = list1(F2008_BLOCK_STATEMENT,st_name); }
         | ENDBLOCK name_or_null
         { $$ = list1(F2008_ENDBLOCK_STATEMENT,$2); }
+        | CLASSIS '(' IDENTIFIER ')' name_or_null
+        { $$ = list2(F03_CLASSIS_STATEMENT, $3, $5); }
+        | TYPEIS '(' IDENTIFIER ')' name_or_null
+        { $$ = list2(F03_TYPEIS_STATEMENT, $3, $5); }  
+        | CLASSDEFAULT name_or_null
+        { $$ = list2(F03_CLASSIS_STATEMENT, NULL, $2); }
         ;
 
 assign_statement_or_null:
