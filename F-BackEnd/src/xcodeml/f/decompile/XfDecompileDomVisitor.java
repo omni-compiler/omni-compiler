@@ -241,7 +241,7 @@ public class XfDecompileDomVisitor {
             String bind = XmDomUtil.getAttr(basicTypeNode, "bind");
             if (XfUtilForDom.isNullOrEmpty(bind) == false) {
                 writer.writeToken(", ");
-                writer.writeToken("BIND(" + bind.toUpperCase() + ")");
+                writer.writeToken("BIND( " + bind.toUpperCase() + " )");
                 break;
             }
         }
@@ -2822,10 +2822,10 @@ public class XfDecompileDomVisitor {
                 String bind = XmDomUtil.getAttr(functionTypeNode, "bind");
                 if(XfUtilForDom.isNullOrEmpty(bind) == false) {
                     writer.writeToken(" ");
-                    writer.writeToken(" BIND(" + bind.toUpperCase());
+                    writer.writeToken("BIND( " + bind.toUpperCase());
                     String bindName = XmDomUtil.getAttr(functionTypeNode, "bind_name");
                     if(XfUtilForDom.isNullOrEmpty(bindName) == false){
-                        writer.writeToken(", NAME=\"" + bindName + "\"");
+                        writer.writeToken(", NAME = \"" + bindName + "\"");
                     }
                     writer.writeToken(")");
                 }
@@ -2866,10 +2866,10 @@ public class XfDecompileDomVisitor {
                 String bind = XmDomUtil.getAttr(functionTypeNode, "bind");
                 if(XfUtilForDom.isNullOrEmpty(bind) == false) {
                     writer.writeToken(" ");
-                    writer.writeToken(" BIND(" + bind.toUpperCase());
+                    writer.writeToken("BIND( " + bind.toUpperCase());
                     String bindName = XmDomUtil.getAttr(functionTypeNode, "bind_name");
                     if(XfUtilForDom.isNullOrEmpty(bindName) == false){
-                        writer.writeToken(", NAME=\"" + bindName + "\"");
+                        writer.writeToken(", NAME = \"" + bindName + "\"");
                     }
                     writer.writeToken(")");
                 }
@@ -3017,10 +3017,10 @@ public class XfDecompileDomVisitor {
                 String bind = XmDomUtil.getAttr(functionTypeNode, "bind");
                 if(XfUtilForDom.isNullOrEmpty(bind) == false) {
                     writer.writeToken(" ");
-                    writer.writeToken(" BIND(" + bind.toUpperCase());
+                    writer.writeToken("BIND( " + bind.toUpperCase());
                     String bindName = XmDomUtil.getAttr(functionTypeNode, "bind_name");
                     if(XfUtilForDom.isNullOrEmpty(bindName) == false){
-                        writer.writeToken(", NAME=\"" + bindName + "\"");
+                        writer.writeToken(", NAME = \"" + bindName + "\"");
                     }
                     writer.writeToken(")");
                 }
@@ -3069,10 +3069,10 @@ public class XfDecompileDomVisitor {
                 String bind = XmDomUtil.getAttr(functionTypeNode, "bind");
                 if(XfUtilForDom.isNullOrEmpty(bind) == false) {
                     writer.writeToken(" ");
-                    writer.writeToken(" BIND(" + bind.toUpperCase());
+                    writer.writeToken("BIND( " + bind.toUpperCase());
                     String bindName = XmDomUtil.getAttr(functionTypeNode, "bind_name");
                     if(XfUtilForDom.isNullOrEmpty(bindName) == false){
-                        writer.writeToken(", NAME=\"" + bindName + "\"");
+                        writer.writeToken(", NAME = \"" + bindName + "\"");
                     }
                     writer.writeToken(")");
                 }
@@ -4644,7 +4644,14 @@ public class XfDecompileDomVisitor {
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")) {
                     writer.writeToken(", PROTECTED");
                 }
+                String bind = XmDomUtil.getAttr(structTypeNode, "bind");
+                if (XfUtilForDom.isNullOrEmpty(bind) == false) {
+                    writer.writeToken(", ");
+                    writer.writeToken("BIND( " + bind.toUpperCase() + " )");
+                }
             }
+
+
 
             writer.writeToken(" :: ");
             writer.writeToken(structTypeName);

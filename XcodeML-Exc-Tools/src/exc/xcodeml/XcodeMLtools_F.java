@@ -181,6 +181,16 @@ public class XcodeMLtools_F extends XcodeMLtools {
       type = new FarrayType(tid, ref, tq, sizeExprs, cosizeExprs);    // #060
     }
 
+    String bind = getAttr(n, "bind");
+    if(bind != null){
+        type.setBind(bind);
+    }
+
+    String bind_name = getAttr(n, "bind_name");
+    if(bind_name != null){
+        type.setBindName(bind_name);
+    }
+
     xobjFile.addType(type);
   }
 
@@ -207,7 +217,18 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     Xobject params = toXobject(getElement(n, "params"));
     FunctionType type = new FunctionType(tid, retType, params, tq, false,
-					 null, getAttr(n, "result_name"));
+        null, getAttr(n, "result_name"));
+
+    String bind = getAttr(n, "bind");
+    if(bind != null){
+        type.setBind(bind);
+    }
+
+    String bind_name = getAttr(n, "bind_name");
+    if(bind_name != null){
+        type.setBindName(bind_name);
+    }
+
     xobjFile.addType(type);
   }
 
@@ -232,6 +253,12 @@ public class XcodeMLtools_F extends XcodeMLtools {
     XobjList tparam_list = (XobjList) toXobject(getElement(n, "typeParams"));
     XobjList id_list = (XobjList) toXobject(getElement(n, "symbols"));
     StructType type = new StructType(tid, parent_tid, id_list, tq, null, tparam_list);
+
+    String bind = getAttr(n, "bind");
+    if(bind != null){
+        type.setBind(bind);
+    }
+
     xobjFile.addType(type);
   }
 

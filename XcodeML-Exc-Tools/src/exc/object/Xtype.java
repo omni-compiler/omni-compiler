@@ -99,6 +99,10 @@ public class Xtype
     /** parameterized derived type infos. */
     protected XobjList fTypeParamValues;
 
+    /** ISO C binding information */
+    protected String bind;
+    protected String bind_name;
+
     /*
      * for pre-defined basic type
      */
@@ -658,6 +662,30 @@ public class Xtype
     public final void setIsFvalue(boolean enabled)
     {
         setTypeQualFlag(TQ_FVALUE, enabled);
+    }
+
+    /** Fortran : return if is qualified by 'value' in pointer decl */
+    public final String getBind()
+    {
+      return bind;
+    }
+
+    /** Fortran : return if is qualified by 'value' in pointer decl */
+    public final String getBindName()
+    {
+      return bind_name;
+    }
+
+    /** Fortran : set qualifier 'bind' in pointer decl */
+    public final void setBind(String value)
+    {
+        bind = value;
+    }
+
+    /** Fortran : set qualifier 'bind_name' in pointer decl */
+    public final void setBindName(String value)
+    {
+        bind_name = value;
     }
 
     /** get basic type kind (BasicType.*) */
