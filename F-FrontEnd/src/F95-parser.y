@@ -941,6 +941,8 @@ type_attr_spec_list:
 type_attr_spec:
           EXTENDS '(' IDENTIFIER ')'
         { $$ = list1(F03_EXTENDS_SPEC, $3); }
+        | BIND '(' IDENTIFIER /* C */ ')'
+        { $$ = list0(F03_BIND_SPEC); }        
         | access_spec
         { $$ = $1; }
         ;
