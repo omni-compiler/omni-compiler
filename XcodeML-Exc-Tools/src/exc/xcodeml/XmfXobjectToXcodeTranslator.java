@@ -299,6 +299,13 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             }
             break;
 
+        case F_IMPORT_STATEMENT:
+            e = createElement(name);
+            for (Xobject a : (XobjList)xobj.getArg(0)) {
+                addChildNode(e, transName(a));
+            }
+            break;
+
         case F_RENAME:
             e = createElement(name,
                               "use_name", xobj.getArg(0).getName(),

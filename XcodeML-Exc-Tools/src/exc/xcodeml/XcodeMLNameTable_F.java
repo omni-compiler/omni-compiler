@@ -141,6 +141,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_TYPE_PARAMS, "typeParams"),
 			new XcodeMLName(Xcode.F_TYPE_PARAM_VALUES, "typeParamValues"),
 			new XcodeMLName(Xcode.F_LEN, "len"),
+      new XcodeMLName(Xcode.F_IMPORT_STATEMENT, "FimportDecl"),
 	};
 
 	// constructor
