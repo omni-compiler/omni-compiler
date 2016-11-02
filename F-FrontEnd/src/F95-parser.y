@@ -141,6 +141,10 @@
 %token PROTECTED
 %token EXTENDS
 %token CLASS
+%token KW_IS
+%token CLASSIS
+%token TYPEIS
+%token CLASSDEFAULT
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -1414,6 +1418,10 @@ executable_statement:
         { $$ = list0(F_ENDWHERE_STATEMENT); }
         | SELECT '(' expr ')'
         { $$ = list2(F_SELECTCASE_STATEMENT, $3, st_name); }
+        | KW_SELECT KW KW_TYPE '(' expr ')'
+        { $$ = list2(F03_SELECTTYPE_STATEMENT, $5, st_name); }
+        | KW_SELECT KW KW_TYPE '(' IDENTIFIER REF_OP expr ')'
+        { $$ = list3(F03_SELECTTYPE_STATEMENT, $7, st_name, $5); }
         | CASE '(' scene_list ')' name_or_null
         { $$ = list2(F_CASELABEL_STATEMENT, $3, $5); }
         | CASEDEFAULT name_or_null
@@ -1424,6 +1432,12 @@ executable_statement:
         { $$ = list1(F2008_BLOCK_STATEMENT,st_name); }
         | ENDBLOCK name_or_null
         { $$ = list1(F2008_ENDBLOCK_STATEMENT,$2); }
+        | CLASSIS '(' IDENTIFIER ')' name_or_null
+        { $$ = list2(F03_CLASSIS_STATEMENT, $3, $5); }
+        | TYPEIS '(' IDENTIFIER ')' name_or_null
+        { $$ = list2(F03_TYPEIS_STATEMENT, $3, $5); }  
+        | CLASSDEFAULT name_or_null
+        { $$ = list2(F03_CLASSIS_STATEMENT, NULL, $2); }
         ;
 
 assign_statement_or_null:

@@ -12,7 +12,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.LIST, "declarations"),
 			new XcodeMLName(Xcode.LIST, "arguments"),
 			new XcodeMLName(Xcode.LIST, "kind"),
-			
+
 			new XcodeMLName(Xcode.LIST, "list"),
 			new XcodeMLName(Xcode.STRING, "string"),
 
@@ -94,6 +94,9 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.STATEMENT_LABEL, "statementLabel"),
 			new XcodeMLName(Xcode.F_SELECT_CASE_STATEMENT,
 					"FselectCaseStatement"),
+			new XcodeMLName(Xcode.SELECT_TYPE_STATEMENT,
+					"selectTypeStatement"),
+      new XcodeMLName(Xcode.TYPE_GUARD, "typeGuard"),
 			new XcodeMLName(Xcode.F_CASE_LABEL, "FcaseLabel"),
 			new XcodeMLName(Xcode.F_WHERE_STATEMENT, "FwhereStatement"),
 			new XcodeMLName(Xcode.F_STOP_STATEMENT, "FstopStatement"),

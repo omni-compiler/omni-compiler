@@ -29,7 +29,7 @@ public enum Xcode
     VAR_DECL                        (  10, 'L', null, null),
     FUNCTION_DECL                   (  11, 'L', null, null),
      // -----------------
-     // C: Statement               
+     // C: Statement
     COMPOUND_STATEMENT              (  12, 'S', null, null),
     EXPR_STATEMENT                  (  13, 'S', null, null),
     WHILE_STATEMENT                 (  14, 'S', null, null),
@@ -108,7 +108,7 @@ public enum Xcode
     MEMBER_ADDR                     (  79, 'L', null, null),
     MEMBER_ARRAY_ADDR               (  80, 'L', null, null),
     ARRAY_REF                       (  81, 'L', null, null),
-     // L   ARRAY_AREF               
+     // L   ARRAY_AREF
      // -----------------
      // C: Directive
     PRAGMA_LINE                     (  82, 'L', null, null),
@@ -132,9 +132,9 @@ public enum Xcode
      // -----------------
      // C: XcalableMP Syntax
     SUB_ARRAY_REF                   (  98, 'L', null, null),
-     // L   SUBA_LOWER_BOUND           
-     // L   SUBA_UPPER_BOUND           
-     // L   SUBA_STEP                  
+     // L   SUBA_LOWER_BOUND
+     // L   SUBA_UPPER_BOUND
+     // L   SUBA_STEP
     CO_ARRAY_REF                    (  99, 'L', null, null),
     CO_ARRAY_ASSIGN_EXPR            ( 100, 'L', null, null),   // not used??
      // -----------------
@@ -189,7 +189,7 @@ public enum Xcode
     F_VAR_REF                       ( 144, 'L', null, null),
     F_ARRAY_REF                     ( 145, 'L', null, null),
      // -----------------
-     // Unary Expression			
+     // Unary Expression
     F_USER_UNARY_EXPR               ( 146, 'U', null, null),
      // -----------------
      // Fortran: Binary Expression
@@ -202,12 +202,12 @@ public enum Xcode
     F_CHARACTER_REF                 ( 151, 'L', null, null),
     F_CONCAT_EXPR                   ( 152, 'L', null, null),
      // -----------------
-     // Fortran: Constant Expression			
+     // Fortran: Constant Expression
     F_LOGICAL_CONSTATNT             ( 153, 'T', null, null),
     F_CHARACTER_CONSTATNT           ( 154, 'T', null, null),
     F_COMPLEX_CONSTATNT             ( 155, 'L', null, null),
      // -----------------
-     // Fortran: Other Expression			
+     // Fortran: Other Expression
     F_ARRAY_CONSTRUCTOR             ( 156, 'L', null, null),
     F_STRUCT_CONSTRUCTOR            ( 157, 'L', null, null),
      // -----------------
@@ -302,6 +302,10 @@ public enum Xcode
     F_TYPE_PARAMS                   ( 221, 'L', null, null),
     F_TYPE_PARAM_VALUES             ( 222, 'L', null, null),
     F_LEN                           ( 223, 'L', null, null),
+     // Fortran2003: SELECT TYPE
+    SELECT_TYPE_STATEMENT           ( 225, 'L', null, null),
+    TYPE_GUARD                      ( 226, 'L', null, null),
+
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),
@@ -461,7 +465,7 @@ public enum Xcode
     {
         return toInt() < ASSIGN_START_NUM;
     }
-    
+
     public boolean isAssignedCode()
     {
         return !isBuiltinCode();
@@ -516,6 +520,7 @@ public enum Xcode
         case F_SYNCMEMORY_STATEMENT:        case F_CRITICAL_STATEMENT:
         case F_LOCK_STATEMENT:              case F_UNLOCK_STATEMENT:
         case F_BLOCK_STATEMENT:
+        case SELECT_TYPE_STATEMENT:         case TYPE_GUARD:
             return true;
         }
         return false;
@@ -531,4 +536,3 @@ public enum Xcode
         return false;
     }
 }
-

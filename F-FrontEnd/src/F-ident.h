@@ -127,6 +127,7 @@ typedef struct ident_descriptor
     struct ident_descriptor *next;      /* linked list */
     enum name_class class;              /* name class */
     char is_declared;
+    char is_associative;                /* ASSOCIATE and associate-name */
     char could_be_implicitly_typed;     /* id is declared in current scope */
                                         /* and could be typed implicity. */
                                         /* never changed to FALSE from TRUE */
@@ -237,6 +238,7 @@ typedef struct ident_descriptor
 #define ID_NAME(id)     SYM_NAME((id)->name)
 #define ID_TYPE(id)     ((id)->type)
 #define ID_IS_DECLARED(id) ((id)->is_declared)
+#define ID_IS_ASSOCIATIVE(id) ((id)->is_associative)
 #define ID_COULD_BE_IMPLICITLY_TYPED(id) ((id)->could_be_implicitly_typed)
 #define ID_ADDR(id)     ((id)->addr)
 #define ID_LINE_NO(x)   ((x)->line->ln_no)
