@@ -663,6 +663,10 @@ extern int      struct_type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern int      function_type_is_appliable
+                    _ANSI_ARGS_((TYPE_DESC ftp, expv args));
+extern int      type_bound_procedure_types_are_compatible
+                    _ANSI_ARGS_((ID tbp1, ID tbp2));
 
 extern int      are_dimension_and_shape_conformant_by_type _ANSI_ARGS_((
     expr x, TYPE_DESC lt, TYPE_DESC rt, expv *shapePtr));

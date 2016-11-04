@@ -3103,7 +3103,7 @@ update_struct_type(HashTable * ht)
                     }
                     ID_TYPE(binding) = ID_TYPE(bindto);
                 }
-                GENERIC_TYPE_GENERICS(ID_TYPE(mem)) = TBP_BINDING(mem);
+                TYPE_BOUND_GENERIC_TYPE_GENERICS(ID_TYPE(mem)) = TBP_BINDING(mem);
             }
         }
     }

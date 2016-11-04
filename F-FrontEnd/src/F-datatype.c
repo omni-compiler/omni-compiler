@@ -1095,15 +1095,14 @@ derived_type_is_compatible(TYPE_DESC left, TYPE_DESC right, int for_argunemt)
 int
 type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
 {
-    int i;
     int i1;
     int i2;
     int len;
     int has_pass1;
     int has_pass2;
     int skip_this_loop;
-    SYMBOL pass_arg1;
-    SYMBOL pass_arg2;
+    SYMBOL pass_arg1 = NULL;
+    SYMBOL pass_arg2 = NULL;
     EXT_ID f1;
     EXT_ID f2;
     expv args1;
@@ -1144,8 +1143,6 @@ type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
         has_pass1 = TRUE;
         if (TBP_BINDING(tbp1)) {
             pass_arg1 = ID_SYM(TBP_BINDING(tbp1));
-        } else {
-            pass_arg1 = NULL;
         }
     }
 
@@ -1153,8 +1150,6 @@ type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
         has_pass2 = TRUE;
         if (TBP_BINDING(tbp2)) {
             pass_arg2 = ID_SYM(TBP_BINDING(tbp2));
-        } else {
-            pass_arg2 = NULL;
         }
     }
 
@@ -1204,7 +1199,7 @@ type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
 
 
 int
-function_type_is_appliable(EXT_ID proc, expv actual_args)
+function_type_is_appliable(TYPE_DESC ftp, expv actual_args)
 {
     ID id;
     ID proc_id_list;
@@ -1212,6 +1207,15 @@ function_type_is_appliable(EXT_ID proc, expv actual_args)
     expv dummy_args;
     list lp;
     list actual_lp;
+    EXT_ID proc;
+    TYPE_DESC tbp_tp = NULL;
+
+    if (TYPE_EXT_ID(ftp) == NULL) {
+        tbp_tp = ftp;
+        ftp = TYPE_REF(tbp_tp);
+    }
+
+    proc = TYPE_EXT_ID(ftp);
 
     dummy_args = EXT_PROC_ARGS(proc);
     proc_id_list = EXT_PROC_ID_LIST(proc);
@@ -1224,6 +1228,18 @@ function_type_is_appliable(EXT_ID proc, expv actual_args)
 
         if (debug_flag)
             fprintf(debug_fp, "dummy args is '%s'\n", SYM_NAME(EXPR_SYM(dummy_arg)));
+
+        if (tbp_tp != NULL && TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tbp_tp)) {
+            if (TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp)) {
+                if (EXPR_SYM(dummy_arg) == ID_SYM(TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp))) {
+                    continue;
+                }
+            } else {
+                if (lp == EXPR_LIST(dummy_arg)) {
+                    continue;
+                }
+            }
+        }
 
         if (actual_arg == NULL) {
             /* argument number mismatch */

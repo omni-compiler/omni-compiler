@@ -4759,6 +4759,9 @@ compile_type_bound_procedure(expr x)
             TBP_PASS_ARG(id) = pass_arg;
             TYPE_ATTR_FLAGS(id) = access_attr_flags;
             ID_TYPE(id) = function_type(NULL);
+            TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(ID_TYPE(id)) = binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS;
+            TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(ID_TYPE(id)) = pass_arg;
+
         }
     } else {
         FOR_ITEMS_IN_LIST(lp, bindings) {
@@ -4779,6 +4782,9 @@ compile_type_bound_procedure(expr x)
             TBP_PASS_ARG(id) = pass_arg;
             TYPE_ATTR_FLAGS(id) = access_attr_flags;
             ID_TYPE(id) = function_type(NULL);
+            TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(ID_TYPE(id)) = binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS;
+            TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(ID_TYPE(id)) = pass_arg;
+
         }
     }
 }
@@ -4894,5 +4900,5 @@ compile_type_generic_procedure(expr x)
     TBP_BINDING_ATTRS(id) = binding_attr_flags | TYPE_BOUND_PROCEDURE_IS_GENERIC;
     TYPE_ATTR_FLAGS(id) = access_attr_flags;
     ID_TYPE(id) = function_type(NULL);
-    GENERIC_TYPE_GENERICS(ID_TYPE(id)) = TBP_BINDING(id);
+    TYPE_BOUND_GENERIC_TYPE_GENERICS(ID_TYPE(id)) = TBP_BINDING(id);
 }

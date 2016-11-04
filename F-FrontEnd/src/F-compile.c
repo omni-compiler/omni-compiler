@@ -1740,10 +1740,6 @@ static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, EXT_ID ep, ID id_list)
  * Update type_bound_procedures in derived-types of struct declarations.
  *
  * Assign type bound procedure to explicit interface OR module procedure
- *
- * struct_decls derived-types to update
- * external_ids OR  
- * just_one TRUE if external_ids is list of external ids
  */
 void update_type_bound_procedures(TYPE_DESC struct_decls, EXT_ID external_ids, int just_one, ID id_list)
 {
@@ -1751,10 +1747,7 @@ void update_type_bound_procedures(TYPE_DESC struct_decls, EXT_ID external_ids, i
     ID mem;
     EXT_ID ep;
 
-    if (struct_decls == NULL) {
-        return;
-    }
-    if (external_ids == NULL) {
+    if (struct_decls == NULL || external_ids == NULL) {
         return;
     }
 
@@ -1775,7 +1768,9 @@ void update_type_bound_procedures(TYPE_DESC struct_decls, EXT_ID external_ids, i
                 if (!check_tbp_pass_arg(tp, mem, ep, id_list)) {
                     return;
                 }
-                // update function type
+                /*
+                 * update function type
+                 */
                 if (debug_flag) {
                     fprintf(debug_fp, "bind %s to %s%%%s\n",
                             SYM_NAME(EXT_SYM(ep)),
@@ -2692,7 +2687,6 @@ is_operator_proc(EXT_ID ep)
 {
     TYPE_DESC ret_type = EXT_PROC_TYPE(ep);
     expv args = EXT_PROC_ARGS(ep);
-    TYPE_DESC tp;
     ID proc_id_list;
     ID id;
 
@@ -2729,7 +2723,6 @@ is_assignment_proc(EXT_ID ep)
 {
     TYPE_DESC ret_type = EXT_PROC_TYPE(ep);
     expv args = EXT_PROC_ARGS(ep);
-    TYPE_DESC tp;
     ID proc_id_list;
     ID id;
 
@@ -2825,7 +2818,7 @@ check_type_bound_procedures()
                 /* already bounded, so check type */
                 if (TBP_IS_OPERATOR(tbp)) {
                     if (!is_operator_proc(ep)) {
-                        error_at_id(bindto, "should be a function");
+                        error_at_id(tbp, "should be a function");
                         return;
                     }
                 }
@@ -4908,13 +4901,13 @@ compile_CALL_type_bound_procedure_statement(expr x)
     }
 
     tp = ID_TYPE(tpd);
-    if (GENERIC_TYPE_GENERICS(tp)) {
+    if (TYPE_BOUND_GENERIC_TYPE_GENERICS(tp)) {
         /* for type-bound GENERIC */
         ID bind;
         ID bindto;
         FOREACH_ID(bind, TBP_BINDING(tpd)) {
             bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
-            if (bindto && function_type_is_appliable(TYPE_EXT_ID(ID_TYPE(bindto)), a)) {
+            if (bindto && function_type_is_appliable(ID_TYPE(bindto), a)) {
                 ep = TYPE_EXT_ID(ID_TYPE(bindto));
                 tp = ID_TYPE(bindto);
             }

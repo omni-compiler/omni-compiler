@@ -153,8 +153,12 @@ typedef struct type_descriptor
     int is_reshaped_type;       /* A bool flag to specify this type is
                                  * genereted by reshape() intrinsic. */
 
-    struct external_symbol *extID;      /* for function_type, external symbol */
-    struct ident_descriptor * generics; /* for generic type */
+    struct external_symbol *extID;      /* for the function type, external symbol */
+    struct {
+        struct ident_descriptor * generics; /* for the function type of type-bound generic */
+        int has_pass_arg;                   /* for the function type of type-bound procedure */
+        struct ident_descriptor * pass_arg; /* for the function type of type-bound procedure */
+    } type_bound_proc_info;
 } *TYPE_DESC;
 
 struct type_attr_check {
@@ -443,7 +447,9 @@ typedef enum {
 } pragma_status_t;
 #endif
 
-#define GENERIC_TYPE_GENERICS(tp) ((tp)->generics)
+#define TYPE_BOUND_GENERIC_TYPE_GENERICS(tp) ((tp)->type_bound_proc_info.generics)
+#define TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tp) ((tp)->type_bound_proc_info.has_pass_arg)
+#define TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tp) ((tp)->type_bound_proc_info.pass_arg)
 
 
 #endif /* _F_DATATYPE_H_ */

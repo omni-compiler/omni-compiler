@@ -2674,7 +2674,7 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
     cur = rest_type_params;
 
     FOR_ITEMS_IN_LIST(lp, type_param_args) {
-        expr arg = LIST_ITEM(lp);
+        expv arg = LIST_ITEM(lp);
 
         if (EXPR_CODE(arg) == F_SET_EXPR) {
             /* A type parameter value has a KEYWORD */
@@ -3347,17 +3347,17 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
     TYPE_DESC ret_type = type_GNUMERIC_ALL;
     EXT_ID ep = NULL;
 
-    a = list_cons(EXPR_ARG1(memberRef), compile_args(args));
+    a = compile_args(args);
 
     ftp = EXPV_TYPE(memberRef);
     stp = EXPV_TYPE(EXPR_ARG1(memberRef));
-    if (GENERIC_TYPE_GENERICS(ftp)) {
+    if (TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
         // for type-bound GENERIC
         ID bind;
         ID bindto;
-        FOREACH_ID(bind, GENERIC_TYPE_GENERICS(ftp)) {
+        FOREACH_ID(bind, TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
             bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
-            if (function_type_is_appliable(TYPE_EXT_ID(ID_TYPE(bindto)), a)) {
+            if (function_type_is_appliable(ID_TYPE(bindto), a)) {
                 ep = TYPE_EXT_ID(ID_TYPE(bindto));
                 EXPV_TYPE(memberRef) = ID_TYPE(bindto);
             }
@@ -3373,7 +3373,7 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
         // for type-bound PROCEDURE
         if ((ep = TYPE_EXT_ID(ftp)) != NULL) {
 #if 0
-            if (function_type_is_appliable(ep, a)) {
+            if (function_type_is_appliable(ftp, a)) {
                 error("argument type mismatch");
             }
 #endif
