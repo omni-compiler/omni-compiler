@@ -48,7 +48,7 @@ C-exprcode.c: C-exprcode.def C-exprcode.c.awk
 	$(AWK) -f C-exprcode.c.awk < C-exprcode.def > C-exprcode.c
 
 fincludes/iso_c_binding.xmod: fincludes/iso_c_binding.f90 $(F_FRONT)
-	$(F_FRONT) $< > /dev/null
+	./$(F_FRONT) -module-compile $< > $@
 
 install: $(F_FRONT)
 	$(MKDIR_P) $(DESTDIR)$(BINDIR)

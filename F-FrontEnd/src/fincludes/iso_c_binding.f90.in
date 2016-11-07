@@ -1,7 +1,7 @@
 module iso_c_binding
     implicit none
 
-    integer, parameter :: POINTER_LEN = 8
+    integer, parameter :: POINTER_LEN = @SIZEOF_VOID_P@
 
     integer (KIND=4), parameter :: C_INT = 4
     integer (KIND=4), parameter :: C_SHORT = 2
