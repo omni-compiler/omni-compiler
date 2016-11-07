@@ -2499,6 +2499,32 @@ input_FuseOnlyDecl(xmlTextReaderPtr reader)
 }
 
 /**
+ * input <FuseDecl> node
+ */
+static int
+input_FimportDecl(xmlTextReaderPtr reader)
+{
+    int depth;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FimportDecl"))
+        return FALSE;
+
+    if (!xmlTextReaderIsEmptyElement(reader)) {
+        depth = xmlTextReaderDepth(reader);
+
+        /* skip until corresponding close tag */
+        if (!xmlSkipUntil(reader, XML_READER_TYPE_END_ELEMENT,"FimportDecl",
+                          depth))
+            return FALSE;
+    }
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    return TRUE;
+}
+
+/**
  * input <FinterfaceDecl> node in Ffunctiondecl/declarations
  */
 static int
@@ -2598,6 +2624,10 @@ input_declarations(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent,
             if (!input_FinterfaceDecl_in_declarations(reader, ht, parent,
                                                       id_list))
                 return FALSE;
+        } else if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
+                                "FimportDecl")) {
+            if (!input_FimportDecl(reader))
+                return FALSE;                                
         } else {
             fprintf(stderr, "unexpected node: %s in <declarations> node.\n",
                     (const char *)xmlTextReaderConstName(reader));
