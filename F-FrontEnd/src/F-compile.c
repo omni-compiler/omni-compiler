@@ -394,7 +394,7 @@ void compile_statement1(int st_no, expr x)
 
     case F95_MODULE_STATEMENT: /* (F95_MODULE_STATEMENT) */
         begin_procedure();
-        declare_procedure(CL_MODULE, EXPR_ARG1(x), type_MODULE, NULL, NULL, NULL);
+        declare_procedure(CL_MODULE, EXPR_ARG1(x), type_MODULE, NULL, NULL, NULL, NULL);
         begin_module(EXPR_ARG1 (x));
         break;
 
@@ -434,17 +434,18 @@ void compile_statement1(int st_no, expr x)
 
     case F_PROGRAM_STATEMENT:   /* (F_PROGRAM_STATEMENT name) */
         begin_procedure();
-        declare_procedure(CL_MAIN, EXPR_ARG1(x), NULL, NULL, NULL, NULL);
+        declare_procedure(CL_MAIN, EXPR_ARG1(x), NULL, NULL, NULL, NULL, NULL);
         break;
     case F_BLOCK_STATEMENT:     /* (F_BLOCK_STATEMENT name) */
         begin_procedure();
-        declare_procedure(CL_BLOCK, EXPR_ARG1(x), NULL, NULL, NULL, NULL);
+        declare_procedure(CL_BLOCK, EXPR_ARG1(x), NULL, NULL, NULL, NULL, NULL);
         break;
     case F_SUBROUTINE_STATEMENT:
         /* (F_SUBROUTINE_STATEMENT name dummy_arg_list) */
         begin_procedure();
         declare_procedure(CL_PROC,
-                          EXPR_ARG1(x), new_type_subr(), EXPR_ARG2(x), EXPR_ARG3(x), NULL);
+                          EXPR_ARG1(x), new_type_subr(), EXPR_ARG2(x), 
+                          EXPR_ARG3(x), NULL, EXPR_ARG4(x));
         break;
         /* entry statements */
     case F_FUNCTION_STATEMENT:
@@ -460,11 +461,13 @@ void compile_statement1(int st_no, expr x)
             }
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               tp,
-                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
+                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x), 
+                              EXPR_ARG6(x));
         } else {
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               compile_type(EXPR_ARG3(x)),
-                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
+                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x), 
+                              EXPR_ARG6(x));
         }
         break;
     case F_ENTRY_STATEMENT:
@@ -477,7 +480,7 @@ void compile_statement1(int st_no, expr x)
         }
         declare_procedure(CL_ENTRY,
                           EXPR_ARG1(x), NULL, EXPR_ARG2(x),
-                          NULL, EXPR_ARG3(x));
+                          NULL, EXPR_ARG3(x), NULL);
         break;
     case F_INCLUDE_STATEMENT:
         /* (F_INCLUDE_STATEMENT filename) */
@@ -1214,7 +1217,7 @@ compile_exec_statement(expr x)
 	begin_procedure();
 	//declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
 	declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
-			  NULL, NULL, NULL, NULL);
+			  NULL, NULL, NULL, NULL, NULL);
       }
 
       x1 = EXPR_ARG1(x);
@@ -1452,7 +1455,7 @@ check_INDATA()
 {
     if (CURRENT_STATE == OUTSIDE) {
         begin_procedure();
-        declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+        declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL, NULL);
     }
     if(NOT_INDATA_YET){
         end_declaration();
@@ -1469,7 +1472,7 @@ check_INDCL()
         if (unit_ctl_level == 0)
 	  //declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
 	  declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
-			    NULL, NULL, NULL, NULL);
+			    NULL, NULL, NULL, NULL, NULL);
     case INSIDE:
         CURRENT_STATE = INDCL;
     case INDCL:
@@ -1489,9 +1492,9 @@ check_INEXEC()
         begin_procedure();
         if (unit_ctl_level == 0)
             declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
-                              NULL, NULL, NULL, NULL);
+                              NULL, NULL, NULL, NULL, NULL);
         else
-            declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+            declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL, NULL);
     }
     if(NOT_INDATA_YET) end_declaration();
 }
@@ -1800,6 +1803,15 @@ end_declaration()
             PROC_IS_ELEMENTAL(myId)) {
             TYPE_SET_ELEMENTAL(ID_TYPE(myId));
             TYPE_SET_ELEMENTAL(EXT_PROC_TYPE(myEId));
+        }
+        /* for bind feature */
+        if(TYPE_HAS_BIND(myId) || PROC_HAS_BIND(myId)) {
+            TYPE_SET_BIND(ID_TYPE(myId));
+            TYPE_SET_BIND(EXT_PROC_TYPE(myEId));
+            if(PROC_BIND(myId)) {
+                TYPE_BIND_NAME(ID_TYPE(myId)) = PROC_BIND(myId);
+                TYPE_BIND_NAME(EXT_PROC_TYPE(myEId)) = PROC_BIND(myId);
+            }
         }
     }
 

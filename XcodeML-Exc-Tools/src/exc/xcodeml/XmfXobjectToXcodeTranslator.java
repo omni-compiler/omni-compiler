@@ -997,7 +997,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                       "is_allocatable", toBoolStr(type.isFallocatable()),
                       "is_cray_pointer", toBoolStr(type.isFcrayPointer()),
                       "is_volatile", toBoolStr(type.isFvolatile()),
-                      "is_class", toBoolStr(type.isFclass()));
+                      "is_class", toBoolStr(type.isFclass()),
+                      "is_value", toBoolStr(type.isFvalue()));
 
         if (type.isFintentIN()) {
             addAttributes(basicTypeElem, "intent", "in");
@@ -1040,7 +1041,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case Xtype.F_ARRAY:
                 typeElem = createElement("FbasicType");
                 addAttributes(typeElem,
-                              "ref", type.getRef().getXcodeFId());
+                              "ref", type.getRef().getXcodeFId(),
+                              "bind", type.getBind(),
+                              "bind_name", type.getBindName());
                 for (Xobject sizeExpr : type.getFarraySizeExpr()) {
                     addChildNode(typeElem, trans(sizeExpr));
                 }
@@ -1054,7 +1057,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     "is_private", toBoolStr(type.isFprivate()),
                     "is_sequence", toBoolStr(type.isFsequence()),
                     "is_internal_private", toBoolStr(type.isFinternalPrivate()),
-                    "extends", ((CompositeType)type).parentId());
+                    "extends", ((CompositeType)type).parentId(),
+                    "bind", type.getBind());
                 addChildNode(typeElem, trans(((StructType)type).getFTypeParams()));
                 addChildNode(typeElem, transSymbols(type.getMemberList()));
                 break;
@@ -1070,7 +1074,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     "is_intrinsic", toBoolStr(type.isFintrinsic()),
                     "is_external", toBoolStr(type.isFexternal()),
                     "is_public", toBoolStr(type.isFpublic()),
-                    "is_private", toBoolStr(type.isFprivate()));
+                    "is_private", toBoolStr(type.isFprivate()),
+                    "bind", type.getBind(),
+                    "bind_name", type.getBindName());
                 addChildNode(typeElem,
                              transParams((XobjList)type.getFuncParam()));
                 break;

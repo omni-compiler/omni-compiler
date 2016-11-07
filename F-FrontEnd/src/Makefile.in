@@ -10,7 +10,7 @@ INSTALL = @INSTALL@
 BINDIR  = @OMNI_HOME@/bin
 AWK     = @AWK@
 XMODDIR = @OMNI_HOME@/fincludes
-INTRMOD = fincludes/iso_fortran_env.xmod
+INTRMOD = fincludes/iso_fortran_env.xmod fincludes/iso_c_binding.xmod
 
 OBJECTS = F95-main.o C-expr-mem.o C-exprcode.o F-datatype.o F-ident.o \
 	  F95-parser.o F-mem.o F-compile.o F-compile-decl.o F-compile-expr.o \
@@ -31,7 +31,7 @@ ifeq ($(IS_MOD2XMOD), $(TRUE))
     CFLAGS+=-D_MPI_FC=gfortran
 endif
 
-all: $(F_FRONT)
+all: $(F_FRONT) $(INTRMOD)
 
 $(F_FRONT): $(OBJECTS) $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(LDFLAGS)
@@ -46,6 +46,9 @@ C-exprcode.h: C-exprcode.def C-exprcode.h.awk
 
 C-exprcode.c: C-exprcode.def C-exprcode.c.awk
 	$(AWK) -f C-exprcode.c.awk < C-exprcode.def > C-exprcode.c
+
+fincludes/iso_c_binding.xmod: fincludes/iso_c_binding.f90 $(F_FRONT)
+	$(F_FRONT) $< > /dev/null
 
 install: $(F_FRONT)
 	$(MKDIR_P) $(DESTDIR)$(BINDIR)

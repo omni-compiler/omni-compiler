@@ -126,16 +126,19 @@ typedef struct list_node
 #define EXPR_LIST3(x)   LIST_NEXT(EXPR_LIST2(x))
 #define EXPR_LIST4(x)   LIST_NEXT(EXPR_LIST3(x))
 #define EXPR_LIST5(x)   LIST_NEXT(EXPR_LIST4(x))
+#define EXPR_LIST6(x)   LIST_NEXT(EXPR_LIST5(x))
 #define EXPR_ARG1(x)    LIST_ITEM(EXPR_LIST1(x))
 #define EXPR_ARG2(x)    LIST_ITEM(EXPR_LIST2(x))
 #define EXPR_ARG3(x)    LIST_ITEM(EXPR_LIST3(x))
 #define EXPR_ARG4(x)    LIST_ITEM(EXPR_LIST4(x))
 #define EXPR_ARG5(x)    LIST_ITEM(EXPR_LIST5(x))
+#define EXPR_ARG6(x)    LIST_ITEM(EXPR_LIST6(x))
 #define EXPR_HAS_ARG1(x)    (EXPR_LIST1(x) != NULL)
 #define EXPR_HAS_ARG2(x)    (EXPR_HAS_ARG1(x) && EXPR_LIST2(x) != NULL)
 #define EXPR_HAS_ARG3(x)    (EXPR_HAS_ARG2(x) && EXPR_LIST3(x) != NULL)
 #define EXPR_HAS_ARG4(x)    (EXPR_HAS_ARG3(x) && EXPR_LIST4(x) != NULL)
 #define EXPR_HAS_ARG5(x)    (EXPR_HAS_ARG4(x) && EXPR_LIST5(x) != NULL)
+#define EXPR_HAS_ARG6(x)    (EXPR_HAS_ARG5(x) && EXPR_LIST6(x) != NULL)
 
 /* typed value returned as a result of evaluation. */
 typedef expr expv;

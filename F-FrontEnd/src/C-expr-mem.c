@@ -210,6 +210,14 @@ expr list5(code,x1,x2,x3,x4,x5)
 list(x4,cons_list(x5,NULL)))))));
 }
 
+expr list6(code,x1,x2,x3,x4,x5,x6)
+     enum expr_code code;
+     expr x1,x2,x3,x4,x5,x6;
+{
+    return(make_enode(code,(void *)cons_list(x1,cons_list(x2,cons_list(x3,cons_\
+list(x4,cons_list(x5,cons_list(x6,NULL))))))));
+}
+
 expr list_cons(v,w)
      expv v,w;
 {
