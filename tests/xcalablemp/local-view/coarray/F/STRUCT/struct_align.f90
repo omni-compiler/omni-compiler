@@ -23,7 +23,6 @@
 
   subroutine check_and_msg(nlen)
     integer*8 nlen
-    integer nerr
 
     me = this_image()
     n_alloced = xmpf_coarray_allocated_bytes()

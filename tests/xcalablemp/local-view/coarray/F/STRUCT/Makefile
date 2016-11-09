@@ -4,7 +4,14 @@ NPE=3
 
 OUT_debug = 
 OUT_basic = struct_align.x put_compo1.x 
-OUT_lev1  = lev1.x lev1-2.x
+OUT_lev1  = lev1-2.x
+
+# On K with Ver.3, after correct execution:
+#jwe0019i-u The program was terminated abnormally with signal number SIGBUS.
+#           signal identifier = BUS_ADRALN, invalid address alignment
+ifneq ($(ONESIDED_LAYER),FJRDMA)
+OUT_lev1 += lev1.x
+endif
 
 # restciction on FJ compiler and Ver.3
 ifneq ($(ONESIDED_LAYER),FJRDMA)

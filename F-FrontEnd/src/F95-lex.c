@@ -1406,6 +1406,7 @@ classify_statement()
 
     case ALLOCATABLE:
     case ALLOCATE:
+    case BIND:
     case CASE:
     case COMMON:
     case CONTAINS:
@@ -1423,6 +1424,7 @@ classify_statement()
     case EXTERNAL:
     case FUNCTION:
     case GOTO:
+    case IMPORT:
     case IMPLICIT:
     case INCLUDE:
     case INTENT:
@@ -1431,8 +1433,10 @@ classify_statement()
     case BLOCK:
     case KW_GO:
     case KW_IN:
+    case KW_IS:
     case KW_KIND:
     case KW_LEN:
+    case KW_NAME:
     case KW_OUT:
     case KW_TO:
     case KW_TYPE:
@@ -1449,6 +1453,7 @@ classify_statement()
     case SEQUENCE:
     case STOP:
     case SUBROUTINE:
+    case VALUE:
     case TARGET:
         if(fixed_format_flag && exposed_eql) {
           goto ret_LET;
@@ -1785,6 +1790,17 @@ get_keyword_optional_blank(int class)
         break;
     case KW_IN:
         if(get_keyword(keywords) == KW_OUT) return KW_INOUT;
+        break;
+    case CLASS:
+        {
+           char *savepoint = bufptr;
+           if(get_keyword(keywords) == KW_IS) return CLASSIS;
+           bufptr = savepoint;
+           if(get_keyword(keywords) == KW_DEFAULT) return CLASSDEFAULT;
+        }
+        break;
+    case KW_TYPE:
+        if(get_keyword(keywords) == KW_IS) return TYPEIS;
         break;
     case KW_SELECT:
         if(get_keyword(keywords) == CASE) return SELECT;
@@ -3766,6 +3782,7 @@ struct keyword_token keywords[ ] =
     { "allocate",       ALLOCATE },
     { "all",            KW_ALL },       /* #060 coarray */
     { "backspace",      BACKSPACE },
+    { "bind",           BIND },
     { "blockdata",      BLOCKDATA },
     { "block",          BLOCK},      /* optional */
     { "call",           CALL },
@@ -3822,6 +3839,7 @@ struct keyword_token keywords[ ] =
     { "goto",           GOTO  },
     { "go",             KW_GO  },
     { "if",             LOGIF },
+    { "import",         IMPORT },
     { "images",         KW_IMAGES },    /* #060 coarray */
     { "implicit",       IMPLICIT },
     { "include",        INCLUDE },
@@ -3832,6 +3850,7 @@ struct keyword_token keywords[ ] =
     { "interface",      INTERFACE },
     { "intrinsic",      INTRINSIC },
     { "in",             KW_IN},
+    { "is",             KW_IS},
     { "kind",           KW_KIND},
     { "logical",        KW_LOGICAL  },
     { "len",            KW_LEN},
@@ -3839,6 +3858,7 @@ struct keyword_token keywords[ ] =
     { "memory",         KW_MEMORY },     /* #060 coarray */
     { "module",         MODULE},
     { "namelist",       NAMELIST },
+    { "name",           KW_NAME },
     { "none",           KW_NONE},
     { "nullify",        NULLIFY},
     { "open",           OPEN },
@@ -3884,6 +3904,7 @@ struct keyword_token keywords[ ] =
     { "undefined",      KW_UNDEFINED },
     { "unlock",         UNLOCK },        /* #060 coarray */
     { "use",            KW_USE },
+    { "value",          VALUE },
     { "where",          WHERE },
     { "while",          KW_WHILE},
     { "write",          WRITE },

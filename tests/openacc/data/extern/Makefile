@@ -13,7 +13,7 @@ $(EXE): $(OBJS)
 	$(XCC) -o $@ $^
 
 run: $(EXE)
-	$(XRUN) $(EXE)
+	$(XRUN) ./$(EXE)
 
 .c.o:
 	$(XCC) -c $<

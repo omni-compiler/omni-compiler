@@ -146,7 +146,11 @@ package exc.xmpF;
 
      // check name collision
      _name = name.getString();
-     if(env.findXMPobject(_name,pb) != null){
+     Block blockStmt = (pb != null) ? pb.findParentBlockStmt() : null;
+     if(blockStmt != null &&
+        blockStmt.getXMPobject(_name) != null ||
+        blockStmt == null &&
+        env.findXMPobject(_name,pb) != null      ){
        XMP.errorAt(pb,"XMP object '"+_name+"' is already declared");
        return;
      }

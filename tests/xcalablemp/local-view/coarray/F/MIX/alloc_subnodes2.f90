@@ -6,6 +6,9 @@
     real, allocatable :: c(:,:)[:]
     real, allocatable :: d(:,:)[:]
     me = this_image()
+    if (xmpf_coarray_uses_fjrdma()) then
+       if (me==1) write(*,*) "skip alloc_subnodes2.f90 due to FJRDMA"
+    endif
 
     tmp=1234.567
     do i=1,20

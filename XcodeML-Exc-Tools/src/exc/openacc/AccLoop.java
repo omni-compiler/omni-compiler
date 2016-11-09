@@ -44,7 +44,7 @@ class AccLoop extends AccDirective{
       collapseNum = collapseNumExpr.getInt();
     }
     XobjList inductionVarIdList = checkCollapsedLoop(_pb.getBody().getHead(), collapseNum);
-    Set<Ident> inductionVariableIdSet = new HashSet<Ident>();
+    Set<Ident> inductionVariableIdSet = new LinkedHashSet<Ident>();
 
 
     CforBlock mainforBlock = findOutermostTightlyNestedForBlock(_pb.getBody().getHead());

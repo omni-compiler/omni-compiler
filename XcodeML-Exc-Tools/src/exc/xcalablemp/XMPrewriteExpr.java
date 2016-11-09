@@ -2330,7 +2330,7 @@ public class XMPrewriteExpr {
 	  rewriteACCClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable, newBody);
 	  if(!newBody.isEmpty()){
 	    bIter.setBlock(Bcons.COMPOUND(newBody));
-    	    newBody.add(Bcons.COMPOUND(Bcons.blockList(block))); //newBody.add(block);
+	    newBody.add(block);
 	  }
 	}
       }

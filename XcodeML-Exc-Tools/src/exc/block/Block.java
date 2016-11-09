@@ -305,6 +305,10 @@ public class Block extends PropObject implements IVarContainer
             next.prev = b;
         else
             parent.tail = b;
+
+        parent = null;
+        prev = null;
+        next = null;
     }
 
     // remove block from list
@@ -390,17 +394,18 @@ public class Block extends PropObject implements IVarContainer
         return null;
     }
 
+    public XMPobject getXMPobject(String name) {
+        XMPsymbolTable table = getXMPsymbolTable();
+        return (table != null) ? table.getXMPobject(name) : null;
+    }
+
     public XMPobject findXMPobject(String name) {
-        XMPsymbolTable table; 
         Block block = this;//.findParentBlockStmt();
         while (block != null) {
-            table = block.getXMPsymbolTable();
-            if (table != null) {
-                XMPobject o = table.getXMPobject(name);
-                if(o != null)
-                    return o;
-            }
-            if (block instanceof FunctionBlock)
+            XMPobject o = block.getXMPobject(name);
+            if(o != null)
+                return o;
+            else if (block instanceof FunctionBlock)
                 break;
             block = block.getParentBlock();
         }

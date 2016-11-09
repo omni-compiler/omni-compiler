@@ -1,4 +1,4 @@
-                                                             July 19, 2016
+                                                             November 1, 2016
                                                              Ver 1.0.2 or later
 
               Coarray Fortran features and the current restrictions
@@ -36,6 +36,10 @@
     * Interface block cannot contains any specification of coarrays. To describe
       explicit interface, host-assocication (with internal procedure) and use-
       association (with module) can be used instead.
+    * A pointer component of a derived-type coarray is not allowed.
+    * An allocatable component of a derived-type coarray cannnot be referrenced
+      as a coindexed object.
+    * A derived-type coarray cannot be defined as allocatable.
       
 2.1  Static Coarray
   E.g.

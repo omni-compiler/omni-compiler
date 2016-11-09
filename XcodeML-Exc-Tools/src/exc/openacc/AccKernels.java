@@ -57,7 +57,7 @@ class AccKernels extends AccData {
     }
 
     //set unspecified var's attribute from outerIdSet
-    Set<Ident> outerIdSet = new HashSet<Ident>();
+    Set<Ident> outerIdSet = new LinkedHashSet<Ident>();
     for(AccKernel gpuKernel : _accKernelList){
       List<Ident> kernelOuterId = gpuKernel.getOuterIdList();
       outerIdSet.addAll(kernelOuterId);
@@ -195,7 +195,7 @@ class AccKernels extends AccData {
     }
 
     for(AccKernel kern : kernelList){
-      Set<Ident> outerIdSet = new HashSet<Ident>(kern.getOuterIdSet());
+      Set<Ident> outerIdSet = new LinkedHashSet<Ident>(kern.getOuterIdSet());
       outerIdSet.removeAll(kern.getReadOnlyOuterIdSet());
       readOnlyOuterIdSet.removeAll(outerIdSet);
     }

@@ -162,6 +162,8 @@ public class XMP {
 	case 8:
 	  t = BasicType.LONGLONG;
 	  break;
+        default:
+          warning("unknown type size of integer for reduction");
 	}
       }
       break;
@@ -181,6 +183,8 @@ public class XMP {
 	case 8:
 	  t = BasicType.UNSIGNED_LONGLONG;
 	  break;
+        default:
+          warning("unknown type size of boolean for reduction");
 	}
       }
       break;
@@ -197,6 +201,8 @@ public class XMP {
 	case 16:
 	  t = BasicType.LONG_DOUBLE;
 	  break;
+        default:
+          warning("unknown type size of float/real for reduction");
 	}
       }
       break;
@@ -213,6 +219,8 @@ public class XMP {
 	case 16:
 	  t = BasicType.LONG_DOUBLE_COMPLEX;
 	  break;
+        default:
+          warning("unknown type size of complex for reduction");
 	}
       }
       break;

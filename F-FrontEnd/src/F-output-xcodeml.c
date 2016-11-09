@@ -114,7 +114,10 @@ xtag(enum expr_code code)
     case F_DO_STATEMENT:            return "FdoStatement";
     case F_DOWHILE_STATEMENT:       return "FdoWhileStatement";
     case F_SELECTCASE_STATEMENT:    return "FselectCaseStatement";
+    case F03_SELECTTYPE_STATEMENT:  return "selectTypeStatement";
     case F_CASELABEL_STATEMENT:     return "FcaseLabel";
+    case F03_CLASSIS_STATEMENT:     return "typeGuard";
+    case F03_TYPEIS_STATEMENT:      return "typeGuard";
     case F_WHERE_STATEMENT:         return "FwhereStatement";
     case F_RETURN_STATEMENT:        return "FreturnStatement";
     case F_CONTINUE_STATEMENT:      return "continueStatement";
@@ -214,6 +217,11 @@ xtag(enum expr_code code)
     case F95_USE_ONLY_STATEMENT:    return "FuseOnlyDecl";
 
     /*
+     * F2003 statement
+     */
+    case F03_IMPORT_STATEMENT:      return "FimportDecl";
+
+    /*
      * invalid or no corresponding tag
      */
     case ERROR_NODE:
@@ -309,6 +317,8 @@ xtag(enum expr_code code)
     case F95_PUBLIC_SPEC:
     case F95_PRIVATE_SPEC:
     case F03_PROTECTED_SPEC:
+    case F03_BIND_SPEC:
+    case F03_VALUE_SPEC:
     case F95_IN_EXTENT:
     case F95_OUT_EXTENT:
     case F95_INOUT_EXTENT:
@@ -787,11 +797,22 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_ALLOCATABLE(tp),      "is_allocatable");
         outx_true(TYPE_IS_SEQUENCE(tp),         "is_sequence");
         outx_true(TYPE_IS_INTERNAL_PRIVATE(tp), "is_internal_private");
-        outx_true(TYPE_IS_VOLATILE(tp),          "is_volatile");
+        outx_true(TYPE_IS_VOLATILE(tp),         "is_volatile");
+        outx_true(TYPE_IS_VALUE(tp),            "is_value");
+
         if (TYPE_PARENT(tp)) {
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
         }
         outx_true(TYPE_IS_CLASS(tp),            "is_class");
+
+        if(TYPE_HAS_BIND(tp)){
+            outx_print(" bind=\"%s\"", "C"); // Only C for the moment
+            if(TYPE_BIND_NAME(tp)){
+                outx_print(" bind_name=\"%s\"", EXPR_STR(TYPE_BIND_NAME(tp)));
+            }
+        }
+
+
     }
 
     if((options & TOPT_INTRINSIC) > 0)
@@ -1536,6 +1557,9 @@ outx_varDecl(int l, ID id)
     assert(id);
     const int l1 = l + 1;
 
+    if(ID_IS_ASSOCIATIVE(id))
+        return;
+
     outx_tagOfDecl(l, "varDecl", id);
 
     if(PROC_EXT_ID(id)) {
@@ -1739,6 +1763,31 @@ outx_caseLabel(int l, expv v)
     outx_expvClose(l, v);
 }
 
+/**
+ * output typeGuard
+ */
+static void
+outx_typeGuard(int l, expv v, int is_class)
+{
+    const int l1 = l + 1;
+    outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
+    if(EXPR_ARG3(v) != NULL) { // construct name
+        outx_print(" construct_name=\"%s\"", SYM_NAME(EXPV_NAME(EXPR_ARG3(v))));
+    }
+    if(is_class){ // CLASS IS and CLASS DEFAULT
+        if(EXPR_ARG1(v) == NULL){ // 
+            outx_print(" kind=\"CLASS_DEFAULT\">\n");
+        } else {
+            outx_print(" kind=\"CLASS_IS\" type=\"%s\">\n", getTypeID(EXPV_TYPE(EXPR_ARG1(v))));
+        }
+    } else { // TYPE IS
+        outx_print(" kind=\"TYPE_IS\" type=\"%s\">\n", getTypeID(EXPV_TYPE(EXPR_ARG1(v))));
+    }
+
+    outx_body(l1, EXPR_ARG2(v));
+    outx_expvClose(l, v);
+}
+
 
 /**
  * output FselectStatement
@@ -1757,6 +1806,31 @@ outx_selectStatement(int l, expv v)
             outx_expv(l1, LIST_ITEM(lp));
     }
 
+    outx_expvClose(l, v);
+}
+
+/**
+ * output selectTypeStatement for SELECT TYPE statement
+ */
+static void
+outx_selectTypeStatement(int l, expv v)
+{
+    const int l1 = l + 1;
+    list lp = EXPR_LIST(v);
+    outx_tagOfStatementWithConstructName(l, v, EXPR_ARG3(v), 1);
+
+    outx_printi(l1, "<id>\n"); 
+    if(EXPR_ARG4(v) != NULL){
+        outx_printi(l1+1, "<name>%s</name>\n", SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
+    } else {
+        outx_printi(l1+1, "<name></name>\n");
+    }
+    outx_value(l1+1, LIST_ITEM(lp));
+    outx_printi(l1, "</id>\n");
+    if(LIST_NEXT(lp) && LIST_ITEM(LIST_NEXT(lp))) {
+        FOR_ITEMS_IN_LIST(lp, LIST_ITEM(LIST_NEXT(lp)))
+            outx_expv(l1, LIST_ITEM(lp));
+    }
     outx_expvClose(l, v);
 }
 
@@ -1813,6 +1887,27 @@ static void
 outx_returnStatement(int l, expv v)
 {
     outx_tagOfStatementNoChild(l, v, NULL);
+}
+
+/**
+ * output FimportStatement
+ */
+static void
+outx_importStatement(int l, expv v) {
+    const int l1 = l + 1;
+    expv ident_list, arg;
+    list lp;
+    outx_tagOfStatement(l, v);
+    ident_list = EXPR_ARG1(v);
+    if(EXPR_LIST(ident_list)) {
+        FOR_ITEMS_IN_LIST(lp, ident_list) {
+            arg = LIST_ITEM(lp);
+            if(EXPR_CODE(arg) == IDENT){
+                outx_printi(l1, "<name>%s</name>\n", getRawString(arg));
+            }            
+        }
+    }
+    outx_expvClose(l, v);
 }
 
 
@@ -3290,6 +3385,7 @@ outx_expv(int l, expv v)
     case F_DO_STATEMENT:            outx_doStatement(l, v); break;
     case F_DOWHILE_STATEMENT:       outx_doWhileStatement(l, v); break;
     case F_SELECTCASE_STATEMENT:    outx_selectStatement(l, v); break;
+    case F03_SELECTTYPE_STATEMENT:  outx_selectTypeStatement(l, v); break;
     case IF_STATEMENT:
     case F_WHERE_STATEMENT:         outx_IFWHERE_Statement(l, v); break;
     case F_RETURN_STATEMENT:        outx_returnStatement(l, v); break;
@@ -3298,6 +3394,8 @@ outx_expv(int l, expv v)
     case F_COMPGOTO_STATEMENT:      outx_compgotoStatement(l, v); break;
     case STATEMENT_LABEL:           outx_labeledStatement(l, v); break;
     case F_CASELABEL_STATEMENT:     outx_caseLabel(l, v); break;
+    case F03_CLASSIS_STATEMENT:     outx_typeGuard(l, v, 1); break;
+    case F03_TYPEIS_STATEMENT:      outx_typeGuard(l, v, 0); break;
     case F_STOP_STATEMENT:
     case F_PAUSE_STATEMENT:         outx_STOPPAUSE_statement(l, v); break;
     case F_LET_STATEMENT:           outx_assignStatement(l, v); break;
@@ -3504,6 +3602,8 @@ outx_expv(int l, expv v)
     case F95_PUBLIC_SPEC:
     case F95_PRIVATE_SPEC:
     case F03_PROTECTED_SPEC:
+    case F03_BIND_SPEC:
+    case F03_VALUE_SPEC:
     case F95_IN_EXTENT:
     case F95_OUT_EXTENT:
     case F95_INOUT_EXTENT:
@@ -3728,6 +3828,7 @@ mark_type_desc_in_id_list(ID ids)
 {
     ID id;
     TYPE_DESC sTp;
+
     FOREACH_ID(id, ids) {
         sTp = reduce_type(ID_TYPE(id));
         mark_type_desc(sTp);
@@ -3967,6 +4068,14 @@ outx_arrayType(int l, TYPE_DESC tp)
       outx_typeAttrs(l, tp, "FbasicType", 0);
       outx_print(" ref=\"%s\">\n", getTypeID(array_element_type(tp)));
 
+#if 0
+      { //debug
+          fprintf(stdout,"outx_arrayType indexRange:"); 
+          print_type(tp,stdout,FALSE);
+          fprintf(stdout,"\n");
+      }
+#endif
+
       outx_indexRangeOfType(l1, tp);
 
       if (tp->codims) outx_coShape(l1, tp);
@@ -4024,6 +4133,14 @@ outx_functionType_EXT(int l, EXT_ID ep)
         outx_true(TYPE_IS_PUBLIC(tp), "is_public");
         outx_true(TYPE_IS_PRIVATE(tp), "is_private");
         outx_true(TYPE_IS_PROTECTED(tp), "is_protected");
+
+        if(TYPE_HAS_BIND(tp)){
+            outx_print(" bind=\"%s\"", "C"); 
+            if(TYPE_BIND_NAME(tp)){
+                outx_print(" bind_name=\"%s\"", EXPR_STR(TYPE_BIND_NAME(tp)));
+            }
+        }
+
     }
 
     if(EXT_PROC_ARGS(ep) == NULL) {
@@ -4387,7 +4504,7 @@ emit_decl(int l, ID id)
     if (ID_IS_EMITTED(id) == TRUE) {
         return;
     }
-    if (ID_IS_OFMODULE(id) == TRUE) {
+    if (ID_IS_OFMODULE(id) == TRUE && ID_CLASS(id) != CL_PARAM) {
         return;
     }
 
@@ -4516,7 +4633,6 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
 }
 
 
-
 /**
  * output declarations with pragmas
  */
@@ -4534,7 +4650,7 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
     outx_tag(l, "declarations");
 
     /*
-     * FuseDecl
+     * FuseDecl and FimportDecl
      */
     FOR_ITEMS_IN_LIST(lp, EXT_PROC_BODY(parent_ep)) {
         v = LIST_ITEM(lp);
@@ -4544,6 +4660,9 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
             break;
         case F95_USE_ONLY_STATEMENT:
             outx_useOnlyDecl(l1, v);
+            break;
+        case F03_IMPORT_STATEMENT:
+            outx_importStatement(l1, v);
             break;
         default:
             break;
@@ -5186,6 +5305,32 @@ outx_identifiers(int l, ID ids)
 }
 
 /**
+ * output declaraions for .xmod file
+ */
+static void
+outx_module_declarations(int l, ID ids)
+{
+    const int l1 = l + 1;
+    ID id;
+
+    outx_tag(l, "declarations");
+
+    FOREACH_ID(id, ids) {
+      switch(ID_CLASS(id)) {
+	/* only value PARAM value is exported from module ??? */
+      case CL_PARAM:
+        if (id_is_visibleVar(id))
+	  outx_varDecl(l1, id);
+        break;
+      default:
+	break;
+      }
+    }
+
+    outx_close(l, "declarations");
+}
+
+/**
  * output <interfaceDecls> node
  */
 static void
@@ -5233,6 +5378,8 @@ outx_module(struct module * mod)
     outx_typeTable(l1);
 
     outx_identifiers(l1, mod->head);
+
+    outx_module_declarations(l1,mod->head);
 
     outx_interfaceDecls(l1, mod->head);
 
@@ -5342,10 +5489,15 @@ output_module_file(struct module * mod)
     type_ext_id_list = NULL;
     type_ext_id_last = NULL;
 
+    /*
+     * collect types used in this module
+     */
+    // mark types of each ids
     mark_type_desc_in_id_list(mod->head);
     FOREACH_ID(id, mod->head) {
         ep = PROC_EXT_ID(id);
-        if (ep != NULL) {
+	// if id is external,  ...
+        if (ep != NULL) { 
             collect_types1(ep);
             FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
                 TYPE_DESC tp = EXT_PROC_TYPE(te->ep);
@@ -5373,7 +5525,8 @@ output_module_file(struct module * mod)
     }
 
     outx_module(mod);
-    unmark_type_table();
+
+    unmark_type_table(); // unmark types collected
     unmark_ids(UNIT_CTL_CURRENT_EXT_ID(CURRENT_UNIT_CTL));
 
     set_module_emission_mode(oEmitMode);

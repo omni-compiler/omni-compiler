@@ -121,6 +121,7 @@ static void compile_UNLOCK_statement(expr x);
 static void compile_CRITICAL_statement(expr x);
 static void compile_ENDCRITICAL_statement(expr x);
 
+static void compile_IMPORT_statement(expr x); // IMPORT statement
 static void compile_BLOCK_statement(expr x);
 static void compile_ENDBLOCK_statement(expr x);
 
@@ -393,7 +394,7 @@ void compile_statement1(int st_no, expr x)
 
     case F95_MODULE_STATEMENT: /* (F95_MODULE_STATEMENT) */
         begin_procedure();
-        declare_procedure(CL_MODULE, EXPR_ARG1(x), type_MODULE, NULL, NULL, NULL);
+        declare_procedure(CL_MODULE, EXPR_ARG1(x), type_MODULE, NULL, NULL, NULL, NULL);
         begin_module(EXPR_ARG1 (x));
         break;
 
@@ -433,17 +434,18 @@ void compile_statement1(int st_no, expr x)
 
     case F_PROGRAM_STATEMENT:   /* (F_PROGRAM_STATEMENT name) */
         begin_procedure();
-        declare_procedure(CL_MAIN, EXPR_ARG1(x), NULL, NULL, NULL, NULL);
+        declare_procedure(CL_MAIN, EXPR_ARG1(x), NULL, NULL, NULL, NULL, NULL);
         break;
     case F_BLOCK_STATEMENT:     /* (F_BLOCK_STATEMENT name) */
         begin_procedure();
-        declare_procedure(CL_BLOCK, EXPR_ARG1(x), NULL, NULL, NULL, NULL);
+        declare_procedure(CL_BLOCK, EXPR_ARG1(x), NULL, NULL, NULL, NULL, NULL);
         break;
     case F_SUBROUTINE_STATEMENT:
         /* (F_SUBROUTINE_STATEMENT name dummy_arg_list) */
         begin_procedure();
         declare_procedure(CL_PROC,
-                          EXPR_ARG1(x), new_type_subr(), EXPR_ARG2(x), EXPR_ARG3(x), NULL);
+                          EXPR_ARG1(x), new_type_subr(), EXPR_ARG2(x), 
+                          EXPR_ARG3(x), NULL, EXPR_ARG4(x));
         break;
         /* entry statements */
     case F_FUNCTION_STATEMENT:
@@ -459,11 +461,13 @@ void compile_statement1(int st_no, expr x)
             }
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               tp,
-                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
+                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x), 
+                              EXPR_ARG6(x));
         } else {
             declare_procedure(CL_PROC, EXPR_ARG1(x),
                               compile_type(EXPR_ARG3(x)),
-                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x));
+                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x), 
+                              EXPR_ARG6(x));
         }
         break;
     case F_ENTRY_STATEMENT:
@@ -476,7 +480,7 @@ void compile_statement1(int st_no, expr x)
         }
         declare_procedure(CL_ENTRY,
                           EXPR_ARG1(x), NULL, EXPR_ARG2(x),
-                          NULL, EXPR_ARG3(x));
+                          NULL, EXPR_ARG3(x), NULL);
         break;
     case F_INCLUDE_STATEMENT:
         /* (F_INCLUDE_STATEMENT filename) */
@@ -958,6 +962,30 @@ void compile_statement1(int st_no, expr x)
         CTL_BLOCK(ctl_top) = st;
 
         break;
+
+    case F03_SELECTTYPE_STATEMENT:
+          check_INEXEC();
+          push_ctl(CTL_SELECT); // TODO special select type ctl
+          v = compile_expression(EXPR_ARG1(x));
+          ID selector = find_ident(EXPR_SYM(EXPR_ARG1(x)));
+          if(EXPR_HAS_ARG3(x)){
+            ID associate_name = find_ident(EXPR_SYM(EXPR_ARG3(x)));
+            if(associate_name == NULL){
+                // Define the associate variable
+                associate_name = declare_ident(EXPR_SYM(EXPR_ARG3(x)), CL_VAR);
+                ID_IS_ASSOCIATIVE(associate_name) = TRUE;
+                ID_TYPE(associate_name) = ID_TYPE(selector);
+            }
+            expv tmp = expv_sym_term(IDENT, ID_TYPE(associate_name), 
+                ID_SYM(associate_name));
+            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), 
+                tmp);          
+          } else {
+            st = list4(F03_SELECTTYPE_STATEMENT, v, NULL, EXPR_ARG2(x), NULL);
+          }
+          
+          CTL_BLOCK(ctl_top) = st;
+          break;
     case F_CASELABEL_STATEMENT:
         if(CTL_TYPE(ctl_top) == CTL_SELECT  ||
            CTL_TYPE(ctl_top) == CTL_CASE) {
@@ -987,6 +1015,37 @@ void compile_statement1(int st_no, expr x)
 
         } else error("'case label', out of place");
         break;
+        case F03_TYPEIS_STATEMENT:
+        case F03_CLASSIS_STATEMENT:
+            if(CTL_TYPE(ctl_top) == CTL_SELECT
+                || CTL_TYPE(ctl_top) == CTL_CASE)
+            {
+                if (CTL_TYPE(ctl_top) == CTL_CASE) {
+                    CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+                    CURRENT_STATEMENTS = NULL;
+                    
+                    if (endlineno_flag)
+                         EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                    pop_ctl();
+                }
+                    
+                push_ctl(CTL_CASE);
+
+                if(EXPR_ARG1(x) != NULL) { // NULL for CLASS DEFAULT
+                    TYPE_DESC tp = find_struct_decl_parent(EXPR_SYM(EXPR_ARG1(x)));
+                    if(tp == NULL){
+                        error("%s has not been declared.", SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
+                    }
+                    expv tmp = expv_sym_term(IDENT, tp, EXPR_SYM(EXPR_ARG1(x)));
+                    st = list3(EXPR_CODE(x), tmp, NULL, EXPR_ARG2(x));
+                } else {
+                    st = list3(EXPR_CODE(x), NULL, NULL, EXPR_ARG2(x));
+                }
+                CTL_BLOCK(ctl_top) = st;
+            } else {
+                error("'class is/type is label', out of place");
+            }
+            break;
     case F_ENDSELECT_STATEMENT:
         if(CTL_TYPE(ctl_top) == CTL_SELECT) {
             CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;
@@ -1077,6 +1136,11 @@ void compile_statement1(int st_no, expr x)
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsProtected);
         break;
 
+    case F03_IMPORT_STATEMENT: // IMPORT statement
+        check_INDCL();
+        compile_IMPORT_statement(x);
+        break;
+
     case F2008_BLOCK_STATEMENT:
         check_INEXEC();
         compile_BLOCK_statement(x);
@@ -1153,7 +1217,7 @@ compile_exec_statement(expr x)
 	begin_procedure();
 	//declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
 	declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
-			  NULL, NULL, NULL, NULL);
+			  NULL, NULL, NULL, NULL, NULL);
       }
 
       x1 = EXPR_ARG1(x);
@@ -1391,7 +1455,7 @@ check_INDATA()
 {
     if (CURRENT_STATE == OUTSIDE) {
         begin_procedure();
-        declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+        declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL, NULL);
     }
     if(NOT_INDATA_YET){
         end_declaration();
@@ -1408,7 +1472,7 @@ check_INDCL()
         if (unit_ctl_level == 0)
 	  //declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
 	  declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
-			    NULL, NULL, NULL, NULL);
+			    NULL, NULL, NULL, NULL, NULL);
     case INSIDE:
         CURRENT_STATE = INDCL;
     case INDCL:
@@ -1428,9 +1492,9 @@ check_INEXEC()
         begin_procedure();
         if (unit_ctl_level == 0)
             declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
-                              NULL, NULL, NULL, NULL);
+                              NULL, NULL, NULL, NULL, NULL);
         else
-            declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL);
+            declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL, NULL);
     }
     if(NOT_INDATA_YET) end_declaration();
 }
@@ -1491,7 +1555,8 @@ checkTypeRef(ID id) {
 
 
 void
-fix_type(ID id) {
+fix_type(ID id) 
+{
     if (classNeedFix(id)) {
         implicit_declaration(id);
     }
@@ -1738,6 +1803,15 @@ end_declaration()
             PROC_IS_ELEMENTAL(myId)) {
             TYPE_SET_ELEMENTAL(ID_TYPE(myId));
             TYPE_SET_ELEMENTAL(EXT_PROC_TYPE(myEId));
+        }
+        /* for bind feature */
+        if(TYPE_HAS_BIND(myId) || PROC_HAS_BIND(myId)) {
+            TYPE_SET_BIND(ID_TYPE(myId));
+            TYPE_SET_BIND(EXT_PROC_TYPE(myEId));
+            if(PROC_BIND(myId)) {
+                TYPE_BIND_NAME(ID_TYPE(myId)) = PROC_BIND(myId);
+                TYPE_BIND_NAME(EXT_PROC_TYPE(myEId)) = PROC_BIND(myId);
+            }
         }
     }
 
@@ -5917,6 +5991,29 @@ check_image_control_statement_available() {
     return TRUE;
 }
 
+/*
+ * IMPORT statement
+ */
+static void
+compile_IMPORT_statement(expr x)
+{
+    if(check_inside_INTERFACE_body() == FALSE){
+        error("IMPORT statement allowed only in interface body");
+    }
+    expv ident_list, arg;
+    list lp;
+    ident_list = EXPR_ARG1(x);
+    if(EXPR_LIST(ident_list)) {
+        FOR_ITEMS_IN_LIST(lp, ident_list) {
+            arg = LIST_ITEM(lp);
+            ID ident = find_ident(EXPR_SYM(arg));
+            if(ident == NULL){
+                error("%s part of the IMPORT statement has not been declared yet.", SYM_NAME(EXPR_SYM(arg)));
+            }
+        }
+    }
+    output_statement(list1(F03_IMPORT_STATEMENT, EXPR_ARG1(x)));
+}
 
 static void
 compile_BLOCK_statement(expr x)

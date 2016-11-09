@@ -1516,7 +1516,7 @@ Optional Packages:
   --with-thread               type of openmp thread
   --with-lock                 type of openmp lock
   --with-gpucc=CMD            GPU C compiler (default: nvcc)
-  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)
+  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3 -Wno-deprecated-gpu-targets)
   --with-cuda=DIR             CUDA installation path (default: /usr/local/cuda)
   --with-opencl=DIR           OpenCL installation path (default: /usr/local/cuda)
   --with-libxml2=DIR          specify prefix directory for installed libxml2 package (default: /usr)
@@ -8108,7 +8108,7 @@ fi
 if test "${with_gpu_cflags+set}" = set; then :
   withval=$with_gpu_cflags; GPU_CFLAGS="${withval}"
 else
-  GPU_CFLAGS="-arch=sm_20 -O3"
+  GPU_CFLAGS="-arch=sm_20 -O3 -Wno-deprecated-gpu-targets"
 fi
 
 
@@ -12989,6 +12989,8 @@ ac_config_files="$ac_config_files F-FrontEnd/src/Makefile"
 
 ac_config_files="$ac_config_files F-FrontEnd/src/F-input-xmod.h"
 
+ac_config_files="$ac_config_files F-FrontEnd/src/fincludes/iso_c_binding.f90"
+
 ac_config_files="$ac_config_files F-FrontEnd/gnu_module/Makefile"
 
 ac_config_files="$ac_config_files F-BackEnd/Makefile"
@@ -13784,6 +13786,7 @@ do
     "C-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES C-BackEnd/Makefile" ;;
     "F-FrontEnd/src/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/Makefile" ;;
     "F-FrontEnd/src/F-input-xmod.h") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/F-input-xmod.h" ;;
+    "F-FrontEnd/src/fincludes/iso_c_binding.f90") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/src/fincludes/iso_c_binding.f90" ;;
     "F-FrontEnd/gnu_module/Makefile") CONFIG_FILES="$CONFIG_FILES F-FrontEnd/gnu_module/Makefile" ;;
     "F-BackEnd/Makefile") CONFIG_FILES="$CONFIG_FILES F-BackEnd/Makefile" ;;
     "F-BackEnd/bin/F_Back") CONFIG_FILES="$CONFIG_FILES F-BackEnd/bin/F_Back" ;;

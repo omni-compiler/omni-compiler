@@ -82,7 +82,7 @@ link_parent_defined_by(SYMBOL sym)
 void
 declare_procedure(enum name_class class,
                   expr name, TYPE_DESC type, expr args,
-                  expr prefix_spec, expr result_opt)
+                  expr prefix_spec, expr result_opt, expr bind_opt)
 {
     SYMBOL s = NULL;
     ID id;
@@ -155,7 +155,7 @@ declare_procedure(enum name_class class,
 
     case CL_MAIN:
       if (debug_flag)
-	fprintf(diag_file,"  MAIN %s:\n",(name ? SYM_NAME(s): ""));
+          fprintf(diag_file,"  MAIN %s:\n",(name ? SYM_NAME(s): ""));
 
       // Delete line because of [Xmp-dev:1896]
       // CURRENT_EXT_ID = declare_external_id(find_symbol(
@@ -233,12 +233,31 @@ declare_procedure(enum name_class class,
                 TYPE_SET_ELEMENTAL(type);
             }
         }
+
+        if (bind_opt) {
+            PROC_HAS_BIND(id) = TRUE;
+            TYPE_SET_BIND(id);
+            if (type != NULL) {
+               TYPE_SET_BIND(type);
+            }
+            expr bind_name = EXPR_ARG1(bind_opt);
+            if(bind_name){
+                PROC_BIND(id) = bind_name;
+                if(type != NULL) {
+                    TYPE_BIND_NAME(type) = bind_name;
+                }
+            }
+        }
+
         ID_STORAGE(id) = STG_EXT;
         declare_dummy_args(args, CL_PROC);
         CURRENT_PROCEDURE = id;
         /* make link before declare_current_procedure_ext_id() */
         link_parent_defined_by(CURRENT_PROC_NAME);
         (void)declare_current_procedure_ext_id();
+
+
+
 
         break;
     }
@@ -1781,6 +1800,12 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
 
             TYPE_SET_LEN(tp);
             break;
+        case F03_BIND_SPEC:
+            TYPE_SET_BIND(tp);
+            break;
+        case F03_VALUE_SPEC:
+            TYPE_SET_VALUE(tp);
+            break;            
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }
@@ -2018,7 +2043,7 @@ compile_type(expr x)
     TYPE_DESC tp = NULL;
     expr rkind = NULL, rcharLen = NULL;
     expv vkind = NULL, vkind2 = NULL, vcharLen = NULL, vcharLen1 = NULL;
-    expv org_vkind = NULL;
+    // expv org_vkind = NULL;
 
     if(x == NULL) return NULL;
 
@@ -2070,14 +2095,14 @@ compile_type(expr x)
          *	SUPER BOGUS FLAG ALERT !
          */
         is_in_kind_compilation_flag_for_declare_ident = TRUE;
-        org_vkind = vkind = compile_expression(rkind);
+	//org_vkind = vkind = compile_expression(rkind);
+	vkind = compile_expression(rkind);
         is_in_kind_compilation_flag_for_declare_ident = FALSE;
-        if(vkind == NULL)
-            return NULL;
+
+        if(vkind == NULL)  return NULL;
 
         vkind2 = expv_reduce(vkind, FALSE);
-        if(vkind2 != NULL)
-            vkind = vkind2;
+        if(vkind2 != NULL)  vkind = vkind2;
 
         if(IS_INT_CONST_V(vkind)) {
             if(EXPV_CODE(vkind) == INT_CONSTANT) {
@@ -2088,7 +2113,8 @@ compile_type(expr x)
                         return NULL;
                     }
                     kind /= 2;
-                    org_vkind = vkind = expv_int_term(INT_CONSTANT, type_INT, kind);
+                    // org_vkind = vkind = expv_int_term(INT_CONSTANT, type_INT, kind);
+                    vkind = expv_int_term(INT_CONSTANT, type_INT, kind);
                 }
             } else if(kindByLen) {
                 error("cannot reduce length parameter");
@@ -2240,8 +2266,8 @@ compile_type(expr x)
 
     if(tp == NULL) {
         tp = type_basic(t);
-	TYPE_KIND(tp) = org_vkind ? org_vkind : vkind;
-	//TYPE_KIND(tp) = vkind;
+	//TYPE_KIND(tp) = org_vkind ? org_vkind : vkind;
+	TYPE_KIND(tp) = vkind;
     }
 
     return tp;
@@ -2382,8 +2408,8 @@ set_implicit_storage(enum storage_class stg,int c1,int c2)
 }
 
 
-static expv
-reduce_kind(expv v)
+expv
+expv_reduce_kind(expv v)
 {
     expv ret = expv_reduce(v, TRUE); /* reduce parameter. */
 
@@ -2450,10 +2476,10 @@ max_kind(expv v0, TYPE_DESC t0, expv v1, TYPE_DESC t1)
     double d1 = 0;
 
     if (v0 != NULL) {
-        kv0 = reduce_kind(v0);
+        kv0 = expv_reduce_kind(v0);
     }
     if (v1 != NULL) {
-        kv1 = reduce_kind(v1);
+        kv1 = expv_reduce_kind(v1);
     }
 
     if (kv0 == NULL || kv1 == NULL) {
@@ -3487,6 +3513,9 @@ compile_struct_decl(expr ident, expr type, expr type_params)
                 TYPE_PARENT(tp) = new_ident_desc(EXPR_SYM(EXPR_ARG1(x)));
                 TYPE_PARENT_TYPE(tp) = parent_type;
             }; break;
+            case F03_BIND_SPEC:
+                TYPE_SET_BIND(tp);
+                break;
             default:
                 break;
         }
@@ -3898,9 +3927,13 @@ compile_PARAM_decl(expr const_list)
         }
         ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
 
+#if 0        
         /* compilataion of initial value is executed later */
         list_put_last(CURRENT_INITIALIZE_DECLS,
             list2(F_PARAM_DECL, ident, EXPR_ARG2(x)));
+#else
+        postproc_PARAM_decl(ident, EXPR_ARG2(x));
+#endif
 
         ID_ORDER(id) = order_sequence++;
     }

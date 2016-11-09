@@ -224,6 +224,7 @@ type_dump(TYPE_DESC tp)
     type_output(tp, stderr);
 }
 
+void expv_dump0(expv x,FILE *fp);
 
 void
 print_type(TYPE_DESC tp, FILE *fp, int recursive)
@@ -243,7 +244,13 @@ print_type(TYPE_DESC tp, FILE *fp, int recursive)
             fprintf(fp,"}\n");
         }
     } else if(TYPE_N_DIM(tp) != 0){
-        fprintf(fp,"{array(dim=%d):",TYPE_N_DIM(tp));
+        fprintf(fp,"{array(dim=%d): lb=",TYPE_N_DIM(tp));
+        if(TYPE_DIM_LOWER(tp) != NULL) expv_dump0(TYPE_DIM_LOWER(tp),fp);
+        else fprintf(fp,"<NULL>");
+        fprintf(fp,",ub=");
+        if(TYPE_DIM_UPPER(tp) != NULL) expv_dump0(TYPE_DIM_UPPER(tp),fp);
+        else fprintf(fp,"<NULL>");
+        fprintf(fp,":");
         print_type(TYPE_REF(tp),fp,recursive);
         fprintf(fp,"}");
     } else if(TYPE_REF(tp)){
@@ -399,6 +406,11 @@ expv_dump(expv x)
     fprintf(stderr, "\n");
 }
 
+void
+expv_dump0(expv x,FILE *fp)
+{
+    expv_output_rec(x, 0, fp);
+}
 
 char *
 basic_type_name(t)

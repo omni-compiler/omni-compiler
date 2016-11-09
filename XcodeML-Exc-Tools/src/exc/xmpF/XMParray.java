@@ -614,10 +614,10 @@ public class XMParray {
 
     Ident sizeArray = null;
     if (type.isFassumedShape()){
-      sizeArray = env.declOrGetSizeArray(block/*b.getHead()*/);
+      sizeArray = env.declOrGetSizeArray(block);
     }
 
-    f = env.declInternIdent(XMP.array_align_info_f,Xtype.FsubroutineType);
+    f = env.declInternIdent(XMP.array_align_info_f,Xtype.FsubroutineType, block);
     for(int i = 0; i < dims.size(); i++){
       XMPdimInfo info = dims.elementAt(i);
 
@@ -797,7 +797,7 @@ public class XMParray {
     }
 
     if(hasShadow()){
-      f = env.declInternIdent(XMP.array_init_shadow_f,Xtype.FsubroutineType);
+      f = env.declInternIdent(XMP.array_init_shadow_f,Xtype.FsubroutineType, block);
       for(int i = 0; i < dims.size(); i++){
 	if(hasShadow(i)){
 	  int left = getShadowLeft(i);
@@ -812,7 +812,7 @@ public class XMParray {
       }
     }
 
-    f = env.declInternIdent(XMP.array_init_f,Xtype.FsubroutineType);
+    f = env.declInternIdent(XMP.array_init_f,Xtype.FsubroutineType, block);
     st.insert(f.callSubroutine(Xcons.List(descId.Ref())));
 
     if(isLinearized()){
@@ -821,7 +821,7 @@ public class XMParray {
       for(int i = 0; i < dims.size(); i++){
 	XMPdimInfo info = dims.elementAt(i);
 	f = env.declInternIdent(XMP.array_get_local_size_f,
-			      Xtype.FsubroutineType);
+			      Xtype.FsubroutineType, block);
 	st.insert(f.callSubroutine(Xcons.List(descId.Ref(),
 					      Xcons.IntConstant(i),
 					      info.getArraySizeVar().Ref(),
@@ -845,7 +845,7 @@ public class XMParray {
       for(int i = 0; i < dims.size(); i++){
 	XMPdimInfo info = dims.elementAt(i);
 	f = env.declInternIdent(XMP.array_get_local_size_f,
-			      Xtype.FsubroutineType);
+			      Xtype.FsubroutineType, block);
 	st.insert(f.callSubroutine(Xcons.List(descId.Ref(),
 					      Xcons.IntConstant(i),
 					      info.getArraySizeVar().Ref(),
@@ -871,7 +871,7 @@ public class XMParray {
     }
       
     // set
-    f = env.declInternIdent(XMP.array_set_local_array_f,Xtype.FsubroutineType);
+    f = env.declInternIdent(XMP.array_set_local_array_f,Xtype.FsubroutineType, block);
     Xobject isCoarray = (sclass == StorageClass.FSAVE) ? Xcons.IntConstant(1) : Xcons.IntConstant(0);
     st.add(f.callSubroutine(Xcons.List(descId.Ref(), localId.Ref(), isCoarray)));
 
@@ -885,7 +885,7 @@ public class XMParray {
     Ident f;
 
     // deallocate desc
-    f = env.declInternIdent(XMP.array_deallocate_f, Xtype.FsubroutineType);
+    f = env.declInternIdent(XMP.array_deallocate_f, Xtype.FsubroutineType, block);
     st.insert(f.callSubroutine(Xcons.List(descId.Ref())));
 
     dealloc.setArg(0, localId.Ref());

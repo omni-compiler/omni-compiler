@@ -124,8 +124,8 @@ AC_ARG_WITH(gpucc,
 
 # specify GPU C compiler flags
 AC_ARG_WITH(gpu-cflags,
-	    [  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3)],
-	    [GPU_CFLAGS="${withval}"], [GPU_CFLAGS="-arch=sm_20 -O3"])
+	    [  --with-gpu-cflags=CFLAGS    GPU C compiler flags (default: -arch=sm_20 -O3 -Wno-deprecated-gpu-targets)],
+	    [GPU_CFLAGS="${withval}"], [GPU_CFLAGS="-arch=sm_20 -O3 -Wno-deprecated-gpu-targets"])
 
 # specify CUDA path
 AC_ARG_WITH(cuda,
@@ -2241,6 +2241,7 @@ AC_CONFIG_FILES(C-FrontEnd/src/Makefile)
 AC_CONFIG_FILES(C-BackEnd/Makefile)
 AC_CONFIG_FILES(F-FrontEnd/src/Makefile)
 AC_CONFIG_FILES(F-FrontEnd/src/F-input-xmod.h)
+AC_CONFIG_FILES(F-FrontEnd/src/fincludes/iso_c_binding.f90)
 AC_CONFIG_FILES(F-FrontEnd/gnu_module/Makefile)
 AC_CONFIG_FILES(F-BackEnd/Makefile)
 AC_CONFIG_FILES(F-BackEnd/bin/F_Back)

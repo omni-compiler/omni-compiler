@@ -540,7 +540,7 @@ extern void     declare_procedure
                 _ANSI_ARGS_((enum name_class class,
                              expr name,
                              TYPE_DESC type, expr args, expr prefix_spec,
-                             expr result_opt));
+                             expr result_opt, expr bind_opt));
 extern EXT_ID   declare_current_procedure_ext_id(void);
 
 extern void     compile_type_decl _ANSI_ARGS_((expr typExpre, TYPE_DESC baseTp,
@@ -691,6 +691,7 @@ extern expv     expv_complex_node_to_variable _ANSI_ARGS_((expv v, TYPE_DESC tp)
 extern expv     expv_complex_const_reduce _ANSI_ARGS_((expv v, TYPE_DESC tp));
 
 extern expv     expv_reduce _ANSI_ARGS_((expv v, int doParamReduce));
+extern expv     expv_reduce_kind _ANSI_ARGS_((expv v));
 extern expv     expv_float_reduce _ANSI_ARGS_((expv v));
 extern expv     expv_reduce_conv_const _ANSI_ARGS_((TYPE_DESC tp, expv v));
 extern expv     expv_inline_function _ANSI_ARGS_((expv left, expv right));
@@ -717,6 +718,7 @@ extern expr     list2 _ANSI_ARGS_((enum expr_code code, expr x1, expr x2));
 extern expr     list3 _ANSI_ARGS_((enum expr_code code, expr x1, expr x2, expr x3));
 extern expr     list4 _ANSI_ARGS_((enum expr_code code, expr x1, expr x2, expr x3, expr x4));
 extern expr     list5 _ANSI_ARGS_((enum expr_code code, expr x1, expr x2, expr x3, expr x4, expr x5));
+extern expr     list6 _ANSI_ARGS_((enum expr_code code, expr x1, expr x2, expr x3, expr x4, expr x5, expr x6));
 
 extern expr     expr_list_get_n _ANSI_ARGS_((expr x, int n));
 extern int      expr_list_set_n _ANSI_ARGS_((expr x, int n, expr val, int doOverride));
