@@ -1818,6 +1818,7 @@ public class XmcXcodeToXcTranslator {
                 else if (clauseName.equals("dir_if"))                clauseName = "if";
                 else if (clauseName.equals("dir_nowait"))            clauseName = "nowait";
                 else if (clauseName.equals("dir_schedule"))          clauseName = "schedule";
+                else if (clauseName.equals("dir_num_threads"))       clauseName = "num_threads";
             
 		obj.addToken(clauseName);
                 
@@ -1826,13 +1827,19 @@ public class XmcXcodeToXcTranslator {
 		    obj.addToken("(");
 		    if (operator != "") obj.addToken(operator + " :");
 
-		    if (!arg.getNodeName().equals("list")){ // default clause
-		      String kind = XmDomUtil.getContentText(arg).toLowerCase();
-		      if (kind.equals("default_shared")) kind = "shared";
-		      else if (kind.equals("default_none")) kind = "none";
-		      obj.addToken(kind);
-		    }
-		    else {
+            if (!arg.getNodeName().equals("list")){
+                String text = XmDomUtil.getContentText(arg);
+                if (clauseName.equals("if") || clauseName.equals("num_threads"))
+                    obj.addToken(text);
+                else
+                {   // 'default' clause
+                    String kind = text.toLowerCase();
+                    if (kind.equals("default_shared")) kind = "shared";
+                    else if (kind.equals("default_none")) kind = "none";
+                    obj.addToken(kind);
+                }
+            }
+            else {
 		      NodeList varList = arg.getChildNodes();
 
 		      String kind = XmDomUtil.getContentText(varList.item(0)).toLowerCase();
