@@ -1045,6 +1045,10 @@ public class XmcXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             }
             addChildNode(e, f1);
 
+            // barrier directive
+            if (xobj.Nargs() < 3)
+                break;
+
             Element f2 = createElement("list");
             Xobject body = xobj.getArg(2);
             if (body != null){

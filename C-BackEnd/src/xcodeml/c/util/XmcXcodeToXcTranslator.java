@@ -1768,6 +1768,9 @@ public class XmcXcodeToXcTranslator {
 
 	    obj.setLine("#pragma omp " + dirName);
 
+            if (dirName.equals("barrier"))
+		return;
+
             if (dirName.equals("threadprivate")){
 		obj.addToken("(");
             	
