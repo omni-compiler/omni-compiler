@@ -94,6 +94,19 @@ public class CompoundBlock extends Block
         return s.toString();
     }
 
+    // find Id in this context or above.
+    @Override
+    public Ident findVarIdent(String name)
+    {
+        return findVarIdent(name, getBody());
+    }
+
+    // find Block where Id found
+    public CompoundBlock findVarIdentBlock(String name)
+    {
+        return findVarIdentBlock(name, getBody());
+    }
+
     private final static String SYMBOL_TABLE = "XMP_PROP_XMP_SYMBOL_TABLE";
 
     public XMPsymbolTable getXMPsymbolTable() {

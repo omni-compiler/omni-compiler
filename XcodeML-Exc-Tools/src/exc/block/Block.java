@@ -332,9 +332,14 @@ public class Block extends PropObject implements IVarContainer
     @Override
     public Ident findVarIdent(String name)
     {
+        return findVarIdent(name, getParent());
+    }
+
+    public Ident findVarIdent(String name, BlockList start_bl)
+    {
         BlockList b_list;
         Ident id;
-        for(b_list = parent; b_list != null; b_list = b_list.getParentList()) {
+        for(b_list = start_bl; b_list != null; b_list = b_list.getParentList()) {
             if((id = b_list.findLocalIdent(name)) != null)
                 return id;
             if(b_list.getParent() instanceof FunctionBlock) {
@@ -343,14 +348,20 @@ public class Block extends PropObject implements IVarContainer
         }
         return null; // not found
     }
+
     // find Block Id found
-    public Block findVarIdentBlock(String name)
+    public CompoundBlock findVarIdentBlock(String name)
+    {
+        return findVarIdentBlock(name, getParent());
+    }
+
+    public CompoundBlock findVarIdentBlock(String name, BlockList start_bl)
     {
         BlockList b_list;
         Ident id;
-        for(b_list = parent; b_list != null; b_list = b_list.getParentList()) {
-            if((id = b_list.findLocalIdent(name)) != null){
-                return b_list.getParent();}
+        for(b_list = start_bl; b_list != null; b_list = b_list.getParentList()) {
+            if((id = b_list.findLocalIdent(name)) != null)
+                return (CompoundBlock)b_list.getParent();
         }
         return null; // not found
     }
