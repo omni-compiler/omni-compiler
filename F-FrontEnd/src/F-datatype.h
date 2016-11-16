@@ -33,9 +33,10 @@ typedef enum datatype {
     TYPE_MODULE,        /* 14 module */
     TYPE_GENERIC,       /* 15 generic type for interface */
     TYPE_NAMELIST,      /* 16 type for namelist */
-    TYPE_LHS,		/* 17 type for intrinsic null(), always
+    TYPE_LHS,           /* 17 type for intrinsic null(), always
                          * comforms to the type of the left hand
                          * expression. */
+    TYPE_VOID,          /* 18 type of subroutine call */
     TYPE_END
 } BASIC_DATA_TYPE;
 
@@ -76,6 +77,14 @@ typedef struct _codims_desc {
   int corank;
   expr cobound_list;
 } codims_desc;
+
+
+enum type_proc_class {
+    TYPE_PROC_UNKNOWN,
+    TYPE_PROC_PROGRAM,
+    TYPE_PROC_FUNC,
+    TYPE_PROC_SUBR,
+};
 
 
 /* FORTRAN 77 type descriptor */
@@ -154,11 +163,22 @@ typedef struct type_descriptor
                                  * genereted by reshape() intrinsic. */
 
     struct external_symbol *extID;      /* for the function type, external symbol */
+
     struct {
-        struct ident_descriptor * generics; /* for the function type of type-bound generic */
-        int has_pass_arg;                   /* for the function type of type-bound procedure */
-        struct ident_descriptor * pass_arg; /* for the function type of type-bound procedure */
-    } type_bound_proc_info;
+        enum type_proc_class class;
+        struct type_descriptor * return_type;
+        SYMBOL result;
+        int has_explicit_arguments;
+        struct ident_descriptor * args; /* for the function type of type-bound generic */
+        int is_generic;
+        int is_tbp;
+        struct {
+            struct ident_descriptor * generics; /* for the function type of type-bound generic */
+            int has_pass_arg;                   /* for the function type of type-bound procedure */
+            struct ident_descriptor * pass_arg; /* for the function type of type-bound procedure */
+        } type_bound_proc_info;
+    } proc_info;
+
 } *TYPE_DESC;
 
 struct type_attr_check {
@@ -350,7 +370,15 @@ extern TYPE_DESC basic_type_desc[];
 #define IS_ELEMENT_TYPE(tp) \
                 ((tp) != NULL && (tp)->ref == NULL)
 #define IS_FUNCTION_TYPE(tp) \
-                ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_FUNCTION)
+                ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_FUNCTION))
+#define IS_SUBR(tp) \
+                ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_SUBR))
+#define IS_VOID(tp) \
+                ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_VOID))
+#define IS_PROCEDURE_TYPE(tp) \
+                (IS_FUNCTION_TYPE(tp) || IS_SUBR(tp))
+#define IS_GENERIC_PROCEDURE_TYPE(tp) \
+                (IS_PROCEDURE_TYPE(tp) && FUNCTION_TYPE_IS_GENERIC(tp))
 #define IS_COMPLEX(tp) \
                 ((tp) != NULL && \
                 (TYPE_BASIC_TYPE(tp) == TYPE_COMPLEX || \
@@ -374,8 +402,6 @@ extern TYPE_DESC basic_type_desc[];
                 ((tp) != NULL && (TYPE_CHAR_LEN(tp) == CHAR_LEN_UNFIXED))
 #define IS_LOGICAL(tp) \
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_LOGICAL))
-#define IS_SUBR(tp) \
-                ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_SUBR))
 #define IS_INT_CONST_V(v) \
                 (IS_INT(EXPV_TYPE(v)) && expr_is_constant(v))
 #define IS_INT_PARAM_V(v) \
@@ -447,9 +473,30 @@ typedef enum {
 } pragma_status_t;
 #endif
 
-#define TYPE_BOUND_GENERIC_TYPE_GENERICS(tp) ((tp)->type_bound_proc_info.generics)
-#define TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tp) ((tp)->type_bound_proc_info.has_pass_arg)
-#define TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tp) ((tp)->type_bound_proc_info.pass_arg)
+#define FUNCTION_TYPE_RETURN_TYPE(tp) ((tp)->proc_info.return_type)
+#define FUNCTION_TYPE_HAS_EXPLICIT_ARGS(tp) ((tp)->proc_info.has_explicit_arguments)
+#define FUNCTION_TYPE_ARGS(tp) ((tp)->proc_info.args)
+#define FUNCTION_TYPE_RESULT(tp) ((tp)->proc_info.result)
+
+#define FUNCTION_TYPE_IS_FUNCTION(tp) ((tp)->proc_info.class == TYPE_PROC_FUNC)
+#define FUNCTION_TYPE_IS_SUBROUTINE(tp) ((tp)->proc_info.class == TYPE_PROC_SUBR)
+#define FUNCTION_TYPE_IS_PROGRAM(tp) ((tp)->proc_info.class == TYPE_PROC_PROGRAM)
+
+#define FUNCTION_TYPE_SET_FUNCTION(tp) ((tp)->proc_info.class = TYPE_PROC_FUNC)
+#define FUNCTION_TYPE_SET_SUBROUTINE(tp) ((tp)->proc_info.class = TYPE_PROC_SUBR)
+#define FUNCTION_TYPE_SET_PROGRAM(tp) ((tp)->proc_info.class = TYPE_PROC_PROGRAM)
+
+#define FUNCTION_TYPE_IS_TYPE_BOUND(tp) ((tp)->proc_info.is_tbp == TRUE)
+#define FUNCTION_TYPE_SET_TYPE_BOUND(tp) ((tp)->proc_info.is_tbp = TRUE)
+#define FUNCTION_TYPE_UNSET_TYPE_BOUND(tp) ((tp)->proc_info.is_tbp = FALSE)
+
+#define FUNCTION_TYPE_IS_GENERIC(tp) ((tp)->proc_info.is_generic == TRUE)
+#define FUNCTION_TYPE_SET_GENERIC(tp) ((tp)->proc_info.is_generic = TRUE)
+#define FUNCTION_TYPE_UNSET_GENERIC(tp) ((tp)->proc_info.is_generic = TRUE)
+
+#define TYPE_BOUND_GENERIC_TYPE_GENERICS(tp) ((tp)->proc_info.type_bound_proc_info.generics)
+#define TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.type_bound_proc_info.has_pass_arg)
+#define TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tp) ((tp)->proc_info.type_bound_proc_info.pass_arg)
 
 
 #endif /* _F_DATATYPE_H_ */

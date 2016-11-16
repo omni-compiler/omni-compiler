@@ -572,7 +572,7 @@ extern expv     compile_expression _ANSI_ARGS_((expr x));
 extern expv     expv_assignment _ANSI_ARGS_((expv v1, expv v2));
 extern expv     compile_args _ANSI_ARGS_((expr args));
 extern expv     compile_function_call _ANSI_ARGS_((ID f_id, expr args));
-extern expv     compile_function_call0 _ANSI_ARGS_((ID f_id, expr args, int ignoreTypeMismatch));
+extern expv     compile_function_call_check_type _ANSI_ARGS_((ID f_id, expr args, int ignoreTypeMismatch));
 extern expv     compile_highorder_function_call _ANSI_ARGS_((ID f_id,
                                                              expr args,
                                                              int isCall));
@@ -605,6 +605,7 @@ extern ID       declare_common_ident _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_head _ANSI_ARGS_((SYMBOL s, ID head));
 extern ID       find_ident _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_local _ANSI_ARGS_((SYMBOL s));
+extern ID       find_ident_parent0 _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_parent _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_sibling _ANSI_ARGS_((SYMBOL s));
 extern ID       find_struct_member _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
@@ -652,21 +653,26 @@ extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
 
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
 extern void     compile_type_generic_procedure _ANSI_ARGS_((expr x));
-extern void     update_type_bound_procedures _ANSI_ARGS_((TYPE_DESC struct_decls, EXT_ID external_ids, int just_one, ID local_symbols));
+extern void     update_type_bound_procedures _ANSI_ARGS_((TYPE_DESC struct_decls, ID local_symbols));
 extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f2, int has_pass_arg));
 extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));
 
-extern int      element_type_is_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
+extern int      type_is_soft_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern int      struct_type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern void     function_type_udpate
+                    _ANSI_ARGS_((TYPE_DESC ftp, expv args, ID idList));
 extern int      function_type_is_appliable
                     _ANSI_ARGS_((TYPE_DESC ftp, expv args));
 extern int      type_bound_procedure_types_are_compatible
                     _ANSI_ARGS_((ID tbp1, ID tbp2));
+
+extern void     merge_type _ANSI_ARGS_((TYPE_DESC *tp1, TYPE_DESC tp2));
+
 
 extern int      are_dimension_and_shape_conformant_by_type _ANSI_ARGS_((
     expr x, TYPE_DESC lt, TYPE_DESC rt, expv *shapePtr));
@@ -697,9 +703,17 @@ extern void             set_index_range_type _ANSI_ARGS_((expv v));
 extern TYPE_DESC        type_ref _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        struct_type  _ANSI_ARGS_((ID id));
 extern TYPE_DESC        function_type _ANSI_ARGS_((TYPE_DESC tp));
-extern TYPE_DESC        new_type_subr _ANSI_ARGS_((void));
+extern TYPE_DESC        subroutine_type _ANSI_ARGS_((void));
+extern TYPE_DESC        generic_procedure_type _ANSI_ARGS_((void));
+extern TYPE_DESC        generic_function_type _ANSI_ARGS_((void));
+extern TYPE_DESC        generic_subroutine_type _ANSI_ARGS_((void));
+extern TYPE_DESC        intrinsic_function_type _ANSI_ARGS_((TYPE_DESC tp));
+extern TYPE_DESC        intrinsic_subroutine_type _ANSI_ARGS_((void));
+extern TYPE_DESC        program_type _ANSI_ARGS_((void));
+extern TYPE_DESC        type_bound_procedure_type _ANSI_ARGS_((void));
 extern TYPE_DESC        type_char _ANSI_ARGS_((int len));
 extern TYPE_DESC        type_basic _ANSI_ARGS_((BASIC_DATA_TYPE t));
+extern TYPE_DESC        type_void _ANSI_ARGS_(());
 extern TYPE_DESC        array_element_type _ANSI_ARGS_((TYPE_DESC tp));
 
 extern expv     compile_array_ref _ANSI_ARGS_((ID id, expv ary, expr args, int isLeft));

@@ -159,8 +159,6 @@ typedef struct ident_descriptor
                                            of this ID, otherwise
                                            NULL */
 
-    char * type_id;                     /* its type ID (for input XcodeML) */
-
     union {
         struct {
             enum proc_class pclass;   /* for CL_PROC */

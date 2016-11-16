@@ -43,20 +43,132 @@ function_type(TYPE_DESC tp)
     TYPE_DESC tq;
     tq = new_type_desc();
     TYPE_BASIC_TYPE(tq) = TYPE_FUNCTION;
-    TYPE_REF(tq) = tp;
+    FUNCTION_TYPE_RETURN_TYPE(tq) = tp;
+    FUNCTION_TYPE_SET_FUNCTION(tq);
+
+    if (tp != NULL && TYPE_ATTR_FLAGS(tp) != 0) {
+        TYPE_ATTR_FLAGS(tq) = TYPE_ATTR_FLAGS(tp);
+        TYPE_ATTR_FLAGS(tp) = 0;
+    }
+
     return tq;
 }
 
+
 TYPE_DESC
-new_type_subr(void)
+intrinsic_function_type(TYPE_DESC tp)
 {
-    TYPE_DESC tp;
+    TYPE_DESC tq = function_type(tp);
+    TYPE_SET_INTRINSIC(tp);
+    return tq;
+}
 
-    tp = new_type_desc();
-    TYPE_BASIC_TYPE(tp) = (BASIC_DATA_TYPE)TYPE_SUBR;
 
+TYPE_DESC
+intrinsic_subroutine_type()
+{
+    TYPE_DESC tp = subroutine_type();
+    TYPE_SET_INTRINSIC(tp);
     return tp;
 }
+
+
+TYPE_DESC
+type_void()
+{
+    TYPE_DESC tp;
+    tp = new_type_desc();
+    TYPE_BASIC_TYPE(tp) = TYPE_VOID;
+    return tp;
+}
+
+
+TYPE_DESC
+subroutine_type(void)
+{
+    TYPE_DESC tp;
+    TYPE_DESC tq;
+
+    tq = new_type_desc();
+    TYPE_BASIC_TYPE(tq) = TYPE_VOID;
+
+    tp = new_type_desc();
+    TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+    FUNCTION_TYPE_SET_SUBROUTINE(tp);
+    FUNCTION_TYPE_RETURN_TYPE(tp) = tq;
+    return tp;
+}
+
+
+TYPE_DESC
+generic_procedure_type()
+{
+    TYPE_DESC tp;
+    tp = new_type_desc();
+    TYPE_BASIC_TYPE(tp) = TYPE_GENERIC;
+    tp = function_type(tp);
+    FUNCTION_TYPE_SET_GENERIC(tp);
+    // TYPE_SET_NOT_FIXED(tp);
+    return tp;
+}
+
+
+/*
+ * function type
+ * - return type is TYPE_GENRERIC
+ * - set generic flag
+ */
+TYPE_DESC
+generic_function_type()
+{
+    TYPE_DESC tp;
+    tp = new_type_desc();
+    TYPE_BASIC_TYPE(tp) = TYPE_GENERIC;
+    tp = function_type(tp);
+    FUNCTION_TYPE_SET_GENERIC(tp);
+    return tp;
+}
+
+
+TYPE_DESC
+generic_subroutine_type()
+{
+    TYPE_DESC tp;
+    TYPE_DESC tq;
+
+    tq = new_type_desc();
+    TYPE_BASIC_TYPE(tq) = TYPE_VOID;
+    tq = wrap_type(tq);
+    TYPE_BASIC_TYPE(tq) = TYPE_GENERIC;
+    tp = new_type_desc();
+    TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+    FUNCTION_TYPE_SET_SUBROUTINE(tp);
+    FUNCTION_TYPE_RETURN_TYPE(tp) = tq;
+    FUNCTION_TYPE_SET_GENERIC(tp);
+    return tp;
+}
+
+
+TYPE_DESC
+program_type(void)
+{
+    TYPE_DESC tp = subroutine_type();
+    FUNCTION_TYPE_SET_PROGRAM(tp);
+    return tp;
+}
+
+
+TYPE_DESC
+type_bound_procedure_type(void)
+{
+    TYPE_DESC tp;
+    tp = new_type_desc();
+    TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
+    FUNCTION_TYPE_SET_FUNCTION(tp);
+    FUNCTION_TYPE_SET_TYPE_BOUND(tp);
+    return tp;
+}
+
 
 TYPE_DESC
 struct_type(ID id)
@@ -206,7 +318,7 @@ type_is_omissible(TYPE_DESC tp, uint32_t attr, uint32_t ext)
     if (IS_ARRAY_TYPE(tp))
         return FALSE;
     // The function type is not omissible.
-    if (IS_FUNCTION_TYPE(tp))
+    if (IS_PROCEDURE_TYPE(tp))
         return FALSE;
     // Co-array is not omissible.
     if (tp->codims != NULL)
@@ -337,6 +449,15 @@ reduce_type(TYPE_DESC tp) {
         TYPE_ATTR_FLAGS(ret) = attr;
         TYPE_EXTATTR_FLAGS(ret) = ext;
 #endif
+    }
+
+    if (IS_PROCEDURE_TYPE(ret)) {
+        ID ip;
+        FUNCTION_TYPE_RETURN_TYPE(ret) =
+                reduce_type(FUNCTION_TYPE_RETURN_TYPE(ret));
+        FOREACH_ID(ip, FUNCTION_TYPE_ARGS(ret)) {
+            ID_TYPE(ip) = reduce_type(ID_TYPE(ip));
+        }
     }
 
     return ret;
@@ -565,11 +686,11 @@ has_coarray_component(TYPE_DESC tp){
 }
 
 /*
- * Check type compatiblity of element types,
+ * Check type compatiblity of types softly,
  * ignoring type parameters like KIND, LENGTH 
  */
 int
-element_type_is_compatible(TYPE_DESC tp, TYPE_DESC tq)
+type_is_soft_compatible(TYPE_DESC tp, TYPE_DESC tq)
 {
     if (tp == NULL || tq == NULL ||
        IS_ARRAY_TYPE(tp) || IS_ARRAY_TYPE(tq)) return FALSE;
@@ -1095,49 +1216,49 @@ derived_type_is_compatible(TYPE_DESC left, TYPE_DESC right, int for_argunemt)
 int
 type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
 {
-    int i1;
-    int i2;
-    int len;
     int has_pass1;
     int has_pass2;
-    int skip_this_loop;
+    int skip_this_loop = FALSE;
     SYMBOL pass_arg1 = NULL;
     SYMBOL pass_arg2 = NULL;
-    EXT_ID f1;
-    EXT_ID f2;
-    expv args1;
-    expv args2;
-    expv arg1;
-    expv arg2;
-    ID id1;
-    ID id2;
+    TYPE_DESC ftp1;
+    TYPE_DESC ftp2;
+    ID args1;
+    ID args2;
+    ID arg1;
+    ID arg2;
 
     if (tbp1 == NULL || tbp2 == NULL) {
         // may never reach
         return FALSE;
     }
 
-    f1 = TYPE_EXT_ID(ID_TYPE(tbp1));
-    f2 = TYPE_EXT_ID(ID_TYPE(tbp2));
+    ftp1 = TYPE_REF(ID_TYPE(tbp1));
+    ftp2 = TYPE_REF(ID_TYPE(tbp2));
 
-    args1 = EXT_PROC_ARGS(f1);
-    args2 = EXT_PROC_ARGS(f2);
+    args1 = FUNCTION_TYPE_ARGS(ftp1);
+    args2 = FUNCTION_TYPE_ARGS(ftp2);
 
-    len = expr_list_length(args1);
+    if (debug_flag) {
+        fprintf(debug_fp, "comparing '%s' and '%s'\n",
+                SYM_NAME(ID_SYM(TBP_BINDING(tbp1)?:tbp1)),
+                SYM_NAME(ID_SYM(TBP_BINDING(tbp2)?:tbp2)));
+    }
 
     /*
      * compare return types
      */
-    if (!type_is_strict_compatible(EXT_PROC_TYPE(f1), EXT_PROC_TYPE(f2))) {
+    if (!type_is_strict_compatible(FUNCTION_TYPE_RETURN_TYPE(ftp1),
+                                   FUNCTION_TYPE_RETURN_TYPE(ftp2))) {
+        if (debug_flag) {
+            fprintf(debug_fp, "return types are not match\n");
+        }
         return FALSE;
     }
 
     /*
      * compare their argument length
      */
-    if (expr_list_length(args1) != expr_list_length(args2)) {
-        return FALSE;
-    }
 
     if (TYPE_BOUND_PROCEDURE_PASS & TBP_BINDING_ATTRS(tbp1)) {
         has_pass1 = TRUE;
@@ -1153,26 +1274,28 @@ type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
         }
     }
 
-    for (i1 = 0, i2 =0; i1 < len && i2 < len; skip_this_loop = FALSE) {
-        arg1 = expr_list_get_n(args1, i1);
-        arg2 = expr_list_get_n(args2, i2);
+    for (arg1 = args1, arg2 = args2; arg1 != NULL && arg2 != NULL; skip_this_loop = FALSE) {
+        if (debug_flag) {
+            fprintf(debug_fp, "comparing argument '%s' and '%s'\n",
+                    SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
+        }
 
         if (has_pass1) {
-            if (pass_arg1 == NULL && i1 == 0) {
+            if (pass_arg1 == NULL && arg1 == args1) {
                 skip_this_loop = TRUE;
-                i1++;
-            } else if (pass_arg1 != NULL && pass_arg1 == EXPR_SYM(arg1)) {
+                arg1 = ID_NEXT(arg1);
+            } else if (pass_arg1 != NULL && pass_arg1 == ID_SYM(arg1)) {
                 skip_this_loop = TRUE;
-                i1++;
+                arg1 = ID_NEXT(arg1);
             }
         }
         if (has_pass2) {
-            if (pass_arg2 == NULL && i2 == 0) {
+            if (pass_arg2 == NULL && arg2 == args2) {
                 skip_this_loop = TRUE;
-                i2++;
-            } else if (pass_arg2 != NULL && pass_arg2 == EXPR_SYM(arg2)) {
+                arg2 = ID_NEXT(arg2);
+            } else if (pass_arg2 != NULL && pass_arg2 == ID_SYM(arg2)) {
                 skip_this_loop = TRUE;
-                i2++;
+                arg2 = ID_NEXT(arg2);
             }
         }
 
@@ -1180,62 +1303,96 @@ type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
             continue;
         }
 
-        arg1 = EXPR_ARG1(arg1);
-        arg2 = EXPR_ARG1(arg2);
-
-        id1 = find_ident_head(EXPR_SYM(arg1), EXT_PROC_ID_LIST(f1));
-        id2 = find_ident_head(EXPR_SYM(arg2), EXT_PROC_ID_LIST(f2));
-
-        if (!type_is_strict_compatible(ID_TYPE(id1), ID_TYPE(id2))) {
+        if (!type_is_strict_compatible(ID_TYPE(arg1), ID_TYPE(arg2))) {
+            if (debug_flag) {
+                fprintf(debug_fp, "argument types are not match ('%s' and '%s')\n",
+                        SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
+            }
             return FALSE;
         }
 
-        i1++;
-        i2++;
+        arg1 = ID_NEXT(arg1);
+        arg2 = ID_NEXT(arg2);
+    }
+
+    if (arg1 != NULL || arg2 != NULL) {
+        /* arugment length are not same */
+        if (debug_flag) {
+            fprintf(debug_fp, "argument length not match\n");
+        }
+        return FALSE;
     }
 
     return TRUE;
 }
 
 
+void
+function_type_udpate(TYPE_DESC ftp, expv args, ID idList)
+{
+    list lp;
+    SYMBOL s;
+    ID id;
+    ID last_ip = NULL;
+    ID ip;
+
+    fix_array_dimensions(FUNCTION_TYPE_RETURN_TYPE(ftp));
+
+    FOR_ITEMS_IN_LIST(lp, args) {
+        s = EXPR_SYM(LIST_ITEM(lp));
+        ip = new_ident_desc(s);
+        id = find_ident_head(s, idList);
+        ID_TYPE(ip) = ID_TYPE(id);
+        fix_array_dimensions(ID_TYPE(ip));
+        ID_LINK_ADD(ip, FUNCTION_TYPE_ARGS(ftp), last_ip);
+    }
+
+    FUNCTION_TYPE_HAS_EXPLICIT_ARGS(ftp) = TRUE;
+}
+
+
 int
 function_type_is_appliable(TYPE_DESC ftp, expv actual_args)
 {
-    ID id;
-    ID proc_id_list;
     expv actual_arg = NULL;
-    expv dummy_args;
-    list lp;
+    ID dummy_arg;
+    ID dummy_args;
     list actual_lp;
-    EXT_ID proc;
     TYPE_DESC tbp_tp = NULL;
 
-    if (TYPE_EXT_ID(ftp) == NULL) {
+    if (TYPE_REF(ftp) != NULL) {
+        /* ftp is the type of type-bound procedure */
         tbp_tp = ftp;
         ftp = TYPE_REF(tbp_tp);
+        if (ftp == NULL) {
+            /* error("type-bound procedure "); */
+            return FALSE;
+        }
     }
 
-    proc = TYPE_EXT_ID(ftp);
+    if (ftp == NULL) {
+        return FALSE;
+    }
 
-    dummy_args = EXT_PROC_ARGS(proc);
-    proc_id_list = EXT_PROC_ID_LIST(proc);
+    dummy_args = FUNCTION_TYPE_ARGS(ftp);
 
     actual_lp = EXPR_LIST(actual_args);
     actual_arg = LIST_ITEM(actual_lp);
 
-    FOR_ITEMS_IN_LIST(lp, dummy_args) {
-        expv dummy_arg = EXPR_ARG1(LIST_ITEM(lp));
+    FOREACH_ID(dummy_arg, dummy_args) {
 
         if (debug_flag)
-            fprintf(debug_fp, "dummy args is '%s'\n", SYM_NAME(EXPR_SYM(dummy_arg)));
+            fprintf(debug_fp, "dummy args is '%s'\n", SYM_NAME(ID_SYM(dummy_arg)));
 
+        /* skip type check for PASS argument */
         if (tbp_tp != NULL && TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tbp_tp)) {
             if (TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp)) {
-                if (EXPR_SYM(dummy_arg) == ID_SYM(TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp))) {
+                if (ID_SYM(dummy_arg) == ID_SYM(TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp))) {
                     continue;
                 }
             } else {
-                if (lp == EXPR_LIST(dummy_arg)) {
+                /* If the PASS argument is not specified, the first arugment is the PASS argument*/
+                if (dummy_arg == dummy_args) {
                     continue;
                 }
             }
@@ -1246,9 +1403,7 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args)
             return FALSE;
         }
 
-        id = find_ident_head(EXPR_SYM(dummy_arg), proc_id_list);
-
-        if (!type_is_strict_compatible(EXPV_TYPE(actual_arg), ID_TYPE(id))) {
+        if (!type_is_strict_compatible(EXPV_TYPE(actual_arg), ID_TYPE(dummy_arg))) {
             return FALSE;
         }
 
@@ -1261,18 +1416,8 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args)
         }
     }
 
-    while (actual_lp != NULL) {
-        id = find_ident_head(EXPR_SYM(actual_arg), proc_id_list);
-        if (!TYPE_IS_OPTIONAL(ID_TYPE(id))) {
-            return FALSE;
-        }
-        if (LIST_NEXT(actual_lp) != NULL) {
-            actual_lp = LIST_NEXT(actual_lp);
-            actual_arg = LIST_ITEM(actual_lp);
-        } else {
-            actual_lp = NULL;
-            actual_arg = NULL;
-        }
+    if (actual_lp != NULL) {
+        return FALSE;
     }
 
     return TRUE;
