@@ -1,5 +1,9 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 1.1.0      2016/11/14
+* Include Javadoc in docs/javadoc
+* Fixed lots of bugs.
+
 # ver. 1.0.3      2016/08/01
 * Fixed lots of bugs.
 

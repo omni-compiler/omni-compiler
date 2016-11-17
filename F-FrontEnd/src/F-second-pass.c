@@ -463,6 +463,8 @@ static void second_pass_expv_scan(expv v)
   case F95_PUBLIC_SPEC:
   case F95_PRIVATE_SPEC:
   case F03_PROTECTED_SPEC:
+  case F03_BIND_SPEC:
+  case F03_VALUE_SPEC:
   case F95_IN_EXTENT:
   case F95_OUT_EXTENT:
   case F95_INOUT_EXTENT:

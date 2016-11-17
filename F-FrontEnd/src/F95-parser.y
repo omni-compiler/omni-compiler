@@ -142,10 +142,13 @@
 %token IMPORT
 %token EXTENDS
 %token CLASS
+%token BIND
+%token KW_NAME
 %token KW_IS
 %token CLASSIS
 %token TYPEIS
 %token CLASSDEFAULT
+%token VALUE
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -487,6 +490,7 @@ gen_default_real_kind(void) {
 %type <val> use_rename_list use_rename use_only_list use_only 
 %type <val> allocation_list allocation
 %type <val> scene_list scene_range
+%type <val> bind_opt
 
 
 %start program
@@ -571,24 +575,24 @@ statement:      /* entry */
               $$ = list1(F95_ENDBLOCKDATA_STATEMENT,$2);
             }
           }
-        | SUBROUTINE IDENTIFIER dummy_arg_list
-          { $$ = list3(F_SUBROUTINE_STATEMENT,$2,$3,NULL); }
-        | func_prefix SUBROUTINE IDENTIFIER dummy_arg_list
-          { $$ = list3(F_SUBROUTINE_STATEMENT,$3,$4,$1); }
+        | SUBROUTINE IDENTIFIER dummy_arg_list KW bind_opt
+          { $$ = list4(F_SUBROUTINE_STATEMENT, $2, $3, NULL, $5); }
+        | func_prefix SUBROUTINE IDENTIFIER dummy_arg_list KW bind_opt
+          { $$ = list4(F_SUBROUTINE_STATEMENT, $3, $4, $1, $6); }
         | ENDSUBROUTINE name_or_null
           { $$ = list1(F95_ENDSUBROUTINE_STATEMENT,$2); }
-        | FUNCTION IDENTIFIER dummy_arg_list KW result_opt
-          { $$ = list5(F_FUNCTION_STATEMENT,$2,$3,NULL,NULL, $5); }
-        | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW result_opt
-          { $$ = list5(F_FUNCTION_STATEMENT,$3,$4,NULL,$1, $6); }
-        | type_spec FUNCTION IDENTIFIER dummy_arg_list KW result_opt
-          { $$ = list5(F_FUNCTION_STATEMENT,$3,$4,$1,NULL, $6); }
+        | FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
+          { $$ = list6(F_FUNCTION_STATEMENT, $2, $3, NULL, NULL, $5, $6); }
+        | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
+          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, $6, $7); }
+        | type_spec FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
+          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, $1, NULL, $6, $7); }
         | type_spec func_prefix FUNCTION IDENTIFIER dummy_arg_list
-          KW result_opt
-          { $$ = list5(F_FUNCTION_STATEMENT,$4,$5,$1,$2, $7); }
+          KW result_opt bind_opt
+          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, $2, $7, $8); }
         | func_prefix type_spec FUNCTION IDENTIFIER dummy_arg_list
-          KW result_opt
-          { $$ = list5(F_FUNCTION_STATEMENT,$4,$5,$2,$1, $7); }
+          KW result_opt bind_opt
+          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $2, $1, $7, $8); }
         | ENDFUNCTION name_or_null
           { $$ = list1(F95_ENDFUNCTION_STATEMENT,$2); }
         | type_spec COL2_or_null declaration_list
@@ -623,6 +627,15 @@ result_opt:    /* null */
         | RESULT '(' name ')'
           { $$ = $3; }
         ;
+      
+bind_opt: /* null */
+          { $$ = NULL; }
+        /* BIND(C) */
+        | BIND '(' IDENTIFIER /* C */ ')'
+          { $$ = list1(LIST, NULL); }
+        /* BIND (C, NAME='<ident>') */
+        | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
+          { $$ = list1(LIST, $8); }
 
 intrinsic_operator: '.'
         { $$ = list0(F95_DOTOP); }
@@ -787,6 +800,8 @@ declaration_statement95:
         { $$ = list1(F03_PROTECTED_STATEMENT, $3); }
         | SEQUENCE
         { $$ = list0(F95_SEQUENCE_STATEMENT); }
+        | KW_USE ',' KW INTRINSIC COL2 IDENTIFIER
+        { $$ = list2(F95_USE_STATEMENT,$6,NULL); }        
         | KW_USE IDENTIFIER
         { $$ = list2(F95_USE_STATEMENT,$2,NULL); }
         | KW_USE IDENTIFIER ',' KW use_rename_list
@@ -795,11 +810,15 @@ declaration_statement95:
         { $$ = list2(F95_USE_ONLY_STATEMENT,$2, NULL); }
         | KW_USE IDENTIFIER ',' KW KW_ONLY ':' use_only_list
         { $$ = list2(F95_USE_ONLY_STATEMENT,$2,$7); }
+        | KW_USE ',' KW INTRINSIC COL2 IDENTIFIER ',' KW KW_ONLY ':' /* empty */
+        { $$ = list2(F95_USE_ONLY_STATEMENT,$6, NULL); }
+        | KW_USE ',' KW INTRINSIC COL2 IDENTIFIER ',' KW KW_ONLY ':' use_only_list
+        { $$ = list2(F95_USE_ONLY_STATEMENT,$6,$11); }
         | INTENT '(' KW intent_spec ')' COL2_or_null ident_list
         { $$ = list2(F95_INTENT_STATEMENT, $4, $7); }
         | ALLOCATABLE COL2_or_null array_allocation_list
         { $$ = list1(F95_ALLOCATABLE_STATEMENT,$3); }
-        | IMPORT COL2 ident_list
+        | IMPORT COL2_or_null ident_list
         { $$ = list1(F03_IMPORT_STATEMENT, $3); }
         | VOLATILE COL2_or_null access_ident_list
         { $$ = list1(F03_VOLATILE_STATEMENT, $3); }
@@ -913,6 +932,10 @@ attr_spec:
         { $$ = list0(F03_KIND_SPEC); }
         | KW_LEN
         { $$ = list0(F03_LEN_SPEC); }
+        | BIND '(' IDENTIFIER /* C */ ')'
+        { $$ = list0(F03_BIND_SPEC); }
+        | VALUE
+        { $$ = list0(F03_VALUE_SPEC); } 
         ;
 
 access_spec:
@@ -934,6 +957,8 @@ type_attr_spec_list:
 type_attr_spec:
           EXTENDS '(' IDENTIFIER ')'
         { $$ = list1(F03_EXTENDS_SPEC, $3); }
+        | BIND '(' IDENTIFIER /* C */ ')'
+        { $$ = list0(F03_BIND_SPEC); }        
         | access_spec
         { $$ = $1; }
         ;
