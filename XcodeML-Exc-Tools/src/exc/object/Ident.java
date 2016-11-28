@@ -29,6 +29,7 @@ public class Ident extends Xobject
     private StorageClass stg_class;
     /** key */
     private String name;
+    private String alias;
     /** for C++ */
     private String fullName;
     private int access = AS_NONE;
@@ -176,6 +177,11 @@ public class Ident extends Xobject
             return name;
     }
 
+    public String getAlias()
+    {
+        return alias;
+    }
+
     public String getFullName()
     {
         return fullName;
@@ -201,6 +207,11 @@ public class Ident extends Xobject
     public void setName(String name)
     {
         this.name = name;
+    }
+
+    public void setAlias(String newAlias)
+    {
+        alias = newAlias;
     }
 
     @Override
