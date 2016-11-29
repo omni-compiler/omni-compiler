@@ -3825,6 +3825,7 @@ struct keyword_token keywords[ ] =
     { "endmodule",      ENDMODULE },
     { "endprogram",     ENDPROGRAM },
     { "endselect",      ENDSELECT },
+    { "endsubmodule",   ENDSUBMODULE }, /* F2008 spec */
     { "endsubroutine",  ENDSUBROUTINE },
     { "endblockdata",   ENDBLOCKDATA },
     { "endblock",       ENDBLOCK },
@@ -3900,6 +3901,7 @@ struct keyword_token keywords[ ] =
     { "sequence",       SEQUENCE },
     /*    { "static",   KW_STATIC },*/
     { "stop",           STOP },
+    { "submodule",      SUBMODULE  },  /* F2008 spec */
     { "subroutine",     SUBROUTINE  },
     { "syncall",        SYNCALL },     /* #060 coarray */
     { "syncimages",     SYNCIMAGES },  /* #060 coarray */
@@ -3932,6 +3934,7 @@ struct keyword_token end_keywords[ ] =
     { "interface",      ENDINTERFACE },
     { "module",         ENDMODULE },
     { "program",        ENDPROGRAM },
+    { "procedure",      ENDPROCEDURE },
     { "select",         ENDSELECT },
     { "subroutine",     ENDSUBROUTINE },
     { "type",           ENDTYPE },
