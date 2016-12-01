@@ -215,7 +215,7 @@ declare_procedure(enum name_class class,
             declare_id_type(id, type);
             TYPE_SET_FOR_FUNC_SELF(type);
         } else {
-            declare_id_type(id, function_type(new_type_desc));
+            declare_id_type(id, function_type(new_type_desc()));
         }
         if (result_opt != NULL) {
             FUNCTION_TYPE_RESULT(ID_TYPE(id)) = EXPR_SYM(result_opt);

@@ -745,6 +745,7 @@ getTypeID(TYPE_DESC tp)
     return buf;
 }
 
+#if 0
 static char*
 genFunctionTypeID(EXT_ID ep)
 {
@@ -752,6 +753,7 @@ genFunctionTypeID(EXT_ID ep)
     sprintf(buf, "F" ADDRX_PRINT_FMT, Addr2Uint(ep));
     return strdup(buf);
 }
+#endif
 
 /**
  * output tag and type attribute
@@ -848,6 +850,7 @@ outx_typeAttrOnly_functionType(int l, TYPE_DESC tp, const char *tag)
 }
 
 
+#if 0
 static void
 outx_typeAttrOnly_functionType_EXT(int l, EXT_ID ep, const char *tag)
 {
@@ -862,6 +865,7 @@ outx_typeAttrOnly_functionType_EXT(int l, EXT_ID ep, const char *tag)
     }
     outx_printi(l,"<%s type=\"%s\"", tag, tid);
 }
+#endif
 
 
 #if 0
@@ -1182,7 +1186,7 @@ outx_ext_id(int l, EXT_ID ep)
         IS_MODULE(EXT_PROC_TYPE(ep)))
         outx_printi(l, "<id");
     else
-        outx_typeAttrOnly_functionType_EXT(l, ep, "id");
+        outx_typeAttrOnly_functionType(l, EXT_PROC_TYPE(ep), "id");
     outx_print(" sclass=\"%s\">\n",sclass);
     outx_symbolName(l + 1, EXT_SYM(ep));
     outx_printi(l,"</id>\n");
@@ -1254,7 +1258,7 @@ outx_id(int l, ID id)
     if (ID_CLASS(id) == CL_PROC && IS_PROCEDURE_TYPE(ID_TYPE(id))) {
         outx_typeAttrOnly_functionType(l, ID_TYPE(id), "id");
     } else if(ID_CLASS(id) == CL_PROC && PROC_EXT_ID(id)) {
-        outx_typeAttrOnly_functionType_EXT(l, PROC_EXT_ID(id), "id");
+        outx_typeAttrOnly_functionType(l, EXT_PROC_TYPE(PROC_EXT_ID(id)), "id");
     } else {
         outx_typeAttrOnly_ID(l, id, "id");
     }
@@ -5052,7 +5056,7 @@ outx_moduleProcedureDecl(int l, EXT_ID parent_ep, SYMBOL parentName)
                     FOREACH_IN_HASH(hPtr, &sCtx, tPtr) {
                         mp = (mod_proc_t)GetHashValue(hPtr);
                         outx_symbolNameWithFunctionType_EXT(l1,
-                                                        MOD_PROC_EXT_ID(mp));
+                                                            MOD_PROC_EXT_ID(mp));
                     }
                 } else {
                     fatal("invalid generic procedure structure.");

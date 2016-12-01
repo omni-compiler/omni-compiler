@@ -2222,6 +2222,19 @@ compile_highorder_function_call(ID id, expr args, int isCall)
 
 
 static TYPE_DESC
+chose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
+{
+    EXT_ID ep;
+    FOREACH_EXT_ID(ep, mod_procedures) {
+        if (function_type_is_appliable(EXT_PROC_TYPE(ep), args)) {
+            return EXT_PROC_TYPE(ep);
+        }
+    }
+    return NULL;
+}
+
+#if 0
+static TYPE_DESC
 chose_module_procedure_by_args(EXT_ID modProcIDs, expv args) {
     TYPE_DESC ret = NULL;
     int nArgs = expr_list_length(args);
@@ -2438,6 +2451,7 @@ chose_module_procedure_by_args(EXT_ID modProcIDs, expv args) {
 
     return ret;
 }
+#endif
 
 
 expv
@@ -2527,8 +2541,6 @@ compile_function_call_check_type(ID f_id, expr args, int ignoreTypeMismatch) {
             tp = ID_TYPE(f_id);
             if (!IS_PROCEDURE_TYPE(tp)) {
                 tp = function_type(tp);
-                TYPE_EXTATTR_FLAGS(tp) = TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp));
-                TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp)) = 0;
                 ID_TYPE(f_id) = tp;
                 EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
             }
@@ -2567,7 +2579,7 @@ compile_function_call_check_type(ID f_id, expr args, int ignoreTypeMismatch) {
             v = list3(FUNCTION_CALL, ID_ADDR(f_id), a,
                       expv_any_term(F_EXTFUNC, f_id));
 
-            if (IS_FUNCTION_TYPE(ID_TYPE(f_id))) {
+            if (IS_SUBR(ID_TYPE(f_id))) {
                 EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(f_id));
 
             } else {

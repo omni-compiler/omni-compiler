@@ -3933,14 +3933,14 @@ import_module_id(ID mid,
         EXT_PROC_INTR_DEF_EXT_IDS(ep) = NULL;
 
         /* hmm, this code is really required? */
-        if(!type_is_replica(EXT_PROC_TYPE(ep))) {
+        if(!type_is_replica(EXT_PROC_TYPE(mep))) {
             EXT_PROC_TYPE(ep)
-                    = shallow_copy_type_for_module_id(EXT_PROC_TYPE(ep));
+                    = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
         }
 
-        if (EXT_PROC_INTR_DEF_EXT_IDS(ep) != NULL) {
+        if (EXT_PROC_INTR_DEF_EXT_IDS(mep) != NULL) {
             EXT_ID head, p;
-            head = shallow_copy_ext_id(EXT_PROC_INTR_DEF_EXT_IDS(ep));
+            head = shallow_copy_ext_id(EXT_PROC_INTR_DEF_EXT_IDS(mep));
             FOREACH_EXT_ID(p, head) {
                 EXT_IS_OFMODULE(p) = TRUE;
             }
@@ -5066,16 +5066,20 @@ compile_CALL_subroutine_statement(expr x)
     }
     if ((PROC_CLASS(id) == P_EXTERNAL || PROC_CLASS(id) == P_UNKNOWN) &&
         (ID_TYPE(id) == NULL || IS_SUBR(ID_TYPE(id)) == FALSE)) {
-        TYPE_DESC tp = subroutine_type();
-        if(ID_TYPE(id)) {
+        TYPE_DESC tp;
+        if (ID_TYPE(id)) {
             if (!FUNCTION_TYPE_IS_GENERIC(ID_TYPE(id)) &&
+                !TYPE_IS_IMPLICIT(ID_TYPE(id)) &&
                 (FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL &&
-                (!TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) &&
-                 !IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) {
+                  !IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))))) {
                 error("called '%s' which has a type like a subroutine", ID_NAME(id));
                 return;
             }
+            tp = subroutine_type();
+            TYPE_ATTR_FLAGS(tp) = TYPE_ATTR_FLAGS(ID_TYPE(id));
             TYPE_EXTATTR_FLAGS(tp) = TYPE_EXTATTR_FLAGS(ID_TYPE(id));
+        } else {
+            tp = subroutine_type();
         }
         TYPE_UNSET_IMPLICIT(tp);
         TYPE_SET_USED_EXPLICIT(tp);

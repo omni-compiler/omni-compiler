@@ -1375,6 +1375,10 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args)
     list actual_lp;
     TYPE_DESC tbp_tp = NULL;
 
+    if (ftp == NULL) {
+        return FALSE;
+    }
+
     if (TYPE_REF(ftp) != NULL) {
         /* ftp is the type of type-bound procedure */
         tbp_tp = ftp;
@@ -1385,14 +1389,10 @@ function_type_is_appliable(TYPE_DESC ftp, expv actual_args)
         }
     }
 
-    if (ftp == NULL) {
-        return FALSE;
-    }
-
     dummy_args = FUNCTION_TYPE_ARGS(ftp);
 
     actual_lp = EXPR_LIST(actual_args);
-    actual_arg = LIST_ITEM(actual_lp);
+    actual_arg = actual_lp ? LIST_ITEM(actual_lp) : NULL;
 
     FOREACH_ID(dummy_arg, dummy_args) {
 
