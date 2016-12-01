@@ -2201,8 +2201,9 @@ compile_highorder_function_call(ID id, expr args, int isCall)
         ID_CLASS(id) = CL_UNKNOWN;
         VAR_IS_USED_AS_FUNCTION(id) = TRUE;
 #endif
-        
-        (void)declare_external_id_for_highorder(id, isCall);
+
+
+        /* (void)declare_external_id_for_highorder(id, isCall); */
         ret = compile_function_call(id, args);
 
 #if 0

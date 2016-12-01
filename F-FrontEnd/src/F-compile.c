@@ -5052,8 +5052,6 @@ compile_CALL_subroutine_statement(expr x)
     if ((PROC_CLASS(id) == P_EXTERNAL || PROC_CLASS(id) == P_UNKNOWN) &&
         (ID_TYPE(id) == NULL || IS_SUBR(ID_TYPE(id)) == FALSE)) {
         TYPE_DESC tp = subroutine_type();
-        TYPE_UNSET_IMPLICIT(tp);
-        TYPE_SET_USED_EXPLICIT(tp);
         if(ID_TYPE(id)) {
             if (!FUNCTION_TYPE_IS_GENERIC(ID_TYPE(id)) &&
                 (FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL &&
@@ -5064,6 +5062,8 @@ compile_CALL_subroutine_statement(expr x)
             }
             TYPE_EXTATTR_FLAGS(tp) = TYPE_EXTATTR_FLAGS(ID_TYPE(id));
         }
+        TYPE_UNSET_IMPLICIT(tp);
+        TYPE_SET_USED_EXPLICIT(tp);
         ID_TYPE(id) = tp;
 
         if(PROC_EXT_ID(id)) {
@@ -5071,13 +5071,22 @@ compile_CALL_subroutine_statement(expr x)
         }
     }
     else if (PROC_CLASS(id) == P_INTRINSIC && ID_TYPE(id) != NULL){
-      TYPE_DESC tp = ID_TYPE(id);
-      TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
-      TYPE_UNSET_IMPLICIT(tp);
-      TYPE_SET_USED_EXPLICIT(tp);
-      ID_TYPE(id) = tp;
-      if (PROC_EXT_ID(id)) EXT_PROC_TYPE(PROC_EXT_ID(id)) = tp;
+        TYPE_DESC tp = ID_TYPE(id);
+        TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+        FUNCTION_TYPE_RETURN_TYPE(tp) = type_void();
+        TYPE_UNSET_IMPLICIT(tp);
+        TYPE_SET_USED_EXPLICIT(tp);
+        ID_TYPE(id) = tp;
+        if (PROC_EXT_ID(id)) EXT_PROC_TYPE(PROC_EXT_ID(id)) = tp;
     }
+    else if (ID_TYPE(id) != NULL && !IS_SUBR(ID_TYPE(id))) {
+        TYPE_DESC tp = subroutine_type();
+        TYPE_EXTATTR_FLAGS(tp) = TYPE_EXTATTR_FLAGS(ID_TYPE(id));
+        TYPE_UNSET_IMPLICIT(tp);
+        TYPE_SET_USED_EXPLICIT(tp);
+        ID_TYPE(id) = tp;
+    }
+
 
 #if 0
     /*

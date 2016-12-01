@@ -707,7 +707,7 @@ declare_variable(ID id)
     case STG_COMMON:
     case STG_TYPE_PARAM:
         v = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
-        if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
+        if (PROC_CLASS(id) == P_THISPROC) {
             EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id));
         }
         ID_ADDR(id) = v;
