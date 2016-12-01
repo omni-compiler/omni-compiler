@@ -864,6 +864,7 @@ outx_typeAttrOnly_functionType_EXT(int l, EXT_ID ep, const char *tag)
 }
 
 
+#if 0
 static void
 outx_typeAttrOnly_functionTypeWithResultVar(
     int l, EXT_ID ep, const char *tag)
@@ -875,7 +876,7 @@ outx_typeAttrOnly_functionTypeWithResultVar(
                    SYM_NAME(EXPV_NAME(res)));
     }
 }
-
+#endif
 
 static void
 outx_lineno(lineno_info *li)
@@ -1059,6 +1060,7 @@ outx_symbolNameWithType_ID(int l, ID id)
 }
 
 
+#if 0
 /**
  * output an expr as name with type
  */
@@ -1073,6 +1075,7 @@ outx_expvNameWithType(int l, expv v)
     }
     outx_print(">%s</name>\n", SYM_NAME(EXPV_NAME(v)));
 }
+#endif
 
 
 /**
@@ -3424,8 +3427,7 @@ outx_lenspec(int l, expv v)
     outx_close(l, "len");
 }
 
-//static void
-void
+static void
 outx_expv(int l, expv v)
 {
     enum expr_code code;
@@ -3951,6 +3953,7 @@ mark_type_desc_in_id_list(ID ids)
                 sTp = reduce_type(EXT_PROC_TYPE(PROC_EXT_ID(id)));
                 mark_type_desc(sTp);
                 EXT_PROC_TYPE(PROC_EXT_ID(id)) = sTp;
+#if 0
                 if (sTp == NULL) {
                     add_type_ext_id(PROC_EXT_ID(id));
                 }
@@ -3961,7 +3964,9 @@ mark_type_desc_in_id_list(ID ids)
                  * output these types.
                  */
                 collect_type_desc(EXT_PROC_ARGS(PROC_EXT_ID(id)));
+#endif
             }
+#if 0
             // TODO
             if (id->use_assoc != NULL) {
                 TYPE_EXT_ID te =
@@ -3971,6 +3976,7 @@ mark_type_desc_in_id_list(ID ids)
                 FUNC_EXT_LINK_ADD(te, type_module_proc_list,
                                   type_module_proc_last);
             }
+#endif
             break;
         default:
             break;
@@ -3985,13 +3991,16 @@ static void
 unmark_type_table()
 {
     TYPE_DESC tp;
+#if 0
     TYPE_EXT_ID te;
+#endif
     for (tp = type_list; tp != NULL; tp = TYPE_LINK(tp)){
         if (tp == NULL || TYPE_IS_REFERENCED(tp) == FALSE || IS_MODULE(tp))
             continue;
         TYPE_IS_REFERENCED(tp) = FALSE;
     }
 
+#if 0
     FOREACH_TYPE_EXT_ID(te, type_module_proc_list) {
         if(te->ep != NULL)
             EXT_PROC_IS_OUTPUT(te->ep) = FALSE;
@@ -4000,6 +4009,7 @@ unmark_type_table()
     FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
         EXT_PROC_IS_OUTPUT(te->ep) = FALSE;
     }
+#endif
 }
 
 static void
@@ -4188,7 +4198,7 @@ outx_arrayType(int l, TYPE_DESC tp)
 }
 
 
-/* TODO FIX */
+#if 0
 /**
  * output functionType of external symbol
  */
@@ -4258,6 +4268,7 @@ outx_functionType_EXT(int l, EXT_ID ep)
         outx_close(l, "FfunctionType");
     }
 }
+#endif
 
 
 /**
@@ -5412,7 +5423,9 @@ outx_typeTable(int l)
 {
     const int l1 = l + 1;
     TYPE_DESC tp;
+#if 0
     TYPE_EXT_ID te;
+#endif
 
     outx_tag(l, "typeTable");
 
@@ -5420,6 +5433,7 @@ outx_typeTable(int l)
         outx_type(l1, tp);
     }
 
+#if 0
     FOREACH_TYPE_EXT_ID(te, type_module_proc_list) {
         if(te->ep != NULL)
             outx_functionType_EXT(l1, te->ep);
@@ -5429,6 +5443,7 @@ outx_typeTable(int l)
         assert(EXT_TAG(te->ep) == STG_EXT);
         outx_functionType_EXT(l1, te->ep);
     }
+#endif
 
     outx_close(l, "typeTable");
 }
