@@ -55,6 +55,21 @@ function_type(TYPE_DESC tp)
 }
 
 
+void
+replace_or_assign_type(TYPE_DESC * tp, TYPE_DESC new_tp)
+{
+    if (tp == NULL || new_tp == NULL) {
+        return;
+    }
+
+    if (*tp == NULL) {
+        *tp = new_tp;
+    } else {
+        **tp = *new_tp;
+    }
+}
+
+
 TYPE_DESC
 intrinsic_function_type(TYPE_DESC tp)
 {

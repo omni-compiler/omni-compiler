@@ -1891,12 +1891,12 @@ end_declaration()
             if (IS_FUNCTION_TYPE(tp)) {
                 ID_TYPE(myId) = NULL;
                 declare_id_type(myId, tp);
-                merge_type(&FUNCTION_TYPE_RETURN_TYPE(tp), ID_TYPE(resId));
+                replace_or_assign_type(&FUNCTION_TYPE_RETURN_TYPE(tp), ID_TYPE(resId));
                 declare_id_type(resId, FUNCTION_TYPE_RETURN_TYPE(tp));
             } else {
                 // declare_id_type(myId, function_type(tp));
 
-                merge_type(&FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(myId)), tp);
+                replace_or_assign_type(&FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(myId)), tp);
                 declare_id_type(resId, tp);
             }
 

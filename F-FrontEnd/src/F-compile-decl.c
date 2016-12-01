@@ -76,34 +76,6 @@ link_parent_defined_by(SYMBOL sym)
     }
 }
 
-void
-merge_type(TYPE_DESC * tp1, TYPE_DESC tp2)
-{
-    if (tp1 == NULL || tp2 == NULL) {
-        return;
-    }
-
-    if (*tp1 == NULL) {
-        *tp1 = tp2;
-    } else {
-        **tp1 = *tp2;
-    }
-}
-
-
-#if 0
-static void
-type_lift_up(TYPE_DESC tp)
-{
-    TYPE_DESC return_type = new_type_desc();
-
-    TYPE_BASIC_TYPE(return_type) = TYPE_BASIC_TYPE(tp);
-
-    TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
-    FUNCTION_TYPE_RETURN_TYPE(tp) = return_type;
-}
-#endif
-
 /*
  * define main program or block data, subroutine, functions
  */
@@ -133,8 +105,8 @@ declare_procedure(enum name_class class,
             if (ep != NULL && EXT_IS_DEFINED(ep) &&
                  EXT_PROC_IS_MODULE_PROCEDURE(ep) == FALSE &&
                 (unit_ctl_level == 0 || PARENT_STATE != ININTR)) {
-                // error("same name is already defined in parent");
-                // return;
+                /* error("same name is already defined in parent"); */
+                /* return; */
                 warning("A host-associated procedure is overridden.");
             }
             else if (unit_ctl_level > 0 && PARENT_STATE != ININTR) {
@@ -236,34 +208,6 @@ declare_procedure(enum name_class class,
             PROC_RESULTVAR(id) = result_opt;
         }
 
-#if 0
-        if (unit_ctl_level > 0 && PARENT_STATE != ININTR) {
-            if ((pid = find_ident_parent0(s)) != NULL && ID_TYPE(pid) != NULL) {
-                if (!IS_PROCEDURE_TYPE(ID_TYPE(pid))) {
-                    if (TYPE_IS_USED_EXPLICIT(ID_TYPE(pid))) {
-                        error("Used as variable, but defined as a procedure");
-                        return;
-                    }
-                }
-                merge_type(&FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(pid)),
-                              FUNCTION_TYPE_RETURN_TYPE(type));
-                type = ID_TYPE(pid);
-                /* TYPE_UNSET_IMPLICIT(type); */
-
-                /* if (FUNCTION_TYPE_RETURN_TYPE(type) == NULL) { */
-                /*     FUNCTION_TYPE_RETURN_TYPE(type) = ID_TYPE(pid); */
-                /* } */
-
-                if (TYPE_ATTR_FLAGS(ID_TYPE(pid))) {
-                    TYPE_ATTR_FLAGS(type) |= TYPE_ATTR_FLAGS(ID_TYPE(pid)) &
-                            (  TYPE_ATTR_PUBLIC
-                             | TYPE_ATTR_PRIVATE
-                             | TYPE_ATTR_PROTECTED);
-                }
-            }
-        }
-#endif
-
         if (type != NULL) {
             if (!IS_PROCEDURE_TYPE(type)) {
                 type = function_type(type);
@@ -350,7 +294,7 @@ declare_procedure(enum name_class class,
 
         id = declare_ident(s, CL_ENTRY);
         if (IS_SUBR(ID_TYPE(CURRENT_PROCEDURE))) {
-            type = type_SUBR;
+            tp = subroutine_type();
         } else {
             type = ID_TYPE(CURRENT_PROCEDURE);
             if (type == NULL) {
@@ -358,10 +302,11 @@ declare_procedure(enum name_class class,
                       __func__);
                 return;
             }
+            tp = new_type_desc();
+            *tp = *type;
+            TYPE_ATTR_FLAGS(tp) = 0;
+            tp = function_type(tp);
         }
-        tp = new_type_desc();
-        *tp = *type;
-        TYPE_ATTR_FLAGS(tp) = 0;
         declare_id_type(id, tp);
 
         ID_LINE(id) = EXPR_LINE(name); /* set line_no */
@@ -388,9 +333,14 @@ declare_procedure(enum name_class class,
         }
 
         if (result_opt != NULL) {
+            if (IS_SUBR(tp)) {
+                error("subroutine with RESULT.");
+                return;
+            }
+
             SYMBOL resS = EXPR_SYM(result_opt);
             ID resId = declare_function_result_id(resS,
-                                                  FUNCTION_TYPE_RETURN_TYPE(type));
+                                                  FUNCTION_TYPE_RETURN_TYPE(tp));
             if (resId == NULL) {
                 fatal("%s: can't declare result identifier '%s'.",
                       __func__, SYM_NAME(resS));
@@ -409,7 +359,6 @@ declare_procedure(enum name_class class,
         EXPV_ENTRY_EXT_ID(symV) = ext_id;
         PROC_EXT_ID(id) = ext_id;
         EXT_PROC_ID_LIST(ext_id) = id;
-        (void)function_type(ID_TYPE(id));
         unset_save_attr_in_dummy_args(ext_id);
         emitV = expv_cons(F_ENTRY_STATEMENT,
                           ID_TYPE(id), symV, EXT_PROC_ARGS(ext_id));
@@ -1978,12 +1927,12 @@ declare_id_type(ID id, TYPE_DESC tp)
     }
 
     if (IS_STRUCT_TYPE(tp)) {      /* tp is struct */
-        merge_type(id_type, tp);
+        replace_or_assign_type(id_type, tp);
         return;
     }
 
     if (IS_MODULE(tp)) {      /* tp is module */
-        merge_type(id_type, tp);
+        replace_or_assign_type(id_type, tp);
         return;
     }
 
@@ -1992,7 +1941,7 @@ declare_id_type(ID id, TYPE_DESC tp)
                        TYPE_IS_NOT_FIXED(tq))) {
         /* override implicit declared type */
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(tq);
-        merge_type(id_type, tp);
+        replace_or_assign_type(id_type, tp);
         if (IS_PROCEDURE_TYPE(ID_TYPE(id))) {
             TYPE_EXTATTR_FLAGS(ID_TYPE(id)) = TYPE_EXTATTR_FLAGS(tp);
             TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) = 0;
@@ -2063,10 +2012,10 @@ declare_id_type(ID id, TYPE_DESC tp)
 
     if(tq != NULL && IS_SUBR(tp) && ID_IS_DUMMY_ARG(id)) {
         /* if argument, may override with TYPE_SUBR ??? */
-        merge_type(id_type, tp);
+        replace_or_assign_type(id_type, tp);
         return;
     } else if(tq == NULL || type_is_soft_compatible(tq, tp)){
-        merge_type(id_type, tp);
+        replace_or_assign_type(id_type, tp);
         if (ID_CLASS(id) == CL_PROC &&
             (TYPE_IS_RECURSIVE(id) ||
              TYPE_IS_RECURSIVE(tp))) {

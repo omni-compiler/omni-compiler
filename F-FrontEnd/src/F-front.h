@@ -671,8 +671,8 @@ extern int      function_type_is_appliable
 extern int      type_bound_procedure_types_are_compatible
                     _ANSI_ARGS_((ID tbp1, ID tbp2));
 
-extern void     merge_type _ANSI_ARGS_((TYPE_DESC *tp1, TYPE_DESC tp2));
-
+extern void     replace_or_assign_type
+                    _ANSI_ARGS_((TYPE_DESC *tp, TYPE_DESC new_tp));
 
 extern int      are_dimension_and_shape_conformant_by_type _ANSI_ARGS_((
     expr x, TYPE_DESC lt, TYPE_DESC rt, expv *shapePtr));
