@@ -479,6 +479,9 @@ typedef enum {
 #define FUNCTION_TYPE_ARGS(tp) ((tp)->proc_info.args)
 #define FUNCTION_TYPE_RESULT(tp) ((tp)->proc_info.result)
 
+#define FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(tp) \
+    (FUNCTION_TYPE_RETURN_TYPE(tp) != NULL || FUNCTION_TYPE_HAS_EXPLICIT_ARGS(tp))
+
 #define FUNCTION_TYPE_IS_FUNCTION(tp) ((tp)->proc_info.class == TYPE_PROC_FUNC)
 #define FUNCTION_TYPE_IS_SUBROUTINE(tp) ((tp)->proc_info.class == TYPE_PROC_SUBR)
 #define FUNCTION_TYPE_IS_PROGRAM(tp) ((tp)->proc_info.class == TYPE_PROC_PROGRAM)

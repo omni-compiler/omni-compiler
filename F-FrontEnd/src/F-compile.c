@@ -3121,6 +3121,14 @@ end_procedure()
             } else {
                 implicit_declaration(id);
                 /* This procedure is external */
+                if (XMP_flag) {
+                    TYPE_SET_EXTERNAL(ID_TYPE(id));
+                }
+            }
+        }
+        if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_EXTERNAL &&
+            !FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(id))) {
+            if (XMP_flag) {
                 TYPE_SET_EXTERNAL(ID_TYPE(id));
             }
         }

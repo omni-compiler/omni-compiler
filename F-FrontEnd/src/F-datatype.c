@@ -46,9 +46,9 @@ function_type(TYPE_DESC tp)
     FUNCTION_TYPE_RETURN_TYPE(tq) = tp;
     FUNCTION_TYPE_SET_FUNCTION(tq);
 
-    if (tp != NULL && TYPE_ATTR_FLAGS(tp) != 0) {
-        TYPE_ATTR_FLAGS(tq) = TYPE_ATTR_FLAGS(tp);
-        TYPE_ATTR_FLAGS(tp) = 0;
+    if (tp != NULL) {
+        TYPE_EXTATTR_FLAGS(tq) = TYPE_EXTATTR_FLAGS(tp);
+        TYPE_EXTATTR_FLAGS(tp) = 0;
     }
 
     return tq;

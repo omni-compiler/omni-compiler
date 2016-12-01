@@ -215,7 +215,7 @@ declare_procedure(enum name_class class,
             declare_id_type(id, type);
             TYPE_SET_FOR_FUNC_SELF(type);
         } else {
-            declare_id_type(id, function_type(NULL));
+            declare_id_type(id, function_type(new_type_desc));
         }
         if (result_opt != NULL) {
             FUNCTION_TYPE_RESULT(ID_TYPE(id)) = EXPR_SYM(result_opt);
@@ -305,7 +305,8 @@ declare_procedure(enum name_class class,
             tp = new_type_desc();
             *tp = *type;
             TYPE_ATTR_FLAGS(tp) = 0;
-            tp = function_type(tp);
+            FUNCTION_TYPE_RETURN_TYPE(tp) = new_type_desc();
+            *FUNCTION_TYPE_RETURN_TYPE(tp) = *FUNCTION_TYPE_RETURN_TYPE(type);
         }
         declare_id_type(id, tp);
 
@@ -577,7 +578,7 @@ implicit_declaration(ID id)
         copy_parent_type(id);
     }
     tp = ID_TYPE(id);
-    if (IS_FUNCTION_TYPE(tp)) {
+    if (IS_PROCEDURE_TYPE(tp)) {
         function_is_not_fixed = TYPE_IS_NOT_FIXED(tp);
         tp = FUNCTION_TYPE_RETURN_TYPE(tp);
     }
