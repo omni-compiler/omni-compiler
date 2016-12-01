@@ -2974,6 +2974,14 @@ public class XfDecompileDomVisitor {
                     writer.writeToken("RECURSIVE");
                     writer.writeToken(" ");
                 }
+                if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
+                    writer.writeToken("PURE");
+                    writer.writeToken(" ");
+                }
+                if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
+                    writer.writeToken("ELEMENTAL");
+                    writer.writeToken(" ");
+                }
                 writer.writeToken("FUNCTION");
                 writer.writeToken(" ");
                 writer.writeToken(XmDomUtil.getContentText(functionNameNode));
