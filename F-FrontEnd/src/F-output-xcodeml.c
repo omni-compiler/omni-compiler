@@ -4331,17 +4331,11 @@ outx_functionType(int l, TYPE_DESC tp)
         outx_true(TYPE_IS_PURE(tp), "is_pure");
         outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
 
-
-        /*TODO implements*/
-#if 0
         if (!TYPE_IS_INTRINSIC(tp) &&
             (TYPE_IS_EXTERNAL(tp) ||
-             (XMP_flag && !TYPE_IS_FOR_FUNC_SELF(tp) &&
-              !EXT_PROC_IS_INTRINSIC(ep) && !EXT_PROC_IS_MODULE_PROCEDURE(ep) && !EXT_PROC_IS_INTERNAL(ep)))){
+             (XMP_flag && !TYPE_IS_FOR_FUNC_SELF(tp) && ! FUNCTION_TYPE_IS_INTERNAL(tp)))) {
             outx_true(TRUE, "is_external");
         }
-#endif
-        outx_true(TYPE_IS_EXTERNAL(tp), "is_external");
 
         outx_true(TYPE_IS_PUBLIC(tp), "is_public");
         outx_true(TYPE_IS_PRIVATE(tp), "is_private");

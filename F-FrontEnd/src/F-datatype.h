@@ -169,9 +169,10 @@ typedef struct type_descriptor
         struct type_descriptor * return_type;
         SYMBOL result;
         int has_explicit_arguments;
-        struct ident_descriptor * args; /* for the function type of type-bound generic */
-        int is_generic;
+        struct ident_descriptor * args;
+        int is_generic;                 /* for the type of generic function/subroutine */
         int is_tbp;
+        int is_internal;                /* for internal subprograms (function/subroutine in the contain block)*/
         struct {
             struct ident_descriptor * generics; /* for the function type of type-bound generic */
             int has_pass_arg;                   /* for the function type of type-bound procedure */
@@ -492,7 +493,10 @@ typedef enum {
 
 #define FUNCTION_TYPE_IS_GENERIC(tp) ((tp)->proc_info.is_generic == TRUE)
 #define FUNCTION_TYPE_SET_GENERIC(tp) ((tp)->proc_info.is_generic = TRUE)
-#define FUNCTION_TYPE_UNSET_GENERIC(tp) ((tp)->proc_info.is_generic = TRUE)
+#define FUNCTION_TYPE_UNSET_GENERIC(tp) ((tp)->proc_info.is_generic = FALSE)
+#define FUNCTION_TYPE_IS_INTERNAL(tp) ((tp)->proc_info.is_internal == TRUE)
+#define FUNCTION_TYPE_SET_INTERNAL(tp) ((tp)->proc_info.is_internal = TRUE)
+#define FUNCTION_TYPE_UNSET_INTERNAL(tp) ((tp)->proc_info.is_internal = FALSE)
 
 #define TYPE_BOUND_GENERIC_TYPE_GENERICS(tp) ((tp)->proc_info.type_bound_proc_info.generics)
 #define TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.type_bound_proc_info.has_pass_arg)

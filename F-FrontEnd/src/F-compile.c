@@ -1669,6 +1669,10 @@ union_parent_type(ID id)
         ID_TYPE(parent_id) = my_tp;
         PROC_CLASS(parent_id) = P_DEFINEDPROC;
 
+    } else if (ID_CLASS(parent_id) == CL_PROC &&
+               TYPE_IS_EXTERNAL(ID_TYPE(parent_id))) {
+        error("external function/subroutine %s in the contain block", ID_NAME(id));
+
     } else if (TYPE_IS_EXPLICIT(parent_tp)) {
         if (TYPE_IS_EXPLICIT(my_tp) && ID_CLASS(parent_id) != CL_PROC) {
             error("%s is declared both parent and contains", ID_NAME(id));
@@ -3030,8 +3034,9 @@ end_procedure()
 
     FinalizeFormat();
 
-    if (EXT_PROC_TYPE(CURRENT_EXT_ID))
-      TYPE_SET_FOR_FUNC_SELF(EXT_PROC_TYPE(CURRENT_EXT_ID));
+    if (EXT_PROC_TYPE(CURRENT_EXT_ID)) {
+        TYPE_SET_FOR_FUNC_SELF(EXT_PROC_TYPE(CURRENT_EXT_ID));
+    }
 
     /* check undefined variable */
     FOREACH_ID(id, LOCAL_SYMBOLS) {
@@ -3109,12 +3114,14 @@ end_procedure()
             }
         }
 
-        if(ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_UNDEFINEDPROC) {
+        if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_UNDEFINEDPROC) {
             if(PROC_EXT_ID(id) != NULL) {
                 /* undefined procedure is defined in contain statement.  */
                 EXT_IS_DEFINED(PROC_EXT_ID(id)) = TRUE;
             } else {
                 implicit_declaration(id);
+                /* This procedure is external */
+                TYPE_SET_EXTERNAL(ID_TYPE(id));
             }
         }
     }
@@ -6005,8 +6012,9 @@ define_internal_subprog(EXT_ID child_ext_ids)
 
     FOREACH_EXT_ID(ep, child_ext_ids) {
         if(EXT_PROC_CLASS(ep) == EP_PROC || EXT_PROC_CLASS(ep) == EP_INTERFACE) {
-	    EXT_PROC_IS_INTERNAL(ep) = TRUE;
+            EXT_PROC_IS_INTERNAL(ep) = TRUE;
             tp = EXT_PROC_TYPE(ep);
+            FUNCTION_TYPE_SET_INTERNAL(tp);
             ip = find_ident(EXT_SYM(ep));
             if (PROC_EXT_ID(ip) == ep)
                 continue;
