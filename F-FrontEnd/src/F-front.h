@@ -607,6 +607,7 @@ extern ID       find_ident_head _ANSI_ARGS_((SYMBOL s, ID head));
 extern ID       find_ident _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_local _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_block_parent _ANSI_ARGS_((SYMBOL s));
+extern ID       find_ident_outer_scope _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_parent _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_sibling _ANSI_ARGS_((SYMBOL s));
 extern ID       find_struct_member _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));

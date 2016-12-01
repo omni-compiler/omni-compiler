@@ -319,13 +319,11 @@ declare_procedure(enum name_class class,
         break;
 
     case CL_PROC: { /* subroutine or functions */
-        ID pid;
-
         if (debug_flag)
             fprintf(diag_file,"   %s:\n",SYM_NAME(s));
 
         if (unit_ctl_level > 0 && PARENT_STATE == ININTR) {
-            pid = find_ident_parent(s);
+            ID pid = find_ident_outer_scope(s);
             if (pid != NULL && ID_STORAGE(pid) == STG_ARG) {
                 /*
                  * The s is declared in an interface statement in
@@ -699,7 +697,7 @@ copy_parent_type(ID id)
     if (ID_TYPE(id) != NULL) {
         return;
     }
-    parent_id = find_ident_parent(ID_SYM(id));
+    parent_id = find_ident_outer_scope(ID_SYM(id));
     if (parent_id == NULL) {
         return;
     }
@@ -899,7 +897,9 @@ declare_function(ID id)
                     } else if (!IS_FUNCTION_TYPE(tp)) {
                         ID_TYPE(id) = function_type(tp);
                         /*
-                         * There is no difference between an explicit SAVE attribute and an implicit SAVE attribute
+                         * For F_Front, There is no difference between an
+                         * explicit SAVE attribute and an implicit SAVE
+                         * attribute
                          *
                          *   REAL, SAVE func
                          *
@@ -907,6 +907,13 @@ declare_function(ID id)
                          *
                          *   REAL func
                          *   SAVE ! set a SAVE attribute to func
+                         *
+                         * But if `func` is a funciton/subroutine, the compiler
+                         * should raise error against an explicit SAVE
+                         * attribute, and shouldn't set an implicit SAVE
+                         * attribute to `func`.  So the following
+                         * TYPE_UNSET_SAVE causes false positive behaviour
+                         * (accepts a function with an explicit SAVE attribute).
                          */
                         TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
                     }
@@ -1566,15 +1573,12 @@ find_external_cont_ident_head(SYMBOL s)
     return NULL;
 }
 
+
 ID
-find_ident(SYMBOL s)
+find_ident_outer_scope(SYMBOL s)
 {
     ID ip;
 
-    ip = find_ident_local(s);
-    if (ip != NULL) {
-        return ip;
-    }
     ip = find_ident_block_parent(s);
     if (ip != NULL) {
         return ip;
@@ -1590,6 +1594,21 @@ find_ident(SYMBOL s)
     ip = find_external_ident_head(s);
     return ip;
 }
+
+
+ID
+find_ident(SYMBOL s)
+{
+    ID ip;
+
+    ip = find_ident_local(s);
+    if (ip != NULL) {
+        return ip;
+    }
+    return find_ident_outer_scope(s);
+}
+
+
 
 EXT_ID
 find_ext_id_parent(SYMBOL s)
