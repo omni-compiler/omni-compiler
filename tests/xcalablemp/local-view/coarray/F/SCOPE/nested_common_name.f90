@@ -1,4 +1,4 @@
-module m1
+module m_nested_common_name
 contains
   subroutine sub1
     integer, save :: a0[*]
@@ -9,7 +9,7 @@ contains
   end subroutine
 end module
 
-use m1, only : sub2
+use m_nested_common_name, only : sub2
 
 call sub1(.false.)
 call sub2

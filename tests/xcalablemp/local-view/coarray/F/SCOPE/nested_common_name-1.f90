@@ -1,4 +1,4 @@
-module m1
+module m_nested_common_name_1
   integer a0[*]
   integer a1[*]
   integer a2[*]
@@ -14,7 +14,7 @@ contains
   end subroutine
 end module
 
-use m1
+use m_nested_common_name_1
 
 integer a3[*]
 
