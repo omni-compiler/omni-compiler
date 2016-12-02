@@ -43,6 +43,132 @@ declare_function_result_id(SYMBOL s, TYPE_DESC tp) {
     return declare_variable(retId);
 }
 
+/*
+ * NOTE:
+ * This function doesnot work well!
+ * The current code don't differ the explicit external declaration and the implicit external declaration,
+ * so the following 2 code seems the same code.
+ *
+ * (a valid code)
+ * ```
+ *   module m
+ *    call sub() ! TYPE_SET_EXTERNAL(id) will be executed
+ *    contains
+ *     subroutine sub()
+ *     end subroutine sub
+ *   end module m
+ * ```
+ *
+ * (an invalid code)
+ * ```
+ *   module m
+ *    external sub
+ *    call sub()
+ *    contains
+ *     subroutine sub()
+ *     end subroutine sub
+ *   end module m
+ * ```
+ *
+ */
+/*
+ * Check id in the parent program unit conflicts with a function/subroutine in
+ * the contain block
+ *
+ * MODULE m
+ *   public          :: f  ! not conflict
+ *   integer         :: g  ! conflict
+ *   integer, public :: h  ! NOT CONFLICT
+ *   external        :: i  ! conflict
+ *   save            :: j  ! conflict? (SAVE cannot be set to function/subroutine,
+ *                         !            should be checked before)
+ *
+ *   interface
+ *     function k() ! conflict
+ *     [...]
+ *   end inteface
+ *
+ *   _ = l()        ! not conflict
+ *   call m()       ! not conflict
+ *  [...]
+ *
+ */
+static int
+conflict_parent_vs_sub_program_unit(ID parent_id)
+{
+    if (parent_id == NULL)
+        return FALSE;
+
+    if (debug_flag) {
+        fprintf(debug_fp, "checking conflict\n");
+    }
+
+    if (ID_CLASS(parent_id) != CL_UNKNOWN) {
+        if (debug_flag) fprintf(debug_fp, "parent_id has explict class\n");
+
+        if (ID_CLASS(parent_id) == CL_PROC) {
+            if (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(parent_id))) ||
+                FUNCTION_TYPE_HAS_IMPLICIT_RETURN_TYPE(ID_TYPE(parent_id)) ||
+                FUNCTION_TYPE_HAS_UNKNOWN_RETURN_TYPE(ID_TYPE(parent_id))) {
+                if (debug_flag) fprintf(debug_fp, "parent_id may be used as a function/subroutine\n");
+                /* continue checking */
+            } else {
+                if (debug_flag) fprintf(debug_fp, "parent_id is an explicit function\n");
+                return TRUE;
+            }
+        } else {
+            if (debug_flag) fprintf(debug_fp, "parent_id be used as a non-function/subroutine\n");
+            return TRUE;
+        }
+    }
+
+    if ((ID_TYPE(parent_id) && !TYPE_IS_IMPLICIT(ID_TYPE(parent_id))) &&
+        !TYPE_HAS_ACCESSIBILITY_FLAGS(parent_id) && TYPE_HAS_NON_ACCESSIBILITY_FLAGS(parent_id)) {
+        if (debug_flag) fprintf(debug_fp, "parent_id has non-accessibility attribute\n");
+        return TRUE;
+    }
+
+    if (ID_TYPE(parent_id) != NULL) {
+        assert (ID_TYPE(parent_id) != NULL);
+        if (IS_SUBR(ID_TYPE(parent_id))) {
+            if (debug_flag) fprintf(debug_fp, "parent_id seems a subroutine\n");
+            if (ID_TYPE(parent_id) &&
+                !TYPE_IS_IMPLICIT(ID_TYPE(parent_id)) && TYPE_HAS_NON_ACCESSIBILITY_FLAGS(parent_id)) {
+                if (debug_flag) fprintf(debug_fp, "parent_id seems an external subroutine\n");
+                return TRUE;
+            }
+
+        } else if (IS_FUNCTION_TYPE(ID_TYPE(parent_id))) {
+            TYPE_DESC return_type = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(parent_id));
+            if (debug_flag) fprintf(debug_fp, "parent_id seems a function\n");
+            if (return_type != NULL &&
+                !TYPE_IS_IMPLICIT(return_type) &&
+                TYPE_BASIC_TYPE(return_type) != TYPE_UNKNOWN) {
+                if (debug_flag) fprintf(debug_fp, "ID_TYPE(parent_id) has explicit type\n");
+                if (!TYPE_HAS_ACCESSIBILITY_FLAGS(parent_id) &&
+                    !TYPE_HAS_ACCESSIBILITY_FLAGS(ID_TYPE(parent_id))) {
+                    if (debug_flag) fprintf(debug_fp, "parent_id and ID_TYPE(parent_id) don't have accessibility attributes\n");
+                    return TRUE;
+                }
+            }
+
+        } else {
+            if (debug_flag) fprintf(debug_fp, "parent_id seems a variable\n");
+            if (!TYPE_IS_IMPLICIT(ID_TYPE(parent_id)) &&
+                TYPE_BASIC_TYPE(ID_TYPE(parent_id)) != TYPE_UNKNOWN) {
+                if (debug_flag) fprintf(debug_fp, "ID_TYPE(parent_id) has explicit type\n");
+                if (!TYPE_HAS_ACCESSIBILITY_FLAGS(parent_id) &&
+                    !TYPE_HAS_ACCESSIBILITY_FLAGS(ID_TYPE(parent_id))) {
+                    if (debug_flag) fprintf(debug_fp, "parent_id and ID_TYPE(parent_id) don't have accessibility attributes\n");
+                    return TRUE;
+                }
+            }
+        }
+    }
+
+    return FALSE;
+}
+
 static void
 link_parent_defined_by(SYMBOL sym)
 {
@@ -53,9 +179,27 @@ link_parent_defined_by(SYMBOL sym)
     /* search parents local symbols,
        and if my name is found, then link it */
     if (unit_ctl_level > 0) {
-        id = find_ident_head(sym, PARENT_LOCAL_SYMBOLS);
+        int is_module_procedure = FALSE;
+        if (PARENT_STATE == INCONT) {
+            /* If the procedure exists in CONTAINS block,
+               the procedure is a module procedure.       */
+            is_module_procedure = TRUE;
+        }
+
+        id = find_ident_block_parent(sym);
+        if (id == NULL) {
+            id = find_ident_head(sym, PARENT_LOCAL_SYMBOLS);
+        }
         if (id == NULL)
             return;
+
+        if (is_module_procedure) {
+            if (conflict_parent_vs_sub_program_unit(id)) {
+                error("%s has an explicit interface before", ID_NAME(id));
+                return;
+            }
+        }
+
         if (ID_CLASS(id) == CL_UNKNOWN) {
             ID_CLASS(id) = CL_PROC;
             ID_STORAGE(id) = STG_EXT;
@@ -70,6 +214,9 @@ link_parent_defined_by(SYMBOL sym)
              IS_TYPE_PUBLICORPRIVATE(id) ||
              (ID_TYPE(id) != NULL && (IS_TYPE_PUBLICORPRIVATE(ID_TYPE(id)))))) {
             ID_DEFINED_BY(id) = CURRENT_PROCEDURE;
+            if (ID_TYPE(id)) {
+                TYPE_UNSET_IMPLICIT(ID_TYPE(id));
+            }
         } else {
             error("%s is defined as variable before", ID_NAME(id));
         }
@@ -213,9 +360,9 @@ declare_procedure(enum name_class class,
                 type = function_type(type);
             }
             declare_id_type(id, type);
-            TYPE_SET_FOR_FUNC_SELF(type);
+            TYPE_SET_FOR_FUNC_SELF(ID_TYPE(id));
         } else {
-            declare_id_type(id, function_type(new_type_desc()));
+            declare_id_type(id, new_type_desc());
         }
         if (result_opt != NULL) {
             FUNCTION_TYPE_RESULT(ID_TYPE(id)) = EXPR_SYM(result_opt);
@@ -228,13 +375,20 @@ declare_procedure(enum name_class class,
             ip = new_ident_desc(EXPR_SYM(LIST_ITEM(lp)));
             ID_LINK_ADD(ip, FUNCTION_TYPE_ARGS(ID_TYPE(id)), last);
         }
+        FUNCTION_TYPE_HAS_EXPLICIT_ARGS(ID_TYPE(id)) = TRUE;
 
         if (recursive == TRUE) {
             PROC_IS_RECURSIVE(id) = recursive;
-            PROC_CLASS(id) = P_DEFINEDPROC;
+            if (result_opt != NULL) {
+                PROC_CLASS(id) = P_DEFINEDPROC;
+            } else {
+                /* RESULT is not specified,
+                 * so this function cannot be called recursively */
+                PROC_CLASS(id) = P_THISPROC;
+            }
             TYPE_SET_RECURSIVE(id);
             if (type != NULL) {
-                TYPE_SET_RECURSIVE(type);
+                TYPE_SET_RECURSIVE(ID_TYPE(id));
             }
         } else {
             PROC_CLASS(id) = P_THISPROC;
@@ -243,17 +397,17 @@ declare_procedure(enum name_class class,
         if (pure == TRUE) {
             PROC_IS_PURE(id) = pure;
             TYPE_SET_PURE(id);
-            if (type != NULL) {
-                TYPE_SET_PURE(type);
+            if (ID_TYPE(id) != NULL) {
+                TYPE_SET_PURE(ID_TYPE(id));
             }
         }
         if (elemental == TRUE) {
             PROC_IS_ELEMENTAL(id) = pure;
             TYPE_SET_ELEMENTAL(id);
             if (type != NULL) {
-                TYPE_SET_ELEMENTAL(type);
+                TYPE_SET_ELEMENTAL(ID_TYPE(id));
             }
-        }
+       }
 
         if (bind_opt) {
             PROC_HAS_BIND(id) = TRUE;
@@ -264,8 +418,8 @@ declare_procedure(enum name_class class,
             expr bind_name = EXPR_ARG1(bind_opt);
             if(bind_name){
                 PROC_BIND(id) = bind_name;
-                if(type != NULL) {
-                    TYPE_BIND_NAME(type) = bind_name;
+                if(ID_TYPE(id) != NULL) {
+                    TYPE_BIND_NAME(ID_TYPE(id)) = bind_name;
                 }
             }
         }
@@ -294,6 +448,10 @@ declare_procedure(enum name_class class,
 
         id = declare_ident(s, CL_ENTRY);
         if (IS_SUBR(ID_TYPE(CURRENT_PROCEDURE))) {
+            /*
+             * If the current procedure is a subroutine,
+             * the entry is also a subroutine.
+             */
             tp = subroutine_type();
         } else {
             type = ID_TYPE(CURRENT_PROCEDURE);
@@ -302,6 +460,9 @@ declare_procedure(enum name_class class,
                       __func__);
                 return;
             }
+            /*
+             * Copy the type of the current procedure.
+             */
             tp = new_type_desc();
             *tp = *type;
             TYPE_ATTR_FLAGS(tp) = 0;
@@ -314,6 +475,13 @@ declare_procedure(enum name_class class,
         PROC_CLASS(id) = P_THISPROC;
         PROC_ARGS(id) = args;
         ID_STORAGE(id) = STG_EXT;
+
+        PROC_ARGS(id) = args;
+        FOR_ITEMS_IN_LIST(lp, args) {
+            ip = new_ident_desc(EXPR_SYM(LIST_ITEM(lp)));
+            ID_LINK_ADD(ip, FUNCTION_TYPE_ARGS(ID_TYPE(id)), last);
+        }
+        FUNCTION_TYPE_HAS_EXPLICIT_ARGS(ID_TYPE(id)) = TRUE;
 
         declare_dummy_args(args, CL_ENTRY);
         /* If an entry statement appears in execute part,
@@ -334,14 +502,14 @@ declare_procedure(enum name_class class,
         }
 
         if (result_opt != NULL) {
-            if (IS_SUBR(tp)) {
+            if (IS_SUBR(ID_TYPE(id))) {
                 error("subroutine with RESULT.");
                 return;
             }
 
             SYMBOL resS = EXPR_SYM(result_opt);
             ID resId = declare_function_result_id(resS,
-                                                  FUNCTION_TYPE_RETURN_TYPE(tp));
+                                                  FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
             if (resId == NULL) {
                 fatal("%s: can't declare result identifier '%s'.",
                       __func__, SYM_NAME(resS));
@@ -564,7 +732,6 @@ implicit_declaration(ID id)
 {
     TYPE_DESC tp;
     char c;
-    int function_is_not_fixed = FALSE;
 
     /* if (ID_CLASS(id) == CL_MAIN || */
     /*     (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_INTRINSIC)) { */
@@ -579,12 +746,11 @@ implicit_declaration(ID id)
     }
     tp = ID_TYPE(id);
     if (IS_PROCEDURE_TYPE(tp)) {
-        function_is_not_fixed = TYPE_IS_NOT_FIXED(tp);
         tp = FUNCTION_TYPE_RETURN_TYPE(tp);
     }
 
-    if (tp == NULL || TYPE_IS_NOT_FIXED(tp) || function_is_not_fixed ||
-        (IS_ARRAY_TYPE(tp) && array_element_type(tp) == NULL)){
+    if (tp == NULL || TYPE_IS_NOT_FIXED(tp) ||
+        (IS_ARRAY_TYPE(tp) && array_element_type(tp) == NULL)) {
         c = ID_NAME(id)[0];
         if (isupper((int)c)) {
             c = tolower((int)c);
@@ -607,10 +773,8 @@ implicit_declaration(ID id)
         tp = wrap_type(tp);
         assert(tp != NULL);
 
-        declare_id_type(id, tp);
-
         if (current_proc_state == P_SAVE) {
-            TYPE_SET_SAVE(ID_TYPE(id));
+            TYPE_SET_SAVE(tp);
         }
 #if 0
         /*
@@ -619,9 +783,11 @@ implicit_declaration(ID id)
          */
         if (is_in_module() &&
             current_module_state == M_PRIVATE) {
-            TYPE_SET_PRIVATE(ID_TYPE(id));
+            TYPE_SET_PRIVATE(tp);
         }
 #endif
+
+        declare_id_type(id, tp);
     }
 }
 
@@ -739,29 +905,8 @@ declare_function(ID id)
                 if (tp == NULL ||
                    (TYPE_IS_IMPLICIT(tp) && !IS_TYPE_PUBLICORPRIVATE(tp))) {
                     if (tp == NULL) {
-                        ID parent;
-                        parent = find_ident_parent(ID_SYM(id));
-                        if (parent == NULL || ID_TYPE(parent) == NULL) {
-                            tp = function_type(new_type_desc());
-                            TYPE_SET_NOT_FIXED(tp);
-                            TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
-                        } else {
-                            if (!IS_FUNCTION_TYPE(ID_TYPE(parent))) {
-                                TYPE_DESC return_type;
-                                ID_TYPE(parent) = function_type(ID_TYPE(parent));
-                                return_type = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(parent));
-
-                                TYPE_ATTR_FLAGS(ID_TYPE(parent)) =
-                                        TYPE_ATTR_FLAGS(return_type);
-
-                                TYPE_ATTR_FLAGS(return_type) = 0;
-                                TYPE_EXTATTR_FLAGS(return_type) = TYPE_EXTATTR_FLAGS(parent);
-                            }
-                            tp = ID_TYPE(parent);
-                            if (TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN) {
-                                TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
-                            }
-                        }
+                        tp = function_type(new_type_desc());
+                        TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
                         ID_TYPE(id) = tp;
                     } else if (!IS_FUNCTION_TYPE(tp)) {
                         ID_TYPE(id) = function_type(tp);
@@ -773,21 +918,17 @@ declare_function(ID id)
                 } else {
                     if (!IS_FUNCTION_TYPE(tp)) {
                         ID_TYPE(id) = function_type(tp);
-                        TYPE_EXTATTR_FLAGS(ID_TYPE(id)) =               \
-                        TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
-                        TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) = 0;
                     }
 
-                    if (IS_TYPE_PUBLICORPRIVATE(tp)) {
+                    if (IS_TYPE_PUBLICORPRIVATE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))) {
                         /* function is module procedure */
                         PROC_CLASS(id) = P_DEFINEDPROC;
-                        if (FUNCTION_TYPE_RETURN_TYPE(tp)) {
-                            if (TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN) {
-                                TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
-                            }
-                        }
                     } else {
                         PROC_CLASS(id) = P_EXTERNAL;
+                    }
+
+                    if (TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) == TYPE_UNKNOWN) {
+                        TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
                     }
                 }
             }
@@ -1041,36 +1182,6 @@ declare_external_proc_id(SYMBOL s, TYPE_DESC tp, int def_flag)
     return ep;
 }
 
-/*
- * For high-order sub program invocation, we need an EXT_ID.
- * So create an EXT_ID for an ID that ID_STORAGE(id) == STG_ARG.
- */
-EXT_ID
-declare_external_id_for_highorder(ID id, int isCall)
-{
-    EXT_ID ret;
-
-    if (!(ID_IS_DUMMY_ARG(id))) {
-        fatal("%s: '%s' is not a dummy arg.",
-              __func__, SYM_NAME(ID_SYM(id)));
-        /* not reached. */
-        return NULL;
-    }
-
-    if (PROC_EXT_ID(id) == NULL) {
-        ret = declare_external_id(ID_SYM(id), STG_EXT, TRUE);
-        PROC_EXT_ID(id) = ret;
-    } else {
-        ret = PROC_EXT_ID(id);
-    }
-
-    EXT_IS_DUMMY(ret) = TRUE;
-    if (isCall == FALSE) {
-        EXT_PROC_TYPE(ret) = ID_TYPE(id);
-    }
-
-    return ret;
-}
 
 /* 'intern' external symbol with tag.
  *  if def_flag, mark it as defined
@@ -1210,6 +1321,10 @@ declare_ident(SYMBOL s, enum name_class class)
                 }
                 return ip;
             }
+            if (ID_CLASS(ip) == CL_PROC && class == CL_VAR) {
+                return ip;
+            }
+
             if (class == CL_UNKNOWN) {
                 return ip;
             }
@@ -1356,17 +1471,6 @@ find_ident_block_parent(SYMBOL s)
     }
 
     return ip;
-}
-
-ID
-find_ident_parent0(SYMBOL s)
-{
-    if (unit_ctl_level > 0) {
-        return find_ident_head(
-            s, UNIT_CTL_LOCAL_SYMBOLS(unit_ctls[unit_ctl_level - 1]));
-    } else {
-        return NULL;
-    }
 }
 
 ID
@@ -1733,23 +1837,23 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                 tp = compile_dimensions(tp, EXPR_ARG1(v));
             }
             break;
-	case XMP_CODIMENSION_SPEC:
-	  if (ignoreDims) break;
-	  /* if (is_descendant_coindexed(tp)){ */
-	  /*   error_at_node(EXPR_ARG1(v), "The derived-type of the coindexed " */
-          /*                 "object cannot have a coindexed member."); */
-	  /*   return NULL; */
-	  /* } */
+        case XMP_CODIMENSION_SPEC:
+            if (ignoreDims) break;
+            /* if (is_descendant_coindexed(tp)){ */
+            /*   error_at_node(EXPR_ARG1(v), "The derived-type of the coindexed " */
+            /*                 "object cannot have a coindexed member."); */
+            /*   return NULL; */
+            /* } */
 
-	  codims_desc *codesc = compile_codimensions(EXPR_ARG1(v),
-						     TYPE_IS_ALLOCATABLE(tp));
-	  if (codesc)
-	    tp->codims = codesc;
-	  else {
-	    error_at_node(EXPR_ARG1(v), "Wrong codimension declaration.");
-	    return NULL;
-	  }
-	  break;
+            codims_desc *codesc = compile_codimensions(EXPR_ARG1(v),
+                                                       TYPE_IS_ALLOCATABLE(tp));
+            if (codesc)
+                tp->codims = codesc;
+            else {
+                error_at_node(EXPR_ARG1(v), "Wrong codimension declaration.");
+                return NULL;
+            }
+            break;
         case F95_EXTERNAL_SPEC:
             /* see compile_EXTERNAL_decl() */
             TYPE_SET_EXTERNAL(tp);
@@ -1883,7 +1987,7 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             break;
         case F03_VALUE_SPEC:
             TYPE_SET_VALUE(tp);
-            break;            
+            break;
         default:
             error("incompatible type attribute , code: %d", EXPR_CODE(v));
         }
@@ -1904,26 +2008,38 @@ declare_id_type(ID id, TYPE_DESC tp)
     TYPE_DESC tq, tpp;
     int isInUseDecl = checkInsideUse();
 
+    if (tp == NULL) {
+        return; /* nothing for TYPE_UNKNOWN */
+    }
+
+    if (IS_MODULE(tp)) {      /* tp is module */
+        ID_TYPE(id) = tp;
+        return;
+    }
+
     id_type = &(ID_TYPE(id));
     if (ID_CLASS(id) == CL_PROC ||
         IS_FUNCTION_TYPE(ID_TYPE(id))) {
 
-        if (ID_TYPE(id) == NULL && !IS_PROCEDURE_TYPE(tp)) {
-            /* change the type into function type */
-            tp = function_type(tp);
-        }
-
         if (ID_TYPE(id) == NULL) {
-            ID_TYPE(id) = tp;
-            return;
+            if (!IS_PROCEDURE_TYPE(tp)) {
+                /* change the type into function type */
+                ID_TYPE(id) = function_type(tp);
+            } else {
+                ID_TYPE(id) = tp;
+                return;
+            }
         }
 
         if (IS_FUNCTION_TYPE(ID_TYPE(id))) {
+            /*
+             * expects tp replace FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))
+             */
             id_type = &(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
         }
     }
 
-    if (tp == NULL || *id_type == tp) {
+    if (*id_type == tp) {
         return; /* nothing for TYPE_UNKNOWN */
     }
 
@@ -1932,21 +2048,11 @@ declare_id_type(ID id, TYPE_DESC tp)
         return;
     }
 
-    if (IS_MODULE(tp)) {      /* tp is module */
-        replace_or_assign_type(id_type, tp);
-        return;
-    }
-
     tq = *id_type;
-    if (tq != NULL && (TYPE_IS_IMPLICIT(tq) ||
-                       TYPE_IS_NOT_FIXED(tq))) {
+    if (tq != NULL && (TYPE_IS_IMPLICIT(tq) || TYPE_IS_NOT_FIXED(tq))) {
         /* override implicit declared type */
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(tq);
         replace_or_assign_type(id_type, tp);
-        if (IS_PROCEDURE_TYPE(ID_TYPE(id))) {
-            TYPE_EXTATTR_FLAGS(ID_TYPE(id)) = TYPE_EXTATTR_FLAGS(tp);
-            TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) = 0;
-        }
         return;
     }
 
@@ -2042,8 +2148,6 @@ declare_id_type(ID id, TYPE_DESC tp)
 
     error("incompatible type declarations, %s", ID_NAME(id));
 }
-
-
 
 
 /**

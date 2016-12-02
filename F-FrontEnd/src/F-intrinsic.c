@@ -225,7 +225,7 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
                 tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
             }
         } else {
-            tp = BASIC_TYPE_DESC(TYPE_SUBR);
+            tp = type_VOID;
         }
 
         /* Finally find symbol for the intrinsic and make it expv. */
@@ -244,11 +244,15 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
             return NULL;
         }
 
-        if (IS_SUBR(tp)) {
+        if (IS_VOID(tp)) {
             ftp = intrinsic_subroutine_type();
         } else {
             ftp = intrinsic_function_type(tp);
         }
+        if (ep->langSpec != LANGSPEC_NONSTD && ep->langSpec != LANGSPEC_UNKNOWN) {
+            FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(ftp);
+        }
+
 
         /* set external id for functionType's type ID.
          * dont call declare_external_id() */

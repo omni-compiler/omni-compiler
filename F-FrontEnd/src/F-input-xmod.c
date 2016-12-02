@@ -185,7 +185,7 @@ setReturnType(HashTable * ht, TYPE_DESC ftp, const char * rtid)
 {
     if (strcmp(rtid, "Fvoid") == 0) {
         TYPE_BASIC_TYPE(ftp) = TYPE_SUBR;
-        FUNCTION_TYPE_RETURN_TYPE(ftp) = type_void();
+        FUNCTION_TYPE_RETURN_TYPE(ftp) = type_VOID;
         FUNCTION_TYPE_SET_SUBROUTINE(ftp);
 
     } else if (strncmp(rtid, "V", 1) == 0) {
@@ -1789,6 +1789,8 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "params"))
         return FALSE;
 
+    FUNCTION_TYPE_HAS_EXPLICIT_ARGS(ftp) = TRUE;
+
     while (TRUE) {
         if (xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT))
             /* must be </params> */
@@ -2673,6 +2675,7 @@ input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
             if (EXT_PROC_TYPE(tep->ep) == NULL) {
                 EXT_PROC_TYPE(tep->ep) = tep->tp;
             }
+            FUNCTION_TYPE_SET_MOUDLE_PROCEDURE(tep->tp);
             new_ep = new_external_id(s);
             *new_ep = *tep->ep;
             EXT_NEXT(new_ep) = NULL;

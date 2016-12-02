@@ -2202,8 +2202,6 @@ compile_highorder_function_call(ID id, expr args, int isCall)
         VAR_IS_USED_AS_FUNCTION(id) = TRUE;
 #endif
 
-
-        /* (void)declare_external_id_for_highorder(id, isCall); */
         ret = compile_function_call(id, args);
 
 #if 0
@@ -2456,11 +2454,12 @@ chose_module_procedure_by_args(EXT_ID modProcIDs, expv args) {
 
 expv
 compile_function_call(ID f_id, expr args) {
-    return compile_function_call_check_type(f_id, args, FALSE);
+    return compile_function_call_check_intrinsic_arg_type(f_id, args, FALSE);
+
 }
 
 expv
-compile_function_call_check_type(ID f_id, expr args, int ignoreTypeMismatch) {
+compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTypeMismatch) {
     expv a, v = NULL;
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
@@ -2473,11 +2472,9 @@ compile_function_call_check_type(ID f_id, expr args, int ignoreTypeMismatch) {
             /* f_id is not defined yet. */
 
             if (ID_TYPE(f_id) != NULL) {
-                if (!IS_FUNCTION_TYPE(ID_TYPE(f_id))) {
+                if (!IS_PROCEDURE_TYPE(ID_TYPE(f_id))) {
                     ID_TYPE(f_id) = function_type(ID_TYPE(f_id));
-                    TYPE_EXTATTR_FLAGS(tp) = TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp));
-                    TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp)) = 0;
-                    EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
+                    EXPV_TYPE(ID_ADDR(f_id)) = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(f_id));
                 }
                 tp = ID_TYPE(f_id);
             } else {
@@ -2526,6 +2523,9 @@ compile_function_call_check_type(ID f_id, expr args, int ignoreTypeMismatch) {
         case P_THISPROC:
             if (!TYPE_IS_RECURSIVE(ID_TYPE(f_id))) {
                 error("recursive call in not a recursive function");
+            } else if (IS_FUNCTION_TYPE(ID_TYPE(f_id)) &&
+                       FUNCTION_TYPE_RESULT(ID_TYPE(f_id)) == NULL) {
+                error("Use a RESULT variable for recursion");
             }
             /* FALL THROUGH */
         case P_DEFINEDPROC:
@@ -2579,14 +2579,9 @@ compile_function_call_check_type(ID f_id, expr args, int ignoreTypeMismatch) {
             v = list3(FUNCTION_CALL, ID_ADDR(f_id), a,
                       expv_any_term(F_EXTFUNC, f_id));
 
-            if (IS_SUBR(ID_TYPE(f_id))) {
-                EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(f_id));
-
-            } else {
-                EXPV_TYPE(v) = IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) ?
-                                               type_GNUMERIC_ALL :
-                                               FUNCTION_TYPE_RETURN_TYPE(tp);
-            }
+            EXPV_TYPE(v) = IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) ?
+                    type_GNUMERIC_ALL :
+                    FUNCTION_TYPE_RETURN_TYPE(tp);
 
             break;
         }
@@ -3428,12 +3423,11 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
             }
         }
 
-        if (ftp)
+        if (ftp) {
             ret_type = FUNCTION_TYPE_RETURN_TYPE(ftp);
-#if 0
-        else
+        } else {
             error("There is no appliable type-bound procedure");
-#endif
+        }
     } else {
         // for type-bound PROCEDURE
         if (ftp != NULL) {
@@ -3480,7 +3474,7 @@ compile_member_array_ref(expr x, expv v)
     }
 #endif
 
-    if (IS_FUNCTION_TYPE(EXPV_TYPE(v))) {
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(v))) {
         /*
          * type bound procedure coall
          */

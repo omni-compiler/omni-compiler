@@ -4937,10 +4937,6 @@ public class XfDecompileDomVisitor {
             invokeEnter(XmDomUtil.getElement(n, "arguments"));
 
             writer.writeToken(")");
-
-            if (typeId == XfType.VOID) {
-                writer.setupNewLine();
-            }
         }
     }
 

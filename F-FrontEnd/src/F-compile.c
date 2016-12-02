@@ -59,6 +59,7 @@ ID this_label;
 
 TYPE_DESC type_REAL, type_INT, type_SUBR, type_CHAR, type_LOGICAL;
 TYPE_DESC type_DREAL, type_COMPLEX, type_DCOMPLEX;
+TYPE_DESC type_VOID;
 TYPE_DESC type_MODULE;
 TYPE_DESC type_GNUMERIC_ALL;
 TYPE_DESC type_NAMELIST;
@@ -207,6 +208,8 @@ initialize_compile()
     expv_constant_0 = expv_int_term(INT_CONSTANT,type_INT,0);
     expv_constant_m1 = expv_int_term(INT_CONSTANT,type_INT,-1);
     expv_float_0 = expv_float_term(FLOAT_CONSTANT,type_REAL,0.0, "0.0");
+
+    type_VOID = BASIC_TYPE_DESC(TYPE_VOID);
 
     type_MODULE = BASIC_TYPE_DESC(TYPE_MODULE);
 
@@ -1294,10 +1297,13 @@ compile_exec_statement(expr x)
               break;
           }
 
-          if (EXPR_CODE(x1) == IDENT &&
-              EXPV_TYPE(v1) != NULL &&
-              TYPE_BASIC_TYPE(EXPV_TYPE(v1)) == TYPE_FUNCTION) {
-              EXPV_TYPE(v1) = FUNCTION_TYPE_RETURN_TYPE(EXPV_TYPE(v1));
+          if (TYPE_BASIC_TYPE(EXPV_TYPE(v1)) == TYPE_FUNCTION) {
+              /*
+               * If a left expression is a function result,
+               * the type of compile_lhs_expression(x) is a non-function type.
+               */
+              error_at_node(x, "a lhs expression is function or subroutine");
+              break;
           }
 
           if (!expv_is_lvalue(v1) && !expv_is_str_lvalue(v1)) {
@@ -1652,8 +1658,9 @@ union_parent_type(ID id)
     }
     parent_id = find_ident_parent(ID_SYM(id));
 
-    if (parent_id == NULL || ID_DEFINED_BY(parent_id) != id)
+    if (parent_id == NULL || ID_DEFINED_BY(parent_id) != id) {
         return;
+    }
 
     my_tp = ID_TYPE(id);
     parent_tp = ID_TYPE(parent_id);
@@ -1665,8 +1672,13 @@ union_parent_type(ID id)
     }
 
     if (ID_CLASS(parent_id) == CL_PROC &&
-       PROC_CLASS(parent_id) == P_UNDEFINEDPROC) {
+        PROC_CLASS(parent_id) == P_UNDEFINEDPROC) {
+        if (TYPE_IS_USED_EXPLICIT(ID_TYPE(parent_id))) {
+            TYPE_DESC return_type = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(parent_id));
+            *return_type = *FUNCTION_TYPE_RETURN_TYPE(my_tp);
+        }
         ID_TYPE(parent_id) = my_tp;
+        EXPV_TYPE(ID_ADDR(parent_id)) = my_tp;
         PROC_CLASS(parent_id) = P_DEFINEDPROC;
 
     } else if (ID_CLASS(parent_id) == CL_PROC &&
@@ -1701,7 +1713,7 @@ union_parent_type(ID id)
 
                 assert(TYPE_REF(tp) == NULL ||
                        TYPE_BASIC_TYPE(tp) == TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE((my_tp))));
-            }            
+            }
         }
     } else {
         if(IS_ARRAY_TYPE(my_tp)) {
@@ -2074,6 +2086,13 @@ end_declaration()
 
         /* merge type attribute flags except SAVE attr*/
         TYPE_ATTR_FLAGS(tp) |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
+        if (IS_PROCEDURE_TYPE(tp)) {
+            /*
+             * The type attributes for the function (PURE, ELEMENETAL, etc) are
+             * never set to local symbol, so there is no need to filter out them.
+             */
+            TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp)) |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
+        }
 
         /* copy type attribute flags to EXT_PROC_TYPE */
         ep = PROC_EXT_ID(ip);
@@ -2316,7 +2335,8 @@ end_declaration()
         /*
          * Update function type
          */
-        function_type_udpate(ID_TYPE(myId), PROC_ARGS(myId), LOCAL_SYMBOLS);
+        implicit_declaration(myId);
+        function_type_udpate(ID_TYPE(myId), LOCAL_SYMBOLS);
 
         /*
          * Update type bound procedure
@@ -2990,7 +3010,7 @@ end_procedure()
                 if (TYPE_REF(tp) != NULL) {
                     TYPE_BASIC_TYPE(TYPE_REF(tp)) = TYPE_VOID;
                 } else {
-                    FUNCTION_TYPE_RETURN_TYPE(EXT_PROC_TYPE(intr)) = type_void();
+                    FUNCTION_TYPE_RETURN_TYPE(EXT_PROC_TYPE(intr)) = type_VOID;
                 }
             }
         }
@@ -3120,16 +3140,6 @@ end_procedure()
                 EXT_IS_DEFINED(PROC_EXT_ID(id)) = TRUE;
             } else {
                 implicit_declaration(id);
-                /* This procedure is external */
-                if (XMP_flag) {
-                    TYPE_SET_EXTERNAL(ID_TYPE(id));
-                }
-            }
-        }
-        if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_EXTERNAL &&
-            !FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(id))) {
-            if (XMP_flag) {
-                TYPE_SET_EXTERNAL(ID_TYPE(id));
             }
         }
     }
@@ -4576,6 +4586,9 @@ compile_MODULEPROCEDURE_statement(expr x)
         EXT_LINE(ep) = EXPR_LINE(x);
         EXT_PROC_CLASS(ep) = EP_MODULE_PROCEDURE;
         EXT_PROC_IS_MODULE_SPECIFIED(ep) = (EXPR_INT(EXPR_ARG2(x)) == 1);
+        if (EXT_PROC_TYPE(ep) != NULL) {
+            FUNCTION_TYPE_SET_MOUDLE_PROCEDURE(EXT_PROC_TYPE(ep));
+        }
 
         if (add_module_procedure(genProcName, SYM_NAME(EXPR_SYM(ident)),
                                  NULL, NULL, NULL) == NULL) {
@@ -5025,7 +5038,7 @@ compile_CALL_type_bound_procedure_statement(expr x)
               expv_cons(F95_MEMBER_REF, tp, structRef, x2),
               a);
 
-    EXPV_TYPE(v) = type_basic(TYPE_VOID);
+    EXPV_TYPE(v) = type_VOID;
     output_statement(v);
 
     return;
@@ -5064,24 +5077,31 @@ compile_CALL_subroutine_statement(expr x)
         error("an ambiguous reference to symbol '%s'", ID_NAME(id));
         return;
     }
+    if (ID_TYPE(id) != NULL && IS_FUNCTION_TYPE(ID_TYPE(id)) &&
+        TYPE_IS_USED_EXPLICIT(ID_TYPE(id))) {
+        error("'%s' is a function, not a subroutine", ID_NAME(id));
+    }
+
     if ((PROC_CLASS(id) == P_EXTERNAL || PROC_CLASS(id) == P_UNKNOWN) &&
         (ID_TYPE(id) == NULL || IS_SUBR(ID_TYPE(id)) == FALSE)) {
         TYPE_DESC tp;
         if (ID_TYPE(id)) {
-            if (!FUNCTION_TYPE_IS_GENERIC(ID_TYPE(id)) &&
-                !TYPE_IS_IMPLICIT(ID_TYPE(id)) &&
-                (FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL &&
-                  !IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))))) {
-                error("called '%s' which has a type like a subroutine", ID_NAME(id));
+            if (!TYPE_IS_IMPLICIT(ID_TYPE(id)) &&
+                !FUNCTION_TYPE_IS_GENERIC(ID_TYPE(id)) &&
+                !(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL &&
+                  (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) ||
+                   TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) ||
+                   IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) {
+                error("called '%s' which doesn't have a type like a subroutine", ID_NAME(id));
                 return;
             }
+
             tp = subroutine_type();
             TYPE_ATTR_FLAGS(tp) = TYPE_ATTR_FLAGS(ID_TYPE(id));
-            TYPE_EXTATTR_FLAGS(tp) = TYPE_EXTATTR_FLAGS(ID_TYPE(id));
         } else {
             tp = subroutine_type();
         }
-        TYPE_UNSET_IMPLICIT(tp);
+        TYPE_SET_IMPLICIT(tp);
         TYPE_SET_USED_EXPLICIT(tp);
         ID_TYPE(id) = tp;
 
@@ -5092,7 +5112,7 @@ compile_CALL_subroutine_statement(expr x)
     else if (PROC_CLASS(id) == P_INTRINSIC && ID_TYPE(id) != NULL){
         TYPE_DESC tp = ID_TYPE(id);
         TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
-        FUNCTION_TYPE_RETURN_TYPE(tp) = type_void();
+        FUNCTION_TYPE_RETURN_TYPE(tp) = type_VOID;
         TYPE_UNSET_IMPLICIT(tp);
         TYPE_SET_USED_EXPLICIT(tp);
         ID_TYPE(id) = tp;
@@ -5129,7 +5149,7 @@ compile_CALL_subroutine_statement(expr x)
     if (ID_IS_DUMMY_ARG(id)) {
         v = compile_highorder_function_call(id, EXPR_ARG2(x), TRUE);
     } else {
-       v = compile_function_call_check_type(id, EXPR_ARG2(x), TRUE);
+       v = compile_function_call_check_intrinsic_arg_type(id, EXPR_ARG2(x), TRUE);
        if (v == NULL && PROC_CLASS(id) == P_INTRINSIC) {
            TYPE_DESC tp = type_basic(TYPE_SUBR);
            /* Retry to compile as 'CALL external_subroutine(..)' . */

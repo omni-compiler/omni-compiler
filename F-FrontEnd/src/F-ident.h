@@ -185,7 +185,7 @@ typedef struct ident_descriptor
                                        * P_EXTERNAL. */
             int has_bind;             /* if TRUE, proc uses BIND feature */
             expr bind;                /* temporary storage for bind
-180                                    * information */
+                                       * information */
         } proc_info;
         struct {
 

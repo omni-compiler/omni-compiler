@@ -64,8 +64,7 @@ typedef struct type_ext_id {
       (tail) = (te); }
 
 static TYPE_DESC    type_list,type_list_tail;
-static TYPE_DESC    leftover_list,leftover_list_tail;
-static int          do_leftover = TRUE;
+static TYPE_DESC    tbp_list,tbp_list_tail;
 static TYPE_EXT_ID  type_module_proc_list, type_module_proc_last;
 static TYPE_EXT_ID  type_ext_id_list, type_ext_id_last;
 static FILE         *print_fp;
@@ -683,8 +682,8 @@ getBasicTypeID(BASIC_DATA_TYPE t)
     case TYPE_MODULE:       tid = "Fvoid"; break;
     case TYPE_NAMELIST:     tid = "Fnamelist"; break;
     case TYPE_VOID:         tid = "Fvoid"; break;
-#if 1
-    case TYPE_UNKNOWN:      tid = "UNKNOWN"; break;
+#if 0
+    case TYPE_UNKNOWN:      tid = "UNKNOWN"; break; /* FOR DEBUG */
 #endif
     default: abort();
     }
@@ -733,8 +732,8 @@ getTypeID(TYPE_DESC tp)
         case TYPE_LHS:		/* fall through too */
         case TYPE_GNUMERIC_ALL: pfx = 'V'; break;
         case TYPE_NAMELIST:     pfx = 'N'; break;
-#if 1
-        case TYPE_UNKNOWN:      pfx = 'X'; break;
+#if 0
+        case TYPE_UNKNOWN:      pfx = 'X'; break; /* FOR DEBUG */
 #endif
         default: abort();
         }
@@ -3784,14 +3783,17 @@ outx_expv(int l, expv v)
 static void mark_type_desc_in_structure(TYPE_DESC tp);
 //static void check_type_desc(TYPE_DESC tp);
 
+static void mark_type_desc(TYPE_DESC tp);
+
 static void
-mark_type_desc(TYPE_DESC tp)
+mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
 {
-    if (do_leftover &&  IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL) {
-        /* type-bound procedure causes circulation reference,
-         * so check them later.
+    if (skip_tbp &&  IS_PROCEDURE_TYPE(tp) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(tp)) {
+        /* type-bound procedure with a PASS argument ALWAY causes a circulation reference,
+         * so store them to a tbp list and check them later.
          */
-        TYPE_LINK_ADD(tp, leftover_list, leftover_list_tail);
+        TYPE_LINK_ADD(tp, tbp_list, tbp_list_tail);
         return;
     }
 
@@ -3837,6 +3839,10 @@ mark_type_desc(TYPE_DESC tp)
     }
 }
 
+static void
+mark_type_desc(TYPE_DESC tp) {
+    mark_type_desc_skip_tbp(tp, TRUE);
+}
 
 /* static void */
 /* check_type_desc(TYPE_DESC tp) */
@@ -4329,7 +4335,9 @@ outx_functionType(int l, TYPE_DESC tp)
 
         outx_print(" return_type=\"%s\"", rtid);
         outx_true(FUNCTION_TYPE_IS_PROGRAM(tp), "is_program");
-        outx_true(TYPE_IS_INTRINSIC(tp), "is_intrinsic");
+
+        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp))
+            outx_true(TYPE_IS_INTRINSIC(tp), "is_intrinsic");
 
         outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
         outx_true(TYPE_IS_PURE(tp), "is_pure");
@@ -4337,7 +4345,10 @@ outx_functionType(int l, TYPE_DESC tp)
 
         if (!TYPE_IS_INTRINSIC(tp) &&
             (TYPE_IS_EXTERNAL(tp) ||
-             (XMP_flag && !TYPE_IS_FOR_FUNC_SELF(tp) && ! FUNCTION_TYPE_IS_INTERNAL(tp)))) {
+             (XMP_flag &&
+              !TYPE_IS_FOR_FUNC_SELF(tp) &&
+              !FUNCTION_TYPE_IS_INTERNAL(tp) &&
+              !FUNCTION_TYPE_IS_MOUDLE_PROCEDURE(tp)))) {
             outx_true(TRUE, "is_external");
         }
 
@@ -5387,8 +5398,7 @@ collect_types(EXT_ID extid)
     TYPE_DESC tp, tq;
     TYPE_DESC sTp;
 
-    leftover_list = NULL;
-    do_leftover = TRUE;
+    tbp_list = NULL;
 
     collect_types1(extid);
     FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
@@ -5401,13 +5411,12 @@ collect_types(EXT_ID extid)
     }
 
     /*
-     * now eat leftover
+     * now mark type-bound procedures
      */
-    do_leftover = FALSE;
-    for (tp = leftover_list; tp != NULL; tp = tq){
+    for (tp = tbp_list; tp != NULL; tp = tq){
         tq = TYPE_LINK(tp);
         TYPE_LINK(tp) = NULL;
-        mark_type_desc(tp);
+        mark_type_desc_skip_tbp(tp, FALSE);
     }
 
 }
@@ -5421,9 +5430,6 @@ outx_typeTable(int l)
 {
     const int l1 = l + 1;
     TYPE_DESC tp;
-#if 0
-    TYPE_EXT_ID te;
-#endif
 
     outx_tag(l, "typeTable");
 
@@ -5743,11 +5749,13 @@ unmark_ids(EXT_ID ep)
 void
 output_module_file(struct module * mod)
 {
-  char filename[255] = {0};
+    char filename[255] = {0};
     ID id;
     EXT_ID ep;
     TYPE_EXT_ID te;
     TYPE_DESC sTp;
+    TYPE_DESC tp;
+    TYPE_DESC tq;
     int oEmitMode;
     expr modTypeList;
     list lp;
@@ -5776,6 +5784,8 @@ output_module_file(struct module * mod)
     type_module_proc_last = NULL;
     type_ext_id_list = NULL;
     type_ext_id_last = NULL;
+
+    tbp_list = NULL;
 
     /*
      * collect types used in this module
@@ -5810,6 +5820,15 @@ output_module_file(struct module * mod)
                 EXT_PROC_TYPE(ep) = sTp;
             }
         }
+    }
+
+    /*
+     * now mark type-bound procedures
+     */
+    for (tp = tbp_list; tp != NULL; tp = tq){
+        tq = TYPE_LINK(tp);
+        TYPE_LINK(tp) = NULL;
+        mark_type_desc_skip_tbp(tp, FALSE);
     }
 
     outx_module(mod);
