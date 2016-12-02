@@ -101,8 +101,14 @@ public class XMPcoarray {
     this.fblock = fblock;
     setIdentEtc(ident);
     homeBlockName = ident.getFdeclaredModule();
-    if (homeBlockName == null)
+    if (homeBlockName == null) {
       homeBlockName = def.getName();
+      XobjectDef parent_def = def.getParent();
+      while (parent_def != null) {
+        homeBlockName = homeBlockName + "_" + parent_def.getName();
+        parent_def = parent_def.getParent();
+      }
+    }
   }
   public XMPcoarray(Ident ident, XobjectDef def, FunctionBlock fblock, XMPenv env,
                     String homeBlockName)

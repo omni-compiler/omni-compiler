@@ -277,6 +277,9 @@ public class XMPtransCoarrayRun
 
   private void _setHostRun(ArrayList<XMPtransCoarrayRun> pastRuns)
   {
+    if (pastRuns == null)
+      return;
+
     hostModuleRun = null;
     hostProcedureRun = null;
 
@@ -346,23 +349,45 @@ public class XMPtransCoarrayRun
     BlockIterator biter = new topdownBlockIterator(fb);
     for (biter.init(); !biter.end(); biter.next()) {
       Block block = biter.getBlock();
-      if (block.Opcode() == Xcode.F_BLOCK_STATEMENT) {
+      if (block.Opcode() == Xcode.F_BLOCK_STATEMENT ||
+          block.Opcode() == Xcode.FUNCTION_DEFINITION ) {
         XobjList id_list = block.getBody().getIdentList();
         for (Xobject idobj: id_list) {
           Ident ident = (Ident)idobj;
           if (ident.wasCoarray()) {
             if (setAlias)
+              // pass 3 : generate unique name.
               ident.setAlias(ident.getName() + "_" + get_gen_id());
             else {
+              // pass 4 : set unique name and hoist.
+              if (block.Opcode() == Xcode.FUNCTION_DEFINITION ) {
+                // rewrite function coarray parameter name.
+                Xtype f_type = fb.getNameObj().Type();
+                Xobject f_params = null;
+                if(f_type != null && f_type.isFunction())
+                  f_params = f_type.getFuncParam();
+                  if(f_params != null && ident.getStorageClass() == StorageClass.FPARAM){
+                  // rewrite parameter
+                  for(Xobject param: (XobjList)f_params){
+                    if(param.Opcode() == Xcode.IDENT &&
+                       param.getName().equals(ident.getName())){
+                      param.setName(ident.getAlias());
+                    }
+                  }
+                }
+              }
+              // rename and hoist.
               XobjList decl_list = (XobjList)((BlockList)block.getBody()).getDecls();
               for (Xobject obj: decl_list) {
                 if (obj.Opcode() == Xcode.VAR_DECL && ((XobjString)obj.getArg(0)).getName().equals(ident.getName())) {
                   ((XobjString)obj.getArg(0)).setName(ident.getAlias());
-                  decl_list.remove(obj);
-                  declList.add(obj);
                   ((XobjString)ident.getValue()).setName(ident.getAlias());
                   ident.setName(ident.getAlias());
-                  idList.add(ident.copy());
+                  if (block.Opcode() == Xcode.F_BLOCK_STATEMENT) {
+                    idList.add(ident.copy());
+                    decl_list.remove(obj);
+                    declList.add(obj);
+                  }
                   break;
                 }
               }
@@ -374,6 +399,27 @@ public class XMPtransCoarrayRun
   }
 
   private void _rewriteExprLocalCoarrays(FunctionBlock fb) {
+    // rewrite "!$xmpf coarray on nodes :: coarrays".
+    BlockIterator biter = new topdownBlockIterator(fb);
+    for (biter.init(); !biter.end(); biter.next()) {
+      Block block = biter.getBlock();
+      if (block.Opcode() == Xcode.XMP_PRAGMA) {
+        PragmaBlock pb = (PragmaBlock)block;
+        if (pb.getPragma().equals("COARRAY")) {
+          Xobject coarrayPragma = pb.getClauses();
+          XobjList coarrayNameList = (XobjList)coarrayPragma.getArg(1);
+          for(Xobject xobj: coarrayNameList) {
+            Ident id = env.findVarIdent(xobj.getString(), pb);
+            if (id != null) {
+              Xobject var = Xcons.Symbol(Xcode.VAR,id.Type(), id.getAlias());
+              coarrayNameList.remove(xobj);
+              coarrayNameList.add(var);
+            }
+          }
+        }
+      }
+    }
+    // rewrite Var.
     BasicBlockExprIterator bbeiter = new BasicBlockExprIterator(fb);
     for (bbeiter.init(); !bbeiter.end(); bbeiter.next()) {
       Xobject expr = bbeiter.getExpr();
@@ -389,14 +435,13 @@ public class XMPtransCoarrayRun
             {
               Ident id = env.findVarIdent(x.getName(),bb.getParent());
               Block block = env.findVarIdentBlock(x.getName(),bb.getParent());
-              if (block == null || block.Opcode() == Xcode.FUNCTION_DEFINITION) continue;
-              if (id == null) throw new RuntimeException();
+              if (id == null) break;
               if (id.wasCoarray()) {
                 String newName = id.getAlias();
 
-                // replace with local decl
-                Xobject var = Xcons.Symbol(Xcode.VAR,id.Type(), newName);
-                iter.setXobject(var);
+                // replace name
+                if (newName != null)
+                  ((XobjString)x).setName(newName);
               }
             }
           }
@@ -411,10 +456,6 @@ public class XMPtransCoarrayRun
     localCoarrays = new ArrayList<XMPcoarray>();
     useAssociatedCoarrays = new ArrayList<XMPcoarray>();
     Xobject idList = def.getFuncIdList();
-
-    _hoistLocalCoarrays(  null,               null, getFblock(), true );
-    _rewriteExprLocalCoarrays(getFblock());
-    _hoistLocalCoarrays(idList, def.getFuncDecls(), getFblock(), false);
 
     /* divide coarrays into localCoarrays and useAssociatedCoarrays
      */
@@ -561,6 +602,22 @@ public class XMPtransCoarrayRun
   //  TRANSLATION
   //------------------------------------------------------------
 
+  /*
+   *  PASS 3: change coarray id name / rewrite expr, etc.
+   */
+  public void run3() {
+    _hoistLocalCoarrays(               null,               null, getFblock(), true );
+    _rewriteExprLocalCoarrays(getFblock());
+  }
+
+  /*
+   *  PASS 4: hoist coarray id.
+   */
+  public void run4() {
+    _hoistLocalCoarrays(def.getFuncIdList(), def.getFuncDecls(), getFblock(), false);
+  }
+
+  /*
   /*
    *  PASS 1: convert for each procedure that is either 
    *            - the main program or

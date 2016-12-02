@@ -205,10 +205,9 @@ public class XMPrewriteExpr
 	  if(array == null) break;
 	  
 	  // replace with local decl
-	  Xobject var = Xcons.Symbol(Xcode.VAR,array.getLocalType(),
-				                 array.getLocalName());
-	  var.setProp(XMP.arrayProp,array);
-	  iter.setXobject(var);
+          ((XobjString)x).setName(array.getLocalName());
+          x.setType(array.getLocalType());
+          x.setProp(XMP.arrayProp,array);
 	  break;
 	}
       case F_ARRAY_REF:
