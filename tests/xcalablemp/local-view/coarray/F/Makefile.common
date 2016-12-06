@@ -1,8 +1,7 @@
 # This file is included from */Makefile files.
 
-SRC= $(OUT:%.x=%.f90)
-RESULT=$(SRC:.f90=.result)
-.SUFFIXES: .x .f90 .xmod
+RESULT=$(OUT:.x=.result)
+.SUFFIXES: .x .f90 .F90 .xmod
 
 OUT4= $(OUT:%.x=%.x4)
 OUT6= $(OUT:%.x=%.x6)
@@ -14,7 +13,10 @@ RESULT7=$(RESULT:.result=.result7)
 RESULT7g=$(RESULT:.result=.result7g)
 
 .f90.x:
-	xmpf90 $(OPT) -cpp -o $@ $<
+	xmpf90 $(OPT) -o $@ $<
+
+.F90.x:
+	xmpf90 $(OPT) -o $@ $<
 
 .c.x:
 	xmpcc $(OPT) -o $@ $<
