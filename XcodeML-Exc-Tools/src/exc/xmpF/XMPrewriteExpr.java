@@ -42,6 +42,7 @@ public class XMPrewriteExpr
     // rewrite allocate, deallocate, and stop statements
     BasicBlockIterator iter3 = new BasicBlockIterator(fb);
     for (iter3.init(); !iter3.end(); iter3.next()){
+      Block b = iter3.getBasicBlock().getParent();
       StatementIterator iter4 = iter3.getBasicBlock().statements();
       while (iter4.hasNext()){
 	Statement st = iter4.next();
@@ -61,7 +62,7 @@ public class XMPrewriteExpr
 		     obj.Opcode() == Xcode.F_VAR_REF)
 		  obj = obj.getArg(0).getArg(0);
 
-	      Ident id = env.findVarIdent(obj.getName(), fb);
+	      Ident id = env.findVarIdent(obj.getName(), b);
 	      if (id == null) break;
 	      XMParray array = XMParray.getArray(id);
 	      if (array == null) break;
@@ -81,7 +82,7 @@ public class XMPrewriteExpr
 		     obj.Opcode() == Xcode.F_ARRAY_REF ||
 		     obj.Opcode() == Xcode.F_VAR_REF)
 		obj = obj.getArg(0).getArg(0);
-	      Ident id = env.findVarIdent(obj.getName(), fb);
+	      Ident id = env.findVarIdent(obj.getName(), b);
 	      if (id == null) break;
 	      XMParray array = XMParray.getArray(id);
 	      if (array == null) break;
@@ -204,10 +205,9 @@ public class XMPrewriteExpr
 	  if(array == null) break;
 	  
 	  // replace with local decl
-	  Xobject var = Xcons.Symbol(Xcode.VAR,array.getLocalType(),
-				                 array.getLocalName());
-	  var.setProp(XMP.arrayProp,array);
-	  iter.setXobject(var);
+          ((XobjString)x).setName(array.getLocalName());
+          x.setType(array.getLocalType());
+          x.setProp(XMP.arrayProp,array);
 	  break;
 	}
       case F_ARRAY_REF:

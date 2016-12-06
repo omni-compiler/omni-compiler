@@ -14,7 +14,7 @@ RESULT7=$(RESULT:.result=.result7)
 RESULT7g=$(RESULT:.result=.result7g)
 
 .f90.x:
-	xmpf90 $(OPT) -o $@ $<
+	xmpf90 $(OPT) -cpp -o $@ $<
 
 .c.x:
 	xmpcc $(OPT) -o $@ $<

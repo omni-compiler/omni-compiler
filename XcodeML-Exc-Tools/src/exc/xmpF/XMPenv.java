@@ -298,7 +298,8 @@ public class XMPenv {
   public Ident findVarIdent(String name, Block b){
     Ident id = null;  // find ident, in this block(b) or parent
     if (b == null || (id = b.findVarIdent(name)) == null)
-out:{ for(XobjectDef def = current_def.getDef(); def != null; 
+out:{
+      for(XobjectDef def = current_def.getDef(); def != null; 
 	  def = def.getParent()){
         Xobject id_list = def.getDef().getArg(1);
         for(Xobject i: (XobjList)id_list){

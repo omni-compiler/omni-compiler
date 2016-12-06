@@ -115,6 +115,18 @@ public class XMPtransCoarray implements XobjectDefVisitor
       //transCoarrayRun.finalize();
       break;
 
+    case 3:               // for both procedures and modules
+      transCoarrayRun = new XMPtransCoarrayRun(d, env,     null, 3, version,
+                                               useMalloc, onlyCafMode);
+      transCoarrayRun.run3();
+      break;
+
+    case 4:               // for both procedures and modules
+      transCoarrayRun = new XMPtransCoarrayRun(d, env,     null, 4, version,
+                                               useMalloc, onlyCafMode);
+      transCoarrayRun.run4();
+      break;
+
     default:
       return;
     }

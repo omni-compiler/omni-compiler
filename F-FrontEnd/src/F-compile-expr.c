@@ -871,7 +871,7 @@ compile_expression(expr x)
             v2 = compile_expression(EXPR_ARG2(x)); /* kind */
         calc_kind:
             if (v2 != NULL) {
-                v2 = expv_reduce(v2, FALSE);
+                v2 = expv_reduce_kind(v2);
                 if (v2 == NULL) {
                     error("bad expression in constant kind parameter");
                     break;

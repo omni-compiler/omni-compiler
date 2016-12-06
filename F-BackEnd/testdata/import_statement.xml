@@ -1,0 +1,95 @@
+<XcodeProgram source="../test/testdata/import_statement.f90"
+              language="Fortran"
+              time="2016-10-28 13:00:27"
+              compiler-info="XcodeML/Fortran-FrontEnd"
+              version="1.0">
+  <typeTable>
+    <FbasicType type="I7fff49406d40" is_parameter="true" ref="Fint"/>
+    <FbasicType type="R7fff49408ed0" ref="Freal">
+      <kind>
+        <Var type="I7fff49406d40" scope="local">real_size</Var>
+      </kind>
+    </FbasicType>
+    <FbasicType type="R7fff49409030" ref="R7fff49408ed0"/>
+    <FbasicType type="R7fff4940a3a0" ref="Freal">
+      <kind>
+        <Var type="I7fff49406d40" scope="local">real_size</Var>
+      </kind>
+    </FbasicType>
+    <FbasicType type="R7fff4940a500" ref="R7fff4940a3a0"/>
+    <FbasicType type="I7fff49407770" is_parameter="true" ref="Fint"/>
+    <FbasicType type="I7fff4940aab0" ref="Fint">
+      <kind>
+        <Var type="I7fff49407770" scope="local">integer_size</Var>
+      </kind>
+    </FbasicType>
+    <FbasicType type="I7fff4940ac10" ref="I7fff4940aab0"/>
+    <FfunctionType type="F7fff49408660" return_type="Fvoid">
+      <params>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="F7fff49409b30" return_type="Fvoid">
+      <params>
+      </params>
+    </FfunctionType>
+  </typeTable>
+  <globalSymbols>
+    <id sclass="ffunc">
+      <name>mod1</name>
+    </id>
+  </globalSymbols>
+  <globalDeclarations>
+    <FmoduleDefinition name="mod1" lineno="1" file="../test/testdata/import_statement.f90">
+      <symbols>
+        <id type="I7fff49406d40" sclass="flocal">
+          <name>real_size</name>
+        </id>
+        <id type="I7fff49407770" sclass="flocal">
+          <name>integer_size</name>
+        </id>
+      </symbols>
+      <declarations>
+        <varDecl lineno="2" file="../test/testdata/import_statement.f90">
+          <name type="I7fff49406d40">real_size</name>
+          <value>
+            <FintConstant type="Fint">8</FintConstant>
+          </value>
+        </varDecl>
+        <varDecl lineno="3" file="../test/testdata/import_statement.f90">
+          <name type="I7fff49407770">integer_size</name>
+          <value>
+            <FintConstant type="Fint">4</FintConstant>
+          </value>
+        </varDecl>
+        <FinterfaceDecl lineno="5" file="../test/testdata/import_statement.f90">
+          <FfunctionDecl lineno="6" file="../test/testdata/import_statement.f90">
+            <name type="F7fff49408660">sub1</name>
+            <declarations>
+              <FimportDecl lineno="7" file="../test/testdata/import_statement.f90">
+                <name>real_size</name>
+              </FimportDecl>
+              <varDecl lineno="8" file="../test/testdata/import_statement.f90">
+                <name type="R7fff49409030">my_real</name>
+              </varDecl>
+            </declarations>
+          </FfunctionDecl>
+          <FfunctionDecl lineno="11" file="../test/testdata/import_statement.f90">
+            <name type="F7fff49409b30">sub2</name>
+            <declarations>
+              <FimportDecl lineno="12" file="../test/testdata/import_statement.f90">
+                <name>real_size</name>
+                <name>integer_size</name>
+              </FimportDecl>
+              <varDecl lineno="13" file="../test/testdata/import_statement.f90">
+                <name type="R7fff4940a500">my_real</name>
+              </varDecl>
+              <varDecl lineno="14" file="../test/testdata/import_statement.f90">
+                <name type="I7fff4940ac10">my_int</name>
+              </varDecl>
+            </declarations>
+          </FfunctionDecl>
+        </FinterfaceDecl>
+      </declarations>
+    </FmoduleDefinition>
+  </globalDeclarations>
+</XcodeProgram>

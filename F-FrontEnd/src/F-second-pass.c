@@ -232,9 +232,23 @@ static void second_pass_expv_scan(expv v)
       second_pass_expv_scan(v2);
     }
     break;
+  case F03_SELECTTYPE_STATEMENT:
+    {
+      expv v3, v4;
+      list lp = EXPR_LIST(v);   /* condition & body */
+      v3 = EXPR_ARG3(v);        /* ConstructName */
+      v4 = EXPR_ARG4(v);        /* associate name */
+
+      /* LIST_ITEM(lp) : select(var) ?*/
+      if(LIST_NEXT(lp) && LIST_ITEM(LIST_NEXT(lp))) {
+        FOR_ITEMS_IN_LIST(lp, LIST_ITEM(LIST_NEXT(lp)))
+          second_pass_expv_scan(LIST_ITEM(lp));
+      }
+    }
+    break;
   case F_SELECTCASE_STATEMENT:
     {
-      expv v3;
+      expv v3, v4;
       list lp = EXPR_LIST(v);   /* condition & body */
       v3 = EXPR_ARG3(v);        /* ConstructName */
 
@@ -253,6 +267,8 @@ static void second_pass_expv_scan(expv v)
   case F_COMPGOTO_STATEMENT:
   case STATEMENT_LABEL:
     break;
+  case F03_TYPEIS_STATEMENT:
+  case F03_CLASSIS_STATEMENT:
   case F_CASELABEL_STATEMENT:
     {
       expv v1, v2, v3;
@@ -447,6 +463,8 @@ static void second_pass_expv_scan(expv v)
   case F95_PUBLIC_SPEC:
   case F95_PRIVATE_SPEC:
   case F03_PROTECTED_SPEC:
+  case F03_BIND_SPEC:
+  case F03_VALUE_SPEC:
   case F95_IN_EXTENT:
   case F95_OUT_EXTENT:
   case F95_INOUT_EXTENT:

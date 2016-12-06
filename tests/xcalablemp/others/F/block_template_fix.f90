@@ -1,6 +1,10 @@
 program main
   include 'xmp_lib.h'
 !$xmp nodes p(*)
+
+#if defined(__GNUC__) && (4 < __GNUC__ || 4 == __GNUC__ && 7 < __GNUC_MINOR__) \
+ || defined(__INTEL_COMPILER) && (1600 < __INTEL_COMPILER)
+
 !$xmp template t(:)
 !$xmp distribute t(block) onto p
   integer N, s, result
@@ -40,5 +44,11 @@ block
 
 ! deallocate(a)
 end block
+
+#else
+!$xmp task on p(1)
+  print *, 'SKIPPED'
+!$xmp end task
+#endif
 
 end program main

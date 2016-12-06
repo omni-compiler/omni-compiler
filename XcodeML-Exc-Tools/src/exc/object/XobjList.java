@@ -101,6 +101,23 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
         tail = tail.next;
     }
 
+    public void remove(Xobject a)
+    {
+        if(args == null)
+            return;
+        Xobject x = null;
+        for(XobjArgs r = args, p = null; r != null; p = r, r = r.next) {
+            if(r.getArg() != a)
+                continue;
+            if(p == null)
+                args = r.next;
+            else
+                p.next = r.next;
+            if(tail == r)
+                tail = p;
+        }
+    }
+
     /** Gets tail of list */
     @Override
     public Xobject getTail()
