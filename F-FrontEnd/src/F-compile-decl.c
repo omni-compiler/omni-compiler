@@ -5106,5 +5106,6 @@ compile_type_generic_procedure(expr x)
     TBP_BINDING_ATTRS(id) = binding_attr_flags | TYPE_BOUND_PROCEDURE_IS_GENERIC;
     TYPE_ATTR_FLAGS(id) = access_attr_flags;
     ID_TYPE(id) = type_bound_procedure_type();
+    ID_LINE(id) = EXPR_LINE(x);
     TYPE_BOUND_GENERIC_TYPE_GENERICS(ID_TYPE(id)) = TBP_BINDING(id);
 }

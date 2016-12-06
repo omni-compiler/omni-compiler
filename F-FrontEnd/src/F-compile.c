@@ -2896,7 +2896,7 @@ check_type_bound_procedures()
                 }
                 if (TBP_IS_ASSIGNMENT(tbp)) {
                     if (!is_assignment_proc(ftp)) {
-                        error("not assiginment");
+                        error_at_id(tbp, "not assiginment");
                         return;
                     }
                 }
@@ -2909,11 +2909,11 @@ check_type_bound_procedures()
                 ID parent_tbp = find_struct_member_allow_private(tp, ID_SYM(tbp), TRUE);
                 if (ID_CLASS(tbp) != CL_TYPE_BOUND_PROC) {
                     /* never reached */
-                    error("should not override member");
+                    error_at_id(tbp, "should not override member");
                 }
 
                 if (!type_bound_procedure_types_are_compatible(tbp, parent_tbp)) {
-                    error("type mismatch to override %s", SYM_NAME(ID_SYM(tbp)));
+                    error_at_id(tbp, "type mismatch to override %s", SYM_NAME(ID_SYM(tbp)));
                 }
             }
         }
