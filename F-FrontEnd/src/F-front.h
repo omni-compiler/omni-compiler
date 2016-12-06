@@ -702,7 +702,7 @@ extern int              array_spec_size _ANSI_ARGS_((expv shape, expv dimShape,
 extern void             set_index_range_type _ANSI_ARGS_((expv v));
 extern TYPE_DESC        type_ref _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        struct_type  _ANSI_ARGS_((ID id));
-extern TYPE_DESC        function_type _ANSI_ARGS_((const TYPE_DESC tp));
+extern TYPE_DESC        function_type _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        subroutine_type _ANSI_ARGS_((void));
 extern TYPE_DESC        generic_procedure_type _ANSI_ARGS_((void));
 extern TYPE_DESC        generic_function_type _ANSI_ARGS_((void));

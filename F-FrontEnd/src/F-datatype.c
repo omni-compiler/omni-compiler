@@ -41,7 +41,7 @@ type_char(int len)
  * type of the function which returns tp
  */
 TYPE_DESC
-function_type(const TYPE_DESC tp)
+function_type(TYPE_DESC tp)
 {
     TYPE_DESC ftp;
     ftp = new_type_desc();
@@ -81,6 +81,8 @@ function_type(const TYPE_DESC tp)
         if (TYPE_IS_ELEMENTAL(tp)) {
             TYPE_SET_ELEMENTAL(ftp);
         }
+
+        TYPE_UNSET_SAVE(tp);
     }
 
     return ftp;

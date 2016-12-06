@@ -774,7 +774,9 @@ implicit_declaration(ID id)
         assert(tp != NULL);
 
         if (current_proc_state == P_SAVE) {
-            TYPE_SET_SAVE(tp);
+            if (!IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                TYPE_SET_SAVE(tp);
+            }
         }
 #if 0
         /*

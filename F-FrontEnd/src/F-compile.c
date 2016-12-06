@@ -3044,7 +3044,7 @@ end_procedure()
             int sz;
             TYPE_DESC t = ID_TYPE(id);
             if(ID_STORAGE(id) != STG_AUTO || ID_CLASS(id) == CL_PARAM
-                || t == NULL || TYPE_IS_SAVE(t))
+               || t == NULL || TYPE_IS_SAVE(t) || IS_PROCEDURE_TYPE(t))
                 continue;
             sz = get_rough_type_size(ID_TYPE(id));
             if (sz >= (auto_save_attr_kb << 10))
