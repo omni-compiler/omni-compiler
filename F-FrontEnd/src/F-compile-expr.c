@@ -6,7 +6,6 @@
 #include "F-second-pass.h"
 #include <math.h>
 
-static expv compile_args _ANSI_ARGS_((expr args));
 static expv compile_data_args _ANSI_ARGS_((expr args));
 
 static expv compile_implied_do_expression _ANSI_ARGS_((expr x));
@@ -179,7 +178,7 @@ force_to_logical_type(expv v)
 }
 
 
-static int
+int
 are_dimension_and_shape_conformant_by_type(expr x,
                                            TYPE_DESC lt, TYPE_DESC rt,
                                            expv *shapePtr) {
@@ -386,7 +385,7 @@ compile_expression(expr x)
 
     if(EXPR_CODE_SYMBOL(EXPR_CODE(x)) != NULL) {
         if (find_symbol_without_allocate(EXPR_CODE_SYMBOL(EXPR_CODE(x))) != NULL)
-        is_userdefined = TRUE;
+            is_userdefined = TRUE;
     }
 
     switch (EXPR_CODE(x)) {
@@ -441,7 +440,7 @@ compile_expression(expr x)
                 }
             }
 
-	    ID_LINE(id) = EXPR_LINE(x); // set line number
+            ID_LINE(id) = EXPR_LINE(x); // set line number
 
             if (ID_CLASS(id) == CL_PROC ||
                 ID_CLASS(id) == CL_ENTRY ||
@@ -499,7 +498,7 @@ compile_expression(expr x)
 
         case XMP_COARRAY_REF: /* (XMP_COARRAY_REF expr args) */
 
-	  return compile_coarray_ref(x);
+            return compile_coarray_ref(x);
 
         /* implied do expression */
         case F_IMPLIED_DO: {     /* (F_IMPLIED_DO loop_spec do_args) */
@@ -1093,6 +1092,7 @@ compile_ident_expression(expr x)
     ID id;
     SYMBOL sym;
     expv ret = NULL;
+    TYPE_DESC tp;
 
     if (EXPR_CODE(x) != IDENT) {
         goto done;
@@ -1136,8 +1136,15 @@ compile_ident_expression(expr x)
 
 
     if ((id = declare_variable(id)) != NULL) {
-        TYPE_ATTR_FLAGS(ID_TYPE(id)) |= TYPE_ATTR_FLAGS(id);
-        ret = expv_sym_term(F_VAR,ID_TYPE(id),ID_SYM(id));
+        tp = ID_TYPE(id);
+        if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
+            tp = FUNCTION_TYPE_RETURN_TYPE(tp);
+        } else if (ID_CLASS(id) == CL_ENTRY) {
+            tp = FUNCTION_TYPE_RETURN_TYPE(tp);
+        }
+
+        TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
+        ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
         goto done;
     }
 
@@ -1275,6 +1282,11 @@ compile_lhs_expression(x)
             }
             v = NULL;
             tp = ID_TYPE(id);
+
+            if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
+                tp = FUNCTION_TYPE_RETURN_TYPE(tp);
+            }
+
         } else {
             id = NULL;
             v = compile_lhs_expression(x1);
@@ -1322,7 +1334,7 @@ compile_lhs_expression(x)
         /* check if name is on the replace list? */
         if((v = is_statement_function_or_replace(id)) != NULL)
             return v;
-        
+
         if((id = declare_variable(id)) == NULL)
             goto err;
 
@@ -1660,6 +1672,10 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         return compile_highorder_function_call(id, args, FALSE);
     }
 
+    if (id != NULL && ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
+        tp = FUNCTION_TYPE_RETURN_TYPE(tp);
+    }
+
     nDims = TYPE_N_DIM(tp);
 
     if (!IS_ARRAY_TYPE(tp)){ //fatal("%s: not ARRAY_TYPE", __func__);
@@ -1832,7 +1848,12 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         vary = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
         ID_ADDR(id) = vary;
 
-        if (TYPE_N_DIM(ID_TYPE(id)) < n) {
+        tp = ID_TYPE(id);
+        if (id != NULL && ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
+            tp = FUNCTION_TYPE_RETURN_TYPE(tp);
+        }
+
+        if (TYPE_N_DIM(tp) < n) {
             error_at_node(args, "too large dimension, %d.", n);
             return NULL;
         }
@@ -2180,8 +2201,7 @@ compile_highorder_function_call(ID id, expr args, int isCall)
         ID_CLASS(id) = CL_UNKNOWN;
         VAR_IS_USED_AS_FUNCTION(id) = TRUE;
 #endif
-        
-        (void)declare_external_id_for_highorder(id, isCall);
+
         ret = compile_function_call(id, args);
 
 #if 0
@@ -2199,6 +2219,19 @@ compile_highorder_function_call(ID id, expr args, int isCall)
 }
 
 
+static TYPE_DESC
+chose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
+{
+    EXT_ID ep;
+    FOREACH_EXT_ID(ep, mod_procedures) {
+        if (function_type_is_appliable(EXT_PROC_TYPE(ep), args)) {
+            return EXT_PROC_TYPE(ep);
+        }
+    }
+    return NULL;
+}
+
+#if 0
 static TYPE_DESC
 chose_module_procedure_by_args(EXT_ID modProcIDs, expv args) {
     TYPE_DESC ret = NULL;
@@ -2416,15 +2449,17 @@ chose_module_procedure_by_args(EXT_ID modProcIDs, expv args) {
 
     return ret;
 }
+#endif
 
 
 expv
 compile_function_call(ID f_id, expr args) {
-    return compile_function_call0(f_id, args, FALSE);
+    return compile_function_call_check_intrinsic_arg_type(f_id, args, FALSE);
+
 }
 
 expv
-compile_function_call0(ID f_id, expr args, int ignoreTypeMismatch) {
+compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTypeMismatch) {
     expv a, v = NULL;
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
@@ -2435,12 +2470,26 @@ compile_function_call0(ID f_id, expr args, int ignoreTypeMismatch) {
     switch (PROC_CLASS(f_id)) {
         case P_UNDEFINEDPROC:
             /* f_id is not defined yet. */
-            tp = (ID_TYPE(f_id) != NULL) ? ID_TYPE(f_id) : new_type_desc();
+
+            if (ID_TYPE(f_id) != NULL) {
+                if (!IS_PROCEDURE_TYPE(ID_TYPE(f_id))) {
+                    if (TYPE_IS_SAVE(ID_TYPE(f_id))) {
+                        TYPE_UNSET_SAVE(ID_TYPE(f_id));
+                    }
+                    ID_TYPE(f_id) = function_type(ID_TYPE(f_id));
+                    EXPV_TYPE(ID_ADDR(f_id)) = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(f_id));
+                }
+                tp = ID_TYPE(f_id);
+            } else {
+                /* f_id is function, but it's return type is unknown */
+                tp = function_type(new_type_desc());
+            }
+
             TYPE_SET_USED_EXPLICIT(tp);
 /* FEAST add start */
-            if(tp->basic_type == TYPE_UNKNOWN){
-              /* ID_TYPE(f_id) = NULL; */
-              sp_link_id(f_id, 4, current_line);
+            if (TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN){
+                /* ID_TYPE(f_id) = NULL; */
+                sp_link_id(f_id, 4, current_line);
             }
 /* FEAST add  end  */
 
@@ -2460,43 +2509,54 @@ compile_function_call0(ID f_id, expr args, int ignoreTypeMismatch) {
 #endif
             v = list3(FUNCTION_CALL, ID_ADDR(f_id), a,
                       expv_any_term(F_EXTFUNC, f_id));
-	    if (IS_GENERIC_TYPE(tp)) {
+
+            if (IS_GENERIC_TYPE(tp)) {
                 EXPV_TYPE(v) = type_GNUMERIC_ALL;
-	    } else {
-                EXPV_TYPE(v) = tp;
+            } else {
+                EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(tp);
                 /*
                  * EXPV_TYPE(v) should be replaced in finalization phase as:
                  * EXT_PROC_TYPE(PROC_EXT_ID(EXPV_ANY(ID, EXPR_ARG3(v))))
                  */
                 EXPV_NEED_TYPE_FIXUP(v) = TRUE;
-	    }
+            }
 
             break;
 
         case P_THISPROC:
             if (!TYPE_IS_RECURSIVE(ID_TYPE(f_id))) {
                 error("recursive call in not a recursive function");
+            } else if (IS_FUNCTION_TYPE(ID_TYPE(f_id)) &&
+                       FUNCTION_TYPE_RESULT(ID_TYPE(f_id)) == NULL) {
+                error("Use a RESULT variable for recursion");
             }
             /* FALL THROUGH */
         case P_DEFINEDPROC:
         case P_EXTERNAL: {
             EXT_ID modProcs = NULL;
             TYPE_DESC modProcType = NULL;
+
             if (ID_TYPE(f_id) == NULL) {
                 error("attempt to use untyped function,'%s'",
                       ID_NAME(f_id));
                 goto err;
             }
             tp = ID_TYPE(f_id);
+            if (!IS_PROCEDURE_TYPE(tp)) {
+                tp = function_type(tp);
+                ID_TYPE(f_id) = tp;
+                EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
+            }
+
             TYPE_SET_USED_EXPLICIT(tp);
-            if (TYPE_BASIC_TYPE(tp) == TYPE_UNKNOWN) {
-                TYPE_SET_NOT_FIXED(tp);
+            if (FUNCTION_TYPE_RETURN_TYPE(tp) != NULL &&
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN) {
+                TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
             }
             a = compile_args(args);
 
             if (ID_DEFINED_BY(f_id) != NULL) {
                 ep = PROC_EXT_ID(ID_DEFINED_BY(f_id));
-                tp = ID_TYPE(ID_DEFINED_BY(f_id));
             } else {
                 ep = PROC_EXT_ID(f_id);
             }
@@ -2520,8 +2580,10 @@ compile_function_call0(ID f_id, expr args, int ignoreTypeMismatch) {
 
             v = list3(FUNCTION_CALL, ID_ADDR(f_id), a,
                       expv_any_term(F_EXTFUNC, f_id));
-            EXPV_TYPE(v) = IS_SUBR(tp) ?
-                type_SUBR : (IS_GENERIC_TYPE(tp) ? type_GNUMERIC_ALL : tp);
+
+            EXPV_TYPE(v) = IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) ?
+                    type_GNUMERIC_ALL :
+                    FUNCTION_TYPE_RETURN_TYPE(tp);
 
             break;
         }
@@ -2551,7 +2613,6 @@ compile_function_call0(ID f_id, expr args, int ignoreTypeMismatch) {
 err:
     return NULL;
 }
-
 
 static int
 id_link_remove(ID * head, ID tobeRemoved)
@@ -2676,7 +2737,7 @@ compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args, expv type_p
     cur = rest_type_params;
 
     FOR_ITEMS_IN_LIST(lp, type_param_args) {
-        expr arg = LIST_ITEM(lp);
+        expv arg = LIST_ITEM(lp);
 
         if (EXPR_CODE(arg) == F_SET_EXPR) {
             /* A type parameter value has a KEYWORD */
@@ -2896,9 +2957,10 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
         ID_LINK_ADD(match, used, used_last);
         list_put_last(components, v);
     }
+
     // check not initialized type parameters
     FOREACH_ID(ip, members) {
-        if (!VAR_INIT_VALUE(ip)) {
+        if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC && !VAR_INIT_VALUE(ip)) {
             error("member %s is not initialized", ID_NAME(ip));
             return FALSE;
         }
@@ -2947,7 +3009,7 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 }
 
 
-static expv
+expv
 compile_args(expr args)
 {
     list lp;
@@ -3339,6 +3401,54 @@ compile_array_constructor(expr x)
 
 
 expv
+compile_type_bound_procedure_call(expv memberRef, expr args) {
+    expv v;
+    expv a;
+
+    TYPE_DESC ftp;
+    TYPE_DESC stp;
+    TYPE_DESC ret_type = type_GNUMERIC_ALL;
+
+    a = compile_args(args);
+
+    ftp = EXPV_TYPE(memberRef);
+    stp = EXPV_TYPE(EXPR_ARG1(memberRef));
+    if (TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
+        // for type-bound GENERIC
+        ID bind;
+        ID bindto;
+        FOREACH_ID(bind, TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
+            bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
+            if (function_type_is_appliable(ID_TYPE(bindto), a)) {
+                ftp = ID_TYPE(bindto);
+                EXPV_TYPE(memberRef) = ftp;
+            }
+        }
+
+        if (ftp) {
+            ret_type = FUNCTION_TYPE_RETURN_TYPE(ftp);
+        } else {
+            error("There is no appliable type-bound procedure");
+        }
+    } else {
+        // for type-bound PROCEDURE
+        if (ftp != NULL) {
+#if 0
+            if (function_type_is_appliable(ftp, a)) {
+                error("argument type mismatch");
+            }
+#endif
+            ret_type = FUNCTION_TYPE_RETURN_TYPE(ftp);
+        }
+    }
+
+    v = list2(FUNCTION_CALL, memberRef, a);
+    EXPV_TYPE(v) = ret_type;
+    return v;
+}
+
+
+expv
 compile_member_array_ref(expr x, expv v)
 {
     expr indices = EXPR_ARG2(x);
@@ -3365,6 +3475,14 @@ compile_member_array_ref(expr x, expv v)
         return NULL;
     }
 #endif
+
+    if (IS_PROCEDURE_TYPE(EXPV_TYPE(v))) {
+        /*
+         * type bound procedure coall
+         */
+        return compile_type_bound_procedure_call(v, indices);
+    }
+
     if(EXPR_LIST(shape) == NULL) {
         generate_shape_expr(tq, shape);
     }

@@ -1387,6 +1387,7 @@ public class XfDecompileDomVisitor {
             } else {
                 invokeEnter(XmDomUtil.getElement(n, "typeParams"));
                 invokeEnter(XmDomUtil.getElement(n, "symbols"));
+                invokeEnter(XmDomUtil.getElement(n, "typeBoundProcedures"));
             }
         }
     }
@@ -1426,6 +1427,131 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    class TypeBoundProceduresVisitor extends XcodeNodeVisitor {
+        @Override public void enter(Node n) {
+            XmfWriter writer = _context.getWriter();
+            writer.decrementIndentLevel();
+            writer.writeToken("CONTAINS");
+            writer.setupNewLine();
+            writer.incrementIndentLevel();
+            _invokeChildEnter(n);
+        }
+    }
+
+    class TypeBoundProcedureVisitor extends XcodeNodeVisitor {
+        @Override public void enter(Node n) {
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("PROCEDURE");
+
+            String pass = XmDomUtil.getAttr(n, "pass");
+            if (!XfUtilForDom.isNullOrEmpty(pass)) {
+                if (pass.equals("pass")) {
+                    writer.writeToken(",");
+                    writer.writeToken("PASS");
+                    String passArg = XmDomUtil.getAttr(n, "pass_arg_name");
+                    if (!XfUtilForDom.isNullOrEmpty(passArg)) {
+                        writer.writeToken("(");
+                        writer.writeToken(passArg);
+                        writer.writeToken(")");
+                    }
+                } else if (pass.equals("nopass")) {
+                    writer.writeToken(",");
+                    writer.writeToken("NOPASS");
+                }
+            }
+            if (XmDomUtil.getAttrBool(n, "is_non_overridable")) {
+                writer.writeToken(",");
+                writer.writeToken("NON_OVERRIDEABLE");
+            }
+            if (XmDomUtil.getAttrBool(n, "is_deferred")) {
+                writer.writeToken(",");
+                writer.writeToken("DEFERRED");
+            }
+            if (XmDomUtil.getAttrBool(n, "is_public")) {
+                writer.writeToken(",");
+                writer.writeToken("PUBLIC");
+            }
+            if (XmDomUtil.getAttrBool(n, "is_private")) {
+                writer.writeToken(",");
+                writer.writeToken("PRIVATE");
+            }
+            writer.writeToken("::");
+
+            Node nameNode = XmDomUtil.getElement(n, "name");
+            String name = XmDomUtil.getContentText(nameNode);
+            writer.writeToken(name);
+
+            writer.writeToken("=>");
+
+            Node binding = XmDomUtil.getElement(n, "binding");
+            if (binding != null) {
+                ArrayList<Node> nameList = XmDomUtil.collectChildNodes(binding);
+                for (Node bindingNameNode : nameList) {
+                    if (bindingNameNode != nameList.get(0)) {
+                        writer.writeToken(",");
+                    }
+                    writer.writeToken(XmDomUtil.getContentText(bindingNameNode));
+                }
+            }
+
+            writer.setupNewLine();
+        }
+    }
+
+    class TypeBoundGenericProcedureVisitor extends XcodeNodeVisitor {
+        @Override public void enter(Node n) {
+            XmfWriter writer = _context.getWriter();
+
+            writer.writeToken("GENERIC");
+            if (XmDomUtil.getAttrBool(n, "is_public")) {
+                writer.writeToken(",");
+                writer.writeToken("PUBLIC");
+            }
+            if (XmDomUtil.getAttrBool(n, "is_private")) {
+                writer.writeToken(",");
+                writer.writeToken("PRIVATE");
+            }
+            writer.writeToken("::");
+
+            Node nameNode = XmDomUtil.getElement(n, "name");
+            String name = XmDomUtil.getContentText(nameNode);
+            if (XmDomUtil.getAttrBool(n, "is_operator")) {
+                writer.writeToken("OPERATOR");
+                writer.writeToken("(");
+                writer.writeToken(name);
+                writer.writeToken(")");
+            } else if (XmDomUtil.getAttrBool(n, "is_assignment")) {
+                writer.writeToken("ASSIGNMENT");
+                writer.writeToken("(");
+                writer.writeToken("=");
+                writer.writeToken(")");
+            } else {
+                writer.writeToken(name);
+            }
+
+            writer.writeToken("=>");
+
+            Node binding = XmDomUtil.getElement(n, "binding");
+            if (binding == null) {
+                _context.setLastErrorMessage(
+                        XfUtilForDom.formatError(n,
+                                XfError.XCODEML_NODE_MISSING,
+                                n.getNodeName(),
+                                "binding"));
+                fail(n);
+            }
+            ArrayList<Node> nameList = XmDomUtil.collectChildNodes(binding);
+            for (Node bindingNameNode : nameList) {
+                if (bindingNameNode != nameList.get(0)) {
+                    writer.writeToken(",");
+                }
+                writer.writeToken(XmDomUtil.getContentText(bindingNameNode));
+            }
+
+            writer.setupNewLine();
+        }
+    }
 
     // globalSymbols
     class GlobalSymbolsVisitor extends XcodeNodeVisitor {
@@ -2138,9 +2264,9 @@ public class XfDecompileDomVisitor {
 
             if (childNodes.size() < 2) {
                 _context.setLastErrorMessage(
-                    XfUtilForDom.formatError(n,
-                                       XfError.XCODEML_SEMANTICS,
-                                       n.getNodeName()));
+                        XfUtilForDom.formatError(n,
+                                XfError.XCODEML_SEMANTICS,
+                                n.getNodeName()));
                 fail(n);
             }
             String typeName = XmDomUtil.getAttr(n, "type");
@@ -2846,6 +2972,14 @@ public class XfDecompileDomVisitor {
                  */
                 if (XmDomUtil.getAttrBool(functionTypeNode, "is_recursive")) {
                     writer.writeToken("RECURSIVE");
+                    writer.writeToken(" ");
+                }
+                if (XmDomUtil.getAttrBool(functionTypeNode, "is_pure")) {
+                    writer.writeToken("PURE");
+                    writer.writeToken(" ");
+                }
+                if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
+                    writer.writeToken("ELEMENTAL");
                     writer.writeToken(" ");
                 }
                 writer.writeToken("FUNCTION");
@@ -4707,65 +4841,78 @@ public class XfDecompileDomVisitor {
          *      XbfFunctionCall)
          */
         @Override public void enter(Node n) {
+            String functionName = null;
             Node functionNameNode = XmDomUtil.getElement(n, "name");
-            if (functionNameNode == null) {
-                _context.debugPrintLine("Detected a function call without the name element.");
+            Node functionMemberRefNode = XmDomUtil.getElement(n, "FmemberRef");
+            if (functionNameNode == null && functionMemberRefNode == null) {
+                _context.debugPrintLine("Detected a function call with neither the name element nor the memberRef element.");
                 _context.setLastErrorMessage(
-                    XfUtilForDom.formatError(n,
-                                             XfError.XCODEML_SEMANTICS,
-                                             n.getNodeName()));
+                        XfUtilForDom.formatError(n,
+                                XfError.XCODEML_SEMANTICS,
+                                n.getNodeName()));
                 fail(n);
             }
 
-            String functionName = XmDomUtil.getContentText(functionNameNode);
-            if (XfUtilForDom.isNullOrEmpty(functionName)) {
-                _context.debugPrintLine("Function name is empty.");
+            if (functionNameNode != null && functionMemberRefNode != null) {
+                _context.debugPrintLine("Detected a function call with either the name element and the memberRef element.");
                 _context.setLastErrorMessage(
-                    XfUtilForDom.formatError(functionNameNode,
-                                             XfError.XCODEML_SEMANTICS,
-                                             functionNameNode.getNodeName()));
-                fail(functionNameNode);
+                        XfUtilForDom.formatError(n,
+                                XfError.XCODEML_SEMANTICS,
+                                n.getNodeName()));
+                fail(n);
             }
 
-            // Note:
-            // If it is built-in function, it is not on the type table.
-            // Either if the name is defined in module xmpf_coarray_decl, it should
-            // not be declared here.
-            if (XmDomUtil.getAttrBool(n, "is_intrinsic") == false &&
-                !_isNameDefinedWithUseStmt(functionName)) {
-                XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
-                Node typeChoice = typeManager.findType(functionNameNode);
-                if (typeChoice == null) {
+            if (functionNameNode != null) {
+
+                functionName = XmDomUtil.getContentText(functionNameNode);
+                if (XfUtilForDom.isNullOrEmpty(functionName)) {
+                    _context.debugPrintLine("Function name is empty.");
                     _context.setLastErrorMessage(
-                        XfUtilForDom.formatError(n,
-                                                 XfError.XCODEML_TYPE_NOT_FOUND,
-                                                 XmDomUtil.getAttr(functionNameNode, "type")));
-                    fail(n);
-                } else if ("FfunctionType".equals(typeChoice.getNodeName()) == false) {
-                    _context.setLastErrorMessage(
-                        XfUtilForDom.formatError(n,
-                                                 XfError.XCODEML_TYPE_MISMATCH,
-                                                 "function definition",
-                                                 typeChoice.getNodeName(),
-                                                 "FfunctionType"));
-                    fail(n);
+                            XfUtilForDom.formatError(functionNameNode,
+                                    XfError.XCODEML_SEMANTICS,
+                                    functionNameNode.getNodeName()));
+                    fail(functionNameNode);
                 }
 
-                Node functionTypeNode = typeChoice;
-                if (XmDomUtil.getAttrBool(functionTypeNode, "is_program")) {
-                    // =======
-                    // PROGRAM
-                    // =======
-                    _context.setLastErrorMessage(
-                        XfUtilForDom.formatError(n,
-                                                 XfError.XCODEML_TYPE_MISMATCH,
-                                                 "function definition",
-                                                 "PROGRAM",
-                                                 "FUNCTION or SUBROUTINE"));
-                    fail(n);
+                // Note:
+                // If it is built-in function, it is not on the type table.
+                // Either if the name is defined in module xmpf_coarray_decl, it should
+                // not be declared here.
+                if (XmDomUtil.getAttrBool(n, "is_intrinsic") == false &&
+                        !_isNameDefinedWithUseStmt(functionName)) {
+                    XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+                    Node typeChoice = typeManager.findType(functionNameNode);
+                    if (typeChoice == null) {
+                        _context.setLastErrorMessage(
+                                XfUtilForDom.formatError(n,
+                                        XfError.XCODEML_TYPE_NOT_FOUND,
+                                        XmDomUtil.getAttr(functionNameNode, "type")));
+                        fail(n);
+                    } else if ("FfunctionType".equals(typeChoice.getNodeName()) == false) {
+                        _context.setLastErrorMessage(
+                                XfUtilForDom.formatError(n,
+                                        XfError.XCODEML_TYPE_MISMATCH,
+                                        "function definition",
+                                        typeChoice.getNodeName(),
+                                        "FfunctionType"));
+                        fail(n);
+                    }
+
+                    Node functionTypeNode = typeChoice;
+                    if (XmDomUtil.getAttrBool(functionTypeNode, "is_program")) {
+                        // =======
+                        // PROGRAM
+                        // =======
+                        _context.setLastErrorMessage(
+                                XfUtilForDom.formatError(n,
+                                        XfError.XCODEML_TYPE_MISMATCH,
+                                        "function definition",
+                                        "PROGRAM",
+                                        "FUNCTION or SUBROUTINE"));
+                        fail(n);
+                    }
                 }
             }
-
             XmfWriter writer = _context.getWriter();
             String returnTypeName = XmDomUtil.getAttr(n, "type");
             XfType typeId = XfType.getTypeIdFromXcodemlTypeName(returnTypeName);
@@ -4780,7 +4927,11 @@ public class XfDecompileDomVisitor {
                 // ========
             }
 
-            writer.writeToken(functionName);
+            if (functionName != null) {
+                writer.writeToken(functionName);
+            } else {
+                invokeEnter(functionMemberRefNode);
+            }
             writer.writeToken("(");
 
             invokeEnter(XmDomUtil.getElement(n, "arguments"));
@@ -6535,6 +6686,9 @@ public class XfDecompileDomVisitor {
         new Pair("FstructType", new FstructTypeVisitor()),
         new Pair("typeParams", new TypeParamsVisitor()),
         new Pair("typeParam", new TypeParamVisitor()),
+        new Pair("typeBoundProcedures", new TypeBoundProceduresVisitor()),
+        new Pair("typeBoundProcedure", new TypeBoundProcedureVisitor()),
+        new Pair("typeBoundGenericProcedure", new TypeBoundGenericProcedureVisitor()),
         new Pair("globalSymbols", new GlobalSymbolsVisitor()),
         new Pair("globalDeclarations", new GlobalDeclarationsVisitor()),
         new Pair("alloc", new AllocVisitor()),

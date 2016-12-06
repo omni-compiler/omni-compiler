@@ -153,7 +153,6 @@ extern void _XMP_build_sync_images_table();
 extern void _XMP_sync_images_EXEC(int* status);
 extern void _XMP_build_coarray_queue();
 extern void _XMP_coarray_lastly_deallocate();
-extern void _XMP_set_stride(size_t*, const _XMP_array_section_t*, const int, const size_t, const size_t);
 extern size_t _XMP_calc_copy_chunk(const int, const _XMP_array_section_t*);
 extern int _XMP_get_dim_of_allelmts(const int, const _XMP_array_section_t*);
 extern void _XMP_local_put(_XMP_coarray_t *, const void *, const int, const int, const int, const int, 
@@ -520,12 +519,6 @@ extern void _xmp_fjrdma_wait(const int, const int);
 extern void _XMP_fjrdma_coarray_lastly_deallocate();
 extern void _XMP_fjrdma_scalar_shortcut_mput(const int, const uint64_t, const uint64_t, const _XMP_coarray_t*, 
 					     const _XMP_coarray_t*, const size_t);
-extern void _XMP_set_coarray_addresses(const uint64_t, const _XMP_array_section_t*, const int, const size_t, uint64_t*);
-extern void _XMP_set_coarray_addresses_with_chunk(uint64_t*, const uint64_t, const _XMP_array_section_t*,
-						  const int, const size_t, const size_t);
-extern int _XMP_is_the_same_constant_stride(const _XMP_array_section_t *, const _XMP_array_section_t *, 
-					    const int, const int);
-extern size_t _XMP_calc_stride(const _XMP_array_section_t *, const int, const size_t);
 extern void _XMP_add_num_of_puts();
 extern void _XMP_add_num_of_gets();
 extern void _XMP_fjrdma_sync_memory_put();
@@ -696,8 +689,6 @@ extern void _xmp_gasnet_unpack_reply(gasnet_token_t, const int);
 extern void _xmp_gasnet_pack(gasnet_token_t, const char*, const size_t, 
 			     const int, const int, const int, const size_t, const int, const int);
 extern void _xmp_gasnet_unpack_get_reply(gasnet_token_t, char *, size_t, const int, const int);
-extern void _XMP_pack_coarray(char*, const char*, const int, const _XMP_array_section_t*);
-extern void _XMP_unpack_coarray(char*, const int, const char*, const _XMP_array_section_t*, const int);
 extern void _xmp_gasnet_atomic_define_do(gasnet_token_t, const char*, const size_t, gasnet_handlerarg_t, gasnet_handlerarg_t, gasnet_handlerarg_t);
 extern void _xmp_gasnet_atomic_define_reply_do(gasnet_token_t, gasnet_handlerarg_t);
 extern void _xmp_gasnet_atomic_ref_do(gasnet_token_t, const size_t, gasnet_handlerarg_t, gasnet_handlerarg_t,

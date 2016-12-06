@@ -64,6 +64,7 @@ typedef struct type_ext_id {
       (tail) = (te); }
 
 static TYPE_DESC    type_list,type_list_tail;
+static TYPE_DESC    tbp_list,tbp_list_tail;
 static TYPE_EXT_ID  type_module_proc_list, type_module_proc_last;
 static TYPE_EXT_ID  type_ext_id_list, type_ext_id_last;
 static FILE         *print_fp;
@@ -678,9 +679,9 @@ getBasicTypeID(BASIC_DATA_TYPE t)
     case TYPE_GENERIC:      /* fall through */
     case TYPE_LHS:          /* fall through too */
     case TYPE_GNUMERIC_ALL: tid = "FnumericAll"; break;
-    case TYPE_SUBR:         /* fall through */
     case TYPE_MODULE:       tid = "Fvoid"; break;
     case TYPE_NAMELIST:     tid = "Fnamelist"; break;
+    case TYPE_VOID:         tid = "Fvoid"; break;
     default: abort();
     }
     return tid;
@@ -695,7 +696,7 @@ getBasicTypeID(BASIC_DATA_TYPE t)
     (!tp->codims) &&                            \
     ((IS_NUMERIC(tp) ||                         \
       IS_LOGICAL(tp) ||                         \
-      IS_SUBR(tp) ||                            \
+      IS_VOID(tp) ||                            \
       IS_MODULE(tp) ||                          \
       (IS_CHAR(tp) && TYPE_CHAR_LEN(tp) == 1)))))
 /**
@@ -735,14 +736,6 @@ getTypeID(TYPE_DESC tp)
     }
 
     return buf;
-}
-
-static char*
-genFunctionTypeID(EXT_ID ep)
-{
-    char buf[128];
-    sprintf(buf, "F" ADDRX_PRINT_FMT, Addr2Uint(ep));
-    return strdup(buf);
 }
 
 /**
@@ -831,26 +824,28 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
 #define outx_typeAttrOnly_ID(l, id, tag) \
     outx_typeAttrs((l), ((id) ? ID_TYPE(id) : NULL), tag, TOPT_TYPEONLY)
 
+
 static void
-outx_typeAttrOnly_functionType(int l, EXT_ID ep, const char *tag)
+outx_typeAttrOnly_functionType(int l, TYPE_DESC tp, const char *tag)
 {
-    char *tid = genFunctionTypeID(ep);
+    const char *tid = getTypeID(tp);
     outx_printi(l,"<%s type=\"%s\"", tag, tid);
 }
 
 
+#if 0
 static void
 outx_typeAttrOnly_functionTypeWithResultVar(
     int l, EXT_ID ep, const char *tag)
 {
-    outx_typeAttrOnly_functionType(l, ep, tag);
+    outx_typeAttrOnly_functionType_EXT(l, ep, tag);
     if (EXT_PROC_RESULTVAR(ep) != NULL) {
         expv res = EXT_PROC_RESULTVAR(ep);
         outx_print(" result_name=\"%s\"",
                    SYM_NAME(EXPV_NAME(res)));
     }
 }
-
+#endif
 
 static void
 outx_lineno(lineno_info *li)
@@ -1005,9 +1000,20 @@ outx_tagText(int l, const char *tag, const char *s)
  * output a symbol with function type (not a return type)
  */
 static void
-outx_symbolNameWithFunctionType(int l, EXT_ID ep)
+outx_symbolNameWithFunctionType(int l, expv v)
 {
-    outx_typeAttrOnly_functionType(l, ep, "name");
+    outx_typeAttrOnly_functionType(l, EXPV_TYPE(v), "name");
+    outx_print(">%s</name>\n", SYM_NAME(EXPR_SYM(v)));
+}
+
+
+/**
+ * output a symbol with function type (not a return type)
+ */
+static void
+outx_symbolNameWithFunctionType_EXT(int l, EXT_ID ep)
+{
+    outx_typeAttrOnly_functionType(l, EXT_PROC_TYPE(ep), "name");
     outx_print(">%s</name>\n", SYM_NAME(EXT_SYM(ep)));
 }
 
@@ -1023,6 +1029,7 @@ outx_symbolNameWithType_ID(int l, ID id)
 }
 
 
+#if 0
 /**
  * output an expr as name with type
  */
@@ -1031,12 +1038,13 @@ outx_expvNameWithType(int l, expv v)
 {
     if(EXPV_PROC_EXT_ID(v)) {
         // for high order function
-        outx_typeAttrOnly_functionType(l, EXPV_PROC_EXT_ID(v), "name");
+        outx_typeAttrOnly_functionType(l, EXPV_TYPE(v), "name");
     } else {
         outx_typeAttrs(l, EXPV_TYPE(v), "name", TOPT_TYPEONLY);
     }
     outx_print(">%s</name>\n", SYM_NAME(EXPV_NAME(v)));
 }
+#endif
 
 
 /**
@@ -1143,7 +1151,7 @@ outx_ext_id(int l, EXT_ID ep)
         IS_MODULE(EXT_PROC_TYPE(ep)))
         outx_printi(l, "<id");
     else
-        outx_typeAttrOnly_functionType(l, ep, "id");
+        outx_typeAttrOnly_functionType(l, EXT_PROC_TYPE(ep), "id");
     outx_print(" sclass=\"%s\">\n",sclass);
     outx_symbolName(l + 1, EXT_SYM(ep));
     outx_printi(l,"</id>\n");
@@ -1208,12 +1216,14 @@ get_sclass(ID id)
 static void
 outx_id(int l, ID id)
 {
-    if(ID_STORAGE(id) == STG_EXT && PROC_EXT_ID(id) == NULL) {
+    if(ID_STORAGE(id) == STG_EXT && !IS_PROCEDURE_TYPE(ID_TYPE(id)) &&  PROC_EXT_ID(id) == NULL) {
         fatal("outx_id: PROC_EXT_ID is NULL: symbol=%s", ID_NAME(id));
     }
 
-    if(ID_CLASS(id) == CL_PROC && PROC_EXT_ID(id)) {
-        outx_typeAttrOnly_functionType(l, PROC_EXT_ID(id), "id");
+    if (ID_CLASS(id) == CL_PROC && IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+        outx_typeAttrOnly_functionType(l, ID_TYPE(id), "id");
+    } else if(ID_CLASS(id) == CL_PROC && PROC_EXT_ID(id)) {
+        outx_typeAttrOnly_functionType(l, EXT_PROC_TYPE(PROC_EXT_ID(id)), "id");
     } else {
         outx_typeAttrOnly_ID(l, id, "id");
     }
@@ -1221,8 +1231,8 @@ outx_id(int l, ID id)
     const char *sclass = get_sclass(id);
     outx_print(" sclass=\"%s\"", sclass);
     if(ID_IS_OFMODULE(id))
-	outx_print(" declared_in=\"%s\"",
-		   ID_USEASSOC_INFO(id)->module_name->s_name);
+        outx_print(" declared_in=\"%s\"",
+                   ID_USEASSOC_INFO(id)->module_name->s_name);
     outx_print(">\n");
     outx_symbolName(l + 1, ID_SYM(id));
     outx_close(l, "id");
@@ -1562,15 +1572,39 @@ outx_varDecl(int l, ID id)
 
     outx_tagOfDecl(l, "varDecl", id);
 
-    if(PROC_EXT_ID(id)) {
-        /* high order func */
-        outx_symbolNameWithFunctionType(l1, PROC_EXT_ID(id));
-    } else {
-        outx_symbolNameWithType_ID(l1, id);
-        outx_value(l1, VAR_INIT_VALUE(id));
-    }
+    outx_symbolNameWithType_ID(l1, id);
+    outx_value(l1, VAR_INIT_VALUE(id));
 
     outx_close(l, "varDecl");
+}
+
+
+static void
+outx_type_bound_procedure_call0(int l, expv v)
+{
+    const int l1 = l + 1, l2 = l1 + 1;
+    list lp;
+    expv arg, v2;
+
+    assert (EXPV_CODE(EXPR_ARG1(v)) == F95_MEMBER_REF);
+
+    outx_tagOfExpression1(l, v, 0);
+    outx_expv(l1, EXPR_ARG1(v));
+
+    assert(EXPR_HAS_ARG2(v)); /* make sure ARG2 exists */
+    v2 = EXPR_ARG2(v);
+    if(EXPR_LIST(v2)) {
+        outx_tag(l1, "arguments");
+        FOR_ITEMS_IN_LIST(lp, v2) {
+            arg = LIST_ITEM(lp);
+            if(EXPV_KWOPT_NAME(arg))
+                outx_namedValue(l2, EXPV_KWOPT_NAME(arg), arg, NULL);
+            else
+                outx_expv(l2, arg);
+        }
+        outx_close(l1, "arguments");
+    }
+    outx_expvClose(l, v);
 }
 
 
@@ -1582,22 +1616,29 @@ outx_functionCall0(int l, expv v)
     expv arg, v2;
     int opt = 0;
     TYPE_DESC tp;
-    int isIntrinsic = (SYM_TYPE(EXPV_NAME(EXPR_ARG1(v))) == S_INTR);
+    int isIntrinsic;
 
-    if (isIntrinsic && (tp = EXPV_TYPE(EXPR_ARG1(v)))){
-      isIntrinsic = !TYPE_IS_EXTERNAL(tp);
+    if (EXPV_CODE(EXPR_ARG1(v)) == F95_MEMBER_REF) {
+        outx_type_bound_procedure_call0(l, v);
+        return;
     }
 
-    if (isIntrinsic)
+    isIntrinsic = (SYM_TYPE(EXPV_NAME(EXPR_ARG1(v))) == S_INTR);
+
+    if (isIntrinsic && (tp = EXPV_TYPE(EXPR_ARG1(v)))){
+        isIntrinsic = !TYPE_IS_EXTERNAL(tp);
+    }
+
+    if (isIntrinsic) {
         opt |= TOPT_INTRINSIC;
+    }
     outx_tagOfExpression1(l, v, opt);
 
     if (isIntrinsic)
         outx_expvName(l1, EXPR_ARG1(v));
     else {
-        assert(EXPR_ARG3(v));
-        outx_symbolNameWithFunctionType(
-            l1, PROC_EXT_ID(EXPV_ANY(ID, EXPR_ARG3(v))));
+        assert(EXPR_ARG1(v));
+        outx_symbolNameWithFunctionType(l1, EXPR_ARG1(v));
     }
 
     assert(LIST_NEXT(EXPV_LIST(v))); /* make sure ARG2 exists */
@@ -1629,7 +1670,7 @@ outx_subroutineCall(int l, expv v)
 static void
 outx_functionCall(int l, expv v)
 {
-    if(IS_SUBR(EXPV_TYPE(v)) || IS_SUBR(TYPE_REF(EXPV_TYPE(v))))
+    if(IS_VOID(EXPV_TYPE(v)) || IS_VOID(TYPE_REF(EXPV_TYPE(v))))
         outx_subroutineCall(l, v);
     else
         outx_functionCall0(l, v);
@@ -2159,7 +2200,7 @@ outx_entryDecl(int l, expv v) {
     }
 
     outx_tagOfStatement(l, v);
-    outx_symbolNameWithFunctionType(l + 1, ep);
+    outx_symbolNameWithFunctionType_EXT(l + 1, ep);
     outx_expvClose(l, v);
 }
 
@@ -3347,8 +3388,7 @@ outx_lenspec(int l, expv v)
     outx_close(l, "len");
 }
 
-//static void
-void
+static void
 outx_expv(int l, expv v)
 {
     enum expr_code code;
@@ -3701,11 +3741,27 @@ outx_expv(int l, expv v)
 static void mark_type_desc_in_structure(TYPE_DESC tp);
 //static void check_type_desc(TYPE_DESC tp);
 
+static void mark_type_desc(TYPE_DESC tp);
+
 static void
-mark_type_desc(TYPE_DESC tp)
+mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
 {
-    if (tp == NULL || TYPE_IS_REFERENCED(tp) || IS_MODULE(tp))
+    if (skip_tbp &&  IS_PROCEDURE_TYPE(tp) &&
+        FUNCTION_TYPE_IS_TYPE_BOUND(tp)) {
+        /* type-bound procedure with a PASS argument ALWAY causes a circulation reference,
+         * so store them to a tbp list and check them later.
+         */
+        TYPE_LINK_ADD(tp, tbp_list, tbp_list_tail);
         return;
+    }
+
+    if (tp == NULL || TYPE_IS_REFERENCED(tp) == TRUE || IS_MODULE(tp))
+        return;
+
+    if (TYPE_BOUND_GENERIC_TYPE_GENERICS(tp) != NULL) {
+        /* the type for type-bound generic, skip it */
+        return;
+    }
 
     if (TYPE_REF(tp) != NULL) {
         TYPE_DESC sTp = NULL;
@@ -3725,12 +3781,26 @@ mark_type_desc(TYPE_DESC tp)
     collect_type_desc(TYPE_DIM_STEP(tp));
 
     TYPE_LINK_ADD(tp, type_list, type_list_tail);
-    TYPE_IS_REFERENCED(tp) = 1;
+    TYPE_IS_REFERENCED(tp) = TRUE;
 
-    if (IS_STRUCT_TYPE(tp))
+    if (IS_PROCEDURE_TYPE(tp)) {
+        ID ip;
+        mark_type_desc(TYPE_REF(tp));
+        mark_type_desc(FUNCTION_TYPE_RETURN_TYPE(tp));
+        FOREACH_ID(ip, FUNCTION_TYPE_ARGS(tp)) {
+            mark_type_desc(ID_TYPE(ip));
+        }
+    }
+
+    if (IS_STRUCT_TYPE(tp)) {
         mark_type_desc_in_structure(tp);
+    }
 }
 
+static void
+mark_type_desc(TYPE_DESC tp) {
+    mark_type_desc_skip_tbp(tp, TRUE);
+}
 
 /* static void */
 /* check_type_desc(TYPE_DESC tp) */
@@ -3786,11 +3856,12 @@ mark_type_desc_in_structure(TYPE_DESC tp)
         siTp = reduce_type(itp);
         mark_type_desc(siTp);
         ID_TYPE(id) = siTp;
-        if (IS_STRUCT_TYPE(itp))
-            mark_type_desc_in_structure(itp);
-        if (VAR_INIT_VALUE(id) != NULL)
+        if (!IS_PROCEDURE_TYPE(ID_TYPE(id)) &&  VAR_INIT_VALUE(id) != NULL) {
             collect_type_desc(VAR_INIT_VALUE(id));
-
+        }
+        if (IS_STRUCT_TYPE(ID_TYPE(id))) {
+            mark_type_desc_in_structure(ID_TYPE(id));
+        }
     }
 }
 
@@ -3847,17 +3918,23 @@ mark_type_desc_in_id_list(ID ids)
                  PROC_CLASS(id) == P_EXTERNAL ||
                  PROC_CLASS(id) == P_DEFINEDPROC)) {
                 /* symbol declared as intrinsic */
-                add_type_ext_id(PROC_EXT_ID(id));
                 sTp = reduce_type(EXT_PROC_TYPE(PROC_EXT_ID(id)));
                 mark_type_desc(sTp);
                 EXT_PROC_TYPE(PROC_EXT_ID(id)) = sTp;
+#if 0
+                if (sTp == NULL) {
+                    add_type_ext_id(PROC_EXT_ID(id));
+                }
+
                 /*
                  * types of argmument below may be verbose(not used).
                  * But to pass consistency check in backend, we choose to
                  * output these types.
                  */
                 collect_type_desc(EXT_PROC_ARGS(PROC_EXT_ID(id)));
+#endif
             }
+#if 0
             // TODO
             if (id->use_assoc != NULL) {
                 TYPE_EXT_ID te =
@@ -3867,6 +3944,7 @@ mark_type_desc_in_id_list(ID ids)
                 FUNC_EXT_LINK_ADD(te, type_module_proc_list,
                                   type_module_proc_last);
             }
+#endif
             break;
         default:
             break;
@@ -3881,20 +3959,10 @@ static void
 unmark_type_table()
 {
     TYPE_DESC tp;
-    TYPE_EXT_ID te;
     for (tp = type_list; tp != NULL; tp = TYPE_LINK(tp)){
-        if (tp == NULL || TYPE_IS_REFERENCED(tp) != 1 || IS_MODULE(tp))
+        if (tp == NULL || TYPE_IS_REFERENCED(tp) == FALSE || IS_MODULE(tp))
             continue;
-        TYPE_IS_REFERENCED(tp) = 0;
-    }
-
-    FOREACH_TYPE_EXT_ID(te, type_module_proc_list) {
-        if(te->ep != NULL)
-            EXT_PROC_IS_OUTPUT(te->ep) = FALSE;
-    }
-
-    FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
-        EXT_PROC_IS_OUTPUT(te->ep) = FALSE;
+        TYPE_IS_REFERENCED(tp) = FALSE;
     }
 }
 
@@ -3940,7 +4008,7 @@ outx_coShape(int l, TYPE_DESC tp)
     }
 
     outx_indexRange0(l+1, ASSUMED_NONE, defaultAssumeKind,
-		     EXPR_ARG1(cobound), upper, EXPR_ARG3(cobound));
+                     EXPR_ARG1(cobound), upper, EXPR_ARG3(cobound));
   }
 
   outx_close(l, "coShape");
@@ -4085,78 +4153,6 @@ outx_arrayType(int l, TYPE_DESC tp)
 
 
 /**
- * output functionType of external symbol
- */
-static void
-outx_functionType_EXT(int l, EXT_ID ep)
-{
-    list lp;
-    TYPE_DESC tp;
-    const int l1 = l + 1, l2 = l1 + 1;
-    const char *rtid;
-
-    if(EXT_PROC_IS_OUTPUT(ep))
-        return;
-
-    EXT_PROC_IS_OUTPUT(ep) = TRUE;
-
-    tp = EXT_PROC_TYPE(ep);
-    outx_typeAttrOnly_functionTypeWithResultVar(l, ep, "FfunctionType");
-
-    if(tp) {
-        if(IS_SUBR(tp))
-            rtid = "Fvoid";
-        else if(IS_FUNCTION_TYPE(tp))
-            rtid = getTypeID(TYPE_REF(tp));
-        else
-            rtid = getTypeID(tp);
-    } else {
-        rtid = "Fvoid";
-    }
-
-    outx_print(" return_type=\"%s\"", rtid);
-    outx_true(EXT_PROC_IS_PROGRAM(ep), "is_program");
-    outx_true(EXT_PROC_IS_INTRINSIC(ep), "is_intrinsic");
-
-    if (tp) {
-        outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
-        outx_true(TYPE_IS_PURE(tp), "is_pure");
-        outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
-
-	if (!TYPE_IS_INTRINSIC(tp) &&
-	    (TYPE_IS_EXTERNAL(tp) ||
-	    (XMP_flag && !TYPE_IS_FOR_FUNC_SELF(tp) &&
-	     !EXT_PROC_IS_INTRINSIC(ep) && !EXT_PROC_IS_MODULE_PROCEDURE(ep) && !EXT_PROC_IS_INTERNAL(ep)))){
-	  outx_true(TRUE, "is_external");
-	}
-
-        outx_true(TYPE_IS_PUBLIC(tp), "is_public");
-        outx_true(TYPE_IS_PRIVATE(tp), "is_private");
-        outx_true(TYPE_IS_PROTECTED(tp), "is_protected");
-
-        if(TYPE_HAS_BIND(tp)){
-            outx_print(" bind=\"%s\"", "C"); 
-            if(TYPE_BIND_NAME(tp)){
-                outx_print(" bind_name=\"%s\"", EXPR_STR(TYPE_BIND_NAME(tp)));
-            }
-        }
-
-    }
-
-    if(EXT_PROC_ARGS(ep) == NULL) {
-        outx_print("/>\n");
-    } else {
-        outx_print(">\n");
-        outx_tag(l1, "params");
-        FOR_ITEMS_IN_LIST(lp, EXT_PROC_ARGS(ep))
-            outx_expvNameWithType(l2, EXPR_ARG1(LIST_ITEM(lp)));
-        outx_close(l1, "params");
-        outx_close(l, "FfunctionType");
-    }
-}
-
-
-/**
  * output the type of CLASS(*)
  */
 static void
@@ -4165,6 +4161,95 @@ outx_unlimitedClass(int l, TYPE_DESC tp)
     outx_typeAttrs(l, tp ,"FbasicType", TOPT_CLOSE);
 }
 
+
+/**
+ * output functionType of type bound procedure
+ */
+static void
+outx_functionType_typeBoundProcedure(int l, TYPE_DESC tp)
+{
+    outx_typeAttrs(l, tp, "FbasicType", 0);
+    outx_print(" ref=\"%s\"/>\n", getTypeID(TYPE_REF(tp)));
+}
+
+
+/**
+ * output functionType of type bound procedure
+ */
+static void
+outx_functionType(int l, TYPE_DESC tp)
+{
+    if (TYPE_REF(tp) != NULL) {
+        /* type-bound procedure */
+        outx_functionType_typeBoundProcedure(l, tp);
+
+    } else {
+        const int l1 = l + 1, l2 = l1 + 1;
+        const char *rtid = NULL;
+
+        const char *tid = getTypeID(tp);
+
+        outx_printi(l,"<FfunctionType type=\"%s\"", tid);
+
+        if (FUNCTION_TYPE_RESULT(tp)) {
+            outx_print(" result_name=\"%s\"",
+                       SYM_NAME(FUNCTION_TYPE_RESULT(tp)));
+        }
+
+        /* outx_typeAttrOnly_functionTypeWithResultVar(l, ep, "FfunctionType"); */
+
+        if (FUNCTION_TYPE_RETURN_TYPE(tp)) {
+            rtid = getTypeID(FUNCTION_TYPE_RETURN_TYPE(tp));
+        } else {
+            rtid = "Fvoid";
+        }
+
+        outx_print(" return_type=\"%s\"", rtid);
+        outx_true(FUNCTION_TYPE_IS_PROGRAM(tp), "is_program");
+
+        if (FUNCTION_TYPE_IS_VISIBLE_INTRINSIC(tp))
+            outx_true(TYPE_IS_INTRINSIC(tp), "is_intrinsic");
+
+        outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
+        outx_true(TYPE_IS_PURE(tp), "is_pure");
+        outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
+
+        if (!TYPE_IS_INTRINSIC(tp) &&
+            (TYPE_IS_EXTERNAL(tp) ||
+             (XMP_flag &&
+              !TYPE_IS_FOR_FUNC_SELF(tp) &&
+              !FUNCTION_TYPE_IS_INTERNAL(tp) &&
+              !FUNCTION_TYPE_IS_MOUDLE_PROCEDURE(tp)))) {
+            outx_true(TRUE, "is_external");
+        }
+
+        outx_true(TYPE_IS_PUBLIC(tp), "is_public");
+        outx_true(TYPE_IS_PRIVATE(tp), "is_private");
+        outx_true(TYPE_IS_PROTECTED(tp), "is_protected");
+
+        if(TYPE_HAS_BIND(tp)){
+            outx_print(" bind=\"%s\"", "C");
+            if(TYPE_BIND_NAME(tp)){
+                outx_print(" bind_name=\"%s\"", EXPR_STR(TYPE_BIND_NAME(tp)));
+            }
+        }
+
+        if (FUNCTION_TYPE_HAS_EXPLICIT_ARGS(tp)) {
+            ID ip;
+            outx_print(">\n");
+            outx_tag(l1, "params");
+            FOREACH_ID(ip, FUNCTION_TYPE_ARGS(tp)) {
+                outx_symbolNameWithType_ID(l2, ip);
+            }
+            outx_close(l1, "params");
+            outx_close(l, "FfunctionType");
+        } else {
+            outx_print("/>\n");
+        }
+    }
+}
+
+
 /**
  * output FstructType
  */
@@ -4172,7 +4257,8 @@ static void
 outx_structType(int l, TYPE_DESC tp)
 {
     ID id;
-    int l1 = l + 1, l2 = l1 + 1, l3 = l2 + 1;
+    int l1 = l + 1, l2 = l1 + 1, l3 = l2 + 1, l4 = l3 + 1;
+    int has_type_bound_procedure = FALSE;
 
     outx_typeAttrs(l, tp ,"FstructType", TOPT_NEXTLINE);
     if (TYPE_TYPE_PARAMS(tp)) {
@@ -4200,6 +4286,10 @@ outx_structType(int l, TYPE_DESC tp)
 
     outx_tag(l1, "symbols");
     FOREACH_MEMBER(id, tp) {
+        if (ID_CLASS(id) == CL_TYPE_BOUND_PROC) {
+            has_type_bound_procedure = TRUE;
+            continue;
+        }
         outx_printi(l2, "<id type=\"%s\">\n", getTypeID(ID_TYPE(id)));
         outx_symbolName(l3, ID_SYM(id));
         if (VAR_INIT_VALUE(id) != NULL) {
@@ -4207,8 +4297,65 @@ outx_structType(int l, TYPE_DESC tp)
         }
         outx_close(l2, "id");
     }
-
     outx_close(l1,"symbols");
+
+    if (has_type_bound_procedure) {
+        outx_tag(l1, "typeBoundProcedures");
+        FOREACH_MEMBER(id, tp) {
+            if (ID_CLASS(id) != CL_TYPE_BOUND_PROC) {
+                continue;
+            }
+            if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
+                ID binding;
+                outx_printi(l2, "<typeBoundGenericProcedure");
+                if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_OPERATOR) {
+                    outx_true(TRUE, "is_operator");
+                }
+                if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT) {
+                    outx_true(TRUE, "is_assignment");
+                }
+                outx_printi(0,">\n");
+                outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
+                outx_tag(l3, "binding");
+                FOREACH_ID(binding, TBP_BINDING(id)) {
+                    outx_tagText(l4, "name", SYM_NAME(ID_SYM(binding)));
+                }
+                outx_close(l3, "binding");
+                outx_close(l2, "typeBoundGenericProcedure");
+            } else {
+
+                outx_printi(l2, "<typeBoundProcedure");
+                outx_printi(0, " type=\"%s\"", getTypeID(ID_TYPE(id)));
+
+                if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_PASS)
+                    outx_printi(0, " pass=\"pass\"");
+                if (TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_NOPASS)
+                    outx_printi(0, " pass=\"nopass\"");
+                if (TBP_PASS_ARG(id))
+                    outx_printi(0, " pass_arg_name=\"%s\"",
+                                SYM_NAME(ID_SYM(TBP_PASS_ARG(id))));
+
+                outx_true(TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_DEFERRED,
+                          "is_deferred");
+                outx_true(TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE,
+                          "is_non_overridable");
+                outx_true(TYPE_IS_PUBLIC(id), "is_public");
+                outx_true(TYPE_IS_PRIVATE(id), "is_private");
+                outx_true(TYPE_IS_PROTECTED(id), "is_protected");
+
+                outx_printi(0,">\n");
+
+                outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
+                outx_tag(l3, "binding");
+                outx_tagText(l4, "name", SYM_NAME(ID_SYM(TBP_BINDING(id))));
+                outx_close(l3, "binding");
+
+                outx_close(l2, "typeBoundProcedure");
+            }
+        }
+        outx_close(l1, "typeBoundProcedures");
+    }
+
     outx_close(l,"FstructType");
 }
 
@@ -4221,7 +4368,7 @@ outx_type(int l, TYPE_DESC tp)
 {
     TYPE_DESC tRef = TYPE_REF(tp);
 
-    if (IS_SUBR(tp)) {
+    if (IS_VOID(tp)) {
         /* output nothing */
     } else if(IS_CHAR(tp)) {
         if(checkBasic(tp) == FALSE || checkBasic(tRef) == FALSE)
@@ -4234,6 +4381,8 @@ outx_type(int l, TYPE_DESC tp)
         } else {
             outx_structType(l, tp);
         }
+    } else if(IS_PROCEDURE_TYPE(tp)) {
+        outx_functionType(l, tp);
     } else if (tRef != NULL) {
         if (has_attribute_except_func_attrs(tp) ||
             TYPE_KIND(tRef) ||
@@ -4454,19 +4603,19 @@ genSortedIDs(ID ids, int *retnIDs)
 #define IS_NO_PROC_OR_DECLARED_PROC(id) \
     ((ID_CLASS(id) != CL_PROC || \
       PROC_CLASS(id) == P_EXTERNAL || \
-      (ID_TYPE(id) && TYPE_IS_EXTERNAL(ID_TYPE(id))) ||	\
-      (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id))) ||	\
+      (ID_TYPE(id) && TYPE_IS_EXTERNAL(ID_TYPE(id))) || \
+      (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id))) || \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \
-      PROC_CLASS(id) == P_DEFINEDPROC) \
-  && (PROC_EXT_ID(id) == NULL ||	     \
+      PROC_CLASS(id) == P_DEFINEDPROC)     \
+  && (PROC_EXT_ID(id) == NULL ||           \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \
       PROC_CLASS(id) == P_DEFINEDPROC || ( \
       EXT_PROC_IS_INTERFACE(PROC_EXT_ID(id)) == FALSE && \
       EXT_PROC_IS_INTERFACE_DEF(PROC_EXT_ID(id)) == FALSE)) \
   && (ID_TYPE(id) \
-      && IS_MODULE(ID_TYPE(id)) == FALSE	    \
+      && IS_MODULE(ID_TYPE(id)) == FALSE   \
       && (IS_SUBR(ID_TYPE(id)) == FALSE || \
-	  has_attribute_except_private_public(ID_TYPE(id)))))
+      has_attribute_except_private_public(ID_TYPE(id)))))
 
 
 static int
@@ -4788,8 +4937,8 @@ outx_moduleProcedureDecl(int l, EXT_ID parent_ep, SYMBOL parentName)
 
                     FOREACH_IN_HASH(hPtr, &sCtx, tPtr) {
                         mp = (mod_proc_t)GetHashValue(hPtr);
-                        outx_symbolNameWithFunctionType(l1,
-                                                        MOD_PROC_EXT_ID(mp));
+                        outx_symbolNameWithFunctionType_EXT(l1,
+                                                            MOD_PROC_EXT_ID(mp));
                     }
                 } else {
                     fatal("invalid generic procedure structure.");
@@ -4822,7 +4971,7 @@ outx_functionDecl(int l, EXT_ID ep)
     const int l1 = l + 1;
     CRT_FUNCEP_PUSH(ep);
     outx_tagOfDecl1(l, "FfunctionDecl", GET_EXT_LINE(ep));
-    outx_symbolNameWithFunctionType(l1, ep);
+    outx_symbolNameWithFunctionType_EXT(l1, ep);
     outx_declarations(l1, ep);
     outx_close(l, "FfunctionDecl");
     CRT_FUNCEP_POP;
@@ -4906,6 +5055,7 @@ outx_interfaceDecl(int l, EXT_ID ep)
     outx_innerDefinitions(l + 1, extids, EXT_SYM(ep), FALSE);
     outx_close(l, "FinterfaceDecl");
 #endif
+
     CRT_FUNCEP_PUSH(NULL);
     outx_printi(l, "<FinterfaceDecl");
 
@@ -4946,7 +5096,7 @@ outx_functionDefinition(int l, EXT_ID ep)
     CRT_FUNCEP_PUSH(ep);
 
     outx_tagOfDecl1(l, "FfunctionDefinition", GET_EXT_LINE(ep));
-    outx_symbolNameWithFunctionType(l1, ep);
+    outx_symbolNameWithFunctionType_EXT(l1, ep);
     outx_definition_symbols(l1, ep);
     outx_declarations(l1, ep);
     outx_tag(l1, "body");
@@ -5116,7 +5266,11 @@ static void
 collect_types(EXT_ID extid)
 {
     TYPE_EXT_ID te;
+    TYPE_DESC tp, tq;
     TYPE_DESC sTp;
+
+    tbp_list = NULL;
+
     collect_types1(extid);
     FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
         TYPE_DESC tp = EXT_PROC_TYPE(te->ep);
@@ -5126,6 +5280,16 @@ collect_types(EXT_ID extid)
             EXT_PROC_TYPE(te->ep) = sTp;
         }
     }
+
+    /*
+     * now mark type-bound procedures
+     */
+    for (tp = tbp_list; tp != NULL; tp = tq){
+        tq = TYPE_LINK(tp);
+        TYPE_LINK(tp) = NULL;
+        mark_type_desc_skip_tbp(tp, FALSE);
+    }
+
 }
 
 
@@ -5137,22 +5301,11 @@ outx_typeTable(int l)
 {
     const int l1 = l + 1;
     TYPE_DESC tp;
-    TYPE_EXT_ID te;
 
     outx_tag(l, "typeTable");
 
     for (tp = type_list; tp != NULL; tp = TYPE_LINK(tp)){
         outx_type(l1, tp);
-    }
-
-    FOREACH_TYPE_EXT_ID(te, type_module_proc_list) {
-        if(te->ep != NULL)
-            outx_functionType_EXT(l1, te->ep);
-    }
-
-    FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
-        assert(EXT_TAG(te->ep) == STG_EXT);
-        outx_functionType_EXT(l1, te->ep);
     }
 
     outx_close(l, "typeTable");
@@ -5269,7 +5422,7 @@ outx_id_mod(int l, ID id)
 
     if ((ID_CLASS(id) == CL_PROC || ID_CLASS(id) == CL_ENTRY) &&
         PROC_EXT_ID(id)) {
-        outx_typeAttrOnly_functionType(l, PROC_EXT_ID(id), "id");
+        outx_typeAttrOnly_functionType(l, ID_TYPE(id), "id");
     } else {
         outx_typeAttrOnly_ID(l, id, "id");
     }
@@ -5455,11 +5608,13 @@ unmark_ids(EXT_ID ep)
 void
 output_module_file(struct module * mod)
 {
-  char filename[255] = {0};
+    char filename[255] = {0};
     ID id;
     EXT_ID ep;
     TYPE_EXT_ID te;
     TYPE_DESC sTp;
+    TYPE_DESC tp;
+    TYPE_DESC tq;
     int oEmitMode;
     expr modTypeList;
     list lp;
@@ -5472,7 +5627,7 @@ output_module_file(struct module * mod)
         char tmp[255];
         if (modincludeDirv) snprintf(filename, sizeof(filename), "%s/", modincludeDirv);
         snprintf(tmp, sizeof(tmp), "%s.xmod", SYM_NAME(mod->name));
-	strncat(filename, tmp, sizeof(filename) - strlen(filename) - 1);
+        strncat(filename, tmp, sizeof(filename) - strlen(filename) - 1);
         if ((print_fp = fopen(filename, "w")) == NULL) {
             fatal("could'nt open module file to write.");
             return;
@@ -5489,6 +5644,8 @@ output_module_file(struct module * mod)
     type_ext_id_list = NULL;
     type_ext_id_last = NULL;
 
+    tbp_list = NULL;
+
     /*
      * collect types used in this module
      */
@@ -5496,7 +5653,7 @@ output_module_file(struct module * mod)
     mark_type_desc_in_id_list(mod->head);
     FOREACH_ID(id, mod->head) {
         ep = PROC_EXT_ID(id);
-	// if id is external,  ...
+        // if id is external,  ...
         if (ep != NULL) { 
             collect_types1(ep);
             FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
@@ -5522,6 +5679,15 @@ output_module_file(struct module * mod)
                 EXT_PROC_TYPE(ep) = sTp;
             }
         }
+    }
+
+    /*
+     * now mark type-bound procedures
+     */
+    for (tp = tbp_list; tp != NULL; tp = tq){
+        tq = TYPE_LINK(tp);
+        TYPE_LINK(tp) = NULL;
+        mark_type_desc_skip_tbp(tp, FALSE);
     }
 
     outx_module(mod);
@@ -5550,7 +5716,9 @@ fixup_function_call(expv v) {
             TYPE_DESC tp = (eid != NULL) ? EXT_PROC_TYPE(eid) : NULL;
             if (tp != NULL) {
                 if (EXPV_NEED_TYPE_FIXUP(v) == TRUE) {
-                    EXPV_TYPE(v) = tp;
+                    ID_TYPE(fid) = tp;
+                    EXPV_TYPE(EXPR_ARG1(v)) = tp;
+                    EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(tp);
                 }
             } else {
                 if (!ID_IS_DUMMY_ARG(fid)) {

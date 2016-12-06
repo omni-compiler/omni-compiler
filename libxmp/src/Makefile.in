@@ -46,23 +46,20 @@ endif
 
 ifeq ($(IS_GASNET), $(TRUE))
 	OBJECTS += xmp_onesided.o xmp_onesided_gasnet.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
-		   xmp_coarray_local_utils.o xmp_post_wait.o xmp_post_wait_gasnet.o \
-	           xmp_coarray_gasnet.o xmp_coarray_gasnet_utils.o xmp_lock_unlock.o xmp_lock_unlock_gasnet.o \
-		   xmp_intrinsic_gasnet.o
+		   xmp_post_wait.o xmp_post_wait_gasnet.o xmp_coarray_gasnet.o xmp_lock_unlock.o \
+		   xmp_lock_unlock_gasnet.o xmp_intrinsic_gasnet.o
 	CFLAGS  += -D_XMP_GASNET
 else
 ifeq ($(IS_MPI3_ONESIDED), $(TRUE))
 #xmp_coarray_mpi_util.o xmp_lock_unlock.o xmp_lock_unlock_mpi.o
 	OBJECTS += xmp_onesided.o xmp_onesided_mpi.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
-		   xmp_coarray_local_utils.o xmp_post_wait.o xmp_post_wait_mpi.o \
-	           xmp_coarray_mpi.o xmp_intrinsic_mpi.o
+		   xmp_post_wait.o xmp_post_wait_mpi.o xmp_coarray_mpi.o xmp_intrinsic_mpi.o
 	CFLAGS += -D_XMP_MPI3_ONESIDED
 endif	
 endif
 ifeq ($(IS_FJRDMA), $(TRUE))
 	OBJECTS += xmp_onesided.o xmp_onesided_fjrdma.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
-		   xmp_coarray_local_utils.o xmp_post_wait.o xmp_post_wait_fjrdma.o \
-		   xmp_coarray_fjrdma.o xmp_coarray_fjrdma_utils.o xmp_intrinsic_fjrdma.o
+		   xmp_post_wait.o xmp_post_wait_fjrdma.o xmp_coarray_fjrdma.o xmp_intrinsic_fjrdma.o
 	CFLAGS  += -D_XMP_FJRDMA
 endif
 
@@ -83,11 +80,9 @@ ifeq ($(IS_INTELMKL), $(TRUE))
 endif
 
 ifeq ($(IS_TCA), $(TRUE))
-#  xmp_coarray_gasnet_utils.o xmp_lock_unlock_gasnet.o xmp_lock_unlock.o
 	OBJECTS += xmp_onesided.o xmp_onesided_tca.o xmp_coarray.o xmp_coarray_utils.o xmp_coarray_local.o \
-		   xmp_coarray_local_utils.o xmp_post_wait.o xmp_post_wait_tca.o \
-		   xmp_coarray_tca.o xmp_reflect_tca.o xmp_reflect_hybrid.o xmp_tca_runtime.o \
-		   xmp_reduce_tca.o xmp_reduce_hybrid.o
+		   xmp_post_wait.o xmp_post_wait_tca.o xmp_coarray_tca.o xmp_reflect_tca.o \
+	           xmp_reflect_hybrid.o xmp_tca_runtime.o xmp_reduce_tca.o xmp_reduce_hybrid.o
 	CFLAGS  += -D_XMP_TCA
 endif
 
@@ -119,4 +114,3 @@ install: $(LIBXMP)
 
 clean:
 	rm -f *~ *.core core core.* *.o $(LIBXMP)
-

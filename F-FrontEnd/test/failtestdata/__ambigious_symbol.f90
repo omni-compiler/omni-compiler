@@ -13,3 +13,8 @@
         use ambigious_symbol1
         use ambigious_symbol2
       end module ambigious_symbol
+
+      program main
+        use ambigious_symbol
+        n = 1
+      end program main
