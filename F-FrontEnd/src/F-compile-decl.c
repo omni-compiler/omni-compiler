@@ -44,34 +44,6 @@ declare_function_result_id(SYMBOL s, TYPE_DESC tp) {
 }
 
 /*
- * NOTE:
- * This function doesnot work well!
- * The current code don't differ the explicit external declaration and the implicit external declaration,
- * so the following 2 code seems the same code.
- *
- * (a valid code)
- * ```
- *   module m
- *    call sub() ! TYPE_SET_EXTERNAL(id) will be executed
- *    contains
- *     subroutine sub()
- *     end subroutine sub
- *   end module m
- * ```
- *
- * (an invalid code)
- * ```
- *   module m
- *    external sub
- *    call sub()
- *    contains
- *     subroutine sub()
- *     end subroutine sub
- *   end module m
- * ```
- *
- */
-/*
  * Check id in the parent program unit conflicts with a function/subroutine in
  * the contain block
  *
