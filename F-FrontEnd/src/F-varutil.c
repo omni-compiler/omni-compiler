@@ -252,7 +252,7 @@ expr_is_constant_typeof(x, bt)
                     ID_STORAGE(id) = STG_NONE;
                     ID_IS_DECLARED(id) = TRUE;
                 }
-                if ((v = compile_function_call0(id, EXPR_ARG2(x), TRUE)) == NULL) {
+                if ((v = compile_function_call_check_intrinsic_arg_type(id, EXPR_ARG2(x), TRUE)) == NULL) {
                     return FALSE;
                 }
                 if (bt != TYPE_UNKNOWN) {

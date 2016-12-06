@@ -53,9 +53,10 @@ do_test_should_be_ng() {
 	local testfile
 	for testfile in \
 	    $(find ${should_be_ng} -name "*.f90" -o -name "*.f" | sort); do
-		do_compile ${testfile}
+		do_compile ${testfile} 2>&1
 		if test $? -eq 0; then
 			echo "Error: ${testfile} should have exit code != 0"
+			echo "Error: ${testfile} should have exit code != 0" 1>&2
 		fi
 	done
 	rm -f *.xmod

@@ -659,7 +659,7 @@ int second_pass()
           ID id;
           FOREACH_ID(id, EXT_PROC_ID_LIST(sp_list->nest_ext_id[i])){
             if(ID_SYM(id) == EXPR_SYM(sp_list->info.ep)){
-              EXPV_TYPE(sp_list->info.ep) = ID_TYPE(id);
+              EXPV_TYPE(sp_list->info.ep) = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id));
               sp_list = unlink_sp_list(sp_list);
               is_exist = 1;
               break;

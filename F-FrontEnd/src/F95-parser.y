@@ -55,6 +55,7 @@
 %token EXTERNAL
 %token FORMAT
 %token FUNCTION
+%token GENERIC
 %token GOTO
 /* %token ASGOTO */
 /* %token COMPGOTO */
@@ -149,6 +150,10 @@
 %token TYPEIS
 %token CLASSDEFAULT
 %token VALUE
+%token PASS
+%token NOPASS
+%token NON_OVERRIDABLE
+%token DEFERRED
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -476,8 +481,9 @@ gen_default_real_kind(void) {
 %type <val> parenthesis_arg_list_or_null
 %type <val> set_expr
 %type <val> io_statement format_spec ctl_list io_clause io_list_or_null io_list io_item
-%type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP
+%type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP type_bound_generic_spec
 %type <val> string_const_substr
+%type <val> binding_attr_list binding_attr type_bounded_proc_decl_list type_bounded_proc_decl
 
 %type <val> name name_or_null generic_name defined_operator intrinsic_operator func_prefix prefix_spec
 %type <val> declaration_statement95 attr_spec_list attr_spec access_spec type_attr_spec_list type_attr_spec
@@ -564,7 +570,22 @@ statement:      /* entry */
         | MODULEPROCEDURE ident_list
           { $$ = list2(F95_MODULEPROCEDURE_STATEMENT, $2, make_int_enode(1)); }
         | PROCEDURE ident_list
-          { $$ = list2(F95_MODULEPROCEDURE_STATEMENT, $2, make_int_enode(0)); }
+          { if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
+                $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $2, NULL, NULL);
+            } else {
+                $$ = list2(F95_MODULEPROCEDURE_STATEMENT, $2, make_int_enode(0));
+            }
+          }
+        | PROCEDURE COL2 type_bounded_proc_decl_list
+          { $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $3, NULL, NULL); }
+        | PROCEDURE ',' binding_attr_list COL2 type_bounded_proc_decl_list
+          { $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $5, $3, NULL); }
+        | PROCEDURE '(' IDENTIFIER ')' ',' binding_attr_list COL2 ident_list
+          { $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $8, $6, $3); }
+        | GENERIC COL2 type_bound_generic_spec REF_OP ident_list
+          { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT,$3, $5, NULL); }
+        | GENERIC ',' access_spec COL2 type_bound_generic_spec REF_OP ident_list
+          { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT,$5, $7, $3); }
         | BLOCKDATA program_name
           { $$ = list1(F_BLOCK_STATEMENT,$2); }
         | ENDBLOCKDATA name_or_null
@@ -613,6 +634,47 @@ statement:      /* entry */
           { $$ = list0(F_END_STATEMENT); }
         | UNKNOWN
           { error("unclassifiable statement"); flush_line(); $$ = NULL; }
+        ;
+
+binding_attr_list:
+          KW binding_attr
+        { $$ = list1(LIST, $2); }
+        | binding_attr_list ',' KW binding_attr
+        { $$ = list_put_last($1, $4); }
+        ;
+
+binding_attr:
+          PASS
+        { $$ = list1(F03_PASS_SPEC, NULL); }
+        | PASS '(' IDENTIFIER ')'
+        { $$ = list1(F03_PASS_SPEC, $3); }
+        | NOPASS
+        { $$ = list0(F03_NO_PASS_SPEC); }
+        | NON_OVERRIDABLE
+        { $$ = list0(F03_NON_OVERRIDEABLE_SPEC); }
+        | DEFERRED
+        { $$ = list0(F03_DEFERRED_SPEC); }
+        | access_spec
+        { $$ = $1; }
+        ;
+
+type_bounded_proc_decl:
+          IDENTIFIER
+        { $$ = $1; }
+        | IDENTIFIER REF_OP IDENTIFIER
+        { $$ = list2(F03_BIND_PROCEDURE, $1, $3); }
+        ;
+
+type_bounded_proc_decl_list:
+          type_bounded_proc_decl
+        { $$ = list1(LIST, $1); }
+        | type_bounded_proc_decl_list ',' type_bounded_proc_decl
+        { $$ = list_put_last($1, $3); }
+        ;
+
+type_bound_generic_spec: GENERIC_SPEC
+        | IDENTIFIER
+        ;
 
 label:    CONSTANT      /* must be interger constant */
         ;
@@ -1512,9 +1574,11 @@ action_statement_key: ASSIGN  label KW KW_TO IDENTIFIER
         { $$ = list4(F_ARITHIF_STATEMENT,$3,$5,$7,$9); }
         | CALL IDENTIFIER
         { $$ = list2(F_CALL_STATEMENT,$2,NULL); }
-        | CALL IDENTIFIER '(' ')'
-        { $$ = list2(F_CALL_STATEMENT,$2,NULL); }
         | CALL IDENTIFIER '(' arg_list ')'
+        { $$ = list2(F_CALL_STATEMENT,$2,$4); }
+        | CALL member_ref
+        { $$ = list2(F_CALL_STATEMENT,$2,NULL); }
+        | CALL member_ref '(' arg_list ')'
         { $$ = list2(F_CALL_STATEMENT,$2,$4); }
         | RETURN  expr_or_null
         { $$ = list1(F_RETURN_STATEMENT,$2); }

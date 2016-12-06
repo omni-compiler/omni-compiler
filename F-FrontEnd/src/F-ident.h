@@ -29,7 +29,8 @@ enum name_class {
     CL_COMMON,  /* common block */
     CL_ELEMENT,  /* structure element name  */
     CL_GENERICS, /* generics name */
-    CL_TYPE_PARAM /* type parameter name */
+    CL_TYPE_PARAM, /* type parameter name */
+    CL_TYPE_BOUND_PROC, /* type bound procedure */
 };
 
 extern char *name_class_names[];
@@ -52,6 +53,7 @@ extern char *name_class_names[];
   "CL_ELEMENT", \
   "CL_GENERICS", \
   "CL_TYPE_PARAM", \
+  "CL_TYPE_BOUND_PROCS", \
 }
 
 /* for CL_PROC  */
@@ -183,7 +185,7 @@ typedef struct ident_descriptor
                                        * P_EXTERNAL. */
             int has_bind;             /* if TRUE, proc uses BIND feature */
             expr bind;                /* temporary storage for bind
-180                                    * information */
+                                       * information */
         } proc_info;
         struct {
 
@@ -231,6 +233,19 @@ typedef struct ident_descriptor
             char is_save;           /* save attribute */
             char is_blank_name;     /* blank name */
         } common_info;
+        struct {
+            /* for CL_TYPE_BOUND_PROCS */
+            struct ident_descriptor * binding; /* binding */
+            struct ident_descriptor * pass_arg; /* pass argument */
+            uint32_t type_bound_attrs;
+#define TYPE_BOUND_PROCEDURE_IS_GENERIC            0x0001
+#define TYPE_BOUND_PROCEDURE_PASS                  0x0002
+#define TYPE_BOUND_PROCEDURE_NOPASS                0x0004
+#define TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE       0x0008
+#define TYPE_BOUND_PROCEDURE_DEFERRED              0x0010
+#define TYPE_BOUND_PROCEDURE_IS_OPERATOR           0x0020
+#define TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT         0x0040
+        } tbp_info;
     } info;
 } *ID;
 
@@ -349,6 +364,20 @@ struct use_assoc_info {
 #define COM_VARS(id)            ((id)->info.common_info.vars)
 #define COM_IS_SAVE(id)         ((id)->info.common_info.is_save)
 #define COM_IS_BLANK_NAME(id)   ((id)->info.common_info.is_blank_name)
+
+/* for CL_TYPE_BOUND_PROCS */
+#define TBP_BINDING(id)         ((id)->info.tbp_info.binding)
+#define TBP_BINDING_ATTRS(id)   ((id)->info.tbp_info.type_bound_attrs)
+#define TBP_PASS_ARG(id)        ((id)->info.tbp_info.pass_arg)
+
+#define TBP_IS_OPERATOR(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
+     TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_OPERATOR)
+
+#define TBP_IS_ASSIGNMENT(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
+     TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT)
+
 
 struct interface_info {
     enum {

@@ -8,7 +8,7 @@ TYPE_SERIAL_ID = 1
 def replace_type_id(line):
     global TYPE_SERIAL_ID, TYPE_ID_DICT
 
-    type_pat = re.compile(r'(type|ref)="([A-Z][0-9a-f]+)"')
+    type_pat = re.compile(r'(type|ref|extends)="([A-Z][0-9a-f]+)"')
     match = type_pat.search(line)
     while match:
         type_id = match.group(2)

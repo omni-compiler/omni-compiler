@@ -20,7 +20,7 @@ static void             generate_reverse_dimension_expr(TYPE_DESC tp,
 static TYPE_DESC        get_intrinsic_return_type(intrinsic_entry *ep,
                                                   expv args,
                                                   expv kindV);
-static BASIC_DATA_TYPE	intr_type_to_basic_type(INTR_DATA_TYPE iType);
+static BASIC_DATA_TYPE  intr_type_to_basic_type(INTR_DATA_TYPE iType);
 
 static INTR_DATA_TYPE COARRAY_TO_BASIC_MAP[] = {
     /* INTR_TYPE_COARRAY_ANY            -> */ INTR_TYPE_ANY,
@@ -91,37 +91,36 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
     EXT_ID extid;
 
     if (SYM_TYPE(ID_SYM(id)) != S_INTR) {
-      //fatal("%s: not intrinsic symbol", __func__);
+        //fatal("%s: not intrinsic symbol", __func__);
 
-      // declarea as intrinsic but not defined in the intrinc table
+        // declarea as intrinsic but not defined in the intrinc table
 
-      SYM_TYPE(ID_SYM(id)) = S_INTR;
+        SYM_TYPE(ID_SYM(id)) = S_INTR;
 
-      if (args == NULL) {
-        args = list0(LIST);
-      }
+        if (args == NULL) {
+            args = list0(LIST);
+        }
 
-      if (ID_TYPE(id) == NULL) implicit_declaration(id);
-      tp = ID_TYPE(id);
-      //tp = BASIC_TYPE_DESC(TYPE_SUBR);
+        if (ID_TYPE(id) == NULL) implicit_declaration(id);
+        tp = ID_TYPE(id);
+        //tp = BASIC_TYPE_DESC(TYPE_SUBR);
 
-      expv symV = expv_sym_term(F_FUNC, NULL, ID_SYM(id));
+        expv symV = expv_sym_term(F_FUNC, NULL, ID_SYM(id));
 
-      ftp = function_type(tp);
-      TYPE_SET_INTRINSIC(ftp);
+        ftp = intrinsic_function_type(tp);
 
-      extid = new_external_id_for_external_decl(ID_SYM(id), ftp);
-      ID_TYPE(id) = ftp;
-      PROC_EXT_ID(id) = extid;
-      if (TYPE_IS_EXTERNAL(tp)){
-	ID_STORAGE(id) = STG_EXT;
-      }
-      else{
-	EXT_PROC_CLASS(extid) = EP_INTRINSIC;
-      }
+        extid = new_external_id_for_external_decl(ID_SYM(id), ftp);
+        ID_TYPE(id) = ftp;
+        PROC_EXT_ID(id) = extid;
+        if (TYPE_IS_EXTERNAL(tp)){
+            ID_STORAGE(id) = STG_EXT;
+        }
+        else {
+            EXT_PROC_CLASS(extid) = EP_INTRINSIC;
+        }
 
-      ret = expv_cons(FUNCTION_CALL, tp, symV, args);
-      return ret;
+        ret = expv_cons(FUNCTION_CALL, tp, symV, args);
+        return ret;
     }
 
     ep = &(intrinsic_table[SYM_VAL(ID_SYM(id))]);
@@ -192,8 +191,8 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
             }
             tp = EXPV_TYPE(a);
             if (!(isValidType(tp))) {
-	      //return NULL;    /* error recovery */
-	      continue;
+                //return NULL;    /* error recovery */
+                continue;
             }
             if (compare_intrinsic_arg_type(a, tp,
                                            ((isVarArgs == 0) ?
@@ -221,12 +220,12 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
         if (INTR_RETURN_TYPE(ep) != INTR_TYPE_NONE) {
             tp = get_intrinsic_return_type(ep, args, kindV);
             if (!(isValidType(tp))) {
-	      //fatal("%s: can't determine return type.", __func__);
-	      //return NULL;
-	      tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                //fatal("%s: can't determine return type.", __func__);
+                //return NULL;
+                tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
             }
         } else {
-            tp = BASIC_TYPE_DESC(TYPE_SUBR);
+            tp = type_VOID;
         }
 
         /* Finally find symbol for the intrinsic and make it expv. */
@@ -245,8 +244,16 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
             return NULL;
         }
 
-        ftp = function_type(tp);
-        TYPE_SET_INTRINSIC(ftp);
+        if (IS_VOID(tp)) {
+            ftp = intrinsic_subroutine_type();
+        } else {
+            ftp = intrinsic_function_type(tp);
+        }
+        if (ep->langSpec != LANGSPEC_NONSTD && ep->langSpec != LANGSPEC_UNKNOWN) {
+            FUNCTION_TYPE_SET_VISIBLE_INTRINSIC(ftp);
+        }
+
+
         /* set external id for functionType's type ID.
          * dont call declare_external_id() */
         extid = new_external_id_for_external_decl(ID_SYM(id), ftp);
@@ -1020,10 +1027,10 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
 
                         /*
                          * FIXME:
-                         *	Should we use
-                         *	get_binary_numeric_intrinsic_operation_type()
-                         *	instead of max_type()? I think so but
-                         *	not sure at this moment.
+                         *  Should we use
+                         *  get_binary_numeric_intrinsic_operation_type()
+                         *  instead of max_type()? I think so but
+                         *  not sure at this moment.
                          */
                         bType = get_basic_type(max_type(t1, t2));
 
@@ -1091,49 +1098,48 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                     }
                     break;
 
-		    case INTR_PACK:
-		    {
+                    case INTR_PACK:
+                    {
 
-		      if (INTR_N_ARGS(ep) == 3){
-			expv v = expr_list_get_n(args, 2);
-			return EXPV_TYPE(v);
-		      }
-		      else {
-			a = expr_list_get_n(args, 0);
-			if (!(isValidTypedExpv(a))) {
-			  return NULL;
-			}
+                        if (INTR_N_ARGS(ep) == 3){
+                            expv v = expr_list_get_n(args, 2);
+                            return EXPV_TYPE(v);
+                        }
+                        else {
+                            a = expr_list_get_n(args, 0);
+                            if (!(isValidTypedExpv(a))) {
+                                return NULL;
+                            }
 
-			bType = get_basic_type(EXPV_TYPE(a));
-			bTypeDsc = BASIC_TYPE_DESC(bType);
-			expr dims = list1(LIST, NULL);
-			ret = compile_dimensions(bTypeDsc, dims);
-			fix_array_dimensions(ret);
-			return ret;
-		      }
-		    }
-		    break;
+                            bType = get_basic_type(EXPV_TYPE(a));
+                            bTypeDsc = BASIC_TYPE_DESC(bType);
+                            expr dims = list1(LIST, NULL);
+                            ret = compile_dimensions(bTypeDsc, dims);
+                            fix_array_dimensions(ret);
+                            return ret;
+                        }
+                    }
+                    break;
 
-		    case INTR_UNPACK:
-		    {
-			a = expr_list_get_n(args, 0);
-			if (!(isValidTypedExpv(a))) {
-			  return NULL;
-			}
-			bType = get_basic_type(EXPV_TYPE(a));
-			bTypeDsc = BASIC_TYPE_DESC(bType);
+                    case INTR_UNPACK:
+                    {
+                        a = expr_list_get_n(args, 0);
+                        if (!(isValidTypedExpv(a))) {
+                            return NULL;
+                        }
+                        bType = get_basic_type(EXPV_TYPE(a));
+                        bTypeDsc = BASIC_TYPE_DESC(bType);
 
-			a = expr_list_get_n(args, 1);
-			if (!(isValidTypedExpv(a))) {
-			  return NULL;
-			}
-			TYPE_DESC tp = EXPV_TYPE(a);
-			ret = copy_dimension(tp, bTypeDsc);
-			fix_array_dimensions(ret);
-			return ret;
-		    }
-		    break;
-
+                        a = expr_list_get_n(args, 1);
+                        if (!(isValidTypedExpv(a))) {
+                            return NULL;
+                        }
+                        TYPE_DESC tp = EXPV_TYPE(a);
+                        ret = copy_dimension(tp, bTypeDsc);
+                        fix_array_dimensions(ret);
+                        return ret;
+                    }
+                    break;
 
                     case INTR_THIS_IMAGE:
                     case INTR_UCOBOUND:
