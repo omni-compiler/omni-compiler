@@ -1,7 +1,7 @@
 # This file is included from */Makefile files.
 
 RESULT=$(OUT:.x=.result)
-.SUFFIXES: .x .f90 .F90 .xmod
+.SUFFIXES: .x .x4 .f90 .F90 .xmod .result
 
 OUT4= $(OUT:%.x=%.x4)
 OUT6= $(OUT:%.x=%.x6)
@@ -18,20 +18,15 @@ RESULT7g=$(RESULT:.result=.result7g)
 .F90.x:
 	xmpf90 $(OPT) -o $@ $<
 
+.f90.x4:
+	xmpf90 $(OPT) --Wx-fcoarray=4 -o $@ $<
+
+.F90.x4:
+	xmpf90 $(OPT) --Wx-fcoarray=4 -o $@ $<
+
 .c.x:
 	xmpcc $(OPT) -o $@ $<
 
-%.x4:  %.f90
-	xmpf90 $(OPT) --Wx-fcoarray=4 -o $@ $<
-
-%.x6:  %.f90
-	xmpf90 $(OPT) --Wx-fcoarray=6 -o $@ $<
-
-%.x7:  %.f90
-	xmpf90 $(OPT) --Wx-fcoarray=7 -o $@ $<
-
-%.x7g:  %.f90
-	xmpf90 $(OPT) --Wx-fcoarray=7g -o $@ $<
 
 %.result: %.x
 	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
@@ -39,16 +34,12 @@ RESULT7g=$(RESULT:.result=.result7g)
 %.result4: %.x4
 	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
 
-%.result6: %.x6
-	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
-
-%.result7: %.x7
-	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
-
-%.result7g: %.x7g
-	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$<
 
 %.result: %.f90
+	xmpf90 $(OPT) -o $*.x $<
+	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$*.x
+
+%.result: %.F90
 	xmpf90 $(OPT) -o $*.x $<
 	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$*.x
 
@@ -57,19 +48,11 @@ RESULT7g=$(RESULT:.result=.result7g)
 	export XMP_ONESIDED_HEAP_SIZE=70M; mpirun -np $(NPE) ./$*.x
 	cat $@
 
+
 RUN/%.x:: %.x
 	cp $< $@
 
 RUN/%.x4:: %.x4
-	cp $< $@
-
-RUN/%.x6:: %.x6
-	cp $< $@
-
-RUN/%.x7:: %.x7
-	cp $< $@
-
-RUN/%.x7g:: %.x7g
 	cp $< $@
 
 RUN/%.x:: 
@@ -78,25 +61,11 @@ RUN/%.x::
 RUN/%.x4:: 
 	touch $@
 
-RUN/%.x6:: 
-	touch $@
-
-RUN/%.x7:: 
-	touch $@
-
-RUN/%.x7g:: 
-	touch $@
 
 ### compile test programs
 all:     $(OUT)
 
 all4:     $(OUT4)
-
-all6:     $(OUT6)
-
-all7:     $(OUT7)
-
-all7g:     $(OUT7g)
 
 ### execute on local environment
 run:	$(RESULT)
@@ -117,12 +86,6 @@ submit: all RUN RUN/go.sh $(OUT:%=RUN/%)
 submit4: all4 RUN RUN/go4.sh $(OUT4:%=RUN/%)
 	cd RUN; pjsub go4.sh
 
-submit6: all6 RUN RUN/go6.sh $(OUT6:%=RUN/%)
-	cd RUN; pjsub go6.sh
-
-submit7: all7 RUN RUN/go7.sh $(OUT7:%=RUN/%)
-	cd RUN; pjsub go7.sh
-
 RUN:
 	mkdir RUN
 
@@ -131,12 +94,6 @@ RUN/go.sh: go.template Makefile
 
 RUN/go4.sh: go.template Makefile
 	sed "s/@OUT@/$(OUT4)/" $< >$@
-
-RUN/go6.sh: go.template Makefile
-	sed "s/@OUT@/$(OUT6)/" $< >$@
-
-RUN/go7.sh: go.template Makefile
-	sed "s/@OUT@/$(OUT7)/" $< >$@
 
 showlog:
 	cat RUN/go.sh.e* RUN/go.sh.o*
