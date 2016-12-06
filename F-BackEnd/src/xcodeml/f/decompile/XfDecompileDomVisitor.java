@@ -3605,7 +3605,17 @@ public class XfDecompileDomVisitor {
 
             String name = XmDomUtil.getAttr(n, "name");
 
-            writer.writeToken("MODULE");
+            boolean isSubmodule = XmDomUtil.getAttrBool(n, "is_sub");
+
+            if (isSubmodule) {
+                writer.writeToken("SUBMODULE");
+                writer.writeToken("(");
+                String parent = XmDomUtil.getAttr(n, "parent_name");
+                writer.writeToken(parent);
+                writer.writeToken(")");
+            } else {
+                writer.writeToken("MODULE");
+            }
             writer.writeToken(" ");
             writer.writeToken(name);
             writer.setupNewLine();
@@ -3635,7 +3645,11 @@ public class XfDecompileDomVisitor {
             writer.decrementIndentLevel();
             typeManager.leaveScope();
 
-            writer.writeToken("END MODULE");
+            if (isSubmodule) {
+                writer.writeToken("END SUBMODULE");
+            } else {
+                writer.writeToken("END MODULE");
+            }
             writer.writeToken(" ");
             writer.writeToken(name);
             writer.setupNewLine();
