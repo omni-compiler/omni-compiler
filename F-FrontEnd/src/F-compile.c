@@ -1133,8 +1133,7 @@ void compile_statement1(int st_no, expr x)
             /* NOTE: PRIVATE and PROTECTED can be written in the derived-type declaration */
             CURRENT_STATE = INDCL;
         } else if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
-            /* PRIVATE statement in type bound proce allowed*/
-            // TODO check no type bound procedure before this statement
+            /* PRIVATE statement in type-bound procedure is allowed*/
             check_INDCL();
         }
         compile_PUBLIC_PRIVATE_statement(EXPR_ARG1(x), markAsPrivate);
@@ -4107,8 +4106,6 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
            */
           if (EXT_PROC_ARGS(mep) != NULL) {
               EXT_PROC_ARGS(mep) = copy_function_args(EXT_PROC_ARGS(mep));
-
-              // TODO check, following code may be wrong, type may be NULL
               FOR_ITEMS_IN_LIST(lp, EXT_PROC_ARGS(mep)) {
                   v = EXPR_ARG1(LIST_ITEM(lp));
                   deep_copy_and_overwrite_for_module_id_type(&(EXPV_TYPE(v)));
@@ -5443,6 +5440,18 @@ static int markAsProtected(ID id)
     return TRUE;
 }
 
+static int
+have_type_bound_procedure(ID ids)
+{
+    ID ip;
+    FOREACH_ID(ip, ids) {
+        if (ID_CLASS(ip) == CL_TYPE_BOUND_PROC) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 static void
 compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
 {
@@ -5463,6 +5472,9 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
         if ((CTL_TYPE(ctl_top) == CTL_STRUCT)
                      && (markAs == markAsPrivate)) {
             TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
+            if (have_type_bound_procedure(TYPE_MEMBER_LIST(struct_tp))) {
+                error("PRIVATE after type-bound procedure");
+            }
             TYPE_SET_INTERNAL_PRIVATE(struct_tp);
             return;
         } else if (markAs == markAsPublic) {

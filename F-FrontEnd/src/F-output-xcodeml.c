@@ -4234,7 +4234,6 @@ outx_functionType_EXT(int l, EXT_ID ep)
     if (tp != NULL && FUNCTION_TYPE_RETURN_TYPE(tp) != NULL) {
         rtid = getTypeID(FUNCTION_TYPE_RETURN_TYPE(tp));
     } else {
-        /* TODO fix, should be subroutine */
         rtid = "Fvoid";
     }
 

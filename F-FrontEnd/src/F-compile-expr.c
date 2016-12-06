@@ -2555,7 +2555,6 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             }
             a = compile_args(args);
 
-            /* TODO FIX: ep may not be requried */
             if (ID_DEFINED_BY(f_id) != NULL) {
                 ep = PROC_EXT_ID(ID_DEFINED_BY(f_id));
             } else {
