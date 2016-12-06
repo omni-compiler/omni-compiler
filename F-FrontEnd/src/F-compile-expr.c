@@ -2473,6 +2473,9 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
 
             if (ID_TYPE(f_id) != NULL) {
                 if (!IS_PROCEDURE_TYPE(ID_TYPE(f_id))) {
+                    if (TYPE_IS_SAVE(ID_TYPE(f_id))) {
+                        TYPE_UNSET_SAVE(ID_TYPE(f_id));
+                    }
                     ID_TYPE(f_id) = function_type(ID_TYPE(f_id));
                     EXPV_TYPE(ID_ADDR(f_id)) = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(f_id));
                 }

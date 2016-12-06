@@ -130,6 +130,20 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
 
     if (ID_TYPE(parent_id) != NULL) {
         assert (ID_TYPE(parent_id) != NULL);
+
+        if (!TYPE_IS_IMPLICIT(ID_TYPE(parent_id)) &&
+            !TYPE_HAS_ACCESSIBILITY_FLAGS(parent_id) &&
+            TYPE_HAS_NON_ACCESSIBILITY_FLAGS(parent_id)) {
+            if (debug_flag) fprintf(debug_fp, "parent_id has non-accessibility attribute\n");
+            return TRUE;
+        }
+
+        if (ID_TYPE(parent_id) && TYPE_IS_SAVE(ID_TYPE(parent_id))) {
+            if (debug_flag) fprintf(debug_fp, "parent_id has non-accessibility attribute\n");
+            error("SAVE attirubte conflicts to the procedure");
+            return TRUE;
+        }
+
         if (IS_SUBR(ID_TYPE(parent_id))) {
             if (debug_flag) fprintf(debug_fp, "parent_id seems a subroutine\n");
             if (ID_TYPE(parent_id) &&
@@ -912,14 +926,23 @@ declare_function(ID id)
                         ID_TYPE(id) = tp;
                     } else if (!IS_FUNCTION_TYPE(tp)) {
                         ID_TYPE(id) = function_type(tp);
-                        TYPE_ATTR_FLAGS(ID_TYPE(id)) =
-                                TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
-                        TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id))) = 0;
+                        /*
+                         * There is no difference between an explicit SAVE attribute and an implicit SAVE attribute
+                         *
+                         *   REAL, SAVE func
+                         *
+                         * and
+                         *
+                         *   REAL func
+                         *   SAVE ! set a SAVE attribute to func
+                         */
+                        TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
                     }
                     PROC_CLASS(id) = P_UNDEFINEDPROC;
                 } else {
                     if (!IS_FUNCTION_TYPE(tp)) {
                         ID_TYPE(id) = function_type(tp);
+                        TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
                     }
 
                     if (IS_TYPE_PUBLICORPRIVATE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))) {
