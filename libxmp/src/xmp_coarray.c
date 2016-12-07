@@ -340,9 +340,9 @@ void _XMP_coarray_malloc_do(void **coarray_desc, void *addr)
   _XMP_check_less_than_SIZE_MAX(transfer_size);
   
 #ifdef _XMP_GASNET
-  _XMP_gasnet_malloc_do(*coarray_desc, addr, (size_t)transfer_size);
+  _XMP_gasnet_coarray_malloc_do(*coarray_desc, addr, (size_t)transfer_size);
 #elif _XMP_FJRDMA
-  _XMP_fjrdma_malloc_do(*coarray_desc, addr, (size_t)transfer_size);
+  _XMP_fjrdma_coarray_malloc_do(*coarray_desc, addr, (size_t)transfer_size);
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_coarray_malloc_do(*coarray_desc, addr, (size_t)transfer_size, false);
 #endif

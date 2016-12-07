@@ -442,7 +442,7 @@ extern size_t _XMP_calc_max_copy_chunk(const int, const int, const _XMP_array_se
   } while (0)
 
 
-extern void _XMP_gasnet_malloc_do(_XMP_coarray_t *, void **, const size_t);
+extern void _XMP_gasnet_coarray_malloc_do(_XMP_coarray_t *, void **, const size_t);
 extern void _XMP_gasnet_initialize(int, char**, const size_t, const size_t);
 extern void _XMP_gasnet_intrinsic_initialize();
 extern void _XMP_gasnet_finalize(const int);
@@ -499,7 +499,7 @@ extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
 extern void _XMP_fjrdma_sync_images(const int, int*, int*);
 extern void _XMP_fjrdma_build_sync_images_table();
-extern void _XMP_fjrdma_malloc_do(_XMP_coarray_t *, void **, const unsigned long);
+extern void _XMP_fjrdma_coarray_malloc_do(_XMP_coarray_t *, void **, const unsigned long);
 extern void _XMP_fjrdma_regmem_do(_XMP_coarray_t *, void *, const unsigned long);
 extern void _XMP_fjrdma_put(const int, const int, const int, const int, const int, const _XMP_array_section_t *,  
 			    const _XMP_array_section_t *, const _XMP_coarray_t *, const _XMP_coarray_t *, void *,
