@@ -138,7 +138,7 @@ extern void _XMP_coarray_attach(_XMP_coarray_t*, void*, const size_t);
 extern void _XMP_coarray_detach(_XMP_coarray_t*);
 extern void _XMP_coarray_rdma_coarray_set_n(const int, const long[], const long[], const long[]);
 extern void _XMP_coarray_rdma_array_set_1(const long start1, const long length1, const long stride1,
-					  const long elmts1, const long distance1);
+					  const long elmts1, const size_t elmt);
 extern void _XMP_coarray_rdma_array_set_n(const int, const long[], const long[], const long[],
 					  const long[], const long[]);
 extern void _XMP_coarray_rdma_image_set_n(const int, const int[]);

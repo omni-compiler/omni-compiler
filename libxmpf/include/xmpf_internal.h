@@ -254,7 +254,7 @@ extern void _XMP_coarray_rdma_coarray_set_1(const long, const long, const long);
 //                                            const int, const int, const int, const int, const int, const int,
 //					    const int, const int, const int);
 
-extern void _XMP_coarray_rdma_array_set_1(const long, const long, const long, const long, const long);
+extern void _XMP_coarray_rdma_array_set_1(const long, const long, const long, const long, const size_t);
 //extern void _XMP_coarray_rdma_array_set_2(const int, const int, const int, const int, const int,
 //					  const int, const int, const int, const int, const int);
 //extern void _XMP_coarray_rdma_array_set_3(const int, const int, const int, const int, const int,

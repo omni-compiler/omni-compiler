@@ -204,6 +204,13 @@ void xmpf_array_init_shadow__(_XMP_array_t **a_desc, int *i_dim,
       _XMP_init_reflect_sched(sched);
       ai->reflect_sched = sched;
     }
+#ifdef _XMP_XACC
+    if (!ai->reflect_acc_sched){
+      _XMP_reflect_sched_t *sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
+      _XMP_init_reflect_sched_acc(sched);
+      ai->reflect_acc_sched = sched;
+    }
+#endif
 
     //_XMP_create_shadow_comm(array, *i_dim);
 
@@ -334,6 +341,13 @@ void xmpf_array_set_local_array__(_XMP_array_t **a_desc, void *array_addr, int *
 	_XMP_finalize_reflect_sched(sched, (i != dim -1));
 	_XMP_init_reflect_sched(sched);
       }
+#ifdef _XMP_XACC
+      _XMP_reflect_sched_t *sched_acc = a->info[i].reflect_acc_sched;
+      if (sched_acc){
+	_XMP_finalize_reflect_sched_acc(sched_acc, (i != dim -1));
+	_XMP_init_reflect_sched_acc(sched_acc);
+      }
+#endif
     }
   }
 
