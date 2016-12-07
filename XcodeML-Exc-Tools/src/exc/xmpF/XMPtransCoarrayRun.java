@@ -2356,9 +2356,11 @@ public class XMPtransCoarrayRun
 	switch (xobj.Opcode()) {
         case F_DEALLOCATE_STATEMENT:
           if (_listHasCoarray(xobj.getArg(1), coarrays)) {
-            if (!useMalloc) {
-              XMP.fatal("Not supported DEALLOCATE statement in the case of useRegMem");
-            }
+            ///////////////////
+            //            if (!useMalloc) {
+            //              XMP.fatal("Not supported DEALLOCATE statement in the case of useRegMem");
+            //            }
+            //////////////////////////
             ArrayList<Xobject> fstmts =
               genDeallocateStmt(xobj, coarrays);
 

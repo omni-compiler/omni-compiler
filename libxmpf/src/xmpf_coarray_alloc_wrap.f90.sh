@@ -41,9 +41,9 @@ print_subr_malloc() {
  esac
 
  case "${DIM}" in
- 0) echo    "        ${typekind}, pointer, intent(out) :: var" ;;
- 1) echo    "        ${typekind}, pointer, intent(out) :: var(:)" ;;
- *) echo -n "        ${typekind}, pointer, intent(out) :: var(:" 
+ 0) echo    "        ${typekind}, pointer, intent(inout) :: var" ;;
+ 1) echo    "        ${typekind}, pointer, intent(inout) :: var(:)" ;;
+ *) echo -n "        ${typekind}, pointer, intent(inout) :: var(:" 
     for i in `seq 2 ${DIM}`; do
         echo -n ",:"
     done
@@ -126,9 +126,9 @@ print_subr_regmem() {
  esac
 
  case "${DIM}" in
- 0) echo    "        ${typekind}, intent(out) :: var" ;;
- 1) echo    "        ${typekind}, intent(out) :: var(:)" ;;
- *) echo -n "        ${typekind}, intent(out) :: var(:" 
+ 0) echo    "        ${typekind}, intent(inout) :: var" ;;
+ 1) echo    "        ${typekind}, intent(inout) :: var(:)" ;;
+ *) echo -n "        ${typekind}, intent(inout) :: var(:" 
     for i in `seq 2 ${DIM}`; do
         echo -n ",:"
     done
@@ -153,9 +153,9 @@ print_subr_dealloc() {
     echo    "        integer(8), intent(in) :: descptr"
 
  case "${DIM}" in
- 0) echo    "        ${typekind}, pointer, intent(out) :: var" ;;
- 1) echo    "        ${typekind}, pointer, intent(out) :: var(:)" ;;
- *) echo -n "        ${typekind}, pointer, intent(out) :: var(:" 
+ 0) echo    "        ${typekind}, pointer, intent(inout) :: var" ;;
+ 1) echo    "        ${typekind}, pointer, intent(inout) :: var(:)" ;;
+ *) echo -n "        ${typekind}, pointer, intent(inout) :: var(:" 
     for i in `seq 2 ${DIM}`; do
         echo -n ",:"
     done
@@ -163,7 +163,6 @@ print_subr_dealloc() {
  esac
 
 # START BODY OF PROCEDURE
-    echo    "        nullify(var)"
     echo    "        call xmpf_coarray_free(descptr)"
     echo    "        return"
 # END BODY OF PROCEDURE
