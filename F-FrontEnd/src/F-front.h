@@ -41,6 +41,11 @@ extern int Addr2Uint(void *x);
 #endif
 #endif /* SIMPLE_TYPE */
 
+#define SAFE_FOREACH(p, q, list, iter)     \
+    for ((p) = (list), (q) = (p)?iter(p):NULL;\
+         (p) != NULL;\
+         (p) = (q), (q) = (p)?iter(q):NULL)
+
 #include "C-expr.h"
 #include "F-datatype.h"
 #include "F-ident.h"

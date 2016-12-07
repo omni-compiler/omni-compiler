@@ -3625,7 +3625,7 @@ flatten_id_list(ID parents, ID childs)
     ID ret = NULL;
     ID last = NULL;
 
-    for (ip = parents, iq = ip?ID_NEXT(iq):NULL; ip != NULL; ip = iq, iq = iq?ID_NEXT(iq):NULL) {
+    SAFE_FOREACH_ID(ip, iq, parents) {
         if (find_ident_head(ID_SYM(ip), childs) != NULL) {
             /* the child id shadows the parent id */
             /* free(id); */
@@ -3634,7 +3634,7 @@ flatten_id_list(ID parents, ID childs)
         ID_LINK_ADD(ip, ret, last);
     }
 
-    for (ip = childs, iq = ip?ID_NEXT(ip):NULL; ip != NULL; ip = iq, iq = iq?ID_NEXT(iq):NULL) {
+    SAFE_FOREACH_ID(ip, iq, childs) {
         ID_LINK_ADD(ip, ret, last);
     }
     return ret;
@@ -3649,7 +3649,7 @@ flatten_ext_id_list(EXT_ID parents, EXT_ID childs)
     EXT_ID ret = NULL;
     EXT_ID last = NULL;
 
-    for (ep = parents, eq = ep?EXT_NEXT(ep):NULL ; ep != NULL; ep = eq, eq = ep?EXT_NEXT(eq):NULL) {
+    SAFE_FOREACH_EXT_ID(ep, eq, parents) {
         if (find_ext_id_head(ID_SYM(ep), childs) != NULL) {
             /* the child id shadows the parent id */
             /* free(ep); */
@@ -3658,7 +3658,7 @@ flatten_ext_id_list(EXT_ID parents, EXT_ID childs)
         EXT_LINK_ADD(ep, ret, last);
     }
 
-    for (ep = childs, eq = ep?EXT_NEXT(ep):NULL; ep != NULL; ep = eq, eq = ep?EXT_NEXT(eq):NULL) {
+    SAFE_FOREACH_EXT_ID(ep, eq, childs) {
         EXT_LINK_ADD(ep, ret, last);
     }
     return ret;
@@ -3673,7 +3673,7 @@ flatten_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
     TYPE_DESC ret = NULL;
     TYPE_DESC last = NULL;
 
-    for (tp = parents, tq = tp?TYPE_SLINK(tp):NULL; tp != NULL; tp = tq, tq = tp?TYPE_SLINK(tq):NULL) {
+    SAFE_FOREACH_STRUCTDECLS(tp, tq, parents) {
         if (find_struct_decl_head(ID_SYM(TYPE_TAGNAME(tp)), childs) != NULL) {
             /* the child id shadows the parent id */
             continue;
@@ -3681,12 +3681,11 @@ flatten_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
         TYPE_SLINK_ADD(tp, ret, last);
     }
 
-    for (tp = childs, tq = tp?TYPE_SLINK(tp):NULL; tp != NULL; tp = tq, tq = tp?TYPE_SLINK(tq):NULL) {
+    SAFE_FOREACH_STRUCTDECLS(tp, tq, childs) {
         TYPE_SLINK_ADD(tp, ret, last);
     }
     return ret;
 }
-
 
 
 void

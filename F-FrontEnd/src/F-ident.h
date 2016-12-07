@@ -307,6 +307,9 @@ struct use_assoc_info {
 #define FOREACH_ID(/* ID */ idp, /* ID */ headp) \
   for ((idp) = (headp); (idp) != NULL ; (idp) = ID_NEXT(idp))
 
+#define SAFE_FOREACH_ID(ip, iq, headp)\
+    SAFE_FOREACH(ip, iq, headp, ID_NEXT)
+
 /* for CL_PROC */
 #define PROC_CLASS(id)  ((id)->info.proc_info.pclass)
 #define PROC_ARGS(id)   ((id)->info.proc_info.args)
@@ -499,6 +502,9 @@ typedef struct external_symbol
 
 #define FOREACH_EXT_ID(/* EXT_ID */ ep, /* EXT_ID */ headp) \
   for ((ep) = (headp); (ep) != NULL ; (ep) = EXT_NEXT(ep))
+
+#define SAFE_FOREACH_EXT_ID(ep, eq, headp)\
+    SAFE_FOREACH(ep, eq, headp, EXT_NEXT)
 
 #define EXT_LINK_ADD(ep, list, tail) \
     { if((list) == NULL || (tail) == NULL) (list) = (ep); \
