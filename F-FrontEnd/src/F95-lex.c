@@ -3936,6 +3936,7 @@ struct keyword_token end_keywords[ ] =
     { "program",        ENDPROGRAM },
     { "procedure",      ENDPROCEDURE },
     { "select",         ENDSELECT },
+    { "submodule",      ENDSUBMODULE },
     { "subroutine",     ENDSUBROUTINE },
     { "type",           ENDTYPE },
     { "where",          ENDWHERE },
