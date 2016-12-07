@@ -123,7 +123,8 @@ enum prog_state {
     INSTRUCT,
     INCONT,     /* contains */
     ININTR,      /* interface */
-    IN_TYPE_PARAM_DECL /**/
+    IN_TYPE_PARAM_DECL, /* type parameter declarations */
+    IN_TYPE_BOUND_PROCS, /* type bound procedure declarations */
 };
 
 extern enum prog_state current_state;
@@ -427,6 +428,7 @@ extern ID this_label;
 
 extern TYPE_DESC type_REAL, type_INT, type_SUBR, type_CHAR, type_LOGICAL;
 extern TYPE_DESC type_DREAL, type_COMPLEX, type_DCOMPLEX, type_CHAR_POINTER;
+extern TYPE_DESC type_VOID;
 extern TYPE_DESC type_MODULE;
 extern TYPE_DESC type_GNUMERIC_ALL;
 extern expv expv_constant_1,expv_constant_0,expv_constant_m1;
@@ -569,8 +571,9 @@ extern int      expv_is_str_lvalue _ANSI_ARGS_((expv v));
 extern expv     compile_terminal_node _ANSI_ARGS_((expr x));
 extern expv     compile_expression _ANSI_ARGS_((expr x));
 extern expv     expv_assignment _ANSI_ARGS_((expv v1, expv v2));
+extern expv     compile_args _ANSI_ARGS_((expr args));
 extern expv     compile_function_call _ANSI_ARGS_((ID f_id, expr args));
-extern expv     compile_function_call0 _ANSI_ARGS_((ID f_id, expr args, int ignoreTypeMismatch));
+extern expv     compile_function_call_check_intrinsic_arg_type _ANSI_ARGS_((ID f_id, expr args, int ignoreTypeMismatch));
 extern expv     compile_highorder_function_call _ANSI_ARGS_((ID f_id,
                                                              expr args,
                                                              int isCall));
@@ -603,9 +606,17 @@ extern ID       declare_common_ident _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_head _ANSI_ARGS_((SYMBOL s, ID head));
 extern ID       find_ident _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_local _ANSI_ARGS_((SYMBOL s));
+extern ID       find_ident_block_parent _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_parent _ANSI_ARGS_((SYMBOL s));
 extern ID       find_ident_sibling _ANSI_ARGS_((SYMBOL s));
 extern ID       find_struct_member _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
+extern ID       find_struct_member_allow_private _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym, int allow_private));
+extern int      type_is_parent_type _ANSI_ARGS_((TYPE_DESC parent, TYPE_DESC child));
+extern int      type_is_unlimited_class _ANSI_ARGS_((TYPE_DESC tp));
+extern int      type_is_class_of _ANSI_ARGS_((TYPE_DESC class, TYPE_DESC derived_type));
+extern int      compare_derived_type_name _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+
+extern ID       find_type _ANSI_ARGS_((TYPE_DESC struct_td, SYMBOL sym));
 extern ID       find_external_ident_head _ANSI_ARGS_((SYMBOL s));
 extern EXT_ID   find_ext_id_head _ANSI_ARGS_((SYMBOL s, EXT_ID head));
 extern EXT_ID   find_ext_id _ANSI_ARGS_((SYMBOL s));
@@ -628,7 +639,6 @@ extern EXT_ID   declare_external_proc_id _ANSI_ARGS_((SYMBOL s, TYPE_DESC tp,
 extern EXT_ID   declare_external_id _ANSI_ARGS_((SYMBOL s,
                                                  enum storage_class tag,
                                                  int def_flag));
-extern EXT_ID   declare_external_id_for_highorder(ID id, int isCall);
 
 extern void     unset_save_attr_in_dummy_args(EXT_ID ep);
 
@@ -641,14 +651,32 @@ extern expv     compile_int_constant _ANSI_ARGS_((expr x));
 extern void     compile_pragma_statement _ANSI_ARGS_((expr x));
 extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
 
+extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
+extern void     compile_type_generic_procedure _ANSI_ARGS_((expr x));
+extern void     update_type_bound_procedures _ANSI_ARGS_((TYPE_DESC struct_decls, ID local_symbols));
+extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f2, int has_pass_arg));
+extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));
 
-extern int      type_is_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
+extern int      type_is_soft_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
 extern int      struct_type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern void     function_type_udpate
+                    _ANSI_ARGS_((TYPE_DESC ftp, ID idList));
+extern int      function_type_is_appliable
+                    _ANSI_ARGS_((TYPE_DESC ftp, expv args));
+extern int      type_bound_procedure_types_are_compatible
+                    _ANSI_ARGS_((ID tbp1, ID tbp2));
+
+extern void     replace_or_assign_type
+                    _ANSI_ARGS_((TYPE_DESC *tp, const TYPE_DESC new_tp));
+
+extern int      are_dimension_and_shape_conformant_by_type _ANSI_ARGS_((
+    expr x, TYPE_DESC lt, TYPE_DESC rt, expv *shapePtr));
+
 extern TYPE_DESC
 	get_binary_numeric_intrinsic_operation_type(TYPE_DESC t0,
                                                     TYPE_DESC t1);
@@ -674,8 +702,15 @@ extern int              array_spec_size _ANSI_ARGS_((expv shape, expv dimShape,
 extern void             set_index_range_type _ANSI_ARGS_((expv v));
 extern TYPE_DESC        type_ref _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        struct_type  _ANSI_ARGS_((ID id));
-extern TYPE_DESC        function_type _ANSI_ARGS_((TYPE_DESC tp));
-extern TYPE_DESC        new_type_subr _ANSI_ARGS_((void));
+extern TYPE_DESC        function_type _ANSI_ARGS_((const TYPE_DESC tp));
+extern TYPE_DESC        subroutine_type _ANSI_ARGS_((void));
+extern TYPE_DESC        generic_procedure_type _ANSI_ARGS_((void));
+extern TYPE_DESC        generic_function_type _ANSI_ARGS_((void));
+extern TYPE_DESC        generic_subroutine_type _ANSI_ARGS_((void));
+extern TYPE_DESC        intrinsic_function_type _ANSI_ARGS_((TYPE_DESC tp));
+extern TYPE_DESC        intrinsic_subroutine_type _ANSI_ARGS_((void));
+extern TYPE_DESC        program_type _ANSI_ARGS_((void));
+extern TYPE_DESC        type_bound_procedure_type _ANSI_ARGS_((void));
 extern TYPE_DESC        type_char _ANSI_ARGS_((int len));
 extern TYPE_DESC        type_basic _ANSI_ARGS_((BASIC_DATA_TYPE t));
 extern TYPE_DESC        array_element_type _ANSI_ARGS_((TYPE_DESC tp));
@@ -727,6 +762,9 @@ extern int      expr_list_length _ANSI_ARGS_((expr x));
 extern expr     list_cons _ANSI_ARGS_((expr v, expr w));
 extern expr     list_put_last _ANSI_ARGS_((expr lx, expr x));
 extern expr     list_delete_item _ANSI_ARGS_((expr lx, expr x));
+extern expr     list_concat _ANSI_ARGS_((expr lx, expr ly));
+extern expr     list_last _ANSI_ARGS_((expr lx));
+extern expr     list_replace_last _ANSI_ARGS_((expr lx, expr x));
 
 extern void     delete_list _ANSI_ARGS_((expr lx));
 
@@ -819,7 +857,6 @@ extern void     compile_OMN_directive _ANSI_ARGS_((expr x));
 extern void     begin_module _ANSI_ARGS_((expr name));
 extern void     end_module _ANSI_ARGS_((void));
 extern int	is_in_module(void);
-extern const char *	get_current_module_name(void);
 
 extern omllint_t getExprValue(expv v);
 

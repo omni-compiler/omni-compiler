@@ -36,26 +36,175 @@ type_char(int len)
     return tp;
 }
 
+
+/*
+ * type of the function which returns tp
+ */
 TYPE_DESC
-function_type(TYPE_DESC tp)
+function_type(const TYPE_DESC tp)
 {
-    TYPE_DESC tq;
-    tq = new_type_desc();
-    TYPE_BASIC_TYPE(tq) = TYPE_FUNCTION;
-    TYPE_REF(tq) = tp;
-    return tq;
+    TYPE_DESC ftp;
+    ftp = new_type_desc();
+    TYPE_BASIC_TYPE(ftp) = TYPE_FUNCTION;
+
+    FUNCTION_TYPE_RETURN_TYPE(ftp) = tp;
+    FUNCTION_TYPE_SET_FUNCTION(ftp);
+
+    if (tp != NULL) {
+        if (TYPE_IS_EXTERNAL(tp)) {
+            TYPE_SET_EXTERNAL(ftp);
+        }
+
+        if (TYPE_IS_USED_EXPLICIT(tp)) {
+            TYPE_SET_USED_EXPLICIT(ftp);
+        }
+        if (TYPE_IS_OVERRIDDEN(tp)) {
+            TYPE_SET_OVERRIDDEN(ftp);
+        }
+
+        if (TYPE_IS_PUBLIC(tp)) {
+            TYPE_SET_PUBLIC(ftp);
+        }
+        if (TYPE_IS_PRIVATE(tp)) {
+            TYPE_SET_PRIVATE(ftp);
+        }
+        if (TYPE_IS_PROTECTED(tp)) {
+            TYPE_SET_PROTECTED(ftp);
+        }
+
+        if (TYPE_IS_RECURSIVE(tp)) {
+            TYPE_SET_RECURSIVE(ftp);
+        }
+        if (TYPE_IS_PURE(tp)) {
+            TYPE_SET_PURE(ftp);
+        }
+        if (TYPE_IS_ELEMENTAL(tp)) {
+            TYPE_SET_ELEMENTAL(ftp);
+        }
+    }
+
+    return ftp;
 }
 
+
+void
+replace_or_assign_type(TYPE_DESC * tp, const TYPE_DESC new_tp)
+{
+    if (tp == NULL || new_tp == NULL) {
+        return;
+    }
+
+    if (*tp == NULL) {
+        *tp = new_tp;
+    } else {
+        **tp = *new_tp;
+    }
+}
+
+
 TYPE_DESC
-new_type_subr(void)
+intrinsic_function_type(TYPE_DESC return_type)
+{
+    TYPE_DESC ftp = function_type(return_type);
+    TYPE_SET_INTRINSIC(ftp);
+    return ftp;
+}
+
+
+TYPE_DESC
+intrinsic_subroutine_type()
+{
+    TYPE_DESC ftp = subroutine_type();
+    TYPE_SET_INTRINSIC(ftp);
+    return ftp;
+}
+
+
+TYPE_DESC
+subroutine_type(void)
 {
     TYPE_DESC tp;
+    TYPE_DESC tq;
+
+    tq = new_type_desc();
+    TYPE_BASIC_TYPE(tq) = TYPE_VOID;
 
     tp = new_type_desc();
-    TYPE_BASIC_TYPE(tp) = (BASIC_DATA_TYPE)TYPE_SUBR;
-
+    TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+    FUNCTION_TYPE_SET_SUBROUTINE(tp);
+    FUNCTION_TYPE_RETURN_TYPE(tp) = tq;
     return tp;
 }
+
+
+TYPE_DESC
+generic_procedure_type()
+{
+    TYPE_DESC tp;
+    tp = new_type_desc();
+    TYPE_BASIC_TYPE(tp) = TYPE_GENERIC;
+    tp = function_type(tp);
+    FUNCTION_TYPE_SET_GENERIC(tp);
+    return tp;
+}
+
+
+/*
+ * function type
+ * - return type is TYPE_GENRERIC
+ * - set generic flag
+ */
+TYPE_DESC
+generic_function_type()
+{
+    TYPE_DESC tp;
+    tp = new_type_desc();
+    TYPE_BASIC_TYPE(tp) = TYPE_GENERIC;
+    tp = function_type(tp);
+    FUNCTION_TYPE_SET_GENERIC(tp);
+    return tp;
+}
+
+
+TYPE_DESC
+generic_subroutine_type()
+{
+    TYPE_DESC tp;
+    TYPE_DESC tq;
+
+    tq = new_type_desc();
+    TYPE_BASIC_TYPE(tq) = TYPE_VOID;
+    tq = wrap_type(tq);
+    TYPE_BASIC_TYPE(tq) = TYPE_GENERIC;
+    tp = new_type_desc();
+    TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+    FUNCTION_TYPE_SET_SUBROUTINE(tp);
+    FUNCTION_TYPE_RETURN_TYPE(tp) = tq;
+    FUNCTION_TYPE_SET_GENERIC(tp);
+    return tp;
+}
+
+
+TYPE_DESC
+program_type(void)
+{
+    TYPE_DESC tp = subroutine_type();
+    FUNCTION_TYPE_SET_PROGRAM(tp);
+    return tp;
+}
+
+
+TYPE_DESC
+type_bound_procedure_type(void)
+{
+    TYPE_DESC tp;
+    tp = new_type_desc();
+    TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
+    FUNCTION_TYPE_SET_FUNCTION(tp);
+    FUNCTION_TYPE_SET_TYPE_BOUND(tp);
+    return tp;
+}
+
 
 TYPE_DESC
 struct_type(ID id)
@@ -115,6 +264,9 @@ getBaseType(TYPE_DESC tp)
 BASIC_DATA_TYPE
 getBasicType(TYPE_DESC tp)
 {
+    return get_basic_type(tp);
+#if 0
+    /* Refactoring */
     BASIC_DATA_TYPE typ;
     if (tp == NULL) {
         return TYPE_UNKNOWN;
@@ -130,10 +282,11 @@ getBasicType(TYPE_DESC tp)
     } else {
         return typ;
     }
+#endif
 }
 
 TYPE_DESC
-getBaseStructType(TYPE_DESC td)
+getBaseParameterizedType(TYPE_DESC td)
 {
     if (td == NULL)
         return NULL;
@@ -150,6 +303,35 @@ TYPE_DESC array_element_type(TYPE_DESC tp)
     while(IS_ARRAY_TYPE(tp)) tp = TYPE_REF(tp);
     return tp;
 }
+
+int
+type_is_unlimited_class(TYPE_DESC tp)
+{
+    return (TYPE_IS_CLASS(tp) && TYPE_REF(tp) == NULL);
+}
+
+int
+type_is_class_of(TYPE_DESC derived_type, TYPE_DESC class)
+{
+    TYPE_DESC class_base;
+    TYPE_DESC derived_type_base;
+
+    if (!TYPE_IS_CLASS(class)) {
+        return FALSE;
+    }
+
+    class_base = getBaseType(class);
+    derived_type_base = getBaseType(derived_type);
+
+    if (class_base == derived_type_base ||
+        TYPE_TAGNAME(class_base) == TYPE_TAGNAME(derived_type_base) ||
+        ID_SYM(TYPE_TAGNAME(class_base)) == ID_SYM(TYPE_TAGNAME(class_base))) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
 
 /**
  * check type is omissible, such that
@@ -172,7 +354,7 @@ type_is_omissible(TYPE_DESC tp, uint32_t attr, uint32_t ext)
     if (IS_ARRAY_TYPE(tp))
         return FALSE;
     // The function type is not omissible.
-    if (IS_FUNCTION_TYPE(tp))
+    if (IS_PROCEDURE_TYPE(tp))
         return FALSE;
     // Co-array is not omissible.
     if (tp->codims != NULL)
@@ -269,7 +451,11 @@ simplify_type_recursively(TYPE_DESC tp, uint32_t attr, uint32_t ext) {
     if (TYPE_REF(tp) != NULL) {
         TYPE_REF(tp) = simplify_type_recursively(TYPE_REF(tp), attr, ext);
     }
-    return type_is_omissible(tp, attr, ext) ? TYPE_REF(tp) : tp;
+    if (type_is_omissible(tp, attr, ext) == TRUE) {
+        return TYPE_REF(tp);
+    } else {
+        return tp;
+    }
 }
 
 
@@ -303,6 +489,15 @@ reduce_type(TYPE_DESC tp) {
         TYPE_ATTR_FLAGS(ret) = attr;
         TYPE_EXTATTR_FLAGS(ret) = ext;
 #endif
+    }
+
+    if (IS_PROCEDURE_TYPE(ret)) {
+        ID ip;
+        FUNCTION_TYPE_RETURN_TYPE(ret) =
+                reduce_type(FUNCTION_TYPE_RETURN_TYPE(ret));
+        FOREACH_ID(ip, FUNCTION_TYPE_ARGS(ret)) {
+            ID_TYPE(ip) = reduce_type(ID_TYPE(ip));
+        }
     }
 
     return ret;
@@ -409,16 +604,34 @@ find_struct_decl_head(SYMBOL s, TYPE_DESC head)
     return NULL;
 }
 
+TYPE_DESC
+current_struct()
+{
+    CTL cp;
+    FOR_CTLS_BACKWARD(cp) {
+        if (CTL_TYPE(cp) == CTL_STRUCT) {
+            return CTL_STRUCT_TYPEDESC(cp);
+        }
+    }
+    return NULL;
+}
+
 
 ID
 find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
+{
+    return find_struct_member_allow_private(struct_td, sym, FALSE);
+}
+
+ID
+find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, int allow_private_member)
 {
     ID member = NULL;
 
     if (!IS_STRUCT_TYPE(struct_td)) {
         return NULL;
     }
-    struct_td = getBaseStructType(struct_td);
+    struct_td = getBaseParameterizedType(struct_td);
 
     if (TYPE_PARENT(struct_td)) {
         ID parent = TYPE_PARENT(struct_td);
@@ -426,7 +639,7 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
             member = TYPE_PARENT(struct_td);
         }
         if (member == NULL) {
-            member = find_struct_member(ID_TYPE(parent), sym);
+            member = find_struct_member_allow_private(ID_TYPE(parent), sym, allow_private_member);
         }
     }
     if (member) {
@@ -435,11 +648,32 @@ find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
 
     FOREACH_MEMBER(member, struct_td) {
         if (strcmp(ID_NAME(member), SYM_NAME(sym)) == 0) {
+
+            if (ID_CLASS(member) == CL_TYPE_BOUND_PROC) {
+                if (!allow_private_member && TYPE_IS_PRIVATE(member)) {
+                    /*
+                     * If the struct type is defined in the other module,
+                     * check accesssibility of the type bound procedure.
+                     *
+                     * The PRIVATE type-bound procedure can be accessed by:
+                     * - the module in which the PRIVATE type-bound procedure is defined
+                     * - the submodule of the module
+                     */
+                    if (TYPE_TAGNAME(struct_td) != NULL &&
+                        ID_USEASSOC_INFO(TYPE_TAGNAME(struct_td)) != NULL) {
+                        error("'%s' is private type bound procedure",
+                              SYM_NAME(sym));
+                        return NULL;
+                    }
+                }
+            }
+
             return member;
         }
     }
     return NULL;
 }
+
 
 /* int */
 /* is_descendant_coindexed(TYPE_DESC tp){ */
@@ -491,19 +725,24 @@ has_coarray_component(TYPE_DESC tp){
   return FALSE;
 }
 
-/* check type compatiblity of element types */
+/*
+ * Check type compatiblity of types softly
+ * ignoring type parameters like KIND, LENGTH
+ */
 int
-type_is_compatible(TYPE_DESC tp,TYPE_DESC tq)
+type_is_soft_compatible(TYPE_DESC tp, TYPE_DESC tq)
 {
-    if(tp == NULL || tq == NULL ||
+    if (tp == NULL || tq == NULL ||
        IS_ARRAY_TYPE(tp) || IS_ARRAY_TYPE(tq)) return FALSE;
-    if(TYPE_BASIC_TYPE(tp) != TYPE_BASIC_TYPE(tq)) {
-      if (TYPE_BASIC_TYPE(tp) == TYPE_GENERIC || TYPE_BASIC_TYPE(tq) == TYPE_GENERIC ||
+    if (TYPE_BASIC_TYPE(tp) != TYPE_BASIC_TYPE(tq)) {
+      if (TYPE_BASIC_TYPE(tp) == TYPE_GENERIC ||
+          TYPE_BASIC_TYPE(tq) == TYPE_GENERIC ||
           TYPE_BASIC_TYPE(tp) == TYPE_GNUMERIC_ALL ||
           TYPE_BASIC_TYPE(tq) == TYPE_GNUMERIC_ALL){
           return TRUE;
       }
-      else if(TYPE_BASIC_TYPE(tp) == TYPE_DREAL || TYPE_BASIC_TYPE(tq) == TYPE_DREAL) {
+      else if(TYPE_BASIC_TYPE(tp) == TYPE_DREAL ||
+              TYPE_BASIC_TYPE(tq) == TYPE_DREAL) {
             TYPE_DESC tt;
             tt = (TYPE_BASIC_TYPE(tp) == TYPE_DREAL)?tq:tp;
             if(TYPE_BASIC_TYPE(tt) == TYPE_REAL &&
@@ -521,6 +760,83 @@ type_is_compatible(TYPE_DESC tp,TYPE_DESC tq)
     return TRUE;
 }
 
+static int
+type_is_double(TYPE_DESC tp)
+{
+    return TYPE_BASIC_TYPE(tp) == TYPE_DREAL ||
+            (TYPE_BASIC_TYPE(tp) == TYPE_REAL &&
+             EXPR_CODE(TYPE_KIND(tp)) == INT_CONSTANT &&
+             EXPV_INT_VALUE(TYPE_KIND(tp)) == KIND_PARAM_DOUBLE);
+}
+
+
+static int
+type_parameter_expv_equals(expv v1, expv v2, int is_strict, int for_argunemt, int for_assignment, int is_pointer_assignment)
+{
+    uint32_t i1, i2;
+
+    if (v1 == NULL && v2 == NULL) {
+        return TRUE;
+    }
+
+    if (is_strict == TRUE) {
+        /*
+         * v1 and v2 should be the same expression
+         */
+
+        if (v1 == NULL || v2 == NULL) {
+            return FALSE;
+        }
+
+        if (EXPR_CODE(v1) != INT_CONSTANT) {
+            if (EXPR_CODE(v1) == F08_LEN_SPEC_COLON ||
+                EXPR_CODE(v1) == LEN_SPEC_ASTERISC ||
+                EXPR_CODE(v1) == F_ASTERISK) {
+                if (EXPR_CODE(v1) != EXPR_CODE(v2)) {
+                    return FALSE;
+                }
+            }
+        } else {
+            if (EXPR_CODE(v2) == F08_LEN_SPEC_COLON ||
+                EXPR_CODE(v2) == LEN_SPEC_ASTERISC ||
+                EXPR_CODE(v2) == F_ASTERISK) {
+                return FALSE;
+            }
+        }
+    }
+
+
+    if (for_argunemt == TRUE) {
+        if (v1 != NULL && (EXPR_CODE(v1) == LEN_SPEC_ASTERISC || EXPR_CODE(v1) == F_ASTERISK)) {
+            return TRUE;
+        }
+    }
+
+    if (for_assignment) {
+#if 0
+        if (EXPR_CODE(v1) == LEN_SPEC_ASTERISC ||
+            EXPR_CODE(v1) == F08_LEN_SPEC_COLON) {
+            if (is_pointer_assignment && EXPR_CODE(v1) == F08_LEN_SPEC_COLON) {
+                return TRUE;
+            }
+        }
+#endif
+    }
+
+    if (EXPR_CODE(v1) == INT_CONSTANT &&
+        EXPR_CODE(v2) == INT_CONSTANT) {
+        i1 = EXPV_INT_VALUE(v1);
+        i2 = EXPV_INT_VALUE(v2);
+        if (i1 == i2) {
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    }
+    /* CANNOT RECOGNIZE THE VALUE OF EXPV, pass */
+    return TRUE;
+}
+
 
 /*
  * check 2 expvs have the same value
@@ -528,8 +844,10 @@ type_is_compatible(TYPE_DESC tp,TYPE_DESC tq)
  * expects 2 expv appears as type parameter value and are already reduced
  */
 static int
-type_parameter_expv_equals(expv v1, expv v2, int is_pointer_set)
+type_parameter_expv_equals_for_assignment(expv v1, expv v2, int is_pointer_set)
 {
+    return type_parameter_expv_equals(v1, v2, FALSE, FALSE, TRUE, is_pointer_set);
+#if 0
     uint32_t i1, i2;
 
     if (v1 == NULL || v2 == NULL) {
@@ -563,39 +881,204 @@ type_parameter_expv_equals(expv v1, expv v2, int is_pointer_set)
         /* CANNOT RECOGNIZE THE VALUE OF EXPV, pass */
         return TRUE;
     }
+#endif
 }
 
 
 static int
-type_parameter_values_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set)
+type_parameter_expv_equals_for_argument(expv v1, expv v2)
 {
-    ID type_params1, type_params2;
-    ID id1, id2;
+    return type_parameter_expv_equals(v1, v2, FALSE, TRUE, FALSE, FALSE);
+}
 
-    assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
-    assert(tp2 != NULL && TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
 
-    type_params1 = TYPE_TYPE_ACTUAL_PARAMS(tp1);
-    type_params2 = TYPE_TYPE_ACTUAL_PARAMS(tp2);
+int derived_type_is_compatible(TYPE_DESC left, TYPE_DESC right, int for_argunemt);
 
-    FOREACH_ID(id1, type_params1) {
-        id2 = find_ident_head(ID_SYM(id1), type_params2);
-        if (id2 == NULL) {
-            return FALSE;
-        }
+/*
+ * Check types are TKR(type, kind, rank) compatible
+ *
+ * If for_argunemt is TRUE, `left` is the type of dummy argument, and `right` is the type of arcutal argument
+ */
+int
+type_is_compatible(TYPE_DESC left, TYPE_DESC right, int is_strict, int for_argunemt, int for_assignment, int is_pointer_assignment)
+{
+    TYPE_DESC left_basic, right_basic;
 
-        if (!type_parameter_expv_equals(VAR_INIT_VALUE(id1),
-                                        VAR_INIT_VALUE(id2),
-                                        is_pointer_set)) {
-            return FALSE;
+    if (left == NULL || right == NULL) {
+        return FALSE;
+    }
+
+    left_basic = getBaseParameterizedType(left);
+    right_basic = getBaseParameterizedType(right);
+
+    /* type_comparison: */
+
+    if (TYPE_BASIC_TYPE(left_basic) == TYPE_BASIC_TYPE(right_basic)) {
+        goto kind_compatibility;
+    }
+
+    if (IS_STRUCT_TYPE(left_basic) && IS_STRUCT_TYPE(right_basic)) {
+        if (derived_type_is_compatible(left_basic, right_basic, for_argunemt)) {
+            /*
+             * derived_type_is_compatible include kind_compatibility
+             */
+            goto rank_compatibility;
         }
     }
 
+    if (TYPE_BASIC_TYPE(left_basic) == TYPE_GENERIC ||
+        TYPE_BASIC_TYPE(right_basic) == TYPE_GENERIC ||
+        TYPE_BASIC_TYPE(left_basic) == TYPE_GNUMERIC_ALL ||
+        TYPE_BASIC_TYPE(right_basic) == TYPE_GNUMERIC_ALL){
+        goto kind_compatibility;
+    }
+
+    if ((TYPE_BASIC_TYPE(left_basic) == TYPE_DREAL &&
+         TYPE_BASIC_TYPE(right_basic) == TYPE_REAL) ||
+        (TYPE_BASIC_TYPE(left_basic) == TYPE_REAL &&
+         TYPE_BASIC_TYPE(right_basic) == TYPE_DREAL)) {
+        goto kind_compatibility;
+    }
+
+    goto incompatible;
+    
+kind_compatibility:
+    
+    if (TYPE_BASIC_TYPE(left_basic) == TYPE_DREAL) {
+        if (type_is_double(right_basic)) {
+            goto length_compatiblity;
+        }
+    } else if (TYPE_BASIC_TYPE(right_basic) == TYPE_DREAL) {
+        if (type_is_double(left_basic)) {
+            goto length_compatiblity;
+        }
+    } else {
+        if (TYPE_KIND(left_basic) || TYPE_KIND(right_basic)) {
+            if (!type_parameter_expv_equals(TYPE_KIND(left_basic), TYPE_KIND(right_basic), is_strict,
+                                            for_argunemt, for_assignment, is_pointer_assignment))
+                goto incompatible;
+        }
+    }
+    
+length_compatiblity:
+
+    if (TYPE_LENG(left_basic) || TYPE_LENG(right_basic)) {
+        if (TYPE_KIND(left_basic) && TYPE_KIND(right_basic)) {
+            if (!type_parameter_expv_equals(TYPE_LENG(left_basic), TYPE_LENG(right_basic), is_strict,
+                                            for_argunemt, for_assignment, is_pointer_assignment))
+                goto incompatible;
+        }
+    }
+
+rank_compatibility:
+
+    if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
+        goto compatible;
+
+    } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
+         are_dimension_and_shape_conformant_by_type(NULL,
+                                                    left,
+                                                    right,
+                                                    NULL)) {
+        goto compatible;
+    }
+
+incompatible:
+    return FALSE;
+
+compatible:
     return TRUE;
 }
 
 
-static int
+int
+type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right)
+{
+    return type_is_compatible(left, right, TRUE, FALSE, FALSE, FALSE);
+}
+
+#if 0
+int
+type_is_same(TYPE_DESC left, TYPE_DESC right, int strict)
+{
+    expv v1;
+    expv v2;
+
+    BASIC_DATA_TYPE left_base = get_basic_type(left);
+    BASIC_DATA_TYPE right_base = get_basic_type(right);
+
+    if (debug_flag) {
+        fprintf(stderr, "left(base): %s\n",
+                basic_type_name(left_base));
+        fprintf(stderr, "right(base): %s\n",
+                basic_type_name(right_base));
+    }
+
+    if (IS_STRUCT_TYPE(left) && IS_STRUCT_TYPE(right)) {
+        if (!derived_type_is_compatible(left, right)) {
+            return FALSE;
+        }
+    } else {
+        if (left_base != right_base) {
+            return FALSE;
+        }
+
+        if (strict) {
+            if (TYPE_KIND(left) && TYPE_KIND(right)) {
+                v1 = TYPE_KIND(left);
+                v2 = TYPE_KIND(right);
+                if (EXPR_CODE(v1) != INT_CONSTANT &&
+                    EXPR_CODE(v1) != EXPR_CODE(v2)) {
+                    return FALSE;
+                }
+                if (EXPR_CODE(v1) == INT_CONSTANT &&
+                    EXPR_CODE(v2) == INT_CONSTANT) {
+                    if (EXPV_INT_VALUE(v1) != EXPV_INT_VALUE(v2)) {
+                        return FALSE;
+                    }
+                }
+                /* CANNOT RECOGNIZE THE VALUE OF EXPV, through it */
+            }
+
+            if (TYPE_LENG(left) && TYPE_LENG(right)) {
+                v1 = TYPE_LENG(left);
+                v2 = TYPE_LENG(right);
+                if (EXPR_CODE(v1) != INT_CONSTANT &&
+                    EXPR_CODE(v1) != EXPR_CODE(v2)) {
+                    return FALSE;
+                }
+                if (EXPR_CODE(v1) == INT_CONSTANT &&
+                    EXPR_CODE(v2) == INT_CONSTANT) {
+                    if (EXPV_INT_VALUE(v1) != EXPV_INT_VALUE(v2)) {
+                        return FALSE;
+                    }
+                }
+                /* CANNOT RECOGNIZE THE VALUE OF EXPV, through it */
+            }
+        }
+    }
+
+
+    if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
+        return TRUE;
+
+    } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
+         are_dimension_and_shape_conformant_by_type(NULL,
+                                                    left,
+                                                    right,
+                                                    NULL)) {
+        return TRUE;
+
+    }
+
+    return FALSE;
+}
+#endif
+
+/*
+ * Compare derived-type by their tagnames
+ */
+int
 compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
 {
     ID name1, name2;
@@ -654,6 +1137,342 @@ compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
 
 
 /*
+ * Check `parent` and `child` is the same derived-type or
+ * `parent` is the parent type of `child`
+ */
+int
+type_is_parent_type(TYPE_DESC parent, TYPE_DESC child)
+{
+    if (parent == NULL || child == NULL) {
+        return FALSE;
+    }
+
+    parent = getBaseParameterizedType(parent);
+    child = getBaseParameterizedType(child);
+
+    if (compare_derived_type_name(parent, child)) {
+        return TRUE;
+    } else if (TYPE_PARENT(child)) {
+        return type_is_parent_type(parent, TYPE_PARENT_TYPE(child));
+    }
+
+    return FALSE;
+}
+
+
+static int
+derived_type_parameter_values_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set)
+{
+    ID type_params1, type_params2;
+    ID id1, id2;
+
+    assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
+    assert(tp2 != NULL && TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
+
+    type_params1 = TYPE_TYPE_ACTUAL_PARAMS(tp1);
+    type_params2 = TYPE_TYPE_ACTUAL_PARAMS(tp2);
+
+    FOREACH_ID(id1, type_params1) {
+        id2 = find_ident_head(ID_SYM(id1), type_params2);
+        if (id2 == NULL) {
+            return FALSE;
+        }
+
+        if (!type_parameter_expv_equals_for_assignment(VAR_INIT_VALUE(id1),
+                                        VAR_INIT_VALUE(id2),
+                                        is_pointer_set)) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+
+static int
+derived_type_parameter_values_is_compatible(TYPE_DESC tp1, TYPE_DESC tp2, int for_argunemt)
+{
+    ID type_params1, type_params2;
+    ID id1, id2;
+
+    assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
+    assert(tp2 != NULL && TYPE_BASIC_TYPE(tp2) == TYPE_STRUCT);
+
+    type_params1 = TYPE_TYPE_ACTUAL_PARAMS(tp1);
+    type_params2 = TYPE_TYPE_ACTUAL_PARAMS(tp2);
+
+    FOREACH_ID(id1, type_params1) {
+        id2 = find_ident_head(ID_SYM(id1), type_params2);
+        if (id2 == NULL) {
+            return FALSE;
+        }
+
+        if (EXPR_CODE(VAR_INIT_VALUE(id1)) == LEN_SPEC_ASTERISC) {
+            continue;
+        }
+
+        if (!type_parameter_expv_equals_for_argument(VAR_INIT_VALUE(id1),
+                                        VAR_INIT_VALUE(id2))) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+
+/*
+ * Check compatiblity of types with type parameters
+ */
+int
+derived_type_is_compatible(TYPE_DESC left, TYPE_DESC right, int for_argunemt)
+{
+    if (!compare_derived_type_name(left, right)) {
+        if (TYPE_IS_CLASS(left) && TYPE_PARENT(right)) {
+            /*
+             * compare the parent
+             */
+            return derived_type_is_compatible(left, TYPE_PARENT_TYPE(right), for_argunemt);
+        }
+    } else {
+        if (TYPE_TYPE_PARAM_VALUES(left) == NULL &&
+            TYPE_TYPE_PARAM_VALUES(right) == NULL) {
+            return TRUE;
+        } else {
+            if (derived_type_parameter_values_is_compatible(left, right, for_argunemt)) {
+                if (debug_flag) { fprintf(debug_fp," compatible\n"); }
+                return TRUE;
+            }
+            if (debug_flag) { fprintf(debug_fp," not compatible\n"); }
+        }
+    }
+    return FALSE;
+}
+
+
+/*
+ * Check type-bound procedures have the same type except pass arguments.
+ */
+int
+type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
+{
+    int has_pass1;
+    int has_pass2;
+    int skip_this_loop = FALSE;
+    SYMBOL pass_arg1 = NULL;
+    SYMBOL pass_arg2 = NULL;
+    TYPE_DESC ftp1;
+    TYPE_DESC ftp2;
+    ID args1;
+    ID args2;
+    ID arg1;
+    ID arg2;
+
+    if (tbp1 == NULL || tbp2 == NULL) {
+        // may never reach
+        return FALSE;
+    }
+
+    ftp1 = TYPE_REF(ID_TYPE(tbp1));
+    ftp2 = TYPE_REF(ID_TYPE(tbp2));
+
+    args1 = FUNCTION_TYPE_ARGS(ftp1);
+    args2 = FUNCTION_TYPE_ARGS(ftp2);
+
+    if (debug_flag) {
+        fprintf(debug_fp, "comparing '%s' and '%s'\n",
+                SYM_NAME(ID_SYM(TBP_BINDING(tbp1)?:tbp1)),
+                SYM_NAME(ID_SYM(TBP_BINDING(tbp2)?:tbp2)));
+    }
+
+    /*
+     * compare return types
+     */
+    if (!type_is_strict_compatible(FUNCTION_TYPE_RETURN_TYPE(ftp1),
+                                   FUNCTION_TYPE_RETURN_TYPE(ftp2))) {
+        if (debug_flag) {
+            fprintf(debug_fp, "return types are not match\n");
+        }
+        return FALSE;
+    }
+
+    /*
+     * compare their argument length
+     */
+
+    if (TYPE_BOUND_PROCEDURE_PASS & TBP_BINDING_ATTRS(tbp1)) {
+        has_pass1 = TRUE;
+        if (TBP_BINDING(tbp1)) {
+            pass_arg1 = ID_SYM(TBP_BINDING(tbp1));
+        }
+    }
+
+    if (TYPE_BOUND_PROCEDURE_PASS & TBP_BINDING_ATTRS(tbp2)) {
+        has_pass2 = TRUE;
+        if (TBP_BINDING(tbp2)) {
+            pass_arg2 = ID_SYM(TBP_BINDING(tbp2));
+        }
+    }
+
+    for (arg1 = args1, arg2 = args2; arg1 != NULL && arg2 != NULL; skip_this_loop = FALSE) {
+        if (debug_flag) {
+            fprintf(debug_fp, "comparing argument '%s' and '%s'\n",
+                    SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
+        }
+
+        if (has_pass1) {
+            if (pass_arg1 == NULL && arg1 == args1) {
+                /* If PASS is specified without a name, the first argument is a PASS argument */
+                skip_this_loop = TRUE;
+                arg1 = ID_NEXT(arg1);
+            } else if (pass_arg1 != NULL && pass_arg1 == ID_SYM(arg1)) {
+                /* If PASS is specified with a name, the argument of that name is a PASS argument */
+                skip_this_loop = TRUE;
+                arg1 = ID_NEXT(arg1);
+            }
+        }
+        if (has_pass2) {
+            if (pass_arg2 == NULL && arg2 == args2) {
+                skip_this_loop = TRUE;
+                arg2 = ID_NEXT(arg2);
+            } else if (pass_arg2 != NULL && pass_arg2 == ID_SYM(arg2)) {
+                skip_this_loop = TRUE;
+                arg2 = ID_NEXT(arg2);
+            }
+        }
+
+        if (skip_this_loop) {
+            /*
+             * arg1 or arg2 is the PASS argument, skip compare them
+             */
+            continue;
+        }
+
+        if (!type_is_strict_compatible(ID_TYPE(arg1), ID_TYPE(arg2))) {
+            if (debug_flag) {
+                fprintf(debug_fp, "argument types are not match ('%s' and '%s')\n",
+                        SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
+            }
+            return FALSE;
+        }
+
+        arg1 = ID_NEXT(arg1);
+        arg2 = ID_NEXT(arg2);
+    }
+
+    if (arg1 != NULL || arg2 != NULL) {
+        /* arugment length are not same */
+        if (debug_flag) {
+            fprintf(debug_fp, "argument length not match\n");
+        }
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+/*
+ * Update a function type, decide the type of its arugments.
+ */
+void
+function_type_udpate(TYPE_DESC ftp, ID idList)
+{
+    ID id;
+    ID arg;
+
+    fix_array_dimensions(FUNCTION_TYPE_RETURN_TYPE(ftp));
+
+    FOREACH_ID(arg, FUNCTION_TYPE_ARGS(ftp)) {
+        id = find_ident_head(ID_SYM(arg), idList);
+        implicit_declaration(id);
+        ID_TYPE(arg) = ID_TYPE(id);
+        fix_array_dimensions(ID_TYPE(arg));
+    }
+}
+
+
+/*
+ * Check the function type is applicable to actual arugments.
+ */
+/*
+ * This function does not consider named argument,
+ * so this function is insufficient normal function/subroutine call.
+ */
+int
+function_type_is_appliable(TYPE_DESC ftp, expv actual_args)
+{
+    expv actual_arg = NULL;
+    ID dummy_arg;
+    ID dummy_args;
+    list actual_lp;
+    TYPE_DESC tbp_tp = NULL;
+
+    if (ftp == NULL) {
+        return FALSE;
+    }
+
+    if (TYPE_REF(ftp) != NULL && FUNCTION_TYPE_IS_TYPE_BOUND(ftp)) {
+        /* ftp is the type of type-bound procedure */
+        tbp_tp = ftp;
+        ftp = TYPE_REF(tbp_tp);
+        if (ftp == NULL) {
+            /* error("type-bound procedure "); */
+            return FALSE;
+        }
+    }
+
+    dummy_args = FUNCTION_TYPE_ARGS(ftp);
+
+    actual_lp = EXPR_LIST(actual_args);
+    actual_arg = actual_lp ? LIST_ITEM(actual_lp) : NULL;
+
+    FOREACH_ID(dummy_arg, dummy_args) {
+
+        if (debug_flag)
+            fprintf(debug_fp, "dummy args is '%s'\n", SYM_NAME(ID_SYM(dummy_arg)));
+
+        /* skip type check for PASS argument */
+        if (tbp_tp != NULL && TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tbp_tp)) {
+            if (TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp)) {
+                if (ID_SYM(dummy_arg) == ID_SYM(TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp_tp))) {
+                    continue;
+                }
+            } else {
+                /* If the PASS argument is not specified, the first arugment is the PASS argument*/
+                if (dummy_arg == dummy_args) {
+                    continue;
+                }
+            }
+        }
+
+        if (actual_arg == NULL) {
+            /* argument number mismatch */
+            return FALSE;
+        }
+
+        if (!type_is_strict_compatible(EXPV_TYPE(actual_arg), ID_TYPE(dummy_arg))) {
+            return FALSE;
+        }
+
+        if (LIST_NEXT(actual_lp) != NULL) {
+            actual_lp = LIST_NEXT(actual_lp);
+            actual_arg = LIST_ITEM(actual_lp);
+        } else {
+            actual_lp = NULL;
+            actual_arg = NULL;
+        }
+    }
+
+    if (actual_lp != NULL) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+/*
  * Check type compatibility of derived-types
  */
 int
@@ -692,7 +1511,7 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
     }
     if (debug_flag) fprintf(debug_fp," not match\n");
 
-    btp2 = getBaseStructType(tp2);
+    btp2 = getBaseParameterizedType(tp2);
 
     if (debug_flag) fprintf(debug_fp,"* compare type names\n");
     if (!compare_derived_type_name(tp1, tp2)) {
@@ -713,7 +1532,7 @@ struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_po
         return TRUE;
     } else {
         if (debug_flag) fprintf(debug_fp,"* compare type parameters");
-        if (type_parameter_values_is_compatible_for_assignment(tp1, tp2, is_pointer_set)) {
+        if (derived_type_parameter_values_is_compatible_for_assignment(tp1, tp2, is_pointer_set)) {
             if (debug_flag) fprintf(debug_fp," match\n");
             return TRUE;
         }

@@ -53,6 +53,27 @@ enum XfError
         }
     },
 
+    XCODEML_NODE_MISSING
+    {
+        @Override
+        public String message()
+        {
+            return "Node '%1$s' requires node '%2$s' as a child.";
+        }
+
+        /**
+         * @param args args[0]: Parent node name. args[1]: Child node name.
+         */
+        @Override
+        public String format(Object... args)
+        {
+            assert (args.length == 2);
+            assert (args[0] instanceof String);
+            assert (args[1] instanceof String);
+            return String.format(message(), args);
+        }
+    },
+
     XCODEML_NAME_NOT_FOUND
     {
         @Override

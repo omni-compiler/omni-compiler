@@ -147,6 +147,8 @@ getTypeEntry(HashTable * ht, const char * typeId) {
             TYPE_BASIC_TYPE(tp) = TYPE_LOGICAL;
         } else if (strcmp(typeId, "Fnamelist") == 0) {
             TYPE_BASIC_TYPE(tp) = TYPE_NAMELIST;
+        } else if (strcmp(typeId, "Fvoid") == 0) {
+            TYPE_BASIC_TYPE(tp) = TYPE_VOID;
         } else {
             e = CreateHashEntry(ht, typeId, &isNew);
             SetHashValue(e, tep);
@@ -179,16 +181,29 @@ updateTypeDesc(HashTable * ht, const char * typeId, TYPE_DESC tp) {
 #endif
 
 static void
-setReturnType(HashTable * ht, TYPE_DESC tp, const char * rtid)
+setReturnType(HashTable * ht, TYPE_DESC ftp, const char * rtid)
 {
     if (strcmp(rtid, "Fvoid") == 0) {
-        TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
+        TYPE_BASIC_TYPE(ftp) = TYPE_SUBR;
+        FUNCTION_TYPE_RETURN_TYPE(ftp) = type_VOID;
+        FUNCTION_TYPE_SET_SUBROUTINE(ftp);
+
     } else if (strncmp(rtid, "V", 1) == 0) {
-        TYPE_BASIC_TYPE(tp) = TYPE_GENERIC;
-        TYPE_REF(tp) = getTypeDesc(ht, rtid);
+        TYPE_DESC tp = getTypeDesc(ht, rtid);
+        TYPE_BASIC_TYPE(ftp) = TYPE_GENERIC;
+        FUNCTION_TYPE_SET_GENERIC(ftp);
+        FUNCTION_TYPE_RETURN_TYPE(ftp) = tp;
+
+        if (tp && TYPE_REF(tp) && TYPE_BASIC_TYPE(TYPE_REF(tp)) == TYPE_VOID) {
+            TYPE_BASIC_TYPE(ftp) = TYPE_SUBR;
+        } else {
+            TYPE_BASIC_TYPE(ftp) = TYPE_FUNCTION;
+        }
+
     } else {
-        TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
-        TYPE_REF(tp) = getTypeDesc(ht, rtid);
+        TYPE_BASIC_TYPE(ftp) = TYPE_FUNCTION;
+        FUNCTION_TYPE_SET_FUNCTION(ftp);
+        FUNCTION_TYPE_RETURN_TYPE(ftp) = getTypeDesc(ht, rtid);
     }
 }
 
@@ -1657,11 +1672,12 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
  * input <name> node with type attribute appears in <params>
  */
 static int
-input_param(xmlTextReaderPtr reader, HashTable * ht, EXT_ID ep)
+input_param(xmlTextReaderPtr reader, HashTable * ht, EXT_ID ep, TYPE_DESC ftp)
 {
     TYPE_DESC tp = NULL;
     SYMBOL s;
     expv v;
+    ID ftp_arg;
 
     if (!input_name_with_type(reader, ht, TRUE, &s, &tp))
         return FALSE;
@@ -1678,6 +1694,20 @@ input_param(xmlTextReaderPtr reader, HashTable * ht, EXT_ID ep)
 
     list_put_last(EXT_PROC_ARGS(ep), v);
 
+    ftp_arg = new_ident_desc(s);
+    ID_TYPE(ftp_arg) = tp;
+
+    if (FUNCTION_TYPE_ARGS(ftp) == NULL) {
+        FUNCTION_TYPE_ARGS(ftp) = ftp_arg;
+    } else {
+        ID last = NULL;
+        last = FUNCTION_TYPE_ARGS(ftp);
+        while (ID_NEXT(last) != NULL) {
+            last = ID_NEXT(last);
+        }
+        ID_NEXT(last) = ftp_arg;
+    }
+
     return TRUE;
 }
 
@@ -1688,6 +1718,7 @@ static int
 input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
 {
     TYPE_ENTRY tep;
+    TYPE_DESC ftp = NULL;
     char * typeId;
     char * attr;
     int isEmpty;
@@ -1702,13 +1733,16 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
     tep->hasExtID = TRUE;
     /* SYMBOL is set later in <id> */
     tep->ep = new_external_id(NULL);
+    ftp = tep->tp;
+
     EXT_PROC_ARGS(tep->ep) = EMPTY_LIST;
     EXT_IS_DEFINED(tep->ep) = TRUE;
     EXT_IS_OFMODULE(tep->ep) = FALSE;
     EXT_TAG(tep->ep) = STG_EXT;
 
-    setReturnType(ht, tep->tp, (char *) xmlTextReaderGetAttribute(reader,
-                               BAD_CAST "return_type"));
+    setReturnType(ht, ftp,
+                  (char *) xmlTextReaderGetAttribute(reader,
+                                                     BAD_CAST "return_type"));
 
     attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_program");
     if (attr != NULL) {
@@ -1721,28 +1755,28 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
         EXT_PROC_CLASS(tep->ep) = EP_INTRINSIC;
         free(attr);
     }
-    
+
     attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_recursive");
     if (attr != NULL) {
-        TYPE_SET_RECURSIVE(tep->tp);
+        TYPE_SET_RECURSIVE(ftp);
         free(attr);
     }
 
     attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_pure");
     if (attr != NULL) {
-        TYPE_SET_PURE(tep->tp);
+        TYPE_SET_PURE(ftp);
         free(attr);
     }
 
     attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_elemental");
     if (attr != NULL) {
-        TYPE_SET_ELEMENTAL(tep->tp);
+        TYPE_SET_ELEMENTAL(ftp);
         free(attr);
     }
 
     attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_external");
     if (attr != NULL) {
-        TYPE_SET_EXTERNAL(tep->tp);
+        TYPE_SET_EXTERNAL(ftp);
         free(attr);
     }
 
@@ -1755,12 +1789,14 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "params"))
         return FALSE;
 
+    FUNCTION_TYPE_HAS_EXPLICIT_ARGS(ftp) = TRUE;
+
     while (TRUE) {
         if (xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT))
             /* must be </params> */
             break;
 
-        if (!input_param(reader, ht, tep->ep))
+        if (!input_param(reader, ht, tep->ep, ftp))
             return FALSE;
     }
 
@@ -1927,6 +1963,258 @@ input_typeParams(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC struct_tp)
     return TRUE;
 }
 
+
+static int
+input_typeBoundProcedure(xmlTextReaderPtr reader, HashTable * ht, ID * id)
+{
+    char * name;
+    char * typeId;
+    char * str;
+    ID binding = NULL;
+    ID pass_arg = NULL;
+    TYPE_ENTRY tep;
+    TYPE_DESC ftp;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
+                       "typeBoundProcedure"))
+        return FALSE;
+
+    typeId = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    if (typeId == NULL)
+        return FALSE;
+
+    tep = getTypeEntry(ht, typeId);
+    ftp = tep->tp;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name"))
+        return FALSE;
+
+    name = (char *)xmlTextReaderConstValue(reader);
+    if (name != NULL) {
+        name = strdup(name);
+    }
+    if (!xmlSkipWhiteSpace(reader)) {
+        return FALSE;
+    }
+
+    *id = new_ident_desc(find_symbol(name));
+    ID_CLASS(*id) = CL_TYPE_BOUND_PROC;
+    ID_TYPE(*id) = type_bound_procedure_type();
+    TYPE_REF(ID_TYPE(*id)) = ftp;
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "pass");
+    if (str != NULL) {
+        if (strcmp("pass", str) == 0) {
+            TBP_BINDING_ATTRS(*id) |= TYPE_BOUND_PROCEDURE_PASS;
+        } else if (strcmp("nopass", str) == 0) {
+            TBP_BINDING_ATTRS(*id) |= TYPE_BOUND_PROCEDURE_NOPASS;
+        } else {
+            /* Unexpected */
+            return FALSE;
+        }
+        free(str);
+    }
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "pass_arg_name");
+    if (str != NULL) {
+        pass_arg = new_ident_desc(find_symbol(str));
+        free(str);
+    }
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_non_overridable");
+    if (str != NULL) {
+        TBP_BINDING_ATTRS(*id) |= TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE;
+        free(str);
+    }
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_deferred");
+    if (str != NULL) {
+        TBP_BINDING_ATTRS(*id) |= TYPE_BOUND_PROCEDURE_DEFERRED;
+        free(str);
+    }
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_public");
+    if (str != NULL) {
+        TYPE_SET_PUBLIC(*id);
+        free(str);
+    }
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_private");
+    if (str != NULL) {
+        TYPE_SET_PRIVATE(*id);
+        free(str);
+    }
+
+    TBP_PASS_ARG(*id) = pass_arg;
+    TBP_BINDING(*id) = binding;
+    TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(ID_TYPE(*id)) =
+            TBP_BINDING_ATTRS(*id) & TYPE_BOUND_PROCEDURE_PASS;
+    TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(ID_TYPE(*id)) = pass_arg;
+
+    if (!xmlSkipWhiteSpace(reader))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "binding"))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name"))
+        return FALSE;
+
+    name = (char *)xmlTextReaderConstValue(reader);
+    if (name != NULL) {
+        name = strdup(name);
+    }
+    if (!xmlSkipWhiteSpace(reader)) {
+        return FALSE;
+    }
+
+    binding = new_ident_desc(find_symbol(name));
+    TBP_BINDING(*id) = binding;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name"))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "binding"))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT,
+                       "typeBoundProcedure"))
+        return FALSE;
+
+    return TRUE;
+}
+
+
+static int
+input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
+{
+    char * name;
+    char * str;
+    ID binding = NULL;
+    ID pass_arg = NULL;
+    ID last_ip = NULL;
+    uint32_t binding_attr_flags = TYPE_BOUND_PROCEDURE_IS_GENERIC;
+
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
+                       "typeBoundProcedure"))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name"))
+        return FALSE;
+
+    name = (char *)xmlTextReaderConstValue(reader);
+    if (name != NULL) {
+        name = strdup(name);
+    }
+    if (!xmlSkipWhiteSpace(reader)) {
+        return FALSE;
+    }
+
+    *id = new_ident_desc(find_symbol(name));
+    TBP_BINDING_ATTRS(*id) |= TYPE_BOUND_PROCEDURE_IS_GENERIC;
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_public");
+    if (str != NULL) {
+        TYPE_SET_PUBLIC(*id);
+        free(str);
+    }
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_private");
+    if (str != NULL) {
+        TYPE_SET_PRIVATE(*id);
+        free(str);
+    }
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_operator");
+    if (str != NULL) {
+        binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
+    }
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_assignment");
+    if (str != NULL) {
+        binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT;
+    }
+
+#if 0
+    /* NOT IMPLEMENETED YET */
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
+#endif
+
+    TBP_PASS_ARG(*id) = pass_arg;
+    TBP_BINDING(*id) = NULL;
+    TBP_BINDING_ATTRS(*id) = binding_attr_flags;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "binding"))
+        return FALSE;
+
+    while (TRUE) {
+        if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name"))
+            return FALSE;
+
+        name = (char *)xmlTextReaderConstValue(reader);
+        if (name != NULL) {
+            name = strdup(name);
+        }
+        if (!xmlSkipWhiteSpace(reader)) {
+            return FALSE;
+        }
+
+        binding = new_ident_desc(find_symbol(name));
+        ID_LINK_ADD(binding, TBP_BINDING(*id), last_ip);
+
+        if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name"))
+            return FALSE;
+
+        if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "binding"))
+            break;
+    }
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "binding"))
+        return FALSE;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT,
+                       "typeBoundProcedure"))
+        return FALSE;
+
+    return TRUE;
+}
+
+
+static int
+input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC struct_tp)
+{
+    ID mem = NULL;
+    ID last_ip = NULL;
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "typeBoundProcedures"))
+        return FALSE;
+
+    while (TRUE) {
+        if (xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT))
+            /* must be </typeParams> */
+            break;
+
+        if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
+                         "typeBoundProcedure")) {
+            if (!input_typeBoundProcedure(reader, ht, &mem))
+                return FALSE;
+        } else if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
+                                "typeBoundGenericProcedure")) {
+            if (!input_typeBoundGenericProcedure(reader, ht, &mem))
+                return FALSE;
+        }
+
+        ID_LINK_ADD(mem, TYPE_MEMBER_LIST(struct_tp), last_ip);
+    }
+
+
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT,
+                       "typeBoundProcedures"))
+        return FALSE;
+
+    return TRUE;
+}
+
+
 /**
  * input <FstructType> node
  */
@@ -1935,7 +2223,6 @@ input_FstructType(xmlTextReaderPtr reader, HashTable * ht)
 {
     TYPE_DESC tp;
     ID tail = NULL;
-
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FstructType"))
         return FALSE;
@@ -1967,6 +2254,11 @@ input_FstructType(xmlTextReaderPtr reader, HashTable * ht)
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "symbols"))
         return FALSE;
+
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "typeBoundProcedures")) {
+        if (!input_typeBoundProcedures(reader, ht, tp))
+            return FALSE;
+    }
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FstructType"))
         return FALSE;
@@ -2383,6 +2675,7 @@ input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
             if (EXT_PROC_TYPE(tep->ep) == NULL) {
                 EXT_PROC_TYPE(tep->ep) = tep->tp;
             }
+            FUNCTION_TYPE_SET_MOUDLE_PROCEDURE(tep->tp);
             new_ep = new_external_id(s);
             *new_ep = *tep->ep;
             EXT_NEXT(new_ep) = NULL;
@@ -2719,7 +3012,7 @@ input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable * ht, ID id_list)
     EXT_IS_BLANK_NAME(ep) = FALSE;
     EXT_PROC_CLASS(ep) = EP_INTERFACE;
     EXT_PROC_INTERFACE_CLASS(ep) = INTF_DECL;
-    
+
     if (is_operator != NULL) {
         EXT_PROC_INTERFACE_CLASS(ep) = INTF_OPERATOR;
         free(is_operator);
@@ -2818,6 +3111,43 @@ input_interfaceDecls(xmlTextReaderPtr reader, HashTable * ht,
     return TRUE;
 }
 
+static int
+update_struct_type(HashTable * ht)
+{
+    HashEntry * e;
+    HashSearch s;
+    TYPE_ENTRY tep;
+    TYPE_DESC tp;
+    ID mem;
+
+    for (e = FirstHashEntry(ht, &s); e != NULL; e = NextHashEntry(&s)) {
+        tep = GetHashValue(e);
+        tp = tep->tp;
+        if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
+            FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
+                /*
+                 * generic type bound procedure
+                 */
+                ID binding;
+                ID bindto;
+                FOREACH_ID(binding, TBP_BINDING(mem)) {
+                    bindto = find_struct_member(tp, ID_SYM(binding));
+                    if (bindto == NULL ||
+                        ID_CLASS(bindto) != CL_TYPE_BOUND_PROC ||
+                        TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
+                        return FALSE;
+                    }
+                    ID_TYPE(binding) = ID_TYPE(bindto);
+                }
+                TYPE_BOUND_GENERIC_TYPE_GENERICS(ID_TYPE(mem)) = TBP_BINDING(mem);
+            }
+        }
+    }
+
+    return TRUE;
+}
+
+
 /**
  * input <OmniFortranModule> node
  */
@@ -2890,6 +3220,12 @@ input_module(xmlTextReaderPtr reader, struct module * mod, int is_intrinsic)
         return FALSE;
 
     mod->is_intrinsic = is_intrinsic;
+
+    /*
+     * Update insuffcient types
+     */
+    if (!update_struct_type(&ht))
+        return FALSE;
 
     free(version);
     return TRUE;
