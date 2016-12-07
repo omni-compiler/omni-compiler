@@ -2127,7 +2127,10 @@ public class XMPrewriteExpr {
                                                   String loopIndexName, Xobject arrayRef) throws XMPexception
   {
     if (arrayRef.Opcode() == Xcode.VAR) {
-      return calcShadow(t, ti, a, ai, arrayRef);
+      if (a.getShadowAt(ai).getType() != XMPshadow.SHADOW_FULL ||
+	  loopIndexName.equals(arrayRef.getString())) {
+	return calcShadow(t, ti, a, ai, arrayRef);
+      }
     }
 
     topdownXobjectIterator iter = new topdownXobjectIterator(arrayRef);
