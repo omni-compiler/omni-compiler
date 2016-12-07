@@ -1461,7 +1461,7 @@ static void _fjrdma_scalar_mput_do(const size_t target_rank, uint64_t* raddrs, u
 /*               [OUT] **addr         : Double pointer of new coarray  */
 /*               [IN]  coarray_size   : Coarray size                   */
 /***********************************************************************/
-void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
+void _XMP_fjrdma_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
 {
   *addr = _XMP_alloc(coarray_size);
   _XMP_fjrdma_regmem_do(coarray_desc, *addr, coarray_size);
