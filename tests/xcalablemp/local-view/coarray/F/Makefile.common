@@ -19,10 +19,10 @@ RESULT7g=$(RESULT:.result=.result7g)
 	xmpf90 $(OPT) -o $@ $<
 
 .f90.x4:
-	xmpf90 $(OPT) --Wx-fcoarray=4 -o $@ $<
+	xmpf90 $(OPT) --debug --Wx-fcoarray=4 -o $@ $<
 
 .F90.x4:
-	xmpf90 $(OPT) --Wx-fcoarray=4 -o $@ $<
+	xmpf90 $(OPT) --debug --Wx-fcoarray=4 -o $@ $<
 
 .c.x:
 	xmpcc $(OPT) -o $@ $<

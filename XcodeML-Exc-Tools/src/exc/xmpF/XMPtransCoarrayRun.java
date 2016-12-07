@@ -50,6 +50,7 @@ public class XMPtransCoarrayRun
   final static String COARRAY_MALLOC_NAME    = "xmpf_coarray_malloc_generic";
   final static String COARRAY_REGMEM_NAME    = "xmpf_coarray_regmem_generic";
   final static String COARRAY_DEALLOC_NAME   = "xmpf_coarray_dealloc_generic";
+  final static String COARRAY_UNREGMEM_NAME  = "xmpf_coarray_unregmem_generic";
   final static String NUM_IMAGES_NAME        = "xmpf_num_images_generic";
   final static String THIS_IMAGE_NAME        = "xmpf_this_image_generic";
   final static String COBOUND_NAME           = "xmpf_cobound_generic";
@@ -1300,9 +1301,9 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_set_coshape(descptr_V3, 2, k1, k2, 0)      ! m.
         call xmpf_coarray_set_varname(descptr_V3, "V3", 2)           ! n.
         deallocate (V3)                           ! keep original    ! j4.*
-        call xmpf_coarray_dealloc(descptr_V3)                        ! j4.*
+        call xmpf_coarray_unregmem(descptr_V3)                       ! j4.*
 
-        if (allocated(V3)) write(*,*) "yes"       ! keep 'allocated' ! l4.
+        if (allocated(V3)) write(*,*) "yes"       ! keep 'allocated' ! l2.
     --------------------------------------------
   */
   private void transExecPart() {
@@ -1323,7 +1324,8 @@ public class XMPtransCoarrayRun
     convDellocateStmts(visibleCoarrays);
 
     // l2. fake intrinsic 'allocatable' (allocatable coarrays only)
-    replaceIntrinsicCalls2(visibleCoarrays);
+    if (useMalloc) 
+      replaceIntrinsicCalls2(visibleCoarrays);
 
     // i. initialization/finalization for auto-syncall and auto-deallocate
     //    and initialization of descPtr (only Ver.6)
@@ -2596,7 +2598,11 @@ public class XMPtransCoarrayRun
 
     Xobject args = Xcons.List(coarray.getDescPointerId(),
                               Xcons.FvarRef(coarray.getIdent()));
-    String subrName = COARRAY_DEALLOC_NAME;
+    String subrName;
+    if (useMalloc)
+      subrName = COARRAY_DEALLOC_NAME;
+    else
+      subrName = COARRAY_UNREGMEM_NAME;
     if (args.hasNullArg())
       XMP.fatal("generated null argument for " + subrName +
                 "(makeStmt_coarrayDealloc)");

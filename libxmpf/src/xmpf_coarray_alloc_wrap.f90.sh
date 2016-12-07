@@ -155,7 +155,35 @@ print_subr_dealloc() {
  case "${DIM}" in
  0) echo    "        ${typekind}, pointer, intent(inout) :: var" ;;
  1) echo    "        ${typekind}, pointer, intent(inout) :: var(:)" ;;
- *) echo -n "        ${typekind}, pointer, intent(inout) :: var(:" 
+ *) echo -n "        ${typekind}, pointer, intent(inout) :: var(:"
+    for i in `seq 2 ${DIM}`; do
+        echo -n ",:"
+    done
+    echo    ")" ;;
+ esac
+
+# START BODY OF PROCEDURE
+    echo    "        nullify(var)"
+    echo    "        call xmpf_coarray_free(descptr)"
+    echo    "        return"
+# END BODY OF PROCEDURE
+
+    echo    "      end subroutine"
+    echo
+}
+
+
+print_subr_unregmem() {
+    tk=$1
+    typekind=$2
+
+    echo    "      subroutine xmpf_coarray_unregmem${DIM}d_${tk}(descptr, var)"
+    echo    "        integer(8), intent(in) :: descptr"
+
+ case "${DIM}" in
+ 0) echo    "        ${typekind}, intent(inout) :: var" ;;
+ 1) echo    "        ${typekind}, intent(inout) :: var(:)" ;;
+ *) echo -n "        ${typekind}, intent(inout) :: var(:"
     for i in `seq 2 ${DIM}`; do
         echo -n ",:"
     done
@@ -256,6 +284,31 @@ do
     print_subr_dealloc z8  "complex(4)"      
     print_subr_dealloc z16 "complex(8)"      
     print_subr_dealloc cn  "character(*)" 
+done
+
+echo ''
+echo '!-----------------------------------------------------------------------'
+echo '!     xmpf_coarray_unregmem_generic'
+echo '!-----------------------------------------------------------------------'
+echo ''
+
+for DIM in `seq 0 7`
+do
+    if test "sxace-nec-superux" != "$TARGET"; then    ## integer(2) cannot be used on SX-ACE
+	print_subr_unregmem i2  "integer(2)"
+    fi
+    print_subr_unregmem i4  "integer(4)"      
+    print_subr_unregmem i8  "integer(8)"
+    if test "sxace-nec-superux" != "$TARGET"; then    ## logical(2) cannot be used on SX-ACE
+	print_subr_unregmem l2  "logical(2)"
+    fi
+    print_subr_unregmem l4  "logical(4)"      
+    print_subr_unregmem l8  "logical(8)"      
+    print_subr_unregmem r4  "real(4)"         
+    print_subr_unregmem r8  "real(8)"         
+    print_subr_unregmem z8  "complex(4)"      
+    print_subr_unregmem z16 "complex(8)"      
+    print_subr_unregmem cn  "character(*)" 
 done
 
 exit

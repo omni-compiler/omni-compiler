@@ -5,7 +5,8 @@ NPE=3   # For image_index0.x and this_iamge.x, NPE>=8 is suitable.
 $NPE=8
 #NPE=18
 
-OUT_decl= decl3.x decl1.x
+OUT_decl= decl3.x 
+# decl1.x scalar coarray cannot be allocatable in Ver.4
 OUT_size= size1.x size1-2.x #sample #size1-err
 #OUT_rt  =  inquiry
 OUT_NG =  allo2NG.x
