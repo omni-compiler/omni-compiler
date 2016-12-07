@@ -646,7 +646,7 @@ void _XMP_coarray_rdma_coarray_set_n(const int n,
    Set transfer 1-dim array information
  */
 void _XMP_coarray_rdma_array_set_1(const long start1, const long length1, const long stride1,
-				   const long elmts1, const long distance1)
+				   const long elmts1, const size_t elmt)
 {
   _transfer_array_elmts = length1;
   _array_dims           = 1;
@@ -656,16 +656,15 @@ void _XMP_coarray_rdma_array_set_1(const long start1, const long length1, const 
   _array[0].length      = length1;
   _array[0].stride      = ((length1 == 1)? 1 : stride1);
   _array[0].elmts       = elmts1;
-  _array[0].distance    = distance1;
+  _array[0].distance    = (long)elmt;
 }
 
 /**
    Set transfer 2-dim array information
 */
-void _XMP_coarray_rdma_array_set_2(const long start1, const long length1, const long stride1,
-				   const long elmts1, const long distance1,
-                                   const long start2, const long length2, const long stride2,
-				   const long elmts2, const long distance2)
+void _XMP_coarray_rdma_array_set_2(const long start1, const long length1, const long stride1, const long elmts1, 
+                                   const long start2, const long length2, const long stride2, const long elmts2,
+				   const size_t elmt)
 {
   _transfer_array_elmts = length1 * length2;
   _array_dims           = 2;
@@ -675,24 +674,22 @@ void _XMP_coarray_rdma_array_set_2(const long start1, const long length1, const 
   _array[0].length      = length1;
   _array[0].stride      = ((length1 == 1)? 1 : stride1);
   _array[0].elmts       = elmts1;
-  _array[0].distance    = distance1;
+  _array[0].distance    = elmts2 * (long)elmt;
 
   _array[1].start       = start2;
   _array[1].length      = length2;
   _array[1].stride      = ((length2 == 1)? 1 : stride2);
   _array[1].elmts       = elmts2;
-  _array[1].distance    = distance2;
+  _array[1].distance    = (long)elmt;
 }
 
 /**
    Set transfer 3-dim array information
 */
-void _XMP_coarray_rdma_array_set_3(const long start1, const long length1, const long stride1,
-				   const long elmts1, const long distance1,
-                                   const long start2, const long length2, const long stride2,
-				   const long elmts2, const long distance2,
-                                   const long start3, const long length3, const long stride3,
-				   const long elmts3, const long distance3)
+void _XMP_coarray_rdma_array_set_3(const long start1, const long length1, const long stride1, const long elmts1, 
+                                   const long start2, const long length2, const long stride2, const long elmts2,
+                                   const long start3, const long length3, const long stride3, const long elmts3,
+				   const size_t elmt)
 {
   _transfer_array_elmts = length1 * length2 * length3;
   _array_dims           = 3;
@@ -702,32 +699,29 @@ void _XMP_coarray_rdma_array_set_3(const long start1, const long length1, const 
   _array[0].length      = length1;
   _array[0].stride      = ((length1 == 1)? 1 : stride1);
   _array[0].elmts       = elmts1;
-  _array[0].distance    = distance1;
+  _array[0].distance    = elmts2 * elmts3 * (long)elmt;
 
   _array[1].start       = start2;
   _array[1].length      = length2;
   _array[1].stride      = ((length2 == 1)? 1 : stride2);
   _array[1].elmts       = elmts2;
-  _array[1].distance    = distance2;
+  _array[1].distance    = elmts3 * (long)elmt;
 
   _array[2].start       = start3;
   _array[2].length      = length3;
   _array[2].stride      = ((length3 == 1)? 1 : stride3);
   _array[2].elmts       = elmts3;
-  _array[2].distance    = distance3;
+  _array[2].distance    = (long)elmt;
 }
 
 /**
    Set transfer 4-dim array information
 */
-void _XMP_coarray_rdma_array_set_4(const long start1, const long length1, const long stride1,
-				   const long elmts1, const long distance1,
-                                   const long start2, const long length2, const long stride2,
-				   const long elmts2, const long distance2,
-                                   const long start3, const long length3, const long stride3,
-				   const long elmts3, const long distance3,
-                                   const long start4, const long length4, const long stride4,
-				   const long elmts4, const long distance4)
+void _XMP_coarray_rdma_array_set_4(const long start1, const long length1, const long stride1, const long elmts1, 
+                                   const long start2, const long length2, const long stride2, const long elmts2, 
+                                   const long start3, const long length3, const long stride3, const long elmts3, 
+                                   const long start4, const long length4, const long stride4, const long elmts4,
+				   const size_t elmt)
 {
   _transfer_array_elmts = length1 * length2 * length3 * length4;
   _array_dims           = 4;
@@ -737,40 +731,36 @@ void _XMP_coarray_rdma_array_set_4(const long start1, const long length1, const 
   _array[0].length      = length1;
   _array[0].stride      = ((length1 == 1)? 1 : stride1);
   _array[0].elmts       = elmts1;
-  _array[0].distance    = distance1;
+  _array[0].distance    = elmts2 * elmts3 * elmts4 * (long)elmt;
 
   _array[1].start       = start2;
   _array[1].length      = length2;
   _array[1].stride      = ((length2 == 1)? 1 : stride2);
   _array[1].elmts       = elmts2;
-  _array[1].distance    = distance2;
+  _array[1].distance    = elmts3 * elmts4 * (long)elmt;
 
   _array[2].start       = start3;
   _array[2].length      = length3;
   _array[2].stride      = ((length3 == 1)? 1 : stride3);
   _array[2].elmts       = elmts3;
-  _array[2].distance    = distance3;
+  _array[2].distance    = elmts4 * (long)elmt;
 
   _array[3].start       = start4;
   _array[3].length      = length4;
   _array[3].stride      = ((length4 == 1)? 1 : stride4);
   _array[3].elmts       = elmts4;
-  _array[3].distance    = distance4;
+  _array[3].distance    = (long)elmt;
 }
 
 /**
    Set transfer 5-dim array information
 */
-void _XMP_coarray_rdma_array_set_5(const long start1, const long length1, const long stride1,
-				   const long elmts1, const long distance1,
-                                   const long start2, const long length2, const long stride2,
-				   const long elmts2, const long distance2,
-                                   const long start3, const long length3, const long stride3,
-				   const long elmts3, const long distance3,
-                                   const long start4, const long length4, const long stride4,
-				   const long elmts4, const long distance4,
-                                   const long start5, const long length5, const long stride5,
-				   const long elmts5, const long distance5)
+void _XMP_coarray_rdma_array_set_5(const long start1, const long length1, const long stride1, const long elmts1, 
+                                   const long start2, const long length2, const long stride2, const long elmts2, 
+                                   const long start3, const long length3, const long stride3, const long elmts3, 
+                                   const long start4, const long length4, const long stride4, const long elmts4,
+                                   const long start5, const long length5, const long stride5, const long elmts5,
+				   const size_t elmt)
 {
   _transfer_array_elmts = length1 * length2 * length3 * length4 * length5;
   _array_dims           = 5;
@@ -780,48 +770,43 @@ void _XMP_coarray_rdma_array_set_5(const long start1, const long length1, const 
   _array[0].length      = length1;
   _array[0].stride      = ((length1 == 1)? 1 : stride1);
   _array[0].elmts       = elmts1;
-  _array[0].distance    = distance1;
+  _array[0].distance    = elmts2 * elmts3 * elmts4 * elmts5 * (long)elmt;
 
   _array[1].start       = start2;
   _array[1].length      = length2;
   _array[1].stride      = ((length2 == 1)? 1 : stride2);
   _array[1].elmts       = elmts2;
-  _array[1].distance    = distance2;
+  _array[1].distance    = elmts3 * elmts4 * elmts5 * (long)elmt;
 
   _array[2].start       = start3;
   _array[2].length      = length3;
   _array[2].stride      = ((length3 == 1)? 1 : stride3);
   _array[2].elmts       = elmts3;
-  _array[2].distance    = distance3;
+  _array[2].distance    = elmts4 * elmts5 * (long)elmt;
 
   _array[3].start       = start4;
   _array[3].length      = length4;
   _array[3].stride      = ((length4 == 1)? 1 : stride4);
   _array[3].elmts       = elmts4;
-  _array[3].distance    = distance4;
+  _array[3].distance    = elmts5 * (long)elmt;
 
   _array[4].start       = start5;
   _array[4].length      = length5;
   _array[4].stride      = ((length5 == 1)? 1 : stride5);
   _array[4].elmts       = elmts5;
-  _array[4].distance    = distance5;
+  _array[4].distance    = (long)elmt;
 }
 
 /**
    Set transfer 6-dim array information
 */
-void _XMP_coarray_rdma_array_set_6(const long start1, const long length1, const long stride1,
-				   const long elmts1, const long distance1,
-				   const long start2, const long length2, const long stride2,
-				   const long elmts2, const long distance2,
-                                   const long start3, const long length3, const long stride3,
-				   const long elmts3, const long distance3,
-                                   const long start4, const long length4, const long stride4,
-				   const long elmts4, const long distance4,
-                                   const long start5, const long length5, const long stride5,
-				   const long elmts5, const long distance5,
-                                   const long start6, const long length6, const long stride6,
-				   const long elmts6, const long distance6)
+void _XMP_coarray_rdma_array_set_6(const long start1, const long length1, const long stride1, const long elmts1, 
+				   const long start2, const long length2, const long stride2, const long elmts2, 
+                                   const long start3, const long length3, const long stride3, const long elmts3, 
+                                   const long start4, const long length4, const long stride4, const long elmts4, 
+                                   const long start5, const long length5, const long stride5, const long elmts5, 
+                                   const long start6, const long length6, const long stride6, const long elmts6,
+				   const size_t elmt)
 {
   _transfer_array_elmts = length1 * length2 * length3 * length4 * length5 * length6;
   _array_dims           = 6;
@@ -831,56 +816,50 @@ void _XMP_coarray_rdma_array_set_6(const long start1, const long length1, const 
   _array[0].length      = length1;
   _array[0].stride      = ((length1 == 1)? 1 : stride1);
   _array[0].elmts       = elmts1;
-  _array[0].distance    = distance1;
+  _array[0].distance    = elmts2 * elmts3 * elmts4 * elmts5 * elmts6 * (long)elmt;
 
   _array[1].start       = start2;
   _array[1].length      = length2;
   _array[1].stride      = ((length2 == 1)? 1 : stride2);
   _array[1].elmts       = elmts2;
-  _array[1].distance    = distance2;
+  _array[1].distance    = elmts3 * elmts4 * elmts5 * elmts6 * (long)elmt;
 
   _array[2].start       = start3;
   _array[2].length      = length3;
   _array[2].stride      = ((length3 == 1)? 1 : stride3);
   _array[2].elmts       = elmts3;
-  _array[2].distance    = distance3;
+  _array[2].distance    = elmts4 * elmts5 * elmts6 * (long)elmt;
 
   _array[3].start       = start4;
   _array[3].length      = length4;
   _array[3].stride      = ((length4 == 1)? 1 : stride4);
   _array[3].elmts       = elmts4;
-  _array[3].distance    = distance4;
+  _array[3].distance    = elmts5 * elmts6 * (long)elmt;
 
   _array[4].start       = start5;
   _array[4].length      = length5;
   _array[4].stride      = ((length5 == 1)? 1 : stride5);
   _array[4].elmts       = elmts5;
-  _array[4].distance    = distance5;
+  _array[4].distance    = elmts6 * (long)elmt;
 
   _array[5].start       = start6;
   _array[5].length      = length6;
   _array[5].stride      = ((length6 == 1)? 1 : stride6);
   _array[5].elmts       = elmts6;
-  _array[5].distance    = distance6;
+  _array[5].distance    = (long)elmt;
 }
 
 /**
    Set transfer 7-dim array information
 */
-void _XMP_coarray_rdma_array_set_7(const long start1, const long length1, const long stride1,
-				   const long elmts1, const long distance1,
-				   const long start2, const long length2, const long stride2,
-				   const long elmts2, const long distance2,
-				   const long start3, const long length3, const long stride3,
-				   const long elmts3, const long distance3,
-				   const long start4, const long length4, const long stride4,
-				   const long elmts4, const long distance4,
-				   const long start5, const long length5, const long stride5,
-				   const long elmts5, const long distance5,
-				   const long start6, const long length6, const long stride6,
-				   const long elmts6, const long distance6,
-				   const long start7, const long length7, const long stride7,
-				   const long elmts7, const long distance7)
+void _XMP_coarray_rdma_array_set_7(const long start1, const long length1, const long stride1, const long elmts1, 
+				   const long start2, const long length2, const long stride2, const long elmts2,
+				   const long start3, const long length3, const long stride3, const long elmts3,
+				   const long start4, const long length4, const long stride4, const long elmts4,
+				   const long start5, const long length5, const long stride5, const long elmts5,
+				   const long start6, const long length6, const long stride6, const long elmts6,
+				   const long start7, const long length7, const long stride7, const long elmts7,
+				   const size_t elmt)
 {
   _transfer_array_elmts = length1 * length2 * length3 * length4 * length5 * length6 * length7;
   _array_dims           = 7;
@@ -890,43 +869,43 @@ void _XMP_coarray_rdma_array_set_7(const long start1, const long length1, const 
   _array[0].length      = length1;
   _array[0].stride      = ((length1 == 1)? 1 : stride1);
   _array[0].elmts       = elmts1;
-  _array[0].distance    = distance1;
+  _array[0].distance    = elmts2 * elmts3 * elmts4 * elmts5 * elmts6 * elmts7 * (long)elmt;
 
   _array[1].start       = start2;
   _array[1].length      = length2;
   _array[1].stride      = ((length2 == 1)? 1 : stride2);
   _array[1].elmts       = elmts2;
-  _array[1].distance    = distance2;
+  _array[1].distance    = elmts3 * elmts4 * elmts5 * elmts6 * elmts7 * (long)elmt;
 
   _array[2].start       = start3;
   _array[2].length      = length3;
   _array[2].stride      = ((length3 == 1)? 1 : stride3);
   _array[2].elmts       = elmts3;
-  _array[2].distance    = distance3;
+  _array[2].distance    = elmts4 * elmts5 * elmts6 * elmts7 * (long)elmt;
 
   _array[3].start       = start4;
   _array[3].length      = length4;
   _array[3].stride      = ((length4 == 1)? 1 : stride4);
   _array[3].elmts       = elmts4;
-  _array[3].distance    = distance4;
+  _array[3].distance    = elmts5 * elmts6 * elmts7 * (long)elmt;
 
   _array[4].start       = start5;
   _array[4].length      = length5;
   _array[4].stride      = ((length5 == 1)? 1 : stride5);
   _array[4].elmts       = elmts5;
-  _array[4].distance    = distance5;
+  _array[4].distance    = elmts6 * elmts7 * (long)elmt;
 
   _array[5].start       = start6;
   _array[5].length      = length6;
   _array[5].stride      = ((length6 == 1)? 1 : stride6);
   _array[5].elmts       = elmts6;
-  _array[5].distance    = distance6;
+  _array[5].distance    = elmts7 * (long)elmt;
 
   _array[6].start       = start7;
   _array[6].length      = length7;
   _array[6].stride      = ((length7 == 1)? 1 : stride7);
   _array[6].elmts       = elmts7;
-  _array[6].distance    = distance7;
+  _array[6].distance    = (long)elmt;
 }
 
 /**

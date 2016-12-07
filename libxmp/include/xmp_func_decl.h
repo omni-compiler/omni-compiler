@@ -111,34 +111,34 @@ extern void _XMP_coarray_rdma_coarray_set_7(const long, const long, const long, 
                                             const long, const long, const long, const long, const long, const long,
 					    const long, const long, const long);
 
-extern void _XMP_coarray_rdma_array_set_1(const long, const long, const long, const long, const long);
-extern void _XMP_coarray_rdma_array_set_2(const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long);
-extern void _XMP_coarray_rdma_array_set_3(const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long);
-extern void _XMP_coarray_rdma_array_set_4(const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long);
-extern void _XMP_coarray_rdma_array_set_5(const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long);
-extern void _XMP_coarray_rdma_array_set_6(const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long);
-extern void _XMP_coarray_rdma_array_set_7(const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long,
-					  const long, const long, const long, const long, const long);
+extern void _XMP_coarray_rdma_array_set_1(const long, const long, const long, const long, const size_t);
+extern void _XMP_coarray_rdma_array_set_2(const long, const long, const long, const long,
+					  const long, const long, const long, const long, const size_t);
+extern void _XMP_coarray_rdma_array_set_3(const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, const size_t);
+extern void _XMP_coarray_rdma_array_set_4(const long, const long, const long, const long,
+					  const long, const long, const long, const long,
+					  const long, const long, const long, const long,
+					  const long, const long, const long, const long, const size_t);
+extern void _XMP_coarray_rdma_array_set_5(const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, const size_t);
+extern void _XMP_coarray_rdma_array_set_6(const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, const size_t);
+extern void _XMP_coarray_rdma_array_set_7(const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, 
+					  const long, const long, const long, const long, const size_t);
 
 extern void _XMP_coarray_rdma_image_set_1(const int);
 extern void _XMP_coarray_rdma_image_set_2(const int, const int);
