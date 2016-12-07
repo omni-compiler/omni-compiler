@@ -642,7 +642,7 @@ statement:      /* entry */
         | UNKNOWN
           { error("unclassifiable statement"); flush_line(); $$ = NULL; }
         | SUBMODULE '(' name ')' name
-          { $$ = list3(F08_SUBMODULE_STATEMENT,$5,$3,NULL); }
+          { $$ = list3(F08_SUBMODULE_STATEMENT,$5,NULL,$3); }
         | SUBMODULE '(' name ':' name ')' name
           { $$ = list3(F08_SUBMODULE_STATEMENT,$7,$3,$5); }
         | ENDSUBMODULE name_or_null

@@ -3604,18 +3604,24 @@ end_module() {
     CURRENT_STATE = OUTSIDE; /* goto outer, outside state.  */
 }
 
+void associate_parent_module(SYMBOL);
 
 void
-begin_submodule(expr name, expr ancestor_name, expr parent_name)
+begin_submodule(expr name, expr ancestor, expr parent)
 {
+    SYMBOL ancestor_name = ancestor?EXPR_SYM(ancestor):NULL;
+    SYMBOL parent_name = parent?EXPR_SYM(parent):NULL;
+
     begin_module(name);
-    use_assoc_rename(EXPR_SYM(ancestor_name), NULL);
+    EXT_MODULE_IS_SUBMODULE(CURRENT_EXT_ID) = TRUE;
+    EXT_MODULE_ANCESTOR(CURRENT_EXT_ID) = ancestor_name;
+    EXT_MODULE_PARENT(CURRENT_EXT_ID) = parent_name;
+    associate_parent_module(parent_name);
     push_unit_ctl(INSIDE); /* just dummy */
     CURRENT_STATE = INSIDE;
     CURRENT_PROC_CLASS = CL_SUBMODULE;
     CURRENT_PROC_NAME = EXPR_SYM(name);
 }
-
 
 ID
 flatten_id_list(ID parents, ID childs)
@@ -4406,6 +4412,13 @@ compile_USE_ONLY_decl (expr x, expr x_args, int is_intrinsic)
 
     list_put_last(LOCAL_USE_DECLS, x);
 }
+
+void
+associate_parent_module(SYMBOL ancestor_name)
+{
+    use_assoc_rename(ancestor_name, NULL);
+}
+
 
 static char*
 genBlankInterfaceName()

@@ -967,6 +967,16 @@ outx_tagOfDecl1(int l, const char *tag, lineno_info *li, ...)
 
 
 static void
+outx_tagOfDeclNoClose(int l, const char *tag, lineno_info *li, ...)
+{
+    va_list args;
+    va_start(args, li);
+    outx_vtagOfDecl(l, tag, li, args);
+    va_end(args);
+}
+
+
+static void
 outx_tagOfDeclNoChild(int l, const char *tag, lineno_info *li, ...)
 {
     va_list args;
@@ -5146,8 +5156,22 @@ outx_moduleDefinition(int l, EXT_ID ep)
     is_outputed_module = TRUE;
     CRT_FUNCEP = NULL;
 
-    outx_tagOfDecl1(l, "%s name=\"%s\"", GET_EXT_LINE(ep),
-                    "FmoduleDefinition", SYM_NAME(EXT_SYM(ep)));
+    outx_tagOfDeclNoClose(l, "%s name=\"%s\"", GET_EXT_LINE(ep),
+                          "FmoduleDefinition", SYM_NAME(EXT_SYM(ep)));
+
+    if (EXT_MODULE_IS_SUBMODULE(ep)) {
+        outx_true(TRUE, "is_sub");
+        if (EXT_MODULE_ANCESTOR(ep)) {
+            outx_print(" parent_name=\"%s:%s\"",
+                       SYM_NAME(EXT_MODULE_ANCESTOR(ep)),
+                       SYM_NAME(EXT_MODULE_PARENT(ep)));
+        } else {
+            outx_print(" parent_name=\"%s\"",
+                       SYM_NAME(EXT_MODULE_PARENT(ep)));
+        }
+    }
+    outx_puts(">\n");
+
     outx_definition_symbols(l1, ep);
     outx_declarations1(l1, ep, TRUE); // output with pragma
     outx_contains(l1, ep);
