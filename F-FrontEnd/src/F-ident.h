@@ -14,21 +14,22 @@
 /* Fortran name class */
 enum name_class {
     CL_UNKNOWN = 0,
-    CL_PARAM,   /* parameter */
-    CL_VAR,     /* variable name */
-    CL_ENTRY,   /* entry name */
-    CL_MAIN,    /* program name */
-    CL_MODULE,	/* module name */
-    CL_CONTAINS,/* contains entry */
-    CL_BLOCK,   /* data block name */
-    CL_PROC,    /* procedure name (subroutine, function, statement func,..) */
-    CL_LABEL,   /* label entry */
-    CL_FORMAT,  /* format entry */
-    CL_TAGNAME, /* derived type name  */
-    CL_NAMELIST, /* name list name (not implmented) */
-    CL_COMMON,  /* common block */
-    CL_ELEMENT,  /* structure element name  */
-    CL_GENERICS, /* generics name */
+    CL_PARAM,     /* parameter */
+    CL_VAR,       /* variable name */
+    CL_ENTRY,     /* entry name */
+    CL_MAIN,      /* program name */
+    CL_MODULE,    /* module name */
+    CL_SUBMODULE, /* submodule name */
+    CL_CONTAINS,  /* contains entry */
+    CL_BLOCK,     /* data block name */
+    CL_PROC,      /* procedure name (subroutine, function, statement func,..) */
+    CL_LABEL,     /* label entry */
+    CL_FORMAT,    /* format entry */
+    CL_TAGNAME,   /* derived type name  */
+    CL_NAMELIST,  /* name list name (not implmented) */
+    CL_COMMON,    /* common block */
+    CL_ELEMENT,   /* structure element name  */
+    CL_GENERICS,  /* generics name */
     CL_TYPE_PARAM, /* type parameter name */
     CL_TYPE_BOUND_PROC, /* type bound procedure */
 };
@@ -410,7 +411,7 @@ enum ext_proc_class {
 /* external symbol */
 typedef struct external_symbol
 {
-    struct external_symbol *next; 
+    struct external_symbol *next;
     SYMBOL name;                /* key */
     enum storage_class stg;     /* STG_UNKNOWN, STG_EXT, STG_COMMON, STG_LIB */
     char is_defined;            /* defined or not */
@@ -438,7 +439,13 @@ typedef struct external_symbol
             enum ext_proc_class ext_proc_class;
             char is_output;
             char is_module_specified; /* module procedure with keyword 'module' */
-	    char is_internal; /* internal procedure */
+            char is_internal; /* internal procedure */
+
+            struct { /* For submodule */
+                int is_submodule;
+                SYMBOL ancestor;
+                SYMBOL parent;
+            } extends;
         } proc_info;
     } info;
 } *EXT_ID;
@@ -485,6 +492,10 @@ typedef struct external_symbol
 #define EXT_PROC_COMMON_ID_LIST(ep) ((ep)->info.proc_info.common_id_list)
 #define EXT_PROC_IS_OUTPUT(ep)  ((ep)->info.proc_info.is_output)
 #define EXT_PROC_IS_INTERNAL(ep)  ((ep)->info.proc_info.is_internal)
+
+#define EXT_MODULE_IS_SUBMODULE(ep) ((ep)->info.proc_info.extends.is_submodule)
+#define EXT_MODULE_PARENT(ep) ((ep)->info.proc_info.extends.parent)
+#define EXT_MODULE_ANCESTOR(ep) ((ep)->info.proc_info.extends.ancestor)
 
 #define FOREACH_EXT_ID(/* EXT_ID */ ep, /* EXT_ID */ headp) \
   for ((ep) = (headp); (ep) != NULL ; (ep) = EXT_NEXT(ep))

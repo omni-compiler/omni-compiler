@@ -539,6 +539,22 @@ declare_procedure(enum name_class class,
         break;
     }
 
+    case CL_SUBMODULE: /* modules */ {
+        extern int mcLn_no;
+        current_module_name = SYM_NAME(s);
+        /* should print in module compile mode.  */
+        if (mcLn_no == -1)
+        if (debug_flag)
+            fprintf(diag_file,"   submodule %s:\n", current_module_name);
+        id = declare_ident(s,CL_SUBMODULE);
+        declare_id_type(id,type);
+        ID_LINE(id) = EXPR_LINE(name); /* set line_no */
+        ID_STORAGE(id) = STG_EXT;
+        CURRENT_PROCEDURE = id;
+        (void)declare_current_procedure_ext_id();
+        break;
+    }
+
     default:
         fatal("%s: unknown class", __func__);
     }

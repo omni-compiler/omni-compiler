@@ -191,6 +191,15 @@ typedef struct environment {
     struct environment * parent;
 } *ENV;
 
+#define ENV_SYMBOLS(l)               ((l)->symbols)
+#define ENV_STRUCT_DECLS(l)          ((l)->struct_decls)
+#define ENV_COMMON_SYMBOLS(l)        ((l)->common_symbols)
+#define ENV_LABELS(l)                ((l)->labels)
+#define ENV_EXTERNAL_SYMBOLS(l)      ((l)->external_symbols)
+#define ENV_INTERFACES(l)            ((l)->interfaces)
+#define ENV_BLOCKS(l)                ((l)->blocks)
+#define ENV_USE_DECLS(l)             ((l)->use_decls)
+
 extern ENV current_local_env;
 
 extern void push_env(ENV);
@@ -857,7 +866,11 @@ extern expv     ExpandImpliedDoInDATA _ANSI_ARGS_((expv spec, expv new));
 extern void     compile_OMN_directive _ANSI_ARGS_((expr x));
 extern void     begin_module _ANSI_ARGS_((expr name));
 extern void     end_module _ANSI_ARGS_((void));
-extern int	is_in_module(void);
+extern int      is_in_module(void);
+
+extern void     begin_submodule _ANSI_ARGS_((expr name, expr ancestor_name, expr parent_name));
+extern void     flatten_submodule_units _ANSI_ARGS_((void));
+extern void     end_submodule _ANSI_ARGS_((void));
 
 extern omllint_t getExprValue(expv v);
 

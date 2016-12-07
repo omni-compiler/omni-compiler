@@ -404,12 +404,28 @@ void compile_statement1(int st_no, expr x)
     case F95_ENDMODULE_STATEMENT: /* (F95_ENDMODULE_STATEMENT) */
     do_end_module:
         check_INDCL();
-	// move into end_procedure()
-	//if (endlineno_flag)
-	//ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
+        // move into end_procedure()
+        //if (endlineno_flag)
+        //ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
         end_procedure();
         end_module();
         break;
+
+
+    case F08_SUBMODULE_STATEMENT: /* (F08_SUBMODULE_STATEMENT submodule_name ancester_name parent_name ) */
+        begin_procedure();
+        declare_procedure(CL_SUBMODULE, EXPR_ARG1(x), type_MODULE, NULL, NULL, NULL, NULL);
+        begin_submodule(EXPR_ARG1(x), EXPR_ARG2(x), EXPR_ARG3(x));
+        break;
+
+    case F08_ENDSUBMODULE_STATEMENT: /* (F08_ENDSUBMODULE_STATEMENT) */
+    /* do_end_submodule: */
+        check_INDCL();
+        flatten_submodule_units();
+        end_procedure();
+        end_submodule();
+        break;
+
 
     /* (F_PROGRAM_STATEMENT name) need: option or lias */
     case F95_USE_STATEMENT:
@@ -2964,6 +2980,7 @@ end_procedure()
     if (CURRENT_PROC_CLASS == CL_MAIN ||
         CURRENT_PROC_CLASS == CL_PROC ||
         CURRENT_PROC_CLASS == CL_MODULE ||
+        CURRENT_PROC_CLASS == CL_SUBMODULE ||
         CURRENT_PROC_CLASS == CL_BLOCK) {
         if (CURRENT_EXT_ID == NULL) {
             /* Any other errors already occured, let compilation carry on. */
@@ -3227,6 +3244,7 @@ end_procedure()
             expv_output(CURRENT_STATEMENTS, debug_fp);
         }
         break;
+    case CL_SUBMODULE: /* fall through */
     case CL_MODULE:
         setLocalInfoToCurrentExtId(TRUE);
         if(debug_flag){
@@ -3586,8 +3604,120 @@ end_module() {
     CURRENT_STATE = OUTSIDE; /* goto outer, outside state.  */
 }
 
+
+void
+begin_submodule(expr name, expr ancestor_name, expr parent_name)
+{
+    begin_module(name);
+    /* load parent submodule xmod */
+    push_unit_ctl(INSIDE); /* just dummy */
+    CURRENT_STATE = INSIDE;
+    CURRENT_PROC_CLASS = CL_SUBMODULE;
+    CURRENT_PROC_NAME = EXPR_SYM(name);
+}
+
+
+ID
+flatten_id_list(ID parents, ID childs)
+{
+    ID ip;
+    ID iq;
+    ID ret = NULL;
+    ID last = NULL;
+
+    for (ip = parents, iq = ip?ID_NEXT(iq):NULL; ip != NULL; ip = iq, iq = iq?ID_NEXT(iq):NULL) {
+        if (find_ident_head(ID_SYM(ip), childs) != NULL) {
+            /* the child id shadows the parent id */
+            /* free(id); */
+            continue;
+        }
+        ID_LINK_ADD(ip, ret, last);
+    }
+
+    for (ip = childs, iq = ip?ID_NEXT(ip):NULL; ip != NULL; ip = iq, iq = iq?ID_NEXT(iq):NULL) {
+        ID_LINK_ADD(ip, ret, last);
+    }
+    return ret;
+}
+
+
+EXT_ID
+flatten_ext_id_list(EXT_ID parents, EXT_ID childs)
+{
+    EXT_ID ep;
+    EXT_ID eq;
+    EXT_ID ret = NULL;
+    EXT_ID last = NULL;
+
+    for (ep = parents, eq = ep?EXT_NEXT(ep):NULL ; ep != NULL; ep = eq, eq = ep?EXT_NEXT(eq):NULL) {
+        if (find_ext_id_head(ID_SYM(ep), childs) != NULL) {
+            /* the child id shadows the parent id */
+            /* free(ep); */
+            continue;
+        }
+        EXT_LINK_ADD(ep, ret, last);
+    }
+
+    for (ep = childs, eq = ep?EXT_NEXT(ep):NULL; ep != NULL; ep = eq, eq = ep?EXT_NEXT(eq):NULL) {
+        EXT_LINK_ADD(ep, ret, last);
+    }
+    return ret;
+}
+
+
+TYPE_DESC
+flatten_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
+{
+    TYPE_DESC tp;
+    TYPE_DESC tq;
+    TYPE_DESC ret = NULL;
+    TYPE_DESC last = NULL;
+
+    for (tp = parents, tq = tp?TYPE_SLINK(tp):NULL; tp != NULL; tp = tq, tq = tp?TYPE_SLINK(tq):NULL) {
+        if (find_struct_decl_head(ID_SYM(TYPE_TAGNAME(tp)), childs) != NULL) {
+            /* the child id shadows the parent id */
+            continue;
+        }
+        TYPE_SLINK_ADD(tp, ret, last);
+    }
+
+    for (tp = childs, tq = tp?TYPE_SLINK(tp):NULL; tp != NULL; tp = tq, tq = tp?TYPE_SLINK(tq):NULL) {
+        TYPE_SLINK_ADD(tp, ret, last);
+    }
+    return ret;
+}
+
+
+
+void
+flatten_submodule_units()
+{
+    ENV submodule;
+    ENV parent;
+
+    submodule = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
+    parent = UNIT_CTL_LOCAL_ENV(PARENT_UNIT_CTL);
+
+    ENV_SYMBOLS(parent)          = flatten_id_list(ENV_SYMBOLS(parent), ENV_SYMBOLS(submodule));
+    ENV_STRUCT_DECLS(parent)     = flatten_struct_decls(ENV_STRUCT_DECLS(parent), ENV_STRUCT_DECLS(submodule));
+    ENV_COMMON_SYMBOLS(parent)   = flatten_id_list(ENV_COMMON_SYMBOLS(parent), ENV_COMMON_SYMBOLS(submodule));
+    ENV_EXTERNAL_SYMBOLS(parent) = flatten_ext_id_list(ENV_EXTERNAL_SYMBOLS(parent), ENV_EXTERNAL_SYMBOLS(submodule));
+    ENV_INTERFACES(parent)       = flatten_ext_id_list(ENV_INTERFACES(parent), ENV_INTERFACES(submodule));
+
+    ENV_USE_DECLS(parent)        = ENV_USE_DECLS(submodule);
+
+    pop_unit_ctl();
+}
+
+void
+end_submodule() {
+    /* flatten current stack */
+    end_module();
+}
+
 int
-is_in_module(void) {
+is_in_module(void)
+{
     return (INMODULE()) ? TRUE : FALSE;
 }
 
@@ -6039,7 +6169,9 @@ push_unit_ctl(enum prog_state state)
         return;
     }
     top_proc = UNIT_CTL_CURRENT_PROCEDURE(unit_ctls[0]);
-    if (top_proc != NULL && ID_CLASS(top_proc) != CL_MODULE) {
+    if (top_proc != NULL &&
+        ID_CLASS(top_proc) != CL_MODULE &&
+        ID_CLASS(top_proc) != CL_SUBMODULE) {
         /* if top procedure is not module, stack len restriction become -1 */
         max_unit_ctl_contains --;
     }
