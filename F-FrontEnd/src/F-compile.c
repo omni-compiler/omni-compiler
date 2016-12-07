@@ -3609,7 +3609,7 @@ void
 begin_submodule(expr name, expr ancestor_name, expr parent_name)
 {
     begin_module(name);
-    /* load parent submodule xmod */
+    use_assoc_rename(EXPR_SYM(ancestor_name), NULL);
     push_unit_ctl(INSIDE); /* just dummy */
     CURRENT_STATE = INSIDE;
     CURRENT_PROC_CLASS = CL_SUBMODULE;
