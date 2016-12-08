@@ -25,7 +25,7 @@ endif
 #OUT_arg    = aarg1.x
 #OUT_mod    = mod1.x
 
-OUT = $(OUT_debug) $(OUT_basic) $(OUT_lev1)
+OUT = $(OUT_lev1) $(OUT_basic) $(OUT_debug)
 # $(OUT_arg) $(OUT_mod)
 
 include ../Makefile.common
