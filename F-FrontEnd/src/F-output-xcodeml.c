@@ -642,7 +642,8 @@ has_attribute(TYPE_DESC tp)
         TYPE_IS_INTRINSIC(tp) ||
         TYPE_IS_RECURSIVE(tp) ||
         TYPE_IS_PURE(tp) ||
-        TYPE_IS_ELEMENTAL(tp);
+        TYPE_IS_ELEMENTAL(tp) ||
+        TYPE_IS_MODULE(tp);
 }
 
 static int
@@ -4243,6 +4244,7 @@ outx_functionType(int l, TYPE_DESC tp)
         outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
         outx_true(TYPE_IS_PURE(tp), "is_pure");
         outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
+        outx_true(TYPE_IS_MODULE(tp), "is_module");
 
         if (!TYPE_IS_INTRINSIC(tp) &&
             (TYPE_IS_EXTERNAL(tp) ||

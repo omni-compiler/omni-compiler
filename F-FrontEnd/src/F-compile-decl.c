@@ -223,6 +223,7 @@ declare_procedure(enum name_class class,
     int recursive = FALSE;
     int pure = FALSE;
     int elemental = FALSE;
+    int module = FALSE;
     list lp;
 
     if (name) {
@@ -278,6 +279,15 @@ declare_procedure(enum name_class class,
             }
             elemental = TRUE;
             break;
+
+        case F08_MODULE_SPEC:
+            if (class != CL_PROC) {
+                error("invalid module prefix");
+                return;
+            }
+            module = TRUE;
+            break;
+
 
         default:
             error("unknown prefix");
@@ -379,17 +389,24 @@ declare_procedure(enum name_class class,
         }
 
         if (pure == TRUE) {
-            PROC_IS_PURE(id) = pure;
-            TYPE_SET_PURE(id);
+            PROC_IS_PURE(id) = pure; /* MAY NOT BE REQUIRED */
+            TYPE_SET_PURE(id); /* MAY NOT BE REQUIRED */
             if (ID_TYPE(id) != NULL) {
                 TYPE_SET_PURE(ID_TYPE(id));
             }
         }
         if (elemental == TRUE) {
-            PROC_IS_ELEMENTAL(id) = pure;
+            PROC_IS_ELEMENTAL(id) = elemental;
             TYPE_SET_ELEMENTAL(id);
             if (type != NULL) {
                 TYPE_SET_ELEMENTAL(ID_TYPE(id));
+            }
+       }
+        if (module == TRUE) {
+            PROC_IS_MODULE(id) = module;
+            TYPE_SET_MODULE(id);
+            if (type != NULL) {
+                TYPE_SET_MODULE(ID_TYPE(id));
             }
        }
 

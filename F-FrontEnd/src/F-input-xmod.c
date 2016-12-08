@@ -1774,6 +1774,12 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
         free(attr);
     }
 
+    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_module");
+    if (attr != NULL) {
+        TYPE_SET_MODULE(ftp);
+        free(attr);
+    }
+
     attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_external");
     if (attr != NULL) {
         TYPE_SET_EXTERNAL(ftp);
