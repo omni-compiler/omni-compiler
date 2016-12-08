@@ -362,6 +362,7 @@ void compile_statement1(int st_no, expr x)
         && EXPR_CODE(x) != F95_ENDPROGRAM_STATEMENT
         && EXPR_CODE(x) != F95_ENDMODULE_STATEMENT
         && EXPR_CODE(x) != F95_ENDINTERFACE_STATEMENT
+        && EXPR_CODE(x) != F08_ENDSUBMODULE_STATEMENT
         && EXPR_CODE(x) != F_END_STATEMENT
         /* differ CONTAIN from INTERFASE */
         && PARENT_STATE != ININTR
@@ -3621,6 +3622,7 @@ begin_submodule(expr name, expr ancestor, expr parent)
     CURRENT_STATE = INSIDE;
     CURRENT_PROC_CLASS = CL_SUBMODULE;
     CURRENT_PROC_NAME = EXPR_SYM(name);
+    CURRENT_EXT_ID = PARENT_EXT_ID;
 }
 
 ID
@@ -3699,6 +3701,10 @@ flatten_submodule_units()
 {
     ENV submodule;
     ENV parent;
+
+    if (CURRENT_PROC_NAME == NULL && CTL_TYPE(ctl_top) != CTL_BLOCK) {
+        end_contains();
+    }
 
     submodule = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
     parent = UNIT_CTL_LOCAL_ENV(PARENT_UNIT_CTL);
