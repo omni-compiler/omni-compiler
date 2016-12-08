@@ -14,13 +14,19 @@ all: module_test.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.
 
 .PHONY: clean submit showlog cleanlog
 
-.SUFFIXES: .x .o .f90
+.SUFFIXES: .x .o .f90 .F90
 
 .f90.x:
-	$(XFC) -cpp -o $@ $<
+	$(XFC) -o $@ $<
+
+.F90.x:
+	$(XFC) -o $@ $<
 
 .f90.o:
-	$(XFC) -cpp -c $<
+	$(XFC) -c $<
+
+.F90.o:
+	$(XFC) -c $<
 
 .f.x:
 	$(XFC) -o $@ $<
@@ -92,8 +98,8 @@ xmp_lib.o: xmp_lib.f90
 threadprivate.o: threadprivate.f90
 	$(XFC) -c --openmp threadprivate.f90
 
-threadprivate-block.o: threadprivate-block.f90
-	$(XFC) -c --openmp threadprivate-block.f90 -cpp
+threadprivate-block.o: threadprivate-block.F90
+	$(XFC) -c --openmp threadprivate-block.F90
 
 refobj.x: refobj.f90
 	$(XFC) -o refobj.x refobj.f90
