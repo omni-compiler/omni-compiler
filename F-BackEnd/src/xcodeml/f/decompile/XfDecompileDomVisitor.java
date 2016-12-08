@@ -3046,6 +3046,29 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    Node findFunctionType(Node n, Node functionNameNode) {
+        XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+        Node typeChoice = typeManager.findType(functionNameNode);
+
+        if (typeChoice == null) {
+            _context.setLastErrorMessage(
+                    XfUtilForDom.formatError(n,
+                            XfError.XCODEML_TYPE_NOT_FOUND,
+                            XmDomUtil.getAttr(functionNameNode,
+                                    "type")));
+            fail(n);
+        } else if ("FfunctionType".equals(typeChoice.getNodeName()) == false) {
+            _context.setLastErrorMessage(
+                    XfUtilForDom.formatError(n,
+                            XfError.XCODEML_TYPE_MISMATCH,
+                            "function definition",
+                            typeChoice.getNodeName(),
+                            "FfunctionType"));
+            fail(n);
+        }
+        return typeChoice;
+    }
+
     // FfunctionDefinition
     class FfunctionDefinitionVisitor extends XcodeNodeVisitor {
         /**
@@ -3092,26 +3115,7 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
 
             Node functionNameNode = XmDomUtil.getElement(n, "name");
-            Node typeChoice = typeManager.findType(functionNameNode);
-
-            if (typeChoice == null) {
-                _context.setLastErrorMessage(
-                    XfUtilForDom.formatError(n,
-                                             XfError.XCODEML_TYPE_NOT_FOUND,
-                                             XmDomUtil.getAttr(functionNameNode,
-                                                               "type")));
-                fail(n);
-            } else if ("FfunctionType".equals(typeChoice.getNodeName()) == false) {
-                _context.setLastErrorMessage(
-                    XfUtilForDom.formatError(n,
-                                             XfError.XCODEML_TYPE_MISMATCH,
-                                             "function definition",
-                                             typeChoice.getNodeName(),
-                                             "FfunctionType"));
-                fail(n);
-            }
-
-            Node functionTypeNode = typeChoice;
+            Node functionTypeNode = findFunctionType(n, functionNameNode);
             String returnTypeName = XmDomUtil.getAttr(functionTypeNode,
                                                       "return_type");
             XfType typeId = XfType.getTypeIdFromXcodemlTypeName(returnTypeName);
@@ -3266,6 +3270,58 @@ public class XfDecompileDomVisitor {
             writer.setupNewLine();
         }
     }
+
+    // FProcedureDefiniton
+    class FprocedureDefinitionVisitor extends XcodeNodeVisitor {
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+            XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+            XmfWriter writer = _context.getWriter();
+
+            Node functionNameNode = XmDomUtil.getElement(n, "name");
+            Node functionTypeNode = findFunctionType(n, functionNameNode);
+
+            String isModule = XmDomUtil.getAttr(functionTypeNode, "is_module");
+            if (XfUtilForDom.isNullOrEmpty(isModule)) {
+                _context.setLastErrorMessage(
+                        XfUtilForDom.formatError(n,
+                                XfError.XCODEML_NEED_ATTR,
+                                "is_module",
+                                functionTypeNode.getNodeName()));
+                fail(n);
+
+            }
+            writer.writeToken("MODULE");
+            writer.writeToken("PROCEDURE");
+            writer.writeToken(XmDomUtil.getContentText(functionNameNode));
+            writer.setupNewLine();
+
+            writer.incrementIndentLevel();
+            typeManager.enterScope();
+            if (!XmOption.coarrayNoUseStatement()) {
+                writer.writeToken("use xmpf_coarray_decl");
+                writer.setupNewLine();
+            }
+
+            invokeEnter(XmDomUtil.getElement(n, "symbols"));
+
+            Node declarations = XmDomUtil.getElement(n, "declarations");
+            invokeEnter(declarations);
+
+            writeVolatileOrAsynchronousStatements(declarations);
+            writer.setupNewLine();
+
+            invokeEnter(XmDomUtil.getElement(n, "body"));
+            writer.decrementIndentLevel();
+            typeManager.leaveScope();
+
+            writer.writeToken("END");
+            writer.writeToken("PROCEDURE");
+            writer.writeToken(XmDomUtil.getContentText(functionNameNode));
+            writer.setupNewLine();
+        }
+    }
+
 
     // FifStatement
     class FifStatementVisitor extends XcodeNodeVisitor {
@@ -6832,5 +6888,6 @@ public class XfDecompileDomVisitor {
         new Pair("unlockStatement", new UnlockStatementVisitor()),
         new Pair("syncStat", new SyncStatVisitor()),
         new Pair("blockStatement", new BlockStatementVisitor()),
+        new Pair("FprocedureDefinition", new FprocedureDefinitionVisitor()),
     };
 }
