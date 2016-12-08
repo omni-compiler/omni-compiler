@@ -165,11 +165,11 @@ link_parent_defined_by(SYMBOL sym)
     /* search parents local symbols,
        and if my name is found, then link it */
     if (unit_ctl_level > 0) {
-        int is_module_procedure = FALSE;
+        int is_contain_proc = FALSE;
         if (PARENT_STATE == INCONT) {
             /* If the procedure exists in CONTAINS block,
                the procedure is a module procedure.       */
-            is_module_procedure = TRUE;
+            is_contain_proc = TRUE;
         }
 
         id = find_ident_block_parent(sym);
@@ -179,7 +179,7 @@ link_parent_defined_by(SYMBOL sym)
         if (id == NULL)
             return;
 
-        if (is_module_procedure) {
+        if (is_contain_proc) {
             if (conflict_parent_vs_sub_program_unit(id)) {
                 error("%s has an explicit interface before", ID_NAME(id));
                 return;
@@ -224,6 +224,7 @@ declare_procedure(enum name_class class,
     int pure = FALSE;
     int elemental = FALSE;
     int module = FALSE;
+    int is_separate_definition = FALSE;
     list lp;
 
     if (name) {
@@ -231,19 +232,25 @@ declare_procedure(enum name_class class,
         s = EXPR_SYM(name);
     }
 
-    if(class != CL_ENTRY){
+    if (IS_PROCEDURE_TYPE(type) && TYPE_IS_MODULE(type)) {
+        is_separate_definition = TRUE;
+    }
+
+    if (class != CL_ENTRY){
         CURRENT_PROC_CLASS = class;
         if (name) {
             CURRENT_PROC_NAME = s;
             ep = find_ext_id_parent(CURRENT_PROC_NAME);
             if (ep != NULL && EXT_IS_DEFINED(ep) &&
                  EXT_PROC_IS_MODULE_PROCEDURE(ep) == FALSE &&
-                (unit_ctl_level == 0 || PARENT_STATE != ININTR)) {
+                (unit_ctl_level == 0 || PARENT_STATE != ININTR) &&
+                !is_separate_definition) {
                 /* error("same name is already defined in parent"); */
                 /* return; */
                 warning("A host-associated procedure is overridden.");
             }
-            else if (unit_ctl_level > 0 && PARENT_STATE != ININTR) {
+            else if (unit_ctl_level > 0 && PARENT_STATE != ININTR &&
+                     !is_separate_definition) {
                 ep = find_ext_id(CURRENT_PROC_NAME);
                 if (ep != NULL && EXT_IS_DEFINED(ep) &&
                     EXT_PROC_IS_MODULE_PROCEDURE(ep) == FALSE) {
@@ -401,14 +408,14 @@ declare_procedure(enum name_class class,
             if (type != NULL) {
                 TYPE_SET_ELEMENTAL(ID_TYPE(id));
             }
-       }
+        }
         if (module == TRUE) {
             PROC_IS_MODULE(id) = module;
             TYPE_SET_MODULE(id);
             if (type != NULL) {
                 TYPE_SET_MODULE(ID_TYPE(id));
             }
-       }
+        }
 
         if (bind_opt) {
             PROC_HAS_BIND(id) = TRUE;
@@ -587,8 +594,9 @@ declare_procedure(enum name_class class,
             arg_len++;
         }
 
-        if(class != CL_PROC) {
+        if (class != CL_PROC) {
             error("unexpected statement in interface block");
+            fprintf(stderr, "HERE\n");
             abort();
         }
 

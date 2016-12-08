@@ -445,6 +445,7 @@ typedef struct external_symbol
             char is_output;
             char is_module_specified; /* module procedure with keyword 'module' */
             char is_internal; /* internal procedure */
+            int is_procedureDecl; /* procedure declaration */
 
             struct { /* For submodule */
                 int is_submodule;
@@ -497,6 +498,7 @@ typedef struct external_symbol
 #define EXT_PROC_COMMON_ID_LIST(ep) ((ep)->info.proc_info.common_id_list)
 #define EXT_PROC_IS_OUTPUT(ep)  ((ep)->info.proc_info.is_output)
 #define EXT_PROC_IS_INTERNAL(ep)  ((ep)->info.proc_info.is_internal)
+#define EXT_PROC_IS_PROCEDUREDECL(ep)  ((ep)->info.proc_info.is_procedureDecl)
 
 #define EXT_MODULE_IS_SUBMODULE(ep) ((ep)->info.proc_info.extends.is_submodule)
 #define EXT_MODULE_PARENT(ep) ((ep)->info.proc_info.extends.parent)

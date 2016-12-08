@@ -1385,6 +1385,9 @@ function_type_udpate(TYPE_DESC ftp, ID idList)
     fix_array_dimensions(FUNCTION_TYPE_RETURN_TYPE(ftp));
 
     FOREACH_ID(arg, FUNCTION_TYPE_ARGS(ftp)) {
+        if (ID_TYPE(arg)) {
+            continue;
+        }
         id = find_ident_head(ID_SYM(arg), idList);
         implicit_declaration(id);
         ID_TYPE(arg) = ID_TYPE(id);

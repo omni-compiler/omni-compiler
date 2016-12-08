@@ -363,11 +363,11 @@ void compile_statement1(int st_no, expr x)
         && EXPR_CODE(x) != F95_ENDMODULE_STATEMENT
         && EXPR_CODE(x) != F95_ENDINTERFACE_STATEMENT
         && EXPR_CODE(x) != F08_ENDSUBMODULE_STATEMENT
+        && EXPR_CODE(x) != F08_ENDPROCEDURE_STATEMENT
         && EXPR_CODE(x) != F_END_STATEMENT
         /* differ CONTAIN from INTERFASE */
         && PARENT_STATE != ININTR
-        /* MODULE PROCEDURE statement is allower under INTERFACE */
-        && (EXPR_CODE(x) != F95_MODULEPROCEDURE_STATEMENT || PARENT_STATE != ININTR)
+        && EXPR_CODE(x) != F95_MODULEPROCEDURE_STATEMENT
         && EXPR_CODE(x) != F_INCLUDE_STATEMENT)
     {
         /* otherwise error */
@@ -521,6 +521,7 @@ void compile_statement1(int st_no, expr x)
         break;
 
 
+    case F08_ENDPROCEDURE_STATEMENT: /* (F08_END_PROCEDURE_STATEMENT) */
     case F95_ENDFUNCTION_STATEMENT:  /* (F95_END_FUNCTION_STATEMENT) */
     case F95_ENDSUBROUTINE_STATEMENT:  /* (F95_END_SUBROUTINE_STATEMENT) */
     case F95_ENDBLOCKDATA_STATEMENT:
@@ -4710,11 +4711,12 @@ accept_MODULEPROCEDURE_statement_in_module(expr x)
     }
 }
 
+
 /*
- * compile MODULE PROCEDURE statement
+ * compile MODULE PROCEDURE statement in the INTERFACE block
  */
 static void
-compile_MODULEPROCEDURE_statement(expr x)
+compile_interface_MODULEPROCEDURE_statement(expr x)
 {
     list lp;
     expr ident;
@@ -4722,10 +4724,7 @@ compile_MODULEPROCEDURE_statement(expr x)
     EXT_ID ep;
     const char *genProcName = NULL;
 
-    if (PARENT_STATE != ININTR) {
-        error("unexpected MODULE PROCEDURE statement");
-        return;
-    }
+    assert(PARENT_STATE == ININTR);
 
     if (checkInsideUse()) {
         accept_MODULEPROCEDURE_statement_in_module(x);
@@ -4774,6 +4773,67 @@ compile_MODULEPROCEDURE_statement(expr x)
         dump_all_module_procedures(stderr);
     }
 }
+
+
+/*
+ * compile MODULE PROCEDURE statement in the CONTAINS block of the submodule
+ */
+static void
+compile_separate_MODULEPROCEDURE_statement(expr x)
+{
+    SYMBOL s;
+    expr name;
+    ID ip = NULL;
+
+    assert(PARENT_STATE == INCONT);
+    assert(EXPR_HAS_ARG1(EXPR_ARG1(x)));
+    assert(!EXPR_HAS_ARG2(EXPR_ARG1(x)));
+
+    if (unit_ctl_level < 2 ||
+        UNIT_CTL_CURRENT_PROC_CLASS(unit_ctls[unit_ctl_level-2]) != CL_SUBMODULE) {
+        error("unexpected MODULE PROCEDURE statement");
+        return;
+    }
+
+    name = EXPR_ARG1(EXPR_ARG1(x));
+    s = EXPR_SYM(name);
+
+    if ((ip = find_ident(s)) == NULL) {
+        error("module procedure interface doesn't exsit");
+        return;
+    } else if(!IS_PROCEDURE_TYPE(ID_TYPE(ip))) {
+        error("parent should be a procedure");
+        return;
+    } else if(!TYPE_IS_MODULE(ID_TYPE(ip))) {
+        error("parent should have a modure prefix");
+        return;
+    }
+
+    /*
+     * TODO: setup types and local symbols
+     */
+    begin_procedure();
+    declare_procedure(CL_PROC, name, ID_TYPE(ip), NULL, NULL, NULL, NULL);
+    EXT_PROC_IS_PROCEDUREDECL(CURRENT_EXT_ID) = TRUE;
+}
+
+
+/*
+ * compile MODULE PROCEDURE statement
+ */
+static void
+compile_MODULEPROCEDURE_statement(expr x)
+{
+    if (PARENT_STATE == ININTR) {
+        compile_interface_MODULEPROCEDURE_statement(x);
+        return;
+    } else if (PARENT_STATE == INCONT) {
+        compile_separate_MODULEPROCEDURE_statement(x);
+    } else {
+        error("unexpected MODULE PROCEDURE statement");
+    }
+}
+
 
 /*
  * compiles the scene range expression of case label.

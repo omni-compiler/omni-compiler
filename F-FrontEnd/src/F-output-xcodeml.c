@@ -5131,9 +5131,18 @@ outx_functionDefinition(int l, EXT_ID ep)
 {
     const int l1 = l + 1, l2 = l + 2;
 
+    const char *tag = NULL;
+
+    if (!EXT_PROC_IS_PROCEDUREDECL(ep)) {
+        tag = "FfunctionDefinition";
+    } else {
+        tag = "FprocedureDefinition";
+    }
+
+
     CRT_FUNCEP_PUSH(ep);
 
-    outx_tagOfDecl1(l, "FfunctionDefinition", GET_EXT_LINE(ep));
+    outx_tagOfDecl1(l, tag, GET_EXT_LINE(ep));
     outx_symbolNameWithFunctionType_EXT(l1, ep);
     outx_definition_symbols(l1, ep);
     outx_declarations(l1, ep);
@@ -5141,7 +5150,7 @@ outx_functionDefinition(int l, EXT_ID ep)
     outx_expv(l2, EXT_PROC_BODY(ep));
     outx_contains(l2, ep);
     outx_close(l1, "body");
-    outx_close(l, "FfunctionDefinition");
+    outx_close(l, tag);
 
     CRT_FUNCEP_POP;
 }
