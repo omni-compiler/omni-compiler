@@ -235,6 +235,9 @@ static int      ScanFortranLine _ANSI_ARGS_((char *src, char *srcHead,
                                              int *inQuotePtr, int *quoteCharPtr,
                                              int *inHollerithPtr, int *hollerithLenPtr,
                                              char **newCurPtr, char **newDstPtr));
+
+extern int unit_ctl_level;
+
 static void
 debugOutStatement()
 {
@@ -260,6 +263,13 @@ debugOutStatement()
     }
     fflush(debug_fp);
 }
+
+static int
+is_top_level(void)
+{
+    return unit_ctl_level == 0;
+}
+
 
 void
 initialize_lex()
@@ -1404,6 +1414,10 @@ classify_statement()
     ret_LOGIF:
       break;
 
+    case MODULE:
+        if (!is_top_level()) {
+            need_keyword = TRUE;
+        }
     case ALLOCATABLE:
     case ALLOCATE:
     case BIND:
@@ -1441,7 +1455,6 @@ classify_statement()
     case KW_TO:
     case KW_TYPE:
     case KW_USE:
-    case MODULE:
     case NAMELIST:
     case NULLIFY:
     case OPTIONAL:
@@ -1728,7 +1741,6 @@ get_keyword(ks)
         return ret;
     }
 }
-
 
 static int
 get_keyword_optional_blank(int class)
