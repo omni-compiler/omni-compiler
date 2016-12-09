@@ -197,10 +197,11 @@ program_type(void)
 TYPE_DESC
 type_bound_procedure_type(void)
 {
+    TYPE_DESC ret; /* dummy return type */
     TYPE_DESC tp;
-    tp = new_type_desc();
-    TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
-    FUNCTION_TYPE_SET_FUNCTION(tp);
+    ret = new_type_desc();
+    TYPE_BASIC_TYPE(ret) = TYPE_GENERIC;
+    tp = function_type(ret);
     FUNCTION_TYPE_SET_TYPE_BOUND(tp);
     return tp;
 }

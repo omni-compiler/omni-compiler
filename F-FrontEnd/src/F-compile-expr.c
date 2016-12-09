@@ -3419,17 +3419,22 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
         ID bindto;
         FOREACH_ID(bind, TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
             bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
-            if (function_type_is_appliable(ID_TYPE(bindto), a)) {
-                ftp = ID_TYPE(bindto);
-                EXPV_TYPE(memberRef) = ftp;
+            if (TYPE_REF(ID_TYPE(bindto)) &&
+                function_type_is_appliable(TYPE_REF(ID_TYPE(bindto)), a)) {
+                ftp = TYPE_REF(ID_TYPE(bindto));
+                /* EXPV_TYPE(memberRef) = ftp; */
             }
         }
 
         if (ftp) {
             ret_type = FUNCTION_TYPE_RETURN_TYPE(ftp);
-        } else {
-            error("There is no appliable type-bound procedure");
         }
+        else {
+            if (debug_flag)
+                fprintf(debug_fp, "There is no appliable type-bound procedure");
+        }
+        /* type-bound generic procedure type does not exist in XcodeML */
+        EXPV_TYPE(memberRef) = NULL;
     } else {
         // for type-bound PROCEDURE
         if (ftp != NULL) {
@@ -3438,7 +3443,15 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
                 error("argument type mismatch");
             }
 #endif
-            ret_type = FUNCTION_TYPE_RETURN_TYPE(ftp);
+            if (TYPE_REF(ftp)) {
+                ret_type = FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ftp));
+            } else {
+                /*
+                 * type-bound procedure is not bound yet,
+                 * so set a dummy type.
+                 */
+                ret_type = FUNCTION_TYPE_RETURN_TYPE(ftp);
+            }
         }
     }
 
