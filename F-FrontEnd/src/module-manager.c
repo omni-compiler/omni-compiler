@@ -67,6 +67,7 @@ add_module_id(struct module * mod, ID id)
     ID_LINK_ADD(mid, MODULE_ID_LIST(mod), MODULE_ID_LIST_LAST(mod));
 }
 
+#if 0
 // TODO check this
 #define AVAILABLE_ID(id)                           \
     ID_CLASS(id)   == CL_NAMELIST ||               \
@@ -82,12 +83,28 @@ add_module_id(struct module * mod, ID id)
        ) \
     && (      ID_STORAGE(id) != STG_NONE           \
         ))
+#else
+#define AVAILABLE_ID(id)                           \
+    ID_CLASS(id)   == CL_NAMELIST ||               \
+    (TRUE                                          \
+    && (      ID_CLASS(id)   == CL_VAR             \
+           || ID_CLASS(id)   == CL_ENTRY           \
+           || ID_CLASS(id)   == CL_PARAM           \
+           || ID_CLASS(id)   == CL_CONTAINS        \
+           || ID_CLASS(id)   == CL_TAGNAME         \
+           || ID_CLASS(id)   == CL_UNKNOWN         \
+           || ID_CLASS(id)   == CL_GENERICS        \
+           || ID_CLASS(id)   == CL_PROC            \
+       ) \
+    && (      ID_STORAGE(id) != STG_NONE           \
+        ))
+#endif
 
 /**
  * export public identifiers to module-manager.
  */
 int
-export_module(SYMBOL sym, ID ids, expv use_decls)
+export_xmod(SYMBOL mod_name, SYMBOL submod_name, ID ids, expv use_decls)
 {
     ID id;
     list lp;
@@ -96,7 +113,10 @@ export_module(SYMBOL sym, ID ids, expv use_decls)
     extern int flag_do_module_cache;
 
     *mod = (struct module){0};
-    MODULE_NAME(mod) = sym;
+    MODULE_NAME(mod) = mod_name;
+    if (submod_name) {
+        SUBMODULE_NAME(mod) = submod_name;
+    }
 
     // add public id
     FOREACH_ID(id, ids) {
@@ -134,14 +154,31 @@ export_module(SYMBOL sym, ID ids, expv use_decls)
 }
 
 /**
- * import public identifiers from module-manager.
+ * export public identifiers to module-manager.
  */
 int
-import_module(const SYMBOL name, struct module ** pmod)
+export_module(SYMBOL sym, ID ids, expv use_decls)
+{
+    return export_xmod(sym, NULL, ids, use_decls);
+}
+
+
+/**
+ * export public identifiers to module-manager.
+ */
+int
+export_submodule(SYMBOL submod, SYMBOL mod, ID ids, expv use_decls)
+{
+    assert(submod != NULL);
+    return export_xmod(mod, submod, ids, use_decls);
+}
+
+static int
+import_xmod(const SYMBOL name, const SYMBOL submodule_name, struct module ** pmod)
 {
     struct module * mod;
     for(mod = MODULE_MANAGER.head; mod != NULL; mod = MODULE_NEXT(mod)) {
-        if(MODULE_NAME(mod) == name) {
+        if(MODULE_NAME(mod) == name && SUBMODULE_NAME(mod) == submodule_name) {
             *pmod = mod;
             return TRUE;
         }
@@ -154,4 +191,22 @@ import_module(const SYMBOL name, struct module ** pmod)
 
     error("failed to import module '%s'", SYM_NAME(name));
     exit(1);
+}
+
+/**
+ * import public identifiers from module-manager.
+ */
+int
+import_module(const SYMBOL name, struct module ** pmod)
+{
+    return import_xmod(name, NULL, pmod);
+}
+
+/**
+ * import public identifiers from module-manager.
+ */
+int
+import_submodule(const SYMBOL name, const SYMBOL submodule_name, struct module ** pmod)
+{
+    return import_xmod(name, submodule_name, pmod);
 }

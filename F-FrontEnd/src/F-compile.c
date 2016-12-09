@@ -3293,6 +3293,17 @@ end_procedure()
         }
 
     }
+    if (CURRENT_PROC_CLASS == CL_SUBMODULE) {
+        if(!export_submodule(current_module_name,
+                             EXT_MODULE_ANCESTOR(CURRENT_EXT_ID)?:EXT_MODULE_PARENT(CURRENT_EXT_ID),
+                             LOCAL_SYMBOLS,
+                             LOCAL_USE_DECLS)) {
+            error("internal error, fail to export module.");
+            exit(1);
+        }
+
+    }
+
 
     /* if (CURRENT_PROC_CLASS != CL_MODULE) { */
     /* } */
@@ -3606,19 +3617,23 @@ end_module() {
     CURRENT_STATE = OUTSIDE; /* goto outer, outside state.  */
 }
 
-void associate_parent_module(SYMBOL);
+int associate_parent_module(const SYMBOL, const SYMBOL);
 
 void
-begin_submodule(expr name, expr ancestor, expr parent)
+begin_submodule(expr name, expr module, expr submodule)
 {
-    SYMBOL ancestor_name = ancestor?EXPR_SYM(ancestor):NULL;
-    SYMBOL parent_name = parent?EXPR_SYM(parent):NULL;
+    SYMBOL module_name = module?EXPR_SYM(module):NULL;
+    SYMBOL submodule_name = submodule?EXPR_SYM(submodule):NULL;
 
     begin_module(name);
     EXT_MODULE_IS_SUBMODULE(CURRENT_EXT_ID) = TRUE;
-    EXT_MODULE_ANCESTOR(CURRENT_EXT_ID) = ancestor_name;
-    EXT_MODULE_PARENT(CURRENT_EXT_ID) = parent_name;
-    associate_parent_module(parent_name);
+    EXT_MODULE_ANCESTOR(CURRENT_EXT_ID) = submodule_name?module_name:NULL;
+    EXT_MODULE_PARENT(CURRENT_EXT_ID) = submodule_name?:module_name;
+
+    if (associate_parent_module(module_name, submodule_name) == FALSE) {
+        error("failed to associate");
+    }
+
     push_unit_ctl(INSIDE); /* just dummy */
     CURRENT_STATE = INSIDE;
     CURRENT_PROC_CLASS = CL_SUBMODULE;
@@ -4073,11 +4088,10 @@ solve_use_assoc_conflict(ID id, ID mid)
 /**
  * import id from module to id list.
  */
-static int
+static void
 import_module_id(ID mid,
                  ID *head, ID *tail,
                  TYPE_DESC *sthead, TYPE_DESC *sttail,
-                 EXT_ID *ehead, EXT_ID *etail,
                  SYMBOL use_name, int need_wrap_type)
 {
     ID existed_id, id;
@@ -4085,7 +4099,7 @@ import_module_id(ID mid,
 
     if ((existed_id = find_ident_head(use_name?:ID_SYM(mid), *head)) != NULL) {
         solve_use_assoc_conflict(existed_id, mid);
-        return TRUE;
+        return;
     }
 
     id = new_ident_desc(ID_SYM(mid));
@@ -4153,7 +4167,7 @@ import_module_id(ID mid,
                 SYM_NAME(use_name));
     }
 
-    return TRUE;
+    return;
 }
 
 /**
@@ -4181,78 +4195,19 @@ copy_function_args(const expv args) {
     return new_args;
 }
 
-/**
- * common use assoc
- */
-int
-use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
+
+void
+deep_copy_id_types(ID mids)
 {
-    struct module *mod;
-    ID mid, id, last_id = NULL, prev_mid, first_mid;
-    TYPE_DESC tp, sttail = NULL;
-    EXT_ID ep, last_ep = NULL, mep;
-    struct use_argument * arg;
-    int ret = TRUE;
-    int wrap_type = TRUE;
+    ID mid;
+    EXT_ID mep;
 
-    initialize_replicated_type_list();
-
-    if (!import_module(name, &mod)) {
-        return FALSE;
-    }
-
-    if (debug_flag) {
-        fprintf(debug_fp, "######## BEGIN USE ASSOC #######\n");
-        print_IDs(MODULE_ID_LIST(mod), debug_fp, TRUE);
-    }
-
-    FOREACH_ID(id, LOCAL_SYMBOLS) {
-        last_id = id;
-    }
-    prev_mid = last_id;
-
-    for (tp = LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
-        sttail = tp;
-    }
-
-    for (ep = LOCAL_EXTERNAL_SYMBOLS; ep != NULL; ep = EXT_NEXT(ep)){
-        last_ep = ep;
-    }
-    ep = LOCAL_EXTERNAL_SYMBOLS;
-
-    FOREACH_ID(mid, MODULE_ID_LIST(mod)) {
-        int rename_count = 0;
-        FOREACH_USE_ARG(arg, args) {
-            wrap_type = TRUE;
-            if(arg->local != ID_SYM(mid))
-                continue;
-            import_module_id(mid,
-                             &LOCAL_SYMBOLS, &last_id,
-                             &LOCAL_STRUCT_DECLS, &sttail,
-                             &LOCAL_EXTERNAL_SYMBOLS, &last_ep,
-                             arg->use, wrap_type);
-            arg->used = TRUE;
-            rename_count++;
-        }
-        if(isRename && rename_count == 0) {
-            wrap_type = TRUE;
-            import_module_id(mid,
-                             &LOCAL_SYMBOLS, &last_id,
-                             &LOCAL_STRUCT_DECLS, &sttail,
-                             &LOCAL_EXTERNAL_SYMBOLS, &last_ep,
-                             NULL, wrap_type);
-        }
-    }
-
-    // deep-copy types now!
-    first_mid = prev_mid ? ID_NEXT(prev_mid) : NULL;
-    FOREACH_ID(mid, first_mid) {
+    FOREACH_ID(mid, mids) {
         // deep copy of types!
         deep_ref_copy_for_module_id_type(ID_TYPE(mid));
 
         // deep copy for function types!
         if ((mep = PROC_EXT_ID(mid)) != NULL) {
-          //ID id;
           expv v;
           list lp;
 
@@ -4273,13 +4228,71 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
           }
         }
     }
+}
+
+
+static int
+import_module_ids(struct module *mod, struct use_argument * args, int isOnly, int allowPrivate)
+{
+    ID mid, id, last_id = NULL, prev_mid, first_mid;
+    TYPE_DESC tp, sttail = NULL;
+    struct use_argument * arg;
+    int ret = TRUE;
+    int wrap_type = TRUE;
+
+    initialize_replicated_type_list();
+
+    if (debug_flag) {
+        fprintf(debug_fp, "######## BEGIN USE ASSOC #######\n");
+        print_IDs(MODULE_ID_LIST(mod), debug_fp, TRUE);
+    }
+
+    FOREACH_ID(id, LOCAL_SYMBOLS) {
+        last_id = id;
+    }
+    prev_mid = last_id;
+
+    FOREACH_STRUCTDECLS(tp, LOCAL_STRUCT_DECLS) {
+        sttail = tp;
+    }
+
+    FOREACH_ID(mid, MODULE_ID_LIST(mod)) {
+        if (!allowPrivate && TYPE_IS_PRIVATE(ID_TYPE(mid))) {
+            continue;
+        }
+        if (args != NULL) {
+            FOREACH_USE_ARG(arg, args) {
+                wrap_type = TRUE;
+                if (arg->local != ID_SYM(mid))
+                    continue;
+                import_module_id(mid,
+                                 &LOCAL_SYMBOLS, &last_id,
+                                 &LOCAL_STRUCT_DECLS, &sttail,
+                                 arg->use, wrap_type);
+                arg->used = TRUE;
+            }
+        } else {
+            if (!isOnly) {
+                wrap_type = TRUE;
+                import_module_id(mid,
+                                 &LOCAL_SYMBOLS, &last_id,
+                                 &LOCAL_STRUCT_DECLS, &sttail,
+                                 NULL, wrap_type);
+            }
+        }
+    }
 
     FOREACH_USE_ARG(arg, args) {
-        if(!arg->used) {
-            error("'%s' is not found in module '%s'", SYM_NAME(arg->local), SYM_NAME(name));
+        if (!arg->used) {
+            error("'%s' is not found in module '%s'",
+                  SYM_NAME(arg->local), SYM_NAME(MODULE_NAME(mod)));
             ret = FALSE;
         }
     }
+
+    // deep-copy types now!
+    first_mid = prev_mid ? ID_NEXT(prev_mid) : NULL;
+    deep_copy_id_types(first_mid);
 
     finalize_replicated_type_list();
 
@@ -4289,16 +4302,30 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
     return ret;
 }
 
+/**
+ * common use assoc
+ */
+int
+use_assoc_common(SYMBOL name, struct use_argument * args, int isOnly)
+{
+    struct module *mod;
+
+    if (!import_module(name, &mod)) {
+        return FALSE;
+    }
+
+    return import_module_ids(mod, args, isOnly, FALSE);
+}
 
 /**
  * use association with rename arguments.
  * import public identifiers from module to LOCAL_SYMBOLS.
  */
 int
-use_assoc_rename(SYMBOL name, struct use_argument * args)
+use_assoc(SYMBOL name, struct use_argument * args)
 {
-    int isRename = TRUE;
-    return use_assoc_common(name, args, isRename);
+    int isOnly = FALSE;
+    return use_assoc_common(name, args, isOnly);
 }
 
 /**
@@ -4308,8 +4335,8 @@ use_assoc_rename(SYMBOL name, struct use_argument * args)
 int
 use_assoc_only(SYMBOL name, struct use_argument * args)
 {
-    int isRename = FALSE;
-    return use_assoc_common(name, args, isRename);
+    int isOnly = TRUE;
+    return use_assoc_common(name, args, isOnly);
 }
 
 /*
@@ -4356,7 +4383,7 @@ compile_USE_decl (expr x, expr x_args, int is_intrinsic)
     EXPV_LINE(v) = EXPR_LINE(x);
     output_statement(v);
 
-    use_assoc_rename(EXPR_SYM(x), use_args);
+    use_assoc(EXPR_SYM(x), use_args);
 
     list_put_last(LOCAL_USE_DECLS, x);
 }
@@ -4420,10 +4447,16 @@ compile_USE_ONLY_decl (expr x, expr x_args, int is_intrinsic)
     list_put_last(LOCAL_USE_DECLS, x);
 }
 
-void
-associate_parent_module(SYMBOL ancestor_name)
+int
+associate_parent_module(const SYMBOL module, const SYMBOL submodule)
 {
-    use_assoc_rename(ancestor_name, NULL);
+    struct module *mod;
+
+    if (!import_submodule(module, submodule, &mod)) {
+        return FALSE;
+    }
+
+    return import_module_ids(mod, NULL, FALSE, TRUE);
 }
 
 

@@ -5669,7 +5669,7 @@ unmark_ids(EXT_ID ep)
 void
 output_module_file(struct module * mod)
 {
-    char filename[255] = {0};
+    char filename[FILE_NAME_LEN] = {0};
     ID id;
     EXT_ID ep;
     TYPE_EXT_ID te;
@@ -5682,12 +5682,22 @@ output_module_file(struct module * mod)
     expv v;
     extern char *modincludeDirv;
 
-    if(flag_module_compile) {
+    if (flag_module_compile) {
         print_fp = stdout;
     } else {
-        char tmp[255];
-        if (modincludeDirv) snprintf(filename, sizeof(filename), "%s/", modincludeDirv);
-        snprintf(tmp, sizeof(tmp), "%s.xmod", SYM_NAME(mod->name));
+        char tmp[FILE_NAME_LEN];
+        if (modincludeDirv) {
+            snprintf(filename, sizeof(filename), "%s/", modincludeDirv);
+        }
+        if (MODULE_IS_MODULE(mod)) {
+            snprintf(tmp, sizeof(tmp), "%s.xmod",
+                     SYM_NAME(MODULE_NAME(mod)));
+        } else { /* mod is submodule */
+            snprintf(tmp, sizeof(tmp), "%s:%s.xmod",
+                     SYM_NAME(SUBMODULE_ANCESTOR(mod)),
+                     SYM_NAME(SUBMODULE_NAME(mod))
+                     );
+        }
         strncat(filename, tmp, sizeof(filename) - strlen(filename) - 1);
         if ((print_fp = fopen(filename, "w")) == NULL) {
             fatal("could'nt open module file to write.");

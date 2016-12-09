@@ -873,7 +873,7 @@ extern void     begin_module _ANSI_ARGS_((expr name));
 extern void     end_module _ANSI_ARGS_((void));
 extern int      is_in_module(void);
 
-extern void     begin_submodule _ANSI_ARGS_((expr name, expr ancestor_name, expr parent_name));
+extern void     begin_submodule _ANSI_ARGS_((expr name, expr module_name, expr submodule_name));
 extern void     flatten_submodule_units _ANSI_ARGS_((void));
 extern void     end_submodule _ANSI_ARGS_((void));
 

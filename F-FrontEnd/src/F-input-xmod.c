@@ -3265,10 +3265,12 @@ search_intrinsic_include_path(const char * filename)
 }
 
 /**
- * input module from .xmod file
+ * input data from .xmod file
  */
-int
-input_module_file(const SYMBOL mod_name, struct module **pmod)
+static int
+input_xmod_file(const SYMBOL mod_name,
+                const SYMBOL submod_name,
+                struct module **pmod)
 {
     int ret;
     char filename[FILE_NAME_LEN];
@@ -3276,8 +3278,20 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
     xmlTextReaderPtr reader;
     int is_intrinsic = FALSE;
 
+    if (mod_name == NULL || pmod == NULL) {
+        return FALSE;
+    }
+
     // search for "xxx.xmod"
     bzero(filename, sizeof(filename));
+    if (!submod_name) {
+        snprintf(filename, sizeof(filename), "%s.xmod",
+                 SYM_NAME(mod_name));
+    } else {
+        snprintf(filename, sizeof(filename), "%s:%s.xmod",
+                 SYM_NAME(mod_name), SYM_NAME(submod_name));
+    }
+
     strcpy(filename, SYM_NAME(mod_name));
     strcat(filename, ".xmod");
 
@@ -3287,25 +3301,25 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
 
 #if defined _MPI_FC && _MPI_FC == gfortran
     // if not found, then search for "xxx.mod" and convert it into "xxx.xmod"
-    if (reader == NULL){
-      char filename2[FILE_NAME_LEN];
-      const char * filepath2;
+    if (reader == NULL && submod_name == NULL){
+        char filename2[FILE_NAME_LEN];
+        const char * filepath2;
 
-      bzero(filename2, sizeof(filename));
-      strcpy(filename2, SYM_NAME(mod_name));
-      strcat(filename2, ".mod");
-      filepath2 = search_include_path(filename2);
+        bzero(filename2, sizeof(filename));
+        strcpy(filename2, SYM_NAME(mod_name));
+        strcat(filename2, ".mod");
+        filepath2 = search_include_path(filename2);
 
-      if (!filepath2) return FALSE;
+        if (!filepath2) return FALSE;
 
-      char command[FILE_NAME_LEN + 9];
-      bzero(command, sizeof(filename2) + 9);
-      strcpy(command, _XMPMOD_NAME);
-      strcat(command, " ");
-      strcat(command, filepath2);
-      if (system(command) != 0) return FALSE;
+        char command[FILE_NAME_LEN + 9];
+        bzero(command, sizeof(filename2) + 9);
+        strcpy(command, _XMPMOD_NAME);
+        strcat(command, " ");
+        strcat(command, filepath2);
+        if (system(command) != 0) return FALSE;
 
-      reader = xmlNewTextReaderFilename(filepath);
+        reader = xmlNewTextReaderFilename(filepath);
     }
 #endif
 
@@ -3327,3 +3341,27 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
 
     return ret;
 }
+
+
+/**
+ * input module from .xmod file
+ */
+int
+input_module_file(const SYMBOL mod_name, struct module **pmod)
+{
+    return input_xmod_file(mod_name, NULL, pmod);
+}
+
+/**
+ * input module from .xmod file
+ */
+int
+input_submodule_file(const SYMBOL mod_name,
+                     const SYMBOL submod_name,
+                     struct module **pmod)
+{
+    assert(submod_name != NULL);
+    return input_xmod_file(mod_name, submod_name, pmod);
+}
+
+
