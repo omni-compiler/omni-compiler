@@ -1436,6 +1436,12 @@ find_ident_from_type_parameter(SYMBOL s, TYPE_DESC tp)
 }
 
 
+/*
+ * Find identifier from the current scope.
+ * If caller is in the block, search the local symbols in the block.
+ * If caller is in the function and not in the block, search the local symbols
+ * of the function.
+ */
 ID
 find_ident_local(SYMBOL s)
 {
@@ -1450,6 +1456,10 @@ find_ident_local(SYMBOL s)
     return find_ident_head(s, LOCAL_SYMBOLS);
 }
 
+/*
+ * Find an identifier from scopes between outside of the current block and the
+ * local scope of the current procedure/module.
+ */
 ID
 find_ident_block_parent(SYMBOL s)
 {
@@ -1477,6 +1487,9 @@ find_ident_block_parent(SYMBOL s)
     return ip;
 }
 
+/*
+ * Find an identifier from the scopes of the parent program units.
+ */
 ID
 find_ident_parent(SYMBOL s)
 {
@@ -1492,6 +1505,10 @@ find_ident_parent(SYMBOL s)
     return NULL;
 }
 
+/*
+ * Find an identifier from the scopes of the other subprogram units in the
+ * current CONTAIN block.
+ */
 ID
 find_ident_sibling(SYMBOL s)
 {
@@ -1574,6 +1591,9 @@ find_external_cont_ident_head(SYMBOL s)
 }
 
 
+/*
+ * Find an identifier from the outiside of the current scope.
+ */
 ID
 find_ident_outer_scope(SYMBOL s)
 {
@@ -1596,6 +1616,9 @@ find_ident_outer_scope(SYMBOL s)
 }
 
 
+/*
+ * Find an identifier from the all scopes thoses the caller can access.
+ */
 ID
 find_ident(SYMBOL s)
 {
