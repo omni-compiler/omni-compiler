@@ -103,8 +103,8 @@ static int  markAsPublic(ID id);
 static int  markAsPrivate(ID id);
 static int  markAsProtected(ID id);
 static void compile_POINTER_SET_statement(expr x);
-static void compile_USE_decl(expr x, expr x_args);
-static void compile_USE_ONLY_decl(expr x, expr x_args);
+static void compile_USE_decl(expr x, expr x_args, int is_intrinsic);
+static void compile_USE_ONLY_decl(expr x, expr x_args, int is_intrinsic);
 static expv compile_scene_range_expression_list(
                             expr scene_range_expression_list);
 static void fix_array_dimensions_recursive(ID ip);
@@ -414,12 +414,19 @@ void compile_statement1(int st_no, expr x)
     /* (F_PROGRAM_STATEMENT name) need: option or lias */
     case F95_USE_STATEMENT:
         check_INDCL();
-        compile_USE_decl(EXPR_ARG1(x), EXPR_ARG2(x));
+        compile_USE_decl(EXPR_ARG1(x), EXPR_ARG2(x), FALSE);
+        break;
+    case F03_USE_INTRINSIC_STATEMENT:
+        check_INDCL();
+        compile_USE_decl(EXPR_ARG1(x), EXPR_ARG2(x), TRUE);
         break;
 
     case F95_USE_ONLY_STATEMENT:
         check_INDCL();
-        compile_USE_ONLY_decl(EXPR_ARG1(x), EXPR_ARG2(x));
+        compile_USE_ONLY_decl(EXPR_ARG1(x), EXPR_ARG2(x), FALSE);
+    case F03_USE_ONLY_INTRINSIC_STATEMENT:
+        check_INDCL();
+        compile_USE_ONLY_decl(EXPR_ARG1(x), EXPR_ARG2(x), TRUE);
         break;
 
     case F95_INTERFACE_STATEMENT:
@@ -4156,7 +4163,7 @@ use_assoc_only(SYMBOL name, struct use_argument * args)
  * compiles use statement.
  */
 static void
-compile_USE_decl (expr x, expr x_args)
+compile_USE_decl (expr x, expr x_args, int is_intrinsic)
 {
     expv args, v;
     struct list_node *lp;
@@ -4187,8 +4194,12 @@ compile_USE_decl (expr x, expr x_args)
         }
         use_args = use_arg;
     }
-
-    v = expv_cons(F95_USE_STATEMENT, NULL, x, args);
+    if(is_intrinsic){
+        v = expv_cons(F03_USE_INTRINSIC_STATEMENT, NULL, x, args);
+    } else {
+        v = expv_cons(F95_USE_STATEMENT, NULL, x, args);
+    }
+    
     EXPV_LINE(v) = EXPR_LINE(x);
     output_statement(v);
 
@@ -4201,7 +4212,7 @@ compile_USE_decl (expr x, expr x_args)
  * compiles use only statement.
  */
 static void
-compile_USE_ONLY_decl (expr x, expr x_args)
+compile_USE_ONLY_decl (expr x, expr x_args, int is_intrinsic)
 {
     expv args, v;
     struct list_node *lp;
@@ -4242,7 +4253,12 @@ compile_USE_ONLY_decl (expr x, expr x_args)
         use_args = use_arg;
     }
 
-    v = expv_cons(F95_USE_ONLY_STATEMENT, NULL, x, args);
+    if(is_intrinsic) {
+        v = expv_cons(F03_USE_ONLY_INTRINSIC_STATEMENT, NULL, x, args);
+    } else {
+        v = expv_cons(F95_USE_ONLY_STATEMENT, NULL, x, args);
+    }
+    
     EXPV_LINE(v) = EXPR_LINE(x);
     output_statement(v);
 

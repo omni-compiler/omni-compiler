@@ -863,19 +863,19 @@ declaration_statement95:
         | SEQUENCE
         { $$ = list0(F95_SEQUENCE_STATEMENT); }
         | KW_USE ',' KW INTRINSIC COL2 IDENTIFIER
-        { $$ = list2(F95_USE_STATEMENT,$6,NULL); }        
+        { $$ = list2(F03_USE_INTRINSIC_STATEMENT, $6, NULL); }        
         | KW_USE IDENTIFIER
-        { $$ = list2(F95_USE_STATEMENT,$2,NULL); }
+        { $$ = list2(F95_USE_STATEMENT, $2, NULL); }
         | KW_USE IDENTIFIER ',' KW use_rename_list
-        { $$ = list2(F95_USE_STATEMENT,$2,$5); }
+        { $$ = list2(F95_USE_STATEMENT, $2, $5); }
         | KW_USE IDENTIFIER ',' KW KW_ONLY ':' /* empty */
-        { $$ = list2(F95_USE_ONLY_STATEMENT,$2, NULL); }
+        { $$ = list2(F95_USE_ONLY_STATEMENT, $2, NULL); }
         | KW_USE IDENTIFIER ',' KW KW_ONLY ':' use_only_list
-        { $$ = list2(F95_USE_ONLY_STATEMENT,$2,$7); }
+        { $$ = list2(F95_USE_ONLY_STATEMENT, $2, $7); }
         | KW_USE ',' KW INTRINSIC COL2 IDENTIFIER ',' KW KW_ONLY ':' /* empty */
-        { $$ = list2(F95_USE_ONLY_STATEMENT,$6, NULL); }
+        { $$ = list2(F03_USE_ONLY_INTRINSIC_STATEMENT, $6, NULL); }
         | KW_USE ',' KW INTRINSIC COL2 IDENTIFIER ',' KW KW_ONLY ':' use_only_list
-        { $$ = list2(F95_USE_ONLY_STATEMENT,$6,$11); }
+        { $$ = list2(F03_USE_ONLY_INTRINSIC_STATEMENT, $6, $11); }
         | INTENT '(' KW intent_spec ')' COL2_or_null ident_list
         { $$ = list2(F95_INTENT_STATEMENT, $4, $7); }
         | ALLOCATABLE COL2_or_null array_allocation_list

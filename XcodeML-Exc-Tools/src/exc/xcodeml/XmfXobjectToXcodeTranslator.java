@@ -283,9 +283,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         case F_USE_DECL:
             e = createElement(name,
-                              "name", xobj.getArg(0).getName());
+                              "name", xobj.getArg(0).getName(),
+                              "intrinsic", intFlagToBoolStr(xobj.getArg(1)));
             if (xobj.Nargs() > 1) {
-                for (Xobject a : (XobjList)xobj.getArg(1)) {
+                for (Xobject a : (XobjList)xobj.getArg(2)) {
                     addChildNode(e, trans(a));
                 }
             }
@@ -293,8 +294,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         case F_USE_ONLY_DECL:
             e = createElement(name,
-                              "name", xobj.getArg(0).getName());
-            for (Xobject a : (XobjList)xobj.getArg(1)) {
+                              "name", xobj.getArg(0).getName(),
+                              "intrinsic", intFlagToBoolStr(xobj.getArg(1)));
+            for (Xobject a : (XobjList)xobj.getArg(2)) {
                 addChildNode(e, trans(a));
             }
             break;

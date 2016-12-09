@@ -1049,7 +1049,9 @@ xtag(enum expr_code code)
     /*
      * module.
      */
+    case F03_USE_INTRINSIC_STATEMENT:
     case F95_USE_STATEMENT:         return "FuseDecl";
+    case F03_USE_ONLY_INTRINSIC_STATEMENT:
     case F95_USE_ONLY_STATEMENT:    return "FuseOnlyDecl";
 
     /*
@@ -2440,7 +2442,9 @@ outx_expv(int l, expv v)
     case FIRST_EXECUTION_POINT:
     case F95_INTERFACE_STATEMENT:
     case F95_USE_STATEMENT:
+    case F03_USE_INTRINSIC_STATEMENT:
     case F95_USE_ONLY_STATEMENT:
+    case F03_USE_ONLY_INTRINSIC_STATEMENT:
         break;
 
     /*
