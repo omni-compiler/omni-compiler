@@ -867,7 +867,7 @@ expv_is_restricted(expv x)
             ID id = find_ident(EXPV_NAME(base));
             if (id != NULL && ID_IS_OFMODULE(id))
                 return TRUE;
-            id = find_ident_parent(EXPV_NAME(base));
+            id = find_ident_outer_scope(EXPV_NAME(base));
             if (id != NULL)
                 return TRUE;
         }

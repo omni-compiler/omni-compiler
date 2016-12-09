@@ -1655,7 +1655,7 @@ union_parent_type(ID id)
     if (ID_TYPE(id) == NULL) {
         return;
     }
-    parent_id = find_ident_parent(ID_SYM(id));
+    parent_id = find_ident_outer_scope(ID_SYM(id));
 
     if (parent_id == NULL || ID_DEFINED_BY(parent_id) != id) {
         return;
@@ -2478,7 +2478,7 @@ define_external_function_id(ID id) {
     /*   ID_TYPE(id) = tp; */
     /* } */
     ID pid;
-    if (tp && (pid = find_ident_parent(ID_SYM(id)))) {
+    if (tp && (pid = find_ident_outer_scope(ID_SYM(id)))){
         if (TYPE_IS_PUBLIC(pid)) TYPE_SET_PUBLIC(tp);
         else if (TYPE_IS_PRIVATE(pid)) TYPE_SET_PRIVATE(tp);
         else if (TYPE_IS_PROTECTED(pid)) TYPE_SET_PROTECTED(tp);
