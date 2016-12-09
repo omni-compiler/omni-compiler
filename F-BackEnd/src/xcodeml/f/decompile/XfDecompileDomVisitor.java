@@ -4972,6 +4972,9 @@ public class XfDecompileDomVisitor {
 
             XmfWriter writer = _context.getWriter();
             writer.writeToken("USE ");
+            if(XmDomUtil.getAttrBool(n, "intrinsic") == true){
+              writer.writeToken(", INTRINSIC :: ");
+            }
             writer.writeToken(XmDomUtil.getAttr(n, "name"));
 
             ArrayList<Node> renameNodes = XmDomUtil.collectElements(n, "rename");
@@ -5028,6 +5031,9 @@ public class XfDecompileDomVisitor {
 
             XmfWriter writer = _context.getWriter();
             writer.writeToken("USE ");
+            if(XmDomUtil.getAttrBool(n, "intrinsic") == true){
+              writer.writeToken(", INTRINSIC :: ");
+            }
             writer.writeToken(XmDomUtil.getAttr(n, "name"));
             writer.writeToken(", ONLY: ");
 
