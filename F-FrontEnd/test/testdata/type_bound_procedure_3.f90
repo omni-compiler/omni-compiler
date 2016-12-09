@@ -18,4 +18,7 @@
 
       PROGRAM main
         USE m
+        INTEGER :: a
+        TYPE(t) :: v = t(1)
+        a = v%f(1)
       END PROGRAM main
