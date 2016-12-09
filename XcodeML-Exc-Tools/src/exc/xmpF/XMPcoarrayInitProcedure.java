@@ -34,13 +34,7 @@ public class XMPcoarrayInitProcedure {
   private int version;         // defined by the constructor
 
   /* for each procedure */
-  /* commonName2 is used if coarray.isUseMalloc() is true.
-   * commonName3 is used otherwise.
-   */
   private String sizeProcName, initProcName;  // names of procedures to generate
-  private String commonName1 = null;    // common block name for descptr
-  private String commonName2 = null;    // common block name for crayptr (Ver.3)
-  private String commonName3 = null;    // common block name for coarrays (Ver.4)
 
   /* for all variables of a procedure */
   private ArrayList<String> varNames1, varNames2;
@@ -211,34 +205,6 @@ public class XMPcoarrayInitProcedure {
   }
 
 
-  private void set_commonName1(XMPcoarray coarray) {
-    String name = coarray.getDescCommonName();
-
-    if (commonName1 == null)
-      commonName1 = name;
-    else if (!commonName1.equals(name))
-      XMP.fatal("INTERNAL: inconsistent descptr common block names " +
-                commonName1 + " and " + name);
-  }
-
-  private void set_commonName2(XMPcoarray coarray) {
-    String name = coarray.getCrayCommonName();
-
-    // set commonName2 if it is not set
-    if (commonName2 == null)
-      commonName2 = name;
-    else if (!commonName2.equals(name)) 
-      XMP.fatal("INTERNAL: inconsistent second common block names " +
-                commonName2 + " and " + name);
-  }
-
-  private void set_commonName3(XMPcoarray coarray) {
-    String name = coarray.getCoarrayCommonName();
-
-    // always overwrite commonName2
-    commonName3 = name;
-  }
-
 
   private void build_initEachCoarray(XMPcoarray coarray,
                                      BlockList body, Xobject decls) {
@@ -255,7 +221,6 @@ public class XMPcoarrayInitProcedure {
     //   "common /xmpf_descptr_foo/ descPtr_var"
     String descPtrName = coarray.getDescPointerName();
     Ident descPtrId = null;
-    set_commonName1(coarray);
     descPtrId = body.declLocalIdent(descPtrName,
                                     Xtype.Farray(BasicType.Fint8Type),
                                     StorageClass.FCOMMON,
@@ -263,7 +228,8 @@ public class XMPcoarrayInitProcedure {
     Xobject commonStmt1 =
       Xcons.List(Xcode.F_COMMON_DECL,
                  Xcons.List(Xcode.F_VAR_LIST,
-                            Xcons.Symbol(Xcode.IDENT, commonName1),
+                            Xcons.Symbol(Xcode.IDENT,
+                                         coarray.getDescCommonName()),
                             Xcons.List(Xcons.FvarRef(descPtrId))));
     decls.add(commonStmt1);
 
@@ -278,13 +244,12 @@ public class XMPcoarrayInitProcedure {
     XobjList commonMember;
     if (coarray.usesMalloc()) {
       // Ver.3 or STRUCT type: generate common block for cray-pointers
-      set_commonName2(coarray);
       String crayPtrName = coarray.getCrayPointerName();
       Ident ident2 = body.declLocalIdent(crayPtrName,
                                          Xtype.Farray(BasicType.Fint8Type),
                                          StorageClass.FCOMMON,  //or StorageClass.FLOCAL
                                          null);
-      commonName = commonName2;
+      commonName = coarray.getCrayCommonName();
       commonMember = Xcons.List(Xcons.FvarRef(ident2));
     }
     else {
@@ -293,10 +258,9 @@ public class XMPcoarrayInitProcedure {
       ////////////////////////
       //      type1.removeCodimensions();       // remove codimensions
       ////////////////////////
-      set_commonName3(coarray);
       _resetSaveAttrInType(type1);         // reset SAVE attribute
       ident1.setStorageClass(StorageClass.FCOMMON);   // reset SAVE attribute again
-      commonName = commonName3;
+      commonName = coarray.getCoarrayCommonName();
       commonMember = Xcons.List(Xcons.FvarRef(ident1));
     }
 

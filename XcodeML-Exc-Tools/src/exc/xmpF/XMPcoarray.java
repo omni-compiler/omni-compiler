@@ -155,7 +155,7 @@ public class XMPcoarray {
   }
 
 
-  public void decideWhetherUseMalloc(Boolean useMalloc) {
+  public void setUseMallocWithHint(Boolean useMalloc) {
     // useMalloc (memory manager Ver.3) is specified.
     if (useMalloc) {
       this.useMalloc = true;
@@ -1555,21 +1555,33 @@ public class XMPcoarray {
 
   public String getDescCommonName()
   {
-    return VAR_DESCPOINTER_PREFIX + "_" + homeBlockCodeName;
+    String descCommonName = 
+      VAR_DESCPOINTER_PREFIX + "_" +
+      homeBlockCodeName + "_" +
+      _getCodeFromName(getName());
+
+    return descCommonName;
   }
 
   // for case useMalloc
   public String getCrayCommonName()
   {
-    return VAR_CRAYPOINTER_PREFIX + "_" + homeBlockCodeName;
+    String crayCommonName = 
+      VAR_CRAYPOINTER_PREFIX + "_" +
+      homeBlockCodeName + "_" +
+      _getCodeFromName(getName());
+
+    return crayCommonName;
   }
 
   // for case !useMalloc
   public String getCoarrayCommonName()
   {
-    // unique name both for the var name and for homeBlockCodeName
     String coarrayCommonName =
-      CBLK_COARRAYS_PREFIX + "_" + homeBlockCodeName + "_" + _getCodeFromName(getName());
+      CBLK_COARRAYS_PREFIX + "_" +
+      homeBlockCodeName + "_" +
+      _getCodeFromName(getName());
+
     return coarrayCommonName;
   }
 

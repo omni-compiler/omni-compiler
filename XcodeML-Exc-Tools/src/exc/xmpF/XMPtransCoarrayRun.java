@@ -465,7 +465,7 @@ public class XMPtransCoarrayRun
       if (ident.wasCoarray()) {
         // found it is a coarray or a variable converted from a coarray
         XMPcoarray coarray = new XMPcoarray(ident, def, getFblock(), env);
-        coarray.decideWhetherUseMalloc(useMalloc);
+        coarray.setUseMallocWithHint(useMalloc);
         if (coarray.isUseAssociated())
           useAssociatedCoarrays.add(coarray);
         else
@@ -553,7 +553,7 @@ public class XMPtransCoarrayRun
     // but not changed homeBlockName, declCommonName and crayCommonName
     XMPcoarray coarray2 = new XMPcoarray(ident2, def, getFblock(), env,
                                          coarray1.getHomeBlockCodeName());
-    coarray2.decideWhetherUseMalloc(useMalloc);
+    coarray2.setUseMallocWithHint(useMalloc);
     coarray2.setWasMovedFromModule(true);
     return coarray2;
   }
@@ -931,18 +931,12 @@ public class XMPtransCoarrayRun
     // a1. make common association of descriptors
     genCommonStmt(staticAssociatedCoarrays);
 
-    if (useMalloc) {
-      // c. generate Cray-POINTER and COMMON statements
-      genDeclOfCrayPointer(staticAssociatedCoarrays);
-      genCommonStmtForCrayPointer(staticAssociatedCoarrays);
-    } else {
-      // c4. generate common block for data
-      genCommonBlockForStaticCoarrays(staticAssociatedCoarrays);
-      // prepare for derived-type coarrays
-      // c. generate Cray-POINTER and COMMON statements
-      genDeclOfCrayPointer(staticAssociatedCoarrays);
-      genCommonStmtForCrayPointer(staticAssociatedCoarrays);
-    }
+    // c4. generate common block for data (case Ver.4)
+    genCommonBlockForStaticCoarrays(staticAssociatedCoarrays);
+
+    // c. generate Cray-POINTER and COMMON statements (case Ver.3)
+    genDeclOfCrayPointer(staticAssociatedCoarrays);
+    genCommonStmtForCrayPointer(staticAssociatedCoarrays);
 
     // b. generate allocation into the init procedure
     genAllocOfStaticCoarrays(staticAssociatedCoarrays);
@@ -1446,24 +1440,25 @@ public class XMPtransCoarrayRun
     if (coarrays.isEmpty())
       return;
 
-    ArrayList<String> cnameList = new ArrayList<String>();
+    ArrayList<String> cbNameList = new ArrayList<String>();
     for (XMPcoarray coarray0: coarrays) {
-      String cname = coarray0.getCoarrayCommonName();
+      String cbName = coarray0.getCoarrayCommonName();
 
-      // it is not the target if coarray0 selects Ver.3
+      // it is not the target if Ver.3 is selected for coarray0
       if (coarray0.usesMalloc())
         continue;
 
-      if (cnameList.contains(cname))
+      // skip double-defined name
+      if (cbNameList.contains(cbName))
         continue;
 
       // found new common block to be declared
-      cnameList.add(cname);
+      cbNameList.add(cbName);
 
-      Xobject cnameObj = Xcons.Symbol(Xcode.IDENT, cname);
+      Xobject cbNameObj = Xcons.Symbol(Xcode.IDENT, cbName);
       Xobject varList = Xcons.List();
       for (XMPcoarray coarray: coarrays) {
-        if (cname.equals(coarray.getCoarrayCommonName())) {
+        if (cbName.equals(coarray.getCoarrayCommonName())) {
           Ident coarrayId = coarray.getIdent();
           varList.add(Xcons.FvarRef(coarrayId));
         }
@@ -1471,8 +1466,9 @@ public class XMPtransCoarrayRun
 
       // add declaration 
       Xobject decls = getFblock().getBody().getDecls();
-      Xobject args = Xcons.List(Xcode.F_COMMON_DECL,
-                                Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList));
+      Xobject args =
+        Xcons.List(Xcode.F_COMMON_DECL,
+                   Xcons.List(Xcode.F_VAR_LIST, cbNameObj, varList));
       decls.add(args);
     }
   }
@@ -2334,6 +2330,7 @@ public class XMPtransCoarrayRun
 
             //////////////////////////////
             //////////// allocation for derived-type coarray must be deleted
+            /////   TEMPORARY
             //////////////////////////////
             // keep the ALLOCATE stmtatement if useRegMem
             if (!useMalloc)
@@ -2375,6 +2372,7 @@ public class XMPtransCoarrayRun
 
             // keep the DEALLOCATE stmtatement if useRegMem
             ///////////////////////////////////
+            /////   TEMPORARY
             //////   exception for derived type needed
             ///////////////////////////////////
             if (!useMalloc)
@@ -2752,8 +2750,7 @@ public class XMPtransCoarrayRun
   //
   private void removeSaveAttr(ArrayList<XMPcoarray> coarrays) {
     for (XMPcoarray coarray: coarrays) {
-      if (coarray.usesMalloc())
-        coarray.resetSaveAttr();
+      coarray.resetSaveAttr();
     }
   }
 
