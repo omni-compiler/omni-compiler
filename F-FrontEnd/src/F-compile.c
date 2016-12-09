@@ -4203,7 +4203,7 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
 
     if (debug_flag) {
         fprintf(debug_fp, "######## BEGIN USE ASSOC #######\n");
-        print_IDs(mod->head, debug_fp, TRUE);
+        print_IDs(MODULE_ID_LIST(mod), debug_fp, TRUE);
     }
 
     FOREACH_ID(id, LOCAL_SYMBOLS) {
@@ -4220,7 +4220,7 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
     }
     ep = LOCAL_EXTERNAL_SYMBOLS;
 
-    FOREACH_ID(mid, mod->head) {
+    FOREACH_ID(mid, MODULE_ID_LIST(mod)) {
         int rename_count = 0;
         FOREACH_USE_ARG(arg, args) {
             wrap_type = TRUE;

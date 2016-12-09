@@ -42,7 +42,7 @@ add_module_id(struct module * mod, ID id)
     if (mid->use_assoc == NULL) {
         mid->use_assoc = XMALLOC(struct use_assoc_info *, sizeof(*(id->use_assoc)));
         mid->use_assoc->module = mod;
-        mid->use_assoc->module_name = mod->name;
+        mid->use_assoc->module_name = MODULE_NAME(mod);
         mid->use_assoc->original_name = id->name;
     }
 
@@ -57,14 +57,14 @@ add_module_id(struct module * mod, ID id)
             if (tagname->use_assoc == NULL) {
                 tagname->use_assoc = XMALLOC(struct use_assoc_info *, sizeof(*(id->use_assoc)));
                 tagname->use_assoc->module = mod;
-                tagname->use_assoc->module_name = mod->name;
+                tagname->use_assoc->module_name = MODULE_NAME(mod);
                 tagname->use_assoc->original_name = tagname->name;
             }
         }
         tp = TYPE_REF(tp);
     }
 
-    ID_LINK_ADD(mid, mod->head, mod->last);
+    ID_LINK_ADD(mid, MODULE_ID_LIST(mod), MODULE_ID_LIST_LAST(mod));
 }
 
 // TODO check this
@@ -96,7 +96,7 @@ export_module(SYMBOL sym, ID ids, expv use_decls)
     extern int flag_do_module_cache;
 
     *mod = (struct module){0};
-    mod->name = sym;
+    MODULE_NAME(mod) = sym;
 
     // add public id
     FOREACH_ID(id, ids) {
@@ -107,13 +107,13 @@ export_module(SYMBOL sym, ID ids, expv use_decls)
     // make the list of module name which this module uses.
     FOR_ITEMS_IN_LIST(lp, use_decls) {
         dep = XMALLOC(struct depend_module *, sizeof(struct depend_module));
-        dep->module_name = EXPR_SYM(LIST_ITEM(lp));
-        if (mod->depend.last == NULL) {
-            mod->depend.head = dep;
-            mod->depend.last = dep;
+        MOD_DEP_NAME(dep) = EXPR_SYM(LIST_ITEM(lp));
+        if (MODULE_DEPEND_LAST(mod) == NULL) {
+            MODULE_DEPEND_HEAD(mod) = dep;
+            MODULE_DEPEND_LAST(mod) = dep;
         } else {
-            mod->depend.last->next = dep;
-            mod->depend.last = dep;
+            MOD_DEP_NEXT(MODULE_DEPEND_LAST(mod)) = dep;
+            MODULE_DEPEND_LAST(mod) = dep;
         }
     }
 
@@ -140,8 +140,8 @@ int
 import_module(const SYMBOL name, struct module ** pmod)
 {
     struct module * mod;
-    for(mod = MODULE_MANAGER.head; mod != NULL; mod = mod->next) {
-        if(mod->name == name) {
+    for(mod = MODULE_MANAGER.head; mod != NULL; mod = MODULE_NEXT(mod)) {
+        if(MODULE_NAME(mod) == name) {
             *pmod = mod;
             return TRUE;
         }

@@ -20,6 +20,10 @@ struct depend_module {
     SYMBOL module_name;
 };
 
+#define MOD_DEP_NEXT(dep) ((dep)->next)
+#define MOD_DEP_NAME(dep) ((dep)->module_name)
+
+
 /**
  * fortran module.
  */
@@ -34,6 +38,16 @@ struct module {
     ID last;
     int is_intrinsic;         /* TRUE if this module is an intrinsic module. */
 };
+
+#define MODULE_NEXT(mod)          ((mod)->next)
+#define MODULE_NAME(mod)          ((mod)->name)
+#define MODULE_DEPEND_HEAD(mod)   ((mod)->depend.head)
+#define MODULE_DEPEND_LAST(mod)   ((mod)->depend.last)
+#define MODULE_ID_LIST(mod)       ((mod)->head)
+#define MODULE_ID_LIST_LAST(mod)  ((mod)->last)
+#define MODULE_IS_INTRINSIC(mod)  ((mod)->is_intrinsic)
+
+
 
 /**
  * import module form module manager.

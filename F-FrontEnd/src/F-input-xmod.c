@@ -3319,7 +3319,7 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
         return FALSE;
 
     *pmod = XMALLOC(struct module *, sizeof(struct module));
-    (*pmod)->name = mod_name;
+    MODULE_NAME(*pmod) = mod_name;
 
     ret = input_module(reader, *pmod, is_intrinsic);
 
