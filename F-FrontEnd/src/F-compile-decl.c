@@ -4889,10 +4889,6 @@ compile_type_bound_procedure(expr x)
                     error_at_node(x, "NOPASS is already specified.");
                     return;
                 }
-                if (binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS) {
-                    error_at_node(x, "PASS and NO_PASS conflicts.");
-                    return;
-                }
                 binding_attr_flags |= TYPE_BOUND_PROCEDURE_NOPASS;
                 break;
             case F03_NON_OVERRIDEABLE_SPEC:
@@ -4900,6 +4896,7 @@ compile_type_bound_procedure(expr x)
                     error_at_node(x, "NON_OVERRIDABLE is already specified.");
                     return;
                 }
+                warning_at_node(x, "NOT IMPLEMENTED YET\n");
                 binding_attr_flags |= TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE;
                 break;
             case F03_DEFERRED_SPEC:
@@ -4922,10 +4919,6 @@ compile_type_bound_procedure(expr x)
                     error_at_node(x, "PUBLIC is already specified.");
                     return;
                 }
-                if (access_attr_flags & (TYPE_ATTR_PRIVATE)) {
-                    error_at_node(x, "access specs are conflicted.");
-                    return;
-                }
                 access_attr_flags |= TYPE_ATTR_PUBLIC;
                 break;
             case F95_PRIVATE_SPEC:
@@ -4945,6 +4938,23 @@ compile_type_bound_procedure(expr x)
         }
     }
 
+    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS) &&
+        (binding_attr_flags & TYPE_BOUND_PROCEDURE_NOPASS)) {
+        error_at_node(x, "PASS and NO_PASS conflicts.");
+        return;
+    }
+
+    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) &&
+        (binding_attr_flags & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE)) {
+        error_at_node(x, "DEFERRED and NON_OVERRIDABLE conflicts.");
+        return;
+    }
+
+    if ((access_attr_flags & (TYPE_ATTR_PRIVATE)) &&
+        (access_attr_flags & (TYPE_ATTR_PUBLIC))) {
+        error_at_node(x, "access specs are conflicted.");
+        return;
+    }
 
     if (!(binding_attr_flags & TYPE_BOUND_PROCEDURE_NOPASS)) {
         /* set a default attribute */
@@ -4953,6 +4963,10 @@ compile_type_bound_procedure(expr x)
 
     if (interface_name) {
         interface = new_ident_desc(EXPR_SYM(interface_name));
+        if (!(binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED)) {
+            error_at_node(x, "require DEFERRED attribute");
+        }
+        warning_at_node(x, "NOT IMPLEMENTED YET\n");
         FOR_ITEMS_IN_LIST(lp, bindings) {
             if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
                 error_at_node(x, "unexpected expression");
