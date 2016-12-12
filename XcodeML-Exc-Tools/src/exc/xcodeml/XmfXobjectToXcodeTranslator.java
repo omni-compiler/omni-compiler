@@ -285,7 +285,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = createElement(name,
                               "name", xobj.getArg(0).getName(),
                               "intrinsic", intFlagToBoolStr(xobj.getArg(1)));
-            if (xobj.Nargs() > 1) {
+            if (xobj.Nargs() > 2) {
                 for (Xobject a : (XobjList)xobj.getArg(2)) {
                     addChildNode(e, trans(a));
                 }

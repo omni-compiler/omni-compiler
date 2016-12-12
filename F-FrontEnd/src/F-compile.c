@@ -424,6 +424,7 @@ void compile_statement1(int st_no, expr x)
     case F95_USE_ONLY_STATEMENT:
         check_INDCL();
         compile_USE_ONLY_decl(EXPR_ARG1(x), EXPR_ARG2(x), FALSE);
+        break;
     case F03_USE_ONLY_INTRINSIC_STATEMENT:
         check_INDCL();
         compile_USE_ONLY_decl(EXPR_ARG1(x), EXPR_ARG2(x), TRUE);
