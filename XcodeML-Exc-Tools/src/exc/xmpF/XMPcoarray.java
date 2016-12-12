@@ -55,7 +55,7 @@ public class XMPcoarray {
   private Ident crayPtrId = null;
   private String _descPtrName = null;
   private Ident descPtrId = null;
-  private String homeBlockName = null;
+  private String homeBlockCodeName = null;    // see _getHomeBlockCodeName()
   private String _coarrayCommName = null;
   private Ident coarrayCommId = null;
   
@@ -68,6 +68,12 @@ public class XMPcoarray {
   protected XobjectDef def;
   protected FunctionBlock fblock;
 
+  // strategy for each coarray
+  /* true (memory allocation in library) if 
+   *   memory mannager is Ver.3 or the coarray is derived type,
+   * else false (not allocation but only registration in library)
+   */
+  private Boolean useMalloc = true;
 
   /**************************
       debugging tools
@@ -90,9 +96,9 @@ public class XMPcoarray {
     this(ident, funcDef.getDef(), funcDef.getBlock(), env);
   }
   public XMPcoarray(Ident ident, FuncDefBlock funcDef, XMPenv env,
-                    String homeBlockName)
+                    String homeBlockCodeName)
   {
-    this(ident, funcDef.getDef(), funcDef.getBlock(), env, homeBlockName);
+    this(ident, funcDef.getDef(), funcDef.getBlock(), env, homeBlockCodeName);
   }
   public XMPcoarray(Ident ident, XobjectDef def, FunctionBlock fblock, XMPenv env)
   {
@@ -100,26 +106,73 @@ public class XMPcoarray {
     this.def = def;
     this.fblock = fblock;
     setIdentEtc(ident);
-    homeBlockName = ident.getFdeclaredModule();
-    if (homeBlockName == null) {
-      homeBlockName = def.getName();
-      XobjectDef parent_def = def.getParent();
-      while (parent_def != null) {
-        homeBlockName = homeBlockName + "_" + parent_def.getName();
-        parent_def = parent_def.getParent();
-      }
-    }
+    _setHomeBlockCodeName();
   }
   public XMPcoarray(Ident ident, XobjectDef def, FunctionBlock fblock, XMPenv env,
-                    String homeBlockName)
+                    String homeBlockCodeName)
   {
     this.env = env;
     this.def = def;
     this.fblock = fblock;
     setIdentEtc(ident);
-    this.homeBlockName = homeBlockName;
+    this.homeBlockCodeName = homeBlockCodeName;
   }
 
+
+  private void _setHomeBlockCodeName()
+  {
+    String name, code;
+
+    name = ident.getFdeclaredModule();
+    if (name != null) {
+      code = _getCodeFromName(name);
+    }
+    else {
+      name = def.getName();
+      code = _getCodeFromName(name);
+      XobjectDef parent_def = def.getParent();
+      while (parent_def != null) {
+        name = parent_def.getName();
+        code = _getCodeFromName(name) + "_" + code;
+        parent_def = parent_def.getParent();
+      }
+    }
+
+    homeBlockCodeName = code;
+  }
+
+  private String _getCodeFromName(String name)
+  {
+    int count = 0;
+    for (int idx = name.indexOf("_");
+         idx >= 0;
+         idx = name.indexOf("_", idx + 1))
+      ++count;
+
+    if (count == 0)
+      return name;
+    return "" + count + name;
+  }
+
+
+  public void setUseMallocWithHint(Boolean useMalloc) {
+    // useMalloc (memory manager Ver.3) is specified.
+    if (useMalloc) {
+      this.useMalloc = true;
+      return;
+    }
+    // derived-type coarray is not supported in Ver.4.
+    if (getIdent().Type().getKind() == Xtype.STRUCT) {
+      this.useMalloc = true;
+      return;
+    }
+    // otherwise, memory manager Ver.4 is used.
+    this.useMalloc = false;
+  }
+
+  public Boolean usesMalloc() {
+    return useMalloc;
+  }
 
   //------------------------------
   //  semantic analysis:
@@ -1495,30 +1548,40 @@ public class XMPcoarray {
     return env;
   }
 
-  public String getHomeBlockName()
+  public String getHomeBlockCodeName()
   {
-    return homeBlockName;
+    return homeBlockCodeName;
   }
 
   public String getDescCommonName()
   {
-    return VAR_DESCPOINTER_PREFIX + "_" + homeBlockName;
+    String descCommonName = 
+      VAR_DESCPOINTER_PREFIX + "_" +
+      homeBlockCodeName + "_" +
+      _getCodeFromName(getName());
+
+    return descCommonName;
   }
 
   // for case useMalloc
   public String getCrayCommonName()
   {
-    return VAR_CRAYPOINTER_PREFIX + "_" + homeBlockName;
+    String crayCommonName = 
+      VAR_CRAYPOINTER_PREFIX + "_" +
+      homeBlockCodeName + "_" +
+      _getCodeFromName(getName());
+
+    return crayCommonName;
   }
 
   // for case !useMalloc
   public String getCoarrayCommonName()
   {
-    // unique name both for the var name and for homeBlockName
-    String homeBlockPart = getHomeBlockName().replaceAll("_", "__");
-    String varPart = getName().replaceAll("_", "__");
     String coarrayCommonName =
-      CBLK_COARRAYS_PREFIX + "_" + homeBlockPart + "_" + varPart;
+      CBLK_COARRAYS_PREFIX + "_" +
+      homeBlockCodeName + "_" +
+      _getCodeFromName(getName());
+
     return coarrayCommonName;
   }
 
@@ -1617,7 +1680,6 @@ public class XMPcoarray {
     return _wasMovedFromModule;
   }
 
-
   public static XMPcoarray findCoarrayInCoarrays(String name,
                                                  ArrayList<XMPcoarray> coarrays) {
     for (XMPcoarray coarray: coarrays) {
@@ -1639,12 +1701,13 @@ public class XMPcoarray {
       "\n  Boolean isAllocatable = " +  isAllocatable +
       "\n  Boolean isPointer = " +  isPointer +
       "\n  Boolean isUseAssociated = " +  isUseAssociated +
+      "\n  Boolean useMalloc = " + useMalloc +
       "\n  Boolean _wasMovedFromModule = " + _wasMovedFromModule +
       "\n  String _crayPtrName = " +  _crayPtrName +
       "\n  Ident crayPtrId = " +  crayPtrId +
       "\n  String _descPtrName = " +  _descPtrName +
       "\n  Ident descPtrId = " +  descPtrId +
-      "\n  String homeBlockName = " +  homeBlockName +
+      "\n  String homeBlockCodeName = " +  homeBlockCodeName +
       "\n  XMPenv env = " +  env +
       "\n  XobjectDef def = " +  def + ": name=" + def.getName() +
       "\n  FunctionBlock fblock" + ": name=" + def.getName();

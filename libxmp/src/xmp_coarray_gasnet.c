@@ -790,7 +790,7 @@ void _XMP_gasnet_coarray_lastly_deallocate(){
 /*               [OUT] **addr        : Double pointer of new coarray  */
 /*               [IN] coarray_size   : Coarray size                   */
 /**********************************************************************/
-void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
+void _XMP_gasnet_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
 {
   char **each_addr;  // head address of a local array on each node
   size_t tmp_shift;

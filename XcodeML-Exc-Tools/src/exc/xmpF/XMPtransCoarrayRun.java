@@ -50,6 +50,7 @@ public class XMPtransCoarrayRun
   final static String COARRAY_MALLOC_NAME    = "xmpf_coarray_malloc_generic";
   final static String COARRAY_REGMEM_NAME    = "xmpf_coarray_regmem_generic";
   final static String COARRAY_DEALLOC_NAME   = "xmpf_coarray_dealloc_generic";
+  final static String COARRAY_UNREGMEM_NAME  = "xmpf_coarray_unregmem_generic";
   final static String NUM_IMAGES_NAME        = "xmpf_num_images_generic";
   final static String THIS_IMAGE_NAME        = "xmpf_this_image_generic";
   final static String COBOUND_NAME           = "xmpf_cobound_generic";
@@ -464,6 +465,7 @@ public class XMPtransCoarrayRun
       if (ident.wasCoarray()) {
         // found it is a coarray or a variable converted from a coarray
         XMPcoarray coarray = new XMPcoarray(ident, def, getFblock(), env);
+        coarray.setUseMallocWithHint(useMalloc);
         if (coarray.isUseAssociated())
           useAssociatedCoarrays.add(coarray);
         else
@@ -550,7 +552,8 @@ public class XMPtransCoarrayRun
     // reset ident, name, isAllocatable, isPointer and _isUseAssociated
     // but not changed homeBlockName, declCommonName and crayCommonName
     XMPcoarray coarray2 = new XMPcoarray(ident2, def, getFblock(), env,
-                                         coarray1.getHomeBlockName());
+                                         coarray1.getHomeBlockCodeName());
+    coarray2.setUseMallocWithHint(useMalloc);
     coarray2.setWasMovedFromModule(true);
     return coarray2;
   }
@@ -847,7 +850,10 @@ public class XMPtransCoarrayRun
       genDeclOfCrayPointer(staticLocalCoarrays);
       genCommonStmtForCrayPointer(staticLocalCoarrays);
     } else { //version 4 or 6 or 7 and !useMalloc
-      // nothing
+      // c. generate Cray-POINTER and COMMON statements
+      // same as Ver.3, prepare for derived-type coarrays 
+      genDeclOfCrayPointer(staticLocalCoarrays);
+      genCommonStmtForCrayPointer(staticLocalCoarrays);
     }
 
     /*--- b. Execution statements for Initialization ---*/
@@ -925,14 +931,12 @@ public class XMPtransCoarrayRun
     // a1. make common association of descriptors
     genCommonStmt(staticAssociatedCoarrays);
 
-    if (!useMalloc) {
-      // c4. generate common block for data
-      genCommonBlockForStaticCoarrays(staticAssociatedCoarrays);
-    } else {
-      // c. generate Cray-POINTER and COMMON statements
-      genDeclOfCrayPointer(staticAssociatedCoarrays);
-      genCommonStmtForCrayPointer(staticAssociatedCoarrays);
-    }
+    // c4. generate common block for data (case Ver.4)
+    genCommonBlockForStaticCoarrays(staticAssociatedCoarrays);
+
+    // c. generate Cray-POINTER and COMMON statements (case Ver.3)
+    genDeclOfCrayPointer(staticAssociatedCoarrays);
+    genCommonStmtForCrayPointer(staticAssociatedCoarrays);
 
     // b. generate allocation into the init procedure
     genAllocOfStaticCoarrays(staticAssociatedCoarrays);
@@ -977,13 +981,11 @@ public class XMPtransCoarrayRun
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(allocatableLocalCoarrays);
 
-    if (useMalloc) {
-      // f1. remove SAVE attributes from declarations of coarrays
-      removeSaveAttr(allocatableLocalCoarrays);
+    // f1. remove SAVE attributes from declarations of coarrays
+    removeSaveAttr(allocatableLocalCoarrays);
 
-      // h. replace allocatable attributes with pointer attributes
-      replaceAllocatableWithPointer(allocatableLocalCoarrays);
-    }
+    // h. replace allocatable attributes with pointer attributes
+    replaceAllocatableWithPointer(allocatableLocalCoarrays);
   }
 
 
@@ -1042,10 +1044,8 @@ public class XMPtransCoarrayRun
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(allocatableLocalCoarrays);
 
-    if (useMalloc) {
-      // h. replace allocatable attributes with pointer attributes
-      replaceAllocatableWithPointer(allocatableLocalCoarrays);
-    }
+    // h. replace allocatable attributes with pointer attributes
+    replaceAllocatableWithPointer(allocatableLocalCoarrays);
   }
 
   private void transModule_allocatableAssociated() {
@@ -1055,10 +1055,8 @@ public class XMPtransCoarrayRun
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(allocatableAssociatedCoarrays);
 
-    if (useMalloc) {
-      // h. replace allocatable attributes with pointer attributes
-      replaceAllocatableWithPointer(allocatableAssociatedCoarrays);
-    }
+    // h. replace allocatable attributes with pointer attributes
+    replaceAllocatableWithPointer(allocatableAssociatedCoarrays);
   }
 
 
@@ -1149,10 +1147,8 @@ public class XMPtransCoarrayRun
     // f. remove codimensions from declarations of coarrays
     removeCodimensions(allocatableDummyCoarrays);
 
-    if (useMalloc) {
-      // h. replace allocatable attributes with pointer attributes
-      replaceAllocatableWithPointer(allocatableDummyCoarrays);
-    }
+    // h. replace allocatable attributes with pointer attributes
+    replaceAllocatableWithPointer(allocatableDummyCoarrays);
   }
 
 
@@ -1196,10 +1192,8 @@ public class XMPtransCoarrayRun
     /*--- a. DESCRIPTOR corresponding to the coarray ---*/
     genDeclOfDescPointer(staticLocalCoarrays);
 
-    if (useMalloc) {
-      // c. generate Cray-POINTER
-      genDeclOfCrayPointer(staticLocalCoarrays);
-    }
+    // c. generate Cray-POINTER
+    genDeclOfCrayPointer(staticLocalCoarrays);
 
     /*--- b. Execution statements for Initialization ---*/
     genAllocOfStaticCoarrays(staticLocalCoarrays);
@@ -1300,9 +1294,9 @@ public class XMPtransCoarrayRun
         call xmpf_coarray_set_coshape(descptr_V3, 2, k1, k2, 0)      ! m.
         call xmpf_coarray_set_varname(descptr_V3, "V3", 2)           ! n.
         deallocate (V3)                           ! keep original    ! j4.*
-        call xmpf_coarray_dealloc(descptr_V3)                        ! j4.*
+        call xmpf_coarray_unregmem(descptr_V3)                       ! j4.*
 
-        if (allocated(V3)) write(*,*) "yes"       ! keep 'allocated' ! l4.
+        if (allocated(V3)) write(*,*) "yes"       ! keep 'allocated' ! l2.
     --------------------------------------------
   */
   private void transExecPart() {
@@ -1446,19 +1440,25 @@ public class XMPtransCoarrayRun
     if (coarrays.isEmpty())
       return;
 
-    ArrayList<String> cnameList = new ArrayList<String>();
+    ArrayList<String> cbNameList = new ArrayList<String>();
     for (XMPcoarray coarray0: coarrays) {
-      String cname = coarray0.getCoarrayCommonName();
-      if (cnameList.contains(cname))
+      String cbName = coarray0.getCoarrayCommonName();
+
+      // it is not the target if Ver.3 is selected for coarray0
+      if (coarray0.usesMalloc())
+        continue;
+
+      // skip double-defined name
+      if (cbNameList.contains(cbName))
         continue;
 
       // found new common block to be declared
-      cnameList.add(cname);
+      cbNameList.add(cbName);
 
-      Xobject cnameObj = Xcons.Symbol(Xcode.IDENT, cname);
+      Xobject cbNameObj = Xcons.Symbol(Xcode.IDENT, cbName);
       Xobject varList = Xcons.List();
       for (XMPcoarray coarray: coarrays) {
-        if (cname.equals(coarray.getCoarrayCommonName())) {
+        if (cbName.equals(coarray.getCoarrayCommonName())) {
           Ident coarrayId = coarray.getIdent();
           varList.add(Xcons.FvarRef(coarrayId));
         }
@@ -1466,8 +1466,9 @@ public class XMPtransCoarrayRun
 
       // add declaration 
       Xobject decls = getFblock().getBody().getDecls();
-      Xobject args = Xcons.List(Xcode.F_COMMON_DECL,
-                                Xcons.List(Xcode.F_VAR_LIST, cnameObj, varList));
+      Xobject args =
+        Xcons.List(Xcode.F_COMMON_DECL,
+                   Xcons.List(Xcode.F_VAR_LIST, cbNameObj, varList));
       decls.add(args);
     }
   }
@@ -1493,7 +1494,8 @@ public class XMPtransCoarrayRun
 
     // genDecl_crayPointer
     for (XMPcoarray coarray: coarrays) {
-      coarray.genDecl_crayPointer(withSave);
+      if (coarray.usesMalloc())
+        coarray.genDecl_crayPointer(withSave);
     }
   }
 
@@ -1508,6 +1510,11 @@ public class XMPtransCoarrayRun
     ArrayList<String> cnameList = new ArrayList<String>();
     for (XMPcoarray coarray0: coarrays) {
       String cname = coarray0.getCrayCommonName();
+
+      // it is not the target if coarray0 selects Ver.4
+      if (!coarray0.usesMalloc())
+        continue;
+
       if (cnameList.contains(cname))
         continue;
 
@@ -2065,7 +2072,7 @@ public class XMPtransCoarrayRun
       new XMPcoarrayInitProcedure(coarrays,
                                   traverseCountName,
                                   traverseInitName,
-                                  env, version, useMalloc);
+                                  env, version);
     coarrayInit.run();
   }
 
@@ -2321,6 +2328,10 @@ public class XMPtransCoarrayRun
             ArrayList<Xobject> fstmts =
               genAllocateStmt(xobj, coarrays);
 
+            //////////////////////////////
+            //////////// allocation for derived-type coarray must be deleted
+            /////   TEMPORARY
+            //////////////////////////////
             // keep the ALLOCATE stmtatement if useRegMem
             if (!useMalloc)
               st.insert(st.getExpr());
@@ -2356,13 +2367,14 @@ public class XMPtransCoarrayRun
 	switch (xobj.Opcode()) {
         case F_DEALLOCATE_STATEMENT:
           if (_listHasCoarray(xobj.getArg(1), coarrays)) {
-            if (!useMalloc) {
-              XMP.fatal("Not supported DEALLOCATE statement in the case of useRegMem");
-            }
             ArrayList<Xobject> fstmts =
               genDeallocateStmt(xobj, coarrays);
 
             // keep the DEALLOCATE stmtatement if useRegMem
+            ///////////////////////////////////
+            /////   TEMPORARY
+            //////   exception for derived type needed
+            ///////////////////////////////////
             if (!useMalloc)
               st.insert(st.getExpr());
 
@@ -2500,7 +2512,7 @@ public class XMPtransCoarrayRun
         shape.add(arg.getArg(1).getArg(i));
 
       // TRANSLATION j4.
-      if (!useMalloc) {
+      if (!coarray.usesMalloc()) {
         arg.getArg(1).removeLastArgs();
       }
 
@@ -2544,7 +2556,8 @@ public class XMPtransCoarrayRun
     }
 
     Xobject tag;
-    if (coarray.wasMovedFromModule() || coarray.def != def || !useMalloc) {
+    if (coarray.wasMovedFromModule() || coarray.def != def ||
+        !coarray.usesMalloc()) {
       // coarray is originally defined in a use-associated module or
       // in a different procedure, or using RegMem stragegy
       // ... do not deallocate automatically at the exit of the procedure
@@ -2572,7 +2585,7 @@ public class XMPtransCoarrayRun
     }
 
     String subrName;
-    if (useMalloc) 
+    if (coarray.usesMalloc()) 
       subrName = COARRAY_MALLOC_NAME;
     else
       subrName = COARRAY_REGMEM_NAME;
@@ -2594,7 +2607,11 @@ public class XMPtransCoarrayRun
 
     Xobject args = Xcons.List(coarray.getDescPointerId(),
                               Xcons.FvarRef(coarray.getIdent()));
-    String subrName = COARRAY_DEALLOC_NAME;
+    String subrName;
+    if (coarray.usesMalloc())
+      subrName = COARRAY_DEALLOC_NAME;
+    else
+      subrName = COARRAY_UNREGMEM_NAME;
     if (args.hasNullArg())
       XMP.fatal("generated null argument for " + subrName +
                 "(makeStmt_coarrayDealloc)");
@@ -2761,8 +2778,10 @@ public class XMPtransCoarrayRun
   //
   private void replaceAllocatableWithPointer(ArrayList<XMPcoarray> coarrays) {
     for (XMPcoarray coarray: coarrays) {
-      coarray.resetAllocatable();
-      coarray.setPointer();
+      if (coarray.usesMalloc()) {
+        coarray.resetAllocatable();
+        coarray.setPointer();
+      }
     }
   }
 
@@ -3110,8 +3129,11 @@ public class XMPtransCoarrayRun
     XobjList actualArgs = (XobjList)xobj.getArg(1);
     Xobject arg1 = actualArgs.getArg(0);
     if (_isIntrinsic(fname) && _isCoarrayInCoarrays(arg1, candidates)) {
-      XobjString associated = Xcons.Symbol(Xcode.IDENT, "associated");
-      xobj.setArg(0, associated);
+      XMPcoarray coarray = _findCoarrayInCoarrays(arg1, candidates);
+      if (coarray.usesMalloc()) {
+        XobjString associated = Xcons.Symbol(Xcode.IDENT, "associated");
+        xobj.setArg(0, associated);
+      }
     }
   }
 

@@ -711,7 +711,6 @@ public class XMPrewriteExpr {
       int varDim = varType.getNumDimensions();
       funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_array_set_" + Integer.toString(varDim));
       Integer[] sizeArray = new Integer[varDim];
-      Integer[] distanceArray = new Integer[varDim];
 
       for(int i=0;i<varDim;i++,varType=varType.getRef()){
         int dimSize = (int)varType.getArraySize();
@@ -721,15 +720,6 @@ public class XMPrewriteExpr {
         sizeArray[i] = dimSize;
       }
 
-      for(int i=0;i<varDim-1;i++){
-	int tmp = 1;
-	for(int j=i+1;j<varDim;j++){
-	  tmp *= sizeArray[j];
-	}
-	distanceArray[i] = tmp;
-      }
-      distanceArray[varDim-1] = 1;
-
       XobjList tripletList = (XobjList)localExpr.getArg(1);
       for(int i=0;i<tripletList.Nargs();i++){
         if(! tripletList.getArg(i).isIndexRange()){
@@ -737,16 +727,15 @@ public class XMPrewriteExpr {
           funcArgs.add(Xcons.IntConstant(1));            // length
           funcArgs.add(Xcons.IntConstant(1));            // stride
           funcArgs.add(Xcons.IntConstant(sizeArray[i])); // size
-	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.IntConstant(distanceArray[i]), Xcons.SizeOf(elmtType))); // distance
         }
         else{
           for(int j=0;j<3;j++){
             funcArgs.add(tripletList.getArg(i).getArg(j));
           }
           funcArgs.add(Xcons.IntConstant(sizeArray[i]));     // size
-	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.IntConstant(distanceArray[i]), Xcons.SizeOf(elmtType)));
         }
       }
+      funcArgs.add(Xcons.SizeOf(elmtType));
     }
     else{  // !isArray
       funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_array_set_1");
@@ -2138,7 +2127,10 @@ public class XMPrewriteExpr {
                                                   String loopIndexName, Xobject arrayRef) throws XMPexception
   {
     if (arrayRef.Opcode() == Xcode.VAR) {
-      return calcShadow(t, ti, a, ai, arrayRef);
+      if (a.getShadowAt(ai).getType() != XMPshadow.SHADOW_FULL ||
+	  loopIndexName.equals(arrayRef.getString())) {
+	return calcShadow(t, ti, a, ai, arrayRef);
+      }
     }
 
     topdownXobjectIterator iter = new topdownXobjectIterator(arrayRef);
