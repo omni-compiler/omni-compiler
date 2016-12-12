@@ -368,11 +368,7 @@ ompc_init(int argc,char *argv[])
             continue;
         }
 
-        ABT_pool tmp;
-        tmp = pools[0];
-        pools[0] = pools[i];
-        pools[i] = tmp;
-        int res = ABT_xstream_create_basic(ABT_SCHED_RANDWS, ompc_max_threads, pools, ABT_SCHED_CONFIG_NULL, &xstreams[i]);
+        int res = ABT_xstream_create_basic(ABT_SCHED_DEFAULT, 1, NULL, ABT_SCHED_CONFIG_NULL, &xstreams[i]);
         if (res) {
             extern int errno;
             fprintf(stderr, "thread create fails at id %d:%d errno=%d\n", i, res, errno);
@@ -388,6 +384,12 @@ ompc_init(int argc,char *argv[])
     for (int i = 1; i < ompc_max_threads; i++) {
         ABT_thread_join(threads[i]);
         ABT_thread_free(&threads[i]);
+
+        ABT_pool tmp;
+        tmp = pools[0];
+        pools[0] = pools[i];
+        pools[i] = tmp;
+        ABT_xstream_set_main_sched_basic(xstreams[i], ABT_SCHED_RANDWS, ompc_max_threads, pools);
     }
 
 #ifdef __TEST_WORK_STEALING
