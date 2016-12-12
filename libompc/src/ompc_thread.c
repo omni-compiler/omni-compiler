@@ -377,7 +377,7 @@ ompc_init(int argc,char *argv[])
         }
 
         size_t tid = (size_t)i;
-        ABT_thread_create(pools[i], ompc_xstream_setup,
+        ABT_thread_create_on_xstream(xstreams[i], ompc_xstream_setup,
                           (void *)tid, ABT_THREAD_ATTR_NULL, &(threads[i]));
     }
 
