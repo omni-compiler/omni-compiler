@@ -336,8 +336,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
     case F_USE_DECL:
     case F_USE_ONLY_DECL:
       x = getSymbol(n, "name");
+      boolean isIntrinsic = getAttrBool(n, "intrinsic");
       return setCommonAttributes(n,
-				 Xcons.List(code, type, x, getChildList(n)));
+        Xcons.List(code, type, x, Xcons.IntConstant(isIntrinsic ? 1 : 0), getChildList(n)));
 
     case F_IMPORT_STATEMENT:
       return setCommonAttributes(n,

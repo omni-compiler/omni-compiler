@@ -214,7 +214,9 @@ xtag(enum expr_code code)
     /*
      * module.
      */
+    case F03_USE_INTRINSIC_STATEMENT: 
     case F95_USE_STATEMENT:         return "FuseDecl";
+    case F03_USE_ONLY_INTRINSIC_STATEMENT:
     case F95_USE_ONLY_STATEMENT:    return "FuseOnlyDecl";
 
     /*
@@ -3141,12 +3143,17 @@ outx_useRename(int l, expv local, expv use)
  * output FuseDecl
  */
 static void
-outx_useDecl(int l, expv v)
+outx_useDecl(int l, expv v, int is_intrinsic)
 {
     list lp;
     const char *mod_name = SYM_NAME(EXPV_NAME(EXPR_ARG1(v)));
 
-    outx_tagOfDecl1(l, "%s name=\"%s\"", EXPR_LINE(v), XTAG(v), mod_name);
+    if(is_intrinsic) {
+        outx_tagOfDecl1(l, "%s name=\"%s\" intrinsic=\"true\"", EXPR_LINE(v), XTAG(v), mod_name);
+    } else {
+        outx_tagOfDecl1(l, "%s name=\"%s\"", EXPR_LINE(v), XTAG(v), mod_name);
+    }
+    
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
         expv x = LIST_ITEM(lp);
@@ -3176,12 +3183,17 @@ outx_useRenamable(int l, expv local, expv use)
  * output FuseOnlyDecl
  */
 static void
-outx_useOnlyDecl(int l, expv v)
+outx_useOnlyDecl(int l, expv v, int is_intrinsic)
 {
     list lp;
     const char *mod_name = SYM_NAME(EXPV_NAME(EXPR_ARG1(v)));
 
-    outx_tagOfDecl1(l, "%s name=\"%s\"", EXPR_LINE(v), XTAG(v), mod_name);
+    if(is_intrinsic) {
+        outx_tagOfDecl1(l, "%s name=\"%s\" intrinsic=\"true\"", EXPR_LINE(v), XTAG(v), mod_name);    
+    } else {
+        outx_tagOfDecl1(l, "%s name=\"%s\"", EXPR_LINE(v), XTAG(v), mod_name);
+    }
+    
 
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
         expv x = LIST_ITEM(lp);
@@ -3345,11 +3357,17 @@ outx_BLOCK_statement(int l, expv v)
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(v)) {
         expv u = LIST_ITEM(lp);
         switch(EXPV_CODE(u)) {
-        case F95_USE_STATEMENT:
-            outx_useDecl(l2, u);
+        case F03_USE_INTRINSIC_STATEMENT:
+            outx_useDecl(l2, u, TRUE);
             break;
+        case F95_USE_STATEMENT:
+            outx_useDecl(l2, u, FALSE);
+            break;
+        case F03_USE_ONLY_INTRINSIC_STATEMENT:
+            outx_useOnlyDecl(l2, u, TRUE);
+            break;            
         case F95_USE_ONLY_STATEMENT:
-            outx_useOnlyDecl(l2, u);
+            outx_useOnlyDecl(l2, u, FALSE);
             break;
         default:
             break;
@@ -3537,6 +3555,8 @@ outx_expv(int l, expv v)
     case F95_INTERFACE_STATEMENT:
     case F95_USE_STATEMENT:
     case F95_USE_ONLY_STATEMENT:
+    case F03_USE_INTRINSIC_STATEMENT:
+    case F03_USE_ONLY_INTRINSIC_STATEMENT:
         break;
 
     /*
@@ -4804,12 +4824,18 @@ outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
     FOR_ITEMS_IN_LIST(lp, EXT_PROC_BODY(parent_ep)) {
         v = LIST_ITEM(lp);
         switch(EXPV_CODE(v)) {
+        case F03_USE_INTRINSIC_STATEMENT:
+            outx_useDecl(l1, v, TRUE);
+            break;
         case F95_USE_STATEMENT:
-            outx_useDecl(l1, v);
+            outx_useDecl(l1, v, FALSE);
             break;
         case F95_USE_ONLY_STATEMENT:
-            outx_useOnlyDecl(l1, v);
+            outx_useOnlyDecl(l1, v, FALSE);
             break;
+        case F03_USE_ONLY_INTRINSIC_STATEMENT:
+            outx_useOnlyDecl(l1, v, TRUE);
+            break;            
         case F03_IMPORT_STATEMENT:
             outx_importStatement(l1, v);
             break;
