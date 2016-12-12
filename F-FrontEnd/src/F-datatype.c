@@ -81,6 +81,9 @@ function_type(const TYPE_DESC tp)
         if (TYPE_IS_ELEMENTAL(tp)) {
             TYPE_SET_ELEMENTAL(ftp);
         }
+        if (TYPE_IS_MODULE(tp)) {
+            TYPE_SET_MODULE(ftp);
+        }
     }
 
     return ftp;
