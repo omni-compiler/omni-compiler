@@ -340,6 +340,10 @@ ompc_init(int argc,char *argv[])
     create_scheds();
 #endif
 
+    for (int i = 0; i < ompc_max_threads; i++) {
+        ABT_pool_create_basic(ABT_POOL_DEQUE, ABT_POOL_ACCESS_SPMC, ABT_TRUE, &pools[i]);
+    }
+
     // ES setup
     ABT_thread threads[MAX_PROC];
     if (ompc_debug_flag) fprintf(stderr, "Creating %d slave thread ...\n", ompc_max_threads - 1);
@@ -359,20 +363,22 @@ ompc_init(int argc,char *argv[])
 
         if (i == 0) {
             ABT_xstream_self(&xstreams[0]);
-            ABT_xstream_get_main_pools(xstreams[0], 1, &pools[0]);
+            ABT_xstream_set_main_sched_basic(xstreams[0], ABT_SCHED_RANDWS, ompc_max_threads, pools);
             ompc_xstream_setup(0);
             continue;
         }
 
-        int res = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[i]);
+        ABT_pool tmp;
+        tmp = pools[0];
+        pools[0] = pools[i];
+        pools[i] = tmp;
+        int res = ABT_xstream_create_basic(ABT_SCHED_RANDWS, ompc_max_threads, pools, ABT_SCHED_CONFIG_NULL, &xstreams[i]);
         if (res) {
             extern int errno;
             fprintf(stderr, "thread create fails at id %d:%d errno=%d\n", i, res, errno);
             perror("thread creation");
             exit(1);
         }
-
-        ABT_xstream_get_main_pools(xstreams[i], 1, &pools[i]);
 
         size_t tid = (size_t)i;
         ABT_thread_create(pools[i], ompc_xstream_setup,
@@ -606,33 +612,23 @@ static void loop_divide_conquer_impl(struct ompc_task *curr_task)
         struct ompc_task *new_task = malloc(sizeof *new_task);
         new_task->func = curr_task->func;
         new_task->nargs = curr_task->nargs;
-        void *args_dup = malloc(new_task->nargs * sizeof(void *));
-        memcpy(args_dup, curr_task->args, new_task->nargs * sizeof(void *));
-        new_task->args = args_dup;
+        new_task->args = curr_task->args;
         new_task->lower = curr_task->lower + (curr_task->upper - curr_task->lower) / 2;
         new_task->upper = curr_task->upper;
         new_task->step = curr_task->step;
-        new_task->depth = curr_task->depth + 1;
-        new_task->es_num = curr_task->es_num + (curr_task->avail_es_count / 2);
-        new_task->avail_es_count = curr_task->avail_es_count - (new_task->es_num - curr_task->es_num);
-        
+
         curr_task->upper = new_task->lower;
-        curr_task->depth++;
-        int old_aval_es_count = curr_task->avail_es_count;
-        curr_task->avail_es_count -= new_task->avail_es_count;
-        if (curr_task->avail_es_count <= 0) curr_task->avail_es_count = 1;
-        ABT_thread *old_loop_child_task = curr_task->loop_child_task;
+        ABT_thread old_loop_child_task = curr_task->loop_child_task;
         
-        ompc_start_ult(pools[new_task->es_num], curr_task->es_num, divide_conquer_wrapper, new_task, &curr_task->loop_child_task);
+        ABT_xstream self;
+        ABT_xstream_self(&self);
+        ABT_thread_create_on_xstream(self, divide_conquer_wrapper, new_task, ABT_THREAD_ATTR_NULL, &curr_task->loop_child_task);
         loop_divide_conquer_impl(curr_task);
-        ABT_thread_join(*curr_task->loop_child_task);
-        ompc_end_ult(curr_task->loop_child_task, curr_task->es_num);
+        ABT_thread_join(curr_task->loop_child_task);
+        ABT_thread_free(&curr_task->loop_child_task);
         
-        curr_task->depth--;
-        curr_task->avail_es_count = old_aval_es_count;
         curr_task->loop_child_task = old_loop_child_task;
         
-        free(new_task->args);
         free(new_task);
     }
 }
