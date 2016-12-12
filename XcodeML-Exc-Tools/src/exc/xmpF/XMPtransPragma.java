@@ -109,7 +109,7 @@ public class XMPtransPragma
       	env.declIdent("xmpf_traverse_module_"+env.currentDefName(),
 		      Xtype.FsubroutineType);
       XobjString modName = Xcons.Symbol(Xcode.IDENT, env.getCurrentDef().getDef().getName());
-      Xobject decls = Xcons.List(Xcons.List(Xcode.F_USE_DECL, modName));
+      Xobject decls = Xcons.List(Xcons.List(Xcode.F_USE_DECL, modName, Xcons.IntConstant(0)));
       XobjectDef prolog_def = 
       	XobjectDef.Func(prolog_f, null, decls, prolog.toXobject());
       env.getEnv().add(prolog_def);

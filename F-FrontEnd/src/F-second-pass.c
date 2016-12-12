@@ -369,7 +369,9 @@ static void second_pass_expv_scan(expv v)
   case FIRST_EXECUTION_POINT:
   case F95_INTERFACE_STATEMENT:
   case F95_USE_STATEMENT:
+  case F03_USE_INTRINSIC_STATEMENT:
   case F95_USE_ONLY_STATEMENT:
+  case F03_USE_ONLY_INTRINSIC_STATEMENT:
 
   /*
    * invalid or no corresponding tag
