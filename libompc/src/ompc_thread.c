@@ -363,7 +363,6 @@ ompc_init(int argc,char *argv[])
 
         if (i == 0) {
             ABT_xstream_self(&xstreams[0]);
-            ABT_xstream_set_main_sched_basic(xstreams[0], ABT_SCHED_RANDWS, ompc_max_threads, pools);
             ompc_xstream_setup(0);
             continue;
         }
@@ -384,7 +383,9 @@ ompc_init(int argc,char *argv[])
     for (int i = 1; i < ompc_max_threads; i++) {
         ABT_thread_join(threads[i]);
         ABT_thread_free(&threads[i]);
+    }
 
+    for (int i = 0; i < ompc_max_threads; i++) {
         ABT_pool tmp;
         tmp = pools[0];
         pools[0] = pools[i];
