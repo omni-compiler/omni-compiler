@@ -904,44 +904,44 @@ ompc_current_thread_barrier()
 void
 ompc_terminate(int exitcode)
 {
-    for (int i = 1; i < ompc_max_threads; i++) {
-        ABT_xstream_join(ompc_procs[i].pid);
-        ABT_xstream_free((ABT_xstream *)&(ompc_procs[i].pid));
-    }
+//     for (int i = 1; i < ompc_max_threads; i++) {
+//         ABT_xstream_join(ompc_procs[i].pid);
+//         ABT_xstream_free((ABT_xstream *)&(ompc_procs[i].pid));
+//     }
 
-#ifdef __TEST_WORK_STEALING
-    // scheds[0] will be deallocated by the argobots runtime
-    for (int i = 1; i < ompc_max_threads; i++) {
-        ABT_sched_free(&scheds[i]);
-    }
-#endif
+// #ifdef __TEST_WORK_STEALING
+//     // scheds[0] will be deallocated by the argobots runtime
+//     for (int i = 1; i < ompc_max_threads; i++) {
+//         ABT_sched_free(&scheds[i]);
+//     }
+// #endif
 
-    free(ompc_procs);
+//     free(ompc_procs);
 
-    // removing master root thread
-    struct ompc_thread *tp = ompc_current_thread();
-    free(tp);
+//     // removing master root thread
+//     struct ompc_thread *tp = ompc_current_thread();
+//     free(tp);
 
-    ABT_key_free(&tls_key);
+//     ABT_key_free(&tls_key);
 
-    for (int i = 0; i < ompc_max_threads; i++) {
-        for (int j = 0; j < ult_pools[i].size_created; j++) {
-            if (ult_pools[i].ult_list[j] != ABT_THREAD_NULL) {
-                ABT_thread_free(&(ult_pools[i].ult_list[j]));
-            }
-        }
-        free(ult_pools[i].ult_list);
-        free(ult_pools[i].idle_ult_list);
+//     for (int i = 0; i < ompc_max_threads; i++) {
+//         for (int j = 0; j < ult_pools[i].size_created; j++) {
+//             if (ult_pools[i].ult_list[j] != ABT_THREAD_NULL) {
+//                 ABT_thread_free(&(ult_pools[i].ult_list[j]));
+//             }
+//         }
+//         free(ult_pools[i].ult_list);
+//         free(ult_pools[i].idle_ult_list);
 
-        for (int j = 0; j < tasklet_pools[i].size_created; j++) {
-            if (tasklet_pools[i].tasklet_list[j] != ABT_TASK_NULL) {
-                ABT_task_free(&(tasklet_pools[i].tasklet_list[j]));
-            }
-        }
-        free(tasklet_pools[i].tasklet_list);
-    }
+//         for (int j = 0; j < tasklet_pools[i].size_created; j++) {
+//             if (tasklet_pools[i].tasklet_list[j] != ABT_TASK_NULL) {
+//                 ABT_task_free(&(tasklet_pools[i].tasklet_list[j]));
+//             }
+//         }
+//         free(tasklet_pools[i].tasklet_list);
+//     }
 
-    ABT_finalize();
+//     ABT_finalize();
 
     hwloc_topology_destroy(topo);
 
