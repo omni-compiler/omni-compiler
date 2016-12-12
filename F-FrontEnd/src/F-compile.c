@@ -1832,7 +1832,17 @@ update_type_bound_procedures(TYPE_DESC struct_decls, ID ids)
                             SYM_NAME(ID_SYM(mem)));
                 }
                 TYPE_REF(ID_TYPE(mem)) = ID_TYPE(target);
-                if (IS_SUBR(ID_TYPE(target))) {
+                if (IS_FUNCTION_TYPE(ID_TYPE(target))) {
+                    /*
+                     * update the dummy return type
+                     */
+                    TYPE_DESC ret;
+                    TYPE_DESC dummy_ret;
+                    ret = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(target));
+                    dummy_ret = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(mem));
+                    TYPE_BASIC_TYPE(dummy_ret) = TYPE_BASIC_TYPE(ret);
+                    TYPE_REF(dummy_ret) = ret;
+                } else { /* IS_SUBR(ID_TYPE(target) == TRUE */
                     TYPE_BASIC_TYPE(ID_TYPE(mem)) = TYPE_SUBR;
                 }
             }
@@ -5040,12 +5050,11 @@ compile_CALL_type_bound_procedure_statement(expr x)
             }
         }
         if (tp == NULL) {
-            /*
-             * if not found, raise error
-             */
-            error("invalid argument for type-bound generic");
-            tp = ID_TYPE(TBP_BINDING(tpd));
+            if (debug_flag)
+                fprintf(debug_fp, "invalid argument for type-bound generic");
         }
+        /* type-bound generic procedure type does not exist in XcodeML */
+        tp = NULL;
     }
 
     v = list2(FUNCTION_CALL,
