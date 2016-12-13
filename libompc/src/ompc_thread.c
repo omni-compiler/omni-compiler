@@ -345,7 +345,6 @@ ompc_init(int argc,char *argv[])
     }
 
     // ES setup
-    ABT_thread threads[MAX_PROC];
     if (ompc_debug_flag) fprintf(stderr, "Creating %d slave thread ...\n", ompc_max_threads - 1);
     for (int i = 0; i < ompc_max_threads; i++) {
         if (ompc_debug_flag) fprintf(stderr, "Creating slave %d  ...\n", i);
@@ -363,11 +362,16 @@ ompc_init(int argc,char *argv[])
 
         if (i == 0) {
             ABT_xstream_self(&xstreams[0]);
-            ompc_xstream_setup(0);
+            ABT_xstream_set_main_sched_basic(xstreams[0], ABT_SCHED_RANDWS, ompc_max_threads, pools);
+            ompc_xstream_setup(0, xstreams[0]);
             continue;
         }
 
-        int res = ABT_xstream_create_basic(ABT_SCHED_DEFAULT, 1, NULL, ABT_SCHED_CONFIG_NULL, &xstreams[i]);
+        ABT_pool tmp;
+        tmp = pools[0];
+        pools[0] = pools[i];
+        pools[i] = tmp;
+        int res = ABT_xstream_create_basic(ABT_SCHED_RANDWS, ompc_max_threads, pools, ABT_SCHED_CONFIG_NULL, &xstreams[i]);
         if (res) {
             extern int errno;
             fprintf(stderr, "thread create fails at id %d:%d errno=%d\n", i, res, errno);
@@ -375,22 +379,7 @@ ompc_init(int argc,char *argv[])
             exit(1);
         }
 
-        size_t tid = (size_t)i;
-        ABT_thread_create_on_xstream(xstreams[i], ompc_xstream_setup,
-                          (void *)tid, ABT_THREAD_ATTR_NULL, &(threads[i]));
-    }
-
-    for (int i = 1; i < ompc_max_threads; i++) {
-        ABT_thread_join(threads[i]);
-        ABT_thread_free(&threads[i]);
-    }
-
-    for (int i = 0; i < ompc_max_threads; i++) {
-        ABT_pool tmp;
-        tmp = pools[0];
-        pools[0] = pools[i];
-        pools[i] = tmp;
-        ABT_xstream_set_main_sched_basic(xstreams[i], ABT_SCHED_RANDWS, ompc_max_threads, pools);
+        ompc_xstream_setup(i, xstreams[i]);
     }
 
 #ifdef __TEST_WORK_STEALING
@@ -456,14 +445,12 @@ ompc_is_master_proc()
 
 /* setup new ompc_proc: master is always at first proc table */
 static struct ompc_proc *
-ompc_new_proc(int i)
+ompc_new_proc(int i, ABT_xstream xstream)
 {
     struct ompc_proc *p = &ompc_procs[i];
-    p->pid = _OMPC_PROC_SELF;
+    p->pid = xstream;
 
-    OMPC_PROC_LOCK();
     ompc_proc_counter++;
-    OMPC_PROC_UNLOCK();
 
     return p;
 }
@@ -591,17 +578,15 @@ static void ompc_init_thread(struct ompc_thread *p) {
     p->set_num_thds = -1;
 }
 
-static void ompc_xstream_setup(void *arg)
+static void ompc_xstream_setup(int es_idx, ABT_xstream xstream)
 {
-    int es_idx = (int)(size_t)arg;
-
 #ifdef USE_LOG
     if (ompc_log_flag && (es_idx != 0)) {
       tlog_slave_init();
     }
 #endif /* USE_LOG */
 
-    ompc_new_proc(es_idx);
+    ompc_new_proc(es_idx, xstream);
     thread_affinity_setup(es_idx);
 }
 
