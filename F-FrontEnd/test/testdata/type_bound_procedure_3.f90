@@ -4,7 +4,6 @@
          CONTAINS
            PROCEDURE, PUBLIC :: f
            PROCEDURE, PUBLIC :: g => f, h => f
-           PROCEDURE(f), PUBLIC :: i, j
         END TYPE t
       CONTAINS
         FUNCTION f(this, w) RESULT(ans)
@@ -18,4 +17,7 @@
 
       PROGRAM main
         USE m
+        INTEGER :: a
+        TYPE(t) :: v = t(1)
+        a = v%f(1)
       END PROGRAM main

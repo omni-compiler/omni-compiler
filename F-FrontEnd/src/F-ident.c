@@ -49,7 +49,7 @@ find_ext_id_head(SYMBOL s, EXT_ID head)
 {
     EXT_ID ep;
     FOREACH_EXT_ID(ep, head) {
-        if(strcmp(SYM_NAME(EXT_SYM(ep)), SYM_NAME(s)) == 0)
+        if(EXT_SYM(ep) && strcmp(SYM_NAME(EXT_SYM(ep)), SYM_NAME(s)) == 0)
             return ep;
     }
     return NULL;

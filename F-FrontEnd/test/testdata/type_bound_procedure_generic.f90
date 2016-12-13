@@ -27,3 +27,15 @@
         END FUNCTION equals_t_int
 
       END MODULE m
+
+      PROGRAM main
+        USE m
+        TYPE(t) :: o1
+        o1 = 10
+        IF (o1==10) THEN
+          PRINT *,'OK'
+        ELSE
+          PRINT *,'NG'
+        END IF
+      END PROGRAM main
+
