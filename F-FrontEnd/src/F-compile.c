@@ -1202,14 +1202,14 @@ void compile_statement1(int st_no, expr x)
 
     case F03_TYPE_BOUND_PROCEDURE_STATEMENT:
         if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
-            error("TYPE BOUDNED PROCEDURE out of the derived-type declaration");
+            error("TYPE-BOUDNED PROCEDURE out of the derived-type declaration");
         }
         compile_type_bound_procedure(x);
         break;
 
     case F03_TYPE_BOUND_GENERIC_STATEMENT:
         if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
-            error("TYPE GENERIC BOUND PROCEDURE out of the derived-type declaration");
+            error("TYPE-BOUND GENERIC out of the derived-type declaration");
         }
         compile_type_generic_procedure(x);
         break;
