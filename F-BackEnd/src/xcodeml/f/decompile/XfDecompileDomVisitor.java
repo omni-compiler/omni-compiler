@@ -3287,8 +3287,8 @@ public class XfDecompileDomVisitor {
         }
     }
 
-    // FProcedureDefiniton
-    class FprocedureDefinitionVisitor extends XcodeNodeVisitor {
+    // FmoduleProcedureDefiniton
+    class FmoduleProcedureDefinitionVisitor extends XcodeNodeVisitor {
         @Override public void enter(Node n) {
             _writeLineDirective(n);
             XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
@@ -6904,6 +6904,6 @@ public class XfDecompileDomVisitor {
         new Pair("unlockStatement", new UnlockStatementVisitor()),
         new Pair("syncStat", new SyncStatVisitor()),
         new Pair("blockStatement", new BlockStatementVisitor()),
-        new Pair("FprocedureDefinition", new FprocedureDefinitionVisitor()),
+        new Pair("FmoduleProcedureDefinition", new FmoduleProcedureDefinitionVisitor()),
     };
 }

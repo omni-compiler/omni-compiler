@@ -5142,7 +5142,7 @@ outx_functionDefinition(int l, EXT_ID ep)
     if (!EXT_PROC_IS_PROCEDUREDECL(ep)) {
         tag = "FfunctionDefinition";
     } else {
-        tag = "FprocedureDefinition";
+        tag = "FmoduleProcedureDefinition";
     }
 
 
