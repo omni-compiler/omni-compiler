@@ -4519,8 +4519,9 @@ id_is_visibleVar(ID id)
 }
 
 
+
 /**
- * output symbols in FfunctionDefinition
+ * output symbols in FfunctionDefinition/FmoduleProcedureDefinition
  */
 static void
 outx_definition_symbols(int l, EXT_ID ep)
@@ -4693,6 +4694,27 @@ emit_decl(int l, ID id)
     }
     if (ID_IS_OFMODULE(id) == TRUE && ID_CLASS(id) != CL_PARAM) {
         return;
+    }
+
+    if (CRT_FUNCEP != NULL && EXT_PROC_IS_PROCEDUREDECL(CRT_FUNCEP)) {
+        /*
+         * In the Separate Module Procedure,
+         * a function, argments, and a result variable are not decleared
+         */
+        TYPE_DESC ftp = EXT_PROC_TYPE(CRT_FUNCEP);
+
+        if (ID_CLASS(id) == CL_PROC && PROC_EXT_ID(id) == CRT_FUNCEP) {
+            /* id is this procedure */
+            return;
+        }
+        if (ID_SYM(id) == FUNCTION_TYPE_RESULT(ftp)) {
+            /* id is this result */
+            return;
+        }
+        if (ID_STORAGE(id) == STG_ARG) {
+            /* id is a argument */
+            return;
+        }
     }
 
     switch(ID_CLASS(id)) {
