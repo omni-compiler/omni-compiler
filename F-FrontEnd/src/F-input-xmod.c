@@ -3265,12 +3265,13 @@ search_intrinsic_include_path(const char * filename)
 }
 
 /**
- * input data from .xmod file
+ * input data from the module intermediate file
  */
-static int
-input_xmod_file(const SYMBOL mod_name,
-                const SYMBOL submod_name,
-                struct module **pmod)
+int
+input_intermediate_file(const SYMBOL mod_name,
+                        const SYMBOL submod_name,
+                        struct module **pmod,
+                        const char * extension)
 {
     int ret;
     char filename[FILE_NAME_LEN];
@@ -3282,18 +3283,17 @@ input_xmod_file(const SYMBOL mod_name,
         return FALSE;
     }
 
-    // search for "xxx.xmod"
+    /* search for "xxx.xmod" */
     bzero(filename, sizeof(filename));
     if (!submod_name) {
-        snprintf(filename, sizeof(filename), "%s.xmod",
-                 SYM_NAME(mod_name));
+        snprintf(filename, sizeof(filename), "%s.%s",
+                 SYM_NAME(mod_name),
+                 extension);
     } else {
-        snprintf(filename, sizeof(filename), "%s:%s.xmod",
-                 SYM_NAME(mod_name), SYM_NAME(submod_name));
+        snprintf(filename, sizeof(filename), "%s:%s.%s",
+                 SYM_NAME(mod_name), SYM_NAME(submod_name),
+                 extension);
     }
-
-    strcpy(filename, SYM_NAME(mod_name));
-    strcat(filename, ".xmod");
 
     filepath = search_include_path(filename);
 
@@ -3301,7 +3301,7 @@ input_xmod_file(const SYMBOL mod_name,
 
 #if defined _MPI_FC && _MPI_FC == gfortran
     // if not found, then search for "xxx.mod" and convert it into "xxx.xmod"
-    if (reader == NULL && submod_name == NULL){
+    if (reader == NULL){
         char filename2[FILE_NAME_LEN];
         const char * filepath2;
 
@@ -3340,28 +3340,6 @@ input_xmod_file(const SYMBOL mod_name,
     xmlTextReaderClose(reader);
 
     return ret;
-}
-
-
-/**
- * input module from .xmod file
- */
-int
-input_module_file(const SYMBOL mod_name, struct module **pmod)
-{
-    return input_xmod_file(mod_name, NULL, pmod);
-}
-
-/**
- * input module from .xmod file
- */
-int
-input_submodule_file(const SYMBOL mod_name,
-                     const SYMBOL submod_name,
-                     struct module **pmod)
-{
-    assert(submod_name != NULL);
-    return input_xmod_file(mod_name, submod_name, pmod);
 }
 
 

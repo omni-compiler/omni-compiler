@@ -3926,20 +3926,18 @@ add_type_ext_id(EXT_ID ep)
 
 
 static void
-mark_type_desc_in_id_list(ID ids)
+mark_type_desc_id(ID id)
 {
-    ID id;
     TYPE_DESC sTp;
 
-    FOREACH_ID(id, ids) {
-        sTp = reduce_type(ID_TYPE(id));
-        mark_type_desc(sTp);
-        ID_TYPE(id) = sTp;
-        collect_type_desc(ID_ADDR(id));
-        switch(ID_CLASS(id)) {
+    sTp = reduce_type(ID_TYPE(id));
+    mark_type_desc(sTp);
+    ID_TYPE(id) = sTp;
+    collect_type_desc(ID_ADDR(id));
+    switch(ID_CLASS(id)) {
         case CL_PARAM:
             collect_type_desc(VAR_INIT_VALUE(id));
-            break;
+            return;
         case CL_VAR:
             collect_type_desc(VAR_INIT_VALUE(id));
             /* fall through */
@@ -3969,17 +3967,25 @@ mark_type_desc_in_id_list(ID ids)
             // TODO
             if (id->use_assoc != NULL) {
                 TYPE_EXT_ID te =
-                    (TYPE_EXT_ID)malloc(sizeof(struct type_ext_id));
+                        (TYPE_EXT_ID)malloc(sizeof(struct type_ext_id));
                 bzero(te, sizeof(struct type_ext_id));
                 te->ep = PROC_EXT_ID(id);
                 FUNC_EXT_LINK_ADD(te, type_module_proc_list,
                                   type_module_proc_last);
             }
 #endif
-            break;
+            return;
         default:
-            break;
-        }
+            return;
+    }
+}
+
+static void
+mark_type_desc_in_id_list(ID ids)
+{
+    ID id;
+    FOREACH_ID(id, ids) {
+        mark_type_desc_id(id);
     }
 }
 
@@ -5663,13 +5669,13 @@ unmark_ids(EXT_ID ep)
     }
 }
 
+
 /**
  * output module to .xmod file
  */
-void
-output_module_file(struct module * mod)
+int
+output_module_file(struct module * mod, const char * filename, int allow_private)
 {
-    char filename[FILE_NAME_LEN] = {0};
     ID id;
     EXT_ID ep;
     TYPE_EXT_ID te;
@@ -5680,28 +5686,13 @@ output_module_file(struct module * mod)
     expr modTypeList;
     list lp;
     expv v;
-    extern char *modincludeDirv;
 
     if (flag_module_compile) {
         print_fp = stdout;
     } else {
-        char tmp[FILE_NAME_LEN];
-        if (modincludeDirv) {
-            snprintf(filename, sizeof(filename), "%s/", modincludeDirv);
-        }
-        if (MODULE_IS_MODULE(mod)) {
-            snprintf(tmp, sizeof(tmp), "%s.xmod",
-                     SYM_NAME(MODULE_NAME(mod)));
-        } else { /* mod is submodule */
-            snprintf(tmp, sizeof(tmp), "%s:%s.xmod",
-                     SYM_NAME(SUBMODULE_ANCESTOR(mod)),
-                     SYM_NAME(SUBMODULE_NAME(mod))
-                     );
-        }
-        strncat(filename, tmp, sizeof(filename) - strlen(filename) - 1);
         if ((print_fp = fopen(filename, "w")) == NULL) {
             fatal("could'nt open module file to write.");
-            return;
+            return FALSE;
         }
     }
 
@@ -5714,18 +5705,21 @@ output_module_file(struct module * mod)
     type_module_proc_last = NULL;
     type_ext_id_list = NULL;
     type_ext_id_last = NULL;
-
     tbp_list = NULL;
 
     /*
      * collect types used in this module
      */
-    // mark types of each ids
-    mark_type_desc_in_id_list(mod->head);
     FOREACH_ID(id, mod->head) {
+        if (allow_private == FALSE) {
+            if (ID_TYPE(id) != NULL && TYPE_IS_PRIVATE(ID_TYPE(id)))
+                continue;
+        }
+        mark_type_desc_id(id);
+
         ep = PROC_EXT_ID(id);
         // if id is external,  ...
-        if (ep != NULL) { 
+        if (ep != NULL) {
             collect_types1(ep);
             FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
                 TYPE_DESC tp = EXT_PROC_TYPE(te->ep);
@@ -5768,8 +5762,11 @@ output_module_file(struct module * mod)
 
     set_module_emission_mode(oEmitMode);
 
-    if(!flag_module_compile)
+    if(!flag_module_compile) {
         fclose(print_fp);
+    }
+
+    return TRUE;
 }
 
 

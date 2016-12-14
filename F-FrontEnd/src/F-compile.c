@@ -342,7 +342,8 @@ compile_statement(st_no,x)
     if(this_label) check_DO_end(this_label);
 }
 
-void compile_statement1(int st_no, expr x)
+void
+compile_statement1(int st_no, expr x)
 {
     expv v,st;
     list lp;
@@ -4456,7 +4457,7 @@ associate_parent_module(const SYMBOL module, const SYMBOL submodule)
         return FALSE;
     }
 
-    return import_module_ids(mod, NULL, FALSE, TRUE);
+    return import_module_ids(mod, NULL, FALSE, /* allowPrivate is */ TRUE);
 }
 
 
@@ -4817,6 +4818,8 @@ compile_separate_MODULEPROCEDURE_statement(expr x)
     SYMBOL s;
     expr name;
     ID ip = NULL;
+    ID id;
+    ID arg;
 
     assert(PARENT_STATE == INCONT);
     assert(EXPR_HAS_ARG1(EXPR_ARG1(x)));
@@ -4848,6 +4851,16 @@ compile_separate_MODULEPROCEDURE_statement(expr x)
     begin_procedure();
     declare_procedure(CL_PROC, name, ID_TYPE(ip), NULL, NULL, NULL, NULL);
     EXT_PROC_IS_PROCEDUREDECL(CURRENT_EXT_ID) = TRUE;
+
+    if (FUNCTION_TYPE_RESULT(ID_TYPE(ip))) {
+        s = FUNCTION_TYPE_RESULT(ID_TYPE(ip));
+    }
+
+    FOREACH_ID(arg, FUNCTION_TYPE_ARGS(ID_TYPE(ip))) {
+        id = declare_ident(ID_SYM(arg), CL_VAR);
+        ID_STORAGE(id) = STG_ARG;
+        declare_id_type(id, ID_TYPE(arg));
+    }
 }
 
 
