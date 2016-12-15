@@ -2120,6 +2120,13 @@ end_declaration()
             }
         }
 
+        if (TYPE_IS_UNCHANGABLE(tp)) {
+            if ((TYPE_ATTR_FLAGS(tp) | TYPE_ATTR_FLAGS(ip)) != TYPE_ATTR_FLAGS(tp)) {
+                error_at_id(ip, "The type of '%s' can not be changed",
+                            SYM_NAME(ID_SYM(ip)));
+            }
+        }
+
         /* merge type attribute flags except SAVE attr*/
         TYPE_ATTR_FLAGS(tp) |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
         if (IS_PROCEDURE_TYPE(tp)) {
@@ -4873,6 +4880,7 @@ compile_separate_MODULEPROCEDURE_statement(expr x)
         id = declare_ident(ID_SYM(arg), CL_VAR);
         ID_STORAGE(id) = STG_ARG;
         declare_id_type(id, ID_TYPE(arg));
+        TYPE_SET_UNCHANGABLE(ID_TYPE(id));
     }
 }
 

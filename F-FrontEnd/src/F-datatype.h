@@ -142,6 +142,7 @@ typedef struct type_descriptor
 #define TYPE_EXFLAGS_NOT_FIXED      0x00000008 /* type is not fixed, since expression
                                                   contains undefined function. */
 #define TYPE_EXFLAGS_FOR_FUNC_SELF  0x00000010 /* type is for the function itself */
+#define TYPE_EXFLAGS_UNCHANGABLE    0x00000020 /* type is not able to change */
         uint32_t exflags;
     } attr; /* FbasicType */
     struct {
@@ -320,6 +321,10 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_FOR_FUNC_SELF(tp)   ((tp)->attr.exflags &   TYPE_EXFLAGS_FOR_FUNC_SELF)
 #define TYPE_SET_FOR_FUNC_SELF(tp)  ((tp)->attr.exflags |=  TYPE_EXFLAGS_FOR_FUNC_SELF)
 #define TYPE_UNSET_FOR_FUNC_SELF(tp) ((tp)->attr.exflags &= ~TYPE_EXFLAGS_FOR_FUNC_SELF)
+
+#define TYPE_IS_UNCHANGABLE(tp)   ((tp)->attr.exflags &   TYPE_EXFLAGS_UNCHANGABLE)
+#define TYPE_SET_UNCHANGABLE(tp)  ((tp)->attr.exflags |=  TYPE_EXFLAGS_UNCHANGABLE)
+#define TYPE_UNSET_UNCHANGABLE(tp) ((tp)->attr.exflags &= ~TYPE_EXFLAGS_UNCHANGABLE)
 
 #define TYPE_HAS_INTENT(tp)      (TYPE_IS_INTENT_IN(tp) || \
                 TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp))

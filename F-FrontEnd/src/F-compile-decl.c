@@ -2092,6 +2092,13 @@ declare_id_type(ID id, TYPE_DESC tp)
         return; /* nothing for TYPE_UNKNOWN */
     }
 
+    if (ID_TYPE(id) != NULL &&
+        ID_TYPE(id) != tp &&
+        TYPE_IS_UNCHANGABLE(ID_TYPE(id))) {
+        error("type of %s can not be changed",
+              ID_NAME(id));
+    }
+
     if (IS_MODULE(tp)) {      /* tp is module */
         ID_TYPE(id) = tp;
         return;
