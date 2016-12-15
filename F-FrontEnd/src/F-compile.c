@@ -4845,17 +4845,16 @@ compile_separate_MODULEPROCEDURE_statement(expr x)
         return;
     }
 
-    /*
-     * TODO: setup types and local symbols
-     */
     begin_procedure();
     declare_procedure(CL_PROC, name, ID_TYPE(ip), NULL, NULL, NULL, NULL);
     EXT_PROC_IS_PROCEDUREDECL(CURRENT_EXT_ID) = TRUE;
 
+    /*
+     * setup local symbols in the function
+     */
     if (FUNCTION_TYPE_RESULT(ID_TYPE(ip))) {
         s = FUNCTION_TYPE_RESULT(ID_TYPE(ip));
-        declare_function_result_id(s,
-                                   FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(ip)));
+        declare_function_result_id(s, FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(ip)));
     }
 
     FOREACH_ID(arg, FUNCTION_TYPE_ARGS(ID_TYPE(ip))) {
