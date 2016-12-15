@@ -2380,6 +2380,15 @@ end_declaration()
         if (unit_ctl_level > 0 && is_in_module()) {
             update_type_bound_procedures(PARENT_LOCAL_STRUCT_DECLS, myId);
         }
+
+        if (TYPE_IS_MODULE(ID_TYPE(myId)) && unit_ctl_level > 0) {
+            ID parent = find_ident_head(ID_SYM(myId), PARENT_LOCAL_SYMBOLS);
+            if (parent && ID_TYPE(parent)) {
+                if (!function_type_is_compatible(ID_TYPE(myId), ID_TYPE(parent))) {
+                    error("module function type is not compatible");
+                }
+            }
+        }
     }
 
     /*
@@ -2948,8 +2957,11 @@ check_type_bound_procedures()
                     error_at_id(tbp, "should not override member");
                 }
 
-                if (!type_bound_procedure_types_are_compatible(tbp, parent_tbp)) {
-                    error_at_id(tbp, "type mismatch to override %s", SYM_NAME(ID_SYM(tbp)));
+                if (!type_bound_procedure_types_are_compatible(
+                        ID_TYPE(tbp), ID_TYPE(parent_tbp))) {
+                    error_at_id(tbp,
+                                "type mismatch to override %s",
+                                SYM_NAME(ID_SYM(tbp)));
                 }
             }
         }

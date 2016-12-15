@@ -683,8 +683,10 @@ extern void     function_type_udpate
                     _ANSI_ARGS_((TYPE_DESC ftp, ID idList));
 extern int      function_type_is_appliable
                     _ANSI_ARGS_((TYPE_DESC ftp, expv args));
+extern int      function_type_is_compatible
+                    _ANSI_ARGS_((TYPE_DESC ftp1, TYPE_DESC ftp2));
 extern int      type_bound_procedure_types_are_compatible
-                    _ANSI_ARGS_((ID tbp1, ID tbp2));
+                    _ANSI_ARGS_((TYPE_DESC tbp1, TYPE_DESC tbp2));
 
 extern void     replace_or_assign_type
                     _ANSI_ARGS_((TYPE_DESC *tp, const TYPE_DESC new_tp));
