@@ -1,5 +1,5 @@
 #ifdef DEBUG
-      MODULE tbp_mod
+      MODULE tbp_mod_type_bound_procedure_use_module
         TYPE t
            INTEGER :: v
          CONTAINS
@@ -39,10 +39,10 @@
           this%v = v
           this%w = w
         END SUBROUTINE initTT
-      END MODULE tbp_mod
+      END MODULE tbp_mod_type_bound_procedure_use_module
 
       PROGRAM main
-        use tbp_mod
+        use tbp_mod_type_bound_procedure_use_module
         TYPE(t) :: a
         TYPE(tt) :: b
         call a%init(1,2)

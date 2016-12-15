@@ -1,6 +1,6 @@
 #if defined(__GNUC__) && (4 < __GNUC__ || 4 == __GNUC__ && 7 < __GNUC_MINOR__) \
   || defined(__INTEL_COMPILER) && (1600 < __INTEL_COMPILER)
-               MODULE m
+               MODULE m_type_bound_procedure
                  TYPE :: t
                    INTEGER :: v
                  CONTAINS
@@ -17,10 +17,10 @@
                    PRINT *, 'NG : t%check called.'
                    call exit(1)
                  END SUBROUTINE check
-               END MODULE m
+               END MODULE m_type_bound_procedure
 
-               MODULE mm
-                 USE m
+               MODULE mm_type_bound_procedure
+                 USE m_type_bound_procedure
                  TYPE, EXTENDS(t) :: tt
                    INTEGER :: u
                  CONTAINS
@@ -41,10 +41,10 @@
                      call exit(1)
                    endif
                  END SUBROUTINE check2
-               END MODULE mm
+               END MODULE mm_type_bound_procedure
 
                PROGRAM MAIN
-                 USE mm
+                 USE mm_type_bound_procedure
                  CLASS(t), POINTER :: a
                  TYPE(tt),TARGET :: b = tt(v=1, u=2)
                  a => b

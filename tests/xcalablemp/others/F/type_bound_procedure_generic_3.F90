@@ -1,6 +1,6 @@
 #if defined(__GNUC__) && (4 < __GNUC__ || 4 == __GNUC__ && 7 < __GNUC_MINOR__) \
   || defined(__INTEL_COMPILER) && (1600 < __INTEL_COMPILER)
-      MODULE m
+      MODULE m_type_bound_procedure_generic_3
         INTEGER :: v
         TYPE t
          CONTAINS
@@ -25,10 +25,10 @@
           v = v + r
 !         PRINT *, "call H"
         END SUBROUTINE h
-      END MODULE m
+      END MODULE m_type_bound_procedure_generic_3
 
       PROGRAM main
-        USE m
+        USE m_type_bound_procedure_generic_3
         TYPE(t), TARGET :: a
         CLASS(t), POINTER :: b
         b => a

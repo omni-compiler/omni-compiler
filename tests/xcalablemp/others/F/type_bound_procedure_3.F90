@@ -1,6 +1,6 @@
 #if defined(__GNUC__) && (4 < __GNUC__ || 4 == __GNUC__ && 7 < __GNUC_MINOR__) \
   || defined(__INTEL_COMPILER) && (1600 < __INTEL_COMPILER)
-      MODULE m
+      MODULE m_type_bound_procedure_3
         TYPE t
            INTEGER :: v
          CONTAINS
@@ -15,10 +15,10 @@
           INTEGER :: ans
           ans = this%v + w
         END FUNCTION f
-      END MODULE m
+      END MODULE m_type_bound_procedure_3
 
       PROGRAM main
-        USE m
+        USE m_type_bound_procedure_3
 
         type(t) o1
         o1 = t(10)

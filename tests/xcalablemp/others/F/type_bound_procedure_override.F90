@@ -1,6 +1,6 @@
 #if defined(__GNUC__) && (4 < __GNUC__ || 4 == __GNUC__ && 7 < __GNUC_MINOR__) \
   || defined(__INTEL_COMPILER) && (1600 < __INTEL_COMPILER)
-      MODULE m
+      MODULE m_type_bound_procedure_override
         TYPE t
          CONTAINS
            PROCEDURE, PUBLIC :: f
@@ -24,10 +24,10 @@
           ff = i + 3
 !         PRINT *, "call FF"
         END FUNCTION ff
-      END MODULE m
+      END MODULE m_type_bound_procedure_override
 
       PROGRAM main
-        USE m
+        USE m_type_bound_procedure_override
         integer ans
         type(t) o1
         type(tt) o2

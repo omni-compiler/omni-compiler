@@ -1,5 +1,5 @@
 #ifdef DEBUG
-      MODULE m
+      MODULE m_type_bound_procedure_5
         TYPE t
          CONTAINS
            PROCEDURE, PUBLIC :: f
@@ -21,10 +21,10 @@
           PRINT *, "call G"
           g = r * 3.0
         END FUNCTION g
-      END MODULE m
+      END MODULE m_type_bound_procedure_5
 
       PROGRAM main
-        USE m
+        USE m_type_bound_procedure_5
         type(t) o1
         print *, o1%p(2)
       END PROGRAM main

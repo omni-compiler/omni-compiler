@@ -1,6 +1,6 @@
 #if defined(__GNUC__) && (4 < __GNUC__ || 4 == __GNUC__ && 7 < __GNUC_MINOR__) \
   || defined(__INTEL_COMPILER) && (1600 < __INTEL_COMPILER)
-      MODULE m
+      MODULE m_type_bound_procedure_generic
         IMPLICIT NONE
 
         TYPE :: t
@@ -28,9 +28,9 @@
           equals_t_int = (me%i == i)
         END FUNCTION equals_t_int
 
-      END MODULE m
+      END MODULE m_type_bound_procedure_generic
 
-      use m
+      use m_type_bound_procedure_generic
 
       type(t) o1
 
