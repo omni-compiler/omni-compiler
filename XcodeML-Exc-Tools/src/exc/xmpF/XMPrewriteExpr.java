@@ -254,6 +254,7 @@ public class XMPrewriteExpr
 
       case FUNCTION_CALL:
 	{
+	  if (x.getArg(0).Opcode() == Xcode.MEMBER_REF) break;
 	  String fname = x.getArg(0).getString();
 	  if (fname.equalsIgnoreCase("xmp_desc_of")){
 
@@ -786,7 +787,8 @@ public class XMPrewriteExpr
 
     Ident sizeArray = env.declOrGetSizeArray(fb);
 
-    String fname = x.getArg(0).getString();
+    String fname = x.getArg(0).Opcode() != Xcode.MEMBER_REF ?
+                   x.getArg(0).getString() : null;
     Xtype ftype = x.getArg(0).Type();
     XobjList arg_list = (XobjList)x.getArg(1);
 
@@ -800,7 +802,7 @@ public class XMPrewriteExpr
       param_list = (XobjList)ftype.getFuncParam();
     }
 
-    if (param_list == null){
+    if (param_list == null && fname != null){
 	    
       XobjList decl_list = (XobjList)fb.getBody().getDecls();
 

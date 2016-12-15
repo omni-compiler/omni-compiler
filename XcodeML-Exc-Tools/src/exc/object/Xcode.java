@@ -307,6 +307,11 @@ public enum Xcode
      // Fortran2003: SELECT TYPE
     SELECT_TYPE_STATEMENT           ( 225, 'L', null, null),
     TYPE_GUARD                      ( 226, 'L', null, null),
+     // Fortran2003: TYPE BOUND PROCEDURES
+    F_TYPE_BOUND_PROCEDURES         ( 227, 'L', null, null),
+    F_TYPE_BOUND_PROCEDURE          ( 228, 'L', null, null),
+    F_TYPE_BOUND_GENERIC_PROCEDURE  ( 229, 'L', null, null),
+    F_BINDING                       ( 230, 'L', null, null),
 
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),

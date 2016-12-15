@@ -53,7 +53,7 @@ public class Xcons
 
     public static XobjString String(String value)
     {
-        return new XobjString(Xcode.STRING, value);
+        return (value != null) ? new XobjString(Xcode.STRING, value) : null;
     }
 
     public static XobjInt Int(Xcode code, Xtype type, int value)

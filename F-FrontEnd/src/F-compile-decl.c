@@ -4933,7 +4933,7 @@ compile_type_bound_procedure(expr x)
                 }
                 binding_attr_flags |= TYPE_BOUND_PROCEDURE_NOPASS;
                 break;
-            case F03_NON_OVERRIDEABLE_SPEC:
+            case F03_NON_OVERRIDABLE_SPEC:
                 if (binding_attr_flags & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE) {
                     error_at_node(x, "NON_OVERRIDABLE is already specified.");
                     return;

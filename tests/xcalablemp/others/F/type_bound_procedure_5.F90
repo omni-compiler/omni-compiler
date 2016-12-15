@@ -1,0 +1,35 @@
+#ifdef DEBUG
+      MODULE m
+        TYPE t
+         CONTAINS
+           PROCEDURE, PUBLIC :: f
+           PROCEDURE, PUBLIC :: g
+           GENERIC :: p => f, g
+        END TYPE t
+      CONTAINS
+        FUNCTION f(this, i)
+          INTEGER :: f
+          CLASS(t) :: this
+          INTEGER :: i
+          PRINT *, "call F"
+          f = this%p(1.0 * i)
+        END FUNCTION f
+        FUNCTION g(this, r)
+          CLASS(t) :: this
+          REAL :: r
+          REAL :: g
+          PRINT *, "call G"
+          g = r * 3.0
+        END FUNCTION g
+      END MODULE m
+
+      PROGRAM main
+        USE m
+        type(t) o1
+        print *, o1%p(2)
+      END PROGRAM main
+#else
+print *, 'SKIPPED'
+end
+#endif
+

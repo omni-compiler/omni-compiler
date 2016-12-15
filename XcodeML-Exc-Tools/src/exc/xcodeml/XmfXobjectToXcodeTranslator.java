@@ -31,6 +31,7 @@ import exc.object.Xcode;
 import exc.object.Xcons;
 import exc.object.XobjBool;
 import exc.object.XobjConst;
+import exc.object.XobjInt;
 import exc.object.XobjContainer;
 import exc.object.XobjList;
 import exc.object.XobjLong;
@@ -746,7 +747,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNodes(createElement(name,
                                             "is_intrinsic",
                                             intFlagToBoolStr(xobj.getArgOrNull(2))),
-                              transName(xobj.getArg(0)));
+                              (xobj.getArg(0).Opcode() != Xcode.MEMBER_REF) ? transName(xobj.getArg(0)) :
+                                                                              trans    (xobj.getArg(0)));
             if (xobj.getArg(1) != null) {
                 Element argsElem = createElement("arguments");
                 for (Xobject a : (XobjList)xobj.getArg(1)) {
@@ -1063,6 +1065,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     "bind", type.getBind());
                 addChildNode(typeElem, trans(((StructType)type).getFTypeParams()));
                 addChildNode(typeElem, transSymbols(type.getMemberList()));
+                addChildNode(typeElem, transProcs(type.getProcList()));
                 break;
 
             case Xtype.FUNCTION:
@@ -1394,6 +1397,61 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             for (Xobject ident : identList) {
                 addChildNode(e, transIdent((Ident)ident));
             }
+        }
+        return e;
+    }
+
+    private Node transProcs(Xobject xobj) {
+        XobjList procList = (XobjList)xobj;
+        Element e = null;
+        if (procList != null) {
+            e = createElement("typeBoundProcedures");
+            for (Xobject proc : procList) {
+                addChildNode(e, transProc(proc));
+            }
+        }
+        return e;
+    }
+
+    private Node transProc(Xobject xobj) {
+        Element e = null;
+        if (xobj.Opcode() == Xcode.F_TYPE_BOUND_PROCEDURE) {
+          e = createElement("typeBoundProcedure");
+          addAttributes(e, "type", xobj.Type().getXcodeFId());
+          addAttributes(e, "pass"         , (xobj.getArg(0) != null) ? ((XobjString)xobj.getArg(0)).getString() : null);
+          addAttributes(e, "pass_arg_name", (xobj.getArg(1) != null) ? ((XobjString)xobj.getArg(1)).getString() : null);
+          addChildNode(e, transName(xobj.getArg(2)));
+          int tq = ((XobjInt)xobj.getArg(3)).getInt();
+          if ((tq & Xtype.TQ_FPRIVATE) != 0)
+            addAttributes(e, "is_private", "true");
+          else if ((tq & Xtype.TQ_FPUBLIC) != 0)
+            addAttributes(e, "is_public", "true");
+          addChildNode(e, addChildNode(createElement("binding"), transName(xobj.getArg(4))));
+          addAttributes(e, "is_non_overridable", (xobj.getArg(5) != null) ? ((XobjString)xobj.getArg(5)).getString() : null);
+        } else if (xobj.Opcode() == Xcode.F_TYPE_BOUND_GENERIC_PROCEDURE) {
+          e = createElement("typeBoundGenericProcedure");
+          addAttributes(e, "is_operator"  , (xobj.getArg(0) != null) ? ((XobjString)xobj.getArg(0)).getString() : null);
+          addAttributes(e, "is_assignment", (xobj.getArg(1) != null) ? ((XobjString)xobj.getArg(1)).getString() : null);
+          addChildNode(e, transName(xobj.getArg(2)));
+          int tq = ((XobjInt)xobj.getArg(3)).getInt();
+          if ((tq & Xtype.TQ_FPRIVATE) != 0)
+            addAttributes(e, "is_private", "true");
+          else if ((tq & Xtype.TQ_FPUBLIC) != 0)
+            addAttributes(e, "is_public", "true");
+          Element bdgn = createElement("binding");
+          if (xobj.getArg(4) != null) {
+              for (Xobject a : (XobjList)xobj.getArg(4)) {
+                  if (a == null)
+                      continue;
+                  Node n = transName(a);
+                  if (n == null)
+                      continue;
+                  addChildNode(bdgn, n);
+              }
+          }
+          addChildNode(e, bdgn);
+        } else {
+           fatal("unknown type bound procedure type.");
         }
         return e;
     }

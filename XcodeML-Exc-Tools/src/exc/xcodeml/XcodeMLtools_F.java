@@ -252,7 +252,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     XobjList tparam_list = (XobjList) toXobject(getElement(n, "typeParams"));
     XobjList id_list = (XobjList) toXobject(getElement(n, "symbols"));
-    StructType type = new StructType(tid, parent_tid, id_list, tq, null, tparam_list);
+    XobjList proc_list = (XobjList) toXobject(getElement(n, "typeBoundProcedures"));
+    StructType type = new StructType(tid, parent_tid, id_list, proc_list, tq, null, tparam_list);
 
     String bind = getAttr(n, "bind");
     if(bind != null){
@@ -490,7 +491,14 @@ public class XcodeMLtools_F extends XcodeMLtools {
     }
 
     case FUNCTION_CALL:
-      return Xcons.List(code, type, toXobject(getElement(n, "name")),
+      Node n_func = getElement(n, "name");
+      if (n_func == null) {
+        n_func = getElement(n, "FmemberRef");
+      }
+      if (n_func == null) {
+        fatal("unknown functionCall function.");
+      }
+      return Xcons.List(code, type, toXobject(n_func),
 			toXobject(getElement(n, "arguments")),
 			getAttrIntFlag(n, "is_intrinsic"));
 
@@ -734,6 +742,38 @@ public class XcodeMLtools_F extends XcodeMLtools {
 						 ));
       }
 
+    case F_TYPE_BOUND_PROCEDURE:
+      {
+        XobjString pass     = Xcons.String(getAttr(n, "pass"         ));
+        XobjString pass_arg = Xcons.String(getAttr(n, "pass_arg_name"));
+        int tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
+               | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0);
+        Node bdg = getElement(n, "binding");
+        XobjString overridable = Xcons.String(getAttr(n, "is_non_overridable"));
+        return setCommonAttributes(n, Xcons.List(code, type, pass, pass_arg,
+						 toXobject(getElement(n, "name")),
+	                                         Xcons.IntConstant(tq),
+                                                 (bdg != null) ? toXobject(getContent(bdg)) : null,
+                                                 overridable
+						));
+      }
+
+    case F_TYPE_BOUND_GENERIC_PROCEDURE:
+      {
+        XobjString is_operator   = Xcons.String(getAttr(n, "is_operator"  ));
+        XobjString is_assignment = Xcons.String(getAttr(n, "is_assignment"));
+        int tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
+               | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0);
+        Node bdg = getElement(n, "binding");
+        return setCommonAttributes(n, Xcons.List(code, (Xtype)null, is_operator, is_assignment,
+						 toXobject(getElement(n, "name")),
+	                                         Xcons.IntConstant(tq),
+                                                 toXobject(bdg)
+						));
+      }
+
+    case F_TYPE_BOUND_PROCEDURES:
+    case F_BINDING:
     case F_SYNCALL_STATEMENT:
     case F_SYNCIMAGE_STATEMENT:
     case F_SYNCMEMORY_STATEMENT:

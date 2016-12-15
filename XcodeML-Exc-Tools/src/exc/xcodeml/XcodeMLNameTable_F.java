@@ -142,6 +142,10 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_TYPE_PARAM_VALUES, "typeParamValues"),
 			new XcodeMLName(Xcode.F_LEN, "len"),
       new XcodeMLName(Xcode.F_IMPORT_STATEMENT, "FimportDecl"),
+			new XcodeMLName(Xcode.F_TYPE_BOUND_PROCEDURES, "typeBoundProcedures"),
+			new XcodeMLName(Xcode.F_TYPE_BOUND_PROCEDURE , "typeBoundProcedure" ),
+			new XcodeMLName(Xcode.F_TYPE_BOUND_GENERIC_PROCEDURE , "typeBoundGenericProcedure"),
+			new XcodeMLName(Xcode.F_BINDING, "binding"),
 	};
 
 	// constructor

@@ -1627,7 +1627,8 @@ public class XMPtransCoarrayRun
       return false;
 
     Xobject callExpr = xobj.getArg(0);
-    if (callExpr == null || callExpr.Opcode() != Xcode.FUNCTION_CALL)
+    if (callExpr == null || callExpr.Opcode() != Xcode.FUNCTION_CALL ||
+                            callExpr.getArg(0).Opcode() == Xcode.MEMBER_REF)
       return false;
 
     String fname = callExpr.getArg(0).getName();
@@ -2808,7 +2809,8 @@ public class XMPtransCoarrayRun
       Xobject xobj = xi.getXobject();
       if (xobj == null)
         continue;
-      if (xobj.Opcode() != Xcode.FUNCTION_CALL)
+      if (xobj.Opcode() != Xcode.FUNCTION_CALL ||
+          xobj.getArg(0).Opcode() == Xcode.MEMBER_REF)
         continue;
 
       String fname = xobj.getArg(0).getString();
@@ -2852,7 +2854,8 @@ public class XMPtransCoarrayRun
       Xobject xobj = xi.getXobject();
       if (xobj == null)
         continue;
-      if (xobj.Opcode() != Xcode.FUNCTION_CALL)
+      if (xobj.Opcode() != Xcode.FUNCTION_CALL ||
+          xobj.getArg(0).Opcode() == Xcode.MEMBER_REF)
         continue;
 
       String fname = xobj.getArg(0).getString();

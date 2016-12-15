@@ -15,9 +15,10 @@ public class StructType extends CompositeType
         super(Xtype.STRUCT, id, parent_id, id_list, typeQualFlags, gccAttrs, codimensions);
     }
 
-    public StructType(String id, String parent_id, XobjList id_list, int typeQualFlags, Xobject gccAttrs, XobjList typeParams)
+    public StructType(String id, String parent_id, XobjList id_list, XobjList proc_list, int typeQualFlags, Xobject gccAttrs, XobjList typeParams)
     {
         this(id, parent_id, id_list, typeQualFlags, gccAttrs, (Xobject[])null);
+        this.proc_list = proc_list;
         this.fTypeParams = typeParams;
     }
 

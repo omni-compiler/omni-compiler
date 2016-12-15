@@ -651,7 +651,7 @@ binding_attr:
         | NOPASS
         { $$ = list0(F03_NO_PASS_SPEC); }
         | NON_OVERRIDABLE
-        { $$ = list0(F03_NON_OVERRIDEABLE_SPEC); }
+        { $$ = list0(F03_NON_OVERRIDABLE_SPEC); }
         | DEFERRED
         { $$ = list0(F03_DEFERRED_SPEC); }
         | access_spec

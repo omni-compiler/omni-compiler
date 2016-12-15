@@ -895,6 +895,12 @@ public class Xtype
         throw new UnsupportedOperationException();
     }
 
+    /** get composite type proc list */
+    public XobjList getProcList()
+    {
+        throw new UnsupportedOperationException();
+    }
+
     /** get type of member which has specified name */
     public Xtype getMemberType(String member)
     {

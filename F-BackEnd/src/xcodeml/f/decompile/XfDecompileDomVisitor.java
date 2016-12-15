@@ -1462,7 +1462,7 @@ public class XfDecompileDomVisitor {
             }
             if (XmDomUtil.getAttrBool(n, "is_non_overridable")) {
                 writer.writeToken(",");
-                writer.writeToken("NON_OVERRIDEABLE");
+                writer.writeToken("NON_OVERRIDABLE");
             }
             if (XmDomUtil.getAttrBool(n, "is_deferred")) {
                 writer.writeToken(",");
