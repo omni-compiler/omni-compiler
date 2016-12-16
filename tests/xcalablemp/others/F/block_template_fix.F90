@@ -42,7 +42,7 @@ block
   endif
 !$xmp end task
 
-! deallocate(a)
+  deallocate(a)
 end block
 
 #else

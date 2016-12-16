@@ -1,6 +1,6 @@
-module bm
+module bm_add_decl_block_mod
   integer a(10)
-end module bm
+end module bm_add_decl_block_mod
 
 integer a(10)
 
@@ -23,7 +23,7 @@ end do
 
 blkname1 : block
 
-use bm
+use bm_add_decl_block_mod
 
 !$xmp nodes p(2)
 !$xmp template t(12)
