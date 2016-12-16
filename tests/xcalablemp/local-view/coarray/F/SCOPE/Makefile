@@ -17,7 +17,7 @@ BUG459= #sakagami459-join.x   ## Type8 NG
 BUG460= sakagami460-join.x sakagami460-2.x #bug460-3.x (err in SX because of bug479)
 BUG472= bug472.x bug472G1.x bug472G2.x bb472.x bb472G1.x bb472G2.x
 BUG006= bug006.x bug006OK.x
-ISSUE064= nested_common_name.x nested_common_name-1.x
+ISSUE064= nested_common_name.x nested_common_name-1.x nested_common_name-1-0-0.x nested_common_name-1-0.x nested_common_name-2.x nested_common_name-3.x
 
 SPECIALS= # bug460get.x bug460put.x
 

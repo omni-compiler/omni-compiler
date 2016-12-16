@@ -350,8 +350,7 @@ public class XMPtransCoarrayRun
     BlockIterator biter = new topdownBlockIterator(fb);
     for (biter.init(); !biter.end(); biter.next()) {
       Block block = biter.getBlock();
-      if (block.Opcode() == Xcode.F_BLOCK_STATEMENT ||
-          block.Opcode() == Xcode.FUNCTION_DEFINITION ) {
+      if (block.Opcode() == Xcode.F_BLOCK_STATEMENT) {
         XobjList id_list = block.getBody().getIdentList();
         for (Xobject idobj: id_list) {
           Ident ident = (Ident)idobj;
@@ -384,11 +383,9 @@ public class XMPtransCoarrayRun
                   ((XobjString)obj.getArg(0)).setName(ident.getAlias());
                   ((XobjString)ident.getValue()).setName(ident.getAlias());
                   ident.setName(ident.getAlias());
-                  if (block.Opcode() == Xcode.F_BLOCK_STATEMENT) {
-                    idList.add(ident.copy());
-                    decl_list.remove(obj);
-                    declList.add(obj);
-                  }
+                  idList.add(ident.copy());
+                  decl_list.remove(obj);
+                  declList.add(obj);
                   break;
                 }
               }
@@ -411,7 +408,7 @@ public class XMPtransCoarrayRun
           XobjList coarrayNameList = (XobjList)coarrayPragma.getArg(1);
           for(Xobject xobj: coarrayNameList) {
             Ident id = env.findVarIdent(xobj.getString(), pb);
-            if (id != null) {
+            if (id != null && id.getAlias() != null) {
               Xobject var = Xcons.Symbol(Xcode.VAR,id.Type(), id.getAlias());
               coarrayNameList.remove(xobj);
               coarrayNameList.add(var);
@@ -529,10 +526,12 @@ public class XMPtransCoarrayRun
       // found I am a module procedure
 
       for (XMPcoarray coarray: hostModuleRun.staticLocalCoarrays)
-        staticAssociatedCoarrays.add(localizedCopyOfCoarray(coarray));
+        if (funcDef.getBlock().getBody().findLocalIdent(coarray.getName()) == null)
+          staticAssociatedCoarrays.add(localizedCopyOfCoarray(coarray));
 
       for (XMPcoarray coarray: hostModuleRun.staticAssociatedCoarrays)
-        staticAssociatedCoarrays.add(localizedCopyOfCoarray(coarray));
+        if (funcDef.getBlock().getBody().findLocalIdent(coarray.getName()) == null)
+          staticAssociatedCoarrays.add(localizedCopyOfCoarray(coarray));
     }
   }
 

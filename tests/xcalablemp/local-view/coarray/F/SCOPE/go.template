@@ -1,7 +1,7 @@
 #!/bin/sh
 ##PJM --rsc-list "rscgrp=small"
 #PJM --rsc-list "node=3"
-#PJM --rsc-list "elapse=00:02:00"
+#PJM --rsc-list "elapse=00:05:00"
 #PJM --mpi "shape=3"
 #PJM --stg-transfiles all
 #PJM --mpi "use-rankdir"
