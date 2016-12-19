@@ -1,13 +1,13 @@
-module comm
+module comm2
   implicit none
   integer,parameter :: ndims=3
   integer :: me(3)
   integer :: npe,id
-end module comm
+end module comm2
 
 subroutine readparam
 !
-  use comm
+  use comm2
 !
   implicit none
 !
