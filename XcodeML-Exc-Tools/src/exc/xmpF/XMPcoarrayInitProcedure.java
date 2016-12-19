@@ -254,14 +254,13 @@ public class XMPcoarrayInitProcedure {
     }
     else {
       // Ver.4(or6) and not STRUCT type : generate common block for coarrays themselves
-      //coarray.resetSaveAttr();   // This seems not correct due to the side effect.
-      ////////////////////////
-      //      type1.removeCodimensions();       // remove codimensions
-      ////////////////////////
-      _resetSaveAttrInType(type1);         // reset SAVE attribute
-      ident1.setStorageClass(StorageClass.FCOMMON);   // reset SAVE attribute again
+      Ident ident2 = body.declLocalIdent(ident1.getName(),
+                                         ident1.Type().copy());
+      ident2.Type().removeCodimensions();       // remove codimensions
+      _resetSaveAttrInType(ident2.Type());         // reset SAVE attribute
+      ident2.setStorageClass(StorageClass.FCOMMON);   // reset SAVE attribute again
       commonName = coarray.getCoarrayCommonName();
-      commonMember = Xcons.List(Xcons.FvarRef(ident1));
+      commonMember = Xcons.List(Xcons.FvarRef(ident2));
     }
 
     Xobject commonStmt2 =
