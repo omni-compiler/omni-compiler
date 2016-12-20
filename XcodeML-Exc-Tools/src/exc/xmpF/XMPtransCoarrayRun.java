@@ -346,7 +346,7 @@ public class XMPtransCoarrayRun
                 "\' is expected in pastRuns before \'" + name + "\'");
   }
 
-  private void _hoistLocalCoarrays(Xobject idList, Xobject declList, FunctionBlock fb, Boolean setAlias) {
+  private void _hoistLocalCoarrays(Xobject idList, Xobject declList, FunctionBlock fb, Boolean flg_setAlias) {
     BlockIterator biter = new topdownBlockIterator(fb);
     for (biter.init(); !biter.end(); biter.next()) {
       Block block = biter.getBlock();
@@ -355,10 +355,39 @@ public class XMPtransCoarrayRun
         for (Xobject idobj: id_list) {
           Ident ident = (Ident)idobj;
           if (ident.wasCoarray()) {
-            if (setAlias)
+            if (flg_setAlias) {
               // pass 3 : generate unique name.
               ident.setAlias(ident.getName() + "_" + get_gen_id());
-            else {
+ frm_bottom : while(true) {
+                // serach within procedure
+                Ident id_found = block.findVarIdent(ident.getAlias());
+                Block b_id_found = block;
+                while (id_found != null) {
+                  if (id_found.wasCoarray()) {
+                    b_id_found = b_id_found.findVarIdentBlock(ident.getAlias());
+                    if (b_id_found.Opcode() == Xcode.F_BLOCK_STATEMENT) {
+                      id_found = b_id_found.findVarIdent(ident.getAlias());
+                      continue;
+                    }
+                  }
+                  ident.setAlias(ident.getName() + "_" + get_gen_id());
+                  id_found = block.findVarIdent(ident.getAlias());
+                  continue frm_bottom;
+                }
+                // serach within parent procedure / module
+                XobjectDef parentDef = def.getParent();
+                while (parentDef != null) {
+                  for(Xobject a : (XobjList)parentDef.getDef().getArg(1)) {
+                    if(a.getName().equals(ident.getAlias())) {
+                      ident.setAlias(ident.getName() + "_" + get_gen_id());
+                      continue frm_bottom;
+                    }
+                  }
+                  parentDef = parentDef.getParent();
+                }
+                break;
+              }
+            } else {
               // pass 4 : set unique name and hoist.
               if (block.Opcode() == Xcode.FUNCTION_DEFINITION ) {
                 // rewrite function coarray parameter name.
