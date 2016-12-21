@@ -175,7 +175,7 @@ for c_file in "${c_files[@]}"; do
     elif [ $OPENACC_PLATFORM = "OpenCL" ]; then
 	FILE_CL=${TEMP_DIR}/"${FILE_NAME}"_pp.cl
 	if [ -e "${FILE_CL}" ]; then
-	    FILE_USER_CL=`basename "${C_FILE}" .c`_pp.cl
+	    FILE_USER_CL="${FILE_NAME}"_pp.cl
 	    omni_exec cp "${FILE_CL}" "${FILE_USER_CL}"
 	fi
     fi
