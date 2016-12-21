@@ -29,7 +29,9 @@ public class XMPcoarray {
   final static String XMPF_UCOBOUND = "xmpf_ucobound";
   final static String XMPF_COSIZE = "xmpf_cosize";
   final static String GET_IMAGE_INDEX_NAME = "xmpf_coarray_get_image_index";
-  final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
+  //  final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
+  final static String SET_CORANK_NAME = "xmpf_coarray_set_corank";
+  final static String SET_CODIMENSION_NAME = "xmpf_coarray_set_codim";
   final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
   final static String GET_DESCR_ID_NAME = "xmpf_get_descr_id";
   final static String SET_NODES_NAME = "xmpf_coarray_set_nodes";    // for COARRAY directive
@@ -397,15 +399,19 @@ public class XMPcoarray {
 
 
   //-----------------------------------------------------
-  //  A part of TRANSLATION m.
-  //  generate "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
+  //  A part of TRANSLATION m. with XMPenv
+  //  generate
+  //     "CALL set_corank(descPtr, corank)"
+  //     "CALL set_codim (descPtr, 0, clb, cub)"
+  //     ...
+  //     "CALL set_codim (descPtr, corank-1, clb)"
   //  returns null if it is not allocated
   //-----------------------------------------------------
   //
+  /******************************
   public Xobject makeStmt_setCoshape() {
     return makeStmt_setCoshape(env);
   }
-
   public Xobject makeStmt_setCoshape(XMPenv env) {
     int corank = getCorank();
 
@@ -416,6 +422,7 @@ public class XMPcoarray {
       args.add(getUcobound(i));
     }
     args.add(getLcobound(corank - 1));
+
     if (args.hasNullArg())
       XMP.fatal("generated null argument " + SET_COSHAPE_NAME +
                 "(makeStmt_setCoshape())");
@@ -428,14 +435,111 @@ public class XMPcoarray {
     Xobject subrCall = subr.callSubroutine(args);
     return subrCall;
   }
+  ***********************************/
+
+  public void addStmts_setCoshape(BlockList list) {
+    addStmts_setCoshape(list, env);
+  }
+  public void addStmts_setCoshape(BlockList list, XMPenv env) {
+    Xobject stmt;
+    stmt = makeStmt_setCorank(env);
+    list.add(stmt);
+
+    int corank = getCorank();
+    for (int i = 0; i < corank; i++) {
+      stmt = makeStmt_setCodimension(i, env);
+      list.add(stmt);
+    }
+  }    
+
+  public void addStmts_setCoshape(ArrayList list) {
+    addStmts_setCoshape(list, env);
+  }
+  public void addStmts_setCoshape(ArrayList list, XMPenv env) {
+    Xobject stmt;
+    stmt = makeStmt_setCorank(env);
+    list.add(stmt);
+
+    int corank = getCorank();
+    for (int i = 0; i < corank; i++) {
+      stmt = makeStmt_setCodimension(i, env);
+      list.add(stmt);
+    }
+  }    
+
+  public void addStmts_setCoshape(XobjList list) {
+    addStmts_setCoshape(list, env);
+  }
+  public void addStmts_setCoshape(XobjList list, XMPenv env) {
+    Xobject stmt;
+    stmt = makeStmt_setCorank(env);
+    list.add(stmt);
+
+    int corank = getCorank();
+    for (int i = 0; i < corank; i++) {
+      stmt = makeStmt_setCodimension(i, env);
+      list.add(stmt);
+    }
+  }    
+
+  public Xobject makeStmt_setCorank() {
+    return makeStmt_setCorank(env);
+  }
+  public Xobject makeStmt_setCorank(XMPenv env) {
+    int corank = getCorank();
+
+    Xobject args = Xcons.List(getDescPointerId(),
+                              Xcons.IntConstant(corank));
+
+    Ident subr = env.findVarIdent(SET_CORANK_NAME, null);
+    if (subr == null) {
+      subr = env.declExternIdent(SET_CORANK_NAME,
+                                 BasicType.FexternalSubroutineType);
+    }
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
+
+  public Xobject makeStmt_setCodimension(int dim) {
+    return makeStmt_setCodimension(dim, env);
+  }
+  public Xobject makeStmt_setCodimension(int dim, XMPenv env) {
+    int corank = getCorank();
+
+    Xobject args = Xcons.List(getDescPointerId(),
+                              Xcons.IntConstant(dim));
+
+    if (dim < corank - 1) {            // not last dimension
+      args.add(getLcobound(dim));
+      args.add(getUcobound(dim));
+    } else if (dim == corank - 1) {    // last dimension
+      args.add(getLcobound(dim));
+      args.add(Xcons.IntConstant(0));  // dummy
+    } else {                           // illegal
+      XMP.fatal("INTERNAL: dimension number specified larger than corank " +
+                SET_CODIMENSION_NAME + "(makeStmt_setCodimension(dim, env))");
+    }
+
+    Ident subr = env.findVarIdent(SET_CODIMENSION_NAME, null);
+    if (subr == null) {
+      subr = env.declExternIdent(SET_CODIMENSION_NAME,
+                                 BasicType.FexternalSubroutineType);
+    }
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
 
 
   //-----------------------------------------------------
-  //  A part of TRANSLATION m.
-  //  generate "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
-  //  with static coshape
+  //  A part of TRANSLATION m. with static coshape
+  //  generate
+  //     "CALL set_corank(descPtr, corank)"
+  //     "CALL set_codim (descPtr, 0, clb, cub)"
+  //     ...
+  //     "CALL set_codim (descPtr, corank-1, clb)"
   //-----------------------------------------------------
   //
+  /*********************************************
   public Xobject makeStmt_setCoshape(XobjList coshape) {
     int corank = getCorank();
     if (corank != coshape.Nargs()) {
@@ -458,6 +562,67 @@ public class XMPcoarray {
     Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
     if (subr == null) {
       subr = env.declExternIdent(SET_COSHAPE_NAME,
+                                 BasicType.FexternalSubroutineType);
+    }
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
+  *********************************************************/
+
+  public void addStmts_setCoshape(BlockList list, XobjList coshape) {
+    Xobject stmt;
+    stmt = makeStmt_setCorank(coshape);
+    list.add(stmt);
+
+    int corank = getCorank();
+    for (int i = 0; i < corank; i++) {
+      stmt = makeStmt_setCodimension(i, coshape);
+      list.add(stmt);
+    }
+  }    
+  public void addStmts_setCoshape(ArrayList list, XobjList coshape) {
+    Xobject stmt;
+    stmt = makeStmt_setCorank(coshape);
+    list.add(stmt);
+
+    int corank = getCorank();
+    for (int i = 0; i < corank; i++) {
+      stmt = makeStmt_setCodimension(i, coshape);
+      list.add(stmt);
+    }
+  }    
+
+  public Xobject makeStmt_setCorank(XobjList coshape) {
+    int corank = getCorank();
+    if (corank != coshape.Nargs()) {
+      XMP.fatal("number of codimensions not matched with the declaration:"
+                + corank + " and " + coshape.Nargs());
+      return null;
+    }
+
+    return makeStmt_setCorank(env);
+  }
+
+
+  public Xobject makeStmt_setCodimension(int dim, XobjList coshape) {
+    int corank = getCorank();
+
+    Xobject args = Xcons.List(getDescPointerId(),
+                              Xcons.IntConstant(dim));
+
+    if (dim < corank - 1) {            // not last dimension
+      args.add(_getLboundInIndexRange(coshape.getArg(dim)));
+      args.add(_getUboundInIndexRange(coshape.getArg(dim)));
+    } else if (dim == corank - 1) {    // last dimension
+      args.add(_getLboundInIndexRange(coshape.getArg(dim)));
+    } else {                           // illegal
+      XMP.fatal("INTERNAL: dimension number specified larger than corank " +
+                SET_CODIMENSION_NAME + "(makeStmt_setCodimension(dim, coshape))");
+    }
+
+    Ident subr = env.findVarIdent(SET_CODIMENSION_NAME, null);
+    if (subr == null) {
+      subr = env.declExternIdent(SET_CODIMENSION_NAME,
                                  BasicType.FexternalSubroutineType);
     }
     Xobject subrCall = subr.callSubroutine(args);

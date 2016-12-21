@@ -98,9 +98,11 @@ extern void xmpf_coarray_epilog_(void **tag);
 extern void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
                                        void **tag, int *isAllocatable,
                                        int *namelen, char *name);
-extern void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...);
+extern void xmpf_coarray_set_corank_(void **descPtr, int *corank);
+extern void xmpf_coarray_set_codim_(void **descPtr, int *dim, int *lb, int *ub);
 extern void xmpf_coarray_set_varname_(void **descPtr, int *namelen, char *name);
 
+// for internal use
 extern int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...);
 
 extern int xmpf_coarray_malloc_bytes_(void);

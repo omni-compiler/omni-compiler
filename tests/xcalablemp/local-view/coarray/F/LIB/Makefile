@@ -2,7 +2,7 @@
 #OPT= -g --debug --verbose
 NPE=3
 
-OUT_inq=this_image.x cobound.x image_index0.x image_index1.x #image_index.x
+OUT_inq=this_image.x this_image2.x this_image3.x cobound.x image_index0.x image_index1.x #image_index.x
 OUT_bcast = bcast0.x bcast1.x bcast2.x bcast3.x bcast_arg2i8.x
 OUT_reduct = reduct.x reductArg12.x reductArg123.x reductArg13.x reductArg1.x
 #OUT_lock = lock.x  not supported yet: 
