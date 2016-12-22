@@ -64,6 +64,14 @@ declare_function_result_id(SYMBOL s, TYPE_DESC tp) {
  *   call m()       ! not conflict
  *  [...]
  *
+ *   interface
+ *     module function n() ! conflict
+ *     [...]
+ *   end inteface
+ * contains
+ *   module function n() ! not confilict (ignore type mismatch)
+ *     [...]
+ *
  */
 static int
 conflict_parent_vs_sub_program_unit(ID parent_id)
@@ -84,6 +92,9 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
                 FUNCTION_TYPE_HAS_UNKNOWN_RETURN_TYPE(ID_TYPE(parent_id))) {
                 if (debug_flag) fprintf(debug_fp, "parent_id may be used as a function/subroutine\n");
                 /* continue checking */
+            } else if (TYPE_IS_MODULE(ID_TYPE(parent_id))) {
+                if (debug_flag) fprintf(debug_fp, "parent_id seems a module function/subroutine\n");
+                return FALSE;
             } else {
                 if (debug_flag) fprintf(debug_fp, "parent_id is an explicit function\n");
                 return TRUE;
