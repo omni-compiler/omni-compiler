@@ -134,7 +134,7 @@ typedef struct type_descriptor
 #define TYPE_ATTR_CLASS             0x00400000
 #define TYPE_ATTR_BIND              0x00800000
 #define TYPE_ATTR_VALUE             0x01000000
-#define TYPE_ATTR_MODULE            0x02000000
+#define TYPE_ATTR_MODULE            0x02000000 /* for module function/subroutine */
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -528,10 +528,12 @@ typedef enum {
 #define FUNCTION_TYPE_SET_GENERIC(tp) ((tp)->proc_info.is_generic = TRUE)
 #define FUNCTION_TYPE_UNSET_GENERIC(tp) ((tp)->proc_info.is_generic = FALSE)
 
+/* For is_external attribute */
 #define FUNCTION_TYPE_IS_INTERNAL(tp) ((tp)->proc_info.is_internal == TRUE)
 #define FUNCTION_TYPE_SET_INTERNAL(tp) ((tp)->proc_info.is_internal = TRUE)
 #define FUNCTION_TYPE_UNSET_INTERNAL(tp) ((tp)->proc_info.is_internal = FALSE)
 
+/* For is_external attribute */
 #define FUNCTION_TYPE_IS_MOUDLE_PROCEDURE(tp) ((tp)->proc_info.is_module_procedure == TRUE)
 #define FUNCTION_TYPE_SET_MOUDLE_PROCEDURE(tp) ((tp)->proc_info.is_module_procedure = TRUE)
 #define FUNCTION_TYPE_UNSET_MOUDLE_PROCEDURE(tp) ((tp)->proc_info.is_module_procedure = FALSE)
