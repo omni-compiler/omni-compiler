@@ -1313,9 +1313,6 @@ function_type_is_compatible0(TYPE_DESC ftp1, TYPE_DESC ftp2, int override)
     }
 
     return TRUE;
-
-
-    return TRUE;
 }
 
 int
