@@ -594,7 +594,7 @@ static void divide_conquer_wrapper(struct ompc_task *curr_task);
 
 static void loop_divide_conquer_impl(struct ompc_task *curr_task)
 {
-    if (curr_task->upper - curr_task->lower <= 1 /* || curr_task->avail_es_count == 1 */) {  // FIXME
+    if (curr_task->upper - curr_task->lower <= 1 || curr_task->num_tasks == 1) {
         curr_task->func(curr_task->lower, curr_task->upper, curr_task->step, curr_task->args);
     } else {
         struct ompc_task *new_task = malloc(sizeof *new_task);
@@ -604,8 +604,10 @@ static void loop_divide_conquer_impl(struct ompc_task *curr_task)
         new_task->lower = curr_task->lower + (curr_task->upper - curr_task->lower) / 2;
         new_task->upper = curr_task->upper;
         new_task->step = curr_task->step;
+        new_task->num_tasks = curr_task->num_tasks / 2;
 
         curr_task->upper = new_task->lower;
+        curr_task->num_tasks -= new_task->num_tasks;
         ABT_thread old_loop_child_task = curr_task->loop_child_task;
         
         ABT_xstream self;
@@ -628,7 +630,7 @@ static void divide_conquer_wrapper(struct ompc_task *curr_task)
 }
 
 void ompc_loop_divide_conquer(cfunc func, int nargs, void *args,
-                              uint64_t lower, uint64_t upper, int step)
+                              uint64_t lower, uint64_t upper, int step, int num_tasks)
 {
     struct ompc_task *curr_task = ompc_current_task();
     curr_task->func = func;
@@ -637,6 +639,7 @@ void ompc_loop_divide_conquer(cfunc func, int nargs, void *args,
     curr_task->lower = lower;
     curr_task->upper = upper;
     curr_task->step = step;
+    curr_task->num_tasks = num_tasks;
     loop_divide_conquer_impl(curr_task);
 }
 

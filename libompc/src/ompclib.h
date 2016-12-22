@@ -65,6 +65,7 @@ struct ompc_task {
     uint64_t lower;
     uint64_t upper;
     int step;
+    int num_tasks;
     ABT_thread loop_child_task;
     int depth;
     int es_num;
