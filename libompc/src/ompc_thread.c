@@ -629,6 +629,7 @@ static void divide_conquer_wrapper(struct ompc_task *curr_task)
     loop_divide_conquer_impl(curr_task);
 }
 
+// num_tasks == 0 means no constraint
 void ompc_loop_divide_conquer(cfunc func, int nargs, void *args,
                               uint64_t lower, uint64_t upper, int step, int num_tasks)
 {
