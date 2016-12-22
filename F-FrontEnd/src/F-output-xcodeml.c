@@ -4252,6 +4252,8 @@ outx_functionType(int l, TYPE_DESC tp)
         outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
         outx_true(TYPE_IS_MODULE(tp), "is_module");
 
+        outx_true(FUNCTION_TYPE_IS_DEFINED(tp), "is_defined");
+
         if (!TYPE_IS_INTRINSIC(tp) &&
             (TYPE_IS_EXTERNAL(tp) ||
              (XMP_flag &&

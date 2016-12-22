@@ -171,7 +171,8 @@ typedef struct type_descriptor
         int has_explicit_arguments;
         struct ident_descriptor * args;
         int is_generic;                 /* for the type of generic function/subroutine */
-        int is_tbp;
+        int is_tbp;                     /* function/subroutine is type-bound procedure */
+        int is_defined;                 /* function/subroutine has a definition (For submodule only) */
         int is_internal;                /* for internal subprograms (function/subroutine in the contain block)*/
         int is_module_procedure;        /* used as a module procedure */ /* may not be required */
         int is_visible_intrinsic;       /* TRUE if non standard intrinsic */
@@ -527,6 +528,10 @@ typedef enum {
 #define FUNCTION_TYPE_IS_GENERIC(tp) ((tp)->proc_info.is_generic == TRUE)
 #define FUNCTION_TYPE_SET_GENERIC(tp) ((tp)->proc_info.is_generic = TRUE)
 #define FUNCTION_TYPE_UNSET_GENERIC(tp) ((tp)->proc_info.is_generic = FALSE)
+
+#define FUNCTION_TYPE_IS_DEFINED(tp) ((tp)->proc_info.is_defined == TRUE)
+#define FUNCTION_TYPE_SET_DEFINED(tp) ((tp)->proc_info.is_defined = TRUE)
+#define FUNCTION_TYPE_UNSET_DEFINED(tp) ((tp)->proc_info.is_defined = FALSE)
 
 /* For is_external attribute */
 #define FUNCTION_TYPE_IS_INTERNAL(tp) ((tp)->proc_info.is_internal == TRUE)

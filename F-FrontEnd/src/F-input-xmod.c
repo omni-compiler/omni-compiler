@@ -1786,6 +1786,13 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
         free(attr);
     }
 
+    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined");
+    if (attr != NULL) {
+        FUNCTION_TYPE_SET_DEFINED(ftp);
+        free(attr);
+    }
+
+
     if (!xmlSkipWhiteSpace(reader)) 
         return FALSE;
 

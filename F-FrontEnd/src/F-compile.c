@@ -4862,7 +4862,12 @@ compile_separate_MODULEPROCEDURE_statement(expr x)
     } else if(!TYPE_IS_MODULE(ID_TYPE(ip))) {
         error("parent should have a modure prefix");
         return;
+    } else if (FUNCTION_TYPE_IS_DEFINED(ID_TYPE(ip))) {
+        error("%s is already defined", SYM_NAME(ID_SYM(ip)));
+        return;
     }
+
+    FUNCTION_TYPE_SET_DEFINED(ID_TYPE(ip));
 
     begin_procedure();
     declare_procedure(CL_PROC, name, ID_TYPE(ip), NULL, NULL, NULL, NULL);

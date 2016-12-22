@@ -92,7 +92,8 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
                 FUNCTION_TYPE_HAS_UNKNOWN_RETURN_TYPE(ID_TYPE(parent_id))) {
                 if (debug_flag) fprintf(debug_fp, "parent_id may be used as a function/subroutine\n");
                 /* continue checking */
-            } else if (TYPE_IS_MODULE(ID_TYPE(parent_id))) {
+            } else if (TYPE_IS_MODULE(ID_TYPE(parent_id)) &&
+                       !FUNCTION_TYPE_IS_DEFINED(ID_TYPE(parent_id))) {
                 if (debug_flag) fprintf(debug_fp, "parent_id seems a module function/subroutine\n");
                 return FALSE;
             } else {
@@ -441,6 +442,11 @@ declare_procedure(enum name_class class,
                     TYPE_BIND_NAME(ID_TYPE(id)) = bind_name;
                 }
             }
+        }
+
+        if (unit_ctl_level == 0 || PARENT_STATE != ININTR) {
+            /* This function/subroutine has the definition */
+            FUNCTION_TYPE_SET_DEFINED(type);
         }
 
         ID_STORAGE(id) = STG_EXT;
