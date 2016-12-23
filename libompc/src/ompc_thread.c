@@ -977,6 +977,13 @@ ompc_get_max_threads()
     return ompc_max_threads;
 }
 
+int ompc_get_proc_num(void)
+{
+    int rank;
+    ABT_xstream_self_rank(&rank);
+    return rank;
+}
+
 ompc_proc_t
 ompc_xstream_self()
 {
