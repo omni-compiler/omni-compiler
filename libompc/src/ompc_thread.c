@@ -640,7 +640,7 @@ void ompc_loop_divide_conquer(cfunc func, int nargs, void *args,
     curr_task->lower = lower;
     curr_task->upper = upper;
     curr_task->step = step;
-    curr_task->num_tasks = num_tasks;
+    curr_task->num_tasks = num_tasks == 0 ? ompc_max_threads * 8 : num_tasks;
     loop_divide_conquer_impl(curr_task);
 }
 
