@@ -1066,6 +1066,12 @@ declare_statement_function(id,args,body)
 
     check_NOT_INBLOCK();
 
+    if (CURRENT_PROC_CLASS == CL_MODULE ||
+        CURRENT_PROC_CLASS == CL_SUBMODULE) {
+        error("misplaced statement function");
+        return;
+    }
+
     ID_CLASS(id) = CL_PROC;
     PROC_CLASS(id) = P_STFUNCT;
     ID_STORAGE(id) = STG_NONE;

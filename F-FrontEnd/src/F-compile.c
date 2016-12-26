@@ -1305,10 +1305,10 @@ compile_exec_statement(expr x)
                 return;
             }
 	    if (ID_CLASS(id) == CL_UNKNOWN){
-	      if (CURRENT_STATE != INEXEC) {
-		declare_statement_function(id,v1,v2);
-		break;
-	      }
+            if (CURRENT_STATE != INEXEC) {
+                declare_statement_function(id,v1,v2);
+                break;
+            }
 	    }
 	  }
 	}
