@@ -6,7 +6,7 @@
       END MODULE m
 
       SUBMODULE(m) subm
-10      format (F10.3)
+ 9      format (F10.3)
       END SUBMODULE subm
 
       PROGRAM main
