@@ -1727,6 +1727,13 @@ union_parent_type(ID id)
                 assert(TYPE_REF(tp) == NULL ||
                        TYPE_BASIC_TYPE(tp) == TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE((my_tp))));
 
+            } else if (TYPE_IS_MODULE(my_tp)){
+                /* module funciton/subroutine types should be compatible */
+                if (!function_type_is_compatible(my_tp, parent_tp)) {
+                    error("The type of the predeclared "
+                          "module funcion/subroutine is not compatible");
+                }
+
             } else {
                 tp = FUNCTION_TYPE_RETURN_TYPE(my_tp);
                 /* copy basic type and ref */
