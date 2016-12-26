@@ -3777,17 +3777,18 @@ static void mark_type_desc(TYPE_DESC tp);
 static void
 mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
 {
+    if (tp == NULL || TYPE_IS_REFERENCED(tp) == TRUE || IS_MODULE(tp))
+        return;
+
     if (skip_tbp &&  IS_PROCEDURE_TYPE(tp) &&
         FUNCTION_TYPE_IS_TYPE_BOUND(tp)) {
         /* type-bound procedure with a PASS argument ALWAY causes a circulation reference,
          * so store them to a tbp list and check them later.
          */
+        TYPE_LINK(tp) = NULL;
         TYPE_LINK_ADD(tp, tbp_list, tbp_list_tail);
         return;
     }
-
-    if (tp == NULL || TYPE_IS_REFERENCED(tp) == TRUE || IS_MODULE(tp))
-        return;
 
     if (TYPE_BOUND_GENERIC_TYPE_GENERICS(tp) != NULL) {
         /* the type for type-bound generic, skip it */
@@ -5730,6 +5731,7 @@ output_module_file(struct module * mod, const char * filename, int allow_private
     type_ext_id_list = NULL;
     type_ext_id_last = NULL;
     tbp_list = NULL;
+    tbp_list_tail = NULL;
 
     /*
      * collect types used in this module
