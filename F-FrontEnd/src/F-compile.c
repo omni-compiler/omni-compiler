@@ -503,7 +503,9 @@ compile_statement1(int st_no, expr x)
         /* (F_ENTRY_STATEMENT name dummy_arg_list) */
         if(CURRENT_STATE == OUTSIDE ||
            CURRENT_PROC_CLASS == CL_MAIN ||
-           CURRENT_PROC_CLASS == CL_BLOCK){
+           CURRENT_PROC_CLASS == CL_BLOCK ||
+           CURRENT_PROC_CLASS == CL_MODULE ||
+           CURRENT_PROC_CLASS == CL_SUBMODULE){
             error("misplaced entry statement");
             break;
         }
