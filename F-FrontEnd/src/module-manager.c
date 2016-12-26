@@ -105,7 +105,7 @@ add_module_id(struct module * mod, ID id)
     )))
 
 struct module *
-generate_current_module(SYMBOL mod_name, SYMBOL submod_name, ID ids, expv use_decls)
+generate_current_module(SYMBOL mod_name, SYMBOL submod_name, ID ids, expv use_decls, int allow_private)
 {
     ID id;
     list lp;
@@ -121,7 +121,8 @@ generate_current_module(SYMBOL mod_name, SYMBOL submod_name, ID ids, expv use_de
 
     /* add public id */
     FOREACH_ID(id, ids) {
-        if(AVAILABLE_ID(id))
+        if(AVAILABLE_ID(id) &&
+           (allow_private || (ID_TYPE(id) && !TYPE_IS_PRIVATE(ID_TYPE(id)))))
             add_module_id(mod, id);
     }
 
@@ -207,7 +208,7 @@ export_xmod(struct module * mod)
     char filename[FILE_NAME_LEN] = {0};
     xmod_file_name(filename, sizeof(filename), mod);
     if (mod != NULL) {
-        return output_module_file(mod, filename, FALSE);
+        return output_module_file(mod, filename);
     } else {
         return FALSE;
     }
@@ -223,7 +224,7 @@ export_xsmod(struct module * mod)
     char filename[FILE_NAME_LEN] = {0};
     xsmod_file_name(filename, sizeof(filename), mod);
     if (mod != NULL) {
-        return output_module_file(mod, filename, TRUE);
+        return output_module_file(mod, filename);
     } else {
         return FALSE;
     }
@@ -236,7 +237,7 @@ export_xsmod(struct module * mod)
 int
 export_module(SYMBOL sym, ID ids, expv use_decls)
 {
-    struct module * mod = generate_current_module(sym, NULL, ids, use_decls);
+    struct module * mod = generate_current_module(sym, NULL, ids, use_decls, FALSE);
     if (mod) {
         return export_xmod(mod) && export_xsmod(mod);
     } else {
@@ -253,7 +254,7 @@ export_submodule(SYMBOL submod_name, SYMBOL mod_name, ID ids, expv use_decls)
 {
     struct module * mod;
     assert(submod != NULL);
-    mod = generate_current_module(mod_name, submod_name, ids, use_decls);
+    mod = generate_current_module(mod_name, submod_name, ids, use_decls, TRUE);
     if (mod) {
         return export_xsmod(mod);
     } else {

@@ -5699,7 +5699,7 @@ unmark_ids(EXT_ID ep)
  * output module to .xmod file
  */
 int
-output_module_file(struct module * mod, const char * filename, int allow_private)
+output_module_file(struct module * mod, const char * filename)
 {
     ID id;
     EXT_ID ep;
@@ -5737,10 +5737,6 @@ output_module_file(struct module * mod, const char * filename, int allow_private
      * collect types used in this module
      */
     FOREACH_ID(id, mod->head) {
-        if (allow_private == FALSE) {
-            if (ID_TYPE(id) != NULL && TYPE_IS_PRIVATE(ID_TYPE(id)))
-                continue;
-        }
         mark_type_desc_id(id);
 
         ep = PROC_EXT_ID(id);

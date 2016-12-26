@@ -4259,7 +4259,7 @@ deep_copy_id_types(ID mids)
 
 
 static int
-import_module_ids(struct module *mod, struct use_argument * args, int isOnly, int allowPrivate)
+import_module_ids(struct module *mod, struct use_argument * args, int isOnly)
 {
     ID mid, id, last_id = NULL, prev_mid, first_mid;
     TYPE_DESC tp, sttail = NULL;
@@ -4284,9 +4284,6 @@ import_module_ids(struct module *mod, struct use_argument * args, int isOnly, in
     }
 
     FOREACH_ID(mid, MODULE_ID_LIST(mod)) {
-        if (!allowPrivate && TYPE_IS_PRIVATE(ID_TYPE(mid))) {
-            continue;
-        }
         if (args != NULL) {
             FOREACH_USE_ARG(arg, args) {
                 wrap_type = TRUE;
@@ -4341,7 +4338,7 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isOnly)
         return FALSE;
     }
 
-    return import_module_ids(mod, args, isOnly, FALSE);
+    return import_module_ids(mod, args, isOnly);
 }
 
 /**
@@ -4483,7 +4480,7 @@ associate_parent_module(const SYMBOL module, const SYMBOL submodule)
         return FALSE;
     }
 
-    return import_module_ids(mod, NULL, FALSE, /* allowPrivate is */ TRUE);
+    return import_module_ids(mod, NULL, FALSE);
 }
 
 
