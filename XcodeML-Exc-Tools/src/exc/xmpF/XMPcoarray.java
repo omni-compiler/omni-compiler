@@ -514,7 +514,7 @@ public class XMPcoarray {
       args.add(getUcobound(dim));
     } else if (dim == corank - 1) {    // last dimension
       args.add(getLcobound(dim));
-      args.add(Xcons.IntConstant(0));  // dummy
+      args.add(Xcons.IntConstant(-999));  // dummy
     } else {                           // illegal
       XMP.fatal("INTERNAL: dimension number specified larger than corank " +
                 SET_CODIMENSION_NAME + "(makeStmt_setCodimension(dim, env))");
@@ -615,6 +615,7 @@ public class XMPcoarray {
       args.add(_getUboundInIndexRange(coshape.getArg(dim)));
     } else if (dim == corank - 1) {    // last dimension
       args.add(_getLboundInIndexRange(coshape.getArg(dim)));
+      args.add(Xcons.IntConstant(-998));  // dummy
     } else {                           // illegal
       XMP.fatal("INTERNAL: dimension number specified larger than corank " +
                 SET_CODIMENSION_NAME + "(makeStmt_setCodimension(dim, coshape))");
