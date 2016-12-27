@@ -420,8 +420,8 @@ compile_statement1(int st_no, expr x)
         begin_submodule(EXPR_ARG1(x), EXPR_ARG2(x), EXPR_ARG3(x));
         break;
 
-    case F08_ENDSUBMODULE_STATEMENT: /* (F08_ENDSUBMODULE_STATEMENT) */
-    /* do_end_submodule: */
+    case F08_ENDSUBMODULE_STATEMENT: /* (F08_ENDSUBMODULE_STATEMENT submodule_name) */
+    do_end_submodule:
         check_INDCL();
         flatten_submodule_units();
         end_procedure();
@@ -546,7 +546,10 @@ compile_statement1(int st_no, expr x)
         break;
     case F_END_STATEMENT:       /* (F_END_STATEMENT) */
         if (!check_image_control_statement_available()) return;
-        if((CURRENT_PROC_NAME == NULL ||
+        if(unit_ctl_level > 0 &&
+           PARENT_PROC_CLASS == CL_SUBMODULE) {
+            goto do_end_submodule;
+        } else if((CURRENT_PROC_NAME == NULL ||
             (CURRENT_PROC_CLASS == CL_MODULE)) &&
             current_module_name != NULL) {
             goto do_end_module;

@@ -407,6 +407,7 @@ extern int unit_ctl_level;
 #define PARENT_STATE                UNIT_CTL_CURRENT_STATE(PARENT_UNIT_CTL)
 #define PARENT_CONTAINS             EXT_PROC_CONT_EXT_SYMS(PARENT_EXT_ID)
 #define PARENT_INTERFACE            UNIT_CTL_CURRENT_INTERFACE(PARENT_UNIT_CTL)
+#define PARENT_PROC_CLASS           UNIT_CTL_CURRENT_PROC_CLASS(PARENT_UNIT_CTL)
 
 #define PARENT_LOCAL_SYMBOLS        (current_local_env->parent->symbols)
 #define PARENT_LOCAL_STRUCT_DECLS   (current_local_env->parent->struct_decls)
