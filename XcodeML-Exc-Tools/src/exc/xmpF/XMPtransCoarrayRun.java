@@ -406,13 +406,15 @@ public class XMPtransCoarrayRun
                 }
               }
               // rename and hoist.
-              XobjList decl_list = (XobjList)((BlockList)block.getBody()).getDecls();
+              XobjList decl_list = (XobjList)block.getBody().getDecls();
               for (Xobject obj: decl_list) {
                 if (obj.Opcode() == Xcode.VAR_DECL && ((XobjString)obj.getArg(0)).getName().equals(ident.getName())) {
                   ((XobjString)obj.getArg(0)).setName(ident.getAlias());
                   ((XobjString)ident.getValue()).setName(ident.getAlias());
                   ident.setName(ident.getAlias());
-                  idList.add(ident.copy());
+                  id_list.remove(obj);
+                  idList.add(ident);
+                  block.getBody().addLocalCoarray(ident);
                   decl_list.remove(obj);
                   declList.add(obj);
                   break;
@@ -437,11 +439,8 @@ public class XMPtransCoarrayRun
           XobjList coarrayNameList = (XobjList)coarrayPragma.getArg(1);
           for(Xobject xobj: coarrayNameList) {
             Ident id = env.findVarIdent(xobj.getString(), pb);
-            if (id != null && id.getAlias() != null) {
-              Xobject var = Xcons.Symbol(Xcode.VAR,id.Type(), id.getAlias());
-              coarrayNameList.remove(xobj);
-              coarrayNameList.add(var);
-            }
+            if (id != null && id.getAlias() != null)
+              ((XobjString)xobj).setName(id.getAlias());
           }
         }
       }
@@ -639,6 +638,7 @@ public class XMPtransCoarrayRun
   public void run3() {
     _hoistLocalCoarrays(               null,               null, getFblock(), true );
     _rewriteExprLocalCoarrays(getFblock());
+    funcDef.Finalize();
   }
 
   /*
@@ -646,6 +646,7 @@ public class XMPtransCoarrayRun
    */
   public void run4() {
     _hoistLocalCoarrays(def.getFuncIdList(), def.getFuncDecls(), getFblock(), false);
+    funcDef.Finalize();
   }
 
   /*

@@ -154,15 +154,22 @@ public class XMPtransPragma
 	a.buildConstructor(prolog,env,block);
 	a.buildDestructor(epilog,env,block);
       }
-      XobjectDef def = env.getCurrentDef().getDef();
-      Xobject id_list = def.getDef().getArg(1);
-      for(Xobject id: (XobjList)id_list){
-        Ident ident = (Ident)id;
-        if (ident.isCoarray()) {
-          XMPcoarray coarray = new XMPcoarray(ident, env);
-          coarray.build_setMappingNodes(prolog);
-        }
+      Xobject id_list;
+      if (block == null) {
+        XobjectDef def = env.getCurrentDef().getDef();
+        id_list = def.getDef().getArg(1);
+      } else {
+        id_list = block.getBody().getLocalCoarrays();
       }
+      if (id_list != null)
+        for(Xobject id: (XobjList)id_list) {
+          Ident ident = (Ident)id;
+          if (ident.isCoarray() && ((block == null && ident.getAlias() == null) ||
+                                    (block != null && ident.getAlias() != null)    )) {
+            XMPcoarray coarray = new XMPcoarray(ident, env);
+            coarray.build_setMappingNodes(prolog);
+          }
+        }
     }
   }
 

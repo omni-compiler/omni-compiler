@@ -197,7 +197,7 @@ public class XMPcoarray {
   private static void analyzeEachCoarray(String name, String nodesName,
                                          XMPenv env, PragmaBlock pb) {
 
-    Ident ident = env.findVarIdent(name, pb);
+    Ident ident = env.findVarIdent(name, null);
 
     // error check #1
     if (ident == null || !ident.isCoarray()) {
@@ -1696,7 +1696,8 @@ public class XMPcoarray {
   private Ident _getNodesDescIdByName(String nodesName,
                                       XMPenv env, FunctionBlock fblock) {
     if (nodesName != null) {
-      XMPnodes nodes = env.findXMPnodes(nodesName, fblock);
+      XMPnodes nodes = env.findXMPnodes(nodesName, (ident.getDeclaredBlock() != null) ?
+                                                    ident.getDeclaredBlock().getParent() : fblock);
       return nodes.getDescId();
     }
     return null;

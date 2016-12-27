@@ -29,7 +29,9 @@ public class Ident extends Xobject
     private StorageClass stg_class;
     /** key */
     private String name;
+    /** for coarray */
     private String alias;
+    private BlockList declared_block;
     /** for C++ */
     private String fullName;
     private int access = AS_NONE;
@@ -182,6 +184,11 @@ public class Ident extends Xobject
         return alias;
     }
 
+    public BlockList getDeclaredBlock()
+    {
+        return declared_block;
+    }
+
     public String getFullName()
     {
         return fullName;
@@ -212,6 +219,11 @@ public class Ident extends Xobject
     public void setAlias(String newAlias)
     {
         alias = newAlias;
+    }
+
+    public void setDeclaredBlock(BlockList bl)
+    {
+        declared_block = bl;
     }
 
     @Override
