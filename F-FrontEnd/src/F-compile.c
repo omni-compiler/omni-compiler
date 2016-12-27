@@ -410,7 +410,7 @@ compile_statement1(int st_no, expr x)
         //if (endlineno_flag)
         //ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
         end_procedure();
-        end_module();
+        end_module(EXPR_HAS_ARG1(x)?EXPR_ARG1(x):NULL);
         break;
 
 
@@ -425,7 +425,7 @@ compile_statement1(int st_no, expr x)
         check_INDCL();
         flatten_submodule_units();
         end_procedure();
-        end_submodule();
+        end_submodule(EXPR_HAS_ARG1(x)?EXPR_ARG1(x):NULL);
         break;
 
 
@@ -3640,7 +3640,24 @@ begin_module(expr name)
  * output module's XcodeML file.
  */
 void
-end_module() {
+end_module(expr name)
+{
+    SYMBOL s;
+
+    if (name) {
+        if (EXPR_CODE(name) == IDENT &&
+            (s = EXPR_SYM(name)) != NULL &&
+            SYM_NAME(s) != NULL) {
+            if (current_module_name != s) {
+                error("expects module name '%s'",
+                      SYM_NAME(s));
+            }
+        } else {
+            fatal("internal error, module name is not "
+                  "IDENT in %s().", __func__);
+        }
+    }
+
     current_module_state = M_DEFAULT;
     current_module_name = NULL;
     CURRENT_STATE = OUTSIDE; /* goto outer, outside state.  */
@@ -3766,9 +3783,22 @@ flatten_submodule_units()
 }
 
 void
-end_submodule() {
-    /* flatten current stack */
-    end_module();
+end_submodule(expr name) {
+    SYMBOL s;
+    if (name) {
+        if (EXPR_CODE(name) == IDENT &&
+            (s = EXPR_SYM(name)) != NULL &&
+            SYM_NAME(s) != NULL) {
+            if (current_module_name != s) {
+                error("expects submodule name '%s'",
+                      SYM_NAME(s));
+            }
+        } else {
+            fatal("internal error, submodule name is not "
+                  "IDENT in %s().", __func__);
+        }
+    }
+    end_module(NULL);
 }
 
 int

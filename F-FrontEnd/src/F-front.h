@@ -872,12 +872,12 @@ extern expv     ExpandImpliedDoInDATA _ANSI_ARGS_((expv spec, expv new));
 
 extern void     compile_OMN_directive _ANSI_ARGS_((expr x));
 extern void     begin_module _ANSI_ARGS_((expr name));
-extern void     end_module _ANSI_ARGS_((void));
+extern void     end_module _ANSI_ARGS_((expr name));
 extern int      is_in_module(void);
 
 extern void     begin_submodule _ANSI_ARGS_((expr name, expr module_name, expr submodule_name));
 extern void     flatten_submodule_units _ANSI_ARGS_((void));
-extern void     end_submodule _ANSI_ARGS_((void));
+extern void     end_submodule _ANSI_ARGS_((expr name));
 
 extern omllint_t getExprValue(expv v);
 
