@@ -168,9 +168,10 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
 }
 
 static void
-link_parent_defined_by(SYMBOL sym)
+link_parent_defined_by(ID id)
 {
-    ID id;
+    SYMBOL sym = ID_SYM(id);
+    ID parent;
 
     if (sym == NULL)
         return;
@@ -184,39 +185,51 @@ link_parent_defined_by(SYMBOL sym)
             is_contain_proc = TRUE;
         }
 
-        id = find_ident_block_parent(sym);
-        if (id == NULL) {
-            id = find_ident_head(sym, PARENT_LOCAL_SYMBOLS);
+        parent = find_ident_block_parent(sym);
+        if (parent == NULL) {
+            parent = find_ident_head(sym, PARENT_LOCAL_SYMBOLS);
         }
-        if (id == NULL)
+        if (parent == NULL)
             return;
 
+        if (ID_CLASS(parent) == CL_PROC &&
+            ID_TYPE(parent) != NULL &&
+            TYPE_IS_MODULE(ID_TYPE(parent)) &&
+            (TYPE_IS_MODULE(id) || TYPE_IS_MODULE(ID_TYPE(id)))) {
+            /*
+             * both are module function/subroutine, check it later
+             */
+            return;
+        }
+
         if (is_contain_proc) {
-            if (conflict_parent_vs_sub_program_unit(id)) {
-                error("%s has an explicit interface before", ID_NAME(id));
+            if (conflict_parent_vs_sub_program_unit(parent)) {
+                error("%s has an explicit interface before", ID_NAME(parent));
                 return;
             }
         }
 
-        if (ID_CLASS(id) == CL_UNKNOWN) {
-            ID_CLASS(id) = CL_PROC;
-            ID_STORAGE(id) = STG_EXT;
-            PROC_CLASS(id) = P_EXTERNAL;
+        if (ID_CLASS(parent) == CL_UNKNOWN) {
+            ID_CLASS(parent) = CL_PROC;
+            ID_STORAGE(parent) = STG_EXT;
+            PROC_CLASS(parent) = P_EXTERNAL;
         }
+
         /* Conditions below is written to make test programs to pass. */
         /* And it is not derived from the specification. So condition */
         /* may be not enough. */
-        if (ID_CLASS(id) == CL_PROC &&
-            (PROC_CLASS(id) == P_UNDEFINEDPROC ||
-             PROC_CLASS(id) == P_EXTERNAL ||
-             IS_TYPE_PUBLICORPRIVATE(id) ||
-             (ID_TYPE(id) != NULL && (IS_TYPE_PUBLICORPRIVATE(ID_TYPE(id)))))) {
-            ID_DEFINED_BY(id) = CURRENT_PROCEDURE;
-            if (ID_TYPE(id)) {
-                TYPE_UNSET_IMPLICIT(ID_TYPE(id));
+        if (ID_CLASS(parent) == CL_PROC &&
+            (PROC_CLASS(parent) == P_UNDEFINEDPROC ||
+             PROC_CLASS(parent) == P_EXTERNAL ||
+             IS_TYPE_PUBLICORPRIVATE(parent) ||
+             (ID_TYPE(parent) != NULL &&
+              (IS_TYPE_PUBLICORPRIVATE(ID_TYPE(parent)))))) {
+            ID_DEFINED_BY(parent) = CURRENT_PROCEDURE;
+            if (ID_TYPE(parent)) {
+                TYPE_UNSET_IMPLICIT(ID_TYPE(parent));
             }
         } else {
-            error("%s is defined as variable before", ID_NAME(id));
+            error("%s is defined as variable before", ID_NAME(parent));
         }
     }
 }
@@ -454,7 +467,7 @@ declare_procedure(enum name_class class,
         CURRENT_PROCEDURE = id;
 
         /* make link before declare_current_procedure_ext_id() */
-        link_parent_defined_by(CURRENT_PROC_NAME);
+        link_parent_defined_by(id);
         (void)declare_current_procedure_ext_id();
 
         break;

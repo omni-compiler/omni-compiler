@@ -546,13 +546,16 @@ compile_statement1(int st_no, expr x)
         break;
     case F_END_STATEMENT:       /* (F_END_STATEMENT) */
         if (!check_image_control_statement_available()) return;
-        if(unit_ctl_level > 0 &&
-           PARENT_PROC_CLASS == CL_SUBMODULE) {
+        if((CURRENT_PROC_NAME == NULL ||
+            (CURRENT_PROC_CLASS == CL_SUBMODULE)) &&
+            current_module_name != NULL) {
             goto do_end_submodule;
+
         } else if((CURRENT_PROC_NAME == NULL ||
             (CURRENT_PROC_CLASS == CL_MODULE)) &&
             current_module_name != NULL) {
             goto do_end_module;
+
         } else {
             check_INEXEC();
 	    // move into end_procedure()
@@ -2407,7 +2410,8 @@ end_declaration()
             ID parent = find_ident_outer_scope(ID_SYM(myId));
 
             if (parent && ID_TYPE(parent)) {
-                if (FUNCTION_TYPE_IS_DEFINED(ID_TYPE(parent)) &&
+                if (ID_TYPE(myId) != ID_TYPE(parent) &&
+                    FUNCTION_TYPE_IS_DEFINED(ID_TYPE(parent)) &&
                     PARENT_STATE != ININTR) {
                     error_at_id(myId,
                                 "A module function/subroutine '%s' is already defined",
@@ -4895,12 +4899,6 @@ compile_separate_MODULEPROCEDURE_statement(expr x)
     assert(PARENT_STATE == INCONT);
     assert(EXPR_HAS_ARG1(EXPR_ARG1(x)));
     assert(!EXPR_HAS_ARG2(EXPR_ARG1(x)));
-
-    if (unit_ctl_level < 2 ||
-        UNIT_CTL_CURRENT_PROC_CLASS(unit_ctls[unit_ctl_level-2]) != CL_SUBMODULE) {
-        error("unexpected MODULE PROCEDURE statement");
-        return;
-    }
 
     name = EXPR_ARG1(EXPR_ARG1(x));
     s = EXPR_SYM(name);
