@@ -2206,7 +2206,7 @@ end_declaration()
                     uint32_t a = TYPE_ATTR_FLAGS(tp) &
                         ~check->acceptable_flags;
                     if (debug_flag) {
-                        fprintf(stderr,
+                        fprintf(debug_fp,
                                 "ID '%s' attr 0x%08x : "
                                 "matches 0x%08x ('%s'), "
                                 "flags allowed 0x%08x (negation: 0x%08x), "
