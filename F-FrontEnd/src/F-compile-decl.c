@@ -18,7 +18,7 @@ static int      markAsSave _ANSI_ARGS_((ID id));
 
 /* for module and use statement */
 extern char line_buffer[];
-extern char *current_module_name;
+extern SYMBOL current_module_name;
 
 /*
  * FIXME:
@@ -566,11 +566,11 @@ declare_procedure(enum name_class class,
 
     case CL_MODULE: /* modules */ {
         extern int mcLn_no;
-        current_module_name = SYM_NAME(s);
+        current_module_name = s;
         /* should print in module compile mode.  */
         if (mcLn_no == -1)
         if (debug_flag)
-            fprintf(diag_file,"   module %s:\n", current_module_name);
+            fprintf(diag_file,"   module %s:\n", SYM_NAME(current_module_name));
         id = declare_ident(s,CL_MODULE);
         declare_id_type(id,type);
         ID_LINE(id) = EXPR_LINE(name); /* set line_no */
@@ -582,11 +582,11 @@ declare_procedure(enum name_class class,
 
     case CL_SUBMODULE: /* modules */ {
         extern int mcLn_no;
-        current_module_name = SYM_NAME(s);
+        current_module_name = s;
         /* should print in module compile mode.  */
         if (mcLn_no == -1)
         if (debug_flag)
-            fprintf(diag_file,"   submodule %s:\n", current_module_name);
+            fprintf(diag_file,"   submodule %s:\n", SYM_NAME(current_module_name));
         id = declare_ident(s,CL_SUBMODULE);
         declare_id_type(id,type);
         ID_LINE(id) = EXPR_LINE(name); /* set line_no */
