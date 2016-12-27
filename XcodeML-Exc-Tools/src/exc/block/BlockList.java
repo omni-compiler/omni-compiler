@@ -17,6 +17,7 @@ public class BlockList
     XobjString block_name;
     Xobject id_list;
     Xobject decls;
+    Xobject id_local_coarrays;
 
     // construct empty BlockList
     public BlockList()
@@ -293,6 +294,26 @@ public class BlockList
       return (f1 | f2);
     }
 
+    public void addLocalCoarray(Ident id)
+    {
+        if(id_local_coarrays == null)
+            id_local_coarrays = Xcons.IDList();
+        id_local_coarrays.add(id);
+    }
+
+    public void initLocalCoarrays(XobjList coarrays)
+    {
+        id_local_coarrays = coarrays;
+        if (id_local_coarrays != null)
+            for(Xobject a : coarrays)
+                ((Ident)a).setDeclaredBlock(this);
+    }
+
+    public Xobject getLocalCoarrays()
+    {
+        return id_local_coarrays;
+    }
+
     public void removeDeclInit()
     {
         Ident id;
@@ -464,7 +485,7 @@ public class BlockList
           return Xcons.CompoundStatement(id_list, decls, v);
         }
         else if (code==Xcode.F_BLOCK_STATEMENT)
-          return Xcons.List(code, (Xtype)null, block_name, id_list, decls, v);
+          return Xcons.List(code, (Xtype)null, block_name, id_list, decls, v, id_local_coarrays);
         else
           return Xcons.FstatementList(v);
     }
@@ -473,7 +494,7 @@ public class BlockList
     public String toString()
     {
         StringBuilder s = new StringBuilder(256);
-        s.append("[BlockList code=" + code + " name=" + block_name + " id_list=" + id_list + " decls=" + decls + " ");
+        s.append("[BlockList code=" + code + " name=" + block_name + " id_list=" + id_list + " decls=" + decls + " coarrays=" + id_local_coarrays + " ");
         int i = 0;
         for(Block b = head; b != null; b = b.getNext()) {
             if(i++ > 0)

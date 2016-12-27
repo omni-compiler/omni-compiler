@@ -339,6 +339,7 @@ public class Bcons
             b_list.block_name = (XobjString)v.getArg(0);
             b_list.id_list = v.getArg(1);
             b_list.decls = v.getArg(2);
+            b_list.initLocalCoarrays((XobjList)v.getArgOrNull(4));
             v = v.getArg(3);
             break;
         case COMPOUND_STATEMENT:
