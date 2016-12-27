@@ -4171,7 +4171,7 @@ static void
 import_module_id(ID mid,
                  ID *head, ID *tail,
                  TYPE_DESC *sthead, TYPE_DESC *sttail,
-                 SYMBOL use_name, int need_wrap_type)
+                 SYMBOL use_name, int need_wrap_type, int fromParentModule)
 {
     ID existed_id, id;
     EXT_ID ep, mep;
@@ -4234,6 +4234,9 @@ import_module_id(ID mid,
 
     if(IS_GENERIC_TYPE(ID_TYPE(id)))
         import_generic_procedure(id);
+
+    if(fromParentModule)
+        ID_IS_FROM_PARENT_MOD(id) = TRUE;
 
     if(debug_flag) {
         fprintf(debug_fp,
@@ -4311,7 +4314,8 @@ deep_copy_id_types(ID mids)
 
 
 static int
-import_module_ids(struct module *mod, struct use_argument * args, int isOnly)
+import_module_ids(struct module *mod, struct use_argument * args,
+                  int isOnly, int fromParentModule)
 {
     ID mid, id, last_id = NULL, prev_mid, first_mid;
     TYPE_DESC tp, sttail = NULL;
@@ -4322,7 +4326,11 @@ import_module_ids(struct module *mod, struct use_argument * args, int isOnly)
     initialize_replicated_type_list();
 
     if (debug_flag) {
-        fprintf(debug_fp, "######## BEGIN USE ASSOC #######\n");
+        if (!fromParentModule) {
+            fprintf(debug_fp, "######## BEGIN USE ASSOC #######\n");
+        } else {
+            fprintf(debug_fp, "######## BEGIN HOST ASSOCIATION FROM SUBMODULE  #######\n");
+        }
         print_IDs(MODULE_ID_LIST(mod), debug_fp, TRUE);
     }
 
@@ -4344,7 +4352,7 @@ import_module_ids(struct module *mod, struct use_argument * args, int isOnly)
                 import_module_id(mid,
                                  &LOCAL_SYMBOLS, &last_id,
                                  &LOCAL_STRUCT_DECLS, &sttail,
-                                 arg->use, wrap_type);
+                                 arg->use, wrap_type, fromParentModule);
                 arg->used = TRUE;
             }
         } else {
@@ -4353,7 +4361,7 @@ import_module_ids(struct module *mod, struct use_argument * args, int isOnly)
                 import_module_id(mid,
                                  &LOCAL_SYMBOLS, &last_id,
                                  &LOCAL_STRUCT_DECLS, &sttail,
-                                 NULL, wrap_type);
+                                 NULL, wrap_type, fromParentModule);
             }
         }
     }
@@ -4372,9 +4380,14 @@ import_module_ids(struct module *mod, struct use_argument * args, int isOnly)
 
     finalize_replicated_type_list();
 
-    if(debug_flag)
-        fprintf(debug_fp, "########   END USE ASSOC #######\n");
+    if(debug_flag) {
+        if (!fromParentModule) {
+            fprintf(debug_fp, "########   END USE ASSOC #######\n");
+        } else {
+            fprintf(debug_fp, "########   END HOST ASSOCIATION FROM SUBMODULE  #######\n");
+        }
 
+    }
     return ret;
 }
 
@@ -4390,7 +4403,7 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isOnly)
         return FALSE;
     }
 
-    return import_module_ids(mod, args, isOnly);
+    return import_module_ids(mod, args, isOnly, FALSE);
 }
 
 /**
@@ -4532,7 +4545,7 @@ associate_parent_module(const SYMBOL module, const SYMBOL submodule)
         return FALSE;
     }
 
-    return import_module_ids(mod, NULL, FALSE);
+    return import_module_ids(mod, NULL, FALSE, TRUE);
 }
 
 

@@ -664,7 +664,8 @@ find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, int allow_priv
                      * - the submodule of the module
                      */
                     if (TYPE_TAGNAME(struct_td) != NULL &&
-                        ID_USEASSOC_INFO(TYPE_TAGNAME(struct_td)) != NULL) {
+                        ID_USEASSOC_INFO(TYPE_TAGNAME(struct_td)) != NULL &&
+                        ID_IS_FROM_PARENT_MOD(TYPE_TAGNAME(struct_td)) == FALSE) {
                         error("'%s' is private type bound procedure",
                               SYM_NAME(sym));
                         return NULL;

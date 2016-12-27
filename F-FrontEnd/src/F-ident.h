@@ -159,6 +159,7 @@ typedef struct ident_descriptor
     struct use_assoc_info *use_assoc;   /* use association infomation
                                            of this ID, otherwise
                                            NULL */
+    int from_parent_module;             /* ID is imported from parent module  */
 
     union {
         struct {
@@ -285,6 +286,8 @@ struct use_assoc_info {
 #define ID_ORIGINAL_NAME(id) ((ID_USEASSOC_INFO(id))->original_name)
 #define ID_IS_OFMODULE(id)  ((id)->use_assoc != NULL)
 #define ID_IS_AMBIGUOUS(id) ((id)->use_assoc_conflicted)
+
+#define ID_IS_FROM_PARENT_MOD(id) ((id)->from_parent_module)
 
 #define ID_IS_EMITTED(id)   ((id)->is_varDeclEmitted)
 #define ID_EQUIV_ID(id)     ((id)->equivID)

@@ -38,6 +38,7 @@ struct module {
     ID head;                  /* public elements of this module. */
     ID last;
     int is_intrinsic;         /* TRUE if this module is an intrinsic module. */
+    int for_submodule;        /* module for submodule */
 };
 
 #define MODULE_IS_MODULE(mod)     ((mod)->submodule_name == NULL)
@@ -49,6 +50,7 @@ struct module {
 #define MODULE_ID_LIST(mod)       ((mod)->head)
 #define MODULE_ID_LIST_LAST(mod)  ((mod)->last)
 #define MODULE_IS_INTRINSIC(mod)  ((mod)->is_intrinsic)
+#define MODULE_IS_FOR_SUBMODULE(mod)  ((mod)->for_submodule)
 
 #define MODULE_IS_SUBMODULE(mod)  ((mod)->submodule_name != NULL)
 

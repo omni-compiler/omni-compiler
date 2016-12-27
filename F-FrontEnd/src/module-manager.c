@@ -15,27 +15,31 @@ struct module_manager {
     struct module * tail;
 } MODULE_MANAGER;
 
-
-static int
-module_exist(const SYMBOL module_name, const SYMBOL submodule_name)
+static struct module *
+find_module(const SYMBOL module_name,
+            const SYMBOL submodule_name,
+            int for_submodule)
 {
     struct module * mp;
     assert(module_name != NULL);
     /* submodule_name may be NULL */
     for (mp = MODULE_MANAGER.head; mp != NULL; mp = mp->next) {
         if (MODULE_NAME(mp) == module_name &&
-            SUBMODULE_NAME(mp) == submodule_name) {
-            return TRUE;
+            SUBMODULE_NAME(mp) == submodule_name &&
+            MODULE_IS_FOR_SUBMODULE(mp) == for_submodule) {
+            return mp;
         }
     }
-    return FALSE;
+    return NULL;
 }
 
 
 static void
 add_module(struct module * mod)
 {
-    if (module_exist(MODULE_NAME(mod), SUBMODULE_NAME(mod))) {
+    if (find_module(MODULE_NAME(mod),
+                    SUBMODULE_NAME(mod),
+                    MODULE_IS_FOR_SUBMODULE(mod)) != NULL) {
         return;
     }
 
@@ -105,7 +109,7 @@ add_module_id(struct module * mod, ID id)
     )))
 
 struct module *
-generate_current_module(SYMBOL mod_name, SYMBOL submod_name, ID ids, expv use_decls, int allow_private)
+generate_current_module(SYMBOL mod_name, SYMBOL submod_name, ID ids, expv use_decls, int for_submodule)
 {
     ID id;
     list lp;
@@ -118,11 +122,12 @@ generate_current_module(SYMBOL mod_name, SYMBOL submod_name, ID ids, expv use_de
     if (submod_name) {
         SUBMODULE_NAME(mod) = submod_name;
     }
+    MODULE_IS_FOR_SUBMODULE(mod) = for_submodule;
 
     /* add public id */
     FOREACH_ID(id, ids) {
         if(AVAILABLE_ID(id) &&
-           (allow_private || (ID_TYPE(id) && !TYPE_IS_PRIVATE(ID_TYPE(id)))))
+           (for_submodule || (ID_TYPE(id) && !TYPE_IS_PRIVATE(ID_TYPE(id)))))
             add_module_id(mod, id);
     }
 
@@ -237,9 +242,20 @@ export_xsmod(struct module * mod)
 int
 export_module(SYMBOL sym, ID ids, expv use_decls)
 {
+    int ret = FALSE;
     struct module * mod = generate_current_module(sym, NULL, ids, use_decls, FALSE);
     if (mod) {
-        return export_xmod(mod) && export_xsmod(mod);
+        ret = export_xmod(mod);
+    } else {
+        return FALSE;
+    }
+    if (ret == FALSE) {
+        return FALSE;
+    }
+
+    mod = generate_current_module(sym, NULL, ids, use_decls, TRUE);
+    if (mod) {
+        return export_xsmod(mod);
     } else {
         return FALSE;
     }
@@ -253,7 +269,6 @@ int
 export_submodule(SYMBOL submod_name, SYMBOL mod_name, ID ids, expv use_decls)
 {
     struct module * mod;
-    assert(submod != NULL);
     mod = generate_current_module(mod_name, submod_name, ids, use_decls, TRUE);
     if (mod) {
         return export_xsmod(mod);
@@ -267,18 +282,26 @@ static int
 import_intermediate_file(const SYMBOL name,
                          const SYMBOL submodule_name,
                          struct module ** pmod,
-                         const char * extension)
+                         int as_for_submodule)
 {
     struct module * mod;
-    for (mod = MODULE_MANAGER.head; mod != NULL; mod = MODULE_NEXT(mod)) {
-        if(MODULE_NAME(mod) == name && SUBMODULE_NAME(mod) == submodule_name) {
-            *pmod = mod;
-            return TRUE;
-        }
+    extern int flag_do_module_cache;
+    const char * extension;
+
+    if (!as_for_submodule) {
+        extension = "xmod";
+    } else {
+        extension = "xsmod";
     }
+
+    if ((*pmod = find_module(name, submodule_name, as_for_submodule)) != NULL) {
+        return TRUE;
+    }
+
     if (input_intermediate_file(name, submodule_name, &mod, extension)) {
         *pmod = mod;
-        add_module(mod);
+        if (flag_do_module_cache == TRUE)
+            add_module(mod);
         return TRUE;
     }
 
@@ -294,7 +317,7 @@ int
 import_module(const SYMBOL name,
               struct module ** pmod)
 {
-    return import_intermediate_file(name, NULL, pmod, "xmod");
+    return import_intermediate_file(name, NULL, pmod, FALSE);
 }
 
 /**
@@ -305,5 +328,5 @@ import_submodule(const SYMBOL module_name,
                  const SYMBOL submodule_name,
                  struct module ** pmod)
 {
-    return import_intermediate_file(module_name, submodule_name, pmod, "xsmod");
+    return import_intermediate_file(module_name, submodule_name, pmod, TRUE);
 }
