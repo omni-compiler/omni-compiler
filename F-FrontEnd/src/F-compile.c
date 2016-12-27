@@ -2060,7 +2060,9 @@ end_declaration()
         }
 #endif
         checkTypeRef(ip);
-        union_parent_type(ip);
+        if (ip != myId) {
+            union_parent_type(ip);
+        }
     }
 
     /*
@@ -2392,6 +2394,7 @@ end_declaration()
          */
         implicit_declaration(myId);
         function_type_udpate(ID_TYPE(myId), LOCAL_SYMBOLS);
+        union_parent_type(myId);
 
         /*
          * Update type bound procedure
@@ -2401,11 +2404,21 @@ end_declaration()
         }
 
         if (TYPE_IS_MODULE(ID_TYPE(myId)) && unit_ctl_level > 0) {
-            ID parent = find_ident_head(ID_SYM(myId), PARENT_LOCAL_SYMBOLS);
+            ID parent = find_ident_outer_scope(ID_SYM(myId));
+
             if (parent && ID_TYPE(parent)) {
-                if (!function_type_is_compatible(ID_TYPE(myId), ID_TYPE(parent))) {
-                    error("module function type is not compatible");
+                if (FUNCTION_TYPE_IS_DEFINED(ID_TYPE(parent)) &&
+                    PARENT_STATE != ININTR) {
+                    error_at_id(myId,
+                                "A module function/subroutine '%s' is already defined",
+                                SYM_NAME(ID_SYM(myId)));
                 }
+
+                if (!function_type_is_compatible(ID_TYPE(myId), ID_TYPE(parent))) {
+                    error_at_id(myId,
+                                "A module function/subroutine type is not compatible");
+                }
+
             }
         }
     }

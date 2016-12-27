@@ -327,6 +327,24 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_SET_UNCHANGABLE(tp)  ((tp)->attr.exflags |=  TYPE_EXFLAGS_UNCHANGABLE)
 #define TYPE_UNSET_UNCHANGABLE(tp) ((tp)->attr.exflags &= ~TYPE_EXFLAGS_UNCHANGABLE)
 
+#define TYPE_ATTR_FOR_COMPARE \
+    (TYPE_ATTR_PARAMETER |                      \
+     TYPE_ATTR_ALLOCATABLE |                    \
+     TYPE_ATTR_EXTERNAL |                       \
+     TYPE_ATTR_INTRINSIC |                      \
+     TYPE_ATTR_OPTIONAL |                       \
+     TYPE_ATTR_POINTER |                        \
+     TYPE_ATTR_TARGET |                         \
+     TYPE_ATTR_INTENT_IN |                      \
+     TYPE_ATTR_INTENT_OUT |                     \
+     TYPE_ATTR_INTENT_INOUT |                   \
+     TYPE_ATTR_SEQUENCE |                       \
+     TYPE_ATTR_VOLATILE |                       \
+     TYPE_ATTR_CLASS |                          \
+     TYPE_ATTR_BIND |                           \
+     TYPE_ATTR_VALUE)
+
+
 #define TYPE_HAS_INTENT(tp)      (TYPE_IS_INTENT_IN(tp) || \
                 TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp))
 // TODO PROTECTED 

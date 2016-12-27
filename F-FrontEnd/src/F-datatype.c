@@ -1086,6 +1086,9 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
     TYPE_DESC left_basic, right_basic;
 
     if (left == NULL || right == NULL) {
+        if (debug_flag) {
+            fprintf(debug_fp, "# unexpected comparison\n");
+        }
         return FALSE;
     }
 
@@ -1093,6 +1096,10 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
     right_basic = getBaseParameterizedType(right);
 
     /* type_comparison: */
+
+    if (debug_flag) {
+        fprintf(debug_fp, "# comparing basic types\n");
+    }
 
     if (TYPE_BASIC_TYPE(left_basic) == TYPE_BASIC_TYPE(right_basic)) {
         goto kind_compatibility;
@@ -1125,6 +1132,10 @@ type_is_compatible(TYPE_DESC left, TYPE_DESC right,
 
 kind_compatibility:
 
+    if (debug_flag) {
+        fprintf(debug_fp, "# comparing kind of types\n");
+    }
+
     if (TYPE_BASIC_TYPE(left_basic) == TYPE_DREAL) {
         if (type_is_double(right_basic)) {
             goto length_compatiblity;
@@ -1144,6 +1155,10 @@ kind_compatibility:
 
 length_compatiblity:
 
+    if (debug_flag) {
+        fprintf(debug_fp, "# comparing length of types\n");
+    }
+
     if (TYPE_LENG(left_basic) || TYPE_LENG(right_basic)) {
         if (TYPE_KIND(left_basic) && TYPE_KIND(right_basic)) {
             if (!type_parameter_expv_equals(
@@ -1154,6 +1169,10 @@ length_compatiblity:
     }
 
 rank_compatibility:
+
+    if (debug_flag) {
+        fprintf(debug_fp, "# comparing rank of types\n");
+    }
 
     if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
         goto attribute_compatibility;
@@ -1174,11 +1193,23 @@ attribute_compatibility:
         goto compatible;
     }
 
-    if (TYPE_ATTR_FLAGS(left) != TYPE_ATTR_FLAGS(right)) {
+    if (debug_flag) {
+        fprintf(debug_fp, "# comparing attribute of types\n");
+        fprintf(debug_fp, "#  left is '%x', right is '%x'\n",
+                TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(left),
+                TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(right));
+    }
+
+    if ((TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(left)) !=
+        (TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(right))) {
         goto incompatible;
     }
 
 compatible:
+    if (debug_flag) {
+        fprintf(debug_fp, "# compatible!\n");
+    }
+
     return TRUE;
 
 incompatible:
