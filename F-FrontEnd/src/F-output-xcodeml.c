@@ -27,6 +27,8 @@ int Addr2Uint(void *x)
 }
 #endif
 
+int is_emitting_for_submodule;
+
 extern int      flag_module_compile;
 
 static void     outx_expv(int l, expv v);
@@ -4253,7 +4255,12 @@ outx_functionType(int l, TYPE_DESC tp)
         outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
         outx_true(TYPE_IS_MODULE(tp), "is_module");
 
-        outx_true(FUNCTION_TYPE_IS_DEFINED(tp), "is_defined");
+        if (is_emitting_for_submodule) {
+            /*
+             * "is_defined" attribute is only for SUBMODULE
+             */
+            outx_true(FUNCTION_TYPE_IS_DEFINED(tp), "is_defined");
+        }
 
         if (!TYPE_IS_INTRINSIC(tp) &&
             (TYPE_IS_EXTERNAL(tp) ||
@@ -5721,6 +5728,8 @@ output_module_file(struct module * mod, const char * filename)
         }
     }
 
+    is_emitting_for_submodule = MODULE_IS_FOR_SUBMODULE(mod);
+
     oEmitMode = is_emitting_xmod();
     set_module_emission_mode(TRUE);
 
@@ -5787,6 +5796,8 @@ output_module_file(struct module * mod, const char * filename)
     if(!flag_module_compile) {
         fclose(print_fp);
     }
+
+    is_emitting_for_submodule = FALSE;
 
     return TRUE;
 }
