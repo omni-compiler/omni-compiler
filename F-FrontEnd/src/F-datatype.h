@@ -130,7 +130,7 @@ typedef struct type_descriptor
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
-#define TYPE_EXFLAGS_USED_EXPLICIT  0x00000004 /* OBSOLETE: not used anymore */
+#define TYPE_EXFLAGS_USED_EXPLICIT  0x00000004 /* type is used explicitly (used for function/subroutine call) */
 #define TYPE_EXFLAGS_NOT_FIXED      0x00000008 /* type is not fixed, since expression
                                                   contains undefined function. */
 #define TYPE_EXFLAGS_FOR_FUNC_SELF  0x00000010 /* type is for the function itself */
