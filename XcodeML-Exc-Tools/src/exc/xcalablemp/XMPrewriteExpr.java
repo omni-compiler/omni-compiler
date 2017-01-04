@@ -309,17 +309,17 @@ public class XMPrewriteExpr {
   // }
 
 
-  private Xobject createShortcutCoarray(int imageDims, XobjList imageList, String commkind, 
-                                        XMPcoarray dstCoarray, XMPcoarray srcCoarray,
-                                        Xobject dstCoarrayExpr, Xobject srcCoarrayExpr,
-                                        boolean isDstCoarrayOnAcc, boolean isSrcCoarrayOnAcc) throws XMPexception
+  private Xobject createContinuousCoarray(int imageDims, XobjList imageList, String commkind, 
+                                          XMPcoarray dstCoarray, XMPcoarray srcCoarray,
+                                          Xobject dstCoarrayExpr, Xobject srcCoarrayExpr,
+                                          boolean isDstCoarrayOnAcc, boolean isSrcCoarrayOnAcc) throws XMPexception
   // dstCoarray is left expression. srcCoarray is right expression.
   {
     // Set Function Name
     // If image set is 2 dimension and Put operation,
     // function name is "_XMP_shortcut_put_image2"
     boolean isAcc = isDstCoarrayOnAcc || isSrcCoarrayOnAcc;
-    String funcName = "_XMP_coarray_shortcut_" + commkind;
+    String funcName = "_XMP_coarray_continuous_" + commkind;
     if(isAcc) funcName += "_acc";
     Ident funcId = _globalDecl.declExternFunc(funcName);
     XobjList funcArgs = Xcons.List();
@@ -639,7 +639,7 @@ public class XMPrewriteExpr {
     XobjList imageList = (XobjList)coarrayExpr.getArg(1);
     int imageDims = coarray.getImageDim();
 
-    // Shortcut Function
+    // Continuous Function
     if(isContinuousArray(coarrayExpr, exprParentBlock) &&
        isContinuousArray(localExpr, exprParentBlock) &&
        isCoarray(localExpr, exprParentBlock))
@@ -650,12 +650,12 @@ public class XMPrewriteExpr {
         boolean isLocalCoarrayUseDevice = isUseDevice(localCoarray.getName(), exprParentBlock);
         if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF)
           {  // put a[:]:[1] = b[:];
-            return createShortcutCoarray(imageDims, imageList, "put", remoteCoarray, localCoarray,
-                                         coarrayExpr.getArg(0), localExpr, isRemoteCoarrayUseDevice, isLocalCoarrayUseDevice);
+            return createContinuousCoarray(imageDims, imageList, "put", remoteCoarray, localCoarray,
+                                            coarrayExpr.getArg(0), localExpr, isRemoteCoarrayUseDevice, isLocalCoarrayUseDevice);
           }
         else{ // get a[:] = b[:]:[1]
-          return createShortcutCoarray(imageDims, imageList, "get", localCoarray, remoteCoarray,
-                                       localExpr, coarrayExpr.getArg(0), isRemoteCoarrayUseDevice, isLocalCoarrayUseDevice);
+          return createContinuousCoarray(imageDims, imageList, "get", localCoarray, remoteCoarray,
+                                         localExpr, coarrayExpr.getArg(0), isRemoteCoarrayUseDevice, isLocalCoarrayUseDevice);
         }
       }
 
@@ -813,7 +813,11 @@ public class XMPrewriteExpr {
 
     boolean isAcc = isRemoteOnDevice || isLocalOnDevice;
     if(isAcc){
-      funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_do_acc");
+      if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF)
+        funcId = _globalDecl.declExternFunc("_XMP_coarray_put_acc");
+      else
+        funcId = _globalDecl.declExternFunc("_XMP_coarray_get_acc");
+      
       funcArgs.add(Xcons.IntConstant(isRemoteOnDevice? 1 : 0));
       funcArgs.add(Xcons.IntConstant(isLocalOnDevice? 1 : 0));
     }else{
@@ -828,7 +832,7 @@ public class XMPrewriteExpr {
 
     return null;
     // Memo: This function translates a coarray syntax (a[1:2:1]:[9] = b) into 4 functions.
-    // This function returns null pointer except for shortcut functions. The reason of returning
+    // This function returns null pointer except for continuous functions. The reason of returning
     // null pointer, when XobjList is returned, an upper process is abort.
     // Therefore this function translates the coarray syntax directly.
   }
@@ -2498,10 +2502,10 @@ public class XMPrewriteExpr {
         if(coarray == null) continue;
 
         if(coarray.getVarId().getStorageClass() != StorageClass.EXTERN){
-          //add func call like "_XMP_coarray_malloc_do_acc(&(_XMP_COARRAY_DESC_a), &(_XMP_COARRAY_ADDR_DEV_a));"
+          //add func call like "_XMP_coarray_malloc_acc(&(_XMP_COARRAY_DESC_a), &(_XMP_COARRAY_ADDR_DEV_a));"
           Xtype elementType = coarray.getElmtType();
           Ident devPointerId = _globalDecl.declStaticIdent(XMP.COARRAY_ADDR_PREFIX_ + "DEV_" + varName, Xtype.Pointer(elementType));
-          String funcName = "_XMP_coarray_malloc_do_acc";
+          String funcName = "_XMP_coarray_malloc_acc";
           XobjList funcArgs = Xcons.List(coarray.getDescId().getAddr(),
                   devPointerId.getAddr());
           _globalDecl.addGlobalInitFuncCall(funcName, funcArgs);

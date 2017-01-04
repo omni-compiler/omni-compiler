@@ -104,7 +104,7 @@ static void _check_transfer(char* src_addr, char* dst_addr, size_t transfer_size
 /*               [OUT] **addr        : Double pointer of new coarray  */
 /*               [IN] coarray_size   : Coarray size                   */
 /**********************************************************************/
-void _XMP_tca_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
+void _XMP_tca_malloc(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
 {
   char *real_addr;
   tcaHandle handle;
@@ -139,7 +139,7 @@ void _XMP_tca_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t 
 /* EXAMPLE    :                                                         */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_tca_shortcut_put(const int target_rank, const size_t dst_offset, const size_t src_offset,
+void _XMP_tca_continuous_put(const int target_rank, const size_t dst_offset, const size_t src_offset,
 			   const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
 			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {

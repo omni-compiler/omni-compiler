@@ -460,10 +460,10 @@ MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes)
   _XMP_coarray_malloc_info_1(nbytes, (size_t)1);   // set shape
   _XMP_coarray_malloc_image_info_1();              // set coshape
   if (baseAddr == NULL) {
-    _XMP_coarray_malloc_do(&desc, &orgAddr);         // malloc
+    _XMP_coarray_malloc(&desc, &orgAddr);         // malloc
     chunk = _newMemoryChunk(desc, orgAddr, nbytes);
   } else {
-    _XMP_coarray_regmem_do(&desc, baseAddr);         // register memory
+    _XMP_coarray_regmem(&desc, baseAddr);         // register memory
     chunk = _newMemoryChunk(desc, baseAddr, nbytes);
   }
 

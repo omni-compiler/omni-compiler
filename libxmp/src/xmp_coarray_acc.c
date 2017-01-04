@@ -43,18 +43,18 @@ void _XMP_coarray_detach_acc(_XMP_coarray_t *coarray_desc)
 #endif
 }
 
-void _XMP_coarray_malloc_do_acc(void **coarray_desc, void *addr)
+void _XMP_coarray_malloc_acc(void **coarray_desc, void *addr)
 {
   _XMP_coarray_t* c = *coarray_desc;
     
   int total_coarray_elmts = _XMP_coarray_get_total_elmts(c);
 
 #ifdef _XMP_TCA
-  _XMP_tca_malloc_do(*coarray_desc, addr, total_coarray_elmts * c->elmt_size);
+  _XMP_tca_malloc(*coarray_desc, addr, total_coarray_elmts * c->elmt_size);
 #elif _XMP_MPI3_ONESIDED
-  _XMP_mpi_coarray_malloc_do(*coarray_desc, addr, total_coarray_elmts * c->elmt_size, true);
+  _XMP_mpi_coarray_malloc(*coarray_desc, addr, total_coarray_elmts * c->elmt_size, true);
 #else
-  _XMP_fatal("_XMP_coarray_malloc_do_acc is unavailable");
+  _XMP_fatal("_XMP_coarray_malloc_acc is unavailable");
 #endif
 }
 
@@ -74,7 +74,7 @@ void _XMP_coarray_malloc_do_acc(void **coarray_desc, void *addr)
 /* EXAMPLE    :                                                         */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_coarray_shortcut_put_acc(const int target_image, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
+void _XMP_coarray_continuous_put_acc(const int target_image, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
 				   const size_t dst_offset, const size_t src_offset, 
 				   const size_t dst_elmts, const size_t src_elmts,
   				   const int is_dst_on_acc, const int is_src_on_acc)
@@ -88,7 +88,7 @@ void _XMP_coarray_shortcut_put_acc(const int target_image, const _XMP_coarray_t 
   
   if(target_rank == _XMP_world_rank){
 #ifdef _XMP_MPI3_ONESIDED
-    _XMP_mpi_shortcut_put(target_rank, dst_desc, src_desc, dst_offset, src_offset,
+    _XMP_mpi_continuous_put(target_rank, dst_desc, src_desc, dst_offset, src_offset,
 			  dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
 #else
     _XMP_fatal("local_continuous_copy is unimplemented");
@@ -98,13 +98,13 @@ void _XMP_coarray_shortcut_put_acc(const int target_image, const _XMP_coarray_t 
   }
   else{
 #ifdef _XMP_TCA
-    _XMP_tca_shortcut_put(target_rank, dst_offset, src_offset, dst_desc, src_desc, 
+    _XMP_tca_continuous_put(target_rank, dst_offset, src_offset, dst_desc, src_desc, 
 			  dst_elmts, src_elmts, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_shortcut_put(target_rank, dst_desc, src_desc, dst_offset, src_offset,
+    _XMP_mpi_continuous_put(target_rank, dst_desc, src_desc, dst_offset, src_offset,
 			  dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
 #else
-    _XMP_fatal("_XMP_coarray_shortcut_put_acc is unavailable");
+    _XMP_fatal("_XMP_coarray_continuous_put_acc is unavailable");
 #endif
   }
 }
@@ -124,7 +124,7 @@ void _XMP_coarray_shortcut_put_acc(const int target_image, const _XMP_coarray_t 
 /* EXAMPLE    :                                                         */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_coarray_shortcut_get_acc(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+void _XMP_coarray_continuous_get_acc(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 				   const size_t dst_offset, const size_t src_offset, 
 				   const size_t dst_elmts, const size_t src_elmts,
 				   const int is_dst_on_acc, const int is_src_on_acc)
@@ -138,7 +138,7 @@ void _XMP_coarray_shortcut_get_acc(const int target_image, _XMP_coarray_t *dst_d
 
   if(target_rank == _XMP_world_rank){
 #ifdef _XMP_MPI3_ONESIDED
-    _XMP_mpi_shortcut_get(target_rank, dst_desc, src_desc, dst_offset, src_offset,
+    _XMP_mpi_continuous_get(target_rank, dst_desc, src_desc, dst_offset, src_offset,
 			  dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
 #else
     _XMP_fatal("local_continuous_copy is unimplemented");
@@ -148,14 +148,14 @@ void _XMP_coarray_shortcut_get_acc(const int target_image, _XMP_coarray_t *dst_d
   }
   else{
 #ifdef _XMP_TCA
-    /* _XMP_tca_shortcut_get(target_rank, dst_offset, src_offset, dst_desc, src_desc,  */
+    /* _XMP_tca_continuous_get(target_rank, dst_offset, src_offset, dst_desc, src_desc,  */
     /* 			  dst_elmts, src_elmts, elmt_size); */
-    _XMP_fatal("_XMP_tca_shortcut_get is unimplemented");
+    _XMP_fatal("_XMP_tca_continuous_get is unimplemented");
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_shortcut_get(target_rank, dst_desc, src_desc, dst_offset, src_offset,
+    _XMP_mpi_continuous_get(target_rank, dst_desc, src_desc, dst_offset, src_offset,
 			  dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
 #else
-    _XMP_fatal("_XMP_coarray_shortcut_get_acc is unavailable");
+    _XMP_fatal("_XMP_coarray_continuous_get_acc is unavailable");
 #endif
   }
 }
