@@ -387,6 +387,7 @@ compile_statement1(int st_no, expr x)
         && EXPR_CODE(x) != F_SUBROUTINE_STATEMENT
         /* MODULE PROCEDURE statement is allower under INTERFACE */
         && EXPR_CODE(x) != F95_MODULEPROCEDURE_STATEMENT
+        && EXPR_CODE(x) != F08_PROCEDURE_STATEMENT
         && EXPR_CODE(x) != F_INCLUDE_STATEMENT)
         {
         error("only function/subroutine/module procedure statement are allowed "
@@ -457,6 +458,7 @@ compile_statement1(int st_no, expr x)
         end_interface();
         break;
 
+    case F08_PROCEDURE_STATEMENT: /* fall through */
     case F95_MODULEPROCEDURE_STATEMENT:
         compile_MODULEPROCEDURE_statement(x);
         break;
