@@ -2146,12 +2146,13 @@ end_declaration()
 
         /* merge type attribute flags except SAVE attr*/
         TYPE_ATTR_FLAGS(tp) |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
-        if (IS_PROCEDURE_TYPE(tp)) {
+        if (IS_FUNCTION_TYPE(tp)) {
             /*
              * The type attributes for the function (PURE, ELEMENETAL, etc) are
              * never set to local symbol, so there is no need to filter out them.
              */
-            TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp)) |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
+            TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp))
+                    |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
         }
 
         /* copy type attribute flags to EXT_PROC_TYPE */
@@ -3079,7 +3080,7 @@ end_procedure()
                 }
                 if (FUNCTION_TYPE_IS_GENERIC(EXT_PROC_TYPE(ep))) {
                     continue;
-                } else if(FUNCTION_TYPE_IS_SUBROUTINE(EXT_PROC_TYPE(ep))) {
+                } else if(IS_SUBR(EXT_PROC_TYPE(ep))) {
                     hasSub = TRUE;
                 } else {
                     hasFunc = TRUE;
@@ -3092,8 +3093,8 @@ end_procedure()
             if (hasSub) {
                 TYPE_BASIC_TYPE(EXT_PROC_TYPE(intr)) = TYPE_SUBR;
                 TYPE_DESC tp = FUNCTION_TYPE_RETURN_TYPE(EXT_PROC_TYPE(intr));
-                if (TYPE_REF(tp) != NULL) {
-                    TYPE_BASIC_TYPE(TYPE_REF(tp)) = TYPE_VOID;
+                if (tp != NULL) {
+                    TYPE_BASIC_TYPE(tp) = TYPE_VOID;
                 } else {
                     FUNCTION_TYPE_RETURN_TYPE(EXT_PROC_TYPE(intr)) = type_VOID;
                 }

@@ -48,7 +48,6 @@ function_type(const TYPE_DESC tp)
     TYPE_BASIC_TYPE(ftp) = TYPE_FUNCTION;
 
     FUNCTION_TYPE_RETURN_TYPE(ftp) = tp;
-    FUNCTION_TYPE_SET_FUNCTION(ftp);
 
     if (tp != NULL) {
         if (TYPE_IS_EXTERNAL(tp)) {
@@ -134,7 +133,6 @@ subroutine_type(void)
 
     tp = new_type_desc();
     TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
-    FUNCTION_TYPE_SET_SUBROUTINE(tp);
     FUNCTION_TYPE_RETURN_TYPE(tp) = tq;
     return tp;
 }
@@ -181,8 +179,6 @@ generic_subroutine_type()
     TYPE_BASIC_TYPE(tq) = TYPE_GENERIC;
     tp = new_type_desc();
     TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
-    FUNCTION_TYPE_SET_SUBROUTINE(tp);
-    FUNCTION_TYPE_RETURN_TYPE(tp) = tq;
     FUNCTION_TYPE_SET_GENERIC(tp);
     return tp;
 }

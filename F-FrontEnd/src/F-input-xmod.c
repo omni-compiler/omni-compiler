@@ -186,7 +186,6 @@ setReturnType(HashTable * ht, TYPE_DESC ftp, const char * rtid)
     if (strcmp(rtid, "Fvoid") == 0) {
         TYPE_BASIC_TYPE(ftp) = TYPE_SUBR;
         FUNCTION_TYPE_RETURN_TYPE(ftp) = type_VOID;
-        FUNCTION_TYPE_SET_SUBROUTINE(ftp);
 
     } else if (strncmp(rtid, "V", 1) == 0) {
         TYPE_DESC tp = getTypeDesc(ht, rtid);
@@ -202,7 +201,6 @@ setReturnType(HashTable * ht, TYPE_DESC ftp, const char * rtid)
 
     } else {
         TYPE_BASIC_TYPE(ftp) = TYPE_FUNCTION;
-        FUNCTION_TYPE_SET_FUNCTION(ftp);
         FUNCTION_TYPE_RETURN_TYPE(ftp) = getTypeDesc(ht, rtid);
     }
 }

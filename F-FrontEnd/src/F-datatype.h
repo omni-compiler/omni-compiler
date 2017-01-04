@@ -79,14 +79,6 @@ typedef struct _codims_desc {
 } codims_desc;
 
 
-enum type_proc_class {
-    TYPE_PROC_UNKNOWN,
-    TYPE_PROC_PROGRAM,
-    TYPE_PROC_FUNC,
-    TYPE_PROC_SUBR,
-};
-
-
 /* FORTRAN 77 type descriptor */
 /* FORTRAN 77 does not have nested data structure */
 /* pointer type, TYPE_UNKNOWN and ref != NULL */
@@ -165,11 +157,11 @@ typedef struct type_descriptor
                                  * genereted by reshape() intrinsic. */
 
     struct {
-        enum type_proc_class class;
         struct type_descriptor * return_type;
         SYMBOL result;
         int has_explicit_arguments;
         struct ident_descriptor * args;
+        int is_program;                 /* for the type of the program */
         int is_generic;                 /* for the type of generic function/subroutine */
         int is_tbp;                     /* function/subroutine is type-bound procedure */
         int is_defined;                 /* function/subroutine has a definition (For submodule only) */
@@ -531,13 +523,9 @@ typedef enum {
 #define FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(tp) \
     (FUNCTION_TYPE_RETURN_TYPE(tp) != NULL && FUNCTION_TYPE_HAS_EXPLICIT_ARGS(tp))
 
-#define FUNCTION_TYPE_IS_FUNCTION(tp) ((tp)->proc_info.class == TYPE_PROC_FUNC)
-#define FUNCTION_TYPE_IS_SUBROUTINE(tp) ((tp)->proc_info.class == TYPE_PROC_SUBR)
-#define FUNCTION_TYPE_IS_PROGRAM(tp) ((tp)->proc_info.class == TYPE_PROC_PROGRAM)
-
-#define FUNCTION_TYPE_SET_FUNCTION(tp) ((tp)->proc_info.class = TYPE_PROC_FUNC)
-#define FUNCTION_TYPE_SET_SUBROUTINE(tp) ((tp)->proc_info.class = TYPE_PROC_SUBR)
-#define FUNCTION_TYPE_SET_PROGRAM(tp) ((tp)->proc_info.class = TYPE_PROC_PROGRAM)
+#define FUNCTION_TYPE_IS_PROGRAM(tp) ((tp)->proc_info.is_program)
+#define FUNCTION_TYPE_SET_PROGRAM(tp) ((tp)->proc_info.is_program = TRUE)
+#define FUNCTION_TYPE_UNSET_PROGRAM(tp) ((tp)->proc_info.is_program = FALSE)
 
 #define FUNCTION_TYPE_IS_TYPE_BOUND(tp) ((tp)->proc_info.is_tbp == TRUE)
 #define FUNCTION_TYPE_SET_TYPE_BOUND(tp) ((tp)->proc_info.is_tbp = TRUE)
