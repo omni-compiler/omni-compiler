@@ -243,6 +243,8 @@ int
 export_module(SYMBOL sym, ID ids, expv use_decls)
 {
     int ret = FALSE;
+    int has_submodule = FALSE;
+    ID id;
     struct module * mod = generate_current_module(sym, NULL, ids, use_decls, FALSE);
     if (mod) {
         ret = export_xmod(mod);
@@ -251,6 +253,22 @@ export_module(SYMBOL sym, ID ids, expv use_decls)
     }
     if (ret == FALSE) {
         return FALSE;
+    }
+
+    /* NOTE:
+     *  If the module doesn't have the module function/subroutine,
+     *  the module is closed and has no submodules.
+     *  So don't make xsmod.
+     */
+    FOREACH_ID(id, ids) {
+        if (ID_TYPE(id) &&
+            TYPE_IS_MODULE(ID_TYPE(id))) {
+            has_submodule = TRUE;
+        }
+    }
+
+    if (!has_submodule) {
+        return TRUE;
     }
 
     mod = generate_current_module(sym, NULL, ids, use_decls, TRUE);
