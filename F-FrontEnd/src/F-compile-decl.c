@@ -577,30 +577,17 @@ declare_procedure(enum name_class class,
         break;
     }
 
+    case CL_SUBMODULE: /* submodule */ /* fall through */
     case CL_MODULE: /* modules */ {
         extern int mcLn_no;
         current_module_name = s;
         /* should print in module compile mode.  */
         if (mcLn_no == -1)
         if (debug_flag)
-            fprintf(diag_file,"   module %s:\n", SYM_NAME(current_module_name));
-        id = declare_ident(s,CL_MODULE);
-        declare_id_type(id,type);
-        ID_LINE(id) = EXPR_LINE(name); /* set line_no */
-        ID_STORAGE(id) = STG_EXT;
-        CURRENT_PROCEDURE = id;
-        (void)declare_current_procedure_ext_id();
-        break;
-    }
-
-    case CL_SUBMODULE: /* modules */ {
-        extern int mcLn_no;
-        current_module_name = s;
-        /* should print in module compile mode.  */
-        if (mcLn_no == -1)
-        if (debug_flag)
-            fprintf(diag_file,"   submodule %s:\n", SYM_NAME(current_module_name));
-        id = declare_ident(s,CL_SUBMODULE);
+            fprintf(diag_file,"   %s %s:\n",
+                    class == CL_MODULE?"module":"submodule",
+                    SYM_NAME(current_module_name));
+        id = declare_ident(s,class);
         declare_id_type(id,type);
         ID_LINE(id) = EXPR_LINE(name); /* set line_no */
         ID_STORAGE(id) = STG_EXT;
