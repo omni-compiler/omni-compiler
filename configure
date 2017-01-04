@@ -11200,7 +11200,7 @@ fi
 
 
 JAVA_OPT="-Xmx200m -Xms200m" # Fix: #338
-JAVAC_OPT="-encoding utf8 -Xlint:deprecation,unchecked"
+JAVAC_OPT="-encoding utf8 -Xlint:deprecation,unchecked "
 JAR_OPT=
 # Set a small Heap Memory because Java installed on frontend machines of the K computer
 if test "$target" = "Kcomputer-linux-gnu"; then
