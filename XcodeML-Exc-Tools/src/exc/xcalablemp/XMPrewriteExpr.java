@@ -759,15 +759,8 @@ public class XMPrewriteExpr {
     newExpr.setIsRewrittedByXmp(true);
     iter.insertStatement(newExpr);
 
-    // Set function _XMP_coarray_rdma_do()
+    // Set function _XMP_coarray_put() and _XMP_coarray_get()
     funcArgs = Xcons.List();
-    if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF){
-      funcArgs.add(Xcons.IntConstant(XMPcoarray.PUT));
-    }
-    else{
-      funcArgs.add(Xcons.IntConstant(XMPcoarray.GET));
-    }
-
     boolean isLocalOnDevice = false;
     boolean isRemoteOnDevice = false;
     
@@ -824,7 +817,10 @@ public class XMPrewriteExpr {
       funcArgs.add(Xcons.IntConstant(isRemoteOnDevice? 1 : 0));
       funcArgs.add(Xcons.IntConstant(isLocalOnDevice? 1 : 0));
     }else{
-      funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_do");
+      if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF)
+        funcId = _globalDecl.declExternFunc("_XMP_coarray_put");
+      else
+        funcId = _globalDecl.declExternFunc("_XMP_coarray_get");
     }
     newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);

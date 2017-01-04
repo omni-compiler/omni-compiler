@@ -292,7 +292,7 @@ extern void _XMP_coarray_rdma_image_set_1(const int);
 //extern void _XMP_coarray_rdma_image_set_7(const int, const int, const int, const int, const int, const int, const int);
 
 //extern void _XMP_coarray_rdma_do_f(const int*, const void*, const void*, const void*);
-extern void _XMP_coarray_rdma_do(const int, void*, void*, void *);
+extern void _XMP_coarray_put(void*, void*, void *);
 //extern size_t get_offset(const void *, const int);
 
 /* libxmp/include/xmp_func_decl.h */
