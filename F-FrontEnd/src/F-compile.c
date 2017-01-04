@@ -3689,6 +3689,16 @@ int associate_parent_module(const SYMBOL, const SYMBOL);
 void
 begin_submodule(expr name, expr module, expr submodule)
 {
+    /* NOTE:
+     *
+     * The submodule has host-association with its parent (sub)module.  To
+     * represent this behaviour, begin_submoule makes two UNITs.  Identifiers
+     * from the parent (sub)module are imported into the parent-side UNIT.  On
+     * the otherhand, identifiers declared in the submodule are placed in the
+     * child-side UNIT.  These two UNITs are flatten into one UNIT in
+     * end_submodule().
+     */
+
     SYMBOL module_name = module?EXPR_SYM(module):NULL;
     SYMBOL submodule_name = submodule?EXPR_SYM(submodule):NULL;
 
@@ -3708,8 +3718,8 @@ begin_submodule(expr name, expr module, expr submodule)
     CURRENT_EXT_ID = PARENT_EXT_ID;
 }
 
-ID
-flatten_id_list(ID parents, ID childs)
+static ID
+flatten_submodule_id_list(ID parents, ID childs)
 {
     ID ip;
     ID iq;
@@ -3732,8 +3742,8 @@ flatten_id_list(ID parents, ID childs)
 }
 
 
-EXT_ID
-flatten_ext_id_list(EXT_ID parents, EXT_ID childs)
+static EXT_ID
+flatten_submodule_ext_id_list(EXT_ID parents, EXT_ID childs)
 {
     EXT_ID ep;
     EXT_ID eq;
@@ -3756,8 +3766,8 @@ flatten_ext_id_list(EXT_ID parents, EXT_ID childs)
 }
 
 
-TYPE_DESC
-flatten_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
+static TYPE_DESC
+flatten_submodule_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
 {
     TYPE_DESC tp;
     TYPE_DESC tq;
@@ -3792,11 +3802,21 @@ flatten_submodule_units()
     submodule = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
     parent = UNIT_CTL_LOCAL_ENV(PARENT_UNIT_CTL);
 
-    ENV_SYMBOLS(parent)          = flatten_id_list(ENV_SYMBOLS(parent), ENV_SYMBOLS(submodule));
-    ENV_STRUCT_DECLS(parent)     = flatten_struct_decls(ENV_STRUCT_DECLS(parent), ENV_STRUCT_DECLS(submodule));
-    ENV_COMMON_SYMBOLS(parent)   = flatten_id_list(ENV_COMMON_SYMBOLS(parent), ENV_COMMON_SYMBOLS(submodule));
-    ENV_EXTERNAL_SYMBOLS(parent) = flatten_ext_id_list(ENV_EXTERNAL_SYMBOLS(parent), ENV_EXTERNAL_SYMBOLS(submodule));
-    ENV_INTERFACES(parent)       = flatten_ext_id_list(ENV_INTERFACES(parent), ENV_INTERFACES(submodule));
+    ENV_SYMBOLS(parent) =
+            flatten_submodule_id_list(ENV_SYMBOLS(parent),
+                                      ENV_SYMBOLS(submodule));
+    ENV_STRUCT_DECLS(parent) =
+            flatten_submodule_struct_decls(ENV_STRUCT_DECLS(parent),
+                                           ENV_STRUCT_DECLS(submodule));
+    ENV_COMMON_SYMBOLS(parent) =
+            flatten_submodule_id_list(ENV_COMMON_SYMBOLS(parent),
+                                      ENV_COMMON_SYMBOLS(submodule));
+    ENV_EXTERNAL_SYMBOLS(parent) =
+            flatten_submodule_ext_id_list(ENV_EXTERNAL_SYMBOLS(parent),
+                                          ENV_EXTERNAL_SYMBOLS(submodule));
+    ENV_INTERFACES(parent) =
+            flatten_submodule_ext_id_list(ENV_INTERFACES(parent),
+                                          ENV_INTERFACES(submodule));
 
     ENV_USE_DECLS(parent)        = ENV_USE_DECLS(submodule);
 
