@@ -126,6 +126,8 @@ static void compile_IMPORT_statement(expr x); // IMPORT statement
 static void compile_BLOCK_statement(expr x);
 static void compile_ENDBLOCK_statement(expr x);
 
+static void unify_submodule_symbol_table(void);
+
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
 
@@ -424,7 +426,7 @@ compile_statement1(int st_no, expr x)
     case F08_ENDSUBMODULE_STATEMENT: /* (F08_ENDSUBMODULE_STATEMENT submodule_name) */
     do_end_submodule:
         check_INDCL();
-        flatten_submodule_units();
+        unify_submodule_symbol_table();
         end_procedure();
         end_submodule(EXPR_HAS_ARG1(x)?EXPR_ARG1(x):NULL);
         break;
@@ -3697,7 +3699,7 @@ begin_submodule(expr name, expr module, expr submodule)
      * represent this behaviour, begin_submoule makes two UNITs.  Identifiers
      * from the parent (sub)module are imported into the parent-side UNIT.  On
      * the otherhand, identifiers declared in the submodule are placed in the
-     * child-side UNIT.  These two UNITs are flatten into one UNIT in
+     * child-side UNIT.  These two UNITs are unified into one UNIT in
      * end_submodule().
      */
 
@@ -3721,7 +3723,7 @@ begin_submodule(expr name, expr module, expr submodule)
 }
 
 static ID
-flatten_submodule_id_list(ID parents, ID childs)
+unify_submodule_id_list(ID parents, ID childs)
 {
     ID ip;
     ID iq;
@@ -3745,7 +3747,7 @@ flatten_submodule_id_list(ID parents, ID childs)
 
 
 static EXT_ID
-flatten_submodule_ext_id_list(EXT_ID parents, EXT_ID childs)
+unify_submodule_ext_id_list(EXT_ID parents, EXT_ID childs)
 {
     EXT_ID ep;
     EXT_ID eq;
@@ -3769,7 +3771,7 @@ flatten_submodule_ext_id_list(EXT_ID parents, EXT_ID childs)
 
 
 static TYPE_DESC
-flatten_submodule_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
+unify_submodule_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
 {
     TYPE_DESC tp;
     TYPE_DESC tq;
@@ -3791,8 +3793,8 @@ flatten_submodule_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
 }
 
 
-void
-flatten_submodule_units()
+static void
+unify_submodule_symbol_table()
 {
     ENV submodule;
     ENV parent;
@@ -3805,22 +3807,22 @@ flatten_submodule_units()
     parent = UNIT_CTL_LOCAL_ENV(PARENT_UNIT_CTL);
 
     ENV_SYMBOLS(parent) =
-            flatten_submodule_id_list(ENV_SYMBOLS(parent),
+            unify_submodule_id_list(ENV_SYMBOLS(parent),
                                       ENV_SYMBOLS(submodule));
     ENV_STRUCT_DECLS(parent) =
-            flatten_submodule_struct_decls(ENV_STRUCT_DECLS(parent),
+            unify_submodule_struct_decls(ENV_STRUCT_DECLS(parent),
                                            ENV_STRUCT_DECLS(submodule));
     ENV_COMMON_SYMBOLS(parent) =
-            flatten_submodule_id_list(ENV_COMMON_SYMBOLS(parent),
+            unify_submodule_id_list(ENV_COMMON_SYMBOLS(parent),
                                       ENV_COMMON_SYMBOLS(submodule));
     ENV_EXTERNAL_SYMBOLS(parent) =
-            flatten_submodule_ext_id_list(ENV_EXTERNAL_SYMBOLS(parent),
+            unify_submodule_ext_id_list(ENV_EXTERNAL_SYMBOLS(parent),
                                           ENV_EXTERNAL_SYMBOLS(submodule));
     ENV_INTERFACES(parent) =
-            flatten_submodule_ext_id_list(ENV_INTERFACES(parent),
+            unify_submodule_ext_id_list(ENV_INTERFACES(parent),
                                           ENV_INTERFACES(submodule));
 
-    ENV_USE_DECLS(parent)        = ENV_USE_DECLS(submodule);
+    ENV_USE_DECLS(parent) = ENV_USE_DECLS(submodule);
 
     pop_unit_ctl();
 }
@@ -4984,7 +4986,6 @@ compile_MODULEPROCEDURE_statement(expr x)
 {
     if (PARENT_STATE == ININTR) {
         compile_interface_MODULEPROCEDURE_statement(x);
-        return;
     } else if (PARENT_STATE == INCONT) {
         compile_separate_MODULEPROCEDURE_statement(x);
     } else {
