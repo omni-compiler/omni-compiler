@@ -691,13 +691,13 @@ result_opt:    /* null */
         ;
       
 bind_opt: /* null */
-          { $$ = NULL; }
+          { $$ = NULL; need_keyword = FALSE;}
         /* BIND(C) */
         | BIND '(' IDENTIFIER /* C */ ')'
-          { $$ = list1(LIST, NULL); }
+          { $$ = list1(LIST, NULL); need_keyword = FALSE;}
         /* BIND (C, NAME='<ident>') */
         | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
-          { $$ = list1(LIST, $8); }
+          { $$ = list1(LIST, $8); need_keyword = FALSE;}
 
 intrinsic_operator: '.'
         { $$ = list0(F95_DOTOP); }
