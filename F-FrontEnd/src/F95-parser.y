@@ -594,11 +594,11 @@ statement:      /* entry */
               if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
                   $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $8, $6, $3);
               } else {
-                  $$ = list3(F03_PROCEDURE_DEFINITION_STATEMENT, $8, $6, $3);
+                  $$ = list3(F03_PROCEDURE_DECL_STATEMENT, $8, $6, $3);
               }
           }
         | PROCEDURE '(' name_or_type_spec_or_null ')' COL2_or_null proc_decl_list
-          { $$ = list3(F03_PROCEDURE_DEFINITION_STATEMENT, $6, NULL, $3); }
+          { $$ = list3(F03_PROCEDURE_DECL_STATEMENT, $6, NULL, $3); }
         | ENDPROCEDURE name_or_null
           { $$ = list1(F08_ENDPROCEDURE_STATEMENT, $2); }
         | GENERIC COL2 type_bound_generic_spec REF_OP ident_list
