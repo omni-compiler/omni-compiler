@@ -488,7 +488,7 @@ gen_default_real_kind(void) {
 %type <val> io_statement format_spec ctl_list io_clause io_list_or_null io_list io_item
 %type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP type_bound_generic_spec
 %type <val> string_const_substr
-%type <val> binding_attr_list binding_attr type_bounded_proc_decl_list type_bounded_proc_decl
+%type <val> binding_attr_list binding_attr type_bound_proc_decl_list type_bound_proc_decl
 %type <val> proc_attr_list proc_def_attr proc_attr proc_decl proc_decl_list name_or_type_spec_or_null0 name_or_type_spec_or_null
 
 %type <val> name name_or_null generic_name defined_operator intrinsic_operator func_prefix prefix_spec
@@ -585,9 +585,9 @@ statement:      /* entry */
                 $$ = list2(F08_PROCEDURE_STATEMENT, $2, make_int_enode(0));
             }
           }
-        | PROCEDURE COL2 type_bounded_proc_decl_list
+        | PROCEDURE COL2 type_bound_proc_decl_list
           { $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $3, NULL, NULL); }
-        | PROCEDURE ',' binding_attr_list COL2 type_bounded_proc_decl_list
+        | PROCEDURE ',' binding_attr_list COL2 type_bound_proc_decl_list
           { $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $5, $3, NULL); }
         | PROCEDURE '(' name_or_type_spec_or_null ')' ',' proc_attr_list COL2 proc_decl_list
           {
@@ -740,17 +740,17 @@ binding_attr:
         { $$ = $1; }
         ;
 
-type_bounded_proc_decl:
+type_bound_proc_decl:
           IDENTIFIER
         { $$ = $1; }
         | IDENTIFIER REF_OP IDENTIFIER
         { $$ = list2(F03_BIND_PROCEDURE, $1, $3); }
         ;
 
-type_bounded_proc_decl_list:
-          type_bounded_proc_decl
+type_bound_proc_decl_list:
+          type_bound_proc_decl
         { $$ = list1(LIST, $1); }
-        | type_bounded_proc_decl_list ',' type_bounded_proc_decl
+        | type_bound_proc_decl_list ',' type_bound_proc_decl
         { $$ = list_put_last($1, $3); }
         ;
 
