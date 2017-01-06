@@ -2319,7 +2319,7 @@ compile_derived_type(expr x, int allow_predecl)
  * leng_spec = NULL | expr | (LIST)
  */
 TYPE_DESC
-compile_type(expr x)
+compile_basic_type(expr x)
 {
     expr r1, r2 = NULL;
     int kind = 0, isKindConst = 1, kindByLen = 0, charLen = 0;
@@ -2557,6 +2557,22 @@ compile_type(expr x)
     return tp;
 }
 
+TYPE_DESC
+compile_type(expr x, int allow_predecl)
+{
+    if (x == NULL) {
+        return NULL;
+    } else if (EXPR_CODE(x) == IDENT ||
+        EXPR_CODE(x) == F03_PARAMETERIZED_TYPE ||
+        EXPR_CODE(x) == F03_CLASS) {
+        return compile_derived_type(x, allow_predecl);
+
+    } else {
+        return compile_basic_type(x);
+    }
+}
+
+
 void
 compile_IMPLICIT_decl(expr type,expr l)
 {
@@ -2592,7 +2608,7 @@ compile_IMPLICIT_decl(expr type,expr l)
                         create_implicit_decl_expv(NULL, "a", "z"));
           return;
         } else {
-            tp = compile_type(type);
+            tp = compile_basic_type(type);
             if(tp == NULL) return;  /* error */
             if(l == NULL) {
                 error("no implicit set");
@@ -3370,16 +3386,9 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
     }
 
     if (typeExpr != NULL) {
-        if (EXPR_CODE(typeExpr) == IDENT ||
-            EXPR_CODE(typeExpr) == F03_PARAMETERIZED_TYPE ||
-            EXPR_CODE(typeExpr) == F03_CLASS) {
-            tp0 = compile_derived_type(typeExpr, hasPointerAttr);
-
-        } else {
-            tp0 = compile_type(typeExpr);
-            if (tp0 == NULL)
-                return;
-        }
+        tp0 = compile_type(typeExpr, hasPointerAttr);
+        if (tp0 == NULL)
+            return;
     } else if (baseTp != NULL) {
         tp0 = baseTp;
     }

@@ -481,28 +481,17 @@ compile_statement1(int st_no, expr x)
                           EXPR_ARG3(x), NULL, EXPR_ARG4(x));
         break;
         /* entry statements */
-    case F_FUNCTION_STATEMENT:
+    case F_FUNCTION_STATEMENT: {
         /* (F_FUNCTION_STATEMENT name dummy_arg_list type) */
+        TYPE_DESC tp;
         begin_procedure();
-        if (EXPR_ARG3(x) &&
-            (EXPR_CODE(EXPR_ARG3(x)) == IDENT ||
-             EXPR_CODE(EXPR_ARG3(x)) == F03_PARAMETERIZED_TYPE ||
-             EXPR_CODE(EXPR_ARG3(x)) == F03_CLASS)) {
-            TYPE_DESC tp = compile_derived_type(EXPR_ARG3(x), TRUE);
-            if (tp == NULL) { /* something wrong */
-                return;
-            }
-            declare_procedure(CL_PROC, EXPR_ARG1(x),
-                              function_type(tp),
-                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x), 
-                              EXPR_ARG6(x));
-        } else {
-            declare_procedure(CL_PROC, EXPR_ARG1(x),
-                              function_type(compile_type(EXPR_ARG3(x))),
-                              EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x), 
-                              EXPR_ARG6(x));
-        }
+        tp = compile_type(EXPR_ARG3(x), TRUE);
+        declare_procedure(CL_PROC, EXPR_ARG1(x),
+                          function_type(tp),
+                          EXPR_ARG2(x), EXPR_ARG4(x), EXPR_ARG5(x),
+                          EXPR_ARG6(x));
         break;
+    }
     case F_ENTRY_STATEMENT:
         /* (F_ENTRY_STATEMENT name dummy_arg_list) */
         if(CURRENT_STATE == OUTSIDE ||

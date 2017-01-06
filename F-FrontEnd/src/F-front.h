@@ -662,7 +662,8 @@ extern void     unset_save_attr_in_dummy_args(EXT_ID ep);
 
 extern void     declare_storage _ANSI_ARGS_((ID id, enum storage_class stg));
 
-extern TYPE_DESC        compile_type _ANSI_ARGS_((expr x));
+extern TYPE_DESC        compile_type _ANSI_ARGS_((expr x, int allow_predecl));
+extern TYPE_DESC        compile_basic_type _ANSI_ARGS_((expr x));
 extern TYPE_DESC        compile_derived_type _ANSI_ARGS_((expr x, int allow_predecl));
 
 extern expv     compile_int_constant _ANSI_ARGS_((expr x));
