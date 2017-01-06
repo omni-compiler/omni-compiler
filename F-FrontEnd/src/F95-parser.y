@@ -489,7 +489,7 @@ gen_default_real_kind(void) {
 %type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP type_bound_generic_spec
 %type <val> string_const_substr
 %type <val> binding_attr_list binding_attr type_bounded_proc_decl_list type_bounded_proc_decl
-%type <val> proc_attr_list proc_def_attr proc_attr proc_decl proc_decl_list name_or_type_spec_or_null
+%type <val> proc_attr_list proc_def_attr proc_attr proc_decl proc_decl_list name_or_type_spec_or_null0 name_or_type_spec_or_null
 
 %type <val> name name_or_null generic_name defined_operator intrinsic_operator func_prefix prefix_spec
 %type <val> declaration_statement95 attr_spec_list attr_spec private_or_public_spec access_spec type_attr_spec_list type_attr_spec
@@ -513,6 +513,8 @@ program: /* empty */
         ;
 
 KW: { need_keyword = TRUE; };
+
+TYPE_KW: { need_type_keyword = TRUE; };
 
 NEED_CHECK: {	      need_check_user_defined = FALSE; };
 
@@ -592,11 +594,11 @@ statement:      /* entry */
               if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
                   $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $8, $6, $3);
               } else {
-                  $$ = list3(F03_PROCEDURE_DEFINITION_STATEMENT, $3, $6, $8);
+                  $$ = list3(F03_PROCEDURE_DEFINITION_STATEMENT, $8, $6, $3);
               }
           }
         | PROCEDURE '(' name_or_type_spec_or_null ')' COL2_or_null proc_decl_list
-          { $$ = list3(F03_PROCEDURE_DEFINITION_STATEMENT, $3, NULL, $6); }
+          { $$ = list3(F03_PROCEDURE_DEFINITION_STATEMENT, $6, NULL, $3); }
         | ENDPROCEDURE name_or_null
           { $$ = list1(F08_ENDPROCEDURE_STATEMENT, $2); }
         | GENERIC COL2 type_bound_generic_spec REF_OP ident_list
@@ -659,11 +661,17 @@ statement:      /* entry */
           { $$ = list1(F08_ENDSUBMODULE_STATEMENT,$2); }
         ;
 
+
 name_or_type_spec_or_null:
+        TYPE_KW name_or_type_spec_or_null0 { $$ = $2;};
+
+name_or_type_spec_or_null0:
           name_or_null
         { $$ = $1; }
-        | KW type_spec
-        { $$ = $2; }
+        | type_spec
+        { $$ = $1; }
+        | KW_TYPE
+        { $$ = GEN_NODE(IDENT, find_symbol("TYPE")); }
         ;
 
 proc_attr_list:
