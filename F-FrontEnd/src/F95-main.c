@@ -568,7 +568,7 @@ search_include_path(const char * filename)
 void
 where(lineno_info *ln)
 { 
-    extern char *current_module_name;
+    extern SYMBOL current_module_name;
 
     /* print location of error  */
     if (ln != NULL) {
@@ -577,7 +577,7 @@ where(lineno_info *ln)
         else
             fprintf(stderr, "\"%s:%s\", line %d: ",
                     FILE_NAME(ln->file_id),
-                    current_module_name,
+                    SYM_NAME(current_module_name),
                     ln->ln_no);
     } else {
         fprintf(stderr, "\"??\", line ??: ");

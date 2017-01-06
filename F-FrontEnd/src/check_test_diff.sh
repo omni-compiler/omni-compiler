@@ -30,7 +30,7 @@ do_compile() {
 
 	echo "END_OF_XCODEML" >> ${filename}
 	echo "exit code: ${exitcode}" >> ${filename}
-	if test ${exitcode} -gt 1; then
+	if test ${exitcode} -ne 0; then
 		# F_Front is segfault or abort, maybe.
 		echo "Error: ${testfile} compile error" >&2
 	fi
@@ -47,6 +47,7 @@ do_test_should_be_ok() {
 		fi
 	done
 	rm -f *.xmod
+	rm -f *.xsmod
 }
 
 do_test_should_be_ng() {
@@ -60,6 +61,7 @@ do_test_should_be_ng() {
 		fi
 	done
 	rm -f *.xmod
+	rm -f *.xsmod
 }
 
 do_test_result_no_care() {
@@ -69,6 +71,7 @@ do_test_result_no_care() {
 		do_compile ${testfile}
 	done
 	rm -f *.xmod
+	rm -f *.xsmod
 }
 
 show_diff() {
