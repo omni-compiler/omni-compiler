@@ -14,21 +14,22 @@
 /* Fortran name class */
 enum name_class {
     CL_UNKNOWN = 0,
-    CL_PARAM,   /* parameter */
-    CL_VAR,     /* variable name */
-    CL_ENTRY,   /* entry name */
-    CL_MAIN,    /* program name */
-    CL_MODULE,	/* module name */
-    CL_CONTAINS,/* contains entry */
-    CL_BLOCK,   /* data block name */
-    CL_PROC,    /* procedure name (subroutine, function, statement func,..) */
-    CL_LABEL,   /* label entry */
-    CL_FORMAT,  /* format entry */
-    CL_TAGNAME, /* derived type name  */
-    CL_NAMELIST, /* name list name (not implmented) */
-    CL_COMMON,  /* common block */
-    CL_ELEMENT,  /* structure element name  */
-    CL_GENERICS, /* generics name */
+    CL_PARAM,     /* parameter */
+    CL_VAR,       /* variable name */
+    CL_ENTRY,     /* entry name */
+    CL_MAIN,      /* program name */
+    CL_MODULE,    /* module name */
+    CL_SUBMODULE, /* submodule name */
+    CL_CONTAINS,  /* contains entry */
+    CL_BLOCK,     /* data block name */
+    CL_PROC,      /* procedure name (subroutine, function, statement func,..) */
+    CL_LABEL,     /* label entry */
+    CL_FORMAT,    /* format entry */
+    CL_TAGNAME,   /* derived type name  */
+    CL_NAMELIST,  /* name list name (not implmented) */
+    CL_COMMON,    /* common block */
+    CL_ELEMENT,   /* structure element name  */
+    CL_GENERICS,  /* generics name */
     CL_TYPE_PARAM, /* type parameter name */
     CL_TYPE_BOUND_PROC, /* type bound procedure */
 };
@@ -158,6 +159,7 @@ typedef struct ident_descriptor
     struct use_assoc_info *use_assoc;   /* use association infomation
                                            of this ID, otherwise
                                            NULL */
+    int from_parent_module;             /* ID is imported from parent module  */
 
     union {
         struct {
@@ -176,6 +178,7 @@ typedef struct ident_descriptor
                                          after type is decided */
             int is_pure;              /* like above. */
             int is_elemental;         /* like above. */
+            int is_module;            /* like above. */
             int is_dummy;             /* if TRUE, declared as dummy
                                        * arg in the parent scope. */
             int is_func_subr_ambiguous;
@@ -284,6 +287,8 @@ struct use_assoc_info {
 #define ID_IS_OFMODULE(id)  ((id)->use_assoc != NULL)
 #define ID_IS_AMBIGUOUS(id) ((id)->use_assoc_conflicted)
 
+#define ID_IS_FROM_PARENT_MOD(id) ((id)->from_parent_module)
+
 #define ID_IS_EMITTED(id)   ((id)->is_varDeclEmitted)
 #define ID_EQUIV_ID(id)     ((id)->equivID)
 
@@ -306,6 +311,9 @@ struct use_assoc_info {
 #define FOREACH_ID(/* ID */ idp, /* ID */ headp) \
   for ((idp) = (headp); (idp) != NULL ; (idp) = ID_NEXT(idp))
 
+#define SAFE_FOREACH_ID(ip, iq, headp)\
+    SAFE_FOREACH(ip, iq, headp, ID_NEXT)
+
 /* for CL_PROC */
 #define PROC_CLASS(id)  ((id)->info.proc_info.pclass)
 #define PROC_ARGS(id)   ((id)->info.proc_info.args)
@@ -314,6 +322,7 @@ struct use_assoc_info {
 #define PROC_IS_RECURSIVE(id) ((id)->info.proc_info.is_recursive)
 #define PROC_IS_PURE(id) ((id)->info.proc_info.is_pure)
 #define PROC_IS_ELEMENTAL(id) ((id)->info.proc_info.is_elemental)
+#define PROC_IS_MODULE(id) ((id)->info.proc_info.is_module)
 #define PROC_IS_DUMMY_ARG(id) ((id)->info.proc_info.is_dummy)
 #define PROC_IS_FUNC_SUBR_AMBIGUOUS(id) \
     ((id)->info.proc_info.is_func_subr_ambiguous)
@@ -410,7 +419,7 @@ enum ext_proc_class {
 /* external symbol */
 typedef struct external_symbol
 {
-    struct external_symbol *next; 
+    struct external_symbol *next;
     SYMBOL name;                /* key */
     enum storage_class stg;     /* STG_UNKNOWN, STG_EXT, STG_COMMON, STG_LIB */
     char is_defined;            /* defined or not */
@@ -438,7 +447,14 @@ typedef struct external_symbol
             enum ext_proc_class ext_proc_class;
             char is_output;
             char is_module_specified; /* module procedure with keyword 'module' */
-	    char is_internal; /* internal procedure */
+            char is_internal; /* internal procedure */
+            int is_procedureDecl; /* procedure declaration */
+
+            struct { /* For submodule */
+                int is_submodule;
+                SYMBOL ancestor;
+                SYMBOL parent;
+            } extends;
         } proc_info;
     } info;
 } *EXT_ID;
@@ -485,9 +501,17 @@ typedef struct external_symbol
 #define EXT_PROC_COMMON_ID_LIST(ep) ((ep)->info.proc_info.common_id_list)
 #define EXT_PROC_IS_OUTPUT(ep)  ((ep)->info.proc_info.is_output)
 #define EXT_PROC_IS_INTERNAL(ep)  ((ep)->info.proc_info.is_internal)
+#define EXT_PROC_IS_PROCEDUREDECL(ep)  ((ep)->info.proc_info.is_procedureDecl)
+
+#define EXT_MODULE_IS_SUBMODULE(ep) ((ep)->info.proc_info.extends.is_submodule)
+#define EXT_MODULE_PARENT(ep) ((ep)->info.proc_info.extends.parent)
+#define EXT_MODULE_ANCESTOR(ep) ((ep)->info.proc_info.extends.ancestor)
 
 #define FOREACH_EXT_ID(/* EXT_ID */ ep, /* EXT_ID */ headp) \
   for ((ep) = (headp); (ep) != NULL ; (ep) = EXT_NEXT(ep))
+
+#define SAFE_FOREACH_EXT_ID(ep, eq, headp)\
+    SAFE_FOREACH(ep, eq, headp, EXT_NEXT)
 
 #define EXT_LINK_ADD(ep, list, tail) \
     { if((list) == NULL || (tail) == NULL) (list) = (ep); \

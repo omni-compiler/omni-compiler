@@ -27,6 +27,8 @@ int Addr2Uint(void *x)
 }
 #endif
 
+int is_emitting_for_submodule;
+
 extern int      flag_module_compile;
 
 static void     outx_expv(int l, expv v);
@@ -642,7 +644,8 @@ has_attribute(TYPE_DESC tp)
         TYPE_IS_INTRINSIC(tp) ||
         TYPE_IS_RECURSIVE(tp) ||
         TYPE_IS_PURE(tp) ||
-        TYPE_IS_ELEMENTAL(tp);
+        TYPE_IS_ELEMENTAL(tp) ||
+        TYPE_IS_MODULE(tp);
 }
 
 static int
@@ -963,6 +966,16 @@ outx_tagOfDecl1(int l, const char *tag, lineno_info *li, ...)
     outx_vtagOfDecl(l, tag, li, args);
     va_end(args);
     outx_puts(">\n");
+}
+
+
+static void
+outx_tagOfDeclNoClose(int l, const char *tag, lineno_info *li, ...)
+{
+    va_list args;
+    va_start(args, li);
+    outx_vtagOfDecl(l, tag, li, args);
+    va_end(args);
 }
 
 
@@ -3766,17 +3779,18 @@ static void mark_type_desc(TYPE_DESC tp);
 static void
 mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
 {
+    if (tp == NULL || TYPE_IS_REFERENCED(tp) == TRUE || IS_MODULE(tp))
+        return;
+
     if (skip_tbp &&  IS_PROCEDURE_TYPE(tp) &&
         FUNCTION_TYPE_IS_TYPE_BOUND(tp)) {
         /* type-bound procedure with a PASS argument ALWAY causes a circulation reference,
          * so store them to a tbp list and check them later.
          */
+        TYPE_LINK(tp) = NULL;
         TYPE_LINK_ADD(tp, tbp_list, tbp_list_tail);
         return;
     }
-
-    if (tp == NULL || TYPE_IS_REFERENCED(tp) == TRUE || IS_MODULE(tp))
-        return;
 
     if (TYPE_BOUND_GENERIC_TYPE_GENERICS(tp) != NULL) {
         /* the type for type-bound generic, skip it */
@@ -3915,20 +3929,18 @@ add_type_ext_id(EXT_ID ep)
 
 
 static void
-mark_type_desc_in_id_list(ID ids)
+mark_type_desc_id(ID id)
 {
-    ID id;
     TYPE_DESC sTp;
 
-    FOREACH_ID(id, ids) {
-        sTp = reduce_type(ID_TYPE(id));
-        mark_type_desc(sTp);
-        ID_TYPE(id) = sTp;
-        collect_type_desc(ID_ADDR(id));
-        switch(ID_CLASS(id)) {
+    sTp = reduce_type(ID_TYPE(id));
+    mark_type_desc(sTp);
+    ID_TYPE(id) = sTp;
+    collect_type_desc(ID_ADDR(id));
+    switch(ID_CLASS(id)) {
         case CL_PARAM:
             collect_type_desc(VAR_INIT_VALUE(id));
-            break;
+            return;
         case CL_VAR:
             collect_type_desc(VAR_INIT_VALUE(id));
             /* fall through */
@@ -3958,17 +3970,25 @@ mark_type_desc_in_id_list(ID ids)
             // TODO
             if (id->use_assoc != NULL) {
                 TYPE_EXT_ID te =
-                    (TYPE_EXT_ID)malloc(sizeof(struct type_ext_id));
+                        (TYPE_EXT_ID)malloc(sizeof(struct type_ext_id));
                 bzero(te, sizeof(struct type_ext_id));
                 te->ep = PROC_EXT_ID(id);
                 FUNC_EXT_LINK_ADD(te, type_module_proc_list,
                                   type_module_proc_last);
             }
 #endif
-            break;
+            return;
         default:
-            break;
-        }
+            return;
+    }
+}
+
+static void
+mark_type_desc_in_id_list(ID ids)
+{
+    ID id;
+    FOREACH_ID(id, ids) {
+        mark_type_desc_id(id);
     }
 }
 
@@ -4233,6 +4253,14 @@ outx_functionType(int l, TYPE_DESC tp)
         outx_true(TYPE_IS_RECURSIVE(tp), "is_recursive");
         outx_true(TYPE_IS_PURE(tp), "is_pure");
         outx_true(TYPE_IS_ELEMENTAL(tp), "is_elemental");
+        outx_true(TYPE_IS_MODULE(tp), "is_module");
+
+        if (is_emitting_for_submodule) {
+            /*
+             * "is_defined" attribute is only for SUBMODULE
+             */
+            outx_true(FUNCTION_TYPE_IS_DEFINED(tp), "is_defined");
+        }
 
         if (!TYPE_IS_INTRINSIC(tp) &&
             (TYPE_IS_EXTERNAL(tp) ||
@@ -4501,8 +4529,9 @@ id_is_visibleVar(ID id)
 }
 
 
+
 /**
- * output symbols in FfunctionDefinition
+ * output symbols in FfunctionDefinition/FmoduleProcedureDefinition
  */
 static void
 outx_definition_symbols(int l, EXT_ID ep)
@@ -4675,6 +4704,27 @@ emit_decl(int l, ID id)
     }
     if (ID_IS_OFMODULE(id) == TRUE && ID_CLASS(id) != CL_PARAM) {
         return;
+    }
+
+    if (CRT_FUNCEP != NULL && EXT_PROC_IS_PROCEDUREDECL(CRT_FUNCEP)) {
+        /*
+         * In the Separate Module Procedure,
+         * a function, argments, and a result variable are not decleared
+         */
+        TYPE_DESC ftp = EXT_PROC_TYPE(CRT_FUNCEP);
+
+        if (ID_CLASS(id) == CL_PROC && PROC_EXT_ID(id) == CRT_FUNCEP) {
+            /* id is this procedure */
+            return;
+        }
+        if (ID_SYM(id) == FUNCTION_TYPE_RESULT(ftp)) {
+            /* id is this result */
+            return;
+        }
+        if (ID_STORAGE(id) == STG_ARG) {
+            /* id is a argument */
+            return;
+        }
     }
 
     switch(ID_CLASS(id)) {
@@ -5119,9 +5169,18 @@ outx_functionDefinition(int l, EXT_ID ep)
 {
     const int l1 = l + 1, l2 = l + 2;
 
+    const char *tag = NULL;
+
+    if (!EXT_PROC_IS_PROCEDUREDECL(ep)) {
+        tag = "FfunctionDefinition";
+    } else {
+        tag = "FmoduleProcedureDefinition";
+    }
+
+
     CRT_FUNCEP_PUSH(ep);
 
-    outx_tagOfDecl1(l, "FfunctionDefinition", GET_EXT_LINE(ep));
+    outx_tagOfDecl1(l, tag, GET_EXT_LINE(ep));
     outx_symbolNameWithFunctionType_EXT(l1, ep);
     outx_definition_symbols(l1, ep);
     outx_declarations(l1, ep);
@@ -5129,7 +5188,7 @@ outx_functionDefinition(int l, EXT_ID ep)
     outx_expv(l2, EXT_PROC_BODY(ep));
     outx_contains(l2, ep);
     outx_close(l1, "body");
-    outx_close(l, "FfunctionDefinition");
+    outx_close(l, tag);
 
     CRT_FUNCEP_POP;
 }
@@ -5146,8 +5205,22 @@ outx_moduleDefinition(int l, EXT_ID ep)
     is_outputed_module = TRUE;
     CRT_FUNCEP = NULL;
 
-    outx_tagOfDecl1(l, "%s name=\"%s\"", GET_EXT_LINE(ep),
-                    "FmoduleDefinition", SYM_NAME(EXT_SYM(ep)));
+    outx_tagOfDeclNoClose(l, "%s name=\"%s\"", GET_EXT_LINE(ep),
+                          "FmoduleDefinition", SYM_NAME(EXT_SYM(ep)));
+
+    if (EXT_MODULE_IS_SUBMODULE(ep)) {
+        outx_true(TRUE, "is_sub");
+        if (EXT_MODULE_ANCESTOR(ep)) {
+            outx_print(" parent_name=\"%s:%s\"",
+                       SYM_NAME(EXT_MODULE_ANCESTOR(ep)),
+                       SYM_NAME(EXT_MODULE_PARENT(ep)));
+        } else {
+            outx_print(" parent_name=\"%s\"",
+                       SYM_NAME(EXT_MODULE_PARENT(ep)));
+        }
+    }
+    outx_puts(">\n");
+
     outx_definition_symbols(l1, ep);
     outx_declarations1(l1, ep, TRUE); // output with pragma
     outx_contains(l1, ep);
@@ -5628,13 +5701,13 @@ unmark_ids(EXT_ID ep)
     }
 }
 
+
 /**
  * output module to .xmod file
  */
-void
-output_module_file(struct module * mod)
+int
+output_module_file(struct module * mod, const char * filename)
 {
-    char filename[255] = {0};
     ID id;
     EXT_ID ep;
     TYPE_EXT_ID te;
@@ -5645,20 +5718,17 @@ output_module_file(struct module * mod)
     expr modTypeList;
     list lp;
     expv v;
-    extern char *modincludeDirv;
 
-    if(flag_module_compile) {
+    if (flag_module_compile) {
         print_fp = stdout;
     } else {
-        char tmp[255];
-        if (modincludeDirv) snprintf(filename, sizeof(filename), "%s/", modincludeDirv);
-        snprintf(tmp, sizeof(tmp), "%s.xmod", SYM_NAME(mod->name));
-        strncat(filename, tmp, sizeof(filename) - strlen(filename) - 1);
         if ((print_fp = fopen(filename, "w")) == NULL) {
             fatal("could'nt open module file to write.");
-            return;
+            return FALSE;
         }
     }
+
+    is_emitting_for_submodule = MODULE_IS_FOR_SUBMODULE(mod);
 
     oEmitMode = is_emitting_xmod();
     set_module_emission_mode(TRUE);
@@ -5669,18 +5739,18 @@ output_module_file(struct module * mod)
     type_module_proc_last = NULL;
     type_ext_id_list = NULL;
     type_ext_id_last = NULL;
-
     tbp_list = NULL;
+    tbp_list_tail = NULL;
 
     /*
      * collect types used in this module
      */
-    // mark types of each ids
-    mark_type_desc_in_id_list(mod->head);
     FOREACH_ID(id, mod->head) {
+        mark_type_desc_id(id);
+
         ep = PROC_EXT_ID(id);
         // if id is external,  ...
-        if (ep != NULL) { 
+        if (ep != NULL) {
             collect_types1(ep);
             FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
                 TYPE_DESC tp = EXT_PROC_TYPE(te->ep);
@@ -5723,8 +5793,13 @@ output_module_file(struct module * mod)
 
     set_module_emission_mode(oEmitMode);
 
-    if(!flag_module_compile)
+    if(!flag_module_compile) {
         fclose(print_fp);
+    }
+
+    is_emitting_for_submodule = FALSE;
+
+    return TRUE;
 }
 
 

@@ -48,7 +48,6 @@ function_type(const TYPE_DESC tp)
     TYPE_BASIC_TYPE(ftp) = TYPE_FUNCTION;
 
     FUNCTION_TYPE_RETURN_TYPE(ftp) = tp;
-    FUNCTION_TYPE_SET_FUNCTION(ftp);
 
     if (tp != NULL) {
         if (TYPE_IS_EXTERNAL(tp)) {
@@ -80,6 +79,9 @@ function_type(const TYPE_DESC tp)
         }
         if (TYPE_IS_ELEMENTAL(tp)) {
             TYPE_SET_ELEMENTAL(ftp);
+        }
+        if (TYPE_IS_MODULE(tp)) {
+            TYPE_SET_MODULE(ftp);
         }
     }
 
@@ -131,7 +133,6 @@ subroutine_type(void)
 
     tp = new_type_desc();
     TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
-    FUNCTION_TYPE_SET_SUBROUTINE(tp);
     FUNCTION_TYPE_RETURN_TYPE(tp) = tq;
     return tp;
 }
@@ -178,8 +179,6 @@ generic_subroutine_type()
     TYPE_BASIC_TYPE(tq) = TYPE_GENERIC;
     tp = new_type_desc();
     TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
-    FUNCTION_TYPE_SET_SUBROUTINE(tp);
-    FUNCTION_TYPE_RETURN_TYPE(tp) = tq;
     FUNCTION_TYPE_SET_GENERIC(tp);
     return tp;
 }
@@ -661,7 +660,8 @@ find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, int allow_priv
                      * - the submodule of the module
                      */
                     if (TYPE_TAGNAME(struct_td) != NULL &&
-                        ID_USEASSOC_INFO(TYPE_TAGNAME(struct_td)) != NULL) {
+                        ID_USEASSOC_INFO(TYPE_TAGNAME(struct_td)) != NULL &&
+                        ID_IS_FROM_PARENT_MOD(TYPE_TAGNAME(struct_td)) == FALSE) {
                         error("'%s' is private type bound procedure",
                               SYM_NAME(sym));
                         return NULL;
@@ -893,189 +893,6 @@ type_parameter_expv_equals_for_argument(expv v1, expv v2)
 }
 
 
-int derived_type_is_compatible(TYPE_DESC left, TYPE_DESC right, int for_argunemt);
-
-/*
- * Check types are TKR(type, kind, rank) compatible
- *
- * If for_argunemt is TRUE, `left` is the type of dummy argument, and `right` is the type of arcutal argument
- */
-int
-type_is_compatible(TYPE_DESC left, TYPE_DESC right, int is_strict, int for_argunemt, int for_assignment, int is_pointer_assignment)
-{
-    TYPE_DESC left_basic, right_basic;
-
-    if (left == NULL || right == NULL) {
-        return FALSE;
-    }
-
-    left_basic = getBaseParameterizedType(left);
-    right_basic = getBaseParameterizedType(right);
-
-    /* type_comparison: */
-
-    if (TYPE_BASIC_TYPE(left_basic) == TYPE_BASIC_TYPE(right_basic)) {
-        goto kind_compatibility;
-    }
-
-    if (IS_STRUCT_TYPE(left_basic) && IS_STRUCT_TYPE(right_basic)) {
-        if (derived_type_is_compatible(left_basic, right_basic, for_argunemt)) {
-            /*
-             * derived_type_is_compatible include kind_compatibility
-             */
-            goto rank_compatibility;
-        }
-    }
-
-    if (TYPE_BASIC_TYPE(left_basic) == TYPE_GENERIC ||
-        TYPE_BASIC_TYPE(right_basic) == TYPE_GENERIC ||
-        TYPE_BASIC_TYPE(left_basic) == TYPE_GNUMERIC_ALL ||
-        TYPE_BASIC_TYPE(right_basic) == TYPE_GNUMERIC_ALL){
-        goto kind_compatibility;
-    }
-
-    if ((TYPE_BASIC_TYPE(left_basic) == TYPE_DREAL &&
-         TYPE_BASIC_TYPE(right_basic) == TYPE_REAL) ||
-        (TYPE_BASIC_TYPE(left_basic) == TYPE_REAL &&
-         TYPE_BASIC_TYPE(right_basic) == TYPE_DREAL)) {
-        goto kind_compatibility;
-    }
-
-    goto incompatible;
-    
-kind_compatibility:
-    
-    if (TYPE_BASIC_TYPE(left_basic) == TYPE_DREAL) {
-        if (type_is_double(right_basic)) {
-            goto length_compatiblity;
-        }
-    } else if (TYPE_BASIC_TYPE(right_basic) == TYPE_DREAL) {
-        if (type_is_double(left_basic)) {
-            goto length_compatiblity;
-        }
-    } else {
-        if (TYPE_KIND(left_basic) || TYPE_KIND(right_basic)) {
-            if (!type_parameter_expv_equals(TYPE_KIND(left_basic), TYPE_KIND(right_basic), is_strict,
-                                            for_argunemt, for_assignment, is_pointer_assignment))
-                goto incompatible;
-        }
-    }
-    
-length_compatiblity:
-
-    if (TYPE_LENG(left_basic) || TYPE_LENG(right_basic)) {
-        if (TYPE_KIND(left_basic) && TYPE_KIND(right_basic)) {
-            if (!type_parameter_expv_equals(TYPE_LENG(left_basic), TYPE_LENG(right_basic), is_strict,
-                                            for_argunemt, for_assignment, is_pointer_assignment))
-                goto incompatible;
-        }
-    }
-
-rank_compatibility:
-
-    if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
-        goto compatible;
-
-    } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
-         are_dimension_and_shape_conformant_by_type(NULL,
-                                                    left,
-                                                    right,
-                                                    NULL)) {
-        goto compatible;
-    }
-
-incompatible:
-    return FALSE;
-
-compatible:
-    return TRUE;
-}
-
-
-int
-type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right)
-{
-    return type_is_compatible(left, right, TRUE, FALSE, FALSE, FALSE);
-}
-
-#if 0
-int
-type_is_same(TYPE_DESC left, TYPE_DESC right, int strict)
-{
-    expv v1;
-    expv v2;
-
-    BASIC_DATA_TYPE left_base = get_basic_type(left);
-    BASIC_DATA_TYPE right_base = get_basic_type(right);
-
-    if (debug_flag) {
-        fprintf(stderr, "left(base): %s\n",
-                basic_type_name(left_base));
-        fprintf(stderr, "right(base): %s\n",
-                basic_type_name(right_base));
-    }
-
-    if (IS_STRUCT_TYPE(left) && IS_STRUCT_TYPE(right)) {
-        if (!derived_type_is_compatible(left, right)) {
-            return FALSE;
-        }
-    } else {
-        if (left_base != right_base) {
-            return FALSE;
-        }
-
-        if (strict) {
-            if (TYPE_KIND(left) && TYPE_KIND(right)) {
-                v1 = TYPE_KIND(left);
-                v2 = TYPE_KIND(right);
-                if (EXPR_CODE(v1) != INT_CONSTANT &&
-                    EXPR_CODE(v1) != EXPR_CODE(v2)) {
-                    return FALSE;
-                }
-                if (EXPR_CODE(v1) == INT_CONSTANT &&
-                    EXPR_CODE(v2) == INT_CONSTANT) {
-                    if (EXPV_INT_VALUE(v1) != EXPV_INT_VALUE(v2)) {
-                        return FALSE;
-                    }
-                }
-                /* CANNOT RECOGNIZE THE VALUE OF EXPV, through it */
-            }
-
-            if (TYPE_LENG(left) && TYPE_LENG(right)) {
-                v1 = TYPE_LENG(left);
-                v2 = TYPE_LENG(right);
-                if (EXPR_CODE(v1) != INT_CONSTANT &&
-                    EXPR_CODE(v1) != EXPR_CODE(v2)) {
-                    return FALSE;
-                }
-                if (EXPR_CODE(v1) == INT_CONSTANT &&
-                    EXPR_CODE(v2) == INT_CONSTANT) {
-                    if (EXPV_INT_VALUE(v1) != EXPV_INT_VALUE(v2)) {
-                        return FALSE;
-                    }
-                }
-                /* CANNOT RECOGNIZE THE VALUE OF EXPV, through it */
-            }
-        }
-    }
-
-
-    if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
-        return TRUE;
-
-    } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
-         are_dimension_and_shape_conformant_by_type(NULL,
-                                                    left,
-                                                    right,
-                                                    NULL)) {
-        return TRUE;
-
-    }
-
-    return FALSE;
-}
-#endif
-
 /*
  * Compare derived-type by their tagnames
  */
@@ -1252,39 +1069,188 @@ derived_type_is_compatible(TYPE_DESC left, TYPE_DESC right, int for_argunemt)
 
 
 /*
- * Check type-bound procedures have the same type except pass arguments.
+ * Check types are TKR(type, kind, rank) compatible
+ *
+ * If for_argunemt is TRUE, `left` is the type of dummy argument, and `right` is the type of arcutal argument
  */
 int
-type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
+type_is_compatible(TYPE_DESC left, TYPE_DESC right,
+                   int is_strict,
+                   int for_argunemt,
+                   int for_assignment,
+                   int is_pointer_assignment)
 {
-    int has_pass1;
-    int has_pass2;
-    int skip_this_loop = FALSE;
-    SYMBOL pass_arg1 = NULL;
-    SYMBOL pass_arg2 = NULL;
-    TYPE_DESC ftp1;
-    TYPE_DESC ftp2;
+    TYPE_DESC left_basic, right_basic;
+
+    if (left == NULL || right == NULL) {
+        if (debug_flag) {
+            fprintf(debug_fp, "# unexpected comparison\n");
+        }
+        return FALSE;
+    }
+
+    left_basic = getBaseParameterizedType(left);
+    right_basic = getBaseParameterizedType(right);
+
+    /* type_comparison: */
+
+    if (debug_flag) {
+        fprintf(debug_fp, "# comparing basic types\n");
+    }
+
+    if (TYPE_BASIC_TYPE(left_basic) == TYPE_BASIC_TYPE(right_basic)) {
+        goto kind_compatibility;
+    }
+
+    if (IS_STRUCT_TYPE(left_basic) && IS_STRUCT_TYPE(right_basic)) {
+        if (derived_type_is_compatible(left_basic, right_basic, for_argunemt)) {
+            /*
+             * derived_type_is_compatible include kind_compatibility
+             */
+            goto rank_compatibility;
+        }
+    }
+
+    if (TYPE_BASIC_TYPE(left_basic) == TYPE_GENERIC ||
+        TYPE_BASIC_TYPE(right_basic) == TYPE_GENERIC ||
+        TYPE_BASIC_TYPE(left_basic) == TYPE_GNUMERIC_ALL ||
+        TYPE_BASIC_TYPE(right_basic) == TYPE_GNUMERIC_ALL){
+        goto kind_compatibility;
+    }
+
+    if ((TYPE_BASIC_TYPE(left_basic) == TYPE_DREAL &&
+         TYPE_BASIC_TYPE(right_basic) == TYPE_REAL) ||
+        (TYPE_BASIC_TYPE(left_basic) == TYPE_REAL &&
+         TYPE_BASIC_TYPE(right_basic) == TYPE_DREAL)) {
+        goto kind_compatibility;
+    }
+
+    goto incompatible;
+
+kind_compatibility:
+
+    if (debug_flag) {
+        fprintf(debug_fp, "# comparing kind of types\n");
+    }
+
+    if (TYPE_BASIC_TYPE(left_basic) == TYPE_DREAL) {
+        if (type_is_double(right_basic)) {
+            goto length_compatiblity;
+        }
+    } else if (TYPE_BASIC_TYPE(right_basic) == TYPE_DREAL) {
+        if (type_is_double(left_basic)) {
+            goto length_compatiblity;
+        }
+    } else {
+        if (TYPE_KIND(left_basic) || TYPE_KIND(right_basic)) {
+            if (!type_parameter_expv_equals(
+                    TYPE_KIND(left_basic), TYPE_KIND(right_basic), is_strict,
+                    for_argunemt, for_assignment, is_pointer_assignment))
+                goto incompatible;
+        }
+    }
+
+length_compatiblity:
+
+    if (debug_flag) {
+        fprintf(debug_fp, "# comparing length of types\n");
+    }
+
+    if (TYPE_LENG(left_basic) || TYPE_LENG(right_basic)) {
+        if (TYPE_KIND(left_basic) && TYPE_KIND(right_basic)) {
+            if (!type_parameter_expv_equals(
+                    TYPE_LENG(left_basic), TYPE_LENG(right_basic), is_strict,
+                    for_argunemt, for_assignment, is_pointer_assignment))
+                goto incompatible;
+        }
+    }
+
+rank_compatibility:
+
+    if (debug_flag) {
+        fprintf(debug_fp, "# comparing rank of types\n");
+    }
+
+    if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
+        goto attribute_compatibility;
+
+    } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
+         are_dimension_and_shape_conformant_by_type(NULL,
+                                                    left,
+                                                    right,
+                                                    NULL)) {
+        goto attribute_compatibility;
+    } else {
+        goto incompatible;
+    }
+
+attribute_compatibility:
+
+    if (for_assignment) {
+        goto compatible;
+    }
+
+    if (debug_flag) {
+        fprintf(debug_fp, "# comparing attribute of types\n");
+        fprintf(debug_fp, "#  left is '%x', right is '%x'\n",
+                TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(left),
+                TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(right));
+    }
+
+    if ((TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(left)) !=
+        (TYPE_ATTR_FOR_COMPARE & TYPE_ATTR_FLAGS(right))) {
+        goto incompatible;
+    }
+
+compatible:
+    if (debug_flag) {
+        fprintf(debug_fp, "# compatible!\n");
+    }
+
+    return TRUE;
+
+incompatible:
+    return FALSE;
+
+}
+
+
+int
+type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right)
+{
+    return type_is_compatible(left, right, TRUE, FALSE, FALSE, FALSE);
+}
+
+
+static int
+function_type_is_compatible0(TYPE_DESC ftp1, TYPE_DESC ftp2, int override)
+{
     ID args1;
     ID args2;
     ID arg1;
     ID arg2;
 
-    if (tbp1 == NULL || tbp2 == NULL) {
+    /* for type-bound procedure */
+    TYPE_DESC tbp1 = NULL;
+    TYPE_DESC tbp2 = NULL;
+    SYMBOL pass_arg = NULL;
+
+    if (ftp1 == NULL || ftp2 == NULL) {
         // may never reach
         return FALSE;
     }
 
-    ftp1 = TYPE_REF(ID_TYPE(tbp1));
-    ftp2 = TYPE_REF(ID_TYPE(tbp2));
+    if (FUNCTION_TYPE_IS_TYPE_BOUND(ftp1)) {
+        tbp1 = ftp1;
+        ftp1 = TYPE_REF(ftp1);
+    }
+    if (FUNCTION_TYPE_IS_TYPE_BOUND(ftp2)) {
+        tbp2 = ftp2;
+        ftp2 = TYPE_REF(ftp2);
+    }
 
     args1 = FUNCTION_TYPE_ARGS(ftp1);
     args2 = FUNCTION_TYPE_ARGS(ftp2);
-
-    if (debug_flag) {
-        fprintf(debug_fp, "comparing '%s' and '%s'\n",
-                SYM_NAME(ID_SYM(TBP_BINDING(tbp1)?:tbp1)),
-                SYM_NAME(ID_SYM(TBP_BINDING(tbp2)?:tbp2)));
-    }
 
     /*
      * compare return types
@@ -1297,56 +1263,64 @@ type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
         return FALSE;
     }
 
-    /*
-     * compare their argument length
-     */
+    if (override) {
+        SYMBOL pass_arg1 = NULL;
+        SYMBOL pass_arg2 = NULL;
 
-    if (TYPE_BOUND_PROCEDURE_PASS & TBP_BINDING_ATTRS(tbp1)) {
-        has_pass1 = TRUE;
-        if (TBP_BINDING(tbp1)) {
-            pass_arg1 = ID_SYM(TBP_BINDING(tbp1));
+        if (tbp1 == NULL || tbp2 == NULL) {
+            return FALSE;
         }
+
+        if ((TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tbp1) &&
+             !TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tbp2)) ||
+            (!TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tbp1) &&
+             TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tbp2))) {
+            return FALSE;
+        }
+
+        if (tbp1 != NULL && TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tbp1)) {
+            if (TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp1)) {
+                pass_arg1 = ID_SYM(TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp1));
+            } else {
+                pass_arg1 = ID_SYM(FUNCTION_TYPE_ARGS(ftp1));
+            }
+        }
+        if (tbp2 != NULL && TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tbp2)) {
+            if (TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp2)) {
+                pass_arg2 = ID_SYM(TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tbp2));
+            } else {
+                pass_arg2 = ID_SYM(FUNCTION_TYPE_ARGS(ftp2));
+            }
+        }
+        if (pass_arg1 != pass_arg2) {
+            return FALSE;
+        }
+
+        pass_arg = pass_arg1;
     }
 
-    if (TYPE_BOUND_PROCEDURE_PASS & TBP_BINDING_ATTRS(tbp2)) {
-        has_pass2 = TRUE;
-        if (TBP_BINDING(tbp2)) {
-            pass_arg2 = ID_SYM(TBP_BINDING(tbp2));
-        }
-    }
+    for (arg1 = args1, arg2 = args2;
+         arg1 != NULL && arg2 != NULL;
+         arg1 = ID_NEXT(arg1), arg2 = ID_NEXT(arg2)) {
 
-    for (arg1 = args1, arg2 = args2; arg1 != NULL && arg2 != NULL; skip_this_loop = FALSE) {
+        if (arg1 == NULL || arg2 == NULL) {
+            break;
+        }
+
         if (debug_flag) {
             fprintf(debug_fp, "comparing argument '%s' and '%s'\n",
                     SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
         }
 
-        if (has_pass1) {
-            if (pass_arg1 == NULL && arg1 == args1) {
-                /* If PASS is specified without a name, the first argument is a PASS argument */
-                skip_this_loop = TRUE;
-                arg1 = ID_NEXT(arg1);
-            } else if (pass_arg1 != NULL && pass_arg1 == ID_SYM(arg1)) {
-                /* If PASS is specified with a name, the argument of that name is a PASS argument */
-                skip_this_loop = TRUE;
-                arg1 = ID_NEXT(arg1);
-            }
-        }
-        if (has_pass2) {
-            if (pass_arg2 == NULL && arg2 == args2) {
-                skip_this_loop = TRUE;
-                arg2 = ID_NEXT(arg2);
-            } else if (pass_arg2 != NULL && pass_arg2 == ID_SYM(arg2)) {
-                skip_this_loop = TRUE;
-                arg2 = ID_NEXT(arg2);
-            }
+        if (ID_SYM(arg1) != ID_SYM(arg2)) {
+            return FALSE;
         }
 
-        if (skip_this_loop) {
-            /*
-             * arg1 or arg2 is the PASS argument, skip compare them
-             */
-            continue;
+        if (override) {
+            if (pass_arg != NULL && pass_arg == ID_SYM(arg1)) {
+                /* when checking override, skip PASS arugment check */
+                continue;
+            }
         }
 
         if (!type_is_strict_compatible(ID_TYPE(arg1), ID_TYPE(arg2))) {
@@ -1356,9 +1330,6 @@ type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
             }
             return FALSE;
         }
-
-        arg1 = ID_NEXT(arg1);
-        arg2 = ID_NEXT(arg2);
     }
 
     if (arg1 != NULL || arg2 != NULL) {
@@ -1370,6 +1341,21 @@ type_bound_procedure_types_are_compatible(ID tbp1, ID tbp2)
     }
 
     return TRUE;
+}
+
+int
+function_type_is_compatible(TYPE_DESC ftp1, TYPE_DESC ftp2)
+{
+    return function_type_is_compatible0(ftp1, ftp2, FALSE);
+}
+
+/*
+ * Check type-bound procedures have the same type except pass arguments.
+ */
+int
+type_bound_procedure_types_are_compatible(TYPE_DESC tbp1, TYPE_DESC tbp2)
+{
+    return function_type_is_compatible0(tbp1, tbp2, TRUE);
 }
 
 
@@ -1385,6 +1371,9 @@ function_type_udpate(TYPE_DESC ftp, ID idList)
     fix_array_dimensions(FUNCTION_TYPE_RETURN_TYPE(ftp));
 
     FOREACH_ID(arg, FUNCTION_TYPE_ARGS(ftp)) {
+        if (ID_TYPE(arg)) {
+            continue;
+        }
         id = find_ident_head(ID_SYM(arg), idList);
         implicit_declaration(id);
         ID_TYPE(arg) = ID_TYPE(id);

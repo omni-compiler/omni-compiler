@@ -237,6 +237,9 @@ static int      ScanFortranLine _ANSI_ARGS_((char *src, char *srcHead,
                                              int *inQuotePtr, int *quoteCharPtr,
                                              int *inHollerithPtr, int *hollerithLenPtr,
                                              char **newCurPtr, char **newDstPtr));
+
+extern int unit_ctl_level;
+
 static void
 debugOutStatement()
 {
@@ -262,6 +265,13 @@ debugOutStatement()
     }
     fflush(debug_fp);
 }
+
+static int
+is_top_level(void)
+{
+    return unit_ctl_level == 0;
+}
+
 
 void
 initialize_lex()
@@ -1412,6 +1422,10 @@ classify_statement()
     ret_LOGIF:
       break;
 
+    case MODULE:
+        if (!is_top_level()) {
+            need_keyword = TRUE;
+        }
     case ALLOCATABLE:
     case ALLOCATE:
     case BIND:
@@ -1449,7 +1463,6 @@ classify_statement()
     case KW_TO:
     case KW_TYPE:
     case KW_USE:
-    case MODULE:
     case NAMELIST:
     case NULLIFY:
     case OPTIONAL:
@@ -1736,7 +1749,6 @@ get_keyword(ks)
         return ret;
     }
 }
-
 
 static int
 get_keyword_optional_blank(int class)
@@ -3833,6 +3845,7 @@ struct keyword_token keywords[ ] =
     { "endmodule",      ENDMODULE },
     { "endprogram",     ENDPROGRAM },
     { "endselect",      ENDSELECT },
+    { "endsubmodule",   ENDSUBMODULE }, /* F2008 spec */
     { "endsubroutine",  ENDSUBROUTINE },
     { "endblockdata",   ENDBLOCKDATA },
     { "endblock",       ENDBLOCK },
@@ -3908,6 +3921,7 @@ struct keyword_token keywords[ ] =
     { "sequence",       SEQUENCE },
     /*    { "static",   KW_STATIC },*/
     { "stop",           STOP },
+    { "submodule",      SUBMODULE  },  /* F2008 spec */
     { "subroutine",     SUBROUTINE  },
     { "syncall",        SYNCALL },     /* #060 coarray */
     { "syncimages",     SYNCIMAGES },  /* #060 coarray */
@@ -3940,7 +3954,9 @@ struct keyword_token end_keywords[ ] =
     { "interface",      ENDINTERFACE },
     { "module",         ENDMODULE },
     { "program",        ENDPROGRAM },
+    { "procedure",      ENDPROCEDURE },
     { "select",         ENDSELECT },
+    { "submodule",      ENDSUBMODULE },
     { "subroutine",     ENDSUBROUTINE },
     { "type",           ENDTYPE },
     { "where",          ENDWHERE },
