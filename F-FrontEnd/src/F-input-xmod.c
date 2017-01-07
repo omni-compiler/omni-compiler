@@ -1294,8 +1294,11 @@ input_indexRange(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
  * input <indexRange> node in <coShape> node
  */
 static int
-input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, expv lp)
+input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 {
+    char * is_assumed_size;
+    char * is_assumed_shape;
+    ARRAY_ASSUME_KIND assumeKind;
     expv cobound = NULL;
     expv lower = NULL;
     expv upper = NULL;
@@ -1303,6 +1306,22 @@ input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, expv lp)
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "indexRange"))
         return FALSE;
+
+    is_assumed_size = (char *) xmlTextReaderGetAttribute(reader,
+                                   BAD_CAST "is_assumed_size");
+
+    is_assumed_shape = (char *) xmlTextReaderGetAttribute(reader,
+                                    BAD_CAST "is_assumed_shape");
+
+    if (is_assumed_size != NULL) {
+        assumeKind = ASSUMED_SIZE;
+        free(is_assumed_size);
+    } else if (is_assumed_shape != NULL) {
+        assumeKind = ASSUMED_SHAPE;
+        free(is_assumed_shape);
+    } else {
+        assumeKind = ASSUMED_NONE;
+    }
 
     if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "lowerBound"))
         if (!input_lowerBound(reader, ht, &lower))
@@ -1316,8 +1335,13 @@ input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, expv lp)
         if (!input_step(reader, ht, &step))
             return FALSE;
 
+    if(upper == NULL && assumeKind == ASSUMED_SIZE){
+        upper = expv_any_term(F_ASTERISK, NULL);
+    }
+
     cobound = list3(LIST, lower, upper, step);
-    list_put_last(lp, cobound);
+    tp->codims->cobound_list = list_put_last(tp->codims->cobound_list, cobound);
+    tp->codims->corank++;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "indexRange"))
         return FALSE;
@@ -1341,7 +1365,7 @@ input_coShape(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
     codims->cobound_list = EMPTY_LIST;
 
     while (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "indexRange")) {
-        if (!input_indexRange_coShape(reader, ht, codims->cobound_list))
+        if (!input_indexRange_coShape(reader, ht, tp))
             return FALSE;
     }
 
