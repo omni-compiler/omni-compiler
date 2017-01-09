@@ -31,8 +31,6 @@ void _XMP_fjrdma_atomic_ref(int target_rank ,_XMP_coarray_t *dst_desc, size_t ds
     return;
   }
 
-  _XMP_fjrdma_sync_memory();   // To complete put operations before the _XMP_fjrdma_atomic_ref()
-
   uint64_t raddr = (uint64_t)dst_desc->addr[target_rank] + elmt_size * dst_offset;
   uint64_t laddr;
   if(src_desc == NULL)
