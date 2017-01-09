@@ -17,6 +17,7 @@ run:
 	$(XRUN) -n 2 ./atomic_define.x
 	$(XRUN) -n 2 ./atomic_ref.x
 	$(XRUN) -n 2 ./atomic_define_ref.x
+	$(XRUN) -n 2 ./atomic_put_ref.x
 
 RUN:
 	mkdir RUN
