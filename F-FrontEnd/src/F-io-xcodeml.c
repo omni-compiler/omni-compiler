@@ -108,6 +108,12 @@ compile_FORMAT_decl(st_no, x)
     ID fId;
     SYMBOL sym = NULL;
 
+    if (CURRENT_PROC_CLASS == CL_MODULE ||
+        CURRENT_PROC_CLASS == CL_SUBMODULE) {
+        error("misplaced format statement");
+        return;
+    }
+
     sym = find_symbol(StatusLineToFormatVariableName(st_no));
     fId = declare_ident(sym, CL_UNKNOWN);
     if (ID_CLASS(fId) == CL_UNKNOWN) {

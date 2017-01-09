@@ -79,14 +79,6 @@ typedef struct _codims_desc {
 } codims_desc;
 
 
-enum type_proc_class {
-    TYPE_PROC_UNKNOWN,
-    TYPE_PROC_PROGRAM,
-    TYPE_PROC_FUNC,
-    TYPE_PROC_SUBR,
-};
-
-
 /* FORTRAN 77 type descriptor */
 /* FORTRAN 77 does not have nested data structure */
 /* pointer type, TYPE_UNKNOWN and ref != NULL */
@@ -134,13 +126,15 @@ typedef struct type_descriptor
 #define TYPE_ATTR_CLASS             0x00400000
 #define TYPE_ATTR_BIND              0x00800000
 #define TYPE_ATTR_VALUE             0x01000000
+#define TYPE_ATTR_MODULE            0x02000000 /* for module function/subroutine */
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
-#define TYPE_EXFLAGS_USED_EXPLICIT  0x00000004 /* OBSOLETE: not used anymore */
+#define TYPE_EXFLAGS_USED_EXPLICIT  0x00000004 /* type is used explicitly (used for function/subroutine call) */
 #define TYPE_EXFLAGS_NOT_FIXED      0x00000008 /* type is not fixed, since expression
                                                   contains undefined function. */
 #define TYPE_EXFLAGS_FOR_FUNC_SELF  0x00000010 /* type is for the function itself */
+#define TYPE_EXFLAGS_UNCHANGABLE    0x00000020 /* type is not able to change */
         uint32_t exflags;
     } attr; /* FbasicType */
     struct {
@@ -163,13 +157,14 @@ typedef struct type_descriptor
                                  * genereted by reshape() intrinsic. */
 
     struct {
-        enum type_proc_class class;
         struct type_descriptor * return_type;
         SYMBOL result;
         int has_explicit_arguments;
         struct ident_descriptor * args;
+        int is_program;                 /* for the type of the program */
         int is_generic;                 /* for the type of generic function/subroutine */
-        int is_tbp;
+        int is_tbp;                     /* function/subroutine is type-bound procedure */
+        int is_defined;                 /* function/subroutine has a definition (For submodule only) */
         int is_internal;                /* for internal subprograms (function/subroutine in the contain block)*/
         int is_module_procedure;        /* used as a module procedure */ /* may not be required */
         int is_visible_intrinsic;       /* TRUE if non standard intrinsic */
@@ -269,6 +264,9 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_ELEMENTAL(tp)       ((tp)->attr.type_attr_flags &   TYPE_ATTR_ELEMENTAL)
 #define TYPE_SET_ELEMENTAL(tp)      ((tp)->attr.type_attr_flags |=  TYPE_ATTR_ELEMENTAL)
 #define TYPE_UNSET_ELEMENTAL(tp)    ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_ELEMENTAL)
+#define TYPE_IS_MODULE(tp)          ((tp)->attr.type_attr_flags &   TYPE_ATTR_MODULE)
+#define TYPE_SET_MODULE(tp)         ((tp)->attr.type_attr_flags |=  TYPE_ATTR_MODULE)
+#define TYPE_UNSET_MODULE(tp)       ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_MODULE)
 #define TYPE_IS_INTENT_IN(tp)       ((tp)->attr.type_attr_flags &   TYPE_ATTR_INTENT_IN)
 #define TYPE_SET_INTENT_IN(tp)      ((tp)->attr.type_attr_flags |=  TYPE_ATTR_INTENT_IN)
 #define TYPE_UNSET_INTENT_IN(tp)    ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_INTENT_IN)
@@ -316,6 +314,28 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_FOR_FUNC_SELF(tp)   ((tp)->attr.exflags &   TYPE_EXFLAGS_FOR_FUNC_SELF)
 #define TYPE_SET_FOR_FUNC_SELF(tp)  ((tp)->attr.exflags |=  TYPE_EXFLAGS_FOR_FUNC_SELF)
 #define TYPE_UNSET_FOR_FUNC_SELF(tp) ((tp)->attr.exflags &= ~TYPE_EXFLAGS_FOR_FUNC_SELF)
+
+#define TYPE_IS_UNCHANGABLE(tp)   ((tp)->attr.exflags &   TYPE_EXFLAGS_UNCHANGABLE)
+#define TYPE_SET_UNCHANGABLE(tp)  ((tp)->attr.exflags |=  TYPE_EXFLAGS_UNCHANGABLE)
+#define TYPE_UNSET_UNCHANGABLE(tp) ((tp)->attr.exflags &= ~TYPE_EXFLAGS_UNCHANGABLE)
+
+#define TYPE_ATTR_FOR_COMPARE \
+    (TYPE_ATTR_PARAMETER |                      \
+     TYPE_ATTR_ALLOCATABLE |                    \
+     TYPE_ATTR_EXTERNAL |                       \
+     TYPE_ATTR_INTRINSIC |                      \
+     TYPE_ATTR_OPTIONAL |                       \
+     TYPE_ATTR_POINTER |                        \
+     TYPE_ATTR_TARGET |                         \
+     TYPE_ATTR_INTENT_IN |                      \
+     TYPE_ATTR_INTENT_OUT |                     \
+     TYPE_ATTR_INTENT_INOUT |                   \
+     TYPE_ATTR_SEQUENCE |                       \
+     TYPE_ATTR_VOLATILE |                       \
+     TYPE_ATTR_CLASS |                          \
+     TYPE_ATTR_BIND |                           \
+     TYPE_ATTR_VALUE)
+
 
 #define TYPE_HAS_INTENT(tp)      (TYPE_IS_INTENT_IN(tp) || \
                 TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp))
@@ -457,6 +477,9 @@ extern TYPE_DESC basic_type_desc[];
     if ((stp) !=NULL) \
         for ((tp) = (stp); (tp) != NULL; (tp) = TYPE_SLINK(tp))
 
+#define SAFE_FOREACH_STRUCTDECLS(tp, tq, headp)\
+    SAFE_FOREACH(tp, tq, headp, TYPE_SLINK)
+
 #define FOREACH_MEMBER(/* ID */ mp, /* TYPE_DESC */ tp) \
     if ((tp) != NULL && TYPE_MEMBER_LIST(tp) != NULL) \
         FOREACH_ID(mp, TYPE_MEMBER_LIST(tp))
@@ -500,13 +523,9 @@ typedef enum {
 #define FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(tp) \
     (FUNCTION_TYPE_RETURN_TYPE(tp) != NULL && FUNCTION_TYPE_HAS_EXPLICIT_ARGS(tp))
 
-#define FUNCTION_TYPE_IS_FUNCTION(tp) ((tp)->proc_info.class == TYPE_PROC_FUNC)
-#define FUNCTION_TYPE_IS_SUBROUTINE(tp) ((tp)->proc_info.class == TYPE_PROC_SUBR)
-#define FUNCTION_TYPE_IS_PROGRAM(tp) ((tp)->proc_info.class == TYPE_PROC_PROGRAM)
-
-#define FUNCTION_TYPE_SET_FUNCTION(tp) ((tp)->proc_info.class = TYPE_PROC_FUNC)
-#define FUNCTION_TYPE_SET_SUBROUTINE(tp) ((tp)->proc_info.class = TYPE_PROC_SUBR)
-#define FUNCTION_TYPE_SET_PROGRAM(tp) ((tp)->proc_info.class = TYPE_PROC_PROGRAM)
+#define FUNCTION_TYPE_IS_PROGRAM(tp) ((tp)->proc_info.is_program)
+#define FUNCTION_TYPE_SET_PROGRAM(tp) ((tp)->proc_info.is_program = TRUE)
+#define FUNCTION_TYPE_UNSET_PROGRAM(tp) ((tp)->proc_info.is_program = FALSE)
 
 #define FUNCTION_TYPE_IS_TYPE_BOUND(tp) ((tp)->proc_info.is_tbp == TRUE)
 #define FUNCTION_TYPE_SET_TYPE_BOUND(tp) ((tp)->proc_info.is_tbp = TRUE)
@@ -516,10 +535,16 @@ typedef enum {
 #define FUNCTION_TYPE_SET_GENERIC(tp) ((tp)->proc_info.is_generic = TRUE)
 #define FUNCTION_TYPE_UNSET_GENERIC(tp) ((tp)->proc_info.is_generic = FALSE)
 
+#define FUNCTION_TYPE_IS_DEFINED(tp) ((tp)->proc_info.is_defined == TRUE)
+#define FUNCTION_TYPE_SET_DEFINED(tp) ((tp)->proc_info.is_defined = TRUE)
+#define FUNCTION_TYPE_UNSET_DEFINED(tp) ((tp)->proc_info.is_defined = FALSE)
+
+/* For is_external attribute */
 #define FUNCTION_TYPE_IS_INTERNAL(tp) ((tp)->proc_info.is_internal == TRUE)
 #define FUNCTION_TYPE_SET_INTERNAL(tp) ((tp)->proc_info.is_internal = TRUE)
 #define FUNCTION_TYPE_UNSET_INTERNAL(tp) ((tp)->proc_info.is_internal = FALSE)
 
+/* For is_external attribute */
 #define FUNCTION_TYPE_IS_MOUDLE_PROCEDURE(tp) ((tp)->proc_info.is_module_procedure == TRUE)
 #define FUNCTION_TYPE_SET_MOUDLE_PROCEDURE(tp) ((tp)->proc_info.is_module_procedure = TRUE)
 #define FUNCTION_TYPE_UNSET_MOUDLE_PROCEDURE(tp) ((tp)->proc_info.is_module_procedure = FALSE)

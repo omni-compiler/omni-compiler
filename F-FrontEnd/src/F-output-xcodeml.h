@@ -20,7 +20,7 @@
 
 extern void final_fixup();
 extern void output_XcodeML_file();
-extern void output_module_file(struct module *);
+extern int output_module_file(struct module *, const char *);
 
 #define CEXPR_OPTVAL_CHARLEN 128
 

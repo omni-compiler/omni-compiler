@@ -15,9 +15,34 @@ struct module_manager {
     struct module * tail;
 } MODULE_MANAGER;
 
+static struct module *
+find_module(const SYMBOL module_name,
+            const SYMBOL submodule_name,
+            int for_submodule)
+{
+    struct module * mp;
+    assert(module_name != NULL);
+    /* submodule_name may be NULL */
+    for (mp = MODULE_MANAGER.head; mp != NULL; mp = mp->next) {
+        if (MODULE_NAME(mp) == module_name &&
+            SUBMODULE_NAME(mp) == submodule_name &&
+            MODULE_IS_FOR_SUBMODULE(mp) == for_submodule) {
+            return mp;
+        }
+    }
+    return NULL;
+}
+
+
 static void
 add_module(struct module * mod)
 {
+    if (find_module(MODULE_NAME(mod),
+                    SUBMODULE_NAME(mod),
+                    MODULE_IS_FOR_SUBMODULE(mod)) != NULL) {
+        return;
+    }
+
     if(MODULE_MANAGER.head == NULL) {
         MODULE_MANAGER.head = mod;
     }else {
@@ -26,6 +51,7 @@ add_module(struct module * mod)
     MODULE_MANAGER.tail = mod;
     MODULE_MANAGER.tail->next = NULL;
 }
+
 
 static void
 add_module_id(struct module * mod, ID id)
@@ -42,7 +68,7 @@ add_module_id(struct module * mod, ID id)
     if (mid->use_assoc == NULL) {
         mid->use_assoc = XMALLOC(struct use_assoc_info *, sizeof(*(id->use_assoc)));
         mid->use_assoc->module = mod;
-        mid->use_assoc->module_name = mod->name;
+        mid->use_assoc->module_name = MODULE_NAME(mod);
         mid->use_assoc->original_name = id->name;
     }
 
@@ -57,20 +83,19 @@ add_module_id(struct module * mod, ID id)
             if (tagname->use_assoc == NULL) {
                 tagname->use_assoc = XMALLOC(struct use_assoc_info *, sizeof(*(id->use_assoc)));
                 tagname->use_assoc->module = mod;
-                tagname->use_assoc->module_name = mod->name;
+                tagname->use_assoc->module_name = MODULE_NAME(mod);
                 tagname->use_assoc->original_name = tagname->name;
             }
         }
         tp = TYPE_REF(tp);
     }
 
-    ID_LINK_ADD(mid, mod->head, mod->last);
+    ID_LINK_ADD(mid, MODULE_ID_LIST(mod), MODULE_ID_LIST_LAST(mod));
 }
 
-// TODO check this
 #define AVAILABLE_ID(id)                           \
-    ID_CLASS(id)   == CL_NAMELIST ||               \
-    (ID_TYPE(id) && !TYPE_IS_PRIVATE(ID_TYPE(id))  \
+    (ID_CLASS(id)   == CL_NAMELIST ||              \
+    (TRUE                                          \
     && (      ID_CLASS(id)   == CL_VAR             \
            || ID_CLASS(id)   == CL_ENTRY           \
            || ID_CLASS(id)   == CL_PARAM           \
@@ -81,13 +106,10 @@ add_module_id(struct module * mod, ID id)
            || ID_CLASS(id)   == CL_PROC            \
        ) \
     && (      ID_STORAGE(id) != STG_NONE           \
-        ))
+    )))
 
-/**
- * export public identifiers to module-manager.
- */
-int
-export_module(SYMBOL sym, ID ids, expv use_decls)
+struct module *
+generate_current_module(SYMBOL mod_name, SYMBOL submod_name, ID ids, expv use_decls, int for_submodule)
 {
     ID id;
     list lp;
@@ -96,32 +118,34 @@ export_module(SYMBOL sym, ID ids, expv use_decls)
     extern int flag_do_module_cache;
 
     *mod = (struct module){0};
-    mod->name = sym;
+    MODULE_NAME(mod) = mod_name;
+    if (submod_name) {
+        SUBMODULE_NAME(mod) = submod_name;
+    }
+    MODULE_IS_FOR_SUBMODULE(mod) = for_submodule;
 
-    // add public id
+    /* add public id */
     FOREACH_ID(id, ids) {
-        if(AVAILABLE_ID(id))
+        if(AVAILABLE_ID(id) &&
+           (for_submodule || (ID_TYPE(id) && !TYPE_IS_PRIVATE(ID_TYPE(id)))))
             add_module_id(mod, id);
     }
 
-    // make the list of module name which this module uses.
+    /* make the list of module name which this module uses. */
     FOR_ITEMS_IN_LIST(lp, use_decls) {
         dep = XMALLOC(struct depend_module *, sizeof(struct depend_module));
-        dep->module_name = EXPR_SYM(LIST_ITEM(lp));
-        if (mod->depend.last == NULL) {
-            mod->depend.head = dep;
-            mod->depend.last = dep;
+        MOD_DEP_NAME(dep) = EXPR_SYM(LIST_ITEM(lp));
+        if (MODULE_DEPEND_LAST(mod) == NULL) {
+            MODULE_DEPEND_HEAD(mod) = dep;
+            MODULE_DEPEND_LAST(mod) = dep;
         } else {
-            mod->depend.last->next = dep;
-            mod->depend.last = dep;
+            MOD_DEP_NEXT(MODULE_DEPEND_LAST(mod)) = dep;
+            MODULE_DEPEND_LAST(mod) = dep;
         }
     }
 
     if (flag_do_module_cache == TRUE)
         add_module(mod);
-
-    if (nerrors == 0)
-        output_module_file(mod);
 
 #if 0
     /* debug */
@@ -130,28 +154,197 @@ export_module(SYMBOL sym, ID ids, expv use_decls)
     printf("\n");
 #endif
 
-    return TRUE;
+    if (nerrors == 0) {
+        return mod;
+    } else {
+        return NULL;
+    }
+}
+
+
+static void
+intermediate_file_name(char * filename,
+                       size_t len,
+                       const struct module * mod,
+                       const char * extension)
+{
+    char tmp[FILE_NAME_LEN];
+    extern char *modincludeDirv;
+    if (modincludeDirv) {
+        snprintf(filename, strnlen(filename, FILE_NAME_LEN),
+                 "%s/", modincludeDirv);
+    }
+    if (MODULE_IS_MODULE(mod)) {
+        snprintf(tmp, sizeof(tmp), "%s.%s",
+                 SYM_NAME(MODULE_NAME(mod)),
+                 extension
+                 );
+    } else { /* mod is submodule */
+        snprintf(tmp, sizeof(tmp), "%s:%s.%s",
+                 SYM_NAME(SUBMODULE_ANCESTOR(mod)),
+                 SYM_NAME(SUBMODULE_NAME(mod)),
+                 extension
+                 );
+    }
+    strncat(filename, tmp, len - strnlen(filename, len) - 1);
+}
+
+
+void
+xmod_file_name(char * filename, size_t len, const struct module * mod)
+{
+    intermediate_file_name(filename, len, mod, "xmod");
+}
+
+
+void
+xsmod_file_name(char * filename, size_t len, const struct module * mod)
+{
+    intermediate_file_name(filename, len, mod, "xsmod");
+}
+
+
+/**
+ * export public identifiers
+ */
+int
+export_xmod(struct module * mod)
+{
+    char filename[FILE_NAME_LEN] = {0};
+    xmod_file_name(filename, sizeof(filename), mod);
+    if (mod != NULL) {
+        return output_module_file(mod, filename);
+    } else {
+        return FALSE;
+    }
+}
+
+
+/**
+ * export public/private identifiers
+ */
+int
+export_xsmod(struct module * mod)
+{
+    char filename[FILE_NAME_LEN] = {0};
+    xsmod_file_name(filename, sizeof(filename), mod);
+    if (mod != NULL) {
+        return output_module_file(mod, filename);
+    } else {
+        return FALSE;
+    }
+}
+
+
+/**
+ * export public identifiers to module-manager.
+ */
+int
+export_module(SYMBOL sym, ID ids, expv use_decls)
+{
+    int ret = FALSE;
+    int has_submodule = FALSE;
+    ID id;
+    struct module * mod = generate_current_module(sym, NULL, ids, use_decls, FALSE);
+    if (mod) {
+        ret = export_xmod(mod);
+    } else {
+        return FALSE;
+    }
+    if (ret == FALSE) {
+        return FALSE;
+    }
+
+    /* NOTE:
+     *  If the module doesn't have the module function/subroutine,
+     *  the module is closed and has no submodules.
+     *  So don't make xsmod.
+     */
+    FOREACH_ID(id, ids) {
+        if (ID_TYPE(id) &&
+            TYPE_IS_MODULE(ID_TYPE(id))) {
+            has_submodule = TRUE;
+        }
+    }
+
+    if (!has_submodule) {
+        return TRUE;
+    }
+
+    mod = generate_current_module(sym, NULL, ids, use_decls, TRUE);
+    if (mod) {
+        return export_xsmod(mod);
+    } else {
+        return FALSE;
+    }
+}
+
+
+/**
+ * export public identifiers to module-manager.
+ */
+int
+export_submodule(SYMBOL submod_name, SYMBOL mod_name, ID ids, expv use_decls)
+{
+    struct module * mod;
+    mod = generate_current_module(mod_name, submod_name, ids, use_decls, TRUE);
+    if (mod) {
+        return export_xsmod(mod);
+    } else {
+        return FALSE;
+    }
+}
+
+
+static int
+import_intermediate_file(const SYMBOL name,
+                         const SYMBOL submodule_name,
+                         struct module ** pmod,
+                         int as_for_submodule)
+{
+    struct module * mod;
+    extern int flag_do_module_cache;
+    const char * extension;
+
+    if (!as_for_submodule) {
+        extension = "xmod";
+    } else {
+        extension = "xsmod";
+    }
+
+    if ((*pmod = find_module(name, submodule_name, as_for_submodule)) != NULL) {
+        return TRUE;
+    }
+
+    if (input_intermediate_file(name, submodule_name, &mod, extension)) {
+        *pmod = mod;
+        if (flag_do_module_cache == TRUE)
+            add_module(mod);
+        return TRUE;
+    }
+
+    error("failed to import module '%s'", SYM_NAME(name));
+    exit(1);
+}
+
+
+/**
+ * import public identifiers from module-manager.
+ */
+int
+import_module(const SYMBOL name,
+              struct module ** pmod)
+{
+    return import_intermediate_file(name, NULL, pmod, FALSE);
 }
 
 /**
  * import public identifiers from module-manager.
  */
 int
-import_module(const SYMBOL name, struct module ** pmod)
+import_submodule(const SYMBOL module_name,
+                 const SYMBOL submodule_name,
+                 struct module ** pmod)
 {
-    struct module * mod;
-    for(mod = MODULE_MANAGER.head; mod != NULL; mod = mod->next) {
-        if(mod->name == name) {
-            *pmod = mod;
-            return TRUE;
-        }
-    }
-    if(input_module_file(name, &mod)) {
-        *pmod = mod;
-        add_module(mod);
-        return TRUE;
-    }
-
-    error("failed to import module '%s'", SYM_NAME(name));
-    exit(1);
+    return import_intermediate_file(module_name, submodule_name, pmod, TRUE);
 }

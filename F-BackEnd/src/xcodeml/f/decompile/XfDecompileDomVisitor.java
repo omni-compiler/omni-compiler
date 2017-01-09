@@ -2935,6 +2935,10 @@ public class XfDecompileDomVisitor {
                     writer.writeToken("ELEMENTAL");
                     writer.writeToken(" ");
                 }
+                if (XmDomUtil.getAttrBool(functionTypeNode, "is_module")) {
+                    writer.writeToken("MODULE");
+                    writer.writeToken(" ");
+                }
                 writer.writeToken("SUBROUTINE");
                 writer.writeToken(" ");
                 writer.writeToken(XmDomUtil.getContentText(functionNameNode));
@@ -2980,6 +2984,10 @@ public class XfDecompileDomVisitor {
                 }
                 if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
                     writer.writeToken("ELEMENTAL");
+                    writer.writeToken(" ");
+                }
+                if (XmDomUtil.getAttrBool(functionTypeNode, "is_module")) {
+                    writer.writeToken("MODULE");
                     writer.writeToken(" ");
                 }
                 writer.writeToken("FUNCTION");
@@ -3046,6 +3054,29 @@ public class XfDecompileDomVisitor {
         }
     }
 
+    Node findFunctionType(Node n, Node functionNameNode) {
+        XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+        Node typeChoice = typeManager.findType(functionNameNode);
+
+        if (typeChoice == null) {
+            _context.setLastErrorMessage(
+                    XfUtilForDom.formatError(n,
+                            XfError.XCODEML_TYPE_NOT_FOUND,
+                            XmDomUtil.getAttr(functionNameNode,
+                                    "type")));
+            fail(n);
+        } else if ("FfunctionType".equals(typeChoice.getNodeName()) == false) {
+            _context.setLastErrorMessage(
+                    XfUtilForDom.formatError(n,
+                            XfError.XCODEML_TYPE_MISMATCH,
+                            "function definition",
+                            typeChoice.getNodeName(),
+                            "FfunctionType"));
+            fail(n);
+        }
+        return typeChoice;
+    }
+
     // FfunctionDefinition
     class FfunctionDefinitionVisitor extends XcodeNodeVisitor {
         /**
@@ -3092,26 +3123,7 @@ public class XfDecompileDomVisitor {
             XmfWriter writer = _context.getWriter();
 
             Node functionNameNode = XmDomUtil.getElement(n, "name");
-            Node typeChoice = typeManager.findType(functionNameNode);
-
-            if (typeChoice == null) {
-                _context.setLastErrorMessage(
-                    XfUtilForDom.formatError(n,
-                                             XfError.XCODEML_TYPE_NOT_FOUND,
-                                             XmDomUtil.getAttr(functionNameNode,
-                                                               "type")));
-                fail(n);
-            } else if ("FfunctionType".equals(typeChoice.getNodeName()) == false) {
-                _context.setLastErrorMessage(
-                    XfUtilForDom.formatError(n,
-                                             XfError.XCODEML_TYPE_MISMATCH,
-                                             "function definition",
-                                             typeChoice.getNodeName(),
-                                             "FfunctionType"));
-                fail(n);
-            }
-
-            Node functionTypeNode = typeChoice;
+            Node functionTypeNode = findFunctionType(n, functionNameNode);
             String returnTypeName = XmDomUtil.getAttr(functionTypeNode,
                                                       "return_type");
             XfType typeId = XfType.getTypeIdFromXcodemlTypeName(returnTypeName);
@@ -3136,6 +3148,10 @@ public class XfDecompileDomVisitor {
                 }
                 if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
                     writer.writeToken("ELEMENTAL");
+                    writer.writeToken(" ");
+                }
+                if (XmDomUtil.getAttrBool(functionTypeNode, "is_module")) {
+                    writer.writeToken("MODULE");
                     writer.writeToken(" ");
                 }
                 writer.writeToken("SUBROUTINE");
@@ -3183,6 +3199,10 @@ public class XfDecompileDomVisitor {
                 }
                 if (XmDomUtil.getAttrBool(functionTypeNode, "is_elemental")) {
                     writer.writeToken("ELEMENTAL");
+                    writer.writeToken(" ");
+                }
+                if (XmDomUtil.getAttrBool(functionTypeNode, "is_module")) {
+                    writer.writeToken("MODULE");
                     writer.writeToken(" ");
                 }
                 writer.writeToken("FUNCTION");
@@ -3266,6 +3286,58 @@ public class XfDecompileDomVisitor {
             writer.setupNewLine();
         }
     }
+
+    // FmoduleProcedureDefiniton
+    class FmoduleProcedureDefinitionVisitor extends XcodeNodeVisitor {
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+            XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+            XmfWriter writer = _context.getWriter();
+
+            Node functionNameNode = XmDomUtil.getElement(n, "name");
+            Node functionTypeNode = findFunctionType(n, functionNameNode);
+
+            String isModule = XmDomUtil.getAttr(functionTypeNode, "is_module");
+            if (XfUtilForDom.isNullOrEmpty(isModule)) {
+                _context.setLastErrorMessage(
+                        XfUtilForDom.formatError(n,
+                                XfError.XCODEML_NEED_ATTR,
+                                "is_module",
+                                functionTypeNode.getNodeName()));
+                fail(n);
+
+            }
+            writer.writeToken("MODULE");
+            writer.writeToken("PROCEDURE");
+            writer.writeToken(XmDomUtil.getContentText(functionNameNode));
+            writer.setupNewLine();
+
+            writer.incrementIndentLevel();
+            typeManager.enterScope();
+            if (!XmOption.coarrayNoUseStatement()) {
+                writer.writeToken("use xmpf_coarray_decl");
+                writer.setupNewLine();
+            }
+
+            invokeEnter(XmDomUtil.getElement(n, "symbols"));
+
+            Node declarations = XmDomUtil.getElement(n, "declarations");
+            invokeEnter(declarations);
+
+            writeVolatileOrAsynchronousStatements(declarations);
+            writer.setupNewLine();
+
+            invokeEnter(XmDomUtil.getElement(n, "body"));
+            writer.decrementIndentLevel();
+            typeManager.leaveScope();
+
+            writer.writeToken("END");
+            writer.writeToken("PROCEDURE");
+            writer.writeToken(XmDomUtil.getContentText(functionNameNode));
+            writer.setupNewLine();
+        }
+    }
+
 
     // FifStatement
     class FifStatementVisitor extends XcodeNodeVisitor {
@@ -3605,7 +3677,17 @@ public class XfDecompileDomVisitor {
 
             String name = XmDomUtil.getAttr(n, "name");
 
-            writer.writeToken("MODULE");
+            boolean isSubmodule = XmDomUtil.getAttrBool(n, "is_sub");
+
+            if (isSubmodule) {
+                writer.writeToken("SUBMODULE");
+                writer.writeToken("(");
+                String parent = XmDomUtil.getAttr(n, "parent_name");
+                writer.writeToken(parent);
+                writer.writeToken(")");
+            } else {
+                writer.writeToken("MODULE");
+            }
             writer.writeToken(" ");
             writer.writeToken(name);
             writer.setupNewLine();
@@ -3635,7 +3717,11 @@ public class XfDecompileDomVisitor {
             writer.decrementIndentLevel();
             typeManager.leaveScope();
 
-            writer.writeToken("END MODULE");
+            if (isSubmodule) {
+                writer.writeToken("END SUBMODULE");
+            } else {
+                writer.writeToken("END MODULE");
+            }
             writer.writeToken(" ");
             writer.writeToken(name);
             writer.setupNewLine();
@@ -6818,5 +6904,6 @@ public class XfDecompileDomVisitor {
         new Pair("unlockStatement", new UnlockStatementVisitor()),
         new Pair("syncStat", new SyncStatVisitor()),
         new Pair("blockStatement", new BlockStatementVisitor()),
+        new Pair("FmoduleProcedureDefinition", new FmoduleProcedureDefinitionVisitor()),
     };
 }

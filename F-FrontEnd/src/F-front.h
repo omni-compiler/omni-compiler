@@ -41,6 +41,11 @@ extern int Addr2Uint(void *x);
 #endif
 #endif /* SIMPLE_TYPE */
 
+#define SAFE_FOREACH(p, q, list, iter)     \
+    for ((p) = (list), (q) = (p)?iter(p):NULL;\
+         (p) != NULL;\
+         (p) = (q), (q) = (p)?iter(q):NULL)
+
 #include "C-expr.h"
 #include "F-datatype.h"
 #include "F-ident.h"
@@ -190,6 +195,15 @@ typedef struct environment {
 
     struct environment * parent;
 } *ENV;
+
+#define ENV_SYMBOLS(l)               ((l)->symbols)
+#define ENV_STRUCT_DECLS(l)          ((l)->struct_decls)
+#define ENV_COMMON_SYMBOLS(l)        ((l)->common_symbols)
+#define ENV_LABELS(l)                ((l)->labels)
+#define ENV_EXTERNAL_SYMBOLS(l)      ((l)->external_symbols)
+#define ENV_INTERFACES(l)            ((l)->interfaces)
+#define ENV_BLOCKS(l)                ((l)->blocks)
+#define ENV_USE_DECLS(l)             ((l)->use_decls)
 
 extern ENV current_local_env;
 
@@ -393,6 +407,7 @@ extern int unit_ctl_level;
 #define PARENT_STATE                UNIT_CTL_CURRENT_STATE(PARENT_UNIT_CTL)
 #define PARENT_CONTAINS             EXT_PROC_CONT_EXT_SYMS(PARENT_EXT_ID)
 #define PARENT_INTERFACE            UNIT_CTL_CURRENT_INTERFACE(PARENT_UNIT_CTL)
+#define PARENT_PROC_CLASS           UNIT_CTL_CURRENT_PROC_CLASS(PARENT_UNIT_CTL)
 
 #define PARENT_LOCAL_SYMBOLS        (current_local_env->parent->symbols)
 #define PARENT_LOCAL_STRUCT_DECLS   (current_local_env->parent->struct_decls)
@@ -669,8 +684,10 @@ extern void     function_type_udpate
                     _ANSI_ARGS_((TYPE_DESC ftp, ID idList));
 extern int      function_type_is_appliable
                     _ANSI_ARGS_((TYPE_DESC ftp, expv args));
+extern int      function_type_is_compatible
+                    _ANSI_ARGS_((TYPE_DESC ftp1, TYPE_DESC ftp2));
 extern int      type_bound_procedure_types_are_compatible
-                    _ANSI_ARGS_((ID tbp1, ID tbp2));
+                    _ANSI_ARGS_((TYPE_DESC tbp1, TYPE_DESC tbp2));
 
 extern void     replace_or_assign_type
                     _ANSI_ARGS_((TYPE_DESC *tp, const TYPE_DESC new_tp));
@@ -856,8 +873,12 @@ extern expv     ExpandImpliedDoInDATA _ANSI_ARGS_((expv spec, expv new));
 
 extern void     compile_OMN_directive _ANSI_ARGS_((expr x));
 extern void     begin_module _ANSI_ARGS_((expr name));
-extern void     end_module _ANSI_ARGS_((void));
-extern int	is_in_module(void);
+extern void     end_module _ANSI_ARGS_((expr name));
+extern int      is_in_module(void);
+
+extern void     begin_submodule _ANSI_ARGS_((expr name, expr module_name, expr submodule_name));
+extern void     flatten_submodule_units _ANSI_ARGS_((void));
+extern void     end_submodule _ANSI_ARGS_((expr name));
 
 extern omllint_t getExprValue(expv v);
 
