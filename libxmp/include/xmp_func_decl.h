@@ -156,8 +156,8 @@ extern void xmp_sync_all(const int* status);
 extern void xmp_sync_image(int image, int* status);
 extern void xmp_sync_images(const int num, int* image_set, int* status);
 extern void xmp_sync_images_all(int* status);
-extern void _XMP_coarray_continuous_put(const int, void*, const void*, const long, const long, const long, const long);
-extern void _XMP_coarray_continuous_get(const int, void*, const void*, const long, const long, const long, const long);
+extern void _XMP_coarray_continuous_put(const int, void*, void*, const void*, const long, const long, const long, const long);
+extern void _XMP_coarray_continuous_get(const int, void*, void*, const void*, const long, const long, const long, const long);
 
 // xmp_coarray_acc.c
 int _XMP_coarray_get_total_elmts(void *coarray_desc);

@@ -105,8 +105,10 @@ static char *get_remote_addr(const _XMP_coarray_t *desc, const int target_rank, 
   return desc->addr[target_rank];
 }
 
-static char *get_local_addr(const _XMP_coarray_t *desc, const bool is_acc)
+static char *get_local_addr(const _XMP_coarray_t *desc, const void* ptr, const bool is_acc)
 {
+  if(desc == NULL) return (char *)ptr;
+  
 #ifdef _XMP_XACC
   if(is_acc){
     return desc->real_addr_dev;
@@ -254,6 +256,8 @@ void _XMP_mpi_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const si
 /* ARGUMENT    : [IN] target_rank  : Target rank                        */
 /*               [OUT] *dst_desc   : Descriptor of destination coarray  */
 /*               [IN] *src_desc    : Descriptor of source coarray       */
+/*                                   If source is not coarray, set NULL */
+/*               [IN] *src_ptr     : Pointer of source array            */
 /*               [IN] dst_offset   : Offset size of destination coarray */
 /*               [IN] src_offset   : Offset size of source coarray      */
 /*               [IN] dst_elmts    : Number of elements of destination  */
@@ -267,11 +271,12 @@ void _XMP_mpi_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const si
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
 void _XMP_mpi_continuous_put(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
-			   const size_t dst_offset, const size_t src_offset,
-			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_dst_on_acc, const bool is_src_on_acc)
+			     const void* src_ptr, const size_t dst_offset, const size_t src_offset,
+			     const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size,
+			     const bool is_dst_on_acc, const bool is_src_on_acc)
 {
   size_t transfer_size = elmt_size * dst_elmts;
-  char *src = get_local_addr(src_desc, is_src_on_acc);
+  char *src = get_local_addr(src_desc, src_ptr, is_src_on_acc);
   if(dst_elmts == src_elmts){
     _mpi_continuous(_XMP_N_COARRAY_PUT,
 		    target_rank,
@@ -297,29 +302,31 @@ void _XMP_mpi_continuous_put(const int target_rank, const _XMP_coarray_t *dst_de
   }
 }
 
-/************************************************************************/
-/* DESCRIPTION : Execute get operation without preprocessing            */
-/* ARGUMENT    : [IN] target_rank  : Target rank                        */
-/*               [OUT] *dst_desc   : Descriptor of destination coarray  */
-/*               [IN] *src_desc    : Descriptor of source coarray       */
-/*               [IN] dst_offset   : Offset size of destination coarray */
-/*               [IN] src_offset   : Offset size of source coarray      */
-/*               [IN] dst_elmts    : Number of elements of destination  */
-/*               [IN] src_elmts    : Number of elements of source       */
-/*               [IN] elmt_size    : Element size                       */
-/*               [IN] is_dst_on_acc: Whether dst is on acc or not       */
-/*               [IN] is_src_on_acc: Whether src is on acc or not       */
-/* NOTE       : Both dst and src are continuous coarrays.               */
-/*              target_rank != __XMP_world_rank.                        */
-/* EXAMPLE    :                                                         */
-/*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
-/************************************************************************/
+/*****************************************************************************/
+/* DESCRIPTION : Execute get operation without preprocessing                 */
+/* ARGUMENT    : [IN] target_rank  : Target rank                             */
+/*               [OUT] *dst_desc   : Descriptor of destination coarray       */
+/*                                   If destination is not coarray, set NULL */
+/*               [IN] *src_desc    : Descriptor of source coarray            */
+/*               [IN] dst_offset   : Offset size of destination coarray      */
+/*               [IN] src_offset   : Offset size of source coarray           */
+/*               [IN] dst_elmts    : Number of elements of destination       */
+/*               [IN] src_elmts    : Number of elements of source            */
+/*               [IN] elmt_size    : Element size                            */
+/*               [IN] is_dst_on_acc: Whether dst is on acc or not            */
+/*               [IN] is_src_on_acc: Whether src is on acc or not            */
+/* NOTE       : Both dst and src are continuous coarrays.                    */
+/*              target_rank != __XMP_world_rank.                             */
+/* EXAMPLE    :                                                              */
+/*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src                */
+/*****************************************************************************/
 void _XMP_mpi_continuous_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
-			   const size_t dst_offset, const size_t src_offset,
-			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_dst_on_acc, const bool is_src_on_acc)
+			     const void* dst_ptr, const size_t dst_offset, const size_t src_offset,
+			     const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size,
+			     const bool is_dst_on_acc, const bool is_src_on_acc)
 {
   size_t transfer_size = elmt_size * dst_elmts;
-  char *dst = get_local_addr(dst_desc, is_dst_on_acc);
+  char *dst = get_local_addr(dst_desc, dst_ptr, is_dst_on_acc);
   if(dst_elmts == src_elmts){
     _mpi_continuous(_XMP_N_COARRAY_GET,
 		    target_rank,
