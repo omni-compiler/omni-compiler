@@ -671,7 +671,7 @@ name_or_type_spec_or_null0:
         | type_spec
         { $$ = $1; }
         | KW_TYPE
-        { $$ = GEN_NODE(IDENT, find_symbol("TYPE")); }
+        { $$ = GEN_NODE(IDENT, find_symbol("type")); }
         ;
 
 proc_attr_list:
