@@ -1413,83 +1413,88 @@ void xmp_sync_images_all(int* status)
   _XMP_fatal("Not implement xmp_sync_images_all()");
 }
 
-/************************************************************************/
-/* DESCRIPTION : Execute put operation without preprocessing            */
-/* ARGUMENT    : [IN] target_image : Target image                       */
-/*               [OUT] *dst_desc   : Descriptor of destination coarray  */
-/*               [IN] *src_desc    : Descriptor of source coarray       */
-/*               [IN] dst_offset   : Offset size of destination coarray */
-/*               [IN] src_offset   : Offset size of source coarray      */
-/*               [IN] dst_elmts    : Number of elements of destination  */
-/*               [IN] src_elmts    : Number of elements of source       */
-/* NOTE       : Both dst and src are continuous coarrays                */
-/* EXAMPLE    :                                                         */
-/*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
-/************************************************************************/
-void _XMP_coarray_continuous_put(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
-			       const long dst_offset, const long src_offset, const long dst_elmts, const long src_elmts)
+/***************************************************************************/
+/* DESCRIPTION : Execute put operation without preprocessing               */
+/* ARGUMENT    : [IN] target_image : Target image                          */
+/*               [OUT] *dst_desc   : Descriptor of destination coarray     */
+/*               [IN] *src_desc    : Descriptor of source coarray          */
+/*                                   If source is not coarray, NULL is set */
+/*               [IN] *src_ptr     : Address of source array               */
+/*               [IN] dst_offset   : Offset size of destination coarray    */
+/*               [IN] src_offset   : Offset size of source coarray         */
+/*               [IN] dst_elmts    : Number of elements of destination     */
+/*               [IN] src_elmts    : Number of elements of source          */
+/* NOTE       : Both dst and src are continuous coarrays                   */
+/* EXAMPLE    :                                                            */
+/*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src              */
+/***************************************************************************/
+void _XMP_coarray_continuous_put(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+				 const void *src_ptr, const long dst_offset,
+				 const long src_offset, const long dst_elmts, const long src_elmts)
 {
-  int target_rank = target_image - 1;
+  int target_rank  = target_image - 1;
   size_t elmt_size = dst_desc->elmt_size;
   
   if(target_rank == _XMP_world_rank){
-    _XMP_local_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src_desc->real_addr+src_offset, 
+    _XMP_local_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src_ptr+src_offset, 
 			       dst_elmts, src_elmts, elmt_size);
   }
   else{
     _XMP_check_less_than_SIZE_MAX(dst_elmts);
     _XMP_check_less_than_SIZE_MAX(src_elmts);
 #ifdef _XMP_GASNET
-    _XMP_gasnet_continuous_put(target_rank, dst_desc, src_desc->addr[_XMP_world_rank]+src_offset,
-			     (size_t)dst_offset, (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
+    _XMP_gasnet_continuous_put(target_rank, dst_desc, (char *)src_ptr+src_offset, (size_t)dst_offset,
+			       (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_FJRDMA
     _XMP_fjrdma_continuous_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, 
-			     (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
+			       (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_TCA
     _XMP_fatal("_XMP_tca_continuous_put is unimplemented");
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_continuous_put(target_rank, dst_desc, src_desc, (size_t)dst_offset, (size_t)src_offset,
-			  (size_t)dst_elmts, (size_t)src_elmts, elmt_size, false, false);
+    _XMP_mpi_continuous_put(target_rank, dst_desc, src_desc, src_ptr, (size_t)dst_offset, (size_t)src_offset,
+			    (size_t)dst_elmts, (size_t)src_elmts, elmt_size, false, false);
 #endif
   }
 }
 
-/************************************************************************/
-/* DESCRIPTION : Execute get operation without preprocessing            */
-/* ARGUMENT    : [IN] target_image : Target image                       */
-/*               [OUT] *dst_desc   : Descriptor of destination coarray  */
-/*               [IN] *src_desc    : Descriptor of source coarray       */
-/*               [IN] dst_offset   : Offset size of destination coarray */
-/*               [IN] src_offset   : Offset size of source coarray      */
-/*               [IN] dst_elmts    : Number of elements of destination  */
-/*               [IN] src_elmts    : Number of elements of source       */
-/* NOTE       : Both dst and src are continuous coarrays                */
-/* EXAMPLE    :                                                         */
-/*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
-/************************************************************************/
-void _XMP_coarray_continuous_get(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
-			       const long dst_offset, const long src_offset, const long dst_elmts,
-			       const long src_elmts)
+/***************************************************************************/
+/* DESCRIPTION : Execute get operation without preprocessing               */
+/* ARGUMENT    : [IN] target_image : Target image                          */
+/*               [OUT] *dst_desc   : Descriptor of destination coarray     */
+/*                                   If source is not coarray, NULL is set */
+/*               [IN] *dst_ptr     : Address of source array               */
+/*               [IN] *src_desc    : Descriptor of source coarray          */
+/*               [IN] dst_offset   : Offset size of destination coarray    */
+/*               [IN] src_offset   : Offset size of source coarray         */
+/*               [IN] dst_elmts    : Number of elements of destination     */
+/*               [IN] src_elmts    : Number of elements of source          */
+/* NOTE       : Both dst and src are continuous coarrays                   */
+/* EXAMPLE    :                                                            */
+/*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src              */
+/***************************************************************************/
+void _XMP_coarray_continuous_get(const int target_image, _XMP_coarray_t *dst_desc, void* dst_ptr,
+				 const _XMP_coarray_t *src_desc, const long dst_offset,
+				 const long src_offset, const long dst_elmts, const long src_elmts)
 {
-  int target_rank = target_image - 1;
-  size_t elmt_size = dst_desc->elmt_size;
+  int target_rank  = target_image - 1;
+  size_t elmt_size = src_desc->elmt_size;
  
   if(target_rank == _XMP_world_rank){
-    _XMP_local_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src_desc->real_addr+src_offset,
+    _XMP_local_continuous_copy((char *)dst_ptr+dst_offset, (char *)src_desc->real_addr+src_offset,
 			       dst_elmts, src_elmts, elmt_size);
   }
   else{
     _XMP_check_less_than_SIZE_MAX(dst_elmts);
     _XMP_check_less_than_SIZE_MAX(src_elmts);
 #ifdef _XMP_GASNET
-    _XMP_gasnet_continuous_get(target_rank, dst_desc, src_desc->addr[target_rank]+src_offset, (size_t)dst_offset,
-                             (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
+    _XMP_gasnet_continuous_get(target_rank, (char*)dst_ptr+dst_offset, src_desc->addr[target_rank]+src_offset,
+			       (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_FJRDMA
     _XMP_fjrdma_continuous_get(target_rank, dst_desc, src_desc, (uint64_t)dst_offset, (uint64_t)src_offset, 
-			     (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
+			       (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_continuous_get(target_rank, dst_desc, src_desc, (size_t)dst_offset, (size_t)src_offset,
-			  (size_t)dst_elmts, (size_t)src_elmts, elmt_size, false, false);
+    _XMP_mpi_continuous_get(target_rank, dst_desc, src_desc, dst_ptr, (size_t)dst_offset, (size_t)src_offset,
+			    (size_t)dst_elmts, (size_t)src_elmts, elmt_size, false, false);
 #endif
   }
 }

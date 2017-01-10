@@ -1471,8 +1471,8 @@ void _XMP_gasnet_get(const int src_continuous, const int dst_continuous, const i
 /*     a[0:100]:[1] = b[0]; // a[] is a dst, b[] is a src             */
 /**********************************************************************/
 static void _gasnet_scalar_continuous_mput(const int target_rank, _XMP_coarray_t *dst_desc, const void *src, 
-					 const size_t dst_offset, const size_t dst_elmts,
-					 const size_t elmt_size)
+					   const size_t dst_offset, const size_t dst_elmts,
+					   const size_t elmt_size)
 {
   _XMP_array_section_t dst_info[1];
   dst_info[0].start    = dst_offset/elmt_size;
@@ -1521,8 +1521,8 @@ static void _gasnet_scalar_continuous_mput(const int target_rank, _XMP_coarray_t
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src               */
 /****************************************************************************/
 void _XMP_gasnet_continuous_put(const int target_rank, _XMP_coarray_t *dst_desc, void *src, 
-			      const size_t dst_offset, const size_t dst_elmts, 
-			      const size_t src_elmts, const size_t elmt_size)
+				const size_t dst_offset, const size_t dst_elmts, 
+				const size_t src_elmts, const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){
     gasnet_put_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
@@ -1538,9 +1538,8 @@ void _XMP_gasnet_continuous_put(const int target_rank, _XMP_coarray_t *dst_desc,
 /****************************************************************************/
 /* DESCRIPTION : Execute multiple get operation without preprocessing       */
 /* ARGUMENT    : [IN] target_rank : Target rank                             */
-/*               [OUT] *dst_desc  : Descriptor of destination coarray       */
+/*               [OUT] *dst_addr  : Address of destination array            */
 /*               [IN] *src        : Pointer of source array                 */
-/*               [IN] dst_offset  : Offset size of destination array        */
 /*               [IN] dst_elmts   : Number of elements of destination array */
 /*               [IN] elmt_size   : Element size                            */
 /* NOTE       : Both dst and src are continuous coarrays                    */
@@ -1548,11 +1547,9 @@ void _XMP_gasnet_continuous_put(const int target_rank, _XMP_coarray_t *dst_desc,
 /* EXAMPLE    :                                                             */
 /*     a[0:100] = b[0]:[1]; // a[] is a dst, b[] is a src                   */
 /****************************************************************************/
-static void _gasnet_scalar_continuous_mget(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
-                                         const size_t dst_offset, const size_t dst_elmts,
-                                         const size_t elmt_size)
+static void _gasnet_scalar_continuous_mget(const int target_rank, char *dst_addr, void *src,
+					   const size_t dst_elmts, const size_t elmt_size)
 {
-  char *dst_addr = dst_desc->addr[_XMP_world_rank]+dst_offset;
   gasnet_get_bulk(dst_addr, target_rank, src, elmt_size);
   for(int i=1;i<dst_elmts;i++)
     memcpy(dst_addr+i*elmt_size, dst_addr, elmt_size);
@@ -1561,9 +1558,8 @@ static void _gasnet_scalar_continuous_mget(const int target_rank, _XMP_coarray_t
 /****************************************************************************/
 /* DESCRIPTION : Execute get operation without preprocessing                */
 /* ARGUMENT    : [IN] target_rank : Target rank                             */
-/*               [OUT] *dst_desc  : Descriptor of destination coarray       */
+/*               [OUT] *dst_addr  : Address of destination array            */
 /*               [IN] *src        : Pointer of source array                 */
-/*               [IN] dst_offset  : Offset size of destination array        */
 /*               [IN] dst_elmts   : Number of elements of destination array */
 /*               [IN] src_elmts   : Number of elements of source array      */
 /*               [IN] elmt_size   : Element size                            */
@@ -1572,15 +1568,15 @@ static void _gasnet_scalar_continuous_mget(const int target_rank, _XMP_coarray_t
 /* EXAMPLE    :                                                             */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src               */
 /****************************************************************************/
-void _XMP_gasnet_continuous_get(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
-			      const size_t dst_offset, const size_t dst_elmts, const size_t src_elmts,
-			      const size_t elmt_size)
+void _XMP_gasnet_continuous_get(const int target_rank, char *dst_addr, void *src,
+				const size_t dst_elmts, const size_t src_elmts,
+				const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){
-    gasnet_get_bulk(dst_desc->addr[_XMP_world_rank]+dst_offset, target_rank, src, src_elmts*elmt_size);
+    gasnet_get_bulk(dst_addr, target_rank, src, src_elmts*elmt_size);
   }
   else if(src_elmts == 1){
-    _gasnet_scalar_continuous_mget(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
+    _gasnet_scalar_continuous_mget(target_rank, dst_addr, src, dst_elmts, elmt_size);
   }
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
