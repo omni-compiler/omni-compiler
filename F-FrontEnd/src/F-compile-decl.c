@@ -229,7 +229,7 @@ link_parent_defined_by(ID id)
                 TYPE_UNSET_IMPLICIT(ID_TYPE(parent));
             }
         } else {
-            error("%s is defined as variable before", ID_NAME(parent));
+            error("%s is defined as a variable before", ID_NAME(parent));
         }
     }
 }
