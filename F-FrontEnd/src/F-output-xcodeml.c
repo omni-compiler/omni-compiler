@@ -631,6 +631,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_INTENT_INOUT(tp) ||
         TYPE_IS_VOLATILE(tp) ||
         TYPE_IS_CLASS(tp) ||
+        TYPE_IS_PROCEDURE(tp) ||
         tp->codims;
 }
 
@@ -787,6 +788,7 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_true(TYPE_IS_INTERNAL_PRIVATE(tp), "is_internal_private");
         outx_true(TYPE_IS_VOLATILE(tp),         "is_volatile");
         outx_true(TYPE_IS_VALUE(tp),            "is_value");
+        outx_true(TYPE_IS_PROCEDURE(tp),        "is_procedure");
 
         if (TYPE_PARENT(tp)) {
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
@@ -4133,10 +4135,14 @@ outx_unlimitedClass(int l, TYPE_DESC tp)
  * output functionType of type bound procedure
  */
 static void
-outx_functionType_typeBoundProcedure(int l, TYPE_DESC tp)
+outx_functionType_procedure(int l, TYPE_DESC tp)
 {
     outx_typeAttrs(l, tp, "FbasicType", 0);
-    outx_print(" ref=\"%s\"/>\n", getTypeID(TYPE_REF(tp)));
+    if (TYPE_REF(tp)) {
+        outx_print(" ref=\"%s\"/>\n", getTypeID(TYPE_REF(tp)));
+    } else {
+        outx_print("/>\n");
+    }
 }
 
 
@@ -4146,9 +4152,9 @@ outx_functionType_typeBoundProcedure(int l, TYPE_DESC tp)
 static void
 outx_functionType(int l, TYPE_DESC tp)
 {
-    if (TYPE_REF(tp) != NULL) {
-        /* type-bound procedure */
-        outx_functionType_typeBoundProcedure(l, tp);
+    if (TYPE_IS_PROCEDURE(tp) || TYPE_REF(tp) != NULL) {
+        /* type-bound procedure or procedure type */
+        outx_functionType_procedure(l, tp);
 
     } else {
         const int l1 = l + 1, l2 = l1 + 1;
@@ -4348,16 +4354,20 @@ outx_type(int l, TYPE_DESC tp)
     } else if(IS_CHAR(tp)) {
         if(checkBasic(tp) == FALSE || checkBasic(tRef) == FALSE)
             outx_characterType(l, tp);
+
     } else if(IS_ARRAY_TYPE(tp)) {
         outx_arrayType(l, tp);
+
     } else if(IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
         if (TYPE_IS_CLASS(tp)) {
             outx_unlimitedClass(l, tp);
         } else {
             outx_structType(l, tp);
         }
+
     } else if(IS_PROCEDURE_TYPE(tp)) {
         outx_functionType(l, tp);
+
     } else if (tRef != NULL) {
         if (has_attribute_except_func_attrs(tp) ||
             TYPE_KIND(tRef) ||
@@ -4365,6 +4375,7 @@ outx_type(int l, TYPE_DESC tp)
             IS_STRUCT_TYPE(tRef)) {
             outx_basicTypeNoCharNoAry(l, tp);
         }
+
     } else if (tRef == NULL) {
         if(checkBasic(tp) == FALSE)
             outx_basicTypeNoCharNoAryNoRef(l, tp);

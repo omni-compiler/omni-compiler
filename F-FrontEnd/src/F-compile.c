@@ -1218,6 +1218,10 @@ compile_statement1(int st_no, expr x)
         compile_type_generic_procedure(x);
         break;
 
+    case F03_PROCEDURE_DECL_STATEMENT:
+        check_INDCL();
+        compile_procedure_declaration(x);
+        break;
 
     default:
         compile_exec_statement(x);
@@ -1813,6 +1817,43 @@ static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, TYPE_DESC ftp)
     } else {
         error("PASS object should be CLASS");
         return FALSE;
+    }
+}
+
+/*
+ * Update procedure typed variables
+ *
+ * Assign type bound procedure to explicit interface OR module procedure
+ */
+void
+update_procedure_variables(ID ids, TYPE_DESC struct_decls)
+{
+    ID id;
+    TYPE_DESC stp;
+
+    FOREACH_ID(id, ids) {
+        if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
+            if (VAR_REF_PROC(id) == NULL)
+                continue;
+            if (TYPE_REF(ID_TYPE(id)) != ID_TYPE(VAR_REF_PROC(id))) {
+                /* a type of the reference procedure is replaced */
+                TYPE_REF(ID_TYPE(id)) = ID_TYPE(VAR_REF_PROC(id));
+            }
+        }
+    }
+
+    FOREACH_STRUCTDECLS(stp, struct_decls) {
+        FOREACH_MEMBER(id, stp) {
+            if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
+                if (VAR_REF_PROC(id) == NULL)
+                    continue;
+
+                if (TYPE_REF(ID_TYPE(id)) != ID_TYPE(VAR_REF_PROC(id))) {
+                    /* a type of the reference procedure is replaced */
+                    TYPE_REF(ID_TYPE(id)) = ID_TYPE(VAR_REF_PROC(id));
+                }
+            }
+        }
     }
 }
 
@@ -2419,6 +2460,11 @@ end_declaration()
     }
 
     /*
+     * Update procedure variables
+     */
+    update_procedure_variables(LOCAL_SYMBOLS, LOCAL_STRUCT_DECLS);
+
+    /*
      * Update type bound procedure against exteranl functions
      */
     update_type_bound_procedures(LOCAL_STRUCT_DECLS, LOCAL_SYMBOLS);
@@ -2830,6 +2876,41 @@ is_assignment_proc(TYPE_DESC ftp)
     return TRUE;
 }
 
+
+/* TODO */
+static void
+check_procedure_variables()
+{
+    ID id;
+    TYPE_DESC stp;
+
+    FOREACH_ID(id, LOCAL_SYMBOLS) {
+        if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
+            if (VAR_REF_PROC(id) == NULL)
+                continue;
+            if (TYPE_REF(ID_TYPE(id)) != ID_TYPE(VAR_REF_PROC(id))) {
+                /* a type of the reference procedure is replaced */
+                TYPE_REF(ID_TYPE(id)) = ID_TYPE(VAR_REF_PROC(id));
+            }
+        }
+    }
+
+    FOREACH_STRUCTDECLS(stp, LOCAL_STRUCT_DECLS) {
+        FOREACH_MEMBER(id, stp) {
+            if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
+                if (VAR_REF_PROC(id) == NULL)
+                    continue;
+
+                if (TYPE_REF(ID_TYPE(id)) != ID_TYPE(VAR_REF_PROC(id))) {
+                    /* a type of the reference procedure is replaced */
+                    TYPE_REF(ID_TYPE(id)) = ID_TYPE(VAR_REF_PROC(id));
+                }
+            }
+        }
+    }
+
+
+}
 
 static void
 check_type_bound_procedures()
@@ -3255,6 +3336,8 @@ end_procedure()
     if (debug_flag) {
         dump_all_module_procedures(stderr);
     }
+
+    check_procedure_variables();
 
     check_type_bound_procedures();
 

@@ -4923,6 +4923,222 @@ type_apply_type_parameter(TYPE_DESC tp, expv type_param_values)
     return tq;
 }
 
+void
+compile_procedure_attributes(expr attrs,
+                          uint32_t *type_attr_flags_p,
+                          uint32_t *binding_attr_flags_p,
+                          ID *pass_arg_p)
+{
+    uint32_t type_attr_flags = 0;
+    uint32_t binding_attr_flags = 0;
+    ID pass_arg = NULL;
+    list lp;
+
+    if (type_attr_flags_p == NULL ||
+        binding_attr_flags_p == NULL ||
+        pass_arg_p == NULL) {
+        return;
+    }
+
+    FOR_ITEMS_IN_LIST(lp, attrs) {
+        expr v = LIST_ITEM(lp);
+        switch (EXPR_CODE(v)) {
+            /*
+             * Binding attributes
+             */
+            case F03_PASS_SPEC:
+                if (binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS) {
+                    error("PASS is already specified.");
+                    return;
+                }
+                if (binding_attr_flags & TYPE_BOUND_PROCEDURE_NOPASS) {
+                    error("PASS and NO_PASS conflicts.");
+                    return;
+                }
+                binding_attr_flags |= TYPE_BOUND_PROCEDURE_PASS;
+                if (EXPR_ARG1(v)) {
+                    pass_arg = new_ident_desc(EXPR_SYM(EXPR_ARG1(v)));
+                }
+                break;
+            case F03_NO_PASS_SPEC:
+                if (binding_attr_flags & TYPE_BOUND_PROCEDURE_NOPASS) {
+                    error("NOPASS is already specified.");
+                    return;
+                }
+                binding_attr_flags |= TYPE_BOUND_PROCEDURE_NOPASS;
+                break;
+            case F03_NON_OVERRIDABLE_SPEC:
+                if (binding_attr_flags & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE) {
+                    error("NON_OVERRIDABLE is already specified.");
+                    return;
+                }
+                warning("NOT IMPLEMENTED YET\n");
+                binding_attr_flags |= TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE;
+                break;
+            case F03_DEFERRED_SPEC:
+                if (binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) {
+                    error("DEFERRED is already specified.");
+                    return;
+                }
+                binding_attr_flags |= TYPE_BOUND_PROCEDURE_DEFERRED;
+                break;
+
+            /*
+             * Accesss specs
+             */
+            case F95_PUBLIC_SPEC:
+                if (type_attr_flags & TYPE_ATTR_PUBLIC) {
+                    error("PUBLIC is already specified.");
+                    return;
+                }
+                type_attr_flags |= TYPE_ATTR_PUBLIC;
+                break;
+            case F95_PRIVATE_SPEC:
+                if (type_attr_flags & TYPE_ATTR_PRIVATE) {
+                    error("PRIVATE is already specified.");
+                    return;
+                }
+                type_attr_flags |= TYPE_ATTR_PRIVATE;
+                break;
+
+            /*
+             * Type attirbutes
+             */
+            case F95_POINTER_SPEC:
+                type_attr_flags |= TYPE_ATTR_POINTER;
+                break;
+            case F95_OPTIONAL_SPEC:
+                type_attr_flags |= TYPE_ATTR_OPTIONAL;
+                break;
+            case F95_SAVE_SPEC:
+                type_attr_flags |= TYPE_ATTR_SAVE;
+                break;
+            case F95_INTENT_SPEC:
+                switch(EXPR_CODE(EXPR_ARG1(v))) {
+                    case F95_IN_EXTENT:
+                        type_attr_flags |= TYPE_ATTR_INTENT_IN;
+                        break;
+                    case F95_OUT_EXTENT:
+                        type_attr_flags |= TYPE_ATTR_INTENT_OUT;
+                        break;
+                    case F95_INOUT_EXTENT:
+                        type_attr_flags |= TYPE_ATTR_INTENT_INOUT;
+                        break;
+                    default:
+                        error("unexpected INTENT value");
+                        break;
+                }
+                break;
+            default:
+                error("unexpected expression");
+                break;
+        }
+    }
+
+    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS) &&
+        (binding_attr_flags & TYPE_BOUND_PROCEDURE_NOPASS)) {
+        error("PASS and NO_PASS conflicts.");
+        return;
+    }
+
+    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) &&
+        (binding_attr_flags & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE)) {
+        error("DEFERRED and NON_OVERRIDABLE conflicts.");
+        return;
+    }
+
+    if ((type_attr_flags & (TYPE_ATTR_PRIVATE)) &&
+        (type_attr_flags & (TYPE_ATTR_PUBLIC))) {
+        error("access specs are conflicted.");
+        return;
+    }
+
+    *type_attr_flags_p = type_attr_flags;
+    *binding_attr_flags_p = binding_attr_flags;
+    *pass_arg_p = pass_arg;
+}
+
+
+/*
+ * (F03_TYPE_BOUND_PROCEDURE_STATEMENT
+ *     (declarations ...)
+ *     (attrs ...)
+ *     [interface_name])
+ */
+void
+compile_procedure_declaration(expr x)
+{
+    expr decls = EXPR_ARG1(x);
+    expr attrs = EXPR_ARG2(x);
+    expr proc_interface = EXPR_ARG3(x);
+    ID id;
+    ID pass_arg = NULL;
+    ID interface = NULL;
+    SYMBOL sym = NULL;
+    list lp;
+    TYPE_DESC tp = NULL;
+
+    uint32_t type_attr_flags = 0;
+    uint32_t binding_attr_flags = 0;
+
+
+    compile_procedure_attributes(attrs,
+                                 &type_attr_flags,
+                                 &binding_attr_flags,
+                                 &pass_arg);
+
+    if (proc_interface) {
+        if (proc_interface == NULL) {
+            tp = NULL;
+        } else if (EXPR_CODE(proc_interface) == IDENT) {
+            sym = EXPR_SYM(proc_interface);
+            if ((interface = find_ident(sym)) != NULL) {
+                if (IS_PROCEDURE_TYPE(ID_TYPE(interface))) {
+                    tp = ID_TYPE(interface);
+                }
+            } else {
+                /* proc_interface is a contains function/subroutine or
+                                     an interface function/subroutine */
+
+                interface = declare_ident(sym, CL_PROC);
+                PROC_CLASS(interface) = P_UNDEFINEDPROC;
+                declare_id_type(interface, function_type(new_type_desc()));
+                declare_function(interface);
+
+                TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
+
+                tp = ID_TYPE(interface);
+            }
+        } else {
+            if (EXPR_TYPE(EXPR_ARG1(proc_interface)) == TYPE_STRUCT) {
+                proc_interface = EXPR_ARG2(proc_interface);
+            }
+            tp = compile_type(proc_interface,
+                              /* allow_predecl = */ FALSE);
+
+            if (tp == NULL) {
+                error("unexpected typeq");
+            }
+            tp = function_type(tp);
+        }
+    } else {
+        tp = NULL;
+    }
+
+    FOR_ITEMS_IN_LIST(lp, decls) {
+        if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
+            error("unexpected expression");
+            continue;
+        }
+
+        id = declare_ident(EXPR_SYM(LIST_ITEM(lp)), CL_VAR);
+        ID_LINE(id) = EXPR_LINE(x);
+        ID_TYPE(id) = procedure_type(tp);
+        TYPE_ATTR_FLAGS(ID_TYPE(id)) |= type_attr_flags;
+        VAR_REF_PROC(id) = interface;
+    }
+}
+
 /*
  * (F03_TYPE_BOUND_PROCEDURE_STATEMENT
  *     (binding_attrs ...)
@@ -4944,95 +5160,14 @@ compile_type_bound_procedure(expr x)
     uint32_t access_attr_flags = 0;
     uint32_t binding_attr_flags = 0;
 
-    FOR_ITEMS_IN_LIST(lp, binding_attrs) {
-        expr v = LIST_ITEM(lp);
-        switch (EXPR_CODE(v)) {
-            /*
-             * Binding attributes
-             */
-            case F03_PASS_SPEC:
-                if (binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS) {
-                    error_at_node(x, "PASS is already specified.");
-                    return;
-                }
-                if (binding_attr_flags & TYPE_BOUND_PROCEDURE_NOPASS) {
-                    error_at_node(x, "PASS and NO_PASS conflicts.");
-                    return;
-                }
-                binding_attr_flags |= TYPE_BOUND_PROCEDURE_PASS;
-                if (EXPR_ARG1(v)) {
-                    pass_arg = new_ident_desc(EXPR_SYM(EXPR_ARG1(v)));
-                }
-                break;
-            case F03_NO_PASS_SPEC:
-                if (binding_attr_flags & TYPE_BOUND_PROCEDURE_NOPASS) {
-                    error_at_node(x, "NOPASS is already specified.");
-                    return;
-                }
-                binding_attr_flags |= TYPE_BOUND_PROCEDURE_NOPASS;
-                break;
-            case F03_NON_OVERRIDABLE_SPEC:
-                if (binding_attr_flags & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE) {
-                    error_at_node(x, "NON_OVERRIDABLE is already specified.");
-                    return;
-                }
-                warning_at_node(x, "NOT IMPLEMENTED YET\n");
-                binding_attr_flags |= TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE;
-                break;
-            case F03_DEFERRED_SPEC:
-                if (interface_name == NULL) {
-                    error_at_node(x, "DEFERRED shall appears if and only if interface_name appears.");
-                }
 
-                if (binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) {
-                    error_at_node(x, "DEFERRED is already specified.");
-                    return;
-                }
-                binding_attr_flags |= TYPE_BOUND_PROCEDURE_DEFERRED;
-                break;
+    compile_procedure_attributes(binding_attrs,
+                                 &access_attr_flags,
+                                 &binding_attr_flags,
+                                 &pass_arg);
 
-            /*
-             * Accesss specs
-             */
-            case F95_PUBLIC_SPEC:
-                if (access_attr_flags & TYPE_ATTR_PUBLIC) {
-                    error_at_node(x, "PUBLIC is already specified.");
-                    return;
-                }
-                access_attr_flags |= TYPE_ATTR_PUBLIC;
-                break;
-            case F95_PRIVATE_SPEC:
-                if (access_attr_flags & TYPE_ATTR_PRIVATE) {
-                    error_at_node(x, "PRIVATE is already specified.");
-                    return;
-                }
-                if (access_attr_flags & (TYPE_ATTR_PUBLIC)) {
-                    error_at_node(x, "access specs are conflicted.");
-                    return;
-                }
-                access_attr_flags |= TYPE_ATTR_PRIVATE;
-                break;
-            default:
-                error_at_node(x, "unexpected expression");
-                break;
-        }
-    }
-
-    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS) &&
-        (binding_attr_flags & TYPE_BOUND_PROCEDURE_NOPASS)) {
-        error_at_node(x, "PASS and NO_PASS conflicts.");
-        return;
-    }
-
-    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) &&
-        (binding_attr_flags & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE)) {
-        error_at_node(x, "DEFERRED and NON_OVERRIDABLE conflicts.");
-        return;
-    }
-
-    if ((access_attr_flags & (TYPE_ATTR_PRIVATE)) &&
-        (access_attr_flags & (TYPE_ATTR_PUBLIC))) {
-        error_at_node(x, "access specs are conflicted.");
+    if ((access_attr_flags & !(TYPE_ATTR_PUBLIC | TYPE_ATTR_PRIVATE)) != 0) {
+        error("type-bound procedure cannot have type attributes");
         return;
     }
 
@@ -5041,7 +5176,21 @@ compile_type_bound_procedure(expr x)
         binding_attr_flags |= TYPE_BOUND_PROCEDURE_PASS;
     }
 
+    if ((binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) != 0 &&
+        interface_name == NULL) {
+        error("DEFERRED shall appears if and only if interface_name appears.");
+    }
+
     if (interface_name) {
+        if (EXPR_CODE(interface_name) != IDENT) {
+            /* TODO:
+             * if interface_name is a type and seems as a function name (i.e. REAL, INTEGER, etc)
+             * change them in to symbol.
+             */
+            error_at_node(x, "unexpected expression");
+            return;
+        }
+
         interface = new_ident_desc(EXPR_SYM(interface_name));
         if (!(binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED)) {
             error_at_node(x, "require DEFERRED attribute");

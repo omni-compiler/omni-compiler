@@ -669,7 +669,14 @@ name_or_type_spec_or_null0:
           name_or_null
         { $$ = $1; }
         | type_spec
-        { $$ = $1; }
+        {
+            if (EXPR_CODE($1) == IDENT) {
+                /* Make difference from `name` */
+                $$ = list2(LIST, GEN_NODE(F_TYPE_NODE, TYPE_STRUCT), $1);
+            } else {
+                $$ = $1;
+            }
+        }
         | KW_TYPE
         { $$ = GEN_NODE(IDENT, find_symbol("type")); }
         ;

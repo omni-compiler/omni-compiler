@@ -127,6 +127,7 @@ typedef struct type_descriptor
 #define TYPE_ATTR_BIND              0x00800000
 #define TYPE_ATTR_VALUE             0x01000000
 #define TYPE_ATTR_MODULE            0x02000000 /* for module function/subroutine */
+#define TYPE_ATTR_PROCEDURE         0x04000000 /* for procedure variables */
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -267,6 +268,9 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_MODULE(tp)          ((tp)->attr.type_attr_flags &   TYPE_ATTR_MODULE)
 #define TYPE_SET_MODULE(tp)         ((tp)->attr.type_attr_flags |=  TYPE_ATTR_MODULE)
 #define TYPE_UNSET_MODULE(tp)       ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_MODULE)
+#define TYPE_IS_PROCEDURE(tp)       ((tp)->attr.type_attr_flags &   TYPE_ATTR_PROCEDURE)
+#define TYPE_SET_PROCEDURE(tp)      ((tp)->attr.type_attr_flags |=  TYPE_ATTR_PROCEDURE)
+#define TYPE_UNSET_PROCEDURE(tp)    ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_PROCEDURE)
 #define TYPE_IS_INTENT_IN(tp)       ((tp)->attr.type_attr_flags &   TYPE_ATTR_INTENT_IN)
 #define TYPE_SET_INTENT_IN(tp)      ((tp)->attr.type_attr_flags |=  TYPE_ATTR_INTENT_IN)
 #define TYPE_UNSET_INTENT_IN(tp)    ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_INTENT_IN)
