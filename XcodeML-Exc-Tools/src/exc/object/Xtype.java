@@ -69,7 +69,8 @@ public class Xtype
     public static final int TQ_FCRAY_POINTER        = 1 << 24;  // cray pointer (ID=060c)
     public static final int TQ_FVOLATILE            = 1 << 25;  // volatile
     public static final int TQ_FCLASS               = 1 << 26;  // class
-    public static final int TQ_FVALUE                = 1 << 27;  // value
+    public static final int TQ_FVALUE               = 1 << 27;  // value
+    public static final int TQ_FMODULE              = 1 << 28;  // module
 
     private String type_id;
     private int type_kind;
@@ -662,6 +663,18 @@ public class Xtype
     public final void setIsFvalue(boolean enabled)
     {
         setTypeQualFlag(TQ_FVALUE, enabled);
+    }
+
+    /** Fortran : return if is qualified by 'module' in subroutine/function decl */
+    public final boolean isFmodule()
+    {
+      return getTypeQualFlag(TQ_FMODULE);
+    }
+
+    /** Fortran : set qualifier 'module' in subroutine/function decl */
+    public final void setIsFmodule(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FMODULE, enabled);
     }
 
     /** Fortran : return if is qualified by 'value' in pointer decl */

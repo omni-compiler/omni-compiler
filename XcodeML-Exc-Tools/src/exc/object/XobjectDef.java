@@ -173,6 +173,11 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
     return def.getArg(0);
   }
 
+  public Xobject getParentNameObj()
+  {
+    return def.getArgOrNull(4);
+  }
+
   public void setName(String name)
   {
     def.setArg(0, Xcons.Symbol(Xcode.IDENT, name));

@@ -234,8 +234,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_MODULE_DEFINITION: {
+            Xobject parent_name = xobj.getArgOrNull(4);
             e = createElement(name,
-                              "name", getArg0Name(xobj));
+                              "name", getArg0Name(xobj),
+                              "is_sub", (parent_name != null) ? "true" : "false",
+                              "parent_name", (parent_name != null) ? parent_name.getName() : null);
             XobjList symbols = (XobjList)xobj.getArgOrNull(1);
             XobjList decls =
                 (XobjList)addDeclForNotDeclared((XobjList)xobj.getArgOrNull(2),
@@ -1081,7 +1084,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     "is_public", toBoolStr(type.isFpublic()),
                     "is_private", toBoolStr(type.isFprivate()),
                     "bind", type.getBind(),
-                    "bind_name", type.getBindName());
+                    "bind_name", type.getBindName(),
+                    "is_module", toBoolStr(type.isFmodule()));
                 addChildNode(typeElem,
                              transParams((XobjList)type.getFuncParam()));
                 break;

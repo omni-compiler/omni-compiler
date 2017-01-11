@@ -213,7 +213,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
       | (getAttrBool(n, "is_public") ? Xtype.TQ_FPUBLIC : 0)
       | (getAttrBool(n, "is_program") ? Xtype.TQ_FPROGRAM : 0)
-      | (getAttrBool(n, "is_recursive") ? Xtype.TQ_FRECURSIVE : 0);
+      | (getAttrBool(n, "is_recursive") ? Xtype.TQ_FRECURSIVE : 0)
+      | (getAttrBool(n, "is_module") ? Xtype.TQ_FMODULE : 0);
 
     Xobject params = toXobject(getElement(n, "params"));
     FunctionType type = new FunctionType(tid, retType, params, tq, false,
@@ -323,6 +324,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 		     toXobject(getElement(n, "declarations"))
 		     );
       x.add(toXobject(getElement(n, "FcontainsStatement")));
+      x.add(getSymbol(n, "parent_name"));
 
       markModuleVariable((XobjList)x.getArgOrNull(1),
 			 (XobjList)x.getArgOrNull(2));

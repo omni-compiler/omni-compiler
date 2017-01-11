@@ -318,7 +318,7 @@ public class Bcons
 	return new FunctionBlock(d.getDef().getLineNo(),d.getDef().Opcode(),d.getNameObj(),
 				 d.getFuncIdList(), d.getFuncDecls(),
 				 buildBlock(d.getFuncBody()), 
-				 d.getFuncGccAttributes(), d.getParentEnv());
+				 d.getFuncGccAttributes(), d.getParentEnv(), d.getParentNameObj());
     }
 
     /** create block list for Xobject */
