@@ -991,7 +991,9 @@ declare_function(ID id)
         } else if (ID_STORAGE(id) != STG_EXT /* maybe interface */) {
             fatal("%s: bad storage '%s'", __func__, ID_NAME(id));
         }
-    } else if (ID_CLASS(id) != CL_PROC && ID_CLASS(id) != CL_ENTRY) {
+    } else if (ID_CLASS(id) != CL_PROC &&
+               ID_CLASS(id) != CL_ENTRY &&
+               !(ID_CLASS(id) == CL_VAR && ID_TYPE(id) != NULL && IS_PROCEDURE_TYPE(ID_TYPE(id)))) {
         error("identifier '%s' is used as a function", ID_NAME(id));
         return NULL;
     }
