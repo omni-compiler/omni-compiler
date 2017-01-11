@@ -59,25 +59,27 @@ void _XMP_coarray_malloc_acc(void **coarray_desc, void *addr)
 }
 
 
-/************************************************************************/
-/* DESCRIPTION : Execute put operation without preprocessing            */
-/* ARGUMENT    : [IN] target_image : Target image                       */
-/*               [OUT] *dst_desc   : Descriptor of destination coarray  */
-/*               [IN] *src_desc    : Descriptor of source coarray       */
-/*               [IN] dst_offset   : Offset size of destination coarray */
-/*               [IN] src_offset   : Offset size of source coarray      */
-/*               [IN] dst_elmts    : Number of elements of destination  */
-/*               [IN] src_elmts    : Number of elements of source       */
-/*               [IN] is_dst_on_acc: Whether dst is on acc or not       */
-/*               [IN] is_src_on_acc: Whether src is on acc or not       */
-/* NOTE       : Both dst and src are continuous coarrays                */
-/* EXAMPLE    :                                                         */
-/*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
-/************************************************************************/
+/***************************************************************************/
+/* DESCRIPTION : Execute put operation without preprocessing               */
+/* ARGUMENT    : [IN] target_image : Target image                          */
+/*               [OUT] *dst_desc   : Descriptor of destination coarray     */
+/*               [IN] *src_desc    : Descriptor of source coarray          */
+/*                                   If source is not coarray, NULL is set */
+/*               [IN] *src_ptr     : Address of source array               */
+/*               [IN] dst_offset   : Offset size of destination coarray    */
+/*               [IN] src_offset   : Offset size of source coarray         */
+/*               [IN] dst_elmts    : Number of elements of destination     */
+/*               [IN] src_elmts    : Number of elements of source          */
+/*               [IN] is_dst_on_acc: Whether dst is on acc or not          */
+/*               [IN] is_src_on_acc: Whether src is on acc or not          */
+/* NOTE       : Both dst and src are continuous coarrays                   */
+/* EXAMPLE    :                                                            */
+/*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src              */
+/***************************************************************************/
 void _XMP_coarray_continuous_put_acc(const int target_image, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
-				   const size_t dst_offset, const size_t src_offset, 
-				   const size_t dst_elmts, const size_t src_elmts,
-  				   const int is_dst_on_acc, const int is_src_on_acc)
+				     const void *src_ptr, const size_t dst_offset, const size_t src_offset, 
+				     const size_t dst_elmts, const size_t src_elmts,
+				     const int is_dst_on_acc, const int is_src_on_acc)
 {
   int target_rank = target_image - 1;
   size_t elmt_size = dst_desc->elmt_size;
@@ -88,8 +90,8 @@ void _XMP_coarray_continuous_put_acc(const int target_image, const _XMP_coarray_
   
   if(target_rank == _XMP_world_rank){
 #ifdef _XMP_MPI3_ONESIDED
-    _XMP_mpi_continuous_put(target_rank, dst_desc, src_desc, dst_offset, src_offset,
-			  dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
+    _XMP_mpi_continuous_put(target_rank, dst_desc, src_desc, src_ptr, dst_offset, src_offset,
+			    dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
 #else
     _XMP_fatal("local_continuous_copy is unimplemented");
 #endif
@@ -99,35 +101,37 @@ void _XMP_coarray_continuous_put_acc(const int target_image, const _XMP_coarray_
   else{
 #ifdef _XMP_TCA
     _XMP_tca_continuous_put(target_rank, dst_offset, src_offset, dst_desc, src_desc, 
-			  dst_elmts, src_elmts, elmt_size);
+			    dst_elmts, src_elmts, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_continuous_put(target_rank, dst_desc, src_desc, dst_offset, src_offset,
-			  dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
+    _XMP_mpi_continuous_put(target_rank, dst_desc, src_desc, src_ptr, dst_offset, src_offset,
+			    dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
 #else
     _XMP_fatal("_XMP_coarray_continuous_put_acc is unavailable");
 #endif
   }
 }
 
-/************************************************************************/
-/* DESCRIPTION : Execute get operation without preprocessing            */
-/* ARGUMENT    : [IN] target_image : Target image                       */
-/*               [OUT] *dst_desc   : Descriptor of destination coarray  */
-/*               [IN] *src_desc    : Descriptor of source coarray       */
-/*               [IN] dst_offset   : Offset size of destination coarray */
-/*               [IN] src_offset   : Offset size of source coarray      */
-/*               [IN] dst_elmts    : Number of elements of destination  */
-/*               [IN] src_elmts    : Number of elements of source       */
-/*               [IN] is_dst_on_acc: Whether dst is on acc or not       */
-/*               [IN] is_src_on_acc: Whether src is on acc or not       */
-/* NOTE       : Both dst and src are continuous coarrays                */
-/* EXAMPLE    :                                                         */
-/*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
-/************************************************************************/
-void _XMP_coarray_continuous_get_acc(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
-				   const size_t dst_offset, const size_t src_offset, 
-				   const size_t dst_elmts, const size_t src_elmts,
-				   const int is_dst_on_acc, const int is_src_on_acc)
+/***************************************************************************/
+/* DESCRIPTION : Execute get operation without preprocessing               */
+/* ARGUMENT    : [IN] target_image : Target image                          */
+/*               [OUT] *dst_desc   : Descriptor of destination coarray     */
+/*                                   If source is not coarray, NULL is set */
+/*               [IN] *dst_ptr     : Address of source array               */
+/*               [IN] *src_desc    : Descriptor of source coarray          */
+/*               [IN] dst_offset   : Offset size of destination coarray    */
+/*               [IN] src_offset   : Offset size of source coarray         */
+/*               [IN] dst_elmts    : Number of elements of destination     */
+/*               [IN] src_elmts    : Number of elements of source          */
+/*               [IN] is_dst_on_acc: Whether dst is on acc or not          */
+/*               [IN] is_src_on_acc: Whether src is on acc or not          */
+/* NOTE       : Both dst and src are continuous coarrays                   */
+/* EXAMPLE    :                                                            */
+/*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src              */
+/***************************************************************************/
+void _XMP_coarray_continuous_get_acc(const int target_image, _XMP_coarray_t *dst_desc, void* dst_ptr,
+				     const _XMP_coarray_t *src_desc, const size_t dst_offset, const size_t src_offset, 
+				     const size_t dst_elmts, const size_t src_elmts,
+				     const int is_dst_on_acc, const int is_src_on_acc)
 {
   int target_rank = target_image - 1;
   size_t elmt_size = dst_desc->elmt_size;
@@ -138,8 +142,8 @@ void _XMP_coarray_continuous_get_acc(const int target_image, _XMP_coarray_t *dst
 
   if(target_rank == _XMP_world_rank){
 #ifdef _XMP_MPI3_ONESIDED
-    _XMP_mpi_continuous_get(target_rank, dst_desc, src_desc, dst_offset, src_offset,
-			  dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
+    _XMP_mpi_continuous_get(target_rank, dst_desc, dst_ptr, src_desc, dst_offset, src_offset,
+			    dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
 #else
     _XMP_fatal("local_continuous_copy is unimplemented");
 #endif
@@ -152,8 +156,8 @@ void _XMP_coarray_continuous_get_acc(const int target_image, _XMP_coarray_t *dst
     /* 			  dst_elmts, src_elmts, elmt_size); */
     _XMP_fatal("_XMP_tca_continuous_get is unimplemented");
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_continuous_get(target_rank, dst_desc, src_desc, dst_offset, src_offset,
-			  dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
+    _XMP_mpi_continuous_get(target_rank, dst_desc, dst_ptr, src_desc, dst_offset, src_offset,
+			    dst_elmts, src_elmts, elmt_size, is_dst_on_acc, is_src_on_acc);
 #else
     _XMP_fatal("_XMP_coarray_continuous_get_acc is unavailable");
 #endif
