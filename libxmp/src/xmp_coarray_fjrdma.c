@@ -1353,9 +1353,6 @@ static void _XMP_FJMPI_Rdma_put(const int target_rank, uint64_t raddr, uint64_t 
 static void _XMP_FJMPI_Rdma_get(const int target_rank, uint64_t raddr, uint64_t laddr,
 				const size_t transfer_size)
 {
-  // To complete put operations before the following get operation.
-  _XMP_fjrdma_sync_memory();
-
   if(transfer_size <= _XMP_FJRDMA_MAX_SIZE){
     FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC);
     _XMP_add_num_of_gets();
