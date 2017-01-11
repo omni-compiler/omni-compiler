@@ -162,14 +162,14 @@ extern void _XMP_coarray_continuous_get(const int, void*, void*, const void*, co
 // xmp_coarray_acc.c
 int _XMP_coarray_get_total_elmts(void *coarray_desc);
 void _XMP_coarray_malloc_acc(void **coarray_desc, void *addr);
-void _XMP_coarray_continuous_put_acc(const int target_image, const void *dst_desc, const void *src_desc, 
-				   const size_t dst_offset, const size_t src_offset, 
-				   const size_t dst_elmts, const size_t src_elmts,
-				   const int is_dst_on_acc, const int is_src_on_acc);
-void _XMP_coarray_continuous_get_acc(const int target_image, const void *dst_desc, const void *src_desc, 
-				   const size_t dst_offset, const size_t src_offset, 
-				   const size_t dst_elmts, const size_t src_elmts,
-				   const int is_dst_on_acc, const int is_src_on_acc);
+void _XMP_coarray_continuous_put_acc(const int target_image, const void *dst_desc, const void *src_desc, const void *src_ptr,
+				     const size_t dst_offset, const size_t src_offset, 
+				     const size_t dst_elmts, const size_t src_elmts,
+				     const int is_dst_on_acc, const int is_src_on_acc);
+void _XMP_coarray_continuous_get_acc(const int target_image, const void *dst_desc, void* dst_ptr, const void *src_desc, 
+				     const size_t dst_offset, const size_t src_offset, 
+				     const size_t dst_elmts, const size_t src_elmts,
+				     const int is_dst_on_acc, const int is_src_on_acc);
 extern void _XMP_coarray_put_acc(void*, void*, void *, const int, const int);
 extern void _XMP_coarray_get_acc(void*, void*, void *, const int, const int);
 
