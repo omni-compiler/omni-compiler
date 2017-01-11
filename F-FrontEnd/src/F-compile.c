@@ -5932,6 +5932,15 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
 }
 
 
+/*
+ * Checks if this is a valid assignment of procedures
+ */
+static int
+check_procedure_assignment(TYPE_DESC left, TYPE_DESC right) {
+    return TRUE;
+}
+
+
 static void
 compile_POINTER_SET_statement(expr x) {
     list lp;
@@ -5977,7 +5986,9 @@ compile_POINTER_SET_statement(expr x) {
                       SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
         return;
     }
-    if (!TYPE_IS_TARGET(vPteTyp) && !TYPE_IS_POINTER(vPteTyp)) {
+    if (!TYPE_IS_TARGET(vPteTyp) &&
+        !TYPE_IS_POINTER(vPteTyp) &&
+        !IS_PROCEDURE_TYPE(vPteTyp)) {
         if(EXPR_CODE(EXPR_ARG2(x)) == IDENT)
             error_at_node(x, "'%s' is not a pointee.",
                           SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
@@ -5992,9 +6003,16 @@ compile_POINTER_SET_statement(expr x) {
         return;
     }
 
-    if (get_basic_type(vPtrTyp) != get_basic_type(vPteTyp)) {
-        error_at_node(x, "Type mismatch.");
-        return;
+    if (IS_PROCEDURE_TYPE(vPtrTyp) || IS_PROCEDURE_TYPE(vPteTyp)) {
+        if (!check_procedure_assignment(vPtrTyp, vPteTyp)) {
+            error_at_node(x, "Type mismatch.");
+            return;
+        }
+    } else {
+        if (get_basic_type(vPtrTyp) != get_basic_type(vPteTyp)) {
+            error_at_node(x, "Type mismatch.");
+            return;
+        }
     }
 
     if (TYPE_IS_VOLATILE(vPtrTyp) != TYPE_IS_VOLATILE(vPteTyp)) {
