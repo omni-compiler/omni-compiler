@@ -502,16 +502,60 @@ public class XfDecompileDomVisitor {
         }
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
+        boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
         // ================
         // Top type element
         // ================
         String topTypeName = topTypeChoice.getNodeName();
-        if ("FbasicType".equals(topTypeName) && !isClass) {
+        if ("FbasicType".equals(topTypeName) && !isClass && !isProcedure) {
             _writeBasicType(topTypeChoice, typeList);
         } else if ("FbasicType".equals(topTypeName) && isClass) {
             writer.writeToken("CLASS");
             writer.writeToken("(");
             writer.writeToken("*");
+            writer.writeToken(")");
+        } else if (isProcedure) {
+            writer.writeToken("PROCEDURE");
+            writer.writeToken("(");
+            if (XmDomUtil.getAttr(lowTypeChoice, "ref") != null) {
+                Node child = topTypeChoice.getFirstChild();
+                if (child != null && "params".equals(child.getNodeName())) {
+                    // function has an explicit interface
+                    // TODO: pickup function/subroutine name
+                    writer.writeToken("f");
+                } else {
+                    String returnTypeId = XmDomUtil.getAttr(topTypeChoice, "return_type");
+                    XfType returnType = XfType.getTypeIdFromXcodemlTypeName(returnTypeId);
+                    if (returnType.isPrimitive()) {
+                        writer.writeToken(returnType.fortranName());
+                    } else {
+                        XfTypeManagerForDom.TypeList returnTypeList = getTypeList(returnTypeId);
+                        boolean isRClass = XmDomUtil.getAttrBool(returnTypeList.getLast(), "is_class");
+                        String topRTypeName = returnTypeList.getFirst().getNodeName();
+                        if ("FstructType".equals(topRTypeName)) {
+                            String aliasStructTypeName =
+                                    typeManager.getAliasTypeName(XmDomUtil.getAttr(returnTypeList.getFirst(), "type"));
+                            if (isRClass) {
+                                writer.writeToken("TYPE");
+                            } else {
+                                writer.writeToken("CLASS");
+                            }
+                            writer.writeToken("(");
+                            writer.writeToken(aliasStructTypeName);
+                            writer.writeToken(")");
+                        } else {
+                            if (isRClass) {
+                                writer.writeToken("CLASS");
+                                writer.writeToken("(");
+                                writer.writeToken("*");
+                                writer.writeToken(")");
+                            } else {
+                                _writeBasicType(returnTypeList.getFirst(), returnTypeList);
+                            }
+                        }
+                    }
+                }
+            }
             writer.writeToken(")");
         } else if ("FstructType".equals(topTypeName)) {
             Node typeParamValues = typeList.findChildNode("typeParamValues");
@@ -545,7 +589,7 @@ public class XfDecompileDomVisitor {
             Node basicTypeNode = lowTypeChoice;
             String refName = XmDomUtil.getAttr(basicTypeNode, "ref");
 
-            if (!isClass && XfUtilForDom.isNullOrEmpty(refName)) {
+            if (!isClass && !isProcedure && XfUtilForDom.isNullOrEmpty(refName)) {
                 XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
                 assert refTypeId != null;
             }
