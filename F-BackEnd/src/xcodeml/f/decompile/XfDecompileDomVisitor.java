@@ -5018,7 +5018,8 @@ public class XfDecompileDomVisitor {
                                         XfError.XCODEML_TYPE_NOT_FOUND,
                                         XmDomUtil.getAttr(functionNameNode, "type")));
                         fail(n);
-                    } else if ("FfunctionType".equals(typeChoice.getNodeName()) == false) {
+                    } else if ("FfunctionType".equals(typeChoice.getNodeName()) == false &&
+                            XmDomUtil.getAttrBool(typeChoice, "is_procedure") == false) {
                         _context.setLastErrorMessage(
                                 XfUtilForDom.formatError(n,
                                         XfError.XCODEML_TYPE_MISMATCH,
