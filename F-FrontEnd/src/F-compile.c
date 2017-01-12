@@ -1826,7 +1826,7 @@ static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, TYPE_DESC ftp)
  * Assign type bound procedure to explicit interface OR module procedure
  */
 void
-update_procedure_variables(ID ids, TYPE_DESC struct_decls)
+update_procedure_variables(ID ids, TYPE_DESC struct_decls, ID targets)
 {
     ID id;
     TYPE_DESC stp;
@@ -1845,12 +1845,37 @@ update_procedure_variables(ID ids, TYPE_DESC struct_decls)
     FOREACH_STRUCTDECLS(stp, struct_decls) {
         FOREACH_MEMBER(id, stp) {
             if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
+                ID target;
                 if (VAR_REF_PROC(id) == NULL)
                     continue;
 
-                if (TYPE_REF(ID_TYPE(id)) != ID_TYPE(VAR_REF_PROC(id))) {
-                    /* a type of the reference procedure is replaced */
-                    TYPE_REF(ID_TYPE(id)) = ID_TYPE(VAR_REF_PROC(id));
+                target = find_ident_head(ID_SYM(VAR_REF_PROC(id)), targets);
+
+                if (target != NULL) {
+                    if (!IS_PROCEDURE_TYPE(ID_TYPE(target))) {
+                        continue;
+                    }
+
+#if 0
+                    // TODO check
+                    if (!check_tbp_pass_arg(tp, mem, ID_TYPE(target))) {
+                        return;
+                    }
+#endif
+                    /*
+                     * update function type
+                     */
+                    if (IS_FUNCTION_TYPE(ID_TYPE(target))) {
+                        TYPE_DESC ret;
+                        TYPE_DESC dummy_ret;
+                        ret = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(target));
+                        dummy_ret = FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ID_TYPE(id)));
+                        TYPE_BASIC_TYPE(dummy_ret) = TYPE_BASIC_TYPE(ret);
+                        TYPE_REF(dummy_ret) = ret;
+                        TYPE_REF(ID_TYPE(id)) = ID_TYPE(target);
+                    } else { /* IS_SUBR(ID_TYPE(target) == TRUE */
+                        TYPE_BASIC_TYPE(ID_TYPE(VAR_REF_PROC(id))) = TYPE_SUBR;
+                    }
                 }
             }
         }
@@ -2431,6 +2456,10 @@ end_declaration()
         function_type_udpate(ID_TYPE(myId), LOCAL_SYMBOLS);
         union_parent_type(myId);
 
+        if (unit_ctl_level > 0) {
+            update_procedure_variables(NULL, PARENT_LOCAL_STRUCT_DECLS, myId);
+        }
+
         /*
          * Update type bound procedure
          */
@@ -2462,7 +2491,7 @@ end_declaration()
     /*
      * Update procedure variables
      */
-    update_procedure_variables(LOCAL_SYMBOLS, LOCAL_STRUCT_DECLS);
+    update_procedure_variables(LOCAL_SYMBOLS, LOCAL_STRUCT_DECLS, LOCAL_SYMBOLS);
 
     /*
      * Update type bound procedure against exteranl functions

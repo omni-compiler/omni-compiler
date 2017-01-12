@@ -3742,8 +3742,8 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
     if (tp == NULL || TYPE_IS_REFERENCED(tp) == TRUE || IS_MODULE(tp))
         return;
 
-    if (skip_tbp &&  IS_PROCEDURE_TYPE(tp) &&
-        FUNCTION_TYPE_IS_TYPE_BOUND(tp)) {
+    if (skip_tbp &&  IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL ) {
+        /* TODO fix comment */
         /* type-bound procedure with a PASS argument ALWAY causes a circulation reference,
          * so store them to a tbp list and check them later.
          */
@@ -4138,6 +4138,19 @@ static void
 outx_functionType_procedure(int l, TYPE_DESC tp)
 {
     outx_typeAttrs(l, tp, "FbasicType", 0);
+
+    if (FUNCTION_TYPE_HAS_BINDING_ARG(tp)) {
+        if (FUNCTION_TYPE_HAS_PASS_ARG(tp)) {
+            outx_printi(0, " pass=\"pass\"");
+        } else {
+            outx_printi(0, " pass=\"nopass\"");
+        }
+        if (FUNCTION_TYPE_PASS_ARG(tp) != NULL) {
+            outx_printi(0, " pass_arg_name=\"%s\"",
+                        SYM_NAME(ID_SYM(FUNCTION_TYPE_PASS_ARG(tp))));
+        }
+    }
+
     if (TYPE_REF(tp)) {
         outx_print(" ref=\"%s\"/>\n", getTypeID(TYPE_REF(tp)));
     } else {

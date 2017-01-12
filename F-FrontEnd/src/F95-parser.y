@@ -579,7 +579,8 @@ statement:      /* entry */
           { $$ = list2(F95_MODULEPROCEDURE_STATEMENT, $2, make_int_enode(1)); }
         | PROCEDURE ident_list
           {
-            if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
+            if (CTL_TYPE(ctl_top) == CTL_STRUCT &&
+                CURRENT_STATE == IN_TYPE_BOUND_PROCS) {
                 $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $2, NULL, NULL);
             } else {
                 $$ = list2(F08_PROCEDURE_STATEMENT, $2, make_int_enode(0));
@@ -591,7 +592,8 @@ statement:      /* entry */
           { $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $5, $3, NULL); }
         | PROCEDURE '(' name_or_type_spec_or_null ')' ',' proc_attr_list COL2 proc_decl_list
           {
-              if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
+              if (CTL_TYPE(ctl_top) == CTL_STRUCT &&
+                CURRENT_STATE == IN_TYPE_BOUND_PROCS) {
                   $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $8, $6, $3);
               } else {
                   $$ = list3(F03_PROCEDURE_DECL_STATEMENT, $8, $6, $3);

@@ -169,10 +169,13 @@ typedef struct type_descriptor
         int is_internal;                /* for internal subprograms (function/subroutine in the contain block)*/
         int is_module_procedure;        /* used as a module procedure */ /* may not be required */
         int is_visible_intrinsic;       /* TRUE if non standard intrinsic */
+
+        int has_binding_arg;
+        int has_pass_arg;                   /* for the function type of procedure variable OR type-bound procedure */
+        struct ident_descriptor * pass_arg; /* for the function type of procedure variable OR type-bound procedure */
+
         struct {
             struct ident_descriptor * generics; /* for the function type of type-bound generic */
-            int has_pass_arg;                   /* for the function type of type-bound procedure */
-            struct ident_descriptor * pass_arg; /* for the function type of type-bound procedure */
         } type_bound_proc_info;
     } proc_info;
 
@@ -558,8 +561,12 @@ typedef enum {
 #define FUNCTION_TYPE_UNSET_VISIBLE_INTRINSIC(tp) ((tp)->proc_info.is_visible_intrinsic = FALSE)
 
 #define TYPE_BOUND_GENERIC_TYPE_GENERICS(tp) ((tp)->proc_info.type_bound_proc_info.generics)
-#define TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.type_bound_proc_info.has_pass_arg)
-#define TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tp) ((tp)->proc_info.type_bound_proc_info.pass_arg)
+#define TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.has_pass_arg)
+#define TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tp) ((tp)->proc_info.pass_arg)
+
+#define FUNCTION_TYPE_HAS_BINDING_ARG(tp) ((tp)->proc_info.has_binding_arg)
+#define FUNCTION_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.has_pass_arg)
+#define FUNCTION_TYPE_PASS_ARG(tp) ((tp)->proc_info.pass_arg)
 
 
 #endif /* _F_DATATYPE_H_ */

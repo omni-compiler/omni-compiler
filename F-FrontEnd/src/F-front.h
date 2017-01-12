@@ -133,8 +133,6 @@ enum prog_state {
     IN_TYPE_BOUND_PROCS, /* type bound procedure declarations */
 };
 
-extern enum prog_state current_state;
-
 /* procedure states */
 enum procedure_state { P_DEFAULT = 0, P_SAVE = 1 };
 extern enum procedure_state current_proc_state;

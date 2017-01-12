@@ -5102,14 +5102,24 @@ compile_procedure_declaration(expr x)
                 /* proc_interface is a contains function/subroutine or
                                      an interface function/subroutine */
 
-                interface = declare_ident(sym, CL_PROC);
-                PROC_CLASS(interface) = P_UNDEFINEDPROC;
-                declare_id_type(interface, function_type(new_type_desc()));
-                declare_function(interface);
+                if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
+                    tp = function_type(new_type_desc());
+                    interface = new_ident_desc(sym);
 
-                TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
+                    ID_TYPE(interface) = tp;
+                    TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
 
-                tp = ID_TYPE(interface);
+                } else {
+                    interface = declare_ident(sym, CL_PROC);
+                    PROC_CLASS(interface) = P_UNDEFINEDPROC;
+                    declare_id_type(interface, function_type(new_type_desc()));
+                    ID_CLASS(interface) = CL_PROC;
+                    declare_function(interface);
+
+                    TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
+
+                    tp = ID_TYPE(interface);
+                }
             }
         } else {
             if (EXPR_TYPE(EXPR_ARG1(proc_interface)) == TYPE_STRUCT) {
@@ -5138,6 +5148,12 @@ compile_procedure_declaration(expr x)
         ID_TYPE(id) = procedure_type(tp);
         TYPE_ATTR_FLAGS(ID_TYPE(id)) |= type_attr_flags;
         VAR_REF_PROC(id) = interface;
+
+        if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
+            FUNCTION_TYPE_HAS_BINDING_ARG(ID_TYPE(id)) = TRUE;
+            FUNCTION_TYPE_HAS_PASS_ARG(ID_TYPE(id)) = binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS;
+            FUNCTION_TYPE_PASS_ARG(ID_TYPE(id)) = pass_arg;
+        }
     }
 }
 
