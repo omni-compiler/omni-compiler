@@ -5735,7 +5735,9 @@ fixup_function_call(expv v) {
                     EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(tp);
                 }
             } else {
-                if (!ID_IS_DUMMY_ARG(fid)) {
+                if (!ID_IS_DUMMY_ARG(fid) &&
+                    !(ID_TYPE(fid) != NULL &&
+                      IS_PROCEDURE_TYPE(ID_TYPE(fid)))) {
                     error_at_node(v, "undefined function/subroutine: '%s'.",
                                   ID_NAME(fid));
                 }
