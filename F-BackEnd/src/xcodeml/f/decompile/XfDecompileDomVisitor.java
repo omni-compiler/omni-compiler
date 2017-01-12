@@ -253,6 +253,25 @@ public class XfDecompileDomVisitor {
                 break;
             }
         }
+
+        for (Node basicTypeNode : basicTypeNodeArray) {
+            String pass = XmDomUtil.getAttr(basicTypeNode, "pass");
+            if (!XfUtilForDom.isNullOrEmpty(pass)) {
+                if (pass.equals("pass")) {
+                    writer.writeToken(",");
+                    writer.writeToken("PASS");
+                    String passArg = XmDomUtil.getAttr(basicTypeNode, "pass_arg_name");
+                    if (!XfUtilForDom.isNullOrEmpty(passArg)) {
+                        writer.writeToken("(");
+                        writer.writeToken(passArg);
+                        writer.writeToken(")");
+                    }
+                } else if (pass.equals("nopass")) {
+                    writer.writeToken(",");
+                    writer.writeToken("NOPASS");
+                }
+            }
+        }
     }
 
     private void _writeFunctionSymbol(XfSymbol symbol,
