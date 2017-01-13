@@ -1159,7 +1159,7 @@ compile_statement1(int st_no, expr x)
 
     case F95_PRIVATE_STATEMENT:
         if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
-            // Expects inside the derived-type declaration
+            /* Expects inside the derived-type declaration */
             /* NOTE: PRIVATE and PROTECTED can be written in the derived-type declaration */
             CURRENT_STATE = INDCL;
         } else if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
@@ -1219,6 +1219,9 @@ compile_statement1(int st_no, expr x)
         break;
 
     case F03_PROCEDURE_DECL_STATEMENT:
+        if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
+            CURRENT_STATE = INDCL;
+        }
         check_INDCL();
         compile_procedure_declaration(x);
         break;
