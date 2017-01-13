@@ -550,14 +550,16 @@ compile_statement1(int st_no, expr x)
         break;
     case F_END_STATEMENT:       /* (F_END_STATEMENT) */
         if (!check_image_control_statement_available()) return;
-        if((CURRENT_PROC_NAME == NULL ||
-            (CURRENT_PROC_CLASS == CL_SUBMODULE)) &&
-            current_module_name != NULL) {
+        if (CURRENT_PROC_CLASS == CL_SUBMODULE ||
+            (CURRENT_PROC_CLASS == CL_UNKNOWN &&
+             unit_ctl_level > 1 &&
+             PARENT_PROC_CLASS == CL_SUBMODULE)) {
             goto do_end_submodule;
 
-        } else if((CURRENT_PROC_NAME == NULL ||
-            (CURRENT_PROC_CLASS == CL_MODULE)) &&
-            current_module_name != NULL) {
+        } else if (CURRENT_PROC_CLASS == CL_SUBMODULE ||
+            (CURRENT_PROC_CLASS == CL_UNKNOWN &&
+             unit_ctl_level > 1 &&
+             PARENT_PROC_CLASS == CL_SUBMODULE)) {
             goto do_end_module;
 
         } else {
