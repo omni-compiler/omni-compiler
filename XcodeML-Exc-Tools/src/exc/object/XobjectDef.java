@@ -139,7 +139,8 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
     
   public boolean isFuncDef()
   {
-    return def != null && def.Opcode() == Xcode.FUNCTION_DEFINITION;
+    return def != null && (def.Opcode() == Xcode.FUNCTION_DEFINITION ||
+                           def.Opcode() == Xcode.F_MODULE_PROCEDURE_DEFINITION);
   }
 
   public boolean isFmoduleDef()
@@ -154,7 +155,8 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
 
   public boolean isFunctionDecl()
   {
-    return def != null && def.Opcode() == Xcode.FUNCTION_DECL;
+    return def != null && (def.Opcode() == Xcode.FUNCTION_DECL ||
+                           def.Opcode() == Xcode.F_MODULE_PROCEDURE_DECL);
   }
 
   public boolean isBlockData()

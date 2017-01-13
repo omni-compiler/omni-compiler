@@ -307,6 +307,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
       type = getType(t);
 
     switch (code) {
+    case F_MODULE_PROCEDURE_DEFINITION:
     case FUNCTION_DEFINITION:
       x = Xcons.List(code, type, toXobject(getElement(n, "name")),
 		     toXobject(getElement(n, "symbols")),

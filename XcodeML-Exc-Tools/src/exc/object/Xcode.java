@@ -312,6 +312,8 @@ public enum Xcode
     F_TYPE_BOUND_PROCEDURE          ( 228, 'L', null, null),
     F_TYPE_BOUND_GENERIC_PROCEDURE  ( 229, 'L', null, null),
     F_BINDING                       ( 230, 'L', null, null),
+     // Fortran2008: SUBMODULE
+    F_MODULE_PROCEDURE_DEFINITION   ( 231, 'L', null, null),
 
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),

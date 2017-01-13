@@ -135,7 +135,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         }
             break;
 
-        case FUNCTION_DEFINITION: {
+        case FUNCTION_DEFINITION:
+        case F_MODULE_PROCEDURE_DEFINITION: {
             XobjList symbols = (XobjList)xobj.getArg(1);
             Xobject body = xobj.getArg(3);
             XobjList decls =
