@@ -375,6 +375,28 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
         }
     }
 
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "pass");
+    if (str != NULL) {
+        FUNCTION_TYPE_HAS_PASS_ARG(*tp) = TRUE;
+        if (strcmp("pass", str) == 0) {
+            FUNCTION_TYPE_HAS_PASS_ARG(*tp) = TRUE;
+        } else if (strcmp("nopass", str) == 0) {
+            FUNCTION_TYPE_HAS_PASS_ARG(*tp) = TRUE;
+        } else {
+            /* Unexpected */
+            return FALSE;
+        }
+        free(str);
+    }
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "pass_arg_name");
+    if (str != NULL) {
+        ID pass_arg;
+        pass_arg = new_ident_desc(find_symbol(str));
+        FUNCTION_TYPE_PASS_ARG(*tp) = pass_arg;
+        free(str);
+    }
+
     if (retTypeId != NULL)
         *retTypeId = typeId;    /* return typeId */
     else
