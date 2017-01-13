@@ -6,8 +6,6 @@ import xcodeml.IXobject;
 import java.util.Vector;
 
 public class XMPcoarray {
-  public final static int GET = 700;
-  public final static int PUT = 701;
   public final static int ASTERISK = -1;
 
   // FIXME supported in coarray fortran???
@@ -185,8 +183,8 @@ public class XMPcoarray {
     }
     imageVector.add(XMPcoarray.ASTERISK);
 
-    // _XMP_coarray_malloc_do()
-    funcName = new String("_XMP_coarray_malloc_do");
+    // _XMP_coarray_malloc()
+    funcName = new String("_XMP_coarray_malloc");
     Ident descId, addrId;
     if(varId.getStorageClass() == StorageClass.EXTERN){
       descId = globalDecl.declExternIdent(XMP.COARRAY_DESC_PREFIX_ + name, Xtype.voidPtrType);

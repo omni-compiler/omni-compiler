@@ -30,9 +30,8 @@ block
      a(i) = i
   end do
 
-!!$xmp reflect (a) width (/periodic/1:1) async (100)
-!$xmp reflect (a) width (/periodic/1:1)
-!!$xmp wait_async (100)
+!$xmp reflect (a) width (/periodic/1:1) async (100)
+!$xmp wait_async (100)
 
 !$xmp loop (i) on t(i)
   do i = 1, N

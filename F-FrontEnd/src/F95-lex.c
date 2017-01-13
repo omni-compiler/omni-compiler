@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include <alloca.h>
 
+// #define LEX_DEBUG 1
+
 /* lexical analyzer, enable open mp.  */
 int OMP_flag = FALSE;
 int XMP_flag = FALSE;
@@ -235,6 +237,9 @@ static int      ScanFortranLine _ANSI_ARGS_((char *src, char *srcHead,
                                              int *inQuotePtr, int *quoteCharPtr,
                                              int *inHollerithPtr, int *hollerithLenPtr,
                                              char **newCurPtr, char **newDstPtr));
+
+extern int unit_ctl_level;
+
 static void
 debugOutStatement()
 {
@@ -260,6 +265,13 @@ debugOutStatement()
     }
     fflush(debug_fp);
 }
+
+static int
+is_top_level(void)
+{
+    return unit_ctl_level == 0;
+}
+
 
 void
 initialize_lex()
@@ -315,6 +327,7 @@ prepare_for_new_statement(void) {
     the_last_token[0] = UNKNOWN;
     the_last_token[1] = UNKNOWN;
     expect_next_token_is_keyword = TRUE;
+    need_keyword = FALSE;
 }
 
 static int
@@ -423,6 +436,7 @@ yylex()
     fprintf(stderr, "%c[%d]",
             (curToken < ' ' || curToken >= 0xFF) ?
             ' ' : curToken, curToken);
+    // fprintf(stderr,",need_keyword=%d, line=%d\n",need_keyword,line_count);
 #endif
     return curToken;
 }
@@ -743,13 +757,15 @@ token()
 	    int t;
 	    int save_n = need_keyword;
 	    int save_p = paren_level;
-	    need_keyword = 1;
+	    need_keyword = TRUE;
 	    t = token();
 	    if (t == KW_LEN) {
+                need_keyword = FALSE;
 		while(isspace(*bufptr)) bufptr++;  /* skip white space */
 		if (*bufptr++ == '=')
 		    return SET_LEN;
 	    } else if (t == KW_KIND) {
+                need_keyword = FALSE;
 		while(isspace(*bufptr)) bufptr++;  /* skip white space */
 		if (*bufptr++ == '=')
 		    return SET_KIND;
@@ -914,6 +930,7 @@ token()
         return UNKNOWN;
     }
 }
+    
 static int
 is_identifier_letter( char c, int pos )
 {
@@ -996,7 +1013,7 @@ read_identifier()
 	int t;
 	int save_n = need_keyword;
 	int save_p = paren_level;
-	need_keyword = 1;
+	need_keyword = TRUE;
 	while (isspace(*bufptr)) /* skip white space */
 	    bufptr++;
 	if (*bufptr != '(') {
@@ -1382,9 +1399,10 @@ classify_statement()
               if (isalpha(*bufptr)) {
 		int save_n = need_keyword;
 		int save_p = paren_level;
-		need_keyword = 1;
+		need_keyword = TRUE;
 		int t = token();
 		if (t == THEN) { /* then key?  */
+                    need_keyword = FALSE;
 		  bufptr = save; /* it is IFTHEN statement, not LET.  */
 		  return IFTHEN;
 		}
@@ -1404,6 +1422,10 @@ classify_statement()
     ret_LOGIF:
       break;
 
+    case MODULE:
+        if (!is_top_level()) {
+            need_keyword = TRUE;
+        }
     case ALLOCATABLE:
     case ALLOCATE:
     case BIND:
@@ -1441,7 +1463,6 @@ classify_statement()
     case KW_TO:
     case KW_TYPE:
     case KW_USE:
-    case MODULE:
     case NAMELIST:
     case NULLIFY:
     case OPTIONAL:
@@ -1728,7 +1749,6 @@ get_keyword(ks)
         return ret;
     }
 }
-
 
 static int
 get_keyword_optional_blank(int class)
@@ -3825,6 +3845,7 @@ struct keyword_token keywords[ ] =
     { "endmodule",      ENDMODULE },
     { "endprogram",     ENDPROGRAM },
     { "endselect",      ENDSELECT },
+    { "endsubmodule",   ENDSUBMODULE }, /* F2008 spec */
     { "endsubroutine",  ENDSUBROUTINE },
     { "endblockdata",   ENDBLOCKDATA },
     { "endblock",       ENDBLOCK },
@@ -3900,6 +3921,7 @@ struct keyword_token keywords[ ] =
     { "sequence",       SEQUENCE },
     /*    { "static",   KW_STATIC },*/
     { "stop",           STOP },
+    { "submodule",      SUBMODULE  },  /* F2008 spec */
     { "subroutine",     SUBROUTINE  },
     { "syncall",        SYNCALL },     /* #060 coarray */
     { "syncimages",     SYNCIMAGES },  /* #060 coarray */
@@ -3932,7 +3954,9 @@ struct keyword_token end_keywords[ ] =
     { "interface",      ENDINTERFACE },
     { "module",         ENDMODULE },
     { "program",        ENDPROGRAM },
+    { "procedure",      ENDPROCEDURE },
     { "select",         ENDSELECT },
+    { "submodule",      ENDSUBMODULE },
     { "subroutine",     ENDSUBROUTINE },
     { "type",           ENDTYPE },
     { "where",          ENDWHERE },

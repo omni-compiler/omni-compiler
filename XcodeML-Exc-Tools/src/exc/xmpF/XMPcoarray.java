@@ -440,6 +440,7 @@ public class XMPcoarray {
   public void addStmts_setCoshape(BlockList list) {
     addStmts_setCoshape(list, env);
   }
+  
   public void addStmts_setCoshape(BlockList list, XMPenv env) {
     Xobject stmt;
     stmt = makeStmt_setCorank(env);
@@ -452,10 +453,11 @@ public class XMPcoarray {
     }
   }    
 
-  public void addStmts_setCoshape(ArrayList list) {
+  public void addStmts_setCoshape(ArrayList<Xobject> list) {
     addStmts_setCoshape(list, env);
   }
-  public void addStmts_setCoshape(ArrayList list, XMPenv env) {
+  
+  public void addStmts_setCoshape(ArrayList<Xobject> list, XMPenv env) {
     Xobject stmt;
     stmt = makeStmt_setCorank(env);
     list.add(stmt);
@@ -470,6 +472,7 @@ public class XMPcoarray {
   public void addStmts_setCoshape(XobjList list) {
     addStmts_setCoshape(list, env);
   }
+  
   public void addStmts_setCoshape(XobjList list, XMPenv env) {
     Xobject stmt;
     stmt = makeStmt_setCorank(env);
@@ -580,7 +583,7 @@ public class XMPcoarray {
       list.add(stmt);
     }
   }    
-  public void addStmts_setCoshape(ArrayList list, XobjList coshape) {
+  public void addStmts_setCoshape(ArrayList<Xobject> list, XobjList coshape) {
     Xobject stmt;
     stmt = makeStmt_setCorank(coshape);
     list.add(stmt);

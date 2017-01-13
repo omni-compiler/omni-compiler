@@ -12,4 +12,4 @@
             f = .TRUE.
           end function f
         end subroutine sub2
-      end module m_Crystal_Structure
+      end module post_decl

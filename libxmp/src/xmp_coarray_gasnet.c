@@ -790,7 +790,7 @@ void _XMP_gasnet_coarray_lastly_deallocate(){
 /*               [OUT] **addr        : Double pointer of new coarray  */
 /*               [IN] coarray_size   : Coarray size                   */
 /**********************************************************************/
-void _XMP_gasnet_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
+void _XMP_gasnet_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
 {
   char **each_addr;  // head address of a local array on each node
   size_t tmp_shift;
@@ -1470,7 +1470,7 @@ void _XMP_gasnet_get(const int src_continuous, const int dst_continuous, const i
 /* EXAMPLE    :                                                       */
 /*     a[0:100]:[1] = b[0]; // a[] is a dst, b[] is a src             */
 /**********************************************************************/
-static void _gasnet_scalar_shortcut_mput(const int target_rank, _XMP_coarray_t *dst_desc, const void *src, 
+static void _gasnet_scalar_continuous_mput(const int target_rank, _XMP_coarray_t *dst_desc, const void *src, 
 					 const size_t dst_offset, const size_t dst_elmts,
 					 const size_t elmt_size)
 {
@@ -1520,7 +1520,7 @@ static void _gasnet_scalar_shortcut_mput(const int target_rank, _XMP_coarray_t *
 /* EXAMPLE    :                                                             */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src               */
 /****************************************************************************/
-void _XMP_gasnet_shortcut_put(const int target_rank, _XMP_coarray_t *dst_desc, void *src, 
+void _XMP_gasnet_continuous_put(const int target_rank, _XMP_coarray_t *dst_desc, void *src, 
 			      const size_t dst_offset, const size_t dst_elmts, 
 			      const size_t src_elmts, const size_t elmt_size)
 {
@@ -1528,7 +1528,7 @@ void _XMP_gasnet_shortcut_put(const int target_rank, _XMP_coarray_t *dst_desc, v
     gasnet_put_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
   }
   else if(src_elmts == 1){
-    _gasnet_scalar_shortcut_mput(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
+    _gasnet_scalar_continuous_mput(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
   }
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
@@ -1548,7 +1548,7 @@ void _XMP_gasnet_shortcut_put(const int target_rank, _XMP_coarray_t *dst_desc, v
 /* EXAMPLE    :                                                             */
 /*     a[0:100] = b[0]:[1]; // a[] is a dst, b[] is a src                   */
 /****************************************************************************/
-static void _gasnet_scalar_shortcut_mget(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
+static void _gasnet_scalar_continuous_mget(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
                                          const size_t dst_offset, const size_t dst_elmts,
                                          const size_t elmt_size)
 {
@@ -1572,7 +1572,7 @@ static void _gasnet_scalar_shortcut_mget(const int target_rank, _XMP_coarray_t *
 /* EXAMPLE    :                                                             */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src               */
 /****************************************************************************/
-void _XMP_gasnet_shortcut_get(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
+void _XMP_gasnet_continuous_get(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
 			      const size_t dst_offset, const size_t dst_elmts, const size_t src_elmts,
 			      const size_t elmt_size)
 {
@@ -1580,7 +1580,7 @@ void _XMP_gasnet_shortcut_get(const int target_rank, _XMP_coarray_t *dst_desc, v
     gasnet_get_bulk(dst_desc->addr[_XMP_world_rank]+dst_offset, target_rank, src, src_elmts*elmt_size);
   }
   else if(src_elmts == 1){
-    _gasnet_scalar_shortcut_mget(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
+    _gasnet_scalar_continuous_mget(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
   }
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");

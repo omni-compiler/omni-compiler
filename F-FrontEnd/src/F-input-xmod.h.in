@@ -16,6 +16,7 @@
 #define DEFAULT_INSTRINSIC_XMODULES_PATH \
     "@OMNI_HOME@/fincludes"
 
-extern int input_module_file(const SYMBOL, struct module **);
+extern int input_intermediate_file(const SYMBOL, const SYMBOL,
+                                   struct module **, const char *);
 
 #endif /* _F_INPUT_XMOD_H_ */

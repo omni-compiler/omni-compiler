@@ -174,6 +174,11 @@
 %token BLOCK
 %token ENDBLOCK
 
+%token SUBMODULE
+%token ENDSUBMODULE
+%token ENDPROCEDURE
+
+
 %token REF_OP
 
 %token L_ARRAY_CONSTRUCTOR /* /( */
@@ -573,7 +578,7 @@ statement:      /* entry */
           { if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
                 $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $2, NULL, NULL);
             } else {
-                $$ = list2(F95_MODULEPROCEDURE_STATEMENT, $2, make_int_enode(0));
+                $$ = list2(F08_PROCEDURE_STATEMENT, $2, make_int_enode(0));
             }
           }
         | PROCEDURE COL2 type_bounded_proc_decl_list
@@ -582,6 +587,8 @@ statement:      /* entry */
           { $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $5, $3, NULL); }
         | PROCEDURE '(' IDENTIFIER ')' ',' binding_attr_list COL2 ident_list
           { $$ = list3(F03_TYPE_BOUND_PROCEDURE_STATEMENT, $8, $6, $3); }
+        | ENDPROCEDURE name_or_null
+          { $$ = list1(F08_ENDPROCEDURE_STATEMENT, $2); }
         | GENERIC COL2 type_bound_generic_spec REF_OP ident_list
           { $$ = list3(F03_TYPE_BOUND_GENERIC_STATEMENT,$3, $5, NULL); }
         | GENERIC ',' access_spec COL2 type_bound_generic_spec REF_OP ident_list
@@ -634,6 +641,12 @@ statement:      /* entry */
           { $$ = list0(F_END_STATEMENT); }
         | UNKNOWN
           { error("unclassifiable statement"); flush_line(); $$ = NULL; }
+        | SUBMODULE '(' name ')' name
+          { $$ = list3(F08_SUBMODULE_STATEMENT,$5,$3,NULL); }
+        | SUBMODULE '(' name ':' name ')' name
+          { $$ = list3(F08_SUBMODULE_STATEMENT,$7,$3,$5); }
+        | ENDSUBMODULE name_or_null
+          { $$ = list1(F08_ENDSUBMODULE_STATEMENT,$2); }
         ;
 
 binding_attr_list:
@@ -691,13 +704,13 @@ result_opt:    /* null */
         ;
       
 bind_opt: /* null */
-          { $$ = NULL; }
+          { $$ = NULL; need_keyword = FALSE;}
         /* BIND(C) */
         | BIND '(' IDENTIFIER /* C */ ')'
-          { $$ = list1(LIST, NULL); }
+          { $$ = list1(LIST, NULL); need_keyword = FALSE;}
         /* BIND (C, NAME='<ident>') */
         | BIND '(' IDENTIFIER /* C */ ',' KW KW_NAME '=' CONSTANT ')'
-          { $$ = list1(LIST, $8); }
+          { $$ = list1(LIST, $8); need_keyword = FALSE;}
 
 intrinsic_operator: '.'
         { $$ = list0(F95_DOTOP); }
@@ -760,6 +773,8 @@ prefix_spec:
         { $$ = list0(F95_PURE_SPEC); }
         | ELEMENTAL
         { $$ = list0(F95_ELEMENTAL_SPEC); }
+        | MODULE
+        { $$ = list0(F08_MODULE_SPEC); }
         ;
 
 name:  IDENTIFIER;

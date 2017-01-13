@@ -186,7 +186,6 @@ setReturnType(HashTable * ht, TYPE_DESC ftp, const char * rtid)
     if (strcmp(rtid, "Fvoid") == 0) {
         TYPE_BASIC_TYPE(ftp) = TYPE_SUBR;
         FUNCTION_TYPE_RETURN_TYPE(ftp) = type_VOID;
-        FUNCTION_TYPE_SET_SUBROUTINE(ftp);
 
     } else if (strncmp(rtid, "V", 1) == 0) {
         TYPE_DESC tp = getTypeDesc(ht, rtid);
@@ -202,7 +201,6 @@ setReturnType(HashTable * ht, TYPE_DESC ftp, const char * rtid)
 
     } else {
         TYPE_BASIC_TYPE(ftp) = TYPE_FUNCTION;
-        FUNCTION_TYPE_SET_FUNCTION(ftp);
         FUNCTION_TYPE_RETURN_TYPE(ftp) = getTypeDesc(ht, rtid);
     }
 }
@@ -1294,8 +1292,11 @@ input_indexRange(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
  * input <indexRange> node in <coShape> node
  */
 static int
-input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, expv lp)
+input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 {
+    char * is_assumed_size;
+    char * is_assumed_shape;
+    ARRAY_ASSUME_KIND assumeKind;
     expv cobound = NULL;
     expv lower = NULL;
     expv upper = NULL;
@@ -1303,6 +1304,22 @@ input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, expv lp)
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "indexRange"))
         return FALSE;
+
+    is_assumed_size = (char *) xmlTextReaderGetAttribute(reader,
+                                   BAD_CAST "is_assumed_size");
+
+    is_assumed_shape = (char *) xmlTextReaderGetAttribute(reader,
+                                    BAD_CAST "is_assumed_shape");
+
+    if (is_assumed_size != NULL) {
+        assumeKind = ASSUMED_SIZE;
+        free(is_assumed_size);
+    } else if (is_assumed_shape != NULL) {
+        assumeKind = ASSUMED_SHAPE;
+        free(is_assumed_shape);
+    } else {
+        assumeKind = ASSUMED_NONE;
+    }
 
     if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "lowerBound"))
         if (!input_lowerBound(reader, ht, &lower))
@@ -1316,8 +1333,13 @@ input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, expv lp)
         if (!input_step(reader, ht, &step))
             return FALSE;
 
+    if(upper == NULL && assumeKind == ASSUMED_SIZE){
+        upper = expv_any_term(F_ASTERISK, NULL);
+    }
+
     cobound = list3(LIST, lower, upper, step);
-    list_put_last(lp, cobound);
+    tp->codims->cobound_list = list_put_last(tp->codims->cobound_list, cobound);
+    tp->codims->corank++;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "indexRange"))
         return FALSE;
@@ -1341,7 +1363,7 @@ input_coShape(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
     codims->cobound_list = EMPTY_LIST;
 
     while (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "indexRange")) {
-        if (!input_indexRange_coShape(reader, ht, codims->cobound_list))
+        if (!input_indexRange_coShape(reader, ht, tp))
             return FALSE;
     }
 
@@ -1774,11 +1796,24 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
         free(attr);
     }
 
+    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_module");
+    if (attr != NULL) {
+        TYPE_SET_MODULE(ftp);
+        free(attr);
+    }
+
     attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_external");
     if (attr != NULL) {
         TYPE_SET_EXTERNAL(ftp);
         free(attr);
     }
+
+    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined");
+    if (attr != NULL) {
+        FUNCTION_TYPE_SET_DEFINED(ftp);
+        free(attr);
+    }
+
 
     if (!xmlSkipWhiteSpace(reader)) 
         return FALSE;
@@ -3259,10 +3294,13 @@ search_intrinsic_include_path(const char * filename)
 }
 
 /**
- * input module from .xmod file
+ * input data from the module intermediate file
  */
 int
-input_module_file(const SYMBOL mod_name, struct module **pmod)
+input_intermediate_file(const SYMBOL mod_name,
+                        const SYMBOL submod_name,
+                        struct module **pmod,
+                        const char * extension)
 {
     int ret;
     char filename[FILE_NAME_LEN];
@@ -3270,10 +3308,21 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
     xmlTextReaderPtr reader;
     int is_intrinsic = FALSE;
 
-    // search for "xxx.xmod"
+    if (mod_name == NULL || pmod == NULL) {
+        return FALSE;
+    }
+
+    /* search for "xxx.xmod" */
     bzero(filename, sizeof(filename));
-    strcpy(filename, SYM_NAME(mod_name));
-    strcat(filename, ".xmod");
+    if (!submod_name) {
+        snprintf(filename, sizeof(filename), "%s.%s",
+                 SYM_NAME(mod_name),
+                 extension);
+    } else {
+        snprintf(filename, sizeof(filename), "%s:%s.%s",
+                 SYM_NAME(mod_name), SYM_NAME(submod_name),
+                 extension);
+    }
 
     filepath = search_include_path(filename);
 
@@ -3282,24 +3331,24 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
 #if defined _MPI_FC && _MPI_FC == gfortran
     // if not found, then search for "xxx.mod" and convert it into "xxx.xmod"
     if (reader == NULL){
-      char filename2[FILE_NAME_LEN];
-      const char * filepath2;
+        char filename2[FILE_NAME_LEN];
+        const char * filepath2;
 
-      bzero(filename2, sizeof(filename));
-      strcpy(filename2, SYM_NAME(mod_name));
-      strcat(filename2, ".mod");
-      filepath2 = search_include_path(filename2);
+        bzero(filename2, sizeof(filename));
+        strcpy(filename2, SYM_NAME(mod_name));
+        strcat(filename2, ".mod");
+        filepath2 = search_include_path(filename2);
 
-      if (!filepath2) return FALSE;
+        if (!filepath2) return FALSE;
 
-      char command[FILE_NAME_LEN + 9];
-      bzero(command, sizeof(filename2) + 9);
-      strcpy(command, _XMPMOD_NAME);
-      strcat(command, " ");
-      strcat(command, filepath2);
-      if (system(command) != 0) return FALSE;
+        char command[FILE_NAME_LEN + 9];
+        bzero(command, sizeof(filename2) + 9);
+        strcpy(command, _XMPMOD_NAME);
+        strcat(command, " ");
+        strcat(command, filepath2);
+        if (system(command) != 0) return FALSE;
 
-      reader = xmlNewTextReaderFilename(filepath);
+        reader = xmlNewTextReaderFilename(filepath);
     }
 #endif
 
@@ -3313,7 +3362,7 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
         return FALSE;
 
     *pmod = XMALLOC(struct module *, sizeof(struct module));
-    (*pmod)->name = mod_name;
+    MODULE_NAME(*pmod) = mod_name;
 
     ret = input_module(reader, *pmod, is_intrinsic);
 
@@ -3321,3 +3370,5 @@ input_module_file(const SYMBOL mod_name, struct module **pmod)
 
     return ret;
 }
+
+

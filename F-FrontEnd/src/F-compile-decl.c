@@ -18,7 +18,7 @@ static int      markAsSave _ANSI_ARGS_((ID id));
 
 /* for module and use statement */
 extern char line_buffer[];
-extern char *current_module_name;
+extern SYMBOL current_module_name;
 
 /*
  * FIXME:
@@ -64,6 +64,14 @@ declare_function_result_id(SYMBOL s, TYPE_DESC tp) {
  *   call m()       ! not conflict
  *  [...]
  *
+ *   interface
+ *     module function n() ! conflict
+ *     [...]
+ *   end inteface
+ * contains
+ *   module function n() ! not confilict (ignore type mismatch)
+ *     [...]
+ *
  */
 static int
 conflict_parent_vs_sub_program_unit(ID parent_id)
@@ -84,6 +92,10 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
                 FUNCTION_TYPE_HAS_UNKNOWN_RETURN_TYPE(ID_TYPE(parent_id))) {
                 if (debug_flag) fprintf(debug_fp, "parent_id may be used as a function/subroutine\n");
                 /* continue checking */
+            } else if (TYPE_IS_MODULE(ID_TYPE(parent_id)) &&
+                       !FUNCTION_TYPE_IS_DEFINED(ID_TYPE(parent_id))) {
+                if (debug_flag) fprintf(debug_fp, "parent_id seems a module function/subroutine\n");
+                return FALSE;
             } else {
                 if (debug_flag) fprintf(debug_fp, "parent_id is an explicit function\n");
                 return TRUE;
@@ -156,55 +168,68 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
 }
 
 static void
-link_parent_defined_by(SYMBOL sym)
+link_parent_defined_by(ID id)
 {
-    ID id;
+    SYMBOL sym = ID_SYM(id);
+    ID parent;
 
     if (sym == NULL)
         return;
     /* search parents local symbols,
        and if my name is found, then link it */
     if (unit_ctl_level > 0) {
-        int is_module_procedure = FALSE;
+        int is_contain_proc = FALSE;
         if (PARENT_STATE == INCONT) {
             /* If the procedure exists in CONTAINS block,
                the procedure is a module procedure.       */
-            is_module_procedure = TRUE;
+            is_contain_proc = TRUE;
         }
 
-        id = find_ident_block_parent(sym);
-        if (id == NULL) {
-            id = find_ident_head(sym, PARENT_LOCAL_SYMBOLS);
+        parent = find_ident_block_parent(sym);
+        if (parent == NULL) {
+            parent = find_ident_head(sym, PARENT_LOCAL_SYMBOLS);
         }
-        if (id == NULL)
+        if (parent == NULL)
             return;
 
-        if (is_module_procedure) {
-            if (conflict_parent_vs_sub_program_unit(id)) {
-                error("%s has an explicit interface before", ID_NAME(id));
+        if (ID_CLASS(parent) == CL_PROC &&
+            ID_TYPE(parent) != NULL &&
+            TYPE_IS_MODULE(ID_TYPE(parent)) &&
+            (TYPE_IS_MODULE(id) || TYPE_IS_MODULE(ID_TYPE(id)))) {
+            /*
+             * both are module function/subroutine, check it later
+             */
+            return;
+        }
+
+        if (is_contain_proc) {
+            if (conflict_parent_vs_sub_program_unit(parent)) {
+                error("%s has an explicit interface before", ID_NAME(parent));
                 return;
             }
         }
 
-        if (ID_CLASS(id) == CL_UNKNOWN) {
-            ID_CLASS(id) = CL_PROC;
-            ID_STORAGE(id) = STG_EXT;
-            PROC_CLASS(id) = P_EXTERNAL;
+        if (ID_CLASS(parent) == CL_UNKNOWN) {
+            ID_CLASS(parent) = CL_PROC;
+            ID_STORAGE(parent) = STG_EXT;
+            PROC_CLASS(parent) = P_EXTERNAL;
         }
+
         /* Conditions below is written to make test programs to pass. */
         /* And it is not derived from the specification. So condition */
         /* may be not enough. */
-        if (ID_CLASS(id) == CL_PROC &&
-            (PROC_CLASS(id) == P_UNDEFINEDPROC ||
-             PROC_CLASS(id) == P_EXTERNAL ||
-             IS_TYPE_PUBLICORPRIVATE(id) ||
-             (ID_TYPE(id) != NULL && (IS_TYPE_PUBLICORPRIVATE(ID_TYPE(id)))))) {
-            ID_DEFINED_BY(id) = CURRENT_PROCEDURE;
-            if (ID_TYPE(id)) {
-                TYPE_UNSET_IMPLICIT(ID_TYPE(id));
+        if (ID_CLASS(parent) == CL_PROC &&
+            (PROC_CLASS(parent) == P_UNDEFINEDPROC ||
+             PROC_CLASS(parent) == P_EXTERNAL ||
+             IS_TYPE_PUBLICORPRIVATE(parent) ||
+             (ID_TYPE(parent) != NULL &&
+              (IS_TYPE_PUBLICORPRIVATE(ID_TYPE(parent)))))) {
+            ID_DEFINED_BY(parent) = CURRENT_PROCEDURE;
+            if (ID_TYPE(parent)) {
+                TYPE_UNSET_IMPLICIT(ID_TYPE(parent));
             }
         } else {
-            error("%s is defined as variable before", ID_NAME(id));
+            error("%s is defined as variable before", ID_NAME(parent));
         }
     }
 }
@@ -223,6 +248,8 @@ declare_procedure(enum name_class class,
     int recursive = FALSE;
     int pure = FALSE;
     int elemental = FALSE;
+    int module = FALSE;
+    int is_separate_definition = FALSE;
     list lp;
 
     if (name) {
@@ -230,19 +257,25 @@ declare_procedure(enum name_class class,
         s = EXPR_SYM(name);
     }
 
-    if(class != CL_ENTRY){
+    if (IS_PROCEDURE_TYPE(type) && TYPE_IS_MODULE(type)) {
+        is_separate_definition = TRUE;
+    }
+
+    if (class != CL_ENTRY){
         CURRENT_PROC_CLASS = class;
         if (name) {
             CURRENT_PROC_NAME = s;
             ep = find_ext_id_parent(CURRENT_PROC_NAME);
             if (ep != NULL && EXT_IS_DEFINED(ep) &&
                  EXT_PROC_IS_MODULE_PROCEDURE(ep) == FALSE &&
-                (unit_ctl_level == 0 || PARENT_STATE != ININTR)) {
+                (unit_ctl_level == 0 || PARENT_STATE != ININTR) &&
+                !is_separate_definition) {
                 /* error("same name is already defined in parent"); */
                 /* return; */
                 warning("A host-associated procedure is overridden.");
             }
-            else if (unit_ctl_level > 0 && PARENT_STATE != ININTR) {
+            else if (unit_ctl_level > 0 && PARENT_STATE != ININTR &&
+                     !is_separate_definition) {
                 ep = find_ext_id(CURRENT_PROC_NAME);
                 if (ep != NULL && EXT_IS_DEFINED(ep) &&
                     EXT_PROC_IS_MODULE_PROCEDURE(ep) == FALSE) {
@@ -278,6 +311,15 @@ declare_procedure(enum name_class class,
             }
             elemental = TRUE;
             break;
+
+        case F08_MODULE_SPEC:
+            if (class != CL_PROC) {
+                error("invalid module prefix");
+                return;
+            }
+            module = TRUE;
+            break;
+
 
         default:
             error("unknown prefix");
@@ -379,19 +421,26 @@ declare_procedure(enum name_class class,
         }
 
         if (pure == TRUE) {
-            PROC_IS_PURE(id) = pure;
-            TYPE_SET_PURE(id);
+            PROC_IS_PURE(id) = pure; /* MAY NOT BE REQUIRED */
+            TYPE_SET_PURE(id); /* MAY NOT BE REQUIRED */
             if (ID_TYPE(id) != NULL) {
                 TYPE_SET_PURE(ID_TYPE(id));
             }
         }
         if (elemental == TRUE) {
-            PROC_IS_ELEMENTAL(id) = pure;
+            PROC_IS_ELEMENTAL(id) = elemental;
             TYPE_SET_ELEMENTAL(id);
             if (type != NULL) {
                 TYPE_SET_ELEMENTAL(ID_TYPE(id));
             }
-       }
+        }
+        if (module == TRUE) {
+            PROC_IS_MODULE(id) = module;
+            TYPE_SET_MODULE(id);
+            if (type != NULL) {
+                TYPE_SET_MODULE(ID_TYPE(id));
+            }
+        }
 
         if (bind_opt) {
             PROC_HAS_BIND(id) = TRUE;
@@ -408,12 +457,17 @@ declare_procedure(enum name_class class,
             }
         }
 
+        if (unit_ctl_level == 0 || PARENT_STATE != ININTR) {
+            /* This function/subroutine has the definition */
+            FUNCTION_TYPE_SET_DEFINED(type);
+        }
+
         ID_STORAGE(id) = STG_EXT;
         declare_dummy_args(args, CL_PROC);
         CURRENT_PROCEDURE = id;
 
         /* make link before declare_current_procedure_ext_id() */
-        link_parent_defined_by(CURRENT_PROC_NAME);
+        link_parent_defined_by(id);
         (void)declare_current_procedure_ext_id();
 
         break;
@@ -523,14 +577,17 @@ declare_procedure(enum name_class class,
         break;
     }
 
+    case CL_SUBMODULE: /* submodule */ /* fall through */
     case CL_MODULE: /* modules */ {
         extern int mcLn_no;
-        current_module_name = SYM_NAME(s);
+        current_module_name = s;
         /* should print in module compile mode.  */
         if (mcLn_no == -1)
         if (debug_flag)
-            fprintf(diag_file,"   module %s:\n", current_module_name);
-        id = declare_ident(s,CL_MODULE);
+            fprintf(diag_file,"   %s %s:\n",
+                    class == CL_MODULE?"module":"submodule",
+                    SYM_NAME(current_module_name));
+        id = declare_ident(s,class);
         declare_id_type(id,type);
         ID_LINE(id) = EXPR_LINE(name); /* set line_no */
         ID_STORAGE(id) = STG_EXT;
@@ -554,8 +611,9 @@ declare_procedure(enum name_class class,
             arg_len++;
         }
 
-        if(class != CL_PROC) {
+        if (class != CL_PROC) {
             error("unexpected statement in interface block");
+            fprintf(stderr, "HERE\n");
             abort();
         }
 
@@ -1007,6 +1065,12 @@ declare_statement_function(id,args,body)
       fatal("declare_statement_function: not CL_UNKNOWN");
 
     check_NOT_INBLOCK();
+
+    if (CURRENT_PROC_CLASS == CL_MODULE ||
+        CURRENT_PROC_CLASS == CL_SUBMODULE) {
+        error("misplaced statement function");
+        return;
+    }
 
     ID_CLASS(id) = CL_PROC;
     PROC_CLASS(id) = P_STFUNCT;
@@ -2049,6 +2113,13 @@ declare_id_type(ID id, TYPE_DESC tp)
 
     if (tp == NULL) {
         return; /* nothing for TYPE_UNKNOWN */
+    }
+
+    if (ID_TYPE(id) != NULL &&
+        ID_TYPE(id) != tp &&
+        TYPE_IS_UNCHANGABLE(ID_TYPE(id))) {
+        error("type of %s can not be changed",
+              ID_NAME(id));
     }
 
     if (IS_MODULE(tp)) {      /* tp is module */
