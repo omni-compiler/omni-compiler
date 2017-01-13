@@ -3748,6 +3748,7 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
          * so store them to a tbp list and check them later.
          */
         TYPE_LINK(tp) = NULL;
+        TYPE_IS_REFERENCED(tp) = TRUE;
         TYPE_LINK_ADD(tp, tbp_list, tbp_list_tail);
         return;
     }
@@ -5312,6 +5313,7 @@ collect_types(EXT_ID extid)
     for (tp = tbp_list; tp != NULL; tp = tq){
         tq = TYPE_LINK(tp);
         TYPE_LINK(tp) = NULL;
+        TYPE_IS_REFERENCED(tp) = FALSE;
         mark_type_desc_skip_tbp(tp, FALSE);
     }
 
