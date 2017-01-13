@@ -11,10 +11,11 @@ OUT_bound = #l0-3okB.x cannot run on SX
 #OUT_err  = l0-2NG
 OUT_BUG   = bug462.x
 OUT_ATOMIC = atomic0.x atomic.x atomic2.x #atomicRefRemote.x
+OUT_CONSIST= consistency1.x consistency2.x
 
 OUT_NGB  = a2d2-2NGB.x
 
 #OUT=$(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_type) $(OUT_NGB)
-OUT= $(OUT_ATOMIC) $(OUT_BUG) $(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_NGB)
+OUT= $(OUT_CONSIST) $(OUT_ATOMIC) $(OUT_BUG) $(OUT_OK) $(OUT_NG) $(OUT_bound) $(OUT_NGB)
 
 include ../Makefile.common

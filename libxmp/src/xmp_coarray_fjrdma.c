@@ -1353,9 +1353,6 @@ static void _XMP_FJMPI_Rdma_put(const int target_rank, uint64_t raddr, uint64_t 
 static void _XMP_FJMPI_Rdma_get(const int target_rank, uint64_t raddr, uint64_t laddr,
 				const size_t transfer_size)
 {
-  // To complete put operations before the following get operation.
-  _XMP_fjrdma_sync_memory();
-
   if(transfer_size <= _XMP_FJRDMA_MAX_SIZE){
     FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC);
     _XMP_add_num_of_gets();
@@ -1461,10 +1458,10 @@ static void _fjrdma_scalar_mput_do(const size_t target_rank, uint64_t* raddrs, u
 /*               [OUT] **addr         : Double pointer of new coarray  */
 /*               [IN]  coarray_size   : Coarray size                   */
 /***********************************************************************/
-void _XMP_fjrdma_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
+void _XMP_fjrdma_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
 {
   *addr = _XMP_alloc(coarray_size);
-  _XMP_fjrdma_regmem_do(coarray_desc, *addr, coarray_size);
+  _XMP_fjrdma_regmem(coarray_desc, *addr, coarray_size);
 }
 
 
@@ -1475,7 +1472,7 @@ void _XMP_fjrdma_coarray_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, co
 /*               [IN]  *addr          : Pointer to the coarray         */
 /*               [IN]  coarray_size   : Coarray size                   */
 /***********************************************************************/
-void _XMP_fjrdma_regmem_do(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size)
+void _XMP_fjrdma_regmem(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size)
 {
   uint64_t *each_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
   if(_memid == _XMP_FJRDMA_MAX_MEMID)
@@ -1524,9 +1521,9 @@ void _XMP_fjrdma_coarray_lastly_deallocate()
 /* EXAMPLE    :                                                         */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_fjrdma_shortcut_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
-			      const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
-			      const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
+void _XMP_fjrdma_continuous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
+				const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
+				const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
   size_t transfer_size = dst_elmts * elmt_size;
   _check_transfer_size(transfer_size);
@@ -1812,9 +1809,9 @@ void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const i
 /* EXAMPLE    :                                                         */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_fjrdma_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
-			      const uint64_t dst_offset, const uint64_t src_offset,
-			      const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
+void _XMP_fjrdma_continuous_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+				const uint64_t dst_offset, const uint64_t src_offset,
+				const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
   size_t transfer_size = dst_elmts * elmt_size;
   _check_transfer_size(transfer_size);

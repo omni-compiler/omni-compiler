@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdarg.h>
 #include "xmpf_internal_coarray.h"
 
 /*****************************************\
@@ -168,6 +169,7 @@ static char *pool_currentAddr;
 static CoarrayInfo_t *_newCoarrayInfo_empty(void);
 static void _freeCoarrayInfo_empty(CoarrayInfo_t *cinfo);
 static CoarrayInfo_t *_newCoarrayInfo(char *baseAddr, size_t nbytes);
+static void _setSimpleCoshapeToCoarrayInfo(CoarrayInfo_t *cinfo);
 static void _addCoarrayInfo(MemoryChunk_t *chunk, CoarrayInfo_t *cinfo2);
 static void _unlinkCoarrayInfo(CoarrayInfo_t *cinfo2);
 static void _freeCoarrayInfo(CoarrayInfo_t *cinfo);
@@ -458,10 +460,10 @@ MemoryChunk_t *_constructMemoryChunk(void *baseAddr, unsigned nbytes)
   _XMP_coarray_malloc_info_1(nbytes, (size_t)1);   // set shape
   _XMP_coarray_malloc_image_info_1();              // set coshape
   if (baseAddr == NULL) {
-    _XMP_coarray_malloc_do(&desc, &orgAddr);         // malloc
+    _XMP_coarray_malloc(&desc, &orgAddr);         // malloc
     chunk = _newMemoryChunk(desc, orgAddr, nbytes);
   } else {
-    _XMP_coarray_regmem_do(&desc, baseAddr);         // register memory
+    _XMP_coarray_regmem(&desc, baseAddr);         // register memory
     chunk = _newMemoryChunk(desc, baseAddr, nbytes);
   }
 
@@ -516,8 +518,6 @@ void xmpf_coarray_free_(void **descPtr)
 
 void xmpf_coarray_malloc_pool_(void)
 {
-  int one = 1;
-
   size_t ctrlDataSize = sizeof(int) * 8;
   size_t localBufSize = XMPF_get_localBufSize();
 
@@ -542,12 +542,12 @@ void xmpf_coarray_malloc_pool_(void)
   // share communication buffer in the pool
   _cinfo_localBuf = _getShareOfStaticCoarray(localBufSize);
   _cinfo_localBuf->name = "(localBuf)";
-  xmpf_coarray_set_coshape_((void **)(&_cinfo_localBuf), &one, &one);
+  _setSimpleCoshapeToCoarrayInfo(_cinfo_localBuf);
 
   // share control data area in the pool
   _cinfo_ctrlData = _getShareOfStaticCoarray(ctrlDataSize);
   _cinfo_ctrlData->name = "(ctrlData)";
-  xmpf_coarray_set_coshape_((void **)(&_cinfo_ctrlData), &one, &one);
+  _setSimpleCoshapeToCoarrayInfo(_cinfo_ctrlData);
 
   // init library internal
   _XMPF_coarrayInit_get();
@@ -1041,39 +1041,46 @@ void _freeMemoryChunkOrder(MemoryChunkOrder_t *chunkP)
 /* translate m.
  * set the current lower and upper cobounds
  */
-void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...)
+void xmpf_coarray_set_corank_(void **descPtr, int *corank)
 {
-  int i, n, count, n_images;
+  int n;
   CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
-
-  va_list args;
-  va_start(args, corank);
 
   cp->corank = n = *corank;
   cp->lcobound = (int*)MALLOC(sizeof(int) * n);
   cp->ucobound = (int*)MALLOC(sizeof(int) * n);
   cp->cosize = (int*)MALLOC(sizeof(int) * n);
 
-  // axis other than the last
-  for (count = 1, i = 0; i < n - 1; i++) {
-    cp->lcobound[i] = *va_arg(args, int*);
-    cp->ucobound[i] = *va_arg(args, int*);
-    cp->cosize[i] = cp->ucobound[i] - cp->lcobound[i] + 1;
-    if (cp->cosize[i] <= 0)
-      _XMPF_coarrayFatal("upper cobound less than lower cobound");
-    count *= cp->cosize[i];
-  }
-
-  // the last axis specified as lcobound:*
-  n_images = _XMPF_num_images_current();
-  cp->lcobound[n-1] = *va_arg(args, int*);
-  cp->cosize[n-1] = DIV_CEILING(n_images, count);
-  cp->ucobound[n-1] = cp->lcobound[n-1] + cp->cosize[n-1] - 1;
-
-  va_end(args);
-
-  _XMPF_coarrayDebugPrint("*** set shape of CoarrayInfo %s, corank=%d\n",
+  _XMPF_coarrayDebugPrint("*** set corank of CoarrayInfo %s, corank=%d\n",
                           _dispCoarrayInfo(cp), cp->corank);
+}
+
+void xmpf_coarray_set_codim_(void **descPtr, int *dim, int *lb, int*ub)
+{
+  int i, count, n_images, size;
+  CoarrayInfo_t *cp = (CoarrayInfo_t*)(*descPtr);
+
+  if (*dim < cp->corank - 1) {        // not last dimension
+    cp->lcobound[*dim] = *lb;
+    cp->ucobound[*dim] = *ub;
+    size = *ub - *lb + 1;
+    cp->cosize[*dim] = size;
+    if (cp->cosize[*dim] <= 0)
+      _XMPF_coarrayFatal("upper cobound less than lower cobound");
+  }
+  else if (*dim == cp->corank - 1) {   // last dimension
+    cp->lcobound[*dim] = *lb;
+    n_images = _XMPF_num_images_current();
+    for (i = 0, count = 1; i < cp->corank - 1; i++)
+      count *= cp->cosize[i];
+    size = DIV_CEILING(n_images, count);
+    cp->cosize[*dim] = size;
+    cp->ucobound[*dim] = *lb + size - 1;
+  }
+  else {                               // illegal
+    _XMPF_coarrayFatal("spedified dim (%d) >= pre-specified corank (%d)\n",
+                       *dim, cp->corank);
+  }
 }
 
 
@@ -1310,6 +1317,22 @@ static CoarrayInfo_t *_newCoarrayInfo(char *baseAddr, size_t size)
   _XMPF_coarrayDebugPrint("*** new CoarrayInfo %s\n",
                           _dispCoarrayInfo(cinfo));
   return cinfo;
+}
+
+
+static void _setSimpleCoshapeToCoarrayInfo(CoarrayInfo_t *cinfo)
+{
+  int size;
+
+  cinfo->corank = 1;
+  cinfo->lcobound = (int*)MALLOC(sizeof(int));
+  cinfo->ucobound = (int*)MALLOC(sizeof(int));
+  cinfo->cosize = (int*)MALLOC(sizeof(int));
+
+  size = _XMPF_num_images_current();
+  cinfo->lcobound[0] = 1;
+  cinfo->ucobound[0] = size;
+  cinfo->cosize[0] = size;
 }
 
 

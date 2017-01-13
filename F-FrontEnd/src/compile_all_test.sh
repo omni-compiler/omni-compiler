@@ -43,12 +43,12 @@ frontend="${work}/F-FrontEnd/src/F_Front"
 frontendOpt="-fintrinsic-xmodules-path ${OMNI_HOME}/F-FrontEnd/src/fincludes"
 backend="${work}/F-BackEnd/bin/F_Back"
 backendOpt=""
-nativecomp="gfortran -fcoarray=single"
-nativicompOpt=""
+nativecomp="gfortran"
+nativecompOpt="-fcoarray=single"
 
 if test ${trans} -eq 1; then
     frontendOpt="${frontendOpt} -M${OMNI_HOME}/libxmpf/src/"
-    nativicompOpt="${nativicompOpt} -I${OMNI_HOME}/libxmpf/src/"
+    nativecompOpt="${nativicompOpt} -I${OMNI_HOME}/libxmpf/src/"
 else
     frontendOpt="${frontendOpt} -fno-xmp-coarray"
     backendOpt="${backendOpt} -fcoarray-no-use-statement"
@@ -95,7 +95,7 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' | sort | x
         ${backend} ${backendOpt} ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1
         if test $? -eq 0; then
             if test ! -e "${skipNative}" ; then
-                ${nativecomp} ${nativicompOpt} -c ${decompiledSrc} -o ${binOut} >> ${errOut} 2>&1
+                ${nativecomp} ${nativecompOpt} -c ${decompiledSrc} -o ${binOut} >> ${errOut} 2>&1
                 if test $? -eq 0; then
                     if test ! -z ${expectedOut} && test -e ${expectedOut}; then
                         if test `nm ${binOut} | awk '{print $3}' | grep -c main 2>&1` -gt 0; then

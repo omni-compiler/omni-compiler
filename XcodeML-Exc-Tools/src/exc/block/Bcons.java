@@ -318,7 +318,7 @@ public class Bcons
 	return new FunctionBlock(d.getDef().getLineNo(),d.getDef().Opcode(),d.getNameObj(),
 				 d.getFuncIdList(), d.getFuncDecls(),
 				 buildBlock(d.getFuncBody()), 
-				 d.getFuncGccAttributes(), d.getParentEnv());
+				 d.getFuncGccAttributes(), d.getParentEnv(), d.getParentNameObj());
     }
 
     /** create block list for Xobject */
@@ -339,6 +339,7 @@ public class Bcons
             b_list.block_name = (XobjString)v.getArg(0);
             b_list.id_list = v.getArg(1);
             b_list.decls = v.getArg(2);
+            b_list.initLocalCoarrays((XobjList)v.getArgOrNull(4));
             v = v.getArg(3);
             break;
         case COMPOUND_STATEMENT:

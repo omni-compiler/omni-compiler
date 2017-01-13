@@ -354,7 +354,7 @@ void _getVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                           nameDMA, offsetDMA);
 
   // ACTION
-  _XMP_coarray_shortcut_get(coindex,
+  _XMP_coarray_continuous_get(coindex,
                             descDMA,   desc,
                             offsetDMA, offset,
                             bytes,     bytes);
@@ -419,7 +419,7 @@ void _getVector(void *descPtr, char *baseAddr, int bytes, int coindex,
                             _localBuf_offset);
 
     // ACTION
-    _XMP_coarray_shortcut_get(coindex,
+    _XMP_coarray_continuous_get(coindex,
                               _localBuf_desc,   desc,
                               _localBuf_offset, offset,
                               bytes,            bytes);

@@ -23,7 +23,9 @@ OUT_debug=bug418.x bug418-2.x bug468.x bug015.x 020.x
 OUT_interface=interface.x  # assumed-shape coarray
 OUT_stat=#allo_stat.x
 
-OUT = $(OUT_epi) $(OUT_etc) $(OUT_decl) $(OUT_size) $(OUT_allo) $(OUT_debug)
+OUT_v4=v4init1.x v4init2.x v4init3.x
+
+OUT = $(OUT_v4) $(OUT_epi) $(OUT_etc) $(OUT_decl) $(OUT_size) $(OUT_allo) $(OUT_debug)
 
 include ../Makefile.common
 

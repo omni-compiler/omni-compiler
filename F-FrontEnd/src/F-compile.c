@@ -126,6 +126,8 @@ static void compile_IMPORT_statement(expr x); // IMPORT statement
 static void compile_BLOCK_statement(expr x);
 static void compile_ENDBLOCK_statement(expr x);
 
+static void unify_submodule_symbol_table(void);
+
 void init_for_OMP_pragma();
 void check_for_OMP_pragma(expr x);
 
@@ -342,7 +344,8 @@ compile_statement(st_no,x)
     if(this_label) check_DO_end(this_label);
 }
 
-void compile_statement1(int st_no, expr x)
+void
+compile_statement1(int st_no, expr x)
 {
     expv v,st;
     list lp;
@@ -362,11 +365,12 @@ void compile_statement1(int st_no, expr x)
         && EXPR_CODE(x) != F95_ENDPROGRAM_STATEMENT
         && EXPR_CODE(x) != F95_ENDMODULE_STATEMENT
         && EXPR_CODE(x) != F95_ENDINTERFACE_STATEMENT
+        && EXPR_CODE(x) != F08_ENDSUBMODULE_STATEMENT
+        && EXPR_CODE(x) != F08_ENDPROCEDURE_STATEMENT
         && EXPR_CODE(x) != F_END_STATEMENT
         /* differ CONTAIN from INTERFASE */
         && PARENT_STATE != ININTR
-        /* MODULE PROCEDURE statement is allower under INTERFACE */
-        && (EXPR_CODE(x) != F95_MODULEPROCEDURE_STATEMENT || PARENT_STATE != ININTR)
+        && EXPR_CODE(x) != F95_MODULEPROCEDURE_STATEMENT
         && EXPR_CODE(x) != F_INCLUDE_STATEMENT)
     {
         /* otherwise error */
@@ -385,6 +389,7 @@ void compile_statement1(int st_no, expr x)
         && EXPR_CODE(x) != F_SUBROUTINE_STATEMENT
         /* MODULE PROCEDURE statement is allower under INTERFACE */
         && EXPR_CODE(x) != F95_MODULEPROCEDURE_STATEMENT
+        && EXPR_CODE(x) != F08_PROCEDURE_STATEMENT
         && EXPR_CODE(x) != F_INCLUDE_STATEMENT)
         {
         error("only function/subroutine/module procedure statement are allowed "
@@ -404,12 +409,28 @@ void compile_statement1(int st_no, expr x)
     case F95_ENDMODULE_STATEMENT: /* (F95_ENDMODULE_STATEMENT) */
     do_end_module:
         check_INDCL();
-	// move into end_procedure()
-	//if (endlineno_flag)
-	//ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
+        // move into end_procedure()
+        //if (endlineno_flag)
+        //ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
         end_procedure();
-        end_module();
+        end_module(EXPR_HAS_ARG1(x)?EXPR_ARG1(x):NULL);
         break;
+
+
+    case F08_SUBMODULE_STATEMENT: /* (F08_SUBMODULE_STATEMENT submodule_name ancester_name parent_name ) */
+        begin_procedure();
+        declare_procedure(CL_SUBMODULE, EXPR_ARG1(x), type_MODULE, NULL, NULL, NULL, NULL);
+        begin_submodule(EXPR_ARG1(x), EXPR_ARG2(x), EXPR_ARG3(x));
+        break;
+
+    case F08_ENDSUBMODULE_STATEMENT: /* (F08_ENDSUBMODULE_STATEMENT submodule_name) */
+    do_end_submodule:
+        check_INDCL();
+        unify_submodule_symbol_table();
+        end_procedure();
+        end_submodule(EXPR_HAS_ARG1(x)?EXPR_ARG1(x):NULL);
+        break;
+
 
     /* (F_PROGRAM_STATEMENT name) need: option or lias */
     case F95_USE_STATEMENT:
@@ -439,6 +460,7 @@ void compile_statement1(int st_no, expr x)
         end_interface();
         break;
 
+    case F08_PROCEDURE_STATEMENT: /* fall through */
     case F95_MODULEPROCEDURE_STATEMENT:
         compile_MODULEPROCEDURE_statement(x);
         break;
@@ -485,7 +507,9 @@ void compile_statement1(int st_no, expr x)
         /* (F_ENTRY_STATEMENT name dummy_arg_list) */
         if(CURRENT_STATE == OUTSIDE ||
            CURRENT_PROC_CLASS == CL_MAIN ||
-           CURRENT_PROC_CLASS == CL_BLOCK){
+           CURRENT_PROC_CLASS == CL_BLOCK ||
+           CURRENT_PROC_CLASS == CL_MODULE ||
+           CURRENT_PROC_CLASS == CL_SUBMODULE){
             error("misplaced entry statement");
             break;
         }
@@ -504,6 +528,7 @@ void compile_statement1(int st_no, expr x)
         break;
 
 
+    case F08_ENDPROCEDURE_STATEMENT: /* (F08_END_PROCEDURE_STATEMENT) */
     case F95_ENDFUNCTION_STATEMENT:  /* (F95_END_FUNCTION_STATEMENT) */
     case F95_ENDSUBROUTINE_STATEMENT:  /* (F95_END_SUBROUTINE_STATEMENT) */
     case F95_ENDBLOCKDATA_STATEMENT:
@@ -526,9 +551,15 @@ void compile_statement1(int st_no, expr x)
     case F_END_STATEMENT:       /* (F_END_STATEMENT) */
         if (!check_image_control_statement_available()) return;
         if((CURRENT_PROC_NAME == NULL ||
+            (CURRENT_PROC_CLASS == CL_SUBMODULE)) &&
+            current_module_name != NULL) {
+            goto do_end_submodule;
+
+        } else if((CURRENT_PROC_NAME == NULL ||
             (CURRENT_PROC_CLASS == CL_MODULE)) &&
             current_module_name != NULL) {
             goto do_end_module;
+
         } else {
             check_INEXEC();
 	    // move into end_procedure()
@@ -1184,14 +1215,14 @@ void compile_statement1(int st_no, expr x)
 
     case F03_TYPE_BOUND_PROCEDURE_STATEMENT:
         if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
-            error("TYPE BOUDNED PROCEDURE out of the derived-type declaration");
+            error("TYPE-BOUDNED PROCEDURE out of the derived-type declaration");
         }
         compile_type_bound_procedure(x);
         break;
 
     case F03_TYPE_BOUND_GENERIC_STATEMENT:
         if (CURRENT_STATE != IN_TYPE_BOUND_PROCS) {
-            error("TYPE GENERIC BOUND PROCEDURE out of the derived-type declaration");
+            error("TYPE-BOUND GENERIC out of the derived-type declaration");
         }
         compile_type_generic_procedure(x);
         break;
@@ -1284,10 +1315,10 @@ compile_exec_statement(expr x)
                 return;
             }
 	    if (ID_CLASS(id) == CL_UNKNOWN){
-	      if (CURRENT_STATE != INEXEC) {
-		declare_statement_function(id,v1,v2);
-		break;
-	      }
+            if (CURRENT_STATE != INEXEC) {
+                declare_statement_function(id,v1,v2);
+                break;
+            }
 	    }
 	  }
 	}
@@ -1708,6 +1739,13 @@ union_parent_type(ID id)
                 assert(TYPE_REF(tp) == NULL ||
                        TYPE_BASIC_TYPE(tp) == TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE((my_tp))));
 
+            } else if (TYPE_IS_MODULE(my_tp)){
+                /* module funciton/subroutine types should be compatible */
+                if (!function_type_is_compatible(my_tp, parent_tp)) {
+                    error("The type of the predeclared "
+                          "module funcion/subroutine is not compatible");
+                }
+
             } else {
                 tp = FUNCTION_TYPE_RETURN_TYPE(my_tp);
                 /* copy basic type and ref */
@@ -2029,7 +2067,9 @@ end_declaration()
         }
 #endif
         checkTypeRef(ip);
-        union_parent_type(ip);
+        if (ip != myId) {
+            union_parent_type(ip);
+        }
     }
 
     /*
@@ -2101,14 +2141,22 @@ end_declaration()
             }
         }
 
+        if (TYPE_IS_UNCHANGABLE(tp)) {
+            if ((TYPE_ATTR_FLAGS(tp) | TYPE_ATTR_FLAGS(ip)) != TYPE_ATTR_FLAGS(tp)) {
+                error_at_id(ip, "The type of '%s' can not be changed",
+                            SYM_NAME(ID_SYM(ip)));
+            }
+        }
+
         /* merge type attribute flags except SAVE attr*/
         TYPE_ATTR_FLAGS(tp) |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
-        if (IS_PROCEDURE_TYPE(tp)) {
+        if (IS_FUNCTION_TYPE(tp)) {
             /*
              * The type attributes for the function (PURE, ELEMENETAL, etc) are
              * never set to local symbol, so there is no need to filter out them.
              */
-            TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp)) |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
+            TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp))
+                    |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
         }
 
         /* copy type attribute flags to EXT_PROC_TYPE */
@@ -2168,7 +2216,7 @@ end_declaration()
                     uint32_t a = TYPE_ATTR_FLAGS(tp) &
                         ~check->acceptable_flags;
                     if (debug_flag) {
-                        fprintf(stderr,
+                        fprintf(debug_fp,
                                 "ID '%s' attr 0x%08x : "
                                 "matches 0x%08x ('%s'), "
                                 "flags allowed 0x%08x (negation: 0x%08x), "
@@ -2354,12 +2402,33 @@ end_declaration()
          */
         implicit_declaration(myId);
         function_type_udpate(ID_TYPE(myId), LOCAL_SYMBOLS);
+        union_parent_type(myId);
 
         /*
          * Update type bound procedure
          */
         if (unit_ctl_level > 0 && is_in_module()) {
             update_type_bound_procedures(PARENT_LOCAL_STRUCT_DECLS, myId);
+        }
+
+        if (TYPE_IS_MODULE(ID_TYPE(myId)) && unit_ctl_level > 0) {
+            ID parent = find_ident_outer_scope(ID_SYM(myId));
+
+            if (parent && ID_TYPE(parent)) {
+                if (ID_TYPE(myId) != ID_TYPE(parent) &&
+                    FUNCTION_TYPE_IS_DEFINED(ID_TYPE(parent)) &&
+                    PARENT_STATE != ININTR) {
+                    error_at_id(myId,
+                                "A module function/subroutine '%s' is already defined",
+                                SYM_NAME(ID_SYM(myId)));
+                }
+
+                if (!function_type_is_compatible(ID_TYPE(myId), ID_TYPE(parent))) {
+                    error_at_id(myId,
+                                "A module function/subroutine type is not compatible");
+                }
+
+            }
         }
     }
 
@@ -2929,8 +2998,11 @@ check_type_bound_procedures()
                     error_at_id(tbp, "should not override member");
                 }
 
-                if (!type_bound_procedure_types_are_compatible(tbp, parent_tbp)) {
-                    error_at_id(tbp, "type mismatch to override %s", SYM_NAME(ID_SYM(tbp)));
+                if (!type_bound_procedure_types_are_compatible(
+                        ID_TYPE(tbp), ID_TYPE(parent_tbp))) {
+                    error_at_id(tbp,
+                                "type mismatch to override %s",
+                                SYM_NAME(ID_SYM(tbp)));
                 }
             }
         }
@@ -2964,6 +3036,7 @@ end_procedure()
     if (CURRENT_PROC_CLASS == CL_MAIN ||
         CURRENT_PROC_CLASS == CL_PROC ||
         CURRENT_PROC_CLASS == CL_MODULE ||
+        CURRENT_PROC_CLASS == CL_SUBMODULE ||
         CURRENT_PROC_CLASS == CL_BLOCK) {
         if (CURRENT_EXT_ID == NULL) {
             /* Any other errors already occured, let compilation carry on. */
@@ -3011,7 +3084,7 @@ end_procedure()
                 }
                 if (FUNCTION_TYPE_IS_GENERIC(EXT_PROC_TYPE(ep))) {
                     continue;
-                } else if(FUNCTION_TYPE_IS_SUBROUTINE(EXT_PROC_TYPE(ep))) {
+                } else if(IS_SUBR(EXT_PROC_TYPE(ep))) {
                     hasSub = TRUE;
                 } else {
                     hasFunc = TRUE;
@@ -3024,8 +3097,8 @@ end_procedure()
             if (hasSub) {
                 TYPE_BASIC_TYPE(EXT_PROC_TYPE(intr)) = TYPE_SUBR;
                 TYPE_DESC tp = FUNCTION_TYPE_RETURN_TYPE(EXT_PROC_TYPE(intr));
-                if (TYPE_REF(tp) != NULL) {
-                    TYPE_BASIC_TYPE(TYPE_REF(tp)) = TYPE_VOID;
+                if (tp != NULL) {
+                    TYPE_BASIC_TYPE(tp) = TYPE_VOID;
                 } else {
                     FUNCTION_TYPE_RETURN_TYPE(EXT_PROC_TYPE(intr)) = type_VOID;
                 }
@@ -3227,6 +3300,7 @@ end_procedure()
             expv_output(CURRENT_STATEMENTS, debug_fp);
         }
         break;
+    case CL_SUBMODULE: /* fall through */
     case CL_MODULE:
         setLocalInfoToCurrentExtId(TRUE);
         if(debug_flag){
@@ -3273,6 +3347,17 @@ end_procedure()
         }
 
     }
+    if (CURRENT_PROC_CLASS == CL_SUBMODULE) {
+        if(!export_submodule(current_module_name,
+                             EXT_MODULE_ANCESTOR(CURRENT_EXT_ID)?:EXT_MODULE_PARENT(CURRENT_EXT_ID),
+                             LOCAL_SYMBOLS,
+                             LOCAL_USE_DECLS)) {
+            error("internal error, fail to export module.");
+            exit(1);
+        }
+
+    }
+
 
     /* if (CURRENT_PROC_CLASS != CL_MODULE) { */
     /* } */
@@ -3580,14 +3665,190 @@ begin_module(expr name)
  * output module's XcodeML file.
  */
 void
-end_module() {
+end_module(expr name)
+{
+    SYMBOL s;
+
+    if (name) {
+        if (EXPR_CODE(name) == IDENT &&
+            (s = EXPR_SYM(name)) != NULL &&
+            SYM_NAME(s) != NULL) {
+            if (current_module_name != s) {
+                error("expects module name '%s'",
+                      SYM_NAME(s));
+            }
+        } else {
+            fatal("internal error, module name is not "
+                  "IDENT in %s().", __func__);
+        }
+    }
+
     current_module_state = M_DEFAULT;
     current_module_name = NULL;
     CURRENT_STATE = OUTSIDE; /* goto outer, outside state.  */
 }
 
+int associate_parent_module(const SYMBOL, const SYMBOL);
+
+void
+begin_submodule(expr name, expr module, expr submodule)
+{
+    /* NOTE:
+     *
+     * The submodule has host-association with its parent (sub)module.  To
+     * represent this behaviour, begin_submoule makes two UNITs.  Identifiers
+     * from the parent (sub)module are imported into the parent-side UNIT.  On
+     * the otherhand, identifiers declared in the submodule are placed in the
+     * child-side UNIT.  These two UNITs are unified into one UNIT in
+     * end_submodule().
+     */
+
+    SYMBOL module_name = module?EXPR_SYM(module):NULL;
+    SYMBOL submodule_name = submodule?EXPR_SYM(submodule):NULL;
+
+    begin_module(name);
+    EXT_MODULE_IS_SUBMODULE(CURRENT_EXT_ID) = TRUE;
+    EXT_MODULE_ANCESTOR(CURRENT_EXT_ID) = submodule_name?module_name:NULL;
+    EXT_MODULE_PARENT(CURRENT_EXT_ID) = submodule_name?:module_name;
+
+    if (associate_parent_module(module_name, submodule_name) == FALSE) {
+        error("failed to associate");
+    }
+
+    push_unit_ctl(INSIDE); /* just dummy */
+    CURRENT_STATE = INSIDE;
+    CURRENT_PROC_CLASS = CL_SUBMODULE;
+    CURRENT_PROC_NAME = EXPR_SYM(name);
+    CURRENT_EXT_ID = PARENT_EXT_ID;
+}
+
+static ID
+unify_submodule_id_list(ID parents, ID childs)
+{
+    ID ip;
+    ID iq;
+    ID ret = NULL;
+    ID last = NULL;
+
+    SAFE_FOREACH_ID(ip, iq, parents) {
+        if (find_ident_head(ID_SYM(ip), childs) != NULL) {
+            /* the child id shadows the parent id */
+            /* free(id); */
+            continue;
+        }
+        ID_LINK_ADD(ip, ret, last);
+    }
+
+    SAFE_FOREACH_ID(ip, iq, childs) {
+        ID_LINK_ADD(ip, ret, last);
+    }
+    return ret;
+}
+
+
+static EXT_ID
+unify_submodule_ext_id_list(EXT_ID parents, EXT_ID childs)
+{
+    EXT_ID ep;
+    EXT_ID eq;
+    EXT_ID ret = NULL;
+    EXT_ID last = NULL;
+
+    SAFE_FOREACH_EXT_ID(ep, eq, parents) {
+        if (find_ext_id_head(ID_SYM(ep), childs) != NULL) {
+            /* the child id shadows the parent id */
+            /* free(ep); */
+            continue;
+        }
+        EXT_LINK_ADD(ep, ret, last);
+    }
+
+    SAFE_FOREACH_EXT_ID(ep, eq, childs) {
+        EXT_LINK_ADD(ep, ret, last);
+    }
+    return ret;
+}
+
+
+static TYPE_DESC
+unify_submodule_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
+{
+    TYPE_DESC tp;
+    TYPE_DESC tq;
+    TYPE_DESC ret = NULL;
+    TYPE_DESC last = NULL;
+
+    SAFE_FOREACH_STRUCTDECLS(tp, tq, parents) {
+        if (find_struct_decl_head(ID_SYM(TYPE_TAGNAME(tp)), childs) != NULL) {
+            /* the child id shadows the parent id */
+            continue;
+        }
+        TYPE_SLINK_ADD(tp, ret, last);
+    }
+
+    SAFE_FOREACH_STRUCTDECLS(tp, tq, childs) {
+        TYPE_SLINK_ADD(tp, ret, last);
+    }
+    return ret;
+}
+
+
+static void
+unify_submodule_symbol_table()
+{
+    ENV submodule;
+    ENV parent;
+
+    if (CURRENT_PROC_NAME == NULL && CTL_TYPE(ctl_top) != CTL_BLOCK) {
+        end_contains();
+    }
+
+    submodule = UNIT_CTL_LOCAL_ENV(CURRENT_UNIT_CTL);
+    parent = UNIT_CTL_LOCAL_ENV(PARENT_UNIT_CTL);
+
+    ENV_SYMBOLS(parent) =
+            unify_submodule_id_list(ENV_SYMBOLS(parent),
+                                      ENV_SYMBOLS(submodule));
+    ENV_STRUCT_DECLS(parent) =
+            unify_submodule_struct_decls(ENV_STRUCT_DECLS(parent),
+                                           ENV_STRUCT_DECLS(submodule));
+    ENV_COMMON_SYMBOLS(parent) =
+            unify_submodule_id_list(ENV_COMMON_SYMBOLS(parent),
+                                      ENV_COMMON_SYMBOLS(submodule));
+    ENV_EXTERNAL_SYMBOLS(parent) =
+            unify_submodule_ext_id_list(ENV_EXTERNAL_SYMBOLS(parent),
+                                          ENV_EXTERNAL_SYMBOLS(submodule));
+    ENV_INTERFACES(parent) =
+            unify_submodule_ext_id_list(ENV_INTERFACES(parent),
+                                          ENV_INTERFACES(submodule));
+
+    ENV_USE_DECLS(parent) = ENV_USE_DECLS(submodule);
+
+    pop_unit_ctl();
+}
+
+void
+end_submodule(expr name) {
+    SYMBOL s;
+    if (name) {
+        if (EXPR_CODE(name) == IDENT &&
+            (s = EXPR_SYM(name)) != NULL &&
+            SYM_NAME(s) != NULL) {
+            if (current_module_name != s) {
+                error("expects submodule name '%s'",
+                      SYM_NAME(s));
+            }
+        } else {
+            fatal("internal error, submodule name is not "
+                  "IDENT in %s().", __func__);
+        }
+    }
+    end_module(NULL);
+}
+
 int
-is_in_module(void) {
+is_in_module(void)
+{
     return (INMODULE()) ? TRUE : FALSE;
 }
 
@@ -3931,19 +4192,18 @@ solve_use_assoc_conflict(ID id, ID mid)
 /**
  * import id from module to id list.
  */
-static int
+static void
 import_module_id(ID mid,
                  ID *head, ID *tail,
                  TYPE_DESC *sthead, TYPE_DESC *sttail,
-                 EXT_ID *ehead, EXT_ID *etail,
-                 SYMBOL use_name, int need_wrap_type)
+                 SYMBOL use_name, int need_wrap_type, int fromParentModule)
 {
     ID existed_id, id;
     EXT_ID ep, mep;
 
     if ((existed_id = find_ident_head(use_name?:ID_SYM(mid), *head)) != NULL) {
         solve_use_assoc_conflict(existed_id, mid);
-        return TRUE;
+        return;
     }
 
     id = new_ident_desc(ID_SYM(mid));
@@ -4000,6 +4260,9 @@ import_module_id(ID mid,
     if(IS_GENERIC_TYPE(ID_TYPE(id)))
         import_generic_procedure(id);
 
+    if(fromParentModule)
+        ID_IS_FROM_PARENT_MOD(id) = TRUE;
+
     if(debug_flag) {
         fprintf(debug_fp,
                 "import '%s' from module '%s'\n",
@@ -4011,7 +4274,7 @@ import_module_id(ID mid,
                 SYM_NAME(use_name));
     }
 
-    return TRUE;
+    return;
 }
 
 /**
@@ -4039,78 +4302,19 @@ copy_function_args(const expv args) {
     return new_args;
 }
 
-/**
- * common use assoc
- */
-int
-use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
+
+void
+deep_copy_id_types(ID mids)
 {
-    struct module *mod;
-    ID mid, id, last_id = NULL, prev_mid, first_mid;
-    TYPE_DESC tp, sttail = NULL;
-    EXT_ID ep, last_ep = NULL, mep;
-    struct use_argument * arg;
-    int ret = TRUE;
-    int wrap_type = TRUE;
+    ID mid;
+    EXT_ID mep;
 
-    initialize_replicated_type_list();
-
-    if (!import_module(name, &mod)) {
-        return FALSE;
-    }
-
-    if (debug_flag) {
-        fprintf(debug_fp, "######## BEGIN USE ASSOC #######\n");
-        print_IDs(mod->head, debug_fp, TRUE);
-    }
-
-    FOREACH_ID(id, LOCAL_SYMBOLS) {
-        last_id = id;
-    }
-    prev_mid = last_id;
-
-    for (tp = LOCAL_STRUCT_DECLS; tp != NULL; tp = TYPE_SLINK(tp)) {
-        sttail = tp;
-    }
-
-    for (ep = LOCAL_EXTERNAL_SYMBOLS; ep != NULL; ep = EXT_NEXT(ep)){
-        last_ep = ep;
-    }
-    ep = LOCAL_EXTERNAL_SYMBOLS;
-
-    FOREACH_ID(mid, mod->head) {
-        int rename_count = 0;
-        FOREACH_USE_ARG(arg, args) {
-            wrap_type = TRUE;
-            if(arg->local != ID_SYM(mid))
-                continue;
-            import_module_id(mid,
-                             &LOCAL_SYMBOLS, &last_id,
-                             &LOCAL_STRUCT_DECLS, &sttail,
-                             &LOCAL_EXTERNAL_SYMBOLS, &last_ep,
-                             arg->use, wrap_type);
-            arg->used = TRUE;
-            rename_count++;
-        }
-        if(isRename && rename_count == 0) {
-            wrap_type = TRUE;
-            import_module_id(mid,
-                             &LOCAL_SYMBOLS, &last_id,
-                             &LOCAL_STRUCT_DECLS, &sttail,
-                             &LOCAL_EXTERNAL_SYMBOLS, &last_ep,
-                             NULL, wrap_type);
-        }
-    }
-
-    // deep-copy types now!
-    first_mid = prev_mid ? ID_NEXT(prev_mid) : NULL;
-    FOREACH_ID(mid, first_mid) {
+    FOREACH_ID(mid, mids) {
         // deep copy of types!
         deep_ref_copy_for_module_id_type(ID_TYPE(mid));
 
         // deep copy for function types!
         if ((mep = PROC_EXT_ID(mid)) != NULL) {
-          //ID id;
           expv v;
           list lp;
 
@@ -4131,32 +4335,111 @@ use_assoc_common(SYMBOL name, struct use_argument * args, int isRename)
           }
         }
     }
+}
+
+
+static int
+import_module_ids(struct module *mod, struct use_argument * args,
+                  int isOnly, int fromParentModule)
+{
+    ID mid, id, last_id = NULL, prev_mid, first_mid;
+    TYPE_DESC tp, sttail = NULL;
+    struct use_argument * arg;
+    int ret = TRUE;
+    int wrap_type = TRUE;
+
+    initialize_replicated_type_list();
+
+    if (debug_flag) {
+        if (!fromParentModule) {
+            fprintf(debug_fp, "######## BEGIN USE ASSOC #######\n");
+        } else {
+            fprintf(debug_fp, "######## BEGIN HOST ASSOCIATION FROM SUBMODULE  #######\n");
+        }
+        print_IDs(MODULE_ID_LIST(mod), debug_fp, TRUE);
+    }
+
+    FOREACH_ID(id, LOCAL_SYMBOLS) {
+        last_id = id;
+    }
+    prev_mid = last_id;
+
+    FOREACH_STRUCTDECLS(tp, LOCAL_STRUCT_DECLS) {
+        sttail = tp;
+    }
+
+    FOREACH_ID(mid, MODULE_ID_LIST(mod)) {
+        if (args != NULL) {
+            FOREACH_USE_ARG(arg, args) {
+                wrap_type = TRUE;
+                if (arg->local != ID_SYM(mid))
+                    continue;
+                import_module_id(mid,
+                                 &LOCAL_SYMBOLS, &last_id,
+                                 &LOCAL_STRUCT_DECLS, &sttail,
+                                 arg->use, wrap_type, fromParentModule);
+                arg->used = TRUE;
+            }
+        } else {
+            if (!isOnly) {
+                wrap_type = TRUE;
+                import_module_id(mid,
+                                 &LOCAL_SYMBOLS, &last_id,
+                                 &LOCAL_STRUCT_DECLS, &sttail,
+                                 NULL, wrap_type, fromParentModule);
+            }
+        }
+    }
 
     FOREACH_USE_ARG(arg, args) {
-        if(!arg->used) {
-            error("'%s' is not found in module '%s'", SYM_NAME(arg->local), SYM_NAME(name));
+        if (!arg->used) {
+            error("'%s' is not found in module '%s'",
+                  SYM_NAME(arg->local), SYM_NAME(MODULE_NAME(mod)));
             ret = FALSE;
         }
     }
 
+    // deep-copy types now!
+    first_mid = prev_mid ? ID_NEXT(prev_mid) : NULL;
+    deep_copy_id_types(first_mid);
+
     finalize_replicated_type_list();
 
-    if(debug_flag)
-        fprintf(debug_fp, "########   END USE ASSOC #######\n");
+    if(debug_flag) {
+        if (!fromParentModule) {
+            fprintf(debug_fp, "########   END USE ASSOC #######\n");
+        } else {
+            fprintf(debug_fp, "########   END HOST ASSOCIATION FROM SUBMODULE  #######\n");
+        }
 
+    }
     return ret;
 }
 
+/**
+ * common use assoc
+ */
+int
+use_assoc_common(SYMBOL name, struct use_argument * args, int isOnly)
+{
+    struct module *mod;
+
+    if (!import_module(name, &mod)) {
+        return FALSE;
+    }
+
+    return import_module_ids(mod, args, isOnly, FALSE);
+}
 
 /**
  * use association with rename arguments.
  * import public identifiers from module to LOCAL_SYMBOLS.
  */
 int
-use_assoc_rename(SYMBOL name, struct use_argument * args)
+use_assoc(SYMBOL name, struct use_argument * args)
 {
-    int isRename = TRUE;
-    return use_assoc_common(name, args, isRename);
+    int isOnly = FALSE;
+    return use_assoc_common(name, args, isOnly);
 }
 
 /**
@@ -4166,8 +4449,8 @@ use_assoc_rename(SYMBOL name, struct use_argument * args)
 int
 use_assoc_only(SYMBOL name, struct use_argument * args)
 {
-    int isRename = FALSE;
-    return use_assoc_common(name, args, isRename);
+    int isOnly = TRUE;
+    return use_assoc_common(name, args, isOnly);
 }
 
 /*
@@ -4214,7 +4497,7 @@ compile_USE_decl (expr x, expr x_args, int is_intrinsic)
     EXPV_LINE(v) = EXPR_LINE(x);
     output_statement(v);
 
-    use_assoc_rename(EXPR_SYM(x), use_args);
+    use_assoc(EXPR_SYM(x), use_args);
 
     list_put_last(LOCAL_USE_DECLS, x);
 }
@@ -4277,6 +4560,19 @@ compile_USE_ONLY_decl (expr x, expr x_args, int is_intrinsic)
 
     list_put_last(LOCAL_USE_DECLS, x);
 }
+
+int
+associate_parent_module(const SYMBOL module, const SYMBOL submodule)
+{
+    struct module *mod;
+
+    if (!import_submodule(module, submodule, &mod)) {
+        return FALSE;
+    }
+
+    return import_module_ids(mod, NULL, FALSE, TRUE);
+}
+
 
 static char*
 genBlankInterfaceName()
@@ -4562,11 +4858,12 @@ accept_MODULEPROCEDURE_statement_in_module(expr x)
     }
 }
 
+
 /*
- * compile MODULE PROCEDURE statement
+ * compile MODULE PROCEDURE statement in the INTERFACE block
  */
 static void
-compile_MODULEPROCEDURE_statement(expr x)
+compile_interface_MODULEPROCEDURE_statement(expr x)
 {
     list lp;
     expr ident;
@@ -4574,10 +4871,7 @@ compile_MODULEPROCEDURE_statement(expr x)
     EXT_ID ep;
     const char *genProcName = NULL;
 
-    if (PARENT_STATE != ININTR) {
-        error("unexpected MODULE PROCEDURE statement");
-        return;
-    }
+    assert(PARENT_STATE == ININTR);
 
     if (checkInsideUse()) {
         accept_MODULEPROCEDURE_statement_in_module(x);
@@ -4626,6 +4920,79 @@ compile_MODULEPROCEDURE_statement(expr x)
         dump_all_module_procedures(stderr);
     }
 }
+
+
+/*
+ * compile MODULE PROCEDURE statement in the CONTAINS block of the submodule
+ */
+static void
+compile_separate_MODULEPROCEDURE_statement(expr x)
+{
+    SYMBOL s;
+    expr name;
+    ID ip = NULL;
+    ID id;
+    ID arg;
+
+    assert(PARENT_STATE == INCONT);
+    assert(EXPR_HAS_ARG1(EXPR_ARG1(x)));
+    assert(!EXPR_HAS_ARG2(EXPR_ARG1(x)));
+
+    name = EXPR_ARG1(EXPR_ARG1(x));
+    s = EXPR_SYM(name);
+
+    if ((ip = find_ident(s)) == NULL) {
+        error("module procedure interface doesn't exsit");
+        return;
+    } else if(!IS_PROCEDURE_TYPE(ID_TYPE(ip))) {
+        error("parent should be a procedure");
+        return;
+    } else if(!TYPE_IS_MODULE(ID_TYPE(ip))) {
+        error("parent should have a modure prefix");
+        return;
+    } else if (FUNCTION_TYPE_IS_DEFINED(ID_TYPE(ip))) {
+        error("%s is already defined", SYM_NAME(ID_SYM(ip)));
+        return;
+    }
+
+    FUNCTION_TYPE_SET_DEFINED(ID_TYPE(ip));
+
+    begin_procedure();
+    declare_procedure(CL_PROC, name, ID_TYPE(ip), NULL, NULL, NULL, NULL);
+    EXT_PROC_IS_PROCEDUREDECL(CURRENT_EXT_ID) = TRUE;
+
+    /*
+     * setup local symbols in the function
+     */
+    if (FUNCTION_TYPE_RESULT(ID_TYPE(ip))) {
+        s = FUNCTION_TYPE_RESULT(ID_TYPE(ip));
+        declare_function_result_id(s, FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(ip)));
+    }
+
+    FOREACH_ID(arg, FUNCTION_TYPE_ARGS(ID_TYPE(ip))) {
+        id = declare_ident(ID_SYM(arg), CL_VAR);
+        ID_STORAGE(id) = STG_ARG;
+        declare_id_type(id, ID_TYPE(arg));
+        TYPE_SET_UNCHANGABLE(ID_TYPE(id));
+    }
+}
+
+
+/*
+ * compile MODULE PROCEDURE statement
+ */
+static void
+compile_MODULEPROCEDURE_statement(expr x)
+{
+    if (PARENT_STATE == ININTR) {
+        compile_interface_MODULEPROCEDURE_statement(x);
+    } else if (PARENT_STATE == INCONT) {
+        compile_separate_MODULEPROCEDURE_statement(x);
+    } else {
+        error("unexpected MODULE PROCEDURE statement");
+    }
+}
+
 
 /*
  * compiles the scene range expression of case label.
@@ -6039,7 +6406,9 @@ push_unit_ctl(enum prog_state state)
         return;
     }
     top_proc = UNIT_CTL_CURRENT_PROCEDURE(unit_ctls[0]);
-    if (top_proc != NULL && ID_CLASS(top_proc) != CL_MODULE) {
+    if (top_proc != NULL &&
+        ID_CLASS(top_proc) != CL_MODULE &&
+        ID_CLASS(top_proc) != CL_SUBMODULE) {
         /* if top procedure is not module, stack len restriction become -1 */
         max_unit_ctl_contains --;
     }

@@ -17,7 +17,7 @@ void _XMP_fjrdma_atomic_define(int target_rank, _XMP_coarray_t *dst_desc, size_t
 
   FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, elmt_size, _XMP_COARRAY_FLAG_NIC);
   _XMP_add_num_of_puts();
-  //  _XMP_fjrdma_sync_memory_put(); // ensure to complete the above put operation.
+  _XMP_fjrdma_sync_memory_put(); // ensure to complete the above put operation.
 
   if(src_desc == NULL)
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
@@ -40,7 +40,7 @@ void _XMP_fjrdma_atomic_ref(int target_rank ,_XMP_coarray_t *dst_desc, size_t ds
 
   FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, elmt_size, _XMP_COARRAY_FLAG_NIC);
   _XMP_add_num_of_gets();
-  //  _XMP_fjrdma_sync_memory_get(); // ensure to complete the above get operation.
+  _XMP_fjrdma_sync_memory_get(); // ensure to complete the above get operation.
 
   if(src_desc == NULL)
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);

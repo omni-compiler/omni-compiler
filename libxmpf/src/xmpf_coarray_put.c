@@ -701,10 +701,10 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
   }
 
   // ACTION (case asynchronous: definition of a coindexed variable)
-  _XMP_coarray_shortcut_put(coindex,
-                            desc,   descDMA,
-                            offset, offsetDMA,
-                            bytes,  bytes);
+  _XMP_coarray_continuous_put(coindex,
+			      desc,   descDMA,
+			      offset, offsetDMA,
+			      bytes,  bytes);
 }
 
 
@@ -756,7 +756,7 @@ void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
   _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // LHS (remote)
   _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // RHS (local)
   _XMP_coarray_rdma_image_set_1(coindex);
-  _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, buf, NULL);
+  _XMP_coarray_put(desc, buf, NULL);
 
   // FREE
   _XMPF_coarrayDebugPrint("===DO NOT FREE in SAFE MODE\n"
