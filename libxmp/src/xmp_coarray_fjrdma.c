@@ -1509,7 +1509,9 @@ void _XMP_fjrdma_coarray_lastly_deallocate()
 /* DESCRIPTION : Call put operation without preprocessing               */
 /* ARGUMENT    : [IN] target_rank  : Target rank                        */
 /*               [OUT] *dst_desc   : Descriptor of destination coarray  */
-/*               [IN] *src_desc    : Descriptor of source coarray       */
+/*               [IN] *src_desc    : Descriptor of source array         */
+/*                                   If source is NOT coarray, set NULL */
+/*               [IN] *src_addr    : Address of source array            */
 /*               [IN] dst_offset   : Offset size of destination coarray */
 /*               [IN] src_offset   : Offset size of source coarray      */
 /*               [IN] dst_elmts    : Number of elements of destination  */
@@ -1521,14 +1523,18 @@ void _XMP_fjrdma_coarray_lastly_deallocate()
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
 void _XMP_fjrdma_continuous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
-				const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
+				char* src_addr, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
 				const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
   size_t transfer_size = dst_elmts * elmt_size;
   _check_transfer_size(transfer_size);
 
   uint64_t raddr = (uint64_t)dst_desc->addr[target_rank] + dst_offset;
-  uint64_t laddr = src_desc->laddr + src_offset;
+  uint64_t laddr;
+  if(src_desc == NULL)
+    laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, src_addr + src_offset, transfer_size);
+  else
+    laddr = src_desc->laddr + src_offset;
 
   if(dst_elmts == src_elmts){
     _XMP_FJMPI_Rdma_put(target_rank, raddr, laddr, transfer_size);
@@ -1545,6 +1551,9 @@ void _XMP_fjrdma_continuous_put(const int target_rank, const uint64_t dst_offset
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
   _XMP_fjrdma_sync_memory_put();
+
+  if(src_desc == NULL)
+    FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
 }
 
 /*************************************************************************/
@@ -1798,22 +1807,25 @@ void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const i
   }
 }
 
-/************************************************************************/
-/* DESCRIPTION : Execute get operation without preprocessing            */
-/* ARGUMENT    : [IN] target_rank  : Target rank                        */
-/*               [OUT] *dst_desc   : Descriptor of destination coarray  */
-/*               [IN] *src_desc    : Descriptor of source coarray       */
-/*               [IN] dst_offset   : Offset size of destination coarray */
-/*               [IN] src_offset   : Offset size of source coarray      */
-/*               [IN] dst_elmts    : Number of elements of destination  */
-/*               [IN] src_elmts    : Number of elements of source       */
-/*               [IN] elmt_size    : Element size                       */
-/* NOTE       : Both dst and src are continuous coarrays.               */
-/*              target_rank != __XMP_world_rank.                        */
-/* EXAMPLE    :                                                         */
-/*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
-/************************************************************************/
-void _XMP_fjrdma_continuous_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+/*****************************************************************************/
+/* DESCRIPTION : Execute get operation without preprocessing                 */
+/* ARGUMENT    : [IN] target_rank  : Target rank                             */
+/*               [OUT] *dst_desc   : Descriptor of destination array         */
+/*                                   If destination is NOT coarray, set NULL */
+/*               [OUT] *dst_addr   : Address of destination array            */
+/*               [IN] *src_desc    : Descriptor of source coarray            */
+/*               [IN] dst_offset   : Offset size of destination coarray      */
+/*               [IN] src_offset   : Offset size of source coarray           */
+/*               [IN] dst_elmts    : Number of elements of destination       */
+/*               [IN] src_elmts    : Number of elements of source            */
+/*               [IN] elmt_size    : Element size                            */
+/* NOTE       : Both dst and src are continuous coarrays.                    */
+/*              target_rank != __XMP_world_rank.                             */
+/* EXAMPLE    :                                                              */
+/*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src                */
+/*****************************************************************************/
+void _XMP_fjrdma_continuous_get(const int target_rank, const _XMP_coarray_t *dst_desc, 
+				char* dst_addr, const _XMP_coarray_t *src_desc,
 				const uint64_t dst_offset, const uint64_t src_offset,
 				const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
@@ -1821,7 +1833,11 @@ void _XMP_fjrdma_continuous_get(const int target_rank, const _XMP_coarray_t *dst
   _check_transfer_size(transfer_size);
 
   uint64_t raddr = (uint64_t)src_desc->addr[target_rank] + src_offset;
-  uint64_t laddr = dst_desc->laddr + dst_offset;
+  uint64_t laddr;
+  if(dst_desc == NULL)
+    laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, dst_addr + dst_offset, transfer_size); 
+  else
+    laddr = dst_desc->laddr + dst_offset;
   
   if(dst_elmts == src_elmts){
     _XMP_FJMPI_Rdma_get(target_rank, raddr, laddr, transfer_size);
@@ -1838,6 +1854,9 @@ void _XMP_fjrdma_continuous_get(const int target_rank, const _XMP_coarray_t *dst
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
+
+  if(dst_desc == NULL)
+    FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
 }
 
 /************************************************************************/
@@ -1861,9 +1880,8 @@ static void _fjrdma_continuous_get(const int target_rank, const uint64_t dst_off
   uint64_t raddr = (uint64_t)src_desc->addr[target_rank] + src_offset;
   uint64_t laddr;
 
-  if(dst_desc == NULL){
+  if(dst_desc == NULL)
     laddr = FJMPI_Rdma_reg_mem(_XMP_TEMP_MEMID, dst + dst_offset, transfer_size);
-  }
   else
     laddr = dst_desc->laddr + dst_offset;
   

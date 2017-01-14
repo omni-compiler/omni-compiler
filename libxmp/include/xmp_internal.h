@@ -507,10 +507,10 @@ extern void _XMP_fjrdma_put(const int, const int, const int, const int, const in
 extern void _XMP_fjrdma_get(const int, const int, const int, const int, const int, const _XMP_array_section_t *, 
 			    const _XMP_array_section_t *, const _XMP_coarray_t *, const _XMP_coarray_t *, void *,
 			    const size_t, const size_t);
-extern void _XMP_fjrdma_continuous_put(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, 
-				     const _XMP_coarray_t *, const size_t, const size_t, const size_t);
-extern void _XMP_fjrdma_continuous_get(const int, const _XMP_coarray_t *, const _XMP_coarray_t *,
-				     const uint64_t, const uint64_t, const size_t, const size_t, const size_t);
+extern void _XMP_fjrdma_continuous_put(const int, const uint64_t, const uint64_t, char*, const _XMP_coarray_t *, 
+				       const _XMP_coarray_t *, const size_t, const size_t, const size_t);
+extern void _XMP_fjrdma_continuous_get(const int, const _XMP_coarray_t *, char*, const _XMP_coarray_t *,
+				       const uint64_t, const uint64_t, const size_t, const size_t, const size_t);
 extern void _xmp_fjrdma_post_wait_initialize();
 extern void _xmp_fjrdma_post(const int, const int);
 extern void _xmp_fjrdma_wait_noargs();
