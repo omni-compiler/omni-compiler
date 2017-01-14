@@ -1446,8 +1446,13 @@ void _XMP_coarray_continuous_put(const int target_image, _XMP_coarray_t *dst_des
     _XMP_gasnet_continuous_put(target_rank, dst_desc, (char *)src_ptr+src_offset, (size_t)dst_offset,
 			       (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_FJRDMA
+<<<<<<< HEAD
     _XMP_fjrdma_continuous_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, (char *)src_ptr, 
 			       dst_desc, src_desc, (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
+=======
+    _XMP_fjrdma_continuous_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, 
+			       (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
+>>>>>>> 0327b1d5811bc49cb41b7261fc5bd6cddde2bd2e
 #elif _XMP_TCA
     _XMP_fatal("_XMP_tca_continuous_put is unimplemented");
 #elif _XMP_MPI3_ONESIDED
@@ -1490,7 +1495,11 @@ void _XMP_coarray_continuous_get(const int target_image, _XMP_coarray_t *dst_des
     _XMP_gasnet_continuous_get(target_rank, (char*)dst_ptr+dst_offset, src_desc->addr[target_rank]+src_offset,
 			       (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_FJRDMA
+<<<<<<< HEAD
     _XMP_fjrdma_continuous_get(target_rank, dst_desc, (char *)dst_ptr, src_desc, (uint64_t)dst_offset, (uint64_t)src_offset, 
+=======
+    _XMP_fjrdma_continuous_get(target_rank, dst_desc, src_desc, (uint64_t)dst_offset, (uint64_t)src_offset, 
+>>>>>>> 0327b1d5811bc49cb41b7261fc5bd6cddde2bd2e
 			       (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_MPI3_ONESIDED
     _XMP_mpi_continuous_get(target_rank, dst_desc, src_desc, dst_ptr, (size_t)dst_offset, (size_t)src_offset,
