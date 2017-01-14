@@ -9,6 +9,24 @@ cl_uint _ACC_cl_device_num; //now fixed
 
 static bool is_working = false;
 
+#define PRINT_PLATFORM_INFO(PLATFORM_ID, PARAM)				\
+  do{									\
+    size_t param_val_size;						\
+    CL_CHECK(clGetPlatformInfo((PLATFORM_ID), (PARAM), 0, NULL, &param_val_size)); \
+    char param_val[param_val_size];					\
+    CL_CHECK(clGetPlatformInfo((PLATFORM_ID), (PARAM), param_val_size, param_val, NULL)); \
+    _ACC_DEBUG("%s: %s\n", #PARAM, param_val);				\
+  }while(0);
+
+#define PRINT_DEVICE_INFO(DEVICE_ID, PARAM)				\
+  do{									\
+    size_t param_val_size;						\
+    CL_CHECK(clGetDeviceInfo((DEVICE_ID), (PARAM), 0, NULL, &param_val_size)); \
+    char param_val[param_val_size];					\
+    CL_CHECK(clGetDeviceInfo((DEVICE_ID), (PARAM), param_val_size, param_val, NULL)); \
+    _ACC_DEBUG("%s: %s\n", #PARAM, param_val);				\
+  }while(0);
+
 void _ACC_platform_init()
 {
   if(is_working == true){
@@ -41,6 +59,22 @@ void _ACC_platform_init()
   
   _ACC_cl_current_context = clCreateContext(NULL, _ACC_cl_num_devices, _ACC_cl_device_ids, NULL, NULL, &ret);
   CL_CHECK(ret);
+
+  _ACC_DEBUG("Platform info\n");
+  PRINT_PLATFORM_INFO(platform_id, CL_PLATFORM_PROFILE);
+  PRINT_PLATFORM_INFO(platform_id, CL_PLATFORM_VERSION);
+  PRINT_PLATFORM_INFO(platform_id, CL_PLATFORM_NAME);
+  PRINT_PLATFORM_INFO(platform_id, CL_PLATFORM_VENDOR);
+  PRINT_PLATFORM_INFO(platform_id, CL_PLATFORM_EXTENSIONS);
+
+  for(int i = 0; i < _ACC_cl_num_devices; i++){
+    _ACC_DEBUG("Device %d info\n", i);
+    PRINT_DEVICE_INFO(_ACC_cl_device_ids[i], CL_DEVICE_VENDOR);
+    PRINT_DEVICE_INFO(_ACC_cl_device_ids[i], CL_DEVICE_NAME);
+    PRINT_DEVICE_INFO(_ACC_cl_device_ids[i], CL_DEVICE_VERSION);
+    PRINT_DEVICE_INFO(_ACC_cl_device_ids[i], CL_DRIVER_VERSION);
+    _ACC_DEBUG("\n");
+  }
 
   is_working = true;
 }
