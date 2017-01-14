@@ -14,7 +14,6 @@
 #define _XMP_FJRDMA_MAX_GET         60 /** This value is trial */
 
 static int _num_of_puts = 0, _num_of_gets = 0;
-static struct FJMPI_Rdma_cq _cq;
 static int _memid = _XMP_FJRDMA_START_MEMID; // _memid = 0 is used for put/get operations.
                                              // _memid = 1 is used for post/wait operations.
                                              // _memid = 2 is used for sync images
@@ -1251,7 +1250,7 @@ static size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int
 void _XMP_fjrdma_sync_memory_put()
 {
   while(_num_of_puts != 0)
-    if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC, &_cq) == FJMPI_RDMA_NOTICE)
+    if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC, NULL) == FJMPI_RDMA_NOTICE)
       _num_of_puts--;
 }
 
@@ -1261,7 +1260,7 @@ void _XMP_fjrdma_sync_memory_put()
 void _XMP_fjrdma_sync_memory_get()
 {
   while(_num_of_gets != 0)
-    if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC, &_cq) == FJMPI_RDMA_NOTICE)
+    if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC, NULL) == FJMPI_RDMA_NOTICE)
       _num_of_gets--;
 }
 
@@ -1290,7 +1289,7 @@ void _XMP_add_num_of_gets()
 */
 void _XMP_fjrdma_sync_memory()
 {
-  _XMP_fjrdma_sync_memory_put();
+  //  _XMP_fjrdma_sync_memory_put();
   // _XMP_fjrdma_sync_memory_get don't need to be executed
 }
 
@@ -1299,7 +1298,7 @@ void _XMP_fjrdma_sync_memory()
 */
 void _XMP_fjrdma_sync_all()
 {
-  _XMP_fjrdma_sync_memory();
+  //  _XMP_fjrdma_sync_memory();
   MPI_Barrier(MPI_COMM_WORLD);
 }
 
@@ -1545,6 +1544,7 @@ void _XMP_fjrdma_continuous_put(const int target_rank, const uint64_t dst_offset
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
+  _XMP_fjrdma_sync_memory_put();
 }
 
 /*************************************************************************/
@@ -1574,6 +1574,7 @@ static void _fjrdma_continuous_put(const int target_rank, const uint64_t dst_off
     laddr = src_desc->laddr + src_offset;
 
   _XMP_FJMPI_Rdma_put(target_rank, raddr, laddr, transfer_size);
+  _XMP_fjrdma_sync_memory_put();
 
   if(src_desc == NULL)   
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
@@ -1616,6 +1617,7 @@ static void _fjrdma_scalar_mput(const int target_rank, const uint64_t dst_offset
   for(size_t i=0;i<transfer_elmts;i++) lengths[i] = elmt_size;
 
   _fjrdma_scalar_mput_do(target_rank, raddrs, laddrs, lengths, transfer_elmts, elmt_size);
+  _XMP_fjrdma_sync_memory_put();
 
   if(src_desc == NULL)
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
@@ -1745,6 +1747,8 @@ static void _fjrdma_NON_continuous_put(const int target_rank, const uint64_t dst
     					dst_info, src_info, dst_dims, src_dims, elmt_size);
   }
   
+  _XMP_fjrdma_sync_memory_put();
+
   if(src_desc == NULL)
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
 }
