@@ -1026,7 +1026,7 @@ public class AccKernel {
     }
 
     if (!_kernelInfo.hasClause(ACCpragma.ASYNC)) {
-      blockListBuilder.add(ACCutil.createFuncCallBlock("_ACC_gpu_wait", Xcons.List(Xcons.IntConstant(ACC.ACC_ASYNC_SYNC) /*_accAsyncSync*/)));
+      blockListBuilder.addFinalizeBlock(ACCutil.createFuncCallBlock("_ACC_gpu_wait", Xcons.List(Xcons.IntConstant(ACC.ACC_ASYNC_SYNC) /*_accAsyncSync*/)));
     }
 
     BlockList launchFuncBody = blockListBuilder.build();

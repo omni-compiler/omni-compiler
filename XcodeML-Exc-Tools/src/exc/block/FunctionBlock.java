@@ -15,6 +15,7 @@ import exc.object.*;
 public class FunctionBlock extends CompoundBlock
 {
     private Xobject name;
+    private Xobject parent_name;
     private Xobject gcc_attrs;
     XobjectDefEnv env;
 
@@ -37,16 +38,17 @@ public class FunctionBlock extends CompoundBlock
 		       Xobject decls, Block body_block,
 		       Xobject gcc_attrs, XobjectDefEnv env)
     {
-        this((LineNo)null, opcode, name, id_list, decls, body_block, gcc_attrs, env);
+        this((LineNo)null, opcode, name, id_list, decls, body_block, gcc_attrs, env, null);
     }
 
   public FunctionBlock(LineNo line_no, Xcode opcode, Xobject name, Xobject id_list, 
 		       Xobject decls, Block body_block,
-		       Xobject gcc_attrs, XobjectDefEnv env)
+		       Xobject gcc_attrs, XobjectDefEnv env, Xobject parent_name)
     {
         super(opcode, new BlockList(id_list, decls));
         this.env = env;
         this.name = name;
+        this.parent_name = parent_name;
         this.gcc_attrs = gcc_attrs;
         body.add(body_block);
         this.setLineNo(line_no);
@@ -69,7 +71,7 @@ public class FunctionBlock extends CompoundBlock
         return env;
     }
 
-    /** contert to Xobject */
+    /** convert to Xobject */
     @Override
     public Xobject toXobject()
     {
@@ -81,7 +83,8 @@ public class FunctionBlock extends CompoundBlock
 	    x = new XobjList(Opcode(),
 			     name, body.id_list,
 			     body.decls, 
-			     body.toXobject());
+			     body.toXobject(),
+			     parent_name);
 	} else {
 	    x = new XobjList(Opcode(),
 			     name, body.id_list,
@@ -100,6 +103,8 @@ public class FunctionBlock extends CompoundBlock
         StringBuilder s = new StringBuilder(256);
         s.append("(FunctionBlock ");
         s.append(name);
+        s.append(" ");
+        s.append(parent_name);
         s.append(" ");
         s.append(body);
         s.append(" ");

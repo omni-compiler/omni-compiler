@@ -72,7 +72,7 @@ void _ACC_program_init(_ACC_program_t **desc, char * kernel_src_filename, int nu
   //open kernel file
   FILE *fp = fopen(kernel_src_filename, "r");
   if (fp == NULL){
-    fprintf(stderr, "Faild to open kernel file.\n");
+    fprintf(stderr, "Failed to open kernel file %s.\n", kernel_src_filename);
     exit(1);
   }
 
