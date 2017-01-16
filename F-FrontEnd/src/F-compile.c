@@ -1879,10 +1879,11 @@ update_procedure_variables(ID ids, TYPE_DESC struct_decls, ID targets)
                         dummy_ret = FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ID_TYPE(id)));
                         TYPE_BASIC_TYPE(dummy_ret) = TYPE_BASIC_TYPE(ret);
                         TYPE_REF(dummy_ret) = ret;
-                        TYPE_REF(ID_TYPE(id)) = ID_TYPE(target);
                     } else { /* IS_SUBR(ID_TYPE(target) == TRUE */
                         TYPE_BASIC_TYPE(ID_TYPE(VAR_REF_PROC(id))) = TYPE_SUBR;
                     }
+                    TYPE_REF(ID_TYPE(id)) = ID_TYPE(target);
+                    ID_TYPE(VAR_REF_PROC(id)) = ID_TYPE(target);
                 }
             }
         }
