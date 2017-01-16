@@ -715,9 +715,9 @@ proc_decl:
           IDENTIFIER
         { $$ = $1; }
         | IDENTIFIER REF_OP IDENTIFIER
-        { $$ = list3(F03_BIND_PROCEDURE, $1, $3, NULL); }
+        { $$ = list2(F03_BIND_PROCEDURE, $1, $3); }
         | IDENTIFIER REF_OP IDENTIFIER '(' arg_list ')'
-        { $$ = list3(F03_BIND_PROCEDURE, $1, $3, $5); }
+        { $$ = list2(F03_BIND_PROCEDURE, $1, list2(F_ARRAY_REF,$3, $5)); }
         ;
 
 proc_decl_list:

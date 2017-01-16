@@ -5138,12 +5138,54 @@ compile_procedure_declaration(expr x)
     }
 
     FOR_ITEMS_IN_LIST(lp, decls) {
-        if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
+        if (EXPR_CODE(LIST_ITEM(lp)) == F03_BIND_PROCEDURE) {
+            expr init_expr;
+            expv v;
+
+            id = declare_ident(EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))), CL_VAR);
+            ID_LINE(id) = EXPR_LINE(LIST_ITEM(lp));
+
+            init_expr = EXPR_ARG2(LIST_ITEM(lp));
+
+            if (EXPR_CODE(init_expr) == IDENT) {
+                ID f_id = find_ident_outer_scope(EXPR_SYM(init_expr));
+
+                if (f_id != NULL) {
+                    /* TODO: check type of function */
+
+                    v = expv_sym_term(IDENT, ID_TYPE(f_id), ID_SYM(f_id));
+                } else {
+                    /* The type will be fixed in other function */
+                    v = expv_sym_term(IDENT, type_GNUMERIC_ALL, ID_SYM(f_id));
+                }
+
+            } else if (EXPR_CODE(init_expr) == F_ARRAY_REF) {
+                /* initialize expression should be NULL() */
+                ID fid = NULL;
+                expr fname = EXPR_ARG1(init_expr);
+                expr args = EXPR_ARG2(init_expr);
+                expv a;
+                if (EXPR_CODE(fname) != IDENT ||
+                    EXPR_SYM(fname) != find_symbol("null")) {
+                    error("not null() initialization");
+                    continue;
+                }
+                fid = new_ident_desc(EXPR_SYM(fname));
+                a = compile_args(args);
+                v = compile_intrinsic_call(fid, a);
+            } else {
+                error("unexepected initialization expression for PROCEDRUE");
+                continue;
+            }
+            VAR_INIT_VALUE(id) = compile_expression(v);
+
+        } else if (EXPR_CODE(LIST_ITEM(lp)) == IDENT) {
+            id = declare_ident(EXPR_SYM(LIST_ITEM(lp)), CL_VAR);
+        } else {
             error("unexpected expression");
             continue;
         }
 
-        id = declare_ident(EXPR_SYM(LIST_ITEM(lp)), CL_VAR);
         ID_LINE(id) = EXPR_LINE(x);
         ID_TYPE(id) = procedure_type(tp);
         TYPE_ATTR_FLAGS(ID_TYPE(id)) |= type_attr_flags;

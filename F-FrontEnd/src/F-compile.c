@@ -545,10 +545,10 @@ compile_statement1(int st_no, expr x)
              PARENT_PROC_CLASS == CL_SUBMODULE)) {
             goto do_end_submodule;
 
-        } else if (CURRENT_PROC_CLASS == CL_SUBMODULE ||
+        } else if (CURRENT_PROC_CLASS == CL_MODULE ||
             (CURRENT_PROC_CLASS == CL_UNKNOWN &&
              unit_ctl_level > 1 &&
-             PARENT_PROC_CLASS == CL_SUBMODULE)) {
+             PARENT_PROC_CLASS == CL_MODULE)) {
             goto do_end_module;
 
         } else {
