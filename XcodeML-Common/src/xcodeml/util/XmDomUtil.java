@@ -65,8 +65,17 @@ public class XmDomUtil {
             return false;
 
         Node nn = n.getAttributes().getNamedItem(name);
-        if (nn != null)
+        if (nn == null)
+            return false;
+
+        String value = nn.getNodeValue();
+
+        if (value == null)
+            return false;
+
+        if ("true".equals(value.toLowerCase()))
             return true;
+
         return false;
     }
 

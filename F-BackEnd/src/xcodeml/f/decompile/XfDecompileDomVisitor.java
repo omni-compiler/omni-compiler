@@ -3677,7 +3677,7 @@ public class XfDecompileDomVisitor {
 
             String name = XmDomUtil.getAttr(n, "name");
 
-            boolean isSubmodule = XmDomUtil.getAttr(n, "is_sub").equals("true");
+            boolean isSubmodule = XmDomUtil.getAttrBool(n, "is_sub");
 
             if (isSubmodule) {
                 writer.writeToken("SUBMODULE");
