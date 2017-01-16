@@ -553,16 +553,16 @@ compile_statement1(int st_no, expr x)
 
         } else {
             check_INEXEC();
-	    // move into end_procedure()
-	    //if (endlineno_flag){
-	    //	      if (CURRENT_PROCEDURE)
-	    //ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
-	    //else if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
-	    //EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
-	    //}
-	    check_for_OMP_pragma(x); /* close DO directives if any */
-	    check_for_ACC_pragma(x); /* close LOOP directives if any */
-	    check_for_XMP_pragma(st_no, x); /* close LOOP directives if any */
+            // move into end_procedure()
+            //if (endlineno_flag){
+            //	      if (CURRENT_PROCEDURE)
+            //ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
+            //else if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
+            //EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
+            //}
+            check_for_OMP_pragma(x); /* close DO directives if any */
+            check_for_ACC_pragma(x); /* close LOOP directives if any */
+            check_for_XMP_pragma(st_no, x); /* close LOOP directives if any */
             end_procedure();
         }
         break;
@@ -1576,8 +1576,12 @@ check_INEXEC()
         if (unit_ctl_level == 0)
             declare_procedure(CL_MAIN, make_enode(IDENT, find_symbol(NAME_FOR_NONAME_PROGRAM)),
                               NULL, NULL, NULL, NULL, NULL);
-        else
-            declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL, NULL);
+        else {
+            if (PARENT_STATE != INCONT) {
+                /* Don't make MAIN program in the CONTAINS block*/
+                declare_procedure(CL_MAIN, NULL, NULL, NULL, NULL, NULL, NULL);
+            }
+        }
     }
     if(NOT_INDATA_YET) end_declaration();
 }
