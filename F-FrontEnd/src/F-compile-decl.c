@@ -5152,11 +5152,10 @@ compile_procedure_declaration(expr x)
 
                 if (f_id != NULL) {
                     /* TODO: check type of function */
-
                     v = expv_sym_term(IDENT, ID_TYPE(f_id), ID_SYM(f_id));
                 } else {
                     /* The type will be fixed in other function */
-                    v = expv_sym_term(IDENT, type_GNUMERIC_ALL, ID_SYM(f_id));
+                    v = expv_sym_term(IDENT, type_GNUMERIC_ALL, EXPR_SYM(init_expr));
                 }
 
             } else if (EXPR_CODE(init_expr) == F_ARRAY_REF) {
