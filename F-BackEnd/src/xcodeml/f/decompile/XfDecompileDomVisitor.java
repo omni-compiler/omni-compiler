@@ -537,11 +537,9 @@ public class XfDecompileDomVisitor {
             writer.writeToken("PROCEDURE");
             writer.writeToken("(");
             if (XmDomUtil.getAttr(lowTypeChoice, "ref") != null) {
-                Node child = topTypeChoice.getFirstChild();
-                if (child != null && "params".equals(child.getNodeName())) {
-                    // function has an explicit interface
-                    // TODO: pickup function/subroutine name
-                    writer.writeToken("f");
+                String functionName = typeManager.findNameFromType(XmDomUtil.getAttr(topTypeChoice, "type"));
+                if (functionName != null) {
+                    writer.writeToken(functionName);
                 } else {
                     String returnTypeId = XmDomUtil.getAttr(topTypeChoice, "return_type");
                     XfType returnType = XfType.getTypeIdFromXcodemlTypeName(returnTypeId);
