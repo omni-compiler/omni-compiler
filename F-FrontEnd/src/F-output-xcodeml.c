@@ -40,6 +40,7 @@ static void     outx_id_declarations(int l, ID id_list, int expectResultVar, con
 static void     collect_types(EXT_ID extid);
 static void     collect_type_desc(expv v);
 static int      id_is_visibleVar(ID id);
+static int      id_is_visibleVar_for_symbols(ID id);
 
 char s_timestamp[CEXPR_OPTVAL_CHARLEN] = { 0 };
 char s_xmlIndent[CEXPR_OPTVAL_CHARLEN] = "  ";
@@ -3317,7 +3318,7 @@ outx_BLOCK_statement(int l, expv v)
 
     outx_tag(l1, "symbols");
     FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
-        if (id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE)
+        if (id_is_visibleVar_for_symbols(id))
             outx_id(l2, id);
     }
     outx_close(l1, "symbols");
@@ -4446,7 +4447,7 @@ id_is_visibleVar(ID id)
         if(PROC_CLASS(id) == P_DEFINEDPROC) {
             /* this id is of function.
                Checkes if this id is of the current function or not. */
-            if(CRT_FUNCEP == PROC_EXT_ID(id)) {
+            if (CRT_FUNCEP == PROC_EXT_ID(id)) {
                 return TRUE;
             } else if (TYPE_IS_MODIFIED(ID_TYPE(id))) {
                 return TRUE;
@@ -4469,6 +4470,19 @@ id_is_visibleVar(ID id)
     return TRUE;
 }
 
+/**
+ * Check id is visible in <symbols>
+ */
+static int
+id_is_visibleVar_for_symbols(ID id)
+{
+    if (id == NULL)
+        return FALSE;
+
+    return (id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE) ||
+            ((ID_STORAGE(id) == STG_ARG || ID_STORAGE(id) == STG_SAVE ||
+              ID_STORAGE(id) == STG_AUTO) && ID_CLASS(id) == CL_PROC);
+}
 
 
 /**
@@ -4483,7 +4497,7 @@ outx_definition_symbols(int l, EXT_ID ep)
     outx_tag(l, "symbols");
 
     FOREACH_ID(id, EXT_PROC_ID_LIST(ep)) {
-        if(id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE)
+        if(id_is_visibleVar_for_symbols(id))
             outx_id(l1, id);
     }
 
