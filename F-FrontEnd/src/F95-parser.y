@@ -1253,6 +1253,8 @@ len_key_spec: KW_LEN '=' expr
 
 len_spec: '*'
         { $$ = list1(F95_LEN_SELECTOR_SPEC, NULL); }
+        | ':'
+        { $$ = list1(F95_LEN_SELECTOR_SPEC, NULL); }
         | expr
         { $$ = list1(F95_LEN_SELECTOR_SPEC, $1); }
         ;
