@@ -451,14 +451,6 @@ expr_is_variable(expr x, int force, ID *idPtr)
         if (ID_CLASS(id) == CL_UNKNOWN) {
             ID_CLASS(id) = CL_VAR;
         }
-#if 0
-        /*
-         * Not fix the type at this moment.
-         */
-        if (ID_CLASS(id) == CL_VAR) {
-            declare_variable(id);
-        }
-#endif
     }
     if (ID_CLASS(id) == CL_VAR) {
         ret = TRUE;

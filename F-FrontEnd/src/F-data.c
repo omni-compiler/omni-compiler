@@ -449,12 +449,6 @@ setInitialValue(expv vrV, expv vlV)
         ID_STORAGE(id) = STG_SAVE;
         TYPE_SET_SAVE(id);
         ID_IS_DECLARED(id) = FALSE;
-#if 0
-        /*
-         * Not fix type here.
-         */
-        declare_variable(id);
-#endif
     }
 
     if (VAR_INIT_TYPE(id) == VAR_INIT_SUBSTR) {

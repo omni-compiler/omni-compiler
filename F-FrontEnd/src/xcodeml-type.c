@@ -4,25 +4,6 @@
 
 xentry * type_table;
 
-#if 0
-static void
-free_entry(xentry entry)
-{
-    entry.content = NULL;
-    entry.next = NULL;
-    entry.tagname = NULL;
-}
-
-void
-typetable_init()
-{
-    int i;
-    for (i = 0; i < XCODEML_TYPE_TABLE_SIZE; i++) {
-        free_entry(type_table[i]);
-    }
-}
-#endif
-
 /**
  * Free hash entry recurcively.
  *

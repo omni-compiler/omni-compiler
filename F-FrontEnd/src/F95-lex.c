@@ -206,13 +206,6 @@ static int      readline_free_format _ANSI_ARGS_((void));
 static int      readline_fixed_format _ANSI_ARGS_((void));
 static void     _warning_if_doubtfulLongLine (char *buf, int maxLen);
 static int      is_fixed_cond_statement_label _ANSI_ARGS_((char *  label));
-#ifdef not
-static int      is_OCL_sentinel _ANSI_ARGS_((char **));
-static int      is_PRAGMA_sentinel _ANSI_ARGS_((char **));
-static int	is_OMP_sentinel _ANSI_ARGS_((char **));
-static int	is_XMP_sentinel _ANSI_ARGS_((char **));
-static int	is_ACC_sentinel _ANSI_ARGS_((char **));
-#endif
 static int      is_pragma_sentinel _ANSI_ARGS_((sentinel_list* plist,
                                                 char* line, int* index));
 static int      is_cond_compilation _ANSI_ARGS_((sentinel_list* plist,
@@ -553,10 +546,6 @@ yylex0()
         return t;
 
     case LEX_PRAGMA_TOKEN:
-#if 0
-        if (!fixed_format_flag)
-            append_pragma_str(st_buffer_org);
-#endif
         lexstate = LEX_RET_EOS;
         return PRAGMA_SLINE;
 
@@ -877,16 +866,9 @@ token()
                 else
                     user_defined[i] = *bufptr++;
             }
-#if 0
-            s = find_symbol_without_allocate (user_defined);
-#endif
             s = find_symbol (user_defined);
-            if (s == NULL)
-                return '.';
-            else {
-                yylval.val = GEN_NODE(IDENT, s);
-                return USER_DEFINED_OP;
-            }
+	    yylval.val = GEN_NODE(IDENT, s);
+	    return USER_DEFINED_OP;
         } else
 	    return '.';
     case '>':
@@ -901,15 +883,6 @@ token()
             return(LE);
         }
         return(LT);
-
-#ifdef not  /* ! is used for comment line */
-    case '!':
-        if(*bufptr == '='){
-            bufptr++;
-            return(NE);
-        }
-        return(NOT);
-#endif
 
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9':
@@ -964,15 +937,6 @@ read_identifier()
       error( "name is too long. " );
     }
     *p = 0;             /* termination */
-
-#ifdef not
-    if (strncmp(buffio,"function",8) == 0 && isalpha((int)buffio[8]) &&
-        bufptr[0] == '(' && (bufptr[1] == ')' || isalpha((int)bufptr[1]))) {
-        /* back */
-        bufptr -= (tkn_len - 8);
-        return(FUNCTION);
-    }
-#endif
 
     if(tkn_len == 1 && *bufptr == QUOTE){
         omllint_t v = 0;
@@ -1188,9 +1152,6 @@ string_to_integer(p, cp, radix)
         ((omllint_t)v2 << 32) |
         ((omllint_t)v1 << 16) |
         (omllint_t)v0;
-#if 0
-    fprintf(stderr, "lex: H = %x, L = %x\n", *hp, *p);
-#endif
 }
 
 static double
@@ -2019,88 +1980,6 @@ find_last_ampersand(char *buf,int *len)
     return FALSE;
 }
 
-#ifdef not
-static int
-is_OCL_sentinel(char **pp)
-{
-  int i;
-  char *p;
-
-  p = *pp;
-  memset(stn_cols, ' ', 6);
-  while (isspace(*p)) p++;     /* skip space */
-  if (*p == '!'){
-    /* check sentinels */
-    for (i = 0; i < 6; i++,p++){
-      if (*p == '\0' || isspace(*p)) break;
-      if (PRAGMA_flag)
-	stn_cols[i] = *p;
-      else
-	stn_cols[i] = TOLOWER(*p);
-    }
-    stn_cols[i] = '\0';
-    if (strncasecmp(stn_cols,"!ocl", 4) == 0){
-      *pp = p;
-      return TRUE;
-    }
-  }
-  return FALSE;
-}
-
-static int
-is_PRAGMA_sentinel(char **pp)
-{
-    int i;
-    char *p;
-
-    p = *pp;
-    memset(stn_cols, ' ', 6);
-    while(isspace(*p)) p++;     /* skip space */
-    if(*p == '!'){
-        /* check sentinels */
-        for(i = 0; i < 6; i++,p++) {
-            if(*p == '\0' || isspace(*p)) break;
-            if (PRAGMA_flag)
-                stn_cols[i] = *p;
-            else
-                stn_cols[i] = TOLOWER(*p);
-        }
-        stn_cols[i] = '\0';
-        if (strncasecmp(stn_cols,"!$", 2) == 0) {
-            *pp = p;
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
-static int
-is_OMP_sentinel(char **pp)
-{
-    int i;
-    char *p;
-
-    p = *pp;
-    memset(stn_cols, ' ', 6);
-    while(isspace(*p)) p++;     /* skip space */
-    if(*p == '!'){
-	/* check sentinels */
-	for(i = 0; i < 6; i++,p++){
-	    if(*p == '\0' || isspace(*p)) break;
-	    if (PRAGMA_flag)
-		stn_cols[i] = *p;
-	    else
-		stn_cols[i] = TOLOWER(*p);
-	}
-	stn_cols[i] = '\0';
-	if (strcasecmp(stn_cols,"!$omp") == 0) {
-	    *pp = p;
-	    return TRUE;
-	}
-    }
-    return FALSE;
-}
-#endif
 /* check sentinel in line */
 /* if is sentnal return 1 and set index of sentinel list to index,
    unless return 0 and no set no value to index. */
@@ -2446,9 +2325,6 @@ next_line0:
     ungetc(c,source_file);
 /* handling the case string has ';'. */
 /* should handlig for holirith here?  */
-#if 0
-    for(bp = line_buffer, inQuote = 0, inComment = FALSE;
-#endif
     for(bp = line_buffer;
         bp < &line_buffer[LINE_BUF_SIZE]; ) {
         c = getc(source_file);
@@ -2818,10 +2694,6 @@ Done:
 Last:
     memcpy(st_buffer_org, st_buffer, st_len);
     st_buffer_org[st_len] = '\0';
-
-#if 0
-    fprintf(stderr, "debug: read_initial got '%s'\n", st_buffer);
-#endif
 
     pre_read = (rv == ST_INIT) ? 1 : 0;
     return ST_ONE;
@@ -3533,9 +3405,6 @@ unHollerith(cur, head, dst, dstHead, dstMax, inQuotePtr, quoteChar,
     int nGet = 0;
     int rQC = '\0';
 
-#if 0
-    fprintf(stderr, "debug: hLen = %d\n", hLen);
-#endif
     if (hLen == 0) {
         /*
          * not a hollerith.
@@ -3550,9 +3419,6 @@ unHollerith(cur, head, dst, dstHead, dstMax, inQuotePtr, quoteChar,
         goto Done;
     }
 
-#if 0
-    fprintf(stderr, "debug: dst = 0x%08x, dHead = 0x%08x\n", dst, dstHead);
-#endif
     while (dst >= dstHead) {
         dst--;
         if (isdigit((int)*dst)) {
@@ -3562,9 +3428,6 @@ unHollerith(cur, head, dst, dstHead, dstMax, inQuotePtr, quoteChar,
         }
     }
     dst++;
-#if 0
-    fprintf(stderr, "debug: dst = '%s'\n", dst);
-#endif
     if (quoteChar == '\'') {
         rQC = '"';
     } else {
@@ -4051,35 +3914,6 @@ XMP_lex_token()
     }
     return token();
 }
-
-#ifdef not
-static int
-is_XMP_sentinel(char **pp)
-{
-    int i;
-    char *p;
-
-    p = *pp;
-    memset(stn_cols, ' ', 6);
-    while(isspace(*p)) p++;     /* skip space */
-    if(*p == '!'){
-	/* check sentinels */
-	for(i = 0; i < 6; i++,p++){
-	    if(*p == '\0' || isspace(*p)) break;
-	    if (PRAGMA_flag)
-		stn_cols[i] = *p;
-	    else
-		stn_cols[i] = TOLOWER(*p);
-	}
-	stn_cols[i] = '\0';
-	if (strcasecmp(stn_cols,"!$xmp") == 0) {
-	    *pp = p;
-	    return TRUE;
-	}
-    }
-    return FALSE;
-}
-#endif
 
 /* sentinel list functions */
 /* initialize sentinel list */

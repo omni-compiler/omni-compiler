@@ -285,16 +285,6 @@ char *argv[];
                 cmd_error_exit("invalid path after -TD.");
         } else if (strcmp(argv[0], "-module-compile") == 0) {
             flag_module_compile = TRUE;
-#if 0
-        } else if (strncmp(argv[0], "-MC=", 4) == 0) {
-            /* -MC=fileName:N:StartSeekPoint:EndSeekPoint */
-            /* internal option for module compile.  */
-            flag_module_compile = TRUE;
-            if (sscanf (argv[0] + 4, "%d:%ld:%ld",
-                        &mcLn_no, &mcStart, &mcEnd) != 3) {
-                cmd_error_exit ("internal error on internal command option, does not match: -MC=fileName:N:StartSeekPoint:EndSeekPoint");
-            }
-#endif
         } else if (strncmp(argv[0], "-I", 2) == 0) {
             /* -I <anotherDir> or -I<anotherDir> */
             char *path;
@@ -361,21 +351,6 @@ char *argv[];
             if (flag_force_fixed_format == 1)  {
                 cmd_warning("no need option for enable c comment(-force-c-comment) in fixed format mode(.f or .F).");
             }
-#if 0
-        } else if (strcmp(argv[0], "-xmod") == 0) {
-            char *path;
-            symbol_filter * filter;
-            if (--argc <= 0)
-                cmd_error_exit("no arg for -xmod.");
-            argv++;
-            path = argv[0];
-
-            filter = push_new_filter();
-
-            FILTER_USAGE(filter) = RENAME;
-
-            return use_module_to(path, stdout) ? EXITCODE_OK : EXITCODE_ERR;
-#endif
         } else if (strcmp(argv[0], "--save") == 0) {
             auto_save_attr_kb = 1; // 1kbytes
         } else if (strncmp(argv[0], "--save=", 7) == 0) {
@@ -411,10 +386,6 @@ char *argv[];
         } else if (strcmp(argv[0], "--help") == 0) {
             usage();
             exit(0);
-#if 0
-        } else if (strncmp(argv[0], "-m", 2) == 0) {
-            cmd_warning("quad/multiple precision is not supported.");
-#endif
         } else if (strcmp(argv[0], "-no-module-cache") == 0) {
             flag_do_module_cache = FALSE;
         } else {
