@@ -476,7 +476,8 @@ int enable_need_type_keyword = TRUE;
 %}
 
 %type <val> statement label
-%type <val> expr /*expr1*/ lhs member_ref lhs_alloc member_ref_alloc substring expr_or_null complex_const array_constructor_list
+%type <val> expr /*expr1*/ lhs member_ref lhs_alloc member_ref_alloc substring expr_or_null complex_const
+%type <val> array_constructor array_constructor_list array_constructor0
 %type <val> program_name dummy_arg_list dummy_args dummy_arg file_name
 %type <val> declaration_statement executable_statement action_statement action_statement_let action_statement_key assign_statement_or_null assign_statement
 %type <val> declaration_list entity_decl type_spec type_spec0 length_spec common_decl
@@ -1961,11 +1962,20 @@ io_item:
         { $$ = list2(F_IMPLIED_DO,$4,$2); }
         ;
 
+
+array_constructor:
+          L_ARRAY_CONSTRUCTOR KW array_constructor_list R_ARRAY_CONSTRUCTOR
+        { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
+        | '[' KW array_constructor_list ']'
+        { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
+        | L_ARRAY_CONSTRUCTOR KW type_spec COL2 array_constructor_list R_ARRAY_CONSTRUCTOR
+        { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
+        | '[' KW type_spec COL2 array_constructor_list ']'
+        { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
+        ;
+
 expr:     lhs
-        | L_ARRAY_CONSTRUCTOR array_constructor_list R_ARRAY_CONSTRUCTOR
-        { $$ = list1(F95_ARRAY_CONSTRUCTOR, $2); }
-        | '[' array_constructor_list ']'
-        { $$ = list1(F95_ARRAY_CONSTRUCTOR, $2); }
+        | array_constructor
         | '(' expr ')'
         { $$ = $2; }
         | complex_const
@@ -2102,12 +2112,24 @@ member_ref_alloc:     /* For allocation list only */
 /*         { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); } */
         ;
 
+array_constructor0:
+          KW_INTEGER        { $$ = GEN_NODE(IDENT,find_symbol("integer")); }
+        | KW_REAL           { $$ = GEN_NODE(IDENT,find_symbol("real")); }
+        | KW_COMPLEX        { $$ = GEN_NODE(IDENT,find_symbol("complex")); }
+        | KW_LOGICAL        { $$ = GEN_NODE(IDENT,find_symbol("logical")); }
+        | KW_TYPE           { $$ = GEN_NODE(IDENT,find_symbol("type")); }
+        | CLASS             { $$ = GEN_NODE(IDENT,find_symbol("class")); }
+        ;
+
 array_constructor_list:
-          io_item
+          array_constructor0
+        { $$ = list1(LIST, $1); }
+        | io_item
         { $$ = list1(LIST, $1); }
         | array_constructor_list  ',' io_item
         { $$ = list_put_last($1, $3); }
         ;
+
 
 /* reduce/reduce conflict between with complex const,  like (1.2, 3.4).
 
