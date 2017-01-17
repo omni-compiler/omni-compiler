@@ -6023,15 +6023,47 @@ compile_POINTER_SET_statement(expr x) {
                       SYM_NAME(EXPR_SYM(EXPR_ARG1(x))));
         return;
     }
-    if (!TYPE_IS_TARGET(vPteTyp) &&
-        !TYPE_IS_POINTER(vPteTyp) &&
-        !IS_PROCEDURE_TYPE(vPteTyp)) {
-        if(EXPR_CODE(EXPR_ARG2(x)) == IDENT)
-            error_at_node(x, "'%s' is not a pointee.",
+
+    if (IS_PROCEDURE_TYPE(vPtrTyp)) {
+        /* if left operand is a procedure type,
+         * right operand is a function/subroutine,
+         * and they may be declared in the CONTAINS block.
+         */
+        if (!IS_PROCEDURE_TYPE(vPteTyp) &&
+            TYPE_BASIC_TYPE(vPteTyp) != TYPE_UNKNOWN &&
+            !TYPE_IS_IMPLICIT(vPteTyp)) {
+            error_at_node(x, "'%s' is not a function/subroutine",
                           SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
-        else
-            error_at_node(x, "right hand side expression is not a pointee.");
-        return;
+        }
+        if (EXPR_CODE(vPointee) == IDENT && !IS_PROCEDURE_TYPE(vPteTyp)) {
+            /* POINTEE is used as a function/subroutine,
+             * so fix its type
+             */
+            TYPE_DESC old;
+            ID id = find_ident(EXPR_SYM(vPointee));
+            ID_CLASS(id) = CL_PROC;
+            old = ID_TYPE(id);
+            if (IS_SUBR(vPtrTyp)) {
+                ID_TYPE(id) = subroutine_type();
+                TYPE_ATTR_FLAGS(ID_TYPE(id)) = TYPE_ATTR_FLAGS(old);
+                TYPE_EXTATTR_FLAGS(ID_TYPE(id)) = TYPE_EXTATTR_FLAGS(old);
+            } else {
+                ID_TYPE(id) = function_type(ID_TYPE(id));
+                TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+            }
+
+        }
+    } else {
+        if (!TYPE_IS_TARGET(vPteTyp) &&
+            !TYPE_IS_POINTER(vPteTyp) &&
+            !IS_PROCEDURE_TYPE(vPteTyp)) {
+            if(EXPR_CODE(EXPR_ARG2(x)) == IDENT)
+                error_at_node(x, "'%s' is not a pointee.",
+                              SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
+            else
+                error_at_node(x, "right hand side expression is not a pointee.");
+            return;
+        }
     }
 
     if (TYPE_N_DIM(IS_REFFERENCE(vPtrTyp)?TYPE_REF(vPtrTyp):vPtrTyp) !=
