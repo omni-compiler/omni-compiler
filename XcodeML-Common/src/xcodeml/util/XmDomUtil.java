@@ -76,6 +76,9 @@ public class XmDomUtil {
         if ("true".equals(value.toLowerCase()))
             return true;
 
+        if ("1".equals(value.toLowerCase()))
+            return true;
+
         return false;
     }
 
