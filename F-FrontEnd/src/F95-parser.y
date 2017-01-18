@@ -443,7 +443,7 @@ typedef union {
 
 #define YYSTYPE yyStackType
 
-extern void     yyerror _ANSI_ARGS_((char *s));
+extern void     yyerror _ANSI_ARGS_((const char *s));
 extern int      yylex _ANSI_ARGS_((void));
 static int      yylex0 _ANSI_ARGS_((void));
 static void     flush_line _ANSI_ARGS_((void));

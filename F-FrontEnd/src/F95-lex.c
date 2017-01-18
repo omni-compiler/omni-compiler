@@ -638,7 +638,7 @@ char *lex_get_line()
 
 void
 yyerror(s)
-     char *s;
+     const char *s;
 {
     error("%s",s);
 }
