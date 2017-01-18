@@ -689,6 +689,7 @@ getBasicTypeID(BASIC_DATA_TYPE t)
     case TYPE_MODULE:       tid = "Fvoid"; break;
     case TYPE_NAMELIST:     tid = "Fnamelist"; break;
     case TYPE_VOID:         tid = "Fvoid"; break;
+
     default: abort();
     }
     return tid;
@@ -3744,9 +3745,9 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
         return;
 
     if (skip_tbp &&  IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL ) {
-        /* TODO fix comment */
-        /* type-bound procedure with a PASS argument ALWAY causes a circulation reference,
-         * so store them to a tbp list and check them later.
+        /* procedure variable or type-bound procedure with a PASS argument
+         * may cause a circulation reference,
+         * so store them to a list and check them later.
          */
         TYPE_LINK(tp) = NULL;
         TYPE_IS_REFERENCED(tp) = TRUE;
@@ -5309,8 +5310,6 @@ collect_types(EXT_ID extid)
     TYPE_DESC tp, tq;
     TYPE_DESC sTp;
 
-    tbp_list = NULL;
-
     collect_types1(extid);
     FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
         TYPE_DESC tp = EXT_PROC_TYPE(te->ep);
@@ -5422,6 +5421,8 @@ output_XcodeML_file()
     type_module_proc_last = NULL;
     type_ext_id_list = NULL;
     type_ext_id_last = NULL;
+    tbp_list = NULL;
+    tbp_list_tail = NULL;
 
     collect_types(EXTERNAL_SYMBOLS);
     CRT_FUNCEP = NULL;
@@ -5725,6 +5726,7 @@ output_module_file(struct module * mod, const char * filename)
     for (tp = tbp_list; tp != NULL; tp = tq){
         tq = TYPE_LINK(tp);
         TYPE_LINK(tp) = NULL;
+        TYPE_IS_REFERENCED(tp) = FALSE;
         mark_type_desc_skip_tbp(tp, FALSE);
     }
 
