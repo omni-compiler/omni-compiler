@@ -4,7 +4,7 @@ EXES    = module_test.x module_test0.x arg.x dnodes.x refobj.x 103.x 228.x 310.x
 
 
 all: module_test.x module_test0.x arg.x dnodes.x external.o interface.o xmp_lib.o threadprivate.o refobj.x \
-     103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o schedule_default.o task001.o 152.x 397.x double_option.x nargs.o result.o 018.x namelist.o 464.o 467.o 454.o 469.o 310.x 157.o 156.o 154.o add_decl-block.x add_decl-block-mod.x block_shadow_reflect.x block_template_fix.x block_reflect.x threadprivate-block.o block_bcast_async.x block_tasks.x type_bound_procedure_2.x type_bound_procedure_5.x type_bound_procedure_generic_2.x type_bound_procedure_override.x type_bound_procedure_3.x type_bound_procedure_attr.x type_bound_procedure_generic_3.x type_bound_procedure_use_module.x type_bound_procedure_4.x type_bound_procedure.x type_bound_procedure_generic.x submodule_01.x submodule_02.o
+     103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o schedule_default.o task001.o 152.x 397.x double_option.x nargs.o result.o 018.x namelist.o 464.o 467.o 454.o 469.o 310.x 157.o 156.o 154.o add_decl-block.x add_decl-block-mod.x block_shadow_reflect.x block_template_fix.x block_reflect.x threadprivate-block.o block_bcast_async.x block_tasks.x type_bound_procedure_2.x type_bound_procedure_5.x type_bound_procedure_generic_2.x type_bound_procedure_override.x type_bound_procedure_3.x type_bound_procedure_attr.x type_bound_procedure_generic_3.x type_bound_procedure_use_module.x type_bound_procedure_4.x type_bound_procedure.x type_bound_procedure_generic.x submodule_01.x
 
 ###     103.x 223.o 228.x 229.o 230.o 321.o 45_save.o 358_result.x 373.o 377.x 261.o 162.o 383.x 384.o 391.o 392.x 393.o 278\ spacefile.x derived.o func.o save_desc.x schedule_default.o task001.o 152.x 397.x double_option.x nargs.o
 ###mpiexec -n 4 ./static_desc.x
@@ -144,7 +144,9 @@ refobj.x: refobj.f90
 	grep -q "# 9" __omni_tmp__018.f90 || exit 1; \
 	echo "PASS"
 
-submodule_01.x: submodule_01.F90 submodule_02.o
+submodule_02.o: submodule_01.o
+
+submodule_01.x: submodule_01.o submodule_02.o
 	$(XFC) -o $@ $^
 
 run:
