@@ -19,8 +19,6 @@
         PRINT *, g(1, 2)
         b => f
         PRINT *, b(1)
-        b => g
-        PRINT *, b(1, 2)
       END PROGRAM main
 
       FUNCTION f(a)
