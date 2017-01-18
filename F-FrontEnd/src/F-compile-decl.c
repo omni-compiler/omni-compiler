@@ -5241,20 +5241,17 @@ compile_type_bound_procedure(expr x)
     }
 
     if (interface_name) {
-        if (EXPR_CODE(interface_name) != IDENT) {
-            /* TODO:
-             * if interface_name is a type and seems as a function name (i.e. REAL, INTEGER, etc)
-             * change them in to symbol.
-             */
+        if (EXPR_CODE(interface_name) == IDENT) {
+            interface = new_ident_desc(EXPR_SYM(interface_name));
+        } else {
             error_at_node(x, "unexpected expression");
             return;
         }
 
-        interface = new_ident_desc(EXPR_SYM(interface_name));
         if (!(binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED)) {
             error_at_node(x, "require DEFERRED attribute");
         }
-        warning_at_node(x, "NOT IMPLEMENTED YET\n");
+        warning_at_node(x, "NOT IMPLEMENTED YET");
         FOR_ITEMS_IN_LIST(lp, bindings) {
             if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
                 error_at_node(x, "unexpected expression");

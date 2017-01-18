@@ -83,6 +83,8 @@ static void compile_DOWHILE_statement(int range_st_no, expr cond,
 static void check_DO_end(ID label);
 static void end_declaration(void);
 static void end_interface(void);
+static void begin_type_bound_procedure_decls(void);
+static void end_type_bound_procedure_decls(void);
 static void compile_CALL_statement(expr x);
 static void compile_RETURN_statement(expr x);
 static void compile_STOP_PAUSE_statement(expr x);
@@ -552,6 +554,7 @@ compile_statement1(int st_no, expr x)
             goto do_end_module;
 
         } else {
+
             check_INEXEC();
             // move into end_procedure()
             //if (endlineno_flag){
@@ -569,8 +572,7 @@ compile_statement1(int st_no, expr x)
     case F95_CONTAINS_STATEMENT:
         if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
             /* For type bound procedure */
-            CURRENT_STATE = IN_TYPE_BOUND_PROCS;
-            TYPE_UNSET_INTERNAL_PRIVATE(CTL_STRUCT_TYPEDESC(ctl_top));
+            begin_type_bound_procedure_decls();
         } else {
             check_INEXEC();
             push_unit_ctl(INCONT);
@@ -1134,6 +1136,7 @@ compile_statement1(int st_no, expr x)
          */
         if (CURRENT_STATE == IN_TYPE_PARAM_DECL ||
             CURRENT_STATE == IN_TYPE_BOUND_PROCS) {
+            end_type_bound_procedure_decls();
             CURRENT_STATE = INDCL;
         } else {
             check_INDCL();
@@ -1907,6 +1910,21 @@ update_procedure_variables(ID ids, TYPE_DESC struct_decls, ID targets)
         }
     }
 }
+
+void
+begin_type_bound_procedure_decls(void)
+{
+    CURRENT_STATE = IN_TYPE_BOUND_PROCS;
+    TYPE_UNSET_INTERNAL_PRIVATE(CTL_STRUCT_TYPEDESC(ctl_top));
+    enable_need_type_keyword = FALSE;
+}
+
+void
+end_type_bound_procedure_decls(void)
+{
+    enable_need_type_keyword = TRUE;
+}
+
 
 /*
  * Update type_bound_procedures in derived-types of struct declarations.

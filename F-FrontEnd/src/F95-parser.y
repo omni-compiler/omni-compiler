@@ -471,6 +471,8 @@ gen_default_real_kind(void) {
 }
 **********************************/
 
+int enable_need_type_keyword = TRUE;
+
 %}
 
 %type <val> statement label
@@ -514,7 +516,7 @@ program: /* empty */
 
 KW: { need_keyword = TRUE; };
 
-TYPE_KW: { need_type_keyword = TRUE; };
+TYPE_KW: { if (enable_need_type_keyword == TRUE) need_type_keyword = TRUE; };
 
 NEED_CHECK: {	      need_check_user_defined = FALSE; };
 
@@ -681,6 +683,8 @@ name_or_type_spec_or_null0:
         }
         | KW_TYPE
         { $$ = GEN_NODE(IDENT, find_symbol("type")); }
+        | CLASS
+        { $$ = GEN_NODE(IDENT, find_symbol("class")); }
         ;
 
 proc_attr_list:
