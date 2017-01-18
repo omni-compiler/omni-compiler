@@ -2173,10 +2173,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
     if (declare_function(f_id) == NULL) return NULL;
 
     if (ID_CLASS(f_id) == CL_VAR && IS_PROCEDURE_TYPE(ID_TYPE(f_id))) {
-        tp = ID_TYPE(f_id);
-        if (TYPE_REF(tp)) {
-            tp = TYPE_REF(tp);
-        }
+        tp = get_bottom_ref_type(ID_TYPE(f_id));
         a = compile_args(args);
         v = list3(FUNCTION_CALL,
                   expv_sym_term(F_VAR, ID_TYPE(f_id), ID_SYM(f_id)),

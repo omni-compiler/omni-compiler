@@ -5092,7 +5092,7 @@ compile_procedure_declaration(expr x)
 
     if (is_inside_struct) {
         if (!(type_attr_flags & TYPE_ATTR_POINTER)) {
-            error("PROCEDURE member should have the POINTER attribute")
+            error("PROCEDURE member should have the POINTER attribute");
         }
     } else {
         if (binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS) {
@@ -5115,14 +5115,27 @@ compile_procedure_declaration(expr x)
 
 
     if (proc_interface == NULL) {
+        /*
+         * ex)
+         *   PROCEDURE(), POINTER :: p
+         */
         tp = NULL;
 
     } else if (EXPR_CODE(proc_interface) == IDENT) {
+        /*
+         * ex)
+         *   PROCEDURE(f), POINTER :: p
+         */
+
         sym = EXPR_SYM(proc_interface);
         if ((interface = find_ident(sym)) != NULL) {
             if (IS_PROCEDURE_TYPE(ID_TYPE(interface))) {
                 tp = ID_TYPE(interface);
             }
+            /*
+             * TODO(shingo-s): type compatibility check
+             */
+
         } else {
             /* proc_interface is a contains function/subroutine or
                an interface function/subroutine */
@@ -5161,8 +5174,21 @@ compile_procedure_declaration(expr x)
 
     FOR_ITEMS_IN_LIST(lp, decls) {
         if (EXPR_CODE(LIST_ITEM(lp)) == F03_BIND_PROCEDURE) {
+            /*
+             * The procedure variable declarations with an initial value.
+             *
+             * ex)
+             *
+             *  PROCEDURE(f), POINTER :: p1 => f, p2 => null()
+             *
+             */
             expr init_expr;
             expv v;
+
+            if (!TYPE_IS_POINTER(tp)) {
+                error("Initialization without a POINTER attribute");
+                return;
+            }
 
             id = declare_ident(EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))), CL_VAR);
             ID_LINE(id) = EXPR_LINE(LIST_ITEM(lp));
@@ -5173,7 +5199,7 @@ compile_procedure_declaration(expr x)
                 ID f_id = find_ident_outer_scope(EXPR_SYM(init_expr));
 
                 if (f_id != NULL) {
-                    /* TODO: check type of function */
+                    /* TODO(shingo-s): check type of function */
                     v = expv_sym_term(IDENT, ID_TYPE(f_id), ID_SYM(f_id));
                 } else {
                     /* The type will be fixed in other function */
@@ -5181,7 +5207,9 @@ compile_procedure_declaration(expr x)
                 }
 
             } else if (EXPR_CODE(init_expr) == F_ARRAY_REF) {
-                /* initialize expression should be NULL() */
+                /*
+                 * initialize expression should be NULL()
+                 */
                 ID fid = NULL;
                 expr fname = EXPR_ARG1(init_expr);
                 expr args = EXPR_ARG2(init_expr);
@@ -5193,25 +5221,39 @@ compile_procedure_declaration(expr x)
                 }
                 fid = new_ident_desc(EXPR_SYM(fname));
                 a = compile_args(args);
-                v = compile_intrinsic_call(fid, a);
+                if ((v = compile_intrinsic_call(fid, a)) == NULL) {
+                    return;
+                }
+
             } else {
+
                 error("unexepected initialization expression for PROCEDRUE");
                 continue;
+
             }
-            VAR_INIT_VALUE(id) = compile_expression(v);
+
+            VAR_INIT_VALUE(id) = v;
 
         } else if (EXPR_CODE(LIST_ITEM(lp)) == IDENT) {
+            /*
+             * without initialization
+             */
+
             id = declare_ident(EXPR_SYM(LIST_ITEM(lp)), CL_VAR);
+
         } else {
             error("unexpected expression");
             continue;
+
         }
 
+        /*
+         * Now setup lines and types
+         */
         ID_LINE(id) = EXPR_LINE(x);
         ID_TYPE(id) = procedure_type(tp);
         TYPE_ATTR_FLAGS(ID_TYPE(id)) |= type_attr_flags;
         VAR_REF_PROC(id) = interface;
-
         if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
             FUNCTION_TYPE_HAS_BINDING_ARG(ID_TYPE(id)) = TRUE;
             FUNCTION_TYPE_HAS_PASS_ARG(ID_TYPE(id)) = binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS;
