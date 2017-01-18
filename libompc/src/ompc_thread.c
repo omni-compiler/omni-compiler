@@ -590,58 +590,59 @@ static void ompc_xstream_setup(int es_idx, ABT_xstream xstream)
     thread_affinity_setup(es_idx);
 }
 
+struct divconq_args
+{
+    cfunc func;
+    void *args;
+    uint64_t lower;
+    uint64_t upper;
+    int step;
+    int num_tasks;
+};
+
 static void divide_conquer_wrapper(struct ompc_task *curr_task);
 
-static void loop_divide_conquer_impl(struct ompc_task *curr_task)
+static void loop_divide_conquer_impl(struct divconq_args *a)
 {
-    if (curr_task->upper - curr_task->lower <= 1 || curr_task->num_tasks == 1) {
-        curr_task->func(curr_task->lower, curr_task->upper, curr_task->step, curr_task->args);
+    if (a->upper - a->lower <= 1 || a->num_tasks == 1) {
+        a->func(a->lower, a->upper, a->step, a->args);
     } else {
-        struct ompc_task *new_task = malloc(sizeof *new_task);
-        new_task->func = curr_task->func;
-        new_task->nargs = curr_task->nargs;
-        new_task->args = curr_task->args;
-        new_task->lower = curr_task->lower + (curr_task->upper - curr_task->lower) / 2;
-        new_task->upper = curr_task->upper;
-        new_task->step = curr_task->step;
-        new_task->num_tasks = curr_task->num_tasks / 2;
+        struct divconq_args a_other = {
+            .func = a->func,
+            .args = a->args,
+            .lower = a->lower + (a->upper - a->lower) / 2
+            .upper = a->upper,
+            .step = a->step,
+            .num_tasks = a->num_tasks / 2
+        };
 
-        curr_task->upper = new_task->lower;
-        curr_task->num_tasks -= new_task->num_tasks;
-        ABT_thread old_loop_child_task = curr_task->loop_child_task;
+        a->upper = a_other.lower;
+        a->num_tasks -= a_other.num_tasks;
         
         ABT_xstream self;
         ABT_xstream_self(&self);
-        ABT_thread_create_on_xstream(self, divide_conquer_wrapper, new_task, ABT_THREAD_ATTR_NULL, &curr_task->loop_child_task);
-        loop_divide_conquer_impl(curr_task);
-        ABT_thread_join(curr_task->loop_child_task);
-        ABT_thread_free(&curr_task->loop_child_task);
-        
-        curr_task->loop_child_task = old_loop_child_task;
-        
-        free(new_task);
+        ABT_thread thread_other;
+        ABT_thread_create_on_xstream(self, divide_conquer_impl, &a_other, ABT_THREAD_ATTR_NULL, &thread_other);
+        loop_divide_conquer_impl(a);
+        ABT_thread_join(thread_other);
+        ABT_thread_free(&thread_other);
     }
-}
-
-static void divide_conquer_wrapper(struct ompc_task *curr_task)
-{
-    ABT_key_set(tls_key, curr_task);
-    loop_divide_conquer_impl(curr_task);
 }
 
 // num_tasks == 0 means no constraint
 void ompc_loop_divide_conquer(cfunc func, int nargs, void *args,
                               uint64_t lower, uint64_t upper, int step, int num_tasks)
 {
-    struct ompc_task *curr_task = ompc_current_task();
-    curr_task->func = func;
-    curr_task->nargs = nargs;
-    curr_task->args = args;
-    curr_task->lower = lower;
-    curr_task->upper = upper;
-    curr_task->step = step;
-    curr_task->num_tasks = num_tasks == 0 ? ompc_max_threads * 8 : num_tasks;
-    loop_divide_conquer_impl(curr_task);
+    struct divconq_args a = {
+        .func = func,
+        .args = args,
+        .lower = lower,
+        .upper = upper,
+        .step = step,
+        .num_tasks = num_tasks == 0 ? ompc_max_threads * 8 : num_tasks
+    };
+
+    loop_divide_conquer_impl(&a);
 }
 
 static void ompc_thread_wrapper_func(void *arg)
