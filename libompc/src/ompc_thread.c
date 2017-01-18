@@ -29,6 +29,7 @@ static ABT_xstream              xstreams[MAX_PROC];
 static ABT_pool                 pools[MAX_PROC];
 static struct ompc_ult_pool     ult_pools[MAX_PROC];
 static struct ompc_tasklet_pool tasklet_pools[MAX_PROC];
+static int taskq_limit = 1024;
 
 static ABT_key tls_key;
 static void tls_free(void *value) {
@@ -311,6 +312,13 @@ ompc_init(int argc,char *argv[])
         sscanf(cp, "%d", &val);
         if(val <= 0) ompc_fatal("bad OMP_NUM_THREADS(<= 0)");
         ompc_num_threads = val;
+    }
+
+    cp = getenv("OMPC_TASKQ_LIMIT");  // limit the size of Argobots' ULT pools
+    if (cp != NULL) {
+        sscanf(cp, "%d", &val);
+        if (val <= 0) ompc_fatal("bad OMPC_TASKQ_LIMIT (<= 0)");
+        taskq_limit = val;
     }
 
     ompc_task_end = 0;
@@ -610,7 +618,7 @@ static void loop_divide_conquer_impl(struct divconq_args *a)
         struct divconq_args a_other = {
             .func = a->func,
             .args = a->args,
-            .lower = a->lower + (a->upper - a->lower) / 2
+            .lower = a->lower + (a->upper - a->lower) / 2,
             .upper = a->upper,
             .step = a->step,
             .num_tasks = a->num_tasks / 2
@@ -622,7 +630,7 @@ static void loop_divide_conquer_impl(struct divconq_args *a)
         ABT_xstream self;
         ABT_xstream_self(&self);
         ABT_thread thread_other;
-        ABT_thread_create_on_xstream(self, divide_conquer_impl, &a_other, ABT_THREAD_ATTR_NULL, &thread_other);
+        ABT_thread_create_on_xstream(self, loop_divide_conquer_impl, &a_other, ABT_THREAD_ATTR_NULL, &thread_other);
         loop_divide_conquer_impl(a);
         ABT_thread_join(thread_other);
         ABT_thread_free(&thread_other);
