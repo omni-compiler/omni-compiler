@@ -2174,6 +2174,10 @@ input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC str
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "typeBoundProcedures"))
         return FALSE;
 
+    FOREACH_MEMBER(mem, struct_tp) {
+        last_ip = mem;
+    }
+
     while (TRUE) {
         if (xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT))
             /* must be </typeParams> */
