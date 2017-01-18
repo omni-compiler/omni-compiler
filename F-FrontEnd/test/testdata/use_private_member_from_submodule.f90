@@ -10,4 +10,4 @@
           v%k = IMAG(r)
           CALL v%p1(func1)
         END PROCEDURE
-      END SUBMODULE subm
+      END SUBMODULE sub
