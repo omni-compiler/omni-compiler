@@ -5083,58 +5083,80 @@ compile_procedure_declaration(expr x)
     uint32_t type_attr_flags = 0;
     uint32_t binding_attr_flags = 0;
 
+    int is_inside_struct = CTL_TYPE(ctl_top) == CTL_STRUCT;
 
     compile_procedure_attributes(attrs,
                                  &type_attr_flags,
                                  &binding_attr_flags,
                                  &pass_arg);
 
-    if (proc_interface) {
-        if (proc_interface == NULL) {
-            tp = NULL;
-        } else if (EXPR_CODE(proc_interface) == IDENT) {
-            sym = EXPR_SYM(proc_interface);
-            if ((interface = find_ident(sym)) != NULL) {
-                if (IS_PROCEDURE_TYPE(ID_TYPE(interface))) {
-                    tp = ID_TYPE(interface);
-                }
-            } else {
-                /* proc_interface is a contains function/subroutine or
-                                     an interface function/subroutine */
-
-                if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
-                    tp = function_type(new_type_desc());
-                    interface = new_ident_desc(sym);
-
-                    ID_TYPE(interface) = tp;
-                    TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
-
-                } else {
-                    interface = declare_ident(sym, CL_PROC);
-                    PROC_CLASS(interface) = P_UNDEFINEDPROC;
-                    declare_id_type(interface, function_type(new_type_desc()));
-                    ID_CLASS(interface) = CL_PROC;
-                    declare_function(interface);
-
-                    TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
-
-                    tp = ID_TYPE(interface);
-                }
-            }
-        } else {
-            if (EXPR_TYPE(EXPR_ARG1(proc_interface)) == TYPE_STRUCT) {
-                proc_interface = EXPR_ARG2(proc_interface);
-            }
-            tp = compile_type(proc_interface,
-                              /* allow_predecl = */ FALSE);
-
-            if (tp == NULL) {
-                error("unexpected typeq");
-            }
-            tp = function_type(tp);
+    if (is_inside_struct) {
+        if (!(type_attr_flags & TYPE_ATTR_POINTER)) {
+            error("PROCEDURE member should have the POINTER attribute")
         }
     } else {
+        if (binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS) {
+            error("PROCEDURE variable cannot have the PASS attribute");
+            return;
+        }
+        if (binding_attr_flags & TYPE_BOUND_PROCEDURE_NOPASS) {
+            error("PROCEDURE variable cannot have the NOPASS attribute");
+            return;
+        }
+    }
+    if (binding_attr_flags & TYPE_BOUND_PROCEDURE_DEFERRED) {
+        error("PROCEDURE member cannot have the DEFERRED attribute");
+        return;
+    }
+    if (binding_attr_flags & TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE) {
+        error("PROCEDURE member cannot have the NON_OVERRIDEABLE attribute");
+        return;
+    }
+
+
+    if (proc_interface == NULL) {
         tp = NULL;
+
+    } else if (EXPR_CODE(proc_interface) == IDENT) {
+        sym = EXPR_SYM(proc_interface);
+        if ((interface = find_ident(sym)) != NULL) {
+            if (IS_PROCEDURE_TYPE(ID_TYPE(interface))) {
+                tp = ID_TYPE(interface);
+            }
+        } else {
+            /* proc_interface is a contains function/subroutine or
+               an interface function/subroutine */
+
+            if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
+                tp = function_type(new_type_desc());
+                interface = new_ident_desc(sym);
+
+                ID_TYPE(interface) = tp;
+                TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
+
+            } else {
+                interface = declare_ident(sym, CL_PROC);
+                PROC_CLASS(interface) = P_UNDEFINEDPROC;
+                declare_id_type(interface, function_type(new_type_desc()));
+                ID_CLASS(interface) = CL_PROC;
+                declare_function(interface);
+
+                TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
+
+                tp = ID_TYPE(interface);
+            }
+        }
+    } else { /* proc_interface is type spec */
+        if (EXPR_TYPE(EXPR_ARG1(proc_interface)) == TYPE_STRUCT) {
+            proc_interface = EXPR_ARG2(proc_interface);
+        }
+        tp = compile_type(proc_interface,
+                          /* allow_predecl = */ FALSE);
+
+        if (tp == NULL) {
+            error("unexpected typeq");
+        }
+        tp = function_type(tp);
     }
 
     FOR_ITEMS_IN_LIST(lp, decls) {

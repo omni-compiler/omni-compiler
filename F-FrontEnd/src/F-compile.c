@@ -554,7 +554,6 @@ compile_statement1(int st_no, expr x)
             goto do_end_module;
 
         } else {
-
             check_INEXEC();
             // move into end_procedure()
             //if (endlineno_flag){
