@@ -453,6 +453,7 @@ extern int OMP_flag;
 extern int XMP_flag;
 extern int XMP_coarray_flag;
 extern int ACC_flag;
+extern int PRAGMA_flag;
 extern int cond_compile_enabled;
 extern int leave_comment_flag;
 

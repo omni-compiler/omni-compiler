@@ -1,7 +1,7 @@
 .PHONY: all clean install
 
 CC       = gcc  # only gcc
-INC      = -I./include -I@MPFR_INCLUDE_DIR@ -I@GMP_INCLUDE_DIR@
+INC      = -I./include -I../src -I@MPFR_INCLUDE_DIR@ -I@GMP_INCLUDE_DIR@
 DOPT     = -DIN_GCC_FRONTEND -DIN_GCC -DHAVE_CONFIG_H -D_ZLIB_
 WOPT     = -W -Wall -Wwrite-strings -Wcast-qual -Wmissing-format-attribute -pedantic -Wno-long-long -Wno-variadic-macros -Wno-overlength-strings -w
 CFLAGS   = @MPI_CFLAGS@ -O -fno-exceptions -fasynchronous-unwind-tables $(DOPT) $(WOPT) $(INC)

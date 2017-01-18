@@ -2061,11 +2061,6 @@ end_declaration()
              */
             implicit_declaration(ip);
         }
-#ifdef not      /* cannot decide type of argument until reference */
-        if (ID_STORAGE(ip) == STG_ARG && ID_CLASS(ip) == CL_UNKNOWN) {
-            declare_variable(ip);
-        }
-#endif
         checkTypeRef(ip);
         if (ip != myId) {
             union_parent_type(ip);
@@ -2437,54 +2432,6 @@ end_declaration()
      */
     update_type_bound_procedures(LOCAL_STRUCT_DECLS, LOCAL_SYMBOLS);
 
-#if 0
-    if (myId != NULL &&
-        ID_CLASS(myId) == CL_PROC) {
-        /*
-         * One more, fix
-         */
-        if (myEId != NULL) {
-            expv idAddrV;
-            expv identV;
-            list fixedArgs = list
-
-            FOR_ITEMS_IN_LIST(lp, EXT_PROC_ARGS(myEId)) {
-                v = LIST_ITEM(lp);
-                if (v != NULL) {
-                    identV = EXPR_ARG1(v);
-                    idAddrV = EXPR_ARG2(v);
-
-                    if (identV == NULL) {
-                        fatal("%s: no named argument??",
-                              __func__);
-                        /* not reached. */
-                        return;
-                    }
-                    if (EXPV_CODE(identV) != IDENT) {
-                        fatal("%s: not an ident.", __func__);
-                        /* not reached. */
-                        return;
-                    }
-
-                    if (idAddrV != NULL) {
-                        /*
-                         * already declared.
-                         */
-                        continue;
-                    }
-
-                    vId = find_ident(EXPV_NAME(identV));
-                    if (vId == NULL) {
-                        fatal("%s: '%s' is not declared.",
-                              __func__, EXPV_NAME(identV));
-                    }
-                    declare_variable(vId);
-                }
-            }
-        }
-    }
-#endif
-
     FOR_ITEMS_IN_LIST (lp, UNIT_CTL_EQUIV_DECLS(uc)) {
         compile_EQUIVALENCE_decl(LIST_ITEM(lp));
     }
@@ -2558,12 +2505,6 @@ define_external_function_id(ID id) {
         tp = ID_TYPE(id);
     }
 
-    /* inherits the public or private attribute from the parent */
-    /* if (!tp){ */
-    /*   tp = new_type_desc(); */
-    /*   TYPE_BASIC_TYPE(tp) = TYPE_GNUMERIC_ALL; */
-    /*   ID_TYPE(id) = tp; */
-    /* } */
     ID pid;
     if (tp && (pid = find_ident_outer_scope(ID_SYM(id)))){
         if (TYPE_IS_PUBLIC(pid)) TYPE_SET_PUBLIC(tp);
@@ -2594,20 +2535,7 @@ define_external_function_id(ID id) {
             tq = function_type(ID_TYPE(ip));
             ID_ADDR(ip) = expv_sym_term(F_FUNC, tq, ID_SYM(ip));
         } else {
-#if 0
-            declare_variable(ip);
-            if (ID_ADDR(ip) == NULL) {
-                error("'%s' is not declared", ID_NAME(ip));
-                return NULL;
-            }
-            tq = ID_TYPE(ip);
-#else
-            tq = NULL;
-            /*
-             * Don't fix type/class of the ip here, let it be fixed by
-             * end_declaration().
-             */
-#endif
+	  tq = NULL;
         }
         x = list2(LIST, expv_sym_term(IDENT, tq, sp), ID_ADDR(ip));
         list_put_last(args, x);
@@ -3151,7 +3079,7 @@ end_procedure()
     /* check undefined variable */
     FOREACH_ID(id, LOCAL_SYMBOLS) {
         if(ID_CLASS(id) == CL_UNKNOWN){
-#ifdef not
+#if 0 // to be solved
             warning("variable '%s' is defined, but never used",ID_NAME(id));
 #endif
             declare_variable(id);
@@ -3364,11 +3292,6 @@ end_procedure()
 
     /* check control nesting */
     if (ctl_top != ctl_base) error("DO loop or BLOCK IF not closed");
-
-#ifdef not
-    donmlist();
-    dobss();
-#endif
 
     /* clean up for next procedure */
     initialize_compile_procedure();
@@ -5110,7 +5033,7 @@ compile_member_ref(expr x)
     }
 
     // TODO:
-    //	merge type override all cases (array/substr/plain scalar).
+    //	 should work for all cases (array/substr/plain scalar).
     if (!IS_FUNCTION_TYPE(ID_TYPE(member_id)) && (
             TYPE_IS_POINTER(stVTyp) ||
             TYPE_IS_TARGET(stVTyp) ||
@@ -5518,6 +5441,7 @@ compile_CALL_subroutine_statement(expr x)
 
 
 #if 0
+    // to be solved
     /*
      * FIXME:
      *	Even if the ident is really a subroutine, we can't
@@ -5990,9 +5914,6 @@ compile_POINTER_SET_statement(expr x) {
 
     if (TYPE_N_DIM(IS_REFFERENCE(vPtrTyp)?TYPE_REF(vPtrTyp):vPtrTyp) !=
         TYPE_N_DIM(IS_REFFERENCE(vPteTyp)?TYPE_REF(vPteTyp):vPteTyp)) {
-#if 0
-    if (TYPE_N_DIM(vPtrTyp) != TYPE_N_DIM(vPteTyp)) {
-#endif
         error_at_node(x, "Rank mismatch.");
         return;
     }
@@ -6133,22 +6054,6 @@ compile_OPTIONAL_statement(expr x)
              *	declare_ident(), here.
              */
             TYPE_SET_OPTIONAL(id);
-
-#if 0
-            /*
-             * XXX FIXME:
-             *	Not sure I could overwrite the storage class here, but
-             *	it seems here could be the place.
-             */
-            ID_STORAGE(id) = STG_ARG;
-#else
-            /*
-             * A fix:
-             *  Since we checked this id IS dummy arg now, no need to
-             *	overwrite it. Furthermore, the id could be STG_EXT if
-             *	it is function/subroutine.
-             */
-#endif
         }
     }
 }

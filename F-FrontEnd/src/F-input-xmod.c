@@ -66,23 +66,6 @@ xmlMatchNodeType(xmlTextReaderPtr reader, int type)
     return (xmlTextReaderNodeType(reader) == type);
 }
 
-#if 0
-static int
-xmlExpectNodeType(xmlTextReaderPtr reader, int type)
-{
-    if (!xmlExpectNodeType(reader, type)) {
-        fprintf(stderr, "expected node type %d, but was %d.\n",
-            type, xmlTextReaderNodeType(reader));
-        fflush(stderr);
-        return FALSE;
-    }
-
-    xmlSkipWhiteSpace(reader);
-
-    return TRUE;
-}
-#endif
-
 static int
 xmlMatchNode(xmlTextReaderPtr reader, int type, const char* name)
 {
@@ -165,20 +148,6 @@ getTypeDesc(HashTable * ht, const char * typeId) {
 
     return tep->tp;
 }
-
-#if 0
-static void
-updateTypeDesc(HashTable * ht, const char * typeId, TYPE_DESC tp) {
-    HashEntry * e;
-    TYPE_ENTRY tep = NULL;
-
-    e = FindHashEntry(ht, typeId);
-    if (e != NULL) {
-        tep = GetHashValue(e);
-        tep->tp = tp;
-    }
-}
-#endif
 
 static void
 setReturnType(HashTable * ht, TYPE_DESC ftp, const char * rtid)
@@ -517,6 +486,7 @@ input_FintConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
         return FALSE;
 
     // FIXME: do we need this?
+    // to be solved
     if (TYPE_BASIC_TYPE(tp) != TYPE_INT) {
         TYPE_BASIC_TYPE(tp) = TYPE_INT;
     }
@@ -555,6 +525,7 @@ input_FrealConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
         return FALSE;
 
     /* FIXME: handling of double precision value */
+    // to be solved
     if (TYPE_BASIC_TYPE(tp) != TYPE_REAL) {
         TYPE_BASIC_TYPE(tp) = TYPE_REAL;
     }
@@ -625,6 +596,7 @@ input_FcharacterConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     value = (const char*) xmlTextReaderConstValue(reader);
 
     // FIXME: do we need this?
+    // to be solved
     if (TYPE_BASIC_TYPE(tp) != TYPE_CHAR) {
         TYPE_BASIC_TYPE(tp) = TYPE_CHAR;
         TYPE_CHAR_LEN(tp) = 1;
@@ -1218,24 +1190,11 @@ input_indexRange(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
         return FALSE;
 
     bottom = tp;
-#if 0  /* bug */
-    while(TYPE_BASIC_TYPE(bottom) == TYPE_ARRAY) {
-        TYPE_N_DIM(bottom)++;
-        bottom = TYPE_REF(bottom);
-    }
-
-    base = new_type_desc();
-    *base = *bottom;
-    TYPE_BASIC_TYPE(bottom) = TYPE_ARRAY;
-    TYPE_REF(bottom) = base;
-    TYPE_N_DIM(bottom)++;
-#else
     base = new_type_desc();
     *base = *bottom;
     TYPE_BASIC_TYPE(bottom) = TYPE_ARRAY;
     TYPE_REF(bottom) = base;
     TYPE_N_DIM(bottom) = TYPE_N_DIM(base)+1;
-#endif
     
     /* fix allocatable attribute set in input_FbasicType() */
     if (TYPE_IS_ALLOCATABLE(bottom)) {
@@ -1657,14 +1616,6 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
     while (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "indexRange")) {
         if (!input_indexRange(reader, ht, tp))
             return FALSE;
-#if 0
-        // debug
-        {
-            fprintf(stdout,"input_xmod indexRange:"); 
-            print_type(tp,stdout,FALSE);
-            fprintf(stdout,"\n");
-        }
-#endif
     }
 
     /* <coShape> */
@@ -2169,7 +2120,7 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
         binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT;
     }
 
-#if 0
+#if 0 // to be solved
     /* NOT IMPLEMENETED YET */
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
 #endif

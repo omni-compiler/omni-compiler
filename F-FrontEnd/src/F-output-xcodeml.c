@@ -774,16 +774,6 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
             outx_print(" intent=\"%s\"", intent);
         }
 
-#if 0
-        /*
-         * FIXME:
-         *	Actually we want this assertions.
-         */
-        assert(TYPE_IS_RECURSIVE(tp) == FALSE);
-        assert(TYPE_IS_EXTERNAL(tp) == FALSE);
-        assert(TYPE_IS_INTRINSIC(tp) == FALSE);
-#endif
-
         outx_true(TYPE_IS_PUBLIC(tp),           "is_public");
         outx_true(TYPE_IS_PRIVATE(tp),          "is_private");
         outx_true(TYPE_IS_PROTECTED(tp),        "is_protected");
@@ -837,20 +827,6 @@ outx_typeAttrOnly_functionType(int l, TYPE_DESC tp, const char *tag)
     outx_printi(l,"<%s type=\"%s\"", tag, tid);
 }
 
-
-#if 0
-static void
-outx_typeAttrOnly_functionTypeWithResultVar(
-    int l, EXT_ID ep, const char *tag)
-{
-    outx_typeAttrOnly_functionType_EXT(l, ep, tag);
-    if (EXT_PROC_RESULTVAR(ep) != NULL) {
-        expv res = EXT_PROC_RESULTVAR(ep);
-        outx_print(" result_name=\"%s\"",
-                   SYM_NAME(EXPV_NAME(res)));
-    }
-}
-#endif
 
 static void
 outx_lineno(lineno_info *li)
@@ -1042,24 +1018,6 @@ outx_symbolNameWithType_ID(int l, ID id)
     outx_typeAttrs(l, ID_TYPE(id), "name", TOPT_TYPEONLY);
     outx_print(">%s</name>\n", SYM_NAME(ID_SYM(id)));
 }
-
-
-#if 0
-/**
- * output an expr as name with type
- */
-static void
-outx_expvNameWithType(int l, expv v)
-{
-    if(EXPV_PROC_EXT_ID(v)) {
-        // for high order function
-        outx_typeAttrOnly_functionType(l, EXPV_TYPE(v), "name");
-    } else {
-        outx_typeAttrs(l, EXPV_TYPE(v), "name", TOPT_TYPEONLY);
-    }
-    outx_print(">%s</name>\n", SYM_NAME(EXPV_NAME(v)));
-}
-#endif
 
 
 /**
@@ -3953,30 +3911,7 @@ mark_type_desc_id(ID id)
                 sTp = reduce_type(EXT_PROC_TYPE(PROC_EXT_ID(id)));
                 mark_type_desc(sTp);
                 EXT_PROC_TYPE(PROC_EXT_ID(id)) = sTp;
-#if 0
-                if (sTp == NULL) {
-                    add_type_ext_id(PROC_EXT_ID(id));
-                }
-
-                /*
-                 * types of argmument below may be verbose(not used).
-                 * But to pass consistency check in backend, we choose to
-                 * output these types.
-                 */
-                collect_type_desc(EXT_PROC_ARGS(PROC_EXT_ID(id)));
-#endif
             }
-#if 0
-            // TODO
-            if (id->use_assoc != NULL) {
-                TYPE_EXT_ID te =
-                        (TYPE_EXT_ID)malloc(sizeof(struct type_ext_id));
-                bzero(te, sizeof(struct type_ext_id));
-                te->ep = PROC_EXT_ID(id);
-                FUNC_EXT_LINK_ADD(te, type_module_proc_list,
-                                  type_module_proc_last);
-            }
-#endif
             return;
         default:
             return;
@@ -4175,14 +4110,6 @@ outx_arrayType(int l, TYPE_DESC tp)
 
       outx_typeAttrs(l, tp, "FbasicType", 0);
       outx_print(" ref=\"%s\">\n", getTypeID(array_element_type(tp)));
-
-#if 0
-      { //debug
-          fprintf(stdout,"outx_arrayType indexRange:"); 
-          print_type(tp,stdout,FALSE);
-          fprintf(stdout,"\n");
-      }
-#endif
 
       outx_indexRangeOfType(l1, tp);
 
@@ -4485,17 +4412,6 @@ id_is_visibleVar(ID id)
             return TRUE;
         if(VAR_IS_IMPLIED_DO_DUMMY(id))
             return FALSE;
-#if 0
-        if(PROC_CLASS(id) == P_DEFINEDPROC) {
-            /* this id is of function.
-               Checkes if this id is of the current function or not. */
-            if(CRT_FUNCEP == PROC_EXT_ID(id)) {
-                return TRUE;
-            } else {
-                return FALSE;
-            }
-        }
-#endif
         break;
     case CL_PARAM:
         return TRUE;
@@ -5110,9 +5026,6 @@ static void
 outx_interfaceDecl(int l, EXT_ID ep)
 {
     EXT_ID extids;
-#if 0
-    char buf[256];
-#endif
 
     extids = EXT_PROC_INTR_DEF_EXT_IDS(ep);
     if(extids == NULL)
@@ -5120,17 +5033,6 @@ outx_interfaceDecl(int l, EXT_ID ep)
 
     if(EXT_IS_OFMODULE(ep) == TRUE)
         return;
-
-#if 0
-    if(EXT_IS_BLANK_NAME(ep))
-        buf[0] = '\0';
-    else
-        sprintf(buf, " name=\"%s\"", SYM_NAME(EXT_SYM(ep)));
-
-    outx_tagOfDecl1(l, "FinterfaceDecl%s", EXT_LINE(ep), buf);
-    outx_innerDefinitions(l + 1, extids, EXT_SYM(ep), FALSE);
-    outx_close(l, "FinterfaceDecl");
-#endif
 
     CRT_FUNCEP_PUSH(NULL);
     outx_printi(l, "<FinterfaceDecl");

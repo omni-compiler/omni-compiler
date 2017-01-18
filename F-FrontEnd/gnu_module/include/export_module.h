@@ -92,13 +92,13 @@ typedef struct module_procedure_info_record *mod_proc_t;
  * module-manager.h
  *************/
 
-/**
- * use association information about ID.
- */
-struct use_assoc_info {
-    SYMBOL module_name;       /* name of module which the ID declared. */
-    SYMBOL original_name;     /* original name of the ID. */
-};
+/* /\** */
+/*  * use association information about ID. */
+/*  *\/ */
+/* struct use_assoc_info { */
+/*     SYMBOL module_name;       /\* name of module which the ID declared. *\/ */
+/*     SYMBOL original_name;     /\* original name of the ID. *\/ */
+/* }; */
 
 /**
  * list of module name.
