@@ -1849,6 +1849,30 @@ check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp)
     }
 }
 
+static void
+update_procedure_variable(ID id, const ID target)
+{
+    if (target == NULL || !IS_PROCEDURE_TYPE(ID_TYPE(target))) {
+        return;
+    }
+
+    if (IS_FUNCTION_TYPE(ID_TYPE(target))) {
+        TYPE_DESC ret;
+        TYPE_DESC dummy_ret;
+        ret = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(target));
+        dummy_ret = FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ID_TYPE(id)));
+        if (ret != dummy_ret && ret != TYPE_REF(dummy_ret)) {
+            TYPE_BASIC_TYPE(dummy_ret) = TYPE_BASIC_TYPE(ret);
+            TYPE_REF(dummy_ret) = ret;
+        }
+    } else { /* IS_SUBR(ID_TYPE(target) == TRUE */
+        TYPE_BASIC_TYPE(ID_TYPE(VAR_REF_PROC(id))) = TYPE_SUBR;
+        TYPE_BASIC_TYPE(ID_TYPE(id)) = TYPE_SUBR;
+    }
+    TYPE_REF(ID_TYPE(id)) = ID_TYPE(target);
+}
+
+
 /*
  * Update procedure typed variables
  *
@@ -1858,49 +1882,27 @@ void
 update_procedure_variables(ID ids, TYPE_DESC struct_decls, ID targets)
 {
     ID id;
+    ID target;
     TYPE_DESC stp;
 
     FOREACH_ID(id, ids) {
         if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
             if (VAR_REF_PROC(id) == NULL)
                 continue;
-            if (TYPE_REF(ID_TYPE(id)) != ID_TYPE(VAR_REF_PROC(id))) {
-                /* a type of the reference procedure is replaced */
-                TYPE_REF(ID_TYPE(id)) = ID_TYPE(VAR_REF_PROC(id));
-            }
+
+            target = find_ident_head(ID_SYM(VAR_REF_PROC(id)), targets);
+            update_procedure_variable(id, target);
         }
     }
 
     FOREACH_STRUCTDECLS(stp, struct_decls) {
         FOREACH_MEMBER(id, stp) {
             if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
-                ID target;
                 if (VAR_REF_PROC(id) == NULL)
                     continue;
 
                 target = find_ident_head(ID_SYM(VAR_REF_PROC(id)), targets);
-
-                if (target != NULL) {
-                    if (!IS_PROCEDURE_TYPE(ID_TYPE(target))) {
-                        continue;
-                    }
-
-                    /*
-                     * update function type
-                     */
-                    if (IS_FUNCTION_TYPE(ID_TYPE(target))) {
-                        TYPE_DESC ret;
-                        TYPE_DESC dummy_ret;
-                        ret = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(target));
-                        dummy_ret = FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ID_TYPE(id)));
-                        TYPE_BASIC_TYPE(dummy_ret) = TYPE_BASIC_TYPE(ret);
-                        TYPE_REF(dummy_ret) = ret;
-                    } else { /* IS_SUBR(ID_TYPE(target) == TRUE */
-                        TYPE_BASIC_TYPE(ID_TYPE(VAR_REF_PROC(id))) = TYPE_SUBR;
-                    }
-                    TYPE_REF(ID_TYPE(id)) = ID_TYPE(target);
-                    ID_TYPE(VAR_REF_PROC(id)) = ID_TYPE(target);
-                }
+                update_procedure_variable(id, target);
             }
         }
     }
@@ -2481,7 +2483,7 @@ end_declaration()
         union_parent_type(myId);
 
         if (unit_ctl_level > 0) {
-            update_procedure_variables(NULL, PARENT_LOCAL_STRUCT_DECLS, myId);
+            update_procedure_variables(PARENT_LOCAL_SYMBOLS, PARENT_LOCAL_STRUCT_DECLS, myId);
         }
 
         /*
@@ -6080,20 +6082,22 @@ compile_POINTER_SET_statement(expr x) {
             error_at_node(x, "'%s' is not a function/subroutine",
                           SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
         }
-        if (EXPR_CODE(vPointee) == IDENT && !IS_PROCEDURE_TYPE(vPteTyp)) {
-            /* POINTEE is used as a function/subroutine,
+        if (EXPR_CODE(vPointee) == F_VAR && !IS_PROCEDURE_TYPE(vPteTyp)) {
+            /*
+             * POINTEE is used as a function/subroutine,
              * so fix its type
              */
             TYPE_DESC old;
             ID id = find_ident(EXPR_SYM(vPointee));
             ID_CLASS(id) = CL_PROC;
+            PROC_CLASS(id) = P_UNDEFINEDPROC;
             old = ID_TYPE(id);
             if (IS_SUBR(vPtrTyp)) {
                 ID_TYPE(id) = subroutine_type();
                 TYPE_ATTR_FLAGS(ID_TYPE(id)) = TYPE_ATTR_FLAGS(old);
                 TYPE_EXTATTR_FLAGS(ID_TYPE(id)) = TYPE_EXTATTR_FLAGS(old);
             } else {
-                ID_TYPE(id) = function_type(ID_TYPE(id));
+                ID_TYPE(id) = function_type(old);
                 TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
             }
 
