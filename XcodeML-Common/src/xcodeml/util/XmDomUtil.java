@@ -60,13 +60,26 @@ public class XmDomUtil {
         return null;
     }
 
+    /* get boolean attribute value whose default value is false(F)/0(C). */
     public static boolean getAttrBool(Node n, String name) {
         if (n == null)
-            return false;
+            return false; /* default value */
 
         Node nn = n.getAttributes().getNamedItem(name);
-        if (nn != null)
+        if (nn == null)
+            return false; /* default value */
+
+        String value = nn.getNodeValue();
+
+        if (value == null)
+            return false; /* default value */
+
+        if ("true".equals(value.toLowerCase()))
             return true;
+
+        if ("1".equals(value.toLowerCase()))
+            return true;
+
         return false;
     }
 
