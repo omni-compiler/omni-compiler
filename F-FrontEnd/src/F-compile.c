@@ -1788,18 +1788,40 @@ static int isAlreadyMarked(ID id)
 }
 
 
-static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, TYPE_DESC ftp)
+/**
+ * Check PASS of type-bound procedure/procedure variable
+ *
+ * stp -- the derived-type in which a type-bound procedure or procedure variable appears
+ * tbp -- the type of a type-bound procedure or procedure variable
+ * ftp -- the function type that is refered from a type-bound procedure or procedure variable
+ *
+ * The function that is refered from a type-bound procedure or a procedure
+ * variable should have a argument that have a CLASS type of the derived-type in
+ * which a type-bound procedure or a procedure variable appears.
+ *
+ * ex)
+ *
+ *   TYPE t
+ *     INTEGER :: v
+ *     PROCEDURE(f),PASS(a),POINTER :: p 
+ *     ! `p` refer the function `f` that have a arugment `a` and
+ *     ! `a` should be a subclass of CLASS(t) or CLASS(*)
+ *   END TYPE t
+ *
+ */
+static int
+check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp)
 {
     ID pass_arg;
     TYPE_DESC tp;
     ID arg;
     ID args = FUNCTION_TYPE_ARGS(ftp);
 
-    if (!(TBP_BINDING_ATTRS(tbp) & TYPE_BOUND_PROCEDURE_PASS)) {
+    if (!(FUNCTION_TYPE_HAS_PASS_ARG(tbp))) {
         return TRUE;
     }
 
-    pass_arg = TBP_PASS_ARG(tbp);
+    pass_arg = FUNCTION_TYPE_PASS_ARG(tbp);
 
     if (pass_arg != NULL) {
         arg = find_ident_head(ID_SYM(pass_arg), args);
@@ -1822,7 +1844,7 @@ static int check_tbp_pass_arg(TYPE_DESC stp, ID tbp, TYPE_DESC ftp)
         return TRUE;
 
     } else {
-        error("PASS object should be CLASS");
+        error("PASS object should be CLASS of the derived-type");
         return FALSE;
     }
 }
@@ -1863,12 +1885,6 @@ update_procedure_variables(ID ids, TYPE_DESC struct_decls, ID targets)
                         continue;
                     }
 
-#if 0
-                    // TODO check
-                    if (!check_tbp_pass_arg(tp, mem, ID_TYPE(target))) {
-                        return;
-                    }
-#endif
                     /*
                      * update function type
                      */
@@ -1922,7 +1938,7 @@ update_type_bound_procedures(TYPE_DESC struct_decls, ID ids)
                     continue;
                 }
 
-                if (!check_tbp_pass_arg(tp, mem, ID_TYPE(target))) {
+                if (!check_tbp_pass_arg(tp, ID_TYPE(mem), ID_TYPE(target))) {
                     return;
                 }
                 /*
@@ -2920,6 +2936,7 @@ check_procedure_variables()
     ID id;
     ID target;
     TYPE_DESC stp;
+    TYPE_DESC ftp;
 
     FOREACH_ID(id, LOCAL_SYMBOLS) {
         target = NULL;
@@ -2931,8 +2948,10 @@ check_procedure_variables()
                             "Interface %s is not found",
                             SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
             }
+            ftp = get_bottom_ref_type(ID_TYPE(target));
+
             if (ID_TYPE(target) == NULL ||
-                !FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(target))) {
+                !FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ftp)) {
                 error_at_id(id,
                             "Interface %s does not have explict interface",
                             SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
@@ -2956,6 +2975,11 @@ check_procedure_variables()
                     error_at_id(id,
                                 "Interface %s does not have explict interface",
                                 SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
+                }
+
+                ftp = get_bottom_ref_type(ID_TYPE(id));
+                if (!check_tbp_pass_arg(stp, ID_TYPE(id), ftp)) {
+                    return;
                 }
             }
         }
