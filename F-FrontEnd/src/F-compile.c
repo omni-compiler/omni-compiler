@@ -3917,7 +3917,13 @@ static void
 import_module_procedure(const char * genName, EXT_ID mep) {
     TYPE_DESC tp = EXT_PROC_TYPE(mep);
     expr modArgs = EXT_PROC_ARGS(mep);
-    // TODO(shingo-s): fix name if the module procedure is private.
+    /*
+     * TODO(shingo-s):
+     *   If the module procedure is private and use-associated,
+     *   its name should be invisible from the current scope.
+     *   So it may be required to rename the name of module procedure and
+     *   make invisible.
+     */
     const char * modName = SYM_NAME(EXT_SYM(mep));
     mod_proc_t mp = add_module_procedure(genName,
                                          modName,
