@@ -2914,20 +2914,28 @@ is_assignment_proc(TYPE_DESC ftp)
 }
 
 
-/* TODO */
 static void
 check_procedure_variables()
 {
     ID id;
+    ID target;
     TYPE_DESC stp;
 
     FOREACH_ID(id, LOCAL_SYMBOLS) {
+        target = NULL;
         if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
             if (VAR_REF_PROC(id) == NULL)
                 continue;
-            if (TYPE_REF(ID_TYPE(id)) != ID_TYPE(VAR_REF_PROC(id))) {
-                /* a type of the reference procedure is replaced */
-                TYPE_REF(ID_TYPE(id)) = ID_TYPE(VAR_REF_PROC(id));
+            if ((target = find_ident(ID_SYM(VAR_REF_PROC(id)))) == NULL) {
+                error_at_id(id,
+                            "Interface %s is not found",
+                            SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
+            }
+            if (ID_TYPE(target) == NULL ||
+                !FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(target))) {
+                error_at_id(id,
+                            "Interface %s does not have explict interface",
+                            SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
             }
         }
     }
@@ -2938,9 +2946,16 @@ check_procedure_variables()
                 if (VAR_REF_PROC(id) == NULL)
                     continue;
 
-                if (TYPE_REF(ID_TYPE(id)) != ID_TYPE(VAR_REF_PROC(id))) {
-                    /* a type of the reference procedure is replaced */
-                    TYPE_REF(ID_TYPE(id)) = ID_TYPE(VAR_REF_PROC(id));
+                if ((target = find_ident(ID_SYM(VAR_REF_PROC(id)))) == NULL) {
+                    error_at_id(id,
+                                "Interface %s is not found",
+                                SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
+                }
+                if (ID_TYPE(target) == NULL ||
+                    !FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(target))) {
+                    error_at_id(id,
+                                "Interface %s does not have explict interface",
+                                SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
                 }
             }
         }
