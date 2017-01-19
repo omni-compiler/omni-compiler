@@ -100,6 +100,13 @@ class ACCgpuDecompileWriter extends PrintWriter {
               func_args = "(";
               for (;  n != null;  a = a.nextArgs(), n = n.nextArgs()) {
                 arg_id = (Ident)n.getArg();
+		switch (ACC.platform){
+                case OpenCL:
+		    if(arg_id.Type().isPointer()) {
+			func_args += " __global ";
+		    }
+		    break;
+		}
                 func_args += makeDeclType(arg_id.Type(), arg_id.getName());
                 if (n.nextArgs() != null) {
                   func_args += ", ";
