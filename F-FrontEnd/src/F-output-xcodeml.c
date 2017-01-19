@@ -172,6 +172,7 @@ xtag(enum expr_code code)
     case ARRAY_REF:                 return "FarrayRef";
     case F_SUBSTR_REF:              return "FcharacterRef";
     case F95_ARRAY_CONSTRUCTOR:     return "FarrayConstructor";
+    case F03_TYPED_ARRAY_CONSTRUCTOR: return "FarrayConstructor";
     case F95_STRUCT_CONSTRUCTOR:    return "FstructConstructor";
     case XMP_COARRAY_REF:           return "FcoArrayRef";
 
@@ -1712,6 +1713,19 @@ outx_arrayConstructor(int l, expv v)
     outx_tagOfExpression(l, v);
     outx_expv(l1, EXPR_ARG1(v));
     outx_expvClose(l, v);
+}
+
+static void
+outx_typedArrayConstructor(int l, expv v)
+{
+    TYPE_DESC old = EXPV_TYPE(v);
+    TYPE_DESC tp = array_element_type(EXPV_TYPE(v));
+    const int l1 = l + 1;
+    EXPV_TYPE(v) = tp;
+    outx_tagOfExpression(l, v);
+    outx_expv(l1, EXPR_ARG1(v));
+    outx_expvClose(l, v);
+    EXPV_TYPE(v) = old;
 }
 
 static void
@@ -3469,6 +3483,7 @@ outx_expv(int l, expv v)
     case ARRAY_REF:         outx_arrayRef(l, v); break;
     case F_SUBSTR_REF:      outx_characterRef(l, v); break;
     case F95_ARRAY_CONSTRUCTOR:     outx_arrayConstructor(l, v); break;
+    case F03_TYPED_ARRAY_CONSTRUCTOR:     outx_typedArrayConstructor(l, v); break;
     case F95_STRUCT_CONSTRUCTOR:    outx_structConstructor(l, v); break;
 
     case XMP_COARRAY_REF:   outx_coarrayRef(l, v); break;
