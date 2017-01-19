@@ -88,7 +88,7 @@ public class AccKernel {
         launchFuncName = kernelMainName;
         break;
       case OpenCL:
-        launchFuncName = ACC_CL_KERNEL_LAUNCHER_NAME;
+        launchFuncName = kernelMainName;
         break;
     }
 
