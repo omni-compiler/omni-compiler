@@ -84,7 +84,7 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
     }
 
     if (ID_CLASS(parent_id) != CL_UNKNOWN) {
-        if (debug_flag) fprintf(debug_fp, "parent_id has explict class\n");
+        if (debug_flag) fprintf(debug_fp, "parent_id has explicit class\n");
 
         if (ID_CLASS(parent_id) == CL_PROC) {
             if (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(parent_id))) ||
@@ -96,6 +96,12 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
                        !FUNCTION_TYPE_IS_DEFINED(ID_TYPE(parent_id))) {
                 if (debug_flag) fprintf(debug_fp, "parent_id seems a module function/subroutine\n");
                 return FALSE;
+            } else if (PROC_CLASS(parent_id) == P_UNDEFINEDPROC &&
+                       ID_TYPE(parent_id) != NULL &&
+                       IS_PROCEDURE_TYPE(ID_TYPE(parent_id))) {
+                if (debug_flag) fprintf(debug_fp, "parent_id seems a undefined function/subroutine\n");
+                return FALSE;
+
             } else {
                 if (debug_flag) fprintf(debug_fp, "parent_id is an explicit function\n");
                 return TRUE;
@@ -5073,17 +5079,23 @@ compile_procedure_declaration(expr x)
     expr decls = EXPR_ARG1(x);
     expr attrs = EXPR_ARG2(x);
     expr proc_interface = EXPR_ARG3(x);
-    ID id;
+    ID id = NULL;
+    int has_pass_arg = FALSE;
     ID pass_arg = NULL;
     ID interface = NULL;
     SYMBOL sym = NULL;
     list lp;
     TYPE_DESC tp = NULL;
+    TYPE_DESC stp = NULL;
 
     uint32_t type_attr_flags = 0;
     uint32_t binding_attr_flags = 0;
 
     int is_inside_struct = CTL_TYPE(ctl_top) == CTL_STRUCT;
+
+    if (is_inside_struct) {
+        stp = CTL_STRUCT_TYPEDESC(ctl_top);
+    }
 
     compile_procedure_attributes(attrs,
                                  &type_attr_flags,
@@ -5093,6 +5105,9 @@ compile_procedure_declaration(expr x)
     if (is_inside_struct) {
         if (!(type_attr_flags & TYPE_ATTR_POINTER)) {
             error("PROCEDURE member should have the POINTER attribute");
+        }
+        if ((type_attr_flags & TYPE_ATTR_OPTIONAL)) {
+            error("PROCEDURE member should NOT have the OPTIONAL attribute");
         }
     } else {
         if (binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS) {
@@ -5113,6 +5128,11 @@ compile_procedure_declaration(expr x)
         return;
     }
 
+    has_pass_arg = binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS;
+    if (pass_arg != NULL) {
+        ID_TYPE(pass_arg) = wrap_type(stp);
+        TYPE_SET_CLASS(ID_TYPE(pass_arg));
+    }
 
     if (proc_interface == NULL) {
         /*
@@ -5131,10 +5151,22 @@ compile_procedure_declaration(expr x)
         if ((interface = find_ident(sym)) != NULL) {
             if (IS_PROCEDURE_TYPE(ID_TYPE(interface))) {
                 tp = ID_TYPE(interface);
+                if (has_pass_arg &&
+                    !procedure_has_pass_arg(tp,
+                                            ID_SYM(pass_arg),
+                                            stp)) {
+                    error("%s should have a PASS argument %s",
+                          SYM_NAME(sym), SYM_NAME(ID_SYM(pass_arg)));
+                    return;
+                }
+
+            } else {
+                TYPE_UNSET_SAVE(ID_TYPE(id));
+                ID_TYPE(id) = function_type(ID_TYPE(id));
+                ID_CLASS(id) = CL_PROC;
+                PROC_CLASS(id) = P_UNDEFINEDPROC;
+
             }
-            /*
-             * TODO(shingo-s): type compatibility check
-             */
 
         } else {
             /* proc_interface is a contains function/subroutine or
@@ -5185,7 +5217,7 @@ compile_procedure_declaration(expr x)
             expr init_expr;
             expv v;
 
-            if (!TYPE_IS_POINTER(tp)) {
+            if (!(type_attr_flags & TYPE_ATTR_POINTER)) {
                 error("Initialization without a POINTER attribute");
                 return;
             }
@@ -5196,14 +5228,29 @@ compile_procedure_declaration(expr x)
             init_expr = EXPR_ARG2(LIST_ITEM(lp));
 
             if (EXPR_CODE(init_expr) == IDENT) {
-                ID f_id = find_ident_outer_scope(EXPR_SYM(init_expr));
+                ID fid = find_ident_outer_scope(EXPR_SYM(init_expr));
 
-                if (f_id != NULL) {
-                    /* TODO(shingo-s): check type of function */
-                    v = expv_sym_term(IDENT, ID_TYPE(f_id), ID_SYM(f_id));
+                if (fid != NULL) {
+                    v = expv_sym_term(IDENT, ID_TYPE(fid), ID_SYM(fid));
+
+                    if (!IS_PROCEDURE_TYPE(ID_TYPE(fid))) {
+                        /* or declare function ? */
+                        TYPE_UNSET_SAVE(ID_TYPE(id));
+                        ID_TYPE(fid) = function_type(ID_TYPE(fid));
+                        ID_CLASS(fid) = CL_PROC;
+                        PROC_CLASS(fid) = P_UNDEFINEDPROC;
+                    }
+
                 } else {
                     /* The type will be fixed in other function */
                     v = expv_sym_term(IDENT, type_GNUMERIC_ALL, EXPR_SYM(init_expr));
+                }
+
+                if (EXPR_SYM(init_expr) != sym) {
+                    /* they are not the same function/subroutine */
+                    if (fid != NULL &&  !procedure_is_assignable(tp, ID_TYPE(fid))) {
+                        error("invalid initialization");
+                    }
                 }
 
             } else if (EXPR_CODE(init_expr) == F_ARRAY_REF) {
@@ -5226,7 +5273,6 @@ compile_procedure_declaration(expr x)
                 }
 
             } else {
-
                 error("unexepected initialization expression for PROCEDRUE");
                 continue;
 
@@ -5258,6 +5304,7 @@ compile_procedure_declaration(expr x)
             FUNCTION_TYPE_HAS_BINDING_ARG(ID_TYPE(id)) = TRUE;
             FUNCTION_TYPE_HAS_PASS_ARG(ID_TYPE(id)) = binding_attr_flags & TYPE_BOUND_PROCEDURE_PASS;
             FUNCTION_TYPE_PASS_ARG(ID_TYPE(id)) = pass_arg;
+            FUNCTION_TYPE_PASS_ARG_TYPE(ID_TYPE(id)) = stp;
         }
     }
 }

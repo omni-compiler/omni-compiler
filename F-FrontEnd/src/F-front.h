@@ -517,6 +517,7 @@ extern void     error_at_node EXC_VARARGS(expr, x);
 extern void     error_at_id EXC_VARARGS(ID, x);
 extern void     warning_at_node EXC_VARARGS(expr, x);
 extern void     warning_at_id EXC_VARARGS(ID, x);
+extern void     debug EXC_VARARGS(char *, fmt);
 
 extern void     initialize_lex _ANSI_ARGS_((void));
 extern void     initialize_compile _ANSI_ARGS_((void));
@@ -688,9 +689,16 @@ extern void     function_type_udpate
 extern int      function_type_is_appliable
                     _ANSI_ARGS_((TYPE_DESC ftp, expv args));
 extern int      function_type_is_compatible
-                    _ANSI_ARGS_((TYPE_DESC ftp1, TYPE_DESC ftp2));
+                    _ANSI_ARGS_((const TYPE_DESC ftp1, const TYPE_DESC ftp2));
 extern int      type_bound_procedure_types_are_compatible
-                    _ANSI_ARGS_((TYPE_DESC tbp1, TYPE_DESC tbp2));
+                    _ANSI_ARGS_((const TYPE_DESC tbp1, const TYPE_DESC tbp2));
+
+extern int      check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp);
+
+extern int      procedure_has_pass_arg
+                    _ANSI_ARGS_((const TYPE_DESC ftp, SYMBOL pass_arg, TYPE_DESC stp));
+extern int      procedure_is_assignable
+                    _ANSI_ARGS_((const TYPE_DESC left, const TYPE_DESC right));
 
 extern void     replace_or_assign_type
                     _ANSI_ARGS_((TYPE_DESC *tp, const TYPE_DESC new_tp));

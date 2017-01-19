@@ -173,6 +173,7 @@ typedef struct type_descriptor
         int has_binding_arg;
         int has_pass_arg;                   /* for the function type of procedure variable OR type-bound procedure */
         struct ident_descriptor * pass_arg; /* for the function type of procedure variable OR type-bound procedure */
+        struct type_descriptor * pass_arg_type; /* for the function type of procedure variable OR type-bound procedure */
 
         struct {
             struct ident_descriptor * generics; /* for the function type of type-bound generic */
@@ -567,6 +568,7 @@ typedef enum {
 #define FUNCTION_TYPE_HAS_BINDING_ARG(tp) ((tp)->proc_info.has_binding_arg)
 #define FUNCTION_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.has_pass_arg)
 #define FUNCTION_TYPE_PASS_ARG(tp) ((tp)->proc_info.pass_arg)
+#define FUNCTION_TYPE_PASS_ARG_TYPE(tp) ((tp)->proc_info.pass_arg_type)
 
 
 #endif /* _F_DATATYPE_H_ */

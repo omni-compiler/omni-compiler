@@ -1715,6 +1715,13 @@ union_parent_type(ID id)
 
     if (ID_CLASS(parent_id) == CL_PROC &&
         PROC_CLASS(parent_id) == P_UNDEFINEDPROC) {
+        if (FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(parent_id))) {
+            if (!function_type_is_compatible(ID_TYPE(id), ID_TYPE(parent_id))) {
+                error_at_id(id,
+                            "Type mismatch from the procedure is called");
+            }
+        }
+
         if (TYPE_IS_USED_EXPLICIT(ID_TYPE(parent_id))) {
             TYPE_DESC return_type = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(parent_id));
             *return_type = *FUNCTION_TYPE_RETURN_TYPE(my_tp);
@@ -1789,67 +1796,6 @@ static int isAlreadyMarked(ID id)
                 TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp) || TYPE_IS_PROTECTED(tp));
 }
 
-
-/**
- * Check PASS of type-bound procedure/procedure variable
- *
- * stp -- the derived-type in which a type-bound procedure or procedure variable appears
- * tbp -- the type of a type-bound procedure or procedure variable
- * ftp -- the function type that is refered from a type-bound procedure or procedure variable
- *
- * The function that is refered from a type-bound procedure or a procedure
- * variable should have a argument that have a CLASS type of the derived-type in
- * which a type-bound procedure or a procedure variable appears.
- *
- * ex)
- *
- *   TYPE t
- *     INTEGER :: v
- *     PROCEDURE(f),PASS(a),POINTER :: p 
- *     ! `p` refer the function `f` that have a arugment `a` and
- *     ! `a` should be a subclass of CLASS(t) or CLASS(*)
- *   END TYPE t
- *
- */
-static int
-check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp)
-{
-    ID pass_arg;
-    TYPE_DESC tp;
-    ID arg;
-    ID args = FUNCTION_TYPE_ARGS(ftp);
-
-    if (!(FUNCTION_TYPE_HAS_PASS_ARG(tbp))) {
-        return TRUE;
-    }
-
-    pass_arg = FUNCTION_TYPE_PASS_ARG(tbp);
-
-    if (pass_arg != NULL) {
-        arg = find_ident_head(ID_SYM(pass_arg), args);
-    } else {
-        /* PASS arugment name is not sepcified,
-           so first argument become PASS argument */
-        arg = args;
-    }
-
-    if (arg == NULL) {
-        error("PASS argument does not exist");
-        return FALSE;
-    }
-
-    tp = ID_TYPE(arg);
-    if (type_is_unlimited_class(tp)) {
-        return TRUE;
-
-    } else if (type_is_class_of(stp, tp)) {
-        return TRUE;
-
-    } else {
-        error("PASS object should be CLASS of the derived-type");
-        return FALSE;
-    }
-}
 
 static void
 update_procedure_variable(ID id, const ID target)
@@ -2486,6 +2432,18 @@ end_declaration()
                        !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "INTENT is applied only "
                               "to dummy argument");
+            } else if (IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL) {
+                if (ID_STORAGE(ip) != STG_ARG) {
+                    if (!TYPE_IS_POINTER(tp)) {
+                        error_at_id(ip, "PROCEDURE variable should have the POINTER attribute");
+                    }
+                    if (TYPE_IS_OPTIONAL(tp)) {
+                        error_at_id(ip, "PROCEDURE variable should not have the OPTINAL attribute");
+                    }
+                    if (TYPE_IS_INTENT_IN(tp) || TYPE_IS_INTENT_OUT(tp) || TYPE_IS_INTENT_INOUT(tp)) {
+                        error_at_id(ip, "PROCEDURE variable should not have the INTENT attribute");
+                    }
+                }
             }
         }
     }
@@ -6033,15 +5991,6 @@ compile_PUBLIC_PRIVATE_statement(expr id_list, int (*markAs)(ID))
 }
 
 
-/*
- * Checks if this is a valid assignment of procedures
- */
-static int
-check_procedure_assignment(TYPE_DESC left, TYPE_DESC right) {
-    return TRUE;
-}
-
-
 static void
 compile_POINTER_SET_statement(expr x) {
     list lp;
@@ -6100,25 +6049,46 @@ compile_POINTER_SET_statement(expr x) {
                           SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
         }
         if (EXPR_CODE(vPointee) == F_VAR && !IS_PROCEDURE_TYPE(vPteTyp)) {
-            /*
-             * POINTEE is used as a function/subroutine,
-             * so fix its type
-             */
-            TYPE_DESC old;
             ID id = find_ident(EXPR_SYM(vPointee));
-            ID_CLASS(id) = CL_PROC;
-            PROC_CLASS(id) = P_UNDEFINEDPROC;
-            old = ID_TYPE(id);
-            if (IS_SUBR(vPtrTyp)) {
-                ID_TYPE(id) = subroutine_type();
-                TYPE_ATTR_FLAGS(ID_TYPE(id)) = TYPE_ATTR_FLAGS(old);
-                TYPE_EXTATTR_FLAGS(ID_TYPE(id)) = TYPE_EXTATTR_FLAGS(old);
-            } else {
-                ID_TYPE(id) = function_type(old);
-                TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
-            }
 
+
+            if (TYPE_IS_IMPLICIT(vPteTyp) && TYPE_REF(vPtrTyp)) {
+                TYPE_DESC tp;
+                TYPE_DESC ftp = get_bottom_ref_type(vPtrTyp);
+                int attrs = TYPE_ATTR_FLAGS(vPteTyp);
+                int extattrs = TYPE_EXTATTR_FLAGS(vPteTyp);
+
+                ID_CLASS(id) = CL_PROC;
+                PROC_CLASS(id) = P_UNDEFINEDPROC;
+                *vPteTyp = *ftp;
+                tp = new_type_desc();
+                *tp = *FUNCTION_TYPE_RETURN_TYPE(vPteTyp);
+                FUNCTION_TYPE_RETURN_TYPE(vPteTyp) = tp;
+                TYPE_ATTR_FLAGS(vPteTyp) = attrs & (TYPE_ATTR_PUBLIC | TYPE_ATTR_PRIVATE);
+                TYPE_EXTATTR_FLAGS(vPteTyp) = extattrs;
+
+            } else {
+                /*
+                 * POINTEE is used as a function/subroutine,
+                 * so fix its type
+                 */
+
+                TYPE_DESC old;
+
+                ID_CLASS(id) = CL_PROC;
+                PROC_CLASS(id) = P_UNDEFINEDPROC;
+                old = ID_TYPE(id);
+                if (IS_SUBR(vPtrTyp)) {
+                    ID_TYPE(id) = subroutine_type();
+                    TYPE_ATTR_FLAGS(ID_TYPE(id)) = TYPE_ATTR_FLAGS(old);
+                    TYPE_EXTATTR_FLAGS(ID_TYPE(id)) = TYPE_EXTATTR_FLAGS(old);
+                } else {
+                    ID_TYPE(id) = function_type(old);
+                    TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+                }
+            }
         }
+
     } else {
         if (!TYPE_IS_TARGET(vPteTyp) &&
             !TYPE_IS_POINTER(vPteTyp) &&
@@ -6139,7 +6109,7 @@ compile_POINTER_SET_statement(expr x) {
     }
 
     if (IS_PROCEDURE_TYPE(vPtrTyp) || IS_PROCEDURE_TYPE(vPteTyp)) {
-        if (!check_procedure_assignment(vPtrTyp, vPteTyp)) {
+        if (!procedure_is_assignable(vPtrTyp, vPteTyp)) {
             error_at_node(x, "Type mismatch.");
             return;
         }
