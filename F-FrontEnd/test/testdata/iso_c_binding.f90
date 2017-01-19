@@ -8,6 +8,7 @@ end type ctype
 interface
   function send_to_port(port, data, length) bind(C)
     implicit none
+    use, intrinsic :: iso_c_binding
     integer(C_INT), value :: port
     character(kind=C_CHAR) :: data(*)
     integer(C_INT), value :: length

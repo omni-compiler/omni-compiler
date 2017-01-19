@@ -2255,7 +2255,7 @@ end_declaration()
              * never set to local symbol, so there is no need to filter out them.
              */
             TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp))
-                    |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
+                    |= (TYPE_ATTR_FLAGS(ip) & ~(TYPE_ATTR_SAVE|TYPE_ATTR_BIND));
         }
         if (TYPE_IS_EXTERNAL(tp) && !IS_PROCEDURE_TYPE(tp)) {
             tp = function_type(tp);
