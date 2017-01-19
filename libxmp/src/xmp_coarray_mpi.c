@@ -552,6 +552,27 @@ static void _mpi_continuous(const int op,
   */
 }
 
+static void _mpi_make_types(MPI_Datatype types[], const int dims, const _XMP_array_section_t sections[], const size_t element_size)
+{
+  for(int i = dims - 1; i >= 0; i--){
+    const _XMP_array_section_t *section = sections + i;
+    const int count = section->length;
+    const int blocklength = (i == dims - 1)? element_size : 1;
+    const int stride = section->distance * section->stride;
+    const MPI_Datatype oldtype = (i == dims - 1)? MPI_BYTE : types[i + 1];
+    XACC_DEBUG("type, dim=%d, start=%lld, length=%lld, stride=%lld, (c,b,s)=(%d,%d,%d)\n", i, section->start, section->length, section->stride, count, blocklength, stride);
+    MPI_Type_create_hvector(count, blocklength, stride, oldtype, types + i);
+    MPI_Type_commit(types + i);
+  }
+}
+
+static void _mpi_free_types(MPI_Datatype types[], const int dims)
+{
+  for(int i = 0; i < dims; i++){
+    MPI_Type_free(types + i);
+  }
+}
+
 static void _mpi_non_continuous(const int op, const int target_rank,
 				const _XMP_coarray_t *remote_desc, const void *local_ptr,
 				const size_t remote_offset, const size_t local_offset,
@@ -566,27 +587,8 @@ static void _mpi_non_continuous(const int op, const int target_rank,
   MPI_Datatype local_types[_XMP_N_MAX_DIM], remote_types[_XMP_N_MAX_DIM];
   size_t element_size = remote_desc->elmt_size;
 
-  for(int i = local_dims - 1; i >= 0; i--){
-    const _XMP_array_section_t *section = local_info + i;
-    int count = section->length;
-    int blocklength = (i == local_dims - 1)? element_size : 1;
-    int stride = section->distance * section->stride;
-    MPI_Datatype oldtype = (i == local_dims - 1)? MPI_BYTE : local_types[i+1];
-    XACC_DEBUG("local, dim=%d, start=%lld, length=%lld, stride=%lld, (c,b,s)=(%d,%d,%d)\n", i, section->start, section->length, section->stride, count, blocklength, stride);
-    MPI_Type_create_hvector(count, blocklength, stride, oldtype, local_types + i);
-    MPI_Type_commit(local_types + i);
-  }
-  for(int i = remote_dims - 1; i >= 0; i--){
-    const _XMP_array_section_t *section = remote_info + i;
-    int count = section->length;
-    int blocklength = (i == remote_dims - 1)? element_size : 1;
-    int stride = section->distance * section->stride;
-    MPI_Datatype oldtype = (i == remote_dims - 1)? MPI_BYTE : remote_types[i+1];
-    XACC_DEBUG("remote, dim=%d, start=%lld, length=%lld, stride=%lld, (c,b,s)=(%d,%d,%d)\n", i, section->start, section->length, section->stride, count, blocklength, stride);
-    MPI_Type_create_hvector(count, blocklength, stride, oldtype, remote_types + i);
-    MPI_Type_commit(remote_types + i);
-  }
-
+  _mpi_make_types(local_types,  local_dims,  local_info,  element_size);
+  _mpi_make_types(remote_types, remote_dims, remote_info, element_size);
 
   //  XACC_DEBUG("nonc_put(src_p=%p, target=%d, dst_p=%p, is_acc=%d)", laddr, src_cnt,src_bl,src_str, target_rank, raddr, is_dst_on_acc);
   if(op == _XMP_N_COARRAY_PUT){
@@ -600,15 +602,12 @@ static void _mpi_non_continuous(const int op, const int target_rank,
   }else{
     _XMP_fatal("invalid coarray operation type");
   }
-  MPI_Win_flush_local(target_rank, win);
 
   //free datatype
-  for(int i = 0; i < local_dims; i++){
-    MPI_Type_free(local_types + i);
-  }
-  for(int i = 0; i < remote_dims; i++){
-    MPI_Type_free(remote_types + i);
-  }
+  _mpi_free_types(local_types,  local_dims );
+  _mpi_free_types(remote_types, remote_dims);
+
+  MPI_Win_flush_local(target_rank, win);
 }
 
 
