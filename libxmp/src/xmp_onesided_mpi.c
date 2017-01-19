@@ -46,11 +46,11 @@ void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size)
 		   &_xmp_mpi_onesided_win);
 
   _XMP_mpi_build_shift_queue(false);
-  MPI_Win_lock_all(0, _xmp_mpi_onesided_win);
+  MPI_Win_lock_all(MPI_MODE_NOCHECK, _xmp_mpi_onesided_win);
   //MPI_Win_fence(MPI_MODE_NOPRECEDE, _xmp_mpi_onesided_win);
 
   MPI_Win_create_dynamic(MPI_INFO_NULL, MPI_COMM_WORLD, &_xmp_mpi_distarray_win);
-  MPI_Win_lock_all(0, _xmp_mpi_distarray_win);
+  MPI_Win_lock_all(MPI_MODE_NOCHECK, _xmp_mpi_distarray_win);
   
 #ifdef _XMP_XACC
   CUDA_SAFE_CALL(cudaMalloc((void**)&_xmp_mpi_onesided_buf_acc, heap_size));
@@ -63,11 +63,11 @@ void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size)
 		 &_xmp_mpi_onesided_win_acc);
 
   _XMP_mpi_build_shift_queue(true);
-  MPI_Win_lock_all(0, _xmp_mpi_onesided_win_acc);
+  MPI_Win_lock_all(MPI_MODE_NOCHECK, _xmp_mpi_onesided_win_acc);
   //MPI_Win_fence(MPI_MODE_NOPRECEDE, _xmp_mpi_onesided_win_acc);
 
   MPI_Win_create_dynamic(MPI_INFO_NULL, MPI_COMM_WORLD, &_xmp_mpi_distarray_win_acc);
-  MPI_Win_lock_all(0, _xmp_mpi_distarray_win_acc);
+  MPI_Win_lock_all(MPI_MODE_NOCHECK, _xmp_mpi_distarray_win_acc);
 #endif
 }
 
