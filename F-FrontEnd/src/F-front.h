@@ -73,7 +73,7 @@ extern int nerrors;
 #define MAX_NAME_LEN_F77          31    /* limitation of fortran 77, 90 */
 #define MAX_NAME_LEN_F03          63    /* limitation of fortran 2003 */
 #define MAX_NAME_LEN_UPPER_LIMIT 256   /* upper bound */
-#define MAX_DIM  7
+#define MAX_DIM  15
 
 /* max line length */
 #define DEFAULT_MAX_LINE_LEN_FIXED 72
