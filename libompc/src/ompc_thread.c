@@ -595,7 +595,7 @@ static void ompc_xstream_setup(int es_idx, ABT_xstream xstream)
 #endif /* USE_LOG */
 
     ompc_new_proc(es_idx, xstream);
-    thread_affinity_setup(es_idx);
+    // thread_affinity_setup(es_idx);
 }
 
 struct divconq_args
