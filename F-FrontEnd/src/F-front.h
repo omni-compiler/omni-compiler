@@ -669,6 +669,7 @@ extern TYPE_DESC        compile_derived_type _ANSI_ARGS_((expr x, int allow_pred
 extern expv     compile_int_constant _ANSI_ARGS_((expr x));
 extern void     compile_pragma_statement _ANSI_ARGS_((expr x));
 extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
+extern void     compile_VALUE_statement _ANSI_ARGS_((expr id_list));
 
 extern void     compile_procedure_declaration _ANSI_ARGS_((expr x));
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
