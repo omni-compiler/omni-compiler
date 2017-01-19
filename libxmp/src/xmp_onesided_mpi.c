@@ -75,22 +75,22 @@ void _XMP_mpi_onesided_finalize(){
   XACC_DEBUG("_XMP_mpi_onesided_finalize()");
 
   MPI_Win_unlock_all(_xmp_mpi_onesided_win);
-  //MPI_Win_fence(MPI_MODE_NOSUCCEED, _xmp_mpi_onesided_win);
   _XMP_mpi_destroy_shift_queue(false);
+  MPI_Win_unlock_all(_xmp_mpi_distarray_win);
+
+  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Win_free(&_xmp_mpi_onesided_win);
   XACC_DEBUG("free _xmp_mpi_onesided_buf(%p)\n", _xmp_mpi_onesided_buf);
-
-  MPI_Win_unlock_all(_xmp_mpi_distarray_win);
   MPI_Win_free(&_xmp_mpi_distarray_win);
   
 #ifdef _XMP_XACC
   MPI_Win_unlock_all(_xmp_mpi_onesided_win_acc);
-  //MPI_Win_fence(MPI_MODE_NOSUCCEED, _xmp_mpi_onesided_win_acc);
   _XMP_mpi_destroy_shift_queue(true);
+  MPI_Win_unlock_all(_xmp_mpi_distarray_win_acc);
+
+  MPI_Barrier(MPI_COMM_WORLD);
   MPI_Win_free(&_xmp_mpi_onesided_win_acc);
   CUDA_SAFE_CALL(cudaFree(_xmp_mpi_onesided_buf_acc));
-
-  MPI_Win_unlock_all(_xmp_mpi_distarray_win_acc);
   MPI_Win_free(&_xmp_mpi_distarray_win_acc);
 #endif
 }
