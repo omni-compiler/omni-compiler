@@ -39,7 +39,7 @@ void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size)
   XACC_DEBUG("alloc memory size=%zd\n", heap_size);
   XACC_DEBUG("alloced _xmp_mpi_onesided_buf(%p)\n", _xmp_mpi_onesided_buf);
   MPI_Win_allocate(heap_size, //window size
-		   sizeof(char), //gap size
+		   1,         //gap size
 		   MPI_INFO_NULL,
 		   MPI_COMM_WORLD,
 		   &_xmp_mpi_onesided_buf, //window address
@@ -57,7 +57,7 @@ void _XMP_mpi_onesided_initialize(int argc, char **argv, const size_t heap_size)
   XACC_DEBUG("alloced gpu addr =%p\n", _xmp_mpi_onesided_buf_acc);
   MPI_Win_create((void*)_xmp_mpi_onesided_buf_acc, //window address
 		 heap_size, //window size
-		 sizeof(char), //gap size
+		 1,         //gap size
 		 MPI_INFO_NULL,
 		 MPI_COMM_WORLD,
 		 &_xmp_mpi_onesided_win_acc);
