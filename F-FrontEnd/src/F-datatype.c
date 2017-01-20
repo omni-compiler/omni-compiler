@@ -41,49 +41,60 @@ type_char(int len)
  * type of the function which returns tp
  */
 TYPE_DESC
-function_type(const TYPE_DESC tp)
+function_type(TYPE_DESC tp)
 {
     TYPE_DESC ftp;
     ftp = new_type_desc();
     TYPE_BASIC_TYPE(ftp) = TYPE_FUNCTION;
-
     FUNCTION_TYPE_RETURN_TYPE(ftp) = tp;
 
     if (tp != NULL) {
         if (TYPE_IS_EXTERNAL(tp)) {
             TYPE_SET_EXTERNAL(ftp);
+            TYPE_UNSET_EXTERNAL(tp);
         }
 
         if (TYPE_IS_USED_EXPLICIT(tp)) {
             TYPE_SET_USED_EXPLICIT(ftp);
+            TYPE_UNSET_USED_EXPLICIT(tp);
         }
         if (TYPE_IS_OVERRIDDEN(tp)) {
             TYPE_SET_OVERRIDDEN(ftp);
+            TYPE_UNSET_OVERRIDDEN(tp);
         }
 
         if (TYPE_IS_PUBLIC(tp)) {
             TYPE_SET_PUBLIC(ftp);
+            TYPE_UNSET_PUBLIC(tp);
         }
         if (TYPE_IS_PRIVATE(tp)) {
             TYPE_SET_PRIVATE(ftp);
+            TYPE_UNSET_PRIVATE(tp);
         }
         if (TYPE_IS_PROTECTED(tp)) {
             TYPE_SET_PROTECTED(ftp);
+            TYPE_UNSET_PROTECTED(tp);
         }
 
         if (TYPE_IS_RECURSIVE(tp)) {
             TYPE_SET_RECURSIVE(ftp);
+            TYPE_UNSET_RECURSIVE(tp);
         }
         if (TYPE_IS_PURE(tp)) {
             TYPE_SET_PURE(ftp);
+            TYPE_UNSET_PURE(tp);
         }
         if (TYPE_IS_ELEMENTAL(tp)) {
             TYPE_SET_ELEMENTAL(ftp);
+            TYPE_UNSET_ELEMENTAL(tp);
         }
         if (TYPE_IS_MODULE(tp)) {
             TYPE_SET_MODULE(ftp);
+            TYPE_UNSET_MODULE(tp);
         }
+        TYPE_UNSET_SAVE(tp);
     }
+
 
     return ftp;
 }
