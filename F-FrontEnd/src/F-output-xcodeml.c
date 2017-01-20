@@ -689,7 +689,6 @@ getBasicTypeID(BASIC_DATA_TYPE t)
     case TYPE_MODULE:       tid = "Fvoid"; break;
     case TYPE_NAMELIST:     tid = "Fnamelist"; break;
     case TYPE_VOID:         tid = "Fvoid"; break;
-
     default: abort();
     }
     return tid;
@@ -4168,7 +4167,7 @@ outx_functionType_procedure(int l, TYPE_DESC tp)
 static void
 outx_functionType(int l, TYPE_DESC tp)
 {
-    if (TYPE_IS_PROCEDURE(tp) || TYPE_REF(tp) != NULL) {
+    if (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL) {
         /* type-bound procedure or procedure type */
         outx_functionType_procedure(l, tp);
 
@@ -4621,7 +4620,7 @@ genSortedIDs(ID ids, int *retnIDs)
       EXT_PROC_IS_INTERFACE_DEF(PROC_EXT_ID(id)) == FALSE)) \
   && (ID_TYPE(id) \
       && IS_MODULE(ID_TYPE(id)) == FALSE   \
-      && (IS_SUBR(ID_TYPE(id)) == FALSE || \
+      && (IS_VOID(ID_TYPE(id)) == FALSE || \
       has_attribute_except_private_public(ID_TYPE(id)))))
 
 

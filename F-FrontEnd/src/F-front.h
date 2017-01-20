@@ -673,7 +673,7 @@ extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
 extern void     compile_procedure_declaration _ANSI_ARGS_((expr x));
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
 extern void     compile_type_generic_procedure _ANSI_ARGS_((expr x));
-extern void     update_type_bound_procedures _ANSI_ARGS_((TYPE_DESC struct_decls, ID local_symbols));
+extern void     update_type_bound_procedures_forall _ANSI_ARGS_((TYPE_DESC struct_decls, ID local_symbols));
 extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f2, int has_pass_arg));
 extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));
 
@@ -740,7 +740,7 @@ extern TYPE_DESC        intrinsic_function_type _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        intrinsic_subroutine_type _ANSI_ARGS_((void));
 extern TYPE_DESC        program_type _ANSI_ARGS_((void));
 extern TYPE_DESC        type_bound_procedure_type _ANSI_ARGS_((void));
-extern TYPE_DESC        procedure_type _ANSI_ARGS_((TYPE_DESC ftp));
+extern TYPE_DESC        procedure_type _ANSI_ARGS_((const TYPE_DESC ftp));
 extern TYPE_DESC        type_char _ANSI_ARGS_((int len));
 extern TYPE_DESC        type_basic _ANSI_ARGS_((BASIC_DATA_TYPE t));
 extern TYPE_DESC        array_element_type _ANSI_ARGS_((TYPE_DESC tp));

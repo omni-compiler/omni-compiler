@@ -2534,7 +2534,7 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
             ID_TYPE(ID_DEFINED_BY(id)) = TYPE_REF(ID_TYPE(id));
 
             /* case for ENTRY */
-            if (EXT_PROC_IS_ENTRY(tep->ep))
+            if (tep->ep != NULL && EXT_PROC_IS_ENTRY(tep->ep))
                 ID_CLASS(id) = CL_ENTRY;
         }
 

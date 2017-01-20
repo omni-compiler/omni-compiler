@@ -207,7 +207,7 @@ type_bound_procedure_type(void)
 
 
 TYPE_DESC
-procedure_type(TYPE_DESC ftp)
+procedure_type(const TYPE_DESC ftp)
 {
     TYPE_DESC tp;
     tp = function_type(NULL);
@@ -1213,10 +1213,12 @@ function_type_is_compatible0(const TYPE_DESC ftp1, const TYPE_DESC ftp2,
                 return FALSE;
             }
 
-            if (FUNCTION_TYPE_PASS_ARG(tbp1)) {
-                pass_arg1 = ID_SYM(FUNCTION_TYPE_PASS_ARG(tbp1));
-            } else {
-                pass_arg1 = ID_SYM(FUNCTION_TYPE_ARGS(bftp1));
+            if (FUNCTION_TYPE_HAS_PASS_ARG(tbp1)) {
+                if (FUNCTION_TYPE_PASS_ARG(tbp1)) {
+                    pass_arg1 = ID_SYM(FUNCTION_TYPE_PASS_ARG(tbp1));
+                } else {
+                    pass_arg1 = ID_SYM(FUNCTION_TYPE_ARGS(bftp1));
+                }
             }
 
         }

@@ -1741,6 +1741,8 @@ union_parent_type(ID id)
             TYPE_DESC tp;
             if (!IS_PROCEDURE_TYPE(parent_tp)) {
                 tp = FUNCTION_TYPE_RETURN_TYPE(my_tp);
+                if (tp == parent_tp)
+                    return;
 
                 TYPE_BASIC_TYPE(tp)
                         = TYPE_BASIC_TYPE(parent_tp);
@@ -1759,6 +1761,9 @@ union_parent_type(ID id)
 
             } else {
                 tp = FUNCTION_TYPE_RETURN_TYPE(my_tp);
+                if (tp == parent_tp)
+                    return;
+
                 /* copy basic type and ref */
                 TYPE_BASIC_TYPE(my_tp) = TYPE_BASIC_TYPE(parent_tp);
 
@@ -1797,17 +1802,47 @@ static int isAlreadyMarked(ID id)
 }
 
 
+/*
+ * Resolve a forward declaration of procedure variable's reference.
+ *
+ * ( 'f' in the following example)
+ *
+ * ex)
+ *
+ *  PROCEDURE( f ), POINTER :: p => g ! id is this f
+ *
+ *  CONTAINS
+ *    FUNCTION f(a)
+ *    END FUNCTION f           ! target is this f
+ *
+ */
 static void
-update_procedure_variable(ID id, const ID target)
+update_procedure_variable(ID id, const ID target, int is_final)
 {
-    if (target == NULL || !IS_PROCEDURE_TYPE(ID_TYPE(target))) {
+    if (target == NULL)
         return;
+
+    if (ID_TYPE(target) == NULL || !IS_PROCEDURE_TYPE(ID_TYPE(target))) {
+        if (is_final) {
+            error_at_id(VAR_REF_PROC(id), "not procedure");
+        } else {
+            return;
+        }
+    }
+
+    if (!FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(target))) {
+        if (is_final) {
+            error_at_id(VAR_REF_PROC(id), "should have explicit interface");
+        } else {
+            return;
+        }
     }
 
     if (IS_FUNCTION_TYPE(ID_TYPE(target))) {
         TYPE_DESC ret;
         TYPE_DESC dummy_ret;
         ret = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(target));
+
         dummy_ret = FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ID_TYPE(id)));
         if (ret != dummy_ret && ret != TYPE_REF(dummy_ret)) {
             TYPE_BASIC_TYPE(dummy_ret) = TYPE_BASIC_TYPE(ret);
@@ -1818,6 +1853,7 @@ update_procedure_variable(ID id, const ID target)
         TYPE_BASIC_TYPE(ID_TYPE(id)) = TYPE_SUBR;
     }
     TYPE_REF(ID_TYPE(id)) = ID_TYPE(target);
+    ID_DEFINED_BY(VAR_REF_PROC(id)) = target;
 }
 
 
@@ -1826,33 +1862,37 @@ update_procedure_variable(ID id, const ID target)
  *
  * Assign type bound procedure to explicit interface OR module procedure
  */
-void
-update_procedure_variables(ID ids, TYPE_DESC struct_decls, ID targets)
+static void
+update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls,
+                                  const ID targets, int is_final)
 {
     ID id;
     ID target;
     TYPE_DESC stp;
 
     FOREACH_ID(id, ids) {
+        if (ID_USEASSOC_INFO(id) &&
+            current_module_name != ID_MODULE_NAME(id)) {
+            continue;
+        }
+
         if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
             if (VAR_REF_PROC(id) == NULL)
                 continue;
 
             target = find_ident_head(ID_SYM(VAR_REF_PROC(id)), targets);
-            update_procedure_variable(id, target);
+            update_procedure_variable(id, target, is_final);
         }
     }
 
     FOREACH_STRUCTDECLS(stp, struct_decls) {
-        FOREACH_MEMBER(id, stp) {
-            if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
-                if (VAR_REF_PROC(id) == NULL)
-                    continue;
-
-                target = find_ident_head(ID_SYM(VAR_REF_PROC(id)), targets);
-                update_procedure_variable(id, target);
-            }
+        if (TYPE_TAGNAME(stp) &&
+            ID_USEASSOC_INFO(TYPE_TAGNAME(stp)) &&
+            current_module_name != ID_MODULE_NAME(TYPE_TAGNAME(stp))) {
+            continue;
         }
+
+        update_procedure_variables_forall(TYPE_MEMBER_LIST(stp), NULL, targets, is_final);
     }
 }
 
@@ -1877,13 +1917,13 @@ end_type_bound_procedure_decls(void)
  * Assign type bound procedure to explicit interface OR module procedure
  */
 void
-update_type_bound_procedures(TYPE_DESC struct_decls, ID ids)
+update_type_bound_procedures_forall(TYPE_DESC struct_decls, ID targets)
 {
     TYPE_DESC tp;
     ID mem;
     ID target;
 
-    if (struct_decls == NULL || ids == NULL) {
+    if (struct_decls == NULL || targets == NULL) {
         return;
     }
 
@@ -1896,7 +1936,7 @@ update_type_bound_procedures(TYPE_DESC struct_decls, ID ids)
                 continue;
             }
 
-            target = find_ident_head(ID_SYM(TBP_BINDING(mem)), ids);
+            target = find_ident_head(ID_SYM(TBP_BINDING(mem)), targets);
 
             if (target != NULL) {
                 if (!IS_PROCEDURE_TYPE(ID_TYPE(target))) {
@@ -2191,13 +2231,17 @@ end_declaration()
 
         /* merge type attribute flags except SAVE attr*/
         TYPE_ATTR_FLAGS(tp) |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
-        if (IS_FUNCTION_TYPE(tp)) {
+        if (IS_FUNCTION_TYPE(tp) && TYPE_REF(tp) == NULL) {
             /*
              * The type attributes for the function (PURE, ELEMENETAL, etc) are
              * never set to local symbol, so there is no need to filter out them.
              */
             TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp))
                     |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
+        }
+        if (TYPE_IS_EXTERNAL(tp) && !IS_PROCEDURE_TYPE(tp)) {
+            tp = function_type(tp);
+            TYPE_UNSET_SAVE(tp);
         }
 
         /* copy type attribute flags to EXT_PROC_TYPE */
@@ -2458,14 +2502,16 @@ end_declaration()
         union_parent_type(myId);
 
         if (unit_ctl_level > 0) {
-            update_procedure_variables(PARENT_LOCAL_SYMBOLS, PARENT_LOCAL_STRUCT_DECLS, myId);
+            update_procedure_variables_forall(PARENT_LOCAL_SYMBOLS,
+                                              PARENT_LOCAL_STRUCT_DECLS, myId,
+                                              /*is_final = */ TRUE);
         }
 
         /*
          * Update type bound procedure
          */
         if (unit_ctl_level > 0 && is_in_module()) {
-            update_type_bound_procedures(PARENT_LOCAL_STRUCT_DECLS, myId);
+            update_type_bound_procedures_forall(PARENT_LOCAL_STRUCT_DECLS, myId);
         }
 
         if (TYPE_IS_MODULE(ID_TYPE(myId)) && unit_ctl_level > 0) {
@@ -2492,12 +2538,14 @@ end_declaration()
     /*
      * Update procedure variables
      */
-    update_procedure_variables(LOCAL_SYMBOLS, LOCAL_STRUCT_DECLS, LOCAL_SYMBOLS);
+    update_procedure_variables_forall(LOCAL_SYMBOLS,
+                                      LOCAL_STRUCT_DECLS,
+                                      LOCAL_SYMBOLS, /* is_final = */ FALSE);
 
     /*
      * Update type bound procedure against exteranl functions
      */
-    update_type_bound_procedures(LOCAL_STRUCT_DECLS, LOCAL_SYMBOLS);
+    update_type_bound_procedures_forall(LOCAL_STRUCT_DECLS, LOCAL_SYMBOLS);
 
     FOR_ITEMS_IN_LIST (lp, UNIT_CTL_EQUIV_DECLS(uc)) {
         compile_EQUIVALENCE_decl(LIST_ITEM(lp));
@@ -2908,14 +2956,19 @@ is_assignment_proc(TYPE_DESC ftp)
 
 
 static void
-check_procedure_variables()
+check_procedure_variables_for_idlist(ID id_list, TYPE_DESC const stp)
 {
     ID id;
     ID target;
-    TYPE_DESC stp;
     TYPE_DESC ftp;
+    expv init_expr;
 
-    FOREACH_ID(id, LOCAL_SYMBOLS) {
+    FOREACH_ID(id, id_list) {
+        if (ID_USEASSOC_INFO(id) &&
+            current_module_name != ID_MODULE_NAME(id)) {
+            continue;
+        }
+
         target = NULL;
         if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
             if (VAR_REF_PROC(id) == NULL)
@@ -2924,6 +2977,7 @@ check_procedure_variables()
                 error_at_id(id,
                             "Interface %s is not found",
                             SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
+                continue;
             }
             ftp = get_bottom_ref_type(ID_TYPE(target));
 
@@ -2932,38 +2986,60 @@ check_procedure_variables()
                 error_at_id(id,
                             "Interface %s does not have explict interface",
                             SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
+                continue;
+            }
+
+            if (stp != NULL && !check_tbp_pass_arg(stp, ID_TYPE(id), ftp)) {
+                continue;
+            }
+
+            init_expr = VAR_INIT_VALUE(id);
+            if (init_expr != NULL && EXPR_CODE(init_expr) == F_VAR) {
+                target = find_ident(EXPR_SYM(init_expr));
+                if (target == NULL) {
+                    error_at_id(id, "invalid initialization");
+                    continue;
+                }
+
+                /* they are not the same function/subroutine */
+                if (!procedure_is_assignable(ID_TYPE(id), ID_TYPE(target))) {
+                    error_at_id(id, "type mismatch in the initialization");
+                    continue;
+                }
+
+                EXPV_TYPE(init_expr) = ID_TYPE(target);
             }
         }
     }
+}
+
+
+static void
+check_procedure_variables()
+{
+    /*
+     * Check a function refered exists
+     *
+     * PROCEDURE ( *f* ) :: p => h
+     *  check f exists
+     *  check h is available
+     *
+     */
+    TYPE_DESC stp;
+
+    check_procedure_variables_for_idlist(LOCAL_SYMBOLS, NULL);
 
     FOREACH_STRUCTDECLS(stp, LOCAL_STRUCT_DECLS) {
-        FOREACH_MEMBER(id, stp) {
-            if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
-                if (VAR_REF_PROC(id) == NULL)
-                    continue;
-
-                if ((target = find_ident(ID_SYM(VAR_REF_PROC(id)))) == NULL) {
-                    error_at_id(id,
-                                "Interface %s is not found",
-                                SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
-                }
-                if (ID_TYPE(target) == NULL ||
-                    !FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(target))) {
-                    error_at_id(id,
-                                "Interface %s does not have explict interface",
-                                SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
-                }
-
-                ftp = get_bottom_ref_type(ID_TYPE(id));
-                if (!check_tbp_pass_arg(stp, ID_TYPE(id), ftp)) {
-                    return;
-                }
-            }
+        if (TYPE_TAGNAME(stp) &&
+            ID_USEASSOC_INFO(TYPE_TAGNAME(stp)) &&
+            current_module_name != ID_MODULE_NAME(TYPE_TAGNAME(stp))) {
+            continue;
         }
+
+        check_procedure_variables_for_idlist(TYPE_MEMBER_LIST(stp), stp);
     }
-
-
 }
+
 
 static void
 check_type_bound_procedures()
@@ -3278,6 +3354,15 @@ end_procedure()
         }
 
         if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_UNDEFINEDPROC) {
+            if (ID_TYPE(id) != NULL &&
+                IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
+                FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(id))) {
+                error_at_id(id,
+                            "%s is used as explicit interface but not defined",
+                            SYM_NAME(ID_SYM(id)));
+                continue;
+            }
+
             if(PROC_EXT_ID(id) != NULL) {
                 /* undefined procedure is defined in contain statement.  */
                 EXT_IS_DEFINED(PROC_EXT_ID(id)) = TRUE;
@@ -6050,9 +6135,15 @@ compile_POINTER_SET_statement(expr x) {
         }
         if (EXPR_CODE(vPointee) == F_VAR && !IS_PROCEDURE_TYPE(vPteTyp)) {
             ID id = find_ident(EXPR_SYM(vPointee));
-
-
+            assert(id != NULL);
             if (TYPE_IS_IMPLICIT(vPteTyp) && TYPE_REF(vPtrTyp)) {
+                /*
+                 * ex)
+                 *  ! f is a procedure pointer
+                 *  f => g ! g is pointee
+                 *
+                 *  So assumption: g is a procedure
+                 */
                 TYPE_DESC tp;
                 TYPE_DESC ftp = get_bottom_ref_type(vPtrTyp);
                 int attrs = TYPE_ATTR_FLAGS(vPteTyp);
@@ -6060,6 +6151,7 @@ compile_POINTER_SET_statement(expr x) {
 
                 ID_CLASS(id) = CL_PROC;
                 PROC_CLASS(id) = P_UNDEFINEDPROC;
+
                 *vPteTyp = *ftp;
                 tp = new_type_desc();
                 *tp = *FUNCTION_TYPE_RETURN_TYPE(vPteTyp);
@@ -6071,6 +6163,12 @@ compile_POINTER_SET_statement(expr x) {
                 /*
                  * POINTEE is used as a function/subroutine,
                  * so fix its type
+                 *
+                 * ex)
+                 *
+                 *   REAL :: g ! may be a external function
+                 *
+                 *   f => g
                  */
 
                 TYPE_DESC old;
@@ -6078,14 +6176,19 @@ compile_POINTER_SET_statement(expr x) {
                 ID_CLASS(id) = CL_PROC;
                 PROC_CLASS(id) = P_UNDEFINEDPROC;
                 old = ID_TYPE(id);
-                if (IS_SUBR(vPtrTyp)) {
+
+                if (IS_FUNCTION_TYPE(vPtrTyp)) {
+                    ID_TYPE(id) = function_type(old);
+                    TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+
+                } else {
                     ID_TYPE(id) = subroutine_type();
                     TYPE_ATTR_FLAGS(ID_TYPE(id)) = TYPE_ATTR_FLAGS(old);
                     TYPE_EXTATTR_FLAGS(ID_TYPE(id)) = TYPE_EXTATTR_FLAGS(old);
-                } else {
-                    ID_TYPE(id) = function_type(old);
-                    TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
                 }
+            }
+            if (ID_LINE(id) == NULL) {
+                ID_LINE(id) = EXPR_LINE(x);
             }
         }
 
@@ -6108,7 +6211,7 @@ compile_POINTER_SET_statement(expr x) {
         return;
     }
 
-    if (IS_PROCEDURE_TYPE(vPtrTyp) || IS_PROCEDURE_TYPE(vPteTyp)) {
+    if (IS_PROCEDURE_TYPE(vPtrTyp)) {
         if (!procedure_is_assignable(vPtrTyp, vPteTyp)) {
             error_at_node(x, "Type mismatch.");
             return;
@@ -6338,6 +6441,10 @@ fix_pointer_pointee_recursive(TYPE_DESC tp)
     if (tp == NULL) {
         return;
     }
+    if (IS_PROCEDURE_TYPE(tp)) {
+        return;
+    }
+
     if (TYPE_IS_TARGET(tp) ||
         TYPE_IS_POINTER(tp) ||
         TYPE_IS_ALLOCATABLE(tp)) {

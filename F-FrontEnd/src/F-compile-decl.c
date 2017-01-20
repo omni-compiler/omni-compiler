@@ -231,9 +231,6 @@ link_parent_defined_by(ID id)
              (ID_TYPE(parent) != NULL &&
               (IS_TYPE_PUBLICORPRIVATE(ID_TYPE(parent)))))) {
             ID_DEFINED_BY(parent) = CURRENT_PROCEDURE;
-            if (ID_TYPE(parent)) {
-                TYPE_UNSET_IMPLICIT(ID_TYPE(parent));
-            }
         } else {
             error("%s is defined as a variable before", ID_NAME(parent));
         }
@@ -3613,6 +3610,13 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
                  ID_CLASS(id) = CL_PROC;
                  PROC_CLASS(id) = P_INTRINSIC;
              }
+             if (TYPE_IS_EXTERNAL(ID_TYPE(id)) && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                 ID_TYPE(id) = function_type(ID_TYPE(id));
+                 ID_CLASS(id) = CL_PROC;
+                 PROC_CLASS(id) = P_EXTERNAL;
+                 tp = ID_TYPE(id);
+             }
+
         }
 
         if (value != NULL && EXPR_CODE(value) != F_DATA_DECL) {
@@ -4396,6 +4400,10 @@ compile_EXTERNAL_decl(expr id_list)
         }
         if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_EXTERNAL;
+            if (ID_TYPE(id) != NULL && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
+                ID_TYPE(id) = function_type(ID_TYPE(id));
+            }
+
             TYPE_SET_EXTERNAL(id);
         } else if (PROC_CLASS(id) != P_EXTERNAL) {
             error_at_node(id_list,
@@ -5068,7 +5076,7 @@ compile_procedure_attributes(expr attrs,
 
 
 /*
- * (F03_TYPE_BOUND_PROCEDURE_STATEMENT
+ * (F03_PROCEDURE_DECLARATION
  *     (declarations ...)
  *     (attrs ...)
  *     [interface_name])
@@ -5136,13 +5144,36 @@ compile_procedure_declaration(expr x)
 
     if (proc_interface == NULL) {
         /*
+         * no name and type_spec
+         *
          * ex)
          *   PROCEDURE(), POINTER :: p
          */
         tp = NULL;
 
-    } else if (EXPR_CODE(proc_interface) == IDENT) {
+    } else if (EXPR_CODE(proc_interface) != IDENT) {
         /*
+         * proc_interface is type spec
+         *
+         * ex)
+         *   PROCEDURE(REAL(KIND=8)) :: p
+         */
+
+        if (EXPR_TYPE(EXPR_ARG1(proc_interface)) == TYPE_STRUCT) {
+            proc_interface = EXPR_ARG2(proc_interface);
+        }
+        tp = compile_type(proc_interface,
+                          /* allow_predecl = */ FALSE);
+
+        if (tp == NULL) {
+            error("unexpected typeq");
+        }
+        tp = function_type(tp);
+
+    } else {
+        /*
+         * interface is name
+         *
          * ex)
          *   PROCEDURE(f), POINTER :: p
          */
@@ -5160,22 +5191,34 @@ compile_procedure_declaration(expr x)
                     return;
                 }
 
-            } else {
-                TYPE_UNSET_SAVE(ID_TYPE(id));
-                ID_TYPE(id) = function_type(ID_TYPE(id));
-                ID_CLASS(id) = CL_PROC;
-                PROC_CLASS(id) = P_UNDEFINEDPROC;
+            } else if (ID_TYPE(interface) != NULL) {
+                TYPE_UNSET_SAVE(ID_TYPE(interface));
+                ID_TYPE(interface) = function_type(ID_TYPE(interface));
+                ID_CLASS(interface) = CL_PROC;
+                PROC_CLASS(interface) = P_UNDEFINEDPROC;
 
+            } else {
+                TYPE_UNSET_SAVE(interface);
+                ID_TYPE(interface) = function_type(new_type_desc());
+                TYPE_SET_IMPLICIT(ID_TYPE(interface));
             }
 
         } else {
-            /* proc_interface is a contains function/subroutine or
-               an interface function/subroutine */
+            /*
+             * proce_interface does not appear YET!.
+             *
+             * proc_interface may be a contains function/subroutine or
+             * an interface function/subroutine
+             */
 
             if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
+                /*
+                 * don't call delcare_id here,
+                 * declare_id make a member of struct
+                 */
                 tp = function_type(new_type_desc());
                 interface = new_ident_desc(sym);
-
+                ID_LINE(interface) = EXPR_LINE(x);
                 ID_TYPE(interface) = tp;
                 TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
 
@@ -5188,20 +5231,11 @@ compile_procedure_declaration(expr x)
 
                 TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
 
-                tp = ID_TYPE(interface);
             }
         }
-    } else { /* proc_interface is type spec */
-        if (EXPR_TYPE(EXPR_ARG1(proc_interface)) == TYPE_STRUCT) {
-            proc_interface = EXPR_ARG2(proc_interface);
-        }
-        tp = compile_type(proc_interface,
-                          /* allow_predecl = */ FALSE);
 
-        if (tp == NULL) {
-            error("unexpected typeq");
-        }
-        tp = function_type(tp);
+        tp = ID_TYPE(interface);
+
     }
 
     FOR_ITEMS_IN_LIST(lp, decls) {
@@ -5228,29 +5262,18 @@ compile_procedure_declaration(expr x)
             init_expr = EXPR_ARG2(LIST_ITEM(lp));
 
             if (EXPR_CODE(init_expr) == IDENT) {
-                ID fid = find_ident_outer_scope(EXPR_SYM(init_expr));
+                /*
+                 * type check is in check_procedure_variables()
+                 */
+
+                ID fid = find_ident(EXPR_SYM(init_expr));
 
                 if (fid != NULL) {
-                    v = expv_sym_term(IDENT, ID_TYPE(fid), ID_SYM(fid));
-
-                    if (!IS_PROCEDURE_TYPE(ID_TYPE(fid))) {
-                        /* or declare function ? */
-                        TYPE_UNSET_SAVE(ID_TYPE(id));
-                        ID_TYPE(fid) = function_type(ID_TYPE(fid));
-                        ID_CLASS(fid) = CL_PROC;
-                        PROC_CLASS(fid) = P_UNDEFINEDPROC;
-                    }
+                    v = expv_sym_term(F_VAR, ID_TYPE(fid), ID_SYM(fid));
 
                 } else {
                     /* The type will be fixed in other function */
-                    v = expv_sym_term(IDENT, type_GNUMERIC_ALL, EXPR_SYM(init_expr));
-                }
-
-                if (EXPR_SYM(init_expr) != sym) {
-                    /* they are not the same function/subroutine */
-                    if (fid != NULL &&  !procedure_is_assignable(tp, ID_TYPE(fid))) {
-                        error("invalid initialization");
-                    }
+                    v = expv_sym_term(F_VAR, type_GNUMERIC_ALL, EXPR_SYM(init_expr));
                 }
 
             } else if (EXPR_CODE(init_expr) == F_ARRAY_REF) {
