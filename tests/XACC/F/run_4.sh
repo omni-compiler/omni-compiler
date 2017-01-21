@@ -10,7 +10,7 @@ cd $PBS_O_WORKDIR
 uniq $PBS_NODEFILE
 
 module purge
-module load cuda/7.5.18 mvapich2/2.1_pgi_cuda-7.5.18 pgi/16.4
+module load cuda/8.0.44 pgi/16.10 mvapich2/2.2_pgi_cuda-8.0.44
 
 for i in {1..1}
 do
@@ -18,4 +18,5 @@ do
     mpirun_rsh -np 4 -hostfile $PBS_NODEFILE $MPIOPT ./numa.sh ./xacc_distarray.x
     mpirun_rsh -np 4 -hostfile $PBS_NODEFILE $MPIOPT ./numa.sh ./xacc_reflect.x
     mpirun_rsh -np 4 -hostfile $PBS_NODEFILE $MPIOPT ./numa.sh ./xacc_reduction.x
+    mpirun_rsh -np 4 -hostfile $PBS_NODEFILE $MPIOPT ./numa.sh ./xacc_reflect_oneside.x
 done

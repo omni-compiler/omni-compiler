@@ -7,14 +7,6 @@
 
 #define _SYNCIMAGE_SENDRECV
 
-struct _shift_queue_t{
-  unsigned int max_size;   /**< Max size of queue */
-  unsigned int      num;   /**< How many shifts are in this queue */
-  size_t        *shifts;   /**< shifts array */
-  size_t    total_shift;   /**< all amount of shifts */
-};
-static struct _shift_queue_t _shift_queue; /** Queue which saves shift information */
-static struct _shift_queue_t _shift_queue_acc;
 static bool _is_coarray_win_flushed = true;
 static bool _is_coarray_win_acc_flushed = true;
 static bool _is_distarray_win_flushed = true;
@@ -115,78 +107,6 @@ static char *get_local_addr(const _XMP_coarray_t *desc, const bool is_acc)
   return desc->real_addr;
 }
 
-/**
-   Set initial value to the shift queue
- */
-void _XMP_mpi_build_shift_queue(bool is_acc)
-{
-  struct _shift_queue_t *shift_queue = is_acc? &_shift_queue_acc : &_shift_queue;
-  
-  shift_queue->max_size = _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INITIAL_SIZE;
-  shift_queue->num      = 0;
-  shift_queue->shifts   = malloc(sizeof(size_t*) * shift_queue->max_size);
-  shift_queue->total_shift = 0;
-}
-
-/**
-   Destroy shift queue
- */
-void _XMP_mpi_destroy_shift_queue(bool is_acc)
-{
-  struct _shift_queue_t *shift_queue = is_acc? &_shift_queue_acc : &_shift_queue;
-
-  _XMP_free(shift_queue->shifts);
-  shift_queue->shifts = NULL;
-}
-
-/**
-   Create new shift queue
- */
-static void _rebuild_shift_queue(struct _shift_queue_t *shift_queue)
-{
-  shift_queue->max_size *= _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO;
-  size_t *tmp;
-  size_t next_size = shift_queue->max_size * sizeof(size_t*);
-  if((tmp = realloc(shift_queue->shifts, next_size)) == NULL)
-    _XMP_fatal("cannot allocate memory");
-  else
-    shift_queue->shifts = tmp;
-}
-
-/**
-   Push shift information to the shift queue
- */
-static void _push_shift_queue(struct _shift_queue_t *shift_queue, size_t s)
-{
-  if(shift_queue->num >= shift_queue->max_size)
-    _rebuild_shift_queue(shift_queue);
-
-  shift_queue->shifts[shift_queue->num++] = s;
-  shift_queue->total_shift += s;
-}
-
-/**
-   Pop shift information from the shift queue
- */
-static size_t _pop_shift_queue(struct _shift_queue_t *shift_queue)
-{
-  if(shift_queue->num == 0)  return 0;
-
-  shift_queue->num--;
-  size_t shift = shift_queue->shifts[shift_queue->num];
-  shift_queue->total_shift -= shift;
-  return shift;
-}
-
-/**
-   Deallocate memory region when calling _XMP_coarray_lastly_deallocate()
-*/
-void _XMP_mpi_coarray_lastly_deallocate(bool is_acc){
-  struct _shift_queue_t *shift_queue = is_acc? &_shift_queue_acc : &_shift_queue;
-  _pop_shift_queue(shift_queue);
-}
-
-
 /**********************************************************************/
 /* DESCRIPTION : Execute malloc operation for coarray                 */
 /* ARGUMENT    : [OUT] *coarray_desc : Descriptor of new coarray      */
@@ -219,8 +139,6 @@ void _XMP_mpi_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const si
   else{
     shift = ((coarray_size / _XMP_MPI_ALIGNMENT) + 1) * _XMP_MPI_ALIGNMENT;
   }
-  
-  _push_shift_queue(shift_queue, shift);
 
   size_t total_shift = shift_queue->total_shift;
 
@@ -806,14 +724,6 @@ void _XMP_mpi_build_sync_images_table()
   struct _shift_queue_t *shift_queue = &_shift_queue;
   _sync_images_table = (unsigned int*)(_xmp_mpi_onesided_buf + shift_queue->total_shift);
   _sync_images_table_disp = (unsigned int*)(shift_queue->total_shift);
-
-  size_t shift;
-  if(table_size % _XMP_MPI_ALIGNMENT == 0)
-    shift = table_size;
-  else{
-    shift = ((table_size / _XMP_MPI_ALIGNMENT) + 1) * _XMP_MPI_ALIGNMENT;
-  }
-  _push_shift_queue(shift_queue, shift);
 #endif
 
   for(int i=0;i<_XMP_world_size;i++)

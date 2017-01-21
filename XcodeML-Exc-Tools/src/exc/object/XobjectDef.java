@@ -177,7 +177,7 @@ public class XobjectDef extends PropObject implements IXobject, XobjectVisitable
 
   public Xobject getParentNameObj()
   {
-    return def.getArgOrNull(4);
+    return def.getArgOrNull(5);
   }
 
   public void setName(String name)

@@ -5,12 +5,6 @@ extern size_t _xmp_gasnet_coarray_shift, _xmp_gasnet_stride_size, _xmp_gasnet_he
 static int _xmp_gasnet_stride_wait_size = 0;
 static int _xmp_gasnet_stride_queue_size = _XMP_GASNET_STRIDE_INIT_SIZE;
 volatile static int done_get_flag;
-struct _shift_queue_t{
-  size_t max_size;  /**< Max size of queue */
-  int         num;  /**< How many shifts are in this queue */
-  size_t  *shifts;  /**< shifts array */
-};
-static struct _shift_queue_t _shift_queue; /** Queue which saves shift information */
 #define _XMP_STRIDE_REG  0
 #define _XMP_STRIDE_DONE 1
 static int *_sync_images_table;
@@ -732,59 +726,6 @@ static void _XMP_unpack_coarray(char *dst, const int dst_dims, const char* src,
   }
 }
 
-/**
-   Set initial value to the shift queue
- */
-void _XMP_gasnet_build_shift_queue()
-{
-  _shift_queue.max_size = _XMP_GASNET_COARRAY_SHIFT_QUEUE_INITIAL_SIZE;
-  _shift_queue.num      = 0;
-  _shift_queue.shifts   = malloc(sizeof(size_t*) * _shift_queue.max_size);
-}
-
-/**
-   Create new shift queue
- */
-static void _rebuild_shift_queue()
-{
-  _shift_queue.max_size *= _XMP_GASNET_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO;
-  size_t *tmp;
-  size_t next_size = _shift_queue.max_size * sizeof(size_t*);
-  if((tmp = realloc(_shift_queue.shifts, next_size)) == NULL)
-    _XMP_fatal("cannot allocate memory");
-  else
-    _shift_queue.shifts = tmp;
-}
-
-/**
-   Push shift information to the shift queue
- */
-static void _push_shift_queue(size_t s)
-{
-  if(_shift_queue.num >= _shift_queue.max_size)
-    _rebuild_shift_queue();
-
-  _shift_queue.shifts[_shift_queue.num++] = s;
-}
-
-/**
-   Pop shift information from the shift queue
- */
-static size_t _pop_shift_queue()
-{
-  if(_shift_queue.num == 0)  return 0;
-
-  _shift_queue.num--;
-  return _shift_queue.shifts[_shift_queue.num];
-}
-
-/**
-   Deallocate memory region when calling _XMP_coarray_lastly_deallocate()
-*/
-void _XMP_gasnet_coarray_lastly_deallocate(){
-  _xmp_gasnet_coarray_shift -= _pop_shift_queue();
-}
-
 /**********************************************************************/
 /* DESCRIPTION : Execute malloc operation for coarray                 */
 /* ARGUMENT    : [OUT] *coarray_desc : Descriptor of new coarray      */
@@ -807,7 +748,6 @@ void _XMP_gasnet_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const
     tmp_shift = ((coarray_size / _XMP_GASNET_ALIGNMENT) + 1) * _XMP_GASNET_ALIGNMENT;
   }
   _xmp_gasnet_coarray_shift += tmp_shift;
-  _push_shift_queue(tmp_shift);
 
   if(_xmp_gasnet_coarray_shift > _xmp_gasnet_heap_size){
     if(_XMP_world_rank == 0){
@@ -836,7 +776,7 @@ void _XMP_gasnet_sync_memory()
 
   _xmp_gasnet_stride_wait_size = 0;
 
-  if( _XMP_flag_put_nb == true)
+  if( _XMP_flag_put_nb)
     gasnet_wait_syncnbi_puts();
 }
 
@@ -1529,7 +1469,7 @@ void _XMP_gasnet_contiguous_put(const int target_rank, _XMP_coarray_t *dst_desc,
 				const size_t src_elmts, const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){
-    if(_XMP_flag_put_nb == true)
+    if(_XMP_flag_put_nb)
       gasnet_put_nbi_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
     else
       gasnet_put_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);

@@ -885,8 +885,11 @@ compile_expression(expr x)
 
         case F95_LEN_SELECTOR_SPEC: {
             expv v;
-            if(EXPR_ARG1(x) == NULL)
+            if (EXPR_ARG1(x) == NULL)
                 return expv_any_term(F_ASTERISK, NULL);
+            if (EXPR_CODE(EXPR_ARG1(x)) == F08_LEN_SPEC_COLON)
+                return expv_any_term(F08_LEN_SPEC_COLON, NULL);
+
             v = compile_expression(EXPR_ARG1(x));
             if((v = expv_reduce(v, FALSE)) == NULL) return NULL;
             /* if type is not fixed yet, do implicit declaration here */
@@ -1606,6 +1609,8 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
     tp = (id ? ID_TYPE(id) : EXPV_TYPE(vary));
 
     if (id != NULL && (
+        (tp != NULL && IS_PROCEDURE_TYPE(tp)
+         && !IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))) ||
         PROC_CLASS(id) == P_EXTERNAL ||
         PROC_CLASS(id) == P_DEFINEDPROC ||
         (ID_IS_DUMMY_ARG(id) &&
@@ -2121,7 +2126,8 @@ compile_coarray_ref(expr coarrayRef){
 expv
 compile_highorder_function_call(ID id, expr args, int isCall)
 {
-    if (!(ID_IS_DUMMY_ARG(id))) {
+    if (!(ID_IS_DUMMY_ARG(id)) &&
+        !(ID_TYPE(id) && IS_PROCEDURE_TYPE(ID_TYPE(id)))) {
         fatal("%s: '%s' is not a dummy arg.",
               __func__, SYM_NAME(ID_SYM(id)));
         /* not reached. */
@@ -2167,8 +2173,22 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
 
-    /* declare as function */
     if (declare_function(f_id) == NULL) return NULL;
+
+    if (ID_CLASS(f_id) == CL_VAR && IS_PROCEDURE_TYPE(ID_TYPE(f_id))) {
+        tp = get_bottom_ref_type(ID_TYPE(f_id));
+        a = compile_args(args);
+        v = list3(FUNCTION_CALL,
+                  expv_sym_term(F_VAR, ID_TYPE(f_id), ID_SYM(f_id)),
+                  a,
+                  expv_any_term(F_EXTFUNC, f_id));
+
+        EXPV_TYPE(v) = !tp ? type_GNUMERIC_ALL :
+                IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) ?
+                type_GNUMERIC_ALL :
+                FUNCTION_TYPE_RETURN_TYPE(tp) ;
+        goto line_info;
+    }
 
     switch (PROC_CLASS(f_id)) {
         case P_UNDEFINEDPROC:
@@ -2186,6 +2206,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             } else {
                 /* f_id is function, but it's return type is unknown */
                 tp = function_type(new_type_desc());
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC;
             }
 
             TYPE_SET_USED_EXPLICIT(tp);
@@ -2233,6 +2254,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 goto err;
             }
             tp = ID_TYPE(f_id);
+
             if (!IS_PROCEDURE_TYPE(tp)) {
                 tp = function_type(tp);
                 ID_TYPE(f_id) = tp;
@@ -2292,6 +2314,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                   PROC_CLASS(f_id));
     }
 
+line_info:
     if (v != NULL) {
         if (args != NULL) {
             EXPR_LINE(v) = EXPR_LINE(args);
@@ -2707,6 +2730,7 @@ compile_args(expr args)
     expr a;
     expv v, arglist;
     ID id;
+    int is_declared = FALSE;
 
     arglist = list0(LIST);
     if (args == NULL) return arglist;
@@ -2732,8 +2756,10 @@ compile_args(expr args)
                 break;
             case CL_VAR: 
             case CL_UNKNOWN:
+                is_declared = ID_IS_DECLARED(id);
                 /* check variable name */
                 declare_variable(id);
+                ID_IS_DECLARED(id) = is_declared;
                 break;
             case CL_PARAM:
                 break;

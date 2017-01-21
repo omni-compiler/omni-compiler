@@ -30,6 +30,7 @@ run: $(EXES)
 	$(XRUN) -n 4 ./shadow_reflect.x
 	$(XRUN) -n 2 ./reflect_acc_2_dup_1-2.x
 	$(XRUN) -n 4 ./shadow_reflect_mem.x
+	$(XRUN) -n 4 ./reflect_acc_oneside.x
 
 submit: $(EXES) $(XSCRIPT)
 	$(XSUBMIT) $(XSCRIPT)

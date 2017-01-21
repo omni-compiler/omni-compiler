@@ -79,6 +79,7 @@ extern int xmpf_this_image_coarray_dim_(void **descPtr, int *corank, int *dim);
 
 /* xmpf_coarray_alloc.c */
 typedef struct _coarrayInfo_t CoarrayInfo_t;
+extern void _XMP_coarray_deallocate(void *);
 
 extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                                  int *count, int *element, void **tag);

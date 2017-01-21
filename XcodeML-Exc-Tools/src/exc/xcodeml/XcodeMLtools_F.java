@@ -81,7 +81,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
   private void declFbasicType(Node n) {
     String tid = getAttr(n, "type");
     BasicType.TypeInfo ti = BasicType.getTypeInfoByFName(
-                             getAttrBool(n, "is_class") && (getAttr(n, "ref") == null) ?
+                             (getAttrBool(n, "is_class") ||
+                              getAttrBool(n, "is_procedure")) &&
+                             (getAttr(n, "ref") == null) ?
                                "Fvoid" : getAttr(n, "ref"));
     int tq = (getAttrBool(n, "is_allocatable") ? Xtype.TQ_FALLOCATABLE : 0)
       | (getAttrBool(n, "is_optional") ? Xtype.TQ_FOPTIONAL : 0)
@@ -93,8 +95,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_target") ? Xtype.TQ_FTARGET : 0)
       | (getAttrBool(n, "is_cray_pointer") ? Xtype.TQ_FCRAY_POINTER : 0) //#060c
       | (getAttrBool(n, "is_volatile") ? Xtype.TQ_FVOLATILE : 0)
-      | (getAttrBool(n, "is_class") ? Xtype.TQ_FCLASS: 0)
-      | (getAttrBool(n, "is_value") ? Xtype.TQ_FVALUE : 0);
+      | (getAttrBool(n, "is_class") ? Xtype.TQ_FCLASS : 0)
+      | (getAttrBool(n, "is_value") ? Xtype.TQ_FVALUE : 0)
+      | (getAttrBool(n, "is_procedure") ? Xtype.TQ_FPROCEDURE : 0);
 
     String intent = getAttr(n, "intent");
 
@@ -116,7 +119,12 @@ public class XcodeMLtools_F extends XcodeMLtools {
     if ((nn = getElement(n, "len")) != null) {
       flen = toXobject(getContent(nn));
       if (flen == null)
-	flen = Xcons.IntConstant(-1); // means variable length
+        if (getAttrBool(nn, "is_assumed_shape"))
+	  flen = Xcons.IntConstant(-1); // means variable length, "(len=:)"
+        else if (getAttrBool(nn, "is_assumed_size"))
+	  flen = Xcons.IntConstant(-2); // means variable length, "(len=*)"
+        else
+          fatal("array length unknown:" + nn);
     } else if ((nn = getElement(n, "typeParamValues")) != null) {
       typeParamValues = (XobjList)toXobject(nn);
     } else {
@@ -167,11 +175,16 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     if (sizeExprs == null) {
       if (ti == null) { // inherited type such as structure
+        String pass = getAttr(n, "pass");
+        String pass_arg_name = getAttr(n, "pass_arg_name");
 	Xtype ref = getType(getAttr(n, "ref"));
+	xobjFile.addType(ref);
 	type = ref.inherit(tid);
 	type.setTypeQualFlags(tq);
         type.setCodimensions(cosizeExprs);                           // #060
         type.setFTypeParamValues(typeParamValues);
+        type.setPass(pass);
+        type.setPassArgName(pass_arg_name);
       } else {
 	type = new BasicType(ti.type.getBasicType(), tid, tq, null,
 			     fkind, flen, cosizeExprs);             // #060
@@ -191,6 +204,11 @@ public class XcodeMLtools_F extends XcodeMLtools {
         type.setBindName(bind_name);
     }
 
+    Xtype dummy = getType(tid);
+    if (dummy.getKind() == Xtype.UNDEF)
+      dummy.assign(type);
+    else
+      fatal("type table entry is doubled: " + tid);
     xobjFile.addType(type);
   }
 
@@ -325,6 +343,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 		     toXobject(getElement(n, "declarations"))
 		     );
       x.add(toXobject(getElement(n, "FcontainsStatement")));
+      x.add(getAttrIntFlag(n, "is_sub"));
       x.add(getSymbol(n, "parent_name"));
 
       markModuleVariable((XobjList)x.getArgOrNull(1),
@@ -349,15 +368,16 @@ public class XcodeMLtools_F extends XcodeMLtools {
          Xcons.List(code, type, getChildList(n)));
 
     case F_MODULE_PROCEDURE_DECL:
-      boolean isModuleSpecified = getAttrBool(n, "is_module_specified");
-      return setCommonAttributes(n,
-				 Xcons.List(code, type, Xcons.IntConstant(isModuleSpecified ? 1 : 0), getChildList(n)));
+      return setCommonAttributes(n, Xcons.List(code, type,
+                                               getAttrIntFlag(n, "is_module_specified"),
+                                               getChildList(n)));
 
     case F_INTERFACE_DECL:
-      boolean isOperator = getAttrBool(n, "is_operator");
-      boolean isAssignment = getAttrBool(n, "is_assignment");
-      return setCommonAttributes(n,
-				 Xcons.List(code, type, getSymbol(n, "name"), Xcons.IntConstant(isOperator ? 1 : 0), Xcons.IntConstant(isAssignment ? 1 : 0), getChildList(n)));
+      return setCommonAttributes(n, Xcons.List(code, type,
+                                               getSymbol(n, "name"),
+                                               getAttrIntFlag(n, "is_operator"),
+                                               getAttrIntFlag(n, "is_assignment"),
+                                               getChildList(n)));
 
     case F_BLOCK_DATA_DEFINITION:
       x = getSymbol(n, "name");
@@ -752,27 +772,26 @@ public class XcodeMLtools_F extends XcodeMLtools {
         int tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
                | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0);
         Node bdg = getElement(n, "binding");
-        XobjString overridable = Xcons.String(getAttr(n, "is_non_overridable"));
         return setCommonAttributes(n, Xcons.List(code, type, pass, pass_arg,
-						 toXobject(getElement(n, "name")),
-	                                         Xcons.IntConstant(tq),
+                                                 toXobject(getElement(n, "name")),
+                                                 Xcons.IntConstant(tq),
                                                  (bdg != null) ? toXobject(getContent(bdg)) : null,
-                                                 overridable
-						));
+                                                 getAttrIntFlag(n, "is_non_overridable")
+                                                ));
       }
 
     case F_TYPE_BOUND_GENERIC_PROCEDURE:
       {
-        XobjString is_operator   = Xcons.String(getAttr(n, "is_operator"  ));
-        XobjString is_assignment = Xcons.String(getAttr(n, "is_assignment"));
         int tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
                | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0);
         Node bdg = getElement(n, "binding");
-        return setCommonAttributes(n, Xcons.List(code, (Xtype)null, is_operator, is_assignment,
-						 toXobject(getElement(n, "name")),
-	                                         Xcons.IntConstant(tq),
+        return setCommonAttributes(n, Xcons.List(code, (Xtype)null,
+                                                 getAttrIntFlag(n, "is_operator"),
+                                                 getAttrIntFlag(n, "is_assignment"),
+                                                 toXobject(getElement(n, "name")),
+                                                 Xcons.IntConstant(tq),
                                                  toXobject(bdg)
-						));
+                                                ));
       }
 
     case F_TYPE_BOUND_PROCEDURES:

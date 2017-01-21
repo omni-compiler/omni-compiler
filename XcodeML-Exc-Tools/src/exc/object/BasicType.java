@@ -194,8 +194,21 @@ public class BasicType extends Xtype
     @Override
     public boolean isFlenVariable()
     {
+        return isFlenAssumedSize();
+    }
+
+    @Override
+    public boolean isFlenAssumedShape()
+    {
         return (flen != null && flen.Opcode() == Xcode.INT_CONSTANT &&
             flen.getInt() == -1);
+    }
+
+    @Override
+    public boolean isFlenAssumedSize()
+    {
+        return (flen != null && flen.Opcode() == Xcode.INT_CONSTANT &&
+            flen.getInt() == -2);
     }
     
     public static Xtype Conversion(Xtype lt, Xtype rt)

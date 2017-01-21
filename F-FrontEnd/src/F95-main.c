@@ -611,8 +611,6 @@ error_at_id EXC_VARARGS_DEF(ID, x)
 }
 
 
-
-
 /* VARARGS0 */
 void
 warning_at_node EXC_VARARGS_DEF(expr, x)
@@ -645,6 +643,26 @@ warning_at_id EXC_VARARGS_DEF(ID, x)
     va_end(args);
     fprintf(stderr, "\n" );
     fflush(stderr);
+}
+
+
+/* debug message */
+/* VARARGS0 */
+void
+debug EXC_VARARGS_DEF(char *, fmt)
+{
+    va_list args;
+
+    if (!debug_flag) return;
+
+    ++nerrors;
+    where(current_line);
+    EXC_VARARGS_START(char *, fmt, args);
+    vfprintf(debug_fp, fmt, args);
+    va_end(args);
+    fprintf(debug_fp, "\n" );
+    fflush(debug_fp);
+    check_nerrors();
 }
 
 
