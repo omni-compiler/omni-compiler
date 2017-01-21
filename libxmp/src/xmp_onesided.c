@@ -100,6 +100,7 @@ void _XMP_initialize_onesided_functions(int argc, char **argv)
 
 #if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
   _XMP_build_sync_images_table();
+  _XMP_build_coarray_queue();
   _XMP_post_wait_initialize();
 #endif
 

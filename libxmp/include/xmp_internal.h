@@ -152,6 +152,8 @@ extern void _XMP_initialize_onesided_functions(int, char **);
 extern void _XMP_finalize_onesided_functions(const int);
 extern void _XMP_build_sync_images_table();
 extern void _XMP_sync_images_EXEC(int* status);
+extern void _XMP_build_coarray_queue();
+extern void _XMP_coarray_lastly_deallocate();
 extern size_t _XMP_calc_copy_chunk(const int, const _XMP_array_section_t*);
 extern int _XMP_get_dim_of_allelmts(const int, const _XMP_array_section_t*);
 extern void _XMP_local_put(_XMP_coarray_t *, const void *, const int, const int, const int, const int, 
@@ -401,6 +403,11 @@ extern void _XMP_threads_finalize(void);
    on a single node. Therefore the node needs 512MByte (32M*16) for coarray operation. 
 */
 
+#define _XMP_COARRAY_QUEUE_INITIAL_SIZE 32         /**< This value is trial */
+#define _XMP_COARRAY_QUEUE_INCREMENT_RAITO (1.5)   /**< This value is trial */
+#define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INITIAL_SIZE _XMP_COARRAY_QUEUE_INITIAL_SIZE        /** The same vaule may be good. */
+#define _XMP_GASNET_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO  /** The same vaule may be good. */
+
 #define _XMP_POSTREQ_TABLE_INITIAL_SIZE             32  /**< This value is trial */
 #define _XMP_POSTREQ_TABLE_INCREMENT_RATIO       (1.5)  /**< This value is trial */
 extern void _XMP_check_less_than_SIZE_MAX(const long s);
@@ -488,7 +495,6 @@ extern void XMP_gasnet_atomic_sync_memory();
 
 #include <mpi-ext.h>
 extern void _XMP_fjrdma_initialize(int, char**);
-extern void _XMP_fjrdma_dereg_mem(_XMP_coarray_t *);
 extern void _XMP_fjrdma_finalize();
 extern void _XMP_fjrdma_sync_memory();
 extern void _XMP_fjrdma_sync_all();
@@ -559,6 +565,8 @@ void _XMP_reduce_hybrid_NODES_ENTIRE(_XMP_nodes_t *nodes, void *dev_addr, int co
 #endif
 
 #ifdef _XMP_MPI3_ONESIDED
+#define _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INITIAL_SIZE _XMP_COARRAY_QUEUE_INITIAL_SIZE        /** The same vaule may be good. */
+#define _XMP_MPI_ONESIDED_COARRAY_SHIFT_QUEUE_INCREMENT_RAITO _XMP_COARRAY_QUEUE_INCREMENT_RAITO  /** The same vaule may be good. */
 #define _XMP_MPI_ALIGNMENT                  64
 #define _XMP_MPI_POSTREQ_TAG                500
 extern size_t _xmp_mpi_onesided_heap_size;

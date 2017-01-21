@@ -1,4 +1,5 @@
 #include "xmp_internal.h"
+extern void _XMP_gasnet_build_shift_queue();
 size_t _xmp_gasnet_heap_size, _xmp_gasnet_stride_size, _xmp_gasnet_coarray_shift = 0;
 char **_xmp_gasnet_buf;
 int *_xmp_gasnet_stride_queue;
@@ -72,6 +73,8 @@ void _XMP_gasnet_initialize(int argc, char **argv, const size_t xmp_gasnet_heap_
 
   _xmp_gasnet_coarray_shift = xmp_gasnet_stride_size;
   _xmp_gasnet_stride_queue = malloc(sizeof(int) * _XMP_GASNET_STRIDE_INIT_SIZE);
+
+  _XMP_gasnet_build_shift_queue();
 }
 
 /**
