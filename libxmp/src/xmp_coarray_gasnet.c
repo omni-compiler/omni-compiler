@@ -16,6 +16,7 @@ static struct _shift_queue_t _shift_queue; /** Queue which saves shift informati
 static int *_sync_images_table;
 static gasnet_hsl_t _hsl;
 #define _XMP_UNROLLING (4)
+extern int _XMP_flag_put_nb; // This variable is temporal
 
 /*************************************************************************/
 /* DESCRIPTION : Execute pack operation for 7-dimensional array          */
@@ -834,6 +835,9 @@ void _XMP_gasnet_sync_memory()
     GASNET_BLOCKUNTIL(_xmp_gasnet_stride_queue[i] == _XMP_STRIDE_DONE);
 
   _xmp_gasnet_stride_wait_size = 0;
+
+  if( _XMP_flag_put_nb == true)
+    gasnet_wait_syncnbi_puts();
 }
 
 /**
@@ -1521,11 +1525,14 @@ static void _gasnet_scalar_contiguous_mput(const int target_rank, _XMP_coarray_t
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src               */
 /****************************************************************************/
 void _XMP_gasnet_contiguous_put(const int target_rank, _XMP_coarray_t *dst_desc, void *src, 
-			      const size_t dst_offset, const size_t dst_elmts, 
-			      const size_t src_elmts, const size_t elmt_size)
+				const size_t dst_offset, const size_t dst_elmts, 
+				const size_t src_elmts, const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){
-    gasnet_put_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
+    if(_XMP_flag_put_nb == true)
+      gasnet_put_nbi_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
+    else
+      gasnet_put_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
   }
   else if(src_elmts == 1){
     _gasnet_scalar_contiguous_mput(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
@@ -1549,8 +1556,8 @@ void _XMP_gasnet_contiguous_put(const int target_rank, _XMP_coarray_t *dst_desc,
 /*     a[0:100] = b[0]:[1]; // a[] is a dst, b[] is a src                   */
 /****************************************************************************/
 static void _gasnet_scalar_contiguous_mget(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
-                                         const size_t dst_offset, const size_t dst_elmts,
-                                         const size_t elmt_size)
+					   const size_t dst_offset, const size_t dst_elmts,
+					   const size_t elmt_size)
 {
   char *dst_addr = dst_desc->addr[_XMP_world_rank]+dst_offset;
   gasnet_get_bulk(dst_addr, target_rank, src, elmt_size);
@@ -1573,8 +1580,8 @@ static void _gasnet_scalar_contiguous_mget(const int target_rank, _XMP_coarray_t
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src               */
 /****************************************************************************/
 void _XMP_gasnet_contiguous_get(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
-			      const size_t dst_offset, const size_t dst_elmts, const size_t src_elmts,
-			      const size_t elmt_size)
+				const size_t dst_offset, const size_t dst_elmts, const size_t src_elmts,
+				const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){
     gasnet_get_bulk(dst_desc->addr[_XMP_world_rank]+dst_offset, target_rank, src, src_elmts*elmt_size);

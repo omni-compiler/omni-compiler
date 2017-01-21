@@ -148,8 +148,8 @@ extern void _XMP_coarray_rdma_do2(const int rdma_code, void *remote_coarray, voi
 				  const long coarray_elmts[], const long coarray_distance[]);
 #endif
 
-extern void _XMP_onesided_initialize(int, char **);
-extern void _XMP_onesided_finalize(const int);
+extern void _XMP_initialize_onesided_functions(int, char **);
+extern void _XMP_finalize_onesided_functions(const int);
 extern void _XMP_build_sync_images_table();
 extern void _XMP_sync_images_EXEC(int* status);
 extern void _XMP_build_coarray_queue();

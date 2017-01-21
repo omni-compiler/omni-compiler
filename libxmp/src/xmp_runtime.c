@@ -29,7 +29,7 @@ void _XMP_init(int argc, char** argv)
 #endif
 
 #if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
-    _XMP_onesided_initialize(argc, argv);
+    _XMP_initialize_onesided_functions(argc, argv);
 #endif
 #ifdef _XMP_MPI3
     _XMP_initialize_async_comm_tab();
@@ -45,7 +45,7 @@ void _XMP_finalize(int return_val)
 {
   if (_XMP_runtime_working) {
 #if defined(_XMP_GASNET) || defined(_XMP_FJRDMA) || defined(_XMP_TCA) || defined(_XMP_MPI3_ONESIDED)
-    _XMP_onesided_finalize(return_val);
+    _XMP_finalize_onesided_functions(return_val);
 #endif
     _XMP_finalize_world();
     _XMP_runtime_working = _XMP_N_INT_FALSE;
