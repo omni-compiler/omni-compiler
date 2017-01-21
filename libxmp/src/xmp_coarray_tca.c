@@ -134,12 +134,12 @@ void _XMP_tca_malloc(_XMP_coarray_t *coarray_desc, void **addr, const size_t coa
 /*               [IN] dst_elmts    : Number of elements of destination  */
 /*               [IN] src_elmts    : Number of elements of source       */
 /*               [IN] elmt_size    : Element size                       */
-/* NOTE       : Both dst and src are continuous coarrays.               */
+/* NOTE       : Both dst and src are contiguous coarrays.               */
 /*              target_rank != __XMP_world_rank.                        */
 /* EXAMPLE    :                                                         */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_tca_continuous_put(const int target_rank, const size_t dst_offset, const size_t src_offset,
+void _XMP_tca_contiguous_put(const int target_rank, const size_t dst_offset, const size_t src_offset,
 			   const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
 			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {

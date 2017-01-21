@@ -449,7 +449,7 @@ static int _is_the_same_shape(const int array1_dims, const int array2_dims,
 }
 
 /************************************************************************************/
-/* DESCRIPTION : Execute copy operation in only local node for NON-continuous array */
+/* DESCRIPTION : Execute copy operation in only local node for NON-contiguous array */
 /* ARGUMENT    : [OUT] *dst     : Pointer of destination array                      */
 /*               [IN] *src      : Pointer of source array                           */
 /*               [IN] dst_dims  : Number of dimensions of destination array         */
@@ -464,7 +464,7 @@ static int _is_the_same_shape(const int array1_dims, const int array2_dims,
 /*   if(xmp_node_num() == 1)                                                        */
 /*     a[0:100:2]:[1] = b[0:100:3]; // a[] is a dst, b[] is a src                   */
 /************************************************************************************/
-static void _local_NON_continuous_copy(char *dst, const char *src, const int dst_dims, const int src_dims,
+static void _local_NON_contiguous_copy(char *dst, const char *src, const int dst_dims, const int src_dims,
 				       const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info,
 				       const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
@@ -525,8 +525,8 @@ static void _local_NON_continuous_copy(char *dst, const char *src, const int dst
 /* DESCRIPTION : Execute put operation in only local node                              */
 /* ARGUMENT    : [OUT] *dst_desc     : Descriptor of destination coarray               */
 /*               [IN] *src           : Pointer of source array                         */
-/*               [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
-/*               [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
+/*               [IN] dst_contiguous : Is destination region contiguous ? (TRUE/FALSE) */
+/*               [IN] src_contiguous : Is source region contiguous ? (TRUE/FALSE)      */
 /*               [IN] dst_dims       : Number of dimensions of destination array       */
 /*               [IN] src_dims       : Number of dimensions of source array            */
 /*               [IN] *dst_info      : Information of destination array                */
@@ -539,7 +539,7 @@ static void _local_NON_continuous_copy(char *dst, const char *src, const int dst
 /*   if(xmp_node_num() == 1)                                                           */
 /*     a[:]:[1] = b[:];  // a[] is a dst, b[] is a src.                                */
 /***************************************************************************************/
-void _XMP_local_put(_XMP_coarray_t *dst_desc, const void *src, const int dst_continuous, const int src_continuous, 
+void _XMP_local_put(_XMP_coarray_t *dst_desc, const void *src, const int dst_contiguous, const int src_contiguous, 
 		    const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
 		    const _XMP_array_section_t *src_info, const size_t dst_elmts, const size_t src_elmts)
 {
@@ -547,11 +547,11 @@ void _XMP_local_put(_XMP_coarray_t *dst_desc, const void *src, const int dst_con
   size_t src_offset = _XMP_get_offset(src_info, src_dims);
   size_t elmt_size  = dst_desc->elmt_size;
 
-  if(dst_continuous && src_continuous)
-    _XMP_local_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src+src_offset,
+  if(dst_contiguous && src_contiguous)
+    _XMP_local_contiguous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src+src_offset,
 			       dst_elmts, src_elmts, elmt_size);
   else
-    _local_NON_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src+src_offset,
+    _local_NON_contiguous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src+src_offset,
 			       dst_dims, src_dims, dst_info, src_info, dst_elmts, src_elmts, elmt_size);
 }
 
@@ -559,8 +559,8 @@ void _XMP_local_put(_XMP_coarray_t *dst_desc, const void *src, const int dst_con
 /* DESCRIPTION : Execute get operation in only local node                               */
 /* ARGUMENT    : [OUT] *dst          : Pointer of destination array                     */
 /*               [IN] *src_desc      : Descriptor of source coarray                     */
-/*               [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE)  */
-/*               [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)       */
+/*               [IN] dst_contiguous : Is destination region contiguous ? (TRUE/FALSE)  */
+/*               [IN] src_contiguous : Is source region contiguous ? (TRUE/FALSE)       */
 /*               [IN] dst_dims       : Number of dimensions of destination array        */
 /*               [IN] src_dims       : Number of dimensions of source array             */
 /*               [IN] *dst_info      : Information of destination array                 */
@@ -573,7 +573,7 @@ void _XMP_local_put(_XMP_coarray_t *dst_desc, const void *src, const int dst_con
 /*   if(xmp_node_num() == 1)                                                            */
 /*     a[:] = b[:]:[1];  // a[] is a dst, b[] is a src.                                 */
 /****************************************************************************************/
-void _XMP_local_get(void *dst, const _XMP_coarray_t *src_desc, const int dst_continuous, const int src_continuous, 
+void _XMP_local_get(void *dst, const _XMP_coarray_t *src_desc, const int dst_contiguous, const int src_contiguous, 
 		    const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
 		    const _XMP_array_section_t *src_info, const size_t dst_elmts, const size_t src_elmts)
 {
@@ -581,10 +581,10 @@ void _XMP_local_get(void *dst, const _XMP_coarray_t *src_desc, const int dst_con
   size_t src_offset = _XMP_get_offset(src_info, src_dims);
   size_t elmt_size  = src_desc->elmt_size;
 
-  if(dst_continuous && src_continuous)
-    _XMP_local_continuous_copy((char *)dst+dst_offset, (char *)src_desc->real_addr+src_offset, 
+  if(dst_contiguous && src_contiguous)
+    _XMP_local_contiguous_copy((char *)dst+dst_offset, (char *)src_desc->real_addr+src_offset, 
 			       dst_elmts, src_elmts, elmt_size);
   else
-    _local_NON_continuous_copy((char *)dst+dst_offset, (char *)src_desc->real_addr+src_offset,
+    _local_NON_contiguous_copy((char *)dst+dst_offset, (char *)src_desc->real_addr+src_offset,
 			       dst_dims, src_dims, dst_info, src_info, dst_elmts, src_elmts, elmt_size);
 }

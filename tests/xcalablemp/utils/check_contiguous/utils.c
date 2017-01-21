@@ -25,7 +25,7 @@ unsigned int _XMP_get_dim_of_allelmts(const int dims,
   return val;
 }
 
-int _check_continuous(const _XMP_array_section_t *array_info, const int dims, const int elmts)
+int _check_contiguous(const _XMP_array_section_t *array_info, const int dims, const int elmts)
 {
   // Only 1 elements is transferred.
   // e.g.) a[2]
@@ -37,7 +37,7 @@ int _check_continuous(const _XMP_array_section_t *array_info, const int dims, co
   if(array_info[dims-1].length == elmts && array_info[dims-1].stride == 1)
     return _XMP_N_INT_TRUE;
 
-  // Does non-continuous dimension exist ?
+  // Does non-contiguous dimension exist ?
   for(int i=0;i<dims;i++)
     if(array_info[i].stride != 1 && array_info[i].length != 1)
       return _XMP_N_INT_FALSE;

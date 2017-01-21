@@ -52,7 +52,7 @@ size_t _XMP_calc_max_copy_chunk(const int dst_dims, const int src_dims,
 }
 
 /********************************************************************************/
-/* DESCRIPTION : Execute copy operation in only local node for continuous array */
+/* DESCRIPTION : Execute copy operation in only local node for contiguous array */
 /* ARGUMENT    : [OUT] *dst     : Pointer of destination array                  */
 /*               [IN] *src      : Pointer of source array                       */
 /*               [IN] dst_elmts : Number of elements of destination array       */
@@ -60,7 +60,7 @@ size_t _XMP_calc_max_copy_chunk(const int dst_dims, const int src_dims,
 /*               [IN] elmt_size : Element size                                  */
 /* NOTE       : This function is called by both put and get functions           */
 /********************************************************************************/
-void _XMP_local_continuous_copy(char *dst, const void *src, const size_t dst_elmts,
+void _XMP_local_contiguous_copy(char *dst, const void *src, const size_t dst_elmts,
 				const size_t src_elmts, const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){ /* a[0:100]:[1] = b[1:100]; or a[0:100] = b[1:100]:[1];*/

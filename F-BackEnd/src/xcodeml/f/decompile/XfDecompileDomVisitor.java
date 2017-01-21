@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 package xcodeml.f.decompile;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -1065,7 +1059,7 @@ public class XfDecompileDomVisitor {
                 invokeEnter(arraySubscriptNode);
             } else {
                 _context
-                    .debugPrintLine("Detected discontinuous 'indexRange' or 'arrayIndex' element.");
+                    .debugPrintLine("Detected discontiguous 'indexRange' or 'arrayIndex' element.");
                 _context.setLastErrorMessage(
                     XfUtilForDom.formatError(arraySubscriptNode,
                                              XfError.XCODEML_SEMANTICS, name));
@@ -5861,9 +5855,9 @@ public class XfDecompileDomVisitor {
                 writer.setupNewLine();
             } else {
                 // Note:
-                // Handling next statement as continuous line.
+                // Handling next statement as contiguous line.
                 writer.writeToken(" ");
-                writer.setupContinuousNewLine();
+                writer.setupContiguousNewLine();
             }
         }
     }

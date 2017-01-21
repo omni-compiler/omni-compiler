@@ -1515,12 +1515,12 @@ void _XMP_fjrdma_coarray_lastly_deallocate()
 /*               [IN] dst_elmts    : Number of elements of destination  */
 /*               [IN] src_elmts    : Number of elements of source       */
 /*               [IN] elmt_size    : Element size                       */
-/* NOTE       : Both dst and src are continuous coarrays.               */
+/* NOTE       : Both dst and src are contiguous coarrays.               */
 /*              target_rank != __XMP_world_rank.                        */
 /* EXAMPLE    :                                                         */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_fjrdma_continuous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
+void _XMP_fjrdma_contiguous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
 				const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
 				const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
@@ -1556,12 +1556,12 @@ void _XMP_fjrdma_continuous_put(const int target_rank, const uint64_t dst_offset
 /*               [IN] *src_desc     : Descriptor of source coarray       */
 /*               [IN] *src          : Pointer of source array            */
 /*               [IN] transfer_size : Transfer size                      */
-/* NOTE       : Both dst and src are continuous arrays.                  */
+/* NOTE       : Both dst and src are contiguous arrays.                  */
 /*              If src is NOT a coarray, src_desc is NULL.               */
 /* EXAMPLE    :                                                          */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src            */
 /*************************************************************************/
-static void _fjrdma_continuous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
+static void _fjrdma_contiguous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
 				   const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 				   char *src, const size_t transfer_size)
 {
@@ -1648,7 +1648,7 @@ static size_t _get_array_size(const _XMP_array_section_t *array_info, const int 
 /* EXAMPLE    :                                                      */
 /*     a[0:10:2]:[2] = b[2:10:2]; // a[] is a dst, b[] is a src      */
 /*********************************************************************/
-static void _fjrdma_NON_continuous_the_same_stride_mput(const int target_rank, uint64_t raddr, uint64_t laddr,
+static void _fjrdma_NON_contiguous_the_same_stride_mput(const int target_rank, uint64_t raddr, uint64_t laddr,
 							const size_t transfer_elmts, const _XMP_array_section_t *array_info,
 							const int array_dims, size_t elmt_size)
 {
@@ -1686,7 +1686,7 @@ static void _fjrdma_NON_continuous_the_same_stride_mput(const int target_rank, u
 /*               [IN] src_dims       : Number of dimensions of source array      */
 /*               [IN] elmt_size      : Element size                              */
 /*********************************************************************************/
-static void _fjrdma_NON_continuous_general_mput(const int target_rank, uint64_t raddr, uint64_t laddr,
+static void _fjrdma_NON_contiguous_general_mput(const int target_rank, uint64_t raddr, uint64_t laddr,
 						const size_t transfer_elmts,
 						const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info,
 						const int dst_dims, const int src_dims, size_t elmt_size)
@@ -1705,7 +1705,7 @@ static void _fjrdma_NON_continuous_general_mput(const int target_rank, uint64_t 
 }
 
 /*********************************************************************************/
-/* DESCRIPTION : Execute put operation for NON-continuous region                 */
+/* DESCRIPTION : Execute put operation for NON-contiguous region                 */
 /* ARGUMENT    : [IN] target_rank    : Target rank                               */
 /*               [IN] dst_offset     : Offset size of destination array          */
 /*               [IN] src_offset     : Offset size of source array               */
@@ -1717,10 +1717,10 @@ static void _fjrdma_NON_continuous_general_mput(const int target_rank, uint64_t 
 /*               [IN] *src_desc      : Descriptor of source array                */
 /*               [IN] *src           : Pointer of source array                   */
 /*               [IN] transfer_elmts : Number of transfer elements               */
-/* NOTE       : src and/or dst arrays are NOT continuous.                        */
+/* NOTE       : src and/or dst arrays are NOT contiguous.                        */
 /*              If src is NOT a coarray, src_desc is NULL                        */
 /*********************************************************************************/
-static void _fjrdma_NON_continuous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
+static void _fjrdma_NON_contiguous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
 				       const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info,
 				       const int dst_dims, const int src_dims, 
 				       const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
@@ -1739,11 +1739,11 @@ static void _fjrdma_NON_continuous_put(const int target_rank, const uint64_t dst
   }
 
   if(_XMP_is_the_same_constant_stride(dst_info, src_info, dst_dims, src_dims)){
-    _fjrdma_NON_continuous_the_same_stride_mput(target_rank, raddr, laddr, transfer_elmts,
+    _fjrdma_NON_contiguous_the_same_stride_mput(target_rank, raddr, laddr, transfer_elmts,
 						dst_info, dst_dims, elmt_size);
   }
   else{
-    _fjrdma_NON_continuous_general_mput(target_rank, raddr, laddr, transfer_elmts, 
+    _fjrdma_NON_contiguous_general_mput(target_rank, raddr, laddr, transfer_elmts, 
     					dst_info, src_info, dst_dims, src_dims, elmt_size);
   }
   
@@ -1755,8 +1755,8 @@ static void _fjrdma_NON_continuous_put(const int target_rank, const uint64_t dst
 
 /***************************************************************************************/
 /* DESCRIPTION : Execute put operation                                                 */
-/* ARGUMENT    : [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
-/*               [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
+/* ARGUMENT    : [IN] dst_contiguous : Is destination region contiguous ? (TRUE/FALSE) */
+/*               [IN] src_contiguous : Is source region contiguous ? (TRUE/FALSE)      */
 /*               [IN] target_rank    : Target rank                                     */
 /*               [IN] dst_dims       : Number of dimensions of destination array       */
 /*               [IN] src_dims       : Number of dimensions of source array            */
@@ -1768,7 +1768,7 @@ static void _fjrdma_NON_continuous_put(const int target_rank, const uint64_t dst
 /*               [IN] dst_elmts      : Number of elements of destination array         */
 /*               [IN] src_elmts      : Number of elements of source array              */
 /***************************************************************************************/
-void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const int target_rank, 
+void _XMP_fjrdma_put(const int dst_contiguous, const int src_contiguous, const int target_rank, 
 		     const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
 		     const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
 		     const _XMP_coarray_t *src_desc, void *src, const size_t dst_elmts, const size_t src_elmts)
@@ -1779,11 +1779,11 @@ void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const i
   _check_transfer_size(transfer_size);
 
   if(dst_elmts == src_elmts){
-    if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-      _fjrdma_continuous_put(target_rank, dst_offset, src_offset, dst_desc, src_desc, src, transfer_size);
+    if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_TRUE){
+      _fjrdma_contiguous_put(target_rank, dst_offset, src_offset, dst_desc, src_desc, src, transfer_size);
     }
     else{
-      _fjrdma_NON_continuous_put(target_rank, dst_offset, src_offset, dst_info, src_info, dst_dims, src_dims, 
+      _fjrdma_NON_contiguous_put(target_rank, dst_offset, src_offset, dst_info, src_info, dst_dims, src_dims, 
       				 dst_desc, src_desc, src, dst_elmts);
     }
   }
@@ -1808,12 +1808,12 @@ void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const i
 /*               [IN] dst_elmts    : Number of elements of destination  */
 /*               [IN] src_elmts    : Number of elements of source       */
 /*               [IN] elmt_size    : Element size                       */
-/* NOTE       : Both dst and src are continuous coarrays.               */
+/* NOTE       : Both dst and src are contiguous coarrays.               */
 /*              target_rank != __XMP_world_rank.                        */
 /* EXAMPLE    :                                                         */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_fjrdma_continuous_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+void _XMP_fjrdma_contiguous_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 				const uint64_t dst_offset, const uint64_t src_offset,
 				const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
@@ -1841,7 +1841,7 @@ void _XMP_fjrdma_continuous_get(const int target_rank, const _XMP_coarray_t *dst
 }
 
 /************************************************************************/
-/* DESCRIPTION : Execute get operation for continuous region            */
+/* DESCRIPTION : Execute get operation for contiguous region            */
 /* ARGUMENT    : [IN] target_rank   : Target rank                       */
 /*               [IN] dst_offset    : Offset size of destination array  */
 /*               [IN] src_offset    : Offset size of source array       */
@@ -1849,12 +1849,12 @@ void _XMP_fjrdma_continuous_get(const int target_rank, const _XMP_coarray_t *dst
 /*               [IN] *dst_desc     : Descriptor of destination coarray */
 /*               [IN] *src_desc     : Descriptor of source coarray      */
 /*               [IN] transfer_size : Transfer size                     */
-/* NOTE       : Both dst and src are continuous arrays.                 */
+/* NOTE       : Both dst and src are contiguous arrays.                 */
 /*              If dst is NOT a coarray, dst_desc is NULL.              */
 /* EXAMPLE    :                                                         */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-static void _fjrdma_continuous_get(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
+static void _fjrdma_contiguous_get(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
 				   char *dst, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
 				   const size_t transfer_size)
 {
@@ -1875,7 +1875,7 @@ static void _fjrdma_continuous_get(const int target_rank, const uint64_t dst_off
 }
 
 /*********************************************************************************/
-/* DESCRIPTION : Execute get operation for NON-continuous region                 */
+/* DESCRIPTION : Execute get operation for NON-contiguous region                 */
 /* ARGUMENT    : [IN] target_rank    : Target rank                               */
 /*               [IN] dst_offset     : Offset size of destination array          */
 /*               [IN] src_offset     : Offset size of source array               */
@@ -1891,7 +1891,7 @@ static void _fjrdma_continuous_get(const int target_rank, const uint64_t dst_off
 /* EXAMPLE    :                                                                  */
 /*     a[0:100:2] = b[0:100:2]:[1]; // a[] is a dst, b[] is a src                */
 /*********************************************************************************/
-static void _fjrdma_NON_continuous_get(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
+static void _fjrdma_NON_contiguous_get(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
 				       const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info,
 				       void *dst, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 				       const int dst_dims, const int src_dims, const int transfer_elmts)
@@ -2003,8 +2003,8 @@ static void _fjrdma_scalar_mget(const int target_rank, const uint64_t dst_offset
 
 /***************************************************************************************/
 /* DESCRIPTION : Execute put operation                                                 */
-/* ARGUMENT    : [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
-/*               [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
+/* ARGUMENT    : [IN] src_contiguous : Is source region contiguous ? (TRUE/FALSE)      */
+/*               [IN] dst_contiguous : Is destination region contiguous ? (TRUE/FALSE) */
 /*               [IN] target_rank    : Target rank                                     */
 /*               [IN] src_dims       : Number of dimensions of source array            */
 /*               [IN] dst_dims       : Number of dimensions of destination array       */
@@ -2016,7 +2016,7 @@ static void _fjrdma_scalar_mget(const int target_rank, const uint64_t dst_offset
 /*               [IN] src_elmts      : Number of elements of source array              */
 /*               [IN] dst_elmts      : Number of elements of destination array         */
 /***************************************************************************************/
-void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const int target_rank, 
+void _XMP_fjrdma_get(const int src_contiguous, const int dst_contiguous, const int target_rank, 
 		     const int src_dims, const int dst_dims, 
 		     const _XMP_array_section_t *src_info, const _XMP_array_section_t *dst_info, 
 		     const _XMP_coarray_t *src_desc, const _XMP_coarray_t *dst_desc, void *dst,
@@ -2029,11 +2029,11 @@ void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const i
   _check_transfer_size(transfer_size);
 
   if(src_elmts == dst_elmts){
-    if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-      _fjrdma_continuous_get(target_rank, dst_offset, src_offset, dst, dst_desc, src_desc, transfer_size);
+    if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_TRUE){
+      _fjrdma_contiguous_get(target_rank, dst_offset, src_offset, dst, dst_desc, src_desc, transfer_size);
     }
     else{
-      _fjrdma_NON_continuous_get(target_rank, dst_offset, src_offset, dst_info, src_info,
+      _fjrdma_NON_contiguous_get(target_rank, dst_offset, src_offset, dst_info, src_info,
 				 dst, dst_desc, src_desc, dst_dims, src_dims, src_elmts);
     }
   }
