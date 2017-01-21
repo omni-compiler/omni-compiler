@@ -621,11 +621,11 @@ static void loop_divide_conquer_impl(struct divconq_args *a)
             .lower = a->lower + (a->upper - a->lower) / 2,
             .upper = a->upper,
             .step = a->step,
-            .num_tasks = a->num_tasks / 2
+            .num_tasks = a->num_tasks - a->num_tasks / 2
         };
 
         a->upper = a_other.lower;
-        a->num_tasks -= a_other.num_tasks;
+        a->num_tasks /= 2;
         
         ABT_xstream self;
         ABT_xstream_self(&self);
