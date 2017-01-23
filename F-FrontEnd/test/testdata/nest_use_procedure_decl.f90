@@ -1,10 +1,10 @@
       PROGRAM main
         USE use_procedure_decls
 
-        INTERFACE 
-          FUNCTION u(a)
+        INTERFACE
+          FUNCTION u(arg)
             INTEGER :: u
-            INTEGER :: a
+            INTEGER :: arg
           END FUNCTION u
           SUBROUTINE v()
           END SUBROUTINE v

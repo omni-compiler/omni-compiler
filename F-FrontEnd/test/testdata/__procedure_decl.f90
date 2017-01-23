@@ -4,9 +4,9 @@
         PROCEDURE(sub), POINTER :: b => sub
         PROCEDURE(), POINTER :: c
        CONTAINS
-        FUNCTION f(a)
+        FUNCTION f(arg)
           INTEGER :: f
-          INTEGER :: a
+          INTEGER :: arg
         END FUNCTION f
         SUBROUTINE sub()
         END SUBROUTINE sub

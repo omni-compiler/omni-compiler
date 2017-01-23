@@ -7,9 +7,9 @@
           b => q
           i = p (1)
         END SUBROUTINE check
-        FUNCTION p(a)
+        FUNCTION p(arg)
           INTEGER :: p
-          INTEGER :: a
+          INTEGER :: arg
         END FUNCTION p
         SUBROUTINE q()
         END SUBROUTINE q
