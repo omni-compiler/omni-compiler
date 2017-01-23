@@ -495,13 +495,26 @@ void _XMP_mpi_sync_memory()
 #endif
 }
 
+static void _mpi_win_sync()
+{
+  MPI_Win_sync(_xmp_mpi_onesided_win);
+  MPI_Win_sync(_xmp_mpi_distarray_win);
+
+#ifdef _XMP_XACC
+  MPI_Win_sync(_xmp_mpi_onesided_win_acc);
+  MPI_Win_sync(_xmp_mpi_distarray_win_acc);
+#endif
+}
+
 /**
    Execute sync_all
  */
 void _XMP_mpi_sync_all()
 {
   _XMP_mpi_sync_memory();
+  _mpi_win_sync();
   MPI_Barrier(MPI_COMM_WORLD);
+  _mpi_win_sync();
 }
 
 static void _mpi_continuous(const int op,
@@ -923,6 +936,7 @@ static void _wait_sync_images(const int num, int *rank_set)
 void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
 {
   _XMP_mpi_sync_memory();
+  _mpi_win_sync();
 
   if(num == 0){
     return;
@@ -939,6 +953,7 @@ void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
 
   _notify_sync_images(num, rank_set);
   _wait_sync_images(num, rank_set);
+  _mpi_win_sync();
 }
 
 
