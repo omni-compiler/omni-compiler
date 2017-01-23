@@ -2502,13 +2502,16 @@ end_declaration()
         tp = ID_TYPE(ip);
 
         if (tp) {
+#if 0
             if (TYPE_IS_ALLOCATABLE(tp) &&
                 !(IS_ARRAY_TYPE(tp) ||
                   TYPE_IS_COINDEXED(tp) ||
                   TYPE_IS_CLASS(tp) ||
                   (IS_CHAR(tp) && IS_CHAR_LEN_ALLOCATABLE(tp)))) {
                 error_at_id(ip, "ALLOCATABLE is applied only to array/coarray/class/character(:)");
-            } else if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
+            }
+#endif
+            if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "OPTIONAL is applied only "
                               "to dummy argument");
             } else if ((TYPE_IS_INTENT_IN(tp) ||
@@ -5510,9 +5513,9 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
     enum expr_code code = EXPR_CODE(x);
 
     expv tmpAssignVstat = NULL;
-    expv tmpAssignVmold = NULL;
-    expv tmpAssignVsource = NULL;
-    expv tmpAssignVerrmsg = NULL;
+
+    expr type = EXPR_ARG2(x);
+    TYPE_DESC tp = NULL;
 
     int isImageControlStatement = FALSE;
 
@@ -5525,6 +5528,7 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
             if(vstat || EXPR_CODE(kwd) != IDENT ||
                (strcmp(SYM_NAME(EXPR_SYM(kwd)), "stat") != 0 &&
                 strcmp(SYM_NAME(EXPR_SYM(kwd)), "mold") != 0 &&
+                strcmp(SYM_NAME(EXPR_SYM(kwd)), "errmsg") != 0 &&
                 strcmp(SYM_NAME(EXPR_SYM(kwd)), "source") != 0)) {
                 error("invalid keyword list");
                 break;
@@ -5536,8 +5540,6 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
                                       EXPR_CODE(vstat) != ARRAY_REF &&
                                       EXPR_CODE(vstat) != F95_MEMBER_REF)){
                     error("invalid status variable");
-                } else if(IS_INT(EXPV_TYPE(vstat)) == FALSE) {
-                    error("status variable is not a integer type");
                 }
 
                 if (EXPR_CODE(vstat) != F_VAR) {
@@ -5547,60 +5549,31 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
                 }
 
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "mold") == 0) {
-                vmold = v;
-                if (vmold == NULL || (EXPR_CODE(vmold) != F_VAR &&
-                                      EXPR_CODE(vmold) != ARRAY_REF &&
-                                      EXPR_CODE(vmold) != F95_MEMBER_REF)){
-                    error("invalid moldus variable");
-                } else if(IS_INT(EXPV_TYPE(vmold)) == FALSE) {
-                    error("moldus variable is not a integer type");
-                }
-
-                if (EXPR_CODE(vmold) != F_VAR) {
-                    expv orgMold = vmold;
-                    vmold = allocate_temp(type_INT);
-                    tmpAssignVmold = expv_assignment(orgMold, vmold);
-                }
-
-                if (code = F95_DEALLOCATE_STATEMENT) {
+                if (code == F95_DEALLOCATE_STATEMENT) {
                     error("MOLD keyword argument in DEALLOCATE statement");
                 }
 
-            } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "source") == 0) {
-                vsource = v;
-                if (vsource == NULL || (EXPR_CODE(vsource) != F_VAR &&
-                                      EXPR_CODE(vsource) != ARRAY_REF &&
-                                      EXPR_CODE(vsource) != F95_MEMBER_REF)){
-                    error("invalid sourceus variable");
-                } else if(IS_INT(EXPV_TYPE(vsource)) == FALSE) {
-                    error("sourceus variable is not a integer type");
+                if ((vmold = compile_expression(v)) == NULL) {
+                    return;
                 }
 
-                if (code = F95_DEALLOCATE_STATEMENT) {
+            } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "source") == 0) {
+                if (code == F95_DEALLOCATE_STATEMENT) {
                     error("SOURCE keyword argument in DEALLOCATE statement");
                 }
 
-                if (EXPR_CODE(vsource) != F_VAR) {
-                    expv orgSource = vsource;
-                    vsource = allocate_temp(type_INT);
-                    tmpAssignVsource = expv_assignment(orgSource, vsource);
+                if ((vsource = compile_expression(v)) == NULL) {
+                    return;
                 }
-
 
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "errmsg") == 0) {
-                verrmsg = v;
-                if (verrmsg == NULL || (EXPR_CODE(verrmsg) != F_VAR &&
-                                      EXPR_CODE(verrmsg) != ARRAY_REF &&
-                                      EXPR_CODE(verrmsg) != F95_MEMBER_REF)){
+                verrmsg = compile_expression(v);
+                if (verrmsg == NULL ||
+                    (EXPR_CODE(verrmsg))) {
                     error("invalid errmsgus variable");
-                } else if(IS_CHAR(EXPV_TYPE(verrmsg)) == FALSE) {
-                    error("errmsgus variable is not a character type");
-                }
 
-                if (EXPR_CODE(verrmsg) != F_VAR) {
-                    expv orgErrmsg = verrmsg;
-                    verrmsg = allocate_temp(type_INT);
-                    tmpAssignVerrmsg = expv_assignment(orgErrmsg, verrmsg);
+                } else if(IS_CHAR(EXPV_TYPE(verrmsg)) == FALSE) {
+                    error("errmsgus variable is not a scala character type");
                 }
 
             }
@@ -5645,21 +5618,17 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
     if (isImageControlStatement && !check_image_control_statement_available())
         return;
 
+    if (type) {
+        tp = compile_type(type, /*allow_predecl=*/FALSE);
+    }
+
     v = expv_cons(code, NULL, args, list4(LIST, vstat, vmold, vsource, verrmsg));
+    EXPV_TYPE(v) = tp;
 
     EXPV_LINE(v) = EXPR_LINE(x);
     output_statement(v);
     if (tmpAssignVstat != NULL) {
         output_statement(tmpAssignVstat);
-    }
-    if (tmpAssignVmold != NULL) {
-        output_statement(tmpAssignVmold);
-    }
-    if (tmpAssignVsource != NULL) {
-        output_statement(tmpAssignVsource);
-    }
-    if (tmpAssignVerrmsg != NULL) {
-        output_statement(tmpAssignVerrmsg);
     }
 }
 

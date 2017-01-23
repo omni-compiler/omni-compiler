@@ -2409,24 +2409,47 @@ static void
 outx_ALLOCDEALLOC_statement(int l, expv v)
 {
     const int l1 = l + 1;
+    const int l2 = l + 2;
+
     expv keywords = EXPR_ARG2(v);
 
     expv vstat = expr_list_get_n(keywords, 1);
     expv vmold = expr_list_get_n(keywords, 2);
     expv vsource = expr_list_get_n(keywords, 3);
     expv verrmsg = expr_list_get_n(keywords, 4);
+    char type_buf[128];
     char stat_buf[128];
-    char mold_buf[128];
-    char source_buf[128];
-    char errmsg_buf[128];
+
+
+    const char *tid = NULL;
+
+    if (EXPV_TYPE(v)) {
+        tid = getTypeID(EXPV_TYPE(v));
+        sprintf(type_buf, " type=\"%s\"", tid);
+    } else {
+        type_buf[0] = '\0';
+    }
 
     print_allocate_keyword(stat_buf, vstat, "stat_name");
-    print_allocate_keyword(mold_buf, vmold, "mold_name");
-    print_allocate_keyword(source_buf, vsource, "source_name");
-    print_allocate_keyword(errmsg_buf, verrmsg, "errmsg_name");
 
-    outx_tagOfStatement1(l, v, stat_buf, mold_buf, source_buf, errmsg_buf);
+
+    outx_tagOfStatement1(l, v, type_buf, stat_buf);
     outx_allocList(l1, EXPR_ARG1(v));
+    if (vsource) {
+        outx_printi(l1,"<allocOpt kind=\"source\">\n");
+        outx_expv(l2, vsource);
+        outx_close(l1,"allocOpt");
+    }
+    if (vmold) {
+        outx_printi(l1,"<allocOpt kind=\"mold\">\n");
+        outx_expv(l2, vmold);
+        outx_close(l1,"allocOpt");
+    }
+    if (verrmsg) {
+        outx_printi(l1,"<allocOpt kind=\"errmsg\">\n");
+        outx_expv(l2, verrmsg);
+        outx_close(l1,"allocOpt");
+    }
     outx_expvClose(l, v);
 }
 

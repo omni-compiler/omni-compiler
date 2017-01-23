@@ -1756,7 +1756,11 @@ action_statement95:
         | EXIT name_or_null
         { $$ = list1(F95_EXIT_STATEMENT,$2); }
         | ALLOCATE '(' allocation_list ')'
-        { $$ = list1(F95_ALLOCATE_STATEMENT,$3); }
+        { $$ = list2(F95_ALLOCATE_STATEMENT,$3,NULL); }
+        /* | ALLOCATE '(' KW type_spec COL2 allocation_list ')' */
+        /* { $$ = list2(F95_ALLOCATE_STATEMENT,$4,NULL); } */
+        /* | ALLOCATE '(' KW type_spec COL2 allocation_list ')' */
+        /* { $$ = list2(F95_ALLOCATE_STATEMENT,$6,4); } */
         | NULLIFY '(' allocation_list ')'
         { $$ = list1(F95_NULLIFY_STATEMENT,$3); }
         | DEALLOCATE '(' allocation_list ')'
