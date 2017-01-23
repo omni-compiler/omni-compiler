@@ -1,0 +1,5 @@
+      PROGRAM main
+        real :: result
+        result = second()
+        CALL exit()
+      END PROGRAM main
