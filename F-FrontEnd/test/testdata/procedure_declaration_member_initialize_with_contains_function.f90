@@ -1,10 +1,11 @@
       PROGRAM main
         TYPE t
           INTEGER :: v
-          PROCEDURE(f),PASS(f),POINTER :: p => g
+          PROCEDURE(f),PASS(a),POINTER :: p => g
         END TYPE t
         INTERFACE
           FUNCTION f(a)
+            IMPORT t
             CLASS(t) :: a
             TYPE(t) :: f
           END FUNCTION f
