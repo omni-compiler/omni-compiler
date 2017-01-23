@@ -1944,6 +1944,8 @@ update_type_bound_procedures_forall(TYPE_DESC struct_decls, ID targets)
                 }
 
                 if (!check_tbp_pass_arg(tp, ID_TYPE(mem), ID_TYPE(target))) {
+                    error("%s should have have a PASS argument",
+                          SYM_NAME(ID_SYM(target)));
                     return;
                 }
                 /*
@@ -2990,6 +2992,9 @@ check_procedure_variables_for_idlist(ID id_list, TYPE_DESC const stp)
             }
 
             if (stp != NULL && !check_tbp_pass_arg(stp, ID_TYPE(id), ftp)) {
+                error_at_id(id,
+                            "Interface %s does not have a PASS argument",
+                            SYM_NAME(ID_SYM(target)));
                 continue;
             }
 

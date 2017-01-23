@@ -696,7 +696,9 @@ extern int      type_bound_procedure_types_are_compatible
 extern int      check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp);
 
 extern int      procedure_has_pass_arg
-                    _ANSI_ARGS_((const TYPE_DESC ftp, SYMBOL pass_arg, TYPE_DESC stp));
+                    _ANSI_ARGS_((const TYPE_DESC ftp,
+                                 const SYMBOL pass_arg,
+                                 const TYPE_DESC stp));
 extern int      procedure_is_assignable
                     _ANSI_ARGS_((const TYPE_DESC left, const TYPE_DESC right));
 

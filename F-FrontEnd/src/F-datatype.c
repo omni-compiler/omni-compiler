@@ -1306,6 +1306,51 @@ procedure_pointers_are_compatible(TYPE_DESC p1, TYPE_DESC p2)
     return function_type_is_compatible0(p1, p2, FALSE, TRUE);
 }
 
+
+int
+procedure_has_pass_arg(const TYPE_DESC ftp, const SYMBOL pass_arg, const TYPE_DESC stp)
+{
+    ID target;
+    TYPE_DESC tp;
+
+    if (ftp == NULL) {
+        return FALSE;
+    }
+
+    if (!FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ftp)) {
+        return FALSE;
+    }
+
+    if (pass_arg == NULL) {
+        /* PASS arugment name is not sepcified,
+           so first argument become PASS argument */
+        target = FUNCTION_TYPE_ARGS(ftp);
+    } else {
+        target = find_ident_head(pass_arg,
+                                 FUNCTION_TYPE_ARGS(ftp));
+    }
+
+    if (target == NULL) {
+        return FALSE;
+    }
+
+
+    /* check type */
+    tp = ID_TYPE(target);
+    if (type_is_unlimited_class(tp)) {
+        return TRUE;
+
+    } else if (type_is_class_of(stp, tp)) {
+        return TRUE;
+
+    } else {
+        debug("PASS object should be CLASS of the derived-type");
+        return FALSE;
+    }
+}
+
+
+
 /**
  * Check PASS of type-bound procedure/procedure variable
  *
@@ -1339,73 +1384,12 @@ check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp)
         return TRUE;
     }
 
+
     pass_arg = FUNCTION_TYPE_PASS_ARG(tbp);
 
-    if (pass_arg != NULL) {
-        arg = find_ident_head(ID_SYM(pass_arg), args);
-    } else {
-        /* PASS arugment name is not sepcified,
-           so first argument become PASS argument */
-        arg = args;
-    }
-
-    if (arg == NULL) {
-        error("PASS argument does not exist");
-        return FALSE;
-    }
-
-    tp = ID_TYPE(arg);
-    if (type_is_unlimited_class(tp)) {
-        return TRUE;
-
-    } else if (type_is_class_of(stp, tp)) {
-        return TRUE;
-
-    } else {
-        error("PASS object should be CLASS of the derived-type");
-        return FALSE;
-    }
+    return procedure_has_pass_arg(ftp, pass_arg?ID_SYM(pass_arg):NULL, stp);
 }
 
-
-int
-procedure_has_pass_arg(const TYPE_DESC ftp, SYMBOL pass_arg, TYPE_DESC stp)
-{
-    ID target;
-
-    if (ftp == NULL) {
-        return FALSE;
-    }
-
-    if (!FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ftp)) {
-        return FALSE;
-    }
-
-    if (pass_arg == NULL) {
-        /* get first argument */
-        target = FUNCTION_TYPE_ARGS(ftp);
-    } else {
-        target = find_ident_head(pass_arg,
-                                 FUNCTION_TYPE_ARGS(ftp));
-    }
-
-    if (target == NULL) {
-        return FALSE;
-    }
-
-    /* check type */
-
-    if (!TYPE_IS_CLASS(ID_TYPE(target))) {
-        return FALSE;
-    }
-
-    if (!type_is_parent_type(/*parent=*/stp,
-                             /* child=*/ID_TYPE(target))) {
-        return FALSE;
-    }
-
-    return TRUE;
-}
 
 int
 procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right)
@@ -1464,9 +1448,9 @@ procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right)
          */
         SYMBOL sym = FUNCTION_TYPE_PASS_ARG(left)?ID_SYM(FUNCTION_TYPE_PASS_ARG(left)):NULL;
 
-        if (!procedure_has_pass_arg(right_ftp,
-                                    sym,
-                                    FUNCTION_TYPE_PASS_ARG_TYPE(left))) {
+        if (!check_tbp_pass_arg(FUNCTION_TYPE_PASS_ARG_TYPE(left),
+                                left, right_ftp)) {
+            error("Pointee hould have a PASS argument");
             return FALSE;
         }
     }
