@@ -2436,9 +2436,11 @@ compile_basic_type(expr x)
     if(rcharLen) {
         if((vcharLen = compile_expression(rcharLen)) == NULL)
             return NULL;
-        if(EXPV_CODE(vcharLen) == F_ASTERISK)
+        if (EXPV_CODE(vcharLen) == F_ASTERISK) {
             charLen = CHAR_LEN_UNFIXED;
-        else {
+        } else if (EXPV_CODE(vcharLen) == F08_LEN_SPEC_COLON) {
+            charLen = CHAR_LEN_ALLOCATABLE;
+        } else {
             if((vcharLen1 = expv_reduce(vcharLen, TRUE)) == NULL) {
                 charLen = CHAR_LEN_UNFIXED;
             } else {

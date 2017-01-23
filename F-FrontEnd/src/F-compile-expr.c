@@ -885,8 +885,11 @@ compile_expression(expr x)
 
         case F95_LEN_SELECTOR_SPEC: {
             expv v;
-            if(EXPR_ARG1(x) == NULL)
+            if (EXPR_ARG1(x) == NULL)
                 return expv_any_term(F_ASTERISK, NULL);
+            if (EXPR_CODE(EXPR_ARG1(x)) == F08_LEN_SPEC_COLON)
+                return expv_any_term(F08_LEN_SPEC_COLON, NULL);
+
             v = compile_expression(EXPR_ARG1(x));
             if((v = expv_reduce(v, FALSE)) == NULL) return NULL;
             /* if type is not fixed yet, do implicit declaration here */

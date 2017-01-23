@@ -1124,12 +1124,21 @@ static int
 input_len(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 {
     expv v = NULL;
+    char * is_assumed_size;
+    char * is_assumed_shape;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "len"))
         return TRUE;
 
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
+
+    is_assumed_size = (char *) xmlTextReaderGetAttribute(reader,
+                                   BAD_CAST "is_assumed_size");
+
+    is_assumed_shape = (char *) xmlTextReaderGetAttribute(reader,
+                                    BAD_CAST "is_assumed_shape");
+
 
     if (xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "len")) {
         /* if <len> tag is empty, size is unfixed */
@@ -1140,6 +1149,14 @@ input_len(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 
         if (v != NULL)
             TYPE_LENG(tp) = v;
+    }
+
+    if (is_assumed_size != NULL) {
+        TYPE_CHAR_LEN(tp) = CHAR_LEN_UNFIXED;
+        free(is_assumed_size);
+    } else if (is_assumed_shape != NULL) {
+        TYPE_CHAR_LEN(tp) = CHAR_LEN_ALLOCATABLE;
+        free(is_assumed_shape);
     }
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "len"))
