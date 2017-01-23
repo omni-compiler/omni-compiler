@@ -11,6 +11,7 @@ public abstract class XobjectIterator
     Xobject currentXobject;
     Xobject topXobject;
     XobjArgs currentArgs;
+    boolean trimBlockStmt;
 
     public XobjectIterator()
     {

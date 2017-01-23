@@ -1274,7 +1274,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         // collect identifiers which are set to 'delayed decl'
         if (body != null && body instanceof XobjList) {
-            XobjectIterator i = new topdownXobjectIterator(body);
+            XobjectIterator i = new topdownXobjectIterator(body, true);
             for (i.init(); !i.end(); i.next()) {
                 Xobject a = i.getXobject();
                 if (a == null || !a.isDelayedDecl())
