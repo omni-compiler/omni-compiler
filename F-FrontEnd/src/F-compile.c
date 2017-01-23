@@ -5612,6 +5612,7 @@ compile_CALL_subroutine_statement(expr x)
         } else if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_EXTERNAL;
             TYPE_SET_EXTERNAL(id);
+            TYPE_SET_IMPLICIT(id);
         }
     }
     if (ID_IS_AMBIGUOUS(id)) {

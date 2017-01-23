@@ -4619,6 +4619,7 @@ genSortedIDs(ID ids, int *retnIDs)
       EXT_PROC_IS_INTERFACE(PROC_EXT_ID(id)) == FALSE && \
       EXT_PROC_IS_INTERFACE_DEF(PROC_EXT_ID(id)) == FALSE)) \
   && (ID_TYPE(id) \
+      && TYPE_IS_IMPLICIT(id) == FALSE \
       && IS_MODULE(ID_TYPE(id)) == FALSE   \
       && (IS_VOID(ID_TYPE(id)) == FALSE || \
       has_attribute_except_private_public(ID_TYPE(id)))))
