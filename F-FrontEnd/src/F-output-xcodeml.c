@@ -4172,7 +4172,7 @@ outx_functionType_procedure(int l, TYPE_DESC tp)
 static void
 outx_functionType(int l, TYPE_DESC tp)
 {
-    if (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL) {
+    if (TYPE_IS_PROCEDURE(tp) || TYPE_REF(tp) != NULL) {
         /* type-bound procedure or procedure type */
         outx_functionType_procedure(l, tp);
 

@@ -222,6 +222,7 @@ procedure_type(const TYPE_DESC ftp)
 {
     TYPE_DESC tp;
     tp = function_type(NULL);
+    TYPE_BASIC_TYPE(tp) = TYPE_BASIC_TYPE(ftp);
     TYPE_REF(tp) = ftp;
     TYPE_SET_PROCEDURE(tp);
     return tp;

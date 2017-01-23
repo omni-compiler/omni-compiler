@@ -1854,6 +1854,7 @@ update_procedure_variable(ID id, const ID target, int is_final)
     }
     TYPE_REF(ID_TYPE(id)) = ID_TYPE(target);
     ID_DEFINED_BY(VAR_REF_PROC(id)) = target;
+    PROC_CLASS(VAR_REF_PROC(id)) = P_DEFINEDPROC;
 }
 
 
@@ -2550,13 +2551,6 @@ end_declaration()
     }
 
     /*
-     * Update procedure variables
-     */
-    update_procedure_variables_forall(LOCAL_SYMBOLS,
-                                      LOCAL_STRUCT_DECLS,
-                                      LOCAL_SYMBOLS, /* is_final = */ FALSE);
-
-    /*
      * Update type bound procedure against exteranl functions
      */
     update_type_bound_procedures_forall(LOCAL_STRUCT_DECLS, LOCAL_SYMBOLS);
@@ -2836,6 +2830,7 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
 
 #if 0
         if (ID_TYPE(id) != NULL &&
+            PROC_CLASS(id) == P_UNDEFINEDPROC &&
             IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
             FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(id))) {
             error_at_id(id,
@@ -2981,7 +2976,7 @@ is_assignment_proc(TYPE_DESC ftp)
 
 
 static void
-check_procedure_variables_for_idlist(ID id_list, TYPE_DESC const stp)
+check_procedure_variables_for_idlist(ID id_list, TYPE_DESC const stp, int is_final)
 {
     ID id;
     ID target;
@@ -2995,29 +2990,37 @@ check_procedure_variables_for_idlist(ID id_list, TYPE_DESC const stp)
         }
 
         target = NULL;
-        if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_REF(ID_TYPE(id)) != NULL) {
-            if (VAR_REF_PROC(id) == NULL)
+        if (IS_PROCEDURE_TYPE(ID_TYPE(id)) && TYPE_IS_PROCEDURE(ID_TYPE(id))) {
+            if (VAR_INIT_VALUE(id) == NULL ||
+                EXPV_NEED_TYPE_FIXUP(VAR_INIT_VALUE(id)) == FALSE) {
                 continue;
+            }
+
             if ((target = find_ident(ID_SYM(VAR_REF_PROC(id)))) == NULL) {
-                error_at_id(id,
-                            "Interface %s is not found",
-                            SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
+                if (is_final)
+                    error_at_id(id,
+                                "Interface %s is not found",
+                                SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
                 continue;
             }
             ftp = get_bottom_ref_type(ID_TYPE(target));
 
             if (ID_TYPE(target) == NULL ||
                 !FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ftp)) {
-                error_at_id(id,
-                            "Interface %s does not have explict interface",
-                            SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
+                if (is_final)
+                    error_at_id(id,
+                                "Interface %s does not have explict interface",
+                                SYM_NAME(ID_SYM(VAR_REF_PROC(id))));
                 continue;
             }
 
             if (stp != NULL && !check_tbp_pass_arg(stp, ID_TYPE(id), ftp)) {
-                error_at_id(id,
-                            "Interface %s does not have a PASS argument",
-                            SYM_NAME(ID_SYM(target)));
+                fprintf(stderr, "Interface %s does not have a PASS argument",
+                        SYM_NAME(ID_SYM(target)));
+                if (is_final)
+                    error_at_id(id,
+                                "Interface %s does not have a PASS argument",
+                                SYM_NAME(ID_SYM(target)));
                 continue;
             }
 
@@ -3025,17 +3028,21 @@ check_procedure_variables_for_idlist(ID id_list, TYPE_DESC const stp)
             if (init_expr != NULL && EXPR_CODE(init_expr) == F_VAR) {
                 target = find_ident(EXPR_SYM(init_expr));
                 if (target == NULL) {
-                    error_at_id(id, "invalid initialization");
+                    if (is_final)
+                        error_at_id(id, "invalid initialization");
                     continue;
                 }
 
                 /* they are not the same function/subroutine */
                 if (!procedure_is_assignable(ID_TYPE(id), ID_TYPE(target))) {
-                    error_at_id(id, "type mismatch in the initialization");
+                    if (is_final)
+                        error_at_id(id, "type mismatch in the initialization");
                     continue;
                 }
 
                 EXPV_TYPE(init_expr) = ID_TYPE(target);
+                EXPV_NEED_TYPE_FIXUP(init_expr) = FALSE;
+
             }
         }
     }
@@ -3043,7 +3050,7 @@ check_procedure_variables_for_idlist(ID id_list, TYPE_DESC const stp)
 
 
 static void
-check_procedure_variables_forall()
+check_procedure_variables_forall(int is_final)
 {
     /*
      * Check a function refered exists
@@ -3054,8 +3061,9 @@ check_procedure_variables_forall()
      *
      */
     TYPE_DESC stp;
+    EXT_ID ep;
 
-    check_procedure_variables_for_idlist(LOCAL_SYMBOLS, NULL);
+    check_procedure_variables_for_idlist(LOCAL_SYMBOLS, NULL, is_final);
 
     FOREACH_STRUCTDECLS(stp, LOCAL_STRUCT_DECLS) {
         if (TYPE_TAGNAME(stp) &&
@@ -3064,8 +3072,15 @@ check_procedure_variables_forall()
             continue;
         }
 
-        check_procedure_variables_for_idlist(TYPE_MEMBER_LIST(stp), stp);
+        check_procedure_variables_for_idlist(TYPE_MEMBER_LIST(stp), stp, is_final);
     }
+
+    FOREACH_EXT_ID(ep, LOCAL_EXTERNAL_SYMBOLS) {
+        check_procedure_variables_for_idlist(EXT_PROC_ID_LIST(ep),
+                                             EXT_PROC_STRUCT_DECLS(ep), is_final);
+    }
+
+
 }
 
 
@@ -3174,6 +3189,7 @@ end_procedure()
     ID id;
     EXT_ID ext;
     BLOCK_ENV bp;
+    EXT_ID ep;
 
     /* Check if a block construct is closed */
     if (CTL_TYPE(ctl_top) == CTL_BLOCK &&
@@ -3392,6 +3408,18 @@ end_procedure()
         }
     }
 
+
+    FOREACH_EXT_ID(ep, LOCAL_EXTERNAL_SYMBOLS) {
+        /*
+         * Update procedure variables
+         */
+        update_procedure_variables_forall(EXT_PROC_ID_LIST(ep),
+                                          EXT_PROC_STRUCT_DECLS(ep),
+                                          LOCAL_SYMBOLS, /* is_final = */ TRUE);
+    }
+
+
+
     if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
         return;
     }
@@ -3495,9 +3523,7 @@ end_procedure()
         dump_all_module_procedures(stderr);
     }
 
-    if (unit_ctl_level == 0) {
-        check_procedure_variables_forall();
-    }
+    check_procedure_variables_forall(/*is_final*/ unit_ctl_level == 0);
 
     check_type_bound_procedures();
 
@@ -4413,7 +4439,9 @@ import_module_id(ID mid,
         TYPE_UNSET_PRIVATE(id);
     }
 
-    if(ID_TYPE(id) != NULL && IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
+    if(ID_TYPE(id) != NULL &&
+       IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
+       TYPE_IS_PROCEDURE(ID_TYPE(id)) &&
        TYPE_REF(ID_TYPE(id)) == NULL) {
         /*
          * Import 'PROCEDURE(), POINTER :: p'
@@ -5654,7 +5682,9 @@ compile_CALL_subroutine_statement(expr x)
     }
 
     if ((PROC_CLASS(id) == P_EXTERNAL || PROC_CLASS(id) == P_UNKNOWN) &&
-        (ID_TYPE(id) == NULL || IS_SUBR(ID_TYPE(id)) == FALSE)) {
+        (ID_TYPE(id) == NULL || (
+            IS_SUBR(ID_TYPE(id)) == FALSE &&
+            TYPE_IS_PROCEDURE(ID_TYPE(id)) == FALSE))) {
         TYPE_DESC tp;
         if (ID_TYPE(id)) {
             if (!TYPE_IS_IMPLICIT(ID_TYPE(id)) &&
@@ -5678,6 +5708,11 @@ compile_CALL_subroutine_statement(expr x)
 
         if(PROC_EXT_ID(id)) {
             EXT_PROC_TYPE(PROC_EXT_ID(id)) = tp;
+        }
+    }
+    else if (ID_TYPE(id) != NULL && TYPE_IS_PROCEDURE(ID_TYPE(id))) {
+        if (!IS_SUBR(ID_TYPE(id))) {
+            TYPE_BASIC_TYPE(ID_TYPE(id)) = TYPE_SUBR;
         }
     }
     else if (PROC_CLASS(id) == P_INTRINSIC && ID_TYPE(id) != NULL){
@@ -6190,9 +6225,6 @@ compile_POINTER_SET_statement(expr x) {
                     int attrs = TYPE_ATTR_FLAGS(vPteTyp);
                     int extattrs = TYPE_EXTATTR_FLAGS(vPteTyp);
 
-                    ID_CLASS(id) = CL_PROC;
-                    PROC_CLASS(id) = P_UNDEFINEDPROC;
-
                     *vPteTyp = *ftp;
                     tp = new_type_desc();
                     *tp = *FUNCTION_TYPE_RETURN_TYPE(vPteTyp);
@@ -6214,13 +6246,10 @@ compile_POINTER_SET_statement(expr x) {
 
                     TYPE_DESC old;
 
-                    ID_CLASS(id) = CL_PROC;
-                    PROC_CLASS(id) = P_UNDEFINEDPROC;
                     old = ID_TYPE(id);
 
                     if (IS_FUNCTION_TYPE(vPtrTyp)) {
                         ID_TYPE(id) = function_type(old);
-                        TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
 
                     } else {
                         ID_TYPE(id) = subroutine_type();
@@ -6229,7 +6258,8 @@ compile_POINTER_SET_statement(expr x) {
                     }
                 }
             } else {
-                if ((IS_FUNCTION_TYPE(vPteTyp) &&  TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)))
+                if ((IS_FUNCTION_TYPE(vPteTyp) &&
+                     TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)))
                     && TYPE_REF(vPtrTyp)) {
                     /*
                      * ex)
@@ -6241,8 +6271,6 @@ compile_POINTER_SET_statement(expr x) {
                      */
                     TYPE_DESC ftp = get_bottom_ref_type(vPtrTyp);
 
-                    ID_CLASS(id) = CL_PROC;
-                    PROC_CLASS(id) = P_UNDEFINEDPROC;
 
                     TYPE_REF(vPteTyp) = ftp;
                     TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = FUNCTION_TYPE_RETURN_TYPE(ftp);
@@ -6253,6 +6281,10 @@ compile_POINTER_SET_statement(expr x) {
 
                 }
             }
+
+            ID_CLASS(id) = CL_PROC;
+            PROC_CLASS(id) = P_UNDEFINEDPROC;
+
             if (ID_LINE(id) == NULL) {
                 ID_LINE(id) = EXPR_LINE(x);
             }

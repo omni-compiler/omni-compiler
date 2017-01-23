@@ -1028,12 +1028,15 @@ declare_function(ID id)
          */
         expv v;
         if (ID_STORAGE(id) != STG_EXT) {
-            if (ID_STORAGE(id) != STG_ARG) {
+            if (ID_STORAGE(id) != STG_ARG &&
+                !(ID_CLASS(id) == CL_VAR && IS_PROCEDURE_TYPE(ID_TYPE(id)))) {
                 fatal("%s: unknown storage", __func__);
             }
         }
 
-        if (PROC_CLASS(id) != P_INTRINSIC && PROC_CLASS(id) != P_UNDEFINEDPROC) {
+        if (ID_CLASS(id) != CL_VAR &&
+            PROC_CLASS(id) != P_INTRINSIC &&
+            PROC_CLASS(id) != P_UNDEFINEDPROC) {
             EXT_ID ep = PROC_EXT_ID(id);
             if(ep == NULL) {
                 ep = declare_external_proc_id(ID_SYM(id), ID_TYPE(id), FALSE);
@@ -5280,6 +5283,7 @@ compile_procedure_declaration(expr x)
                     /* The type will be fixed in other function */
                     v = expv_sym_term(F_VAR, type_GNUMERIC_ALL, EXPR_SYM(init_expr));
                 }
+                EXPV_NEED_TYPE_FIXUP(v) = TRUE;
 
             } else if (EXPR_CODE(init_expr) == F_ARRAY_REF) {
                 /*
