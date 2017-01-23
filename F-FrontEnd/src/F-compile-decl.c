@@ -5316,11 +5316,35 @@ compile_procedure_declaration(expr x)
 
         }
 
+        if (tp != NULL) {
+            ID_TYPE(id) = procedure_type(tp);
+
+        } else {
+            /*
+             * If proce interface is null,
+             * the function return type is declared implicitly
+             *
+             * ex)
+             *   PROCEDURE(), POINTER :: i
+             *
+             *   i will returns an INTEGER type
+             *
+             */
+
+            ID_TYPE(id) = function_type(NULL);
+            implicit_declaration(id);
+            TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+            ID_TYPE(id) = procedure_type(ID_TYPE(id));
+
+            /* When the first assignment appears, fix it */
+            TYPE_SET_NOT_FIXED(ID_TYPE(id));
+        }
+
         /*
          * Now setup lines and types
          */
         ID_LINE(id) = EXPR_LINE(x);
-        ID_TYPE(id) = procedure_type(tp);
+
         TYPE_ATTR_FLAGS(ID_TYPE(id)) |= type_attr_flags;
         VAR_REF_PROC(id) = interface;
         if (CTL_TYPE(ctl_top) == CTL_STRUCT) {

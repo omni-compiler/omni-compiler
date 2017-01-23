@@ -1376,14 +1376,10 @@ int
 check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp)
 {
     ID pass_arg;
-    TYPE_DESC tp;
-    ID arg;
-    ID args = FUNCTION_TYPE_ARGS(ftp);
 
     if (!(FUNCTION_TYPE_HAS_PASS_ARG(tbp))) {
         return TRUE;
     }
-
 
     pass_arg = FUNCTION_TYPE_PASS_ARG(tbp);
 
@@ -1423,6 +1419,20 @@ procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right)
         return FALSE;
     }
 
+    if (TYPE_IS_NOT_FIXED(left) && IS_SUBR(right_ftp)) {
+        /*
+         * Left handside operand does not specify any interface,
+         * but it expects a function by default.
+         * so if right handside operand is subroutine,
+         * return TRUE and fix the type in the caller.
+         *
+         * ex)
+         *   PROCEDURE(), POINTER :: left
+         *   left => sub() ! success, and left is fixed to a subroutine
+         */
+        return TRUE;
+    }
+
     if (left == right || left == right_ftp ||
         left_ftp == right || left_ftp == right_ftp) {
         debug("#### The same function");
@@ -1430,27 +1440,13 @@ procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right)
         return TRUE;
     }
 
-    if (TYPE_REF(left) == NULL) {
-        /*
-         * Left handside operand does not specify any interface,
-         * so assignment always succeeds.
-         *
-         * ex)
-         *   PROCEDURE(), POINTER :: left
-         *   left => right
-         */
-        return TRUE;
-    }
-
     if (FUNCTION_TYPE_HAS_PASS_ARG(left)) {
         /*
          * Check right have a PASS argument.
          */
-        SYMBOL sym = FUNCTION_TYPE_PASS_ARG(left)?ID_SYM(FUNCTION_TYPE_PASS_ARG(left)):NULL;
-
         if (!check_tbp_pass_arg(FUNCTION_TYPE_PASS_ARG_TYPE(left),
                                 left, right_ftp)) {
-            error("Pointee hould have a PASS argument");
+            error("Pointee should have a PASS argument");
             return FALSE;
         }
     }

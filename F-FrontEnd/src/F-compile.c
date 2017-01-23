@@ -1861,6 +1861,11 @@ update_procedure_variable(ID id, const ID target, int is_final)
  * Update procedure typed variables
  *
  * Assign type bound procedure to explicit interface OR module procedure
+ *
+ * ids -- procedure variables are in them
+ * struct_decls -- the derived-type to check
+ * targets -- candidates to which the procedure variables refer
+ * is_final -- if TRUE, raise error if the target doesn't have an appropriate type
  */
 static void
 update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls,
@@ -6221,6 +6226,19 @@ compile_POINTER_SET_statement(expr x) {
             error_at_node(x, "Type mismatch.");
             return;
         }
+
+        if (TYPE_IS_NOT_FIXED(vPtrTyp)) {
+            TYPE_DESC subr, ftp;
+
+            subr = get_bottom_ref_type(vPteTyp);
+            if (IS_SUBR(subr)) {
+                ftp = get_bottom_ref_type(vPtrTyp);
+                TYPE_BASIC_TYPE(ftp) = TYPE_SUBR;
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ftp)) = TYPE_VOID;
+            }
+            TYPE_UNSET_NOT_FIXED(vPtrTyp);
+        }
+
     } else {
         if (get_basic_type(vPtrTyp) != get_basic_type(vPteTyp)) {
             error_at_node(x, "Type mismatch.");
