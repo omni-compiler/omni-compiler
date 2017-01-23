@@ -2483,7 +2483,7 @@ end_declaration()
                        !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "INTENT is applied only "
                               "to dummy argument");
-            } else if (IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL) {
+            } else if (IS_PROCEDURE_TYPE(tp) && TYPE_IS_PROCEDURE(tp)) {
                 if (ID_STORAGE(ip) != STG_ARG) {
                     if (!TYPE_IS_POINTER(tp)) {
                         error_at_id(ip, "PROCEDURE variable should have the POINTER attribute");
