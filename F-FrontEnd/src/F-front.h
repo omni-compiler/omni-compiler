@@ -61,6 +61,7 @@ extern int enable_need_type_keyword;
 extern int need_type_keyword;
 extern int need_type_len;
 extern int need_check_user_defined;
+extern int lookup_col2(void);
 
 extern BASIC_DATA_TYPE defaultSingleRealType;
 extern BASIC_DATA_TYPE defaultDoubleRealType;

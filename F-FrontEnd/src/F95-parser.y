@@ -477,7 +477,7 @@ int enable_need_type_keyword = TRUE;
 
 %type <val> statement label
 %type <val> expr /*expr1*/ lhs member_ref lhs_alloc member_ref_alloc substring expr_or_null complex_const
-%type <val> array_constructor array_constructor_list array_constructor0
+%type <val> array_constructor array_constructor_list
 %type <val> program_name dummy_arg_list dummy_args dummy_arg file_name
 %type <val> declaration_statement executable_statement action_statement action_statement_let action_statement_key assign_statement_or_null assign_statement
 %type <val> declaration_list entity_decl type_spec type_spec0 length_spec common_decl
@@ -519,6 +519,8 @@ KW: { need_keyword = TRUE; };
 TYPE_KW: { if (enable_need_type_keyword == TRUE) need_type_keyword = TRUE; };
 
 NEED_CHECK: {	      need_check_user_defined = FALSE; };
+
+TYPE_KW_COL2: { if (lookup_col2()) need_keyword = TRUE;  }
 
 one_statement:
           STATEMENT_LABEL_NO  /* null statement */
@@ -1964,13 +1966,13 @@ io_item:
 
 
 array_constructor:
-          L_ARRAY_CONSTRUCTOR KW array_constructor_list R_ARRAY_CONSTRUCTOR
+          L_ARRAY_CONSTRUCTOR TYPE_KW_COL2 array_constructor_list R_ARRAY_CONSTRUCTOR
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
-        | '[' KW array_constructor_list ']'
+        | '[' TYPE_KW_COL2 array_constructor_list ']'
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
-        | L_ARRAY_CONSTRUCTOR KW type_spec COL2 array_constructor_list R_ARRAY_CONSTRUCTOR
+        | L_ARRAY_CONSTRUCTOR TYPE_KW_COL2 type_spec COL2 array_constructor_list R_ARRAY_CONSTRUCTOR
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
-        | '[' KW type_spec COL2 array_constructor_list ']'
+        | '[' TYPE_KW_COL2 type_spec COL2 array_constructor_list ']'
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
         ;
 
@@ -2112,19 +2114,9 @@ member_ref_alloc:     /* For allocation list only */
 /*         { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); } */
         ;
 
-array_constructor0:
-          KW_INTEGER        { $$ = GEN_NODE(IDENT,find_symbol("integer")); }
-        | KW_REAL           { $$ = GEN_NODE(IDENT,find_symbol("real")); }
-        | KW_COMPLEX        { $$ = GEN_NODE(IDENT,find_symbol("complex")); }
-        | KW_LOGICAL        { $$ = GEN_NODE(IDENT,find_symbol("logical")); }
-        | KW_TYPE           { $$ = GEN_NODE(IDENT,find_symbol("type")); }
-        | CLASS             { $$ = GEN_NODE(IDENT,find_symbol("class")); }
-        ;
 
 array_constructor_list:
-          array_constructor0
-        { $$ = list1(LIST, $1); }
-        | io_item
+          io_item
         { $$ = list1(LIST, $1); }
         | array_constructor_list  ',' io_item
         { $$ = list_put_last($1, $3); }
