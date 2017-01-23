@@ -2296,51 +2296,54 @@ outx_alloc(int l, expv v)
     outx_tag(l, "alloc");
 
     switch(EXPV_CODE(v)) {
-    case F_VAR:
-    case F95_MEMBER_REF:
-        outx_expv(l1, v);
-        break;
-    case ARRAY_REF:
-        outx_expv(l1, EXPR_ARG1(v));
-        outx_arraySpec(l1, EXPR_ARG2(v));
-        break;
-    case XMP_COARRAY_REF:
+        case F_VAR:
+        case F95_MEMBER_REF:
+            outx_expv(l1, v);
+            break;
 
-      v1 = EXPR_ARG1(v);
+        case ARRAY_REF:
+            outx_expv(l1, EXPR_ARG1(v));
+            outx_arraySpec(l1, EXPR_ARG2(v));
+            break;
 
-      switch (EXPR_CODE(v1)){
+        case XMP_COARRAY_REF: {
 
-      case F_VAR:
-      case F95_MEMBER_REF:
-        outx_expv(l1, v1);
-        break;
-      case ARRAY_REF:
-        outx_expv(l1, EXPR_ARG1(v1));
-        outx_arraySpec(l1, EXPR_ARG2(v1));
-        break;
-      default:
-	abort();
-      }
+            v1 = EXPR_ARG1(v);
 
-      outx_printi(l1, "<coShape>\n");
-      FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)){
-	expr cobound = LIST_ITEM(lp);
-/* 	expr upper = EXPR_ARG2(cobound); */
-/* 	ARRAY_ASSUME_KIND defaultAssumeKind = ASSUMED_SHAPE; */
+            switch (EXPR_CODE(v1)){
 
-/* 	if (upper && EXPR_CODE(upper) == F_ASTERISK){ */
-/* 	  upper = NULL; */
-/* 	  defaultAssumeKind = ASSUMED_SIZE; */
-/* 	} */
+                case F_VAR:
+                case F95_MEMBER_REF:
+                    outx_expv(l1, v1);
+                    break;
+                case ARRAY_REF:
+                    outx_expv(l1, EXPR_ARG1(v1));
+                    outx_arraySpec(l1, EXPR_ARG2(v1));
+                    break;
+                default:
+                    abort();
+            }
 
-	outx_indexRange0(l+2, ASSUMED_NONE, ASSUMED_SIZE,
-			 EXPR_ARG1(cobound), EXPR_ARG2(cobound), EXPR_ARG3(cobound));
+            outx_printi(l1, "<coShape>\n");
+            FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(v)) {
 
-      }
-      outx_close(l1, "coShape");
-      break;
-    default:
-        abort();
+                expr cobound = LIST_ITEM(lp);
+                /* expr upper = EXPR_ARG2(cobound); */
+                /* ARRAY_ASSUME_KIND defaultAssumeKind = ASSUMED_SHAPE; */
+                /* if (upper && EXPR_CODE(upper) == F_ASTERISK){ */
+                /*   upper = NULL; */
+                /*   defaultAssumeKind = ASSUMED_SIZE; */
+                /* } */
+
+                outx_indexRange0(l+2, ASSUMED_NONE, ASSUMED_SIZE,
+                                 EXPR_ARG1(cobound), EXPR_ARG2(cobound), EXPR_ARG3(cobound));
+
+            }
+            outx_close(l1, "coShape");
+        } break;
+
+        default:
+            abort();
     }
 
     outx_close(l, "alloc");
@@ -2354,8 +2357,9 @@ static void
 outx_allocList(int l, expv v)
 {
     list lp;
-    FOR_ITEMS_IN_LIST(lp, v)
+    FOR_ITEMS_IN_LIST(lp, v) {
         outx_alloc(l, LIST_ITEM(lp));
+    }
 }
 
 
@@ -2373,6 +2377,31 @@ outx_nullifyStatement(int l, expv v)
 }
 
 
+static void
+print_allocate_keyword(char * buf, expv v, const char * keyword)
+{
+    if (v) {
+        switch (EXPR_CODE(v)){
+            case F_VAR:
+                sprintf(buf, " %s=\"%s\"", keyword, SYM_NAME(EXPV_NAME(v)));
+                break;
+            case ARRAY_REF:
+                warning("cannot use array ref. in allocate/deallocate keyword specifier");
+                buf[0] = '\0';
+                break;
+            case F95_MEMBER_REF:
+                warning("cannot use member ref. in allocate/deallocate keyword specifier");
+                buf[0] = '\0';
+                break;
+            default:
+                buf[0] = '\0';
+                break;
+        }
+    }
+}
+
+
+
 /**
  * output FallocateStatement/FdeallocateStatement
  */
@@ -2380,34 +2409,23 @@ static void
 outx_ALLOCDEALLOC_statement(int l, expv v)
 {
     const int l1 = l + 1;
-    char buf[128];
-    expv vstat = expr_list_get_n(v, 1);
+    expv keywords = EXPR_ARG2(v);
 
-    if(vstat)
-      switch (EXPR_CODE(vstat)){
-      case F_VAR:
-	sprintf(buf, " stat_name=\"%s\"", SYM_NAME(EXPV_NAME(vstat)));
-	break;
-      case ARRAY_REF:
-        //error_at_node(v, "cannot use array ref. in stat specifier");
-	warning("cannot use array ref. in stat specifier");
-        buf[0] = '\0';
-	break;
-	//        exit(1);
-      case F95_MEMBER_REF:
-        //error_at_node(v, "cannot use member ref. in stat specifier");
-	warning("cannot use member ref. in stat specifier");
-        buf[0] = '\0';
-        //exit(1);
-	break;
-      default:
-        buf[0] = '\0';
-	break;
-      }
-    else
-        buf[0] = '\0';
+    expv vstat = expr_list_get_n(keywords, 1);
+    expv vmold = expr_list_get_n(keywords, 2);
+    expv vsource = expr_list_get_n(keywords, 3);
+    expv verrmsg = expr_list_get_n(keywords, 4);
+    char stat_buf[128];
+    char mold_buf[128];
+    char source_buf[128];
+    char errmsg_buf[128];
 
-    outx_tagOfStatement1(l, v, buf);
+    print_allocate_keyword(stat_buf, vstat, "stat_name");
+    print_allocate_keyword(mold_buf, vmold, "mold_name");
+    print_allocate_keyword(source_buf, vsource, "source_name");
+    print_allocate_keyword(errmsg_buf, verrmsg, "errmsg_name");
+
+    outx_tagOfStatement1(l, v, stat_buf, mold_buf, source_buf, errmsg_buf);
     outx_allocList(l1, EXPR_ARG1(v));
     outx_expvClose(l, v);
 }
