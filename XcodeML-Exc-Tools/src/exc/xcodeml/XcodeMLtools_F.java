@@ -325,6 +325,7 @@ public class XcodeMLtools_F extends XcodeMLtools {
 		     toXobject(getElement(n, "declarations"))
 		     );
       x.add(toXobject(getElement(n, "FcontainsStatement")));
+      x.add(getAttrIntFlag(n, "is_sub"));
       x.add(getSymbol(n, "parent_name"));
 
       markModuleVariable((XobjList)x.getArgOrNull(1),

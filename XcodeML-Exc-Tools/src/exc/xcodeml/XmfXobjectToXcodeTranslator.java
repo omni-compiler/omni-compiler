@@ -235,10 +235,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_MODULE_DEFINITION: {
-            Xobject parent_name = xobj.getArgOrNull(4);
+            Xobject parent_name = xobj.getArgOrNull(5);
             e = createElement(name,
                               "name", getArg0Name(xobj),
-                              "is_sub", (parent_name != null) ? "true" : "false",
+                              "is_sub", intFlagToBoolStr(xobj.getArgOrNull(4)),
                               "parent_name", (parent_name != null) ? parent_name.getName() : null);
             XobjList symbols = (XobjList)xobj.getArgOrNull(1);
             XobjList decls =

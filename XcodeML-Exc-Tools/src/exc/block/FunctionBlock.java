@@ -84,6 +84,7 @@ public class FunctionBlock extends CompoundBlock
 			     name, body.id_list,
 			     body.decls, 
 			     body.toXobject(),
+			     Xcons.IntConstant((parent_name != null) ? 1 : 0),
 			     parent_name);
 	} else {
 	    x = new XobjList(Opcode(),
