@@ -2511,8 +2511,15 @@ end_declaration()
         if (unit_ctl_level > 0) {
             update_procedure_variables_forall(PARENT_LOCAL_SYMBOLS,
                                               PARENT_LOCAL_STRUCT_DECLS, myId,
-                                              /*is_final = */ TRUE);
+                                              /*is_final = */ FALSE);
+
+            FOREACH_EXT_ID(ep, LOCAL_EXTERNAL_SYMBOLS) {
+                update_procedure_variables_forall(EXT_PROC_ID_LIST(ep),
+                                                  EXT_PROC_STRUCT_DECLS(ep), myId,
+                                                  /*is_final = */ FALSE);
+            }
         }
+
 
         /*
          * Update type bound procedure
@@ -2826,6 +2833,17 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
             PROC_CLASS(id)  = P_DEFINEDPROC;
             PROC_EXT_ID(id) = contained_proc;
         }
+
+#if 0
+        if (ID_TYPE(id) != NULL &&
+            IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
+            FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(id))) {
+            error_at_id(id,
+                        "%s is used as explicit interface but not defined",
+                        SYM_NAME(ID_SYM(id)));
+            continue;
+        }
+#endif
     }
 }
 
@@ -3025,7 +3043,7 @@ check_procedure_variables_for_idlist(ID id_list, TYPE_DESC const stp)
 
 
 static void
-check_procedure_variables()
+check_procedure_variables_forall()
 {
     /*
      * Check a function refered exists
@@ -3180,7 +3198,7 @@ end_procedure()
         if (CURRENT_EXT_ID == NULL) {
             /* Any other errors already occured, let compilation carry on. */
             return;
-         }
+        }
         /* check if module procedures are defined in contains block */
         EXT_ID intr, intrDef, ep;
         FOREACH_EXT_ID(intr, LOCAL_INTERFACES) {
@@ -3364,14 +3382,6 @@ end_procedure()
         }
 
         if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_UNDEFINEDPROC) {
-            if (ID_TYPE(id) != NULL &&
-                IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
-                FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(id))) {
-                error_at_id(id,
-                            "%s is used as explicit interface but not defined",
-                            SYM_NAME(ID_SYM(id)));
-                continue;
-            }
 
             if(PROC_EXT_ID(id) != NULL) {
                 /* undefined procedure is defined in contain statement.  */
@@ -3485,7 +3495,9 @@ end_procedure()
         dump_all_module_procedures(stderr);
     }
 
-    check_procedure_variables();
+    if (unit_ctl_level == 0) {
+        check_procedure_variables_forall();
+    }
 
     check_type_bound_procedures();
 
@@ -4400,6 +4412,23 @@ import_module_id(ID mid,
         TYPE_UNSET_PUBLIC(id);
         TYPE_UNSET_PRIVATE(id);
     }
+
+    if(ID_TYPE(id) != NULL && IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
+       TYPE_REF(ID_TYPE(id)) == NULL) {
+        /*
+         * Import 'PROCEDURE(), POINTER :: p'
+         * So setup id as unfixed procedure variable.
+         */
+        TYPE_DESC old = ID_TYPE(id);
+        ID_TYPE(id) = function_type(NULL);
+        implicit_declaration(id);
+        TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+        TYPE_SET_IMPLICIT(ID_TYPE(id));
+        TYPE_REF(old) = ID_TYPE(id);
+        ID_TYPE(id) = old;
+        TYPE_SET_NOT_FIXED(ID_TYPE(id));
+    }
+
 
     if(ID_STORAGE(id) == STG_TAGNAME) {
         TYPE_TAGNAME(ID_TYPE(id)) = id;
@@ -6144,58 +6173,84 @@ compile_POINTER_SET_statement(expr x) {
             error_at_node(x, "'%s' is not a function/subroutine",
                           SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
         }
-        if (EXPR_CODE(vPointee) == F_VAR && !IS_PROCEDURE_TYPE(vPteTyp)) {
+        if (EXPR_CODE(vPointee) == F_VAR) {
             ID id = find_ident(EXPR_SYM(vPointee));
-            assert(id != NULL);
-            if (TYPE_IS_IMPLICIT(vPteTyp) && TYPE_REF(vPtrTyp)) {
-                /*
-                 * ex)
-                 *  ! f is a procedure pointer
-                 *  f => g ! g is pointee
-                 *
-                 *  So assumption: g is a procedure
-                 */
-                TYPE_DESC tp;
-                TYPE_DESC ftp = get_bottom_ref_type(vPtrTyp);
-                int attrs = TYPE_ATTR_FLAGS(vPteTyp);
-                int extattrs = TYPE_EXTATTR_FLAGS(vPteTyp);
+            if (!IS_PROCEDURE_TYPE(vPteTyp)) {
+                assert(id != NULL); /* declared in compile_expression() */
+                if (TYPE_IS_IMPLICIT(vPteTyp) && TYPE_REF(vPtrTyp)) {
+                    /*
+                     * ex)
+                     *  ! f is a procedure pointer
+                     *  f => g ! g is pointee
+                     *
+                     *  So assumption: g is a procedure
+                     */
+                    TYPE_DESC tp;
+                    TYPE_DESC ftp = get_bottom_ref_type(vPtrTyp);
+                    int attrs = TYPE_ATTR_FLAGS(vPteTyp);
+                    int extattrs = TYPE_EXTATTR_FLAGS(vPteTyp);
 
-                ID_CLASS(id) = CL_PROC;
-                PROC_CLASS(id) = P_UNDEFINEDPROC;
+                    ID_CLASS(id) = CL_PROC;
+                    PROC_CLASS(id) = P_UNDEFINEDPROC;
 
-                *vPteTyp = *ftp;
-                tp = new_type_desc();
-                *tp = *FUNCTION_TYPE_RETURN_TYPE(vPteTyp);
-                FUNCTION_TYPE_RETURN_TYPE(vPteTyp) = tp;
-                TYPE_ATTR_FLAGS(vPteTyp) = attrs & (TYPE_ATTR_PUBLIC | TYPE_ATTR_PRIVATE);
-                TYPE_EXTATTR_FLAGS(vPteTyp) = extattrs;
-
-            } else {
-                /*
-                 * POINTEE is used as a function/subroutine,
-                 * so fix its type
-                 *
-                 * ex)
-                 *
-                 *   REAL :: g ! may be a external function
-                 *
-                 *   f => g
-                 */
-
-                TYPE_DESC old;
-
-                ID_CLASS(id) = CL_PROC;
-                PROC_CLASS(id) = P_UNDEFINEDPROC;
-                old = ID_TYPE(id);
-
-                if (IS_FUNCTION_TYPE(vPtrTyp)) {
-                    ID_TYPE(id) = function_type(old);
-                    TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+                    *vPteTyp = *ftp;
+                    tp = new_type_desc();
+                    *tp = *FUNCTION_TYPE_RETURN_TYPE(vPteTyp);
+                    FUNCTION_TYPE_RETURN_TYPE(vPteTyp) = tp;
+                    TYPE_ATTR_FLAGS(vPteTyp) = attrs & (TYPE_ATTR_PUBLIC | TYPE_ATTR_PRIVATE);
+                    TYPE_EXTATTR_FLAGS(vPteTyp) = extattrs;
 
                 } else {
-                    ID_TYPE(id) = subroutine_type();
-                    TYPE_ATTR_FLAGS(ID_TYPE(id)) = TYPE_ATTR_FLAGS(old);
-                    TYPE_EXTATTR_FLAGS(ID_TYPE(id)) = TYPE_EXTATTR_FLAGS(old);
+                    /*
+                     * POINTEE is used as a function/subroutine,
+                     * so fix its type
+                     *
+                     * ex)
+                     *
+                     *   REAL :: g ! may be a external function
+                     *
+                     *   f => g
+                     */
+
+                    TYPE_DESC old;
+
+                    ID_CLASS(id) = CL_PROC;
+                    PROC_CLASS(id) = P_UNDEFINEDPROC;
+                    old = ID_TYPE(id);
+
+                    if (IS_FUNCTION_TYPE(vPtrTyp)) {
+                        ID_TYPE(id) = function_type(old);
+                        TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+
+                    } else {
+                        ID_TYPE(id) = subroutine_type();
+                        TYPE_ATTR_FLAGS(ID_TYPE(id)) = TYPE_ATTR_FLAGS(old);
+                        TYPE_EXTATTR_FLAGS(ID_TYPE(id)) = TYPE_EXTATTR_FLAGS(old);
+                    }
+                }
+            } else {
+                if ((IS_FUNCTION_TYPE(vPteTyp) &&  TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)))
+                    && TYPE_REF(vPtrTyp)) {
+                    /*
+                     * ex)
+                     *  i = g()
+                     *  ! f is a procedure pointer
+                     *  f => g ! g is pointee
+                     *
+                     *  So assumption: g is a procedure
+                     */
+                    TYPE_DESC ftp = get_bottom_ref_type(vPtrTyp);
+
+                    ID_CLASS(id) = CL_PROC;
+                    PROC_CLASS(id) = P_UNDEFINEDPROC;
+
+                    TYPE_REF(vPteTyp) = ftp;
+                    TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = FUNCTION_TYPE_RETURN_TYPE(ftp);
+                    TYPE_ATTR_FLAGS(vPteTyp) = 0;
+                    TYPE_EXTATTR_FLAGS(vPteTyp) = 0;
+                    TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = 0;
+                    TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = 0;
+
                 }
             }
             if (ID_LINE(id) == NULL) {

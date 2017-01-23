@@ -397,17 +397,22 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
         free(str);
     }
 
-    if (retTypeId != NULL)
-        *retTypeId = typeId;    /* return typeId */
-    else
-        free(typeId);
-
-
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_class");
     if (str != NULL) {
         TYPE_SET_CLASS(*tp);
         free(str);
     }
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_procedure");
+    if (str != NULL) {
+        TYPE_SET_PROCEDURE(*tp);
+        free(str);
+    }
+
+    if (retTypeId != NULL)
+        *retTypeId = typeId;    /* return typeId */
+    else
+        free(typeId);
 
     return TRUE;
 }
@@ -1616,9 +1621,18 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
         return FALSE;
 
     ref = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "ref");
-    TYPE_REF(tp) = getTypeDesc(ht, ref);
-    TYPE_BASIC_TYPE(tp) = TYPE_BASIC_TYPE(TYPE_REF(tp));
-    shrink_type(tp);
+    if (ref != NULL) {
+        TYPE_REF(tp) = getTypeDesc(ht, ref);
+        TYPE_BASIC_TYPE(tp) = TYPE_BASIC_TYPE(TYPE_REF(tp));
+        shrink_type(tp);
+    } else {
+        TYPE_REF(tp) = NULL;
+        if (TYPE_IS_PROCEDURE(tp)) {
+            TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
+        } else if (TYPE_IS_CLASS(tp)) {
+            TYPE_BASIC_TYPE(tp) = TYPE_STRUCT;
+        }
+    }
 
     if (!xmlSkipWhiteSpace(reader)) 
         return FALSE;
@@ -2431,7 +2445,8 @@ set_sclass(ID id, const char* sclass)
         else
             ID_CLASS(id) = CL_VAR;
 
-        if (IS_FUNCTION_TYPE(tp) || IS_SUBR(tp) || IS_GENERIC_TYPE(tp)) {
+        if (!TYPE_IS_PROCEDURE(tp) &&
+            (IS_PROCEDURE_TYPE(tp) || IS_GENERIC_TYPE(tp))) {
             ID_CLASS(id) = CL_PROC;
             /* ID_STORAGE(id) = STG_SAVE; */
         }
@@ -2518,9 +2533,10 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
         }
 
         // if type of id is function/subroutine, then regarded as procedure
-        if (TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_FUNCTION ||
-            TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_SUBR ||
-            TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_GENERIC) {
+        if ((TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_FUNCTION ||
+             TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_SUBR ||
+             TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_GENERIC) &&
+            !TYPE_IS_PROCEDURE(ID_TYPE(id))) {
             ID_IS_DECLARED(id) = TRUE;
             if (TYPE_IS_EXTERNAL(ID_TYPE(id)))
                 PROC_CLASS(id) = P_EXTERNAL;

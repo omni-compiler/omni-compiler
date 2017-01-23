@@ -791,7 +791,12 @@ implicit_declaration(ID id)
         copy_parent_type(id);
     }
     tp = ID_TYPE(id);
-    if (IS_PROCEDURE_TYPE(tp)) {
+    if (IS_SUBR(tp)) {
+        /* implicit declaration does not work */
+        return;
+    }
+
+    if (IS_FUNCTION_TYPE(tp)) {
         tp = FUNCTION_TYPE_RETURN_TYPE(tp);
     }
 
@@ -5321,23 +5326,37 @@ compile_procedure_declaration(expr x)
 
         } else {
             /*
-             * If proce interface is null,
+             * If proc interface is null,
              * the function return type is declared implicitly
              *
              * ex)
              *   PROCEDURE(), POINTER :: i
              *
-             *   i will returns an INTEGER type
+             *   it will returns an INTEGER type
              *
              */
 
-            ID_TYPE(id) = function_type(NULL);
-            implicit_declaration(id);
-            TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
-            ID_TYPE(id) = procedure_type(ID_TYPE(id));
+            if (VAR_INIT_VALUE(id)) {
+                if (IS_SUBR(EXPV_TYPE(VAR_INIT_VALUE(id)))) {
+                    ID_TYPE(id) = subroutine_type();
+                    TYPE_SET_IMPLICIT(ID_TYPE(id));
+                } else {
+                    ID_TYPE(id) = function_type(NULL);
+                    implicit_declaration(id);
+                    TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+                    TYPE_SET_IMPLICIT(ID_TYPE(id));
+                }
+                ID_TYPE(id) = procedure_type(ID_TYPE(id));
+            } else {
+                ID_TYPE(id) = function_type(NULL);
+                implicit_declaration(id);
+                TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+                TYPE_SET_IMPLICIT(ID_TYPE(id));
+                ID_TYPE(id) = procedure_type(ID_TYPE(id));
 
-            /* When the first assignment appears, fix it */
-            TYPE_SET_NOT_FIXED(ID_TYPE(id));
+                /* When the first assignment appears, fix it */
+                TYPE_SET_NOT_FIXED(ID_TYPE(id));
+            }
         }
 
         /*

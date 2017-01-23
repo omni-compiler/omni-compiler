@@ -4153,7 +4153,12 @@ outx_functionType_procedure(int l, TYPE_DESC tp)
         }
     }
 
-    if (TYPE_REF(tp)) {
+    if (TYPE_REF(tp) && !TYPE_IS_IMPLICIT(TYPE_REF(tp))) {
+        /*
+         * TYPE_IS_IMPLICIT(TYPE_REF(tp)) means that
+         * the procedure variable declared like "PROCEDURE(), POINTER :: p".
+         * So don't emit this attribute.
+         */
         outx_print(" ref=\"%s\"/>\n", getTypeID(TYPE_REF(tp)));
     } else {
         outx_print("/>\n");

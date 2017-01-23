@@ -2,6 +2,7 @@
         PRIVATE :: f, sub
         PROCEDURE(f), POINTER :: a => f
         PROCEDURE(sub), POINTER :: b => sub
+        PROCEDURE(), POINTER :: c
        CONTAINS
         FUNCTION f(a)
           INTEGER :: f
