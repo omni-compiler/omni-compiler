@@ -259,7 +259,7 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
         extid = new_external_id_for_external_decl(ID_SYM(id), ftp);
         ID_TYPE(id) = ftp;
         PROC_EXT_ID(id) = extid;
-        if(TYPE_IS_EXTERNAL(tp)){
+        if(TYPE_IS_EXTERNAL(ftp)){
            ID_STORAGE(id) = STG_EXT;
         }else{
            EXT_PROC_CLASS(extid) = EP_INTRINSIC;
