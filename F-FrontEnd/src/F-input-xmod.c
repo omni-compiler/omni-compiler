@@ -1642,6 +1642,11 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
         TYPE_REF(tp) = getTypeDesc(ht, ref);
         TYPE_BASIC_TYPE(tp) = TYPE_BASIC_TYPE(TYPE_REF(tp));
         shrink_type(tp);
+
+        if (IS_CHAR(tp))  {
+            TYPE_CHAR_LEN(tp) = TYPE_CHAR_LEN(TYPE_REF(tp));
+        }
+
     } else {
         TYPE_REF(tp) = NULL;
         if (TYPE_IS_PROCEDURE(tp)) {
@@ -1651,7 +1656,7 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
         }
     }
 
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     if (isEmpty)
@@ -1664,6 +1669,15 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
     /* <len> */
     if (!input_len(reader, ht, tp))
         return FALSE;
+
+    if (IS_CHAR(tp) && TYPE_LENG(tp))  {
+        if (EXPR_CODE(TYPE_LENG(tp)) == INT_CONSTANT) {
+            TYPE_CHAR_LEN(tp) = EXPV_INT_VALUE(TYPE_LENG(tp));
+        } else {
+            /* don't use as Fcharacter */
+            TYPE_CHAR_LEN(tp) = 0;
+        }
+    }
 
     /* <indexRange> */
     while (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "indexRange")) {
@@ -1690,6 +1704,15 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
 
     if (typeId != NULL)
         free(typeId);
+
+    /*
+     * cut last
+     */
+    if (IS_CHAR(tp))  {
+        if (TYPE_REF(TYPE_REF(tp)) == NULL && TYPE_CHAR_LEN(TYPE_REF(tp)) == 1) {
+            TYPE_REF(tp) = NULL;
+        }
+    }
 
     return TRUE;
 }
