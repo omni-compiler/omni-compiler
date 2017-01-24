@@ -227,6 +227,7 @@ public class omompx
       } else if (arg.equals("-const-size-distarray")) {
         XmOption.setIsConstSizeDistArray(true);
       } else if (arg.equals("-keep-distarray-form")) {
+        XmOption.setIsConstSizeDistArray(true);
         XmOption.setKeepDistArrayForm(true);
       } else if (arg.equals("-no-ldg")) {
         accDisableReadOnlyDataCache = true;
@@ -252,10 +253,6 @@ public class omompx
       if (doScalasca == false && doTlog == false) {
         doScalasca = true;
       }
-    }
-
-    if(XmOption.keepDistArrayForm() && !XmOption.isConstSizeDistArray()){
-      error("use -keep-distarray-form with -const-size-distarray");
     }
 
     Reader reader = null;
