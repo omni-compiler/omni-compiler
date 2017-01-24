@@ -20,6 +20,10 @@ static int _memid = _XMP_FJRDMA_START_MEMID; // _memid = 0 is used for put/get o
 static uint64_t _local_rdma_addr, *_remote_rdma_addr;
 static unsigned int *_sync_images_table;
 
+/** These variables are temporral **/
+extern int _XMP_flag_put_nb;   
+/** End these variables are temporral **/ 
+
 /******************************************************************/
 /* DESCRIPTION : Set addresses                                    */
 /* ARGUMENT    : [OUT] *addrs     : Addresses                     */
@@ -1289,6 +1293,9 @@ void _XMP_add_num_of_gets()
 */
 void _XMP_fjrdma_sync_memory()
 {
+  if(_XMP_flag_put_nb)
+    _XMP_fjrdma_sync_memory_put();
+
   //  _XMP_fjrdma_sync_memory_put();
   // _XMP_fjrdma_sync_memory_get don't need to be executed
 }
@@ -1298,10 +1305,12 @@ void _XMP_fjrdma_sync_memory()
 */
 void _XMP_fjrdma_sync_all()
 {
+  if(_XMP_flag_put_nb)
+    _XMP_fjrdma_sync_memory();
+
   //  _XMP_fjrdma_sync_memory();
   MPI_Barrier(MPI_COMM_WORLD);
 }
-
 
 /**
    transfer_size must be 4-Byte align
@@ -1544,7 +1553,9 @@ void _XMP_fjrdma_contiguous_put(const int target_rank, const uint64_t dst_offset
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
-  _XMP_fjrdma_sync_memory_put();
+
+  if(_XMP_flag_put_nb == false)
+    _XMP_fjrdma_sync_memory_put();
 }
 
 /*************************************************************************/

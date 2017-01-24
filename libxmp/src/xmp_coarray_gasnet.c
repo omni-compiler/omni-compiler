@@ -836,7 +836,7 @@ void _XMP_gasnet_sync_memory()
 
   _xmp_gasnet_stride_wait_size = 0;
 
-  if( _XMP_flag_put_nb == true)
+  if( _XMP_flag_put_nb)
     gasnet_wait_syncnbi_puts();
 }
 
@@ -1529,7 +1529,7 @@ void _XMP_gasnet_contiguous_put(const int target_rank, _XMP_coarray_t *dst_desc,
 				const size_t src_elmts, const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){
-    if(_XMP_flag_put_nb == true)
+    if(_XMP_flag_put_nb)
       gasnet_put_nbi_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
     else
       gasnet_put_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
