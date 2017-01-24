@@ -350,15 +350,16 @@ public class XcodeMLtools_F extends XcodeMLtools {
          Xcons.List(code, type, getChildList(n)));
 
     case F_MODULE_PROCEDURE_DECL:
-      boolean isModuleSpecified = getAttrBool(n, "is_module_specified");
-      return setCommonAttributes(n,
-				 Xcons.List(code, type, Xcons.IntConstant(isModuleSpecified ? 1 : 0), getChildList(n)));
+      return setCommonAttributes(n, Xcons.List(code, type,
+                                               getAttrIntFlag(n, "is_module_specified"),
+                                               getChildList(n)));
 
     case F_INTERFACE_DECL:
-      boolean isOperator = getAttrBool(n, "is_operator");
-      boolean isAssignment = getAttrBool(n, "is_assignment");
-      return setCommonAttributes(n,
-				 Xcons.List(code, type, getSymbol(n, "name"), Xcons.IntConstant(isOperator ? 1 : 0), Xcons.IntConstant(isAssignment ? 1 : 0), getChildList(n)));
+      return setCommonAttributes(n, Xcons.List(code, type,
+                                               getSymbol(n, "name"),
+                                               getAttrIntFlag(n, "is_operator"),
+                                               getAttrIntFlag(n, "is_assignment"),
+                                               getChildList(n)));
 
     case F_BLOCK_DATA_DEFINITION:
       x = getSymbol(n, "name");
@@ -753,27 +754,26 @@ public class XcodeMLtools_F extends XcodeMLtools {
         int tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
                | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0);
         Node bdg = getElement(n, "binding");
-        XobjString overridable = Xcons.String(getAttr(n, "is_non_overridable"));
         return setCommonAttributes(n, Xcons.List(code, type, pass, pass_arg,
-						 toXobject(getElement(n, "name")),
-	                                         Xcons.IntConstant(tq),
+                                                 toXobject(getElement(n, "name")),
+                                                 Xcons.IntConstant(tq),
                                                  (bdg != null) ? toXobject(getContent(bdg)) : null,
-                                                 overridable
-						));
+                                                 getAttrIntFlag(n, "is_non_overridable")
+                                                ));
       }
 
     case F_TYPE_BOUND_GENERIC_PROCEDURE:
       {
-        XobjString is_operator   = Xcons.String(getAttr(n, "is_operator"  ));
-        XobjString is_assignment = Xcons.String(getAttr(n, "is_assignment"));
         int tq = (getAttrBool(n, "is_private") ? Xtype.TQ_FPRIVATE : 0)
                | (getAttrBool(n, "is_public" ) ? Xtype.TQ_FPUBLIC  : 0);
         Node bdg = getElement(n, "binding");
-        return setCommonAttributes(n, Xcons.List(code, (Xtype)null, is_operator, is_assignment,
-						 toXobject(getElement(n, "name")),
-	                                         Xcons.IntConstant(tq),
+        return setCommonAttributes(n, Xcons.List(code, (Xtype)null,
+                                                 getAttrIntFlag(n, "is_operator"),
+                                                 getAttrIntFlag(n, "is_assignment"),
+                                                 toXobject(getElement(n, "name")),
+                                                 Xcons.IntConstant(tq),
                                                  toXobject(bdg)
-						));
+                                                ));
       }
 
     case F_TYPE_BOUND_PROCEDURES:

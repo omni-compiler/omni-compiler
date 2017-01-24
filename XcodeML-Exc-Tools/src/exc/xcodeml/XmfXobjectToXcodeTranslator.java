@@ -1130,6 +1130,13 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         return a.getName();
     }
 
+    private String getArgString(Xobject x, int idx) {
+        Xobject a = x.getArgOrNull(idx);
+        if (a == null)
+            return null;
+        return a.getString();
+    }
+
     private Node transDef(XobjectDef def) {
         if (def == null) {
             fatal("def is null");
@@ -1423,8 +1430,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (xobj.Opcode() == Xcode.F_TYPE_BOUND_PROCEDURE) {
           e = createElement("typeBoundProcedure");
           addAttributes(e, "type", xobj.Type().getXcodeFId());
-          addAttributes(e, "pass"         , (xobj.getArg(0) != null) ? ((XobjString)xobj.getArg(0)).getString() : null);
-          addAttributes(e, "pass_arg_name", (xobj.getArg(1) != null) ? ((XobjString)xobj.getArg(1)).getString() : null);
+          addAttributes(e, "pass"         , getArgString(xobj, 0));
+          addAttributes(e, "pass_arg_name", getArgString(xobj, 1));
           addChildNode(e, transName(xobj.getArg(2)));
           int tq = ((XobjInt)xobj.getArg(3)).getInt();
           if ((tq & Xtype.TQ_FPRIVATE) != 0)
@@ -1432,11 +1439,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
           else if ((tq & Xtype.TQ_FPUBLIC) != 0)
             addAttributes(e, "is_public", "true");
           addChildNode(e, addChildNode(createElement("binding"), transName(xobj.getArg(4))));
-          addAttributes(e, "is_non_overridable", (xobj.getArg(5) != null) ? ((XobjString)xobj.getArg(5)).getString() : null);
+          addAttributes(e, "is_non_overridable", intFlagToBoolStr(xobj.getArgOrNull(5)));
         } else if (xobj.Opcode() == Xcode.F_TYPE_BOUND_GENERIC_PROCEDURE) {
           e = createElement("typeBoundGenericProcedure");
-          addAttributes(e, "is_operator"  , (xobj.getArg(0) != null) ? ((XobjString)xobj.getArg(0)).getString() : null);
-          addAttributes(e, "is_assignment", (xobj.getArg(1) != null) ? ((XobjString)xobj.getArg(1)).getString() : null);
+          addAttributes(e, "is_operator"  , intFlagToBoolStr(xobj.getArgOrNull(0)));
+          addAttributes(e, "is_assignment", intFlagToBoolStr(xobj.getArgOrNull(1)));
           addChildNode(e, transName(xobj.getArg(2)));
           int tq = ((XobjInt)xobj.getArg(3)).getInt();
           if ((tq & Xtype.TQ_FPRIVATE) != 0)
