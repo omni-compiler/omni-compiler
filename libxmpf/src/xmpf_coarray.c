@@ -28,6 +28,7 @@ static int _XMPF_coarrayMsg_last;         // for _XMPF_set/reset_coarrayMsg()
 static unsigned _XMPF_poolThreshold = POOL_THRESHOLD;
 static size_t _XMPF_localBufSize = LOCAL_BUF_SIZE;
 static BOOL _XMPF_isSafeBufferMode = FALSE;
+static BOOL _XMPF_isSyncPutMode = FALSE;
 
 static void _set_coarrayMsg(int sw)
 {
@@ -56,6 +57,7 @@ static void _set_poolThreshold(unsigned size);
 static void _set_localBufSize(unsigned size);
 static unsigned _envStringToBytes(char *str, char *envVarName);
 static void _set_isSafeBufferMode(BOOL sw);
+static void _set_isSyncPutMode(BOOL sw);
 
 int _XMPF_get_coarrayMsg(void)
 {
@@ -117,6 +119,17 @@ BOOL XMPF_isSafeBufferMode(void)
 }
 
 
+void _set_isSyncPutMode(BOOL sw)
+{
+  _XMPF_isSyncPutMode = sw;
+}
+
+BOOL XMPF_isSyncPutMode(void)
+{
+  return _XMPF_isSyncPutMode;
+}
+
+
 /*****************************************\
   hidden API,
    which can be used in the program
@@ -158,73 +171,83 @@ void _XMPF_coarray_init(void)
   /*
    * read environment variables
    */
-  char *tok, *work, *env1, *env2, *env3, *env4;
+  char *tok, *work, *env1, *env2, *env3, *env4, *env5;
   int i;
   char delim[] = ", ";
   unsigned len;
+
+  _XMPF_coarrayDebugPrint("Execution time environment\n"
+                          "   communication layer  :  %s\n"
+                          "    - memory allocation boundary : %u byte(s)\n"
+                          "    - communication boundary     : %u byte(s)\n",
+                          ONESIDED_COMM_LAYER,
+                          MALLOC_UNIT,
+                          COMM_UNIT
+                          );
+
+
+  _XMPF_set_coarrayMsg(TRUE);
 
   env1 = getenv("XMPF_COARRAY_MSG");
   if (env1 != NULL) {
     work = strdup(env1);
     tok = strtok(work, delim);
     for (i = 1; tok != NULL; i++, tok = strtok(NULL, delim)) {
-      if (_XMPF_this_image_current() == i)
+      if (_XMPF_this_image_current() == i) {
+        _XMPF_coarrayDebugPrint("Accepted XMPF_COARRAY_MSG=%s\n", env1);
         _set_coarrayMsg(atoi(tok));
+      }
     }
   }
 
   env2 = getenv("XMPF_COARRAY_POOL");
   if (env2 != NULL) {
     len = _envStringToBytes(env2, "XMPF_COARRAY_POOL");
-    if (len != 0)
+    if (len != 0) {
+      _XMPF_coarrayDebugPrint("Accepted XMPF_COARRAY_POOL=%s\n", env2);
       _set_poolThreshold(len);
+    }
   }
     
   env3 = getenv("XMPF_COARRAY_BUF");
   if (env3 != NULL) {
     len = _envStringToBytes(env3, "XMPF_COARRAY_BUF");
-    if (len != 0)
+    if (len != 0) {
+      _XMPF_coarrayDebugPrint("Accepted XMPF_COARRAY_BUF=%s\n", env3);
       _set_localBufSize(len);
+    }
   }
     
   env4 = getenv("XMPF_COARRAY_SAFE");
   if (env4 != NULL) {
+    _XMPF_coarrayDebugPrint("Accepted XMPF_COARRAY_SAFE=%s\n", env4);
     _set_isSafeBufferMode(atoi(env4));
   }
     
-  if (_XMPF_coarrayMsg || (env2&&*env2) || (env3&&*env3) || (env4&&*env4)) {
-    _XMPF_set_coarrayMsg(TRUE);
-
-    _XMPF_coarrayDebugPrint("Execution time environment\n"
-                            "   communication layer  :  %s\n"
-                            "    - memory allocation boundary : %u byte(s)\n"
-                            "    - communication boundary     : %u byte(s)\n"
-                            "   environment vars     :  XMPF_COARRAY_MSG=%s\n"
-                            "                           XMPF_COARRAY_POOL=%s\n"
-                            "                           XMPF_COARRAY_BUF=%s\n"
-                            "                           XMPF_COARRAY_SAFE=%s\n",
-                            ONESIDED_COMM_LAYER, MALLOC_UNIT, COMM_UNIT, 
-                            env1 ? env1 : "",
-                            env2 ? env2 : "",
-                            env3 ? env3 : "",
-                            env4 ? env4 : ""
-                            );
-
-    _XMPF_reset_coarrayMsg();
+  env5 = getenv("XMPF_COARRAY_SYNCPUT");
+  if (env5 != NULL) {
+    _XMPF_coarrayDebugPrint("Accepted XMPF_COARRAY_SYNCPUT=%s\n", env5);
+    _set_isSyncPutMode(atoi(env5));
   }
+
+  _XMPF_reset_coarrayMsg();
+
 
   _XMPF_coarrayDebugPrint("Specified Parameters\n"
                           "   runtime message switch        :  %s\n"
                           "   pooling/allocation threshold  :  %u bytes\n"
                           "   static buffer (localBuf) size :  %u bytes\n"
                           "   safe buffer mode (PUT only)   :  %s\n"
+                          "   sync put mode (PUT only)      :  %s\n"
                           "   GET-communication interface   :  type %d\n"
                           "   PUT-communication interface   :  type %d\n",
                           _XMPF_get_coarrayMsg() ? "on" : "off",
                           XMPF_get_poolThreshold(),
                           XMPF_get_localBufSize(),
                           XMPF_isSafeBufferMode() ? "on" : "off",
-                          GET_INTERFACE_TYPE, PUT_INTERFACE_TYPE
+                          XMPF_isSyncPutMode() ? "on" : "off",
+                          GET_INTERFACE_TYPE,
+                          PUT_INTERFACE_TYPE
                           );
 }
 
