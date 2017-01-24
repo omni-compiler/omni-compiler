@@ -3435,6 +3435,8 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             } else if (id != NULL && ID_IS_AMBIGUOUS(id)) {
                 error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
                 return;
+	    } else if(id != NULL && ID_TYPE(id) && TYPE_IS_FOR_FUNC_SELF(ID_TYPE(id))) {
+	      ;
             } else if(id == NULL || !(ID_IS_DUMMY_ARG(id))) {
                 id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
             } else if (id != NULL && ID_IS_DUMMY_ARG(id)) {
@@ -3597,6 +3599,15 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         }
 
         if (value != NULL && EXPR_CODE(value) != F_DATA_DECL) {
+
+	  // to be checked for function results.
+	  if (ID_IS_DUMMY_ARG(id) || ID_CLASS(id) == CL_PROC ||
+	      TYPE_IS_ALLOCATABLE(tp) || TYPE_IS_POINTER(tp) ||
+	      TYPE_IS_EXTERNAL(tp) || TYPE_IS_INTRINSIC(tp)){
+	    error_at_node(decl_list, "%s cannot have an initializer.", ID_NAME(id));
+	    return;
+	  }
+	  
             /*
              * FIXME:
              *	SUPER BOGUS FLAG ALERT !

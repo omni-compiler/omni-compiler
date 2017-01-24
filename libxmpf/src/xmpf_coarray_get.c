@@ -228,7 +228,7 @@ extern void xmpf_coarray_get_array_(void **descPtr, char **baseAddr, int *elemen
 
 /* REMARKING CONDITIONS:
  *  - The result variable may be invisible to FJ-RDMA.
- *  - The length of put/get communication must be divisible by
+ *  - The length of get communication must be divisible by
  *    COMM_UNIT. Else, SCHEME_Extra... should be selected.
  *  - SCHEME_ExtraDirectGet should not be used because the extra
  *    copy to local destination might overwrite neighboring data.
