@@ -8,6 +8,7 @@ package exc.xcalablemp;
 
 import exc.block.*;
 import exc.object.*;
+import xcodeml.util.XmOption;
 
 public class XMPshadow {
   // defined in xmp_constant.h
@@ -152,6 +153,10 @@ public class XMPshadow {
       globalDecl.addGlobalInitFuncCall(fname, shadowFuncArgs);
     }
 
+    if(XmOption.isConstSizeDistArray()) {
+      alignedArray.addShadowSizeToStaticSizeId();
+    }
+    
     // set shadow flag
     alignedArray.setHasShadow();
   }

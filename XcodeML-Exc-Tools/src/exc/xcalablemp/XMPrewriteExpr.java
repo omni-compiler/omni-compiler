@@ -3,6 +3,8 @@ package exc.xcalablemp;
 import exc.block.*;
 import exc.object.*;
 import exc.openacc.ACCpragma;
+import xcodeml.util.XmOption;
+
 import java.util.*;
 
 public class XMPrewriteExpr {
@@ -1803,6 +1805,25 @@ public class XMPrewriteExpr {
   public static Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount,
                                                       XobjList getAddrFuncArgs) throws XMPexception {
     int arrayDim = alignedArray.getDim();
+
+    if(alignedArray.isStaticLocalSize() && XmOption.keepDistArrayForm()){
+      XobjArgs args = getAddrFuncArgs.getArgs();
+      Xobject ref = args.getArg();
+      args = args.nextArgs();
+      
+      for(; args != null; args = args.nextArgs()){
+        Xobject x = args.getArg();
+        if(x.Opcode() == Xcode.FUNCTION_CALL){
+          if(x.getArg(0).getSym().startsWith("_XMP_M_")){
+            x.setType(Xtype.intType);
+          }
+        }
+        ref = Xcons.PointerRef(Xcons.binaryOp(Xcode.PLUS_EXPR, ref, x));
+      }
+
+      return ref;
+    }
+
     Ident getAddrFuncId = null;
 
     if (arrayDim < arrayDimCount) {
@@ -1810,11 +1831,12 @@ public class XMPrewriteExpr {
     } else if (arrayDim == arrayDimCount) {
       getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
       for (int i = 0; i < arrayDim - 1; i++)
-        getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
+        getAddrFuncArgs.add(alignedArray.getAccAt(i));
     } else {
       getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
-      for (int i = 0; i < arrayDimCount; i++)
-        getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
+      for (int i = 0; i < arrayDimCount; i++){
+        getAddrFuncArgs.add(alignedArray.getAccAt(i));
+      }
     }
 
     Xobject retObj = getAddrFuncId.Call(getAddrFuncArgs);
@@ -1942,6 +1964,9 @@ public class XMPrewriteExpr {
         continue;
       } else if (myExpr.isRewrittedByXmp()) {
         continue;
+      }
+      if(myExpr.Opcode() == null){
+        return;
       }
       switch (myExpr.Opcode()) {
         case ARRAY_REF:
@@ -2430,6 +2455,17 @@ public class XMPrewriteExpr {
 	      Ident descId = alignedArray.getDescId();
 	      
 	      
+	      if(alignedArray.isStaticLocalSize() && XmOption.keepDistArrayForm()){
+	        XobjList subscriptList = Xcons.List();
+	        for(int i = 0; i <alignedArray.getDim(); i++){
+	          long size = alignedArray.getStaticLocalSize(i);
+	          subscriptList.add(Xcons.List(Xcons.IntConstant(0), Xcons.IntConstant((int)size)));
+	        }
+	        subscriptList.cons(arrayAddrRef);
+	        XobjList arrayRef = subscriptList;//Xcons.List(arrayAddrRef, subscriptList);
+	        arrayRef.setIsRewrittedByXmp(true);
+	        return arrayRef;
+	      }else{
 	      String arraySizeName = "_ACC_size_" + arrayAddr.getSym();
 	      Ident arraySizeId = body.declLocalIdent(arraySizeName, Xtype.unsignedlonglongType);
 
@@ -2440,6 +2476,7 @@ public class XMPrewriteExpr {
 	      
 	      arrayRef.setIsRewrittedByXmp(true);
 	      return arrayRef;
+	      }
 	  }
 	  else {
 	      return arrayAddr;

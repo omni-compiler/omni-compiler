@@ -224,6 +224,10 @@ public class omompx
       } else if (arg.startsWith("-max_assumed_shape=")) {
 	  String n = arg.substring(19);
 	  exc.xmpF.XMP.MAX_ASSUMED_SHAPE = Integer.parseInt(n);
+      } else if (arg.equals("-const-size-distarray")) {
+        XmOption.setIsConstSizeDistArray(true);
+      } else if (arg.equals("-keep-distarray-form")) {
+        XmOption.setKeepDistArrayForm(true);
       } else if (arg.equals("-no-ldg")) {
         accDisableReadOnlyDataCache = true;
       } else if (arg.startsWith("-default-veclen=")) {
@@ -248,6 +252,10 @@ public class omompx
       if (doScalasca == false && doTlog == false) {
         doScalasca = true;
       }
+    }
+
+    if(XmOption.keepDistArrayForm() && !XmOption.isConstSizeDistArray()){
+      error("use -keep-distarray-form with -const-size-distarray");
     }
 
     Reader reader = null;

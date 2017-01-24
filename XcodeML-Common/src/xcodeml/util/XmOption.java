@@ -53,6 +53,9 @@ public class XmOption
      */
     private static boolean _coarrayNoUseStatement = false;  
 
+    private static boolean _isConstSizeDistArray = false;
+    private static boolean _keepDistArrayForm = false;
+
     private XmOption()
     {
     }
@@ -309,4 +312,8 @@ public class XmOption
         return _coarrayNoUseStatement;
     }
 
+    public static void setIsConstSizeDistArray(boolean constSizeDistArray) { _isConstSizeDistArray = constSizeDistArray; }
+    public static boolean isConstSizeDistArray() { return _isConstSizeDistArray; }
+    public static void setKeepDistArrayForm(boolean keepDistArrayForm) { _keepDistArrayForm = keepDistArrayForm; }
+    public static boolean keepDistArrayForm() { return _keepDistArrayForm; }
 }

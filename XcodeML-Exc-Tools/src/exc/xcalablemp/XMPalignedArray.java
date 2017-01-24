@@ -8,6 +8,7 @@ package exc.xcalablemp;
 
 import exc.block.*;
 import exc.object.*;
+import xcodeml.util.XmOption;
 import java.util.Vector;
 import java.util.Iterator;
 
@@ -619,6 +620,10 @@ public class XMPalignedArray {
       alignSourceIndex++;
     }
 
+    if(XmOption.isConstSizeDistArray()) {
+      alignedArray.checkLocalSize();
+    }
+
     if (isPointer){
       //if (!isParameter) XMPlocalDecl.removeLocalIdent(pb, arrayName);
       return;
@@ -910,5 +915,161 @@ public class XMPalignedArray {
     }
 
     // create runtime func call
+  }
+
+  private boolean _isStaticLocalSize = false;
+  private long _localArraySize[];
+  boolean isStaticLocalSize(){
+    return _isStaticLocalSize;
+  }
+
+  private void checkLocalSize(){
+    if(! _alignTemplate.isFixed()){
+      return;
+    }
+    
+    _isStaticLocalSize = true;
+
+    try{
+      _localArraySize = new long[_dim]; 
+      Xtype arrayType = _arrayType;
+      XMPnodes nodesObj = _alignTemplate.getOntoNodes();
+
+      for(int i = 0; i < _dim; i++, arrayType = arrayType.getRef()){
+        if(getAlignMannerAt(i) == NOT_ALIGNED){
+          long size = arrayType.getArraySize();
+          if(size == -1){
+            Xobject sizeObj = arrayType.getArraySizeExpr();
+            sizeObj = Xcons.Reduce(sizeObj);
+            _localArraySize[i] = toInteger(sizeObj);
+          }else{
+            _localArraySize[i] = size;
+          }
+          continue;
+        }
+
+        int alignSubscriptIndex = getAlignSubscriptIndexAt(i).intValue();
+        Xobject templateSize = _alignTemplate.getSizeAt(alignSubscriptIndex);
+        Xobject nodeSize = Xcons.IntConstant(1);
+        if(_alignTemplate.getDistMannerAt(alignSubscriptIndex) != XMPtemplate.DUPLICATION){
+          Xobject ontoSubscriptIndex = _alignTemplate.getOntoNodesIndexAt(alignSubscriptIndex);
+          nodeSize = nodesObj.getSizeAt(ontoSubscriptIndex.getInt());
+        }
+
+        nodeSize = Xcons.Reduce(nodeSize);
+        templateSize = Xcons.Reduce(templateSize);
+
+        switch(getAlignMannerAt(i)){
+        case DUPLICATION:
+        {
+          _localArraySize[i] = toInteger(templateSize);
+        } break;
+        case BLOCK:
+        {
+          long nodeSizeInt = toInteger(nodeSize);
+          long templateSizeInt = toInteger(templateSize);
+          if(templateSizeInt % nodeSizeInt != 0){
+            throw new XMPexception("indivisible");
+          }
+          long chunkSize = templateSizeInt / nodeSizeInt;
+          _localArraySize[i] = chunkSize;
+        } break;
+        default:
+          throw new XMPexception("unsupported alignment");
+        }
+      }
+      
+      convertToStaticSizeId();
+
+      System.out.print("Distributed array '" + _name + "' is constant size in local. (" + _name);
+      for(int i = 0; i < _dim; i++){
+        System.out.print("[" + _localArraySize[i] + "]");
+      }
+      System.out.println(")");
+    }catch(XMPexception e){
+      _isStaticLocalSize = false;
+    }
+  }
+  
+  private long toInteger(Xobject x) throws XMPexception {
+    switch(x.Opcode()){
+    case LONGLONG_CONSTANT:
+      return x.getLong();
+    case INT_CONSTANT:
+      return x.getInt();
+    default:
+      throw new XMPexception("nonconstant expression");
+    }
+  }
+  
+  void addShadowSizeToStaticSizeId(){
+    if(! _isStaticLocalSize) return;
+    
+    try{
+      for(int i = 0; i < _dim; i++){
+        switch(getAlignMannerAt(i)){
+        case NOT_ALIGNED:
+          break;
+        case BLOCK:
+        {
+          XMPshadow shadow = getShadowAt(i);
+          long shadowLo = toInteger(shadow.getLo());
+          long shadowHi = toInteger(shadow.getHi());
+          _localArraySize[i] += shadowLo + shadowHi;
+        } break;
+        default:
+          throw new XMPexception("unsupported alignment");
+        }
+      }
+      convertToStaticSizeId();
+    }catch(XMPexception e){
+      _isStaticLocalSize = false;
+      
+      //revert _addrId's type
+      Xtype t = Xtype.Pointer(_type);
+      _addrId.setType(t);
+      _addrId.setValue(Xcons.Symbol(Xcode.VAR_ADDR, Xtype.Pointer(t), _addrId.getName()));
+
+      System.out.println("Distributed array '" + _name + "' has variable size shadow. It became inconstant size in local.");
+    }
+  }
+  
+  private void convertToStaticSizeId(){
+    if(! XmOption.keepDistArrayForm()){
+      return;
+    }
+    if(! _isStaticLocalSize){
+      return;
+    }
+    
+    Xtype newType = _type;
+    for(int i = _dim - 1; i > 0; i--){
+      newType = Xtype.Array(newType, _localArraySize[i]);
+    }
+
+    newType = Xtype.Pointer(newType);
+
+    //FIXME this is bad code...
+    _addrId.setType(newType);
+    _addrId.setValue(Xcons.Symbol(Xcode.VAR_ADDR, Xtype.Pointer(newType), _addrId.getName()));
+  }
+  
+  long getStaticLocalSize(int dim){
+    if(! _isStaticLocalSize){
+      return -1;
+    }
+    return _localArraySize[dim];
+  }
+
+  Xobject getAccAt(int i){
+    if(! _isStaticLocalSize){
+      return getAccIdAt(i).Ref();
+    }
+
+    long acc = 1;
+    for(int j = _dim - 1; j > i; j--){
+      acc *= _localArraySize[j];
+    }
+    return Xcons.LongLongConstant(0, acc);
   }
 }
