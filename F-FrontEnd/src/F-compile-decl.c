@@ -554,6 +554,7 @@ declare_procedure(enum name_class class,
                 return;
             }
             //TODO: resId also required implicit declaration like args
+	    // to be resolved
             resultV = expv_sym_term(F_VAR, ID_TYPE(resId), ID_SYM(resId));
 
             PROC_CLASS(id) = P_DEFINEDPROC;
@@ -820,23 +821,10 @@ implicit_declaration(ID id)
                 TYPE_SET_SAVE(tp);
             }
         }
-#if 0
-        /*
-         * FIXME:
-         *	Don't we really need this?
-         */
-        if (is_in_module() &&
-            current_module_state == M_PRIVATE) {
-            TYPE_SET_PRIVATE(tp);
-        }
-#endif
 
         declare_id_type(id, tp);
     }
 }
-
-/* do i need?  */
-extern int PRAGMA_flag;
 
 /* variable declaration */
 ID
@@ -1374,7 +1362,7 @@ declare_ident(SYMBOL s, enum name_class class)
                         error(msg);
                         return NULL;
                     } else {
-#if 0
+#if 1
                         warning(msg);
                         /*
                          * FIXME:
@@ -1405,7 +1393,7 @@ declare_ident(SYMBOL s, enum name_class class)
                     error(msg);
                     return NULL;
                 } else {
-#if 0
+#if 1
                     warning(msg);
                     /*
                      * FIXME:
@@ -1701,23 +1689,12 @@ EXT_ID
 find_ext_id_parent(SYMBOL s)
 {
     EXT_ID ep;
-#if 0
-    int lev_idx;
-    for (lev_idx = unit_ctl_level - 1; lev_idx >= 0; --lev_idx) {
-        ep = find_ext_id_head(s,
-                UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(unit_ctls[lev_idx]));
-        if (ep != NULL) {
-            return ep;
-        }
-    }
-    return NULL;
-#endif
+
     if (unit_ctl_level == 0)
         return NULL;
     ep = find_ext_id_head(s,
          UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(unit_ctls[unit_ctl_level - 1]));
     return ep;
-
 }
 
 EXT_ID
@@ -1827,7 +1804,7 @@ declare_struct_type(expr ident)
                 error(msg);
                 return NULL;
             } else {
-#if 0
+#if 1
                 warning(msg);
 #endif
                 return tp0;
@@ -1855,14 +1832,6 @@ declare_struct_type(expr ident)
     }
     ID_LINE(id) = EXPR_LINE(ident);
     ID_ORDER(id) = order_sequence++;
-
-#if 0
-    /* add to id list for output <FstructDecl> */
-    if(EXT_PROC_ID_LIST(current_ext_id) == NULL)
-        EXT_PROC_ID_LIST(current_ext_id) = id;
-    else
-        ID_NEXT(EXT_PROC_ID_LIST(current_ext_id)) = id;
-#endif
 
     return tp;
 }
@@ -2042,13 +2011,6 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             TYPE_UNSET_PUBLIC(tp);
             TYPE_UNSET_PRIVATE(tp);
             TYPE_SET_PROTECTED(tp);
-#if 0
-            if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
-              //TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
-                //TYPE_SET_INTERNAL_PRIVATE(struct_tp);
-                // TODO PROTECTED
-            }
-#endif
             break;
         case F03_VOLATILE_SPEC:
             TYPE_SET_VOLATILE(tp);
@@ -2185,7 +2147,7 @@ declare_id_type(ID id, TYPE_DESC tp)
                 if (isInUseDecl == FALSE) {
                     error(msg);
                 } else {
-#if 0
+#if 1
                     warning(msg);
                     /*
                      * FIXME:
@@ -2253,6 +2215,7 @@ declare_id_type(ID id, TYPE_DESC tp)
         /* TODO:
          *  the type of id turns into ambiguous type.
          */
+      // to be resolved
         return;
     }
 
@@ -3472,6 +3435,8 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             } else if (id != NULL && ID_IS_AMBIGUOUS(id)) {
                 error_at_node(decl_list, "an ambiguous reference to symbol '%s'", ID_NAME(id));
                 return;
+	    } else if(id != NULL && ID_TYPE(id) && TYPE_IS_FOR_FUNC_SELF(ID_TYPE(id))) {
+	      ;
             } else if(id == NULL || !(ID_IS_DUMMY_ARG(id))) {
                 id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
             } else if (id != NULL && ID_IS_DUMMY_ARG(id)) {
@@ -3541,15 +3506,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             }
         }
 
-#if 0
-        /*
-         * create new TYPE_DESC
-         * except tp is not duplicated numeric/logical.
-         */
-        if(IS_NUMERIC_OR_LOGICAL(tp) == FALSE &&
-            IS_NUMERIC_OR_LOGICAL(TYPE_REF(tp)) == FALSE)
-            tp = wrap_type(tp);
-#else
         /*
          * Create new TYPE_DESC, ALWAYS.  Since we need it. Otherwise
          * identifier-origin attribute are corrupted.
@@ -3557,7 +3513,6 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         if (!TYPE_IS_CLASS(tp)) {
             tp = wrap_type(tp);
         }
-#endif
 
         if (attributes != NULL) {
             int ignoreDimsInAttr = FALSE;
@@ -3644,6 +3599,15 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
         }
 
         if (value != NULL && EXPR_CODE(value) != F_DATA_DECL) {
+
+	  // to be checked for function results.
+	  if (ID_IS_DUMMY_ARG(id) || ID_CLASS(id) == CL_PROC ||
+	      TYPE_IS_ALLOCATABLE(tp) || TYPE_IS_POINTER(tp) ||
+	      TYPE_IS_EXTERNAL(tp) || TYPE_IS_INTRINSIC(tp)){
+	    error_at_node(decl_list, "%s cannot have an initializer.", ID_NAME(id));
+	    return;
+	  }
+	  
             /*
              * FIXME:
              *	SUPER BOGUS FLAG ALERT !
@@ -4277,13 +4241,7 @@ compile_PARAM_decl(expr const_list)
         }
         ID_COULD_BE_IMPLICITLY_TYPED(id) = TRUE;
 
-#if 0        
-        /* compilataion of initial value is executed later */
-        list_put_last(CURRENT_INITIALIZE_DECLS,
-            list2(F_PARAM_DECL, ident, EXPR_ARG2(x)));
-#else
         postproc_PARAM_decl(ident, EXPR_ARG2(x));
-#endif
 
         ID_ORDER(id) = order_sequence++;
     }

@@ -265,24 +265,6 @@ BASIC_DATA_TYPE
 getBasicType(TYPE_DESC tp)
 {
     return get_basic_type(tp);
-#if 0
-    /* Refactoring */
-    BASIC_DATA_TYPE typ;
-    if (tp == NULL) {
-        return TYPE_UNKNOWN;
-    }
-    typ = TYPE_BASIC_TYPE(tp);
-    if (typ == TYPE_UNKNOWN ||
-        typ == TYPE_ARRAY) {
-        if (TYPE_REF(tp) != NULL) {
-            return getBasicType(TYPE_REF(tp));
-        } else {
-            return typ;
-        }
-    } else {
-        return typ;
-    }
-#endif
 }
 
 TYPE_DESC
@@ -366,17 +348,6 @@ type_is_omissible(TYPE_DESC tp, uint32_t attr, uint32_t ext)
         return FALSE;
     }
 
-#if 0
-    // The type has attributes is not omissible.
-    if (TYPE_ATTR_FLAGS(tp))
-        return FALSE;
-    if (TYPE_EXTATTR_FLAGS(tp))
-        return FALSE;
-#else
-    /*
-     * not omissible if this type has any attributes that is not
-     * included in the given attrribute flags.
-     */
     if (TYPE_ATTR_FLAGS(tp) != 0) {
         if ((attr != 0 && (attr & TYPE_ATTR_FLAGS(tp)) == 0) ||
             (attr == 0)) {
@@ -389,7 +360,6 @@ type_is_omissible(TYPE_DESC tp, uint32_t attr, uint32_t ext)
             return FALSE;
         }
     }
-#endif
 
     return TRUE;
 }
@@ -419,33 +389,6 @@ shrink_type(TYPE_DESC tp)
     }
 }
 
-#if 0
-static uint64_t
-reduce_type_attr(TYPE_DESC tp) {
-    uint64_t f = 0LL;
-
-    if (TYPE_REF(tp) != NULL &&
-        TYPE_BASIC_TYPE(TYPE_REF(tp)) != TYPE_STRUCT) {
-        /*
-         * FIXME:
-         *	Do we have to avoid recursive reduction other than the
-         *	TYPE_STRUCT ?
-         */
-        f = reduce_type_attr(TYPE_REF(tp));
-    }
-
-    /*
-     * upper 32 bit: exflag
-     * lower 32 bit: attr
-     */
-    f |= (((uint64_t)(TYPE_EXTATTR_FLAGS(tp)) << 32)
-          & 0xffffffff00000000LL);
-    f |= (((uint64_t)TYPE_ATTR_FLAGS(tp)) & 0xffffffffL);
-
-    return f;
-}
-#endif
-
 static TYPE_DESC
 simplify_type_recursively(TYPE_DESC tp, uint32_t attr, uint32_t ext) {
     if (TYPE_REF(tp) != NULL) {
@@ -470,14 +413,8 @@ reduce_type(TYPE_DESC tp) {
     TYPE_DESC ret = NULL;
 
     if (tp != NULL) {
-#if 0
-        uint64_t f = reduce_type_attr(tp);
-        uint32_t attr = (uint32_t)(f & 0xffffffffL);
-        uint32_t ext = (uint32_t)((f >> 32) & 0xffffffffL);
-#else
         uint32_t attr = 0;
         uint32_t ext = 0;
-#endif
 
         ret = simplify_type_recursively(tp, attr, ext);
         if (ret == NULL) {
@@ -485,10 +422,6 @@ reduce_type(TYPE_DESC tp) {
             /* not reached. */
             return NULL;
         }
-#if 0
-        TYPE_ATTR_FLAGS(ret) = attr;
-        TYPE_EXTATTR_FLAGS(ret) = ext;
-#endif
     }
 
     if (IS_PROCEDURE_TYPE(ret)) {
@@ -772,7 +705,7 @@ type_is_double(TYPE_DESC tp)
 
 
 static int
-type_parameter_expv_equals(expv v1, expv v2, int is_strict, int for_argunemt, int for_assignment, int is_pointer_assignment)
+type_parameter_expv_equals(expv v1, expv v2, int is_strict, int for_argument, int for_assignment, int is_pointer_assignment)
 {
     uint32_t i1, i2;
 
@@ -807,14 +740,14 @@ type_parameter_expv_equals(expv v1, expv v2, int is_strict, int for_argunemt, in
     }
 
 
-    if (for_argunemt == TRUE) {
+    if (for_argument == TRUE) {
         if (v1 != NULL && (EXPR_CODE(v1) == LEN_SPEC_ASTERISC || EXPR_CODE(v1) == F_ASTERISK)) {
             return TRUE;
         }
     }
 
     if (for_assignment) {
-#if 0
+#if 0 // to be solved
         if (EXPR_CODE(v1) == LEN_SPEC_ASTERISC ||
             EXPR_CODE(v1) == F08_LEN_SPEC_COLON) {
             if (is_pointer_assignment && EXPR_CODE(v1) == F08_LEN_SPEC_COLON) {
@@ -848,41 +781,6 @@ static int
 type_parameter_expv_equals_for_assignment(expv v1, expv v2, int is_pointer_set)
 {
     return type_parameter_expv_equals(v1, v2, FALSE, FALSE, TRUE, is_pointer_set);
-#if 0
-    uint32_t i1, i2;
-
-    if (v1 == NULL || v2 == NULL) {
-        return FALSE;
-    }
-
-    if (EXPR_CODE(v1) == LEN_SPEC_ASTERISC ||
-        EXPR_CODE(v1) == F08_LEN_SPEC_COLON) {
-        if (is_pointer_set && EXPR_CODE(v1) == F08_LEN_SPEC_COLON) {
-            return TRUE;
-        } else if (EXPR_CODE(v1) == EXPR_CODE(v2)) {
-            return TRUE;
-        }
-        return FALSE;
-
-    } else if (EXPR_CODE(v2) == LEN_SPEC_ASTERISC ||
-               EXPR_CODE(v2) == F08_LEN_SPEC_COLON) {
-        return FALSE;
-
-    } else {
-        if (EXPR_CODE(v1) == INT_CONSTANT &&
-            EXPR_CODE(v2) == INT_CONSTANT) {
-            i1 = EXPV_INT_VALUE(v1);
-            i2 = EXPV_INT_VALUE(v2);
-            if (i1 == i2) {
-                return TRUE;
-            } else {
-                return FALSE;
-            }
-        }
-        /* CANNOT RECOGNIZE THE VALUE OF EXPV, pass */
-        return TRUE;
-    }
-#endif
 }
 
 

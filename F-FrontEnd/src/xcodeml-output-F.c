@@ -358,19 +358,10 @@ outf_decl(char * type_signature, char * symbol,
             return FALSE;
 
         if (IS_FFUNCTIONTYPE(first)) {
-#if 0
-            if (GET_IS_PRIVATE(GET_CONTENT(first))) {
-            }
-#endif
             func_org = first;
             if (GET_CONTENT(first) == NULL)
                 return FALSE;
             ref = GET_RETURN(GET_CONTENT(first));
-#if 0
-            if (strcmp(ref, "Fnumeric") == 0 ||
-                strcmp(ref, "FnumericAll") == 0)
-                return FALSE;
-#endif
             if (!type_isPrimitive(ref)) {
                 first = typetable_dehash(ref);
                 ref = GET_REF(GET_CONTENT(first));
@@ -406,11 +397,6 @@ outf_decl(char * type_signature, char * symbol,
                 } else {
                     convertSymbol = false;
                 }
-#if 0
-            } else if ((!IS_FSTRUCTTYPE(first) ||
-                        (first == last)) &&
-                       IS_FSTRUCTTYPE(last)) {
-#endif
             } else if ((IS_FSTRUCTTYPE(first) &&
                         GET_IS_PRIVATE(GET_CONTENT(last)) == false)) {
                 // do nothing.
