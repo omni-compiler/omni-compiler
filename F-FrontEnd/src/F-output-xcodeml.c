@@ -38,6 +38,7 @@ static void     outx_definition_symbols(int l, EXT_ID ep);
 static void     outx_declarations(int l, EXT_ID parent_ep);
 static void     outx_id_declarations(int l, ID id_list, int expectResultVar, const char *functionName);
 static void     collect_types(EXT_ID extid);
+static void     collect_types_inner(EXT_ID extid);
 static void     collect_type_desc(expv v);
 static int      id_is_visibleVar(ID id);
 static int      id_is_visibleVar_for_symbols(ID id);
@@ -3743,7 +3744,7 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
     if (tp == NULL || TYPE_IS_REFERENCED(tp) == TRUE || IS_MODULE(tp))
         return;
 
-    if (skip_tbp &&  IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL ) {
+    if (skip_tbp &&  IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL) {
         /* procedure variable or type-bound procedure with a PASS argument
          * may cause a circulation reference,
          * so store them to a list and check them later.
@@ -5231,8 +5232,8 @@ collect_types_from_block(BLOCK_ENV block)
 
     FOREACH_BLOCKS(bp, block) {
         mark_type_desc_in_id_list(BLOCK_LOCAL_SYMBOLS(bp));
-        collect_types(BLOCK_LOCAL_EXTERNAL_SYMBOLS(bp));
-        collect_types(BLOCK_LOCAL_INTERFACES(bp));
+        collect_types_inner(BLOCK_LOCAL_EXTERNAL_SYMBOLS(bp));
+        collect_types_inner(BLOCK_LOCAL_INTERFACES(bp));
         for(tp = BLOCK_LOCAL_STRUCT_DECLS(bp); tp != NULL; tp = TYPE_SLINK(tp)) {
             if(TYPE_IS_DECLARED(tp)) {
                 mark_type_desc(tp);
@@ -5335,6 +5336,28 @@ collect_types(EXT_ID extid)
         TYPE_LINK(tp) = NULL;
         TYPE_IS_REFERENCED(tp) = FALSE;
         mark_type_desc_skip_tbp(tp, FALSE);
+    }
+
+}
+
+
+/**
+ * recursively collect TYPE_DESC to type_list
+ */
+static void
+collect_types_inner(EXT_ID extid)
+{
+    TYPE_EXT_ID te;
+    TYPE_DESC sTp;
+
+    collect_types1(extid);
+    FOREACH_TYPE_EXT_ID(te, type_ext_id_list) {
+        TYPE_DESC tp = EXT_PROC_TYPE(te->ep);
+        if (tp && EXT_TAG(te->ep) == STG_EXT) {
+            sTp = reduce_type(EXT_PROC_TYPE(te->ep));
+            mark_type_desc(sTp);
+            EXT_PROC_TYPE(te->ep) = sTp;
+        }
     }
 
 }

@@ -1869,12 +1869,13 @@ update_procedure_variable(ID id, const ID target, int is_final)
  * is_final -- if TRUE, raise error if the target doesn't have an appropriate type
  */
 static void
-update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls,
+update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls, BLOCK_ENV block,
                                   const ID targets, int is_final)
 {
     ID id;
     ID target;
     TYPE_DESC stp;
+    BLOCK_ENV bp;
 
     FOREACH_ID(id, ids) {
         if (ID_USEASSOC_INFO(id) &&
@@ -1898,7 +1899,16 @@ update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls,
             continue;
         }
 
-        update_procedure_variables_forall(TYPE_MEMBER_LIST(stp), NULL, targets, is_final);
+        update_procedure_variables_forall(TYPE_MEMBER_LIST(stp), NULL, NULL,
+                                          targets, is_final);
+    }
+
+
+    FOREACH_BLOCKS(bp, block) {
+        update_procedure_variables_forall(BLOCK_LOCAL_SYMBOLS(bp),
+                                          BLOCK_LOCAL_STRUCT_DECLS(bp),
+                                          BLOCK_CHILDREN(bp),
+                                          targets, is_final);
     }
 }
 
@@ -2511,12 +2521,16 @@ end_declaration()
 
         if (unit_ctl_level > 0) {
             update_procedure_variables_forall(PARENT_LOCAL_SYMBOLS,
-                                              PARENT_LOCAL_STRUCT_DECLS, myId,
+                                              PARENT_LOCAL_STRUCT_DECLS,
+                                              UNIT_CTL_LOCAL_BLOCKS(PARENT_UNIT_CTL),
+                                              myId,
                                               /*is_final = */ FALSE);
 
             FOREACH_EXT_ID(ep, LOCAL_EXTERNAL_SYMBOLS) {
                 update_procedure_variables_forall(EXT_PROC_ID_LIST(ep),
-                                                  EXT_PROC_STRUCT_DECLS(ep), myId,
+                                                  EXT_PROC_STRUCT_DECLS(ep),
+                                                  EXT_PROC_BLOCKS(ep),
+                                                  myId,
                                                   /*is_final = */ FALSE);
             }
         }
@@ -3050,6 +3064,18 @@ check_procedure_variables_for_idlist(ID id_list, TYPE_DESC const stp, int is_fin
 
 
 static void
+check_procedure_variables_in_block(BLOCK_ENV block, int is_final)
+{
+    BLOCK_ENV bp;
+
+    FOREACH_BLOCKS(bp, block) {
+        check_procedure_variables_for_idlist(BLOCK_LOCAL_SYMBOLS(bp), NULL, is_final);
+        check_procedure_variables_in_block(BLOCK_CHILDREN(bp), is_final);
+    }
+}
+
+
+static void
 check_procedure_variables_forall(int is_final)
 {
     /*
@@ -3062,6 +3088,7 @@ check_procedure_variables_forall(int is_final)
      */
     TYPE_DESC stp;
     EXT_ID ep;
+    BLOCK_ENV bp;
 
     check_procedure_variables_for_idlist(LOCAL_SYMBOLS, NULL, is_final);
 
@@ -3081,6 +3108,9 @@ check_procedure_variables_forall(int is_final)
     }
 
 
+    FOREACH_BLOCKS(bp, LOCAL_BLOCKS) {
+        check_procedure_variables_in_block(bp, is_final);
+    }
 }
 
 
@@ -3415,6 +3445,7 @@ end_procedure()
          */
         update_procedure_variables_forall(EXT_PROC_ID_LIST(ep),
                                           EXT_PROC_STRUCT_DECLS(ep),
+                                          EXT_PROC_BLOCKS(ep),
                                           LOCAL_SYMBOLS, /* is_final = */ TRUE);
     }
 
