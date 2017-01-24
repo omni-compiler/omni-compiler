@@ -5210,9 +5210,6 @@ outx_blockDataDefinition(int l, EXT_ID ep)
 }
 
 
-
-
-
 static const char*
 getTimestamp()
 {
@@ -5221,8 +5218,6 @@ getTimestamp()
     strftime(s_timestamp, CEXPR_OPTVAL_CHARLEN, "%F %T", ltm);
     return s_timestamp;
 }
-
-
 
 
 /**
