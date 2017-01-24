@@ -21,7 +21,21 @@ static uint64_t _local_rdma_addr, *_remote_rdma_addr;
 static unsigned int *_sync_images_table;
 
 /** These variables are temporral **/
-extern int _XMP_flag_put_nb;   
+extern int _XMP_flag_put_nb;
+extern int _XMP_flag_put_nb_rr;
+extern int _XMP_flag_put_nb_rr_i;
+#define _XMP_COARRAY_SEND_NIC_TMP_0 FJMPI_RDMA_LOCAL_NIC0
+#define _XMP_COARRAY_SEND_NIC_TMP_1 FJMPI_RDMA_LOCAL_NIC1
+#define _XMP_COARRAY_SEND_NIC_TMP_2 FJMPI_RDMA_LOCAL_NIC2
+#define _XMP_COARRAY_SEND_NIC_TMP_3 FJMPI_RDMA_LOCAL_NIC3
+#define _XMP_COARRAY_FLAG_NIC_TMP_0 (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC0)
+#define _XMP_COARRAY_FLAG_NIC_TMP_1 (FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1)
+#define _XMP_COARRAY_FLAG_NIC_TMP_2 (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC2)
+#define _XMP_COARRAY_FLAG_NIC_TMP_3 (FJMPI_RDMA_LOCAL_NIC3 | FJMPI_RDMA_REMOTE_NIC3)
+#define _XMP_COARRAY_FLAG_NIC_TMP_i0 (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC0 | FJMPI_RDMA_IMMEDIATE_RETURN)
+#define _XMP_COARRAY_FLAG_NIC_TMP_i1 (FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
+#define _XMP_COARRAY_FLAG_NIC_TMP_i2 (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC2 | FJMPI_RDMA_IMMEDIATE_RETURN)
+#define _XMP_COARRAY_FLAG_NIC_TMP_i3 (FJMPI_RDMA_LOCAL_NIC3 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_IMMEDIATE_RETURN)
 /** End these variables are temporral **/ 
 
 /******************************************************************/
@@ -1253,9 +1267,30 @@ static size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int
  */
 void _XMP_fjrdma_sync_memory_put()
 {
-  while(_num_of_puts != 0)
-    if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC, NULL) == FJMPI_RDMA_NOTICE)
-      _num_of_puts--;
+  if(_XMP_flag_put_nb_rr){
+    while(1){
+      if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC_TMP_0, NULL) == FJMPI_RDMA_NOTICE)
+	_num_of_puts--;
+      if(_num_of_puts == 0) break;
+
+      if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC_TMP_1, NULL) == FJMPI_RDMA_NOTICE)
+	_num_of_puts--;
+      if(_num_of_puts == 0) break;
+
+      if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC_TMP_2, NULL) == FJMPI_RDMA_NOTICE)
+	_num_of_puts--;
+      if(_num_of_puts == 0) break;
+
+      if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC_TMP_3, NULL) == FJMPI_RDMA_NOTICE)
+	_num_of_puts--;
+      if(_num_of_puts == 0) break;
+    }
+  }
+  else{
+    while(_num_of_puts != 0)
+      if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC, NULL) == FJMPI_RDMA_NOTICE)
+	_num_of_puts--;
+  }
 }
 
 /**
@@ -1332,7 +1367,47 @@ static void _XMP_FJMPI_Rdma_put(const int target_rank, uint64_t raddr, uint64_t 
 				const size_t transfer_size)
 {
   if(transfer_size <= _XMP_FJRDMA_MAX_SIZE){
-    FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC);
+    if(_XMP_flag_put_nb_rr_i){
+      switch(_num_of_puts%4){
+      case 0:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_i0);
+        break;
+      case 1:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_i1);
+        break;
+      case 2:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_i2);
+        break;
+      case 3:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_i3);
+        break;
+      default:
+        printf("ERROR !! \n"); exit(1);
+	break;
+      }
+    }
+    else if(_XMP_flag_put_nb_rr){
+      switch(_num_of_puts%4){
+      case 0:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_0);
+	break;
+      case 1:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_1);
+	break;
+      case 2:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_2);
+	break;
+      case 3:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_3);
+	break;
+      default:
+	printf("ERROR !! \n"); exit(1);
+	break;
+      }
+    }
+    else{
+      FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC);
+    }
     _XMP_add_num_of_puts();
   }
   else{

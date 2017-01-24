@@ -2,7 +2,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include "xmp_internal.h"
-int _XMP_flag_put_nb = false; // This variable is temporal
+int _XMP_flag_put_nb      = false; // This variable is temporal
+#if defined(_XMP_FJRDMA)
+int _XMP_flag_put_nb_rr   = false; // This variable is temporal
+int _XMP_flag_put_nb_rr_i = false; // This variable is temporal
+#endif
 
 #if defined(_XMP_GASNET) || defined(_XMP_MPI3_ONESIDED)
 static void _check_unit(char *env, char *env_val)
@@ -106,6 +110,23 @@ void _XMP_initialize_onesided_functions(int argc, char **argv)
     if(_XMP_world_rank == 0)
       printf("*** _XMP_coarray_contiguous_put() is Non-Blocking ***\n");
   }
+
+#if defined(_XMP_FJRDMA)
+  if(getenv("XMP_PUT_NB_RR") != NULL){
+    _XMP_flag_put_nb    = true;  // defalt false
+    _XMP_flag_put_nb_rr = true;  // defalt false
+    if(_XMP_world_rank == 0)
+      printf("*** _XMP_coarray_contiguous_put() is Non-Blocking and Round-Robin ***\n");
+  }
+
+  if(getenv("XMP_PUT_NB_RR_I") != NULL){
+    _XMP_flag_put_nb      = true;  // defalt false
+    _XMP_flag_put_nb_rr   = true;  // defalt false
+    _XMP_flag_put_nb_rr_i = true;  // defalt false
+    if(_XMP_world_rank == 0)
+      printf("*** _XMP_coarray_contiguous_put() is Non-Blocking, Round-Robin and Immediately ***\n");
+  }
+#endif
   /* End Temporary */
 }
 
