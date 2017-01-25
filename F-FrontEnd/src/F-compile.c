@@ -1228,6 +1228,11 @@ compile_statement1(int st_no, expr x)
         compile_procedure_declaration(x);
         break;
 
+    case F03_VALUE_STATEMENT:
+        check_INDCL();
+        compile_VALUE_statement(EXPR_ARG1(x));
+        break;
+
     default:
         compile_exec_statement(x);
         break;
@@ -2255,7 +2260,7 @@ end_declaration()
              * never set to local symbol, so there is no need to filter out them.
              */
             TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(tp))
-                    |= (TYPE_ATTR_FLAGS(ip) & ~TYPE_ATTR_SAVE);
+                    |= (TYPE_ATTR_FLAGS(ip) & ~(TYPE_ATTR_SAVE|TYPE_ATTR_BIND));
         }
         if (TYPE_IS_EXTERNAL(tp) && !IS_PROCEDURE_TYPE(tp)) {
             tp = function_type(tp);
@@ -7405,4 +7410,47 @@ compile_ENDBLOCK_statement(expr x)
     BLOCK_LINK_ADD(current_block, LOCAL_BLOCKS, tail);
 
     CURRENT_STATE = INEXEC;
+}
+
+
+void
+compile_VALUE_statement(expr x)
+{
+    list lp;
+    expr ident;
+    ID id;
+
+    assert(EXPR_CODE(x) == F03_VALUE_STATEMENT);
+
+    FOR_ITEMS_IN_LIST(lp, x) {
+        ident = LIST_ITEM(lp);
+
+        assert(EXPR_CODE(ident) == IDENT);
+
+        id = find_ident_local(EXPR_SYM(ident));
+        if (id == NULL) {
+            error_at_node(x, "\"%s\" is not declared yet.",
+                          SYM_NAME(EXPR_SYM(ident)));
+            continue;
+        }
+        if (!ID_IS_DUMMY_ARG(id)) {
+            error_at_node(x, "\"%s\" is not a dummy argument.",
+                          SYM_NAME(ID_SYM(id)));
+            continue;
+        }
+
+        if(ID_IS_OFMODULE(id)) {
+            error("can't change attributes of USE-assoicated symbol '%s'",
+                  ID_NAME(id));
+            return;
+        } else if (ID_IS_AMBIGUOUS(id)) {
+            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+            return;
+        }
+
+        TYPE_SET_VALUE(id);
+        if (ID_TYPE(id)) {
+            TYPE_SET_VALUE(ID_TYPE(id));
+        }
+    }
 }

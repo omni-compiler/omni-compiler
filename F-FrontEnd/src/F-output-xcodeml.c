@@ -632,6 +632,7 @@ has_attribute_except_func_attrs(TYPE_DESC tp)
         TYPE_IS_INTENT_OUT(tp) ||
         TYPE_IS_INTENT_INOUT(tp) ||
         TYPE_IS_VOLATILE(tp) ||
+        TYPE_IS_VALUE(tp) ||
         TYPE_IS_CLASS(tp) ||
         TYPE_IS_PROCEDURE(tp) ||
         tp->codims;

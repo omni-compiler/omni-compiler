@@ -95,6 +95,13 @@ struct type_attr_check type_attr_checker[] = {
         (TYPE_ATTR_LEN),
         "LEN",
     },
+    {
+        TYPE_ATTR_VALUE,
+        (TYPE_ATTR_VALUE|TYPE_ATTR_ALLOCATABLE|TYPE_ATTR_INTENT_INOUT|
+         TYPE_ATTR_INTENT_OUT|TYPE_ATTR_POINTER|TYPE_ATTR_VOLATILE|
+         TYPE_ATTR_SEQUENCE|TYPE_ATTR_INTERNAL_PRIVATE|TYPE_ATTR_PROTECTED),
+        "value",
+    },
     {  /* terminater, DO NOT remove */
         0,0,NULL
     }
