@@ -202,17 +202,10 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_TAGNAME(tp)        ((tp)->tagname)
 #define TYPE_IS_REFERENCED(tp)  ((tp)->is_referenced)
 #define TYPE_CODIMENSION(tp)    ((tp)->codims)
-#if 0
-#define TYPE_LINK_ADD(tp, tlist, ttail) \
-    { if((tlist) == NULL) (tlist) = (tp); \
-      else TYPE_LINK(ttail) = (tp); \
-      (ttail) = (tp); }
-#else
 #define TYPE_LINK_ADD(tp, tlist, ttail) \
     { if((tlist) == NULL) (tlist) = (tp); \
       ttail = type_link_add(tp, tlist, ttail);  \
     }
-#endif
 #define TYPE_SLINK_ADD(tp, tlist, ttail) \
     { if((tlist) == NULL) (tlist) = (tp); \
       else TYPE_SLINK(ttail) = (tp); \
@@ -505,16 +498,6 @@ extern TYPE_DESC basic_type_desc[];
     FOREACH_MEMBER(mp, tp) \
     if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC && \
         (TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_GENERIC))
-
-#if 0
-typedef enum {
-    PRAGMA_NOT_IN_SCOPE = 0,	/* The sentinel is not appeared, yet. */
-    PRAGMA_ENTER_SCOPE,		/* The sentinel just appeared. */
-    PRAGMA_LEAVE_SCOPE		/* The sentinel got enough block(s) and
-                                 * the scope is needed to be
-                                 * closed. */
-} pragma_status_t;
-#endif
 
 #define FUNCTION_TYPE_RETURN_TYPE(tp) ((tp)->proc_info.return_type)
 #define FUNCTION_TYPE_HAS_EXPLICIT_ARGS(tp) ((tp)->proc_info.has_explicit_arguments)
