@@ -137,6 +137,7 @@ xtag(enum expr_code code)
     case F95_CYCLE_STATEMENT:       return "FcycleStatement";
     case F95_EXIT_STATEMENT:        return "FexitStatement";
     case F_ENTRY_STATEMENT:         return "FentryDecl";
+    case F_FORALL_STATEMENT:        return "forallStatement";
 
     /*
      * IO statements
@@ -292,6 +293,7 @@ xtag(enum expr_code code)
     case F_FALSE_CONSTANT:
     case F_ARRAY_REF:
     case F_STARSTAR:
+    case F_ENDFORALL_STATEMENT:
     case F95_CONSTANT_WITH:
     case F95_TRUE_CONSTANT_WITH:
     case F95_FALSE_CONSTANT_WITH:
@@ -3378,6 +3380,39 @@ outx_BLOCK_statement(int l, expv v)
     outx_expvClose(l, v);
 }
 
+/*
+ * output forallStatement
+ */
+static void
+outx_FORALL_statement(int l, expv v)
+{
+    list lp;
+    int l1 = l + 1;
+    expv init = EXPR_ARG1(v);
+    expv mask = EXPR_ARG2(v);
+    expv body = EXPR_ARG3(v);
+
+    outx_tagOfStatement(l, v);
+
+    FOR_ITEMS_IN_LIST(lp, init) {
+        expv name = EXPR_ARG1(LIST_ITEM(lp));
+        expv indexRange = EXPR_ARG2(LIST_ITEM(lp));
+
+        outx_printi(l1, "<Var>%s</Var>\n", SYM_NAME(EXPR_SYM(name)));
+        outx_indexRange(l1,
+                        EXPR_ARG1(indexRange),
+                        EXPR_ARG2(indexRange),
+                        EXPR_ARG3(indexRange));
+    }
+
+    if (mask) {
+        outx_condition(l1, mask);
+    }
+
+    outx_body(l1, body);
+    outx_expvClose(l, v);
+}
+
 static void
 outx_lenspec(int l, expv v)
 {
@@ -3741,6 +3776,10 @@ outx_expv(int l, expv v)
 
     case F2008_BLOCK_STATEMENT:
       outx_BLOCK_statement(l, v);
+      break;
+
+    case F_FORALL_STATEMENT:
+      outx_FORALL_statement(l, v);
       break;
 
     default:
