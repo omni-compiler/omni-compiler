@@ -57,6 +57,8 @@ extern int Addr2Uint(void *x);
 
 extern int lineno;
 extern int need_keyword;
+extern int enable_need_type_keyword;
+extern int need_type_keyword;
 extern int need_type_len;
 extern int need_check_user_defined;
 
@@ -131,8 +133,6 @@ enum prog_state {
     IN_TYPE_PARAM_DECL, /* type parameter declarations */
     IN_TYPE_BOUND_PROCS, /* type bound procedure declarations */
 };
-
-extern enum prog_state current_state;
 
 /* procedure states */
 enum procedure_state { P_DEFAULT = 0, P_SAVE = 1 };
@@ -517,6 +517,7 @@ extern void     error_at_node EXC_VARARGS(expr, x);
 extern void     error_at_id EXC_VARARGS(ID, x);
 extern void     warning_at_node EXC_VARARGS(expr, x);
 extern void     warning_at_id EXC_VARARGS(ID, x);
+extern void     debug EXC_VARARGS(char *, fmt);
 
 extern void     initialize_lex _ANSI_ARGS_((void));
 extern void     initialize_compile _ANSI_ARGS_((void));
@@ -661,16 +662,18 @@ extern void     unset_save_attr_in_dummy_args(EXT_ID ep);
 
 extern void     declare_storage _ANSI_ARGS_((ID id, enum storage_class stg));
 
-extern TYPE_DESC        compile_type _ANSI_ARGS_((expr x));
+extern TYPE_DESC        compile_type _ANSI_ARGS_((expr x, int allow_predecl));
+extern TYPE_DESC        compile_basic_type _ANSI_ARGS_((expr x));
 extern TYPE_DESC        compile_derived_type _ANSI_ARGS_((expr x, int allow_predecl));
 
 extern expv     compile_int_constant _ANSI_ARGS_((expr x));
 extern void     compile_pragma_statement _ANSI_ARGS_((expr x));
 extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
 
+extern void     compile_procedure_declaration _ANSI_ARGS_((expr x));
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
 extern void     compile_type_generic_procedure _ANSI_ARGS_((expr x));
-extern void     update_type_bound_procedures _ANSI_ARGS_((TYPE_DESC struct_decls, ID local_symbols));
+extern void     update_type_bound_procedures_forall _ANSI_ARGS_((TYPE_DESC struct_decls, ID local_symbols));
 extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f2, int has_pass_arg));
 extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));
 
@@ -686,9 +689,18 @@ extern void     function_type_udpate
 extern int      function_type_is_appliable
                     _ANSI_ARGS_((TYPE_DESC ftp, expv args));
 extern int      function_type_is_compatible
-                    _ANSI_ARGS_((TYPE_DESC ftp1, TYPE_DESC ftp2));
+                    _ANSI_ARGS_((const TYPE_DESC ftp1, const TYPE_DESC ftp2));
 extern int      type_bound_procedure_types_are_compatible
-                    _ANSI_ARGS_((TYPE_DESC tbp1, TYPE_DESC tbp2));
+                    _ANSI_ARGS_((const TYPE_DESC tbp1, const TYPE_DESC tbp2));
+
+extern int      check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp);
+
+extern int      procedure_has_pass_arg
+                    _ANSI_ARGS_((const TYPE_DESC ftp,
+                                 const SYMBOL pass_arg,
+                                 const TYPE_DESC stp));
+extern int      procedure_is_assignable
+                    _ANSI_ARGS_((const TYPE_DESC left, const TYPE_DESC right));
 
 extern void     replace_or_assign_type
                     _ANSI_ARGS_((TYPE_DESC *tp, const TYPE_DESC new_tp));
@@ -721,7 +733,7 @@ extern int              array_spec_size _ANSI_ARGS_((expv shape, expv dimShape,
 extern void             set_index_range_type _ANSI_ARGS_((expv v));
 extern TYPE_DESC        type_ref _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        struct_type  _ANSI_ARGS_((ID id));
-extern TYPE_DESC        function_type _ANSI_ARGS_((const TYPE_DESC tp));
+extern TYPE_DESC        function_type _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        subroutine_type _ANSI_ARGS_((void));
 extern TYPE_DESC        generic_procedure_type _ANSI_ARGS_((void));
 extern TYPE_DESC        generic_function_type _ANSI_ARGS_((void));
@@ -730,6 +742,7 @@ extern TYPE_DESC        intrinsic_function_type _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        intrinsic_subroutine_type _ANSI_ARGS_((void));
 extern TYPE_DESC        program_type _ANSI_ARGS_((void));
 extern TYPE_DESC        type_bound_procedure_type _ANSI_ARGS_((void));
+extern TYPE_DESC        procedure_type _ANSI_ARGS_((const TYPE_DESC ftp));
 extern TYPE_DESC        type_char _ANSI_ARGS_((int len));
 extern TYPE_DESC        type_basic _ANSI_ARGS_((BASIC_DATA_TYPE t));
 extern TYPE_DESC        array_element_type _ANSI_ARGS_((TYPE_DESC tp));

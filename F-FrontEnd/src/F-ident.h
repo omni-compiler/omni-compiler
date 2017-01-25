@@ -214,6 +214,8 @@ typedef struct ident_descriptor
             int isUnCompiledArray;
             int isUnCompiled;
             int isUsedAsHighOrder;      /* Once used as a function. */
+
+            struct ident_descriptor * ref_proc; /* for a procedure variable, refer to a procedure name */
         } var_info;
         struct {
             LABEL_TYPE lab_type;
@@ -352,6 +354,7 @@ struct use_assoc_info {
 #define VAR_IS_UNCOMPILED(id)   ((id)->info.var_info.isUnCompiled)
 #define VAR_IS_UNCOMPILED_ARRAY(id)     ((id)->info.var_info.isUnCompiledArray)
 #define VAR_IS_USED_AS_FUNCTION(id)     ((id)->info.var_info.isUsedAsHighOrder)
+#define VAR_REF_PROC(id)        ((id)->info.var_info.ref_proc)
 
 /* for CL_PROC/CL_VAR */
 #define PROC_EXT_ID(id) ((id)->extID)
