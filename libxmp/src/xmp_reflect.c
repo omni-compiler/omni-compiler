@@ -7,29 +7,20 @@ static void _XMP_reflect_normal_sched_dim(_XMP_array_t *adesc, int target_dim,
 					   int lwidth, int uwidth, int is_periodic);
 static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 					 int lwidth, int uwidth, int is_periodic);
-static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
-/* static void _XMP_reflect_start(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic, */
-/* 				int dummy); */
-static void _XMP_reflect_async_cardinal(_XMP_array_t *a, int async_id);
-static void _XMP_reflect_async_ordinal(_XMP_array_t *a, int async_id);
-static void _XMP_reflect_sched_dir(_XMP_array_t *adesc, int ishadow[],
-				   int lwidth[], int uwidth[], int is_periodic_dim[]);
 #else
-/* static void _XMP_reflect_sched(_XMP_array_t *a, int *lwidth, int *uwidth, */
-/* 				int *is_periodic, int is_async); */
 static void _XMP_reflect_rdma_sched_dim(_XMP_array_t *adesc, int target_dim,
 					int lwidth, int uwidth, int is_periodic);
 static void _XMP_reflect_start(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic,
 				 int tag);
-static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
 #endif
 
+static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
 
 //int _XMP_get_owner_pos_BLOCK(_XMP_array_t *a, int dim, int index);
 int _XMP_get_owner_pos(_XMP_array_t *a, int dim, int index);
 
 //void _XMP_reflect_pack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
-void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
+static void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic);
 
 static void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic);
 static void _XMP_reflect_unpack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwidth, int *is_periodic);
@@ -1718,7 +1709,7 @@ static void _XMP_reflect_pack_dim(_XMP_array_t *a, int i, int *lwidth, int *uwid
 }
 
 
-void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic)
+static void _XMP_reflect_unpack(_XMP_array_t *a, int *lwidth, int *uwidth, int *is_periodic)
 {
 
   int lb = 0, ub = 0;
