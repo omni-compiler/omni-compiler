@@ -128,6 +128,8 @@ static void compile_ENDCRITICAL_statement(expr x);
 static void compile_IMPORT_statement(expr x); // IMPORT statement
 static void compile_BLOCK_statement(expr x);
 static void compile_ENDBLOCK_statement(expr x);
+static void compile_FORALL_statement(int st_no, expr x);
+static void compile_ENDFORALL_statement(expr x);
 
 static void unify_submodule_symbol_table(void);
 
@@ -287,18 +289,12 @@ push_ctl(ctl)
     CTL_SAVE(ctl_top) = CURRENT_STATEMENTS;
     CURRENT_STATEMENTS = NULL;
     CURRENT_BLK_LEVEL++;
-
-    if (ctl == CTL_BLOCK) {
-        push_env(CTL_BLOCK_LOCAL_ENV(ctl_top));
-    }
 }
 
 /* pop control block and output statement block */
 void
 pop_ctl()
 {
-    enum control_type old_ctl_type = CTL_TYPE(ctl_top);
-    
     /* restore previous statements */
     CURRENT_STATEMENTS = CTL_SAVE(ctl_top);
     output_statement(CTL_BLOCK(ctl_top));
@@ -308,10 +304,6 @@ pop_ctl()
     ctl_top = CTL_PREV(ctl_top);
     CTL_NEXT(ctl_top) = NULL;
     CURRENT_BLK_LEVEL--;
-
-    if (old_ctl_type == CTL_BLOCK) {
-        pop_env();
-    }
 }
 
 
@@ -1232,6 +1224,15 @@ compile_statement1(int st_no, expr x)
     case F03_VALUE_STATEMENT:
         check_INDCL();
         compile_VALUE_statement(EXPR_ARG1(x));
+
+    case F_FORALL_STATEMENT:
+        check_INEXEC();
+        compile_FORALL_statement(st_no, x);
+        break;
+
+    case F_ENDFORALL_STATEMENT:
+        compile_ENDFORALL_statement(x);
+        check_INEXEC();
         break;
 
     default:
@@ -3250,6 +3251,11 @@ end_procedure()
         error("expecting END BLOCK statement");
     }
 
+    /* Check if a forall construct is closed */
+    if (CTL_TYPE(ctl_top) == CTL_FORALL) {
+        error("expecting END FORALL statement");
+    }
+
     if (unit_ctl_level > 0 && CURRENT_PROC_NAME == NULL &&\
         CTL_TYPE(ctl_top) != CTL_BLOCK) {
         /* if CURRENT_PROC_NAME == NULL, then this is the end of CONTAINS */
@@ -3928,6 +3934,7 @@ end_module(expr name)
 
 int associate_parent_module(const SYMBOL, const SYMBOL);
 
+
 void
 begin_submodule(expr name, expr module, expr submodule)
 {
@@ -3960,8 +3967,9 @@ begin_submodule(expr name, expr module, expr submodule)
     CURRENT_EXT_ID = PARENT_EXT_ID;
 }
 
+
 static ID
-unify_submodule_id_list(ID parents, ID childs)
+unify_id_list(ID parents, ID childs, int overshadow)
 {
     ID ip;
     ID iq;
@@ -3970,9 +3978,13 @@ unify_submodule_id_list(ID parents, ID childs)
 
     SAFE_FOREACH_ID(ip, iq, parents) {
         if (find_ident_head(ID_SYM(ip), childs) != NULL) {
-            /* the child id shadows the parent id */
-            /* free(id); */
-            continue;
+            if (overshadow) {
+                /* the child id shadows the parent id */
+                /* free(ip); */
+                continue;
+            } else {
+                fatal("internal error, unexpected symbol confliction", __func__);
+            }
         }
         ID_LINK_ADD(ip, ret, last);
     }
@@ -3984,8 +3996,15 @@ unify_submodule_id_list(ID parents, ID childs)
 }
 
 
+static ID
+unify_submodule_id_list(ID parents, ID childs)
+{
+    return unify_id_list(parents, childs, /*overshadow=*/TRUE);
+}
+
+
 static EXT_ID
-unify_submodule_ext_id_list(EXT_ID parents, EXT_ID childs)
+unify_ext_id_list(EXT_ID parents, EXT_ID childs, int overshadow)
 {
     EXT_ID ep;
     EXT_ID eq;
@@ -3994,9 +4013,13 @@ unify_submodule_ext_id_list(EXT_ID parents, EXT_ID childs)
 
     SAFE_FOREACH_EXT_ID(ep, eq, parents) {
         if (find_ext_id_head(ID_SYM(ep), childs) != NULL) {
-            /* the child id shadows the parent id */
-            /* free(ep); */
-            continue;
+            if (overshadow) {
+                /* the child ext id shadows the parent ext id */
+                /* free(ep); */
+                continue;
+            } else {
+                fatal("internal error, unexpected symbol confliction", __func__);
+            }
         }
         EXT_LINK_ADD(ep, ret, last);
     }
@@ -4008,8 +4031,16 @@ unify_submodule_ext_id_list(EXT_ID parents, EXT_ID childs)
 }
 
 
+
+static EXT_ID
+unify_submodule_ext_id_list(EXT_ID parents, EXT_ID childs)
+{
+    return unify_ext_id_list(parents, childs, /*overshadow=*/TRUE);
+}
+
+
 static TYPE_DESC
-unify_submodule_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
+unify_struct_decls(TYPE_DESC parents, TYPE_DESC childs, int overshadow)
 {
     TYPE_DESC tp;
     TYPE_DESC tq;
@@ -4017,9 +4048,12 @@ unify_submodule_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
     TYPE_DESC last = NULL;
 
     SAFE_FOREACH_STRUCTDECLS(tp, tq, parents) {
-        if (find_struct_decl_head(ID_SYM(TYPE_TAGNAME(tp)), childs) != NULL) {
-            /* the child id shadows the parent id */
+        if (overshadow) {
+            /* the child struct shadows the parent struct */
+            /* free(tp); */
             continue;
+        } else {
+            fatal("internal error, unexpected symbol confliction", __func__);
         }
         TYPE_SLINK_ADD(tp, ret, last);
     }
@@ -4028,6 +4062,12 @@ unify_submodule_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
         TYPE_SLINK_ADD(tp, ret, last);
     }
     return ret;
+}
+
+static TYPE_DESC
+unify_submodule_struct_decls(TYPE_DESC parents, TYPE_DESC childs)
+{
+    return unify_struct_decls(parents, childs, /*overshadow=*/TRUE);
 }
 
 
@@ -7384,6 +7424,7 @@ compile_BLOCK_statement(expr x)
     expv st;
 
     push_ctl(CTL_BLOCK);
+    push_env(CTL_BLOCK_LOCAL_ENV(ctl_top));
 
     st = list2(F2008_BLOCK_STATEMENT, NULL, NULL);
     output_statement(st);
@@ -7459,6 +7500,7 @@ compile_ENDBLOCK_statement(expr x)
 
     end_procedure();
     pop_ctl();
+    pop_env();
 
     FOREACH_BLOCKS(bp, LOCAL_BLOCKS) {
         tail = bp;
@@ -7509,4 +7551,220 @@ compile_VALUE_statement(expr x)
             TYPE_SET_VALUE(ID_TYPE(id));
         }
     }
+}
+
+
+/*
+ * (F_FORALL_STATEMENT
+ *   (LIST
+ *     (LIST triplet ...)
+ *     mask
+ *     type)
+ *   assignment
+ *   construct_name)
+ */
+static void
+compile_FORALL_statement(int st_no, expr x)
+{
+    TYPE_DESC tp;
+    expr st;
+    expr forall_header;
+    expr type;
+    expr triplets;
+    expr mask;
+    expv vmask = NULL;
+    expv init;
+    list lp;
+
+    forall_header = EXPR_ARG1(x);
+    triplets      = EXPR_ARG1(forall_header);
+    mask          = EXPR_ARG2(forall_header);
+    type          = EXPR_ARG3(forall_header);
+
+    if (type) {
+        /* TODO(shingo-s) */
+        tp = type_basic(TYPE_INT);
+    } else {
+        tp = type_INT;
+    }
+
+    push_ctl(CTL_FORALL);
+    push_env(CTL_FORALL_LOCAL_ENV(ctl_top));
+
+    assert(LOCAL_SYMBOLS == NULL);
+
+    init = list0(LIST);
+    FOR_ITEMS_IN_LIST(lp, triplets) {
+        ID id;
+        SYMBOL sym;
+        SYMBOL new_sym = NULL;
+        expr x1, x2, x3;
+        expv low_limit;
+        expv top_limit;
+        expv step;
+
+        assert(EXPR_CODE(LIST_ITEM(lp)) == F95_TRIPLET_EXPR);
+
+        sym = EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp)));
+        x1 = EXPR_ARG1(EXPR_ARG2(LIST_ITEM(lp)));
+        x2 = EXPR_ARG2(EXPR_ARG2(LIST_ITEM(lp)));
+        x3 = EXPR_ARG3(EXPR_ARG2(LIST_ITEM(lp)));
+
+        if (find_ident_local(sym) != NULL) {
+            error("duplicate index");
+            return;
+        }
+
+        id = declare_ident(sym, CL_VAR);
+        ID_TYPE(id) = tp;
+        ID_STORAGE(id) = STG_AUTO;
+        declare_variable(id);
+
+        for (;;) {
+            new_sym = gen_temp_symbol("omnitmp");
+            if (find_ident(new_sym) == NULL) {
+                break;
+            }
+        }
+        /* replace name */
+        EXPV_NAME(ID_ADDR(id)) = new_sym;
+
+        ID_LINE(id) = EXPR_LINE(x);
+
+        low_limit = compile_expression(x1);
+        top_limit = compile_expression(x2);
+        step      = compile_expression(x3);
+
+        if (low_limit == NULL || (
+                !IS_INT(EXPV_TYPE(low_limit)) &&
+                !IS_GNUMERIC(EXPV_TYPE(low_limit)) &&
+                !IS_GNUMERIC_ALL(EXPV_TYPE(low_limit)))) {
+            error("invalid expression");
+        }
+        if (top_limit == NULL || (
+                !IS_INT(EXPV_TYPE(top_limit)) &&
+                !IS_GNUMERIC(EXPV_TYPE(top_limit)) &&
+                !IS_GNUMERIC_ALL(EXPV_TYPE(top_limit)))) {
+            error("invalid expression");
+        }
+        if (step != NULL && (
+                !IS_INT(EXPV_TYPE(step)) &&
+                !IS_GNUMERIC(EXPV_TYPE(step)) &&
+                !IS_GNUMERIC_ALL(EXPV_TYPE(step)))) {
+            error("invalid expression");
+        }
+
+        init = list_put_last(init, list2(F_SET_EXPR,
+                                         expv_sym_term(IDENT, tp, sym),
+                                         list3(F_INDEX_RANGE,
+                                               low_limit, top_limit, step)));
+    }
+
+    if (mask) {
+        vmask = compile_expression(mask);
+        if (!IS_LOGICAL(EXPV_TYPE(vmask)) &&
+            !IS_GNUMERIC(EXPV_TYPE(vmask)) &&
+            !IS_GNUMERIC_ALL(EXPV_TYPE(vmask))) {
+            error("invalid expression");
+        }
+    }
+
+    st = list4(F_FORALL_STATEMENT, NULL, NULL, NULL, NULL);
+    output_statement(st);
+
+    CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+    CTL_FORALL_STATEMENT(ctl_top) = st;
+    CTL_FORALL_INIT(ctl_top) = init;
+    CTL_FORALL_MASK(ctl_top) = vmask;
+
+    /* save construct name */
+    if (EXPR_HAS_ARG3(x)) {
+        CTL_FORALL_CONST_NAME(ctl_top) = EXPR_ARG3(x);
+    }
+
+    CURRENT_STATEMENTS = NULL;
+    current_proc_state = P_DEFAULT;
+
+    if (EXPR_ARG2(x)) {
+        compile_statement(st_no, EXPR_ARG2(x));
+        compile_ENDFORALL_statement(NULL);
+        return;
+    }
+}
+
+
+static void
+compile_ENDFORALL_statement(expr x)
+{
+    ID ip;
+    ENV parent;
+    expv init;
+    list lp;
+
+    if (CTL_TYPE(ctl_top) != CTL_FORALL) {
+        error("'endforall', out of place");
+        return;
+    }
+
+    /* check construct name */
+    if (x != NULL && CTL_FORALL_CONST_NAME(ctl_top) != NULL) {
+        if (EXPR_ARG1(x) == NULL) {
+            error("expects construnct name");
+            return;
+        } else if (EXPR_SYM(CTL_FORALL_CONST_NAME(ctl_top)) !=
+                   EXPR_SYM(EXPR_ARG1(x))) {
+            error("unmatched construct name");
+            return;
+        }
+    } else if (EXPR_ARG1(x) != NULL) {
+        error("unexpected construnct name");
+        return;
+    }
+
+    if (debug_flag) {
+        fprintf(debug_fp,"\n*** IN FORALL:\n");
+        print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
+        print_types(LOCAL_STRUCT_DECLS, debug_fp);
+        expv_output(CURRENT_STATEMENTS, debug_fp);
+    }
+
+    CTL_FORALL_BODY(ctl_top) = CURRENT_STATEMENTS;
+
+    if (endlineno_flag) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    }
+
+    init = CTL_FORALL_INIT(ctl_top);
+
+    FOR_ITEMS_IN_LIST(lp, init) {
+        ip = find_ident_head(EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))), LOCAL_SYMBOLS);
+        if (ip) {
+            debug("#### rename %s to %s",
+                  SYM_NAME(ID_SYM(ip)),
+                  SYM_NAME(EXPV_NAME(ID_ADDR(ip))));
+            ID_SYM(ip) = EXPV_NAME(ID_ADDR(ip));
+            EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
+        }
+    }
+
+    parent = ENV_PARENT(current_local_env);
+
+    ENV_SYMBOLS(parent) = unify_id_list(
+        ENV_SYMBOLS(parent),
+        ENV_SYMBOLS(current_local_env),
+        /*overshadow=*/FALSE);
+
+    ENV_EXTERNAL_SYMBOLS(parent) = unify_ext_id_list(
+        ENV_EXTERNAL_SYMBOLS(parent),
+        ENV_EXTERNAL_SYMBOLS(current_local_env),
+        /*overshadow=*/FALSE);
+
+    assert(ENV_STRUCT_DECLS(current_local_env) == NULL);
+    assert(ENV_COMMON_SYMBOLS(current_local_env) == NULL);
+    assert(ENV_INTERFACES(current_local_env) == NULL);
+    assert(ENV_USE_DECLS(current_local_env) == NULL);
+
+    pop_ctl();
+    pop_env();
+    CURRENT_STATE = INEXEC;
 }
