@@ -16,6 +16,7 @@ static struct _shift_queue_t _shift_queue; /** Queue which saves shift informati
 static int *_sync_images_table;
 static gasnet_hsl_t _hsl;
 #define _XMP_UNROLLING (4)
+extern int _XMP_flag_put_nb; // This variable is temporal
 
 /*************************************************************************/
 /* DESCRIPTION : Execute pack operation for 7-dimensional array          */
@@ -834,6 +835,9 @@ void _XMP_gasnet_sync_memory()
     GASNET_BLOCKUNTIL(_xmp_gasnet_stride_queue[i] == _XMP_STRIDE_DONE);
 
   _xmp_gasnet_stride_wait_size = 0;
+
+  if( _XMP_flag_put_nb)
+    gasnet_wait_syncnbi_puts();
 }
 
 /**
@@ -846,7 +850,7 @@ void _XMP_gasnet_sync_all()
 }
 
 /*************************************************************************************/
-/* DESCRIPTION : Execute put operation (from continuous region to continuous region) */
+/* DESCRIPTION : Execute put operation (from contiguous region to contiguous region) */
 /* ARGUMENT    : [IN] target_rank    : Target rank                                   */
 /*               [IN] dst_offset     : Offset size of destination array              */
 /*               [IN] src_offset     : Offset size of source array                   */
@@ -865,7 +869,7 @@ static void _gasnet_c_to_c_put(const int target_rank, const size_t dst_offset,
 }
 
 /*****************************************************************************************/
-/* DESCRIPTION : Execute put operation (from NON-continuous region to continuous region) */
+/* DESCRIPTION : Execute put operation (from NON-contiguous region to contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                        */
 /*               [IN] dst_offset    : Offset size of destination array                   */
 /*               [IN] src_dims      : Number of dimensions of source array               */
@@ -951,7 +955,7 @@ static void _stride_size_error(size_t request_size){
 }
 
 /*****************************************************************************************/
-/* DESCRIPTION : Execute put operation (from continuous region to NON-continuous region) */
+/* DESCRIPTION : Execute put operation (from contiguous region to NON-contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                        */
 /*               [IN] src_offset    : Offset size of source array                        */
 /*               [IN] dst_dims      : Number of dimensions of destination array          */
@@ -991,7 +995,7 @@ static void _gasnet_c_to_nonc_put(const int target_rank, const size_t src_offset
 }
 
 /*********************************************************************************************/
-/* DESCRIPTION : Execute put operation (from NON-continuous region to NON-continuous region) */
+/* DESCRIPTION : Execute put operation (from NON-contiguous region to NON-contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                            */
 /*               [IN] dst_dims      : Number of dimensions of destination array              */
 /*               [IN] src_dims      : Number of dimensions of source array                   */
@@ -1074,8 +1078,8 @@ static void _gasnet_scalar_mput(const int target_rank, const int dst_dims,
 
 /***************************************************************************************/
 /* DESCRIPTION : Execute put operation                                                 */
-/* ARGUMENT    : [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
-/*               [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
+/* ARGUMENT    : [IN] dst_contiguous : Is destination region contiguous ? (TRUE/FALSE) */
+/*               [IN] src_contiguous : Is source region contiguous ? (TRUE/FALSE)      */
 /*               [IN] target_rank    : Target rank                                     */
 /*               [IN] dst_dims       : Number of dimensions of destination array       */
 /*               [IN] src_dims       : Number of dimensions of source array            */
@@ -1088,27 +1092,27 @@ static void _gasnet_scalar_mput(const int target_rank, const int dst_dims,
 /* EXAMPLE    :                                                                        */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src                          */
 /***************************************************************************************/
-void _XMP_gasnet_put(const int dst_continuous, const int src_continuous, const int target_rank, 
+void _XMP_gasnet_put(const int dst_contiguous, const int src_contiguous, const int target_rank, 
 		     const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
 		     const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
 		     const void *src, const size_t dst_elmts, const size_t src_elmts)
 {
   if(dst_elmts == src_elmts){
     size_t transfer_size = dst_desc->elmt_size*dst_elmts;
-    if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
+    if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_TRUE){
       size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
       size_t src_offset = _XMP_get_offset(src_info, src_dims);
       _gasnet_c_to_c_put(target_rank, dst_offset, src_offset, dst_desc, src, transfer_size);
     }
-    else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
+    else if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_FALSE){
       size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
       _gasnet_nonc_to_c_put(target_rank, dst_offset, src_dims, src_info, dst_desc, src, transfer_size);
     }
-    else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
+    else if(dst_contiguous == _XMP_N_INT_FALSE && src_contiguous == _XMP_N_INT_TRUE){
       size_t src_offset = _XMP_get_offset(src_info, src_dims);
       _gasnet_c_to_nonc_put(target_rank, src_offset, dst_dims, dst_info, dst_desc, src, transfer_size);
     }
-    else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_FALSE){
+    else if(dst_contiguous == _XMP_N_INT_FALSE && src_contiguous == _XMP_N_INT_FALSE){
       _gasnet_nonc_to_nonc_put(target_rank, dst_dims, src_dims, dst_info, src_info, 
 			       dst_desc, src, transfer_size);
     }
@@ -1125,7 +1129,7 @@ void _XMP_gasnet_put(const int dst_continuous, const int src_continuous, const i
 }
 
 /*************************************************************************************/
-/* DESCRIPTION : Execute get operation (from continuous region to continuous region) */
+/* DESCRIPTION : Execute get operation (from contiguous region to contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                    */
 /*               [IN] dst_offset    : Offset size of destination array               */
 /*               [IN] src_offset    : Offset size of source array                    */
@@ -1144,7 +1148,7 @@ static void _gasnet_c_to_c_get(const int target_rank, const size_t dst_offset, c
 }
 
 /*****************************************************************************************/
-/* DESCRIPTION : Execute get operation (from NON-continuous region to continuous region) */
+/* DESCRIPTION : Execute get operation (from NON-contiguous region to contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                        */
 /*               [IN] src_offset    : Offset size of source array                        */
 /*               [IN] dst_dims      : Number of dimensions of destination array          */
@@ -1226,7 +1230,7 @@ void _xmp_gasnet_pack_get(gasnet_token_t t, const char* array_info, const size_t
 }
 
 /********************************************************************************/
-/* DESCRIPTION : Execute unpack operations for Non-continuous GET               */
+/* DESCRIPTION : Execute unpack operations for Non-contiguous GET               */
 /* ARGUMENT    : [IN] t             : Token for Active Messages                 */
 /*               [IN] *archives     : Recieved message                          */
 /*               [IN] transfer_size : Transfer size                             */
@@ -1296,7 +1300,7 @@ void _xmp_gasnet_pack_using_buf(gasnet_token_t t, const char* array_info, const 
 }
 
 /*****************************************************************************************/
-/* DESCRIPTION : Execute get operation (from NON-continuous region to continuous region) */
+/* DESCRIPTION : Execute get operation (from NON-contiguous region to contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                        */
 /*               [IN] dst_offset    : Offset size of destination array                   */
 /*               [IN] src_dims      : Number of dimensions of source array               */
@@ -1337,7 +1341,7 @@ static void _gasnet_nonc_to_c_get(const int target_rank, const size_t dst_offset
 }
 
 /*********************************************************************************************/
-/* DESCRIPTION : Execute get operation (from NON-continuous region to NON-continuous region) */
+/* DESCRIPTION : Execute get operation (from NON-contiguous region to NON-contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                            */
 /*               [IN] dst_dims      : Number of dimensions of destination array              */
 /*               [IN] src_dims      : Number of dimensions of source array                   */
@@ -1409,8 +1413,8 @@ static void _gasnet_scalar_mget(const int target_rank, const size_t src_offset, 
 
 /***************************************************************************************/
 /* DESCRIPTION : Execute get operation                                                 */
-/* ARGUMENT    : [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
-/*               [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
+/* ARGUMENT    : [IN] src_contiguous : Is source region contiguous ? (TRUE/FALSE)      */
+/*               [IN] dst_contiguous : Is destination region contiguous ? (TRUE/FALSE) */
 /*               [IN] target_rank    : Target rank                                     */
 /*               [IN] src_dims       : Number of dimensions of source array            */
 /*               [IN] dst_dims       : Number of dimensions of destination array       */
@@ -1423,26 +1427,26 @@ static void _gasnet_scalar_mget(const int target_rank, const size_t src_offset, 
 /* EXAMPLE    :                                                                        */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src                          */
 /***************************************************************************************/
-void _XMP_gasnet_get(const int src_continuous, const int dst_continuous, const int target_rank, const int src_dims, 
+void _XMP_gasnet_get(const int src_contiguous, const int dst_contiguous, const int target_rank, const int src_dims, 
 		     const int dst_dims, const _XMP_array_section_t *src_info, const _XMP_array_section_t *dst_info, 
 		     const _XMP_coarray_t *src_desc, const void *dst, const size_t src_elmts, const size_t dst_elmts)
 {
   if(src_elmts == dst_elmts){
     size_t transfer_size = src_desc->elmt_size*src_elmts;
-    if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
+    if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_TRUE){
       size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
       size_t src_offset = _XMP_get_offset(src_info, src_dims);
       _gasnet_c_to_c_get(target_rank, dst_offset, src_offset, dst, src_desc, transfer_size);
     }
-    else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
+    else if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_FALSE){
       size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
       _gasnet_nonc_to_c_get(target_rank, dst_offset, src_dims, src_info, dst, src_desc, transfer_size);
     }
-    else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
+    else if(dst_contiguous == _XMP_N_INT_FALSE && src_contiguous == _XMP_N_INT_TRUE){
       size_t src_offset = _XMP_get_offset(src_info, src_dims);
       _gasnet_c_to_nonc_get(target_rank, src_offset, dst_dims, dst_info, dst, src_desc, transfer_size);
     }
-    else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_FALSE){
+    else if(dst_contiguous == _XMP_N_INT_FALSE && src_contiguous == _XMP_N_INT_FALSE){
       _gasnet_nonc_to_nonc_get(target_rank, dst_dims, src_dims, dst_info, src_info, dst, src_desc, transfer_size);
     }
   }
@@ -1465,12 +1469,12 @@ void _XMP_gasnet_get(const int src_continuous, const int dst_continuous, const i
 /*               [IN] dst_offset  : Offset size of destination array  */
 /*               [IN] dst_elmts   : Number of elements of destination */
 /*               [IN] elmt_size   : Element size                      */
-/* NOTE       : Both dst and src are continuous coarrays              */
+/* NOTE       : Both dst and src are contiguous coarrays              */
 /*              target_rank != __XMP_world_rank.                      */
 /* EXAMPLE    :                                                       */
 /*     a[0:100]:[1] = b[0]; // a[] is a dst, b[] is a src             */
 /**********************************************************************/
-static void _gasnet_scalar_continuous_mput(const int target_rank, _XMP_coarray_t *dst_desc, const void *src, 
+static void _gasnet_scalar_contiguous_mput(const int target_rank, _XMP_coarray_t *dst_desc, const void *src, 
 					 const size_t dst_offset, const size_t dst_elmts,
 					 const size_t elmt_size)
 {
@@ -1515,20 +1519,23 @@ static void _gasnet_scalar_continuous_mput(const int target_rank, _XMP_coarray_t
 /*               [IN] dst_elmts   : Number of elements of destination array */
 /*               [IN] src_elmts   : Number of elements of source array      */
 /*               [IN] elmt_size   : Element size                            */
-/* NOTE       : Both dst and src are continuous coarrays                    */
+/* NOTE       : Both dst and src are contiguous coarrays                    */
 /*              target_rank != __XMP_world_rank.                            */
 /* EXAMPLE    :                                                             */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src               */
 /****************************************************************************/
-void _XMP_gasnet_continuous_put(const int target_rank, _XMP_coarray_t *dst_desc, void *src, 
-			      const size_t dst_offset, const size_t dst_elmts, 
-			      const size_t src_elmts, const size_t elmt_size)
+void _XMP_gasnet_contiguous_put(const int target_rank, _XMP_coarray_t *dst_desc, void *src, 
+				const size_t dst_offset, const size_t dst_elmts, 
+				const size_t src_elmts, const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){
-    gasnet_put_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
+    if(_XMP_flag_put_nb)
+      gasnet_put_nbi_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
+    else
+      gasnet_put_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
   }
   else if(src_elmts == 1){
-    _gasnet_scalar_continuous_mput(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
+    _gasnet_scalar_contiguous_mput(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
   }
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
@@ -1543,14 +1550,14 @@ void _XMP_gasnet_continuous_put(const int target_rank, _XMP_coarray_t *dst_desc,
 /*               [IN] dst_offset  : Offset size of destination array        */
 /*               [IN] dst_elmts   : Number of elements of destination array */
 /*               [IN] elmt_size   : Element size                            */
-/* NOTE       : Both dst and src are continuous coarrays                    */
+/* NOTE       : Both dst and src are contiguous coarrays                    */
 /*              target_rank != __XMP_world_rank.                            */
 /* EXAMPLE    :                                                             */
 /*     a[0:100] = b[0]:[1]; // a[] is a dst, b[] is a src                   */
 /****************************************************************************/
-static void _gasnet_scalar_continuous_mget(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
-                                         const size_t dst_offset, const size_t dst_elmts,
-                                         const size_t elmt_size)
+static void _gasnet_scalar_contiguous_mget(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
+					   const size_t dst_offset, const size_t dst_elmts,
+					   const size_t elmt_size)
 {
   char *dst_addr = dst_desc->addr[_XMP_world_rank]+dst_offset;
   gasnet_get_bulk(dst_addr, target_rank, src, elmt_size);
@@ -1567,20 +1574,20 @@ static void _gasnet_scalar_continuous_mget(const int target_rank, _XMP_coarray_t
 /*               [IN] dst_elmts   : Number of elements of destination array */
 /*               [IN] src_elmts   : Number of elements of source array      */
 /*               [IN] elmt_size   : Element size                            */
-/* NOTE       : Both dst and src are continuous coarrays                    */
+/* NOTE       : Both dst and src are contiguous coarrays                    */
 /*              target_rank != __XMP_world_rank.                            */
 /* EXAMPLE    :                                                             */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src               */
 /****************************************************************************/
-void _XMP_gasnet_continuous_get(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
-			      const size_t dst_offset, const size_t dst_elmts, const size_t src_elmts,
-			      const size_t elmt_size)
+void _XMP_gasnet_contiguous_get(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
+				const size_t dst_offset, const size_t dst_elmts, const size_t src_elmts,
+				const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){
     gasnet_get_bulk(dst_desc->addr[_XMP_world_rank]+dst_offset, target_rank, src, src_elmts*elmt_size);
   }
   else if(src_elmts == 1){
-    _gasnet_scalar_continuous_mget(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
+    _gasnet_scalar_contiguous_mget(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
   }
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");

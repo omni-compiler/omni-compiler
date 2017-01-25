@@ -703,7 +703,7 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
   }
 
   // ACTION (case asynchronous: definition of a coindexed variable)
-  _XMP_coarray_continuous_put(coindex,
+  _XMP_coarray_contiguous_put(coindex,
                               desc,   descDMA,
                               offset, offsetDMA,
                               bytes,  bytes);

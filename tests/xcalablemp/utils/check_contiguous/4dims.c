@@ -14,7 +14,7 @@ typedef struct _XMP_array_section{
 
 extern unsigned int _XMP_get_dim_of_allelmts(const int dims,
 					     const _XMP_array_section_t* array_info);
-extern int _check_continuous(const _XMP_array_section_t *array_info, const int dims, const int elmts);
+extern int _check_contiguous(const _XMP_array_section_t *array_info, const int dims, const int elmts);
 
 static int _check_stride(_XMP_array_section_t* array_info, int dims, int elmts)
 {
@@ -60,7 +60,7 @@ static void test(int start0, int len0, int stride0, int start1, int len1, int st
 
   int elmts = array[0].length * array[1].length * array[2].length * array[3].length;
 #ifdef _CHECK
-  if(_check_continuous(array, DIM, elmts)){
+  if(_check_contiguous(array, DIM, elmts)){
 #else
   if(_check_stride(array, DIM, elmts)){
 #endif

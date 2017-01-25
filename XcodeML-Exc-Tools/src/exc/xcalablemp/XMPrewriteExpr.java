@@ -309,7 +309,7 @@ public class XMPrewriteExpr {
   // }
 
 
-  private Xobject createContinuousCoarray(int imageDims, XobjList imageList, String commkind, 
+  private Xobject createContiguousCoarray(int imageDims, XobjList imageList, String commkind, 
                                           XMPcoarray dstCoarray, XMPcoarray srcCoarray,
                                           Xobject dstCoarrayExpr, Xobject srcCoarrayExpr,
                                           boolean isDstCoarrayOnAcc, boolean isSrcCoarrayOnAcc) throws XMPexception
@@ -319,7 +319,7 @@ public class XMPrewriteExpr {
     // If image set is 2 dimension and Put operation,
     // function name is "_XMP_shortcut_put_image2"
     boolean isAcc = isDstCoarrayOnAcc || isSrcCoarrayOnAcc;
-    String funcName = "_XMP_coarray_continuous_" + commkind;
+    String funcName = "_XMP_coarray_contiguous_" + commkind;
     if(isAcc) funcName += "_acc";
     Ident funcId = _globalDecl.declExternFunc(funcName);
     XobjList funcArgs = Xcons.List();
@@ -396,39 +396,39 @@ public class XMPrewriteExpr {
       }
     }
 
-    // How depth continuous ?
+    // How depth contiguous ?
     // e.g.) a[100][100][100]:[*];
-    //       a[:][:][:],   xxxCoarrayDepthContinuous = 0
-    //       a[2][:][:],   xxxCoarrayDepthContinuous = 1
-    //       a[:2][:][:],  xxxCoarrayDepthContinuous = 1
-    //       a[2][2][:],   xxxCoarrayDepthContinuous = 2
-    //       a[:][:2][:],  xxxCoarrayDepthContinuous = 2
-    //       a[2][2][2:2], xxxCoarrayDepthContinuous = 3
-    //       a[2][2][2:],  xxxCoarrayDepthContinuous = 3
-    //       a[2][2][:],   xxxCoarrayDepthContinuous = 3
-    //       a[2][2][1],   xxxCoarrayDepthContinuous = 3
+    //       a[:][:][:],   xxxCoarrayDepthContiguous = 0
+    //       a[2][:][:],   xxxCoarrayDepthContiguous = 1
+    //       a[:2][:][:],  xxxCoarrayDepthContiguous = 1
+    //       a[2][2][:],   xxxCoarrayDepthContiguous = 2
+    //       a[:][:2][:],  xxxCoarrayDepthContiguous = 2
+    //       a[2][2][2:2], xxxCoarrayDepthContiguous = 3
+    //       a[2][2][2:],  xxxCoarrayDepthContiguous = 3
+    //       a[2][2][:],   xxxCoarrayDepthContiguous = 3
+    //       a[2][2][1],   xxxCoarrayDepthContiguous = 3
 
     // dstCoarray
-    int dstCoarrayDepthContinuous = dstDim;
+    int dstCoarrayDepthContiguous = dstDim;
     if(dstCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
       Ident varId = dstCoarray.getVarId();
       XobjList tripletList = (XobjList)dstCoarrayExpr.getArg(1);
       for(int i=dstDim-1;i>=0;i--){
         if(is_all_element(i, tripletList, varId)){
-          dstCoarrayDepthContinuous = i;
+          dstCoarrayDepthContiguous = i;
         }
       }
     }
     // if dstCoarray == Xcode.ARRAY_REF or Xcode.VAR,
-    // dstCoarrayDepthContinuous = 1.
+    // dstCoarrayDepthContiguous = 1.
     
-    int srcCoarrayDepthContinuous = srcDim;
+    int srcCoarrayDepthContiguous = srcDim;
     if(srcCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
       Ident varId = srcCoarray.getVarId();
       XobjList tripletList = (XobjList)srcCoarrayExpr.getArg(1);
       for(int i=srcDim-1;i>=0;i--){
         if(is_all_element(i, tripletList, varId)){
-          srcCoarrayDepthContinuous = i;
+          srcCoarrayDepthContiguous = i;
         }
       }
     }
@@ -521,17 +521,17 @@ public class XMPrewriteExpr {
     // dst_length
     Xobject dst_length = null;
     if(dstCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
-      if(dstCoarrayDepthContinuous == 0){
+      if(dstCoarrayDepthContiguous == 0){
         dst_length = Xcons.IntConstant((int)dstCoarray.getSizeAt(0) * dstCoarrayDistance[0]);
       }
       else{
-        Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(dstCoarrayDepthContinuous-1);
+        Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(dstCoarrayDepthContiguous-1);
         if(! tripletList.isIndexRange()){
-          dst_length = Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]);
+          dst_length = Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContiguous-1]);
         }
         else{
           dst_length = Xcons.binaryOp(Xcode.MUL_EXPR, ((XobjList)tripletList).getArg(1),
-                                  Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]));
+                                  Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContiguous-1]));
         }
       }
     }
@@ -546,17 +546,17 @@ public class XMPrewriteExpr {
     // src_length
     Xobject src_length = null;
     if(srcCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
-      if(srcCoarrayDepthContinuous == 0){
+      if(srcCoarrayDepthContiguous == 0){
         src_length = Xcons.IntConstant((int)srcCoarray.getSizeAt(0) * srcCoarrayDistance[0]);
       }
       else{
-        Xobject tripletList = srcCoarrayExpr.getArg(1).getArg(srcCoarrayDepthContinuous-1);
+        Xobject tripletList = srcCoarrayExpr.getArg(1).getArg(srcCoarrayDepthContiguous-1);
         if(! tripletList.isIndexRange()){
-          src_length = Xcons.IntConstant(srcCoarrayDistance[srcCoarrayDepthContinuous-1]);
+          src_length = Xcons.IntConstant(srcCoarrayDistance[srcCoarrayDepthContiguous-1]);
         }
         else{
           src_length = Xcons.binaryOp(Xcode.MUL_EXPR, ((XobjList)tripletList).getArg(1),
-                                      Xcons.IntConstant(srcCoarrayDistance[srcCoarrayDepthContinuous-1]));
+                                      Xcons.IntConstant(srcCoarrayDistance[srcCoarrayDepthContiguous-1]));
         }
       }
     }
@@ -639,9 +639,9 @@ public class XMPrewriteExpr {
     XobjList imageList = (XobjList)coarrayExpr.getArg(1);
     int imageDims = coarray.getImageDim();
 
-    // Continuous Function
-    if(isContinuousArray(coarrayExpr, exprParentBlock) &&
-       isContinuousArray(localExpr, exprParentBlock) &&
+    // Contiguous Function
+    if(isContiguousArray(coarrayExpr, exprParentBlock) &&
+       isContiguousArray(localExpr, exprParentBlock) &&
        isCoarray(localExpr, exprParentBlock))
       {
         XMPcoarray remoteCoarray = coarray;
@@ -650,11 +650,11 @@ public class XMPrewriteExpr {
         boolean isLocalCoarrayUseDevice = isUseDevice(localCoarray.getName(), exprParentBlock);
         if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF)
           {  // put a[:]:[1] = b[:];
-            return createContinuousCoarray(imageDims, imageList, "put", remoteCoarray, localCoarray,
+            return createContiguousCoarray(imageDims, imageList, "put", remoteCoarray, localCoarray,
                                             coarrayExpr.getArg(0), localExpr, isRemoteCoarrayUseDevice, isLocalCoarrayUseDevice);
           }
         else{ // get a[:] = b[:]:[1]
-          return createContinuousCoarray(imageDims, imageList, "get", localCoarray, remoteCoarray,
+          return createContiguousCoarray(imageDims, imageList, "get", localCoarray, remoteCoarray,
                                          localExpr, coarrayExpr.getArg(0), isRemoteCoarrayUseDevice, isLocalCoarrayUseDevice);
         }
       }
@@ -832,7 +832,7 @@ public class XMPrewriteExpr {
 
     return null;
     // Memo: This function translates a coarray syntax (a[1:2:1]:[9] = b) into 4 functions.
-    // This function returns null pointer except for continuous functions. The reason of returning
+    // This function returns null pointer except for contiguous functions. The reason of returning
     // null pointer, when XobjList is returned, an upper process is abort.
     // Therefore this function translates the coarray syntax directly.
   }
@@ -933,7 +933,7 @@ public class XMPrewriteExpr {
     return false;
   }
 
-  private boolean isContinuousArray(Xobject myExpr, Block block) throws XMPexception
+  private boolean isContiguousArray(Xobject myExpr, Block block) throws XMPexception
   {
     if(myExpr.Opcode() == Xcode.CO_ARRAY_REF)
       myExpr = myExpr.getArg(0);

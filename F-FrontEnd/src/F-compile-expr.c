@@ -1606,6 +1606,8 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
     tp = (id ? ID_TYPE(id) : EXPV_TYPE(vary));
 
     if (id != NULL && (
+        (tp != NULL && IS_PROCEDURE_TYPE(tp)
+         && !IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))) ||
         PROC_CLASS(id) == P_EXTERNAL ||
         PROC_CLASS(id) == P_DEFINEDPROC ||
         (ID_IS_DUMMY_ARG(id) &&
@@ -2121,7 +2123,8 @@ compile_coarray_ref(expr coarrayRef){
 expv
 compile_highorder_function_call(ID id, expr args, int isCall)
 {
-    if (!(ID_IS_DUMMY_ARG(id))) {
+    if (!(ID_IS_DUMMY_ARG(id)) &&
+        !(ID_TYPE(id) && IS_PROCEDURE_TYPE(ID_TYPE(id)))) {
         fatal("%s: '%s' is not a dummy arg.",
               __func__, SYM_NAME(ID_SYM(id)));
         /* not reached. */
@@ -2167,8 +2170,22 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
 
-    /* declare as function */
     if (declare_function(f_id) == NULL) return NULL;
+
+    if (ID_CLASS(f_id) == CL_VAR && IS_PROCEDURE_TYPE(ID_TYPE(f_id))) {
+        tp = get_bottom_ref_type(ID_TYPE(f_id));
+        a = compile_args(args);
+        v = list3(FUNCTION_CALL,
+                  expv_sym_term(F_VAR, ID_TYPE(f_id), ID_SYM(f_id)),
+                  a,
+                  expv_any_term(F_EXTFUNC, f_id));
+
+        EXPV_TYPE(v) = !tp ? type_GNUMERIC_ALL :
+                IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) ?
+                type_GNUMERIC_ALL :
+                FUNCTION_TYPE_RETURN_TYPE(tp) ;
+        goto line_info;
+    }
 
     switch (PROC_CLASS(f_id)) {
         case P_UNDEFINEDPROC:
@@ -2233,6 +2250,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 goto err;
             }
             tp = ID_TYPE(f_id);
+
             if (!IS_PROCEDURE_TYPE(tp)) {
                 tp = function_type(tp);
                 ID_TYPE(f_id) = tp;
@@ -2292,6 +2310,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                   PROC_CLASS(f_id));
     }
 
+line_info:
     if (v != NULL) {
         if (args != NULL) {
             EXPR_LINE(v) = EXPR_LINE(args);
