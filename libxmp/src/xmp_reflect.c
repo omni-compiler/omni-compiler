@@ -782,7 +782,7 @@ static void _XMP_reflect_wait(_XMP_array_t *a, int *lwidth, int *uwidth, int *is
       _XMP_TEND2(xmptiming_.t_wait, xmptiming_.tdim_wait[i], t0);
     }
     else if (ai->shadow_type == _XMP_N_SHADOW_FULL){
-      _XMP_reflect_shadow_FULL(a->array_addr_p, a, i);
+      //_XMP_reflect_shadow_FULL(a->array_addr_p, a, i);
     }
 
   }
