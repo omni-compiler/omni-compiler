@@ -1674,7 +1674,9 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
         if (EXPR_CODE(TYPE_LENG(tp)) == INT_CONSTANT) {
             TYPE_CHAR_LEN(tp) = EXPV_INT_VALUE(TYPE_LENG(tp));
         } else {
-            /* don't use as Fcharacter */
+            /*
+             * don't use as a character basictype "Fcharacter"
+             */
             TYPE_CHAR_LEN(tp) = 0;
         }
     }
@@ -1706,10 +1708,11 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
         free(typeId);
 
     /*
-     * cut last
+     * Remove a character basic type which is genereted from 'ref="Fcharacter"'
      */
     if (IS_CHAR(tp))  {
-        if (TYPE_REF(TYPE_REF(tp)) == NULL && TYPE_CHAR_LEN(TYPE_REF(tp)) == 1) {
+        if (TYPE_REF(TYPE_REF(tp)) == NULL &&
+            TYPE_CHAR_LEN(TYPE_REF(tp)) == 1) {
             TYPE_REF(tp) = NULL;
         }
     }
