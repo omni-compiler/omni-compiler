@@ -2145,8 +2145,9 @@ outx_pointerAssignStatement(int l, expv v)
     vPointee = EXPR_ARG2(v);
 
     if (EXPV_CODE(vPointer) != F_VAR &&
+        EXPV_CODE(vPointer) != ARRAY_REF &&
         EXPV_CODE(vPointer) != F95_MEMBER_REF) {
-        fatal("%s: Invalid argument, expected F_VAR or F95_MEMBER_REF.", __func__);
+        fatal("%s: Invalid argument, expected F_VAR or F_ARRAY_REF or F95_MEMBER_REF.", __func__);
     }
     if (EXPV_CODE(vPointee) != F_VAR &&
         EXPV_CODE(vPointee) != ARRAY_REF &&
