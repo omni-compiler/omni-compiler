@@ -4030,12 +4030,20 @@ outx_characterType(int l, TYPE_DESC tp)
         outx_kind(l1, tp);
 
         if(charLen != 1|| vcharLen != NULL) {
-            outx_tag(l1, "len");
-            if(IS_CHAR_LEN_UNFIXED(tp) == FALSE) {
+            if (!IS_CHAR_LEN_UNFIXED(tp) && !IS_CHAR_LEN_ALLOCATABLE(tp)) {
+                outx_tag(l1, "len");
                 if(vcharLen != NULL)
                     outx_expv(l2, vcharLen);
                 else
                     outx_intAsConst(l2, TYPE_CHAR_LEN(tp));
+            } else if (IS_CHAR_LEN_UNFIXED(tp)) {
+                outx_printi(l1, "<len");
+                outx_true(TRUE, "is_assumed_size");
+                outx_print(">\n");
+            } else if (IS_CHAR_LEN_ALLOCATABLE(tp)) {
+                outx_printi(l1, "<len");
+                outx_true(TRUE, "is_assumed_shape");
+                outx_print(">\n");
             }
             outx_close(l1, "len");
         }
@@ -5204,9 +5212,6 @@ outx_blockDataDefinition(int l, EXT_ID ep)
 }
 
 
-
-
-
 static const char*
 getTimestamp()
 {
@@ -5215,8 +5220,6 @@ getTimestamp()
     strftime(s_timestamp, CEXPR_OPTVAL_CHARLEN, "%F %T", ltm);
     return s_timestamp;
 }
-
-
 
 
 /**

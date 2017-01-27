@@ -395,6 +395,8 @@ extern TYPE_DESC basic_type_desc[];
 
 #define CHAR_LEN_UNFIXED (-1)
 
+#define CHAR_LEN_ALLOCATABLE (-2)
+
 /* macros distinguishing type */
 #define IS_STRUCT_TYPE(tp) \
                 ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_STRUCT)
@@ -433,6 +435,8 @@ extern TYPE_DESC basic_type_desc[];
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_CHAR))
 #define IS_CHAR_LEN_UNFIXED(tp) \
                 ((tp) != NULL && (TYPE_CHAR_LEN(tp) == CHAR_LEN_UNFIXED))
+#define IS_CHAR_LEN_ALLOCATABLE(tp) \
+                ((tp) != NULL && (TYPE_CHAR_LEN(tp) == CHAR_LEN_ALLOCATABLE))
 #define IS_LOGICAL(tp) \
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_LOGICAL))
 #define IS_INT_CONST_V(v) \

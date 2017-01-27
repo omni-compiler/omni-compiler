@@ -2488,8 +2488,9 @@ end_declaration()
             if (TYPE_IS_ALLOCATABLE(tp) &&
                 !(IS_ARRAY_TYPE(tp) ||
                   TYPE_IS_COINDEXED(tp) ||
-                  TYPE_IS_CLASS(tp))) {
-                error_at_id(ip, "ALLOCATABLE is applied only to array/coarray/class");
+                  TYPE_IS_CLASS(tp) ||
+                  (IS_CHAR(tp) && IS_CHAR_LEN_ALLOCATABLE(tp)))) {
+                error_at_id(ip, "ALLOCATABLE is applied only to array/coarray/class/character(:)");
             } else if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "OPTIONAL is applied only "
                               "to dummy argument");

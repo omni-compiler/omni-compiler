@@ -2389,11 +2389,11 @@ compile_basic_type(expr x)
     if(rkind) {
         /*
          * FIXME:
-         *	SUPER BOGUS FLAG ALERT !
+         *  SUPER BOGUS FLAG ALERT !
          */
         is_in_kind_compilation_flag_for_declare_ident = TRUE;
-	//org_vkind = vkind = compile_expression(rkind);
-	vkind = compile_expression(rkind);
+        //org_vkind = vkind = compile_expression(rkind);
+        vkind = compile_expression(rkind);
         is_in_kind_compilation_flag_for_declare_ident = FALSE;
 
         if(vkind == NULL)  return NULL;
@@ -2436,9 +2436,11 @@ compile_basic_type(expr x)
     if(rcharLen) {
         if((vcharLen = compile_expression(rcharLen)) == NULL)
             return NULL;
-        if(EXPV_CODE(vcharLen) == F_ASTERISK)
+        if (EXPV_CODE(vcharLen) == F_ASTERISK) {
             charLen = CHAR_LEN_UNFIXED;
-        else {
+        } else if (EXPV_CODE(vcharLen) == F08_LEN_SPEC_COLON) {
+            charLen = CHAR_LEN_ALLOCATABLE;
+        } else {
             if((vcharLen1 = expv_reduce(vcharLen, TRUE)) == NULL) {
                 charLen = CHAR_LEN_UNFIXED;
             } else {
