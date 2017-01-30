@@ -7744,6 +7744,20 @@ compile_ENDFORALL_statement(expr x)
 
     CTL_FORALL_BODY(ctl_top) = CURRENT_STATEMENTS;
 
+    FOR_ITEMS_IN_LIST(lp, CTL_FORALL_BODY(ctl_top)) {
+        switch (EXPV_CODE(LIST_ITEM(lp))) {
+            case F_FORALL_STATEMENT:
+            case F_WHERE_STATEMENT:
+            case F_LET_STATEMENT:
+            case F95_POINTER_SET_STATEMENT:
+                continue;
+                break;
+            default:
+                error_at_node(LIST_ITEM(lp), "not allowed statement in the FORALL construct");
+                break;
+        }
+    }
+
     if (endlineno_flag) {
         EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
     }
