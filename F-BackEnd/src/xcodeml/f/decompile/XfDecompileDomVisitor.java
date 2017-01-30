@@ -2020,45 +2020,19 @@ public class XfDecompileDomVisitor {
          *      XbfFarrayConstructor)
          */
         @Override public void enter(Node n) {
-            XfTypeManagerForDom.TypeList typeList = getTypeList(XmDomUtil.getAttr(n, "type"));
-
-            Node bottomType = typeList.getLast();
-            Node topType = typeList.getFirst();
+            String elementTypeId = XmDomUtil.getAttr(n, "element_type");
 
             XmfWriter writer = _context.getWriter();
 
             writer.writeToken("(/");
 
-            if (XmDomUtil.getElement(topType, "indexRange") == null) {
-                // TODO: arrangement
-                XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
-                boolean isClass = XmDomUtil.getAttrBool(bottomType, "is_class");
-                String topTypeName = topType.getNodeName();
-                if ("FbasicType".equals(topTypeName) && !isClass) {
-                    _writeBasicType(topType, typeList);
-                } else if ("FbasicType".equals(topTypeName) && isClass) {
-                    writer.writeToken("CLASS");
-                    writer.writeToken("(");
-                    writer.writeToken("*");
-                    writer.writeToken(")");
-                } else if ("FstructType".equals(topTypeName)) {
-                    Node typeParamValues = typeList.findChildNode("typeParamValues");
-                    String aliasStructTypeName =
-                            typeManager.getAliasTypeName(XmDomUtil.getAttr(topType,
-                                    "type"));
-                    if (isClass) {
-                        writer.writeToken("CLASS");
-                    } else {
-                        writer.writeToken("TYPE");
-                    }
-                    writer.writeToken("(");
-                    writer.writeToken(aliasStructTypeName);
-                    if (typeParamValues != null) {
-                        writer.writeToken("(");
-                        _invokeChildEnterAndWriteDelim(typeParamValues, ",");
-                        writer.writeToken(")");
-                    }
-                    writer.writeToken(")");
+            if (!XfUtilForDom.isNullOrEmpty(elementTypeId)) {
+                XfType elementType = XfType.getTypeIdFromXcodemlTypeName(elementTypeId);
+                if (elementType.isPrimitive()) {
+                    writer.writeToken(elementType.fortranName());
+                } else {
+                    XfTypeManagerForDom.TypeList typeList = getTypeList(elementTypeId);
+                    _writeTopType(typeList);
                 }
                 writer.writeToken("::");
             }
