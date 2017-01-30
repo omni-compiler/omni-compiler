@@ -708,11 +708,6 @@ type_is_soft_compatible(TYPE_DESC tp, TYPE_DESC tq)
         }
         return FALSE;
     }
-    if(TYPE_BASIC_TYPE(tp) == TYPE_CHAR){
-        int l1 = TYPE_CHAR_LEN(tp);
-        int l2 = TYPE_CHAR_LEN(tq);
-        if(l1 > 0 && l2 > 0 && l1 != l2) return FALSE;
-    }
     return TRUE;
 }
 
@@ -1076,7 +1071,11 @@ length_compatiblity:
         fprintf(debug_fp, "# comparing length of types\n");
     }
 
-    if (TYPE_LENG(left_basic) || TYPE_LENG(right_basic)) {
+    if (TYPE_CHAR_LEN(left_basic) > 0 && TYPE_CHAR_LEN(right_basic) > 0) {
+        int l1 = TYPE_CHAR_LEN(left_basic);
+        int l2 = TYPE_CHAR_LEN(right_basic);
+        if (l1 != l2) goto incompatible;
+    } else if (TYPE_LENG(left_basic) && TYPE_LENG(right_basic)) {
         if (TYPE_KIND(left_basic) && TYPE_KIND(right_basic)) {
             if (!type_parameter_expv_equals(
                     TYPE_LENG(left_basic), TYPE_LENG(right_basic), is_strict,

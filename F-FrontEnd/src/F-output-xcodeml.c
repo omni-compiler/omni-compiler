@@ -1718,14 +1718,13 @@ outx_arrayConstructor(int l, expv v)
 static void
 outx_typedArrayConstructor(int l, expv v)
 {
-    TYPE_DESC old = EXPV_TYPE(v);
-    TYPE_DESC tp = array_element_type(EXPV_TYPE(v));
+    TYPE_DESC element_tp = array_element_type(EXPV_TYPE(v));
     const int l1 = l + 1;
-    EXPV_TYPE(v) = tp;
-    outx_tagOfExpression(l, v);
+    EXPV_TYPE(v) = EXPV_TYPE(v);
+    outx_typeAttrs(l, EXPV_TYPE(v), XTAG(v), TOPT_TYPEONLY);
+    outx_print(" element_type=\"%s\">\n", getTypeID(element_tp));
     outx_expv(l1, EXPR_ARG1(v));
     outx_expvClose(l, v);
-    EXPV_TYPE(v) = old;
 }
 
 static void
