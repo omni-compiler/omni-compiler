@@ -62,6 +62,7 @@ declare_function_result_id(SYMBOL s, TYPE_DESC tp) {
  *
  *   _ = l()        ! not conflict
  *   call m()       ! not conflict
+ *
  *  [...]
  *
  *   interface
@@ -71,6 +72,9 @@ declare_function_result_id(SYMBOL s, TYPE_DESC tp) {
  * contains
  *   module function n() ! not confilict (ignore type mismatch)
  *     [...]
+ *
+ *
+ *   call other_function(o) ! not conflict (as a high order function)
  *
  */
 static int
@@ -107,8 +111,13 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
                 return TRUE;
             }
         } else {
-            if (debug_flag) fprintf(debug_fp, "parent_id be used as a non-function/subroutine\n");
-            return TRUE;
+            if (ID_TYPE(parent_id) == NULL || TYPE_IS_IMPLICIT(ID_TYPE(parent_id))) {
+                if (debug_flag) fprintf(debug_fp, "parent_id is used as an implicit declared variable\n");
+                /* continue checking */
+            } else {
+                if (debug_flag) fprintf(debug_fp, "parent_id be used as a non-function/subroutine\n");
+                return TRUE;
+            }
         }
     }
 
@@ -156,8 +165,11 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
                 }
             }
 
+        } else if (ID_IS_DECLARED(parent_id)) {
+            if (debug_flag) fprintf(debug_fp, "parent_id seems like to be not declared\n");
+
         } else {
-            if (debug_flag) fprintf(debug_fp, "parent_id seems a variable\n");
+            if (debug_flag) fprintf(debug_fp, "parent_id seems like a variable\n");
             if (!TYPE_IS_IMPLICIT(ID_TYPE(parent_id)) &&
                 TYPE_BASIC_TYPE(ID_TYPE(parent_id)) != TYPE_UNKNOWN) {
                 if (debug_flag) fprintf(debug_fp, "ID_TYPE(parent_id) has explicit type\n");
@@ -169,6 +181,8 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
             }
         }
     }
+
+    if (debug_flag) fprintf(debug_fp, "NOT conflict\n");
 
     return FALSE;
 }
@@ -215,10 +229,14 @@ link_parent_defined_by(ID id)
             }
         }
 
-        if (ID_CLASS(parent) == CL_UNKNOWN) {
+        if (ID_CLASS(parent) == CL_UNKNOWN ||
+            (ID_CLASS(parent) == CL_VAR && ID_IS_DECLARED(id) == FALSE)) { /* my used as a argument */
             ID_CLASS(parent) = CL_PROC;
             ID_STORAGE(parent) = STG_EXT;
             PROC_CLASS(parent) = P_EXTERNAL;
+        } else if (ID_IS_DECLARED(id) == FALSE) {
+            ID_CLASS(parent) = CL_PROC;
+
         }
 
         /* Conditions below is written to make test programs to pass. */
@@ -881,7 +899,7 @@ declare_variable(ID id)
                 (!TYPE_IS_ALLOCATABLE(ID_TYPE(id))) &&
                 isSubprogram == FALSE &&
                 is_array_size_adjustable(ID_TYPE(id)) &&
-		!XMP_flag) { // For XMP, local adjustable array seems to be supported, because of LOCAL_ALIAS.
+                !XMP_flag) { // For XMP, local adjustable array seems to be supported, because of LOCAL_ALIAS.
                 error("'%s' looks like a local adjustable array, "
                       "not supported yet.",
                       ID_NAME(id));
@@ -889,16 +907,16 @@ declare_variable(ID id)
                 return NULL;
             }
             else if (IS_ARRAY_TYPE(ID_TYPE(id)) &&
-		     (TYPE_IS_POINTER(ID_TYPE(id)) ||
-		      TYPE_IS_ALLOCATABLE(ID_TYPE(id))) &&
-		     !is_array_shape_assumed(ID_TYPE(id))) {
+                     (TYPE_IS_POINTER(ID_TYPE(id)) ||
+                      TYPE_IS_ALLOCATABLE(ID_TYPE(id))) &&
+                     !is_array_shape_assumed(ID_TYPE(id))) {
                 error("'%s' has the allocatable or pointer attribute, "
-		      "but is not a dererred-shape array.",
+                      "but is not a dererred-shape array.",
                       ID_NAME(id));
                 /* not reached. */
                 return NULL;
             }
-	    else {
+            else {
                 ID_STORAGE(id) = STG_AUTO;
             }
         }
@@ -947,6 +965,7 @@ declare_function(ID id)
                     if (tp == NULL) {
                         tp = function_type(new_type_desc());
                         TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
+                        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC;
                         ID_TYPE(id) = tp;
                     } else if (!IS_FUNCTION_TYPE(tp)) {
                         ID_TYPE(id) = function_type(tp);
@@ -5210,6 +5229,7 @@ compile_procedure_declaration(expr x)
             } else {
                 TYPE_UNSET_SAVE(interface);
                 ID_TYPE(interface) = function_type(new_type_desc());
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface))) = TYPE_GNUMERIC;
                 TYPE_SET_IMPLICIT(ID_TYPE(interface));
             }
 
@@ -5240,7 +5260,7 @@ compile_procedure_declaration(expr x)
                 declare_function(interface);
 
                 TYPE_SET_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface)));
-
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(interface))) = TYPE_GENERIC;
             }
         }
 
