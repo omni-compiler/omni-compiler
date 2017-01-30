@@ -6634,8 +6634,6 @@ public class XfDecompileDomVisitor {
             Node declarations = XmDomUtil.getElement(n, "declarations");
             invokeEnter(declarations);
 
-            writer.setupNewLine();
-
             writeVolatileOrAsynchronousStatements(declarations);
 
             invokeEnter(XmDomUtil.getElement(n, "body"));
@@ -6674,8 +6672,13 @@ public class XfDecompileDomVisitor {
 
             String typeName = XmDomUtil.getAttr(n, "type");
             if (!XfUtilForDom.isNullOrEmpty(typeName)) {
-                XfTypeManagerForDom.TypeList typeList = getTypeList(typeName);
-                _writeTopType(typeList);
+                XfType type = XfType.getTypeIdFromXcodemlTypeName(typeName);
+                if (type.isPrimitive()) {
+                    writer.writeToken(type.fortranName());
+                } else {
+                    XfTypeManagerForDom.TypeList typeList = getTypeList(typeName);
+                    _writeTopType(typeList, false);
+                }
                 writer.writeToken("::");
             }
 
