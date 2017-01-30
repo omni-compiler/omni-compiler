@@ -671,6 +671,7 @@ extern TYPE_DESC  find_struct_decl_head _ANSI_ARGS_((SYMBOL s, TYPE_DESC head));
 extern TYPE_DESC  find_struct_decl _ANSI_ARGS_((SYMBOL s));
 extern TYPE_DESC  find_struct_decl_parent _ANSI_ARGS_((SYMBOL s));
 extern TYPE_DESC  find_struct_decl_sibling _ANSI_ARGS_((SYMBOL s));
+extern int      id_link_remove _ANSI_ARGS_((ID * head, ID tobeRemoved));
 
 extern void     initialize_intrinsic _ANSI_ARGS_((void));
 extern int      is_intrinsic_function _ANSI_ARGS_((ID id));

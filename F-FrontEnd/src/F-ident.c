@@ -76,3 +76,24 @@ declare_storage(ID id, enum storage_class stg)
     else if(ID_STORAGE(id) != stg)
       error("incompatible storage declarations, %s", ID_NAME(id));
 }
+
+
+int
+id_link_remove(ID * head, ID tobeRemoved)
+{
+    ID ip, pre = NULL;
+    if (head == NULL) return FALSE;
+
+    FOREACH_ID(ip, *head) {
+        if (ID_SYM(ip) == ID_SYM(tobeRemoved)) {
+            if (pre == NULL) {
+                *head = ID_NEXT(ip);
+            } else {
+                ID_NEXT(pre) = ID_NEXT(ip);
+            }
+            return TRUE;
+        }
+        pre = ip;
+    }
+    return FALSE;
+}

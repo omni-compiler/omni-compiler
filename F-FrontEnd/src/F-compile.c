@@ -7567,6 +7567,7 @@ static void
 compile_FORALL_statement(int st_no, expr x)
 {
     TYPE_DESC tp;
+    int has_type = FALSE;
     expr st;
     expr forall_header;
     expr type;
@@ -7582,8 +7583,8 @@ compile_FORALL_statement(int st_no, expr x)
     type          = EXPR_ARG3(forall_header);
 
     if (type) {
-        /* TODO(shingo-s) */
-        tp = type_basic(TYPE_INT);
+        tp = compile_type(type, /*allow_predecl=*/ FALSE);
+        has_type = TRUE;
     } else {
         tp = type_INT;
     }
@@ -7670,6 +7671,9 @@ compile_FORALL_statement(int st_no, expr x)
     }
 
     st = list4(F_FORALL_STATEMENT, NULL, NULL, NULL, NULL);
+    if (has_type) {
+        EXPV_TYPE(st) = tp;
+    }
     output_statement(st);
 
     CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
@@ -7700,6 +7704,12 @@ compile_ENDFORALL_statement(expr x)
     ENV parent;
     expv init;
     list lp;
+    int has_type = FALSE;
+    ID forall_local = NULL;
+    ID forall_last = NULL;
+    BLOCK_ENV current_block;
+    BLOCK_ENV bp;
+    BLOCK_ENV tail;
 
     if (CTL_TYPE(ctl_top) != CTL_FORALL) {
         error("'endforall', out of place");
@@ -7728,6 +7738,10 @@ compile_ENDFORALL_statement(expr x)
         expv_output(CURRENT_STATEMENTS, debug_fp);
     }
 
+    if (EXPV_TYPE(CTL_FORALL_STATEMENT(ctl_top)) != NULL) {
+        has_type = TRUE;
+    }
+
     CTL_FORALL_BODY(ctl_top) = CURRENT_STATEMENTS;
 
     if (endlineno_flag) {
@@ -7742,8 +7756,27 @@ compile_ENDFORALL_statement(expr x)
             debug("#### rename %s to %s",
                   SYM_NAME(ID_SYM(ip)),
                   SYM_NAME(EXPV_NAME(ID_ADDR(ip))));
+            /*
+             * Rename symbol names those are generated in compile_FORALL_statement()
+             */
             ID_SYM(ip) = EXPV_NAME(ID_ADDR(ip));
             EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
+            if (has_type) {
+                /*
+                 * If the forall statement has type,
+                 * indices are local variables in the forall statement.
+                 *
+                 * ex)
+                 *
+                 *  FORALL (INTEGER :: I = 1:3, J = 1:3)
+                 *    ! I and J live only here
+                 *  END FORALL
+                 *
+                 *
+                 */
+                (void)id_link_remove(&LOCAL_SYMBOLS, ip);
+                ID_LINK_ADD(ip, forall_local, forall_last);
+            }
         }
     }
 
@@ -7764,7 +7797,16 @@ compile_ENDFORALL_statement(expr x)
     assert(ENV_INTERFACES(current_local_env) == NULL);
     assert(ENV_USE_DECLS(current_local_env) == NULL);
 
+    current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
+    BLOCK_LOCAL_SYMBOLS(current_block) = forall_local;
+    EXPR_BLOCK(CTL_FORALL_STATEMENT(ctl_top)) = current_block;
+
     pop_ctl();
     pop_env();
     CURRENT_STATE = INEXEC;
+
+    FOREACH_BLOCKS(bp, LOCAL_BLOCKS) {
+        tail = bp;
+    }
+    BLOCK_LINK_ADD(current_block, LOCAL_BLOCKS, tail);
 }

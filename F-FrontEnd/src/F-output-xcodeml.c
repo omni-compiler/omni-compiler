@@ -3391,14 +3391,47 @@ outx_FORALL_statement(int l, expv v)
     expv init = EXPR_ARG1(v);
     expv mask = EXPR_ARG2(v);
     expv body = EXPR_ARG3(v);
+    const char *tid = NULL;
 
-    outx_tagOfStatement(l, v);
+    if (EXPV_TYPE(v)) {
+        tid = getTypeID(EXPV_TYPE(v));
+        outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
+        outx_print(" type=\"%s\">\n", tid);
+    } else {
+        outx_tagOfStatement(l, v);
+    }
+
+
+#if 0
+    /*
+     * NOTE:
+     * It may be useful to output <symbols> for FORALL statement
+     * to describe the indices of FORALL statement
+     *
+     * ex)
+     *
+     *    FORALL( INTEGER :: I = 1:3 )
+     *    ! print I to the <symbols> in <forallStatement>
+     *
+     */
+    if (BLOCK_LOCAL_SYMBOLS(EXPR_BLOCK(v))) {
+        ID id;
+        BLOCK_ENV block = EXPR_BLOCK(v);
+        outx_tag(l1, "symbols");
+        FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
+            if (id_is_visibleVar_for_symbols(id))
+                outx_id(l2, id);
+        }
+        outx_close(l1, "symbols");
+    }
+#endif
+
 
     FOR_ITEMS_IN_LIST(lp, init) {
         expv name = EXPR_ARG1(LIST_ITEM(lp));
         expv indexRange = EXPR_ARG2(LIST_ITEM(lp));
 
-        outx_printi(l1, "<Var>%s</Var>\n", SYM_NAME(EXPR_SYM(name)));
+        outx_varOrFunc(l1, name);
         outx_indexRange(l1,
                         EXPR_ARG1(indexRange),
                         EXPR_ARG2(indexRange),
