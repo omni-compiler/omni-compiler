@@ -71,6 +71,7 @@ public class Xtype
     public static final int TQ_FCLASS               = 1 << 26;  // class
     public static final int TQ_FVALUE               = 1 << 27;  // value
     public static final int TQ_FMODULE              = 1 << 28;  // module
+    public static final int TQ_FPROCEDURE           = 1 << 29;  // procedure
 
     private String type_id;
     private int type_kind;
@@ -103,6 +104,10 @@ public class Xtype
     /** ISO C binding information */
     protected String bind;
     protected String bind_name;
+
+    /** Fortran procedure pointer pass attributes */
+    private String pass;
+    private String pass_arg_name;
 
     /*
      * for pre-defined basic type
@@ -247,6 +252,24 @@ public class Xtype
         setCodimensions(codimensions);
     }
 
+    public void assign(Xtype op2)
+    {
+        this.type_id = op2.type_id;
+        this.type_kind = op2.type_kind;
+        this.type_qual_flags = op2.type_qual_flags;
+        this.is_marked = op2.is_marked;
+        this.copied = op2.copied;
+        this.gen_id_seq = op2.gen_id_seq;
+        this.gcc_attrs = op2.gcc_attrs;
+        this.tag = op2.tag;
+        this.fTypeParamValues = op2.fTypeParamValues;
+        this.bind = op2.bind;
+        this.bind_name = op2.bind_name;
+        this.pass = op2.pass;
+        this.pass_arg_name = op2.pass_arg_name;
+        setCodimensions(op2.getCodimensions());
+    }
+
     public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs,
                  Ident tag)
     {
@@ -300,6 +323,12 @@ public class Xtype
         return type_id != null ? type_id :
             ((copied != null) ? copied.getXcodeFId() :
                 (isBasic() ? BasicType.getTypeInfo(getBasicType()).fname : null));
+    }
+
+    /** set kind constant (BASIC, STRUCT, UNION, ...) */
+    public final void setKind(int kind)
+    {
+        type_kind = kind;
     }
 
     /** get kind constant (BASIC, STRUCT, UNION, ...) */
@@ -675,6 +704,18 @@ public class Xtype
     public final void setIsFmodule(boolean enabled)
     {
         setTypeQualFlag(TQ_FMODULE, enabled);
+    }
+
+    /** Fortran : return if is 'procedure' decl */
+    public final boolean isFprocedure()
+    {
+      return getTypeQualFlag(TQ_FPROCEDURE);
+    }
+
+    /** Fortran : set attribute 'is_procedure' */
+    public final void setIsFprocedure(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FPROCEDURE, enabled);
     }
 
     /** Fortran : return if is qualified by 'value' in pointer decl */
@@ -1053,6 +1094,30 @@ public class Xtype
     public Xobject getFlen()
     {
         return null;
+    }
+
+    /** Fortran: get procedure pointer pass attribute */
+    public String getPass()
+    {
+        return pass;
+    }
+
+    /** Fortran: get procedure pointer pass attribute */
+    public void setPass(String pass)
+    {
+        this.pass = pass;
+    }
+
+    /** Fortran: get procedure pointer pass arg name attribute */
+    public String getPassArgName()
+    {
+        return pass_arg_name;
+    }
+
+    /** Fortran: get procedure pointer pass arg name attribute */
+    public void setPassArgName(String pass_arg_name)
+    {
+        this.pass_arg_name = pass_arg_name;
     }
 
     /** Fortran: return if len parameter is variable value */

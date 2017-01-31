@@ -81,7 +81,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
   private void declFbasicType(Node n) {
     String tid = getAttr(n, "type");
     BasicType.TypeInfo ti = BasicType.getTypeInfoByFName(
-                             getAttrBool(n, "is_class") && (getAttr(n, "ref") == null) ?
+                             (getAttrBool(n, "is_class") ||
+                              getAttrBool(n, "is_procedure")) &&
+                             (getAttr(n, "ref") == null) ?
                                "Fvoid" : getAttr(n, "ref"));
     int tq = (getAttrBool(n, "is_allocatable") ? Xtype.TQ_FALLOCATABLE : 0)
       | (getAttrBool(n, "is_optional") ? Xtype.TQ_FOPTIONAL : 0)
@@ -93,8 +95,9 @@ public class XcodeMLtools_F extends XcodeMLtools {
       | (getAttrBool(n, "is_target") ? Xtype.TQ_FTARGET : 0)
       | (getAttrBool(n, "is_cray_pointer") ? Xtype.TQ_FCRAY_POINTER : 0) //#060c
       | (getAttrBool(n, "is_volatile") ? Xtype.TQ_FVOLATILE : 0)
-      | (getAttrBool(n, "is_class") ? Xtype.TQ_FCLASS: 0)
-      | (getAttrBool(n, "is_value") ? Xtype.TQ_FVALUE : 0);
+      | (getAttrBool(n, "is_class") ? Xtype.TQ_FCLASS : 0)
+      | (getAttrBool(n, "is_value") ? Xtype.TQ_FVALUE : 0)
+      | (getAttrBool(n, "is_procedure") ? Xtype.TQ_FPROCEDURE : 0);
 
     String intent = getAttr(n, "intent");
 
@@ -167,11 +170,16 @@ public class XcodeMLtools_F extends XcodeMLtools {
 
     if (sizeExprs == null) {
       if (ti == null) { // inherited type such as structure
+        String pass = getAttr(n, "pass");
+        String pass_arg_name = getAttr(n, "pass_arg_name");
 	Xtype ref = getType(getAttr(n, "ref"));
+	xobjFile.addType(ref);
 	type = ref.inherit(tid);
 	type.setTypeQualFlags(tq);
         type.setCodimensions(cosizeExprs);                           // #060
         type.setFTypeParamValues(typeParamValues);
+        type.setPass(pass);
+        type.setPassArgName(pass_arg_name);
       } else {
 	type = new BasicType(ti.type.getBasicType(), tid, tq, null,
 			     fkind, flen, cosizeExprs);             // #060
@@ -191,6 +199,11 @@ public class XcodeMLtools_F extends XcodeMLtools {
         type.setBindName(bind_name);
     }
 
+    Xtype dummy = getType(tid);
+    if (dummy.getKind() == Xtype.UNDEF)
+      dummy.assign(type);
+    else
+      fatal("type table entry is doubled: " + tid);
     xobjFile.addType(type);
   }
 
