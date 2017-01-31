@@ -109,9 +109,13 @@ typedef struct _XMP_template_type {
   _XMP_template_info_t info[1];
 } _XMP_template_t;
 
-// schedule of reflect comm.
+// schedule of shadow comm.
 typedef struct _XMP_reflect_sched_type {
 
+  int reflect_is_initialized;
+  int reduce_is_initialized;
+  int pcopy_sched_is_initialized;
+  
   int lo_width, hi_width;
   int is_periodic;
 
@@ -119,6 +123,7 @@ typedef struct _XMP_reflect_sched_type {
   MPI_Datatype datatype_hi;
 
   MPI_Request req[4];
+  MPI_Request req_reduce[4];
 
   void *lo_send_buf, *lo_recv_buf;
   void *hi_send_buf, *hi_recv_buf;
