@@ -4021,7 +4021,7 @@ compile_codimensions(expr dims, int is_alloc){
     x = LIST_ITEM(lp);
     if (x == NULL) {
       if(LIST_NEXT(lp) != NULL)
-	error("only last cobound may be \"*\"");
+          error("only last cobound may be \"*\"");
     }
     else if (EXPR_CODE(x) == LIST){ /* (LIST lower upper) */
       lower = compile_expression(EXPR_ARG1(x));
@@ -4055,14 +4055,14 @@ compile_codimensions(expr dims, int is_alloc){
 
     if (!LIST_NEXT(lp)){
       if (!upper){
-	;
+          ;
       }
       else if (EXPV_CODE(upper) == F_ASTERISK){
-	//upper = NULL;
+          //upper = NULL;
       }
       else {
-	error("Last upper-cobound must be \"*\".");
-	return NULL;
+          error("Last upper-cobound must be \"*\".");
+          return NULL;
       }
     }
 
@@ -4073,7 +4073,7 @@ compile_codimensions(expr dims, int is_alloc){
     reduce_subscript(&upper);
     reduce_subscript(&step);
     codims->cobound_list = list_put_last(codims->cobound_list,
-					 list3(F95_TRIPLET_EXPR, lower, upper, step));
+                                         list3(F95_TRIPLET_EXPR, lower, upper, step));
 
     n++;
 

@@ -110,6 +110,7 @@ static void compile_USE_ONLY_decl(expr x, expr x_args, int is_intrinsic);
 static expv compile_scene_range_expression_list(
                             expr scene_range_expression_list);
 static void fix_array_dimensions_recursive(ID ip);
+static void check_array_length(ID ip);
 static void fix_pointer_pointee_recursive(TYPE_DESC tp);
 static void compile_data_style_decl(expr x);
 
@@ -2189,6 +2190,13 @@ end_declaration()
      */
     FOREACH_ID (ip, LOCAL_SYMBOLS) {
         fix_array_dimensions_recursive(ip);
+    }
+
+    /*
+     * Check if array is too long.
+     */
+    FOREACH_ID (ip, LOCAL_SYMBOLS) {
+        check_array_length(ip);
     }
 
     /*
@@ -6582,6 +6590,31 @@ fix_array_dimensions_recursive(ID ip)
         }
     }
 }
+
+/*
+ * Check if rank + corank <= MAX_DIM
+ *
+ */
+static void
+check_array_length(ID id)
+{
+    if (id == NULL || ID_TYPE(id) == NULL) {
+        return;
+    }
+
+    if (!IS_ARRAY_TYPE(ID_TYPE(id))) {
+        return;
+    }
+
+    if (!TYPE_CODIMENSION(ID_TYPE(id))) {
+        return;
+    }
+
+    if (TYPE_N_DIM(ID_TYPE(id)) + TYPE_CODIMENSION(ID_TYPE(id))->corank > MAX_DIM) {
+        error_at_id(id, "Too long array (rank + corank > %d)", MAX_DIM);
+    }
+}
+
 
 static void
 fix_pointer_pointee_recursive(TYPE_DESC tp)

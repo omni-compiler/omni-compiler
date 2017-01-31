@@ -139,7 +139,7 @@ typedef struct type_descriptor
         uint32_t exflags;
     } attr; /* FbasicType */
     struct {
-        char n_dim;            /* dimension (max 7) */
+        char n_dim;            /* dimension (max 15) */
         char dim_fixed;        /* fixed or not */
         char dim_fixing;
         ARRAY_ASSUME_KIND assume_kind; /* represents assumed size or shape */
