@@ -12,7 +12,6 @@
           END TYPE t
 
           INTEGER :: a
-          INTEGER, ALLOCATABLE :: alloc
 
           INTEGER,PARAMETER,DIMENSION(2) :: param_array = (/1,2/)
           TYPE(t),PARAMETER :: param_struct = t(1)
@@ -24,7 +23,7 @@
 
           INTEGER                          :: i001 = param_array(param_array(1))
           CHARACTER(len=param_array(1))    :: c002 
-          CHARACTER(len=param_struct%v)    :: c003
+          ! CHARACTER(len=param_struct%v)    :: c003
 
           ! dummy argument
           CHARACTER(len=arg1)              :: c004
@@ -34,7 +33,7 @@
 
           !! NEW_LINE intrinsic
 
-          !! NOT IMPLEMENTED
+          !! *NOT IMPLEMENTED*
           !! type parameter inquery
 
           ! CHARACTER(len=param_array%len) :: c008
@@ -43,19 +42,17 @@
 
           ! other?
 
-          !! C_SIZE_OF from the ISO_C_BINDING module
+          !! C_SIZEOF from the ISO_C_BINDING module
+
+          CHARACTER(len=C_SIZEOF(arg1)) :: c_c_sizeof
 
           !! intrinsic module ISO_FORTRAN_ENV
 
           !!! COMPLIER VERSION or COMPILER OPTIONS inquiry function from the
 
-          CHARACTER(len=LEN(COMPILER_VERSION()) :: c_compiver_version = COMPILER_VERSION()
+          CHARACTER(len=LEN(COMPILER_VERSION())) :: c_compiver_version = COMPILER_VERSION()
 
-          CHARACTER(len=LEN(COMPILER_OPTIONS()) :: c_compiver_options = COMPILER_OPTIONS()
-
-
-
-
+          CHARACTER(len=LEN(COMPILER_OPTIONS())) :: c_compiver_options = COMPILER_OPTIONS()
 
 
         END SUBROUTINE sub

@@ -3,24 +3,52 @@
   <depends>
   </depends>
   <typeTable>
-    <FstructType type="S1a9b9a0">
+    <FstructType type="S26e23e0">
       <symbols>
       </symbols>
     </FstructType>
-    <FbasicType type="I1a9c3b0" is_parameter="true" ref="Fint"/>
-    <FbasicType type="I1a9cf00" is_parameter="true" ref="Fint"/>
+    <FbasicType type="I26e2f90" is_parameter="true" ref="Fint"/>
+    <FbasicType type="I26e3d00" is_parameter="true" ref="Fint"/>
+    <FfunctionType type="F26e4dc0" return_type="Fcharacter">
+      <params>
+      </params>
+    </FfunctionType>
+    <FfunctionType type="F26e6690" return_type="Fcharacter">
+      <params>
+      </params>
+    </FfunctionType>
   </typeTable>
   <identifiers>
-    <id type="S1a9b9a0" sclass="ftype_name" original_name="lock_type" declared_in="iso_fortran_env">
+    <id type="S26e23e0" sclass="ftype_name" original_name="lock_type" declared_in="iso_fortran_env">
       <name>lock_type</name>
     </id>
-    <id type="I1a9c3b0" sclass="flocal" original_name="atomic_int_kind" declared_in="iso_fortran_env">
+    <id type="I26e2f90" sclass="flocal" original_name="atomic_int_kind" declared_in="iso_fortran_env">
       <name>atomic_int_kind</name>
     </id>
-    <id type="I1a9cf00" sclass="flocal" original_name="atomic_logical_kind" declared_in="iso_fortran_env">
+    <id type="I26e3d00" sclass="flocal" original_name="atomic_logical_kind" declared_in="iso_fortran_env">
       <name>atomic_logical_kind</name>
     </id>
+    <id type="F26e4dc0" sclass="ffunc" original_name="compiler_options" declared_in="iso_fortran_env">
+      <name>compiler_options</name>
+    </id>
+    <id type="F26e6690" sclass="ffunc" original_name="compiler_version" declared_in="iso_fortran_env">
+      <name>compiler_version</name>
+    </id>
   </identifiers>
+  <declarations>
+    <varDecl lineno="5" file="./fincludes/iso_fortran_env.f90">
+      <name type="I26e2f90">atomic_int_kind</name>
+      <value>
+        <FintConstant type="Fint">8</FintConstant>
+      </value>
+    </varDecl>
+    <varDecl lineno="6" file="./fincludes/iso_fortran_env.f90">
+      <name type="I26e3d00">atomic_logical_kind</name>
+      <value>
+        <FintConstant type="Fint">8</FintConstant>
+      </value>
+    </varDecl>
+  </declarations>
   <interfaceDecls>
   </interfaceDecls>
   <aux_info>
