@@ -149,9 +149,9 @@ submodule_02.o: submodule_01.o
 submodule_01.x: submodule_01.o submodule_02.o
 	$(XFC) -o $@ $^
 
-nest_use_procedure_decl.o: __procedure_decl.o _use_procedure_decl.o
-
-#use_procedure_decl.o: __procedure_decl.o _use_procedure_decl.o
+_use_procedure_decl.o: __procedure_decl.o
+nest_use_procedure_decl.o: _use_procedure_decl.o
+use_procedure_decl.o: _use_procedure_decl.o
 
 use_procedure_decl.x: __procedure_decl.o _use_procedure_decl.o use_procedure_decl.o
 	$(XFC) -o $@ $^
