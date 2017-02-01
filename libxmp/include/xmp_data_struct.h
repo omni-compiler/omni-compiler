@@ -300,6 +300,7 @@ typedef struct xmp_coarray{
 #ifdef _XMP_FJRDMA
   uint64_t laddr;  // On the FJRDMA machines, xmp_coarray.addr[_XMP_world_rank] is not local address of a coarray,
                    // Thus, "laddr" is defined the local address.
+  int  memid;
 #endif
   char *real_addr; // Pointer to local node.
                    // Note that xmp_coarray.addr[my_rank] may not be a pointer of an object.
