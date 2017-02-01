@@ -2145,8 +2145,9 @@ outx_pointerAssignStatement(int l, expv v)
     vPointee = EXPR_ARG2(v);
 
     if (EXPV_CODE(vPointer) != F_VAR &&
+        EXPV_CODE(vPointer) != ARRAY_REF &&
         EXPV_CODE(vPointer) != F95_MEMBER_REF) {
-        fatal("%s: Invalid argument, expected F_VAR or F95_MEMBER_REF.", __func__);
+        fatal("%s: Invalid argument, expected F_VAR or F_ARRAY_REF or F95_MEMBER_REF.", __func__);
     }
     if (EXPV_CODE(vPointee) != F_VAR &&
         EXPV_CODE(vPointee) != ARRAY_REF &&
@@ -4029,12 +4030,20 @@ outx_characterType(int l, TYPE_DESC tp)
         outx_kind(l1, tp);
 
         if(charLen != 1|| vcharLen != NULL) {
-            outx_tag(l1, "len");
-            if(IS_CHAR_LEN_UNFIXED(tp) == FALSE) {
+            if (!IS_CHAR_LEN_UNFIXED(tp) && !IS_CHAR_LEN_ALLOCATABLE(tp)) {
+                outx_tag(l1, "len");
                 if(vcharLen != NULL)
                     outx_expv(l2, vcharLen);
                 else
                     outx_intAsConst(l2, TYPE_CHAR_LEN(tp));
+            } else if (IS_CHAR_LEN_UNFIXED(tp)) {
+                outx_printi(l1, "<len");
+                outx_true(TRUE, "is_assumed_size");
+                outx_print(">\n");
+            } else if (IS_CHAR_LEN_ALLOCATABLE(tp)) {
+                outx_printi(l1, "<len");
+                outx_true(TRUE, "is_assumed_shape");
+                outx_print(">\n");
             }
             outx_close(l1, "len");
         }
@@ -4506,13 +4515,13 @@ outx_definition_symbols(int l, EXT_ID ep)
     outx_tag(l, "symbols");
 
     FOREACH_ID(id, EXT_PROC_ID_LIST(ep)) {
-        if(id_is_visibleVar_for_symbols(id))
+        if (id_is_visibleVar_for_symbols(id))
             outx_id(l1, id);
     }
 
     /* print common ids */
     FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(ep)) {
-        if(IS_MODULE(ID_TYPE(id)) == FALSE)
+        if (IS_MODULE(ID_TYPE(id)) == FALSE)
             outx_id(l1, id);
     }
 
@@ -5203,9 +5212,6 @@ outx_blockDataDefinition(int l, EXT_ID ep)
 }
 
 
-
-
-
 static const char*
 getTimestamp()
 {
@@ -5214,8 +5220,6 @@ getTimestamp()
     strftime(s_timestamp, CEXPR_OPTVAL_CHARLEN, "%F %T", ltm);
     return s_timestamp;
 }
-
-
 
 
 /**

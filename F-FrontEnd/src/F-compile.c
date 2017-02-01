@@ -110,6 +110,7 @@ static void compile_USE_ONLY_decl(expr x, expr x_args, int is_intrinsic);
 static expv compile_scene_range_expression_list(
                             expr scene_range_expression_list);
 static void fix_array_dimensions_recursive(ID ip);
+static void check_array_length(ID ip);
 static void fix_pointer_pointee_recursive(TYPE_DESC tp);
 static void compile_data_style_decl(expr x);
 
@@ -1824,8 +1825,15 @@ static int isAlreadyMarked(ID id)
 static void
 update_procedure_variable(ID id, const ID target, int is_final)
 {
-    if (target == NULL)
+    if (target == NULL) {
         return;
+    }
+
+    if (ID_CLASS(target) == CL_VAR) {
+        /* target is also a procedure variable, skip */
+        return;
+    }
+
 
     if (ID_TYPE(target) == NULL || !IS_PROCEDURE_TYPE(ID_TYPE(target))) {
         if (is_final) {
@@ -1835,9 +1843,11 @@ update_procedure_variable(ID id, const ID target, int is_final)
         }
     }
 
-    if (!FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(target))) {
+    if (!FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(get_bottom_ref_type(ID_TYPE(target)))) {
         if (is_final) {
-            error_at_id(VAR_REF_PROC(id), "should have explicit interface");
+            error_at_id(VAR_REF_PROC(id),
+                        "%s should have an explicit interface",
+                        SYM_NAME(ID_SYM(id)));
         } else {
             return;
         }
@@ -2192,6 +2202,13 @@ end_declaration()
     }
 
     /*
+     * Check if array is too long.
+     */
+    FOREACH_ID (ip, LOCAL_SYMBOLS) {
+        check_array_length(ip);
+    }
+
+    /*
      * Fix pointee (is_target) recursively.
      */
     FOREACH_ID (ip, LOCAL_SYMBOLS) {
@@ -2488,8 +2505,9 @@ end_declaration()
             if (TYPE_IS_ALLOCATABLE(tp) &&
                 !(IS_ARRAY_TYPE(tp) ||
                   TYPE_IS_COINDEXED(tp) ||
-                  TYPE_IS_CLASS(tp))) {
-                error_at_id(ip, "ALLOCATABLE is applied only to array/coarray/class");
+                  TYPE_IS_CLASS(tp) ||
+                  (IS_CHAR(tp) && IS_CHAR_LEN_ALLOCATABLE(tp)))) {
+                error_at_id(ip, "ALLOCATABLE is applied only to array/coarray/class/character(:)");
             } else if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "OPTIONAL is applied only "
                               "to dummy argument");
@@ -6294,7 +6312,9 @@ compile_POINTER_SET_statement(expr x) {
                     }
                 }
             } else {
-                if ((IS_FUNCTION_TYPE(vPteTyp) &&
+                if (get_bottom_ref_type(vPtrTyp) == get_bottom_ref_type(vPteTyp)) {
+                    /* DO NOTHING */
+                } else if ((IS_FUNCTION_TYPE(vPteTyp) &&
                      TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)))
                     && TYPE_REF(vPtrTyp)) {
                     /*
@@ -6306,7 +6326,6 @@ compile_POINTER_SET_statement(expr x) {
                      *  So assumption: g is a procedure
                      */
                     TYPE_DESC ftp = get_bottom_ref_type(vPtrTyp);
-
 
                     TYPE_REF(vPteTyp) = ftp;
                     TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = FUNCTION_TYPE_RETURN_TYPE(ftp);
@@ -6582,6 +6601,31 @@ fix_array_dimensions_recursive(ID ip)
     }
 }
 
+/*
+ * Check if rank + corank <= MAX_DIM
+ *
+ */
+static void
+check_array_length(ID id)
+{
+    if (id == NULL || ID_TYPE(id) == NULL) {
+        return;
+    }
+
+    if (!IS_ARRAY_TYPE(ID_TYPE(id))) {
+        return;
+    }
+
+    if (!TYPE_CODIMENSION(ID_TYPE(id))) {
+        return;
+    }
+
+    if (TYPE_N_DIM(ID_TYPE(id)) + TYPE_CODIMENSION(ID_TYPE(id))->corank > MAX_DIM) {
+        error_at_id(id, "Too long array (rank + corank > %d)", MAX_DIM);
+    }
+}
+
+
 static void
 fix_pointer_pointee_recursive(TYPE_DESC tp)
 {
@@ -6815,6 +6859,9 @@ define_internal_subprog(EXT_ID child_ext_ids)
                 continue;
             if (PROC_CLASS(ip) == P_UNDEFINEDPROC) {
                 continue;
+            }
+            if (ID_DEFINED_BY(ip)) {
+                ip = ID_DEFINED_BY(ip);
             }
             if (ip != NULL && ID_TYPE(ip) != NULL)
                 tp = ID_TYPE(ip);

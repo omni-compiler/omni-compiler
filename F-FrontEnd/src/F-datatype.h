@@ -139,7 +139,7 @@ typedef struct type_descriptor
         uint32_t exflags;
     } attr; /* FbasicType */
     struct {
-        char n_dim;            /* dimension (max 7) */
+        char n_dim;            /* dimension (max 15) */
         char dim_fixed;        /* fixed or not */
         char dim_fixing;
         ARRAY_ASSUME_KIND assume_kind; /* represents assumed size or shape */
@@ -395,6 +395,8 @@ extern TYPE_DESC basic_type_desc[];
 
 #define CHAR_LEN_UNFIXED (-1)
 
+#define CHAR_LEN_ALLOCATABLE (-2)
+
 /* macros distinguishing type */
 #define IS_STRUCT_TYPE(tp) \
                 ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_STRUCT)
@@ -433,6 +435,8 @@ extern TYPE_DESC basic_type_desc[];
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_CHAR))
 #define IS_CHAR_LEN_UNFIXED(tp) \
                 ((tp) != NULL && (TYPE_CHAR_LEN(tp) == CHAR_LEN_UNFIXED))
+#define IS_CHAR_LEN_ALLOCATABLE(tp) \
+                ((tp) != NULL && (TYPE_CHAR_LEN(tp) == CHAR_LEN_ALLOCATABLE))
 #define IS_LOGICAL(tp) \
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_LOGICAL))
 #define IS_INT_CONST_V(v) \

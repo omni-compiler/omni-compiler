@@ -31,7 +31,7 @@ type_char(int len)
     /* (len <=0) means character(len=*) in function argument */
     tp = new_type_desc();
     TYPE_BASIC_TYPE(tp) = TYPE_CHAR;
-    assert(len >= 0 || len == CHAR_LEN_UNFIXED);
+    assert(len >= 0 || len == CHAR_LEN_UNFIXED || len == CHAR_LEN_ALLOCATABLE);
     TYPE_CHAR_LEN(tp) = len;
     return tp;
 }

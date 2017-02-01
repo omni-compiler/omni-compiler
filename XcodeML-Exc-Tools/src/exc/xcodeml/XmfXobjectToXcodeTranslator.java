@@ -1025,8 +1025,12 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         if (type.copied != null) {
             typeElem = createElement("FbasicType", "ref",
-                                     type.isFclass() && type.isBasic() && (type.getBasicType() == BasicType.VOID) ?
-                                       null : type.copied.getXcodeFId());
+                                     (type.isFclass() || type.isFprocedure() && type.isFpointer())
+                                      && type.isBasic() && (type.getBasicType() == BasicType.VOID) ?
+                                       null : type.copied.getXcodeFId(),
+                                     "is_procedure", toBoolStr(type.isFprocedure()),
+                                     "pass", type.getPass(),
+                                     "pass_arg_name", type.getPassArgName());
             setBasicTypeFlags(typeElem, type);
             XobjList typeParams = type.getFTypeParamValues();
             if (typeParams != null) {
@@ -1038,8 +1042,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case Xtype.BASIC:
                 typeElem = createElement("FbasicType");
                 addAttributes(typeElem,
-                              "ref", type.isFclass() && type.isBasic() && (type.getBasicType() == BasicType.VOID) ?
-                                       null : BasicType.getTypeInfo(type.getBasicType()).fname);
+                              "ref", (type.isFclass() || type.isFprocedure() && type.isFpointer())
+                                      && type.isBasic() && (type.getBasicType() == BasicType.VOID) ?
+                                       null : BasicType.getTypeInfo(type.getBasicType()).fname,
+                              "is_procedure", toBoolStr(type.isFprocedure()));
                 addChildNodes(typeElem,
                               transKind(type.getFkind()),
                               transLen(type));
@@ -1665,7 +1671,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             Ident id = ident_list.find(decl.getArg(0).getName(),
                 (decl.Opcode() == Xcode.VAR_DECL) ? IXobject.FINDKIND_VAR : IXobject.FINDKIND_TAGNAME);
             Xtype t = (id != null) ? id.Type() : null;
-            _collectDependName(t, idSet);
+            _collectDependName(t, idSet, null);
 
             if (decl.Opcode() == Xcode.VAR_DECL) {
                 _collectDependName(decl.getArgOrNull(1), idSet);
@@ -1687,21 +1693,28 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             }
         }
 
-        private void _collectDependName(Xtype t, Set<String> idSet) {
+        private void _collectDependName(Xtype t, Set<String> idSet, Set<Xtype> checkedSet) {
             if (t == null)
                 return;
+
+            if (checkedSet == null)
+                checkedSet = new HashSet<Xtype>();
+            else if (checkedSet.contains(t))
+                return;
+            else
+                checkedSet.add(t);
 
             switch (t.getKind()) {
             case Xtype.BASIC:
                 if (t.copied != null) {
-                    _collectDependName(t.copied, idSet);
+                    _collectDependName(t.copied, idSet, checkedSet);
                 } else {
                     _collectDependName(t.getFkind(), idSet);
                     _collectDependName(t.getFlen(), idSet);
                 }
                 break;
             case Xtype.F_ARRAY:
-                _collectDependName(t.getRef(), idSet);
+                _collectDependName(t.getRef(), idSet, checkedSet);
                 for (Xobject s : t.getFarraySizeExpr())
                     _collectDependName(s, idSet);
                 break;
@@ -1712,14 +1725,13 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     for (Xobject a : t.getMemberList()) {
 
 			if (a.Type().equals(t)) continue;
-
-                        _collectDependName(a.Type(), idSet);
+                        _collectDependName(a.Type(), idSet, checkedSet);
                         _collectDependName(((Ident)a).getValue(), idSet);
                     }
                 }
 		break;
 	    case Xtype.FUNCTION:
-                _collectDependName(t.getRef(), idSet);
+                _collectDependName(t.getRef(), idSet, checkedSet);
                 break;
             }
         }
