@@ -1547,6 +1547,14 @@ void _XMP_fjrdma_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const
   _XMP_fjrdma_regmem(coarray_desc, *addr, coarray_size);
 }
 
+/*****************************************************************/
+/* DESCRIPTION : Deallocate coarray                              */
+/* ARGUMENT    : [IN] *coarray_desc  : Descriptor of new coarray */
+/*****************************************************************/
+void _XMP_fjrdma_dereg_mem(_XMP_coarray_t *coarray_desc)
+{
+  FJMPI_Rdma_dereg_mem(coarray_desc->memid);
+}
 
 /***********************************************************************/
 /* DESCRIPTION : Register the local address of the coarray and get the */
@@ -1560,8 +1568,8 @@ void _XMP_fjrdma_regmem(_XMP_coarray_t *coarray_desc, void *addr, const size_t c
   uint64_t *each_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
   if(_memid == _XMP_FJRDMA_MAX_MEMID)
     _XMP_fatal("Too many coarrays. Number of coarrays is not more than 510.");
-
   coarray_desc->laddr = FJMPI_Rdma_reg_mem(_memid, addr, coarray_size);
+  coarray_desc->memid = _memid;
 
   MPI_Barrier(MPI_COMM_WORLD);
   for(int ncount=0,i=1; i<_XMP_world_size+1; ncount++,i++){
@@ -1576,17 +1584,6 @@ void _XMP_fjrdma_regmem(_XMP_coarray_t *coarray_desc, void *addr, const size_t c
   coarray_desc->real_addr = addr;
   coarray_desc->addr = (void *)each_addr;
   _memid++;
-}
-
-/**
-   Deallocate memory region when calling _XMP_coarray_lastly_deallocate()
-*/
-void _XMP_fjrdma_coarray_lastly_deallocate()
-{
-  if(_memid == _XMP_FJRDMA_START_MEMID) return;
-
-  _memid--;
-  FJMPI_Rdma_dereg_mem(_memid);
 }
 
 /************************************************************************/

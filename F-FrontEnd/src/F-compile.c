@@ -3558,7 +3558,8 @@ end_procedure()
     switch (CURRENT_PROC_CLASS) {
     case CL_MAIN:
     case CL_PROC:
-    case CL_MODULE: {
+    case CL_MODULE:
+    case CL_SUBMODULE: {
         /* EXT_ID list, used as a stack.*/
         EXT_ID unit_ctl_procs[MAX_UNIT_CTL];
         if(unit_ctl_level != 0)
@@ -5722,7 +5723,7 @@ compile_CALL_subroutine_statement(expr x)
             ID_IS_DECLARED(id) = TRUE;
         } else if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_EXTERNAL;
-            TYPE_SET_EXTERNAL(id);
+            /* DO NOT TYPE_SET_EXTERNAL(id), this is not an explicit exernal subroutine */
             TYPE_SET_IMPLICIT(id);
         }
     }
@@ -5818,7 +5819,7 @@ compile_CALL_subroutine_statement(expr x)
            id = declare_ident(EXPR_SYM(x1), CL_PROC);
            ID_TYPE(id) = tp;
 
-           TYPE_SET_EXTERNAL(id);
+           /* NOTE: DO NOT 'TYPE_SET_EXTERNAL(id)', this is not an explicit exteranl function  */
            ID_IS_DECLARED(id) = FALSE;
            ID_STORAGE(id) = STG_EXT;
            PROC_CLASS(id) = P_EXTERNAL;
