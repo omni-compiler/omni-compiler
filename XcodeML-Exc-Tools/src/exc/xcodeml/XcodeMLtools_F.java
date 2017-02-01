@@ -119,7 +119,12 @@ public class XcodeMLtools_F extends XcodeMLtools {
     if ((nn = getElement(n, "len")) != null) {
       flen = toXobject(getContent(nn));
       if (flen == null)
-	flen = Xcons.IntConstant(-1); // means variable length
+        if (getAttrBool(nn, "is_assumed_shape"))
+	  flen = Xcons.IntConstant(-1); // means variable length, "(len=:)"
+        else if (getAttrBool(nn, "is_assumed_size"))
+	  flen = Xcons.IntConstant(-2); // means variable length, "(len=*)"
+        else
+          fatal("array length unknown:" + nn);
     } else if ((nn = getElement(n, "typeParamValues")) != null) {
       typeParamValues = (XobjList)toXobject(nn);
     } else {
