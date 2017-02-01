@@ -1380,7 +1380,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             return null;
         }
         Element e = createElement("len");
-        if (!type.isFlenVariable()) {
+        if (type.isFlenAssumedShape()) {
+            addAttributes(e, "is_assumed_shape", "true");
+        } else if (type.isFlenAssumedSize()) {
+            addAttributes(e, "is_assumed_size", "true");
+        } else {
             addChildNode(e, transExpr(xobj));
         }
         return e;
