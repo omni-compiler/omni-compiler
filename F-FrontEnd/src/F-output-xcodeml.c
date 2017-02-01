@@ -4624,7 +4624,10 @@ genSortedIDs(ID ids, int *retnIDs)
 
 #define IS_NO_PROC_OR_DECLARED_PROC(id) \
     ((ID_CLASS(id) != CL_PROC || \
-      PROC_CLASS(id) == P_EXTERNAL || \
+      (PROC_CLASS(id) == P_EXTERNAL && \
+       (TYPE_IS_EXTERNAL(ID_TYPE(id)) || \
+        (FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL && \
+         !TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) || \
       (ID_TYPE(id) && TYPE_IS_EXTERNAL(ID_TYPE(id))) || \
       (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id))) || \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \
