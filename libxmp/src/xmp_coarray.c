@@ -17,6 +17,13 @@ static long _transfer_coarray_elmts, _transfer_array_elmts;
 static int *_image_num;
 
 static _XMP_array_section_t *_coarray, *_array;
+struct _coarray_queue_t{
+  size_t           max_size; /**< Max size of queue */
+  int                   num; /**< How many coarrays are in this queue */
+  _XMP_coarray_t **coarrays; /**< pointer of coarrays */
+};
+static struct _coarray_queue_t _coarray_queue;
+static void _push_coarray_queue(_XMP_coarray_t *c);
 
 /**
    Set 1-dim coarray information 
@@ -339,6 +346,8 @@ void _XMP_coarray_malloc(void **coarray_desc, void *addr)
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_coarray_malloc(*coarray_desc, addr, (size_t)transfer_size, false);
 #endif
+  
+  _push_coarray_queue(c);
 }
 
 
@@ -363,7 +372,10 @@ void _XMP_coarray_regmem(void **coarray_desc, void *addr)
   //not implemented
   _XMP_fatal("_XMP_coarray_regmem_do is not supported over MPI3.\n");
 #endif
+
+  _push_coarray_queue(c);
 }
+
 
 /** 
    Attach memory to coarray
@@ -381,6 +393,8 @@ void _XMP_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const size_t 
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_coarray_attach(coarray_desc, addr, coarray_size, false);
 #endif
+
+  _push_coarray_queue(coarray_desc);
 }
 
 /** 
@@ -1495,15 +1509,57 @@ void _XMP_build_sync_images_table()
 }
 
 /**
+   Build queue for coarray
+*/
+void _XMP_build_coarray_queue()
+{
+  _coarray_queue.max_size = _XMP_COARRAY_QUEUE_INITIAL_SIZE;
+  _coarray_queue.num      = 0;
+  _coarray_queue.coarrays = malloc(sizeof(_XMP_coarray_t*) * _coarray_queue.max_size);
+}
+
+/**
+   Rebuild the queue when the queue is full
+*/
+static void _rebuild_coarray_queue()
+{
+  _coarray_queue.max_size *= _XMP_COARRAY_QUEUE_INCREMENT_RAITO;
+  _XMP_coarray_t **tmp;
+  size_t next_size = _coarray_queue.max_size * sizeof(_XMP_coarray_t*);
+  if((tmp = realloc(_coarray_queue.coarrays, next_size)) == NULL)
+    _XMP_fatal("cannot allocate memory");
+  else
+    _coarray_queue.coarrays = tmp;
+}
+
+/**
+   Push a coarray to the queue
+*/
+static void _push_coarray_queue(_XMP_coarray_t *c)
+{
+  if(_coarray_queue.num >= _coarray_queue.max_size)
+    _rebuild_coarray_queue();
+
+  _coarray_queue.coarrays[_coarray_queue.num++] = c;
+}
+
+/**
+   Pop a coarray from the queue
+*/
+static _XMP_coarray_t* _pop_coarray_queue()
+{
+  if(_coarray_queue.num == 0) return NULL;
+
+  _coarray_queue.num--;
+  return _coarray_queue.coarrays[_coarray_queue.num];
+}
+
+/**
    Deallocate memory space and an object of coarray
 */
-void _XMP_coarray_deallocate(_XMP_coarray_t *c)
+static void _XMP_coarray_deallocate(_XMP_coarray_t *c)
 {
   if(c == NULL) return;
-
-#if defined(_XMP_FJRDMA)
-  _XMP_fjrdma_dereg_mem(c);
-#endif
 
   free(c->addr);
 #if !defined(_XMP_GASNET) && !defined(_XMP_MPI3_ONESIDED)
@@ -1513,6 +1569,23 @@ void _XMP_coarray_deallocate(_XMP_coarray_t *c)
   free(c->distance_of_coarray_elmts);
   free(c->distance_of_image_elmts);
   free(c);
+}
+
+/**
+   Deallocate memory space and an object of the last coarray
+*/
+void _XMP_coarray_lastly_deallocate()
+{
+#ifdef _XMP_GASNET
+  _XMP_gasnet_coarray_lastly_deallocate();
+#elif _XMP_FJRDMA
+  _XMP_fjrdma_coarray_lastly_deallocate();
+#elif _XMP_MPI3_ONESIDED
+  _XMP_mpi_coarray_lastly_deallocate(false);
+#endif
+
+  _XMP_coarray_t *_last_coarray_ptr = _pop_coarray_queue();
+  _XMP_coarray_deallocate(_last_coarray_ptr);
 }
 
 /**************************************************************************/
