@@ -235,10 +235,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_MODULE_DEFINITION: {
-            Xobject parent_name = xobj.getArgOrNull(4);
+            Xobject parent_name = xobj.getArgOrNull(5);
             e = createElement(name,
                               "name", getArg0Name(xobj),
-                              "is_sub", (parent_name != null) ? "true" : "false",
+                              "is_sub", intFlagToBoolStr(xobj.getArgOrNull(4)),
                               "parent_name", (parent_name != null) ? parent_name.getName() : null);
             XobjList symbols = (XobjList)xobj.getArgOrNull(1);
             XobjList decls =
@@ -1025,8 +1025,12 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         if (type.copied != null) {
             typeElem = createElement("FbasicType", "ref",
-                                     type.isFclass() && type.isBasic() && (type.getBasicType() == BasicType.VOID) ?
-                                       null : type.copied.getXcodeFId());
+                                     (type.isFclass() || type.isFprocedure() && type.isFpointer())
+                                      && type.isBasic() && (type.getBasicType() == BasicType.VOID) ?
+                                       null : type.copied.getXcodeFId(),
+                                     "is_procedure", toBoolStr(type.isFprocedure()),
+                                     "pass", type.getPass(),
+                                     "pass_arg_name", type.getPassArgName());
             setBasicTypeFlags(typeElem, type);
             XobjList typeParams = type.getFTypeParamValues();
             if (typeParams != null) {
@@ -1038,8 +1042,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case Xtype.BASIC:
                 typeElem = createElement("FbasicType");
                 addAttributes(typeElem,
-                              "ref", type.isFclass() && type.isBasic() && (type.getBasicType() == BasicType.VOID) ?
-                                       null : BasicType.getTypeInfo(type.getBasicType()).fname);
+                              "ref", (type.isFclass() || type.isFprocedure() && type.isFpointer())
+                                      && type.isBasic() && (type.getBasicType() == BasicType.VOID) ?
+                                       null : BasicType.getTypeInfo(type.getBasicType()).fname,
+                              "is_procedure", toBoolStr(type.isFprocedure()));
                 addChildNodes(typeElem,
                               transKind(type.getFkind()),
                               transLen(type));
@@ -1128,6 +1134,13 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (a == null)
             return null;
         return a.getName();
+    }
+
+    private String getArgString(Xobject x, int idx) {
+        Xobject a = x.getArgOrNull(idx);
+        if (a == null)
+            return null;
+        return a.getString();
     }
 
     private Node transDef(XobjectDef def) {
@@ -1274,7 +1287,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         // collect identifiers which are set to 'delayed decl'
         if (body != null && body instanceof XobjList) {
-            XobjectIterator i = new topdownXobjectIterator(body);
+            XobjectIterator i = new topdownXobjectIterator(body, true);
             for (i.init(); !i.end(); i.next()) {
                 Xobject a = i.getXobject();
                 if (a == null || !a.isDelayedDecl())
@@ -1423,8 +1436,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (xobj.Opcode() == Xcode.F_TYPE_BOUND_PROCEDURE) {
           e = createElement("typeBoundProcedure");
           addAttributes(e, "type", xobj.Type().getXcodeFId());
-          addAttributes(e, "pass"         , (xobj.getArg(0) != null) ? ((XobjString)xobj.getArg(0)).getString() : null);
-          addAttributes(e, "pass_arg_name", (xobj.getArg(1) != null) ? ((XobjString)xobj.getArg(1)).getString() : null);
+          addAttributes(e, "pass"         , getArgString(xobj, 0));
+          addAttributes(e, "pass_arg_name", getArgString(xobj, 1));
           addChildNode(e, transName(xobj.getArg(2)));
           int tq = ((XobjInt)xobj.getArg(3)).getInt();
           if ((tq & Xtype.TQ_FPRIVATE) != 0)
@@ -1432,11 +1445,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
           else if ((tq & Xtype.TQ_FPUBLIC) != 0)
             addAttributes(e, "is_public", "true");
           addChildNode(e, addChildNode(createElement("binding"), transName(xobj.getArg(4))));
-          addAttributes(e, "is_non_overridable", (xobj.getArg(5) != null) ? ((XobjString)xobj.getArg(5)).getString() : null);
+          addAttributes(e, "is_non_overridable", intFlagToBoolStr(xobj.getArgOrNull(5)));
         } else if (xobj.Opcode() == Xcode.F_TYPE_BOUND_GENERIC_PROCEDURE) {
           e = createElement("typeBoundGenericProcedure");
-          addAttributes(e, "is_operator"  , (xobj.getArg(0) != null) ? ((XobjString)xobj.getArg(0)).getString() : null);
-          addAttributes(e, "is_assignment", (xobj.getArg(1) != null) ? ((XobjString)xobj.getArg(1)).getString() : null);
+          addAttributes(e, "is_operator"  , intFlagToBoolStr(xobj.getArgOrNull(0)));
+          addAttributes(e, "is_assignment", intFlagToBoolStr(xobj.getArgOrNull(1)));
           addChildNode(e, transName(xobj.getArg(2)));
           int tq = ((XobjInt)xobj.getArg(3)).getInt();
           if ((tq & Xtype.TQ_FPRIVATE) != 0)
@@ -1658,7 +1671,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             Ident id = ident_list.find(decl.getArg(0).getName(),
                 (decl.Opcode() == Xcode.VAR_DECL) ? IXobject.FINDKIND_VAR : IXobject.FINDKIND_TAGNAME);
             Xtype t = (id != null) ? id.Type() : null;
-            _collectDependName(t, idSet);
+            _collectDependName(t, idSet, null);
 
             if (decl.Opcode() == Xcode.VAR_DECL) {
                 _collectDependName(decl.getArgOrNull(1), idSet);
@@ -1680,21 +1693,28 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             }
         }
 
-        private void _collectDependName(Xtype t, Set<String> idSet) {
+        private void _collectDependName(Xtype t, Set<String> idSet, Set<Xtype> checkedSet) {
             if (t == null)
                 return;
+
+            if (checkedSet == null)
+                checkedSet = new HashSet<Xtype>();
+            else if (checkedSet.contains(t))
+                return;
+            else
+                checkedSet.add(t);
 
             switch (t.getKind()) {
             case Xtype.BASIC:
                 if (t.copied != null) {
-                    _collectDependName(t.copied, idSet);
+                    _collectDependName(t.copied, idSet, checkedSet);
                 } else {
                     _collectDependName(t.getFkind(), idSet);
                     _collectDependName(t.getFlen(), idSet);
                 }
                 break;
             case Xtype.F_ARRAY:
-                _collectDependName(t.getRef(), idSet);
+                _collectDependName(t.getRef(), idSet, checkedSet);
                 for (Xobject s : t.getFarraySizeExpr())
                     _collectDependName(s, idSet);
                 break;
@@ -1705,14 +1725,13 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     for (Xobject a : t.getMemberList()) {
 
 			if (a.Type().equals(t)) continue;
-
-                        _collectDependName(a.Type(), idSet);
+                        _collectDependName(a.Type(), idSet, checkedSet);
                         _collectDependName(((Ident)a).getValue(), idSet);
                     }
                 }
 		break;
 	    case Xtype.FUNCTION:
-                _collectDependName(t.getRef(), idSet);
+                _collectDependName(t.getRef(), idSet, checkedSet);
                 break;
             }
         }

@@ -21,6 +21,7 @@ class XfTypeManagerForDom {
     private SymbolMapStack _symbolMapStack;
     private AliasMapStack _aliasMapStack;
     private AliasMap _reverseBasicRefMap;
+    private final AliasMapStack _typeToSymbolMapStack;
 
     /**
      * This map contains node set : { FbasicType, FfunctionType, FstructType }.
@@ -148,6 +149,7 @@ class XfTypeManagerForDom {
         _typeMap = new TypeMap();
         _symbolMapStack = new SymbolMapStack();
         _aliasMapStack = new AliasMapStack();
+        _typeToSymbolMapStack = new AliasMapStack();
         _reverseBasicRefMap = new AliasMap();
     }
 
@@ -161,16 +163,23 @@ class XfTypeManagerForDom {
         return _aliasMapStack.peekFirst();
     }
 
+    private AliasMap _getCurrentTypeToSymbolMap()
+    {
+        return _typeToSymbolMapStack.peekFirst();
+    }
+
     public void enterScope()
     {
         _symbolMapStack.push(new SymbolMap());
         _aliasMapStack.push(new AliasMap());
+        _typeToSymbolMapStack.push(new AliasMap());
     }
 
     public void leaveScope()
     {
         _symbolMapStack.pop();
         _aliasMapStack.pop();
+        _typeToSymbolMapStack.pop();
     }
 
     public void addSymbol(Node idNode)
@@ -213,6 +222,11 @@ class XfTypeManagerForDom {
             SymbolMap symbolMap = _getCurrentSymbolMap();
             assert (symbolMap != null);
             symbolMap.put(symbolName, idNode);
+            AliasMap aliasMap = _getCurrentTypeToSymbolMap();
+            String typeName = XmDomUtil.getAttr(idNode, "type");
+            if (!XfUtilForDom.isNullOrEmpty(typeName)) {
+                aliasMap.put(typeName, symbolName);
+            }
         }
     }
 
@@ -306,6 +320,23 @@ class XfTypeManagerForDom {
         return findType(XmDomUtil.getAttr(id, "type"));
     }
 
+    public String findNameFromType(String typeId)
+    {
+        if (typeId == null) {
+            return null;
+        }
+
+        typeId = typeId.trim();
+        for (AliasMap aliasMap : _typeToSymbolMapStack) {
+            String aliasName = aliasMap.get(typeId);
+            if (aliasName != null) {
+                return aliasName;
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Put tagname of type id.
      * @param typeName
@@ -380,6 +411,9 @@ class XfTypeManagerForDom {
                 String refType = XmDomUtil.getAttr(basicType, "ref");
 
                 if (XmDomUtil.getAttrBool(basicType, "is_class") && XfUtilForDom.isNullOrEmpty(refType))
+                    break;
+
+                if (XmDomUtil.getAttrBool(basicType, "is_pointer") && XfUtilForDom.isNullOrEmpty(refType))
                     break;
 
                 if (XfType.DERIVED != XfType.getTypeIdFromXcodemlTypeName(refType))

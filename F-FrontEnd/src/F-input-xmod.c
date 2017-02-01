@@ -375,17 +375,44 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
         }
     }
 
-    if (retTypeId != NULL)
-        *retTypeId = typeId;    /* return typeId */
-    else
-        free(typeId);
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "pass");
+    if (str != NULL) {
+        FUNCTION_TYPE_HAS_PASS_ARG(*tp) = TRUE;
+        if (strcmp("pass", str) == 0) {
+            FUNCTION_TYPE_HAS_PASS_ARG(*tp) = TRUE;
+        } else if (strcmp("nopass", str) == 0) {
+            FUNCTION_TYPE_HAS_PASS_ARG(*tp) = TRUE;
+        } else {
+            /* Unexpected */
+            return FALSE;
+        }
+        free(str);
+    }
 
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "pass_arg_name");
+    if (str != NULL) {
+        ID pass_arg;
+        pass_arg = new_ident_desc(find_symbol(str));
+        FUNCTION_TYPE_PASS_ARG(*tp) = pass_arg;
+        free(str);
+    }
 
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_class");
     if (str != NULL) {
         TYPE_SET_CLASS(*tp);
         free(str);
     }
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_procedure");
+    if (str != NULL) {
+        TYPE_SET_PROCEDURE(*tp);
+        free(str);
+    }
+
+    if (retTypeId != NULL)
+        *retTypeId = typeId;    /* return typeId */
+    else
+        free(typeId);
 
     return TRUE;
 }
@@ -1097,12 +1124,21 @@ static int
 input_len(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 {
     expv v = NULL;
+    char * is_assumed_size;
+    char * is_assumed_shape;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "len"))
         return TRUE;
 
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
+
+    is_assumed_size = (char *) xmlTextReaderGetAttribute(reader,
+                                   BAD_CAST "is_assumed_size");
+
+    is_assumed_shape = (char *) xmlTextReaderGetAttribute(reader,
+                                    BAD_CAST "is_assumed_shape");
+
 
     if (xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "len")) {
         /* if <len> tag is empty, size is unfixed */
@@ -1113,6 +1149,14 @@ input_len(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 
         if (v != NULL)
             TYPE_LENG(tp) = v;
+    }
+
+    if (is_assumed_size != NULL) {
+        TYPE_CHAR_LEN(tp) = CHAR_LEN_UNFIXED;
+        free(is_assumed_size);
+    } else if (is_assumed_shape != NULL) {
+        TYPE_CHAR_LEN(tp) = CHAR_LEN_ALLOCATABLE;
+        free(is_assumed_shape);
     }
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "len"))
@@ -1594,11 +1638,25 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
         return FALSE;
 
     ref = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "ref");
-    TYPE_REF(tp) = getTypeDesc(ht, ref);
-    TYPE_BASIC_TYPE(tp) = TYPE_BASIC_TYPE(TYPE_REF(tp));
-    shrink_type(tp);
+    if (ref != NULL) {
+        TYPE_REF(tp) = getTypeDesc(ht, ref);
+        TYPE_BASIC_TYPE(tp) = TYPE_BASIC_TYPE(TYPE_REF(tp));
+        shrink_type(tp);
 
-    if (!xmlSkipWhiteSpace(reader)) 
+        if (IS_CHAR(tp))  {
+            TYPE_CHAR_LEN(tp) = TYPE_CHAR_LEN(TYPE_REF(tp));
+        }
+
+    } else {
+        TYPE_REF(tp) = NULL;
+        if (TYPE_IS_PROCEDURE(tp)) {
+            TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
+        } else if (TYPE_IS_CLASS(tp)) {
+            TYPE_BASIC_TYPE(tp) = TYPE_STRUCT;
+        }
+    }
+
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     if (isEmpty)
@@ -1611,6 +1669,17 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
     /* <len> */
     if (!input_len(reader, ht, tp))
         return FALSE;
+
+    if (IS_CHAR(tp) && TYPE_LENG(tp))  {
+        if (EXPR_CODE(TYPE_LENG(tp)) == INT_CONSTANT) {
+            TYPE_CHAR_LEN(tp) = EXPV_INT_VALUE(TYPE_LENG(tp));
+        } else {
+            /*
+             * don't use as a character basictype "Fcharacter"
+             */
+            TYPE_CHAR_LEN(tp) = 0;
+        }
+    }
 
     /* <indexRange> */
     while (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "indexRange")) {
@@ -1637,6 +1706,16 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
 
     if (typeId != NULL)
         free(typeId);
+
+    /*
+     * Remove a character basic type which is genereted from 'ref="Fcharacter"'
+     */
+    if (IS_CHAR(tp))  {
+        if (TYPE_REF(TYPE_REF(tp)) == NULL &&
+            TYPE_CHAR_LEN(TYPE_REF(tp)) == 1) {
+            TYPE_REF(tp) = NULL;
+        }
+    }
 
     return TRUE;
 }
@@ -2409,7 +2488,8 @@ set_sclass(ID id, const char* sclass)
         else
             ID_CLASS(id) = CL_VAR;
 
-        if (IS_FUNCTION_TYPE(tp) || IS_SUBR(tp) || IS_GENERIC_TYPE(tp)) {
+        if (!TYPE_IS_PROCEDURE(tp) &&
+            (IS_PROCEDURE_TYPE(tp) || IS_GENERIC_TYPE(tp))) {
             ID_CLASS(id) = CL_PROC;
             /* ID_STORAGE(id) = STG_SAVE; */
         }
@@ -2496,9 +2576,10 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
         }
 
         // if type of id is function/subroutine, then regarded as procedure
-        if (TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_FUNCTION ||
-            TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_SUBR ||
-            TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_GENERIC) {
+        if ((TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_FUNCTION ||
+             TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_SUBR ||
+             TYPE_BASIC_TYPE(ID_TYPE(id)) == TYPE_GENERIC) &&
+            !TYPE_IS_PROCEDURE(ID_TYPE(id))) {
             ID_IS_DECLARED(id) = TRUE;
             if (TYPE_IS_EXTERNAL(ID_TYPE(id)))
                 PROC_CLASS(id) = P_EXTERNAL;
@@ -2512,7 +2593,7 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
             ID_TYPE(ID_DEFINED_BY(id)) = TYPE_REF(ID_TYPE(id));
 
             /* case for ENTRY */
-            if (EXT_PROC_IS_ENTRY(tep->ep))
+            if (tep->ep != NULL && EXT_PROC_IS_ENTRY(tep->ep))
                 ID_CLASS(id) = CL_ENTRY;
         }
 

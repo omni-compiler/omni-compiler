@@ -475,7 +475,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
   // for lower reflect
 
-  if (lwidth){
+  if (lwidth || uwidth){
 
     lo_buf_size = lwidth * blocklength * count;
     hi_buf_size = uwidth * blocklength * count;

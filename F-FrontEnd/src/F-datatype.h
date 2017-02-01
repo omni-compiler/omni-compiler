@@ -127,6 +127,7 @@ typedef struct type_descriptor
 #define TYPE_ATTR_BIND              0x00800000
 #define TYPE_ATTR_VALUE             0x01000000
 #define TYPE_ATTR_MODULE            0x02000000 /* for module function/subroutine */
+#define TYPE_ATTR_PROCEDURE         0x04000000 /* for procedure variables */
         uint32_t type_attr_flags;
 #define TYPE_EXFLAGS_IMPLICIT       0x00000001 /* implicitly defined or not */
 #define TYPE_EXFLAGS_OVERRIDDEN     0x00000002 /* type is overridden by child */
@@ -138,7 +139,7 @@ typedef struct type_descriptor
         uint32_t exflags;
     } attr; /* FbasicType */
     struct {
-        char n_dim;            /* dimension (max 7) */
+        char n_dim;            /* dimension (max 15) */
         char dim_fixed;        /* fixed or not */
         char dim_fixing;
         ARRAY_ASSUME_KIND assume_kind; /* represents assumed size or shape */
@@ -168,10 +169,14 @@ typedef struct type_descriptor
         int is_internal;                /* for internal subprograms (function/subroutine in the contain block)*/
         int is_module_procedure;        /* used as a module procedure */ /* may not be required */
         int is_visible_intrinsic;       /* TRUE if non standard intrinsic */
+
+        int has_binding_arg;
+        int has_pass_arg;                   /* for the function type of procedure variable OR type-bound procedure */
+        struct ident_descriptor * pass_arg; /* for the function type of procedure variable OR type-bound procedure */
+        struct type_descriptor * pass_arg_type; /* for the function type of procedure variable OR type-bound procedure */
+
         struct {
             struct ident_descriptor * generics; /* for the function type of type-bound generic */
-            int has_pass_arg;                   /* for the function type of type-bound procedure */
-            struct ident_descriptor * pass_arg; /* for the function type of type-bound procedure */
         } type_bound_proc_info;
     } proc_info;
 
@@ -197,17 +202,10 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_TAGNAME(tp)        ((tp)->tagname)
 #define TYPE_IS_REFERENCED(tp)  ((tp)->is_referenced)
 #define TYPE_CODIMENSION(tp)    ((tp)->codims)
-#if 0
-#define TYPE_LINK_ADD(tp, tlist, ttail) \
-    { if((tlist) == NULL) (tlist) = (tp); \
-      else TYPE_LINK(ttail) = (tp); \
-      (ttail) = (tp); }
-#else
 #define TYPE_LINK_ADD(tp, tlist, ttail) \
     { if((tlist) == NULL) (tlist) = (tp); \
       ttail = type_link_add(tp, tlist, ttail);  \
     }
-#endif
 #define TYPE_SLINK_ADD(tp, tlist, ttail) \
     { if((tlist) == NULL) (tlist) = (tp); \
       else TYPE_SLINK(ttail) = (tp); \
@@ -267,6 +265,9 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_IS_MODULE(tp)          ((tp)->attr.type_attr_flags &   TYPE_ATTR_MODULE)
 #define TYPE_SET_MODULE(tp)         ((tp)->attr.type_attr_flags |=  TYPE_ATTR_MODULE)
 #define TYPE_UNSET_MODULE(tp)       ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_MODULE)
+#define TYPE_IS_PROCEDURE(tp)       ((tp)->attr.type_attr_flags &   TYPE_ATTR_PROCEDURE)
+#define TYPE_SET_PROCEDURE(tp)      ((tp)->attr.type_attr_flags |=  TYPE_ATTR_PROCEDURE)
+#define TYPE_UNSET_PROCEDURE(tp)    ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_PROCEDURE)
 #define TYPE_IS_INTENT_IN(tp)       ((tp)->attr.type_attr_flags &   TYPE_ATTR_INTENT_IN)
 #define TYPE_SET_INTENT_IN(tp)      ((tp)->attr.type_attr_flags |=  TYPE_ATTR_INTENT_IN)
 #define TYPE_UNSET_INTENT_IN(tp)    ((tp)->attr.type_attr_flags &= ~TYPE_ATTR_INTENT_IN)
@@ -394,6 +395,8 @@ extern TYPE_DESC basic_type_desc[];
 
 #define CHAR_LEN_UNFIXED (-1)
 
+#define CHAR_LEN_ALLOCATABLE (-2)
+
 /* macros distinguishing type */
 #define IS_STRUCT_TYPE(tp) \
                 ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_STRUCT)
@@ -432,6 +435,8 @@ extern TYPE_DESC basic_type_desc[];
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_CHAR))
 #define IS_CHAR_LEN_UNFIXED(tp) \
                 ((tp) != NULL && (TYPE_CHAR_LEN(tp) == CHAR_LEN_UNFIXED))
+#define IS_CHAR_LEN_ALLOCATABLE(tp) \
+                ((tp) != NULL && (TYPE_CHAR_LEN(tp) == CHAR_LEN_ALLOCATABLE))
 #define IS_LOGICAL(tp) \
                 ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_LOGICAL))
 #define IS_INT_CONST_V(v) \
@@ -498,16 +503,6 @@ extern TYPE_DESC basic_type_desc[];
     if (ID_CLASS(mp) == CL_TYPE_BOUND_PROC && \
         (TBP_BINDING_ATTRS(mp) & TYPE_BOUND_PROCEDURE_IS_GENERIC))
 
-#if 0
-typedef enum {
-    PRAGMA_NOT_IN_SCOPE = 0,	/* The sentinel is not appeared, yet. */
-    PRAGMA_ENTER_SCOPE,		/* The sentinel just appeared. */
-    PRAGMA_LEAVE_SCOPE		/* The sentinel got enough block(s) and
-                                 * the scope is needed to be
-                                 * closed. */
-} pragma_status_t;
-#endif
-
 #define FUNCTION_TYPE_RETURN_TYPE(tp) ((tp)->proc_info.return_type)
 #define FUNCTION_TYPE_HAS_EXPLICIT_ARGS(tp) ((tp)->proc_info.has_explicit_arguments)
 #define FUNCTION_TYPE_ARGS(tp) ((tp)->proc_info.args)
@@ -554,8 +549,13 @@ typedef enum {
 #define FUNCTION_TYPE_UNSET_VISIBLE_INTRINSIC(tp) ((tp)->proc_info.is_visible_intrinsic = FALSE)
 
 #define TYPE_BOUND_GENERIC_TYPE_GENERICS(tp) ((tp)->proc_info.type_bound_proc_info.generics)
-#define TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.type_bound_proc_info.has_pass_arg)
-#define TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tp) ((tp)->proc_info.type_bound_proc_info.pass_arg)
+#define TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.has_pass_arg)
+#define TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(tp) ((tp)->proc_info.pass_arg)
+
+#define FUNCTION_TYPE_HAS_BINDING_ARG(tp) ((tp)->proc_info.has_binding_arg)
+#define FUNCTION_TYPE_HAS_PASS_ARG(tp) ((tp)->proc_info.has_pass_arg)
+#define FUNCTION_TYPE_PASS_ARG(tp) ((tp)->proc_info.pass_arg)
+#define FUNCTION_TYPE_PASS_ARG_TYPE(tp) ((tp)->proc_info.pass_arg_type)
 
 
 #endif /* _F_DATATYPE_H_ */

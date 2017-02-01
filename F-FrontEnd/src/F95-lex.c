@@ -40,6 +40,7 @@ int line_buf_size;
 
 int st_class;           /* token for classify statement */
 int need_keyword = FALSE;
+int need_type_keyword = FALSE;
 int need_type_len = FALSE;
 int need_check_user_defined = TRUE; /* check the user defined dot id */
 
@@ -64,6 +65,7 @@ struct keyword_token {
 
 extern struct keyword_token dot_keywords[],keywords[];
 extern struct keyword_token end_keywords[];
+extern struct keyword_token type_keywords[];
 
 extern int ocl_flag;
 extern int cdir_flag;
@@ -636,7 +638,7 @@ char *lex_get_line()
 
 void
 yyerror(s)
-     char *s;
+     const char *s;
 {
     error("%s",s);
 }
@@ -663,6 +665,15 @@ token()
          */
         need_keyword = FALSE;
         t = get_keyword(keywords);
+        if (t != UNKNOWN) return(t);
+    }
+
+    if (need_type_keyword == TRUE) {
+        /*
+         * require type spec keyword
+         */
+        need_type_keyword = FALSE;
+        t = get_keyword(type_keywords);
         if (t != UNKNOWN) return(t);
     }
 
@@ -3824,6 +3835,22 @@ struct keyword_token end_keywords[ ] =
     { "type",           ENDTYPE },
     { "where",          ENDWHERE },
     { 0, 0 }};
+
+
+struct keyword_token type_keywords[ ] =
+{
+    { "complex",          KW_COMPLEX },
+    { "doublecomplex",    KW_DCOMPLEX },
+    { "doubleprecision",  KW_DOUBLE  },
+    { "double",           KW_DBL },
+    { "integer",          KW_INTEGER  },
+    { "logical",          KW_LOGICAL  },
+    { "real",             KW_REAL },
+    { "type",             KW_TYPE},
+    { "class",            CLASS},
+    { "character",        KW_CHARACTER, },
+    { 0, 0 }};
+
 
 /*
  * lex for OpenMP part
