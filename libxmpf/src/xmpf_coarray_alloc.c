@@ -1250,7 +1250,10 @@ void _freeMemoryChunk(MemoryChunk_t *chunk)
                           _dispMemoryChunk(chunk));
 
   // free the last memory chunk object
-  _XMP_coarray_lastly_deallocate();
+  ///////////////////////////////////////////////
+  //  _XMP_coarray_lastly_deallocate();
+  ///////////////////////////////////////////////
+  _XMP_coarray_deallocate(chunk->desc);
 
   _freeMemoryChunk_empty(chunk);
 }
