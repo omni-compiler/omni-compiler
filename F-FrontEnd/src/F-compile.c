@@ -3558,7 +3558,8 @@ end_procedure()
     switch (CURRENT_PROC_CLASS) {
     case CL_MAIN:
     case CL_PROC:
-    case CL_MODULE: {
+    case CL_MODULE:
+    case CL_SUBMODULE: {
         /* EXT_ID list, used as a stack.*/
         EXT_ID unit_ctl_procs[MAX_UNIT_CTL];
         if(unit_ctl_level != 0)
