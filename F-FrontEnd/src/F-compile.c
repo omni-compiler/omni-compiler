@@ -6860,6 +6860,9 @@ define_internal_subprog(EXT_ID child_ext_ids)
             if (PROC_CLASS(ip) == P_UNDEFINEDPROC) {
                 continue;
             }
+            if (ID_DEFINED_BY(ip)) {
+                ip = ID_DEFINED_BY(ip);
+            }
             if (ip != NULL && ID_TYPE(ip) != NULL)
                 tp = ID_TYPE(ip);
             ext_id = declare_external_proc_id(EXT_SYM(ep), tp, TRUE);
