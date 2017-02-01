@@ -1825,8 +1825,15 @@ static int isAlreadyMarked(ID id)
 static void
 update_procedure_variable(ID id, const ID target, int is_final)
 {
-    if (target == NULL)
+    if (target == NULL) {
         return;
+    }
+
+    if (ID_CLASS(target) == CL_VAR) {
+        /* target is also a procedure variable, skip */
+        return;
+    }
+
 
     if (ID_TYPE(target) == NULL || !IS_PROCEDURE_TYPE(ID_TYPE(target))) {
         if (is_final) {
@@ -1836,9 +1843,11 @@ update_procedure_variable(ID id, const ID target, int is_final)
         }
     }
 
-    if (!FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(target))) {
+    if (!FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(get_bottom_ref_type(ID_TYPE(target)))) {
         if (is_final) {
-            error_at_id(VAR_REF_PROC(id), "should have explicit interface");
+            error_at_id(VAR_REF_PROC(id),
+                        "%s should have an explicit interface",
+                        SYM_NAME(ID_SYM(id)));
         } else {
             return;
         }
@@ -6303,7 +6312,9 @@ compile_POINTER_SET_statement(expr x) {
                     }
                 }
             } else {
-                if ((IS_FUNCTION_TYPE(vPteTyp) &&
+                if (get_bottom_ref_type(vPtrTyp) == get_bottom_ref_type(vPteTyp)) {
+                    /* DO NOTHING */
+                } else if ((IS_FUNCTION_TYPE(vPteTyp) &&
                      TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)))
                     && TYPE_REF(vPtrTyp)) {
                     /*
@@ -6315,7 +6326,6 @@ compile_POINTER_SET_statement(expr x) {
                      *  So assumption: g is a procedure
                      */
                     TYPE_DESC ftp = get_bottom_ref_type(vPtrTyp);
-
 
                     TYPE_REF(vPteTyp) = ftp;
                     TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = FUNCTION_TYPE_RETURN_TYPE(ftp);
@@ -6849,6 +6859,9 @@ define_internal_subprog(EXT_ID child_ext_ids)
                 continue;
             if (PROC_CLASS(ip) == P_UNDEFINEDPROC) {
                 continue;
+            }
+            if (ID_DEFINED_BY(ip)) {
+                ip = ID_DEFINED_BY(ip);
             }
             if (ip != NULL && ID_TYPE(ip) != NULL)
                 tp = ID_TYPE(ip);

@@ -4515,13 +4515,13 @@ outx_definition_symbols(int l, EXT_ID ep)
     outx_tag(l, "symbols");
 
     FOREACH_ID(id, EXT_PROC_ID_LIST(ep)) {
-        if(id_is_visibleVar_for_symbols(id))
+        if (id_is_visibleVar_for_symbols(id))
             outx_id(l1, id);
     }
 
     /* print common ids */
     FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(ep)) {
-        if(IS_MODULE(ID_TYPE(id)) == FALSE)
+        if (IS_MODULE(ID_TYPE(id)) == FALSE)
             outx_id(l1, id);
     }
 

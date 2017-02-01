@@ -2206,6 +2206,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             } else {
                 /* f_id is function, but it's return type is unknown */
                 tp = function_type(new_type_desc());
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC;
             }
 
             TYPE_SET_USED_EXPLICIT(tp);
@@ -2729,6 +2730,7 @@ compile_args(expr args)
     expr a;
     expv v, arglist;
     ID id;
+    int is_declared = FALSE;
 
     arglist = list0(LIST);
     if (args == NULL) return arglist;
@@ -2754,8 +2756,10 @@ compile_args(expr args)
                 break;
             case CL_VAR: 
             case CL_UNKNOWN:
+                is_declared = ID_IS_DECLARED(id);
                 /* check variable name */
                 declare_variable(id);
+                ID_IS_DECLARED(id) = is_declared;
                 break;
             case CL_PARAM:
                 break;
