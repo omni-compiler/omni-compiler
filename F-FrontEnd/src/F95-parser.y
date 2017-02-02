@@ -1203,12 +1203,23 @@ type_spec0:
         ;
 
 
+/*
+ * NOTE:
+ *  Q. Why don't you use `type_param_list` instead of `parenthesis_arg_list_or_null`?
+ *  A. Because this rule is expected to use inside expression (and avoid conflicts).
+ *     `parenthesis_arg_list_or_null` accept '*' ':' 'XXX=*' 'XXX=:'.
+ *     On the other hand, this rule don't for the argument ('*' may be used) and the declaration (':' may be used).
+ */
 // in fortran specification, `type-spec`
 expr_type_spec:
-          IDENTIFIER
-        { $$ = $1; }
-        | IDENTIFIER '(' type_param_value_list ')' /* NOTE: this line cause conflict +1 shift/reduce +8 reduce/reduce */
-        { $$ = list2(F03_PARAMETERIZED_TYPE,$1,$3); }
+          IDENTIFIER parenthesis_arg_list_or_null
+        {
+            if ($2 == NULL) {
+                $$ = $1;
+            } else {
+                $$ = list2(F03_PARAMETERIZED_TYPE,$1,$2);
+            }
+        }
         | type_keyword kind_selector
         { $$ = list2(LIST,$1,$2); }
         | type_keyword length_spec  /* compatibility */
