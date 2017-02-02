@@ -480,7 +480,7 @@ int enable_need_type_keyword = TRUE;
 %type <val> array_constructor array_constructor_list
 %type <val> program_name dummy_arg_list dummy_args dummy_arg file_name
 %type <val> declaration_statement executable_statement action_statement action_statement_let action_statement_key assign_statement_or_null assign_statement
-%type <val> declaration_list entity_decl type_spec type_spec0 length_spec common_decl
+%type <val> declaration_list entity_decl type_spec type_spec0 expr_type_spec length_spec common_decl
 %type <val> type_param_value_list type_param_value
 %type <val> common_block external_decl intrinsic_decl equivalence_decl
 %type <val> cray_pointer_list cray_pointer_pair cray_pointer_var
@@ -1172,6 +1172,7 @@ entity_decl:
         { $$ = list5(LIST,$1,$2,$4,$6,$3);}
         ;
 
+// in fortran specification, `declaration-type-spec`
 type_spec: type_spec0 { $$ = $1; /* need_keyword = TRUE; */ };
 
 type_spec0:
@@ -1200,6 +1201,31 @@ type_spec0:
                             GEN_NODE(INT_CONSTANT, 8)); }
         //                    gen_default_real_kind()); }
         ;
+
+
+// in fortran specification, `type-spec`
+expr_type_spec:
+          IDENTIFIER
+        { $$ = $1; }
+        | IDENTIFIER '(' type_param_value_list ')'
+        { $$ = list2(F03_PARAMETERIZED_TYPE,$1,$3); }
+        | type_keyword kind_selector
+        { $$ = list2(LIST,$1,$2); }
+        | type_keyword length_spec  /* compatibility */
+        { $$ = list2(LIST, $1, $2);}
+        | KW_CHARACTER char_selector
+        { $$ = list2(LIST,GEN_NODE(F_TYPE_NODE,TYPE_CHAR),$2); }
+        | KW_DOUBLE
+        { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_REAL),
+                            GEN_NODE(INT_CONSTANT, 8)); }
+        //                    gen_default_real_kind()); }
+        | KW_DCOMPLEX
+        { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_COMPLEX),
+                            GEN_NODE(INT_CONSTANT, 8)); }
+        //                    gen_default_real_kind()); }
+        ;
+
+
 
 type_param_value_list:
           type_param_value
@@ -1970,9 +1996,9 @@ array_constructor:
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
         | '[' TYPE_KW_COL2 array_constructor_list ']'
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
-        | L_ARRAY_CONSTRUCTOR TYPE_KW_COL2 type_spec COL2 array_constructor_list R_ARRAY_CONSTRUCTOR
+        | L_ARRAY_CONSTRUCTOR TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list R_ARRAY_CONSTRUCTOR
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
-        | '[' TYPE_KW_COL2 type_spec COL2 array_constructor_list ']'
+        | '[' TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list ']'
         { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
         ;
 
