@@ -3082,7 +3082,7 @@ compile_array_constructor(expr x)
     BASIC_DATA_TYPE elem_type = TYPE_UNKNOWN;
 
     l = list0(LIST);
-    if (base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) {
+    if ((base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) != NULL) {
         elem_type = get_basic_type(base_type);
         res = list1(F03_TYPED_ARRAY_CONSTRUCTOR, l);
     } else {

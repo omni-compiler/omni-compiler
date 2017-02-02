@@ -520,7 +520,7 @@ TYPE_KW: { if (enable_need_type_keyword == TRUE) need_type_keyword = TRUE; };
 
 NEED_CHECK: {	      need_check_user_defined = FALSE; };
 
-TYPE_KW_COL2: { if (lookup_col2()) need_keyword = TRUE;  }
+TYPE_KW_COL2: { if (lookup_col2()) need_type_keyword = TRUE;  }
 
 one_statement:
           STATEMENT_LABEL_NO  /* null statement */
