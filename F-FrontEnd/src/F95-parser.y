@@ -1207,7 +1207,7 @@ type_spec0:
 expr_type_spec:
           IDENTIFIER
         { $$ = $1; }
-        | IDENTIFIER '(' type_param_value_list ')'
+        | IDENTIFIER '(' type_param_value_list ')' /* NOTE: this line cause conflict +1 shift/reduce +8 reduce/reduce */
         { $$ = list2(F03_PARAMETERIZED_TYPE,$1,$3); }
         | type_keyword kind_selector
         { $$ = list2(LIST,$1,$2); }
