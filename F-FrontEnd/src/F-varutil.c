@@ -866,7 +866,8 @@ expv_is_restricted(expv x)
     }
 
     /* x is array constructor with all elements is restricted expression. */
-    if(EXPV_CODE(x) == F95_ARRAY_CONSTRUCTOR) {
+    if(EXPV_CODE(x) == F95_ARRAY_CONSTRUCTOR ||
+       EXPV_CODE(x) == F03_TYPED_ARRAY_CONSTRUCTOR) {
         if (expv_list_is_restricted(EXPV_LEFT(x)))
             return TRUE;
     }
