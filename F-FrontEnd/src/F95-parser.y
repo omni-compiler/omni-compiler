@@ -322,6 +322,11 @@
 %token XMPKW_WIDTH
 %token XMPKW_PERIODIC
 
+%token XMPKW_EXPAND
+%token XMPKW_MARGIN
+%token XMPKW_PEEL_AND_WAIT
+%token XMPKW_UNBOUND
+
 %token XMPKW_ASYNC
 %token XMPKW_NOWAIT
 %token XMPKW_MASTER /* not used */
@@ -343,7 +348,7 @@
 
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_width_opt xmp_width_opt1 xmp_async_opt xmp_async_opt1 xmp_width_list xmp_width
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width
-%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width xmp_coarray_clause xmp_image_clause xmp_acc_opt
+%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_loop_opt xmp_loop_opt1 xmp_expand_width_list xmp_expand_width xmp_nocomm_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_async_opt xmp_width_list xmp_width xmp_coarray_clause xmp_image_clause xmp_acc_opt
 
 %type <code> xmp_reduction_op
 
@@ -2519,11 +2524,11 @@ xmp_task_clause:
           ;
 
 xmp_loop_clause:
-	    xmp_ON xmp_obj_ref xmp_reduction_opt xmp_clause_opt
-	    { $$ = list4(LIST,NULL,$2,$3,$4); }
+	    xmp_ON xmp_obj_ref xmp_loop_opt xmp_reduction_opt xmp_clause_opt
+	    { $$ = list5(LIST,NULL,$2,$3,$4,$5); }
 	  | '(' xmp_subscript_list ')' xmp_ON xmp_obj_ref
-	    	xmp_reduction_opt xmp_clause_opt
-	    { $$ = list4(LIST,$2,$5,$6,$7); }
+	    	xmp_loop_opt xmp_reduction_opt xmp_clause_opt
+	    { $$ = list5(LIST,$2,$5,$6,$7,$8); }
 	  ;
 
 /* xmp_reflect_clause: */
@@ -2713,6 +2718,33 @@ xmp_pos_var_list:
 	     /* empty */ { $$ = NULL; }
         | '/' ident_list '/' { $$=$2; }
 	;
+
+xmp_loop_opt:
+	 { need_keyword=TRUE; } xmp_loop_opt1 { $$ = $2; }
+
+xmp_loop_opt1:
+	     /* empty */ { $$ = NULL; }
+        | XMPKW_EXPAND '(' xmp_expand_width_list ')' { $$=list2(LIST, GEN_NODE(INT_CONSTANT, XMP_LOOP_EXPAND), $3); }
+        | XMPKW_MARGIN '(' xmp_expand_width_list ')' { $$=list2(LIST, GEN_NODE(INT_CONSTANT, XMP_LOOP_MARGIN), $3); }
+	;
+
+xmp_expand_width_list:
+          xmp_expand_width
+	  { $$ = list1(LIST,$1); }
+	  | xmp_expand_width_list ',' xmp_expand_width
+	  { $$ = list_put_last($1,$3); }
+	  ;
+
+xmp_expand_width:
+	    expr_or_null
+            { $$ = list3(LIST,$1,$1,GEN_NODE(INT_CONSTANT, 0)); }
+	  | expr_or_null ':' expr_or_null
+            { $$ = list3(LIST,$1,$3,GEN_NODE(INT_CONSTANT, 0)); }
+          | XMPKW_UNBOUND expr_or_null
+            { $$ = list3(LIST,$2,$2,GEN_NODE(INT_CONSTANT, 1)); }
+	  | XMPKW_UNBOUND expr_or_null ':' expr_or_null
+            { $$ = list3(LIST,$2,$4,GEN_NODE(INT_CONSTANT, 1)); }
+	  ;
 
 /* xmp_gmove_opt: */
 /* 	  /\* NULL *\/ { $$= NULL; } */

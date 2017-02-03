@@ -471,7 +471,27 @@ public class XMPanalyzePragma
       }
     }
     
-    Xobject reductionSpec = loopDecl.getArg(2);
+    // width list
+    XobjList expandOpt = (XobjList) loopDecl.getArg(2);
+    int loopType;
+    Vector<XMPdimInfo> widthList = new Vector<XMPdimInfo>();
+    if (expandOpt == null || expandOpt.hasNullArg()){
+      loopType = XMP.LOOP_NONE;
+    }
+    else {
+      loopType = expandOpt.getArg(0).getInt();
+      for (Xobject x: (XobjList)expandOpt.getArg(1)){
+	XMPdimInfo width = new XMPdimInfo();
+
+	if (XMP.debugFlag)
+	  System.out.println("width = ("+x.getArg(0)+":"+x.getArg(1)+":"+x.getArg(2)+")");
+
+	width.parse(x);
+	widthList.add(width);
+      }
+    }
+    
+    Xobject reductionSpec = loopDecl.getArg(3);
     if(reductionSpec != null) 
       analyzeReductionSpec(info, reductionSpec, pb);
 
@@ -480,7 +500,7 @@ public class XMPanalyzePragma
     checkLocalizableLoop(dims,on_ref,pb);
 
     info.setBody(loopBody);  // inner most body
-    info.setLoopInfo(dims, on_ref);
+    info.setLoopInfo(dims, on_ref, loopType, widthList);
   }
 
   private static ForBlock getOutermostLoopBlock(BlockList body) {
@@ -1313,6 +1333,7 @@ public class XMPanalyzePragma
     onRef.add(subscriptList);
     args.add(onRef);
 
+    args.add(null);
     args.add(null);
 
     return Bcons.PRAGMA(Xcode.XMP_PRAGMA, "LOOP", args, loop);

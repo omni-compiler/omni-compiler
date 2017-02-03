@@ -29,6 +29,7 @@ public class XMPinfo
 
   // loop info for loop
   Vector<XMPdimInfo> loop_dims;  // and on_ref
+  int loop_type;
 
   // for reflect
   Vector<XMParray> reflectArrays; // and async_id
@@ -97,8 +98,17 @@ public class XMPinfo
     on_ref = ref;
   }
 
+  public void setLoopInfo(Vector<XMPdimInfo> dims, XMPobjectsRef ref, int type, Vector<XMPdimInfo> list){
+    loop_dims = dims;
+    on_ref = ref;
+    loop_type = type;
+    widthList = list;
+  }
+
   public int getLoopDim() { return loop_dims.size(); }
   
+  public int getLoopType() { return loop_type; }
+
   public XMPdimInfo getLoopDimInfo(int i) { return loop_dims.elementAt(i); }
 
   public Xobject getLoopVar(int i) { 
@@ -116,6 +126,7 @@ public class XMPinfo
   
   public  Vector<XMParray> getReflectArrays(){ return reflectArrays; }
 
+  // also used for loop
   public  Vector<XMPdimInfo> getWidthList() {
       return widthList;
   }

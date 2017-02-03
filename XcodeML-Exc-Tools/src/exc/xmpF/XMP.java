@@ -47,6 +47,11 @@ public class XMP {
   public final static int GMOVE_IN              = 401;
   public final static int GMOVE_OUT	        = 402;
 
+  public final static int LOOP_EXPAND           = 410;
+  public final static int LOOP_MARGIN           = 411;
+  public final static int LOOP_PEEL_AND_WAIT    = 412;
+  public final static int LOOP_NONE             = 413;
+    
   public final static int MAX_DIM		= 7;
   public       static int MAX_ASSUMED_SHAPE     = 16;
   public final static int NONBASIC_TYPE		= 99 /*599*/;

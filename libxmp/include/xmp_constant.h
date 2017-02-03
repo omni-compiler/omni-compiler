@@ -70,6 +70,12 @@
 #define _XMP_N_GMOVE_IN				401
 #define _XMP_N_GMOVE_OUT			402
 
+// defined in exc.xcalablemp.XMP???
+#define _XMP_LOOP_EXPAND                        410
+#define _XMP_LOOP_MARGIN                        411
+#define _XMP_LOOP_PEEL_AND_WAIT                 412
+#define _XMP_LOOP_NONE                          413
+
 // defined in exc.object.BasicType + 500
 #define _XMP_N_TYPE_BOOL			502
 #define _XMP_N_TYPE_CHAR			503
