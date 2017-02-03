@@ -1,6 +1,6 @@
+      PROGRAM main
 #if defined(__GNUC__) && (6 < __GNUC__ || 6 == __GNUC__ && 1 < __GNUC_MINOR__) \
   || defined(__INTEL_COMPILER) && (1600 < __INTEL_COMPILER)
-      PROGRAM main
         integer :: c,d
         c = 1
         d = 2
@@ -19,7 +19,7 @@
          a = 3
          b = 4
        END SUBROUTINE f
-      END PROGRAM main
 #else
   PRINT *, 'SKIPPED'
 #endif
+      END PROGRAM main
