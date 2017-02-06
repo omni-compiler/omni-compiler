@@ -1176,6 +1176,7 @@ get_sclass(ID id)
             return "fsave";
         case STG_AUTO:
         case STG_EQUIV:
+        case STG_INDEX:
             return "flocal";
         case STG_TAGNAME:
             return "ftype_name";
@@ -4540,6 +4541,8 @@ id_is_visibleVar(ID id)
             return TRUE;
         if(VAR_IS_IMPLIED_DO_DUMMY(id))
             return FALSE;
+        if(ID_STORAGE(id) == STG_INDEX) /* Don't declare as a variable */
+            return FALSE;
         break;
     case CL_PARAM:
         return TRUE;
@@ -4564,6 +4567,8 @@ id_is_visibleVar(ID id)
         case STG_UNKNOWN:
         case STG_NONE:
             return FALSE;
+        case STG_INDEX:
+            return FALSE;
         default:
             break;
         }
@@ -4580,6 +4585,9 @@ id_is_visibleVar_for_symbols(ID id)
 {
     if (id == NULL)
         return FALSE;
+
+    if (ID_STORAGE(id) == STG_INDEX)
+        return TRUE;
 
     return (id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE) ||
             ((ID_STORAGE(id) == STG_ARG ||
@@ -4812,6 +4820,7 @@ emit_decl(int l, ID id)
             case STG_EQUIV:
             case STG_COMEQ:
             case STG_COMMON:
+            case STG_INDEX:
                 if (id_is_visibleVar(id) &&
                     IS_NO_PROC_OR_DECLARED_PROC(id)) {
                     outx_varDecl(l, id);

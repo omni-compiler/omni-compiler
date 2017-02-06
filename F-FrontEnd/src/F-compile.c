@@ -7464,7 +7464,7 @@ compile_ENDBLOCK_statement(expr x)
 
     /* check construct name */
     if (CTL_BLOCK_CONST_NAME(ctl_top) != NULL) {
-        if (EXPR_ARG1(x) == NULL) {
+        if (!EXPR_HAS_ARG1(x)) {
             error("expects construnct name");
             return;
         } else if (EXPR_SYM(CTL_BLOCK_CONST_NAME(ctl_top)) !=
@@ -7472,7 +7472,7 @@ compile_ENDBLOCK_statement(expr x)
             error("unmatched construct name");
             return;
         }
-    } else if (EXPR_ARG1(x) != NULL) {
+    } else if (EXPR_HAS_ARG1(x)) {
         error("unexpected construnct name");
         return;
     }
@@ -7589,6 +7589,27 @@ compile_FORALL_statement(int st_no, expr x)
         tp = type_INT;
     }
 
+    /*
+     * Insert a block construct.
+     *
+     * compile_FORALL_statement will rename the index variabls,
+     * so it may be good to confine these index variables with the BLOCK construct.
+     *
+     *
+     * ex)
+     *
+     *    FORALL(I = 1:3); ...; ENDFORALL
+     *
+     *  will be transrated into
+     *
+     *    BLOCK
+     *      INTEGER :: omnitmp001
+     *      FORALL(omnitmp001 = 1:3); ...; ENDFORALL
+     *    END BLOCK
+     *
+     */
+    compile_BLOCK_statement(list0(F2008_BLOCK_STATEMENT));
+
     push_ctl(CTL_FORALL);
     push_env(CTL_FORALL_LOCAL_ENV(ctl_top));
 
@@ -7618,7 +7639,11 @@ compile_FORALL_statement(int st_no, expr x)
 
         id = declare_ident(sym, CL_VAR);
         ID_TYPE(id) = tp;
-        ID_STORAGE(id) = STG_AUTO;
+        if (type) {
+            ID_STORAGE(id) = STG_INDEX;
+        } else {
+            ID_STORAGE(id) = STG_AUTO;
+        }
         declare_variable(id);
 
         for (;;) {
@@ -7674,6 +7699,7 @@ compile_FORALL_statement(int st_no, expr x)
     if (has_type) {
         EXPV_TYPE(st) = tp;
     }
+
     output_statement(st);
 
     CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
@@ -7704,9 +7730,7 @@ compile_ENDFORALL_statement(expr x)
     ENV parent;
     expv init;
     list lp;
-    int has_type = FALSE;
     ID forall_local = NULL;
-    ID forall_last = NULL;
     BLOCK_ENV current_block;
     BLOCK_ENV bp;
     BLOCK_ENV tail;
@@ -7738,10 +7762,6 @@ compile_ENDFORALL_statement(expr x)
         expv_output(CURRENT_STATEMENTS, debug_fp);
     }
 
-    if (EXPV_TYPE(CTL_FORALL_STATEMENT(ctl_top)) != NULL) {
-        has_type = TRUE;
-    }
-
     CTL_FORALL_BODY(ctl_top) = CURRENT_STATEMENTS;
 
     FOR_ITEMS_IN_LIST(lp, CTL_FORALL_BODY(ctl_top)) {
@@ -7753,7 +7773,8 @@ compile_ENDFORALL_statement(expr x)
                 continue;
                 break;
             default:
-                error_at_node(LIST_ITEM(lp), "not allowed statement in the FORALL construct");
+                error_at_node(LIST_ITEM(lp),
+                              "not allowed statement in the FORALL construct");
                 break;
         }
     }
@@ -7775,7 +7796,8 @@ compile_ENDFORALL_statement(expr x)
              */
             ID_SYM(ip) = EXPV_NAME(ID_ADDR(ip));
             EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
-            if (has_type) {
+#if 0
+            if (EXPV_TYPE(CTL_FORALL_STATEMENT(ctl_top)) != NULL) {
                 /*
                  * If the forall statement has type,
                  * indices are local variables in the forall statement.
@@ -7791,6 +7813,7 @@ compile_ENDFORALL_statement(expr x)
                 (void)id_link_remove(&LOCAL_SYMBOLS, ip);
                 ID_LINK_ADD(ip, forall_local, forall_last);
             }
+#endif
         }
     }
 
@@ -7806,9 +7829,12 @@ compile_ENDFORALL_statement(expr x)
         ENV_EXTERNAL_SYMBOLS(current_local_env),
         /*overshadow=*/FALSE);
 
+    /* no declarations in the forall construct */
     assert(ENV_STRUCT_DECLS(current_local_env) == NULL);
     assert(ENV_COMMON_SYMBOLS(current_local_env) == NULL);
     assert(ENV_INTERFACES(current_local_env) == NULL);
+
+    /* no use statements in the forall construct */
     assert(ENV_USE_DECLS(current_local_env) == NULL);
 
     current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
@@ -7823,4 +7849,9 @@ compile_ENDFORALL_statement(expr x)
         tail = bp;
     }
     BLOCK_LINK_ADD(current_block, LOCAL_BLOCKS, tail);
+
+    /*
+     * Close the block construct which is genereted in compile_FORALL_statement().
+     */
+    compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
 }
