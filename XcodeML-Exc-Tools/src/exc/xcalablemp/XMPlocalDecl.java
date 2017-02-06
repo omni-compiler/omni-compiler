@@ -42,16 +42,6 @@ public class XMPlocalDecl {
     return null;
   }
 
-  public static CompoundBlock findParentCompoundBlock(Block block) {
-    if (block == null) return null;
-
-    for (Block b = block; b != null; b = b.getParentBlock())
-      if (b.Opcode() == Xcode.FUNCTION_DEFINITION
-      ||  b.Opcode() == Xcode.F_BLOCK_STATEMENT) return (CompoundBlock)b;
-
-    return null;
-  }
-
   public static Ident findLocalIdent(Block block, String name) {
     if (block == null) return null;
 
@@ -71,31 +61,31 @@ public class XMPlocalDecl {
   }
     
   public static XMPsymbolTable getXMPsymbolTable(Block block) {
-    CompoundBlock pb = findParentCompoundBlock(block);
-    if (pb == null) return null;
-    else return (XMPsymbolTable)pb.getProp(XMP_SYMBOL_TABLE);
+    Block fb = findParentFunctionBlock(block);
+    if (fb == null) return null;
+    else return (XMPsymbolTable)fb.getProp(XMP_SYMBOL_TABLE);
   }
 
   public static XMPsymbolTable declXMPsymbolTable(Block block) {
-    CompoundBlock pb = findParentCompoundBlock(block);
-    if (pb == null) return null;
+    Block fb = findParentFunctionBlock(block);
+    if (fb == null) return null;
 
-    XMPsymbolTable table = (XMPsymbolTable)pb.getProp(XMP_SYMBOL_TABLE);
+    XMPsymbolTable table = (XMPsymbolTable)fb.getProp(XMP_SYMBOL_TABLE);
     if (table == null) {
       table = new XMPsymbolTable();
-      pb.setProp(XMP_SYMBOL_TABLE, (Object)table);
+      fb.setProp(XMP_SYMBOL_TABLE, (Object)table);
     }
 
     return table;
   }
 
   public static Ident addObjectId(String objectName, Xtype type, Block block) {
-    CompoundBlock pb = findParentCompoundBlock(block);
+    Block fb = findParentFunctionBlock(block);
 
-    XobjList idList = (XobjList)pb.getProp(OBJECT_ID_LIST);
+    XobjList idList = (XobjList)fb.getProp(OBJECT_ID_LIST);
     if (idList == null) {
       idList = Xcons.List(Xcode.LIST);
-      pb.setProp(OBJECT_ID_LIST, (Object)idList);
+      fb.setProp(OBJECT_ID_LIST, (Object)idList);
     }
 
     Ident objectId = Ident.Local(objectName, type);
@@ -109,12 +99,12 @@ public class XMPlocalDecl {
   }
 
   public static void addConstructorCall(String funcName, Xobject funcArgs, XMPglobalDecl globalDecl, Block block) {
-    CompoundBlock pb = findParentCompoundBlock(block);
+    Block fb = findParentFunctionBlock(block);
 
-    XobjList bodyList = (XobjList)pb.getProp(CONSTRUCTOR);
+    XobjList bodyList = (XobjList)fb.getProp(CONSTRUCTOR);
     if(bodyList == null) {
       bodyList = Xcons.List(Xcode.LIST);
-      pb.setProp(CONSTRUCTOR, (Object)bodyList);
+      fb.setProp(CONSTRUCTOR, (Object)bodyList);
     }
 
     Ident funcId = globalDecl.declExternFunc(funcName);
@@ -122,12 +112,12 @@ public class XMPlocalDecl {
   }
 
   public static void addAllocCall(String funcName, Xobject funcArgs, XMPglobalDecl globalDecl, Block block) {
-    CompoundBlock pb = findParentCompoundBlock(block);
+    Block fb = findParentFunctionBlock(block);
 
-    XobjList bodyList = (XobjList)pb.getProp(ALLOC);
+    XobjList bodyList = (XobjList)fb.getProp(ALLOC);
     if(bodyList == null) {
       bodyList = Xcons.List(Xcode.LIST);
-      pb.setProp(ALLOC, (Object)bodyList);
+      fb.setProp(ALLOC, (Object)bodyList);
     }
 
     Ident funcId = globalDecl.declExternFunc(funcName);
@@ -135,12 +125,12 @@ public class XMPlocalDecl {
   }
 
   public static void insertDestructorCall(String funcName, Xobject funcArgs, XMPglobalDecl globalDecl, Block block) {
-    CompoundBlock pb = findParentCompoundBlock(block);
+    Block fb = findParentFunctionBlock(block);
 
-    XobjList bodyList = (XobjList)pb.getProp(DESTRUCTOR);
+    XobjList bodyList = (XobjList)fb.getProp(DESTRUCTOR);
     if(bodyList == null) {
       bodyList = Xcons.List(Xcode.LIST);
-      pb.setProp(DESTRUCTOR, (Object)bodyList);
+      fb.setProp(DESTRUCTOR, (Object)bodyList);
     }
 
     Ident funcId = globalDecl.declExternFunc(funcName);
