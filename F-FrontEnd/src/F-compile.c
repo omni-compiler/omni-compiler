@@ -4299,7 +4299,7 @@ deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
         FOREACH_MEMBER(id, cur) {
             ID new_id = new_ident_desc(ID_SYM(id));
             *new_id = *id;
-            deep_copy_and_overwrite_for_module_id_type(&(ID_TYPE(id)));
+            deep_copy_and_overwrite_for_module_id_type(&(ID_TYPE(new_id)));
             ID_LINK_ADD(new_id, new_members, last_ip);
         }
         TYPE_MEMBER_LIST(cur) = new_members;
