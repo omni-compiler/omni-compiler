@@ -2014,7 +2014,7 @@ public class XfDecompileDomVisitor {
                     writer.writeToken(type.fortranName());
                 } else {
                     XfTypeManagerForDom.TypeList typeList = getTypeList(typeId);
-                    _writeTopType(typeList);
+                    _writeTopType(typeList, false);
                 }
                 writer.writeToken("::");
             }
