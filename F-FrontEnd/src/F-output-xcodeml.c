@@ -2377,6 +2377,7 @@ outx_nullifyStatement(int l, expv v)
 }
 
 
+#if 0
 static void
 print_allocate_keyword(char * buf, expv v, const char * keyword)
 {
@@ -2399,7 +2400,7 @@ print_allocate_keyword(char * buf, expv v, const char * keyword)
         }
     }
 }
-
+#endif
 
 
 /**
@@ -2430,11 +2431,18 @@ outx_ALLOCDEALLOC_statement(int l, expv v)
         type_buf[0] = '\0';
     }
 
+#if 0
+    /* Deprecated */
     print_allocate_keyword(stat_buf, vstat, "stat_name");
-
+#endif
 
     outx_tagOfStatement1(l, v, type_buf, stat_buf);
     outx_allocList(l1, EXPR_ARG1(v));
+    if (vstat) {
+        outx_printi(l1,"<allocOpt kind=\"source\">\n");
+        outx_expv(l2, vstat);
+        outx_close(l1,"allocOpt");
+    }
     if (vsource) {
         outx_printi(l1,"<allocOpt kind=\"source\">\n");
         outx_expv(l2, vsource);

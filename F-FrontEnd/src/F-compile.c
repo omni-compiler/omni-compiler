@@ -5512,8 +5512,6 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
     list lp;
     enum expr_code code = EXPR_CODE(x);
 
-    expv tmpAssignVstat = NULL;
-
     expr type = EXPR_ARG2(x);
     TYPE_DESC tp = NULL;
 
@@ -5542,12 +5540,6 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
                     error("invalid status variable");
                 }
 
-                if (EXPR_CODE(vstat) != F_VAR) {
-                    expv orgStat = vstat;
-                    vstat = allocate_temp(type_INT);
-                    tmpAssignVstat = expv_assignment(orgStat, vstat);
-                }
-
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "mold") == 0) {
                 if (code == F95_DEALLOCATE_STATEMENT) {
                     error("MOLD keyword argument in DEALLOCATE statement");
@@ -5568,12 +5560,13 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
 
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "errmsg") == 0) {
                 verrmsg = compile_expression(v);
-                if (verrmsg == NULL ||
-                    (EXPR_CODE(verrmsg))) {
-                    error("invalid errmsgus variable");
+                if (verrmsg == NULL || (EXPR_CODE(verrmsg) != F_VAR &&
+                                        EXPR_CODE(verrmsg) != ARRAY_REF &&
+                                        EXPR_CODE(verrmsg) != F95_MEMBER_REF)){
+                    error("invalid errmsg variable");
 
                 } else if(IS_CHAR(EXPV_TYPE(verrmsg)) == FALSE) {
-                    error("errmsgus variable is not a scala character type");
+                    error("errmsg variable is not a scala character type");
                 }
 
             }
@@ -5627,9 +5620,6 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
 
     EXPV_LINE(v) = EXPR_LINE(x);
     output_statement(v);
-    if (tmpAssignVstat != NULL) {
-        output_statement(tmpAssignVstat);
-    }
 }
 
 
