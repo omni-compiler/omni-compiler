@@ -5504,7 +5504,7 @@ isVarSetTypeAttr(expv v, uint32_t typeAttrFlags)
 extern int is_in_alloc;
 
 static void
-compile_ALLOCATE_DEALLOCATE_statement (expr x)
+compile_ALLOCATE_DEALLOCATE_statement(expr x)
 {
     /* (F95_ALLOCATE_STATEMENT args) */
     expr r, kwd;
@@ -5523,7 +5523,7 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
 
         if(EXPR_CODE(r) == F_SET_EXPR) {
             kwd = EXPR_ARG1(r);
-            if(vstat || EXPR_CODE(kwd) != IDENT ||
+            if(EXPR_CODE(kwd) != IDENT ||
                (strcmp(SYM_NAME(EXPR_SYM(kwd)), "stat") != 0 &&
                 strcmp(SYM_NAME(EXPR_SYM(kwd)), "mold") != 0 &&
                 strcmp(SYM_NAME(EXPR_SYM(kwd)), "errmsg") != 0 &&
@@ -5533,16 +5533,28 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
             }
             v = compile_expression(EXPR_ARG2(r));
             if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "stat") == 0) {
-                vstat = v;
+
                 if (vstat == NULL || (EXPR_CODE(vstat) != F_VAR &&
                                       EXPR_CODE(vstat) != ARRAY_REF &&
                                       EXPR_CODE(vstat) != F95_MEMBER_REF)){
                     error("invalid status variable");
                 }
 
+                if (vstat != NULL) {
+                    error("duplicate stat keyword");
+                }
+
+                if ((vstat = compile_expression(v)) == NULL) {
+                    return;
+                }
+
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "mold") == 0) {
                 if (code == F95_DEALLOCATE_STATEMENT) {
                     error("MOLD keyword argument in DEALLOCATE statement");
+                }
+
+                if (vstat != NULL) {
+                    error("duplicate mold keyword");
                 }
 
                 if ((vmold = compile_expression(v)) == NULL) {
@@ -5554,20 +5566,32 @@ compile_ALLOCATE_DEALLOCATE_statement (expr x)
                     error("SOURCE keyword argument in DEALLOCATE statement");
                 }
 
+                if (vstat != NULL) {
+                    error("duplicate source keyword");
+                }
+
                 if ((vsource = compile_expression(v)) == NULL) {
                     return;
                 }
 
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "errmsg") == 0) {
-                verrmsg = compile_expression(v);
                 if (verrmsg == NULL || (EXPR_CODE(verrmsg) != F_VAR &&
                                         EXPR_CODE(verrmsg) != ARRAY_REF &&
                                         EXPR_CODE(verrmsg) != F95_MEMBER_REF)){
                     error("invalid errmsg variable");
 
-                } else if(IS_CHAR(EXPV_TYPE(verrmsg)) == FALSE) {
+                }
+                
+                if (verrmsg != NULL) {
+                    error("duplicate errmsg keyword");
+                }
+
+                verrmsg = compile_expression(v);
+
+                if(IS_CHAR(EXPV_TYPE(verrmsg)) == FALSE) {
                     error("errmsg variable is not a scala character type");
                 }
+
 
             }
         } else {

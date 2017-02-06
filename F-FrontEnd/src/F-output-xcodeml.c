@@ -2414,13 +2414,12 @@ outx_ALLOCDEALLOC_statement(int l, expv v)
 
     expv keywords = EXPR_ARG2(v);
 
-    expv vstat = expr_list_get_n(keywords, 1);
-    expv vmold = expr_list_get_n(keywords, 2);
-    expv vsource = expr_list_get_n(keywords, 3);
-    expv verrmsg = expr_list_get_n(keywords, 4);
+    expv vstat = expr_list_get_n(keywords, 0);
+    expv vmold = expr_list_get_n(keywords, 1);
+    expv vsource = expr_list_get_n(keywords, 2);
+    expv verrmsg = expr_list_get_n(keywords, 3);
     char type_buf[128];
     char stat_buf[128];
-
 
     const char *tid = NULL;
 
@@ -2439,7 +2438,7 @@ outx_ALLOCDEALLOC_statement(int l, expv v)
     outx_tagOfStatement1(l, v, type_buf, stat_buf);
     outx_allocList(l1, EXPR_ARG1(v));
     if (vstat) {
-        outx_printi(l1,"<allocOpt kind=\"source\">\n");
+        outx_printi(l1,"<allocOpt kind=\"stat\">\n");
         outx_expv(l2, vstat);
         outx_close(l1,"allocOpt");
     }
