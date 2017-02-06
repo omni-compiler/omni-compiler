@@ -682,6 +682,8 @@ extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_ar
 extern int      type_is_soft_compatible _ANSI_ARGS_((TYPE_DESC tp, TYPE_DESC tq));
 extern int      type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2));
+extern int      type_is_compatible_for_allocation
+                    _ANSI_ARGS_((TYPE_DESC left, TYPE_DESC right));
 extern int      struct_type_is_compatible_for_assignment
                     _ANSI_ARGS_((TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set));
 extern int      type_is_specific_than

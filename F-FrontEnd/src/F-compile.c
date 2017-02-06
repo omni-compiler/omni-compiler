@@ -5639,6 +5639,34 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
         tp = compile_type(type, /*allow_predecl=*/FALSE);
     }
 
+    /*
+     * Now check type for allocation
+     */
+
+    FOR_ITEMS_IN_LIST(lp, args) {
+        if (tp) {
+            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+                                                  tp)) {
+                error("type incompatible");
+                return;
+            }
+        }
+        if (vsource) {
+            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+                                                  EXPV_TYPE(vsource))) {
+                error("type incompatible");
+                return;
+            }
+        }
+        if (vmold) {
+            if (type_is_compatible_for_allocation(EXPV_TYPE(LIST_ITEM(lp)),
+                                                  EXPV_TYPE(vmold))) {
+                return;
+                error("type incompatible");
+            }
+        }
+    }
+
     v = expv_cons(code, NULL, args, list4(LIST, vstat, vmold, vsource, verrmsg));
     EXPV_TYPE(v) = tp;
 
