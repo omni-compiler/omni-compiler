@@ -7741,8 +7741,8 @@ compile_ENDFORALL_statement(expr x)
     }
 
     /* check construct name */
-    if (x != NULL && CTL_FORALL_CONST_NAME(ctl_top) != NULL) {
-        if (EXPR_ARG1(x) == NULL) {
+    if (CTL_FORALL_CONST_NAME(ctl_top) != NULL) {
+        if (x == NULL || !EXPR_HAS_ARG1(x)) {
             error("expects construnct name");
             return;
         } else if (EXPR_SYM(CTL_FORALL_CONST_NAME(ctl_top)) !=
@@ -7750,7 +7750,7 @@ compile_ENDFORALL_statement(expr x)
             error("unmatched construct name");
             return;
         }
-    } else if (EXPR_ARG1(x) != NULL) {
+    } else if (x != NULL && EXPR_HAS_ARG1(x)) {
         error("unexpected construnct name");
         return;
     }
