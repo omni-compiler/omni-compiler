@@ -1224,6 +1224,7 @@ compile_statement1(int st_no, expr x)
     case F03_VALUE_STATEMENT:
         check_INDCL();
         compile_VALUE_statement(EXPR_ARG1(x));
+        break;
 
     case F_FORALL_STATEMENT:
         check_INEXEC();
@@ -7595,7 +7596,6 @@ compile_FORALL_statement(int st_no, expr x)
      * compile_FORALL_statement will rename the index variabls,
      * so it may be good to confine these index variables with the BLOCK construct.
      *
-     *
      * ex)
      *
      *    FORALL(I = 1:3); ...; ENDFORALL
@@ -7652,7 +7652,11 @@ compile_FORALL_statement(int st_no, expr x)
                 break;
             }
         }
-        /* replace name */
+        /*
+         * Renaming trick:
+         *  When compile_expression() is applied to this identifier,
+         *  new_sym will be used.
+         */
         EXPV_NAME(ID_ADDR(id)) = new_sym;
 
         ID_LINE(id) = EXPR_LINE(x);
@@ -7681,7 +7685,7 @@ compile_FORALL_statement(int st_no, expr x)
         }
 
         init = list_put_last(init, list2(F_SET_EXPR,
-                                         expv_sym_term(IDENT, tp, sym),
+                                         expv_sym_term(F_VAR, tp, sym),
                                          list3(F_INDEX_RANGE,
                                                low_limit, top_limit, step)));
     }
@@ -7796,6 +7800,7 @@ compile_ENDFORALL_statement(expr x)
              */
             ID_SYM(ip) = EXPV_NAME(ID_ADDR(ip));
             EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
+
 #if 0
             if (EXPV_TYPE(CTL_FORALL_STATEMENT(ctl_top)) != NULL) {
                 /*
@@ -7808,6 +7813,9 @@ compile_ENDFORALL_statement(expr x)
                  *    ! I and J live only here
                  *  END FORALL
                  *
+                 * NOTE:
+                 *  FORALL will be confined with the BLOCK construct,
+                 *  so this code is not required.
                  *
                  */
                 (void)id_link_remove(&LOCAL_SYMBOLS, ip);

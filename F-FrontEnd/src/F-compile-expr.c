@@ -1094,7 +1094,7 @@ compile_ident_expression(expr x)
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
 #if 1
         if (ID_ADDR(id)) {
-            ret = ID_ADDR(id);
+            ret = expv_sym_term(F_VAR, tp, EXPV_NAME(ID_ADDR(id)));
         } else {
             ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
         }
