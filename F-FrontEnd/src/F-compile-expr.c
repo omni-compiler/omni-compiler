@@ -1435,7 +1435,8 @@ expv_assignment(expv v1, expv v2)
     }
 /* FEAST add end */
 
-    if (EXPV_CODE(v2) == F95_ARRAY_CONSTRUCTOR) {
+    if (EXPV_CODE(v2) == F95_ARRAY_CONSTRUCTOR ||
+        EXPV_CODE(v2) == F03_TYPED_ARRAY_CONSTRUCTOR) {
         if (!IS_ARRAY_TYPE(tp1)) {
             error("lhs expr is not an array.");
             return NULL;
@@ -1450,6 +1451,7 @@ expv_assignment(expv v1, expv v2)
 
     if (TYPE_IS_RESHAPED(tp2) == FALSE &&
         EXPR_CODE(v2) != F95_ARRAY_CONSTRUCTOR &&
+        EXPR_CODE(v2) != F03_TYPED_ARRAY_CONSTRUCTOR &&
         ((TYPE_N_DIM(tp1) > 0 && TYPE_N_DIM(tp2) > 0) &&
          (are_dimension_and_shape_conformant(NULL, v1, v2,
                                              NULL) == FALSE))) {
@@ -3076,10 +3078,17 @@ compile_array_constructor(expr x)
     list lp;
     expv v, res, l;
     TYPE_DESC tp;
+    TYPE_DESC base_type = NULL;
     BASIC_DATA_TYPE elem_type = TYPE_UNKNOWN;
 
     l = list0(LIST);
-    res = list1(F95_ARRAY_CONSTRUCTOR, l);
+    if ((base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) != NULL) {
+        elem_type = get_basic_type(base_type);
+        res = list1(F03_TYPED_ARRAY_CONSTRUCTOR, l);
+    } else {
+        res = list1(F95_ARRAY_CONSTRUCTOR, l);
+    }
+
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
         nElems++;
         v = compile_expression(LIST_ITEM(lp));
@@ -3093,10 +3102,19 @@ compile_array_constructor(expr x)
             error("Array constructor elements have different data types.");
             return NULL;
         }
+
+        if (base_type) {
+            if (!type_is_soft_compatible(base_type, tp)) {
+                error("Unexpected element type");
+                return NULL;
+            }
+        }
     }
 
     assert(elem_type != TYPE_UNKNOWN);
-    if (elem_type == TYPE_CHAR) {
+    if (base_type) {
+        tp = base_type;
+    } else if (elem_type == TYPE_CHAR) {
         tp = type_char(-1);
     } else if (elem_type != TYPE_STRUCT) {
         tp = type_basic(elem_type);

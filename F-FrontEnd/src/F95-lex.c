@@ -3163,6 +3163,43 @@ static void _warning_if_doubtfulLongLine(char *buf, int maxLen)
                   maxLen);
 }
 
+int
+lookup_col2()
+{
+    uint32_t count_lbrace = 0;
+    uint32_t count_rbrace = 0;
+
+    int ret = FALSE;
+
+    char *save = bufptr;
+
+    while (*bufptr != '\0') {
+        if (*bufptr == '(') {
+            count_lbrace++;
+        } else if (*bufptr == ')') {
+            count_rbrace++;
+        } else if (*bufptr == '[') {
+            count_lbrace++;
+        } else if (*bufptr == ']') {
+            count_rbrace++;
+        } else if (*bufptr == ':') {
+            if (*(bufptr+1) == ':') {
+                ret = TRUE;
+                break;
+            }
+        }
+
+        if (count_rbrace > count_lbrace) {
+            break;
+        }
+        bufptr++;
+    }
+
+    bufptr = save;
+    return ret;
+}
+
+
 static int
 power10(y)
      int y;
