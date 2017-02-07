@@ -108,7 +108,7 @@ public class omompx
     String lang = "C";
     boolean openMP = false;
     boolean openACC = false;
-    boolean coarray = false;
+    boolean coarray = true;
     boolean xcalableMP = false;
     boolean xcalableMPthreads = false;
     boolean xcalableMPGPU = false;
@@ -150,6 +150,7 @@ public class omompx
         coarray = true;
       } else if(arg.equals("-fnocoarray")) {
         coarray = false;
+        coarray_noUseStmt = true;
       } else if(arg.startsWith("-fcoarray=")) {                  // HIDDEN
         coarray_suboption += arg.substring(arg.indexOf("=")+1);
       } else if(arg.equals("-fcoarray-no-use-statement")) {       // TEMPORARY
@@ -374,12 +375,12 @@ public class omompx
       }
     }
 
-    if (xmpf && xmpf_skipCafMode) {
+    if (xmpf && (xmpf_skipCafMode || !XmOption.isCoarray())) {
       System.out.println("<SKIP-CAF MODE> XMP/F Coarray translator is " +
                          "bypassed for " + xobjFile.getSourceFileName() + ".");
     }
 
-    if (xmpf && !xmpf_skipCafMode) {
+    if (xmpf && (!xmpf_skipCafMode && XmOption.isCoarray())) {
 
       // Coarray Fortran pass#3
       exc.xmpF.XMPtransCoarray caf_translator3 =
