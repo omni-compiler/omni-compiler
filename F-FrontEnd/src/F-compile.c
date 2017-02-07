@@ -7464,7 +7464,7 @@ compile_ENDBLOCK_statement(expr x)
 
     /* check construct name */
     if (CTL_BLOCK_CONST_NAME(ctl_top) != NULL) {
-        if (!EXPR_HAS_ARG1(x)) {
+        if (!EXPR_HAS_ARG1(x) || EXPR_ARG1(x) == NULL) {
             error("expects construnct name");
             return;
         } else if (EXPR_SYM(CTL_BLOCK_CONST_NAME(ctl_top)) !=
@@ -7472,7 +7472,7 @@ compile_ENDBLOCK_statement(expr x)
             error("unmatched construct name");
             return;
         }
-    } else if (EXPR_HAS_ARG1(x)) {
+    } else if (EXPR_HAS_ARG1(x) && EXPR_ARG1(x) != NULL) {
         error("unexpected construnct name");
         return;
     }
@@ -7742,7 +7742,7 @@ compile_ENDFORALL_statement(expr x)
 
     /* check construct name */
     if (CTL_FORALL_CONST_NAME(ctl_top) != NULL) {
-        if (x == NULL || !EXPR_HAS_ARG1(x)) {
+        if (x == NULL || !EXPR_HAS_ARG1(x) || EXPR_ARG1(x) == NULL) {
             error("expects construnct name");
             return;
         } else if (EXPR_SYM(CTL_FORALL_CONST_NAME(ctl_top)) !=
@@ -7750,7 +7750,7 @@ compile_ENDFORALL_statement(expr x)
             error("unmatched construct name");
             return;
         }
-    } else if (x != NULL && EXPR_HAS_ARG1(x)) {
+    } else if (x != NULL && EXPR_HAS_ARG1(x) && EXPR_ARG1(x) != NULL) {
         error("unexpected construnct name");
         return;
     }
