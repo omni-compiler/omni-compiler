@@ -769,6 +769,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_ARRAY_CONSTRUCTOR:
+            e = createElement(name, "element_type", getArg0Name(xobj));
+            for (Xobject a : (XobjList)xobj.getArg(1)) {
+                addChildNode(e, transExpr(a));
+            }
+            break;
         case F_STRUCT_CONSTRUCTOR:
         case F_TYPE_PARAMS:
         case F_TYPE_PARAM_VALUES:
