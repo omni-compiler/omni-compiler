@@ -5512,7 +5512,7 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
     list lp;
     enum expr_code code = EXPR_CODE(x);
 
-    expr type = EXPR_ARG2(x);
+    expr type = EXPR_HAS_ARG2(x)?EXPR_ARG2(x):NULL;
     TYPE_DESC tp = NULL;
 
     int isImageControlStatement = FALSE;
@@ -5534,18 +5534,16 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
             v = compile_expression(EXPR_ARG2(r));
             if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "stat") == 0) {
 
-                if (vstat == NULL || (EXPR_CODE(vstat) != F_VAR &&
-                                      EXPR_CODE(vstat) != ARRAY_REF &&
-                                      EXPR_CODE(vstat) != F95_MEMBER_REF)){
-                    error("invalid status variable");
-                }
-
                 if (vstat != NULL) {
                     error("duplicate stat keyword");
                 }
 
-                if ((vstat = compile_expression(v)) == NULL) {
-                    return;
+                vstat = compile_expression(v);
+
+                if (vstat == NULL || (EXPR_CODE(vstat) != F_VAR &&
+                                      EXPR_CODE(vstat) != ARRAY_REF &&
+                                      EXPR_CODE(vstat) != F95_MEMBER_REF)){
+                    error("invalid status variable");
                 }
 
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "mold") == 0) {
@@ -5553,28 +5551,30 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
                     error("MOLD keyword argument in DEALLOCATE statement");
                 }
 
-                if (vstat != NULL) {
+                if (vmold != NULL) {
                     error("duplicate mold keyword");
                 }
 
-                if ((vmold = compile_expression(v)) == NULL) {
-                    return;
-                }
+                vmold = compile_expression(v);
 
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "source") == 0) {
                 if (code == F95_DEALLOCATE_STATEMENT) {
                     error("SOURCE keyword argument in DEALLOCATE statement");
                 }
 
-                if (vstat != NULL) {
+                if (vsource != NULL) {
                     error("duplicate source keyword");
                 }
 
-                if ((vsource = compile_expression(v)) == NULL) {
-                    return;
-                }
+                vsource = compile_expression(v);
 
             } else if (strcmp(SYM_NAME(EXPR_SYM(kwd)), "errmsg") == 0) {
+                if (verrmsg != NULL) {
+                    error("duplicate errmsg keyword");
+                }
+
+                verrmsg = compile_expression(v);
+
                 if (verrmsg == NULL || (EXPR_CODE(verrmsg) != F_VAR &&
                                         EXPR_CODE(verrmsg) != ARRAY_REF &&
                                         EXPR_CODE(verrmsg) != F95_MEMBER_REF)){
@@ -5582,12 +5582,6 @@ compile_ALLOCATE_DEALLOCATE_statement(expr x)
 
                 }
                 
-                if (verrmsg != NULL) {
-                    error("duplicate errmsg keyword");
-                }
-
-                verrmsg = compile_expression(v);
-
                 if(IS_CHAR(EXPV_TYPE(verrmsg)) == FALSE) {
                     error("errmsg variable is not a scala character type");
                 }
