@@ -2651,8 +2651,10 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
         }
 
         if (is_use_associated && ID_TYPE(match) != NULL &&
-            (TYPE_IS_INTERNAL_PRIVATE(match) ||
-             TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match)))) {
+            ((TYPE_IS_INTERNAL_PRIVATE(match) ||
+              TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match))) &&
+             !(TYPE_IS_PUBLIC(match) ||
+               TYPE_IS_PUBLIC(ID_TYPE(match))))) {
             error("accessing a private component");
             return FALSE;
         }

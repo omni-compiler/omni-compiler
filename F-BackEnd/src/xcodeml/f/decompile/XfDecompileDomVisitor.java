@@ -131,8 +131,8 @@ public class XfDecompileDomVisitor {
 
         XmfWriter writer = _context.getWriter();
 
-        /* public, private are allowed only in module definition */
-        if (_isUnderModuleDef()) {
+        /* public, private are allowed only in module definition OR in derived-type definition */
+        if (_isUnderModuleDef() || _isUnderFstructType()) {
             for (Node basicTypeNode : basicTypeNodeArray) {
                 if (XmDomUtil.getAttrBool(basicTypeNode, "is_public")) {
                     writer.writeToken(", ");
@@ -861,6 +861,10 @@ public class XfDecompileDomVisitor {
      */
     private boolean _isUnderModuleDef() {
         return _isInvokeNodeOf("FmoduleDefinition", 2);
+    }
+
+    private boolean _isUnderFstructType() {
+        return _isInvokeAncestorNodeOf("FstructDecl");
     }
 
     /**
@@ -4966,8 +4970,6 @@ public class XfDecompileDomVisitor {
                     writer.writeToken("BIND( " + bind.toUpperCase() + " )");
                 }
             }
-
-
 
             writer.writeToken(" :: ");
             writer.writeToken(structTypeName);

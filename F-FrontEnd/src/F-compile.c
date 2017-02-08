@@ -4300,6 +4300,17 @@ deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
             ID new_id = new_ident_desc(ID_SYM(id));
             *new_id = *id;
             deep_copy_and_overwrite_for_module_id_type(&(ID_TYPE(new_id)));
+
+            /*
+             * PUBLIC/PRIVATE should be inherited
+             */
+            if (TYPE_IS_PUBLIC(ID_TYPE(id))) {
+                TYPE_SET_PUBLIC(ID_TYPE(new_id));
+            }
+            if (TYPE_IS_PRIVATE(ID_TYPE(id))) {
+                TYPE_SET_PRIVATE(ID_TYPE(new_id));
+            }
+
             ID_LINK_ADD(new_id, new_members, last_ip);
         }
         TYPE_MEMBER_LIST(cur) = new_members;
