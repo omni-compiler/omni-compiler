@@ -7077,10 +7077,18 @@ compile_SYNCIMAGES_statement(expr x) {
     expv image_set = NULL;
 
     if (EXPR_ARG1(x) != NULL) {
-        image_set = compile_expression(EXPR_ARG1(x));
+        TYPE_DESC tp;
+        BASIC_DATA_TYPE bt;
 
-        if (!IS_INT(EXPV_TYPE(image_set))) {
-            error("The first argument of SYNC IMAGES statement must be INTEGER");
+        image_set = compile_expression(EXPR_ARG1(x));
+        tp = EXPV_TYPE(image_set);
+
+        if ((IS_ARRAY_TYPE(tp) && TYPE_N_DIM(tp) > 1) ||
+            ((bt = get_basic_type(tp)) != TYPE_INT &&
+             bt != TYPE_GNUMERIC &&
+             bt != TYPE_GNUMERIC_ALL)) {
+            error("The first argument of SYNC IMAGES statement must be "
+                  "INTEGER (scalar or rank 1)");
             return;
         }
     }
