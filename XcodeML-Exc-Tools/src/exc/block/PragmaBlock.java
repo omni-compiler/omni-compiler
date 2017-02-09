@@ -28,6 +28,25 @@ public class PragmaBlock extends CompoundBlock
         this.args = args;
     }
 
+    /** make clone */
+    public PragmaBlock(PragmaBlock b)
+    {
+      super(b);
+      LineNo ln = getLineNo();
+      if (ln != null)
+	setLineNo(new LineNo(ln.fileName(), ln.lineNo() - 1));
+      this.code = b.Opcode();
+      this.pragma = b.getPragma();
+      this.args = b.getClauses().copy();
+    }
+
+    /** make clone */
+    @Override
+    public Block copy()
+    {
+        return new PragmaBlock(this);
+    }
+
     public String getPragma()
     {
         return pragma;

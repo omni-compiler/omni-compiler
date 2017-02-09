@@ -195,10 +195,27 @@ public class XMPanalyzePragma
       analyzeTemplateFix(pb.getClauses(), info, pb);
       break;
 
-    case LOOP:
-      analyzeLoop(pb.getClauses(), pb.getBody(), pb,info);
-      break; 
+    case LOOP: {
 
+      Block newBlock = divideMarginLoop(pb);
+      
+      if (newBlock != null){
+	for (Block b = newBlock.getBody().getHead(); b != null; b = b.getNext()){
+	  String pp = ((PragmaBlock)b).getPragma();
+	  Xobject cc = ((PragmaBlock)b).getClauses();
+	  XMPinfo info2 = new XMPinfo(XMPpragma.valueOf(pp), outer, b, env);
+	  b.setProp(XMP.prop, info2);
+	  analyzeLoop(cc, b.getBody(), (PragmaBlock)b, info2);
+	}
+	pb.replace(newBlock);
+      }
+      else {
+	analyzeLoop(pb.getClauses(), pb.getBody(), pb, info);
+      }
+      break;
+      
+    }
+      
     case REFLECT:
       analyzeReflect(pb.getClauses(),info,pb);
       break;
@@ -366,6 +383,7 @@ public class XMPanalyzePragma
    */
   void analyzeLoop(Xobject loopDecl, BlockList loopBody,
 		   PragmaBlock pb, XMPinfo info) {
+
     // get block to schedule
     Vector<XMPdimInfo> dims = new Vector<XMPdimInfo>();
     
@@ -472,7 +490,7 @@ public class XMPanalyzePragma
     }
     
     // width list
-    XobjList expandOpt = (XobjList) loopDecl.getArg(2);
+    XobjList expandOpt = (XobjList)loopDecl.getArg(2);
     int loopType;
     Vector<XMPdimInfo> widthList = new Vector<XMPdimInfo>();
     if (expandOpt == null || expandOpt.hasNullArg()){
@@ -481,13 +499,13 @@ public class XMPanalyzePragma
     else {
       loopType = expandOpt.getArg(0).getInt();
       for (Xobject x: (XobjList)expandOpt.getArg(1)){
-	XMPdimInfo width = new XMPdimInfo();
+    	XMPdimInfo width = new XMPdimInfo();
 
-	if (XMP.debugFlag)
-	  System.out.println("width = ("+x.getArg(0)+":"+x.getArg(1)+":"+x.getArg(2)+")");
+    	if (XMP.debugFlag)
+    	  System.out.println("width = ("+x.getArg(0)+":"+x.getArg(1)+":"+x.getArg(2)+")");
 
-	width.parse(x);
-	widthList.add(width);
+    	width.parse(x);
+    	widthList.add(width);
       }
     }
     
@@ -503,6 +521,91 @@ public class XMPanalyzePragma
     info.setLoopInfo(dims, on_ref, loopType, widthList);
   }
 
+  private static Block divideMarginLoop(PragmaBlock pb){
+
+    XobjList expandOpt = (XobjList)pb.getClauses().getArg(2);
+
+    if (expandOpt == null || expandOpt.hasNullArg() ||
+	expandOpt.getArg(0).getInt() != XMP.LOOP_MARGIN){
+      return null;
+    }
+
+    // The type is XMP.LOOP_MARGIN
+
+    BlockList loops = Bcons.emptyBody();
+    boolean flag = false;
+    
+    for (int i = 0; i < expandOpt.getArg(1).Nargs(); i++){
+
+      Xobject expandWidth = expandOpt.getArg(1).getArg(i);
+
+      Xobject lower = expandWidth.getArg(0);
+      Xobject upper = expandWidth.getArg(1);
+
+      if (!lower.isZeroConstant() && !upper.isZeroConstant()){
+
+	flag = true;
+
+	PragmaBlock pb1;
+	XobjList expandOpt1;
+	
+	// for lower margin
+	pb1 = (PragmaBlock)pb.copy();
+	expandOpt1 = (XobjList)pb1.getClauses().getArg(2);
+
+	for (int j = 0; j < expandOpt1.getArg(1).Nargs(); j++){
+	  Xobject expandWidth1 = expandOpt1.getArg(1).getArg(j);
+	  if (j == i){
+	    expandWidth1.setArg(0, lower);
+	    expandWidth1.setArg(1, Xcons.IntConstant(0));
+	  }
+	  else if (j > i){
+	    if (expandWidth1.getArg(2).getInt() != 0)
+	      expandWidth1.setArg(2, Xcons.IntConstant(-1)); // edge of margin
+	  }
+	  else { // j < i
+	    expandWidth1.setArg(0, Xcons.IntConstant(0));
+	    expandWidth1.setArg(1, Xcons.IntConstant(0));
+	  }
+	}
+
+	loops.add(pb1);
+			     
+	// for upper margin
+	pb1 = (PragmaBlock)pb.copy();
+	expandOpt1 = (XobjList)pb1.getClauses().getArg(2);
+
+	for (int j = 0; j < expandOpt1.getArg(1).Nargs(); j++){
+	  Xobject expandWidth1 = expandOpt1.getArg(1).getArg(j);
+	  if (j == i){
+	    expandWidth1.setArg(0, Xcons.IntConstant(0));
+	    expandWidth1.setArg(1, upper);
+	  }
+	  else if (j > i){
+	    if (expandWidth1.getArg(2).getInt() != 0)
+	      expandWidth1.setArg(2, Xcons.IntConstant(-1)); // edge of margin
+	  }
+	  else { // j < i
+	    expandWidth1.setArg(0, Xcons.IntConstant(0));
+	    expandWidth1.setArg(1, Xcons.IntConstant(0));
+	  }	    
+	}
+
+	loops.add(pb1);
+
+      }
+
+    }
+
+    if (flag){
+      return Bcons.COMPOUND(loops);
+    }
+    else {
+      return null;
+    }
+
+  }
+  
   private static ForBlock getOutermostLoopBlock(BlockList body) {
     Block b = body.getHead();
     while (b != null) {

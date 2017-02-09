@@ -36,6 +36,25 @@ public class FdoBlock extends Block implements ForBlock
         }
     }
 
+    public FdoBlock(FdoBlock doBlock)
+    {
+      super(doBlock);
+      this.setLineNo(doBlock.getLineNo());
+      this.body = doBlock.getBody().copy();
+      this.is_canonical = doBlock.is_canonical;
+      body.parent = this;
+      ind_var_part = BasicBlock.Expr(this, doBlock.getInductionVar());
+      lower_part = BasicBlock.Expr(this, doBlock.getLowerBound());
+      upper_part = BasicBlock.Expr(this, doBlock.getUpperBound());
+      step_part = BasicBlock.Expr(this, doBlock.getStep());
+    }
+
+    @Override
+    public Block copy()
+    {
+        return new FdoBlock(this);
+    }
+
     @Override
     public void Canonicalize()
     {

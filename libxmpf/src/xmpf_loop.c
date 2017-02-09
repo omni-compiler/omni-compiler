@@ -6,6 +6,10 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
 {
   _XMP_object_ref_t *rp = *r_desc;
   _XMP_ASSERT(rp->ref_kind == XMP_OBJ_REF_TEMPL);
+  _XMP_ASSERT(*expand_type != _XMP_LOOP_MARGIN || *lwidth == 0 || *uwidth == 0);
+  
+  int glb_orig = *lb;
+  int gub_orig = *ub;
 
   if (rp->REF_INDEX[*r_idx] != -1){
 
@@ -60,30 +64,61 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
     ; /* the nest is not aligned with any dimension of the template. */
   }
 
-  if (*expand_type == _XMP_LOOP_EXPAND){
-    (*lb) -= (*lwidth);
-    (*ub) += (*uwidth);
+  if (*expand_type == _XMP_LOOP_NONE){
+    return;
+  }
+  else if (*expand_type == _XMP_LOOP_EXPAND){
 
-    _XMP_template_t *t_desc = rp->t_desc;
-    int t_idx = rp->REF_INDEX[*r_idx];
-
-    if (!(*unbound_flag)){
-      long long int glb;
-      _XMP_L2G(*lb, &glb, t_desc, t_idx);
-      if (glb < t_desc->info[t_idx].ser_lower){
-	(*lb) += (*lwidth);
-      }
-
-      long long int gub;
-      _XMP_L2G(*ub, &gub, t_desc, t_idx);
-      if (gub > t_desc->info[t_idx].ser_upper){
-	(*ub) -= (*uwidth);
-      }
+    if ((*lb) <= (*ub)){ // iterates at least once
+      (*lb) -= (*lwidth);
+      (*ub) += (*uwidth);
     }
 
   }
   else if (*expand_type == _XMP_LOOP_MARGIN){
+
+    if ((*lb) <= (*ub)){ // iterates at least once
+
+      if (*lwidth > 0){
+	(*lb) -= (*lwidth);
+	(*ub) = (*lb) + (*lwidth) - 1;
+      }
+      else if (*lwidth < 0){
+	(*ub) = (*lb) - (*lwidth) - 1;
+	// (*lb)
+      }
+      else if (*uwidth > 0){
+	(*ub) += (*uwidth);
+	(*lb) = (*ub) - (*uwidth) + 1;
+      }
+      else if (*uwidth < 0){
+	(*lb) = (*ub) + (*uwidth) + 1;
+	// (*ub)
+      }
+
+    }
+
   }
+
+  if (!(*unbound_flag)){
+
+    _XMP_template_t *t_desc = rp->t_desc;
+    int t_idx = rp->REF_INDEX[*r_idx];
+
+    long long int glb;
+    _XMP_L2G(*lb, &glb, t_desc, t_idx);
+    if (glb < glb_orig){
+      (*lb) += (*lwidth);
+    }
+
+    long long int gub;
+    _XMP_L2G(*ub, &gub, t_desc, t_idx);
+    if (gub > gub_orig){
+      (*ub) -= (*uwidth);
+    }
+  }
+
+  //  xmpf_dbg_printf("%d %d\n", *lb, *ub);
   
   return;
 
