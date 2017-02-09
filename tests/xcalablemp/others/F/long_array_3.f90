@@ -1,5 +1,5 @@
       PROGRAM main
-        INTEGER, DIMENSION(1,1,1,2,1,1,2), CODIMENSION[1, 1,1,2,1,1,1,*] :: a
+        INTEGER, DIMENSION(1,1,1,2,1,1,2), CODIMENSION[1,1,1,2,1,1,1,*] :: a
         if(this_image() == 1) then
           a(1, 1, 1, 2, 1, 1, 2)[1, 1, 1, 2, 1, 1, 1, 2] = 10
         END IF

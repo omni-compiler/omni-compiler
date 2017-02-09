@@ -209,15 +209,15 @@ run:
 	$(XRUN) -np 1 ./procedure_declaration_separete_type_and_attribute_1.x
 	$(XRUN) -np 1 ./procedure_declaration_separete_type_and_attribute_2.x
 	$(XRUN) -np 1 ./use_procedure_decl.x
-	$(XRUN) -np 16 ./long_array_3.x
-	$(XRUN) -np 1  ./allocatable_character.x
-	$(XRUN) -np 1  ./assign_to_allocatable_integer_array.x
-	$(XRUN) -np 1  ./assumed_size.x
-#	$(XRUN) -np 1  ./pointer_assignment_with_lower_bound.x
-	$(XRUN) -np 1  ./value_statement.x
-	$(XRUN) -np 1  ./array_constractor_2.x
-	$(XRUN) -np 1  ./array_constractor_with_type.x
-	$(XRUN) -np 1  ./typed_array_constructor.x
+	$(XRUN) -np 4 ./long_array_3.x
+	$(XRUN) -np 1 ./allocatable_character.x
+	$(XRUN) -np 1 ./assign_to_allocatable_integer_array.x
+	$(XRUN) -np 1 ./assumed_size.x
+#	$(XRUN) -np 1 ./pointer_assignment_with_lower_bound.x
+	$(XRUN) -np 1 ./value_statement.x
+	$(XRUN) -np 1 ./array_constractor_2.x
+	$(XRUN) -np 1 ./array_constractor_with_type.x
+	$(XRUN) -np 1 ./typed_array_constructor.x
 
 
 RUN:
