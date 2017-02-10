@@ -59,7 +59,7 @@ typedef struct {
 } stride_t;
 
 //static void stride_print(int n, stride_t st[]);
-static bool stride_simplify(int *nd, stride_t st[]);
+static bool stride_simplify(int *nd, stride_t st[], bool check_target);
 static bool stride_reduce(int *nd, stride_t st[]);
 
 void _XMP_set_reflect_gpu(_XMP_array_t *a, int dim, int lwidth, int uwidth,
@@ -346,19 +346,36 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
       /* 	stride_print(nd, st); */
       /* } */
 
-      while(stride_simplify(&nd, st));
+      while(stride_simplify(&nd, st, true));
 
       /* if(_XMP_world_rank == 0){ */
-      /* 	printf("after simplify:"); */
+      /* 	printf("after simplify(t):"); */
       /* 	stride_print(nd, st); */
       /* } */
 
-      while(stride_reduce(&nd, st));
+      if(lwidths[target_dim] <= 1 && uwidths[target_dim] <= 1){
+	while(stride_reduce(&nd, st));
 
-      /* if(_XMP_world_rank == 0){ */
-      /* 	printf("after reduce:"); */
-      /* 	stride_print(nd, st); */
-      /* } */
+	/* if(_XMP_world_rank == 0){ */
+	/*   printf("after reduce:"); */
+	/*   stride_print(nd, st); */
+	/* } */
+      }else{
+	while(true){
+	  if(target_dim == 0){
+	    if(nd <= 1) break;
+	  }else{
+	    if(nd <= 2) break;
+	  }
+	  if(! stride_simplify(&nd, st, false)) break;
+	}
+
+	/* if(_XMP_world_rank == 0){ */
+	/*   printf("after simplify(f):"); */
+	/*   stride_print(nd, st); */
+	/* } */
+      }
+
 
       if(nd == 1){ //contiguous
 	count = 1;
@@ -1032,15 +1049,15 @@ static bool stride_reduce(int *nd, stride_t st[])
 }
 
 /* change to more simple form, which is not equivalant to the old form. */
-static bool stride_simplify(int *nd, stride_t st[])
+static bool stride_simplify(int *nd, stride_t st[], bool check_target)
 {
   for(int i = *nd - 2; i >= 0; i--){
-    if(! st[i].is_target && ! st[i+1].is_target){
-      st[i] = (stride_t){st[i].count * st[i].stride / st[i+1].stride,
-			 st[i+1].stride};
-      stride_shift(nd, st, i+1);
-      return true;
-    }
+    if(check_target && (st[i].is_target || st[i+1].is_target)) continue;
+
+    st[i] = (stride_t){st[i].count * st[i].stride / st[i+1].stride,
+		       st[i+1].stride};
+    stride_shift(nd, st, i+1);
+    return true;
   }
 
   return false;
