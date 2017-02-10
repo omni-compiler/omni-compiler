@@ -2,6 +2,7 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 void _XMP_reflect_do_gpu(_XMP_array_t *array_desc);
 void _XMP_reflect_init_gpu(void *acc_addr, _XMP_array_t *array_desc);
@@ -50,6 +51,16 @@ static const int useSingleStreamLimit = 1; //16 * 1024; //element
 #else
 #define TLOG_LOG(log) do{}while(0)
 #endif
+
+typedef struct {
+  uint64_t count;
+  uint64_t stride;
+  bool is_target;
+} stride_t;
+
+//static void stride_print(int n, stride_t st[]);
+static bool stride_simplify(int *nd, stride_t st[]);
+static bool stride_reduce(int *nd, stride_t st[]);
 
 void _XMP_set_reflect_gpu(_XMP_array_t *a, int dim, int lwidth, int uwidth,
 			    int is_periodic)
@@ -302,73 +313,11 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
   }
   else if (!_XMPF_running && _XMPC_running){ /* for XMP/C */
-
-    count = 1;
-    blocklength = type_size;
-    stride = ainfo[ndims-1].alloc_size * type_size;
-
-    
-    /* if(target_dim > 0){ */
-    /*   count *= ainfo[0].par_size; */
-    /*   count_offset = ainfo[0].shadow_size_lo; */
-    /* } */
-    /* for (int i = 1; i < target_dim; i++){ */
-    /*   count *= ainfo[i].alloc_size; */
-    /* } */
-
-    /* for (int i = ndims - 2; i >= target_dim; i--){ */
-    /*   blocklength *= ainfo[i+1].alloc_size; */
-    /*   stride *= ainfo[i].alloc_size; */
-    /* } */
-
-    if(target_dim == 0){
-      count *= 1;
-      if(ndims >= 2){
-	blocklength *= (ainfo[1].par_size + lwidths[1] + uwidths[1]);
-      }
-    }else{
-      count *= (ainfo[0].par_size + lwidths[0] + uwidths[0]);
-      for(int i = 1; i < target_dim; i++){
-	count *= ainfo[i].alloc_size;
-      }
-      blocklength *= ainfo[target_dim+1].alloc_size;
-      stride *= ainfo[target_dim].alloc_size;
-    }
-    for(int i = target_dim+2; i < ndims; i++){
-      blocklength *= ainfo[i].alloc_size;
-    }
-    for(int i = target_dim+1 ; i < ndims - 1; i++){
-      stride *= ainfo[i].alloc_size;
-    }
-
-    /* mod_4 */
+#if 0
     count = 1;
     blocklength = 1;
-    stride = 1;
+    stride = ainfo[ndims-1].alloc_size;
 
-    for(int i = 0; i < ndims; i++){
-      int fact = (i == target_dim)? 1 : (ainfo[i].par_size + lwidths[i] + uwidths[i]);
-      int alloc_size = ainfo[i].alloc_size;
-
-      if(blocklength == 1 || fact == alloc_size){
-	blocklength *= fact;
-	stride *= alloc_size;
-      }else if(count == 1 && target_dim != 0){ //to be contiguous if target_dim==0
-	count = blocklength;
-	blocklength = fact;
-	stride = alloc_size;
-      }else{
-	blocklength *= alloc_size;
-	stride *= alloc_size;
-      }
-      //printf("tar=%d, i=%d, fact=%d, allocsize=%d, (%d,%d,%lld)\n", target_dim, i, fact, alloc_size, count , blocklength, stride);
-    }
-
-    blocklength *= type_size;
-    stride *= type_size;
-    /* mod_4 end */
-    
-    /* it used at 150717
     for (int i = 1; i <= target_dim; i++){
       count *= ainfo[i-1].alloc_size;
     }
@@ -377,18 +326,60 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
       blocklength *= ainfo[i+1].alloc_size;
       stride *= ainfo[i].alloc_size;
     }
-    */
+#else
+    count = 1;
+    blocklength = 1;
+    stride = 1;
 
-    /* for (int i = target_dim + 1; i < ndims; i++){ */
-    /*   blocklength *= ainfo[i].alloc_size; */
-    /* } */
-    /* for (int i = target_dim; i < ndims - 1; i++){ */
-    /*   stride *= ainfo[i].alloc_size; */
+    {
+      stride_t st[_XMP_N_MAX_DIM];
+      int nd = ndims;
+
+      for(int i = ndims - 1; i >= 0; i--){
+	st[i].count  = (i == target_dim)? 1 : (ainfo[i].par_size + lwidths[i] + uwidths[i]);
+	st[i].stride = (i == ndims - 1)? 1 : (st[i+1].stride * ainfo[i+1].alloc_size);
+	st[i].is_target = (i == target_dim)? true : false;
+      }
+
+      /* if(_XMP_world_rank == 0){ */
+      /* 	printf("before:"); */
+      /* 	stride_print(nd, st); */
+      /* } */
+
+      while(stride_simplify(&nd, st));
+
+      /* if(_XMP_world_rank == 0){ */
+      /* 	printf("after simplify:"); */
+      /* 	stride_print(nd, st); */
+      /* } */
+
+      while(stride_reduce(&nd, st));
+
+      /* if(_XMP_world_rank == 0){ */
+      /* 	printf("after reduce:"); */
+      /* 	stride_print(nd, st); */
+      /* } */
+
+      if(nd == 1){ //contiguous
+	count = 1;
+	blocklength = st[0].count;
+	stride = blocklength;
+      }else if(nd == 2){ //block stride
+	count = st[0].count;
+	blocklength = st[1].count;
+	stride = st[0].stride;
+      }else{
+	_XMP_fatal("unexpected error");
+      }
+    }
+#endif
+
+    /* if(_XMP_world_rank == 0){ */
+    /*   printf("(%d,%d,%lld)\n", count , blocklength, stride); */
     /* } */
 
-    //    printf("count =%d, blength=%d, stride=%lld\n", count ,blocklength, stride);
-    //    printf("ainfo[0].par_size=%d\n", ainfo[0].par_size);
-    //    printf("count_ofset=%d,\n", count_offset);
+    blocklength *= type_size;
+    stride *= type_size;
   }
   else {
     _XMP_fatal("cannot determin the base language.");
@@ -1008,3 +999,59 @@ void _XMP_finalize_reflect_sched_gpu(_XMP_reflect_sched_t *sched, _Bool free_buf
     sched->hi_async_id = NULL;
   }
 }
+
+
+static void stride_shift(int *n, stride_t st[], int i)
+{
+  for(int j = i; j < *n - 1; j++){
+    st[j] = st[j+1];
+  }
+  (*n)--;
+}
+
+/* change to more simple form, which is equivalant to the old form. */
+static bool stride_reduce(int *nd, stride_t st[])
+{
+  for(int i = 0; i < *nd - 1; i++){
+    if(st[i].count == 1){
+      stride_shift(nd, st, i);
+      return true;
+    }
+  }
+
+  for(int i = 0; i < *nd - 1; i++){
+    if(st[i].stride == st[i+1].count * st[i+1].stride){
+      st[i] = (stride_t){st[i].count * st[i+1].count,
+			 st[i+1].stride};
+
+      stride_shift(nd, st, i+1);
+      return true;
+    }
+  }
+  return false;
+}
+
+/* change to more simple form, which is not equivalant to the old form. */
+static bool stride_simplify(int *nd, stride_t st[])
+{
+  for(int i = *nd - 2; i >= 0; i--){
+    if(! st[i].is_target && ! st[i+1].is_target){
+      st[i] = (stride_t){st[i].count * st[i].stride / st[i+1].stride,
+			 st[i+1].stride};
+      stride_shift(nd, st, i+1);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+#if 0
+static void stride_print(int n, stride_t st[])
+{
+  for(int i = 0; i < n; i++){
+    printf("(%"PRIu64",%"PRIu64",%c)", st[i].count, st[i].stride, st[i].is_target? 't':'f');
+  }
+  printf("\n");
+}
+#endif

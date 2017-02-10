@@ -29,8 +29,10 @@ run: $(EXES)
 	$(XRUN) -n 8 ./reflect_acc_2_dup_2.x
 	$(XRUN) -n 4 ./shadow_reflect.x
 	$(XRUN) -n 2 ./reflect_acc_2_dup_1-2.x
-	$(XRUN) -n 4 ./shadow_reflect_mem.x
 	$(XRUN) -n 4 ./reflect_acc_oneside.x
+	$(XRUN) -n 2 ./reflect_array4d_dist3d.x
+	$(XRUN) -n 2 ./reflect_array4d_dist4d.x
+	$(XRUN) -n 4 ./shadow_reflect_mem.x
 
 submit: $(EXES) $(XSCRIPT)
 	$(XSUBMIT) $(XSCRIPT)
