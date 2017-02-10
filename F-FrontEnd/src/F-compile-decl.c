@@ -946,6 +946,14 @@ declare_variable(ID id)
 ID
 declare_function(ID id)
 {
+    if (ID_CLASS(id) == CL_MULTI) {
+        id = multi_find_class(id , CL_PROC);
+        if (id == NULL) {
+            fatal("multi class id bug");
+            return id;
+        }
+    }
+
     if (ID_CLASS(id) == CL_UNKNOWN) {
         /* if name class is unknown, define it as CL_PROC */
         ID_CLASS(id) = CL_PROC;
