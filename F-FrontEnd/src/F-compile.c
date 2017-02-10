@@ -4875,6 +4875,14 @@ compile_INTERFACE_statement(expr x)
                 iid = declare_ident(s, CL_PROC);
                 if(iid == NULL)
                     return;
+            } else if(ID_CLASS(iid) == CL_TAGNAME) {
+                /*
+                 * There is the derived-type with the same name,
+                 * so turn id into the multi class identifier.
+                 */
+                id_multilize(iid);
+                iid = declare_ident(s, CL_PROC);
+
             } else if(ID_STORAGE(iid) == STG_UNKNOWN) {
                 ID_STORAGE(iid) = STG_EXT;
                 ID_CLASS(iid) = CL_PROC;
@@ -5053,10 +5061,14 @@ end_interface()
 
         /* add interface symbol to parent local symbols */
         iid = find_ident(EXT_SYM(intr));
+
         if(iid == NULL) {
             iid = declare_ident(EXT_SYM(intr), CL_PROC);
             if(iid == NULL)
                 return;
+        }
+        if (ID_CLASS(iid) == CL_MULTI) {
+            iid = multi_find_class(iid, CL_PROC);
         }
 
         /* type should be calculated from
@@ -6856,6 +6868,13 @@ define_internal_subprog(EXT_ID child_ext_ids)
             tp = EXT_PROC_TYPE(ep);
             FUNCTION_TYPE_SET_INTERNAL(tp);
             ip = find_ident(EXT_SYM(ep));
+            if (ID_CLASS(ip) == CL_MULTI) {
+                ip = multi_find_class(ip, CL_PROC);
+                if (ip == NULL) {
+                    fatal("multi class id bug");
+                    return;
+                }
+            }
             if (PROC_EXT_ID(ip) == ep)
                 continue;
             if (PROC_CLASS(ip) == P_UNDEFINEDPROC) {

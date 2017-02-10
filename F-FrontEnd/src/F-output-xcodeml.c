@@ -42,6 +42,8 @@ static void     collect_types_inner(EXT_ID extid);
 static void     collect_type_desc(expv v);
 static int      id_is_visibleVar(ID id);
 static int      id_is_visibleVar_for_symbols(ID id);
+static void     mark_type_desc_in_id_list(ID ids);
+
 
 char s_timestamp[CEXPR_OPTVAL_CHARLEN] = { 0 };
 char s_xmlIndent[CEXPR_OPTVAL_CHARLEN] = "  ";
@@ -3934,6 +3936,9 @@ mark_type_desc_id(ID id)
                 EXT_PROC_TYPE(PROC_EXT_ID(id)) = sTp;
             }
             return;
+        case CL_MULTI:
+            mark_type_desc_in_id_list(MULTI_ID_LIST(id));
+            return;
         default:
             return;
     }
@@ -4618,16 +4623,31 @@ genSortedIDs(ID ids, int *retnIDs)
     if(ids == NULL)
         return NULL;
 
-    FOREACH_ID(id, ids)
-        ++nIDs;
+    FOREACH_ID(id, ids) {
+        if (ID_CLASS(id) == CL_MULTI) {
+            ID ip;
+            FOREACH_ID(ip, MULTI_ID_LIST(id))
+                    ++nIDs;
+        } else {
+            ++nIDs;
+        }
+    }
 
     if(nIDs == 0)
         return NULL;
 
     sortedIDs = (ID*)malloc(nIDs * sizeof(ID));
 
-    FOREACH_ID(id, ids)
-        sortedIDs[i++] = id;
+    FOREACH_ID(id, ids) {
+        if (ID_CLASS(id) == CL_MULTI) {
+            ID ip;
+            FOREACH_ID(ip, MULTI_ID_LIST(id)) {
+                sortedIDs[i++] = ip;
+            }
+        } else {
+            sortedIDs[i++] = id;
+        }
+    }
 
     qsort((void*)sortedIDs, nIDs, sizeof(ID), qsort_compare_id);
     *retnIDs = nIDs;
