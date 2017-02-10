@@ -4028,6 +4028,7 @@ struct keyword_token XMP_keywords[ ] =
     {"reduction",	XMPKW_REDUCTION },
     {"expand",	XMPKW_EXPAND },
     {"margin",	XMPKW_MARGIN },
+    {"peel_and_wait", XMPKW_PEEL_AND_WAIT },
     {"bcast",	XMPKW_BCAST },
     {"wait_async",	XMPKW_WAIT_ASYNC },
     {"array",	XMPKW_ARRAY },

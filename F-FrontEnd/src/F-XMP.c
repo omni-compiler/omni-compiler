@@ -239,7 +239,12 @@ void compile_XMP_directive(expr x)
       x1 = XMP_compile_subscript_list(EXPR_ARG1(c),XMP_LIST_ID_LIST);
       x2 = XMP_compile_ON_ref(EXPR_ARG2(c));
       x3 = EXPR_ARG3(c);
-      if (x3) x3 = list2(LIST, EXPR_ARG1(x3), XMP_compile_subscript_list(EXPR_ARG2(x3), XMP_LIST_WIDTH));
+      if (x3){
+	if (EXPR_INT(EXPR_ARG1(x3)) == XMP_LOOP_PEEL_AND_WAIT)
+	  x3 = list3(LIST, EXPR_ARG1(x3), EXPR_ARG2(x3), XMP_compile_subscript_list(EXPR_ARG3(x3), XMP_LIST_WIDTH));
+	else
+	  x3 = list2(LIST, EXPR_ARG1(x3), XMP_compile_subscript_list(EXPR_ARG2(x3), XMP_LIST_WIDTH));
+      }
       x4 = EXPR_ARG4(c);
       x5 = EXPR_ARG5(c);
       c = list5(LIST,x1,x2,x3,x4,x5);

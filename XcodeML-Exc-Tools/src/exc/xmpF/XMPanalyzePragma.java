@@ -197,15 +197,24 @@ public class XMPanalyzePragma
 
     case LOOP: {
 
-      Block newBlock = divideMarginLoop(pb);
+      Block newBlock = null;
+      XobjList expandOpt = (XobjList)pb.getClauses().getArg(2);
+
+      if (expandOpt == null || expandOpt.hasNullArg()){
+	;
+      }
+      else if (expandOpt.getArg(0).getInt() == XMP.LOOP_MARGIN){
+	newBlock = divideMarginLoop(pb);
+      }
+      else if (expandOpt.getArg(0).getInt() == XMP.LOOP_PEEL_AND_WAIT){
+	newBlock = dividePeelWaitLoop(pb);
+      }
       
       if (newBlock != null){
-	for (Block b = newBlock.getBody().getHead(); b != null; b = b.getNext()){
-	  String pp = ((PragmaBlock)b).getPragma();
-	  Xobject cc = ((PragmaBlock)b).getClauses();
-	  XMPinfo info2 = new XMPinfo(XMPpragma.valueOf(pp), outer, b, env);
-	  b.setProp(XMP.prop, info2);
-	  analyzeLoop(cc, b.getBody(), (PragmaBlock)b, info2);
+	Block next;
+	for (Block b = newBlock.getBody().getHead(); b != null; b = next){
+	  next = b.getNext();
+	  analyzePragma((PragmaBlock)b);
 	}
 	pb.replace(newBlock);
       }
@@ -525,11 +534,6 @@ public class XMPanalyzePragma
 
     XobjList expandOpt = (XobjList)pb.getClauses().getArg(2);
 
-    if (expandOpt == null || expandOpt.hasNullArg() ||
-	expandOpt.getArg(0).getInt() != XMP.LOOP_MARGIN){
-      return null;
-    }
-
     // The type is XMP.LOOP_MARGIN
 
     BlockList loops = Bcons.emptyBody();
@@ -605,7 +609,36 @@ public class XMPanalyzePragma
     }
 
   }
-  
+
+  private static Block dividePeelWaitLoop(PragmaBlock pb){
+
+    // The type is XMP.LOOP_PEEL_AND_WAIT
+
+    BlockList bl = Bcons.emptyBody();
+
+    // First, create the peeled Loop
+    PragmaBlock pb1 = (PragmaBlock)pb.copy();
+    pb1.getClauses().getArg(2).setArg(0, Xcons.IntConstant(XMP.LOOP_MARGIN));
+    pb1.getClauses().getArg(2).setArg(1, pb.getClauses().getArg(2).getArg(2));
+    bl.add(pb1);
+
+    // Second, create wait_async
+    XobjList clauses = Xcons.List();
+    clauses.add(Xcons.List(pb.getClauses().getArg(2).getArg(1)));
+    clauses.add(null);
+    PragmaBlock pb2 = new PragmaBlock(Xcode.XMP_PRAGMA, "WAIT_ASYNC", clauses, null);
+    bl.add(pb2);
+    
+    // Third, create the kernel loop
+    PragmaBlock pb3 = (PragmaBlock)pb.copy();
+    pb3.getClauses().getArg(2).setArg(0, Xcons.IntConstant(XMP.LOOP_EXPAND));
+    pb3.getClauses().getArg(2).setArg(1, pb.getClauses().getArg(2).getArg(2));
+    bl.add(pb3);
+    
+    return Bcons.COMPOUND(bl);
+
+  }
+
   private static ForBlock getOutermostLoopBlock(BlockList body) {
     Block b = body.getHead();
     while (b != null) {

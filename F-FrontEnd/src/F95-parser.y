@@ -2726,7 +2726,9 @@ xmp_loop_opt1:
 	     /* empty */ { $$ = NULL; }
         | XMPKW_EXPAND '(' xmp_expand_width_list ')' { $$=list2(LIST, GEN_NODE(INT_CONSTANT, XMP_LOOP_EXPAND), $3); }
         | XMPKW_MARGIN '(' xmp_expand_width_list ')' { $$=list2(LIST, GEN_NODE(INT_CONSTANT, XMP_LOOP_MARGIN), $3); }
-	;
+        | XMPKW_PEEL_AND_WAIT '(' expr ',' xmp_expand_width_list ')'
+	{ $$=list3(LIST, GEN_NODE(INT_CONSTANT, XMP_LOOP_PEEL_AND_WAIT), $3, $5); }
+        ;
 
 xmp_expand_width_list:
           xmp_expand_width
