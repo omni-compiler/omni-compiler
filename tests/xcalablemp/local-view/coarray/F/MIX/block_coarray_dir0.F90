@@ -7,9 +7,9 @@ block
 block
 !$xmp nodes q(2,2)=p(4:7)
 
-     integer p1[*]
+     integer, save:: p1[*]
 block
-     integer q1[*], s1[*]
+     integer, save:: q1[*], s1[*]
      integer p1ok, q1ok, s1ok
 
 block
