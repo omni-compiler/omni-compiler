@@ -109,5 +109,12 @@ multi_find_class(const ID id, const enum name_class class)
         }
     }
 
+    FOREACH_ID(ip, ID_NEXT(id)) {
+        if (ID_SYM(id) == ID_SYM(ip) && ID_CLASS(ip) == class) {
+            return ip;
+        }
+    }
+
+
     return NULL;
 }
