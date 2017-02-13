@@ -271,8 +271,8 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   long long stride = 0;
   //  int count_offset = 0;
 
+#if 0
   if (_XMPF_running && !_XMPC_running){ /* for XMP/F */
-    /*
     count = 1;
     blocklength = type_size;
     stride = ainfo[0].alloc_size * type_size;
@@ -285,35 +285,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
       blocklength *= ainfo[i-1].alloc_size;
       stride *= ainfo[i].alloc_size;
     }
-    */
-    count = 1;
-    blocklength = 1;
-    stride = 1;
-
-    for(int i = ndims-1; i >= 0; i--){
-      int fact = (i == target_dim)? 1 : (ainfo[i].par_size + lwidths[i] + uwidths[i]);
-      int alloc_size = ainfo[i].alloc_size;
-
-      if(blocklength == 1 || fact == alloc_size){
-	blocklength *= fact;
-	stride *= alloc_size;
-      }else if(count == 1 && target_dim != ndims-1){ //to be contiguous if target_dim==ndims-1
-	count = blocklength;
-	blocklength = fact;
-	stride = alloc_size;
-      }else{
-	blocklength *= alloc_size;
-	stride *= alloc_size;
-      }
-      //printf("tar=%d, i=%d, fact=%d, allocsize=%d, (%d,%d,%lld)\n", target_dim, i, fact, alloc_size, count , blocklength, stride);
-    }
-
-    blocklength *= type_size;
-    stride *= type_size;
-
-  }
-  else if (!_XMPF_running && _XMPC_running){ /* for XMP/C */
-#if 0
+  }else if (!_XMPF_running && _XMPC_running){ /* for XMP/C */
     count = 1;
     blocklength = 1;
     stride = ainfo[ndims-1].alloc_size;
@@ -326,81 +298,93 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
       blocklength *= ainfo[i+1].alloc_size;
       stride *= ainfo[i].alloc_size;
     }
+  }
 #else
+  {
+    stride_t st[_XMP_N_MAX_DIM];
+    int nd = ndims;
+    int first_dim = 0, last_dim = 0;
+
     count = 1;
     blocklength = 1;
     stride = 1;
 
-    {
-      stride_t st[_XMP_N_MAX_DIM];
-      int nd = ndims;
+    if (_XMPF_running && !_XMPC_running){ /* for XMP/F */
+      first_dim = ndims - 1;
+      last_dim = 0;
+
+      for(int i = 0; i < ndims; i++){
+	st[ndims - 1 - i].count  = (i == target_dim)? 1 : (ainfo[i].par_size + lwidths[i] + uwidths[i]);
+	st[ndims - 1 - i].stride = (i == last_dim)? 1 : (st[ndims - 1 - i + 1].stride * ainfo[i-1].alloc_size);
+	st[ndims - 1 - i].is_target = (i == target_dim)? true : false;
+      }
+    }else if (!_XMPF_running && _XMPC_running){ /* for XMP/C */
+      first_dim = 0;
+      last_dim = ndims - 1;
 
       for(int i = ndims - 1; i >= 0; i--){
 	st[i].count  = (i == target_dim)? 1 : (ainfo[i].par_size + lwidths[i] + uwidths[i]);
-	st[i].stride = (i == ndims - 1)? 1 : (st[i+1].stride * ainfo[i+1].alloc_size);
+	st[i].stride = (i == last_dim)? 1 : (st[i+1].stride * ainfo[i+1].alloc_size);
 	st[i].is_target = (i == target_dim)? true : false;
       }
-
-      /* if(_XMP_world_rank == 0){ */
-      /* 	printf("before:"); */
-      /* 	stride_print(nd, st); */
-      /* } */
-
-      while(stride_simplify(&nd, st, true));
-
-      /* if(_XMP_world_rank == 0){ */
-      /* 	printf("after simplify(t):"); */
-      /* 	stride_print(nd, st); */
-      /* } */
-
-      if(lwidths[target_dim] <= 1 && uwidths[target_dim] <= 1){
-	while(stride_reduce(&nd, st));
-
-	/* if(_XMP_world_rank == 0){ */
-	/*   printf("after reduce:"); */
-	/*   stride_print(nd, st); */
-	/* } */
-      }else{
-	while(true){
-	  if(target_dim == 0){
-	    if(nd <= 1) break;
-	  }else{
-	    if(nd <= 2) break;
-	  }
-	  if(! stride_simplify(&nd, st, false)) break;
-	}
-
-	/* if(_XMP_world_rank == 0){ */
-	/*   printf("after simplify(f):"); */
-	/*   stride_print(nd, st); */
-	/* } */
-      }
-
-
-      if(nd == 1){ //contiguous
-	count = 1;
-	blocklength = st[0].count;
-	stride = blocklength;
-      }else if(nd == 2){ //block stride
-	count = st[0].count;
-	blocklength = st[1].count;
-	stride = st[0].stride;
-      }else{
-	_XMP_fatal("unexpected error");
-      }
+    }else{
+      _XMP_fatal("cannot determin the base language.");
     }
-#endif
+
+    /* if(_XMP_world_rank == 0){ */
+    /*   printf("before:"); */
+    /*   stride_print(nd, st); */
+    /* } */
+
+    while(stride_simplify(&nd, st, true));
+
+    /* if(_XMP_world_rank == 0){ */
+    /* 	printf("after simplify(t):"); */
+    /* 	stride_print(nd, st); */
+    /* } */
+
+    if(lwidths[target_dim] <= 1 && uwidths[target_dim] <= 1){
+      while(stride_reduce(&nd, st));
+
+      /* if(_XMP_world_rank == 0){ */
+      /*   printf("after reduce:"); */
+      /*   stride_print(nd, st); */
+      /* } */
+    }else{
+      while(true){
+	if(target_dim == first_dim){
+	  if(nd <= 1) break;
+	}else{
+	  if(nd <= 2) break;
+	}
+	if(! stride_simplify(&nd, st, false)) break;
+      }
+
+      /* if(_XMP_world_rank == 0){ */
+      /* 	printf("after simplify(f):"); */
+      /* 	stride_print(nd, st); */
+      /* } */
+    }
+
+    if(nd == 1){ //contiguous
+      count = 1;
+      blocklength = st[0].count;
+      stride = blocklength;
+    }else if(nd == 2){ //block stride
+      count = st[0].count;
+      blocklength = st[1].count;
+      stride = st[0].stride;
+    }else{
+      _XMP_fatal("unexpected error");
+    }
 
     /* if(_XMP_world_rank == 0){ */
     /*   printf("(%d,%d,%lld)\n", count , blocklength, stride); */
     /* } */
-
     blocklength *= type_size;
     stride *= type_size;
   }
-  else {
-    _XMP_fatal("cannot determin the base language.");
-  }
+#endif
 
   //
   // calculate base address
