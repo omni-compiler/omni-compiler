@@ -2288,6 +2288,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 modProcType = choose_module_procedure_by_args(modProcs, a);
                 if (modProcType != NULL) {
                     tp = modProcType;
+
                 } else if (tagname != NULL) {
                     return compile_struct_constructor(tagname, NULL, args);
 

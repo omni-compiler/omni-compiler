@@ -4401,6 +4401,19 @@ solve_use_assoc_conflict(ID id, ID mid)
         }
         return;
     }
+    if ((ID_CLASS(id) == CL_TAGNAME &&
+         (ID_CLASS(mid) == CL_PROC && IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(mid))))
+        ||
+        (ID_CLASS(mid) == CL_TAGNAME &&
+         (ID_CLASS(id) == CL_PROC && IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(id))))) {
+        ID next = ID_NEXT(id);
+        id_multilize(id);
+        ID_NEXT(id) = MULTI_ID_LIST(id);
+        ID_NEXT(ID_NEXT(id)) = next;
+        MULTI_ID_LIST(id) = NULL;
+        return;
+    }
+
     if(!id->use_assoc) {
         // conflict between (sub)program, argument, or module
         /* NOTE:
@@ -4414,7 +4427,7 @@ solve_use_assoc_conflict(ID id, ID mid)
                     SYM_NAME(ID_SYM(mid)),
                     SYM_NAME(mid->use_assoc->module_name));
         }
-        id->use_assoc_conflicted = TRUE;
+        ID_IS_AMBIGUOUS(id) = TRUE;
     } else {
         // conflict between use associated ids
         /* NOTE:
@@ -4443,7 +4456,7 @@ solve_use_assoc_conflict(ID id, ID mid)
                         SYM_NAME(id->use_assoc->module_name),
                         SYM_NAME(mid->use_assoc->module_name));
             }
-            id->use_assoc_conflicted = TRUE;
+            ID_IS_AMBIGUOUS(id) = TRUE;
         }
     }
 }
@@ -4462,7 +4475,15 @@ import_module_id(ID mid,
 
     if ((existed_id = find_ident_head(use_name?:ID_SYM(mid), *head)) != NULL) {
         solve_use_assoc_conflict(existed_id, mid);
-        return;
+        if (ID_CLASS(existed_id) == CL_MULTI) {
+            ID ip;
+            /* recheck tail */
+            FOREACH_ID(ip, *head) {
+                *tail = ip;
+            }
+        } else {
+            return;
+        }
     }
 
     id = new_ident_desc(ID_SYM(mid));
