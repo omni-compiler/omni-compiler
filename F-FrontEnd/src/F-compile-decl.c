@@ -3422,8 +3422,10 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
     if (typeExpr != NULL) {
         tp0 = compile_type(typeExpr, hasPointerAttr);
-        if (tp0 == NULL)
+        if (tp0 == NULL) {
+            error_at_node(typeExpr, "Invalid type spec");
             return;
+        }
     } else if (baseTp != NULL) {
         tp0 = baseTp;
     }
