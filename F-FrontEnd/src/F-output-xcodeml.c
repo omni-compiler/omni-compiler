@@ -2436,18 +2436,6 @@ getKindParameter(TYPE_DESC tp)
 }
 
 
-static TYPE_DESC
-getLargeIntType()
-{
-    static TYPE_DESC tp = NULL;
-    if(tp) return tp;
-
-    tp = type_basic(TYPE_INT);
-    TYPE_KIND(tp) = expv_int_term(INT_CONSTANT, type_INT, 8);
-
-    return tp;
-}
-
 
 /**
  * output FintConstant/FcharacterConstant/FlogicalConstant/FcomplexConstant
@@ -2469,8 +2457,6 @@ outx_constants(int l, expv v)
             tag = "FlogicalConstant";
         } else {
             omllint_t n = EXPV_INT_VALUE(v);
-            if(n > INT_MAX)
-                tp = getLargeIntType();
             sprintf(buf, OMLL_DFMT, n);
         }
         if(tp == NULL)

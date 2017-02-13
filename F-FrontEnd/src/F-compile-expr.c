@@ -17,6 +17,7 @@ static expv compile_member_array_ref  _ANSI_ARGS_((expr x, expv v));
 struct replace_item replace_stack[MAX_REPLACE_ITEMS];
 struct replace_item *replace_sp = replace_stack;
 
+static TYPE_DESC getLargeIntType();
 
 /*
  * Convert expr terminal node to expv terminal node.
@@ -73,7 +74,12 @@ compile_terminal_node(x)
         }
 
         case INT_CONSTANT: {
+            omllint_t n;
             ret = expv_int_term(INT_CONSTANT, type_basic(TYPE_INT), EXPR_INT(x));
+            n = EXPV_INT_VALUE(ret);
+            if (n > INT_MAX) {
+                EXPV_TYPE(ret) = getLargeIntType();
+            }
             break;
         }
 
@@ -1367,6 +1373,19 @@ expv_is_str_lvalue(expv v)
 }
 
 
+static TYPE_DESC
+getLargeIntType()
+{
+    static TYPE_DESC tp = NULL;
+    if(tp) return tp;
+
+    tp = type_basic(TYPE_INT);
+    TYPE_KIND(tp) = expv_int_term(INT_CONSTANT, type_INT, 8);
+
+    return tp;
+}
+
+
 /* compile into integer constant */
 expv
 compile_int_constant(expr x)
@@ -1376,6 +1395,10 @@ compile_int_constant(expr x)
     if((v = compile_expression(x)) == NULL) return NULL;
     if((v = expv_reduce(v, FALSE)) == NULL) return NULL;
     if (expr_is_constant_typeof(v, TYPE_INT)) {
+        omllint_t n = EXPV_INT_VALUE(v);
+        if (n > INT_MAX) {
+            EXPV_TYPE(v) = getLargeIntType();
+        }
         return v;
     } else {
         error("integer constant is required");
