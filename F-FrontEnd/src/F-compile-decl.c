@@ -1871,7 +1871,7 @@ declare_struct_type(expr ident)
                 ID_CLASS(id) = CL_TAGNAME;
                 ID_STORAGE(id) = STG_TAGNAME;
 
-            } if (ID_CLASS(id) == CL_PROC &&
+            } else if (ID_CLASS(id) == CL_PROC &&
                   ID_TYPE(id) != NULL &&
                   IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(id))) {
                 /*

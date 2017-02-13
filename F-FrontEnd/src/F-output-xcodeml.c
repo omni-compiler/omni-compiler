@@ -4468,6 +4468,9 @@ id_is_visibleVar(ID id)
     }
 
     switch(ID_CLASS(id)) {
+    case CL_MULTI:
+        return FALSE;
+        break;
     case CL_VAR:
         if(TYPE_IS_MODIFIED(ID_TYPE(id)))
             return TRUE;
@@ -4490,8 +4493,7 @@ id_is_visibleVar(ID id)
                 return FALSE;
             }
         }
-    case CL_MULTI:
-        return FALSE;
+        /* FALL THROUGH */
     default:
         switch(ID_STORAGE(id)) {
         case STG_TAGNAME:
