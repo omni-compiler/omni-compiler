@@ -2584,8 +2584,8 @@ compile_basic_type(expr x)
 
     if(tp == NULL) {
         tp = type_basic(t);
-	//TYPE_KIND(tp) = org_vkind ? org_vkind : vkind;
-	TYPE_KIND(tp) = vkind;
+        //TYPE_KIND(tp) = org_vkind ? org_vkind : vkind;
+        TYPE_KIND(tp) = vkind;
     }
 
     return tp;

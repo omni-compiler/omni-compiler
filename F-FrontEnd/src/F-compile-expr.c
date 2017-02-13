@@ -2594,7 +2594,7 @@ get_struct_members(TYPE_DESC struct_tp)
 
 
 static int
-compile_struct_constructor_components(ID struct_id, expr args, expv components)
+compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr args, expv components)
 {
     int has_keyword = FALSE;
     list lp;
@@ -2602,13 +2602,14 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
     ID match = NULL;
     SYMBOL sym;
     expv v;
-    TYPE_DESC struct_tp;
 
     // Check PRIVATE components
     // (PRIVATE works if the derived type is use-associated)
     int is_use_associated = ID_USEASSOC_INFO(struct_id) != NULL;
 
-    struct_tp = ID_TYPE(struct_id);
+    if (struct_tp == NULL) {
+        struct_tp = ID_TYPE(struct_id);
+    }
 
     members = get_struct_members(struct_tp);
     cur = members;
@@ -2691,7 +2692,9 @@ expv
 compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 {
     expv result, component;
-    TYPE_DESC tp, base_stp;
+    TYPE_DESC applied_type = NULL;
+    TYPE_DESC base_stp;
+    TYPE_DESC tp;
 
     assert(ID_TYPE(struct_id) != NULL);
 
@@ -2701,15 +2704,6 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
     base_stp = find_struct_decl(ID_SYM(struct_id));
     assert(EXPV_TYPE(result) != NULL);
 
-    if(args) {
-        EXPV_LINE(result) = EXPR_LINE(args);
-
-        if (!compile_struct_constructor_components(struct_id,
-                                                   args, component)) {
-            return NULL;
-        }
-    }
-
     if (type_param_args) {
         tp = type_apply_type_parameter(base_stp, type_param_args);
         EXPR_ARG1(result) = TYPE_TYPE_PARAM_VALUES(tp);
@@ -2718,7 +2712,19 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
               SYM_NAME(ID_SYM(struct_id)));
         return NULL;
     } else {
-        tp = wrap_type(base_stp);
+        tp = base_stp;
+    }
+
+    if(args) {
+        EXPV_LINE(result) = EXPR_LINE(args);
+        if (!compile_struct_constructor_components(struct_id, tp,
+                                                   args, component)) {
+            return NULL;
+        }
+    }
+
+    if (tp == base_stp) {
+        tp = wrap_type(tp);
     }
 
     EXPV_TYPE(result) = tp;
