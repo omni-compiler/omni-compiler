@@ -15,7 +15,7 @@
 #----------------
 . /opt/Modules/default/init/bash
 module purge
-module load cuda/7.5.18 mvapich2-gdr/2.1_gnu_cuda-7.5
+module load pgi/16.10 cuda/8.0.44 mvapich2/2.2_pgi_medium_cuda-8.0.44
 cd $PBS_O_WORKDIR
 
-make run RUNTYPE=PBS
+make run JOBSCHED=PBS
