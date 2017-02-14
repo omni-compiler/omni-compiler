@@ -207,7 +207,7 @@ public class XMPanalyzePragma
 	newBlock = divideMarginLoop(pb);
       }
       else if (expandOpt.getArg(0).getInt() == XMP.LOOP_PEEL_AND_WAIT){
-	newBlock = dividePeelWaitLoop(pb);
+	newBlock = peelLoop(pb);
       }
       
       if (newBlock != null){
@@ -532,26 +532,34 @@ public class XMPanalyzePragma
 
   private static Block divideMarginLoop(PragmaBlock pb){
 
-    XobjList expandOpt = (XobjList)pb.getClauses().getArg(2);
-
     // The type is XMP.LOOP_MARGIN
 
     BlockList loops = Bcons.emptyBody();
     boolean flag = false;
     
+    XobjList expandOpt = (XobjList)pb.getClauses().getArg(2);
+
+    // System.out.println("("+expandOpt.getArg(1).getArg(0).getArg(0).getInt()+" : "+expandOpt.getArg(1).getArg(0).getArg(1).getInt()+" ,"
+    // 		       +expandOpt.getArg(1).getArg(1).getArg(0).getInt()+" : "+expandOpt.getArg(1).getArg(1).getArg(1).getInt()+")");
+
+    PragmaBlock pb1, pb2;
+    XobjList expandOpt1 = null, expandOpt2 = null;
+
     for (int i = 0; i < expandOpt.getArg(1).Nargs(); i++){
 
       Xobject expandWidth = expandOpt.getArg(1).getArg(i);
-
       Xobject lower = expandWidth.getArg(0);
       Xobject upper = expandWidth.getArg(1);
+
+      Xobject stride = expandWidth.getArg(2);
+      if (stride.isIntConstant() && stride.getInt() == -1) continue;
 
       if (!lower.isZeroConstant() && !upper.isZeroConstant()){
 
 	flag = true;
 
-	PragmaBlock pb1;
-	XobjList expandOpt1;
+	// PragmaBlock pb1, pb2;
+	// XobjList expandOpt1, expandOpt2;
 	
 	// for lower margin
 	pb1 = (PragmaBlock)pb.copy();
@@ -564,38 +572,43 @@ public class XMPanalyzePragma
 	    expandWidth1.setArg(1, Xcons.IntConstant(0));
 	  }
 	  else if (j > i){
-	    if (expandWidth1.getArg(2).getInt() != 0)
-	      expandWidth1.setArg(2, Xcons.IntConstant(-1)); // edge of margin
+	    expandWidth1.setArg(2, Xcons.IntConstant(-1)); // edge of margin
 	  }
 	  else { // j < i
 	    expandWidth1.setArg(0, Xcons.IntConstant(0));
 	    expandWidth1.setArg(1, Xcons.IntConstant(0));
 	  }
 	}
+
+	// System.out.println(" ("+expandOpt1.getArg(1).getArg(0).getArg(0).getInt()+" : "+expandOpt1.getArg(1).getArg(0).getArg(1).getInt()+" ,"
+	// 		   +expandOpt1.getArg(1).getArg(1).getArg(0).getInt()+" : "+expandOpt1.getArg(1).getArg(1).getArg(1).getInt()+")");
 
 	loops.add(pb1);
 			     
 	// for upper margin
-	pb1 = (PragmaBlock)pb.copy();
-	expandOpt1 = (XobjList)pb1.getClauses().getArg(2);
+	pb2 = (PragmaBlock)pb.copy();
+	expandOpt2 = (XobjList)pb2.getClauses().getArg(2);
 
 	for (int j = 0; j < expandOpt1.getArg(1).Nargs(); j++){
-	  Xobject expandWidth1 = expandOpt1.getArg(1).getArg(j);
+	  Xobject expandWidth2 = expandOpt2.getArg(1).getArg(j);
 	  if (j == i){
-	    expandWidth1.setArg(0, Xcons.IntConstant(0));
-	    expandWidth1.setArg(1, upper);
+	    expandWidth2.setArg(0, Xcons.IntConstant(0));
+	    expandWidth2.setArg(1, upper);
 	  }
 	  else if (j > i){
-	    if (expandWidth1.getArg(2).getInt() != 0)
-	      expandWidth1.setArg(2, Xcons.IntConstant(-1)); // edge of margin
+	    expandWidth2.setArg(2, Xcons.IntConstant(-1)); // edge of margin
 	  }
 	  else { // j < i
-	    expandWidth1.setArg(0, Xcons.IntConstant(0));
-	    expandWidth1.setArg(1, Xcons.IntConstant(0));
+	    expandWidth2.setArg(0, Xcons.IntConstant(0));
+	    expandWidth2.setArg(1, Xcons.IntConstant(0));
 	  }	    
 	}
 
-	loops.add(pb1);
+      // System.out.println(" ("+expandOpt2.getArg(1).getArg(0).getArg(0).getInt()+" : "+expandOpt2.getArg(1).getArg(0).getArg(1).getInt()+" ,"
+      // 			 +expandOpt2.getArg(1).getArg(1).getArg(0).getInt()+" : "+expandOpt2.getArg(1).getArg(1).getArg(1).getInt()+")");
+
+    
+	loops.add(pb2);
 
       }
 
@@ -610,17 +623,17 @@ public class XMPanalyzePragma
 
   }
 
-  private static Block dividePeelWaitLoop(PragmaBlock pb){
+  private static Block peelLoop(PragmaBlock pb){
 
     // The type is XMP.LOOP_PEEL_AND_WAIT
 
     BlockList bl = Bcons.emptyBody();
 
-    // First, create the peeled Loop
-    PragmaBlock pb1 = (PragmaBlock)pb.copy();
-    pb1.getClauses().getArg(2).setArg(0, Xcons.IntConstant(XMP.LOOP_MARGIN));
-    pb1.getClauses().getArg(2).setArg(1, pb.getClauses().getArg(2).getArg(2));
-    bl.add(pb1);
+    // First, create the kernel loop
+    PragmaBlock pb3 = (PragmaBlock)pb.copy();
+    pb3.getClauses().getArg(2).setArg(0, Xcons.IntConstant(XMP.LOOP_EXPAND));
+    pb3.getClauses().getArg(2).setArg(1, pb.getClauses().getArg(2).getArg(2));
+    bl.add(pb3);
 
     // Second, create wait_async
     XobjList clauses = Xcons.List();
@@ -629,12 +642,12 @@ public class XMPanalyzePragma
     PragmaBlock pb2 = new PragmaBlock(Xcode.XMP_PRAGMA, "WAIT_ASYNC", clauses, null);
     bl.add(pb2);
     
-    // Third, create the kernel loop
-    PragmaBlock pb3 = (PragmaBlock)pb.copy();
-    pb3.getClauses().getArg(2).setArg(0, Xcons.IntConstant(XMP.LOOP_EXPAND));
-    pb3.getClauses().getArg(2).setArg(1, pb.getClauses().getArg(2).getArg(2));
-    bl.add(pb3);
-    
+    // Third, create the peeled Loop
+    PragmaBlock pb1 = (PragmaBlock)pb.copy();
+    pb1.getClauses().getArg(2).setArg(0, Xcons.IntConstant(XMP.LOOP_MARGIN));
+    pb1.getClauses().getArg(2).setArg(1, pb.getClauses().getArg(2).getArg(2));
+    bl.add(pb1);
+
     return Bcons.COMPOUND(bl);
 
   }

@@ -65,6 +65,8 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
   }
 
   if (*expand_type == _XMP_LOOP_NONE){
+    //xmpf_dbg_printf("%d : %d\n", *lb, *ub);
+    xmpf_ref_dealloc__(r_desc);
     return;
   }
   else if (*expand_type == _XMP_LOOP_EXPAND){
@@ -100,7 +102,7 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
 
   }
 
-  if (!(*unbound_flag)){
+  if (*unbound_flag > 0){
 
     _XMP_template_t *t_desc = rp->t_desc;
     int t_idx = rp->REF_INDEX[*r_idx];
@@ -118,8 +120,10 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
     }
   }
 
-  //  xmpf_dbg_printf("%d %d\n", *lb, *ub);
+  //xmpf_dbg_printf("%d : %d\n", *lb, *ub);
   
+  xmpf_ref_dealloc__(r_desc);
+
   return;
 
 }

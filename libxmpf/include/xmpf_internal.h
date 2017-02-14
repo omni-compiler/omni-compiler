@@ -41,25 +41,11 @@ typedef struct _XMP_object_ref_type {
   _XMP_nodes_t *n_desc;
     
   int ndims;
-/*   int *offset; */
-/*   int *index; */
   int *arg0;
   int *arg1;
   int *arg2;
   int *subscript_type;
 } _XMP_object_ref_t;
-
-
-/* typedef struct _XMP_object_ref_type2 { */
-/*   int ref_kind;  */
-/*   _XMP_template_t *t_desc; */
-/*   _XMP_nodes_t *n_desc; */
-    
-/*   int ndims; */
-/*   int *lb; */
-/*   int *ub; */
-/*   int *st; */
-/* } _XMP_object_ref_t2; */
 
 
 /* From xmpf_index.c */
@@ -205,6 +191,9 @@ extern _XMP_async_comm_t* _XMP_get_current_async();
 extern _XMP_async_comm_t* _XMP_get_async(int);
 extern void xmpc_init_async(int);
 extern void xmpc_start_async();
+
+/* From xmpf_template.c */
+extern void xmpf_ref_dealloc__(_XMP_object_ref_t **r_desc);
 
 /* From xmpf_pack.c */
 void _XMPF_pack_array(void *buffer, void *src, int array_type, size_t array_type_size,

@@ -43,8 +43,10 @@ public class CompoundBlock extends Block
     public CompoundBlock(CompoundBlock b)
     {
         super(b);
-        if(b.body != null)
+        if(b.body != null){
             this.body = b.body.copy();
+	    this.body.parent = this;
+	}
     }
 
     /** make clone */
