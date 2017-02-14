@@ -66,7 +66,6 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
 
   if (*expand_type == _XMP_LOOP_NONE){
     //xmpf_dbg_printf("%d : %d\n", *lb, *ub);
-    xmpf_ref_dealloc__(r_desc);
     return;
   }
   else if (*expand_type == _XMP_LOOP_EXPAND){
@@ -122,8 +121,6 @@ void xmpf_loop_sched__(int *lb, int *ub, int *st, int *r_idx, _XMP_object_ref_t 
 
   //xmpf_dbg_printf("%d : %d\n", *lb, *ub);
   
-  xmpf_ref_dealloc__(r_desc);
-
   return;
 
 }

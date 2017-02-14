@@ -372,8 +372,8 @@ public class XMPtransPragma
 
     ret_body.add(pb.getBody().getHead()); // loop
 
-    //Ident f = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
-    //ret_body.add(f.callSubroutine(Xcons.List(on_ref.getDescId())));
+    Ident f = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
+    ret_body.add(f.callSubroutine(Xcons.List(on_ref.getDescId())));
 
     if(info.getReductionOp() != XMP.REDUCE_NONE){
       ret_body.add(translateReduction(pb,info));
