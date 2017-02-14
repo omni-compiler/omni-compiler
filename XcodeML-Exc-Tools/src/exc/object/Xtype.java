@@ -1126,6 +1126,18 @@ public class Xtype
         return false;
     }
 
+    /** Fortran: return if len parameter is variable value */
+    public boolean isFlenAssumedShape()
+    {
+        return false;
+    }
+
+    /** Fortran: return if len parameter is variable value */
+    public boolean isFlenAssumedSize()
+    {
+        return false;
+    }
+
     /** Fortran: return if the type extends parent type */
     public boolean isExtended()
     {

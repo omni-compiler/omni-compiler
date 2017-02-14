@@ -1,5 +1,9 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 1.1.1      2017/02/09
+* Fix of bug of coarray features in The K computer/FX10/FX100
+* Fixed lots of bugs.
+
 # ver. 1.1.0      2016/11/14
 * Include Javadoc in docs/javadoc
 * Fixed lots of bugs.

@@ -172,6 +172,7 @@ xtag(enum expr_code code)
     case ARRAY_REF:                 return "FarrayRef";
     case F_SUBSTR_REF:              return "FcharacterRef";
     case F95_ARRAY_CONSTRUCTOR:     return "FarrayConstructor";
+    case F03_TYPED_ARRAY_CONSTRUCTOR: return "FarrayConstructor";
     case F95_STRUCT_CONSTRUCTOR:    return "FstructConstructor";
     case XMP_COARRAY_REF:           return "FcoArrayRef";
 
@@ -1710,6 +1711,18 @@ outx_arrayConstructor(int l, expv v)
 {
     const int l1 = l + 1;
     outx_tagOfExpression(l, v);
+    outx_expv(l1, EXPR_ARG1(v));
+    outx_expvClose(l, v);
+}
+
+static void
+outx_typedArrayConstructor(int l, expv v)
+{
+    TYPE_DESC element_tp = array_element_type(EXPV_TYPE(v));
+    const int l1 = l + 1;
+    EXPV_TYPE(v) = EXPV_TYPE(v);
+    outx_typeAttrs(l, EXPV_TYPE(v), XTAG(v), TOPT_TYPEONLY);
+    outx_print(" element_type=\"%s\">\n", getTypeID(element_tp));
     outx_expv(l1, EXPR_ARG1(v));
     outx_expvClose(l, v);
 }
@@ -3469,6 +3482,7 @@ outx_expv(int l, expv v)
     case ARRAY_REF:         outx_arrayRef(l, v); break;
     case F_SUBSTR_REF:      outx_characterRef(l, v); break;
     case F95_ARRAY_CONSTRUCTOR:     outx_arrayConstructor(l, v); break;
+    case F03_TYPED_ARRAY_CONSTRUCTOR:     outx_typedArrayConstructor(l, v); break;
     case F95_STRUCT_CONSTRUCTOR:    outx_structConstructor(l, v); break;
 
     case XMP_COARRAY_REF:   outx_coarrayRef(l, v); break;
@@ -4515,13 +4529,13 @@ outx_definition_symbols(int l, EXT_ID ep)
     outx_tag(l, "symbols");
 
     FOREACH_ID(id, EXT_PROC_ID_LIST(ep)) {
-        if(id_is_visibleVar_for_symbols(id))
+        if (id_is_visibleVar_for_symbols(id))
             outx_id(l1, id);
     }
 
     /* print common ids */
     FOREACH_ID(id, EXT_PROC_COMMON_ID_LIST(ep)) {
-        if(IS_MODULE(ID_TYPE(id)) == FALSE)
+        if (IS_MODULE(ID_TYPE(id)) == FALSE)
             outx_id(l1, id);
     }
 
@@ -4624,7 +4638,10 @@ genSortedIDs(ID ids, int *retnIDs)
 
 #define IS_NO_PROC_OR_DECLARED_PROC(id) \
     ((ID_CLASS(id) != CL_PROC || \
-      PROC_CLASS(id) == P_EXTERNAL || \
+      (PROC_CLASS(id) == P_EXTERNAL && \
+       (TYPE_IS_EXTERNAL(ID_TYPE(id)) || \
+        (FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)) != NULL && \
+         !TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))))) || \
       (ID_TYPE(id) && TYPE_IS_EXTERNAL(ID_TYPE(id))) || \
       (ID_TYPE(id) && TYPE_IS_INTRINSIC(ID_TYPE(id))) || \
       PROC_CLASS(id) == P_UNDEFINEDPROC || \

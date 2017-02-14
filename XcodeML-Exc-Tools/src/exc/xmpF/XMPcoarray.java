@@ -751,10 +751,14 @@ public class XMPcoarray {
   //
   public static Xobject makeStmt_setImageNodes(String nodesName, XMPenv env)
   {
+    return makeStmt_setImageNodes(nodesName, env, env.getCurrentDef().getBlock());
+  }
+
+  public static Xobject makeStmt_setImageNodes(String nodesName, XMPenv env, Block block)
+  {
     //    Ident imageNodesId = _getNodesDescIdByName(nodesName, env,
     //                                               env.getCurrentDef().getBlock());
-    FunctionBlock fblock = env.getCurrentDef().getBlock();
-    XMPnodes nodes = env.findXMPnodes(nodesName, fblock);
+    XMPnodes nodes = env.findXMPnodes(nodesName, block);
     Ident imageNodesId = nodes.getDescId();
 
     Xobject args = Xcons.List(imageNodesId);

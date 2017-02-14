@@ -467,10 +467,11 @@ int enable_need_type_keyword = TRUE;
 %}
 
 %type <val> statement label
-%type <val> expr /*expr1*/ lhs member_ref lhs_alloc member_ref_alloc substring expr_or_null complex_const array_constructor_list
+%type <val> expr /*expr1*/ lhs member_ref lhs_alloc member_ref_alloc substring expr_or_null complex_const
+%type <val> array_constructor array_constructor_list
 %type <val> program_name dummy_arg_list dummy_args dummy_arg file_name
 %type <val> declaration_statement executable_statement action_statement action_statement_let action_statement_key assign_statement_or_null assign_statement
-%type <val> declaration_list entity_decl type_spec type_spec0 length_spec common_decl
+%type <val> declaration_list entity_decl type_spec type_spec0 expr_type_spec length_spec common_decl
 %type <val> type_param_value_list type_param_value
 %type <val> common_block external_decl intrinsic_decl equivalence_decl
 %type <val> cray_pointer_list cray_pointer_pair cray_pointer_var
@@ -509,6 +510,8 @@ KW: { need_keyword = TRUE; };
 TYPE_KW: { if (enable_need_type_keyword == TRUE) need_type_keyword = TRUE; };
 
 NEED_CHECK: {	      need_check_user_defined = FALSE; };
+
+TYPE_KW_COL2: { if (lookup_col2()) need_type_keyword = TRUE;  }
 
 one_statement:
           STATEMENT_LABEL_NO  /* null statement */
@@ -1160,6 +1163,7 @@ entity_decl:
         { $$ = list5(LIST,$1,$2,$4,$6,$3);}
         ;
 
+// in fortran specification, `declaration-type-spec`
 type_spec: type_spec0 { $$ = $1; /* need_keyword = TRUE; */ };
 
 type_spec0:
@@ -1188,6 +1192,42 @@ type_spec0:
                             GEN_NODE(INT_CONSTANT, 8)); }
         //                    gen_default_real_kind()); }
         ;
+
+
+/*
+ * NOTE:
+ *  Q. Why don't you use `type_param_list` instead of `parenthesis_arg_list_or_null`?
+ *  A. Because this rule is expected to use inside expression (and avoid conflicts).
+ *     `parenthesis_arg_list_or_null` accept '*' ':' 'XXX=*' 'XXX=:'.
+ *     On the other hand, this rule don't for the argument ('*' may be used) and the declaration (':' may be used).
+ */
+// in fortran specification, `type-spec`
+expr_type_spec:
+          IDENTIFIER parenthesis_arg_list_or_null
+        {
+            if ($2 == NULL) {
+                $$ = $1;
+            } else {
+                $$ = list2(F03_PARAMETERIZED_TYPE,$1,$2);
+            }
+        }
+        | type_keyword kind_selector
+        { $$ = list2(LIST,$1,$2); }
+        | type_keyword length_spec  /* compatibility */
+        { $$ = list2(LIST, $1, $2);}
+        | KW_CHARACTER char_selector
+        { $$ = list2(LIST,GEN_NODE(F_TYPE_NODE,TYPE_CHAR),$2); }
+        | KW_DOUBLE
+        { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_REAL),
+                            GEN_NODE(INT_CONSTANT, 8)); }
+        //                    gen_default_real_kind()); }
+        | KW_DCOMPLEX
+        { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_COMPLEX),
+                            GEN_NODE(INT_CONSTANT, 8)); }
+        //                    gen_default_real_kind()); }
+        ;
+
+
 
 type_param_value_list:
           type_param_value
@@ -1952,11 +1992,20 @@ io_item:
         { $$ = list2(F_IMPLIED_DO,$4,$2); }
         ;
 
+
+array_constructor:
+          L_ARRAY_CONSTRUCTOR TYPE_KW_COL2 array_constructor_list R_ARRAY_CONSTRUCTOR
+        { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
+        | '[' TYPE_KW_COL2 array_constructor_list ']'
+        { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
+        | L_ARRAY_CONSTRUCTOR TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list R_ARRAY_CONSTRUCTOR
+        { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
+        | '[' TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list ']'
+        { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
+        ;
+
 expr:     lhs
-        | L_ARRAY_CONSTRUCTOR array_constructor_list R_ARRAY_CONSTRUCTOR
-        { $$ = list1(F95_ARRAY_CONSTRUCTOR, $2); }
-        | '[' array_constructor_list ']'
-        { $$ = list1(F95_ARRAY_CONSTRUCTOR, $2); }
+        | array_constructor
         | '(' expr ')'
         { $$ = $2; }
         | complex_const
@@ -2093,12 +2142,14 @@ member_ref_alloc:     /* For allocation list only */
 /*         { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); } */
         ;
 
+
 array_constructor_list:
           io_item
         { $$ = list1(LIST, $1); }
         | array_constructor_list  ',' io_item
         { $$ = list_put_last($1, $3); }
         ;
+
 
 /* reduce/reduce conflict between with complex const,  like (1.2, 3.4).
 

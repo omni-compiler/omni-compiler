@@ -1825,8 +1825,15 @@ static int isAlreadyMarked(ID id)
 static void
 update_procedure_variable(ID id, const ID target, int is_final)
 {
-    if (target == NULL)
+    if (target == NULL) {
         return;
+    }
+
+    if (ID_CLASS(target) == CL_VAR) {
+        /* target is also a procedure variable, skip */
+        return;
+    }
+
 
     if (ID_TYPE(target) == NULL || !IS_PROCEDURE_TYPE(ID_TYPE(target))) {
         if (is_final) {
@@ -1836,9 +1843,11 @@ update_procedure_variable(ID id, const ID target, int is_final)
         }
     }
 
-    if (!FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(target))) {
+    if (!FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(get_bottom_ref_type(ID_TYPE(target)))) {
         if (is_final) {
-            error_at_id(VAR_REF_PROC(id), "should have explicit interface");
+            error_at_id(VAR_REF_PROC(id),
+                        "%s should have an explicit interface",
+                        SYM_NAME(ID_SYM(id)));
         } else {
             return;
         }
@@ -3549,7 +3558,8 @@ end_procedure()
     switch (CURRENT_PROC_CLASS) {
     case CL_MAIN:
     case CL_PROC:
-    case CL_MODULE: {
+    case CL_MODULE:
+    case CL_SUBMODULE: {
         /* EXT_ID list, used as a stack.*/
         EXT_ID unit_ctl_procs[MAX_UNIT_CTL];
         if(unit_ctl_level != 0)
@@ -4289,7 +4299,7 @@ deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
         FOREACH_MEMBER(id, cur) {
             ID new_id = new_ident_desc(ID_SYM(id));
             *new_id = *id;
-            deep_copy_and_overwrite_for_module_id_type(&(ID_TYPE(id)));
+            deep_copy_and_overwrite_for_module_id_type(&(ID_TYPE(new_id)));
             ID_LINK_ADD(new_id, new_members, last_ip);
         }
         TYPE_MEMBER_LIST(cur) = new_members;
@@ -5713,7 +5723,7 @@ compile_CALL_subroutine_statement(expr x)
             ID_IS_DECLARED(id) = TRUE;
         } else if (PROC_CLASS(id) == P_UNKNOWN) {
             PROC_CLASS(id) = P_EXTERNAL;
-            TYPE_SET_EXTERNAL(id);
+            /* DO NOT TYPE_SET_EXTERNAL(id), this is not an explicit exernal subroutine */
             TYPE_SET_IMPLICIT(id);
         }
     }
@@ -5809,7 +5819,7 @@ compile_CALL_subroutine_statement(expr x)
            id = declare_ident(EXPR_SYM(x1), CL_PROC);
            ID_TYPE(id) = tp;
 
-           TYPE_SET_EXTERNAL(id);
+           /* NOTE: DO NOT 'TYPE_SET_EXTERNAL(id)', this is not an explicit exteranl function  */
            ID_IS_DECLARED(id) = FALSE;
            ID_STORAGE(id) = STG_EXT;
            PROC_CLASS(id) = P_EXTERNAL;
@@ -6303,7 +6313,9 @@ compile_POINTER_SET_statement(expr x) {
                     }
                 }
             } else {
-                if ((IS_FUNCTION_TYPE(vPteTyp) &&
+                if (get_bottom_ref_type(vPtrTyp) == get_bottom_ref_type(vPteTyp)) {
+                    /* DO NOTHING */
+                } else if ((IS_FUNCTION_TYPE(vPteTyp) &&
                      TYPE_IS_IMPLICIT(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)))
                     && TYPE_REF(vPtrTyp)) {
                     /*
@@ -6315,7 +6327,6 @@ compile_POINTER_SET_statement(expr x) {
                      *  So assumption: g is a procedure
                      */
                     TYPE_DESC ftp = get_bottom_ref_type(vPtrTyp);
-
 
                     TYPE_REF(vPteTyp) = ftp;
                     TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = FUNCTION_TYPE_RETURN_TYPE(ftp);
@@ -6850,6 +6861,9 @@ define_internal_subprog(EXT_ID child_ext_ids)
             if (PROC_CLASS(ip) == P_UNDEFINEDPROC) {
                 continue;
             }
+            if (ID_DEFINED_BY(ip)) {
+                ip = ID_DEFINED_BY(ip);
+            }
             if (ip != NULL && ID_TYPE(ip) != NULL)
                 tp = ID_TYPE(ip);
             ext_id = declare_external_proc_id(EXT_SYM(ep), tp, TRUE);
@@ -7063,10 +7077,18 @@ compile_SYNCIMAGES_statement(expr x) {
     expv image_set = NULL;
 
     if (EXPR_ARG1(x) != NULL) {
-        image_set = compile_expression(EXPR_ARG1(x));
+        TYPE_DESC tp;
+        BASIC_DATA_TYPE bt;
 
-        if (!IS_INT(EXPV_TYPE(image_set))) {
-            error("The first argument of SYNC IMAGES statement must be INTEGER");
+        image_set = compile_expression(EXPR_ARG1(x));
+        tp = EXPV_TYPE(image_set);
+
+        if ((IS_ARRAY_TYPE(tp) && TYPE_N_DIM(tp) > 1) ||
+            ((bt = get_basic_type(tp)) != TYPE_INT &&
+             bt != TYPE_GNUMERIC &&
+             bt != TYPE_GNUMERIC_ALL)) {
+            error("The first argument of SYNC IMAGES statement must be "
+                  "INTEGER (scalar or rank 1)");
             return;
         }
     }

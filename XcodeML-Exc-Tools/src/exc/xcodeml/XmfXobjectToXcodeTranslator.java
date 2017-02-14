@@ -769,6 +769,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_ARRAY_CONSTRUCTOR:
+            e = createElement(name, "element_type", getArg0Name(xobj));
+            for (Xobject a : (XobjList)xobj.getArg(1)) {
+                addChildNode(e, transExpr(a));
+            }
+            break;
         case F_STRUCT_CONSTRUCTOR:
         case F_TYPE_PARAMS:
         case F_TYPE_PARAM_VALUES:
@@ -1380,7 +1385,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             return null;
         }
         Element e = createElement("len");
-        if (!type.isFlenVariable()) {
+        if (type.isFlenAssumedShape()) {
+            addAttributes(e, "is_assumed_shape", "true");
+        } else if (type.isFlenAssumedSize()) {
+            addAttributes(e, "is_assumed_size", "true");
+        } else {
             addChildNode(e, transExpr(xobj));
         }
         return e;

@@ -119,7 +119,12 @@ public class XcodeMLtools_F extends XcodeMLtools {
     if ((nn = getElement(n, "len")) != null) {
       flen = toXobject(getContent(nn));
       if (flen == null)
-	flen = Xcons.IntConstant(-1); // means variable length
+        if (getAttrBool(nn, "is_assumed_shape"))
+	  flen = Xcons.IntConstant(-1); // means variable length, "(len=:)"
+        else if (getAttrBool(nn, "is_assumed_size"))
+	  flen = Xcons.IntConstant(-2); // means variable length, "(len=*)"
+        else
+          fatal("array length unknown:" + nn);
     } else if ((nn = getElement(n, "typeParamValues")) != null) {
       typeParamValues = (XobjList)toXobject(nn);
     } else {
@@ -787,6 +792,22 @@ public class XcodeMLtools_F extends XcodeMLtools {
                                                  Xcons.IntConstant(tq),
                                                  toXobject(bdg)
                                                 ));
+      }
+
+    case F_ARRAY_CONSTRUCTOR:
+      {
+        XobjList xobjp = new XobjList(code, type);
+        xobjp.add(getSymbol(n, "element_type"));
+        XobjList xobjs = new XobjList();
+        xobjp.add(xobjs);
+        NodeList list = n.getChildNodes();
+        for (int i = 0; i < list.getLength(); i++) {
+          Node nn = list.item(i);
+          if (nn.getNodeType() != Node.ELEMENT_NODE)
+            continue;
+          xobjs.add(toXobject(nn));
+        }
+        return setCommonAttributes(n, xobjp);
       }
 
     case F_TYPE_BOUND_PROCEDURES:

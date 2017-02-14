@@ -3618,7 +3618,7 @@ public class XMPtransCoarrayRun
     BasicBlock bb = b.getBasicBlock();
 
     String nodesName = pb.getClauses().getArg(0).getName();
-    Xobject stmt = XMPcoarray.makeStmt_setImageNodes(nodesName, info.env);
+    Xobject stmt = XMPcoarray.makeStmt_setImageNodes(nodesName, info.env, pb);
 
     bb.add(stmt);
     return b;

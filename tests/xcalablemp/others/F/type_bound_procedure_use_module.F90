@@ -1,4 +1,5 @@
 #ifdef DEBUG
+! NG by native compiler(gfortran 6.2.0/ifort 13.1.2).
       MODULE tbp_mod_type_bound_procedure_use_module
         TYPE t
            INTEGER :: v

@@ -215,6 +215,7 @@ get_tagname_from_code(enum expr_code c)
     case F_CONCAT_EXPR:
         return "FconcatExpr";
     case F95_ARRAY_CONSTRUCTOR:
+    case F03_TYPED_ARRAY_CONSTRUCTOR:
         return "FarrayConstructor";
     case F95_STRUCT_CONSTRUCTOR:
         return "FstructConstructor";

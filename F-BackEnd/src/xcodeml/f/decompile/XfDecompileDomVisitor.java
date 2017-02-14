@@ -464,7 +464,7 @@ public class XfDecompileDomVisitor {
         return typeList;
     }
 
-    private boolean _writeTopType(XfTypeManagerForDom.TypeList typeList) {
+    private boolean _writeTopType(XfTypeManagerForDom.TypeList typeList, Boolean isDeclaration) {
         Node topTypeChoice = typeList.getFirst();
         Node lowTypeChoice = typeList.getLast();
 
@@ -473,6 +473,13 @@ public class XfDecompileDomVisitor {
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
+
+        if (!isDeclaration) {
+            assert (!isClass);
+            assert (!isProcedure);
+            isClass = false;
+            isProcedure = false;
+        }
 
         String topTypeName = topTypeChoice.getNodeName();
         if ("FbasicType".equals(topTypeName) && !isClass && !isProcedure) {
@@ -509,7 +516,7 @@ public class XfDecompileDomVisitor {
                         writer.writeToken(returnType.fortranName());
                     } else {
                         XfTypeManagerForDom.TypeList returnTypeList = getTypeList(returnTypeId);
-                        _writeTopType(returnTypeList);
+                        _writeTopType(returnTypeList, true);
                     }
                 }
             }
@@ -519,19 +526,23 @@ public class XfDecompileDomVisitor {
             String aliasStructTypeName =
                     typeManager.getAliasTypeName(XmDomUtil.getAttr(topTypeChoice,
                             "type"));
-            if (isClass) {
-                writer.writeToken("CLASS");
-            } else {
-                writer.writeToken("TYPE");
+            if (isDeclaration) {
+                if (isClass) {
+                    writer.writeToken("CLASS");
+                } else {
+                    writer.writeToken("TYPE");
+                }
+                writer.writeToken("(");
             }
-            writer.writeToken("(");
             writer.writeToken(aliasStructTypeName);
             if (typeParamValues != null) {
                 writer.writeToken("(");
                 _invokeChildEnterAndWriteDelim(typeParamValues, ",");
                 writer.writeToken(")");
             }
-            writer.writeToken(")");
+            if (isDeclaration) {
+                writer.writeToken(")");
+            }
         } else {
             /* Unexpected type */
             return false;
@@ -603,7 +614,7 @@ public class XfDecompileDomVisitor {
             _writeFunctionSymbol(symbol, topTypeChoice, node);
             _writeDeclAttr(topTypeChoice, lowTypeChoice);
         } else {
-            if (!_writeTopType(typeList)) {
+            if (!_writeTopType(typeList, true)) {
                 throw new XmTranslationException(node, "Unexpected type");
             }
         }
@@ -2020,12 +2031,26 @@ public class XfDecompileDomVisitor {
          *      XbfFarrayConstructor)
          */
         @Override public void enter(Node n) {
+            String elementTypeId = XmDomUtil.getAttr(n, "element_type");
+
             XmfWriter writer = _context.getWriter();
-            writer.writeToken("(/ ");
 
-            _invokeChildEnterAndWriteDelim(n, ", ");
+            writer.writeToken("(/");
 
-            writer.writeToken(" /)");
+            if (!XfUtilForDom.isNullOrEmpty(elementTypeId)) {
+                XfType elementType = XfType.getTypeIdFromXcodemlTypeName(elementTypeId);
+                if (elementType.isPrimitive()) {
+                    writer.writeToken(elementType.fortranName());
+                } else {
+                    XfTypeManagerForDom.TypeList typeList = getTypeList(elementTypeId);
+                    _writeTopType(typeList, false);
+                }
+                writer.writeToken("::");
+            }
+
+            _invokeChildEnterAndWriteDelim(n, ",");
+
+            writer.writeToken("/)");
         }
     }
 
