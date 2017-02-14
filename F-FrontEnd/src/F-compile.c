@@ -2843,7 +2843,6 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
         contained_proc = procedure_defined(id, unit_ctl_procs, redefine_unit_ctl_level);
         if (contained_proc == NULL) {
             EXT_ID external_proc = NULL;
-            PROC_CLASS(id)  = P_EXTERNAL;
 
             EXT_ID ep;
             FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS){
@@ -2853,9 +2852,22 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
                 }
             }
 
-            if (!external_proc)
-                external_proc = declare_external_proc_id(ID_SYM(id), ID_TYPE(id), TRUE);
+            if (external_proc == NULL) {
+                if (ID_TYPE(id) != NULL &&
+                    ID_STORAGE(id) != STG_EXT &&
+                    PROC_CLASS(id) == P_UNDEFINEDPROC &&
+                    IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
+                    FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(id))) {
+                    error_at_id(id,
+                                "%s is used as an explicit interface but not defined",
+                                SYM_NAME(ID_SYM(id)));
+                    continue;
+                } else {
+                    external_proc = declare_external_proc_id(ID_SYM(id), ID_TYPE(id), TRUE);
+                }
+            }
 
+            PROC_CLASS(id)  = P_EXTERNAL;
             EXT_TAG(external_proc) = STG_EXT;
             PROC_EXT_ID(id) = external_proc;
 
@@ -2865,17 +2877,6 @@ redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[], int redefine_unit_ctl_
             PROC_EXT_ID(id) = contained_proc;
         }
 
-#if 0
-        if (ID_TYPE(id) != NULL &&
-            PROC_CLASS(id) == P_UNDEFINEDPROC &&
-            IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
-            FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(ID_TYPE(id))) {
-            error_at_id(id,
-                        "%s is used as explicit interface but not defined",
-                        SYM_NAME(ID_SYM(id)));
-            continue;
-        }
-#endif
     }
 }
 
@@ -6274,6 +6275,8 @@ compile_POINTER_SET_statement(expr x) {
                      *  f => g ! g is pointee
                      *
                      *  So assumption: g is a procedure
+                     *
+                     *  redefine_procedures() will check 'g' is defined or not
                      */
                     TYPE_DESC tp;
                     TYPE_DESC ftp = get_bottom_ref_type(vPtrTyp);
@@ -6284,9 +6287,9 @@ compile_POINTER_SET_statement(expr x) {
                     tp = new_type_desc();
                     *tp = *FUNCTION_TYPE_RETURN_TYPE(vPteTyp);
                     FUNCTION_TYPE_RETURN_TYPE(vPteTyp) = tp;
-                    TYPE_ATTR_FLAGS(vPteTyp) = attrs & (TYPE_ATTR_PUBLIC | TYPE_ATTR_PRIVATE);
+                    TYPE_ATTR_FLAGS(vPteTyp) = attrs & !(TYPE_ATTR_PUBLIC | TYPE_ATTR_PRIVATE);
                     TYPE_EXTATTR_FLAGS(vPteTyp) = extattrs;
-
+                    FUNCTION_TYPE_HAS_EXPLICIT_ARGS(vPteTyp) = TRUE;
                 } else {
                     /*
                      * POINTEE is used as a function/subroutine,
@@ -6325,6 +6328,8 @@ compile_POINTER_SET_statement(expr x) {
                      *  f => g ! g is pointee
                      *
                      *  So assumption: g is a procedure
+                     *
+                     *  redefine_procedures() will check 'g' is defined or not
                      */
                     TYPE_DESC ftp = get_bottom_ref_type(vPtrTyp);
 
@@ -6334,6 +6339,7 @@ compile_POINTER_SET_statement(expr x) {
                     TYPE_EXTATTR_FLAGS(vPteTyp) = 0;
                     TYPE_ATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = 0;
                     TYPE_EXTATTR_FLAGS(FUNCTION_TYPE_RETURN_TYPE(vPteTyp)) = 0;
+                    FUNCTION_TYPE_HAS_EXPLICIT_ARGS(vPteTyp) = TRUE;
 
                 }
             }
