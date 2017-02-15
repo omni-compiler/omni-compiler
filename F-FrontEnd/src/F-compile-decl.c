@@ -2024,12 +2024,6 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             TYPE_UNSET_PUBLIC(tp);
             TYPE_UNSET_PROTECTED(tp);
             TYPE_SET_PRIVATE(tp);
-#if 0
-            if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
-                TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
-                TYPE_SET_INTERNAL_PRIVATE(struct_tp);
-            }
-#endif
             break;
         case F03_PROTECTED_SPEC:
             if (TYPE_IS_PUBLIC(tp)) {
