@@ -3393,26 +3393,33 @@ outx_FORALL_statement(int l, expv v)
     expv mask = EXPR_ARG2(v);
     expv body = EXPR_ARG3(v);
     const char *tid = NULL;
+    char buf[128];
 
+    outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
+
+    if (EXPR_HAS_ARG4(v) && EXPR_ARG4(v) != NULL) {
+        outx_print(" construct_name=\"%s\"",
+                   SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
+    }
     if (EXPV_TYPE(v)) {
         tid = getTypeID(EXPV_TYPE(v));
-        outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
-        outx_print(" type=\"%s\">\n", tid);
-    } else {
-        outx_tagOfStatement(l, v);
+        outx_print(" type=\"%s\"", tid);
     }
-
+    outx_print(">\n");
 
 #if 0
     /*
      * NOTE:
-     * It may be useful to output <symbols> for FORALL statement
-     * to describe the indices of FORALL statement
+     *  Comment out by specification changed.
+     *  the BLOCK statement will have symbols for FORALL statement
+     *
+     *  It may be useful to output <symbols> for FORALL statement
+     *  to describe the indices of FORALL statement
      *
      * ex)
      *
-     *    FORALL( INTEGER :: I = 1:3 )
-     *    ! print I to the <symbols> in <forallStatement>
+     *   FORALL( INTEGER :: I = 1:3 )
+     *   ! print I to the <symbols> in <forallStatement>
      *
      */
     if (BLOCK_LOCAL_SYMBOLS(EXPR_BLOCK(v))) {

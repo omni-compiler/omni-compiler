@@ -7578,10 +7578,10 @@ compile_FORALL_statement(int st_no, expr x)
     expv init;
     list lp;
 
-    forall_header = EXPR_ARG1(x);
-    triplets      = EXPR_ARG1(forall_header);
-    mask          = EXPR_ARG2(forall_header);
-    type          = EXPR_ARG3(forall_header);
+    forall_header  = EXPR_ARG1(x);
+    triplets       = EXPR_ARG1(forall_header);
+    mask           = EXPR_ARG2(forall_header);
+    type           = EXPR_ARG3(forall_header);
 
     if (type) {
         tp = compile_type(type, /*allow_predecl=*/ FALSE);
@@ -7608,7 +7608,9 @@ compile_FORALL_statement(int st_no, expr x)
      *    END BLOCK
      *
      */
-    compile_BLOCK_statement(list0(F2008_BLOCK_STATEMENT));
+    if (CTL_TYPE(ctl_top) != CTL_FORALL) {
+        compile_BLOCK_statement(list0(F2008_BLOCK_STATEMENT));
+    }
 
     push_ctl(CTL_FORALL);
     push_env(CTL_FORALL_LOCAL_ENV(ctl_top));
@@ -7654,8 +7656,15 @@ compile_FORALL_statement(int st_no, expr x)
         }
         /*
          * Renaming trick:
-         *  When compile_expression() is applied to this identifier,
-         *  new_sym will be used.
+         *
+         * Replace the name of the index here.
+         *
+         * When compile_expression() is applied to this identifier,
+         * new_sym will be used.
+         *
+         * The index's own name will be replaced in
+         * compile_ENDFORALL_statement().
+         *
          */
         EXPV_NAME(ID_ADDR(id)) = new_sym;
 
@@ -7704,9 +7713,7 @@ compile_FORALL_statement(int st_no, expr x)
         EXPV_TYPE(st) = tp;
     }
 
-    output_statement(st);
-
-    CTL_BLOCK(ctl_top) = CURRENT_STATEMENTS;
+    CTL_BLOCK(ctl_top) = st;
     CTL_FORALL_STATEMENT(ctl_top) = st;
     CTL_FORALL_INIT(ctl_top) = init;
     CTL_FORALL_MASK(ctl_top) = vmask;
@@ -7719,8 +7726,24 @@ compile_FORALL_statement(int st_no, expr x)
     CURRENT_STATEMENTS = NULL;
     current_proc_state = P_DEFAULT;
 
+    /*
+     * If FORALL has forall-assign-statment,
+     * compile this FORALL as FORALL-statement
+     *
+     * ex)
+     *
+     * FORALL(...) A(I) = B(I)
+     *
+     */
     if (EXPR_ARG2(x)) {
+        expv forall_assign;
         compile_statement(st_no, EXPR_ARG2(x));
+        forall_assign = LIST_ITEM(EXPV_LIST(CURRENT_STATEMENTS));
+        if (EXPR_CODE(forall_assign) != F_LET_STATEMENT &&
+            EXPR_CODE(forall_assign) != F95_POINTER_SET_STATEMENT) {
+            error_at_node(forall_assign,
+                          "not allowed statement in the FORALL statement");
+        }
         compile_ENDFORALL_statement(NULL);
         return;
     }
@@ -7736,8 +7759,6 @@ compile_ENDFORALL_statement(expr x)
     list lp;
     ID forall_local = NULL;
     BLOCK_ENV current_block;
-    BLOCK_ENV bp;
-    BLOCK_ENV tail;
 
     if (CTL_TYPE(ctl_top) != CTL_FORALL) {
         error("'endforall', out of place");
@@ -7802,6 +7823,13 @@ compile_ENDFORALL_statement(expr x)
             EXPR_SYM(EXPR_ARG1(LIST_ITEM(lp))) = EXPV_NAME(ID_ADDR(ip));
 
 #if 0
+            /*
+             * NOTE:
+             *  Comment out by specification changed.
+             *
+             *  FORALL will be confined with the BLOCK construct,
+             *  so this code is no longer required.
+             */
             if (EXPV_TYPE(CTL_FORALL_STATEMENT(ctl_top)) != NULL) {
                 /*
                  * If the forall statement has type,
@@ -7812,10 +7840,6 @@ compile_ENDFORALL_statement(expr x)
                  *  FORALL (INTEGER :: I = 1:3, J = 1:3)
                  *    ! I and J live only here
                  *  END FORALL
-                 *
-                 * NOTE:
-                 *  FORALL will be confined with the BLOCK construct,
-                 *  so this code is not required.
                  *
                  */
                 (void)id_link_remove(&LOCAL_SYMBOLS, ip);
@@ -7845,6 +7869,9 @@ compile_ENDFORALL_statement(expr x)
     /* no use statements in the forall construct */
     assert(ENV_USE_DECLS(current_local_env) == NULL);
 
+    /* BLOCK cannot exists in FORALL construct */
+    assert(LOCAL_BLOCKS == NULL);
+
     current_block = XMALLOC(BLOCK_ENV, sizeof(*current_block));
     BLOCK_LOCAL_SYMBOLS(current_block) = forall_local;
     EXPR_BLOCK(CTL_FORALL_STATEMENT(ctl_top)) = current_block;
@@ -7853,13 +7880,10 @@ compile_ENDFORALL_statement(expr x)
     pop_env();
     CURRENT_STATE = INEXEC;
 
-    FOREACH_BLOCKS(bp, LOCAL_BLOCKS) {
-        tail = bp;
-    }
-    BLOCK_LINK_ADD(current_block, LOCAL_BLOCKS, tail);
-
     /*
      * Close the block construct which is genereted in compile_FORALL_statement().
      */
-    compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
+    if (CTL_TYPE(ctl_top) == CTL_BLOCK) {
+        compile_ENDBLOCK_statement(list0(F2008_ENDBLOCK_STATEMENT));
+    }
 }

@@ -1092,15 +1092,17 @@ compile_ident_expression(expr x)
         }
 
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
-#if 1
+
         if (ID_ADDR(id)) {
+            /*
+             * Renaming trick:
+             *  EXPV_NAME(ID_ADDR(id)) might be replaced to other name in
+             *  compile_FORALL_statement().
+             */
             ret = expv_sym_term(F_VAR, tp, EXPV_NAME(ID_ADDR(id)));
         } else {
             ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
         }
-#else
-        ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
-#endif
         goto done;
     }
 

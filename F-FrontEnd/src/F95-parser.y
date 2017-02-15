@@ -1684,8 +1684,8 @@ executable_statement:
         { $$ = list2(F03_CLASSIS_STATEMENT, NULL, $2); }
         | FORALL '(' forall_header ')' assign_statement_or_null
         { $$ = list3(F_FORALL_STATEMENT, $3, $5, st_name); }
-        | ENDFORALL
-        { $$ = list1(F_ENDFORALL_STATEMENT, st_name); }
+        | ENDFORALL name_or_null
+        { $$ = list1(F_ENDFORALL_STATEMENT, $2); }
         ;
 
 assign_statement_or_null:
