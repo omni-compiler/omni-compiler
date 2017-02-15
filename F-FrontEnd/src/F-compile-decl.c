@@ -931,6 +931,7 @@ declare_variable(ID id)
     case STG_COMEQ:
     case STG_COMMON:
     case STG_TYPE_PARAM:
+    case STG_INDEX:
         v = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
         if (PROC_CLASS(id) == P_THISPROC) {
             EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id));
@@ -1552,7 +1553,7 @@ find_ident_block_parent(SYMBOL s)
     int in_block = FALSE;
 
     FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK) {
+        if (CTL_TYPE(cp) == CTL_BLOCK || CTL_TYPE(cp) == CTL_FORALL) {
             in_block = TRUE;
             if (CTL_BLOCK_LOCAL_SYMBOLS(cp) == LOCAL_SYMBOLS) {
                 continue;

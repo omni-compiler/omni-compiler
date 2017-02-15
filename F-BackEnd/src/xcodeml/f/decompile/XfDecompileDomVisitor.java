@@ -3934,6 +3934,7 @@ public class XfDecompileDomVisitor {
         }
     }
 
+
     // FnamelistDecl
     class FnamelistDeclVisitor extends XcodeNodeVisitor {
         /**
@@ -6635,8 +6636,6 @@ public class XfDecompileDomVisitor {
             Node declarations = XmDomUtil.getElement(n, "declarations");
             invokeEnter(declarations);
 
-            writer.setupNewLine();
-
             writeVolatileOrAsynchronousStatements(declarations);
 
             invokeEnter(XmDomUtil.getElement(n, "body"));
@@ -6646,6 +6645,79 @@ public class XfDecompileDomVisitor {
 
             writer.writeToken("END");
             writer.writeToken("BLOCK");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+            }
+            writer.setupNewLine();
+        }
+    }
+
+    // forallStatement
+    class ForallStatementVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "forallStatement" element in XcodeML/F.
+         */
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+            XmfWriter writer = _context.getWriter();
+
+            String constructName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+                writer.writeToken(":");
+            }
+            writer.writeToken("FORALL");
+
+            writer.writeToken("(");
+
+            String typeName = XmDomUtil.getAttr(n, "type");
+            if (!XfUtilForDom.isNullOrEmpty(typeName)) {
+                XfType type = XfType.getTypeIdFromXcodemlTypeName(typeName);
+                if (type.isPrimitive()) {
+                    writer.writeToken(type.fortranName());
+                } else {
+                    XfTypeManagerForDom.TypeList typeList = getTypeList(typeName);
+                    _writeTopType(typeList, false);
+                }
+                writer.writeToken("::");
+            }
+
+            Boolean first = true;
+            NodeList list = n.getChildNodes();
+            for (int i = 0; i < list.getLength(); i++) {
+                if (list.item(i).getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                if ("Var".equals(list.item(i).getNodeName())) {
+                    if (!first) {
+                         writer.writeToken(",");
+                    }
+                    first = false;
+                    Node m = list.item(i);
+                    invokeEnter(m);
+                    writer.writeToken("=");
+                } else if ("indexRange".equals(list.item(i).getNodeName())) {
+                    invokeEnter(list.item(i));
+                }
+            }
+
+            Node condition = XmDomUtil.getElement(n, "condition");
+            if (condition != null) {
+                writer.writeToken(",");
+                _invokeChildEnter(condition);
+            }
+
+            writer.writeToken(")");
+            writer.setupNewLine();
+
+            writer.incrementIndentLevel();
+            invokeEnter(XmDomUtil.getElement(n, "body"));
+            writer.decrementIndentLevel();
+
+            writer.writeToken("END");
+            writer.writeToken("FORALL");
             if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
                 writer.writeToken(constructName);
             }
@@ -7004,5 +7076,6 @@ public class XfDecompileDomVisitor {
         new Pair("syncStat", new SyncStatVisitor()),
         new Pair("blockStatement", new BlockStatementVisitor()),
         new Pair("FmoduleProcedureDefinition", new FmoduleProcedureDefinitionVisitor()),
+        new Pair("forallStatement", new ForallStatementVisitor()),
     };
 }

@@ -494,6 +494,7 @@ int enable_need_type_keyword = TRUE;
 %type <val> binding_attr_list binding_attr type_bound_proc_decl_list type_bound_proc_decl
 %type <val> proc_attr_list proc_def_attr proc_attr proc_decl proc_decl_list name_or_type_spec_or_null0 name_or_type_spec_or_null
 %type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix prefix_spec
+%type <val> forall_header forall_triplet forall_triplet_list
 %type <val> declaration_statement95 attr_spec_list attr_spec private_or_public_spec access_spec type_attr_spec_list type_attr_spec
 %type <val> declaration_statement2003 type_param_list
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
@@ -1606,8 +1607,8 @@ namelist_list:  IDENTIFIER
  */
 executable_statement:
           action_statement
-	| DO label KW_WHILE '(' expr ')'
-	{ $$ = list3(F_DOWHILE_STATEMENT, $2, $5, st_name); }
+        | DO label KW_WHILE '(' expr ')'
+        { $$ = list3(F_DOWHILE_STATEMENT, $2, $5, st_name); }
         | DO label do_spec
         { $$ = list3(F_DO_STATEMENT, $2, $3, st_name); }
         | DO label ',' do_spec  /* for dusty deck */
@@ -1681,6 +1682,10 @@ executable_statement:
         { $$ = list2(F03_TYPEIS_STATEMENT, $3, $5); }  
         | CLASSDEFAULT name_or_null
         { $$ = list2(F03_CLASSIS_STATEMENT, NULL, $2); }
+        | FORALL '(' forall_header ')' assign_statement_or_null
+        { $$ = list3(F_FORALL_STATEMENT, $3, $5, st_name); }
+        | ENDFORALL name_or_null
+        { $$ = list1(F_ENDFORALL_STATEMENT, $2); }
         ;
 
 assign_statement_or_null:
@@ -1699,6 +1704,33 @@ do_spec:
         |  IDENTIFIER '=' expr ',' expr ',' expr
         { $$ = list4(LIST,$1,$3,$5,$7); }
         ;
+
+
+forall_triplet:
+          name '=' expr ':' expr
+        { $$ = list2(F_SET_EXPR, $1, list3(F95_TRIPLET_EXPR,$3,$5,NULL)); }
+        | name '=' expr ':' expr ':' expr
+        { $$ = list2(F_SET_EXPR, $1, list3(F95_TRIPLET_EXPR,$3,$5,$7)); }
+        ;
+
+forall_triplet_list:
+          forall_triplet
+        { $$ = list1(LIST, $1); }
+        | forall_triplet_list ',' forall_triplet
+        { $$ = list_put_last($1, $3); }
+        ;
+
+forall_header:
+          TYPE_KW forall_triplet_list
+        { $$ = list3(LIST, $2, NULL, NULL); }
+        | TYPE_KW forall_triplet_list ',' expr
+        { $$ = list3(LIST, $2,   $4, NULL); }
+        | TYPE_KW type_spec COL2 forall_triplet_list
+        { $$ = list3(LIST, $4, NULL,   $2); }
+        | TYPE_KW type_spec COL2 forall_triplet_list ',' expr
+        { $$ = list3(LIST, $4,   $6,   $2); }
+        ;
+
 
 /* 'ifable' statement */
 action_statement: action_statement_let
