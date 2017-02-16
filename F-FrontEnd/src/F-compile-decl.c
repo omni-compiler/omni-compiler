@@ -931,6 +931,7 @@ declare_variable(ID id)
     case STG_COMEQ:
     case STG_COMMON:
     case STG_TYPE_PARAM:
+    case STG_INDEX:
         v = expv_sym_term(F_VAR, ID_TYPE(id), ID_SYM(id));
         if (PROC_CLASS(id) == P_THISPROC) {
             EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id));
@@ -946,6 +947,14 @@ declare_variable(ID id)
 ID
 declare_function(ID id)
 {
+    if (ID_CLASS(id) == CL_MULTI) {
+        id = multi_find_class(id , CL_PROC);
+        if (id == NULL) {
+            fatal("multi class id bug");
+            return id;
+        }
+    }
+
     if (ID_CLASS(id) == CL_UNKNOWN) {
         /* if name class is unknown, define it as CL_PROC */
         ID_CLASS(id) = CL_PROC;
@@ -1413,9 +1422,19 @@ declare_ident(SYMBOL s, enum name_class class)
                 return ip;
             }
 
+            if (ID_CLASS(ip) == CL_MULTI &&
+                (class == CL_TAGNAME || class == CL_PROC)) {
+                symbols = &MULTI_ID_LIST(ip);
+                FOREACH_ID(ip, *symbols) {
+                    last_ip = ip;
+                }
+                break;
+            }
+
             if (class == CL_UNKNOWN) {
                 return ip;
             }
+
             /* define name class */
             if (ID_CLASS(ip) == CL_UNKNOWN) {
                 ID_CLASS(ip) = class;
@@ -1552,7 +1571,7 @@ find_ident_block_parent(SYMBOL s)
     int in_block = FALSE;
 
     FOR_CTLS_BACKWARD(cp) {
-        if (CTL_TYPE(cp) == CTL_BLOCK) {
+        if (CTL_TYPE(cp) == CTL_BLOCK || CTL_TYPE(cp) == CTL_FORALL) {
             in_block = TRUE;
             if (CTL_BLOCK_LOCAL_SYMBOLS(cp) == LOCAL_SYMBOLS) {
                 continue;
@@ -1852,6 +1871,16 @@ declare_struct_type(expr ident)
             if (ID_CLASS(id) == CL_UNKNOWN) {
                 ID_CLASS(id) = CL_TAGNAME;
                 ID_STORAGE(id) = STG_TAGNAME;
+
+            } else if (ID_CLASS(id) == CL_PROC &&
+                  ID_TYPE(id) != NULL &&
+                  IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(id))) {
+                /*
+                 * There is the generic procedure with the same name,
+                 * so turn id into the multi class identifier.
+                 */
+                id_multilize(id);
+                id = declare_ident(sp, CL_TAGNAME);
             } else {
                 error("identifier '%s' is already used", ID_NAME(id));
             }
@@ -2024,10 +2053,6 @@ declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             TYPE_UNSET_PUBLIC(tp);
             TYPE_UNSET_PROTECTED(tp);
             TYPE_SET_PRIVATE(tp);
-            if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
-                TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
-                TYPE_SET_INTERNAL_PRIVATE(struct_tp);
-            }
             break;
         case F03_PROTECTED_SPEC:
             if (TYPE_IS_PUBLIC(tp)) {
@@ -3941,6 +3966,57 @@ compile_struct_decl_end()
 
     /* check for type bound generic */
     check_type_bound_generics(stp);
+
+    if (!TYPE_IS_INTERNAL_PRIVATE(stp)) {
+        /*
+         * To transform the fortran code.
+         *
+         * TYPE t
+         *  INTEGER, PRIVATE :: a
+         *  INTEGER :: b
+         * END TYPE t
+         *
+         * will turn into
+         *
+         * TYPE t
+         *  PRIVATE
+         *  INTEGER :: a
+         *  INTEGER, PUBLIC :: b
+         * END TYPE t
+         *
+         */
+
+        ID mem;
+        int has_private_member = FALSE;
+
+        FOREACH_MEMBER(mem, stp) {
+            if (TYPE_IS_PRIVATE(ID_TYPE(mem))) {
+                has_private_member = TRUE;
+                break;
+            }
+        }
+
+        if (has_private_member) {
+            /*
+             * If the derived-type has a PRIVATE member,
+             * set is_internal_private to the derived-type.
+             */
+            TYPE_SET_INTERNAL_PRIVATE(stp);
+
+            /*
+             * Remove PRIVATE from PRIVATE members,
+             * and add PUBLIC to other members.
+             */
+            FOREACH_MEMBER(mem, stp) {
+                if (TYPE_IS_PRIVATE(ID_TYPE(mem))) {
+                    TYPE_UNSET_PRIVATE(ID_TYPE(mem));
+                } else {
+                    TYPE_SET_PUBLIC(ID_TYPE(mem));
+                }
+            }
+        }
+    }
+
 
     pop_ctl();
 }

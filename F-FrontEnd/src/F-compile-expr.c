@@ -400,6 +400,7 @@ compile_expression(expr x)
 
             if (ID_CLASS(id) == CL_PROC ||
                 ID_CLASS(id) == CL_ENTRY ||
+                ID_CLASS(id) == CL_MULTI ||
                 ID_CLASS(id) == CL_UNKNOWN) {
                 expv vRet = NULL;
                 if (ID_CLASS(id) == CL_PROC && IS_SUBR(ID_TYPE(id))) {
@@ -447,6 +448,7 @@ compile_expression(expr x)
                 }
                 return vRet;
             }
+
             if (ID_CLASS(id) == CL_TAGNAME) {
                 return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
             }
@@ -875,9 +877,12 @@ compile_expression(expr x)
 
         case F95_KIND_SELECTOR_SPEC: {
             expv v = NULL;
-            expv u;
             v = compile_expression(EXPR_ARG1(x));
             if (v != NULL) v = expv_reduce_kind(v)?:v;
+            if(v != NULL && !expv_is_specification(v)){
+                error_at_node(EXPR_ARG1(x),
+                    "kind must be a specification expression.");
+            }
             if (v != NULL) {
                 EXPV_KWOPT_NAME(v) = (const char *)strdup("kind");
             }
@@ -1078,6 +1083,7 @@ compile_ident_expression(expr x)
         goto done;
     }
 
+
     if(ID_CLASS(id) == CL_PARAM){
         if(VAR_INIT_VALUE(id) != NULL) 
             return VAR_INIT_VALUE(id);
@@ -1093,7 +1099,17 @@ compile_ident_expression(expr x)
         }
 
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
-        ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
+
+        if (ID_ADDR(id)) {
+            /*
+             * Renaming trick:
+             *  EXPV_NAME(ID_ADDR(id)) might be replaced to other name in
+             *  compile_FORALL_statement().
+             */
+            ret = expv_sym_term(F_VAR, tp, EXPV_NAME(ID_ADDR(id)));
+        } else {
+            ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
+        }
         goto done;
     }
 
@@ -2175,6 +2191,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
     expv a, v = NULL;
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
+    ID tagname = NULL;
 
     if (declare_function(f_id) == NULL) return NULL;
 
@@ -2191,6 +2208,11 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 type_GNUMERIC_ALL :
                 FUNCTION_TYPE_RETURN_TYPE(tp) ;
         goto line_info;
+    }
+
+    if (ID_CLASS(f_id) == CL_MULTI) {
+        tagname = multi_find_class(f_id, CL_TAGNAME);
+        f_id = multi_find_class(f_id, CL_PROC);
     }
 
     switch (PROC_CLASS(f_id)) {
@@ -2281,7 +2303,12 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 modProcType = choose_module_procedure_by_args(modProcs, a);
                 if (modProcType != NULL) {
                     tp = modProcType;
+
+                } else if (tagname != NULL) {
+                    return compile_struct_constructor(tagname, NULL, args);
+
                 } else {
+
                     warning_at_id(f_id, "can't determine a function to "
                                     "be actually called for a generic "
                                     "interface function call of '%s', "
@@ -2330,28 +2357,6 @@ line_info:
 err:
     return NULL;
 }
-
-static int
-id_link_remove(ID * head, ID tobeRemoved)
-{
-    ID ip, pre = NULL;
-    if (head == NULL) return FALSE;
-
-    FOREACH_ID(ip, *head) {
-        if (ID_SYM(ip) == ID_SYM(tobeRemoved)) {
-            if (pre == NULL) {
-                *head = ID_NEXT(ip);
-            } else {
-                ID_NEXT(pre) = ID_NEXT(ip);
-            }
-            return TRUE;
-        }
-        pre = ip;
-    }
-    return FALSE;
-}
-
-
 
 static int
 type_param_values_required0(TYPE_DESC struct_tp, ID * head, ID * tail)
@@ -2653,8 +2658,10 @@ compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr ar
         }
 
         if (is_use_associated && ID_TYPE(match) != NULL &&
-            (TYPE_IS_INTERNAL_PRIVATE(match) ||
-             TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match)))) {
+            ((TYPE_IS_INTERNAL_PRIVATE(match) ||
+              TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match))) &&
+             !(TYPE_IS_PUBLIC(match) ||
+               TYPE_IS_PUBLIC(ID_TYPE(match))))) {
             error("accessing a private component");
             return FALSE;
         }

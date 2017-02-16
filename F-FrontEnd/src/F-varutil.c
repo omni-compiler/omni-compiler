@@ -4,6 +4,7 @@
 
 #include "F-front.h"
 #include "F-intrinsics-types.h"
+#include "module-manager.h"
 
 static expv             getTerminalExpr _ANSI_ARGS_((expr x, expv l));
 static TYPE_DESC        getConstExprType _ANSI_ARGS_((expr x));
@@ -231,6 +232,7 @@ expr_is_constant_typeof(x, bt)
         }
         return TRUE;
 
+    case ARRAY_REF:
     case F_ARRAY_REF: {
         list lp;
         expr x1 = EXPR_ARG1(x);
@@ -662,7 +664,10 @@ type_is_inqurable(TYPE_DESC tp)
 #define EXPV_IS_INTRINSIC_CALL(x) \
     (EXPV_CODE(x) == FUNCTION_CALL && SYM_TYPE(EXPV_NAME(EXPR_ARG1(x))) == S_INTR)
 #define EXPV_IS_OBJECT_DESIGNATOR(x) \
-    (EXPV_CODE(x) == F_VAR || EXPV_CODE(x) == F_ARRAY_REF || EXPV_CODE(x) == F95_MEMBER_REF)
+    (EXPV_CODE(x) == F_VAR || \
+     EXPV_CODE(x) == F_ARRAY_REF || \
+     EXPV_CODE(x) == ARRAY_REF || \
+     EXPV_CODE(x) == F95_MEMBER_REF)
 
 expv
 base_object(expv x)
@@ -675,6 +680,7 @@ base_object(expv x)
             ret = x;
             break;
         case F_ARRAY_REF:
+        case ARRAY_REF:
         case F95_MEMBER_REF:
             ret = base_object(EXPV_LEFT(x));
             break;
@@ -709,8 +715,16 @@ expv_is_restricted_argument(expv x)
     return FALSE;
 }
 
-int
-expv_is_specification_inquiry(expv x)
+/**
+ * Checks if expv is an intrinsic inquiry function call
+ *
+ * NOTE:
+ *
+ *  The inquiry function is a function returns value which depends on only the
+ *  type of arguments (not on the value of arguments)
+ */
+static int
+expv_is_intrinsic_inquiry(expv x)
 {
     if(EXPV_IS_INTRINSIC_CALL(x)) {
         intrinsic_entry *ep = NULL;
@@ -721,6 +735,8 @@ expv_is_specification_inquiry(expv x)
         case INTR_SHAPE:
         case INTR_SIZE:
         case INTR_UBOUND:
+        case INTR_ALLOCATED:
+        /* NOT IMPLEMENTED: IS_CONTIGUOUS */
         /* bit inquiry function BIT_SIZE */
         case INTR_BIT_SIZE:
         /* character inquiry function LEN */
@@ -738,7 +754,25 @@ expv_is_specification_inquiry(expv x)
         case INTR_RADIX:
         case INTR_RANGE:
         case INTR_TINY:
-        /* NOT IMPLEMENTED: IEEE inquiry function */
+        /* pointer inquiry functions */
+        case INTR_ASSOCIATED:
+        /* argments inquiry functions */
+        case INTR_PRESENT:
+        /* Other intrinsic inquiry functions those are not not implemeted yet
+         *
+         * query dynamic type for extension
+         *
+         * EXTENDS_TYPE_OF
+         * SAME_TYPE_AS
+         *
+         * coarray inquify functions
+         * IMAGE_INDEX
+         * LCOBOUND
+         * UCOBOUND
+         *
+         * others
+         * STORAGE_SIZE
+         */
             return TRUE;
         default:
             break;
@@ -749,6 +783,69 @@ expv_is_specification_inquiry(expv x)
 
     return FALSE;
 }
+
+
+typedef struct {
+    const char * module_name;
+    const char * function_name;
+} inquiry_intrinsic_module_entry;
+
+
+const inquiry_intrinsic_module_entry inquiry_in_intrinsic_module_table[] = {
+    {"iso_c_binding",       "c_sizeof"},
+    {"iso_fortran_env",     "compiler_version"},
+    {NULL,                  "compiler_options"},
+    {"ieee_arithmetic",     "ieee_support_datatype"},
+    {NULL,                  "ieee_support_denormal"},
+    {NULL,                  "ieee_support_divide"},
+    {NULL,                  "ieee_support_inf"},
+    {NULL,                  "ieee_support_io"},
+    {NULL,                  "ieee_support_nan"},
+    {NULL,                  "ieee_support_rounding"},
+    {NULL,                  "ieee_support_sqrt"},
+    {NULL,                  "ieee_support_standard"},
+    {NULL,                  "ieee_support_underflow_control"},
+    {"ieee_exceptions",     "ieee_support_flag"},
+    {NULL,                  "ieee_support_halting"},
+    {NULL,                  NULL},
+};
+
+
+/**
+ * Checks if expv is an inquiry function of the intrinsic module
+ */
+static int
+expv_is_inquiry_in_intrinsic_module(const expv x)
+{
+    assert(x != NULL);
+
+    SYMBOL sym = EXPV_NAME(EXPR_ARG1(x));
+    ID id = find_ident(sym);
+
+    if (id != NULL &&
+        ID_USEASSOC_INFO(id) != NULL &&
+        MODULE_IS_INTRINSIC(ID_MODULE(id)) == TRUE) {
+        const inquiry_intrinsic_module_entry * entry = NULL;
+        const char * module_name = NULL;
+
+        for (entry = inquiry_in_intrinsic_module_table;
+             entry->module_name != NULL && entry->function_name != NULL;
+             entry++) {
+            if (entry->module_name != NULL) {
+                module_name = entry->module_name;
+            }
+
+            if (strcmp(module_name, SYM_NAME(ID_MODULE_NAME(id))) == 0 &&
+                strcmp(entry->function_name,
+                       SYM_NAME(ID_ORIGINAL_NAME(id)?:ID_SYM(id))) == 0) {
+                return TRUE;
+            }
+        }
+    }
+
+    return FALSE;
+}
+
 
 int
 expv_is_specification_function_call(expv x)
@@ -789,6 +886,9 @@ expv_is_specification_function_call(expv x)
         EXT_ID eid = arg != NULL ? PROC_EXT_ID(arg) : NULL;
         if (eid != NULL && EXT_IS_DUMMY(eid))
             return FALSE;
+        if (arg != NULL && ID_TYPE(arg) && IS_PROCEDURE_TYPE(ID_TYPE(arg)))
+            return FALSE;
+
     }
 
     return TRUE;
@@ -842,6 +942,11 @@ expv_is_restricted(expv x)
         if (base == NULL)
             return FALSE;
 
+        /* x is a part of constant */
+        if(expr_is_constant(base)) {
+            return TRUE;
+        }
+
         /* x is argument without optional or intent(out) or part of it. */
         if(expv_is_restricted_argument(base)) {
             return TRUE;
@@ -890,8 +995,9 @@ expv_is_restricted(expv x)
             return TRUE;
     }
 
+
     /* x is a specification inquiry */
-    if(expv_is_specification_inquiry(x)) {
+    if(expv_is_intrinsic_inquiry(x)) {
         /*check parameter*/
         list lp;
         expv v = EXPR_ARG2(x);
@@ -910,6 +1016,13 @@ expv_is_restricted(expv x)
        if (expv_list_is_restricted(EXPR_ARG2(x)))
            return TRUE;
     }
+
+    /* x is an inquiry function of the intrinsic module */
+    if(expv_is_inquiry_in_intrinsic_module(x)) {
+       if (expv_list_is_restricted(EXPR_ARG2(x)))
+           return TRUE;
+    }
+
 
     /* x is a specification function call. */
     if(expv_is_specification_function_call(x)) {
