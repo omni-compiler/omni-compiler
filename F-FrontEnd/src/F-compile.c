@@ -3381,6 +3381,21 @@ end_procedure()
         TYPE_SET_FOR_FUNC_SELF(EXT_PROC_TYPE(CURRENT_EXT_ID));
     }
 
+    /* expand CL_MULTI */
+    FOREACH_ID(id, LOCAL_SYMBOLS) {
+        if (ID_CLASS(id) == CL_MULTI && MULTI_ID_LIST(id) != NULL) {
+            ID ip, iq;
+            ID next;
+            SAFE_FOREACH_ID(ip, iq, MULTI_ID_LIST(id)) {
+                next = ID_NEXT(id);
+                ID_NEXT(id) = ip;
+                ID_NEXT(ip) = next;
+            }
+            MULTI_ID_LIST(id) = NULL;
+        }
+    }
+
+
     /* check undefined variable */
     FOREACH_ID(id, LOCAL_SYMBOLS) {
         if(ID_CLASS(id) == CL_UNKNOWN){
@@ -4438,6 +4453,19 @@ solve_use_assoc_conflict(ID id, ID mid)
         }
         return;
     }
+    if ((ID_CLASS(id) == CL_TAGNAME &&
+         (ID_CLASS(mid) == CL_PROC && IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(mid))))
+        ||
+        (ID_CLASS(mid) == CL_TAGNAME &&
+         (ID_CLASS(id) == CL_PROC && IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(id))))) {
+        ID next = ID_NEXT(id);
+        id_multilize(id);
+        ID_NEXT(id) = MULTI_ID_LIST(id);
+        ID_NEXT(ID_NEXT(id)) = next;
+        MULTI_ID_LIST(id) = NULL;
+        return;
+    }
+
     if(!id->use_assoc) {
         // conflict between (sub)program, argument, or module
         /* NOTE:
@@ -4451,7 +4479,7 @@ solve_use_assoc_conflict(ID id, ID mid)
                     SYM_NAME(ID_SYM(mid)),
                     SYM_NAME(mid->use_assoc->module_name));
         }
-        id->use_assoc_conflicted = TRUE;
+        ID_IS_AMBIGUOUS(id) = TRUE;
     } else {
         // conflict between use associated ids
         /* NOTE:
@@ -4480,7 +4508,7 @@ solve_use_assoc_conflict(ID id, ID mid)
                         SYM_NAME(id->use_assoc->module_name),
                         SYM_NAME(mid->use_assoc->module_name));
             }
-            id->use_assoc_conflicted = TRUE;
+            ID_IS_AMBIGUOUS(id) = TRUE;
         }
     }
 }
@@ -4499,7 +4527,15 @@ import_module_id(ID mid,
 
     if ((existed_id = find_ident_head(use_name?:ID_SYM(mid), *head)) != NULL) {
         solve_use_assoc_conflict(existed_id, mid);
-        return;
+        if (ID_CLASS(existed_id) == CL_MULTI) {
+            ID ip;
+            /* recheck tail */
+            FOREACH_ID(ip, *head) {
+                *tail = ip;
+            }
+        } else {
+            return;
+        }
     }
 
     id = new_ident_desc(ID_SYM(mid));
@@ -4927,6 +4963,14 @@ compile_INTERFACE_statement(expr x)
                 iid = declare_ident(s, CL_PROC);
                 if(iid == NULL)
                     return;
+            } else if(ID_CLASS(iid) == CL_TAGNAME) {
+                /*
+                 * There is the derived-type with the same name,
+                 * so turn id into the multi class identifier.
+                 */
+                id_multilize(iid);
+                iid = declare_ident(s, CL_PROC);
+
             } else if(ID_STORAGE(iid) == STG_UNKNOWN) {
                 ID_STORAGE(iid) = STG_EXT;
                 ID_CLASS(iid) = CL_PROC;
@@ -5105,10 +5149,14 @@ end_interface()
 
         /* add interface symbol to parent local symbols */
         iid = find_ident(EXT_SYM(intr));
+
         if(iid == NULL) {
             iid = declare_ident(EXT_SYM(intr), CL_PROC);
             if(iid == NULL)
                 return;
+        }
+        if (ID_CLASS(iid) == CL_MULTI) {
+            iid = multi_find_class(iid, CL_PROC);
         }
 
         /* type should be calculated from
@@ -6908,6 +6956,13 @@ define_internal_subprog(EXT_ID child_ext_ids)
             tp = EXT_PROC_TYPE(ep);
             FUNCTION_TYPE_SET_INTERNAL(tp);
             ip = find_ident(EXT_SYM(ep));
+            if (ID_CLASS(ip) == CL_MULTI) {
+                ip = multi_find_class(ip, CL_PROC);
+                if (ip == NULL) {
+                    fatal("multi class id bug");
+                    return;
+                }
+            }
             if (PROC_EXT_ID(ip) == ep)
                 continue;
             if (PROC_CLASS(ip) == P_UNDEFINEDPROC) {

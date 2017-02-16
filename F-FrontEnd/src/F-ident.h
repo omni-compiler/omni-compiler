@@ -32,6 +32,7 @@ enum name_class {
     CL_GENERICS,  /* generics name */
     CL_TYPE_PARAM, /* type parameter name */
     CL_TYPE_BOUND_PROC, /* type bound procedure */
+    CL_MULTI,     /* Both the derived type name and the generic procedure */
 };
 
 extern char *name_class_names[];
@@ -55,6 +56,7 @@ extern char *name_class_names[];
   "CL_GENERICS", \
   "CL_TYPE_PARAM", \
   "CL_TYPE_BOUND_PROCS", \
+  "CL_MULTI",   \
 }
 
 /* for CL_PROC  */
@@ -253,6 +255,10 @@ typedef struct ident_descriptor
 #define TYPE_BOUND_PROCEDURE_IS_OPERATOR           0x0020
 #define TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT         0x0040
         } tbp_info;
+        struct {
+            /* for CL_MULTI */
+            struct ident_descriptor * id_list;
+        } multi_info;
     } info;
 } *ID;
 
@@ -391,6 +397,8 @@ struct use_assoc_info {
 #define TBP_IS_ASSIGNMENT(id) \
     (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
      TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT)
+
+#define MULTI_ID_LIST(id)     ((id)->info.multi_info.id_list)
 
 
 struct interface_info {

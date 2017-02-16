@@ -400,6 +400,7 @@ compile_expression(expr x)
 
             if (ID_CLASS(id) == CL_PROC ||
                 ID_CLASS(id) == CL_ENTRY ||
+                ID_CLASS(id) == CL_MULTI ||
                 ID_CLASS(id) == CL_UNKNOWN) {
                 expv vRet = NULL;
                 if (ID_CLASS(id) == CL_PROC && IS_SUBR(ID_TYPE(id))) {
@@ -447,6 +448,7 @@ compile_expression(expr x)
                 }
                 return vRet;
             }
+
             if (ID_CLASS(id) == CL_TAGNAME) {
                 return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
             }
@@ -2184,6 +2186,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
     expv a, v = NULL;
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
+    ID tagname = NULL;
 
     if (declare_function(f_id) == NULL) return NULL;
 
@@ -2200,6 +2203,11 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 type_GNUMERIC_ALL :
                 FUNCTION_TYPE_RETURN_TYPE(tp) ;
         goto line_info;
+    }
+
+    if (ID_CLASS(f_id) == CL_MULTI) {
+        tagname = multi_find_class(f_id, CL_TAGNAME);
+        f_id = multi_find_class(f_id, CL_PROC);
     }
 
     switch (PROC_CLASS(f_id)) {
@@ -2290,7 +2298,12 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 modProcType = choose_module_procedure_by_args(modProcs, a);
                 if (modProcType != NULL) {
                     tp = modProcType;
+
+                } else if (tagname != NULL) {
+                    return compile_struct_constructor(tagname, NULL, args);
+
                 } else {
+
                     warning_at_id(f_id, "can't determine a function to "
                                     "be actually called for a generic "
                                     "interface function call of '%s', "

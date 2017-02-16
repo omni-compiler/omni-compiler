@@ -947,6 +947,14 @@ declare_variable(ID id)
 ID
 declare_function(ID id)
 {
+    if (ID_CLASS(id) == CL_MULTI) {
+        id = multi_find_class(id , CL_PROC);
+        if (id == NULL) {
+            fatal("multi class id bug");
+            return id;
+        }
+    }
+
     if (ID_CLASS(id) == CL_UNKNOWN) {
         /* if name class is unknown, define it as CL_PROC */
         ID_CLASS(id) = CL_PROC;
@@ -1414,9 +1422,19 @@ declare_ident(SYMBOL s, enum name_class class)
                 return ip;
             }
 
+            if (ID_CLASS(ip) == CL_MULTI &&
+                (class == CL_TAGNAME || class == CL_PROC)) {
+                symbols = &MULTI_ID_LIST(ip);
+                FOREACH_ID(ip, *symbols) {
+                    last_ip = ip;
+                }
+                break;
+            }
+
             if (class == CL_UNKNOWN) {
                 return ip;
             }
+
             /* define name class */
             if (ID_CLASS(ip) == CL_UNKNOWN) {
                 ID_CLASS(ip) = class;
@@ -1853,6 +1871,16 @@ declare_struct_type(expr ident)
             if (ID_CLASS(id) == CL_UNKNOWN) {
                 ID_CLASS(id) = CL_TAGNAME;
                 ID_STORAGE(id) = STG_TAGNAME;
+
+            } else if (ID_CLASS(id) == CL_PROC &&
+                  ID_TYPE(id) != NULL &&
+                  IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(id))) {
+                /*
+                 * There is the generic procedure with the same name,
+                 * so turn id into the multi class identifier.
+                 */
+                id_multilize(id);
+                id = declare_ident(sp, CL_TAGNAME);
             } else {
                 error("identifier '%s' is already used", ID_NAME(id));
             }

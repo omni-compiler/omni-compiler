@@ -42,6 +42,8 @@ static void     collect_types_inner(EXT_ID extid);
 static void     collect_type_desc(expv v);
 static int      id_is_visibleVar(ID id);
 static int      id_is_visibleVar_for_symbols(ID id);
+static void     mark_type_desc_in_id_list(ID ids);
+
 
 char s_timestamp[CEXPR_OPTVAL_CHARLEN] = { 0 };
 char s_xmlIndent[CEXPR_OPTVAL_CHARLEN] = "  ";
@@ -4014,6 +4016,9 @@ mark_type_desc_id(ID id)
                 EXT_PROC_TYPE(PROC_EXT_ID(id)) = sTp;
             }
             return;
+        case CL_MULTI:
+            mark_type_desc_in_id_list(MULTI_ID_LIST(id));
+            return;
         default:
             return;
     }
@@ -4543,6 +4548,9 @@ id_is_visibleVar(ID id)
     }
 
     switch(ID_CLASS(id)) {
+    case CL_MULTI:
+        return FALSE;
+        break;
     case CL_VAR:
         if(TYPE_IS_MODIFIED(ID_TYPE(id)))
             return TRUE;
@@ -4567,6 +4575,7 @@ id_is_visibleVar(ID id)
                 return FALSE;
             }
         }
+        /* FALL THROUGH */
     default:
         switch(ID_STORAGE(id)) {
         case STG_TAGNAME:
