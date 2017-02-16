@@ -879,6 +879,10 @@ compile_expression(expr x)
             expv v = NULL;
             v = compile_expression(EXPR_ARG1(x));
             if(v != NULL) v = expv_reduce_kind(v);
+            if(v != NULL && !expv_is_specification(v)){
+                error_at_node(EXPR_ARG1(x),
+                    "kind must be a specification expression.");
+            }
             if (v != NULL) {
                 EXPV_KWOPT_NAME(v) = (const char *)strdup("kind");
             }
@@ -1078,6 +1082,7 @@ compile_ident_expression(expr x)
         ret = expv_sym_term(F_VAR,NULL,ID_SYM(id));
         goto done;
     }
+
 
     if(ID_CLASS(id) == CL_PARAM){
         if(VAR_INIT_VALUE(id) != NULL) 
