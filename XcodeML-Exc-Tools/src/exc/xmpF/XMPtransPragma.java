@@ -167,7 +167,7 @@ public class XMPtransPragma
           if (ident.isCoarray() && ((block == null && ident.getAlias() == null) ||
                                     (block != null && ident.getAlias() != null)    )) {
             XMPcoarray coarray = new XMPcoarray(ident, env);
-            coarray.build_setMappingNodes(prolog);
+            coarray.build_setMappingNodes(prolog, block);
           }
         }
     }

@@ -205,10 +205,10 @@ release:
 	  echo "Exist ! $(WORKDIR). Please delete it."; exit 1; \
 	fi; \
 	cp -a . $(WORKDIR); cd $(WORKDIR); \
-	rm -rf .git .gitignore; \
-	sh autogen.sh; ./configure; make clean; make clean-tests; \
+	sh autogen.sh; ./configure; \
+	rm -rf .git .gitignore; make clean; make clean-tests; \
 	cd /tmp; tar cjf $(PACKAGE_NAME).tar.bz2 $(PACKAGE_NAME); \
-	echo "/tmp/Created $(PACKAGE_NAME).tar.bz2"; \
+	echo "Created /tmp/$(PACKAGE_NAME).tar.bz2"; \
 	rm -rf $(WORKDIR)
 
 remote-tests:

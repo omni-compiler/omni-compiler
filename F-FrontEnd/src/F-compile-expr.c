@@ -1094,7 +1094,17 @@ compile_ident_expression(expr x)
         }
 
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
-        ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
+
+        if (ID_ADDR(id)) {
+            /*
+             * Renaming trick:
+             *  EXPV_NAME(ID_ADDR(id)) might be replaced to other name in
+             *  compile_FORALL_statement().
+             */
+            ret = expv_sym_term(F_VAR, tp, EXPV_NAME(ID_ADDR(id)));
+        } else {
+            ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
+        }
         goto done;
     }
 
@@ -2344,28 +2354,6 @@ err:
 }
 
 static int
-id_link_remove(ID * head, ID tobeRemoved)
-{
-    ID ip, pre = NULL;
-    if (head == NULL) return FALSE;
-
-    FOREACH_ID(ip, *head) {
-        if (ID_SYM(ip) == ID_SYM(tobeRemoved)) {
-            if (pre == NULL) {
-                *head = ID_NEXT(ip);
-            } else {
-                ID_NEXT(pre) = ID_NEXT(ip);
-            }
-            return TRUE;
-        }
-        pre = ip;
-    }
-    return FALSE;
-}
-
-
-
-static int
 type_param_values_required0(TYPE_DESC struct_tp, ID * head, ID * tail)
 {
     ID ip;
@@ -2664,8 +2652,10 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
         }
 
         if (is_use_associated && ID_TYPE(match) != NULL &&
-            (TYPE_IS_INTERNAL_PRIVATE(match) ||
-             TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match)))) {
+            ((TYPE_IS_INTERNAL_PRIVATE(match) ||
+              TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match))) &&
+             !(TYPE_IS_PUBLIC(match) ||
+               TYPE_IS_PUBLIC(ID_TYPE(match))))) {
             error("accessing a private component");
             return FALSE;
         }

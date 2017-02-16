@@ -100,6 +100,7 @@ enum storage_class {
     STG_TAGNAME, /* derived type name  */
     STG_NONE,    /* for intrinsic, stfunction */
     STG_TYPE_PARAM, /* type parameter */
+    STG_INDEX, /* indexes of forall */
 
 };
 
@@ -117,6 +118,7 @@ extern char *storage_class_names[];
  "STG_TAGNAME", \
  "STG_NONE",    \
  "STG_TYPE_PARAM", \
+ "STG_INDEX", \
 }
 
 /* statement label for CL_LABEL */
