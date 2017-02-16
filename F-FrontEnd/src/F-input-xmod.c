@@ -2992,7 +2992,7 @@ input_declarations(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent,
         } else if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
                                 "FimportDecl")) {
             if (!input_FimportDecl(reader))
-                return FALSE;                                
+                return FALSE;
         } else {
             fprintf(stderr, "unexpected node: %s in <declarations> node.\n",
                     (const char *)xmlTextReaderConstName(reader));
@@ -3072,6 +3072,9 @@ input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable * ht, ID id_list)
 
     if (name != NULL) {
         id = find_ident_head(find_symbol(name), id_list);
+        if (ID_CLASS(id) == CL_TAGNAME) { /* for multi class */
+            id = find_ident_head(ID_SYM(id), ID_NEXT(id));
+        }
         free(name);
     } else {
         assert(is_assignment != NULL); /* must be assignment */
