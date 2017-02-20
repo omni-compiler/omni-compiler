@@ -1502,7 +1502,7 @@ if test x${use_tca} = xyes; then
 fi
 
 use_mpi3_onesided=no
-if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu"; then
+if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu" -a "x${target}" != "xFX10-linux-gnu" -a "x${target}" != "xFX100-linux-gnu" ; then
     use_mpi3_onesided=yes
 fi
 
