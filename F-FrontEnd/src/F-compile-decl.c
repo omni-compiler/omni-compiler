@@ -2609,8 +2609,8 @@ compile_basic_type(expr x)
 
     if(tp == NULL) {
         tp = type_basic(t);
-	//TYPE_KIND(tp) = org_vkind ? org_vkind : vkind;
-	TYPE_KIND(tp) = vkind;
+        //TYPE_KIND(tp) = org_vkind ? org_vkind : vkind;
+        TYPE_KIND(tp) = vkind;
     }
 
     return tp;
@@ -3389,6 +3389,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
     int len;
     list lp;
     ID id;
+    SYMBOL resS = NULL;
     expr v;
     int hasDimsInAttr = FALSE;
     int hasPointerAttr = FALSE;
@@ -3446,10 +3447,22 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
     if (typeExpr != NULL) {
         tp0 = compile_type(typeExpr, hasPointerAttr);
-        if (tp0 == NULL)
+        if (tp0 == NULL) {
+            error_at_node(typeExpr, "Invalid type spec");
             return;
+        }
     } else if (baseTp != NULL) {
         tp0 = baseTp;
+    }
+
+    /*
+     * Check result var
+     */
+    if (CURRENT_PROCEDURE != NULL &&
+        ctl_top == ctl_base && /* not in BLOCK */
+        PROC_RESULTVAR(CURRENT_PROCEDURE) != NULL) {
+        expr resX = PROC_RESULTVAR(CURRENT_PROCEDURE);
+        resS = EXPR_SYM(resX);
     }
 
     FOR_ITEMS_IN_LIST(lp, decl_list) {
@@ -3675,14 +3688,16 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
 
         if (value != NULL && EXPR_CODE(value) != F_DATA_DECL) {
 
-	  // to be checked for function results.
-	  if (ID_IS_DUMMY_ARG(id) || ID_CLASS(id) == CL_PROC ||
-	      TYPE_IS_ALLOCATABLE(tp) || TYPE_IS_POINTER(tp) ||
-	      TYPE_IS_EXTERNAL(tp) || TYPE_IS_INTRINSIC(tp)){
-	    error_at_node(decl_list, "%s cannot have an initializer.", ID_NAME(id));
-	    return;
-	  }
-	  
+            /*
+             * to be checked for function results.
+             */
+            if (ID_IS_DUMMY_ARG(id) || ID_CLASS(id) == CL_PROC ||
+                TYPE_IS_ALLOCATABLE(tp) ||
+                TYPE_IS_EXTERNAL(tp) || TYPE_IS_INTRINSIC(tp) || ID_SYM(id) == resS) {
+                error_at_node(decl_list, "%s cannot have an initializer.", ID_NAME(id));
+                return;
+            }
+
             /*
              * FIXME:
              *	SUPER BOGUS FLAG ALERT !

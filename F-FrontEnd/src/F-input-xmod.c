@@ -3294,7 +3294,17 @@ input_module(xmlTextReaderPtr reader, struct module * mod, int is_intrinsic)
         "OmniFortranModule"))
         return FALSE;
 
-    mod->is_intrinsic = is_intrinsic;
+    MODULE_IS_INTRINSIC(mod) = is_intrinsic;
+    if (MODULE_IS_INTRINSIC(mod)) {
+        /*
+         * The parameters from the intrinsic module should not be expanded,
+         * so remove initial value of thems.
+         */
+        ID id;
+        FOREACH_ID(id, MODULE_ID_LIST(mod)) {
+            VAR_INIT_VALUE(id) = NULL;
+        }
+    }
 
     /*
      * Update insuffcient types
