@@ -146,6 +146,24 @@ public class Bcons
         return FOR(init, cond, iter, body, null);
     }
 
+    /** create 'forall' statement block */
+    public static Block FforAll(Xobject v) // (construct_name or null) (VAR INDEX_RANGE)+ [condition] body
+    {
+        String construct_name = (v.getArgOrNull(0) != null) ? v.getArgOrNull(0).getName() : null;
+        XobjList ind_var_range = new XobjList();
+        int idx;
+        for (idx = 1; v.getArg(idx).Opcode() == Xcode.VAR; idx = idx + 2)
+            if (v.getArg(idx + 1).Opcode() == Xcode.F_INDEX_RANGE)
+                ind_var_range.add(new XobjList(null, v.getArg(idx), v.getArg(idx + 1)));
+            else
+                break;
+        BasicBlock cond = null;
+        if (v.getArg(idx).Opcode() != Xcode.F_STATEMENT_LIST)
+            cond = BasicBlock.Cond(v.getArg(idx++));
+        BlockList body = buildList(v.getArg(idx));
+        return new FforAllBlock(cond, ind_var_range, body, construct_name);
+    }
+
     /** create 'for' statement block */
     public static Block FORall(Xobject ind_var, Xobject lb, Xobject ub, Xobject step,
 			       Xcode checkOp, BlockList body)
@@ -442,6 +460,9 @@ public class Bcons
             return IF(BasicBlock.Cond(v.getArg(0)), buildList(v.getArg(1)),
 		      buildList(v.getArg(2)));
             
+        case F_FORALL_STATEMENT: /* (FORALL construct_name index_range cond body) */
+            return FforAll(v);
+
         case FOR_STATEMENT: /* (FOR init cond iter body) */
             return FOR(BasicBlock.Statement(v.getArg(0)), BasicBlock.Cond(v.getArg(1)),
 		       BasicBlock.Statement(v.getArg(2)), buildList(v.getArg(3)));
