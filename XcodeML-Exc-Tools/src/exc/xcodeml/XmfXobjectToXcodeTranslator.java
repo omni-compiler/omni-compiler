@@ -793,6 +793,27 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = transValue(xobj);
             break;
 
+        case F_FORALL_STATEMENT: {
+              e = createElement(name, "construct_name",
+                                      (xobj.getArg(0) != null) ? xobj.getArg(0).getName() : null);
+              addChildNode(e, trans(xobj.getArg(1))); // VAR 1
+              addChildNode(e, trans(xobj.getArg(2))); // INDEX_RANGE 1
+              int idx = 3;
+              if (xobj.getArgOrNull(idx + 1) == null) {
+                  // 0:LABEL , 1:VAR1 , 2:INDEX_RANGE1 , 3:BODY
+                  // just continue...
+              } else {
+                  while (xobj.getArgOrNull(idx + 2) != null)
+                      addChildNode(e, trans(xobj.getArg(idx++)));
+                  if ((idx % 2) == 1)
+                      addChildNode(e, addChildNode(createElement("condition"), trans(xobj.getArg(idx++))));
+                  else
+                      addChildNode(e, trans(xobj.getArg(idx++)));
+              }
+              addChildNode(e, transBody(xobj.getArg(idx)));
+              break;
+            }
+
         case NULL:
             return null;
         case STRING:

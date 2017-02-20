@@ -147,6 +147,8 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_TYPE_BOUND_GENERIC_PROCEDURE , "typeBoundGenericProcedure"),
 			new XcodeMLName(Xcode.F_BINDING, "binding"),
 			new XcodeMLName(Xcode.F_MODULE_PROCEDURE_DEFINITION, "FmoduleProcedureDefinition"),
+			new XcodeMLName(Xcode.F_FORALL_STATEMENT, "forallStatement"),
+			new XcodeMLName(Xcode.F_CONDITION, "condition"),
 	};
 
 	// constructor
