@@ -68,13 +68,15 @@ public class FforAllBlock extends CondBlock
     public String toString()
     {
         StringBuilder s = new StringBuilder(256);
-        s.append("(CondBlock ");
-        s.append(Opcode());
-        s.append(" ");
+        s.append("(FforAllBlock construct_name[");
+        s.append((getConstructNameObj() != null) ? getConstructNameObj() : "(no name)");
+        s.append("] index_range[");
+        s.append(getInductionVarRange());
+        s.append("] condition[");
+        s.append((getBasicBlock() != null) ? getBasicBlock().getExpr() : "(no condition)");
+        s.append("] body[");
         s.append(body);
-        s.append(" ");
-        s.append(getBasicBlock());
-        s.append(")");
+        s.append("])");
         return s.toString();
     }
 }
