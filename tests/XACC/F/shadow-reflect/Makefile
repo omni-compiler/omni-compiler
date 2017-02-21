@@ -1,5 +1,5 @@
 XFC     = xmpf90
-FCFLAGS = -xacc --Wn"-acc -Minfo=accel" --Wl-acc -lstdc++
+FCFLAGS = -xacc -lstdc++
 TESTS   = $(wildcard *.f90)
 EXES    = $(TESTS:.f90=.x)
 OBJS    = $(TESTS:.f90=.o)
@@ -26,6 +26,7 @@ run: $(EXES)
 	$(XRUN) -n 2 $(XRUN_ENV) ./reflect_array4d_dist4d.x
 	$(XRUN) -n 2 $(XRUN_ENV) ./reflect_array4d_dist4d_width2.x
 	$(XRUN) -n 2 $(XRUN_ENV) ./reflect_array4d_dist4d_width2_2.x
+	$(XRUN) -n 2 $(XRUN_ENV) ./reflect_array2d_dist2d_l1u0.x
 
 submit: $(EXES) $(XSCRIPT)
 	$(XSUBMIT) $(XSCRIPT)
