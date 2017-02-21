@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([Omni Compiler], [1.1.0], [omni-compiler@googlegroups.com], [omni])
+AC_INIT([Omni Compiler], [1.1.1], [omni-compiler@googlegroups.com], [omni])
 AC_CONFIG_AUX_DIR([./buildutils])
 AC_CONFIG_MACRO_DIR([./buildutils])
 AC_CANONICAL_TARGET
@@ -1502,7 +1502,7 @@ if test x${use_tca} = xyes; then
 fi
 
 use_mpi3_onesided=no
-if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu"; then
+if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu" -a "x${target}" != "xFX10-linux-gnu" -a "x${target}" != "xFX100-linux-gnu" ; then
     use_mpi3_onesided=yes
 fi
 
@@ -2194,16 +2194,15 @@ unset program_transform_name
 #--------------------------------------------------------------------
 # Set version file
 VERSIONTXT="./Driver/etc/version"
-echo -n Version:AC_PACKAGE_VERSION > ${VERSIONTXT}
 
 # If possible, set more information
 if test -d .git || test -f .git; then
     which git 1>/dev/null 2>/dev/null
     if test $? -eq 0; then
-        VERSION=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
-        echo -n Version:AC_PACKAGE_VERSION, ${VERSION} > ${VERSIONTXT}
+        VERSION_INFO=`git log --date=short --pretty=format:"Last Commit Day:%ad, Hash Value:%h" -1`
+        echo -n Version:AC_PACKAGE_VERSION, ${VERSION_INFO} > ${VERSIONTXT}
     else
-        echo -n "This omni compiler was compiled on no-git environment however git clone it." > ${VERSIONTXT}
+        echo -n Version:AC_PACKAGE_VERSION > ${VERSIONTXT}
     fi
 fi
 

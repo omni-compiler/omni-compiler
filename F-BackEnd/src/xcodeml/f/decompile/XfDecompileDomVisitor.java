@@ -131,8 +131,8 @@ public class XfDecompileDomVisitor {
 
         XmfWriter writer = _context.getWriter();
 
-        /* public, private are allowed only in module definition */
-        if (_isUnderModuleDef()) {
+        /* public, private are allowed only in module definition OR in derived-type definition */
+        if (_isUnderModuleDef() || _isUnderFstructType()) {
             for (Node basicTypeNode : basicTypeNodeArray) {
                 if (XmDomUtil.getAttrBool(basicTypeNode, "is_public")) {
                     writer.writeToken(", ");
@@ -464,7 +464,7 @@ public class XfDecompileDomVisitor {
         return typeList;
     }
 
-    private boolean _writeTopType(XfTypeManagerForDom.TypeList typeList) {
+    private boolean _writeTopType(XfTypeManagerForDom.TypeList typeList, Boolean isDeclaration) {
         Node topTypeChoice = typeList.getFirst();
         Node lowTypeChoice = typeList.getLast();
 
@@ -473,6 +473,13 @@ public class XfDecompileDomVisitor {
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
+
+        if (!isDeclaration) {
+            assert (!isClass);
+            assert (!isProcedure);
+            isClass = false;
+            isProcedure = false;
+        }
 
         String topTypeName = topTypeChoice.getNodeName();
         if ("FbasicType".equals(topTypeName) && !isClass && !isProcedure) {
@@ -509,7 +516,7 @@ public class XfDecompileDomVisitor {
                         writer.writeToken(returnType.fortranName());
                     } else {
                         XfTypeManagerForDom.TypeList returnTypeList = getTypeList(returnTypeId);
-                        _writeTopType(returnTypeList);
+                        _writeTopType(returnTypeList, true);
                     }
                 }
             }
@@ -519,19 +526,23 @@ public class XfDecompileDomVisitor {
             String aliasStructTypeName =
                     typeManager.getAliasTypeName(XmDomUtil.getAttr(topTypeChoice,
                             "type"));
-            if (isClass) {
-                writer.writeToken("CLASS");
-            } else {
-                writer.writeToken("TYPE");
+            if (isDeclaration) {
+                if (isClass) {
+                    writer.writeToken("CLASS");
+                } else {
+                    writer.writeToken("TYPE");
+                }
+                writer.writeToken("(");
             }
-            writer.writeToken("(");
             writer.writeToken(aliasStructTypeName);
             if (typeParamValues != null) {
                 writer.writeToken("(");
                 _invokeChildEnterAndWriteDelim(typeParamValues, ",");
                 writer.writeToken(")");
             }
-            writer.writeToken(")");
+            if (isDeclaration) {
+                writer.writeToken(")");
+            }
         } else {
             /* Unexpected type */
             return false;
@@ -603,7 +614,7 @@ public class XfDecompileDomVisitor {
             _writeFunctionSymbol(symbol, topTypeChoice, node);
             _writeDeclAttr(topTypeChoice, lowTypeChoice);
         } else {
-            if (!_writeTopType(typeList)) {
+            if (!_writeTopType(typeList, true)) {
                 throw new XmTranslationException(node, "Unexpected type");
             }
         }
@@ -850,6 +861,10 @@ public class XfDecompileDomVisitor {
      */
     private boolean _isUnderModuleDef() {
         return _isInvokeNodeOf("FmoduleDefinition", 2);
+    }
+
+    private boolean _isUnderFstructType() {
+        return _isInvokeAncestorNodeOf("FstructDecl");
     }
 
     /**
@@ -2020,12 +2035,26 @@ public class XfDecompileDomVisitor {
          *      XbfFarrayConstructor)
          */
         @Override public void enter(Node n) {
+            String elementTypeId = XmDomUtil.getAttr(n, "element_type");
+
             XmfWriter writer = _context.getWriter();
-            writer.writeToken("(/ ");
 
-            _invokeChildEnterAndWriteDelim(n, ", ");
+            writer.writeToken("(/");
 
-            writer.writeToken(" /)");
+            if (!XfUtilForDom.isNullOrEmpty(elementTypeId)) {
+                XfType elementType = XfType.getTypeIdFromXcodemlTypeName(elementTypeId);
+                if (elementType.isPrimitive()) {
+                    writer.writeToken(elementType.fortranName());
+                } else {
+                    XfTypeManagerForDom.TypeList typeList = getTypeList(elementTypeId);
+                    _writeTopType(typeList, false);
+                }
+                writer.writeToken("::");
+            }
+
+            _invokeChildEnterAndWriteDelim(n, ",");
+
+            writer.writeToken("/)");
         }
     }
 
@@ -3905,6 +3934,7 @@ public class XfDecompileDomVisitor {
         }
     }
 
+
     // FnamelistDecl
     class FnamelistDeclVisitor extends XcodeNodeVisitor {
         /**
@@ -4941,8 +4971,6 @@ public class XfDecompileDomVisitor {
                     writer.writeToken("BIND( " + bind.toUpperCase() + " )");
                 }
             }
-
-
 
             writer.writeToken(" :: ");
             writer.writeToken(structTypeName);
@@ -6608,8 +6636,6 @@ public class XfDecompileDomVisitor {
             Node declarations = XmDomUtil.getElement(n, "declarations");
             invokeEnter(declarations);
 
-            writer.setupNewLine();
-
             writeVolatileOrAsynchronousStatements(declarations);
 
             invokeEnter(XmDomUtil.getElement(n, "body"));
@@ -6619,6 +6645,79 @@ public class XfDecompileDomVisitor {
 
             writer.writeToken("END");
             writer.writeToken("BLOCK");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+            }
+            writer.setupNewLine();
+        }
+    }
+
+    // forallStatement
+    class ForallStatementVisitor extends XcodeNodeVisitor {
+        /**
+         * Decompile "forallStatement" element in XcodeML/F.
+         */
+        @Override public void enter(Node n) {
+            _writeLineDirective(n);
+
+            XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+            XmfWriter writer = _context.getWriter();
+
+            String constructName = XmDomUtil.getAttr(n, "construct_name");
+            if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
+                writer.writeToken(constructName);
+                writer.writeToken(":");
+            }
+            writer.writeToken("FORALL");
+
+            writer.writeToken("(");
+
+            String typeName = XmDomUtil.getAttr(n, "type");
+            if (!XfUtilForDom.isNullOrEmpty(typeName)) {
+                XfType type = XfType.getTypeIdFromXcodemlTypeName(typeName);
+                if (type.isPrimitive()) {
+                    writer.writeToken(type.fortranName());
+                } else {
+                    XfTypeManagerForDom.TypeList typeList = getTypeList(typeName);
+                    _writeTopType(typeList, false);
+                }
+                writer.writeToken("::");
+            }
+
+            Boolean first = true;
+            NodeList list = n.getChildNodes();
+            for (int i = 0; i < list.getLength(); i++) {
+                if (list.item(i).getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                if ("Var".equals(list.item(i).getNodeName())) {
+                    if (!first) {
+                         writer.writeToken(",");
+                    }
+                    first = false;
+                    Node m = list.item(i);
+                    invokeEnter(m);
+                    writer.writeToken("=");
+                } else if ("indexRange".equals(list.item(i).getNodeName())) {
+                    invokeEnter(list.item(i));
+                }
+            }
+
+            Node condition = XmDomUtil.getElement(n, "condition");
+            if (condition != null) {
+                writer.writeToken(",");
+                _invokeChildEnter(condition);
+            }
+
+            writer.writeToken(")");
+            writer.setupNewLine();
+
+            writer.incrementIndentLevel();
+            invokeEnter(XmDomUtil.getElement(n, "body"));
+            writer.decrementIndentLevel();
+
+            writer.writeToken("END");
+            writer.writeToken("FORALL");
             if (XfUtilForDom.isNullOrEmpty(constructName) == false) {
                 writer.writeToken(constructName);
             }
@@ -6977,5 +7076,6 @@ public class XfDecompileDomVisitor {
         new Pair("syncStat", new SyncStatVisitor()),
         new Pair("blockStatement", new BlockStatementVisitor()),
         new Pair("FmoduleProcedureDefinition", new FmoduleProcedureDefinitionVisitor()),
+        new Pair("forallStatement", new ForallStatementVisitor()),
     };
 }

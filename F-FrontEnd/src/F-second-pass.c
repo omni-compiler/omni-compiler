@@ -318,6 +318,7 @@ static void second_pass_expv_scan(expv v)
   case ARRAY_REF:
   case F_SUBSTR_REF:
   case F95_ARRAY_CONSTRUCTOR:
+  case F03_TYPEIS_STATEMENT:
   case F95_STRUCT_CONSTRUCTOR:
 
   case XMP_COARRAY_REF:

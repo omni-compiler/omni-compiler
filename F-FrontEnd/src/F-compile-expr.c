@@ -400,6 +400,7 @@ compile_expression(expr x)
 
             if (ID_CLASS(id) == CL_PROC ||
                 ID_CLASS(id) == CL_ENTRY ||
+                ID_CLASS(id) == CL_MULTI ||
                 ID_CLASS(id) == CL_UNKNOWN) {
                 expv vRet = NULL;
                 if (ID_CLASS(id) == CL_PROC && IS_SUBR(ID_TYPE(id))) {
@@ -447,6 +448,7 @@ compile_expression(expr x)
                 }
                 return vRet;
             }
+
             if (ID_CLASS(id) == CL_TAGNAME) {
                 return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
             }
@@ -876,7 +878,11 @@ compile_expression(expr x)
         case F95_KIND_SELECTOR_SPEC: {
             expv v = NULL;
             v = compile_expression(EXPR_ARG1(x));
-            if(v != NULL) v = expv_reduce_kind(v);
+            if (v != NULL) v = expv_reduce_kind(v)?:v;
+            if(v != NULL && !expv_is_specification(v)){
+                error_at_node(EXPR_ARG1(x),
+                    "kind must be a specification expression.");
+            }
             if (v != NULL) {
                 EXPV_KWOPT_NAME(v) = (const char *)strdup("kind");
             }
@@ -1077,6 +1083,7 @@ compile_ident_expression(expr x)
         goto done;
     }
 
+
     if(ID_CLASS(id) == CL_PARAM){
         if(VAR_INIT_VALUE(id) != NULL) 
             return VAR_INIT_VALUE(id);
@@ -1092,7 +1099,17 @@ compile_ident_expression(expr x)
         }
 
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
-        ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
+
+        if (ID_ADDR(id)) {
+            /*
+             * Renaming trick:
+             *  EXPV_NAME(ID_ADDR(id)) might be replaced to other name in
+             *  compile_FORALL_statement().
+             */
+            ret = expv_sym_term(F_VAR, tp, EXPV_NAME(ID_ADDR(id)));
+        } else {
+            ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
+        }
         goto done;
     }
 
@@ -1435,7 +1452,8 @@ expv_assignment(expv v1, expv v2)
     }
 /* FEAST add end */
 
-    if (EXPV_CODE(v2) == F95_ARRAY_CONSTRUCTOR) {
+    if (EXPV_CODE(v2) == F95_ARRAY_CONSTRUCTOR ||
+        EXPV_CODE(v2) == F03_TYPED_ARRAY_CONSTRUCTOR) {
         if (!IS_ARRAY_TYPE(tp1)) {
             error("lhs expr is not an array.");
             return NULL;
@@ -1450,6 +1468,7 @@ expv_assignment(expv v1, expv v2)
 
     if (TYPE_IS_RESHAPED(tp2) == FALSE &&
         EXPR_CODE(v2) != F95_ARRAY_CONSTRUCTOR &&
+        EXPR_CODE(v2) != F03_TYPED_ARRAY_CONSTRUCTOR &&
         ((TYPE_N_DIM(tp1) > 0 && TYPE_N_DIM(tp2) > 0) &&
          (are_dimension_and_shape_conformant(NULL, v1, v2,
                                              NULL) == FALSE))) {
@@ -2172,6 +2191,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
     expv a, v = NULL;
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
+    ID tagname = NULL;
 
     if (declare_function(f_id) == NULL) return NULL;
 
@@ -2188,6 +2208,11 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 type_GNUMERIC_ALL :
                 FUNCTION_TYPE_RETURN_TYPE(tp) ;
         goto line_info;
+    }
+
+    if (ID_CLASS(f_id) == CL_MULTI) {
+        tagname = multi_find_class(f_id, CL_TAGNAME);
+        f_id = multi_find_class(f_id, CL_PROC);
     }
 
     switch (PROC_CLASS(f_id)) {
@@ -2278,7 +2303,12 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 modProcType = choose_module_procedure_by_args(modProcs, a);
                 if (modProcType != NULL) {
                     tp = modProcType;
+
+                } else if (tagname != NULL) {
+                    return compile_struct_constructor(tagname, NULL, args);
+
                 } else {
+
                     warning_at_id(f_id, "can't determine a function to "
                                     "be actually called for a generic "
                                     "interface function call of '%s', "
@@ -2327,28 +2357,6 @@ line_info:
 err:
     return NULL;
 }
-
-static int
-id_link_remove(ID * head, ID tobeRemoved)
-{
-    ID ip, pre = NULL;
-    if (head == NULL) return FALSE;
-
-    FOREACH_ID(ip, *head) {
-        if (ID_SYM(ip) == ID_SYM(tobeRemoved)) {
-            if (pre == NULL) {
-                *head = ID_NEXT(ip);
-            } else {
-                ID_NEXT(pre) = ID_NEXT(ip);
-            }
-            return TRUE;
-        }
-        pre = ip;
-    }
-    return FALSE;
-}
-
-
 
 static int
 type_param_values_required0(TYPE_DESC struct_tp, ID * head, ID * tail)
@@ -2591,7 +2599,7 @@ get_struct_members(TYPE_DESC struct_tp)
 
 
 static int
-compile_struct_constructor_components(ID struct_id, expr args, expv components)
+compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr args, expv components)
 {
     int has_keyword = FALSE;
     list lp;
@@ -2599,13 +2607,14 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
     ID match = NULL;
     SYMBOL sym;
     expv v;
-    TYPE_DESC struct_tp;
 
     // Check PRIVATE components
     // (PRIVATE works if the derived type is use-associated)
     int is_use_associated = ID_USEASSOC_INFO(struct_id) != NULL;
 
-    struct_tp = ID_TYPE(struct_id);
+    if (struct_tp == NULL) {
+        struct_tp = ID_TYPE(struct_id);
+    }
 
     members = get_struct_members(struct_tp);
     cur = members;
@@ -2649,8 +2658,10 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
         }
 
         if (is_use_associated && ID_TYPE(match) != NULL &&
-            (TYPE_IS_INTERNAL_PRIVATE(match) ||
-             TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match)))) {
+            ((TYPE_IS_INTERNAL_PRIVATE(match) ||
+              TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match))) &&
+             !(TYPE_IS_PUBLIC(match) ||
+               TYPE_IS_PUBLIC(ID_TYPE(match))))) {
             error("accessing a private component");
             return FALSE;
         }
@@ -2688,7 +2699,9 @@ expv
 compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 {
     expv result, component;
-    TYPE_DESC tp, base_stp;
+    TYPE_DESC applied_type = NULL;
+    TYPE_DESC base_stp;
+    TYPE_DESC tp;
 
     assert(ID_TYPE(struct_id) != NULL);
 
@@ -2698,15 +2711,6 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
     base_stp = find_struct_decl(ID_SYM(struct_id));
     assert(EXPV_TYPE(result) != NULL);
 
-    if(args) {
-        EXPV_LINE(result) = EXPR_LINE(args);
-
-        if (!compile_struct_constructor_components(struct_id,
-                                                   args, component)) {
-            return NULL;
-        }
-    }
-
     if (type_param_args) {
         tp = type_apply_type_parameter(base_stp, type_param_args);
         EXPR_ARG1(result) = TYPE_TYPE_PARAM_VALUES(tp);
@@ -2715,7 +2719,19 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
               SYM_NAME(ID_SYM(struct_id)));
         return NULL;
     } else {
-        tp = wrap_type(base_stp);
+        tp = base_stp;
+    }
+
+    if(args) {
+        EXPV_LINE(result) = EXPR_LINE(args);
+        if (!compile_struct_constructor_components(struct_id, tp,
+                                                   args, component)) {
+            return NULL;
+        }
+    }
+
+    if (tp == base_stp) {
+        tp = wrap_type(tp);
     }
 
     EXPV_TYPE(result) = tp;
@@ -3076,10 +3092,17 @@ compile_array_constructor(expr x)
     list lp;
     expv v, res, l;
     TYPE_DESC tp;
+    TYPE_DESC base_type = NULL;
     BASIC_DATA_TYPE elem_type = TYPE_UNKNOWN;
 
     l = list0(LIST);
-    res = list1(F95_ARRAY_CONSTRUCTOR, l);
+    if ((base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) != NULL) {
+        elem_type = get_basic_type(base_type);
+        res = list1(F03_TYPED_ARRAY_CONSTRUCTOR, l);
+    } else {
+        res = list1(F95_ARRAY_CONSTRUCTOR, l);
+    }
+
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
         nElems++;
         v = compile_expression(LIST_ITEM(lp));
@@ -3093,10 +3116,19 @@ compile_array_constructor(expr x)
             error("Array constructor elements have different data types.");
             return NULL;
         }
+
+        if (base_type) {
+            if (!type_is_soft_compatible(base_type, tp)) {
+                error("Unexpected element type");
+                return NULL;
+            }
+        }
     }
 
     assert(elem_type != TYPE_UNKNOWN);
-    if (elem_type == TYPE_CHAR) {
+    if (base_type) {
+        tp = base_type;
+    } else if (elem_type == TYPE_CHAR) {
         tp = type_char(-1);
     } else if (elem_type != TYPE_STRUCT) {
         tp = type_basic(elem_type);

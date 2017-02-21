@@ -42,6 +42,8 @@ static void     collect_types_inner(EXT_ID extid);
 static void     collect_type_desc(expv v);
 static int      id_is_visibleVar(ID id);
 static int      id_is_visibleVar_for_symbols(ID id);
+static void     mark_type_desc_in_id_list(ID ids);
+
 
 char s_timestamp[CEXPR_OPTVAL_CHARLEN] = { 0 };
 char s_xmlIndent[CEXPR_OPTVAL_CHARLEN] = "  ";
@@ -137,6 +139,7 @@ xtag(enum expr_code code)
     case F95_CYCLE_STATEMENT:       return "FcycleStatement";
     case F95_EXIT_STATEMENT:        return "FexitStatement";
     case F_ENTRY_STATEMENT:         return "FentryDecl";
+    case F_FORALL_STATEMENT:        return "forallStatement";
 
     /*
      * IO statements
@@ -172,6 +175,7 @@ xtag(enum expr_code code)
     case ARRAY_REF:                 return "FarrayRef";
     case F_SUBSTR_REF:              return "FcharacterRef";
     case F95_ARRAY_CONSTRUCTOR:     return "FarrayConstructor";
+    case F03_TYPED_ARRAY_CONSTRUCTOR: return "FarrayConstructor";
     case F95_STRUCT_CONSTRUCTOR:    return "FstructConstructor";
     case XMP_COARRAY_REF:           return "FcoArrayRef";
 
@@ -291,6 +295,7 @@ xtag(enum expr_code code)
     case F_FALSE_CONSTANT:
     case F_ARRAY_REF:
     case F_STARSTAR:
+    case F_ENDFORALL_STATEMENT:
     case F95_CONSTANT_WITH:
     case F95_TRUE_CONSTANT_WITH:
     case F95_FALSE_CONSTANT_WITH:
@@ -1173,6 +1178,7 @@ get_sclass(ID id)
             return "fsave";
         case STG_AUTO:
         case STG_EQUIV:
+        case STG_INDEX:
             return "flocal";
         case STG_TAGNAME:
             return "ftype_name";
@@ -1710,6 +1716,18 @@ outx_arrayConstructor(int l, expv v)
 {
     const int l1 = l + 1;
     outx_tagOfExpression(l, v);
+    outx_expv(l1, EXPR_ARG1(v));
+    outx_expvClose(l, v);
+}
+
+static void
+outx_typedArrayConstructor(int l, expv v)
+{
+    TYPE_DESC element_tp = array_element_type(EXPV_TYPE(v));
+    const int l1 = l + 1;
+    EXPV_TYPE(v) = EXPV_TYPE(v);
+    outx_typeAttrs(l, EXPV_TYPE(v), XTAG(v), TOPT_TYPEONLY);
+    outx_print(" element_type=\"%s\">\n", getTypeID(element_tp));
     outx_expv(l1, EXPR_ARG1(v));
     outx_expvClose(l, v);
 }
@@ -2458,7 +2476,7 @@ outx_constants(int l, expv v)
         if(tp == NULL)
             tp = type_INT;
         //tid = getBasicTypeID(TYPE_BASIC_TYPE(tp));
-	tid = getTypeID(tp);
+        tid = getTypeID(tp);
         goto print_constant;
 
     case FLOAT_CONSTANT:
@@ -2469,7 +2487,7 @@ outx_constants(int l, expv v)
         if(tp == NULL)
             tp = type_REAL;
         //tid = getBasicTypeID(TYPE_BASIC_TYPE(tp));
-	tid = getTypeID(tp);
+        tid = getTypeID(tp);
         goto print_constant;
 
     case STRING_CONSTANT:
@@ -3365,6 +3383,79 @@ outx_BLOCK_statement(int l, expv v)
     outx_expvClose(l, v);
 }
 
+/*
+ * output forallStatement
+ */
+static void
+outx_FORALL_statement(int l, expv v)
+{
+    list lp;
+    int l1 = l + 1;
+    expv init = EXPR_ARG1(v);
+    expv mask = EXPR_ARG2(v);
+    expv body = EXPR_ARG3(v);
+    const char *tid = NULL;
+    char buf[128];
+
+    outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
+
+    if (EXPR_HAS_ARG4(v) && EXPR_ARG4(v) != NULL) {
+        outx_print(" construct_name=\"%s\"",
+                   SYM_NAME(EXPR_SYM(EXPR_ARG4(v))));
+    }
+    if (EXPV_TYPE(v)) {
+        tid = getTypeID(EXPV_TYPE(v));
+        outx_print(" type=\"%s\"", tid);
+    }
+    outx_print(">\n");
+
+#if 0
+    /*
+     * NOTE:
+     *  Comment out by specification changed.
+     *  the BLOCK statement will have symbols for FORALL statement
+     *
+     *  It may be useful to output <symbols> for FORALL statement
+     *  to describe the indices of FORALL statement
+     *
+     * ex)
+     *
+     *   FORALL( INTEGER :: I = 1:3 )
+     *   ! print I to the <symbols> in <forallStatement>
+     *
+     */
+    if (BLOCK_LOCAL_SYMBOLS(EXPR_BLOCK(v))) {
+        ID id;
+        BLOCK_ENV block = EXPR_BLOCK(v);
+        outx_tag(l1, "symbols");
+        FOREACH_ID(id, BLOCK_LOCAL_SYMBOLS(block)) {
+            if (id_is_visibleVar_for_symbols(id))
+                outx_id(l2, id);
+        }
+        outx_close(l1, "symbols");
+    }
+#endif
+
+
+    FOR_ITEMS_IN_LIST(lp, init) {
+        expv name = EXPR_ARG1(LIST_ITEM(lp));
+        expv indexRange = EXPR_ARG2(LIST_ITEM(lp));
+
+        outx_varOrFunc(l1, name);
+        outx_indexRange(l1,
+                        EXPR_ARG1(indexRange),
+                        EXPR_ARG2(indexRange),
+                        EXPR_ARG3(indexRange));
+    }
+
+    if (mask) {
+        outx_condition(l1, mask);
+    }
+
+    outx_body(l1, body);
+    outx_expvClose(l, v);
+}
+
 static void
 outx_lenspec(int l, expv v)
 {
@@ -3469,6 +3560,7 @@ outx_expv(int l, expv v)
     case ARRAY_REF:         outx_arrayRef(l, v); break;
     case F_SUBSTR_REF:      outx_characterRef(l, v); break;
     case F95_ARRAY_CONSTRUCTOR:     outx_arrayConstructor(l, v); break;
+    case F03_TYPED_ARRAY_CONSTRUCTOR:     outx_typedArrayConstructor(l, v); break;
     case F95_STRUCT_CONSTRUCTOR:    outx_structConstructor(l, v); break;
 
     case XMP_COARRAY_REF:   outx_coarrayRef(l, v); break;
@@ -3729,6 +3821,10 @@ outx_expv(int l, expv v)
       outx_BLOCK_statement(l, v);
       break;
 
+    case F_FORALL_STATEMENT:
+      outx_FORALL_statement(l, v);
+      break;
+
     default:
         fatal("unkown exprcode : %d", code);
         abort();
@@ -3919,6 +4015,9 @@ mark_type_desc_id(ID id)
                 mark_type_desc(sTp);
                 EXT_PROC_TYPE(PROC_EXT_ID(id)) = sTp;
             }
+            return;
+        case CL_MULTI:
+            mark_type_desc_in_id_list(MULTI_ID_LIST(id));
             return;
         default:
             return;
@@ -4449,10 +4548,15 @@ id_is_visibleVar(ID id)
     }
 
     switch(ID_CLASS(id)) {
+    case CL_MULTI:
+        return FALSE;
+        break;
     case CL_VAR:
         if(TYPE_IS_MODIFIED(ID_TYPE(id)))
             return TRUE;
         if(VAR_IS_IMPLIED_DO_DUMMY(id))
+            return FALSE;
+        if(ID_STORAGE(id) == STG_INDEX) /* Don't declare as a variable */
             return FALSE;
         break;
     case CL_PARAM:
@@ -4471,12 +4575,15 @@ id_is_visibleVar(ID id)
                 return FALSE;
             }
         }
+        /* FALL THROUGH */
     default:
         switch(ID_STORAGE(id)) {
         case STG_TAGNAME:
             return TRUE;
         case STG_UNKNOWN:
         case STG_NONE:
+            return FALSE;
+        case STG_INDEX:
             return FALSE;
         default:
             break;
@@ -4494,6 +4601,9 @@ id_is_visibleVar_for_symbols(ID id)
 {
     if (id == NULL)
         return FALSE;
+
+    if (ID_STORAGE(id) == STG_INDEX)
+        return TRUE;
 
     return (id_is_visibleVar(id) && IS_MODULE(ID_TYPE(id)) == FALSE) ||
             ((ID_STORAGE(id) == STG_ARG ||
@@ -4726,6 +4836,7 @@ emit_decl(int l, ID id)
             case STG_EQUIV:
             case STG_COMEQ:
             case STG_COMMON:
+            case STG_INDEX:
                 if (id_is_visibleVar(id) &&
                     IS_NO_PROC_OR_DECLARED_PROC(id)) {
                     outx_varDecl(l, id);

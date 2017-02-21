@@ -794,6 +794,39 @@ public class XcodeMLtools_F extends XcodeMLtools {
                                                 ));
       }
 
+    case F_ARRAY_CONSTRUCTOR:
+      {
+        XobjList xobjp = new XobjList(code, type);
+        xobjp.add(getSymbol(n, "element_type"));
+        XobjList xobjs = new XobjList();
+        xobjp.add(xobjs);
+        NodeList list = n.getChildNodes();
+        for (int i = 0; i < list.getLength(); i++) {
+          Node nn = list.item(i);
+          if (nn.getNodeType() != Node.ELEMENT_NODE)
+            continue;
+          xobjs.add(toXobject(nn));
+        }
+        return setCommonAttributes(n, xobjp);
+      }
+
+    case F_CONDITION:
+      return toXobject(getContent(n));
+
+    case F_FORALL_STATEMENT:
+      {
+        XobjList xobj = new XobjList(code);
+        xobj.add(getSymbol(n, "construct_name"));
+        NodeList list = n.getChildNodes();
+        for (int i = 0; i < list.getLength(); i++) {
+          Node nn = list.item(i);
+          if (nn.getNodeType() != Node.ELEMENT_NODE)
+            continue;
+          xobj.add(toXobject(nn));
+        }
+        return setCommonAttributes(n, xobj);
+      }
+
     case F_TYPE_BOUND_PROCEDURES:
     case F_BINDING:
     case F_SYNCALL_STATEMENT:

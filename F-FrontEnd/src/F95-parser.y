@@ -476,10 +476,11 @@ int enable_need_type_keyword = TRUE;
 %}
 
 %type <val> statement label
-%type <val> expr /*expr1*/ lhs member_ref lhs_alloc member_ref_alloc substring expr_or_null complex_const array_constructor_list
+%type <val> expr /*expr1*/ lhs member_ref lhs_alloc member_ref_alloc substring expr_or_null complex_const
+%type <val> array_constructor array_constructor_list
 %type <val> program_name dummy_arg_list dummy_args dummy_arg file_name
 %type <val> declaration_statement executable_statement action_statement action_statement_let action_statement_key assign_statement_or_null assign_statement
-%type <val> declaration_list entity_decl type_spec type_spec0 length_spec common_decl
+%type <val> declaration_list entity_decl type_spec type_spec0 expr_type_spec length_spec common_decl
 %type <val> type_param_value_list type_param_value
 %type <val> common_block external_decl intrinsic_decl equivalence_decl
 %type <val> cray_pointer_list cray_pointer_pair cray_pointer_var
@@ -493,6 +494,7 @@ int enable_need_type_keyword = TRUE;
 %type <val> binding_attr_list binding_attr type_bound_proc_decl_list type_bound_proc_decl
 %type <val> proc_attr_list proc_def_attr proc_attr proc_decl proc_decl_list name_or_type_spec_or_null0 name_or_type_spec_or_null
 %type <val> name name_or_null name_list generic_name defined_operator intrinsic_operator func_prefix prefix_spec
+%type <val> forall_header forall_triplet forall_triplet_list
 %type <val> declaration_statement95 attr_spec_list attr_spec private_or_public_spec access_spec type_attr_spec_list type_attr_spec
 %type <val> declaration_statement2003 type_param_list
 %type <val> intent_spec kind_selector kind_or_len_selector char_selector len_key_spec len_spec kind_key_spec array_allocation_list  array_allocation defered_shape_list defered_shape
@@ -518,6 +520,8 @@ KW: { need_keyword = TRUE; };
 TYPE_KW: { if (enable_need_type_keyword == TRUE) need_type_keyword = TRUE; };
 
 NEED_CHECK: {	      need_check_user_defined = FALSE; };
+
+TYPE_KW_COL2: { if (lookup_col2()) need_type_keyword = TRUE;  }
 
 one_statement:
           STATEMENT_LABEL_NO  /* null statement */
@@ -1169,6 +1173,7 @@ entity_decl:
         { $$ = list5(LIST,$1,$2,$4,$6,$3);}
         ;
 
+// in fortran specification, `declaration-type-spec`
 type_spec: type_spec0 { $$ = $1; /* need_keyword = TRUE; */ };
 
 type_spec0:
@@ -1197,6 +1202,42 @@ type_spec0:
                             GEN_NODE(INT_CONSTANT, 8)); }
         //                    gen_default_real_kind()); }
         ;
+
+
+/*
+ * NOTE:
+ *  Q. Why don't you use `type_param_list` instead of `parenthesis_arg_list_or_null`?
+ *  A. Because this rule is expected to use inside expression (and avoid conflicts).
+ *     `parenthesis_arg_list_or_null` accept '*' ':' 'XXX=*' 'XXX=:'.
+ *     On the other hand, this rule don't for the argument ('*' may be used) and the declaration (':' may be used).
+ */
+// in fortran specification, `type-spec`
+expr_type_spec:
+          IDENTIFIER parenthesis_arg_list_or_null
+        {
+            if ($2 == NULL) {
+                $$ = $1;
+            } else {
+                $$ = list2(F03_PARAMETERIZED_TYPE,$1,$2);
+            }
+        }
+        | type_keyword kind_selector
+        { $$ = list2(LIST,$1,$2); }
+        | type_keyword length_spec  /* compatibility */
+        { $$ = list2(LIST, $1, $2);}
+        | KW_CHARACTER char_selector
+        { $$ = list2(LIST,GEN_NODE(F_TYPE_NODE,TYPE_CHAR),$2); }
+        | KW_DOUBLE
+        { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_REAL),
+                            GEN_NODE(INT_CONSTANT, 8)); }
+        //                    gen_default_real_kind()); }
+        | KW_DCOMPLEX
+        { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_COMPLEX),
+                            GEN_NODE(INT_CONSTANT, 8)); }
+        //                    gen_default_real_kind()); }
+        ;
+
+
 
 type_param_value_list:
           type_param_value
@@ -1566,8 +1607,8 @@ namelist_list:  IDENTIFIER
  */
 executable_statement:
           action_statement
-	| DO label KW_WHILE '(' expr ')'
-	{ $$ = list3(F_DOWHILE_STATEMENT, $2, $5, st_name); }
+        | DO label KW_WHILE '(' expr ')'
+        { $$ = list3(F_DOWHILE_STATEMENT, $2, $5, st_name); }
         | DO label do_spec
         { $$ = list3(F_DO_STATEMENT, $2, $3, st_name); }
         | DO label ',' do_spec  /* for dusty deck */
@@ -1641,6 +1682,10 @@ executable_statement:
         { $$ = list2(F03_TYPEIS_STATEMENT, $3, $5); }  
         | CLASSDEFAULT name_or_null
         { $$ = list2(F03_CLASSIS_STATEMENT, NULL, $2); }
+        | FORALL '(' forall_header ')' assign_statement_or_null
+        { $$ = list3(F_FORALL_STATEMENT, $3, $5, st_name); }
+        | ENDFORALL name_or_null
+        { $$ = list1(F_ENDFORALL_STATEMENT, $2); }
         ;
 
 assign_statement_or_null:
@@ -1659,6 +1704,33 @@ do_spec:
         |  IDENTIFIER '=' expr ',' expr ',' expr
         { $$ = list4(LIST,$1,$3,$5,$7); }
         ;
+
+
+forall_triplet:
+          name '=' expr ':' expr
+        { $$ = list2(F_SET_EXPR, $1, list3(F95_TRIPLET_EXPR,$3,$5,NULL)); }
+        | name '=' expr ':' expr ':' expr
+        { $$ = list2(F_SET_EXPR, $1, list3(F95_TRIPLET_EXPR,$3,$5,$7)); }
+        ;
+
+forall_triplet_list:
+          forall_triplet
+        { $$ = list1(LIST, $1); }
+        | forall_triplet_list ',' forall_triplet
+        { $$ = list_put_last($1, $3); }
+        ;
+
+forall_header:
+          TYPE_KW forall_triplet_list
+        { $$ = list3(LIST, $2, NULL, NULL); }
+        | TYPE_KW forall_triplet_list ',' expr
+        { $$ = list3(LIST, $2,   $4, NULL); }
+        | TYPE_KW type_spec COL2 forall_triplet_list
+        { $$ = list3(LIST, $4, NULL,   $2); }
+        | TYPE_KW type_spec COL2 forall_triplet_list ',' expr
+        { $$ = list3(LIST, $4,   $6,   $2); }
+        ;
+
 
 /* 'ifable' statement */
 action_statement: action_statement_let
@@ -1961,11 +2033,20 @@ io_item:
         { $$ = list2(F_IMPLIED_DO,$4,$2); }
         ;
 
+
+array_constructor:
+          L_ARRAY_CONSTRUCTOR TYPE_KW_COL2 array_constructor_list R_ARRAY_CONSTRUCTOR
+        { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
+        | '[' TYPE_KW_COL2 array_constructor_list ']'
+        { $$ = list2(F95_ARRAY_CONSTRUCTOR, $3, NULL); }
+        | L_ARRAY_CONSTRUCTOR TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list R_ARRAY_CONSTRUCTOR
+        { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
+        | '[' TYPE_KW_COL2 expr_type_spec COL2 array_constructor_list ']'
+        { $$ = list2(F95_ARRAY_CONSTRUCTOR, $5, $3); }
+        ;
+
 expr:     lhs
-        | L_ARRAY_CONSTRUCTOR array_constructor_list R_ARRAY_CONSTRUCTOR
-        { $$ = list1(F95_ARRAY_CONSTRUCTOR, $2); }
-        | '[' array_constructor_list ']'
-        { $$ = list1(F95_ARRAY_CONSTRUCTOR, $2); }
+        | array_constructor
         | '(' expr ')'
         { $$ = $2; }
         | complex_const
@@ -2102,12 +2183,14 @@ member_ref_alloc:     /* For allocation list only */
 /*         { $$ = list2(F95_MEMBER_REF, list2(XMP_COARRAY_REF,list2(F_ARRAY_REF,$1,$2),$3), $5); } */
         ;
 
+
 array_constructor_list:
           io_item
         { $$ = list1(LIST, $1); }
         | array_constructor_list  ',' io_item
         { $$ = list_put_last($1, $3); }
         ;
+
 
 /* reduce/reduce conflict between with complex const,  like (1.2, 3.4).
 
