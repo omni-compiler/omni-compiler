@@ -1,8 +1,8 @@
 #include <stdio.h>
 
-#define lx 6
+#define lz 6
 #define ly 8
-#define lz 10
+#define lx 10
 #define lt 12
 
 #define SL_T 2
@@ -93,9 +93,30 @@ int test_dist_t(double array_t[lz][ly][lx][lt], int lst, int ust, int lsx, int u
     }
 
 #pragma xmp reduction(+:err)
-    if(err != 0) return 1;
+    if(err == 0) return 0;
 
-    return 0;
+#pragma xmp task on pt(1,1,1,1)
+    for(iz = 0; iz < lz; iz++){
+	for(iy = 0; iy < ly; iy++){
+	    for(ix = 0; ix <lx; ix++){
+		for(it = 0; it < lt/2 + uwt; it++){ //0,1,2|3
+		    printf("node(%d) array[%2d][%2d][%2d][%2d] = %f\n", 1,iz, iy, ix, it, array_t[iz][iy][ix][it]);
+		}
+	    }
+	}
+    }
+#pragma xmp task on pt(2,1,1,1)
+    for(iz = 0; iz < lz; iz++){
+	for(iy = 0; iy < ly; iy++){
+	    for(ix = 0; ix <lx; ix++){
+		for(it = lt/2 - lwt; it < lt; it++){ //2|3,4,5
+		    printf("node(%d) array[%2d][%2d][%2d][%2d] = %f\n", 2,iz, iy, ix, it, array_t[iz][iy][ix][it]);
+		}
+	    }
+	}
+    }
+    
+    return 1;
 }
 
 int test_dist_x(double array_x[lz][ly][lx][lt], int lst, int ust, int lsx, int usx, int lsy, int usy, int lsz, int usz, int lwx, int uwx)
@@ -161,9 +182,31 @@ int test_dist_x(double array_x[lz][ly][lx][lt], int lst, int ust, int lsx, int u
     }
 
 #pragma xmp reduction(+:err)
-    if(err != 0) return 1;
-
-    return 0;
+    if(err == 0) return 0;
+	
+#pragma xmp task on px(1,1,1,1)
+    for(iz = 0; iz < lz; iz++){
+	for(iy = 0; iy < ly; iy++){
+	    for(ix = 0; ix < lx/2 + uwx; ix++){ //0,1,2|3
+		for(it = 0; it < lt; it++){
+		    printf("node(%d) array[%2d][%2d][%2d][%2d] = %f\n", 1,iz, iy, ix, it, array_x[iz][iy][ix][it]);
+		}
+	    }
+	}
+    }
+#pragma xmp barrier
+#pragma xmp task on px(1,2,1,1)
+    for(iz = 0; iz < lz; iz++){
+	for(iy = 0; iy < ly; iy++){
+	    for(ix = lx/2 - lwx; ix < lx; ix++){ //2|3,4,5
+		for(it = 0; it < lt; it++){
+		    printf("node(%d) array[%2d][%2d][%2d][%2d] = %f\n", 2, iz, iy, ix, it, array_x[iz][iy][ix][it]);
+		}
+	    }
+	}
+    }
+    
+    return 1;
 }
 
 int test_dist_y(double array_y[lz][ly][lx][lt], int lst, int ust, int lsx, int usx, int lsy, int usy, int lsz, int usz, int lwy, int uwy)
@@ -229,9 +272,31 @@ int test_dist_y(double array_y[lz][ly][lx][lt], int lst, int ust, int lsx, int u
     }
 
 #pragma xmp reduction(+:err)
-    if(err != 0) return 1;
+    if(err == 0) return 0;
 
-    return 0;
+#pragma xmp task on py(1,1,1,1)
+    for(iz = 0; iz < lz; iz++){
+	for(iy = 0; iy < ly/2 + uwy; iy++){ //0,1,2|3
+	    for(ix = 0; ix < lx; ix++){
+		for(it = 0; it < lt; it++){
+		    printf("node(%d) array[%2d][%2d][%2d][%2d] = %f\n", 1,iz, iy, ix, it, array_y[iz][iy][ix][it]);
+		}
+	    }
+	}
+    }
+#pragma xmp barrier
+#pragma xmp task on py(1,1,2,1)
+    for(iz = 0; iz < lz; iz++){
+	for(iy = ly/2 - lwy; iy < ly; iy++){ //2|3,4,5
+	    for(ix = 0; ix < lx; ix++){
+		for(it = 0; it < lt; it++){
+		    printf("node(%d) array[%2d][%2d][%2d][%2d] = %f\n", 2,iz, iy, ix, it, array_y[iz][iy][ix][it]);
+		}
+	    }
+	}
+    }
+
+    return 1;
 }
 
 int test_dist_z(double array_z[lz][ly][lx][lt], int lst, int ust, int lsx, int usx, int lsy, int usy, int lsz, int usz, int lwz, int uwz)
@@ -297,9 +362,31 @@ int test_dist_z(double array_z[lz][ly][lx][lt], int lst, int ust, int lsx, int u
     }
 
 #pragma xmp reduction(+:err)
-    if(err != 0) return 1;
+    if(err == 0) return 0;
 
-    return 0;
+#pragma xmp task on pz(1,1,1,1)
+    for(iz = 0; iz < lz/2 + uwz; iz++){ //0,1,2|3
+	for(iy = 0; iy < ly; iy++){
+	    for(ix = 0; ix < lx; ix++){
+		for(it = 0; it < lt; it++){
+		    printf("node(%d) array[%2d][%2d][%2d][%2d] = %f\n", 1,iz, iy, ix, it, array_z[iz][iy][ix][it]);
+		}
+	    }
+	}
+    }
+#pragma xmp barrier
+#pragma xmp task on pz(1,1,1,2)
+    for(iz = lz/2 - lwz; iz < lz; iz++){ //2|3,4,5
+	for(iy = 0; iy < ly; iy++){
+	    for(ix = 0; ix < lx; ix++){
+		for(it = 0; it < lt; it++){
+		    printf("node(%d) array[%2d][%2d][%2d][%2d] = %f\n", 2,iz, iy, ix, it, array_z[iz][iy][ix][it]);
+		}
+	    }
+	}
+    }
+
+    return 1;
 }
 
 int main(void)
@@ -331,30 +418,38 @@ int main(void)
 
         for(lw = 0; lw <= lst; lw++){
 	    for(uw = 0; uw <= ust; uw++){
-//#pragma xmp task on px(1,1,1,1) nocomm
-//		printf("[%d:%d][%d:%d][%d:%d][%d:%d], width(%d:%d,%d:%d,%d:%d,%d:%d)\n", lsz,usz,lsy,usy,lsx,usx,lst,ust, 0,0,0,0,0,0,lw,uw);
-	        if(test_dist_t(array_t, lst, ust, lsx, usx, lsy, usy, lsz, usz, lw, uw)) return 1;
+	        if(test_dist_t(array_t, lst, ust, lsx, usx, lsy, usy, lsz, usz, lw, uw)){
+#pragma xmp task on px(1,1,1,1) nocomm
+		    printf("[%d:%d][%d:%d][%d:%d][%d:%d], width(%d:%d,%d:%d,%d:%d,%d:%d)\n", lsz,usz,lsy,usy,lsx,usx,lst,ust, 0,0,0,0,0,0,lw,uw);
+		    return 1;
+		}
 	    }
         }
 	for(lw = 0; lw <= lsx; lw++){
 	    for(uw = 0; uw <= usx; uw++){
-//#pragma xmp task on px(1,1,1,1) nocomm
-//		printf("[%d:%d][%d:%d][%d:%d][%d:%d], width(%d:%d,%d:%d,%d:%d,%d:%d)\n", lsz,usz,lsy,usy,lsx,usx,lst,ust, 0,0,0,0,lw,uw,0,0);
-		if(test_dist_x(array_x, lst, ust, lsx, usx, lsy, usy, lsz, usz, lw, uw)) return 2;
+		if(test_dist_x(array_x, lst, ust, lsx, usx, lsy, usy, lsz, usz, lw, uw)){
+#pragma xmp task on px(1,1,1,1) nocomm
+		    printf("[%d:%d][%d:%d][%d:%d][%d:%d], width(%d:%d,%d:%d,%d:%d,%d:%d)\n", lsz,usz,lsy,usy,lsx,usx,lst,ust, 0,0,0,0,lw,uw,0,0);
+		    return 2;
+		}
 	    }
 	}
 	for(lw = 0; lw <= lsy; lw++){
 	    for(uw = 0; uw <= usy; uw++){
-//#pragma xmp task on px(1,1,1,1) nocomm
-//		printf("[%d:%d][%d:%d][%d:%d][%d:%d], width(%d:%d,%d:%d,%d:%d,%d:%d)\n", lsz,usz,lsy,usy,lsx,usx,lst,ust, 0,0,lw,uw,0,0,0,0);
-		if(test_dist_y(array_y, lst, ust, lsx, usx, lsy, usy, lsz, usz, lw, uw)) return 3;
+		if(test_dist_y(array_y, lst, ust, lsx, usx, lsy, usy, lsz, usz, lw, uw)){
+#pragma xmp task on px(1,1,1,1) nocomm
+		    printf("[%d:%d][%d:%d][%d:%d][%d:%d], width(%d:%d,%d:%d,%d:%d,%d:%d)\n", lsz,usz,lsy,usy,lsx,usx,lst,ust, 0,0,lw,uw,0,0,0,0);
+		    return 3;
+		}
 	    }
 	}
 	for(lw = 0; lw <= lsz; lw++){
 	    for(uw = 0; uw <= usz; uw++){
-//#pragma xmp task on px(1,1,1,1) nocomm
-//		printf("[%d:%d][%d:%d][%d:%d][%d:%d], width(%d:%d,%d:%d,%d:%d,%d:%d)\n", lsz,usz,lsy,usy,lsx,usx,lst,ust, lw,uw,0,0,0,0,0,0);
-		if(test_dist_z(array_z, lst, ust, lsx, usx, lsy, usy, lsz, usz, lw, uw)) return 4;
+		if(test_dist_z(array_z, lst, ust, lsx, usx, lsy, usy, lsz, usz, lw, uw)){
+#pragma xmp task on px(1,1,1,1) nocomm
+		    printf("[%d:%d][%d:%d][%d:%d][%d:%d], width(%d:%d,%d:%d,%d:%d,%d:%d)\n", lsz,usz,lsy,usy,lsx,usx,lst,ust, lw,uw,0,0,0,0,0,0);
+		    return 4;
+		}
 	    }
 	}
     }
