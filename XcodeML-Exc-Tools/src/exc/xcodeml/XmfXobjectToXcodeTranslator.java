@@ -794,8 +794,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_FORALL_STATEMENT: {
-              e = createElement(name, "construct_name",
-                                      (xobj.getArg(0) != null) ? xobj.getArg(0).getName() : null);
+              e = createElement(name, "type", (xobj.Type() != null) ? xobj.Type().getXcodeFId() : null,
+                                      "construct_name", (xobj.getArg(0) != null) ? xobj.getArg(0).getName() : null);
               addChildNode(e, trans(xobj.getArg(1))); // VAR 1
               addChildNode(e, trans(xobj.getArg(2))); // INDEX_RANGE 1
               int idx = 3;
