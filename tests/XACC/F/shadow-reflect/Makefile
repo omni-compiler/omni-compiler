@@ -1,5 +1,5 @@
 XFC     = xmpf90
-FCFLAGS = -xacc -lstdc++
+FCFLAGS = -xacc --Wn"-acc -Minfo=accel" --Wl"-acc" -lstdc++
 TESTS   = $(wildcard *.f90)
 EXES    = $(TESTS:.f90=.x)
 OBJS    = $(TESTS:.f90=.o)

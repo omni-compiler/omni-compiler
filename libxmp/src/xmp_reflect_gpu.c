@@ -492,9 +492,21 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     }
 
     if(useHostBuffer){
+      /*
       CUDA_SAFE_CALL(cudaMallocHost((void**)&lo_send_host_buf, lo_buf_size + hi_buf_size));
-      hi_send_host_buf = (char*)lo_send_host_buf + lo_buf_size;
       CUDA_SAFE_CALL(cudaMallocHost((void**)&lo_recv_host_buf, lo_buf_size + hi_buf_size));
+      */
+      /*
+      CUDA_SAFE_CALL(cudaHostAlloc((void**)&lo_send_host_buf, lo_buf_size + hi_buf_size, cudaHostAllocDefault));
+      CUDA_SAFE_CALL(cudaHostAlloc((void**)&lo_recv_host_buf, lo_buf_size + hi_buf_size, cudaHostAllocDefault));
+      */
+      
+      lo_send_host_buf = _XMP_alloc(lo_buf_size + hi_buf_size);
+      lo_recv_host_buf = _XMP_alloc(lo_buf_size + hi_buf_size);
+      CUDA_SAFE_CALL(cudaHostRegister(lo_send_host_buf, lo_buf_size + hi_buf_size, cudaHostRegisterDefault));
+      CUDA_SAFE_CALL(cudaHostRegister(lo_recv_host_buf, lo_buf_size + hi_buf_size, cudaHostRegisterDefault));
+      
+      hi_send_host_buf = (char*)lo_send_host_buf + lo_buf_size;
       hi_recv_host_buf = (char*)lo_recv_host_buf + lo_buf_size;
       mpi_lo_send_buf = lo_send_host_buf;
       mpi_lo_recv_buf = lo_recv_host_buf;
@@ -977,13 +989,24 @@ void _XMP_finalize_reflect_sched_gpu(_XMP_reflect_sched_t *sched, _Bool free_buf
   }
 
   if(useHostBuffer){
+    /*
     CUDA_SAFE_CALL(cudaFreeHost(sched->lo_send_host_buf));
     CUDA_SAFE_CALL(cudaFreeHost(sched->lo_recv_host_buf));
+    */
+    if(sched->lo_send_host_buf) CUDA_SAFE_CALL(cudaHostUnregister(sched->lo_send_host_buf));
+    if(sched->lo_recv_host_buf) CUDA_SAFE_CALL(cudaHostUnregister(sched->lo_recv_host_buf));
+    free(sched->lo_send_host_buf);
+    free(sched->lo_recv_host_buf);
+
+    sched->lo_send_host_buf = NULL;
+    sched->lo_recv_host_buf = NULL;
   }
 
   if (free_buf && packVector){
     CUDA_SAFE_CALL(cudaFree(sched->lo_send_buf));
     CUDA_SAFE_CALL(cudaFree(sched->lo_recv_buf));
+    sched->lo_send_buf = NULL;
+    sched->lo_recv_buf = NULL;
   }
 
   if(sched->lo_async_id){
