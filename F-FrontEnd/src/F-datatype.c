@@ -1249,8 +1249,10 @@ function_type_is_compatible0(const TYPE_DESC ftp1, const TYPE_DESC ftp2,
                     SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
         }
 
-        if (ID_SYM(arg1) != ID_SYM(arg2)) {
-            return FALSE;
+        if (override) {
+            if (ID_SYM(arg1) != ID_SYM(arg2)) {
+                return FALSE;
+            }
         }
 
         if (override || assignment) {
