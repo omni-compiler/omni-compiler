@@ -784,9 +784,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_TYPE_PARAM:
-            e = addChildNode(createElement(name,
-                                           "attr", xobj.getArg(0).getName()),
-                             transName(xobj.getArg(1)));
+            e = addChildNode(addChildNode(createElement(name, "attr", xobj.getArg(0).getName()),
+                                          transName(xobj.getArg(1))),
+                             trans(xobj.getArg(2)));
             break;
 
         case F_VALUE:
