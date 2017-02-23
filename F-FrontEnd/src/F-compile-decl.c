@@ -3494,10 +3494,22 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
             }
 
             id = find_ident_from_type_parameter(EXPR_SYM(ident), struct_tp);
-            if (id != NULL && CURRENT_STATE != IN_TYPE_PARAM_DECL) {
-                error_at_node(decl_list, "'%s' is already used as a type parameter.", ID_NAME(id));
-                continue;
+            if (hasTypeParamAttr) {
+                if (id == NULL) {
+                    error_at_node(decl_list,
+                                  "'%s' is not in the type parameter.",
+                                  SYM_NAME(EXPR_SYM(ident)));
+                } else if (ID_TYPE(id) != NULL) {
+                    error_at_node(decl_list, "'%s' is already declared.",
+                                  ID_NAME(id));
+                }
+            } else {
+                if (id != NULL && CURRENT_STATE != IN_TYPE_PARAM_DECL) {
+                    error_at_node(decl_list, "'%s' is already used as a type parameter.", ID_NAME(id));
+                    continue;
+                }
             }
+
 
             id = declare_ident(EXPR_SYM(ident), CL_UNKNOWN);
             if (id == NULL) {

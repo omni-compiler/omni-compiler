@@ -10,12 +10,24 @@ import exc.object.*;
 
 public class FforAllBlock extends CondBlock
 {
+    private Xtype type;
     private Xobject ind_var_range;
 
-    public FforAllBlock(BasicBlock cond, Xobject ind_var_range, BlockList body, String construct_name)
+    public FforAllBlock(Xtype type, BasicBlock cond, Xobject ind_var_range, BlockList body, String construct_name)
     {
         super(Xcode.F_FORALL_STATEMENT, cond, body, construct_name);
+        this.type = type;
         this.ind_var_range = ind_var_range;
+    }
+
+    public Xtype getType()
+    {
+        return type;
+    }
+
+    public void setType(Xtype type)
+    {
+        this.type = type;
     }
 
     @Override
@@ -51,7 +63,7 @@ public class FforAllBlock extends CondBlock
     public Xobject toXobject()
     {
         Xobject cond = (bblock != null) ? bblock.toXobject() : null;
-        Xobject x = new XobjList(Opcode(), getConstructNameObj());
+        Xobject x = new XobjList(Opcode(), getType(), getConstructNameObj());
         for(Xobject a : (XobjList)getInductionVarRange())
         {
           x.add(((XobjList)a).getArg(0));
@@ -68,13 +80,17 @@ public class FforAllBlock extends CondBlock
     public String toString()
     {
         StringBuilder s = new StringBuilder(256);
-        s.append("(CondBlock ");
-        s.append(Opcode());
-        s.append(" ");
+        s.append("(FforAllBlock construct_name[");
+        s.append((getConstructNameObj() != null) ? getConstructNameObj() : "(no name)");
+        s.append("] type[");
+        s.append(getType());
+        s.append("] index_range[");
+        s.append(getInductionVarRange());
+        s.append("] condition[");
+        s.append((getBasicBlock() != null) ? getBasicBlock().getExpr() : "(no condition)");
+        s.append("] body[");
         s.append(body);
-        s.append(" ");
-        s.append(getBasicBlock());
-        s.append(")");
+        s.append("])");
         return s.toString();
     }
 }

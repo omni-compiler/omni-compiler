@@ -56,6 +56,7 @@ typedef struct {
   uint64_t count;
   uint64_t stride;
   bool is_target;
+  uint64_t offset;
 } stride_t;
 
 //static void stride_print(int n, stride_t st[]);
@@ -216,9 +217,9 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   _XMP_nodes_info_t *ni = adesc->align_template->chunk[target_tdim].onto_nodes_info;
 
   int ndims = adesc->dim;
-  if(adesc->array_addr_p == dev_array_addr){
-    _XMP_fatal("device addr is the same as host addr for reflect.");
-  }
+//  if(adesc->array_addr_p == dev_array_addr){
+//    _XMP_fatal("device addr is the same as host addr for reflect.");
+//  }
 
   _XMP_reflect_sched_t *reflect = ai->reflect_acc_sched;
   bool free_buf = (_XMPF_running && target_dim != ndims - 1) || (_XMPC_running && target_dim != 0);
@@ -269,6 +270,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
   int count = 0, blocklength = 0;
   long long stride = 0;
+  long long offset;
   //  int count_offset = 0;
 
 #if 0
@@ -308,6 +310,7 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     count = 1;
     blocklength = 1;
     stride = 1;
+    offset = 1;
 
     if (_XMPF_running && !_XMPC_running){ /* for XMP/F */
       first_dim = ndims - 1;
@@ -315,8 +318,9 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
       for(int i = 0; i < ndims; i++){
 	st[ndims - 1 - i].count  = (i == target_dim)? 1 : (ainfo[i].par_size + lwidths[i] + uwidths[i]);
-	st[ndims - 1 - i].stride = (i == last_dim)? 1 : (st[ndims - 1 - i + 1].stride * ainfo[i-1].alloc_size);
+	st[ndims - 1 - i].stride = ainfo[i].dim_acc;
 	st[ndims - 1 - i].is_target = (i == target_dim)? true : false;
+	st[ndims - 1 - i].offset = (ainfo[i].shadow_size_lo - lwidths[i]) * ainfo[i].dim_acc;
       }
     }else if (!_XMPF_running && _XMPC_running){ /* for XMP/C */
       first_dim = 0;
@@ -324,8 +328,9 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
 
       for(int i = ndims - 1; i >= 0; i--){
 	st[i].count  = (i == target_dim)? 1 : (ainfo[i].par_size + lwidths[i] + uwidths[i]);
-	st[i].stride = (i == last_dim)? 1 : (st[i+1].stride * ainfo[i+1].alloc_size);
+	st[i].stride = ainfo[i].dim_acc;
 	st[i].is_target = (i == target_dim)? true : false;
+	st[i].offset = (ainfo[i].shadow_size_lo - lwidths[i]) * ainfo[i].dim_acc;
       }
     }else{
       _XMP_fatal("cannot determin the base language.");
@@ -370,19 +375,22 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
       count = 1;
       blocklength = st[0].count;
       stride = blocklength;
+      offset = st[0].offset;
     }else if(nd == 2){ //block stride
       count = st[0].count;
       blocklength = st[1].count;
       stride = st[0].stride;
+      offset = st[0].offset + st[1].offset;
     }else{
       _XMP_fatal("unexpected error");
     }
 
     /* if(_XMP_world_rank == 0){ */
-    /*   printf("(%d,%d,%lld)\n", count , blocklength, stride); */
+    /*   printf("(%d,%d,%lld@%d)\n", count , blocklength, stride, offset); */
     /* } */
     blocklength *= type_size;
     stride *= type_size;
+    offset *= type_size;
   }
 #endif
 
@@ -393,48 +401,37 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
   // for lower reflect
 
   if (lwidth){
-    lo_send_array = lo_recv_array = (void *)((char*)dev_array_addr + /*count_offset*/0 * stride);
+    lo_send_array = lo_recv_array = (void *)((char*)dev_array_addr + offset);
 
     for (int i = 0; i < ndims; i++) {
-      int lb_send, lb_recv;
-      unsigned long long dim_acc;
+      if(i != target_dim) continue;
 
-      if (i == target_dim) {
-	//printf("ainfo[%d].local_upper=%d\n",i,ainfo[i].local_upper);
-	lb_send = ainfo[i].local_upper - lwidth + 1;
-	lb_recv = ainfo[i].shadow_size_lo - lwidth; ////ainfo[i].local_lower - lwidth;
-      } else {
-	// Note: including shadow area
-	lb_send = 0; //// ainfo[i].local_lower - ainfo[i].shadow_size_lo;
-	lb_recv = 0; //// ainfo[i].local_lower - ainfo[i].shadow_size_lo;
-      }
-
-      dim_acc = ainfo[i].dim_acc;
+      int lb_send = ainfo[i].par_size;
+      int lb_recv = 0;
+      unsigned long long dim_acc = ainfo[i].dim_acc;
 
       lo_send_array = (void *)((char *)lo_send_array + lb_send * dim_acc * type_size);
       lo_recv_array = (void *)((char *)lo_recv_array + lb_recv * dim_acc * type_size);
+
+      /* if(_XMP_world_rank == 0){ */
+      /* 	printf("dim=%d, dim_acc=%llu\n", i, dim_acc); */
+      /* 	printf("dim=%d, send_array += %llu\n", i, lb_send * dim_acc); */
+      /* 	printf("dim=%d, recv_array += %llu\n", i, lb_recv * dim_acc); */
+      /* } */
     }
   }
 
   // for upper reflect
 
   if (uwidth){
-    hi_send_array = hi_recv_array = (void *)((char*)dev_array_addr + /*count_offset*/0 * stride);
+    hi_send_array = hi_recv_array = (void *)((char*)dev_array_addr + offset);
 
     for (int i = 0; i < ndims; i++) {
-      int lb_send, lb_recv;
-      unsigned long long dim_acc;
+      if (i != target_dim) continue;
 
-      if (i == target_dim) {
-	lb_send = ainfo[i].local_lower;
-	lb_recv = ainfo[i].local_upper + 1;
-      } else {
-	// Note: including shadow area
-	lb_send = 0; //ainfo[i].local_lower - ainfo[i].shadow_size_lo;
-	lb_recv = 0; //ainfo[i].local_lower - ainfo[i].shadow_size_lo;
-      }
-
-      dim_acc = ainfo[i].dim_acc;
+      int lb_send = lwidth;
+      int lb_recv = lwidth + ainfo[i].par_size;
+      unsigned long long dim_acc = ainfo[i].dim_acc;
 
       hi_send_array = (void *)((char *)hi_send_array + lb_send * dim_acc * type_size);
       hi_recv_array = (void *)((char *)hi_recv_array + lb_recv * dim_acc * type_size);
@@ -495,9 +492,21 @@ static void _XMP_reflect_pcopy_sched_dim(_XMP_array_t *adesc, int target_dim,
     }
 
     if(useHostBuffer){
+      /*
       CUDA_SAFE_CALL(cudaMallocHost((void**)&lo_send_host_buf, lo_buf_size + hi_buf_size));
-      hi_send_host_buf = (char*)lo_send_host_buf + lo_buf_size;
       CUDA_SAFE_CALL(cudaMallocHost((void**)&lo_recv_host_buf, lo_buf_size + hi_buf_size));
+      */
+      /*
+      CUDA_SAFE_CALL(cudaHostAlloc((void**)&lo_send_host_buf, lo_buf_size + hi_buf_size, cudaHostAllocDefault));
+      CUDA_SAFE_CALL(cudaHostAlloc((void**)&lo_recv_host_buf, lo_buf_size + hi_buf_size, cudaHostAllocDefault));
+      */
+      
+      lo_send_host_buf = _XMP_alloc(lo_buf_size + hi_buf_size);
+      lo_recv_host_buf = _XMP_alloc(lo_buf_size + hi_buf_size);
+      CUDA_SAFE_CALL(cudaHostRegister(lo_send_host_buf, lo_buf_size + hi_buf_size, cudaHostRegisterDefault));
+      CUDA_SAFE_CALL(cudaHostRegister(lo_recv_host_buf, lo_buf_size + hi_buf_size, cudaHostRegisterDefault));
+      
+      hi_send_host_buf = (char*)lo_send_host_buf + lo_buf_size;
       hi_recv_host_buf = (char*)lo_recv_host_buf + lo_buf_size;
       mpi_lo_send_buf = lo_send_host_buf;
       mpi_lo_recv_buf = lo_recv_host_buf;
@@ -980,13 +989,24 @@ void _XMP_finalize_reflect_sched_gpu(_XMP_reflect_sched_t *sched, _Bool free_buf
   }
 
   if(useHostBuffer){
+    /*
     CUDA_SAFE_CALL(cudaFreeHost(sched->lo_send_host_buf));
     CUDA_SAFE_CALL(cudaFreeHost(sched->lo_recv_host_buf));
+    */
+    if(sched->lo_send_host_buf) CUDA_SAFE_CALL(cudaHostUnregister(sched->lo_send_host_buf));
+    if(sched->lo_recv_host_buf) CUDA_SAFE_CALL(cudaHostUnregister(sched->lo_recv_host_buf));
+    free(sched->lo_send_host_buf);
+    free(sched->lo_recv_host_buf);
+
+    sched->lo_send_host_buf = NULL;
+    sched->lo_recv_host_buf = NULL;
   }
 
   if (free_buf && packVector){
     CUDA_SAFE_CALL(cudaFree(sched->lo_send_buf));
     CUDA_SAFE_CALL(cudaFree(sched->lo_recv_buf));
+    sched->lo_send_buf = NULL;
+    sched->lo_recv_buf = NULL;
   }
 
   if(sched->lo_async_id){
@@ -1015,17 +1035,22 @@ static bool stride_reduce(int *nd, stride_t st[])
 {
   for(int i = 0; i < *nd - 1; i++){
     if(st[i].count == 1){
+      uint64_t offset = st[i].offset;
       stride_shift(nd, st, i);
+      st[i].offset += offset;
       return true;
     }
   }
 
   for(int i = 0; i < *nd - 1; i++){
     if(st[i].stride == st[i+1].count * st[i+1].stride){
-      st[i] = (stride_t){st[i].count * st[i+1].count,
-			 st[i+1].stride};
+      st[i] = (stride_t){.count = st[i].count * st[i+1].count,
+			 .stride = st[i+1].stride,
+			 .offset = st[i].offset + st[i+1].offset};
+      //This offset calculation may be wrong, but this code is not reached as far as I know.
 
       stride_shift(nd, st, i+1);
+//      _XMP_fatal("reduce_pattern2\n");
       return true;
     }
   }
@@ -1038,8 +1063,9 @@ static bool stride_simplify(int *nd, stride_t st[], bool check_target)
   for(int i = *nd - 2; i >= 0; i--){
     if(check_target && (st[i].is_target || st[i+1].is_target)) continue;
 
-    st[i] = (stride_t){st[i].count * st[i].stride / st[i+1].stride,
-		       st[i+1].stride};
+    st[i] = (stride_t){.count = st[i].count * st[i].stride / st[i+1].stride,
+		       .stride = st[i+1].stride,
+		       .offset = st[i].offset};
     stride_shift(nd, st, i+1);
     return true;
   }
@@ -1051,7 +1077,7 @@ static bool stride_simplify(int *nd, stride_t st[], bool check_target)
 static void stride_print(int n, stride_t st[])
 {
   for(int i = 0; i < n; i++){
-    printf("(%"PRIu64",%"PRIu64",%c)", st[i].count, st[i].stride, st[i].is_target? 't':'f');
+    printf("(%"PRIu64",%"PRIu64",%c@%"PRIu64")", st[i].count, st[i].stride, st[i].is_target? 't':'f', st[i].offset);
   }
   printf("\n");
 }

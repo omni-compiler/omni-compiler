@@ -161,7 +161,7 @@ public class Bcons
         if (v.getArg(idx).Opcode() != Xcode.F_STATEMENT_LIST)
             cond = BasicBlock.Cond(v.getArg(idx++));
         BlockList body = buildList(v.getArg(idx));
-        return new FforAllBlock(cond, ind_var_range, body, construct_name);
+        return new FforAllBlock(v.Type(), cond, ind_var_range, body, construct_name);
     }
 
     /** create 'for' statement block */

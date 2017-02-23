@@ -2699,7 +2699,6 @@ expv
 compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 {
     expv result, component;
-    TYPE_DESC applied_type = NULL;
     TYPE_DESC base_stp;
     TYPE_DESC tp;
 
