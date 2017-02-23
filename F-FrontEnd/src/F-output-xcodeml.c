@@ -3395,7 +3395,6 @@ outx_FORALL_statement(int l, expv v)
     expv mask = EXPR_ARG2(v);
     expv body = EXPR_ARG3(v);
     const char *tid = NULL;
-    char buf[128];
 
     outx_vtagLineno(l, XTAG(v), EXPR_LINE(v), NULL);
 
