@@ -1843,8 +1843,12 @@ public class XMPrewriteExpr {
     Xtype arrayType = alignedArray.getArrayType();
     for (int i=0; i<arrayDim; i++, arrayType=arrayType.getRef()){
       int dimSize = (int)arrayType.getArraySize();
-      if(dimSize == -1){   // this dimension is distributed
+      if(alignedArray.getAlignMannerAt(i) == XMPalignedArray.BLOCK ||
+         alignedArray.getAlignMannerAt(i) == XMPalignedArray.CYCLIC ||
+         alignedArray.getAlignMannerAt(i) == XMPalignedArray.BLOCK_CYCLIC ||
+	 dimSize == -1){
         Xobject x = arrayType.getArraySizeExpr();
+	if(x == null) x = Xcons.LongLongConstant(0, arrayType.getArraySize());
         int index = alignedArray.getAlignSubscriptIndexAt(i);
         if(t.getOntoNodesIndexAt(index) != null){ // Not duplicate
           if(x.Opcode() != Xcode.LONGLONG_CONSTANT)              return false;
@@ -1900,16 +1904,19 @@ public class XMPrewriteExpr {
 
     if(is_divisible_size(alignedArray)){
       is_divisible_size_flag = true;
-      
+
       XMPtemplate t     = alignedArray.getAlignTemplate();
       XMPnodes n        = t.getOntoNodes();
       XobjList tmp_args = Xcons.List();
       Xtype arrayType   = alignedArray.getArrayType();
       for (int i=0; i<arrayDim; i++, arrayType=arrayType.getRef()){
         int dimSize = (int)arrayType.getArraySize();
-        if (dimSize == -1) {  // this dimension is distributed
-          //          Xobject x = Xcons.Cast(Xtype.intType, arrayType.getArraySizeExpr());
+	if(alignedArray.getAlignMannerAt(i) == XMPalignedArray.BLOCK || 
+	   alignedArray.getAlignMannerAt(i) == XMPalignedArray.CYCLIC ||
+	   alignedArray.getAlignMannerAt(i) == XMPalignedArray.BLOCK_CYCLIC || 
+	   dimSize == -1){
           Xobject x = arrayType.getArraySizeExpr();
+	  if(x == null) x = Xcons.IntConstant((int)arrayType.getArraySize());
           int index = alignedArray.getAlignSubscriptIndexAt(i);
           if(t.getOntoNodesIndexAt(index) != null){ // Not duplicate
             int node_rank = t.getOntoNodesIndexAt(index).getInt();
