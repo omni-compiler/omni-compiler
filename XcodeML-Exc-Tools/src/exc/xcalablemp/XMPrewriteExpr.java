@@ -1836,12 +1836,36 @@ public class XMPrewriteExpr {
     return true;
   }
 
-  // Is size of template % size of node == 0 ?
-  private static Boolean is_divisible_size(XMPtemplate t) throws XMPexception
+  private static Boolean is_the_same_size_template_array(XMPalignedArray alignedArray) throws XMPexception
   {
-    XMPnodes n = t.getOntoNodes();
-    if(is_template_constant_size(t) == false) return false;
-    if(is_node_constant_size(n)     == false) return false;
+    XMPtemplate t   = alignedArray.getAlignTemplate();
+    int arrayDim    = alignedArray.getDim();
+    Xtype arrayType = alignedArray.getArrayType();
+    for (int i=0; i<arrayDim; i++, arrayType=arrayType.getRef()){
+      int dimSize = (int)arrayType.getArraySize();
+      if(dimSize == -1){   // this dimension is distributed
+        Xobject x = arrayType.getArraySizeExpr();
+        int index = alignedArray.getAlignSubscriptIndexAt(i);
+        if(t.getOntoNodesIndexAt(index) != null){ // Not duplicate
+          if(x.Opcode() != Xcode.LONGLONG_CONSTANT)              return false;
+          if(x.getLongHigh() != 0)                               return false;
+          int template_size = XMPutil.foldIntConstant(t.getSizeAt(index)).getInt();
+          if((int)x.getLongLow() != template_size) return false;
+        }
+      }
+    }
+
+    return true;
+  }
+  
+  // Is size of template % size of node == 0 ?
+  private static Boolean is_divisible_size(XMPalignedArray alignedArray) throws XMPexception
+  {
+    XMPtemplate t = alignedArray.getAlignTemplate();
+    XMPnodes    n = t.getOntoNodes();
+    if(! is_template_constant_size(t))                  return false;
+    if(! is_node_constant_size(n))                      return false;
+    if(! is_the_same_size_template_array(alignedArray)) return false;
 
     // Number of dimensions of template must be larger than that of node.
     for(int i=0;i<t.getDim();i++){
@@ -1866,18 +1890,18 @@ public class XMPrewriteExpr {
 
     return true;
   }
-	
+
   public static Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount,
                                                       XobjList getAddrFuncArgs) throws XMPexception {
     int arrayDim = alignedArray.getDim();
     Ident getAddrFuncId = null;
     XobjList args = Xcons.List();
     Boolean is_divisible_size_flag = false;
-    XMPtemplate t = alignedArray.getAlignTemplate();
 
-    if(is_divisible_size(t)){
+    if(is_divisible_size(alignedArray)){
       is_divisible_size_flag = true;
       
+      XMPtemplate t     = alignedArray.getAlignTemplate();
       XMPnodes n        = t.getOntoNodes();
       XobjList tmp_args = Xcons.List();
       Xtype arrayType   = alignedArray.getArrayType();
@@ -1887,10 +1911,7 @@ public class XMPrewriteExpr {
           //          Xobject x = Xcons.Cast(Xtype.intType, arrayType.getArraySizeExpr());
           Xobject x = arrayType.getArraySizeExpr();
           int index = alignedArray.getAlignSubscriptIndexAt(i);
-          if(t.getOntoNodesIndexAt(index) == null){ // duplicate
-            x = arrayType.getArraySizeExpr();
-          }
-          else{
+          if(t.getOntoNodesIndexAt(index) != null){ // Not duplicate
             int node_rank = t.getOntoNodesIndexAt(index).getInt();
             x = Xcons.binaryOp(Xcode.DIV_EXPR, x, n.getSizeAt(node_rank));
           }
