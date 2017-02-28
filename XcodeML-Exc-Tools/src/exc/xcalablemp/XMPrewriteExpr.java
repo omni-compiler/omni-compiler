@@ -1800,18 +1800,140 @@ public class XMPrewriteExpr {
     return createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
   }
 
+  private static Boolean is_template_constant_size(XMPtemplate t) throws XMPexception
+  {
+    for(int i=0;i<t.getDim();i++){
+      topdownXobjectIterator iter = t.getSizeAt(i).topdownIterator();
+      for(iter.init(); !iter.end(); iter.next()){
+        Xobject expr = iter.getXobject();
+        Xcode code = expr.Opcode();
+        if(code == Xcode.PLUS_EXPR || code == Xcode.MINUS_EXPR ||
+           code == Xcode.MUL_EXPR || code == Xcode.DIV_EXPR)
+          continue;
+        else if(! expr.isConstant())
+          return false;
+      }
+    }
+    
+    return true;
+  }
+  
+  private static Boolean is_node_constant_size(XMPnodes n) throws XMPexception
+  {
+    for(int i=0;i<n.getDim();i++){
+      topdownXobjectIterator iter = n.getSizeAt(i).topdownIterator();
+      for(iter.init(); !iter.end(); iter.next()){
+        Xobject expr = iter.getXobject();
+        Xcode code = expr.Opcode();
+        if(code == Xcode.PLUS_EXPR || code == Xcode.MINUS_EXPR ||
+           code == Xcode.MUL_EXPR || code == Xcode.DIV_EXPR)
+          continue;
+        if(! expr.isConstant())
+          return false;
+      }
+    }
+    
+    return true;
+  }
+
+  // Is size of template % size of node == 0 ?
+  private static Boolean is_divisible_size(XMPtemplate t) throws XMPexception
+  {
+    XMPnodes n = t.getOntoNodes();
+    if(is_template_constant_size(t) == false) return false;
+    if(is_node_constant_size(n)     == false) return false;
+
+    // Number of dimensions of template must be larger than that of node.
+    for(int i=0;i<t.getDim();i++){
+      int manner = t.getDistMannerAt(i);
+      switch (manner){
+      case XMPtemplate.GBLOCK:
+        return false;
+      case XMPtemplate.DUPLICATION:
+        break;
+      case XMPtemplate.BLOCK:
+      case XMPtemplate.CYCLIC:
+      case XMPtemplate.BLOCK_CYCLIC:
+        int template_size = XMPutil.foldIntConstant(t.getSizeAt(i)).getInt();
+        int blocksize     = (manner == XMPtemplate.BLOCK_CYCLIC)? XMPutil.foldIntConstant(t.getWidthAt(i)).getInt() : 1;
+        int node_rank     = t.getOntoNodesIndexAt(i).getInt();
+        int node_size     = XMPutil.foldIntConstant(n.getSizeAt(node_rank)).getInt();
+        if(template_size%(node_size*blocksize) != 0)
+          return false;
+        break;
+      }
+    }
+
+    return true;
+  }
+	
   public static Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount,
                                                       XobjList getAddrFuncArgs) throws XMPexception {
     int arrayDim = alignedArray.getDim();
     Ident getAddrFuncId = null;
+    XobjList args = Xcons.List();
+    Boolean is_divisible_size_flag = false;
+    XMPtemplate t = alignedArray.getAlignTemplate();
 
+    if(is_divisible_size(t)){
+      is_divisible_size_flag = true;
+      
+      XMPnodes n        = t.getOntoNodes();
+      XobjList tmp_args = Xcons.List();
+      Xtype arrayType   = alignedArray.getArrayType();
+      for (int i=0; i<arrayDim; i++, arrayType=arrayType.getRef()){
+        int dimSize = (int)arrayType.getArraySize();
+        if (dimSize == -1) {  // this dimension is distributed
+          //          Xobject x = Xcons.Cast(Xtype.intType, arrayType.getArraySizeExpr());
+          Xobject x = arrayType.getArraySizeExpr();
+          int index = alignedArray.getAlignSubscriptIndexAt(i);
+          if(t.getOntoNodesIndexAt(index) == null){ // duplicate
+            x = arrayType.getArraySizeExpr();
+          }
+          else{
+            int node_rank = t.getOntoNodesIndexAt(index).getInt();
+            x = Xcons.binaryOp(Xcode.DIV_EXPR, x, n.getSizeAt(node_rank));
+          }
+          
+          if(alignedArray.hasShadow()){
+            XMPshadow s = alignedArray.getShadowAt(i);
+            if(s.getHi() != null && s.getLo() != null){
+              Xobject h_plus_l = Xcons.binaryOp(Xcode.PLUS_EXPR, s.getHi(), s.getLo());
+              x = Xcons.binaryOp(Xcode.PLUS_EXPR, x, h_plus_l);
+            }
+          }
+          tmp_args.add(x);
+        }
+	else{
+          tmp_args.add(Xcons.IntConstant(dimSize));
+	}
+      }
+
+      for (int i=1; i<arrayDim; i++){
+	Xobject x = tmp_args.getArg(i);
+	for (int j=i+1; j<arrayDim; j++){
+          if(tmp_args.getArg(j) != null){
+            x = Xcons.binaryOp(Xcode.MUL_EXPR, x, tmp_args.getArg(j));
+          }
+	}
+        if(x != null) args.add(x);
+      }
+    }
+    
     if (arrayDim < arrayDimCount) {
       throw new XMPexception("wrong array ref");
-    } else if (arrayDim == arrayDimCount) {
+    }
+    else if (arrayDim == arrayDimCount) {
       getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
-      for (int i = 0; i < arrayDim - 1; i++)
-        getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
-    } else {
+      for (int i=0; i<arrayDim-1; i++)
+        if(is_divisible_size_flag){
+          //          System.out.println(i + " : " + args.getArg(i));
+          getAddrFuncArgs.add(args.getArg(i));
+        }
+        else
+          getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
+    }
+    else {
       getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
       for (int i = 0; i < arrayDimCount; i++)
         getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
@@ -2607,7 +2729,5 @@ public class XMPrewriteExpr {
     Ident f = _globalDecl.declExternFunc("_XMP_barrier_EXEC", Xtype.Function(Xtype.voidType));
     BlockList bl = fb.getBody().getHead().getBody();
     bl.add(f.Call(Xcons.List()));
-
   }
-
 }
