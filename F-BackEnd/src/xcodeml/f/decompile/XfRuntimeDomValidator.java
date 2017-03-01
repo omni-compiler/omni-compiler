@@ -70,7 +70,10 @@ public class XfRuntimeDomValidator {
                 return false;
             }
 
-            if (XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "ref"))) {
+            boolean isClass = XmDomUtil.getAttrBool(n, "is_class");
+            boolean isProcedure = XmDomUtil.getAttrBool(n, "is_procedure");
+
+            if (!isClass && !isProcedure && XfUtilForDom.isNullOrEmpty(XmDomUtil.getAttr(n, "ref"))) {
                 errorDescription =
                     XfUtilForDom.formatError(n,
                                              XfError.XCODEML_NEED_ATTR,

@@ -5,7 +5,8 @@
                   intent(in) :: a
               end function id
           end interface
-          integer n
           ! pure function call is restricted expression
-          character(len=id(n)) :: a
+          BLOCK
+            character(len=id(8)) :: a
+          END BLOCK
       end subroutine foo

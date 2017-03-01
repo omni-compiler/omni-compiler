@@ -1,5 +1,4 @@
 subroutine autosyncall
-!!   include "xmp_coarray.h"
   integer :: mam(19)[2,*]
 
   mam(9)[2,1] = 1

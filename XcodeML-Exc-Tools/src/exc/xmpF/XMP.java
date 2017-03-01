@@ -11,8 +11,10 @@ import exc.block.*;
 import xcodeml.util.XmLog;
 
 /**
- * all static members are defined here
+ * Class to define several constants related to XMP compiler.
+ *    all static members are defined here
  */
+
 public class XMP {
   public static boolean debugFlag = false;
 
@@ -45,7 +47,7 @@ public class XMP {
   public final static int GMOVE_IN              = 401;
   public final static int GMOVE_OUT	        = 402;
 
-  public final static int MAX_DIM		= 7;
+  public final static int MAX_DIM		= 15;
   public       static int MAX_ASSUMED_SHAPE     = 16;
   public final static int NONBASIC_TYPE		= 99 /*599*/;
 
@@ -160,6 +162,8 @@ public class XMP {
 	case 8:
 	  t = BasicType.LONGLONG;
 	  break;
+        default:
+          warning("unknown type size of integer for reduction");
 	}
       }
       break;
@@ -179,6 +183,8 @@ public class XMP {
 	case 8:
 	  t = BasicType.UNSIGNED_LONGLONG;
 	  break;
+        default:
+          warning("unknown type size of boolean for reduction");
 	}
       }
       break;
@@ -195,6 +201,8 @@ public class XMP {
 	case 16:
 	  t = BasicType.LONG_DOUBLE;
 	  break;
+        default:
+          warning("unknown type size of float/real for reduction");
 	}
       }
       break;
@@ -211,6 +219,8 @@ public class XMP {
 	case 16:
 	  t = BasicType.LONG_DOUBLE_COMPLEX;
 	  break;
+        default:
+          warning("unknown type size of complex for reduction");
 	}
       }
       break;

@@ -14,21 +14,1283 @@
 #define _XMP_FJRDMA_MAX_GET         60 /** This value is trial */
 
 static int _num_of_puts = 0, _num_of_gets = 0;
-static struct FJMPI_Rdma_cq _cq;
 static int _memid = _XMP_FJRDMA_START_MEMID; // _memid = 0 is used for put/get operations.
                                              // _memid = 1 is used for post/wait operations.
                                              // _memid = 2 is used for sync images
 static uint64_t _local_rdma_addr, *_remote_rdma_addr;
 static unsigned int *_sync_images_table;
 
+/** These variables are temporral **/
+extern int _XMP_flag_put_nb;
+extern int _XMP_flag_put_nb_rr;
+extern int _XMP_flag_put_nb_rr_i;
+#define _XMP_COARRAY_SEND_NIC_TMP_0 FJMPI_RDMA_LOCAL_NIC0
+#define _XMP_COARRAY_SEND_NIC_TMP_1 FJMPI_RDMA_LOCAL_NIC1
+#define _XMP_COARRAY_SEND_NIC_TMP_2 FJMPI_RDMA_LOCAL_NIC2
+#define _XMP_COARRAY_SEND_NIC_TMP_3 FJMPI_RDMA_LOCAL_NIC3
+#define _XMP_COARRAY_FLAG_NIC_TMP_0 (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC0)
+#define _XMP_COARRAY_FLAG_NIC_TMP_1 (FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1)
+#define _XMP_COARRAY_FLAG_NIC_TMP_2 (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC2)
+#define _XMP_COARRAY_FLAG_NIC_TMP_3 (FJMPI_RDMA_LOCAL_NIC3 | FJMPI_RDMA_REMOTE_NIC3)
+#define _XMP_COARRAY_FLAG_NIC_TMP_i0 (FJMPI_RDMA_LOCAL_NIC0 | FJMPI_RDMA_REMOTE_NIC0 | FJMPI_RDMA_IMMEDIATE_RETURN)
+#define _XMP_COARRAY_FLAG_NIC_TMP_i1 (FJMPI_RDMA_LOCAL_NIC1 | FJMPI_RDMA_REMOTE_NIC1 | FJMPI_RDMA_IMMEDIATE_RETURN)
+#define _XMP_COARRAY_FLAG_NIC_TMP_i2 (FJMPI_RDMA_LOCAL_NIC2 | FJMPI_RDMA_REMOTE_NIC2 | FJMPI_RDMA_IMMEDIATE_RETURN)
+#define _XMP_COARRAY_FLAG_NIC_TMP_i3 (FJMPI_RDMA_LOCAL_NIC3 | FJMPI_RDMA_REMOTE_NIC3 | FJMPI_RDMA_IMMEDIATE_RETURN)
+/** End these variables are temporral **/ 
+
+/******************************************************************/
+/* DESCRIPTION : Set addresses                                    */
+/* ARGUMENT    : [OUT] *addrs     : Addresses                     */
+/*               [IN] *base_addr  : Base address                  */
+/*               [IN] *array_info : Information of array          */
+/*               [IN] dims        : Number of dimensions of array */
+/*               [IN] chunk_size  : Chunk size for copy           */
+/*               [IN] copy_elmts  : Num of elements for copy      */
+/******************************************************************/
+static void _XMP_set_coarray_addresses_with_chunk(uint64_t* addrs, const uint64_t base_addr, const _XMP_array_section_t* array_info, 
+						  const int dims, const size_t chunk_size, const size_t copy_elmts)
+{
+  uint64_t stride_offset[dims], tmp[dims];
+
+  // Temporally variables to reduce calculation for offset
+  for(int i=0;i<dims;i++)
+    stride_offset[i] = array_info[i].stride * array_info[i].distance;
+
+  // array_info[dims-1].distance is an element size
+  // chunk_size >= array_info[dims-1].distance
+  switch (dims){
+    int chunk_len;
+  case 1:
+    chunk_len = chunk_size / array_info[0].distance;
+    for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+      addrs[num++] = stride_offset[0] * i + base_addr;
+    }
+    break;
+  case 2:
+    if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+          addrs[num++] = tmp[0] + tmp[1] + base_addr;
+        }
+      }
+    }
+    else{                               // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+        addrs[num++] = stride_offset[0] * i + base_addr;
+      }
+    }
+    break;
+  case 3:
+    if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+      chunk_len = chunk_size / array_info[2].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+            tmp[2] = stride_offset[2] * k;
+            addrs[num++] = tmp[0] + tmp[1] + tmp[2] + base_addr;
+          }
+        }
+      }
+    }
+    else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+          addrs[num++] = tmp[0] + tmp[1] + base_addr;
+        }
+      }
+    }
+    else{                                   // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+        addrs[num++] = stride_offset[0] * i + base_addr;
+      }
+    }
+    break;
+  case 4:
+    if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+      chunk_len = chunk_size / array_info[3].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l+=chunk_len){
+              tmp[3] = stride_offset[3] * l;
+              addrs[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + base_addr;
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+      chunk_len = chunk_size / array_info[2].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+            tmp[2] = stride_offset[2] * k;
+            addrs[num++] = tmp[0] + tmp[1] + tmp[2] + base_addr;
+          }
+        }
+      }
+    }
+    else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+          addrs[num++] = tmp[0] + tmp[1] + base_addr;
+        }
+      }
+    }
+    else{                                   // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+        addrs[num++] = stride_offset[0] * i + base_addr;
+      }
+    }
+    break;
+  case 5:
+    if(array_info[3].distance > chunk_size){ // array_info[3].distance > chunk_size >= array_info[4].distance
+      chunk_len = chunk_size / array_info[4].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l++){
+              tmp[3] = stride_offset[3] * l;
+              for(size_t m=0;m<array_info[4].length;m+=chunk_len){
+                tmp[4] = stride_offset[4] * m;
+                addrs[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + base_addr;
+              }
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+      chunk_len = chunk_size / array_info[3].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l+=chunk_len){
+              tmp[3] = stride_offset[3] * l;
+              addrs[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + base_addr;
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+      chunk_len = chunk_size / array_info[2].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+            tmp[2] = stride_offset[2] * k;
+            addrs[num++] = tmp[0] + tmp[1] + tmp[2] + base_addr;
+          }
+        }
+      }
+    }
+    else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+          addrs[num++] = tmp[0] + tmp[1] + base_addr;
+        }
+      }
+    }
+    else{                                   // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+        addrs[num++] = stride_offset[0] * i + base_addr;
+      }
+    }
+    break;
+  case 6:
+    if(array_info[4].distance > chunk_size){ // array_info[4].distance > chunk_size >= array_info[5].distance
+      chunk_len = chunk_size / array_info[5].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l++){
+              tmp[3] = stride_offset[3] * l;
+              for(size_t m=0;m<array_info[4].length;m++){
+                tmp[4] = stride_offset[4] * m;
+                for(size_t n=0;n<array_info[5].length;n+=chunk_len){
+                  tmp[5] = stride_offset[5] * n;
+                  addrs[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + base_addr;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[3].distance > chunk_size){ // array_info[3].distance > chunk_size >= array_info[4].distance
+      chunk_len = chunk_size / array_info[4].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l++){
+              tmp[3] = stride_offset[3] * l;
+              for(size_t m=0;m<array_info[4].length;m+=chunk_len){
+                tmp[4] = stride_offset[4] * m;
+                addrs[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + base_addr;
+              }
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+      chunk_len = chunk_size / array_info[3].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l+=chunk_len){
+              tmp[3] = stride_offset[3] * l;
+              addrs[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + base_addr;
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+      chunk_len = chunk_size / array_info[2].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+            tmp[2] = stride_offset[2] * k;
+            addrs[num++] = tmp[0] + tmp[1] + tmp[2] + base_addr;
+          }
+        }
+      }
+    }
+    else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+          addrs[num++] = tmp[0] + tmp[1] + base_addr;
+        }
+      }
+    }
+    else{                                   // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+        addrs[num++] = stride_offset[0] * i + base_addr;
+      }
+    }
+    break;
+  case 7:
+    if(array_info[5].distance > chunk_size){ // array_info[5].distance > chunk_size >= array_info[6].distance
+      chunk_len = chunk_size / array_info[6].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l++){
+              tmp[3] = stride_offset[3] * l;
+              for(size_t m=0;m<array_info[4].length;m++){
+                tmp[4] = stride_offset[4] * m;
+                for(size_t n=0;n<array_info[5].length;n++){
+                  tmp[5] = stride_offset[5] * n;
+                  for(size_t p=0;p<array_info[6].length;p+=chunk_len){
+                    tmp[6] = stride_offset[6] * p;
+                    addrs[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6] + base_addr;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[4].distance > chunk_size){ // array_info[4].distance > chunk_size >= array_info[5].distance
+      chunk_len = chunk_size / array_info[5].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l++){
+              tmp[3] = stride_offset[3] * l;
+              for(size_t m=0;m<array_info[4].length;m++){
+                tmp[4] = stride_offset[4] * m;
+                for(size_t n=0;n<array_info[5].length;n+=chunk_len){
+                  tmp[5] = stride_offset[5] * n;
+                  addrs[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + base_addr;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[3].distance > chunk_size){ // array_info[3].distance > chunk_size >= array_info[4].distance
+      chunk_len = chunk_size / array_info[4].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l++){
+              tmp[3] = stride_offset[3] * l;
+              for(size_t m=0;m<array_info[4].length;m+=chunk_len){
+                tmp[4] = stride_offset[4] * m;
+                addrs[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + base_addr;
+              }
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+      chunk_len = chunk_size / array_info[3].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l+=chunk_len){
+              tmp[3] = stride_offset[3] * l;
+              addrs[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + base_addr;
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+      chunk_len = chunk_size / array_info[2].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+	tmp[0] = stride_offset[0] * i;
+	for(size_t j=0;j<array_info[1].length;j++){
+	  tmp[1] = stride_offset[1] * j;
+	  for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+	    tmp[2] = stride_offset[2] * k;
+	    addrs[num++] = tmp[0] + tmp[1] + tmp[2] + base_addr;
+	  }
+	}
+      }
+    }
+    else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+          addrs[num++] = tmp[0] + tmp[1] + base_addr;
+        }
+      }
+    }
+    else{                                   // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+        addrs[num++] = stride_offset[0] * i + base_addr;
+      }
+    }
+    break;
+  }
+}
+
+static void _XMP_set_coarray_addresses(const uint64_t addr, const _XMP_array_section_t *array, const int dims, 
+				       const size_t elmts, uint64_t* addrs)
+{
+  uint64_t stride_offset[dims], tmp[dims];
+
+  // Temporally variables to reduce calculation for offset
+  for(int i=0;i<dims;i++)
+    stride_offset[i] = array[i].stride * array[i].distance;
+ 
+  switch (dims){
+  case 1:
+    for(size_t i=0, num=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      addrs[num++] = addr + tmp[0];
+    }
+    break;
+  case 2:
+    for(size_t i=0, num=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(size_t j=0;j<array[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+	addrs[num++] = addr + tmp[0] + tmp[1];
+      }
+    }
+    break;
+  case 3:
+    for(size_t i=0, num=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(size_t j=0;j<array[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+	for(size_t k=0;k<array[2].length;k++){
+	  tmp[2] = stride_offset[2] * k;
+	  addrs[num++] = addr + tmp[0] + tmp[1] + tmp[2];
+	}
+      }
+    }
+    break;
+  case 4:
+    for(size_t i=0, num=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(size_t j=0;j<array[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+	for(size_t k=0;k<array[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+	  for(size_t l=0;l<array[3].length;l++){
+	    tmp[3] = stride_offset[3] * l;
+	    addrs[num++] = addr + tmp[0] + tmp[1] + tmp[2] + tmp[3];
+	  }
+	}
+      }
+    }
+    break;
+  case 5:
+    for(size_t i=0, num=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(size_t j=0;j<array[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(size_t k=0;k<array[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(size_t l=0;l<array[3].length;l++){
+            tmp[3] = stride_offset[3] * l;
+	    for(size_t m=0;m<array[4].length;m++){
+	      tmp[4] = stride_offset[4] * m;
+	      addrs[num++] = addr + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
+	    }
+          }
+        }
+      }
+    }
+    break;
+  case 6:
+    for(size_t i=0, num=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(size_t j=0;j<array[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(size_t k=0;k<array[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(size_t l=0;l<array[3].length;l++){
+            tmp[3] = stride_offset[3] * l;
+            for(size_t m=0;m<array[4].length;m++){
+              tmp[4] = stride_offset[4] * m;
+	      for(size_t n=0;n<array[5].length;n++){
+		tmp[5] = stride_offset[5] * n;
+		addrs[num++] = addr + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5];
+	      }
+            }
+          }
+        }
+      }
+    }
+    break;
+  case 7:
+    for(size_t i=0, num=0;i<array[0].length;i++){
+      tmp[0] = stride_offset[0] * i;
+      for(size_t j=0;j<array[1].length;j++){
+        tmp[1] = stride_offset[1] * j;
+        for(size_t k=0;k<array[2].length;k++){
+          tmp[2] = stride_offset[2] * k;
+          for(size_t l=0;l<array[3].length;l++){
+            tmp[3] = stride_offset[3] * l;
+            for(size_t m=0;m<array[4].length;m++){
+              tmp[4] = stride_offset[4] * m;
+              for(size_t n=0;n<array[5].length;n++){
+                tmp[5] = stride_offset[5] * n;
+		for(size_t p=0;p<array[6].length;p++){
+		  tmp[6] = stride_offset[6] * p;
+		  addrs[num++] = addr + tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6];
+		}
+	      }
+            }
+          }
+        }
+      }
+    }
+    break;
+  }
+}
+
+/***************************************************************************/
+/* DESCRIPTION : Check the dimension of an array has all element ?         */
+/* ARGUMENT    : [IN] *array_info : Information of array                   */
+/*               [IN] dim         : Dimension                              */
+/* RETURN      : If the dimension of an array has all element, return TRUE */
+/***************************************************************************/
+static int _is_all_element(const _XMP_array_section_t *array_info, int dim){
+  if(array_info[dim].elmts == array_info[dim].length)
+    return _XMP_N_INT_TRUE;
+  else
+    return _XMP_N_INT_FALSE;
+}
+
+
+/**************************************************************************************/
+/* DESCRIPTION : Check round of array[dim]                                            */
+/* ARGUMENT    : [IN] *array      : Information of array                              */
+/*               [IN] dim         : Dimension                                         */
+/* RETURN      : If a round of array[dim], return TRUE                                */
+/* NOTE        : The following 3 lines are equal to this function                     */
+/*    int last_elmt = array[dim].start + (array[dim].length - 1) * array[dim].stride; */
+/*    int next_elmt = last_elmt + array[dim].stride - array[dim].elmts;               */
+/*    return next_elmt == array[dim].start;                                           */
+/**************************************************************************************/
+static int _check_round(const _XMP_array_section_t *array, const int dim)
+{
+  return array[dim].length * array[dim].stride - array[dim].elmts == 0;
+}
+
+/**
+   If 1dim array has a constant stride, return TRUE (Always TRUE)
+*/
+static int _is_constant_stride_1dim()
+{
+  return _XMP_N_INT_TRUE;
+}
+
+/********************************************************************/
+/* DESCRIPTION : Is 2dim array has a constant stride ?              */
+/* ARGUMENT    : [IN] *array_info : Information of array            */
+/* RETURN:     : If 2dim array has a constant stride, return TRUE   */
+/********************************************************************/
+static int _is_constant_stride_2dim(const _XMP_array_section_t *array_info)
+{
+  if(array_info[0].stride == 1 && _check_round(array_info, 1)){
+    return _XMP_N_INT_TRUE;
+  }
+  else if(array_info[1].stride == 1){
+    return _XMP_N_INT_TRUE;
+  }
+
+  return _XMP_N_INT_FALSE;
+}
+
+/********************************************************************/
+/* DESCRIPTION : Is 3dim array has a constant stride ?              */
+/* ARGUMENT    : [IN] *array_info : Information of array            */
+/* RETURN:     : If 3dim array has a constant stride, return TRUE   */
+/********************************************************************/
+static int _is_constant_stride_3dim(const _XMP_array_section_t *array_info)
+{
+  if(array_info[1].stride == 1 && _is_all_element(array_info, 2)){
+    return _XMP_N_INT_TRUE;
+  }
+  else if(array_info[0].stride == 1){
+    if(_check_round(array_info, 1) && array_info[2].stride == 1){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _check_round(array_info, 2)){
+      return _XMP_N_INT_TRUE;
+    }
+  }
+
+  return _XMP_N_INT_FALSE;
+}
+
+/********************************************************************/
+/* DESCRIPTION : Is 4dim array has a constant stride ?              */
+/* ARGUMENT    : [IN] *array_info : Information of array            */
+/* RETURN:     : If 4dim array has a constant stride, return TRUE   */
+/********************************************************************/
+static int _is_constant_stride_4dim(const _XMP_array_section_t *array_info)
+{
+  if(array_info[1].stride == 1 && _is_all_element(array_info, 2) &&
+     _is_all_element(array_info, 3)){
+    return _XMP_N_INT_TRUE;
+  }
+  else if(array_info[0].stride == 1){
+    if(_check_round(array_info, 1) && array_info[2].stride == 1 &&
+       _is_all_element(array_info, 3)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _check_round(array_info, 2) &&
+            array_info[3].stride == 1){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _check_round(array_info, 3)){
+      return _XMP_N_INT_TRUE;
+    }
+  }
+
+  return _XMP_N_INT_FALSE;
+}
+
+/********************************************************************/
+/* DESCRIPTION : Is 5dim array has a constant stride ?              */
+/* ARGUMENT    : [IN] *array_info : Information of array            */
+/* RETURN:     : If 5dim array has a constant stride, return TRUE   */
+/********************************************************************/
+static int _is_constant_stride_5dim(const _XMP_array_section_t *array_info)
+{
+  if(array_info[1].stride == 1 && _is_all_element(array_info, 2) &&
+     _is_all_element(array_info, 3) && _is_all_element(array_info, 4)){
+    return _XMP_N_INT_TRUE;
+  }
+  else if(array_info[0].stride == 1){
+    if(_check_round(array_info, 1) && array_info[2].stride == 1 &&
+       _is_all_element(array_info, 3) && _is_all_element(array_info, 4)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _check_round(array_info, 2) &&
+            array_info[3].stride == 1 && _is_all_element(array_info, 4)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _check_round(array_info, 3) && array_info[4].stride == 1){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _is_all_element(array_info, 3) && _check_round(array_info, 4)){
+      return _XMP_N_INT_TRUE;
+    }
+  }
+
+  return _XMP_N_INT_FALSE;
+}
+
+/********************************************************************/
+/* DESCRIPTION : Is 6dim array has a constant stride ?              */
+/* ARGUMENT    : [IN] *array_info : Information of array            */
+/* RETURN:     : If 6dim array has a constant stride, return TRUE   */
+/********************************************************************/
+static int _is_constant_stride_6dim(const _XMP_array_section_t *array_info)
+{
+  if(array_info[1].stride == 1 && _is_all_element(array_info, 2) &&
+     _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+     _is_all_element(array_info, 5)){
+    return _XMP_N_INT_TRUE;
+  }
+  else if(array_info[0].stride == 1){
+    if(_check_round(array_info, 1) && array_info[2].stride == 1 &&
+       _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+       _is_all_element(array_info, 5)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _check_round(array_info, 2) &&
+            array_info[3].stride == 1 && _is_all_element(array_info, 4) &&
+            _is_all_element(array_info, 5)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _check_round(array_info, 3) && array_info[4].stride == 1 &&
+            _is_all_element(array_info, 5)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _is_all_element(array_info, 3) && _check_round(array_info, 4) &&
+            array_info[5].stride == 1){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+            _check_round(array_info, 5)){
+      return _XMP_N_INT_TRUE;
+    }
+  }
+
+  return _XMP_N_INT_FALSE;
+}
+
+/********************************************************************/
+/* DESCRIPTION : Is 7dim array has a constant stride ?              */
+/* ARGUMENT    : [IN] *array_info : Information of array            */
+/* RETURN:     : If 7dim array has a constant stride, return TRUE   */
+/********************************************************************/
+static int _is_constant_stride_7dim(const _XMP_array_section_t *array_info)
+{
+  if(array_info[1].stride == 1 && _is_all_element(array_info, 2) &&
+     _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+     _is_all_element(array_info, 5) && _is_all_element(array_info, 6)){
+    return _XMP_N_INT_TRUE;
+  }
+  else if(array_info[0].stride == 1){
+    if(_check_round(array_info, 1) && array_info[2].stride == 1 &&
+       _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+       _is_all_element(array_info, 5) && _is_all_element(array_info, 6)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _check_round(array_info, 2) &&
+            array_info[3].stride == 1 && _is_all_element(array_info, 4) &&
+            _is_all_element(array_info, 5) && _is_all_element(array_info, 6)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _check_round(array_info, 3) && array_info[4].stride == 1 &&
+            _is_all_element(array_info, 5) && _is_all_element(array_info, 6)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _is_all_element(array_info, 3) && _check_round(array_info, 4) &&
+            array_info[5].stride == 1 && _is_all_element(array_info, 6)){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+            _check_round(array_info, 5) && array_info[6].stride == 1){
+      return _XMP_N_INT_TRUE;
+    }
+    else if(_is_all_element(array_info, 1) && _is_all_element(array_info, 2) &&
+            _is_all_element(array_info, 3) && _is_all_element(array_info, 4) &&
+            _is_all_element(array_info, 5) && _check_round(array_info, 6)){
+      return _XMP_N_INT_TRUE;
+    }
+  }
+
+  return _XMP_N_INT_FALSE;
+}
+
+/**********************************************************************************/
+/* DESCRIPTION : Check shape of two arrays, the same is except for start          */
+/* ARGUMENT    : [IN] *array1_info : Information of array1                        */
+/*               [IN] *array2_info : Information of array2                        */
+/*               [IN] array1_dims  : Number of dimensions of array1               */
+/*               [IN] array2_dims  : Number of dimensions of array2               */
+/* RETURN:     : If two arrays have the same stride except for start, return TRUE */
+/**********************************************************************************/
+static int _is_the_same_shape_except_for_start(const _XMP_array_section_t *array1_info,
+                                               const _XMP_array_section_t *array2_info,
+                                               const int array1_dims, const int array2_dims)
+{
+  if(array1_dims != array2_dims) return _XMP_N_INT_FALSE;
+
+  for(int i=0;i<array1_dims;i++)
+    if(array1_info[i].length != array2_info[i].length ||
+       array1_info[i].elmts  != array2_info[i].elmts ||
+       array1_info[i].stride != array2_info[i].stride)
+      return _XMP_N_INT_FALSE;
+
+  return _XMP_N_INT_TRUE;
+}
+
+/********************************************************************/
+/* DESCRIPTION : Check two arrays have the same stride              */
+/* ARGUMENT    : [IN] *array1_info : Information of array1          */
+/*               [IN] *array2_info : Information of array2          */
+/*               [IN] array1_dims  : Number of dimensions of array1 */
+/*               [IN] array2_dims  : Number of dimensions of array2 */
+/* RETURN:     : If two arrays have the same stride, return TRUE    */
+/* NOTE        : This function does not support the following very  */
+/*               rare case.                                         */
+/*               int a[10][10]; -> a[0:2][0:5:2];                   */
+/*               An array has continuity jumped over the dimension  */
+/********************************************************************/
+static int _XMP_is_the_same_constant_stride(const _XMP_array_section_t *array1_info,
+					    const _XMP_array_section_t *array2_info,
+					    const int array1_dims, const int array2_dims)
+{
+  if(! _is_the_same_shape_except_for_start(array1_info, array2_info,
+                                           array1_dims, array2_dims))
+    return _XMP_N_INT_FALSE;
+
+  switch (array1_dims){
+  case 1:
+    return _is_constant_stride_1dim();
+  case 2:
+    return _is_constant_stride_2dim(array1_info);
+  case 3:
+    return _is_constant_stride_3dim(array1_info);
+  case 4:
+    return _is_constant_stride_4dim(array1_info);
+  case 5:
+    return _is_constant_stride_5dim(array1_info);
+  case 6:
+    return _is_constant_stride_6dim(array1_info);
+  case 7:
+    return _is_constant_stride_7dim(array1_info);
+  default:
+    _XMP_fatal("Coarray Error ! Dimension is too big.\n");
+    return _XMP_N_INT_FALSE; // dummy
+  }
+}
+
+/***************************************************************/
+/* DESCRIPTION : Caluculate stride size of array               */
+/* ARGUMENT    : [IN] *array_info : Information of array       */
+/*               [IN] dims        : Demension of array         */
+/*               [IN] chunk_size  : Size of chunk              */
+/* RETURN:     : Stride size                                   */
+/***************************************************************/
+static size_t _XMP_calc_stride(const _XMP_array_section_t *array_info, const int dims,
+			       const size_t chunk_size)
+{
+  uint64_t stride_offset[dims], tmp[dims];
+  size_t stride[2];
+
+  // Temporally variables to reduce calculation for offset
+  for(int i=0;i<dims;i++)
+    stride_offset[i] = array_info[i].stride * array_info[i].distance;
+
+  switch (dims){
+    size_t chunk_len;
+  case 1:
+    chunk_len = chunk_size / array_info[0].distance;
+    for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+      stride[num++] = stride_offset[0] * chunk_len * i;
+      if(num == 2) goto end;
+    }
+  case 2:
+    if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+          stride[num++] = tmp[0] + tmp[1];
+          if(num == 2) goto end;
+        }
+      }
+    }
+    else{                               // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+        stride[num++] = stride_offset[0] * i;
+        if(num == 2) goto end;
+      }
+    }
+  case 3:
+   if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+     chunk_len = chunk_size / array_info[2].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+	   tmp[2] = stride_offset[2] * k;
+	   stride[num++] = tmp[0] + tmp[1] + tmp[2];
+	   if(num == 2) goto end;
+	 }
+       }
+     }
+   }
+   else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+     chunk_len = chunk_size / array_info[1].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+	 tmp[1] = stride_offset[1] * j;
+	 stride[num++] = tmp[0] + tmp[1];
+	 if(num == 2) goto end;
+       }
+     }
+   }
+   else{                                   // chunk_size >= array_info[0].distance
+     chunk_len = chunk_size / array_info[0].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+       stride[num++] = stride_offset[0] * i;
+       if(num == 2) goto end;
+     }
+   }
+   break;
+ case 4:
+   if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+     chunk_len = chunk_size / array_info[3].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k++){
+	   tmp[2] = stride_offset[2] * k;
+	   for(size_t l=0;l<array_info[3].length;l+=chunk_len){
+	     tmp[3] = stride_offset[3] * l;
+	     stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+	     if(num == 2) goto end;
+	   }
+	 }
+       }
+     }
+   }
+   else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+     chunk_len = chunk_size / array_info[2].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+	   tmp[2] = stride_offset[2] * k;
+	   stride[num++] = tmp[0] + tmp[1] + tmp[2];
+	   if(num == 2) goto end;
+	 }
+       }
+     }
+   }
+   else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+     chunk_len = chunk_size / array_info[1].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+	 tmp[1] = stride_offset[1] * j;
+	 stride[num++] = tmp[0] + tmp[1];
+	 if(num == 2) goto end;
+       }
+     }
+   }
+   else{                                   // chunk_size >= array_info[0].distance
+     chunk_len = chunk_size / array_info[0].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+       stride[num++] = stride_offset[0] * i;
+       if(num == 2) goto end;
+     }
+   }
+   break;
+ case 5:
+   if(array_info[3].distance > chunk_size){ // array_info[3].distance > chunk_size >= array_info[4].distance
+     chunk_len = chunk_size / array_info[4].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k++){
+	   tmp[2] = stride_offset[2] * k;
+	   for(size_t l=0;l<array_info[3].length;l++){
+	     tmp[3] = stride_offset[3] * l;
+	     for(size_t m=0;m<array_info[4].length;m+=chunk_len){
+	       tmp[4] = stride_offset[4] * m;
+	       stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
+	       if(num == 2) goto end;
+	     }
+	   }
+	 }
+       }
+     }
+   }
+   else if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+     chunk_len = chunk_size / array_info[3].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k++){
+	   tmp[2] = stride_offset[2] * k;
+	   for(size_t l=0;l<array_info[3].length;l+=chunk_len){
+	     tmp[3] = stride_offset[3] * l;
+	     stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+	     if(num == 2) goto end;
+	   }
+	 }
+       }
+     }
+   }
+   else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+     chunk_len = chunk_size / array_info[2].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+	   tmp[2] = stride_offset[2] * k;
+	   stride[num++] = tmp[0] + tmp[1] + tmp[2];
+	   if(num == 2) goto end;
+	 }
+       }
+     }
+   }
+   else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+     chunk_len = chunk_size / array_info[1].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+	 tmp[1] = stride_offset[1] * j;
+	 stride[num++] = tmp[0] + tmp[1];
+	 if(num == 2) goto end;
+       }
+     }
+   }
+   else{                                   // chunk_size >= array_info[0].distance
+     chunk_len = chunk_size / array_info[0].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+       stride[num++] = stride_offset[0] * i;
+       if(num == 2) goto end;
+     }
+   }
+   break;
+ case 6:
+   if(array_info[4].distance > chunk_size){ // array_info[4].distance > chunk_size >= array_info[5].distance
+     chunk_len = chunk_size / array_info[5].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k++){
+	   tmp[2] = stride_offset[2] * k;
+	   for(size_t l=0;l<array_info[3].length;l++){
+	     tmp[3] = stride_offset[3] * l;
+	     for(size_t m=0;m<array_info[4].length;m++){
+	       tmp[4] = stride_offset[4] * m;
+	       for(size_t n=0;n<array_info[5].length;n+=chunk_len){
+		 tmp[5] = stride_offset[5] * n;
+		 stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5];
+		 if(num == 2) goto end;
+	       }
+	     }
+	   }
+	 }
+       }
+     }
+   }
+   else if(array_info[3].distance > chunk_size){ // array_info[3].distance > chunk_size >= array_info[4].distance
+     chunk_len = chunk_size / array_info[4].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k++){
+	   tmp[2] = stride_offset[2] * k;
+	   for(size_t l=0;l<array_info[3].length;l++){
+	     tmp[3] = stride_offset[3] * l;
+	     for(size_t m=0;m<array_info[4].length;m+=chunk_len){
+	       tmp[4] = stride_offset[4] * m;
+	       stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
+               if(num == 2) goto end;
+	     }
+	   }
+	 }
+       }
+     }
+   }
+   else if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+     chunk_len = chunk_size / array_info[3].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k++){
+	   tmp[2] = stride_offset[2] * k;
+	   for(size_t l=0;l<array_info[3].length;l+=chunk_len){
+	     tmp[3] = stride_offset[3] * l;
+	     stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+	     if(num == 2) goto end;
+	   }
+	 }
+       }
+     }
+   }
+   else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+     chunk_len = chunk_size / array_info[2].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+	   tmp[2] = stride_offset[2] * k;
+	   stride[num++] = tmp[0] + tmp[1] + tmp[2];
+	   if(num == 2) goto end;
+	 }
+       }
+     }
+   }
+   else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+     chunk_len = chunk_size / array_info[1].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+	 tmp[1] = stride_offset[1] * j;
+	 stride[num++] = tmp[0] + tmp[1];
+	 if(num == 2) goto end;
+       }
+     }
+   }
+   else{                                   // chunk_size >= array_info[0].distance
+     chunk_len = chunk_size / array_info[0].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+       stride[num++] = stride_offset[0] * i;
+       if(num == 2) goto end;
+     }
+   }
+   break;
+ case 7:
+   if(array_info[5].distance > chunk_size){ // array_info[5].distance > chunk_size >= array_info[6].distance
+     chunk_len = chunk_size / array_info[6].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k++){
+	   tmp[2] = stride_offset[2] * k;
+	   for(size_t l=0;l<array_info[3].length;l++){
+	     tmp[3] = stride_offset[3] * l;
+	     for(size_t m=0;m<array_info[4].length;m++){
+	       tmp[4] = stride_offset[4] * m;
+	       for(size_t n=0;n<array_info[5].length;n++){
+		 tmp[5] = stride_offset[5] * n;
+		 for(size_t p=0;p<array_info[6].length;p+=chunk_len){
+		   tmp[6] = stride_offset[6] * p;
+		   stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6];
+		   if(num == 2) goto end;
+		 }
+	       }
+	     }
+	   }
+	 }
+       }
+     }
+   }
+   else if(array_info[4].distance > chunk_size){ // array_info[4].distance > chunk_size >= array_info[5].distance
+     chunk_len = chunk_size / array_info[5].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k++){
+	   tmp[2] = stride_offset[2] * k;
+	   for(size_t l=0;l<array_info[3].length;l++){
+	     tmp[3] = stride_offset[3] * l;
+	     for(size_t m=0;m<array_info[4].length;m++){
+	       tmp[4] = stride_offset[4] * m;
+	       for(size_t n=0;n<array_info[5].length;n+=chunk_len){
+		 tmp[5] = stride_offset[5] * n;
+		 stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5];
+		 if(num == 2) goto end;
+	       }
+	     }
+	   }
+	 }
+       }
+     }
+   }
+   else if(array_info[3].distance > chunk_size){ // array_info[3].distance > chunk_size >= array_info[4].distance
+     chunk_len = chunk_size / array_info[4].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k++){
+	   tmp[2] = stride_offset[2] * k;
+	   for(size_t l=0;l<array_info[3].length;l++){
+	     tmp[3] = stride_offset[3] * l;
+	     for(size_t m=0;m<array_info[4].length;m+=chunk_len){
+	       tmp[4] = stride_offset[4] * m;
+	       stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
+               if(num == 2) goto end;
+	     }
+	   }
+	 }
+       }
+     }
+   }
+   else if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+     chunk_len = chunk_size / array_info[3].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k++){
+	   tmp[2] = stride_offset[2] * k;
+	   for(size_t l=0;l<array_info[3].length;l+=chunk_len){
+	     tmp[3] = stride_offset[3] * l;
+	     stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+	     if(num == 2) goto end;
+	   }
+	 }
+       }
+     }
+   }
+   else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+     chunk_len = chunk_size / array_info[2].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j++){
+	 tmp[1] = stride_offset[1] * j;
+	 for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+	   tmp[2] = stride_offset[2] * k;
+	   stride[num++] = tmp[0] + tmp[1] + tmp[2];
+	   if(num == 2) goto end;
+	 }
+       }
+     }
+   }
+   else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+     chunk_len = chunk_size / array_info[1].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i++){
+       tmp[0] = stride_offset[0] * i;
+       for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+	 tmp[1] = stride_offset[1] * j;
+	 stride[num++] = tmp[0] + tmp[1];
+	 if(num == 2) goto end;
+       }
+     }
+   }
+   else{                                   // chunk_size >= array_info[0].distance
+     chunk_len = chunk_size / array_info[0].distance;
+     for(size_t i=0,num=0;i<array_info[0].length;i+=chunk_len){
+       stride[num++] = stride_offset[0] * i;
+       if(num == 2) goto end;
+     }
+   }
+   break;
+  }
+
+ end:
+  return stride[1] - stride[0];
+}
 /**
    Execute sync_memory for put operation
  */
 void _XMP_fjrdma_sync_memory_put()
 {
-  while(_num_of_puts != 0)
-    if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC, &_cq) == FJMPI_RDMA_NOTICE)
-      _num_of_puts--;
+  if(_XMP_flag_put_nb_rr){
+    while(1){
+      if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC_TMP_0, NULL) == FJMPI_RDMA_NOTICE)
+	_num_of_puts--;
+      if(_num_of_puts == 0) break;
+
+      if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC_TMP_1, NULL) == FJMPI_RDMA_NOTICE)
+	_num_of_puts--;
+      if(_num_of_puts == 0) break;
+
+      if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC_TMP_2, NULL) == FJMPI_RDMA_NOTICE)
+	_num_of_puts--;
+      if(_num_of_puts == 0) break;
+
+      if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC_TMP_3, NULL) == FJMPI_RDMA_NOTICE)
+	_num_of_puts--;
+      if(_num_of_puts == 0) break;
+    }
+  }
+  else{
+    while(_num_of_puts != 0)
+      if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC, NULL) == FJMPI_RDMA_NOTICE)
+	_num_of_puts--;
+  }
 }
 
 /**
@@ -37,7 +1299,7 @@ void _XMP_fjrdma_sync_memory_put()
 void _XMP_fjrdma_sync_memory_get()
 {
   while(_num_of_gets != 0)
-    if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC, &_cq) == FJMPI_RDMA_NOTICE)
+    if(FJMPI_Rdma_poll_cq(_XMP_COARRAY_SEND_NIC, NULL) == FJMPI_RDMA_NOTICE)
       _num_of_gets--;
 }
 
@@ -66,7 +1328,10 @@ void _XMP_add_num_of_gets()
 */
 void _XMP_fjrdma_sync_memory()
 {
-  _XMP_fjrdma_sync_memory_put();
+  if(_XMP_flag_put_nb)
+    _XMP_fjrdma_sync_memory_put();
+
+  //  _XMP_fjrdma_sync_memory_put();
   // _XMP_fjrdma_sync_memory_get don't need to be executed
 }
 
@@ -75,10 +1340,12 @@ void _XMP_fjrdma_sync_memory()
 */
 void _XMP_fjrdma_sync_all()
 {
-  _XMP_fjrdma_sync_memory();
+  if(_XMP_flag_put_nb)
+    _XMP_fjrdma_sync_memory();
+
+  //  _XMP_fjrdma_sync_memory();
   MPI_Barrier(MPI_COMM_WORLD);
 }
-
 
 /**
    transfer_size must be 4-Byte align
@@ -100,7 +1367,47 @@ static void _XMP_FJMPI_Rdma_put(const int target_rank, uint64_t raddr, uint64_t 
 				const size_t transfer_size)
 {
   if(transfer_size <= _XMP_FJRDMA_MAX_SIZE){
-    FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC);
+    if(_XMP_flag_put_nb_rr_i){
+      switch(_num_of_puts%4){
+      case 0:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_i0);
+        break;
+      case 1:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_i1);
+        break;
+      case 2:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_i2);
+        break;
+      case 3:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_i3);
+        break;
+      default:
+        printf("ERROR !! \n"); exit(1);
+	break;
+      }
+    }
+    else if(_XMP_flag_put_nb_rr){
+      switch(_num_of_puts%4){
+      case 0:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_0);
+	break;
+      case 1:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_1);
+	break;
+      case 2:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_2);
+	break;
+      case 3:
+	FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC_TMP_3);
+	break;
+      default:
+	printf("ERROR !! \n"); exit(1);
+	break;
+      }
+    }
+    else{
+      FJMPI_Rdma_put(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC);
+    }
     _XMP_add_num_of_puts();
   }
   else{
@@ -129,9 +1436,6 @@ static void _XMP_FJMPI_Rdma_put(const int target_rank, uint64_t raddr, uint64_t 
 static void _XMP_FJMPI_Rdma_get(const int target_rank, uint64_t raddr, uint64_t laddr,
 				const size_t transfer_size)
 {
-  // To complete put operations before the following get operation.
-  _XMP_fjrdma_sync_memory();
-
   if(transfer_size <= _XMP_FJRDMA_MAX_SIZE){
     FJMPI_Rdma_get(target_rank, _XMP_FJRDMA_TAG, raddr, laddr, transfer_size, _XMP_COARRAY_FLAG_NIC);
     _XMP_add_num_of_gets();
@@ -237,10 +1541,10 @@ static void _fjrdma_scalar_mput_do(const size_t target_rank, uint64_t* raddrs, u
 /*               [OUT] **addr         : Double pointer of new coarray  */
 /*               [IN]  coarray_size   : Coarray size                   */
 /***********************************************************************/
-void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
+void _XMP_fjrdma_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
 {
   *addr = _XMP_alloc(coarray_size);
-  _XMP_fjrdma_regmem_do(coarray_desc, *addr, coarray_size);
+  _XMP_fjrdma_regmem(coarray_desc, *addr, coarray_size);
 }
 
 
@@ -251,7 +1555,7 @@ void _XMP_fjrdma_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size
 /*               [IN]  *addr          : Pointer to the coarray         */
 /*               [IN]  coarray_size   : Coarray size                   */
 /***********************************************************************/
-void _XMP_fjrdma_regmem_do(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size)
+void _XMP_fjrdma_regmem(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size)
 {
   uint64_t *each_addr = _XMP_alloc(sizeof(uint64_t) * _XMP_world_size);
   if(_memid == _XMP_FJRDMA_MAX_MEMID)
@@ -295,14 +1599,14 @@ void _XMP_fjrdma_coarray_lastly_deallocate()
 /*               [IN] dst_elmts    : Number of elements of destination  */
 /*               [IN] src_elmts    : Number of elements of source       */
 /*               [IN] elmt_size    : Element size                       */
-/* NOTE       : Both dst and src are continuous coarrays.               */
+/* NOTE       : Both dst and src are contiguous coarrays.               */
 /*              target_rank != __XMP_world_rank.                        */
 /* EXAMPLE    :                                                         */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_fjrdma_shortcut_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
-			      const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
-			      const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
+void _XMP_fjrdma_contiguous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
+				const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
+				const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
   size_t transfer_size = dst_elmts * elmt_size;
   _check_transfer_size(transfer_size);
@@ -324,6 +1628,9 @@ void _XMP_fjrdma_shortcut_put(const int target_rank, const uint64_t dst_offset, 
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
   }
+
+  if(_XMP_flag_put_nb == false)
+    _XMP_fjrdma_sync_memory_put();
 }
 
 /*************************************************************************/
@@ -335,12 +1642,12 @@ void _XMP_fjrdma_shortcut_put(const int target_rank, const uint64_t dst_offset, 
 /*               [IN] *src_desc     : Descriptor of source coarray       */
 /*               [IN] *src          : Pointer of source array            */
 /*               [IN] transfer_size : Transfer size                      */
-/* NOTE       : Both dst and src are continuous arrays.                  */
+/* NOTE       : Both dst and src are contiguous arrays.                  */
 /*              If src is NOT a coarray, src_desc is NULL.               */
 /* EXAMPLE    :                                                          */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src            */
 /*************************************************************************/
-static void _fjrdma_continuous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
+static void _fjrdma_contiguous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
 				   const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 				   char *src, const size_t transfer_size)
 {
@@ -353,6 +1660,7 @@ static void _fjrdma_continuous_put(const int target_rank, const uint64_t dst_off
     laddr = src_desc->laddr + src_offset;
 
   _XMP_FJMPI_Rdma_put(target_rank, raddr, laddr, transfer_size);
+  _XMP_fjrdma_sync_memory_put();
 
   if(src_desc == NULL)   
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
@@ -395,6 +1703,7 @@ static void _fjrdma_scalar_mput(const int target_rank, const uint64_t dst_offset
   for(size_t i=0;i<transfer_elmts;i++) lengths[i] = elmt_size;
 
   _fjrdma_scalar_mput_do(target_rank, raddrs, laddrs, lengths, transfer_elmts, elmt_size);
+  _XMP_fjrdma_sync_memory_put();
 
   if(src_desc == NULL)
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
@@ -425,7 +1734,7 @@ static size_t _get_array_size(const _XMP_array_section_t *array_info, const int 
 /* EXAMPLE    :                                                      */
 /*     a[0:10:2]:[2] = b[2:10:2]; // a[] is a dst, b[] is a src      */
 /*********************************************************************/
-static void _fjrdma_NON_continuous_the_same_stride_mput(const int target_rank, uint64_t raddr, uint64_t laddr,
+static void _fjrdma_NON_contiguous_the_same_stride_mput(const int target_rank, uint64_t raddr, uint64_t laddr,
 							const size_t transfer_elmts, const _XMP_array_section_t *array_info,
 							const int array_dims, size_t elmt_size)
 {
@@ -463,7 +1772,7 @@ static void _fjrdma_NON_continuous_the_same_stride_mput(const int target_rank, u
 /*               [IN] src_dims       : Number of dimensions of source array      */
 /*               [IN] elmt_size      : Element size                              */
 /*********************************************************************************/
-static void _fjrdma_NON_continuous_general_mput(const int target_rank, uint64_t raddr, uint64_t laddr,
+static void _fjrdma_NON_contiguous_general_mput(const int target_rank, uint64_t raddr, uint64_t laddr,
 						const size_t transfer_elmts,
 						const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info,
 						const int dst_dims, const int src_dims, size_t elmt_size)
@@ -482,7 +1791,7 @@ static void _fjrdma_NON_continuous_general_mput(const int target_rank, uint64_t 
 }
 
 /*********************************************************************************/
-/* DESCRIPTION : Execute put operation for NON-continuous region                 */
+/* DESCRIPTION : Execute put operation for NON-contiguous region                 */
 /* ARGUMENT    : [IN] target_rank    : Target rank                               */
 /*               [IN] dst_offset     : Offset size of destination array          */
 /*               [IN] src_offset     : Offset size of source array               */
@@ -494,10 +1803,10 @@ static void _fjrdma_NON_continuous_general_mput(const int target_rank, uint64_t 
 /*               [IN] *src_desc      : Descriptor of source array                */
 /*               [IN] *src           : Pointer of source array                   */
 /*               [IN] transfer_elmts : Number of transfer elements               */
-/* NOTE       : src and/or dst arrays are NOT continuous.                        */
+/* NOTE       : src and/or dst arrays are NOT contiguous.                        */
 /*              If src is NOT a coarray, src_desc is NULL                        */
 /*********************************************************************************/
-static void _fjrdma_NON_continuous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
+static void _fjrdma_NON_contiguous_put(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
 				       const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info,
 				       const int dst_dims, const int src_dims, 
 				       const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
@@ -516,22 +1825,24 @@ static void _fjrdma_NON_continuous_put(const int target_rank, const uint64_t dst
   }
 
   if(_XMP_is_the_same_constant_stride(dst_info, src_info, dst_dims, src_dims)){
-    _fjrdma_NON_continuous_the_same_stride_mput(target_rank, raddr, laddr, transfer_elmts,
+    _fjrdma_NON_contiguous_the_same_stride_mput(target_rank, raddr, laddr, transfer_elmts,
 						dst_info, dst_dims, elmt_size);
   }
   else{
-    _fjrdma_NON_continuous_general_mput(target_rank, raddr, laddr, transfer_elmts, 
+    _fjrdma_NON_contiguous_general_mput(target_rank, raddr, laddr, transfer_elmts, 
     					dst_info, src_info, dst_dims, src_dims, elmt_size);
   }
   
+  _XMP_fjrdma_sync_memory_put();
+
   if(src_desc == NULL)
     FJMPI_Rdma_dereg_mem(_XMP_TEMP_MEMID);
 }
 
 /***************************************************************************************/
 /* DESCRIPTION : Execute put operation                                                 */
-/* ARGUMENT    : [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
-/*               [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
+/* ARGUMENT    : [IN] dst_contiguous : Is destination region contiguous ? (TRUE/FALSE) */
+/*               [IN] src_contiguous : Is source region contiguous ? (TRUE/FALSE)      */
 /*               [IN] target_rank    : Target rank                                     */
 /*               [IN] dst_dims       : Number of dimensions of destination array       */
 /*               [IN] src_dims       : Number of dimensions of source array            */
@@ -543,7 +1854,7 @@ static void _fjrdma_NON_continuous_put(const int target_rank, const uint64_t dst
 /*               [IN] dst_elmts      : Number of elements of destination array         */
 /*               [IN] src_elmts      : Number of elements of source array              */
 /***************************************************************************************/
-void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const int target_rank, 
+void _XMP_fjrdma_put(const int dst_contiguous, const int src_contiguous, const int target_rank, 
 		     const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
 		     const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
 		     const _XMP_coarray_t *src_desc, void *src, const size_t dst_elmts, const size_t src_elmts)
@@ -554,11 +1865,11 @@ void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const i
   _check_transfer_size(transfer_size);
 
   if(dst_elmts == src_elmts){
-    if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-      _fjrdma_continuous_put(target_rank, dst_offset, src_offset, dst_desc, src_desc, src, transfer_size);
+    if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_TRUE){
+      _fjrdma_contiguous_put(target_rank, dst_offset, src_offset, dst_desc, src_desc, src, transfer_size);
     }
     else{
-      _fjrdma_NON_continuous_put(target_rank, dst_offset, src_offset, dst_info, src_info, dst_dims, src_dims, 
+      _fjrdma_NON_contiguous_put(target_rank, dst_offset, src_offset, dst_info, src_info, dst_dims, src_dims, 
       				 dst_desc, src_desc, src, dst_elmts);
     }
   }
@@ -583,14 +1894,14 @@ void _XMP_fjrdma_put(const int dst_continuous, const int src_continuous, const i
 /*               [IN] dst_elmts    : Number of elements of destination  */
 /*               [IN] src_elmts    : Number of elements of source       */
 /*               [IN] elmt_size    : Element size                       */
-/* NOTE       : Both dst and src are continuous coarrays.               */
+/* NOTE       : Both dst and src are contiguous coarrays.               */
 /*              target_rank != __XMP_world_rank.                        */
 /* EXAMPLE    :                                                         */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_fjrdma_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
-			      const uint64_t dst_offset, const uint64_t src_offset,
-			      const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
+void _XMP_fjrdma_contiguous_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+				const uint64_t dst_offset, const uint64_t src_offset,
+				const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
   size_t transfer_size = dst_elmts * elmt_size;
   _check_transfer_size(transfer_size);
@@ -616,7 +1927,7 @@ void _XMP_fjrdma_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_d
 }
 
 /************************************************************************/
-/* DESCRIPTION : Execute get operation for continuous region            */
+/* DESCRIPTION : Execute get operation for contiguous region            */
 /* ARGUMENT    : [IN] target_rank   : Target rank                       */
 /*               [IN] dst_offset    : Offset size of destination array  */
 /*               [IN] src_offset    : Offset size of source array       */
@@ -624,12 +1935,12 @@ void _XMP_fjrdma_shortcut_get(const int target_rank, const _XMP_coarray_t *dst_d
 /*               [IN] *dst_desc     : Descriptor of destination coarray */
 /*               [IN] *src_desc     : Descriptor of source coarray      */
 /*               [IN] transfer_size : Transfer size                     */
-/* NOTE       : Both dst and src are continuous arrays.                 */
+/* NOTE       : Both dst and src are contiguous arrays.                 */
 /*              If dst is NOT a coarray, dst_desc is NULL.              */
 /* EXAMPLE    :                                                         */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-static void _fjrdma_continuous_get(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
+static void _fjrdma_contiguous_get(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
 				   char *dst, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
 				   const size_t transfer_size)
 {
@@ -650,7 +1961,7 @@ static void _fjrdma_continuous_get(const int target_rank, const uint64_t dst_off
 }
 
 /*********************************************************************************/
-/* DESCRIPTION : Execute get operation for NON-continuous region                 */
+/* DESCRIPTION : Execute get operation for NON-contiguous region                 */
 /* ARGUMENT    : [IN] target_rank    : Target rank                               */
 /*               [IN] dst_offset     : Offset size of destination array          */
 /*               [IN] src_offset     : Offset size of source array               */
@@ -666,7 +1977,7 @@ static void _fjrdma_continuous_get(const int target_rank, const uint64_t dst_off
 /* EXAMPLE    :                                                                  */
 /*     a[0:100:2] = b[0:100:2]:[1]; // a[] is a dst, b[] is a src                */
 /*********************************************************************************/
-static void _fjrdma_NON_continuous_get(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
+static void _fjrdma_NON_contiguous_get(const int target_rank, const uint64_t dst_offset, const uint64_t src_offset,
 				       const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info,
 				       void *dst, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 				       const int dst_dims, const int src_dims, const int transfer_elmts)
@@ -778,8 +2089,8 @@ static void _fjrdma_scalar_mget(const int target_rank, const uint64_t dst_offset
 
 /***************************************************************************************/
 /* DESCRIPTION : Execute put operation                                                 */
-/* ARGUMENT    : [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
-/*               [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
+/* ARGUMENT    : [IN] src_contiguous : Is source region contiguous ? (TRUE/FALSE)      */
+/*               [IN] dst_contiguous : Is destination region contiguous ? (TRUE/FALSE) */
 /*               [IN] target_rank    : Target rank                                     */
 /*               [IN] src_dims       : Number of dimensions of source array            */
 /*               [IN] dst_dims       : Number of dimensions of destination array       */
@@ -791,7 +2102,7 @@ static void _fjrdma_scalar_mget(const int target_rank, const uint64_t dst_offset
 /*               [IN] src_elmts      : Number of elements of source array              */
 /*               [IN] dst_elmts      : Number of elements of destination array         */
 /***************************************************************************************/
-void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const int target_rank, 
+void _XMP_fjrdma_get(const int src_contiguous, const int dst_contiguous, const int target_rank, 
 		     const int src_dims, const int dst_dims, 
 		     const _XMP_array_section_t *src_info, const _XMP_array_section_t *dst_info, 
 		     const _XMP_coarray_t *src_desc, const _XMP_coarray_t *dst_desc, void *dst,
@@ -804,11 +2115,11 @@ void _XMP_fjrdma_get(const int src_continuous, const int dst_continuous, const i
   _check_transfer_size(transfer_size);
 
   if(src_elmts == dst_elmts){
-    if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
-      _fjrdma_continuous_get(target_rank, dst_offset, src_offset, dst, dst_desc, src_desc, transfer_size);
+    if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_TRUE){
+      _fjrdma_contiguous_get(target_rank, dst_offset, src_offset, dst, dst_desc, src_desc, transfer_size);
     }
     else{
-      _fjrdma_NON_continuous_get(target_rank, dst_offset, src_offset, dst_info, src_info,
+      _fjrdma_NON_contiguous_get(target_rank, dst_offset, src_offset, dst_info, src_info,
 				 dst, dst_desc, src_desc, dst_dims, src_dims, src_elmts);
     }
   }

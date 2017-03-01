@@ -29,7 +29,7 @@ public enum Xcode
     VAR_DECL                        (  10, 'L', null, null),
     FUNCTION_DECL                   (  11, 'L', null, null),
      // -----------------
-     // C: Statement               
+     // C: Statement
     COMPOUND_STATEMENT              (  12, 'S', null, null),
     EXPR_STATEMENT                  (  13, 'S', null, null),
     WHILE_STATEMENT                 (  14, 'S', null, null),
@@ -108,7 +108,7 @@ public enum Xcode
     MEMBER_ADDR                     (  79, 'L', null, null),
     MEMBER_ARRAY_ADDR               (  80, 'L', null, null),
     ARRAY_REF                       (  81, 'L', null, null),
-     // L   ARRAY_AREF               
+     // L   ARRAY_AREF
      // -----------------
      // C: Directive
     PRAGMA_LINE                     (  82, 'L', null, null),
@@ -132,9 +132,9 @@ public enum Xcode
      // -----------------
      // C: XcalableMP Syntax
     SUB_ARRAY_REF                   (  98, 'L', null, null),
-     // L   SUBA_LOWER_BOUND           
-     // L   SUBA_UPPER_BOUND           
-     // L   SUBA_STEP                  
+     // L   SUBA_LOWER_BOUND
+     // L   SUBA_UPPER_BOUND
+     // L   SUBA_STEP
     CO_ARRAY_REF                    (  99, 'L', null, null),
     CO_ARRAY_ASSIGN_EXPR            ( 100, 'L', null, null),   // not used??
      // -----------------
@@ -189,7 +189,7 @@ public enum Xcode
     F_VAR_REF                       ( 144, 'L', null, null),
     F_ARRAY_REF                     ( 145, 'L', null, null),
      // -----------------
-     // Unary Expression			
+     // Unary Expression
     F_USER_UNARY_EXPR               ( 146, 'U', null, null),
      // -----------------
      // Fortran: Binary Expression
@@ -202,12 +202,12 @@ public enum Xcode
     F_CHARACTER_REF                 ( 151, 'L', null, null),
     F_CONCAT_EXPR                   ( 152, 'L', null, null),
      // -----------------
-     // Fortran: Constant Expression			
+     // Fortran: Constant Expression
     F_LOGICAL_CONSTATNT             ( 153, 'T', null, null),
     F_CHARACTER_CONSTATNT           ( 154, 'T', null, null),
     F_COMPLEX_CONSTATNT             ( 155, 'L', null, null),
      // -----------------
-     // Fortran: Other Expression			
+     // Fortran: Other Expression
     F_ARRAY_CONSTRUCTOR             ( 156, 'L', null, null),
     F_STRUCT_CONSTRUCTOR            ( 157, 'L', null, null),
      // -----------------
@@ -270,7 +270,7 @@ public enum Xcode
      // added for coarray
     F_CO_SHAPE                      ( 197, 'L', null, null),         // ID=060
      // -----------------
-     // Fortran2008: Statement, etc.
+     // Fortran2008: SYNCXX, CRITICAL, LOCK.
     F_SYNCALL_STATEMENT             ( 198, 'S', null, null),
     F_SYNCIMAGE_STATEMENT           ( 199, 'S', null, null),
     F_SYNCMEMORY_STATEMENT          ( 200, 'S', null, null),
@@ -283,6 +283,40 @@ public enum Xcode
     CPP_CLASS_DECL                  ( 206, 'L', null, null),
     CPP_CONSTRUCT_EXPR_CLASS_STATEMENT
                                     ( 207, 'L', null, null),
+    CPP_THIS_EXPR                   ( 208, 'L', null, null),
+    ID                              ( 209, 'T', null, null),
+    CPP_NESTEDNAMESPECIFIER_TYPESPEC( 210, 'L', null, null),
+     // Fortran2008: BLOCK, VOLATILE.
+    F_BLOCK_STATEMENT               ( 211, 'L', null, null),
+     // C++11
+    CPP_CONST_CAST_EXPR             ( 212, 'L', null, null),
+    CPP_STATIC_CAST_EXPR            ( 213, 'L', null, null),
+    CPP_REINTERPRET_CAST_EXPR       ( 214, 'L', null, null),
+    CPP_DYNAMIC_CAST_EXPR           ( 215, 'L', null, null),
+    CPP_OPERATOR_ADDR               ( 216, 'T', null, null),
+    CPP_TRY_STATEMENT               ( 217, 'L', null, null),
+    CPP_THROW_STATEMENT             ( 218, 'L', null, null),
+    CPP_CATCH_STATEMENT             ( 219, 'L', null, null),
+     // Fortran2008: PARAMETERIZED DERIVED TYPE.
+    F_TYPE_PARAM                    ( 220, 'L', null, null),
+    F_TYPE_PARAMS                   ( 221, 'L', null, null),
+    F_TYPE_PARAM_VALUES             ( 222, 'L', null, null),
+    F_LEN                           ( 223, 'L', null, null),
+     // Fortran2003: IMPORT Statement
+    F_IMPORT_STATEMENT              ( 224, 'L', null, null ),
+     // Fortran2003: SELECT TYPE
+    SELECT_TYPE_STATEMENT           ( 225, 'L', null, null),
+    TYPE_GUARD                      ( 226, 'L', null, null),
+     // Fortran2003: TYPE BOUND PROCEDURES
+    F_TYPE_BOUND_PROCEDURES         ( 227, 'L', null, null),
+    F_TYPE_BOUND_PROCEDURE          ( 228, 'L', null, null),
+    F_TYPE_BOUND_GENERIC_PROCEDURE  ( 229, 'L', null, null),
+    F_BINDING                       ( 230, 'L', null, null),
+     // Fortran2008: SUBMODULE
+    F_MODULE_PROCEDURE_DEFINITION   ( 231, 'L', null, null),
+     // Fortran2003: FORALL STATEMENT
+    F_FORALL_STATEMENT              ( 232, 'L', null, null),
+
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),
     DYN_2                           ( 1002, 'L', null, null),
@@ -442,7 +476,7 @@ public enum Xcode
     {
         return toInt() < ASSIGN_START_NUM;
     }
-    
+
     public boolean isAssignedCode()
     {
         return !isBuiltinCode();
@@ -496,6 +530,8 @@ public enum Xcode
         case F_SYNCALL_STATEMENT:           case F_SYNCIMAGE_STATEMENT:
         case F_SYNCMEMORY_STATEMENT:        case F_CRITICAL_STATEMENT:
         case F_LOCK_STATEMENT:              case F_UNLOCK_STATEMENT:
+        case F_BLOCK_STATEMENT:
+        case SELECT_TYPE_STATEMENT:         case TYPE_GUARD:
             return true;
         }
         return false;
@@ -511,4 +547,3 @@ public enum Xcode
         return false;
     }
 }
-

@@ -1,6 +1,12 @@
 /******************************************\
     internal header for COARRAY Fortran
 \******************************************/
+
+#ifndef XMPF_INTERNAL_COARRAY_H
+#define XMPF_INTERNAL_COARRAY_H
+
+#include "xmpf_internal.h"
+
 #define BOOL   int
 #define TRUE   1
 #define FALSE  0
@@ -45,15 +51,15 @@ extern int _XMP_boundaryByte;     // communication boundary (bytes)
 #define COARRAY_PUT_CODE  701
 
 /* xmpf_coarray.c */
-extern void _XMPF_coarray_init(void); 
-extern void _XMPF_coarray_finalize(void); 
-
+//extern void _XMPF_coarray_init(void); 
+//extern void _XMPF_coarray_finalize(void); 
 extern int _XMPF_get_coarrayMsg(void);
 extern void _XMPF_set_coarrayMsg(int sw);
 extern void _XMPF_reset_coarrayMsg(void);
 extern unsigned XMPF_get_poolThreshold(void);
 extern size_t XMPF_get_localBufSize(void);
 extern BOOL XMPF_isSafeBufferMode(void);
+extern BOOL XMPF_isSyncPutMode(void);
 
 /* hidden API */
 extern void xmpf_coarray_msg_(int *sw);
@@ -93,9 +99,11 @@ extern void xmpf_coarray_epilog_(void **tag);
 extern void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
                                        void **tag, int *isAllocatable,
                                        int *namelen, char *name);
-extern void xmpf_coarray_set_coshape_(void **descPtr, int *corank, ...);
+extern void xmpf_coarray_set_corank_(void **descPtr, int *corank);
+extern void xmpf_coarray_set_codim_(void **descPtr, int *dim, int *lb, int *ub);
 extern void xmpf_coarray_set_varname_(void **descPtr, int *namelen, char *name);
 
+// for internal use
 extern int xmpf_coarray_get_image_index_(void **descPtr, int *corank, ...);
 
 extern int xmpf_coarray_malloc_bytes_(void);
@@ -103,12 +111,21 @@ extern int xmpf_coarray_allocated_bytes_(void);
 extern int xmpf_coarray_garbage_bytes_(void);
 
 extern char *_XMPF_get_coarrayName(void *descPtr);
-extern void *_XMPF_get_coarrayDesc(void *descPtr);
-extern size_t _XMPF_get_coarrayOffset(void *descPtr, char *baseAddr);
+extern char *_XMPF_get_coarrayBaseAddr(void *descPtr);
+extern size_t _XMPF_get_coarraySize(void *descPtr);
+extern size_t _XMPF_get_coarrayOffset(void *descPtr, char *addr);
+
+extern void *_XMPF_get_coarrayChunkDesc(void *descPtr);
+extern char *_XMPF_get_coarrayChunkOrgAddr(void *descPtr);
+extern size_t _XMPF_get_coarrayChunkSize(void *descPtr);
+extern size_t _XMPF_get_coarrayChunkOffset(void *descPtr, char *addr);
+
 extern void *_XMPF_get_cntlDataCoarrayDesc(char **baseAddr, size_t *offset,
                                            char **name);
 extern void *_XMPF_get_localBufCoarrayDesc(char **baseAddr, size_t *offset,
                                            char **name);
+extern BOOL _XMPF_isAddrInRangeOfCoarray(char *localAddr, void *descPtr);
+extern BOOL _XMPF_isAddrInCoarrayChunk(char *localAddr, void *descPtr);
 extern void *_XMPF_get_coarrayDescFromAddr(char *localAddr, char **orgAddr,
                                            size_t *offset, char **nameAddr);
 extern MPI_Comm _XMPF_get_communicatorFromDescPtr(void *descPtr);
@@ -215,3 +232,4 @@ extern void _XMPF_coarrayInit_get(void);
 extern _Bool xmp_is_async();
 #endif
 
+#endif /* !XMPF_INTERNAL_COARRAY_H */

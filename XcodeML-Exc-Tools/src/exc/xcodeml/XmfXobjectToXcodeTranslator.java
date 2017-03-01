@@ -31,6 +31,7 @@ import exc.object.Xcode;
 import exc.object.Xcons;
 import exc.object.XobjBool;
 import exc.object.XobjConst;
+import exc.object.XobjInt;
 import exc.object.XobjContainer;
 import exc.object.XobjList;
 import exc.object.XobjLong;
@@ -41,6 +42,8 @@ import exc.object.XobjectDefEnv;
 import exc.object.XobjectFile;
 import exc.object.XobjectIterator;
 import exc.object.Xtype;
+import exc.object.CompositeType;
+import exc.object.StructType;
 import exc.object.topdownXobjectIterator;
 import exc.openmp.OMPpragma;
 
@@ -121,7 +124,19 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         }
             break;
 
-        case FUNCTION_DEFINITION: {
+        case F_LEN: {
+            e = createElement(name,
+                              "is_assumed_shape", intFlagToBoolStr(xobj.getArgOrNull(1)),
+                              "is_assumed_size", intFlagToBoolStr(xobj.getArgOrNull(2)));
+            Xobject len = xobj.getArg(0);
+            if (len != null) {
+                addChildNode(e, transExpr(len));
+            }
+        }
+            break;
+
+        case FUNCTION_DEFINITION:
+        case F_MODULE_PROCEDURE_DEFINITION: {
             XobjList symbols = (XobjList)xobj.getArg(1);
             Xobject body = xobj.getArg(3);
             XobjList decls =
@@ -206,7 +221,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         case F_EQUIVALENCE_DECL:
             e = createElement(name);
             for (Xobject a : (XobjList)xobj) {
-                addChildNodes(e, 
+                addChildNodes(e,
                               trans(a.getArg(0)),
                               trans(a.getArg(1)));
             }
@@ -220,8 +235,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_MODULE_DEFINITION: {
+            Xobject parent_name = xobj.getArgOrNull(5);
             e = createElement(name,
-                              "name", getArg0Name(xobj));
+                              "name", getArg0Name(xobj),
+                              "is_sub", intFlagToBoolStr(xobj.getArgOrNull(4)),
+                              "parent_name", (parent_name != null) ? parent_name.getName() : null);
             XobjList symbols = (XobjList)xobj.getArgOrNull(1);
             XobjList decls =
                 (XobjList)addDeclForNotDeclared((XobjList)xobj.getArgOrNull(2),
@@ -270,9 +288,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         case F_USE_DECL:
             e = createElement(name,
-                              "name", xobj.getArg(0).getName());
-            if (xobj.Nargs() > 1) {
-                for (Xobject a : (XobjList)xobj.getArg(1)) {
+                              "name", xobj.getArg(0).getName(),
+                              "intrinsic", intFlagToBoolStr(xobj.getArg(1)));
+            if (xobj.Nargs() > 2) {
+                for (Xobject a : (XobjList)xobj.getArg(2)) {
                     addChildNode(e, trans(a));
                 }
             }
@@ -280,9 +299,17 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         case F_USE_ONLY_DECL:
             e = createElement(name,
-                              "name", xobj.getArg(0).getName());
-            for (Xobject a : (XobjList)xobj.getArg(1)) {
+                              "name", xobj.getArg(0).getName(),
+                              "intrinsic", intFlagToBoolStr(xobj.getArg(1)));
+            for (Xobject a : (XobjList)xobj.getArg(2)) {
                 addChildNode(e, trans(a));
+            }
+            break;
+
+        case F_IMPORT_STATEMENT:
+            e = createElement(name);
+            for (Xobject a : (XobjList)xobj.getArg(0)) {
+                addChildNode(e, transName(a));
             }
             break;
 
@@ -362,37 +389,55 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                                             "construct_name", getArg0Name(xobj)),
                               transValue(xobj.getArg(1)));
 
-	    Xobject caseList = xobj.getArg(2);
+            Xobject caseList = xobj.getArg(2);
 
-	    if (caseList.Opcode() == Xcode.F_STATEMENT_LIST){
-		for (Xobject a : (XobjList)caseList) {
-		    if (a.Opcode() == Xcode.F_STATEMENT_LIST){
-			for (Xobject b : (XobjList)a){
-			    addChildNode(e, trans(b));
-			}
-		    }
-		    else {
-			addChildNode(e, trans(a));
-		    }
-		}
-	    }
-	    else {
-		addChildNode(e, trans(caseList));
-	    }
+            if (caseList.Opcode() == Xcode.F_STATEMENT_LIST){
+                for (Xobject a : (XobjList)caseList) {
+                    if (a.Opcode() == Xcode.F_STATEMENT_LIST){
+                        for (Xobject b : (XobjList)a){
+                            addChildNode(e, trans(b));
+                        }
+                    } else {
+                        addChildNode(e, trans(a));
+                    }
+                }
+            } else {
+                addChildNode(e, trans(caseList));
+            }
             break;
 
-        case F_CASE_LABEL: {
+        case F_CASE_LABEL:
+            {
+                e = createElement(name,
+                                  "construct_name", getArg0Name(xobj));
+                XobjList values = (XobjList)xobj.getArg(1);
+                if (values != null) {
+                    for (Xobject a : values) {
+                        addChildNode(e, trans(a));
+                    }
+                }
+                addChildNode(e, transBody(xobj.getArg(2)));
+            }
+            break;
+        case SELECT_TYPE_STATEMENT:
             e = createElement(name,
                               "construct_name", getArg0Name(xobj));
-            XobjList values = (XobjList)xobj.getArg(1);
-            if (values != null) {
-                for (Xobject a : values) {
-                    addChildNode(e, trans(a));
-                }
+            addChildNode(e, transIdent((Ident)xobj.getArg(1)));
+            XobjList typeGuards = (XobjList)xobj.getArg(2);
+            for (Xobject a : typeGuards) {
+                addChildNode(e, trans(a));
             }
-            addChildNode(e, transBody(xobj.getArg(2)));
-        }
             break;
+        case TYPE_GUARD:
+            {
+                e = createElement(name, "construct_name", getArg0Name(xobj),
+                                  "kind", (xobj.getArgOrNull(1) != null ? xobj.getArg(1).getName() : null),
+                                  "type", (xobj.getArgOrNull(1) != null ? xobj.getArg(1).getName() : null)
+                );
+                addChildNode(e, transBody(xobj.getArg(3)));
+            }
+            break;
+
 
         case F_WHERE_STATEMENT: {
             e = addChildNodes(createElement(name),
@@ -576,8 +621,19 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = createElement(name, "construct_name", getArg0Name(xobj));
             addChildNode(e, transBody((XobjList)xobj.getArg(1)));
             break;
+        case F_BLOCK_STATEMENT:
+            e = createElement(name, "construct_name", getArg0Name(xobj));
+            XobjList identList = (XobjList)xobj.getArg(1);
+            XobjList declList = (XobjList)xobj.getArg(2);
+            Xobject  body = (XobjList)xobj.getArg(3);
+            XobjList addDeclList = (XobjList)addDeclForNotDeclared(declList, identList, body);
+            e = addChildNodes(e,
+                              transSymbols(identList),
+                              transDeclarations(declList),
+                              transBody(body));
+            break;
 
-        case F_SYNCALL_STATEMENT:                    
+        case F_SYNCALL_STATEMENT:
         case F_SYNCIMAGE_STATEMENT:
         case F_SYNCMEMORY_STATEMENT:
         case F_LOCK_STATEMENT:
@@ -621,8 +677,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_CO_SHAPE:                                        // #060
-            e = addChildNode(createElement(name),
-                             trans(xobj.getArg(0)));
+            e = createElement(name);
+            for (Xobject a : (XobjList)xobj) {
+                addChildNode(e, trans(a));
+            }
             break;
 
         case F_USER_UNARY_EXPR:
@@ -695,7 +753,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             e = addChildNodes(createElement(name,
                                             "is_intrinsic",
                                             intFlagToBoolStr(xobj.getArgOrNull(2))),
-                              transName(xobj.getArg(0)));
+                              (xobj.getArg(0).Opcode() != Xcode.MEMBER_REF) ? transName(xobj.getArg(0)) :
+                                                                              trans    (xobj.getArg(0)));
             if (xobj.getArg(1) != null) {
                 Element argsElem = createElement("arguments");
                 for (Xobject a : (XobjList)xobj.getArg(1)) {
@@ -712,16 +771,50 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_ARRAY_CONSTRUCTOR:
+            e = createElement(name, "element_type", getArg0Name(xobj));
+            for (Xobject a : (XobjList)xobj.getArg(1)) {
+                addChildNode(e, transExpr(a));
+            }
+            break;
         case F_STRUCT_CONSTRUCTOR:
+        case F_TYPE_PARAMS:
+        case F_TYPE_PARAM_VALUES:
             e = createElement(name);
             for (Xobject a : (XobjList)xobj) {
                 addChildNode(e, transExpr(a));
             }
             break;
 
+        case F_TYPE_PARAM:
+            e = addChildNode(addChildNode(createElement(name, "attr", xobj.getArg(0).getName()),
+                                          transName(xobj.getArg(1))),
+                             trans(xobj.getArg(2)));
+            break;
+
         case F_VALUE:
             e = transValue(xobj);
             break;
+
+        case F_FORALL_STATEMENT: {
+              e = createElement(name, "type", (xobj.Type() != null) ? xobj.Type().getXcodeFId() : null,
+                                      "construct_name", (xobj.getArg(0) != null) ? xobj.getArg(0).getName() : null);
+              addChildNode(e, trans(xobj.getArg(1))); // VAR 1
+              addChildNode(e, trans(xobj.getArg(2))); // INDEX_RANGE 1
+              int idx = 3;
+              if (xobj.getArgOrNull(idx + 1) == null) {
+                  // 0:LABEL , 1:VAR1 , 2:INDEX_RANGE1 , 3:BODY
+                  // just continue...
+              } else {
+                  while (xobj.getArgOrNull(idx + 2) != null)
+                      addChildNode(e, trans(xobj.getArg(idx++)));
+                  if ((idx % 2) == 1)
+                      addChildNode(e, addChildNode(createElement("condition"), trans(xobj.getArg(idx++))));
+                  else
+                      addChildNode(e, trans(xobj.getArg(idx++)));
+              }
+              addChildNode(e, transBody(xobj.getArg(idx)));
+              break;
+            }
 
         case NULL:
             return null;
@@ -748,7 +841,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         		{
     			case SCHED_STATIC:
     				xobj.setName("STATIC");
-    				break;    
+    				break;
     			case SCHED_DYNAMIC:
     				xobj.setName("DYNAMIC");
     				break;
@@ -765,7 +858,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         			fatal_dump("OMP SCHED error",xobj);
         		}
         	}
-        	addChildNode(e,trans(xobj.getName()));        	
+        	addChildNode(e,trans(xobj.getName()));
         	break;
 
         case OMP_PRAGMA: {
@@ -775,7 +868,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
 	    addChildNode(f0, trans(xobj.getArg(0).getString()));
 	    addChildNode(e, f0);
-        	
+
 	    Element f1 = createElement("list");
 	    Xobject clause = xobj.getArg(1);
 	    if (clause != null){
@@ -786,7 +879,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 		    }
 		    else {
 			Element g = createElement("list");
-			
+
 			addChildNode(g, trans(a.getArg(0).getString()));
 			Xobject vars = a.getArg(1);
 			if (vars != null){
@@ -801,15 +894,15 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 			    }
 			    addChildNode(g, g1);
 			}
-        			
+
 			addChildNode(f1, g);
 		    }
 		}
             }
 	    addChildNode(e, f1);
-        	
+
 	    Element f2 = createElement("list");
-	    Xobject body = xobj.getArg(2);
+	    body = xobj.getArg(2);
 	    if (body != null){
 		if (body.Opcode() == Xcode.F_STATEMENT_LIST){
 		    for (Xobject a : (XobjList)body){
@@ -835,7 +928,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 		}
             }
 	    addChildNode(e, f2);
-            
+
         }
 //System.out.println(xcode.toString());
 	    break;
@@ -870,7 +963,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
             //add body
             Element f2 = createElement("list");
-            Xobject body = xobj.getArg(2);
+            body = xobj.getArg(2);
             addToBody(f2, body);
             addChildNode(e, f2);
         }
@@ -883,13 +976,13 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             String tid = xobj.Type().getXcodeFId();
             if (tid == null || tid.equals("null")) {
 	      Xtype t = xobj.Type();
-	      if(t.isBasic() && 
+	      if(t.isBasic() &&
 		 t.getBasicType() == BasicType.DOUBLE){
 		addAttributes(e, "type", "Freal");
 		addAttributes(e, "kind", "8");
 	      } else
 	      fatal("type is null");
-            } else 
+            } else
 	      addAttributes(e, "type", tid);
         }
 
@@ -902,16 +995,16 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
              */
             switch (xcode) {
             // IXbfIOStatement
-            case F_OPEN_STATEMENT:
-            case F_CLOSE_STATEMENT:
-            case F_END_FILE_STATEMENT:
-            case F_REWIND_STATEMENT:
-            case F_BACKSPACE_STATEMENT:
+//          case F_OPEN_STATEMENT:
+//          case F_CLOSE_STATEMENT:
+//          case F_END_FILE_STATEMENT:
+//          case F_REWIND_STATEMENT:
+//          case F_BACKSPACE_STATEMENT:
             // IXbfRWStatement
-            case F_READ_STATEMENT:
-            case F_WRITE_STATEMENT:
-            case F_INQUIRE_STATEMENT:
-                break;
+//          case F_READ_STATEMENT:
+//          case F_WRITE_STATEMENT:
+//          case F_INQUIRE_STATEMENT:
+//              break;
             default:
                 ILineNo lineNo = xobj.getLineNo();
                 addAttributes(e,
@@ -938,7 +1031,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                       "is_save", toBoolStr(type.isFsave()),
                       "is_parameter", toBoolStr(type.isFparameter()),
                       "is_allocatable", toBoolStr(type.isFallocatable()),
-                      "is_cray_pointer", toBoolStr(type.isFcrayPointer()));
+                      "is_cray_pointer", toBoolStr(type.isFcrayPointer()),
+                      "is_volatile", toBoolStr(type.isFvolatile()),
+                      "is_class", toBoolStr(type.isFclass()),
+                      "is_value", toBoolStr(type.isFvalue()));
 
         if (type.isFintentIN()) {
             addAttributes(basicTypeElem, "intent", "in");
@@ -956,15 +1052,28 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         Element typeElem = null;
 
         if (type.copied != null) {
-            typeElem = createElement("FbasicType",
-                                     "ref", type.copied.getXcodeFId());
+            typeElem = createElement("FbasicType", "ref",
+                                     (type.isFclass() || type.isFprocedure() && type.isFpointer())
+                                      && type.isBasic() && (type.getBasicType() == BasicType.VOID) ?
+                                       null : type.copied.getXcodeFId(),
+                                     "is_procedure", toBoolStr(type.isFprocedure()),
+                                     "pass", type.getPass(),
+                                     "pass_arg_name", type.getPassArgName());
             setBasicTypeFlags(typeElem, type);
+            XobjList typeParams = type.getFTypeParamValues();
+            if (typeParams != null) {
+              Element e_typeparams = trans(typeParams);
+              typeElem = addChildNodes(typeElem, e_typeparams);
+            }
         } else {
             switch (type.getKind()) {
             case Xtype.BASIC:
                 typeElem = createElement("FbasicType");
                 addAttributes(typeElem,
-                              "ref", BasicType.getTypeInfo(type.getBasicType()).fname);
+                              "ref", (type.isFclass() || type.isFprocedure() && type.isFpointer())
+                                      && type.isBasic() && (type.getBasicType() == BasicType.VOID) ?
+                                       null : BasicType.getTypeInfo(type.getBasicType()).fname,
+                              "is_procedure", toBoolStr(type.isFprocedure()));
                 addChildNodes(typeElem,
                               transKind(type.getFkind()),
                               transLen(type));
@@ -974,7 +1083,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             case Xtype.F_ARRAY:
                 typeElem = createElement("FbasicType");
                 addAttributes(typeElem,
-                              "ref", type.getRef().getXcodeFId());
+                              "ref", type.getRef().getXcodeFId(),
+                              "bind", type.getBind(),
+                              "bind_name", type.getBindName());
                 for (Xobject sizeExpr : type.getFarraySizeExpr()) {
                     addChildNode(typeElem, trans(sizeExpr));
                 }
@@ -987,8 +1098,12 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     "is_public", toBoolStr(type.isFpublic()),
                     "is_private", toBoolStr(type.isFprivate()),
                     "is_sequence", toBoolStr(type.isFsequence()),
-                    "is_internal_private", toBoolStr(type.isFinternalPrivate()));
+                    "is_internal_private", toBoolStr(type.isFinternalPrivate()),
+                    "extends", ((CompositeType)type).parentId(),
+                    "bind", type.getBind());
+                addChildNode(typeElem, trans(((StructType)type).getFTypeParams()));
                 addChildNode(typeElem, transSymbols(type.getMemberList()));
+                addChildNode(typeElem, transProcs(type.getProcList()));
                 break;
 
             case Xtype.FUNCTION:
@@ -1002,7 +1117,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     "is_intrinsic", toBoolStr(type.isFintrinsic()),
                     "is_external", toBoolStr(type.isFexternal()),
                     "is_public", toBoolStr(type.isFpublic()),
-                    "is_private", toBoolStr(type.isFprivate()));
+                    "is_private", toBoolStr(type.isFprivate()),
+                    "bind", type.getBind(),
+                    "bind_name", type.getBindName(),
+                    "is_module", toBoolStr(type.isFmodule()));
                 addChildNode(typeElem,
                              transParams((XobjList)type.getFuncParam()));
                 break;
@@ -1044,6 +1162,13 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (a == null)
             return null;
         return a.getName();
+    }
+
+    private String getArgString(Xobject x, int idx) {
+        Xobject a = x.getArgOrNull(idx);
+        if (a == null)
+            return null;
+        return a.getString();
     }
 
     private Node transDef(XobjectDef def) {
@@ -1107,6 +1232,12 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
         if (val != null && val.Opcode() == Xcode.F_VALUE) {
             Element ve = trans(val);
             addChildNode(e, ve);
+        }
+
+        // module declared in
+        String mod_name = ident.getFdeclaredModule();
+        if (mod_name != null) {
+            addAttributes(e, "declared_in", mod_name);
         }
 
         return e;
@@ -1184,7 +1315,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
         // collect identifiers which are set to 'delayed decl'
         if (body != null && body instanceof XobjList) {
-            XobjectIterator i = new topdownXobjectIterator(body);
+            XobjectIterator i = new topdownXobjectIterator(body, true);
             for (i.init(); !i.end(); i.next()) {
                 Xobject a = i.getXobject();
                 if (a == null || !a.isDelayedDecl())
@@ -1277,7 +1408,11 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             return null;
         }
         Element e = createElement("len");
-        if (!type.isFlenVariable()) {
+        if (type.isFlenAssumedShape()) {
+            addAttributes(e, "is_assumed_shape", "true");
+        } else if (type.isFlenAssumedSize()) {
+            addAttributes(e, "is_assumed_size", "true");
+        } else {
             addChildNode(e, transExpr(xobj));
         }
         return e;
@@ -1307,11 +1442,66 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
 
     private Node transSymbols(Xobject xobj) {
         XobjList identList = (XobjList)xobj;
-        Element e = createElement("symbols"); 
+        Element e = createElement("symbols");
         if (identList != null) {
             for (Xobject ident : identList) {
                 addChildNode(e, transIdent((Ident)ident));
             }
+        }
+        return e;
+    }
+
+    private Node transProcs(Xobject xobj) {
+        XobjList procList = (XobjList)xobj;
+        Element e = null;
+        if (procList != null) {
+            e = createElement("typeBoundProcedures");
+            for (Xobject proc : procList) {
+                addChildNode(e, transProc(proc));
+            }
+        }
+        return e;
+    }
+
+    private Node transProc(Xobject xobj) {
+        Element e = null;
+        if (xobj.Opcode() == Xcode.F_TYPE_BOUND_PROCEDURE) {
+          e = createElement("typeBoundProcedure");
+          addAttributes(e, "type", xobj.Type().getXcodeFId());
+          addAttributes(e, "pass"         , getArgString(xobj, 0));
+          addAttributes(e, "pass_arg_name", getArgString(xobj, 1));
+          addChildNode(e, transName(xobj.getArg(2)));
+          int tq = ((XobjInt)xobj.getArg(3)).getInt();
+          if ((tq & Xtype.TQ_FPRIVATE) != 0)
+            addAttributes(e, "is_private", "true");
+          else if ((tq & Xtype.TQ_FPUBLIC) != 0)
+            addAttributes(e, "is_public", "true");
+          addChildNode(e, addChildNode(createElement("binding"), transName(xobj.getArg(4))));
+          addAttributes(e, "is_non_overridable", intFlagToBoolStr(xobj.getArgOrNull(5)));
+        } else if (xobj.Opcode() == Xcode.F_TYPE_BOUND_GENERIC_PROCEDURE) {
+          e = createElement("typeBoundGenericProcedure");
+          addAttributes(e, "is_operator"  , intFlagToBoolStr(xobj.getArgOrNull(0)));
+          addAttributes(e, "is_assignment", intFlagToBoolStr(xobj.getArgOrNull(1)));
+          addChildNode(e, transName(xobj.getArg(2)));
+          int tq = ((XobjInt)xobj.getArg(3)).getInt();
+          if ((tq & Xtype.TQ_FPRIVATE) != 0)
+            addAttributes(e, "is_private", "true");
+          else if ((tq & Xtype.TQ_FPUBLIC) != 0)
+            addAttributes(e, "is_public", "true");
+          Element bdgn = createElement("binding");
+          if (xobj.getArg(4) != null) {
+              for (Xobject a : (XobjList)xobj.getArg(4)) {
+                  if (a == null)
+                      continue;
+                  Node n = transName(a);
+                  if (n == null)
+                      continue;
+                  addChildNode(bdgn, n);
+              }
+          }
+          addChildNode(e, bdgn);
+        } else {
+           fatal("unknown type bound procedure type.");
         }
         return e;
     }
@@ -1513,7 +1703,7 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             Ident id = ident_list.find(decl.getArg(0).getName(),
                 (decl.Opcode() == Xcode.VAR_DECL) ? IXobject.FINDKIND_VAR : IXobject.FINDKIND_TAGNAME);
             Xtype t = (id != null) ? id.Type() : null;
-            _collectDependName(t, idSet);
+            _collectDependName(t, idSet, null);
 
             if (decl.Opcode() == Xcode.VAR_DECL) {
                 _collectDependName(decl.getArgOrNull(1), idSet);
@@ -1535,21 +1725,28 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             }
         }
 
-        private void _collectDependName(Xtype t, Set<String> idSet) {
+        private void _collectDependName(Xtype t, Set<String> idSet, Set<Xtype> checkedSet) {
             if (t == null)
                 return;
+
+            if (checkedSet == null)
+                checkedSet = new HashSet<Xtype>();
+            else if (checkedSet.contains(t))
+                return;
+            else
+                checkedSet.add(t);
 
             switch (t.getKind()) {
             case Xtype.BASIC:
                 if (t.copied != null) {
-                    _collectDependName(t.copied, idSet);
+                    _collectDependName(t.copied, idSet, checkedSet);
                 } else {
                     _collectDependName(t.getFkind(), idSet);
                     _collectDependName(t.getFlen(), idSet);
                 }
                 break;
             case Xtype.F_ARRAY:
-                _collectDependName(t.getRef(), idSet);
+                _collectDependName(t.getRef(), idSet, checkedSet);
                 for (Xobject s : t.getFarraySizeExpr())
                     _collectDependName(s, idSet);
                 break;
@@ -1560,14 +1757,13 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
                     for (Xobject a : t.getMemberList()) {
 
 			if (a.Type().equals(t)) continue;
-
-                        _collectDependName(a.Type(), idSet);
+                        _collectDependName(a.Type(), idSet, checkedSet);
                         _collectDependName(((Ident)a).getValue(), idSet);
                     }
                 }
 		break;
 	    case Xtype.FUNCTION:
-                _collectDependName(t.getRef(), idSet);
+                _collectDependName(t.getRef(), idSet, checkedSet);
                 break;
             }
         }

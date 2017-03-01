@@ -5,7 +5,8 @@ NPE=3   # For image_index0.x and this_iamge.x, NPE>=8 is suitable.
 $NPE=8
 #NPE=18
 
-OUT_decl= decl3.x decl1.x
+OUT_decl= decl3.x 
+# decl1.x scalar coarray cannot be allocatable in Ver.4
 OUT_size= size1.x size1-2.x #sample #size1-err
 #OUT_rt  =  inquiry
 OUT_NG =  allo2NG.x
@@ -22,7 +23,9 @@ OUT_debug=bug418.x bug418-2.x bug468.x bug015.x 020.x
 OUT_interface=interface.x  # assumed-shape coarray
 OUT_stat=#allo_stat.x
 
-OUT = $(OUT_epi) $(OUT_etc) $(OUT_decl) $(OUT_size) $(OUT_allo) $(OUT_debug)
+OUT_v4=v4init1.x v4init2.x v4init3.x
+
+OUT = $(OUT_v4) $(OUT_epi) $(OUT_etc) $(OUT_decl) $(OUT_size) $(OUT_allo) $(OUT_debug)
 
 include ../Makefile.common
 

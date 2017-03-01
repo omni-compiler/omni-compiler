@@ -14,7 +14,7 @@ template_broadcast='
 subroutine xmpf_co_broadcast%dim%d_%tk%(source, source_image)
   include "mpif.h"
   %typeandkind%, intent(inout) :: source%shape%
-  integer, intent(in) :: source_image
+  integer(4), intent(in) :: source_image
   integer comm, ierr
 
   if (source_image <= 0) then
@@ -32,17 +32,42 @@ subroutine xmpf_co_broadcast%dim%d_%tk%(source, source_image)
 end subroutine'
 
 template_reduction='
-subroutine xmpf_co_%op%%dim%d_%tk%(source, result)
+subroutine xmpf_co_%op%%dim%d_%tk%(source, result, result_image)
   include "mpif.h"
-  %typeandkind%, intent(in) :: source%shape%
-  %typeandkind%, intent(out) :: result%shape%
+  %typeandkind%, intent(inout) :: source%shape%
+  %typeandkind%, intent(out), optional :: result%shape%
+  integer(4), intent(in), optional :: result_image
   integer comm, ierr
+  %typeandkind% :: target%sameshape%
 
   call xmpf_consume_comm_current(comm);
 
-  call mpi_allreduce(source, result, %size%, %mpitype%, mpi_%op%, comm, ierr)
-  if (ierr /= 0) then
-     call xmpf_coarray_fatal("CO_%OP% failed in mpi_allreduce")
+  if (present(result_image)) then
+    if (present(result)) then
+      call mpi_reduce(source, result, %size%, %mpitype%, mpi_%op%, result_image-1, comm, ierr)
+      if (ierr /= 0) then
+        call xmpf_coarray_fatal("CO_%OP%(source, result, result_image) failed")
+      end if
+    else
+      call mpi_reduce(source, target, %size%, %mpitype%, mpi_%op%, result_image-1, comm, ierr)
+      if (ierr /= 0) then
+        call xmpf_coarray_fatal("CO_%OP%(source, result_image) failed")
+      end if
+      source = target
+    end if
+  else
+    if (present(result)) then
+      call mpi_allreduce(source, result, %size%, %mpitype%, mpi_%op%, comm, ierr)
+      if (ierr /= 0) then
+        call xmpf_coarray_fatal("CO_%OP%(source, result) failed")
+      end if
+    else
+      call mpi_allreduce(source, target, %size%, %mpitype%, mpi_%op%, comm, ierr)
+      if (ierr /= 0) then
+        call xmpf_coarray_fatal("CO_%OP%(source) failed")
+      end if
+      source = target
+    end if
   end if
 
   return
@@ -92,6 +117,16 @@ print_reduction() {
         7) shape="(:,:,:,:,:,:,:)";;
     esac
     case $dim in
+        0) sameshape="";;
+        1) sameshape="(size(source,1))";;
+        2) sameshape="(size(source,1),size(source,2))";;
+        3) sameshape="(size(source,1),size(source,2),size(source,3))";;
+        4) sameshape="(size(source,1),size(source,2),size(source,3),size(source,4))";;
+        5) sameshape="(size(source,1),size(source,2),size(source,3),size(source,4),size(source,5))";;
+        6) sameshape="(size(source,1),size(source,2),size(source,3),size(source,4),size(source,5),size(source,6))";;
+        7) sameshape="(size(source,1),size(source,2),size(source,3),size(source,4),size(source,5),size(source,6),size(source,7))";;
+    esac
+    case $dim in
         0) size="1";;
         *) size="size(source)";;
     esac
@@ -104,6 +139,7 @@ print_reduction() {
         s/%mpitype%/'$5'/g
         s/%dim%/'$dim'/g
         s/%shape%/'$shape'/g
+        s/%sameshape%/'$sameshape'/g
         s/%size%/'$size'/g'
 }
 

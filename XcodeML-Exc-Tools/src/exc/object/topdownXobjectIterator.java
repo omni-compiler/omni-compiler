@@ -18,7 +18,13 @@ public class topdownXobjectIterator extends XobjectIterator
 
     public topdownXobjectIterator(Xobject x)
     {
+        this(x, false);
+    }
+
+    public topdownXobjectIterator(Xobject x, boolean trimBS)
+    {
         topXobject = x;
+        trimBlockStmt = trimBS;
     }
 
     @Override
@@ -26,7 +32,9 @@ public class topdownXobjectIterator extends XobjectIterator
     {
         obj_stack = new Stack<Xobject>();
         arg_stack = new Stack<XobjArgs>();
-        currentXobject = x;
+        if(x == null ||
+           !trimBlockStmt || x.Opcode() != Xcode.F_BLOCK_STATEMENT)
+            currentXobject = x;
     }
 
     @Override
@@ -45,13 +53,17 @@ public class topdownXobjectIterator extends XobjectIterator
             arg_stack.push(currentArgs);
             currentArgs = currentXobject.getArgs();
             currentXobject = currentArgs.getArg();
-            return;
+            if(currentXobject == null ||
+               !trimBlockStmt || currentXobject.Opcode() != Xcode.F_BLOCK_STATEMENT)
+                return;
         }
         while(!obj_stack.empty()) {
-            currentArgs = currentArgs.nextArgs();
-            if(currentArgs != null) {
-                currentXobject = currentArgs.getArg();
-                return;
+            while((currentArgs = currentArgs.nextArgs()) != null) {
+                if((currentXobject = currentArgs.getArg()) == null ||
+                    !trimBlockStmt || currentXobject.Opcode() != Xcode.F_BLOCK_STATEMENT)
+                    return;
+                else
+                    continue;
             }
             obj_stack.pop();
             currentArgs = arg_stack.pop();

@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 #include "exc_platform.h"
 #include "ompclib.h"
 
@@ -343,7 +344,6 @@ ompc_init(int argc,char *argv[])
 #endif /* USE_SOL_THREAD */
 
         if ( r ){
-            extern int errno;
             fprintf(stderr, "thread create fails at id %d:%d errno=%d\n", t, r, errno);
             perror("thread creation");
             exit(1);

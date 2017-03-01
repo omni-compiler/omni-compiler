@@ -33,7 +33,7 @@ public class AccKernel {
   private final ArrayDeque<Loop> loopStack = new ArrayDeque<Loop>();
   private final SharedMemory sharedMemory = new SharedMemory();
   private final ReductionManager reductionManager = new ReductionManager();
-  private final Set<Ident> _useMemPoolOuterIdSet = new HashSet<Ident>();
+  private final Set<Ident> _useMemPoolOuterIdSet = new LinkedHashSet<Ident>();
   private final List<XobjList> allocList = new ArrayList<XobjList>(); //for private array or reduction tmp array
   private List<ACCvar> _outerVarList;
 
@@ -567,7 +567,7 @@ public class AccKernel {
 
     LinkedList<CforBlock> collapsedForBlockList = new LinkedList<CforBlock>();
 
-    Set<String> indVarSet = new HashSet<String>();
+    Set<String> indVarSet = new LinkedHashSet<String>();
     {
       CforBlock tmpForBlock = forBlock;
       collapsedForBlockList.add(forBlock);
@@ -1026,7 +1026,7 @@ public class AccKernel {
     }
 
     if (!_kernelInfo.hasClause(ACCpragma.ASYNC)) {
-      blockListBuilder.add(ACCutil.createFuncCallBlock("_ACC_gpu_wait", Xcons.List(Xcons.IntConstant(ACC.ACC_ASYNC_SYNC) /*_accAsyncSync*/)));
+      blockListBuilder.addFinalizeBlock(ACCutil.createFuncCallBlock("_ACC_gpu_wait", Xcons.List(Xcons.IntConstant(ACC.ACC_ASYNC_SYNC) /*_accAsyncSync*/)));
     }
 
     BlockList launchFuncBody = blockListBuilder.build();
@@ -1131,14 +1131,14 @@ public class AccKernel {
     gpuManager.analyze();
 
     //get outerId set
-    Set<Ident> outerIdSet = new HashSet<Ident>();
+    Set<Ident> outerIdSet = new LinkedHashSet<Ident>();
     OuterIdCollector outerIdCollector = new OuterIdCollector();
     for (Block b : _kernelBlocks) {
       outerIdSet.addAll(outerIdCollector.collect(b));
     }
 
     //collect read only id
-    _readOnlyOuterIdSet = new HashSet<Ident>(outerIdSet);
+    _readOnlyOuterIdSet = new LinkedHashSet<Ident>(outerIdSet);
     AssignedIdCollector assignedIdCollector = new AssignedIdCollector();
     for (Block b : _kernelBlocks) {
       _readOnlyOuterIdSet.removeAll(assignedIdCollector.collect(b));
@@ -1244,7 +1244,7 @@ public class AccKernel {
   }
 
   public Set<Ident> getOuterIdSet() {
-    return new HashSet<Ident>(_outerIdList);
+    return new LinkedHashSet<Ident>(_outerIdList);
   }
 
   public List<Ident> getOuterIdList() {
@@ -1349,7 +1349,7 @@ public class AccKernel {
 
   private class AssignedIdCollector {
     Set<Ident> collect(Block kernelBlock) {
-      Set<Ident> assignedIds = new HashSet<Ident>();
+      Set<Ident> assignedIds = new LinkedHashSet<Ident>();
 
       BasicBlockExprIterator bbExprIter = new BasicBlockExprIterator(kernelBlock);
       for (bbExprIter.init(); !bbExprIter.end(); bbExprIter.next()) {

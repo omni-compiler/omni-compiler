@@ -10,19 +10,14 @@ import java.util.Vector;
 
 public class topdownBlockIterator extends BlockIterator
 {
-    Vector<Block> blocks;
-    int index;
-
     public topdownBlockIterator(Block b)
     {
         super(b);
-        init(b);
     }
 
     public topdownBlockIterator(BlockList body)
     {
         super(body);
-        init(body);
     }
 
     @Override

@@ -11,13 +11,13 @@ OUT_TASK=this_image.x this_image_subnodes.x this_image3.x sync_task.x
 #this_image2.x: too complicated
 
 #---- COARRAY directive
-OUT_DIR=coarray_dir0.x coarray_dir1.x coarray_dir2.x coarray_dir_ti1.x coarray_dir_ti2.x ti_outofset.x
+OUT_DIR=coarray_dir0.x coarray_dir1.x coarray_dir2.x coarray_dir_ti1.x coarray_dir_ti2.x ti_outofset.x block_coarray_dir0.x
 
 #---- IMAGE directive
-OUT_IMG=image_dir0.x image_dir1.x #image_dir_sync1.x #not yet
+OUT_IMG=image_dir0.x image_dir1.x block_image_dir1.x #image_dir_sync1.x #not yet
 
 #---- ALLOC/DEALLOC
-OUT_ALO=alloc_subnodes2.x autodealloc1.x
+OUT_ALO= autodealloc1.x alloc_subnodes2.x
 #alloc_subnodes.x ###Operating system error: Cannot allocate memory
 #coarraydir_allocatable3.x  #restriction coarray dir for allocatable coarray
 #coarraydir_allocatable2-mod.x also freezed on ipv-conduit

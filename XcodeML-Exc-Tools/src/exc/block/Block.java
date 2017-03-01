@@ -7,6 +7,7 @@
 package exc.block;
 
 import exc.object.*;
+import exc.xmpF.*;
 
 /**
  * abstract class of a statement block
@@ -304,6 +305,10 @@ public class Block extends PropObject implements IVarContainer
             next.prev = b;
         else
             parent.tail = b;
+
+        parent = null;
+        prev = null;
+        next = null;
     }
 
     // remove block from list
@@ -327,9 +332,14 @@ public class Block extends PropObject implements IVarContainer
     @Override
     public Ident findVarIdent(String name)
     {
+        return findVarIdent(name, getParent());
+    }
+
+    public Ident findVarIdent(String name, BlockList start_bl)
+    {
         BlockList b_list;
         Ident id;
-        for(b_list = parent; b_list != null; b_list = b_list.getParentList()) {
+        for(b_list = start_bl; b_list != null; b_list = b_list.getParentList()) {
             if((id = b_list.findLocalIdent(name)) != null)
                 return id;
             if(b_list.getParent() instanceof FunctionBlock) {
@@ -338,20 +348,47 @@ public class Block extends PropObject implements IVarContainer
         }
         return null; // not found
     }
+
+    // find Block Id found
+    public CompoundBlock findVarIdentBlock(String name)
+    {
+        return findVarIdentBlock(name, getParent());
+    }
+
+    public CompoundBlock findVarIdentBlock(String name, BlockList start_bl)
+    {
+        BlockList b_list;
+        Ident id;
+        for(b_list = start_bl; b_list != null; b_list = b_list.getParentList()) {
+            if((id = b_list.findLocalIdent(name)) != null)
+                return (CompoundBlock)b_list.getParent();
+        }
+        return null; // not found
+    }
+    // find Id parent Block
+    public Block findParentBlockStmt()
+    {
+        Block parent = this;
+        while(parent.Opcode() != Xcode.F_BLOCK_STATEMENT && parent.Opcode() != Xcode.FUNCTION_DEFINITION)
+        {
+            parent = parent.getParentBlock();
+            if(parent == null)
+                return null;
+        }
+        return (parent.Opcode() == Xcode.F_BLOCK_STATEMENT) ? parent : null;
+    }
     @Override
     public Ident findCommonIdent(String name)
     {
 	return null;
     }
     public Boolean removeVarIdent(String name){
-
-      BlockList b_list;
-      Ident id;
-      for (b_list = parent; b_list != null; b_list = b_list.getParentList()){
-	if (b_list.removeIdent(name)) return true;
-      }
-      return false;
-
+        BlockList b_list;
+        Ident id;
+        for (b_list = parent; b_list != null; b_list = b_list.getParentList()){
+            if (b_list.removeIdent(name)) return true;
+        }
+        return false;
     }
 
     public static final int numberOfBlock()
@@ -362,5 +399,27 @@ public class Block extends PropObject implements IVarContainer
     public static final int numberOfBasicBlock()
     {
         return BasicBlock.BasicBlockCounter;
+    }
+
+    public XMPsymbolTable getXMPsymbolTable() {
+        return null;
+    }
+
+    public XMPobject getXMPobject(String name) {
+        XMPsymbolTable table = getXMPsymbolTable();
+        return (table != null) ? table.getXMPobject(name) : null;
+    }
+
+    public XMPobject findXMPobject(String name) {
+        Block block = this;//.findParentBlockStmt();
+        while (block != null) {
+            XMPobject o = block.getXMPobject(name);
+            if(o != null)
+                return o;
+            else if (block instanceof FunctionBlock)
+                break;
+            block = block.getParentBlock();
+        }
+        return null;
     }
 }

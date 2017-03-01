@@ -6,10 +6,7 @@
  */
 package xcodeml.f.decompile;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 import org.w3c.dom.Node;
 
@@ -24,6 +21,7 @@ class XfTypeManagerForDom {
     private SymbolMapStack _symbolMapStack;
     private AliasMapStack _aliasMapStack;
     private AliasMap _reverseBasicRefMap;
+    private final AliasMapStack _typeToSymbolMapStack;
 
     /**
      * This map contains node set : { FbasicType, FfunctionType, FstructType }.
@@ -48,7 +46,7 @@ class XfTypeManagerForDom {
 
     /** This map contains the node "id". */
     @SuppressWarnings("serial")
-    private class SymbolMap extends HashMap<String, Node>
+    public class SymbolMap extends HashMap<String, Node>
     {
         @Override
         public String toString()
@@ -133,6 +131,17 @@ class XfTypeManagerForDom {
             }
             return sb.toString();
         }
+
+        public Node findChildNode(String nodeName) {
+            Node n;
+            for (Node typeChoice : this) {
+                n = XmDomUtil.getElement(typeChoice, nodeName);
+                if (n != null) {
+                    return n;
+                }
+            }
+            return null;
+        }
     }
 
     public XfTypeManagerForDom()
@@ -140,6 +149,7 @@ class XfTypeManagerForDom {
         _typeMap = new TypeMap();
         _symbolMapStack = new SymbolMapStack();
         _aliasMapStack = new AliasMapStack();
+        _typeToSymbolMapStack = new AliasMapStack();
         _reverseBasicRefMap = new AliasMap();
     }
 
@@ -153,20 +163,28 @@ class XfTypeManagerForDom {
         return _aliasMapStack.peekFirst();
     }
 
+    private AliasMap _getCurrentTypeToSymbolMap()
+    {
+        return _typeToSymbolMapStack.peekFirst();
+    }
+
     public void enterScope()
     {
         _symbolMapStack.push(new SymbolMap());
         _aliasMapStack.push(new AliasMap());
+        _typeToSymbolMapStack.push(new AliasMap());
     }
 
     public void leaveScope()
     {
         _symbolMapStack.pop();
         _aliasMapStack.pop();
+        _typeToSymbolMapStack.pop();
     }
 
     public void addSymbol(Node idNode)
     {
+      // get name Node
         Node nameNode = XmDomUtil.getElement(idNode, "name");
         if (nameNode == null) {
             // Ignore invalid symbol name.
@@ -181,7 +199,7 @@ class XfTypeManagerForDom {
 
         // Trim key word string.
         symbolName = symbolName.trim();
-        if (symbolName.isEmpty() != false) {
+        if (symbolName.isEmpty()) {
             // Ignore invalid symbol name.
             return;
         }
@@ -192,7 +210,7 @@ class XfTypeManagerForDom {
 
         if (XfStorageClass.FTYPE_NAME.toXcodeString().equalsIgnoreCase(sclass)) {
             String typeName = XmDomUtil.getAttr(idNode, "type");
-            if (XfUtilForDom.isNullOrEmpty(typeName) != false) {
+            if (XfUtilForDom.isNullOrEmpty(typeName)) {
                 // Ignore invalid type name.
                 return;
             }
@@ -204,6 +222,11 @@ class XfTypeManagerForDom {
             SymbolMap symbolMap = _getCurrentSymbolMap();
             assert (symbolMap != null);
             symbolMap.put(symbolName, idNode);
+            AliasMap aliasMap = _getCurrentTypeToSymbolMap();
+            String typeName = XmDomUtil.getAttr(idNode, "type");
+            if (!XfUtilForDom.isNullOrEmpty(typeName)) {
+                aliasMap.put(typeName, symbolName);
+            }
         }
     }
 
@@ -297,6 +320,23 @@ class XfTypeManagerForDom {
         return findType(XmDomUtil.getAttr(id, "type"));
     }
 
+    public String findNameFromType(String typeId)
+    {
+        if (typeId == null) {
+            return null;
+        }
+
+        typeId = typeId.trim();
+        for (AliasMap aliasMap : _typeToSymbolMapStack) {
+            String aliasName = aliasMap.get(typeId);
+            if (aliasName != null) {
+                return aliasName;
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Put tagname of type id.
      * @param typeName
@@ -319,30 +359,30 @@ class XfTypeManagerForDom {
 
     /**
      * Get alias of type name.
-     * @param typeName
+     * @param typeId
      * @return When alias not found, return argument type name.
      */
-    public String getAliasTypeName(String typeName)
+    public String getAliasTypeName(String typeId)
     {
-        if (XfUtilForDom.isNullOrEmpty(typeName) != false) {
+        if (XfUtilForDom.isNullOrEmpty(typeId) != false) {
             return null;
         }
 
         // Trim key word string.
-        typeName = typeName.trim();
+        typeId = typeId.trim();
         for (AliasMap aliasMap : _aliasMapStack) {
-            String aliasName = aliasMap.get(typeName);
+            String aliasName = aliasMap.get(typeId);
             if (aliasName != null) {
                 return aliasName;
             }
         }
 
-        String inheritName = _reverseBasicRefMap.get(typeName);
+        String inheritName = _reverseBasicRefMap.get(typeId);
         if (inheritName != null) {
             return getAliasTypeName(inheritName);
         }
 
-        throw new IllegalStateException("not found type name of '" + typeName + "'");
+        throw new IllegalStateException("not found type name of '" + typeId + "'");
     }
 
     /**
@@ -367,7 +407,14 @@ class XfTypeManagerForDom {
             String name = typeChoice.getNodeName();
             if ("FbasicType".equals(name)) {
                 Node basicType = typeChoice;
+
                 String refType = XmDomUtil.getAttr(basicType, "ref");
+
+                if (XmDomUtil.getAttrBool(basicType, "is_class") && XfUtilForDom.isNullOrEmpty(refType))
+                    break;
+
+                if (XmDomUtil.getAttrBool(basicType, "is_pointer") && XfUtilForDom.isNullOrEmpty(refType))
+                    break;
 
                 if (XfType.DERIVED != XfType.getTypeIdFromXcodemlTypeName(refType))
                     break;
@@ -470,5 +517,25 @@ class XfTypeManagerForDom {
         sb.append(_aliasMapStack.toString());
         sb.append(_symbolMapStack.toString());
         return sb.toString();
+    }
+
+    interface SymbolMatcher {
+        boolean match(Node symbol, Node type);
+    }
+
+    public Set<String> findSymbolFromCurrentScope(SymbolMatcher matcher) {
+        Set<String> set = new HashSet<String>();
+        SymbolMap symbolMap = _getCurrentSymbolMap();
+        for (String name: symbolMap.keySet()) {
+            Node node = symbolMap.get(name);
+            String typeName = XmDomUtil.getAttr(node, "type");
+            if (typeName == null) {
+                continue;
+            }
+            if (matcher.match(node, findType(typeName))) {
+                set.add(name);
+            }
+        }
+        return Collections.unmodifiableSet(set);
     }
 }

@@ -73,8 +73,10 @@ public class XMPrewriteExpr {
         if (decls != null) {
           try {
             for (Xobject x : decls) {
-              Xobject declInitExpr = x.getArg(1);
-	      x.setArg(1, rewriteExpr(declInitExpr, b));
+              if (Xcode.VAR_DECL == x.Opcode()) {
+                Xobject declInitExpr = x.getArg(1);
+                x.setArg(1, rewriteExpr(declInitExpr, b));
+              }
             }
           } catch (XMPexception e) {
             XMP.error(b.getLineNo(), e.getMessage());
@@ -307,17 +309,17 @@ public class XMPrewriteExpr {
   // }
 
 
-  private Xobject createShortcutCoarray(int imageDims, XobjList imageList, String commkind, 
-                                        XMPcoarray dstCoarray, XMPcoarray srcCoarray,
-                                        Xobject dstCoarrayExpr, Xobject srcCoarrayExpr,
-                                        boolean isDstCoarrayOnAcc, boolean isSrcCoarrayOnAcc) throws XMPexception
+  private Xobject createContiguousCoarray(int imageDims, XobjList imageList, String commkind, 
+                                          XMPcoarray dstCoarray, XMPcoarray srcCoarray,
+                                          Xobject dstCoarrayExpr, Xobject srcCoarrayExpr,
+                                          boolean isDstCoarrayOnAcc, boolean isSrcCoarrayOnAcc) throws XMPexception
   // dstCoarray is left expression. srcCoarray is right expression.
   {
     // Set Function Name
     // If image set is 2 dimension and Put operation,
     // function name is "_XMP_shortcut_put_image2"
     boolean isAcc = isDstCoarrayOnAcc || isSrcCoarrayOnAcc;
-    String funcName = "_XMP_coarray_shortcut_" + commkind;
+    String funcName = "_XMP_coarray_contiguous_" + commkind;
     if(isAcc) funcName += "_acc";
     Ident funcId = _globalDecl.declExternFunc(funcName);
     XobjList funcArgs = Xcons.List();
@@ -394,39 +396,39 @@ public class XMPrewriteExpr {
       }
     }
 
-    // How depth continuous ?
+    // How depth contiguous ?
     // e.g.) a[100][100][100]:[*];
-    //       a[:][:][:],   xxxCoarrayDepthContinuous = 0
-    //       a[2][:][:],   xxxCoarrayDepthContinuous = 1
-    //       a[:2][:][:],  xxxCoarrayDepthContinuous = 1
-    //       a[2][2][:],   xxxCoarrayDepthContinuous = 2
-    //       a[:][:2][:],  xxxCoarrayDepthContinuous = 2
-    //       a[2][2][2:2], xxxCoarrayDepthContinuous = 3
-    //       a[2][2][2:],  xxxCoarrayDepthContinuous = 3
-    //       a[2][2][:],   xxxCoarrayDepthContinuous = 3
-    //       a[2][2][1],   xxxCoarrayDepthContinuous = 3
+    //       a[:][:][:],   xxxCoarrayDepthContiguous = 0
+    //       a[2][:][:],   xxxCoarrayDepthContiguous = 1
+    //       a[:2][:][:],  xxxCoarrayDepthContiguous = 1
+    //       a[2][2][:],   xxxCoarrayDepthContiguous = 2
+    //       a[:][:2][:],  xxxCoarrayDepthContiguous = 2
+    //       a[2][2][2:2], xxxCoarrayDepthContiguous = 3
+    //       a[2][2][2:],  xxxCoarrayDepthContiguous = 3
+    //       a[2][2][:],   xxxCoarrayDepthContiguous = 3
+    //       a[2][2][1],   xxxCoarrayDepthContiguous = 3
 
     // dstCoarray
-    int dstCoarrayDepthContinuous = dstDim;
+    int dstCoarrayDepthContiguous = dstDim;
     if(dstCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
       Ident varId = dstCoarray.getVarId();
       XobjList tripletList = (XobjList)dstCoarrayExpr.getArg(1);
       for(int i=dstDim-1;i>=0;i--){
         if(is_all_element(i, tripletList, varId)){
-          dstCoarrayDepthContinuous = i;
+          dstCoarrayDepthContiguous = i;
         }
       }
     }
     // if dstCoarray == Xcode.ARRAY_REF or Xcode.VAR,
-    // dstCoarrayDepthContinuous = 1.
+    // dstCoarrayDepthContiguous = 1.
     
-    int srcCoarrayDepthContinuous = srcDim;
+    int srcCoarrayDepthContiguous = srcDim;
     if(srcCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
       Ident varId = srcCoarray.getVarId();
       XobjList tripletList = (XobjList)srcCoarrayExpr.getArg(1);
       for(int i=srcDim-1;i>=0;i--){
         if(is_all_element(i, tripletList, varId)){
-          srcCoarrayDepthContinuous = i;
+          srcCoarrayDepthContiguous = i;
         }
       }
     }
@@ -437,7 +439,7 @@ public class XMPrewriteExpr {
       for(int i=0;i<dstDim;i++){
         Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(i);
         Xobject tmp_position;
-        if(tripletList.isConstant() || tripletList.isVariable()){
+        if(! tripletList.isIndexRange()){
           tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, tripletList, Xcons.IntConstant(dstCoarrayDistance[i]));
         }
         else{
@@ -480,7 +482,7 @@ public class XMPrewriteExpr {
       for(int i=0;i<srcDim;i++){
         Xobject tripletList = srcCoarrayExpr.getArg(1).getArg(i);
         Xobject tmp_position;
-        if(tripletList.isConstant() || tripletList.isVariable()){
+        if(! tripletList.isIndexRange()){
           tmp_position = Xcons.binaryOp(Xcode.MUL_EXPR, tripletList, Xcons.IntConstant(srcCoarrayDistance[i]));
         }
         else{
@@ -519,17 +521,17 @@ public class XMPrewriteExpr {
     // dst_length
     Xobject dst_length = null;
     if(dstCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
-      if(dstCoarrayDepthContinuous == 0){
+      if(dstCoarrayDepthContiguous == 0){
         dst_length = Xcons.IntConstant((int)dstCoarray.getSizeAt(0) * dstCoarrayDistance[0]);
       }
       else{
-        Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(dstCoarrayDepthContinuous-1);
-        if(tripletList.isConstant() || tripletList.isVariable()){
-          dst_length = Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]);
+        Xobject tripletList = dstCoarrayExpr.getArg(1).getArg(dstCoarrayDepthContiguous-1);
+        if(! tripletList.isIndexRange()){
+          dst_length = Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContiguous-1]);
         }
         else{
           dst_length = Xcons.binaryOp(Xcode.MUL_EXPR, ((XobjList)tripletList).getArg(1),
-                                  Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContinuous-1]));
+                                  Xcons.IntConstant(dstCoarrayDistance[dstCoarrayDepthContiguous-1]));
         }
       }
     }
@@ -544,17 +546,17 @@ public class XMPrewriteExpr {
     // src_length
     Xobject src_length = null;
     if(srcCoarrayExpr.Opcode() == Xcode.SUB_ARRAY_REF){
-      if(srcCoarrayDepthContinuous == 0){
+      if(srcCoarrayDepthContiguous == 0){
         src_length = Xcons.IntConstant((int)srcCoarray.getSizeAt(0) * srcCoarrayDistance[0]);
       }
       else{
-        Xobject tripletList = srcCoarrayExpr.getArg(1).getArg(srcCoarrayDepthContinuous-1);
-        if(tripletList.isConstant() || tripletList.isVariable()){
-          src_length = Xcons.IntConstant(srcCoarrayDistance[srcCoarrayDepthContinuous-1]);
+        Xobject tripletList = srcCoarrayExpr.getArg(1).getArg(srcCoarrayDepthContiguous-1);
+        if(! tripletList.isIndexRange()){
+          src_length = Xcons.IntConstant(srcCoarrayDistance[srcCoarrayDepthContiguous-1]);
         }
         else{
           src_length = Xcons.binaryOp(Xcode.MUL_EXPR, ((XobjList)tripletList).getArg(1),
-                                      Xcons.IntConstant(srcCoarrayDistance[srcCoarrayDepthContinuous-1]));
+                                      Xcons.IntConstant(srcCoarrayDistance[srcCoarrayDepthContiguous-1]));
         }
       }
     }
@@ -637,9 +639,9 @@ public class XMPrewriteExpr {
     XobjList imageList = (XobjList)coarrayExpr.getArg(1);
     int imageDims = coarray.getImageDim();
 
-    // Shortcut Function
-    if(isContinuousArray(coarrayExpr, exprParentBlock) &&
-       isContinuousArray(localExpr, exprParentBlock) &&
+    // Contiguous Function
+    if(isContiguousArray(coarrayExpr, exprParentBlock) &&
+       isContiguousArray(localExpr, exprParentBlock) &&
        isCoarray(localExpr, exprParentBlock))
       {
         XMPcoarray remoteCoarray = coarray;
@@ -648,12 +650,12 @@ public class XMPrewriteExpr {
         boolean isLocalCoarrayUseDevice = isUseDevice(localCoarray.getName(), exprParentBlock);
         if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF)
           {  // put a[:]:[1] = b[:];
-            return createShortcutCoarray(imageDims, imageList, "put", remoteCoarray, localCoarray,
-                                         coarrayExpr.getArg(0), localExpr, isRemoteCoarrayUseDevice, isLocalCoarrayUseDevice);
+            return createContiguousCoarray(imageDims, imageList, "put", remoteCoarray, localCoarray,
+                                            coarrayExpr.getArg(0), localExpr, isRemoteCoarrayUseDevice, isLocalCoarrayUseDevice);
           }
         else{ // get a[:] = b[:]:[1]
-          return createShortcutCoarray(imageDims, imageList, "get", localCoarray, remoteCoarray,
-                                       localExpr, coarrayExpr.getArg(0), isRemoteCoarrayUseDevice, isLocalCoarrayUseDevice);
+          return createContiguousCoarray(imageDims, imageList, "get", localCoarray, remoteCoarray,
+                                         localExpr, coarrayExpr.getArg(0), isRemoteCoarrayUseDevice, isLocalCoarrayUseDevice);
         }
       }
 
@@ -664,7 +666,7 @@ public class XMPrewriteExpr {
       XobjList tripletList = (XobjList)(coarrayExpr.getArg(0)).getArg(1);
       funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_coarray_set_" + Integer.toString(tripletList.Nargs()));
       for(int i=0;i<tripletList.Nargs();i++){
-        if(tripletList.getArg(i).isConstant() || tripletList.getArg(i).isVariable()){
+        if(! tripletList.getArg(i).isIndexRange()){
           funcArgs.add(tripletList.getArg(i)); // start
           funcArgs.add(Xcons.IntConstant(1));  // length
           funcArgs.add(Xcons.IntConstant(1));  // stride
@@ -709,7 +711,6 @@ public class XMPrewriteExpr {
       int varDim = varType.getNumDimensions();
       funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_array_set_" + Integer.toString(varDim));
       Integer[] sizeArray = new Integer[varDim];
-      Integer[] distanceArray = new Integer[varDim];
 
       for(int i=0;i<varDim;i++,varType=varType.getRef()){
         int dimSize = (int)varType.getArraySize();
@@ -719,32 +720,22 @@ public class XMPrewriteExpr {
         sizeArray[i] = dimSize;
       }
 
-      for(int i=0;i<varDim-1;i++){
-	int tmp = 1;
-	for(int j=i+1;j<varDim;j++){
-	  tmp *= sizeArray[j];
-	}
-	distanceArray[i] = tmp;
-      }
-      distanceArray[varDim-1] = 1;
-
       XobjList tripletList = (XobjList)localExpr.getArg(1);
       for(int i=0;i<tripletList.Nargs();i++){
-        if(tripletList.getArg(i).isVariable() || tripletList.getArg(i).isIntConstant() ){
+        if(! tripletList.getArg(i).isIndexRange()){
           funcArgs.add(tripletList.getArg(i));           // start
           funcArgs.add(Xcons.IntConstant(1));            // length
           funcArgs.add(Xcons.IntConstant(1));            // stride
           funcArgs.add(Xcons.IntConstant(sizeArray[i])); // size
-	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.IntConstant(distanceArray[i]), Xcons.SizeOf(elmtType))); // distance
         }
         else{
           for(int j=0;j<3;j++){
             funcArgs.add(tripletList.getArg(i).getArg(j));
           }
           funcArgs.add(Xcons.IntConstant(sizeArray[i]));     // size
-	  funcArgs.add(Xcons.binaryOp(Xcode.MUL_EXPR, Xcons.IntConstant(distanceArray[i]), Xcons.SizeOf(elmtType)));
         }
       }
+      funcArgs.add(Xcons.SizeOf(elmtType));
     }
     else{  // !isArray
       funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_array_set_1");
@@ -768,15 +759,8 @@ public class XMPrewriteExpr {
     newExpr.setIsRewrittedByXmp(true);
     iter.insertStatement(newExpr);
 
-    // Set function _XMP_coarray_rdma_do()
+    // Set function _XMP_coarray_put() and _XMP_coarray_get()
     funcArgs = Xcons.List();
-    if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF){
-      funcArgs.add(Xcons.IntConstant(XMPcoarray.PUT));
-    }
-    else{
-      funcArgs.add(Xcons.IntConstant(XMPcoarray.GET));
-    }
-
     boolean isLocalOnDevice = false;
     boolean isRemoteOnDevice = false;
     
@@ -829,11 +813,18 @@ public class XMPrewriteExpr {
 
     boolean isAcc = isRemoteOnDevice || isLocalOnDevice;
     if(isAcc){
-      funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_do_acc");
+      if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF)
+        funcId = _globalDecl.declExternFunc("_XMP_coarray_put_acc");
+      else
+        funcId = _globalDecl.declExternFunc("_XMP_coarray_get_acc");
+      
       funcArgs.add(Xcons.IntConstant(isRemoteOnDevice? 1 : 0));
       funcArgs.add(Xcons.IntConstant(isLocalOnDevice? 1 : 0));
     }else{
-      funcId = _globalDecl.declExternFunc("_XMP_coarray_rdma_do");
+      if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF)
+        funcId = _globalDecl.declExternFunc("_XMP_coarray_put");
+      else
+        funcId = _globalDecl.declExternFunc("_XMP_coarray_get");
     }
     newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
@@ -841,14 +832,14 @@ public class XMPrewriteExpr {
 
     return null;
     // Memo: This function translates a coarray syntax (a[1:2:1]:[9] = b) into 4 functions.
-    // This function returns null pointer except for shortcut functions. The reason of returning
+    // This function returns null pointer except for contiguous functions. The reason of returning
     // null pointer, when XobjList is returned, an upper process is abort.
     // Therefore this function translates the coarray syntax directly.
   }
 
   private boolean is_stride_1(int dim, XobjList tripletList)
   {
-    if(tripletList.getArg(dim).isConstant() || tripletList.getArg(dim).isVariable()){
+    if(! tripletList.getArg(dim).isIndexRange()){
         return true;
     } 
     else{
@@ -875,7 +866,7 @@ public class XMPrewriteExpr {
       else{
         return false;
       }
-    else{
+    else if(tripletList.getArg(dim).isIndexRange()){
       Xobject start = tripletList.getArg(dim).getArg(0);
       if(start.isConstant()){
         if(start.getInt() == 0){
@@ -887,7 +878,8 @@ public class XMPrewriteExpr {
   }
 
   private boolean is_length_all(int dim, XobjList tripletList, Ident varId){
-    if(tripletList.getArg(dim).isConstant() || tripletList.getArg(dim).isVariable()){
+    if(! tripletList.getArg(dim).isIndexRange()){
+      //FIXME if dimSize equals 1, this case must return true
       return false;
     }
 
@@ -926,7 +918,7 @@ public class XMPrewriteExpr {
 
   private boolean is_length_1(int dim, XobjList tripletList)
   {
-    if(tripletList.getArg(dim).isVariable() || tripletList.getArg(dim).isConstant()){
+    if(! tripletList.getArg(dim).isIndexRange()){
       return true;
     }
     else{
@@ -941,7 +933,7 @@ public class XMPrewriteExpr {
     return false;
   }
 
-  private boolean isContinuousArray(Xobject myExpr, Block block) throws XMPexception
+  private boolean isContiguousArray(Xobject myExpr, Block block) throws XMPexception
   {
     if(myExpr.Opcode() == Xcode.CO_ARRAY_REF)
       myExpr = myExpr.getArg(0);
@@ -1210,7 +1202,7 @@ public class XMPrewriteExpr {
       Ident var;
       Xobject lb, len, st;
 
-      if (sub.Opcode() != Xcode.LIST) continue;
+      if (! sub.isIndexRange()) continue;
 
       var = body0.declLocalIdent("_XMP_loop_i" + Integer.toString(i), Xtype.intType);
       varList.add(var);
@@ -1271,7 +1263,7 @@ public class XMPrewriteExpr {
 
 	Xobject lb, st;
 
-	if (sub.Opcode() != Xcode.LIST) continue;
+	if (! sub.isIndexRange()) continue;
 
 	lb = ((XobjList)sub).getArg(0);
 	if (lb == null) lb = Xcons.IntConstant(0);
@@ -1808,18 +1800,168 @@ public class XMPrewriteExpr {
     return createRewriteAlignedArrayFunc(alignedArray, arrayDimCount, args);
   }
 
+  private static Boolean is_template_constant_size(XMPtemplate t) throws XMPexception
+  {
+    for(int i=0;i<t.getDim();i++){
+      topdownXobjectIterator iter = t.getSizeAt(i).topdownIterator();
+      for(iter.init(); !iter.end(); iter.next()){
+        Xobject expr = iter.getXobject();
+        Xcode code = expr.Opcode();
+        if(code == Xcode.PLUS_EXPR || code == Xcode.MINUS_EXPR ||
+           code == Xcode.MUL_EXPR || code == Xcode.DIV_EXPR)
+          continue;
+        else if(! expr.isConstant())
+          return false;
+      }
+    }
+    
+    return true;
+  }
+  
+  private static Boolean is_node_constant_size(XMPnodes n) throws XMPexception
+  {
+    for(int i=0;i<n.getDim();i++){
+      topdownXobjectIterator iter = n.getSizeAt(i).topdownIterator();
+      for(iter.init(); !iter.end(); iter.next()){
+        Xobject expr = iter.getXobject();
+        Xcode code = expr.Opcode();
+        if(code == Xcode.PLUS_EXPR || code == Xcode.MINUS_EXPR ||
+           code == Xcode.MUL_EXPR || code == Xcode.DIV_EXPR)
+          continue;
+        if(! expr.isConstant())
+          return false;
+      }
+    }
+    
+    return true;
+  }
+
+  private static Boolean is_the_same_size_template_array(XMPalignedArray alignedArray) throws XMPexception
+  {
+    XMPtemplate t   = alignedArray.getAlignTemplate();
+    int arrayDim    = alignedArray.getDim();
+    Xtype arrayType = alignedArray.getArrayType();
+    for (int i=0; i<arrayDim; i++, arrayType=arrayType.getRef()){
+      int dimSize = (int)arrayType.getArraySize();
+      if(alignedArray.getAlignMannerAt(i) == XMPalignedArray.BLOCK ||
+         alignedArray.getAlignMannerAt(i) == XMPalignedArray.CYCLIC ||
+         alignedArray.getAlignMannerAt(i) == XMPalignedArray.BLOCK_CYCLIC ||
+	 dimSize == -1){
+        Xobject x = arrayType.getArraySizeExpr();
+	if(x == null) x = Xcons.LongLongConstant(0, arrayType.getArraySize());
+        int index = alignedArray.getAlignSubscriptIndexAt(i);
+        if(t.getOntoNodesIndexAt(index) != null){ // Not duplicate
+          if(x.Opcode() != Xcode.LONGLONG_CONSTANT)              return false;
+          if(x.getLongHigh() != 0)                               return false;
+          int template_size = XMPutil.foldIntConstant(t.getSizeAt(index)).getInt();
+          if((int)x.getLongLow() != template_size) return false;
+        }
+      }
+    }
+
+    return true;
+  }
+  
+  // Is size of template % size of node == 0 ?
+  private static Boolean is_divisible_size(XMPalignedArray alignedArray) throws XMPexception
+  {
+    XMPtemplate t = alignedArray.getAlignTemplate();
+    XMPnodes    n = t.getOntoNodes();
+    if(! is_template_constant_size(t))                  return false;
+    if(! is_node_constant_size(n))                      return false;
+    if(! is_the_same_size_template_array(alignedArray)) return false;
+
+    // Number of dimensions of template must be larger than that of node.
+    for(int i=0;i<t.getDim();i++){
+      int manner = t.getDistMannerAt(i);
+      switch (manner){
+      case XMPtemplate.GBLOCK:
+        return false;
+      case XMPtemplate.DUPLICATION:
+        break;
+      case XMPtemplate.BLOCK:
+      case XMPtemplate.CYCLIC:
+      case XMPtemplate.BLOCK_CYCLIC:
+        int template_size = XMPutil.foldIntConstant(t.getSizeAt(i)).getInt();
+        int blocksize     = (manner == XMPtemplate.BLOCK_CYCLIC)? XMPutil.foldIntConstant(t.getWidthAt(i)).getInt() : 1;
+        int node_rank     = t.getOntoNodesIndexAt(i).getInt();
+        int node_size     = XMPutil.foldIntConstant(n.getSizeAt(node_rank)).getInt();
+        if(template_size%(node_size*blocksize) != 0)
+          return false;
+        break;
+      }
+    }
+
+    return true;
+  }
+
   public static Xobject createRewriteAlignedArrayFunc(XMPalignedArray alignedArray, int arrayDimCount,
                                                       XobjList getAddrFuncArgs) throws XMPexception {
     int arrayDim = alignedArray.getDim();
     Ident getAddrFuncId = null;
+    XobjList args = Xcons.List();
+    Boolean is_divisible_size_flag = false;
 
+    if(is_divisible_size(alignedArray)){
+      is_divisible_size_flag = true;
+
+      XMPtemplate t     = alignedArray.getAlignTemplate();
+      XMPnodes n        = t.getOntoNodes();
+      XobjList tmp_args = Xcons.List();
+      Xtype arrayType   = alignedArray.getArrayType();
+      for (int i=0; i<arrayDim; i++, arrayType=arrayType.getRef()){
+        int dimSize = (int)arrayType.getArraySize();
+	if(alignedArray.getAlignMannerAt(i) == XMPalignedArray.BLOCK || 
+	   alignedArray.getAlignMannerAt(i) == XMPalignedArray.CYCLIC ||
+	   alignedArray.getAlignMannerAt(i) == XMPalignedArray.BLOCK_CYCLIC || 
+	   dimSize == -1){
+          Xobject x = arrayType.getArraySizeExpr();
+	  if(x == null) x = Xcons.IntConstant((int)arrayType.getArraySize());
+          int index = alignedArray.getAlignSubscriptIndexAt(i);
+          if(t.getOntoNodesIndexAt(index) != null){ // Not duplicate
+            int node_rank = t.getOntoNodesIndexAt(index).getInt();
+            x = Xcons.binaryOp(Xcode.DIV_EXPR, x, n.getSizeAt(node_rank));
+          }
+          
+          if(alignedArray.hasShadow()){
+            XMPshadow s = alignedArray.getShadowAt(i);
+            if(s.getHi() != null && s.getLo() != null){
+              Xobject h_plus_l = Xcons.binaryOp(Xcode.PLUS_EXPR, s.getHi(), s.getLo());
+              x = Xcons.binaryOp(Xcode.PLUS_EXPR, x, h_plus_l);
+            }
+          }
+          tmp_args.add(x);
+        }
+	else{
+          tmp_args.add(Xcons.IntConstant(dimSize));
+	}
+      }
+
+      for (int i=1; i<arrayDim; i++){
+	Xobject x = tmp_args.getArg(i);
+	for (int j=i+1; j<arrayDim; j++){
+          if(tmp_args.getArg(j) != null){
+            x = Xcons.binaryOp(Xcode.MUL_EXPR, x, tmp_args.getArg(j));
+          }
+	}
+        if(x != null) args.add(x);
+      }
+    }
+    
     if (arrayDim < arrayDimCount) {
       throw new XMPexception("wrong array ref");
-    } else if (arrayDim == arrayDimCount) {
+    }
+    else if (arrayDim == arrayDimCount) {
       getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
-      for (int i = 0; i < arrayDim - 1; i++)
-        getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
-    } else {
+      for (int i=0; i<arrayDim-1; i++)
+        if(is_divisible_size_flag){
+          //          System.out.println(i + " : " + args.getArg(i));
+          getAddrFuncArgs.add(args.getArg(i));
+        }
+        else
+          getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
+    }
+    else {
       getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
       for (int i = 0; i < arrayDimCount; i++)
         getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
@@ -2135,7 +2277,10 @@ public class XMPrewriteExpr {
                                                   String loopIndexName, Xobject arrayRef) throws XMPexception
   {
     if (arrayRef.Opcode() == Xcode.VAR) {
-      return calcShadow(t, ti, a, ai, arrayRef);
+      if (a.getShadowAt(ai).getType() != XMPshadow.SHADOW_FULL ||
+	  loopIndexName.equals(arrayRef.getString())) {
+	return calcShadow(t, ti, a, ai, arrayRef);
+      }
     }
 
     topdownXobjectIterator iter = new topdownXobjectIterator(arrayRef);
@@ -2327,7 +2472,7 @@ public class XMPrewriteExpr {
 	  rewriteACCClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable, newBody);
 	  if(!newBody.isEmpty()){
 	    bIter.setBlock(Bcons.COMPOUND(newBody));
-    	    newBody.add(Bcons.COMPOUND(Bcons.blockList(block))); //newBody.add(block);
+	    newBody.add(block);
 	  }
 	}
       }
@@ -2507,10 +2652,10 @@ public class XMPrewriteExpr {
         if(coarray == null) continue;
 
         if(coarray.getVarId().getStorageClass() != StorageClass.EXTERN){
-          //add func call like "_XMP_coarray_malloc_do_acc(&(_XMP_COARRAY_DESC_a), &(_XMP_COARRAY_ADDR_DEV_a));"
+          //add func call like "_XMP_coarray_malloc_acc(&(_XMP_COARRAY_DESC_a), &(_XMP_COARRAY_ADDR_DEV_a));"
           Xtype elementType = coarray.getElmtType();
           Ident devPointerId = _globalDecl.declStaticIdent(XMP.COARRAY_ADDR_PREFIX_ + "DEV_" + varName, Xtype.Pointer(elementType));
-          String funcName = "_XMP_coarray_malloc_do_acc";
+          String funcName = "_XMP_coarray_malloc_acc";
           XobjList funcArgs = Xcons.List(coarray.getDescId().getAddr(),
                   devPointerId.getAddr());
           _globalDecl.addGlobalInitFuncCall(funcName, funcArgs);
@@ -2612,7 +2757,5 @@ public class XMPrewriteExpr {
     Ident f = _globalDecl.declExternFunc("_XMP_barrier_EXEC", Xtype.Function(Xtype.voidType));
     BlockList bl = fb.getBody().getHead().getBody();
     bl.add(f.Call(Xcons.List()));
-
   }
-
 }

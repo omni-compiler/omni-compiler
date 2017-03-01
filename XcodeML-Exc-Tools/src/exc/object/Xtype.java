@@ -34,7 +34,7 @@ public class Xtype
         "XMP_COARRAY",
         "F_COARRAY",        // ID=060
     };
-    
+
     //
     // Qualifiers for C
     //
@@ -44,7 +44,7 @@ public class Xtype
     public static final int TQ_INLINE           = 1 << 3;   // inline
     public static final int TQ_ARRAY_STATIC     = 1 << 4;   // static at array specifier
     public static final int TQ_FUNC_STATIC      = 1 << 5;   // static at function definition
-    
+
     //
     // Qualifiers for Fortran
     //
@@ -67,31 +67,47 @@ public class Xtype
     public static final int TQ_FSEQUENCE            = 1 << 22;  // sequence
     public static final int TQ_FINTERNAL_PRIVATE    = 1 << 23;  // private in structure decl
     public static final int TQ_FCRAY_POINTER        = 1 << 24;  // cray pointer (ID=060c)
-    
+    public static final int TQ_FVOLATILE            = 1 << 25;  // volatile
+    public static final int TQ_FCLASS               = 1 << 26;  // class
+    public static final int TQ_FVALUE               = 1 << 27;  // value
+    public static final int TQ_FMODULE              = 1 << 28;  // module
+    public static final int TQ_FPROCEDURE           = 1 << 29;  // procedure
+
     private String type_id;
     private int type_kind;
 
     /* Type Qualifiers */
     private int type_qual_flags;
-    
+
     /** for marking */
     boolean is_marked;
 
     /** copy source */
     public Xtype copied;
-    
+
     /** sequence fo generating type id */
     private static int gen_id_seq = 0;
-    
+
     /** gcc attributes */
     private Xobject gcc_attrs;
-    
+
     /** type name */
     protected Ident tag;
-    
+
     /** coshape infos. incl. corank and codimensions (ID=060) */
     protected boolean is_coarray = false;
     protected Coshape coshape = new Coshape();
+
+    /** parameterized derived type infos. */
+    protected XobjList fTypeParamValues;
+
+    /** ISO C binding information */
+    protected String bind;
+    protected String bind_name;
+
+    /** Fortran procedure pointer pass attributes */
+    private String pass;
+    private String pass_arg_name;
 
     /*
      * for pre-defined basic type
@@ -136,7 +152,7 @@ public class Xtype
         new BasicType(BasicType.DOUBLE_COMPLEX);
     public static final BasicType longDoubleComplexType =
         new BasicType(BasicType.LONG_DOUBLE_COMPLEX);
-    
+
     public static final BasicType FintType =
         intType;
     public static final BasicType Fint4Type =
@@ -173,7 +189,7 @@ public class Xtype
         new FunctionType(FintType, TQ_FEXTERNAL);
     public static final FunctionType FnumericalAllFunctionType =
         new FunctionType(FnumericAllType);
-    
+
     public static final Xtype stringType =
         Xtype.Pointer(Xtype.charType);
     public static final Xtype FuintPtrType =
@@ -182,12 +198,12 @@ public class Xtype
     public static final Xtype indvarType = new PointerType(voidType); // not Xtype.Pointer(voidType)
     public static final Xtype indvarPtrType =
         new PointerType(indvarType); // not Xtype.Pointer(indvarType)
-    
+
     public static class TypeInfo
     {
         public final Xtype type;
         public final String cname, fname, fnamesub;
-        
+
         TypeInfo(Xtype type, String cname, String fname, String fnamesub)
         {
             this.type = type;
@@ -196,7 +212,7 @@ public class Xtype
             this.fnamesub = fnamesub;
         }
     }
-    
+
     /** type mapping of Xtype, XcodeML/C, XcodeML/Fortran */
     protected static final TypeInfo[] type_infos =
     {
@@ -236,23 +252,41 @@ public class Xtype
         setCodimensions(codimensions);
     }
 
+    public void assign(Xtype op2)
+    {
+        this.type_id = op2.type_id;
+        this.type_kind = op2.type_kind;
+        this.type_qual_flags = op2.type_qual_flags;
+        this.is_marked = op2.is_marked;
+        this.copied = op2.copied;
+        this.gen_id_seq = op2.gen_id_seq;
+        this.gcc_attrs = op2.gcc_attrs;
+        this.tag = op2.tag;
+        this.fTypeParamValues = op2.fTypeParamValues;
+        this.bind = op2.bind;
+        this.bind_name = op2.bind_name;
+        this.pass = op2.pass;
+        this.pass_arg_name = op2.pass_arg_name;
+        setCodimensions(op2.getCodimensions());
+    }
+
     public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs,
                  Ident tag)
     {
         this(kind, id, typeQualFlags, gccAttrs, tag, null);
     }
-    
+
     public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs,
                  Xobject[] codimensions)
     {
         this(kind, id, typeQualFlags, gccAttrs, null, codimensions);
     }
-    
+
     public Xtype(int kind, String id, int typeQualFlags, Xobject gccAttrs)
     {
         this(kind, id, typeQualFlags, gccAttrs, null, null);
     }
-    
+
     public Xtype(int kind)
     {
         this(kind, null, 0, null, null, null);
@@ -274,7 +308,7 @@ public class Xtype
     {
         return type_id;
     }
-    
+
     /** return type id for XcodeML/C */
     public final String getXcodeCId()
     {
@@ -282,13 +316,19 @@ public class Xtype
             ((copied != null) ? copied.getXcodeCId() :
                 (isBasic() ? BasicType.getTypeInfo(getBasicType()).cname : null));
     }
-    
+
     /** return type id for XcodeML/F */
     public final String getXcodeFId()
     {
         return type_id != null ? type_id :
             ((copied != null) ? copied.getXcodeFId() :
                 (isBasic() ? BasicType.getTypeInfo(getBasicType()).fname : null));
+    }
+
+    /** set kind constant (BASIC, STRUCT, UNION, ...) */
+    public final void setKind(int kind)
+    {
+        type_kind = kind;
     }
 
     /** get kind constant (BASIC, STRUCT, UNION, ...) */
@@ -317,19 +357,19 @@ public class Xtype
     {
         return (type_qual_flags & flag) > 0;
     }
-    
+
     /** set type qualifier flags (TQ_*). */
     public final void setTypeQualFlags(int flags)
     {
         type_qual_flags = flags;
     }
-    
+
     /** return if is qualified by 'const' */
     public final boolean isConst()
     {
         return getTypeQualFlag(TQ_CONST);
     }
-    
+
     /** set qualifier 'const' */
     public final void setIsConst(boolean enabled)
     {
@@ -347,25 +387,25 @@ public class Xtype
     {
         setTypeQualFlag(TQ_VOLATILE, enabled);
     }
-    
+
     /** return if is qualified by 'restrict' */
     public final boolean isRestrict()
     {
         return getTypeQualFlag(TQ_RESTRICT);
     }
-    
+
     /** set qualifier 'restirct' */
     public final void setIsRestrict(boolean enabled)
     {
         setTypeQualFlag(TQ_RESTRICT, enabled);
     }
-    
+
     /** return if is qualified by 'inline' */
     public final boolean isInline()
     {
         return getTypeQualFlag(TQ_INLINE);
     }
-    
+
     /** set qualifier 'inline' */
     public final void setIsInline(boolean enabled)
     {
@@ -377,7 +417,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_ARRAY_STATIC);
     }
-    
+
     /** set qualifier 'static' in array specifier */
     public final void setIsArrayStatic(boolean enabled)
     {
@@ -389,7 +429,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FUNC_STATIC);
     }
-    
+
     /** set qualifier 'static' at function definition */
     public final void setIsFuncStatic(boolean enabled)
     {
@@ -401,7 +441,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FPUBLIC);
     }
-    
+
     /** Fortran : set qualifier 'public' */
     public final void setIsFpublic(boolean enabled)
     {
@@ -413,7 +453,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FPRIVATE);
     }
-    
+
     /** Fortran : set qualifier 'private' */
     public final void setIsFprivate(boolean enabled)
     {
@@ -425,7 +465,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FPOINTER);
     }
-    
+
     /** Fortran : set qualifier 'pointer' */
     public final void setIsFpointer(boolean enabled)
     {
@@ -437,7 +477,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FOPTIONAL);
     }
-    
+
     /** Fortran : set qualifier 'optional' */
     public final void setIsFoptional(boolean enabled)
     {
@@ -449,7 +489,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FTARGET);
     }
-    
+
     /** Fortran : set qualifier 'target' */
     public final void setIsFtarget(boolean enabled)
     {
@@ -461,7 +501,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FSAVE);
     }
-    
+
     /** Fortran : set qualifier 'save' */
     public final void setIsFsave(boolean enabled)
     {
@@ -473,7 +513,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FPARAMETER);
     }
-    
+
     /** Fortran : set qualifier 'parameter' */
     public final void setIsFparameter(boolean enabled)
     {
@@ -485,7 +525,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FALLOCATABLE);
     }
-    
+
     /** Fortran : set qualifier 'allocatable' */
     public final void setIsFallocatable(boolean enabled)
     {
@@ -497,7 +537,13 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FCRAY_POINTER);
     }
-    
+
+    /** Fortran : return if it is volatile */
+    public final boolean isFvolatile()
+    {
+        return getTypeQualFlag(TQ_FVOLATILE);
+    }
+
     /** Fortran : set qualifier 'cray pointer' (ID=060c) */
     public final void setIsFcrayPointer(boolean enabled)
     {
@@ -509,7 +555,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FINTENT_IN);
     }
-    
+
     /** Fortran : set qualifier 'intent(in)' */
     public final void setIsFintentIN(boolean enabled)
     {
@@ -521,7 +567,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FINTENT_OUT);
     }
-    
+
     /** Fortran : set qualifier 'intent(out)' */
     public final void setIsFintentOUT(boolean enabled)
     {
@@ -533,7 +579,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FINTENT_INOUT);
     }
-    
+
     /** Fortran : set qualifier 'intent(inout)' */
     public final void setIsFintentINOUT(boolean enabled)
     {
@@ -545,7 +591,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FPROGRAM);
     }
-    
+
     /** Fortran : set qualifier 'program' */
     public final void setIsFprogram(boolean enabled)
     {
@@ -557,7 +603,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FINTRINSIC);
     }
-    
+
     /** Fortran : set qualifier 'intrinsic' */
     public final void setIsFintrinsic(boolean enabled)
     {
@@ -569,7 +615,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FRECURSIVE);
     }
-    
+
     /** Fortran : set qualifier 'recursive' */
     public final void setIsFrecursive(boolean enabled)
     {
@@ -581,7 +627,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FINTERNAL);
     }
-    
+
     /** Fortran : set qualifier 'internal' */
     public final void setIsFinternal(boolean enabled)
     {
@@ -593,7 +639,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FEXTERNAL);
     }
-    
+
     /** Fortran : set qualifier 'external' */
     public final void setIsFexternal(boolean enabled)
     {
@@ -605,7 +651,7 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FSEQUENCE);
     }
-    
+
     /** Fortran : set qualifier 'sequence' */
     public final void setIsFsequence(boolean enabled)
     {
@@ -617,11 +663,83 @@ public class Xtype
     {
         return getTypeQualFlag(TQ_FINTERNAL_PRIVATE);
     }
-    
+
     /** Fortran : set qualifier 'private' in structure decl */
     public final void setIsFinternalPrivate(boolean enabled)
     {
         setTypeQualFlag(TQ_FINTERNAL_PRIVATE, enabled);
+    }
+
+    /** Fortran : return if is qualified by 'class' in pointer decl */
+    public final boolean isFclass()
+    {
+        return getTypeQualFlag(TQ_FCLASS);
+    }
+
+    /** Fortran : set qualifier 'class' in pointer decl */
+    public final void setIsFclass(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FCLASS, enabled);
+    }
+
+    /** Fortran : return if is qualified by 'value' in pointer decl */
+    public final boolean isFvalue()
+    {
+      return getTypeQualFlag(TQ_FVALUE);
+    }
+
+    /** Fortran : set qualifier 'value' in pointer decl */
+    public final void setIsFvalue(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FVALUE, enabled);
+    }
+
+    /** Fortran : return if is qualified by 'module' in subroutine/function decl */
+    public final boolean isFmodule()
+    {
+      return getTypeQualFlag(TQ_FMODULE);
+    }
+
+    /** Fortran : set qualifier 'module' in subroutine/function decl */
+    public final void setIsFmodule(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FMODULE, enabled);
+    }
+
+    /** Fortran : return if is 'procedure' decl */
+    public final boolean isFprocedure()
+    {
+      return getTypeQualFlag(TQ_FPROCEDURE);
+    }
+
+    /** Fortran : set attribute 'is_procedure' */
+    public final void setIsFprocedure(boolean enabled)
+    {
+        setTypeQualFlag(TQ_FPROCEDURE, enabled);
+    }
+
+    /** Fortran : return if is qualified by 'value' in pointer decl */
+    public final String getBind()
+    {
+      return bind;
+    }
+
+    /** Fortran : return if is qualified by 'value' in pointer decl */
+    public final String getBindName()
+    {
+      return bind_name;
+    }
+
+    /** Fortran : set qualifier 'bind' in pointer decl */
+    public final void setBind(String value)
+    {
+        bind = value;
+    }
+
+    /** Fortran : set qualifier 'bind_name' in pointer decl */
+    public final void setBindName(String value)
+    {
+        bind_name = value;
     }
 
     /** get basic type kind (BasicType.*) */
@@ -665,7 +783,7 @@ public class Xtype
     {
         throw new UnsupportedOperationException();
     }
-    
+
     @Deprecated
     public final long getArrayDim()
     {
@@ -731,31 +849,31 @@ public class Xtype
     {
         return false;
     }
-    
+
     /** Fortran: return if is assumed shape array */
     public boolean isFassumedShape()
     {
         return false;
     }
-    
+
     /** Fortran: return if is fixed size array */
     public boolean isFfixedShape()
     {
         return false;
     }
-    
+
     /** Fortran: convert Fortran array size */
     public void convertFindexRange(boolean extendsLowerBound, boolean extendsUpperBound, Block b)
     {
         throw new UnsupportedOperationException();
     }
-    
+
     /** Fortran: convert Fortran array size */
     public void convertToAssumedShape()
     {
         throw new UnsupportedOperationException();
     }
-    
+
     /** get number of array dimensions */
     public int getNumDimensions()
     {
@@ -796,6 +914,14 @@ public class Xtype
         coshape.setCodimensions(codimensions);
         is_coarray  = (getCorank() > 0);
     }
+    public void setFTypeParamValues(XobjList params)
+    {
+        fTypeParamValues = params;
+    }
+    public XobjList getFTypeParamValues()
+    {
+        return fTypeParamValues;
+    }
     public void removeCodimensions()
     {
         coshape.removeCodimensions();
@@ -823,6 +949,12 @@ public class Xtype
         throw new UnsupportedOperationException();
     }
 
+    /** get composite type proc list */
+    public XobjList getProcList()
+    {
+        throw new UnsupportedOperationException();
+    }
+
     /** get type of member which has specified name */
     public Xtype getMemberType(String member)
     {
@@ -834,13 +966,13 @@ public class Xtype
     {
     	return copy(null);
     }
-    
+
     /** create copy */
     protected Xtype copy(String id)
     {
         return new Xtype(type_kind, id, getTypeQualFlags(), gcc_attrs, tag, copyCodimensions());
     }
-    
+
     /** create copy. created copy references this instance as copied */
     public Xtype inherit(String id)
     {
@@ -854,7 +986,7 @@ public class Xtype
     {
         return type_kind == FUNCTION;
     }
-    
+
     /** Fortran: return if is subroutine */
     public final boolean isFsubroutine()
     {
@@ -878,7 +1010,7 @@ public class Xtype
     {
         return type_kind == ARRAY;
     }
-    
+
     /** Fortran: return if is array */
     public final boolean isFarray()
     {
@@ -957,15 +1089,57 @@ public class Xtype
     {
         return null;
     }
-    
+
     /** Fortran: get len parameter */
     public Xobject getFlen()
     {
         return null;
     }
-    
+
+    /** Fortran: get procedure pointer pass attribute */
+    public String getPass()
+    {
+        return pass;
+    }
+
+    /** Fortran: get procedure pointer pass attribute */
+    public void setPass(String pass)
+    {
+        this.pass = pass;
+    }
+
+    /** Fortran: get procedure pointer pass arg name attribute */
+    public String getPassArgName()
+    {
+        return pass_arg_name;
+    }
+
+    /** Fortran: get procedure pointer pass arg name attribute */
+    public void setPassArgName(String pass_arg_name)
+    {
+        this.pass_arg_name = pass_arg_name;
+    }
+
     /** Fortran: return if len parameter is variable value */
     public boolean isFlenVariable()
+    {
+        return false;
+    }
+
+    /** Fortran: return if len parameter is variable value */
+    public boolean isFlenAssumedShape()
+    {
+        return false;
+    }
+
+    /** Fortran: return if len parameter is variable value */
+    public boolean isFlenAssumedSize()
+    {
+        return false;
+    }
+
+    /** Fortran: return if the type extends parent type */
+    public boolean isExtended()
     {
         return false;
     }
@@ -1038,11 +1212,11 @@ public class Xtype
             id = getXcodeFId();
         return id;
     }
-    
+
     //
     // static constructor
     //
-    
+
     /**
      * C: create pointer type.
      * Fortran: return ref.
@@ -1054,7 +1228,7 @@ public class Xtype
         return new PointerType(ref);
     }
 
-    /** 
+    /**
      * C: create void pointer type.
      * Fortran: integer type whose size equals to void pointer.
      */
@@ -1064,7 +1238,7 @@ public class Xtype
             return Pointer(Xtype.voidType);
         return Xtype.FuintPtrType;
     }
-    
+
     /**
      * C: create pointer type and add to type table.
      * Fortran: return ref.
@@ -1096,7 +1270,7 @@ public class Xtype
     {
         return new ArrayType(ref, sizeExpr);
     }
-    
+
     /** Fortran: create array type */
     public static FarrayType Farray(Xtype ref, Xobject ... sizeExprs)
     {
@@ -1107,7 +1281,7 @@ public class Xtype
     public void generateId()
     {
         String prefix = null;
-        
+
         switch(type_kind) {
         case BASIC:
             prefix = "B"; break;
@@ -1128,7 +1302,7 @@ public class Xtype
         default:
             throw new IllegalStateException();
         }
-        
+
         type_id = prefix + "X" + Integer.toHexString(++gen_id_seq);
     }
 
@@ -1149,7 +1323,7 @@ public class Xtype
     {
         return kind_names[kind];
     }
-    
+
     /** Fortran: unset save attribute */
     public void unsetIsFsave()
     {
@@ -1183,19 +1357,19 @@ public class Xtype
             return copied;
         return this;
     }
-    
+
     /** get original reference */
     public Xtype getOriginal()
     {
     	return null;
     }
-    
+
     /** Fortran: set type name identifier */
     public void setTagIdent(Ident tag)
     {
     	this.tag = tag;
     }
-    
+
     /** Fortran: get type name identifier */
     public Ident getTagIdent()
     {

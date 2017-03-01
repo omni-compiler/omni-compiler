@@ -4,7 +4,7 @@
  */
 
 #include <assert.h>
-#include "xmpf_internal.h"
+#include "xmpf_internal_coarray.h"
 
 // TEMPORARY
 // declared in ../../libxmp/include/xmp_func_decl.h
@@ -136,6 +136,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
   char *orgAddrDMA;
   char *nameDMA;
   int avail_DMA;
+  BOOL sync = *synchronous;
 
   descDMA = _XMPF_get_coarrayDescFromAddr(rhs, &orgAddrDMA, &offsetDMA, &nameDMA);
   avail_DMA = descDMA ? 1 : 0;
@@ -156,7 +157,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     assert(avail_DMA);
 
     _putVector_DMA(*descPtr, *baseAddr, *element, coindex0,
-                   descDMA, offsetDMA, nameDMA, *synchronous);
+                   descDMA, offsetDMA, nameDMA, sync);
     break;
     
   case SCHEME_ExtraDirectPut:
@@ -166,14 +167,14 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     assert(avail_DMA);
 
     _putVector_DMA(*descPtr, *baseAddr, elementRU, coindex0,
-                   descDMA, offsetDMA, nameDMA, *synchronous);
+                   descDMA, offsetDMA, nameDMA, sync);
     break;
 
   case SCHEME_BufferPut:
     _XMPF_coarrayDebugPrint("SCHEME_BufferPut/scalar selected\n");
 
     _putVector_buffer(*descPtr, *baseAddr, *element, coindex0,
-                      rhs, *element, *synchronous);
+                      rhs, *element, sync);
     break;
 
   case SCHEME_ExtraBufferPut:
@@ -182,7 +183,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
                             elementRU);
 
     _putVector_buffer(*descPtr, *baseAddr, elementRU, coindex0,
-                      rhs, *element, *synchronous);
+                      rhs, *element, sync);
     break;
 
   default:
@@ -202,6 +203,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
                                     BOOL *synchronous, int *rank, ...)
 #endif
 {
+  BOOL sync = *synchronous;
   int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
   if (*element % COMM_UNIT != 0) {
@@ -260,13 +262,13 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
     _XMPF_coarrayDebugPrint("SCHEME_DirectPut/array selected\n");
     _putCoarray_DMA(*descPtr, *baseAddr, coindex0, rhs,
                     *element, *rank, skip, skip_rhs, count,
-                    descDMA, offsetDMA, nameDMA, *synchronous);
+                    descDMA, offsetDMA, nameDMA, sync);
     break;
 
   case SCHEME_BufferPut:
     _XMPF_coarrayDebugPrint("SCHEME_BufferPut/array selected\n");
     _putCoarray_buffer(*descPtr, *baseAddr, coindex0, rhs,
-                       *element, *rank, skip, skip_rhs, count, *synchronous);
+                       *element, *rank, skip, skip_rhs, count, sync);
     break;
 
   default:
@@ -285,6 +287,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
                                      BOOL *synchronous, int *rank, ...)
 #endif
 {
+  BOOL sync = *synchronous;
   int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
   if (*element % COMM_UNIT != 0) {
@@ -321,7 +324,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
    * action                               *
   \*--------------------------------------*/
   _spreadCoarray(*descPtr, *baseAddr, coindex0, rhs,
-                 *element, *rank, skip, count, *element, *synchronous);
+                 *element, *rank, skip, count, *element, sync);
 }
 
 
@@ -363,8 +366,7 @@ void xmpf_coarray_put_err_size_(void **descPtr, int *dim,
 \***************************************************/
 
 /* REMARKING CONDITIONS:
- *  - The result variable may be invisible to FJ-RDMA.
- *  - The length of put/get communication must be divisible by
+ *  - The length of put communication must be divisible by
  *    COMM_UNIT. Else, SCHEME_Extra... should be selected.
  *  - Array element of coarray is divisible by COMM_UNIT
  *    due to a restriction.
@@ -677,8 +679,8 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
                     void *descDMA, size_t offsetDMA, char *nameDMA,
                     BOOL synchronous)
 {
-  char* desc = _XMPF_get_coarrayDesc(descPtr);
-  size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
+  char* desc = _XMPF_get_coarrayChunkDesc(descPtr);
+  size_t offset = _XMPF_get_coarrayChunkOffset(descPtr, baseAddr);
 
   _XMPF_coarrayDebugPrint("===PUT_VECTOR DMA-RDMA to[%d], %d bytes, %s\n"
                           "  local : \'%s\', offset=%zd\n"
@@ -701,10 +703,10 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
   }
 
   // ACTION (case asynchronous: definition of a coindexed variable)
-  _XMP_coarray_shortcut_put(coindex,
-                            desc,   descDMA,
-                            offset, offsetDMA,
-                            bytes,  bytes);
+  _XMP_coarray_contiguous_put(coindex,
+                              desc,   descDMA,
+                              offset, offsetDMA,
+                              bytes,  bytes);
 }
 
 
@@ -731,8 +733,8 @@ void _putVector_buffer(void *descPtr, char *baseAddr, int bytesRU,
 void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
                             int coindex, char *rhs, int bytes)
 {
-  char *desc = _XMPF_get_coarrayDesc(descPtr);
-  size_t offset = _XMPF_get_coarrayOffset(descPtr, baseAddr);
+  char *desc = _XMPF_get_coarrayChunkDesc(descPtr);
+  size_t offset = _XMPF_get_coarrayChunkOffset(descPtr, baseAddr);
 
   // MALLOC & MEMCPY
   char *buf = (char*)_XMP_alloc(sizeof(char) * bytesRU);
@@ -756,13 +758,13 @@ void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
   _XMP_coarray_rdma_coarray_set_1(offset, bytes, 1);    // LHS (remote)
   _XMP_coarray_rdma_array_set_1(0, bytes, 1, 1, 1);    // RHS (local)
   _XMP_coarray_rdma_image_set_1(coindex);
-  _XMP_coarray_rdma_do(COARRAY_PUT_CODE, desc, buf, NULL);
+  _XMP_coarray_put(desc, buf, NULL);
 
-  // FREE
-  _XMPF_coarrayDebugPrint("===DO NOT FREE in SAFE MODE\n"
+  // NOT FREE for safe
+  _XMPF_coarrayDebugPrint("===DO NOT FREE every local buffer in SAFE MODE\n"
                           "  addr=%p\n",
                           buf);
-  //_XMP_free(buf);  // for safe, changing the address every time
+  //_XMP_free(buf);
 }
 
 

@@ -61,13 +61,13 @@ public class XMPlocalDecl {
   }
     
   public static XMPsymbolTable getXMPsymbolTable(Block block) {
-    FunctionBlock fb = findParentFunctionBlock(block);
+    Block fb = findParentFunctionBlock(block);
     if (fb == null) return null;
     else return (XMPsymbolTable)fb.getProp(XMP_SYMBOL_TABLE);
   }
 
   public static XMPsymbolTable declXMPsymbolTable(Block block) {
-    FunctionBlock fb = findParentFunctionBlock(block);
+    Block fb = findParentFunctionBlock(block);
     if (fb == null) return null;
 
     XMPsymbolTable table = (XMPsymbolTable)fb.getProp(XMP_SYMBOL_TABLE);
@@ -80,7 +80,7 @@ public class XMPlocalDecl {
   }
 
   public static Ident addObjectId(String objectName, Xtype type, Block block) {
-    FunctionBlock fb = findParentFunctionBlock(block);
+    Block fb = findParentFunctionBlock(block);
 
     XobjList idList = (XobjList)fb.getProp(OBJECT_ID_LIST);
     if (idList == null) {
@@ -125,7 +125,7 @@ public class XMPlocalDecl {
   }
 
   public static void insertDestructorCall(String funcName, Xobject funcArgs, XMPglobalDecl globalDecl, Block block) {
-    FunctionBlock fb = findParentFunctionBlock(block);
+    Block fb = findParentFunctionBlock(block);
 
     XobjList bodyList = (XobjList)fb.getProp(DESTRUCTOR);
     if(bodyList == null) {

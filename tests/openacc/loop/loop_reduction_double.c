@@ -1,9 +1,11 @@
+#include <stdio.h>
+
 int main()
 {
   int i;
   double double_red;
 
-  //float sum
+  //sum
   double_red = 3.0;
 #pragma acc parallel
 #pragma acc loop reduction(+:double_red)
@@ -15,7 +17,7 @@ int main()
     return 1;
   }
 
-  //int mul
+  //mul
   double_red = 2.0;
 #pragma acc parallel
 #pragma acc loop reduction(*:double_red)
@@ -30,7 +32,7 @@ int main()
     return 2;
   }
 
-  //int max
+  //max
   double_red = 123.0;
 #pragma acc parallel
 #pragma acc loop reduction(max:double_red)
@@ -43,7 +45,7 @@ int main()
     return 3;
   }
 
-  //float min
+  //min
   double_red = 33333;
 #pragma acc parallel
 #pragma acc loop reduction(min:double_red)
@@ -55,6 +57,21 @@ int main()
   if(double_red != -2.0){
     return 4;
   }
+
+  //max (result is negative value)
+  double_red = -100;
+#pragma acc parallel
+#pragma acc loop reduction(max:double_red)
+  for(i=-1;i>-10000;i--){
+    if(double_red < i){
+      double_red = i;
+    }
+  }
+  if(double_red != -1){
+    return 5;
+  }
+
+  printf("PASS\n");
 
   return 0;
 }

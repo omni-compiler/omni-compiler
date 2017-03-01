@@ -214,6 +214,39 @@ static void _XMP_reflect_shadow_FULL_BCAST(void *array_addr, _XMP_array_t *array
   _XMP_free(bcast_buffer);
 }
 
+
+void _XMP_init_reflect_sched(_XMP_reflect_sched_t *sched){
+  sched->is_periodic = -1; /* not used yet */
+  sched->datatype_lo = MPI_DATATYPE_NULL;
+  sched->datatype_hi = MPI_DATATYPE_NULL;
+  for (int j = 0; j < 4; j++) sched->req[j] = MPI_REQUEST_NULL;
+  sched->lo_send_buf = NULL;
+  sched->lo_recv_buf = NULL;
+  sched->hi_send_buf = NULL;
+  sched->hi_recv_buf = NULL;
+}
+
+
+void _XMP_finalize_reflect_sched(_XMP_reflect_sched_t *sched, _Bool free_buf){
+
+  if (sched->datatype_lo != MPI_DATATYPE_NULL)
+    MPI_Type_free(&sched->datatype_lo);
+  if (sched->datatype_hi != MPI_DATATYPE_NULL)
+    MPI_Type_free(&sched->datatype_hi);
+
+  for (int j = 0; j < 4; j++)
+    if (sched->req[j] != MPI_REQUEST_NULL)
+      MPI_Request_free(&sched->req[j]);
+
+  if (free_buf){
+    _XMP_free(sched->lo_send_buf);
+    _XMP_free(sched->lo_recv_buf);
+    _XMP_free(sched->hi_send_buf);
+    _XMP_free(sched->hi_recv_buf);
+  }
+
+}
+
 void _XMP_init_shadow(_XMP_array_t *array, ...) {
   int dim = array->dim;
   va_list args;
@@ -260,17 +293,16 @@ void _XMP_init_shadow(_XMP_array_t *array, ...) {
 
 	    if (!ai->reflect_sched){
 	      _XMP_reflect_sched_t *sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
-	      sched->is_periodic = -1; /* not used yet */
-	      sched->datatype_lo = MPI_DATATYPE_NULL;
-	      sched->datatype_hi = MPI_DATATYPE_NULL;
-	      for (int j = 0; j < 4; j++) sched->req[j] = MPI_REQUEST_NULL;
-	      sched->lo_send_buf = NULL;
-	      sched->lo_recv_buf = NULL;
-	      sched->hi_send_buf = NULL;
-	      sched->hi_recv_buf = NULL;
+	      _XMP_init_reflect_sched(sched);
 	      ai->reflect_sched = sched;
 	    }
-	    ai->reflect_acc_sched = NULL;
+#ifdef _XMP_XACC
+	    if (!ai->reflect_acc_sched){
+	      _XMP_reflect_sched_t *sched = _XMP_alloc(sizeof(_XMP_reflect_sched_t));
+	      _XMP_init_reflect_sched_acc(sched);
+	      ai->reflect_acc_sched = sched;
+	    }
+#endif
 
             _XMP_create_shadow_comm(array, i);
           }

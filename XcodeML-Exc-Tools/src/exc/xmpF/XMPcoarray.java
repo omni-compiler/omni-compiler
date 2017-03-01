@@ -14,6 +14,9 @@ import java.util.*;
  * Madiator for each coarray
  */
 public class XMPcoarray {
+  // DEBUG
+  private final static Boolean _DEBUG_ALIGN_ON = false;    // true or false
+
   // name of property 
   private final static String XMP_COARRAY_NODES_PROP = "XMP_COARRAY_NODES_PROP";
 
@@ -26,7 +29,9 @@ public class XMPcoarray {
   final static String XMPF_UCOBOUND = "xmpf_ucobound";
   final static String XMPF_COSIZE = "xmpf_cosize";
   final static String GET_IMAGE_INDEX_NAME = "xmpf_coarray_get_image_index";
-  final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
+  //  final static String SET_COSHAPE_NAME = "xmpf_coarray_set_coshape";
+  final static String SET_CORANK_NAME = "xmpf_coarray_set_corank";
+  final static String SET_CODIMENSION_NAME = "xmpf_coarray_set_codim";
   final static String SET_VARNAME_NAME = "xmpf_coarray_set_varname";
   final static String GET_DESCR_ID_NAME = "xmpf_get_descr_id";
   final static String SET_NODES_NAME = "xmpf_coarray_set_nodes";    // for COARRAY directive
@@ -35,7 +40,6 @@ public class XMPcoarray {
   final static String COUNT_SIZE_NAME = "xmpf_coarray_count_size";
   final static String ALLOC_STATIC_NAME = "xmpf_coarray_alloc_static";
   final static String REGMEM_STATIC_NAME = "xmpf_coarray_regmem_static";
-
 
   // original attributes
   private Ident ident;
@@ -53,7 +57,7 @@ public class XMPcoarray {
   private Ident crayPtrId = null;
   private String _descPtrName = null;
   private Ident descPtrId = null;
-  private String homeBlockName = null;
+  private String homeBlockCodeName = null;    // see _getHomeBlockCodeName()
   private String _coarrayCommName = null;
   private Ident coarrayCommId = null;
   
@@ -66,8 +70,21 @@ public class XMPcoarray {
   protected XobjectDef def;
   protected FunctionBlock fblock;
 
-  // for debug
-  private Boolean DEBUG = false;        // switch me on debugger
+  // strategy for each coarray
+  /* true (memory allocation in library) if 
+   *   memory mannager is Ver.3 or the coarray is derived type,
+   * else false (not allocation but only registration in library)
+   */
+  private Boolean useMalloc = true;
+
+  /**************************
+      debugging tools
+   ***************************/
+  private void _DEBUG_ALIGN(String str) {
+    if (_DEBUG_ALIGN_ON)
+      System.out.println(str);
+  }
+
 
   //------------------------------
   //  CONSTRUCTOR
@@ -81,9 +98,9 @@ public class XMPcoarray {
     this(ident, funcDef.getDef(), funcDef.getBlock(), env);
   }
   public XMPcoarray(Ident ident, FuncDefBlock funcDef, XMPenv env,
-                    String homeBlockName)
+                    String homeBlockCodeName)
   {
-    this(ident, funcDef.getDef(), funcDef.getBlock(), env, homeBlockName);
+    this(ident, funcDef.getDef(), funcDef.getBlock(), env, homeBlockCodeName);
   }
   public XMPcoarray(Ident ident, XobjectDef def, FunctionBlock fblock, XMPenv env)
   {
@@ -91,20 +108,73 @@ public class XMPcoarray {
     this.def = def;
     this.fblock = fblock;
     setIdentEtc(ident);
-    homeBlockName = ident.getFdeclaredModule();
-    if (homeBlockName == null)
-      homeBlockName = def.getName();
+    _setHomeBlockCodeName();
   }
   public XMPcoarray(Ident ident, XobjectDef def, FunctionBlock fblock, XMPenv env,
-                    String homeBlockName)
+                    String homeBlockCodeName)
   {
     this.env = env;
     this.def = def;
     this.fblock = fblock;
     setIdentEtc(ident);
-    this.homeBlockName = homeBlockName;
+    this.homeBlockCodeName = homeBlockCodeName;
   }
 
+
+  private void _setHomeBlockCodeName()
+  {
+    String name, code;
+
+    name = ident.getFdeclaredModule();
+    if (name != null) {
+      code = _getCodeFromName(name);
+    }
+    else {
+      name = def.getName();
+      code = _getCodeFromName(name);
+      XobjectDef parent_def = def.getParent();
+      while (parent_def != null) {
+        name = parent_def.getName();
+        code = _getCodeFromName(name) + "_" + code;
+        parent_def = parent_def.getParent();
+      }
+    }
+
+    homeBlockCodeName = code;
+  }
+
+  private String _getCodeFromName(String name)
+  {
+    int count = 0;
+    for (int idx = name.indexOf("_");
+         idx >= 0;
+         idx = name.indexOf("_", idx + 1))
+      ++count;
+
+    if (count == 0)
+      return name;
+    return "" + count + name;
+  }
+
+
+  public void setUseMallocWithHint(Boolean useMalloc) {
+    // useMalloc (memory manager Ver.3) is specified.
+    if (useMalloc) {
+      this.useMalloc = true;
+      return;
+    }
+    // derived-type coarray is not supported in Ver.4.
+    if (getIdent().Type().getKind() == Xtype.STRUCT) {
+      this.useMalloc = true;
+      return;
+    }
+    // otherwise, memory manager Ver.4 is used.
+    this.useMalloc = false;
+  }
+
+  public Boolean usesMalloc() {
+    return useMalloc;
+  }
 
   //------------------------------
   //  semantic analysis:
@@ -127,7 +197,7 @@ public class XMPcoarray {
   private static void analyzeEachCoarray(String name, String nodesName,
                                          XMPenv env, PragmaBlock pb) {
 
-    Ident ident = env.findVarIdent(name, pb);
+    Ident ident = env.findVarIdent(name, null);
 
     // error check #1
     if (ident == null || !ident.isCoarray()) {
@@ -221,7 +291,7 @@ public class XMPcoarray {
 
   public Xobject makeStmt_countCoarrays(BlockList blist)
   {
-    Xobject elem = getElementLengthExpr();
+    Xobject elem = getElementLengthExpr_atmost();
 
     if (elem == null) {
       XMP.error("current restriction: " + 
@@ -304,7 +374,7 @@ public class XMPcoarray {
     // arg3
     Xobject count = getTotalArraySizeExpr();
     // arg4
-    Xobject elem = getElementLengthExpr();
+    Xobject elem = getElementLengthExpr_atmost();
     if (elem==null)
       XMP.fatal("elem must not be null.");
     // arg6
@@ -329,15 +399,19 @@ public class XMPcoarray {
 
 
   //-----------------------------------------------------
-  //  A part of TRANSLATION m.
-  //  generate "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
+  //  A part of TRANSLATION m. with XMPenv
+  //  generate
+  //     "CALL set_corank(descPtr, corank)"
+  //     "CALL set_codim (descPtr, 0, clb, cub)"
+  //     ...
+  //     "CALL set_codim (descPtr, corank-1, clb)"
   //  returns null if it is not allocated
   //-----------------------------------------------------
   //
+  /******************************
   public Xobject makeStmt_setCoshape() {
     return makeStmt_setCoshape(env);
   }
-
   public Xobject makeStmt_setCoshape(XMPenv env) {
     int corank = getCorank();
 
@@ -348,6 +422,7 @@ public class XMPcoarray {
       args.add(getUcobound(i));
     }
     args.add(getLcobound(corank - 1));
+
     if (args.hasNullArg())
       XMP.fatal("generated null argument " + SET_COSHAPE_NAME +
                 "(makeStmt_setCoshape())");
@@ -360,14 +435,114 @@ public class XMPcoarray {
     Xobject subrCall = subr.callSubroutine(args);
     return subrCall;
   }
+  ***********************************/
+
+  public void addStmts_setCoshape(BlockList list) {
+    addStmts_setCoshape(list, env);
+  }
+  
+  public void addStmts_setCoshape(BlockList list, XMPenv env) {
+    Xobject stmt;
+    stmt = makeStmt_setCorank(env);
+    list.add(stmt);
+
+    int corank = getCorank();
+    for (int i = 0; i < corank; i++) {
+      stmt = makeStmt_setCodimension(i, env);
+      list.add(stmt);
+    }
+  }    
+
+  public void addStmts_setCoshape(ArrayList<Xobject> list) {
+    addStmts_setCoshape(list, env);
+  }
+  
+  public void addStmts_setCoshape(ArrayList<Xobject> list, XMPenv env) {
+    Xobject stmt;
+    stmt = makeStmt_setCorank(env);
+    list.add(stmt);
+
+    int corank = getCorank();
+    for (int i = 0; i < corank; i++) {
+      stmt = makeStmt_setCodimension(i, env);
+      list.add(stmt);
+    }
+  }    
+
+  public void addStmts_setCoshape(XobjList list) {
+    addStmts_setCoshape(list, env);
+  }
+  
+  public void addStmts_setCoshape(XobjList list, XMPenv env) {
+    Xobject stmt;
+    stmt = makeStmt_setCorank(env);
+    list.add(stmt);
+
+    int corank = getCorank();
+    for (int i = 0; i < corank; i++) {
+      stmt = makeStmt_setCodimension(i, env);
+      list.add(stmt);
+    }
+  }    
+
+  public Xobject makeStmt_setCorank() {
+    return makeStmt_setCorank(env);
+  }
+  public Xobject makeStmt_setCorank(XMPenv env) {
+    int corank = getCorank();
+
+    Xobject args = Xcons.List(getDescPointerId(),
+                              Xcons.IntConstant(corank));
+
+    Ident subr = env.findVarIdent(SET_CORANK_NAME, null);
+    if (subr == null) {
+      subr = env.declExternIdent(SET_CORANK_NAME,
+                                 BasicType.FexternalSubroutineType);
+    }
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
+
+  public Xobject makeStmt_setCodimension(int dim) {
+    return makeStmt_setCodimension(dim, env);
+  }
+  public Xobject makeStmt_setCodimension(int dim, XMPenv env) {
+    int corank = getCorank();
+
+    Xobject args = Xcons.List(getDescPointerId(),
+                              Xcons.IntConstant(dim));
+
+    if (dim < corank - 1) {            // not last dimension
+      args.add(getLcobound(dim));
+      args.add(getUcobound(dim));
+    } else if (dim == corank - 1) {    // last dimension
+      args.add(getLcobound(dim));
+      args.add(Xcons.IntConstant(-999));  // dummy
+    } else {                           // illegal
+      XMP.fatal("INTERNAL: dimension number specified larger than corank " +
+                SET_CODIMENSION_NAME + "(makeStmt_setCodimension(dim, env))");
+    }
+
+    Ident subr = env.findVarIdent(SET_CODIMENSION_NAME, null);
+    if (subr == null) {
+      subr = env.declExternIdent(SET_CODIMENSION_NAME,
+                                 BasicType.FexternalSubroutineType);
+    }
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
 
 
   //-----------------------------------------------------
-  //  A part of TRANSLATION m.
-  //  generate "CALL set_coshape(descPtr, corank, clb1, clb2, ..., clbr)"
-  //  with static coshape
+  //  A part of TRANSLATION m. with static coshape
+  //  generate
+  //     "CALL set_corank(descPtr, corank)"
+  //     "CALL set_codim (descPtr, 0, clb, cub)"
+  //     ...
+  //     "CALL set_codim (descPtr, corank-1, clb)"
   //-----------------------------------------------------
   //
+  /*********************************************
   public Xobject makeStmt_setCoshape(XobjList coshape) {
     int corank = getCorank();
     if (corank != coshape.Nargs()) {
@@ -390,6 +565,68 @@ public class XMPcoarray {
     Ident subr = env.findVarIdent(SET_COSHAPE_NAME, null);
     if (subr == null) {
       subr = env.declExternIdent(SET_COSHAPE_NAME,
+                                 BasicType.FexternalSubroutineType);
+    }
+    Xobject subrCall = subr.callSubroutine(args);
+    return subrCall;
+  }
+  *********************************************************/
+
+  public void addStmts_setCoshape(BlockList list, XobjList coshape) {
+    Xobject stmt;
+    stmt = makeStmt_setCorank(coshape);
+    list.add(stmt);
+
+    int corank = getCorank();
+    for (int i = 0; i < corank; i++) {
+      stmt = makeStmt_setCodimension(i, coshape);
+      list.add(stmt);
+    }
+  }    
+  public void addStmts_setCoshape(ArrayList<Xobject> list, XobjList coshape) {
+    Xobject stmt;
+    stmt = makeStmt_setCorank(coshape);
+    list.add(stmt);
+
+    int corank = getCorank();
+    for (int i = 0; i < corank; i++) {
+      stmt = makeStmt_setCodimension(i, coshape);
+      list.add(stmt);
+    }
+  }    
+
+  public Xobject makeStmt_setCorank(XobjList coshape) {
+    int corank = getCorank();
+    if (corank != coshape.Nargs()) {
+      XMP.fatal("number of codimensions not matched with the declaration:"
+                + corank + " and " + coshape.Nargs());
+      return null;
+    }
+
+    return makeStmt_setCorank(env);
+  }
+
+
+  public Xobject makeStmt_setCodimension(int dim, XobjList coshape) {
+    int corank = getCorank();
+
+    Xobject args = Xcons.List(getDescPointerId(),
+                              Xcons.IntConstant(dim));
+
+    if (dim < corank - 1) {            // not last dimension
+      args.add(_getLboundInIndexRange(coshape.getArg(dim)));
+      args.add(_getUboundInIndexRange(coshape.getArg(dim)));
+    } else if (dim == corank - 1) {    // last dimension
+      args.add(_getLboundInIndexRange(coshape.getArg(dim)));
+      args.add(Xcons.IntConstant(-998));  // dummy
+    } else {                           // illegal
+      XMP.fatal("INTERNAL: dimension number specified larger than corank " +
+                SET_CODIMENSION_NAME + "(makeStmt_setCodimension(dim, coshape))");
+    }
+
+    Ident subr = env.findVarIdent(SET_CODIMENSION_NAME, null);
+    if (subr == null) {
+      subr = env.declExternIdent(SET_CODIMENSION_NAME,
                                  BasicType.FexternalSubroutineType);
     }
     Xobject subrCall = subr.callSubroutine(args);
@@ -484,22 +721,25 @@ public class XMPcoarray {
   //  generate and add "CALL xmpf_coarray_set_nodes(descPtr, nodesDesc)"
   //-----------------------------------------------------
   //
-  public void build_setMappingNodes(BlockList blist)
+  public void build_setMappingNodes(BlockList blist, Block block)
   {
     if (nodesDescId != null)
-      blist.add(makeStmt_setMappingNodes());
+      blist.add(makeStmt_setMappingNodes(block));
   }
 
-  public Xobject makeStmt_setMappingNodes()
+  public Xobject makeStmt_setMappingNodes(Block block)
   {
     // descPtrId must be declarad previously in the coarray pass
     if (descPtrId == null)
-      descPtrId = env.findVarIdent(getDescPointerName(), fblock);
+      descPtrId = env.findVarIdent(getDescPointerName(), block);
 
     Xobject args = Xcons.List(descPtrId, nodesDescId);
     Ident subr = env.findVarIdent(SET_NODES_NAME, null);
     if (subr == null) {
-      subr = env.declExternIdent(SET_NODES_NAME,
+      subr = (block == null ) ?
+             env.declExternIdent(SET_NODES_NAME,
+                                 BasicType.FexternalSubroutineType) :
+             block.getBody().declLocalIdent(SET_NODES_NAME,
                                  BasicType.FexternalSubroutineType);
     }
     Xobject subrCall = subr.callSubroutine(args);
@@ -514,16 +754,23 @@ public class XMPcoarray {
   //
   public static Xobject makeStmt_setImageNodes(String nodesName, XMPenv env)
   {
+    return makeStmt_setImageNodes(nodesName, env, env.getCurrentDef().getBlock());
+  }
+
+  public static Xobject makeStmt_setImageNodes(String nodesName, XMPenv env, Block block)
+  {
     //    Ident imageNodesId = _getNodesDescIdByName(nodesName, env,
     //                                               env.getCurrentDef().getBlock());
-    FunctionBlock fblock = env.getCurrentDef().getBlock();
-    XMPnodes nodes = env.findXMPnodes(nodesName, fblock);
+    XMPnodes nodes = env.findXMPnodes(nodesName, block);
     Ident imageNodesId = nodes.getDescId();
 
     Xobject args = Xcons.List(imageNodesId);
-    Ident subr = env.findVarIdent(SET_IMAGE_NODES_NAME, null);
+    Ident subr = env.findVarIdent(SET_IMAGE_NODES_NAME, block);
     if (subr == null) {
-      subr = env.declExternIdent(SET_IMAGE_NODES_NAME,
+      subr = (block == null) ?
+             env.declExternIdent(SET_IMAGE_NODES_NAME,
+                                 BasicType.FexternalSubroutineType) :
+             block.getBody().declLocalIdent(SET_IMAGE_NODES_NAME,
                                  BasicType.FexternalSubroutineType);
     }
     Xobject subrCall = subr.callSubroutine(args);
@@ -599,7 +846,7 @@ public class XMPcoarray {
   //  evaluate index
   //------------------------------
   public int getElementLengthOrNot() {
-    Xobject elem = getElementLengthExpr(); 
+    Xobject elem = getElementLengthExpr_runtime(); 
     if (elem == null || !elem.isIntConstant())
       return -1;
     return elem.getInt();
@@ -614,51 +861,277 @@ public class XMPcoarray {
     return elem;
   }
 
+  /******************************************************
   public Xobject getElementLengthExpr() {
-    return getElementLengthExpr(fblock);
+    ////// SELECTIVE
+    return getElementLengthExpr(true);   // statically
   }
-  public Xobject getElementLengthExpr(Block block) {
-    Xobject elem = ident.Type().getElementLengthExpr(block);    // see BasicType.java
-    if (elem != null)
-      return elem;
+  public Xobject getElementLengthExpr(Boolean staticEvaluation) {
+    if (staticEvaluation)
+      return getElementLengthExpr_atmost();
+    else
+      return getElementLengthExpr_runtime();
+  }
+  *********************************************************/
 
-    // The element length was not detected from the Ident.
+  /* static evaluation of the size of derived-type data element
+   *  This result will be equal to or greater than the size that 
+   *  the backend compiler will deside.
+   */
+  public Xobject getElementLengthExpr_atmost() {
+    int length = getElementLength_atmost(ident.Type());
+    return Xcons.IntConstant(length);
+  }
 
-    if (getRank() == 0) {    // scalar coarray
-      // copy type
-      // size(transfer(ident, (/" "/))
-      Ident sizeId = declIntIntrinsicIdent("size");
-      Ident transferId = declIntIntrinsicIdent("transfer");
-      Xobject arg1 = Xcons.FvarRef(ident);
-      Xobject arg21 = Xcons.FcharacterConstant(Xtype.FcharacterType, " ", null);
-      Xobject arg2 = Xcons.List(Xcode.F_ARRAY_CONSTRUCTOR,
-                                _getCharFarrayType(1),
-                                arg21);
-      Xobject transfer = transferId.Call(Xcons.List(arg1, arg2));
-      Xobject size = sizeId.Call(Xcons.List(transfer));
-      return size;
-    } else {                 // array coarray
+  public int getElementLength_atmost(Xtype type) {
+    switch (type.getKind()) {
+    case Xtype.F_ARRAY:
+      Xtype baseType = type.getBaseRefType();        // type BASIC or STRUCT
+      return _getLength_atmost(baseType);
+
+    default:
+      break;
+    }
+    return _getLength_atmost(type);
+  }
+
+  private int _getLength_atmost(Xtype type) {
+    if (type.isFpointer())
+      return _getPointerComponentLength_atmost(type);
+    else if (type.isFallocatable())
+      return _getAllocatableComponentLength_atmost(type);
+
+    // otherwize
+    return _getStaticDataLength_atmost(type);
+  }
+
+
+  /* These values are desided to match gfortran. If they do not match other
+   * Fortran compilers, it should be modified.
+   *    ----------------------------------
+   *       p  p(:) p(:,:) p(:,:,:) ...
+   *       8   48    72      96    ...
+   *    ----------------------------------
+   */
+  private int _getPointerComponentLength_atmost(Xtype type) {
+    int rank, length;
+    rank = getRank(type);
+    if (rank == 0)
+      length = 8;
+    else
+      length = 24 * rank + 24;
+    return length;
+  }
+
+  /* These values are desided to match gfortran. If they do not match other
+   * Fortran compilers, it should be modified.
+   */
+  private int _getAllocatableComponentLength_atmost(Xtype type) {
+    return _getPointerComponentLength_atmost(type);
+  }
+
+  private int _getStaticDataLength_atmost(Xtype type) {
+    switch (type.getKind()) {
+    case Xtype.BASIC:
+      return type.getElementLength(getFblock());    // see BasicType.java
+
+    case Xtype.F_ARRAY:
+      Xtype baseType = type.getBaseRefType();       // type BASIC or STRUCT
+      int elemLen = getElementLength_atmost(baseType);
+      int size = getTotalArraySize(type);
+      return size * elemLen;
+
+    case Xtype.STRUCT:
+      _DEBUG_ALIGN("Into DerivedType " + type);
+      int length = _getStructLength_atmost(type);
+      _DEBUG_ALIGN("Out of DerivedType " + type);
+      return length;
+
+    case Xtype.UNION:
+    case Xtype.FUNCTION:
+    case Xtype.F_COARRAY:
+    default:
+      XMP.fatal("INTERNAL: unexpected Xtype kind (" + type.getKind() + ")");
+      break;
     }
 
-    return null;
+    return 0;   // illegal
   }
+
+
+  private int _getNumElements(Xtype type, Block block) {
+    int size;
+    if (type.getKind() == Xtype.F_ARRAY)
+      size = getTotalArraySize(type);
+    else
+      size = 1;
+
+    return size;
+  }
+    
+
+  private int _getStructLength_atmost(Xtype type) {
+    int currentPos = 0;
+    int largestBoundary = 1;
+    for (Xobject member: type.getMemberList()) {
+      Xtype type1 = member.Type();
+      int elemLen1, numElems1;
+      if (type1.isFpointer()) {
+        elemLen1 = _getPointerComponentLength_atmost(type1);
+        numElems1 = 1;
+        _DEBUG_ALIGN("  pointer member:" + member +
+                     ", length=" + elemLen1);
+      } else if (type1.isFallocatable()) {
+        elemLen1 = _getAllocatableComponentLength_atmost(type1);
+        numElems1 = 1;
+        _DEBUG_ALIGN("  allocatable member:" + member +
+                     ", length=" + elemLen1);
+      } else {
+        elemLen1 = getElementLength_atmost(type1);
+        numElems1 = _getNumElements(type1, getFblock());
+        _DEBUG_ALIGN("  static member:" + member +
+                     ", element length=" + elemLen1 +
+                     ", num elements=" + numElems1);
+      }
+
+      // get boundary length for the member
+      int boundary1;
+      if (elemLen1 > 4)
+        boundary1 = 8;
+      else if (elemLen1 > 2)
+        boundary1 = 4;
+      else if (elemLen1 > 1)
+        boundary1 = 2;
+      else
+        boundary1 = 1;
+
+      // alignment for the member (round up)
+      if (currentPos % boundary1 != 0) {
+        currentPos = (currentPos/boundary1 + 1) * boundary1;
+        _DEBUG_ALIGN("  skip for alignment upto "+ currentPos);
+      }
+
+      // proceed current position
+      currentPos += elemLen1 * numElems1;
+      _DEBUG_ALIGN("  proceed upto "+ currentPos);
+
+      if (largestBoundary < boundary1)
+        largestBoundary = boundary1;
+    }
+
+    // alignment for the structure (round up)
+    if (currentPos % largestBoundary != 0) {
+      currentPos = (currentPos/largestBoundary + 1) * largestBoundary;
+    }
+    _DEBUG_ALIGN("  finally proceed upto "+ currentPos);
+
+    return currentPos;
+  }
+
+
+  /* build an expression for the size of the data element that
+   * can be evaluated at runtime
+   */
+  public Xobject getElementLengthExpr_runtime() {
+    Xobject lengthExpr = ident.Type().getElementLengthExpr(getFblock());    // see BasicType.java
+    if (lengthExpr != null)
+      return lengthExpr;
+
+    // for derived type objects
+    lengthExpr = _getDerivedTypeLengthExpr_runtime();
+    return lengthExpr;
+  }
+
+  private Xobject _getDerivedTypeLengthExpr_runtime() {
+    int rank = getRank();
+
+    // build reference of the object
+    Xobject elemRef;
+    if (rank == 0) {          // scalar
+      elemRef = Xcons.FvarRef(ident);
+    } else {                  // array element eg. a(lb1,lb2,...)
+      elemRef = Xcons.FarrayRef(ident.Ref());
+      for (int i = 0; i < rank; i++) {
+        Xobject lb = getLbound(i);
+        Xobject subscr = Xcons.FarrayIndex(lb);
+        elemRef.getArg(1).setArg(i, subscr);
+      }
+    }
+
+    // build an expression to get sizeof elemRef
+    Xobject lengthExpr = _buildSizeofExpr(elemRef);
+    return lengthExpr;
+  }
+
+
+  /* build expression sizeof(data)
+   * PROBLEM in BACKEND: extended intrinsic function sizeof is declared
+   * with the attribute EXTERNAL anyway.
+   */
+  private Xobject _buildSizeofExpr(Xobject data) {
+    Ident sizeofId = declIntExtendIntrinsicIdent("sizeof");
+    Xobject size = sizeofId.Call(Xcons.List(data));
+    return size;
+  }
+
+  /* NOT USED
+   * tricky and low-performance but standard version
+   *    size(transfer(data, (/" "/))
+   */
+  private Xobject _buildSizeofExpr__OLD__(Xobject data) {
+    Ident sizeId = declIntIntrinsicIdent("size");
+    Ident transferId = declIntIntrinsicIdent("transfer");
+    Xobject arg21 = Xcons.FcharacterConstant(Xtype.FcharacterType, " ", null);
+    Xobject arg2 = Xcons.List(Xcode.F_ARRAY_CONSTRUCTOR,
+                              _getCharFarrayType(1),
+                              arg21);
+    Xobject transfer = transferId.Call(Xcons.List(data, arg2));
+    Xobject size = sizeId.Call(Xcons.List(transfer));
+    return size;
+  }
+
 
   public int getTotalArraySize() {
-    Xobject size = getTotalArraySizeExpr();
-    if (!size.isIntConstant()) {
+    return getTotalArraySize(getIndexRange());
+  }
+
+  public int getTotalArraySize(Xtype type) {
+    if (type.getKind() != Xtype.F_ARRAY)
+      XMP.fatal("INTERNAL ERROR: FarrayType expected here");
+    Xobject[] shape = getShape((FarrayType)type);
+    FindexRange findexRange = new FindexRange(shape, getFblock(), getEnv());
+    return getTotalArraySize(findexRange);
+  }
+
+  public int getTotalArraySize(FindexRange findexRange) {
+    Xobject sizeExpr = getTotalArraySizeExpr(findexRange);
+    if (!sizeExpr.isIntConstant()) {
       XMP.error("current restriction: " +
-                "could not numerically evaluate the total size of: "+name);
+                "cannot numerically evaluate the total size of: "+name);
       return 0;
     }
-    return size.getInt();
+    return sizeExpr.getInt();
   }
 
   public Xobject getTotalArraySizeExpr() {
-    Xobject size = getIndexRange().getTotalArraySizeExpr();
-    if (size == null)
+    FindexRange findexRange = getIndexRange();
+    return getTotalArraySizeExpr(findexRange);
+  }
+
+  public Xobject getTotalArraySizeExpr(Xtype type) {
+    if (type.getKind() != Xtype.F_ARRAY)
+      XMP.fatal("INTERNAL ERROR: FarrayType expected here");
+    Xobject[] shape = getShape((FarrayType)type);
+    FindexRange findexRange = new FindexRange(shape, getFblock(), getEnv());
+    return getTotalArraySizeExpr(findexRange);
+  }
+
+  public Xobject getTotalArraySizeExpr(FindexRange findexRange) {
+    Xobject sizeExpr = findexRange.getTotalArraySizeExpr();
+    if (sizeExpr == null)
       XMP.error("current restriction: " +
-                "could not find the total size of: "+name);
-    return size;
+                "cannot find the total size of: "+name);
+    return sizeExpr;
   }
 
 
@@ -671,6 +1144,12 @@ public class XMPcoarray {
     return ident.Type().getNumDimensions();
   }
 
+  private int getRank(Xtype ftype) {
+    if (ftype.getKind() == Xtype.F_ARRAY)
+      return ftype.getNumDimensions();
+    return 0;
+  }
+
   public Xobject[] getShape() {
     if (getRank() == 0)
       return new Xobject[0];
@@ -679,6 +1158,10 @@ public class XMPcoarray {
     return ftype.getFarraySizeExpr();
   }
 
+  private Xobject[] getShape(FarrayType ftype) {
+    return ftype.getFarraySizeExpr();
+  }
+    
 
   public Xobject getLboundStatic(int i) {
     if (isExplicitShape()) {
@@ -1078,6 +1561,12 @@ public class XMPcoarray {
     return ident;
   }
 
+  private Ident declIntExtendIntrinsicIdent(String name) { 
+    FunctionType ftype = new FunctionType(Xtype.FintType, Xtype.TQ_FINTRINSIC);
+    Ident ident = getEnv().declIntrinsicIdent(name, ftype);
+    return ident;
+  }
+
 
   //------------------------------
   //  get/set Xtype object
@@ -1095,14 +1584,23 @@ public class XMPcoarray {
   }
 
   public void resetAllocatable() {
+    /**
+     * Since TypeQualFlag TQ_FALLOCATABLE may duplicately be set
+     * in a type and its children, e.g., in type (of F_ARRAY) and
+     * in type.getRef() (of STRUCT).  In order to reset such a 
+     * flag, recursive operation is necessary.
+     */
     for (Xtype type = ident.Type(); type != null; ) {
       type.setIsFallocatable(false);
-      if (type.copied != null)
+      if (type.copied != null) {
         type = type.copied;
-      else if (type.isBasic())
+        continue;
+      }
+      if (type.isBasic())
         break;
-      else
-        type = type.getRef();
+      else if (type.isStruct())
+        break;
+      type = type.getRef();
     }
   }
 
@@ -1211,7 +1709,8 @@ public class XMPcoarray {
   private Ident _getNodesDescIdByName(String nodesName,
                                       XMPenv env, FunctionBlock fblock) {
     if (nodesName != null) {
-      XMPnodes nodes = env.findXMPnodes(nodesName, fblock);
+      XMPnodes nodes = env.findXMPnodes(nodesName, (ident.getDeclaredBlock() != null) ?
+                                                    ident.getDeclaredBlock().getParent() : fblock);
       return nodes.getDescId();
     }
     return null;
@@ -1229,30 +1728,40 @@ public class XMPcoarray {
     return env;
   }
 
-  public String getHomeBlockName()
+  public String getHomeBlockCodeName()
   {
-    return homeBlockName;
+    return homeBlockCodeName;
   }
 
   public String getDescCommonName()
   {
-    return VAR_DESCPOINTER_PREFIX + "_" + homeBlockName;
+    String descCommonName = 
+      VAR_DESCPOINTER_PREFIX + "_" +
+      homeBlockCodeName + "_" +
+      _getCodeFromName(getName());
+
+    return descCommonName;
   }
 
   // for case useMalloc
   public String getCrayCommonName()
   {
-    return VAR_CRAYPOINTER_PREFIX + "_" + homeBlockName;
+    String crayCommonName = 
+      VAR_CRAYPOINTER_PREFIX + "_" +
+      homeBlockCodeName + "_" +
+      _getCodeFromName(getName());
+
+    return crayCommonName;
   }
 
   // for case !useMalloc
   public String getCoarrayCommonName()
   {
-    // unique name both for the var name and for homeBlockName
-    String homeBlockPart = getHomeBlockName().replaceAll("_", "__");
-    String varPart = getName().replaceAll("_", "__");
     String coarrayCommonName =
-      CBLK_COARRAYS_PREFIX + "_" + homeBlockPart + "_" + varPart;
+      CBLK_COARRAYS_PREFIX + "_" +
+      homeBlockCodeName + "_" +
+      _getCodeFromName(getName());
+
     return coarrayCommonName;
   }
 
@@ -1351,7 +1860,6 @@ public class XMPcoarray {
     return _wasMovedFromModule;
   }
 
-
   public static XMPcoarray findCoarrayInCoarrays(String name,
                                                  ArrayList<XMPcoarray> coarrays) {
     for (XMPcoarray coarray: coarrays) {
@@ -1373,12 +1881,13 @@ public class XMPcoarray {
       "\n  Boolean isAllocatable = " +  isAllocatable +
       "\n  Boolean isPointer = " +  isPointer +
       "\n  Boolean isUseAssociated = " +  isUseAssociated +
+      "\n  Boolean useMalloc = " + useMalloc +
       "\n  Boolean _wasMovedFromModule = " + _wasMovedFromModule +
       "\n  String _crayPtrName = " +  _crayPtrName +
       "\n  Ident crayPtrId = " +  crayPtrId +
       "\n  String _descPtrName = " +  _descPtrName +
       "\n  Ident descPtrId = " +  descPtrId +
-      "\n  String homeBlockName = " +  homeBlockName +
+      "\n  String homeBlockCodeName = " +  homeBlockCodeName +
       "\n  XMPenv env = " +  env +
       "\n  XobjectDef def = " +  def + ": name=" + def.getName() +
       "\n  FunctionBlock fblock" + ": name=" + def.getName();
@@ -1454,10 +1963,11 @@ public class XMPcoarray {
    * return a name of Fortran intrinsic function
    */
   public String getFtypeString() {
-    return _getTypeIntrinName_1(getFtypeNumber());
+    return getFtypeString(_getXtype());
   }
-  public String getFtypeString(int typeNumber) {
-    return _getTypeIntrinName_1(typeNumber);
+  public String getFtypeString(Xtype xtype) {
+    Ftype ftype = new Ftype(xtype, fblock);
+    return ftype.getNameOfConvFunction();
   }
 
 
@@ -1465,56 +1975,6 @@ public class XMPcoarray {
     Xtype ref = Xtype.FcharacterType;
     Xtype type = Xtype.Farray(ref, Xcons.IntConstant(size));
     return type;
-  }
-
-  /// see also BasicType.getElementLength
-  private String _getTypeIntrinName_1(int typeNumber) {
-    String tname = null;
-
-    switch(typeNumber) {
-    case BasicType.BOOL:
-      tname = "logical";
-      break;
-
-    case BasicType.SHORT:
-    case BasicType.UNSIGNED_SHORT:
-    case BasicType.INT:
-    case BasicType.UNSIGNED_INT:
-    case BasicType.LONG:
-    case BasicType.UNSIGNED_LONG:
-    case BasicType.LONGLONG:
-    case BasicType.UNSIGNED_LONGLONG:
-      tname = "int";
-      break;
-
-    case BasicType.FLOAT:
-    case BasicType.DOUBLE:
-    case BasicType.LONG_DOUBLE:
-      tname = "real";
-      break;
-
-    case BasicType.FLOAT_COMPLEX:
-    case BasicType.DOUBLE_COMPLEX:
-    case BasicType.LONG_DOUBLE_COMPLEX:
-      tname = "cmplx";
-      break;
-
-    case BasicType.CHAR:
-    case BasicType.UNSIGNED_CHAR:
-    case BasicType.F_CHARACTER:
-      tname = "char";
-      break;
-
-    case BasicType.F_NUMERIC_ALL:
-      tname = null;
-      break;
-
-    default:
-      XMP.fatal("found illegal type number in BasicType: " + typeNumber);
-      break;
-    }
-
-    return tname;
   }
 
 }

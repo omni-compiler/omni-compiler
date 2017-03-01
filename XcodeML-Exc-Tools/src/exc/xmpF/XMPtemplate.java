@@ -146,7 +146,11 @@ package exc.xmpF;
 
      // check name collision
      _name = name.getString();
-     if(env.findXMPobject(_name,pb) != null){
+     Block blockStmt = (pb != null) ? pb.findParentBlockStmt() : null;
+     if(blockStmt != null &&
+        blockStmt.getXMPobject(_name) != null ||
+        blockStmt == null &&
+        env.findXMPobject(_name,pb) != null      ){
        XMP.errorAt(pb,"XMP object '"+_name+"' is already declared");
        return;
      }
@@ -275,7 +279,7 @@ package exc.xmpF;
     *                                     dist_manner,n_idx,chunk)
     *  !  xmpf_template_init__(t_desc,n_desc)
     */
-   public void buildConstructor(BlockList body, XMPenv env){
+   public void buildConstructor(BlockList body, XMPenv env, Block block){
 
      if (_is_saveDesc && !isFixed)
        XMP.fatal("non-fixed template cannot have the save_desc attribute.");
@@ -303,7 +307,7 @@ package exc.xmpF;
 				   Xcons.List(Xcode.F_VALUE, Xcons.FlogicalConstant(false)));
      }
 
-     Ident f = env.declInternIdent(XMP.template_alloc_f,Xtype.FsubroutineType);
+     Ident f = env.declInternIdent(XMP.template_alloc_f,Xtype.FsubroutineType,block);
      Xobject flag = isFixed ? Xcons.IntConstant(1) : Xcons.IntConstant(0);
      Xobject args = Xcons.List(_descId.Ref(), Xcons.IntConstant(_dim), flag);
      b.add(f.callSubroutine(args));
@@ -311,7 +315,7 @@ package exc.xmpF;
      if (!isFixed) return;
      
      /* template size */
-     f = env.declInternIdent(XMP.template_dim_info_f,Xtype.FsubroutineType);
+     f = env.declInternIdent(XMP.template_dim_info_f,Xtype.FsubroutineType,block);
      for(int i = 0; i < _dim; i++){
        XMPdimInfo info = scripts.elementAt(i);
        Xobject dist_arg = info.getDistArg();
@@ -325,7 +329,7 @@ package exc.xmpF;
      }
 
      /* init */
-     f = env.declInternIdent(XMP.template_init_f,Xtype.FsubroutineType);
+     f = env.declInternIdent(XMP.template_init_f,Xtype.FsubroutineType,block);
      b.add(f.callSubroutine(Xcons.List(_descId.Ref(),
 					ontoNodes.getDescId().Ref())));
 
@@ -336,10 +340,10 @@ package exc.xmpF;
 
    }
 
-   public void buildDestructor(BlockList body, XMPenv env){
+   public void buildDestructor(BlockList body, XMPenv env, Block block){
      if (!_is_saveDesc){
        Ident f = env.declInternIdent(XMP.template_dealloc_f,Xtype.
-				     FsubroutineType);
+				     FsubroutineType,block);
        Xobject args = Xcons.List(_descId.Ref());
        body.add(f.callSubroutine(args));
      }

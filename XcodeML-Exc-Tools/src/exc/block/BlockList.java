@@ -13,8 +13,11 @@ public class BlockList
     Block head, tail;
     Block parent;
 
+    Xcode code;
+    XobjString block_name;
     Xobject id_list;
     Xobject decls;
+    Xobject id_local_coarrays;
 
     // construct empty BlockList
     public BlockList()
@@ -86,11 +89,13 @@ public class BlockList
       if(b == null) return;  // if b is null, do nothing
         if(head == null) {
             head = tail = b;
+            b.prev = null;
         } else {
             tail.next = b;
             b.prev = tail;
             tail = b;
         }
+        b.next = null;
         b.setParent(this);
     }
 
@@ -109,6 +114,7 @@ public class BlockList
         if(head == null)
             return;
         head = head.next;
+        head.prev = null;
     }
 
     // insert block before head
@@ -116,11 +122,13 @@ public class BlockList
     {
         if(head == null) {
             head = tail = b;
+            b.next = null;
         } else {
             head.prev = b;
             b.next = head;
             head = b;
         }
+        b.prev = null;
         b.setParent(this);
     }
 
@@ -286,6 +294,26 @@ public class BlockList
       return (f1 | f2);
     }
 
+    public void addLocalCoarray(Ident id)
+    {
+        if(id_local_coarrays == null)
+            id_local_coarrays = Xcons.IDList();
+        id_local_coarrays.add(id);
+    }
+
+    public void initLocalCoarrays(XobjList coarrays)
+    {
+        id_local_coarrays = coarrays;
+        if (id_local_coarrays != null)
+            for(Xobject a : coarrays)
+                ((Ident)a).setDeclaredBlock(this);
+    }
+
+    public Xobject getLocalCoarrays()
+    {
+        return id_local_coarrays;
+    }
+
     public void removeDeclInit()
     {
         Ident id;
@@ -419,8 +447,8 @@ public class BlockList
     {
         Xobject v;
         if(head == null)
-            return Xcons.statementList();
-        if(head == tail && head.Opcode() != Xcode.LIST)
+            v = Xcons.statementList();
+        else if(head == tail && head.Opcode() != Xcode.LIST)
             v = head.toXobject();
         else {
             v = Xcons.statementList();
@@ -456,6 +484,8 @@ public class BlockList
             return v;
           return Xcons.CompoundStatement(id_list, decls, v);
         }
+        else if (code==Xcode.F_BLOCK_STATEMENT)
+          return Xcons.List(code, (Xtype)null, block_name, id_list, decls, v, id_local_coarrays);
         else
           return Xcons.FstatementList(v);
     }
@@ -464,7 +494,7 @@ public class BlockList
     public String toString()
     {
         StringBuilder s = new StringBuilder(256);
-        s.append("[BlockList id_list="+id_list);
+        s.append("[BlockList code=" + code + " name=" + block_name + " id_list=" + id_list + " decls=" + decls + " coarrays=" + id_local_coarrays + " ");
         int i = 0;
         for(Block b = head; b != null; b = b.getNext()) {
             if(i++ > 0)

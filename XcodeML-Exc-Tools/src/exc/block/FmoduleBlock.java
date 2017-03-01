@@ -16,6 +16,7 @@ import exc.object.XobjectFile;
 public class FmoduleBlock extends CompoundBlock
 {
     private Xobject name;
+    private Xobject parent_name;
     
     private BlockList func_blocks;
     
@@ -23,8 +24,14 @@ public class FmoduleBlock extends CompoundBlock
 
     public FmoduleBlock(String name, XobjectFile env)
     {
+      this(name, null, env);
+    }
+
+    public FmoduleBlock(String name, String parent_name, XobjectFile env)
+    {
         super(Xcode.F_MODULE_DEFINITION, new BlockList(Xcons.IDList(), Xcons.List()));
         this.name = new XobjString(Xcode.IDENT, name);
+        this.parent_name = (parent_name != null) ? new XobjString(Xcode.IDENT, parent_name) : null;
         this.env = env;
         this.func_blocks = new BlockList();
     }
@@ -38,7 +45,17 @@ public class FmoduleBlock extends CompoundBlock
     {
         return name;
     }
+
+    public Xobject getParentName()
+    {
+        return parent_name;
+    }
     
+    public boolean isSub()
+    {
+        return parent_name != null;
+    }
+
     public BlockList getFunctionBlocks()
     {
         return func_blocks;
@@ -68,6 +85,6 @@ public class FmoduleBlock extends CompoundBlock
         }
         
         return new XobjectDef(Xcons.List(Xcode.F_MODULE_DEFINITION,
-            name, getBody().getIdentList(), getBody().getDecls(), xcontains), env);
+            name, getBody().getIdentList(), getBody().getDecls(), xcontains, parent_name), env);
     }
 }

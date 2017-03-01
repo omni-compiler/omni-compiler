@@ -15,6 +15,722 @@ static struct _shift_queue_t _shift_queue; /** Queue which saves shift informati
 #define _XMP_STRIDE_DONE 1
 static int *_sync_images_table;
 static gasnet_hsl_t _hsl;
+#define _XMP_UNROLLING (4)
+extern int _XMP_flag_put_nb; // This variable is temporal
+
+/*************************************************************************/
+/* DESCRIPTION : Execute pack operation for 7-dimensional array          */
+/* ARGUMENT    : [IN] *src_info       : Information of source array      */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] *src            : Pointer of source array          */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _pack_7dim_array(const _XMP_array_section_t* src_info, char* dst, const char* src,
+			     const int dim_of_allelmts)
+{
+  switch (dim_of_allelmts){
+  case 0:
+    memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
+    break;
+  case 1:
+    _XMP_stride_memcpy_1dim(dst, src, src_info, src_info[0].distance, _XMP_PACK);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst, src, src_info, src_info[1].distance, _XMP_PACK);
+    break;
+  case 3:
+    _XMP_stride_memcpy_3dim(dst, src, src_info, src_info[2].distance, _XMP_PACK);
+    break;
+  case 4:
+    _XMP_stride_memcpy_4dim(dst, src, src_info, src_info[3].distance, _XMP_PACK);
+    break;
+  case 5:
+    _XMP_stride_memcpy_5dim(dst, src, src_info, src_info[4].distance, _XMP_PACK);
+    break;
+  case 6:
+    _XMP_stride_memcpy_6dim(dst, src, src_info, src_info[5].distance, _XMP_PACK);
+    break;
+  case 7:
+    _XMP_stride_memcpy_7dim(dst, src, src_info, src_info[6].distance, _XMP_PACK);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray error");
+    break;
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute pack operation for 6-dimensional array          */
+/* ARGUMENT    : [IN] *src_info       : Information of source array      */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] *src            : Pointer of source array          */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _pack_6dim_array(const _XMP_array_section_t* src_info, char* dst, const char* src,
+			     const int dim_of_allelmts)
+{
+  switch (dim_of_allelmts){
+  case 0:
+    memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
+    break;
+  case 1:
+    _XMP_stride_memcpy_1dim(dst, src, src_info, src_info[0].distance, _XMP_PACK);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst, src, src_info, src_info[1].distance, _XMP_PACK);
+    break;
+  case 3:
+    _XMP_stride_memcpy_3dim(dst, src, src_info, src_info[2].distance, _XMP_PACK);
+    break;
+  case 4:
+    _XMP_stride_memcpy_4dim(dst, src, src_info, src_info[3].distance, _XMP_PACK);
+    break;
+  case 5:
+    _XMP_stride_memcpy_5dim(dst, src, src_info, src_info[4].distance, _XMP_PACK);
+    break;
+  case 6:
+    _XMP_stride_memcpy_6dim(dst, src, src_info, src_info[5].distance, _XMP_PACK);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray error");
+    break;
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute pack operation for 5-dimensional array          */
+/* ARGUMENT    : [IN] *src_info       : Information of source array      */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] *src            : Pointer of source array          */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _pack_5dim_array(const _XMP_array_section_t* src_info, char* dst, const char* src,
+			     const int dim_of_allelmts)
+{
+  switch (dim_of_allelmts){
+  case 0:
+    memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
+    break;
+  case 1:
+    _XMP_stride_memcpy_1dim(dst, src, src_info, src_info[0].distance, _XMP_PACK);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst, src, src_info, src_info[1].distance, _XMP_PACK);
+    break;
+  case 3:
+    _XMP_stride_memcpy_3dim(dst, src, src_info, src_info[2].distance, _XMP_PACK);
+    break;
+  case 4:
+    _XMP_stride_memcpy_4dim(dst, src, src_info, src_info[3].distance, _XMP_PACK);
+    break;
+  case 5:
+    _XMP_stride_memcpy_5dim(dst, src, src_info, src_info[4].distance, _XMP_PACK);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray error");
+    break;
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute pack operation for 4-dimensional array          */
+/* ARGUMENT    : [IN] *src_info       : Information of source array      */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] *src            : Pointer of source array          */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _pack_4dim_array(const _XMP_array_section_t* src_info, char* dst, const char* src,
+			     const int dim_of_allelmts)
+{
+  switch (dim_of_allelmts){
+  case 0:
+    memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
+    break;
+  case 1:
+    _XMP_stride_memcpy_1dim(dst, src, src_info, src_info[0].distance, _XMP_PACK);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst, src, src_info, src_info[1].distance, _XMP_PACK);
+    break;
+  case 3:
+    _XMP_stride_memcpy_3dim(dst, src, src_info, src_info[2].distance, _XMP_PACK);
+    break;
+  case 4:
+    _XMP_stride_memcpy_4dim(dst, src, src_info, src_info[3].distance, _XMP_PACK);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray error");
+    break;
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute pack operation for 3-dimensional array          */
+/* ARGUMENT    : [IN] *src_info       : Information of source array      */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] *src            : Pointer of source array          */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _pack_3dim_array(const _XMP_array_section_t* src_info, char* dst, const char* src,
+			     const int dim_of_allelmts)
+{
+  switch (dim_of_allelmts){
+  case 0:
+    memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
+    break;
+  case 1:
+    _XMP_stride_memcpy_1dim(dst, src, src_info, src_info[0].distance, _XMP_PACK);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst, src, src_info, src_info[1].distance, _XMP_PACK);
+    break;
+  case 3:
+    _XMP_stride_memcpy_3dim(dst, src, src_info, src_info[2].distance, _XMP_PACK);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray error");
+    break;
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute pack operation for 2-dimensional array          */
+/* ARGUMENT    : [IN] *src_info       : Information of source array      */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] *src            : Pointer of source array          */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _pack_2dim_array(const _XMP_array_section_t* src_info, char* dst, const char* src, 
+			     const int dim_of_allelmts)
+{
+  switch (dim_of_allelmts){
+  case 0:
+    memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
+    break;
+  case 1:
+    _XMP_stride_memcpy_1dim(dst, src, src_info, src_info[0].distance, _XMP_PACK);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst, src, src_info, src_info[1].distance, _XMP_PACK);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray error");
+    break;
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute pack operation for 1-dimensional array          */
+/* ARGUMENT    : [IN] *src_info       : Information of source array      */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] *src            : Pointer of source array          */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _pack_1dim_array(const _XMP_array_section_t* src_info, char* dst, const char* src,
+			     const int dim_of_allelmts)
+{
+  if(dim_of_allelmts == 0){
+    memcpy(dst, src, src_info[0].distance * src_info[0].elmts);
+    return;
+  }
+  
+  // for(i=0;i<src_info[0].length;i++){
+  //   src_offset = stride_offset * i;
+  //   memcpy(dst + archive_offset, src + src_offset, element_size);
+  //   archive_offset += element_size;
+  // }
+  size_t element_size = src_info[0].distance;
+  int repeat = src_info[0].length / _XMP_UNROLLING;
+  int left   = src_info[0].length % _XMP_UNROLLING;
+  size_t stride_offset = src_info[0].stride * element_size;
+  size_t dst_offset = 0, src_offset;
+  int i = 0;
+
+  if(repeat == 0){
+    for(i=0;i<left;i++){
+      src_offset = stride_offset * i;
+      dst_offset = i * element_size;
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+    }
+  }
+  else{
+    while( repeat-- > 0 ) {
+      src_offset = stride_offset * i;
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+      dst_offset += element_size;
+
+      src_offset += stride_offset;
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+      dst_offset += element_size;
+
+      src_offset += stride_offset;
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+      dst_offset += element_size;
+
+      src_offset += stride_offset;
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+      dst_offset += element_size;
+
+      i += _XMP_UNROLLING;
+    }
+
+    switch (left) {
+    case 3 :
+      src_offset = stride_offset * (i+2);
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+      dst_offset += element_size;
+    case 2 :
+      src_offset = stride_offset * (i+1);
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+      dst_offset += element_size;
+    case 1 :
+      src_offset = stride_offset * i;
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+    }
+  }
+}
+
+/***********************************************************************/
+/* DESCRIPTION : Execute pack operation                                */
+/* ARGUMENT    : [OUT] *dst     : Pointer of destination array         */
+/*               [IN] *src      : Pointer of source array              */
+/*               [IN] src_dims  : Number of dimensions of source array */
+/*               [IN] *src_info : Information of source array          */
+/***********************************************************************/
+static void _XMP_pack_coarray(char* dst, const char* src, const int src_dims,
+			      const _XMP_array_section_t* src_info)
+{
+  size_t src_offset   = _XMP_get_offset(src_info, src_dims);
+  int dim_of_allelmts = _XMP_get_dim_of_allelmts(src_dims, src_info);
+  
+  switch (src_dims){
+  case 1:
+    _pack_1dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
+    break;
+  case 2:
+    _pack_2dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
+    break;
+  case 3:
+    _pack_3dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
+    break;
+  case 4:
+    _pack_4dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
+    break;
+  case 5:
+    _pack_5dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
+    break;
+  case 6:
+    _pack_6dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
+    break;
+  case 7:
+    _pack_7dim_array(src_info, dst, src + src_offset, dim_of_allelmts);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray is too big");
+    break;
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute unpack operation for 7-dimensional array        */
+/* ARGUMENT    : [IN] *dst_info       : Information of destination array */
+/*               [IN] *src            : Pointer of source array          */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _unpack_7dim_array(const _XMP_array_section_t* dst_info, const char* src,
+			       char* dst, const int dim_of_allelmts)
+{
+  switch (dim_of_allelmts){
+  case 0:
+    memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
+    break;
+  case 1:
+    _XMP_stride_memcpy_1dim(dst, src, dst_info, dst_info[0].distance, _XMP_UNPACK);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst, src, dst_info, dst_info[1].distance, _XMP_UNPACK);
+    break;
+  case 3:
+    _XMP_stride_memcpy_3dim(dst, src, dst_info, dst_info[2].distance, _XMP_UNPACK);
+    break;
+  case 4:
+    _XMP_stride_memcpy_4dim(dst, src, dst_info, dst_info[3].distance, _XMP_UNPACK);
+    break;
+  case 5:
+    _XMP_stride_memcpy_5dim(dst, src, dst_info, dst_info[4].distance, _XMP_UNPACK);
+    break;
+  case 6:
+    _XMP_stride_memcpy_6dim(dst, src, dst_info, dst_info[5].distance, _XMP_UNPACK);
+    break;
+  case 7:
+    _XMP_stride_memcpy_7dim(dst, src, dst_info, dst_info[6].distance, _XMP_UNPACK);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray error");
+    break;
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute unpack operation for 6-dimensional array        */
+/* ARGUMENT    : [IN] *dst_info       : Information of destination array */
+/*               [IN] *src            : Pointer of source array          */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _unpack_6dim_array(const _XMP_array_section_t* dst_info, const char* src,
+			       char* dst, const int dim_of_allelmts)
+{
+  switch (dim_of_allelmts){
+  case 0:
+    memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
+    break;
+  case 1:
+    _XMP_stride_memcpy_1dim(dst, src, dst_info, dst_info[0].distance, _XMP_UNPACK);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst, src, dst_info, dst_info[1].distance, _XMP_UNPACK);
+    break;
+  case 3:
+    _XMP_stride_memcpy_3dim(dst, src, dst_info, dst_info[2].distance, _XMP_UNPACK);
+    break;
+  case 4:
+    _XMP_stride_memcpy_4dim(dst, src, dst_info, dst_info[3].distance, _XMP_UNPACK);
+    break;
+  case 5:
+    _XMP_stride_memcpy_5dim(dst, src, dst_info, dst_info[4].distance, _XMP_UNPACK);
+    break;
+  case 6:
+    _XMP_stride_memcpy_6dim(dst, src, dst_info, dst_info[5].distance, _XMP_UNPACK);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray error");
+    break;
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute unpack operation for 5-dimensional array        */
+/* ARGUMENT    : [IN] *dst_info       : Information of destination array */
+/*               [IN] *src            : Pointer of source array          */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _unpack_5dim_array(const _XMP_array_section_t* dst_info, const char* src,
+			       char* dst, const int dim_of_allelmts)
+{
+  switch (dim_of_allelmts){
+  case 0:
+    memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
+    break;
+  case 1:
+    _XMP_stride_memcpy_1dim(dst, src, dst_info, dst_info[0].distance, _XMP_UNPACK);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst, src, dst_info, dst_info[1].distance, _XMP_UNPACK);
+    break;
+  case 3:
+    _XMP_stride_memcpy_3dim(dst, src, dst_info, dst_info[2].distance, _XMP_UNPACK);
+    break;
+  case 4:
+    _XMP_stride_memcpy_4dim(dst, src, dst_info, dst_info[3].distance, _XMP_UNPACK);
+    break;
+  case 5:
+    _XMP_stride_memcpy_5dim(dst, src, dst_info, dst_info[4].distance, _XMP_UNPACK);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray error");
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute unpack operation for 4-dimensional array        */
+/* ARGUMENT    : [IN] *dst_info       : Information of destination array */
+/*               [IN] *src            : Pointer of source array          */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _unpack_4dim_array(const _XMP_array_section_t* dst_info, const char* src, 
+			       char* dst, const int dim_of_allelmts)
+{
+  switch (dim_of_allelmts){
+  case 0:
+    memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
+    break;
+  case 1:
+    _XMP_stride_memcpy_1dim(dst, src, dst_info, dst_info[0].distance, _XMP_UNPACK);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst, src, dst_info, dst_info[1].distance, _XMP_UNPACK);
+    break;
+  case 3:
+    _XMP_stride_memcpy_3dim(dst, src, dst_info, dst_info[2].distance, _XMP_UNPACK);
+    break;
+  case 4:
+    _XMP_stride_memcpy_4dim(dst, src, dst_info, dst_info[3].distance, _XMP_UNPACK);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray error");
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute unpack operation for 3-dimensional array        */
+/* ARGUMENT    : [IN] *dst_info       : Information of destination array */
+/*               [IN] *src            : Pointer of source array          */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _unpack_3dim_array(const _XMP_array_section_t* dst_info, const char* src,
+			       char* dst, const int dim_of_allelmts)
+{
+  switch (dim_of_allelmts){
+  case 0:
+    memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
+    break;
+  case 1:
+    _XMP_stride_memcpy_1dim(dst, src, dst_info, dst_info[0].distance, _XMP_UNPACK);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst, src, dst_info, dst_info[1].distance, _XMP_UNPACK);
+    break;
+  case 3:
+    _XMP_stride_memcpy_3dim(dst, src, dst_info, dst_info[2].distance, _XMP_UNPACK);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray error");
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute unpack operation for 2-dimensional array        */
+/* ARGUMENT    : [IN] *dst_info       : Information of destination array */
+/*               [IN] *src            : Pointer of source array          */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _unpack_2dim_array(const _XMP_array_section_t* dst_info, const char* src,
+			       char* dst, const int dim_of_allelmts)
+{
+  switch (dim_of_allelmts){
+  case 0:
+    memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
+    break;
+  case 1:
+    _XMP_stride_memcpy_1dim(dst, src, dst_info, dst_info[0].distance, _XMP_UNPACK);
+    break;
+  case 2:
+    _XMP_stride_memcpy_2dim(dst, src, dst_info, dst_info[1].distance, _XMP_UNPACK);
+    break;
+  default:
+    _XMP_fatal("Dimension of coarray error");
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute unpack operation for 1-dimensional array        */
+/* ARGUMENT    : [IN] *dst_info       : Information of destination array */
+/*               [IN] *src            : Pointer of source array          */
+/*               [OUT] *dst           : Pointer of destination array     */
+/*               [IN] dim_of_allelmts : Dimension which has all elements */
+/*************************************************************************/
+static void _unpack_1dim_array(const _XMP_array_section_t* dst_info, const char* src, char* dst,
+			       const int dim_of_allelmts)
+{
+  if(dim_of_allelmts == 0){
+    memcpy(dst, src, dst_info[0].distance * dst_info[0].elmts);
+    return;
+  }
+  
+  //  for(i=0;i<dst[0].length;i++){
+  //    dst_offset = i * stride_offset;
+  //    memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
+  //    src_offset += element_size;
+  //  }
+  size_t element_size = dst_info[0].distance;
+  int repeat = dst_info[0].length / _XMP_UNROLLING;
+  int left   = dst_info[0].length % _XMP_UNROLLING;
+  size_t stride_offset = dst_info[0].stride * element_size;
+  size_t dst_offset, src_offset = 0;
+  int i = 0;
+
+  if(repeat == 0){
+    for(i=0;i<left;i++){
+      dst_offset = i * stride_offset;
+      src_offset = i * element_size;
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+    }
+  }
+  else{
+    while( repeat-- > 0 ) {
+      dst_offset = i * stride_offset;
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+      src_offset += element_size;
+
+      dst_offset += stride_offset;
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+      src_offset += element_size;
+
+      dst_offset += stride_offset;
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+      src_offset += element_size;
+
+      dst_offset += stride_offset;
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+      src_offset += element_size;
+
+      i += _XMP_UNROLLING;
+    }
+
+    switch (left) {
+    case 3 :
+      dst_offset = stride_offset * (i+2);
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+      src_offset += element_size;
+    case 2 :
+      dst_offset = stride_offset * (i+1);
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+      src_offset += element_size;
+    case 1:
+      dst_offset = stride_offset * i;
+      memcpy(dst + dst_offset, src + src_offset, element_size);
+    }
+  }
+}
+
+/*************************************************************************/
+/* DESCRIPTION : Execute unpack operation for 1-dimensional array        */
+/* ARGUMENT    : [IN] *dst_info       : Information of destination array */
+/*               [IN] *src            : Pointer of source array          */
+/*               [OUT] *dst           : Pointer of destination array     */
+/* NOTE       : Only one element is copied to multiple regions           */
+/*************************************************************************/
+static void _unpack_1dim_array_fixed_src(const _XMP_array_section_t* dst_info,
+					 const char* src, char* dst)
+{
+  //  for(i=0;i<dst[0].length;i++){
+  //    dst_offset = i * stride_offset;
+  //    memcpy(dst_ptr + dst_offset, src_ptr + src_offset, element_size);
+  //  }
+  size_t element_size = dst_info[0].distance;
+  int repeat = dst_info[0].length / _XMP_UNROLLING;
+  int left   = dst_info[0].length % _XMP_UNROLLING;
+  size_t stride_offset = dst_info[0].stride * element_size;
+  size_t dst_offset;
+  int i = 0;
+
+  if(repeat == 0){
+    for(i=0;i<left;i++){
+      dst_offset = i * stride_offset;
+      memcpy(dst + dst_offset, src, element_size);
+    }
+  }
+  else{
+    while( repeat-- > 0 ) {
+      dst_offset = i * stride_offset;
+      memcpy(dst + dst_offset, src, element_size);
+ 
+      dst_offset += stride_offset;
+      memcpy(dst + dst_offset, src, element_size);
+ 
+      dst_offset += stride_offset;
+      memcpy(dst + dst_offset, src, element_size);
+ 
+      dst_offset += stride_offset;
+      memcpy(dst + dst_offset, src, element_size);
+ 
+      i += _XMP_UNROLLING;
+    }
+
+    switch (left) {
+    case 3 :
+      dst_offset = stride_offset * (i+2);
+      memcpy(dst + dst_offset, src, element_size);
+    case 2 :
+      dst_offset = stride_offset * (i+1);
+      memcpy(dst + dst_offset, src, element_size);
+    case 1:
+      dst_offset = stride_offset * i;
+      memcpy(dst + dst_offset, src, element_size);
+    }
+  }
+}
+
+/****************************************************************************/
+/* DESCRIPTION : Execute pack operation                                     */
+/* ARGUMENT    : [OUT] *dst     : Pointer of destination array              */
+/*               [IN] dst_dims  : Number of dimensions of destination array */
+/*               [IN] *src      : Pointer of source array                   */
+/*               [IN] *dst_info : Information of destination array          */
+/*               [IN] flag      : Kind of unpack                            */
+/****************************************************************************/
+static void _XMP_unpack_coarray(char *dst, const int dst_dims, const char* src, 
+				const _XMP_array_section_t* dst_info, const int flag)
+{
+  size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
+  if(flag == _XMP_UNPACK){
+    int dim_of_allelmts = _XMP_get_dim_of_allelmts(dst_dims, dst_info);
+    switch (dst_dims){
+    case 1:
+      _unpack_1dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
+      break;
+    case 2:
+      _unpack_2dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
+      break;
+    case 3:
+      _unpack_3dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
+      break;
+    case 4:
+      _unpack_4dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
+      break;
+    case 5:
+      _unpack_5dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
+      break;
+    case 6:
+      _unpack_6dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
+      break;
+    case 7:
+      _unpack_7dim_array(dst_info, src, dst + dst_offset, dim_of_allelmts);
+      break;
+    default:
+      _XMP_fatal("Dimension of coarray is too big.");
+      break;
+    }
+  }
+  else if(flag == _XMP_SCALAR_MCOPY){
+    switch (dst_dims){
+    case 1:
+      _unpack_1dim_array_fixed_src(dst_info, src, dst + dst_offset);
+      // Perhaps _unpack_1dim_array_fixed_src() is faster than _XMP_stride_memcpy_1dim()
+      break;
+    case 2:
+      _XMP_stride_memcpy_2dim(dst + dst_offset, src, dst_info, dst_info[1].distance, _XMP_SCALAR_MCOPY);
+      break;
+    case 3:
+      _XMP_stride_memcpy_3dim(dst + dst_offset, src, dst_info, dst_info[2].distance, _XMP_SCALAR_MCOPY);
+      break;
+    case 4:
+      _XMP_stride_memcpy_4dim(dst + dst_offset, src, dst_info, dst_info[3].distance, _XMP_SCALAR_MCOPY);
+      break;
+    case 5:
+      _XMP_stride_memcpy_5dim(dst + dst_offset, src, dst_info, dst_info[4].distance, _XMP_SCALAR_MCOPY);
+      break;
+    case 6:
+      _XMP_stride_memcpy_6dim(dst + dst_offset, src, dst_info, dst_info[5].distance, _XMP_SCALAR_MCOPY);
+      break;
+    case 7:
+      _XMP_stride_memcpy_7dim(dst + dst_offset, src, dst_info, dst_info[6].distance, _XMP_SCALAR_MCOPY);
+      break;
+    default:
+      _XMP_fatal("Dimension of coarray is too big.");
+      break;
+    }
+  }
+  else{
+    _XMP_fatal("Unexpected error !");
+  }
+}
 
 /**
    Set initial value to the shift queue
@@ -75,7 +791,7 @@ void _XMP_gasnet_coarray_lastly_deallocate(){
 /*               [OUT] **addr        : Double pointer of new coarray  */
 /*               [IN] coarray_size   : Coarray size                   */
 /**********************************************************************/
-void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
+void _XMP_gasnet_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size)
 {
   char **each_addr;  // head address of a local array on each node
   size_t tmp_shift;
@@ -113,10 +829,15 @@ void _XMP_gasnet_malloc_do(_XMP_coarray_t *coarray_desc, void **addr, const size
  */
 void _XMP_gasnet_sync_memory()
 {
+  XMP_gasnet_atomic_sync_memory();
+  
   for(int i=0;i<_xmp_gasnet_stride_wait_size;i++)
     GASNET_BLOCKUNTIL(_xmp_gasnet_stride_queue[i] == _XMP_STRIDE_DONE);
 
   _xmp_gasnet_stride_wait_size = 0;
+
+  if( _XMP_flag_put_nb)
+    gasnet_wait_syncnbi_puts();
 }
 
 /**
@@ -129,7 +850,7 @@ void _XMP_gasnet_sync_all()
 }
 
 /*************************************************************************************/
-/* DESCRIPTION : Execute put operation (from continuous region to continuous region) */
+/* DESCRIPTION : Execute put operation (from contiguous region to contiguous region) */
 /* ARGUMENT    : [IN] target_rank    : Target rank                                   */
 /*               [IN] dst_offset     : Offset size of destination array              */
 /*               [IN] src_offset     : Offset size of source array                   */
@@ -148,7 +869,7 @@ static void _gasnet_c_to_c_put(const int target_rank, const size_t dst_offset,
 }
 
 /*****************************************************************************************/
-/* DESCRIPTION : Execute put operation (from NON-continuous region to continuous region) */
+/* DESCRIPTION : Execute put operation (from NON-contiguous region to contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                        */
 /*               [IN] dst_offset    : Offset size of destination array                   */
 /*               [IN] src_dims      : Number of dimensions of source array               */
@@ -234,7 +955,7 @@ static void _stride_size_error(size_t request_size){
 }
 
 /*****************************************************************************************/
-/* DESCRIPTION : Execute put operation (from continuous region to NON-continuous region) */
+/* DESCRIPTION : Execute put operation (from contiguous region to NON-contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                        */
 /*               [IN] src_offset    : Offset size of source array                        */
 /*               [IN] dst_dims      : Number of dimensions of destination array          */
@@ -274,7 +995,7 @@ static void _gasnet_c_to_nonc_put(const int target_rank, const size_t src_offset
 }
 
 /*********************************************************************************************/
-/* DESCRIPTION : Execute put operation (from NON-continuous region to NON-continuous region) */
+/* DESCRIPTION : Execute put operation (from NON-contiguous region to NON-contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                            */
 /*               [IN] dst_dims      : Number of dimensions of destination array              */
 /*               [IN] src_dims      : Number of dimensions of source array                   */
@@ -357,8 +1078,8 @@ static void _gasnet_scalar_mput(const int target_rank, const int dst_dims,
 
 /***************************************************************************************/
 /* DESCRIPTION : Execute put operation                                                 */
-/* ARGUMENT    : [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
-/*               [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
+/* ARGUMENT    : [IN] dst_contiguous : Is destination region contiguous ? (TRUE/FALSE) */
+/*               [IN] src_contiguous : Is source region contiguous ? (TRUE/FALSE)      */
 /*               [IN] target_rank    : Target rank                                     */
 /*               [IN] dst_dims       : Number of dimensions of destination array       */
 /*               [IN] src_dims       : Number of dimensions of source array            */
@@ -371,27 +1092,27 @@ static void _gasnet_scalar_mput(const int target_rank, const int dst_dims,
 /* EXAMPLE    :                                                                        */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src                          */
 /***************************************************************************************/
-void _XMP_gasnet_put(const int dst_continuous, const int src_continuous, const int target_rank, 
+void _XMP_gasnet_put(const int dst_contiguous, const int src_contiguous, const int target_rank, 
 		     const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
 		     const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
 		     const void *src, const size_t dst_elmts, const size_t src_elmts)
 {
   if(dst_elmts == src_elmts){
     size_t transfer_size = dst_desc->elmt_size*dst_elmts;
-    if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
+    if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_TRUE){
       size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
       size_t src_offset = _XMP_get_offset(src_info, src_dims);
       _gasnet_c_to_c_put(target_rank, dst_offset, src_offset, dst_desc, src, transfer_size);
     }
-    else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
+    else if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_FALSE){
       size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
       _gasnet_nonc_to_c_put(target_rank, dst_offset, src_dims, src_info, dst_desc, src, transfer_size);
     }
-    else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
+    else if(dst_contiguous == _XMP_N_INT_FALSE && src_contiguous == _XMP_N_INT_TRUE){
       size_t src_offset = _XMP_get_offset(src_info, src_dims);
       _gasnet_c_to_nonc_put(target_rank, src_offset, dst_dims, dst_info, dst_desc, src, transfer_size);
     }
-    else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_FALSE){
+    else if(dst_contiguous == _XMP_N_INT_FALSE && src_contiguous == _XMP_N_INT_FALSE){
       _gasnet_nonc_to_nonc_put(target_rank, dst_dims, src_dims, dst_info, src_info, 
 			       dst_desc, src, transfer_size);
     }
@@ -408,7 +1129,7 @@ void _XMP_gasnet_put(const int dst_continuous, const int src_continuous, const i
 }
 
 /*************************************************************************************/
-/* DESCRIPTION : Execute get operation (from continuous region to continuous region) */
+/* DESCRIPTION : Execute get operation (from contiguous region to contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                    */
 /*               [IN] dst_offset    : Offset size of destination array               */
 /*               [IN] src_offset    : Offset size of source array                    */
@@ -427,7 +1148,7 @@ static void _gasnet_c_to_c_get(const int target_rank, const size_t dst_offset, c
 }
 
 /*****************************************************************************************/
-/* DESCRIPTION : Execute get operation (from NON-continuous region to continuous region) */
+/* DESCRIPTION : Execute get operation (from NON-contiguous region to contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                        */
 /*               [IN] src_offset    : Offset size of source array                        */
 /*               [IN] dst_dims      : Number of dimensions of destination array          */
@@ -509,7 +1230,7 @@ void _xmp_gasnet_pack_get(gasnet_token_t t, const char* array_info, const size_t
 }
 
 /********************************************************************************/
-/* DESCRIPTION : Execute unpack operations for Non-continuous GET               */
+/* DESCRIPTION : Execute unpack operations for Non-contiguous GET               */
 /* ARGUMENT    : [IN] t             : Token for Active Messages                 */
 /*               [IN] *archives     : Recieved message                          */
 /*               [IN] transfer_size : Transfer size                             */
@@ -579,7 +1300,7 @@ void _xmp_gasnet_pack_using_buf(gasnet_token_t t, const char* array_info, const 
 }
 
 /*****************************************************************************************/
-/* DESCRIPTION : Execute get operation (from NON-continuous region to continuous region) */
+/* DESCRIPTION : Execute get operation (from NON-contiguous region to contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                        */
 /*               [IN] dst_offset    : Offset size of destination array                   */
 /*               [IN] src_dims      : Number of dimensions of source array               */
@@ -620,7 +1341,7 @@ static void _gasnet_nonc_to_c_get(const int target_rank, const size_t dst_offset
 }
 
 /*********************************************************************************************/
-/* DESCRIPTION : Execute get operation (from NON-continuous region to NON-continuous region) */
+/* DESCRIPTION : Execute get operation (from NON-contiguous region to NON-contiguous region) */
 /* ARGUMENT    : [IN] target_rank   : Target rank                                            */
 /*               [IN] dst_dims      : Number of dimensions of destination array              */
 /*               [IN] src_dims      : Number of dimensions of source array                   */
@@ -692,8 +1413,8 @@ static void _gasnet_scalar_mget(const int target_rank, const size_t src_offset, 
 
 /***************************************************************************************/
 /* DESCRIPTION : Execute get operation                                                 */
-/* ARGUMENT    : [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
-/*               [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
+/* ARGUMENT    : [IN] src_contiguous : Is source region contiguous ? (TRUE/FALSE)      */
+/*               [IN] dst_contiguous : Is destination region contiguous ? (TRUE/FALSE) */
 /*               [IN] target_rank    : Target rank                                     */
 /*               [IN] src_dims       : Number of dimensions of source array            */
 /*               [IN] dst_dims       : Number of dimensions of destination array       */
@@ -706,26 +1427,26 @@ static void _gasnet_scalar_mget(const int target_rank, const size_t src_offset, 
 /* EXAMPLE    :                                                                        */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src                          */
 /***************************************************************************************/
-void _XMP_gasnet_get(const int src_continuous, const int dst_continuous, const int target_rank, const int src_dims, 
+void _XMP_gasnet_get(const int src_contiguous, const int dst_contiguous, const int target_rank, const int src_dims, 
 		     const int dst_dims, const _XMP_array_section_t *src_info, const _XMP_array_section_t *dst_info, 
 		     const _XMP_coarray_t *src_desc, const void *dst, const size_t src_elmts, const size_t dst_elmts)
 {
   if(src_elmts == dst_elmts){
     size_t transfer_size = src_desc->elmt_size*src_elmts;
-    if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_TRUE){
+    if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_TRUE){
       size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
       size_t src_offset = _XMP_get_offset(src_info, src_dims);
       _gasnet_c_to_c_get(target_rank, dst_offset, src_offset, dst, src_desc, transfer_size);
     }
-    else if(dst_continuous == _XMP_N_INT_TRUE && src_continuous == _XMP_N_INT_FALSE){
+    else if(dst_contiguous == _XMP_N_INT_TRUE && src_contiguous == _XMP_N_INT_FALSE){
       size_t dst_offset = _XMP_get_offset(dst_info, dst_dims);
       _gasnet_nonc_to_c_get(target_rank, dst_offset, src_dims, src_info, dst, src_desc, transfer_size);
     }
-    else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_TRUE){
+    else if(dst_contiguous == _XMP_N_INT_FALSE && src_contiguous == _XMP_N_INT_TRUE){
       size_t src_offset = _XMP_get_offset(src_info, src_dims);
       _gasnet_c_to_nonc_get(target_rank, src_offset, dst_dims, dst_info, dst, src_desc, transfer_size);
     }
-    else if(dst_continuous == _XMP_N_INT_FALSE && src_continuous == _XMP_N_INT_FALSE){
+    else if(dst_contiguous == _XMP_N_INT_FALSE && src_contiguous == _XMP_N_INT_FALSE){
       _gasnet_nonc_to_nonc_get(target_rank, dst_dims, src_dims, dst_info, src_info, dst, src_desc, transfer_size);
     }
   }
@@ -748,12 +1469,12 @@ void _XMP_gasnet_get(const int src_continuous, const int dst_continuous, const i
 /*               [IN] dst_offset  : Offset size of destination array  */
 /*               [IN] dst_elmts   : Number of elements of destination */
 /*               [IN] elmt_size   : Element size                      */
-/* NOTE       : Both dst and src are continuous coarrays              */
+/* NOTE       : Both dst and src are contiguous coarrays              */
 /*              target_rank != __XMP_world_rank.                      */
 /* EXAMPLE    :                                                       */
 /*     a[0:100]:[1] = b[0]; // a[] is a dst, b[] is a src             */
 /**********************************************************************/
-static void _gasnet_scalar_shortcut_mput(const int target_rank, _XMP_coarray_t *dst_desc, const void *src, 
+static void _gasnet_scalar_contiguous_mput(const int target_rank, _XMP_coarray_t *dst_desc, const void *src, 
 					 const size_t dst_offset, const size_t dst_elmts,
 					 const size_t elmt_size)
 {
@@ -798,20 +1519,23 @@ static void _gasnet_scalar_shortcut_mput(const int target_rank, _XMP_coarray_t *
 /*               [IN] dst_elmts   : Number of elements of destination array */
 /*               [IN] src_elmts   : Number of elements of source array      */
 /*               [IN] elmt_size   : Element size                            */
-/* NOTE       : Both dst and src are continuous coarrays                    */
+/* NOTE       : Both dst and src are contiguous coarrays                    */
 /*              target_rank != __XMP_world_rank.                            */
 /* EXAMPLE    :                                                             */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src               */
 /****************************************************************************/
-void _XMP_gasnet_shortcut_put(const int target_rank, _XMP_coarray_t *dst_desc, void *src, 
-			      const size_t dst_offset, const size_t dst_elmts, 
-			      const size_t src_elmts, const size_t elmt_size)
+void _XMP_gasnet_contiguous_put(const int target_rank, _XMP_coarray_t *dst_desc, void *src, 
+				const size_t dst_offset, const size_t dst_elmts, 
+				const size_t src_elmts, const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){
-    gasnet_put_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
+    if(_XMP_flag_put_nb)
+      gasnet_put_nbi_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
+    else
+      gasnet_put_bulk(target_rank, dst_desc->addr[target_rank]+dst_offset, src, src_elmts*elmt_size);
   }
   else if(src_elmts == 1){
-    _gasnet_scalar_shortcut_mput(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
+    _gasnet_scalar_contiguous_mput(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
   }
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");
@@ -826,14 +1550,14 @@ void _XMP_gasnet_shortcut_put(const int target_rank, _XMP_coarray_t *dst_desc, v
 /*               [IN] dst_offset  : Offset size of destination array        */
 /*               [IN] dst_elmts   : Number of elements of destination array */
 /*               [IN] elmt_size   : Element size                            */
-/* NOTE       : Both dst and src are continuous coarrays                    */
+/* NOTE       : Both dst and src are contiguous coarrays                    */
 /*              target_rank != __XMP_world_rank.                            */
 /* EXAMPLE    :                                                             */
 /*     a[0:100] = b[0]:[1]; // a[] is a dst, b[] is a src                   */
 /****************************************************************************/
-static void _gasnet_scalar_shortcut_mget(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
-                                         const size_t dst_offset, const size_t dst_elmts,
-                                         const size_t elmt_size)
+static void _gasnet_scalar_contiguous_mget(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
+					   const size_t dst_offset, const size_t dst_elmts,
+					   const size_t elmt_size)
 {
   char *dst_addr = dst_desc->addr[_XMP_world_rank]+dst_offset;
   gasnet_get_bulk(dst_addr, target_rank, src, elmt_size);
@@ -850,20 +1574,20 @@ static void _gasnet_scalar_shortcut_mget(const int target_rank, _XMP_coarray_t *
 /*               [IN] dst_elmts   : Number of elements of destination array */
 /*               [IN] src_elmts   : Number of elements of source array      */
 /*               [IN] elmt_size   : Element size                            */
-/* NOTE       : Both dst and src are continuous coarrays                    */
+/* NOTE       : Both dst and src are contiguous coarrays                    */
 /*              target_rank != __XMP_world_rank.                            */
 /* EXAMPLE    :                                                             */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src               */
 /****************************************************************************/
-void _XMP_gasnet_shortcut_get(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
-			      const size_t dst_offset, const size_t dst_elmts, const size_t src_elmts,
-			      const size_t elmt_size)
+void _XMP_gasnet_contiguous_get(const int target_rank, _XMP_coarray_t *dst_desc, void *src,
+				const size_t dst_offset, const size_t dst_elmts, const size_t src_elmts,
+				const size_t elmt_size)
 {
   if(dst_elmts == src_elmts){
     gasnet_get_bulk(dst_desc->addr[_XMP_world_rank]+dst_offset, target_rank, src, src_elmts*elmt_size);
   }
   else if(src_elmts == 1){
-    _gasnet_scalar_shortcut_mget(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
+    _gasnet_scalar_contiguous_mget(target_rank, dst_desc, src, dst_offset, dst_elmts, elmt_size);
   }
   else{
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n");

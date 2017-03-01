@@ -12,7 +12,7 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.LIST, "declarations"),
 			new XcodeMLName(Xcode.LIST, "arguments"),
 			new XcodeMLName(Xcode.LIST, "kind"),
-			
+
 			new XcodeMLName(Xcode.LIST, "list"),
 			new XcodeMLName(Xcode.STRING, "string"),
 
@@ -94,6 +94,9 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.STATEMENT_LABEL, "statementLabel"),
 			new XcodeMLName(Xcode.F_SELECT_CASE_STATEMENT,
 					"FselectCaseStatement"),
+			new XcodeMLName(Xcode.SELECT_TYPE_STATEMENT,
+					"selectTypeStatement"),
+      new XcodeMLName(Xcode.TYPE_GUARD, "typeGuard"),
 			new XcodeMLName(Xcode.F_CASE_LABEL, "FcaseLabel"),
 			new XcodeMLName(Xcode.F_WHERE_STATEMENT, "FwhereStatement"),
 			new XcodeMLName(Xcode.F_STOP_STATEMENT, "FstopStatement"),
@@ -133,6 +136,19 @@ public class XcodeMLNameTable_F extends XcodeMLNameTable {
 			new XcodeMLName(Xcode.F_LOCK_STATEMENT, "lockStatement"),
 			new XcodeMLName(Xcode.F_UNLOCK_STATEMENT, "unlockStatement"),
 			new XcodeMLName(Xcode.F_SYNC_STAT, "syncStat"),
+			new XcodeMLName(Xcode.F_BLOCK_STATEMENT, "blockStatement"),
+			new XcodeMLName(Xcode.F_TYPE_PARAM, "typeParam"),
+			new XcodeMLName(Xcode.F_TYPE_PARAMS, "typeParams"),
+			new XcodeMLName(Xcode.F_TYPE_PARAM_VALUES, "typeParamValues"),
+			new XcodeMLName(Xcode.F_LEN, "len"),
+      new XcodeMLName(Xcode.F_IMPORT_STATEMENT, "FimportDecl"),
+			new XcodeMLName(Xcode.F_TYPE_BOUND_PROCEDURES, "typeBoundProcedures"),
+			new XcodeMLName(Xcode.F_TYPE_BOUND_PROCEDURE , "typeBoundProcedure" ),
+			new XcodeMLName(Xcode.F_TYPE_BOUND_GENERIC_PROCEDURE , "typeBoundGenericProcedure"),
+			new XcodeMLName(Xcode.F_BINDING, "binding"),
+			new XcodeMLName(Xcode.F_MODULE_PROCEDURE_DEFINITION, "FmoduleProcedureDefinition"),
+			new XcodeMLName(Xcode.F_FORALL_STATEMENT, "forallStatement"),
+			new XcodeMLName(Xcode.F_CONDITION, "condition"),
 	};
 
 	// constructor

@@ -102,10 +102,10 @@ char *myName;
 char *includeDirv[MAXINCLUDEDIRV + 1];
 int includeDirvI = 0;
 
-/* has termination element.  */
-//char *modincludeDirv[MAXMODINCLUDEDIRV + 1];
-char *modincludeDirv = NULL;
-//int modincludeDirvI = 0;
+/* user module search path */
+char *modincludeDirv[MAXMODINCLUDEDIRV + 1];
+int modincludeDirvI = 0;
+
 /* -MC?  */
 int flag_module_compile = FALSE;
 
@@ -285,16 +285,6 @@ char *argv[];
                 cmd_error_exit("invalid path after -TD.");
         } else if (strcmp(argv[0], "-module-compile") == 0) {
             flag_module_compile = TRUE;
-#if 0
-        } else if (strncmp(argv[0], "-MC=", 4) == 0) {
-            /* -MC=fileName:N:StartSeekPoint:EndSeekPoint */
-            /* internal option for module compile.  */
-            flag_module_compile = TRUE;
-            if (sscanf (argv[0] + 4, "%d:%ld:%ld",
-                        &mcLn_no, &mcStart, &mcEnd) != 3) {
-                cmd_error_exit ("internal error on internal command option, does not match: -MC=fileName:N:StartSeekPoint:EndSeekPoint");
-            }
-#endif
         } else if (strncmp(argv[0], "-I", 2) == 0) {
             /* -I <anotherDir> or -I<anotherDir> */
             char *path;
@@ -329,16 +319,14 @@ char *argv[];
                 /* -M<anotherDir> */
                 path = argv[0] + 2;
             }
-	    modincludeDirv = path;
-            /* if (modincludeDirvI < 256) { */
-            /*     modincludeDirv[modincludeDirvI++] = path; */
-            /* } else { */
-            /*     cmd_error_exit( */
-            /*         "over the maximum module include search dir. vector, %d", */
-            /*         MAXMODINCLUDEDIRV); */
-            /* } */
-        
-        } else if (strncmp(argv[0], "-fintrinsic-xmodules-path", 25) == 0) {
+            if(modincludeDirvI < MAXMODINCLUDEDIRV){
+                modincludeDirv[modincludeDirvI++] = path;
+            } else {
+                cmd_error_exit(
+                     "over the maximum module include search dir. vector, %d",
+                     MAXMODINCLUDEDIRV);
+            }
+        } else if (strcmp(argv[0], "-fintrinsic-xmodules-path") == 0) {
             char *path;
             if (strlen(argv[0]) == 25) {
                 /* -fintrinsic-xmodules-path <intrinsic xmodule dir> */
@@ -363,21 +351,6 @@ char *argv[];
             if (flag_force_fixed_format == 1)  {
                 cmd_warning("no need option for enable c comment(-force-c-comment) in fixed format mode(.f or .F).");
             }
-#if 0
-        } else if (strcmp(argv[0], "-xmod") == 0) {
-            char *path;
-            symbol_filter * filter;
-            if (--argc <= 0)
-                cmd_error_exit("no arg for -xmod.");
-            argv++;
-            path = argv[0];
-
-            filter = push_new_filter();
-
-            FILTER_USAGE(filter) = RENAME;
-
-            return use_module_to(path, stdout) ? EXITCODE_OK : EXITCODE_ERR;
-#endif
         } else if (strcmp(argv[0], "--save") == 0) {
             auto_save_attr_kb = 1; // 1kbytes
         } else if (strncmp(argv[0], "--save=", 7) == 0) {
@@ -413,10 +386,6 @@ char *argv[];
         } else if (strcmp(argv[0], "--help") == 0) {
             usage();
             exit(0);
-#if 0
-        } else if (strncmp(argv[0], "-m", 2) == 0) {
-            cmd_warning("quad/multiple precision is not supported.");
-#endif
         } else if (strcmp(argv[0], "-no-module-cache") == 0) {
             flag_do_module_cache = FALSE;
         } else {
@@ -540,14 +509,16 @@ search_include_path(const char * filename)
         return filename;
     }
 
-    if (modincludeDirv){
-        strcpy(path, modincludeDirv);
-        strcat(path, "/");
-        strcat(path, filename);
-
-        if ((fp = fopen(path, "r")) != NULL) {
-            fclose(fp);
-            return path;
+    if (modincludeDirvI > 0){
+        // Iterate over available module search path
+        for(i = 0; i < modincludeDirvI; i++){
+            strcpy(path, modincludeDirv[i]);
+            strcat(path, "/");
+            strcat(path, filename);
+            if ((fp = fopen(path, "r")) != NULL) {
+                fclose(fp);
+                return path;
+            }
         }
     }
 
@@ -568,7 +539,7 @@ search_include_path(const char * filename)
 void
 where(lineno_info *ln)
 { 
-    extern char *current_module_name;
+    extern SYMBOL current_module_name;
 
     /* print location of error  */
     if (ln != NULL) {
@@ -577,7 +548,7 @@ where(lineno_info *ln)
         else
             fprintf(stderr, "\"%s:%s\", line %d: ",
                     FILE_NAME(ln->file_id),
-                    current_module_name,
+                    SYM_NAME(current_module_name),
                     ln->ln_no);
     } else {
         fprintf(stderr, "\"??\", line ??: ");
@@ -640,8 +611,6 @@ error_at_id EXC_VARARGS_DEF(ID, x)
 }
 
 
-
-
 /* VARARGS0 */
 void
 warning_at_node EXC_VARARGS_DEF(expr, x)
@@ -674,6 +643,26 @@ warning_at_id EXC_VARARGS_DEF(ID, x)
     va_end(args);
     fprintf(stderr, "\n" );
     fflush(stderr);
+}
+
+
+/* debug message */
+/* VARARGS0 */
+void
+debug EXC_VARARGS_DEF(char *, fmt)
+{
+    va_list args;
+
+    if (!debug_flag) return;
+
+    ++nerrors;
+    where(current_line);
+    EXC_VARARGS_START(char *, fmt, args);
+    vfprintf(debug_fp, fmt, args);
+    va_end(args);
+    fprintf(debug_fp, "\n" );
+    fflush(debug_fp);
+    check_nerrors();
 }
 
 

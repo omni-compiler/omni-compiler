@@ -236,13 +236,15 @@ elif [ "$target"  = "sxace-nec-superux" -a "${output_file}" != "" ]; then
 fi
 
 obj_files+=("$TRAVERSE_FILE_O")
-if [ $ENABLE_XACC = true ]; then
+if [ @XACC@ = 0 ]; then
     #OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_GPUCC_LIB"
     if [ $OPENACC_PLATFORM = "CUDA" ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_CUDA_LIB"
     elif [ $OPENACC_PLATFORM = "OpenCL" ]; then
 	OMNI_LINKER_OPT="$OMNI_LINKER_OPT $OMNI_OPENCL_LIB"
     fi
+fi
+if [ $ENABLE_XACC = true ]; then
     obj_files+=("$TRAVERSE_FILE_XACC_O")
 fi
 

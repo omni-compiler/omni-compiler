@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include <alloca.h>
 
+// #define LEX_DEBUG 1
+
 /* lexical analyzer, enable open mp.  */
 int OMP_flag = FALSE;
 int XMP_flag = FALSE;
@@ -38,6 +40,7 @@ int line_buf_size;
 
 int st_class;           /* token for classify statement */
 int need_keyword = FALSE;
+int need_type_keyword = FALSE;
 int need_type_len = FALSE;
 int need_check_user_defined = TRUE; /* check the user defined dot id */
 
@@ -62,6 +65,7 @@ struct keyword_token {
 
 extern struct keyword_token dot_keywords[],keywords[];
 extern struct keyword_token end_keywords[];
+extern struct keyword_token type_keywords[];
 
 extern int ocl_flag;
 extern int cdir_flag;
@@ -204,13 +208,6 @@ static int      readline_free_format _ANSI_ARGS_((void));
 static int      readline_fixed_format _ANSI_ARGS_((void));
 static void     _warning_if_doubtfulLongLine (char *buf, int maxLen);
 static int      is_fixed_cond_statement_label _ANSI_ARGS_((char *  label));
-#ifdef not
-static int      is_OCL_sentinel _ANSI_ARGS_((char **));
-static int      is_PRAGMA_sentinel _ANSI_ARGS_((char **));
-static int	is_OMP_sentinel _ANSI_ARGS_((char **));
-static int	is_XMP_sentinel _ANSI_ARGS_((char **));
-static int	is_ACC_sentinel _ANSI_ARGS_((char **));
-#endif
 static int      is_pragma_sentinel _ANSI_ARGS_((sentinel_list* plist,
                                                 char* line, int* index));
 static int      is_cond_compilation _ANSI_ARGS_((sentinel_list* plist,
@@ -235,6 +232,9 @@ static int      ScanFortranLine _ANSI_ARGS_((char *src, char *srcHead,
                                              int *inQuotePtr, int *quoteCharPtr,
                                              int *inHollerithPtr, int *hollerithLenPtr,
                                              char **newCurPtr, char **newDstPtr));
+
+extern int unit_ctl_level;
+
 static void
 debugOutStatement()
 {
@@ -260,6 +260,13 @@ debugOutStatement()
     }
     fflush(debug_fp);
 }
+
+static int
+is_top_level(void)
+{
+    return unit_ctl_level == 0;
+}
+
 
 void
 initialize_lex()
@@ -315,6 +322,7 @@ prepare_for_new_statement(void) {
     the_last_token[0] = UNKNOWN;
     the_last_token[1] = UNKNOWN;
     expect_next_token_is_keyword = TRUE;
+    need_keyword = FALSE;
 }
 
 static int
@@ -423,6 +431,7 @@ yylex()
     fprintf(stderr, "%c[%d]",
             (curToken < ' ' || curToken >= 0xFF) ?
             ' ' : curToken, curToken);
+    // fprintf(stderr,",need_keyword=%d, line=%d\n",need_keyword,line_count);
 #endif
     return curToken;
 }
@@ -539,10 +548,6 @@ yylex0()
         return t;
 
     case LEX_PRAGMA_TOKEN:
-#if 0
-        if (!fixed_format_flag)
-            append_pragma_str(st_buffer_org);
-#endif
         lexstate = LEX_RET_EOS;
         return PRAGMA_SLINE;
 
@@ -633,7 +638,7 @@ char *lex_get_line()
 
 void
 yyerror(s)
-     char *s;
+     const char *s;
 {
     error("%s",s);
 }
@@ -660,6 +665,15 @@ token()
          */
         need_keyword = FALSE;
         t = get_keyword(keywords);
+        if (t != UNKNOWN) return(t);
+    }
+
+    if (need_type_keyword == TRUE) {
+        /*
+         * require type spec keyword
+         */
+        need_type_keyword = FALSE;
+        t = get_keyword(type_keywords);
         if (t != UNKNOWN) return(t);
     }
 
@@ -743,13 +757,15 @@ token()
 	    int t;
 	    int save_n = need_keyword;
 	    int save_p = paren_level;
-	    need_keyword = 1;
+	    need_keyword = TRUE;
 	    t = token();
 	    if (t == KW_LEN) {
+                need_keyword = FALSE;
 		while(isspace(*bufptr)) bufptr++;  /* skip white space */
 		if (*bufptr++ == '=')
 		    return SET_LEN;
 	    } else if (t == KW_KIND) {
+                need_keyword = FALSE;
 		while(isspace(*bufptr)) bufptr++;  /* skip white space */
 		if (*bufptr++ == '=')
 		    return SET_KIND;
@@ -861,16 +877,9 @@ token()
                 else
                     user_defined[i] = *bufptr++;
             }
-#if 0
-            s = find_symbol_without_allocate (user_defined);
-#endif
             s = find_symbol (user_defined);
-            if (s == NULL)
-                return '.';
-            else {
-                yylval.val = GEN_NODE(IDENT, s);
-                return USER_DEFINED_OP;
-            }
+	    yylval.val = GEN_NODE(IDENT, s);
+	    return USER_DEFINED_OP;
         } else
 	    return '.';
     case '>':
@@ -885,15 +894,6 @@ token()
             return(LE);
         }
         return(LT);
-
-#ifdef not  /* ! is used for comment line */
-    case '!':
-        if(*bufptr == '='){
-            bufptr++;
-            return(NE);
-        }
-        return(NOT);
-#endif
 
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9':
@@ -914,6 +914,7 @@ token()
         return UNKNOWN;
     }
 }
+    
 static int
 is_identifier_letter( char c, int pos )
 {
@@ -947,15 +948,6 @@ read_identifier()
       error( "name is too long. " );
     }
     *p = 0;             /* termination */
-
-#ifdef not
-    if (strncmp(buffio,"function",8) == 0 && isalpha((int)buffio[8]) &&
-        bufptr[0] == '(' && (bufptr[1] == ')' || isalpha((int)bufptr[1]))) {
-        /* back */
-        bufptr -= (tkn_len - 8);
-        return(FUNCTION);
-    }
-#endif
 
     if(tkn_len == 1 && *bufptr == QUOTE){
         omllint_t v = 0;
@@ -996,7 +988,7 @@ read_identifier()
 	int t;
 	int save_n = need_keyword;
 	int save_p = paren_level;
-	need_keyword = 1;
+	need_keyword = TRUE;
 	while (isspace(*bufptr)) /* skip white space */
 	    bufptr++;
 	if (*bufptr != '(') {
@@ -1171,9 +1163,6 @@ string_to_integer(p, cp, radix)
         ((omllint_t)v2 << 32) |
         ((omllint_t)v1 << 16) |
         (omllint_t)v0;
-#if 0
-    fprintf(stderr, "lex: H = %x, L = %x\n", *hp, *p);
-#endif
 }
 
 static double
@@ -1382,9 +1371,10 @@ classify_statement()
               if (isalpha(*bufptr)) {
 		int save_n = need_keyword;
 		int save_p = paren_level;
-		need_keyword = 1;
+		need_keyword = TRUE;
 		int t = token();
 		if (t == THEN) { /* then key?  */
+                    need_keyword = FALSE;
 		  bufptr = save; /* it is IFTHEN statement, not LET.  */
 		  return IFTHEN;
 		}
@@ -1404,8 +1394,13 @@ classify_statement()
     ret_LOGIF:
       break;
 
+    case MODULE:
+        if (!is_top_level()) {
+            need_keyword = TRUE;
+        }
     case ALLOCATABLE:
     case ALLOCATE:
+    case BIND:
     case CASE:
     case COMMON:
     case CONTAINS:
@@ -1423,31 +1418,35 @@ classify_statement()
     case EXTERNAL:
     case FUNCTION:
     case GOTO:
+    case IMPORT:
     case IMPLICIT:
     case INCLUDE:
     case INTENT:
     case INTERFACE:
     case INTRINSIC:
-    case KW_BLOCK:
+    case BLOCK:
     case KW_GO:
     case KW_IN:
+    case KW_IS:
     case KW_KIND:
     case KW_LEN:
+    case KW_NAME:
     case KW_OUT:
     case KW_TO:
     case KW_TYPE:
     case KW_USE:
-    case MODULE:
     case NAMELIST:
     case NULLIFY:
     case OPTIONAL:
     case PARAMETER:
     case POINTER:
+    case VOLATILE:
     case SAVE:
     case SELECT:
     case SEQUENCE:
     case STOP:
     case SUBROUTINE:
+    case VALUE:
     case TARGET:
         if(fixed_format_flag && exposed_eql) {
           goto ret_LET;
@@ -1489,6 +1488,10 @@ classify_statement()
             bufptr = p+1;
             return BACKSPACE_P;
         }
+        break;
+
+    case GENERIC:
+        may_generic_spec = TRUE;
         break;
     }
     return(st_class);
@@ -1719,7 +1722,6 @@ get_keyword(ks)
     }
 }
 
-
 static int
 get_keyword_optional_blank(int class)
 {
@@ -1731,23 +1733,36 @@ get_keyword_optional_blank(int class)
 
     switch(class){
     case END:
-        if((cl = get_keyword(end_keywords)) != UNKNOWN){
-            if(cl == KW_BLOCK){
-	        while(isspace(*bufptr)) bufptr++;   /* skip space */
-                if(get_keyword(keywords) == DATA) return ENDBLOCKDATA;
+        if ((cl = get_keyword(end_keywords)) != UNKNOWN){
+            if (cl == BLOCK){
+                while(isspace(*bufptr)) bufptr++;   /* skip space */
+                if (get_keyword(keywords) == DATA) {
+                    return ENDBLOCKDATA;
+                } else {
+                    return ENDBLOCK;
+                }
                 break;
+            } else if (cl == BLOCKDATA){
+                return ENDBLOCKDATA;
+            } else {
+                return cl;
             }
-	    else if (cl == BLOCKDATA){
-	      return ENDBLOCKDATA;
-	    }
-            return cl;
         }
         break;
-    case KW_BLOCK: /* BLOCK DATA*/
-        if(get_keyword(keywords) == DATA) return BLOCKDATA;
+    case BLOCK: /* BLOCK or BLOCK DATA*/
+        if (get_keyword(keywords) == DATA) {
+            return BLOCKDATA;
+        } else {
+            return BLOCK;
+        }
         break;
-    case KW_ENDBLOCK: /* BLOCK DATA*/
-        if(get_keyword(keywords) == DATA) return ENDBLOCKDATA;
+    case ENDBLOCK: /* BLOCK or BLOCK DATA*/
+        if (get_keyword(keywords) == DATA) {
+            return ENDBLOCKDATA;
+        } else {
+            return ENDBLOCK;
+        }
+
         break;
 
     case KW_DBL: { /* DOBULE PRECISION */
@@ -1771,6 +1786,17 @@ get_keyword_optional_blank(int class)
         break;
     case KW_IN:
         if(get_keyword(keywords) == KW_OUT) return KW_INOUT;
+        break;
+    case CLASS:
+        {
+           char *savepoint = bufptr;
+           if(get_keyword(keywords) == KW_IS) return CLASSIS;
+           bufptr = savepoint;
+           if(get_keyword(keywords) == KW_DEFAULT) return CLASSDEFAULT;
+        }
+        break;
+    case KW_TYPE:
+        if(get_keyword(keywords) == KW_IS) return TYPEIS;
         break;
     case KW_SELECT:
         if(get_keyword(keywords) == CASE) return SELECT;
@@ -1965,88 +1991,6 @@ find_last_ampersand(char *buf,int *len)
     return FALSE;
 }
 
-#ifdef not
-static int
-is_OCL_sentinel(char **pp)
-{
-  int i;
-  char *p;
-
-  p = *pp;
-  memset(stn_cols, ' ', 6);
-  while (isspace(*p)) p++;     /* skip space */
-  if (*p == '!'){
-    /* check sentinels */
-    for (i = 0; i < 6; i++,p++){
-      if (*p == '\0' || isspace(*p)) break;
-      if (PRAGMA_flag)
-	stn_cols[i] = *p;
-      else
-	stn_cols[i] = TOLOWER(*p);
-    }
-    stn_cols[i] = '\0';
-    if (strncasecmp(stn_cols,"!ocl", 4) == 0){
-      *pp = p;
-      return TRUE;
-    }
-  }
-  return FALSE;
-}
-
-static int
-is_PRAGMA_sentinel(char **pp)
-{
-    int i;
-    char *p;
-
-    p = *pp;
-    memset(stn_cols, ' ', 6);
-    while(isspace(*p)) p++;     /* skip space */
-    if(*p == '!'){
-        /* check sentinels */
-        for(i = 0; i < 6; i++,p++) {
-            if(*p == '\0' || isspace(*p)) break;
-            if (PRAGMA_flag)
-                stn_cols[i] = *p;
-            else
-                stn_cols[i] = TOLOWER(*p);
-        }
-        stn_cols[i] = '\0';
-        if (strncasecmp(stn_cols,"!$", 2) == 0) {
-            *pp = p;
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
-static int
-is_OMP_sentinel(char **pp)
-{
-    int i;
-    char *p;
-
-    p = *pp;
-    memset(stn_cols, ' ', 6);
-    while(isspace(*p)) p++;     /* skip space */
-    if(*p == '!'){
-	/* check sentinels */
-	for(i = 0; i < 6; i++,p++){
-	    if(*p == '\0' || isspace(*p)) break;
-	    if (PRAGMA_flag)
-		stn_cols[i] = *p;
-	    else
-		stn_cols[i] = TOLOWER(*p);
-	}
-	stn_cols[i] = '\0';
-	if (strcasecmp(stn_cols,"!$omp") == 0) {
-	    *pp = p;
-	    return TRUE;
-	}
-    }
-    return FALSE;
-}
-#endif
 /* check sentinel in line */
 /* if is sentnal return 1 and set index of sentinel list to index,
    unless return 0 and no set no value to index. */
@@ -2392,9 +2336,6 @@ next_line0:
     ungetc(c,source_file);
 /* handling the case string has ';'. */
 /* should handlig for holirith here?  */
-#if 0
-    for(bp = line_buffer, inQuote = 0, inComment = FALSE;
-#endif
     for(bp = line_buffer;
         bp < &line_buffer[LINE_BUF_SIZE]; ) {
         c = getc(source_file);
@@ -2764,10 +2705,6 @@ Done:
 Last:
     memcpy(st_buffer_org, st_buffer, st_len);
     st_buffer_org[st_len] = '\0';
-
-#if 0
-    fprintf(stderr, "debug: read_initial got '%s'\n", st_buffer);
-#endif
 
     pre_read = (rv == ST_INIT) ? 1 : 0;
     return ST_ONE;
@@ -3226,6 +3163,43 @@ static void _warning_if_doubtfulLongLine(char *buf, int maxLen)
                   maxLen);
 }
 
+int
+lookup_col2()
+{
+    uint32_t count_lbrace = 0;
+    uint32_t count_rbrace = 0;
+
+    int ret = FALSE;
+
+    char *save = bufptr;
+
+    while (*bufptr != '\0') {
+        if (*bufptr == '(') {
+            count_lbrace++;
+        } else if (*bufptr == ')') {
+            count_rbrace++;
+        } else if (*bufptr == '[') {
+            count_lbrace++;
+        } else if (*bufptr == ']') {
+            count_rbrace++;
+        } else if (*bufptr == ':') {
+            if (*(bufptr+1) == ':') {
+                ret = TRUE;
+                break;
+            }
+        }
+
+        if (count_rbrace > count_lbrace) {
+            break;
+        }
+        bufptr++;
+    }
+
+    bufptr = save;
+    return ret;
+}
+
+
 static int
 power10(y)
      int y;
@@ -3479,9 +3453,6 @@ unHollerith(cur, head, dst, dstHead, dstMax, inQuotePtr, quoteChar,
     int nGet = 0;
     int rQC = '\0';
 
-#if 0
-    fprintf(stderr, "debug: hLen = %d\n", hLen);
-#endif
     if (hLen == 0) {
         /*
          * not a hollerith.
@@ -3496,9 +3467,6 @@ unHollerith(cur, head, dst, dstHead, dstMax, inQuotePtr, quoteChar,
         goto Done;
     }
 
-#if 0
-    fprintf(stderr, "debug: dst = 0x%08x, dHead = 0x%08x\n", dst, dstHead);
-#endif
     while (dst >= dstHead) {
         dst--;
         if (isdigit((int)*dst)) {
@@ -3508,9 +3476,6 @@ unHollerith(cur, head, dst, dstHead, dstMax, inQuotePtr, quoteChar,
         }
     }
     dst++;
-#if 0
-    fprintf(stderr, "debug: dst = '%s'\n", dst);
-#endif
     if (quoteChar == '\'') {
         rQC = '"';
     } else {
@@ -3752,8 +3717,9 @@ struct keyword_token keywords[ ] =
     { "allocate",       ALLOCATE },
     { "all",            KW_ALL },       /* #060 coarray */
     { "backspace",      BACKSPACE },
+    { "bind",           BIND },
     { "blockdata",      BLOCKDATA },
-    { "block",          KW_BLOCK},      /* optional */
+    { "block",          BLOCK},      /* optional */
     { "call",           CALL },
     { "case",           CASE},
     { "character",      KW_CHARACTER, },
@@ -3768,6 +3734,7 @@ struct keyword_token keywords[ ] =
     { "data",           DATA },
     { "deallocate",     DEALLOCATE},
     { "default",        KW_DEFAULT},
+    { "deferred",       DEFERRED},       /* F2003 spec */
     { "dimension",      DIMENSION  },
     { "doublecomplex",  KW_DCOMPLEX },
     { "doubleprecision",  KW_DOUBLE  },
@@ -3778,7 +3745,7 @@ struct keyword_token keywords[ ] =
     { "elsewhere",      ELSEWHERE },
     { "else",           ELSE },
     { "exit",           EXIT },
-    { "endblock",       KW_ENDBLOCK },
+    { "endblock",       ENDBLOCK },
     { "endcritical",    ENDCRITICAL },     /* #060 coarray */
     { "enddo",          ENDDO },
     { "endfile",        ENDFILE  },
@@ -3789,8 +3756,10 @@ struct keyword_token keywords[ ] =
     { "endmodule",      ENDMODULE },
     { "endprogram",     ENDPROGRAM },
     { "endselect",      ENDSELECT },
+    { "endsubmodule",   ENDSUBMODULE }, /* F2008 spec */
     { "endsubroutine",  ENDSUBROUTINE },
     { "endblockdata",   ENDBLOCKDATA },
+    { "endblock",       ENDBLOCK },
     { "endtype",        ENDTYPE },
     { "endwhere",       ENDWHERE },
     { "end",            END  },
@@ -3799,13 +3768,16 @@ struct keyword_token keywords[ ] =
     { "errorstop",      ERRORSTOP },     /* #060 coarray */
     { "error",          KW_ERROR },      /* #060 coarray */
     { "external",       EXTERNAL  },
+    { "extends",        EXTENDS  },      /* F2003 spec */
     { "elemental",      ELEMENTAL },
     { "format",         FORMAT  },
     { "function",       FUNCTION  },
     { "forall",         FORALL },
+    { "generic",        GENERIC },       /* F2003 spec */
     { "goto",           GOTO  },
     { "go",             KW_GO  },
     { "if",             LOGIF },
+    { "import",         IMPORT },
     { "images",         KW_IMAGES },    /* #060 coarray */
     { "implicit",       IMPLICIT },
     { "include",        INCLUDE },
@@ -3816,6 +3788,7 @@ struct keyword_token keywords[ ] =
     { "interface",      INTERFACE },
     { "intrinsic",      INTRINSIC },
     { "in",             KW_IN},
+    { "is",             KW_IS},
     { "kind",           KW_KIND},
     { "logical",        KW_LOGICAL  },
     { "len",            KW_LEN},
@@ -3823,7 +3796,10 @@ struct keyword_token keywords[ ] =
     { "memory",         KW_MEMORY },     /* #060 coarray */
     { "module",         MODULE},
     { "namelist",       NAMELIST },
+    { "name",           KW_NAME },
+    { "non_overridable",NON_OVERRIDABLE }, /* F2003 spec */
     { "none",           KW_NONE},
+    { "nopass",         NOPASS  },       /* F2003 spec */
     { "nullify",        NULLIFY},
     { "open",           OPEN },
     { "operator",       OPERATOR },
@@ -3832,7 +3808,9 @@ struct keyword_token keywords[ ] =
     { "only",           KW_ONLY},
     { "parameter",      PARAMETER },
     { "pause",          PAUSE  },
+    { "pass",           PASS  },         /* F2003 spec */
     { "pointer",        POINTER },
+    { "volatile",       VOLATILE },
     { "precision",      KW_PRECISION},
     { "print",          PRINT  },
     { "protected",      PROTECTED },
@@ -3854,6 +3832,7 @@ struct keyword_token keywords[ ] =
     { "sequence",       SEQUENCE },
     /*    { "static",   KW_STATIC },*/
     { "stop",           STOP },
+    { "submodule",      SUBMODULE  },  /* F2008 spec */
     { "subroutine",     SUBROUTINE  },
     { "syncall",        SYNCALL },     /* #060 coarray */
     { "syncimages",     SYNCIMAGES },  /* #060 coarray */
@@ -3863,9 +3842,11 @@ struct keyword_token keywords[ ] =
     { "then",           THEN },
     { "to",             KW_TO},
     { "type",           KW_TYPE},
+    { "class",          CLASS},
     { "undefined",      KW_UNDEFINED },
     { "unlock",         UNLOCK },        /* #060 coarray */
     { "use",            KW_USE },
+    { "value",          VALUE },
     { "where",          WHERE },
     { "while",          KW_WHILE},
     { "write",          WRITE },
@@ -3873,7 +3854,7 @@ struct keyword_token keywords[ ] =
 
 struct keyword_token end_keywords[ ] =
 {
-    { "block",          KW_BLOCK },
+    { "block",          BLOCK },
     { "blockdata",      BLOCKDATA },
     { "critical",       ENDCRITICAL },     /* #060 coarray */
     { "do",             ENDDO },
@@ -3884,11 +3865,29 @@ struct keyword_token end_keywords[ ] =
     { "interface",      ENDINTERFACE },
     { "module",         ENDMODULE },
     { "program",        ENDPROGRAM },
+    { "procedure",      ENDPROCEDURE },
     { "select",         ENDSELECT },
+    { "submodule",      ENDSUBMODULE },
     { "subroutine",     ENDSUBROUTINE },
     { "type",           ENDTYPE },
     { "where",          ENDWHERE },
     { 0, 0 }};
+
+
+struct keyword_token type_keywords[ ] =
+{
+    { "complex",          KW_COMPLEX },
+    { "doublecomplex",    KW_DCOMPLEX },
+    { "doubleprecision",  KW_DOUBLE  },
+    { "double",           KW_DBL },
+    { "integer",          KW_INTEGER  },
+    { "logical",          KW_LOGICAL  },
+    { "real",             KW_REAL },
+    { "type",             KW_TYPE},
+    { "class",            CLASS},
+    { "character",        KW_CHARACTER, },
+    { 0, 0 }};
+
 
 /*
  * lex for OpenMP part
@@ -3979,35 +3978,6 @@ XMP_lex_token()
     }
     return token();
 }
-
-#ifdef not
-static int
-is_XMP_sentinel(char **pp)
-{
-    int i;
-    char *p;
-
-    p = *pp;
-    memset(stn_cols, ' ', 6);
-    while(isspace(*p)) p++;     /* skip space */
-    if(*p == '!'){
-	/* check sentinels */
-	for(i = 0; i < 6; i++,p++){
-	    if(*p == '\0' || isspace(*p)) break;
-	    if (PRAGMA_flag)
-		stn_cols[i] = *p;
-	    else
-		stn_cols[i] = TOLOWER(*p);
-	}
-	stn_cols[i] = '\0';
-	if (strcasecmp(stn_cols,"!$xmp") == 0) {
-	    *pp = p;
-	    return TRUE;
-	}
-    }
-    return FALSE;
-}
-#endif
 
 /* sentinel list functions */
 /* initialize sentinel list */

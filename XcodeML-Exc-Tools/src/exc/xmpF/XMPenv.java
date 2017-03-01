@@ -14,7 +14,9 @@ import exc.block.*;
 
 import xcodeml.util.XmOption;
 
-/* this is for Fortran environment:
+/** 
+ * XMPenv represents the environment structure
+ * this is for Fortran environment:
  *   no global declaration
  */
 
@@ -29,14 +31,25 @@ public class XMPenv {
   
   public XMPenv() { }
 
+  /**
+   * Constructor with linked XobjectFile environment.
+   */
   public XMPenv(XobjectFile env) {
     this.env = env;
   }
 
+  /**
+   * Return the XobjectFile which this XMPenv belongs to.
+   */
   public XobjectFile getEnv() {
     return env;
   }
 
+  /**
+   * Find XMPmodule object of the give module name in this XMPenv environment.
+   *  This method reads .xmod file to create the XMPmodule object for it.
+   *  If the module is already read, then return it.
+   */
   public XMPmodule findModule(String module_name){
     for(XMPmodule mod : modules){
       if(module_name.equals(mod.getModuleName())) return mod;
@@ -47,15 +60,26 @@ public class XMPenv {
     return module;
   }
 
+  /**
+   * add the given name of the module to 
+   */
   public void useModule(String module_name){
     XMPsymbolTable table = getXMPsymbolTable();
     table.addUseModule(module_name);
   }
 
+  /**
+   * return the found modules as a vector of XMPmodule.
+   */
   public Vector<XMPmodule> getModules(){
     return modules;
   }
 
+  /**
+   * Set the given definition as the current definition in this XMPenv.
+   *  When setting the current definition, set XMP sybmol table associcated
+   *  to the current definition.
+   */
   // set current definition and set symbol table each DEF
   public void setCurrentDef(FuncDefBlock def){
     current_def = def;
@@ -67,17 +91,33 @@ public class XMPenv {
     is_module = def.getDef().isFmoduleDef();
   }
 
+  /**
+   * Return the crrent definition setted by "setCurrentDef".
+   */
   FuncDefBlock getCurrentDef() { return current_def; }
   
+  /**
+   * Return wheter the current definition is a module.
+   */
   public boolean currentDefIsModule() { return is_module; }
 
+  /**
+   * Return the name of the current definition.
+   */
   public String currentDefName() { return current_def.getDef().getName(); }
 
+  /**
+   * Static method to get the XMP sybmol table asscoated with 
+   *  the give definition.
+   */
   // get symbol table bind to XobjectDef def
   public static XMPsymbolTable getXMPsymbolTable(XobjectDef def) {
     return (XMPsymbolTable)def.getProp(SYMBOL_TABLE);
   }
 
+  /**
+   *  Return XMP symbol table assocated with the current defintion.
+   */
   public XMPsymbolTable getXMPsymbolTable() {
     return getXMPsymbolTable(current_def.getDef());
   }
@@ -85,28 +125,61 @@ public class XMPenv {
   /* 
    * Symbol management: external func
    */
+  /**
+   * Declare an external identifier with the given name and type 
+   *  in this environment and return the Ident object of the identifier.
+   */
   public Ident declExternIdent(String name, Xtype type) {
     return declIdent(name,type,true,null);
   }
 
   // Internal ident is used in the same way as static
+  /**
+   * Declare a local (internal) identifier with the given name and type 
+   *  in this environment and return the Ident object of the identifier.
+   */
   public Ident declInternIdent(String name, Xtype type) {
     return declIdent(name,type,false,null);
   }
 
+  public Ident declInternIdent(String name, Xtype type, Block b) {
+    return declIdent(name,type,false,b);
+  }
+
   // this is local
+  /**
+   * Declare a local (internal) identifier with the given name and type
+   *  in this environment and return the Ident object of the identifier.
+   *  The parameter "block" specifies the block where the identifier 
+   *  is declared. 
+   */
   public Ident declIdent(String name, Xtype type, Block block) {
     return declIdent(name,type,false,block);
   }
 
+  /**
+   * Declare a local (internal) identifier with the given name and type
+   *  in this environment and return the Ident object of the identifier.
+   *  The parameter "block" is not specified, then it is static.
+   */
   // this is static
   public Ident declIdent(String name, Xtype type) {
     return declIdent(name,type,false,null);
   }
 
+  /**
+   * Declare an identifier with the given name and type.
+   * the arguemnt is_external specifies whther it is declared external or not.
+   * If it is declared as local identiier (is_external == false), the block
+   * where the identifier is declared can be specified.
+   */
   public Ident declIdent(String name, Xtype type, 
 			 boolean is_external, Block block) {
-    BlockList body= current_def.getBlock().getBody();
+    BlockList body = null;
+    if (block != null)
+      block = block.findParentBlockStmt();
+    body = (block != null) ? block.getBody() : current_def.getBlock().getBody();
+
     Xobject id_list = body.getIdentList();
     if(id_list != null){
       for(Xobject o : (XobjList)id_list){
@@ -127,7 +200,14 @@ public class XMPenv {
     return id;
   }
 
+  /**
+   * Remove the identifier specified with the name and block 
+   *  where the identifier is decalred, in this XMPenv.
+   */
   public void removeIdent(String name, Block block){
+
+    if (block != null && block.removeVarIdent(name))
+      return;
 
     BlockList body= current_def.getBlock().getBody();
 
@@ -152,11 +232,20 @@ public class XMPenv {
 
   }    
 
+  /**
+   * Declare the identifier as intrinsic function with the name and type.
+   *  (use 
+   */
   public Ident declIntrinsicIdent(String name, Xtype type) {
     return Ident.Fident(name,type,false,false,null);
   }
 
   // Id is Fint8type
+  /**
+   * Declare the identifer of Fortran integer 8 with the name and the block 
+   *  where the identifer is declared. 
+   *  This identifier is used to store object ID.
+   */
   public Ident declObjectId(String objectName, Block block) {
     Xtype t = Xtype.Fint8Type;
 //     if(is_module){
@@ -166,17 +255,32 @@ public class XMPenv {
     return declIdent(objectName, t, block);
   }
 
+  /**
+   * Declare the identifer of Fortran integer 8 with the name and the block 
+   *  where the identifer is declared. 
+   *  This identifier is used to store object ID.
+   *  The initial value is specified as a paramter "init".
+   */
   public Ident declObjectId(String objectName, Block block, Xobject init) {
-    BlockList body = current_def.getBlock().getBody();
+    if (block != null)
+      block = block.findParentBlockStmt();
+    BlockList body = ((block != null) ? block : current_def.getBlock()).getBody();
     return body.declLocalIdent(objectName, Xtype.Fint8Type, StorageClass.FLOCAL, init);
   }
 
+  /**
+   * Finalize this XMPenv. 
+   */
   public void finalize() {
     env.collectAllTypes();
     env.fixupTypeRef();
   }
 
   // intrinsic
+  /**
+   * Create an identifier for intrinsic function with the type and name.
+   *  (use declIntrinsicIdent ???)
+   */
   public Ident FintrinsicIdent(Xtype t, String name){
     Xtype tt;
     tt = t.copy();
@@ -187,45 +291,66 @@ public class XMPenv {
   /*
    *  Serch symbols nested definitions in Fortran
    */
+  /**
+   * Search the identifier specified by the given name from the scope 
+   *  of the given block.
+   */
   public Ident findVarIdent(String name, Block b){
-    for(XobjectDef def = current_def.getDef(); def != null; 
-	def = def.getParent()){
-      Xobject id_list = def.getDef().getArg(1);
-      for(Xobject i: (XobjList)id_list){
-	if(i.getName().equals(name)){
-	  Ident id = (Ident)i;
-	  String mod_name = id.getFdeclaredModule();
-	  if(mod_name == null) return id;
-
-	  /* check module */
-	  XMPmodule mod = findModule(mod_name);
-	  return mod.findVarIdent(name,null);
-	}
+    Ident id = null;  // find ident, in this block(b) or parent
+    if (b == null || (id = b.findVarIdent(name)) == null)
+out:{
+      for(XobjectDef def = current_def.getDef(); def != null;
+	  def = def.getParent()){
+        Xobject id_list = def.getDef().getArg(1);
+        for(Xobject i: (XobjList)id_list){
+	  if(i.getName().equals(name)){
+	    id = (Ident)i;
+            break out;
+	  }
+        }
       }
-    }
-    return null;
+      return null;
+    } /* out */
+
+    String mod_name = id.getFdeclaredModule();
+    if(mod_name == null) return id;
+
+    /* check module */
+    XMPmodule mod = findModule(mod_name);
+    return mod.findVarIdent(name,null);
+  }
+
+  public Block findVarIdentBlock(String name, Block b){
+    return (b != null) ? b.findVarIdentBlock(name) : null;
   }
 
   /*
    * put/get XMPobject (nodes and template)
    */
+  /**
+   * 
+   */
   public void declXMPobject(XMPobject obj, Block block) {
-    // in case of fortran, block is ingored
-    declXMPobject(obj);
-  }
-
-  public void declXMPobject(XMPobject obj) {
-    XMPsymbolTable table = getXMPsymbolTable();
+    XMPsymbolTable table = null;
+    if (block != null) {
+      block = block.findParentBlockStmt();
+      if (block != null) {
+        table = block.getXMPsymbolTable();
+      }
+    }
+    if (table == null)
+      table = getXMPsymbolTable();
     table.putXMPobject(obj);
   }
 
   public XMPobject findXMPobject(String name, Block block){
-    // in case of fortran, block is ingored
-    return findXMPobject(name);
-  }
-
-  public XMPobject findXMPobject(String name) {
     XMPobject o;
+
+    if (block != null) {
+        o = block.findXMPobject(name);
+        if(o != null)
+          return o;
+    }
 
     for(XobjectDef def = current_def.getDef(); 
 	def != null; def = def.getParent()){
@@ -248,11 +373,7 @@ public class XMPenv {
    * find XMPnodes
    */
   public XMPnodes findXMPnodes(String name, Block block){
-    return findXMPnodes(name);
-  }
-
-  public XMPnodes findXMPnodes(String name) {
-    XMPobject o = findXMPobject(name);
+    XMPobject o = findXMPobject(name, block);
     if (o != null && o.getKind() == XMPobject.NODES) 
       return (XMPnodes)o;
     return null;
@@ -262,11 +383,7 @@ public class XMPenv {
    * find XMPtemplate
    */
    public XMPtemplate findXMPtemplate(String name, Block block){
-     return findXMPtemplate(name);
-   }
-
-   public XMPtemplate findXMPtemplate(String name) {
-     XMPobject o = findXMPobject(name);
+     XMPobject o = findXMPobject(name, block);
      if (o != null && o.getKind() == XMPobject.TEMPLATE) 
        return (XMPtemplate)o;
      return null;
@@ -276,11 +393,15 @@ public class XMPenv {
    * decl/find XMParray
    */
   public void declXMParray(XMParray array, Block block) {
-    declXMParray(array);
-  }
-
-  public void declXMParray(XMParray array) {
-    XMPsymbolTable table = getXMPsymbolTable();
+    XMPsymbolTable table = null;
+    if (block != null) {
+      block = block.findParentBlockStmt();
+      if (block != null) {
+        table = block.getXMPsymbolTable();
+      }
+    }
+    if (table == null)
+      table = getXMPsymbolTable();
     table.putXMParray(array);
   }
 
@@ -322,7 +443,7 @@ public class XMPenv {
   Ident getNullIdent(Block b){
     Ident xmp_null = findVarIdent("XMP_NULL", b);
     if (xmp_null == null){
-      xmp_null = declObjectId("XMP_NULL", null,
+      xmp_null = declObjectId("XMP_NULL", b,
 			      Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0)));
     }
     return xmp_null;

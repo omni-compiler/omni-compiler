@@ -1,4 +1,4 @@
-Implementation Status version 1.0.3
+Implementation Status version 1.1.1
 ---------------------------------------
 # Global-View
 * Mot support block(n) distribution in distribute directive in XMP/C
@@ -6,6 +6,8 @@ Implementation Status version 1.0.3
 * Not support global-IO in XMP/C
 * Not support tasks directive
 * In a task construct, a section of a node array or a template shall not appear in the on clause of a directive.
+* In XMP/C for function prototype, a multidimensional array is used in argument of the function,
+  the function prototype can not be used.
 
 # Local-View
 * Not support "coarray" and "image" directives in the XMP Specification v1.2.1

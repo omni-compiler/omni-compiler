@@ -232,9 +232,23 @@ static void second_pass_expv_scan(expv v)
       second_pass_expv_scan(v2);
     }
     break;
+  case F03_SELECTTYPE_STATEMENT:
+    {
+      expv v3, v4;
+      list lp = EXPR_LIST(v);   /* condition & body */
+      v3 = EXPR_ARG3(v);        /* ConstructName */
+      v4 = EXPR_ARG4(v);        /* associate name */
+
+      /* LIST_ITEM(lp) : select(var) ?*/
+      if(LIST_NEXT(lp) && LIST_ITEM(LIST_NEXT(lp))) {
+        FOR_ITEMS_IN_LIST(lp, LIST_ITEM(LIST_NEXT(lp)))
+          second_pass_expv_scan(LIST_ITEM(lp));
+      }
+    }
+    break;
   case F_SELECTCASE_STATEMENT:
     {
-      expv v3;
+      expv v3, v4;
       list lp = EXPR_LIST(v);   /* condition & body */
       v3 = EXPR_ARG3(v);        /* ConstructName */
 
@@ -253,6 +267,8 @@ static void second_pass_expv_scan(expv v)
   case F_COMPGOTO_STATEMENT:
   case STATEMENT_LABEL:
     break;
+  case F03_TYPEIS_STATEMENT:
+  case F03_CLASSIS_STATEMENT:
   case F_CASELABEL_STATEMENT:
     {
       expv v1, v2, v3;
@@ -302,6 +318,7 @@ static void second_pass_expv_scan(expv v)
   case ARRAY_REF:
   case F_SUBSTR_REF:
   case F95_ARRAY_CONSTRUCTOR:
+  case F03_TYPEIS_STATEMENT:
   case F95_STRUCT_CONSTRUCTOR:
 
   case XMP_COARRAY_REF:
@@ -353,7 +370,9 @@ static void second_pass_expv_scan(expv v)
   case FIRST_EXECUTION_POINT:
   case F95_INTERFACE_STATEMENT:
   case F95_USE_STATEMENT:
+  case F03_USE_INTRINSIC_STATEMENT:
   case F95_USE_ONLY_STATEMENT:
+  case F03_USE_ONLY_INTRINSIC_STATEMENT:
 
   /*
    * invalid or no corresponding tag
@@ -447,6 +466,8 @@ static void second_pass_expv_scan(expv v)
   case F95_PUBLIC_SPEC:
   case F95_PRIVATE_SPEC:
   case F03_PROTECTED_SPEC:
+  case F03_BIND_SPEC:
+  case F03_VALUE_SPEC:
   case F95_IN_EXTENT:
   case F95_OUT_EXTENT:
   case F95_INOUT_EXTENT:
@@ -641,7 +662,7 @@ int second_pass()
           ID id;
           FOREACH_ID(id, EXT_PROC_ID_LIST(sp_list->nest_ext_id[i])){
             if(ID_SYM(id) == EXPR_SYM(sp_list->info.ep)){
-              EXPV_TYPE(sp_list->info.ep) = ID_TYPE(id);
+              EXPV_TYPE(sp_list->info.ep) = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id));
               sp_list = unlink_sp_list(sp_list);
               is_exist = 1;
               break;

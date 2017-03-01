@@ -2,11 +2,13 @@
 !$xmp nodes p(8)
 
     real, allocatable :: a(:,:)[:]
-!!!$xmp coarray on p :: a
     real, allocatable :: b(:,:)[:]
     real, allocatable :: c(:,:)[:]
     real, allocatable :: d(:,:)[:]
     me = this_image()
+    if (xmpf_coarray_uses_fjrdma()) then
+       if (me==1) write(*,*) "skip alloc_subnodes2.f90 due to FJRDMA"
+    endif
 
     tmp=1234.567
     do i=1,20
@@ -23,9 +25,6 @@
        !! at least 2 nodes execute.
        allocate(c(1300,1000)[*],d(1001,1001)[*])
        if (this_image()==2) then
-!!!!!!!!!!!!!!!!!
-!!          c(1000,i)=a(44,44)[n1]
-!!!!!!!!!!!!!!!!!
           c(1000,i)=a(44,44)[1]
        endif
        sync all
@@ -58,7 +57,6 @@
 
 
   subroutine final_msg(nerr)
-!!     include 'xmp_coarray.h'
     if (nerr==0) then 
        print '("[",i0,"] OK")', this_image()
     else

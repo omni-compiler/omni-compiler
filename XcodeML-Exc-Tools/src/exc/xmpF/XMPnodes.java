@@ -73,7 +73,11 @@ public class XMPnodes extends XMPobject {
 
     // check name collision, name = arg(1)
     _name = decl.getArg(0).getString();
-    if(env.findXMPobject(_name,pb) != null){
+    Block blockStmt = (pb != null) ? pb.findParentBlockStmt() : null;
+    if(blockStmt != null &&
+       blockStmt.getXMPobject(_name) != null ||
+       blockStmt == null &&
+       env.findXMPobject(_name,null) != null    ){
       XMP.errorAt(pb,"XMP object '"+_name+"' is already declared");
       return;
     }
@@ -139,7 +143,7 @@ public class XMPnodes extends XMPobject {
    *    _xmpf_nodes_init_EXEC__(n_1)
    *    _xmpf_nodes_init_NODES__(n_1,nodes_ref)
    */
-  public void buildConstructor(BlockList body, XMPenv env){
+  public void buildConstructor(BlockList body, XMPenv env, Block block){
 
     BlockList b;
     if (_is_saveDesc && !env.currentDefIsModule()){
@@ -164,11 +168,11 @@ public class XMPnodes extends XMPobject {
       				    Xcons.List(Xcode.F_VALUE, Xcons.FlogicalConstant(false)));
     }
 
-    Ident f = env.declInternIdent(XMP.nodes_alloc_f,Xtype.FsubroutineType);
+    Ident f = env.declInternIdent(XMP.nodes_alloc_f,Xtype.FsubroutineType,block);
     Xobject args = Xcons.List(_descId.Ref(),Xcons.IntConstant(_dim));
     b.add(f.callSubroutine(args));
 
-    f = env.declInternIdent(XMP.nodes_dim_size_f,Xtype.FsubroutineType);
+    f = env.declInternIdent(XMP.nodes_dim_size_f,Xtype.FsubroutineType,block);
     for(int i = 0; i < _dim; i++){
       Xobject size = _sizeVector.elementAt(i).getSize();
       if(size == null) size = Xcons.IntConstant(-1);
@@ -178,16 +182,16 @@ public class XMPnodes extends XMPobject {
 
     switch(inheritType){
     case INHERIT_GLOBAL:
-      f = env.declInternIdent(XMP.nodes_init_GLOBAL_f,Xtype.FsubroutineType);
+      f = env.declInternIdent(XMP.nodes_init_GLOBAL_f,Xtype.FsubroutineType,block);
       b.add(f.callSubroutine(Xcons.List(_descId.Ref())));
       break;
     case INHERIT_EXEC:
-      f = env.declInternIdent(XMP.nodes_init_EXEC_f,Xtype.FsubroutineType);
+      f = env.declInternIdent(XMP.nodes_init_EXEC_f,Xtype.FsubroutineType,block);
       b.add(f.callSubroutine(Xcons.List(_descId.Ref())));
       break;
     case INHERIT_NODES:
       b.add(nodesRef.buildConstructor(env));
-      f = env.declInternIdent(XMP.nodes_init_NODES_f, Xtype.FsubroutineType);
+      f = env.declInternIdent(XMP.nodes_init_NODES_f, Xtype.FsubroutineType,block);
       b.add(f.callSubroutine(Xcons.List(_descId.Ref(), nodesRef.getDescId().Ref())));
       break;
     default:
@@ -195,7 +199,7 @@ public class XMPnodes extends XMPobject {
     }
 
     if(XmOption.isXcalableACC()) {
-      f = env.declInternIdent(XMP.nodes_get_dim_info_f, Xtype.FsubroutineType);
+      f = env.declInternIdent(XMP.nodes_get_dim_info_f, Xtype.FsubroutineType,block);
       for (int i = 0; i < _dim; i++) {
         Ident sizeVar = _sizeVector.elementAt(i).getNodeSizeVar();
         Ident rankVar = _sizeVector.elementAt(i).getNodeRankVar();
@@ -215,9 +219,9 @@ public class XMPnodes extends XMPobject {
 
   }
 
-  public void buildDestructor(BlockList body, XMPenv env){
+  public void buildDestructor(BlockList body, XMPenv env, Block block){
     if (!_is_saveDesc){
-      Ident f = env.declInternIdent(XMP.nodes_dealloc_f,Xtype.FsubroutineType);
+      Ident f = env.declInternIdent(XMP.nodes_dealloc_f,Xtype.FsubroutineType,block);
       Xobject args = Xcons.List(_descId.Ref());
       body.add(f.callSubroutine(args));
     }

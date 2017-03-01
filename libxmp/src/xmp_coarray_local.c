@@ -2,6 +2,425 @@
 #include "xmp_internal.h"
 #include "xmp_math_function.h"
 
+/*************************************************************************/
+/* DESCRIPTION : Calculate chunk size                                    */
+/* ARGUMENT    : [IN] copy_chunk_dim : Maximum dimensions of which array */
+/*                                     has all elements                  */
+/*               [IN] *array         : Information of array              */
+/* RETURN     : Chunk size for copy                                      */
+/* EXAMPLE    :                                                          */
+/*   int a[10][20];                                                      */
+/*   a[:][:]     (copy_chunk_dim = 0) -> 10 * 20 * sizeof(int)           */
+/*   a[0][:]     (copy_chunk_dim = 1) -> 1  * 20 * sizeof(int)           */
+/*   a[0:2][:]   (copy_chunk_dim = 1) -> 2  * 20 * sizeof(int)           */
+/*   a[0:2:2][:] (copy_chunk_dim = 1) -> 1  * 20 * sizeof(int)           */
+/*   a[0][0:3]   (copy_chunk_dim = 2) -> 3 * sizeof(int)                 */
+/*   a[:][0]     (copy_chunk_dim = 2) -> 1 * sizeof(int)                 */
+/*   a[0][:10:2] (copy_chunk_dim = 2) -> 1 * sizeof(int)                 */
+/*************************************************************************/
+size_t _XMP_calc_copy_chunk(const int copy_chunk_dim, const _XMP_array_section_t* array)
+{
+  if(copy_chunk_dim == 0)   // All elements are copied
+    return array[0].length * array[0].distance;
+
+  if(array[copy_chunk_dim-1].stride == 1)
+    return array[copy_chunk_dim-1].length * array[copy_chunk_dim-1].distance;
+  else
+    return array[copy_chunk_dim-1].distance;
+}
+
+/******************************************************************/
+/* DESCRIPTION : Set stride for local copy                        */
+/* ARGUMENT    : [OUT] *stride    : Stride for local copy         */
+/*               [IN] *array_info : Information of array          */
+/*               [IN] dims        : Number of dimensions of array */
+/*               [IN] chunk_size  : Chunk size for copy           */
+/*               [IN] copy_elmts  : Num of elements for copy      */
+/******************************************************************/
+static void _XMP_set_stride(size_t* stride, const _XMP_array_section_t* array_info, const int dims, 
+			    const size_t chunk_size, const size_t copy_elmts)
+{
+  // Temporally variables to reduce offset calculation
+  size_t stride_offset[dims], tmp[dims], chunk_len, num = 0;
+  
+  for(int i=0;i<dims;i++)
+    stride_offset[i] = array_info[i].stride * array_info[i].distance;
+
+  // array_info[dims-1].distance is an element size
+  // chunk_size >= array_info[dims-1].distance
+  switch (dims){
+  case 1:
+    chunk_len = chunk_size / array_info[0].distance;
+    for(size_t i=0;i<array_info[0].length;i+=chunk_len){
+      stride[num++] = stride_offset[0] * i;
+    }
+    break;
+  case 2:
+    if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+          stride[num++] = tmp[0] + tmp[1];
+        }
+      }
+    }
+    else{                               // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0;i<array_info[0].length;i+=chunk_len){
+	stride[num++] = stride_offset[0] * i;
+      }
+    }
+    break;
+  case 3:
+    if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+      chunk_len = chunk_size / array_info[2].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+	  for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+	    tmp[2] = stride_offset[2] * k;
+	    stride[num++] = tmp[0] + tmp[1] + tmp[2];
+	  }
+        }
+      }
+    }
+    else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+	  stride[num++] = tmp[0] + tmp[1];
+	}
+      }
+    }
+    else{                                   // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0;i<array_info[0].length;i+=chunk_len){
+        stride[num++] = stride_offset[0] * i;
+      }
+    }
+    break;
+  case 4:
+    if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+      chunk_len = chunk_size / array_info[3].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+	    for(size_t l=0;l<array_info[3].length;l+=chunk_len){
+	      tmp[3] = stride_offset[3] * l;
+	      stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+	    }
+          }
+        }
+      }
+    }
+    else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+      chunk_len = chunk_size / array_info[2].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+	tmp[0] = stride_offset[0] * i;
+	for(size_t j=0;j<array_info[1].length;j++){
+	  tmp[1] = stride_offset[1] * j;
+	  for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+	    tmp[2] = stride_offset[2] * k;
+	    stride[num++] = tmp[0] + tmp[1] + tmp[2];
+	  }
+	}
+      }
+    }
+    else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+          stride[num++] = tmp[0] + tmp[1];
+        }
+      }
+    }
+    else{                                   // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0;i<array_info[0].length;i+=chunk_len){
+        stride[num++] = stride_offset[0] * i;
+      }
+    }
+    break;
+  case 5:
+    if(array_info[3].distance > chunk_size){ // array_info[3].distance > chunk_size >= array_info[4].distance
+      chunk_len = chunk_size / array_info[4].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l++){
+              tmp[3] = stride_offset[3] * l;
+	      for(size_t m=0;m<array_info[4].length;m+=chunk_len){
+		tmp[4] = stride_offset[4] * m;
+		stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
+	      }
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+      chunk_len = chunk_size / array_info[3].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l+=chunk_len){
+              tmp[3] = stride_offset[3] * l;
+              stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+      chunk_len = chunk_size / array_info[2].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+            tmp[2] = stride_offset[2] * k;
+            stride[num++] = tmp[0] + tmp[1] + tmp[2];
+          }
+        }
+      }
+    }
+    else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+          stride[num++] = tmp[0] + tmp[1];
+        }
+      }
+    }
+    else{                                   // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0;i<array_info[0].length;i+=chunk_len){
+        stride[num++] = stride_offset[0] * i;
+      }
+    }
+    break;
+  case 6:
+    if(array_info[4].distance > chunk_size){ // array_info[4].distance > chunk_size >= array_info[5].distance
+      chunk_len = chunk_size / array_info[5].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l++){
+              tmp[3] = stride_offset[3] * l;
+              for(size_t m=0;m<array_info[4].length;m++){
+                tmp[4] = stride_offset[4] * m;
+		for(size_t n=0;n<array_info[5].length;n+=chunk_len){
+		  tmp[5] = stride_offset[5] * n;
+		  stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5];
+		}
+              }
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[3].distance > chunk_size){ // array_info[3].distance > chunk_size >= array_info[4].distance
+      chunk_len = chunk_size / array_info[4].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l++){
+              tmp[3] = stride_offset[3] * l;
+              for(size_t m=0;m<array_info[4].length;m+=chunk_len){
+                tmp[4] = stride_offset[4] * m;
+                stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
+              }
+            }
+          }
+        }
+      }
+    }
+    if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+      chunk_len = chunk_size / array_info[3].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l+=chunk_len){
+              tmp[3] = stride_offset[3] * l;
+              stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+      chunk_len = chunk_size / array_info[2].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+            tmp[2] = stride_offset[2] * k;
+            stride[num++] = tmp[0] + tmp[1] + tmp[2];
+          }
+        }
+      }
+    }
+    else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+          stride[num++] = tmp[0] + tmp[1];
+        }
+      }
+    }
+    else{                                   // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0;i<array_info[0].length;i+=chunk_len){
+        stride[num++] = stride_offset[0] * i;
+      }
+    }
+    break;
+  case 7:
+    if(array_info[5].distance > chunk_size){ // array_info[5].distance > chunk_size >= array_info[6].distance
+      chunk_len = chunk_size / array_info[6].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l++){
+              tmp[3] = stride_offset[3] * l;
+              for(size_t m=0;m<array_info[4].length;m++){
+                tmp[4] = stride_offset[4] * m;
+                for(size_t n=0;n<array_info[5].length;n++){
+                  tmp[5] = stride_offset[5] * n;
+		  for(size_t p=0;p<array_info[6].length;p+=chunk_len){
+		    tmp[6] = stride_offset[6] * p;
+		    stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6];
+		  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[4].distance > chunk_size){ // array_info[4].distance > chunk_size >= array_info[5].distance
+      chunk_len = chunk_size / array_info[5].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l++){
+              tmp[3] = stride_offset[3] * l;
+              for(size_t m=0;m<array_info[4].length;m++){
+                tmp[4] = stride_offset[4] * m;
+                for(size_t n=0;n<array_info[5].length;n+=chunk_len){
+                  tmp[5] = stride_offset[5] * n;
+                  stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5];
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[3].distance > chunk_size){ // array_info[3].distance > chunk_size >= array_info[4].distance
+      chunk_len = chunk_size / array_info[4].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l++){
+              tmp[3] = stride_offset[3] * l;
+              for(size_t m=0;m<array_info[4].length;m+=chunk_len){
+                tmp[4] = stride_offset[4] * m;
+                stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4];
+              }
+            }
+          }
+        }
+      }
+    }
+    if(array_info[2].distance > chunk_size){ // array_info[2].distance > chunk_size >= array_info[3].distance
+      chunk_len = chunk_size / array_info[3].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k++){
+            tmp[2] = stride_offset[2] * k;
+            for(size_t l=0;l<array_info[3].length;l+=chunk_len){
+              tmp[3] = stride_offset[3] * l;
+              stride[num++] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+            }
+          }
+        }
+      }
+    }
+    else if(array_info[1].distance > chunk_size){ // array_info[1].distance > chunk_size >= array_info[2].distance
+      chunk_len = chunk_size / array_info[2].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j++){
+          tmp[1] = stride_offset[1] * j;
+          for(size_t k=0;k<array_info[2].length;k+=chunk_len){
+            tmp[2] = stride_offset[2] * k;
+            stride[num++] = tmp[0] + tmp[1] + tmp[2];
+          }
+        }
+      }
+    }
+    else if(array_info[0].distance > chunk_size){ // array_info[0].distance > chunk_size >= array_info[1].distance
+      chunk_len = chunk_size / array_info[1].distance;
+      for(size_t i=0;i<array_info[0].length;i++){
+        tmp[0] = stride_offset[0] * i;
+        for(size_t j=0;j<array_info[1].length;j+=chunk_len){
+          tmp[1] = stride_offset[1] * j;
+          stride[num++] = tmp[0] + tmp[1];
+        }
+      }
+    }
+    else{                                   // chunk_size >= array_info[0].distance
+      chunk_len = chunk_size / array_info[0].distance;
+      for(size_t i=0;i<array_info[0].length;i+=chunk_len){
+        stride[num++] = stride_offset[0] * i;
+      }
+    }
+    break;
+  }
+}
+
 /********************************************************************/
 /* DESCRIPTION : Check shape of two arrays                          */
 /* ARGUMENT    : [IN] array1_dims : Number of dimensions of array 1 */
@@ -30,7 +449,7 @@ static int _is_the_same_shape(const int array1_dims, const int array2_dims,
 }
 
 /************************************************************************************/
-/* DESCRIPTION : Execute copy operation in only local node for NON-continuous array */
+/* DESCRIPTION : Execute copy operation in only local node for NON-contiguous array */
 /* ARGUMENT    : [OUT] *dst     : Pointer of destination array                      */
 /*               [IN] *src      : Pointer of source array                           */
 /*               [IN] dst_dims  : Number of dimensions of destination array         */
@@ -45,7 +464,7 @@ static int _is_the_same_shape(const int array1_dims, const int array2_dims,
 /*   if(xmp_node_num() == 1)                                                        */
 /*     a[0:100:2]:[1] = b[0:100:3]; // a[] is a dst, b[] is a src                   */
 /************************************************************************************/
-static void _local_NON_continuous_copy(char *dst, const char *src, const int dst_dims, const int src_dims,
+static void _local_NON_contiguous_copy(char *dst, const char *src, const int dst_dims, const int src_dims,
 				       const _XMP_array_section_t *dst_info, const _XMP_array_section_t *src_info,
 				       const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size)
 {
@@ -106,8 +525,8 @@ static void _local_NON_continuous_copy(char *dst, const char *src, const int dst
 /* DESCRIPTION : Execute put operation in only local node                              */
 /* ARGUMENT    : [OUT] *dst_desc     : Descriptor of destination coarray               */
 /*               [IN] *src           : Pointer of source array                         */
-/*               [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE) */
-/*               [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)      */
+/*               [IN] dst_contiguous : Is destination region contiguous ? (TRUE/FALSE) */
+/*               [IN] src_contiguous : Is source region contiguous ? (TRUE/FALSE)      */
 /*               [IN] dst_dims       : Number of dimensions of destination array       */
 /*               [IN] src_dims       : Number of dimensions of source array            */
 /*               [IN] *dst_info      : Information of destination array                */
@@ -120,7 +539,7 @@ static void _local_NON_continuous_copy(char *dst, const char *src, const int dst
 /*   if(xmp_node_num() == 1)                                                           */
 /*     a[:]:[1] = b[:];  // a[] is a dst, b[] is a src.                                */
 /***************************************************************************************/
-void _XMP_local_put(_XMP_coarray_t *dst_desc, const void *src, const int dst_continuous, const int src_continuous, 
+void _XMP_local_put(_XMP_coarray_t *dst_desc, const void *src, const int dst_contiguous, const int src_contiguous, 
 		    const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
 		    const _XMP_array_section_t *src_info, const size_t dst_elmts, const size_t src_elmts)
 {
@@ -128,11 +547,11 @@ void _XMP_local_put(_XMP_coarray_t *dst_desc, const void *src, const int dst_con
   size_t src_offset = _XMP_get_offset(src_info, src_dims);
   size_t elmt_size  = dst_desc->elmt_size;
 
-  if(dst_continuous && src_continuous)
-    _XMP_local_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src+src_offset,
+  if(dst_contiguous && src_contiguous)
+    _XMP_local_contiguous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src+src_offset,
 			       dst_elmts, src_elmts, elmt_size);
   else
-    _local_NON_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src+src_offset,
+    _local_NON_contiguous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src+src_offset,
 			       dst_dims, src_dims, dst_info, src_info, dst_elmts, src_elmts, elmt_size);
 }
 
@@ -140,8 +559,8 @@ void _XMP_local_put(_XMP_coarray_t *dst_desc, const void *src, const int dst_con
 /* DESCRIPTION : Execute get operation in only local node                               */
 /* ARGUMENT    : [OUT] *dst          : Pointer of destination array                     */
 /*               [IN] *src_desc      : Descriptor of source coarray                     */
-/*               [IN] dst_continuous : Is destination region continuous ? (TRUE/FALSE)  */
-/*               [IN] src_continuous : Is source region continuous ? (TRUE/FALSE)       */
+/*               [IN] dst_contiguous : Is destination region contiguous ? (TRUE/FALSE)  */
+/*               [IN] src_contiguous : Is source region contiguous ? (TRUE/FALSE)       */
 /*               [IN] dst_dims       : Number of dimensions of destination array        */
 /*               [IN] src_dims       : Number of dimensions of source array             */
 /*               [IN] *dst_info      : Information of destination array                 */
@@ -154,7 +573,7 @@ void _XMP_local_put(_XMP_coarray_t *dst_desc, const void *src, const int dst_con
 /*   if(xmp_node_num() == 1)                                                            */
 /*     a[:] = b[:]:[1];  // a[] is a dst, b[] is a src.                                 */
 /****************************************************************************************/
-void _XMP_local_get(void *dst, const _XMP_coarray_t *src_desc, const int dst_continuous, const int src_continuous, 
+void _XMP_local_get(void *dst, const _XMP_coarray_t *src_desc, const int dst_contiguous, const int src_contiguous, 
 		    const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
 		    const _XMP_array_section_t *src_info, const size_t dst_elmts, const size_t src_elmts)
 {
@@ -162,10 +581,10 @@ void _XMP_local_get(void *dst, const _XMP_coarray_t *src_desc, const int dst_con
   size_t src_offset = _XMP_get_offset(src_info, src_dims);
   size_t elmt_size  = src_desc->elmt_size;
 
-  if(dst_continuous && src_continuous)
-    _XMP_local_continuous_copy((char *)dst+dst_offset, (char *)src_desc->real_addr+src_offset, 
+  if(dst_contiguous && src_contiguous)
+    _XMP_local_contiguous_copy((char *)dst+dst_offset, (char *)src_desc->real_addr+src_offset, 
 			       dst_elmts, src_elmts, elmt_size);
   else
-    _local_NON_continuous_copy((char *)dst+dst_offset, (char *)src_desc->real_addr+src_offset,
+    _local_NON_contiguous_copy((char *)dst+dst_offset, (char *)src_desc->real_addr+src_offset,
 			       dst_dims, src_dims, dst_info, src_info, dst_elmts, src_elmts, elmt_size);
 }

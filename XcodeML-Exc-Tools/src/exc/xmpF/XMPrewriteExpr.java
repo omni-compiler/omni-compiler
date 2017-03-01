@@ -42,6 +42,7 @@ public class XMPrewriteExpr
     // rewrite allocate, deallocate, and stop statements
     BasicBlockIterator iter3 = new BasicBlockIterator(fb);
     for (iter3.init(); !iter3.end(); iter3.next()){
+      Block b = iter3.getBasicBlock().getParent();
       StatementIterator iter4 = iter3.getBasicBlock().statements();
       while (iter4.hasNext()){
 	Statement st = iter4.next();
@@ -61,7 +62,7 @@ public class XMPrewriteExpr
 		     obj.Opcode() == Xcode.F_VAR_REF)
 		  obj = obj.getArg(0).getArg(0);
 
-	      Ident id = env.findVarIdent(obj.getName(), fb);
+	      Ident id = env.findVarIdent(obj.getName(), b);
 	      if (id == null) break;
 	      XMParray array = XMParray.getArray(id);
 	      if (array == null) break;
@@ -81,7 +82,7 @@ public class XMPrewriteExpr
 		     obj.Opcode() == Xcode.F_ARRAY_REF ||
 		     obj.Opcode() == Xcode.F_VAR_REF)
 		obj = obj.getArg(0).getArg(0);
-	      Ident id = env.findVarIdent(obj.getName(), fb);
+	      Ident id = env.findVarIdent(obj.getName(), b);
 	      if (id == null) break;
 	      XMParray array = XMParray.getArray(id);
 	      if (array == null) break;
@@ -137,41 +138,48 @@ public class XMPrewriteExpr
   }
 
   private void rewriteDecls(FunctionBlock funcBlock){
-    Xobject decl_list = funcBlock.getBody().getDecls();
-    Xobject id_list = funcBlock.getBody().getIdentList();
-    Xtype f_type = funcBlock.getNameObj().Type();
-    Xobject f_params = null;
-    if(f_type != null && f_type.isFunction())
-      f_params = f_type.getFuncParam();
+    BlockIterator biter = new topdownBlockIterator(funcBlock);
+    for (biter.init(); !biter.end(); biter.next()){
+      if (biter.getBlock().Opcode() == Xcode.F_BLOCK_STATEMENT ||
+          biter.getBlock().Opcode() == Xcode.FUNCTION_DEFINITION){
+        Xobject decl_list = biter.getBlock().getBody().getDecls();
+        Xobject id_list = biter.getBlock().getBody().getIdentList();
+        Xtype f_type = biter.getBlock().Opcode() == Xcode.FUNCTION_DEFINITION ?
+                         funcBlock.getNameObj().Type() : null;
+        Xobject f_params = null;
+        if(f_type != null && f_type.isFunction())
+          f_params = f_type.getFuncParam();
     
-    for(Xobject i: (XobjList) id_list){
-      Ident id = (Ident)i;
-      XMParray array = XMParray.getArray(id);
-      if(array == null) continue;
+        for(Xobject i: (XobjList) id_list){
+          Ident id = (Ident)i;
+          XMParray array = XMParray.getArray(id);
+          if(array == null) continue;
       
-      // write id
-      String a_name = id.getName();
-      String xmp_name = array.getLocalName();
-      Xtype xmp_type = array.getLocalType();
+          // write id
+          String a_name = id.getName();
+          String xmp_name = array.getLocalName();
+          Xtype xmp_type = array.getLocalType();
 
-      for(Xobject decl: (XobjList) decl_list){
-	if(decl.Opcode() != Xcode.VAR_DECL) continue;
-	Xobject decl_id = decl.getArg(0);
-	if(decl_id.Opcode() == Xcode.IDENT && 
-	   decl_id.getName().equals(a_name)){
-	  decl.setArg(0,Xcons.Symbol(Xcode.IDENT,xmp_type,xmp_name));
-	  break;
-	}
-      }
-      if(f_params != null && id.getStorageClass() == StorageClass.FPARAM){
-	// rewrite parameter
-	for(Xobject param: (XobjList)f_params){
-	  if(param.Opcode() == Xcode.IDENT &&
-	     param.getName().equals(a_name)){
-	    param.setName(xmp_name);
-	    param.setType(xmp_type);
-	  }
-	}
+          for(Xobject decl: (XobjList) decl_list){
+            if(decl.Opcode() != Xcode.VAR_DECL) continue;
+            Xobject decl_id = decl.getArg(0);
+            if(decl_id.Opcode() == Xcode.IDENT && 
+               decl_id.getName().equals(a_name)){
+              decl.setArg(0,Xcons.Symbol(Xcode.IDENT,xmp_type,xmp_name));
+              break;
+            }
+          }
+          if(f_params != null && id.getStorageClass() == StorageClass.FPARAM){
+            // rewrite parameter
+            for(Xobject param: (XobjList)f_params){
+              if(param.Opcode() == Xcode.IDENT &&
+                 param.getName().equals(a_name)){
+                param.setName(xmp_name);
+                param.setType(xmp_type);
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -191,16 +199,15 @@ public class XMPrewriteExpr
 	{
 	  if(x.getProp(XMP.RWprotected) != null) break;
 
-	  Ident id = env.findVarIdent(x.getName(),block);
+	  Ident id = env.findVarIdent(x.getName(),bb.getParent());
 	  if(id == null) break;
 	  XMParray array = XMParray.getArray(id);
 	  if(array == null) break;
 	  
 	  // replace with local decl
-	  Xobject var = Xcons.Symbol(Xcode.VAR,array.getLocalType(),
-				                 array.getLocalName());
-	  var.setProp(XMP.arrayProp,array);
-	  iter.setXobject(var);
+          ((XobjString)x).setName(array.getLocalName());
+          x.setType(array.getLocalType());
+          x.setProp(XMP.arrayProp,array);
 	  break;
 	}
       case F_ARRAY_REF:
@@ -247,6 +254,7 @@ public class XMPrewriteExpr
 
       case FUNCTION_CALL:
 	{
+	  if (x.getArg(0).Opcode() == Xcode.MEMBER_REF) break;
 	  String fname = x.getArg(0).getString();
 	  if (fname.equalsIgnoreCase("xmp_desc_of")){
 
@@ -779,8 +787,11 @@ public class XMPrewriteExpr
 
     Ident sizeArray = env.declOrGetSizeArray(fb);
 
-    String fname = x.getArg(0).getString();
+    String fname = x.getArg(0).Opcode() != Xcode.MEMBER_REF ?
+                   x.getArg(0).getString() : null;
     Xtype ftype = x.getArg(0).Type();
+    while((ftype != null) && (ftype.copied != null)/*ftype.isFprocedure()*/)
+      ftype = ftype.copied;
     XobjList arg_list = (XobjList)x.getArg(1);
 
     //
@@ -788,12 +799,12 @@ public class XMPrewriteExpr
     //
 
     XobjList param_list = null;
-    if (ftype != null){
+    if ((ftype != null) && ftype instanceof FunctionType/*not VOID type*/){
       // internal or module procedures
       param_list = (XobjList)ftype.getFuncParam();
     }
 
-    if (param_list == null){
+    if (param_list == null && fname != null){
 	    
       XobjList decl_list = (XobjList)fb.getBody().getDecls();
 

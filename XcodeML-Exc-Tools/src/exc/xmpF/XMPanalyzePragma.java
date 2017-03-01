@@ -69,6 +69,7 @@ public class XMPanalyzePragma
     }
   }
 
+  // check use and import if use of module is found.
   private void checkUseDecl(Xobject decls){
     if(decls == null) return;
     for(Xobject decl: (XobjList)decls){
@@ -231,11 +232,19 @@ public class XMPanalyzePragma
       break;
 
     case COARRAY:
-      XMPcoarray.analyzeCoarrayDirective(pb.getClauses(), env, pb);
+      if (XmOption.isCoarray()) {
+        XMPcoarray.analyzeCoarrayDirective(pb.getClauses(), env, pb);
+      } else {
+        XMP.error("coarray directive is specified.");
+      }
       break;
 
     case IMAGE:
-      XMPtransCoarrayRun.analyzeImageDirective(pb.getClauses(), env, pb);
+      if (XmOption.isCoarray()) {
+        XMPtransCoarrayRun.analyzeImageDirective(pb.getClauses(), env, pb);
+      } else {
+        XMP.error("image directive is specified.");
+      }
       break;
 
     case ARRAY:

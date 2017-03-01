@@ -1,6 +1,6 @@
 #include "F-front.h"
 
-extern CTL *ctl_top_saved;
+extern CTL ctl_top_saved;
 extern expv CURRENT_STATEMENTS_saved;
 
 expv OMP_check_SECTION(expr x);
@@ -122,15 +122,6 @@ expv OMP_pragma_list(enum OMP_pragma pragma,expv arg1,expv arg2)
 expv OMP_FOR_pragma_list(expv clause,expv statements)
 {
     list lp;
-
-#ifdef not
-    if(EXPR_CODE(statements) == F_DO_STATEMENT) 
-	return OMP_pragma_list(OMP_FOR,clause,statements);
-    else {
-	error_at_node(clause,"OpenMP DO directive must be followed by DO");
-	return NULL;
-    }
-#endif
 
     if(EXPR_CODE(statements) != LIST) 
 	fatal("OMP_FOR_pragma_list: unknown list");
@@ -764,25 +755,9 @@ void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
 	    }
 	    v = EXPR_ARG2(EXPR_ARG2(c));
 	    if(v != NULL){
-#ifdef not
-		if(EXPR_INT(EXPR_ARG1(EXPR_ARG2(c))) == OMP_SCHED_AFFINITY){
-		    list lp; expv vv;
-		    extern void TEA_map_expr();
-		    FOR_ITEMS_IN_LIST(lp,EXPR_ARG2(v)){
-			vv = LIST_ITEM(lp);
-			if(vv != NULL && 
-			   EXPR_INT(EXPR_ARG1(vv)) == TEA_MAP_EXPR){
-			    TEA_map_expr(EXPR_ARG2(vv));
-			}
-		    }
-		} else {
-#endif
 		    v = compile_expression(v);
 		    c = list2(LIST,EXPR_ARG1(c),
 			      list2(LIST,EXPR_ARG1(EXPR_ARG2(c)),v));
-#ifdef not
-		} 
-#endif
 	    }
 	    dclause = list_put_last(dclause,c);
 	    break;
@@ -901,7 +876,7 @@ void check_OMP_runtime_function(ID id)
 /* called from F-compile.c, force loop variable to be private. */
 void check_OMP_loop_var(SYMBOL do_var_sym)
 {
-    CTL *cp;
+    CTL cp;
     expr x,c;
     list lp,lq;
     enum OMP_pragma_clause cdir;
@@ -911,7 +886,7 @@ void check_OMP_loop_var(SYMBOL do_var_sym)
 	      list1(LIST,expv_sym_term(IDENT,NULL,do_var_sym)));
 
     /* find any data attribute clauses on do_var_sym */
-    for(cp = ctl_top; cp >= ctls; cp--){
+    FOR_CTLS_BACKWARD(cp) {
 	if(CTL_TYPE(cp) != CTL_OMP) continue;
 	if(CTL_OMP_ARG_DCLAUSE(cp) != NULL){
 	    FOR_ITEMS_IN_LIST(lp,CTL_OMP_ARG_DCLAUSE(cp)){

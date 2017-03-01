@@ -93,6 +93,7 @@ void _XMP_init_array_desc(_XMP_array_t **array, _XMP_template_t *template, int d
     ai->shadow_size_hi  = 0;
 
     ai->reflect_sched = NULL;
+    ai->reflect_acc_sched = NULL;
 
     ai->shadow_comm = NULL;
     ai->shadow_comm_size = 1;
@@ -194,27 +195,21 @@ void _XMP_finalize_array_desc(_XMP_array_t *array)
     if(ai->is_shadow_comm_member)
       _XMP_finalize_comm(ai->shadow_comm);
 
+    _Bool free_buf = (_XMPF_running && i != dim -1) || (_XMPC_running && i != 0);
+
     _XMP_reflect_sched_t *reflect_sched;
-
     if((reflect_sched = ai->reflect_sched)){
-      if(reflect_sched->datatype_lo != MPI_DATATYPE_NULL)
-	MPI_Type_free(&reflect_sched->datatype_lo);
-      if(reflect_sched->datatype_hi != MPI_DATATYPE_NULL)
-	MPI_Type_free(&reflect_sched->datatype_hi);
-
-      for(int j=0;j<4;j++)
-	if(reflect_sched->req[j] != MPI_REQUEST_NULL)
-	  MPI_Request_free(&reflect_sched->req[j]);
-
-      if((_XMPF_running && i != dim -1) || (_XMPC_running && i != 0)){
-	_XMP_free(reflect_sched->lo_send_buf);
-	_XMP_free(reflect_sched->lo_recv_buf);
-	_XMP_free(reflect_sched->hi_send_buf);
-	_XMP_free(reflect_sched->hi_recv_buf);
-      }
-      
+      _XMP_finalize_reflect_sched(reflect_sched, free_buf);
       _XMP_free(reflect_sched);
     }
+
+#ifdef _XMP_XACC
+    _XMP_reflect_sched_t *reflect_acc_sched;
+    if((reflect_acc_sched = ai->reflect_acc_sched)){
+      _XMP_finalize_reflect_sched_acc(reflect_acc_sched, free_buf);
+      _XMP_free(reflect_acc_sched);
+    }
+#endif
   }
 
   _XMP_async_reflect_t *async_reflect = array->async_reflect;
@@ -808,6 +803,24 @@ void _XMP_init_array_addr(void **array_addr, void *init_addr,
 
   for (int i = 0; i < dim; i++) {
     _XMP_calc_array_dim_elmts(array_desc, i);
+  }
+
+  // clear reflect schedule
+  if (array_desc->array_addr_p && array_desc->array_addr_p != init_addr){
+    for (int i = 0; i < dim; i++) {
+      _XMP_reflect_sched_t *sched = array_desc->info[i].reflect_sched;
+      if (sched){
+	_XMP_finalize_reflect_sched(sched, (i != 0));
+	_XMP_init_reflect_sched(sched);
+      }
+#ifdef _XMP_XACC
+      _XMP_reflect_sched_t *sched_acc = array_desc->info[i].reflect_acc_sched;
+      if (sched_acc){
+	_XMP_finalize_reflect_sched_acc(sched_acc, (i != 0));
+	_XMP_init_reflect_sched_acc(sched_acc);
+      }
+#endif
+    }
   }
 
   *array_addr = init_addr;

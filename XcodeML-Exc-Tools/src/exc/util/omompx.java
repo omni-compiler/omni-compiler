@@ -108,7 +108,7 @@ public class omompx
     String lang = "C";
     boolean openMP = false;
     boolean openACC = false;
-    boolean coarray = false;
+    boolean coarray = true;
     boolean xcalableMP = false;
     boolean xcalableMPthreads = false;
     boolean xcalableMPGPU = false;
@@ -150,6 +150,7 @@ public class omompx
         coarray = true;
       } else if(arg.equals("-fnocoarray")) {
         coarray = false;
+        coarray_noUseStmt = true;
       } else if(arg.startsWith("-fcoarray=")) {                  // HIDDEN
         coarray_suboption += arg.substring(arg.indexOf("=")+1);
       } else if(arg.equals("-fcoarray-no-use-statement")) {       // TEMPORARY
@@ -374,12 +375,24 @@ public class omompx
       }
     }
 
-    if (xmpf && xmpf_skipCafMode) {
+    if (xmpf && (xmpf_skipCafMode || !XmOption.isCoarray())) {
       System.out.println("<SKIP-CAF MODE> XMP/F Coarray translator is " +
                          "bypassed for " + xobjFile.getSourceFileName() + ".");
     }
 
-    if (xmpf && !xmpf_skipCafMode) {
+    if (xmpf && (!xmpf_skipCafMode && XmOption.isCoarray())) {
+
+      // Coarray Fortran pass#3
+      exc.xmpF.XMPtransCoarray caf_translator3 =
+        new exc.xmpF.XMPtransCoarray(xobjFile, 3, coarray_suboption,
+                                     xmpf_onlyCafMode);
+      xobjFile.iterateDef(caf_translator3);
+
+      // Coarray Fortran pass#4
+      exc.xmpF.XMPtransCoarray caf_translator4 =
+        new exc.xmpF.XMPtransCoarray(xobjFile, 4, coarray_suboption,
+                                     xmpf_onlyCafMode);
+      xobjFile.iterateDef(caf_translator4);
 
       // Coarray Fortran pass#1
       exc.xmpF.XMPtransCoarray caf_translator1 =
@@ -481,6 +494,7 @@ public class omompx
     Document xcodeDoc = null;
     XmXobjectToXcodeTranslator xc2xcodeTranslator = null;
     
+    // create transformer from Xobject to XcodeML DOM.
     if (lang.equals("F")) {
       xc2xcodeTranslator = new XmfXobjectToXcodeTranslator();
     } else {
@@ -489,6 +503,7 @@ public class omompx
 
     xcodeDoc = xc2xcodeTranslator.write(xobjFile);
 
+    // transformation from DOM to the file. It means to output DOM to the file.
     Transformer transformer = null;
     try {
       transformer = TransformerFactory.newInstance().newTransformer();
@@ -500,6 +515,7 @@ public class omompx
 
     try {
       transformer.transform(new DOMSource(xcodeDoc), new StreamResult(xmlWriter));
+      // transformer.transform(new DOMSource(xcodeDoc), new StreamResult(new OutputStreamWriter(System.out)));
     } catch(TransformerException e) {
       throw new XmException(e);
     }
@@ -544,7 +560,8 @@ public class omompx
       XmDecompiler decompiler = toolFactory.createDecompiler();
 
       if (xcodeDoc == null) {
-        javax.xml.parsers.DocumentBuilderFactory docFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        javax.xml.parsers.DocumentBuilderFactory docFactory = 
+          javax.xml.parsers.DocumentBuilderFactory.newInstance();
         javax.xml.parsers.DocumentBuilder builder = docFactory.newDocumentBuilder();
         xcodeDoc = builder.parse(outXmlFile);
       }

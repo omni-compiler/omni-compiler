@@ -26,7 +26,7 @@ print_broadcast() {
             done
             echo ')' ;;
     esac
-    echo "      integer, intent(in) :: source_image"
+    echo "      integer(4), intent(in) :: source_image"
     echo "      end subroutine"
     echo
 }
@@ -34,12 +34,12 @@ print_broadcast() {
 print_reduction() {
     tk=$1
     typekind=$2
-    echo "      subroutine xmpf_co_${OP}${DIM}d_${tk}(source, result)"
+    echo "      subroutine xmpf_co_${OP}${DIM}d_${tk}(source, result, result_image)"
 
     case ${DIM} in
-        0)  echo    "      ${typekind}, intent(in)  :: source" ;;
-        1)  echo    "      ${typekind}, intent(in)  :: source(:)" ;;
-        *)  echo -n "      ${typekind}, intent(in)  :: source(:"
+        0)  echo    "      ${typekind}, intent(inout)  :: source" ;;
+        1)  echo    "      ${typekind}, intent(inout)  :: source(:)" ;;
+        *)  echo -n "      ${typekind}, intent(inout)  :: source(:"
             for i in `seq 2 ${DIM}`; do
                 echo -n ',:'
             done
@@ -47,15 +47,16 @@ print_reduction() {
     esac
 
     case ${DIM} in
-        0)  echo    "      ${typekind}, intent(out) :: result" ;;
-        1)  echo    "      ${typekind}, intent(out) :: result(:)" ;;
-        *)  echo -n "      ${typekind}, intent(out) :: result(:"
+        0)  echo    "      ${typekind}, intent(out), optional :: result" ;;
+        1)  echo    "      ${typekind}, intent(out), optional :: result(:)" ;;
+        *)  echo -n "      ${typekind}, intent(out), optional :: result(:"
             for i in `seq 2 ${DIM}`; do
                 echo -n ',:'
             done
             echo ')' ;;
     esac
 
+    echo "      integer(4), intent(in), optional :: result_image"
     echo "      end subroutine"
     echo
 }

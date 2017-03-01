@@ -32,13 +32,9 @@ public class XMPcoarrayInitProcedure {
    *       static allocation/first time registration w/o cray pointer w/o common
    */
   private int version;         // defined by the constructor
-  private Boolean useMalloc;   // defined by the constructor
 
   /* for each procedure */
   private String sizeProcName, initProcName;  // names of procedures to generate
-  private String commonName1 = null;    // common block name for descptr
-  private String commonName2 = null;    // common block name for crayptr (Ver.3)
-                                        //                   or coarrays (Ver.4)
 
   /* for all variables of a procedure */
   private ArrayList<String> varNames1, varNames2;
@@ -49,7 +45,7 @@ public class XMPcoarrayInitProcedure {
   //------------------------------
   public XMPcoarrayInitProcedure(ArrayList<XMPcoarray> staticCoarrays,
                                  String sizeProcName, String initProcName,
-                                 XMPenv env, int version, Boolean useMalloc) {
+                                 XMPenv env, int version) {
     _init_forFile();
 
     this.staticCoarrays = staticCoarrays;
@@ -57,17 +53,10 @@ public class XMPcoarrayInitProcedure {
     this.initProcName = initProcName;
     this.env = env;
     this.version = version;
-    this.useMalloc = useMalloc;
 
     // assertion
     if (version != 3 && version != 4 && version != 6 && version != 7) {
       XMP.fatal("INTERNAL: extinct or unsupported version (" + version +
-                ") found in XMPcoarrayInitProcedure constructor");
-    }
-    else if (useMalloc && version != 3 && version != 7 ||
-             !useMalloc && version != 4 && version != 6 && version != 7) {
-      XMP.fatal("INTERNAL; Wrong combination of version (" + version +
-                ") and useMalloc (" + useMalloc +
                 ") found in XMPcoarrayInitProcedure constructor");
     }
 
@@ -117,7 +106,7 @@ public class XMPcoarrayInitProcedure {
       xmpf_CP_EX1 : name of a common block for procedure EX1
       CP_V2       : cray poiter to coarray V2
 
-      Case: useRegMem (Ver.4, 6 and 7 for FJRDMA and MPI3):
+    Case: useRegMem (Ver.4, 6 and 7 for FJRDMA and MPI3):
     --------------------------------------------
       // no subroutine xmpf_traverse_countcoarrays_EX1
 
@@ -146,15 +135,8 @@ public class XMPcoarrayInitProcedure {
   */
 
   public void run() {
-
-    /* generate the two subroutines in the same file
-     */
-    if (useMalloc) {    // Ver.3 or 7g
-      buildSubroutine_countcoarrays();
-      buildSubroutine_initcoarrays();
-    } else {           // Ver.4 or 6 or 7
-      buildSubroutine_initcoarrays();
-    }
+    buildSubroutine_countcoarrays();
+    buildSubroutine_initcoarrays();
   }
 
 
@@ -164,13 +146,19 @@ public class XMPcoarrayInitProcedure {
 
   private void buildSubroutine_countcoarrays() {
     BlockList body = Bcons.emptyBody();         // new body of the building procedure
+    Boolean isEmpty = true;
 
     for (XMPcoarray coarray: staticCoarrays) {
-      // "CALL coarray_count_size(count, elem)"
-      Xobject callStmt = coarray.makeStmt_countCoarrays(body);
-
-      body.add(callStmt);
+      if (coarray.usesMalloc()) {
+        // "CALL coarray_count_size(count, elem)"
+        Xobject callStmt = coarray.makeStmt_countCoarrays(body);
+        body.add(callStmt);
+        isEmpty = false;
+      }
     }
+
+    if (isEmpty)
+      return;
 
     // construct a new procedure
     Xobject decls = Xcons.List();
@@ -207,8 +195,11 @@ public class XMPcoarrayInitProcedure {
     env.setCurrentDef(funcDef2);
 
     for (XMPcoarray coarray: staticCoarrays) {
+      /**************************
       Xobject setCoshape = coarray.makeStmt_setCoshape(env);
       blist2.add(setCoshape);
+      ******************************/
+      coarray.addStmts_setCoshape(blist2, env);
     }
 
     funcDef2.Finalize();
@@ -217,40 +208,12 @@ public class XMPcoarrayInitProcedure {
   }
 
 
-  private void set_commonName1(XMPcoarray coarray) {
-    String name = coarray.getDescCommonName();
-
-    if (commonName1 == null)
-      commonName1 = name;
-    else if (!commonName1.equals(name))
-      XMP.fatal("INTERNAL: inconsistent descptr common block names " +
-                commonName1 + " and " + name);
-  }
-
-  private void set_commonName2(XMPcoarray coarray) {
-    if (useMalloc) {
-      String name = coarray.getCrayCommonName();
-
-      // set commonName2 if it is not set
-      if (commonName2 == null)
-        commonName2 = name;
-      else if (!commonName2.equals(name)) 
-        XMP.fatal("INTERNAL: inconsistent second common block names " +
-                  commonName2 + " and " + name);
-    } else {
-      String name = coarray.getCoarrayCommonName();
-
-      // always overwrite commonName2
-      commonName2 = name;
-    }
-  }
-
 
   private void build_initEachCoarray(XMPcoarray coarray,
                                      BlockList body, Xobject decls) {
-    Xobject elem = coarray.getElementLengthExpr();
+    Xobject elem = coarray.getElementLengthExpr_atmost();
     if (elem==null)
-      XMP.fatal("elem must not be null.");
+      XMP.fatal("INTERNAL: elem must not be null.");
     int count = coarray.getTotalArraySize();
 
     /*-------------------------------*\
@@ -261,7 +224,6 @@ public class XMPcoarrayInitProcedure {
     //   "common /xmpf_descptr_foo/ descPtr_var"
     String descPtrName = coarray.getDescPointerName();
     Ident descPtrId = null;
-    set_commonName1(coarray);
     descPtrId = body.declLocalIdent(descPtrName,
                                     Xtype.Farray(BasicType.Fint8Type),
                                     StorageClass.FCOMMON,
@@ -269,7 +231,8 @@ public class XMPcoarrayInitProcedure {
     Xobject commonStmt1 =
       Xcons.List(Xcode.F_COMMON_DECL,
                  Xcons.List(Xcode.F_VAR_LIST,
-                            Xcons.Symbol(Xcode.IDENT, commonName1),
+                            Xcons.Symbol(Xcode.IDENT,
+                                         coarray.getDescCommonName()),
                             Xcons.List(Xcons.FvarRef(descPtrId))));
     decls.add(commonStmt1);
 
@@ -278,49 +241,36 @@ public class XMPcoarrayInitProcedure {
     // case useRegMem
     //    "TYPE var(N)"  !! without SAVE attr.
     //    "common /xmpf_coarray_foo/ var"           
-    set_commonName2(coarray);
-    Ident ident2;
-    if (!useMalloc) {
-      // Version 4 & 6: generate common block for coarrays themselves
-      //coarray.resetSaveAttr();   // This seems not correct due to the side effect.
-      Xtype type1 = coarray.getIdent().Type();
-      Xtype type2;
-      switch (type1.getKind()) {
-      case Xtype.BASIC:
-        type2 = type1.copy();
-        type2.removeCodimensions();
-        _resetSaveAttrInType(type2);      // reset SAVE attribute
-        break;
-      case Xtype.F_ARRAY:
-        Xobject[] sizeExprs2 = new Xobject[1];
-        sizeExprs2[0] = Xcons.FindexRange(Xcons.IntConstant(count));
-        type2 = new FarrayType(coarray.getName(),
-                               type1.getRef().copy(),
-                               type1.getTypeQualFlags(),
-                               sizeExprs2);
-        _resetSaveAttrInType(type2);      // reset SAVE attribute
-        break;
-      default:
-        XMP.fatal("unexpected kind of Xtype of coarray " + coarray.getName());
-        return;   // to avoid warning message from javac
-      }
-      ident2 = body.declLocalIdent(coarray.getName(), type2);
-      ident2.setStorageClass(StorageClass.FCOMMON);   // reset SAVE attribute again
-
-    } else {  // useMalloc
-      // Version 3: generate common block for cray-pointers
+    Ident ident1 = coarray.getIdent();
+    Xtype type1 = ident1.Type();
+    String commonName;
+    XobjList commonMember;
+    if (coarray.usesMalloc()) {
+      // Ver.3 or STRUCT type: generate common block for cray-pointers
       String crayPtrName = coarray.getCrayPointerName();
-      ident2 = body.declLocalIdent(crayPtrName,
-                                   Xtype.Farray(BasicType.Fint8Type),
-                                   StorageClass.FCOMMON,  //or StorageClass.FLOCAL
-                                   null);
+      Ident ident2 = body.declLocalIdent(crayPtrName,
+                                         Xtype.Farray(BasicType.Fint8Type),
+                                         StorageClass.FCOMMON,  //or StorageClass.FLOCAL
+                                         null);
+      commonName = coarray.getCrayCommonName();
+      commonMember = Xcons.List(Xcons.FvarRef(ident2));
+    }
+    else {
+      // Ver.4(or6) and not STRUCT type : generate common block for coarrays themselves
+      Ident ident2 = body.declLocalIdent(ident1.getName(),
+                                         ident1.Type().copy());
+      ident2.Type().removeCodimensions();       // remove codimensions
+      _resetSaveAttrInType(ident2.Type());         // reset SAVE attribute
+      ident2.setStorageClass(StorageClass.FCOMMON);   // reset SAVE attribute again
+      commonName = coarray.getCoarrayCommonName();
+      commonMember = Xcons.List(Xcons.FvarRef(ident2));
     }
 
     Xobject commonStmt2 =
       Xcons.List(Xcode.F_COMMON_DECL,
                  Xcons.List(Xcode.F_VAR_LIST,
-                            Xcons.Symbol(Xcode.IDENT, commonName2),
-                            Xcons.List(Xcons.FvarRef(ident2))));
+                            Xcons.Symbol(Xcode.IDENT, commonName),
+                            commonMember));
     decls.add(commonStmt2);
 
     /*-------------------------------*\
@@ -330,11 +280,11 @@ public class XMPcoarrayInitProcedure {
     //   "CALL coarray_regmem_static(descPtr_var, LOC(var), ... )"
     // case useMalloc
     //   "CALL coarray_alloc_static(descPtr_var, crayPtr_var, ... )"
-    if (!useMalloc) {
-      Xobject subrCall = coarray.makeStmt_regmemStatic(body);
+    if (coarray.usesMalloc()) {
+      Xobject subrCall = coarray.makeStmt_allocStatic(body);
       body.add(subrCall);
     } else {
-      Xobject subrCall = coarray.makeStmt_allocStatic(body);
+      Xobject subrCall = coarray.makeStmt_regmemStatic(body);
       body.add(subrCall);
     }
   }

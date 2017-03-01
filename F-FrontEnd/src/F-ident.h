@@ -14,21 +14,25 @@
 /* Fortran name class */
 enum name_class {
     CL_UNKNOWN = 0,
-    CL_PARAM,   /* parameter */
-    CL_VAR,     /* variable name */
-    CL_ENTRY,   /* entry name */
-    CL_MAIN,    /* program name */
-    CL_MODULE,	/* module name */
-    CL_CONTAINS,/* contains entry */
-    CL_BLOCK,   /* data block name */
-    CL_PROC,    /* procedure name (subroutine, function, statement func,..) */
-    CL_LABEL,   /* label entry */
-    CL_FORMAT,  /* format entry */
-    CL_TAGNAME, /* derived type name  */
-    CL_NAMELIST, /* name list name (not implmented) */
-    CL_COMMON,  /* common block */
-    CL_ELEMENT,  /* structure element name  */
-    CL_GENERICS /* generics name */
+    CL_PARAM,     /* parameter */
+    CL_VAR,       /* variable name */
+    CL_ENTRY,     /* entry name */
+    CL_MAIN,      /* program name */
+    CL_MODULE,    /* module name */
+    CL_SUBMODULE, /* submodule name */
+    CL_CONTAINS,  /* contains entry */
+    CL_BLOCK,     /* data block name */
+    CL_PROC,      /* procedure name (subroutine, function, statement func,..) */
+    CL_LABEL,     /* label entry */
+    CL_FORMAT,    /* format entry */
+    CL_TAGNAME,   /* derived type name  */
+    CL_NAMELIST,  /* name list name (not implmented) */
+    CL_COMMON,    /* common block */
+    CL_ELEMENT,   /* structure element name  */
+    CL_GENERICS,  /* generics name */
+    CL_TYPE_PARAM, /* type parameter name */
+    CL_TYPE_BOUND_PROC, /* type bound procedure */
+    CL_MULTI,     /* Both the derived type name and the generic procedure */
 };
 
 extern char *name_class_names[];
@@ -49,7 +53,10 @@ extern char *name_class_names[];
   "CL_NAMELIST", \
   "CL_COMMON",  \
   "CL_ELEMENT", \
-  "CL_GENERICS" \
+  "CL_GENERICS", \
+  "CL_TYPE_PARAM", \
+  "CL_TYPE_BOUND_PROCS", \
+  "CL_MULTI",   \
 }
 
 /* for CL_PROC  */
@@ -91,7 +98,10 @@ enum storage_class {
     STG_EQUIV,  /* allocated in equive */
     STG_COMEQ,  /* allocated in common and equive */
     STG_TAGNAME, /* derived type name  */
-    STG_NONE    /* for intrinsic, stfunction */
+    STG_NONE,    /* for intrinsic, stfunction */
+    STG_TYPE_PARAM, /* type parameter */
+    STG_INDEX, /* indexes of forall */
+
 };
 
 extern char *storage_class_names[];
@@ -106,7 +116,9 @@ extern char *storage_class_names[];
  "STG_EQUIV",   \
  "STG_COMEQ",   \
  "STG_TAGNAME", \
- "STG_NONE"     \
+ "STG_NONE",    \
+ "STG_TYPE_PARAM", \
+ "STG_INDEX", \
 }
 
 /* statement label for CL_LABEL */
@@ -122,6 +134,7 @@ typedef struct ident_descriptor
     struct ident_descriptor *next;      /* linked list */
     enum name_class class;              /* name class */
     char is_declared;
+    char is_associative;                /* ASSOCIATE and associate-name */
     char could_be_implicitly_typed;     /* id is declared in current scope */
                                         /* and could be typed implicity. */
                                         /* never changed to FALSE from TRUE */
@@ -150,6 +163,7 @@ typedef struct ident_descriptor
     struct use_assoc_info *use_assoc;   /* use association infomation
                                            of this ID, otherwise
                                            NULL */
+    int from_parent_module;             /* ID is imported from parent module  */
 
     union {
         struct {
@@ -168,6 +182,7 @@ typedef struct ident_descriptor
                                          after type is decided */
             int is_pure;              /* like above. */
             int is_elemental;         /* like above. */
+            int is_module;            /* like above. */
             int is_dummy;             /* if TRUE, declared as dummy
                                        * arg in the parent scope. */
             int is_func_subr_ambiguous;
@@ -175,6 +190,9 @@ typedef struct ident_descriptor
                                        * ambiguous function or
                                        * subroutine when pclass ==
                                        * P_EXTERNAL. */
+            int has_bind;             /* if TRUE, proc uses BIND feature */
+            expr bind;                /* temporary storage for bind
+                                       * information */
         } proc_info;
         struct {
 
@@ -200,6 +218,8 @@ typedef struct ident_descriptor
             int isUnCompiledArray;
             int isUnCompiled;
             int isUsedAsHighOrder;      /* Once used as a function. */
+
+            struct ident_descriptor * ref_proc; /* for a procedure variable, refer to a procedure name */
         } var_info;
         struct {
             LABEL_TYPE lab_type;
@@ -222,6 +242,23 @@ typedef struct ident_descriptor
             char is_save;           /* save attribute */
             char is_blank_name;     /* blank name */
         } common_info;
+        struct {
+            /* for CL_TYPE_BOUND_PROCS */
+            struct ident_descriptor * binding; /* binding */
+            struct ident_descriptor * pass_arg; /* pass argument */
+            uint32_t type_bound_attrs;
+#define TYPE_BOUND_PROCEDURE_IS_GENERIC            0x0001
+#define TYPE_BOUND_PROCEDURE_PASS                  0x0002
+#define TYPE_BOUND_PROCEDURE_NOPASS                0x0004
+#define TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE       0x0008
+#define TYPE_BOUND_PROCEDURE_DEFERRED              0x0010
+#define TYPE_BOUND_PROCEDURE_IS_OPERATOR           0x0020
+#define TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT         0x0040
+        } tbp_info;
+        struct {
+            /* for CL_MULTI */
+            struct ident_descriptor * id_list;
+        } multi_info;
     } info;
 } *ID;
 
@@ -232,6 +269,7 @@ typedef struct ident_descriptor
 #define ID_NAME(id)     SYM_NAME((id)->name)
 #define ID_TYPE(id)     ((id)->type)
 #define ID_IS_DECLARED(id) ((id)->is_declared)
+#define ID_IS_ASSOCIATIVE(id) ((id)->is_associative)
 #define ID_COULD_BE_IMPLICITLY_TYPED(id) ((id)->could_be_implicitly_typed)
 #define ID_ADDR(id)     ((id)->addr)
 #define ID_LINE_NO(x)   ((x)->line->ln_no)
@@ -243,9 +281,24 @@ typedef struct ident_descriptor
 
 #define ID_INTF(id)     ((id)->interfaceId)
 
+/**
+ * use association information about ID.
+ */
+struct use_assoc_info {
+    struct module * module;   /* module. */
+    SYMBOL module_name;       /* name of module which the ID declared. */
+    SYMBOL original_name;     /* original name of the ID. */
+};
+
 #define ID_USEASSOC_INFO(id) ((id)->use_assoc)
+#define ID_MODULE(id) ((ID_USEASSOC_INFO(id))->module)
+#define ID_MODULE_NAME(id) ((ID_USEASSOC_INFO(id))->module_name)
+#define ID_ORIGINAL_NAME(id) ((ID_USEASSOC_INFO(id))->original_name)
 #define ID_IS_OFMODULE(id)  ((id)->use_assoc != NULL)
 #define ID_IS_AMBIGUOUS(id) ((id)->use_assoc_conflicted)
+
+#define ID_IS_FROM_PARENT_MOD(id) ((id)->from_parent_module)
+
 #define ID_IS_EMITTED(id)   ((id)->is_varDeclEmitted)
 #define ID_EQUIV_ID(id)     ((id)->equivID)
 
@@ -268,6 +321,9 @@ typedef struct ident_descriptor
 #define FOREACH_ID(/* ID */ idp, /* ID */ headp) \
   for ((idp) = (headp); (idp) != NULL ; (idp) = ID_NEXT(idp))
 
+#define SAFE_FOREACH_ID(ip, iq, headp)\
+    SAFE_FOREACH(ip, iq, headp, ID_NEXT)
+
 /* for CL_PROC */
 #define PROC_CLASS(id)  ((id)->info.proc_info.pclass)
 #define PROC_ARGS(id)   ((id)->info.proc_info.args)
@@ -276,13 +332,19 @@ typedef struct ident_descriptor
 #define PROC_IS_RECURSIVE(id) ((id)->info.proc_info.is_recursive)
 #define PROC_IS_PURE(id) ((id)->info.proc_info.is_pure)
 #define PROC_IS_ELEMENTAL(id) ((id)->info.proc_info.is_elemental)
+#define PROC_IS_MODULE(id) ((id)->info.proc_info.is_module)
 #define PROC_IS_DUMMY_ARG(id) ((id)->info.proc_info.is_dummy)
 #define PROC_IS_FUNC_SUBR_AMBIGUOUS(id) \
     ((id)->info.proc_info.is_func_subr_ambiguous)
+#define PROC_HAS_BIND(id) ((id)->info.proc_info.has_bind)
+#define PROC_BIND(id)   ((id)->info.proc_info.bind)
 
 #define ID_IS_DUMMY_ARG(id) \
     ((ID_STORAGE((id)) == STG_ARG) || \
      (ID_CLASS((id)) == CL_PROC && PROC_IS_DUMMY_ARG((id)) == TRUE))
+
+#define ID_IS_TYPE_PARAM(id) \
+    ((ID_CLASS((id)) == CL_TYPE_PARAM))
 
 /* for CL_VAR */
 #define VAR_COM_ID(id)          ((id)->info.var_info.common_id)
@@ -300,6 +362,7 @@ typedef struct ident_descriptor
 #define VAR_IS_UNCOMPILED(id)   ((id)->info.var_info.isUnCompiled)
 #define VAR_IS_UNCOMPILED_ARRAY(id)     ((id)->info.var_info.isUnCompiledArray)
 #define VAR_IS_USED_AS_FUNCTION(id)     ((id)->info.var_info.isUsedAsHighOrder)
+#define VAR_REF_PROC(id)        ((id)->info.var_info.ref_proc)
 
 /* for CL_PROC/CL_VAR */
 #define PROC_EXT_ID(id) ((id)->extID)
@@ -321,6 +384,22 @@ typedef struct ident_descriptor
 #define COM_VARS(id)            ((id)->info.common_info.vars)
 #define COM_IS_SAVE(id)         ((id)->info.common_info.is_save)
 #define COM_IS_BLANK_NAME(id)   ((id)->info.common_info.is_blank_name)
+
+/* for CL_TYPE_BOUND_PROCS */
+#define TBP_BINDING(id)         ((id)->info.tbp_info.binding)
+#define TBP_BINDING_ATTRS(id)   ((id)->info.tbp_info.type_bound_attrs)
+#define TBP_PASS_ARG(id)        ((id)->info.tbp_info.pass_arg)
+
+#define TBP_IS_OPERATOR(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
+     TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_OPERATOR)
+
+#define TBP_IS_ASSIGNMENT(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
+     TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT)
+
+#define MULTI_ID_LIST(id)     ((id)->info.multi_info.id_list)
+
 
 struct interface_info {
     enum {
@@ -353,7 +432,7 @@ enum ext_proc_class {
 /* external symbol */
 typedef struct external_symbol
 {
-    struct external_symbol *next; 
+    struct external_symbol *next;
     SYMBOL name;                /* key */
     enum storage_class stg;     /* STG_UNKNOWN, STG_EXT, STG_COMMON, STG_LIB */
     char is_defined;            /* defined or not */
@@ -373,6 +452,7 @@ typedef struct external_symbol
             ID common_id_list;  /* common block ids */
             TYPE_DESC struct_decls; /* derived types in Fortran90 */
             lineno_info *contains_line;
+            struct block_env * blocks; /* block constructs */
             struct external_symbol *contains_external_symbols;
             struct external_symbol *interface_external_symbols;
             struct interface_info * interface_info;
@@ -380,7 +460,14 @@ typedef struct external_symbol
             enum ext_proc_class ext_proc_class;
             char is_output;
             char is_module_specified; /* module procedure with keyword 'module' */
-	    char is_internal; /* internal procedure */
+            char is_internal; /* internal procedure */
+            int is_procedureDecl; /* procedure declaration */
+
+            struct { /* For submodule */
+                int is_submodule;
+                SYMBOL ancestor;
+                SYMBOL parent;
+            } extends;
         } proc_info;
     } info;
 } *EXT_ID;
@@ -404,6 +491,7 @@ typedef struct external_symbol
 #define EXT_PROC_ID_LIST(ep)    ((ep)->info.proc_info.id_list)
 #define EXT_PROC_LABEL_LIST(ep) ((ep)->info.proc_info.label_list)
 #define EXT_PROC_STRUCT_DECLS(ep) ((ep)->info.proc_info.struct_decls)
+#define EXT_PROC_BLOCKS(ep)    ((ep)->info.proc_info.blocks)
 #define EXT_PROC_CONT_EXT_SYMS(ep) ((ep)->info.proc_info.contains_external_symbols)
 #define EXT_PROC_CONT_EXT_LINE(ep) ((ep)->info.proc_info.contains_line)
 #define EXT_PROC_INTERFACES(ep) ((ep)->info.proc_info.interface_external_symbols)
@@ -426,9 +514,17 @@ typedef struct external_symbol
 #define EXT_PROC_COMMON_ID_LIST(ep) ((ep)->info.proc_info.common_id_list)
 #define EXT_PROC_IS_OUTPUT(ep)  ((ep)->info.proc_info.is_output)
 #define EXT_PROC_IS_INTERNAL(ep)  ((ep)->info.proc_info.is_internal)
+#define EXT_PROC_IS_PROCEDUREDECL(ep)  ((ep)->info.proc_info.is_procedureDecl)
+
+#define EXT_MODULE_IS_SUBMODULE(ep) ((ep)->info.proc_info.extends.is_submodule)
+#define EXT_MODULE_PARENT(ep) ((ep)->info.proc_info.extends.parent)
+#define EXT_MODULE_ANCESTOR(ep) ((ep)->info.proc_info.extends.ancestor)
 
 #define FOREACH_EXT_ID(/* EXT_ID */ ep, /* EXT_ID */ headp) \
   for ((ep) = (headp); (ep) != NULL ; (ep) = EXT_NEXT(ep))
+
+#define SAFE_FOREACH_EXT_ID(ep, eq, headp)\
+    SAFE_FOREACH(ep, eq, headp, EXT_NEXT)
 
 #define EXT_LINK_ADD(ep, list, tail) \
     { if((list) == NULL || (tail) == NULL) (list) = (ep); \
@@ -436,6 +532,34 @@ typedef struct external_symbol
       (tail) = (ep); }
 
 #define BLANK_COMMON_NAME       "_____BLANK_COMMON_____"
+
+typedef struct block_env
+{
+    struct block_env *next;
+    struct block_env *blocks;
+    ID id_list;
+    ID label_list;
+    TYPE_DESC struct_decls; /* derived types in Fortran90 */
+    struct external_symbol *interfaces;
+    struct external_symbol *external_symbols;
+} *BLOCK_ENV;
+
+#define BLOCK_NEXT(bp) ((bp)->next)
+#define BLOCK_CHILDREN(bp) ((bp)->blocks)
+#define BLOCK_LOCAL_LABELS(bp) ((bp)->label_list)
+#define BLOCK_LOCAL_SYMBOLS(bp) ((bp)->id_list)
+#define BLOCK_LOCAL_STRUCT_DECLS(bp) ((bp)->struct_decls)
+#define BLOCK_LOCAL_INTERFACES(bp) ((bp)->interfaces)
+#define BLOCK_LOCAL_EXTERNAL_SYMBOLS(bp) ((bp)->external_symbols)
+
+#define FOREACH_BLOCKS(bp, headp) \
+    for ((bp) = (headp); (bp) != NULL ; (bp) = BLOCK_NEXT(bp))
+
+#define BLOCK_LINK_ADD(bp, list, tail) \
+    { if((list) == NULL || (tail) == NULL) (list) = (bp); \
+      else BLOCK_NEXT(tail) = (bp); \
+      (tail) = (bp); }
+
 
 #endif /* _F_IDENT_H_ */
 
