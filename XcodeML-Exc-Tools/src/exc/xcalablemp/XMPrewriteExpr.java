@@ -1806,9 +1806,9 @@ public class XMPrewriteExpr {
       topdownXobjectIterator iter = t.getSizeAt(i).topdownIterator();
       for(iter.init(); !iter.end(); iter.next()){
         Xobject expr = iter.getXobject();
-        Xcode code = expr.Opcode();
+        Xcode code   = expr.Opcode();
         if(code == Xcode.PLUS_EXPR || code == Xcode.MINUS_EXPR ||
-           code == Xcode.MUL_EXPR || code == Xcode.DIV_EXPR)
+           code == Xcode.MUL_EXPR  || code == Xcode.DIV_EXPR)
           continue;
         else if(! expr.isConstant())
           return false;
@@ -1824,11 +1824,11 @@ public class XMPrewriteExpr {
       topdownXobjectIterator iter = n.getSizeAt(i).topdownIterator();
       for(iter.init(); !iter.end(); iter.next()){
         Xobject expr = iter.getXobject();
-        Xcode code = expr.Opcode();
+        Xcode code   = expr.Opcode();
         if(code == Xcode.PLUS_EXPR || code == Xcode.MINUS_EXPR ||
-           code == Xcode.MUL_EXPR || code == Xcode.DIV_EXPR)
+           code == Xcode.MUL_EXPR  || code == Xcode.DIV_EXPR)
           continue;
-        if(! expr.isConstant())
+        else if(! expr.isConstant())
           return false;
       }
     }
@@ -1842,27 +1842,27 @@ public class XMPrewriteExpr {
     int arrayDim    = alignedArray.getDim();
     Xtype arrayType = alignedArray.getArrayType();
     for (int i=0; i<arrayDim; i++, arrayType=arrayType.getRef()){
-      int dimSize = (int)arrayType.getArraySize();
-      if(alignedArray.getAlignMannerAt(i) == XMPalignedArray.BLOCK ||
-         alignedArray.getAlignMannerAt(i) == XMPalignedArray.CYCLIC ||
-         alignedArray.getAlignMannerAt(i) == XMPalignedArray.BLOCK_CYCLIC ||
-	 dimSize == -1){
-        Xobject x = arrayType.getArraySizeExpr();
-	if(x == null) x = Xcons.LongLongConstant(0, arrayType.getArraySize());
-        int index = alignedArray.getAlignSubscriptIndexAt(i);
-        if(t.getOntoNodesIndexAt(index) != null){ // Not duplicate
-          if(x.Opcode() != Xcode.LONGLONG_CONSTANT)              return false;
-          if(x.getLongHigh() != 0)                               return false;
-          int template_size = XMPutil.foldIntConstant(t.getSizeAt(index)).getInt();
-          if((int)x.getLongLow() != template_size) return false;
-        }
+      if(arrayType.getArraySize() == 0)  // Use xmp_malloc
+        return false;
+
+      switch (alignedArray.getAlignMannerAt(i)){
+      case XMPtemplate.GBLOCK:
+	return false;
+      case XMPalignedArray.BLOCK:
+      case XMPalignedArray.CYCLIC:
+      case XMPalignedArray.BLOCK_CYCLIC:
+	Xobject x = arrayType.getArraySizeExpr();
+        if(x.getLongHigh() != 0) return false; // fix me
+	int index = alignedArray.getAlignSubscriptIndexAt(i);
+        int template_size = XMPutil.foldIntConstant(t.getSizeAt(index)).getInt();
+        if((int)x.getLongLow() != template_size) return false;
       }
     }
 
     return true;
   }
   
-  // Is size of template % size of node == 0 ?
+  // Is size of template % size of node == 0 && size of template and size of array?
   private static Boolean is_divisible_size(XMPalignedArray alignedArray) throws XMPexception
   {
     XMPtemplate t = alignedArray.getAlignTemplate();
@@ -1874,11 +1874,10 @@ public class XMPrewriteExpr {
     // Number of dimensions of template must be larger than that of node.
     for(int i=0;i<t.getDim();i++){
       int manner = t.getDistMannerAt(i);
+
       switch (manner){
       case XMPtemplate.GBLOCK:
         return false;
-      case XMPtemplate.DUPLICATION:
-        break;
       case XMPtemplate.BLOCK:
       case XMPtemplate.CYCLIC:
       case XMPtemplate.BLOCK_CYCLIC:
@@ -1900,66 +1899,66 @@ public class XMPrewriteExpr {
     int arrayDim = alignedArray.getDim();
     Ident getAddrFuncId = null;
     XobjList args = Xcons.List();
-    Boolean is_divisible_size_flag = false;
+    Boolean is_optimize_trasform = false;
 
-    if(is_divisible_size(alignedArray)){
-      is_divisible_size_flag = true;
+    if(is_divisible_size(alignedArray) && arrayDim > 1){
+      is_optimize_trasform = true;
 
       XMPtemplate t     = alignedArray.getAlignTemplate();
       XMPnodes n        = t.getOntoNodes();
       XobjList tmp_args = Xcons.List();
       Xtype arrayType   = alignedArray.getArrayType();
       for (int i=0; i<arrayDim; i++, arrayType=arrayType.getRef()){
-        int dimSize = (int)arrayType.getArraySize();
-	if(alignedArray.getAlignMannerAt(i) == XMPalignedArray.BLOCK || 
-	   alignedArray.getAlignMannerAt(i) == XMPalignedArray.CYCLIC ||
-	   alignedArray.getAlignMannerAt(i) == XMPalignedArray.BLOCK_CYCLIC || 
-	   dimSize == -1){
-          Xobject x = arrayType.getArraySizeExpr();
-	  if(x == null) x = Xcons.IntConstant((int)arrayType.getArraySize());
-          int index = alignedArray.getAlignSubscriptIndexAt(i);
-          if(t.getOntoNodesIndexAt(index) != null){ // Not duplicate
-            int node_rank = t.getOntoNodesIndexAt(index).getInt();
-            x = Xcons.binaryOp(Xcode.DIV_EXPR, x, n.getSizeAt(node_rank));
-          }
+	int manner = alignedArray.getAlignMannerAt(i);
+	switch (manner) {
+	case XMPalignedArray.BLOCK:
+	case XMPalignedArray.CYCLIC:
+	case XMPalignedArray.BLOCK_CYCLIC:
+	  Xobject x = arrayType.getArraySizeExpr();
+	  int index = alignedArray.getAlignSubscriptIndexAt(i);
+          int node_rank = t.getOntoNodesIndexAt(index).getInt();
+          x = Xcons.binaryOp(Xcode.DIV_EXPR, x, n.getSizeAt(node_rank));
           
-          if(alignedArray.hasShadow()){
-            XMPshadow s = alignedArray.getShadowAt(i);
-            if(s.getHi() != null && s.getLo() != null){
-              Xobject h_plus_l = Xcons.binaryOp(Xcode.PLUS_EXPR, s.getHi(), s.getLo());
-              x = Xcons.binaryOp(Xcode.PLUS_EXPR, x, h_plus_l);
-            }
-          }
-          tmp_args.add(x);
-        }
-	else{
-          tmp_args.add(Xcons.IntConstant(dimSize));
+	  if(alignedArray.hasShadow()){
+	    XMPshadow s = alignedArray.getShadowAt(i);
+	    if(s.getHi() != null && s.getLo() != null){
+	      Xobject h_plus_l = Xcons.binaryOp(Xcode.PLUS_EXPR, s.getHi(), s.getLo());
+	      x = Xcons.binaryOp(Xcode.PLUS_EXPR, x, h_plus_l);
+	    }
+	  }
+	  tmp_args.add(x);
+	  break;
+	case XMPalignedArray.DUPLICATION:
+	  tmp_args.add(arrayType.getArraySizeExpr());
+	  break;
+	case XMPalignedArray.NOT_ALIGNED:
+	  int dimSize = (int)arrayType.getArraySize();
+	  tmp_args.add(Xcons.IntConstant(dimSize));
+	  break;
 	}
       }
 
       for (int i=1; i<arrayDim; i++){
 	Xobject x = tmp_args.getArg(i);
 	for (int j=i+1; j<arrayDim; j++){
-          if(tmp_args.getArg(j) != null){
-            x = Xcons.binaryOp(Xcode.MUL_EXPR, x, tmp_args.getArg(j));
-          }
+	  x = Xcons.binaryOp(Xcode.MUL_EXPR, x, tmp_args.getArg(j));
 	}
-        if(x != null) args.add(x);
+	args.add(x);
       }
     }
-    
+
     if (arrayDim < arrayDimCount) {
       throw new XMPexception("wrong array ref");
     }
     else if (arrayDim == arrayDimCount) {
       getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_E_" + arrayDim, Xtype.Pointer(alignedArray.getType()));
       for (int i=0; i<arrayDim-1; i++)
-        if(is_divisible_size_flag){
-          //          System.out.println(i + " : " + args.getArg(i));
+        if(is_optimize_trasform){
           getAddrFuncArgs.add(args.getArg(i));
         }
-        else
+        else{
           getAddrFuncArgs.add(alignedArray.getAccIdAt(i).Ref());
+	}
     }
     else {
       getAddrFuncId = XMP.getMacroId("_XMP_M_GET_ADDR_" + arrayDimCount, Xtype.Pointer(alignedArray.getType()));
@@ -1970,7 +1969,8 @@ public class XMPrewriteExpr {
     Xobject retObj = getAddrFuncId.Call(getAddrFuncArgs);
     if (arrayDim == arrayDimCount) {
       return Xcons.PointerRef(retObj);
-    } else {
+    }
+    else {
       return retObj;
     }
   }
