@@ -2316,13 +2316,26 @@ public class XMPrewriteExpr {
     for (bIter.init(); !bIter.end(); bIter.next()){
       Block block = bIter.getBlock();
       if (block.Opcode() == Xcode.ACC_PRAGMA){
-	Xobject clauses = ((PragmaBlock)block).getClauses();
+	PragmaBlock pragmaBlock = ((PragmaBlock)block);
+	Xobject clauses = pragmaBlock.getClauses();
 	if (clauses != null){
 	  BlockList newBody = Bcons.emptyBody();
-	  rewriteACCClauses(clauses, (PragmaBlock)block, fb, localXMPsymbolTable, newBody);
+	  rewriteACCClauses(clauses, pragmaBlock, fb, localXMPsymbolTable, newBody);
 	  if(!newBody.isEmpty()){
 	    bIter.setBlock(Bcons.COMPOUND(newBody));
 	    newBody.add(block);
+	  }
+	}
+
+	if (pragmaBlock.getPragma().equals("PARALLEL_LOOP")){
+	  BlockList body = pragmaBlock.getBody();
+	  if (body.getDecls() != null){
+	    BlockList newBody = Bcons.emptyBody(body.getIdentList().copy(), body.getDecls().copy());
+	    body.setIdentList(null);
+	    body.setDecls(null);
+	    newBody.add(Bcons.PRAGMA(Xcode.ACC_PRAGMA, pragmaBlock.getPragma(),
+				     pragmaBlock.getClauses(), body));
+	    pragmaBlock.replace(Bcons.COMPOUND(newBody));
 	  }
 	}
       }
