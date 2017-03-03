@@ -1574,7 +1574,13 @@ public class XMPtranslateLocalPragma {
       case XMPtemplate.GBLOCK:
         forBlock.setLowerBound(parallelInitId.Ref());
         forBlock.setUpperBound(parallelCondId.Ref());
-        forBlock.setStep(parallelStepId.Ref());
+	if(forBlock.getStep().equals(Xcons.IntConstant(1)))
+          forBlock.setStep(Xcons.IntConstant(1));
+        else if(forBlock.getStep().equals(Xcons.IntConstant(-1)))
+          forBlock.setStep(Xcons.IntConstant(-1));
+	else
+          forBlock.setStep(parallelStepId.Ref());
+	
         break;
       default:
         throw new XMPexception("unknown distribute manner");
