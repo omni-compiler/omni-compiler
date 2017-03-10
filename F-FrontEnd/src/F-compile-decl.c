@@ -2779,8 +2779,8 @@ expv_reduce_kind(expv v)
     switch (EXPV_CODE(ret)) {
         case FUNCTION_CALL: {
             ID fId = find_ident(EXPV_NAME(EXPR_ARG1(ret)));
-
-            if (PROC_CLASS(fId) == P_INTRINSIC) {
+            
+            if (fId != NULL && PROC_CLASS(fId) == P_INTRINSIC) {
                 const char *name = SYM_NAME(ID_SYM(fId));
 
                 if (strncasecmp("kind", name, 4) == 0 ||
