@@ -6,7 +6,7 @@
 
       FUNCTION g(a)
         INTEGER :: g
-        INTEGER :: b
+        INTEGER :: a
         g = a
       END FUNCTION g
 

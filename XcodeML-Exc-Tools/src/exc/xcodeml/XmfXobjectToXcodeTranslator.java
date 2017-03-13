@@ -677,8 +677,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_CO_SHAPE:                                        // #060
-            e = addChildNode(createElement(name),
-                             trans(xobj.getArg(0)));
+            e = createElement(name);
+            for (Xobject a : (XobjList)xobj) {
+                addChildNode(e, trans(a));
+            }
             break;
 
         case F_USER_UNARY_EXPR:
@@ -784,9 +786,9 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_TYPE_PARAM:
-            e = addChildNode(createElement(name,
-                                           "attr", xobj.getArg(0).getName()),
-                             transName(xobj.getArg(1)));
+            e = addChildNode(addChildNode(createElement(name, "attr", xobj.getArg(0).getName()),
+                                          transName(xobj.getArg(1))),
+                             trans(xobj.getArg(2)));
             break;
 
         case F_VALUE:
@@ -794,8 +796,8 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_FORALL_STATEMENT: {
-              e = createElement(name, "construct_name",
-                                      (xobj.getArg(0) != null) ? xobj.getArg(0).getName() : null);
+              e = createElement(name, "type", (xobj.Type() != null) ? xobj.Type().getXcodeFId() : null,
+                                      "construct_name", (xobj.getArg(0) != null) ? xobj.getArg(0).getName() : null);
               addChildNode(e, trans(xobj.getArg(1))); // VAR 1
               addChildNode(e, trans(xobj.getArg(2))); // INDEX_RANGE 1
               int idx = 3;
