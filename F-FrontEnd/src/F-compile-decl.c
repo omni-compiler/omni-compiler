@@ -2779,12 +2779,10 @@ expv_reduce_kind(expv v)
     switch (EXPV_CODE(ret)) {
         case FUNCTION_CALL: {
             ID fId = find_ident(EXPV_NAME(EXPR_ARG1(ret)));
-            const char *name = fId != NULL ? SYM_NAME(ID_SYM(fId))
-                : SYM_NAME(EXPV_NAME(EXPR_ARG1(ret)));
-            
-            if ((fId != NULL && PROC_CLASS(fId) == P_INTRINSIC) 
-                || SYM_NAME(EXPV_NAME(EXPR_ARG1(ret))) != NULL) 
-            {
+
+            if (PROC_CLASS(fId) == P_INTRINSIC) {
+                const char *name = SYM_NAME(ID_SYM(fId));
+
                 if (strncasecmp("kind", name, 4) == 0 ||
                     strncasecmp("selected_int_kind", name, 17) == 0) {
                     ret = EXPR_ARG1(EXPR_ARG2(ret));
