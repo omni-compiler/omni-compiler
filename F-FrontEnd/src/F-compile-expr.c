@@ -828,15 +828,13 @@ compile_expression(expr x)
             assert(EXPV_TYPE(v1));
             v2 = compile_expression(EXPR_ARG2(x)); /* kind */
         calc_kind:
-            if (v2 != NULL) {           
+            if (v2 != NULL) {
                 v2 = expv_reduce_kind(v2);
                 if (v2 == NULL) {
                     error("bad expression in constant kind parameter");
                     break;
                 }
-                if(expr_is_constant_typeof(v2, TYPE_INT) == FALSE
-                    && expr_is_constant_typeof(v2, TYPE_REAL) == FALSE) 
-                {
+                if(expr_is_constant_typeof(v2, TYPE_INT) == FALSE) {
                     error("bad expression in constant kind parameter");
                     break;
                 }

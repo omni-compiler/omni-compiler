@@ -2424,9 +2424,7 @@ getKindParameter(TYPE_DESC tp)
     static char buf[256];
     expv v = TYPE_KIND(tp);
 
-    if(IS_DOUBLED_TYPE(tp) || 
-        ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_REAL)) 
-    {
+    if(IS_DOUBLED_TYPE(tp)) {
         sprintf(buf, "%d", KIND_PARAM_DOUBLE);
     } else if(v) {
         strcpy(buf, getRawString(v));
