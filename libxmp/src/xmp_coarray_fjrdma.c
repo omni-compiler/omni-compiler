@@ -2141,7 +2141,7 @@ void _XMP_fjrdma_build_sync_images_table()
   _sync_images_table = malloc(sizeof(unsigned int) * _XMP_world_size);
 
   for(int i=0;i<_XMP_world_size;i++)
-    _sync_images_table[i] = _XMP_N_INT_FALSE;
+    _sync_images_table[i] = 0;
 
   double *token     = _XMP_alloc(sizeof(double));
   _local_rdma_addr  = FJMPI_Rdma_reg_mem(_XMP_SYNC_IMAGES_ID, token, sizeof(double));
@@ -2167,7 +2167,7 @@ void _XMP_fjrdma_build_sync_images_table()
    */
 static void _add_sync_images_table(const int rank)
 {
-  _sync_images_table[rank] = _XMP_N_INT_TRUE;
+  _sync_images_table[rank]++;
 }
 
 /**
@@ -2190,9 +2190,8 @@ static void _notify_sync_images(const int num, int *rank_set)
       num_of_requests++;
     }
 
-  struct FJMPI_Rdma_cq cq;
   for(int i=0;i<num_of_requests;i++)
-    while(FJMPI_Rdma_poll_cq(_XMP_SYNC_IMAGES_SEND_NIC, &cq) != FJMPI_RDMA_NOTICE);  // Wait until finishing above put operations
+    while(FJMPI_Rdma_poll_cq(_XMP_SYNC_IMAGES_SEND_NIC, NULL) != FJMPI_RDMA_NOTICE);  // Wait until finishing above put operations
 }
 
 /**
@@ -2207,7 +2206,7 @@ static _Bool _check_sync_images_table(const int num, int *rank_set)
   int checked = 0;
 
   for(int i=0;i<num;i++)
-    if(_sync_images_table[rank_set[i]] == _XMP_N_INT_TRUE)
+    if(_sync_images_table[rank_set[i]] > 0)
       checked++;
 
   if(checked == num) return true;
@@ -2227,7 +2226,7 @@ static void _wait_sync_images(const int num, int *rank_set)
 
   while(1){
     if(_check_sync_images_table(num, rank_set)) break;
-
+    
     if(FJMPI_Rdma_poll_cq(_XMP_SYNC_IMAGES_RECV_NIC, &cq) == FJMPI_RDMA_HALFWAY_NOTICE)
       _add_sync_images_table(cq.pid);
   }
@@ -2261,5 +2260,5 @@ void _XMP_fjrdma_sync_images(const int num, int* image_set, int* status)
 
   // Update table for post-processing
   for(int i=0;i<num;i++)
-    _sync_images_table[rank_set[i]] = _XMP_N_INT_FALSE;
+    _sync_images_table[rank_set[i]]--;
 }
