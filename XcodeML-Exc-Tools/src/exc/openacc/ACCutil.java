@@ -186,10 +186,15 @@ class ACCutil {
     XobjList declList = Xcons.List();
     for(Xobject x : arrayArgs){
       XobjList arrayElements = (XobjList)x;
-      Ident id = body.declLocalIdent("_ACC_funcarg_"+i, Xtype.Array(Xtype.unsignedlonglongType, null));
-      id.setIsDeclared(true);
-      declList.add(Xcons.List(Xcode.VAR_DECL, id, arrayElements, null));
-      funcArgs.add(id.Ref());
+      if(arrayElements != null && !arrayElements.isEmpty()){
+	Ident id = body.declLocalIdent("_ACC_funcarg_"+i, Xtype.Array(Xtype.unsignedlonglongType, null));
+	id.setIsDeclared(true);
+	declList.add(Xcons.List(Xcode.VAR_DECL, id, arrayElements, null));
+	funcArgs.add(id.Ref());
+      }else{
+	Xobject nullPtr = Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));
+	funcArgs.add(nullPtr);
+      }
       i++;
     }
     

@@ -677,8 +677,10 @@ public class XmfXobjectToXcodeTranslator extends XmXobjectToXcodeTranslator {
             break;
 
         case F_CO_SHAPE:                                        // #060
-            e = addChildNode(createElement(name),
-                             trans(xobj.getArg(0)));
+            e = createElement(name);
+            for (Xobject a : (XobjList)xobj) {
+                addChildNode(e, trans(a));
+            }
             break;
 
         case F_USER_UNARY_EXPR:
