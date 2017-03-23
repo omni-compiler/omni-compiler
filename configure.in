@@ -427,6 +427,16 @@ AC_ARG_ENABLE(shared,
   [  --enable-shared         enable to generate shared library (only OpenACC now) (false default)],
   [doshared=yes], [doshared=no])
 
+AC_ARG_ENABLE(fjrdma,
+  [  --enable-fjrdma         enable FJRDMA for one-sided communication. If "--disable-fjrdma" is attatched, 
+                          MPI3 is used instead of FJRDMA. This disable option works on only FX100 (true default)],
+  [dofjrdma=no], [dofjrdma=yes])
+
+# check --disable-fjrdma is used with --target=FX100-linux-gnu
+if test x${dofjrdma} = xno -a x${target} != xFX100-linux-gnu; then
+    echo "Error!! --disable-fjrdma works on only FX100. Please attach --target=FX100-linux-gnu"
+    exit 1
+fi
 #--------------------------------------------------------------------
 # set defulat platform and device for OpenACC
 if test "x${use_cuda}" = "xyes"; then
@@ -453,7 +463,10 @@ POWERPC=$FALSE
 CRAY=$FALSE
 SUPERUX=$FALSE
 if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
-    FJRDMA=$TRUE
+    if test "$dofjrdma" = "yes"; then
+        FJRDMA=$TRUE
+    fi
+
     if test "$target" = "Kcomputer-linux-gnu"; then
         KCOMPUTER=$TRUE
     elif test "$target" = "FX10-linux-gnu"; then
@@ -1095,7 +1108,7 @@ AC_ARG_WITH(libblas,
             [LIBBLAS="${withval}"; use_libblas=yes], [use_libblas=no])
 
 AC_ARG_ENABLE(SSL2BLAMP,
-              [  --enable-SSL2BLAMP      enable Fujitsu Math Library (true on only the K computer, false on Fx10)],
+              [  --enable-SSL2BLAMP      enable Fujitsu Math Library (true on only the K computer, false on Fx10 & FX100)],
               [use_SSL2BLAMP=yes], [use_SSL2BLAMP=no])
 
 AC_ARG_ENABLE(intelmkl,
@@ -1502,7 +1515,9 @@ if test x${use_tca} = xyes; then
 fi
 
 use_mpi3_onesided=no
-if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu"; then
+if test "x${doMPI3_ASYNC}" = "xyes" -a "x${use_gasnet}" = "xno" -a "x${target}" != "xKcomputer-linux-gnu" -a "x${target}" != "xFX10-linux-gnu" -a "x${target}" != "xFX100-linux-gnu" ; then
+    use_mpi3_onesided=yes
+elif test x${dofjrdma} = xno; then
     use_mpi3_onesided=yes
 fi
 
@@ -1520,7 +1535,9 @@ if test x${use_gasnet} = xyes; then
 elif test x${use_mpi3_onesided} = xyes; then
     ONESIDED_CPPFLAGS="-D_XMP_MPI3_ONESIDED"
 elif test x${target} = xKcomputer-linux-gnu -o x${target} = xFX10-linux-gnu -o x${target} = xFX100-linux-gnu; then
-    ONESIDED_CPPFLAGS="-D_XMP_FJRDMA"
+    if x${dofjrdma} = xyes; then
+        ONESIDED_CPPFLAGS="-D_XMP_FJRDMA"
+    fi
 fi
 
 AC_SUBST(MPI3_ASYNC)
@@ -2208,13 +2225,7 @@ fi
 
 # check use one-sided
 isOnesided=no
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
-    isOnesided=yes
-    ONESIDED_LIB="Fujitsu RDMA"
-    isCoarray=yes
-    isPostWait=yes
-    isLockUnlock=no
-elif test x$use_gasnet = xyes; then
+if test x$use_gasnet = xyes; then
     isOnesided=yes
     ONESIDED_LIB=GASNet
     isCoarray=yes
@@ -2223,6 +2234,12 @@ elif test x$use_gasnet = xyes; then
 elif test x$use_mpi3_onesided = xyes; then
     isOnesided=yes
     ONESIDED_LIB=MPI3
+    isCoarray=yes
+    isPostWait=yes
+    isLockUnlock=no
+elif test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
+    isOnesided=yes
+    ONESIDED_LIB="Fujitsu RDMA"
     isCoarray=yes
     isPostWait=yes
     isLockUnlock=no

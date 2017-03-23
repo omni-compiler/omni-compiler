@@ -314,6 +314,8 @@ public enum Xcode
     F_BINDING                       ( 230, 'L', null, null),
      // Fortran2008: SUBMODULE
     F_MODULE_PROCEDURE_DEFINITION   ( 231, 'L', null, null),
+     // Fortran2003: FORALL STATEMENT
+    F_FORALL_STATEMENT              ( 232, 'L', null, null),
 
      // Codes dynamically assignable
     DYN_1                           ( 1001, 'L', null, null),

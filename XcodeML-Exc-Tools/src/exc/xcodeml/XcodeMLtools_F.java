@@ -761,7 +761,8 @@ public class XcodeMLtools_F extends XcodeMLtools {
       {
         attr = getSymbol(n, "attr");
         return setCommonAttributes(n, Xcons.List(code, type, attr,
-						 toXobject(getElement(n, "name"))
+						 toXobject(getElement(n, "name")),
+						 toXobject(getElement(n, "value"))
 						 ));
       }
 
@@ -808,6 +809,23 @@ public class XcodeMLtools_F extends XcodeMLtools {
           xobjs.add(toXobject(nn));
         }
         return setCommonAttributes(n, xobjp);
+      }
+
+    case F_CONDITION:
+      return toXobject(getContent(n));
+
+    case F_FORALL_STATEMENT:
+      {
+        XobjList xobj = new XobjList(code, type);
+        xobj.add(getSymbol(n, "construct_name"));
+        NodeList list = n.getChildNodes();
+        for (int i = 0; i < list.getLength(); i++) {
+          Node nn = list.item(i);
+          if (nn.getNodeType() != Node.ELEMENT_NODE)
+            continue;
+          xobj.add(toXobject(nn));
+        }
+        return setCommonAttributes(n, xobj);
       }
 
     case F_TYPE_BOUND_PROCEDURES:
