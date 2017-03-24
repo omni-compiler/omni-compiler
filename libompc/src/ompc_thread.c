@@ -18,7 +18,6 @@
 #include "exc_platform.h"
 #include "ompclib.h"
 
-#include <hwloc.h>
 #include <errno.h>
 
 #define ULT_POOL_SIZE 1024
@@ -34,38 +33,6 @@ static int taskq_limit = 1024;
 static ABT_key tls_key;
 static void tls_free(void *value) {
     // do nothing
-}
-
-static hwloc_topology_t topo;
-static int hwloc_ncores;
-static void thread_affinity_setup(int i) {
-    int thread_num;
-    if (ompc_max_threads >= hwloc_ncores) {
-        thread_num = i % hwloc_ncores;
-    }
-    else { // ompc_max_threads < hwloc_ncores
-        int chunk_size = hwloc_ncores / ompc_max_threads;
-        thread_num = i * chunk_size;
-    }
-
-    hwloc_obj_t core = hwloc_get_obj_by_type(topo, HWLOC_OBJ_CORE, thread_num);
-    hwloc_cpuset_t set = hwloc_bitmap_dup(core->cpuset);
-//    hwloc_bitmap_singlify(set);
-
-    int res;
-    res = hwloc_set_cpubind(topo, set, HWLOC_CPUBIND_THREAD | HWLOC_CPUBIND_STRICT);
-    if (res) {
-        int err = errno;
-        printf("[%d] error: hwloc_set_cpubind(): %d\n", i, err);
-    }
-
-    res = hwloc_set_membind(topo, set, HWLOC_MEMBIND_FIRSTTOUCH, HWLOC_MEMBIND_THREAD | HWLOC_MEMBIND_STRICT);
-    if (res) {
-        int err = errno;
-        printf("[%d] error: hwloc_set_membind(): %d\n", i, err);
-    }
-
-    hwloc_bitmap_free(set);
 }
 
 #ifdef __TEST_WORK_STEALING
@@ -234,11 +201,6 @@ ompc_init(int argc,char *argv[])
     ABT_init(argc, argv);
     tls_key = ABT_KEY_NULL;
     ABT_key_create(tls_free, &tls_key);
-
-    // hwloc init
-    hwloc_topology_init(&topo);
-    hwloc_topology_load(topo);
-    hwloc_ncores = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_CORE);
     
     {
       char buff[BUFSIZ];
@@ -941,8 +903,6 @@ ompc_terminate(int exitcode)
 //     }
 
 //     ABT_finalize();
-
-    hwloc_topology_destroy(topo);
 
     exit (exitcode);
 }
