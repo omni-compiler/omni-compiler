@@ -4,6 +4,12 @@ configure のオプションに以下を追加：
 --with-argobots=path/to/argobots
 ```
 
+# 新たに実装したランタイム関数一覧
+* ompc_loop_divide_conquer
+* ompc_do_task/ompc_do_task_if
+* ompc_taskwait
+* ompc_taskyield
+
 -------------------------------------------------------------------------
 
 README
