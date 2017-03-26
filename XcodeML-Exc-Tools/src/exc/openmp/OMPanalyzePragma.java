@@ -228,7 +228,7 @@ public class OMPanalyzePragma
         case CRITICAL: /* critical <name> */
             t = pb.getClauses();
             if(t != null)
-                info.arg = t.getArg(0);
+                info.arg = t.getArgOrNull(0);
             else
                 info.arg = null;
             if(info.findContext(OMPpragma.CRITICAL, info.arg) != null)
