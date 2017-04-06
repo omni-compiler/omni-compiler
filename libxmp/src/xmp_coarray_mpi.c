@@ -455,47 +455,7 @@ void _XMP_mpi_get(const int src_continuous, const int dst_continuous, const int 
   }
 }
 
-/**
-   Execute sync_memory
- */
-void _XMP_mpi_sync_memory()
-{
-  if(! _is_coarray_win_flushed){
-    XACC_DEBUG("sync_memory(normal, host)");
-    //MPI_Win_flush_local_all(_xmp_mpi_onesided_win);
-    MPI_Win_flush_all(_xmp_mpi_onesided_win);
-
-    _is_coarray_win_flushed = true;
-  }
-
-  if(! _is_distarray_win_flushed){
-    XACC_DEBUG("sync_memory(distarray, host)");
-    //MPI_Win_flush_local_all(_xmp_mpi_onesided_win);
-    MPI_Win_flush_all(_xmp_mpi_distarray_win);
-
-    _is_distarray_win_flushed = true;
-  }
-
-#ifdef _XMP_XACC
-  if(! _is_coarray_win_acc_flushed){
-    XACC_DEBUG("sync_memory(normal, acc)");
-    //MPI_Win_flush_local_all(_xmp_mpi_onesided_win_acc);
-    MPI_Win_flush_all(_xmp_mpi_onesided_win_acc);
-
-    _is_coarray_win_acc_flushed = true;
-  }
-
-  if(! _is_distarray_win_acc_flushed){
-    XACC_DEBUG("sync_memory(distarray, acc)");
-    //MPI_Win_flush_local_all(_xmp_mpi_onesided_win_acc);
-    MPI_Win_flush_all(_xmp_mpi_distarray_win_acc);
-
-    _is_distarray_win_acc_flushed = true;
-  }
-#endif
-}
-
-static void _mpi_win_sync()
+static void _win_sync()
 {
   MPI_Win_sync(_xmp_mpi_onesided_win);
   MPI_Win_sync(_xmp_mpi_distarray_win);
@@ -507,14 +467,51 @@ static void _mpi_win_sync()
 }
 
 /**
+   Execute sync_memory
+ */
+void _XMP_mpi_sync_memory()
+{
+  if(! _is_coarray_win_flushed){
+    XACC_DEBUG("sync_memory(normal, host)");
+    MPI_Win_flush_all(_xmp_mpi_onesided_win);
+
+    _is_coarray_win_flushed = true;
+  }
+
+  if(! _is_distarray_win_flushed){
+    XACC_DEBUG("sync_memory(distarray, host)");
+    MPI_Win_flush_all(_xmp_mpi_distarray_win);
+
+    _is_distarray_win_flushed = true;
+  }
+
+#ifdef _XMP_XACC
+  if(! _is_coarray_win_acc_flushed){
+    XACC_DEBUG("sync_memory(normal, acc)");
+    MPI_Win_flush_all(_xmp_mpi_onesided_win_acc);
+
+    _is_coarray_win_acc_flushed = true;
+  }
+
+  if(! _is_distarray_win_acc_flushed){
+    XACC_DEBUG("sync_memory(distarray, acc)");
+    MPI_Win_flush_all(_xmp_mpi_distarray_win_acc);
+
+    _is_distarray_win_acc_flushed = true;
+  }
+#endif
+
+  _win_sync();
+}
+
+/**
    Execute sync_all
  */
 void _XMP_mpi_sync_all()
 {
   _XMP_mpi_sync_memory();
-  _mpi_win_sync();
   MPI_Barrier(MPI_COMM_WORLD);
-  _mpi_win_sync();
+  _XMP_mpi_sync_memory();
 }
 
 static void _mpi_continuous(const int op,
@@ -936,7 +933,6 @@ static void _wait_sync_images(const int num, int *rank_set)
 void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
 {
   _XMP_mpi_sync_memory();
-  _mpi_win_sync();
 
   if(num == 0){
     return;
@@ -953,7 +949,8 @@ void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
 
   _notify_sync_images(num, rank_set);
   _wait_sync_images(num, rank_set);
-  _mpi_win_sync();
+
+  _XMP_mpi_sync_memory();
 }
 
 
