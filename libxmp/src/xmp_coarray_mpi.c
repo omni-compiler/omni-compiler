@@ -24,6 +24,10 @@ static unsigned int *_sync_images_table;
 static unsigned int *_sync_images_table_disp;
 #endif
 
+static bool _is_put_blocking = true;
+static bool _is_put_local_blocking = true;
+static bool _is_get_blocking = true;
+
 static void _mpi_continuous(const int op,
 			    const int target_rank, 
 			    const _XMP_coarray_t *remote_desc, const void *local,
@@ -514,6 +518,23 @@ void _XMP_mpi_sync_all()
   _XMP_mpi_sync_memory();
 }
 
+static inline
+void _wait_puts(const int target_rank, const MPI_Win win)
+{
+    if(_is_put_blocking){
+      MPI_Win_flush(target_rank, win);
+    }else if(_is_put_local_blocking){
+      MPI_Win_flush_local(target_rank, win);
+    }
+}
+static inline
+void _wait_gets(const int target_rank, const MPI_Win win)
+{
+  if(_is_get_blocking){
+    MPI_Win_flush_local(target_rank, win);
+  }
+}
+
 static void _mpi_continuous(const int op,
 			    const int target_rank, 
 			    const _XMP_coarray_t *remote_desc, const void *local,
@@ -530,15 +551,16 @@ static void _mpi_continuous(const int op,
     MPI_Put((void*)laddr, transfer_size, MPI_BYTE, target_rank,
 	    (MPI_Aint)raddr, transfer_size, MPI_BYTE,
 	    win);
+    _wait_puts(target_rank, win);
   }else if(op == _XMP_N_COARRAY_GET){
     XACC_DEBUG("continuous_get(local=%p, size=%zd, target=%d, remote=%p, is_acc=%d)", laddr, transfer_size, target_rank, raddr, is_remote_on_acc);
     MPI_Get((void*)laddr, transfer_size, MPI_BYTE, target_rank,
 	    (MPI_Aint)raddr, transfer_size, MPI_BYTE,
 	    win);
+    _wait_gets(target_rank, win);
   }else{
     _XMP_fatal("invalid coarray operation type");
   }
-  MPI_Win_flush_local(target_rank, win);
 
   /*
   MPI_Request req[2];
@@ -617,7 +639,11 @@ static void _mpi_non_continuous(const int op, const int target_rank,
   _mpi_free_types(local_types,  local_dims );
   _mpi_free_types(remote_types, remote_dims);
 
-  MPI_Win_flush_local(target_rank, win);
+  if(op == _XMP_N_COARRAY_PUT){
+    _wait_puts(target_rank, win);
+  }else if (op == _XMP_N_COARRAY_GET){
+    _wait_gets(target_rank, win);
+  }
 }
 
 
@@ -677,7 +703,7 @@ static void _mpi_scalar_mput(const int target_rank,
       break;
     }
   }
-  MPI_Win_flush_local(target_rank, win);
+  _wait_puts(target_rank, win);
   if(allelmt_dim != dst_dims){
     _XMP_free(laddr);
   }
@@ -732,6 +758,8 @@ static void _mpi_scalar_mget(const int target_rank,
   MPI_Get((void*)laddr, transfer_size, MPI_BYTE, target_rank,
 	  (MPI_Aint)raddr, transfer_size, MPI_BYTE,
 	  win);
+
+  //we have to wait completion of the get
   MPI_Win_flush_local(target_rank, win);
 
   _unpack_scalar((char*)dst, dst_dims, laddr, dst_info);
