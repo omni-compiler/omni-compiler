@@ -164,7 +164,7 @@ intermediate_file_name(char * filename,
     char tmp[FILE_NAME_LEN];
     extern char *modincludeDirv;
     if (modincludeDirv) {
-        snprintf(filename, strnlen(filename, FILE_NAME_LEN),
+        snprintf(filename, strnlen(modincludeDirv, FILE_NAME_LEN)+2,
                  "%s/", modincludeDirv);
     }
     if (MODULE_IS_MODULE(mod)) {
