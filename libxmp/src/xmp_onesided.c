@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "xmp_internal.h"
 int _XMP_flag_put_nb      = false; // This variable is temporal
+int _XMP_flag_get_nb      = false; // This variable is temporal
 #if defined(_XMP_FJRDMA)
 int _XMP_flag_put_nb_rr   = false; // This variable is temporal
 int _XMP_flag_put_nb_rr_i = false; // This variable is temporal
@@ -109,6 +110,12 @@ void _XMP_initialize_onesided_functions(int argc, char **argv)
     _XMP_flag_put_nb = true;  // defalt false
     if(_XMP_world_rank == 0)
       printf("*** _XMP_coarray_contiguous_put() is Non-Blocking ***\n");
+  }
+
+  if(getenv("XMP_GET_NB") != NULL){
+    _XMP_flag_get_nb = true;  // defalt false
+    if(_XMP_world_rank == 0)
+      printf("*** _XMP_coarray_contiguous_get() is Non-Blocking ***\n");
   }
 
 #if defined(_XMP_FJRDMA)

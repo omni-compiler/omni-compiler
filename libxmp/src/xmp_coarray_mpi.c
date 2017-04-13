@@ -24,9 +24,18 @@ static unsigned int *_sync_images_table;
 static unsigned int *_sync_images_table_disp;
 #endif
 
+//external variables in xmp_onesided.c
+extern int _XMP_flag_put_nb; // This variable is temporal
+extern int _XMP_flag_get_nb; // This variable is temporal
+
+/*
 static bool _is_put_blocking = true;
 static bool _is_put_local_blocking = true;
 static bool _is_get_blocking = true;
+*/
+#define _is_put_blocking (! _XMP_flag_put_nb)
+#define _is_put_local_blocking (! _XMP_flag_put_nb)
+#define _is_get_blocking (! _XMP_flag_get_nb)
 
 static void _mpi_contiguous(const int op,
 			    const int target_rank, 
