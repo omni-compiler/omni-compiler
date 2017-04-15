@@ -2221,6 +2221,8 @@ if test -d .git || test -f .git; then
     else
         echo -n Version:AC_PACKAGE_VERSION > ${VERSIONTXT}
     fi
+else
+    echo -n Version:AC_PACKAGE_VERSION > ${VERSIONTXT}
 fi
 
 # check use one-sided
