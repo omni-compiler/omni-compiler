@@ -12970,6 +12970,8 @@ if test -d .git || test -f .git; then
     else
         echo -n Version:1.1.1 > ${VERSIONTXT}
     fi
+else
+    echo -n Version:1.1.1 > ${VERSIONTXT}
 fi
 
 # check use one-sided
