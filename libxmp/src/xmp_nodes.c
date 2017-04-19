@@ -820,49 +820,51 @@ void _XMP_finalize_nodes(_XMP_nodes_t *nodes)
   _XMP_free(nodes);
 }
 
-int _XMP_exec_task_GLOBAL_PART(_XMP_task_desc_t **task_desc, int ref_lower, int ref_upper, int ref_stride)
-{
-  int lower[1], upper[1], stride[1];
+// no need because never occur.
+//
+/* int _XMP_exec_task_GLOBAL_PART(_XMP_task_desc_t **task_desc, int ref_lower, int ref_upper, int ref_stride) */
+/* { */
+/*   int lower[1], upper[1], stride[1]; */
   
-  lower[0] = ref_lower;
-  upper[0] = ref_upper;
-  stride[0] = ref_stride;
+/*   lower[0] = ref_lower; */
+/*   upper[0] = ref_upper; */
+/*   stride[0] = ref_stride; */
 
-  _XMP_task_desc_t *desc = NULL;
-  if(*task_desc == NULL){
-    desc = (_XMP_task_desc_t *)_XMP_alloc(sizeof(_XMP_task_desc_t));
-    *task_desc = desc;
-  }
-  else{
-    desc = *task_desc;
-    if(_XMP_compare_task_exec_cond(desc, _XMP_world_nodes, lower, upper, stride)){
-      if(desc->execute){
-        _XMP_push_nodes(desc->nodes);
-        return _XMP_N_INT_TRUE;
-      }
-      else {
-        return _XMP_N_INT_FALSE;
-      }
-    }
-    else{
-      if(desc->nodes != NULL){
-        _XMP_finalize_nodes(desc->nodes);
-      }
-    }
-  }
+/*   _XMP_task_desc_t *desc = NULL; */
+/*   if(*task_desc == NULL){ */
+/*     desc = (_XMP_task_desc_t *)_XMP_alloc(sizeof(_XMP_task_desc_t)); */
+/*     *task_desc = desc; */
+/*   } */
+/*   else{ */
+/*     desc = *task_desc; */
+/*     if(_XMP_compare_task_exec_cond(desc, _XMP_world_nodes, lower, upper, stride)){ */
+/*       if(desc->execute){ */
+/*         _XMP_push_nodes(desc->nodes); */
+/*         return _XMP_N_INT_TRUE; */
+/*       } */
+/*       else { */
+/*         return _XMP_N_INT_FALSE; */
+/*       } */
+/*     } */
+/*     else{ */
+/*       if(desc->nodes != NULL){ */
+/*         _XMP_finalize_nodes(desc->nodes); */
+/*       } */
+/*     } */
+/*   } */
 
-  _XMP_nodes_t *n = NULL;
-  _XMP_init_nodes_STATIC_NODES_NUMBER(&n, 1, ref_lower, ref_upper, ref_stride, _XMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride));
-  _XMP_set_task_desc(desc, n, n->is_member, _XMP_world_nodes, lower, upper, stride);
+/*   _XMP_nodes_t *n = NULL; */
+/*   _XMP_init_nodes_STATIC_NODES_NUMBER(&n, 1, ref_lower, ref_upper, ref_stride, _XMP_M_COUNT_TRIPLETi(ref_lower, ref_upper, ref_stride)); */
+/*   _XMP_set_task_desc(desc, n, n->is_member, _XMP_world_nodes, lower, upper, stride); */
   
-  if(n->is_member){
-    _XMP_push_nodes(n);
-    return _XMP_N_INT_TRUE;
-  }
-  else{
-    return _XMP_N_INT_FALSE;
-  }
-}
+/*   if(n->is_member){ */
+/*     _XMP_push_nodes(n); */
+/*     return _XMP_N_INT_TRUE; */
+/*   } */
+/*   else{ */
+/*     return _XMP_N_INT_FALSE; */
+/*   } */
+/* } */
 
 int _XMP_exec_task_NODES_ENTIRE(_XMP_task_desc_t **task_desc, _XMP_nodes_t *ref_nodes)
 {

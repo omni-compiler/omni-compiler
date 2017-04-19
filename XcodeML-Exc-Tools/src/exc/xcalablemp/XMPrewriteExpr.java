@@ -4,6 +4,7 @@ import exc.block.*;
 import exc.object.*;
 import exc.openacc.ACCpragma;
 import java.util.*;
+import xcodeml.util.XmOption;
 
 public class XMPrewriteExpr {
   private XMPglobalDecl		_globalDecl;
@@ -574,9 +575,44 @@ public class XMPrewriteExpr {
       funcArgs.add(Xcons.IntConstant(isSrcCoarrayOnAcc? 1 : 0));
     }
 
+    // // for XMPT
+    // XMPcoarray localCoarray = null;
+    // Xobject localCoarrayExpr = null;
+    // Ident xmptFuncId;
+    // if (commkind == "get"){
+    //   localCoarray = dstCoarray;
+    //   localCoarrayExpr = dstCoarrayExpr;
+    //   xmptFuncId = _globalDecl.declExternFunc("_XMP_coarray_local_write");
+    // }
+    // else {
+    //   localCoarray = srcCoarray;
+    //   localCoarrayExpr = srcCoarrayExpr;
+    //   xmptFuncId = _globalDecl.declExternFunc("_XMP_coarray_local_read");
+    // }
+    // XobjList xmptArgs = Xcons.List();
+    // xmptArgs.add(Xcons.SymbolRef(localCoarray.getDescId()));
+    // XobjList tripletList = (XobjList)localCoarrayExpr.getArg(1);
+    // for (int i = 0; i < tripletList.Nargs(); i++){
+    //   if (!tripletList.getArg(i).isIndexRange()){
+    // 	xmptArgs.add(tripletList.getArg(i));           // start
+    // 	xmptArgs.add(Xcons.IntConstant(1));            // length
+    // 	xmptArgs.add(Xcons.IntConstant(1));            // stride
+    //   }
+    //   else{
+    // 	for (int j = 0; j < 3; j++){
+    // 	  xmptArgs.add(tripletList.getArg(i).getArg(j));
+    //     }
+    //   }
+    // }
+    // Xobject xmptNewExpr = xmptFuncId.Call(xmptArgs);
+    // xmptNewExpr.setIsRewrittedByXmp(true);
+    // // end for XMPT
+    
     // Create function
     Xobject newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
+
+    //return Xcons.List(Xcode.COMMA_EXPR, xmptNewExpr, newExpr);
     return newExpr;
   }
 
@@ -635,6 +671,15 @@ public class XMPrewriteExpr {
       throw new XMPexception("Not supported this coarray Syntax");
     }
 
+    XMPcoarray localCoarray = _globalDecl.getXMPcoarray(localName, exprParentBlock);
+
+    // // for XMPT
+    // XobjList xmptArgs = null;
+    // if (localCoarray != null){
+    //   xmptArgs = Xcons.List();
+    //   xmptArgs.add(Xcons.SymbolRef(localCoarray.getDescId()));
+    // }
+
     // Get image Dims
     XobjList imageList = (XobjList)coarrayExpr.getArg(1);
     int imageDims = coarray.getImageDim();
@@ -645,7 +690,7 @@ public class XMPrewriteExpr {
        isCoarray(localExpr, exprParentBlock))
       {
         XMPcoarray remoteCoarray = coarray;
-        XMPcoarray localCoarray = _globalDecl.getXMPcoarray(localName, exprParentBlock);
+        //XMPcoarray localCoarray = _globalDecl.getXMPcoarray(localName, exprParentBlock);
         boolean isRemoteCoarrayUseDevice = isUseDevice(remoteCoarray.getName(), exprParentBlock);
         boolean isLocalCoarrayUseDevice = isUseDevice(localCoarray.getName(), exprParentBlock);
         if(leftExpr.Opcode() == Xcode.CO_ARRAY_REF)
@@ -727,10 +772,19 @@ public class XMPrewriteExpr {
           funcArgs.add(Xcons.IntConstant(1));            // length
           funcArgs.add(Xcons.IntConstant(1));            // stride
           funcArgs.add(Xcons.IntConstant(sizeArray[i])); // size
+
+	  // // for XMPT
+	  // if (localCoarray != null){
+	  //   xmptArgs.add(tripletList.getArg(i));           // start
+	  //   xmptArgs.add(Xcons.IntConstant(1));            // length
+	  //   xmptArgs.add(Xcons.IntConstant(1));            // stride
+	  // }
         }
         else{
           for(int j=0;j<3;j++){
             funcArgs.add(tripletList.getArg(i).getArg(j));
+	    // // for XMPT
+	    // if (localCoarray != null) xmptArgs.add(tripletList.getArg(i).getArg(j));
           }
           funcArgs.add(Xcons.IntConstant(sizeArray[i]));     // size
         }
@@ -744,7 +798,29 @@ public class XMPrewriteExpr {
       funcArgs.add(Xcons.IntConstant(1)); // stride
       funcArgs.add(Xcons.IntConstant(1)); // size
       funcArgs.add(Xcons.SizeOf(localExpr.Type()));
+
+      // // for XMPT
+      // if (localCoarray != null){
+      // 	xmptArgs.add(Xcons.IntConstant(0)); // start
+      // 	xmptArgs.add(Xcons.IntConstant(1)); // length
+      // 	xmptArgs.add(Xcons.IntConstant(1)); // stride
+      // }
     }
+
+    // // for XMPT
+    // if (localCoarray != null){
+    //   Ident xmptFuncId;
+    //   if (leftExpr.Opcode() == Xcode.CO_ARRAY_REF){
+    // 	xmptFuncId = _globalDecl.declExternFunc("_XMP_coarray_local_read");
+    //   }
+    //   else {
+    // 	xmptFuncId = _globalDecl.declExternFunc("_XMP_coarray_local_write");
+    //   }
+    //   Xobject xmptNewExpr = xmptFuncId.Call(xmptArgs);
+    //   xmptNewExpr.setIsRewrittedByXmp(true);
+    //   iter.insertStatement(xmptNewExpr);
+    // }
+    
     newExpr = funcId.Call(funcArgs);
     newExpr.setIsRewrittedByXmp(true);
     iter.insertStatement(newExpr);
@@ -1132,9 +1208,17 @@ public class XMPrewriteExpr {
     BasicBlockIterator iter = new BasicBlockIterator(funcBlock);
     for (iter.init(); !iter.end(); iter.next()) {
       BasicBlock bb = iter.getBasicBlock();
+
+      // for XMPT
+      if (XmOption.isXmptEnabled()) insertXmptCallForLocalCoarray(bb.getExpr(), bb.getParent(), bb);
+
       for (Statement s = bb.getHead(); s != null; s = s.getNext()){
 	Xobject x = s.getExpr();
 	try {
+
+	  // for XMPT
+	  if (XmOption.isXmptEnabled()) insertXmptCallForLocalCoarray(x, bb.getParent(), s);
+
 	  if (x.Opcode() == Xcode.ASSIGN_EXPR && x.getArg(0).Opcode() == Xcode.SUB_ARRAY_REF &&
 	      x.getArg(1).Opcode() != Xcode.CO_ARRAY_REF){
 	    Block b = rewriteSubarrayToLoop(x, bb.getParent());
@@ -2758,4 +2842,95 @@ public class XMPrewriteExpr {
     BlockList bl = fb.getBody().getHead().getBody();
     bl.add(f.Call(Xcons.List()));
   }
+
+  // for XMPT
+  private void insertXmptCallForLocalCoarray(Xobject expr, Block exprParentBlock, Statement s){
+    XobjectIterator i = new topdownXobjectIterator(expr);
+    for (i.init(); !i.end(); i.next()) {
+      Xobject x = i.getXobject();
+      if (x == null) continue;
+      if (i.getParent() != null && i.getParent().Opcode() == Xcode.CO_ARRAY_REF) continue;
+      Xobject xmptCall = createXmptCallForLocalCoarray(x, exprParentBlock);
+      if (xmptCall != null) s.insert(xmptCall);
+    }
+  }
+
+  private void insertXmptCallForLocalCoarray(Xobject expr, Block exprParentBlock, BasicBlock bb){
+    XobjectIterator i = new topdownXobjectIterator(expr);
+    for (i.init(); !i.end(); i.next()) {
+      Xobject x = i.getXobject();
+      //if (x.Opcode() == Xcode.CO_ARRAY_REF) continue;
+      //if (i.getParent() != null && i.getParent().Opcode() == Xcode.CO_ARRAY_REF) continue;
+      if (x == null) continue;
+      Xobject xmptCall = createXmptCallForLocalCoarray(x, exprParentBlock);
+      if (xmptCall != null) bb.insert(xmptCall);
+    }
+  }
+
+  private Xobject createXmptCallForLocalCoarray(Xobject expr, Block exprParentBlock){
+
+    String localName;
+    boolean isArray;
+
+    if (expr.Opcode() == Xcode.SUB_ARRAY_REF || expr.Opcode() == Xcode.ARRAY_REF){
+      localName = expr.getArg(0).getName();
+      isArray = true;
+    }
+    //else if (expr.Opcode() == Xcode.VAR || expr.Opcode() == Xcode.POINTER_REF){
+    else if (expr.Opcode() == Xcode.VAR){
+      if (expr.Opcode() == Xcode.VAR)
+        localName = expr.getName();
+      else
+        localName = expr.getArg(0).getName();
+      isArray = false;
+    }
+    else {
+      return null;
+    }
+
+    XMPcoarray localCoarray = _globalDecl.getXMPcoarray(localName, exprParentBlock);
+
+    if (localCoarray != null){
+
+      Ident xmptFuncId = _globalDecl.declExternFunc("_XMP_coarray_local_read");
+      XobjList xmptArgs = Xcons.List();
+      xmptArgs.add(Xcons.SymbolRef(localCoarray.getDescId()));
+
+      if (isArray){
+	String arrayName = expr.getArg(0).getName();
+	Ident varId = expr.findVarIdent(arrayName);
+	Xtype varType = varId.Type();
+	int varDim = varType.getNumDimensions();
+
+	XobjList tripletList = (XobjList)expr.getArg(1);
+	for (int i = 0; i < tripletList.Nargs(); i++){
+	  if (!tripletList.getArg(i).isIndexRange()){
+	    xmptArgs.add(tripletList.getArg(i)); // start
+	    xmptArgs.add(Xcons.IntConstant(1));  // length
+	    xmptArgs.add(Xcons.IntConstant(1));  // stride
+	  }
+	  else {
+	    for (int j = 0; j < 3; j++){
+	      xmptArgs.add(tripletList.getArg(i).getArg(j));
+	    }
+	  }
+	}
+      }
+      else{ // !isArray
+	xmptArgs.add(Xcons.IntConstant(0)); // start
+	xmptArgs.add(Xcons.IntConstant(1)); // length
+	xmptArgs.add(Xcons.IntConstant(1)); // stride
+      }
+
+      Xobject xmptNewExpr = xmptFuncId.Call(xmptArgs);
+      xmptNewExpr.setIsRewrittedByXmp(true);
+
+      return xmptNewExpr;
+
+    }
+
+    return null;
+    
+  }
+
 }

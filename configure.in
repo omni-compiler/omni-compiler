@@ -1101,6 +1101,12 @@ fi
 AC_SUBST(ARFLAGS)
 
 #--------------------------------------------------------------------
+# XMPT
+if test "x${doxmpt}" = "xyes"; then
+   OMNI_X2X_FLAGS="${OMNI_X2X_FLAGS} -fxmpt"
+fi
+
+#--------------------------------------------------------------------
 # set BLAS
 AC_ARG_WITH(libblas,
             [  --with-libblas=DIR          BLAS Library (e.g. /foo/blas_LINUX.a)],

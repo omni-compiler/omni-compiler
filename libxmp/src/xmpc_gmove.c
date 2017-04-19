@@ -144,32 +144,85 @@ static void _XMPC_larray_alloc(_XMP_array_t **a, _XMP_gmv_desc_t *gmv_desc, int 
   (*a)->total_elmts = -1; // temporal descriptor
 }
 
+#ifdef _XMPT
+extern void _XMPT_set_gmove_subsc(xmpt_subscript_t subsc, _XMP_gmv_desc_t *gmv_desc);
+#endif
 
 void
 xmpc_gmv_do(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
-	      int mode)
+	    int mode)
 {
 
   _XMP_pack_comm_set = _XMPC_pack_comm_set;
   _XMP_unpack_comm_set = _XMPC_unpack_comm_set;
 
+#ifdef _XMPT
+  xmpt_tool_data_t *data = NULL;
+  struct _xmpt_subscript_t lhs_subsc, rhs_subsc;
+  _XMPT_set_gmove_subsc(&lhs_subsc, gmv_desc_leftp);
+  _XMPT_set_gmove_subsc(&rhs_subsc, gmv_desc_rightp);
+  xmpt_gmove_kind_t kind = mode - _XMP_N_GMOVE_NORMAL;
+  xmpt_async_id_t async_id = 0;
+#ifdef _XMP_MPI3
+  if (xmp_is_async()){
+    _XMP_async_comm_t *async = _XMP_get_current_async();
+    async_id = async->async_id;
+  }
+#endif
+#endif
+  
   if (gmv_desc_leftp->is_global && gmv_desc_rightp->is_global){
+
+#ifdef _XMPT
+    if (xmpt_enabled){
+      if (!xmp_is_async() && xmpt_callback[xmpt_event_gmove_begin])
+	(*(xmpt_event_gmove_begin_t)xmpt_callback[xmpt_event_gmove_begin])
+	  (gmv_desc_leftp->a_desc, &lhs_subsc,
+	   gmv_desc_rightp->a_desc, &rhs_subsc,
+	   kind, data);
+      else if (xmp_is_async() && xmpt_callback[xmpt_event_gmove_begin_async])
+	(*(xmpt_event_gmove_begin_async_t)xmpt_callback[xmpt_event_gmove_begin_async])
+	  (gmv_desc_leftp->a_desc, &lhs_subsc,
+	   gmv_desc_rightp->a_desc, &rhs_subsc,
+	   kind, async_id, data);
+    }
+#endif
+
     _XMP_gmove_garray_garray(gmv_desc_leftp, gmv_desc_rightp, mode);
+
   }
   else if (gmv_desc_leftp->is_global && !gmv_desc_rightp->is_global){
     if (gmv_desc_rightp->ndims == 0){
+      // needs xmpt
       _XMP_gmove_garray_scalar(gmv_desc_leftp, gmv_desc_rightp->local_data, mode);
     }
     else {
       _XMP_array_t *a = NULL;
       _XMPC_larray_alloc(&a, gmv_desc_rightp,
-			   gmv_desc_leftp->a_desc->type, gmv_desc_leftp->a_desc->align_template);
+			 gmv_desc_leftp->a_desc->type, gmv_desc_leftp->a_desc->align_template);
+
+#ifdef _XMPT
+      if (xmpt_enabled){
+	if (!xmp_is_async() && xmpt_callback[xmpt_event_gmove_begin])
+	  (*(xmpt_event_gmove_begin_t)xmpt_callback[xmpt_event_gmove_begin])
+	    (gmv_desc_leftp->a_desc, &lhs_subsc,
+	     gmv_desc_rightp->a_desc, &rhs_subsc,
+	     kind, data);
+	else if (xmp_is_async() && xmpt_callback[xmpt_event_gmove_begin_async])
+	  (*(xmpt_event_gmove_begin_async_t)xmpt_callback[xmpt_event_gmove_begin_async])
+	    (gmv_desc_leftp->a_desc, &lhs_subsc,
+	     gmv_desc_rightp->a_desc, &rhs_subsc,
+	     kind, async_id, data);
+      }
+#endif
+
       _XMP_gmove_garray_larray(gmv_desc_leftp, gmv_desc_rightp, mode);
       _XMP_finalize_array_desc(a);
     }
   }
   else if (!gmv_desc_leftp->is_global && gmv_desc_rightp->is_global){
     if (gmv_desc_leftp->ndims == 0){
+      // needs xmpt
       _XMP_gmove_scalar_garray(gmv_desc_leftp->local_data, gmv_desc_rightp, mode);
     }
     else {
@@ -180,7 +233,23 @@ xmpc_gmv_do(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
       // in _XMP_gmove_1to1)
       _XMP_array_t *a = NULL;
       _XMPC_larray_alloc(&a, gmv_desc_leftp,
-			   gmv_desc_rightp->a_desc->type, gmv_desc_rightp->a_desc->align_template);
+			 gmv_desc_rightp->a_desc->type, gmv_desc_rightp->a_desc->align_template);
+
+#ifdef _XMPT
+      if (xmpt_enabled){
+	if (!xmp_is_async() && xmpt_callback[xmpt_event_gmove_begin])
+	  (*(xmpt_event_gmove_begin_t)xmpt_callback[xmpt_event_gmove_begin])
+	    (gmv_desc_leftp->a_desc, &lhs_subsc,
+	     gmv_desc_rightp->a_desc, &rhs_subsc,
+	     kind, data);
+	else if (xmp_is_async() && xmpt_callback[xmpt_event_gmove_begin_async])
+	  (*(xmpt_event_gmove_begin_async_t)xmpt_callback[xmpt_event_gmove_begin_async])
+	    (gmv_desc_leftp->a_desc, &lhs_subsc,
+	     gmv_desc_rightp->a_desc, &rhs_subsc,
+	     kind, async_id, data);
+      }
+#endif
+
       _XMP_gmove_larray_garray(gmv_desc_leftp, gmv_desc_rightp, mode);
       _XMP_finalize_array_desc(a);
 
@@ -189,6 +258,12 @@ xmpc_gmv_do(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp,
   else {
     _XMP_fatal("gmv_do: both sides are local.");
   }
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_gmove_end])
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_gmove_end])(
+     data);
+#endif
 
 }
 

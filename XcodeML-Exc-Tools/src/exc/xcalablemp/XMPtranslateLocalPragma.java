@@ -3536,201 +3536,49 @@ public class XMPtranslateLocalPragma {
     return new XMPpair<XMPalignedArray, XobjList>(alignedArray, castedArrayRefs);
   }
 
-  // private XMPquadruplet<String, Boolean, XobjList, XMPobject> createExecOnRefArgs(XobjList onRef,
-  //                                                                                 XMPsymbolTable localXMPsymbolTable) throws XMPexception {
-  //   if (onRef.getArg(0) == null) {
-  //     // execute on global communicator
-  //     XobjList globalRef = (XobjList)onRef.getArg(1);
-
-  //     boolean splitComm = false;
-  //     XobjList tempArgs = Xcons.List();
-  //     // lower
-  //     if (globalRef.getArg(0) == null) tempArgs.add(Xcons.IntConstant(1));
-  //     else {
-  //       splitComm = true;
-  //       tempArgs.add(globalRef.getArg(0));
-  //     }
-  //     // upper
-  //     if (globalRef.getArg(1) == null) tempArgs.add(_globalDecl.getWorldSizeId().Ref());
-  //     else {
-  //       splitComm = true;
-  //       tempArgs.add(globalRef.getArg(1));
-  //     }
-  //     // stride
-  //     if (globalRef.getArg(2) == null) tempArgs.add(Xcons.IntConstant(1));
-  //     else {
-  //       splitComm = true;
-  //       tempArgs.add(globalRef.getArg(2));
-  //     }
-
-  //     String execFuncSuffix = null;
-  //     XobjList execFuncArgs = null;
-  //     if (splitComm) {
-  //       execFuncSuffix = "GLOBAL_PART";
-  //       execFuncArgs = tempArgs;
-  //     }
-  //     else {
-  //       execFuncSuffix = "NODES_ENTIRE";
-  //       execFuncArgs = Xcons.List(_globalDecl.getWorldDescId().Ref());
-  //     }
-
-  //     return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, new Boolean(splitComm), execFuncArgs, null);
-  //   }
-  //   else {
-  //     // execute on <object-ref>
-
-  //     // check object name collision
-  //     String objectName = onRef.getArg(0).getString();
-  //     XMPobject onRefObject = _globalDecl.getXMPobject(objectName, localXMPsymbolTable);
-  //     if (onRefObject == null) {
-  //       throw new XMPexception("cannot find '" + objectName + "' nodes/template");
-  //     }
-
-  //     Xobject ontoNodesRef = null;
-  //     Xtype castType = null;
-  //     switch (onRefObject.getKind()) {
-  //       case XMPobject.NODES:
-  //         ontoNodesRef = onRefObject.getDescId().Ref();
-  //         castType = Xtype.intType;
-  //         break;
-  //       case XMPobject.TEMPLATE:
-  //         {
-  //           XMPtemplate ontoTemplate = (XMPtemplate)onRefObject;
-
-  //           if (!ontoTemplate.isFixed()) {
-  //             throw new XMPexception("template '" + objectName + "' is not fixed");
-  //           }
-
-  //           if (!ontoTemplate.isDistributed()) {
-  //             throw new XMPexception("template '" + objectName + "' is not distributed");
-  //           }
-
-  //           XMPnodes ontoNodes = ((XMPtemplate)onRefObject).getOntoNodes();
-
-  //           ontoNodesRef = ontoNodes.getDescId().Ref();
-  //           castType = Xtype.longlongType;
-  //           break;
-  //         }
-  //       default:
-  //         throw new XMPexception("unknown object type");
-  //     }
-
-  //     // create arguments
-  //     if (onRef.getArg(1) == null || onRef.getArg(1).getArgs() == null)
-  //       return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"), new Boolean(false), Xcons.List(ontoNodesRef), onRefObject);
-  //     else {
-  //       boolean splitComm = false;
-  //       int refIndex = 0;
-  //       int refDim = onRefObject.getDim();
-  //       XobjList tempArgs = Xcons.List();
-  //       for (XobjArgs i = onRef.getArg(1).getArgs(); i != null; i = i.nextArgs()) {
-  //         if (refIndex == refDim)
-  //           throw new XMPexception("wrong nodes dimension indicated, too many");
-
-  //         XobjList t = (XobjList)i.getArg();
-  //         if (t == null || t.getArgs() == null) {
-  //           splitComm = true;
-  //           tempArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(1)));
-  //         }
-  //         else {
-  //           tempArgs.add(Xcons.Cast(Xtype.intType, Xcons.IntConstant(0)));
-
-  //           // lower
-  //           if (t.getArg(0) == null || (t.getArg(0) instanceof XobjList && t.getArg(0).getArgs() == null)) {
-  //             tempArgs.add(Xcons.Cast(castType, onRefObject.getLowerAt(refIndex)));
-  //           } else {
-  //             splitComm = true;
-  //             tempArgs.add(Xcons.Cast(castType, t.getArg(0)));
-  //           }
-  //           // upper
-  //           if (t.getArg(1) == null || (t.getArg(0) instanceof XobjList && t.getArg(1).getArgs() == null)) {
-  //             tempArgs.add(Xcons.Cast(castType, onRefObject.getUpperAt(refIndex)));
-  //           }
-  //           else {
-  //             splitComm = true;
-  //             tempArgs.add(Xcons.Cast(castType, t.getArg(1)));
-  //           }
-  //           // stride
-  //           if (t.getArg(2) == null) tempArgs.add(Xcons.Cast(castType, Xcons.IntConstant(1)));
-  //           else {
-  //             splitComm = true;
-  //             // XXX stride: always int
-  //             tempArgs.add(Xcons.Cast(castType, t.getArg(2)));
-  //           }
-  //         }
-
-  //         refIndex++;
-  //       }
-
-  //       if (refIndex != refDim)
-  //         throw new XMPexception("the number of <nodes/template-subscript> should be the same with the dimension");
-
-  //       if (splitComm) {
-  //         String execFuncSuffix = null;
-  //         XobjList execFuncArgs = null;
-  //         execFuncArgs = tempArgs;
-  //         switch (onRefObject.getKind()) {
-  //           case XMPobject.NODES:
-  //             execFuncSuffix = "NODES_PART";
-  //             execFuncArgs.cons(ontoNodesRef);
-  //             break;
-  //           case XMPobject.TEMPLATE:
-  //             execFuncSuffix = "TEMPLATE_PART";
-  //             execFuncArgs.cons(((XMPtemplate)onRefObject).getDescId().Ref());
-  //             break;
-  //           default:
-  //             throw new XMPexception("unknown object type");
-  //         }
-
-  //         return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, new Boolean(splitComm), execFuncArgs, onRefObject);
-  //       }
-  //       else
-  //         return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(new String("NODES_ENTIRE"),
-  //                                                             new Boolean(splitComm), Xcons.List(ontoNodesRef),
-  //                                                             onRefObject);
-  //     }
-  //   }
-  // }
-
   private XMPquadruplet<String, Boolean, XobjList, XMPobject> createExecOnRefArgs(XobjList onRef,
                                                                                   Block block) throws XMPexception {
     if (onRef.getArg(0) == null) {
-      // execute on global communicator
-      XobjList globalRef = (XobjList)onRef.getArg(1);
 
-      boolean splitComm = false;
-      XobjList tempArgs = Xcons.List();
-      // lower
-      if (globalRef.getArg(0) == null) tempArgs.add(Xcons.IntConstant(1));
-      else {
-        splitComm = true;
-        tempArgs.add(globalRef.getArg(0));
-      }
-      // upper
-      if (globalRef.getArg(1) == null) tempArgs.add(_globalDecl.getWorldSizeId().Ref());
-      else {
-        splitComm = true;
-        tempArgs.add(globalRef.getArg(1));
-      }
-      // stride
-      if (globalRef.getArg(2) == null) tempArgs.add(Xcons.IntConstant(1));
-      else {
-        splitComm = true;
-        tempArgs.add(globalRef.getArg(2));
-      }
+      // Now this case never ocuur.
+      return null;
+      
+      // // execute on global communicator
+      // XobjList globalRef = (XobjList)onRef.getArg(1);
 
-      String execFuncSuffix = null;
-      XobjList execFuncArgs = null;
-      if (splitComm) {
-        execFuncSuffix = "GLOBAL_PART";
-        execFuncArgs = tempArgs;
-      }
-      else {
-        execFuncSuffix = "NODES_ENTIRE";
-        execFuncArgs = Xcons.List(_globalDecl.getWorldDescId().Ref());
-      }
+      // boolean splitComm = false;
+      // XobjList tempArgs = Xcons.List();
+      // // lower
+      // if (globalRef.getArg(0) == null) tempArgs.add(Xcons.IntConstant(1));
+      // else {
+      //   splitComm = true;
+      //   tempArgs.add(globalRef.getArg(0));
+      // }
+      // // upper
+      // if (globalRef.getArg(1) == null) tempArgs.add(_globalDecl.getWorldSizeId().Ref());
+      // else {
+      //   splitComm = true;
+      //   tempArgs.add(globalRef.getArg(1));
+      // }
+      // // stride
+      // if (globalRef.getArg(2) == null) tempArgs.add(Xcons.IntConstant(1));
+      // else {
+      //   splitComm = true;
+      //   tempArgs.add(globalRef.getArg(2));
+      // }
 
-      return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, new Boolean(splitComm), execFuncArgs, null);
+      // String execFuncSuffix = null;
+      // XobjList execFuncArgs = null;
+      // if (splitComm) {
+      //   execFuncSuffix = "GLOBAL_PART";
+      //   execFuncArgs = tempArgs;
+      // }
+      // else {
+      //   execFuncSuffix = "NODES_ENTIRE";
+      //   execFuncArgs = Xcons.List(_globalDecl.getWorldDescId().Ref());
+      // }
+
+      // return new XMPquadruplet<String, Boolean, XobjList, XMPobject>(execFuncSuffix, new Boolean(splitComm), execFuncArgs, null);
     }
     else {
       // execute on <object-ref>

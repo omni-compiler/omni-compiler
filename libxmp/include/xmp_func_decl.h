@@ -447,4 +447,9 @@ extern void _XMP_lock_initialize_6(void*, const unsigned int, const unsigned int
 extern void _XMP_lock_initialize_7(void*, const unsigned int, const unsigned int, const unsigned int,
 				   const unsigned int, const unsigned int, const unsigned int,
 				   const unsigned int);
+
+// xmpt_lib.c
+extern void _XMP_coarray_local_read(void *local_coarray, ...);
+extern void _XMP_coarray_local_write(void *local_coarray, ...);
+
 #endif // _XMP_RUNTIME_FUNC_DECL

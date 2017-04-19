@@ -24,6 +24,7 @@ public class XmOption
     private static boolean _xcalableMPthreads = false;
     private static boolean _xcalableMPGPU = false;
     private static boolean _xcalableMPasync = false;
+    private static boolean _xmpt = false;
 
     private static boolean _tlog = false;
 
@@ -135,6 +136,22 @@ public class XmOption
     public static void setIsAsync(boolean enable)
     {
         _xcalableMPasync = enable;
+    }
+
+    /**
+     * Checks whether the XMPT interface is enabled or not
+     */
+    public static boolean isXmptEnabled()
+    {
+        return _xmpt;
+    }
+
+    /**
+     * Sets whether the XMPT interface is enabled or not
+     */
+    public static void setXmptIsEnabled(boolean enable)
+    {
+        _xmpt = enable;
     }
 
     /**

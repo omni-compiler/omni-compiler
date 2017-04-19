@@ -12,20 +12,30 @@
 void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size){
   _XMP_RETURN_IF_SINGLE;
 
+#ifdef _XMPT
+  xmpt_tool_data_t *data = NULL;
+#endif
+    
   if(!bcast_nodes->is_member) return;
 
-#ifdef _XMPT
-  int async_id;
-#endif
-  
 #ifdef _XMP_MPI3
   if(xmp_is_async()){
     _XMP_async_comm_t *async = _XMP_get_current_async();
 
 #ifdef _XMPT
-    async_id = async->async_id;
-    if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_begin])
-      (*(xmpt_bcast_begin_callback_t)xmpt_callback[xmpt_event_bcast_begin])(async_id);
+    xmpt_async_id_t async_id = async->async_id;
+    if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_begin]){
+      struct _xmpt_subscript_t from_subsc;
+      (*(xmpt_event_bcast_begin_async_t)xmpt_callback[xmpt_event_bcast_begin])(
+        addr,
+	count * datatype_size,
+	bcast_nodes,
+	&from_subsc,
+	&on_desc,
+	&on_subsc,
+        async_id,
+	data);
+    }
 #endif
 
     MPI_Ibcast(addr, count*datatype_size, MPI_BYTE, _XMP_N_DEFAULT_ROOT_RANK,
@@ -36,18 +46,29 @@ void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int 
 #endif
 
 #ifdef _XMPT
-    async_id = XMP_ASYNC_NONE;
-    if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_begin])
-      (*(xmpt_bcast_begin_callback_t)xmpt_callback[xmpt_event_bcast_begin])(async_id);
+    if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_begin]){
+      struct _xmpt_subscript_t from_subsc;
+      (*(xmpt_event_bcast_begin_t)xmpt_callback[xmpt_event_bcast_begin])(
+        addr,
+	count * datatype_size,
+	bcast_nodes,
+	&from_subsc,
+	&on_desc,
+	&on_subsc,
+	data);
+    }
 #endif
 
     MPI_Bcast(addr, count*datatype_size, MPI_BYTE, _XMP_N_DEFAULT_ROOT_RANK,
 	      *((MPI_Comm *)bcast_nodes->comm));
+
+#ifdef _XMP_MPI3
   }
+#endif
 
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_end])
-    (*(xmpt_bcast_end_callback_t)xmpt_callback[xmpt_event_bcast_end])(async_id);
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_bcast_end])(data);
 #endif
   
 }
@@ -109,6 +130,28 @@ void _XMP_bcast_NODES_ENTIRE_NODES_V(_XMP_nodes_t *bcast_nodes, void *addr, int 
   int from_dim = from_nodes->dim;
   int from_lower, from_upper, from_stride;
   _XMP_nodes_inherit_info_t  *inherit_info = bcast_nodes->inherit_info;
+
+#ifdef _XMPT
+  xmpt_tool_data_t *data = NULL;
+  struct _xmpt_subscript_t from_subsc;
+  from_subsc.ndims = from_nodes->dim;;
+  from_subsc.omit = 0;
+  va_list args2;
+  va_copy(args2, args);
+  for (int i = 0; i < from_subsc.ndims; i++){
+    int rank = from_nodes->info[i].rank;
+    if (va_arg(args2, int) == 1) {
+      from_subsc.lbound[i] = rank + 1;
+      from_subsc.ubound[i] = rank + 1;
+      from_subsc.marker[i] = 1;
+    }
+    else {
+      from_subsc.lbound[i] = va_arg(args2, int);
+      from_subsc.ubound[i] = va_arg(args2, int);
+      from_subsc.marker[i] = va_arg(args2, int);
+    }
+  }
+#endif
 
   if(inherit_info == NULL){
     for (int i = 0; i < from_dim; i++) {
@@ -180,16 +223,55 @@ void _XMP_bcast_NODES_ENTIRE_NODES_V(_XMP_nodes_t *bcast_nodes, void *addr, int 
   }
 
 #ifdef _XMP_MPI3
-  if(xmp_is_async()){
+  if (xmp_is_async()){
     _XMP_async_comm_t *async = _XMP_get_current_async();
+
+#ifdef _XMPT
+    xmpt_async_id_t async_id = async->async_id;
+    if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_begin]){
+      (*(xmpt_event_bcast_begin_async_t)xmpt_callback[xmpt_event_bcast_begin])(
+        addr,
+	count * datatype_size,
+	from_nodes,
+	&from_subsc,
+	&on_desc,
+	&on_subsc,
+        async_id,
+	data);
+    }
+#endif
+
     MPI_Ibcast(addr, count*datatype_size, MPI_BYTE, root,
     	       *((MPI_Comm *)bcast_nodes->comm), &async->reqs[async->nreqs]);
     async->nreqs++;
   }
-  else
+  else {
 #endif
-  MPI_Bcast(addr, count*datatype_size, MPI_BYTE, root,
+
+#ifdef _XMPT
+    if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_begin]){
+      (*(xmpt_event_bcast_begin_t)xmpt_callback[xmpt_event_bcast_begin])(
+        addr,
+	count * datatype_size,
+	from_nodes,
+	&from_subsc,
+	&on_desc,
+	&on_subsc,
+	data);
+    }
+#endif
+
+    MPI_Bcast(addr, count*datatype_size, MPI_BYTE, root,
 	    *((MPI_Comm *)bcast_nodes->comm));
+
+#ifdef _XMP_MPI3
+  }
+#endif
+  
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_bcast_end])
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_bcast_end])(data);
+#endif
 
   /* // setup type */
   /* MPI_Datatype mpi_datatype; */

@@ -87,8 +87,16 @@ void _XMP_wait_async__(int async_id)
   _XMP_async_comm_t *async;
 
 #ifdef _XMPT
-  if (xmpt_enabled && xmpt_callback[xmpt_event_wait_async_begin])
-    (*(xmpt_wait_async_begin_callback_t)xmpt_callback[xmpt_event_wait_async_begin])(async_id);
+  xmpt_tool_data_t *data = NULL;
+  if (xmpt_enabled && xmpt_callback[xmpt_event_wait_async_begin]){
+    //    xmp_desc_t on_desc;
+    //    struct _xmpt_subscript_t on_subsc;
+    (*(xmpt_event_wait_async_begin_t)xmpt_callback[xmpt_event_wait_async_begin])(
+      (xmpt_async_id_t)async_id,
+      &on_desc,
+      &on_subsc,
+      data);
+  }
 #endif
   
   if(!(async = _XMP_get_async(async_id))) return;
@@ -129,7 +137,7 @@ void _XMP_wait_async__(int async_id)
 
 #ifdef _XMPT
   if (xmpt_enabled && xmpt_callback[xmpt_event_wait_async_end])
-    (*(xmpt_wait_async_end_callback_t)xmpt_callback[xmpt_event_wait_async_end])(async_id);
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_wait_async_end])(data);
 #endif
 
 }

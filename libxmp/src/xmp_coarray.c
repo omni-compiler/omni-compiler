@@ -1142,6 +1142,29 @@ void _XMP_coarray_put(void *remote_coarray, void *local_array, void *local_coarr
     // e.g. a[0:3]:[3] = b[0:2] is NG, but a[0:3]:[3] = b[0:1] is OK.
   }
 
+#ifdef _XMPT
+  struct _xmpt_subscript_t subsc, cosubsc;
+  xmpt_tool_data_t *data = NULL;
+  if (xmpt_enabled && xmpt_callback[xmpt_event_coarray_remote_write]){
+    subsc.ndims = _array_dims;
+    subsc.omit = 0;
+    for (int i = 0; i < _array_dims; i++){
+      subsc.lbound[i] = _array[i].start;
+      subsc.ubound[i] = _array[i].length;
+      subsc.marker[i] = _array[i].stride;
+    }
+    cosubsc.ndims = _image_dims;
+    cosubsc.omit = 0;
+    for (int i = 0; i < _image_dims; i++){
+      cosubsc.lbound[i] = _image_num[i];
+      cosubsc.ubound[i] = _image_num[i];
+      cosubsc.marker[i] = 0;
+    }
+    (*(xmpt_event_coarray_remote_t)xmpt_callback[xmpt_event_coarray_remote_write])(
+     (xmpt_coarray_id_t)remote_coarray, &subsc, &cosubsc, data);
+  }
+#endif
+
   int target_rank = 0;
   for(int i=0;i<_image_dims;i++)
     target_rank += ((_XMP_coarray_t*)remote_coarray)->distance_of_image_elmts[i] * (_image_num[i] - 1);
@@ -1199,6 +1222,29 @@ void _XMP_coarray_get(void *remote_coarray, void *local_array, void *local_coarr
     _XMP_fatal("Coarray Error ! transfer size is wrong.\n") ;
     // e.g. a[0:3] = b[0:2]:[3] is NG, but a[0:3] = b[0:1]:[3] is OK
   }
+
+#ifdef _XMPT
+  struct _xmpt_subscript_t subsc, cosubsc;
+  xmpt_tool_data_t *data = NULL;
+  if (xmpt_enabled && xmpt_callback[xmpt_event_coarray_remote_read]){
+    subsc.ndims = _array_dims;
+    subsc.omit = 0;
+    for (int i = 0; i < _array_dims; i++){
+      subsc.lbound[i] = _array[i].start;
+      subsc.ubound[i] = _array[i].length;
+      subsc.marker[i] = _array[i].stride;
+    }
+    cosubsc.ndims = _image_dims;
+    cosubsc.omit = 0;
+    for (int i = 0; i < _image_dims; i++){
+      cosubsc.lbound[i] = _image_num[i];
+      cosubsc.ubound[i] = _image_num[i];
+      cosubsc.marker[i] = 0;
+    }
+    (*(xmpt_event_coarray_remote_t)xmpt_callback[xmpt_event_coarray_remote_read])(
+     (xmpt_coarray_id_t)remote_coarray, &subsc, &cosubsc, data);
+  }
+#endif
 
   int target_rank = 0;
   for(int i=0;i<_image_dims;i++)
@@ -1358,6 +1404,14 @@ void _XMP_coarray_sync_memory()
 */
 void xmp_sync_memory(const int* status)
 {
+
+#ifdef _XMPT
+  xmpt_tool_data_t *data = NULL;
+  if (xmpt_enabled && xmpt_callback[xmpt_event_sync_memory_begin])
+    (*(xmpt_event_begin_t)xmpt_callback[xmpt_event_sync_memory_begin])(
+     data);
+#endif
+
 #ifdef _XMP_GASNET
   _XMP_gasnet_sync_memory();
 #elif _XMP_FJRDMA
@@ -1367,6 +1421,12 @@ void xmp_sync_memory(const int* status)
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_sync_memory();
 #endif
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_sync_memory_end])
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_sync_memory_end])(
+     data);
+#endif
 }
 
 /**
@@ -1374,12 +1434,26 @@ void xmp_sync_memory(const int* status)
 */
 void xmp_sync_all(const int* status)
 {
+
+#ifdef _XMPT
+  xmpt_tool_data_t *data = NULL;
+  if (xmpt_enabled && xmpt_callback[xmpt_event_sync_all_begin])
+    (*(xmpt_event_begin_t)xmpt_callback[xmpt_event_sync_all_begin])(
+     data);
+#endif
+
 #ifdef _XMP_GASNET
   _XMP_gasnet_sync_all();
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_all();
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_sync_all();
+#endif
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_sync_all_end])
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_sync_all_end])(
+     data);
 #endif
 }
 
@@ -1388,12 +1462,26 @@ void xmp_sync_all(const int* status)
 */
 void xmp_sync_images(const int num, int* image_set, int* status)
 {
+
+#ifdef _XMPT
+  xmpt_tool_data_t *data = NULL;
+  if (xmpt_enabled && xmpt_callback[xmpt_event_sync_images_begin])
+    (*(xmpt_event_sync_images_begin_t)xmpt_callback[xmpt_event_sync_images_begin])(
+     num, image_set, data);
+#endif
+
 #ifdef _XMP_GASNET
   _XMP_gasnet_sync_images(num, image_set, status);
 #elif _XMP_FJRDMA
   _XMP_fjrdma_sync_images(num, image_set, status);
 #elif _XMP_MPI3_ONESIDED
   _XMP_mpi_sync_images(num, image_set, status);
+#endif
+
+#ifdef _XMPT
+  if (xmpt_enabled && xmpt_callback[xmpt_event_sync_images_end])
+    (*(xmpt_event_end_t)xmpt_callback[xmpt_event_sync_images_end])(
+     data);
 #endif
 }
 
@@ -1432,6 +1520,50 @@ void _XMP_coarray_contiguous_put(const int target_image, _XMP_coarray_t *dst_des
   int target_rank = target_image - 1;
   size_t elmt_size = dst_desc->elmt_size;
   
+#ifdef _XMPT
+  struct _xmpt_subscript_t subsc, cosubsc;
+  xmpt_tool_data_t *data = NULL;
+  if (xmpt_enabled && xmpt_callback[xmpt_event_coarray_remote_write]){
+    subsc.ndims = dst_desc->coarray_dims;
+    subsc.omit = 0;
+
+    long j0 = dst_offset / dst_desc->elmt_size;
+    for (int i =  0; i < subsc.ndims; i++){
+      int k = j0 / dst_desc->distance_of_coarray_elmts[i];
+      j0 -= k * dst_desc->distance_of_coarray_elmts[i];
+      subsc.lbound[i] = k;
+      subsc.ubound[i] = dst_desc->coarray_elmts[i];
+      subsc.marker[i] = 1;
+    }
+    
+    long j1 = dst_elmts * dst_desc->elmt_size;
+    for (int i =  0; i < subsc.ndims; i++){
+      int k = j1 / dst_desc->distance_of_coarray_elmts[i];
+      if (k > 0){
+	subsc.ubound[i] = k;
+	break;
+      }
+      else {
+	subsc.ubound[i] = 1;
+      }
+    }
+
+    cosubsc.ndims = ((_XMP_coarray_t*)dst_desc)->image_dims;
+    cosubsc.omit = 0;
+    int j = target_image - 1;
+    for (int i =  cosubsc.ndims - 1; i >= 0; i--){
+      int k = j / ((_XMP_coarray_t*)dst_desc)->distance_of_image_elmts[i];
+      j -= k * ((_XMP_coarray_t*)dst_desc)->distance_of_image_elmts[i];
+      cosubsc.lbound[i] = k + 1;
+      cosubsc.ubound[i] = k + 1;
+      cosubsc.marker[i] = 0;
+    }
+
+    (*(xmpt_event_coarray_remote_t)xmpt_callback[xmpt_event_coarray_remote_write])(
+     (xmpt_coarray_id_t)dst_desc, &subsc, &cosubsc, data);
+  }
+#endif
+
   if(target_rank == _XMP_world_rank){
     _XMP_local_contiguous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src_desc->real_addr+src_offset, 
 			       dst_elmts, src_elmts, elmt_size);
@@ -1474,6 +1606,50 @@ void _XMP_coarray_contiguous_get(const int target_image, _XMP_coarray_t *dst_des
   int target_rank = target_image - 1;
   size_t elmt_size = dst_desc->elmt_size;
  
+#ifdef _XMPT
+  struct _xmpt_subscript_t subsc, cosubsc;
+  xmpt_tool_data_t *data = NULL;
+  if (xmpt_enabled && xmpt_callback[xmpt_event_coarray_remote_read]){
+    subsc.ndims = src_desc->coarray_dims;
+    subsc.omit = 0;
+
+    long j0 = src_offset;
+    for (int i =  0; i < subsc.ndims; i++){
+      int k = j0 / src_desc->distance_of_coarray_elmts[i];
+      j0 -= k * src_desc->distance_of_coarray_elmts[i];
+      subsc.lbound[i] = k;
+      subsc.ubound[i] = src_desc->coarray_elmts[i];
+      subsc.marker[i] = 1;
+    }
+
+    long j1 = src_elmts * src_desc->elmt_size;
+    for (int i =  0; i < subsc.ndims; i++){
+      int k = j1 / src_desc->distance_of_coarray_elmts[i];
+      if (k > 0){
+	subsc.ubound[i] = k;
+	break;
+      }
+      else {
+	subsc.ubound[i] = 1;
+      }
+    }
+
+    cosubsc.ndims = ((_XMP_coarray_t*)src_desc)->image_dims;
+    cosubsc.omit = 0;
+    int j = target_image - 1;
+    for (int i =  cosubsc.ndims - 1; i >= 0; i--){
+      int k = j / ((_XMP_coarray_t*)src_desc)->distance_of_image_elmts[i];
+      j -= k * ((_XMP_coarray_t*)src_desc)->distance_of_image_elmts[i];
+      cosubsc.lbound[i] = k + 1;
+      cosubsc.ubound[i] = k + 1;
+      cosubsc.marker[i] = 0;
+    }
+
+    (*(xmpt_event_coarray_remote_t)xmpt_callback[xmpt_event_coarray_remote_read])(
+     (xmpt_coarray_id_t)src_desc, &subsc, &cosubsc, data);
+  }
+#endif
+
   if(target_rank == _XMP_world_rank){
     _XMP_local_contiguous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src_desc->real_addr+src_offset,
 			       dst_elmts, src_elmts, elmt_size);
@@ -1540,6 +1716,10 @@ static void _push_coarray_queue(_XMP_coarray_t *c)
   if(_coarray_queue.num >= _coarray_queue.max_size)
     _rebuild_coarray_queue();
 
+#ifdef _XMPT
+  c->gid = _coarray_queue.num;
+#endif
+  
   _coarray_queue.coarrays[_coarray_queue.num++] = c;
 }
 
