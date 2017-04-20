@@ -115,6 +115,9 @@ extern void xmpc_end_async(int);
 extern void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes);
 extern void _XMP_barrier_EXEC(void);
 
+// xmp_obj_ref.c
+extern _Bool _XMP_is_entire(_XMP_object_ref_t *rp);
+  
 // xmp_bcast.c
 extern void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size);
 extern void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
@@ -254,7 +257,10 @@ extern _XMP_nodes_ref_t *_XMP_create_nodes_ref_for_target_nodes(_XMP_nodes_t *n,
 extern void _XMP_translate_nodes_rank_array_to_ranks(_XMP_nodes_t *nodes, int *ranks, int *rank_array, int shrink_nodes_size);
 extern int _XMP_get_next_rank(_XMP_nodes_t *nodes, int *rank_array);
 extern int _XMP_calc_nodes_index_from_inherit_nodes_index(_XMP_nodes_t *nodes, int inherit_nodes_index);
-
+extern void _XMP_create_task_nodes(_XMP_nodes_t **n, _XMP_object_ref_t *rp);
+extern int _XMP_test_task_on_nodes(_XMP_nodes_t *ref_nodes);
+extern void _XMP_end_task(void);
+  
 // xmp_nodes_stack.c
 extern void _XMP_push_nodes(_XMP_nodes_t *nodes);
 extern void _XMP_pop_nodes(void);

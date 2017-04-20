@@ -1706,35 +1706,59 @@ public class XMPtranslateLocalPragma {
   }
 
   private void translateBarrier(PragmaBlock pb) throws XMPexception {
-    // start translation
-    XobjList barrierDecl = (XobjList)pb.getClauses();
-    XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
 
-    // create function call
-    Block barrierFuncCallBlock = null;
-    XobjList onRef = (XobjList)barrierDecl.getArg(0);
-    if (onRef == null || onRef.Nargs() == 0) {
-      barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null);
+    BlockList ret_body = Bcons.emptyBody();
+
+    XMPobjectsRef on_ref = XMPobjectsRef.parseDecl(pb.getClauses().getArg(0), _globalDecl, pb);
+    Xobject on_ref_arg;
+
+    if (on_ref != null){
+      ret_body.add(on_ref.buildConstructor(_globalDecl));
+      on_ref_arg = on_ref.getDescId().Ref();
     }
-    else {
-      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
-      String execFuncSuffix = execOnRefArgs.getFirst();
-      boolean splitComm = execOnRefArgs.getSecond().booleanValue();
-      XobjList execFuncArgs = execOnRefArgs.getThird();
-      if (splitComm) {
-        BlockList barrierBody = Bcons.blockList(_globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null));
-	barrierFuncCallBlock = createCommTaskBlock(barrierBody, execFuncSuffix, execFuncArgs);
-      }
-      else {
-	barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_" + execFuncSuffix, execFuncArgs);
-      }
+    else on_ref_arg = Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));;
+
+    Ident f = _globalDecl.declExternFunc("_XMP_barrier", Xtype.voidType);
+    ret_body.add(f.callSubroutine(Xcons.List(on_ref_arg)));
+
+    if (on_ref != null){
+      Ident g = _globalDecl.declExternFunc("_XMP_ref_dealloc", Xtype.voidType);
+      ret_body.add(g.callSubroutine(Xcons.List(on_ref.getDescId().Ref())));
     }
 
-    pb.replace(barrierFuncCallBlock);
-
-    Xobject profileClause = barrierDecl.getArg(1);
-    addProfileFunctions(profileClause, barrierFuncCallBlock, "barrier", pb);
+    pb.replace(Bcons.COMPOUND(ret_body));
   }
+
+  // private void translateBarrier(PragmaBlock pb) throws XMPexception {
+  //   // start translation
+  //   XobjList barrierDecl = (XobjList)pb.getClauses();
+  //   XMPsymbolTable localXMPsymbolTable = XMPlocalDecl.declXMPsymbolTable(pb);
+
+  //   // create function call
+  //   Block barrierFuncCallBlock = null;
+  //   XobjList onRef = (XobjList)barrierDecl.getArg(0);
+  //   if (onRef == null || onRef.Nargs() == 0) {
+  //     barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null);
+  //   }
+  //   else {
+  //     XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
+  //     String execFuncSuffix = execOnRefArgs.getFirst();
+  //     boolean splitComm = execOnRefArgs.getSecond().booleanValue();
+  //     XobjList execFuncArgs = execOnRefArgs.getThird();
+  //     if (splitComm) {
+  //       BlockList barrierBody = Bcons.blockList(_globalDecl.createFuncCallBlock("_XMP_barrier_EXEC", null));
+  // 	barrierFuncCallBlock = createCommTaskBlock(barrierBody, execFuncSuffix, execFuncArgs);
+  //     }
+  //     else {
+  // 	barrierFuncCallBlock = _globalDecl.createFuncCallBlock("_XMP_barrier_" + execFuncSuffix, execFuncArgs);
+  //     }
+  //   }
+
+  //   pb.replace(barrierFuncCallBlock);
+
+  //   Xobject profileClause = barrierDecl.getArg(1);
+  //   addProfileFunctions(profileClause, barrierFuncCallBlock, "barrier", pb);
+  // }
 
 
   private Xobject setStartLengthSize(Xobject obj, Xtype varType, int dims, Xobject[] start, Xobject[] length, Xobject[] size) throws XMPexception {

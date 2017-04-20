@@ -16,38 +16,41 @@
 /* #define UBOUND 1 */
 /* #define STRIDE 2 */
 
-#define XMP_OBJ_REF_NODES 1
-#define XMP_OBJ_REF_TEMPL 2
+//
+// moved to xmp_data_struct.h
+//
+/* #define XMP_OBJ_REF_NODES 1 */
+/* #define XMP_OBJ_REF_TEMPL 2 */
 
-#define REF_OFFSET arg0
-#define REF_LBOUND arg0
-#define REF_INDEX  arg1
-#define REF_UBOUND arg1
-#define REF_STRIDE arg2
+/* #define REF_OFFSET arg0 */
+/* #define REF_LBOUND arg0 */
+/* #define REF_INDEX  arg1 */
+/* #define REF_UBOUND arg1 */
+/* #define REF_STRIDE arg2 */
 
-#define SUBSCRIPT_ASTERISK 0
-#define SUBSCRIPT_SCALAR   1
-#define SUBSCRIPT_TRIPLET  2
-#define SUBSCRIPT_NOLB     3
-#define SUBSCRIPT_NOUB     4
-#define SUBSCRIPT_NOLBUB   5
-#define SUBSCRIPT_NONE     6
+/* #define SUBSCRIPT_ASTERISK 0 */
+/* #define SUBSCRIPT_SCALAR   1 */
+/* #define SUBSCRIPT_TRIPLET  2 */
+/* #define SUBSCRIPT_NOLB     3 */
+/* #define SUBSCRIPT_NOUB     4 */
+/* #define SUBSCRIPT_NOLBUB   5 */
+/* #define SUBSCRIPT_NONE     6 */
 
-#define MAX_RANK 31
+/* #define MAX_RANK 31 */
 
-typedef struct _XMP_object_ref_type {
-  int ref_kind; 
-  _XMP_template_t *t_desc;
-  _XMP_nodes_t *n_desc;
+/* typedef struct _XMP_object_ref_type { */
+/*   int ref_kind;  */
+/*   _XMP_template_t *t_desc; */
+/*   _XMP_nodes_t *n_desc; */
     
-  int ndims;
-/*   int *offset; */
-/*   int *index; */
-  int *arg0;
-  int *arg1;
-  int *arg2;
-  int *subscript_type;
-} _XMP_object_ref_t;
+/*   int ndims; */
+/* /\*   int *offset; *\/ */
+/* /\*   int *index; *\/ */
+/*   int *arg0; */
+/*   int *arg1; */
+/*   int *arg2; */
+/*   int *subscript_type; */
+/* } _XMP_object_ref_t; */
 
 
 /* typedef struct _XMP_object_ref_type2 { */
@@ -76,7 +79,7 @@ void xmpf_finalize_each__(void);
 
 /* From xmpf_gcomm.c */
 int _XMPF_get_owner_pos_BLOCK(_XMP_array_t *a, int dim, int index);
-_Bool _XMP_is_entire(_XMP_object_ref_t *rp);
+//_Bool _XMP_is_entire(_XMP_object_ref_t *rp);
 
 // From xmp_world.c
 extern int _XMP_world_size;
@@ -234,4 +237,12 @@ extern void _XMP_coarray_contiguous_get(const int, void*, const void*, const lon
 /* xmpf_coarray.c */
 extern void _XMPF_coarray_init(void); 
 extern void _XMPF_coarray_finalize(void); 
+
+/* xmp_obj_ref.c */
+extern void _XMP_ref_templ_alloc(_XMP_object_ref_t **r_desc, _XMP_template_t *t_desc, int n);
+extern void _XMP_ref_nodes_alloc(_XMP_object_ref_t **r_desc, _XMP_nodes_t *n_desc, int n);
+extern void _XMP_ref_set_loop_info(_XMP_object_ref_t *rp, int i, int t_idx, int off);
+extern void _XMP_ref_set_dim_info(_XMP_object_ref_t *rp, int i, int type, int lb, int ub, int st);
+extern void _XMP_ref_init(_XMP_object_ref_t *rp);
+extern void _XMP_ref_dealloc(_XMP_object_ref_t *rp);
 

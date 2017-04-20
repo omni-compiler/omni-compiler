@@ -447,4 +447,32 @@ typedef struct _XMP_gpu_data_type {
   size_t size;
 } _XMP_gpu_data_t;
 
+#define XMP_OBJ_REF_NODES 1
+#define XMP_OBJ_REF_TEMPL 2
+
+#define REF_OFFSET arg0
+#define REF_LBOUND arg0
+#define REF_INDEX  arg1
+#define REF_UBOUND arg1
+#define REF_STRIDE arg2
+
+#define SUBSCRIPT_ASTERISK 0
+#define SUBSCRIPT_SCALAR   1
+#define SUBSCRIPT_TRIPLET  2
+#define SUBSCRIPT_NOLB     3
+#define SUBSCRIPT_NOUB     4
+#define SUBSCRIPT_NOLBUB   5
+#define SUBSCRIPT_NONE     6
+
+typedef struct _XMP_object_ref_type {
+  int ref_kind; 
+  _XMP_template_t *t_desc;
+  _XMP_nodes_t *n_desc;
+  int ndims;
+  int *arg0;
+  int *arg1;
+  int *arg2;
+  int *subscript_type;
+} _XMP_object_ref_t;
+
 #endif // _XMP_DATA_STRUCT

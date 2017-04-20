@@ -49,6 +49,7 @@ extern void xmpc_end_async(int async_id);
 // xmp_barrier.c
 extern void _XMP_barrier_NODES_ENTIRE(void *nodes);
 extern void _XMP_barrier_EXEC(void);
+extern void _XMP_barrier(void *desc);
 
 // xmp_bcast.c
 extern void _XMP_bcast_NODES_ENTIRE_OMITTED(void *bcast_nodes, void *addr, int count, size_t datatype_size);
@@ -447,4 +448,13 @@ extern void _XMP_lock_initialize_6(void*, const unsigned int, const unsigned int
 extern void _XMP_lock_initialize_7(void*, const unsigned int, const unsigned int, const unsigned int,
 				   const unsigned int, const unsigned int, const unsigned int,
 				   const unsigned int);
+
+// xmp_obj_ref.c
+extern void _XMP_ref_templ_alloc(void **r_desc, void *t_desc, int n);
+extern void _XMP_ref_nodes_alloc(void **r_desc, void *n_desc, int n);
+extern void _XMP_ref_set_loop_info(void *rp, int i, int t_idx, int off);
+extern void _XMP_ref_set_dim_info(void *rp, int i, int type, int lb, int ub, int st);
+extern void _XMP_ref_init(void *rp);
+extern void _XMP_ref_dealloc(void *rp);
+
 #endif // _XMP_RUNTIME_FUNC_DECL

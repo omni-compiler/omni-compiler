@@ -662,7 +662,7 @@ public class XobjList extends Xobject implements Iterable<Xobject>, XobjContaine
 
     public boolean hasNullArg() {
       if (args == null)          // empty list
-        return false;
+        return true;
       return args.hasNullArg();
     }
 }

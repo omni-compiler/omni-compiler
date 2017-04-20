@@ -23,3 +23,31 @@ void _XMP_barrier_EXEC(void) {
 
   MPI_Barrier(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm));
 }
+
+
+void _XMP_barrier(_XMP_object_ref_t *desc)
+{
+  if (desc){
+
+    if (_XMP_is_entire(desc)){
+      if (desc->ref_kind == XMP_OBJ_REF_NODES){
+	_XMP_barrier_NODES_ENTIRE(desc->n_desc);
+      }
+      else {
+	_XMP_barrier_NODES_ENTIRE(desc->t_desc->onto_nodes);
+      }
+    }
+    else {
+      _XMP_nodes_t *n;
+      _XMP_create_task_nodes(&n, desc);
+      if (_XMP_test_task_on_nodes(n)){
+      	_XMP_barrier_EXEC();
+      	_XMP_end_task();
+      }
+      _XMP_finalize_nodes(n);
+    }
+  }
+  else {
+    _XMP_barrier_EXEC();
+  }
+}
