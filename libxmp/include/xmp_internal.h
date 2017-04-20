@@ -148,8 +148,8 @@ extern void _XMP_coarray_rdma_do2(const int rdma_code, void *remote_coarray, voi
 				  const long coarray_elmts[], const long coarray_distance[]);
 #endif
 
-extern void _XMP_onesided_initialize(int, char **);
-extern void _XMP_onesided_finalize(const int);
+extern void _XMP_initialize_onesided_functions(int, char **);
+extern void _XMP_finalize_onesided_functions(const int);
 extern void _XMP_build_sync_images_table();
 extern void _XMP_sync_images_EXEC(int* status);
 extern void _XMP_build_coarray_queue();
@@ -424,7 +424,7 @@ extern void _XMP_stride_memcpy_4dim(char *, const char *, const _XMP_array_secti
 extern void _XMP_stride_memcpy_5dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
 extern void _XMP_stride_memcpy_6dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
 extern void _XMP_stride_memcpy_7dim(char *, const char *, const _XMP_array_section_t *, size_t, const int);
-extern void _XMP_local_continuous_copy(char *, const void *, const size_t, const size_t, const size_t);
+extern void _XMP_local_contiguous_copy(char *, const void *, const size_t, const size_t, const size_t);
 extern size_t _XMP_calc_max_copy_chunk(const int, const int, const _XMP_array_section_t *, const _XMP_array_section_t *);
 #endif
 
@@ -461,9 +461,9 @@ extern void _xmp_gasnet_wait_noargs();
 extern void _xmp_gasnet_wait_node(const int);
 extern void _xmp_gasnet_wait(const int, const int);
 extern void _XMP_gasnet_coarray_lastly_deallocate();
-extern void _XMP_gasnet_continuous_put(const int, _XMP_coarray_t*, void*, 
+extern void _XMP_gasnet_contiguous_put(const int, _XMP_coarray_t*, void*, 
 				     const size_t, const size_t, const size_t, const size_t);
-extern void _XMP_gasnet_continuous_get(const int, _XMP_coarray_t*, void*,
+extern void _XMP_gasnet_contiguous_get(const int, _XMP_coarray_t*, void*,
                                      const size_t, const size_t, const size_t, const size_t);
 extern void _xmp_gasnet_post_sync_images(const int, const int*);
 extern void _xmp_gasnet_wait_sync_images(const int, const int*);
@@ -508,9 +508,9 @@ extern void _XMP_fjrdma_put(const int, const int, const int, const int, const in
 extern void _XMP_fjrdma_get(const int, const int, const int, const int, const int, const _XMP_array_section_t *, 
 			    const _XMP_array_section_t *, const _XMP_coarray_t *, const _XMP_coarray_t *, void *,
 			    const size_t, const size_t);
-extern void _XMP_fjrdma_continuous_put(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, 
+extern void _XMP_fjrdma_contiguous_put(const int, const uint64_t, const uint64_t, const _XMP_coarray_t *, 
 				     const _XMP_coarray_t *, const size_t, const size_t, const size_t);
-extern void _XMP_fjrdma_continuous_get(const int, const _XMP_coarray_t *, const _XMP_coarray_t *,
+extern void _XMP_fjrdma_contiguous_get(const int, const _XMP_coarray_t *, const _XMP_coarray_t *,
 				     const uint64_t, const uint64_t, const size_t, const size_t, const size_t);
 extern void _xmp_fjrdma_post_wait_initialize();
 extern void _xmp_fjrdma_post(const int, const int);
@@ -518,7 +518,7 @@ extern void _xmp_fjrdma_wait_noargs();
 extern void _xmp_fjrdma_wait_node(const int);
 extern void _xmp_fjrdma_wait(const int, const int);
 extern void _XMP_fjrdma_coarray_lastly_deallocate();
-extern void _XMP_fjrdma_scalar_continuous_mput(const int, const uint64_t, const uint64_t, const _XMP_coarray_t*, 
+extern void _XMP_fjrdma_scalar_contiguous_mput(const int, const uint64_t, const uint64_t, const _XMP_coarray_t*, 
 					     const _XMP_coarray_t*, const size_t);
 extern void _XMP_add_num_of_puts();
 extern void _XMP_add_num_of_gets();
@@ -530,7 +530,7 @@ extern void _XMP_fjrdma_atomic_ref(int, _XMP_coarray_t*, size_t, int*, _XMP_coar
 
 #ifdef _XMP_TCA
 void _XMP_tca_malloc(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size);
-void _XMP_tca_continuous_put(const int target_rank, const size_t dst_offset, const size_t src_offset,
+void _XMP_tca_contiguous_put(const int target_rank, const size_t dst_offset, const size_t src_offset,
 			   const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
 			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size);
 void _XMP_tca_sync_memory();
@@ -586,18 +586,18 @@ void _XMP_mpi_coarray_lastly_deallocate(bool);
 void _XMP_mpi_coarray_malloc(_XMP_coarray_t *coarray_desc, void **addr, const size_t coarray_size, bool is_acc);
 void _XMP_mpi_coarray_attach(_XMP_coarray_t *coarray_desc, void *addr, const size_t coarray_size, const bool is_acc);
 void _XMP_mpi_coarray_detach(_XMP_coarray_t *coarray_desc, const bool is_acc);
-void _XMP_mpi_continuous_put(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+void _XMP_mpi_contiguous_put(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 			   const size_t dst_offset, const size_t src_offset,
 			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_dst_on_acc, const bool is_src_on_acc);
-void _XMP_mpi_continuous_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+void _XMP_mpi_contiguous_get(const int target_rank, const _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 			   const size_t dst_offset, const size_t src_offset,
 			   const size_t dst_elmts, const size_t src_elmts, const size_t elmt_size, const bool is_dst_on_acc, const bool is_src_on_acc);
-void _XMP_mpi_put(const int dst_continuous, const int src_continuous, const int target_rank, 
+void _XMP_mpi_put(const int dst_contiguous, const int src_contiguous, const int target_rank, 
 		  const int dst_dims, const int src_dims, const _XMP_array_section_t *dst_info, 
 		  const _XMP_array_section_t *src_info, const _XMP_coarray_t *dst_desc, 
 		  const void *src, const int dst_elmts, const int src_elmts,
 		  const int is_dst_on_acc);
-void _XMP_mpi_get(const int src_continuous, const int dst_continuous, const int target_rank,
+void _XMP_mpi_get(const int src_contiguous, const int dst_contiguous, const int target_rank,
 		  const int src_dims, const int dst_dims, const _XMP_array_section_t *src_info,
 		  const _XMP_array_section_t *dst_info, const _XMP_coarray_t *src_desc,
 		  void *dst, const int src_elmts, const int dst_elmts,

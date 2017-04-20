@@ -36,7 +36,7 @@ void _ACC_gpu_init_reduction_var(float *var, int kind){
   switch(kind){
   case _ACC_REDUCTION_PLUS: *var = 0.0f; return;
   case _ACC_REDUCTION_MUL: *var = 1.0f; return;
-  case _ACC_REDUCTION_MAX: *var = FLT_MIN; return;
+  case _ACC_REDUCTION_MAX: *var = -FLT_MAX; return;
   case _ACC_REDUCTION_MIN: *var = FLT_MAX; return;
   }
 }
@@ -45,7 +45,7 @@ void _ACC_gpu_init_reduction_var(double *var, int kind){
   switch(kind){
   case _ACC_REDUCTION_PLUS: *var = 0.0; return;
   case _ACC_REDUCTION_MUL: *var = 1.0; return;
-  case _ACC_REDUCTION_MAX: *var = DBL_MIN; return;
+  case _ACC_REDUCTION_MAX: *var = -DBL_MAX; return;
   case _ACC_REDUCTION_MIN: *var = DBL_MAX; return;
   }
 }

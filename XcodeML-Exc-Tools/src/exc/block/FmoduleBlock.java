@@ -45,7 +45,7 @@ public class FmoduleBlock extends CompoundBlock
     {
         return name;
     }
-    
+
     public Xobject getParentName()
     {
         return parent_name;

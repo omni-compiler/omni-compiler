@@ -136,6 +136,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
   char *orgAddrDMA;
   char *nameDMA;
   int avail_DMA;
+  BOOL sync = *synchronous;
 
   descDMA = _XMPF_get_coarrayDescFromAddr(rhs, &orgAddrDMA, &offsetDMA, &nameDMA);
   avail_DMA = descDMA ? 1 : 0;
@@ -156,7 +157,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     assert(avail_DMA);
 
     _putVector_DMA(*descPtr, *baseAddr, *element, coindex0,
-                   descDMA, offsetDMA, nameDMA, *synchronous);
+                   descDMA, offsetDMA, nameDMA, sync);
     break;
     
   case SCHEME_ExtraDirectPut:
@@ -166,14 +167,14 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
     assert(avail_DMA);
 
     _putVector_DMA(*descPtr, *baseAddr, elementRU, coindex0,
-                   descDMA, offsetDMA, nameDMA, *synchronous);
+                   descDMA, offsetDMA, nameDMA, sync);
     break;
 
   case SCHEME_BufferPut:
     _XMPF_coarrayDebugPrint("SCHEME_BufferPut/scalar selected\n");
 
     _putVector_buffer(*descPtr, *baseAddr, *element, coindex0,
-                      rhs, *element, *synchronous);
+                      rhs, *element, sync);
     break;
 
   case SCHEME_ExtraBufferPut:
@@ -182,7 +183,7 @@ extern void xmpf_coarray_put_scalar_(void **descPtr, char **baseAddr, int *eleme
                             elementRU);
 
     _putVector_buffer(*descPtr, *baseAddr, elementRU, coindex0,
-                      rhs, *element, *synchronous);
+                      rhs, *element, sync);
     break;
 
   default:
@@ -202,6 +203,7 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
                                     BOOL *synchronous, int *rank, ...)
 #endif
 {
+  BOOL sync = *synchronous;
   int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
   if (*element % COMM_UNIT != 0) {
@@ -260,13 +262,13 @@ extern void xmpf_coarray_put_array_(void **descPtr, char **baseAddr, int *elemen
     _XMPF_coarrayDebugPrint("SCHEME_DirectPut/array selected\n");
     _putCoarray_DMA(*descPtr, *baseAddr, coindex0, rhs,
                     *element, *rank, skip, skip_rhs, count,
-                    descDMA, offsetDMA, nameDMA, *synchronous);
+                    descDMA, offsetDMA, nameDMA, sync);
     break;
 
   case SCHEME_BufferPut:
     _XMPF_coarrayDebugPrint("SCHEME_BufferPut/array selected\n");
     _putCoarray_buffer(*descPtr, *baseAddr, coindex0, rhs,
-                       *element, *rank, skip, skip_rhs, count, *synchronous);
+                       *element, *rank, skip, skip_rhs, count, sync);
     break;
 
   default:
@@ -285,6 +287,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
                                      BOOL *synchronous, int *rank, ...)
 #endif
 {
+  BOOL sync = *synchronous;
   int coindex0 = _XMPF_get_initial_image_withDescPtr(*coindex, *descPtr);
 
   if (*element % COMM_UNIT != 0) {
@@ -321,7 +324,7 @@ extern void xmpf_coarray_put_spread_(void **descPtr, char **baseAddr, int *eleme
    * action                               *
   \*--------------------------------------*/
   _spreadCoarray(*descPtr, *baseAddr, coindex0, rhs,
-                 *element, *rank, skip, count, *element, *synchronous);
+                 *element, *rank, skip, count, *element, sync);
 }
 
 
@@ -363,8 +366,7 @@ void xmpf_coarray_put_err_size_(void **descPtr, int *dim,
 \***************************************************/
 
 /* REMARKING CONDITIONS:
- *  - The result variable may be invisible to FJ-RDMA.
- *  - The length of put/get communication must be divisible by
+ *  - The length of put communication must be divisible by
  *    COMM_UNIT. Else, SCHEME_Extra... should be selected.
  *  - Array element of coarray is divisible by COMM_UNIT
  *    due to a restriction.
@@ -701,10 +703,10 @@ void _putVector_DMA(void *descPtr, char *baseAddr, int bytes, int coindex,
   }
 
   // ACTION (case asynchronous: definition of a coindexed variable)
-  _XMP_coarray_continuous_put(coindex,
-			      desc,   descDMA,
-			      offset, offsetDMA,
-			      bytes,  bytes);
+  _XMP_coarray_contiguous_put(coindex,
+                              desc,   descDMA,
+                              offset, offsetDMA,
+                              bytes,  bytes);
 }
 
 
@@ -758,11 +760,11 @@ void _putVector_buffer_SAFE(void *descPtr, char *baseAddr, int bytesRU,
   _XMP_coarray_rdma_image_set_1(coindex);
   _XMP_coarray_put(desc, buf, NULL);
 
-  // FREE
-  _XMPF_coarrayDebugPrint("===DO NOT FREE in SAFE MODE\n"
+  // NOT FREE for safe
+  _XMPF_coarrayDebugPrint("===DO NOT FREE every local buffer in SAFE MODE\n"
                           "  addr=%p\n",
                           buf);
-  //_XMP_free(buf);  // for safe, changing the address every time
+  //_XMP_free(buf);
 }
 
 
@@ -904,47 +906,61 @@ void _push_localBuf(char *src0, int bytes0, BOOL synchronous)
 {
   char *src = src0;
   int bytes = bytes0;
+  int copySize;
 
   if (_localBuf_used + bytes >= _localBuf_size) {
       _flush_localBuf(synchronous);
 
       // for huge data
       while (bytes > _localBuf_size) {
-        _XMPF_coarrayDebugPrint("===MEMCPY to localBuf, %d bytes (cont\'d)\n"
+        copySize = _localBuf_size;      
+        _XMPF_coarrayDebugPrint("===MEMCPY %d of %d bytes to localBuf (cont\'d)\n"
                                 "  from: addr=%p\n"
-                                "  to  : localBuf, offset=0\n",
-                                _localBuf_size, src);
+                                "  to  : localBuf\n",
+                                copySize, bytes,
+                                src);
 
-        (void)memcpy(_localBuf_baseAddr, src, _localBuf_size);
-        _localBuf_used = _localBuf_size;
+        (void)memcpy(_localBuf_baseAddr, src, copySize);
+        _localBuf_used = copySize;
 
         _flush_localBuf(synchronous);
 
-        src += _localBuf_size;
-        bytes -= _localBuf_size;
+        src += copySize;
+        bytes -= copySize;
       }
   }    
 
   if (bytes == 0)
     return;
+  copySize = bytes;
 
-  _XMPF_coarrayDebugPrint("===MEMCPY to localBuf, %d bytes (final)\n"
+  _XMPF_coarrayDebugPrint("===MEMCPY %d bytes to localBuf (final)\n"
                           "  from: addr=%p\n"
-                          "  to  : localBuf, offset=%d\n",
-                          _localBuf_size, src, _localBuf_used);
+                          "  to  : localBuf + offset(%d bytes)\n",
+                          copySize,
+                          src,
+                          _localBuf_used);
 
-  (void)memcpy(_localBuf_baseAddr + _localBuf_used, src, bytes);
-  _localBuf_used += bytes;
+  (void)memcpy(_localBuf_baseAddr + _localBuf_used, src, copySize);
+  _localBuf_used += copySize;
 }
 
 
 void _flush_localBuf(BOOL synchronous)
 {
+  int state;
+
   if (_localBuf_used > 0) {
     _putVector_DMA(_target_desc, _target_baseAddr, _localBuf_used, _target_coindex,
                    _localBuf_desc, _localBuf_offset, _localBuf_name, synchronous);
     _target_baseAddr += _localBuf_used;
     _localBuf_used = 0;
+  }
+
+  if (XMPF_isSyncPutMode()) {
+      xmp_sync_memory(&state);
+      _XMPF_coarrayDebugPrint("SYNC MEMORY caused by SYNCPUT MODE (stat=%d)\n",
+                              state);
   }
 }
 

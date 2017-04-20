@@ -1574,7 +1574,13 @@ public class XMPtranslateLocalPragma {
       case XMPtemplate.GBLOCK:
         forBlock.setLowerBound(parallelInitId.Ref());
         forBlock.setUpperBound(parallelCondId.Ref());
-        forBlock.setStep(parallelStepId.Ref());
+	if(forBlock.getStep().equals(Xcons.IntConstant(1)))
+          forBlock.setStep(Xcons.IntConstant(1));
+        else if(forBlock.getStep().equals(Xcons.IntConstant(-1)))
+          forBlock.setStep(Xcons.IntConstant(-1));
+	else
+          forBlock.setStep(parallelStepId.Ref());
+	
         break;
       default:
         throw new XMPexception("unknown distribute manner");
@@ -1811,10 +1817,10 @@ public class XMPtranslateLocalPragma {
         Xobject[] size   = new Xobject[dims];
         Xobject total_length = setStartLengthSize(reductionLocation, varType, dims, start, length, size);
 
-        // Check the array is continuous or not.
+        // Check the array is contiguous or not.
         // Note that when XMP runtime supports stride bcast communication,
         // the following if-statment will be removed.
-        if(! check_continuous_of_array(dims, length, size))
+        if(! check_contiguous_of_array(dims, length, size))
           throw new XMPexception("Stride bcast operation is not supported");
 
         Xobject[] acc_size = new Xobject[dims];
@@ -2395,28 +2401,28 @@ public class XMPtranslateLocalPragma {
     return length.equals(Xcons.IntConstant(1));
   }
   
-  private boolean check_continuous_of_array(int dims, Xobject length[], Xobject size[]) throws XMPexception{
-    boolean is_continuous = false;
+  private boolean check_contiguous_of_array(int dims, Xobject length[], Xobject size[]) throws XMPexception{
+    boolean is_contiguous = false;
 
     switch (dims){
-    case 1: is_continuous = true;
+    case 1: is_contiguous = true;
       break;
     case 2:
       if(check_one(length[0]) || check_all(length[1], size[1]))
-        is_continuous = true;
+        is_contiguous = true;
       break;
     case 3:
       if((check_one(length[0]) && check_one(length[1])) ||
          (check_one(length[0]) && check_all(length[2], size[2])) ||
          (check_all(length[1], size[1]) && check_all(length[2], size[2])))
-        is_continuous = true;
+        is_contiguous = true;
       break;
     case 4:
       if((check_one(length[0]) && check_one(length[1]) && check_one(length[2])) ||
          (check_one(length[0]) && check_one(length[1]) && check_all(length[3], size[3])) ||
          (check_one(length[0]) && check_all(length[2], size[2]) && check_all(length[3], size[3])) ||
          (check_all(length[1], size[1]) && check_all(length[2], size[2]) && check_all(length[3], size[3])))
-        is_continuous = true;
+        is_contiguous = true;
       break;
     case 5:
       if((check_one(length[0]) && check_one(length[1]) && check_one(length[2]) && check_one(length[3])) ||
@@ -2424,7 +2430,7 @@ public class XMPtranslateLocalPragma {
          (check_one(length[0]) && check_one(length[1]) && check_all(length[3], size[3]) && check_all(length[4], size[4])) ||
          (check_one(length[0]) && check_all(length[2], size[2]) && check_all(length[3], size[3]) && check_all(length[4], size[4])) ||
          (check_all(length[1], size[1]) && check_all(length[2], size[2]) && check_all(length[3], size[3]) && check_all(length[4], size[4])))
-        is_continuous = true;
+        is_contiguous = true;
       break;
     case 6:
       if((check_one(length[0]) && check_one(length[1]) && check_one(length[2]) && check_one(length[3]) && check_one(length[4])) ||
@@ -2433,7 +2439,7 @@ public class XMPtranslateLocalPragma {
          (check_one(length[0]) && check_one(length[1]) && check_all(length[3], size[3]) && check_all(length[4], size[4]) && check_all(length[5], size[5])) ||
          (check_one(length[0]) && check_all(length[2], size[2]) && check_all(length[3], size[3]) && check_all(length[4], size[4]) && check_all(length[5], size[5])) ||
          (check_all(length[1], size[1]) && check_all(length[2], size[2]) && check_all(length[3], size[3]) && check_all(length[4], size[4]) && check_all(length[5], size[5])))
-        is_continuous = true;
+        is_contiguous = true;
       break;
     case 7:
       if((check_one(length[0]) && check_one(length[1]) && check_one(length[2]) && check_one(length[3]) && check_one(length[4]) && check_one(length[5])) ||
@@ -2443,13 +2449,13 @@ public class XMPtranslateLocalPragma {
          (check_one(length[0]) && check_one(length[1]) && check_all(length[3], size[3]) && check_all(length[4], size[4]) && check_all(length[5], size[5]) && check_all(length[6], size[6])) ||
          (check_one(length[0]) && check_all(length[2], size[2]) && check_all(length[3], size[3]) && check_all(length[4], size[4]) && check_all(length[5], size[5]) && check_all(length[6], size[6])) ||
          (check_all(length[1], size[1]) && check_all(length[2], size[2]) && check_all(length[3], size[3]) && check_all(length[4], size[4]) && check_all(length[5], size[5]) && check_all(length[6], size[6])))
-        is_continuous = true;
+        is_contiguous = true;
       break;
     default:
       throw new XMPexception("A wrong data type for broadcast");
     }
 
-    return is_continuous;
+    return is_contiguous;
   }
   
   private Vector<XobjList> createBcastArgsList(XobjList varList, PragmaBlock pb) throws XMPexception {
@@ -2534,10 +2540,10 @@ public class XMPtranslateLocalPragma {
         Xobject[] size   = new Xobject[dims];
         Xobject total_length = setStartLengthSize(i.getArg(), varType, dims, start, length, size);
 
-        // Check the array is continuous or not.
+        // Check the array is contiguous or not.
         // Note that when XMP runtime supports stride bcast communication,
         // the following if-statment will be removed.
-        if(! check_continuous_of_array(dims, length, size))
+        if(! check_contiguous_of_array(dims, length, size))
           throw new XMPexception("Stride bcast operation is not supported");
 
         Xobject[] acc_size = new Xobject[dims];

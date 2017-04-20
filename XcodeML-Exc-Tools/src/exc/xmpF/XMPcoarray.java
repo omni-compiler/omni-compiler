@@ -721,22 +721,25 @@ public class XMPcoarray {
   //  generate and add "CALL xmpf_coarray_set_nodes(descPtr, nodesDesc)"
   //-----------------------------------------------------
   //
-  public void build_setMappingNodes(BlockList blist)
+  public void build_setMappingNodes(BlockList blist, Block block)
   {
     if (nodesDescId != null)
-      blist.add(makeStmt_setMappingNodes());
+      blist.add(makeStmt_setMappingNodes(block));
   }
 
-  public Xobject makeStmt_setMappingNodes()
+  public Xobject makeStmt_setMappingNodes(Block block)
   {
     // descPtrId must be declarad previously in the coarray pass
     if (descPtrId == null)
-      descPtrId = env.findVarIdent(getDescPointerName(), fblock);
+      descPtrId = env.findVarIdent(getDescPointerName(), block);
 
     Xobject args = Xcons.List(descPtrId, nodesDescId);
     Ident subr = env.findVarIdent(SET_NODES_NAME, null);
     if (subr == null) {
-      subr = env.declExternIdent(SET_NODES_NAME,
+      subr = (block == null ) ?
+             env.declExternIdent(SET_NODES_NAME,
+                                 BasicType.FexternalSubroutineType) :
+             block.getBody().declLocalIdent(SET_NODES_NAME,
                                  BasicType.FexternalSubroutineType);
     }
     Xobject subrCall = subr.callSubroutine(args);
@@ -751,16 +754,23 @@ public class XMPcoarray {
   //
   public static Xobject makeStmt_setImageNodes(String nodesName, XMPenv env)
   {
+    return makeStmt_setImageNodes(nodesName, env, env.getCurrentDef().getBlock());
+  }
+
+  public static Xobject makeStmt_setImageNodes(String nodesName, XMPenv env, Block block)
+  {
     //    Ident imageNodesId = _getNodesDescIdByName(nodesName, env,
     //                                               env.getCurrentDef().getBlock());
-    FunctionBlock fblock = env.getCurrentDef().getBlock();
-    XMPnodes nodes = env.findXMPnodes(nodesName, fblock);
+    XMPnodes nodes = env.findXMPnodes(nodesName, block);
     Ident imageNodesId = nodes.getDescId();
 
     Xobject args = Xcons.List(imageNodesId);
-    Ident subr = env.findVarIdent(SET_IMAGE_NODES_NAME, null);
+    Ident subr = env.findVarIdent(SET_IMAGE_NODES_NAME, block);
     if (subr == null) {
-      subr = env.declExternIdent(SET_IMAGE_NODES_NAME,
+      subr = (block == null) ?
+             env.declExternIdent(SET_IMAGE_NODES_NAME,
+                                 BasicType.FexternalSubroutineType) :
+             block.getBody().declLocalIdent(SET_IMAGE_NODES_NAME,
                                  BasicType.FexternalSubroutineType);
     }
     Xobject subrCall = subr.callSubroutine(args);

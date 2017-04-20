@@ -75,7 +75,7 @@ static int _xmp_io_set_view_block_cyclic
 )
 {
   MPI_Datatype dataType_tmp;
-  long continuous_size, space_size, total_size;
+  long contiguous_size, space_size, total_size;
   int mpiRet;
 
   int nprocs, myrank;
@@ -105,10 +105,10 @@ static int _xmp_io_set_view_block_cyclic
       return 1;
 
     }else if(par_upper < rp_lb || rp_ub < par_lower){
-      continuous_size = space_size = 0;
+      contiguous_size = space_size = 0;
       total_size = ((rp_ub-rp_lb)/step + 1) * type_size;
 
-      mpiRet = MPI_Type_contiguous(continuous_size, dataType0, &dataType_tmp);
+      mpiRet = MPI_Type_contiguous(contiguous_size, dataType0, &dataType_tmp);
       if (mpiRet != MPI_SUCCESS) { return 1; }
 
     }else{
@@ -159,10 +159,10 @@ static int _xmp_io_set_view_block_cyclic
       } /* ib */
 
       if (ib_l == bw || ib_u == -1){ /* set is empty */
-	continuous_size = space_size = 0;
+	contiguous_size = space_size = 0;
 	total_size = ((rp_ub-rp_lb)/step + 1) * type_size;
 
-        mpiRet = MPI_Type_contiguous(continuous_size, dataType0, &dataType_tmp);
+        mpiRet = MPI_Type_contiguous(contiguous_size, dataType0, &dataType_tmp);
         if (mpiRet != MPI_SUCCESS) { return 1; }
 #ifdef DEBUG
 	int byte_dataType_tmp; MPI_Aint lb_dataType_tmp, extent_dataType_tmp;
@@ -292,7 +292,7 @@ static int _xmp_io_set_view_block_cyclic
 	  if (byte_newtype2a > 0){ MPI_Type_free(&newtype2aa); }
 	  MPI_Type_free(&newtype2b);
 	  dataType_tmp = newtype2c;
-	  continuous_size = byte_newtype2c / type_size;
+	  contiguous_size = byte_newtype2c / type_size;
 	  space_size = (y_l - y_sta) * type_size;
 	  total_size = ((rp_ub-rp_lb)/step + 1) * type_size;
 
@@ -348,10 +348,10 @@ static int _xmp_io_set_view_block_cyclic
       return 1;
 
     }else if (par_upper < rp_ub || rp_lb < par_lower){
-      continuous_size = space_size = 0;
+      contiguous_size = space_size = 0;
       total_size = ((rp_ub-rp_lb)/step + 1) * type_size;
 
-      mpiRet = MPI_Type_contiguous(continuous_size, dataType0, &dataType_tmp);
+      mpiRet = MPI_Type_contiguous(contiguous_size, dataType0, &dataType_tmp);
       if (mpiRet != MPI_SUCCESS) { return 1; }
 
     }else{
@@ -402,10 +402,10 @@ static int _xmp_io_set_view_block_cyclic
       } /* ib */
 
       if (ib_l == -1 || ib_u == bw){ /* set is empty */
-	continuous_size = space_size = 0;
+	contiguous_size = space_size = 0;
 	total_size = ((rp_ub-rp_lb)/step + 1) * type_size;
 
-        mpiRet = MPI_Type_contiguous(continuous_size, dataType0, &dataType_tmp);
+        mpiRet = MPI_Type_contiguous(contiguous_size, dataType0, &dataType_tmp);
         if (mpiRet != MPI_SUCCESS) { return 1; }
 
       }else{ /* ib_l */ /* ib_u */
@@ -529,7 +529,7 @@ static int _xmp_io_set_view_block_cyclic
 	  if (byte_newtype2a > 0){ MPI_Type_free(&newtype2aa); }
 	  MPI_Type_free(&newtype2b);
 	  dataType_tmp = newtype2c;
-	  continuous_size = byte_newtype2c / type_size;
+	  contiguous_size = byte_newtype2c / type_size;
 	  space_size = (y_end - y_base1) * type_size;
 	  total_size = ((rp_ub-rp_lb)/step + 1) * type_size;
 	  if (extent_newtype2c + space_size > total_size){
@@ -609,7 +609,7 @@ static int _xmp_io_write_read_block_cyclic
 )
 {
   MPI_Datatype dataType_tmp;
-  long continuous_size, space_size, total_size;
+  long contiguous_size, space_size, total_size;
   int mpiRet;
 
   int nprocs, myrank;
@@ -636,10 +636,10 @@ static int _xmp_io_write_read_block_cyclic
       return 1;
 
     }else if(par_upper < rp_lb || rp_ub < par_lower){
-      continuous_size = space_size = 0;
+      contiguous_size = space_size = 0;
       total_size = alloc_size * type_size;
 
-      mpiRet = MPI_Type_contiguous(continuous_size, dataType0, &dataType_tmp);
+      mpiRet = MPI_Type_contiguous(contiguous_size, dataType0, &dataType_tmp);
       if (mpiRet != MPI_SUCCESS) { return 1; }
 
     }else{
@@ -692,10 +692,10 @@ static int _xmp_io_write_read_block_cyclic
       fprintf(stderr, "bw = %d  x_l = %d  x_u = %d  ib_l = %d  ib_u = %d\n",bw,x_l,x_u,ib_l,ib_u);
 #endif /* DEBUG */
       if (ib_l == bw || ib_u == -1){ /* set is empty */
-	continuous_size = space_size = 0;
+	contiguous_size = space_size = 0;
 	total_size = alloc_size * type_size;
 
-        mpiRet = MPI_Type_contiguous(continuous_size, dataType0, &dataType_tmp);
+        mpiRet = MPI_Type_contiguous(contiguous_size, dataType0, &dataType_tmp);
         if (mpiRet != MPI_SUCCESS) { return 1; }
 #ifdef DEBUG
 	fprintf(stderr, "_xmp_io_write_read_block_cyclic: myrank=%d: set is empty: \n",
@@ -825,7 +825,7 @@ static int _xmp_io_write_read_block_cyclic
 	  if (byte_newtype3a > 0){ MPI_Type_free(&newtype3aa); }
 	  MPI_Type_free(&newtype3b);
 	  dataType_tmp = newtype3c;
-	  continuous_size = byte_newtype3c / type_size;
+	  contiguous_size = byte_newtype3c / type_size;
 	  space_size = (ista + local_lower) * type_size;
 	  total_size = alloc_size * type_size;
 	  if (extent_newtype3c + space_size > total_size){
@@ -2086,7 +2086,7 @@ ssize_t xmp_fread_darray_all(xmp_file_t  *pstXmp_file,
   MPI_Status status;        // MPI status
   int readCount;            // read bytes
   int mpiRet;               // return value of MPI functions
-  long continuous_size;      // continuous size
+  long contiguous_size;      // contiguous size
   long space_size;           // space size
   long total_size;           // total size
   MPI_Aint tmp1, type_size;
@@ -2180,15 +2180,15 @@ fprintf(stderr, "READ(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
       // incremnet is positive
       else
       {
-        // continuous size
-        continuous_size = (RP_UB(i) - RP_LB(i)) / RP_STEP(i) + 1;
+        // contiguous size
+        contiguous_size = (RP_UB(i) - RP_LB(i)) / RP_STEP(i) + 1;
 
         // get extent of data type
         mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &type_size);
         if (mpiRet !=  MPI_SUCCESS) { return -1; }  
 
         // create basic data type
-        mpiRet = MPI_Type_create_hvector(continuous_size,
+        mpiRet = MPI_Type_create_hvector(contiguous_size,
                                          1,
                                          type_size * RP_STEP(i),
                                          dataType[0],
@@ -2225,7 +2225,7 @@ fprintf(stderr, "READ(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
 
 #ifdef DEBUG
 fprintf(stderr, "READ(%d/%d) NOT_ALIGNED\n", rank, nproc);
-fprintf(stderr, "READ(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
+fprintf(stderr, "READ(%d/%d) contiguous_size=%d\n", rank, nproc, contiguous_size);
 fprintf(stderr, "READ(%d/%d) space_size=%d\n", rank, nproc, space_size);
 fprintf(stderr, "READ(%d/%d) total_size=%d\n", rank, nproc, total_size);
 #endif
@@ -2244,11 +2244,11 @@ fprintf(stderr, "READ(%d/%d) total_size=%d\n", rank, nproc, total_size);
 
         // upper after distribution < lower
         if (par_upper_i < RP_LB(i)) {
-          continuous_size = space_size = 0;
+          contiguous_size = space_size = 0;
         }
         // lower after distribution > upper
         else if (par_lower_i > RP_UB(i)) {
-          continuous_size = space_size = 0;
+          contiguous_size = space_size = 0;
         }
         // other
         else {
@@ -2262,15 +2262,15 @@ fprintf(stderr, "READ(%d/%d) total_size=%d\n", rank, nproc, total_size);
                   par_upper_i
 	          : RP_UB(i);
 
-          // continuous size
-          continuous_size = (upper - lower + RP_STEP(i)) / RP_STEP(i);
+          // contiguous size
+          contiguous_size = (upper - lower + RP_STEP(i)) / RP_STEP(i);
 
 	  // space size
 	  space_size = (local_lower_i + (lower - par_lower_i)) * type_size;
         }
 
         // create basic data type
-        mpiRet = MPI_Type_create_hvector(continuous_size,
+        mpiRet = MPI_Type_create_hvector(contiguous_size,
                                          1,
                                          type_size * RP_STEP(i),
                                          dataType[0],
@@ -2301,7 +2301,7 @@ fprintf(stderr, "READ(%d/%d) total_size=%d\n", rank, nproc, total_size);
  	fprintf(stderr, "fread_darray_all: rank = %d:  space_size = %d  total_size = %d\n",
  	       rank,space_size,total_size);
 fprintf(stderr, "READ(%d/%d) ALIGN_BLOCK\n", rank, nproc);
-fprintf(stderr, "READ(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
+fprintf(stderr, "READ(%d/%d) contiguous_size=%d\n", rank, nproc, contiguous_size);
 fprintf(stderr, "READ(%d/%d) space_size=%d\n", rank, nproc, space_size);
 fprintf(stderr, "READ(%d/%d) total_size=%d\n", rank, nproc, total_size);
 fprintf(stderr, "READ(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);
@@ -2680,7 +2680,7 @@ ssize_t xmp_fwrite_darray_all(xmp_file_t *pstXmp_file,
   MPI_Status status;        // MPI status
   int writeCount;           // write btye
   int mpiRet;               // return value of MPI functions
-  long continuous_size;      // continuous size
+  long contiguous_size;      // contiguous size
   long space_size;           // space size
   long total_size;           // total size
   MPI_Aint tmp1, type_size;
@@ -2784,15 +2784,15 @@ fprintf(stderr, "WRITE(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
       // incremnet is positive
       else
       {
-        // continuous size
-        continuous_size = (RP_UB(i) - RP_LB(i)) / RP_STEP(i) + 1;
+        // contiguous size
+        contiguous_size = (RP_UB(i) - RP_LB(i)) / RP_STEP(i) + 1;
 
         // get extent of data type
         mpiRet =MPI_Type_get_extent(dataType[0], &tmp1, &type_size);
         if (mpiRet !=  MPI_SUCCESS) { return -1110; }  
 
         // create basic data type
-        mpiRet = MPI_Type_create_hvector(continuous_size,
+        mpiRet = MPI_Type_create_hvector(contiguous_size,
                                          1,
                                          type_size * RP_STEP(i),
                                          dataType[0],
@@ -2830,7 +2830,7 @@ fprintf(stderr, "WRITE(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
 #ifdef DEBUG
 fprintf(stderr, "WRITE(%d/%d) NOT_ALIGNED\n",rank, nproc);
 fprintf(stderr, "WRITE(%d/%d) type_size=%ld\n",rank, nproc, (long)type_size);
-fprintf(stderr, "WRITE(%d/%d) continuous_size=%ld\n",rank, nproc, continuous_size);
+fprintf(stderr, "WRITE(%d/%d) contiguous_size=%ld\n",rank, nproc, contiguous_size);
 fprintf(stderr, "WRITE(%d/%d) space_size=%ld\n",rank, nproc, space_size);
 fprintf(stderr, "WRITE(%d/%d) total_size=%ld\n",rank, nproc, total_size);
 #endif
@@ -2854,11 +2854,11 @@ fprintf(stderr, "WRITE(%d/%d) total_size=%ld\n",rank, nproc, total_size);
         // upper after distribution < lower
         if (par_upper_i < RP_LB(i))
         {
-          continuous_size = space_size = 0;
+          contiguous_size = space_size = 0;
         }
         // lower after distribution > upper
         else if (par_lower_i > RP_UB(i)) {
-          continuous_size = space_size = 0;
+          contiguous_size = space_size = 0;
         }
         // other
         else {
@@ -2872,8 +2872,8 @@ fprintf(stderr, "WRITE(%d/%d) total_size=%ld\n",rank, nproc, total_size);
                   par_upper_i
 	          : RP_UB(i);
 
-          // continuous size
-          continuous_size = (upper - lower + RP_STEP(i)) / RP_STEP(i);
+          // contiguous size
+          contiguous_size = (upper - lower + RP_STEP(i)) / RP_STEP(i);
 
 	  if(lower > upper){ type_size = 0; }
 	  // space size
@@ -2881,7 +2881,7 @@ fprintf(stderr, "WRITE(%d/%d) total_size=%ld\n",rank, nproc, total_size);
         }
 
         // create basic data type
-        mpiRet = MPI_Type_create_hvector(continuous_size,
+        mpiRet = MPI_Type_create_hvector(contiguous_size,
                                          1,
                                          type_size * RP_STEP(i),
                                          dataType[0],
@@ -2911,7 +2911,7 @@ fprintf(stderr, "WRITE(%d/%d) total_size=%ld\n",rank, nproc, total_size);
 #ifdef DEBUG
 fprintf(stderr, "WRITE(%d/%d) ALIGN_BLOCK\n",rank, nproc);
 fprintf(stderr, "WRITE(%d/%d) type_size=%ld\n",rank, nproc, (long)type_size);
-fprintf(stderr, "WRITE(%d/%d) continuous_size=%ld\n",rank, nproc, continuous_size);
+fprintf(stderr, "WRITE(%d/%d) contiguous_size=%ld\n",rank, nproc, contiguous_size);
 fprintf(stderr, "WRITE(%d/%d) space_size=%ld\n",rank, nproc, space_size);
 fprintf(stderr, "WRITE(%d/%d) total_size=%ld\n",rank, nproc, total_size);
 fprintf(stderr, "WRITE(%d/%d) (lower,upper)=(%d,%d)\n",rank, nproc, lower, upper);
@@ -3222,7 +3222,7 @@ int xmp_file_set_view_all(xmp_file_t  *pstXmp_file,
   int mpiRet;               // return value of MPI functions
   int lower;                // lower bound accessed by this node
   int upper;                // upper bound accessed by this node
-  long continuous_size;      // continuous size
+  long contiguous_size;      // contiguous size
   MPI_Datatype dataType[2];
   MPI_Aint tmp1, type_size;
   xmp_desc_t tempd;
@@ -3309,11 +3309,11 @@ fprintf(stderr, "VIEW(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
     if (align_manner_i == _XMP_N_ALIGN_NOT_ALIGNED ||
         align_manner_i == _XMP_N_ALIGN_DUPLICATION)
     {
-      // continuous size
-      continuous_size = (RP_UB(i) - RP_LB(i)) / RP_STEP(i) + 1;
+      // contiguous size
+      contiguous_size = (RP_UB(i) - RP_LB(i)) / RP_STEP(i) + 1;
 
       // create basic data type
-      mpiRet = MPI_Type_contiguous(continuous_size, dataType[0], &dataType[1]);
+      mpiRet = MPI_Type_contiguous(contiguous_size, dataType[0], &dataType[1]);
 
       // free MPI_Datatype out of use
       MPI_Type_free(&dataType[0]);
@@ -3324,7 +3324,7 @@ fprintf(stderr, "VIEW(%d/%d) (par_lower,par_upper)=(%d,%d)\n",
 
 #ifdef DEBUG
 fprintf(stderr, "VIEW(%d/%d) NOT_ALIGNED\n", rank, nproc);
-fprintf(stderr, "VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size);
+fprintf(stderr, "VIEW(%d/%d) contiguous_size=%d\n", rank, nproc, contiguous_size);
 #endif
     }
     // block distribution
@@ -3344,12 +3344,12 @@ fprintf(stderr, "VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size
         // upper after distribution < lower
         else if (par_upper_i < RP_LB(i))
         {
-          continuous_size = space_size = 0;
+          contiguous_size = space_size = 0;
         }
         // lower after distribution > upper
         else if (par_lower_i > RP_UB(i))
         {
-          continuous_size = space_size = 0;
+          contiguous_size = space_size = 0;
         }
         // other
         else
@@ -3365,15 +3365,15 @@ fprintf(stderr, "VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size
             = (par_upper_i < RP_UB(i)) ?
                par_upper_i : RP_UB(i);
 
-          // continuous size
-          continuous_size = (upper - lower) / RP_STEP(i) + 1;
+          // contiguous size
+          contiguous_size = (upper - lower) / RP_STEP(i) + 1;
 
           // space size
           space_size
             = ((lower - RP_LB(i)) / RP_STEP(i)) * type_size;
 
-/* 	  fprintf(stderr, "set_view_all: rank = %d: lower = %d  upper = %d  continuous_size = %d  space_size = %d\n", */
-/* 		 rank,lower, upper, continuous_size, space_size); */
+/* 	  fprintf(stderr, "set_view_all: rank = %d: lower = %d  upper = %d  contiguous_size = %d  space_size = %d\n", */
+/* 		 rank,lower, upper, contiguous_size, space_size); */
 
         }
 
@@ -3382,7 +3382,7 @@ fprintf(stderr, "VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size
           = ((RP_UB(i) - RP_LB(i)) / RP_STEP(i) + 1) * type_size;
 
         // create basic data type
-        mpiRet = MPI_Type_contiguous(continuous_size, dataType[0], &dataType[1]);
+        mpiRet = MPI_Type_contiguous(contiguous_size, dataType[0], &dataType[1]);
 
         // free MPI_Datatype out of use
         MPI_Type_free(&dataType[0]);
@@ -3422,7 +3422,7 @@ fprintf(stderr, "VIEW(%d/%d) continuous_size=%d\n", rank, nproc, continuous_size
 #ifdef DEBUG
 fprintf(stderr, "VIEW(%d/%d) ALIGN_BLOCK\n", rank, nproc );
 fprintf(stderr, "VIEW(%d/%d) type_size=%ld\n", rank, nproc , (long)type_size);
-fprintf(stderr, "VIEW(%d/%d) continuous_size=%ld\n", rank, nproc , continuous_size);
+fprintf(stderr, "VIEW(%d/%d) contiguous_size=%ld\n", rank, nproc , contiguous_size);
 fprintf(stderr, "VIEW(%d/%d) space_size=%ld\n", rank, nproc , space_size);
 fprintf(stderr, "VIEW(%d/%d) total_size=%ld\n", rank, nproc , total_size);
 fprintf(stderr, "VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc , lower, upper);
@@ -3440,12 +3440,12 @@ fprintf(stderr, "\n");
         // lower after distribution < upper
         else if (par_lower_i < RP_UB(i))
         {
-          continuous_size = space_size = 0;
+          contiguous_size = space_size = 0;
         }
         // upper after distribution > lower
         else if (par_upper_i > RP_LB(i))
         {
-          continuous_size = space_size = 0;
+          contiguous_size = space_size = 0;
         }
         // other
         else
@@ -3461,8 +3461,8 @@ fprintf(stderr, "\n");
             = (par_lower_i > RP_UB(i)) ?
                par_lower_i : RP_UB(i);
 
-          // continuous size
-          continuous_size = (upper - lower) / RP_STEP(i) + 1;
+          // contiguous size
+          contiguous_size = (upper - lower) / RP_STEP(i) + 1;
 
           // space size
 /*           space_size */
@@ -3472,7 +3472,7 @@ fprintf(stderr, "\n");
         }
 
         // create basic data type
-        mpiRet = MPI_Type_contiguous(continuous_size, dataType[0], &dataType[1]);
+        mpiRet = MPI_Type_contiguous(contiguous_size, dataType[0], &dataType[1]);
 
         // total size
         total_size
@@ -3507,7 +3507,7 @@ fprintf(stderr, "\n");
 
 #ifdef DEBUG
 fprintf(stderr, "VIEW(%d/%d) ALIGN_BLOCK\n", rank, nproc);
-fprintf(stderr, "VIEW(%d/%d) continuous_size=%ld\n", rank, nproc, continuous_size);
+fprintf(stderr, "VIEW(%d/%d) contiguous_size=%ld\n", rank, nproc, contiguous_size);
 fprintf(stderr, "VIEW(%d/%d) space_size=%ld\n", rank, nproc, space_size);
 fprintf(stderr, "VIEW(%d/%d) total_size=%ld\n", rank, nproc, total_size);
 fprintf(stderr, "VIEW(%d/%d) (lower,upper)=(%d,%d)\n", rank, nproc, lower, upper);

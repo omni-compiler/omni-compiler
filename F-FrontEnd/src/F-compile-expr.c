@@ -217,20 +217,6 @@ are_dimension_and_shape_conformant_by_type(expr x,
         int raSz;
         expv retShape = list0(LIST);
 
-#if 0
-        if (x != NULL) {
-            expr_print(x, stderr);
-        }
-
-        fprintf(stderr, "\nLEFT:\n");
-        expr_print(lShape, stderr);
-
-        fprintf(stderr, "\n\nRIGHT:\n");
-        expr_print(rShape, stderr);
-                
-        fprintf(stderr, "\n");
-#endif
-
         for (i = 0; i < nDims; i++) {
             aSpec = NULL;
             laSpec = expr_list_get_n(lShape, i);
@@ -244,18 +230,6 @@ are_dimension_and_shape_conformant_by_type(expr x,
                      */
                     aSpec = laSpec;
                 } else {
-#if 0
-                    fprintf(stderr, "%d: laSz: %d, raSz: %d\n",
-                            i, laSz, raSz);
-
-                    fprintf(stderr, "\nLEFT:\n");
-                    expr_print(lShape, stderr);
-
-                    fprintf(stderr, "\n\nRIGHT:\n");
-                    expr_print(rShape, stderr);
-                
-                    fprintf(stderr, "\n");
-#endif
                     if (x != NULL) {
                         error_at_node(x,
                                       "Subscript #%d array-spec size differs, "
@@ -282,14 +256,6 @@ are_dimension_and_shape_conformant_by_type(expr x,
                  *	I'm not so sure about this case.
                  */
                 aSpec = combine_array_specs(laSpec, raSpec);
-#if 0
-                fprintf(stderr, "\nLEFT:\n");
-                expr_print(laSpec, stderr);
-                fprintf(stderr, "\n\nRIGHT:\n");
-                expr_print(raSpec, stderr);
-                fprintf(stderr, "\n\nCOMBINED:\n");
-                expr_print(aSpec, stderr);
-#endif
             }
 
             if (aSpec == NULL) {
@@ -323,16 +289,6 @@ are_dimension_and_shape_conformant_by_type(expr x,
             error("incompatible dimension for the operation, %d and %d.",
                   TYPE_N_DIM(lt), TYPE_N_DIM(rt));
         }
-
-#if 0
-        fprintf(stderr, "\nLEFT:\n");
-        expr_print(lShape, stderr);
-
-        fprintf(stderr, "\n\nRIGHT:\n");
-        expr_print(rShape, stderr);
-
-        fprintf(stderr, "\n");
-#endif
     }
 
     Done:
@@ -444,6 +400,7 @@ compile_expression(expr x)
 
             if (ID_CLASS(id) == CL_PROC ||
                 ID_CLASS(id) == CL_ENTRY ||
+                ID_CLASS(id) == CL_MULTI ||
                 ID_CLASS(id) == CL_UNKNOWN) {
                 expv vRet = NULL;
                 if (ID_CLASS(id) == CL_PROC && IS_SUBR(ID_TYPE(id))) {
@@ -459,6 +416,7 @@ compile_expression(expr x)
                 }
 
 #if 0
+		// to be resolved
                 if (is_in_module() == FALSE &&
                     CURRENT_STATE == INEXEC &&
                     is_intrinsic_function(id) == FALSE &&
@@ -490,6 +448,7 @@ compile_expression(expr x)
                 }
                 return vRet;
             }
+
             if (ID_CLASS(id) == CL_TAGNAME) {
                 return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
             }
@@ -919,20 +878,12 @@ compile_expression(expr x)
 
         case F95_KIND_SELECTOR_SPEC: {
             expv v = NULL;
-#if 0
-            if (expr_is_constant(EXPR_ARG1(x))) {
-                v = compile_int_constant(EXPR_ARG1(x));
-            } else {
-                /*
-                 * allow any expression
-                 * ex) kind = selected_int_kind(..)
-                 */
-                v = compile_expression(EXPR_ARG1(x));
-            }
-#else
             v = compile_expression(EXPR_ARG1(x));
-            if(v != NULL) v = expv_reduce_kind(v);
-#endif            
+            if (v != NULL) v = expv_reduce_kind(v)?:v;
+            if(v != NULL && !expv_is_specification(v)){
+                error_at_node(EXPR_ARG1(x),
+                    "kind must be a specification expression.");
+            }
             if (v != NULL) {
                 EXPV_KWOPT_NAME(v) = (const char *)strdup("kind");
             }
@@ -941,8 +892,11 @@ compile_expression(expr x)
 
         case F95_LEN_SELECTOR_SPEC: {
             expv v;
-            if(EXPR_ARG1(x) == NULL)
+            if (EXPR_ARG1(x) == NULL)
                 return expv_any_term(F_ASTERISK, NULL);
+            if (EXPR_CODE(EXPR_ARG1(x)) == F08_LEN_SPEC_COLON)
+                return expv_any_term(F08_LEN_SPEC_COLON, NULL);
+
             v = compile_expression(EXPR_ARG1(x));
             if((v = expv_reduce(v, FALSE)) == NULL) return NULL;
             /* if type is not fixed yet, do implicit declaration here */
@@ -1130,6 +1084,7 @@ compile_ident_expression(expr x)
         goto done;
     }
 
+
     if(ID_CLASS(id) == CL_PARAM){
         if(VAR_INIT_VALUE(id) != NULL) 
             return VAR_INIT_VALUE(id);
@@ -1145,7 +1100,17 @@ compile_ident_expression(expr x)
         }
 
         TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
-        ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
+
+        if (ID_ADDR(id)) {
+            /*
+             * Renaming trick:
+             *  EXPV_NAME(ID_ADDR(id)) might be replaced to other name in
+             *  compile_FORALL_statement().
+             */
+            ret = expv_sym_term(F_VAR, tp, EXPV_NAME(ID_ADDR(id)));
+        } else {
+            ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
+        }
         goto done;
     }
 
@@ -1391,9 +1356,6 @@ expv_is_lvalue(expv v)
 int
 expv_is_str_lvalue(expv v)
 {
-#if 0
-    if(!IS_CHAR(EXPV_TYPE(v))) return FALSE;
-#endif
     if(!IS_CHAR(bottom_type(EXPV_TYPE(v)))) return FALSE;
 
     if(EXPR_CODE(v) == F_SUBSTR_REF ||
@@ -1491,7 +1453,8 @@ expv_assignment(expv v1, expv v2)
     }
 /* FEAST add end */
 
-    if (EXPV_CODE(v2) == F95_ARRAY_CONSTRUCTOR) {
+    if (EXPV_CODE(v2) == F95_ARRAY_CONSTRUCTOR ||
+        EXPV_CODE(v2) == F03_TYPED_ARRAY_CONSTRUCTOR) {
         if (!IS_ARRAY_TYPE(tp1)) {
             error("lhs expr is not an array.");
             return NULL;
@@ -1506,6 +1469,7 @@ expv_assignment(expv v1, expv v2)
 
     if (TYPE_IS_RESHAPED(tp2) == FALSE &&
         EXPR_CODE(v2) != F95_ARRAY_CONSTRUCTOR &&
+        EXPR_CODE(v2) != F03_TYPED_ARRAY_CONSTRUCTOR &&
         ((TYPE_N_DIM(tp1) > 0 && TYPE_N_DIM(tp2) > 0) &&
          (are_dimension_and_shape_conformant(NULL, v1, v2,
                                              NULL) == FALSE))) {
@@ -1665,6 +1629,8 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
     tp = (id ? ID_TYPE(id) : EXPV_TYPE(vary));
 
     if (id != NULL && (
+        (tp != NULL && IS_PROCEDURE_TYPE(tp)
+         && !IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))) ||
         PROC_CLASS(id) == P_EXTERNAL ||
         PROC_CLASS(id) == P_DEFINEDPROC ||
         (ID_IS_DUMMY_ARG(id) &&
@@ -2180,7 +2146,8 @@ compile_coarray_ref(expr coarrayRef){
 expv
 compile_highorder_function_call(ID id, expr args, int isCall)
 {
-    if (!(ID_IS_DUMMY_ARG(id))) {
+    if (!(ID_IS_DUMMY_ARG(id)) &&
+        !(ID_TYPE(id) && IS_PROCEDURE_TYPE(ID_TYPE(id)))) {
         fatal("%s: '%s' is not a dummy arg.",
               __func__, SYM_NAME(ID_SYM(id)));
         /* not reached. */
@@ -2190,25 +2157,7 @@ compile_highorder_function_call(ID id, expr args, int isCall)
          * A high order sub program invocation.
          */
         expv ret;
-        /*
-         * We commented out temporal substitution of name class below for a bug
-         * fix. But, we don't know why this temporal substitution is introduced.
-         * Uncommnet two code blocks below if any problem occurs.
-         */
-#if 0
-        enum name_class sNC = ID_CLASS(id);
-        int sUAF = VAR_IS_USED_AS_FUNCTION(id);
-
-        ID_CLASS(id) = CL_UNKNOWN;
-        VAR_IS_USED_AS_FUNCTION(id) = TRUE;
-#endif
-
         ret = compile_function_call(id, args);
-
-#if 0
-        ID_CLASS(id) = sNC;
-        VAR_IS_USED_AS_FUNCTION(id) = sUAF;
-#endif
 
         if (isCall == TRUE) {
             EXPV_TYPE(ret) = type_SUBR;
@@ -2221,7 +2170,7 @@ compile_highorder_function_call(ID id, expr args, int isCall)
 
 
 static TYPE_DESC
-chose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
+choose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
 {
     EXT_ID ep;
     FOREACH_EXT_ID(ep, mod_procedures) {
@@ -2231,227 +2180,6 @@ chose_module_procedure_by_args(EXT_ID mod_procedures, expv args)
     }
     return NULL;
 }
-
-#if 0
-static TYPE_DESC
-chose_module_procedure_by_args(EXT_ID modProcIDs, expv args) {
-    TYPE_DESC ret = NULL;
-    int nArgs = expr_list_length(args);
-    int nModArgs;
-    expr modArgs;
-    EXT_ID aProcID;
-    EXT_ID extFId;
-    ID idList;
-    ID aModArgID;
-    int i;
-    expv anArg, aModArg;
-    TYPE_DESC anArgType, aModArgType;
-    BASIC_DATA_TYPE anArgBType, aModArgBType;
-    ID fId;
-    int nMatch;
-
-    FOREACH_EXT_ID(aProcID, modProcIDs) {
-        fId = NULL;
-        nMatch = 0;
-        nModArgs = 0;
-
-        if (debug_flag) {
-            fprintf(stderr, "eId:Name = '%s'\n", SYM_NAME(EXT_SYM(aProcID)));
-        }
-
-        fId = find_ident(EXT_SYM(aProcID));
-        modArgs = EXT_PROC_ARGS(aProcID);
-        if (modArgs == NULL) {
-            if (fId != NULL &&
-                ID_CLASS(fId) == CL_PROC &&
-                (extFId = PROC_EXT_ID(fId)) != NULL) {
-                modArgs = EXT_PROC_ARGS(extFId);
-                idList = EXT_PROC_ID_LIST(extFId);
-                if (debug_flag) {
-                    fprintf(stderr, "fId = '%s'\n", ID_NAME(fId));
-                    if (idList != NULL) {
-                        fprintf(stderr, "EXT_PROC_ID_LIST('%s')[extFId]:\n", 
-                                SYM_NAME(EXT_SYM(extFId)));
-                        print_IDs(idList, stderr, TRUE);
-                    }
-                }
-            }
-        } else {
-            idList = EXT_PROC_ID_LIST(aProcID);
-            if (debug_flag) {
-                if (idList != NULL) {
-                    fprintf(stderr, "EXT_PROC_ID_LIST('%s')[aProcID]:\n", 
-                            SYM_NAME(EXT_SYM(aProcID)));
-                    print_IDs(idList, stderr, TRUE);
-                }
-            }
-        }
-
-        if (modArgs == NULL) {
-            if (debug_flag) {
-                fprintf(stderr, "can't get dummy arguments list of '%s'.\n",
-                        SYM_NAME(EXT_SYM(aProcID)));
-            }
-            continue;
-        }
-
-        nModArgs = expr_list_length(modArgs);
-        if (nArgs != nModArgs) {
-            if (debug_flag) {
-                fprintf(stderr, "# of dummy argument for '%s' differs to "
-                        "# of the given actual arguments.\n",
-                        SYM_NAME(EXT_SYM(aProcID)));
-            }
-            continue;
-        }
-
-        if (debug_flag) {
-            fprintf(stderr, "dummy args of '%s':\n",
-                    SYM_NAME(EXT_SYM(aProcID)));
-            expr_print(modArgs, stderr);
-        }
-
-        for (i = 0; i < nArgs; i++) {
-            aModArgID = NULL;
-            aModArgType = NULL;
-
-            /*
-             * It's easy to get the type of an actual argument.
-             */
-            anArg = expr_list_get_n(args, i);
-            anArgType = EXPV_TYPE(anArg);
-
-            /*
-             * The otherhand, it's not so easy to get the type of a
-             * dummy argument.
-             */
-            aModArg = expr_list_get_n(modArgs, i);
-            if (aModArg != NULL &&
-                EXPR_CODE(aModArg) == LIST &&
-                EXPR_ARG1(aModArg) != NULL &&
-                EXPR_CODE(EXPR_ARG1(aModArg)) == IDENT) {
-                aModArg = EXPR_ARG1(aModArg);
-
-                /*
-                 * First of all, check if each the element of the
-                 * EXT_PROC_ARGS() has the type as an EXPV_TYPE.
-                 */
-                if ((aModArgType = EXPV_TYPE(aModArg)) != NULL) {
-                    goto checkBothSeemsOK;
-                }
-                if (debug_flag) {
-                    fprintf(stderr, "arg %d: can't get a type of '%s' "
-                            "from EXPV_TYPE().\n",
-                            i, SYM_NAME(EXPR_SYM(aModArg)));
-                }
-
-                /*
-                 * Then check if an id for EXPV_SYM(aModArg) is in
-                 * EXT_PROC_ID_LIST() and try ID_TYPE(id).
-                 */
-                if (idList != NULL) {
-                    aModArgID = find_ident_head(EXPR_SYM(aModArg), idList);
-                    if (aModArgID != NULL) {
-                        aModArgType = ID_TYPE(aModArgID);
-                        goto checkBothSeemsOK;
-                    }
-                    if (debug_flag) {
-                        fprintf(stderr, "arg %d: can't find dummy arg "
-                                "'%s'.\n",
-                                i, SYM_NAME(EXPR_SYM(aModArg)));
-                    }
-                    continue;
-                }
-            }
-
-            checkBothSeemsOK:
-            if (anArgType == NULL || aModArgType == NULL) {
-                if (debug_flag) {
-                    fprintf(stderr, "can't compare types "
-                            "(at laset a type is NULL).\n");
-                }
-                continue;
-            }
-
-            anArgBType = get_basic_type(anArgType);
-            aModArgBType = get_basic_type(aModArgType);
-            if (debug_flag) {
-                fprintf(stderr, "argBType: %s\n",
-                        basic_type_name(anArgBType));
-                fprintf(stderr, "modBType: %s\n",
-                        basic_type_name(aModArgBType));
-            }
-
-            if (anArgBType == aModArgBType &&
-                aModArgBType != TYPE_UNKNOWN) {
-                if (debug_flag) {
-                    fprintf(stderr, "arg %d: basic types match.\n", i);
-                }
-                if ((TYPE_N_DIM(anArgType) == 0 &&
-                     TYPE_N_DIM(aModArgType) == 0) ||
-                    (TYPE_N_DIM(anArgType) > 0 &&
-                     TYPE_N_DIM(aModArgType) > 0 &&
-                     /*
-                      * aModArgType must be the left hand type.
-                      */
-                     are_dimension_and_shape_conformant_by_type(args,
-                                                                aModArgType,
-                                                                anArgType,
-                                                                NULL) ==
-                     TRUE)) {
-                    nMatch++;
-                    if (debug_flag) {
-                        fprintf(stderr, "arg %d: both type and "
-                                "shape match.\n", i);
-                    }
-                }
-            } else {
-                if (debug_flag) {
-                    fprintf(stderr, "arg %d: basic types don't match.\n", i);
-                }
-            }
-        }
-
-        if (nMatch == nArgs) {
-            ret = EXT_PROC_TYPE(aProcID);
-            if (ret == NULL) {
-                if (fId == NULL) {
-                    if (idList != NULL) {
-                        fId = find_ident_head(EXT_SYM(aProcID), idList);
-                    }
-                }
-                if (fId != NULL) {
-                    ret = ID_TYPE(fId);
-                }
-            }
-            if (ret != NULL) {
-                if (TYPE_BASIC_TYPE(ret) == TYPE_FUNCTION) {
-                    ret = TYPE_REF(ret);
-                }
-            }
-            if (ret == NULL) {
-                if (debug_flag) {
-                    fprintf(stderr, "found '%s' is suitable for the "
-                            "given arguments, but can't get the type of it.\n",
-                            SYM_NAME(EXT_SYM(aProcID)));
-                }
-            }
-            break;
-        }
-    }
-
-    if (ret != NULL) {
-        if (debug_flag) {
-            fprintf(stderr, "ret = %p\n", ret);
-            print_type(ret, stderr, TRUE);
-            fprintf(stderr, "\n");
-        }
-    }
-
-    return ret;
-}
-#endif
-
 
 expv
 compile_function_call(ID f_id, expr args) {
@@ -2464,9 +2192,29 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
     expv a, v = NULL;
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
+    ID tagname = NULL;
 
-    /* declare as function */
     if (declare_function(f_id) == NULL) return NULL;
+
+    if (ID_CLASS(f_id) == CL_VAR && IS_PROCEDURE_TYPE(ID_TYPE(f_id))) {
+        tp = get_bottom_ref_type(ID_TYPE(f_id));
+        a = compile_args(args);
+        v = list3(FUNCTION_CALL,
+                  expv_sym_term(F_VAR, ID_TYPE(f_id), ID_SYM(f_id)),
+                  a,
+                  expv_any_term(F_EXTFUNC, f_id));
+
+        EXPV_TYPE(v) = !tp ? type_GNUMERIC_ALL :
+                IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) ?
+                type_GNUMERIC_ALL :
+                FUNCTION_TYPE_RETURN_TYPE(tp) ;
+        goto line_info;
+    }
+
+    if (ID_CLASS(f_id) == CL_MULTI) {
+        tagname = multi_find_class(f_id, CL_TAGNAME);
+        f_id = multi_find_class(f_id, CL_PROC);
+    }
 
     switch (PROC_CLASS(f_id)) {
         case P_UNDEFINEDPROC:
@@ -2484,6 +2232,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             } else {
                 /* f_id is function, but it's return type is unknown */
                 tp = function_type(new_type_desc());
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC;
             }
 
             TYPE_SET_USED_EXPLICIT(tp);
@@ -2495,19 +2244,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
 /* FEAST add  end  */
 
             a = compile_args(args);
-#if 0
-            ep = PROC_EXT_ID(f_id);
-            if (ID_DEFINED_BY(f_id) != NULL) {
-                ep = PROC_EXT_ID(ID_DEFINED_BY(f_id));
-            }
-            if (ep == NULL) {
-                ep = new_external_id_for_external_decl(ID_SYM(f_id),
-                                                       type_GNUMERIC_ALL);
-                PROC_EXT_ID(f_id) = ep;
-            }
-            EXT_TAG(ep) = STG_EXT;
-            EXT_IS_DEFINED(ep) = TRUE;
-#endif
+
             v = list3(FUNCTION_CALL, ID_ADDR(f_id), a,
                       expv_any_term(F_EXTFUNC, f_id));
 
@@ -2543,6 +2280,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                 goto err;
             }
             tp = ID_TYPE(f_id);
+
             if (!IS_PROCEDURE_TYPE(tp)) {
                 tp = function_type(tp);
                 ID_TYPE(f_id) = tp;
@@ -2563,10 +2301,15 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
             }
             if (ep != NULL && EXT_PROC_CLASS(ep) == EP_INTERFACE &&
                 (modProcs = EXT_PROC_INTR_DEF_EXT_IDS(ep)) != NULL) {
-                modProcType = chose_module_procedure_by_args(modProcs, a);
+                modProcType = choose_module_procedure_by_args(modProcs, a);
                 if (modProcType != NULL) {
                     tp = modProcType;
+
+                } else if (tagname != NULL) {
+                    return compile_struct_constructor(tagname, NULL, args);
+
                 } else {
+
                     warning_at_id(f_id, "can't determine a function to "
                                     "be actually called for a generic "
                                     "interface function call of '%s', "
@@ -2602,6 +2345,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
                   PROC_CLASS(f_id));
     }
 
+line_info:
     if (v != NULL) {
         if (args != NULL) {
             EXPR_LINE(v) = EXPR_LINE(args);
@@ -2614,28 +2358,6 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
 err:
     return NULL;
 }
-
-static int
-id_link_remove(ID * head, ID tobeRemoved)
-{
-    ID ip, pre = NULL;
-    if (head == NULL) return FALSE;
-
-    FOREACH_ID(ip, *head) {
-        if (ID_SYM(ip) == ID_SYM(tobeRemoved)) {
-            if (pre == NULL) {
-                *head = ID_NEXT(ip);
-            } else {
-                ID_NEXT(pre) = ID_NEXT(ip);
-            }
-            return TRUE;
-        }
-        pre = ip;
-    }
-    return FALSE;
-}
-
-
 
 static int
 type_param_values_required0(TYPE_DESC struct_tp, ID * head, ID * tail)
@@ -2878,7 +2600,7 @@ get_struct_members(TYPE_DESC struct_tp)
 
 
 static int
-compile_struct_constructor_components(ID struct_id, expr args, expv components)
+compile_struct_constructor_components(ID struct_id, TYPE_DESC struct_tp, expr args, expv components)
 {
     int has_keyword = FALSE;
     list lp;
@@ -2886,13 +2608,14 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
     ID match = NULL;
     SYMBOL sym;
     expv v;
-    TYPE_DESC struct_tp;
 
     // Check PRIVATE components
     // (PRIVATE works if the derived type is use-associated)
     int is_use_associated = ID_USEASSOC_INFO(struct_id) != NULL;
 
-    struct_tp = ID_TYPE(struct_id);
+    if (struct_tp == NULL) {
+        struct_tp = ID_TYPE(struct_id);
+    }
 
     members = get_struct_members(struct_tp);
     cur = members;
@@ -2936,8 +2659,10 @@ compile_struct_constructor_components(ID struct_id, expr args, expv components)
         }
 
         if (is_use_associated && ID_TYPE(match) != NULL &&
-            (TYPE_IS_INTERNAL_PRIVATE(match) ||
-             TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match)))) {
+            ((TYPE_IS_INTERNAL_PRIVATE(match) ||
+              TYPE_IS_INTERNAL_PRIVATE(ID_TYPE(match))) &&
+             !(TYPE_IS_PUBLIC(match) ||
+               TYPE_IS_PUBLIC(ID_TYPE(match))))) {
             error("accessing a private component");
             return FALSE;
         }
@@ -2975,7 +2700,8 @@ expv
 compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
 {
     expv result, component;
-    TYPE_DESC tp, base_stp;
+    TYPE_DESC base_stp;
+    TYPE_DESC tp;
 
     assert(ID_TYPE(struct_id) != NULL);
 
@@ -2985,15 +2711,6 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
     base_stp = find_struct_decl(ID_SYM(struct_id));
     assert(EXPV_TYPE(result) != NULL);
 
-    if(args) {
-        EXPV_LINE(result) = EXPR_LINE(args);
-
-        if (!compile_struct_constructor_components(struct_id,
-                                                   args, component)) {
-            return NULL;
-        }
-    }
-
     if (type_param_args) {
         tp = type_apply_type_parameter(base_stp, type_param_args);
         EXPR_ARG1(result) = TYPE_TYPE_PARAM_VALUES(tp);
@@ -3002,7 +2719,19 @@ compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
               SYM_NAME(ID_SYM(struct_id)));
         return NULL;
     } else {
-        tp = wrap_type(base_stp);
+        tp = base_stp;
+    }
+
+    if(args) {
+        EXPV_LINE(result) = EXPR_LINE(args);
+        if (!compile_struct_constructor_components(struct_id, tp,
+                                                   args, component)) {
+            return NULL;
+        }
+    }
+
+    if (tp == base_stp) {
+        tp = wrap_type(tp);
     }
 
     EXPV_TYPE(result) = tp;
@@ -3017,6 +2746,7 @@ compile_args(expr args)
     expr a;
     expv v, arglist;
     ID id;
+    int is_declared = FALSE;
 
     arglist = list0(LIST);
     if (args == NULL) return arglist;
@@ -3042,8 +2772,10 @@ compile_args(expr args)
                 break;
             case CL_VAR: 
             case CL_UNKNOWN:
+                is_declared = ID_IS_DECLARED(id);
                 /* check variable name */
                 declare_variable(id);
+                ID_IS_DECLARED(id) = is_declared;
                 break;
             case CL_PARAM:
                 break;
@@ -3360,10 +3092,17 @@ compile_array_constructor(expr x)
     list lp;
     expv v, res, l;
     TYPE_DESC tp;
+    TYPE_DESC base_type = NULL;
     BASIC_DATA_TYPE elem_type = TYPE_UNKNOWN;
 
     l = list0(LIST);
-    res = list1(F95_ARRAY_CONSTRUCTOR, l);
+    if ((base_type = compile_type(EXPR_ARG2(x), /*allow_predecl=*/FALSE)) != NULL) {
+        elem_type = get_basic_type(base_type);
+        res = list1(F03_TYPED_ARRAY_CONSTRUCTOR, l);
+    } else {
+        res = list1(F95_ARRAY_CONSTRUCTOR, l);
+    }
+
     FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
         nElems++;
         v = compile_expression(LIST_ITEM(lp));
@@ -3377,10 +3116,19 @@ compile_array_constructor(expr x)
             error("Array constructor elements have different data types.");
             return NULL;
         }
+
+        if (base_type) {
+            if (!type_is_soft_compatible(base_type, tp)) {
+                error("Unexpected element type");
+                return NULL;
+            }
+        }
     }
 
     assert(elem_type != TYPE_UNKNOWN);
-    if (elem_type == TYPE_CHAR) {
+    if (base_type) {
+        tp = base_type;
+    } else if (elem_type == TYPE_CHAR) {
         tp = type_char(-1);
     } else if (elem_type != TYPE_STRUCT) {
         tp = type_basic(elem_type);
@@ -3439,7 +3187,7 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
     } else {
         // for type-bound PROCEDURE
         if (ftp != NULL) {
-#if 0
+#if 0 // to be solved
             if (function_type_is_appliable(ftp, a)) {
                 error("argument type mismatch");
             }
@@ -3476,11 +3224,11 @@ compile_member_array_ref(expr x, expv v)
      */
     tq = EXPV_TYPE(org_expr);
 
-#if 0
+#if 0 // to be solved
     if(compile_array_ref_dimension(indices,shape,NULL)) {
         return NULL;
     }
-    // Checkes two or more nonzero rank arrey references are not appeared.
+    // Checks two or more nonzero rank array references are not appeared.
     // i.e) a(1:5)%n(1:5) not accepted
     if(((EXPV_CODE(org_expr) == F_ARRAY_REF) &&
         (IS_ARRAY_TYPE(tq) && IS_CHAR(bottom_type(tq)) == FALSE)) &&

@@ -147,13 +147,6 @@ generate_current_module(SYMBOL mod_name, SYMBOL submod_name, ID ids, expv use_de
     if (flag_do_module_cache == TRUE)
         add_module(mod);
 
-#if 0
-    /* debug */
-    printf("debug=");
-    expr_print(CURRENT_STATEMENTS,stdout);
-    printf("\n");
-#endif
-
     if (nerrors == 0) {
         return mod;
     } else {
@@ -171,7 +164,7 @@ intermediate_file_name(char * filename,
     char tmp[FILE_NAME_LEN];
     extern char *modincludeDirv;
     if (modincludeDirv) {
-        snprintf(filename, strnlen(filename, FILE_NAME_LEN),
+        snprintf(filename, strnlen(modincludeDirv, FILE_NAME_LEN)+2,
                  "%s/", modincludeDirv);
     }
     if (MODULE_IS_MODULE(mod)) {

@@ -562,13 +562,6 @@ expv expv_reduce_conv_const(TYPE_DESC tp, expv v)
         return v;
     }
 
-#if 0
-    fprintf(stderr, "debug: tp='%s' v='%s'\n",
-            basic_type_name(TYPE_BASIC_TYPE(tp)),
-            basic_type_name(TYPE_BASIC_TYPE(EXPV_TYPE(v))));
-    expr_print(v, stderr);
-#endif
-
     switch (TYPE_BASIC_TYPE(tp)) {
 
         case TYPE_REAL:

@@ -41,6 +41,10 @@ extern int Addr2Uint(void *x);
 #endif
 #endif /* SIMPLE_TYPE */
 
+/*
+ * Safe for the case if iter(p) (i.e. ID_NEXT(ip), EXT_ID_NEXT(ep)) is
+ * overwritten in the for clause.
+ */
 #define SAFE_FOREACH(p, q, list, iter)     \
     for ((p) = (list), (q) = (p)?iter(p):NULL;\
          (p) != NULL;\
@@ -57,8 +61,11 @@ extern int Addr2Uint(void *x);
 
 extern int lineno;
 extern int need_keyword;
+extern int enable_need_type_keyword;
+extern int need_type_keyword;
 extern int need_type_len;
 extern int need_check_user_defined;
+extern int lookup_col2(void);
 
 extern BASIC_DATA_TYPE defaultSingleRealType;
 extern BASIC_DATA_TYPE defaultDoubleRealType;
@@ -71,7 +78,7 @@ extern int nerrors;
 #define MAX_NAME_LEN_F77          31    /* limitation of fortran 77, 90 */
 #define MAX_NAME_LEN_F03          63    /* limitation of fortran 2003 */
 #define MAX_NAME_LEN_UPPER_LIMIT 256   /* upper bound */
-#define MAX_DIM  7
+#define MAX_DIM  15
 
 /* max line length */
 #define DEFAULT_MAX_LINE_LEN_FIXED 72
@@ -132,8 +139,6 @@ enum prog_state {
     IN_TYPE_BOUND_PROCS, /* type bound procedure declarations */
 };
 
-extern enum prog_state current_state;
-
 /* procedure states */
 enum procedure_state { P_DEFAULT = 0, P_SAVE = 1 };
 extern enum procedure_state current_proc_state;
@@ -163,6 +168,7 @@ enum control_type {
     CTL_CRITICAL,
     CTL_BLOCK,
     CTL_INTERFACE,
+    CTL_FORALL,
 };
 
 #define CONTROL_TYPE_NAMES {\
@@ -181,6 +187,7 @@ enum control_type {
     "CTL_CRITICAL",\
     "CTL_BLOCK",\
     "CTL_INTERFACE",\
+    "CTL_FORALL",\
 }
 
 typedef struct environment {
@@ -204,6 +211,7 @@ typedef struct environment {
 #define ENV_INTERFACES(l)            ((l)->interfaces)
 #define ENV_BLOCKS(l)                ((l)->blocks)
 #define ENV_USE_DECLS(l)             ((l)->use_decls)
+#define ENV_PARENT(l)                ((l)->parent)
 
 extern ENV current_local_env;
 
@@ -273,6 +281,20 @@ typedef struct control
 #define CTL_BLOCK_LOCAL_LABELS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->labels)
 #define CTL_BLOCK_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_BLOCK_LOCAL_ENV(l))->external_symbols)
 #define CTL_BLOCK_LOCAL_BLOCKS(l)                ((CTL_BLOCK_LOCAL_ENV(l))->blocks)
+
+#define CTL_FORALL_STATEMENT(l)                   ((l)->v2)
+#define CTL_FORALL_INIT(l)                        (EXPR_ARG1((l)->v2))
+#define CTL_FORALL_MASK(l)                        (EXPR_ARG2((l)->v2))
+#define CTL_FORALL_BODY(l)                        (EXPR_ARG3((l)->v2))
+#define CTL_FORALL_CONST_NAME(l)                  (EXPR_ARG4((l)->v2))
+#define CTL_FORALL_LOCAL_ENV(l)                   (&((l)->local_env))
+#define CTL_FORALL_LOCAL_SYMBOLS(l)               ((CTL_FORALL_LOCAL_ENV(l))->symbols)
+#define CTL_FORALL_LOCAL_STRUCT_DECLS(l)          ((CTL_FORALL_LOCAL_ENV(l))->struct_decls)
+#define CTL_FORALL_LOCAL_COMMON_SYMBOLS(l)        ((CTL_FORALL_LOCAL_ENV(l))->common_symbols)
+#define CTL_FORALL_LOCAL_LABELS(l)                ((CTL_FORALL_LOCAL_ENV(l))->labels)
+#define CTL_FORALL_LOCAL_EXTERNAL_SYMBOLS(l)      ((CTL_FORALL_LOCAL_ENV(l))->external_symbols)
+#define CTL_FORALL_LOCAL_BLOCKS(l)                ((CTL_FORALL_LOCAL_ENV(l))->blocks)
+
 
 
 #define CTL_NEXT(u)               ((u)->next)
@@ -412,7 +434,11 @@ extern int unit_ctl_level;
 #define PARENT_LOCAL_SYMBOLS        (current_local_env->parent->symbols)
 #define PARENT_LOCAL_STRUCT_DECLS   (current_local_env->parent->struct_decls)
 #define PARENT_LOCAL_COMMON_SYMBOLS (current_local_env->parent->common_symbols)
+#define PARENT_LOCAL_LABELS         (current_local_env->parent->labels)
 #define PARENT_EXTERNAL_SYMBOLS     (current_local_env->parent->external_symbols)
+#define PARENT_LOCAL_BLOCKS         (current_local_env->parent->blocks)
+#define PARENT_LOCAL_INTERFACES     (current_local_env->parent->interfaces)
+#define PARENT_LOCAL_USE_DECLS      (current_local_env->parent->use_decls)
 
 /*
  * Language specification level. Mainly used for intrinsic table
@@ -453,6 +479,7 @@ extern int OMP_flag;
 extern int XMP_flag;
 extern int XMP_coarray_flag;
 extern int ACC_flag;
+extern int PRAGMA_flag;
 extern int cond_compile_enabled;
 extern int leave_comment_flag;
 
@@ -516,6 +543,7 @@ extern void     error_at_node EXC_VARARGS(expr, x);
 extern void     error_at_id EXC_VARARGS(ID, x);
 extern void     warning_at_node EXC_VARARGS(expr, x);
 extern void     warning_at_id EXC_VARARGS(ID, x);
+extern void     debug EXC_VARARGS(char *, fmt);
 
 extern void     initialize_lex _ANSI_ARGS_((void));
 extern void     initialize_compile _ANSI_ARGS_((void));
@@ -643,6 +671,7 @@ extern TYPE_DESC  find_struct_decl_head _ANSI_ARGS_((SYMBOL s, TYPE_DESC head));
 extern TYPE_DESC  find_struct_decl _ANSI_ARGS_((SYMBOL s));
 extern TYPE_DESC  find_struct_decl_parent _ANSI_ARGS_((SYMBOL s));
 extern TYPE_DESC  find_struct_decl_sibling _ANSI_ARGS_((SYMBOL s));
+extern int      id_link_remove _ANSI_ARGS_((ID * head, ID tobeRemoved));
 
 extern void     initialize_intrinsic _ANSI_ARGS_((void));
 extern int      is_intrinsic_function _ANSI_ARGS_((ID id));
@@ -660,16 +689,23 @@ extern void     unset_save_attr_in_dummy_args(EXT_ID ep);
 
 extern void     declare_storage _ANSI_ARGS_((ID id, enum storage_class stg));
 
-extern TYPE_DESC        compile_type _ANSI_ARGS_((expr x));
+extern void     id_multilize _ANSI_ARGS_((ID id));
+extern ID       multi_find_class  _ANSI_ARGS_((ID id, enum name_class class));
+
+
+extern TYPE_DESC        compile_type _ANSI_ARGS_((expr x, int allow_predecl));
+extern TYPE_DESC        compile_basic_type _ANSI_ARGS_((expr x));
 extern TYPE_DESC        compile_derived_type _ANSI_ARGS_((expr x, int allow_predecl));
 
 extern expv     compile_int_constant _ANSI_ARGS_((expr x));
 extern void     compile_pragma_statement _ANSI_ARGS_((expr x));
 extern void     compile_VOLATILE_statement _ANSI_ARGS_((expr id_list));
+extern void     compile_VALUE_statement _ANSI_ARGS_((expr id_list));
 
+extern void     compile_procedure_declaration _ANSI_ARGS_((expr x));
 extern void     compile_type_bound_procedure _ANSI_ARGS_((expr x));
 extern void     compile_type_generic_procedure _ANSI_ARGS_((expr x));
-extern void     update_type_bound_procedures _ANSI_ARGS_((TYPE_DESC struct_decls, ID local_symbols));
+extern void     update_type_bound_procedures_forall _ANSI_ARGS_((TYPE_DESC struct_decls, ID local_symbols));
 extern int      type_bound_procedure_type_match _ANSI_ARGS_((EXT_ID f1, EXT_ID f2, int has_pass_arg));
 extern int      is_procedure_acceptable _ANSI_ARGS_((EXT_ID proc, expv actual_args));
 
@@ -685,9 +721,18 @@ extern void     function_type_udpate
 extern int      function_type_is_appliable
                     _ANSI_ARGS_((TYPE_DESC ftp, expv args));
 extern int      function_type_is_compatible
-                    _ANSI_ARGS_((TYPE_DESC ftp1, TYPE_DESC ftp2));
+                    _ANSI_ARGS_((const TYPE_DESC ftp1, const TYPE_DESC ftp2));
 extern int      type_bound_procedure_types_are_compatible
-                    _ANSI_ARGS_((TYPE_DESC tbp1, TYPE_DESC tbp2));
+                    _ANSI_ARGS_((const TYPE_DESC tbp1, const TYPE_DESC tbp2));
+
+extern int      check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp);
+
+extern int      procedure_has_pass_arg
+                    _ANSI_ARGS_((const TYPE_DESC ftp,
+                                 const SYMBOL pass_arg,
+                                 const TYPE_DESC stp));
+extern int      procedure_is_assignable
+                    _ANSI_ARGS_((const TYPE_DESC left, const TYPE_DESC right));
 
 extern void     replace_or_assign_type
                     _ANSI_ARGS_((TYPE_DESC *tp, const TYPE_DESC new_tp));
@@ -720,7 +765,7 @@ extern int              array_spec_size _ANSI_ARGS_((expv shape, expv dimShape,
 extern void             set_index_range_type _ANSI_ARGS_((expv v));
 extern TYPE_DESC        type_ref _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        struct_type  _ANSI_ARGS_((ID id));
-extern TYPE_DESC        function_type _ANSI_ARGS_((const TYPE_DESC tp));
+extern TYPE_DESC        function_type _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        subroutine_type _ANSI_ARGS_((void));
 extern TYPE_DESC        generic_procedure_type _ANSI_ARGS_((void));
 extern TYPE_DESC        generic_function_type _ANSI_ARGS_((void));
@@ -729,6 +774,7 @@ extern TYPE_DESC        intrinsic_function_type _ANSI_ARGS_((TYPE_DESC tp));
 extern TYPE_DESC        intrinsic_subroutine_type _ANSI_ARGS_((void));
 extern TYPE_DESC        program_type _ANSI_ARGS_((void));
 extern TYPE_DESC        type_bound_procedure_type _ANSI_ARGS_((void));
+extern TYPE_DESC        procedure_type _ANSI_ARGS_((const TYPE_DESC ftp));
 extern TYPE_DESC        type_char _ANSI_ARGS_((int len));
 extern TYPE_DESC        type_basic _ANSI_ARGS_((BASIC_DATA_TYPE t));
 extern TYPE_DESC        array_element_type _ANSI_ARGS_((TYPE_DESC tp));

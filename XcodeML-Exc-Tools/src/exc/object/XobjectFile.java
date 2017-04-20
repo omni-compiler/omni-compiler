@@ -498,6 +498,10 @@ public class XobjectFile extends XobjectDefEnv {
         collectType(x);
       break;
     case Xtype.FUNCTION:
+      while(t.copied != null) {
+        t = t.copied;
+        markType(t);
+      }
       markType(t.getRef());
       collectType(t.getFuncParam());
       break;

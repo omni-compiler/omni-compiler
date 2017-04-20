@@ -29,7 +29,7 @@ public class XmfWriter
     public static final int DEFAULT_MAX_COLUMN_COUNT = 132;
     // In F90 The maximum count of colomn is 132.
 
-    // for continuous line symbol('&')
+    // for contiguous line symbol('&')
     public static final int RESERVE_COLUMN_COUNT = 2;
 
     private PrintWriter _out;
@@ -257,9 +257,9 @@ public class XmfWriter
     }
 
     /**
-     * Setup continuous new line.
+     * Setup contiguous new line.
      */
-    public void setupContinuousNewLine()
+    public void setupContiguousNewLine()
     {
         _out.print(" &");
         setupNewLine();

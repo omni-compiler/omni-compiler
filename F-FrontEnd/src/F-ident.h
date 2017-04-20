@@ -32,6 +32,7 @@ enum name_class {
     CL_GENERICS,  /* generics name */
     CL_TYPE_PARAM, /* type parameter name */
     CL_TYPE_BOUND_PROC, /* type bound procedure */
+    CL_MULTI,     /* Both the derived type name and the generic procedure */
 };
 
 extern char *name_class_names[];
@@ -55,6 +56,7 @@ extern char *name_class_names[];
   "CL_GENERICS", \
   "CL_TYPE_PARAM", \
   "CL_TYPE_BOUND_PROCS", \
+  "CL_MULTI",   \
 }
 
 /* for CL_PROC  */
@@ -98,6 +100,7 @@ enum storage_class {
     STG_TAGNAME, /* derived type name  */
     STG_NONE,    /* for intrinsic, stfunction */
     STG_TYPE_PARAM, /* type parameter */
+    STG_INDEX, /* indexes of forall */
 
 };
 
@@ -115,6 +118,7 @@ extern char *storage_class_names[];
  "STG_TAGNAME", \
  "STG_NONE",    \
  "STG_TYPE_PARAM", \
+ "STG_INDEX", \
 }
 
 /* statement label for CL_LABEL */
@@ -214,6 +218,8 @@ typedef struct ident_descriptor
             int isUnCompiledArray;
             int isUnCompiled;
             int isUsedAsHighOrder;      /* Once used as a function. */
+
+            struct ident_descriptor * ref_proc; /* for a procedure variable, refer to a procedure name */
         } var_info;
         struct {
             LABEL_TYPE lab_type;
@@ -249,6 +255,10 @@ typedef struct ident_descriptor
 #define TYPE_BOUND_PROCEDURE_IS_OPERATOR           0x0020
 #define TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT         0x0040
         } tbp_info;
+        struct {
+            /* for CL_MULTI */
+            struct ident_descriptor * id_list;
+        } multi_info;
     } info;
 } *ID;
 
@@ -352,6 +362,7 @@ struct use_assoc_info {
 #define VAR_IS_UNCOMPILED(id)   ((id)->info.var_info.isUnCompiled)
 #define VAR_IS_UNCOMPILED_ARRAY(id)     ((id)->info.var_info.isUnCompiledArray)
 #define VAR_IS_USED_AS_FUNCTION(id)     ((id)->info.var_info.isUsedAsHighOrder)
+#define VAR_REF_PROC(id)        ((id)->info.var_info.ref_proc)
 
 /* for CL_PROC/CL_VAR */
 #define PROC_EXT_ID(id) ((id)->extID)
@@ -386,6 +397,8 @@ struct use_assoc_info {
 #define TBP_IS_ASSIGNMENT(id) \
     (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
      TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT)
+
+#define MULTI_ID_LIST(id)     ((id)->info.multi_info.id_list)
 
 
 struct interface_info {

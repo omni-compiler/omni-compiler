@@ -358,6 +358,7 @@ public class XMPtransCoarrayRun
             if (flg_setAlias) {
               // pass 3 : generate unique name.
               ident.setAlias(ident.getName() + "_" + get_gen_id());
+              // adding prefix such as "xmp_local_coarray_" must have been much simpler, though.
  frm_bottom : while(true) {
                 // serach within procedure
                 Ident id_found = block.findVarIdent(ident.getAlias());
@@ -3617,7 +3618,7 @@ public class XMPtransCoarrayRun
     BasicBlock bb = b.getBasicBlock();
 
     String nodesName = pb.getClauses().getArg(0).getName();
-    Xobject stmt = XMPcoarray.makeStmt_setImageNodes(nodesName, info.env);
+    Xobject stmt = XMPcoarray.makeStmt_setImageNodes(nodesName, info.env, pb.findParentBlockStmt());
 
     bb.add(stmt);
     return b;

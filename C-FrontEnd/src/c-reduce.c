@@ -833,7 +833,7 @@ reduce_declarator_1(CExpr *declr, CExpr *parent, int *isReduced,
 /**
  * \brief
  * reduce nodes of EC_STMTS_AND_DECLS.
- * join continuous EC_STMTS_AND_DECLS. 
+ * join contiguous EC_STMTS_AND_DECLS. 
  *
  * @param expr
  *      target node

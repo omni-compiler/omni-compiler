@@ -2,6 +2,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include "xmp_internal.h"
+int _XMP_flag_put_nb      = false; // This variable is temporal
+int _XMP_flag_get_nb      = false; // This variable is temporal
+#if defined(_XMP_FJRDMA)
+int _XMP_flag_put_nb_rr   = false; // This variable is temporal
+int _XMP_flag_put_nb_rr_i = false; // This variable is temporal
+#endif
 
 #if defined(_XMP_GASNET) || defined(_XMP_MPI3_ONESIDED)
 static void _check_unit(char *env, char *env_val)
@@ -62,7 +68,7 @@ static size_t _get_size(char *env)
 }
 #endif
 
-void _XMP_onesided_initialize(int argc, char **argv)
+void _XMP_initialize_onesided_functions(int argc, char **argv)
 {
 #ifdef _XMP_FJRDMA
   if(_XMP_world_size > _XMP_ONESIDED_MAX_PROCS){
@@ -98,9 +104,40 @@ void _XMP_onesided_initialize(int argc, char **argv)
   _XMP_build_coarray_queue();
   _XMP_post_wait_initialize();
 #endif
+
+  /* Temporary  */
+  if(getenv("XMP_PUT_NB") != NULL){
+    _XMP_flag_put_nb = true;  // defalt false
+    if(_XMP_world_rank == 0)
+      printf("*** _XMP_coarray_contiguous_put() is Non-Blocking ***\n");
+  }
+
+  if(getenv("XMP_GET_NB") != NULL){
+    _XMP_flag_get_nb = true;  // defalt false
+    if(_XMP_world_rank == 0)
+      printf("*** _XMP_coarray_contiguous_get() is Non-Blocking ***\n");
+  }
+
+#if defined(_XMP_FJRDMA)
+  if(getenv("XMP_PUT_NB_RR") != NULL){
+    _XMP_flag_put_nb    = true;  // defalt false
+    _XMP_flag_put_nb_rr = true;  // defalt false
+    if(_XMP_world_rank == 0)
+      printf("*** _XMP_coarray_contiguous_put() is Non-Blocking and Round-Robin ***\n");
+  }
+
+  if(getenv("XMP_PUT_NB_RR_I") != NULL){
+    _XMP_flag_put_nb      = true;  // defalt false
+    _XMP_flag_put_nb_rr   = true;  // defalt false
+    _XMP_flag_put_nb_rr_i = true;  // defalt false
+    if(_XMP_world_rank == 0)
+      printf("*** _XMP_coarray_contiguous_put() is Non-Blocking, Round-Robin and Immediately ***\n");
+  }
+#endif
+  /* End Temporary */
 }
 
-void _XMP_onesided_finalize(const int return_val)
+void _XMP_finalize_onesided_functions(const int return_val)
 {
 #ifdef _XMP_GASNET
   _XMP_gasnet_finalize(return_val);

@@ -1,10 +1,11 @@
-XCC     = xmpcc -xacc -O2
+XCC     = xmpcc -xacc -O2 -lstdc++
 TESTS   = $(wildcard *.c)
 EXES    = $(TESTS:.c=.x)
 OBJS    = $(TESTS:.c=.o)
 
 ifeq ($(JOBSCHED), PBS)
 XRUN    = mpirun_rsh -hostfile $$PBS_NODEFILE
+XRUN_ENV = MV2_ENABLE_AFFINITY=0 MV2_SHOW_CPU_BINDING=1 MV2_NUM_PORTS=2 MV2_USE_CUDA=1 XACC_COMM_MODE=1 MV2_CUDA_IPC=0
 XSCRIPT = run_pbs.sh
 XSUBMIT = qsub
 endif
@@ -20,7 +21,7 @@ all default: $(EXES)
 	$(XCC) -o $@ $<
 
 run: $(EXES)
-	$(XRUN) -n 2 ./parallel_1.x
+	$(XRUN) -n 2 $(XRUN_ENV) ./parallel_1.x
 
 submit: $(EXES) $(XSCRIPT)
 	$(XSUBMIT) $(XSCRIPT)

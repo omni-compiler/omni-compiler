@@ -790,6 +790,8 @@ public class XMPrewriteExpr
     String fname = x.getArg(0).Opcode() != Xcode.MEMBER_REF ?
                    x.getArg(0).getString() : null;
     Xtype ftype = x.getArg(0).Type();
+    while((ftype != null) && (ftype.copied != null)/*ftype.isFprocedure()*/)
+      ftype = ftype.copied;
     XobjList arg_list = (XobjList)x.getArg(1);
 
     //
@@ -797,7 +799,7 @@ public class XMPrewriteExpr
     //
 
     XobjList param_list = null;
-    if (ftype != null){
+    if ((ftype != null) && ftype instanceof FunctionType/*not VOID type*/){
       // internal or module procedures
       param_list = (XobjList)ftype.getFuncParam();
     }

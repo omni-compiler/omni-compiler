@@ -1030,17 +1030,17 @@ void _XMP_coarray_rdma_image_set_n(const int ndims, const int n[])
 }
 
 /*************************************************************************/
-/* DESCRIPTION : Check region is continuous                              */
+/* DESCRIPTION : Check region is contiguous                              */
 /* ARGUMENT    : [IN] *array_info : Information of array                 */
 /*               [IN] dims        : Number of dimensions of array        */
 /*               [IN] elmts       : Number of transfer elements of array */
-/* RETURN      : If the region is continuous, return TRUE                */
+/* RETURN      : If the region is contiguous, return TRUE                */
 /* EXAMPLE     : a[:]      -> TRUE                                       */
 /*               a[:100:2] -> FALSE                                      */
 /*               a[0:2][:] -> TRUE                                       */
 /*               a[:][1]   -> FALSE                                      */
 /*************************************************************************/
-static int _check_continuous(const _XMP_array_section_t *array_info, const int dims, const long elmts)
+static int _check_contiguous(const _XMP_array_section_t *array_info, const int dims, const long elmts)
 {
   // Only 1 elements is transferred.
   // e.g.) a[2]
@@ -1052,7 +1052,7 @@ static int _check_continuous(const _XMP_array_section_t *array_info, const int d
   if(array_info[dims-1].length == elmts && array_info[dims-1].stride == 1)
     return _XMP_N_INT_TRUE;
 
-  // Does non-continuous dimension exist ?
+  // Does non-contiguous dimension exist ?
   for(int i=0;i<dims;i++)
     if(array_info[i].stride != 1 && array_info[i].length != 1)
       return _XMP_N_INT_FALSE;
@@ -1151,8 +1151,8 @@ void _XMP_coarray_put(void *remote_coarray, void *local_array, void *local_coarr
     _coarray[i].distance = ((_XMP_coarray_t*)remote_coarray)->distance_of_coarray_elmts[i];
   }
 
-  int remote_coarray_is_continuous = _check_continuous(_coarray, _coarray_dims, _transfer_coarray_elmts);
-  int local_array_is_continuous    = _check_continuous(_array,   _array_dims,   _transfer_array_elmts); 
+  int remote_coarray_is_contiguous = _check_contiguous(_coarray, _coarray_dims, _transfer_coarray_elmts);
+  int local_array_is_contiguous    = _check_contiguous(_array,   _array_dims,   _transfer_array_elmts); 
 
   // _XMP_local_put(), _XMP_gasnet_put(), ... don't support to transfer long data size now.
   // _XMP_check_less_than_SIZE_MAX() checks whether the trasfer size is less than SIZE_MAX, defined in <limits.h>.
@@ -1161,18 +1161,18 @@ void _XMP_coarray_put(void *remote_coarray, void *local_array, void *local_coarr
   _XMP_check_less_than_SIZE_MAX(_transfer_array_elmts*elmt_size);   // fix me
   
   if(target_rank == _XMP_world_rank){
-    _XMP_local_put(remote_coarray, local_array, remote_coarray_is_continuous, local_array_is_continuous, 
+    _XMP_local_put(remote_coarray, local_array, remote_coarray_is_contiguous, local_array_is_contiguous, 
 		   _coarray_dims, _array_dims, _coarray, _array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
   }
   else{
 #ifdef _XMP_GASNET
-    _XMP_gasnet_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
+    _XMP_gasnet_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
 		    _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_FJRDMA
-    _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
+    _XMP_fjrdma_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
 		    _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
+    _XMP_mpi_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
 		 _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts,
 		 _XMP_N_INT_FALSE);
 #endif
@@ -1209,8 +1209,8 @@ void _XMP_coarray_get(void *remote_coarray, void *local_array, void *local_coarr
     _coarray[i].distance = ((_XMP_coarray_t*)remote_coarray)->distance_of_coarray_elmts[i];
   }
 
-  int remote_coarray_is_continuous = _check_continuous(_coarray, _coarray_dims, _transfer_coarray_elmts);
-  int local_array_is_continuous    = _check_continuous(_array,   _array_dims,   _transfer_array_elmts);
+  int remote_coarray_is_contiguous = _check_contiguous(_coarray, _coarray_dims, _transfer_coarray_elmts);
+  int local_array_is_contiguous    = _check_contiguous(_array,   _array_dims,   _transfer_array_elmts);
 
   // _XMP_local_put(), _XMP_gasnet_put(), ... don't support to transfer long data size now.
   // _XMP_check_less_than_SIZE_MAX() checks whether the trasfer size is less than SIZE_MAX, defined in <limits.h>.
@@ -1219,18 +1219,18 @@ void _XMP_coarray_get(void *remote_coarray, void *local_array, void *local_coarr
   _XMP_check_less_than_SIZE_MAX(_transfer_array_elmts*elmt_size);   // fix me
 
   if(target_rank == _XMP_world_rank){
-    _XMP_local_get(local_array, remote_coarray, local_array_is_continuous, remote_coarray_is_continuous,
+    _XMP_local_get(local_array, remote_coarray, local_array_is_contiguous, remote_coarray_is_contiguous,
 		   _array_dims, _coarray_dims, _array, _coarray, (size_t)_transfer_array_elmts, (size_t)_transfer_coarray_elmts);
   }
   else{
 #ifdef _XMP_GASNET
-    _XMP_gasnet_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank,
+    _XMP_gasnet_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank,
 		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_FJRDMA
-    _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
+    _XMP_fjrdma_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
 		    _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
+    _XMP_mpi_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
 		 _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts,
 		 _XMP_N_INT_FALSE);
 #endif
@@ -1266,8 +1266,8 @@ void _XMP_coarray_rdma_do2(const int rdma_code, void *remote_coarray, void *loca
     _coarray[i].distance = coarray_distance[i];
   }
 
-  int remote_coarray_is_continuous = _check_continuous(_coarray, _coarray_dims, _transfer_coarray_elmts);
-  int local_array_is_continuous    = _check_continuous(_array,   _array_dims,   _transfer_array_elmts); 
+  int remote_coarray_is_contiguous = _check_contiguous(_coarray, _coarray_dims, _transfer_coarray_elmts);
+  int local_array_is_contiguous    = _check_contiguous(_array,   _array_dims,   _transfer_array_elmts); 
 
   // _XMP_local_put(), _XMP_gasnet_put(), ... don't support to transfer long data size now.
   // _XMP_check_less_than_SIZE_MAX() checks whether the trasfer size is less than SIZE_MAX, defined in <limits.h>.
@@ -1277,18 +1277,18 @@ void _XMP_coarray_rdma_do2(const int rdma_code, void *remote_coarray, void *loca
   
   if(rdma_code == _XMP_N_COARRAY_PUT){
     if(target_rank == _XMP_world_rank){
-      _XMP_local_put(remote_coarray, local_array, remote_coarray_is_continuous, local_array_is_continuous, 
+      _XMP_local_put(remote_coarray, local_array, remote_coarray_is_contiguous, local_array_is_contiguous, 
 		     _coarray_dims, _array_dims, _coarray, _array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
     }
     else{
 #ifdef _XMP_GASNET
-      _XMP_gasnet_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
+      _XMP_gasnet_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
 		      _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_FJRDMA
-      _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
+      _XMP_fjrdma_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
 		      _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
-      _XMP_mpi_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
+      _XMP_mpi_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
 		   _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts,
 		   _XMP_N_INT_FALSE);
 #endif
@@ -1296,18 +1296,18 @@ void _XMP_coarray_rdma_do2(const int rdma_code, void *remote_coarray, void *loca
   }
   else if(rdma_code == _XMP_N_COARRAY_GET){
     if(target_rank == _XMP_world_rank){
-      _XMP_local_get(local_array, remote_coarray, local_array_is_continuous, remote_coarray_is_continuous,
+      _XMP_local_get(local_array, remote_coarray, local_array_is_contiguous, remote_coarray_is_contiguous,
 		     _array_dims, _coarray_dims, _array, _coarray, (size_t)_transfer_array_elmts, (size_t)_transfer_coarray_elmts);
     }
     else{
 #ifdef _XMP_GASNET
-      _XMP_gasnet_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank,
+      _XMP_gasnet_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank,
 		      _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_FJRDMA
-      _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
+      _XMP_fjrdma_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
 		      _coarray, _array, remote_coarray, local_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
-      _XMP_mpi_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
+      _XMP_mpi_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
 		   _coarray, _array, remote_coarray, local_array, (size_t)_transfer_coarray_elmts, (size_t)_transfer_array_elmts,
 		   _XMP_N_INT_FALSE);
 #endif
@@ -1422,33 +1422,33 @@ void xmp_sync_images_all(int* status)
 /*               [IN] src_offset   : Offset size of source coarray      */
 /*               [IN] dst_elmts    : Number of elements of destination  */
 /*               [IN] src_elmts    : Number of elements of source       */
-/* NOTE       : Both dst and src are continuous coarrays                */
+/* NOTE       : Both dst and src are contiguous coarrays                */
 /* EXAMPLE    :                                                         */
 /*     a[0:100]:[1] = b[0:100]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_coarray_continuous_put(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
+void _XMP_coarray_contiguous_put(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc, 
 			       const long dst_offset, const long src_offset, const long dst_elmts, const long src_elmts)
 {
   int target_rank = target_image - 1;
   size_t elmt_size = dst_desc->elmt_size;
   
   if(target_rank == _XMP_world_rank){
-    _XMP_local_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src_desc->real_addr+src_offset, 
+    _XMP_local_contiguous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src_desc->real_addr+src_offset, 
 			       dst_elmts, src_elmts, elmt_size);
   }
   else{
     _XMP_check_less_than_SIZE_MAX(dst_elmts);
     _XMP_check_less_than_SIZE_MAX(src_elmts);
 #ifdef _XMP_GASNET
-    _XMP_gasnet_continuous_put(target_rank, dst_desc, src_desc->addr[_XMP_world_rank]+src_offset,
+    _XMP_gasnet_contiguous_put(target_rank, dst_desc, src_desc->addr[_XMP_world_rank]+src_offset,
 			     (size_t)dst_offset, (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_FJRDMA
-    _XMP_fjrdma_continuous_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, 
+    _XMP_fjrdma_contiguous_put(target_rank, (uint64_t)dst_offset, (uint64_t)src_offset, dst_desc, src_desc, 
 			     (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_TCA
-    _XMP_fatal("_XMP_tca_continuous_put is unimplemented");
+    _XMP_fatal("_XMP_tca_contiguous_put is unimplemented");
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_continuous_put(target_rank, dst_desc, src_desc, (size_t)dst_offset, (size_t)src_offset,
+    _XMP_mpi_contiguous_put(target_rank, dst_desc, src_desc, (size_t)dst_offset, (size_t)src_offset,
 			  (size_t)dst_elmts, (size_t)src_elmts, elmt_size, false, false);
 #endif
   }
@@ -1463,11 +1463,11 @@ void _XMP_coarray_continuous_put(const int target_image, _XMP_coarray_t *dst_des
 /*               [IN] src_offset   : Offset size of source coarray      */
 /*               [IN] dst_elmts    : Number of elements of destination  */
 /*               [IN] src_elmts    : Number of elements of source       */
-/* NOTE       : Both dst and src are continuous coarrays                */
+/* NOTE       : Both dst and src are contiguous coarrays                */
 /* EXAMPLE    :                                                         */
 /*     a[0:100] = b[0:100]:[1]; // a[] is a dst, b[] is a src           */
 /************************************************************************/
-void _XMP_coarray_continuous_get(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
+void _XMP_coarray_contiguous_get(const int target_image, _XMP_coarray_t *dst_desc, const _XMP_coarray_t *src_desc,
 			       const long dst_offset, const long src_offset, const long dst_elmts,
 			       const long src_elmts)
 {
@@ -1475,20 +1475,20 @@ void _XMP_coarray_continuous_get(const int target_image, _XMP_coarray_t *dst_des
   size_t elmt_size = dst_desc->elmt_size;
  
   if(target_rank == _XMP_world_rank){
-    _XMP_local_continuous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src_desc->real_addr+src_offset,
+    _XMP_local_contiguous_copy((char *)dst_desc->real_addr+dst_offset, (char *)src_desc->real_addr+src_offset,
 			       dst_elmts, src_elmts, elmt_size);
   }
   else{
     _XMP_check_less_than_SIZE_MAX(dst_elmts);
     _XMP_check_less_than_SIZE_MAX(src_elmts);
 #ifdef _XMP_GASNET
-    _XMP_gasnet_continuous_get(target_rank, dst_desc, src_desc->addr[target_rank]+src_offset, (size_t)dst_offset,
+    _XMP_gasnet_contiguous_get(target_rank, dst_desc, src_desc->addr[target_rank]+src_offset, (size_t)dst_offset,
                              (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_FJRDMA
-    _XMP_fjrdma_continuous_get(target_rank, dst_desc, src_desc, (uint64_t)dst_offset, (uint64_t)src_offset, 
+    _XMP_fjrdma_contiguous_get(target_rank, dst_desc, src_desc, (uint64_t)dst_offset, (uint64_t)src_offset, 
 			     (size_t)dst_elmts, (size_t)src_elmts, elmt_size);
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_continuous_get(target_rank, dst_desc, src_desc, (size_t)dst_offset, (size_t)src_offset,
+    _XMP_mpi_contiguous_get(target_rank, dst_desc, src_desc, (size_t)dst_offset, (size_t)src_offset,
 			  (size_t)dst_elmts, (size_t)src_elmts, elmt_size, false, false);
 #endif
   }
@@ -1615,23 +1615,23 @@ void _XMP_coarray_put_acc(void *remote_coarray, void *local_array, void *local_c
     _coarray[i].distance = ((_XMP_coarray_t*)remote_coarray)->distance_of_coarray_elmts[i];
   }
 
-  int remote_coarray_is_continuous = _check_continuous(_coarray, _coarray_dims, _transfer_coarray_elmts);
-  int local_array_is_continuous    = _check_continuous(_array,   _array_dims,   _transfer_array_elmts); 
+  int remote_coarray_is_contiguous = _check_contiguous(_coarray, _coarray_dims, _transfer_coarray_elmts);
+  int local_array_is_contiguous    = _check_contiguous(_array,   _array_dims,   _transfer_array_elmts); 
 
   if(target_rank == _XMP_world_rank){
     _XMP_fatal("_XMP_coarray_put_acc: local_put is unimplemented");
-    /* _XMP_local_put(remote_coarray, local_array, remote_coarray_is_continuous, local_array_is_continuous,  */
+    /* _XMP_local_put(remote_coarray, local_array, remote_coarray_is_contiguous, local_array_is_contiguous,  */
     /* 		     _coarray_dims, _array_dims, _coarray, _array, _transfer_coarray_elmts, _transfer_array_elmts); */
   }
   else{
 #ifdef _XMP_GASNET
-    _XMP_gasnet_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
+    _XMP_gasnet_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
 		    _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_FJRDMA
-    _XMP_fjrdma_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
+    _XMP_fjrdma_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
 		    _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_put(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims, 
+    _XMP_mpi_put(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims, 
 		 _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
 		 is_remote_on_acc);
 #endif
@@ -1669,22 +1669,22 @@ void _XMP_coarray_get_acc(void *remote_coarray, void *local_array, void *local_c
     _coarray[i].distance = ((_XMP_coarray_t*)remote_coarray)->distance_of_coarray_elmts[i];
   }
 
-  int remote_coarray_is_continuous = _check_continuous(_coarray, _coarray_dims, _transfer_coarray_elmts);
-  int local_array_is_continuous    = _check_continuous(_array,   _array_dims,   _transfer_array_elmts);
+  int remote_coarray_is_contiguous = _check_contiguous(_coarray, _coarray_dims, _transfer_coarray_elmts);
+  int local_array_is_contiguous    = _check_contiguous(_array,   _array_dims,   _transfer_array_elmts);
 
   if(target_rank == _XMP_world_rank){
-    _XMP_local_get(local_array, remote_coarray, local_array_is_continuous, remote_coarray_is_continuous,
+    _XMP_local_get(local_array, remote_coarray, local_array_is_contiguous, remote_coarray_is_contiguous,
 		   _array_dims, _coarray_dims, _array, _coarray, _transfer_array_elmts, _transfer_coarray_elmts);
   }
   else{
 #ifdef _XMP_GASNET
-    _XMP_gasnet_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank,
+    _XMP_gasnet_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank,
 		    _coarray_dims, _array_dims, _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_FJRDMA
-    _XMP_fjrdma_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
+    _XMP_fjrdma_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
 		    _coarray, _array, remote_coarray, local_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts);
 #elif _XMP_MPI3_ONESIDED
-    _XMP_mpi_get(remote_coarray_is_continuous, local_array_is_continuous, target_rank, _coarray_dims, _array_dims,
+    _XMP_mpi_get(remote_coarray_is_contiguous, local_array_is_contiguous, target_rank, _coarray_dims, _array_dims,
 		 _coarray, _array, remote_coarray, local_array, _transfer_coarray_elmts, _transfer_array_elmts,
 		 is_remote_on_acc);
 #endif
