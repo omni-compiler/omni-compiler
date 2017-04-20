@@ -3342,8 +3342,12 @@ end_procedure()
     if (CURRENT_PROC_CLASS == CL_MODULE) {
         if(!export_module(current_module_name, LOCAL_SYMBOLS,
                           LOCAL_USE_DECLS)) {
+#if 0
             error("internal error, fail to export module.");
             exit(1);
+#else
+            return;
+#endif
         }
 
     }
@@ -3352,8 +3356,12 @@ end_procedure()
                              EXT_MODULE_ANCESTOR(CURRENT_EXT_ID)?:EXT_MODULE_PARENT(CURRENT_EXT_ID),
                              LOCAL_SYMBOLS,
                              LOCAL_USE_DECLS)) {
+#if 0
             error("internal error, fail to export module.");
             exit(1);
+#else
+            return;
+#endif
         }
 
     }

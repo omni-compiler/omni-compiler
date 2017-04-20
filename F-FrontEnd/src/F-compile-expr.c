@@ -872,7 +872,8 @@ compile_expression(expr x)
             if (v2 != NULL) {
                 v2 = expv_reduce_kind(v2);
                 if (v2 == NULL) {
-                    error("bad expression in constant kind parameter");
+                    // error!!
+                    // error("bad expression in constant kind parameter");
                     break;
                 }
                 if(expr_is_constant_typeof(v2, TYPE_INT) == FALSE) {

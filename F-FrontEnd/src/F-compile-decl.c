@@ -2732,56 +2732,50 @@ set_implicit_storage(enum storage_class stg,int c1,int c2)
 expv
 expv_reduce_kind(expv v)
 {
-    expv ret = expv_reduce(v, TRUE); /* reduce parameter. */
-
+    expv ret = expv_reduce(v, TRUE); /* reduce parameter */
+    
     if (EXPV_CODE(ret) == INT_CONSTANT) {
-        return ret;
+        return ret; // already reduced
     }
 
     switch (EXPV_CODE(ret)) {
-        case FUNCTION_CALL: {
-            ID fId = find_ident(EXPV_NAME(EXPR_ARG1(ret)));
-
-            if (PROC_CLASS(fId) == P_INTRINSIC) {
-                const char *name = SYM_NAME(ID_SYM(fId));
-
-                if (strncasecmp("kind", name, 4) == 0 ||
-                    strncasecmp("selected_int_kind", name, 17) == 0) {
-                    ret = EXPR_ARG1(EXPR_ARG2(ret));
-                } else if (strncasecmp("selected_real_kind", name, 18) == 0) {
-#if 1
-                    expv pV = expr_list_get_n(EXPR_ARG2(ret), 0);
-                    expv rV = expr_list_get_n(EXPR_ARG2(ret), 1);
-
-                    if(pV == NULL || rV == NULL)
-                        break;
-
-                    pV = expv_reduce(pV, TRUE);
-                    rV = expv_reduce(rV, TRUE);
-                    if (EXPV_CODE(pV) == INT_CONSTANT &&
-                        EXPV_CODE(rV) == INT_CONSTANT) {
-                        double p = pow((double)EXPV_INT_VALUE(pV),
-                                       (double)EXPV_INT_VALUE(rV));
-                        ret = expv_float_term(FLOAT_CONSTANT, type_DREAL,
-                                              p, "");
-                    } else {
-                        ret = expv_power_expr(pV, rV);
-                    }
-#else
-                    ret = expv_reduce(EXPR_ARG1(EXPR_ARG2(ret)), TRUE);
-#endif
-                }
-            }
-            break;
+    case FUNCTION_CALL: {
+        char *name = NULL;
+        SYMBOL s = EXPV_NAME(EXPR_ARG1(ret));
+        ID fId = find_ident(s);
+        
+        if(fId != NULL && PROC_CLASS(fId) == P_INTRINSIC){
+            name = SYM_NAME(ID_SYM(fId));
+        } else if(SYM_TYPE(s) == S_INTR){
+            name = SYM_NAME(s);
         }
-        default: {
-            break;
+
+        if (name == NULL) return NULL;
+        if (strncasecmp("kind", name, 4) == 0 ||
+            strncasecmp("selected_int_kind", name, 17) == 0) {
+            expv arg = expr_list_get_n(EXPR_ARG2(ret), 0);
+            arg = expv_reduce_kind(arg);
+            if(arg == NULL) return NULL;
+            return expv_cons(FUNCTION_CALL, type_INT, EXPR_ARG1(ret), list1(LIST,arg));
+        } else if (strncasecmp("selected_real_kind", name, 18) == 0) {
+            expv arg1 = expr_list_get_n(EXPR_ARG2(ret), 0);
+            expv arg2 = expr_list_get_n(EXPR_ARG2(ret), 1);
+            
+            if(arg1 == NULL || arg2 == NULL) return NULL; // error
+            arg1 = expv_reduce_kind(arg1);
+            arg2 = expv_reduce_kind(arg2);
+            return expv_cons(FUNCTION_CALL, type_INT, 
+                             EXPR_ARG1(ret), list2(LIST,arg1,arg2));
         }
+        break;
+    }
+    default: 
+        break;
     }
 
     if (EXPV_CODE(ret) != INT_CONSTANT &&
         EXPV_CODE(ret) != FLOAT_CONSTANT) {
-        ret = NULL;
+        ret = NULL;  // error
     }
 
     return ret;
