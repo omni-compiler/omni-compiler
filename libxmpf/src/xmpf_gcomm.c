@@ -387,31 +387,36 @@ void xmpf_bcast__(void *data_addr, int *count, int *datatype,
 //
 void xmpf_barrier__(_XMP_object_ref_t **desc)
 {
-  if (*desc){
-
-    if (_XMP_is_entire(*desc)){
-      if ((*desc)->ref_kind == XMP_OBJ_REF_NODES){
-	_XMP_barrier_NODES_ENTIRE((*desc)->n_desc);
-      }
-      else {
-	_XMP_barrier_NODES_ENTIRE((*desc)->t_desc->onto_nodes);
-      }
-    }
-    else {
-      /* if (xmpf_test_task_on__(desc)){ */
-      /* 	_XMP_barrier_EXEC(); */
-      /* 	xmpf_end_task__(); */
-      /* } */
-      _XMP_nodes_t *n;
-      xmpf_create_task_nodes__(&n, desc);
-      if (xmpf_test_task_on_nodes__(&n)){
-      	_XMP_barrier_EXEC();
-      	xmpf_end_task__();
-      }
-      xmpf_nodes_dealloc__(&n);
-    }
-  }
-  else {
-    _XMP_barrier_EXEC();
-  }
+  _XMP_barrier(*desc);
 }
+
+/* void xmpf_barrier__(_XMP_object_ref_t **desc) */
+/* { */
+/*   if (*desc){ */
+
+/*     if (_XMP_is_entire(*desc)){ */
+/*       if ((*desc)->ref_kind == XMP_OBJ_REF_NODES){ */
+/* 	_XMP_barrier_NODES_ENTIRE((*desc)->n_desc); */
+/*       } */
+/*       else { */
+/* 	_XMP_barrier_NODES_ENTIRE((*desc)->t_desc->onto_nodes); */
+/*       } */
+/*     } */
+/*     else { */
+/*       /\* if (xmpf_test_task_on__(desc)){ *\/ */
+/*       /\* 	_XMP_barrier_EXEC(); *\/ */
+/*       /\* 	xmpf_end_task__(); *\/ */
+/*       /\* } *\/ */
+/*       _XMP_nodes_t *n; */
+/*       xmpf_create_task_nodes__(&n, desc); */
+/*       if (xmpf_test_task_on_nodes__(&n)){ */
+/*       	_XMP_barrier_EXEC(); */
+/*       	xmpf_end_task__(); */
+/*       } */
+/*       xmpf_nodes_dealloc__(&n); */
+/*     } */
+/*   } */
+/*   else { */
+/*     _XMP_barrier_EXEC(); */
+/*   } */
+/* } */
