@@ -960,4 +960,9 @@ public class Xcons
     {
 	return Xcons.List(Xcode.STATEMENT_LABEL, Xcons.StringConstant(label));
     }
+
+    public static Xobject Cnull()
+    {
+	return Xcons.Cast(Xtype.voidPtrType, Xcons.IntConstant(0));
+    }
 }

@@ -47,8 +47,8 @@ extern void xmpc_start_async();
 extern void xmpc_end_async(int async_id);
 
 // xmp_barrier.c
-extern void _XMP_barrier_NODES_ENTIRE(void *nodes);
-extern void _XMP_barrier_EXEC(void);
+//extern void _XMP_barrier_NODES_ENTIRE(void *nodes);
+//extern void _XMP_barrier_EXEC(void);
 extern void _XMP_barrier(void *desc);
 
 // xmp_bcast.c

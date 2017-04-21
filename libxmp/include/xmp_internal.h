@@ -112,8 +112,9 @@ extern void _XMP_nodes_dealloc_after_wait_async(_XMP_nodes_t* n);
 extern void xmpc_end_async(int);
 
 // xmp_barrier.c
-extern void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes);
-extern void _XMP_barrier_EXEC(void);
+//extern void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes);
+//extern void _XMP_barrier_EXEC(void);
+extern void _XMP_barrier(_XMP_object_ref_t *desc);
 
 // xmp_obj_ref.c
 extern _Bool _XMP_is_entire(_XMP_object_ref_t *rp);

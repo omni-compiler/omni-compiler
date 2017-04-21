@@ -994,7 +994,7 @@ void _XMP_mpi_sync_images(const int num, int* image_set, int* status)
 void _XMP_sync_images_EXEC(int* status)
 {
   MPI_Win_flush_all(_xmp_mpi_onesided_win);
-  _XMP_barrier_EXEC();
+  _XMP_barrier(NULL);
 }
 
 

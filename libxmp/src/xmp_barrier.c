@@ -10,7 +10,7 @@
 #include "mpi.h"
 #include "xmp_internal.h"
 
-void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes) {
+static void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes) {
   _XMP_RETURN_IF_SINGLE;
 
   if (nodes->is_member) {
@@ -18,7 +18,7 @@ void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes) {
   }
 }
 
-void _XMP_barrier_EXEC(void) {
+static void _XMP_barrier_EXEC(void) {
   _XMP_RETURN_IF_SINGLE;
 
   MPI_Barrier(*((MPI_Comm *)(_XMP_get_execution_nodes())->comm));

@@ -2760,15 +2760,15 @@ public class XMPrewriteExpr {
 
       // insert a barrier before each return statement
       if (b.Opcode() == Xcode.RETURN_STATEMENT){
-    	Ident f = _globalDecl.declExternFunc("_XMP_barrier_EXEC", Xtype.Function(Xtype.voidType));
-    	b.insert(f.Call(Xcons.List()));
+    	Ident f = _globalDecl.declExternFunc("_XMP_barrier", Xtype.Function(Xtype.voidType));
+    	b.insert(f.Call(Xcons.List(Xcons.Cnull())));
       }
 	
     }
 
     // add a barrier at the end of the function
-    Ident f = _globalDecl.declExternFunc("_XMP_barrier_EXEC", Xtype.Function(Xtype.voidType));
+    Ident f = _globalDecl.declExternFunc("_XMP_barrier", Xtype.Function(Xtype.voidType));
     BlockList bl = fb.getBody().getHead().getBody();
-    bl.add(f.Call(Xcons.List()));
+    bl.add(f.Call(Xcons.List(Xcons.Cnull())));
   }
 }
