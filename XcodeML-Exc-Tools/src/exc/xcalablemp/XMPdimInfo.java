@@ -86,7 +86,7 @@ public class XMPdimInfo {
   }
 
   public boolean hasLower(){
-    return (lower != null);
+    return (lower != null && !lower.isEmptyList());
   }
   
   public Xobject getUpper() { return upper; }
@@ -96,7 +96,7 @@ public class XMPdimInfo {
   }
 
   public boolean hasUpper(){
-    return (upper != null);
+    return (upper != null && !upper.isEmptyList());
   }
 
   public Xobject getSize() { 
@@ -105,7 +105,7 @@ public class XMPdimInfo {
   }
 
   public boolean hasStride() { 
-    return stride != null;
+    return (stride != null && !stride.isEmptyList());
   }
 
   public Xobject getStride() { 

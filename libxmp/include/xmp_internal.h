@@ -125,6 +125,10 @@ extern void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr,
 					  _XMP_nodes_t *from_nodes, ...);
 extern void _XMP_bcast_NODES_ENTIRE_NODES_V(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
 					    _XMP_nodes_t *from_nodes, va_list args);
+extern void _XMP_bcast_on_nodes(void *data_addr, int count, int size,
+				_XMP_object_ref_t *from_desc, _XMP_object_ref_t *on_desc);
+extern void _XMP_bcast_on_template(void *data_addr, int count, int size,
+				   _XMP_object_ref_t *from_desc, _XMP_object_ref_t *on_desc);
 
 // xmp_coarray.c
 typedef struct _XMP_coarray_list_type {

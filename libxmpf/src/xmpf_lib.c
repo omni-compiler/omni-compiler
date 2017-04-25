@@ -46,7 +46,7 @@ int xmp_node_num_(void) {
 }
 
 void xmp_barrier_(void) {
-  _XMP_barrier_EXEC();
+  _XMP_barrier(NULL);
 }
 
 int xmp_all_num_nodes_(void) {

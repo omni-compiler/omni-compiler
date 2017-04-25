@@ -768,12 +768,12 @@ public class XMPtransPragma
 
     if (on_ref != null){
       Ident g = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
-      ret_body.add(g.callSubroutine(Xcons.List(on_ref.getDescId())));
+      ret_body.add(g.callSubroutine(Xcons.List(on_ref_arg)));
     }
 
     if (from_ref != null){
       Ident g = env.declInternIdent(XMP.ref_dealloc_f, Xtype.FsubroutineType);
-      ret_body.add(g.callSubroutine(Xcons.List(from_ref.getDescId())));
+      ret_body.add(g.callSubroutine(Xcons.List(from_ref_arg)));
     }
 
     if(isAcc) {
