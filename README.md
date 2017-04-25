@@ -28,7 +28,7 @@ See docs/STATUS-XMP.md, docs/STATUS-CAF.md, and docs/STATUS-ACC.md
 -----
 # Quick	Reference for OpenACC
 ## How to install
-    $ ./configure --prefix=(INSTALL PATH) --enable-openacc --with-cuda=(CUDA PATH) --with-gpu-cflags=="-arch=sm_35 -O2"
+    $ ./configure --prefix=(INSTALL PATH) --enable-openacc --with-cuda=(CUDA PATH) --with-gpu-cflags="-arch=sm_35 -O2"
     $ make
     $ make install
     $ export PATH=(INSTALL PATH)/bin:$PATH
