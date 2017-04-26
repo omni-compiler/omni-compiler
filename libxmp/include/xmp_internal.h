@@ -120,11 +120,11 @@ extern void _XMP_barrier(_XMP_object_ref_t *desc);
 extern _Bool _XMP_is_entire(_XMP_object_ref_t *rp);
   
 // xmp_bcast.c
-extern void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size);
-extern void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
-					  _XMP_nodes_t *from_nodes, ...);
-extern void _XMP_bcast_NODES_ENTIRE_NODES_V(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size,
-					    _XMP_nodes_t *from_nodes, va_list args);
+/* extern void _XMP_bcast_NODES_ENTIRE_OMITTED(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size); */
+/* extern void _XMP_bcast_NODES_ENTIRE_NODES(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size, */
+/* 					  _XMP_nodes_t *from_nodes, ...); */
+/* extern void _XMP_bcast_NODES_ENTIRE_NODES_V(_XMP_nodes_t *bcast_nodes, void *addr, int count, size_t datatype_size, */
+/* 					    _XMP_nodes_t *from_nodes, va_list args); */
 extern void _XMP_bcast_on_nodes(void *data_addr, int count, int size,
 				_XMP_object_ref_t *from_desc, _XMP_object_ref_t *on_desc);
 extern void _XMP_bcast_on_template(void *data_addr, int count, int size,
@@ -290,10 +290,10 @@ void _XMPF_unpack_transpose_vector(char * restrict dst, char * restrict src,
 void _XMP_check_reflect_type(void);
 
 // xmp_reduce.c
-extern void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
-extern void _XMPF_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
-					   void *addr, int count, int datatype, int op,
-					   int num_locs, void **loc_vars, int *loc_types);
+/* extern void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op); */
+/* extern void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes, */
+/* 					  void *addr, int count, int datatype, int op, */
+/* 					  int num_locs, void **loc_vars, int *loc_types); */
 extern void _XMP_reduce_CLAUSE(void *data_addr, int count, int datatype, int op);
 extern void xmp_reduce_initialize();
 

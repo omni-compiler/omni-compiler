@@ -300,38 +300,39 @@ public class XMPobjectsRef {
   //   return f.Call(args);
   // }
 
-  // public XMPobjectsRef convertLoopToReduction(){
-  //   XMPobjectsRef new_obj = new XMPobjectsRef();
-  //   new_obj.descId = descId;
-  //   new_obj.refName = refName;
-  //   new_obj.refObject = refObject;
-  //   new_obj.subscripts = new Vector<XMPdimInfo>();
+  public XMPobjectsRef convertLoopToReduction(){
+    XMPobjectsRef new_obj = new XMPobjectsRef();
+    new_obj.descId = descId;
+    new_obj.refName = refName;
+    new_obj.refObject = refObject;
+    new_obj.subscripts = new Vector<XMPdimInfo>();
 
-  //   for (int i = 0; i < subscripts.size(); i++){
-  //     XMPdimInfo sub_i = subscripts.elementAt(i);
-  //     XMPdimInfo newDim = new XMPdimInfo();
-  //     if (sub_i.isTriplet()){
-  // 	newDim.setStar();
-  //     }
-  //     else {
-  // 	newDim.setLower(sub_i.getLower());
-  // 	newDim.setUpper(sub_i.getUpper());
-  // 	newDim.setStride(sub_i.getStride());
-  // 	if (sub_i.isStar()) newDim.setStar();
-  //     }
-  //     new_obj.subscripts.addElement(newDim);
-  //   }
+    for (int i = 0; i < subscripts.size(); i++){
+      XMPdimInfo sub_i = subscripts.elementAt(i);
+      XMPdimInfo newDim = new XMPdimInfo();
+      if (sub_i.isTriplet()){
+  	newDim.setStar();
+      }
+      else {
+  	newDim.setLower(sub_i.getLower());
+  	newDim.setUpper(sub_i.getUpper());
+  	newDim.setStride(sub_i.getStride());
+  	if (sub_i.isStar()) newDim.setStar();
+      }
+      new_obj.subscripts.addElement(newDim);
+    }
 
-  //   for (int i = 0; i < loop_dims.size(); i++){
-  //     XMPdimInfo loop_i = loop_dims.elementAt(i);
-  //     int k;
-  //     if ((k = loop_i.getLoopOnIndex()) != -1){
-  // 	new_obj.subscripts.elementAt(k).setLower(loop_i.getLower());
-  // 	new_obj.subscripts.elementAt(k).setUpper(loop_i.getUpper());
-  // 	new_obj.subscripts.elementAt(k).setStride(loop_i.getStride());
-  //     }
-  //   }
+    for (int i = 0; i < loop_dims.size(); i++){
+      XMPdimInfo loop_i = loop_dims.elementAt(i);
+      int k;
+      if ((k = loop_i.getLoopOnIndex()) != -1){
+  	new_obj.subscripts.elementAt(k).setLower(loop_i.getLower());
+  	new_obj.subscripts.elementAt(k).setUpper(loop_i.getUpper());
+  	new_obj.subscripts.elementAt(k).setStride(loop_i.getStride());
+      }
+    }
 
-  //   return new_obj;
-  // }
+    return new_obj;
+  }
+
 }

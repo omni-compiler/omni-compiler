@@ -132,7 +132,9 @@ void _XMP_sched_loop_template_GBLOCK(int ser_init, int ser_cond, int ser_step,
 				     _XMP_template_t *template, int template_index);
 
 /* From xmp_reduce.c */
-void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
+//void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op);
+void _XMP_reduction(void *data_addr, int count, int datatype, int op,
+		    _XMP_object_ref_t *r_desc, int num_locs);
 
 /* From xmp_shadow.c */
 void _XMP_init_reflect_sched(_XMP_reflect_sched_t *sched);
@@ -148,51 +150,49 @@ void _XMP_unpack_shadow_NORMAL(void *lo_buffer, void *hi_buffer, void *array_add
 
 
 /* From xmp_barrier.c */
-void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes);
+//void _XMP_barrier_NODES_ENTIRE(_XMP_nodes_t *nodes);
 
 /* From xmp_gmove.c */
-int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref_index);
-void _XMP_gmove_bcast_SCALAR(void *dst_addr, void *src_addr,
-			     size_t type_size, int root_rank);
-unsigned long long _XMP_gmove_bcast_ARRAY(void *dst_addr, int dst_dim,
-					  int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
-					  void *src_addr, int src_dim,
-					  int *src_l, int *src_u, int *src_s, unsigned long long *src_d,
-					  int type, size_t type_size, int root_rank);
-void _XMP_gtol_array_ref_triplet(_XMP_array_t *array,
-				 int dim_index, int *lower, int *upper, int *stride);
-int _XMP_check_gmove_array_ref_inclusion_SCALAR(_XMP_array_t *array, int array_index,
-						int ref_index);
-void _XMP_gmove_localcopy_ARRAY(int type, int type_size,
-				void *dst_addr, int dst_dim,
-				int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d,
-				void *src_addr, int src_dim,
-				int *src_l, int *src_u, int *src_s, unsigned long long *src_d);
-int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_index,
-				    int *dst_l, int *dst_u, int *dst_s,
-				    int *src_l, int *src_u, int *src_s);
-int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s,
-				 _XMP_array_t *src_array, int *src_array_nodes_ref, int *src_l, int *src_u, int *src_s);
-void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype,
-                         _XMP_array_t *dst_array, int *dst_array_nodes_ref,
-                         int *dst_lower, int *dst_upper, int *dst_stride, unsigned long long *dst_dim_acc,
-                         _XMP_array_t *src_array, int *src_array_nodes_ref,
-                         int *src_lower, int *src_upper, int *src_stride, unsigned long long *src_dim_acc);
-void _XMP_gmove_BCAST_GSCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array, int ref_index[]);
-void _XMP_gmove_SENDRECV_GSCALAR(void *dst_addr, void *src_addr,
-				 _XMP_array_t *dst_array, _XMP_array_t *src_array,
-				 int dst_ref_index[], int src_ref_index[]);
+/* int _XMP_calc_gmove_array_owner_linear_rank_SCALAR(_XMP_array_t *array, int *ref_index); */
+/* void _XMP_gmove_bcast_SCALAR(void *dst_addr, void *src_addr, */
+/* 			     size_t type_size, int root_rank); */
+/* unsigned long long _XMP_gmove_bcast_ARRAY(void *dst_addr, int dst_dim, */
+/* 					  int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d, */
+/* 					  void *src_addr, int src_dim, */
+/* 					  int *src_l, int *src_u, int *src_s, unsigned long long *src_d, */
+/* 					  int type, size_t type_size, int root_rank); */
+/* void _XMP_gtol_array_ref_triplet(_XMP_array_t *array, */
+/* 				 int dim_index, int *lower, int *upper, int *stride); */
+/* int _XMP_check_gmove_array_ref_inclusion_SCALAR(_XMP_array_t *array, int array_index, */
+/* 						int ref_index); */
+/* void _XMP_gmove_localcopy_ARRAY(int type, int type_size, */
+/* 				void *dst_addr, int dst_dim, */
+/* 				int *dst_l, int *dst_u, int *dst_s, unsigned long long *dst_d, */
+/* 				void *src_addr, int src_dim, */
+/* 				int *src_l, int *src_u, int *src_s, unsigned long long *src_d); */
+/* int _XMP_calc_global_index_HOMECOPY(_XMP_array_t *dst_array, int dst_dim_index, */
+/* 				    int *dst_l, int *dst_u, int *dst_s, */
+/* 				    int *src_l, int *src_u, int *src_s); */
+/* int _XMP_calc_global_index_BCAST(int dst_dim, int *dst_l, int *dst_u, int *dst_s, */
+/* 				 _XMP_array_t *src_array, int *src_array_nodes_ref, int *src_l, int *src_u, int *src_s); */
+/* void _XMP_sendrecv_ARRAY(int type, int type_size, MPI_Datatype *mpi_datatype, */
+/*                          _XMP_array_t *dst_array, int *dst_array_nodes_ref, */
+/*                          int *dst_lower, int *dst_upper, int *dst_stride, unsigned long long *dst_dim_acc, */
+/*                          _XMP_array_t *src_array, int *src_array_nodes_ref, */
+/*                          int *src_lower, int *src_upper, int *src_stride, unsigned long long *src_dim_acc); */
+/* void _XMP_gmove_BCAST_GSCALAR(void *dst_addr, void *src_addr, _XMP_array_t *array, int ref_index[]); */
+/* void _XMP_gmove_SENDRECV_GSCALAR(void *dst_addr, void *src_addr, */
+/* 				 _XMP_array_t *dst_array, _XMP_array_t *src_array, */
+/* 				 int dst_ref_index[], int src_ref_index[]); */
 
-extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d, int mode);
-extern void _XMP_gmove_inout_scalar(void *scalar, _XMP_gmv_desc_t *gmv_desc, int rdma_type);
+/* extern void _XMP_gmove_array_array_common(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int *dst_l, int *dst_u, int *dst_s, unsigned long long  *dst_d, int *src_l, int *src_u, int *src_s, unsigned long long *src_d, int mode); */
+/* extern void _XMP_gmove_inout_scalar(void *scalar, _XMP_gmv_desc_t *gmv_desc, int rdma_type); */
 
 void _XMP_gmove_scalar_garray(void *scalar, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
 void _XMP_gmove_garray_scalar(_XMP_gmv_desc_t *gmv_desc_leftp, void *scalar, int mode);
 void _XMP_gmove_garray_garray(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
 void _XMP_gmove_garray_larray(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
 void _XMP_gmove_larray_garray(_XMP_gmv_desc_t *gmv_desc_leftp, _XMP_gmv_desc_t *gmv_desc_rightp, int mode);
-
-
 
 /* From xmp_runtime.c */
 void _XMP_init(int argc, char** argv);
@@ -202,10 +202,12 @@ size_t _XMP_get_datatype_size(int datatype);
 /* From xmp_reflect.c */
 extern void _XMP_set_reflect__(_XMP_array_t *a_desc, int dim, int lwidth, int uwidth, int is_periodic);
 extern void _XMP_reflect__(_XMP_array_t *a_desc);
-extern void _XMP_wait_async__(int async_id);
 extern void _XMP_reflect_async__(_XMP_array_t *a_desc, int async_id);
-extern _XMP_async_comm_t* _XMP_get_current_async();
+
+/* From xmp_async.c */
+extern void _XMP_wait_async__(int async_id);
 extern _XMP_async_comm_t* _XMP_get_async(int);
+extern _XMP_async_comm_t* _XMP_get_current_async();
 extern void xmpc_init_async(int);
 extern void xmpc_start_async();
 
@@ -245,4 +247,3 @@ extern void _XMP_ref_set_loop_info(_XMP_object_ref_t *rp, int i, int t_idx, int 
 extern void _XMP_ref_set_dim_info(_XMP_object_ref_t *rp, int i, int type, int lb, int ub, int st);
 extern void _XMP_ref_init(_XMP_object_ref_t *rp);
 extern void _XMP_ref_dealloc(_XMP_object_ref_t *rp);
-

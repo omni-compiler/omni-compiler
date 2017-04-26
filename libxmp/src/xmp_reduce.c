@@ -214,7 +214,7 @@ static void _XMP_init_localtion_variables(void *loc, int count, int loc_datatype
   }
 }
 
-void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op) {
+static void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int datatype, int op) {
   if (count == 0) {
     return; // FIXME not good implementation
   }
@@ -242,60 +242,60 @@ void _XMP_reduce_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, int da
     MPI_Allreduce(MPI_IN_PLACE, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
 }
 
-void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count,
-				   int datatype, int op, int num_locs, ...)
-{
-  if(count == 0)        return; // FIXME not good implementation
-  if(!nodes->is_member) return;
+/* void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes, void *addr, int count, */
+/* 				   int datatype, int op, int num_locs, ...) */
+/* { */
+/*   if(count == 0)        return; // FIXME not good implementation */
+/*   if(!nodes->is_member) return; */
 
-  // setup information
-  MPI_Datatype mpi_datatype;
-  size_t datatype_size;
-  MPI_Op mpi_op;
-  _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype);
-  _XMP_setup_reduce_op(&mpi_op, op);
+/*   // setup information */
+/*   MPI_Datatype mpi_datatype; */
+/*   size_t datatype_size; */
+/*   MPI_Op mpi_op; */
+/*   _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, datatype); */
+/*   _XMP_setup_reduce_op(&mpi_op, op); */
 
-  // reduce <reduction-variable>
-  size_t n = datatype_size * count;
-  void *temp_buffer = _XMP_alloc(n);
-  memcpy(temp_buffer, addr, n);
+/*   // reduce <reduction-variable> */
+/*   size_t n = datatype_size * count; */
+/*   void *temp_buffer = _XMP_alloc(n); */
+/*   memcpy(temp_buffer, addr, n); */
 
-  MPI_Allreduce(temp_buffer, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
+/*   MPI_Allreduce(temp_buffer, addr, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm)); */
 
-  // compare results
-  n = sizeof(int) * count;
-  int *cmp_buffer = _XMP_alloc(n);
-  _XMP_compare_reduce_results(cmp_buffer, temp_buffer, addr, count, datatype);
+/*   // compare results */
+/*   n = sizeof(int) * count; */
+/*   int *cmp_buffer = _XMP_alloc(n); */
+/*   _XMP_compare_reduce_results(cmp_buffer, temp_buffer, addr, count, datatype); */
 
-  // reduce <location-variable>
-  va_list args;
-  va_start(args, num_locs);
-  for (int i = 0; i < num_locs; i++) {
-    void *loc = va_arg(args, void *);
-    int loc_datatype = va_arg(args, int);
+/*   // reduce <location-variable> */
+/*   va_list args; */
+/*   va_start(args, num_locs); */
+/*   for (int i = 0; i < num_locs; i++) { */
+/*     void *loc = va_arg(args, void *); */
+/*     int loc_datatype = va_arg(args, int); */
 
-    _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, loc_datatype);
-    _XMP_setup_reduce_FLMM_op(&mpi_op, op);
-    _XMP_init_localtion_variables(loc, count, loc_datatype, cmp_buffer, op);
+/*     _XMP_setup_reduce_type(&mpi_datatype, &datatype_size, loc_datatype); */
+/*     _XMP_setup_reduce_FLMM_op(&mpi_op, op); */
+/*     _XMP_init_localtion_variables(loc, count, loc_datatype, cmp_buffer, op); */
 
-    n = datatype_size * count;
-    void *loc_temp = _XMP_alloc(n);
-    memcpy(loc_temp, loc, n);
+/*     n = datatype_size * count; */
+/*     void *loc_temp = _XMP_alloc(n); */
+/*     memcpy(loc_temp, loc, n); */
 
-    MPI_Allreduce(loc_temp, loc, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm));
+/*     MPI_Allreduce(loc_temp, loc, count, mpi_datatype, mpi_op, *((MPI_Comm *)nodes->comm)); */
 
-    _XMP_free(loc_temp);
-  }
-  va_end(args);
+/*     _XMP_free(loc_temp); */
+/*   } */
+/*   va_end(args); */
 
-  _XMP_free(temp_buffer);
-  _XMP_free(cmp_buffer);
-}
+/*   _XMP_free(temp_buffer); */
+/*   _XMP_free(cmp_buffer); */
+/* } */
 
 // not use variable-length arguments
-void _XMPF_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
-				    void *addr, int count, int datatype, int op,
-				    int num_locs, void **loc_vars, int *loc_types) {
+static void _XMP_reduce_FLMM_NODES_ENTIRE(_XMP_nodes_t *nodes,
+					  void *addr, int count, int datatype, int op,
+					  int num_locs, void **loc_vars, int *loc_types) {
 
   if (count == 0) {
     return; // FIXME not good implementation
@@ -687,3 +687,54 @@ void xmp_reduce_loc_execute(const int op)
   free(_addr);
 }
 
+
+void *_XMP_reduction_loc_vars[_XMP_N_MAX_LOC_VAR];
+int _XMP_reduction_loc_types[_XMP_N_MAX_LOC_VAR];
+
+void _XMP_reduction_loc(int dim, void *loc, int datatype)
+{
+  _XMP_reduction_loc_vars[dim] = loc;
+  _XMP_reduction_loc_types[dim] = datatype;
+}
+
+void _XMP_reduction(void *data_addr, int count, int datatype, int op,
+		    _XMP_object_ref_t *r_desc, int num_locs)
+{
+  _XMP_nodes_t *nodes;
+
+  if (r_desc){
+    if (_XMP_is_entire(r_desc)){
+      if (r_desc->ref_kind == XMP_OBJ_REF_NODES){
+	nodes = r_desc->n_desc;
+	if (num_locs == 0) _XMP_reduce_NODES_ENTIRE(nodes, data_addr, count, datatype, op);
+	else _XMP_reduce_FLMM_NODES_ENTIRE(nodes, data_addr, count, datatype, op, num_locs,
+					   _XMP_reduction_loc_vars, _XMP_reduction_loc_types);
+      }
+      else {
+	nodes = r_desc->t_desc->onto_nodes;
+	if (num_locs == 0) _XMP_reduce_NODES_ENTIRE(nodes, data_addr, count, datatype, op);
+	else _XMP_reduce_FLMM_NODES_ENTIRE(nodes, data_addr, count, datatype, op, num_locs,
+					   _XMP_reduction_loc_vars, _XMP_reduction_loc_types);
+      }
+    }
+    else {
+      _XMP_nodes_t *n;
+      _XMP_create_task_nodes(&n, r_desc);
+      if (_XMP_test_task_on_nodes(n)){
+      	nodes = _XMP_get_execution_nodes();
+      	if (num_locs == 0) _XMP_reduce_NODES_ENTIRE(nodes, data_addr, count, datatype, op);
+      	else _XMP_reduce_FLMM_NODES_ENTIRE(nodes, data_addr, count, datatype, op, num_locs,
+					   _XMP_reduction_loc_vars, _XMP_reduction_loc_types);
+      	_XMP_end_task();
+      }
+      _XMP_finalize_nodes(n);
+    }
+
+  }
+  else {
+    nodes = _XMP_get_execution_nodes();
+    if (num_locs == 0) _XMP_reduce_NODES_ENTIRE(nodes, data_addr, count, datatype, op);
+    else _XMP_reduce_FLMM_NODES_ENTIRE(nodes, data_addr, count, datatype, op, num_locs,
+				       _XMP_reduction_loc_vars, _XMP_reduction_loc_types);
+  }
+}

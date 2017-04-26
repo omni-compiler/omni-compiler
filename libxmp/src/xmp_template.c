@@ -657,7 +657,6 @@ int _XMP_calc_template_owner_SCALAR(_XMP_template_t *template, int dim_index, lo
       }
       return _XMP_N_INVALID_RANK;
     default:
-      xmp_dbg_printf("%d\n", chunk->dist_manner);
       _XMP_fatal("unknown distribute manner");
       return _XMP_N_INVALID_RANK; // XXX dummy
   }

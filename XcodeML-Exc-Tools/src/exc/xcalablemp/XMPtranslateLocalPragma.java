@@ -1884,7 +1884,84 @@ public class XMPtranslateLocalPragma {
     
     pb.replace(reductionBodyBlock);
   }
-  
+
+  private Block createReductionFuncCallBlock(PragmaBlock pb) throws XMPexception {
+
+    BlockList ret_body = Bcons.emptyBody();
+    
+    XobjList reductionRef = (XobjList)pb.getClauses().getArg(0);
+
+    XMPobjectsRef on_ref = XMPobjectsRef.parseDecl(pb.getClauses().getArg(1), _globalDecl, pb);
+    Xobject on_ref_arg;
+
+    if (on_ref != null){
+      if (XMPpragma.valueOf(pb.getPragma()) != XMPpragma.LOOP){
+	ret_body.add(on_ref.buildConstructor(_globalDecl));
+	on_ref_arg = on_ref.getDescId().Ref();
+      }
+      else {
+	XMPobjectsRef on_ref_copy = on_ref.convertLoopToReduction();
+	ret_body.add(on_ref_copy.buildConstructor(_globalDecl));
+	on_ref_arg = on_ref_copy.getDescId().Ref();
+      }
+    }
+    else on_ref_arg = Xcons.Cnull();
+
+    //boolean isAcc = info.isAcc();
+    //Ident f = env.declInternIdent(isAcc? XMP.reduction_acc_f : XMP.reduction_f, Xtype.FsubroutineType);
+    //Ident f2 = env.declInternIdent(isAcc? XMP.reduction_loc_acc_f : XMP.reduction_loc_f, Xtype.FsubroutineType);
+    Ident f = _globalDecl.declExternFunc("_XMP_reduction", Xtype.voidType);
+    Ident f2 = _globalDecl.declExternFunc("_XMP_reduction_loc", Xtype.voidType);
+
+    Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false, null, null);
+
+    Vector<Vector<Ident>> pos_vars = new Vector<Vector<Ident>>();
+    for (Xobject w: (XobjList)reductionRef.getArg(1)){
+      Vector<Ident> plist = new Vector<Ident>();
+      if (w.getArg(1) != null){
+	for (Xobject p: (XobjList)w.getArg(1)){
+	  Ident pid = pb.findVarIdent(p.getName());
+	  if (pid == null){
+	    XMP.error(pb.getLineNo(), "variable '" + p.getName() + "' in reduction is not found");
+	  }
+	  plist.add(pid);
+	}
+      }
+      pos_vars.add(plist);
+    }
+
+    int i = 0;
+    for (XobjList args : reductionFuncArgsList){
+      int j = 0;
+      Vector<Ident> plist = pos_vars.elementAt(i);
+      for (Ident pos: plist){
+      	Xobject args2 = Xcons.List(Xcons.IntConstant(j), pos.Ref(), XMP.createBasicTypeConstantObj(pos.Type()));
+      	ret_body.add(f2.Call(args2));
+      	j++;
+      }
+      args.add(on_ref_arg);
+      args.add(Xcons.IntConstant(plist.size()));
+      ret_body.add(f.Call(args));
+      i++;
+    }      
+    
+    if (on_ref != null){
+      Ident g = _globalDecl.declExternFunc("_XMP_ref_dealloc", Xtype.voidType);
+      ret_body.add(g.Call(Xcons.List(on_ref.getDescId().Ref())));
+    }
+
+    // if (isAcc){
+    //   XobjList vars = Xcons.List();
+    //   for(Ident id : info.getReductionVars()){
+    //     vars.add(id.Ref());
+    //   }
+    //   ret_body = Bcons.blockList(buildAccHostData(vars, ret_body));
+    // }
+
+    return Bcons.COMPOUND(ret_body);
+
+  }
+
   private void translateReduction(PragmaBlock pb) throws XMPexception {
     // start translation
     XobjList reductionDecl = (XobjList)pb.getClauses();
@@ -1902,41 +1979,43 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(pb.getLineNo(), "reduction for both acc and host is unimplemented");
     }
 
-    // create function arguments
+    Block reductionFuncCallBlock = createReductionFuncCallBlock(pb);
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
-    XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
+    // // create function arguments
+    // XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
+    // XobjInt reductionOp = (XobjInt)reductionRef.getArg(0);
 
-    // create function call
-    XobjList onRef = (XobjList)reductionDecl.getArg(1);
+    // // create function call
+    // XobjList onRef = (XobjList)reductionDecl.getArg(1);
     
-    // When MAXLOC or MINLOC, another flow, which does not use a variadic function in runtime, is executed.
-    if(reductionOp.getInt() == XMPcollective.REDUCE_MAXLOC || reductionOp.getInt() == XMPcollective.REDUCE_MINLOC){
-      createLocReduction(pb, reductionRef, reductionOp, onRef);
-      return;
-    }
+    // // When MAXLOC or MINLOC, another flow, which does not use a variadic function in runtime, is executed.
+    // if(reductionOp.getInt() == XMPcollective.REDUCE_MAXLOC || reductionOp.getInt() == XMPcollective.REDUCE_MINLOC){
+    //   createLocReduction(pb, reductionRef, reductionOp, onRef);
+    //   return;
+    // }
 
-    Block reductionFuncCallBlock = null;
-    Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false, null, null);
-    String reductionFuncType = createReductionFuncType(reductionRef, pb, isACC);
+    // Block reductionFuncCallBlock = null;
+    // Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false, null, null);
+    // String reductionFuncType = createReductionFuncType(reductionRef, pb, isACC);
 
-    if (onRef == null || onRef.Nargs() == 0){
-      reductionFuncCallBlock = createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList);
-    }
-    else{
-      XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
-      String execFuncSuffix = execOnRefArgs.getFirst();
-      boolean splitComm = execOnRefArgs.getSecond().booleanValue();
-      XobjList execFuncArgs = execOnRefArgs.getThird();
-      if (splitComm) {
-        BlockList reductionBody =
-          Bcons.blockList(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList));
-	reductionFuncCallBlock = createCommTaskBlock(reductionBody, execFuncSuffix, execFuncArgs);
-      }
-      else {
-        reductionFuncCallBlock = createReductionFuncCallBlock(false, reductionFuncType + "_" + execFuncSuffix,
-                                                              execFuncArgs.operand(), reductionFuncArgsList);
-      }
-    }
+    // if (onRef == null || onRef.Nargs() == 0){
+    //   reductionFuncCallBlock = createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList);
+    // }
+    // else{
+    //   XMPquadruplet<String, Boolean, XobjList, XMPobject> execOnRefArgs = createExecOnRefArgs(onRef, pb);
+    //   String execFuncSuffix = execOnRefArgs.getFirst();
+    //   boolean splitComm = execOnRefArgs.getSecond().booleanValue();
+    //   XobjList execFuncArgs = execOnRefArgs.getThird();
+    //   if (splitComm) {
+    //     BlockList reductionBody =
+    //       Bcons.blockList(createReductionFuncCallBlock(true, reductionFuncType + "_EXEC", null, reductionFuncArgsList));
+    // 	reductionFuncCallBlock = createCommTaskBlock(reductionBody, execFuncSuffix, execFuncArgs);
+    //   }
+    //   else {
+    //     reductionFuncCallBlock = createReductionFuncCallBlock(false, reductionFuncType + "_" + execFuncSuffix,
+    //                                                           execFuncArgs.operand(), reductionFuncArgsList);
+    //   }
+    // }
 
     if(isACC){
       XobjList vars = Xcons.List();
@@ -2344,7 +2423,7 @@ public class XMPtranslateLocalPragma {
     return Bcons.COMPOUND(funcCallList);
   }
 
-  private Block translateBcast2(PragmaBlock pb) throws XMPexception {
+  private Block createBcastFuncCallBlock(PragmaBlock pb) throws XMPexception {
 
     BlockList ret_body = Bcons.emptyBody();
 
@@ -2402,7 +2481,7 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(pb.getLineNo(), "bcast for both acc and host is unimplemented");
     }
     
-    Block bcastFuncCallBlock = translateBcast2(pb);
+    Block bcastFuncCallBlock = createBcastFuncCallBlock(pb);
     // // create function arguments
     // XobjList varList = (XobjList)bcastDecl.getArg(0);
     // Vector<XobjList> bcastArgsList = createBcastArgsList(varList, pb);
