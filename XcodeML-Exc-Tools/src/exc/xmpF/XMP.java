@@ -224,6 +224,9 @@ public class XMP {
 	}
       }
       break;
+    case BasicType.F_CHARACTER:
+      t = BasicType.CHAR;
+      break;
     case BasicType.CHAR:
     case BasicType.UNSIGNED_CHAR:
     case BasicType.SHORT:

@@ -1,5 +1,13 @@
 Omni Compiler Software RELEASE NOTES
 
+# ver. 1.1.2      2017/05/??
+* Support charactor type for bcast operation in XMP/F
+* Support allocatable array for reduction operation in XMP/F
+* Add option --disable-fjrdma to use MPI3 instead of FJRDMA on FX100
+* Improve performance in for-loop statement in XMP/C
+
+* Fixed lots of bugs.
+
 # ver. 1.1.1      2017/02/09
 * Fix of bug of coarray features in The K computer/FX10/FX100
 * Fixed lots of bugs.
