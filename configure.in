@@ -925,9 +925,15 @@ else
     AC_CHECK_PROG([MPI_CC], [mpiicc], [mpiicc])
     AC_CHECK_PROG([MPI_CC], [mpicc], [mpicc])
 
-    chk=`${MPI_CC} --version | head -n1`
+    # Workaround for Cray CC >8.5. Version is printed on stderr now.
+    if [ $CRAY ]
+    then 
+      chk=`${MPI_CC} -V 2>&1 | head -n1`
+    else
+      chk=`${MPI_CC} --version | head -n1`
+    fi
     case $chk in
-	cc* | gcc* | Apple*)
+       gcc* | Apple*)
 	    # OpenMP
 	    OPENMP_OPT_C="-fopenmp"
 
@@ -947,6 +953,26 @@ else
 	    # Omni Common
 	    OMNI_X2X_FLAGS="-gnu"
 	    ;;
+       Cray* | cc*)
+           # OpenMP
+           OPENMP_OPT_C="-h omp"
+
+           # XcalableMP
+           XMPC_DEF="-D_XCALABLEMP"
+
+           # MPI C
+           MPI_CPPFLAGS="-E -std=c99"
+           MPI_CFLAGS="-O2 -std=c99 -Wall -Wpointer-arith $OPENMP_OPT_C"
+           MPI_CLIBS=""
+
+           # Omni C
+           OMNI_C2X_FLAGS=""
+           OMNI_NTV_CFLAGS="-std=c99 -lm"
+           OMNI_LNK_CFLAGS="$OMNI_NTV_CFLAGS $OPENMP_OPT_C"
+
+           # Omni Common
+           OMNI_X2X_FLAGS="-gnu"
+           ;;
 	*ICC*)
 	    # OpenMP
 	    OPENMP_OPT_C="-fopenmp"
@@ -1273,11 +1299,20 @@ else
     if test "$target" = "powerpc-hitachi-aix"; then
 	CFLAGS="${CFLAGS} -maix64"
     fi
-    chk=`${CC} --version | head -n1`
+
+    if [ $CRAY ]
+    then 
+      chk=`${CC} -V 2>&1 | head -n1`
+    else
+      chk=`${CC} --version | head -n1`
+    fi
     case $chk in
-	cc* | gcc* | Apple* | *ICC*)
+	gcc* | Apple* | *ICC*)
 	    CFLAGS="${CFLAGS} -std=gnu99 -Wall -Wpointer-arith"
 	    ;;
+        Cray* | cc*)
+            CFLAGS=""
+            ;;
 	*)
 	    chk2=`${CC} --version 2> /dev/null | head -n2 | tail -n1`
 	    case $chk2 in
