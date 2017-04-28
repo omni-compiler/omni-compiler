@@ -829,7 +829,7 @@ implicit_declaration(ID id)
             if (ID_CLASS(id) == CL_VAR) {
 /* FEAST delete start */
                 /* error("attempt to use undefined type variable, %s", ID_NAME(id)); */
-                sp_link_id(id, 1, current_line);
+                sp_link_id(id, SP_ERR_UNDEF_TYPE_VAR, current_line);
 /* FEAST delete  end  */
                 return;
             }

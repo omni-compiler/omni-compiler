@@ -1,84 +1,67 @@
 #include "F-front.h"
+#include "F-second-pass.h"
+
 /* #define FE_DEBUG */
 #ifdef FE_DEBUG
 #include "test.h"
 #endif
 
-#define TYPE_ID 1
-#define TYPE_EXPR 2
+#define SP_LIST_TYPE_NONE 0
+#define SP_LIST_TYPE_ID 1
+#define SP_LIST_TYPE_EXPR 2
 
-struct sp_list {
-  struct sp_list *prev;
-  struct sp_list *next;
-  int type;
-  int nest_level;
-  int err_no;
-  lineno_info *line;
-  EXT_ID nest_ext_id[MAX_UNIT_CTL_CONTAINS];
-  union {
-    ID id;
-    expr ep;
-  } info;
-};
+typedef struct sp_list {
+    struct sp_list *next;
+    char type;
+    char err_no;
+    short int nest_level;
+    lineno_info *line;
+    EXT_ID nest_ext_id[MAX_UNIT_CTL_CONTAINS];
+    union {
+        ID id;
+        expr ep;
+    } info;
+} SP_LIST;
 
-struct sp_list_l{
-  struct sp_list *head;
-  struct sp_list *tail;
-};
-
-typedef struct sp_list SP_LIST;
-typedef struct sp_list_l SP_LIST_L;
-
-static SP_LIST_L top_sp_list; /* undefined ID and expr(expv) list */
+SP_LIST *sp_list_head;
 
 void second_pass_init()
 {
-  top_sp_list.head = XMALLOC(SP_LIST*, sizeof(SP_LIST));
-  top_sp_list.tail = XMALLOC(SP_LIST*, sizeof(SP_LIST));
-  top_sp_list.head->prev = NULL;
-  top_sp_list.head->next = top_sp_list.tail;
-  top_sp_list.tail->prev = top_sp_list.head;
-  top_sp_list.tail->next = NULL;
-  top_sp_list.head->err_no = 0;
-  top_sp_list.tail->err_no = 0;
+    sp_list_head = NULL;
 }
 
 static void link_sp_list(SP_LIST *list)
 {
-  top_sp_list.tail->prev->next = list;
-  list->next = top_sp_list.tail;
-  list->prev = top_sp_list.tail->prev;
-  top_sp_list.tail->prev = list;
+    if(sp_list_head == NULL){
+        sp_list_head = list;
+        list->next = NULL;
+    } else {
+        list->next = sp_list_head;
+        sp_list_head = list;
+    }
 }
 
-static SP_LIST *unlink_sp_list(SP_LIST *list)
+void remove_sp_list(SP_LIST *list)
 {
-  SP_LIST *ret;
-
-  ret = list->prev;
-  list->prev->next = list->next;
-  list->next->prev = list->prev;
-  free(list);
-
-  return ret;
+    list->type = SP_LIST_TYPE_NONE;
+    list->err_no = 0;
 }
-
-#define FOREACH_SP_LIST(x) for((x)=top_sp_list.head->next;(x)!=top_sp_list.tail;(x)=(x)->next)
 
 void sp_link_id(ID id, int err_no, lineno_info *line)
 {
   SP_LIST *list;
   int i;
 
-  FOREACH_SP_LIST(list){
-    if(list->info.id == id) return;
+  for(list = sp_list_head; list != NULL; list = list->next){
+      if(list->type == SP_LIST_TYPE_NONE) continue;
+      if(list->info.id == id) return;
   }
 
   /* printf("!!! debug sp_link_id(%s)\n", ID_NAME(id)); */
   list = XMALLOC(SP_LIST*, sizeof(SP_LIST));
   list->next = NULL;
   list->info.id = id;
-  list->type = TYPE_ID;
+  list->type = SP_LIST_TYPE_ID;
   list->nest_level = unit_ctl_level;
   list->err_no = err_no;
   list->line = line;
@@ -93,14 +76,16 @@ void sp_link_expr(expr ep, int err_no, lineno_info *line)
   SP_LIST *list;
   int i;
 
-  FOREACH_SP_LIST(list){
-    if(list->info.ep == ep) return;
+  for(list = sp_list_head; list != NULL; list = list->next){
+      if(list->type == SP_LIST_TYPE_NONE) continue;
+      if(list->info.ep == ep) return;
   }
+
   /* printf("!!! debug sp_link_expr(%s)\n", _expr_code[EXPR_CODE(ep)]); */
   list = XMALLOC(SP_LIST*, sizeof(SP_LIST));
   list->next = NULL;
   list->info.ep = ep;
-  list->type = TYPE_EXPR;
+  list->type = SP_LIST_TYPE_EXPR;
   list->nest_level = unit_ctl_level;
   list->err_no = err_no;
   list->line = line;
@@ -113,31 +98,32 @@ void sp_link_expr(expr ep, int err_no, lineno_info *line)
 static int second_pass_clean()
 {
   int err_num=0;
-  SP_LIST *list = top_sp_list.head;
+  SP_LIST *list = sp_list_head;
+
   while(list){
     SP_LIST *next = list->next;
     /* error */
     switch(list->err_no){
-    case 1:
+    case SP_ERR_UNDEF_TYPE_VAR: /* 1 */
       current_line = list->line;
       error("attempt to use undefined type variable, %s", ID_NAME(list->info.id));
       err_num++;
       break;
-    case 2:
+    case SP_ERR_CHAR_LEN: /* 2*/
       error_at_node(list->info.ep,
                     "character string length must be integer.");
       err_num++;
       break;
-    case 3:
-      current_line = list->line;
-      error("%s: invalid code", SYM_NAME(EXPR_SYM(list->info.ep)));
-      err_num++;
-      break;
-    case 4:
+    case SP_ERR_UNDEF_TYPE_FUNC: /* 4 */
       current_line = list->line;
       TYPE_DESC tp = list->info.id->type;
       if (tp && !TYPE_IS_NOT_FIXED(tp)) break;
       error("attempt to use undefined type function, %s", ID_NAME(list->info.id));
+      err_num++;
+      break;
+    case SP_ERR_FATAL:  /* 3 */
+      current_line = list->line;
+      error("%s: invalid code", SYM_NAME(EXPR_SYM(list->info.ep)));
       err_num++;
       break;
     default:
@@ -593,12 +579,15 @@ int second_pass()
 #endif
 
   SP_LIST *sp_list;
-  FOREACH_SP_LIST(sp_list){
-    int i;
+
+  for(sp_list = sp_list_head; sp_list != NULL; sp_list = sp_list->next){
+      int i;
+
+      if(sp_list->type == SP_LIST_TYPE_NONE) continue;
 
 #ifdef FE_DEBUG
     /* debug */
-    if(sp_list->type == TYPE_ID){ /* ID */
+    if(sp_list->type == SP_LIST_TYPE_ID){ /* ID */
       printf(" undefined symbol name: %s(%p) class=%d: nest=(",
              ID_NAME(sp_list->info.id), ID_SYM(sp_list->info.id), ID_CLASS(sp_list->info.id));
     } else {                    /* expr */
@@ -614,7 +603,7 @@ int second_pass()
 #endif
 
     /* fix ID & expr */
-    if(sp_list->type == TYPE_ID){ /* ID */
+    if(sp_list->type == SP_LIST_TYPE_ID){ /* ID */
       int is_exist = 0;
       if(EXT_PROC_CONT_EXT_SYMS(sp_list->nest_ext_id[0])){
         ID id;
@@ -648,7 +637,7 @@ int second_pass()
               EXT_PROC_ID_LIST(sp_list->nest_ext_id[sp_list->nest_level]) = id->next;
             }
             free(id);
-            sp_list = unlink_sp_list(sp_list);
+            remove_sp_list(sp_list);
             break;
           }
           prev = id;
@@ -661,9 +650,10 @@ int second_pass()
         for(i=sp_list->nest_level; i>=0 && !is_exist; i--){
           ID id;
           FOREACH_ID(id, EXT_PROC_ID_LIST(sp_list->nest_ext_id[i])){
-            if(ID_SYM(id) == EXPR_SYM(sp_list->info.ep)){
+            if(ID_SYM(id) == EXPR_SYM(sp_list->info.ep) &&
+               ID_TYPE(id) != NULL){
               EXPV_TYPE(sp_list->info.ep) = FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id));
-              sp_list = unlink_sp_list(sp_list);
+              remove_sp_list(sp_list);
               is_exist = 1;
               break;
             }

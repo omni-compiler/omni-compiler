@@ -914,7 +914,7 @@ compile_expression(expr x)
             /*         "character string length must be integer."); */
             if(!expv_is_specification(v)){
               EXPV_TYPE(v) = NULL;
-              sp_link_expr((expr)v, 2, current_line);
+              sp_link_expr((expr)v, SP_ERR_CHAR_LEN, current_line);
             }
 /* FEAST change  end  */
             return v;
@@ -1115,13 +1115,15 @@ compile_ident_expression(expr x)
     }
 
     done:
+#ifdef not
     if (ret == NULL) {
 /* FEAST change start */
         /* fatal("%s: invalid code", __func__); */
         ret = expv_sym_term(EXPR_CODE(x),NULL,EXPR_SYM(x));
-        sp_link_expr((expr)ret, 3, current_line);
+        sp_link_expr((expr)ret, SP_ERR_FATAL, current_line);
 /* FEAST change  end  */
     }
+#endif
 
     return ret;
 }
@@ -2239,7 +2241,7 @@ compile_function_call_check_intrinsic_arg_type(ID f_id, expr args, int ignoreTyp
 /* FEAST add start */
             if (TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN){
                 /* ID_TYPE(f_id) = NULL; */
-                sp_link_id(f_id, 4, current_line);
+                sp_link_id(f_id, SP_ERR_UNDEF_TYPE_FUNC, current_line);
             }
 /* FEAST add  end  */
 
