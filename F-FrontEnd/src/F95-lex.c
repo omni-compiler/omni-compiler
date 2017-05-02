@@ -4017,6 +4017,7 @@ struct keyword_token OMP_keywords[ ] =
     {"linear",		OMPKW_LINEAR },
     {"aligned",		OMPKW_ALIGNED },
     {"num_threads",     OMPKW_NUM_THREADS },
+    {"collapse",        OMPKW_COLLAPSE},
     {"copyin",		OMPKW_COPYIN },
     {"do",		OMPKW_DO },
     {"simd",		OMPKW_SIMD },
