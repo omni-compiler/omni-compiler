@@ -1174,7 +1174,7 @@ entity_decl:
         ;
 
 // in fortran specification, `declaration-type-spec`
-type_spec: type_spec0 { $$ = $1; /* need_keyword = TRUE; */ };
+type_spec: type_spec0 { $$ = $1; need_keyword = TRUE; };
 
 type_spec0:
           KW_TYPE '(' IDENTIFIER ')'
@@ -1188,7 +1188,7 @@ type_spec0:
         | CLASS '(' '*' ')'
         { $$ = list1(F03_CLASS, NULL);; }
         | type_keyword kind_selector
-        { $$ = list2(LIST,$1,$2); }
+        { $$ = list2(LIST,$1,$2);}
         | type_keyword length_spec  /* compatibility */
         { $$ = list2(LIST, $1, $2);}
         | KW_CHARACTER char_selector

@@ -297,6 +297,34 @@ expr_is_constant_typeof(x, bt)
         return TRUE;
     } break;
 
+    case FUNCTION_CALL: 
+        if(bt == TYPE_INT || bt == TYPE_UNKNOWN){
+            char *name = NULL;
+            SYMBOL s = EXPV_NAME(EXPR_ARG1(x));
+            ID fId = find_ident(s);
+        
+            if(fId != NULL && PROC_CLASS(fId) == P_INTRINSIC){
+                name = SYM_NAME(ID_SYM(fId));
+            } else if(SYM_TYPE(s) == S_INTR){
+                name = SYM_NAME(s);
+            }
+
+            if(name == NULL) return FALSE; // error
+
+            if (strncasecmp("kind", name, 4) == 0 ||
+                strncasecmp("selected_int_kind", name, 17) == 0) {
+                expv arg = expr_list_get_n(EXPR_ARG2(x), 0);
+                if(arg == NULL) return FALSE;
+                return expr_is_constant(arg);
+            } else if (strncasecmp("selected_real_kind", name, 18) == 0) {
+                expv arg1 = expr_list_get_n(EXPR_ARG2(x), 0);
+                expv arg2 = expr_list_get_n(EXPR_ARG2(x), 1);
+                if(arg1 == NULL || arg2 == NULL) return FALSE; // error
+                return (expr_is_constant(arg1) && expr_is_constant(arg2));
+            }
+        }
+        break;
+
     default:
         break;
     }

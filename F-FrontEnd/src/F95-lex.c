@@ -353,6 +353,7 @@ is_keyword(int k, struct keyword_token *tblPtr) {
     return FALSE;
 }
 
+#if 0
 static int
 seems_type_or_func_attr(int kw) {
     return (kw == KW_CHARACTER ||
@@ -366,6 +367,7 @@ seems_type_or_func_attr(int kw) {
             kw == PURE ||
             kw == RECURSIVE) ? TRUE : FALSE;
 }
+#endif
 
 static char *
 yyidentvalue(void) {
@@ -408,6 +410,7 @@ yylex()
         }
     } else {
         if (curToken == IDENTIFIER) {
+#if 0
             if ((strncasecmp(yyidentvalue(), "function", 8) == 0) &&
                 (seems_type_or_func_attr(the_last_token[1]) == TRUE ||
                  the_last_token[1] == ')')) {
@@ -416,7 +419,9 @@ yylex()
                     char *rest = yyidentvalue() + 8;
                     auxIdentX = GEN_NODE(IDENT, find_symbol(rest));
                 }
-            } else if (is_current_ident_matched("operator") == TRUE &&
+            } else 
+#endif 
+                if (is_current_ident_matched("operator") == TRUE &&
                        the_last_token[1] == ENDINTERFACE) {
                 curToken = the_last_token[0] = OPERATOR;
             } else if (is_current_ident_matched("assignment") == TRUE &&
@@ -664,6 +669,7 @@ token()
          * require keyword
          */
         need_keyword = FALSE;
+        expect_next_token_is_keyword = FALSE;
         t = get_keyword(keywords);
         if (t != UNKNOWN) return(t);
     }

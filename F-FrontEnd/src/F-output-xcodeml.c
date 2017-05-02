@@ -2426,7 +2426,7 @@ getKindParameter(TYPE_DESC tp)
 
     if(IS_DOUBLED_TYPE(tp)) {
         sprintf(buf, "%d", KIND_PARAM_DOUBLE);
-    } else if(v) {
+    } else if(v && EXPV_CODE(v) == INT_CONSTANT) {
         strcpy(buf, getRawString(v));
     } else {
         return NULL;
@@ -4204,7 +4204,7 @@ outx_basicTypeNoCharNoAryNoRef(int l, TYPE_DESC tp)
 
     if (TYPE_KIND(tp) || IS_DOUBLED_TYPE(tp) || tp->codims){
         outx_print(">\n");
-        outx_kind(l + 1, tp);
+        outx_kind(l + 1, tp); // !!!
         if (tp->codims) outx_coShape(l+1, tp);
         outx_close(l, "FbasicType");
     } else {
