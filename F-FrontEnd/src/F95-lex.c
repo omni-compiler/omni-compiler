@@ -13,7 +13,7 @@
 
 // #define LEX_DEBUG 1
 
-/* lexical analyzer, enable open mp.  */
+/* Lexical analyzer, enable open mp.  */
 int OMP_flag = FALSE;
 int XMP_flag = FALSE;
 int ACC_flag = FALSE;
@@ -184,8 +184,11 @@ int last_ln_no = 0;
 /* when read ';', no need for line count up.  */
 static int no_countup = FALSE;
 
-static int the_last_token[2] = { UNKNOWN, UNKNOWN };
 static int expect_next_token_is_keyword = TRUE;
+
+#define MAX_TOKEN_HISTORY_BUF 200
+static int token_history_count = 0;
+static int token_history_buf[MAX_TOKEN_HISTORY_BUF];
 
 static int      read_initial_line _ANSI_ARGS_((void));
 static int      classify_statement _ANSI_ARGS_((void));
@@ -319,8 +322,7 @@ initialize_lex()
 
 static void
 prepare_for_new_statement(void) {
-    the_last_token[0] = UNKNOWN;
-    the_last_token[1] = UNKNOWN;
+    token_history_count = 0;
     expect_next_token_is_keyword = TRUE;
     need_keyword = FALSE;
 }
@@ -369,17 +371,107 @@ seems_type_or_func_attr(int kw) {
 }
 #endif
 
-static char *
-yyidentvalue(void) {
-    return SYM_NAME(EXPR_SYM(yylval.val));
-}
 
-static int
-is_current_ident_matched(const char *str) {
-    return (strcasecmp(str, yyidentvalue()) == 0) ? TRUE : FALSE;
+static void switch_need_keyword(int t)
+{
+    need_keyword = t;
 }
 
 static expr auxIdentX = NULL;
+
+static void type_spec_done()
+{
+    /* printf("type_spec_done!\n"); */
+}
+
+int is_function_statement_context()
+{
+    int i = 0;
+    int plevel = 0;
+    
+    switch(token_history_buf[0]){
+        /* func_prefix */
+    case PURE: 
+    case RECURSIVE:
+    case ELEMENTAL:
+    case MODULE:
+        i++;
+        /* type_spec */
+    case CLASS:
+    case KW_TYPE:
+    case KW_CHARACTER:
+    case KW_COMPLEX:
+    case KW_DOUBLE:
+    case KW_DCOMPLEX:
+    case KW_INTEGER:
+    case KW_LOGICAL:
+    case KW_REAL:
+        i++;
+        if(token_history_buf[i] == '('){
+            plevel++;
+            for(i++; i < token_history_count; i++){
+                if(token_history_buf[i] == ')') plevel--;
+                if(token_history_buf[i] == '(') plevel++;
+                if(plevel == 0) {
+                    i++;
+                    break;
+                }
+            }
+            if(plevel != 0) return FALSE;
+        }
+        if(i == (token_history_count-1)) return TRUE;
+    }
+    return FALSE;
+}
+
+
+int check_ident_context(char *name)
+{
+    int ret = IDENTIFIER;
+
+    switch(token_history_buf[0]){
+        /* type_spec */
+    case CLASS:
+    case KW_TYPE:
+    case KW_CHARACTER:
+    case KW_COMPLEX:
+    case KW_DOUBLE:
+    case KW_DCOMPLEX:
+    case KW_INTEGER:
+    case KW_LOGICAL:
+    case KW_REAL:
+        /* func_prefix */
+    case PURE: 
+    case RECURSIVE:
+    case ELEMENTAL:
+    case MODULE:
+        if(fixed_format_flag){
+            if (strncasecmp(name, "function", 8) == 0 &&
+                is_function_statement_context()){
+                ret = FUNCTION;
+                if (strcasecmp(name,"function") != 0) {
+                    char *rest = name + 8;
+                    auxIdentX = GEN_NODE(IDENT, find_symbol(rest));
+                }
+            }
+        } else { // free format
+            if (strcasecmp(name,"function") == 0 && 
+                is_function_statement_context()){
+                ret = FUNCTION;
+            }
+        }
+        break;
+
+    case ENDINTERFACE:
+        if(token_history_count == 2){
+            if (strcasecmp(name,"operator") == 0) 
+                return OPERATOR;
+            else if (strcasecmp(name,"assignment") == 0)
+                return ASSIGNMENT;
+        }
+    }
+    return ret;
+}
 
 /* lexical analyzer */
 int
@@ -394,8 +486,14 @@ yylex()
         curToken = yylex0();
     }
 
-    the_last_token[1] = the_last_token[0];
-    the_last_token[0] = curToken;
+    // record history counter
+    if(curToken == STATEMENT_LABEL_NO){
+        token_history_count = 0;
+    } else {
+        token_history_buf[token_history_count++] = curToken;
+        if(token_history_count >= MAX_TOKEN_HISTORY_BUF)
+            fatal("token_history_buffer overflow");
+    }
 
     if (auxIdentX != NULL) {
         auxIdentX = NULL;
@@ -403,32 +501,13 @@ yylex()
     }
 
     if (expect_next_token_is_keyword == TRUE) {
-        if (the_last_token[0] == '(' ||
-            the_last_token[0] == LET ||
-            is_keyword(the_last_token[0], keywords) == TRUE) {
+        if (curToken == '(' || curToken == LET ||
+            is_keyword(curToken, keywords) == TRUE) {
             expect_next_token_is_keyword = FALSE;
         }
-    } else {
-        if (curToken == IDENTIFIER) {
-#if 0
-            if ((strncasecmp(yyidentvalue(), "function", 8) == 0) &&
-                (seems_type_or_func_attr(the_last_token[1]) == TRUE ||
-                 the_last_token[1] == ')')) {
-                curToken = the_last_token[0] = FUNCTION;
-                if (is_current_ident_matched("function") != TRUE) {
-                    char *rest = yyidentvalue() + 8;
-                    auxIdentX = GEN_NODE(IDENT, find_symbol(rest));
-                }
-            } else 
-#endif 
-                if (is_current_ident_matched("operator") == TRUE &&
-                       the_last_token[1] == ENDINTERFACE) {
-                curToken = the_last_token[0] = OPERATOR;
-            } else if (is_current_ident_matched("assignment") == TRUE &&
-                       the_last_token[1] == ENDINTERFACE) {
-                curToken = the_last_token[0] = ASSIGNMENT;
-            }
-        }
+    } else if (curToken == IDENTIFIER) {
+        curToken = check_ident_context(SYM_NAME(EXPR_SYM(yylval.val)));
+        token_history_buf[token_history_count-1] = curToken;
     }
 
     Done:
@@ -639,7 +718,6 @@ char *lex_get_line()
     lexstate = LEX_RET_EOS;     /* force terminate */
     return(s);
 }
-
 
 void
 yyerror(s)

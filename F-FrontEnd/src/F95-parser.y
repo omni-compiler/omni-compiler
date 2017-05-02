@@ -1,6 +1,23 @@
 /**
  * \file F95-parser.y
  */
+
+/*
+  yacc: 9 shift/reduce conflicts, 2 reduce/reduce conflicts.
+TO BE RESOLVED for "reduce/reduce conflicts.":
+
+1393: reduce/reduce conflict (reduce 318, reduce 364) on ')'
+state 1393
+	common_var : IDENTIFIER . dims  (306)
+	cray_pointer_var : IDENTIFIER .  (318)
+	dims : .  (364)
+
+2058: reduce/reduce conflict (reduce 751, reduce 795) on EOS
+state 2058
+	xmp_nodes_clause : IDENTIFIER '(' xmp_subscript_list ')' '=' '*' .  (751)
+	xmp_obj_ref : '*' .  (795)
+*/
+
 /* F95 parser */
 %token EOS              /* end of statement */
 %token CONSTANT         /* any constant */
@@ -229,7 +246,6 @@
 %left '*' '/'
 %right POWER
 %left '%'
-
 
 %token PRAGMA_SLINE /* do not parse omp token.  */
 %token PRAGMA_HEAD /*  pragma leading char like !$ etc.  */
@@ -473,6 +489,9 @@ gen_default_real_kind(void) {
 
 int enable_need_type_keyword = TRUE;
 
+static void switch_need_keyword(int t);
+static void type_spec_done();
+
 %}
 
 %type <val> statement label
@@ -515,7 +534,7 @@ program: /* empty */
         | program one_statement EOS
         ;
 
-KW: { need_keyword = TRUE; };
+KW: { switch_need_keyword(TRUE); };
 
 TYPE_KW: { if (enable_need_type_keyword == TRUE) need_type_keyword = TRUE; };
 
@@ -628,24 +647,26 @@ statement:      /* entry */
           { $$ = list4(F_SUBROUTINE_STATEMENT, $3, $4, $1, $6); }
         | ENDSUBROUTINE name_or_null
           { $$ = list1(F95_ENDSUBROUTINE_STATEMENT,$2); }
+/* FUNCTION declaration */
         | FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
           { $$ = list6(F_FUNCTION_STATEMENT, $2, $3, NULL, NULL, $5, $6); }
         | func_prefix FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
           { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, NULL, $1, $6, $7); }
-        | type_spec FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $3, $4, $1, NULL, $6, $7); }
-        | type_spec func_prefix FUNCTION IDENTIFIER dummy_arg_list
+        | type_spec KW FUNCTION IDENTIFIER dummy_arg_list KW result_opt bind_opt
+          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, NULL, $7, $8); }
+        | type_spec KW func_prefix FUNCTION IDENTIFIER dummy_arg_list
           KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $1, $2, $7, $8); }
-        | func_prefix type_spec FUNCTION IDENTIFIER dummy_arg_list
+          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $1, $3, $8, $9); }
+        | func_prefix type_spec KW FUNCTION IDENTIFIER dummy_arg_list
           KW result_opt bind_opt
-          { $$ = list6(F_FUNCTION_STATEMENT, $4, $5, $2, $1, $7, $8); }
+          { $$ = list6(F_FUNCTION_STATEMENT, $5, $6, $2, $1, $8, $9); }
+/* END: FUNCTION */
         | ENDFUNCTION name_or_null
           { $$ = list1(F95_ENDFUNCTION_STATEMENT,$2); }
         | type_spec COL2_or_null declaration_list
           { $$ = list3(F_TYPE_DECL,$1,$3,NULL); }
-        | type_spec attr_spec_list COL2 declaration_list
-          { $$ = list3(F_TYPE_DECL,$1,$4,$2); }
+        | type_spec KW attr_spec_list COL2 declaration_list
+          { $$ = list3(F_TYPE_DECL,$1,$5,$3); }
         | ENTRY IDENTIFIER dummy_arg_list KW result_opt
           { $$ = list3(F_ENTRY_STATEMENT,$2,$3, $5); }
         | CONTAINS
@@ -1157,7 +1178,7 @@ declaration_list:
         ;
 
 entity_decl:
-          IDENTIFIER  dims image_dims length_spec
+          IDENTIFIER dims image_dims length_spec
         { $$ = list5(LIST,$1,$2,$4,NULL,$3); }
         | IDENTIFIER  dims image_dims length_spec '=' expr
         { $$ = list5(LIST,$1,$2,$4,$6,$3);}
@@ -1174,7 +1195,7 @@ entity_decl:
         ;
 
 // in fortran specification, `declaration-type-spec`
-type_spec: type_spec0 { $$ = $1; need_keyword = TRUE; };
+type_spec: type_spec0 { $$ = $1; type_spec_done(); }
 
 type_spec0:
           KW_TYPE '(' IDENTIFIER ')'
