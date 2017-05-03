@@ -976,7 +976,7 @@ declare_function(ID id)
                         TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
                         TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC;
                         ID_TYPE(id) = tp;
-                    } else if (!IS_FUNCTION_TYPE(tp)) {
+                    } else if (!IS_SUBR(tp) && !IS_FUNCTION_TYPE(tp)) {
                         ID_TYPE(id) = function_type(tp);
                         /*
                          * For F_Front, There is no difference between an
@@ -1001,7 +1001,7 @@ declare_function(ID id)
                     }
                     PROC_CLASS(id) = P_UNDEFINEDPROC;
                 } else {
-                    if (!IS_FUNCTION_TYPE(tp)) {
+                    if (!IS_SUBR(tp) && !IS_FUNCTION_TYPE(tp)) {
                         ID_TYPE(id) = function_type(tp);
                         TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
                     }
