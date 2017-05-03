@@ -1,9 +1,3 @@
-/*
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file F95-lex.c
  */
@@ -186,9 +180,10 @@ static int no_countup = FALSE;
 
 static int expect_next_token_is_keyword = TRUE;
 
-#define MAX_TOKEN_HISTORY_BUF 200
+static int token_history_buf_size = 200;
+#define ADD_HISTORY_BUF_SIZE 200
 static int token_history_count = 0;
-static int token_history_buf[MAX_TOKEN_HISTORY_BUF];
+static int *token_history_buf = NULL;
 
 static int      read_initial_line _ANSI_ARGS_((void));
 static int      classify_statement _ANSI_ARGS_((void));
@@ -477,6 +472,9 @@ int check_ident_context(char *name)
 int
 yylex()
 {
+  if(token_history_buf == NULL)
+    token_history_buf = malloc(sizeof(int) * token_history_buf_size);
+
     int curToken = UNKNOWN;
 
     if (auxIdentX != NULL) {
@@ -485,14 +483,24 @@ yylex()
     } else {
         curToken = yylex0();
     }
-
+    
     // record history counter
     if(curToken == STATEMENT_LABEL_NO){
         token_history_count = 0;
-    } else {
+    } 
+    else {
         token_history_buf[token_history_count++] = curToken;
-        if(token_history_count >= MAX_TOKEN_HISTORY_BUF)
-            fatal("token_history_buffer overflow");
+        if(token_history_count >= token_history_buf_size){
+	  int *tmp;
+	  token_history_buf_size += ADD_HISTORY_BUF_SIZE;
+	  if((tmp = (int *)realloc(token_history_buf, sizeof(int)*token_history_buf_size)) == NULL) {
+	    free(token_history_buf);
+	    fatal("Cannot allocate token_history_buffer");
+	  }
+	  else {
+	    token_history_buf = tmp;
+	  }
+	}
     }
 
     if (auxIdentX != NULL) {
