@@ -11,7 +11,7 @@ OUT_size= size1.x size1-2.x #sample #size1-err
 #OUT_rt  =  inquiry
 OUT_NG =  allo2NG.x
 
-OUT_allo= allo1.x allo3.x 	
+OUT_allo= allo1.x allo3.x  fig2.x
 #allo4.x restriction: excessive auto-dealloc of allocatable-dummy-coarray
 
 OUT_epi= allodeallo.x #epi2 #epi1

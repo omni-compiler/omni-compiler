@@ -186,19 +186,19 @@ void _XMPF_coarray_init(void)
                           );
 
 
-  _XMPF_set_coarrayMsg(TRUE);
-
   env1 = getenv("XMPF_COARRAY_MSG");
   if (env1 != NULL) {
     work = strdup(env1);
     tok = strtok(work, delim);
     for (i = 1; tok != NULL; i++, tok = strtok(NULL, delim)) {
       if (_XMPF_this_image_current() == i) {
-        _XMPF_coarrayDebugPrint("Accepted XMPF_COARRAY_MSG=%s\n", env1);
+        _XMPF_coarrayDebugPrint("Accepted XMPF_COARRAY_MSG=%s as %s\n", env1, tok);
         _set_coarrayMsg(atoi(tok));
       }
     }
   }
+
+  _XMPF_set_coarrayMsg(TRUE);
 
   env2 = getenv("XMPF_COARRAY_POOL");
   if (env2 != NULL) {
@@ -349,7 +349,7 @@ void __XMPF_coarrayDebugPrint(char *format, ...)
   //  if (!_XMPF_coarrayMsg)
   //    return;
 
-  char work[300];
+  char work[800];
   va_list list;
   va_start(list, format);
   vsprintf(work, format, list);

@@ -1,4 +1,4 @@
-.PHONY: all install clean tests clean-tests run-tests large-tests clean-large-tests run-large-tests release remote-tests distclean submit-tests submit1-tests submit2-tests submit3-tests submit4-tests showlog-tests cleanlog-tests submit-large-tests showlog-large-tests cleanlog-large-tests
+.PHONY: all install clean tests clean-tests run-tests tests-F2003 clean-tests-F2003 run-tests-F2003 large-tests clean-large-tests run-large-tests release remote-tests distclean submit-tests submit1-tests submit2-tests submit3-tests submit4-tests showlog-tests cleanlog-tests submit-large-tests showlog-large-tests cleanlog-large-tests
 
 SUBDIRS=libxmp/include libxmp/src libxmpf/include libxmpf/src libxmp/src_threads \
 	C-FrontEnd/src F-FrontEnd/src Driver/src libtlog/src_threads libtlog/src_mpi \
@@ -73,6 +73,7 @@ TESTDIRS4 = "local-view/coarray/C" "local-view/other/C" "local-view/other/F" \
 	    "local-view/coarray/F/CFOLD"
 
 TESTDIRS  = $(TESTDIRS1) $(TESTDIRS2) $(TESTDIRS3) $(TESTDIRS4)
+TESTF2003DIR = $(BASE_TESTDIR)/Fortran2003
 
 IS_GASNET=@GASNET@
 ifeq ($(IS_GASNET), $(TRUE))
@@ -120,6 +121,15 @@ run-tests:
 	  $(MAKE) $(TEST_DEFS) run -C $(BASE_TESTDIR)$$subdir; \
 	  if test $$? -ne 0; then exit 1; fi ;\
 	done
+
+tests-F2003:
+	@$(MAKE) $(TEST_DEFS) -C $(TESTF2003DIR)
+
+clean-tests-F2003:
+	cd $(TESTF2003DIR) && $(MAKE) $(TEST_DEFS) clean
+
+run-tests-F2003:
+	$(MAKE) $(TEST_DEFS) run -C $(TESTF2003DIR)
 
 submit-tests:
 	@for subdir in $(TESTDIRS); do \

@@ -412,12 +412,12 @@ size_t _roundUpElementSize(int count, size_t element, char *name, int namelen)
     /* round up */
     elementRU = ROUND_UP_COMM(element);
     _XMPF_coarrayDebugPrint("round-up size of scalar variable "
-                            "%d to %u (name=\"%*s\")\n",
+                            "%d to %u (name=\"%.*s\")\n",
                             element, elementRU, namelen, name);
   } else {
     /* restriction */
     _XMPF_coarrayFatal("boundary violation detected in coarray allocation\n"
-                       "  element size %d (name=\"%*s\")\n",
+                       "  element size %d (name=\"%.*s\")\n",
                        element, namelen, name);
   }
 
@@ -510,6 +510,27 @@ void xmpf_coarray_free_(void **descPtr)
   }
 }
 
+void xmpf_coarray_deregmem_(void **descPtr)
+{
+  CoarrayInfo_t *cinfo = (CoarrayInfo_t*)(*descPtr);
+  MemoryChunk_t *chunk = cinfo->parent;
+
+  // SYNCALL_AUTO
+  xmpf_sync_all_auto_();
+
+  _XMPF_coarrayDebugPrint("XMPF_COARRAY_DEREGMEM_ for MemoryChunk %s\n",
+                          _dispMemoryChunk(chunk));
+
+  // unlink and free CoarrayInfo keeping MemoryChunk
+  _unlinkCoarrayInfo(cinfo);
+  _freeCoarrayInfo(cinfo);
+
+  if (IsEmptyMemoryChunk(chunk)) {
+    // unlink this memory chunk
+    _unlinkMemoryChunk(chunk);
+  }
+}
+
 
 /*****************************************\
   handling memory pool
@@ -585,7 +606,7 @@ void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
 
   CoarrayInfo_t *cinfo;
 
-  _XMPF_coarrayDebugPrint("COARRAY_ALLOC_STATIC_ varname=\'%*s\'\n"
+  _XMPF_coarrayDebugPrint("COARRAY_ALLOC_STATIC_ varname=\'%.*s\'\n"
                           "  *count=%d, *element=%d, nbytes=%u\n",
                           *namelen, name, *count, *element, nbytes);
 
@@ -623,7 +644,7 @@ void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
   // boundary check
   if ((size_t)(*baseAddr) % MALLOC_UNIT != 0) {  // check base address
     /* restriction */
-    _XMPF_coarrayFatal("boundary violation detected for coarray \'%*s\'\n"
+    _XMPF_coarrayFatal("boundary violation detected for coarray \'%.*s\'\n"
                        "  baseAddr=%p\n",
                        *namelen, name, *baseAddr);
   }
@@ -631,7 +652,7 @@ void xmpf_coarray_regmem_static_(void **descPtr, void **baseAddr,
   size_t nbytes = (size_t)(*count) * (size_t)(*element);
   //size_t nbytesRU = ROUND_UP_MALLOC(nbytes);
 
-  _XMPF_coarrayDebugPrint("COARRAY_REGMEM_STATIC_ varname=\'%*s\'\n",
+  _XMPF_coarrayDebugPrint("COARRAY_REGMEM_STATIC_ varname=\'%.*s\'\n",
                           *namelen, name);
 
   //cinfo = _regmemStaticCoarray(*baseAddr, nbytesRU);
@@ -763,7 +784,7 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
   MemoryChunk_t *myChunk;
 
   _XMPF_coarrayDebugPrint("XMPF_COARRAY_FIND_DESCPTR_ "
-                          "(varname=\'%*s\', isAllocatable=%s)\n",
+                          "(varname=\'%.*s\', isAllocatable=%s)\n",
                           *namelen, name,
                           *isAllocatable ? "yes" : "no");
 
@@ -794,7 +815,7 @@ void xmpf_coarray_find_descptr_(void **descPtr, char *baseAddr,
   _XMPF_coarrayDebugPrint("*** ILLEGAL: home MemoryChunk was not found. "
                           "baseAddr=%p\n", baseAddr);
 
-  _XMPF_coarrayFatal("The actual argument corresponding to \'%*s\' "
+  _XMPF_coarrayFatal("The actual argument corresponding to \'%.*s\' "
                      "should be a coarray.\n", *namelen, name);
 }
 
@@ -1010,6 +1031,8 @@ void _garbageCollectMallocHistory()
     _unlinkMemoryChunkOrder(chunkP);
     _freeMemoryChunkOrder(chunkP);
   }
+
+  _XMPF_coarrayDebugPrint("[[[GARBAGE COLLECTION]]] ends\n");
 }
 
 
@@ -1262,11 +1285,11 @@ char *_dispMemoryChunk(MemoryChunk_t *chunk)
   CoarrayInfo_t *cinfo;
   int count;
 
-  (void)sprintf(work, "<%p %ud bytes ", chunk, (unsigned)chunk->nbytes);
+  (void)sprintf(work, "<%p %u bytes ", chunk, (unsigned)chunk->nbytes);
 
   count = 0;
   forallCoarrayInfo(cinfo, chunk) {
-    if (++count == 4) {
+    if (++count == 6) {
       strcat(work, "...");
       break;
     } 

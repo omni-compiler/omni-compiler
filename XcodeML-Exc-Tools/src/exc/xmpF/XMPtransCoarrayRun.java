@@ -50,7 +50,8 @@ public class XMPtransCoarrayRun
   final static String COARRAY_MALLOC_NAME    = "xmpf_coarray_malloc_generic";
   final static String COARRAY_REGMEM_NAME    = "xmpf_coarray_regmem_generic";
   final static String COARRAY_DEALLOC_NAME   = "xmpf_coarray_dealloc_generic";
-  final static String COARRAY_UNREGMEM_NAME  = "xmpf_coarray_unregmem_generic";
+  final static String COARRAY_DEREGMEM_NAME  = "xmpf_coarray_deregmem";
+  //---------------------------------------------------------------------------
   final static String NUM_IMAGES_NAME        = "xmpf_num_images_generic";
   final static String THIS_IMAGE_NAME        = "xmpf_this_image_generic";
   final static String COBOUND_NAME           = "xmpf_cobound_generic";
@@ -2427,13 +2428,11 @@ public class XMPtransCoarrayRun
             ArrayList<Xobject> fstmts =
               genDeallocateStmt(xobj, coarrays);
 
-            // keep the DEALLOCATE stmtatement if useRegMem
             ///////////////////////////////////
-            /////   TEMPORARY
             //////   exception for derived type needed
             ///////////////////////////////////
-            if (!useMalloc)
-              st.insert(st.getExpr());
+            //  if (!useMalloc)
+            //    st.insert(st.getExpr());
 
             // insert generated stmts. before the DEALLOCATE stmt.
             LineNo lineno = xobj.getLineNo();
@@ -2441,8 +2440,11 @@ public class XMPtransCoarrayRun
               fstmt.setLineNo(lineno);
               st.insert(fstmt);
             }
+
             // delete the DEALLOCATE statement
-            st.remove();
+            // keep the DEALLOCATE stmtatement if useRegMem
+            if (useMalloc)
+              st.remove();
           }
           break;
         }
@@ -2671,7 +2673,7 @@ public class XMPtransCoarrayRun
     if (coarray.usesMalloc())
       subrName = COARRAY_DEALLOC_NAME;
     else
-      subrName = COARRAY_UNREGMEM_NAME;
+      subrName = COARRAY_DEREGMEM_NAME;
     if (args.hasNullArg())
       XMP.fatal("generated null argument for " + subrName +
                 "(makeStmt_coarrayDealloc)");

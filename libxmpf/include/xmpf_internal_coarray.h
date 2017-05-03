@@ -83,6 +83,7 @@ typedef struct _coarrayInfo_t CoarrayInfo_t;
 extern void xmpf_coarray_malloc_(void **descPtr, char **crayPtr,
                                  int *count, int *element, void **tag);
 extern void xmpf_coarray_free_(void **descPtr);
+extern void xmpf_coarray_deregmem_(void **descPtr);
 
 extern void xmpf_coarray_malloc_pool_(void);
 extern void xmpf_coarray_alloc_static_(void **descPtr, char **crayPtr,
