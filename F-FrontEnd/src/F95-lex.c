@@ -186,7 +186,7 @@ static int no_countup = FALSE;
 
 static int expect_next_token_is_keyword = TRUE;
 
-#define MAX_TOKEN_HISTORY_BUF 100
+#define MAX_TOKEN_HISTORY_BUF 200
 static int token_history_count = 0;
 static int token_history_buf[MAX_TOKEN_HISTORY_BUF];
 
@@ -491,6 +491,8 @@ yylex()
         token_history_count = 0;
     } else {
         token_history_buf[token_history_count++] = curToken;
+        if(token_history_count >= MAX_TOKEN_HISTORY_BUF)
+            fatal("token_history_buffer overflow");
     }
 
     if (auxIdentX != NULL) {
@@ -716,7 +718,6 @@ char *lex_get_line()
     lexstate = LEX_RET_EOS;     /* force terminate */
     return(s);
 }
-
 
 void
 yyerror(s)
