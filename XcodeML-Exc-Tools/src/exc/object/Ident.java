@@ -345,6 +345,8 @@ public class Ident extends Xobject
     @Override
     public Xobject cfold(Block block)
     {
+      // System.out.println("cfold: name='"+name+"' fparam_value="+fparam_value);
+      
       if (Type().isFparameter() && fparam_value != null) {
         // I don't know why but fparam_value is always in this form.
         if (fparam_value.Nargs() == 2 && fparam_value.getArg(1) == null) {
@@ -355,22 +357,22 @@ public class Ident extends Xobject
         }
       }
 
-      if (declared_module != null) {
-        XobjectDefEnv xobjDefEnv = ((FunctionBlock)block).getEnv();
-        XobjectFile xobjFile = (XobjectFile)xobjDefEnv;
+      // if (declared_module != null) {
+      //   XobjectDefEnv xobjDefEnv = ((FunctionBlock)block).getEnv();
+      //   XobjectFile xobjFile = (XobjectFile)xobjDefEnv;
 
-        if (xobjFile.findVarIdent(declared_module) == null)
-          XmLog.fatal("Ident.cfold: not found module name in globalSymbols: " + 
-                      declared_module);
+      //   if (xobjFile.findVarIdent(declared_module) == null)
+      //     XmLog.fatal("Ident.cfold: not found module name in globalSymbols: " + 
+      //                 declared_module);
 
-        for (XobjectDef punit: xobjFile.getDefs()) {
-          if (declared_module.equals(punit.getName())) {
-            // found the module that declares this ident
-            Ident ident2 = punit.getDef().findVarIdent(name);
-            return ident2.cfold(block);
-          }
-        }
-      }
+      //   for (XobjectDef punit: xobjFile.getDefs()) {
+      //     if (declared_module.equals(punit.getName())) {
+      //       // found the module that declares this ident
+      //       Ident ident2 = punit.getDef().findVarIdent(name);
+      //       return ident2.cfold(block);
+      //     }
+      //   }
+      //}
 
       return this.copy();
     }
