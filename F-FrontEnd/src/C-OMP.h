@@ -108,8 +108,9 @@ enum OMP_pragma_clause {
 
     OMP_DIR_UNTIED = 30,
     OMP_DATA_FINAL = 31,
-    OMP_DIR_MERGEABLE = 32
+    OMP_DIR_MERGEABLE = 32,
 
+    OMP_DIR_COLLAPSE=33
 };
 
 #define IS_OMP_DATA_CLAUSE(c) \

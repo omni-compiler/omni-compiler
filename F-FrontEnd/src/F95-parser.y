@@ -274,6 +274,7 @@ state 2058
 %token OMPKW_LINEAR
 %token OMPKW_ALIGNED
 %token OMPKW_NUM_THREADS
+%token OMPKW_COLLAPSE
 %token OMPKW_COPYIN
 %token OMPKW_DO
 %token OMPKW_SIMD
@@ -2427,6 +2428,8 @@ omp_clause:
 	  { $$ = OMP_LIST(OMP_DIR_ORDERED,NULL); }
         | OMPKW_NUM_THREADS '(' expr ')'
 	{ $$ = OMP_LIST(OMP_DIR_NUM_THREADS,$3); }
+        | OMPKW_COLLAPSE '(' expr ')'
+	{ $$ = OMP_LIST(OMP_DIR_COLLAPSE,$3); }
 	| OMPKW_DEPEND '(' omp_depend_op ':' omp_list ')'
 	{ $$ = OMP_LIST($3,$5); }
         | OMPKW_FINAL '(' expr ')'
