@@ -90,7 +90,7 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
     if (ID_CLASS(parent_id) != CL_UNKNOWN) {
         if (debug_flag) fprintf(debug_fp, "parent_id has explicit class\n");
 
-        if (ID_CLASS(parent_id) == CL_PROC) {
+        if (ID_CLASS(parent_id) == CL_PROC && ID_TYPE(parent_id) != NULL) {
             if (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(parent_id))) ||
                 FUNCTION_TYPE_HAS_IMPLICIT_RETURN_TYPE(ID_TYPE(parent_id)) ||
                 FUNCTION_TYPE_HAS_UNKNOWN_RETURN_TYPE(ID_TYPE(parent_id))) {
@@ -101,7 +101,6 @@ conflict_parent_vs_sub_program_unit(ID parent_id)
                 if (debug_flag) fprintf(debug_fp, "parent_id seems a module function/subroutine\n");
                 return FALSE;
             } else if (PROC_CLASS(parent_id) == P_UNDEFINEDPROC &&
-                       ID_TYPE(parent_id) != NULL &&
                        IS_PROCEDURE_TYPE(ID_TYPE(parent_id))) {
                 if (debug_flag) fprintf(debug_fp, "parent_id seems a undefined function/subroutine\n");
                 return FALSE;
