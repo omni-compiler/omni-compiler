@@ -33,7 +33,6 @@ OPENMPI_PATH=/opt/openmpi
 MPICH_PATH=/opt/mpich
 
 ## Clean Temporal files and dirs
-
 function clean_files()
 {
     echo "Clean temporal files ... "
@@ -61,6 +60,7 @@ else
     omni_exec omni_exec cp -a ${OMNI} ${LOCAL_TMP_DIR}/${OMNI}
     omni_exec cd ${LOCAL_TMP_DIR}/${OMNI}
     omni_exec make clean-tests > /dev/null
+    omni_exec make clean-tests-F2003 > /dev/null
     omni_exec make clean > /dev/null
     omni_exec cd ..
     omni_exec tar cfj ${ARCHIVE} ${OMNI}
@@ -103,8 +103,9 @@ echo "----------------------------------------------"
 CMD="export PATH=${OPENMPI_PATH}/bin:${GASNET_OPENMPI_INSTALL_DIR}/bin:$PATH && \
      cd ${GASNET_OPENMPI_BASE_DIR}/${OMNI} && \
      sh autogen.sh && \
-     ./configure --prefix=${GASNET_OPENMPI_INSTALL_DIR} --with-gasnet=${GASNET_OPENMPI_PATH} && \
-     make -j16 && make install && make clean-tests && make tests -j16 && make run-tests"
+     ./configure --prefix=${GASNET_OPENMPI_INSTALL_DIR} --with-gasnet=${GASNET_OPENMPI_PATH} && make -j16 && make install && \
+     make clean-tests && make tests -j16 && make run-tests && \
+     make clean-tests-F2003 && make tests-F2003 -j16 && make run-tests-F2003"
 omni_exec ssh ${REMOTE_HOST} ${CMD}
 
 ## GASNet and mpich
@@ -115,8 +116,9 @@ echo "--------------------------------------------"
 CMD="export PATH=${MPICH_PATH}/bin:${GASNET_MPICH_INSTALL_DIR}/bin:$PATH && \
      cd ${GASNET_MPICH_BASE_DIR}/${OMNI} && \
      sh autogen.sh && \
-     ./configure --prefix=${GASNET_MPICH_INSTALL_DIR} --with-gasnet=${GASNET_MPICH_PATH} && \
-     make -j16 && make install && make clean-tests && make tests -j16 && make run-tests"
+     ./configure --prefix=${GASNET_MPICH_INSTALL_DIR} --with-gasnet=${GASNET_MPICH_PATH} && make -j16 && make install && \
+     make clean-tests && make tests -j16 && make run-tests && \
+     make clean-tests-F2003 && make tests-F2003 -j16 && make run-tests-F2003"
 omni_exec ssh ${REMOTE_HOST} ${CMD}
 
 ## OpenMPI
@@ -127,8 +129,9 @@ echo "-----------------------------------"
 CMD="export PATH=${OPENMPI_PATH}/bin:${OPENMPI_INSTALL_DIR}/bin:$PATH && \
      cd ${OPENMPI_BASE_DIR}/${OMNI} && \
      sh autogen.sh && \
-     ./configure --prefix=${OPENMPI_INSTALL_DIR} && \
-     make -j16 && make install && make clean-tests && make tests -j16 && make run-tests"
+     ./configure --prefix=${OPENMPI_INSTALL_DIR} && make -j16 && make install && \
+     make clean-tests && make tests -j16 && make run-tests && \
+     make clean-tests-F2003 && make tests-F2003 -j16 && make run-tests-F2003"
 omni_exec ssh ${REMOTE_HOST} ${CMD}
 
 ## MPICH
@@ -139,8 +142,9 @@ echo "---------------------------------"
 CMD="export PATH=${MPICH_PATH}/bin:${MPICH_INSTALL_DIR}/bin:$PATH && \
      cd ${MPICH_BASE_DIR}/${OMNI} && \
      sh autogen.sh && \
-     ./configure --prefix=${MPICH_INSTALL_DIR} && \
-     make -j16 && make install && make clean-tests && make tests -j16 && make run-tests"
+     ./configure --prefix=${MPICH_INSTALL_DIR} && make -j16 && make install && \
+     make clean-tests && make tests -j16 && make run-tests && \
+     make clean-tests-F2003 && make tests-F2003 -j16 && make run-tests-F2003"
 omni_exec ssh ${REMOTE_HOST} ${CMD}
 
 echo "------------------"
