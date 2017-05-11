@@ -1,0 +1,18 @@
+#!/bin/sh
+#PJM -L rscunit=gwmpc
+#PJM -L rscgrp=batch
+#PJM -j        
+#PJM -L node=2
+#PJM --mpi proc=3
+#PJM -L elapse=00:02:00
+
+basename `dirname $PWD`
+echo "export XMP_ONESIDED_HEAP_SIZE=70M"
+export XMP_ONESIDED_HEAP_SIZE=70M
+
+for f in @OUT@; do
+    echo $f
+    mpiexec ./$f
+done
+
+echo

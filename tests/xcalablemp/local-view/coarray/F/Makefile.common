@@ -89,11 +89,29 @@ submit4: all4 RUN RUN/go4.sh $(OUT4:%=RUN/%)
 RUN:
 	mkdir RUN
 
-RUN/go.sh: go.template Makefile
-	sed "s/@OUT@/$(OUT)/" $< >$@
+RUN/go.sh:
+	rm -rf $@
+	@if test $(FX10) == '0'; then\
+	  sed "s/@OUT@/$(OUT)/" >$@ go.template;\
+	elif ( hostname | egrep -q '^greatwave' ); then\
+	  if test -f ./go-hokusai.template; then\
+	    sed "s/@OUT@/$(OUT)/" >$@ ./go-hokusai.template;\
+	  else\
+	    sed "s/@OUT@/$(OUT)/" >$@ ../go-hokusai.template;\
+	  fi;\
+	fi
 
-RUN/go4.sh: go.template Makefile
-	sed "s/@OUT@/$(OUT4)/" $< >$@
+RUN/go4.sh:
+	rm -rf $@
+	@if test $(FX10) == '0'; then\
+	  sed "s/@OUT@/$(OUT4)/" >$@ go.template;\
+	elif ( hostname | egrep -q '^greatwave' ); then\
+	  if test -f ./go-hokusai.template; then\
+	    sed "s/@OUT@/$(OUT4)/" >$@ ./go-hokusai.template;\
+	  else\
+	    sed "s/@OUT@/$(OUT4)/" >$@ ../go-hokusai.template;\
+	  fi;\
+	fi
 
 showlog:
 	cat RUN/go.sh.e* RUN/go.sh.o*
