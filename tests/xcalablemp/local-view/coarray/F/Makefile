@@ -15,7 +15,7 @@ DIRS_SUBMIT=LIB GET PUT SCOPE CFOLD MIX ALLOC STRUCT
 #   execution of the program.
 # For more infos., see the blue note and comment in XMPtransCoarrayRun.java
 
-MAKEDEF = "ONESIDED_LAYER=`find_layer.sh`"
+MAKEDEF = "ONESIDED_LAYER=`find_layer.sh`" "EXEC_FC=`find_ecec_fc.sh`"
 
 .PHONY: clean all run rerun submit showlog cleanlog
 
