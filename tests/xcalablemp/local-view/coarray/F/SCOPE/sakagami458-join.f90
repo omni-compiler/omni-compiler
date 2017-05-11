@@ -1,10 +1,10 @@
-module sdata
+module sdata2
 !! include 'xmp_coarray.h'
 parameter(lx=100,ly=50)
 real*8 :: a(100,50)[*]
 end module
 
-use sdata
+use sdata2
 do i = 1, lx
    a(i,1)[2] = i
 end do
