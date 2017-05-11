@@ -285,10 +285,11 @@ extern void _XMP_reduction_loc(int dim, void *loc, int datatype);
 extern void _XMP_reduction(void *data_addr, int count, int datatype, int op, void *r_desc, int num_locs);
 
 // xmp_reduce_acc.c
-extern void _XMP_reduce_acc_NODES_ENTIRE(void *nodes, void *dev_addr, int count, int datatype, int op);
-extern void _XMP_reduce_acc_FLMM_NODES_ENTIRE(void *nodes, void *addr, int count, int datatype, int op, int num_locs, ...);
+//extern void _XMP_reduce_acc_NODES_ENTIRE(void *nodes, void *dev_addr, int count, int datatype, int op);
+//extern void _XMP_reduce_acc_FLMM_NODES_ENTIRE(void *nodes, void *addr, int count, int datatype, int op, int num_locs, ...);
 extern void _XMP_reduce_acc_CLAUSE(void *dev_addr, int count, int datatype, int op);
 extern void _XMP_reduce_acc_FLMM_CLAUSE(void *data_addr, int count, int datatype, int op, int num_locs, ...);
+extern void _XMP_reduction_acc(void *data_addr, int count, int datatype, int op, void *r_desc, int num_locs);
 
 
 // xmp_reflect.c

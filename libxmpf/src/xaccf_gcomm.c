@@ -26,11 +26,7 @@ void xaccf_reduction__(void *data_addr, int *count, int *datatype, int *op,
     _XMP_fatal("reduce_FLMM is not implemented for XACC");
   }
 
-  if(comm_mode >= 1){
-    xmpf_reduction__(data_addr, count, datatype, op, r_desc, num_locs);
-  }else{
-    _XMP_fatal("reduce is not implemented for XACC_COMM_MODE=0");
-  }
+  _XMP_reduction_acc(data_addr, *count, *datatype, *op, *r_desc, *num_locs);
 }
 
 void xaccf_reduction_loc__(int *dim, void *loc, int *datatype)

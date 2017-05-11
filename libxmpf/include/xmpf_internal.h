@@ -247,3 +247,10 @@ extern void _XMP_ref_set_loop_info(_XMP_object_ref_t *rp, int i, int t_idx, int 
 extern void _XMP_ref_set_dim_info(_XMP_object_ref_t *rp, int i, int type, int lb, int ub, int st);
 extern void _XMP_ref_init(_XMP_object_ref_t *rp);
 extern void _XMP_ref_dealloc(_XMP_object_ref_t *rp);
+
+
+#ifdef _XMP_XACC
+/* From xmp_reduce_acc.c */
+void _XMP_reduction_acc(void *data_addr, int count, int datatype, int op,
+			_XMP_object_ref_t *r_desc, int num_locs);
+#endif

@@ -559,7 +559,7 @@ public class XMPtranslateLocalPragma {
     addProfileFunctions(profileClause, reflectFuncCallBlock, "reflect", pb);
   }
 
-  static Block encloseWithAccHostDataDirective(Block block, XobjList useDeviceClauseArgs) throws XMPexception {
+  static Block encloseWithAccHostDataConstruct(Block block, XobjList useDeviceClauseArgs) throws XMPexception {
     if(useDeviceClauseArgs == null || useDeviceClauseArgs.isEmpty()){
       throw new XMPexception("empty argument for use_device clause");
     }
@@ -1885,7 +1885,7 @@ public class XMPtranslateLocalPragma {
     pb.replace(reductionBodyBlock);
   }
 
-  private Block createReductionFuncCallBlock(PragmaBlock pb) throws XMPexception {
+  private Block createReductionFuncCallBlock(PragmaBlock pb, Boolean isAcc) throws XMPexception {
 
     BlockList ret_body = Bcons.emptyBody();
     
@@ -1907,10 +1907,7 @@ public class XMPtranslateLocalPragma {
     }
     else on_ref_arg = Xcons.Cnull();
 
-    //boolean isAcc = info.isAcc();
-    //Ident f = env.declInternIdent(isAcc? XMP.reduction_acc_f : XMP.reduction_f, Xtype.FsubroutineType);
-    //Ident f2 = env.declInternIdent(isAcc? XMP.reduction_loc_acc_f : XMP.reduction_loc_f, Xtype.FsubroutineType);
-    Ident f = _globalDecl.declExternFunc("_XMP_reduction", Xtype.voidType);
+    Ident f = _globalDecl.declExternFunc(isAcc? "_XMP_reduction_acc" : "_XMP_reduction", Xtype.voidType);
     Ident f2 = _globalDecl.declExternFunc("_XMP_reduction_loc", Xtype.voidType);
 
     Vector<XobjList> reductionFuncArgsList = createReductionArgsList(reductionRef, pb, false, null, null);
@@ -1979,7 +1976,7 @@ public class XMPtranslateLocalPragma {
       throw new XMPexception(pb.getLineNo(), "reduction for both acc and host is unimplemented");
     }
 
-    Block reductionFuncCallBlock = createReductionFuncCallBlock(pb);
+    Block reductionFuncCallBlock = createReductionFuncCallBlock(pb, isACC);
     XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
     // // create function arguments
     // XobjList reductionRef = (XobjList)reductionDecl.getArg(0);
@@ -2023,9 +2020,7 @@ public class XMPtranslateLocalPragma {
       for(Xobject x : reductionSpecList){
         vars.add(x.getArg(0));
       }
-      reductionFuncCallBlock =
-      Bcons.PRAGMA(Xcode.ACC_PRAGMA, "HOST_DATA", Xcons.List(Xcons.List(Xcons.String("USE_DEVICE"), vars)),
-                   Bcons.blockList(reductionFuncCallBlock));
+      reductionFuncCallBlock = encloseWithAccHostDataConstruct(reductionFuncCallBlock, vars);
     }
 
     Xobject async = reductionDecl.getArg(2);

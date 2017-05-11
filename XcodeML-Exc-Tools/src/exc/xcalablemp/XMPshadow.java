@@ -253,7 +253,7 @@ public class XMPshadow {
 
     Block reflectFuncCallBlock = Bcons.COMPOUND(reflectFuncBody);
     if(isAcc && !accUseDeviceClauseArgs.isEmpty()) {
-      reflectFuncCallBlock = XMPtranslateLocalPragma.encloseWithAccHostDataDirective(reflectFuncCallBlock, accUseDeviceClauseArgs);
+      reflectFuncCallBlock = XMPtranslateLocalPragma.encloseWithAccHostDataConstruct(reflectFuncCallBlock, accUseDeviceClauseArgs);
     }
 
     pb.replace(reflectFuncCallBlock);
