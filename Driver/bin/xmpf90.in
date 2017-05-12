@@ -9,6 +9,8 @@ OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
 ### Directory for saving intermediate files ###
 PID=$$
 TEMP_DIR=/tmp/__omni_tmp__${PID}
+COMMAMD_LOG=$TEMP_DIR/command_log
+ERROR_LOG=$TEMP_DIR/error_log
 DEBUG_TEMP_DIR="__omni_tmp__"
 
 ### Default options ###

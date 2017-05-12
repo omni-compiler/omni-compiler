@@ -33,15 +33,21 @@ function omni_exec_run()
 
 function error_process()
 {
+    [ $VERBOSE = false ] && cat $COMMAMD_LOG
+    cat $ERROR_LOG
     [ $ENABLE_DEBUG = false ] && omni_exec rm -rf $TEMP_DIR
     exit 1
 }
 
 function omni_exec()
 {
+    [ -d $TEMP_DIR ] || mkdir -p $TEMP_DIR
     [ $VERBOSE = true -o $DRY_RUN = true ] && echo ${@+"$@"}
+    [ $VERBOSE = false ] && echo ${@+"$@"} >> $COMMAMD_LOG
+    
     if [ $DRY_RUN = false ]; then
-	${@+"$@"} || error_process
+	[ -d $TEMP_DIR ] || mkdir -p $TEMP_DIR
+	$(${@+"$@"} &> $ERROR_LOG) || error_process
     fi
 }
 
