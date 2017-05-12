@@ -36,6 +36,10 @@ public class XMPtransPragma
 	bc = transPragma((PragmaBlock)bc);
 	if(bc != null) i.setBlock(bc);
       }
+      if (bc.Opcode() == Xcode.OMN_PRAGMA) {
+	((METAXblock)bc).run();
+	i.setBlock(Bcons.COMPOUND(bc.getBody()));
+      }
     }
     
     run_block(def, env, null);

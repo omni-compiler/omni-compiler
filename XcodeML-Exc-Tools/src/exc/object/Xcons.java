@@ -352,6 +352,26 @@ public class Xcons
         return Xcons.List(Xcode.FUNCTION_CALL, t.getRef(), f, args);
     }
 
+    public static Xobject plusOp(Xobject x, Xobject y)
+    {
+	return binaryOp(Xcode.PLUS_EXPR, x, y);
+    }
+    
+    public static Xobject minusOp(Xobject x, Xobject y)
+    {
+	return binaryOp(Xcode.MINUS_EXPR, x, y);
+    }
+
+    public static Xobject mulOp(Xobject x, Xobject y)
+    {
+	return binaryOp(Xcode.MUL_EXPR, x, y);
+    }
+
+    public static Xobject divOp(Xobject x, Xobject y)
+    {
+	return binaryOp(Xcode.DIV_EXPR, x, y);
+    }
+
     public static Xobject binaryOp(Xcode code, Xobject x, Xobject y)
     {
         if(x == null)

@@ -145,6 +145,10 @@ int check_for_XMP_pragma(int st_no, expr x);
 void init_for_ACC_pragma();
 void check_for_ACC_pragma(expr x);
 
+expv OMN_pragma_list(char *dir_name, expv arg1, expv arg2);
+void init_for_OMN_pragma();
+void check_for_OMN_pragma(expr x);
+
 void set_parent_implicit_decls(void);
 
 void
@@ -321,6 +325,7 @@ compile_statement(st_no,x)
         expr_print(x,debug_fp);
     }
 
+    check_for_OMN_pragma(x);
     check_for_ACC_pragma(x);
     check_for_OMP_pragma(x);
     doCont = check_for_XMP_pragma(st_no, x);
@@ -555,6 +560,7 @@ compile_statement1(int st_no, expr x)
             //else if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
             //EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
             //}
+	    check_for_OMN_pragma(x); /* close DO directives if any */
             check_for_OMP_pragma(x); /* close DO directives if any */
             check_for_ACC_pragma(x); /* close LOOP directives if any */
             check_for_XMP_pragma(st_no, x); /* close LOOP directives if any */
@@ -860,7 +866,12 @@ compile_statement1(int st_no, expr x)
 	    pop_ctl();
 	  }
 	}
-
+	else if (CTL_TYPE(ctl_top) == CTL_OMN){
+	  CTL_BLOCK(ctl_top) =
+	    OMN_pragma_list(CTL_OMN_ARG_DIR(ctl_top), CTL_OMN_ARG_CLAUSE(ctl_top), CURRENT_STATEMENTS);
+	  EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
+	  pop_ctl();
+	}
         break;
 
     case F_DOWHILE_STATEMENT: {

@@ -17,6 +17,7 @@
 int OMP_flag = FALSE;
 int XMP_flag = FALSE;
 int ACC_flag = FALSE;
+int OMN_flag = TRUE;
 
 /* lexical analyzer, enable conditional compilation.  */
 int cond_compile_enabled = FALSE;
@@ -130,6 +131,7 @@ int st_OCL_flag;
 int st_OMP_flag;
 int st_XMP_flag;
 int st_ACC_flag;
+int st_OMN_flag;
 
 enum lex_state lexstate;
 
@@ -147,6 +149,7 @@ sentinel_list sentinels;
 #define ACC_SENTINEL "!$acc"
 #define OCL_SENTINEL "!ocl"
 #define CDIR_SENTINEL "!cdir"
+#define OMN_SENTINEL "!$omn"
 
 /* sentinel list functions */
 static void init_sentinel_list( sentinel_list * p );
@@ -315,6 +318,7 @@ initialize_lex()
     add_sentinel( &sentinels, ACC_SENTINEL );
     if (ocl_flag) add_sentinel( &sentinels, OCL_SENTINEL );
     if (cdir_flag) add_sentinel( &sentinels, CDIR_SENTINEL );
+    add_sentinel( &sentinels, OMN_SENTINEL );
 }
 
 static void
@@ -479,6 +483,11 @@ yylex0()
 	    for (p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
             return ACCKW_LINE;
         }
+	if (st_OMN_flag && OMN_flag) {
+            lexstate = LEX_ACC_TOKEN;
+	    //for (p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
+            return OMNKW_LINE;
+	}
         if (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
             (st_CONDCOMPL_flag && !OMP_flag && !cond_compile_enabled)) {
             lexstate = LEX_PRAGMA_TOKEN;
@@ -2073,6 +2082,7 @@ again:
     st_ACC_flag = FALSE;       /* flag for "!$ACC" */
     st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
     st_OCL_flag = FALSE;       /* flag for "!OCL" */
+    st_OMN_flag = FALSE;       /* flag for "!OCL" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
 
     if (flag_force_c_comment) {
@@ -2110,6 +2120,11 @@ again:
 		strcat(buff, p);
                 set_pragma_str( buff );
                 st_PRAGMA_flag = TRUE;
+            }else if( strcasecmp( sentinel_name( &sentinels, index ), OMN_SENTINEL )== 0 ){
+	        char buff[256] = "OMN";
+		strcat(buff, p);
+                set_pragma_str( buff );
+                st_OMN_flag = TRUE;
             }else{
                 set_pragma_str( &(sentinel_name( &sentinels, index )[2]) );
                 st_PRAGMA_flag = TRUE;

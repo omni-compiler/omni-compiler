@@ -86,6 +86,12 @@ public class Bcons
         return new PragmaBlock(code, pragma, args, body);
     }
 
+    /** create 'metax' statement block */
+    public static Block METAX(Xcode code, String pragma, Xobject args, BlockList body)
+    {
+        return new METAXblock(code, pragma, args, body);
+    }
+
     /** create 'if' statement block */
     public static Block IF(Xcode code, BasicBlock cond, BlockList then_part, BlockList else_part, String construct_name)
     {
@@ -455,6 +461,10 @@ public class Bcons
         case ACC_PRAGMA:
 	    return PRAGMA(Xcode.ACC_PRAGMA, v.getArg(0).getString(), v.getArgOrNull(1),
 			  buildList(v.getArgOrNull(2)));
+
+	case OMN_PRAGMA:
+	    return METAX(Xcode.OMN_PRAGMA, v.getArg(0).getString(), v.getArgOrNull(1),
+			 buildList(v.getArgOrNull(2)));
 
         case IF_STATEMENT: /* (IF_STATMENT cond then-part else-part) */
             return IF(BasicBlock.Cond(v.getArg(0)), buildList(v.getArg(1)),

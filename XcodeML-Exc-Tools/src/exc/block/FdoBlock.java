@@ -36,6 +36,19 @@ public class FdoBlock extends Block implements ForBlock
         }
     }
 
+    public FdoBlock(FdoBlock b)
+    {
+        super(Xcode.F_DO_STATEMENT, null, null);
+        this.setLineNo(b.getLineNo());
+        this.body = b.getBody().copy();
+        this.is_canonical = false;
+        body.parent = this;
+        ind_var_part = BasicBlock.Expr(this, b.getInductionVar());
+	lower_part = BasicBlock.Expr(this, b.getLowerBound().copy());
+	upper_part = BasicBlock.Expr(this, b.getUpperBound().copy());
+	step_part = BasicBlock.Expr(this, b.getStep().copy());
+    }
+  
     @Override
     public void Canonicalize()
     {
@@ -131,6 +144,12 @@ public class FdoBlock extends Block implements ForBlock
         v.visit(bblock);
     }
 
+    @Override
+    public FdoBlock copy()
+    {
+      return new FdoBlock(this);
+    }
+    
   // only for FdoBlock
     public void setInductionVar(Xobject ind_var)
     {

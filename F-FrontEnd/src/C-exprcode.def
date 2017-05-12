@@ -303,6 +303,9 @@ L    XMP_PRAGMA
 # ACC
 L    ACC_PRAGMA
 
+# OMN
+L    OMN_PRAGMA
+
 # just text, for comment, etc ...
 T    TEXT
 

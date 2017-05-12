@@ -339,6 +339,10 @@
 
 %token XMPKW_ACC
 
+
+%token OMNKW_LINE
+
+
 %type <val> xmp_directive xmp_nodes_clause xmp_template_clause xmp_distribute_clause xmp_align_clause xmp_shadow_clause xmp_template_fix_clause xmp_task_clause xmp_loop_clause xmp_reflect_clause xmp_gmove_clause xmp_barrier_clause xmp_bcast_clause xmp_reduction_clause xmp_array_clause xmp_save_desc_clause xmp_wait_async_clause xmp_end_clause
 
  //%type <val> xmp_subscript_list xmp_subscript xmp_dist_fmt_list xmp_dist_fmt xmp_obj_ref xmp_reduction_opt xmp_reduction_opt1 xmp_reduction_spec xmp_reduction_var_list xmp_reduction_var xmp_pos_var_list xmp_gmove_opt xmp_expr_list xmp_name_list xmp_clause_opt xmp_clause_list xmp_clause_one xmp_master_io_options xmp_global_io_options xmp_width_opt xmp_width_opt1 xmp_async_opt xmp_async_opt1 xmp_width_list xmp_width
@@ -416,7 +420,7 @@
 %type <code> acc_reduction_op
 %type <code> acc_end_clause
 
-%type <val> acc_directive acc_if_clause acc_parallel_clause_list acc_data_clause_list acc_loop_clause_list acc_parallel_loop_clause_list acc_kernels_loop_clause_list acc_wait_clause_list acc_expr_list acc_data_clause acc_var acc_var_list acc_subscript acc_subscript_list acc_csep acc_parallel_clause acc_kernels_clause_list acc_kernels_clause acc_routine_clause_list acc_enter_data_clause_list acc_exit_data_clause_list acc_host_data_clause_list acc_declare_clause_list acc_update_clause_list acc_init_clause_list acc_shutdown_clause_list acc_set_clause_list
+%type <val> acc_directive acc_if_clause acc_parallel_clause_list acc_data_clause_list acc_loop_clause_list acc_parallel_loop_clause_list acc_kernels_loop_clause_list acc_wait_clause_list acc_expr_list acc_data_clause acc_var acc_var_list acc_subscript acc_subscript_list acc_csep acc_parallel_clause acc_kernels_clause_list acc_kernels_clause acc_routine_clause_list acc_enter_data_clause_list acc_exit_data_clause_list acc_host_data_clause_list acc_declare_clause_list acc_update_clause_list acc_init_clause_list acc_shutdown_clause_list acc_set_clause_list omn_directive
 
 /* abstract clause */
 %type <val> acc_loop_clause acc_atomic_clause acc_enter_data_clause acc_exit_data_clause acc_declare_clause acc_update_clause acc_set_clause acc_compute_clause acc_parallel_loop_clause acc_kernels_loop_clause acc_routine_clause acc_init_clause acc_shutdown_clause acc_host_data_clause
@@ -455,6 +459,7 @@ static void append_pragma_str _ANSI_ARGS_((char *p));
 #define OMP_LIST(op, args) list2(LIST, GEN_NODE(INT_CONSTANT, op), args)
 #define XMP_LIST(op, args) list2(XMP_PRAGMA, GEN_NODE(INT_CONSTANT, op), args)
 #define ACC_LIST(op, args) list2(ACC_PRAGMA, GEN_NODE(INT_CONSTANT, op), args)
+#define OMN_LIST(op, args) list2(OMN_PRAGMA, GEN_NODE(INT_CONSTANT, op), args)
 
 /* statement name */
 expr st_name;
@@ -533,6 +538,8 @@ one_statement:
 	{ compile_XMP_directive($3); }
 	| ACCKW_LINE { need_keyword = TRUE; } acc_directive
 	{ compile_ACC_directive($3); }
+        | OMNKW_LINE { need_keyword = TRUE; } omn_directive
+	{ compile_OMN_directive($3); }
         | PRAGMA_HEAD  PRAGMA_SLINE /* like !$ ... */
 	{
 	    if (pragmaString != NULL)
@@ -2991,6 +2998,11 @@ acc_directive:
 	| ACCKW_END acc_end_clause
 	{ $$ = ACC_LIST($2, NULL); }
 	;
+
+omn_directive:
+        IDENTIFIER '(' xmp_expr_list ')'
+	{ $$ = OMN_LIST(GEN_NODE(STRING_CONSTANT, $1), $3); }
+        ;
 
 /* clause separator */
 acc_csep:

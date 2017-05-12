@@ -165,6 +165,7 @@ enum control_type {
     CTL_OMP,
     CTL_XMP,
     CTL_ACC,
+    CTL_OMN,
     CTL_CRITICAL,
     CTL_BLOCK,
     CTL_INTERFACE,
@@ -270,6 +271,10 @@ typedef struct control
 #define CTL_ACC_ARG(l)	((l)->v2)
 #define CTL_ACC_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
 #define CTL_ACC_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
+
+#define CTL_OMN_ARG(l)	((l)->v2)
+#define CTL_OMN_ARG_DIR(l) (EXPR_STR(EXPR_ARG1((l)->v2)))
+#define CTL_OMN_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
 
 #define CTL_BLOCK_STATEMENT(l)                   ((l)->v2)
 #define CTL_BLOCK_BODY(l)                        (EXPR_ARG1((l)->v2))

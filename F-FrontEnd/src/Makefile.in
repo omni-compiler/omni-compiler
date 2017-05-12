@@ -18,7 +18,8 @@ OBJECTS = F95-main.o C-expr-mem.o C-exprcode.o F-datatype.o F-ident.o \
 	  F-equiv.o F-varutil.o F-intrinsic.o F-intrinsics-table.o F-OMP.o F-ACC.o F-XMP.o \
 	  xcodeml-node.o xcodeml-parse.o xcodeml-util.o xcodeml-type.o \
 	  xcodeml-traverse.o xcodeml-output-F.o F-dump.o F-type-attr-tbl.o \
-	  module-manager.o hash.o F-input-xmod.o F-module-procedure.o F-second-pass.o
+	  module-manager.o hash.o F-input-xmod.o F-module-procedure.o F-second-pass.o \
+	  F-OMN.c
 HEADERS = C-OMP.h C-ACC.h C-XMP.h C-expr.h C-exprcode.h F-datatype.h F-front.h F-ident.h \
 	  F-input-xmod.h F-intrinsics-types.h F-module-procedure.h F-output-xcodeml.h \
 	  F-second-pass.h hash.h module-manager.h xcodeml-module.h xcodeml-node.h xcodeml.h
@@ -46,6 +47,8 @@ C-exprcode.h: C-exprcode.def C-exprcode.h.awk
 
 C-exprcode.c: C-exprcode.def C-exprcode.c.awk
 	$(AWK) -f C-exprcode.c.awk < C-exprcode.def > C-exprcode.c
+
+F95-parser.o: F95-parser.y F95-lex.c
 
 fincludes/iso_c_binding.xmod: fincludes/iso_c_binding.f90 $(F_FRONT)
 	./$(F_FRONT) -module-compile $< > $@

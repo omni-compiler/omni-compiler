@@ -386,6 +386,9 @@ xtag(enum expr_code code)
     case ACC_PRAGMA:
       return "ACCPragma";
 
+    case OMN_PRAGMA:
+      return "OMNPragma";
+      
     default:
       fatal("unknown exprcode : %d", code);
     }
@@ -3062,6 +3065,30 @@ outx_ACC_dir_clause_list(int l,expv v)
 
 
 /**
+ * output OMN pragma statement
+ */
+static void outx_XMP_dir_string(int l,expv v);
+static void outx_XMP_dir_clause_list(int l,expv v);
+
+static void
+outx_OMN_pragma(int l, expv v)
+{
+  const int l1 = l + 1;
+  outx_tagOfStatement(l, v);
+
+  //outx_XMP_dir_string(l1,EXPR_ARG1(v));
+  outx_tagText(l, "string", "Unroll");
+
+  if (EXPR_ARG2(v)) outx_XMP_dir_clause_list(l1, EXPR_ARG2(v));
+  
+  /* output body */
+  if (EXPR_HAS_ARG3(v))
+    outx_expv_withListTag(l1, EXPR_ARG3(v));
+  outx_expvClose(l, v);
+}
+
+
+/**
  * output FassignStatement
  */
 static void
@@ -3816,6 +3843,10 @@ outx_expv(int l, expv v)
       outx_ACC_pragma(l, v);
       break;
 
+    case OMN_PRAGMA:
+      outx_OMN_pragma(l, v);
+      break;
+      
     case F2008_BLOCK_STATEMENT:
       outx_BLOCK_statement(l, v);
       break;
