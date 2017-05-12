@@ -10,8 +10,6 @@ OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
 ### Directory for saving intermediate files ###
 PID=$$
 TEMP_DIR=/tmp/__omni_tmp__${PID}
-COMMAMD_LOG=$TEMP_DIR/command_log
-ERROR_LOG=$TEMP_DIR/error_log
 DEBUG_TEMP_DIR="__omni_tmp__"
 
 ### Default options ###
@@ -73,10 +71,11 @@ omni_c_check_file_exist
 
 ### Create temporal directory ###
 [ $ENABLE_DEBUG = true ] && TEMP_DIR=$DEBUG_TEMP_DIR
+COMMAMD_LOG=$TEMP_DIR/command_log
+ERROR_LOG=$TEMP_DIR/error_log
 # Note that, if TEMP_DIR exists, the TEMP_DIR is not deleted (KAGEMAI #379)
 
 omni_exec mkdir -p $TEMP_DIR
-[ $ENABLE_DEBUG = true ] && echo "Create ${TEMP_DIR}/"
 
 ### Clean temporal directory before exit ###
 omni_set_trap
