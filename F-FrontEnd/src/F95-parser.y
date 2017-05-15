@@ -115,6 +115,8 @@ state 2058
 %token INTERFACE
 %token INTERFACEASSIGNMENT
 %token INTERFACEOPERATOR
+%token INTERFACEREAD
+%token INTERFACEWRITE
 %token ENDINTERFACE
 %token PROCEDURE
 %token MODULEPROCEDURE
@@ -171,6 +173,8 @@ state 2058
 %token NOPASS
 %token NON_OVERRIDABLE
 %token DEFERRED
+%token FORMATTED
+%token UNFORMATTED
 
 /* Coarray keywords #060 */
 %token SYNCALL
@@ -509,7 +513,7 @@ static void type_spec_done();
 %type <val> parenthesis_arg_list_or_null
 %type <val> set_expr
 %type <val> io_statement format_spec ctl_list io_clause io_list_or_null io_list io_item
-%type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP type_bound_generic_spec
+%type <val> IDENTIFIER CONSTANT const kind_parm GENERIC_SPEC USER_DEFINED_OP type_bound_generic_spec defined_io_generic_spec formatted_or_unformatted
 %type <val> string_const_substr
 %type <val> binding_attr_list binding_attr type_bound_proc_decl_list type_bound_proc_decl
 %type <val> proc_attr_list proc_def_attr proc_attr proc_decl proc_decl_list name_or_type_spec_or_null0 name_or_type_spec_or_null
@@ -598,6 +602,10 @@ statement:      /* entry */
           { $$ = list1(F95_ENDINTERFACE_STATEMENT, $4); }
         | ENDINTERFACE OPERATOR '(' USER_DEFINED_OP ')'
           { $$ = list1(F95_ENDINTERFACE_STATEMENT, $4); }
+        | ENDINTERFACE READ '(' formatted_or_unformatted ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT, list1(F03_GENERIC_READ, $4)); }
+        | ENDINTERFACE WRITE '(' formatted_or_unformatted ')'
+          { $$ = list1(F95_ENDINTERFACE_STATEMENT, list1(F03_GENERIC_WRITE, $4)); }
         | ENDINTERFACE
           { $$ = list1(F95_ENDINTERFACE_STATEMENT,NULL); }
         | MODULEPROCEDURE ident_list
@@ -792,8 +800,23 @@ type_bound_proc_decl_list:
         { $$ = list_put_last($1, $3); }
         ;
 
+formatted_or_unformatted:
+          FORMATTED
+        { $$ = list0(F03_FORMATTED); }
+        | UNFORMATTED
+        { $$ = list0(F03_UNFORMATTED); }
+        ;
+
+defined_io_generic_spec:
+          WRITE_P KW formatted_or_unformatted ')'
+        { $$ = list1(F03_GENERIC_WRITE, $3); }
+        | READ_P  KW formatted_or_unformatted ')'
+        { $$ = list1(F03_GENERIC_READ, $3); }
+        ;
+
 type_bound_generic_spec: GENERIC_SPEC
         | IDENTIFIER
+        | defined_io_generic_spec
         ;
 
 label:    CONSTANT      /* must be interger constant */

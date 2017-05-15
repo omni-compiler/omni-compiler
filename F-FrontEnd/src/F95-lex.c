@@ -1909,8 +1909,12 @@ get_keyword_optional_blank(int class)
     case INTERFACE: /* interface assignment or interface operator */ {
            char *save2 = bufptr;
            if(get_keyword(keywords) == ASSIGNMENT) return INTERFACEASSIGNMENT;
-	   bufptr = save2;
-	   if(get_keyword(keywords) == OPERATOR) return INTERFACEOPERATOR;
+           bufptr = save2;
+           if(get_keyword(keywords) == OPERATOR) return INTERFACEOPERATOR;
+           bufptr = save2;
+           if(get_keyword(keywords) == READ) return INTERFACEREAD;
+           bufptr = save2;
+           if(get_keyword(keywords) == WRITE) return INTERFACEWRITE;
         }
 	break;
     case MODULE: /* module procedure */
@@ -3863,6 +3867,7 @@ struct keyword_token keywords[ ] =
     { "extends",        EXTENDS  },      /* F2003 spec */
     { "elemental",      ELEMENTAL },
     { "format",         FORMAT  },
+    { "formatted",      FORMATTED  },    /* F2003 spec */
     { "function",       FUNCTION  },
     { "forall",         FORALL },
     { "generic",        GENERIC },       /* F2003 spec */
@@ -3936,6 +3941,7 @@ struct keyword_token keywords[ ] =
     { "type",           KW_TYPE},
     { "class",          CLASS},
     { "undefined",      KW_UNDEFINED },
+    { "funormatted",    UNFORMATTED  },  /* F2003 spec */
     { "unlock",         UNLOCK },        /* #060 coarray */
     { "use",            KW_USE },
     { "value",          VALUE },
