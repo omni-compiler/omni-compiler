@@ -403,7 +403,7 @@ struct use_assoc_info {
 
 struct interface_info {
     enum {
-        INTF_ASSINGMENT,  /* for assignment interface */
+        INTF_ASSIGNMENT,  /* for assignment interface */
         INTF_OPERATOR,    /* for operator (override) interface */
         INTF_USEROP,      /* for user defined operator interface */
         INTF_GENERICS,    /* for generics interface but not yet defined */
@@ -411,12 +411,7 @@ struct interface_info {
         INTF_GENERIC_SUBR,/* for generic 'subroutines' interface */
         INTF_DECL         /* for interface not above cases. (interface for function prottype)*/
     } class;
-    enum expr_code ecode; /* need it? */
-    ID operatorId;        /* identifier of the operator */
-    ID idlist;            /* ident implements this interface. */
 };
-#define INTF_OPID(ii) ((ii)->operatorId)
-#define INTF_IMPL(ii) ((ii)->idlist) /* need it? */
 
 enum ext_proc_class {
     EP_UNKNOWN,

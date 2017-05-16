@@ -643,7 +643,7 @@ declare_procedure(enum name_class class,
         assert(interface != NULL);
 
         switch(EXT_PROC_INTERFACE_CLASS(interface)) {
-            case INTF_ASSINGMENT: {
+            case INTF_ASSIGNMENT: {
                 if(IS_SUBR(type) == FALSE) {
                     error("unexpected FUNCTION in assignment(=) INTERFACE");
                     return;

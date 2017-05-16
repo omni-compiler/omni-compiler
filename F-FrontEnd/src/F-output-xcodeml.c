@@ -5201,7 +5201,7 @@ outx_interfaceDecl(int l, EXT_ID ep)
             if(EXT_IS_BLANK_NAME(ep) == FALSE)
                 outx_printi(0, " name=\"%s\"", SYM_NAME(EXT_SYM(ep)));
             break;
-        case INTF_ASSINGMENT:
+        case INTF_ASSIGNMENT:
             outx_true(TRUE, "is_assignment");
             break;
         case INTF_OPERATOR:

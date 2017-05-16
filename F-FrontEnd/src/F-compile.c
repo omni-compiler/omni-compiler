@@ -4996,7 +4996,7 @@ compile_INTERFACE_statement(expr x)
         case F95_ASSIGNOP: {
             /* user define assingment operator */
             s = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(identOrOp)));
-            info->class = INTF_ASSINGMENT;
+            info->class = INTF_ASSIGNMENT;
         } break;
         case F95_USER_DEFINED: {
 #define END_LENGTH 2

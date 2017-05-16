@@ -2926,7 +2926,7 @@ input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
     }
 
     if (is_assignment != NULL) {
-        EXT_PROC_INTERFACE_CLASS(ep) = INTF_ASSINGMENT;
+        EXT_PROC_INTERFACE_CLASS(ep) = INTF_ASSIGNMENT;
         free(is_assignment);
     }
 
@@ -3094,7 +3094,7 @@ input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable * ht, ID id_list)
     }
 
     if (is_assignment != NULL) {
-        EXT_PROC_INTERFACE_CLASS(ep) = INTF_ASSINGMENT;
+        EXT_PROC_INTERFACE_CLASS(ep) = INTF_ASSIGNMENT;
         free(is_assignment);
     }
 
