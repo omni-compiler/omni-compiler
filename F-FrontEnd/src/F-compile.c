@@ -3139,6 +3139,13 @@ check_procedure_variables_forall(int is_final)
     }
 }
 
+static int
+is_defined_io_procedure(ID id)
+{
+    /* TODO(shingo-s): implement*/
+    return TRUE;
+}
+
 
 static void
 check_type_bound_procedures()
@@ -3166,13 +3173,17 @@ check_type_bound_procedures()
         parent = TYPE_PARENT(tp)? TYPE_PARENT_TYPE(tp) : NULL;
 
         /*
-         * Marks each type-bound procedure if it is used as operator/assignment
+         * Marks each type-bound procedure if it is specified by type-bound generics
          */
         FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
             FOREACH_ID(binding, TBP_BINDING(mem)) {
                 bindto = find_struct_member(tp, ID_SYM(binding));
                 TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_OPERATOR;
                 TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT;
+                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_WRITE;
+                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_READ;
+                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_FORMATTED;
+                TBP_BINDING_ATTRS(bindto) |= TBP_BINDING_ATTRS(mem) & TYPE_BOUND_PROCEDURE_UNFORMATTED;
             }
         }
 
@@ -3190,14 +3201,13 @@ check_type_bound_procedures()
             }
 
             /*
-             * Check a type-bound procedure works as operator or assginment
+             * Check a type-bound procedure works as defined io procedure
              */
-            if (TBP_IS_OPERATOR(tbp) && TBP_IS_ASSIGNMENT(tbp)) {
-                /*
-                 * If a procedure is bound from a operator generics and a assignment generics,
-                 * raise an error.
-                 */
-                error("type-bound procedure that is bound to an operator cannot be bound to an assignment");
+            if (TBP_IS_DEFINED_IO(tbp)) {
+                if (!is_defined_io_procedure(tbp)) {
+                    error("type-bound procedure is used as defined i/o procedure, "
+                          "but its procedure signamture is wrong");
+                }
             }
 
             if ((ftp = TYPE_REF(ID_TYPE(tbp))) != NULL) {

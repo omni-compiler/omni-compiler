@@ -254,6 +254,10 @@ typedef struct ident_descriptor
 #define TYPE_BOUND_PROCEDURE_DEFERRED              0x0010
 #define TYPE_BOUND_PROCEDURE_IS_OPERATOR           0x0020
 #define TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT         0x0040
+#define TYPE_BOUND_PROCEDURE_WRITE                 0x0080
+#define TYPE_BOUND_PROCEDURE_READ                  0x0100
+#define TYPE_BOUND_PROCEDURE_FORMATTED             0x0200
+#define TYPE_BOUND_PROCEDURE_UNFORMATTED           0x0400
         } tbp_info;
         struct {
             /* for CL_MULTI */
@@ -397,6 +401,12 @@ struct use_assoc_info {
 #define TBP_IS_ASSIGNMENT(id) \
     (ID_CLASS(id) == CL_TYPE_BOUND_PROC && \
      TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT)
+
+#define TBP_IS_DEFINED_IO(id) \
+    (ID_CLASS(id) == CL_TYPE_BOUND_PROC && (                    \
+        TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_WRITE ||   \
+        TBP_BINDING_ATTRS(id) & TYPE_BOUND_PROCEDURE_READ))
+
 
 #define MULTI_ID_LIST(id)     ((id)->info.multi_info.id_list)
 

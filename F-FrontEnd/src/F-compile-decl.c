@@ -5657,20 +5657,44 @@ compile_type_generic_procedure(expr x)
             id = declare_ident(EXPR_SYM(arg), CL_TYPE_BOUND_PROC);
             binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
         } break;
-        case F03_GENERIC_WRITE:
-        case F03_GENERIC_READ: {
+        case F03_GENERIC_WRITE: {
             expr formatted = EXPR_ARG1(generics_spec);
+            SYMBOL sym;
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_WRITE;
             switch (EXPR_CODE(formatted)) {
                 case F03_FORMATTED:
-
+                    sym = find_symbol("_write_formatted");
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_FORMATTED;
                     break;
                 case F03_UNFORMATTED:
-
+                    sym = find_symbol("_write_unformatted");
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_UNFORMATTED;
                     break;
                 default:
+                    /* never reach */
                     break;
             }
-        }
+            /* TODO(shingo-s): check the procedure already exists */
+            id = declare_ident(sym, CL_TYPE_BOUND_PROC);
+        } break;
+        case F03_GENERIC_READ: {
+            expr formatted = EXPR_ARG1(generics_spec);
+            SYMBOL sym;
+            binding_attr_flags |= TYPE_BOUND_PROCEDURE_WRITE;
+            switch (EXPR_CODE(formatted)) {
+                case F03_FORMATTED:
+                    sym = find_symbol("_read_formatted");
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_FORMATTED;
+                    break;
+                case F03_UNFORMATTED:
+                    sym = find_symbol("_read_unformatted");
+                    binding_attr_flags |= TYPE_BOUND_PROCEDURE_UNFORMATTED;
+                    break;
+                default:
+                    /* never reach */
+                    break;
+            }
+        } break;
         default:
             error_at_node(x, "unexpected expression");
             break;
